@@ -1038,6 +1038,57 @@ HOOK_API int social_ai(int fac, int v1, int v2, int v3, int v4, int v5) {
     return 0;
 }
 
+/*
+Prototype cost calculation.
 
+Chassis cost divided by 2 is a unit cost multiplier.
 
+Weapon and armor cost is multiplied by reactor power.
+Module cost is NOT multiplied by reactor power.
+
+Positive ability cost becomes unit cost multiplier.
+Negative ability cost becomes flat addition to cost as ability cost absolute value.
+
+All fractional multipliers are turned into whole rational fractions.
+For example, ability with cost 1 multiplies unit cost by 1.25. This is coded in formula as multiplication by 5/4.
+
+All divisions are done after multiplications. This is to minimize an effect of integer rounding on intermediary steps.
+
+*/
+HOOK_API int proto_cost(int chassisTypeId, int weaponTypeId, int armorTypeId, int abilities, int reactorLevel) {
+
+    int chassisCost = tx_chassis[chassisTypeId].cost;
+    int weaponCost = tx_weapon[weaponTypeId].cost * (tx_weapon[weaponTypeId].mode < 3 ? reactorLevel : 1);
+    int armorCost = tx_defense[armorTypeId].cost * reactorLevel;
+
+    int abilityCostMultiplier = 1;
+    int abilityCostDivider = 1;
+    int abilityCostAddition = 0;
+    for (int position = 0; position < 32; position++)
+    {
+        if (((abilities >> position) & 0x1) == 0x1)
+        {
+            int abilityCost = tx_ability[position].cost;
+
+            if (abilityCost > 0)
+            {
+                abilityCostMultiplier *= (4 + abilityCost);
+                abilityCostDivider *= 4;
+
+            }
+            else if (abilityCost < 0)
+            {
+                abilityCostAddition += (-abilityCost);
+
+            }
+
+        }
+
+    }
+
+    int cost = max(1, ((max(weaponCost, armorCost) + (weaponCost + armorCost)) * chassisCost) * abilityCostMultiplier / 4 / abilityCostDivider + abilityCostAddition);
+
+    return cost;
+
+}
 
