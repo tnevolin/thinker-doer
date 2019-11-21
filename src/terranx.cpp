@@ -82,3 +82,6 @@ fp_1int* tx_action_staple = (fp_1int*)0x4CA7F0;
 fp_1int* tx_tech_rate = (fp_1int*)0x5BE6B0;
 fp_1int* tx_tech_selection = (fp_1int*)0x5BE380;
 
+// prototype cost
+fp_5int* tx_proto_cost = (fp_5int*)0x5A5A60;
+

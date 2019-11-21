@@ -98,7 +98,8 @@ extern fp_1int* tx_consider_designs;
 extern fp_1int* tx_action_staple;
 extern fp_1int* tx_tech_rate;
 extern fp_1int* tx_tech_selection;
-
+// prototype cost
+extern fp_5int* tx_proto_cost;
 
 #endif // __TERRANX_H__
 
