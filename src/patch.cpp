@@ -3,6 +3,7 @@
 #include "game.h"
 #include "move.h"
 #include "tech.h"
+#include "prototype.h"
 
 const char* ac_alpha = "ac_mod\\alphax";
 const char* ac_help = "ac_mod\\helpx";
@@ -232,26 +233,29 @@ bool patch_setup(Config* cf) {
     write_call_ptr(0x527304, (int)social_ai);
     write_call_ptr(0x5C0908, (int)log_veh_kill);
 
+    // read reactor cost multiplier
+    write_call_ptr(0x005878CE, (int)read_reactor_cost_multiplier);
+
     // prototype cost
-    write_call_ptr(0x436ADD, (int)proto_cost);
-    write_call_ptr(0x43704C, (int)proto_cost);
-    write_call_ptr(0x5817C9, (int)proto_cost);
-    write_call_ptr(0x581833, (int)proto_cost);
-    write_call_ptr(0x581BB3, (int)proto_cost);
-    write_call_ptr(0x581BCB, (int)proto_cost);
-    write_call_ptr(0x582339, (int)proto_cost);
-    write_call_ptr(0x582359, (int)proto_cost);
-    write_call_ptr(0x582378, (int)proto_cost);
-    write_call_ptr(0x582398, (int)proto_cost);
-    write_call_ptr(0x5823B0, (int)proto_cost);
-    write_call_ptr(0x582482, (int)proto_cost);
-    write_call_ptr(0x58249A, (int)proto_cost);
-    write_call_ptr(0x58254A, (int)proto_cost);
-    write_call_ptr(0x5827E4, (int)proto_cost);
-    write_call_ptr(0x582EC5, (int)proto_cost);
-    write_call_ptr(0x582FEC, (int)proto_cost);
-    write_call_ptr(0x5A5D35, (int)proto_cost);
-    write_call_ptr(0x5A5F15, (int)proto_cost);
+    write_call_ptr(0x00436ADD, (int)proto_cost);
+    write_call_ptr(0x0043704C, (int)proto_cost);
+    write_call_ptr(0x005817C9, (int)proto_cost);
+    write_call_ptr(0x00581833, (int)proto_cost);
+    write_call_ptr(0x00581BB3, (int)proto_cost);
+    write_call_ptr(0x00581BCB, (int)proto_cost);
+    write_call_ptr(0x00582339, (int)proto_cost);
+    write_call_ptr(0x00582359, (int)proto_cost);
+    write_call_ptr(0x00582378, (int)proto_cost);
+    write_call_ptr(0x00582398, (int)proto_cost);
+    write_call_ptr(0x005823B0, (int)proto_cost);
+    write_call_ptr(0x00582482, (int)proto_cost);
+    write_call_ptr(0x0058249A, (int)proto_cost);
+    write_call_ptr(0x0058254A, (int)proto_cost);
+    write_call_ptr(0x005827E4, (int)proto_cost);
+    write_call_ptr(0x00582EC5, (int)proto_cost);
+    write_call_ptr(0x00582FEC, (int)proto_cost);
+    write_call_ptr(0x005A5D35, (int)proto_cost);
+    write_call_ptr(0x005A5F15, (int)proto_cost);
 
     if (FileExists(ac_movlist_txt) && !FileExists(ac_movlistx_txt)) {
         CopyFile(ac_movlist_txt, ac_movlistx_txt, TRUE);
