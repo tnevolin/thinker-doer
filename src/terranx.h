@@ -61,6 +61,7 @@ typedef int __cdecl fp_4int(int, int, int, int);
 typedef int __cdecl fp_5int(int, int, int, int, int);
 typedef int __cdecl fp_6int(int, int, int, int, int, int);
 typedef int __cdecl fp_7intstr(int, int, int, int, int, int, int, const char*);
+typedef char* __cdecl fp_str_void();
 
 // params: faction, chassis, module, armor, specials, reactor, unit_plan, name
 extern fp_7intstr* tx_propose_proto;
@@ -98,8 +99,15 @@ extern fp_1int* tx_consider_designs;
 extern fp_1int* tx_action_staple;
 extern fp_1int* tx_tech_rate;
 extern fp_1int* tx_tech_selection;
+
 // prototype cost
 extern fp_5int* tx_proto_cost;
+
+// read configuration field
+extern fp_str_void* tx_read_configuration_field;
+
+// create prototype
+extern fp_6int* tx_create_prototype;
 
 #endif // __TERRANX_H__
 

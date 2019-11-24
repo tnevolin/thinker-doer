@@ -41,6 +41,7 @@
 #include <math.h>
 #include <algorithm>
 #include <set>
+#include <stdexcept>
 #include "terranx.h"
 
 typedef std::set<std::pair<int,int>> Points;
@@ -139,8 +140,6 @@ HOOK_API int faction_upkeep(int fac);
 HOOK_API int base_production(int id, int v1, int v2, int v3);
 HOOK_API int tech_value(int tech, int fac, int flag);
 HOOK_API int social_ai(int fac, int v1, int v2, int v3, int v4, int v5);
-// prototype cost
-HOOK_API int proto_cost(int chassisTypeId, int weaponTypeId, int armorTypeId, int abilities, int reactorTypeId);
 
 int need_psych(int id);
 int consider_hurry(int id);
@@ -150,7 +149,4 @@ int find_project(int base_id);
 int select_combat(int, bool, bool, int, int);
 
 #endif // __MAIN_H__
-
-
-
 

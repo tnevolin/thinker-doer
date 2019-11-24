@@ -86,11 +86,11 @@ struct UNIT
     char carry_capacity;
     char cost;
     char unit_plan;
-    char unk0;
+    char unk0; // this is used
     char factions_retired;
     char factions;
     char icon_offset;
-    char unk1;
+    char unk1; // not used, plan to use it for reactor value (cost multiplier or power)
     short unit_flags;
     short preq_tech;
 };
@@ -678,7 +678,7 @@ struct R_Reactor
     char* name;
     char* name_short;
     short preq_tech;
-    short padding;
+    short cost_multiplier; // Renamed from padding. Will be used to store cost_multiplier.
 };
 
 struct R_Terraform
