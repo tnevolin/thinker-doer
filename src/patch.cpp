@@ -233,8 +233,8 @@ bool patch_setup(Config* cf) {
     write_call_ptr(0x527304, (int)social_ai);
     write_call_ptr(0x5C0908, (int)log_veh_kill);
 
-    // read reactor cost multiplier
-    write_call_ptr(0x005878CE, (int)read_reactor_cost_multiplier);
+    // read reactor cost factor
+    write_call_ptr(0x005878CE, (int)read_reactor_cost_factor);
 
     // prototype cost
     write_call_ptr(0x00436ADD, (int)proto_cost);
