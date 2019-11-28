@@ -208,6 +208,17 @@ void write_offset(int addr, const void* ofs) {
     *(int*)(addr+1) = (int)ofs;
 }
 
+/**
+Replaces byte by address: old value to new value.
+Verifies that byte contains old value before replacing.
+*/
+void write_byte(int address, byte old_value, byte new_value) {
+    if (*(byte*)address != old_value || *(int*)(address+1) < (int)AC_IMAGE_BASE) {
+        throw std::exception();
+    }
+    *(byte*)(address) = new_value;
+}
+
 void remove_call(int addr) {
     if (*(byte*)addr != 0xE8) {
         throw std::exception();
@@ -256,6 +267,10 @@ bool patch_setup(Config* cf) {
     write_call_ptr(0x00582FEC, (int)proto_cost);
     write_call_ptr(0x005A5D35, (int)proto_cost);
     write_call_ptr(0x005A5F15, (int)proto_cost);
+
+    // do not set ALIEN default technologies
+    // replace jz by !ALIEN condition with jmp unconditional
+    write_byte(0x005B29F8, (byte)0x74 /*jz*/, (byte)0xEB /*jmp*/);
 
     if (FileExists(ac_movlist_txt) && !FileExists(ac_movlistx_txt)) {
         CopyFile(ac_movlist_txt, ac_movlistx_txt, TRUE);
