@@ -337,67 +337,53 @@ mov     DWORD PTR [ebp-0x4], 0xD
 
     new code
 
-or      eax, 0xFFFFFFFF
-mov     [ebp-0x68], eax
-mov     [ebp-0x64], eax
-
-inc eax
-mov     [ebp-0x60], eax
-
-inc eax
-mov     [ebp-0x5C], eax
-
-inc eax
-mov     [ebp-0x54], eax
-
-inc eax
-mov     [ebp-0x58], eax
-
-inc eax
-mov     [ebp-0x50], eax
-mov     [ebp-0x4C], eax
-
-inc eax
-mov     [ebp-0x48], eax
-mov     [ebp-0x44], eax
-
-inc eax
-mov     [ebp-0x40], eax
-mov     [ebp-0x3C], eax
-mov     [ebp-0x38], eax
-
-inc eax
-mov     [ebp-0x34], eax
-mov     [ebp-0x30], eax
-mov     [ebp-0x2C], eax
-
-inc eax
-mov     [ebp-0x28], eax
-mov     [ebp-0x24], eax
-mov     [ebp-0x20], eax
-mov     [ebp-0x1C], eax
-
-inc eax
-mov     [ebp-0x18], eax
-mov     [ebp-0x14], eax
-mov     [ebp-0x10], eax
-mov     [ebp-0xC], eax
-
-inc eax
-mov     [ebp-0x8], eax
-
-mov     DWORD PTR [ebp-0x4], 0xD
-
-push    ebx
-push    esi
-push    edi
-xor     ebx, ebx
-mov     edx, 0x5
-mov     edi, 0x7
-mov     eax, [ebp+0xC]
-mov     ecx, 0x8
-cmp     eax, ecx
-
+or     eax,0xffffffff
+mov    DWORD PTR [ebp-0x68],eax
+mov    DWORD PTR [ebp-0x64],eax
+inc    eax
+mov    DWORD PTR [ebp-0x60],eax
+inc    eax
+mov    DWORD PTR [ebp-0x5c],eax
+inc    eax
+mov    DWORD PTR [ebp-0x54],eax
+inc    eax
+mov    DWORD PTR [ebp-0x58],eax
+inc    eax
+mov    DWORD PTR [ebp-0x50],eax
+mov    DWORD PTR [ebp-0x4c],eax
+inc    eax
+mov    DWORD PTR [ebp-0x48],eax
+mov    DWORD PTR [ebp-0x44],eax
+inc    eax
+mov    DWORD PTR [ebp-0x40],eax
+mov    DWORD PTR [ebp-0x3c],eax
+mov    DWORD PTR [ebp-0x38],eax
+inc    eax
+mov    DWORD PTR [ebp-0x34],eax
+mov    DWORD PTR [ebp-0x30],eax
+mov    DWORD PTR [ebp-0x2c],eax
+inc    eax
+mov    DWORD PTR [ebp-0x28],eax
+mov    DWORD PTR [ebp-0x24],eax
+mov    DWORD PTR [ebp-0x20],eax
+mov    DWORD PTR [ebp-0x1c],eax
+inc    eax
+mov    DWORD PTR [ebp-0x18],eax
+mov    DWORD PTR [ebp-0x14],eax
+mov    DWORD PTR [ebp-0x10],eax
+mov    DWORD PTR [ebp-0xc],eax
+inc    eax
+mov    DWORD PTR [ebp-0x8],eax
+mov    DWORD PTR [ebp-0x4],0xd
+push   ebx
+push   esi
+push   edi
+xor    ebx,ebx
+mov    edx,0x5
+mov    edi,0x7
+mov    eax,DWORD PTR [ebp+0xc]
+mov    ecx,0x8
+cmp    eax,ecx
 nop
 nop
 nop
