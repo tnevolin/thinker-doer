@@ -106,7 +106,7 @@ Supply module replaced foil cost with infantry cost and cruiser cost with speede
 */
 HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level)
 {
-    // special case: supply foil and cruiser chassis are counted as infantry and speeder
+    // special case: supply foil and cruiser chassis are counted as infantry and speeder, correspondingly
 
     if (tx_weapon[weapon_id].mode == WMODE_CONVOY)
     {
@@ -181,7 +181,9 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
             (
                 max(weapon_cost, armor_cost) * 2    // primary statistics
                 +
-                min(weapon_cost, armor_cost) - 1    // secondary statistics
+                min(weapon_cost, armor_cost)        // secondary statistics
+                -
+                fission_reactor_cost_factor         // exclude minimal secondary statistics cost
             )
             *
             chassis_cost
