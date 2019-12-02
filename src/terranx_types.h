@@ -593,9 +593,7 @@ struct R_Tech
 {
     int flags;
     char* name;
-    int unk_0;
-    int unk_1;
-    int unk_2;
+    char short_name[12]; // technology short name that is used as reference in other places (prerequisites, etc.)
     int AI_growth;
     int AI_tech;
     int AI_wealth;
