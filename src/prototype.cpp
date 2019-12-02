@@ -82,18 +82,28 @@ HOOK_API void read_reactor_cost_factor()
 /**
 Prototype cost calculation.
 
-Base unit cost is:
-the most expensive weapon/armor item reactor adjusted cost
-+
-1/2 of (the least expensive weapon/armor item reactor adjusted cost - 1)
+Calculate true cost for weapon/module and armor
+weapon/armor true cost = weapon/armor cost * (reactor cost factor / Fission reactor cost factor)
+module true cost = module cost
 
-Module cost is NOT changed by reactor. It is calculated as using Fission reactor regardless of which one is fitted.
-Weapon/armor cost is multiplied by reactor cost factor.
+Select primary and secondary weapon/module/armor items
+primary item = one with higher true cost
+secondary item = one with lower true cost
 
-Chassis cost divided by 2 is unit cost factor.
+Calculate primary and secondary items true adjusted cost (positioning cost scale beginning at 1)
+primary item true adjusted cost = primary item true cost
+secondary weapon item true adjusted cost = (secondary weapon item cost - 1) * (reactor cost factor / Fission reactor cost factor)
+secondary module item true adjusted cost = (secondary module item cost - 1)
 
-Ability bytes 0-3 is unit cost factor.
-Ability bytes 4-7 is unit cost flat addition.
+Calculate unit base cost
+unit base cost = primary item true adjusted cost + secondary item true adjusted cost / 2
+
+Multiply by chassis cost factor
+chassis cost factor = chassis cost / 2
+
+Multiply by ability factor or add ability flat cost
+ability bytes 0-3 is unit cost factor
+ability bytes 4-7 is unit cost flat addition
 
 All fractional factors are turned into whole rational fractions.
 For example, ability with cost 1 multiplies unit cost by 1.25. This is coded in formula as multiplication by 5/4.
@@ -124,6 +134,10 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     }
 
+    // get unit type
+
+    bool combat_unit = tx_weapon[weapon_id].mode < 3;
+
     // get Fission reactor cost factor
 
     int fission_reactor_cost_factor = tx_reactor[REC_FISSION - 1].cost_factor;
@@ -132,11 +146,34 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     int reactor_cost_factor = tx_reactor[reactor_level - 1].cost_factor;
 
-    // get elements cost
+    // get pieces cost
 
     int chassis_cost = tx_chassis[chassis_id].cost;
-    int weapon_cost = tx_weapon[weapon_id].cost * (tx_weapon[weapon_id].mode < 3 ? reactor_cost_factor : fission_reactor_cost_factor);
-    int armor_cost = tx_defense[armor_id].cost * reactor_cost_factor;
+    int weapon_cost = tx_weapon[weapon_id].cost;
+    int armor_cost = tx_defense[armor_id].cost;
+
+    // calculate weapon/armor true cost
+
+    int weapon_true_cost = weapon_cost * (combat_unit ? reactor_cost_factor : fission_reactor_cost_factor);
+    int armor_true_cost = armor_cost * reactor_cost_factor;
+
+    // select primary and secondary item and assign their true adjusted cost
+
+    int primary_item_true_adjusted_cost;
+    int secondary_item_true_adjusted_cost;
+
+    if (weapon_true_cost >= armor_true_cost)
+    {
+        primary_item_true_adjusted_cost = weapon_true_cost;
+        secondary_item_true_adjusted_cost = (armor_cost - 1) * reactor_cost_factor;
+
+    }
+    else
+    {
+        primary_item_true_adjusted_cost = armor_true_cost;
+        secondary_item_true_adjusted_cost = (weapon_cost - 1) * (combat_unit ? reactor_cost_factor : fission_reactor_cost_factor);
+
+    }
 
     // get abilities cost modifications
 
@@ -179,19 +216,17 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
         (
             1,                                      // minimal cost
             (
-                max(weapon_cost, armor_cost) * 2    // primary statistics
+                primary_item_true_adjusted_cost * 2 // primary item true adjusted cost
                 +
-                min(weapon_cost, armor_cost)        // secondary statistics
-                -
-                fission_reactor_cost_factor         // exclude minimal secondary statistics cost
+                secondary_item_true_adjusted_cost   // secondary item true adjusted cost
             )
             *
             chassis_cost
             *
             abilities_cost_factor
-            / 2                                     // weapon/armor denominator
-            / 2                                     // chassis denominator
+            / 2                                     // unit base cost denominator
             / fission_reactor_cost_factor           // fission reactor cost factor
+            / 2                                     // chassis denominator
             / abilities_cost_divider                // abilities denominator
             +
             abilities_cost_addition                 // abilities flat cost
