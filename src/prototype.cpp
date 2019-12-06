@@ -146,6 +146,10 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     int reactor_cost_factor = tx_reactor[reactor_level - 1].cost_factor;
 
+    // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
+
+    int minimal_cost = reactor_level;
+
     // get pieces cost
 
     int chassis_cost = tx_chassis[chassis_id].cost;
@@ -214,7 +218,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     int cost =
         max
         (
-            1,                                      // minimal cost
+            minimal_cost,                           // minimal cost
             (
                 primary_item_true_adjusted_cost * 2 // primary item true adjusted cost
                 +
