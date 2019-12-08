@@ -193,22 +193,30 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
         (
             minimal_cost,                           // minimal cost
             (
-                primary_item_cost * 2               // primary item true adjusted cost
-                +
-                secondary_item_cost                 // secondary item true adjusted cost
-                -
-                1                                   // scale adjustment to make Scout Patrol cost 1
+                (
+                    primary_item_cost * 2           // primary item true adjusted cost
+                    +
+                    secondary_item_cost             // secondary item true adjusted cost
+                    -
+                    1                               // scale adjustment to make Scout Patrol cost 1
+                )
+                *
+                reactor_cost_factor                 // reactor cost factor
+                *
+                chassis_cost
+                *
+                abilities_cost_factor
             )
-            *
-            reactor_cost_factor                     // reactor cost factor
-            *
-            chassis_cost
-            *
-            abilities_cost_factor
-            / 2                                     // unit base cost denominator
-            / fission_reactor_cost_factor           // fission reactor cost factor
-            / 2                                     // chassis denominator
-            / abilities_cost_divider                // abilities denominator
+            /
+            (
+                2                                     // unit base cost denominator
+                *
+                fission_reactor_cost_factor           // fission reactor cost factor
+                *
+                2                                     // chassis denominator
+                *
+                abilities_cost_divider                // abilities denominator
+            )
             +
             abilities_cost_addition                 // abilities flat cost
         )
