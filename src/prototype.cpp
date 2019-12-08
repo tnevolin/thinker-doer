@@ -82,21 +82,15 @@ HOOK_API void read_reactor_cost_factor()
 /**
 Prototype cost calculation.
 
-Calculate true cost for weapon/module and armor
-weapon/armor true cost = weapon/armor cost * (reactor cost factor / Fission reactor cost factor)
-module true cost = module cost
-
 Select primary and secondary weapon/module/armor items
 primary item = one with higher true cost
 secondary item = one with lower true cost
 
-Calculate primary and secondary items true adjusted cost (positioning cost scale beginning at 1)
-primary item true adjusted cost = primary item true cost
-secondary weapon item true adjusted cost = (secondary weapon item cost - 1) * (reactor cost factor / Fission reactor cost factor)
-secondary module item true adjusted cost = (secondary module item cost - 1)
-
 Calculate unit base cost
-unit base cost = primary item true adjusted cost + secondary item true adjusted cost / 2
+unit base cost = primary item cost + secondary item cost / 2 - 1
+
+Multiply by reactor cost factor
+reactor cost factor = reactor cost / Fission reactor cost
 
 Multiply by chassis cost factor
 chassis cost factor = chassis cost / 2
@@ -111,12 +105,13 @@ For example, ability with cost 1 multiplies unit cost by 1.25. This is coded in 
 All divisions are done after multiplications. This is to minimize an effect of integer rounding on intermediary steps.
 
 Special rules:
-Supply module replaced foil cost with infantry cost and cruiser cost with speeder cost.
+Supply module foil/cruiser chassis cost is replaced with infantry/speeder chassis cost, correspondingly.
 
 */
 HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level)
 {
-    // special case: supply foil and cruiser chassis are counted as infantry and speeder, correspondingly
+    // Special rules:
+    // Supply module foil/cruiser chassis cost is replaced with infantry/speeder chassis cost, correspondingly.
 
     if (tx_weapon[weapon_id].mode == WMODE_CONVOY)
     {
@@ -133,10 +128,6 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
         }
 
     }
-
-    // get unit type
-
-    bool combat_unit = tx_weapon[weapon_id].mode < 3;
 
     // get Fission reactor cost factor
 
@@ -156,28 +147,10 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     int weapon_cost = tx_weapon[weapon_id].cost;
     int armor_cost = tx_defense[armor_id].cost;
 
-    // calculate weapon/armor true cost
+    // select primary and secondary item cost
 
-    int weapon_true_cost = weapon_cost * (combat_unit ? reactor_cost_factor : fission_reactor_cost_factor);
-    int armor_true_cost = armor_cost * reactor_cost_factor;
-
-    // select primary and secondary item and assign their true adjusted cost
-
-    int primary_item_true_adjusted_cost;
-    int secondary_item_true_adjusted_cost;
-
-    if (weapon_true_cost >= armor_true_cost)
-    {
-        primary_item_true_adjusted_cost = weapon_true_cost;
-        secondary_item_true_adjusted_cost = (armor_cost - 1) * reactor_cost_factor;
-
-    }
-    else
-    {
-        primary_item_true_adjusted_cost = armor_true_cost;
-        secondary_item_true_adjusted_cost = (weapon_cost - 1) * (combat_unit ? reactor_cost_factor : fission_reactor_cost_factor);
-
-    }
+    int primary_item_cost = max(weapon_cost, armor_cost);
+    int secondary_item_cost = min(weapon_cost, armor_cost);
 
     // get abilities cost modifications
 
@@ -220,10 +193,14 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
         (
             minimal_cost,                           // minimal cost
             (
-                primary_item_true_adjusted_cost * 2 // primary item true adjusted cost
+                primary_item_cost * 2               // primary item true adjusted cost
                 +
-                secondary_item_true_adjusted_cost   // secondary item true adjusted cost
+                secondary_item_cost                 // secondary item true adjusted cost
+                -
+                1                                   // scale adjustment to make Scout Patrol cost 1
             )
+            *
+            reactor_cost_factor                     // reactor cost factor
             *
             chassis_cost
             *
