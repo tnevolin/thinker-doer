@@ -82,11 +82,11 @@ fp_1int* tx_action_staple = (fp_1int*)0x4CA7F0;
 fp_1int* tx_tech_rate = (fp_1int*)0x5BE6B0;
 fp_1int* tx_tech_selection = (fp_1int*)0x5BE380;
 
-// prototype cost
-fp_5int* tx_proto_cost = (fp_5int*)0x005A5A60;
-
 // read configuration field
 fp_str_void* tx_read_configuration_field = (fp_str_void*)0x005FD670;
+
+// prototype cost
+fp_5int* tx_proto_cost = (fp_5int*)0x005A5A60;
 
 // create prototype
 fp_6int* tx_create_prototype = (fp_6int*)0x005A5D40;
