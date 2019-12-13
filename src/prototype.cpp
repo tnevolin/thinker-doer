@@ -31,17 +31,12 @@ HOOK_API void read_reactor_cost_factor()
 
         // parse field into number
 
-        int cost_factor;
+        int cost_factor = atoi(field);
 
-        int sscanfOutput = sscanf(field, "%d", &cost_factor);
-
-        if (sscanfOutput == 1)
+        if (cost_factor == 0)
         {
-            // correct read
+            // incorrect read
 
-        }
-        else
-        {
             throw std::runtime_error("Reactor cost factor should be an integer.");
 
         }
