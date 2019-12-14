@@ -208,6 +208,13 @@ void write_offset(int addr, const void* ofs) {
     *(int*)(addr+1) = (int)ofs;
 }
 
+void remove_call(int addr) {
+    if (*(byte*)addr != 0xE8) {
+        throw std::exception();
+    }
+    memset((void*)addr, 0x90, 5);
+}
+
 /**
 Replaces old byte sequence to new byte sequence at address.
 Verifies that byte contains old values before replacing.
@@ -234,99 +241,44 @@ void write_bytes(int address, int length, byte old_bytes[], byte new_bytes[]) {
 
 }
 
-void remove_call(int addr) {
-    if (*(byte*)addr != 0xE8) {
-        throw std::exception();
-    }
-    memset((void*)addr, 0x90, 5);
+// ========================================
+// The Will to Power patch procedures
+// ========================================
+
+/**
+Enables the procedure to read and store reactor cost factor.
+*/
+void patch_read_reactor_cost_factor()
+{
+    write_call_ptr(0x005878CE, (int)read_reactor_cost_factor);
+
 }
 
-bool patch_setup(Config* cf) {
-    DWORD attrs;
-    int lm = ~cf->landmarks;
-    if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READWRITE, &attrs))
-        return false;
+/**
+Disables alien guaranteed technologies assignment.
+*/
+void patch_alien_guaranteed_technologies()
+{
+    // replace jz by !ALIEN condition with jmp unconditional
 
-    write_call_ptr(0x52768A, (int)turn_upkeep);
-    write_call_ptr(0x52A4AD, (int)turn_upkeep);
-    write_call_ptr(0x528214, (int)faction_upkeep);
-    write_call_ptr(0x52918F, (int)faction_upkeep);
-    write_call_ptr(0x4E61D0, (int)base_production);
-    write_call_ptr(0x4E888C, (int)crop_yield);
-    write_call_ptr(0x5BDC4C, (int)tech_value);
-    write_call_ptr(0x579362, (int)enemy_move);
-    write_call_ptr(0x4AED04, (int)social_ai);
-    write_call_ptr(0x527304, (int)social_ai);
-    write_call_ptr(0x5C0908, (int)log_veh_kill);
+    int bytes_length = 1;
 
-    if (FileExists(ac_movlist_txt) && !FileExists(ac_movlistx_txt)) {
-        CopyFile(ac_movlist_txt, ac_movlistx_txt, TRUE);
-    }
-    if (cf->smac_only) {
-        *(int*)0x45F97A = 0;
-        *(const char**)0x691AFC = ac_alpha;
-        *(const char**)0x691B00 = ac_help;
-        *(const char**)0x691B14 = ac_tutor;
-        write_offset(0x42B30E, ac_concepts);
-        write_offset(0x42B49E, ac_concepts);
-        write_offset(0x42C450, ac_concepts);
-        write_offset(0x42C7C2, ac_concepts);
-        write_offset(0x403BA8, ac_movlist);
-        write_offset(0x4BEF8D, ac_movlist);
-        write_offset(0x52AB68, ac_opening);
+    /* jz */
+    byte old_bytes[] = { 0x74 };
 
-        /* Enable custom faction selection during the game setup. */
-        memset((void*)0x58A5E1, 0x90, 6);
-        memset((void*)0x58B76F, 0x90, 2);
-        memset((void*)0x58B9F3, 0x90, 2);
-    }
-    if (cf->faction_placement) {
-        remove_call(0x5B1DFF);
-        remove_call(0x5B2137);
-        memset((void*)0x5B220F, 0x90, 63);
-        memset((void*)0x5B2257, 0x90, 11);
-        memcpy((void*)0x5B220F, asm_find_start, sizeof(asm_find_start));
-        write_call_ptr(0x5B221B, (int)find_start);
-    }
-    if (cf->revised_tech_cost) {
-        write_call_ptr(0x4452D5, (int)tech_rate);
-        write_call_ptr(0x498D26, (int)tech_rate);
-        write_call_ptr(0x4A77DA, (int)tech_rate);
-        write_call_ptr(0x521872, (int)tech_rate);
-        write_call_ptr(0x5218BE, (int)tech_rate);
-        write_call_ptr(0x5581E9, (int)tech_rate);
-        write_call_ptr(0x5BEA4D, (int)tech_rate);
-        write_call_ptr(0x5BEAC7, (int)tech_rate);
+    /* jmp */
+    byte new_bytes[] = { 0xEB };
 
-        write_call_ptr(0x52935F, (int)tech_selection);
-        write_call_ptr(0x5BE5E1, (int)tech_selection);
-        write_call_ptr(0x5BE690, (int)tech_selection);
-        write_call_ptr(0x5BEB5D, (int)tech_selection);
-    }
-    if (lm & LM_JUNGLE) remove_call(0x5C88A0);
-    if (lm & LM_CRATER) remove_call(0x5C88A9);
-    if (lm & LM_VOLCANO) remove_call(0x5C88B5);
-    if (lm & LM_MESA) remove_call(0x5C88BE);
-    if (lm & LM_RIDGE) remove_call(0x5C88C7);
-    if (lm & LM_URANIUM) remove_call(0x5C88D0);
-    if (lm & LM_RUINS) remove_call(0x5C88D9);
-    if (lm & LM_UNITY) remove_call(0x5C88EE);
-    if (lm & LM_FOSSIL) remove_call(0x5C88F7);
-    if (lm & LM_CANYON) remove_call(0x5C8903);
-    if (lm & LM_NEXUS) remove_call(0x5C890F);
-    if (lm & LM_BOREHOLE) remove_call(0x5C8918);
-    if (lm & LM_SARGASSO) remove_call(0x5C8921);
-    if (lm & LM_DUNES) remove_call(0x5C892A);
-    if (lm & LM_FRESH) remove_call(0x5C8933);
-    if (lm & LM_GEOTHERMAL) remove_call(0x5C893C);
+    write_bytes(0x005B29F8, bytes_length, old_bytes, new_bytes);
 
-    // ==============================
-    // The Will to Power mod changes
-    // ==============================
+}
 
-    // rearrange weapon icon selection by value
-
-    int weapon_icon_selection_bytes_length = 0x8D;
+/**
+Assigns alternative base values for weapon icon selection algorithm.
+*/
+void patch_weapon_icon_selection_algorithm()
+{
+    int bytes_length = 0x8D;
 
     /*
 or      eax, 0xFFFFFFFF
@@ -369,7 +321,7 @@ mov     DWORD PTR [ebp-0x1C], ecx
 mov     DWORD PTR [ebp-0x8], 0xA
 mov     DWORD PTR [ebp-0x4], 0xD
     */
-    byte old_weapon_icon_selection_bytes[] =
+    byte old_bytes[] =
         { 0x83, 0xC8, 0xFF, 0x53, 0x89, 0x45, 0x98, 0x89, 0x45, 0x9C, 0xB8, 0x02, 0x00, 0x00, 0x00, 0x56, 0x89, 0x45, 0xB0, 0x89, 0x45, 0xB4, 0xB8, 0x04, 0x00, 0x00, 0x00, 0x57, 0x89, 0x45, 0xB8, 0x89, 0x45, 0xBC, 0xB8, 0x09, 0x00, 0x00, 0x00, 0xB9, 0x08, 0x00, 0x00, 0x00, 0x89, 0x45, 0xE8, 0x89, 0x45, 0xEC, 0x89, 0x45, 0xF0, 0x89, 0x45, 0xF4, 0x8B, 0x45, 0x0C, 0x33, 0xDB, 0xBA, 0x05, 0x00, 0x00, 0x00, 0xBF, 0x07, 0x00, 0x00, 0x00, 0x3B, 0xC1, 0x89, 0x5D, 0xA0, 0x89, 0x5D, 0xA4, 0xC7, 0x45, 0xA8, 0x01, 0x00, 0x00, 0x00, 0xC7, 0x45, 0xAC, 0x03, 0x00, 0x00, 0x00, 0x89, 0x55, 0xC0, 0x89, 0x55, 0xC4, 0xC7, 0x45, 0xC8, 0x06, 0x00, 0x00, 0x00, 0x89, 0x7D, 0xCC, 0x89, 0x7D, 0xD0, 0x89, 0x7D, 0xD4, 0x89, 0x4D, 0xD8, 0x89, 0x4D, 0xDC, 0x89, 0x4D, 0xE0, 0x89, 0x4D, 0xE4, 0xC7, 0x45, 0xF8, 0x0A, 0x00, 0x00, 0x00, 0xC7, 0x45, 0xFC, 0x0D, 0x00, 0x00, 0x00 }
     ;
 
@@ -442,51 +394,19 @@ nop
 nop
 nop
     */
-    byte new_weapon_icon_selection_bytes[] =
+    byte new_bytes[] =
         { 0x83, 0xC8, 0xFF, 0x89, 0x45, 0x98, 0x89, 0x45, 0x9C, 0x40, 0x89, 0x45, 0xA0, 0x40, 0x89, 0x45, 0xA4, 0x40, 0x89, 0x45, 0xAC, 0x40, 0x89, 0x45, 0xA8, 0x40, 0x89, 0x45, 0xB0, 0x89, 0x45, 0xB4, 0x40, 0x89, 0x45, 0xB8, 0x89, 0x45, 0xBC, 0x40, 0x89, 0x45, 0xC0, 0x89, 0x45, 0xC4, 0x89, 0x45, 0xC8, 0x40, 0x89, 0x45, 0xCC, 0x89, 0x45, 0xD0, 0x89, 0x45, 0xD4, 0x40, 0x89, 0x45, 0xD8, 0x89, 0x45, 0xDC, 0x89, 0x45, 0xE0, 0x89, 0x45, 0xE4, 0x40, 0x89, 0x45, 0xE8, 0x89, 0x45, 0xEC, 0x89, 0x45, 0xF0, 0x89, 0x45, 0xF4, 0x40, 0x89, 0x45, 0xF8, 0xC7, 0x45, 0xFC, 0x0D, 0x00, 0x00, 0x00, 0x53, 0x56, 0x57, 0x31, 0xDB, 0xBA, 0x05, 0x00, 0x00, 0x00, 0xBF, 0x07, 0x00, 0x00, 0x00, 0x8B, 0x45, 0x0C, 0xB9, 0x08, 0x00, 0x00, 0x00, 0x39, 0xC8, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
 
-    write_bytes(0x004C2CF6, weapon_icon_selection_bytes_length, old_weapon_icon_selection_bytes, new_weapon_icon_selection_bytes);
+    write_bytes(0x004C2CF6, bytes_length, old_bytes, new_bytes);
 
-    // do not set ALIEN default technologies
-    // replace jz by !ALIEN condition with jmp unconditional
+}
 
-    int alien_default_technologies_bytes_length = 1;
-
-    /* jz */
-    byte old_alien_default_technologies_bytes[] = { 0x74 };
-
-    /* jmp */
-    byte new_alien_default_technologies_bytes[] = { 0xEB };
-
-    write_bytes(0x005B29F8, alien_default_technologies_bytes_length, old_alien_default_technologies_bytes, new_alien_default_technologies_bytes);
-
-    // read reactor cost factor
-
-    write_call_ptr(0x005878CE, (int)read_reactor_cost_factor);
-
-    // prototype cost
-
-    write_call_ptr(0x00436ADD, (int)proto_cost);
-    write_call_ptr(0x0043704C, (int)proto_cost);
-    write_call_ptr(0x005817C9, (int)proto_cost);
-    write_call_ptr(0x00581833, (int)proto_cost);
-    write_call_ptr(0x00581BB3, (int)proto_cost);
-    write_call_ptr(0x00581BCB, (int)proto_cost);
-    write_call_ptr(0x00582339, (int)proto_cost);
-    write_call_ptr(0x00582359, (int)proto_cost);
-    write_call_ptr(0x00582378, (int)proto_cost);
-    write_call_ptr(0x00582398, (int)proto_cost);
-    write_call_ptr(0x005823B0, (int)proto_cost);
-    write_call_ptr(0x00582482, (int)proto_cost);
-    write_call_ptr(0x0058249A, (int)proto_cost);
-    write_call_ptr(0x0058254A, (int)proto_cost);
-    write_call_ptr(0x005827E4, (int)proto_cost);
-    write_call_ptr(0x00582EC5, (int)proto_cost);
-    write_call_ptr(0x00582FEC, (int)proto_cost);
-    write_call_ptr(0x005A5D35, (int)proto_cost);
-    write_call_ptr(0x005A5F15, (int)proto_cost);
-
+/**
+Ignores reactor power multiplier in combat processing and odds calculations.
+*/
+void patch_ignore_reactor_power_in_combat_processing()
+{
     // Ignore reactor power in combat processing
     // set up both units firepower as if it were psi combat
 
@@ -500,7 +420,7 @@ nop
 
     write_bytes(0x00506F90, ignore_reactor_power_combat_bytes_length, old_ignore_reactor_power_combat_bytes, new_ignore_reactor_power_combat_bytes);
 
-    // ignore attacker reactor power in odds calculation
+    // ignore reactor power in odds calculation
     // divide both HP and damage by reactor value
 
     // ignore attacker reactor power
@@ -618,6 +538,162 @@ nop
     ;
 
     write_bytes(0x005080A7, ignore_defender_reactor_power_odds_bytes_length, old_ignore_defender_reactor_power_odds_bytes, new_ignore_defender_reactor_power_odds_bytes);
+
+}
+
+/**
+Enables alternative prototype cost formula.
+*/
+void patch_alternative_prototype_cost_formula()
+{
+    write_call_ptr(0x00436ADD, (int)proto_cost);
+    write_call_ptr(0x0043704C, (int)proto_cost);
+    write_call_ptr(0x005817C9, (int)proto_cost);
+    write_call_ptr(0x00581833, (int)proto_cost);
+    write_call_ptr(0x00581BB3, (int)proto_cost);
+    write_call_ptr(0x00581BCB, (int)proto_cost);
+    write_call_ptr(0x00582339, (int)proto_cost);
+    write_call_ptr(0x00582359, (int)proto_cost);
+    write_call_ptr(0x00582378, (int)proto_cost);
+    write_call_ptr(0x00582398, (int)proto_cost);
+    write_call_ptr(0x005823B0, (int)proto_cost);
+    write_call_ptr(0x00582482, (int)proto_cost);
+    write_call_ptr(0x0058249A, (int)proto_cost);
+    write_call_ptr(0x0058254A, (int)proto_cost);
+    write_call_ptr(0x005827E4, (int)proto_cost);
+    write_call_ptr(0x00582EC5, (int)proto_cost);
+    write_call_ptr(0x00582FEC, (int)proto_cost);
+    write_call_ptr(0x005A5D35, (int)proto_cost);
+    write_call_ptr(0x005A5F15, (int)proto_cost);
+
+}
+
+// ========================================
+// patch setup
+// ========================================
+
+bool patch_setup(Config* cf) {
+    DWORD attrs;
+    int lm = ~cf->landmarks;
+    if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READWRITE, &attrs))
+        return false;
+
+    write_call_ptr(0x52768A, (int)turn_upkeep);
+    write_call_ptr(0x52A4AD, (int)turn_upkeep);
+    write_call_ptr(0x528214, (int)faction_upkeep);
+    write_call_ptr(0x52918F, (int)faction_upkeep);
+    write_call_ptr(0x4E61D0, (int)base_production);
+    write_call_ptr(0x4E888C, (int)crop_yield);
+    write_call_ptr(0x5BDC4C, (int)tech_value);
+    write_call_ptr(0x579362, (int)enemy_move);
+    write_call_ptr(0x4AED04, (int)social_ai);
+    write_call_ptr(0x527304, (int)social_ai);
+    write_call_ptr(0x5C0908, (int)log_veh_kill);
+
+    if (FileExists(ac_movlist_txt) && !FileExists(ac_movlistx_txt)) {
+        CopyFile(ac_movlist_txt, ac_movlistx_txt, TRUE);
+    }
+    if (cf->smac_only) {
+        *(int*)0x45F97A = 0;
+        *(const char**)0x691AFC = ac_alpha;
+        *(const char**)0x691B00 = ac_help;
+        *(const char**)0x691B14 = ac_tutor;
+        write_offset(0x42B30E, ac_concepts);
+        write_offset(0x42B49E, ac_concepts);
+        write_offset(0x42C450, ac_concepts);
+        write_offset(0x42C7C2, ac_concepts);
+        write_offset(0x403BA8, ac_movlist);
+        write_offset(0x4BEF8D, ac_movlist);
+        write_offset(0x52AB68, ac_opening);
+
+        /* Enable custom faction selection during the game setup. */
+        memset((void*)0x58A5E1, 0x90, 6);
+        memset((void*)0x58B76F, 0x90, 2);
+        memset((void*)0x58B9F3, 0x90, 2);
+    }
+    if (cf->faction_placement) {
+        remove_call(0x5B1DFF);
+        remove_call(0x5B2137);
+        memset((void*)0x5B220F, 0x90, 63);
+        memset((void*)0x5B2257, 0x90, 11);
+        memcpy((void*)0x5B220F, asm_find_start, sizeof(asm_find_start));
+        write_call_ptr(0x5B221B, (int)find_start);
+    }
+    if (cf->revised_tech_cost) {
+        write_call_ptr(0x4452D5, (int)tech_rate);
+        write_call_ptr(0x498D26, (int)tech_rate);
+        write_call_ptr(0x4A77DA, (int)tech_rate);
+        write_call_ptr(0x521872, (int)tech_rate);
+        write_call_ptr(0x5218BE, (int)tech_rate);
+        write_call_ptr(0x5581E9, (int)tech_rate);
+        write_call_ptr(0x5BEA4D, (int)tech_rate);
+        write_call_ptr(0x5BEAC7, (int)tech_rate);
+
+        write_call_ptr(0x52935F, (int)tech_selection);
+        write_call_ptr(0x5BE5E1, (int)tech_selection);
+        write_call_ptr(0x5BE690, (int)tech_selection);
+        write_call_ptr(0x5BEB5D, (int)tech_selection);
+    }
+    if (lm & LM_JUNGLE) remove_call(0x5C88A0);
+    if (lm & LM_CRATER) remove_call(0x5C88A9);
+    if (lm & LM_VOLCANO) remove_call(0x5C88B5);
+    if (lm & LM_MESA) remove_call(0x5C88BE);
+    if (lm & LM_RIDGE) remove_call(0x5C88C7);
+    if (lm & LM_URANIUM) remove_call(0x5C88D0);
+    if (lm & LM_RUINS) remove_call(0x5C88D9);
+    if (lm & LM_UNITY) remove_call(0x5C88EE);
+    if (lm & LM_FOSSIL) remove_call(0x5C88F7);
+    if (lm & LM_CANYON) remove_call(0x5C8903);
+    if (lm & LM_NEXUS) remove_call(0x5C890F);
+    if (lm & LM_BOREHOLE) remove_call(0x5C8918);
+    if (lm & LM_SARGASSO) remove_call(0x5C8921);
+    if (lm & LM_DUNES) remove_call(0x5C892A);
+    if (lm & LM_FRESH) remove_call(0x5C8933);
+    if (lm & LM_GEOTHERMAL) remove_call(0x5C893C);
+
+    // ==============================
+    // The Will to Power mod changes
+    // ==============================
+
+    // patch read reactor cost factor
+
+    if (cf->read_reactor_cost_factor)
+    {
+        patch_read_reactor_cost_factor();
+
+    }
+
+    // patch ALIEN guaranteed technologies
+
+    if (cf->disable_alien_guaranteed_technologies)
+    {
+        patch_alien_guaranteed_technologies();
+
+    }
+
+    // patch weapon icon selection algorithm
+
+    if (cf->alternative_weapon_icon_selection_algorithm)
+    {
+        patch_weapon_icon_selection_algorithm();
+
+    }
+
+    // patch ignore reactor power in combat processing
+
+    if (cf->ignore_reactor_power_in_combat)
+    {
+        patch_ignore_reactor_power_in_combat_processing();
+
+    }
+
+    // patch prototype cost formula
+
+    if (cf->alternative_prototype_cost_formula)
+    {
+        patch_alternative_prototype_cost_formula();
+
+    }
 
     // continue with original Thinker checks
 

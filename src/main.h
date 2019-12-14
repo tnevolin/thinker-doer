@@ -97,6 +97,12 @@ struct Config {
     int faction_placement;
     int nutrient_bonus;
     int landmarks;
+//  SMACX The Will to Power Mod
+    bool read_reactor_cost_factor;
+    bool disable_alien_guaranteed_technologies;
+    bool alternative_weapon_icon_selection_algorithm;
+    bool ignore_reactor_power_in_combat;
+    bool alternative_prototype_cost_formula;
 };
 
 /*

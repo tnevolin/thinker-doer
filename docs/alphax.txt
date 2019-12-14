@@ -34,7 +34,7 @@
 8,       ; Max airdrop range w/o orbital insertion
 10,      ; Nutrient cost multiplier
 10,      ; Minerals cost multiplier
-100,     ; Technology discovery rate as a percentage of standard
+ 50,     ; Technology discovery rate as a percentage of standard
 1,       ; Limits mineral increase for mine without road in square
 -1,      ; Nutrient effect in mine square (0 or -1)
 5,       ; Minimum base size to support specialists
@@ -47,32 +47,32 @@
 3,2,     ; Psi combat offense-to-defense ratio (LAND unit defending)
 1,1,     ; Psi combat offense-to-defense ratio (SEA unit defending)
 1,1,     ; Psi combat offense-to-defense ratio (AIR unit defending)
-10,      ; Players' starting energy reserves
-25,      ; Combat % -> intrinsic base defense
+50,      ; Players' starting energy reserves
+50,      ; Combat % -> intrinsic base defense
 0,       ; Combat % -> attacking along road
 0,       ; Combat % -> for attacking from higher elevation
 0,       ; Combat penalty % -> attacking from lower elevation
-25,      ; Combat % -> Mobile unit in open ground
+50,      ; Combat % -> Mobile unit in open ground
 0,       ; Combat % -> Defend vs. mobile in rough
-25,      ; Combat % -> Infantry vs. Base
+0,       ; Combat % -> Infantry vs. Base
 50,      ; Combat penalty % -> attack after airdrop
-25,      ; Combat % -> Fanatic attack bonus
+50,      ; Combat % -> Fanatic attack bonus
 50,      ; Combat % -> Land based guns vs. ship artillery bonus
 25,      ; Combat % -> Artillery bonus per level of altitude
 50,      ; Combat % -> Trance bonus defending vs. psi
 50,      ; Combat % -> Empath Song bonus attacking vs. psi
 50,      ; Combat penalty % -> Air superiority unit vs. ground unit
 100,     ; Combat % -> Air superiority unit vs. air unit
-50,      ; Combat penalty % -> Non-combat unit defending vs. combat unit
+0,       ; Combat penalty % -> Non-combat unit defending vs. combat unit
 50,      ; Combat % -> Comm Jammer unit defending vs. mobile unit
-100,     ; Combat % -> Bonus vs. ships caught in port
+0,       ; Combat % -> Bonus vs. ships caught in port
 100,     ; Combat % -> AAA bonus vs. air units
-25,      ; Combat % -> Defend in range of friendly Sensor
+50,      ; Combat % -> Defend in range of friendly Sensor
 10,      ; Combat % -> Psi attack bonus/penalty per +PLANET
 50,      ; Retool percent penalty for production change
 2,       ; Retool strictness (0 = Always Free, 1 = Free in Category, 2 = Free if Project, 3 = Never Free)
 10,      ; Retool exemption (first X minerals not affected by penalty)
-20,      ; Minimum # of turns between councils
+10,      ; Minimum # of turns between councils
 5,       ; Minerals for harvesting forest
 8,       ; Territory: max distance from base
 20,      ; Turns to corner Global Energy Market
@@ -80,12 +80,12 @@ CentPsi, ; Technology to improve fungus squares
 CentPsi, ; Technology to ease fungus movement
 CentEmp, ; Technology to build roads in fungus
 Neural,  ; Technology to allow 2 special abilities for a unit
-Gene,    ; Technology to allow 3 nutrients in a square
-EcoEng,  ; Technology to allow 3 minerals in a square
-EnvEcon, ; Technology to allow 3 energy in a square
+Ecology, ; Technology to allow 3 nutrients in a square
+Ecology, ; Technology to allow 3 minerals in a square
+Ecology, ; Technology to allow 3 energy in a square
 Gravity, ; Technology to allow orbital insertion w/o Space Elevator
 EcoEng2, ; Technology for +1 mining platform bonus
-PlaEcon, ; Technology for economic victory
+ProbMec, ; Technology for economic victory
 1,       ; If non-zero, probe teams can steal technologies
 1,       ; If non-zero, humans can always contact each other in net games
 1,       ; If non-zero, humans can always contact each other in hotseat/email games
@@ -112,25 +112,27 @@ PlaEcon, ; Technology for economic victory
 ; Keystroke = Keystroke description (changing text does not change
 ;             the actual key mappings in the game)
 ;
+;# Disabled bunkers.
+;# Tripled price for forest as it is essentially equivalent to farm + mine.
 #TERRAIN
 Farm,             None,    Kelp Farm,        None,     4,  Cultivate $STR0, f, F
 Soil Enricher,    EcoEng2, Soil Enricher,    Disable,  8,  Construct $STR0, f, F
 Mine,             None,    Mining Platform,  None,     8,  Construct $STR0, M, M
 Solar Collector,  None,    Tidal Harness,    None,     4,  Construct $STR0, S, S
-Forest,           None,    ...,              Disable,  4,  Plant $STR0,     F, Shift+F
+Forest,           None,    ...,              Disable, 12,  Plant $STR0,     F, Shift+F
 Road,             None,    Road,             Disable,  1,  Build $STR0,     R, R
 Mag Tube,         Magnets, Mag Tube,         Disable,  3,  Build $STR0,     R, R
-Bunker,           MilAlg,  Bunker,           Disable,  5,  Construct $STR0, K, K
-Airbase,          DocAir,  Airbase,          Disable,  10, Construct $STR0, ., .
+Bunker,           Disable, Bunker,           Disable,  5,  Construct $STR0, K, K
+Airbase,          DocAir,  Airbase,          Disable, 10,  Construct $STR0, ., .
 Sensor Array,     None,    Sensor Array,     Disable,  4,  Construct $STR0, O, O
 Fungus,           None,    Sea Fungus,       None,     6,  Remove $STR0,    F, F
 Fungus,           EcoEng,  Sea Fungus,       EcoEng,   6,  Plant $STR0,     F, Ctrl+F
-Condenser,        EcoEng,  Condenser,        Disable,  12, Construct $STR0, N, N
-Echelon Mirror,   EcoEng,  Echelon Mirror,   Disable,  12, Construct $STR0, E, Shift+E
-Thermal Borehole, EcoEng,  Thermal Borehole, Disable,  24, Construct $STR0, B, Shift+B
-Aquifer,          EcoEng,  Aquifer,          Disable,  18, Drill to $STR0,  Q, Q
-Raise Land,       EnvEcon, Raise Sea Floor,  EnvEcon,  12, Terraform UP,    ], ]]
-Lower Land,       EnvEcon, Lower Sea Floor,  EnvEcon,  12, Terraform DOWN,  [, [[
+Condenser,        EcoEng,  Condenser,        Disable, 12,  Construct $STR0, N, N
+Echelon Mirror,   EcoEng,  Echelon Mirror,   Disable, 12,  Construct $STR0, E, Shift+E
+Thermal Borehole, EcoEng,  Thermal Borehole, Disable, 24,  Construct $STR0, B, Shift+B
+Aquifer,          EcoEng,  Aquifer,          Disable, 18,  Drill to $STR0,  Q, Q
+Raise Land,       EcoEng2, Raise Sea Floor,  EcoEng2, 12,  Terraform UP,    ], ]]
+Lower Land,       EcoEng2, Lower Sea Floor,  EcoEng2, 12,  Terraform DOWN,  [, [[
 Level Terrain,    None,    Level Terrain,    Disable,  8,  Terraform LEVEL, _, _
 Monolith,         Disable, Monolith,         Disable,  8,  Place Monolith,  ?, ?, (this is here for map editor)
 
@@ -255,95 +257,95 @@ Custom,   20, 3, 3, 8,  20, 10,  2,
 ;            100000000 = Increases NUTRIENT production in fungus
 ;
 #TECHNOLOGY
-Biogenetics,                Biogen,  0, 3, 2, 2, None,    None,    000100000
-Industrial Base,            Indust,  2, 1, 3, 0, None,    None,    000000000
-Information Networks,       InfNet,  0, 3, 2, 1, None,    None,    000000000
-Applied Physics,            Physic,  4, 2, 1, 0, None,    None,    000000000
-Social Psych,               Psych,   0, 1, 3, 2, None,    None,    000000000
-Doctrine: Mobility,         Mobile,  2, 0, 0, 3, None,    None,    000000000
-Centauri Ecology,           Ecology, 0, 1, 2, 3, None,    None,    100000000
-Superconductor,             Super,   4, 2, 0, 0, OptComp, Indust,  000000000
-Nonlinear Mathematics,      Chaos,   4, 3, 0, 0, Physic,  InfNet,  000000000
-Applied Relativity,         E=Mc2,   1, 3, 2, 0, Super,   Subat,   000000000
-Fusion Power,               Fusion,  3, 4, 3, 1, Algor,   Super,   000000000
-Silksteel Alloys,           Alloys,  3, 0, 4, 2, Subat,   IndAuto, 000000000
-Advanced Subatomic Theory,  Subat,   2, 3, 2, 0, Chemist, Poly,    000000000
-High Energy Chemistry,      Chemist, 3, 1, 2, 0, Indust,  Physic,  000000000
-Frictionless Surfaces,      Surface, 1, 3, 2, 0, Unified, IndRob,  000000000
-Nanometallurgy,             Metal,   1, 1, 0, 3, ProbMec, DocInit, 000000000
-Superstring Theory,         String,  3, 2, 0, 1, Chaos,   Cyber,   000000000
-Advanced Military Algorithms,MilAlg, 3, 0, 1, 2, AdapDoc, OptComp, 000000000
-Monopole Magnets,           Magnets, 1, 1, 5, 0, String,  Alloys,  000000000
-Matter Compression,         MatComp, 3, 1, 2, 0, Metal,   NanoMin, 000000000
-Unified Field Theory,       Unified, 4, 3, 0, 1, Magnets, E=Mc2,   000000000
-Graviton Theory,            Gravity, 3, 1, 0, 3, QuanMac, MindMac, 000000000
-Polymorphic Software,       Poly,    2, 3, 1, 0, Indust,  InfNet,  000000010
-Applied Gravitonics,        AGrav,   3, 1, 0, 4, Gravity, DigSent, 000000000
-deleted,                    delete,  3, 2, 0, 2, Disable, Disable, 000000000
-Quantum Power,              Quantum, 3, 4, 3, 0, Surface, PlaEcon, 000000000
-Singularity Mechanics,      SingMec, 1, 4, 3, 0, Create,  HAL9000, 000000000
-Controlled Singularity,     ConSing, 4, 1, 2, 0, SingMec, AGrav,   000000000
-Temporal Mechanics,         TempMec, 0, 1, 3, 2, Eudaim,  Matter,  001000000
-Probability Mechanics,      ProbMec, 1, 1, 3, 2, DocSec,  Algor,   000000000
-Pre-Sentient Algorithms,    Algor,   2, 4, 3, 2, MilAlg,  Cyber,   000000010
-Super Tensile Solids,       Solids,  1, 0, 5, 2, MatComp, Space,   000000000
-Planetary Networks,         PlaNets, 0, 4, 3, 1, InfNet,  None,    000000000
-Digital Sentience,          DigSent, 0, 4, 3, 2, IndRob,  MindMac, 000000010
-Self-Aware Machines,        HAL9000, 0, 4, 3, 3, NewMiss, DigSent, 000000010
-Doctrine: Initiative,       DocInit, 2, 0, 0, 4, DocFlex, IndAuto, 000000000
-Doctrine: Flexibility,      DocFlex, 2, 0, 1, 4, Mobile,  None,    000000000
-Intellectual Integrity,     Integ,   0, 1, 3, 4, EthCalc, DocLoy,  000000000
-Synthetic Fossil Fuels,     Fossil,  1, 0, 2, 4, Chemist, Gene,    000000000
-Doctrine: Air Power,        DocAir,  3, 0, 3, 4, Fossil,  DocFlex, 000000000
-Photon/Wave Mechanics,      DocSec,  3, 2, 2, 0, E=Mc2,   Alloys,  000000000
-Mind/Machine Interface,     MindMac, 4, 0, 2, 2, DocAir,  Neural,  000000010
-Nanominiaturization,        NanoMin, 1, 0, 4, 3, Magnets, SupLube, 000000000
-Doctrine: Loyalty,          DocLoy,  3, 0, 2, 2, Mobile,  Psych,   000000000
-Ethical Calculus,           EthCalc, 0, 1, 3, 3, Psych,   None,    000000000
-Industrial Economics,       IndEcon, 0, 0, 5, 2, Indust,  None,    000000100
-Industrial Automation,      IndAuto, 0, 1, 4, 3, IndEcon, PlaNets, 000000100
-Centauri Meditation,        CentMed, 0, 0, 2, 4, EcoEng,  CentEmp, 001000000
-Secrets of the Human Brain, Brain,   1, 5, 0, 3, Psych,   Biogen,  000000001
-Gene Splicing,              Gene,    0, 2, 4, 3, Biogen,  EthCalc, 000100000
-Bio-Engineering,            BioEng,  0, 2, 3, 2, Gene,    Neural,  000100000
-Biomachinery,               BioMac,  3, 1, 4, 1, MindMac, Viral,   000100000
-Neural Grafting,            Neural,  3, 1, 1, 1, Brain,   IndAuto, 000000000
-Cyberethics,                Cyber,   1, 3, 4, 0, PlaNets, Integ,   000000000
-Eudaimonia,                 Eudaim,  0, 0, 3, 4, SentEco, WillPow, 000000000
-The Will to Power,          WillPow, 0, 3, 1, 4, HomoSup, CentPsi, 000000000
-Threshold of Transcendence, Thresh,  0, 1, 3, 4, SecMani, TempMec, 010000000
-Matter Transmission,        Matter,  1, 0, 3, 2, NanEdit, AlphCen, 010000000
-Centauri Empathy,           CentEmp, 0, 1, 0, 6, Brain,   Ecology, 000000000
-Environmental Economics,    EnvEcon, 0, 0, 4, 3, IndEcon, EcoEng,  000000100
-Ecological Engineering,     EcoEng,  0, 0, 3, 4, Ecology, Gene,    000000000
-Planetary Economics,        PlaEcon, 0, 0, 4, 3, AdapEco, Integ,   000000100
-Adv. Ecological Engineering,EcoEng2, 0, 0, 4, 2, Fusion,  EnvEcon, 000000000
-Centauri Psi,               CentPsi, 0, 1, 1, 6, CentGen, EcoEng2, 100000000
-Secrets of Alpha Centauri,  AlphCen, 0, 4, 0, 2, CentPsi, SentEco, 001001001
-Secrets of Creation,        Create,  1, 4, 1, 0, Unified, WillPow, 000000001
-Advanced Spaceflight,       Space,   2, 4, 2, 3, Orbital, SupLube, 000000000
-Homo Superior,              HomoSup, 3, 2, 1, 4, BioMac,  DocInit, 000000000
-Organic Superlubricant,     SupLube, 3, 1, 2, 0, Fusion,  Fossil,  000000000
-Quantum Machinery,          QuanMac, 3, 1, 4, 0, Quantum, Metal,   000000000
-deleted,                    deleted, 0, 0, 5, 0, Disable, Disable, 000000000
-Matter Editation,           NanEdit, 1, 2, 3, 1, HAL9000, Solids,  000100000
-Optical Computers,          OptComp, 2, 4, 1, 0, Physic,  Poly,    000000000
-Industrial Nanorobotics,    IndRob,  3, 1, 8, 1, NanoMin, IndAuto, 000000100
-Centauri Genetics,          CentGen, 0, 2, 0, 5, CentMed, Viral,   010000000
-Sentient Econometrics,      SentEco, 1, 1, 3, 4, PlaEcon, DigSent, 000000100
-Retroviral Engineering,     Viral,   4, 2, 0, 2, BioEng,  MilAlg,  000110000
-Orbital Spaceflight,        Orbital, 0, 4, 3, 3, DocAir,  Algor,   000000000
-Progenitor Psych,           PrPsych, 0, 2, 3, 4, None,    None,    000000000
-Field Modulation,           FldMod,  4, 2, 0, 2, PrPsych, Ecology, 000000000
-Adaptive Doctrine,          AdapDoc, 5, 2, 0, 0, Poly,    DocFlex, 000000000
-Adaptive Economics,         AdapEco, 0, 1, 5, 2, PrPsych, IndEcon, 000000000
-Bioadaptive Resonance,      Bioadap, 5, 2, 0, 0, FldMod,  CentEmp, 000000000
-Sentient Resonance,         SentRes, 5, 2, 0, 0, Bioadap, CentPsi, 000000000
-Secrets of the Manifolds,   SecMani, 0, 5, 4, 2, SentRes, AlphCen, 000000001
-N-Space Compression,        NewMiss, 4, 0, 2, 0, Orbital, BioMac,  000000000
-String Resonance,           BFG9000, 8, 0, 0, 0, SecMani, ConSing, 000000000
-User Technology,            User,    0, 2, 0, 0, Disable, Disable, 000000000
-Transcendent Thought,       TranT,   0, 2, 0, 0, Thresh,  ConSing, 000000000
+Biogenetics,                   Biogen,   2, 3, 2, 2, PrPsych, None,    000100000
+Industrial Base,               Indust,   3, 2, 2, 2, None,    None,    000000000
+Information Networks,          InfNet,   0, 4, 0, 0, DocLoy,  Psych,   000000000
+Applied Physics,               Physic,   4, 0, 0, 0, None,    None,    000000000
+Social Psych,                  Psych,    1, 1, 3, 2, None,    None,    000000000
+Doctrine: Mobility,            Mobile,   3, 0, 0, 4, None,    None,    000000000
+Centauri Ecology,              Ecology,  1, 2, 2, 4, None,    None,    100000000
+Superconductor,                Super,    4, 0, 2, 0, Chaos,   DocFlex, 000000000
+Nonlinear Mathematics,         Chaos,    4, 2, 0, 0, Physic,  None,    000000000
+Applied Relativity,            E=Mc2,    0, 3, 1, 0, OptComp, Brain,   000000000
+Fusion Power,                  Fusion,   4, 2, 2, 2, FldMod,  Chaos,   000000000
+Silksteel Alloys,              Alloys,   2, 2, 3, 2, Chemist, PrPsych, 000000000
+Advanced Subatomic Theory,     Subat,    3, 1, 2, 1, Quantum, SupLube, 000000000
+High Energy Chemistry,         Chemist,  3, 2, 2, 2, Indust,  None,    000000000
+Frictionless Surfaces,         Surface,  3, 0, 0, 0, Subat,   Solids,  000000000
+Nanometallurgy,                Metal,    1, 3, 2, 0, DocAir,  EnvEcon, 000000000
+Superstring Theory,            String,   4, 1, 0, 0, Fossil,  IndEcon, 000000000
+Advanced Military Algorithms,  MilAlg,   3, 2, 2, 2, E=Mc2,   Alloys,  000000000
+Monopole Magnets,              Magnets,  1, 1, 2, 1, Solids,  DocInit, 000000000
+Matter Compression,            MatComp,  3, 2, 2, 2, CentMed, ProbMec, 000000000
+Unified Field Theory,          Unified,  4, 3, 0, 0, SupLube, Integ,   000000000
+Graviton Theory,               Gravity,  2, 0, 0, 3, NewMiss, QuanMac, 000000000
+Polymorphic Software,          Poly,     3, 1, 2, 1, Ecology, None,    000000000
+Applied Gravitonics,           AGrav,    4, 0, 0, 0, QuanMac, NanoMin, 000000000
+deleted,                       delete,   0, 0, 0, 0, Disable, Disable, 000000000
+Quantum Power,                 Quantum,  4, 0, 2, 1, EnvEcon, AdapEco, 000000000
+Singularity Mechanics,         SingMec,  3, 4, 3, 0, NanEdit, Metal,   000000000
+Controlled Singularity,        ConSing,  4, 0, 2, 0, AGrav,   Surface, 000000000
+Temporal Mechanics,            TempMec,  2, 2, 3, 2, SingMec, BioEng,  000000000
+Probability Mechanics,         ProbMec,  3, 2, 2, 2, DocSec,  Super,   000000000
+Pre-Sentient Algorithms,       Algor,    1, 2, 1, 1, MatComp, Gene,    000000000
+Super Tensile Solids,          Solids,   1, 1, 4, 3, Gene,    CentPsi, 000000000
+Planetary Networks,            PlaNets,  0, 3, 2, 0, InfNet,  Chemist, 000000000
+Digital Sentience,             DigSent,  0, 3, 0, 0, TempMec, AlphCen, 000000000
+Self-Aware Machines,           HAL9000,  1, 0, 2, 0, Create,  Matter,  000000000
+Doctrine: Initiative,          DocInit,  3, 1, 1, 2, AdapEco, Fossil,  000000000
+Doctrine: Flexibility,         DocFlex,  1, 1, 0, 4, None,    None,    000000000
+Intellectual Integrity,        Integ,    1, 1, 2, 1, Fusion,  OptComp, 000000000
+Synthetic Fossil Fuels,        Fossil,   4, 0, 0, 2, Super,   DocLoy,  000000000
+Doctrine: Air Power,           DocAir,   4, 2, 2, 2, DocInit, MilAlg,  000000000
+Photon/Wave Mechanics,         DocSec,   3, 2, 2, 2, Alloys,  Poly,    000000000
+Mind/Machine Interface,        MindMac,  3, 2, 0, 0, Metal,   MatComp, 000000000
+Nanominiaturization,           NanoMin,  3, 4, 0, 0, Eudaim,  CentMed, 000000000
+Doctrine: Loyalty,             DocLoy,   3, 0, 2, 1, Mobile,  None,    000000000
+Ethical Calculus,              EthCalc,  0, 1, 2, 3, DocFlex, None,    000000000
+Industrial Economics,          IndEcon,  0, 0, 3, 0, Brain,   Indust,  000000100
+Industrial Automation,         IndAuto,  1, 1, 4, 3, IndEcon, Biogen,  000000100
+Centauri Meditation,           CentMed,  1, 0, 2, 3, CentPsi, IndAuto, 001000000
+Secrets of the Human Brain,    Brain,    1, 0, 1, 3, Psych,   None,    000000000
+Gene Splicing,                 Gene,     0, 3, 2, 0, MilAlg,  Fusion,  000100000
+Bio-Engineering,               BioEng,   1, 1, 3, 2, NanoMin, Unified, 000100000
+Biomachinery,                  BioMac,   0, 0, 0, 4, Space,   DigSent, 000100000
+Neural Grafting,               Neural,   3, 1, 1, 1, Magnets, Eudaim,  000000000
+Cyberethics,                   Cyber,    0, 4, 0, 0, PlaNets, FldMod,  000000000
+Eudaimonia,                    Eudaim,   1, 1, 3, 4, EcoEng,  Cyber,   000000000
+The Will to Power,             WillPow,  4, 2, 2, 2, MindMac, AdapDoc, 000000000
+Threshold of Transcendence,    Thresh,   0, 2, 0, 0, BioMac,  SentRes, 000000000
+Matter Transmission,           Matter,   3, 0, 4, 0, AlphCen, NanEdit, 000000000
+Centauri Empathy,              CentEmp,  1, 0, 0, 4, Poly,    Physic,  000000000
+Environmental Economics,       EnvEcon,  1, 1, 3, 2, Integ,   PlaNets, 000000100
+Ecological Engineering,        EcoEng,   2, 2, 2, 4, ProbMec, E=Mc2,   000000000
+Planetary Economics,           PlaEcon,  0, 1, 3, 1, BioEng,  Magnets, 000000100
+Adv. Ecological Engineering,   EcoEng2,  1, 1, 3, 4, IndRob,  EcoEng,  000000000
+Centauri Psi,                  CentPsi,  0, 0, 2, 3, Bioadap, InfNet,  100000000
+Secrets of Alpha Centauri,     AlphCen,  0, 2, 2, 3, Neural,  Subat,   001001000
+Secrets of Creation,           Create,   0, 3, 2, 1, WillPow, Neural,  000000000
+Advanced Spaceflight,          Space,    0, 4, 3, 0, Orbital, AGrav,   000000000
+Homo Superior,                 HomoSup,  0, 4, 1, 0, EcoEng2, Quantum, 000000000
+Organic Superlubricant,        SupLube,  4, 0, 0, 0, String,  DocSec,  000000000
+Quantum Machinery,             QuanMac,  4, 0, 3, 0, AdapDoc, DocAir,  000000000
+deleted,                       deleted,  0, 0, 0, 0, Disable, Disable, 000000000
+Matter Editation,              NanEdit,  2, 2, 3, 2, Algor,   IndRob,  000100000
+Optical Computers,             OptComp,  2, 4, 0, 0, EthCalc, Mobile,  000000000
+Industrial Nanorobotics,       IndRob,   2, 0, 4, 0, Viral,   String,  000000100
+Centauri Genetics,             CentGen,  0, 0, 0, 4, Surface, EcoEng2, 010000000
+Sentient Econometrics,         SentEco,  0, 0, 3, 1, PlaEcon, HomoSup, 000000100
+Retroviral Engineering,        Viral,    1, 1, 4, 1, Cyber,   Bioadap, 000110000
+Orbital Spaceflight,           Orbital,  3, 0, 0, 4, CentGen, MindMac, 000000000
+Progenitor Psych,              PrPsych,  1, 3, 0, 2, None,    None,    010000000
+Field Modulation,              FldMod,   0, 0, 1, 4, Biogen,  Ecology, 001000000
+Adaptive Doctrine,             AdapDoc,  4, 0, 0, 0, Unified, Viral,   000000000
+Adaptive Economics,            AdapEco,  0, 1, 2, 0, IndAuto, CentEmp, 000000000
+Bioadaptive Resonance,         Bioadap,  1, 0, 0, 3, CentEmp, EthCalc, 001000000
+Sentient Resonance,            SentRes,  0, 2, 3, 0, Gravity, SentEco, 000000000
+Secrets of the Manifolds,      SecMani,  0, 0, 4, 3, BFG9000, HAL9000, 000000000
+N-Space Compression,           NewMiss,  0, 2, 2, 3, HomoSup, Algor,   000000000
+String Resonance,              BFG9000,  4, 0, 0, 0, ConSing, NewMiss, 000000000
+User Technology,               User,     0, 0, 0, 0, Disable, Disable, 000000000
+Transcendent Thought,          TranT,    0, 2, 0, 0, Thresh,  SecMani, 000000000
 
 ;
 ; Chassis
@@ -365,26 +367,26 @@ Transcendent Thought,       TranT,   0, 2, 0, 0, Thresh,  ConSing, 000000000
 ; Preq    = Technology required (see TECHNOLOGY)
 ;
 #CHASSIS
-Infantry,M1,  Squad,M1,      Sentinels,M2,   Garrison,M1,  1, 0, 0, 0, 1, 1, None,     Shock Troops,M2,   Elite Guard,M1,
-Speeder,M1,   Rover,M1,      Defensive,M1,   Skirmisher,M1,2, 0, 0, 0, 1, 2, Mobile,   Dragon,M1,         Enforcer,M1,
-Hovertank,M1, Tank,M1,       Skimmer,M1,     Evasive,M1,   3, 0, 0, 0, 1, 3, NanoMin,  Behemoth,M1,       Guardian,M1,
-Foil,M1,      Skimship,M1,   Hoverboat,M1,   Coastal,M1,   4, 1, 0, 0, 2, 4, DocFlex,  Megafoil,M1,       Superfoil,M1,
-Cruiser,M1,   Destroyer,M1,  Cutter,M1,      Gunboat,M1,   6, 1, 0, 0, 4, 6, DocInit,  Battleship,M1,     Monitor,M1,
-Needlejet,M1, Penetrator,M1, Interceptor,M1, Tactical,M1,  8, 2, 2, 0, 1, 8, DocAir,   Thunderbolt,M1,    Sovereign,M1,
-Copter,M1,    Chopper,M1,    Rotor,M1,       Lifter,M1,    8, 2, 1, 0, 1, 8, MindMac,  Gunship,M1,        Warbird,M1,
-Gravship,M1,  Skybase,M1,    Antigrav,M1,    Skyfort,M1,   8, 2, 0, 0, 1, 8, Gravity,  Deathsphere,M1,    Doomwall,M1,
-Missile,M1,   Missile,M1,    Missile,M1,     Missile,M1,  12, 2, 1, 1, 0,12, Orbital,  Missile,M1,        Missile,M1,
+Infantry,M1,  Squad,M1,      Sentinels,M2,   Garrison,M1,  1, 0, 0, 0, 1, 2, None,     Shock Troops,M2,   Elite Guard,M1,
+Speeder,M1,   Rover,M1,      Defensive,M1,   Skirmisher,M1,2, 0, 0, 0, 1, 3, Mobile,   Dragon,M1,         Enforcer,M1,
+Hovertank,M1, Tank,M1,       Skimmer,M1,     Evasive,M1,   3, 0, 0, 0, 1, 4, NanoMin,  Behemoth,M1,       Guardian,M1,
+Foil,M1,      Skimship,M1,   Hoverboat,M1,   Coastal,M1,   4, 1, 0, 0, 2, 3, DocFlex,  Megafoil,M1,       Superfoil,M1,
+Cruiser,M1,   Destroyer,M1,  Cutter,M1,      Gunboat,M1,   6, 1, 0, 0, 4, 4, DocInit,  Battleship,M1,     Monitor,M1,
+Needlejet,M1, Penetrator,M1, Interceptor,M1, Tactical,M1,  8, 2, 2, 0, 1, 3, DocAir,   Thunderbolt,M1,    Sovereign,M1,
+Copter,M1,    Chopper,M1,    Rotor,M1,       Lifter,M1,    8, 2, 1, 0, 1, 3, MindMac,  Gunship,M1,        Warbird,M1,
+Gravship,M1,  Skybase,M1,    Antigrav,M1,    Skyfort,M1,   8, 2, 0, 0, 1, 4, Gravity,  Deathsphere,M1,    Doomwall,M1,
+Missile,M1,   Missile,M1,    Missile,M1,     Missile,M1,  12, 2, 1, 1, 0, 5, AGrav,    Missile,M1,        Missile,M1,
 
 ;
 ; Reactors
 ;
-; Name, power, preq
+; Name, short name, cost factor, preq
 ;
 #REACTORS
-Fission Plant,        Fission,     1, None,
-Fusion Reactor,       Fusion,      2, Fusion,
-Quantum Chamber,      Quantum,     3, Quantum,
-Singularity Engine,   Singularity, 4, SingMec,
+Fission Plant,        Fission,     100, None,
+Fusion Reactor,       Fusion,       80, Fusion,
+Quantum Chamber,      Quantum,      65, Quantum,
+Singularity Engine,   Singularity,  50, SingMec,
 
 ;
 ; Weapons & non-combat packages
@@ -406,26 +408,26 @@ Singularity Engine,   Singularity, 4, SingMec,
 #WEAPONS
 Hand Weapons,         Gun,            1, 0, 1, -1, None,
 Laser,                Laser,          2, 0, 2, -1, Physic,
-Particle Impactor,    Impact,         4, 0, 4, -1, Chaos,
-Gatling Laser,        Gatling,        5, 1, 5, -1, Super,
-Missile Launcher,     Missile,        6, 2, 6, -1, Fossil,
-Chaos Gun,            Chaos,          8, 0, 8, -1, String,
-Fusion Laser,         Fusion,        10, 1,10, -1, SupLube,
-Tachyon Bolt,         Tachyon,       12, 1,12, -1, Unified,
-Plasma Shard,         Shard,         13, 2,13, -1, Space,
-Quantum Laser,        Quantum,       16, 1,16, -1, QuanMac,
-Graviton Gun,         Graviton,      20, 0,20, -1, AGrav,
-Singularity Laser,    Singularity,   24, 1,24, -1, ConSing,
-Resonance Laser,      R-Laser,        6, 1, 8, -1, Bioadap,
-Resonance Bolt,       R-Bolt,        12, 1,16, -1, SentRes,
-String Disruptor,     String,        30, 1,40, -1, BFG9000,
-Psi Attack,           Psi,           -1, 2,10, -1, CentPsi,
+Particle Impactor,    Impact,         3, 0, 3, -1, Chaos,
+Gatling Laser,        Gatling,        4, 1, 4, -1, Super,
+Missile Launcher,     Missile,        5, 2, 5, -1, Fossil,
+Chaos Gun,            Chaos,          6, 0, 6, -1, String,
+Fusion Laser,         Fusion,         8, 1, 7, -1, SupLube,
+Tachyon Bolt,         Tachyon,       10, 1, 8, -1, Unified,
+Plasma Shard,         Shard,         13, 2,10, -1, AdapDoc,
+Quantum Laser,        Quantum,       16, 1,12, -1, QuanMac,
+Graviton Gun,         Graviton,      20, 0,14, -1, AGrav,
+Singularity Laser,    Singularity,   24, 1,16, -1, ConSing,
+Resonance Laser,      R-Laser,        6, 1,11, -1, Disable,
+Resonance Bolt,       R-Bolt,        12, 1,22, -1, Disable,
+String Disruptor,     String,        30, 1,20, -1, BFG9000,
+Psi Attack,           Psi,           -1, 2,10, -1, Disable,
 Planet Buster,        Planet Buster, 99, 0,32, -1, Orbital,
-Colony Module,        Colony Pod,     0, 8,10, -1, None,     ; Noncombat packages
-Terraforming Unit,    Formers,        0, 9, 6, -1, Ecology,
+Colony Module,        Colony Pod,     0, 8, 6, -1, None,     ; Noncombat packages
+Terraforming Unit,    Formers,        0, 9, 4, -1, Ecology,
 Troop Transport,      Transport,      0, 7, 4, -1, DocFlex,
 Supply Transport,     Supply,         0,10, 8, -1, IndAuto,
-Probe Team,           Probe Team,     0,11, 4, -1, PlaNets,
+Probe Team,           Probe Team,     0,11, 4, -1, OptComp,
 Alien Artifact,       Artifact,       0,12,36, -1, Disable,
 Conventional Payload, Conventional,  12, 0,12, -1, Orbital,
 Tectonic Payload,     Tectonic,       0,13,24, -1, NewMiss
@@ -450,14 +452,14 @@ Plasma Steel Armor,  Plasma,      3, 2, 3, Chemist,
 Silksteel Armor,     Silksteel,   4, 1, 4, Alloys,
 Photon Wall,         Photon,      5, 1, 5, DocSec,
 Probability Sheath,  Probability, 6, 2, 6, ProbMec,
-Neutronium Armor,    Neutronium,  8, 1, 8, MatComp,
-Antimatter Plate,    Antimatter, 10, 2,10, NanEdit,
-Stasis Generator,    Stasis,     12, 2,12, TempMec,
-Psi Defense,         Psi,        -1, 2, 6, Eudaim,
-Pulse 3 Armor,       3-Pulse,     3, 1, 5, AdapDoc,
-Resonance 3 Armor,   3-Res,       3, 1, 5, FldMod,
-Pulse 8 Armor,       8-Pulse,     8, 1, 11, Solids,
-Resonance 8 Armor,   8-Res,       8, 1, 11, SentRes,
+Neutronium Armor,    Neutronium, 10, 1, 8, MatComp,
+Antimatter Plate,    Antimatter, 16, 2,12, NanEdit,
+Stasis Generator,    Stasis,     24, 2,16, TempMec,
+Psi Defense,         Psi,        -1, 2, 6, Disable,
+Pulse 3 Armor,       3-Pulse,     3, 1, 5, Disable,
+Resonance 3 Armor,   3-Res,       3, 1, 5, Disable,
+Pulse 8 Armor,       8-Pulse,     8, 1,11, Disable,
+Resonance 8 Armor,   8-Res,       8, 1,11, Disable,
 
 ;
 ; Special Unit Abilities
@@ -498,35 +500,35 @@ Resonance 8 Armor,   8-Res,       8, 1, 11, SentRes,
 ;          100000000000 = Only allowed on probe teams
 ;
 #ABILITIES
-Super Former,           1, EcoEng2,  Super,     000000010111, Terraform rate doubled
+Super Former,          32, EcoEng2,  Super,     000000010111, Terraform rate doubled
 Deep Radar,             0, MilAlg,   ,          010000111111, Sees 2 spaces
-Cloaking Device,        1, Surface,  Cloaked,   000001111001, Invisible; Ignores ZOCs
+Cloaking Device,        1, Disable,  Cloaked,   000001111001, Invisible; Ignores ZOCs
 Amphibious Pods,        1, DocInit,  Amphibious,000000001001, Attacks from ship
 Drop Pods,              2, MindMac,  Drop,      000000111001, Makes air drops
 Air Superiority,        1, DocAir,   SAM,       000000001111, Attacks air units
-Deep Pressure Hull,     1, Metal,    Sub,       000000111010, Operates underwater
+Deep Pressure Hull,     1, Disable,  Sub,       000000111010, Operates underwater
 Carrier Deck,           1, Metal,    Carrier,   000101101010, Mobile Airbase
 AAA Tracking,           1, MilAlg,   AAA,       000010001011, x2 vs. air attacks
-Comm Jammer,           -1, Subat,    ECM,       000010111001, +50% vs. fast units
-Antigrav Struts,        1, Gravity,  Grav,      000000111101, +1 movement rate (or +Reactor*2 for Air)
-Empath Song,            2, CentEmp,  Empath,    000010001111, +50% attack vs. Psi
+Comm Jammer,            1, InfNet,   ECM,       000010111001, +50% vs. fast units
+Antigrav Struts,        2, Gravity,  Grav,      000000111001, +1 movement rate (or +Reactor*2 for Air)
+Empath Song,           64, Bioadap,  Empath,    000010001111, +50% attack vs. Psi
 Polymorphic Encryption, 1, Algor,    Secure,    000000111111, x2 cost to subvert
-Fungicide Tanks,        1, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
-High Morale,            1, Integ,    Trained,   000000001111, Gains morale upgrade
-Heavy Artillery,       -7, Poly,     Artillery, 000010001001, Bombards
-Clean Reactor,          2, BioEng,   Clean,     000001111111, Requires no support
-Blink Displacer,        1, Matter,   Blink,     000000001111, Bypass base defenses
-Hypnotic Trance,       -1, Brain,    Trance,    000010111111, +50% defense vs. Psi
+Fungicide Tanks,       16, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
+High Morale,            1, Disable,  Trained,   000000001111, Gains morale upgrade
+Heavy Artillery,        1, Poly,     Artillery, 000010001001, Bombards
+Clean Reactor,         64, BioEng,   Clean,     000000111111, Requires no support
+Blink Displacer,        4, Matter,   Blink,     000000001111, Bypass base defenses
+Hypnotic Trance,       32, Brain,    Trance,    000010111111, +50% defense vs. Psi
 Heavy Transport,        1, Disable,  Heavy,     000100100111, +50% transport capacity
 Nerve Gas Pods,         1, Chemist,  X,         000011001101, Can +50% offense (Atrocity)
-Repair Bay,             1, Metal,    Repair,    000100100111, Repairs ground units on board
-Non-Lethal Methods,     1, Integ,    Police,    000000001001, x2 Police powers
+Repair Bay,             1, Disable,  Repair,    000100100111, Repairs ground units on board
+Non-Lethal Methods,    64, AlphCen,  Police,    000000001001, x2 Police powers
 Slow Unit,              0, Disable,  Slow,      000000111111, -1 moves
-Soporific Gas Pods,     1, Bioadap,  Gas,       000001001101, -2 Enemy morale vs. non-native
-Dissociative Wave,      2, CentPsi,  Wave,      000000111111, Fizzles special abilities
-Marine Detachment,      1, AdapDoc,  Marine,    000001001010, Capture enemy ships
+Soporific Gas Pods,     2, Disable,  Gas,       000001001101, -2 Enemy morale vs. non-native
+Dissociative Wave,      2, Surface,  Wave,      000000111111, Fizzles special abilities
+Marine Detachment,      1, SupLube,  Marine,    000001001010, Capture enemy ships
 Fuel Nanocells,         1, MatComp,  Nanocell,  000000111100, Increased air range
-Algorithmic Enhancement,1, NanoMin,  Enhanced,  100000111111, Halves probe team failure
+Algorithmic Enhancement,4, NanoMin,  Enhanced,  100000111111, Halves probe team failure
 
 
 ;
@@ -596,23 +598,23 @@ Missile,    Missile-, Miss., M
 ; Reac    = Reactor level 1–4
 ;
 #UNITS
-23
+28
 Colony Pod,             Infantry, Colony Pod,   Scout,      8, 0, 0, None,    -1, 00000000000000000000000000
 Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
 Transport Foil,         Foil,     Transport,    Scout,      7, 0, 0, DocFlex, -1, 00000000000000000000000000
-Sea Formers,            Foil,     Formers,      Scout,      9, 0, 0, Disable, -1, 00000000000000000000000000
+*Sea Formers,           Foil,     Formers,      Scout,      9, 0, 0, Disable, -1, 00000000000000000000000000
 Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, IndAuto, -1, 00000000000000000000000000
-Probe Team,             Speeder,  Probe Team,   Scout,     11, 0, 0, PlaNets, -1, 00000000000000000000000000
+Speeder Probe Team,     Speeder,  Probe Team,   Scout,     11, 0, 0, OptComp, -1, 00000000000000000000000000
 Alien Artifact,         Infantry, Artifact,     Scout,     12,10, 0, Disable,  2, 00000000000000000000000000
-Mind Worms,             Infantry, Psi,          Psi,        1, 5, 0, CentEmp,  3, 00000000000000000000000000
-Isle of the Deep,       Foil,     Psi,          Psi,        7, 8, 4, CentMed, -1, 00000000000000000000000000
-Locusts of Chiron,      Gravship, Psi,          Psi,        4,10, 0, CentGen, -1, 00000000000000000000100000
+Mind Worms,             Infantry, Psi,          Psi,        1, 8, 0, CentEmp,  3, 00000000000000000000000000
+Isle of the Deep,       Foil,     Psi,          Psi,        7,12, 4, CentMed, -1, 00000000000000000000000000
+Locusts of Chiron,      Gravship, Psi,          Psi,        4,16, 0, CentGen, -1, 00000000000000000000100000
 Unity Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Disable, -1, 00000000000000000000000000
 Unity Scout Chopper,    Copter,   Gun,          Scout,      4, 0, 0, Disable, -1, 00000000000000000000100000
 Unity Foil,             Foil,     Transport,    Scout,      7, 0, 0, Disable, -1, 00100000000000000000000000
-Sealurk,                Foil,     Psi,          Psi,        6, 6, 0, CentPsi,  4, 00000000000000000001000000
-Spore Launcher,         Infantry, Psi,          Psi,        0, 5, 0, Bioadap,  5, 00000000001000000000000000
+Sealurk,                Foil,     Psi,          Psi,        6, 8, 0, CentPsi,  4, 00000000000000000001000000
+Spore Launcher,         Infantry, Psi,          Psi,        0, 4, 0, Bioadap,  5, 00000000001000000000000000
 Battle Ogre MK1,        Infantry, R-Laser,      3-Res,      0,10, 0, Disable,  6, 00010000000000000000000000
 Battle Ogre MK2,        Infantry, R-Bolt,       8-Res,      0,15, 0, Disable,  6, 10010000000000000000000000
 Battle Ogre MK3,        Speeder,  String,       Stasis,     0,20, 0, Disable,  6, 10010000000000000000000000
@@ -620,6 +622,12 @@ Fungal Tower,           Infantry, Psi,          Psi,        3, 0, 0, Disable,  1
 Unity Mining Laser,     Infantry, Laser,        Scout,      0, 0, 0, Disable, -1, 00000000000000000000000000
 Sea Escape Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, Disable, -1, 00000000000000000000000000
 Unity Gunship,          Foil,     Gun,          Scout,     -1, 0, 0, Disable, -1, 00000000000000000000000000
+Infantry Probe Team,    Infantry, Probe Team,   Scout,     11, 0, 0, OptComp, -1, 00000000000000000000000000
+Foil Probe Team,        Foil,     Probe Team,   Scout,     11, 0, 0, OptComp, -1, 00000000000000000000000000
+Supply Trawler,         Foil,     Supply,       Scout,     10, 0, 0, IndAuto, -1, 00000000000000000000000000
+Rover Colony Pod,       Speeder,  Colony Pod,   Scout,      8, 0, 0, Mobile,  -1, 00000000000000000000000000
+Sea Colony Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, DocFlex, -1, 00000000000000000000000000
+
 
 ;
 ; Base Facilities
@@ -641,24 +649,24 @@ Unity Gunship,          Foil,     Gun,          Scout,     -1, 0, 0, Disable, -1
 #FACILITIES
 Headquarters,                  5, 0, None,    Disable,  Efficiency
 Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic/Morale
-Recycling Tanks,               4, 0, Biogen,  EcoEng2,  Bonus Resources
+Recycling Tanks,               4, 0, Biogen,  Magnets,  Bonus Resources
 Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +100%
-Tachyon Field,                12, 2, ProbMec, Disable,  All Defense +100%
-Recreation Commons,            4, 1, Psych,   SentEco,  Fewer Drones
-Energy Bank,                   8, 1, IndEcon, QuanMac,  Economy Bonus
-Network Node,                  8, 1, InfNet,  HAL9000,  Labs Bonus
-Biology Lab,                   6, 1, CentEmp, Disable,  Research and PSI
+Tachyon Field,                12, 2, WillPow, Disable,  All Defense +100%
+Recreation Commons,            4, 1, Psych,   NanEdit,  Fewer Drones
+Energy Bank,                   6, 1, IndEcon, SentEco,  Economy Bonus
+Network Node,                  6, 1, InfNet,  Create,   Labs Bonus
+Biology Lab,                   4, 0, PrPsych, Disable,  Research and PSI
 Skunkworks,                    6, 1, Subat,   Disable,  Prototypes Free
-Hologram Theatre,              6, 3, PlaNets, Disable,  Psych and Fewer Drones
+Hologram Theatre,              6, 3, Poly,    Disable,  Psych and Fewer Drones
 Paradise Garden,              12, 4, SentEco, Disable,  +2 Talents
 Tree Farm,                    12, 3, EnvEcon, Disable,  Econ/Psych/Forest
 Hybrid Forest,                24, 4, PlaEcon, Disable,  Econ/Psych/Forest
-Fusion Lab,                   12, 3, Fusion,  Disable,  Econ and Labs Bonus
-Quantum Lab,                  24, 4, Quantum, Disable,  Econ and Labs Bonus
-Research Hospital,            12, 3, Gene,    Disable,  Labs and Psych Bonus
-Nanohospital,                 24, 4, HomoSup, Disable,  Labs and Psych Bonus
+Fusion Lab,                   12, 3, Metal,   Disable,  Econ and Labs Bonus
+Quantum Lab,                  24, 4, SingMec, Disable,  Econ and Labs Bonus
+Research Hospital,             9, 3, Gene,    Disable,  Labs and Psych Bonus
+Nanohospital,                 18, 4, HomoSup, Disable,  Labs and Psych Bonus
 Robotic Assembly Plant,       20, 4, IndRob,  Disable,  Minerals Bonus
-Nanoreplicator,               32, 6, NanEdit, Disable,  Minerals Bonus
+Nanoreplicator,               32, 6, TempMec, Disable,  Minerals Bonus
 Quantum Converter,            20, 5, QuanMac, Disable,  Minerals Bonus
 Genejack Factory,             10, 2, Viral,   Disable,  Minerals; More Drones
 Punishment Sphere,            10, 2, MilAlg,  Disable,  No Drones/-50% Tech
@@ -666,20 +674,20 @@ Hab Complex,                   8, 2, IndAuto, Disable,  Increase Population Limi
 Habitation Dome,              16, 4, Solids,  Disable,  Increase Population Limit
 Pressure Dome,                 8, 0, DocFlex, Disable,  Submersion/Resources
 Command Center,                4, 1, Mobile,  Disable,  +2 Morale:Land
-Naval Yard,                    8, 2, DocInit, Disable,  +2 Morale:Sea, Sea Def +100%
+Naval Yard,                    5, 1, DocInit, Disable,  +2 Morale:Sea, Sea Def +100%
 Aerospace Complex,             8, 2, DocAir,  Disable,  +2 Morale:Air, Air Def +100%
-Bioenhancement Center,        10, 2, Neural,  Disable,  +2 Morale:ALL
+Bioenhancement Center,        16, 4, Neural,  Disable,  +2 Morale:ALL
 Centauri Preserve,            10, 2, CentMed, Disable,  Ecology Bonus
 Temple of Planet,             20, 3, AlphCen, Disable,  Ecology Bonus
 Psi Gate,                     10, 2, Matter,  Disable,  Teleport
 Covert Ops Center,            10, 2, Algor,   Disable,  Stronger Probe Teams
 Brood Pit,                     8, 2, CentGen, Disable,  Police/Morale
-Aquafarm,                      8, 1, PrPsych, Disable,  Sea Nutrients
-Subsea Trunkline,             12, 4, PlaEcon, Disable,  Sea Minerals
+Aquafarm,                     12, 2, FldMod,  Disable,  Sea Nutrients
+Subsea Trunkline,             12, 4, SupLube, Disable,  Sea Minerals
 Thermocline Transducer,        8, 0, AdapEco, Disable,  Sea Energy
 Flechette Defense System,     12, 2, NewMiss, Disable,  Missile Defense
-Subspace Generator,           60, 5, SingMec, Disable,  Alien Victory
-Geosynchronous Survey Pod,    16, 4, NewMiss, Disable,  Increase sight\sensor bonus
+Subspace Generator,           60, 5, SecMani, Disable,  Alien Victory
+Geosynchronous Survey Pod,    16, 2, NewMiss, Disable,  Increase sight\sensor bonus
 Empty Facility 42,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 43,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 44,            10, 2, Disable, Disable,  Do Not Build Me
@@ -704,47 +712,47 @@ Empty Facility 62,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 63,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 64,            10, 2, Disable, Disable,  Do Not Build Me
 Sky Hydroponics Lab,          12, 0, Orbital, Disable,  +1 Nutrient ALL BASES
-Nessus Mining Station,        12, 0, HAL9000, Disable,  +1 Minerals ALL BASES
+Nessus Mining Station,        12, 0, SecMani, Disable,  +1 Minerals ALL BASES
 Orbital Power Transmitter,    12, 0, Space,   Disable,  +1 Energy ALL BASES
 Orbital Defense Pod,          12, 0, HAL9000, Disable,  Missile Defense
 Stockpile Energy,              0, 0, None,    Disable,  Minerals to Energy
-The Human Genome Project,     20, 0, Biogen,  Disable,  +1 Talent Each Base,            -1, 0, 0, 1, 1,
-The Command Nexus,            20, 0, DocLoy,  Disable,  Command Center Each Base,        1, 2, 0,-1, 0,
-The Weather Paradigm,         20, 0, Ecology, Disable,  Terraform Rate +50%,             0, 0, 0, 2, 1,
+The Human Genome Project,     40, 0, Biogen,  Disable,  +1 Talent Each Base,            -1, 0, 0, 1, 1,
+The Command Nexus,            40, 0, DocLoy,  Disable,  Command Center Each Base,        1, 2, 0,-1, 0,
+The Weather Paradigm,         60, 0, FldMod,  Disable,  Terraform Rate +50%,             0, 0, 0, 2, 1,
 The Merchant Exchange,        20, 0, Indust,  Disable,  +1 Energy Each Square Here,      0, 0, 1, 2, 0,
-The Empath Guild,             20, 0, CentEmp, Disable,  Commlink For Every Faction,     -2, 0, 0, 0, 0,
-The Citizens' Defense Force,  30, 0, Integ,   Disable,  Perimeter Defense Each Base,     0, 1, 0, 0, 0,
-The Virtual World,            30, 0, PlaNets, Disable,  Network Nodes Help Drones,       0, 0, 2, 0, 0,
-The Planetary Transit System, 30, 0, IndAuto, Disable,  New Bases Begin At Size 3,       0, 0, 0, 1, 2,
-The Xenoempathy Dome,         30, 0, CentMed, Disable,  Fungus Movement Bonus,           0,-1, 0, 0, 2,
-The Neural Amplifier,         30, 0, Neural,  Disable,  Psi Defense +50%,                0, 0, 0, 0, 0,
-The Maritime Control Center,  30, 0, DocInit, Disable,  Naval Movement +2; Naval Bases,  1, 1, 0, 0, 0,
-The Planetary Datalinks,      30, 0, Cyber,   Disable,  Any Tech Known To 3 Others,      0, 0, 1, 0, 0,
+The Empath Guild,             60, 0, CentEmp, Disable,  Commlink For Every Faction,     -2, 0, 0, 0, 0,
+The Citizens' Defense Force,  50, 0, Integ,   Disable,  Perimeter Defense Each Base,     0, 1, 0, 0, 0,
+The Virtual World,            60, 0, PlaNets, Disable,  Network Nodes Help Drones,       0, 0, 2, 0, 0,
+The Planetary Transit System, 40, 0, IndAuto, Disable,  New Bases Begin At Size 3,       0, 0, 0, 1, 2,
+The Xenoempathy Dome,         40, 0, CentMed, Disable,  Fungus Movement Bonus,           0,-1, 0, 0, 2,
+The Neural Amplifier,         80, 0, Neural,  Disable,  Psi Defense +50%,                0, 0, 0, 0, 0,
+The Maritime Control Center,  50, 0, DocInit, Disable,  Naval Movement +2; Naval Bases,  1, 1, 0, 0, 0,
+The Planetary Datalinks,      60, 0, Cyber,   Disable,  Any Tech Known To 3 Others,      0, 0, 1, 0, 0,
 The Supercollider,            30, 0, E=Mc2,   Disable,  Labs +100% At This Base,         0, 0, 2, 0, 0,
-The Ascetic Virtues,          30, 0, PlaEcon, Disable,  Pop. Limit Relaxed; +1 POLICE,   0, 0, 0, 1, 2,
-The Longevity Vaccine,        30, 0, BioEng,  Disable,  Fewer Drones or More Profits,    0, 0, 0, 2, 1,
-The Hunter-Seeker Algorithm,  30, 0, Algor,   Disable,  Immunity to Probe Teams,         0, 0, 2, 0, 0,
-The Pholus Mutagen,           40, 0, CentGen, Disable,  Ecology Bonus; Lifecycle Bonus,  0, 0, 0, 1, 1,
-The Cyborg Factory,           40, 0, MindMac, Disable,  Bioenh. Center Every Base,       1, 1, 0, 0, 0,
+The Ascetic Virtues,          60, 0, Gene,    Disable,  Pop. Limit Relaxed; +1 POLICE,   0, 0, 0, 1, 2,
+The Longevity Vaccine,        60, 0, BioEng,  Disable,  Fewer Drones or More Profits,    0, 0, 0, 2, 1,
+The Hunter-Seeker Algorithm,  60, 0, Algor,   Disable,  Immunity to Probe Teams,         0, 0, 2, 0, 0,
+The Pholus Mutagen,           60, 0, CentGen, Disable,  Ecology Bonus; Lifecycle Bonus,  0, 0, 0, 1, 1,
+The Cyborg Factory,          160, 0, Gravity, Disable,  Bioenh. Center Every Base,       1, 1, 0, 0, 0,
 The Theory of Everything,     40, 0, Unified, Disable,  Labs +100% At This Base,         0, 0, 2, 0, 0,
-The Dream Twister,            40, 0, WillPow, Disable,  Psi Attack +50%,                 0, 1, 0, 0, 1,
-The Universal Translator,     40, 0, HomoSup, Disable,  Two Free Techs,                  0, 1, 2, 0, 0,
-The Network Backbone,         40, 0, DigSent, Disable,  +1 Lab Per Commerce/Net Node,    0, 0, 1, 0, 0,
+The Dream Twister,            80, 0, AGrav,   Disable,  Psi Attack +50%,                 0, 1, 0, 0, 1,
+The Universal Translator,     40, 0, Chaos,   Disable,  Two Free Techs,                  0, 1, 2, 0, 0,
+The Network Backbone,        160, 0, DigSent, Disable,  +1 Lab Per Commerce/Net Node,    0, 0, 1, 0, 0,
 The Nano Factory,             40, 0, IndRob,  Disable,  Repair Units; Low Upgrade Costs, 2, 1, 0, 0, 0,
-The Living Refinery,          40, 0, Space,   Disable,  +2 SUPPORT (social),             0, 1, 0, 1, 0,
-The Cloning Vats,             50, 0, BioMac,  Disable,  Population Boom At All Bases,    0, 0, 0, 1, 2,
-The Self-Aware Colony,        50, 0, HAL9000, Disable,  Maintenance Halved; Extra Police,0, 1, 0, 2, 0,
-Clinical Immortality,         50, 0, NanEdit, Disable,  Extra Talent Every Base,         0, 0, 1, 1, 0,
-The Space Elevator,           50, 0, Solids,  Disable,  Energy +100%/Orbital Cost Halved,0, 0, 2, 2, 0,
-The Singularity Inductor,     60, 0, ConSing, Disable,  Quantum Converter Every Base,    0, 1, 1, 1, 0,
-The Bulk Matter Transmitter,  60, 0, Matter,  Disable,  +2 Minerals Every Base,          0, 1, 1, 1, 0,
-The Telepathic Matrix,        60, 0, Eudaim,  Disable,  No More Drone Riots; +2 PROBE,   0, 1, 0, 0, 1,
-The Voice of Planet,          60, 0, Thresh,  Disable,  Begins Ascent To Transcendence,  0,-2, 2, 2, 1,
-The Ascent to Transcendence, 200, 0, Thresh,  Disable,  End of Singular Sentience Era,   0, 0, 2, 2, 2,
-The Manifold Harmonics,       50, 0, SecMani, Disable,  Bonus Resources In Fungus,      -1, 0, 1, 2, 2,
-The Nethack Terminus,         40, 0, HAL9000, Disable,  Stronger Probe Teams,            0, 1, 2, 1, 1,
-The Cloudbase Academy,        30, 0, MindMac, Disable,  Faster/Stronger Air Units,       1, 1, 0, 0, 0,
-The Planetary Energy Grid,    30, 0, AdapEco, Disable,  Energy Bank At Every Base,      -1, 0, 1, 2, 1,
+The Living Refinery,          40, 0, Super,   Disable,  +2 SUPPORT (social),             0, 1, 0, 1, 0,
+The Cloning Vats,            400, 0, BioMac,  Disable,  Population Boom At All Bases,    0, 0, 0, 1, 2,
+The Self-Aware Colony,       200, 0, HAL9000, Disable,  Maintenance Halved; Extra Police,0, 1, 0, 2, 0,
+The Clinical Immortality,    120, 0, Create,  Disable,  Extra Talent Every Base,         0, 0, 1, 1, 0,
+The Space Elevator,          100, 0, SentRes, Disable,  Energy +100%/Orbital Cost Halved,0, 0, 2, 2, 0,
+The Singularity Inductor,    200, 0, ConSing, Disable,  Quantum Converter Every Base,    0, 1, 1, 1, 0,
+The Bulk Matter Transmitter, 300, 0, Matter,  Disable,  +2 Minerals Every Base,          0, 1, 1, 1, 0,
+The Telepathic Matrix,       240, 0, SecMani, Disable,  No More Drone Riots; +2 PROBE,   0, 1, 0, 0, 1,
+The Voice of Planet,         120, 0, Thresh,  Disable,  Begins Ascent To Transcendence,  0,-2, 2, 2, 1,
+The Ascent to Transcendence, 500, 0, Thresh,  Disable,  End of Singular Sentience Era,   0, 0, 2, 2, 2,
+The Manifold Harmonics,       60, 0, EnvEcon, Disable,  Bonus Resources In Fungus,      -1, 0, 1, 2, 2,
+The Nethack Terminus,         60, 0, HomoSup, Disable,  Stronger Probe Teams,            0, 1, 2, 1, 1,
+The Cloudbase Academy,       120, 0, WillPow, Disable,  Faster/Stronger Air Units,       1, 1, 0, 0, 0,
+The Planetary Energy Grid,    80, 0, Subat,   Disable,  Energy Bank At Every Base,      -1, 0, 1, 2, 1,
 Empty Secret Project 38,      20, 0, Disable, Disable,  End of Real Secret Projects,     0, 0, 2, 2, 2,
 Empty Secret Project 39,      20, 0, Disable, Disable,  End of Real Secret Projects,     0, 0, 2, 2, 2,
 Empty Secret Project 40,      20, 0, Disable, Disable,  End of Real Secret Projects,     0, 0, 2, 2, 2,
@@ -846,10 +854,10 @@ Labs,  Laboratories,
 ;
 
 #CITIZENS
-Technician,       Technicians,         None,    Fusion,  3, 0, 0, 0000000
+Technician,       Technicians,         None,    String,  3, 0, 0, 0000000
 Doctor,           Doctors,             None,    CentMed, 0, 2, 0, 0000000
 Librarian,        Librarians,          PlaNets, MindMac, 0, 0, 3, 0000000
-Engineer,         Engineers,           Fusion,  Disable, 3, 0, 2, 0000000
+Engineer,         Engineers,           String,  Disable, 3, 0, 2, 0000000
 Empath,           Empathi,             CentMed, AlphCen, 2, 2, 0, 0000000
 Thinker,          Thinkers,            MindMac, AlphCen, 0, 1, 3, 0000000
 Transcend,        Transcendi,          AlphCen, Disable, 2, 2, 4, 0000000
@@ -862,21 +870,21 @@ ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
 Frontier,        None,
-Police State,    DocLoy,  ++POLICE, ++SUPPORT, --EFFIC
-Democratic,      EthCalc, ++EFFIC,  ++GROWTH,  --SUPPORT
-Fundamentalist,  Brain,   +MORALE,  ++PROBE,   --RESEARCH
+Police State,    DocLoy,    -EFFIC,     ++SUPPORT,   ++POLICE,    --PLANET
+Democratic,      EthCalc,   +EFFIC,     --SUPPORT,    +GROWTH,     -PROBE
+Fundamentalist,  Brain,     +MORALE,     +PROBE,      +INDUSTRY,  --RESEARCH,   +TALENT
 Simple,          None,
-Free Market,     IndEcon, ++ECONOMY, ---PLANET, -----POLICE
-Planned,         PlaNets, ++GROWTH,  +INDUSTRY,  --EFFIC
-Green,           CentEmp, ++PLANET,  ++EFFIC,    --GROWTH
+Free Market,     IndEcon,  ++ECONOMY,   --POLICE,    --PLANET,     -PROBE
+Planned,         Alloys,    -EFFIC,      +GROWTH,     +INDUSTRY,   -RESEARCH,   +TALENT
+Green,           CentEmp,  ++EFFIC,    ---GROWTH,    ++PLANET,    --INDUSTRY
 Survival,        None,
-Power,           MilAlg,  ++MORALE,   ++SUPPORT, --INDUSTRY
-Knowledge,       Cyber,   ++RESEARCH, +EFFIC,    --PROBE
-Wealth,          IndAuto, +INDUSTRY,  +ECONOMY,  --MORALE
+Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +PROBE,     --INDUSTRY
+Knowledge,       Cyber,     -ECONOMY,    +EFFIC,     --PROBE,    +++RESEARCH
+Wealth,          Integ,     +ECONOMY,   --MORALE,     -POLICE,     +INDUSTRY
 None,            None,
-Cybernetic,      DigSent, ++EFFIC,  ++PLANET,  ++RESEARCH, ---POLICE
-Eudaimonic,      Eudaim,  ++GROWTH, ++ECONOMY, ++INDUSTRY, --MORALE
-Thought Control, WillPow, ++POLICE, ++MORALE,  ++PROBE,   ---SUPPORT
+Cybernetic,      MatComp,   +EFFIC,    ---POLICE,    ++PLANET,     +RESEARCH
+Eudaimonic,      Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,     +INDUSTRY
+Thought Control, Quantum, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,       +TALENT
 
 
 #SOCECONOMY
@@ -1241,12 +1249,12 @@ Pathetic,    pathetic little
 #PROPOSALS
 Elect Planetary Governor,          None,    New Governor Appointed
 Unite Behind Me As Supreme Leader, MindMac, Diplomatic Victory; Game Ends
-Salvage Unity Fusion Core,         Orbital, +500 Energy Credits Every Faction
-Global Trade Pact,                 PlaEcon, Commerce Rates Doubled
-Repeal Global Trade Pact,          PlaEcon, Commerce Rates Halved
-Launch Solar Shade,                Space,   Global Cooling; Sea Levels Drop
-Increase Solar Shade,              Space,   Global Cooling; Sea Levels Drop
-Melt Polar Caps,                   EcoEng2, Global Warming; Sea Levels Rise
+Salvage Unity Fusion Core,         E=Mc2,   +500 Energy Credits Every Faction
+Global Trade Pact,                 AdapEco, Commerce Rates Doubled
+Repeal Global Trade Pact,          AdapEco, Commerce Rates Halved
+Launch Solar Shade,                PlaEcon, Global Cooling; Sea Levels Drop
+Increase Solar Shade,              PlaEcon, Global Cooling; Sea Levels Drop
+Melt Polar Caps,                   Solids,  Global Warming; Sea Levels Rise
 Repeal U.N. Charter,               MilAlg,  Atrocity Prohibitions Lifted
 Reinstate U.N. Charter,            MilAlg,  Atrocity Prohibitions Return
 ...,                               Disable, ...

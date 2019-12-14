@@ -55,7 +55,31 @@ int handler(void* user, const char* section, const char* name, const char* value
         for (int i=0; i<6 && p != NULL; i++, p = strtok(NULL, ",")) {
             tx_cost_ratios[i] = max(1, atoi(p));
         }
-    } else {
+    }
+    // WtP configuration parameters
+    else if (MATCH("wtp", "read_reactor_cost_factor"))
+    {
+        cf->read_reactor_cost_factor = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "disable_alien_guaranteed_technologies"))
+    {
+        cf->disable_alien_guaranteed_technologies = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_weapon_icon_selection_algorithm"))
+    {
+        cf->alternative_weapon_icon_selection_algorithm = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "ignore_reactor_power_in_combat"))
+    {
+        cf->ignore_reactor_power_in_combat = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_prototype_cost_formula"))
+    {
+        cf->alternative_prototype_cost_formula = (atoi(value) == 0 ? false : true);
+    }
+    // Thinker default case
+    else
+    {
         for (int i=0; i<16; i++) {
             if (MATCH("thinker", lm_params[i])) {
                 cf->landmarks &= ~((atoi(value) ? 0 : 1) << i);
@@ -79,6 +103,7 @@ int cmd_parse(Config* cf) {
 }
 
 DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LPVOID UNUSED(lpvReserved)) {
+    debug("DLL entry.");
     switch (fdwReason) {
         case DLL_PROCESS_ATTACH:
             conf.free_formers = 0;
@@ -98,6 +123,15 @@ DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LP
             conf.faction_placement = 1;
             conf.nutrient_bonus = 1;
             conf.landmarks = 0xffff;
+
+            // WtP configuration parameters
+
+            conf.read_reactor_cost_factor = false;
+            conf.disable_alien_guaranteed_technologies = false;
+            conf.alternative_weapon_icon_selection_algorithm = false;
+            conf.ignore_reactor_power_in_combat = false;
+            conf.alternative_prototype_cost_formula = false;
+
             memset(plans, 0, sizeof(plans));
             if (DEBUG && !(debug_log = fopen("debug.txt", "w")))
                 return FALSE;
