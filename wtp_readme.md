@@ -1,7 +1,7 @@
 CREDITS
 ==================================================
 
-This mod continues my Fission Armor mod work combined with Induktio's Thinker mod which does great job on improving AI play. Now I am able to tap into exe patching (thanks to Thinker mod project code base!). Due to that I was able to overcome reactor problem and unit cost calculation problem that was previous unsolvable by simple text modding. All reactors are now back into game as well as other features. "Fission" doesn't belong to the name anymore. Hence I renamed it from "Fission Armor" to "Doer". Seems to be a logical name as I try to enable all the underused game features and encourage player to *DO* different things.
+This mod continues my Fission Armor mod work combined with Induktio's Thinker mod which does great job on improving AI play. Now I am able to tap into exe patching (thanks to Thinker mod project code base!). Due to that I was able to overcome reactor problem and unit cost calculation problem that was previous unsolvable by simple text modding. All reactors are now back into game as well as other features. "Fission" doesn't belong to the name anymore. Hence I renamed it to "The Will to Power". Seems to be a logical name as I try to enable all the underused game features to make game more challengin on top of AI improvement from Thinker.
 
 
 WHY THIS MOD?
