@@ -4,8 +4,6 @@ Version 21
 TODO
 --------------------------------------------------
 
-Add off switches for all WtP functionalities. Not sure if combined or separately.
-
 Modify weapon icon selection to be NOT dependent on the value.
 
 Remove minerals restriction on hurry cost.
