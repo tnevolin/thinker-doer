@@ -1,4 +1,4 @@
-Version 21
+Version 22
 ==================================================
 
 TODO
@@ -12,12 +12,16 @@ First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
 
-TODO
+
+Weapon icon selection algorithm fix
 --------------------------------------------------
 
-Modify weapon icon selection algorithm to be NOT dependent on the value at all.
+Modified weapon icon selection algorithm to be NOT dependent on the weapon value at all.
 Now it just a bug fix that anyone can use regardless of alphax.txt weapon values settings.
 
+
+Version 21
+==================================================
 
 Combat
 --------------------------------------------------
