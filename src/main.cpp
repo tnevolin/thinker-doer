@@ -103,7 +103,6 @@ int cmd_parse(Config* cf) {
 }
 
 DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LPVOID UNUSED(lpvReserved)) {
-    debug("DLL entry.");
     switch (fdwReason) {
         case DLL_PROCESS_ATTACH:
             conf.free_formers = 0;
