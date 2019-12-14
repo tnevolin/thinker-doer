@@ -4,8 +4,6 @@ Version 21
 TODO
 --------------------------------------------------
 
-Modify weapon icon selection to be NOT dependent on the value.
-
 Remove minerals restriction on hurry cost.
 Set unit hurry cost to purchased minerals x 4.
 Set unit upgrade cost to hurry cost difference.
@@ -13,6 +11,13 @@ Set unit upgrade cost to hurry cost difference.
 First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
+
+TODO
+--------------------------------------------------
+
+Modify weapon icon selection algorithm to be NOT dependent on the value at all.
+Now it just a bug fix that anyone can use regardless of alphax.txt weapon values settings.
+
 
 Combat
 --------------------------------------------------
