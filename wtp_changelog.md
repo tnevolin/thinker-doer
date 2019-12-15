@@ -4,13 +4,18 @@ Version 22
 TODO
 --------------------------------------------------
 
-Remove minerals restriction on hurry cost.
-Set unit hurry cost to purchased minerals x 4.
 Set unit upgrade cost to hurry cost difference.
 
 First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
+
+
+Alternative unit hurry cost formula
+--------------------------------------------------
+
+Unit hurry cost = <purchased minerals> x 4, doubled if less then <carryover minerals accumulated>.
+This simplifies unit hurrying cost calculation and fixes crawler rush exploit.
 
 
 Weapon icon selection algorithm fix

@@ -77,6 +77,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->alternative_prototype_cost_formula = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "alternative_unit_hurry_formula"))
+    {
+        cf->alternative_unit_hurry_formula = (atoi(value) == 0 ? false : true);
+    }
     // Thinker default case
     else
     {

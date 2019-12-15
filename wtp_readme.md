@@ -116,10 +116,10 @@ This makes cheapest speeder 1-1-2 unit to cost 1 (1.5 rounded down). This doesn'
 Weapon and armor value progression
 --------------------------------------------------
 
-Vanilla game has very weird code that selects weapon icon based on its offensive value set in text configuration. The configuration line clearly states something like "Particle Impactor,    Impact,         3, ...". The weapon ID and name is passed along the code. Yet there is an explicit (!) code that looks at given weapon and assign it a different (!) icon based on its offensive value. It does not do such strange reassigment for modules or for mixed items like Resonance Laser and Resonance Bolt but for conventional weapons only. Nothing like that for any other item types (armor, chassis, ability). Wery precise, specific and meaningless piece of machinery.
-I wasn't able to cancel this completely. However, I found a place where it's done and now I can match values in the code to those in text configuration to make sure proper icons are selected.
+Vanilla game has very weird code that selects regular conventional weapon icon based on its offensive value. There is nothing like that for any other item types (non regular-conventional weapons, armor, chassis, ability). Wery precise, specific, and meaningless piece of machinery.
+This is fixed now. Modders are free to set any offensive values to regular conventional weapons without breaking their respective icons.
 
-With this in mind I was able to correct weapon strenght progression to more smooth one while keeping proper icons for each weapon.
+With this in mind I was able to correct weapon strenght progression to smoothen it while keeping proper icons for each weapon.
 Here is the current game weapon and strength progression by technology levels:
 weapon: 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 24, 30
 armor:  1, 2, 3, 4, 5, 6,  , 10,   , 16,   , 24,
@@ -393,5 +393,12 @@ Probe morale boosing technologies
 --------------------------------------------------
 
 Some vanilla technologies boost probe team morale for free. That makes all probe teams elite toward the end of the game. Err, what's the point in that if everybody gets it and this renders Covert Ops and PROBE ratings useless for probe team morale? I removed all such flags. Technologies do not improve probe team morale any more.
+
+
+Simplified unit hurry cost formula
+--------------------------------------------------
+
+Unit hurry cost formula always puzzled me. Why make it exorbitant for higher end units? If anyone understand the idea - please explain it to me and we can discuss it.
+For now I've set it to flat <minerals>x4 value. This also fixes crawler hurry exploit while building SPs.
 
 

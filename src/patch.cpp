@@ -613,6 +613,38 @@ void patch_alternative_prototype_cost_formula()
 
 }
 
+/**
+Enables alternative unit hurry cost formula.
+*/
+void patch_alternative_unit_hurry_formula()
+{
+    int alternative_unit_hurry_formula_bytes_length = 0x3;
+
+    /*
+    lea    edi,[edx+ecx*2]
+    */
+    byte old_alternative_unit_hurry_formula_bytes[] =
+        { 0x8D, 0x3C, 0x4A }
+    ;
+
+    /*
+    lea    edi,[edi+ecx*4]
+    */
+    byte new_alternative_unit_hurry_formula_bytes[] =
+        { 0x8D, 0x3C, 0x8F }
+    ;
+
+    write_bytes
+    (
+        0x00418FD4,
+        alternative_unit_hurry_formula_bytes_length,
+        old_alternative_unit_hurry_formula_bytes,
+        new_alternative_unit_hurry_formula_bytes
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -737,6 +769,14 @@ bool patch_setup(Config* cf) {
     if (cf->alternative_prototype_cost_formula)
     {
         patch_alternative_prototype_cost_formula();
+
+    }
+
+    // patch prototype cost formula
+
+    if (cf->alternative_unit_hurry_formula)
+    {
+        patch_alternative_unit_hurry_formula();
 
     }
 
