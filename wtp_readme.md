@@ -8,7 +8,7 @@ WHY THIS MOD?
 ==================================================
 
 There are tons of interesting features in the game. Designers did a good job on it. I don't think there is another so feature reach game. I DO want to try them all! :)
-Unfortunately, I usually end up not using them just because they don't give me any noticeable advantage. Trying them up just for fun and scenery is one time experience - no replayability. The range of unusability varies from completely broken to only marginally useful or not worth micromanaging and extra mouseclicks. Overall, about 2/3 of vanilla features are unusable or underpowered to extent of being strategically unviable. It is so sad to see multitude of otherwise cool features are not actually used by most players.
+Unfortunately, I usually end up not using most them just because they don't make a difference. Trying them up just for fun and scenery is one time experience - no replayability. The range of unusability varies from completely broken to only marginally useful or not worth micromanaging and extra mouseclicks. Overall, about 2/3 of vanilla features are unusable or underpowered to extent of being strategically unviable. It is so sad to see multitude of otherwise cool features are not actually used by most players.
 I do want them to make difference. Therefore, I started this mod to give them second chance! :)
 
 In such option reach games like SMAX variations are endless. Due to such variations some strategical choice may shine sometimes depending on current conditions. Changing strategy in response to changing game situation is the nature of the play and that's why we have many to chose from. However, there should never be an option that never (or quite rarely) viable. Such unused option would just clutter game interface and player memory. Well balanced game should not have any unusable elements. In this mod I try to get rid of all outsiders or balance them somehow to make them usable.
@@ -22,11 +22,14 @@ Whenever I see some feature worth improving/highlighting these are guidelines I 
 
 Feature should do what it claims to. If it is impossible to make it work, such feature should be excluded. Example: Deep pressure hull.
 
-Feature should not outright contradict or break game concepts. Example of game concept: build your own unit design workshop. Example of the feature directly contradicting this concept: mixed components (resonance armor and such).
+Feature should not outright contradict or break game concepts. Example of game concept: build-your-own-unit design workshop. Example of the feature directly contradicting this concept: mixed components (resonance armor and such).
+
+Game flow and features generally should be understandable to people and have clear visual effect on the game and player choices. This doesn't mean they should resemble real life. They should be only what is expected of them by average game player. There should be no hidden elements or algorithms those are difficult to grasp and apply.
+Example: unit cost formula. In vanilla infantry attacker 10-1-1 unit costs 5. Given that what should average player expect same strength infantry defender 1-10-1 cost? Naturally something close to this in 4-6 range. Well, it is 20 in vanilla actually. This is definitely not expected.
 
 Overall game parameters configuration should not create an extremely overpowered or underpowered strategy. Each strategy should be viable at least at some circumstances according to this mod principles. This mod does not intent to "balance" anything but only to adjust some obvious favorite or underdog strategies. Overpowered stategy example: indestructible army.
 
-Being usable also means to come at the right time in research tree. Coming too early clutters game interface and takes space from other more needed features. Coming too lake causes unnecessary slowdown and frustration. This mod adjusts item appearence times to match contemporary development level.
+Being usable also means to come at the right time in research tree. Coming too early clutters game interface and takes space from other more needed features. Coming too lake causes unnecessary slowdown and frustration. This mod adjusts item appearence times to match faction development level.
 
 Some items naturally come in sequence when each follower effectively obsolets its predecessor. Good example is weapons and armors. This mod tries to spread them evenly on a research scale so player can enjoy each for about same time. It also tries to link their corresponding technologies to assure they appear in right order. 
 
