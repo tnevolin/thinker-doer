@@ -4,6 +4,9 @@ Version 22
 TODO
 --------------------------------------------------
 
+Make unit promotion probability same for all ranks.
+Make unit promotion probability very low or dependent on number of victories or toughness of victories.
+
 First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
