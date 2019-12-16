@@ -109,5 +109,8 @@ extern fp_str_void* tx_read_configuration_field;
 // create prototype
 extern fp_6int* tx_create_prototype;
 
+// upgrade cost
+extern fp_3int* tx_upgrade_cost;
+
 #endif // __TERRANX_H__
 

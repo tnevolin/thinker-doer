@@ -398,10 +398,11 @@ Probe morale boosing technologies
 Some vanilla technologies boost probe team morale for free. That makes all probe teams elite toward the end of the game. Err, what's the point in that if everybody gets it and this renders Covert Ops and PROBE ratings useless for probe team morale? I removed all such flags. Technologies do not improve probe team morale any more.
 
 
-Simplified unit hurry cost formula
+Alternative unit hurry cost formula and unit upgrade cost formula
 --------------------------------------------------
 
-Unit hurry cost formula always puzzled me. Why make it exorbitant for higher end units? If anyone understand the idea - please explain it to me and we can discuss it.
-For now I've set it to flat <minerals>x4 value. This also fixes crawler hurry exploit while building SPs.
+Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? Same story with unit upgrade cost. This one is, on the countrary, too cheap allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten these as well as disabling that exploit along the way.
 
+For now I've set unit hurry cost to be flat <minerals> x 4 value. The base upgrade cost now is an exact difference in hurry cost! Wow. Could anyone imagine game design could be that simple and transparent? :)
+Since higher reactors now do nothing but decrease unit cost player also gets REFUND when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :)
 

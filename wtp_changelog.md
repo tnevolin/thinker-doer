@@ -4,8 +4,6 @@ Version 22
 TODO
 --------------------------------------------------
 
-Set unit upgrade cost to hurry cost difference.
-
 First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
@@ -16,6 +14,19 @@ Alternative unit hurry cost formula
 
 Unit hurry cost = <purchased minerals> x 4, doubled if less then <carryover minerals accumulated>.
 This simplifies unit hurrying cost calculation and fixes crawler rush exploit.
+
+
+Alternative upgrade cost formula
+--------------------------------------------------
+
+upgrade cost = (new unit mineral cost - old unit mineral cost) * 4
+
+Upgrading to unprototyped unit doubles new unit mineral cost for purpose of above calculation. That effectivelly adds the full hurry cost of unprototyped unit on top of difference cost. Added this to honor vanilla logic which prices upgrade to unprototyped unit very high.
+
+Upgrading to cheaper unit cost is negative and player gets a refund. That happens in this mod when only upgrade is more advanced reactor that drops unit cost.
+
+Faction possessing The Nano Factory SP pays half of the positive cost. Negative cost is unaffected.
+That accutally reinstates crawler upgrade exploit. I'm open for discussion whether this should be allowed or we double all upgrade cost to not allow this exploit in any case.
 
 
 Weapon icon selection algorithm fix

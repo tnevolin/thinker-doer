@@ -104,6 +104,7 @@ struct Config {
     bool ignore_reactor_power_in_combat;
     bool alternative_prototype_cost_formula;
     bool alternative_unit_hurry_formula;
+    bool alternative_upgrade_cost_formula;
 };
 
 /*

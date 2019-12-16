@@ -645,6 +645,18 @@ void patch_alternative_unit_hurry_formula()
 
 }
 
+/**
+Enables alternative upgrade cost formula.
+*/
+void patch_alternative_upgrade_cost_formula()
+{
+    write_call_ptr(0x004D0ECF, (int)upgrade_cost);
+    write_call_ptr(0x004D16D9, (int)upgrade_cost);
+    write_call_ptr(0x004EFB76, (int)upgrade_cost);
+    write_call_ptr(0x004EFEB9, (int)upgrade_cost);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -772,11 +784,19 @@ bool patch_setup(Config* cf) {
 
     }
 
-    // patch prototype cost formula
+    // patch unit hurry cost formula
 
     if (cf->alternative_unit_hurry_formula)
     {
         patch_alternative_unit_hurry_formula();
+
+    }
+
+    // patch upgrade cost formula
+
+    if (cf->alternative_upgrade_cost_formula)
+    {
+        patch_alternative_upgrade_cost_formula();
 
     }
 

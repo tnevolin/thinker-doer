@@ -226,3 +226,46 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
 }
 
+HOOK_API int upgrade_cost(int faction_id, int new_unit_id, int old_unit_id)
+{
+    // get new unit cost
+
+    int new_unit_cost = tx_units[new_unit_id].cost;
+
+    // double new unit cost if not prototyped
+
+    if ((tx_units[new_unit_id].unit_flags & 0x4) == 0)
+    {
+        new_unit_cost *= 2;
+    }
+
+    // get base upgrade cost
+
+    int upgrade_cost = (new_unit_cost - tx_units[old_unit_id].cost) * 4;
+
+    // halve upgrade cost if positive and faction possesses The Nano Factory
+
+    if (upgrade_cost > 0)
+    {
+        // get The Nano Factory base id
+
+        int nano_factory_base_id = tx_secret_projects[0x16];
+
+        // get The Nano Factory faction id
+
+        if (nano_factory_base_id >= 0)
+        {
+            if (tx_bases[nano_factory_base_id].faction_id == faction_id)
+            {
+                upgrade_cost /= 2;
+
+            }
+
+        }
+
+    }
+
+    return upgrade_cost;
+
+}
+

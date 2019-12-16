@@ -91,3 +91,6 @@ fp_5int* tx_proto_cost = (fp_5int*)0x005A5A60;
 // create prototype
 fp_6int* tx_create_prototype = (fp_6int*)0x005A5D40;
 
+// upgrade cost
+fp_3int* tx_upgrade_cost = (fp_3int*)0x004EFD50;
+
