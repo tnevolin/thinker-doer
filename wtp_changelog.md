@@ -7,6 +7,8 @@ TODO
 Make unit promotion probability same for all ranks.
 Make unit promotion probability very low or dependent on number of victories or toughness of victories.
 
+Remove +1 mineral AQUATIC faction advantage.
+
 Make artillery duel use armor as well.
 
 First technology should be discoverable in 6-10 turns.
