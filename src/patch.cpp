@@ -657,6 +657,63 @@ void patch_alternative_upgrade_cost_formula()
 
 }
 
+/**
+Sets Perimeter Defense and Tachyon Field defense bonus.
+*/
+void patch_defensive_structures_bonus(int perimeter_defense_multiplier, int tachyon_field_bonus)
+{
+    int perimeter_defense_multiplier_bytes_length = 0x5;
+
+    /*
+    mov     esi, 4
+    */
+    byte old_perimeter_defense_multiplier_bytes[] =
+        { 0xBE, 0x04, 0x00, 0x00, 0x00 }
+    ;
+
+    /*
+    mov     esi, ?
+    */
+    byte new_perimeter_defense_multiplier_bytes[] =
+        { 0xBE, (byte)perimeter_defense_multiplier, 0x00, 0x00, 0x00 }
+    ;
+
+    write_bytes
+    (
+        0x005034B9,
+        perimeter_defense_multiplier_bytes_length,
+        old_perimeter_defense_multiplier_bytes,
+        new_perimeter_defense_multiplier_bytes
+    )
+    ;
+
+    int tachyon_field_bonus_bytes_length = 0x3;
+
+    /*
+    add     esi, 2
+    */
+    byte old_tachyon_field_bonus_bytes[] =
+        { 0x83, 0xC6, 0x02 }
+    ;
+
+    /*
+    add     esi, ?
+    */
+    byte new_tachyon_field_bonus_bytes[] =
+        { 0x83, 0xC6, (byte)tachyon_field_bonus }
+    ;
+
+    write_bytes
+    (
+        0x00503506,
+        tachyon_field_bonus_bytes_length,
+        old_tachyon_field_bonus_bytes,
+        new_tachyon_field_bonus_bytes
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -799,6 +856,8 @@ bool patch_setup(Config* cf) {
         patch_alternative_upgrade_cost_formula();
 
     }
+
+    patch_defensive_structures_bonus(cf->perimeter_defense_multiplier, cf->tachyon_field_bonus);
 
     // continue with original Thinker checks
 

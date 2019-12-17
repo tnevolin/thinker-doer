@@ -105,6 +105,8 @@ struct Config {
     bool alternative_prototype_cost_formula;
     bool alternative_unit_hurry_formula;
     bool alternative_upgrade_cost_formula;
+    int perimeter_defense_multiplier;
+    int tachyon_field_bonus;
 };
 
 /*

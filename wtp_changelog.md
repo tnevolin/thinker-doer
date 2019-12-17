@@ -4,6 +4,12 @@ Version 22
 TODO
 --------------------------------------------------
 
+Expose base defensive structure defense multiplier.
+
+Reduce sensor array bonus to 25%.
+
+Rearrange ractor to appear along with every third weapon.
+
 Make unit promotion probability same for all ranks.
 Make unit promotion probability very low or dependent on number of victories or toughness of victories.
 
@@ -14,6 +20,13 @@ Make artillery duel use armor as well.
 First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
+
+
+Perimeter Defense and Tachyon Field
+--------------------------------------------------
+
+Exposed Perimeter Defense and Tachyon Field bonuses in thinker.ini
+Distributed unchanged for testers to play with.
 
 
 Alternative unit hurry cost formula

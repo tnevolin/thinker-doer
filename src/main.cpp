@@ -85,6 +85,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->alternative_upgrade_cost_formula = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "perimeter_defense_multiplier"))
+    {
+        cf->perimeter_defense_multiplier = atoi(value);
+    }
+    else if (MATCH("wtp", "tachyon_field_bonus"))
+    {
+        cf->tachyon_field_bonus = atoi(value);
+    }
     // Thinker default case
     else
     {
@@ -138,6 +146,10 @@ DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LP
             conf.alternative_weapon_icon_selection_algorithm = false;
             conf.ignore_reactor_power_in_combat = false;
             conf.alternative_prototype_cost_formula = false;
+            conf.alternative_unit_hurry_formula = false;
+            conf.alternative_upgrade_cost_formula = false;
+            conf.perimeter_defense_multiplier = 4;
+            conf.tachyon_field_bonus = 2;
 
             memset(plans, 0, sizeof(plans));
             if (DEBUG && !(debug_log = fopen("debug.txt", "w")))
