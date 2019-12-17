@@ -1,10 +1,8 @@
-Version 22
+Version 23
 ==================================================
 
 TODO
 --------------------------------------------------
-
-Expose base defensive structure defense multiplier.
 
 Reduce sensor array bonus to 25%.
 
@@ -21,6 +19,16 @@ First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
 
+
+Others
+--------------------------------------------------
+
+Moved reactor cost factors configuration to thinker.ini.
+Added alternative_base_defensive_structure_bonuses switch to thinker.ini.
+
+
+Version 22
+==================================================
 
 Perimeter Defense and Tachyon Field
 --------------------------------------------------

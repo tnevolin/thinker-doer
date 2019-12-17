@@ -57,10 +57,6 @@ int handler(void* user, const char* section, const char* name, const char* value
         }
     }
     // WtP configuration parameters
-    else if (MATCH("wtp", "read_reactor_cost_factor"))
-    {
-        cf->read_reactor_cost_factor = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("wtp", "disable_alien_guaranteed_technologies"))
     {
         cf->disable_alien_guaranteed_technologies = (atoi(value) == 0 ? false : true);
@@ -77,6 +73,22 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->alternative_prototype_cost_formula = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "reactor_cost_factor_0"))
+    {
+        cf->reactor_cost_factors[0] = atoi(value);
+    }
+    else if (MATCH("wtp", "reactor_cost_factor_1"))
+    {
+        cf->reactor_cost_factors[1] = atoi(value);
+    }
+    else if (MATCH("wtp", "reactor_cost_factor_2"))
+    {
+        cf->reactor_cost_factors[2] = atoi(value);
+    }
+    else if (MATCH("wtp", "reactor_cost_factor_3"))
+    {
+        cf->reactor_cost_factors[3] = atoi(value);
+    }
     else if (MATCH("wtp", "alternative_unit_hurry_formula"))
     {
         cf->alternative_unit_hurry_formula = (atoi(value) == 0 ? false : true);
@@ -84,6 +96,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "alternative_upgrade_cost_formula"))
     {
         cf->alternative_upgrade_cost_formula = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_base_defensive_structure_bonuses"))
+    {
+        cf->alternative_base_defensive_structure_bonuses = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "perimeter_defense_multiplier"))
     {
@@ -138,18 +154,6 @@ DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LP
             conf.faction_placement = 1;
             conf.nutrient_bonus = 1;
             conf.landmarks = 0xffff;
-
-            // WtP configuration parameters
-
-            conf.read_reactor_cost_factor = false;
-            conf.disable_alien_guaranteed_technologies = false;
-            conf.alternative_weapon_icon_selection_algorithm = false;
-            conf.ignore_reactor_power_in_combat = false;
-            conf.alternative_prototype_cost_formula = false;
-            conf.alternative_unit_hurry_formula = false;
-            conf.alternative_upgrade_cost_formula = false;
-            conf.perimeter_defense_multiplier = 4;
-            conf.tachyon_field_bonus = 2;
 
             memset(plans, 0, sizeof(plans));
             if (DEBUG && !(debug_log = fopen("debug.txt", "w")))

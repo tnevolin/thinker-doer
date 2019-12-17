@@ -67,7 +67,7 @@
 50,      ; Combat % -> Comm Jammer unit defending vs. mobile unit
 0,       ; Combat % -> Bonus vs. ships caught in port
 100,     ; Combat % -> AAA bonus vs. air units
-50,      ; Combat % -> Defend in range of friendly Sensor
+25,      ; Combat % -> Defend in range of friendly Sensor
 10,      ; Combat % -> Psi attack bonus/penalty per +PLANET
 50,      ; Retool percent penalty for production change
 2,       ; Retool strictness (0 = Always Free, 1 = Free in Category, 2 = Free if Project, 3 = Never Free)
@@ -380,13 +380,13 @@ Missile,M1,   Missile,M1,    Missile,M1,     Missile,M1,  12, 2, 1, 1, 0, 5, AGr
 ;
 ; Reactors
 ;
-; Name, short name, cost factor, preq
+; Name, power, preq
 ;
 #REACTORS
-Fission Plant,        Fission,     100, None,
-Fusion Reactor,       Fusion,       80, Fusion,
-Quantum Chamber,      Quantum,      65, Quantum,
-Singularity Engine,   Singularity,  50, SingMec,
+Fission Plant,        Fission,     1, None,
+Fusion Reactor,       Fusion,      2, Fusion,
+Quantum Chamber,      Quantum,     3, Quantum,
+Singularity Engine,   Singularity, 4, SingMec,
 
 ;
 ; Weapons & non-combat packages

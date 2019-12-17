@@ -246,15 +246,6 @@ void write_bytes(int address, int length, byte old_bytes[], byte new_bytes[]) {
 // ========================================
 
 /**
-Enables the procedure to read and store reactor cost factor.
-*/
-void patch_read_reactor_cost_factor()
-{
-    write_call_ptr(0x005878CE, (int)read_reactor_cost_factor);
-
-}
-
-/**
 Disables alien guaranteed technologies assignment.
 */
 void patch_alien_guaranteed_technologies()
@@ -801,14 +792,6 @@ bool patch_setup(Config* cf) {
     // The Will to Power mod changes
     // ==============================
 
-    // patch read reactor cost factor
-
-    if (cf->read_reactor_cost_factor)
-    {
-        patch_read_reactor_cost_factor();
-
-    }
-
     // patch ALIEN guaranteed technologies
 
     if (cf->disable_alien_guaranteed_technologies)
@@ -857,7 +840,13 @@ bool patch_setup(Config* cf) {
 
     }
 
-    patch_defensive_structures_bonus(cf->perimeter_defense_multiplier, cf->tachyon_field_bonus);
+    // patch base defense structure bonuses
+
+    if (cf->alternative_base_defensive_structure_bonuses)
+    {
+        patch_defensive_structures_bonus(cf->perimeter_defense_multiplier, cf->tachyon_field_bonus);
+
+    }
 
     // continue with original Thinker checks
 

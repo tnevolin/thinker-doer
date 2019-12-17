@@ -1,85 +1,6 @@
 #include "prototype.h"
 
 /**
-Reads reactor cost factor and stores it in reactor structure.
-*/
-HOOK_API void read_reactor_cost_factor()
-{
-    // static reactor cost factor variables
-    // there supposed to be 4 reactors and configuration file is read twice
-    // so we should end up with 8 reads - no more no less
-
-    static bool reactor_configuration_complete = false;
-    static int reactor_index = 0;
-    static int reactor_cost_factors[8];
-
-    // check if we have already completed all reads
-
-    if (reactor_configuration_complete)
-    {
-        throw std::runtime_error("Incorrect number of reactor line reads. Expected 8.");
-
-    }
-
-    // reading stage
-
-    if (reactor_index < 8)
-    {
-        // read configuration field
-
-        char* field = tx_read_configuration_field();
-
-        // parse field into number
-
-        int cost_factor;
-
-        int sscanfOutput = sscanf(field, "%d", &cost_factor);
-
-        if (sscanfOutput == 1)
-        {
-            // correct read
-
-        }
-        else
-        {
-            throw std::runtime_error("Reactor cost factor should be an integer.");
-
-        }
-
-        // store reactor cost factor
-
-        reactor_cost_factors[reactor_index] = cost_factor;
-        reactor_index++;
-
-    }
-
-    // populating stage
-
-    if (reactor_index == 8)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            // check both reads for this reactor are identical
-
-            if (reactor_cost_factors[i] != reactor_cost_factors[i + 4])
-            {
-                throw "First and second reads for same reactor produced different results.";
-
-            }
-
-            // set reactor cost factor
-
-            tx_reactor[i].cost_factor = (short)reactor_cost_factors[i];
-
-        }
-
-        reactor_configuration_complete = true;
-
-    }
-
-}
-
-/**
 Prototype cost calculation.
 
 Select primary and secondary weapon/module/armor items
@@ -131,11 +52,11 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     // get Fission reactor cost factor
 
-    int fission_reactor_cost_factor = tx_reactor[REC_FISSION - 1].cost_factor;
+    int fission_reactor_cost_factor = conf.reactor_cost_factors[REC_FISSION - 1];
 
     // get reactor cost factor
 
-    int reactor_cost_factor = tx_reactor[reactor_level - 1].cost_factor;
+    int reactor_cost_factor = conf.reactor_cost_factors[reactor_level - 1];
 
     // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
 
