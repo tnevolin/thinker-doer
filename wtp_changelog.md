@@ -4,8 +4,6 @@ Version 23
 TODO
 --------------------------------------------------
 
-Reduce sensor array bonus to 25%.
-
 Rearrange ractor to appear along with every third weapon.
 
 Make unit promotion probability same for all ranks.
@@ -25,6 +23,7 @@ Others
 
 Moved reactor cost factors configuration to thinker.ini.
 Added alternative_base_defensive_structure_bonuses switch to thinker.ini.
+Adjusted reactor appearence in technology tree to be closer to 25%, 50%, 75% marks.
 
 
 Version 22
