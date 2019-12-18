@@ -1,4 +1,4 @@
-Version 23
+Version 24
 ==================================================
 
 TODO
@@ -23,6 +23,18 @@ First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
 
+
+Collateral damage
+--------------------------------------------------
+
+Collateral damage computation fixed to take exact percentage of the unit HPs.
+Vanilla computation for conventional combat multiply this by ATTACKER reactor power instead.
+
+Modified collateral damage to take 20% instead 30% in vanilla.
+
+
+Version 23
+==================================================
 
 Others
 --------------------------------------------------
