@@ -4,12 +4,16 @@ Version 23
 TODO
 --------------------------------------------------
 
-Rearrange ractor to appear along with every third weapon.
+Override hurry and upgrade functions completely.
+
+Expose collateral damage switch.
+
+Rethink cost of non combat units and abilities in light of upgraded reactors.
+
+Remove +1 mineral AQUATIC faction advantage.
 
 Make unit promotion probability same for all ranks.
 Make unit promotion probability very low or dependent on number of victories or toughness of victories.
-
-Remove +1 mineral AQUATIC faction advantage.
 
 Make artillery duel use armor as well.
 
@@ -24,6 +28,9 @@ Others
 Moved reactor cost factors configuration to thinker.ini.
 Added alternative_base_defensive_structure_bonuses switch to thinker.ini.
 Adjusted reactor appearence in technology tree to be closer to 25%, 50%, 75% marks.
+25,      ; Combat % -> Fanatic attack bonus
+25,      ; Combat % -> Mobile unit in open ground
+25,      ; Combat % -> Infantry vs. Base
 
 
 Version 22
