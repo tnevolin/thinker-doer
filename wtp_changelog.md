@@ -31,6 +31,7 @@ Adjusted reactor appearence in technology tree to be closer to 25%, 50%, 75% mar
 25,      ; Combat % -> Fanatic attack bonus
 25,      ; Combat % -> Mobile unit in open ground
 25,      ; Combat % -> Infantry vs. Base
+Forest Square,    1, 2, 0, 0,
 
 
 Version 22

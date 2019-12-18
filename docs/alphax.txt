@@ -154,7 +154,7 @@ Monolith,         Disable, Monolith,         Disable,  8,  Place Monolith,  ?, ?
 Ocean Square,     1, 0, 0, 0,
 Base Square,      2, 1, 1, 0,
 Bonus Square,     2, 2, 2, 0, * Mineral +1 if mine present
-Forest Square,    1, 2, 1, 0,
+Forest Square,    1, 2, 0, 0,
 Recycling Tanks,  1, 1, 1, 0,
 Improved Land,    1, *, *, 0, "*" columns are ignored entirely
 Improved Sea,     2, 1, 3, 0, * Mineral +1 with Advanced Ecological Engineering
