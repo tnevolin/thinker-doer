@@ -109,6 +109,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->tachyon_field_bonus = atoi(value);
     }
+    else if (MATCH("wtp", "collateral_damage_defender_reactor"))
+    {
+        cf->collateral_damage_defender_reactor = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "collateral_damage_value"))
+    {
+        cf->collateral_damage_value = atoi(value);
+    }
     // Thinker default case
     else
     {

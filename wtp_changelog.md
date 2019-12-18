@@ -4,9 +4,11 @@ Version 23
 TODO
 --------------------------------------------------
 
+Expose collateral damage switch.
+
 Override hurry and upgrade functions completely.
 
-Expose collateral damage switch.
+I should limit refund with x2 or x1.
 
 Rethink cost of non combat units and abilities in light of upgraded reactors.
 

@@ -705,6 +705,71 @@ void patch_defensive_structures_bonus(int perimeter_defense_multiplier, int tach
 
 }
 
+/**
+Uses defender reactor power for collateral damage computation.
+*/
+void patch_collateral_damage_defender_reactor()
+{
+    int collateral_damage_defender_reactor_bytes_length = 0x2;
+
+    /*
+    jge     short loc_50AA9F
+    */
+    byte old_collateral_damage_defender_reactor_bytes[] =
+        { 0x7D, 0x16 }
+    ;
+
+    /*
+    nop
+    nop
+    */
+    byte new_collateral_damage_defender_reactor_bytes[] =
+        { 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0050AA87,
+        collateral_damage_defender_reactor_bytes_length,
+        old_collateral_damage_defender_reactor_bytes,
+        new_collateral_damage_defender_reactor_bytes
+    )
+    ;
+
+}
+
+/**
+Sets collateral damage value.
+*/
+void patch_collateral_damage_value(int collateral_damage_value)
+{
+    int collateral_damage_value_bytes_length = 0x2;
+
+    /*
+    mov     dl, 3
+    */
+    byte old_collateral_damage_value_bytes[] =
+        { 0xB2, 0x03 }
+    ;
+
+    /*
+    mov     dl, ?
+    */
+    byte new_collateral_damage_value_bytes[] =
+        { 0xB2, (byte)collateral_damage_value }
+    ;
+
+    write_bytes
+    (
+        0x0050AAA5,
+        collateral_damage_value_bytes_length,
+        old_collateral_damage_value_bytes,
+        new_collateral_damage_value_bytes
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -845,6 +910,22 @@ bool patch_setup(Config* cf) {
     if (cf->alternative_base_defensive_structure_bonuses)
     {
         patch_defensive_structures_bonus(cf->perimeter_defense_multiplier, cf->tachyon_field_bonus);
+
+    }
+
+    // patch collateral damage defender reactor
+
+    if (cf->collateral_damage_defender_reactor)
+    {
+        patch_collateral_damage_defender_reactor();
+
+    }
+
+    // patch collateral damage value
+
+    if (cf->collateral_damage_value >= 0)
+    {
+        patch_collateral_damage_value(cf->collateral_damage_value);
 
     }
 

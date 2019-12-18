@@ -108,6 +108,8 @@ struct Config {
     bool alternative_base_defensive_structure_bonuses = false;
     int perimeter_defense_multiplier = 0;
     int tachyon_field_bonus = 0;
+    bool collateral_damage_defender_reactor = false;
+    int collateral_damage_value = 3;
 };
 
 /*
