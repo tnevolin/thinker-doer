@@ -4,8 +4,6 @@ Version 24
 TODO
 --------------------------------------------------
 
-Expose collateral damage switch.
-
 Override hurry and upgrade functions completely.
 
 I should limit refund with x2 or x1.
@@ -23,6 +21,11 @@ First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
 
+
+Removed all hurry thresholds
+--------------------------------------------------
+
+There is no more hurry penalty thresholds. Everything is flat.
 
 Collateral damage
 --------------------------------------------------

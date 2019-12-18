@@ -89,6 +89,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->reactor_cost_factors[3] = atoi(value);
     }
+    else if (MATCH("wtp", "disable_hurry_penalty_threshold"))
+    {
+        cf->disable_hurry_penalty_threshold = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "alternative_unit_hurry_formula"))
     {
         cf->alternative_unit_hurry_formula = (atoi(value) == 0 ? false : true);

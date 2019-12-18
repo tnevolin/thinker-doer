@@ -607,6 +607,67 @@ void patch_alternative_prototype_cost_formula()
 /**
 Enables alternative unit hurry cost formula.
 */
+void patch_disable_hurry_penalty_threshold()
+{
+    int disable_hurry_penalty_threshold_bytes_length = 0x6;
+
+    /*
+    cmp     esi, dword_949830
+    */
+    byte old_disable_hurry_penalty_threshold_bytes[] =
+        { 0x3B, 0x35, 0x30, 0x98, 0x94, 0x00 }
+    ;
+
+    /*
+    cmp     esi, 0x0
+    nop
+    nop
+    nop
+    */
+    byte new_disable_hurry_penalty_threshold_bytes[] =
+        { 0x83, 0xFE, 0x00, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00419007,
+        disable_hurry_penalty_threshold_bytes_length,
+        old_disable_hurry_penalty_threshold_bytes,
+        new_disable_hurry_penalty_threshold_bytes
+    )
+    ;
+
+    int disable_sp_hurry_penalty_threshold_bytes_length = 0x3;
+
+    /*
+    shl     eax, 2
+    */
+    byte old_disable_sp_hurry_penalty_threshold_bytes[] =
+        { 0xC1, 0xE0, 0x02 }
+    ;
+
+    /*
+    xor     eax, eax
+    nop
+    */
+    byte new_disable_sp_hurry_penalty_threshold_bytes[] =
+        { 0x31, 0xC0, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00418FFB,
+        disable_sp_hurry_penalty_threshold_bytes_length,
+        old_disable_sp_hurry_penalty_threshold_bytes,
+        new_disable_sp_hurry_penalty_threshold_bytes
+    )
+    ;
+
+}
+
+/**
+Enables alternative unit hurry cost formula.
+*/
 void patch_alternative_unit_hurry_formula()
 {
     int alternative_unit_hurry_formula_bytes_length = 0x3;
@@ -886,6 +947,14 @@ bool patch_setup(Config* cf) {
     if (cf->alternative_prototype_cost_formula)
     {
         patch_alternative_prototype_cost_formula();
+
+    }
+
+    // patch facility hurry penalty threshold
+
+    if (cf->disable_hurry_penalty_threshold)
+    {
+        patch_disable_hurry_penalty_threshold();
 
     }
 

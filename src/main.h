@@ -103,6 +103,7 @@ struct Config {
     bool ignore_reactor_power_in_combat = false;
     bool alternative_prototype_cost_formula = false;
     int reactor_cost_factors[4];
+    bool disable_hurry_penalty_threshold = false;
     bool alternative_unit_hurry_formula = false;
     bool alternative_upgrade_cost_formula = false;
     bool alternative_base_defensive_structure_bonuses = false;
