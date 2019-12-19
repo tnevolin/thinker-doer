@@ -12,7 +12,7 @@
 
 #DRONE
 The Free Drones, The Laborer, Drones, M, 2, Domai, M, 0, 0, 0, 1, 0, 
-  TECH, Indust, TECH, PrPsych, SOCIAL, ++INDUSTRY, SOCIAL, --RESEARCH, SOCIAL, -POLICE, NODRONE, 1, REVOLT, 75
+  TECH, Indust, SOCIAL, ++INDUSTRY, SOCIAL, --RESEARCH, SOCIAL, -POLICE, NODRONE, 1, REVOLT, 75
   Future Society, Eudaimonic, INDUSTRY
   Economics, Green, nil
   Free Drone, Free D.

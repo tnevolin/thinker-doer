@@ -12,7 +12,7 @@
 
 #ANGELS
 The Data Angels, The Infogrrrrl, Angels, F, 2, Roze, F, 0, 0, 1, 1, 0, 
-  TECH, Mobile, TECH, Psych, SOCIAL, ++PROBE, SOCIAL, --POLICE, PROBECOST, 75, FREEFAC, 34, SHARETECH, 3, UNIT, 6
+  TECH, Psych, SOCIAL, ++PROBE, SOCIAL, --POLICE, PROBECOST, 75, FREEFAC, 34, SHARETECH, 3, UNIT, 6
   Politics, Democratic, PROBE
   Values, Power, nil
   Datatech, Datate.

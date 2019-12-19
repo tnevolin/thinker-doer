@@ -26,15 +26,23 @@ For example, ability with cost 1 multiplies unit cost by 1.25. This is coded in 
 All divisions are done after multiplications. This is to minimize an effect of integer rounding on intermediary steps.
 
 Special rules:
-Supply module foil/cruiser chassis cost is replaced with infantry/speeder chassis cost, correspondingly.
+Colony foil/cruiser costs same as infantry/speeder.
+Former foil/cruiser costs same as infantry/speeder.
+Supply foil/cruiser costs same as infantry/speeder.
 
 */
 HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level)
 {
-    // Special rules:
-    // Supply module foil/cruiser chassis cost is replaced with infantry/speeder chassis cost, correspondingly.
+    // Special rules
 
-    if (tx_weapon[weapon_id].mode == WMODE_CONVOY)
+    if
+    (
+        tx_weapon[weapon_id].mode == WMODE_COLONIST
+        ||
+        tx_weapon[weapon_id].mode == WMODE_TERRAFORMER
+        ||
+        tx_weapon[weapon_id].mode == WMODE_CONVOY
+    )
     {
         switch(chassis_id)
         {
@@ -149,6 +157,10 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
 HOOK_API int upgrade_cost(int faction_id, int new_unit_id, int old_unit_id)
 {
+    // get old unit cost
+
+    int old_unit_cost = tx_units[old_unit_id].cost;
+
     // get new unit cost
 
     int new_unit_cost = tx_units[new_unit_id].cost;
@@ -160,9 +172,15 @@ HOOK_API int upgrade_cost(int faction_id, int new_unit_id, int old_unit_id)
         new_unit_cost *= 2;
     }
 
-    // get base upgrade cost
+    // calculate cost difference
 
-    int upgrade_cost = (new_unit_cost - tx_units[old_unit_id].cost) * 4;
+    int cost_difference = new_unit_cost - old_unit_cost;
+
+    // calculate base upgrade cost
+    // x4 if positive
+    // x2 if negative
+
+    int upgrade_cost = cost_difference * (cost_difference >= 0 ? 4 : 2);
 
     // halve upgrade cost if positive and faction possesses The Nano Factory
 

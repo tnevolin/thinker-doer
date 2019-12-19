@@ -12,7 +12,7 @@
 
 #USURPER
 Manifold Usurpers, The Insurgent, Usurpers, M, 2, Marr, M, 1, 1, 0, 1, 0,
-  TECH, PrPsych, TECH, Mobile, ALIEN, 0, OFFENSE, 125, SOCIAL, +GROWTH, SOCIAL, -PLANET, SOCIAL, -INDUSTRY, SOCIAL, -POLICE
+  TECH, PrPsych, ALIEN, 0, OFFENSE, 125, SOCIAL, +GROWTH, SOCIAL, -PLANET, SOCIAL, -INDUSTRY, SOCIAL, -POLICE
   Economics, Planned, PLANET
   Politics, Democratic, nil
   Usurper, Usurper

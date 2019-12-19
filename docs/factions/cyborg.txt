@@ -12,7 +12,7 @@
 
 #CYBORG
 The Cybernetic Consciousness, The Algorithm, Consciousness, F, 1, Aki Zeta-5, F, -1, 0, 1, 0, 1,
-  TECH, Physic, TECH, Ecology, IMPUNITY, Cybernetic, SOCIAL, +RESEARCH, SOCIAL, +EFFIC, SOCIAL, -GROWTH, SOCIAL, -POLICE, TECHSTEAL, 0
+  TECH, Physic, IMPUNITY, Cybernetic, SOCIAL, +RESEARCH, SOCIAL, +EFFIC, SOCIAL, -GROWTH, SOCIAL, -POLICE, TECHSTEAL, 0
   Future Society, Cybernetic, GROWTH
   Politics, Fundamentalist, nil
   Cybernetic, Cybern.

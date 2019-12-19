@@ -1,6 +1,7 @@
 build/
 rel/
 patch/
+release/
 utils/
 *.layout
 *.depend

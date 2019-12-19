@@ -12,7 +12,7 @@
 
 #SPARTANS
 Spartan Federation, The Survivalist, Spartans, M, 2, Santiago, F,  0,  1, 1, 0, 0,
-  TECH, Mobile, TECH, Physic, FREEPROTO, 0, SOCIAL, ++MORALE, SOCIAL, -INDUSTRY
+  TECH, Mobile, FREEPROTO, 0, SOCIAL, ++MORALE, SOCIAL, -INDUSTRY
   Values, Power, MORALE
   Values, Wealth, nil
   Spartan, Spartan,

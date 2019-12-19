@@ -1,23 +1,49 @@
-Version 24
+Version 25
 ==================================================
 
 TODO
 --------------------------------------------------
 
-Override hurry and upgrade functions completely.
-
-I should limit refund with x2 or x1.
-
 Rethink cost of non combat units and abilities in light of upgraded reactors.
+
+First technology should be discoverable in 6-10 turns.
+Technology cost should not rise more than 10%
+Technology cost map size multiplier should be proportional to number of map squares.
 
 Make unit promotion probability same for all ranks.
 Make unit promotion probability very low or dependent on number of victories or toughness of victories.
 
 Make artillery duel use armor as well.
 
-First technology should be discoverable in 6-10 turns.
-Technology cost should not rise more than 10%
-Technology cost map size multiplier should be proportional to number of map squares.
+
+Units
+--------------------------------------------------
+
+Colony foil/cruiser costs same as infantry/speeder.
+Former foil/cruiser costs same as infantry/speeder.
+Supply foil/cruiser costs same as infantry/speeder.
+
+Supply Transport module now costs 12. It is now less appealing to spam crawlers/trawlers for harvesting each and every 2 production factors tiles.
+
+Removed Infantry Probe Team.
+
+
+Upgrade cost
+--------------------------------------------------
+
+Positive base upgrade cost is <mineral cost difference> * 4.
+Negative base upgrade cost is <mineral cost difference> * 2.
+Positive upgrade cost is also halved by Nano Factory, as before.
+
+
+Version 24
+==================================================
+
+Factions
+--------------------------------------------------
+
+Reverted back to one initial technology for everybody.
+Rearranged initial technologies to give Psych to -2 POLICE and Ecology to research impeded factions.
 
 
 AQUATIC faction bonus and Pirates

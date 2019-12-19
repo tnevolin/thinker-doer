@@ -65,6 +65,21 @@
 					<Add option="-s -static" />
 					<Add library="user32" />
 				</Linker>
+				<ExtraCommands>
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)Changelog.md&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)Details.md&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)License.txt&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)Readme.md&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)wtp_changelog.md&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)wtp_installation.md&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)wtp_readme.md&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)exe\terranx_mod.exe&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\thinker.ini&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\alphax.txt&quot; release\' />
+					<Add after='cmd /c xcopy /iy &quot;$(PROJECT_DIR)docs\factions&quot; release\factions' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; release\' />
+					<Mode after="always" />
+				</ExtraCommands>
 			</Target>
 		</Build>
 		<Compiler>
@@ -73,6 +88,7 @@
 		<ExtraCommands>
 			<Add after='cmd /c copy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; patch\' />
 			<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\thinker.ini&quot; patch\' />
+			<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\alphax.txt&quot; patch\' />
 		</ExtraCommands>
 		<Unit filename="src/game.cpp" />
 		<Unit filename="src/game.h" />
