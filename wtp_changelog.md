@@ -27,6 +27,10 @@ Supply Transport module now costs 12. It is now less appealing to spam crawlers/
 
 Removed Infantry Probe Team.
 
+ #ABILITIES
++Super Former,           3, EcoEng2,  Super,     000000010111, Terraform rate doubled
++Fungicide Tanks,        1, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
++Clean Reactor,         32, BioEng,   Clean,     000000111111, Requires no support
 
 Upgrade cost
 --------------------------------------------------

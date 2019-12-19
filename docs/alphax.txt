@@ -500,7 +500,7 @@ Resonance 8 Armor,   8-Res,       8, 1,11, Disable,
 ;          100000000000 = Only allowed on probe teams
 ;
 #ABILITIES
-Super Former,          32, EcoEng2,  Super,     000000010111, Terraform rate doubled
+Super Former,           3, EcoEng2,  Super,     000000010111, Terraform rate doubled
 Deep Radar,             0, MilAlg,   ,          010000111111, Sees 2 spaces
 Cloaking Device,        1, Disable,  Cloaked,   000001111001, Invisible; Ignores ZOCs
 Amphibious Pods,        1, DocInit,  Amphibious,000000001001, Attacks from ship
@@ -513,10 +513,10 @@ Comm Jammer,            1, InfNet,   ECM,       000010111001, +50% vs. fast unit
 Antigrav Struts,        2, Gravity,  Grav,      000000111001, +1 movement rate (or +Reactor*2 for Air)
 Empath Song,           64, Bioadap,  Empath,    000010001111, +50% attack vs. Psi
 Polymorphic Encryption, 1, Algor,    Secure,    000000111111, x2 cost to subvert
-Fungicide Tanks,       16, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
+Fungicide Tanks,        1, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
 High Morale,            1, Disable,  Trained,   000000001111, Gains morale upgrade
 Heavy Artillery,        1, Poly,     Artillery, 000010001001, Bombards
-Clean Reactor,         64, BioEng,   Clean,     000000111111, Requires no support
+Clean Reactor,         32, BioEng,   Clean,     000000111111, Requires no support
 Blink Displacer,        4, Matter,   Blink,     000000001111, Bypass base defenses
 Hypnotic Trance,       32, Brain,    Trance,    000010111111, +50% defense vs. Psi
 Heavy Transport,        1, Disable,  Heavy,     000100100111, +50% transport capacity
