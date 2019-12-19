@@ -3,7 +3,7 @@
 #include "game.h"
 #include "move.h"
 #include "tech.h"
-#include "prototype.h"
+#include "wtp.h"
 
 const char* ac_alpha = "ac_mod\\alphax";
 const char* ac_help = "ac_mod\\helpx";

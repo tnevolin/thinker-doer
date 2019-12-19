@@ -1,4 +1,4 @@
-#include "prototype.h"
+#include "wtp.h"
 
 /**
 Prototype cost calculation.

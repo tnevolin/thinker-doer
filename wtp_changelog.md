@@ -4,8 +4,6 @@ Version 25
 TODO
 --------------------------------------------------
 
-Rethink cost of non combat units and abilities in light of upgraded reactors.
-
 First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
