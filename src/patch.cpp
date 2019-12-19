@@ -831,6 +831,38 @@ void patch_collateral_damage_value(int collateral_damage_value)
 
 }
 
+/**
+Disables AQUATIC bonus minerals.
+*/
+void patch_disable_aquatic_bonus_minerals()
+{
+    int disable_aquatic_bonus_minerals_bytes_length = 0x1;
+
+    /*
+    inc     esi
+    */
+    byte old_disable_aquatic_bonus_minerals_bytes[] =
+        { 0x46 }
+    ;
+
+    /*
+    nop
+    */
+    byte new_disable_aquatic_bonus_minerals_bytes[] =
+        { 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x004E7604,
+        disable_aquatic_bonus_minerals_bytes_length,
+        old_disable_aquatic_bonus_minerals_bytes,
+        new_disable_aquatic_bonus_minerals_bytes
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -995,6 +1027,14 @@ bool patch_setup(Config* cf) {
     if (cf->collateral_damage_value >= 0)
     {
         patch_collateral_damage_value(cf->collateral_damage_value);
+
+    }
+
+    // patch disable_aquatic_bonus_minerals
+
+    if (cf->disable_aquatic_bonus_minerals)
+    {
+        patch_disable_aquatic_bonus_minerals();
 
     }
 

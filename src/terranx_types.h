@@ -6,7 +6,7 @@ struct BASE
 {
     short x;
     short y;
-    char faction_id;
+    char faction_id;                        // +0x4
     char faction_id_former;
     char pop_size;
     char assimilation_turns_left;
@@ -17,7 +17,7 @@ struct BASE
     char name[25];
     short unk_x_coord;
     short unk_y_coord;
-    int status_flags;
+    int status_flags;                       // +0x26
     int event_flags;
     int governor_flags;
     int nutrients_accumulated;
@@ -26,13 +26,13 @@ struct BASE
     int eco_damage;
     int queue_size;
     int queue_items[10];
-    int worked_tiles;
+    int worked_tiles;                       // +0x54
     int specialist_total;
     int pad3;
     int pad4;
     int pad5;
     char facilities_built[12];
-    int mineral_surplus_final;
+    int mineral_surplus_final;              // +0x74
     int minerals_accumulated_2;
     int pad6;
     int pad7;
@@ -41,7 +41,7 @@ struct BASE
     int nutrient_intake;
     int mineral_intake;
     int energy_intake;
-    int unused_intake;
+    int unused_intake;                      // +0x98
     int nutrient_intake_2;
     int mineral_intake_2;
     int energy_intake_2;
@@ -49,15 +49,15 @@ struct BASE
     int nutrient_surplus;
     int mineral_surplus;
     int energy_surplus;
-    int unused_surplus;
+    int unused_surplus;                     // +0xB8
     int nutrient_inefficiency;
     int mineral_inefficiency;
     int energy_inefficiency;
     int unused_inefficiency;
     int nutrient_consumption;
     int mineral_consumption;
-    int energy_consumption;
-    int unused_consumption;
+    int energy_consumption;                 // +0xD4
+    int unused_consumption;                 // +0xD8
     int economy_total;
     int psych_total;
     int labs_total;
@@ -171,7 +171,7 @@ struct FactMeta
     char scientist_name[24];
     char assistant_city[24];
     char pad_2[176];
-    int rule_tech_selected;
+    int rule_tech_selected; // +0x4D4
     int rule_morale;
     int rule_research;
     int rule_drone;
@@ -184,7 +184,7 @@ struct FactMeta
     int rule_psi;
     int rule_sharetech;
     int rule_commerce;
-    int rule_flags;
+    int rule_flags;         // +0x508
     int faction_bonus_count;
     int faction_bonus_id[8];
     int faction_bonus_val1[8];

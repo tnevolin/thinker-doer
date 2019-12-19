@@ -121,6 +121,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->collateral_damage_value = atoi(value);
     }
+    else if (MATCH("wtp", "disable_aquatic_bonus_minerals"))
+    {
+        cf->disable_aquatic_bonus_minerals = (atoi(value) == 0 ? false : true);
+    }
     // Thinker default case
     else
     {

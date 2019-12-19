@@ -10,8 +10,6 @@ I should limit refund with x2 or x1.
 
 Rethink cost of non combat units and abilities in light of upgraded reactors.
 
-Remove +1 mineral AQUATIC faction advantage.
-
 Make unit promotion probability same for all ranks.
 Make unit promotion probability very low or dependent on number of victories or toughness of victories.
 
@@ -20,6 +18,14 @@ Make artillery duel use armor as well.
 First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
+
+
+AQUATIC faction bonus and Pirates
+--------------------------------------------------
+
+Removed +1 mineral AQUATIC faction bonus.
+Reverted Pirates -3 SUPPORT penalty that was there earlier to neutralize their mineral bonus.
+Gave Pirates +1 POLICE. Now they start with 0 POLICE to help their accelerated growth in mineral deficit.
 
 
 Removed all hurry thresholds

@@ -111,6 +111,7 @@ struct Config {
     int tachyon_field_bonus = 0;
     bool collateral_damage_defender_reactor = false;
     int collateral_damage_value = 3;
+    bool disable_aquatic_bonus_minerals = false;
 };
 
 /*
