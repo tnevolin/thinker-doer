@@ -17,6 +17,7 @@ int* tx_total_num_bases = (int*)0x9A64CC;
 int* tx_total_num_vehicles = (int*)0x9A64C8;
 int* tx_random_seed = (int*)0x949878;
 int* tx_map_toggle_flat = (int*)0x94988C;
+int* tx_map_area = (int*)0x949884;
 int* tx_map_area_sq_root = (int*)0x949888;
 int* tx_map_axis_x = (int*)0x949870;
 int* tx_map_axis_y = (int*)0x949874;

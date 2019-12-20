@@ -13,14 +13,12 @@ void init_values(int fac) {
 }
 
 /**
-Returns tech level recursively.
+Calculates tech level recursively.
 */
-int tech_level(int id)
-{
+int tech_level(int id) {
     if (id < 0 || id > TECH_TranT)
     {
         return 0;
-
     }
     else
     {
@@ -28,49 +26,50 @@ int tech_level(int id)
         int v2 = tech_level(tx_techs[id].preq_tech2);
 
         return max(v1, v2) + 1;
-
     }
-
 }
 
+/**
+Calculates tech cost.
+*/
 int tech_cost(int fac, int tech) {
     assert(fac >= 0 && fac < 8);
-    Faction* f = &tx_factions[fac];
     FactMeta* m = &tx_factions_meta[fac];
     int level = 1;
-    int owned = 0;
-    int links = 0;
 
     if (tech >= 0) {
         level = tech_level(tech);
-        for (int i=1; i<8; i++) {
-            if (i != fac && f->diplo_status[i] & DIPLO_COMMLINK) {
-                links |= 1 << i;
-            }
-        }
-        owned = __builtin_popcount(tx_tech_discovered[tech] & links);
     }
-    double base = 3 * pow(level, 3) + 117 * level;
-    double dw;
-    double cost = base * *tx_map_area_sq_root / 56
-        * m->rule_techcost / 100
-        * (10 - min(5, max(-5, f->SE_research))) / 10
-        * (2 * min(10, max(1, f->tech_ranking/2)) + 1) / 21
+
+    double previous_level = (double)(level - 1);
+
+    double endgame_linear_growth = 450.0 * ((double)(*tx_map_area) / 3200.0);
+
+    double base = 20.0 + min(50.0 * previous_level * previous_level, endgame_linear_growth * previous_level);
+
+    double cost =
+        base
+        * (double)m->rule_techcost / 100.0
         * (*tx_scen_rules & RULES_TECH_STAGNATION ? 1.5 : 1.0)
-        * tx_basic->rules_tech_discovery_rate / 100
-        * (owned > 0 ? (owned > 1 ? 0.75 : 0.85) : 1.0);
+        * (double)tx_basic->rules_tech_discovery_rate / 100.0
+    ;
+
+    double dw;
 
     if (is_human(fac)) {
-        dw = (1.0 + 0.1 * (*tx_diff_level +
-            (*tx_diff_level < DIFF_LIBRARIAN ? 1 : 0) - DIFF_LIBRARIAN));
-    } else {
-        dw = (1.0 + 0.1 * (tx_cost_ratios[*tx_diff_level] - 10));
+        dw = 1.0 + 0.1 * (10.0 - tx_cost_ratios[*tx_diff_level]);
     }
+    else {
+        dw = 1.0;
+    }
+
     cost *= dw;
-    debug("tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %d %s\n", *tx_current_turn, fac,
-        base, dw, cost, level, owned, tech, (tech >= 0 ? tx_techs[tech].name : NULL));
+
+    debug("tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %s\n", *tx_current_turn, fac,
+        base, dw, cost, level, tech, (tech >= 0 ? tx_techs[tech].name : NULL));
 
     return max(2, (int)cost);
+
 }
 
 HOOK_API int tech_rate(int fac) {

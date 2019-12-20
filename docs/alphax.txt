@@ -34,7 +34,7 @@
 8,       ; Max airdrop range w/o orbital insertion
 10,      ; Nutrient cost multiplier
 10,      ; Minerals cost multiplier
- 50,     ; Technology discovery rate as a percentage of standard
+100,     ; Technology discovery rate as a percentage of standard
 1,       ; Limits mineral increase for mine without road in square
 -1,      ; Nutrient effect in mine square (0 or -1)
 5,       ; Minimum base size to support specialists

@@ -22,6 +22,7 @@ extern int* tx_total_num_bases;
 extern int* tx_total_num_vehicles;
 extern int* tx_random_seed;
 extern int* tx_map_toggle_flat;
+extern int* tx_map_area;
 extern int* tx_map_area_sq_root;
 extern int* tx_map_axis_x;
 extern int* tx_map_axis_y;
