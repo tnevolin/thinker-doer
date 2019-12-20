@@ -12,14 +12,25 @@ void init_values(int fac) {
     }
 }
 
-int tech_level(int id, int lvl) {
-    if (id < 0 || id > TECH_TranT || lvl >= 20) {
-        return lvl;
-    } else {
-        int v1 = tech_level(tx_techs[id].preq_tech1, lvl + 1);
-        int v2 = tech_level(tx_techs[id].preq_tech2, lvl + 1);
-        return max(v1, v2);
+/**
+Returns tech level recursively.
+*/
+int tech_level(int id)
+{
+    if (id < 0 || id > TECH_TranT)
+    {
+        return 0;
+
     }
+    else
+    {
+        int v1 = tech_level(tx_techs[id].preq_tech1);
+        int v2 = tech_level(tx_techs[id].preq_tech2);
+
+        return max(v1, v2) + 1;
+
+    }
+
 }
 
 int tech_cost(int fac, int tech) {
@@ -31,7 +42,7 @@ int tech_cost(int fac, int tech) {
     int links = 0;
 
     if (tech >= 0) {
-        level = tech_level(tech, 0);
+        level = tech_level(tech);
         for (int i=1; i<8; i++) {
             if (i != fac && f->diplo_status[i] & DIPLO_COMMLINK) {
                 links |= 1 << i;
