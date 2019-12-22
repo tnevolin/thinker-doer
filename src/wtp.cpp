@@ -20,11 +20,6 @@ Multiply by ability factor or add ability flat cost
 ability bytes 0-3 is unit cost factor
 ability bytes 4-7 is unit cost flat addition
 
-All fractional factors are turned into whole rational fractions.
-For example, ability with cost 1 multiplies unit cost by 1.25. This is coded in formula as multiplication by 5/4.
-
-All divisions are done after multiplications. This is to minimize an effect of integer rounding on intermediary steps.
-
 Special rules:
 Colony foil/cruiser costs same as infantry/speeder.
 Former foil/cruiser costs same as infantry/speeder.
@@ -60,11 +55,11 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     // get Fission reactor cost factor
 
-    int fission_reactor_cost_factor = conf.reactor_cost_factors[REC_FISSION - 1];
+    double fission_reactor_cost_factor = (double)conf.reactor_cost_factors[REC_FISSION - 1];
 
     // get reactor cost factor
 
-    int reactor_cost_factor = conf.reactor_cost_factors[reactor_level - 1];
+    double reactor_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1];
 
     // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
 
@@ -72,19 +67,18 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     // get pieces cost
 
-    int chassis_cost = tx_chassis[chassis_id].cost;
-    int weapon_cost = tx_weapon[weapon_id].cost;
-    int armor_cost = tx_defense[armor_id].cost;
+    double chassis_cost = (double)tx_chassis[chassis_id].cost;
+    double weapon_cost = (double)tx_weapon[weapon_id].cost;
+    double armor_cost = (double)tx_defense[armor_id].cost;
 
     // select primary and secondary item cost
 
-    int primary_item_cost = max(weapon_cost, armor_cost);
-    int secondary_item_cost = min(weapon_cost, armor_cost);
+    double primary_item_cost = max(weapon_cost, armor_cost);
+    double secondary_item_cost = min(weapon_cost, armor_cost);
 
     // get abilities cost modifications
 
-    int abilities_cost_factor = 1;
-    int abilities_cost_divider = 1;
+    double abilities_cost_factor = 0;
     int abilities_cost_addition = 0;
     for (int ability_id = 0; ability_id < 32; ability_id++)
     {
@@ -98,8 +92,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
             if (ability_cost_factor > 0)
             {
-                abilities_cost_factor *= (4 + ability_cost_factor);
-                abilities_cost_divider *= 4;
+                abilities_cost_factor += (double)ability_cost_factor;
 
             }
 
@@ -120,34 +113,31 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     int cost =
         max
         (
-            minimal_cost,                           // minimal cost
+            // minimal cost
+            minimal_cost,
+            (int)
+            round
             (
                 (
-                    primary_item_cost * 2           // primary item true adjusted cost
+                    // primary item cost
+                    primary_item_cost
                     +
-                    secondary_item_cost             // secondary item true adjusted cost
-                    -
-                    1                               // scale adjustment to make Scout Patrol cost 1
+                    // secondary item cost scaled and halved
+                    (secondary_item_cost - 1.0) / 2.0
                 )
                 *
-                reactor_cost_factor                 // reactor cost factor
+                // chassis cost factor
+                (chassis_cost / 2.0)
                 *
-                chassis_cost
+                // abilities cost factor
+                (1.0 + 0.25 * abilities_cost_factor)
                 *
-                abilities_cost_factor
-            )
-            /
-            (
-                2                                     // unit base cost denominator
-                *
-                fission_reactor_cost_factor           // fission reactor cost factor
-                *
-                2                                     // chassis denominator
-                *
-                abilities_cost_divider                // abilities denominator
+                // reactor cost factor
+                (reactor_cost_factor / fission_reactor_cost_factor)
             )
             +
-            abilities_cost_addition                 // abilities flat cost
+            // abilities flat cost
+            abilities_cost_addition
         )
     ;
 

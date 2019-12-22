@@ -1,4 +1,4 @@
-Version 26
+Version 27
 ==================================================
 
 TODO
@@ -16,6 +16,14 @@ Make unit promotion probability very low or dependent on number of victories or 
 
 Make artillery duel use armor as well.
 
+Unit cost
+--------------------------------------------------
+
+Replaced round down with round normally.
+
+
+Version 26
+==================================================
 
 Bug fixes
 --------------------------------------------------
