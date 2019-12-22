@@ -1,4 +1,4 @@
-Version 25
+Version 26
 ==================================================
 
 TODO
@@ -8,11 +8,23 @@ First technology should be discoverable in 6-10 turns.
 Technology cost should not rise more than 10%
 Technology cost map size multiplier should be proportional to number of map squares.
 
+Round unit cost normally.
+Move reactors closer.
+
 Make unit promotion probability same for all ranks.
 Make unit promotion probability very low or dependent on number of victories or toughness of victories.
 
 Make artillery duel use armor as well.
 
+
+Bug fixes
+--------------------------------------------------
+
+Fixed combat ignore reactor for attacker.
+
+
+Version 25
+==================================================
 
 Units
 --------------------------------------------------

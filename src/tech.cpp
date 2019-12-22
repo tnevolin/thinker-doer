@@ -1,6 +1,5 @@
-
+#include <math.h>
 #include "tech.h"
-
 
 void init_values(int fac) {
     Faction* f = &tx_factions[fac];
@@ -31,6 +30,21 @@ int tech_level(int id) {
 
 /**
 Calculates tech cost.
+cost grows cubic from the beginning then linear.
+S  = 20                                     // fixed shift (first tech cost)
+C  = 0.025                                  // cubic coefficient
+B  = 120 * (<map area> / <normal map area>) // linear slope
+x0 = SQRT(B / (3 * C))                      // break point
+A  = C * x0 ^ 3 - B * x0                    // linear intercept
+x  = (<level> - 1) * 7
+
+cost = S +
+1.
+when x < x0 then
+C * x ^ 3
+2.
+else
+A + B * x
 */
 int tech_cost(int fac, int tech) {
     assert(fac >= 0 && fac < 8);
@@ -41,11 +55,14 @@ int tech_cost(int fac, int tech) {
         level = tech_level(tech);
     }
 
-    double previous_level = (double)(level - 1);
+    double S = 20.0;
+    double C = 0.025;
+    double B = 120 * (*tx_map_area / 3200.0);
+    double x0 = sqrt(B / (3 * C));
+    double A = C * x0 * x0 * x0 - B * x0;
+    double x = (level - 1) * 7;
 
-    double endgame_linear_growth = 450.0 * ((double)(*tx_map_area) / 3200.0);
-
-    double base = 20.0 + min(50.0 * previous_level * previous_level, endgame_linear_growth * previous_level);
+    double base = S + (x < x0 ? C * x * x * x : A + B * x);
 
     double cost =
         base

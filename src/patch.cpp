@@ -446,15 +446,29 @@ void patch_ignore_reactor_power_in_combat_processing()
     // Ignore reactor power in combat processing
     // set up both units firepower as if it were psi combat
 
-    int ignore_reactor_power_combat_bytes_length = 1;
+    // ignore defender reactor power
+
+    int ignore_defender_reactor_power_combat_bytes_length = 1;
 
     /* jl */
-    byte old_ignore_reactor_power_combat_bytes[] = { 0x7C };
+    byte old_ignore_defender_reactor_power_combat_bytes[] = { 0x7C };
 
     /* jmp */
-    byte new_ignore_reactor_power_combat_bytes[] = { 0xEB };
+    byte new_ignore_defender_reactor_power_combat_bytes[] = { 0xEB };
 
-    write_bytes(0x00506F90, ignore_reactor_power_combat_bytes_length, old_ignore_reactor_power_combat_bytes, new_ignore_reactor_power_combat_bytes);
+    write_bytes(0x00506F90, ignore_defender_reactor_power_combat_bytes_length, old_ignore_defender_reactor_power_combat_bytes, new_ignore_defender_reactor_power_combat_bytes);
+
+    // ignore attacker reactor power
+
+    int ignore_attacker_reactor_power_combat_bytes_length = 1;
+
+    /* jl */
+    byte old_ignore_attacker_reactor_power_combat_bytes[] = { 0x7C };
+
+    /* jmp */
+    byte new_ignore_attacker_reactor_power_combat_bytes[] = { 0xEB };
+
+    write_bytes(0x00506FF6, ignore_attacker_reactor_power_combat_bytes_length, old_ignore_attacker_reactor_power_combat_bytes, new_ignore_attacker_reactor_power_combat_bytes);
 
     // ignore reactor power in odds calculation
     // divide both HP and damage by reactor value
