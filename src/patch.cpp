@@ -443,32 +443,33 @@ Ignores reactor power multiplier in combat processing and odds calculations.
 */
 void patch_ignore_reactor_power_in_combat_processing()
 {
+// this is disabled now as it is taken care of by patch_firepower_multiplier()
     // Ignore reactor power in combat processing
     // set up both units firepower as if it were psi combat
 
     // ignore defender reactor power
 
-    int ignore_defender_reactor_power_combat_bytes_length = 1;
+//    int ignore_defender_reactor_power_combat_bytes_length = 1;
 
     /* jl */
-    byte old_ignore_defender_reactor_power_combat_bytes[] = { 0x7C };
+//    byte old_ignore_defender_reactor_power_combat_bytes[] = { 0x7C };
 
     /* jmp */
-    byte new_ignore_defender_reactor_power_combat_bytes[] = { 0xEB };
+//    byte new_ignore_defender_reactor_power_combat_bytes[] = { 0xEB };
 
-    write_bytes(0x00506F90, ignore_defender_reactor_power_combat_bytes_length, old_ignore_defender_reactor_power_combat_bytes, new_ignore_defender_reactor_power_combat_bytes);
+//    write_bytes(0x00506F90, ignore_defender_reactor_power_combat_bytes_length, old_ignore_defender_reactor_power_combat_bytes, new_ignore_defender_reactor_power_combat_bytes);
 
     // ignore attacker reactor power
 
-    int ignore_attacker_reactor_power_combat_bytes_length = 1;
+//    int ignore_attacker_reactor_power_combat_bytes_length = 1;
 
     /* jl */
-    byte old_ignore_attacker_reactor_power_combat_bytes[] = { 0x7C };
+//    byte old_ignore_attacker_reactor_power_combat_bytes[] = { 0x7C };
 
     /* jmp */
-    byte new_ignore_attacker_reactor_power_combat_bytes[] = { 0xEB };
+//    byte new_ignore_attacker_reactor_power_combat_bytes[] = { 0xEB };
 
-    write_bytes(0x00506FF6, ignore_attacker_reactor_power_combat_bytes_length, old_ignore_attacker_reactor_power_combat_bytes, new_ignore_attacker_reactor_power_combat_bytes);
+//    write_bytes(0x00506FF6, ignore_attacker_reactor_power_combat_bytes_length, old_ignore_attacker_reactor_power_combat_bytes, new_ignore_attacker_reactor_power_combat_bytes);
 
     // ignore reactor power in odds calculation
     // divide both HP and damage by reactor value
@@ -877,6 +878,105 @@ void patch_disable_aquatic_bonus_minerals()
 
 }
 
+/**
+Multiplies all unit firepower by given value.
+*/
+void patch_firepower_multiplier(int firepower_multiplier)
+{
+    int firepower_multiplier_bytes_length = 0xA0;
+
+    /*
+    0:  0f bf 87 32 28 95 00    movsx  eax,WORD PTR [edi+0x952832]
+    7:  33 d2                   xor    edx,edx
+    9:  8d 0c 40                lea    ecx,[eax+eax*2]
+    c:  8d 04 88                lea    eax,[eax+ecx*4]
+    f:  c1 e0 02                shl    eax,0x2
+    12: 8a 90 8d b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab88d]
+    18: c1 e2 04                shl    edx,0x4
+    1b: 8a 8a 68 ae 94 00       mov    cl,BYTE PTR [edx+0x94ae68]
+    21: 84 c9                   test   cl,cl
+    23: 7c 2f                   jl     0x54
+    25: 8b 55 f8                mov    edx,DWORD PTR [ebp-0x8]
+    28: 0f bf b2 32 28 95 00    movsx  esi,WORD PTR [edx+0x952832]
+    2f: 8d 14 76                lea    edx,[esi+esi*2]
+    32: 8d 34 96                lea    esi,[esi+edx*4]
+    35: 33 d2                   xor    edx,edx
+    37: c1 e6 02                shl    esi,0x2
+    3a: 8a 96 8e b8 9a 00       mov    dl,BYTE PTR [esi+0x9ab88e]
+    40: c1 e2 04                shl    edx,0x4
+    43: 8a 9a 80 f2 94 00       mov    bl,BYTE PTR [edx+0x94f280]
+    49: 84 db                   test   bl,bl
+    4b: 7c 07                   jl     0x54
+    4d: ba 01 00 00 00          mov    edx,0x1
+    52: eb 1b                   jmp    0x6f
+    54: 8b 55 f8                mov    edx,DWORD PTR [ebp-0x8]
+    57: 0f bf b2 32 28 95 00    movsx  esi,WORD PTR [edx+0x952832]
+    5e: 8d 14 76                lea    edx,[esi+esi*2]
+    61: 8d 34 96                lea    esi,[esi+edx*4]
+    64: c1 e6 02                shl    esi,0x2
+    67: 33 d2                   xor    edx,edx
+    69: 8a 96 8f b8 9a 00       mov    dl,BYTE PTR [esi+0x9ab88f]
+    6f: 84 c9                   test   cl,cl
+    71: 89 55 98                mov    DWORD PTR [ebp-0x68],edx
+    74: 7c 1c                   jl     0x92
+    76: 33 c9                   xor    ecx,ecx
+    78: 8a 8e 8e b8 9a 00       mov    cl,BYTE PTR [esi+0x9ab88e]
+    7e: c1 e1 04                shl    ecx,0x4
+    81: 8a 99 80 f2 94 00       mov    bl,BYTE PTR [ecx+0x94f280]
+    87: 84 db                   test   bl,bl
+    89: 7c 07                   jl     0x92
+    8b: bb 01 00 00 00          mov    ebx,0x1
+    90: eb 08                   jmp    0x9a
+    92: 33 db                   xor    ebx,ebx
+    94: 8a 98 8f b8 9a 00       mov    bl,BYTE PTR [eax+0x9ab88f]
+    9a: 8b 4d 1c                mov    ecx,DWORD PTR [ebp+0x1c]
+    9d: 89 5d 90                mov    DWORD PTR [ebp-0x70],ebx
+    */
+    byte old_firepower_multiplier_bytes[] =
+        { 0x0F, 0xBF, 0x87, 0x32, 0x28, 0x95, 0x00, 0x33, 0xD2, 0x8D, 0x0C, 0x40, 0x8D, 0x04, 0x88, 0xC1, 0xE0, 0x02, 0x8A, 0x90, 0x8D, 0xB8, 0x9A, 0x00, 0xC1, 0xE2, 0x04, 0x8A, 0x8A, 0x68, 0xAE, 0x94, 0x00, 0x84, 0xC9, 0x7C, 0x2F, 0x8B, 0x55, 0xF8, 0x0F, 0xBF, 0xB2, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x14, 0x76, 0x8D, 0x34, 0x96, 0x33, 0xD2, 0xC1, 0xE6, 0x02, 0x8A, 0x96, 0x8E, 0xB8, 0x9A, 0x00, 0xC1, 0xE2, 0x04, 0x8A, 0x9A, 0x80, 0xF2, 0x94, 0x00, 0x84, 0xDB, 0x7C, 0x07, 0xBA, 0x01, 0x00, 0x00, 0x00, 0xEB, 0x1B, 0x8B, 0x55, 0xF8, 0x0F, 0xBF, 0xB2, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x14, 0x76, 0x8D, 0x34, 0x96, 0xC1, 0xE6, 0x02, 0x33, 0xD2, 0x8A, 0x96, 0x8F, 0xB8, 0x9A, 0x00, 0x84, 0xC9, 0x89, 0x55, 0x98, 0x7C, 0x1C, 0x33, 0xC9, 0x8A, 0x8E, 0x8E, 0xB8, 0x9A, 0x00, 0xC1, 0xE1, 0x04, 0x8A, 0x99, 0x80, 0xF2, 0x94, 0x00, 0x84, 0xDB, 0x7C, 0x07, 0xBB, 0x01, 0x00, 0x00, 0x00, 0xEB, 0x08, 0x33, 0xDB, 0x8A, 0x98, 0x8F, 0xB8, 0x9A, 0x00, 0x8B, 0x4D, 0x1C, 0x89, 0x5D, 0x90 }
+    ;
+
+    /*
+    movsx  eax,WORD PTR [edi+0x952832]
+    xor    edx,edx
+    lea    ecx,[eax+eax*2]
+    lea    eax,[eax+ecx*4]
+    shl    eax,0x2
+    mov    edx,DWORD PTR [ebp-0x8]
+    movsx  esi,WORD PTR [edx+0x952832]
+    lea    edx,[esi+esi*2]
+    lea    esi,[esi+edx*4]
+    shl    esi,0x2
+    xor    edx,edx
+    mov    dl,BYTE PTR [esi+0x9ab88f]
+    push   edx
+    imul   edx,edx,0x1
+    mov    DWORD PTR [ebp-0x68],edx
+    pop    edx
+    xor    ebx,ebx
+    mov    bl,BYTE PTR [eax+0x9ab88f]
+    push   ebx
+    imul   ebx,ebx,0x1
+    mov    DWORD PTR [ebp-0x70],ebx
+    pop    ebx
+    mov    ecx,DWORD PTR [ebp+0x1c]
+    nop (many times)
+    */
+    byte new_firepower_multiplier_bytes[] =
+        { 0x0F, 0xBF, 0x87, 0x32, 0x28, 0x95, 0x00, 0x31, 0xD2, 0x8D, 0x0C, 0x40, 0x8D, 0x04, 0x88, 0xC1, 0xE0, 0x02, 0x8B, 0x55, 0xF8, 0x0F, 0xBF, 0xB2, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x14, 0x76, 0x8D, 0x34, 0x96, 0xC1, 0xE6, 0x02, 0x31, 0xD2, 0x8A, 0x96, 0x8F, 0xB8, 0x9A, 0x00, 0x52, 0x6B, 0xD2, (byte)firepower_multiplier, 0x89, 0x55, 0x98, 0x5A, 0x31, 0xDB, 0x8A, 0x98, 0x8F, 0xB8, 0x9A, 0x00, 0x53, 0x6B, 0xDB, (byte)firepower_multiplier, 0x89, 0x5D, 0x90, 0x5B, 0x8B, 0x4D, 0x1C, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00506F6D,
+        firepower_multiplier_bytes_length,
+        old_firepower_multiplier_bytes,
+        new_firepower_multiplier_bytes
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -984,7 +1084,14 @@ bool patch_setup(Config* cf) {
 
     if (cf->ignore_reactor_power_in_combat)
     {
+        // patch ignore reactor power in odds display only
+
         patch_ignore_reactor_power_in_combat_processing();
+
+        // patch ignore reactor power in combat processing
+        // patch firepower_multiplier
+
+        patch_firepower_multiplier(cf->firepower_multiplier);
 
     }
 

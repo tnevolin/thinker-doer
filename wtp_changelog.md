@@ -1,20 +1,34 @@
-Version 27
+Version 28
 ==================================================
 
 TODO
 --------------------------------------------------
 
-First technology should be discoverable in 6-10 turns.
-Technology cost should not rise more than 10%
-Technology cost map size multiplier should be proportional to number of map squares.
+Change combat formula to match WINNING odds EXACTLY!
 
-Round unit cost normally.
-Move reactors closer.
+Move reactors closer?
 
 Make unit promotion probability same for all ranks.
 Make unit promotion probability very low or dependent on number of victories or toughness of victories.
 
 Make artillery duel use armor as well.
+
+Work on healing rates. Like no 100% healing rates for CC.
+
+Combat mechanics
+--------------------------------------------------
+
+Added firepower multiplier parameter.
+
+
+Rules
+--------------------------------------------------
+
+Set Resonance Laser strength to 3.
+
+
+Version 27
+==================================================
 
 Unit cost
 --------------------------------------------------

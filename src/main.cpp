@@ -125,6 +125,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->disable_aquatic_bonus_minerals = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "firepower_multiplier"))
+    {
+        cf->firepower_multiplier = max(1, atoi(value));
+    }
     // Thinker default case
     else
     {
