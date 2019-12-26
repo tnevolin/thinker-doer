@@ -246,6 +246,75 @@ void write_bytes(int address, int length, byte old_bytes[], byte new_bytes[]) {
 // ========================================
 
 /**
+Fixes combat roll formula to match odds.
+*/
+void patch_combat_roll()
+{
+    int combat_roll_bytes_length = 0x36;
+
+    /*
+    0:  8b 75 ec                mov    esi,DWORD PTR [ebp-0x14]
+    3:  8d 46 ff                lea    eax,[esi-0x1]
+    6:  85 c0                   test   eax,eax
+    8:  7f 04                   jg     0xe
+    a:  33 ff                   xor    edi,edi
+    c:  eb 0a                   jmp    0x18
+    e:  e8 65 ce 13 00          call   0x13ce78
+    13: 99                      cdq
+    14: f7 fe                   idiv   esi
+    16: 8b fa                   mov    edi,edx
+    18: 8b 75 e4                mov    esi,DWORD PTR [ebp-0x1c]
+    1b: 8d 4e ff                lea    ecx,[esi-0x1]
+    1e: 85 c9                   test   ecx,ecx
+    20: 7f 04                   jg     0x26
+    22: 33 d2                   xor    edx,edx
+    24: eb 08                   jmp    0x2e
+    26: e8 4d ce 13 00          call   0x13ce78
+    2b: 99                      cdq
+    2c: f7 fe                   idiv   esi
+    2e: 3b fa                   cmp    edi,edx
+    30: 0f 8e 4e 04 00 00       jle    0x484
+    */
+    byte combat_roll_old_bytes[] =
+        { 0x8B, 0x75, 0xEC, 0x8D, 0x46, 0xFF, 0x85, 0xC0, 0x7F, 0x04, 0x33, 0xFF, 0xEB, 0x0A, 0xE8, 0x65, 0xCE, 0x13, 0x00, 0x99, 0xF7, 0xFE, 0x8B, 0xFA, 0x8B, 0x75, 0xE4, 0x8D, 0x4E, 0xFF, 0x85, 0xC9, 0x7F, 0x04, 0x33, 0xD2, 0xEB, 0x08, 0xE8, 0x4D, 0xCE, 0x13, 0x00, 0x99, 0xF7, 0xFE, 0x3B, 0xFA, 0x0F, 0x8E, 0x4E, 0x04, 0x00, 0x00 }
+    ;
+
+    /*
+    0:  8b 75 ec                mov    esi,DWORD PTR [ebp-0x14]
+    3:  83 fe 01                cmp    esi,0x1
+    6:  73 05                   jae    d <loc_1>
+    8:  be 01 00 00 00          mov    esi,0x1
+    0000000d <loc_1>:
+    d:  89 f7                   mov    edi,esi
+    f:  8b 75 e4                mov    esi,DWORD PTR [ebp-0x1c]
+    12: 83 fe 01                cmp    esi,0x1
+    15: 73 05                   jae    1c <loc_2>
+    17: be 01 00 00 00          mov    esi,0x1
+    0000001c <loc_2>:
+    1c: 01 fe                   add    esi,edi
+    1e: e8 66 ce 13 00          call   13ce89 <loc_2+0x13ce6d>
+    23: 99                      cdq
+    24: f7 fe                   idiv   esi
+    26: 39 fa                   cmp    edx,edi
+    28: 0f 83 50 04 00 00       jae    47e <loc_2+0x462>
+    ...
+    */
+    byte combat_roll_new_bytes[] =
+        { 0x8B, 0x75, 0xEC, 0x83, 0xFE, 0x01, 0x73, 0x05, 0xBE, 0x01, 0x00, 0x00, 0x00, 0x89, 0xF7, 0x8B, 0x75, 0xE4, 0x83, 0xFE, 0x01, 0x73, 0x05, 0xBE, 0x01, 0x00, 0x00, 0x00, 0x01, 0xFE, 0xE8, 0x66, 0xCE, 0x13, 0x00, 0x99, 0xF7, 0xFE, 0x39, 0xFA, 0x0F, 0x83, 0x50, 0x04, 0x00, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x005B29F8,
+        combat_roll_bytes_length,
+        combat_roll_old_bytes,
+        combat_roll_new_bytes
+    )
+    ;
+
+}
+
+/**
 Disables alien guaranteed technologies assignment.
 */
 void patch_alien_guaranteed_technologies()
@@ -1063,6 +1132,15 @@ bool patch_setup(Config* cf) {
     // ==============================
     // The Will to Power mod changes
     // ==============================
+
+    // patch combat roll
+    // internally configurable
+
+    if (cf->fix_combat_roll)
+    {
+        patch_combat_roll();
+
+    }
 
     // patch ALIEN guaranteed technologies
 
