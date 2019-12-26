@@ -1019,13 +1019,13 @@ void patch_firepower_multiplier(int firepower_multiplier)
     xor    edx,edx
     mov    dl,BYTE PTR [esi+0x9ab88f]
     push   edx
-    imul   edx,edx,0x1
+    imul   edx,edx,<firepower_multiplier>
     mov    DWORD PTR [ebp-0x68],edx
     pop    edx
     xor    ebx,ebx
     mov    bl,BYTE PTR [eax+0x9ab88f]
     push   ebx
-    imul   ebx,ebx,0x1
+    imul   ebx,ebx,<firepower_multiplier>
     mov    DWORD PTR [ebp-0x70],ebx
     pop    ebx
     mov    ecx,DWORD PTR [ebp+0x1c]
