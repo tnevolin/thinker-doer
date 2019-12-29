@@ -21,6 +21,7 @@ Combat mechanics
 Fixed combat rolls.
 Added firepower multiplier.
 Added firepower randomization.
+Odds dialog now display true winning odds.
 
 
 Version 28
