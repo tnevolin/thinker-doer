@@ -8,14 +8,16 @@ HOOK_API int proto_cost(int chassisTypeId, int weaponTypeId, int armorTypeId, in
 
 HOOK_API int upgrade_cost(int faction_id, int new_unit_id, int old_unit_id);
 
-HOOK_API HOOK_API int combat_roll
+HOOK_API int combat_roll
 (
-    int attacker_strength,
-    int defender_strength,
     int attacker_vehicle_offset,
     int defender_vehicle_offset,
-    int *attacker_firepower,
-    int *defender_firepower
+    int attacker_initial_health,
+    int defender_initial_health,
+    int attacker_strength,
+    int defender_strength,
+    int attacker_firepower,
+    int defender_firepower,
 )
 ;
 

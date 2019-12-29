@@ -209,12 +209,14 @@ Multipurpose combat roll function.
 */
 HOOK_API int combat_roll
 (
-    int attacker_strength,
-    int defender_strength,
     int attacker_vehicle_offset,
     int defender_vehicle_offset,
-    int *attacker_firepower,
-    int *defender_firepower
+    int attacker_initial_health,
+    int defender_initial_health,
+    int attacker_strength,
+    int defender_strength,
+    int attacker_firepower,
+    int defender_firepower,
 )
 {
     debug("combat_roll(attacker_strength=%d, defender_strength=%d, attacker_vehicle_offset=%d, defender_vehicle_offset=%d, *attacker_firepower, *defender_firepower)\n",
