@@ -246,6 +246,40 @@ void write_bytes(int address, int length, byte old_bytes[], byte new_bytes[]) {
 // ========================================
 
 /**
+Ignores reactor power multiplier in combat processing.
+*/
+void patch_ignore_reactor_power_in_combat_processing()
+{
+    // Ignore reactor power in combat processing
+    // set up both units firepower as if it were psi combat
+
+    // ignore defender reactor power
+
+    int ignore_defender_reactor_power_combat_bytes_length = 1;
+
+    /* jl */
+    byte old_ignore_defender_reactor_power_combat_bytes[] = { 0x7C };
+
+    /* jmp */
+    byte new_ignore_defender_reactor_power_combat_bytes[] = { 0xEB };
+
+    write_bytes(0x00506F90, ignore_defender_reactor_power_combat_bytes_length, old_ignore_defender_reactor_power_combat_bytes, new_ignore_defender_reactor_power_combat_bytes);
+
+    // ignore attacker reactor power
+
+    int ignore_attacker_reactor_power_combat_bytes_length = 1;
+
+    /* jl */
+    byte old_ignore_attacker_reactor_power_combat_bytes[] = { 0x7C };
+
+    /* jmp */
+    byte new_ignore_attacker_reactor_power_combat_bytes[] = { 0xEB };
+
+    write_bytes(0x00506FF6, ignore_attacker_reactor_power_combat_bytes_length, old_ignore_attacker_reactor_power_combat_bytes, new_ignore_attacker_reactor_power_combat_bytes);
+
+}
+
+/**
 Fixes combat roll formula to match odds.
 */
 void patch_combat_roll()
@@ -1002,6 +1036,12 @@ bool patch_setup(Config* cf) {
     // ==============================
     // The Will to Power mod changes
     // ==============================
+
+    if (cf->ignore_reactor_power_in_combat)
+    {
+        patch_ignore_reactor_power_in_combat_processing();
+
+    }
 
     // patch combat roll
 
