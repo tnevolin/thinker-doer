@@ -127,7 +127,11 @@ int handler(void* user, const char* section, const char* name, const char* value
     }
     else if (MATCH("wtp", "firepower_multiplier"))
     {
-        cf->firepower_multiplier = max(1, atoi(value));
+        cf->firepower_multiplier = min(10, max(1, atoi(value)));
+    }
+    else if (MATCH("wtp", "random_firepower"))
+    {
+        cf->random_firepower = (atoi(value) == 0 ? false : true);
     }
     // Thinker default case
     else

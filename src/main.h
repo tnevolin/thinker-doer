@@ -98,7 +98,6 @@ struct Config {
     int nutrient_bonus;
     int landmarks;
 //  SMACX The Will to Power Mod
-    bool fix_combat_roll = false;
     bool disable_alien_guaranteed_technologies = false;
     bool alternative_weapon_icon_selection_algorithm = false;
     bool ignore_reactor_power_in_combat = false;
@@ -114,6 +113,7 @@ struct Config {
     int collateral_damage_value = 3;
     bool disable_aquatic_bonus_minerals = false;
     int firepower_multiplier = 1;
+    bool random_firepower = false;
 };
 
 /*
