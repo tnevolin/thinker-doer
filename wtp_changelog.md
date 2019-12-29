@@ -19,6 +19,8 @@ Combat mechanics
 --------------------------------------------------
 
 Fixed combat rolls.
+Added firepower multiplier.
+Added firepower randomization.
 
 
 Version 28
