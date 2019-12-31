@@ -216,7 +216,7 @@ HOOK_API int combat_roll
     int attacker_strength,
     int defender_strength,
     int attacker_firepower,
-    int defender_firepower,
+    int defender_firepower
 )
 {
     debug("combat_roll(attacker_strength=%d, defender_strength=%d, attacker_vehicle_offset=%d, defender_vehicle_offset=%d, *attacker_firepower, *defender_firepower)\n",
@@ -232,33 +232,11 @@ HOOK_API int combat_roll
     UNIT attacker_unit = tx_units[tx_vehicles[attacker_vehicle_offset / sizeof(VEH)].proto_id];
     UNIT defender_unit = tx_units[tx_vehicles[defender_vehicle_offset / sizeof(VEH)].proto_id];
 
-    // get attacker weapon value and defender armor value
-
-    int attacker_weapon_value = tx_weapon[attacker_unit.weapon_type].offense_value;
-    debug("\tattacker_weapon_value=%d\n", attacker_weapon_value);
-    int defender_armor_value = tx_defense[defender_unit.armor_type].defense_value;
-    debug("\tdefender_armor_value=%d\n", defender_armor_value);
-
-    // determine ignoring reactor power
-
-    bool ignore_reactor_power = (attacker_weapon_value < 0 || defender_armor_value < 0) || conf.ignore_reactor_power_in_combat;
-    debug("\tignore_reactor_power=%d\n", ignore_reactor_power);
-
     // ATTACKER FIREPOWER
-
-    // get defender reactor power
-
-    int defender_reactor_power = defender_unit.reactor_type;
-    debug("\tdefender_reactor_power=%d\n", defender_reactor_power);
-
-    // calculate attacker base firepower
-
-    int attacker_base_firepower = ignore_reactor_power ? defender_reactor_power : 1;
-    debug("\tattacker_base_firepower=%d\n", attacker_base_firepower);
 
     // calculate attacker multiplied firepower
 
-    int attacker_multiplied_firepower = attacker_base_firepower * conf.firepower_multiplier;
+    int attacker_multiplied_firepower = attacker_firepower * conf.firepower_multiplier;
     debug("\tattacker_multiplied_firepower=%d\n", attacker_multiplied_firepower);
 
     // calculate attacker random firepower
@@ -266,35 +244,17 @@ HOOK_API int combat_roll
     int attacker_random_firepower = (conf.random_firepower ? (rand() % attacker_multiplied_firepower) + 1 : attacker_multiplied_firepower);
     debug("\tattacker_random_firepower=%d\n", attacker_random_firepower);
 
-    // store attacker firepower
-
-    *attacker_firepower = attacker_random_firepower;
-
     // DEFENDER FIREPOWER
-
-    // get attacker reactor power
-
-    int attacker_reactor_power = attacker_unit.reactor_type;
-    debug("\tattacker_reactor_power=%d\n", attacker_reactor_power);
-
-    // calculate defender base firepower
-
-    int defender_base_firepower = ignore_reactor_power ? attacker_reactor_power : 1;
-    debug("\tdefender_base_firepower=%d\n", defender_base_firepower);
 
     // calculate defender multiplied firepower
 
-    int defender_multiplied_firepower = defender_base_firepower * conf.firepower_multiplier;
+    int defender_multiplied_firepower = defender_firepower * conf.firepower_multiplier;
     debug("\tdefender_multiplied_firepower=%d\n", defender_multiplied_firepower);
 
     // calculate defender random firepower
 
     int defender_random_firepower = (conf.random_firepower ? (rand() % defender_multiplied_firepower) + 1 : defender_multiplied_firepower);
     debug("\tdefender_random_firepower=%d\n", defender_random_firepower);
-
-    // store defender firepower
-
-    *defender_firepower = defender_random_firepower;
 
     // ROUND OUTCOME
 

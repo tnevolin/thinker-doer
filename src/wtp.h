@@ -17,7 +17,7 @@ HOOK_API int combat_roll
     int attacker_strength,
     int defender_strength,
     int attacker_firepower,
-    int defender_firepower,
+    int defender_firepower
 )
 ;
 

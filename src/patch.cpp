@@ -351,7 +351,7 @@ void patch_combat_roll()
 
     // set call pointer to custom combat_roll function
 
-    write_call_ptr(0x005091A5 + 0x18, (int)combat_roll);
+    write_call_ptr(0x005091A5 + 0x20, (int)combat_roll);
 
 }
 
@@ -950,6 +950,276 @@ void patch_disable_aquatic_bonus_minerals()
 
 }
 
+/**
+Following methods modify repair rates.
+*/
+void patch_repair_minimal(int repair_minimal)
+{
+    int repair_minimal_bytes_length = 0x7;
+
+    /*
+    0:  c7 45 fc 01 00 00 00    mov    DWORD PTR [ebp-0x4],0x1
+    */
+    byte repair_minimal_bytes_old[] =
+        { 0xC7, 0x45, 0xFC, 0x01, 0x00, 0x00, 0x00 }
+    ;
+
+    /*
+    0:  c7 45 fc 01 00 00 00    mov    DWORD PTR [ebp-0x4],<repair_minimal>
+    */
+    byte repair_minimal_bytes_new[] =
+        { 0xC7, 0x45, 0xFC, (byte)repair_minimal, 0x00, 0x00, 0x00 }
+    ;
+
+    write_bytes
+    (
+        0x00526200,
+        repair_minimal_bytes_length,
+        repair_minimal_bytes_old,
+        repair_minimal_bytes_new
+    )
+    ;
+
+}
+void patch_repair_fungus(int repair_fungus)
+{
+    int repair_fungus_bytes_length = 0x7;
+
+    /*
+    0:  c7 45 fc 02 00 00 00    mov    DWORD PTR [ebp-0x4],0x2
+    */
+    byte repair_fungus_bytes_old[] =
+        { 0xC7, 0x45, 0xFC, 0x02, 0x00, 0x00, 0x00 }
+    ;
+
+    /*
+    0:  c7 45 fc 02 00 00 00    mov    DWORD PTR [ebp-0x4],<repair_fungus>
+    */
+    byte repair_fungus_bytes_new[] =
+        { 0xC7, 0x45, 0xFC, (byte)repair_fungus, 0x00, 0x00, 0x00 }
+    ;
+
+    write_bytes
+    (
+        0x00526261,
+        repair_fungus_bytes_length,
+        repair_fungus_bytes_old,
+        repair_fungus_bytes_new
+    )
+    ;
+
+}
+void patch_repair_friendly()
+{
+    int repair_friendly_bytes_length = 0x3;
+
+    /*
+    0:  ff 45 fc                inc    DWORD PTR [ebp-0x4]
+    */
+    byte repair_friendly_bytes_old[] =
+        { 0xFF, 0x45, 0xFC }
+    ;
+
+    /*
+    ...
+    */
+    byte repair_friendly_bytes_new[] =
+        { 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00526284,
+        repair_friendly_bytes_length,
+        repair_friendly_bytes_old,
+        repair_friendly_bytes_new
+    )
+    ;
+
+}
+void patch_repair_airbase()
+{
+    int repair_airbase_bytes_length = 0x3;
+
+    /*
+    0:  ff 45 fc                inc    DWORD PTR [ebp-0x4]
+    */
+    byte repair_airbase_bytes_old[] =
+        { 0xFF, 0x45, 0xFC }
+    ;
+
+    /*
+    ...
+    */
+    byte repair_airbase_bytes_new[] =
+        { 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x005262D4,
+        repair_airbase_bytes_length,
+        repair_airbase_bytes_old,
+        repair_airbase_bytes_new
+    )
+    ;
+
+}
+void patch_repair_bunker()
+{
+    int repair_bunker_bytes_length = 0x3;
+
+    /*
+    0:  ff 45 fc                inc    DWORD PTR [ebp-0x4]
+    */
+    byte repair_bunker_bytes_old[] =
+        { 0xFF, 0x45, 0xFC }
+    ;
+
+    /*
+    ...
+    */
+    byte repair_bunker_bytes_new[] =
+        { 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x005262F5,
+        repair_bunker_bytes_length,
+        repair_bunker_bytes_old,
+        repair_bunker_bytes_new
+    )
+    ;
+
+}
+void patch_repair_base(int repair_base)
+{
+    int repair_base_bytes_length = 0x10;
+
+    /*
+    0:  8b 45 fc                mov    eax,DWORD PTR [ebp-0x4]
+    3:  66 8b 8e 32 28 95 00    mov    cx,WORD PTR [esi+0x952832]
+    a:  40                      inc    eax
+    b:  33 d2                   xor    edx,edx
+    d:  89 45 fc                mov    DWORD PTR [ebp-0x4],eax
+    */
+    byte repair_base_bytes_old[] =
+        { 0x8B, 0x45, 0xFC, 0x66, 0x8B, 0x8E, 0x32, 0x28, 0x95, 0x00, 0x40, 0x33, 0xD2, 0x89, 0x45, 0xFC }
+    ;
+
+    /*
+    0:  66 8b 8e 32 28 95 00    mov    cx,WORD PTR [esi+0x952832]
+    7:  31 d2                   xor    edx,edx
+    9:  83 45 fc 01             add    DWORD PTR [ebp-0x4],0x1
+    ...
+    */
+    byte repair_base_bytes_new[] =
+        { 0x66, 0x8B, 0x8E, 0x32, 0x28, 0x95, 0x00, 0x31, 0xD2, 0x83, 0x45, 0xFC, (byte)repair_base, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0052632E,
+        repair_base_bytes_length,
+        repair_base_bytes_old,
+        repair_base_bytes_new
+    )
+    ;
+
+}
+void patch_repair_base_native(int repair_base_native)
+{
+    int repair_base_native_bytes_length = 0xB;
+
+    /*
+    0:  33 c9                   xor    ecx,ecx
+    2:  8a 8e 38 28 95 00       mov    cl,BYTE PTR [esi+0x952838]
+    8:  89 4d fc                mov    DWORD PTR [ebp-0x4],ecx
+    */
+    byte repair_base_native_bytes_old[] =
+        { 0x33, 0xC9, 0x8A, 0x8E, 0x38, 0x28, 0x95, 0x00, 0x89, 0x4D, 0xFC }
+    ;
+
+    /*
+    0:  83 45 fc 01             add    DWORD PTR [ebp-0x4],<repair_base_native>
+    ...
+    */
+    byte repair_base_native_bytes_new[] =
+        { 0x83, 0x45, 0xFC, (byte)repair_base_native, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00526376,
+        repair_base_native_bytes_length,
+        repair_base_native_bytes_old,
+        repair_base_native_bytes_new
+    )
+    ;
+
+}
+void patch_repair_base_facility(int repair_base_facility)
+{
+    int repair_base_facility_bytes_length = 0xB;
+
+    /*
+    0:  33 d2                   xor    edx,edx
+    2:  8a 96 38 28 95 00       mov    dl,BYTE PTR [esi+0x952838]
+    8:  89 55 fc                mov    DWORD PTR [ebp-0x4],edx
+    */
+    byte repair_base_facility_bytes_old[] =
+        { 0x33, 0xD2, 0x8A, 0x96, 0x38, 0x28, 0x95, 0x00, 0x89, 0x55, 0xFC }
+    ;
+
+    /*
+    0:  83 45 fc 01             add    DWORD PTR [ebp-0x4],<repair_base_facility>
+    */
+    byte repair_base_facility_bytes_new[] =
+        { 0x83, 0x45, 0xFC, (byte)repair_base_facility, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00526422,
+        repair_base_facility_bytes_length,
+        repair_base_facility_bytes_old,
+        repair_base_facility_bytes_new
+    )
+    ;
+
+}
+void patch_repair_nano_factory(int repair_nano_factory)
+{
+    int repair_nano_factory_bytes_length = 0xB;
+
+    /*
+    0:  33 c9                   xor    ecx,ecx
+    2:  8a 8e 38 28 95 00       mov    cl,BYTE PTR [esi+0x952838]
+    8:  89 4d fc                mov    DWORD PTR [ebp-0x4],ecx
+    */
+    byte repair_nano_factory_bytes_old[] =
+        { 0x33, 0xC9, 0x8A, 0x8E, 0x38, 0x28, 0x95, 0x00, 0x89, 0x4D, 0xFC }
+    ;
+
+    /*
+    0:  83 45 fc 01             add    DWORD PTR [ebp-0x4],<repair_nano_factory>
+    */
+    byte repair_nano_factory_bytes_new[] =
+        { 0x83, 0x45, 0xFC, (byte)repair_nano_factory, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00526540,
+        repair_nano_factory_bytes_length,
+        repair_nano_factory_bytes_old,
+        repair_nano_factory_bytes_new
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -1128,6 +1398,54 @@ bool patch_setup(Config* cf) {
     if (cf->disable_aquatic_bonus_minerals)
     {
         patch_disable_aquatic_bonus_minerals();
+
+    }
+
+    // patch repair rate
+
+    if (cf->repair_minimal != 1)
+    {
+        patch_repair_minimal(cf->repair_minimal);
+
+    }
+    if (cf->repair_fungus != 2)
+    {
+        patch_repair_fungus(cf->repair_fungus);
+
+    }
+    if (!cf->repair_friendly)
+    {
+        patch_repair_friendly();
+
+    }
+    if (!cf->repair_airbase)
+    {
+        patch_repair_airbase();
+
+    }
+    if (!cf->repair_bunker)
+    {
+        patch_repair_bunker();
+
+    }
+    if (cf->repair_base != 1)
+    {
+        patch_repair_base(cf->repair_base);
+
+    }
+    if (cf->repair_base_native != 10)
+    {
+        patch_repair_base_native(cf->repair_base_native);
+
+    }
+    if (cf->repair_base_facility != 1)
+    {
+        patch_repair_base_facility(cf->repair_base_facility);
+
+    }
+    if (cf->repair_nano_factory != 1)
+    {
+        patch_repair_nano_factory(cf->repair_nano_factory);
 
     }
 

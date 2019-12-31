@@ -133,6 +133,42 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->random_firepower = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "repair_minimal"))
+    {
+        cf->repair_minimal = min(10, max(0, atoi(value)));
+    }
+    else if (MATCH("wtp", "repair_fungus"))
+    {
+        cf->repair_fungus = min(10, max(0, atoi(value)));
+    }
+    else if (MATCH("wtp", "repair_friendly"))
+    {
+        cf->repair_friendly = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "repair_airbase"))
+    {
+        cf->repair_airbase = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "repair_bunker"))
+    {
+        cf->repair_bunker = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "repair_base"))
+    {
+        cf->repair_base = min(10, max(0, atoi(value)));
+    }
+    else if (MATCH("wtp", "repair_base_native"))
+    {
+        cf->repair_base_native = min(10, max(0, atoi(value)));
+    }
+    else if (MATCH("wtp", "repair_base_facility"))
+    {
+        cf->repair_base_facility = min(10, max(0, atoi(value)));
+    }
+    else if (MATCH("wtp", "repair_nano_factory"))
+    {
+        cf->repair_nano_factory = min(10, max(0, atoi(value)));
+    }
     // Thinker default case
     else
     {
