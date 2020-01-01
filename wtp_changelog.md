@@ -1,4 +1,4 @@
-Version 30
+Version 31
 ==================================================
 
 TODO
@@ -14,6 +14,15 @@ Make unit promotion probability very low or dependent on number of victories or 
 Make artillery duel use armor as well.
 
 Work on healing rates. Like no 100% healing rates for CC.
+
+Repair rates
+--------------------------------------------------
+
+Modified repair rates. Now they are very low.
+
+
+Version 30
+==================================================
 
 Repair rates
 --------------------------------------------------
