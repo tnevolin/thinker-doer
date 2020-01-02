@@ -469,7 +469,7 @@ void patch_calculate_odds()
 
     // disable odds fraction simplification
     // didn't decide whether I want to do it yet
-    // set some big value at 005080F7
+    // set some big value lower than 0x64 at 005080F7
 
 }
 
