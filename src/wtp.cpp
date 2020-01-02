@@ -505,11 +505,11 @@ HOOK_API void calculate_odds
 
     }
 
+    /*
     // calculate odds
 
     double odds = 1.0 / (1.0 / attacker_winning_probability - 1.0);
 
-    /*
     bool attacker_advantage = (odds >= 1.0);
     double normalized_odds = (attacker_advantage ? odds : 1.0 / odds);
 
@@ -551,10 +551,11 @@ HOOK_API void calculate_odds
     }
     */
 
-    // set odds with common denominator
+    // set attacker odd to attacker winning probability percentage
+    // set defender odd to 1 to disable fraction simplification
 
-    *defender_odd = 12;
-    *attacker_odd = (int)round(odds * (double)*defender_odd);
+    *attacker_odd = (int)round(attacker_winning_probability * 100.0);
+    *defender_odd = 1;
 
 }
 
