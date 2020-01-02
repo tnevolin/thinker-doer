@@ -76,6 +76,7 @@
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)exe\terranx_mod.exe&quot; release\' />
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\thinker.ini&quot; release\' />
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\alphax.txt&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\Script.txt&quot; release\' />
 					<Add after='cmd /c xcopy /iy &quot;$(PROJECT_DIR)docs\factions&quot; release\factions' />
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; release\' />
 					<Mode after="always" />
@@ -89,6 +90,7 @@
 			<Add after='cmd /c copy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; patch\' />
 			<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\thinker.ini&quot; patch\' />
 			<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\alphax.txt&quot; patch\' />
+			<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\Script.txt&quot; patch\' />
 		</ExtraCommands>
 		<Unit filename="src/game.cpp" />
 		<Unit filename="src/game.h" />
