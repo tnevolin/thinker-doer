@@ -315,29 +315,27 @@ void patch_combat_roll()
     ;
 
     /*
-    0:  8b 7d 90                mov    edi,DWORD PTR [ebp-0x70]
-    3:  57                      push   edi
-    4:  8b 7d 98                mov    edi,DWORD PTR [ebp-0x68]
-    7:  57                      push   edi
-    8:  8b 7d e4                mov    edi,DWORD PTR [ebp-0x1c]
-    b:  57                      push   edi
-    c:  8b 7d ec                mov    edi,DWORD PTR [ebp-0x14]
-    f:  57                      push   edi
-    10: 8b 7d a4                mov    edi,DWORD PTR [ebp-0x5c]
-    13: 57                      push   edi
-    14: 8b 7d a0                mov    edi,DWORD PTR [ebp-0x60]
-    17: 57                      push   edi
-    18: 8b 7d f8                mov    edi,DWORD PTR [ebp-0x8]
-    1b: 57                      push   edi
-    1c: 8b 7d fc                mov    edi,DWORD PTR [ebp-0x4]
-    1f: 57                      push   edi
-    20: e8 fc ff ff ff          call   21 <_main+0x21>
-    25: 83 c4 20                add    esp,0x20
-    28: 85 c0                   test   eax,eax
+    0:  8d bd 10 ff ff ff       lea    edi,[ebp-0xf0]
+    6:  57                      push   edi
+    7:  8b 7d a4                mov    edi,DWORD PTR [ebp-0x5c]
+    a:  57                      push   edi
+    b:  8b 7d a0                mov    edi,DWORD PTR [ebp-0x60]
+    e:  57                      push   edi
+    f:  8b 7d f8                mov    edi,DWORD PTR [ebp-0x8]
+    12: 57                      push   edi
+    13: 8b 7d fc                mov    edi,DWORD PTR [ebp-0x4]
+    16: 57                      push   edi
+    17: 8b 7d e4                mov    edi,DWORD PTR [ebp-0x1c]
+    1a: 57                      push   edi
+    1b: 8b 7d ec                mov    edi,DWORD PTR [ebp-0x14]
+    1e: 57                      push   edi
+    1f: e8 fc ff ff ff          call   20 <_main+0x20>
+    24: 83 c4 1c                add    esp,0x1c
+    27: 85 c0                   test   eax,eax
     ...
     */
     byte combat_roll_new_bytes[] =
-        { 0x8B, 0x7D, 0x90, 0x57, 0x8B, 0x7D, 0x98, 0x57, 0x8B, 0x7D, 0xE4, 0x57, 0x8B, 0x7D, 0xEC, 0x57, 0x8B, 0x7D, 0xA4, 0x57, 0x8B, 0x7D, 0xA0, 0x57, 0x8B, 0x7D, 0xF8, 0x57, 0x8B, 0x7D, 0xFC, 0x57, 0xE8, 0xFC, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x20, 0x85, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+        { 0x8D, 0xBD, 0x10, 0xFF, 0xFF, 0xFF, 0x57, 0x8B, 0x7D, 0xA4, 0x57, 0x8B, 0x7D, 0xA0, 0x57, 0x8B, 0x7D, 0xF8, 0x57, 0x8B, 0x7D, 0xFC, 0x57, 0x8B, 0x7D, 0xE4, 0x57, 0x8B, 0x7D, 0xEC, 0x57, 0xE8, 0xFC, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x1C, 0x85, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
 
     write_bytes
@@ -351,7 +349,7 @@ void patch_combat_roll()
 
     // set call pointer to custom combat_roll function
 
-    write_call_ptr(0x005091A5 + 0x20, (int)combat_roll);
+    write_call_ptr(0x005091A5 + 0x1f, (int)combat_roll);
 
 }
 

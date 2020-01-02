@@ -112,8 +112,6 @@ struct Config {
     bool collateral_damage_defender_reactor = false;
     int collateral_damage_value = 3;
     bool disable_aquatic_bonus_minerals = false;
-    int firepower_multiplier = 1;
-    bool random_firepower = false;
     int repair_minimal = 1;
     int repair_fungus = 2;
     bool repair_friendly = true;
@@ -123,6 +121,8 @@ struct Config {
     int repair_base_native = 10;
     int repair_base_facility = 10;
     int repair_nano_factory = 10;
+    bool alternative_combat_mechanics = false;
+    double alternative_combat_mechanics_loss_divider = 1.0;
 };
 
 /*

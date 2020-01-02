@@ -1,19 +1,16 @@
-Version 31
+Version 32
 ==================================================
 
-TODO
+Combat engine
 --------------------------------------------------
 
-Change combat formula to match WINNING odds EXACTLY!
+Introduced alternative combat mechanics. Thank you to dino for idea.
+Stronger unit emphasis is toned down now.
+At the same time vanilla combat round based functionality is preserved (bombardment, disengagement).
 
-Move reactors closer?
 
-Make unit promotion probability same for all ranks.
-Make unit promotion probability very low or dependent on number of victories or toughness of victories.
-
-Make artillery duel use armor as well.
-
-Work on healing rates. Like no 100% healing rates for CC.
+Version 31
+==================================================
 
 Repair rates
 --------------------------------------------------
@@ -606,4 +603,19 @@ Alien do not have default technologies anymore. You need to assign them technolo
 
 #USURPER
   TECH, PrPsych, ALIEN, 0, OFFENSE, 125, SOCIAL, +GROWTH, SOCIAL, -PLANET, SOCIAL, -INDUSTRY, SOCIAL, -POLICE
+
+
+TODO
+--------------------------------------------------
+
+Change combat formula to match WINNING odds EXACTLY!
+
+Move reactors closer?
+
+Make unit promotion probability same for all ranks.
+Make unit promotion probability very low or dependent on number of victories or toughness of victories.
+
+Make artillery duel use armor as well.
+
+Work on healing rates. Like no 100% healing rates for CC.
 

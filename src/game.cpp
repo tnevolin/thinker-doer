@@ -227,7 +227,7 @@ int defense_value(UNIT* u) {
 }
 
 int random(int n) {
-    return (n != 0 ? rand() % n : 0);
+    return (n >= 1 ? rand() % n : 0);
 }
 
 int wrap(int a) {

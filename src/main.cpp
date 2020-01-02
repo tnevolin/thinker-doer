@@ -125,14 +125,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->disable_aquatic_bonus_minerals = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "firepower_multiplier"))
-    {
-        cf->firepower_multiplier = min(10, max(1, atoi(value)));
-    }
-    else if (MATCH("wtp", "random_firepower"))
-    {
-        cf->random_firepower = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("wtp", "repair_minimal"))
     {
         cf->repair_minimal = min(10, max(0, atoi(value)));
@@ -168,6 +160,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "repair_nano_factory"))
     {
         cf->repair_nano_factory = min(10, max(0, atoi(value)));
+    }
+    else if (MATCH("wtp", "alternative_combat_mechanics"))
+    {
+        cf->alternative_combat_mechanics = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_combat_mechanics_loss_divider"))
+    {
+        cf->alternative_combat_mechanics_loss_divider = max(1.0, atof(value));
     }
     // Thinker default case
     else
