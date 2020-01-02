@@ -617,13 +617,9 @@ Alien do not have default technologies anymore. You need to assign them technolo
 TODO
 --------------------------------------------------
 
-Change combat formula to match WINNING odds EXACTLY!
-
 Make unit promotion probability very low or dependent on number of victories or toughness of victories.
 
 Make artillery duel use armor as well.
 
 Correct power display in odds display dialog. Now they do not ignore reactor power. They should if this option is on.
-
-Correct displayed odds. Make them somewhat simpler to interpret.
 
