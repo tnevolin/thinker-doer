@@ -565,7 +565,7 @@ Thought Control, Quantum, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,      
 Faction changes
 --------------------------------------------------
 
-All factions now have only one level 1 predesigned technology at start. 7 level one technologies are distributed among 14 original SMACX factions evenly to increase technology trading potential at start in random games.
+All factions now have only one L1 predesigned technology at start. Seven L1 technologies are distributed among 14 original SMACX factions evenly to increase technology trading potential at start in random games.
 
 All factions have POLICE decreased by 1. I.e. +1 POLICE becomes 0 POLICE, 0 POLICE becomes -1 POLICE, etc.
 

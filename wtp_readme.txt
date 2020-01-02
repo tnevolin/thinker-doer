@@ -25,11 +25,11 @@ Feature should do what it claims to. If it is impossible to make it work, such f
 Feature should not outright contradict or break game concepts. Example of game concept: build-your-own-unit design workshop. Example of the feature directly contradicting this concept: mixed components (resonance armor and such).
 
 Game flow and features generally should be understandable to people and have clear visual effect on the game and player choices. This doesn't mean they should resemble real life. They should be only what is expected of them by average game player. There should be no hidden elements or algorithms those are difficult to grasp and apply.
-Example: unit cost formula. In vanilla infantry attacker 10-1-1 unit costs 5. Given that what should average player expect same strength infantry defender 1-10-1 cost? Naturally something close to this in 4-6 range. Well, it is 20 in vanilla actually. This is definitely not expected.
+Example: unit cost formula. In vanilla infantry attacker 10-1-1 unit costs 5. With that in mind average player with previous Civ1/2 experience naturally would expect same strength infantry defender 1-10-1 cost the same. They would be shocked to discover that it is 20 in SMACX actually. This doesn't match player expectations.
 
 Overall game parameters configuration should not create an extremely overpowered or underpowered strategy. Each strategy should be viable at least at some circumstances according to this mod principles. This mod does not intent to "balance" anything but only to adjust some obvious favorite or underdog strategies. Overpowered stategy example: indestructible army.
 
-Being usable also means to come at the right time in research tree. Coming too early clutters game interface and takes space from other more needed features. Coming too lake causes unnecessary slowdown and frustration. This mod adjusts item appearence times to match faction development level.
+Being usable also means to come at the right time in research tree. Coming too early clutters game interface and takes space from other more needed features. Coming too late causes unnecessary slowdown and frustration. This mod adjusts item appearence times to match faction development level.
 
 Some items naturally come in sequence when each follower effectively obsolets its predecessor. Good example is weapons and armors. This mod tries to spread them evenly on a research scale so player can enjoy each for about same time. It also tries to link their corresponding technologies to assure they appear in right order. 
 
@@ -41,86 +41,113 @@ REARRANGING TECHNOLOGY TREE
 
 A lot of above changes require moving items and features up and down technology tree. Apparently, rearranging technology tree is inevitable. This may seem like a big change for users. Therefore I dedicate a whole section to explain my reasons.
 
-First of all, rearranging technology tree is not something unheard of. A lot of mods do it and produce quite playable experience. The trick is in accuracy and placement since handling a dependency tree is non trivial work.
+Rearranging technology tree is not something unheard of. A lot of mods do it and produce quite playable experience. The trick is in accuracy and placement since handling a dependency tree is non trivial work.
 
-SMACX futuristicly named technologies have no roots in real scientific history except maybe Fusion Power :). This is done, obviously, on purpose to highlight a sci-fi atmosphere. Same story is with other in game concepts, items, and features. Nobody can rationaly explain why technology has such prerequisites or why it allows certain game features. I agree that *some* technology-feature relations make sense but most do not. In this regard I believe fiddling with technology tree is an acceptable modding approach. One could memorize some game concepts after thousands of games, of course but I doubt this is the way to go. Most of the time I fing myself browsing help to understand which technology uncover withc feature. That is completely fine and that is what help is designed for.
+SMACX futuristicly named technologies have no roots in real scientific history except maybe Fusion Power :). This is done, obviously, on purpose to highlight a sci-fi atmosphere. Same story is with other in game concepts, items, and features. Nobody can rationaly explain why technology has such prerequisites or why it allows certain game features. I agree that *some* technology-feature relations make sense but most do not. In this regard I believe fiddling with technology tree is an acceptable modding approach. One could memorize some game concepts after thousands of games, of course but I doubt this is the way to go. Most of the time I fing myself browsing help to understand which technology uncover which feature. That is completely fine and that is what help is for.
 
-I tried to minimize technology tree changes to satisfy my modding needs only and to not get highwire about it. I selected one primary feature for each technology among those it uncovers. Such primary feature is the most memorized and most important technology association. In other words, player usually researches certain technology for its primary feature. Example: Doctrine: Air Power for needlejet chassis. I firmly kept such assisiations. Everything else might change. However, I also tried to keep modified tree as close as possible to vanilla one. Technologies may float but they do not go far from where they were originally. Like Biogenetics is still early game technology same as Advanced Spaceflight is late game one. I also tried to preserve secondary assosiations whenever possible to not mixup things too much.
+I tried to minimize technology tree changes to satisfy my modding needs only and to not get highwire about it. I selected one primary feature for each technology among those it uncovers. Such primary feature is the most memorized and most important technology association. In other words, player usually researches certain technology for its primary feature. Example: Doctrine: Air Power for needlejet chassis. I firmly kept such assisiations. Everything else might change. However, I also tried to keep modified tree as close as possible to vanilla one. Technologies may float but they do not go far from where they were originally. Like Biogenetics is still early game technology while Advanced Spaceflight is still late game one. I also tried to preserve secondary assosiations whenever possible to not mix things up too much.
 
 NOTE TO USERS
 I used my own selection of primary feature. If someone believes there should be a different primary association - let me know. I'll gladly substitute. After all, the technology is just a placeholder for features and can be replaced or even renamed as needed.
 
-I think I did good job on linking technologies. Vanilla technology level quite inaccurately predict technology appearance time. My tree is built with exactly 7 technologies per level. Each technology prerequisites are exactly from two below levels. This puts a pretty good timeline and value on a technology which is a great help for technology exchange. You know right away that any level 4 technology is clearly farther up the tree than any level 3 one - no need to look them up in datalink. Same way you understant approximate technology appearance time looking at its datalink description.
+I think I did good job on linking technologies. Vanilla technology level quite inaccurately predict technology appearance time. My tree is built with exactly 7 technologies per level. Each technology prerequisites are exactly from two below levels. This puts a pretty good timeline and value on a technology which is a great help for technology exchange. You know right away that any level 4 technology is clearly farther up the tree than any level 3 one - no need to look them up in datalink. Now it is easy to predict relative technology appearance time by its level.
 
 
-DESCRIPTION OF CHANGES
+COMBAT ENGINE
 ==================================================
 
-Attack/defense
+Reactor power does not multiply unit max power anymore. All units (conventional and native) have max power of 10 regardless of reactor.
+
+Round odds are proportional to unit corresponding strengths. That is a fix for vanilla which used incorrect formula.
+
+Alternative combat mechanics favors previous round winner generating longer winning streaks thus reducing battle winning probability skew. The parameter is configurable and can be turn off.
+
+Odds confirmation dialog now displays correct winning probability percentage. Vanilla odds numbers were cool but highly unusable without calculator not even mentioning they were incorrect to start with.
+
+
+HEALING RATES
+==================================================
+
+Healing rates are lowered to eliminate fast and instant healing. Parameters are configurable.
+
+Current settings:
+Field: 10% up to 80% regardless of location.
+Base/bunker/aribase: 10% up to 100%.
+Base with facility: +10%.
+SP for natives in base: +10%.
+Nano Factory: + 10%.
+
+
+BASE DEFENSIVE STRUCTURES
+==================================================
+
+Configurable parameters.
+
+Current values:
+Intrinsic base defense: 50%, configurable in alphax.txt.
+Perimeter Defense: 100%, configurable in thinker.ini.
+Tachion Field: +100%, configurable in thinker.ini.
+
+
+OTHER CHANGES
+==================================================
+
+Attack/defense adjustment
 --------------------------------------------------
 
 Overpowered strategy: Indestructible army.
 Cost/benefit imbalance: Conquering whole planet for near zero cost investment in army reinforcement.
-Fix: Balance attack/defense ratio, combat unit cost, military facility cost so that invader lose units conquering enemy bases and need constant resupply to advance further. From economical point of view invader should incur about 2-3 times bigger loss against PREPARED defense at the same technological level. Hefty price on conquering enemy bases makes non-stop conquering strategy not always a best choice. War related economical stagnation could be a too severe consequence to pay for expansion.
+Fix: adjust attack/defense ratio, combat unit costs, military facility costs so that invader lose units conquering enemy bases and need constant resupply to advance further. From economical point of view invader should incur about 2-3 times bigger loss against PREPARED defense of enemy at the same technological level. Hefty price on conquering enemy bases makes non-stop conquering strategy not always a best choice. War related economical stagnation could be a too severe consequence to pay for expansion.
+Technological advantage gradually decreases loss ratio. One still need the 50% stronger weapon along with artillery superiority to capture bases with TD without losses. This is an improvement comparing to vanilla where weapon technology advantage and artillery is not required at all.
 
-To support the point above weapon and armor rating in this mod go 1:1 until about end of the game. The top weapon is about 20% stronger than top armor. Not that this difference is important at the end game where faction power difference is too much to stop anybody with anything.
-Weapon and armor strengths were redone to resemble Civ 1/2 slow exponential progression. Indeed, I cannot imagine why developers would left such weird weapon strength progression as 12-13-16. Whereas it is completely easy to correct it to normal looking one 12-14-16 by just changing text configuration. I've adjusted other weapon strenghts too to make their progression look more exponential as it should be. Each next level item is about 25% stronger.
+To support the point above weapon and armor rating in this mod go 1:1 until about end of the game. The top weapon is about 20% stronger than top armor. Not that this difference is important at the end game where winned is essentially determined already. This is the point of this mod: let factions effectivelly defend themselves throughout the game and do not crack under slightest pressure in the middle ages.
+Weapon and armor strengths were redone to resemble Civ 1/2 slow exponential progression. Indeed, I cannot imagine why developers would left such weird weapon strength progression as 2-4-5 (?) or 12-13-16 (?). Whereas it is completely easy to correct it to normal growing progression by just changing text configuration. I've adjusted other weapon strenghts too to make their progression look more exponential as it should be. Each next level item is about 25% stronger starting from value 4 onwards. Unfortunately, early weapon/armor discoveries still chaotic in this way. Simple discovering strenght 2 weapon against strenght 1 armor is sudden 100% jump that is difficult to correct.
 
 NOTE TO USERS
 Large number of conventional weapon items (12) in the game presents two potential improvement areas.
-First, one should experience war conflict in each of 12 first technology levels to enjoy each and every weapon/armor item. This is practically impossible and, therefore, big part of weapon/armor items is inevitable skipped. It does not contradict my principle as each one can still be used over the course of multiple games. Yet, if anyone believe there are too many of them, I can reduce number of weapons to 8 or something.
-Second, even with that slow progression or 25% a piece, 12 of them bring strength to 30 for the latest one. That in turn brings their cost to 60+ rows of minerals for best reactor. Such cost increase doesn't seem to be necessary as about half of items are not even get prototyped anyway due to quick research succession (see previous note). Game war element is still enough variative with lesser number of weapon item. After all there are plenty of other war strategy related features: abilities, facitilies, chassis, delivery mechanisms, natives, etc. Reducing number of weapon/armor items does not reduce strategical richness but does reduce unit cost climbing to exorbitant values. Think about it.
+One should experience war conflict in each of 12 first technology levels to enjoy each and every weapon/armor item. This is practically impossible and, therefore, big part of weapon/armor items is inevitable unused. It does not contradict my principle as each one can still be used over the course of multiple games. Yet, if anyone believe there are too many of them, I can reduce number of weapons to 8 or something.
 
 
-Unit cost
+Unit cost (general discussion)
 --------------------------------------------------
 
 Great news! I've hacked into exe thanks to Induktio and his Thinker mod. That let me fulfil my long time dream of modifying unit cost calculation. Now it is much-Much-MUCH easier to understand unit cost. Both 6-1-1 and 1-6-1 infantry units now cost 6 rows of minerals. Imagine such simplicity! That was not like that in vanilla.
 Moreover, it completely removes a quadratic armor cost growth problem. High end mixed inrantry units now cost comparable to speeder and fully armored foil units are comparable to hovertank.
 
 Conventional combat unit cost calculation is redone to resemble Civ 1/2 unit costs. Unit base cost is defined by its primary statistics item cost. Pure infantry unit (attacker or defender) with lowest reactor costs exactly as its primary statistics item. Example: 4 weapon costs 4 => 4-1-1*1 unit costs 4. Same story with modules. Setting colony module cost to 6 makes (no armor) infantry colony to cost exactly 6!
-Faster chassis are slightly more expensive. Speeder, foil, needlejet and copter are 1.5 more expensive than infantry. Hovertank and gravship are 2.0 times more expensive than infantry. Mixed units (full weapon + full armor) are 50% more expensive. More advanced items are stronger but their price doesn't grow as fast as their strenght. Therefore, it is generally beneficial to use stronger items. Reactors increase unit cost 80% slower than they increase HP making units 20% more economically effective. Therefore, it is generally beneficial to use stronger reactors.
+Faster chassis are slightly more expensive. Speeder, foil, needlejet and copter are 1.5 more expensive than infantry. Hovertank and gravship are 2.0 times more expensive than infantry. Mixed units (full weapon + full armor) are 50% more expensive. More advanced items are stronger but their price doesn't grow as fast as their strenght. Therefore, it is generally beneficial to use stronger items.
 
-I appreciate Yitzi's attempt at adding flexibility to abilities cost. However, I don't see much value in it. It is too fine grained and too not visually clear to understand ability value. I've introduced just one additional ability pricing model instead: flat cost. That is for all abilities not improving or not related to weapon/armor values. I believe this is pretty enough.
-Conventional combat related abilities naturally improve weapon/armor values - unit fights as if it get stronger weapon/armor. Such abilities correctly increase unit price proportionally. Others have nothing to do with the wearing items like anti native improvements, all non combat improvements, deep radar, etc. I believe such abilities should be priced flat. That allows them to be used on beefed up units as well without paying hand and leg for that. Hypnotic Trance is one example. Why cannot I add it on a high end unit for the flat cost to protect them from enemy worm attacks? After all their worms are flat cost as well!
+Reactors decrease unit cost by about 20% each level. That applies to all units reducing late game multi-abilities units cost to bearable level.
+Another good news about this reactor decrease cost is that it is beneficial to upgrade units to higher reactor versions. They do not become stronger but player get 50% refund for negative cost upgrade! How cool is that?
+
+I appreciate Yitzi's attempt at adding flexibility to abilities cost. However, I don't see much value in it. It is too fine grained and too not visually clear to understand ability value. I've introduced just one additional ability pricing model instead: flat cost. That is for all abilities not improving or not related to weapon/armor values. I believe this is fair and enough to fix the problem with insane Hypnotic Trance cost for combat units.
+Conventional combat related abilities naturally improve weapon/armor values - unit fights as if it get stronger weapon/armor. Such abilities correctly increase unit price proportionally. Others have nothing to do with the wearing items like anti native improvements, all non combat improvements, deep radar, etc. I believe such abilities should be priced flat. That allows them to be used on beefed up units as well without sacrificint hand and leg. Hypnotic Trance is one example. Why cannot I add it on a high end unit for the flat cost to protect them from enemy worm attacks? After all their worms are flat cost as well!
 These two ability cost models can be used together. So one can configure ability to cost a proportion plust a flat cost if desired!
 
 Cheap colony pod allows fueling expansion with nutrients excess only and ignores any economical development whatsoever. Nutrient reach faction keeps stamping colony pods and fills up all available space exponentially. Not surprisingly, such simple strategy is also a most effective way to get economical advantage early in the game. Higher colony pod price put expansion speed in check of both nutrients and minerals production encouraging early terraforming and development. Now player needs to invest into base growth and terraforming in order to expand faster.
 
-Harvesting resources by crawler is a very lucrative investment. Harvesting 4 minerals from rocky mine pays for vanila crawler in 7.5 turns! Then it delivers 4 minerals each turn. That is just insane ROI. I suggest to price it as high as 80 minerals which brings its effectiveness closer to Genejack Factory. Even at this price it is still quite useful but it is not an ultimate and only strategy anymore. You would think thrice if you want to build a crawler just to extract 2 units of production.
+Harvesting resources by crawler is a very lucrative investment. Harvesting 4 minerals from rocky mine pays for vanila crawler in 7.5 turns! Then it delivers 4 minerals each turn. That is just insane ROI. I suggest to price it as high as 120 minerals which brings its effectiveness closer to Genejack Factory. Even at this price it is still quite useful but it is not a single ultimate strategy anymore. You would think thrice if you want to build a crawler just to extract 2 units of production.
 
-Native warfare should be slightly worse to conventional as they have other benefits. They ignore base defensive structures. They are naturally both full scale attacker and defender. Their price is fixed and is much lower comparing to fully equipped top level attacker-defender units. They do not require prototyping. IoD can transport. Sealurk can attack shore units. LoC does not need refueling and can capture bases. They all can repair up to 100% in fungus squares. They do not require maintenance while in fungus square. All together they are no brainer units and as such should be a little bit less effective to not become a superior choice. I've increased most native unit cost except spore launcher. Its damage is pathetic.
+Native warfare should be slightly worse to conventional as they have other benefits. They ignore base defensive structures. They are naturally both full scale attacker and defender. Their price is fixed and is much lower comparing to fully equipped top level attacker-defender units. They do not require prototyping. IoD can transport. Sealurk can attack shore units. LoC does not need refueling and can capture bases. They all can repair up to 100% in fungus squares. They do not require maintenance while in fungus square. All together they are no brainer units and as such should be a little bit less effective to not become a superior choice. I've increased most native unit cost except spore launcher to encourage its usage due pathetic damage.
 
-Exact cost formula.
 
-unit cost in mineral rows = [primary item true adjusted cost * 2 + secondary item true adjusted cost] / 2 / FissionRC * CC / 2 * (4 + PAC1) / 4 * (4 + PAC2) / 4 + FAC
+Unit cost (formula)
+--------------------------------------------------
 
-module true cost = weapon cost * Fission reactor cost factor
-weapon/armor true cost = weapon/armor cost * reactor cost factor
+unit cost in mineral rows = [<primary item cost> + (<secondary item cost> - 1) / 2] * <reactor cost factor> * <proportional abilities cost factors> + <flat abilities costs>
+(rounded normally)
 
-primary item = one with higher true cost
-secondary item = one with lower true cost
+primary item = higher cost module/weapon/armor
+secondary item = lower cost module/weapon/armor
 
-primary item true adjusted cost = primary item true cost
-secondary module true adjusted cost = (secondary item cost - 1) * corresponding reactor cost factor
-
-FissionRC = Fission reactor cost factor
-CC = chassis cost
-PAC = proportional ability cost factor for each ability if any
-FAC = flat ability cost for each ability if any
-
-Unit cost is a whole number rounded down. Programmatically all divisions goes after all multiplications to minimize rounding impact.
-After all roundings minimal cost is set to Reactor level. This seems to be checked somewhere else in the code. At least I see it complains for Fusion unit to be less than 2.
-
-NOTE TO USERS
-This makes cheapest speeder 1-1-2 unit to cost 1 (1.5 rounded down). This doesn't present any problem to me. After all you researched new technology that allows cheaper and faster exploration. However, if anyone 
+reactor cost factor is set in thinker.ini as a ratio of <reactor cost value from thinker.ini> / <Fission reactor cost value from thinker.ini>. So that Fission reactor cost factor is always 1.
 
 
 Weapon and armor value progression
 --------------------------------------------------
 
-Vanilla game has very weird code that selects regular conventional weapon icon based on its offensive value. There is nothing like that for any other item types (non regular-conventional weapons, armor, chassis, ability). Wery precise, specific, and meaningless piece of machinery.
-This is fixed now. Modders are free to set any offensive values to regular conventional weapons without breaking their respective icons.
+Vanilla game has very weird code that selects regular conventional weapon icon based on its offensive value. There is nothing like that for any other item types (non regular-conventional weapons, armor, chassis, ability). Wery precise, specific, and meaningless piece of programmatic machinery.
+This is fixed now. Modders are free to set any offensive values to regular conventional weapons without breaking their respective icons! Woo-hoo, thanks to me.
 
 With this in mind I was able to correct weapon strenght progression to smoothen it while keeping proper icons for each weapon.
 Here is the current game weapon and strength progression by technology levels:
@@ -133,16 +160,13 @@ Facility cost
 --------------------------------------------------
 
 Energy Bank = 6, Network Node = 6, Research Hospital = 9, Nanohospital = 18
-Cost is reduced slightly. They seem to be a pretty interesing facilities those don't get build early because of their price.
+Cost is reduced slightly for these. They seem to be a pretty interesing facilities not getting build early because of their price.
 
 Biology Lab = 4
 Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player insentive to build it before Network Node.
 
 Naval Yard = 5
 Reduced price to give player insentive to actually build it. It is priced as a combination of morale boosting and defensive facility. However, one usually needs morale boosting benefit at rich unit producing bases and defense benefit at weak distant ones - rarely both at once.
-
-Skunkworks = 20/6
-They are usually built just in few highly producing bases. Therefore, cost and maintainance should outweigh its rare use.
 
 Bioenhancement Center = 16/4
 Morale boosting facility for all unit realms. Together with other facilities it produces elite units. Should have very high cost and maintainance.
@@ -355,18 +379,13 @@ Centauri Genetics			+1m
 Aquatic faction advantage
 --------------------------------------------------
 
-Sea bases is an amazing and wonderful addition in SMACX comparing to ALL Civ games where ocean is just an obstacle to reach another continent. Balancing sea and land bases is a challenge, though. I like the way it is done now in SMAX. Sea bases are quite poor on minerals but rich on nutrients and energy especially with sea improvement facilities in SMAX. Assuming one build equal number of tidal harnesses and mining platforms base mineral yield is about half of its size before Adv. Eco. Eng. is discovered. This about 2-3 times lower comparing to land bases. However, nutrient excess makes them grow about 1.5-2 times faster than land bases. That patially compensates mineral shortage. Their energy surplus may be seen as additional compensation for low productivity as well as additional contribution to research. Even if that is not enough extra population gives you governorship and fuels faster expansion. Overall, I'd say they are definitely NOT inferior to land bases and probably even better. I always see sea factions or those expanding to sea advancint in overall power.
-
-Aquatic faction is given +1 mineral in shore tiles FOR FREE. This is an insane advantage. Effectively it triples mineral yield going from 0.5 of population to 1.5 of population. Sea terraforming is faster and more beneficial. Only some land tiles give you 3 nutrients or 3 energy. Sea squares are all like that. When land base growths to size 4 with about 5-7 mineral yield, aquatic sea base is already at size 7 producing +7 free minerals on top of their worker yield just because of the base size. If we count regular sea bases at least equal to land ones than aquatic sea bases are at least 2-3 times as better. Pirates AI always comes first or second in early game even with yield restrictions in place. They start booming exponentially when restriction are lifted. Something need to be done about it.
-
-Unfortunately, I cannot take their bonus yet. My solution is to give them -3 SUPPORT. This sucks some amount of minerals bringing them close to regular sea base. Even with this setting their bases are still slightly better as they keep outgrowing the support hurdle. However, their land bases would suffer more should they go there. So, I guess, this is more or less fine.
-I figured -4 SUPPORT would be to harsh on them from the beginning. They are still impacted by this threat, though, and should chose any -1 SUPPORT social choices wisely.
+I was able to remove AQUATIC +1 sea mineral advantage. Now they are back to normal and expected growth. They will be slow on start but they have 50-100 years of undisturbed development. Once their old bases are developped enought to stamp sea pods they explosivly expand but then other factions start barraging waters and set their sea colonies. Seems to be a good balance. However, aquatic factions still develop quite differently. That requires a lot of play testing.
 
 
 Forest
 --------------------------------------------------
 
-Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns. Its yield is comparable to the rocky mine. It spreads by itself. It has defensive bonus. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. In different versions of the game I tried these options: 1) set its terraforming time to 12, 2) set its terraforming time to 8 and reduce its production to 1-2-0. Second option appeals to me more. I believe forest is the always available option for mineral boost. With that in mind it should not provide any additional energy for free. You chose to have either cheap minerals or energy.
+Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
 
 Social engineering
@@ -395,14 +414,22 @@ About the same story with PROBE and Covert ops center. Even though it is just on
 Probe morale boosing technologies
 --------------------------------------------------
 
-Some vanilla technologies boost probe team morale for free. That makes all probe teams elite toward the end of the game. Err, what's the point in that if everybody gets it and this renders Covert Ops and PROBE ratings useless for probe team morale? I removed all such flags. Technologies do not improve probe team morale any more.
+Some vanilla technologies boost probe team morale for free. That makes all new probe teams elite toward the end of the game. Err, what's the point in that if everybody gets it and this renders Covert Ops and PROBE ratings useless for probe team morale? I removed all such flags. Technologies do not improve probe team morale any more.
 
 
-Alternative unit hurry cost formula and unit upgrade cost formula
+Unit hurry cost and unit upgrade cost
 --------------------------------------------------
 
 Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? Same story with unit upgrade cost. This one is, on the countrary, too cheap allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten these as well as disabling that exploit along the way.
 
 For now I've set unit hurry cost to be flat <minerals> x 4 value. The base upgrade cost now is an exact difference in hurry cost! Wow. Could anyone imagine game design could be that simple and transparent? :)
 Since higher reactors now do nothing but decrease unit cost player also gets REFUND when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :)
+
+
+Hurry cost penalty thresholds
+--------------------------------------------------
+
+Removed all hurry cost penalty thresholds. Never could grasp their strategical meaning since they do not affect course of the game as well. Let me know if anyone thinks otherwise.
+Now all hurry costs are flat x2 for facilities and x4 for units and projects.
+
 
