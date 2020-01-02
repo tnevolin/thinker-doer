@@ -1,3 +1,12 @@
+Version 33
+==================================================
+
+Displayed odds
+--------------------------------------------------
+
+Used common denominator of 12 to all odds.
+
+
 Version 32
 ==================================================
 
@@ -610,12 +619,11 @@ TODO
 
 Change combat formula to match WINNING odds EXACTLY!
 
-Move reactors closer?
-
-Make unit promotion probability same for all ranks.
 Make unit promotion probability very low or dependent on number of victories or toughness of victories.
 
 Make artillery duel use armor as well.
 
-Work on healing rates. Like no 100% healing rates for CC.
+Correct power display in odds display dialog. Now they do not ignore reactor power. They should if this option is on.
+
+Correct displayed odds. Make them somewhat simpler to interpret.
 

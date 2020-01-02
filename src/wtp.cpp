@@ -509,6 +509,7 @@ HOOK_API void calculate_odds
 
     double odds = 1.0 / (1.0 / attacker_winning_probability - 1.0);
 
+    /*
     bool attacker_advantage = (odds >= 1.0);
     double normalized_odds = (attacker_advantage ? odds : 1.0 / odds);
 
@@ -548,6 +549,12 @@ HOOK_API void calculate_odds
         *defender_odd = best_numerator;
 
     }
+    */
+
+    // set odds with common denominator
+
+    *defender_odd = 12;
+    *attacker_odd = (int)round(odds * (double)*defender_odd);
 
 }
 
