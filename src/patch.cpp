@@ -467,10 +467,6 @@ void patch_calculate_odds()
 
     write_call_ptr(0x00508034 + 0x1f, (int)calculate_odds);
 
-    // disable odds fraction simplification
-    // didn't decide whether I want to do it yet
-    // set some big value lower than 0x64 at 005080F7
-
 }
 
 /**
