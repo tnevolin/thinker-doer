@@ -358,7 +358,7 @@ Calculates odds.
 */
 void patch_calculate_odds()
 {
-    // replace code
+    // replace calculate odds code
 
     int calculate_odds_bytes_length = 0xC3;
 
@@ -466,6 +466,10 @@ void patch_calculate_odds()
     // set call pointer to custom calculate_odds function
 
     write_call_ptr(0x00508034 + 0x1f, (int)calculate_odds);
+
+    // disable odds fraction simplification
+    // didn't decide whether I want to do it yet
+    // set some big value at 005080F7
 
 }
 
