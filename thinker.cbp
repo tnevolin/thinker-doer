@@ -70,9 +70,9 @@
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)Details.md&quot; release\' />
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)License.txt&quot; release\' />
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)Readme.md&quot; release\' />
-					<Add after='cmd /c copy &quot;$(PROJECT_DIR)wtp_changelog.md&quot; release\' />
-					<Add after='cmd /c copy &quot;$(PROJECT_DIR)wtp_installation.md&quot; release\' />
-					<Add after='cmd /c copy &quot;$(PROJECT_DIR)wtp_readme.md&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)wtp_changelog.txt&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)wtp_installation.txt&quot; release\' />
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)wtp_readme.txt&quot; release\' />
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)exe\terranx_mod.exe&quot; release\' />
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\thinker.ini&quot; release\' />
 					<Add after='cmd /c copy &quot;$(PROJECT_DIR)docs\alphax.txt&quot; release\' />
