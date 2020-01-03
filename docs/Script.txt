@@ -8254,8 +8254,8 @@ Proceed with the attack. You have your orders.
 #caption Security Chief
 #xs 440
 Our forces are ready to begin the assault, $TITLE0 $NAME1.
-Their winning probability is {$NUM0} %
-Shall I order them to proceed?
+^Their chances to win the battle are {$NUM0} %
+^Shall I order them to proceed?
 
 No. Call off the attack.
 Yes. Proceed as ordered.
@@ -8264,8 +8264,8 @@ Yes. Proceed as ordered.
 #caption Security Chief
 #xs 440
 Our forces are ready to begin the assault, $TITLE0 $NAME1.
-Taking damage into account, their odds are {$NUM0} %.
-Shall I order them to proceed?
+^Taking damage into account, their chances to win the battle are {$NUM0} %.
+^Shall I order them to proceed?
 
 No. Call off the attack.
 Yes. Proceed as ordered.
