@@ -29,7 +29,7 @@
 #RULES
 3,       ; Movement rate along roads
 2,       ; Nutrient intake requirement for citizens
-3,2      ; Numerator & Denominator for artillery fire damage
+5,1      ; Numerator & Denominator for artillery fire damage
 2,       ; Max artillery range (larger will break multiplayer)
 8,       ; Max airdrop range w/o orbital insertion
 10,      ; Nutrient cost multiplier
@@ -375,7 +375,7 @@ Cruiser,M1,   Destroyer,M1,  Cutter,M1,      Gunboat,M1,   6, 1, 0, 0, 4, 4, Doc
 Needlejet,M1, Penetrator,M1, Interceptor,M1, Tactical,M1,  8, 2, 2, 0, 1, 3, DocAir,   Thunderbolt,M1,    Sovereign,M1,
 Copter,M1,    Chopper,M1,    Rotor,M1,       Lifter,M1,    8, 2, 1, 0, 1, 3, MindMac,  Gunship,M1,        Warbird,M1,
 Gravship,M1,  Skybase,M1,    Antigrav,M1,    Skyfort,M1,   8, 2, 0, 0, 1, 4, Gravity,  Deathsphere,M1,    Doomwall,M1,
-Missile,M1,   Missile,M1,    Missile,M1,     Missile,M1,  12, 2, 1, 1, 0, 5, AGrav,    Missile,M1,        Missile,M1,
+Missile,M1,   Missile,M1,    Missile,M1,     Missile,M1,  12, 2, 1, 1, 0, 2, AGrav,    Missile,M1,        Missile,M1,
 
 ;
 ; Reactors

@@ -12,7 +12,7 @@
 
 #FUNGBOY
 The Cult of Planet, The Voice, Planet Cult, M, 1, Cha Dawn, M, 1, 1, 0, 0, 1, 
-  TECH, Ecology, WORMPOLICE, 0, SOCIAL, ++PLANET, SOCIAL, -INDUSTRY, SOCIAL, -ECONOMY, SOCIAL, -POLICE, FREEFAC, 35, UNIT, 8
+  TECH, Ecology, WORMPOLICE, 0, SOCIAL, ++PLANET, SOCIAL, -ECONOMY, SOCIAL, -POLICE, FREEFAC, 35, UNIT, 8
   Economics, Green, PLANET
   Values, Wealth, nil
   Cultist, Cultist

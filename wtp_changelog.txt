@@ -1,10 +1,32 @@
+Version 34
+==================================================
+
+Factions
+--------------------------------------------------
+Removed industry penalty from Cult of Planet. They are often develop very badly.
+#FUNGBOY
+  TECH, Ecology, WORMPOLICE, 0, SOCIAL, ++PLANET, SOCIAL, -ECONOMY, SOCIAL, -POLICE, FREEFAC, 35, UNIT, 8
+
+Rules
+--------------------------------------------------
+5,1      ; Numerator & Denominator for artillery fire damage
+
+Combat mechanics
+--------------------------------------------------
+alternative_combat_mechanics_loss_divider=3.0
+collateral_damage_value=0
+
+Chassis
+--------------------------------------------------
+Missile chassis cost = 2
+
 Version 33
 ==================================================
 
-Displayed odds
+Odds confirmation dialog
 --------------------------------------------------
 
-Used common denominator of 12 to all odds.
+Display battle winning probability now.
 
 
 Version 32
