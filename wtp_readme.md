@@ -158,6 +158,20 @@ Repair rates are lowered to eliminate fast and instant healing. Parameters are c
 * SP for fast repair natives in base: +10%.
 * Nano Factory: + 10%.
 
+# Unit hurry cost and unit upgrade cost
+
+Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? It is an opposite with unit upgrade cost. This one is, on the countrary, too cheap allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten both of them for simplicity and also prevent abovementioned exploit along the way.
+
+In this mod unit hurry cost is flat <mineral cost> x 4 value. The base upgrade cost now is an exact difference in hurry cost! Could anyone imagine game design could be that simple and transparent? :rofl:
+
+Since higher reactors now do nothing but decrease unit cost player also gets **REFUND** when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :)
+
+## Hurry cost penalty thresholds
+
+This mod removes all hurry cost penalty thresholds. I never could grasp their strategical meaning since they do not affect course of the game but add annoyance only and force me to use calculator. Let me know if anyone thinks otherwise.
+
+Now all hurry costs are flat x2 for facilities and x4 for units and projects.
+
 # Base intrinsic defense and defensive structures
 
 Base intrinsic defence raised to 50%. This is configurable in alphax.txt.
@@ -326,25 +340,7 @@ I was able to remove AQUATIC +1 sea mineral advantage. Now they are back to norm
 
 Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
-Probe morale boosing technologies
---------------------------------------------------
+## Probe morale boosing technologies
 
 Some vanilla technologies boost probe team morale for free. That makes all new probe teams elite toward the end of the game. Err, what's the point in that if everybody gets it and this renders Covert Ops and PROBE ratings useless for probe team morale? I removed all such flags. Technologies do not improve probe team morale any more.
-
-
-Unit hurry cost and unit upgrade cost
---------------------------------------------------
-
-Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? Same story with unit upgrade cost. This one is, on the countrary, too cheap allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten these as well as disabling that exploit along the way.
-
-For now I've set unit hurry cost to be flat <minerals> x 4 value. The base upgrade cost now is an exact difference in hurry cost! Wow. Could anyone imagine game design could be that simple and transparent? :)
-Since higher reactors now do nothing but decrease unit cost player also gets REFUND when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :)
-
-
-Hurry cost penalty thresholds
---------------------------------------------------
-
-Removed all hurry cost penalty thresholds. Never could grasp their strategical meaning since they do not affect course of the game as well. Let me know if anyone thinks otherwise.
-Now all hurry costs are flat x2 for facilities and x4 for units and projects.
-
 
