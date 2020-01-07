@@ -5,17 +5,21 @@ It is built on top of Thinker mod. Read the complete description of Thinker mod 
 
 # Credits
 
-Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
+* Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
+* bvanevery: Play testing and help in design.
+* dino: Play testing and alternative combat mechanics idea.
 
 # Why this mod?
 
-There are tons of interesting features in the game. Designers did a good job on it. I don't think there is another so feature reach game. I **DO** want to try them all!
+There are tons of interesting features in the game. Many of them are revolutionary for 4X games world. I don't think there is another so feature reach game. I **DO** want to try them all!
 
-Unfortunately, I usually end up not using most them just because they don't make a difference. Trying them up just for fun and scenery is one time experience - no replayability. The range of unusability varies from completely broken to only marginally useful or not worth micromanaging and extra mouseclicks. Overall, about 2/3 of vanilla features are unusable or underpowered to extent of being strategically unviable. It is so sad to see multitude of otherwise cool features are not actually used by most players.
-I do want them to make difference. Therefore, I started this mod to give them second chance!  
+With great power comes great responsibility, though. The more features you have the more difficult to make them work together. A slightest change in parameters or implementation may renders any of them completely broken, unusable, strategically unviable, or shadowed by other features. It is time consuming art and craft of game testing and perfecting. There is no doubt SMACX is the greatest games of all time. It is also clear it was hastily pushed to the market to earn quick money in its unfinished form. In definitely contains quite playable core - thanks to previous Civ 1/2 play testing. However, most of new features do not compose an integral game experience. Instead they look like unframed gems scattered here and there. Their description sounds exciting but current implementation renders them unusable which is to a great sadness to all true strategical game lovers.
 
-In such option reach games like SMAX variations are endless. Due to such variations some strategical choice may shine sometimes depending on current conditions. Changing strategy in response to changing game situation is the nature of the play and that's why we have many to chose from. However, there should never be an option that never (or quite rarely) viable. Such unused option would just clutter game interface and player memory. Well balanced game should not have any unusable elements. In this mod I try to get rid of all outsiders or balance them somehow to make them usable.
-In other words, any feature should be advantegeous without doubts in at least some play style of game situations. Proportion of games where it provides such advantage should be noticeable too. At least 1/4 of the games, I think.
+I have started this mod initially to myself to give such underused features and strategies a chance to shine and to increase overall game challenge and replayability. In such option reach games like SMAX variations are endless. Due to such variations some strategical choice may sometimes shine depending on current conditions. Changing strategy in response to changing game situation is the nature of the play and that's why we have many to chose from. However, there should not be options those are never (or quite rarely) viable. Such unused option would just clutter game interface and player memory. Well thought game should not have any unusable elements. In this mod I try to make all options/features/strategies viable in one way or another.
+
+## This mod motto
+
+Any option/feature/strategy should be undoubtfully advantegeous in some play style of game situation. Proportion of games where it provides such advantage should be noticeable too.
 
 # Design concepts
 
