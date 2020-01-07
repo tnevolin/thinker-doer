@@ -45,7 +45,9 @@ I think I did good job on linking technologies. Vanilla technology level quite i
 
 I selected primary features based on my own understanding of their importance. If someone believes there should be a different primary association - let me know. I'll gladly substitute. After all, the technology is just a placeholder for features and can be replaced or even renamed as needed.
 
-# Units
+# Unit cost
+
+Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 model. Now it is **MUCH** easier to understand this. For example, both 6-1-1 and 1-6-1 infantry units now cost 6 rows of minerals. Imagine the simplicity! New formula completely removes a quadratic armor cost growth problem. High end mixed inrantry units now cost comparable to speeder and fully armored foil units are comparable to hovertank.
 
 ## Reactors
 
@@ -53,63 +55,69 @@ Reactor power does not multiply unit max power anymore. All units (conventional 
 
 Instead each subsequent reactor decreases unit cost by approximately 20%. Player gets refund when upgrading unit to cheaper one with more powerful reactor.
 
-## Unit cost
-
-Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 model. Now it is **MUCH** easier to understand this. For example, both 6-1-1 and 1-6-1 infantry units now cost 6 rows of minerals. Imagine the simplicity! New formula completely removes a quadratic armor cost growth problem. High end mixed inrantry units now cost comparable to speeder and fully armored foil units are comparable to hovertank.
-
-### Unit pricing principles
+## Unit pricing principles
 * Primary item (most expensive module/weapon/armor item) defines base cost.
 * Secondary item (least expensive module/weapon/armor item) increases cost just slightly to encourage mixed units usage.
 * Faster chassis make unit proportionally more expensive. Speeder/Foil are 1.5 times and Hovertank/Cruiser are 2 times more expensive than Infantry.
 * Stronger reactors decrease cost by 20% comparing to previous generation.
 * Abilities have now proportional and flat cost components those can be set independently for each ability. Proportional one works as in vanilla and increases cost by 25% for each unit value. Flat cost adds given number of minerals rows to the cost.
 
-### Unit cost formula
+## Unit cost formula
 
-```
 unit cost in mineral rows = [<primary item cost> + (<secondary item cost> - 1) / 2] * <reactor cost factor> * <proportional abilities cost factors> + <flat abilities costs>
 (rounded normally)
-```
 
-primary item = higher cost module/weapon/armor
-secondary item = lower cost module/weapon/armor
+primary item = most expensive module/weapon/armor
+secondary item = least expensive module/weapon/armor
 
 reactor cost factor is set in thinker.ini as a ratio of <reactor cost value from thinker.ini> / <Fission reactor cost value from thinker.ini>. So that Fission reactor cost factor is always 1.
 
+### Special cases for non combat units
+* Colony on foil/cruiser costs same as if on infantry/speeder.
+* Former on foil/cruiser costs same as if on infantry/speeder.
+* Supply on foil/cruiser costs same as if on infantry/speeder.
 
+## Specific components cost values
 
-I appreciate Yitzi's attempt at adding flexibility to abilities cost. However, I don't see much value in it. It is too fine grained and too not visually clear to understand ability value. I've introduced just one additional ability pricing model instead: flat cost. That is for all abilities not improving or not related to weapon/armor values. I believe this is fair and enough to fix the problem with insane Hypnotic Trance cost for combat units.
-Conventional combat related abilities naturally improve weapon/armor values - unit fights as if it get stronger weapon/armor. Such abilities correctly increase unit price proportionally. Others have nothing to do with the wearing items like anti native improvements, all non combat improvements, deep radar, etc. I believe such abilities should be priced flat. That allows them to be used on beefed up units as well without sacrificint hand and leg. Hypnotic Trance is one example. Why cannot I add it on a high end unit for the flat cost to protect them from enemy worm attacks? After all their worms are flat cost as well!
-These two ability cost models can be used together. So one can configure ability to cost a proportion plust a flat cost if desired!
+Weapon and armor cost growths slightly slower than their value. That makes stronger weapon/armor more cost effective against stronger opponent. However, it is still cheaper to build weaker units when top item is overkill.
 
+Colony base cost is now 6.  
 Cheap colony pod allows fueling expansion with nutrients excess only and ignores any economical development whatsoever. Nutrient reach faction keeps stamping colony pods and fills up all available space exponentially. Not surprisingly, such simple strategy is also a most effective way to get economical advantage early in the game. Higher colony pod price put expansion speed in check of both nutrients and minerals production encouraging early terraforming and development. Now player needs to invest into base growth and terraforming in order to expand faster.
 
+Former base cost is now 4.  
+Cheapest of all non combat units. There is no much sense to lower it down even more as it screws abilities cost multiplication.
+
+Supply base cost is now 12.  
 Harvesting resources by crawler is a very lucrative investment. Harvesting 4 minerals from rocky mine pays for vanila crawler in 7.5 turns! Then it delivers 4 minerals each turn. That is just insane ROI. I suggest to price it as high as 120 minerals which brings its effectiveness closer to Genejack Factory. Even at this price it is still quite useful but it is not a single ultimate strategy anymore. You would think thrice if you want to build a crawler just to extract 2 units of production.
 
-Native warfare should be slightly worse to conventional as they have other benefits. They ignore base defensive structures. They are naturally both full scale attacker and defender. Their price is fixed and is much lower comparing to fully equipped top level attacker-defender units. They do not require prototyping. IoD can transport. Sealurk can attack shore units. LoC does not need refueling and can capture bases. They all can repair up to 100% in fungus squares. They do not require maintenance while in fungus square. All together they are no brainer units and as such should be a little bit less effective to not become a superior choice. I've increased most native unit cost except spore launcher to encourage its usage due pathetic damage.
+Native warfare should be slightly worse to conventional as they have other benefits. They ignore base defensive structures. They are naturally both full scale attacker and defender. Their price is fixed and is much lower comparing to fully equipped top level attacker-defender units. They do not require prototyping. IoD can transport. Sealurk can attack shore units. LoC does not need refueling and can capture bases. They all can repair up to 100% in fungus squares. They do not require maintenance while in fungus square. All together they are no brainer units and as such should be a little bit less effective to not become a superior choice. I've increased most native unit cost except spore launcher to encourage its use for bombardment.
 
+# Combat
 
-## Combat
+## Round odds fix
 
-Round odds are proportional to unit corresponding strengths. That is a fix for vanilla which used incorrect formula.
+Round odds are now proportional to unit corresponding strengths. That is a fix for vanilla incorrect formula!
 
-Alternative combat mechanics favors previous round winner generating longer winning streaks thus reducing battle winning probability skew. The parameter is configurable and can be turn off.
+## Battle outcome skew fix
+
+Vanilla multiround combat model generated extremely narrow skew for combat outcome. Strength ration of 2:1 (twice stronger attacker) produces 14:1 battle winning odds which is almost guaranteed kill. Taking that there are plenty of 50% and 100% bonuses in the game it quite common to observe significant strenght ratio variations. Together with inequality in weaponry research strenght ratio may easily vary somewhere between 1:4 and 4:1. Yet, as we just saw any investment into strength improvement beyond 2:1 is a complete waste. 
+
+This mod introduces alternative combat mechanics that smoothens that skew and returns interest in building stronger units by all means.
+
+## Odds confirmation dialog fix
 
 Odds confirmation dialog now displays correct winning probability percentage. Vanilla odds numbers were cool but highly unusable without calculator not even mentioning they were incorrect to start with.
 
+# Repair rates
 
-HEALING RATES
-==================================================
+Repair rates are lowered to eliminate fast and instant healing. Parameters are configurable.
 
-Healing rates are lowered to eliminate fast and instant healing. Parameters are configurable.
-
-Current settings:
-Field: 10% up to 80% regardless of location.
-Base/bunker/aribase: 10% up to 100%.
-Base with facility: +10%.
-SP for natives in base: +10%.
-Nano Factory: + 10%.
-
+## Current settings
+* Field: 10% up to 80% regardless of location.
+* Base/bunker/aribase: 10% up to 100%.
+* Base with corresponding land/sea/air repair facility: +10%.
+* SP for fast repair natives in base: +10%.
+* Nano Factory: + 10%.
 
 BASE DEFENSIVE STRUCTURES
 ==================================================

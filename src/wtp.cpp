@@ -25,9 +25,9 @@ ability bytes 0-3 is unit cost factor
 ability bytes 4-7 is unit cost flat addition
 
 Special rules:
-Colony foil/cruiser costs same as infantry/speeder.
-Former foil/cruiser costs same as infantry/speeder.
-Supply foil/cruiser costs same as infantry/speeder.
+Colony on foil/cruiser costs same as if on infantry/speeder.
+Former on foil/cruiser costs same as if on infantry/speeder.
+Supply on foil/cruiser costs same as if on infantry/speeder.
 
 */
 HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level)
