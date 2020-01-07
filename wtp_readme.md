@@ -166,27 +166,17 @@ Base defensive structures (Perimeter Defense, Naval Yard, Aerospace Complex, and
 
 # Facilities cost/maintainance
 
-Facility | Cost | Maintenance | Explanation
--------- | ---- | ----------- | -----------
+Base facility | Cost (mineral rows) | Maintenance | Explanation
+------------- | -------------------:| -----------:| -----------
 Energy Bank | 6 | |
 Network Node | 6 | |
-, Research Hospital = 9, Nanohospital = 18  
-Cost is reduced slightly for these. They seem to be a pretty interesing facilities not getting build early because of their price.
-
-Biology Lab = 4  
-Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player insentive to build it before Network Node.
-
-Naval Yard = 5  
-Reduced price to give player insentive to actually build it. It is priced as a combination of morale boosting and defensive facility. However, one usually needs morale boosting benefit at rich unit producing bases and defense benefit at weak distant ones - rarely both at once.
-
-Bioenhancement Center = 16/4  
-Morale boosting facility for all unit realms. Together with other facilities it produces elite units. Should have very high cost and maintainance.
-
-Geosynchronous Survery Pod = 16/2  
-Dropped maintenance since this is defense helping facility. I rarely use it myself. Maybe with lower maintenance it'll be more attractive.
-
-Aquafarm = 12/2  
-This is the most beneficial facility out of three aquatic yield related ones. It affects all work squares and not only half as other two. Besides, nutrient surplus is the most powerful resource that in time compensates lack of two others due to population growth and increase in workers. I think the above increased price is not even enough to compensate for it but 12 rows is already quite high for early game.
+Research Hospital | 9 | |
+Nanohospital | 18 | | Cost is reduced slightly for these. They seem to be a pretty interesing facilities not getting build early because of their price.
+Biology Lab | 4 | | Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player insentive to build it before Network Node.
+Naval Yard | 5 | | Reduced price to give player insentive to actually build it. It is priced as a combination of morale boosting and defensive facility. However, one usually needs morale boosting benefit at rich unit producing bases and defense benefit at weak distant ones - rarely both at once.
+Bioenhancement Center | 16 | 4 | Morale boosting facility for all unit realms. Together with other facilities it produces elite units. Should have very high cost and maintainance.
+Geosynchronous Survery Pod | 16 | 2 | Dropped maintenance since this is defense helping facility. I rarely use it myself. Maybe with lower maintenance it'll be more attractive.
+Aquafarm | 12 | 2 | This is the most beneficial facility out of three aquatic yield related ones. It affects all work squares and not only half as other two. Besides, nutrient surplus is the most powerful resource that in time compensates lack of two others due to population growth and increase in workers. I think the above increased price is not even enough to compensate for it but 12 rows is already quite high for early game.
 
 # Secret Project costs
 
@@ -194,213 +184,71 @@ General consideration about SPs: they are very lucrative. Especially those affec
 
 I also cleary understand that exact SP cost is not that relevant. It easily can be moved 50% up or down and nothing changes much in the game. My main concern was their way to low cost in vanilla. I feel like they should be about 2-5 times more expensive based on benefits. Other than that I welcome your suggestions.
 
-First Header | Second Header
+Secret project | Cost (mineral rows) | Explanation
+-------------- | -------------------:| -----------
+The Human Genome | 40 | 2 minerals worth quelled drone x 10 bases x 20 turns
+The Command Nexus | 400 | 40 minerals worth facility x 10 bases.
+The Weather Paradigm | 600 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game. Should be most expensive in its time.
+The Merchant Exchange | 200 | Local improvement - no change.
+The Empath Guild | 600 | Way to Governorship and energy income multiplier. Should be quite expensive.
+The Citizens' Defense Force | 500 | 50 minerals worth facility x 10 bases.
+The Virtual World | 600 | 60 minerals worth facility x 10 bases.
+The Planetary Transit System | 400 | Drone quellying + immediate growth boost. Proportional to empire size but limited to small bases only. Slight increase.
+The Xenoempathy Dome | 400 | Tactical advantage, aid to fungus terrafirming, +1 lifecycle = slight increase.
+The Neural Amplifier | 800 | Tough to evaluate but I tend to price combat effectiveness boosting projects quite high.
+The Maritime Control Center | 500 | 50 minerals worth facility x 10 bases.
+The Planetary Datalinks	| 600 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
+The Supercollider | 300 | Local effect = no change.
+The Ascetic Virtues | 600 | +POLICE + growth = slight increase.
+The Longevity Vaccine | 600 | Drone quellying. Slightly higher valued than The Human Genome due to more advanced era.
+The Hunter-Seeker Algorithm | 600 | No clue how to deal with this. People tend to value it quite high. Doubled the price.
+The Pholus Mutagen | 600 | Allows higher production without ecology impact. Should be slightly more expensive.
+The Cyborg Factory | 1600 | 160 minerals worth facility x 10 bases.
+The Theory of Everything | 400 | Local effect = no change.
+The Dream Twister | 800 | Same as The Neural Amplifier.
+The Universal Translator | 400 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. No change.
+The Network Backbone | 1600 | Large source of labs multiplied by the number of all world bases. Very high.
+The Nano Factory | 400 | Slight tactical and unit upgrade advantage. Nothing seriosly game changing. No change.
+The Living Refinery | 400 | About 2 minerals per base per turn x 10 bases x 20 turns.
+The Cloning Vats | 4000 | Endless population boom. It is the most expensive SP in my mod (besides AtT).
+The Self-Aware Colony | 2000 | About 25% raw energy income per base multiplied by number of bases in your empire. Also very highly priced.
+The Clinical Immortality | 1200 | Drones and diplomatic victory. Should be quite high.
+The Space Elevator | 1000 | Production boost for satellites. The boost itself is limited but satellites are the most lucrative facilities in the game. Priced high.
+The Singularity Inductor | 2000 | 200 minerals worth facility x 10 bases.
+The Bulk Matter Transmitter | 3000 | +50% minerals at every base. Insane game breaker.
+The Telepathic Matrix | 2400 | Total drone solution. Very high price.
+The Voice of Planet | 1200 | 
+The Ascent to Transcendence | 5000 | End game bases with crawlers should be able to build it in reasonable time but not instantly.
+The Manifold Harmonics | 600 | Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
+The Nethack Terminus | 600 | Some help to probe teams. Other than that nothing much.
+The Cloudbase Academy | 1200 | 80 minerals worth facility x 10 bases. Plus all benefits of Aerospace Complex (defense, morale, satellites yield, etc).
+The Planetary Energy Grid | 800 | 80 minerals worth facility x 10 bases.
 
-The Human Genome				400
-2 minerals worth quelled drone * 10 bases * 20 turns
-
-The Command Nexus				400
-40 minerals worth facility * 10 bases.
-
-The Weather Paradigm			600
-Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game. Should be most expensive in its time.
-
-The Merchant Exchange			200
-Local improvement - no change.
-
-The Empath Guild				600
-Way to Governorship and energy income multiplier. Should be quite expensive.
-
-The Citizens' Defense Force		500
-50 minerals worth facility * 10 bases.
-
-The Virtual World				600
-60 minerals worth facility * 10 bases.
-
-The Planetary Transit System	400
-Drone quellying + immediate growth boost. Proportional to empire size but limited to small bases only. Slight increase.
-
-The Xenoempathy Dome			400
-Tactical advantage, aid to fungus terrafirming, +1 lifecycle = slight increase.
-
-The Neural Amplifier			800
-Tough to evaluate but I tend to price combat effectiveness boosting projects quite high.
-
-The Maritime Control Center		500
-50 minerals worth facility * 10 bases.
-
-The Planetary Datalinks			600
-Again pretty vague but should be quite high priced since technology advantage is everything in this game.
-
-The Supercollider				300
-Local effect = no change.
-
-The Ascetic Virtues				600
-+POLICE + growth = slight increase.
-
-The Longevity Vaccine			600
-Drone quellying. Slightly higher valued than The Human Genome due to more advanced era.
-
-The Hunter-Seeker Algorithm		600
-No clue how to deal with this. People tend to value it quite high. Doubled the price.
-
-The Pholus Mutagen				600
-Allows higher production without ecology impact. Should be slightly more expensive.
-
-The Cyborg Factory				1600
-160 minerals worth facility * 10 bases.
-
-The Theory of Everything		400
-Local effect = no change.
-
-The Dream Twister				800
-Same as The Neural Amplifier.
-
-The Universal Translator		400
-Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. No change.
-
-The Network Backbone			1600
-Large source of labs multiplied by the number of all world bases. Very high.
-
-The Nano Factory				400
-Slight tactical and unit upgrade advantage. Nothing seriosly game changing. No change.
-
-The Living Refinery				400
-about 2 minerals per base per turn * 10 bases * 20 turns.
-
-The Cloning Vats				4000
-Endless population boom. It is the most expensive SP in my mod (besides AtT).
-
-The Self-Aware Colony			2000
-About 25% raw energy income per base multiplied by number of bases in your empire. Also very highly priced.
-
-The Clinical Immortality		1200
-Drones and diplomatic victory. Should be quite high.
-
-The Space Elevator				1000
-Production boost for satellites. The boost itself is limited but satellites are the most lucrative facilities in the game. Priced high.
-
-The Singularity Inductor		2000
-200 minerals worth facility * 10 bases.
-
-The Bulk Matter Transmitter		3000
-+50% minerals at every base. Insane game breaker.
-
-The Telepathic Matrix			2400
-Total drone solution. Very high price.
-
-The Voice of Planet				1200
-
-The Ascent to Transcendence		5000
-End game bases with crawlers should be able to build it in reasonable time but not instantly.
-
-The Manifold Harmonics			600
-Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
-
-The Nethack Terminus			600
-Some help to probe teams. Other than that nothing much.
-
-The Cloudbase Academy			1200
-80 minerals worth facility * 10 bases. Plus all benefits of Aerospace Complex (defense, morale, satellites yield, etc).
-
-The Planetary Energy Grid		800
-80 minerals worth facility * 10 bases.
-
-
-Feature appearance time
---------------------------------------------------
+# Feature appearance time
 
 Foil is available to be researched at start. Other modders said much about that already.
 
-Network Node, Energy Bank
-Moved to level 3.
+Network Node, Energy Bank: moved to level 3.  
 These facilities are not effective at the beginning. Even with 20 raw energy yield they contribute 5 labs/energy = 2.5 worth of minerals and break even time is 32 turn. Only averagely beneficial and you need to get your first bases at 20 energy yield first.
 
-Habitaion Dome
-Moved to 50% in research tree (was 75%).
+Habitaion Dome: moved to 50% in research tree (was 75%).  
 I often struggle to get it when needed. It's too far in the future.
 
-Non-lethal methods
-Moved to 75% in research tree (was 50%).
+Non-lethal methods: moved to 75% in research tree (was 50%).  
 Doubling police power should not come too early.
 
-Bioenhancement Center
-Moved to 75% in research tree (was 50%).
+Bioenhancement Center: moved to 75% in research tree (was 50%).  
 Generic facility should come after all specific ones.
 
-Hybrid Forest
-Moved to 70% in research tree (was 50%).
+Hybrid Forest: moved to 70% in research tree (was 50%).  
 Not needed immediatelly after Tree Farm. With its price nobody is going to build it right away.
 
-Satellites
-Moved to 80%, 85%, 90% in research tree (were somewhere at 60-70%).
+Satellites: moved to 80%, 85%, 90% in research tree (were somewhere at 60-70%).  
 Game breaker goes to the very end. Discussed many times by other modders.
 
-The Living Refinery, The Manifold Harmonics
-Relatively weak SPs moved earlier.
+The Living Refinery, The Manifold Harmonics: relatively weak SPs moved earlier.
 
-
-Special weapon and armor
---------------------------------------------------
-
-Disabled all hybrid and psi items.
-
-I really cannot grasp this concept. Why having half strength ability while you can attach fully powered one for the same price? Besides, mere melting ability to the item breaks the unique SMACX unit workshop build-it-yourself paradigm! Why to introduce constructor tool and then provide pieces those cannot be disassembled to elementary properties. I almost never use them for their added ability. Merely like another regular piece of equipment. And now in my mod they don't exist anymore and nobody cries.
-
-Same story with psi weapon and armor. By the time you get them you have full spectrum of natives who are much cheaper than psi attack + psi defense unit. I personally never used them. Anybody does? Let me know if you think they are valuable assets.
-
-
-Removed abilities
---------------------------------------------------
-
-Cloaking device and Deep pressure hull abilities are broken by game shared map implementation. Other people said enough about it. Disabled them.
-
-Repair Bay ability is useless in my mind as well. I cannot even imagine where would you massively transport wounded units.
-
-Soporific Gas Pods. People reported AI doesn't use them due to the bug. I think it would be fair not to give them to humans too until this is fixed.
-
-
-Yield restrictions
---------------------------------------------------
-
-This is another feature I cannot understand. What good does restricting yield do? Why I cannot farm a rainy tile to boost my base growth a little? Why I cannot mine a rocky tile to get myself some minerals? In vanilla game these restriction are lifted when you discover advanced terraforming. At this time I don't need a rocky mine anymore since borehole is better. As the result I never build mines to work on - only to harvest by crawler. I don't know how to disable them completely so I moved them all onto level 1 technologies.
-
-I guess this was a blind copy of Civ 1 Despotism restrictions. Despotism reduces any factor of production by 1 where you have 3+ of such production. However, this was compensated by unit production and settler food supports. Meaning you harvest less but you spend less on support too. SMACX lost this second part separating support into its own effect. Thus leaving this nicely thought and designed element half cut and stupid looking.
-
-
-Fungus production
---------------------------------------------------
-
-Fungus production is not some crucial part of the game. However, it is still some alternative yield source that is mostly overlooked due to very slow development comparing to conventional terrafirming. I'd like to add few touches on it.
-
-Get it to at least 1-1-0 yield relatively early in the game to allow minimal support for barren land and sea bases.
-Focus on energy yield in the mid game to compliment forest instead of competing with it.
-Use green technologies for fungus production to simplify research priorities for green/PLANET factions.
-
-Centauri Ecology			+1n
-Progenitor Psych			+1m - reassigned
-Field Modulation			+1e - reassigned
-Bioadaptive Resonance		+1e - reassigned
-Centauri Psi				+1n
-Centauri Meditation			+1e
-Secrets of Alpha Centauri	+1e
-Centauri Genetics			+1m
-
-
-Aquatic faction advantage
---------------------------------------------------
-
-I was able to remove AQUATIC +1 sea mineral advantage. Now they are back to normal and expected growth. They will be slow on start but they have 50-100 years of undisturbed development. Once their old bases are developped enought to stamp sea pods they explosivly expand but then other factions start barraging waters and set their sea colonies. Seems to be a good balance. However, aquatic factions still develop quite differently. That requires a lot of play testing.
-
-
-Forest
---------------------------------------------------
-
-Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
-
-
-Social engineering
---------------------------------------------------
+# Social engineering
 
 This mod treats a combination of SE choices as an option, not a single SE model in isolation. It also doesn't try to "balance" SE models between each other but rather distribute SE effect changes across models to conveniently provide all the spectrum of possible SE effect ratings making all of them reacheable. I have devised a model to "compare" SE effects average value to each other with certain degree of assumption. Even though they can be "compared" to each other it is obvious that their use varies greatly during the course of the game and depending on circumstances. They had to be weighed based not only on their average value but on the other game related factors.
 
@@ -409,11 +257,11 @@ As always, I tried preserve social effects set whenever possible so vanilla SMs 
 I timed them on research line so that first row of SMs comes at level 2, second at level 3, third at level 5 and fourth at level 7 which is about when 50% technologies are researched. This is somewhat earlier that in vanilla when you got last SE row at about 75% throughout the game. Certainly future society SMs are powerful but it is kinda useless to aquire them at the game sunset.
 In accordance to this timing I tried to focus on most important effects at the time of appearance. Early models emphasize TALENT, SUPPORT, POLICE, GROWTH. While later models favor ECONOMY, EFFICIENCY, INDUSTRY, RESEARCH. Not necessarily exactly like this but as a rule of thumb.
 
-ECONOMY and EFFICIENCY are by far the strongest effects. I tried to equalize their positive and negative impact whereever possible. Some people complained that I give by one hand and take by other. Well, sort of. I don't want Democracy-FreeMarket-Welth combination to rule the world. You want to play it over and over and over again - there is vanilla out there. I had my share and now I seek for more variability. You want to throw all goodies at a single SE choice - go ahead and be your own guest. I want a variety of option I can weigh and corretly apply to ever changing game situation instead. If you don't like the fact that some SE choices are not insanely overpowered - you probably shouldn't play my mod. See the mod goal at the very top.
+*ECONOMY* and *EFFICIENCY* are by far the strongest effects. I tried to equalize their positive and negative impact whereever possible. Some people complained that I give by one hand and take by other. Well, sort of. I don't want Democracy-FreeMarket-Welth combination to rule the world. You want to play it over and over and over again - there is vanilla out there. I had my share and now I seek for more variability. You want to throw all goodies at a single SE choice - go ahead and be your own guest. I want a variety of option I can weigh and corretly apply to ever changing game situation instead. If you don't like the fact that some SE choices are not insanely overpowered - you probably shouldn't play my mod. See the mod goal at the very top.
 
-ECONOMY changes are mostly positive in original. Even though negative effects are not that interesing I still added some negative ECONOMY changes here and there to outweigh positive changes in other SMs.
+*ECONOMY* changes are mostly positive in original. Even though negative effects are not that interesing I still added some negative ECONOMY changes here and there to outweigh positive changes in other SMs.
 
-POLICE scale is assymetric and shifted toward negative values. The true middle point is at -1 rating. In vanilla game everybody essentially starts with inherent +1 rating. Besides, everybody can also build Brood Pit to get +2 POLICE later. That is too much inclination toward positive values which results in need of enourmous negative changes for some SE models like FM in vanilla. This mod tries to avoid this by subtracting 1 POLICE from ALL factions shifting starting position to where it should be. This allows applying positive and negative POLICE changes equally across SE choices.
+*POLICE* scale is assymetric and shifted toward negative values. The true middle point is at -1 rating. In vanilla game everybody essentially starts with inherent +1 rating. Besides, everybody can also build Brood Pit to get +2 POLICE later. That is too much inclination toward positive values which results in need of enourmous negative changes for some SE models like FM in vanilla. This mod tries to avoid this by subtracting 1 POLICE from ALL factions shifting starting position to where it should be. This allows applying positive and negative POLICE changes equally across SE choices.
 
 GROWTH is very restricted on negative side. Just -3 rating halts base growth completely which is a pretty strong effect. On the other side of the spectrum +6 rating triggers population boom which is another pretty strong effect. It is a common concertn of all modders to limit population boom. In this mod it is attainable by Children Creche + SE + golden age. However, it is not attainable without golden age. One need to pour some amount of gold on people to make them happy and produce more children. Same as in old good Civ 2.
 
@@ -421,6 +269,58 @@ MORALE had a balanced scale by itself but morale facilities can easily raise uni
 
 About the same story with PROBE and Covert ops center. Even though it is just one +2 facility the PROBE scale is shorter as well. SE provides +2 PROBE max only.
 
+# Other changes
+
+## Special weapon and armor
+
+Disabled all hybrid and psi items.
+
+I really cannot grasp this concept. Why having half strength ability while you can attach fully powered one for the same price? Besides, mere melting ability to the item breaks the unique SMACX unit workshop build-it-yourself paradigm! Why to introduce constructor tool and then provide pieces those cannot be disassembled to elementary properties. I almost never use them for their added ability. Merely like another regular piece of equipment. And now in my mod they don't exist anymore and nobody cries.
+
+Same story with psi weapon and armor. By the time you get them you have full spectrum of natives who are much cheaper than psi attack + psi defense unit. I personally never used them. Anybody does? Let me know if you think they are valuable assets.
+
+## Removed abilities
+
+Cloaking device and Deep pressure hull abilities are broken by game shared map implementation. Other people said enough about it. Disabled them.
+
+Repair Bay ability is useless in my mind as well. I cannot even imagine where would you massively transport wounded units.
+
+Soporific Gas Pods. People reported AI doesn't use them due to the bug. I think it would be fair not to give them to humans too until this is fixed.
+
+## Yield restrictions
+
+This is another feature I cannot understand. What good does restricting yield do? Why I cannot farm a rainy tile to boost my base growth a little? Why I cannot mine a rocky tile to get myself some minerals? In vanilla game these restriction are lifted when you discover advanced terraforming. At this time I don't need a rocky mine anymore since borehole is better. As the result I never build mines to work on - only to harvest by crawler. I don't know how to disable them completely so I moved them all onto level 1 technologies.
+
+I guess this was a blind copy of Civ 1 Despotism restrictions. Despotism reduces any factor of production by 1 where you have 3+ of such production. However, this was compensated by unit production and settler food supports. Meaning you harvest less but you spend less on support too. SMACX lost this second part separating support into its own effect. Thus leaving this nicely thought and designed element half cut and stupid looking.
+
+## Fungus production
+
+Fungus production is not some crucial part of the game. However, it is still some alternative yield source that is mostly overlooked due to very slow development comparing to conventional terrafirming. I'd like to add few touches on it.
+
+### Fungus production guidelines
+
+Get it to at least 1-1-0 yield relatively early in the game to allow minimal support for barren land and sea bases.
+Focus on energy yield in the mid game to compliment forest instead of competing with it.
+Use green/alien technologies for fungus production to streamline research priorities for green/PLANET factions.
+
+Technology | Fungus production effect | Comment
+---------- | ------------------------ | -------
+Centauri Ecology | +1 nutrient |
+Progenitor Psych | +1 mineral | reassigned
+Field Modulation | +1 energy | reassigned
+Bioadaptive Resonance | +1 energy | reassigned
+Centauri Psi | +1 nutrient |
+Centauri Meditation | +1 energy |
+Secrets of Alpha Centauri | +1 energy |
+Centauri Genetics | +1 mineral |
+
+## Aquatic faction +1 mineral advantage
+
+I was able to remove AQUATIC +1 sea mineral advantage. Now they are back to normal and expected growth. They will be slow on start but they have 50-100 years of undisturbed development. Once their old bases are developped enought to stamp sea pods they explosivly expand but then other factions start barraging waters and set their sea colonies. Seems to be a good balance. However, aquatic factions still develop quite differently. That requires a lot of play testing.
+
+## Forest
+
+Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
 Probe morale boosing technologies
 --------------------------------------------------
