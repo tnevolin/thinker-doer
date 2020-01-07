@@ -1,322 +1,115 @@
-Version 34
-==================================================
+# Version 34
 
-Factions
---------------------------------------------------
-Removed industry penalty from Cult of Planet. They are often develop very badly.
-#FUNGBOY
-  TECH, Ecology, WORMPOLICE, 0, SOCIAL, ++PLANET, SOCIAL, -ECONOMY, SOCIAL, -POLICE, FREEFAC, 35, UNIT, 8
+* Removed industry penalty from Cult of Planet. They are often develop very badly.
+* Set Numerator & Denominator for artillery fire damage to 5,1.
+* Set alternative_combat_mechanics_loss_divider=3.0.
+* Set collateral_damage_value=0.
+* Set missile chassis cost = 2.
 
-Rules
---------------------------------------------------
-5,1      ; Numerator & Denominator for artillery fire damage
+# Version 33
 
-Combat mechanics
---------------------------------------------------
-alternative_combat_mechanics_loss_divider=3.0
-collateral_damage_value=0
+* Odds confirmation dialog now displays correct battle winning probability percentage.
 
-Chassis
---------------------------------------------------
-Missile chassis cost = 2
+# Version 32
 
-Version 33
-==================================================
+* Introduced alternative combat mechanics. Thanks to dino for idea.
+* Removed firepower multiplier.
+* Removed firepower randomization.
 
-Odds confirmation dialog
---------------------------------------------------
+# Version 31
 
-Display battle winning probability now.
+* Modified repair rates.
 
+# Version 30
 
-Version 32
-==================================================
+* Exposed repair rates. Didn't modify them.
 
-Combat engine
---------------------------------------------------
+# Version 29
 
-Introduced alternative combat mechanics. Thank you to dino for idea.
-Stronger unit emphasis is toned down now.
-At the same time vanilla combat round based functionality is preserved (bombardment, disengagement).
+* Fixed combat rolls.
+* Added firepower multiplier.
+* Added firepower randomization.
+* Odds dialog now display true winning odds.
 
+# Version 28
 
-Version 31
-==================================================
+* Set Resonance Laser strength to 3.
 
-Repair rates
---------------------------------------------------
+# Version 27
 
-Modified repair rates. Now they are very low.
+* Unit cost is now rounded normally.
 
+# Version 26
 
-Version 30
-==================================================
+* Fixed combat ignore reactor for attacker.
 
-Repair rates
---------------------------------------------------
+# Version 25
 
-Exposed repair rates. Didn't modify them.
+* Colony foil/cruiser costs same as infantry/speeder.
+* Former foil/cruiser costs same as infantry/speeder.
+* Supply foil/cruiser costs same as infantry/speeder.
+* Supply Transport module now costs 12.
+* Removed Infantry Probe Team.
+* Set Super Former ability cost to 3.
+* Set Fungicide Tanks ability cost to 1.
+* Set Clean Reactor ability cost to 32.
+* Set Positive base upgrade cost to <mineral cost difference> x 4.
+* Set Negative base upgrade cost to <mineral cost difference> x 2.
+* Set Positive upgrade cost halved by Nano Factory, as before.
 
+# Version 24
 
-Version 29
-==================================================
+* Reverted all factions back to one initial technology for everybody.
+* Rearranged initial technologies to give Psych to -2 POLICE and Ecology to research impeded factions.
+* Removed +1 mineral AQUATIC faction bonus.
+* Removed Pirates -3 SUPPORT penalty that was there earlier to neutralize their mineral bonus.
+* Gave Pirates +1 POLICE. Now they start with 0 POLICE to help their accelerated growth in mineral deficit.
+* Removed all hurry thresholds.
+* Collateral damage computation is fixed to take exact percentage of the unit HPs. Vanilla computation for conventional combat multiply this by ATTACKER reactor power instead.
+* Modified collateral damage to take 20% instead 30% in vanilla.
 
-Combat mechanics
---------------------------------------------------
+# Version 23
 
-Fixed combat rolls.
-Added firepower multiplier.
-Added firepower randomization.
-Odds dialog now display true winning odds.
+* Moved reactor cost factors configuration to thinker.ini.
+* Added alternative_base_defensive_structure_bonuses switch to thinker.ini.
+* Adjusted reactor appearence in technology tree to be closer to 25%, 50%, 75% marks.
+* Set Fanatic attack bonus = 25.
+* Set Mobile unit in open ground = 25.
+* Set Infantry vs. Base = 25.
+* Set Forest Square,    1, 2, 0, 0,
 
+# Version 22
 
-Version 28
-==================================================
+* Exposed Perimeter Defense and Tachyon Field bonuses in thinker.ini.
+* Set Alternative unit hurry cost formula.
+* Set Alternative upgrade cost formula.
+* Weapon icon selection algorithm fix.
 
-Combat mechanics
---------------------------------------------------
+# Version 21
 
-Added firepower multiplier parameter.
-
-
-Rules
---------------------------------------------------
-
-Set Resonance Laser strength to 3.
-
-
-Version 27
-==================================================
-
-Unit cost
---------------------------------------------------
-
-Replaced round down with round normally.
-
-
-Version 26
-==================================================
-
-Bug fixes
---------------------------------------------------
-
-Fixed combat ignore reactor for attacker.
-
-
-Version 25
-==================================================
-
-Units
---------------------------------------------------
-
-Colony foil/cruiser costs same as infantry/speeder.
-Former foil/cruiser costs same as infantry/speeder.
-Supply foil/cruiser costs same as infantry/speeder.
-
-Supply Transport module now costs 12. It is now less appealing to spam crawlers/trawlers for harvesting each and every 2 production factors tiles.
-
-Removed Infantry Probe Team.
-
- #ABILITIES
-+Super Former,           3, EcoEng2,  Super,     000000010111, Terraform rate doubled
-+Fungicide Tanks,        1, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
-+Clean Reactor,         32, BioEng,   Clean,     000000111111, Requires no support
-
-Upgrade cost
---------------------------------------------------
-
-Positive base upgrade cost is <mineral cost difference> * 4.
-Negative base upgrade cost is <mineral cost difference> * 2.
-Positive upgrade cost is also halved by Nano Factory, as before.
-
-
-Version 24
-==================================================
-
-Factions
---------------------------------------------------
-
-Reverted back to one initial technology for everybody.
-Rearranged initial technologies to give Psych to -2 POLICE and Ecology to research impeded factions.
-
-
-AQUATIC faction bonus and Pirates
---------------------------------------------------
-
-Removed +1 mineral AQUATIC faction bonus.
-Reverted Pirates -3 SUPPORT penalty that was there earlier to neutralize their mineral bonus.
-Gave Pirates +1 POLICE. Now they start with 0 POLICE to help their accelerated growth in mineral deficit.
-
-
-Removed all hurry thresholds
---------------------------------------------------
-
-There is no more hurry penalty thresholds. Everything is flat.
-
-Collateral damage
---------------------------------------------------
-
-Collateral damage computation fixed to take exact percentage of the unit HPs.
-Vanilla computation for conventional combat multiply this by ATTACKER reactor power instead.
-
-Modified collateral damage to take 20% instead 30% in vanilla.
-
-
-Version 23
-==================================================
-
-Others
---------------------------------------------------
-
-Moved reactor cost factors configuration to thinker.ini.
-Added alternative_base_defensive_structure_bonuses switch to thinker.ini.
-Adjusted reactor appearence in technology tree to be closer to 25%, 50%, 75% marks.
-25,      ; Combat % -> Fanatic attack bonus
-25,      ; Combat % -> Mobile unit in open ground
-25,      ; Combat % -> Infantry vs. Base
-Forest Square,    1, 2, 0, 0,
-
-
-Version 22
-==================================================
-
-Perimeter Defense and Tachyon Field
---------------------------------------------------
-
-Exposed Perimeter Defense and Tachyon Field bonuses in thinker.ini
-Distributed unchanged for testers to play with.
-
-
-Alternative unit hurry cost formula
---------------------------------------------------
-
-Unit hurry cost = <purchased minerals> x 4, doubled if less then <carryover minerals accumulated>.
-This simplifies unit hurrying cost calculation and fixes crawler rush exploit.
-
-
-Alternative upgrade cost formula
---------------------------------------------------
-
-upgrade cost = (new unit mineral cost - old unit mineral cost) * 4
-
-Upgrading to unprototyped unit doubles new unit mineral cost for purpose of above calculation. That effectivelly adds the full hurry cost of unprototyped unit on top of difference cost. Added this to honor vanilla logic which prices upgrade to unprototyped unit very high.
-
-Upgrading to cheaper unit cost is negative and player gets a refund. That happens in this mod when only upgrade is more advanced reactor that drops unit cost.
-
-Faction possessing The Nano Factory SP pays half of the positive cost. Negative cost is unaffected.
-That accutally reinstates crawler upgrade exploit. I'm open for discussion whether this should be allowed or we double all upgrade cost to not allow this exploit in any case.
-
-
-Weapon icon selection algorithm fix
---------------------------------------------------
-
-Modified weapon icon selection algorithm to be NOT dependent on the weapon value at all.
-Now it just a bug fix that anyone can use regardless of alphax.txt weapon values settings.
-
-
-Version 21
-==================================================
-
-Combat
---------------------------------------------------
-
-Conventional combat now ignores reactor power same way as psi combat does.
-
-Odds calculation now ignore reactor power for both conventional and psi combat.
-For psi combat it was actually a bug that nobody ever fixed yet.
-
-
-Unit cost
---------------------------------------------------
-
-Each higher reactors now decrease unit cost approximately by 20% comparing to predecessor.
-Chaged weapon and armor cost so it increases at about 50-60% rate of the item value. This way unit cost still growth but slower than strength.
-
-
-Rules
---------------------------------------------------
-
-Returned back to original values
-50,      ; Extra percentage cost of prototype LAND unit
-50,      ; Extra percentage cost of prototype SEA unit
-50,      ; Extra percentage cost of prototype AIR unit
-
-
-Facilities
---------------------------------------------------
-
-Returned back to original cost/maintenance
-Skunkworks,                    6, 1, Subat,   Disable,  Prototypes Free
-
-
-Factions
---------------------------------------------------
-
-Added TECH, Mobile - protection from natives
-#MORGAN
-  TECH, Indust, TECH, Mobile, ENERGY, 100, SOCIAL, +ECONOMY, POPULATION, 3, COMMERCE, 1, SOCIAL, -SUPPORT, SOCIAL, -POLICE
-
-Added TECH, PrPsych - Biologic Lab for more research
-#UNIV
-  TECH, Physic, TECH, PrPsych, SOCIAL, ++RESEARCH, SOCIAL, --PROBE, SOCIAL, -POLICE, DRONE, 4, FACILITY, 8
-
-Added TECH, Physic - first level weapon
-#SPARTANS
-  TECH, Mobile, TECH, Physic, FREEPROTO, 0, SOCIAL, ++MORALE, SOCIAL, -INDUSTRY
-
-Added TECH, Psych - Recreation Commons to cope with -2 POLICE
-#GAIANS
-  TECH, Ecology, TECH, Psych, SOCIAL, -MORALE, SOCIAL, --POLICE, SOCIAL, +EFFIC, SOCIAL, +PLANET, FUNGNUTRIENT, 1
-
-Added TECH, Ecology - they are slow on research and need terraforming
-Lowered RESEARCH to -2 and raised POLICE to 0 - they have pretty harsh research penalty already so I let them easy on police
-#BELIEVE
-  TECH, Psych, TECH, Ecology, SOCIAL, --RESEARCH, SOCIAL, +PROBE, SOCIAL, +SUPPORT, SOCIAL, -PLANET, FANATIC, 0
-
-Added TECH, DocFlex
-#HIVE
-  TECH, Psych, TECH, DocFlex, FACILITY, 4, SOCIAL, +GROWTH, SOCIAL, +INDUSTRY, SOCIAL, --ECONOMY, SOCIAL, -POLICE, IMMUNITY, EFFIC
-
-Added TECH, Indust
-#PEACE
-  TECH, DocFlex, TECH, Indust, TALENT, 4, SOCIAL, -EFFIC, SOCIAL, -POLICE, POPULATION, -2, VOTES, 2
-
-Added TECH, Ecology
-#CYBORG
-  TECH, Physic, TECH, Ecology, IMPUNITY, Cybernetic, SOCIAL, +RESEARCH, SOCIAL, +EFFIC, SOCIAL, -GROWTH, SOCIAL, -POLICE, TECHSTEAL, 0
-
-Added TECH, PrPsych - Biologic Lab to compensate research penalty
-#DRONE
-  TECH, Indust, TECH, PrPsych, SOCIAL, ++INDUSTRY, SOCIAL, --RESEARCH, SOCIAL, -POLICE, NODRONE, 1, REVOLT, 75
-
-Added TECH, Physic - didn't know who else needs it they wouldn't hert anybody early in the ocean anyway
-#PIRATES
-  TECH, DocFlex, TECH, Physic, SOCIAL, -GROWTH, SOCIAL, -EFFIC, SOCIAL, ---SUPPORT, SOCIAL, -POLICE, FREEFAC, 28, AQUATIC, 0, FREEABIL, 26
-
-Added TECH, DocFlex
-#FUNGBOY
-  TECH, Ecology, TECH, DocFlex, WORMPOLICE, 0, SOCIAL, ++PLANET, SOCIAL, -INDUSTRY, SOCIAL, -ECONOMY, SOCIAL, -POLICE, FREEFAC, 35, UNIT, 8
-
-Added TECH, Psych - Recreation Commons to cope with -2 POLICE
-#ANGELS
-  TECH, Mobile, TECH, Psych, SOCIAL, ++PROBE, SOCIAL, --POLICE, PROBECOST, 75, FREEFAC, 34, SHARETECH, 3, UNIT, 6
-
-Added TECH, Indust - emphasis on defense
-#CARETAKE
-  TECH, PrPsych, TECH, Indust, ALIEN, 0, DEFENSE, 125, SOCIAL, +PLANET, SOCIAL, -INDUSTRY, SOCIAL, -POLICE
-
-Added TECH, Mobile
-#USURPER
-  TECH, PrPsych, TECH, Mobile, ALIEN, 0, OFFENSE, 125, SOCIAL, +GROWTH, SOCIAL, -PLANET, SOCIAL, -INDUSTRY, SOCIAL, -POLICE
-
-
-Version 20
-==================================================
-
-Technology changes
---------------------------------------------------
-
-No technology has this anymore
+* Conventional combat now ignores reactor power same way as psi combat does.
+* Odds calculation now ignore reactor power for both conventional and psi combat. For psi combat it was actually a bug that nobody ever fixed yet.
+* Each higher reactors now decrease unit cost approximately by 20% comparing to predecessor. Chaged weapon and armor cost so it increases at about 50-60% rate of the item value. This way unit cost still growth but slower than strength.
+* Returned all prototype cost back to vanilla values.
+* Returned back to original cost/maintenance: Skunkworks.
+* Added TECH, Mobile to MORGAN.
+* Added TECH, PrPsych to UNIV.
+* Added TECH, Physic to SPARTANS.
+* Added TECH, Psych to GAIANS.
+* Added TECH, Ecology to BELIEVE.
+* Added TECH, DocFlex to HIVE.
+* Added TECH, Indust to PEACE.
+* Added TECH, Ecology to CYBORG.
+* Added TECH, PrPsych to DRONE.
+* Added TECH, Physic to PIRATES.
+* Added TECH, DocFlex to FUNGBOY.
+* Added TECH, Psych to ANGELS.
+* Added TECH, Indust to CARETAKE.
+* Added TECH, Mobile to USURPER.
+
+# Version 20
+
+* No technology has this anymore
 ;            000000001 = "Secrets": first discoverer gains free tech
 
 No technology has this anymore
