@@ -1,11 +1,13 @@
-CREDITS
-==================================================
+# SMACX The Will to Power mod
 
-This mod continues my Fission Armor mod work combined with Induktio's Thinker mod which does great job on improving AI play. Now I am able to tap into exe patching (thanks to Thinker mod project code base!). Due to that I was able to overcome reactor problem and unit cost calculation problem that was previous unsolvable by simple text modding. All reactors are now back into game as well as other features. "Fission" doesn't belong to the name anymore. Hence I renamed it to "The Will to Power". Seems to be a logical name as I try to enable all the underused game features to make game more challengin on top of AI improvement from Thinker.
+The Will to Power is a playing experience enhancement mod for Alpha Centauri: Alien Crossfire.
+It is built on top of Thinker mod. Read the complete description of Thinker mod in: Readme.md, Details.md, Changelog.md.
 
+# Credits
 
-WHY THIS MOD?
-==================================================
+Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
+
+# Why this mod?
 
 There are tons of interesting features in the game. Designers did a good job on it. I don't think there is another so feature reach game. I DO want to try them all! :)
 Unfortunately, I usually end up not using most them just because they don't make a difference. Trying them up just for fun and scenery is one time experience - no replayability. The range of unusability varies from completely broken to only marginally useful or not worth micromanaging and extra mouseclicks. Overall, about 2/3 of vanilla features are unusable or underpowered to extent of being strategically unviable. It is so sad to see multitude of otherwise cool features are not actually used by most players.
@@ -14,30 +16,19 @@ I do want them to make difference. Therefore, I started this mod to give them se
 In such option reach games like SMAX variations are endless. Due to such variations some strategical choice may shine sometimes depending on current conditions. Changing strategy in response to changing game situation is the nature of the play and that's why we have many to chose from. However, there should never be an option that never (or quite rarely) viable. Such unused option would just clutter game interface and player memory. Well balanced game should not have any unusable elements. In this mod I try to get rid of all outsiders or balance them somehow to make them usable.
 In other words, any feature should be advantegeous without doubts in at least some play style of game situations. Proportion of games where it provides such advantage should be noticeable too. At least 1/4 of the games, I think.
 
-
-DESIGN CONCEPTS
-==================================================
+# Design concepts
 
 Whenever I see some feature worth improving/highlighting these are guidelines I use to decide whethere I should touch it at all and, if yes, to which extent. By default I try to not fix what is not obviously broken.
 
-Feature should do what it claims to. If it is impossible to make it work, such feature should be excluded. Example: Deep pressure hull.
+* Feature should do what it claims to. If it is impossible to make it work, such feature should be excluded. Example: Deep pressure hull.
+* Feature should not outright contradict or break game concepts. Example of game concept: build-your-own-unit design workshop. Example of the feature directly contradicting this concept: mixed components (resonance armor and such).
+* Game flow and features generally should be understandable to people and have clear visual effect on the game and player choices. This doesn't mean they should resemble real life. They should be only what is expected of them by average game player. There should be no hidden elements or algorithms those are difficult to grasp and apply. Example: unit cost formula. In vanilla infantry attacker 10-1-1 unit costs 5. With that in mind average player with previous Civ1/2 experience naturally would expect same strength infantry defender 1-10-1 cost the same. They would be shocked to discover that it is 20 in SMACX actually. This doesn't match player expectations.
+* Overall game parameters configuration should not create an extremely overpowered or underpowered strategy. Each strategy should be viable at least at some circumstances according to this mod principles. This mod does not intent to "balance" anything but only to adjust some obvious favorite or underdog strategies. Overpowered stategy example: indestructible army.
+* Being usable also means to come at the right time in research tree. Coming too early clutters game interface and takes space from other more needed features. Coming too late causes unnecessary slowdown and frustration. This mod adjusts item appearence times to match faction development level.
+* Some items naturally come in sequence when each follower effectively obsolets its predecessor. Good example is weapons and armors. This mod tries to spread them evenly on a research scale so player can enjoy each for about same time. It also tries to link their corresponding technologies to assure they appear in right order. 
+* Mutually exclusive items/features are adjusted in price and effect so that they can compete with each other and none is completely inferior. Good example is social models.
 
-Feature should not outright contradict or break game concepts. Example of game concept: build-your-own-unit design workshop. Example of the feature directly contradicting this concept: mixed components (resonance armor and such).
-
-Game flow and features generally should be understandable to people and have clear visual effect on the game and player choices. This doesn't mean they should resemble real life. They should be only what is expected of them by average game player. There should be no hidden elements or algorithms those are difficult to grasp and apply.
-Example: unit cost formula. In vanilla infantry attacker 10-1-1 unit costs 5. With that in mind average player with previous Civ1/2 experience naturally would expect same strength infantry defender 1-10-1 cost the same. They would be shocked to discover that it is 20 in SMACX actually. This doesn't match player expectations.
-
-Overall game parameters configuration should not create an extremely overpowered or underpowered strategy. Each strategy should be viable at least at some circumstances according to this mod principles. This mod does not intent to "balance" anything but only to adjust some obvious favorite or underdog strategies. Overpowered stategy example: indestructible army.
-
-Being usable also means to come at the right time in research tree. Coming too early clutters game interface and takes space from other more needed features. Coming too late causes unnecessary slowdown and frustration. This mod adjusts item appearence times to match faction development level.
-
-Some items naturally come in sequence when each follower effectively obsolets its predecessor. Good example is weapons and armors. This mod tries to spread them evenly on a research scale so player can enjoy each for about same time. It also tries to link their corresponding technologies to assure they appear in right order. 
-
-Mutually exclusive items/features are adjusted in price and effect so that they can compete with each other and none is completely inferior. Good example is social models.
-
-
-REARRANGING TECHNOLOGY TREE
-==================================================
+# Rearranging technology tree
 
 A lot of above changes require moving items and features up and down technology tree. Apparently, rearranging technology tree is inevitable. This may seem like a big change for users. Therefore I dedicate a whole section to explain my reasons.
 
