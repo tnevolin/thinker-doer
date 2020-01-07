@@ -1,5 +1,7 @@
 # SMACX The Will to Power mod
 
+https://github.com/tnevolin/thinker-doer/blob/master/wtp_readme.md
+
 The Will to Power is a playing experience enhancement mod for Alpha Centauri: Alien Crossfire.  
 It is built on top of Thinker mod. Read the complete description of Thinker mod in: Readme.md, Details.md, Changelog.md.
 
@@ -47,7 +49,37 @@ I think I did good job on linking technologies. Vanilla technology level quite i
 
 ## Note to users
 
-I selected primary features based on my own understanding of their importance. If someone believes there should be a different primary association - let me know. I'll gladly substitute. After all, the technology is just a placeholder for features and can be replaced or even renamed as needed.
+I have selected primary features based on my own understanding of their importance. If someone believes there should be a different primary association - let me know. I'll gladly substitute. After all, the technology is just a placeholder for features and can be replaced or even renamed as needed.
+
+Keep in mind that technology prerequisites are generally arbitrary and serve as interlevel relations only. Preserving some beelines is an option but not a primary concern. I welcome any suggestions about rearranging and relinking technology tree to match game lore.
+
+# Attack/defense ratio adjustment
+
+Overpowered strategy: Indestructible army.  
+Cost/benefit imbalance: Conquering whole planet for near zero cost investment in army reinforcement.  
+Consequences: Conquering the whole world can be easily done in the mid game with minimal investments. The conquest victory become the easiest and earliest achievable. Other victory conditions almost never apply especially the ascent to transcedence. One needs to delay the victory **on purpose** just to enjoy other victory types.  
+:frowning_face:  
+Fix: adjust weapon and armor progression, attack/defense ratio, combat unit costs, military facility costs so that equally developed invader lose more units conquering enemy bases than defender and would require constant resupply to keep further advancement. In economical terms capturing a base should cost 2-3 times more in unit mineral cost to assailant than to victim. That is, of course, holds true only for attacking **prepared** defense of same technologically developed opponent. More advanced weaponry decreases player relative losses, obviously. Hefty price on conquering enemy bases makes non-stop conquering strategy not always a best choice. War related economical stagnation could be a too severe consequence to pay for expansion.
+
+To support the point above weapon and armor rating in this mod go 1:1 until about end of the game. The top weapon is about 20% stronger than top armor. Not that this difference is important at the end game where winned is essentially determined already. This is the point of this mod: let factions effectivelly defend themselves throughout the game and do not crack under slightest pressure in the middle ages.
+Weapon and armor strengths were redone to resemble Civ 1/2 slow exponential progression. Indeed, I cannot imagine why developers would left such weird weapon strength progression as 2-4-5 (?) or 12-13-16 (?). Whereas it is completely easy to correct it to normal growing progression by just changing text configuration. I've adjusted other weapon strenghts too to make their progression look more exponential as it should be. Each next level item is about 25% stronger starting from value 4 onwards. Unfortunately, early weapon/armor discoveries still chaotic in this way. Simple discovering strenght 2 weapon against strenght 1 armor is sudden 100% jump that is difficult to correct.
+
+NOTE TO USERS
+Large number of conventional weapon items (12) in the game presents two potential improvement areas.
+One should experience war conflict in each of 12 first technology levels to enjoy each and every weapon/armor item. This is practically impossible and, therefore, big part of weapon/armor items is inevitable unused. It does not contradict my principle as each one can still be used over the course of multiple games. Yet, if anyone believe there are too many of them, I can reduce number of weapons to 8 or something.
+
+
+Weapon and armor value progression
+--------------------------------------------------
+
+Vanilla game has very weird code that selects regular conventional weapon icon based on its offensive value. There is nothing like that for any other item types (non regular-conventional weapons, armor, chassis, ability). Wery precise, specific, and meaningless piece of programmatic machinery.
+This is fixed now. Modders are free to set any offensive values to regular conventional weapons without breaking their respective icons! Woo-hoo, thanks to me.
+
+With this in mind I was able to correct weapon strenght progression to smoothen it while keeping proper icons for each weapon.
+Here is the current game weapon and strength progression by technology levels:
+weapon: 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 24, 30
+armor:  1, 2, 3, 4, 5, 6,  , 10,   , 16,   , 24,
+There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
 
 # Unit cost
 
@@ -136,34 +168,6 @@ Tachion Field: +100%, configurable in thinker.ini.
 
 OTHER CHANGES
 ==================================================
-
-Attack/defense adjustment
---------------------------------------------------
-
-Overpowered strategy: Indestructible army.
-Cost/benefit imbalance: Conquering whole planet for near zero cost investment in army reinforcement.
-Fix: adjust attack/defense ratio, combat unit costs, military facility costs so that invader lose units conquering enemy bases and need constant resupply to advance further. From economical point of view invader should incur about 2-3 times bigger loss against PREPARED defense of enemy at the same technological level. Hefty price on conquering enemy bases makes non-stop conquering strategy not always a best choice. War related economical stagnation could be a too severe consequence to pay for expansion.
-Technological advantage gradually decreases loss ratio. One still need the 50% stronger weapon along with artillery superiority to capture bases with TD without losses. This is an improvement comparing to vanilla where weapon technology advantage and artillery is not required at all.
-
-To support the point above weapon and armor rating in this mod go 1:1 until about end of the game. The top weapon is about 20% stronger than top armor. Not that this difference is important at the end game where winned is essentially determined already. This is the point of this mod: let factions effectivelly defend themselves throughout the game and do not crack under slightest pressure in the middle ages.
-Weapon and armor strengths were redone to resemble Civ 1/2 slow exponential progression. Indeed, I cannot imagine why developers would left such weird weapon strength progression as 2-4-5 (?) or 12-13-16 (?). Whereas it is completely easy to correct it to normal growing progression by just changing text configuration. I've adjusted other weapon strenghts too to make their progression look more exponential as it should be. Each next level item is about 25% stronger starting from value 4 onwards. Unfortunately, early weapon/armor discoveries still chaotic in this way. Simple discovering strenght 2 weapon against strenght 1 armor is sudden 100% jump that is difficult to correct.
-
-NOTE TO USERS
-Large number of conventional weapon items (12) in the game presents two potential improvement areas.
-One should experience war conflict in each of 12 first technology levels to enjoy each and every weapon/armor item. This is practically impossible and, therefore, big part of weapon/armor items is inevitable unused. It does not contradict my principle as each one can still be used over the course of multiple games. Yet, if anyone believe there are too many of them, I can reduce number of weapons to 8 or something.
-
-
-Weapon and armor value progression
---------------------------------------------------
-
-Vanilla game has very weird code that selects regular conventional weapon icon based on its offensive value. There is nothing like that for any other item types (non regular-conventional weapons, armor, chassis, ability). Wery precise, specific, and meaningless piece of programmatic machinery.
-This is fixed now. Modders are free to set any offensive values to regular conventional weapons without breaking their respective icons! Woo-hoo, thanks to me.
-
-With this in mind I was able to correct weapon strenght progression to smoothen it while keeping proper icons for each weapon.
-Here is the current game weapon and strength progression by technology levels:
-weapon: 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 24, 30
-armor:  1, 2, 3, 4, 5, 6,  , 10,   , 16,   , 24,
-There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
 
 
 Facility cost
