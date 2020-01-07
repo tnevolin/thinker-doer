@@ -9,9 +9,12 @@ Induktio: Created Thinker mod which greatly improves AI intelligence and makes g
 
 # Why this mod?
 
-There are tons of interesting features in the game. Designers did a good job on it. I don't think there is another so feature reach game. I DO want to try them all! :)
+There are tons of interesting features in the game. Designers did a good job on it. I don't think there is another so feature reach game. I DO want to try them all!  
+:smiley:
+
 Unfortunately, I usually end up not using most them just because they don't make a difference. Trying them up just for fun and scenery is one time experience - no replayability. The range of unusability varies from completely broken to only marginally useful or not worth micromanaging and extra mouseclicks. Overall, about 2/3 of vanilla features are unusable or underpowered to extent of being strategically unviable. It is so sad to see multitude of otherwise cool features are not actually used by most players.
-I do want them to make difference. Therefore, I started this mod to give them second chance! :)
+I do want them to make difference. Therefore, I started this mod to give them second chance!  
+:smiley:
 
 In such option reach games like SMAX variations are endless. Due to such variations some strategical choice may shine sometimes depending on current conditions. Changing strategy in response to changing game situation is the nature of the play and that's why we have many to chose from. However, there should never be an option that never (or quite rarely) viable. Such unused option would just clutter game interface and player memory. Well balanced game should not have any unusable elements. In this mod I try to get rid of all outsiders or balance them somehow to make them usable.
 In other words, any feature should be advantegeous without doubts in at least some play style of game situations. Proportion of games where it provides such advantage should be noticeable too. At least 1/4 of the games, I think.
