@@ -1,6 +1,6 @@
 # SMACX The Will to Power mod
 
-https://github.com/tnevolin/thinker-doer/blob/master/wtp_readme.md
+HTML version of this document: https://github.com/tnevolin/thinker-doer/blob/master/wtp_readme.md
 
 The Will to Power is a playing experience enhancement mod for Alpha Centauri: Alien Crossfire.  
 It is built on top of Thinker mod. Read the complete description of Thinker mod in: Readme.md, Details.md, Changelog.md.
@@ -107,41 +107,45 @@ secondary item = least expensive module/weapon/armor
 
 reactor cost factor is set in thinker.ini as a ratio of <reactor cost value from thinker.ini> / <Fission reactor cost value from thinker.ini>. So that Fission reactor cost factor is always 1.
 
-### Special cases for non combat units
+### Special formula cases for non combat units
 * Colony on foil/cruiser costs same as if on infantry/speeder.
 * Former on foil/cruiser costs same as if on infantry/speeder.
 * Supply on foil/cruiser costs same as if on infantry/speeder.
 
-## Specific components cost values
+## Weapon and armor
 
 Weapon and armor cost growths slightly slower than their value. That makes stronger weapon/armor more cost effective against stronger opponent. However, it is still cheaper to build weaker units when top item is overkill.
 
-Colony base cost is now 6.  
+## Non combat modules
+
+Colony now costs 6.  
 Cheap colony pod allows fueling expansion with nutrients excess only and ignores any economical development whatsoever. Nutrient reach faction keeps stamping colony pods and fills up all available space exponentially. Not surprisingly, such simple strategy is also a most effective way to get economical advantage early in the game. Higher colony pod price put expansion speed in check of both nutrients and minerals production encouraging early terraforming and development. Now player needs to invest into base growth and terraforming in order to expand faster.
 
-Former base cost is now 4.  
+Former now costs 4.  
 Cheapest of all non combat units. There is no much sense to lower it down even more as it screws abilities cost multiplication.
 
-Supply base cost is now 12.  
+Supply now costs 12.  
 Harvesting resources by crawler is a very lucrative investment. Harvesting 4 minerals from rocky mine pays for vanila crawler in 7.5 turns! Then it delivers 4 minerals each turn. That is just insane ROI. I suggest to price it as high as 120 minerals which brings its effectiveness closer to Genejack Factory. Even at this price it is still quite useful but it is not a single ultimate strategy anymore. You would think thrice if you want to build a crawler just to extract 2 units of production.
+
+## Native units
 
 Native warfare should be slightly worse to conventional as they have other benefits. They ignore base defensive structures. They are naturally both full scale attacker and defender. Their price is fixed and is much lower comparing to fully equipped top level attacker-defender units. They do not require prototyping. IoD can transport. Sealurk can attack shore units. LoC does not need refueling and can capture bases. They all can repair up to 100% in fungus squares. They do not require maintenance while in fungus square. All together they are no brainer units and as such should be a little bit less effective to not become a superior choice. I've increased most native unit cost except spore launcher to encourage its use for bombardment.
 
-# Combat
+# Combat mechanics
 
 ## Round odds fix
 
-Round odds are now proportional to unit corresponding strengths. That is a fix for vanilla incorrect formula!
+Vanilla random roll method resulted in incorrect combat round odds. This is fixed now. Round odds are now proportional to unit corresponding strengths as it should be. :wink:
 
 ## Battle outcome skew fix
 
-Vanilla multiround combat model generated extremely narrow skew for combat outcome. Strength ration of 2:1 (twice stronger attacker) produces 14:1 battle winning odds which is almost guaranteed kill. Taking that there are plenty of 50% and 100% bonuses in the game it quite common to observe significant strenght ratio variations. Together with inequality in weaponry research strenght ratio may easily vary somewhere between 1:4 and 4:1. Yet, as we just saw any investment into strength improvement beyond 2:1 is a complete waste. 
+Vanilla multiround combat model generates extremely narrow skew for combat outcome. Strength ratio of 2:1 (twice stronger attacker) produces 14:1 battle winning odds which is almost guaranteed kill. Since there are plenty of 50% and 100% bonuses in the game it quite common to observe significant strenght ratio variations. Together with inequality in weaponry research and other game variations strenght ratio may easily fluctuate between 1:4 and 4:1. Yet, as we just saw any investment into strength improvement beyond 2:1 is a complete waste.
 
-This mod introduces alternative combat mechanics that smoothens that skew and returns interest in building stronger units by all means.
+This mod introduces alternative combat mechanics that smoothens that skew by reintroducing some randomness into combat outcomes. Now strenghtening units by all means keeps paying off up to 4:1-5:1 ratios. Anything beyond it is still an almost guaranteed kill as it should be.
 
 ## Odds confirmation dialog fix
 
-Odds confirmation dialog now displays correct winning probability percentage. Vanilla odds numbers were cool but highly unusable without calculator not even mentioning they were incorrect to start with.
+Odds confirmation dialog now displays correct winning probability percentage. Vanilla odds numbers look cool but are highly unusable without calculator not even mentioning they are incorrect to begin with.
 
 # Repair rates
 
@@ -154,49 +158,43 @@ Repair rates are lowered to eliminate fast and instant healing. Parameters are c
 * SP for fast repair natives in base: +10%.
 * Nano Factory: + 10%.
 
-BASE DEFENSIVE STRUCTURES
-==================================================
+# Base intrinsic defense and defensive structures
 
-Configurable parameters.
+Base intrinsic defence raised to 50%. This is configurable in alphax.txt.
 
-Current values:
-Intrinsic base defense: 50%, configurable in alphax.txt.
-Perimeter Defense: 100%, configurable in thinker.ini.
-Tachion Field: +100%, configurable in thinker.ini.
+Base defensive structures (Perimeter Defense, Naval Yard, Aerospace Complex, and Tachyon Field) defense bonuses are exposed in thinker.ini. They are left as is for now. Could change in future versions.
 
+# Facilities cost/maintainance
 
-OTHER CHANGES
-==================================================
-
-
-Facility cost
---------------------------------------------------
-
-Energy Bank = 6, Network Node = 6, Research Hospital = 9, Nanohospital = 18
+Facility | Cost | Maintenance | Explanation
+-------- | ---- | ----------- | -----------
+Energy Bank | 6 | |
+Network Node | 6 | |
+, Research Hospital = 9, Nanohospital = 18  
 Cost is reduced slightly for these. They seem to be a pretty interesing facilities not getting build early because of their price.
 
-Biology Lab = 4
+Biology Lab = 4  
 Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player insentive to build it before Network Node.
 
-Naval Yard = 5
+Naval Yard = 5  
 Reduced price to give player insentive to actually build it. It is priced as a combination of morale boosting and defensive facility. However, one usually needs morale boosting benefit at rich unit producing bases and defense benefit at weak distant ones - rarely both at once.
 
-Bioenhancement Center = 16/4
+Bioenhancement Center = 16/4  
 Morale boosting facility for all unit realms. Together with other facilities it produces elite units. Should have very high cost and maintainance.
 
-Geosynchronous Survery Pod = 16/2
+Geosynchronous Survery Pod = 16/2  
 Dropped maintenance since this is defense helping facility. I rarely use it myself. Maybe with lower maintenance it'll be more attractive.
 
-Aquafarm = 12/2
+Aquafarm = 12/2  
 This is the most beneficial facility out of three aquatic yield related ones. It affects all work squares and not only half as other two. Besides, nutrient surplus is the most powerful resource that in time compensates lack of two others due to population growth and increase in workers. I think the above increased price is not even enough to compensate for it but 12 rows is already quite high for early game.
 
-
-Secret Project cost
---------------------------------------------------
+# Secret Project costs
 
 General consideration about SPs: they are very lucrative. Especially those affecting whole empire. Even after they just built they are pretty useful and their value keep growing with your empire size. I believe making them cost at least same as replaced facility in 10 bases is still not fair but fairer than their original price. For SPs bringing constant benefit every turn I price them as <benefit per base per turn> * 10 bases * 20 turns. Your empire suppose to grow bigger than that eventually and you are not paying maintenance too.
 
-I also cleary understand that exact SP cost is not that relevant. It easily can be moved 50% up or down and nothing changes much in the game. My main concern was their way to low cost in vanilla. I feel like they should be about 2-5 times more expensive based on benefits. Other than that I welcome your suggestions. 
+I also cleary understand that exact SP cost is not that relevant. It easily can be moved 50% up or down and nothing changes much in the game. My main concern was their way to low cost in vanilla. I feel like they should be about 2-5 times more expensive based on benefits. Other than that I welcome your suggestions.
+
+First Header | Second Header
 
 The Human Genome				400
 2 minerals worth quelled drone * 10 bases * 20 turns
