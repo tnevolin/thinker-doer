@@ -1,27 +1,29 @@
-This is text mod built on top of modified Thinker mod.
-It was tested on GOG version.
+# Description
 
-Game engine
-===================================================================================
+This is text mod built on top of modified Thinker mod. Thinker mod is bundled in. No need to install it separately.
+
+This mod was tested on GOG SMAX version.
+
+# Installation
+
+## Game engine
 
 Copy these files to game directory overriding existing files.
-alphax.txt
-terranx_mod.exe
-thinker.dll
-thinker.ini
+* terranx_mod.exe
+* thinker.dll
+* thinker.ini
+* alphax.txt
+* Script.txt
 
-
-Factions
-===================================================================================
+## Factions (optional)
 
 This mod provides slight modifications to factions. These changes are minor and not required to experience the mod.
 
 Copy all faction files from factions folder to game directory overriding existing files.
 
-
-Run
-===================================================================================
+# Run
 
 Run terranx_mod.exe
-See Thinker mod instructions for details.
+
+See Thinker mod instructions for further details.
 

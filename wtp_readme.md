@@ -53,6 +53,53 @@ I have selected primary features based on my own understanding of their importan
 
 Keep in mind that technology prerequisites are generally arbitrary and serve as interlevel relations only. Preserving some beelines is an option but not a primary concern. I welcome any suggestions about rearranging and relinking technology tree to match game lore.
 
+## Technology feature association changes
+
+Technology | Associated feature
+---------- | ------------------
+Optical Computers | Probe teams
+Applied Gravitonics | Missile chassis
+Information Networks | Comm jammer
+Bioadaptive Resonance | Empath song
+Frictionless Surfaces | Dissociative wave
+Secrets of Alpha Centauri | Non-lethal methods
+Field Modulation | Aquafarm
+Organic Superlubricant | Subsea Trunkline
+The Will to Power | Tachyon field
+Polymorphic Software | Hologram theatre
+Secrets of the Manifolds | Subspace Generator
+Progenitor Psych | Biology lab
+Nanometallurgy | Fusion lab
+Singularity Mechanics | Quantum lab
+Temporal Mechanics | Nanoreplicator
+Secrets of the Manifolds | Nessus mining station
+Nonlinear Mathematics | The Universal Translator
+Superconductor | The Living Refinery
+Gene Splicing | The Ascetic Virtues
+Environmental Economics | The Manifold Harmonics
+Advanced Subatomic Theory | The Planetary Energy Grid
+Homo Superior | The Nethack Terminus
+The Will to Power | The Cloudbase Academy
+Secrets of Creation | The Clinical Immortality
+Graviton Theory | The Cyborg Factory
+Secrets of the Manifolds | The Telepathic Matrix
+Sentient Resonance | The Space Elevator
+Adaptive Doctrine | Plasma shard
+Silksteel Alloys | Planned
+Intellectual Integrity | Wealth
+Quantum Power | Thought Control
+Matter Compression | Cybernetic
+Adaptive Economics | Global Trade Pact, Repeal Global Trade Pact
+Probability Mechanics | Economic victory
+Applied Relativity | Salvage Unity Fusion Core
+Super Tensile Solids | Melt Polar Caps
+Planetary Economics | Launch Solar Shade, Increase Solar Shade
+Superstring Theory | Engineer
+Monopole Magnets | free Recycling Tanks
+Matter Editation | free Recreation Commons
+Sentient Econometrics | free Energy Bank
+Secrets of Creation | free Network Node
+
 # Attack/defense ratio adjustment
 
 Overpowered strategy: Indestructible army.  
