@@ -1,3 +1,7 @@
+# Version 37
+
+* Nautilus Pirates: SOCIAL, -POLICE
+
 # Version 36
 
 * Gaia's Stepdaughters: TECH, Ecology; SOCIAL, --MORALE; SOCIAL, -POLICE
