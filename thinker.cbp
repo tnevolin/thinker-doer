@@ -66,17 +66,17 @@
 					<Add library="user32" />
 				</Linker>
 				<ExtraCommands>
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Changelog.md&quot; TheWillToPower\  /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Details.md&quot; TheWillToPower\ /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)License.txt&quot; TheWillToPower\ /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Readme.md&quot; TheWillToPower\ /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_changelog.md&quot; TheWillToPower\ /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_installation.md&quot; TheWillToPower\ /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_readme.md&quot; TheWillToPower\ /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\exe\terranx_mod.exe&quot; TheWillToPower\core\ /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; TheWillToPower\core\ /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; TheWillToPower\core\ /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\factions&quot; TheWillToPower\factions /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Changelog.md&quot; &quot;releases\TheWillToPower\&quot;  /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Details.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)License.txt&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Readme.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_changelog.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_installation.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_readme.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\exe\terranx_mod.exe&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\factions&quot; &quot;releases\TheWillToPower\factions\&quot; /iy' />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
