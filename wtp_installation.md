@@ -8,12 +8,7 @@ This mod was tested on GOG SMAX version.
 
 ## Game engine
 
-Copy these files to game directory overriding existing files.
-* terranx_mod.exe
-* thinker.dll
-* thinker.ini
-* alphax.txt
-* Script.txt
+Copy files from top folder to game directory overriding existing files.
 
 ## Factions (optional)
 

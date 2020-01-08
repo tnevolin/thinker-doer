@@ -1,3 +1,7 @@
+# Version 35
+
+* Updated unit cost help.
+
 # Version 34
 
 * Removed industry penalty from Cult of Planet. They are often develop very badly.
