@@ -7,6 +7,7 @@
 * Peacekeeping Forces: TECH, Physic
 * University of Planet: TECH, DocFlex
 * Police State -EFFIC, +SUPPORT, ++POLICE, --PLANET
+* Removed extra info in SM help.
 
 # Version 35
 
