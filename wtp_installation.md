@@ -6,15 +6,16 @@ This mod was tested on GOG SMAX version.
 
 # Installation
 
-## Game engine
+## Core files
 
-Copy files from top folder to game directory overriding existing files.
+Copy files from **core** folder to game directory overriding existing files.
 
 ## Factions (optional)
 
-This mod provides slight modifications to factions. These changes are minor and not required to experience the mod.
+This mod provides slight modifications to factions. These changes are minor and not required to experience the mod.  
+You are welcome to use other faction configurations.
 
-Copy all faction files from factions folder to game directory overriding existing files.
+Copy files from **factions** folder to game directory overriding existing files.
 
 # Run
 
