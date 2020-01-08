@@ -6,6 +6,7 @@
 * Human Hive: TECH, Psych
 * Peacekeeping Forces: TECH, Physic
 * University of Planet: TECH, DocFlex
+* Police State -EFFIC, +SUPPORT, ++POLICE, --PLANET
 
 # Version 35
 
