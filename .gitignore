@@ -1,7 +1,8 @@
 build/
 rel/
-patch/
-release/
 utils/
+patch/
 *.layout
 *.depend
+TheWillToPower/
+TheWillToPower*.*
