@@ -633,11 +633,6 @@ Police States use oppression to keep their citizens in line, and allow
 their leaders great power over military decisions. But oppression of
 this type also decreases economic efficiency.
 ^
-+2 POLICE
-+1 SUPPORT
--1 EFFICIENCY
--2 PLANET
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Democratic
@@ -647,11 +642,6 @@ oppression and the stability it confers in favor of growth and efficiency.
 But citizens remain suspicious of large military deployments, and civilian
 oversight creates large military bureaucracies, so military support
 costs increase.
-^
-+1 EFFICIENCY
-+1 GROWTH
--2 SUPPORT
--1 PROBE
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -663,12 +653,6 @@ military forces, and tends to immunize citizens against (other forms
 of) brainwashing, but technological research tends to suffer under the
 continual assaults on intellectual integrity associated with such
 regimes.
-^
-+1 MORALE
-+1 PROBE
-+1 INDUSTRY
-+1 TALENT
--2 RESEARCH
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -701,11 +685,6 @@ to extremes of pollution and ecological damage. Also, citizens rendered
 suddenly poor by the actions unscrupulous moguls may revolt against
 their energy-fattened masters.
 ^
-+2 ECONOMY
--2 PLANET
--2 POLICE
--1 PROBE
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Planned
@@ -713,12 +692,6 @@ their energy-fattened masters.
 A semi-market economy kept in check by fierce governmental regulation,
 Planned Economics promotes stable industrial and population growth, but
 sacrifices efficiency.
-^
-+1 GROWTH
-+1 INDUSTRY
-+1 TALENT
--1 EFFICIENCY
--1 RESEARCH
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -729,11 +702,6 @@ of the biosphere. Green economies use resources efficiently and
 tend to avoid the excesses of industrial development which could
 provoke Planet's native life, but population growth necessarily
 suffers for lack of space.
-^
-+2 EFFICIENCY
-+2 PLANET
--3 GROWTH
--2 INDUSTRY
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -761,11 +729,6 @@ Leaders seeking Power build strong, well-paid military forces to
 enforce their will. But Economic and industrial infrastructure may
 suffer from bloated "defense" budgets.
 ^
-+2 MORALE
-+2 SUPPORT
-+1 PROBE
--2 INDUSTRY
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Knowledge
@@ -775,11 +738,6 @@ resources into research and education. They will also tend to promote
 the free exchange of information, which increases efficiency but also
 carries greater security risks.
 ^
-+1 EFFICIENCY
-+3 RESEARCH
--1 ECONOMY
--2 PROBE
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Wealth
@@ -788,11 +746,6 @@ Leaders seeking Wealth will concentrate on building economic and
 industrial infrastructure rapidly. They achieve rapid growth and
 development, with possible side effects being decadence and moral
 decay.
-^
-+1 ECONOMY
-+1 INDUSTRY
--2 MORALE
--1 POLICE
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -821,11 +774,6 @@ efficiency and freeing individuals for more creative tasks. But will
 workers displaced by computers sink into despair, poverty, and
 possible unrest?
 ^
-+1 EFFICIENCY
-+2 PLANET
-+1 RESEARCH
--3 POLICE
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Eudiamonic
@@ -839,11 +787,6 @@ Violence fades as society grows more tolerant and just, and even when
 this society's hand is forced it often shoots to subdue rather than
 to destroy.
 ^
-+2 ECONOMY
-+1 INDUSTRY
--1 EFFICIENCY
--3 MORALE
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Thought Control
@@ -853,11 +796,6 @@ subtle neurochemical triggers into the atmosphere to render its
 population obedient, loyal, and resistant to outside ideas.
 But significant resources are required to maintain this level
 of control.
-^
-+2 MORALE
-+2 POLICE
-+2 PROBE
--3 SUPPORT
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
