@@ -115,3 +115,8 @@
 
 Initial release. See list of changes in readme.
 
+# TODO
+
+* Land and sea borders should be 8 and not restricted by shore.
+* Artillery damage rework.
+
