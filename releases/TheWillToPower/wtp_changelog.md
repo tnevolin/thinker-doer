@@ -1,3 +1,13 @@
+# Version 36
+
+* Gaia's Stepdaughters: TECH, Ecology; SOCIAL, --MORALE; SOCIAL, -POLICE
+* The Lord's Believers: TECH, Psych; , SOCIAL, --RESEARCH, SOCIAL, +PROBE, SOCIAL, +SUPPORT, SOCIAL, -PLANET, FANATIC, 0
+* The Data Angels: TECH, Mobile; SOCIAL, -POLICE; SOCIAL, -RESEARCH
+* Human Hive: TECH, Psych
+* Peacekeeping Forces: TECH, Physic
+* University of Planet: TECH, DocFlex
+* Police State -EFFIC, +SUPPORT, ++POLICE, --PLANET
+
 # Version 35
 
 * Updated unit cost help.
