@@ -169,6 +169,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->alternative_combat_mechanics_loss_divider = max(1.0, atof(value));
     }
+    else if (MATCH("wtp", "disable_planetpearls"))
+    {
+        cf->disable_planetpearls = (atoi(value) == 0 ? false : true);
+    }
     // Thinker default case
     else
     {

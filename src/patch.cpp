@@ -1218,6 +1218,65 @@ void patch_repair_nano_factory(int repair_nano_factory)
 
 }
 
+void patch_disable_planetpearls()
+{
+    // do not collect planetpearls
+
+    int disable_planetpearls_bytes_length = 0x6;
+
+    /*
+    0:  89 90 00 cc 96 00       mov    DWORD PTR [eax+0x96cc00],edx
+    */
+    byte disable_planetpearls_bytes_old[] =
+        { 0x89, 0x90, 0x00, 0xCC, 0x96, 0x00 }
+    ;
+
+    /*
+    ...
+    */
+    byte disable_planetpearls_bytes_new[] =
+        { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0050B22B,
+        disable_planetpearls_bytes_length,
+        disable_planetpearls_bytes_old,
+        disable_planetpearls_bytes_new
+    )
+    ;
+
+    // do not display planetpearls message
+
+    int disable_planetpearls_message_bytes_length = 0x3;
+
+    /*
+    0:  8b 45 a8                mov    eax,DWORD PTR [ebp-0x58]
+    */
+    byte disable_planetpearls_message_bytes_old[] =
+        { 0x8B, 0x45, 0xA8 }
+    ;
+
+    /*
+    0:  31 c0                   xor    eax,eax
+    ...
+    */
+    byte disable_planetpearls_message_bytes_new[] =
+        { 0x31, 0xC0, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0050B362,
+        disable_planetpearls_message_bytes_length,
+        disable_planetpearls_message_bytes_old,
+        disable_planetpearls_message_bytes_new
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -1444,6 +1503,14 @@ bool patch_setup(Config* cf) {
     if (cf->repair_nano_factory != 1)
     {
         patch_repair_nano_factory(cf->repair_nano_factory);
+
+    }
+
+    // patch disable_planetpearls
+
+    if (cf->disable_planetpearls)
+    {
+        patch_disable_planetpearls();
 
     }
 
