@@ -12,7 +12,7 @@
 
 #PIRATES
 Nautilus Pirates, The Buccaneer, Pirates, M, 2, Svensgaard, M, 0, 1, 0, 0, 1,
-  TECH, DocFlex, SOCIAL, -GROWTH, SOCIAL, -EFFIC, SOCIAL, -POLICE, FREEFAC, 28, AQUATIC, 0, FREEABIL, 26
+  TECH, DocFlex, SOCIAL, -GROWTH, SOCIAL, -EFFIC, FREEFAC, 28, AQUATIC, 0, FREEABIL, 26
   Values, Power, SUPPORT
   nil, nil, nil
   Nautilus, Nautil.

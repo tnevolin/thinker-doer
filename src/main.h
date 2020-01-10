@@ -123,6 +123,7 @@ struct Config {
     int repair_nano_factory = 10;
     bool alternative_combat_mechanics = false;
     double alternative_combat_mechanics_loss_divider = 1.0;
+    bool disable_planetpearls = false;
 };
 
 /*

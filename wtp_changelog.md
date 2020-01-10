@@ -1,6 +1,7 @@
 # Version 37
 
 * Nautilus Pirates: SOCIAL, -POLICE
+* Removed Planetpearl energy reserve bonus.
 
 # Version 36
 
@@ -134,4 +135,9 @@ Initial release. See list of changes in readme.
 
 * Land and sea borders should be 8 and not restricted by shore.
 * Artillery damage rework.
+* Artillery duel uses armor as well.
+* Interceptor fight uses armor as well.
+* Remove planet pearls.
+* Get morale by losing HPs.
+* Remove morale boost from Children Creche.
 
