@@ -134,6 +134,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Very Green morale should not have inherent defense bonus.
 * Land and sea borders should be 8 and not restricted by shore.
 * Artillery damage rework.
 * Artillery duel uses armor as well.

@@ -397,12 +397,17 @@ I was able to remove AQUATIC +1 sea mineral advantage. Now they are back to norm
 
 Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
-## Probe morale boosing technologies
+## Disabled probe morale boosing technologies
 
 Some vanilla technologies boost probe team morale for free. That makes all new probe teams elite toward the end of the game. Err, what's the point in that if everybody gets it and this renders Covert Ops and PROBE ratings useless for probe team morale? I removed all such flags. Technologies do not improve probe team morale any more.
 
-## Planetpearl energy reserve bonus
+## Removed planetpearls energy reserve bonus
 
-Removed Planetpearl energy reserve bonus.
 Planetpearl is a pretty weird bonus that player gets when killing land only natives (not sea, not air). This bonus goes from 10 to 70 based on killed unit lifecycle. Attacking unit with 3:2 strenght advantage has pretty good winning chances. That least to harvesting Planetpearl exploit when player induces natives appearance by trying to enter fungus tile on purpose. Gameplay wise I percieve it as gold coins falling off defeated monsters in Mario. Purely arcade element quite strategically disconnected from the rest of the game and very distracting. Native lifeforms should be percieved as a threat not as a treasure.
+
+## Removed Very Green defense bonus
+
+Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
+
+One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
 
