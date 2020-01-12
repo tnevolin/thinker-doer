@@ -2,6 +2,7 @@
 
 * Nautilus Pirates: SOCIAL, -POLICE
 * Removed Planetpearl energy reserve bonus.
+* Modified promotion probability.
 
 # Version 36
 
@@ -140,4 +141,11 @@ Initial release. See list of changes in readme.
 * Remove planet pearls.
 * Get morale by losing HPs.
 * Remove morale boost from Children Creche.
-
+* Set basic morale to Very Green.
+* Set PLANET combat bonus to 20%.
+* Set PLANET combat bonus applicable on both attack and defense.
+* Set land native combat odds to 1:1.
+* Increase morale facilities cost.
+* Introduce sea sensors.
+* Make ECM to affect sea units as well.
+* Increase morale level bonus to 25%.

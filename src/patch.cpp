@@ -1218,6 +1218,9 @@ void patch_repair_nano_factory(int repair_nano_factory)
 
 }
 
+/**
+Disables planetpearls collection and corresponding message.
+*/
 void patch_disable_planetpearls()
 {
     // do not collect planetpearls
@@ -1272,6 +1275,206 @@ void patch_disable_planetpearls()
         disable_planetpearls_message_bytes_length,
         disable_planetpearls_message_bytes_old,
         disable_planetpearls_message_bytes_new
+    )
+    ;
+
+}
+
+/**
+Makes promotions probabilities uniform for all levels.
+*/
+void patch_uniform_promotions()
+{
+    // enable factor of 1/2 for Very Green, Green, Regular
+
+    int halve_promotion_chances_for_all_levels_bytes_length = 0x2;
+
+    /*
+    0:  7e 17                   jle    0x19
+    */
+    byte halve_promotion_chances_for_all_levels_bytes_old[] =
+        { 0x7E, 0x17 }
+    ;
+
+    /*
+    ...
+    */
+    byte halve_promotion_chances_for_all_levels_bytes_new[] =
+        { 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00506342,
+        halve_promotion_chances_for_all_levels_bytes_length,
+        halve_promotion_chances_for_all_levels_bytes_old,
+        halve_promotion_chances_for_all_levels_bytes_new
+    )
+    ;
+
+    // disable attacker immediate promotion for Very Green, Green
+
+    int disable_attacker_immediate_promotion_bytes_length = 0x2;
+
+    /*
+    0:  7e 21                   jle    0x23
+    */
+    byte disable_attacker_immediate_promotion_bytes_old[] =
+        { 0x7E, 0x21 }
+    ;
+
+    /*
+    ...
+    */
+    byte disable_attacker_immediate_promotion_bytes_new[] =
+        { 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0050A2B1,
+        disable_attacker_immediate_promotion_bytes_length,
+        disable_attacker_immediate_promotion_bytes_old,
+        disable_attacker_immediate_promotion_bytes_new
+    )
+    ;
+
+    // disable defender immediate promotion for Very Green, Green
+
+    int disable_defender_immediate_promotion_bytes_length = 0x2;
+
+    /*
+    0:  7e 3a                   jle    0x3c
+    */
+    byte disable_defender_immediate_promotion_bytes_old[] =
+        { 0x7E, 0x3A }
+    ;
+
+    /*
+    ...
+    */
+    byte disable_defender_immediate_promotion_bytes_new[] =
+        { 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0050A3ED,
+        disable_defender_immediate_promotion_bytes_length,
+        disable_defender_immediate_promotion_bytes_old,
+        disable_defender_immediate_promotion_bytes_new
+    )
+    ;
+
+    // unify attacker_1 reactor power multiplier
+
+    int unify_attacker_1_reactor_power_multiplier_bytes_length = 0x6;
+
+    /*
+    0:  8a 81 8f b8 9a 00       mov    al,BYTE PTR [ecx+0x9ab88f]
+    */
+    byte unify_attacker_1_reactor_power_multiplier_bytes_old[] =
+        { 0x8A, 0x81, 0x8F, 0xB8, 0x9A, 0x00 }
+    ;
+
+    /*
+    0:  b0 01                   mov    al,0x1
+    ...
+    */
+    byte unify_attacker_1_reactor_power_multiplier_bytes_new[] =
+        { 0xB0, 0x01, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0050A223,
+        unify_attacker_1_reactor_power_multiplier_bytes_length,
+        unify_attacker_1_reactor_power_multiplier_bytes_old,
+        unify_attacker_1_reactor_power_multiplier_bytes_new
+    )
+    ;
+
+    // unify attacker_2 reactor power multiplier
+
+    int unify_attacker_2_reactor_power_multiplier_bytes_length = 0x6;
+
+    /*
+    0:  8a 90 8f b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab88f]
+    */
+    byte unify_attacker_2_reactor_power_multiplier_bytes_old[] =
+        { 0x8A, 0x90, 0x8F, 0xB8, 0x9A, 0x00 }
+    ;
+
+    /*
+    0:  b2 01                   mov    dl,0x1
+    ...
+    */
+    byte unify_attacker_2_reactor_power_multiplier_bytes_new[] =
+        { 0xB2, 0x01, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0050A283,
+        unify_attacker_2_reactor_power_multiplier_bytes_length,
+        unify_attacker_2_reactor_power_multiplier_bytes_old,
+        unify_attacker_2_reactor_power_multiplier_bytes_new
+    )
+    ;
+
+    // unify defender_1 reactor power multiplier
+
+    int unify_defender_1_reactor_power_multiplier_bytes_length = 0x6;
+
+    /*
+    0:  8a 90 8f b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab88f]
+    */
+    byte unify_defender_1_reactor_power_multiplier_bytes_old[] =
+        { 0x8A, 0x90, 0x8F, 0xB8, 0x9A, 0x00 }
+    ;
+
+    /*
+    0:  b2 01                   mov    dl,0x1
+    ...
+    */
+    byte unify_defender_1_reactor_power_multiplier_bytes_new[] =
+        { 0xB2, 0x01, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0050A341,
+        unify_defender_1_reactor_power_multiplier_bytes_length,
+        unify_defender_1_reactor_power_multiplier_bytes_old,
+        unify_defender_1_reactor_power_multiplier_bytes_new
+    )
+    ;
+
+    // unify defender_2 reactor power multiplier
+
+    int unify_defender_2_reactor_power_multiplier_bytes_length = 0x6;
+
+    /*
+    0:  8a 90 8f b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab88f]
+    */
+    byte unify_defender_2_reactor_power_multiplier_bytes_old[] =
+        { 0x8A, 0x90, 0x8F, 0xB8, 0x9A, 0x00 }
+    ;
+
+    /*
+    0:  b2 01                   mov    dl,0x1
+    ...
+    */
+    byte unify_defender_2_reactor_power_multiplier_bytes_new[] =
+        { 0xB2, 0x01, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0050A3BF,
+        unify_defender_2_reactor_power_multiplier_bytes_length,
+        unify_defender_2_reactor_power_multiplier_bytes_old,
+        unify_defender_2_reactor_power_multiplier_bytes_new
     )
     ;
 
@@ -1511,6 +1714,14 @@ bool patch_setup(Config* cf) {
     if (cf->disable_planetpearls)
     {
         patch_disable_planetpearls();
+
+    }
+
+    // patch uniform_promotions
+
+    if (cf->uniform_promotions)
+    {
+        patch_uniform_promotions();
 
     }
 
