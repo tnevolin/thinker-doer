@@ -3,6 +3,7 @@
 * Nautilus Pirates: SOCIAL, -POLICE
 * Removed Planetpearl energy reserve bonus.
 * Modified promotion probability.
+* Removed Very Green morale level defense bonus and its (+) display.
 
 # Version 36
 
@@ -134,6 +135,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Very Green morale should not have inherent defense bonus.
 * Land and sea borders should be 8 and not restricted by shore.
 * Artillery damage rework.
 * Artillery duel uses armor as well.

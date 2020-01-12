@@ -1480,6 +1480,67 @@ void patch_uniform_promotions()
 
 }
 
+/**
+Removes Very Green on defense morale bonus.
+*/
+void patch_very_green_no_defense_bonus()
+{
+    // very_green_no_defense_bonus
+
+    int very_green_no_defense_bonus_bytes_length = 0x2;
+
+    /*
+    0:  7c 0c                   jl     0xe
+    */
+    byte very_green_no_defense_bonus_bytes_old[] =
+        { 0x7C, 0x0C }
+    ;
+
+    /*
+    ...
+    */
+    byte very_green_no_defense_bonus_bytes_new[] =
+        { 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00501C06,
+        very_green_no_defense_bonus_bytes_length,
+        very_green_no_defense_bonus_bytes_old,
+        very_green_no_defense_bonus_bytes_new
+    )
+    ;
+
+    // very_green_no_defense_bonus_display
+
+    int very_green_no_defense_bonus_display_bytes_length = 0x2;
+
+    /*
+    0:  75 10                   jne    0x12
+    */
+    byte very_green_no_defense_bonus_display_bytes_old[] =
+        { 0x75, 0x10 }
+    ;
+
+    /*
+    0:  75 10                   jmp    0x12
+    */
+    byte very_green_no_defense_bonus_display_bytes_new[] =
+        { 0xEB, 0x10 }
+    ;
+
+    write_bytes
+    (
+        0x004B4327,
+        very_green_no_defense_bonus_display_bytes_length,
+        very_green_no_defense_bonus_display_bytes_old,
+        very_green_no_defense_bonus_display_bytes_new
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -1722,6 +1783,14 @@ bool patch_setup(Config* cf) {
     if (cf->uniform_promotions)
     {
         patch_uniform_promotions();
+
+    }
+
+    // patch very_green_no_defense_bonus
+
+    if (cf->very_green_no_defense_bonus)
+    {
+        patch_very_green_no_defense_bonus();
 
     }
 
