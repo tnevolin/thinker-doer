@@ -4,6 +4,8 @@
 * Removed Planetpearl energy reserve bonus.
 * Modified promotion probability.
 * Removed Very Green morale level defense bonus and its (+) display.
+* 20,      ; Combat % -> Psi attack bonus/penalty per +PLANET
+* 1,1,     ; Psi combat offense-to-defense ratio (LAND unit defending)
 
 # Version 36
 
@@ -135,18 +137,13 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Very Green morale should not have inherent defense bonus.
+* Set PLANET combat bonus applicable on both attack and defense.
 * Land and sea borders should be 8 and not restricted by shore.
 * Artillery damage rework.
 * Artillery duel uses armor as well.
 * Interceptor fight uses armor as well.
-* Remove planet pearls.
-* Get morale by losing HPs.
-* Remove morale boost from Children Creche.
+* Remove morale boost from home base Children Creche.
 * Set basic morale to Very Green.
-* Set PLANET combat bonus to 20%.
-* Set PLANET combat bonus applicable on both attack and defense.
-* Set land native combat odds to 1:1.
 * Increase morale facilities cost.
 * Introduce sea sensors.
 * Make ECM to affect sea units as well.
