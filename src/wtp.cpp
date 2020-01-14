@@ -5,6 +5,86 @@
 #include "wtp.h"
 
 /**
+Combat calculation placeholder.
+All custom combat calculation goes here.
+*/
+HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, int attacker_strength_pointer, int defender_strength_pointer, int flags)
+{
+    debug
+    (
+        "battle_compute(attacker_vehicle_id=%d, defender_vehicle_id=%d, attacker_strength_pointer=%d, defender_strength_pointer=%d, flags=%d)\n",
+        attacker_vehicle_id,
+        defender_vehicle_id,
+        attacker_strength_pointer,
+        defender_strength_pointer,
+        flags
+    )
+    ;
+
+    // run original function
+
+    tx_battle_compute(attacker_vehicle_id, defender_vehicle_id, attacker_strength_pointer, defender_strength_pointer, flags);
+
+    debug
+    (
+        "attacker_strength=%d, defender_strength=%d\n",
+        *(int *)attacker_strength_pointer,
+        *(int *)defender_strength_pointer
+    )
+    ;
+
+    // adjust summary lines to the bottom
+
+    *tx_battle_compute_attacker_effect_count = 4;
+    *tx_battle_compute_defender_effect_count = 4;
+
+}
+
+/**
+Composes combat effect value percentage.
+Overwrites zero with empty string.
+*/
+HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer, int input_string_pointer)
+{
+    debug
+    (
+        "battle_compute_compose_value_percentage:input(output_string=%s, input_string=%s)\n",
+        (char *)output_string_pointer,
+        (char *)input_string_pointer
+    )
+    ;
+
+    // call original function
+
+    tx_strcat(output_string_pointer, input_string_pointer);
+
+    debug
+    (
+        "battle_compute_compose_value_percentage:output(output_string=%d, input_string=%d)\n",
+        (char *)output_string_pointer,
+        (char *)input_string_pointer
+    )
+    ;
+
+    // replace zero with empty string
+
+    if (strcmp((char *)output_string_pointer, " +0%") == 0)
+    {
+        ((char *)output_string_pointer)[0] = '\x0';
+
+    }
+
+    debug
+    (
+        "battle_compute_compose_value_percentage:corrected(output_string=%d, input_string=%d)\n",
+        (char *)output_string_pointer,
+        (char *)input_string_pointer
+    )
+    ;
+
+}
+
+/**
 Prototype cost calculation.
 
 Select primary and secondary weapon/module/armor items

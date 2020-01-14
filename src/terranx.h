@@ -54,6 +54,14 @@ extern R_Resource* tx_resource;
 extern R_Terraform* tx_terraform;
 extern R_Weapon* tx_weapon;
 
+// battle computation display variables
+extern int *tx_battle_compute_attacker_effect_count;
+extern char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50];
+extern int (*tx_battle_compute_attacker_effect_values)[0x4];
+extern int *tx_battle_compute_defender_effect_count;
+extern char (*tx_battle_compute_defender_effect_labels)[0x4][0x50];
+extern int (*tx_battle_compute_defender_effect_values)[0x4];
+
 typedef int __cdecl fp_void();
 typedef int __cdecl fp_1int(int);
 typedef int __cdecl fp_2int(int, int);
@@ -63,6 +71,9 @@ typedef int __cdecl fp_5int(int, int, int, int, int);
 typedef int __cdecl fp_6int(int, int, int, int, int, int);
 typedef int __cdecl fp_7intstr(int, int, int, int, int, int, int, const char*);
 typedef char* __cdecl fp_str_void();
+typedef char* __cdecl fp_str_void();
+typedef void __cdecl fp_2int_void(int, int);
+typedef void __cdecl fp_3int_void(int, int, int);
 
 // params: faction, chassis, module, armor, specials, reactor, unit_plan, name
 extern fp_7intstr* tx_propose_proto;
@@ -101,17 +112,20 @@ extern fp_1int* tx_action_staple;
 extern fp_1int* tx_tech_rate;
 extern fp_1int* tx_tech_selection;
 
-// prototype cost
+// calculates prototype cost
 extern fp_5int* tx_proto_cost;
 
-// read configuration field
+// reads configuration field
 extern fp_str_void* tx_read_configuration_field;
 
-// create prototype
+// creates prototype
 extern fp_6int* tx_create_prototype;
 
-// upgrade cost
+// calculates upgrade cost
 extern fp_3int* tx_upgrade_cost;
+
+// concatenates strings
+extern fp_2int_void* tx_strcat;
 
 #endif // __TERRANX_H__
 
