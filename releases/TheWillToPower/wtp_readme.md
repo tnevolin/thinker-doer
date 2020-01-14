@@ -100,7 +100,7 @@ Matter Editation | free Recreation Commons
 Sentient Econometrics | free Energy Bank
 Secrets of Creation | free Network Node
 
-# Units
+# Units and combat related changes
 
 ## Attack/defense ratio adjustment
 
@@ -228,6 +228,12 @@ Since higher reactors now do nothing but decrease unit cost player also gets **R
 This mod removes all hurry cost penalty thresholds. I never could grasp their strategical meaning since they do not affect course of the game but add annoyance only and force me to use calculator. Let me know if anyone thinks otherwise.
 
 Now all hurry costs are flat x2 for facilities and x4 for units and projects.
+
+## PLANET rating effect on combat
+
+Native warfare seems to be everybody's weapon in vanilla. It doesn't seem fair to PLANET oriented factions. In base game PLANET rating is very weak comparing to say INDUSTRY/RESEARCH. It should be at least comparable to justify Cult of Planet's -1 INDUSTRY penalty. In my mind even ±1 PLANET rating should be *very* noticeable. Therefore, this mod increases its combat bonus to 20%. It also applies it on both attack and defense so PLANET haters suffer significant penalty. Now running Free Market really forces player to build up anti native base defense - mere escaping combat does not help anymore.
+
+On top of that this mod sets land psi combat base odds to 1:1. This way PLANET rating controls advantage/disadvantage in psi combat, correspondingly. It also brings psi attack odds against Transe unit in base (1:2.25) in range with conventional attack odds against base with PD/TF (1:2 - 1:3). This last change, though, could be undesired for many players as I found out already. Luckily, it is configured in alphax.txt. So anyone can roll it back or set to any other preferred value.
 
 # Base intrinsic defense and defensive structures
 
@@ -397,12 +403,17 @@ I was able to remove AQUATIC +1 sea mineral advantage. Now they are back to norm
 
 Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
-## Probe morale boosing technologies
+## Disabled probe morale boosing technologies
 
 Some vanilla technologies boost probe team morale for free. That makes all new probe teams elite toward the end of the game. Err, what's the point in that if everybody gets it and this renders Covert Ops and PROBE ratings useless for probe team morale? I removed all such flags. Technologies do not improve probe team morale any more.
 
-## Planetpearl energy reserve bonus
+## Removed planetpearls energy reserve bonus
 
-Removed Planetpearl energy reserve bonus.
 Planetpearl is a pretty weird bonus that player gets when killing land only natives (not sea, not air). This bonus goes from 10 to 70 based on killed unit lifecycle. Attacking unit with 3:2 strenght advantage has pretty good winning chances. That least to harvesting Planetpearl exploit when player induces natives appearance by trying to enter fungus tile on purpose. Gameplay wise I percieve it as gold coins falling off defeated monsters in Mario. Purely arcade element quite strategically disconnected from the rest of the game and very distracting. Native lifeforms should be percieved as a threat not as a treasure.
+
+## Removed Very Green defense bonus
+
+Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
+
+One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
 

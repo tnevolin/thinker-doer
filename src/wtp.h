@@ -4,6 +4,10 @@
 #include "main.h"
 #include "game.h"
 
+HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, int attacker_strength_pointer, int defender_strength_pointer, int flags);
+
+HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer, int input_string_pointer);
+
 HOOK_API int proto_cost(int chassisTypeId, int weaponTypeId, int armorTypeId, int abilities, int reactorTypeId);
 
 HOOK_API int upgrade_cost(int faction_id, int new_unit_id, int old_unit_id);

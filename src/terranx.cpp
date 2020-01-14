@@ -49,6 +49,13 @@ R_Resource* tx_resource = (R_Resource *)0x945F50;
 R_Terraform* tx_terraform = (R_Terraform *)0x691878;
 R_Weapon* tx_weapon = (R_Weapon *)0x94AE60;
 
+// battle computation display variables
+int *tx_battle_compute_attacker_effect_count = (int *)0x915614;
+char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F554;
+int (*tx_battle_compute_attacker_effect_values)[0x4] = (int (*)[0x4])0x9155F0;
+int *tx_battle_compute_defender_effect_count = (int *)0x915618;
+char (*tx_battle_compute_defender_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F694;
+int (*tx_battle_compute_defender_effect_values)[0x4] = (int (*)[0x4])0x915600;
 
 fp_7intstr* tx_propose_proto = (fp_7intstr*)0x580860;
 fp_4int* tx_veh_init = (fp_4int*)0x5C03D0;
@@ -83,15 +90,18 @@ fp_1int* tx_action_staple = (fp_1int*)0x4CA7F0;
 fp_1int* tx_tech_rate = (fp_1int*)0x5BE6B0;
 fp_1int* tx_tech_selection = (fp_1int*)0x5BE380;
 
-// read configuration field
+// reads configuration field
 fp_str_void* tx_read_configuration_field = (fp_str_void*)0x005FD670;
 
-// prototype cost
+// calculates prototype cost
 fp_5int* tx_proto_cost = (fp_5int*)0x005A5A60;
 
-// create prototype
+// creates prototype
 fp_6int* tx_create_prototype = (fp_6int*)0x005A5D40;
 
-// upgrade cost
+// calculates upgrade cost
 fp_3int* tx_upgrade_cost = (fp_3int*)0x004EFD50;
+
+// concatenates strings
+fp_2int_void* tx_strcat = (fp_2int_void*)0x00645470;
 

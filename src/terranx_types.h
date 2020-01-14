@@ -150,46 +150,46 @@ struct MAP
 
 struct FactMeta
 {
-    int is_leader_female;
-    char filename[24];
-    char search_key[24];
-    char name_leader[24];
-    char title_leader[24];
-    char adj_leader[128];
-    char adj_insult_leader[128];
-    char adj_faction[128];
-    char adj_insult_faction[128];
-    char pad_1[128];
-    char noun_faction[24];
-    int noun_gender;
-    int is_noun_plural;
-    char adj_name_faction[128];
-    char formal_name_faction[40];
-    char insult_leader[24];
-    char desc_name_faction[24];
-    char assistant_name[24];
-    char scientist_name[24];
-    char assistant_city[24];
-    char pad_2[176];
-    int rule_tech_selected; // +0x4D4
+    int is_leader_female;           // 0x0000
+    char filename[24];              // 0x0004
+    char search_key[24];            // 0x001C
+    char name_leader[24];           // 0x0034
+    char title_leader[24];          // 0x004C
+    char adj_leader[128];           // 0x0064
+    char adj_insult_leader[128];    // 0x00E4
+    char adj_faction[128];          // 0x0164
+    char adj_insult_faction[128];   // 0x01E4
+    char pad_1[128];                // 0x0264
+    char noun_faction[24];          // 0x02E4
+    int noun_gender;                // 0x02FC
+    int is_noun_plural;             // 0x0300
+    char adj_name_faction[128];     // 0x0304
+    char formal_name_faction[40];   // 0x0384
+    char insult_leader[24];         // 0x03AC
+    char desc_name_faction[24];     // 0x03C4
+    char assistant_name[24];        // 0x03DC
+    char scientist_name[24];        // 0x03F4
+    char assistant_city[24];        // 0x040C
+    char pad_2[176];                // 0x0424
+    int rule_tech_selected;         // 0x04D4
     int rule_morale;
     int rule_research;
-    int rule_drone;
+    int rule_drone;                 // 0x04E0
     int rule_talent;
     int rule_energy;
     int rule_interest;
-    int rule_population;
+    int rule_population;            // 0x04F0
     int rule_hurry;
     int rule_techcost;
     int rule_psi;
-    int rule_sharetech;
+    int rule_sharetech;             // 0x0500
     int rule_commerce;
-    int rule_flags;         // +0x508
+    int rule_flags;                 // 0x0508
     int faction_bonus_count;
-    int faction_bonus_id[8];
-    int faction_bonus_val1[8];
-    int faction_bonus_val2[8];
-    int AI_fight;
+    int faction_bonus_id[8];        // 0x0510
+    int faction_bonus_val1[8];      // 0x0530
+    int faction_bonus_val2[8];      // 0x0550
+    int AI_fight;                   // 0x0570
     int AI_growth;
     int AI_tech;
     int AI_wealth;
@@ -213,94 +213,94 @@ struct Goal
 
 struct Faction
 {
-    int diplo_flags;
+    int diplo_flags;                // 0x0000
     int ranking;
     int diff_level;
     int unk_0;
-    int unk_1;
+    int unk_1;                      // 0x0010
     int tutorial_more_bases;
-    int diplo_status[8];
-    int diplo_agenda[8];
-    int diplo_friction_1[8];
-    int diplo_turn_check[8];
-    int diplo_treaty_turns[8];
-    char diplo_friction_2[8];
-    int sanction_turns;
-    int loan_years[8];
-    int loan_payment[8];
-    char gap_104[32];
-    int minor_atrocities;
+    int diplo_status[8];            // 0x0018
+    int diplo_agenda[8];            // 0x0038
+    int diplo_friction_1[8];        // 0x0058
+    int diplo_turn_check[8];        // 0x0078
+    int diplo_treaty_turns[8];      // 0x0098
+    char diplo_friction_2[8];       // 0x00B8
+    int sanction_turns;             // 0x00C0
+    int loan_years[8];              // 0x00C4
+    int loan_payment[8];            // 0x00E4
+    char gap_104[32];               // 0x0104
+    int minor_atrocities;           // 0x0124
     int global_reputation;
-    int diplo_unk1[8];
-    int diplo_unk2[8];
-    int diplo_backstabs[8];
-    int diplo_unk3[8];
-    int diplo_unk4[8];
-    int map_trade_done;
-    int governor_def_flags;
+    int diplo_unk1[8];              // 0x012C
+    int diplo_unk2[8];              // 0x014C
+    int diplo_backstabs[8];         // 0x016C
+    int diplo_unk3[8];              // 0x018C
+    int diplo_unk4[8];              // 0x01AC
+    int map_trade_done;             // 0x01CC
+    int governor_def_flags;         // 0x01D0
     int unk_2;
     int major_atrocities;
     int unk_3;
-    int unk_4[8];
-    int unk_5[8];
-    int energy_credits;
+    int unk_4[8];                   // 0x01E0
+    int unk_5[8];                   // 0x0200
+    int energy_credits;             // 0x0220
     int energy_cost;
     int SE_Politics_pending;
     int SE_Economics_pending;
-    int SE_Values_pending;
+    int SE_Values_pending;          // 0x0230
     int SE_Future_pending;
     int SE_Politics;
     int SE_Economics;
-    int SE_Values;
+    int SE_Values;                  // 0x0240
     int SE_Future;
     int SE_upheaval_cost_paid;
     int SE_economy_pending;
-    int SE_effic_pending;
+    int SE_effic_pending;           // 0x0250
     int SE_support_pending;
     int SE_talent_pending;
     int SE_morale_pending;
-    int SE_police_pending;
+    int SE_police_pending;          // 0x0260
     int SE_growth_pending;
     int SE_planet_pending;
     int SE_probe_pending;
-    int SE_industry_pending;
+    int SE_industry_pending;        // 0x0270
     int SE_research_pending;
     int SE_economy;
     int SE_effic;
-    int SE_support;
+    int SE_support;                 // 0x0280
     int SE_talent;
     int SE_morale;
     int SE_police;
-    int SE_growth;
+    int SE_growth;                  // 0x0290
     int SE_planet;
     int SE_probe;
     int SE_industry;
-    int SE_research;
+    int SE_research;                // 0x02A0
     int SE_economy_2;
     int SE_effic_2;
     int SE_support_2;
-    int SE_talent_2;
+    int SE_talent_2;                // 0x02B0
     int SE_morale_2;
     int SE_police_2;
     int SE_growth_2;
-    int SE_planet_2;
+    int SE_planet_2;                // 0x02C0
     int SE_probe_2;
     int SE_industry_2;
     int SE_research_2;
-    int SE_economy_base;
+    int SE_economy_base;            // 0x02D0
     int SE_effic_base;
     int SE_support_base;
     int SE_talent_base;
-    int SE_morale_base;
+    int SE_morale_base;             // 0x02E0
     int SE_police_base;
     int SE_growth_base;
     int SE_planet_base;
-    int SE_probe_base;
+    int SE_probe_base;              // 0x02F0
     int SE_industry_base;
     int SE_research_base;
     int unk_13;
     int unk_14;
-    int tech_commerce_bonus;
+    int tech_commerce_bonus;        // 0x0300
     int unk_16;
     int unk_17;
     int unk_18;

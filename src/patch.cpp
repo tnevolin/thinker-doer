@@ -246,6 +246,23 @@ void write_bytes(int address, int length, byte old_bytes[], byte new_bytes[]) {
 // ========================================
 
 /**
+Patch battle compute wrapper.
+*/
+void patch_battle_compute()
+{
+    // wrap battle computation into custom function
+
+    write_call_ptr(0x0050474C, (int)battle_compute);
+    write_call_ptr(0x00506EA6, (int)battle_compute);
+    write_call_ptr(0x005085E0, (int)battle_compute);
+
+    // wrap string concatenation into custom function for battle computation output only
+
+    write_call_ptr(0x00422915, (int)battle_compute_compose_value_percentage);
+
+}
+
+/**
 Ignores reactor power multiplier in combat processing.
 */
 void patch_ignore_reactor_power_in_combat_processing()
@@ -1627,6 +1644,12 @@ bool patch_setup(Config* cf) {
     // ==============================
     // The Will to Power mod changes
     // ==============================
+
+    // patch battle_compute
+
+    patch_battle_compute();
+
+    // patch ignore_reactor_power_in_combat_processing
 
     if (cf->ignore_reactor_power_in_combat)
     {
