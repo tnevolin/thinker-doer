@@ -250,7 +250,6 @@ Patch battle compute wrapper.
 */
 void patch_battle_compute()
 {
-    /*
     // wrap battle computation into custom function
 
     write_call_ptr(0x0050474C, (int)battle_compute);
@@ -260,7 +259,6 @@ void patch_battle_compute()
     // wrap string concatenation into custom function for battle computation output only
 
     write_call_ptr(0x00422915, (int)battle_compute_compose_value_percentage);
-    */
 
 }
 
@@ -1560,67 +1558,6 @@ void patch_very_green_no_defense_bonus()
 
 }
 
-/**
-Applies PLANET combat bonus on defense as well.
-*/
-void patch_apply_planet_combat_bonus_on_defense()
-{
-    // apply_planet_combat_bonus_on_defense
-
-    int apply_planet_combat_bonus_on_defense_bytes_length = 0x2;
-
-    /*
-    0:  7c 0c                   jl     0xe
-    */
-    byte apply_planet_combat_bonus_on_defense_bytes_old[] =
-        { 0x7C, 0x0C }
-    ;
-
-    /*
-    ...
-    */
-    byte apply_planet_combat_bonus_on_defense_bytes_new[] =
-        { 0x90, 0x90 }
-    ;
-
-    write_bytes
-    (
-        0x00501C06,
-        apply_planet_combat_bonus_on_defense_bytes_length,
-        apply_planet_combat_bonus_on_defense_bytes_old,
-        apply_planet_combat_bonus_on_defense_bytes_new
-    )
-    ;
-
-    // apply_planet_combat_bonus_on_defense_display
-
-    int apply_planet_combat_bonus_on_defense_display_bytes_length = 0x2;
-
-    /*
-    0:  75 10                   jne    0x12
-    */
-    byte apply_planet_combat_bonus_on_defense_display_bytes_old[] =
-        { 0x75, 0x10 }
-    ;
-
-    /*
-    0:  75 10                   jmp    0x12
-    */
-    byte apply_planet_combat_bonus_on_defense_display_bytes_new[] =
-        { 0xEB, 0x10 }
-    ;
-
-    write_bytes
-    (
-        0x004B4327,
-        apply_planet_combat_bonus_on_defense_display_bytes_length,
-        apply_planet_combat_bonus_on_defense_display_bytes_old,
-        apply_planet_combat_bonus_on_defense_display_bytes_new
-    )
-    ;
-
-}
-
 // ========================================
 // patch setup
 // ========================================
@@ -1877,14 +1814,6 @@ bool patch_setup(Config* cf) {
     if (cf->very_green_no_defense_bonus)
     {
         patch_very_green_no_defense_bonus();
-
-    }
-
-    // patch apply_planet_combat_bonus_on_defense
-
-    if (cf->apply_planet_combat_bonus_on_defense)
-    {
-        patch_apply_planet_combat_bonus_on_defense();
 
     }
 

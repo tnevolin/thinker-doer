@@ -134,13 +134,13 @@ struct VEH
 
 struct MAP
 {
-    byte level;
-    byte altitude;
-    short flags;
-    byte visibility;
-    byte rocks;
-    byte unk_1;
-    char owner;
+    byte level;             // 0x0000
+    byte altitude;          // 0x0001
+    short flags;            // 0x0002
+    byte visibility;        // 0x0004
+    byte rocks;             // 0x0005
+    byte unk_1;             // 0x0006
+    char owner;             // 0x0007
     int items;
     short landmarks;
     byte unk_2;
