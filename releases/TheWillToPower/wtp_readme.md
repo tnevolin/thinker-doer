@@ -417,7 +417,7 @@ Designers added tons of little trinket for player so they don't feel sorry for t
 
 One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
 
-# UI changes
+# UI changes / cosmetics
 
 ## Battle computation display
 

@@ -77,11 +77,15 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
                     int defender_psi_combat_bonus = tx_basic->combat_psi_bonus_per_PLANET * defender_planet_rating;
 
+                    // calculate "Planet" label pointer
+
+                    char *label_planet = *(*tx_labels + LABEL_OFFSET_PLANET);
+
                     // add effect description
 
                     if (*tx_battle_compute_defender_effect_count < 4)
                     {
-                        strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], tx_label_planet);
+                        strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label_planet);
                         (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_psi_combat_bonus;
 
                     }
@@ -125,7 +129,7 @@ HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer,
 
     debug
     (
-        "battle_compute_compose_value_percentage:output(output_string=%d, input_string=%d)\n",
+        "battle_compute_compose_value_percentage:output(output_string=%s, input_string=%s)\n",
         (char *)output_string_pointer,
         (char *)input_string_pointer
     )
@@ -141,7 +145,7 @@ HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer,
 
     debug
     (
-        "battle_compute_compose_value_percentage:corrected(output_string=%d, input_string=%d)\n",
+        "battle_compute_compose_value_percentage:corrected(output_string=%s, input_string=%s)\n",
         (char *)output_string_pointer,
         (char *)input_string_pointer
     )

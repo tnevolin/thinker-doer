@@ -4,7 +4,7 @@
 * Removed Planetpearl energy reserve bonus.
 * Modified promotion probability.
 * Removed Very Green morale level defense bonus and its (+) display.
-* 20,      ; Combat % -> Psi attack bonus/penalty per +PLANET
+* 15,      ; Combat % -> Psi attack bonus/penalty per +PLANET
 * 1,1,     ; Psi combat offense-to-defense ratio (LAND unit defending)
 * Adjusted summary strength and power lines to the bottom in battle computation display. This way it is easier to read and compare them between attacker and defender.
 

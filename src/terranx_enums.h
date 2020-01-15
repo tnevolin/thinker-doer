@@ -722,4 +722,9 @@ enum terrain_basic_flags
     TILE_ROCKY = 0x80,
 };
 
+enum label_offsets
+{
+    LABEL_OFFSET_PLANET = 0x271,
+};
+
 #endif // __TERRANX_ENUMS_H__
