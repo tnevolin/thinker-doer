@@ -173,6 +173,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->disable_planetpearls = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "apply_planet_combat_bonus_on_defense"))
+    {
+        cf->apply_planet_combat_bonus_on_defense = (atoi(value) == 0 ? false : true);
+    }
     // Thinker default case
     else
     {

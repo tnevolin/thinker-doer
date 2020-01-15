@@ -33,6 +33,71 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
     )
     ;
 
+    // apply_planet_combat_bonus_on_defense
+
+    if (conf.apply_planet_combat_bonus_on_defense)
+    {
+        // get attacker/defender vehicles
+
+        VEH attacker_vehicle = tx_vehicles[attacker_vehicle_id];
+        VEH defender_vehicle = tx_vehicles[defender_vehicle_id];
+
+        // get attacker/defender units
+
+        UNIT attacker_unit = tx_units[attacker_vehicle.proto_id];
+        UNIT defender_unit = tx_units[defender_vehicle.proto_id];
+
+        // get attacker/defender weapon/armor id
+
+        R_Weapon attacker_weapon = tx_weapon[attacker_unit.weapon_type];
+        R_Defense defender_armor = tx_defense[defender_unit.armor_type];
+
+        // get attacker/defender weapon/armor value
+
+        int attacker_weapon_value = attacker_weapon.offense_value;
+        int defender_armor_value = defender_armor.defense_value;
+
+        // check if it is a psi combat
+
+        if (attacker_weapon_value < 0 || defender_armor_value < 0)
+        {
+            // get defender faction id
+
+            int defender_faction_id = tx_vehicles[defender_vehicle_id].faction_id;
+
+            if (defender_faction_id != 0)
+            {
+                // get defender planet rating
+
+                int defender_planet_rating = tx_factions[defender_faction_id].SE_planet;
+
+                if (defender_planet_rating != 0)
+                {
+                    // calculate defender psi combat bonus
+
+                    int defender_psi_combat_bonus = tx_basic->combat_psi_bonus_per_PLANET * defender_planet_rating;
+
+                    // add effect description
+
+                    if (*tx_battle_compute_defender_effect_count < 4)
+                    {
+                        strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], tx_label_planet);
+                        (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_psi_combat_bonus;
+
+                    }
+
+                    // modify defender strength
+
+                    *(int *)defender_strength_pointer = (int)round((double)(*(int *)defender_strength_pointer) * (100.0 + (double)defender_psi_combat_bonus) / 100.0);
+
+                }
+
+            }
+
+        }
+
+    }
+
     // adjust summary lines to the bottom
 
     *tx_battle_compute_attacker_effect_count = 4;

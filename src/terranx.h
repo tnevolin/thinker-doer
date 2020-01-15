@@ -62,6 +62,9 @@ extern int *tx_battle_compute_defender_effect_count;
 extern char (*tx_battle_compute_defender_effect_labels)[0x4][0x50];
 extern int (*tx_battle_compute_defender_effect_values)[0x4];
 
+// labels
+extern char *tx_label_planet;
+
 typedef int __cdecl fp_void();
 typedef int __cdecl fp_1int(int);
 typedef int __cdecl fp_2int(int, int);
