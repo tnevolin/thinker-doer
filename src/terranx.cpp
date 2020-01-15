@@ -57,6 +57,9 @@ int *tx_battle_compute_defender_effect_count = (int *)0x915618;
 char (*tx_battle_compute_defender_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F694;
 int (*tx_battle_compute_defender_effect_values)[0x4] = (int (*)[0x4])0x915600;
 
+// labels
+char *tx_label_planet = (char (*))(0x009B90F8 + 0x000009C4);
+
 fp_7intstr* tx_propose_proto = (fp_7intstr*)0x580860;
 fp_4int* tx_veh_init = (fp_4int*)0x5C03D0;
 fp_1int* tx_veh_skip = (fp_1int*)0x5C1D20;

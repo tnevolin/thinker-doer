@@ -126,6 +126,7 @@ struct Config {
     bool disable_planetpearls = false;
     bool uniform_promotions = true; // internal configuration
     bool very_green_no_defense_bonus = true; // internal configuration
+    bool apply_planet_combat_bonus_on_defense = false;
 };
 
 /*
