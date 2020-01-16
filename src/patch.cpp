@@ -1558,6 +1558,51 @@ void patch_very_green_no_defense_bonus()
 
 }
 
+/**
+Makes sea base territory distance same as land one.
+*/
+void patch_sea_territory_distance_same_as_land()
+{
+    // sea_territory_distance_same_as_land
+
+    int sea_territory_distance_same_as_land_bytes_length = 0x2;
+
+    /*
+    0:  d1 fa                   sar    edx,1
+    */
+    byte sea_territory_distance_same_as_land_bytes_old[] =
+        { 0xD1, 0xFA }
+    ;
+
+    /*
+    ...
+    */
+    byte sea_territory_distance_same_as_land_bytes_new[] =
+        { 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00523F01,
+        sea_territory_distance_same_as_land_bytes_length,
+        sea_territory_distance_same_as_land_bytes_old,
+        sea_territory_distance_same_as_land_bytes_new
+    )
+    ;
+
+}
+
+/**
+Makes coastal base territory distance same as sea one.
+*/
+void patch_coastal_territory_distance_same_as_sea()
+{
+    // wrap calculate_distance_to_nearest_base
+
+    write_call_ptr(0x00523ED7, (int)calculate_distance_to_nearest_base);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -1814,6 +1859,22 @@ bool patch_setup(Config* cf) {
     if (cf->very_green_no_defense_bonus)
     {
         patch_very_green_no_defense_bonus();
+
+    }
+
+    // patch sea_territory_distance_same_as_land
+
+    if (cf->sea_territory_distance_same_as_land)
+    {
+        patch_sea_territory_distance_same_as_land();
+
+    }
+
+    // patch coastal_territory_distance_same_as_sea
+
+    if (cf->coastal_territory_distance_same_as_sea)
+    {
+        patch_coastal_territory_distance_same_as_sea();
 
     }
 

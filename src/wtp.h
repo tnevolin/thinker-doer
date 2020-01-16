@@ -91,5 +91,9 @@ double alternative_combat_mechanics_calculate_attacker_winning_probability_follo
 )
 ;
 
+HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int body_id, int unknown_2, int unknown_3);
+
+int map_distance(int x1, int y1, int x2, int y2);
+
 #endif // __PROTOTYPE_H__
 

@@ -177,6 +177,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->apply_planet_combat_bonus_on_defense = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "sea_territory_distance_same_as_land"))
+    {
+        cf->sea_territory_distance_same_as_land = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "coastal_territory_distance_same_as_sea"))
+    {
+        cf->coastal_territory_distance_same_as_sea = (atoi(value) == 0 ? false : true);
+    }
     // Thinker default case
     else
     {

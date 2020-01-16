@@ -6,6 +6,7 @@
 * Removed Very Green morale level defense bonus and its (+) display.
 * 15,      ; Combat % -> Psi attack bonus/penalty per +PLANET
 * 1,1,     ; Psi combat offense-to-defense ratio (LAND unit defending)
+* PLANET combat bonus can now be applied on defense as well.
 * Adjusted summary strength and power lines to the bottom in battle computation display. This way it is easier to read and compare them between attacker and defender.
 
 # Version 36
@@ -138,7 +139,6 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Set PLANET combat bonus applicable on both attack and defense.
 * Land and sea borders should be 8 and not restricted by shore.
 * Artillery damage rework.
 * Artillery duel uses armor as well.
