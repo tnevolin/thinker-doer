@@ -2,7 +2,7 @@
 
 * Nautilus Pirates: SOCIAL, -POLICE
 * Removed Planetpearl energy reserve bonus.
-* Modified promotion probability.
+* Unified promotion probability.
 * Removed Very Green morale level defense bonus and its (+) display.
 * 15,      ; Combat % -> Psi attack bonus/penalty per +PLANET
 * 1,1,     ; Psi combat offense-to-defense ratio (LAND unit defending)

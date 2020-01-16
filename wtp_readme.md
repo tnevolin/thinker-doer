@@ -202,7 +202,9 @@ Odds confirmation dialog now displays correct winning probability percentage. Va
 
 Surprisingly, the vanilla formula is very sensible. Essentially, promotion odds are proportional to opponent to victor strength ratio as well as to how badly both you and opponent got damaged in battle. The only problem with it is that Very Green and Green units skip this calculation and are always promoted. That opens a padorra exploit box as player can wind down their MORALE rating to lower their units morale and then quickly aquire 1-2 promotion levels.
 
-I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then 25% chance to be promoted upon victory.
+I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then 25% chance to be promoted upon victory. This removes a micro exploit when player could lower their MORALE rating on purpose to receive cheap promotions then revert MORALE back up and get their easy earned Commandos and Elites.
+
+Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
 
 ## Repair rates
 
