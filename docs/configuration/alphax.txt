@@ -124,7 +124,7 @@ Road,             None,    Road,             Disable,  1,  Build $STR0,     R, R
 Mag Tube,         Magnets, Mag Tube,         Disable,  3,  Build $STR0,     R, R
 Bunker,           Disable, Bunker,           Disable,  5,  Construct $STR0, K, K
 Airbase,          DocAir,  Airbase,          Disable, 10,  Construct $STR0, ., .
-Sensor Array,     None,    Sensor Array,     Disable,  4,  Construct $STR0, O, O
+Sensor Array,     None,    Sensor Buoy,      None,     4,  Construct $STR0, O, O
 Fungus,           None,    Sea Fungus,       None,     6,  Remove $STR0,    F, F
 Fungus,           EcoEng,  Sea Fungus,       EcoEng,   6,  Plant $STR0,     F, Ctrl+F
 Condenser,        EcoEng,  Condenser,        Disable, 12,  Construct $STR0, N, N
