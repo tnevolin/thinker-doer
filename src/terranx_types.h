@@ -136,13 +136,15 @@ struct MAP
 {
     byte level;             // 0x0000
     byte altitude;          // 0x0001
-    short flags;            // 0x0002
+    byte flags;             // 0x0002
+    // continent/sea id
+    byte body_id;           // 0x0003
     byte visibility;        // 0x0004
     byte rocks;             // 0x0005
     byte unk_1;             // 0x0006
     char owner;             // 0x0007
-    int items;
-    short landmarks;
+    int items;              // 0x0008
+    short landmarks;        // 0x000C
     byte unk_2;
     byte art_ref_id;
     int visible_items[7];

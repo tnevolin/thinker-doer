@@ -130,5 +130,8 @@ extern fp_3int* tx_upgrade_cost;
 // concatenates strings
 extern fp_2int_void* tx_strcat;
 
+// calculate_distance_to_nearest_base
+extern fp_6int* tx_calculate_distance_to_nearest_base;
+
 #endif // __TERRANX_H__
 

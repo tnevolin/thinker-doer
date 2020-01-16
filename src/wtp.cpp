@@ -918,3 +918,221 @@ double alternative_combat_mechanics_calculate_attacker_winning_probability_follo
     return attacker_winning_probability;
 
 }
+
+/**
+For sea squares pretend they are on the same continent as closest reachable coastal base
+if such base is also closer than any other sea base in the same sea.
+*/
+HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int body_id, int unknown_2, int unknown_3)
+{
+    debug
+    (
+        "calculate_distance_to_nearest_base(x=%d, y=%d, body_id=%d)\n",
+        x,
+        y,
+        body_id
+    )
+    ;
+
+    bool closest_reachable_base_found = false;
+    bool closest_reachable_base_is_coastal = false;
+    int closest_reachable_base_distance = 9999;
+    BASE *closest_reachable_base = NULL;
+    MAP *closest_reachable_base_square = NULL;
+
+    int saved_coastal_base_body_id = -1;
+
+    // check if given square is at sea
+
+    if (body_id >= 0x41)
+    {
+        // loop through bases
+
+        for (int base_id = 0; base_id < *tx_total_num_bases; base_id++)
+        {
+            // get base
+
+            BASE *base = &tx_bases[base_id];
+
+            // get base map square
+
+            MAP *base_map_square = mapsq(base->x, base->y);
+
+            // get base map square body id
+
+            int base_map_square_body_id = base_map_square->body_id;
+
+            // check if it is the same body
+            if (base_map_square_body_id == body_id)
+            {
+                // calculate base distance
+
+                int base_distance = map_distance(x, y, base->x, base->y);
+
+                // improve distance if smaller
+
+                if (!closest_reachable_base_found || base_distance < closest_reachable_base_distance)
+                {
+                    closest_reachable_base_found = true;
+                    closest_reachable_base_is_coastal = false;
+                    closest_reachable_base_distance = base_distance;
+                    closest_reachable_base = base;
+                    closest_reachable_base_square = base_map_square;
+
+                }
+
+            }
+            // otherwise, check it it is a land base
+            else if (base_map_square_body_id < 0x41)
+            {
+                // iterate over nearby base squares
+
+                for (int dx = -2; dx <= 2; dx++)
+                {
+                    for (int dy = -(2 - abs(dx)); dy <= (2 - abs(dx)); dy += 2)
+                    {
+                        int near_x = base->x + dx;
+                        int near_y = base->y + dy;
+
+                        // exclude squares beyond the map
+
+                        if (near_y < 0 || near_y >= *tx_map_axis_y)
+                            continue;
+
+                        if (*tx_map_toggle_flat && (near_x < 0 || near_x >= *tx_map_axis_x))
+                            continue;
+
+                        // wrap x on cylinder map
+
+                        if (!*tx_map_toggle_flat && near_x < 0)
+                        {
+                            near_x += *tx_map_axis_x;
+
+                        }
+
+                        if (!*tx_map_toggle_flat && near_x >= *tx_map_axis_x)
+                        {
+                            near_x -= *tx_map_axis_x;
+
+                        }
+
+                        // get near map square
+
+                        MAP *near_map_square = mapsq(near_x, near_y);
+
+                        // get near map square body id
+
+                        int near_map_square_body_id = near_map_square->body_id;
+
+                        // check if it is a matching body id
+
+                        if (near_map_square_body_id == body_id)
+                        {
+                            // calculate base distance
+
+                            int base_distance = map_distance(x, y, base->x, base->y);
+
+                            // improve distance if smaller
+
+                            if (!closest_reachable_base_found || base_distance < closest_reachable_base_distance)
+                            {
+                                closest_reachable_base_found = true;
+                                closest_reachable_base_is_coastal = true;
+                                closest_reachable_base_distance = base_distance;
+                                closest_reachable_base = base;
+                                closest_reachable_base_square = base_map_square;
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        debug
+        (
+            "closest_reachable_base_found=%d, closest_reachable_base_is_coastal=%d, closest_reachable_base_distance=%d\n",
+            closest_reachable_base_found,
+            closest_reachable_base_is_coastal,
+            closest_reachable_base_distance
+        )
+        ;
+
+        // if closest coastal base is found - pretend it is placed on same body
+
+        if (closest_reachable_base_found && closest_reachable_base_is_coastal)
+        {
+            saved_coastal_base_body_id = closest_reachable_base_square->body_id;
+
+            debug
+            (
+                "Before emulation: closest_reachable_base->x=%d, closest_reachable_base->y=%d, closest_reachable_base_square->body_id=%d\n",
+                closest_reachable_base->x,
+                closest_reachable_base->y,
+                closest_reachable_base_square->body_id
+            )
+            ;
+
+            closest_reachable_base_square->body_id = body_id;
+
+            debug
+            (
+                "After emulation: closest_reachable_base_square->body_id=%d\n",
+                closest_reachable_base_square->body_id
+            )
+            ;
+
+        }
+
+    }
+
+    // run original function
+
+    int nearest_base_faction_id = tx_calculate_distance_to_nearest_base(x, y, unknown_1, body_id, unknown_2, unknown_3);
+
+    // revert coastal base map square body to original
+
+    if (closest_reachable_base_found && closest_reachable_base_is_coastal)
+    {
+        debug
+        (
+            "Before restoration: closest_reachable_base_square->body_id=%d\n",
+            closest_reachable_base_square->body_id
+        )
+        ;
+
+        closest_reachable_base_square->body_id = saved_coastal_base_body_id;
+
+        debug
+        (
+            "After restoration: closest_reachable_base_square->body_id=%d\n",
+            closest_reachable_base_square->body_id
+        )
+        ;
+
+    }
+
+    // return nearest base faction id
+
+    return nearest_base_faction_id;
+
+}
+
+/**
+Returns map distance as it calculated by game.
+*/
+int map_distance(int x1, int y1, int x2, int y2)
+{
+    int xd = abs(x1-x2);
+    int yd = abs(y1-y2);
+    if (!*tx_map_toggle_flat && xd > *tx_map_axis_x/2)
+        xd = *tx_map_axis_x - xd;
+
+    return ((xd + yd) + abs(xd - yd) / 2) / 2;
+
+}
