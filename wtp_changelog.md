@@ -1,3 +1,7 @@
+# Version 38
+
+* Sea formers can build Sensor Buoy now (similar to Sensor Array on land).
+
 # Version 37
 
 * Nautilus Pirates: SOCIAL, -POLICE
@@ -150,3 +154,4 @@ Initial release. See list of changes in readme.
 * Introduce sea sensors.
 * Make ECM to affect sea units as well.
 * Increase morale level bonus to 25%.
+

@@ -352,6 +352,12 @@ MORALE had a balanced scale by itself but morale facilities can easily raise uni
 
 About the same story with PROBE and Covert ops center. Even though it is just one +2 facility the PROBE scale is shorter as well. SE provides +2 PROBE max only.
 
+# Terraforming and land improvements
+
+## Sea Sensors
+
+Introduced *Sensor Buoy* on sea similar to *Sensor Array* on land. Copied from SMAniaC mod. They do not confer defense bonus but they increase visibility which is very important to track fast moving ships in your territory and around.
+
 # Other changes
 
 ## Special weapon and armor
