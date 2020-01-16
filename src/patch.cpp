@@ -1240,58 +1240,41 @@ Disables planetpearls collection and corresponding message.
 */
 void patch_disable_planetpearls()
 {
-    // do not collect planetpearls
+    // remove planetpearls calculation code (effectively sets its value to 0)
 
-    int disable_planetpearls_bytes_length = 0x6;
+    int disable_planetpearls_bytes_length = 0x1C;
 
     /*
-    0:  89 90 00 cc 96 00       mov    DWORD PTR [eax+0x96cc00],edx
+    0:  8b 45 08                mov    eax,DWORD PTR [ebp+0x8]
+    3:  6a 00                   push   0x0
+    5:  6a 01                   push   0x1
+    7:  50                      push   eax
+    8:  e8 46 ad 0b 00          call   0xbad53
+    d:  83 c4 0c                add    esp,0xc
+    10: 40                      inc    eax
+    11: 8d 0c 80                lea    ecx,[eax+eax*4]
+    14: 8b 06                   mov    eax,DWORD PTR [esi]
+    16: d1 e1                   shl    ecx,1
+    18: 03 c1                   add    eax,ecx
+    1a: 89 06                   mov    DWORD PTR [esi],eax
     */
     byte disable_planetpearls_bytes_old[] =
-        { 0x89, 0x90, 0x00, 0xCC, 0x96, 0x00 }
+        { 0x8B, 0x45, 0x08, 0x6A, 0x00, 0x6A, 0x01, 0x50, 0xE8, 0x46, 0xAD, 0x0B, 0x00, 0x83, 0xC4, 0x0C, 0x40, 0x8D, 0x0C, 0x80, 0x8B, 0x06, 0xD1, 0xE1, 0x03, 0xC1, 0x89, 0x06 }
     ;
 
     /*
     ...
     */
     byte disable_planetpearls_bytes_new[] =
-        { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+        { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
 
     write_bytes
     (
-        0x0050B22B,
+        0x005060ED,
         disable_planetpearls_bytes_length,
         disable_planetpearls_bytes_old,
         disable_planetpearls_bytes_new
-    )
-    ;
-
-    // do not display planetpearls message
-
-    int disable_planetpearls_message_bytes_length = 0x3;
-
-    /*
-    0:  8b 45 a8                mov    eax,DWORD PTR [ebp-0x58]
-    */
-    byte disable_planetpearls_message_bytes_old[] =
-        { 0x8B, 0x45, 0xA8 }
-    ;
-
-    /*
-    0:  31 c0                   xor    eax,eax
-    ...
-    */
-    byte disable_planetpearls_message_bytes_new[] =
-        { 0x31, 0xC0, 0x90 }
-    ;
-
-    write_bytes
-    (
-        0x0050B362,
-        disable_planetpearls_message_bytes_length,
-        disable_planetpearls_message_bytes_old,
-        disable_planetpearls_message_bytes_new
     )
     ;
 
