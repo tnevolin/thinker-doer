@@ -151,7 +151,6 @@ Initial release. See list of changes in readme.
 * Remove morale boost from home base Children Creche.
 * Set basic morale to Very Green.
 * Increase morale facilities cost.
-* Introduce sea sensors.
 * Make ECM to affect sea units as well.
 * Increase morale level bonus to 25%.
 

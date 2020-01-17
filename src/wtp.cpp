@@ -104,8 +104,23 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     // adjust summary lines to the bottom
 
-    *tx_battle_compute_attacker_effect_count = 4;
-    *tx_battle_compute_defender_effect_count = 4;
+    while (*tx_battle_compute_attacker_effect_count < 4)
+    {
+        (*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count][0] = '\x0';
+        (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = 0;
+
+        (*tx_battle_compute_attacker_effect_count)++;
+
+    }
+
+    while (*tx_battle_compute_defender_effect_count < 4)
+    {
+        (*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count][0] = '\x0';
+        (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = 0;
+
+        (*tx_battle_compute_defender_effect_count)++;
+
+    }
 
 }
 
