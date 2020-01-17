@@ -1,13 +1,19 @@
+# Version 38
+
+* Sea formers can build Sensor Buoy now (similar to Sensor Array on land).
+
 # Version 37
 
 * Nautilus Pirates: SOCIAL, -POLICE
 * Removed Planetpearl energy reserve bonus.
-* Modified promotion probability.
+* Unified promotion probability.
 * Removed Very Green morale level defense bonus and its (+) display.
 * 15,      ; Combat % -> Psi attack bonus/penalty per +PLANET
 * 1,1,     ; Psi combat offense-to-defense ratio (LAND unit defending)
 * PLANET combat bonus can now be applied on defense as well.
 * Adjusted summary strength and power lines to the bottom in battle computation display. This way it is easier to read and compare them between attacker and defender.
+* Territory extends from sea base by same distance as from land bases!
+* Territory extends from coastal base into the adjacent sea by same distance as from sea bases!
 
 # Version 36
 
@@ -139,13 +145,12 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Land and sea borders should be 8 and not restricted by shore.
 * Artillery damage rework.
 * Artillery duel uses armor as well.
 * Interceptor fight uses armor as well.
 * Remove morale boost from home base Children Creche.
 * Set basic morale to Very Green.
 * Increase morale facilities cost.
-* Introduce sea sensors.
 * Make ECM to affect sea units as well.
 * Increase morale level bonus to 25%.
+

@@ -202,7 +202,9 @@ Odds confirmation dialog now displays correct winning probability percentage. Va
 
 Surprisingly, the vanilla formula is very sensible. Essentially, promotion odds are proportional to opponent to victor strength ratio as well as to how badly both you and opponent got damaged in battle. The only problem with it is that Very Green and Green units skip this calculation and are always promoted. That opens a padorra exploit box as player can wind down their MORALE rating to lower their units morale and then quickly aquire 1-2 promotion levels.
 
-I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then 25% chance to be promoted upon victory.
+I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then 25% chance to be promoted upon victory. This removes a micro exploit when player could lower their MORALE rating on purpose to receive cheap promotions then revert MORALE back up and get their easy earned Commandos and Elites.
+
+Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
 
 ## Repair rates
 
@@ -350,6 +352,12 @@ MORALE had a balanced scale by itself but morale facilities can easily raise uni
 
 About the same story with PROBE and Covert ops center. Even though it is just one +2 facility the PROBE scale is shorter as well. SE provides +2 PROBE max only.
 
+# Terraforming and land improvements
+
+## Sea Sensors
+
+Introduced *Sensor Buoy* on sea similar to *Sensor Array* on land. Copied from SMAniaC mod. They do not confer defense bonus but they increase visibility which is very important to track fast moving ships in your territory and around.
+
 # Other changes
 
 ## Special weapon and armor
@@ -416,6 +424,14 @@ Planetpearl is a pretty weird bonus that player gets when killing land only nati
 Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
 
 One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
+
+## Territory distance from sea and coastal bases
+
+SMACX introduces a brilliant concept of a territory. Now no one can stick their own bases in between other faction bases. This prevents a constant micromanagement of shooing **friendly and especially ally** colonies from your territory. It also lets player more high level control of keeping other faction units far enough from your bases. It is a definite playability improvement.
+
+Interestingly that when SMAXC treats land and sea bases equally (which is an epic feature by itself) the sea territory borders do not extend from sea bases as much as on land. Essentially they fail to secure territory even in between already placed sea bases which is a primary purpose of the territory. It also doesn't serve secondary puprose of the territory to keep other faction sea units at bay. Sea units move fast and 3 square extended borders is just a one turn cross distance. The situation with coastal bases is even worse. They extend their sea border 1 square away. It is just ridiculous. It doesn't prevent other players to place sea colony just 2 tiles away denying **ALL** water resources to coastal base. It is a major complaint of may players.
+
+This mod equalizes border extension distances between land, sea, and coastal bases. Even thouh I believe this is a must have feature the configuration parameter is still in thinker.ini in case anyone wants to switch it off.
 
 # UI changes / cosmetics
 
