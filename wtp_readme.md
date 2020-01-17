@@ -191,13 +191,12 @@ abilities flat = ability1 flat + ability2 flat
 </pre>
 
 #### Special formula cases for non combat units
-* Colony on foil/cruiser costs same as if on infantry/speeder.
-* Former on foil/cruiser costs same as if on infantry/speeder.
-* Supply on foil/cruiser costs same as if on infantry/speeder.
+
+Colony, Former, Supply units on foil/cruiser cost same as if on infantry/speeder.
 
 ### Weapon and armor cost
 
-Weapon and armor cost growths slightly slower than their value. That makes stronger weapon/armor more cost effective against stronger opponent. However, it is still cheaper to build weaker units when top item is overkill.
+Weapon and armor cost grows slightly slower than their value. That makes stronger weapon/armor more cost effective against stronger opponent. However, it is still cheaper to build weaker units when top item is overkill.
 
 ### Non combat modules cost
 
@@ -244,7 +243,7 @@ One of such nonsense bonuses is a Very Green defense bonus effectively turning i
 
 Surprisingly, the vanilla formula is very sensible. Essentially, promotion odds are proportional to opponent to victor strength ratio as well as to how badly both you and opponent got damaged in battle. The only problem with it is that Very Green and Green units skip this calculation and are always promoted. That opens a padorra exploit box as player can wind down their MORALE rating to lower their units morale and then quickly aquire 1-2 promotion levels.
 
-I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then 25% chance to be promoted upon victory. This removes a micro exploit when player could lower their MORALE rating on purpose to receive cheap promotions then revert MORALE back up and get their easy earned Commandos and Elites.
+I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then victor has 25% chance to be promoted.
 
 Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
 
@@ -257,15 +256,15 @@ Repair rates are lowered to eliminate fast and instant healing. Parameters are c
 * Base/bunker/aribase: 10% up to 100%.
 * Base with corresponding land/sea/air repair facility: +10%.
 * SP for fast repair natives in base: +10%.
-* Nano Factory: + 10%.
+* Nano Factory: + 10% up to 100% everywhere.
 
 ## Unit hurry cost and unit upgrade cost
 
-Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? It is an opposite with unit upgrade cost. This one is, on the countrary, too cheap allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten both of them for simplicity and also prevent abovementioned exploit along the way.
+Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? The upgrade cost is, on the contrary, quite low allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten both of them for simplicity and to prevent abovementioned exploit.
 
-In this mod unit hurry cost is flat <mineral cost> x 4 value. The base upgrade cost now is an exact difference in hurry cost! Could anyone imagine game design could be that simple and transparent? :rofl:
+In this mod unit hurry cost is for times its mineral cost. The base upgrade cost now is an exact difference of new and old units hurry cost! Could anyone imagine game design could be that simple and transparent? :rofl:
 
-Since higher reactors now do nothing but decrease unit cost player also gets **REFUND** when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :)
+Since higher reactors now do nothing but decrease unit cost player also gets **REFUND** when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :smile:
 
 ### Hurry cost penalty thresholds
 
