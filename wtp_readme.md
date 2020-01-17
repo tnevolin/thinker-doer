@@ -138,10 +138,23 @@ Vanilla game has very weird code that selects regular conventional weapon icon b
 This is fixed now. Modders are free to set any offensive values to regular conventional weapons without breaking their respective icons! Woo-hoo, thanks to me.
 
 With this in mind I was able to correct weapon strenght progression to smoothen it while keeping proper icons for each weapon.
-Here is the current game weapon and strength progression by technology levels:
-weapon: 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 24, 30
-armor:  1, 2, 3, 4, 5, 6,  , 10,   , 16,   , 24,
-There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
+Here is the current game weapon and strength progression by technology levels. There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
+
+ Level | Weapon strength | Weapon cost | Armor strenght | Armor cost 
+ -----:| ---------------:| -----------:| --------------:| ----------:
+1 | 1 | 1 | 1 | 1
+2 | 2 | 2 | 2 | 2
+3 | 3 | 3 | 3 | 3
+4 | 4 | 4 | 4 | 4
+5 | 5 | 5 | 5 | 5
+6 | 6 | 6 | 6 | 6
+7 | 8 | 7 |  | 
+8 | 10 | 8 | 10 | 8
+9 | 13 | 10 |  | 
+10 | 16 | 12 | 16 | 12
+11 | 20 | 14 |  | 
+12 | 24 | 16 | 24 | 16
+1 | 30 | 20 |  | 
 
 ## Unit cost
 
