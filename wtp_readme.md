@@ -177,16 +177,16 @@ Instead each subsequent reactor decreases unit cost by approximately 20%. Player
 
 <pre>
 
-unit cost in mineral rows = [primary item cost + (secondary item cost - 1) / 2] * reactor cost factor * abilities cost factor + abilities cost flat
+unit cost = [PI cost + (SI cost - 1) / 2] * reactor factor * abilities factor + abilities flat
 (rounded normally)
 
-primary item = most expensive module/weapon/armor
-secondary item = least expensive module/weapon/armor
+PI (primary item) = most expensive module/weapon/armor
+SI (secondary item) = least expensive module/weapon/armor
 
-reactor cost factor = reactor cost value / Fission reactor cost value
+reactor factor = reactor cost / Fission reactor cost
 
-abilities cost factor = (1 + 0.25 * (ability1 cost factor + ability2 cost factor))
-abilities cost flat = ability1 cost flat + ability2 cost flat
+abilities factor = (1 + 0.25 * (ability1 factor + ability2 factor))
+abilities flat = ability1 flat + ability2 flat
 
 </pre>
 
