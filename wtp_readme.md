@@ -15,12 +15,13 @@ It is built on top of Thinker mod. Read the complete description of Thinker mod 
 
 I put this at the very top to avoid first impression frustration for those used to eaily win every vanilla game on highest difficulty level.
 
-This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to first try out this mod on **three(!)** difficulty levels below your usual vanilla comfortable level! I also recommend to lower activity of native life from medium to lowest at first. It also plays a little bit differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accomodate to play style and AI strength feel free to crank up the difficulty for bigger challenge! :)
+This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to try it out first on **three(!)** difficulty levels below of your usual vanilla comfortable level. I also recommend to lower activity of native life from medium to lowest at first. It also plays a little bit differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accomodate to play style and AI strength feel free to crank up the difficulty for bigger challenge! :)
 
 ## Main highlights
 
 * AI is very **shokingly** smart, thanks to Induktio work. Just last game I was miving my damaged mindworm toward the monolith for repair so that I can further attack enemy base nearby. AI sent a unity copter 6 tiles away just to take my damaged mindworm out before I would reach the monolith!
 * Major revamp of unit/cost/combat system. Primary purpose is to significantly improve defense effectiveness. Attacker needs larger economical investments than defender. Building a prepared defense and deflecting enemy attacks on a frontline with minimal losses is a completely viable and economically profitable strategy.
+* Major revamp in combat probability also results in more battle outcome randomness than in vanilla. It is still not that random as in Civ 1 but somewhere in between. That makes native life a real **threat** now. Beware! There is no point in hunting natives for planetpearls anymore. Player should minimize spawning native life and prepare bases and infrastructure to deflect worm attacks. Native life now acts like an opponent as it should.
 * Many formulas and rules are simplified to achieve better clarity. Things are more intuitive and understandable now.
 * A lot of micro exploits are eliminated. Game is more streamlined toward general competition without logically irrelevant grinding.
 
