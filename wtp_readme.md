@@ -162,7 +162,7 @@ Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 mode
 
 ### Reactors
 
-Reactor power does not multiply unit max power anymore. All units (conventional and native) have max power of 10 regardless of reactor.
+Reactor power does not multiply unit max hit points anymore. All units (conventional and native) have 10 max hit points regardless of reactor.
 
 Instead each subsequent reactor decreases unit cost by approximately 20%. Player gets refund when upgrading unit to cheaper one with more powerful reactor.
 
@@ -175,7 +175,7 @@ Instead each subsequent reactor decreases unit cost by approximately 20%. Player
 
 ### Unit cost formula
 
-unit cost in mineral rows = [<primary item cost> + (<secondary item cost> - 1) / 2] * <reactor cost factor> * <proportional abilities cost factors> + <flat abilities costs>
+<pre>unit cost in mineral rows = [<primary item cost> + (<secondary item cost> - 1) / 2] * <reactor cost factor> * <proportional abilities cost factors> + <flat abilities costs></pre>
 (rounded normally)
 
 primary item = most expensive module/weapon/armor
