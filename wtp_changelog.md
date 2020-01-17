@@ -151,7 +151,6 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Rethink abilities cost.
 * Remove morale boost from home base Children Creche.
 * Set basic morale to Very Green.
 * Increase morale facilities cost.
