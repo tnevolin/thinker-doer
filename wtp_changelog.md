@@ -3,7 +3,6 @@
 * Decreased Police State PLANET penalty to -1. PLANET seems to be more powerful now = too much of a penalty.
 * Hypnotic Trance cost = flat 1, Empath Song cost = flat 2. With new combat higher values seem to be economically not effective.
 
-
 # Version 37
 
 * Nautilus Pirates: SOCIAL, -POLICE
