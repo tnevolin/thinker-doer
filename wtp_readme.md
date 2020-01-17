@@ -140,7 +140,7 @@ This is fixed now. Modders are free to set any offensive values to regular conve
 With this in mind I was able to correct weapon strenght progression to smoothen it while keeping proper icons for each weapon.
 Here is the current game weapon and strength progression by technology levels. There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
 
- Level | Weapon<br>strength | Weapon cost | Armor strenght | Armor cost 
+ Level | Weapon<br>strength | Weapon<br>cost | Armor<br>strenght | Armor<br>cost 
  -----:| ---------------:| -----------:| --------------:| ----------:
 1 | 1 | 1 | 1 | 1
 2 | 2 | 2 | 2 | 2
