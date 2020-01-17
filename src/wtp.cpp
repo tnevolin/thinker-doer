@@ -88,6 +88,8 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
                         strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label_planet);
                         (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_psi_combat_bonus;
 
+                        (*tx_battle_compute_defender_effect_count)++;
+
                     }
 
                     // modify defender strength
