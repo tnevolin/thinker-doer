@@ -175,13 +175,20 @@ Instead each subsequent reactor decreases unit cost by approximately 20%. Player
 
 ### Unit cost formula
 
-<pre>unit cost in mineral rows = [<primary item cost> + (<secondary item cost> - 1) / 2] * <reactor cost factor> * <proportional abilities cost factors> + <flat abilities costs></pre>
+<pre>
+
+unit cost in mineral rows = [primary item cost + (secondary item cost - 1) / 2] * reactor cost factor * abilities cost factor + abilities cost flat
 (rounded normally)
 
 primary item = most expensive module/weapon/armor
 secondary item = least expensive module/weapon/armor
 
-reactor cost factor is set in thinker.ini as a ratio of <reactor cost value from thinker.ini> / <Fission reactor cost value from thinker.ini>. So that Fission reactor cost factor is always 1.
+reactor cost factor = reactor cost value / Fission reactor cost value
+
+abilities cost factor = (1 + 0.25 * (ability1 cost factor + ability2 cost factor))
+abilities cost flat = ability1 cost flat + ability2 cost flat
+
+</pre>
 
 #### Special formula cases for non combat units
 * Colony on foil/cruiser costs same as if on infantry/speeder.
