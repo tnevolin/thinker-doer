@@ -1,3 +1,7 @@
+# Version 39
+
+* High Morale ability reinstated.
+
 # Version 38
 
 * Decreased Police State PLANET penalty to -1. PLANET seems to be more powerful now = too much of a penalty.
@@ -147,12 +151,16 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Artillery damage rework.
-* Artillery duel uses armor as well.
-* Interceptor fight uses armor as well.
+* Rethink abilities cost.
 * Remove morale boost from home base Children Creche.
 * Set basic morale to Very Green.
 * Increase morale facilities cost.
+* Prevent road usage on enemy territory.
+* Make AI build more units, defensive structures, sensors.
+* Artillery damage rework.
+* Artillery duel uses armor as well.
+* Interceptor fight uses armor as well.
 * Make ECM to affect sea units as well.
 * Increase morale level bonus to 25%.
+* Rework probe team success rates.
 

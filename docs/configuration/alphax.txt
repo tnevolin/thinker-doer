@@ -514,7 +514,7 @@ Antigrav Struts,        2, Gravity,  Grav,      000000111001, +1 movement rate (
 Empath Song,           32, Bioadap,  Empath,    000010001111, +50% attack vs. Psi
 Polymorphic Encryption, 1, Algor,    Secure,    000000111111, x2 cost to subvert
 Fungicide Tanks,        1, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
-High Morale,            1, Disable,  Trained,   000000001111, Gains morale upgrade
+High Morale,            1, Integ,    Trained,   000000001111, Gains morale upgrade
 Heavy Artillery,        1, Poly,     Artillery, 000010001001, Bombards
 Clean Reactor,         32, BioEng,   Clean,     000000111111, Requires no support
 Blink Displacer,        4, Matter,   Blink,     000000001111, Bypass base defenses
