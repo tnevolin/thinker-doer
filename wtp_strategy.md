@@ -6,7 +6,7 @@ This mod enhances *Alpha Centauri: Alien Crossfire* experience by improving AI a
 # Think & Adapt
 
 Really! This mod is so much more intense that you have to review your general strategy every 5-10 turns or so. Whether to attack or build a defense or expand to land or expand to sea or to strengthen infrastructure or to rush for new technologies. You won't be able to succeed in all diarections. Choose the one that suits your current situation best. Standard "Fusion Power + Needlejets = global conquest" strategy doesn't work anymore. You need to mix and match it with other macro and micro strategies.  
-:tongue:
+:stuck_out_tongue_winking_eye:
 
 Besides of general direction you'll be making decisions on lower level about many movements, attack, defenses, maneuvering, etc. Hopefully, the new battle winning probability display helps you in that.
 
