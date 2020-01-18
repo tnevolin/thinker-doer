@@ -1586,6 +1586,70 @@ void patch_coastal_territory_distance_same_as_sea()
 
 }
 
+/**
+Alternative artillery damage.
+*/
+void patch_alternative_artillery_damage()
+{
+    // alternative_artillery_damage
+
+    int alternative_artillery_damage_bytes_length = 0x35;
+
+    /*
+    0:  99                      cdq
+    1:  f7 f9                   idiv   ecx
+    3:  40                      inc    eax
+    4:  83 f8 01                cmp    eax,0x1
+    7:  7c 12                   jl     0x1b
+    9:  3d e7 03 00 00          cmp    eax,0x3e7
+    e:  7e 07                   jle    0x17
+    10: be e7 03 00 00          mov    esi,0x3e7
+    15: eb 09                   jmp    0x20
+    17: 8b f0                   mov    esi,eax
+    19: eb 05                   jmp    0x20
+    1b: be 01 00 00 00          mov    esi,0x1
+    20: 8d 4e ff                lea    ecx,[esi-0x1]
+    23: 85 c9                   test   ecx,ecx
+    25: 7f 04                   jg     0x2b
+    27: 33 ff                   xor    edi,edi
+    29: eb 0a                   jmp    0x35
+    2b: e8 d7 d9 13 00          call   0x13da07
+    30: 99                      cdq
+    31: f7 fe                   idiv   esi
+    33: 8b fa                   mov    edi,edx
+    */
+    byte alternative_artillery_damage_bytes_old[] =
+        { 0x99, 0xF7, 0xF9, 0x40, 0x83, 0xF8, 0x01, 0x7C, 0x12, 0x3D, 0xE7, 0x03, 0x00, 0x00, 0x7E, 0x07, 0xBE, 0xE7, 0x03, 0x00, 0x00, 0xEB, 0x09, 0x8B, 0xF0, 0xEB, 0x05, 0xBE, 0x01, 0x00, 0x00, 0x00, 0x8D, 0x4E, 0xFF, 0x85, 0xC9, 0x7F, 0x04, 0x33, 0xFF, 0xEB, 0x0A, 0xE8, 0xD7, 0xD9, 0x13, 0x00, 0x99, 0xF7, 0xFE, 0x8B, 0xFA }
+    ;
+
+    /*
+    0:  ff 75 90                push   DWORD PTR [ebp-0x70]
+    3:  51                      push   ecx
+    4:  50                      push   eax
+    5:  e8 fc ff ff ff          call   6 <_main+0x6>
+    a:  83 c4 0c                add    esp,0xc
+    d:  89 c7                   mov    edi,eax
+    ...
+    */
+    byte alternative_artillery_damage_bytes_new[] =
+        { 0xFF, 0x75, 0x90, 0x51, 0x50, 0xE8, 0xFC, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x0C, 0x89, 0xC7, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00508616,
+        alternative_artillery_damage_bytes_length,
+        alternative_artillery_damage_bytes_old,
+        alternative_artillery_damage_bytes_new
+    )
+    ;
+
+    // custom artillery damage generator
+
+    write_call_ptr(0x00508616 + 0x5, (int)roll_artillery_damage);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -1858,6 +1922,14 @@ bool patch_setup(Config* cf) {
     if (cf->coastal_territory_distance_same_as_sea)
     {
         patch_coastal_territory_distance_same_as_sea();
+
+    }
+
+    // patch alternative_artillery_damage
+
+    if (cf->alternative_artillery_damage)
+    {
+        patch_alternative_artillery_damage();
 
     }
 

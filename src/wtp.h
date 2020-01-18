@@ -95,5 +95,7 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
 int map_distance(int x1, int y1, int x2, int y2);
 
+HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower);
+
 #endif // __PROTOTYPE_H__
 
