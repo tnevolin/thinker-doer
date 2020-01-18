@@ -1,6 +1,7 @@
 # Version 39
 
 * High Morale ability reinstated.
+* 50,      ; Combat % -> Fanatic attack bonus
 
 # Version 38
 
