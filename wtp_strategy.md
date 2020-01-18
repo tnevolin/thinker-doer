@@ -1,7 +1,7 @@
-# SMACX The Will to Power mod
+# SMACX - The Will to Power - mod: Strategy tips for newcomers
 
-The Will to Power is a playing experience enhancement mod for Alpha Centauri: Alien Crossfire.  
-It is built on top of Thinker mod. (Thinker mod info: Readme.md, Details.md, Changelog.md).
+This mod enhances *Alpha Centauri: Alien Crossfire* experience by improving AI and rebalancing other features. Therefore, it is more diffcult to beat and play style differs a little from vanilla. It is irrelevant to those never played vanilla but for those who did it **is**.
+:wink:
 
 ##### Links
 * [This readme](https://github.com/tnevolin/thinker-doer/blob/master/wtp_readme.md)
