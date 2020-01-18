@@ -73,6 +73,7 @@
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_changelog.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_installation.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_readme.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_strategy.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\exe\terranx_mod.exe&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
