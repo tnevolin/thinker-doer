@@ -42,7 +42,7 @@ This is a cornerstone of this mod. Protecting borders does pay off! Start establ
 
 # Artillery
 
-Overall slower repair rates lay our foundation for attrition war. Player is not limited to one turn assault to capture a base anymore. Fighting for 5-10 turns may be fruitful as well. Economy of war is to destroy more enemy HPs and lose less of your own. Bombardment let you do just that by taking away enemy HPs unpenalized. Economic wise artillery superiority doubles or triples your sheer army power.
+Overall slower repair rates lay out a foundation for attrition war. Player is not limited to one turn assault to capture a base anymore. Fighting for 5-10 turns may be fruitful as well. Economy of war is to destroy more enemy HPs and lose less of your own. Bombardment let you do just that by taking away enemy HPs unpenalized. Economic wise artillery superiority doubles or triples your sheer army power.
 
 # Army composition
 
