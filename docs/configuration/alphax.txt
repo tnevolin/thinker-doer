@@ -56,7 +56,7 @@
 0,       ; Combat % -> Defend vs. mobile in rough
 25,      ; Combat % -> Infantry vs. Base
 50,      ; Combat penalty % -> attack after airdrop
-25,      ; Combat % -> Fanatic attack bonus
+50,      ; Combat % -> Fanatic attack bonus
 50,      ; Combat % -> Land based guns vs. ship artillery bonus
 25,      ; Combat % -> Artillery bonus per level of altitude
 50,      ; Combat % -> Trance bonus defending vs. psi
