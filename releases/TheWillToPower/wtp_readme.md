@@ -1,28 +1,32 @@
 # SMACX The Will to Power mod
 
-HTML version of this document: https://github.com/tnevolin/thinker-doer/blob/master/wtp_readme.md
-
 The Will to Power is a playing experience enhancement mod for Alpha Centauri: Alien Crossfire.  
-It is built on top of Thinker mod. Read the complete description of Thinker mod in: Readme.md, Details.md, Changelog.md.
+It is built on top of Thinker mod. (Thinker mod info: Readme.md, Details.md, Changelog.md).
+
+##### Links
+* [This readme](https://github.com/tnevolin/thinker-doer/blob/master/wtp_readme.md)
+* [Strategy tips](https://github.com/tnevolin/thinker-doer/blob/master/wtp_strategy.md)
+* [Changelog](https://github.com/tnevolin/thinker-doer/blob/master/wtp_changelog.md)
+
+## Credits
+
+* Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
+* bvanevery: Play testing and help in design.
+* dino: Play testing and alternative combat mechanics idea.
 
 ## Difficulty warning
 
-I put this at the very top to avoid first impression frustration for those used to win vanilla game every time on highest difficulty level.
+I put this at the very top to avoid first impression frustration for those used to eaily win every vanilla game on highest difficulty level.
 
-This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to first try out this mod on **3 (three)** difficulty levels below your usual vanilla comfortable level! I also recommend to lower activity of native life from medium to lowest at first. It also plays a little bit differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accomodate to play style and AI strength feel free to crank up the difficulty for bigger challenge! :)
+This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to try it out first on **three(!)** difficulty levels below of your usual vanilla comfortable level. I also recommend to lower activity of native life from medium to lowest at first. It also plays a little bit differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accomodate to play style and AI strength feel free to crank up the difficulty for bigger challenge! :)
 
 ## Main highlights
 
 * AI is very **shokingly** smart, thanks to Induktio work. Just last game I was miving my damaged mindworm toward the monolith for repair so that I can further attack enemy base nearby. AI sent a unity copter 6 tiles away just to take my damaged mindworm out before I would reach the monolith!
 * Major revamp of unit/cost/combat system. Primary purpose is to significantly improve defense effectiveness. Attacker needs larger economical investments than defender. Building a prepared defense and deflecting enemy attacks on a frontline with minimal losses is a completely viable and economically profitable strategy.
+* Major revamp in combat probability also results in more battle outcome randomness than in vanilla. It is still not that random as in Civ 1 but somewhere in between. That makes native life a real **threat**. Beware! There is no point in hunting natives for planetpearls anymore. Player should minimize native life spawning and seriously prepare to deflect worm attacks or suffer consequences. Native life acts like an opponent as it should.
 * Many formulas and rules are simplified to achieve better clarity. Things are more intuitive and understandable now.
 * A lot of micro exploits are eliminated. Game is more streamlined toward general competition without logically irrelevant grinding.
-
-# Credits
-
-* Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
-* bvanevery: Play testing and help in design.
-* dino: Play testing and alternative combat mechanics idea.
 
 # Why this mod?
 
@@ -137,10 +141,23 @@ Vanilla game has very weird code that selects regular conventional weapon icon b
 This is fixed now. Modders are free to set any offensive values to regular conventional weapons without breaking their respective icons! Woo-hoo, thanks to me.
 
 With this in mind I was able to correct weapon strenght progression to smoothen it while keeping proper icons for each weapon.
-Here is the current game weapon and strength progression by technology levels:
-weapon: 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 24, 30
-armor:  1, 2, 3, 4, 5, 6,  , 10,   , 16,   , 24,
-There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
+Here is the current game weapon and strength progression by technology levels. There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
+
+ Level | W str. | W cost | A str. | A cost 
+ -----:| ---------------:| -----------:| --------------:| ----------:
+1 | 1 | 1 | 1 | 1
+2 | 2 | 2 | 2 | 2
+3 | 3 | 3 | 3 | 3
+4 | 4 | 4 | 4 | 4
+5 | 5 | 5 | 5 | 5
+6 | 6 | 6 | 6 | 6
+7 | 8 | 7 |  | 
+8 | 10 | 8 | 10 | 8
+9 | 13 | 10 |  | 
+10 | 16 | 12 | 16 | 12
+11 | 20 | 14 |  | 
+12 | 24 | 16 | 24 | 16
+13 | 30 | 20 |  | 
 
 ## Unit cost
 
@@ -148,7 +165,7 @@ Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 mode
 
 ### Reactors
 
-Reactor power does not multiply unit max power anymore. All units (conventional and native) have max power of 10 regardless of reactor.
+Reactor power does not multiply unit max hit points anymore. All units (conventional and native) have 10 max hit points regardless of reactor.
 
 Instead each subsequent reactor decreases unit cost by approximately 20%. Player gets refund when upgrading unit to cheaper one with more powerful reactor.
 
@@ -161,22 +178,28 @@ Instead each subsequent reactor decreases unit cost by approximately 20%. Player
 
 ### Unit cost formula
 
-unit cost in mineral rows = [<primary item cost> + (<secondary item cost> - 1) / 2] * <reactor cost factor> * <proportional abilities cost factors> + <flat abilities costs>
+<pre>
+
+unit cost = [PI cost + (SI cost - 1) / 2] * reactor factor * abilities factor + abilities flat
 (rounded normally)
 
-primary item = most expensive module/weapon/armor
-secondary item = least expensive module/weapon/armor
+PI (primary item) = most expensive module/weapon/armor
+SI (secondary item) = least expensive module/weapon/armor
 
-reactor cost factor is set in thinker.ini as a ratio of <reactor cost value from thinker.ini> / <Fission reactor cost value from thinker.ini>. So that Fission reactor cost factor is always 1.
+reactor factor = reactor cost / Fission reactor cost
+
+abilities factor = (1 + 0.25 * (ability1 factor + ability2 factor))
+abilities flat = ability1 flat + ability2 flat
+
+</pre>
 
 #### Special formula cases for non combat units
-* Colony on foil/cruiser costs same as if on infantry/speeder.
-* Former on foil/cruiser costs same as if on infantry/speeder.
-* Supply on foil/cruiser costs same as if on infantry/speeder.
+
+Colony, Former, Supply units on foil/cruiser cost same as if on infantry/speeder.
 
 ### Weapon and armor cost
 
-Weapon and armor cost growths slightly slower than their value. That makes stronger weapon/armor more cost effective against stronger opponent. However, it is still cheaper to build weaker units when top item is overkill.
+Weapon and armor cost grows slightly slower than their value. That makes stronger weapon/armor more cost effective against stronger opponent. However, it is still cheaper to build weaker units when top item is overkill.
 
 ### Non combat modules cost
 
@@ -209,13 +232,21 @@ This mod introduces alternative combat mechanics that smoothens that skew by rei
 
 Odds confirmation dialog now displays correct winning probability percentage. Vanilla odds numbers look cool but are highly unusable without calculator not even mentioning they are incorrect to begin with.
 
-## Promotion probability
+## Unit morale
+
+### Removed Very Green defense bonus
+
+Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
+
+One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
+
+### Promotion probability
 
 [Vanilla formula disassembled](http://alphacentauri2.info/wiki/Treatise_on_Morale#Reverse_engineered_Battle_Upgrade_formula)
 
 Surprisingly, the vanilla formula is very sensible. Essentially, promotion odds are proportional to opponent to victor strength ratio as well as to how badly both you and opponent got damaged in battle. The only problem with it is that Very Green and Green units skip this calculation and are always promoted. That opens a padorra exploit box as player can wind down their MORALE rating to lower their units morale and then quickly aquire 1-2 promotion levels.
 
-I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then 25% chance to be promoted upon victory. This removes a micro exploit when player could lower their MORALE rating on purpose to receive cheap promotions then revert MORALE back up and get their easy earned Commandos and Elites.
+I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then victor has 25% chance to be promoted.
 
 Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
 
@@ -228,33 +259,37 @@ Repair rates are lowered to eliminate fast and instant healing. Parameters are c
 * Base/bunker/aribase: 10% up to 100%.
 * Base with corresponding land/sea/air repair facility: +10%.
 * SP for fast repair natives in base: +10%.
-* Nano Factory: + 10%.
+* Nano Factory: + 10% up to 100% everywhere.
 
 ## Unit hurry cost and unit upgrade cost
 
-Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? It is an opposite with unit upgrade cost. This one is, on the countrary, too cheap allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten both of them for simplicity and also prevent abovementioned exploit along the way.
+Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? The upgrade cost is, on the contrary, quite low allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten both of them for simplicity and to prevent abovementioned exploit.
 
-In this mod unit hurry cost is flat <mineral cost> x 4 value. The base upgrade cost now is an exact difference in hurry cost! Could anyone imagine game design could be that simple and transparent? :rofl:
+In this mod unit hurry cost is for times its mineral cost. The base upgrade cost now is an exact difference of new and old units hurry cost! Could anyone imagine game design could be that simple and transparent? :rofl:
 
-Since higher reactors now do nothing but decrease unit cost player also gets **REFUND** when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :)
+Since higher reactors now do nothing but decrease unit cost player also gets **REFUND** when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :smile:
 
 ### Hurry cost penalty thresholds
 
-This mod removes all hurry cost penalty thresholds. I never could grasp their strategical meaning since they do not affect course of the game but add annoyance only and force me to use calculator. Let me know if anyone thinks otherwise.
+This mod removes all hurry cost penalty thresholds. I never could grasp their strategical meaning since they do not affect course of the game but only add annoyance and require use of calculator. Let me know if anyone thinks they need to be kept.
 
 Now all hurry costs are flat x2 for facilities and x4 for units and projects.
 
 ## PLANET rating effect on combat
 
-Native warfare seems to be everybody's weapon in vanilla. It doesn't seem fair to PLANET oriented factions. In base game PLANET rating is very weak comparing to say INDUSTRY/RESEARCH. It should be at least comparable to justify Cult of Planet's -1 INDUSTRY penalty. In my mind even ±1 PLANET rating should be *very* noticeable. Therefore, this mod increases its combat bonus to 15%. It also applies it on both attack and defense so PLANET haters suffer significant penalty. Now running Free Market really forces player to build up anti native base defense - mere avoiding combat is not a good defense anymore.
+Native warfare seems to be everybody's weapon in vanilla. It doesn't seem fair to PLANET oriented factions. In base game PLANET rating is very weak comparing to say INDUSTRY/RESEARCH. It should be at least comparable to justify Cult of Planet's -1 INDUSTRY penalty. In my mind even ±1 PLANET rating should be *very* noticeable. Therefore, this mod increases its combat bonus to 15%. It also applies it on both attack and defense so PLANET haters suffer significant penalty. Now running Free Market really forces player to build up anti native base defense - mere avoiding combat is not a good strategy anymore.
 
 On top of that this mod sets land psi combat base odds to 1:1. This way PLANET rating controls advantage/disadvantage in psi combat, correspondingly. It also brings psi attack odds against Transe unit in base (1:2.25) in range with conventional attack odds against base with PD/TF (1:2 - 1:3). This last change, though, could be undesired for many players as I found out already. Luckily, it is configured in alphax.txt. So anyone can roll it back or set to any other preferred value.
 
-# Base intrinsic defense and defensive structures
+## Base intrinsic defense and defensive structures
 
 Base intrinsic defence raised to 50%. This is configurable in alphax.txt.
 
 Base defensive structures (Perimeter Defense, Naval Yard, Aerospace Complex, and Tachyon Field) defense bonuses are exposed in thinker.ini. They are left as is for now. Could change in future versions.
+
+## Fanatic attack bonus
+
+Believers are quite narrow focused faction. Their SUPPORT and Fanatic attack bonus makes them powerful large army warfare machine. This is whaty they **should** be doing to succeed as they suck at everything else with their RESEARCH and PLANET penalties. Surprisingly, their attack bonus is not that remarkable. Even Usurpers are better with their +25% attack bonus as they apply it to all type of combat including psi. Since believers are pathetic in psi combat their conventional attack bonus should be at least greater than Usurpers'. Assuming that even in the best circumstances they are not going to be in permanent war state raising their attack bonus to 50% is not at all overpowered. This is essentially compensation for their poor economical development.
 
 # Facilities cost/maintainance
 
@@ -367,33 +402,15 @@ About the same story with PROBE and Covert ops center. Even though it is just on
 
 # Terraforming and land improvements
 
-## Sea Sensors
-
-Introduced *Sensor Buoy* on sea similar to *Sensor Array* on land. Copied from SMAniaC mod. They do not confer defense bonus but they increase visibility which is very important to track fast moving ships in your territory and around.
-
-# Other changes
-
-## Special weapon and armor
-
-Disabled all hybrid and psi items.
-
-I really cannot grasp this concept. Why having half strength ability while you can attach fully powered one for the same price? Besides, mere melting ability to the item breaks the unique SMACX unit workshop build-it-yourself paradigm! Why to introduce constructor tool and then provide pieces those cannot be disassembled to elementary properties. I almost never use them for their added ability. Merely like another regular piece of equipment. And now in my mod they don't exist anymore and nobody cries.
-
-Same story with psi weapon and armor. By the time you get them you have full spectrum of natives who are much cheaper than psi attack + psi defense unit. I personally never used them. Anybody does? Let me know if you think they are valuable assets.
-
-## Removed abilities
-
-Cloaking device and Deep pressure hull abilities are broken by game shared map implementation. Other people said enough about it. Disabled them.
-
-Repair Bay ability is useless in my mind as well. I cannot even imagine where would you massively transport wounded units.
-
-Soporific Gas Pods. People reported AI doesn't use them due to the bug. I think it would be fair not to give them to humans too until this is fixed.
-
 ## Yield restrictions
 
 This is another feature I cannot understand. What good does restricting yield do? Why I cannot farm a rainy tile to boost my base growth a little? Why I cannot mine a rocky tile to get myself some minerals? In vanilla game these restriction are lifted when you discover advanced terraforming. At this time I don't need a rocky mine anymore since borehole is better. As the result I never build mines to work on - only to harvest by crawler. I don't know how to disable them completely so I moved them all onto level 1 technologies.
 
 I guess this was a blind copy of Civ 1 Despotism restrictions. Despotism reduces any factor of production by 1 where you have 3+ of such production. However, this was compensated by unit production and settler food supports. Meaning you harvest less but you spend less on support too. SMACX lost this second part separating support into its own effect. Thus leaving this nicely thought and designed element half cut and stupid looking.
+
+## Forest
+
+Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
 ## Fungus production
 
@@ -416,13 +433,31 @@ Centauri Meditation | +1 energy |
 Secrets of Alpha Centauri | +1 energy |
 Centauri Genetics | +1 mineral |
 
+## Sea Sensors
+
+Introduced *Sensor Buoy* on sea similar to *Sensor Array* on land. Copied from SMAniaC mod. They do not confer defense bonus but they increase visibility which is very important to track fast moving ships in your territory and around.
+
+# Other changes
+
+## Special weapon and armor
+
+Disabled all hybrid and psi items.
+
+I really cannot grasp this concept. Why having half strength ability while you can attach fully powered one for the same price? Besides, mere melting ability to the item breaks the unique SMACX unit workshop build-it-yourself paradigm! Why to introduce constructor tool and then provide pieces those cannot be disassembled to elementary properties. I almost never use them for their added ability. Merely like another regular piece of equipment. And now in my mod they don't exist anymore and nobody cries.
+
+Same story with psi weapon and armor. By the time you get them you have full spectrum of natives who are much cheaper than psi attack + psi defense unit. I personally never used them. Anybody does? Let me know if you think they are valuable assets.
+
+## Removed abilities
+
+Cloaking device and Deep pressure hull abilities are broken by game shared map implementation. Other people said enough about it. Disabled them.
+
+Repair Bay ability is useless in my mind as well. I cannot even imagine where would you massively transport wounded units.
+
+Soporific Gas Pods. People reported AI doesn't use them due to the bug. I think it would be fair not to give them to humans too until this is fixed.
+
 ## Aquatic faction +1 mineral advantage
 
 I was able to remove AQUATIC +1 sea mineral advantage. Now they are back to normal and expected growth. They will be slow on start but they have 50-100 years of undisturbed development. Once their old bases are developped enought to stamp sea pods they explosivly expand but then other factions start barraging waters and set their sea colonies. Seems to be a good balance. However, aquatic factions still develop quite differently. That requires a lot of play testing.
-
-## Forest
-
-Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
 ## Disabled probe morale boosing technologies
 
@@ -431,12 +466,6 @@ Some vanilla technologies boost probe team morale for free. That makes all new p
 ## Removed planetpearls energy reserve bonus
 
 Planetpearl is a pretty weird bonus that player gets when killing land only natives (not sea, not air). This bonus goes from 10 to 70 based on killed unit lifecycle. Attacking unit with 3:2 strenght advantage has pretty good winning chances. That least to harvesting Planetpearl exploit when player induces natives appearance by trying to enter fungus tile on purpose. Gameplay wise I percieve it as gold coins falling off defeated monsters in Mario. Purely arcade element quite strategically disconnected from the rest of the game and very distracting. Native lifeforms should be percieved as a threat not as a treasure.
-
-## Removed Very Green defense bonus
-
-Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
-
-One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
 
 ## Territory distance from sea and coastal bases
 

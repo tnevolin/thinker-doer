@@ -1,3 +1,8 @@
+# Version 39
+
+* High Morale ability reinstated.
+* 50,      ; Combat % -> Fanatic attack bonus
+
 # Version 38
 
 * Decreased Police State PLANET penalty to -1. PLANET seems to be more powerful now = too much of a penalty.
@@ -15,10 +20,7 @@
 * Adjusted summary strength and power lines to the bottom in battle computation display. This way it is easier to read and compare them between attacker and defender.
 * Territory extends from sea base by same distance as from land bases!
 * Territory extends from coastal base into the adjacent sea by same distance as from sea bases!
-<<<<<<< HEAD
 * Sea formers can build Sensor Buoy now (similar to Sensor Array on land).
-=======
->>>>>>> disable-planetpearls-alternative
 
 # Version 36
 
@@ -150,19 +152,15 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-<<<<<<< HEAD
-=======
-* Artillery damage rework.
-* Artillery duel uses armor as well.
-* Interceptor fight uses armor as well.
->>>>>>> disable-planetpearls-alternative
 * Remove morale boost from home base Children Creche.
 * Set basic morale to Very Green.
 * Increase morale facilities cost.
+* Prevent road usage on enemy territory.
 * Make AI build more units, defensive structures, sensors.
 * Artillery damage rework.
 * Artillery duel uses armor as well.
 * Interceptor fight uses armor as well.
 * Make ECM to affect sea units as well.
 * Increase morale level bonus to 25%.
+* Rework probe team success rates.
 
