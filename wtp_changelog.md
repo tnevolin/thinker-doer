@@ -2,6 +2,8 @@
 
 * High Morale ability reinstated.
 * 50,      ; Combat % -> Fanatic attack bonus
+* Returned artillery damage back to vanilla setting: 3,2. Previous 5,1 was a temporary setting.
+
 
 # Version 38
 
@@ -152,12 +154,12 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Artillery damage rework.
 * Remove morale boost from home base Children Creche.
 * Set basic morale to Very Green.
 * Increase morale facilities cost.
 * Prevent road usage on enemy territory.
 * Make AI build more units, defensive structures, sensors.
-* Artillery damage rework.
 * Artillery duel uses armor as well.
 * Interceptor fight uses armor as well.
 * Make ECM to affect sea units as well.

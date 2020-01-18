@@ -29,7 +29,7 @@
 #RULES
 3,       ; Movement rate along roads
 2,       ; Nutrient intake requirement for citizens
-5,1      ; Numerator & Denominator for artillery fire damage
+3,2      ; Numerator & Denominator for artillery fire damage
 2,       ; Max artillery range (larger will break multiplayer)
 8,       ; Max airdrop range w/o orbital insertion
 10,      ; Nutrient cost multiplier
