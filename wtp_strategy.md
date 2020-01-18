@@ -1,6 +1,6 @@
-# SMACX - The Will to Power - mod: Strategy tips for newcomers
+# The Will to Power: Strategy tips for newcomers
 
-This mod enhances *Alpha Centauri: Alien Crossfire* experience by improving AI and rebalancing other features. Therefore, it is more diffcult to beat and play style differs a little from vanilla. It is irrelevant to those never played vanilla but for those who did it **is**.
+This mod enhances *Alpha Centauri: Alien Crossfire* experience by improving AI and rebalancing other features. Therefore, it is more diffcult to beat and play style differs a little from vanilla. It is irrelevant to those never played vanilla but for those who did it **is**.  
 :wink:
 
 ##### Links
