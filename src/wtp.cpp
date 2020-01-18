@@ -1141,7 +1141,7 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 }
 
 /**
-Returns map distance as it calculated by game.
+Calculates map distance as in vanilla.
 */
 int map_distance(int x1, int y1, int x2, int y2)
 {
@@ -1153,3 +1153,54 @@ int map_distance(int x1, int y1, int x2, int y2)
     return ((xd + yd) + abs(xd - yd) / 2) / 2;
 
 }
+
+/**
+Rolls artillery damage.
+*/
+HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower)
+{
+    debug
+    (
+        "roll_artillery_damage(attacker_strength=%d, defender_strength=%d, attacker_firepower=%d)\n",
+        attacker_strength,
+        defender_strength,
+        attacker_firepower
+    )
+    ;
+
+    int artillery_damage = 0;
+
+    // compare attacker and defender strength
+
+    if (attacker_strength >= defender_strength)
+    {
+        // replicate vanilla algorithm
+
+        int max_damage = attacker_strength / defender_strength;
+
+        artillery_damage = random(max_damage + 1);
+
+    }
+    else
+    {
+        int random_roll = random(attacker_strength + defender_strength);
+
+        artillery_damage = (random_roll < attacker_strength ? 1 : 0);
+
+    }
+
+    // multiply attacker strength by firepower
+
+    artillery_damage *= attacker_firepower;
+
+    debug
+    (
+        "artillery_damage=%d)\n",
+        artillery_damage
+    )
+    ;
+
+    return artillery_damage;
+
+}
+

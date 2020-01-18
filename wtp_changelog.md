@@ -1,9 +1,12 @@
 # Version 39
 
+* Alternative artillery damage.
+
+# Version 39
+
 * High Morale ability reinstated.
 * 50,      ; Combat % -> Fanatic attack bonus
 * Returned artillery damage back to vanilla setting: 3,2. Previous 5,1 was a temporary setting.
-
 
 # Version 38
 

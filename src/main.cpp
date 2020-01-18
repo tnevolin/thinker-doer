@@ -185,6 +185,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->coastal_territory_distance_same_as_sea = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "alternative_artillery_damage"))
+    {
+        cf->alternative_artillery_damage = (atoi(value) == 0 ? false : true);
+    }
     // Thinker default case
     else
     {
