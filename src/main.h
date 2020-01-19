@@ -130,7 +130,8 @@ struct Config {
     bool sea_territory_distance_same_as_land = false;
     bool coastal_territory_distance_same_as_sea = false;
     bool alternative_artillery_damage = false;
-    bool disable_homebase_cc_morale_bonus = false;
+    bool disable_home_base_cc_morale_bonus = false;
+    bool disable_current_base_cc_morale_bonus = false;
 };
 
 /*
