@@ -1772,6 +1772,67 @@ void patch_disable_current_base_cc_morale_bonus()
 
 }
 
+/**
+Sets default unit morale to Very Green.
+*/
+void patch_default_morale_very_green()
+{
+    // default_morale_very_green place 1
+
+    int default_morale_very_green_1_bytes_length = 0x1;
+
+    /*
+    0:  46                      inc    esi
+    */
+    byte default_morale_very_green_1_bytes_old[] =
+        { 0x46 }
+    ;
+
+    /*
+    ...
+    */
+    byte default_morale_very_green_1_bytes_new[] =
+        { 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x004F13A6,
+        default_morale_very_green_1_bytes_length,
+        default_morale_very_green_1_bytes_old,
+        default_morale_very_green_1_bytes_new
+    )
+    ;
+
+    // default_morale_very_green place 2
+
+    int default_morale_very_green_2_bytes_length = 0x2;
+
+    /*
+    0:  fe c2                   inc    dl
+    */
+    byte default_morale_very_green_2_bytes_old[] =
+        { 0xFE, 0xC2 }
+    ;
+
+    /*
+    ...
+    */
+    byte default_morale_very_green_2_bytes_new[] =
+        { 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x005C039C,
+        default_morale_very_green_2_bytes_length,
+        default_morale_very_green_2_bytes_old,
+        default_morale_very_green_2_bytes_new
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2068,6 +2129,14 @@ bool patch_setup(Config* cf) {
     if (cf->disable_current_base_cc_morale_bonus)
     {
         patch_disable_current_base_cc_morale_bonus();
+
+    }
+
+    // patch default_morale_very_green
+
+    if (cf->default_morale_very_green)
+    {
+        patch_default_morale_very_green();
 
     }
 

@@ -132,6 +132,7 @@ struct Config {
     bool alternative_artillery_damage = false;
     bool disable_home_base_cc_morale_bonus = false;
     bool disable_current_base_cc_morale_bonus = false;
+    bool default_morale_very_green = false;
 };
 
 /*
