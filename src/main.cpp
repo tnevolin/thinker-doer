@@ -189,9 +189,13 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->alternative_artillery_damage = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "disable_homebase_cc_morale_bonus"))
+    else if (MATCH("wtp", "disable_home_base_cc_morale_bonus"))
     {
-        cf->disable_homebase_cc_morale_bonus = (atoi(value) == 0 ? false : true);
+        cf->disable_home_base_cc_morale_bonus = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "disable_current_base_cc_morale_bonus"))
+    {
+        cf->disable_current_base_cc_morale_bonus = (atoi(value) == 0 ? false : true);
     }
     // Thinker default case
     else

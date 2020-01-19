@@ -4,6 +4,7 @@ The Will to Power is a playing experience enhancement mod for Alpha Centauri: Al
 It is built on top of Thinker mod. (Thinker mod info: Readme.md, Details.md, Changelog.md).
 
 ##### Links
+
 * [This readme](https://github.com/tnevolin/thinker-doer/blob/master/wtp_readme.md)
 * [Strategy tips](https://github.com/tnevolin/thinker-doer/blob/master/wtp_strategy.md)
 * [Changelog](https://github.com/tnevolin/thinker-doer/blob/master/wtp_changelog.md)
@@ -28,7 +29,7 @@ This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I stron
 * Many formulas and rules are simplified to achieve better clarity. Things are more intuitive and understandable now.
 * A lot of micro exploits are eliminated. Game is more streamlined toward general competition without logically irrelevant grinding.
 
-# Why this mod?
+## Why this mod?
 
 There are tons of interesting features in the game. Many of them are revolutionary for 4X games world. I don't think there is another so feature reach game. I **DO** want to try them all!
 
@@ -36,7 +37,7 @@ With great power comes great responsibility, though. The more features you have 
 
 I have started this mod initially to myself to give such underused features and strategies a chance to shine and to increase overall game challenge and replayability. In such option reach games like SMAX variations are endless. Due to such variations some strategical choice may sometimes shine depending on current conditions. Changing strategy in response to changing game situation is the nature of the play and that's why we have many to chose from. However, there should not be options those are never (or quite rarely) viable. Such unused option would just clutter game interface and player memory. Well thought game should not have any unusable elements. In this mod I try to make all options/features/strategies viable in one way or another.
 
-## This mod motto
+### This mod motto
 
 Any option/feature/strategy should be undoubtfully advantegeous in some play style of game situation. Proportion of games where it provides such advantage should be noticeable too.
 
@@ -117,7 +118,7 @@ Matter Editation | free Recreation Commons
 Sentient Econometrics | free Energy Bank
 Secrets of Creation | free Network Node
 
-# Units and combat related changes
+# Combat related stuff
 
 ## Attack/defense ratio adjustment
 
@@ -159,63 +160,6 @@ Here is the current game weapon and strength progression by technology levels. T
 12 | 24 | 16 | 24 | 16
 13 | 30 | 20 |  | 
 
-## Unit cost
-
-Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 model. Now it is **MUCH** easier to understand this. For example, both 6-1-1 and 1-6-1 infantry units now cost 6 rows of minerals. Imagine the simplicity! New formula completely removes a quadratic armor cost growth problem. High end mixed inrantry units now cost comparable to speeder and fully armored foil units are comparable to hovertank.
-
-### Reactors
-
-Reactor power does not multiply unit max hit points anymore. All units (conventional and native) have 10 max hit points regardless of reactor.
-
-Instead each subsequent reactor decreases unit cost by approximately 20%. Player gets refund when upgrading unit to cheaper one with more powerful reactor.
-
-### Unit pricing principles
-* Primary item (most expensive module/weapon/armor item) defines base cost.
-* Secondary item (least expensive module/weapon/armor item) increases cost just slightly to encourage mixed units usage.
-* Faster chassis make unit proportionally more expensive. Speeder/Foil are 1.5 times and Hovertank/Cruiser are 2 times more expensive than Infantry.
-* Stronger reactors decrease cost by 20% comparing to previous generation.
-* Abilities have now proportional and flat cost components those can be set independently for each ability. Proportional one works as in vanilla and increases cost by 25% for each unit value. Flat cost adds given number of minerals rows to the cost.
-
-### Unit cost formula
-
-<pre>
-
-unit cost = [PI cost + (SI cost - 1) / 2] * reactor factor * abilities factor + abilities flat
-(rounded normally)
-
-PI (primary item) = most expensive module/weapon/armor
-SI (secondary item) = least expensive module/weapon/armor
-
-reactor factor = reactor cost / Fission reactor cost
-
-abilities factor = (1 + 0.25 * (ability1 factor + ability2 factor))
-abilities flat = ability1 flat + ability2 flat
-
-</pre>
-
-#### Special formula cases for non combat units
-
-Colony, Former, Supply units on foil/cruiser cost same as if on infantry/speeder.
-
-### Weapon and armor cost
-
-Weapon and armor cost grows slightly slower than their value. That makes stronger weapon/armor more cost effective against stronger opponent. However, it is still cheaper to build weaker units when top item is overkill.
-
-### Non combat modules cost
-
-Colony now costs 6.  
-Cheap colony pod allows fueling expansion with nutrients excess only and ignores any economical development whatsoever. Nutrient reach faction keeps stamping colony pods and fills up all available space exponentially. Not surprisingly, such simple strategy is also a most effective way to get economical advantage early in the game. Higher colony pod price put expansion speed in check of both nutrients and minerals production encouraging early terraforming and development. Now player needs to invest into base growth and terraforming in order to expand faster.
-
-Former now costs 4.  
-Cheapest of all non combat units. There is no much sense to lower it down even more as it screws abilities cost multiplication.
-
-Supply now costs 12.  
-Harvesting resources by crawler is a very lucrative investment. Harvesting 4 minerals from rocky mine pays for vanila crawler in 7.5 turns! Then it delivers 4 minerals each turn. That is just insane ROI. I suggest to price it as high as 120 minerals which brings its effectiveness closer to Genejack Factory. Even at this price it is still quite useful but it is not a single ultimate strategy anymore. You would think thrice if you want to build a crawler just to extract 2 units of production.
-
-### Native units cost
-
-Native warfare should be slightly worse to conventional as they have other benefits. They ignore base defensive structures. They are naturally both full scale attacker and defender. Their price is fixed and is much lower comparing to fully equipped top level attacker-defender units. They do not require prototyping. IoD can transport. Sealurk can attack shore units. LoC does not need refueling and can capture bases. They all can repair up to 100% in fungus squares. They do not require maintenance while in fungus square. All together they are no brainer units and as such should be a little bit less effective to not become a superior choice. I've increased most native unit cost except spore launcher to encourage its use for bombardment.
-
 ## Combat mechanics
 
 ### Round odds fix
@@ -231,49 +175,6 @@ This mod introduces alternative combat mechanics that smoothens that skew by rei
 ### Odds confirmation dialog fix
 
 Odds confirmation dialog now displays correct winning probability percentage. Vanilla odds numbers look cool but are highly unusable without calculator not even mentioning they are incorrect to begin with.
-
-## Unit morale
-
-### Removed Very Green defense bonus
-
-Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
-
-One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
-
-### Promotion probability
-
-[Vanilla formula disassembled](http://alphacentauri2.info/wiki/Treatise_on_Morale#Reverse_engineered_Battle_Upgrade_formula)
-
-Surprisingly, the vanilla formula is very sensible. Essentially, promotion odds are proportional to opponent to victor strength ratio as well as to how badly both you and opponent got damaged in battle. The only problem with it is that Very Green and Green units skip this calculation and are always promoted. That opens a padorra exploit box as player can wind down their MORALE rating to lower their units morale and then quickly aquire 1-2 promotion levels.
-
-I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then victor has 25% chance to be promoted.
-
-Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
-
-## Repair rates
-
-Repair rates are lowered to eliminate fast and instant healing. Parameters are configurable.
-
-### Current settings
-* Field: 10% up to 80% regardless of location.
-* Base/bunker/aribase: 10% up to 100%.
-* Base with corresponding land/sea/air repair facility: +10%.
-* SP for fast repair natives in base: +10%.
-* Nano Factory: + 10% up to 100% everywhere.
-
-## Unit hurry cost and unit upgrade cost
-
-Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? The upgrade cost is, on the contrary, quite low allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten both of them for simplicity and to prevent abovementioned exploit.
-
-In this mod unit hurry cost is for times its mineral cost. The base upgrade cost now is an exact difference of new and old units hurry cost! Could anyone imagine game design could be that simple and transparent? :rofl:
-
-Since higher reactors now do nothing but decrease unit cost player also gets **REFUND** when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :smile:
-
-### Hurry cost penalty thresholds
-
-This mod removes all hurry cost penalty thresholds. I never could grasp their strategical meaning since they do not affect course of the game but only add annoyance and require use of calculator. Let me know if anyone thinks they need to be kept.
-
-Now all hurry costs are flat x2 for facilities and x4 for units and projects.
 
 ## PLANET rating effect on combat
 
@@ -298,6 +199,113 @@ Vanilla artillery damage is proportional to weapon/armor ratio *rounded down*. T
 This mod introduces a small correction to the game formula when the above ratio is below 1. Instead of doing zero damage artillery have a chance to do 1 damage proportional to attacking artillery strenght. It is a logical fractional continuation of original whole number formula.
 
 Additionally artillery damage is multiplied by attacker firepower to ignore defender reactor power as it is done for hand-to-hand combat as well.
+
+## Repair rates
+
+Repair rates are lowered to eliminate fast and instant healing. Parameters are configurable.
+
+### Current settings
+
+* Field: 10% up to 80% regardless of location.
+* Base/bunker/aribase: 10% up to 100%.
+* Base with corresponding land/sea/air repair facility: +10%.
+* SP for fast repair natives in base: +10%.
+* Nano Factory: + 10% up to 100% everywhere.
+
+## Morale
+
+### Very Green defense bonus
+
+Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
+
+One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
+
+### Promotion probability
+
+[Vanilla formula disassembled](http://alphacentauri2.info/wiki/Treatise_on_Morale#Reverse_engineered_Battle_Upgrade_formula)
+
+Surprisingly, the vanilla formula is very sensible. Essentially, promotion odds are proportional to opponent to victor strength ratio as well as to how badly both you and opponent got damaged in battle. The only problem with it is that Very Green and Green units skip this calculation and are always promoted. That opens a padorra exploit box as player can wind down their MORALE rating to lower their units morale and then quickly aquire 1-2 promotion levels.
+
+I decided to even out promotion probabilities across all levels to decouple from MORALE rating jumping up and down. Now all probabilities are same as for Commando->Elite promotion. For example, when two equal units fight they both have 50% chance to win and then victor has 25% chance to be promoted.
+
+Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
+
+### Children Creche morale bonuses
+
+#### Removed Children Creche home base morale bonus
+
+Reason: undocumented.
+
+# Unit cost
+
+Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 model. Now it is **MUCH** easier to understand this. For example, both 6-1-1 and 1-6-1 infantry units now cost 6 rows of minerals. Imagine the simplicity! New formula completely removes a quadratic armor cost growth problem. High end mixed inrantry units now cost comparable to speeder and fully armored foil units are comparable to hovertank.
+
+## Reactors
+
+Reactor power does not multiply unit max hit points anymore. All units (conventional and native) have 10 max hit points regardless of reactor.
+
+Instead each subsequent reactor decreases unit cost by approximately 20%. Player gets refund when upgrading unit to cheaper one with more powerful reactor.
+
+## Unit pricing principles
+* Primary item (most expensive module/weapon/armor item) defines base cost.
+* Secondary item (least expensive module/weapon/armor item) increases cost just slightly to encourage mixed units usage.
+* Faster chassis make unit proportionally more expensive. Speeder/Foil are 1.5 times and Hovertank/Cruiser are 2 times more expensive than Infantry.
+* Stronger reactors decrease cost by 20% comparing to previous generation.
+* Abilities have now proportional and flat cost components those can be set independently for each ability. Proportional one works as in vanilla and increases cost by 25% for each unit value. Flat cost adds given number of minerals rows to the cost.
+
+## Unit cost formula
+
+<pre>
+
+unit cost = [PI cost + (SI cost - 1) / 2] * reactor factor * abilities factor + abilities flat
+(rounded normally)
+
+PI (primary item) = most expensive module/weapon/armor
+SI (secondary item) = least expensive module/weapon/armor
+
+reactor factor = reactor cost / Fission reactor cost
+
+abilities factor = (1 + 0.25 * (ability1 factor + ability2 factor))
+abilities flat = ability1 flat + ability2 flat
+
+</pre>
+
+### Special formula cases for non combat units
+
+Colony, Former, Supply units on foil/cruiser cost same as if on infantry/speeder.
+
+## Weapon and armor cost
+
+Weapon and armor cost grows slightly slower than their value. That makes stronger weapon/armor more cost effective against stronger opponent. However, it is still cheaper to build weaker units when top item is overkill.
+
+## Non combat modules cost
+
+Colony now costs 6.  
+Cheap colony pod allows fueling expansion with nutrients excess only and ignores any economical development whatsoever. Nutrient reach faction keeps stamping colony pods and fills up all available space exponentially. Not surprisingly, such simple strategy is also a most effective way to get economical advantage early in the game. Higher colony pod price put expansion speed in check of both nutrients and minerals production encouraging early terraforming and development. Now player needs to invest into base growth and terraforming in order to expand faster.
+
+Former now costs 4.  
+Cheapest of all non combat units. There is no much sense to lower it down even more as it screws abilities cost multiplication.
+
+Supply now costs 12.  
+Harvesting resources by crawler is a very lucrative investment. Harvesting 4 minerals from rocky mine pays for vanila crawler in 7.5 turns! Then it delivers 4 minerals each turn. That is just insane ROI. I suggest to price it as high as 120 minerals which brings its effectiveness closer to Genejack Factory. Even at this price it is still quite useful but it is not a single ultimate strategy anymore. You would think thrice if you want to build a crawler just to extract 2 units of production.
+
+## Native units cost
+
+Native warfare should be slightly worse to conventional as they have other benefits. They ignore base defensive structures. They are naturally both full scale attacker and defender. Their price is fixed and is much lower comparing to fully equipped top level attacker-defender units. They do not require prototyping. IoD can transport. Sealurk can attack shore units. LoC does not need refueling and can capture bases. They all can repair up to 100% in fungus squares. They do not require maintenance while in fungus square. All together they are no brainer units and as such should be a little bit less effective to not become a superior choice. I've increased most native unit cost except spore launcher to encourage its use for bombardment.
+
+# Unit hurry cost and unit upgrade cost
+
+Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? The upgrade cost is, on the contrary, quite low allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten both of them for simplicity and to prevent abovementioned exploit.
+
+In this mod unit hurry cost is for times its mineral cost. The base upgrade cost now is an exact difference of new and old units hurry cost! Could anyone imagine game design could be that simple and transparent? :rofl:
+
+Since higher reactors now do nothing but decrease unit cost player also gets **REFUND** when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :smile:
+
+## Hurry cost penalty thresholds
+
+This mod removes all hurry cost penalty thresholds. I never could grasp their strategical meaning since they do not affect course of the game but only add annoyance and require use of calculator. Let me know if anyone thinks they need to be kept.
+
+Now all hurry costs are flat x2 for facilities and x4 for units and projects.
 
 # Facilities cost/maintainance
 

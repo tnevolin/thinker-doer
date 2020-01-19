@@ -1651,34 +1651,122 @@ void patch_alternative_artillery_damage()
 }
 
 /**
-Disable homebase CC morale bonus.
+Disables home base CC morale bonus.
 */
-void patch_disable_homebase_cc_morale_bonus()
+void patch_disable_home_base_cc_morale_bonus()
 {
-    // disable_homebase_cc_morale_bonus
+    // disable_home_base_cc_morale_bonus
 
-    int disable_homebase_cc_morale_bonus_bytes_length = 0x2;
+    int disable_home_base_cc_morale_bonus_bytes_length = 0x2;
 
     /*
     0:  6a 02                   push   0x2
     */
-    byte disable_homebase_cc_morale_bonus_bytes_old[] =
+    byte disable_home_base_cc_morale_bonus_bytes_old[] =
         { 0x6A, 0x02 }
     ;
 
     /*
     0:  6a 00                   push   0x0
     */
-    byte disable_homebase_cc_morale_bonus_bytes_new[] =
+    byte disable_home_base_cc_morale_bonus_bytes_new[] =
         { 0x6A, 0x00 }
     ;
 
     write_bytes
     (
         0x005C100B,
-        disable_homebase_cc_morale_bonus_bytes_length,
-        disable_homebase_cc_morale_bonus_bytes_old,
-        disable_homebase_cc_morale_bonus_bytes_new
+        disable_home_base_cc_morale_bonus_bytes_length,
+        disable_home_base_cc_morale_bonus_bytes_old,
+        disable_home_base_cc_morale_bonus_bytes_new
+    )
+    ;
+
+}
+
+/**
+Disables current base CC morale bonus.
+*/
+void patch_disable_current_base_cc_morale_bonus()
+{
+    // disable_current_base_cc_morale_bonus display
+
+    int disable_current_base_cc_morale_bonus_display_bytes_length = 0x2;
+
+    /*
+    0:  6a 02                   push   0x2
+    */
+    byte disable_current_base_cc_morale_bonus_display_bytes_old[] =
+        { 0x6A, 0x02 }
+    ;
+
+    /*
+    0:  6a 00                   push   0x0
+    */
+    byte disable_current_base_cc_morale_bonus_display_bytes_new[] =
+        { 0x6A, 0x00 }
+    ;
+
+    write_bytes
+    (
+        0x004B4118,
+        disable_current_base_cc_morale_bonus_display_bytes_length,
+        disable_current_base_cc_morale_bonus_display_bytes_old,
+        disable_current_base_cc_morale_bonus_display_bytes_new
+    )
+    ;
+
+    // disable_current_base_cc_morale_bonus attack
+
+    int disable_current_base_cc_morale_bonus_attack_bytes_length = 0x2;
+
+    /*
+    0:  6a 02                   push   0x2
+    */
+    byte disable_current_base_cc_morale_bonus_attack_bytes_old[] =
+        { 0x6A, 0x02 }
+    ;
+
+    /*
+    0:  6a 00                   push   0x0
+    */
+    byte disable_current_base_cc_morale_bonus_attack_bytes_new[] =
+        { 0x6A, 0x00 }
+    ;
+
+    write_bytes
+    (
+        0x00501640,
+        disable_current_base_cc_morale_bonus_attack_bytes_length,
+        disable_current_base_cc_morale_bonus_attack_bytes_old,
+        disable_current_base_cc_morale_bonus_attack_bytes_new
+    )
+    ;
+
+    // disable_current_base_cc_morale_bonus defense
+
+    int disable_current_base_cc_morale_bonus_defense_bytes_length = 0x2;
+
+    /*
+    0:  6a 02                   push   0x2
+    */
+    byte disable_current_base_cc_morale_bonus_defense_bytes_old[] =
+        { 0x6A, 0x02 }
+    ;
+
+    /*
+    0:  6a 00                   push   0x0
+    */
+    byte disable_current_base_cc_morale_bonus_defense_bytes_new[] =
+        { 0x6A, 0x00 }
+    ;
+
+    write_bytes
+    (
+        0x005019C8,
+        disable_current_base_cc_morale_bonus_defense_bytes_length,
+        disable_current_base_cc_morale_bonus_defense_bytes_old,
+        disable_current_base_cc_morale_bonus_defense_bytes_new
     )
     ;
 
@@ -1967,11 +2055,19 @@ bool patch_setup(Config* cf) {
 
     }
 
-    // patch disable_homebase_cc_morale_bonus
+    // patch disable_home_base_cc_morale_bonus
 
-    if (cf->disable_homebase_cc_morale_bonus)
+    if (cf->disable_home_base_cc_morale_bonus)
     {
-        patch_disable_homebase_cc_morale_bonus();
+        patch_disable_home_base_cc_morale_bonus();
+
+    }
+
+    // patch disable_current_base_cc_morale_bonus
+
+    if (cf->disable_current_base_cc_morale_bonus)
+    {
+        patch_disable_current_base_cc_morale_bonus();
 
     }
 
