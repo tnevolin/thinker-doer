@@ -5,7 +5,3 @@ text eol=lf
 *.txt eol=crlf
 *.md eol=crlf
 
-data export-ignore
-docs export-ignore
-src export-ignore
-
