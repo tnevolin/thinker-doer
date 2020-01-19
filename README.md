@@ -250,10 +250,6 @@ I decided to even out promotion probabilities across all levels to decouple from
 
 Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
 
-### Default unit morale
-
-Set to Very Green. It makes sense to start from lowest and work the way up with facilities and promotions as naturally set in all 4X games. This is not too important for game play, though. Feel free to turn this off.
-
 # Unit cost
 
 Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 model. Now it is **MUCH** easier to understand this. For example, both 6-1-1 and 1-6-1 infantry units now cost 6 rows of minerals. Imagine the simplicity! New formula completely removes a quadratic armor cost growth problem. High end mixed inrantry units now cost comparable to speeder and fully armored foil units are comparable to hovertank.

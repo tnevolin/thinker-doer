@@ -2,7 +2,6 @@
 
 * Removed morale bonus from home base Children Creche.
 * Removed all morale bonuses from current base Children Creche.
-* Set basic morale to Very Green.
 
 # Version 40
 
@@ -163,12 +162,10 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Increase morale facilities cost.
 * Prevent road usage on enemy territory.
 * Make AI build more units, defensive structures, sensors.
 * Artillery duel uses armor as well.
 * Interceptor fight uses armor as well.
 * Make ECM to affect sea units as well.
-* Increase morale level bonus to 25%.
 * Rework probe team success rates.
 
