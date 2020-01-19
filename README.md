@@ -250,17 +250,9 @@ I decided to even out promotion probabilities across all levels to decouple from
 
 Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
 
-### Children Creche morale bonuses
+### Default unit morale
 
-#### Removed home base Children Creche morale bonus
-
-Reason: undocumented.
-
-#### Removed current base Children Creche morale bonus
-
-Reason: undocumented.
-
-Some may refer to this passage from Datalinks: "All negative MORALE effects are cancelled for units in base square; instead such units receive a +1 MORALE modifier." It is hardly a documetation for such complex mechanics. See [Treatise on Morale].
+Set to Very Green. It makes sense to start from lowest and work the way up with facilities and promotions as naturally set in all 4X games. This is not too important for game play, though. Feel free to turn this off.
 
 # Unit cost
 

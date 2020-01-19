@@ -197,6 +197,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->disable_current_base_cc_morale_bonus = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "default_morale_very_green"))
+    {
+        cf->default_morale_very_green = (atoi(value) == 0 ? false : true);
+    }
     // Thinker default case
     else
     {

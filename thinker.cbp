@@ -66,9 +66,9 @@
 					<Add library="user32" />
 				</Linker>
 				<ExtraCommands>
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Changelog.md&quot; &quot;releases\TheWillToPower\&quot;  /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Details.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)License.txt&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_Changelog.md&quot; &quot;releases\TheWillToPower\&quot;  /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_Details.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_License.txt&quot; &quot;releases\TheWillToPower\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Readme.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_changelog.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_installation.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />

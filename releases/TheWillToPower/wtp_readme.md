@@ -214,6 +214,28 @@ Repair rates are lowered to eliminate fast and instant healing. Parameters are c
 
 ## Morale
 
+[Treatise on Morale](http://alphacentauri2.info/wiki/Treatise_on_Morale)
+
+That is a good example of what we are dealing with here. An excellent scolary article explaining miriads of small SMACX morale releated features and their interdependencies. A lot of enthusiasts worked a lot of man-months to disassemble, reverse engineere, and deliver this sacral knowledge to us in more or less understandable fashion. And even after all these efforts mere reading this article and trying to compose a clear picture in one's mind about all intricacies of game engine is a work in itself. I personally sometimes have to read some passages few times to catch the idea and details.
+
+Undoubtfully, such complicated rules should not even exist in a game in a first place for players sake. And if they do they should be clearly explained with every detail at least in advanced help. Apparently designers realized that such help would be of the above mentioned article size and wouldn require like 20 pages of in game text. That could scare beginners! Better to replace it with one-two vague sentences or not mention it at all. Clarity achieved = profit! In literal meaning.  
+:smile:
+
+Now players need to disassemble game to understand why their units have unexpected morale. Ugh.  
+:unamused:
+
+### Children Creche morale bonuses
+
+#### Removed home base Children Creche morale bonus
+
+Reason: undocumented.
+
+#### Removed current base Children Creche morale bonus
+
+Reason: undocumented.
+
+Some may refer to this passage from Datalinks: "All negative MORALE effects are cancelled for units in base square; instead such units receive a +1 MORALE modifier." It is hardly a documetation for such complex mechanics. See [Treatise on Morale].
+
 ### Very Green defense bonus
 
 Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
@@ -232,9 +254,15 @@ Besides, why promotion should be easier for lower morale levels? That benefits w
 
 ### Children Creche morale bonuses
 
-#### Removed Children Creche home base morale bonus
+#### Removed home base Children Creche morale bonus
 
 Reason: undocumented.
+
+#### Removed current base Children Creche morale bonus
+
+Reason: undocumented.
+
+Some may refer to this passage from Datalinks: "All negative MORALE effects are cancelled for units in base square; instead such units receive a +1 MORALE modifier." It is hardly a documetation for such complex mechanics. See [Treatise on Morale].
 
 # Unit cost
 
