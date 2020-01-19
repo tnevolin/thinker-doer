@@ -4,35 +4,35 @@
 #pragma pack(push, 1)
 struct BASE
 {
-    short x;
-    short y;
-    char faction_id;                        // +0x4
+    short x;                                // +0x0000
+    short y;                                // +0x0002
+    char faction_id;                        // +0x0004
     char faction_id_former;
     char pop_size;
     char assimilation_turns_left;
-    char nerve_staple_turns_left;
+    char nerve_staple_turns_left;           // +0x0008
     char ai_plan_status;
     char factions_spotted_flags;
-    char factions_pop_size_intel[8];
-    char name[25];
-    short unk_x_coord;
-    short unk_y_coord;
-    int status_flags;                       // +0x26
+    char factions_pop_size_intel[8];        // +0x000B
+    char name[25];                          // +0x0013
+    short unk_x_coord;                      // +0x002C
+    short unk_y_coord;                      // +0x002E
+    int status_flags;                       // +0x0030
     int event_flags;
     int governor_flags;
     int nutrients_accumulated;
-    int minerals_accumulated;
+    int minerals_accumulated;               // +0x0040
     int production_id_last;
     int eco_damage;
     int queue_size;
-    int queue_items[10];
-    int worked_tiles;                       // +0x54
+    int queue_items[10];                    // +0x0050
+    int worked_tiles;                       // +0x0078
     int specialist_total;
     int pad3;
     int pad4;
-    int pad5;
-    char facilities_built[12];
-    int mineral_surplus_final;              // +0x74
+    int pad5;                               // +0x0088
+    char facilities_built[12];              // +0x008C
+    int mineral_surplus_final;              // +0x0098
     int minerals_accumulated_2;
     int pad6;
     int pad7;
@@ -271,7 +271,7 @@ struct Faction
     int SE_effic;
     int SE_support;                 // 0x0280
     int SE_talent;
-    int SE_morale;
+    int SE_morale;                  // 0x0288
     int SE_police;
     int SE_growth;                  // 0x0290
     int SE_planet;

@@ -157,7 +157,6 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Artillery damage rework.
 * Remove morale boost from home base Children Creche.
 * Set basic morale to Very Green.
 * Increase morale facilities cost.

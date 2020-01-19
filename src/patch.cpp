@@ -1650,6 +1650,40 @@ void patch_alternative_artillery_damage()
 
 }
 
+/**
+Disable homebase CC morale bonus.
+*/
+void patch_disable_homebase_cc_morale_bonus()
+{
+    // disable_homebase_cc_morale_bonus
+
+    int disable_homebase_cc_morale_bonus_bytes_length = 0x2;
+
+    /*
+    0:  6a 02                   push   0x2
+    */
+    byte disable_homebase_cc_morale_bonus_bytes_old[] =
+        { 0x6A, 0x02 }
+    ;
+
+    /*
+    0:  6a 00                   push   0x0
+    */
+    byte disable_homebase_cc_morale_bonus_bytes_new[] =
+        { 0x6A, 0x00 }
+    ;
+
+    write_bytes
+    (
+        0x005C100B,
+        disable_homebase_cc_morale_bonus_bytes_length,
+        disable_homebase_cc_morale_bonus_bytes_old,
+        disable_homebase_cc_morale_bonus_bytes_new
+    )
+    ;
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -1930,6 +1964,14 @@ bool patch_setup(Config* cf) {
     if (cf->alternative_artillery_damage)
     {
         patch_alternative_artillery_damage();
+
+    }
+
+    // patch disable_homebase_cc_morale_bonus
+
+    if (cf->disable_homebase_cc_morale_bonus)
+    {
+        patch_disable_homebase_cc_morale_bonus();
 
     }
 
