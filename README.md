@@ -327,7 +327,7 @@ Cost in mineral rows
 
 Base facility | Cost | Maint | Explanation
 ------------- | -------------------:| -----------:| -----------
-Command Center | 8 | 2 | This morale boosting facility increases combat effectiveness of land units by 25% which is probably the majority of all units at early age. That translates to 25% stronger army which is otherwise equivalent to 25% production bonus while forging units. It's like +2 INDUSTRY even if for land units only. Taking in account the average combat unit cost of 4-8+ raising the morale improvement facility cost to the price of 1-2 combat units is not at all excessive. Vanilla cost of 4 is too cheap and makes the building of this facility a no brainer. With increased cost it will present a choice.
+Command Center | 8 | 2 | This morale boosting facility increases combat effectiveness of land units by 25% which is probably the majority of all units at early age. That translates to 25% stronger army which is otherwise equivalent to 25% production bonus while forging units. It's like +2 INDUSTRY even if for land units only. Taking in account the average combat unit cost of 4+ raising the morale improvement facility cost to the price of 1-2 combat units is not at all excessive. Vanilla cost of 4 is too cheap and makes the building of this facility a no brainer. With increased cost it will present a choice.
 Naval Yard | 8 | 2 | Reverted to vanilla values. Same reason as for Command Center.
 Aerospace Complex | 12 | 3 | This facility is conceptually same as Naval Yard. However, there are more air units in a game. Plus this facility also provides multiple other benefits like doubling space resources income, preventing airdrops, etc. Very useful facility should cost a little bit more than similar sea based one.
 Bioenhancement Center | 20 | 5 | Super generic facility that boost *all* units morale up to Commando. Should be priced at least close to raw sum of individual triad facilities.
@@ -352,41 +352,41 @@ Cost in mineral rows
 Secret project | Cost | Explanation
 -------------- | -------------------:| -----------
 The Human Genome | 40 | 2 minerals worth quelled drone x 10 bases x 20 turns
-The Command Nexus | 400 | 40 minerals worth facility x 10 bases.
-The Weather Paradigm | 600 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game. Should be most expensive in its time.
-The Merchant Exchange | 200 | Local improvement - no change.
-The Empath Guild | 600 | Way to Governorship and energy income multiplier. Should be quite expensive.
-The Citizens' Defense Force | 500 | 50 minerals worth facility x 10 bases.
-The Virtual World | 600 | 60 minerals worth facility x 10 bases.
+The Command Nexus | 80 | 80 minerals worth facility x 10 bases.
+The Weather Paradigm | 60 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game. Should be most expensive in its time.
+The Merchant Exchange | 20 | Local improvement - no change.
+The Empath Guild | 60 | Way to Governorship and energy income multiplier. Should be quite expensive.
+The Citizens' Defense Force | 50 | 50 minerals worth facility x 10 bases.
+The Virtual World | 60 | 60 minerals worth facility x 10 bases.
 The Planetary Transit System | 400 | Drone quellying + immediate growth boost. Proportional to empire size but limited to small bases only. Slight increase.
-The Xenoempathy Dome | 400 | Tactical advantage, aid to fungus terrafirming, +1 lifecycle = slight increase.
-The Neural Amplifier | 800 | Tough to evaluate but I tend to price combat effectiveness boosting projects quite high.
-The Maritime Control Center | 500 | 50 minerals worth facility x 10 bases.
-The Planetary Datalinks	| 600 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
-The Supercollider | 300 | Local effect = no change.
-The Ascetic Virtues | 600 | +POLICE + growth = slight increase.
-The Longevity Vaccine | 600 | Drone quellying. Slightly higher valued than The Human Genome due to more advanced era.
-The Hunter-Seeker Algorithm | 600 | No clue how to deal with this. People tend to value it quite high. Doubled the price.
-The Pholus Mutagen | 600 | Allows higher production without ecology impact. Should be slightly more expensive.
-The Cyborg Factory | 1600 | 160 minerals worth facility x 10 bases.
-The Theory of Everything | 400 | Local effect = no change.
-The Dream Twister | 800 | Same as The Neural Amplifier.
-The Universal Translator | 400 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. No change.
-The Network Backbone | 1600 | Large source of labs multiplied by the number of all world bases. Very high.
-The Nano Factory | 400 | Slight tactical and unit upgrade advantage. Nothing seriosly game changing. No change.
-The Living Refinery | 400 | About 2 minerals per base per turn x 10 bases x 20 turns.
-The Cloning Vats | 4000 | Endless population boom. It is the most expensive SP in my mod (besides AtT).
-The Self-Aware Colony | 2000 | About 25% raw energy income per base multiplied by number of bases in your empire. Also very highly priced.
-The Clinical Immortality | 1200 | Drones and diplomatic victory. Should be quite high.
-The Space Elevator | 1000 | Production boost for satellites. The boost itself is limited but satellites are the most lucrative facilities in the game. Priced high.
-The Singularity Inductor | 2000 | 200 minerals worth facility x 10 bases.
-The Bulk Matter Transmitter | 3000 | +50% minerals at every base. Insane game breaker.
-The Telepathic Matrix | 2400 | Total drone solution. Very high price.
-The Voice of Planet | 1200 | 
-The Ascent to Transcendence | 5000 | End game bases with crawlers should be able to build it in reasonable time but not instantly.
-The Manifold Harmonics | 600 | Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
-The Nethack Terminus | 600 | Some help to probe teams. Other than that nothing much.
-The Cloudbase Academy | 1200 | 80 minerals worth facility x 10 bases. Plus all benefits of Aerospace Complex (defense, morale, satellites yield, etc).
+The Xenoempathy Dome | 40 | Tactical advantage, aid to fungus terrafirming, +1 lifecycle = slight increase.
+The Neural Amplifier | 80 | Tough to evaluate but I tend to price combat effectiveness boosting projects quite high.
+The Maritime Control Center | 80 | 80 minerals worth facility x 10 bases.
+The Planetary Datalinks	| 60 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
+The Supercollider | 30 | Local effect = no change.
+The Ascetic Virtues | 60 | +POLICE + growth = slight increase.
+The Longevity Vaccine | 60 | Drone quellying. Slightly higher valued than The Human Genome due to more advanced era.
+The Hunter-Seeker Algorithm | 60 | No clue how to deal with this. People tend to value it quite high. Doubled the price.
+The Pholus Mutagen | 60 | Allows higher production without ecology impact. Should be slightly more expensive.
+The Cyborg Factory | 200 | 200 minerals worth facility x 10 bases.
+The Theory of Everything | 40 | Local effect = no change.
+The Dream Twister | 80 | Same as The Neural Amplifier.
+The Universal Translator | 40 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. No change.
+The Network Backbone | 160 | Large source of labs multiplied by the number of all world bases. Very high.
+The Nano Factory | 40 | Slight tactical and unit upgrade advantage. Nothing seriosly game changing. No change.
+The Living Refinery | 40 | About 2 minerals per base per turn x 10 bases x 20 turns.
+The Cloning Vats | 400 | Endless population boom. It is the most expensive SP in my mod (besides AtT).
+The Self-Aware Colony | 200 | About 25% raw energy income per base multiplied by number of bases in your empire. Also very highly priced.
+The Clinical Immortality | 120 | Drones and diplomatic victory. Should be quite high.
+The Space Elevator | 100 | Production boost for satellites. The boost itself is limited but satellites are the most lucrative facilities in the game. Priced high.
+The Singularity Inductor | 200 | 200 minerals worth facility x 10 bases.
+The Bulk Matter Transmitter | 300 | +50% minerals at every base. Insane game breaker.
+The Telepathic Matrix | 240 | Total drone solution. Very high price.
+The Voice of Planet | 120 | 
+The Ascent to Transcendence | 500 | End game bases with crawlers should be able to build it in reasonable time but not instantly.
+The Manifold Harmonics | 60 | Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
+The Nethack Terminus | 60 | Some help to probe teams. Other than that nothing much.
+The Cloudbase Academy | 120 | 120 minerals worth facility x 10 bases.
 The Planetary Energy Grid | 800 | 80 minerals worth facility x 10 bases.
 
 # Feature appearance time
