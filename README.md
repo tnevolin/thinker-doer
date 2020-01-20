@@ -327,10 +327,14 @@ Cost in mineral rows
 
 Base facility | Cost | Maint | Explanation
 ------------- | -------------------:| -----------:| -----------
-Energy Bank | 6 | |
-Network Node | 6 | |
-Research Hospital | 9 | |
-Nanohospital | 18 | | Cost is reduced slightly for these. They seem to be a pretty interesing facilities not getting build early because of their price.
+Command Center | 8 | 2 | This morale boosting facility increases combat effectiveness of land units by 25% which is probably the majority of all units at early age. That translates to 25% stronger army which is otherwise equivalent to 25% production bonus while forging units. It's like +2 INDUSTRY even if for land units only. Taking in account the average combat unit cost of 4-8+ raising the morale improvement facility cost to the price of 1-2 combat units is not at all excessive. Vanilla cost of 4 is too cheap and makes the building of this facility a no brainer. With increased cost it will present a choice.
+Naval Yard | 8 | 2 | Reverted to vanilla values. Same reason as for Command Center.
+Aerospace Complex | 12 | 3 | This facility is conceptually same as Naval Yard. However, there are more air units in a game. Plus this facility also provides multiple other benefits like doubling space resources income, preventing airdrops, etc. Very useful facility should cost a little bit more than similar sea based one.
+Bioenhancement Center | 20 | 5 | Super generic facility that boost *all* units morale up to Commando. Should be priced at least close to raw sum of individual triad facilities.
+Energy Bank | 6 | | Cost is reduced slightly for this and three below facilities. They seem to be a pretty interesing facilities not getting build early because of their price.
+Network Node | 6 | | 
+Research Hospital | 9 | | 
+Nanohospital | 18 | | 
 Biology Lab | 4 | | Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player insentive to build it before Network Node.
 Naval Yard | 5 | | Reduced price to give player insentive to actually build it. It is priced as a combination of morale boosting and defensive facility. However, one usually needs morale boosting benefit at rich unit producing bases and defense benefit at weak distant ones - rarely both at once.
 Bioenhancement Center | 16 | 4 | Morale boosting facility for all unit realms. Together with other facilities it produces elite units. Should have very high cost and maintainance.

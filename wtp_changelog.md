@@ -2,6 +2,10 @@
 
 * Removed morale bonus from home base Children Creche.
 * Removed all morale bonuses from current base Children Creche.
+* Increased cost/maintenance for Command Center: 8/2.
+* Increased cost/maintenance for Naval Yard: 8/2.
+* Increased cost/maintenance for Aerospace Complex: 12/3.
+* Increased cost/maintenance for Bioenhancement Center: 20/5.
 
 # Version 40
 
