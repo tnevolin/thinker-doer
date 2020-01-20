@@ -6,6 +6,9 @@
 * Increased cost/maintenance for Naval Yard: 8/2.
 * Increased cost/maintenance for Aerospace Complex: 12/3.
 * Increased cost/maintenance for Bioenhancement Center: 20/5.
+* Increased cost for The Command Nexus: 80.
+* Increased cost for The Maritime Control Center: 80.
+* Increased cost for The Cyborg Factory: 200.
 
 # Version 40
 
