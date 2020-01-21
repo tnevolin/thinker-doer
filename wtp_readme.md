@@ -519,6 +519,12 @@ Interestingly that when SMAXC treats land and sea bases equally (which is an epi
 
 This mod equalizes border extension distances between land, sea, and coastal bases. Even thouh I believe this is a must have feature the configuration parameter is still in thinker.ini in case anyone wants to switch it off.
 
+## Air Superiority ability cost
+
+This ability essentially converts unit to interceptor (including land/sea interceptors) without multiplying its power. Such unit still fights bombers with weapon against weapon resulting in 50%-50% winning chances on average. Player should invest same into interceptors as enemy invested into their bombers to merely neutralize air threat. Economically wise this is already quite ineffective defense. There is no point in paying for this ability anything at all. In fact it should be probably even negative to compensate for halved ground attack which narrow down the function of such unit to interception only.
+
+I believe it makes sense to set this ability cost to either 0 or -1 to help out a defender a little.
+
 # UI changes / cosmetics
 
 ## Battle computation display

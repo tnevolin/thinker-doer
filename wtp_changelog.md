@@ -1,3 +1,7 @@
+# Version 42
+
+* Air Superiority ability costs -1.
+
 # Version 41
 
 * Removed morale bonus from home base Children Creche.
