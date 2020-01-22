@@ -1,6 +1,7 @@
 # Version 42
 
-* Air Superiority ability costs -1.
+* Heavy Artillery costs 0.
+* Air Superiority costs 0.
 
 # Version 41
 
