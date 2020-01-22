@@ -509,6 +509,10 @@ Interestingly that when SMAXC treats land and sea bases equally (which is an epi
 
 This mod equalizes border extension distances between land, sea, and coastal bases. Even thouh I believe this is a must have feature the configuration parameter is still in thinker.ini in case anyone wants to switch it off.
 
+## Heavy Artillery and Air Superiority cost
+
+These abilities do not improve unit properties directly. Instead they essentially create completely distinct unit type with its own ins and outs. These unit type strengths are controlled by its own settings in alphax.txt. Damage Numerator & Denominator for Heavy Artillery and Combat bonus/penalty for Air Superiority. Their non zero cost is confusing as if these abilities worth something by themselves. I think it is much clearer to keep them zero and allow player to convert unit type without additional penalty.
+
 # UI changes / cosmetics
 
 ## Battle computation display
