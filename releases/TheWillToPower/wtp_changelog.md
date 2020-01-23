@@ -1,3 +1,8 @@
+# Version 42
+
+* Heavy Artillery costs 0.
+* Air Superiority costs 0.
+
 # Version 41
 
 * Removed morale bonus from home base Children Creche.
@@ -169,7 +174,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Prevent road usage on enemy territory.
+* Make magtube movement cost 1/6.
 * Make AI build more units, defensive structures, sensors.
 * Artillery duel uses armor as well.
 * Interceptor fight uses armor as well.

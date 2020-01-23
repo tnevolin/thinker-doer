@@ -505,7 +505,7 @@ Deep Radar,             0, MilAlg,   ,          010000111111, Sees 2 spaces
 Cloaking Device,        1, Disable,  Cloaked,   000001111001, Invisible; Ignores ZOCs
 Amphibious Pods,        1, DocInit,  Amphibious,000000001001, Attacks from ship
 Drop Pods,              2, MindMac,  Drop,      000000111001, Makes air drops
-Air Superiority,        1, DocAir,   SAM,       000000001111, Attacks air units
+Air Superiority,        0, DocAir,   SAM,       000000001111, Attacks air units
 Deep Pressure Hull,     1, Disable,  Sub,       000000111010, Operates underwater
 Carrier Deck,           1, Metal,    Carrier,   000101101010, Mobile Airbase
 AAA Tracking,           1, MilAlg,   AAA,       000010001011, x2 vs. air attacks
@@ -515,7 +515,7 @@ Empath Song,           32, Bioadap,  Empath,    000010001111, +50% attack vs. Ps
 Polymorphic Encryption, 1, Algor,    Secure,    000000111111, x2 cost to subvert
 Fungicide Tanks,        1, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
 High Morale,            1, Integ,    Trained,   000000001111, Gains morale upgrade
-Heavy Artillery,        1, Poly,     Artillery, 000010001001, Bombards
+Heavy Artillery,        0, Poly,     Artillery, 000010001001, Bombards
 Clean Reactor,         32, BioEng,   Clean,     000000111111, Requires no support
 Blink Displacer,        4, Matter,   Blink,     000000001111, Bypass base defenses
 Hypnotic Trance,       16, Brain,    Trance,    000010111111, +50% defense vs. Psi
