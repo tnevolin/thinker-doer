@@ -104,6 +104,65 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     }
 
+    // homeland_defense_bonus
+
+    if (conf.homeland_defense_bonus != 0)
+    {
+        // get attacker/defender vehicle
+
+        VEH *attacker_vehicle = &tx_vehicles[attacker_vehicle_id];
+        VEH *defender_vehicle = &tx_vehicles[defender_vehicle_id];
+
+        // get attacker/defender owner
+
+        int attacker_faction_id = attacker_vehicle->faction_id;
+        int defender_faction_id = defender_vehicle->faction_id;
+
+        // apply homeland defense bonus for non alien combat only
+
+        if (attacker_faction_id != 0 && defender_faction_id != 0)
+        {
+            // get defender location
+
+            MAP *defender_location = mapsq(defender_vehicle->x, defender_vehicle->y);
+
+            // get defender territory owner
+
+            int defender_location_owner = (int)defender_location->owner;
+
+            // verify defender is on own territory
+
+            if (defender_location_owner == defender_faction_id)
+            {
+                // homeland defense bonus
+
+                int defender_homeland_bonus = conf.homeland_defense_bonus;
+
+                // "Homeland" label
+
+                const char label_homeland[] = "Homeland";
+
+                // add effect description
+
+                if (*tx_battle_compute_defender_effect_count < 4)
+                {
+                    strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label_homeland);
+                    (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_homeland_bonus;
+
+                    (*tx_battle_compute_defender_effect_count)++;
+
+                }
+
+                // modify defender strength
+
+                *(int *)defender_strength_pointer = (int)round((double)(*(int *)defender_strength_pointer) * (100.0 + (double)defender_homeland_bonus) / 100.0);
+
+            }
+
+        }
+
+    }
+
     // adjust summary lines to the bottom
 
     while (*tx_battle_compute_attacker_effect_count < 4)

@@ -133,6 +133,7 @@ struct Config {
     bool disable_home_base_cc_morale_bonus = false;
     bool disable_current_base_cc_morale_bonus = false;
     bool default_morale_very_green = false;
+    int homeland_defense_bonus = 0;
 };
 
 /*
