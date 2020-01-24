@@ -3,7 +3,7 @@
 * Heavy Artillery cost = 0.
 * Air Superiority cost = 0.
 * Tachyon Field bonus = 50%.
-* Homeland defense bonus = 25%.
+* Homeland combat bonus = 25%.
 
 # Version 41
 

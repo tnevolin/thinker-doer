@@ -250,6 +250,12 @@ I decided to even out promotion probabilities across all levels to decouple from
 
 Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
 
+## Homeland combat bonus
+
+I was struggling to make defense economically more effective than assault. Ideally player should have two to three times less war related expenses than aggressor to be able to hold it off. Equalizing contemporary weapon and armor strength was a step in that direction. It is still far from desired ratio, though. Attacker still fights at 1:1 with greater numbers and artillery superiority against base garrisons behind PD. I do not count sensors as they are easily destroyable and not of great help. Outside of bases aggressor has full control of the land: penetrate deeply beyond frontline, kill formers, destroy enhancements, destroy sensors, cut reinforcement communications. I was thinking about giving defender a direct bonus: pertained to defending of own territory explicitly, permanent, indistructible.
+
+Homeland combat bonus is the perfect solution for that. It is inherent so everybody always has it and it cannot be cancelled. It kicks in only on own territory combat. Due to its inherent nature it helps defender even in case of poorly prepared defence. It also kind of replaces a Chidren Creche morale bonuses that I removed. However, it applies on whole territory, not only in bases which, I think, is the way to go. Why the rest of the territory should be any less protected?
+
 # Unit cost
 
 Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 model. Now it is **MUCH** easier to understand this. For example, both 6-1-1 and 1-6-1 infantry units now cost 6 rows of minerals. Imagine the simplicity! New formula completely removes a quadratic armor cost growth problem. High end mixed inrantry units now cost comparable to speeder and fully armored foil units are comparable to hovertank.
