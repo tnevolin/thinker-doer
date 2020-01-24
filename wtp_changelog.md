@@ -1,7 +1,8 @@
 # Version 42
 
-* Heavy Artillery costs 0.
-* Air Superiority costs 0.
+* Heavy Artillery cost = 0.
+* Air Superiority cost = 0.
+* Tachyon Field bonus = 50%.
 
 # Version 41
 
