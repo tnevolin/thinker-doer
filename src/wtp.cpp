@@ -104,9 +104,9 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     }
 
-    // homeland_defense_bonus
+    // homeland_combat_bonus
 
-    if (conf.homeland_defense_bonus != 0)
+    if (conf.homeland_combat_bonus != 0)
     {
         // get attacker/defender vehicle
 
@@ -130,13 +130,42 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
             int defender_location_owner = (int)defender_location->owner;
 
-            // verify defender is on own territory
+            // verify defender is in attacker's territory
+
+            if (defender_location_owner == attacker_faction_id)
+            {
+                // homeland attack bonus
+
+                int attacker_homeland_bonus = conf.homeland_combat_bonus;
+
+                // "Homeland" label
+
+                const char label_homeland[] = "Homeland";
+
+                // add effect description
+
+                if (*tx_battle_compute_attacker_effect_count < 4)
+                {
+                    strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], label_homeland);
+                    (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = attacker_homeland_bonus;
+
+                    (*tx_battle_compute_attacker_effect_count)++;
+
+                }
+
+                // modify attacker strength
+
+                *(int *)attacker_strength_pointer = (int)round((double)(*(int *)attacker_strength_pointer) * (100.0 + (double)attacker_homeland_bonus) / 100.0);
+
+            }
+
+            // verify defender is in defender's territory
 
             if (defender_location_owner == defender_faction_id)
             {
                 // homeland defense bonus
 
-                int defender_homeland_bonus = conf.homeland_defense_bonus;
+                int defender_homeland_bonus = conf.homeland_combat_bonus;
 
                 // "Homeland" label
 
