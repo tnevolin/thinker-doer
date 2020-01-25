@@ -260,7 +260,7 @@ Children Creche and Sensor Array lose their combat related bonuses. I think it i
 
 Building sensors to extend protection bonus is nice idea but they are easy to destroy with single artillery shot or with Needlejet raid or with probe accompanied by combat unit. They are so easy target that it is considered stupid to storm base without destroying them fist. This effectively nullifies their defense bonus value. We can set their bonus to 100% and it is still equals to zero when they are gone. Therefore, I've decided to remove their defense bonus altogether and keep them as observation stations which is still quite useful tool for human player.
 
-Summarizing the above, homeland combat bonus (both attack and defense) is a nice replacement for Children Creche and Sensors combat bonuses but more logical, simpler, more understandable, move visual. It is also displays properly in combat calculation screen with own explicit name and bonus (Homeland: +50%) which is much better than the train of yet to be deciphered pluses. Essentially the rule is that troops fight 50% stronger on mother land. Neat! How simple and logical is that?
+Summarizing the above, homeland combat bonus (both attack and defense) is a nice replacement for Children Creche and Sensors combat bonuses but more logical, simpler, more understandable, move visual. It is also displays properly in combat calculation screen with own explicit name and bonus (Homeland: +50%) which is much better than the train of yet to be deciphered pluses. Essentially the rule is that troops fight 50% stronger on mother land or sea. Neat! How simple and logical is that?
 
 # Unit cost
 
