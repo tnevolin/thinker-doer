@@ -1,3 +1,7 @@
+# Version 43
+
+* Green SM: -2 GROWTH. With increase of PLANET power -3 GROWTH seems to be a very harsh penalty.
+
 # Version 42
 
 * Heavy Artillery cost = 0.
