@@ -201,9 +201,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->default_morale_very_green = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "homeland_combat_bonus"))
+    else if (MATCH("wtp", "territory_combat_bonus"))
     {
-        cf->homeland_combat_bonus = atoi(value);
+        cf->territory_combat_bonus = atoi(value);
     }
     // Thinker default case
     else

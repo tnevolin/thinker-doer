@@ -104,9 +104,9 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     }
 
-    // homeland_combat_bonus
+    // territory_combat_bonus
 
-    if (conf.homeland_combat_bonus != 0)
+    if (conf.territory_combat_bonus != 0)
     {
         // get attacker/defender vehicle
 
@@ -118,7 +118,7 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
         int attacker_faction_id = attacker_vehicle->faction_id;
         int defender_faction_id = defender_vehicle->faction_id;
 
-        // apply homeland defense bonus for non alien combat only
+        // apply territory defense bonus for non alien combat only
 
         if (attacker_faction_id != 0 && defender_faction_id != 0)
         {
@@ -134,20 +134,20 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
             if (defender_location_owner == attacker_faction_id)
             {
-                // homeland attack bonus
+                // territory attack bonus
 
-                int attacker_homeland_bonus = conf.homeland_combat_bonus;
+                int attacker_territory_bonus = conf.territory_combat_bonus;
 
-                // "Homeland" label
+                // "Territory:" label
 
-                const char label_homeland[] = "Homeland";
+                const char label_territory[] = "Territory:";
 
                 // add effect description
 
                 if (*tx_battle_compute_attacker_effect_count < 4)
                 {
-                    strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], label_homeland);
-                    (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = attacker_homeland_bonus;
+                    strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], label_territory);
+                    (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = attacker_territory_bonus;
 
                     (*tx_battle_compute_attacker_effect_count)++;
 
@@ -155,7 +155,7 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
                 // modify attacker strength
 
-                *(int *)attacker_strength_pointer = (int)round((double)(*(int *)attacker_strength_pointer) * (100.0 + (double)attacker_homeland_bonus) / 100.0);
+                *(int *)attacker_strength_pointer = (int)round((double)(*(int *)attacker_strength_pointer) * (100.0 + (double)attacker_territory_bonus) / 100.0);
 
             }
 
@@ -163,20 +163,20 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
             if (defender_location_owner == defender_faction_id)
             {
-                // homeland defense bonus
+                // territory defense bonus
 
-                int defender_homeland_bonus = conf.homeland_combat_bonus;
+                int defender_territory_bonus = conf.territory_combat_bonus;
 
-                // "Homeland" label
+                // "Territory:" label
 
-                const char label_homeland[] = "Homeland";
+                const char label_territory[] = "Territory:";
 
                 // add effect description
 
                 if (*tx_battle_compute_defender_effect_count < 4)
                 {
-                    strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label_homeland);
-                    (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_homeland_bonus;
+                    strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label_territory);
+                    (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_territory_bonus;
 
                     (*tx_battle_compute_defender_effect_count)++;
 
@@ -184,7 +184,7 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
                 // modify defender strength
 
-                *(int *)defender_strength_pointer = (int)round((double)(*(int *)defender_strength_pointer) * (100.0 + (double)defender_homeland_bonus) / 100.0);
+                *(int *)defender_strength_pointer = (int)round((double)(*(int *)defender_strength_pointer) * (100.0 + (double)defender_territory_bonus) / 100.0);
 
             }
 
