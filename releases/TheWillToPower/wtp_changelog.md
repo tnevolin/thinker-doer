@@ -1,3 +1,7 @@
+# Version 43
+
+* Renamed "Homeland" effect to "Territory" to avoid confusion. It applies on sea as well.
+
 # Version 42
 
 * Heavy Artillery cost = 0.

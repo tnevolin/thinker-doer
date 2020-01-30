@@ -1,6 +1,6 @@
 # Version 43
 
-* Green SM: -2 GROWTH. With increase of PLANET power -3 GROWTH seems to be a very harsh penalty.
+* Renamed "Homeland" effect to "Territory" to avoid confusion. It applies on sea as well.
 
 # Version 42
 

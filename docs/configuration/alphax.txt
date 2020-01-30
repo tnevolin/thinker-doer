@@ -875,7 +875,7 @@ Fundamentalist,  Brain,     +MORALE,     +PROBE,      +INDUSTRY,  --RESEARCH,   
 Simple,          None,
 Free Market,     IndEcon,  ++ECONOMY,   --POLICE,    --PLANET,     -PROBE
 Planned,         Alloys,    -EFFIC,      +GROWTH,     +INDUSTRY,   -RESEARCH,   +TALENT
-Green,           CentEmp,  ++EFFIC,     --GROWTH,    ++PLANET,    --INDUSTRY
+Green,           CentEmp,  ++EFFIC,    ---GROWTH,    ++PLANET,    --INDUSTRY
 Survival,        None,
 Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +PROBE,     --INDUSTRY
 Knowledge,       Cyber,     -ECONOMY,    +EFFIC,     --PROBE,    +++RESEARCH
