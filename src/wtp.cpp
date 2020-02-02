@@ -279,14 +279,15 @@ ability bytes 0-3 is unit cost factor
 ability bytes 4-7 is unit cost flat addition
 
 Special rules:
-Colony on foil/cruiser costs same as if on infantry/speeder.
-Former on foil/cruiser costs same as if on infantry/speeder.
-Supply on foil/cruiser costs same as if on infantry/speeder.
+1. Colony/Former/Supply on foil/cruiser costs same as if on infantry/speeder.
+2. Reactor doesn't change Supply cost.
 
 */
 HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level)
 {
     // Special rules
+
+    // 1. Colony/Former/Supply on foil/cruiser costs same as if on infantry/speeder.
 
     if
     (
@@ -308,6 +309,14 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
             break;
 
         }
+
+    }
+
+    // 2. Reactor doesn't change Supply cost.
+
+    if (tx_weapon[weapon_id].mode == WMODE_CONVOY)
+    {
+        reactor_level = 1;
 
     }
 
