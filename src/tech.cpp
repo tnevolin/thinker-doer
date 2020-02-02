@@ -32,8 +32,8 @@ int tech_level(int id) {
 Calculates tech cost.
 cost grows cubic from the beginning then linear.
 S  = 20                                     // fixed shift (first tech cost)
-C  = 0.025                                  // cubic coefficient
-B  = 120 * (<map area> / <normal map area>) // linear slope
+C  = 0.02                                   // cubic coefficient
+B  = 80 * (<map area> / <normal map area>)  // linear slope
 x0 = SQRT(B / (3 * C))                      // break point
 A  = C * x0 ^ 3 - B * x0                    // linear intercept
 x  = (<level> - 1) * 7
@@ -56,8 +56,8 @@ int tech_cost(int fac, int tech) {
     }
 
     double S = 20.0;
-    double C = 0.025;
-    double B = 120 * (*tx_map_area / 3200.0);
+    double C = 0.02;
+    double B = 80 * (*tx_map_area / 3200.0);
     double x0 = sqrt(B / (3 * C));
     double A = C * x0 * x0 * x0 - B * x0;
     double x = (level - 1) * 7;

@@ -1,6 +1,13 @@
 # Version 43
 
 * Renamed "Homeland" effect to "Territory" to avoid confusion. It applies on sea as well.
+* Reactor technologies levels: 3, 6, 9.
+* Society Models: Politics is level 2, Economics is level 3, Values is level 5, Future Society is level 7.
+* Some technology tree rearrangement to adapt Reactor and Society Model technologies.
+* Linked green technologies together through level.
+* Chaned tech cost final slope from 120 to 80.
+* Chaned tech cost cubic coefficient slope from 120 to 80.
+* Modified technology weights a little. Made all weapon technologies non zero in all areas.
 
 # Version 42
 
