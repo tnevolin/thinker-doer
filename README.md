@@ -298,7 +298,10 @@ abilities flat = ability1 flat + ability2 flat
 
 ### Special formula cases for non combat units
 
-Colony, Former, Supply units on foil/cruiser cost same as if on infantry/speeder.
+1. Colony/Former/Supply on foil/cruiser costs same as if on infantry/speeder.
+2. Reactor doesn't change Supply cost.
+
+Here is the reason for #2. Each subsequent reactor reduces unit cost by ~20%. That essentially equals to corresponding production increase for buiding units. Supply unit harvesting resources is more like a part of production infrastructure rather than part of disposable unit pool that needs to be constantly replenished by the mean of this same production infrastructure. It already has a precisely computed cost to outweigh benefits. Moreover, resources it brings home are multiplied by other facilities increasing its value further into the game. If anything Supply cost should grow with game progress but not fall. Reactors have nothing to do with Supply primary purpose: mineral harvesting. As such they should not affect it in any way.
 
 ## Weapon and armor cost
 
