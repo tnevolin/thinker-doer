@@ -211,13 +211,13 @@ Additionally artillery damage is multiplied by attacker firepower to ignore defe
 
 Repair rates are lowered to eliminate fast and instant healing. Parameters are configurable.
 
-### Current settings
-
-* Field: 10% up to 80% regardless of location.
-* Base/bunker/aribase: 10% up to 100%.
-* Base with corresponding land/sea/air repair facility: +10%.
-* SP for fast repair natives in base: +10%.
-* Nano Factory: + 10% up to 100% everywhere.
+| Location/Facility/SP | Repair rate, per turn | Maximal repair level |
+|----|----:|----:|
+| Field | 10% | 80% |
+| Base/bunker/aribase | 10% | 100% |
+| Conventional unit in base with corresponding land/sea/air repair facility | +10% | 100% |
+| Native unit in base when faction owns SP for fast native repair | +10% | 100% |
+| **Anywhere** when faction owns Nano Factory | +10% | 100% |
 
 ## Morale
 
