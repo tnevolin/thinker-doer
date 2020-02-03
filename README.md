@@ -156,9 +156,8 @@ Here is the current game weapon and strength progression by technology levels. T
 |--------------|-----------------|----------------|----------------|----------------|----------------|
 [Caption Text]
 
-| Level | Weapon         || Armor          ||
-|^      | strength | cost | strength | cost |
-|------:|---------:|-----:|---------:|-----:|
+| Level | Weapon strength | Weapon cost | Armor strength | Armor cost |
+|----:|----:|----:|----:|----:|
 | 1 | 1 | 1 | 1 | 1 |
 | 2 | 2 | 2 | 2 | 2 |
 | 3 | 3 | 3 | 3 | 3 |
