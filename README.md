@@ -466,11 +466,11 @@ About the same story with PROBE and Covert ops center. Even though it is just on
 
 This is another feature I cannot understand. What good does restricting yield do? Why I cannot farm a rainy tile to boost my base growth a little? Why I cannot mine a rocky tile to get myself some minerals? In vanilla game these restriction are lifted when you discover advanced terraforming. At this time I don't need a rocky mine anymore since borehole is better. As the result I never build mines to work on - only to harvest by crawler. I don't know how to disable them completely so I moved them all onto level 1 technologies.
 
-I guess this was a blind copy of Civ 1 Despotism restrictions. Despotism reduces any factor of production by 1 where you have 3+ of such production. However, this was compensated by unit production and settler food supports. Meaning you harvest less but you spend less on support too. SMACX lost this second part separating support into its own effect. Thus leaving this nicely thought and designed element half cut and stupid looking.
+I guess this was a blind copy of Civ 1 Despotism restrictions. Despotism reduces any factor of production by 1 where you have 3+ of such production. However, this was compensated by unit production and settler food supports. Meaning you harvest less but you spend less on support too. SMACX lost this second part separating support into its own effect. Thus leaving this nicely thought and designed element half cut and stupid looking. :angry:
 
 ## Forest
 
-Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
+Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with combined yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
 ## Fungus production
 
@@ -482,16 +482,16 @@ Get it to at least 1-1-0 yield relatively early in the game to allow minimal sup
 Focus on energy yield in the mid game to compliment forest instead of competing with it.
 Use green/alien technologies for fungus production to streamline research priorities for green/PLANET factions.
 
-Technology | Fungus production effect | Comment
----------- | ------------------------ | -------
-Centauri Ecology | +1 nutrient |
-Progenitor Psych | +1 mineral | reassigned
-Field Modulation | +1 energy | reassigned
-Bioadaptive Resonance | +1 energy | reassigned
-Centauri Psi | +1 nutrient |
-Centauri Meditation | +1 energy |
-Secrets of Alpha Centauri | +1 energy |
-Centauri Genetics | +1 mineral |
+| Technology | Fungus production effect | Cumulative yield | Comment |
+|----|----|----|----|
+| Centauri Ecology | +1 nutrient | 1-0-0 |
+| Progenitor Psych | +1 mineral | 1-1-0 | reassigned |
+| Field Modulation | +1 energy | 1-1-1 | reassigned |
+| Bioadaptive Resonance | +1 energy | 1-1-2 | reassigned |
+| Centauri Psi | +1 nutrient | 2-1-2 |
+| Centauri Meditation | +1 energy | 2-1-3 |
+| Secrets of Alpha Centauri | +1 energy | 2-1-4 |
+| Centauri Genetics | +1 mineral | 2-2-4 |
 
 ## Sea Sensors
 
