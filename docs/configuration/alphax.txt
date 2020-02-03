@@ -868,22 +868,22 @@ Talent,           Talents,
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
-Frontier,        None,
-Police State,    DocLoy,    -EFFIC,      +SUPPORT,   ++POLICE,     -PLANET
-Democratic,      EthCalc,   +EFFIC,     --SUPPORT,    +GROWTH,     -PROBE
-Fundamentalist,  Brain,     +MORALE,     +PROBE,      +INDUSTRY,  --RESEARCH,   +TALENT
-Simple,          None,
-Free Market,     IndEcon,  ++ECONOMY,   --POLICE,    --PLANET,     -PROBE
-Planned,         InfNet,    -EFFIC,      +GROWTH,     +INDUSTRY,   -RESEARCH,   +TALENT
-Green,           CentEmp,  ++EFFIC,    ---GROWTH,    ++PLANET,    --INDUSTRY
-Survival,        None,
-Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +PROBE,     --INDUSTRY
-Knowledge,       Cyber,     -ECONOMY,    +EFFIC,     --PROBE,    +++RESEARCH
-Wealth,          AdapEco,   +ECONOMY,   --MORALE,     -POLICE,     +INDUSTRY
-None,            None,
-Cybernetic,      Unified,   +EFFIC,    ---POLICE,    ++PLANET,     +RESEARCH
-Eudaimonic,      Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,     +INDUSTRY
-Thought Control, MatComp, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,       +TALENT
+Frontier,          None,
+Police State,      DocLoy,    -EFFIC,      +SUPPORT,   ++POLICE,     -PLANET
+Democratic,        EthCalc,   +EFFIC,     --SUPPORT,    +GROWTH,     -PROBE
+Fundamentalist +,  Brain,     +MORALE,     +PROBE,      +INDUSTRY,  --RESEARCH,   +TALENT
+Simple,            None,
+Free Market,       IndEcon,  ++ECONOMY,   --POLICE,    --PLANET,     -PROBE
+Planned +,         InfNet,    -EFFIC,      +GROWTH,     +INDUSTRY,   -RESEARCH,   +TALENT
+Green,             CentEmp,  ++EFFIC,    ---GROWTH,    ++PLANET,    --INDUSTRY
+Survival,          None,
+Power,             MilAlg,   ++SUPPORT,   ++MORALE,     +PROBE,     --INDUSTRY
+Knowledge,         Cyber,     -ECONOMY,    +EFFIC,     --PROBE,    +++RESEARCH
+Wealth,            AdapEco,   +ECONOMY,   --MORALE,     -POLICE,     +INDUSTRY
+None,              None,
+Cybernetic,        Unified,   +EFFIC,    ---POLICE,    ++PLANET,     +RESEARCH
+Eudaimonic,        Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,     +INDUSTRY
+Thought Control +, MatComp, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,       +TALENT
 
 
 #SOCECONOMY

@@ -1,6 +1,7 @@
 # Version 44
 
 * Reactor doesn't change Supply cost.
+* Added "+" to SM with +TALENT. This SE otherwise is not visible in social engineering screen.
 
 # Version 43
 
