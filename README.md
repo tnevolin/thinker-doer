@@ -144,18 +144,6 @@ This is fixed now. Modders are free to set any offensive values to regular conve
 With this in mind I was able to correct weapon strenght progression to smooth it while keeping proper icons for each weapon.
 Here is the current game weapon and strength progression by technology levels. There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
 
-|              | Header 1        | Header 2                       || Header 3                       ||
-|              | Subheader 1     | Subheader 2.1  | Subheader 2.2  | Subheader 3.1  | Subheader 3.2  |
-|==============|-----------------|----------------|----------------|----------------|----------------|
-| Row Header 1 | 3row, 3col span                                 ||| Colspan only                   ||
-| Row Header 2 |       ^                                         ||| Rowspan only   | Cell           |
-| Row Header 3 |       ^                                         |||       ^        | Cell           |
-| Row Header 4 |  Row            |  Each cell     |:   Centered   :| Right-aligned :|: Left-aligned  |
-:              :  with multiple  :  has room for  :   multi-line   :    multi-line  :  multi-line    :
-:              :  lines.         :  more text.    :      text.     :         text.  :  text.         :
-|--------------|-----------------|----------------|----------------|----------------|----------------|
-[Caption Text]
-
 | Level | Weapon strength | Weapon cost | Armor strength | Armor cost |
 |----:|----:|----:|----:|----:|
 | 1 | 1 | 1 | 1 | 1 |
@@ -196,9 +184,16 @@ On top of that this mod sets land psi combat base odds to 1:1. This way PLANET r
 
 ## Base intrinsic defense and defensive structures
 
-Base intrinsic defence raised to 50%. This is configurable in alphax.txt.
+Base intrinsic defence raised to 50%. This is configurable in alphax.txt. Unit in base protected weaker than on rough terrain does not make sense as it forces defender to step outside of the base to get better defense.
 
-Base defensive structures (Perimeter Defense, Naval Yard, Aerospace Complex, and Tachyon Field) defense bonuses are exposed in thinker.ini. They are left as is for now. Could change in future versions.
+Base defensive structures (Perimeter Defense, Naval Yard, Aerospace Complex, and Tachyon Field) defense bonuses are exposed in thinker.ini. First level structures defense bonus is left 100% as in vanilla. That effectivelly adds 50% on top of intrinsic defense. Second level structure (Tachyon Field) defense bonus is +50% to match first level bonus increase and to avoid late game overdefence that is many modders major concern.
+
+| Defense structures | Cumulative bonus | Cumulative multiplier |
+|----|----:|----:|
+| No structures | +50% | 1.5 |
+| Level 1 | +100% | 2.0 |
+| Level 2 | +100% | 2.0 |
+| Level 1 and Level 2 | +150% | 2.5 |
 
 ## Fanatic attack bonus
 
