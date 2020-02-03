@@ -23,8 +23,8 @@ This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I stron
 
 ## Main highlights
 
-* AI is very **shokingly** smart, thanks to Induktio work. Just last game I was moving my damaged mindworm toward the monolith for repair so that I can further attack enemy base nearby. AI sent a unity copter 6 tiles away just to take my damaged mindworm out before I would reach the monolith!
-* Major revamping of unit/cost/combat system. Primary purpose is to significantly improve defense effectiveness. Attacker needs larger economical investments than defender. Building a prepared defense and deflecting enemy attacks on a frontline with minimal losses is a completely viable and economically profitable strategy.
+* AI is **shokingly** smart, thanks to Induktio's work. Last game I was about to heal my damaged mindworm at a monolith so that I can later attack nearny enemy base. AI sent a unity copter 6 tiles away just to take my damaged mindworm out before it reached the monolith!
+* Major revamping of unit/cost/combat system. Primary purpose is to significantly improve defense effectiveness. Attacker investments are much larger than defender ones. Building a prepared defense and deflecting enemy attacks on a frontline with minimal losses is a completely viable and economically profitable strategy.
 * Major revamping in combat probability also results in more battle outcome randomness than in vanilla. It is still not that random as in Civ 1 but somewhere in between. That makes native life a real **threat**. Beware! There is no point in hunting natives for planetpearls anymore. Player should minimize native life spawning and seriously prepare to deflect worm attacks or suffer consequences. Native life acts like an opponent as it should.
 * Many formulas and rules are simplified to achieve better clarity. Things are more intuitive and understandable now.
 * A lot of micro exploits are eliminated. Game is more streamlined toward general competition without logically irrelevant grinding.
@@ -144,8 +144,9 @@ This is fixed now. Modders are free to set any offensive values to regular conve
 With this in mind I was able to correct weapon strenght progression to smooth it while keeping proper icons for each weapon.
 Here is the current game weapon and strength progression by technology levels. There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
 
- Level | W str. | W cost | A str. | A cost 
- -----:| ---------------:| -----------:| --------------:| ----------:
+| Level | Weapon          | A str. | A cost |
+|       | strength | cost | A str. | A cost |
+|------:|---------:|-----:| -----------:| --------------:| ----------:|
 1 | 1 | 1 | 1 | 1
 2 | 2 | 2 | 2 | 2
 3 | 3 | 3 | 3 | 3
