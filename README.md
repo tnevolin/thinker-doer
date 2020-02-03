@@ -228,7 +228,7 @@ Now players need to disassemble game to understand why their units have unexpect
 
 Reason: undocumented.
 
-#### Removed current base Children Creche morale bonus
+#### Removed stationning base Children Creche morale bonus
 
 Reason: undocumented.
 
