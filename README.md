@@ -17,7 +17,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 
 ## Difficulty warning
 
-I put this at the very top to avoid first impression frustration for those used to eaily win every vanilla game on highest difficulty level.
+I put this at the very top to avoid first impression frustration for those used to easily win every vanilla game on highest difficulty level.
 
 This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to try it out first on **three(!)** difficulty levels below of your usual vanilla comfortable level. I also recommend lowering activity of native life from medium to lowest at first. It also plays a little differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accomodate to play style and AI strength feel free to crank up the difficulty for bigger challenge! :)
 
@@ -191,7 +191,7 @@ Base defensive structures (Perimeter Defense, Naval Yard, Aerospace Complex, and
 
 ## Fanatic attack bonus
 
-Believers are quite narrow focused faction. Their SUPPORT and Fanatic attack bonus makes them powerful large army warfare machine. This is what they **should** be doing to succeed as they suck at everything else with their RESEARCH and PLANET penalties. Surprisingly, their attack bonus is not that remarkable. Even Usurpers are better with their +25% attack bonus as they apply it to all type of combat including psi. Since believers are pathetic in psi combat their conventional attack bonus should be at least greater than Usurpers'. Assuming that even in the best circumstances they are not going to be in permanent war state raising their attack bonus to 50% is not at all overpowered. This is essentially compensation for their poor economical development.
+Believers are quite narrow focused faction. Their SUPPORT and Fanatic attack bonus makes them powerful large army warfare machine. This is what they **should** be doing to succeed as they suck at everything else with their RESEARCH and PLANET penalties. Surprisingly, their attack bonus is not that remarkable. Even Usurpers are better with their +25% attack bonus as they apply it to all type of combat including psi. Since believers are pathetic in psi combat their conventional attack bonus should be at least greater than Usurpers'. Assuming that even in the best circumstances they are not going to be in permanent war state raising their attack bonus to 50% is not at all overpowered. This is a compensation for their poor economical development.
 
 ## Alternative artillery damage
 
@@ -217,9 +217,9 @@ Repair rates are lowered to eliminate fast and instant healing. Parameters are c
 
 [Treatise on Morale](http://alphacentauri2.info/wiki/Treatise_on_Morale)
 
-That is a good example of what we are dealing with here. An excellent scholary article explaining miriads of small SMACX morale releated features and their interdependencies. A lot of enthusiasts worked a lot of man-months to disassemble, reverse engineer, and deliver this sacral knowledge to us in more or less understandable fashion. And even after all these efforts mere reading this article and trying to compose a clear picture in one's mind about all intricacies of game engine is a work in itself. I personally sometimes have to read some passages few times to catch the idea and details.
+The article above is a good example of what we are dealing with here. An excellent scholary article explaining miriads of small SMACX morale releated features and their interdependencies. A lot of enthusiasts worked a lot of man-months to disassemble, reverse engineer, and deliver this sacral knowledge to us in more or less understandable fashion. And even after all these efforts mere reading this article and trying to compose a clear picture in one's mind about all intricacies of game engine is a work in itself. I personally sometimes have to read some passages few times to catch the idea and details.
 
-Undoubtfully, such complicated rules should not even exist in a game in a first place for players' sake. And if they do they should be clearly explained with every detail at least in advanced help. Apparently designers realized that such help would be of the above mentioned article size and wouldn't require like 20 pages of in game text. That could scare beginners! Better to replace it with one-two vague sentences or not mention it at all. Clarity achieved = profit! In literal meaning. :smile:
+Undoubtfully, such complicated rules should not even exist in a game in a first place for players' sake. And if they do they should be clearly explained with every detail at least in advanced help. Apparently designers realized that such help would be of the above mentioned article size and would require like 20 pages of in game text. That could scare beginners! Better to replace it with one-two vague sentences or not mention it at all. Clarity achieved = profit! In literal meaning. :smile:
 
 Now players need to disassemble game to understand why their units have unexpected morale. Ugh. :unamused:
 
@@ -229,7 +229,7 @@ Now players need to disassemble game to understand why their units have unexpect
 
 Reason: undocumented.
 
-#### Removed current base Children Creche morale bonus
+#### Removed stationning base Children Creche morale bonus
 
 Reason: undocumented.
 
@@ -237,7 +237,7 @@ Some may refer to this passage from Datalinks: "All negative MORALE effects are 
 
 ### Very Green defense bonus
 
-Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
+Designers added tons of little trinkets for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
 
 One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
 
