@@ -17,7 +17,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 
 ## Difficulty warning
 
-I put this at the very top to avoid first impression frustration for those used to eaily win every vanilla game on highest difficulty level.
+I put this at the very top to avoid first impression frustration for those used to easily win every vanilla game on highest difficulty level.
 
 This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to try it out first on **three(!)** difficulty levels below of your usual vanilla comfortable level. I also recommend lowering activity of native life from medium to lowest at first. It also plays a little differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accomodate to play style and AI strength feel free to crank up the difficulty for bigger challenge! :)
 
