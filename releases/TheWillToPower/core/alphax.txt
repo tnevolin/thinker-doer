@@ -131,8 +131,8 @@ Condenser,        EcoEng,  Condenser,        Disable, 12,  Construct $STR0, N, N
 Echelon Mirror,   EcoEng,  Echelon Mirror,   Disable, 12,  Construct $STR0, E, Shift+E
 Thermal Borehole, EcoEng,  Thermal Borehole, Disable, 24,  Construct $STR0, B, Shift+B
 Aquifer,          EcoEng,  Aquifer,          Disable, 18,  Drill to $STR0,  Q, Q
-Raise Land,       EcoEng2, Raise Sea Floor,  EcoEng2, 12,  Terraform UP,    ], ]]
-Lower Land,       EcoEng2, Lower Sea Floor,  EcoEng2, 12,  Terraform DOWN,  [, [[
+Raise Land,       EcoEng,  Raise Sea Floor,  EcoEng,  12,  Terraform UP,    ], ]]
+Lower Land,       EcoEng,  Lower Sea Floor,  EcoEng,  12,  Terraform DOWN,  [, [[
 Level Terrain,    None,    Level Terrain,    Disable,  8,  Terraform LEVEL, _, _
 Monolith,         Disable, Monolith,         Disable,  8,  Place Monolith,  ?, ?, (this is here for map editor)
 
@@ -717,7 +717,7 @@ Orbital Defense Pod,          12, 0, HAL9000, Disable,  Missile Defense
 Stockpile Energy,              0, 0, None,    Disable,  Minerals to Energy
 The Human Genome Project,     40, 0, Biogen,  Disable,  +1 Talent Each Base,            -1, 0, 0, 1, 1,
 The Command Nexus,            80, 0, DocLoy,  Disable,  Command Center Each Base,        1, 2, 0,-1, 0,
-The Weather Paradigm,         60, 0, FldMod,  Disable,  Terraform Rate +50%,             0, 0, 0, 2, 1,
+The Weather Paradigm,         60, 0, Chemist, Disable,  Terraform Rate +50%,             0, 0, 0, 2, 1,
 The Merchant Exchange,        20, 0, Indust,  Disable,  +1 Energy Each Square Here,      0, 0, 1, 2, 0,
 The Empath Guild,             60, 0, CentEmp, Disable,  Commlink For Every Faction,     -2, 0, 0, 0, 0,
 The Citizens' Defense Force,  50, 0, Integ,   Disable,  Perimeter Defense Each Base,     0, 1, 0, 0, 0,
@@ -868,22 +868,22 @@ Talent,           Talents,
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
-Frontier,        None,
-Police State,    DocLoy,    -EFFIC,      +SUPPORT,   ++POLICE,     -PLANET
-Democratic,      EthCalc,   +EFFIC,     --SUPPORT,    +GROWTH,     -PROBE
-Fundamentalist,  Brain,     +MORALE,     +PROBE,      +INDUSTRY,  --RESEARCH,   +TALENT
-Simple,          None,
-Free Market,     IndEcon,  ++ECONOMY,   --POLICE,    --PLANET,     -PROBE
-Planned,         InfNet,    -EFFIC,      +GROWTH,     +INDUSTRY,   -RESEARCH,   +TALENT
-Green,           CentEmp,  ++EFFIC,    ---GROWTH,    ++PLANET,    --INDUSTRY
-Survival,        None,
-Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +PROBE,     --INDUSTRY
-Knowledge,       Cyber,     -ECONOMY,    +EFFIC,     --PROBE,    +++RESEARCH
-Wealth,          AdapEco,   +ECONOMY,   --MORALE,     -POLICE,     +INDUSTRY
-None,            None,
-Cybernetic,      Unified,   +EFFIC,    ---POLICE,    ++PLANET,     +RESEARCH
-Eudaimonic,      Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,     +INDUSTRY
-Thought Control, MatComp, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,       +TALENT
+Frontier,          None,
+Police State,      DocLoy,    -EFFIC,      +SUPPORT,   ++POLICE,     -PLANET
+Democratic,        EthCalc,   +EFFIC,     --SUPPORT,    +GROWTH,     -PROBE
+Fundamentalist +,  Brain,     +MORALE,     +PROBE,      +INDUSTRY,  --RESEARCH,   +TALENT
+Simple,            None,
+Free Market,       IndEcon,  ++ECONOMY,   --POLICE,    --PLANET,     -PROBE
+Planned +,         InfNet,    -EFFIC,      +GROWTH,     +INDUSTRY,   -RESEARCH,   +TALENT
+Green,             CentEmp,  ++EFFIC,    ---GROWTH,    ++PLANET,    --INDUSTRY
+Survival,          None,
+Power,             MilAlg,   ++SUPPORT,   ++MORALE,     +PROBE,     --INDUSTRY
+Knowledge,         Cyber,     -ECONOMY,    +EFFIC,     --PROBE,    +++RESEARCH
+Wealth,            AdapEco,   +ECONOMY,   --MORALE,     -POLICE,     +INDUSTRY
+None,              None,
+Cybernetic,        Unified,   +EFFIC,    ---POLICE,    ++PLANET,     +RESEARCH
+Eudaimonic,        Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,     +INDUSTRY
+Thought Control +, MatComp, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,       +TALENT
 
 
 #SOCECONOMY

@@ -17,14 +17,14 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 
 ## Difficulty warning
 
-I put this at the very top to avoid first impression frustration for those used to eaily win every vanilla game on highest difficulty level.
+I put this at the very top to avoid first impression frustration for those used to easily win every vanilla game on highest difficulty level.
 
 This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to try it out first on **three(!)** difficulty levels below of your usual vanilla comfortable level. I also recommend lowering activity of native life from medium to lowest at first. It also plays a little differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accomodate to play style and AI strength feel free to crank up the difficulty for bigger challenge! :)
 
 ## Main highlights
 
-* AI is very **shokingly** smart, thanks to Induktio work. Just last game I was moving my damaged mindworm toward the monolith for repair so that I can further attack enemy base nearby. AI sent a unity copter 6 tiles away just to take my damaged mindworm out before I would reach the monolith!
-* Major revamping of unit/cost/combat system. Primary purpose is to significantly improve defense effectiveness. Attacker needs larger economical investments than defender. Building a prepared defense and deflecting enemy attacks on a frontline with minimal losses is a completely viable and economically profitable strategy.
+* AI is **shokingly** smart, thanks to Induktio's work. Last game I was about to heal my damaged mindworm at a monolith so that I can later attack nearny enemy base. AI sent a unity copter 6 tiles away just to take my damaged mindworm out before it reached the monolith!
+* Major revamping of unit/cost/combat system. Primary purpose is to significantly improve defense effectiveness. Attacker investments are much larger than defender ones. Building a prepared defense and deflecting enemy attacks on a frontline with minimal losses is a completely viable and economically profitable strategy.
 * Major revamping in combat probability also results in more battle outcome randomness than in vanilla. It is still not that random as in Civ 1 but somewhere in between. That makes native life a real **threat**. Beware! There is no point in hunting natives for planetpearls anymore. Player should minimize native life spawning and seriously prepare to deflect worm attacks or suffer consequences. Native life acts like an opponent as it should.
 * Many formulas and rules are simplified to achieve better clarity. Things are more intuitive and understandable now.
 * A lot of micro exploits are eliminated. Game is more streamlined toward general competition without logically irrelevant grinding.
@@ -71,53 +71,6 @@ I have selected primary features based on my own understanding of their importan
 
 Keep in mind that technology prerequisites are generally arbitrary and serve as interlevel relations only. Preserving some beelines is an option but not a primary concern. I welcome any suggestions about rearranging and relinking technology tree to match game lore.
 
-## Technology feature association changes
-
-Technology | Associated feature
----------- | ------------------
-Optical Computers | Probe teams
-Applied Gravitonics | Missile chassis
-Information Networks | Comm jammer
-Bioadaptive Resonance | Empath song
-Frictionless Surfaces | Dissociative wave
-Secrets of Alpha Centauri | Non-lethal methods
-Field Modulation | Aquafarm
-Organic Superlubricant | Subsea Trunkline
-The Will to Power | Tachyon field
-Polymorphic Software | Hologram theatre
-Secrets of the Manifolds | Subspace Generator
-Progenitor Psych | Biology lab
-Nanometallurgy | Fusion lab
-Singularity Mechanics | Quantum lab
-Temporal Mechanics | Nanoreplicator
-Secrets of the Manifolds | Nessus mining station
-Nonlinear Mathematics | The Universal Translator
-Superconductor | The Living Refinery
-Gene Splicing | The Ascetic Virtues
-Environmental Economics | The Manifold Harmonics
-Advanced Subatomic Theory | The Planetary Energy Grid
-Homo Superior | The Nethack Terminus
-The Will to Power | The Cloudbase Academy
-Secrets of Creation | The Clinical Immortality
-Graviton Theory | The Cyborg Factory
-Secrets of the Manifolds | The Telepathic Matrix
-Sentient Resonance | The Space Elevator
-Adaptive Doctrine | Plasma shard
-Silksteel Alloys | Planned
-Intellectual Integrity | Wealth
-Quantum Power | Thought Control
-Matter Compression | Cybernetic
-Adaptive Economics | Global Trade Pact, Repeal Global Trade Pact
-Probability Mechanics | Economic victory
-Applied Relativity | Salvage Unity Fusion Core
-Super Tensile Solids | Melt Polar Caps
-Planetary Economics | Launch Solar Shade, Increase Solar Shade
-Superstring Theory | Engineer
-Monopole Magnets | free Recycling Tanks
-Matter Editation | free Recreation Commons
-Sentient Econometrics | free Energy Bank
-Secrets of Creation | free Network Node
-
 # Combat related stuff
 
 ## Attack/defense ratio adjustment
@@ -144,21 +97,21 @@ This is fixed now. Modders are free to set any offensive values to regular conve
 With this in mind I was able to correct weapon strenght progression to smooth it while keeping proper icons for each weapon.
 Here is the current game weapon and strength progression by technology levels. There are less armor items in the game so they do not appear every research level at second half of the game. When they appear they match same level weapon strength.
 
- Level | W str. | W cost | A str. | A cost 
- -----:| ---------------:| -----------:| --------------:| ----------:
-1 | 1 | 1 | 1 | 1
-2 | 2 | 2 | 2 | 2
-3 | 3 | 3 | 3 | 3
-4 | 4 | 4 | 4 | 4
-5 | 5 | 5 | 5 | 5
-6 | 6 | 6 | 6 | 6
-7 | 8 | 7 |  | 
-8 | 10 | 8 | 10 | 8
-9 | 13 | 10 |  | 
-10 | 16 | 12 | 16 | 12
-11 | 20 | 14 |  | 
-12 | 24 | 16 | 24 | 16
-13 | 30 | 20 |  | 
+| Level | Weapon strength | Weapon cost | Armor strength | Armor cost |
+|----:|----:|----:|----:|----:|
+| 1 | 1 | 1 | 1 | 1 |
+| 2 | 2 | 2 | 2 | 2 |
+| 3 | 3 | 3 | 3 | 3 |
+| 4 | 4 | 4 | 4 | 4 |
+| 5 | 5 | 5 | 5 | 5 |
+| 6 | 6 | 6 | 6 | 6 |
+| 7 | 8 | 7 |  |  |
+| 8 | 10 | 8 | 10 | 8 |
+| 9 | 13 | 10 |  |  |
+| 10 | 16 | 12 | 16 | 12 |
+| 11 | 20 | 14 |  |  |
+| 12 | 24 | 16 | 24 | 16 |
+| 13 | 30 | 20 |  |  |
 
 ## Combat mechanics
 
@@ -184,13 +137,20 @@ On top of that this mod sets land psi combat base odds to 1:1. This way PLANET r
 
 ## Base intrinsic defense and defensive structures
 
-Base intrinsic defence raised to 50%. This is configurable in alphax.txt.
+Base intrinsic defence raised to 50%. This is configurable in alphax.txt. Unit in base protected weaker than on rough terrain does not make sense as it forces defender to step outside of the base to get better defense.
 
-Base defensive structures (Perimeter Defense, Naval Yard, Aerospace Complex, and Tachyon Field) defense bonuses are exposed in thinker.ini. They are left as is for now. Could change in future versions.
+Base defensive structures (Perimeter Defense, Naval Yard, Aerospace Complex, and Tachyon Field) defense bonuses are exposed in thinker.ini. First level structures defense bonus is left 100% as in vanilla. That effectivelly adds 50% on top of intrinsic defense. Second level structure (Tachyon Field) defense bonus is +50% to match first level bonus increase and to avoid late game overdefence that is many modders major concern.
+
+| Defense structures | Cumulative bonus | Cumulative multiplier |
+|----|----:|----:|
+| No structures | +50% | 1.5 |
+| Level 1 | +100% | 2.0 |
+| Level 2 | +100% | 2.0 |
+| Level 1 and Level 2 | +150% | 2.5 |
 
 ## Fanatic attack bonus
 
-Believers are quite narrow focused faction. Their SUPPORT and Fanatic attack bonus makes them powerful large army warfare machine. This is what they **should** be doing to succeed as they suck at everything else with their RESEARCH and PLANET penalties. Surprisingly, their attack bonus is not that remarkable. Even Usurpers are better with their +25% attack bonus as they apply it to all type of combat including psi. Since believers are pathetic in psi combat their conventional attack bonus should be at least greater than Usurpers'. Assuming that even in the best circumstances they are not going to be in permanent war state raising their attack bonus to 50% is not at all overpowered. This is essentially compensation for their poor economical development.
+Believers are quite narrow focused faction. Their SUPPORT and Fanatic attack bonus makes them powerful large army warfare machine. This is what they **should** be doing to succeed as they suck at everything else with their RESEARCH and PLANET penalties. Surprisingly, their attack bonus is not that remarkable. Even Usurpers are better with their +25% attack bonus as they apply it to all type of combat including psi. Since believers are pathetic in psi combat their conventional attack bonus should be at least greater than Usurpers'. Assuming that even in the best circumstances they are not going to be in permanent war state raising their attack bonus to 50% is not at all overpowered. This is a compensation for their poor economical development.
 
 ## Alternative artillery damage
 
@@ -204,21 +164,21 @@ Additionally artillery damage is multiplied by attacker firepower to ignore defe
 
 Repair rates are lowered to eliminate fast and instant healing. Parameters are configurable.
 
-### Current settings
-
-* Field: 10% up to 80% regardless of location.
-* Base/bunker/aribase: 10% up to 100%.
-* Base with corresponding land/sea/air repair facility: +10%.
-* SP for fast repair natives in base: +10%.
-* Nano Factory: + 10% up to 100% everywhere.
+| Location/Facility/SP | Repair rate, per turn | Maximal repair level |
+|----|----:|----:|
+| Field | 10% | 80% |
+| Base/bunker/aribase | 10% | 100% |
+| Conventional unit in base with corresponding land/sea/air repair facility | +10% | 100% |
+| Native unit in base when faction owns SP for fast native repair | +10% | 100% |
+| **Anywhere** when faction owns Nano Factory | +10% | 100% |
 
 ## Morale
 
 [Treatise on Morale](http://alphacentauri2.info/wiki/Treatise_on_Morale)
 
-That is a good example of what we are dealing with here. An excellent scholary article explaining miriads of small SMACX morale releated features and their interdependencies. A lot of enthusiasts worked a lot of man-months to disassemble, reverse engineer, and deliver this sacral knowledge to us in more or less understandable fashion. And even after all these efforts mere reading this article and trying to compose a clear picture in one's mind about all intricacies of game engine is a work in itself. I personally sometimes have to read some passages few times to catch the idea and details.
+The article above is a good example of what we are dealing with here. An excellent scholary research explaining miriads of small SMACX morale releated features and their interdependencies. A lot of enthusiasts worked a lot of man-months to disassemble, reverse engineer, and deliver this sacral knowledge to us in more or less orderly fashion. Even after all these efforts mere reading this article and trying to comprehend all intricacies of game engine is a work in itself. I personally sometimes have to read passages few times to catch the idea and details.
 
-Undoubtfully, such complicated rules should not even exist in a game in a first place for players' sake. And if they do they should be clearly explained with every detail at least in advanced help. Apparently designers realized that such help would be of the above mentioned article size and wouldn't require like 20 pages of in game text. That could scare beginners! Better to replace it with one-two vague sentences or not mention it at all. Clarity achieved = profit! In literal meaning. :smile:
+Undoubtfully, such complicated rules should not even exist in a game in a first place for players' sake. And if they do they should be clearly explained with every detail at least in advanced help. Apparently designers realized that such help would take like 20 pages of in game text. That could scare beginners! Better to replace it with one-two vague sentences or not mention it at all. Clarity achieved = profit! In literal meaning. :smile:
 
 Now players need to disassemble game to understand why their units have unexpected morale. Ugh. :unamused:
 
@@ -228,7 +188,7 @@ Now players need to disassemble game to understand why their units have unexpect
 
 Reason: undocumented.
 
-#### Removed current base Children Creche morale bonus
+#### Removed stationning base Children Creche morale bonus
 
 Reason: undocumented.
 
@@ -236,7 +196,7 @@ Some may refer to this passage from Datalinks: "All negative MORALE effects are 
 
 ### Very Green defense bonus
 
-Designers added tons of little trinket for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
+Designers added tons of little trinkets for player so they don't feel sorry for themselves and don't stop playing game in first few turns. As important as it is for absolute newcomer this is a pure annoyance to a seasoned player who doesn't quit just because they don't see a measly bonuses everywhere they look.
 
 One of such nonsense bonuses is a Very Green defense bonus effectively turning it into Green on defense. I absolutely welcome any number of independent means to raise/lower morale in addition to base unit morale levels. However, assigning a special bonus to the very basic morale level that effectivelly disables its intended effect (even if on defense only) is beyond my comprehention.
 
@@ -250,17 +210,17 @@ I decided to even out promotion probabilities across all levels to decouple from
 
 Besides, why promotion should be easier for lower morale levels? That benefits weak morale factions. It should not. They have low morale for a reason. It most likely a flip side of having some other good benefit either innate or SM induced. The combination of bonuses and penalties is already carefully thought of by faction/SM designers. Why game thinks it knows better and aid to these poor "weaklings" as it percieves them?
 
-## Homeland combat bonus
+## Territory combat bonus
 
-I was struggling to make defense economically more effective than assault. Ideally defending should be two to three times cheaper than assaulting. Equalizing contemporary weapon and armor strength was a step in that direction. It is still far from desired ratio, though. Attacker still fights at 1:1 with greater numbers and artillery superiority against base garrisons behind PD. I do not count sensors as they are easily destroyable and not of great help. Outside of bases aggressor has full control of the land: penetrate deeply beyond frontline, kill formers, destroy enhancements, destroy sensors, cut reinforcement communications. I was thinking about giving defender a direct bonus: pertained to defending of own territory explicitly, permanent, indistructible, undeniable.
+I was struggling to make defense economically more effective than assault. Ideally defending should be two to three times cheaper than assaulting. Equalizing contemporary weapon and armor strength was a step in that direction. It was not enough. Attacker still can bring fight odds at 1:1 with greater numbers and artillery superiority against base garrisons behind PD. I do not count sensors as they are easily destroyable and not of great help. Outside of bases aggressor has full control of the land: penetrates deeply beyond frontline, kills formers, destroys enhancements, destroys sensors, cuts reinforcement communications. I was thinking about giving defender a direct bonus: pertained to defending of own territory explicitly, permanent, indistructible, undeniable.
 
-Homeland combat bonus is the perfect solution for that. It is inherent so everybody always has it and it cannot be cancelled. It kicks in only on own territory combat. Due to its inherent nature it helps defender even in case of poorly prepared defence. It effectivelly replaces Chidren Creche morale bonuses and Sensor Array defense bonuse. However, it applies on whole territory, not only in bases which, I think, is much better representation of defensive war. Why on earth the rest of the territory should be any less protected?
+Then it struck me. The *explicit* territory combat bonus is the perfect solution for that! :star2: It is inherent so everybody always has it and it cannot be cancelled. It kicks in only on own territory combat. Due to its inherent nature it helps defender even in case of poorly prepared defence. It effectivelly replaces Chidren Creche and Sensor Array bonuses. Unlike them, though, it applies on whole territory not only in bases which is much better representation of defensive war. Why on earth the rest of the territory should be any less protected?
 
-Children Creche and Sensor Array lose their combat related bonuses. I think it is to the best. Children Creche affecting morale was pretty strange idea in first place: too powerful for cheap facility, too cumbersome to understand the logic (only negative MORALE SE), too limited (bases only), buggy implemented, difficult to read/understand in unit screen. It should concentrate on its primary purpose: growth and efficiency. It is already quite powerful capabilities.
+Children Creche and Sensor Array lose their combat related bonuses. I think it is to the best. Children Creche affecting morale was pretty strange idea in first place: too powerful for cheap facility, too cumbersome to understand the logic (only negative MORALE SE), too limited (bases only), buggy implemented, difficult to read/understand in unit screen. It should concentrate on its primary purpose: growth and efficiency. They are already quite powerful capabilities.
 
 Building sensors to extend protection bonus is nice idea but they are easy to destroy with single artillery shot or with Needlejet raid or with probe accompanied by combat unit. They are so easy target that it is considered stupid to storm base without destroying them fist. This effectively nullifies their defense bonus value. We can set their bonus to 100% and it is still equals to zero when they are gone. Therefore, I've decided to remove their defense bonus altogether and keep them as observation stations which is still quite useful tool for human player.
 
-Summarizing the above, homeland combat bonus (both attack and defense) is a nice replacement for Children Creche and Sensors combat bonuses but more logical, simpler, more understandable, move visual. It is also displays properly in combat calculation screen with own explicit name and bonus (Homeland: +50%) which is much better than the train of yet to be deciphered pluses. Essentially the rule is that troops fight 50% stronger on mother land or sea. Neat! How simple and logical is that?
+Summarizing the above, territory combat bonus (both attack and defense) is a nice replacement for Children Creche and Sensor Array combat bonuses but more logical, simpler, more understandable, move visual. It is also displays properly in combat calculation screen with own explicit name and bonus value (Territory +50%) which is much better than the train of yet to be deciphered pluses. It works equally on land and sea. Finally, the undervalues sea battles are taken care of. From game lore side one can visualize this as troops fighting 50% stronger on mother land/sea. Neat! How simple and logical is that?
 
 # Unit cost
 
@@ -291,14 +251,17 @@ SI (secondary item) = least expensive module/weapon/armor
 
 reactor factor = reactor cost / Fission reactor cost
 
-abilities factor = (1 + 0.25 * (ability1 factor + ability2 factor))
-abilities flat = ability1 flat + ability2 flat
+abilities factor = (1 + 0.25 * (ability1 proportional value + ability2 proportional value))
+abilities flat = ability1 flat value + ability2 flat value
 
 </pre>
 
 ### Special formula cases for non combat units
 
-Colony, Former, Supply units on foil/cruiser cost same as if on infantry/speeder.
+1. Colony/Former/Supply on foil/cruiser costs same as if on infantry/speeder.
+2. Reactor doesn't change Supply cost.
+
+Here is the reason for #2. Each subsequent reactor reduces unit cost by ~20%. That is like 20% production increase for buiding units. Supply unit harvesting resources is more like a part of production infrastructure rather than part of disposable unit pool that needs to be constantly replenished by the mean of this same production infrastructure. It already has a precisely computed cost to outweigh benefits. Moreover, resources it brings home are multiplied by other facilities increasing its value further into the game. If anything Supply cost should grow with game progress but not fall. Reactors have nothing to do with Supply primary purpose: mineral harvesting. As such they should not affect it in any way.
 
 ## Weapon and armor cost
 
@@ -347,11 +310,9 @@ Energy Bank | 6 | | Cost is reduced slightly for this and three below facilities
 Network Node | 6 | | 
 Research Hospital | 9 | | 
 Nanohospital | 18 | | 
-Biology Lab | 4 | | Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player incentive to build it before Network Node.
-Naval Yard | 5 | | Reduced price to give player incentive to actually build it. It is priced as a combination of morale boosting and defensive facility. However, one usually needs morale boosting benefit at rich unit producing bases and defense benefit at weak distant ones - rarely both at once.
-Bioenhancement Center | 16 | 4 | Morale boosting facility for all unit realms. Together with other facilities it produces elite units. Should have very high cost and maintenance.
+Biology Lab | 4 | 0 | Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player incentive to build it before Network Node.
 Geosynchronous Survey Pod | 16 | 2 | Dropped maintenance since this is defense helping facility. I rarely use it myself. Maybe with lower maintenance it'll be more attractive.
-Aquafarm | 12 | 2 | This is the most beneficial facility out of three aquatic yield related ones. It affects all work squares and not only half as other two. Besides, nutrient surplus is the most powerful resource that in time compensates lack of two others due to population growth and increase in workers. I think the above increased price is not even enough to compensate for it but 12 rows is already quite high for early game.
+Aquafarm | 12 | 2 | This is the most beneficial facility out of three aquatic yield improvers. It affects all work squares and not only half as other two. Besides, nutrient surplus is the most powerful resource that in time compensates lack of two others due to population growth and increase in workers. I think the above increased price is not even enough to compensate for it but 12 rows is already quite high for early game.
 
 # Secret Project costs
 
@@ -406,7 +367,8 @@ The Planetary Energy Grid | 800 | 80 minerals worth facility x 10 bases.
 Foil is available to be researched at start. Other modders said much about that already.
 
 Network Node, Energy Bank: moved to level 3.  
-These facilities are not effective at the beginning. Even with 20 raw energy yield they contribute 5 labs/energy = 2.5 worth of minerals and break even time is 32 turn. Only averagely beneficial and you need to get your first bases at 20 energy yield first.
+These facilities are not effective at the beginning. Even with 20 raw energy yield they contribute 5 labs/energy = 2.5 worth of minerals and break even time is 32 turn. Only averagely beneficial and you need to get your first bases at 20 energy yield first.  
+After some playtesting I think they could be moved to level 4. I rarely start building them immediately upon their discovery. They are not that immense critical nor they are super beneficial at the time.
 
 Habitaion Dome: moved to 50% in research tree (was 75%).  
 I often struggle to get it when needed. It's too far in the future.
@@ -425,11 +387,16 @@ Game breaker goes to the very end. Discussed many times by other modders.
 
 The Living Refinery, The Manifold Harmonics: relatively weak SPs moved earlier.
 
+Reactors are on level 3, 6, 9, correspondingly.  
+It seems that unit cost reduction is most useful earlier when production power is low. Later on it becomes less relevant. Early Fusion reactor fuels further expansion.
+
 # Social engineering
+
+![SE models](SM.png)
 
 This mod treats a combination of SE choices as an option, not a single SE model in isolation. It also doesn't try to "balance" SE models between each other but rather distribute SE effect changes across models to conveniently provide all the spectrum of possible SE effect ratings making all of them reacheable. I have devised a model to "compare" SE effects average value to each other with certain degree of assumption. Even though they can be "compared" to each other it is obvious that their use varies greatly during the course of the game and depending on circumstances. They had to be weighed based not only on their average value but on the other game related factors.
 
-As always, I tried preserve social effects set whenever possible so vanilla SMs stay recognizable. Apparently, UI cannot display more than 4 effects per model. So that was another hard restriction for this reengineering project. Obviously, I did on purpose is tried to use up to 4 effects wherever possible to maximize effect usage and variety across the effect scale.
+As always, I tried preserve social effects set whenever possible so vanilla SMs stay recognizable. Apparently, UI cannot display more than 4 effects per model. So that was another hard restriction for this reengineering project. I tried to use up to 4 effects wherever possible to maximize effects usage and maximize variety of their ratings.
 
 I timed them on research line so that first row of SMs comes at level 2, second at level 3, third at level 5 and fourth at level 7 which is about when 50% technologies are researched. This is somewhat earlier that in vanilla when you got last SE row at about 75% throughout the game. Certainly future society SMs are powerful but it is kinda useless to acquire them at the game sunset.
 In accordance to this timing I tried to focus on most important effects at the time of appearance. Early models emphasize TALENT, SUPPORT, POLICE, GROWTH. While later models favor ECONOMY, EFFICIENCY, INDUSTRY, RESEARCH. Not necessarily exactly like this but as a rule of thumb.
@@ -438,11 +405,11 @@ ECONOMY and EFFICIENCY are by far the strongest effects. I tried to equalize the
 
 ECONOMY changes are mostly positive in original. Even though negative effects are not that interesing I still added some negative ECONOMY changes here and there to outweigh positive changes in other SMs.
 
-POLICE scale is assymetric and shifted toward negative values. The true middle point is at -1 rating. In vanilla game everybody essentially starts with inherent +1 rating. Besides, everybody can also build Brood Pit to get +2 POLICE later. That is too much inclination toward positive values which results in need of enourmous negative changes for some SE models like FM in vanilla. This mod tries to avoid this by subtracting 1 POLICE from ALL factions shifting starting position to where it should be. This allows applying positive and negative POLICE changes equally across SE choices.
+POLICE scale is assymetric and shifted toward negative values. The true middle point is at -1 rating. In vanilla game everybody essentially starts with inherent +1 rating above the middle point. Moreover, everybody can build Brood Pit to get +2 POLICE later. That is too much inclination toward positive values which results in need of enourmous negative changes for some SE models like FM in vanilla. This mod tries to avoid this by subtracting 1 POLICE from ALL factions shifting starting position to where it should be. This allows applying positive and negative POLICE changes equally across SE choices.
 
-GROWTH is very restricted on negative side. Just -3 rating halts base growth completely which is a pretty strong effect. On the other side of the spectrum +6 rating triggers population boom which is another pretty strong effect. It is a common concern of all modders to limit population boom. In this mod it is attainable by Children Creche + SE + golden age. However, it is not attainable without golden age. One need to pour some amount of gold on people to make them happy and produce more children. Same as in old good Civ 2.
+GROWTH is very restricted on negative side. Just -3 rating halts base growth completely which is a pretty strong effect. On the other side of the spectrum +6 rating triggers population boom which is another pretty strong effect. It is a common concern of all modders to limit population boom. In this mod it is attainable by Children Creche + SE + golden age. However, it is not attainable without golden age. One need to pour some amount of gold on people to make them happy and produce more children. Same as in old good Civ 1/2.
 
-MORALE had a balanced scale by itself but morale facilities can easily raise unit morale even beyond what highest MORALE rating would do. That effectivelly renders high MORALE values useless. Don't forget to count Children Creche with its +1 morale bonus as well. As such I do not use too many MORALE modifiers across SE choices. SE provides +2 MORALE max only.
+MORALE had a balanced scale by itself but morale facilities can easily raise unit morale even beyond what highest MORALE rating would do. That effectivelly renders high MORALE values useless. As such I do not use too many MORALE modifiers across SE choices. SE provides +2 MORALE max only.
 
 About the same story with PROBE and Covert ops center. Even though it is just one +2 facility the PROBE scale is shorter as well. SE provides +2 PROBE max only.
 
@@ -452,11 +419,11 @@ About the same story with PROBE and Covert ops center. Even though it is just on
 
 This is another feature I cannot understand. What good does restricting yield do? Why I cannot farm a rainy tile to boost my base growth a little? Why I cannot mine a rocky tile to get myself some minerals? In vanilla game these restriction are lifted when you discover advanced terraforming. At this time I don't need a rocky mine anymore since borehole is better. As the result I never build mines to work on - only to harvest by crawler. I don't know how to disable them completely so I moved them all onto level 1 technologies.
 
-I guess this was a blind copy of Civ 1 Despotism restrictions. Despotism reduces any factor of production by 1 where you have 3+ of such production. However, this was compensated by unit production and settler food supports. Meaning you harvest less but you spend less on support too. SMACX lost this second part separating support into its own effect. Thus leaving this nicely thought and designed element half cut and stupid looking.
+I guess this was a blind copy of Civ 1 Despotism restrictions. Despotism reduces any factor of production by 1 where you have 3+ of such production. However, this was compensated by unit production and settler food supports. Meaning you harvest less but you spend less on support too. SMACX lost this second part separating support into its own effect. Thus leaving this nicely thought and designed element half cut and stupid looking. :angry:
 
 ## Forest
 
-Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
+Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with combined yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
 ## Fungus production
 
@@ -468,16 +435,16 @@ Get it to at least 1-1-0 yield relatively early in the game to allow minimal sup
 Focus on energy yield in the mid game to compliment forest instead of competing with it.
 Use green/alien technologies for fungus production to streamline research priorities for green/PLANET factions.
 
-Technology | Fungus production effect | Comment
----------- | ------------------------ | -------
-Centauri Ecology | +1 nutrient |
-Progenitor Psych | +1 mineral | reassigned
-Field Modulation | +1 energy | reassigned
-Bioadaptive Resonance | +1 energy | reassigned
-Centauri Psi | +1 nutrient |
-Centauri Meditation | +1 energy |
-Secrets of Alpha Centauri | +1 energy |
-Centauri Genetics | +1 mineral |
+| Technology | Fungus production effect | Cumulative yield | Comment |
+|----|----|----|----|
+| Centauri Ecology | +1 nutrient | 1-0-0 |
+| Progenitor Psych | +1 mineral | 1-1-0 | reassigned |
+| Field Modulation | +1 energy | 1-1-1 | reassigned |
+| Bioadaptive Resonance | +1 energy | 1-1-2 | reassigned |
+| Centauri Psi | +1 nutrient | 2-1-2 |
+| Centauri Meditation | +1 energy | 2-1-3 |
+| Secrets of Alpha Centauri | +1 energy | 2-1-4 |
+| Centauri Genetics | +1 mineral | 2-2-4 |
 
 ## Sea Sensors
 
@@ -530,4 +497,199 @@ These abilities do not improve unit properties directly. Instead they essentiall
 ## Battle computation display
 
 Adjusted summary strength and power lines to the bottom in battle computation display. This way it is easier to read and compare them between attacker and defender.
+
+# Appendix
+
+## Technology feature associations
+
+Feature associations change quite often. This may be stale information.
+
+|Type|Feature|Technology|Level|Primary|
+|----|----|----|----:|----|
+|1 unit types|Foil chassis<br>Troop transport<br> Pressure dome|Doctrine: Flexibility|1|Yes|
+|1 unit types|Speeder chassis|Doctrine: Mobility|1|Yes|
+|1 unit types|Heavy artillery|Polymorphic Software|2|Yes|
+|1 unit types|Probe teams|Optical Computers|3||
+|1 unit types|+ Foil Probe Team|Optical Computers|3||
+|1 unit types|Mind Worms|Centauri Empathy|3|Yes|
+|1 unit types|Spore Launcher|Bioadaptive Resonance|4|Yes|
+|1 unit types|Supply transport|Industrial Automation|4||
+|1 unit types|Sealurk|Centauri Psi|5|Yes|
+|1 unit types|AAA Tracking|Advanced Military Algorithms|5|Yes|
+|1 unit types|Cruiser chassis|Doctrine: Initiative|6||
+|1 unit types|Isle of the Deep|Centauri Meditation|7||
+|1 unit types|Needlejet chassis<br> Air base|Doctrine: Air Power|7|Yes|
+|1 unit types|Hovertank chassis|Nanominiaturization|8|Yes|
+|1 unit types|Copter chassis|Mind/Machine Interface|9|Yes|
+|1 unit types|Missile chassis|Applied Gravitonics|10||
+|1 unit types|Locusts of Chiron|Centauri Genetics|10|Yes|
+|1 unit types|Fungal and tectonic payloads|N-Space Compression|10||
+|1 unit types|Gravship chassis|Graviton Theory|11|Yes|
+|1 unit types|Planet Buster payload|Orbital Spaceflight|11||
+|1 unit types|orbital insertion|Graviton Theory|11||
+|2 ability|Hypnotic trance|Secrets of the Human Brain|2|Yes|
+|2 ability|Comm jammer|Information Networks|3||
+|2 ability|Empath song|Bioadaptive Resonance|4||
+|2 ability|Fungicide tanks|Synthetic Fossil Fuels|4||
+|2 ability|Amphibious pods|Doctrine: Initiative|6||
+|2 ability|High morale|Intellectual Integrity|5||
+|2 ability|Deep radar|Advanced Military Algorithms|5||
+|2 ability|Air superiority|Doctrine: Air Power|7||
+|2 ability|Soporific Gas Pods||||
+|2 ability|Polymorphic encryption|Pre-Sentient Algorithms|8||
+|2 ability|Marine detachment|Adaptive Doctrine|8|Yes|
+|2 ability|Algorithmic Enhancement|Nanominiaturization|8||
+|2 ability|2 special abilities for a unit|Neural Grafting|10||
+|2 ability|Super Formers|Adv. Ecological Engineering|8||
+|2 ability|Dissociative wave|Frictionless Surfaces|10||
+|2 ability|Carrier deck|Nanometallurgy|8|Yes|
+|2 ability|Clean reactor|Bio-Engineering|9|Yes|
+|2 ability|Drop pods|Mind/Machine Interface|9||
+|2 ability|Non-lethal methods|Secrets of Alpha Centauri|10||
+|2 ability|Blink Displacer|Matter Transmission|11||
+|3 terraforming|basic terraforming<br> Terraform unit<br> restrictions lifted|Centauri Ecology|1|Yes|
+|3 terraforming|Aquafarm|Field Modulation|4||
+|3 terraforming|fungus road|Centauri Empathy|3||
+|3 terraforming|Thermocline transducer|Adaptive Economics|5|Yes|
+|3 terraforming|fungus movement|Centauri Psi|5||
+|3 terraforming|improve fungus|Centauri Psi|5||
+|3 terraforming|advanced terraforming|Ecological Engineering|6|Yes|
+|3 terraforming|Subsea Trunkline|Organic Superlubricant|6||
+|3 terraforming|Mag tube|Monopole Magnets|8|Yes|
+|3 terraforming|Soil enricher|Adv. Ecological Engineering|8||
+|3 terraforming|Raise/Lower Land and Sea Floor|Adv. Ecological Engineering|8|Yes|
+|3 terraforming|Mining Platform + 1|Adv. Ecological Engineering|8||
+|3a fungus production|+1 nutrient|Centauri Ecology|1||
+|3a fungus production|+1 mineral|Progenitor Psych|1||
+|3a fungus production|+1 energy|Field Modulation|4||
+|3a fungus production|+1 energy|Bioadaptive Resonance|4||
+|3a fungus production|+1 nutrient|Centauri Psi|5||
+|3a fungus production|+1 energy|Centauri Meditation|7||
+|3a fungus production|+1 energy|Secrets of Alpha Centauri|10||
+|3a fungus production|+1 mineral|Centauri Genetics|10||
+|4a facility - military|Command center|Doctrine: Mobility|1||
+|4a facility - military|Perimeter defense|Doctrine: Loyalty|2|Yes|
+|4a facility - military|Naval Yard|Doctrine: Initiative|6|Yes|
+|4a facility - military|Aerospace complex|Doctrine: Air Power|7||
+|4a facility - military|Bioenhancement center|Neural Grafting|10|Yes|
+|4a facility - military|Tachyon field|The Will to Power|10||
+|4a facility - military|Flechette defense system|N-Space Compression|10|Yes|
+|4a facility - military|Geosynchronous survey pod|N-Space Compression|10||
+|4b facility - drones|Recreation commons|Social Psych|1|Yes|
+|4b facility - drones|Hologram theatre|Polymorphic Software|2|Yes|
+|4b facility - drones|Punishment sphere|Advanced Military Algorithms|5||
+|4b facility - drones|Paradise garden|Sentient Econometrics|11|Yes|
+|4c facility - misc|Recycling tanks|Biogenetics|2|Yes|
+|4c facility - misc|Children's creche|Ethical Calculus|2|Yes|
+|4c facility - misc|Subspace Generator|Secrets of the Manifolds|13|Yes|
+|4d facility - energy|Biology lab|Progenitor Psych|1|Yes|
+|4d facility - energy|Network node|Information Networks|3|Yes|
+|4d facility - energy|Energy bank|Industrial Economics|3|Yes|
+|4d facility - energy|Research hospital|Gene Splicing|6|Yes|
+|4d facility - energy|Fusion lab|Nanometallurgy|8||
+|4d facility - energy|Nanohospital|Homo Superior|9|Yes|
+|4d facility - energy|Quantum lab|Frictionless Surfaces|10||
+|4e facility - ecodamage|Tree farm|Environmental Economics|6|Yes|
+|4e facility - ecodamage|Centauri preserve|Centauri Meditation|7|Yes|
+|4e facility - ecodamage|Hybrid forest|Planetary Economics|9|Yes|
+|4e facility - ecodamage|Temple of Planet|Secrets of Alpha Centauri|10|Yes|
+|4f facility - minerals|Genejack factory|Retroviral Engineering|6|Yes|
+|4f facility - minerals|Robotic assembly plant|Industrial Nanorobotics|7|Yes|
+|4f facility - minerals|Quantum converter|Quantum Machinery|9||
+|4f facility - minerals|Nanoreplicator|Temporal Mechanics|11||
+|4g facility - space station|Sky hydroponics lab|Orbital Spaceflight|11|Yes|
+|4g facility - space station|Orbital power transmitter|Advanced Spaceflight|12|Yes|
+|4g facility - space station|orbital defense pods|Self-Aware Machines|12||
+|4g facility - space station|Nessus mining station|Secrets of the Manifolds|13||
+|4h facility - prototypes|Skunkworks|Advanced Subatomic Theory|8|Yes|
+|4i facility - movement|Psi gate|Matter Transmission|11|Yes|
+|4j facility - size limit|Hab complex|Industrial Automation|4|Yes|
+|4j facility - size limit|Habitation dome|Super Tensile Solids|7|Yes|
+|5 reactor|Fusion Reactor|Fusion Power|3|Yes|
+|5 reactor|Quantum Chamber|Quantum Power|6|Yes|
+|5 reactor|Singularity Engine|Singularity Mechanics|9|Yes|
+|6 secret project|The Merchant Exchange|Industrial Base|1||
+|6 secret project|The Human Genome Project|Biogenetics|2||
+|6 secret project|The Command Nexus|Doctrine: Loyalty|2||
+|6 secret project|The Universal Translator|Nonlinear Mathematics|2||
+|6 secret project|The Weather Paradigm|High Energy Chemistry|2||
+|6 secret project|The Empath Guild|Centauri Empathy|3||
+|6 secret project|The Citizens' Defense Force|Intellectual Integrity|5|Yes|
+|6 secret project|The Planetary Transit System|Industrial Automation|4||
+|6 secret project|The Supercollider|Applied Relativity|4|Yes|
+|6 secret project|The Living Refinery|Superconductor|3||
+|6 secret project|The Virtual World|Planetary Networks|4|Yes|
+|6 secret project|The Planetary Datalinks|Cyberethics|5|Yes|
+|6 secret project|The Maritime Control Center|Doctrine: Initiative|6||
+|6 secret project|The Ascetic Virtues|Gene Splicing|6||
+|6 secret project|The Manifold Harmonics|Environmental Economics|6||
+|6 secret project|The Xenoempathy Dome|Centauri Meditation|7||
+|6 secret project|The Theory of Everything|Unified Field Theory|7||
+|6 secret project|The Nano Factory|Industrial Nanorobotics|7||
+|6 secret project|The Hunter-Seeker Algorithm|Pre-Sentient Algorithms|8|Yes|
+|6 secret project|The Planetary Energy Grid|Advanced Subatomic Theory|8||
+|6 secret project|The Longevity Vaccine|Bio-Engineering|9||
+|6 secret project|The Neural Amplifier|Neural Grafting|10||
+|6 secret project|The Dream Twister|The Will to Power|10|Yes|
+|6 secret project|The Nethack Terminus|Homo Superior|9||
+|6 secret project|The Cloudbase Academy|The Will to Power|10||
+|6 secret project|The Pholus Mutagen|Centauri Genetics|10||
+|6 secret project|The Clinical Immortality|Secrets of Creation|11||
+|6 secret project|The Cyborg Factory|Graviton Theory|11||
+|6 secret project|The Singularity Inductor|Controlled Singularity|11||
+|6 secret project|The Bulk Matter Transmitter|Matter Transmission|11||
+|6 secret project|The Network Backbone|Digital Sentience|12|Yes|
+|6 secret project|The Self-Aware Colony|Self-Aware Machines|12|Yes|
+|6 secret project|The Telepathic Matrix|Secrets of the Manifolds|13||
+|6 secret project|The Cloning Vats|Biomachinery|13|Yes|
+|6 secret project|The Space Elevator|Sentient Resonance|12||
+|6 secret project|The Voice of Planet<br> The Ascent to Transcendence|Threshold of Transcendence|14|Yes|
+|7 weapon|Laser|Applied Physics|1|Yes|
+|7 weapon|Particle impactor|Nonlinear Mathematics|2|Yes|
+|7 weapon|Gatling Laser|Superconductor|3|Yes|
+|7 weapon|Missile launcher|Synthetic Fossil Fuels|4|Yes|
+|7 weapon|Chaos gun|Superstring Theory|5|Yes|
+|7 weapon|Fusion laser|Organic Superlubricant|6|Yes|
+|7 weapon|Tachyon bolt|Unified Field Theory|7|Yes|
+|7 weapon|Plasma shard|Adaptive Doctrine|8||
+|7 weapon|Quantum laser|Quantum Machinery|9|Yes|
+|7 weapon|Graviton gun|Applied Gravitonics|10|Yes|
+|7 weapon|Singularity laser|Controlled Singularity|11|Yes|
+|7 weapon|String disruptor|String Resonance|12|Yes|
+|8 armor|Synthmetal armor|Industrial Base|1|Yes|
+|8 armor|Plasma steel armor|High Energy Chemistry|2|Yes|
+|8 armor|Silksteel armor|Silksteel Alloys|3|Yes|
+|8 armor|Photon wall|Photon/Wave Mechanics|4|Yes|
+|8 armor|Probability sheath|Probability Mechanics|5|Yes|
+|8 armor|Neutronium armor|Matter Compression|7|Yes|
+|8 armor|Antimatter plate|Matter Editation|9|Yes|
+|8 armor|Stasis generator|Temporal Mechanics|11|Yes|
+|9 social enginering 11|Police State|Doctrine: Loyalty|2||
+|9 social enginering 12|Democratic|Ethical Calculus|2||
+|9 social enginering 13|Fundamentalist|Secrets of the Human Brain|2||
+|9 social enginering 21|Free market|Industrial Economics|3||
+|9 social enginering 22|Planned|Information Networks|3||
+|9 social enginering 23|Green|Centauri Empathy|3||
+|9 social enginering 33|Wealth|Adaptive Economics|5||
+|9 social enginering 31|Power|Advanced Military Algorithms|5||
+|9 social enginering 32|Knowledge|Cyberethics|5||
+|9 social enginering 41|Cybernetic|Unified Field Theory|7||
+|9 social enginering 42|Eudaimonic|Eudaimonia|7|Yes|
+|9 social enginering 43|Thought Control|Matter Compression|7||
+|A proposal|Global Trade Pact<br> Repeal Global Trade Pact|Adaptive Economics|5||
+|A proposal|Salvage Unity Fusion Core|Applied Relativity|4||
+|A proposal|Economic victory|Probability Mechanics|5||
+|A proposal|Repeal U.N. Charter<br> Reinstate U.N. Charter|Advanced Military Algorithms|5||
+|A proposal|Melt Polar Caps|Super Tensile Solids|7||
+|A proposal|Diplomatic victory|Mind/Machine Interface|9||
+|A proposal|Launch Solar Shade<br> Increase Solar Shade|Planetary Economics|9||
+|citizens|Librarian|Planetary Networks|4||
+|citizens|Engineer|Superstring Theory|5||
+|citizens|Empath|Centauri Meditation|7||
+|citizens|Thinker|Mind/Machine Interface|9||
+|citizens|Transcend|Secrets of Alpha Centauri|10||
+|free facility|Recycling Tanks|Monopole Magnets|8||
+|free facility|Recreation Commons|Matter Editation|9||
+|free facility|Energy Bank|Sentient Econometrics|11||
+|free facility|Network Node|Secrets of Creation|11||
 

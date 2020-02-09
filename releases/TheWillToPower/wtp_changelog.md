@@ -1,3 +1,12 @@
+# Version 44
+
+* Reactor doesn't change Supply cost.
+* Added "+" to SM with +TALENT. This SE otherwise is not visible in social engineering screen.
+* Changed AI cost factors for mineral/nutrient production for two toughest levels to *9*,*8*. AI is already very strong. This change makes difficulty level progression from Librarian to Thinker somewhat smoother.
+* The Weather Paradigm moved to level 2. It should appear early enough to be beneficial.
+* Reactor technologies moved up one level: 4, 7, 10. Due to their value they seem to be discovered first in their level.
+* Raise/Lower Land and Sea Floor is assigned to Ecological Engineering. It fits this bucket more.
+
 # Version 43
 
 * Renamed "Homeland" effect to "Territory" to avoid confusion. It applies on sea as well.
