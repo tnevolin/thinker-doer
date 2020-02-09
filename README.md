@@ -518,7 +518,7 @@ Feature associations change quite often. This may be stale information.
 |1 unit types|AAA Tracking|Advanced Military Algorithms|5|Yes|
 |1 unit types|Cruiser chassis|Doctrine: Initiative|6||
 |1 unit types|Isle of the Deep|Centauri Meditation|7||
-|1 unit types|Needlejet chassis, Air base|Doctrine: Air Power|7|Yes|
+|1 unit types|Needlejet chassis<br> Air base|Doctrine: Air Power|7|Yes|
 |1 unit types|Hovertank chassis|Nanominiaturization|8|Yes|
 |1 unit types|Copter chassis|Mind/Machine Interface|9|Yes|
 |1 unit types|Missile chassis|Applied Gravitonics|10||
@@ -547,7 +547,7 @@ Feature associations change quite often. This may be stale information.
 |2 ability|Drop pods|Mind/Machine Interface|9||
 |2 ability|Non-lethal methods|Secrets of Alpha Centauri|10||
 |2 ability|Blink Displacer|Matter Transmission|11||
-|3 terraforming|basic terraforming, Terraform unit, restrictions lifted|Centauri Ecology|1|Yes|
+|3 terraforming|basic terraforming<br> Terraform unit<br> restrictions lifted|Centauri Ecology|1|Yes|
 |3 terraforming|Aquafarm|Field Modulation|4||
 |3 terraforming|fungus road|Centauri Empathy|3||
 |3 terraforming|Thermocline transducer|Adaptive Economics|5|Yes|
@@ -643,7 +643,7 @@ Feature associations change quite often. This may be stale information.
 |6 secret project|The Telepathic Matrix|Secrets of the Manifolds|13||
 |6 secret project|The Cloning Vats|Biomachinery|13|Yes|
 |6 secret project|The Space Elevator|Sentient Resonance|12||
-|6 secret project|The Voice of Planet, The Ascent to Transcendence|Threshold of Transcendence|14|Yes|
+|6 secret project|The Voice of Planet<br> The Ascent to Transcendence|Threshold of Transcendence|14|Yes|
 |7 weapon|Laser|Applied Physics|1|Yes|
 |7 weapon|Particle impactor|Nonlinear Mathematics|2|Yes|
 |7 weapon|Gatling Laser|Superconductor|3|Yes|
@@ -676,13 +676,13 @@ Feature associations change quite often. This may be stale information.
 |9 social enginering 41|Cybernetic|Unified Field Theory|7||
 |9 social enginering 42|Eudaimonic|Eudaimonia|7|Yes|
 |9 social enginering 43|Thought Control|Matter Compression|7||
-|A proposal|Global Trade Pact, Repeal Global Trade Pact|Adaptive Economics|5||
+|A proposal|Global Trade Pact<br> Repeal Global Trade Pact|Adaptive Economics|5||
 |A proposal|Salvage Unity Fusion Core|Applied Relativity|4||
 |A proposal|Economic victory|Probability Mechanics|5||
-|A proposal|Repeal U.N. Charter, Reinstate U.N. Charter|Advanced Military Algorithms|5||
+|A proposal|Repeal U.N. Charter<br> Reinstate U.N. Charter|Advanced Military Algorithms|5||
 |A proposal|Melt Polar Caps|Super Tensile Solids|7||
 |A proposal|Diplomatic victory|Mind/Machine Interface|9||
-|A proposal|Launch Solar Shade, Increase Solar Shade|Planetary Economics|9||
+|A proposal|Launch Solar Shade<br> Increase Solar Shade|Planetary Economics|9||
 |citizens|Librarian|Planetary Networks|4||
 |citizens|Engineer|Superstring Theory|5||
 |citizens|Empath|Centauri Meditation|7||
