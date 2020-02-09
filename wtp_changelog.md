@@ -2,6 +2,8 @@
 
 * Reactor doesn't change Supply cost.
 * Added "+" to SM with +TALENT. This SE otherwise is not visible in social engineering screen.
+* Changed AI cost factors for mineral/nutrient production for two toughest levels to *9*,*8*. AI is already very strong. This change makes difficulty level progression from Librarian to Thinker somewhat smoother.
+* The Weather Paradigm is assigned to High Energy Chemistry (level 2). It should appear early enough to be beneficial.
 
 # Version 43
 

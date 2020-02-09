@@ -73,6 +73,8 @@ Keep in mind that technology prerequisites are generally arbitrary and serve as 
 
 ## Technology feature association changes
 
+Feature association changes quite often. This may be stale information.
+
 Technology | Associated feature
 ---------- | ------------------
 Optical Computers | Probe teams
