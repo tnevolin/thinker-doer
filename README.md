@@ -506,7 +506,8 @@ Feature associations change quite often. This may be stale information.
 
 |Type|Feature|Technology|Level|Primary|
 |----|----|----|----:|----|
-|1 unit types|Foil chassis, Troop transport, Pressure dome|Doctrine: Flexibility|1|Yes|
+|1 unit types|Foil chassis
+Troop transport, Pressure dome|Doctrine: Flexibility|1|Yes|
 |1 unit types|Speeder chassis|Doctrine: Mobility|1|Yes|
 |1 unit types|Heavy artillery|Polymorphic Software|2|Yes|
 |1 unit types|Probe teams|Optical Computers|3||
