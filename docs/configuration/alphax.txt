@@ -717,7 +717,7 @@ Orbital Defense Pod,          12, 0, HAL9000, Disable,  Missile Defense
 Stockpile Energy,              0, 0, None,    Disable,  Minerals to Energy
 The Human Genome Project,     40, 0, Biogen,  Disable,  +1 Talent Each Base,            -1, 0, 0, 1, 1,
 The Command Nexus,            80, 0, DocLoy,  Disable,  Command Center Each Base,        1, 2, 0,-1, 0,
-The Weather Paradigm,         60, 0, FldMod,  Disable,  Terraform Rate +50%,             0, 0, 0, 2, 1,
+The Weather Paradigm,         60, 0, Chemist, Disable,  Terraform Rate +50%,             0, 0, 0, 2, 1,
 The Merchant Exchange,        20, 0, Indust,  Disable,  +1 Energy Each Square Here,      0, 0, 1, 2, 0,
 The Empath Guild,             60, 0, CentEmp, Disable,  Commlink For Every Faction,     -2, 0, 0, 0, 0,
 The Citizens' Defense Force,  50, 0, Integ,   Disable,  Perimeter Defense Each Base,     0, 1, 0, 0, 0,
