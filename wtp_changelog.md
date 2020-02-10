@@ -6,6 +6,10 @@
 * The Weather Paradigm moved to level 2. It should appear early enough to be beneficial.
 * Reactor technologies moved up one level: 4, 7, 10. Due to their value they seem to be discovered first in their level.
 * Raise/Lower Land and Sea Floor is assigned to Ecological Engineering. It fits this bucket more.
+* Doctrine: Initiative is level 4.
+* Advanced Military Algorithms is level 5.
+* Applied Relativity is level 6.
+* Intellectual Integrity is level 6.
 
 # Version 43
 
