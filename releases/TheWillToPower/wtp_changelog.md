@@ -2,10 +2,14 @@
 
 * Reactor doesn't change Supply cost.
 * Added "+" to SM with +TALENT. This SE otherwise is not visible in social engineering screen.
-* Changed AI cost factors for mineral/nutrient production for two toughest levels to *9*,*8*. AI is already very strong. This change makes difficulty level progression from Librarian to Thinker somewhat smoother.
+* Changed AI cost factors for mineral/nutrient production to 12,11,10,9,8,7. Lower level AI are pathetic. This way they are a little bit more useful.
 * The Weather Paradigm moved to level 2. It should appear early enough to be beneficial.
 * Reactor technologies moved up one level: 4, 7, 10. Due to their value they seem to be discovered first in their level.
 * Raise/Lower Land and Sea Floor is assigned to Ecological Engineering. It fits this bucket more.
+* Doctrine: Initiative is level 4.
+* Advanced Military Algorithms is level 5.
+* Applied Relativity is level 6.
+* Intellectual Integrity is level 6.
 
 # Version 43
 
