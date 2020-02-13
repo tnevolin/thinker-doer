@@ -498,6 +498,10 @@ These abilities do not improve unit properties directly. Instead they essentiall
 
 Adjusted summary strength and power lines to the bottom in battle computation display. This way it is easier to read and compare them between attacker and defender.
 
+## F4 screen lables
+
+Shortened some labels in F4 screen to fit longer base names and avoid line wrapping.
+
 # Appendix
 
 ## Technology feature associations
