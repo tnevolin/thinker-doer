@@ -202,6 +202,8 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Copy basic units to player unit pool.
+* Don't display basic units in design workshop.
 * Make magtube movement cost 1/6.
 * Make AI build more units, defensive structures, sensors.
 * Artillery duel uses armor as well.
