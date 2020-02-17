@@ -11,6 +11,8 @@
 * Applied Relativity is level 6.
 * Intellectual Integrity is level 6.
 * Cosmetics. Shortened some labels in F4 screen to fit longer base names and avoid line wrapping.
+* Environmental Economics is level 5.
+* Postponed each mineral facilities after Genejack Factory by 1 level.
 
 # Version 43
 
