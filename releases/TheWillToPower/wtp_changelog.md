@@ -10,6 +10,9 @@
 * Advanced Military Algorithms is level 5.
 * Applied Relativity is level 6.
 * Intellectual Integrity is level 6.
+* Cosmetics. Shortened some labels in F4 screen to fit longer base names and avoid line wrapping.
+* Environmental Economics is level 5.
+* Postponed each mineral facilities after Genejack Factory by 1 level.
 
 # Version 43
 
@@ -201,6 +204,8 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Copy basic units to player unit pool.
+* Don't display basic units in design workshop.
 * Make magtube movement cost 1/6.
 * Make AI build more units, defensive structures, sensors.
 * Artillery duel uses armor as well.

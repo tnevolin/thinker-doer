@@ -77,31 +77,31 @@ struct BASE
 
 struct UNIT
 {
-    char name[32];
-    int ability_flags;
-    char chassis_type;
-    char weapon_type;
-    char armor_type;
-    char reactor_type;
-    char carry_capacity;
-    char cost;
-    char unit_plan;
-    char unk0; // this is used
-    char factions_retired;
-    char factions;
-    char icon_offset;
-    char unk1; // not used, plan to use it for reactor value (cost factor or power)
-    short unit_flags;
-    short preq_tech;
+    char name[32];                  //0x0000
+    int ability_flags;              //0x0020
+    char chassis_type;              //0x0024
+    char weapon_type;               //0x0025
+    char armor_type;                //0x0026
+    char reactor_type;              //0x0027
+    char carry_capacity;            //0x0028
+    char cost;                      //0x0029
+    char unit_plan;                 //0x002A
+    char unk0; // this is used      //0x002B
+    char factions_retired;          //0x002C
+    char factions;                  //0x002D
+    char icon_offset;               //0x002E
+    char unk1; // not used          //0x002F
+    short unit_flags;               //0x0030
+    short preq_tech;                //0x0032
 };
 
 struct VEH
 {
-    short x;
-    short y;
-    int flags_1;
-    short flags_2;
-    short proto_id;
+    short x;                        //0x0000
+    short y;                        //0x0002
+    int flags_1;                    //0x0004
+    short flags_2;                  //0x0008
+    short proto_id;                 //0x000A
     short pad_0;
     char faction_id;
     char year_end_lurking;
