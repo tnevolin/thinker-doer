@@ -672,7 +672,7 @@ Punishment Sphere,            10, 2, MilAlg,  Disable,  No Drones/-50% Tech
 Hab Complex,                   8, 2, IndAuto, Disable,  Increase Population Limit
 Habitation Dome,              16, 4, Solids,  Disable,  Increase Population Limit
 Pressure Dome,                 8, 0, DocFlex, Disable,  Submersion/Resources
-Command Center,                8, 2, Mobile,  Disable,  +2 Morale:Land
+Command Center,                6, 2, Mobile,  Disable,  +2 Morale:Land
 Naval Yard,                    8, 2, DocInit, Disable,  +2 Morale:Sea, Sea Def +100%
 Aerospace Complex,            12, 3, DocAir,  Disable,  +2 Morale:Air, Air Def +100%
 Bioenhancement Center,        20, 5, Neural,  Disable,  +2 Morale:ALL
@@ -716,16 +716,16 @@ Orbital Power Transmitter,    12, 0, Space,   Disable,  +1 Energy ALL BASES
 Orbital Defense Pod,          12, 0, HAL9000, Disable,  Missile Defense
 Stockpile Energy,              0, 0, None,    Disable,  Minerals to Energy
 The Human Genome Project,     40, 0, Biogen,  Disable,  +1 Talent Each Base,            -1, 0, 0, 1, 1,
-The Command Nexus,            80, 0, DocLoy,  Disable,  Command Center Each Base,        1, 2, 0,-1, 0,
+The Command Nexus,            40, 0, DocLoy,  Disable,  Command Center Each Base,        1, 2, 0,-1, 0,
 The Weather Paradigm,         60, 0, Chemist, Disable,  Terraform Rate +50%,             0, 0, 0, 2, 1,
 The Merchant Exchange,        20, 0, Indust,  Disable,  +1 Energy Each Square Here,      0, 0, 1, 2, 0,
 The Empath Guild,             60, 0, CentEmp, Disable,  Commlink For Every Faction,     -2, 0, 0, 0, 0,
-The Citizens' Defense Force,  50, 0, Integ,   Disable,  Perimeter Defense Each Base,     0, 1, 0, 0, 0,
+The Citizens' Defense Force,  40, 0, Integ,   Disable,  Perimeter Defense Each Base,     0, 1, 0, 0, 0,
 The Virtual World,            60, 0, PlaNets, Disable,  Network Nodes Help Drones,       0, 0, 2, 0, 0,
 The Planetary Transit System, 40, 0, IndAuto, Disable,  New Bases Begin At Size 3,       0, 0, 0, 1, 2,
 The Xenoempathy Dome,         40, 0, CentMed, Disable,  Fungus Movement Bonus,           0,-1, 0, 0, 2,
 The Neural Amplifier,         80, 0, Neural,  Disable,  Psi Defense +50%,                0, 0, 0, 0, 0,
-The Maritime Control Center,  80, 0, DocInit, Disable,  Naval Movement +2; Naval Bases,  1, 1, 0, 0, 0,
+The Maritime Control Center,  60, 0, DocInit, Disable,  Naval Movement +2; Naval Bases,  1, 1, 0, 0, 0,
 The Planetary Datalinks,      60, 0, Cyber,   Disable,  Any Tech Known To 3 Others,      0, 0, 1, 0, 0,
 The Supercollider,            30, 0, E=Mc2,   Disable,  Labs +100% At This Base,         0, 0, 2, 0, 0,
 The Ascetic Virtues,          60, 0, Gene,    Disable,  Pop. Limit Relaxed; +1 POLICE,   0, 0, 0, 1, 2,

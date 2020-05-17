@@ -1,3 +1,10 @@
+# Version 45
+
+* Command Center cost/maint is 6/2.
+* The Command Nexus cost is 40.
+* The Citizens' Defense Force cost is 40.
+* The Maritime Control Center cost is 60.
+
 # Version 44
 
 * Reactor doesn't change Supply cost.
