@@ -313,6 +313,7 @@ Nanohospital | 18 | |
 Biology Lab | 4 | 0 | Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player incentive to build it before Network Node.
 Geosynchronous Survey Pod | 16 | 2 | Dropped maintenance since this is defense helping facility. I rarely use it myself. Maybe with lower maintenance it'll be more attractive.
 Aquafarm | 12 | 2 | This is the most beneficial facility out of three aquatic yield improvers. It affects all work squares and not only half as other two. Besides, nutrient surplus is the most powerful resource that in time compensates lack of two others due to population growth and increase in workers. I think the above increased price is not even enough to compensate for it but 12 rows is already quite high for early game.
+Brood Pit | 12 | 4 | As lolada pointed out here http://alphacentauri2.info/index.php?topic=21359.msg125058#msg125058, the combined features of this facility make it an awesome native warfare oriented aid on top of extra policae rating. Its cost/maint should be much bigger to compensate it.
 
 # Secret Project costs
 
@@ -585,6 +586,7 @@ Feature associations change quite often. This may be stale information.
 |4b facility - drones|Hologram theatre|Polymorphic Software|2|Yes|
 |4b facility - drones|Punishment sphere|Advanced Military Algorithms|5||
 |4b facility - drones|Paradise garden|Sentient Econometrics|11|Yes|
+|4b facility - drones|Brood Pit|Centauri Genetics|10||
 |4c facility - misc|Recycling tanks|Biogenetics|2|Yes|
 |4c facility - misc|Children's creche|Ethical Calculus|2|Yes|
 |4c facility - misc|Subspace Generator|Secrets of the Manifolds|13|Yes|
@@ -626,6 +628,7 @@ Feature associations change quite often. This may be stale information.
 |6 secret project|The Living Refinery|Superconductor|3||
 |6 secret project|The Virtual World|Planetary Networks|4|Yes|
 |6 secret project|The Planetary Datalinks|Cyberethics|5|Yes|
+|6 secret project|The Planetary Energy Grid|Adaptive Economics|5||
 |6 secret project|The Maritime Control Center|Doctrine: Initiative|6||
 |6 secret project|The Ascetic Virtues|Gene Splicing|6||
 |6 secret project|The Manifold Harmonics|Environmental Economics|6||
@@ -633,7 +636,6 @@ Feature associations change quite often. This may be stale information.
 |6 secret project|The Theory of Everything|Unified Field Theory|7||
 |6 secret project|The Nano Factory|Industrial Nanorobotics|7||
 |6 secret project|The Hunter-Seeker Algorithm|Pre-Sentient Algorithms|8|Yes|
-|6 secret project|The Planetary Energy Grid|Advanced Subatomic Theory|8||
 |6 secret project|The Longevity Vaccine|Bio-Engineering|9||
 |6 secret project|The Neural Amplifier|Neural Grafting|10||
 |6 secret project|The Dream Twister|The Will to Power|10|Yes|
