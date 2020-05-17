@@ -626,6 +626,7 @@ Feature associations change quite often. This may be stale information.
 |6 secret project|The Living Refinery|Superconductor|3||
 |6 secret project|The Virtual World|Planetary Networks|4|Yes|
 |6 secret project|The Planetary Datalinks|Cyberethics|5|Yes|
+|6 secret project|The Planetary Energy Grid|Adaptive Economics|5||
 |6 secret project|The Maritime Control Center|Doctrine: Initiative|6||
 |6 secret project|The Ascetic Virtues|Gene Splicing|6||
 |6 secret project|The Manifold Harmonics|Environmental Economics|6||
@@ -633,7 +634,6 @@ Feature associations change quite often. This may be stale information.
 |6 secret project|The Theory of Everything|Unified Field Theory|7||
 |6 secret project|The Nano Factory|Industrial Nanorobotics|7||
 |6 secret project|The Hunter-Seeker Algorithm|Pre-Sentient Algorithms|8|Yes|
-|6 secret project|The Planetary Energy Grid|Advanced Subatomic Theory|8||
 |6 secret project|The Longevity Vaccine|Bio-Engineering|9||
 |6 secret project|The Neural Amplifier|Neural Grafting|10||
 |6 secret project|The Dream Twister|The Will to Power|10|Yes|
