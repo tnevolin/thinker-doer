@@ -13,6 +13,8 @@
 * Cosmetics. Shortened some labels in F4 screen to fit longer base names and avoid line wrapping.
 * Environmental Economics is level 5.
 * Postponed each mineral facilities after Genejack Factory by 1 level.
+* The Planetary Energy Grid is enabled by Adaptive Economics.
+* The Planetary Energy Grid cost is 600.
 
 # Version 43
 

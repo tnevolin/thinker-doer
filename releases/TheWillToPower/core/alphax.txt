@@ -751,7 +751,7 @@ The Ascent to Transcendence, 500, 0, Thresh,  Disable,  End of Singular Sentienc
 The Manifold Harmonics,       60, 0, EnvEcon, Disable,  Bonus Resources In Fungus,      -1, 0, 1, 2, 2,
 The Nethack Terminus,         60, 0, HomoSup, Disable,  Stronger Probe Teams,            0, 1, 2, 1, 1,
 The Cloudbase Academy,       120, 0, WillPow, Disable,  Faster/Stronger Air Units,       1, 1, 0, 0, 0,
-The Planetary Energy Grid,    80, 0, Subat,   Disable,  Energy Bank At Every Base,      -1, 0, 1, 2, 1,
+The Planetary Energy Grid,    60, 0, AdapEco, Disable,  Energy Bank At Every Base,      -1, 0, 1, 2, 1,
 Empty Secret Project 38,      20, 0, Disable, Disable,  End of Real Secret Projects,     0, 0, 2, 2, 2,
 Empty Secret Project 39,      20, 0, Disable, Disable,  End of Real Secret Projects,     0, 0, 2, 2, 2,
 Empty Secret Project 40,      20, 0, Disable, Disable,  End of Real Secret Projects,     0, 0, 2, 2, 2,
