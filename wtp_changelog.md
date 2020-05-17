@@ -1,3 +1,7 @@
+# Version 46
+
+* Brood Pit cost/maint is 12/4.
+
 # Version 45
 
 * Command Center cost/maint is 6/2.
