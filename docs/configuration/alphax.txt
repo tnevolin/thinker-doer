@@ -680,7 +680,7 @@ Centauri Preserve,            10, 2, CentMed, Disable,  Ecology Bonus
 Temple of Planet,             20, 3, AlphCen, Disable,  Ecology Bonus
 Psi Gate,                     10, 2, Matter,  Disable,  Teleport
 Covert Ops Center,            10, 2, Algor,   Disable,  Stronger Probe Teams
-Brood Pit,                     8, 2, CentGen, Disable,  Police/Morale
+Brood Pit,                    12, 3, AlphCen, Disable,  Police/Morale
 Aquafarm,                     12, 2, FldMod,  Disable,  Sea Nutrients
 Subsea Trunkline,             12, 4, SupLube, Disable,  Sea Minerals
 Thermocline Transducer,        8, 0, AdapEco, Disable,  Sea Energy

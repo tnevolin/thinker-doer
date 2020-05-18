@@ -586,7 +586,7 @@ Feature associations change quite often. This may be stale information.
 |4b facility - drones|Hologram theatre|Polymorphic Software|2|Yes|
 |4b facility - drones|Punishment sphere|Advanced Military Algorithms|5||
 |4b facility - drones|Paradise garden|Sentient Econometrics|11|Yes|
-|4b facility - drones|Brood Pit|Centauri Genetics|10||
+|4b facility - drones|Brood Pit|Secrets of Alpha Centauri|9||
 |4c facility - misc|Recycling tanks|Biogenetics|2|Yes|
 |4c facility - misc|Children's creche|Ethical Calculus|2|Yes|
 |4c facility - misc|Subspace Generator|Secrets of the Manifolds|13|Yes|

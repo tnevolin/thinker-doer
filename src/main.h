@@ -2,7 +2,7 @@
 #define __MAIN_H__
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v1.0"
+    #define MOD_VERSION "Will to Power Mod"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
