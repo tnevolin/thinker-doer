@@ -1,3 +1,8 @@
+# Version 47
+
+* Brood Pit cost/maint is 12/3.
+* Brood Pit is assigned to Secrets of Alpha Centauri.
+
 # Version 46
 
 * Brood Pit cost/maint is 12/4.
@@ -217,6 +222,10 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Assign Brood pit to Secrets of Alpha Centauri.
+* Set Brood pit cost to 120/3.
+* Adjust SP costs to be built in 20-40 turns by a single base.
+* Disable self-destruct ability.
 * Copy basic units to player unit pool.
 * Don't display basic units in design workshop.
 * Make magtube movement cost 1/6.
