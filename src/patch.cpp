@@ -1833,6 +1833,29 @@ void patch_default_morale_very_green()
 
 }
 
+/**
+Sets default unit morale to Very Green.
+*/
+void patch_tile_yield()
+{
+    write_call_ptr(0x0040A68E, (int)tile_yield);
+    write_call_ptr(0x0040A6E6, (int)tile_yield);
+    write_call_ptr(0x0040A744, (int)tile_yield);
+    write_call_ptr(0x0040CF06, (int)tile_yield);
+    write_call_ptr(0x0040F643, (int)tile_yield);
+    write_call_ptr(0x004B4791, (int)tile_yield);
+    write_call_ptr(0x004D90B5, (int)tile_yield);
+    write_call_ptr(0x004E83EF, (int)tile_yield);
+    write_call_ptr(0x004E867B, (int)tile_yield);
+    write_call_ptr(0x004E8D9A, (int)tile_yield);
+    write_call_ptr(0x004E8F13, (int)tile_yield);
+    write_call_ptr(0x004E9015, (int)tile_yield);
+    write_call_ptr(0x004E912B, (int)tile_yield);
+    write_call_ptr(0x004E920C, (int)tile_yield);
+    write_call_ptr(0x0056D6E0, (int)tile_yield);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2139,6 +2162,10 @@ bool patch_setup(Config* cf) {
         patch_default_morale_very_green();
 
     }
+
+    // patch tile_yield
+
+    patch_tile_yield();
 
     // continue with original Thinker checks
 
