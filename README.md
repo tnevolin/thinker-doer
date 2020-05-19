@@ -438,16 +438,16 @@ Get it to at least 1-1-0 yield relatively early in the game to allow minimal sup
 Focus on energy yield in the mid game to compliment forest instead of competing with it.
 Use green/alien technologies for fungus production to streamline research priorities for green/PLANET factions.
 
-| Technology | Fungus production effect | Cumulative yield | Comment |
-|----|----|----|----|
-| Centauri Ecology | +1 nutrient | 1-0-0 |
-| Progenitor Psych | +1 mineral | 1-1-0 | reassigned |
-| Field Modulation | +1 energy | 1-1-1 | reassigned |
-| Bioadaptive Resonance | +1 energy | 1-1-2 | reassigned |
-| Centauri Psi | +1 nutrient | 2-1-2 |
-| Centauri Meditation | +1 energy | 2-1-3 |
-| Secrets of Alpha Centauri | +1 energy | 2-1-4 |
-| Centauri Genetics | +1 mineral | 2-2-4 |
+| technology | level | fungus production | cumulative yield | comment |
+|----|----:|----|----|----|
+| Centauri Ecology | 1 | +1 nutrient | 1-0-0 |
+| Progenitor Psych | 1 | +1 mineral | 1-1-0 | reassigned |
+| Field Modulation | 3 | +1 energy | 1-1-1 | reassigned |
+| Bioadaptive Resonance | 4 | +1 energy | skipped | reassigned |
+| Centauri Psi | 5 | +1 nutrient | 2-1-1 |
+| Centauri Meditation | 6 | +1 energy | 2-1-2 |
+| Secrets of Alpha Centauri | 9 | +1 energy | 2-1-3 |
+| Centauri Genetics | 10 | +1 mineral | skipped |
 
 ## Sea Sensors
 

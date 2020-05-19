@@ -1,3 +1,7 @@
+# Version 48
+
+* Reduced fungus yield. See table in readme.
+
 # Version 47
 
 * Brood Pit cost/maint is 12/3.
@@ -222,8 +226,6 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Assign Brood pit to Secrets of Alpha Centauri.
-* Set Brood pit cost to 120/3.
 * Adjust SP costs to be built in 20-40 turns by a single base.
 * Disable self-destruct ability.
 * Copy basic units to player unit pool.
