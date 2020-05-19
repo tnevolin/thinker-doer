@@ -1,3 +1,7 @@
+# Version 50
+
+* Command Center cost/maint is 6/1. It is updated automatically in game to match reactor level.
+
 # Version 49
 
 * Condenser does not multiply nutrient yield.
