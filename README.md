@@ -313,7 +313,7 @@ Nanohospital | 18 | |
 Biology Lab | 4 | 0 | Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player incentive to build it before Network Node.
 Geosynchronous Survey Pod | 16 | 2 | Dropped maintenance since this is defense helping facility. I rarely use it myself. Maybe with lower maintenance it'll be more attractive.
 Aquafarm | 12 | 2 | This is the most beneficial facility out of three aquatic yield improvers. It affects all work squares and not only half as other two. Besides, nutrient surplus is the most powerful resource that in time compensates lack of two others due to population growth and increase in workers. I think the above increased price is not even enough to compensate for it but 12 rows is already quite high for early game.
-Brood Pit | 12 | 4 | As lolada pointed out here http://alphacentauri2.info/index.php?topic=21359.msg125058#msg125058, the combined features of this facility make it an awesome native warfare oriented aid on top of extra policae rating. Its cost/maint should be much bigger to compensate it.
+Brood Pit | 12 | 3 | As lolada pointed out here http://alphacentauri2.info/index.php?topic=21359.msg125058#msg125058, the combined features of this facility make it an awesome native warfare oriented aid on top of extra policae rating. Its cost/maint should be much bigger to compensate it.
 
 # Secret Project costs
 
