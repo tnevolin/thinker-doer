@@ -441,13 +441,13 @@ Use green/alien technologies for fungus production to streamline research priori
 | technology | level | fungus production | cumulative yield | comment |
 |----|----:|----|----|----|
 | Centauri Ecology | 1 | +1 nutrient | 1-0-0 |
-| Progenitor Psych | 1 | +1 mineral | 1-0-1 | reassigned |
-| Field Modulation | 3 | +1 energy | 2-0-1 | reassigned |
+| Progenitor Psych | 1 | +1 energy | 1-0-1 | reassigned |
+| Field Modulation | 3 | +1 nutrient | 2-0-1 | reassigned |
 | Bioadaptive Resonance | 4 | +1 energy | 2-0-2 | reassigned |
 | Centauri Psi | 5 | +1 nutrient | 3-0-2 |
 | Centauri Meditation | 6 | +1 energy | 3-0-3 |
-| Secrets of Alpha Centauri | 9 | +1 energy | 4-0-3 |
-| Centauri Genetics | 10 | +1 mineral | 4-0-4 |
+| Secrets of Alpha Centauri | 9 | +1 nutrient | 4-0-3 |
+| Centauri Genetics | 10 | +1 energy | 4-0-4 |
 
 ## Sea Sensors
 
