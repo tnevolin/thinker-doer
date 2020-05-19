@@ -111,3 +111,7 @@ fp_2int_void* tx_strcat = (fp_2int_void*)0x00645470;
 // calculate_distance_to_nearest_base
 fp_6int* tx_calculate_distance_to_nearest_base = (fp_6int*)0x004E3D50;
 
+// calculate tile yield
+fp_5int* tx_tile_yield = (fp_5int*)0x004E7DC0;
+
+

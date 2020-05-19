@@ -1,3 +1,9 @@
+# Version 49
+
+* Condenser does not multiply nutrient yield.
+* Soil Enricher does not multiply nutrient yield and instead adds 1.
+* Borehole yield is 0-4-4.
+
 # Version 48
 
 * Rearranged fungus yield. See table in readme.

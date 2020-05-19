@@ -133,5 +133,8 @@ extern fp_2int_void* tx_strcat;
 // calculate_distance_to_nearest_base
 extern fp_6int* tx_calculate_distance_to_nearest_base;
 
+// calculate tile yield
+extern fp_5int* tx_tile_yield;
+
 #endif // __TERRANX_H__
 

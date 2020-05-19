@@ -97,5 +97,7 @@ int map_distance(int x1, int y1, int x2, int y2);
 
 HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower);
 
+int tile_yield(int type, int base, int faction, int x, int y);
+
 #endif // __PROTOTYPE_H__
 
