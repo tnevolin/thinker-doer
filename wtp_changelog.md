@@ -1,6 +1,6 @@
 # Version 48
 
-* Reduced fungus yield. See table in readme.
+* Rearranged fungus yield. See table in readme.
 
 # Version 47
 
