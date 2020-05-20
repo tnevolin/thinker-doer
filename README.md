@@ -346,43 +346,43 @@ Cost in mineral rows.
 
 secret project | level | cost | explanation
 ----|----:|----:|----
-The Merchant Exchange | 20 | 1 | Local improvement - no change.
-The Human Genome | 40 | 2 | 2 minerals worth quelled drone x 200
-The Command Nexus | 40 | 2 | 60 cost x 10 + 1 maintenance x 100. Reduced in half as it is not needed in every base.
-The Universal Translator | 40 | 2 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. No change.
-The Weather Paradigm | 60 | 3 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game. Should be most expensive in its time.
-The Empath Guild | 60 | 3 | Way to Governorship and energy income multiplier. Should be quite expensive.
-The Living Refinery | 40 | 3 | About 2 minerals per base per turn x 200.
-The Virtual World | 60 | 4 | 60 cost x 10 + 2 maintenance x 100. Reduced slightly by user requests.
-The Planetary Transit System | 40 | 4 | Drone quellying + immediate growth boost. Proportional to empire size but limited to small bases only. Slight increase.
-The Maritime Control Center | 50 | 4 | 80 cost x 10 + 2 maintenance x 100. Reduced in half as it is not needed in every base.
-The Planetary Datalinks	| 60 | 5 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
-The Manifold Harmonics | 60 | 5 | Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
-The Planetary Energy Grid | 60 | 5 | 60 cost x 10 + 1 maintenance x 100.
-The Citizens' Defense Force | 40 | 6 | 50 cost x 10. Reduced slightly as it is not needed in every base.
-The Xenoempathy Dome | 40 | 6 | Tactical advantage, aid to fungus terraforming, +1 lifecycle = slight increase.
-The Supercollider | 30 | 6 | Local effect = no change.
-The Ascetic Virtues | 60 | 6 | +POLICE + growth = slight increase.
-The Theory of Everything | 40 | 7 | Local effect = no change.
-The Hunter-Seeker Algorithm | 60 | 8 | No clue how to deal with this. People tend to value it quite high. Doubled the price.
-The Nano Factory | 40 | 8 | Slight tactical and unit upgrade advantage. Nothing seriosly game changing. No change.
-The Longevity Vaccine | 60 | 9 | Drone quellying. Slightly higher valued than The Human Genome due to more advanced era.
-The Nethack Terminus | 60 | 9 | Some help to probe teams. Other than that nothing much.
-The Neural Amplifier | 80 | 10 | Tough to evaluate but I tend to price combat effectiveness boosting projects quite high.
-The Pholus Mutagen | 60 | 10 | Allows higher production without ecology impact. Should be slightly more expensive.
-The Dream Twister | 80 | 10 | Same as The Neural Amplifier.
-The Cloudbase Academy | 120 | 10 | 100 cost x 10 + 3 maintenance x 100. Not reduced at all as AC is needed in every base for satellites later on.
-The Cyborg Factory | 120 | 11 | 200 cost x 10 + 5 maintenance x 100. Reduced in half as it is not needed in every base.
-The Clinical Immortality | 120 | 11 | Drones and diplomatic victory. Should be quite high.
-The Singularity Inductor | 200 | 11 | 200 cost x 10.
-The Bulk Matter Transmitter | 200 | 11 | 10 minerals x 200.
-The Network Backbone | 160 | 12 | Large source of labs multiplied by the number of all world bases. Very high.
-The Self-Aware Colony | 200 | 12 | Roughly 20 maintenance x 100.
-The Space Elevator | 100 | 12 | Production boost for satellites. The boost itself is limited but satellites are the most lucrative facilities in the game. Priced high.
-The Cloning Vats | 300 | 13 | Endless population boom. It is the most expensive SP in my mod (besides AtT).
-The Telepathic Matrix | 200 | 13 | Total drone solution. About 5 times The Human Genome cost. 
-The Voice of Planet | 120 | 14 | 
-The Ascent to Transcendence | 300 | 14 | End game bases with crawlers should be able to build it in reasonable time but not instantly.
+The Merchant Exchange | 1 | 20 | Local improvement - no change.
+The Human Genome | 2 | 40 | 2 minerals worth quelled drone x 200
+The Command Nexus | 2 | 40 | 60 cost x 10 + 1 maintenance x 100. Reduced in half as it is not needed in every base.
+The Universal Translator | 2 | 40 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. No change.
+The Weather Paradigm | 3 | 60 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game. Should be most expensive in its time.
+The Empath Guild | 3 | 60 | Way to Governorship and energy income multiplier. Should be quite expensive.
+The Living Refinery | 3 | 40 | About 2 minerals per base per turn x 200.
+The Virtual World | 4 | 60 | 60 cost x 10 + 2 maintenance x 100. Reduced slightly by user requests.
+The Planetary Transit System | 4 | 40 | Drone quellying + immediate growth boost. Proportional to empire size but limited to small bases only. Slight increase.
+The Maritime Control Center | 4 | 50 | 80 cost x 10 + 2 maintenance x 100. Reduced in half as it is not needed in every base.
+The Planetary Datalinks	| 5 | 60 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
+The Manifold Harmonics | 5 | 60 | Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
+The Planetary Energy Grid | 5 | 60 | 60 cost x 10 + 1 maintenance x 100.
+The Citizens' Defense Force | 6 | 40 | 50 cost x 10. Reduced slightly as it is not needed in every base.
+The Xenoempathy Dome | 6 | 40 | Tactical advantage, aid to fungus terraforming, +1 lifecycle = slight increase.
+The Supercollider | 6 | 30 | Local effect = no change.
+The Ascetic Virtues | 6 | 60 | +POLICE + growth = slight increase.
+The Theory of Everything | 7 | 40 | Local effect = no change.
+The Hunter-Seeker Algorithm | 8 | 60 | No clue how to deal with this. People tend to value it quite high. Doubled the price.
+The Nano Factory | 8 | 40 | Slight tactical and unit upgrade advantage. Nothing seriosly game changing. No change.
+The Longevity Vaccine | 9 | 60 | Drone quellying. Slightly higher valued than The Human Genome due to more advanced era.
+The Nethack Terminus | 9 | 60 | Some help to probe teams. Other than that nothing much.
+The Neural Amplifier | 10 | 80 | Tough to evaluate but I tend to price combat effectiveness boosting projects quite high.
+The Pholus Mutagen | 10 | 60 | Allows higher production without ecology impact. Should be slightly more expensive.
+The Dream Twister | 10 | 80 | Same as The Neural Amplifier.
+The Cloudbase Academy | 10 | 120 | 100 cost x 10 + 3 maintenance x 100. Not reduced at all as AC is needed in every base for satellites later on.
+The Cyborg Factory | 11 | 120 | 200 cost x 10 + 5 maintenance x 100. Reduced in half as it is not needed in every base.
+The Clinical Immortality | 11 | 120 | Drones and diplomatic victory. Should be quite high.
+The Singularity Inductor | 11 | 200 | 200 cost x 10.
+The Bulk Matter Transmitter | 11 | 200 | 10 minerals x 200.
+The Network Backbone | 12 | 160 | Large source of labs multiplied by the number of all world bases. Very high.
+The Self-Aware Colony | 12 | 200 | Roughly 20 maintenance x 100.
+The Space Elevator | 12 | 100 | Production boost for satellites. The boost itself is limited but satellites are the most lucrative facilities in the game. Priced high.
+The Cloning Vats | 13 | 300 | Endless population boom. It is the most expensive SP in my mod (besides AtT).
+The Telepathic Matrix | 13 | 200 | Total drone solution. About 5 times The Human Genome cost. 
+The Voice of Planet | 14 | 120 | 
+The Ascent to Transcendence | 14 | 300 | End game bases with crawlers should be able to build it in reasonable time but not instantly.
 
 # Feature appearance time
 
