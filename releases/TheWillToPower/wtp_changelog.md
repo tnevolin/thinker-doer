@@ -1,3 +1,7 @@
+# Version 53
+
+* Removed dialog option for self-destruct.
+
 # Version 52
 
 * Aerospace Complex cost/maint is 10/3.
@@ -248,7 +252,6 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Adjust SP costs to be built in 20-40 turns by a single base.
 * Make accumulated production change proportionally with INDUSTRY change. Same for GROWTH.
 * Disable self-destruct ability.
 * Copy basic units to player unit pool.
