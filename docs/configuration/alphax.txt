@@ -674,7 +674,7 @@ Habitation Dome,              16, 4, Solids,  Disable,  Increase Population Limi
 Pressure Dome,                 8, 0, DocFlex, Disable,  Submersion/Resources
 Command Center,                6, 1, Mobile,  Disable,  +2 Morale:Land
 Naval Yard,                    8, 2, DocInit, Disable,  +2 Morale:Sea, Sea Def +100%
-Aerospace Complex,            12, 3, DocAir,  Disable,  +2 Morale:Air, Air Def +100%
+Aerospace Complex,            10, 3, DocAir,  Disable,  +2 Morale:Air, Air Def +100%
 Bioenhancement Center,        20, 5, Neural,  Disable,  +2 Morale:ALL
 Centauri Preserve,            10, 2, CentMed, Disable,  Ecology Bonus
 Temple of Planet,             20, 3, AlphCen, Disable,  Ecology Bonus

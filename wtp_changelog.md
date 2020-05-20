@@ -1,3 +1,7 @@
+# Version 52
+
+* Aerospace Complex cost/maint is 10/3.
+
 # Version 51
 
 * Default unit morale is Very Green.
