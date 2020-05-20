@@ -917,7 +917,6 @@ Really disband $UNITTYPE0?
 
 Never mind.
 Confirmed.
-Activate self-destruct overload sequence!
 
 #STARVE
 #xs 320
