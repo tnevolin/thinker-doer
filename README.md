@@ -355,7 +355,7 @@ The Empath Guild | 3 | 60 | Way to Governorship and energy income multiplier. Sh
 The Living Refinery | 3 | 40 | About 2 minerals per base per turn x 200.
 The Virtual World | 4 | 60 | 60 cost x 10 + 2 maintenance x 100. Reduced slightly by user requests.
 The Planetary Transit System | 4 | 40 | Drone quellying + immediate growth boost. Proportional to empire size but limited to small bases only. Slight increase.
-The Maritime Control Center | 4 | 50 | 80 cost x 10 + 2 maintenance x 100. Reduced in half as it is not needed in every base.
+The Maritime Control Center | 4 | 60 | 80 cost x 10 + 2 maintenance x 100. Reduced in half as it is not needed in every base.
 The Planetary Datalinks	| 5 | 60 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
 The Manifold Harmonics | 5 | 60 | Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
 The Planetary Energy Grid | 5 | 60 | 60 cost x 10 + 1 maintenance x 100.
