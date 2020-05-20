@@ -1834,7 +1834,7 @@ void patch_default_morale_very_green()
 }
 
 /**
-Sets default unit morale to Very Green.
+Patch tile yield calculation.
 */
 void patch_tile_yield()
 {
@@ -1853,6 +1853,15 @@ void patch_tile_yield()
     write_call_ptr(0x004E912B, (int)tile_yield);
     write_call_ptr(0x004E920C, (int)tile_yield);
     write_call_ptr(0x0056D6E0, (int)tile_yield);
+
+}
+
+/**
+Patch base mechanics production.
+*/
+void patch_base_mechanics_production()
+{
+    write_call_ptr(0x004F7A2F, (int)base_mechanics_production);
 
 }
 
@@ -2166,6 +2175,10 @@ bool patch_setup(Config* cf) {
     // patch tile_yield
 
     patch_tile_yield();
+
+    // patch base_mechanics_production
+
+    patch_base_mechanics_production();
 
     // continue with original Thinker checks
 

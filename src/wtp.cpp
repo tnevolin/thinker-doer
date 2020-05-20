@@ -1327,3 +1327,30 @@ int tile_yield(int type, int base, int faction, int x, int y)
 
 }
 
+/**
+Base mechanics production modifications.
+*/
+int base_mechanics_production()
+{
+    int returnValue = tx_base_mechanics_production();
+
+    // get current base
+
+    BASE* base = tx_current_base_ptr;
+
+    // get current item
+
+    int current_item = base->queue_items[0];
+
+    debug
+    (
+        "base=%d, current_item=%d\n",
+        (int)base,
+        current_item
+    )
+    ;
+
+    return returnValue;
+
+}
+

@@ -66,6 +66,7 @@ extern int (*tx_battle_compute_defender_effect_values)[0x4];
 extern char ***tx_labels;
 
 typedef int __cdecl fp_void();
+typedef int __cdecl fp_0int();
 typedef int __cdecl fp_1int(int);
 typedef int __cdecl fp_2int(int, int);
 typedef int __cdecl fp_3int(int, int, int);
@@ -135,6 +136,9 @@ extern fp_6int* tx_calculate_distance_to_nearest_base;
 
 // calculate tile yield
 extern fp_5int* tx_tile_yield;
+
+// base mechanics production
+extern fp_0int* tx_base_mechanics_production;
 
 #endif // __TERRANX_H__
 
