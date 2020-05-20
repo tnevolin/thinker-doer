@@ -1,3 +1,10 @@
+# Version 51
+
+* Default unit morale is Very Green.
+* Forest terraforming time is 8 turns.
+* Hologram Theatre cost/maint is 6/2.
+* AI rushes SP when they can.
+
 # Version 50
 
 * Command Center cost/maint is 6/1. It is updated automatically in game to match reactor level.
@@ -237,6 +244,7 @@ Initial release. See list of changes in readme.
 # TODO
 
 * Adjust SP costs to be built in 20-40 turns by a single base.
+* Make accumulated production change proportionally with INDUSTRY change. Same for GROWTH.
 * Disable self-destruct ability.
 * Copy basic units to player unit pool.
 * Don't display basic units in design workshop.
@@ -246,4 +254,6 @@ Initial release. See list of changes in readme.
 * Interceptor fight uses armor as well.
 * Make ECM to affect sea units as well.
 * Rework probe team success rates.
+* Check research cost calculation.
+* Cloning Vats should not grant impunities.
 

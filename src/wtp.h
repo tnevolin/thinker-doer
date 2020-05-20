@@ -99,5 +99,7 @@ HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength,
 
 int tile_yield(int type, int base, int faction, int x, int y);
 
+int base_mechanics_production();
+
 #endif // __PROTOTYPE_H__
 

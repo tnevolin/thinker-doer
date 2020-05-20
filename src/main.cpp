@@ -732,16 +732,98 @@ int consider_hurry(int id) {
     FactMeta* m = &tx_factions_meta[fac];
     AIPlans* p = &plans[fac];
 
-    if (!(conf.hurry_items && t >= -FAC_ORBITAL_DEFENSE_POD && ~b->status_flags & BASE_HURRY_PRODUCTION))
+    // applicability condition
+    if
+    (
+        !
+        (
+            conf.hurry_items
+            &&
+            // [WtP] allow hurrying everything
+            (
+                t >= -FAC_ORBITAL_DEFENSE_POD
+                ||
+                (t >= -PROJECT_ID_LAST && t <= -PROJECT_ID_FIRST)
+            )
+            &&
+            (~b->status_flags & BASE_HURRY_PRODUCTION)
+         )
+    )
         return 0;
-    bool cheap = b->minerals_accumulated >= tx_basic->retool_exemption;
+
+    // determine hurry penalty threshold and hurry cost
+    bool cheap;
+    // projects
+    if (t >= -PROJECT_ID_LAST && t <= -PROJECT_ID_FIRST)
+    {
+        // no threshold
+        if (conf.disable_hurry_penalty_threshold)
+        {
+            cheap = true;
+        }
+        // vanilla default threshold
+        else
+        {
+            int rowMinerals = 10 - max(-5, min(5, f->SE_industry));
+            cheap = b->minerals_accumulated >= 4 * rowMinerals;
+        }
+    }
+    // facilities and units
+    else
+    {
+        // no threshold
+        if (conf.disable_hurry_penalty_threshold)
+        {
+            cheap = true;
+        }
+        // vanilla default threshold
+        else
+        {
+            cheap = b->minerals_accumulated >= tx_basic->retool_exemption;
+        }
+    }
+
     int reserve = 20 + min(900, max(0, f->current_num_bases * min(30, (*tx_current_turn - 20)/5)));
     int mins = mineral_cost(fac, t) - b->minerals_accumulated;
-    int cost = (t < 0 ? 2*mins : mins*mins/20 + 2*mins) * (cheap ? 1 : 2) * m->rule_hurry / 100;
     int turns = (int)ceil(mins / max(0.01, 1.0 * b->mineral_surplus));
 
+    // hurry cost calculation
+    int cost;
+    // facility
+    if (t >= -FAC_ORBITAL_DEFENSE_POD && t < 0)
+    {
+        cost = (cheap ? 1 : 2) * 2 * mins;
+    }
+    // project
+    else if (t >= -PROJECT_ID_LAST && t <= -PROJECT_ID_FIRST)
+    {
+        cost = (cheap ? 1 : 2) * 4 * mins;
+    }
+    // units
+    else if (t >= 0)
+    {
+        // alternative formula
+        if (conf.alternative_unit_hurry_formula)
+        {
+            cost = (cheap ? 1 : 2) * 4 * mins;
+        }
+        // vanilla default formula
+        else
+        {
+            cost = (mins * mins / 20 + 2 * mins) * (cheap ? 1 : 2);
+        }
+    }
+    // unsupported item type
+    else
+    {
+        return 0;
+    }
+    cost = cost * m->rule_hurry / 100;
+
+    // hurry only cheap cases
     if (!(cheap && mins > 0 && cost > 0 && f->energy_credits - cost > reserve))
         return 0;
+
     if (b->drone_total > b->talent_total && t < 0 && t == need_psych(id))
         return hurry_item(b, mins, cost);
     if (t < 0 && turns > 1) {
@@ -753,6 +835,9 @@ int consider_hurry(int id) {
         if (t == -FAC_PERIMETER_DEFENSE && p->enemy_range < 15)
             return hurry_item(b, mins, cost);
         if (t == -FAC_AEROSPACE_COMPLEX && has_tech(fac, TECH_Orbital))
+            return hurry_item(b, mins, cost);
+        // [WtP] hurry SP always
+        if (t >= -PROJECT_ID_LAST && t <= -PROJECT_ID_FIRST)
             return hurry_item(b, mins, cost);
     }
     if (t >= 0 && turns > 1) {

@@ -7,20 +7,20 @@ struct BASE
     short x;                                // +0x0000
     short y;                                // +0x0002
     char faction_id;                        // +0x0004
-    char faction_id_former;
-    char pop_size;
-    char assimilation_turns_left;
+    char faction_id_former;                 // +0x0005
+    char pop_size;                          // +0x0006
+    char assimilation_turns_left;           // +0x0007
     char nerve_staple_turns_left;           // +0x0008
-    char ai_plan_status;
-    char factions_spotted_flags;
+    char ai_plan_status;                    // +0x0009
+    char factions_spotted_flags;            // +0x000A
     char factions_pop_size_intel[8];        // +0x000B
     char name[25];                          // +0x0013
     short unk_x_coord;                      // +0x002C
     short unk_y_coord;                      // +0x002E
     int status_flags;                       // +0x0030
-    int event_flags;
-    int governor_flags;
-    int nutrients_accumulated;
+    int event_flags;                        // +0x0034
+    int governor_flags;                     // +0x0038
+    int nutrients_accumulated;              // +0x003C
     int minerals_accumulated;               // +0x0040
     int production_id_last;
     int eco_damage;
@@ -33,21 +33,21 @@ struct BASE
     int pad5;                               // +0x0088
     char facilities_built[12];              // +0x008C
     int mineral_surplus_final;              // +0x0098
-    int minerals_accumulated_2;
-    int pad6;
+    int minerals_accumulated_2;             // +0x009C
+    int pad6;                               // +0x00A0
     int pad7;
     int pad8;
     int pad9;
-    int nutrient_intake;
+    int nutrient_intake;                    // +0x00B0
     int mineral_intake;
     int energy_intake;
-    int unused_intake;                      // +0x98
-    int nutrient_intake_2;
+    int unused_intake;
+    int nutrient_intake_2;                  // +0x00C0
     int mineral_intake_2;
     int energy_intake_2;
     int unused_intake_2;
-    int nutrient_surplus;
-    int mineral_surplus;
+    int nutrient_surplus;                   // +0x00D0
+    int mineral_surplus;                    // +0x00D4
     int energy_surplus;
     int unused_surplus;                     // +0xB8
     int nutrient_inefficiency;
@@ -301,39 +301,39 @@ struct Faction
     int SE_industry_base;
     int SE_research_base;
     int unk_13;
-    int unk_14;
-    int tech_commerce_bonus;        // 0x0300
+    int unk_14;                     // 0x0300
+    int tech_commerce_bonus;
     int unk_16;
     int unk_17;
-    int unk_18;
+    int unk_18;                     // 0x0310
     int tech_fungus_nutrient;
     int tech_fungus_mineral;
     int tech_fungus_energy;
-    int unk_22;
+    int unk_22;                     // 0x0320
     int SE_alloc_psych;
     int SE_alloc_labs;
     int unk_25;
-    char gap_330[44];
-    int tech_ranking;
-    int unk_26;
-    int ODP_deployed;
-    int theory_of_everything;
-    char tech_trade_source[92];
-    int tech_accumulated;
-    int tech_research_id;
-    int tech_cost;
+    char gap_330[44];               // 0x0330
+    int tech_ranking;               // 0x035C
+    int unk_26;                     // 0x0360
+    int ODP_deployed;               // 0x0364
+    int theory_of_everything;       // 0x0368
+    char tech_trade_source[92];     // 0x036C
+    int tech_accumulated;           // 0x03C8
+    int tech_research_id;           // 0x03CC
+    int tech_cost;                  // 0x03D0
     int earned_techs_saved;
     int net_random_event;
     int AI_fight;
-    int AI_growth;
+    int AI_growth;                  // 0x03E0
     int AI_tech;
     int AI_wealth;
     int AI_power;
-    int target_x;
-    int target_y;
-    int unk_28;
-    int council_call_turn;
-    int unk_29[11];
+    int target_x;                   // 0x03F0
+    int target_y;                   // 0x03F4
+    int unk_28;                     // 0x03F8
+    int council_call_turn;          // 0x03FC
+    int unk_29[11];                 // 0x0400
     int unk_30[11];
     int unk_31;
     int unk_32;
