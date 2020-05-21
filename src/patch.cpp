@@ -1861,7 +1861,17 @@ Patch base mechanics production.
 */
 void patch_base_mechanics_production()
 {
-    write_call_ptr(0x004F7A2F, (int)base_mechanics_production);
+    //write_call_ptr(0x004F7A2F, (int)base_mechanics_production);
+
+}
+
+/**
+SE GROWTH/INDUSTRY change accumulated nutrients/minerals proportionally.
+*/
+void patch_se_accumulated_resource_adjustment()
+{
+    // SE set upon SE dialog close
+    write_call_ptr(0x004AF0F6, (int)se_accumulated_resource_adjustment);
 
 }
 
@@ -2179,6 +2189,10 @@ bool patch_setup(Config* cf) {
     // patch base_mechanics_production
 
     patch_base_mechanics_production();
+
+    // se_accumulated_resource_adjustment
+
+    patch_se_accumulated_resource_adjustment();
 
     // continue with original Thinker checks
 

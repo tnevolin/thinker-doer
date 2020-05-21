@@ -1,6 +1,7 @@
 # Version 53
 
 * Removed dialog option for self-destruct.
+* Accumulated nutrients and minerals are adjusted after GROWTH and INDUSTRY SE change to maintain the same completion percentage.
 
 # Version 52
 
@@ -253,7 +254,6 @@ Initial release. See list of changes in readme.
 # TODO
 
 * Make accumulated production change proportionally with INDUSTRY change. Same for GROWTH.
-* Disable self-destruct ability.
 * Copy basic units to player unit pool.
 * Don't display basic units in design workshop.
 * Make magtube movement cost 1/6.

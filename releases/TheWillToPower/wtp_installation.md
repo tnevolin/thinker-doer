@@ -10,6 +10,11 @@ This is fan made mod that goes without warranty of any kind! Use it on your own 
 
 # Installation
 
+Take latest release package from here.
+https://github.com/tnevolin/thinker-doer/tree/master/releases
+
+Unpack it to local directory.
+
 ## Core files
 
 Copy files from **core** folder to game directory overriding existing files.
@@ -24,6 +29,4 @@ Copy files from **factions** folder to game directory overriding existing files.
 # Run
 
 Run terranx_mod.exe
-
-See Thinker mod instructions for further details.
 
