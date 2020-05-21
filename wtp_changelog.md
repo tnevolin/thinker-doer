@@ -1,6 +1,7 @@
 # Version 53
 
 * Removed dialog option for self-destruct.
+* Accumulated nutrients and minerals are adjusted after GROWTH and INDUSTRY SE change to maintain the same completion percentage.
 
 # Version 52
 

@@ -1304,7 +1304,7 @@ HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength,
 /**
 Tile yield modifications.
 */
-int tile_yield(int type, int base, int faction, int x, int y)
+HOOK_API int tile_yield(int type, int base, int faction, int x, int y)
 {
     int value = tx_tile_yield(type, base, faction, x, y);
 
@@ -1330,7 +1330,7 @@ int tile_yield(int type, int base, int faction, int x, int y)
 /**
 Base mechanics production modifications.
 */
-int base_mechanics_production()
+HOOK_API int base_mechanics_production()
 {
     int returnValue = tx_base_mechanics_production();
 
@@ -1349,6 +1349,92 @@ int base_mechanics_production()
         current_item
     )
     ;
+
+    return returnValue;
+
+}
+
+/**
+SE accumulated resource adjustment
+*/
+HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5)
+{
+    // get faction
+
+    Faction* faction = &tx_factions[faction_id];
+
+    // get old ratings
+
+    int SE_growth_pending_old = faction->SE_growth_pending;
+    int SE_industry_pending_old = faction->SE_industry_pending;
+
+    // execute original code
+
+    int returnValue = tx_set_se_on_dialog_close(a1, a2, faction_id, a4, a5);
+
+    // get new ratings
+
+    int SE_growth_pending_new = faction->SE_growth_pending;
+    int SE_industry_pending_new = faction->SE_industry_pending;
+
+    debug
+    (
+        "se_accumulated_resource_adjustment: faction_id=%d, SE_growth: %+d -> %+d, SE_industry: %+d -> %+d\n",
+        faction_id,
+        SE_growth_pending_old,
+        SE_growth_pending_new,
+        SE_industry_pending_old,
+        SE_industry_pending_new
+    )
+    ;
+
+    // adjust nutrients
+
+    if (SE_growth_pending_new != SE_growth_pending_old)
+    {
+        int row_size_old = 10 - SE_growth_pending_old;
+        int row_size_new = 10 - SE_growth_pending_new;
+
+        double conversion_ratio = (double)row_size_new / (double)row_size_old;
+
+        for (int i = 0; i < *tx_total_num_bases; i++)
+        {
+            BASE* base = &tx_bases[i];
+
+            if (base->faction_id == faction_id)
+            {
+                base->nutrients_accumulated = (int)round((double)base->nutrients_accumulated * conversion_ratio);
+
+            }
+
+        }
+
+    }
+
+    // adjust minerals
+
+    if (SE_industry_pending_new != SE_industry_pending_old)
+    {
+        int row_size_old = 10 - SE_industry_pending_old;
+        int row_size_new = 10 - SE_industry_pending_new;
+
+        double conversion_ratio = (double)row_size_new / (double)row_size_old;
+
+        for (int i = 0; i < *tx_total_num_bases; i++)
+        {
+            BASE* base = &tx_bases[i];
+
+            if (base->faction_id == faction_id)
+            {
+                base->minerals_accumulated = (int)round((double)base->minerals_accumulated * conversion_ratio);
+
+            }
+
+        }
+
+    }
+
+    fflush(debug_log);
 
     return returnValue;
 

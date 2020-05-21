@@ -140,5 +140,8 @@ extern fp_5int* tx_tile_yield;
 // base mechanics production
 extern fp_0int* tx_base_mechanics_production;
 
+// set SE on dialog close
+extern fp_5int* tx_set_se_on_dialog_close;
+
 #endif // __TERRANX_H__
 
