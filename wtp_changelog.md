@@ -1,3 +1,8 @@
+# Version 54
+
+* Set borehole to 0-6-4.
+* Fixed Condenser and Enricher calculation and display.
+
 # Version 53
 
 * Removed dialog option for self-destruct.
@@ -253,7 +258,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Make accumulated production change proportionally with INDUSTRY change. Same for GROWTH.
+* fix production tips for condensor, enricher, borehole.
 * Copy basic units to player unit pool.
 * Don't display basic units in design workshop.
 * Make magtube movement cost 1/6.

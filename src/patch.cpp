@@ -36,7 +36,10 @@ bool FileExists(const char* path) {
 }
 
 HOOK_API int crop_yield(int fac, int base, int x, int y, int tf) {
-    int value = tx_crop_yield(fac, base, x, y, tf);
+//    int value = tx_crop_yield(fac, base, x, y, tf);
+    // [WtP] delegate to generic function instead
+    int value = nutrient_yield(fac, base, x, y, tf);
+
     MAP* sq = mapsq(x, y);
     if (sq && sq->items & TERRA_THERMAL_BORE) {
         value++;
@@ -1838,21 +1841,40 @@ Patch tile yield calculation.
 */
 void patch_tile_yield()
 {
-    write_call_ptr(0x0040A68E, (int)tile_yield);
-    write_call_ptr(0x0040A6E6, (int)tile_yield);
-    write_call_ptr(0x0040A744, (int)tile_yield);
-    write_call_ptr(0x0040CF06, (int)tile_yield);
-    write_call_ptr(0x0040F643, (int)tile_yield);
-    write_call_ptr(0x004B4791, (int)tile_yield);
-    write_call_ptr(0x004D90B5, (int)tile_yield);
-    write_call_ptr(0x004E83EF, (int)tile_yield);
-    write_call_ptr(0x004E867B, (int)tile_yield);
-    write_call_ptr(0x004E8D9A, (int)tile_yield);
-    write_call_ptr(0x004E8F13, (int)tile_yield);
-    write_call_ptr(0x004E9015, (int)tile_yield);
-    write_call_ptr(0x004E912B, (int)tile_yield);
-    write_call_ptr(0x004E920C, (int)tile_yield);
-    write_call_ptr(0x0056D6E0, (int)tile_yield);
+    // nutrient yield
+    write_call_ptr(0x00465DD6, (int)nutrient_yield);
+    write_call_ptr(0x004B6C44, (int)nutrient_yield);
+    write_call_ptr(0x004BCEEB, (int)nutrient_yield);
+    write_call_ptr(0x004E7DE4, (int)nutrient_yield);
+    write_call_ptr(0x004E7F04, (int)nutrient_yield);
+    write_call_ptr(0x004E8034, (int)nutrient_yield);
+    // already patched by Thinker
+    // Thinker code will delegate to nutrient_yield instead of original function
+//    write_call_ptr(0x004E888C, (int)nutrient_yield);
+    write_call_ptr(0x004E96F4, (int)nutrient_yield);
+    write_call_ptr(0x004ED7F1, (int)nutrient_yield);
+    write_call_ptr(0x00565878, (int)nutrient_yield);
+
+    // mineral yield
+    write_call_ptr(0x004B6E4F, (int)mineral_yield);
+    write_call_ptr(0x004B6EF9, (int)mineral_yield);
+    write_call_ptr(0x004B6F84, (int)mineral_yield);
+    write_call_ptr(0x004E7E00, (int)mineral_yield);
+    write_call_ptr(0x004E7F14, (int)mineral_yield);
+    write_call_ptr(0x004E8044, (int)mineral_yield);
+    write_call_ptr(0x004E88AC, (int)mineral_yield);
+    write_call_ptr(0x004E970A, (int)mineral_yield);
+
+    // energy yield
+    write_call_ptr(0x004B7028, (int)energy_yield);
+    write_call_ptr(0x004B7136, (int)energy_yield);
+    write_call_ptr(0x004D3E5C, (int)energy_yield);
+    write_call_ptr(0x004E7E1C, (int)energy_yield);
+    write_call_ptr(0x004E7F24, (int)energy_yield);
+    write_call_ptr(0x004E8054, (int)energy_yield);
+    write_call_ptr(0x004E88CA, (int)energy_yield);
+    write_call_ptr(0x004E971F, (int)energy_yield);
+    write_call_ptr(0x0056C856, (int)energy_yield);
 
 }
 
