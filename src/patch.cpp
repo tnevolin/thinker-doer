@@ -1857,15 +1857,6 @@ void patch_tile_yield()
 }
 
 /**
-Patch base mechanics production.
-*/
-void patch_base_mechanics_production()
-{
-    //write_call_ptr(0x004F7A2F, (int)base_mechanics_production);
-
-}
-
-/**
 SE GROWTH/INDUSTRY change accumulated nutrients/minerals proportionally.
 */
 void patch_se_accumulated_resource_adjustment()
@@ -2185,10 +2176,6 @@ bool patch_setup(Config* cf) {
     // patch tile_yield
 
     patch_tile_yield();
-
-    // patch base_mechanics_production
-
-    patch_base_mechanics_production();
 
     // se_accumulated_resource_adjustment
 
