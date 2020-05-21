@@ -1302,26 +1302,48 @@ HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength,
 }
 
 /**
-Tile yield modifications.
+nutrient yield calculation
 */
-HOOK_API int tile_yield(int type, int base, int faction, int x, int y)
+HOOK_API int nutrient_yield(int faction_id, int base, int x, int y, int tf)
 {
-    int value = tx_tile_yield(type, base, faction, x, y);
+    int value = tx_crop_yield(faction_id, base, x, y, tf);
 
     MAP* sq = mapsq(x, y);
 
     // condenser does not multiply nutrients
-    if (type == 0 && (sq && (sq->items & TERRA_CONDENSER)))
+    if (sq && (sq->items & TERRA_CONDENSER))
     {
         value = (value * 2 + 2) / 3;
     }
 
     // enricher does not multiply nutrients and instead adds 1
-    if (type == 0 && (sq && (sq->items & TERRA_SOIL_ENR)))
+    if (sq && (sq->items & TERRA_SOIL_ENR))
     {
         value = (value * 2 + 2) / 3;
         value++;
     }
+
+    return value;
+
+}
+
+/**
+mineral yield calculation
+*/
+HOOK_API int mineral_yield(int faction_id, int base, int x, int y, int tf)
+{
+    int value = tx_mineral_yield(faction_id, base, x, y, tf);
+
+    return value;
+
+}
+
+/**
+energy yield calculation
+*/
+HOOK_API int energy_yield(int faction_id, int base, int x, int y, int tf)
+{
+    int value = tx_energy_yield(faction_id, base, x, y, tf);
 
     return value;
 
