@@ -8,6 +8,35 @@
 Combat calculation placeholder.
 All custom combat calculation goes here.
 */
+HOOK_API int read_basic_rules()
+{
+    // run original code
+
+    int value = tx_read_basic_rules();
+
+    // update rules
+
+    if (value == 0)
+    {
+        if (conf.tube_movement_rate_multiplier > 0)
+        {
+            // set road movement cost
+            conf.road_movement_cost = conf.tube_movement_rate_multiplier;
+            // set tube movement rate
+            tx_basic->mov_rate_along_roads *= conf.tube_movement_rate_multiplier;
+
+        }
+
+    }
+
+    return value;
+
+}
+
+/**
+Combat calculation placeholder.
+All custom combat calculation goes here.
+*/
 HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, int attacker_strength_pointer, int defender_strength_pointer, int flags)
 {
     debug
@@ -1432,6 +1461,51 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
     fflush(debug_log);
 
     return returnValue;
+
+}
+
+/**
+hex cost
+*/
+HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7)
+{
+    // execute original code
+
+    int value = tx_hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, a7);
+
+    // update road/tube movement rate
+
+    if (conf.tube_movement_rate_multiplier > 0)
+    {
+        MAP* square_from = mapsq(from_x, from_y);
+        MAP* square_to = mapsq(to_x, to_y);
+
+        // tube takes one movement rate along the road
+        if
+        (
+            square_from && (square_from->items & TERRA_MAGTUBE)
+            &&
+            square_to && (square_to->items & TERRA_MAGTUBE)
+        )
+        {
+            value = 1;
+
+        }
+        // road take road movement cost
+        else if
+        (
+            square_from && (square_from->items & TERRA_ROAD)
+            &&
+            square_to && (square_to->items & TERRA_ROAD)
+        )
+        {
+            value = conf.road_movement_cost;
+
+        }
+
+    }
+
+    return value;
 
 }
 

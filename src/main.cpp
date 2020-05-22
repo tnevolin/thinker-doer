@@ -205,6 +205,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->territory_combat_bonus = atoi(value);
     }
+    else if (MATCH("wtp", "tube_movement_rate_multiplier"))
+    {
+        cf->tube_movement_rate_multiplier = atoi(value);
+    }
     // Thinker default case
     else
     {

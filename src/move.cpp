@@ -627,6 +627,19 @@ bool can_road(int x, int y, int fac, MAP* sq) {
     return k > 3 && r[0]+r[2]+r[4]+r[6] < 3;
 }
 
+bool can_tube(int x, int y, int fac, MAP* sq)
+{
+    return
+        !is_ocean(sq)
+        &&
+        has_terra(fac, FORMER_MAG_TUBE, 0)
+        &&
+        pm_former[x][y]
+        &&
+        ((sq->items & TERRA_ROAD) && !(sq->items & TERRA_MAGTUBE))
+    ;
+}
+
 bool can_sensor(int x, int y, int fac, MAP* sq) {
     return has_terra(fac, FORMER_SENSOR, is_ocean(sq))
         && ~sq->items & TERRA_SENSOR
@@ -644,6 +657,11 @@ int select_item(int x, int y, int fac, MAP* sq) {
     bool has_min = has_tech(fac, tx_basic->tech_preq_allow_3_minerals_sq);
     bool has_nut = has_tech(fac, tx_basic->tech_preq_allow_3_nutrients_sq);
     bool road = can_road(x, y, fac, sq);
+    bool tube = can_tube(x, y, fac, sq);
+
+    // build tube if can
+    if (tube)
+        return FORMER_MAG_TUBE;
 
     if (items & TERRA_BASE_IN_TILE || (sea && !is_ocean_shelf(sq))
     || (sq->landmarks & LM_VOLCANO && sq->art_ref_id == 0))

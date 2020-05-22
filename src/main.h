@@ -134,6 +134,8 @@ struct Config {
     bool disable_current_base_cc_morale_bonus = false;
     bool default_morale_very_green = false;
     int territory_combat_bonus = 0;
+    int tube_movement_rate_multiplier = 0;
+    int road_movement_cost = 0;
 };
 
 /*

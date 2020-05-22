@@ -95,8 +95,10 @@ fp_1int* tx_action_staple = (fp_1int*)0x4CA7F0;
 fp_1int* tx_tech_rate = (fp_1int*)0x5BE6B0;
 fp_1int* tx_tech_selection = (fp_1int*)0x5BE380;
 
-// reads configuration field
-fp_str_void* tx_read_configuration_field = (fp_str_void*)0x005FD670;
+// [WtP]
+
+// read basic rules
+fp_0int* tx_read_basic_rules = (fp_0int*)0x00585170;
 
 // calculates prototype cost
 fp_5int* tx_proto_cost = (fp_5int*)0x005A5A60;
@@ -121,4 +123,7 @@ fp_0int* tx_base_mechanics_production = (fp_0int*)0x004F07E0;
 
 // set SE on dialog close
 fp_5int* tx_set_se_on_dialog_close = (fp_5int*)0x005B4210;
+
+// hex cost
+fp_7int* tx_hex_cost = (fp_7int*)0x00593510;
 

@@ -1,3 +1,7 @@
+# Version 55
+
+* Tube movement rate is a multiplier of road movement rate.
+
 # Version 54
 
 * Set borehole to 0-6-4.
@@ -258,15 +262,12 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* fix production tips for condensor, enricher, borehole.
-* Copy basic units to player unit pool.
-* Don't display basic units in design workshop.
-* Make magtube movement cost 1/6.
 * Make AI build more units, defensive structures, sensors.
 * Artillery duel uses armor as well.
 * Interceptor fight uses armor as well.
 * Make ECM to affect sea units as well.
 * Rework probe team success rates.
-* Check research cost calculation.
 * Cloning Vats should not grant impunities.
+* Copy basic units to player unit pool.
+* Don't display basic units in design workshop.
 
