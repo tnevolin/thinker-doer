@@ -4,6 +4,8 @@
 #include "main.h"
 #include "game.h"
 
+HOOK_API int read_basic_rules();
+
 HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, int attacker_strength_pointer, int defender_strength_pointer, int flags);
 
 HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer, int input_string_pointer);
@@ -102,6 +104,8 @@ HOOK_API int mineral_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int energy_yield(int faction_id, int a2, int x, int y, int a5);
 
 HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5);
+
+HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7);
 
 #endif // __PROTOTYPE_H__
 

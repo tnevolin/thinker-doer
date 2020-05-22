@@ -73,6 +73,7 @@ typedef int __cdecl fp_3int(int, int, int);
 typedef int __cdecl fp_4int(int, int, int, int);
 typedef int __cdecl fp_5int(int, int, int, int, int);
 typedef int __cdecl fp_6int(int, int, int, int, int, int);
+typedef int __cdecl fp_7int(int, int, int, int, int, int, int);
 typedef int __cdecl fp_7intstr(int, int, int, int, int, int, int, const char*);
 typedef char* __cdecl fp_str_void();
 typedef char* __cdecl fp_str_void();
@@ -118,11 +119,13 @@ extern fp_1int* tx_action_staple;
 extern fp_1int* tx_tech_rate;
 extern fp_1int* tx_tech_selection;
 
+// [WtP]
+
+// read basic rules
+extern fp_0int* tx_read_basic_rules;
+
 // calculates prototype cost
 extern fp_5int* tx_proto_cost;
-
-// reads configuration field
-extern fp_str_void* tx_read_configuration_field;
 
 // creates prototype
 extern fp_6int* tx_create_prototype;
@@ -144,6 +147,9 @@ extern fp_0int* tx_base_mechanics_production;
 
 // set SE on dialog close
 extern fp_5int* tx_set_se_on_dialog_close;
+
+// hex cost
+extern fp_7int* tx_hex_cost;
 
 #endif // __TERRANX_H__
 

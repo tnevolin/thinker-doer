@@ -102,26 +102,26 @@ struct VEH
     int flags_1;                    //0x0004
     short flags_2;                  //0x0008
     short proto_id;                 //0x000A
-    short pad_0;
-    char faction_id;
-    char year_end_lurking;
-    char damage_taken;
-    char move_status;
-    char waypoint_count;
-    char patrol_current_point;
-    short waypoint_1_x;
-    short waypoint_2_x;
-    short waypoint_3_x;
-    short waypoint_4_x;
-    short waypoint_1_y;
-    short waypoint_2_y;
-    short waypoint_3_y;
-    short waypoint_4_y;
-    char morale;
-    char terraforming_turns;
-    char type_crawling;
-    byte visibility;
-    char road_moves_spent;
+    short pad_0;                    //0x000C
+    char faction_id;                //0x000E
+    char year_end_lurking;          //0x000F
+    char damage_taken;              //0x0010
+    char move_status;               //0x0011
+    char waypoint_count;            //0x0012
+    char patrol_current_point;      //0x0013
+    short waypoint_1_x;             //0x0014
+    short waypoint_2_x;             //0x0016
+    short waypoint_3_x;             //0x0018
+    short waypoint_4_x;             //0x001A
+    short waypoint_1_y;             //0x001C
+    short waypoint_2_y;             //0x001E
+    short waypoint_3_y;             //0x0020
+    short waypoint_4_y;             //0x0022
+    char morale;                    //0x0024
+    char terraforming_turns;        //0x0025
+    char type_crawling;             //0x0026
+    byte visibility;                //0x0027
+    char road_moves_spent;          //0x0028
     char unk5;
     char iter_count;
     char status_icon;
@@ -266,7 +266,7 @@ struct Faction
     int SE_planet_pending;
     int SE_probe_pending;
     int SE_industry_pending;        // 0x0270
-    int SE_research_pending;
+    int SE_research_pending;        // 0x0274
     int SE_economy;
     int SE_effic;
     int SE_support;                 // 0x0280

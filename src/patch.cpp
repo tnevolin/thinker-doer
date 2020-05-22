@@ -266,6 +266,15 @@ void patch_battle_compute()
 }
 
 /**
+Patch read basic rules.
+*/
+void patch_read_basic_rules()
+{
+    write_call_ptr(0x00587424, (int)read_basic_rules);
+
+}
+
+/**
 Ignores reactor power multiplier in combat processing.
 */
 void patch_ignore_reactor_power_in_combat_processing()
@@ -1888,6 +1897,24 @@ void patch_se_accumulated_resource_adjustment()
 
 }
 
+/**
+Patch hex_cost.
+*/
+void patch_hex_cost()
+{
+    write_call_ptr(0x00467711, (int)hex_cost);
+    write_call_ptr(0x00572518, (int)hex_cost);
+    write_call_ptr(0x005772D7, (int)hex_cost);
+    write_call_ptr(0x005776F4, (int)hex_cost);
+    write_call_ptr(0x00577E2C, (int)hex_cost);
+    write_call_ptr(0x00577F0E, (int)hex_cost);
+    write_call_ptr(0x00597695, (int)hex_cost);
+    write_call_ptr(0x0059ACA4, (int)hex_cost);
+    write_call_ptr(0x0059B61A, (int)hex_cost);
+    write_call_ptr(0x0059C105, (int)hex_cost);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -1974,6 +2001,10 @@ bool patch_setup(Config* cf) {
     // ==============================
     // The Will to Power mod changes
     // ==============================
+
+    // read basic rules
+
+    patch_read_basic_rules();
 
     // patch battle_compute
 
@@ -2202,6 +2233,10 @@ bool patch_setup(Config* cf) {
     // se_accumulated_resource_adjustment
 
     patch_se_accumulated_resource_adjustment();
+
+    // hex cost
+
+    patch_hex_cost();
 
     // continue with original Thinker checks
 
