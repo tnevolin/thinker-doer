@@ -8,6 +8,7 @@
 * AI formers build sensor with 5% probability to not waste time on them.
 * Industrial Economics prerequisite is Industrial Base (thanks to Hagen0).
 * Field Modulation prerequisite is Applied Physics (thanks to Hagen0).
+* Fixed my previous bug when river movement rate was same as tube.
 
 # Version 55
 
