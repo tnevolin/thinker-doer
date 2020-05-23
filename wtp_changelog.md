@@ -1,3 +1,14 @@
+# Version 56
+
+* Tree Farm cost/maint is 10/2
+* Hybrid Forest cost/maint is 20/3
+* Green has -1 INDUSTRY.
+* Power has -1 INDUSTRY.
+* AI land formers don't stop in transit.
+* AI formers build sensor with 5% probability to not waste time on them.
+* Industrial Economics prerequisite is Industrial Base (thanks to Hagen0).
+* Field Modulation prerequisite is Applied Physics (thanks to Hagen0).
+
 # Version 55
 
 * Tube movement rate is a multiplier of road movement rate.
@@ -262,10 +273,9 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Nerf specialists.
+* Reduce production multipliers.
 * Make AI build more units, defensive structures, sensors.
-* Artillery duel uses armor as well.
-* Interceptor fight uses armor as well.
-* Make ECM to affect sea units as well.
 * Rework probe team success rates.
 * Cloning Vats should not grant impunities.
 * Copy basic units to player unit pool.

@@ -1,9 +1,46 @@
+#include <iostream>
+#include <string>
+#include <stdio.h>
 
 #include "main.h"
 #include "patch.h"
 #include "game.h"
 #include "move.h"
 #include "lib/ini.h"
+
+std::string MOVE_STATUS[] =
+{
+	"ORDER_NONE",              //  -
+	"ORDER_SENTRY_BOARD",      // (L)
+	"ORDER_HOLD",              // (H); Hold (set 1st waypoint (-1, 0)), Hold 10 (-1, 10), On Alert
+	"ORDER_CONVOY",            // (O)
+	"ORDER_FARM",              // (f)
+	"ORDER_SOIL_ENRICHER",     // (f)
+	"ORDER_MINE",              // (M)
+	"ORDER_SOLAR_COLLECTOR",   // (S)
+	"ORDER_PLANT_FOREST",      // (F)
+	"ORDER_ROAD",              // (R)
+	"ORDER_MAGTUBE",          // (R)
+	"ORDER_BUNKER",           // (K)
+	"ORDER_AIRBASE",          // (.)
+	"ORDER_SENSOR_ARRAY",     // (O)
+	"ORDER_REMOVE_FUNGUS",    // (F)
+	"ORDER_PLANT_FUNGUS",     // (F)
+	"ORDER_CONDENSER",        // (N)
+	"ORDER_ECHELON_MIRROR",   // (E)
+	"ORDER_THERMAL_BOREHOLE", // (B)
+	"ORDER_DRILL_AQUIFIER",   // (Q)
+	"ORDER_TERRAFORM_UP",     // (])
+	"ORDER_TERRAFORM_DOWN",   // ([)
+	"ORDER_TERRAFORM_LEVEL",  // (_)
+	"ORDER_PLACE_MONOLITH",   // (?)
+	"ORDER_MOVE_TO",          // (G); Move unit to here, Go to Base, Group go to, Patrol
+	"ORDER_MOVE",             // (>); Only used in a few places, seems to be buggy mechanic
+	"ORDER_EXPLORE",          // (/); not set via shortcut, AI related?
+	"ORDER_ROADS_TO",         // (r)
+	"ORDER_MAGTUBE_TO",       // (t)
+}
+;
 
 FILE* debug_log = NULL;
 Config conf;

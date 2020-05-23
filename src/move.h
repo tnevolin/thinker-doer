@@ -12,6 +12,25 @@
 #define PM_SAFE -20
 #define PM_NEAR_SAFE -40
 
+typedef int PMTable[MAPSZ*2][MAPSZ];
+/*
+    Priority Management Tables contain values calculated for each map square
+    to guide the AI in its move planning.
+
+    The tables contain only ephemeral values: they are recalculated each turn
+    for every active faction, and the values are never saved with the save games.
+
+    For example, pm_former counter is decremented whenever a former starts
+    work on a given square to prevent too many of them converging on the same spot.
+    It is also used as a shortcut to determine if a square has a friendly base
+    in a 2-tile radius, because formers are only allowed to work on squares which
+    are reachable by a friendly base worker.
+
+    Non-combat units controlled by Thinker use pm_safety table to decide if
+    there are enemy units too close to them. PM_SAFE defines the threshold below
+    which the units will attempt to flee to the square chosen by escape_move.
+*/
+
 HOOK_API int enemy_move(int id);
 HOOK_API int log_veh_kill(int a, int b, int c, int d);
 void move_upkeep(int fac);
@@ -24,5 +43,10 @@ int colony_move(int id);
 int former_move(int id);
 int trans_move(int id);
 int combat_move(int id);
+bool defend_tile(VEH* veh, MAP* sq);
+int select_item(int x, int y, int fac, MAP* sq);
+int escape_move(int id);
+bool other_in_tile(int fac, MAP* sq);
+int former_tile_score(int x1, int y1, int x2, int y2, int fac, MAP* sq);
 
 #endif // __MOVE_H__

@@ -166,6 +166,7 @@ struct AIPlans {
     double enemy_range;
 };
 
+extern std::string MOVE_STATUS[];
 extern FILE* debug_log;
 extern Config conf;
 extern AIPlans plans[8];
