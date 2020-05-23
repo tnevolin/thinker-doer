@@ -1480,26 +1480,30 @@ HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int t
         MAP* square_from = mapsq(from_x, from_y);
         MAP* square_to = mapsq(to_x, to_y);
 
-        // tube takes one movement rate along the road
-        if
-        (
-            square_from && (square_from->items & TERRA_MAGTUBE)
-            &&
-            square_to && (square_to->items & TERRA_MAGTUBE)
-        )
+        if (square_from && square_to)
         {
-            value = 1;
+            // tube takes one movement rate along the road
+            if
+            (
+                (square_from->items & TERRA_MAGTUBE)
+                &&
+                (square_to->items & TERRA_MAGTUBE)
+            )
+            {
+                value = 1;
 
-        }
-        // road take road movement cost
-        else if
-        (
-            square_from && (square_from->items & TERRA_ROAD)
-            &&
-            square_to && (square_to->items & TERRA_ROAD)
-        )
-        {
-            value = conf.road_movement_cost;
+            }
+            // road and river take road movement cost
+            else if
+            (
+                (square_from->items & (TERRA_ROAD | TERRA_RIVER))
+                &&
+                (square_to->items & (TERRA_ROAD | TERRA_RIVER))
+            )
+            {
+                value = conf.road_movement_cost;
+
+            }
 
         }
 
