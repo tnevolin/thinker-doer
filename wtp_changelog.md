@@ -1,3 +1,16 @@
+# Version 57
+
+* Citizen change.
+| name | technology | level | economy | psych | labs | change |
+|----|----|----:|----:|----:|----:|----|
+| Doctor | | | | +2 | | |
+| Empath | Centauri Meditation | 6 | +2 | +2 | |
+| Transcend | Sentient Resonance | 12 | +2 | +2 | +2 | Moved to L12 |
+| Technician | | | +3 | | | |
+| Engineer | Planetary Economics | 7 | +3 | +2 | | Moved to L7 |
+| Librarian | Planetary Networks | 4 | | | +3 | |
+| Thinker | Advanced Subatomic Theory | 8 | | +1 | +4 | Moved to L 8 |
+
 # Version 56
 
 * Tree Farm cost/maint is 10/2
