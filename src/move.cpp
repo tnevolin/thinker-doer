@@ -1,24 +1,6 @@
 
 #include "move.h"
-
-typedef int PMTable[MAPSZ*2][MAPSZ];
-/*
-    Priority Management Tables contain values calculated for each map square
-    to guide the AI in its move planning.
-
-    The tables contain only ephemeral values: they are recalculated each turn
-    for every active faction, and the values are never saved with the save games.
-
-    For example, pm_former counter is decremented whenever a former starts
-    work on a given square to prevent too many of them converging on the same spot.
-    It is also used as a shortcut to determine if a square has a friendly base
-    in a 2-tile radius, because formers are only allowed to work on squares which
-    are reachable by a friendly base worker.
-
-    Non-combat units controlled by Thinker use pm_safety table to decide if
-    there are enemy units too close to them. PM_SAFE defines the threshold below
-    which the units will attempt to flee to the square chosen by escape_move.
-*/
+#include "ai.h"
 
 PMTable pm_former;
 PMTable pm_safety;
@@ -58,7 +40,9 @@ HOOK_API int enemy_move(int id) {
         } else if (w == WPN_SUPPLY_TRANSPORT) {
             return crawler_move(id);
         } else if (w == WPN_TERRAFORMING_UNIT) {
+            // [WtP] redirect to WtP function in future versions
             return former_move(id);
+//            return ai_former_move(id, pm_safety, pm_former);
         } else if (w == WPN_TROOP_TRANSPORT && veh_triad(id) == TRIAD_SEA) {
             return trans_move(id);
         } else if (w <= WPN_PSI_ATTACK && veh_triad(id) == TRIAD_LAND) {
@@ -645,7 +629,9 @@ bool can_sensor(int x, int y, int fac, MAP* sq) {
         && ~sq->items & TERRA_SENSOR
         && !nearby_items(x, y, 2, TERRA_SENSOR)
         && (~sq->items & TERRA_FUNGUS || has_tech(fac, tx_basic->tech_preq_improv_fungus))
-        && *tx_current_turn > random(20);
+        // [WtP] build sensors sparingly as they do not grant defense bonus anymore
+        && random(20) == 0
+    ;
 }
 
 int select_item(int x, int y, int fac, MAP* sq) {
@@ -658,8 +644,9 @@ int select_item(int x, int y, int fac, MAP* sq) {
     bool has_nut = has_tech(fac, tx_basic->tech_preq_allow_3_nutrients_sq);
     bool road = can_road(x, y, fac, sq);
     bool tube = can_tube(x, y, fac, sq);
+    bool sensor = can_sensor(x, y, fac, sq);
 
-    // build tube if can
+    // [WtP] build tube if can
     if (tube)
         return FORMER_MAG_TUBE;
 
@@ -670,7 +657,7 @@ int select_item(int x, int y, int fac, MAP* sq) {
         if (plans[fac].keep_fungus && can_fungus(x, y, fac, bonus, sq)) {
             if (road)
                 return FORMER_ROAD;
-            else if (can_sensor(x, y, fac, sq))
+            else if (sensor)
                 return FORMER_SENSOR;
             return -1;
         }
@@ -692,7 +679,7 @@ int select_item(int x, int y, int fac, MAP* sq) {
         bool improved = items & (TERRA_MINE | TERRA_SOLAR | TERRA_SENSOR);
         if (~items & TERRA_FARM && has_terra(fac, FORMER_FARM, sea))
             return FORMER_FARM;
-        else if (!improved && bonus == RES_NONE && can_sensor(x, y, fac, sq))
+        else if (!improved && bonus == RES_NONE && sensor)
             return FORMER_SENSOR;
         else if (!improved && has_terra(fac, FORMER_SOLAR, sea) && bonus != RES_MINERAL
         && (bonus == RES_NUTRIENT || nearby_items(x, y, 1, TERRA_SOLAR)+1 < nearby_items(x, y, 1, TERRA_MINE)))
@@ -731,7 +718,7 @@ int select_item(int x, int y, int fac, MAP* sq) {
                 return FORMER_SOLAR;
         }
     } else if (!rocky_sq && !(items & IMP_ADVANCED)) {
-        if (can_sensor(x, y, fac, sq))
+        if (sensor)
             return FORMER_SENSOR;
         else if (~items & TERRA_FOREST && has_terra(fac, FORMER_FOREST, sea))
             return FORMER_FOREST;
@@ -795,11 +782,30 @@ int former_move(int id) {
     if (defend_tile(veh, sq)) {
         return veh_skip(id);
     }
-    if (safe || (veh->move_status >= 16 && veh->move_status < 22)) {
-        if ((veh->move_status >= 4 && veh->move_status < 24)
-        || (triad != TRIAD_LAND && !at_target(veh))) {
+    debug
+    (
+        "former parameters: x=%d, y=%d, safe=%d, move_status=%s\n",
+        veh->x,
+        veh->y,
+        safe,
+        MOVE_STATUS[veh->move_status].c_str()
+    )
+    ;
+
+    if (safe || (veh->move_status >= 16 && veh->move_status < 22))
+    {
+        if
+        (
+            (veh->move_status >= 4 && veh->move_status < 24)
+            ||
+//            (triad != TRIAD_LAND && !at_target(veh))
+            // [WtP] do not disturb former in transit any kind including land ones
+            !at_target(veh)
+        )
+        {
             return SYNC;
         }
+
         item = select_item(x, y, fac, sq);
         if (item >= 0) {
             pm_former[x][y] -= 2;
@@ -808,7 +814,7 @@ int former_move(int id) {
                 tx_factions[fac].energy_credits -= cost;
                 debug("bridge_cost %d %d %d %d\n", x, y, fac, cost);
             }
-            debug("former_action %d %d %d %d %d\n", x, y, fac, id, item);
+            debug("former_action %d %d %d %d %s\n", x, y, fac, id, MOVE_STATUS[item+4].c_str());
             return set_action(id, item+4, *tx_terraform[item].shortcuts);
         }
     } else if (!safe) {
@@ -954,6 +960,4 @@ int combat_move(int id) {
     }
     return tx_enemy_move(id);
 }
-
-
 

@@ -94,5 +94,7 @@ class TileSearch {
     MAP* get_next();
 };
 
+BASE *vehicle_home_base(VEH *vehicle);
+MAP *base_square(BASE *base);
 
 #endif // __GAME_H__

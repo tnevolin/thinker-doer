@@ -494,5 +494,13 @@ MAP* TileSearch::get_next() {
     return NULL;
 }
 
+BASE *vehicle_home_base(VEH *vehicle)
+{
+    return (vehicle->home_base_id >= 0 ? &tx_bases[vehicle->home_base_id] : NULL);
+}
 
+MAP *base_square(BASE *base)
+{
+    return mapsq(base->x, base->y);
+}
 

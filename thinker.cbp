@@ -88,6 +88,8 @@
 			<Add after='cmd /c copy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; patch\' />
 			<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; patch\ /Y' />
 		</ExtraCommands>
+		<Unit filename="src/ai.cpp" />
+		<Unit filename="src/ai.h" />
 		<Unit filename="src/game.cpp" />
 		<Unit filename="src/game.h" />
 		<Unit filename="src/lib/ini.c">
