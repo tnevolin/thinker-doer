@@ -1,6 +1,7 @@
 # Version 57
 
 * Citizen change.
+
 | name | technology | level | economy | psych | labs | change |
 |----|----|----:|----:|----:|----:|----|
 | Doctor | | | | +2 | | |
