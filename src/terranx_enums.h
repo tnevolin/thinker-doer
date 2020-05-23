@@ -667,9 +667,12 @@ enum terrain_flags
     TERRA_SOLAR = 0x40,
     TERRA_RIVER = 0x80,
     TERRA_RIVER_SRC = 0x100,
+    TERRA_UNK_200 = 0x200, // something related to cluster of rivers
     TERRA_BONUS_RES = 0x400,
     TERRA_BUNKER = 0x800,
+    TERRA_BASE_RADIUS = 0x1000, // production radius; 21 tiles per base (20 surrounding + base tile)
     TERRA_MONOLITH = 0x2000,
+    TERRA_UNK_4000 = 0x4000, // continent + single tile island off coast, used by AI; boundary?
     TERRA_FARM = 0x8000,
     TERRA_ENERGY_RES = 0x10000,
     TERRA_MINERAL_RES = 0x20000,
@@ -680,8 +683,12 @@ enum terrain_flags
     TERRA_CONDENSER = 0x400000,
     TERRA_ECH_MIRROR = 0x800000,
     TERRA_THERMAL_BORE = 0x1000000,
+    TERRA_UNK_2000000 = 0x2000000, // ?
+	TERRA_UNK_4000000 = 0x4000000, // ?
+	TERRA_UNK_8000000 = 0x8000000, // ?
     TERRA_SUPPLY_POD = 0x10000000,
     TERRA_NUTRIENT_RES = 0x20000000,
+    TERRA_UNK_40000000 = 0x40000000, // ?
     TERRA_SENSOR = 0x80000000,
 };
 
