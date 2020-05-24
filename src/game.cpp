@@ -253,7 +253,8 @@ int point_range(const Points& S, int x, int y) {
     return z;
 }
 
-MAP* mapsq(int x, int y) {
+MAP* mapsq(int x, int y)
+{
     if (x >= 0 && y >= 0 && x < *tx_map_axis_x && y < *tx_map_axis_y) {
         int i = x/2 + (*tx_map_half_x) * y;
         return &((*tx_map_ptr)[i]);
@@ -502,5 +503,10 @@ BASE *vehicle_home_base(VEH *vehicle)
 MAP *base_square(BASE *base)
 {
     return mapsq(base->x, base->y);
+}
+
+bool vehicle_has_ability(VEH *vehicle, int ability)
+{
+    return tx_units[vehicle->proto_id].ability_flags & ability;
 }
 

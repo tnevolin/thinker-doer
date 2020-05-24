@@ -760,4 +760,71 @@ enum label_offsets
     LABEL_OFFSET_PLANET = 0x271,
 };
 
+enum veh_orders {
+	ORDER_NONE = 0,              //  -
+	ORDER_SENTRY_BOARD = 1,      // (L)
+	ORDER_HOLD = 2,              // (H); Hold (set 1st waypoint (-1, 0)), Hold 10 (-1, 10), On Alert
+	ORDER_CONVOY = 3,            // (O)
+	ORDER_FARM = 4,              // (f)
+	ORDER_SOIL_ENRICHER = 5,     // (f)
+	ORDER_MINE = 6,              // (M)
+	ORDER_SOLAR_COLLECTOR = 7,   // (S)
+	ORDER_PLANT_FOREST = 8,      // (F)
+	ORDER_ROAD = 9,              // (R)
+	ORDER_MAGTUBE = 10,          // (R)
+	ORDER_BUNKER = 11,           // (K)
+	ORDER_AIRBASE = 12,          // (.)
+	ORDER_SENSOR_ARRAY = 13,     // (O)
+	ORDER_REMOVE_FUNGUS = 14,    // (F)
+	ORDER_PLANT_FUNGUS = 15,     // (F)
+	ORDER_CONDENSER = 16,        // (N)
+	ORDER_ECHELON_MIRROR = 17,   // (E)
+	ORDER_THERMAL_BOREHOLE = 18, // (B)
+	ORDER_DRILL_AQUIFIER = 19,   // (Q)
+	ORDER_TERRAFORM_UP = 20,     // (])
+	ORDER_TERRAFORM_DOWN = 21,   // ([)
+	ORDER_TERRAFORM_LEVEL = 22,  // (_)
+	ORDER_PLACE_MONOLITH = 23,   // (?)
+	ORDER_MOVE_TO = 24,          // (G); Move unit to here, Go to Base, Group go to, Patrol
+	ORDER_MOVE = 25,             // (>); Only used in a few places, seems to be buggy mechanic
+	ORDER_EXPLORE = 26,          // (/); not set via shortcut, AI related?
+	ORDER_ROADS_TO = 27,         // (r)
+	ORDER_MAGTUBE_TO = 28,       // (t)
+	// 29                        // max value, seems to be unused
+	ORDER_AI_GO_TO = 88,         //  - ; ORDER_GO_TO (0x18) | 0x40 > 0x58 ? only used by AI funcs
+};
+
+const char veh_status_icon[] =
+{
+	'-',
+	'L',
+	'H',
+	'O',
+	'f',
+	'f',
+	'M',
+	'S',
+	'F',
+	'R',
+	'R',
+	'K',
+	'.',
+	'O',
+	'F',
+	'F',
+	'N',
+	'E',
+	'B',
+	'Q',
+	']',
+	'[',
+	'_',
+	'?',
+	'G',
+	'>',
+	'/',
+	'r',
+	't',
+};
+
 #endif // __TERRANX_ENUMS_H__

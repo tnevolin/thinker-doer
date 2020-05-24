@@ -96,5 +96,6 @@ class TileSearch {
 
 BASE *vehicle_home_base(VEH *vehicle);
 MAP *base_square(BASE *base);
+bool vehicle_has_ability(VEH *vehicle, int ability);
 
 #endif // __GAME_H__

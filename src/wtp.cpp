@@ -1493,12 +1493,23 @@ HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int t
                 value = 1;
 
             }
-            // road and river take road movement cost
+            // road take road movement cost
             else if
             (
-                (square_from->items & (TERRA_ROAD | TERRA_RIVER))
+                (square_from->items & TERRA_ROAD)
                 &&
-                (square_to->items & (TERRA_ROAD | TERRA_RIVER))
+                (square_to->items & TERRA_ROAD)
+            )
+            {
+                value = conf.road_movement_cost;
+
+            }
+            // land river take road movement cost
+            else if
+            (
+                (!is_ocean(square_from) && square_from->items & TERRA_RIVER)
+                &&
+                (!is_ocean(square_to) && square_to->items & TERRA_RIVER)
             )
             {
                 value = conf.road_movement_cost;
