@@ -667,9 +667,12 @@ enum terrain_flags
     TERRA_SOLAR = 0x40,
     TERRA_RIVER = 0x80,
     TERRA_RIVER_SRC = 0x100,
+    TERRA_UNK_200 = 0x200, // something related to cluster of rivers
     TERRA_BONUS_RES = 0x400,
     TERRA_BUNKER = 0x800,
+    TERRA_BASE_RADIUS = 0x1000, // production radius; 21 tiles per base (20 surrounding + base tile)
     TERRA_MONOLITH = 0x2000,
+    TERRA_UNK_4000 = 0x4000, // continent + single tile island off coast, used by AI; boundary?
     TERRA_FARM = 0x8000,
     TERRA_ENERGY_RES = 0x10000,
     TERRA_MINERAL_RES = 0x20000,
@@ -680,8 +683,12 @@ enum terrain_flags
     TERRA_CONDENSER = 0x400000,
     TERRA_ECH_MIRROR = 0x800000,
     TERRA_THERMAL_BORE = 0x1000000,
+    TERRA_UNK_2000000 = 0x2000000, // ?
+	TERRA_UNK_4000000 = 0x4000000, // ?
+	TERRA_UNK_8000000 = 0x8000000, // ?
     TERRA_SUPPLY_POD = 0x10000000,
     TERRA_NUTRIENT_RES = 0x20000000,
+    TERRA_UNK_40000000 = 0x40000000, // ?
     TERRA_SENSOR = 0x80000000,
 };
 
@@ -751,6 +758,73 @@ enum terrain_basic_flags
 enum label_offsets
 {
     LABEL_OFFSET_PLANET = 0x271,
+};
+
+enum veh_orders {
+	ORDER_NONE = 0,              //  -
+	ORDER_SENTRY_BOARD = 1,      // (L)
+	ORDER_HOLD = 2,              // (H); Hold (set 1st waypoint (-1, 0)), Hold 10 (-1, 10), On Alert
+	ORDER_CONVOY = 3,            // (O)
+	ORDER_FARM = 4,              // (f)
+	ORDER_SOIL_ENRICHER = 5,     // (f)
+	ORDER_MINE = 6,              // (M)
+	ORDER_SOLAR_COLLECTOR = 7,   // (S)
+	ORDER_PLANT_FOREST = 8,      // (F)
+	ORDER_ROAD = 9,              // (R)
+	ORDER_MAGTUBE = 10,          // (R)
+	ORDER_BUNKER = 11,           // (K)
+	ORDER_AIRBASE = 12,          // (.)
+	ORDER_SENSOR_ARRAY = 13,     // (O)
+	ORDER_REMOVE_FUNGUS = 14,    // (F)
+	ORDER_PLANT_FUNGUS = 15,     // (F)
+	ORDER_CONDENSER = 16,        // (N)
+	ORDER_ECHELON_MIRROR = 17,   // (E)
+	ORDER_THERMAL_BOREHOLE = 18, // (B)
+	ORDER_DRILL_AQUIFIER = 19,   // (Q)
+	ORDER_TERRAFORM_UP = 20,     // (])
+	ORDER_TERRAFORM_DOWN = 21,   // ([)
+	ORDER_TERRAFORM_LEVEL = 22,  // (_)
+	ORDER_PLACE_MONOLITH = 23,   // (?)
+	ORDER_MOVE_TO = 24,          // (G); Move unit to here, Go to Base, Group go to, Patrol
+	ORDER_MOVE = 25,             // (>); Only used in a few places, seems to be buggy mechanic
+	ORDER_EXPLORE = 26,          // (/); not set via shortcut, AI related?
+	ORDER_ROADS_TO = 27,         // (r)
+	ORDER_MAGTUBE_TO = 28,       // (t)
+	// 29                        // max value, seems to be unused
+	ORDER_AI_GO_TO = 88,         //  - ; ORDER_GO_TO (0x18) | 0x40 > 0x58 ? only used by AI funcs
+};
+
+const char veh_status_icon[] =
+{
+	'-',
+	'L',
+	'H',
+	'O',
+	'f',
+	'f',
+	'M',
+	'S',
+	'F',
+	'R',
+	'R',
+	'K',
+	'.',
+	'O',
+	'F',
+	'F',
+	'N',
+	'E',
+	'B',
+	'Q',
+	']',
+	'[',
+	'_',
+	'?',
+	'G',
+	'>',
+	'/',
+	'r',
+	't',
 };
 
 #endif // __TERRANX_ENUMS_H__
