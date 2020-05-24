@@ -41,8 +41,8 @@ HOOK_API int enemy_move(int id) {
             return crawler_move(id);
         } else if (w == WPN_TERRAFORMING_UNIT) {
             // [WtP] redirect to WtP function in future versions
-            return former_move(id);
-//            return ai_former_move(id, pm_safety, pm_former);
+//            return former_move(id);
+            return giveOrderToFormer(id);
         } else if (w == WPN_TROOP_TRANSPORT && veh_triad(id) == TRIAD_SEA) {
             return trans_move(id);
         } else if (w <= WPN_PSI_ATTACK && veh_triad(id) == TRIAD_LAND) {
@@ -815,7 +815,7 @@ int former_move(int id) {
                 debug("bridge_cost %d %d %d %d\n", x, y, fac, cost);
             }
             debug("former_action %d %d %d %d %s\n", x, y, fac, id, MOVE_STATUS[item+4].c_str());
-            return set_action(id, item+4, *tx_terraform[item].shortcuts);
+            return set_action(id, item+4, veh_status_icon[item+4]);
         }
     } else if (!safe) {
         return escape_move(id);
