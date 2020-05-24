@@ -41,8 +41,8 @@ HOOK_API int enemy_move(int id) {
             return crawler_move(id);
         } else if (w == WPN_TERRAFORMING_UNIT) {
             // [WtP] redirect to WtP function in future versions
-//            return former_move(id);
-            return giveOrderToFormer(id);
+            return former_move(id);
+//            return giveOrderToFormer(id);
         } else if (w == WPN_TROOP_TRANSPORT && veh_triad(id) == TRIAD_SEA) {
             return trans_move(id);
         } else if (w <= WPN_PSI_ATTACK && veh_triad(id) == TRIAD_LAND) {

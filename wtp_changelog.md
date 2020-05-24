@@ -1,3 +1,7 @@
+# Version 58
+
+* Fixed advanced movement on ocean squares. Somehow ocean has river flag on it. So I have to restrict river movement for land only.
+
 # Version 57
 
 * Citizen change.

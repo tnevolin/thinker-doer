@@ -1,7 +1,11 @@
+# Version 58
+
+* Fixed advanced movement on ocean squares. Somehow ocean has river flag on it. So I have to restrict river movement for land only.
+
 # Version 57
 
-<<<<<<< HEAD
 * Citizen change.
+
 | name | technology | level | economy | psych | labs | change |
 |----|----|----:|----:|----:|----:|----|
 | Doctor | | | | +2 | | |
@@ -12,8 +16,6 @@
 | Librarian | Planetary Networks | 4 | | | +3 | |
 | Thinker | Advanced Subatomic Theory | 8 | | +1 | +4 | Moved to L 8 |
 
-=======
->>>>>>> ai
 # Version 56
 
 * Tree Farm cost/maint is 10/2
