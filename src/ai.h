@@ -31,7 +31,18 @@ const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 }
 ;
 
+struct TERRAFORMING_OPTION
+{
+	bool requiresFarm;
+	bool removeFungusBeforeTech;
+	bool removeFungusAfterTech;
+	bool level;
+	int action;
+	int item;
+};
+
 int giveOrderToFormer(int vehicleId);
+bool isTileOccupiedByBase(MAP *tile);
 bool isVehicleTerraforming(VEH *vehicle);
 bool isVehicleFormer(VEH *vehicle);
 bool isVehicleTerraforming(VEH *vehicle);

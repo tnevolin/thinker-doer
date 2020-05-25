@@ -9,14 +9,43 @@ const double mineralWeight = 8.0;
 const double energyWeight = 5.0;
 const double improvementTimeWeight = -2.0;
 
-const int terraformingOptions[][] =
+/**
+Various terraforming options given to AI.
+1. requires farm
+2. remove fungus before improve fungus technology
+3. remove fungus after improve fungus technology
+4. level
+5. terraform action
+6. tile items mask
+*/
+const int LAND_TERRAFORMING_OPTION_COUNT = 3;
+TERRAFORMING_OPTION LAND_TERRAFORMING_OPTIONS[] =
 {
-	{FORMER_PLANT_FUNGUS},
-	{FORMER_FOREST},
-	{FORMER_SOIL_ENR, FORMER_SOLAR},
-	{FORMER_SOIL_ENR, FORMER_ECH_MIRROR},
-	{FORMER_SOIL_ENR, FORMER_MINE},
-	{FORMER_MINE},
+	{false, true, true, true, FORMER_FARM, TERRA_FARM},
+	{false, true, true, false, FORMER_SOLAR, TERRA_SOLAR},
+	{false, true, true, false, FORMER_MINE, TERRA_MINE},
+//	{FORMER_FOREST},
+//	{FORMER_PLANT_FUNGUS},
+//	{FORMER_AQUIFER},
+//	{FORMER_CONDENSER},
+//	{FORMER_ECH_MIRROR},
+//	{FORMER_THERMAL_BORE},
+//	{FORMER_SOIL_ENR},
+}
+;
+const int SEA_TERRAFORMING_OPTION_COUNT = 3;
+TERRAFORMING_OPTION SEA_TERRAFORMING_OPTIONS[] =
+{
+	{false, true, true, false, FORMER_FARM, TERRA_FARM},
+	{false, true, true, false, FORMER_SOLAR, TERRA_SOLAR},
+	{false, true, true, false, FORMER_MINE, TERRA_MINE},
+//	{FORMER_FOREST},
+//	{FORMER_PLANT_FUNGUS},
+//	{FORMER_AQUIFER},
+//	{FORMER_CONDENSER},
+//	{FORMER_ECH_MIRROR},
+//	{FORMER_THERMAL_BORE},
+//	{FORMER_SOIL_ENR},
 }
 ;
 
@@ -138,6 +167,11 @@ int giveOrderToFormer(int vehicleId)
 			// exclude unreachable tiles
 
 			if (vehicleTriad != TRIAD_AIR && (tile->body_id != vehicleTile->body_id))
+				continue;
+
+			// exclude base tiles
+
+			if (isTileOccupiedByBase(tile))
 				continue;
 
 			// exclude already taken tiles
@@ -267,6 +301,28 @@ int giveOrderToFormer(int vehicleId)
 	}
 
 	return order;
+
+}
+
+bool isTileOccupiedByBase(MAP *tile)
+{
+	bool tileOccupiedByBase = false;
+
+	for (int baseIndex = 0; baseIndex < *tx_total_num_bases; baseIndex++)
+	{
+		BASE *base = &tx_bases[baseIndex];
+
+		MAP *baseTile = mapsq(base->x, base->y);
+
+		if (baseTile == tile)
+		{
+			tileOccupiedByBase = true;
+			break;
+		}
+
+	}
+
+	return tileOccupiedByBase;
 
 }
 
@@ -460,12 +516,29 @@ double calculateTileYieldScore(int baseId, BASE *base, int tileX, int tileY)
 
 }
 
-double calculateImprovementScore(int vehicleId, int baseIndex, BASE *base, MAP *tile, int tileX, int tileY, double previousYieldScore, int *action)
+double calculateImprovementScore(int vehicleId, int baseIndex, BASE *base, MAP *tile, int tileX, int tileY, double previousYieldScore, int *bestTerraformingAction)
 {
 	VEH *vehicle = &tx_vehicles[vehicleId];
 	int factionId = vehicle->faction_id;
 	int triad = veh_triad(vehicleId);
-	int speed = veh_speed(vehicleId);
+	int speed = veh_chassis_speed(vehicleId);
+	bool sea = is_ocean(tile);
+
+	// select terraforming options for body type
+
+	int terraformingOptionCount;
+	TERRAFORMING_OPTION *terraformingOptions;
+
+	if (sea)
+	{
+		terraformingOptionCount = SEA_TERRAFORMING_OPTION_COUNT;
+		terraformingOptions = SEA_TERRAFORMING_OPTIONS;
+	}
+	else
+	{
+		terraformingOptionCount = LAND_TERRAFORMING_OPTION_COUNT;
+		terraformingOptions = LAND_TERRAFORMING_OPTIONS;
+	}
 
 	// store tile values
 
@@ -474,194 +547,185 @@ double calculateImprovementScore(int vehicleId, int baseIndex, BASE *base, MAP *
 
 	int improvedTileRocks;
 	int improvedTileItems;
-	double improvementFungicidalTime;
-	double improvementTime;
+	double fungusImprovementTime;
+	double conventionalImprovementTime;
+	int action;
 
-	// get current yield
+	// find best terraforming option
 
-	// calculate best terraforming option
+	double bestImprovementScores[] = {0.0, 0,0};
+	*bestTerraformingAction = -1;
 
-	double bestTerraformingScore = 0.0;
-
-	// ===
-	// farm/enricher, solar
-	// ===
-
-	improvedTileRocks = tileRocks;
-	improvedTileItems = tileItems;
-	improvementFungicidalTime = 0.0;
-	improvementTime = 0.0;
-
-	// remove fungus
-
-	if (improvedTileItems & TERRA_FUNGUS)
+	for (int optionIndex = 0; optionIndex < terraformingOptionCount; optionIndex++)
 	{
-		improvedTileItems &= ~TERRA_FUNGUS;
-		improvementFungicidalTime += tx_terraform[FORMER_REMOVE_FUNGUS].rate;
-		if (*action == -1)
+		TERRAFORMING_OPTION option = terraformingOptions[optionIndex];
+
+		// check improvement already exists
+
+		if (tileItems & option.item)
+			continue;
+
+		// check technology prerequisite
+
+		if (!has_terra(factionId, option.action, sea))
+			continue;
+
+		// check farm requirement
+
+		if (option.requiresFarm && (~tileItems & TERRA_FARM))
+			continue;
+
+		// initialize variables
+
+		improvedTileRocks = tileRocks;
+		improvedTileItems = tileItems;
+		fungusImprovementTime = 0.0;
+		conventionalImprovementTime = 0.0;
+		action = -1;
+
+		// remove fungus
+
+		bool hasFungusImprovementTech = has_tech(factionId, tx_basic->tech_preq_improv_fungus);
+		bool removeFungus = (hasFungusImprovementTech ? option.removeFungusAfterTech : option.removeFungusBeforeTech);
+
+		if (removeFungus && (tileItems & TERRA_FUNGUS))
 		{
-			*action = FORMER_REMOVE_FUNGUS;
-		}
-	}
+			improvedTileItems &= ~TERRA_FUNGUS;
+			fungusImprovementTime += tx_terraform[FORMER_REMOVE_FUNGUS].rate;
 
-	// level
-
-	if (improvedTileRocks & TILE_ROCKY)
-	{
-		improvedTileRocks = TILE_ROLLING;
-		improvementTime += tx_terraform[FORMER_LEVEL_TERRAIN].rate;
-		if (*action == -1)
-		{
-			*action = FORMER_LEVEL_TERRAIN;
-		}
-	}
-
-	// add farm
-
-	if (~improvedTileItems & TERRA_FARM)
-	{
-		improvedTileItems |= TERRA_FARM;
-		improvementTime += tx_terraform[FORMER_FARM].rate;
-		if (*action == -1)
-		{
-			*action = FORMER_FARM;
-		}
-	}
-
-	// add enricher
-
-	if (has_terra(factionId, FORMER_SOIL_ENR, is_ocean(tile)))
-	{
-		if (~improvedTileItems & TERRA_SOIL_ENR)
-		{
-			improvedTileItems |= TERRA_SOIL_ENR;
-			improvementTime += tx_terraform[FORMER_SOIL_ENR].rate;
-			if (*action == -1)
+			if (action == -1)
 			{
-				*action = FORMER_SOIL_ENR;
+				action = FORMER_REMOVE_FUNGUS;
 			}
+
 		}
-	}
 
-	// add solar
+		// level
 
-	if (~improvedTileItems & TERRA_SOLAR)
-	{
-		improvedTileItems |= TERRA_SOLAR;
-		improvementTime += tx_terraform[FORMER_SOLAR].rate;
-		if (*action == -1)
+		if (option.level && (improvedTileRocks & TILE_ROCKY))
 		{
-			*action = FORMER_SOLAR;
-		}
-	}
+			improvedTileRocks = TILE_ROLLING;
+			conventionalImprovementTime += tx_terraform[FORMER_LEVEL_TERRAIN].rate;
 
-	// add road
-
-	if (~improvedTileItems & TERRA_ROAD)
-	{
-		improvedTileItems |= TERRA_ROAD;
-		improvementTime += tx_terraform[FORMER_ROAD].rate;
-		if (*action == -1)
-		{
-			*action = FORMER_ROAD;
-		}
-	}
-
-	// add tube
-
-	if (has_terra(factionId, FORMER_MAG_TUBE, is_ocean(tile)))
-	{
-		if (~improvedTileItems & TERRA_MAGTUBE)
-		{
-			improvedTileItems |= TERRA_MAGTUBE;
-			improvementTime += tx_terraform[FORMER_MAG_TUBE].rate;
-			if (*action == -1)
+			if (action == -1)
 			{
-				*action = FORMER_MAG_TUBE;
+				action = FORMER_LEVEL_TERRAIN;
 			}
+
 		}
+
+		// build improvement
+
+		if (~improvedTileItems & option.item)
+		{
+			improvedTileItems |= option.item;
+			conventionalImprovementTime += tx_terraform[option.action].rate;
+
+			if (action == -1)
+			{
+				action = option.action;
+			}
+
+		}
+
+		// verify action is set
+
+		if (action == -1)
+			continue;
+
+		// set changes
+
+		tile->rocks = improvedTileRocks;
+		tile->items = improvedTileItems;
+
+		// test
+
+		double improvedTileYieldScore = calculateTileYieldScore(baseIndex, base, tileX, tileY);
+
+		// revert changes
+
+		tile->rocks = tileRocks;
+		tile->items = tileItems;
+
+		// calculate yield improvement score
+
+		double yieldImprovementScore = (improvedTileYieldScore - previousYieldScore);
+
+		// modify improvement time
+
+		if (vehicle_has_ability(vehicle, ABL_FUNGICIDAL))
+		{
+			fungusImprovementTime /= 2.0;
+		}
+
+		if (has_project(factionId, FAC_WEATHER_PARADIGM))
+		{
+			conventionalImprovementTime /= 1.5;
+		}
+
+		double totalImprovementTime = fungusImprovementTime + conventionalImprovementTime;
+
+		if (tx_units[vehicle->proto_id].ability_flags & ABL_SUPER_TERRAFORMER)
+		{
+			totalImprovementTime /= 2.0;
+		}
+
+		// calculate path length
+
+		double travelPathLength = (double)map_range(vehicle->x, vehicle->y, tileX, tileY);
+
+		// estimate travel time
+
+		double travelTime = travelPathLength / (max(1.0, (double)*tx_current_turn / 40.0));
+		double moveAllowance;
+		double adjustedSpeed;
+
+		switch (triad)
+		{
+		case TRIAD_LAND:
+
+			// it takes 1 turn on average per tile building roads in the beginning
+			// then it decreases to 1/9 close to the middle-end.
+
+			moveAllowance = min(1.0, max(1.0/9.0, (200.0 - (double)*tx_current_turn) / 200.0));
+			adjustedSpeed = (double)speed / moveAllowance;
+			travelTime = travelPathLength / adjustedSpeed;
+
+			break;
+
+		default:
+
+			// no roads for sea and air units
+
+			travelTime = travelPathLength / speed;
+
+		}
+
+
+		// summarize score
+
+		double improvementScore =
+			yieldImprovementScore
+			+
+			improvementTimeWeight * (totalImprovementTime + travelTime)
+		;
+
+		// update score
+
+		if (improvementScore > bestImprovementScores[0])
+		{
+			bestImprovementScores[1] = bestImprovementScores[0];
+			bestImprovementScores[0] = improvementScore;
+			*bestTerraformingAction = action;
+		}
+		else if (improvementScore > bestImprovementScores[1])
+		{
+			bestImprovementScores[1] = improvementScore;
+		}
+
 	}
 
-	// set changes
-
-	tile->rocks = improvedTileRocks;
-	tile->items = improvedTileItems;
-
-	// test
-
-	double improvedTileYieldScore = calculateTileYieldScore(baseIndex, base, tileX, tileY);
-
-	// revert changes
-
-	tile->rocks = tileRocks;
-	tile->items = tileItems;
-
-	// calculate yield improvement score
-
-	double yieldImprovementScore = (improvedTileYieldScore - previousYieldScore);
-
-	// modify improvement time
-
-	if (vehicle_has_ability(vehicle, ABL_FUNGICIDAL))
-	{
-		improvementFungicidalTime /= 2.0;
-	}
-
-	if (has_project(factionId, FAC_WEATHER_PARADIGM))
-	{
-		improvementTime /= 1.5;
-	}
-
-	double totalImprovementTime = improvementFungicidalTime + improvementTime;
-
-	if (tx_units[vehicle->proto_id].ability_flags & ABL_SUPER_TERRAFORMER)
-	{
-		totalImprovementTime /= 2.0;
-	}
-
-	// calculate path length
-
-	double travelPathLength = (double)map_range(vehicle->x, vehicle->y, tileX, tileY);
-
-	// estimate travel time
-
-	double travelTime = travelPathLength / (max(1.0, (double)*tx_current_turn / 40.0));
-	double moveAllowance;
-	double adjustedSpeed;
-
-	switch (triad)
-	{
-	case TRIAD_LAND:
-
-		// it takes 1 turn on average per tile building roads in the beginning
-		// then it decreases to 1/9 close to the middle-end.
-
-		moveAllowance = min(1.0, max(1.0/9.0, (200.0 - (double)*tx_current_turn) / 200.0));
-		adjustedSpeed = (double)speed / moveAllowance;
-		travelTime = travelPathLength / adjustedSpeed;
-
-		break;
-
-	default:
-
-		// no roads for sea and air units
-
-		travelTime = travelPathLength / speed;
-
-	}
-
-
-	// summarize score
-
-	double improvementScore =
-		yieldImprovementScore
-		+
-		improvementTimeWeight * (totalImprovementTime + travelTime)
-	;
-
-	// return score
-
-	return improvementScore;
+	return bestImprovementScores[0];
 
 }
 

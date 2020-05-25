@@ -162,6 +162,14 @@ int veh_speed(int id) {
     return tx_veh_speed(id, 0);
 }
 
+int veh_chassis_speed(int id)
+{
+	VEH *vehicle = &tx_vehicles[id];
+	UNIT *unit = &tx_units[vehicle->proto_id];
+	R_Chassis *chassis = &tx_chassis[unit->chassis_type];
+	return chassis->speed;
+}
+
 int unit_triad(int id) {
     int tr = tx_chassis[tx_units[id].chassis_type].triad;
     assert(tr == TRIAD_LAND || tr == TRIAD_SEA || tr == TRIAD_AIR);
@@ -293,7 +301,6 @@ Send unit to destination building a road/tube on a way if applicable.
 int set_move_road_tube_to(int id, int x, int y)
 {
     VEH *veh = &tx_vehicles[id];
-    MAP *destination = mapsq(x, y);
     int triad = veh_triad(id);
 
     // set way points
@@ -323,6 +330,8 @@ int set_move_road_tube_to(int id, int x, int y)
 
     veh->move_status = moveStatus;
     veh->status_icon = veh_status_icon[moveStatus];
+    veh->waypoint_1_x = x;
+    veh->waypoint_1_y = y;
 
     return SYNC;
 
