@@ -32,9 +32,7 @@ const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 ;
 
 int giveOrderToFormer(int vehicleId);
-void collectFormerTargets(int factionId);
 bool isVehicleTerraforming(VEH *vehicle);
-MAP *getVehicleDestination(VEH *vehicle);
 bool isVehicleFormer(VEH *vehicle);
 bool isVehicleTerraforming(VEH *vehicle);
 bool isVehicleMoving(VEH *vehicle);
@@ -42,6 +40,6 @@ MAP *getVehicleDestination(VEH *vehicle);
 bool isTileTakenByOtherFormer(VEH *primaryVehicle, MAP *primaryVehicleTargetTile);
 bool isTileWorkedByOtherBase(BASE *base, MAP *tile);
 double calculateTileYieldScore(int baseId, BASE *base, int tileX, int tileY);
-double calculateImprovementScore(VEH *vehicle, int baseIndex, BASE *base, MAP *tile, int tileX, int tileY, double previousYieldScore, int *action);
+double calculateImprovementScore(int vehicleId, int baseIndex, BASE *base, MAP *tile, int tileX, int tileY, double previousYieldScore, int *action);
 
 #endif // __AI_H__

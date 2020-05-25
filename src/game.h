@@ -53,6 +53,7 @@ MAP* mapsq(int x, int y);
 int unit_in_tile(MAP* sq);
 int set_move_to(int id, int x, int y);
 int set_road_to(int id, int x, int y);
+int set_move_road_tube_to(int id, int x, int y);
 int set_action(int id, int act, char icon);
 int set_convoy(int id, int res);
 int veh_skip(int id);
