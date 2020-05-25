@@ -2,13 +2,23 @@
 #include "move.h"
 #include "wtp.h"
 
+// terraforming choice optimization parameters
+
 const double nutrientWeight = 10.0;
 const double mineralWeight = 8.0;
 const double energyWeight = 5.0;
-const double improvementTimeWeight = -1.0;
+const double improvementTimeWeight = -2.0;
 
-int formerTargetCount;
-MAP *formerTargets[UNITS];
+const int terraformingOptions[][] =
+{
+	{FORMER_PLANT_FUNGUS},
+	{FORMER_FOREST},
+	{FORMER_SOIL_ENR, FORMER_SOLAR},
+	{FORMER_SOIL_ENR, FORMER_ECH_MIRROR},
+	{FORMER_SOIL_ENR, FORMER_MINE},
+	{FORMER_MINE},
+}
+;
 
 /**
 Gives order to former.
@@ -30,10 +40,6 @@ int giveOrderToFormer(int vehicleId)
 	{
 		return SYNC;
 	}
-
-	// collect own former targets
-
-	collectFormerTargets(vehicle->faction_id);
 
 	// iterate through own bases
 
@@ -148,7 +154,7 @@ int giveOrderToFormer(int vehicleId)
 
 			double previousYieldScore = (worked ? calculateTileYieldScore(baseIndex, base, tileX, tileY) : worstWorkedTileYieldScore);
 
-			double tileImprovementScore = calculateImprovementScore(vehicle, baseIndex, base, tile, tileX, tileY, previousYieldScore, &action);
+			double tileImprovementScore = calculateImprovementScore(vehicleId, baseIndex, base, tile, tileX, tileY, previousYieldScore, &action);
 
 			// skip tiles where is nothing to build anymore
 
@@ -242,15 +248,16 @@ int giveOrderToFormer(int vehicleId)
 		}
 		else
 		{
-			// send former to tile
+			// send former to tile building connection
 
-			order = set_move_to(vehicleId, bestTargetTileX, bestTargetTileY);
+			order = set_move_road_tube_to(vehicleId, bestTargetTileX, bestTargetTileY);
 
 			debug
 			(
-				"giveOrderToFormer: vehicle(%d,%d), order=MOVE_TO(%d,%d)\n",
+				"giveOrderToFormer: vehicle(%d,%d), order=%s(%d,%d)\n",
 				vehicle->x,
 				vehicle->y,
+				MOVE_STATUS[vehicle->move_status].c_str(),
 				bestTargetTileX,
 				bestTargetTileY
 			)
@@ -263,49 +270,34 @@ int giveOrderToFormer(int vehicleId)
 
 }
 
-/**
-Collect current former orders.
-*/
-void collectFormerTargets(int factionId)
-{
-	// iterate through vehicles
-
-	for (int vehicleIndex = 0; vehicleIndex < *tx_total_num_vehicles; vehicleIndex++)
-	{
-		VEH *vehicle = &tx_vehicles[vehicleIndex];
-
-		// skip not own vehicles
-
-		if (vehicle->faction_id != factionId)
-			continue;
-
-		// skip not formers
-
-		if (tx_units[vehicle->proto_id].weapon_type != WPN_TERRAFORMING_UNIT)
-			continue;
-
-		// former is working the tile
-		if (isVehicleTerraforming(vehicle))
-		{
-			formerTargets[formerTargetCount] = mapsq(vehicle->x, vehicle->y);
-			formerTargetCount++;
-
-		}
-		// former is going somewhere
-		else if (vehicle->move_status == STATUS_GOTO || vehicle->move_status == STATUS_ROAD_TO)
-		{
-			formerTargets[formerTargetCount] = getVehicleDestination(vehicle);
-			formerTargetCount++;
-
-		}
-
-	}
-
-}
-
 bool isVehicleFormer(VEH *vehicle)
 {
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_TERRAFORMING_UNIT);
+}
+
+bool isFormerTargettingTile(VEH *vehicle, MAP *tile)
+{
+	bool targetting = false;
+
+	if (isVehicleFormer(vehicle))
+	{
+		if (isVehicleTerraforming(vehicle))
+		{
+			if (mapsq(vehicle->x, vehicle->y) == tile)
+			{
+				targetting = true;
+			}
+		}
+		else if (isVehicleMoving(vehicle))
+		{
+			if (getVehicleDestination(vehicle) == tile)
+			{
+				targetting = true;
+			}
+		}
+	}
+
+	return targetting;
 }
 
 bool isVehicleTerraforming(VEH *vehicle)
@@ -325,19 +317,19 @@ MAP *getVehicleDestination(VEH *vehicle)
 
 	switch (vehicle->waypoint_count)
 	{
-	case 1:
-		x = vehicle->waypoint_1_x;
-		y = vehicle->waypoint_1_y;
+	case 0:
+		x = (vehicle->waypoint_1_x == -1 ? vehicle->x : vehicle->waypoint_1_x);
+		y = (vehicle->waypoint_1_y == -1 ? vehicle->y : vehicle->waypoint_1_y);
 		break;
-	case 2:
+	case 1:
 		x = vehicle->waypoint_2_x;
 		y = vehicle->waypoint_2_y;
 		break;
-	case 3:
+	case 2:
 		x = vehicle->waypoint_3_x;
 		y = vehicle->waypoint_3_y;
 		break;
-	case 4:
+	case 3:
 		x = vehicle->waypoint_4_x;
 		y = vehicle->waypoint_4_y;
 		break;
@@ -372,22 +364,10 @@ bool isTileTakenByOtherFormer(VEH *primaryVehicle, MAP *primaryVehicleTargetTile
 		if (!isVehicleFormer(vehicle))
 			continue;
 
-		// check moving vehicles
-
-		if (isVehicleMoving(vehicle))
+		if (isFormerTargettingTile(vehicle, primaryVehicleTargetTile))
 		{
-			// check vehicle destination
-
-			MAP *vehicleDestination = getVehicleDestination(vehicle);
-
-			// compare destinations
-
-			if (vehicleDestination == primaryVehicleTargetTile)
-			{
-				taken = true;
-				break;
-			}
-
+			taken = true;
+			break;
 		}
 
 	}
@@ -480,9 +460,12 @@ double calculateTileYieldScore(int baseId, BASE *base, int tileX, int tileY)
 
 }
 
-double calculateImprovementScore(VEH *vehicle, int baseIndex, BASE *base, MAP *tile, int tileX, int tileY, double previousYieldScore, int *action)
+double calculateImprovementScore(int vehicleId, int baseIndex, BASE *base, MAP *tile, int tileX, int tileY, double previousYieldScore, int *action)
 {
+	VEH *vehicle = &tx_vehicles[vehicleId];
 	int factionId = vehicle->faction_id;
+	int triad = veh_triad(vehicleId);
+	int speed = veh_speed(vehicleId);
 
 	// store tile values
 
@@ -636,10 +619,37 @@ double calculateImprovementScore(VEH *vehicle, int baseIndex, BASE *base, MAP *t
 		totalImprovementTime /= 2.0;
 	}
 
-	// calculate range and estimate travel time
+	// calculate path length
 
 	double travelPathLength = (double)map_range(vehicle->x, vehicle->y, tileX, tileY);
+
+	// estimate travel time
+
 	double travelTime = travelPathLength / (max(1.0, (double)*tx_current_turn / 40.0));
+	double moveAllowance;
+	double adjustedSpeed;
+
+	switch (triad)
+	{
+	case TRIAD_LAND:
+
+		// it takes 1 turn on average per tile building roads in the beginning
+		// then it decreases to 1/9 close to the middle-end.
+
+		moveAllowance = min(1.0, max(1.0/9.0, (200.0 - (double)*tx_current_turn) / 200.0));
+		adjustedSpeed = (double)speed / moveAllowance;
+		travelTime = travelPathLength / adjustedSpeed;
+
+		break;
+
+	default:
+
+		// no roads for sea and air units
+
+		travelTime = travelPathLength / speed;
+
+	}
+
 
 	// summarize score
 

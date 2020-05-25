@@ -287,6 +287,47 @@ int set_road_to(int id, int x, int y) {
     return SYNC;
 }
 
+/**
+Send unit to destination building a road/tube on a way if applicable.
+*/
+int set_move_road_tube_to(int id, int x, int y)
+{
+    VEH *veh = &tx_vehicles[id];
+    MAP *destination = mapsq(x, y);
+    int triad = veh_triad(id);
+
+    // set way points
+
+    veh->waypoint_1_x = x;
+    veh->waypoint_1_y = y;
+
+    // set connection type
+
+    int moveStatus;
+
+    switch (triad)
+    {
+	// land unit
+	case TRIAD_LAND:
+		// build road or tube to destination depending on existing technology
+		moveStatus = (has_terra(veh->faction_id, TERRA_MAGTUBE, 0) ? STATUS_MAGTUBE_TO : STATUS_ROAD_TO);
+		break;
+	// sea or air unit
+	default:
+		// go to destination
+		moveStatus = STATUS_GOTO;
+		break;
+    }
+
+    // set vehicle status and icon
+
+    veh->move_status = moveStatus;
+    veh->status_icon = veh_status_icon[moveStatus];
+
+    return SYNC;
+
+}
+
 int set_action(int id, int act, char icon) {
     VEH* veh = &tx_vehicles[id];
     if (act == FORMER_THERMAL_BORE+4)
