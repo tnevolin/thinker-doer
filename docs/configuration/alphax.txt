@@ -511,7 +511,7 @@ Carrier Deck,           1, Metal,    Carrier,   000101101010, Mobile Airbase
 AAA Tracking,           1, MilAlg,   AAA,       000010001011, x2 vs. air attacks
 Comm Jammer,            1, InfNet,   ECM,       000010111001, +50% vs. fast units
 Antigrav Struts,        2, Gravity,  Grav,      000000111001, +1 movement rate (or +Reactor*2 for Air)
-Empath Song,           32, Bioadap,  Empath,    000010001111, +50% attack vs. Psi
+Empath Song,           32, CentEmp,  Empath,    000010001111, +50% attack vs. Psi
 Polymorphic Encryption, 1, Algor,    Secure,    000000111111, x2 cost to subvert
 Fungicide Tanks,        1, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
 High Morale,            1, Integ,    Trained,   000000001111, Gains morale upgrade
@@ -748,7 +748,7 @@ The Bulk Matter Transmitter, 200, 0, Matter,  Disable,  +2 Minerals Every Base, 
 The Telepathic Matrix,       200, 0, SecMani, Disable,  No More Drone Riots; +2 PROBE,   0, 1, 0, 0, 1,
 The Voice of Planet,         120, 0, Thresh,  Disable,  Begins Ascent To Transcendence,  0,-2, 2, 2, 1,
 The Ascent to Transcendence, 300, 0, Thresh,  Disable,  End of Singular Sentience Era,   0, 0, 2, 2, 2,
-The Manifold Harmonics,       60, 0, EnvEcon, Disable,  Bonus Resources In Fungus,      -1, 0, 1, 2, 2,
+The Manifold Harmonics,       60, 0, SecMani, Disable,  Bonus Resources In Fungus,      -1, 0, 1, 2, 2,
 The Nethack Terminus,         60, 0, HomoSup, Disable,  Stronger Probe Teams,            0, 1, 2, 1, 1,
 The Cloudbase Academy,       120, 0, WillPow, Disable,  Faster/Stronger Air Units,       1, 1, 0, 0, 0,
 The Planetary Energy Grid,    60, 0, AdapEco, Disable,  Energy Bank At Every Base,      -1, 0, 1, 2, 1,

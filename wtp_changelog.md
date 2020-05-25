@@ -1,3 +1,8 @@
+# Version 59
+
+* Centauri Empathy enables Empath Song.
+* Secrets of the Manifolds enables The Manifold Harmonics.
+
 # Version 58
 
 * Fixed advanced movement on ocean squares. Somehow ocean has river flag on it. So I have to restrict river movement for land only.
