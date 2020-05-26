@@ -1,3 +1,8 @@
+# Version 59
+
+* Fixed advanced movement on river. River direction is always straight across tile edge - never diagonally.
+* Fixed advanced movement when leaving or entering a base. Previously base didn't count as having road.
+
 # Version 58
 
 * Fixed advanced movement on ocean squares. Somehow ocean has river flag on it. So I have to restrict river movement for land only.
@@ -292,6 +297,8 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Centauri Empathy enables Empath Song.
+* Secrets of the Manifolds enables The Manifold Harmonics.
 * Nerf specialists.
 * Reduce production multipliers.
 * Make AI build more units, defensive structures, sensors.
