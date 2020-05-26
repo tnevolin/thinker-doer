@@ -1483,22 +1483,24 @@ HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int t
         if (square_from && square_to)
         {
             // tube takes one movement rate along the road
+            // base implies road and tube in its tile
             if
             (
-                (square_from->items & TERRA_MAGTUBE)
+                (square_from->items & (TERRA_BASE_IN_TILE | TERRA_MAGTUBE))
                 &&
-                (square_to->items & TERRA_MAGTUBE)
+                (square_to->items & (TERRA_BASE_IN_TILE | TERRA_MAGTUBE))
             )
             {
                 value = 1;
 
             }
             // road take road movement cost
+            // base implies road and tube in its tile
             else if
             (
-                (square_from->items & TERRA_ROAD)
+                (square_from->items & (TERRA_BASE_IN_TILE | TERRA_ROAD))
                 &&
-                (square_to->items & TERRA_ROAD)
+                (square_to->items & (TERRA_BASE_IN_TILE | TERRA_ROAD))
             )
             {
                 value = conf.road_movement_cost;
@@ -1510,6 +1512,9 @@ HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int t
                 (!is_ocean(square_from) && square_from->items & TERRA_RIVER)
                 &&
                 (!is_ocean(square_to) && square_to->items & TERRA_RIVER)
+                &&
+                // river crossing is only allowed to the tile with common edge
+                (abs(to_x - from_x) == 1 && abs(to_y - from_y) == 1)
             )
             {
                 value = conf.road_movement_cost;
