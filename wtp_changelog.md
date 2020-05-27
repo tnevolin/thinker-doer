@@ -1,3 +1,7 @@
+# Version 60
+
+* AAA Tracking cost is 2.
+
 # Version 59
 
 * Fixed advanced movement on river. River direction is always straight across tile edge - never diagonally.
