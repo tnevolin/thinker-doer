@@ -1,4 +1,25 @@
+# Version 59
+
+* Fixed advanced movement on river. River direction is always straight across tile edge - never diagonally.
+* Fixed advanced movement when leaving or entering a base. Previously base didn't count as having road.
+
+# Version 58
+
+* Fixed advanced movement on ocean squares. Somehow ocean has river flag on it. So I have to restrict river movement for land only.
+
 # Version 57
+
+* Citizen change.
+
+| name | technology | level | economy | psych | labs | change |
+|----|----|----:|----:|----:|----:|----|
+| Doctor | | | | +2 | | |
+| Empath | Centauri Meditation | 6 | +2 | +2 | |
+| Transcend | Sentient Resonance | 12 | +2 | +2 | +2 | Moved to L12 |
+| Technician | | | +3 | | | |
+| Engineer | Planetary Economics | 7 | +3 | +2 | | Moved to L7 |
+| Librarian | Planetary Networks | 4 | | | +3 | |
+| Thinker | Advanced Subatomic Theory | 8 | | +1 | +4 | Moved to L 8 |
 
 # Version 56
 
@@ -276,8 +297,14 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Centauri Empathy enables Empath Song.
+* Secrets of the Manifolds enables The Manifold Harmonics.
 * Nerf specialists.
 * Reduce production multipliers.
+
+* Air unit should not excert ZOC.
+* Air unit should not cover surface unit.
+
 * Make AI build more units, defensive structures, sensors.
 * Rework probe team success rates.
 * Cloning Vats should not grant impunities.

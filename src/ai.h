@@ -42,6 +42,7 @@ struct TERRAFORMING_OPTION
 };
 
 int giveOrderToFormer(int vehicleId);
+bool carryAIOrder(VEH *vehicle);
 bool isTileOccupiedByBase(MAP *tile);
 bool isVehicleTerraforming(VEH *vehicle);
 bool isVehicleFormer(VEH *vehicle);
