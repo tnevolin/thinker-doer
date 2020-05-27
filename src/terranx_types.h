@@ -102,6 +102,7 @@ struct VEH
     int flags_1;                    //0x0004
     short flags_2;                  //0x0008
     short proto_id;                 //0x000A
+    // used by WtP for AI control
     short pad_0;                    //0x000C
     char faction_id;                //0x000E
     char year_end_lurking;          //0x000F

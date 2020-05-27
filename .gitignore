@@ -1,6 +1,5 @@
 build/
-rel/
-utils/
 patch/
+releases/TheWillToPower
 *.layout
 *.depend
