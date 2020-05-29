@@ -1473,7 +1473,7 @@ HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int t
 
     int value = tx_hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, a7);
 
-    // update road/tube movement rate
+    // correct road/tube movement rate
 
     if (conf.tube_movement_rate_multiplier > 0)
     {
@@ -1482,8 +1482,8 @@ HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int t
 
         if (square_from && square_to)
         {
-            // tube takes one movement rate along the road
-            // base implies road and tube in its tile
+            // set movement cost along tube to 1
+            // base implies tube in its tile
             if
             (
                 (square_from->items & (TERRA_BASE_IN_TILE | TERRA_MAGTUBE))
@@ -1494,28 +1494,8 @@ HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int t
                 value = 1;
 
             }
-            // road take road movement cost
-            // base implies road and tube in its tile
-            else if
-            (
-                (square_from->items & (TERRA_BASE_IN_TILE | TERRA_ROAD))
-                &&
-                (square_to->items & (TERRA_BASE_IN_TILE | TERRA_ROAD))
-            )
-            {
-                value = conf.road_movement_cost;
-
-            }
-            // land river take road movement cost
-            else if
-            (
-                (!is_ocean(square_from) && square_from->items & TERRA_RIVER)
-                &&
-                (!is_ocean(square_to) && square_to->items & TERRA_RIVER)
-                &&
-                // river crossing is only allowed to the tile with common edge
-                (abs(to_x - from_x) == 1 && abs(to_y - from_y) == 1)
-            )
+            // set road movement cost
+            else if (value == 1)
             {
                 value = conf.road_movement_cost;
 
