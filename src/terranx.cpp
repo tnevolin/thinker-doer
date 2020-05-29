@@ -70,8 +70,20 @@ fp_3int* tx_best_defender = (fp_3int*)0x5044D0;
 fp_5int* tx_battle_compute = (fp_5int*)0x501DA0;
 fp_1int* tx_enemy_move = (fp_1int*)0x56B5B0;
 fp_1int* tx_monolith = (fp_1int*)0x57A050;
+/**
+Builds base.
+(vehicle id, ?)
+*/
 fp_2int* tx_action_build = (fp_2int*)0x4C96E0;
-fp_3int* tx_action_terraform = (fp_3int*)0x4C9B00;
+/**
+Sets vehicle move_action to given terraform action and returns number of terraforming turns - 1.
+(vehicle id, terrafroming action, 0 = return terraforming turns only or 1 = also set vehicle move_action)
+*/
+fp_3int* tx_action_terraform = (fp_3int*)0x004C9B00;
+/**
+Calculates cost of raising land in energy credits.
+(tile x, tile y, faction id)
+*/
 fp_3int* tx_terraform_cost = (fp_3int*)0x4C9420;
 fp_2int* tx_bonus_at = (fp_2int*)0x592030;
 fp_2int* tx_goody_at = (fp_2int*)0x592140;
@@ -81,7 +93,7 @@ fp_3int* tx_world_site = (fp_3int*)0x5C4FD0;
 fp_1int* tx_set_base = (fp_1int*)0x4E39D0;
 fp_1int* tx_base_compute = (fp_1int*)0x4EC3B0;
 fp_4int* tx_base_prod_choices = (fp_4int*)0x4F81A0;
-fp_void* tx_turn_upkeep = (fp_void*)0x5258C0;
+fp_0int* tx_turn_upkeep = (fp_0int*)0x5258C0;
 fp_1int* tx_faction_upkeep = (fp_1int*)0x527290;
 fp_3int* tx_tech_val = (fp_3int*)0x5BCBE0;
 fp_5int* tx_crop_yield = (fp_5int*)0x4E6E50;
@@ -98,32 +110,43 @@ fp_1int* tx_tech_selection = (fp_1int*)0x5BE380;
 // [WtP]
 
 // read basic rules
-fp_0int* tx_read_basic_rules = (fp_0int*)0x00585170;
+fp_0int *tx_read_basic_rules = (fp_0int* )0x00585170;
 
 // calculates prototype cost
-fp_5int* tx_proto_cost = (fp_5int*)0x005A5A60;
+fp_5int *tx_proto_cost = (fp_5int* )0x005A5A60;
 
 // creates prototype
-fp_6int* tx_create_prototype = (fp_6int*)0x005A5D40;
+fp_6int *tx_create_prototype = (fp_6int* )0x005A5D40;
 
 // calculates upgrade cost
-fp_3int* tx_upgrade_cost = (fp_3int*)0x004EFD50;
+fp_3int *tx_upgrade_cost = (fp_3int* )0x004EFD50;
 
 // concatenates strings
-fp_2int_void* tx_strcat = (fp_2int_void*)0x00645470;
+fp_2int_void *tx_strcat = (fp_2int_void* )0x00645470;
 
 // calculate_distance_to_nearest_base
-fp_6int* tx_calculate_distance_to_nearest_base = (fp_6int*)0x004E3D50;
+fp_6int *tx_calculate_distance_to_nearest_base = (fp_6int* )0x004E3D50;
 
 // calculate tile yield
-fp_5int* tx_tile_yield = (fp_5int*)0x004E7DC0;
+fp_5int *tx_tile_yield = (fp_5int* )0x004E7DC0;
 
 // base mechanics production
-fp_0int* tx_base_mechanics_production = (fp_0int*)0x004F07E0;
+fp_0int *tx_base_mechanics_production = (fp_0int* )0x004F07E0;
 
 // set SE on dialog close
-fp_5int* tx_set_se_on_dialog_close = (fp_5int*)0x005B4210;
+fp_5int *tx_set_se_on_dialog_close = (fp_5int* )0x005B4210;
 
 // hex cost
-fp_7int* tx_hex_cost = (fp_7int*)0x00593510;
+fp_7int *tx_hex_cost = (fp_7int* )0x00593510;
+
+/**
+Checks if terraforming action is available.
+(terraforming action, sea flag, returns 0 unless action is advanced terraforming and The Weather Paradigm is owned)
+*/
+fp_3int *tx_terrain_avail = (fp_3int *)0x005BAB40;
+
+/**
+Places worked squares among other things.
+*/
+fp_0void *tx_base_yield = (fp_0void *)0x004E80B0;
 
