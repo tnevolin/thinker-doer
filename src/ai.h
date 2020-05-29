@@ -33,25 +33,26 @@ const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 
 struct TERRAFORMING_OPTION
 {
-	bool requiresFarm;
-	bool removeFungusBeforeTech;
-	bool removeFungusAfterTech;
-	bool level;
-	int action;
-	int item;
+	int count;
+	int actions[10];
 };
 
 int giveOrderToFormer(int vehicleId);
-bool carryAIOrder(VEH *vehicle);
-bool isTileOccupiedByBase(MAP *tile);
-bool isVehicleTerraforming(VEH *vehicle);
+double calculateTerraformingScore(int vehicleId, int tileX, int tileY, int *bestTerraformingOptionIndex);
+double calculateYieldScore(int factionId, int tileX, int tileY);
+bool isOwnWorkTile(int factionId, int tileX, int tileY);
+bool isTerraformingAvailable(int factionId, int x, int y, int action);
+void applyTerraforming(MAP *tile, int action);
+int calculateTerraformingTime(int vehicleId, int action);
+void carryFormerAIOrders(int vehicleId);
+bool isFormerCarryingAIOrders(int vehicleId);
+bool isVehicleTerraforming(int vehicleId);
 bool isVehicleFormer(VEH *vehicle);
 bool isVehicleTerraforming(VEH *vehicle);
-bool isVehicleMoving(VEH *vehicle);
-MAP *getVehicleDestination(VEH *vehicle);
-bool isTileTakenByOtherFormer(VEH *primaryVehicle, MAP *primaryVehicleTargetTile);
+bool isVehicleMoving(int vehicleId);
+MAP *getVehicleDestination(int vehicleId);
+bool isTileTakenByOtherFormer(int primaryVehicleId, int x, int y);
 bool isTileWorkedByOtherBase(BASE *base, MAP *tile);
-double calculateTileYieldScore(int baseId, BASE *base, int tileX, int tileY);
-double calculateImprovementScore(int vehicleId, int baseIndex, BASE *base, MAP *tile, int tileX, int tileY, double previousYieldScore, int *action);
+bool isFormerTargettingTile(int vehicleId, int x, int y);
 
 #endif // __AI_H__

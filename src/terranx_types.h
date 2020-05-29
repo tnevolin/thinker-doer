@@ -327,9 +327,9 @@ struct Faction
     int net_random_event;
     int AI_fight;
     int AI_growth;                  // 0x03E0
-    int AI_tech;
-    int AI_wealth;
-    int AI_power;
+    int AI_tech;					// 0x03E4
+    int AI_wealth;					// 0x03E8
+    int AI_power;					// 0x03EC
     int target_x;                   // 0x03F0
     int target_y;                   // 0x03F4
     int unk_28;                     // 0x03F8
@@ -690,8 +690,8 @@ struct R_Terraform
     char* name_sea;
     int preq_tech;
     int preq_tech_sea;
-    int flag;
-    int flag_sea;
+    int added_items_flag;
+    int removed_items_flag;
     int rate;
     char* shortcuts;
 };

@@ -65,7 +65,7 @@ extern int (*tx_battle_compute_defender_effect_values)[0x4];
 // labels pointer
 extern char ***tx_labels;
 
-typedef int __cdecl fp_void();
+typedef void __cdecl fp_0void();
 typedef int __cdecl fp_0int();
 typedef int __cdecl fp_1int(int);
 typedef int __cdecl fp_2int(int, int);
@@ -105,7 +105,7 @@ extern fp_3int* tx_world_site;
 extern fp_1int* tx_set_base;
 extern fp_1int* tx_base_compute;
 extern fp_4int* tx_base_prod_choices;
-extern fp_void* tx_turn_upkeep;
+extern fp_0int* tx_turn_upkeep;
 extern fp_1int* tx_faction_upkeep;
 extern fp_3int* tx_tech_val;
 extern fp_5int* tx_crop_yield;
@@ -118,38 +118,18 @@ extern fp_1int* tx_consider_designs;
 extern fp_1int* tx_action_staple;
 extern fp_1int* tx_tech_rate;
 extern fp_1int* tx_tech_selection;
-
-// [WtP]
-
-// read basic rules
-extern fp_0int* tx_read_basic_rules;
-
-// calculates prototype cost
-extern fp_5int* tx_proto_cost;
-
-// creates prototype
-extern fp_6int* tx_create_prototype;
-
-// calculates upgrade cost
-extern fp_3int* tx_upgrade_cost;
-
-// concatenates strings
-extern fp_2int_void* tx_strcat;
-
-// calculate_distance_to_nearest_base
-extern fp_6int* tx_calculate_distance_to_nearest_base;
-
-// calculate tile yield
-extern fp_5int* tx_tile_yield;
-
-// base mechanics production
-extern fp_0int* tx_base_mechanics_production;
-
-// set SE on dialog close
-extern fp_5int* tx_set_se_on_dialog_close;
-
-// hex cost
-extern fp_7int* tx_hex_cost;
+extern fp_0int *tx_read_basic_rules;
+extern fp_5int *tx_proto_cost;
+extern fp_6int *tx_create_prototype;
+extern fp_3int *tx_upgrade_cost;
+extern fp_2int_void *tx_strcat;
+extern fp_6int *tx_calculate_distance_to_nearest_base;
+extern fp_5int *tx_tile_yield;
+extern fp_0int *tx_base_mechanics_production;
+extern fp_5int *tx_set_se_on_dialog_close;
+extern fp_7int *tx_hex_cost;
+extern fp_3int *tx_terrain_avail;
+extern fp_0void *tx_base_yield;
 
 #endif // __TERRANX_H__
 
