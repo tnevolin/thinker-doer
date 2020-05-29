@@ -1,3 +1,7 @@
+# Version 61
+
+* Fixed adavanced movement cost again. This time everything that is treated as road movement is corrected to have road movement cost.
+
 # Version 60
 
 * AAA Tracking cost is 2.
