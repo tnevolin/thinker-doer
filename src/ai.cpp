@@ -1,45 +1,29 @@
+#include <float.h>
 #include "ai.h"
-#include "move.h"
-#include "wtp.h"
 
 // terraforming choice optimization parameters
 
+// TODO use breakpoint time instead
 const double growthWeight = 40.0;
 const double mineralWeight = 1.0;
 const double energyWeight = 0.5;
-const double improvementBreakpointTime = 40.0;
-const double roadValue = 1.0;
-const double tubeValue = 1.0;
+const double improvementBreakpointTime = 50.0;
+const double tileWithExistingRoadValue = 10.0;
+const double tileWithExistingTubeValue = 10.0;
 
 /**
 AI terraforming options
 */
-const int LAND_TERRAFORMING_OPTION_COUNT = 3;
-TERRAFORMING_OPTION LAND_TERRAFORMING_OPTIONS[LAND_TERRAFORMING_OPTION_COUNT] =
+const int TERRAFORMING_OPTION_COUNT = 5;
+TERRAFORMING_OPTION TERRAFORMING_OPTIONS[TERRAFORMING_OPTION_COUNT] =
 {
-	{7, {FORMER_REMOVE_FUNGUS, FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR, FORMER_ROAD, FORMER_MAG_TUBE}},
-	{7, {FORMER_REMOVE_FUNGUS, FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE, FORMER_ROAD, FORMER_MAG_TUBE}},
-	{4, {FORMER_REMOVE_FUNGUS, FORMER_MINE, FORMER_ROAD, FORMER_MAG_TUBE}},
-//	{FORMER_FOREST},
-//	{FORMER_PLANT_FUNGUS},
-//	{FORMER_AQUIFER},
-//	{FORMER_CONDENSER},
-//	{FORMER_ECH_MIRROR},
-//	{FORMER_THERMAL_BORE},
-//	{FORMER_SOIL_ENR},
-};
-const int SEA_TERRAFORMING_OPTION_COUNT = 2;
-TERRAFORMING_OPTION SEA_TERRAFORMING_OPTIONS[SEA_TERRAFORMING_OPTION_COUNT] =
-{
-	{3, {FORMER_REMOVE_FUNGUS, FORMER_FARM, FORMER_SOLAR}},
-	{3, {FORMER_REMOVE_FUNGUS, FORMER_FARM, FORMER_MINE}},
-//	{FORMER_FOREST},
-//	{FORMER_PLANT_FUNGUS},
-//	{FORMER_AQUIFER},
-//	{FORMER_CONDENSER},
-//	{FORMER_ECH_MIRROR},
-//	{FORMER_THERMAL_BORE},
-//	{FORMER_SOIL_ENR},
+	// land
+	{0, 5, {FORMER_REMOVE_FUNGUS, FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},
+	{0, 5, {FORMER_REMOVE_FUNGUS, FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}},
+	{0, 2, {FORMER_REMOVE_FUNGUS, FORMER_MINE}},
+	// sea
+	{1, 3, {FORMER_REMOVE_FUNGUS, FORMER_FARM, FORMER_SOLAR}},
+	{1, 3, {FORMER_REMOVE_FUNGUS, FORMER_FARM, FORMER_MINE}},
 };
 
 /**
@@ -55,30 +39,26 @@ int giveOrderToFormer(int vehicleId)
 	int vehicleBodyId = vehicleTile->body_id;
 	int factionId = vehicle->faction_id;
 
-	// carry current former AI orders
-
-	carryFormerAIOrders(vehicleId);
-
-	// ignore formers with orders
-
-    if (isFormerCarryingAIOrders(vehicleId))
-		return SYNC;
-
-	// set default order
+	// set default return value
 
 	int order = SYNC;
 
+	// skip currently terraforming vehicles
+
+	if (isVehicleTerraforming(vehicle))
+		return order;
+
 	// iterate through map tiles
 
-	double bestTerraformingScore = 0.0;
-	MAP *bestTerraformingTile = NULL;
+	double bestTerraformingScore = -DBL_MAX;
 	int bestTerraformingTileX = -1;
 	int bestTerraformingTileY = -1;
-	int bestTerraformingOptionIndex = -1;
+	MAP *bestTerraformingTile = NULL;
+	int bestTerraformingAction = -1;
 
-	for (int x = 0; x < *tx_map_axis_x; x++)
+	for (int y = 0; y < *tx_map_axis_y; y++)
 	{
-		for (int y = 0; y < *tx_map_axis_y; y++)
+		for (int x = 0; x < *tx_map_axis_x; x++)
 		{
 			// skip impossible combinations
 
@@ -88,6 +68,11 @@ int giveOrderToFormer(int vehicleId)
 			// get map tile
 
 			MAP *tile = mapsq(x, y);
+
+			// skip incorrect map tiles
+
+			if (!tile)
+				continue;
 
 			// skip unreachable territory
 
@@ -106,82 +91,86 @@ int giveOrderToFormer(int vehicleId)
 
 			// exclude already taken tiles
 
-			if (isTileTakenByOtherFormer(vehicleId, x, y))
+			if (isTileTakenByOtherFormer(vehicle, tile))
 				continue;
 
 			// calculate terraforming score
 
-			int terraformingOptionIndex;
-			double terraformingScore = calculateTerraformingScore(vehicleId, x, y, &terraformingOptionIndex);
+			int terraformingAction = -1;
+			double terraformingScore = calculateTerraformingScore(vehicleId, x, y, &terraformingAction);
 
 			debug
 			(
-				"calculateTerraformingScore: (%d,%d), terraformingScore=%f, terraformingOptionIndex=%d\n",
+				"calculateTerraformingScore: (%d,%d), terraformingScore=%f, terraformingAction=%d\n",
 				x,
 				y,
 				terraformingScore,
-				terraformingOptionIndex
+				terraformingAction
 			)
 
-			if (bestTerraformingTile == NULL || bestTerraformingScore > terraformingScore)
+			if (terraformingScore > bestTerraformingScore )
 			{
 				bestTerraformingScore = terraformingScore;
-				bestTerraformingTile = tile;
 				bestTerraformingTileX = x;
 				bestTerraformingTileY = y;
-				bestTerraformingOptionIndex = terraformingOptionIndex;
+				bestTerraformingTile = tile;
+				bestTerraformingAction = terraformingAction;
 
 			}
 
+			debug
+			(
+				"calculateBestTerraformingScore: (%d,%d), bestTerraformingScore=%f, bestTerraformingAction=%d\n",
+				bestTerraformingTileX,
+				bestTerraformingTileY,
+				bestTerraformingScore,
+				bestTerraformingAction
+			)
+
 		}
+
 	}
 
-	debug
-	(
-		"calculateBestTerraformingScore: (%d,%d), bestTerraformingScore=%f, bestTerraformingOptionIndex=%d\n",
-		bestTerraformingTileX,
-		bestTerraformingTileY,
-		bestTerraformingScore,
-		bestTerraformingOptionIndex
-	)
-
-	if (bestTerraformingTile == NULL)
+	// could not find good terraforming option
+	if (bestTerraformingTile == NULL || bestTerraformingAction == -1)
 	{
-		// do nothing
+		// build improvement
 
-		order = veh_skip(vehicleId);
-
-		debug
-		(
-			"giveOrderToFormer: (%d,%d), order=skip\n",
-			vehicle->x,
-			vehicle->y
-		)
+		order = buildImprovement(vehicleId);
 
 	}
+	// found good terraforming option
 	else
 	{
 		// at destination
-
 		if (bestTerraformingTile == vehicleTile)
 		{
-			// start carrying terraforming orders
+			// execute terraforming action
 
-			carryFormerAIOrders(vehicleId);
+			order = setTerraformingAction(vehicleId, bestTerraformingAction);
+
+			debug
+			(
+				"giveOrderToFormer: (%d,%d), action=%s\n",
+				vehicle->x,
+				vehicle->y,
+				tx_terraform[bestTerraformingAction].name
+			)
+			;
 
 		}
+		// not at destination
 		else
 		{
-			// send former to tile
+			// send former to destination
 
 			order = set_move_to(vehicleId, bestTerraformingTileX, bestTerraformingTileY);
 
 			debug
 			(
-				"giveOrderToFormer: (%d,%d), order=%s(%d,%d)\n",
+				"giveOrderToFormer: (%d,%d), move_to(%d,%d)\n",
 				vehicle->x,
 				vehicle->y,
-				MOVE_STATUS[vehicle->move_status].c_str(),
 				bestTerraformingTileX,
 				bestTerraformingTileY
 			)
@@ -198,7 +187,7 @@ int giveOrderToFormer(int vehicleId)
 Selects best terraforming option for given square and calculates its improvement score after terraforming.
 Returns improvement score and modifies bestTerraformingOptionIndex reference.
 */
-double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerraformingOptionIndex)
+double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerraformingAction)
 {
 	VEH *vehicle = &tx_vehicles[vehicleId];
 	int factionId = vehicle->faction_id;
@@ -209,22 +198,6 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 	// calculate previous yield score
 
 	double previousYieldScore = calculateYieldScore(factionId, x, y);
-
-	// select terraforming options for body type
-
-	int terraformingOptionCount;
-	TERRAFORMING_OPTION *terraformingOptions;
-
-	if (sea)
-	{
-		terraformingOptionCount = SEA_TERRAFORMING_OPTION_COUNT;
-		terraformingOptions = SEA_TERRAFORMING_OPTIONS;
-	}
-	else
-	{
-		terraformingOptionCount = LAND_TERRAFORMING_OPTION_COUNT;
-		terraformingOptions = LAND_TERRAFORMING_OPTIONS;
-	}
 
 	// store tile values
 
@@ -239,12 +212,17 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 	// find best terraforming option
 
-	*bestTerraformingOptionIndex = -1;
-	double bestTerrafromningScore = 0.0;
+	double bestTerrafromningScore = -DBL_MAX;
+	*bestTerraformingAction = -1;
 
-	for (int optionIndex = 0; optionIndex < terraformingOptionCount; optionIndex++)
+	for (int optionIndex = 0; optionIndex < TERRAFORMING_OPTION_COUNT; optionIndex++)
 	{
-		TERRAFORMING_OPTION option = terraformingOptions[optionIndex];
+		TERRAFORMING_OPTION option = TERRAFORMING_OPTIONS[optionIndex];
+
+		// skip wrong body type
+
+		if (option.sea != sea)
+			continue;
 
 		// initialize variables
 
@@ -253,6 +231,8 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 		terraformingTime = 0;
 
 		// process actions
+
+		int firstAction = -1;
 
 		for (int actionIndex = 0; actionIndex < option.count; actionIndex++)
 		{
@@ -267,9 +247,16 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 			terraformingTime += calculateTerraformingTime(vehicleId, action);
 
-			// apply terraforming
+			// generate terraforming change
 
-			applyTerraforming(tile, action);
+			generateTerraformingChange(&improvedTileRocks, &improvedTileItems, action);
+
+			// store first action
+
+			if (firstAction == -1)
+			{
+				firstAction = action;
+			}
 
 		}
 
@@ -297,34 +284,33 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 		// estimate movement rate along the path
 
-		double estimatedMovementRate;
-        double movementRateWithoutRoad = (double)tx_basic->mov_rate_along_roads;
-        double movementRateAlongRoad = (conf.tube_movement_rate_multiplier > 0 ? (double)tx_basic->mov_rate_along_roads / conf.tube_movement_rate_multiplier : (double)tx_basic->mov_rate_along_roads);
-        double movementRateAlongTube = (conf.tube_movement_rate_multiplier > 0 ? 1 : 0);
+		double estimatedMovementCost;
+        double movementCostWithoutRoad = (double)tx_basic->mov_rate_along_roads;
+        double movementCostAlongRoad = (conf.tube_movement_rate_multiplier > 0 ? (double)tx_basic->mov_rate_along_roads / conf.tube_movement_rate_multiplier : (double)tx_basic->mov_rate_along_roads);
+        double movementCostAlongTube = (conf.tube_movement_rate_multiplier > 0 ? 1 : 0);
         double currentTurn = (double)*tx_current_turn;
 
 		switch (triad)
 		{
 		case TRIAD_LAND:
 
-			// it takes 5 full turns on average per tile building roads in the beginning
-			// then it decreases to tube movement allowance close to the middle-end.
+			// approximating 2 turns per tile at the beginning and then decrease movement close to the middle-end.
 
             if (*tx_current_turn < 100)
             {
-                estimatedMovementRate = 5.0 * movementRateWithoutRoad - (5.0 * movementRateWithoutRoad - 1.0 * movementRateWithoutRoad) * ((currentTurn - 0.0) / (100.0 - 0.0));
+                estimatedMovementCost = 2.0 * movementCostWithoutRoad - (2.0 * movementCostWithoutRoad - 1.0 * movementCostWithoutRoad) * ((currentTurn - 0.0) / (100.0 - 0.0));
             }
             else if (*tx_current_turn < 200)
             {
-                estimatedMovementRate = 1.0 * movementRateWithoutRoad - (1.0 * movementRateWithoutRoad - movementRateAlongRoad) * ((currentTurn - 100.0) / (200.0 - 100.0));
+                estimatedMovementCost = 1.0 * movementCostWithoutRoad - (1.0 * movementCostWithoutRoad - movementCostAlongRoad) * ((currentTurn - 100.0) / (200.0 - 100.0));
             }
             else if (*tx_current_turn < 400)
             {
-                estimatedMovementRate = movementRateAlongRoad - (movementRateAlongRoad - movementRateAlongTube) * ((currentTurn - 200.0) / (400.0 - 200.0));
+                estimatedMovementCost = 1.0 * movementCostAlongRoad - (1.0 * movementCostAlongRoad - 1.0 * movementCostAlongTube) * ((currentTurn - 200.0) / (400.0 - 200.0));
             }
             else
             {
-                estimatedMovementRate = movementRateAlongTube;
+                estimatedMovementCost = movementCostAlongTube;
             }
 
             break;
@@ -333,13 +319,13 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 			// no roads for sea and air units
 
-			estimatedMovementRate = movementRateWithoutRoad;
+			estimatedMovementCost = movementCostWithoutRoad;
 
 		}
 
         // estimate travel time
 
-        double estimatedTravelTime = travelPathLength * estimatedMovementRate / veh_speed(vehicleId);
+        double estimatedTravelTime = travelPathLength * estimatedMovementCost / veh_speed(vehicleId);
 
 		// summarize score
 
@@ -347,9 +333,10 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
         debug
         (
-            "calculateTerraformingScore: (%d,%d), improvementScore=%f, improvementBreakpointTime=%f, estimatedTravelTime=%f, terraformingTime=%d, terraformingScore=%f\n",
+            "calculateTerraformingOptionScore: (%d,%d), optionIndex=%d, improvementScore=%f, improvementBreakpointTime=%f, estimatedTravelTime=%f, terraformingTime=%d, terraformingScore=%f\n",
             x,
             y,
+            optionIndex,
             improvementScore,
             improvementBreakpointTime,
             estimatedTravelTime,
@@ -360,13 +347,28 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 		// update score
 
-		if (*bestTerraformingOptionIndex == -1 || terraformingScore > bestTerrafromningScore)
+		if (terraformingScore > bestTerrafromningScore)
 		{
-			*bestTerraformingOptionIndex = optionIndex;
 			bestTerrafromningScore = terraformingScore;
+			*bestTerraformingAction = firstAction;
+
 		}
 
 	}
+
+	// add intangible assets
+
+	if (tile->items & TERRA_ROAD)
+	{
+		bestTerrafromningScore += tileWithExistingRoadValue;
+	}
+
+	if (tile->items & TERRA_MAGTUBE)
+	{
+		bestTerrafromningScore += tileWithExistingTubeValue;
+	}
+
+	// return
 
 	return bestTerrafromningScore;
 
@@ -399,30 +401,34 @@ double calculateYieldScore(int factionId, int x, int y)
 
 		// set current base
 
-		*tx_current_base_id = baseIndex;
+        tx_set_base(baseIndex);
 
-		// calculate yield
+        // clear working tiles
 
-		tx_base_yield();
+        base->worked_tiles = 0;
+
+		// compute base
+
+		computeBase(baseIndex);
 
 		// calculate base yield score
 
 		double baseYieldScore = 0.0;
 
 		baseYieldScore += growthWeight * (double)base->nutrient_surplus / (double)((base->pop_size + 1) * 10);
-		baseYieldScore += mineralWeight * (double)base->nutrient_surplus;
+		baseYieldScore += mineralWeight * (double)base->mineral_surplus;
 		baseYieldScore += energyWeight * (double)base->energy_surplus;
 
 		debug
 		(
-			"calculateBaseYieldScore: (%d,%d), base(%d,%d), pop_size=%d, nutrient_surplus=%d, nutrient_surplus=%d, energy_surplus=%d, baseYieldScore=%f\n",
+			"calculateBaseYieldScore: (%d,%d), base(%d,%d), pop_size=%d, nutrient_surplus=%d, mineral_surplus=%d, energy_surplus=%d, baseYieldScore=%f\n",
 			x,
 			y,
 			base->x,
 			base->y,
 			base->pop_size,
 			base->nutrient_surplus,
-			base->nutrient_surplus,
+			base->mineral_surplus,
 			base->energy_surplus,
 			baseYieldScore
 		)
@@ -433,6 +439,8 @@ double calculateYieldScore(int factionId, int x, int y)
 		yieldScore += baseYieldScore;
 
     }
+
+    // add value for not tangible assets
 
 	debug
 	(
@@ -514,7 +522,7 @@ bool isTerraformingAvailable(int factionId, int x, int y, int action)
 
 	// special cases
 
-	bool terraformingAvailable = false;
+	bool terraformingAvailable = true;
 
 	switch (action)
 	{
@@ -567,75 +575,35 @@ int calculateTerraformingTime(int vehicleId, int action)
 
 }
 
-void applyTerraforming(MAP *tile, int action)
+void generateTerraformingChange(int *improvedTileRocks, int *improvedTileItems, int action)
 {
-	// remove items
-
-	tile->items &= ~tx_terraform[action].removed_items_flag;
-
-	// add items
-
-	tile->items |= tx_terraform[action].added_items_flag;
-
-}
-
-void carryFormerAIOrders(int vehicleId)
-{
-	VEH *vehicle = &tx_vehicles[vehicleId];
-	int x = vehicle->x;
-	int y = vehicle->y;
-	int factionId = vehicle->faction_id;
-
-	short aiStatus = vehicle->pad_0;
-	bool sea = aiStatus & 0x2;
-	int terraformingOptionIndex = (aiStatus >> 2) & 0xF;
-	int actionIndex = (aiStatus >> 6) & 0xF;
-
-	TERRAFORMING_OPTION terraformingOption = (sea ? SEA_TERRAFORMING_OPTIONS : LAND_TERRAFORMING_OPTIONS)[terraformingOptionIndex];
-
-	// skip vehicles without AI orders
-
-	if (!isFormerCarryingAIOrders(vehicleId))
-		return;
-
-	// skip not idle vehicles
-
-	if (vehicle->move_status != STATUS_IDLE)
-		return;
-
-	// advance to next action index
-
-	actionIndex++;
-
-	// execute next available action
-
-	for (actionIndex++; actionIndex < (int)(sizeof(terraformingOption.actions)/sizeof(terraformingOption.actions[0])); actionIndex++)
+	// level terrain changes rockiness
+	if (action == FORMER_LEVEL_TERRAIN)
 	{
-		int action = terraformingOption.actions[actionIndex];
-
-		// check if current action is available
-
-		if (isTerraformingAvailable(factionId, x, y, action))
+		if (*improvedTileRocks & TILE_ROCKY)
 		{
-			set_action(vehicleId, action, veh_status_icon[action + 4]);
-			return;
+			*improvedTileRocks &= ~TILE_ROCKY;
+			*improvedTileRocks |= TILE_ROLLING;
+		}
+		else if (*improvedTileRocks & TILE_ROLLING)
+		{
+			*improvedTileRocks &= ~TILE_ROLLING;
 		}
 
 	}
+	// other actions change items
+	else
+	{
+		// remove items
 
-	// no next action were selected
-	// clear AI orders and return
+		*improvedTileItems &= ~tx_terraform[action].removed_items_flag;
 
-	vehicle->pad_0 = 0;
-	return;
+		// add items
 
-}
+		*improvedTileItems |= tx_terraform[action].added_items_flag;
 
-bool isFormerCarryingAIOrders(int vehicleId)
-{
-	VEH *vehicle = &tx_vehicles[vehicleId];
+	}
 
-	return (vehicle->pad_0 & 0x1) != 0;
 }
 
 bool isVehicleFormer(VEH *vehicle)
@@ -643,51 +611,38 @@ bool isVehicleFormer(VEH *vehicle)
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_TERRAFORMING_UNIT);
 }
 
-bool isFormerTargettingTile(int vehicleId, int x, int y)
+bool isFormerTargetingTile(VEH *vehicle, MAP *tile)
 {
-	VEH *vehicle = &tx_vehicles[vehicleId];
-	MAP *tile = mapsq(x, y);
+	// ignore not formers
 
-	bool targetting = false;
+	if (!isVehicleFormer(vehicle))
+		return false;
 
-	if (isVehicleFormer(vehicle))
+	// return true if former is going to the tile
+	if (vehicle->move_status == STATUS_GOTO)
 	{
-		if (isVehicleTerraforming(vehicleId))
-		{
-			if (mapsq(vehicle->x, vehicle->y) == tile)
-			{
-				targetting = true;
-			}
-		}
-		else if (isVehicleMoving(vehicleId))
-		{
-			if (getVehicleDestination(vehicleId) == tile)
-			{
-				targetting = true;
-			}
-		}
+		return (getVehicleDestination(vehicle) == tile);
+	}
+	// otherwise, return true if vehicle is on tile
+	else
+	{
+		return (mapsq(vehicle->x, vehicle->y) == tile);
 	}
 
-	return targetting;
 }
 
-bool isVehicleTerraforming(int vehicleId)
+bool isVehicleTerraforming(VEH *vehicle)
 {
-	VEH *vehicle = &tx_vehicles[vehicleId];
-
 	return vehicle->move_status >= STATUS_FARM && vehicle->move_status <= STATUS_PLACE_MONOLITH;
 }
 
-bool isVehicleMoving(int vehicleId)
+bool isVehicleMoving(VEH *vehicle)
 {
-	VEH *vehicle = &tx_vehicles[vehicleId];
-
 	return vehicle->move_status == STATUS_GOTO || vehicle->move_status == STATUS_MOVE || vehicle->move_status == STATUS_ROAD_TO || vehicle->move_status == STATUS_MAGTUBE_TO || vehicle->move_status == STATUS_AI_GO_TO;
 }
 
-MAP *getVehicleDestination(int vehicleId)
+MAP *getVehicleDestination(VEH *vehicle)
 {
-	VEH *vehicle = &tx_vehicles[vehicleId];
 	int x = vehicle->x;
 	int y = vehicle->y;
 
@@ -715,10 +670,8 @@ MAP *getVehicleDestination(int vehicleId)
 
 }
 
-bool isTileTakenByOtherFormer(int primaryVehicleId, int x, int y)
+bool isTileTakenByOtherFormer(VEH *primaryVehicle, MAP *tile)
 {
-	VEH *primaryVehicle = &tx_vehicles[primaryVehicleId];
-
 	bool taken = false;
 
 	// iterate through vehicles
@@ -742,15 +695,92 @@ bool isTileTakenByOtherFormer(int primaryVehicleId, int x, int y)
 		if (!isVehicleFormer(vehicle))
 			continue;
 
-		if (isFormerTargettingTile(vehicleIndex, x, y))
+		// check if vehicle targets given tile
+
+		if (isFormerTargetingTile(vehicle, tile))
 		{
 			taken = true;
 			break;
+
 		}
 
 	}
 
 	return taken;
+
+}
+
+void computeBase(int baseId)
+{
+	tx_set_base(baseId);
+	tx_base_compute(1);
+
+}
+
+int setTerraformingAction(int vehicleId, int action)
+{
+	return set_action(vehicleId, action + 4, veh_status_icon[action + 4]);
+}
+
+/**
+Orders former to build other improvement besides base yield change.
+*/
+int buildImprovement(int vehicleId)
+{
+	VEH *vehicle = &tx_vehicles[vehicleId];
+
+	int order;
+
+	// TODO
+	// currently only skip turn
+
+	order = veh_skip(vehicleId);
+
+	debug
+	(
+		"giveOrderToFormer: (%d,%d), order=skip\n",
+		vehicle->x,
+		vehicle->y
+	)
+
+	return order;
+
+}
+
+/**
+Checks if former can build road or tube in square without disturbing fungus.
+Returns available action or -1 if none available.
+*/
+int canBuildRoadOrTube(int factionId, MAP *tile)
+{
+	// skip ocean
+
+	if (is_ocean(tile))
+		return -1;
+
+	// no road
+	if (~tile->items & TERRA_ROAD)
+	{
+		// there is no fungus or there is fungus road tech/project
+		if (~tile->items & TERRA_FUNGUS || has_tech(factionId, tx_basic->tech_preq_build_road_fungus) || has_project(factionId, FAC_XENOEMPATHY_DOME))
+		{
+			return FORMER_ROAD;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	// road but no tube
+	else if (tile->items & TERRA_ROAD && ~tile->items & TERRA_MAGTUBE)
+	{
+		return FORMER_MAG_TUBE;
+	}
+	// other
+	else
+	{
+		return -1;
+	}
 
 }
 

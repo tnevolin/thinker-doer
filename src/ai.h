@@ -3,6 +3,8 @@
 
 #include "main.h"
 #include "game.h"
+#include "move.h"
+#include "wtp.h"
 
 const int BASE_TILE_OFFSET_COUNT = 21;
 const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
@@ -33,26 +35,29 @@ const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 
 struct TERRAFORMING_OPTION
 {
+	int sea;
 	int count;
 	int actions[10];
 };
 
 int giveOrderToFormer(int vehicleId);
-double calculateTerraformingScore(int vehicleId, int tileX, int tileY, int *bestTerraformingOptionIndex);
+double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerraformingAction);
 double calculateYieldScore(int factionId, int tileX, int tileY);
 bool isOwnWorkTile(int factionId, int tileX, int tileY);
 bool isTerraformingAvailable(int factionId, int x, int y, int action);
-void applyTerraforming(MAP *tile, int action);
+void generateTerraformingChange(int *improvedTileRocks, int *improvedTileItems, int action);
 int calculateTerraformingTime(int vehicleId, int action);
-void carryFormerAIOrders(int vehicleId);
-bool isFormerCarryingAIOrders(int vehicleId);
 bool isVehicleTerraforming(int vehicleId);
 bool isVehicleFormer(VEH *vehicle);
 bool isVehicleTerraforming(VEH *vehicle);
-bool isVehicleMoving(int vehicleId);
-MAP *getVehicleDestination(int vehicleId);
-bool isTileTakenByOtherFormer(int primaryVehicleId, int x, int y);
+bool isVehicleMoving(VEH *vehicle);
+MAP *getVehicleDestination(VEH *vehicle);
+bool isTileTakenByOtherFormer(VEH *primaryVehicle, MAP *tile);
 bool isTileWorkedByOtherBase(BASE *base, MAP *tile);
-bool isFormerTargettingTile(int vehicleId, int x, int y);
+bool isVehicleTargetingTile(int vehicleId, int x, int y);
+void computeBase(int baseId);
+int setTerraformingAction(int vehicleId, int action);
+int buildImprovement(int vehicleId);
+int canBuildRoadOrTube(int factionId, MAP *tile);
 
 #endif // __AI_H__
