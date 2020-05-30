@@ -11,7 +11,7 @@ extern const char** tx_version;
 extern const char** tx_date;
 
 extern int*  tx_current_base_id;
-extern BASE* tx_current_base_ptr;
+extern BASE **tx_current_base_ptr;
 extern int* tx_game_rules;
 extern int* tx_scen_rules;
 extern int* tx_diff_level;
