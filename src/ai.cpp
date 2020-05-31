@@ -1,29 +1,37 @@
 #include <float.h>
+#include <math.h>
 #include "ai.h"
 
 // terraforming choice optimization parameters
 
 // TODO use breakpoint time instead
-const double growthWeight = 40.0;
+const double decayLifetime = 80.0;
 const double mineralWeight = 1.0;
-const double energyWeight = 0.5;
-const double improvementBreakpointTime = 50.0;
-const double tileWithExistingRoadValue = 10.0;
-const double tileWithExistingTubeValue = 10.0;
+const double energyWeight = 3.0 / 8.0;
 
 /**
 AI terraforming options
 */
-const int TERRAFORMING_OPTION_COUNT = 5;
+const int TERRAFORMING_OPTION_COUNT = 15;
 TERRAFORMING_OPTION TERRAFORMING_OPTIONS[TERRAFORMING_OPTION_COUNT] =
 {
 	// land
-	{0, 5, {FORMER_REMOVE_FUNGUS, FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},
-	{0, 5, {FORMER_REMOVE_FUNGUS, FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}},
-	{0, 2, {FORMER_REMOVE_FUNGUS, FORMER_MINE}},
+	{false, true, true, FORMER_FARM, 0.0},
+	{false, true, true, FORMER_SOIL_ENR, 0.0},
+	{false, true, false, FORMER_MINE, 0.0},
+	{false, true, false, FORMER_SOLAR, 0.0},
+	{false, false, false, FORMER_CONDENSER, 0.0},
+	{false, false, false, FORMER_ECH_MIRROR, 0.0},
+	{false, false, false, FORMER_THERMAL_BORE, 0.0},
+	{false, false, false, FORMER_FOREST, 0.0},
+	{false, false, false, FORMER_PLANT_FUNGUS, 0.0},
+	{false, false, false, FORMER_ROAD, 1.0},
+	{false, false, false, FORMER_MAG_TUBE, 1.0},
+	{false, false, false, FORMER_SENSOR, 0.1},
 	// sea
-	{1, 3, {FORMER_REMOVE_FUNGUS, FORMER_FARM, FORMER_SOLAR}},
-	{1, 3, {FORMER_REMOVE_FUNGUS, FORMER_FARM, FORMER_MINE}},
+	{true, true, false, FORMER_FARM, 0.0},
+	{true, true, false, FORMER_MINE, 0.0},
+	{true, true, false, FORMER_SOLAR, 0.0},
 };
 
 /**
@@ -209,6 +217,8 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 	int improvedTileRocks;
 	int improvedTileItems;
 	int terraformingTime;
+	int lostTerraformingTime;
+	int action;
 
 	// find best terraforming option
 
@@ -229,41 +239,102 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 		improvedTileRocks = tileRocks;
 		improvedTileItems = tileItems;
 		terraformingTime = 0;
+		lostTerraformingTime = 0;
+
+		// skip unavailable actions
+
+		if (!isTerraformingAvailable(factionId, x, y, option.action))
+			continue;
 
 		// process actions
 
 		int firstAction = -1;
 
-		for (int actionIndex = 0; actionIndex < option.count; actionIndex++)
+		// remove fungus if needed
+
+		if (tile->items & TERRA_FUNGUS)
 		{
-			int action = option.actions[actionIndex];
+			// fungus build technology is different for road and improvements
 
-			// skip unavailable actions
+			int fungusBuildTechnology = (option.action == FORMER_ROAD ? tx_basic->tech_preq_build_road_fungus : tx_basic->tech_preq_improv_fungus);
 
-			if (!isTerraformingAvailable(factionId, x, y, action))
-				continue;
-
-			// compute terraforming time
-
-			terraformingTime += calculateTerraformingTime(vehicleId, action);
-
-			// generate terraforming change
-
-			generateTerraformingChange(&improvedTileRocks, &improvedTileItems, action);
-
-			// store first action
-
-			if (firstAction == -1)
+			if (option.removeFungus || !has_tech(factionId, fungusBuildTechnology))
 			{
-				firstAction = action;
+				action = FORMER_REMOVE_FUNGUS;
+
+				// compute terraforming time
+
+				terraformingTime += calculateTerraformingTime(vehicleId, action);
+
+				// generate terraforming change
+
+				generateTerraformingChange(&improvedTileRocks, &improvedTileItems, action);
+
+				// store first action
+
+				if (firstAction == -1)
+				{
+					firstAction = action;
+				}
+
 			}
 
+		}
+
+		// level terrain if needed
+
+		if (tile->rocks & TILE_ROCKY)
+		{
+			if (option.levelTerrain)
+			{
+				action = FORMER_LEVEL_TERRAIN;
+
+				// compute terraforming time
+
+				terraformingTime += calculateTerraformingTime(vehicleId, action);
+
+				// generate terraforming change
+
+				generateTerraformingChange(&improvedTileRocks, &improvedTileItems, action);
+
+				// store first action
+
+				if (firstAction == -1)
+				{
+					firstAction = action;
+				}
+
+			}
+
+		}
+
+		// execute main action
+
+		action = option.action;
+
+		// compute terraforming time
+
+		terraformingTime += calculateTerraformingTime(vehicleId, action);
+
+		// generate terraforming change
+
+		generateTerraformingChange(&improvedTileRocks, &improvedTileItems, action);
+
+		// store first action
+
+		if (firstAction == -1)
+		{
+			firstAction = action;
 		}
 
 		// set changes
 
 		tile->rocks = improvedTileRocks;
 		tile->items = improvedTileItems;
+
+		// calculate lost terraforming time
+
+		lostTerraformingTime = calculateLostTerraformingTime(vehicleId, tileItems, improvedTileItems);
 
 		// test
 
@@ -277,6 +348,10 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 		// calculate yield improvement score
 
 		double improvementScore = (improvedYieldScore - previousYieldScore);
+
+		// update improvement score with bonus
+
+		improvementScore += decayLifetime * option.bonusValue;
 
 		// calculate path length
 
@@ -327,20 +402,25 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
         double estimatedTravelTime = travelPathLength * estimatedMovementCost / veh_speed(vehicleId);
 
-		// summarize score
+        // summarize total time penalty
 
-		double terraformingScore = improvementScore * (improvementBreakpointTime - (estimatedTravelTime + (double)terraformingTime));
+        double totalTimePenalty = estimatedTravelTime + (double)terraformingTime + (double)lostTerraformingTime;
+
+		// factor improvement score with decay coefficient
+
+		double terraformingScore = improvementScore * exp(-totalTimePenalty / decayLifetime);
 
         debug
         (
-            "calculateTerraformingOptionScore: (%d,%d), optionIndex=%d, improvementScore=%f, improvementBreakpointTime=%f, estimatedTravelTime=%f, terraformingTime=%d, terraformingScore=%f\n",
+            "calculateTerraformingOptionScore: (%d,%d), optionIndex=%d, improvementScore=%f, decayLifetime=%f, estimatedTravelTime=%f, terraformingTime=%d, lostTerraformingTime=%d, terraformingScore=%f\n",
             x,
             y,
             optionIndex,
             improvementScore,
-            improvementBreakpointTime,
+            decayLifetime,
             estimatedTravelTime,
             terraformingTime,
+            lostTerraformingTime,
             terraformingScore
         )
         ;
@@ -354,18 +434,6 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 		}
 
-	}
-
-	// add intangible assets
-
-	if (tile->items & TERRA_ROAD)
-	{
-		bestTerrafromningScore += tileWithExistingRoadValue;
-	}
-
-	if (tile->items & TERRA_MAGTUBE)
-	{
-		bestTerrafromningScore += tileWithExistingTubeValue;
 	}
 
 	// return
@@ -403,6 +471,10 @@ double calculateYieldScore(int factionId, int x, int y)
 
         tx_set_base(baseIndex);
 
+        // store current worked tiles
+
+        int currentWorkedTiles = base->worked_tiles;
+
         // clear working tiles
 
         base->worked_tiles = 0;
@@ -411,13 +483,23 @@ double calculateYieldScore(int factionId, int x, int y)
 
 		computeBase(baseIndex);
 
+		// calculate current yield
+
+		double yield = mineralWeight * (double)base->mineral_surplus + energyWeight * (double)base->energy_surplus;
+
+		// calculate population growth and yield growth
+
+		double absolutePopulationGrowth = (double)base->nutrient_surplus / (double)((base->pop_size + 1) * 10);
+		double relativePopulationGrowth = absolutePopulationGrowth / (double)(base->pop_size + 1);
+		double yieldGrowth = yield * relativePopulationGrowth;
+
 		// calculate base yield score
 
-		double baseYieldScore = 0.0;
+		double baseYieldScore = decayLifetime * yield + decayLifetime * decayLifetime * yieldGrowth;
 
-		baseYieldScore += growthWeight * (double)base->nutrient_surplus / (double)((base->pop_size + 1) * 10);
-		baseYieldScore += mineralWeight * (double)base->mineral_surplus;
-		baseYieldScore += energyWeight * (double)base->energy_surplus;
+		// restore worked tiles
+
+        base->worked_tiles = currentWorkedTiles;
 
 		debug
 		(
@@ -781,6 +863,40 @@ int canBuildRoadOrTube(int factionId, MAP *tile)
 	{
 		return -1;
 	}
+
+}
+
+/**
+Calculate terraforming time needed to rebuild lost improvements.
+*/
+const int PRESERVED_IMRPOVEMENT_COUNT = 7;
+const int PRESERVED_IMRPOVEMENTS[][2] =
+{
+	{FORMER_FARM, TERRA_FARM},
+	{FORMER_SOIL_ENR, TERRA_SOIL_ENR},
+	{FORMER_MINE, TERRA_MINE},
+	{FORMER_SOLAR, TERRA_SOLAR},
+	{FORMER_CONDENSER, TERRA_CONDENSER},
+	{FORMER_ECH_MIRROR, TERRA_ECH_MIRROR},
+	{FORMER_THERMAL_BORE, TERRA_THERMAL_BORE},
+};
+int calculateLostTerraformingTime(int vehicleId, int tileItems, int improvedTileItems)
+{
+	int lostTerraformingTime = 0;
+
+	for (int improvementIndex = 0; improvementIndex < PRESERVED_IMRPOVEMENT_COUNT; improvementIndex++)
+	{
+		int terraformingAction = PRESERVED_IMRPOVEMENTS[improvementIndex][0];
+		int itemFlag = PRESERVED_IMRPOVEMENTS[improvementIndex][1];
+
+		if ((tileItems & itemFlag) && (~improvedTileItems & itemFlag))
+		{
+			lostTerraformingTime += calculateTerraformingTime(vehicleId, terraformingAction);
+		}
+
+	}
+
+	return lostTerraformingTime;
 
 }
 

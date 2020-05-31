@@ -35,9 +35,11 @@ const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 
 struct TERRAFORMING_OPTION
 {
-	int sea;
-	int count;
-	int actions[10];
+	bool sea;
+	bool removeFungus;
+	bool levelTerrain;
+	int action;
+	double bonusValue;
 };
 
 int giveOrderToFormer(int vehicleId);
@@ -59,5 +61,6 @@ void computeBase(int baseId);
 int setTerraformingAction(int vehicleId, int action);
 int buildImprovement(int vehicleId);
 int canBuildRoadOrTube(int factionId, MAP *tile);
+int calculateLostTerraformingTime(int vehicleId, int tileItems, int improvedTileItems);
 
 #endif // __AI_H__
