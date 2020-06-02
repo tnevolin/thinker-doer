@@ -4,7 +4,7 @@
 #ifdef BUILD_REL
     #define MOD_VERSION "Will to Power Mod"
 #else
-    #define MOD_VERSION "Thinker Mod develop build"
+    #define MOD_VERSION "The Will to Power mod - version 62"
 #endif
 
 #ifdef BUILD_DEBUG
