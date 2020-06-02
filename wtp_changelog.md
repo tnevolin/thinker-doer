@@ -1,3 +1,11 @@
+# Version 63
+
+* VoP doubles hurry cost. This is now correctly calculated in AI hurry code.
+
+# Version 62
+
+* Changed default value of alternative_combat_mechanics_loss_divider=2.0.
+
 # Version 61
 
 * Fixed adavanced movement cost again. This time everything that is treated as road movement is corrected to have road movement cost.
