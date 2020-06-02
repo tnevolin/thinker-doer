@@ -43,7 +43,7 @@ struct BASE
     int energy_intake;
     int unused_intake;
     int nutrient_intake_2;                  // +0x00C0
-    int mineral_intake_2;
+    int mineral_intake_2;					// +0x00C4
     int energy_intake_2;
     int unused_intake_2;
     int nutrient_surplus;                   // +0x00D0

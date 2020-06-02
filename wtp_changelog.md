@@ -1,3 +1,7 @@
+# Version 63
+
+* VoP doubles hurry cost. This is now correctly calculated in AI hurry code.
+
 # Version 62
 
 * Changed default value of alternative_combat_mechanics_loss_divider=2.0.
