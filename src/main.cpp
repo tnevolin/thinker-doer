@@ -861,6 +861,13 @@ int consider_hurry(int id) {
     }
     cost = cost * m->rule_hurry / 100;
 
+    // VoP doubles hurry cost
+
+    if (tx_secret_projects[FAC_VOICE_OF_PLANET - PROJECT_ID_FIRST] > PROJECT_UNBUILT)
+	{
+		cost *= 2;
+	}
+
     // hurry only cheap cases
     if (!(cheap && mins > 0 && cost > 0 && f->energy_credits - cost > reserve))
         return 0;
