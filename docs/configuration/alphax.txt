@@ -159,7 +159,7 @@ Recycling Tanks,  1, 1, 1, 0,
 Improved Land,    1, *, *, 0, "*" columns are ignored entirely
 Improved Sea,     2, 1, 3, 0, * Mineral +1 with Advanced Ecological Engineering
 Monolith,         2, 2, 2, 0,
-Borehole Square,  0, 6, 4, 0,
+Borehole Square,  0, 2, 6, 0,
 
 ;
 ; WORLDBUILDER
