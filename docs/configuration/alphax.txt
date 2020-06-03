@@ -159,7 +159,7 @@ Recycling Tanks,  1, 1, 1, 0,
 Improved Land,    1, *, *, 0, "*" columns are ignored entirely
 Improved Sea,     2, 1, 3, 0, * Mineral +1 with Advanced Ecological Engineering
 Monolith,         2, 2, 2, 0,
-Borehole Square,  0, 6, 4, 0,
+Borehole Square,  0, 2, 6, 0,
 
 ;
 ; WORLDBUILDER
@@ -266,40 +266,40 @@ Doctrine: Mobility,            Mobile,   4, 0, 0, 2, None,    None,    000000000
 Centauri Ecology,              Ecology,  3, 3, 3, 4, None,    None,    100000000
 Superconductor,                Super,    4, 1, 1, 1, Chaos,   PrPsych, 000000000
 Nonlinear Mathematics,         Chaos,    4, 1, 1, 1, Physic,  None,    000000000
-Applied Relativity,            E=Mc2,    0, 3, 0, 0, Cyber,   Fossil,  000000000
+Applied Relativity,            E=Mc2,    0, 3, 0, 0, Cyber,   IndAuto, 000000000
 Fusion Power,                  Fusion,   4, 2, 2, 2, OptComp, DocLoy,  000000000
 Silksteel Alloys,              Alloys,   3, 2, 2, 2, Chemist, Mobile,  000000000
-Advanced Subatomic Theory,     Subat,    3, 1, 2, 1, PlaEcon, EcoEng,  000000000
+Advanced Subatomic Theory,     Subat,    3, 1, 2, 1, Quantum, MilAlg,  000000000
 High Energy Chemistry,         Chemist,  3, 2, 2, 2, Indust,  None,    000000000
-Frictionless Surfaces,         Surface,  3, 0, 0, 0, MindMac, IndRob,  000000000
+Frictionless Surfaces,         Surface,  3, 0, 0, 0, MindMac, PlaEcon, 000000000
 Nanometallurgy,                Metal,    1, 3, 2, 0, DocAir,  CentMed, 000000000
 Superstring Theory,            String,   4, 1, 1, 1, Fossil,  InfNet,  000000000
-Advanced Military Algorithms,  MilAlg,   4, 2, 3, 2, IndAuto, IndEcon, 000000000
-Monopole Magnets,              Magnets,  1, 1, 2, 1, Eudaim,  E=Mc2,   000000000
-Matter Compression,            MatComp,  3, 2, 2, 2, EcoEng,  ProbMec, 000000000
-Unified Field Theory,          Unified,  4, 3, 1, 1, SupLube, MilAlg,  000000000
+Advanced Military Algorithms,  MilAlg,   4, 2, 3, 2, ProbMec, PlaNets, 000000000
+Monopole Magnets,              Magnets,  1, 1, 2, 1, IndRob,  SupLube, 000000000
+Matter Compression,            MatComp,  3, 2, 2, 2, MilAlg,  ProbMec, 000000000
+Unified Field Theory,          Unified,  4, 3, 1, 1, SupLube, Viral,   000000000
 Graviton Theory,               Gravity,  2, 0, 0, 3, CentGen, BioEng,  000000000
 Polymorphic Software,          Poly,     4, 2, 2, 2, Mobile,  None,    000000000
-Applied Gravitonics,           AGrav,    4, 1, 1, 1, QuanMac, Algor,   000000000
+Applied Gravitonics,           AGrav,    4, 1, 1, 1, QuanMac, Metal,   000000000
 deleted,                       delete,   0, 0, 0, 0, Disable, Disable, 000000000
-Quantum Power,                 Quantum,  4, 2, 3, 2, Viral,   CentPsi, 000000000
-Singularity Mechanics,         SingMec,  2, 4, 3, 2, BioEng,  Subat,   000000000
-Controlled Singularity,        ConSing,  4, 1, 2, 1, AGrav,   HomoSup, 000000000
+Quantum Power,                 Quantum,  4, 2, 3, 2, EcoEng,  CentPsi, 000000000
+Singularity Mechanics,         SingMec,  2, 4, 3, 2, BioEng,  Algor,   000000000
+Controlled Singularity,        ConSing,  4, 1, 2, 1, AGrav,   EcoEng2, 000000000
 Temporal Mechanics,            TempMec,  2, 2, 3, 2, SingMec, NanEdit, 000000000
 Probability Mechanics,         ProbMec,  3, 2, 2, 2, DocSec,  CentEmp, 000000000
-Pre-Sentient Algorithms,       Algor,    1, 2, 1, 1, MatComp, Viral,   000000000
-Super Tensile Solids,          Solids,   2, 2, 4, 2, E=Mc2,   EnvEcon, 000000000
+Pre-Sentient Algorithms,       Algor,    1, 2, 1, 1, MatComp, EcoEng,  000000000
+Super Tensile Solids,          Solids,   2, 2, 4, 2, Gene,    EnvEcon, 000000000
 Planetary Networks,            PlaNets,  0, 2, 1, 0, InfNet,  Chaos,   000000000
 Digital Sentience,             DigSent,  0, 3, 0, 0, Create,  WillPow, 000000000
-Self-Aware Machines,           HAL9000,  1, 0, 2, 0, SentEco, AGrav,   000000000
+Self-Aware Machines,           HAL9000,  1, 0, 2, 0, SentEco, Neural,  000000000
 Doctrine: Initiative,          DocInit,  3, 1, 1, 1, IndEcon, Biogen,  000000000
 Doctrine: Flexibility,         DocFlex,  2, 2, 2, 3, None,    None,    000000000
-Intellectual Integrity,        Integ,    1, 1, 2, 1, ProbMec, IndAuto, 000000000
+Intellectual Integrity,        Integ,    1, 1, 2, 1, Viral,   Fossil,  000000000
 Synthetic Fossil Fuels,        Fossil,   4, 1, 1, 2, Super,   Brain,   000000000
-Doctrine: Air Power,           DocAir,   4, 2, 2, 2, Gene,    Cyber,   000000000
+Doctrine: Air Power,           DocAir,   4, 2, 2, 2, Integ,   Cyber,   000000000
 Photon/Wave Mechanics,         DocSec,   3, 2, 2, 2, Alloys,  EthCalc, 000000000
-Mind/Machine Interface,        MindMac,  3, 2, 0, 0, NanoMin, Eudaim,  000000000
-Nanominiaturization,           NanoMin,  3, 4, 0, 0, Quantum, SupLube, 000000000
+Mind/Machine Interface,        MindMac,  3, 2, 0, 0, NanoMin, IndRob,  000000000
+Nanominiaturization,           NanoMin,  3, 4, 0, 0, Solids,  Integ,   000000000
 Doctrine: Loyalty,             DocLoy,   2, 1, 1, 1, Ecology, None,    000000000
 Ethical Calculus,              EthCalc,  0, 1, 1, 2, PrPsych, None,    000000000
 Industrial Economics,          IndEcon,  0, 1, 3, 0, EthCalc, Indust,  000000100
@@ -307,42 +307,42 @@ Industrial Automation,         IndAuto,  3, 3, 4, 3, FldMod,  Poly,    000000100
 Centauri Meditation,           CentMed,  0, 0, 2, 3, CentPsi, Fusion,  001000000
 Secrets of the Human Brain,    Brain,    2, 0, 0, 4, DocFlex, None,    000000000
 Gene Splicing,                 Gene,     0, 3, 2, 0, AdapEco, Bioadap, 000100000
-Bio-Engineering,               BioEng,   2, 2, 3, 2, Magnets, Unified, 000100000
-Biomachinery,                  BioMac,   0, 0, 0, 4, DigSent, Gravity, 000100000
-Neural Grafting,               Neural,   3, 1, 1, 1, NanEdit, Metal,   000000000
+Bio-Engineering,               BioEng,   2, 2, 3, 2, PlaEcon, Solids,  000100000
+Biomachinery,                  BioMac,   0, 0, 0, 4, DigSent, Matter,  000100000
+Neural Grafting,               Neural,   3, 1, 1, 1, NanEdit, Magnets, 000000000
 Cyberethics,                   Cyber,    0, 4, 0, 0, DocInit, Alloys,  000000000
-Eudaimonia,                    Eudaim,   1, 1, 3, 4, CentMed, AdapEco, 000000000
+Eudaimonia,                    Eudaim,   1, 1, 3, 4, CentMed, String,  000000000
 The Will to Power,             WillPow,  4, 2, 2, 2, EcoEng2, NanoMin, 000000000
-Threshold of Transcendence,    Thresh,   0, 2, 0, 0, BioMac,  BFG9000, 000000000
-Matter Transmission,           Matter,   3, 0, 4, 0, Surface, MindMac, 000000000
+Threshold of Transcendence,    Thresh,   0, 2, 0, 0, BioMac,  Space,   000000000
+Matter Transmission,           Matter,   3, 0, 4, 0, Surface, QuanMac, 000000000
 Centauri Empathy,              CentEmp,  0, 0, 0, 4, Brain,   Psych,   000000000
 Environmental Economics,       EnvEcon,  2, 2, 3, 2, Fusion,  Super,   000000100
 Ecological Engineering,        EcoEng,   2, 2, 2, 4, EnvEcon, DocInit, 000000000
-Planetary Economics,           PlaEcon,  0, 1, 3, 1, Integ,   String,  000000100
-Adv. Ecological Engineering,   EcoEng2,  2, 2, 2, 4, Algor,   DocAir,  000000000
+Planetary Economics,           PlaEcon,  0, 1, 3, 1, Eudaim,  E=Mc2,   000000100
+Adv. Ecological Engineering,   EcoEng2,  2, 2, 2, 4, Algor,   Unified, 000000000
 Centauri Psi,                  CentPsi,  0, 0, 0, 4, Bioadap, FldMod,  100000000
-Secrets of Alpha Centauri,     AlphCen,  0, 2, 2, 3, IndRob,  Quantum, 100001000
-Secrets of Creation,           Create,   0, 3, 2, 1, Neural,  QuanMac, 000000000
-Advanced Spaceflight,          Space,    2, 4, 2, 2, TempMec, CentGen, 000000000
-Homo Superior,                 HomoSup,  0, 4, 1, 0, Metal,   PlaEcon, 000000000
+Secrets of Alpha Centauri,     AlphCen,  0, 2, 2, 3, Magnets, DocAir,  100001000
+Secrets of Creation,           Create,   0, 3, 2, 1, Neural,  HomoSup, 000000000
+Advanced Spaceflight,          Space,    2, 4, 2, 2, TempMec, AGrav,   000000000
+Homo Superior,                 HomoSup,  0, 4, 1, 0, Metal,   Eudaim,  000000000
 Organic Superlubricant,        SupLube,  4, 1, 1, 1, String,  DocSec,  000000000
-Quantum Machinery,             QuanMac,  4, 1, 3, 1, AdapDoc, Solids,  000000000
+Quantum Machinery,             QuanMac,  4, 1, 3, 1, AdapDoc, Quantum, 000000000
 deleted,                       deleted,  0, 0, 0, 0, Disable, Disable, 000000000
 Matter Editation,              NanEdit,  3, 2, 2, 2, Subat,   MatComp, 000100000
 Optical Computers,             OptComp,  2, 4, 2, 2, Poly,    DocFlex, 000000000
-Industrial Nanorobotics,       IndRob,   2, 0, 4, 0, Solids,  Integ,   000000100
-Centauri Genetics,             CentGen,  0, 0, 0, 4, AlphCen, AdapDoc, 001000000
-Sentient Econometrics,         SentEco,  0, 0, 3, 1, NewMiss, EcoEng2, 000000100
-Retroviral Engineering,        Viral,    1, 1, 4, 1, MilAlg,  PlaNets, 000110000
+Industrial Nanorobotics,       IndRob,   2, 0, 4, 0, E=Mc2,   AdapEco, 000000100
+Centauri Genetics,             CentGen,  0, 0, 0, 4, AlphCen, Subat,   001000000
+Sentient Econometrics,         SentEco,  0, 0, 3, 1, NewMiss, MindMac, 000000100
+Retroviral Engineering,        Viral,    1, 1, 4, 1, IndAuto, IndEcon, 000110000
 Orbital Spaceflight,           Orbital,  4, 2, 2, 2, WillPow, AlphCen, 000000000
 Progenitor Psych,              PrPsych,  0, 4, 0, 3, None,    None,    001000000
 Field Modulation,              FldMod,   0, 1, 2, 3, DocLoy,  Physic,  100000000
 Adaptive Doctrine,             AdapDoc,  4, 1, 1, 1, Unified, Gene,    000000000
 Adaptive Economics,            AdapEco,  0, 1, 3, 0, PlaNets, OptComp, 000000000
 Bioadaptive Resonance,         Bioadap,  0, 0, 0, 4, CentEmp, Chemist, 001000000
-Sentient Resonance,            SentRes,  0, 2, 3, 0, Matter,  Neural,  000000000
-Secrets of the Manifolds,      SecMani,  2, 2, 4, 2, Space,   ConSing, 000000000
-N-Space Compression,           NewMiss,  0, 2, 2, 3, HomoSup, Magnets, 000000000
+Sentient Resonance,            SentRes,  0, 2, 3, 0, Matter,  CentGen, 000000000
+Secrets of the Manifolds,      SecMani,  2, 2, 4, 2, Space,   Orbital, 000000000
+N-Space Compression,           NewMiss,  0, 2, 2, 3, HomoSup, AdapDoc, 000000000
 String Resonance,              BFG9000,  4, 0, 0, 0, ConSing, Surface, 000000000
 User Technology,               User,     0, 0, 0, 0, Disable, Disable, 000000000
 Transcendent Thought,          TranT,    0, 2, 0, 0, Thresh,  SecMani, 000000000
@@ -877,7 +877,7 @@ Free Market,       IndEcon,  ++ECONOMY,   --POLICE,    --PLANET,     -PROBE
 Planned+,          InfNet,    -EFFIC,      +GROWTH,     +INDUSTRY,   -RESEARCH,   +TALENT
 Green,             CentEmp,  ++EFFIC,    ---GROWTH,    ++PLANET,     -INDUSTRY
 Survival,          None,
-Power,             MilAlg,   ++SUPPORT,   ++MORALE,     +PROBE,      -INDUSTRY
+Power,             String,   ++SUPPORT,   ++MORALE,     +PROBE,      -INDUSTRY
 Knowledge,         Cyber,     -ECONOMY,    +EFFIC,     --PROBE,    +++RESEARCH
 Wealth,            AdapEco,   +ECONOMY,   --MORALE,     -POLICE,     +INDUSTRY
 None,              None,
