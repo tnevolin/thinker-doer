@@ -2,12 +2,14 @@
 #include <math.h>
 #include "ai.h"
 
-// terraforming choice optimization parameters
-
-// TODO use breakpoint time instead
-const double decayLifetime = 40.0;
-const double mineralWeight = 1.0;
-const double energyWeight = 0.4;
+//// terraforming choice optimization parameters
+//
+//const double conf.ai_terraforming_resourceLifetime = 40.0;
+//const double conf.ai_terraforming_mineralWeight = 1.0;
+//const double conf.ai_terraforming_energyWeight = 0.4;
+//const double conf.ai_terraforming_workedTileBonus = 4.0;
+//const double roadBonus = 2.0;
+//const double conf.ai_terraforming_tubeBonus = 2.0;
 
 /**
 AI terraforming options
@@ -24,8 +26,8 @@ TERRAFORMING_OPTION TERRAFORMING_OPTIONS[TERRAFORMING_OPTION_COUNT] =
 	{false, false, 0.0, 1, {FORMER_THERMAL_BORE}},
 	{false, false, 0.0, 1, {FORMER_FOREST}},
 	{false, false, 0.0, 1, {FORMER_PLANT_FUNGUS}},
-	{false, false, 8.0, 1, {FORMER_ROAD}},
-	{false, false, 8.0, 1, {FORMER_MAG_TUBE}},
+	{false, false, conf.ai_terraforming_roadBonus, 1, {FORMER_ROAD}},
+	{false, false, conf.ai_terraforming_tubeBonus, 1, {FORMER_MAG_TUBE}},
 	// sea
 	{true, false, 0.0, 2, {FORMER_FARM, FORMER_MINE}},
 	{true, false, 0.0, 2, {FORMER_FARM, FORMER_SOLAR}},
@@ -91,19 +93,14 @@ int giveOrderToFormer(int vehicleId)
 			if (vehicleTriad != TRIAD_AIR && tile->body_id != vehicleBodyId)
 				continue;
 
-			// exclude not own tiles
-
-			if (tile->owner != factionId)
-				continue;
-
-			// exclude not our work tiles
-
-			if (!isOwnWorkTile(factionId, x, y))
-				continue;
-
 			// exclude volcano mouth
 
 			if ((tile->landmarks & LM_VOLCANO) && (tile->art_ref_id == 0))
+				continue;
+
+			// exclude everything but our workable tiles
+
+			if (!isOwnWorkableTile(factionId, x, y))
 				continue;
 
 			// exclude already taken tiles
@@ -346,9 +343,13 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 		double improvementScore = (improvedYieldScore - previousYieldScore);
 
-		// update improvement score with bonus
+		// add worked tile bonus
 
-		improvementScore += decayLifetime * option.bonusValue;
+		improvementScore += conf.ai_terraforming_resourceLifetime * conf.ai_terraforming_workedTileBonus;
+
+		// add arbitrary bonus
+
+		improvementScore += conf.ai_terraforming_resourceLifetime * option.bonusValue;
 
 		// calculate path length
 
@@ -405,14 +406,14 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 		// factor improvement score with decay coefficient
 
-		double terraformingScore = improvementScore * exp(-totalTimePenalty / decayLifetime);
+		double terraformingScore = improvementScore * exp(-totalTimePenalty / conf.ai_terraforming_resourceLifetime);
 
         debug
         (
-            "\toptionIndex=%d, improvementScore=%f, decayLifetime=%f, estimatedTravelTime=%f, terraformingTime=%d, lostTerraformingTime=%d, terraformingScore=%f\n",
+            "\toptionIndex=%d, improvementScore=%f, conf.ai_terraforming_resourceLifetime=%f, estimatedTravelTime=%f, terraformingTime=%d, lostTerraformingTime=%d, terraformingScore=%f\n",
             optionIndex,
             improvementScore,
-            decayLifetime,
+            conf.ai_terraforming_resourceLifetime,
             estimatedTravelTime,
             terraformingTime,
             lostTerraformingTime,
@@ -490,7 +491,7 @@ double calculateYieldScore(int factionId, int x, int y)
 		int mineralIncome = base->mineral_surplus;
 		int energyIncome = base->economy_total + base->psych_total + base->labs_total;
 
-		double income = mineralWeight * (double)mineralIncome + energyWeight * (double)energyIncome;
+		double income = conf.ai_terraforming_mineralWeight * (double)mineralIncome + conf.ai_terraforming_energyWeight * (double)energyIncome;
 
 		// calculate population growth and income growth
 
@@ -500,7 +501,7 @@ double calculateYieldScore(int factionId, int x, int y)
 
 		// calculate base yield score
 
-		double baseYieldScore = decayLifetime * income + decayLifetime * decayLifetime * incomeGrowth;
+		double baseYieldScore = conf.ai_terraforming_resourceLifetime * income + conf.ai_terraforming_resourceLifetime * conf.ai_terraforming_resourceLifetime * incomeGrowth;
 
 		// restore worked tiles
 
@@ -543,11 +544,23 @@ double calculateYieldScore(int factionId, int x, int y)
 }
 
 /**
-Checks whether tile is own work tile but not base square.
+Checks whether tile is own workable tile but not base square.
 */
-bool isOwnWorkTile(int factionId, int x, int y)
+bool isOwnWorkableTile(int factionId, int x, int y)
 {
-	bool ownWorkTile = false;
+	MAP *tile = mapsq(x, y);
+
+	// exclude base squares
+
+	if (tile->items & TERRA_BASE_IN_TILE)
+		return false;
+
+	// exclude not own territory
+
+	if (tile->owner != factionId)
+		return false;
+
+	// iterate through own bases
 
 	for (int baseIndex = 0; baseIndex < *tx_total_num_bases; baseIndex++)
 	{
@@ -563,24 +576,85 @@ bool isOwnWorkTile(int factionId, int x, int y)
 		int absDx = abs(base->x - x);
 		int absDy = abs(base->y - y);
 
-		// skip base in tile
-
-		if (absDx == 0 && absDy == 0)
-			continue;
-
-		// skip too far bases
+		// exclude too far bases
 
 		if ((absDx + absDy > 4) || absDx >= 4 || absDy >= 4)
 			continue;
 
-		// return true
+		// tile is workable tile
 
-		ownWorkTile = true;
-		break;
+		return true;
 
 	}
 
-	return ownWorkTile;
+	// matched workable tile not found
+
+	return false;
+
+}
+
+/**
+Checks whether tile is own worked tile but not base square.
+*/
+bool isOwnWorkedTile(int factionId, int x, int y)
+{
+	MAP *tile = mapsq(x, y);
+
+	// exclude base squares
+
+	if (tile->items & TERRA_BASE_IN_TILE)
+		return false;
+
+	// exclude not own territory
+
+	if (tile->owner != factionId)
+		return false;
+
+	// iterate through own bases
+
+	for (int baseIndex = 0; baseIndex < *tx_total_num_bases; baseIndex++)
+	{
+		BASE *base = &tx_bases[baseIndex];
+
+		// skip not own bases
+
+		if (base->faction_id != factionId)
+			continue;
+
+		// calculate distance
+
+		int absDx = abs(base->x - x);
+		int absDy = abs(base->y - y);
+
+		// exclude too far bases
+
+		if ((absDx + absDy > 4) || absDx >= 4 || absDy >= 4)
+			continue;
+
+		// iterate through worked tiles
+
+		for (int baseTileOffsetIndex = 1; baseTileOffsetIndex < BASE_TILE_OFFSET_COUNT; baseTileOffsetIndex++)
+		{
+			// skip not worked tile
+
+			if ((base->worked_tiles & (0x1 << baseTileOffsetIndex)) == 0)
+				continue;
+
+			// check if this worked tile same as given tile
+
+			int workedTileX = base->x + BASE_TILE_OFFSETS[baseTileOffsetIndex][0];
+			int workedTileY = base->y + BASE_TILE_OFFSETS[baseTileOffsetIndex][1];
+
+			if (workedTileX == x && workedTileY == y)
+				return true;
+
+		}
+
+	}
+
+	// matching worked tile not found
+
+	return false;
 
 }
 
@@ -853,43 +927,6 @@ int buildImprovement(int vehicleId)
 	)
 
 	return order;
-
-}
-
-/**
-Checks if former can build road or tube in square without disturbing fungus.
-Returns available action or -1 if none available.
-*/
-int canBuildRoadOrTube(int factionId, MAP *tile)
-{
-	// skip ocean
-
-	if (is_ocean(tile))
-		return -1;
-
-	// no road
-	if (~tile->items & TERRA_ROAD)
-	{
-		// there is no fungus or there is fungus road tech/project
-		if (~tile->items & TERRA_FUNGUS || has_tech(factionId, tx_basic->tech_preq_build_road_fungus) || has_project(factionId, FAC_XENOEMPATHY_DOME))
-		{
-			return FORMER_ROAD;
-		}
-		else
-		{
-			return -1;
-		}
-	}
-	// road but no tube
-	else if (tile->items & TERRA_ROAD && ~tile->items & TERRA_MAGTUBE)
-	{
-		return FORMER_MAG_TUBE;
-	}
-	// other
-	else
-	{
-		return -1;
-	}
 
 }
 
