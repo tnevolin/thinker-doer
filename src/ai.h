@@ -36,10 +36,10 @@ const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 struct TERRAFORMING_OPTION
 {
 	bool sea;
-	bool removeFungus;
-	bool levelTerrain;
-	int action;
+	bool worldRainfall;
 	double bonusValue;
+	int count;
+	int actions[10];
 };
 
 int giveOrderToFormer(int vehicleId);
@@ -48,7 +48,7 @@ double calculateYieldScore(int factionId, int tileX, int tileY);
 bool isOwnWorkTile(int factionId, int tileX, int tileY);
 bool isTerraformingAvailable(int factionId, int x, int y, int action);
 void generateTerraformingChange(int *improvedTileRocks, int *improvedTileItems, int action);
-int calculateTerraformingTime(int vehicleId, int action);
+int calculateTerraformingTime(int vehicleId, int x, int y, int action);
 bool isVehicleTerraforming(int vehicleId);
 bool isVehicleFormer(VEH *vehicle);
 bool isVehicleTerraforming(VEH *vehicle);
@@ -61,6 +61,6 @@ void computeBase(int baseId);
 int setTerraformingAction(int vehicleId, int action);
 int buildImprovement(int vehicleId);
 int canBuildRoadOrTube(int factionId, MAP *tile);
-int calculateLostTerraformingTime(int vehicleId, int tileItems, int improvedTileItems);
+int calculateLostTerraformingTime(int vehicleId, int x, int y, int tileItems, int improvedTileItems);
 
 #endif // __AI_H__

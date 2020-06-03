@@ -129,7 +129,9 @@ extern fp_0int *tx_base_mechanics_production;
 extern fp_5int *tx_set_se_on_dialog_close;
 extern fp_7int *tx_hex_cost;
 extern fp_3int *tx_terrain_avail;
-extern fp_0void *tx_base_yield;
+extern fp_0void *tx_world_climate;
+extern fp_0void *tx_world_rivers;
+extern fp_0void *tx_world_rainfall;
 
 #endif // __TERRANX_H__
 

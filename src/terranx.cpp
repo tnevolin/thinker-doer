@@ -146,7 +146,17 @@ Checks if terraforming action is available.
 fp_3int *tx_terrain_avail = (fp_3int *)0x005BAB40;
 
 /**
-Places worked squares among other things.
+Recalculates world climate.
 */
-fp_0void *tx_base_yield = (fp_0void *)0x004E80B0;
+fp_0void *tx_world_climate = (fp_0void *)0x005C5A30;
+
+/**
+Recalculates world rivers.
+*/
+fp_0void *tx_world_rivers = (fp_0void *)0x005C38B0;
+
+/**
+Recalculates world rainfall.
+*/
+fp_0void *tx_world_rainfall = (fp_0void *)0x005C4470;
 
