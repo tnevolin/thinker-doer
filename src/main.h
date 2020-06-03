@@ -141,6 +141,13 @@ struct Config {
     int territory_combat_bonus = 0;
     int tube_movement_rate_multiplier = 0;
     int road_movement_cost = 0;
+    double ai_terraforming_resourceLifetime;
+    double ai_terraforming_mineralWeight;
+	double ai_terraforming_energyWeight;
+	double ai_terraforming_workedTileBonus;
+	double ai_terraforming_roadBonus;
+	double ai_terraforming_tubeBonus;
+
 };
 
 /*

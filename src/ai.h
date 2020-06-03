@@ -45,7 +45,7 @@ struct TERRAFORMING_OPTION
 int giveOrderToFormer(int vehicleId);
 double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerraformingAction);
 double calculateYieldScore(int factionId, int tileX, int tileY);
-bool isOwnWorkTile(int factionId, int tileX, int tileY);
+bool isOwnWorkableTile(int factionId, int tileX, int tileY);
 bool isTerraformingAvailable(int factionId, int x, int y, int action);
 void generateTerraformingChange(int *improvedTileRocks, int *improvedTileItems, int action);
 int calculateTerraformingTime(int vehicleId, int x, int y, int action);
@@ -60,7 +60,6 @@ bool isVehicleTargetingTile(int vehicleId, int x, int y);
 void computeBase(int baseId);
 int setTerraformingAction(int vehicleId, int action);
 int buildImprovement(int vehicleId);
-int canBuildRoadOrTube(int factionId, MAP *tile);
 int calculateLostTerraformingTime(int vehicleId, int x, int y, int tileItems, int improvedTileItems);
 
 #endif // __AI_H__

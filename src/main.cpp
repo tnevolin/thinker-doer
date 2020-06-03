@@ -246,6 +246,30 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->tube_movement_rate_multiplier = atoi(value);
     }
+    else if (MATCH("wtp", "ai_terraforming_resourceLifetime"))
+    {
+        cf->ai_terraforming_resourceLifetime = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_mineralWeight"))
+    {
+        cf->ai_terraforming_mineralWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_energyWeight"))
+    {
+        cf->ai_terraforming_energyWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_workedTileBonus"))
+    {
+        cf->ai_terraforming_workedTileBonus = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_roadBonus"))
+    {
+        cf->ai_terraforming_roadBonus = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_tubeBonus"))
+    {
+        cf->ai_terraforming_tubeBonus = atof(value);
+    }
     // Thinker default case
     else
     {
