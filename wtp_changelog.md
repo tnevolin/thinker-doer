@@ -1,3 +1,12 @@
+# Version 64
+
+* Borehole Square,  0, 2, 6, 0.
+* Retroviral Engineering is level 5.
+* Advanced Military Algorithms is level 6.
+* Industrial Nanorobotics is level 7.
+* Planetary Economics is level 8.
+* Power SE model is reassigned to Superstring Theory (L5).
+
 # Version 63
 
 * VoP doubles hurry cost. This is now correctly calculated in AI hurry code.
