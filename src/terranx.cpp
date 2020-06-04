@@ -160,3 +160,13 @@ Recalculates world rainfall.
 */
 fp_0void *tx_world_rainfall = (fp_0void *)0x005C4470;
 
+/**
+Enemy strategy.
+*/
+fp_1void *tx_enemy_strategy = (fp_1void *)0x00561080;
+
+/**
+Send vehicle to destination.
+*/
+fp_4void *tx_go_to = (fp_4void *)0x00560AD0;
+

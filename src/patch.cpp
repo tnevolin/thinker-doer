@@ -4,6 +4,7 @@
 #include "move.h"
 #include "tech.h"
 #include "wtp.h"
+#include "ai.h"
 
 const char* ac_alpha = "ac_mod\\alphax";
 const char* ac_help = "ac_mod\\helpx";
@@ -1915,6 +1916,16 @@ void patch_hex_cost()
 
 }
 
+/**
+Patch enemy strategy.
+*/
+void patch_enemy_strategy()
+{
+    write_call_ptr(0x005272EF, (int)enemy_strategy);
+    write_call_ptr(0x005AFE2C, (int)enemy_strategy);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2238,11 +2249,16 @@ bool patch_setup(Config* cf) {
 
     patch_hex_cost();
 
+    // enemy strategy
+
+    patch_enemy_strategy();
+
     // continue with original Thinker checks
 
     if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READ, &attrs))
         return false;
 
     return true;
+
 }
 

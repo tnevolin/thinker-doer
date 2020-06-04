@@ -66,6 +66,8 @@ extern int (*tx_battle_compute_defender_effect_values)[0x4];
 extern char ***tx_labels;
 
 typedef void __cdecl fp_0void();
+typedef void __cdecl fp_1void(int);
+typedef void __cdecl fp_4void(int, int, int, int);
 typedef int __cdecl fp_0int();
 typedef int __cdecl fp_1int(int);
 typedef int __cdecl fp_2int(int, int);
@@ -132,6 +134,8 @@ extern fp_3int *tx_terrain_avail;
 extern fp_0void *tx_world_climate;
 extern fp_0void *tx_world_rivers;
 extern fp_0void *tx_world_rainfall;
+extern fp_1void *tx_enemy_strategy;
+extern fp_4void *tx_go_to;
 
 #endif // __TERRANX_H__
 
