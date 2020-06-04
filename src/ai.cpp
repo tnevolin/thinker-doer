@@ -1,15 +1,9 @@
 #include <float.h>
 #include <math.h>
+#include <vector>
+#include <unordered_set>
+#include <map>
 #include "ai.h"
-
-//// terraforming choice optimization parameters
-//
-//const double conf.ai_terraforming_resourceLifetime = 40.0;
-//const double conf.ai_terraforming_mineralWeight = 1.0;
-//const double conf.ai_terraforming_energyWeight = 0.4;
-//const double conf.ai_terraforming_workedTileBonus = 4.0;
-//const double roadBonus = 2.0;
-//const double conf.ai_terraforming_tubeBonus = 2.0;
 
 /**
 AI terraforming options
@@ -33,29 +27,302 @@ TERRAFORMING_OPTION TERRAFORMING_OPTIONS[TERRAFORMING_OPTION_COUNT] =
 	{true, false, 0.0, 2, {FORMER_FARM, FORMER_SOLAR}},
 };
 
+// global variables
+
+int factionId;
+std::vector<int> terraformingFormerIds;
+std::vector<int> availableFormerIds;
+std::unordered_set<MAP *> terraformedTiles;
+std::unordered_set<MAP *> targetedTiles;
+std::map<int, FormerOrder> formerOrders;
+
+/**
+AI strategy entry point.
+*/
+HOOK_API void enemy_strategy(int id)
+{
+	// set faction id
+
+	factionId = id;
+
+	// prepare former orders
+
+	prepareFormerOrders();
+
+}
+
+/**
+Prepares former orders.
+*/
+void prepareFormerOrders()
+{
+	// populate processing lists
+
+	populateLists();
+
+	// process available formers
+
+	processAvailableFormers();
+
+	// optimize former destinations
+
+	optimizeFormerDestinations();
+
+}
+
+/**
+Populate global lists before processing faction strategy.
+*/
+void populateLists()
+{
+	// clear lists
+
+	terraformingFormerIds.clear();
+	availableFormerIds.clear();
+	terraformedTiles.clear();
+	targetedTiles.clear();
+	formerOrders.clear();
+
+	// populate lists
+
+	for (int vehicleIndex = 0; vehicleIndex < *tx_total_num_vehicles; vehicleIndex++)
+	{
+		VEH *vehicle = &tx_vehicles[vehicleIndex];
+
+		// exclude not own vehicles
+
+		if (vehicle->faction_id != factionId)
+			continue;
+
+		// exclude not formers
+
+		if (!isVehicleFormer(vehicle))
+			continue;
+
+		// create entry
+
+		if (isVehicleTerraforming(vehicle))
+		{
+			terraformingFormerIds.push_back(vehicleIndex);
+
+			// populate terraformed tile
+
+			MAP *terraformedTile = mapsq(vehicle->x, vehicle->y);
+
+			terraformedTiles.insert(terraformedTile);
+
+		}
+		else
+		{
+			availableFormerIds.push_back(vehicleIndex);
+
+			formerOrders[vehicleIndex] = {vehicleIndex, vehicle, -1, -1, -1};
+
+		}
+
+	}
+
+}
+
+void processAvailableFormers()
+{
+	for
+	(
+		std::map<int, FormerOrder>::iterator formerOrdersIterator = formerOrders.begin();
+		formerOrdersIterator != formerOrders.end();
+		formerOrdersIterator++
+	)
+	{
+		generateFormerOrder(&formerOrdersIterator->second);
+	}
+
+}
+
+void optimizeFormerDestinations()
+{
+	// iterate until optimized or max iterations
+
+	for (int iteration = 0; iteration < 1000; iteration++)
+	{
+		bool swapped = false;
+
+		// iterate through former pairs
+
+		for
+		(
+			std::map<int, FormerOrder>::iterator formerOrdersIterator1 = formerOrders.begin();
+			formerOrdersIterator1 != formerOrders.end();
+			formerOrdersIterator1++
+		)
+		{
+			for
+			(
+				std::map<int, FormerOrder>::iterator formerOrdersIterator2 = formerOrders.begin();
+				formerOrdersIterator2 != formerOrders.end();
+				formerOrdersIterator2++
+			)
+			{
+				// skip itself
+
+				if (formerOrdersIterator2->first == formerOrdersIterator1->first)
+					continue;
+
+				FormerOrder *formerOrder1 = &formerOrdersIterator1->second;
+				FormerOrder *formerOrder2 = &formerOrdersIterator2->second;
+
+				VEH *vehicle1 = formerOrder1->vehicle;
+				VEH *vehicle2 = formerOrder2->vehicle;
+
+				int vehicle1Speed = veh_speed_without_roads(formerOrder1->vehicleId);
+				int vehicle2Speed = veh_speed_without_roads(formerOrder2->vehicleId);
+
+				int destination1X = formerOrder1->x;
+				int destination1Y = formerOrder1->y;
+				int destination2X = formerOrder2->x;
+				int destination2Y = formerOrder2->y;
+
+				int action1 = formerOrder1->action;
+				int action2 = formerOrder2->action;
+
+				// calculate current travel time
+
+				double vehicle1CurrentTravelTime = (double)map_range(vehicle1->x, vehicle1->y, destination1X, destination1Y) / (double)vehicle1Speed;
+				double vehicle2CurrentTravelTime = (double)map_range(vehicle2->x, vehicle2->y, destination2X, destination2Y) / (double)vehicle2Speed;
+
+				double currentTravelTime = vehicle1CurrentTravelTime + vehicle2CurrentTravelTime;
+
+				// calculate swapped travel time
+
+				double vehicle1SwappedTravelTime = (double)map_range(vehicle1->x, vehicle1->y, destination2X, destination2Y) / (double)vehicle1Speed;
+				double vehicle2SwappedTravelTime = (double)map_range(vehicle2->x, vehicle2->y, destination1X, destination1Y) / (double)vehicle2Speed;
+
+				double swappedTravelTime = vehicle1SwappedTravelTime + vehicle2SwappedTravelTime;
+
+				// swap orders if beneficial
+
+				if (swappedTravelTime < currentTravelTime)
+				{
+					formerOrder1->x = destination2X;
+					formerOrder1->y = destination2Y;
+					formerOrder1->action = action2;
+
+					formerOrder2->x = destination1X;
+					formerOrder2->y = destination1Y;
+					formerOrder2->action = action1;
+
+					swapped = true;
+
+				}
+
+			}
+
+		}
+
+		// stop cycle if nothing is swapped
+
+		if (!swapped)
+			break;
+
+	}
+}
+
+/**
+Handles movement phase.
+*/
+int enemyMoveFormer(int vehicleId)
+{
+	VEH *vehicle = &tx_vehicles[vehicleId];
+
+	// skip not formers
+
+	if (!isVehicleFormer(vehicle))
+		return SYNC;
+
+	// skip terraforming vehicles
+
+	if (isVehicleTerraforming(vehicle))
+		return SYNC;
+
+	// find former order
+
+	std::map<int, FormerOrder>::iterator formerOrderIterator = formerOrders.find(vehicleId);
+
+	// skip vehicle if not found
+
+	if (formerOrderIterator == formerOrders.end())
+		return SYNC;
+
+	// get order
+
+	FormerOrder *formerOrder = &formerOrderIterator->second;
+
+	// skip orders without action
+
+	if (formerOrder->action == -1)
+		return SYNC;
+
+	// execute order
+
+	setFormerOrder(formerOrder);
+
+	return SYNC;
+
+}
+
+void setFormerOrder(FormerOrder *formerOrder)
+{
+	int vehicleId = formerOrder->vehicleId;
+	VEH *vehicle = formerOrder->vehicle;
+	int x = formerOrder->x;
+	int y = formerOrder->y;
+	int action = formerOrder->action;
+
+	// at destination
+	if (vehicle->x == x && vehicle->y == y)
+	{
+		// execute terraforming action
+
+		setTerraformingAction(vehicleId, action);
+
+		debug
+		(
+			"generateFormerOrder: location=(%d,%d), action=%s\n",
+			vehicle->x,
+			vehicle->y,
+			tx_terraform[action].name
+		)
+		;
+
+	}
+	// not at destination
+	else
+	{
+		// send former to destination
+
+		sendVehicleToDestination(vehicleId, x, y);
+
+		debug
+		(
+			"generateFormerOrder: location=(%d,%d), move_to(%d,%d)\n",
+			vehicle->x,
+			vehicle->y,
+			x,
+			y
+		)
+
+	}
+
+}
+
 /**
 Gives order to former.
 */
-int giveOrderToFormer(int vehicleId)
+void generateFormerOrder(FormerOrder *formerOrder)
 {
-	MAP *t = mapsq(27,47);
-	t->items |= TERRA_CONDENSER;
-	// variables
-
-	VEH *vehicle = &tx_vehicles[vehicleId];
+	int vehicleId = formerOrder->vehicleId;
+	VEH *vehicle = formerOrder->vehicle;
 	int vehicleTriad = veh_triad(vehicleId);
 	MAP *vehicleTile = mapsq(vehicle->x, vehicle->y);
-	int vehicleBodyId = vehicleTile->body_id;
-	int factionId = vehicle->faction_id;
-
-	// set default return value
-
-	int order = SYNC;
-
-	// skip currently terraforming vehicles
-
-	if (isVehicleTerraforming(vehicle))
-		return order;
 
 	// iterate through map tiles
 
@@ -90,7 +357,7 @@ int giveOrderToFormer(int vehicleId)
 
 			// exclude unreachable territory
 
-			if (vehicleTriad != TRIAD_AIR && tile->body_id != vehicleBodyId)
+			if (vehicleTriad != TRIAD_AIR && tile->body_id != vehicleTile->body_id)
 				continue;
 
 			// exclude volcano mouth
@@ -100,12 +367,12 @@ int giveOrderToFormer(int vehicleId)
 
 			// exclude everything but our workable tiles
 
-			if (!isOwnWorkableTile(factionId, x, y))
+			if (!isOwnWorkableTile(x, y))
 				continue;
 
 			// exclude already taken tiles
 
-			if (isTileTakenByOtherFormer(vehicle, tile))
+			if (isTileTakenByOtherFormer(tile))
 				continue;
 
 			// calculate terraforming score
@@ -127,55 +394,65 @@ int giveOrderToFormer(int vehicleId)
 
 	}
 
-	// could not find good terraforming option
-	if (bestTerraformingTile == NULL || bestTerraformingAction == -1)
-	{
-		// build improvement
-
-		order = buildImprovement(vehicleId);
-
-	}
 	// found good terraforming option
-	else
+	if (bestTerraformingTile != NULL && bestTerraformingAction != -1)
 	{
-		// at destination
-		if (bestTerraformingTile == vehicleTile)
-		{
-			// execute terraforming action
+//		// at destination
+//		if (bestTerraformingTile == vehicleTile)
+//		{
+//			// execute terraforming action
+//
+//			setTerraformingAction(vehicleId, bestTerraformingAction);
+//
+//			debug
+//			(
+//				"generateFormerOrder: location=(%d,%d), action=%s\n",
+//				vehicle->x,
+//				vehicle->y,
+//				tx_terraform[bestTerraformingAction].name
+//			)
+//			;
+//
+//		}
+//		// not at destination
+//		else
+//		{
+//			// send former to destination
+//
+//			sendVehicleToDestination(vehicleId, bestTerraformingTileX, bestTerraformingTileY);
+//
+//			debug
+//			(
+//				"generateFormerOrder: location=(%d,%d), move_to(%d,%d)\n",
+//				vehicle->x,
+//				vehicle->y,
+//				bestTerraformingTileX,
+//				bestTerraformingTileY
+//			)
+//
+//		}
+//
+		// set former order
 
-			order = setTerraformingAction(vehicleId, bestTerraformingAction);
+		formerOrder->x = bestTerraformingTileX;
+		formerOrder->y = bestTerraformingTileY;
+		formerOrder->action = bestTerraformingAction;
 
-			debug
-			(
-				"giveOrderToFormer: location=(%d,%d), action=%s\n",
-				vehicle->x,
-				vehicle->y,
-				tx_terraform[bestTerraformingAction].name
-			)
-			;
+		// add target to list
 
-		}
-		// not at destination
-		else
-		{
-			// send former to destination
+		targetedTiles.insert(bestTerraformingTile);
 
-			order = set_move_to(vehicleId, bestTerraformingTileX, bestTerraformingTileY);
-
-			debug
-			(
-				"giveOrderToFormer: location=(%d,%d), move_to(%d,%d)\n",
-				vehicle->x,
-				vehicle->y,
-				bestTerraformingTileX,
-				bestTerraformingTileY
-			)
-
-		}
+		debug
+		(
+			"generateFormerOrder: location=(%d,%d), move_to(%d,%d), action=%s\n",
+			vehicle->x,
+			vehicle->y,
+			bestTerraformingTileX,
+			bestTerraformingTileY,
+			(bestTerraformingAction == -1 ? "none" : tx_terraform[bestTerraformingAction].name)
+		)
 
 	}
-
-	return order;
 
 }
 
@@ -193,14 +470,13 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 	)
 
 	VEH *vehicle = &tx_vehicles[vehicleId];
-	int factionId = vehicle->faction_id;
 	int triad = veh_triad(vehicleId);
 	MAP *tile = mapsq(x, y);
 	bool sea = is_ocean(tile);
 
 	// calculate previous yield score
 
-	double previousYieldScore = calculateYieldScore(factionId, x, y);
+	double previousYieldScore = calculateYieldScore(x, y);
 
 	// store tile values
 
@@ -245,7 +521,7 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 			// skip unavailable actions
 
-			if (!isTerraformingAvailable(factionId, x, y, action))
+			if (!isTerraformingAvailable(x, y, action))
 				continue;
 
 			// remove fungus if needed
@@ -273,7 +549,7 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 			// level terrain if needed
 
-			if (action == FORMER_FARM && improvedTileRocks & TILE_ROCKY)
+			if ((action == FORMER_FARM || action == FORMER_FOREST) && improvedTileRocks & TILE_ROCKY)
 			{
 				int levelTerrainAction = FORMER_LEVEL_TERRAIN;
 
@@ -328,7 +604,7 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 		// test
 
-		double improvedYieldScore = calculateYieldScore(factionId, x, y);
+		double improvedYieldScore = calculateYieldScore(x, y);
 
 		// revert changes
 
@@ -448,7 +724,7 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 }
 
-double calculateYieldScore(int factionId, int x, int y)
+double calculateYieldScore(int x, int y)
 {
 	double yieldScore = 0.0;
 
@@ -546,7 +822,7 @@ double calculateYieldScore(int factionId, int x, int y)
 /**
 Checks whether tile is own workable tile but not base square.
 */
-bool isOwnWorkableTile(int factionId, int x, int y)
+bool isOwnWorkableTile(int x, int y)
 {
 	MAP *tile = mapsq(x, y);
 
@@ -596,7 +872,7 @@ bool isOwnWorkableTile(int factionId, int x, int y)
 /**
 Checks whether tile is own worked tile but not base square.
 */
-bool isOwnWorkedTile(int factionId, int x, int y)
+bool isOwnWorkedTile(int x, int y)
 {
 	MAP *tile = mapsq(x, y);
 
@@ -662,7 +938,7 @@ bool isOwnWorkedTile(int factionId, int x, int y)
 Checks whether terraforming is available.
 Returns true if corresponding technology exists and tile doesn't contain this improvement yet.
 */
-bool isTerraformingAvailable(int factionId, int x, int y, int action)
+bool isTerraformingAvailable(int x, int y, int action)
 {
 	MAP *tile = mapsq(x, y);
 
@@ -794,24 +1070,9 @@ bool isVehicleFormer(VEH *vehicle)
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_TERRAFORMING_UNIT);
 }
 
-bool isFormerTargetingTile(VEH *vehicle, MAP *tile)
+bool isTileTargettedByVehicle(VEH *vehicle, MAP *tile)
 {
-	// ignore not formers
-
-	if (!isVehicleFormer(vehicle))
-		return false;
-
-	// return true if former is going to the tile
-	if (vehicle->move_status == STATUS_GOTO)
-	{
-		return (getVehicleDestination(vehicle) == tile);
-	}
-	// otherwise, return true if vehicle is on tile
-	else
-	{
-		return (mapsq(vehicle->x, vehicle->y) == tile);
-	}
-
+	return (vehicle->move_status == STATUS_GOTO && (getVehicleDestination(vehicle) == tile));
 }
 
 bool isVehicleTerraforming(VEH *vehicle)
@@ -853,44 +1114,19 @@ MAP *getVehicleDestination(VEH *vehicle)
 
 }
 
-bool isTileTakenByOtherFormer(VEH *primaryVehicle, MAP *tile)
+bool isTileTakenByOtherFormer(MAP *tile)
 {
-	bool taken = false;
+	return isTileTerraformed(tile) || isTileTargettedByOtherFormer(tile);
+}
 
-	// iterate through vehicles
+bool isTileTerraformed(MAP *tile)
+{
+	return terraformedTiles.count(tile) == 1;
+}
 
-	for (int vehicleIndex = 0; vehicleIndex < *tx_total_num_vehicles; vehicleIndex++)
-	{
-		VEH *vehicle = &tx_vehicles[vehicleIndex];
-
-		// skip itself
-
-		if (vehicle == primaryVehicle)
-			continue;
-
-		// skip not own vehicles
-
-		if (vehicle->faction_id != primaryVehicle->faction_id)
-			continue;
-
-		// skip not formers
-
-		if (!isVehicleFormer(vehicle))
-			continue;
-
-		// check if vehicle targets given tile
-
-		if (isFormerTargetingTile(vehicle, tile))
-		{
-			taken = true;
-			break;
-
-		}
-
-	}
-
-	return taken;
-
+bool isTileTargettedByOtherFormer(MAP *tile)
+{
+	return targetedTiles.count(tile) == 1;
 }
 
 void computeBase(int baseId)
@@ -900,33 +1136,29 @@ void computeBase(int baseId)
 
 }
 
-int setTerraformingAction(int vehicleId, int action)
+void setTerraformingAction(int vehicleId, int action)
 {
-	return set_action(vehicleId, action + 4, veh_status_icon[action + 4]);
+	set_action(vehicleId, action + 4, veh_status_icon[action + 4]);
 }
 
 /**
 Orders former to build other improvement besides base yield change.
 */
-int buildImprovement(int vehicleId)
+void buildImprovement(int vehicleId)
 {
 	VEH *vehicle = &tx_vehicles[vehicleId];
-
-	int order;
 
 	// TODO
 	// currently only skip turn
 
-	order = veh_skip(vehicleId);
+	veh_skip(vehicleId);
 
 	debug
 	(
-		"giveOrderToFormer: (%d,%d), order=skip\n",
+		"generateFormerOrder: (%d,%d), order=skip\n",
 		vehicle->x,
 		vehicle->y
 	)
-
-	return order;
 
 }
 
@@ -962,5 +1194,10 @@ int calculateLostTerraformingTime(int vehicleId, int x, int y, int tileItems, in
 
 	return lostTerraformingTime;
 
+}
+
+void sendVehicleToDestination(int vehicleId, int x, int y)
+{
+	tx_go_to(vehicleId, veh_status_icon[STATUS_GOTO], x, y);
 }
 

@@ -40,9 +40,9 @@ HOOK_API int enemy_move(int id) {
         } else if (w == WPN_SUPPLY_TRANSPORT) {
             return crawler_move(id);
         } else if (w == WPN_TERRAFORMING_UNIT) {
-            // [WtP] redirect to WtP function in future versions
+            // [WtP] use enemy_strategy function for formers
 //            return former_move(id);
-            return giveOrderToFormer(id);
+            return enemyMoveFormer(id);
         } else if (w == WPN_TROOP_TRANSPORT && veh_triad(id) == TRIAD_SEA) {
             return trans_move(id);
         } else if (w <= WPN_PSI_ATTACK && veh_triad(id) == TRIAD_LAND) {

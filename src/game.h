@@ -38,6 +38,7 @@ int prod_count(int fac, int id, int skip);
 int find_hq(int fac);
 int veh_triad(int id);
 int veh_speed(int id);
+int veh_speed_without_roads(int id);
 int veh_chassis_speed(int id);
 int unit_triad(int id);
 int unit_speed(int id);
