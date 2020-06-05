@@ -1066,14 +1066,14 @@ double alternative_combat_mechanics_calculate_attacker_winning_probability_follo
 For sea squares pretend they are on the same continent as closest reachable coastal base
 if such base is also closer than any other sea base in the same sea.
 */
-HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int body_id, int unknown_2, int unknown_3)
+HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int region, int unknown_2, int unknown_3)
 {
     debug
     (
-        "calculate_distance_to_nearest_base(x=%d, y=%d, body_id=%d)\n",
+        "calculate_distance_to_nearest_base(x=%d, y=%d, region=%d)\n",
         x,
         y,
-        body_id
+        region
     )
     ;
 
@@ -1083,15 +1083,15 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
     BASE *closest_reachable_base = NULL;
     MAP *closest_reachable_base_square = NULL;
 
-    int saved_coastal_base_body_id = -1;
+    int saved_coastal_base_region = -1;
 
     // check if given square is at sea
 
-    if (body_id >= 0x41)
+    if (region >= 0x41)
     {
         // loop through bases
 
-        for (int base_id = 0; base_id < *tx_total_num_bases; base_id++)
+        for (int base_id = 0; base_id < *total_num_bases; base_id++)
         {
             // get base
 
@@ -1103,10 +1103,10 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
             // get base map square body id
 
-            int base_map_square_body_id = base_map_square->body_id;
+            int base_map_square_region = base_map_square->region;
 
             // check if it is the same body
-            if (base_map_square_body_id == body_id)
+            if (base_map_square_region == region)
             {
                 // calculate base distance
 
@@ -1126,7 +1126,7 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
             }
             // otherwise, check it it is a land base
-            else if (base_map_square_body_id < 0x41)
+            else if (base_map_square_region < 0x41)
             {
                 // iterate over nearby base squares
 
@@ -1139,23 +1139,23 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
                         // exclude squares beyond the map
 
-                        if (near_y < 0 || near_y >= *tx_map_axis_y)
+                        if (near_y < 0 || near_y >= *map_axis_y)
                             continue;
 
-                        if (*tx_map_toggle_flat && (near_x < 0 || near_x >= *tx_map_axis_x))
+                        if (*map_toggle_flat && (near_x < 0 || near_x >= *map_axis_x))
                             continue;
 
                         // wrap x on cylinder map
 
-                        if (!*tx_map_toggle_flat && near_x < 0)
+                        if (!*map_toggle_flat && near_x < 0)
                         {
-                            near_x += *tx_map_axis_x;
+                            near_x += *map_axis_x;
 
                         }
 
-                        if (!*tx_map_toggle_flat && near_x >= *tx_map_axis_x)
+                        if (!*map_toggle_flat && near_x >= *map_axis_x)
                         {
-                            near_x -= *tx_map_axis_x;
+                            near_x -= *map_axis_x;
 
                         }
 
@@ -1165,11 +1165,11 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
                         // get near map square body id
 
-                        int near_map_square_body_id = near_map_square->body_id;
+                        int near_map_square_region = near_map_square->region;
 
                         // check if it is a matching body id
 
-                        if (near_map_square_body_id == body_id)
+                        if (near_map_square_region == region)
                         {
                             // calculate base distance
 
@@ -1210,23 +1210,23 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
         if (closest_reachable_base_found && closest_reachable_base_is_coastal)
         {
-            saved_coastal_base_body_id = closest_reachable_base_square->body_id;
+            saved_coastal_base_region = closest_reachable_base_square->region;
 
             debug
             (
-                "Before emulation: closest_reachable_base->x=%d, closest_reachable_base->y=%d, closest_reachable_base_square->body_id=%d\n",
+                "Before emulation: closest_reachable_base->x=%d, closest_reachable_base->y=%d, closest_reachable_base_square->region=%d\n",
                 closest_reachable_base->x,
                 closest_reachable_base->y,
-                closest_reachable_base_square->body_id
+                closest_reachable_base_square->region
             )
             ;
 
-            closest_reachable_base_square->body_id = body_id;
+            closest_reachable_base_square->region = region;
 
             debug
             (
-                "After emulation: closest_reachable_base_square->body_id=%d\n",
-                closest_reachable_base_square->body_id
+                "After emulation: closest_reachable_base_square->region=%d\n",
+                closest_reachable_base_square->region
             )
             ;
 
@@ -1236,7 +1236,7 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
     // run original function
 
-    int nearest_base_faction_id = tx_calculate_distance_to_nearest_base(x, y, unknown_1, body_id, unknown_2, unknown_3);
+    int nearest_base_faction_id = tx_calculate_distance_to_nearest_base(x, y, unknown_1, region, unknown_2, unknown_3);
 
     // revert coastal base map square body to original
 
@@ -1244,17 +1244,17 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
     {
         debug
         (
-            "Before restoration: closest_reachable_base_square->body_id=%d\n",
-            closest_reachable_base_square->body_id
+            "Before restoration: closest_reachable_base_square->region=%d\n",
+            closest_reachable_base_square->region
         )
         ;
 
-        closest_reachable_base_square->body_id = saved_coastal_base_body_id;
+        closest_reachable_base_square->region = saved_coastal_base_region;
 
         debug
         (
-            "After restoration: closest_reachable_base_square->body_id=%d\n",
-            closest_reachable_base_square->body_id
+            "After restoration: closest_reachable_base_square->region=%d\n",
+            closest_reachable_base_square->region
         )
         ;
 
@@ -1273,8 +1273,8 @@ int map_distance(int x1, int y1, int x2, int y2)
 {
     int xd = abs(x1-x2);
     int yd = abs(y1-y2);
-    if (!*tx_map_toggle_flat && xd > *tx_map_axis_x/2)
-        xd = *tx_map_axis_x - xd;
+    if (!*map_toggle_flat && xd > *map_axis_x/2)
+        xd = *map_axis_x - xd;
 
     return ((xd + yd) + abs(xd - yd) / 2) / 2;
 
@@ -1333,9 +1333,9 @@ HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength,
 /**
 nutrient yield calculation
 */
-HOOK_API int nutrient_yield(int faction_id, int base, int x, int y, int tf)
+HOOK_API int mod_nutrient_yield(int faction_id, int base, int x, int y, int tf)
 {
-    int value = tx_crop_yield(faction_id, base, x, y, tf);
+    int value = crop_yield(faction_id, base, x, y, tf);
 
     MAP* sq = mapsq(x, y);
 
@@ -1359,9 +1359,9 @@ HOOK_API int nutrient_yield(int faction_id, int base, int x, int y, int tf)
 /**
 mineral yield calculation
 */
-HOOK_API int mineral_yield(int faction_id, int base, int x, int y, int tf)
+HOOK_API int mod_mineral_yield(int faction_id, int base, int x, int y, int tf)
 {
-    int value = tx_mineral_yield(faction_id, base, x, y, tf);
+    int value = mineral_yield(faction_id, base, x, y, tf);
 
     return value;
 
@@ -1370,9 +1370,9 @@ HOOK_API int mineral_yield(int faction_id, int base, int x, int y, int tf)
 /**
 energy yield calculation
 */
-HOOK_API int energy_yield(int faction_id, int base, int x, int y, int tf)
+HOOK_API int mod_energy_yield(int faction_id, int base, int x, int y, int tf)
 {
-    int value = tx_energy_yield(faction_id, base, x, y, tf);
+    int value = energy_yield(faction_id, base, x, y, tf);
 
     return value;
 
@@ -1421,7 +1421,7 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
         double conversion_ratio = (double)row_size_new / (double)row_size_old;
 
-        for (int i = 0; i < *tx_total_num_bases; i++)
+        for (int i = 0; i < *total_num_bases; i++)
         {
             BASE* base = &tx_bases[i];
 
@@ -1444,7 +1444,7 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
         double conversion_ratio = (double)row_size_new / (double)row_size_old;
 
-        for (int i = 0; i < *tx_total_num_bases; i++)
+        for (int i = 0; i < *total_num_bases; i++)
         {
             BASE* base = &tx_bases[i];
 
@@ -1506,6 +1506,84 @@ HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int t
     }
 
     return value;
+
+}
+
+/**
+Calculates tech level recursively.
+*/
+int wtp_tech_level(int id) {
+    if (id < 0 || id > TECH_TranT)
+    {
+        return 0;
+    }
+    else
+    {
+        int v1 = wtp_tech_level(tx_techs[id].preq_tech1);
+        int v2 = wtp_tech_level(tx_techs[id].preq_tech2);
+
+        return max(v1, v2) + 1;
+    }
+}
+
+/**
+Calculates tech cost.
+cost grows cubic from the beginning then linear.
+S  = 20                                     // fixed shift (first tech cost)
+C  = 0.02                                   // cubic coefficient
+B  = 80 * (<map area> / <normal map area>)  // linear slope
+x0 = SQRT(B / (3 * C))                      // break point
+A  = C * x0 ^ 3 - B * x0                    // linear intercept
+x  = (<level> - 1) * 7
+
+cost = S +
+1.
+when x < x0 then
+C * x ^ 3
+2.
+else
+A + B * x
+*/
+int wtp_tech_cost(int fac, int tech) {
+    assert(fac >= 0 && fac < 8);
+    MetaFaction* m = &tx_metafactions[fac];
+    int level = 1;
+
+    if (tech >= 0) {
+        level = wtp_tech_level(tech);
+    }
+
+    double S = 20.0;
+    double C = 0.02;
+    double B = 80 * (*map_area_tiles / 3200.0);
+    double x0 = sqrt(B / (3 * C));
+    double A = C * x0 * x0 * x0 - B * x0;
+    double x = (level - 1) * 7;
+
+    double base = S + (x < x0 ? C * x * x * x : A + B * x);
+
+    double cost =
+        base
+        * (double)m->rule_techcost / 100.0
+        * (*game_rules & RULES_TECH_STAGNATION ? 1.5 : 1.0)
+        * (double)tx_basic->rules_tech_discovery_rate / 100.0
+    ;
+
+    double dw;
+
+    if (is_human(fac)) {
+        dw = 1.0 + 0.1 * (10.0 - tx_cost_ratios[*diff_level]);
+    }
+    else {
+        dw = 1.0;
+    }
+
+    cost *= dw;
+
+    debug("tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %s\n", *current_turn, fac,
+        base, dw, cost, level, tech, (tech >= 0 ? tx_techs[tech].name : NULL));
+
+    return max(2, (int)cost);
 
 }
 

@@ -1,3 +1,7 @@
+# Version 65
+
+* Merged with Thinker 2.0.
+
 # Version 64
 
 * Borehole Square,  0, 2, 6, 0.
