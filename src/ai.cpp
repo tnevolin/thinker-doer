@@ -43,7 +43,7 @@ int giveOrderToFormer(int vehicleId)
 	int bestTargetTileY = vehicle->y;
 	int bestTargetTileAction = -1;
 
-	for (int baseIndex = 0; baseIndex < *tx_total_num_bases; baseIndex++)
+	for (int baseIndex = 0; baseIndex < *total_num_bases; baseIndex++)
 	{
 		BASE *base = &tx_bases[baseIndex];
 
@@ -131,7 +131,7 @@ int giveOrderToFormer(int vehicleId)
 
 			// exclude unreachable tiles
 
-			if (vehicleTriad != TRIAD_AIR && (tile->body_id != vehicleTile->body_id))
+			if (vehicleTriad != TRIAD_AIR && (tile->region != vehicleTile->region))
 				continue;
 
 			// exclude already taken tiles
@@ -270,7 +270,7 @@ void collectFormerTargets(int factionId)
 {
 	// iterate through vehicles
 
-	for (int vehicleIndex = 0; vehicleIndex < *tx_total_num_vehicles; vehicleIndex++)
+	for (int vehicleIndex = 0; vehicleIndex < *total_num_vehicles; vehicleIndex++)
 	{
 		VEH *vehicle = &tx_vehicles[vehicleIndex];
 
@@ -292,7 +292,7 @@ void collectFormerTargets(int factionId)
 
 		}
 		// former is going somewhere
-		else if (vehicle->move_status == STATUS_GOTO || vehicle->move_status == STATUS_ROAD_TO)
+		else if (vehicle->move_status == ORDER_MOVE_TO || vehicle->move_status == ORDER_ROAD_TO)
 		{
 			formerTargets[formerTargetCount] = getVehicleDestination(vehicle);
 			formerTargetCount++;
@@ -310,12 +310,12 @@ bool isVehicleFormer(VEH *vehicle)
 
 bool isVehicleTerraforming(VEH *vehicle)
 {
-	return vehicle->move_status >= STATUS_FARM && vehicle->move_status <= STATUS_PLACE_MONOLITH;
+	return vehicle->move_status >= ORDER_FARM && vehicle->move_status <= ORDER_PLACE_MONOLITH;
 }
 
 bool isVehicleMoving(VEH *vehicle)
 {
-	return vehicle->move_status == STATUS_GOTO || vehicle->move_status == STATUS_MOVE || vehicle->move_status == STATUS_ROAD_TO || vehicle->move_status == STATUS_MAGTUBE_TO || vehicle->move_status == STATUS_AI_GO_TO;
+	return vehicle->move_status == ORDER_MOVE_TO || vehicle->move_status == ORDER_MOVE || vehicle->move_status == ORDER_ROAD_TO || vehicle->move_status == ORDER_MAGTUBE_TO || vehicle->move_status == ORDER_AI_GO_TO;
 }
 
 MAP *getVehicleDestination(VEH *vehicle)
@@ -353,7 +353,7 @@ bool isTileTakenByOtherFormer(VEH *primaryVehicle, MAP *primaryVehicleTargetTile
 
 	// iterate through vehicles
 
-	for (int vehicleIndex = 0; vehicleIndex < *tx_total_num_vehicles; vehicleIndex++)
+	for (int vehicleIndex = 0; vehicleIndex < *total_num_vehicles; vehicleIndex++)
 	{
 		VEH *vehicle = &tx_vehicles[vehicleIndex];
 
@@ -400,7 +400,7 @@ bool isTileWorkedByOtherBase(BASE *primaryBase, MAP *primaryBaseTile)
 {
 	bool worked = false;
 
-	for (int baseIndex = 0; baseIndex < *tx_total_num_bases; baseIndex++)
+	for (int baseIndex = 0; baseIndex < *total_num_bases; baseIndex++)
 	{
 		BASE *base = &tx_bases[baseIndex];
 
@@ -458,21 +458,21 @@ double calculateTileYieldScore(int baseId, BASE *base, int tileX, int tileY)
 	// nutrient
 
 	int baseNutrientSurplus = max(1, base->nutrient_surplus);
-	int tileNutrientYield = nutrient_yield(base->faction_id, baseId, tileX, tileY, 0);
+	int tileNutrientYield = mod_nutrient_yield(base->faction_id, baseId, tileX, tileY, 0);
 
 	tileYieldScore += nutrientWeight / (double)baseNutrientSurplus * (double)tileNutrientYield;
 
 	// mineral
 
 	int baseMineralSurplus = max(1, base->mineral_surplus);
-	int tileMineralYield = mineral_yield(base->faction_id, baseId, tileX, tileY, 0);
+	int tileMineralYield = mod_mineral_yield(base->faction_id, baseId, tileX, tileY, 0);
 
 	tileYieldScore += mineralWeight / (double)baseMineralSurplus * (double)tileMineralYield;
 
 	// energy
 
 	int baseEnergySurplus = max(1, base->energy_surplus);
-	int tileEnergyYield = energy_yield(base->faction_id, baseId, tileX, tileY, 0);
+	int tileEnergyYield = mod_energy_yield(base->faction_id, baseId, tileX, tileY, 0);
 
 	tileYieldScore += energyWeight / (double)baseEnergySurplus * (double)tileEnergyYield;
 
@@ -495,10 +495,6 @@ double calculateImprovementScore(VEH *vehicle, int baseIndex, BASE *base, MAP *t
 	double improvementTime;
 
 	// get current yield
-
-	// calculate best terraforming option
-
-	double bestTerraformingScore = 0.0;
 
 	// ===
 	// farm/enricher, solar
@@ -586,15 +582,15 @@ double calculateImprovementScore(VEH *vehicle, int baseIndex, BASE *base, MAP *t
 
 	// add tube
 
-	if (has_terra(factionId, FORMER_MAG_TUBE, is_ocean(tile)))
+	if (has_terra(factionId, FORMER_MAGTUBE, is_ocean(tile)))
 	{
 		if (~improvedTileItems & TERRA_MAGTUBE)
 		{
 			improvedTileItems |= TERRA_MAGTUBE;
-			improvementTime += tx_terraform[FORMER_MAG_TUBE].rate;
+			improvementTime += tx_terraform[FORMER_MAGTUBE].rate;
 			if (*action == -1)
 			{
-				*action = FORMER_MAG_TUBE;
+				*action = FORMER_MAGTUBE;
 			}
 		}
 	}
@@ -639,7 +635,7 @@ double calculateImprovementScore(VEH *vehicle, int baseIndex, BASE *base, MAP *t
 	// calculate range and estimate travel time
 
 	double travelPathLength = (double)map_range(vehicle->x, vehicle->y, tileX, tileY);
-	double travelTime = travelPathLength / (max(1.0, (double)*tx_current_turn / 40.0));
+	double travelTime = travelPathLength / (max(1.0, (double)*current_turn / 40.0));
 
 	// summarize score
 

@@ -1,6 +1,4 @@
-
-#ifndef __TERRANX_H__
-#define __TERRANX_H__
+#pragma once
 
 typedef unsigned char byte;
 
@@ -10,31 +8,11 @@ typedef unsigned char byte;
 extern const char** tx_version;
 extern const char** tx_date;
 
-extern int*  tx_current_base_id;
-extern BASE* tx_current_base_ptr;
-extern int* tx_game_rules;
-extern int* tx_scen_rules;
-extern int* tx_diff_level;
-extern int* tx_human_players;
-extern int* tx_current_turn;
-extern int* tx_active_faction;
-extern int* tx_total_num_bases;
-extern int* tx_total_num_vehicles;
-extern int* tx_random_seed;
-extern int* tx_map_toggle_flat;
-extern int* tx_map_area;
-extern int* tx_map_area_sq_root;
-extern int* tx_map_axis_x;
-extern int* tx_map_axis_y;
-extern int* tx_map_half_x;
-extern int* tx_climate_future_change;
-extern int* tx_un_charter_repeals;
-extern int* tx_un_charter_reinstates;
-extern int* tx_cost_ratios;
-
 extern byte* tx_tech_discovered;
 extern int* tx_secret_projects;
-extern FactMeta* tx_factions_meta;
+extern int* tx_cost_ratios;
+extern short (*tx_faction_rankings)[8];
+extern MetaFaction* tx_metafactions;
 extern Faction* tx_factions;
 extern BASE* tx_bases;
 extern UNIT* tx_units;
@@ -92,6 +70,7 @@ extern fp_2int* tx_veh_speed;
 extern fp_3int* tx_zoc_any;
 extern fp_3int* tx_best_defender;
 extern fp_5int* tx_battle_compute;
+extern fp_6int* tx_battle_kill;
 extern fp_1int* tx_enemy_move;
 extern fp_1int* tx_monolith;
 extern fp_2int* tx_action_build;
@@ -108,9 +87,6 @@ extern fp_4int* tx_base_prod_choices;
 extern fp_void* tx_turn_upkeep;
 extern fp_1int* tx_faction_upkeep;
 extern fp_3int* tx_tech_val;
-extern fp_5int* tx_crop_yield;
-extern fp_5int* tx_mineral_yield;
-extern fp_5int* tx_energy_yield;
 extern fp_6int* tx_social_ai;
 extern fp_1int* tx_social_set;
 extern fp_1int* tx_pop_goal;
@@ -151,5 +127,4 @@ extern fp_5int* tx_set_se_on_dialog_close;
 // hex cost
 extern fp_7int* tx_hex_cost;
 
-#endif // __TERRANX_H__
 

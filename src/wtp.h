@@ -99,13 +99,15 @@ int map_distance(int x1, int y1, int x2, int y2);
 
 HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower);
 
-HOOK_API int nutrient_yield(int faction_id, int a2, int x, int y, int a5);
-HOOK_API int mineral_yield(int faction_id, int a2, int x, int y, int a5);
-HOOK_API int energy_yield(int faction_id, int a2, int x, int y, int a5);
+HOOK_API int mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
+HOOK_API int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
+HOOK_API int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
 
 HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5);
 
 HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7);
+
+int wtp_tech_cost(int fac, int tech);
 
 #endif // __PROTOTYPE_H__
 
