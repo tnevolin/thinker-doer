@@ -51,7 +51,7 @@ struct TERRAFORMING_OPTION
 	int actions[10];
 };
 
-HOOK_API void enemy_strategy(int factionId);
+void ai_strategy(int id);
 void prepareFormerOrders();
 void populateLists();
 void processAvailableFormers();

@@ -21,7 +21,7 @@ TERRAFORMING_OPTION TERRAFORMING_OPTIONS[TERRAFORMING_OPTION_COUNT] =
 	{false, false, 0.0, 1, {FORMER_FOREST}},
 	{false, false, 0.0, 1, {FORMER_PLANT_FUNGUS}},
 	{false, false, conf.ai_terraforming_roadBonus, 1, {FORMER_ROAD}},
-	{false, false, conf.ai_terraforming_tubeBonus, 1, {FORMER_MAG_TUBE}},
+	{false, false, conf.ai_terraforming_tubeBonus, 1, {FORMER_MAGTUBE}},
 	// sea
 	{true, false, 0.0, 2, {FORMER_FARM, FORMER_MINE}},
 	{true, false, 0.0, 2, {FORMER_FARM, FORMER_SOLAR}},
@@ -37,9 +37,9 @@ std::unordered_set<MAP *> targetedTiles;
 std::map<int, FormerOrder> formerOrders;
 
 /**
-AI strategy entry point.
+AI strategy.
 */
-HOOK_API void enemy_strategy(int id)
+void ai_strategy(int id)
 {
 	// set faction id
 
@@ -85,7 +85,7 @@ void populateLists()
 
 	// populate lists
 
-	for (int vehicleIndex = 0; vehicleIndex < *tx_total_num_vehicles; vehicleIndex++)
+	for (int vehicleIndex = 0; vehicleIndex < *total_num_vehicles; vehicleIndex++)
 	{
 		VEH *vehicle = &tx_vehicles[vehicleIndex];
 
@@ -332,9 +332,9 @@ void generateFormerOrder(FormerOrder *formerOrder)
 	MAP *bestTerraformingTile = NULL;
 	int bestTerraformingAction = -1;
 
-	for (int y = 0; y < *tx_map_axis_y; y++)
+	for (int y = 0; y < *map_axis_y; y++)
 	{
-		for (int x = 0; x < *tx_map_axis_x; x++)
+		for (int x = 0; x < *map_axis_x; x++)
 		{
 			// skip impossible combinations
 
@@ -357,7 +357,7 @@ void generateFormerOrder(FormerOrder *formerOrder)
 
 			// exclude unreachable territory
 
-			if (vehicleTriad != TRIAD_AIR && tile->body_id != vehicleTile->body_id)
+			if (vehicleTriad != TRIAD_AIR && tile->region != vehicleTile->region)
 				continue;
 
 			// exclude volcano mouth
@@ -637,7 +637,7 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
         double movementCostWithoutRoad = (double)tx_basic->mov_rate_along_roads;
         double movementCostAlongRoad = (conf.tube_movement_rate_multiplier > 0 ? (double)tx_basic->mov_rate_along_roads / conf.tube_movement_rate_multiplier : (double)tx_basic->mov_rate_along_roads);
         double movementCostAlongTube = (conf.tube_movement_rate_multiplier > 0 ? 1 : 0);
-        double currentTurn = (double)*tx_current_turn;
+        double currentTurn = (double)*current_turn;
 
 		switch (triad)
 		{
@@ -645,15 +645,15 @@ double calculateTerraformingScore(int vehicleId, int x, int y, int *bestTerrafor
 
 			// approximating 2 turns per tile at the beginning and then decrease movement close to the middle-end.
 
-            if (*tx_current_turn < 100)
+            if (*current_turn < 100)
             {
                 estimatedMovementCost = 2.0 * movementCostWithoutRoad - (2.0 * movementCostWithoutRoad - 1.0 * movementCostWithoutRoad) * ((currentTurn - 0.0) / (100.0 - 0.0));
             }
-            else if (*tx_current_turn < 200)
+            else if (*current_turn < 200)
             {
                 estimatedMovementCost = 1.0 * movementCostWithoutRoad - (1.0 * movementCostWithoutRoad - movementCostAlongRoad) * ((currentTurn - 100.0) / (200.0 - 100.0));
             }
-            else if (*tx_current_turn < 400)
+            else if (*current_turn < 400)
             {
                 estimatedMovementCost = 1.0 * movementCostAlongRoad - (1.0 * movementCostAlongRoad - 1.0 * movementCostAlongTube) * ((currentTurn - 200.0) / (400.0 - 200.0));
             }
@@ -730,7 +730,7 @@ double calculateYieldScore(int x, int y)
 
 	// iterate bases
 
-	for (int baseIndex = 0; baseIndex < *tx_total_num_bases; baseIndex++)
+	for (int baseIndex = 0; baseIndex < *total_num_bases; baseIndex++)
 	{
 		BASE *base = &tx_bases[baseIndex];
 
@@ -838,7 +838,7 @@ bool isOwnWorkableTile(int x, int y)
 
 	// iterate through own bases
 
-	for (int baseIndex = 0; baseIndex < *tx_total_num_bases; baseIndex++)
+	for (int baseIndex = 0; baseIndex < *total_num_bases; baseIndex++)
 	{
 		BASE *base = &tx_bases[baseIndex];
 
@@ -888,7 +888,7 @@ bool isOwnWorkedTile(int x, int y)
 
 	// iterate through own bases
 
-	for (int baseIndex = 0; baseIndex < *tx_total_num_bases; baseIndex++)
+	for (int baseIndex = 0; baseIndex < *total_num_bases; baseIndex++)
 	{
 		BASE *base = &tx_bases[baseIndex];
 
@@ -971,7 +971,7 @@ bool isTerraformingAvailable(int x, int y, int action)
 		// enricher requires farm
 		terraformingAvailable = tile->items & TERRA_FARM;
 		break;
-	case FORMER_MAG_TUBE:
+	case FORMER_MAGTUBE:
 		// tube requires road
 		terraformingAvailable = tile->items & TERRA_ROAD;
 		break;
@@ -1072,17 +1072,17 @@ bool isVehicleFormer(VEH *vehicle)
 
 bool isTileTargettedByVehicle(VEH *vehicle, MAP *tile)
 {
-	return (vehicle->move_status == STATUS_GOTO && (getVehicleDestination(vehicle) == tile));
+	return (vehicle->move_status == ORDER_MOVE_TO && (getVehicleDestination(vehicle) == tile));
 }
 
 bool isVehicleTerraforming(VEH *vehicle)
 {
-	return vehicle->move_status >= STATUS_FARM && vehicle->move_status <= STATUS_PLACE_MONOLITH;
+	return vehicle->move_status >= ORDER_FARM && vehicle->move_status <= ORDER_PLACE_MONOLITH;
 }
 
 bool isVehicleMoving(VEH *vehicle)
 {
-	return vehicle->move_status == STATUS_GOTO || vehicle->move_status == STATUS_MOVE || vehicle->move_status == STATUS_ROAD_TO || vehicle->move_status == STATUS_MAGTUBE_TO || vehicle->move_status == STATUS_AI_GO_TO;
+	return vehicle->move_status == ORDER_MOVE_TO || vehicle->move_status == ORDER_MOVE || vehicle->move_status == ORDER_ROAD_TO || vehicle->move_status == ORDER_MAGTUBE_TO || vehicle->move_status == ORDER_AI_GO_TO;
 }
 
 MAP *getVehicleDestination(VEH *vehicle)
@@ -1198,6 +1198,6 @@ int calculateLostTerraformingTime(int vehicleId, int x, int y, int tileItems, in
 
 void sendVehicleToDestination(int vehicleId, int x, int y)
 {
-	tx_go_to(vehicleId, veh_status_icon[STATUS_GOTO], x, y);
+	tx_go_to(vehicleId, veh_status_icon[ORDER_MOVE_TO], x, y);
 }
 
