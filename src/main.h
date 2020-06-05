@@ -1,8 +1,7 @@
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Will to Power Mod"
+    #define MOD_VERSION "Thinker Mod v2.0"
 #else
     #define MOD_VERSION "The Will to Power mod - version 62"
 #endif
@@ -53,7 +52,7 @@ static_assert(sizeof(struct R_Basic) == 308, "");
 static_assert(sizeof(struct R_Social) == 212, "");
 static_assert(sizeof(struct R_Facility) == 48, "");
 static_assert(sizeof(struct R_Tech) == 44, "");
-static_assert(sizeof(struct FactMeta) == 1436, "");
+static_assert(sizeof(struct MetaFaction) == 1436, "");
 static_assert(sizeof(struct Faction) == 8396, "");
 static_assert(sizeof(struct BASE) == 308, "");
 static_assert(sizeof(struct UNIT) == 52, "");
@@ -68,40 +67,41 @@ static_assert(sizeof(struct MAP) == 44, "");
 #define SYNC 0
 #define NO_SYNC 1
 #define NEAR_ROADS 3
+#define TERRITORY_LAND 4
 #define RES_NONE 0
 #define RES_NUTRIENT 1
 #define RES_MINERAL 2
 #define RES_ENERGY 3
-#define STATUS_IDLE 0
-#define STATUS_CONVOY 3
-#define STATUS_FARM 4
-#define STATUS_PLACE_MONOLITH 23
-#define STATUS_GOTO 24
-#define STATUS_MOVE 25
-#define STATUS_ROAD_TO 27
-#define STATUS_MAGTUBE_TO 28
-#define STATUS_AI_GO_TO 88
 #define ATT false
 #define DEF true
 
 struct Config {
-    int free_formers;
-    int satellites_nutrient;
-    int satellites_mineral;
-    int satellites_energy;
-    int design_units;
-    int factions_enabled;
-    int hurry_items;
-    int social_ai;
-    int tech_balance;
-    int limit_project_start;
-    double expansion_factor;
-    int max_sat;
-    int smac_only;
-    int revised_tech_cost;
-    int faction_placement;
-    int nutrient_bonus;
-    int landmarks;
+    int free_formers = 0;
+    int free_colony_pods = 0;
+    int satellites_nutrient = 0;
+    int satellites_mineral = 0;
+    int satellites_energy = 0;
+    int design_units = 1;
+    int factions_enabled = 7;
+    int social_ai = 1;
+    int tech_balance = 0;
+    int hurry_items = 1;
+    double expansion_factor = 1;
+    int limit_project_start = 3;
+    int max_sat = 10;
+    int smac_only = 0;
+    int faction_placement = 1;
+    int nutrient_bonus = 1;
+    int landmarks = 0xffff;
+    int revised_tech_cost = 1;
+    int auto_relocate_hq = 1;
+    int eco_damage_fix = 1;
+    int collateral_damage_value = 3;
+    int disable_planetpearls = 0;
+    int disable_aquatic_bonus_minerals = 0;
+    int patch_content_pop = 0;
+    int content_pop_player[6] = {6,5,4,3,2,1};
+    int content_pop_computer[6] = {3,3,3,3,3,3};
 //  SMACX The Will to Power Mod
     bool disable_alien_guaranteed_technologies = false;
     bool alternative_weapon_icon_selection_algorithm = false;
@@ -115,8 +115,10 @@ struct Config {
     int perimeter_defense_multiplier = 0;
     int tachyon_field_bonus = 0;
     bool collateral_damage_defender_reactor = false;
-    int collateral_damage_value = 3;
-    bool disable_aquatic_bonus_minerals = false;
+// integrated into Thinker
+//    int collateral_damage_value = 3;
+// integrated into Thinker
+//    bool disable_aquatic_bonus_minerals = false;
     int repair_minimal = 1;
     int repair_fungus = 2;
     bool repair_friendly = true;
@@ -128,7 +130,8 @@ struct Config {
     int repair_nano_factory = 10;
     bool alternative_combat_mechanics = false;
     double alternative_combat_mechanics_loss_divider = 1.0;
-    bool disable_planetpearls = false;
+// integrated into Thinker
+//    bool disable_planetpearls = false;
     bool uniform_promotions = true; // internal configuration
     bool very_green_no_defense_bonus = true; // internal configuration
     bool apply_planet_combat_bonus_on_defense = false;
@@ -155,27 +158,26 @@ struct Config {
     that are recalculated each turn. These values are not stored in the save game.
 */
 struct AIPlans {
-    int diplo_flags;
+    int diplo_flags = 0;
     /*
     Amount of minerals a base needs to produce before it is allowed to build secret projects.
     All faction-owned bases are ranked each turn based on the surplus mineral production,
     and only the top third are selected for project building.
     */
-    int proj_limit;
-    int psi_score;
-    int keep_fungus;
-    int plant_fungus;
+    int proj_limit = 5;
+    /*
+    PSI combat units are only selected for production if this score is higher than zero.
+    Higher values will make the prototype picker choose these units more often.
+    */
+    int psi_score = 0;
+    int need_police = 1;
+    int keep_fungus = 0;
+    int plant_fungus = 0;
     /*
     Number of our bases captured by another faction we're currently at war with.
     Important heuristic in threat calculation.
     */
-    int enemy_bases;
-    /*
-    Exponentially weighted moving average of distances to nearest enemy bases.
-    This is updated while choosing base production, and it is used as a
-    general heuristic to determine the level of threat from other factions.
-    */
-    double enemy_range;
+    int enemy_bases = 0;
 };
 
 extern std::string MOVE_STATUS[];
@@ -188,17 +190,16 @@ extern Points needferry;
 
 DLL_EXPORT int ThinkerDecide();
 HOOK_API int turn_upkeep();
-HOOK_API int faction_upkeep(int fac);
 HOOK_API int base_production(int id, int v1, int v2, int v3);
-HOOK_API int tech_value(int tech, int fac, int flag);
-HOOK_API int social_ai(int fac, int v1, int v2, int v3, int v4, int v5);
+HOOK_API int social_ai(int faction, int v1, int v2, int v3, int v4, int v5);
 
+int need_defense(int id);
 int need_psych(int id);
 int consider_hurry(int id);
+int find_project(int id);
+int find_facility(int id);
 int select_prod(int id);
-int find_facility(int base_id);
-int find_project(int base_id);
-int select_combat(int, bool, bool, int, int);
-
-#endif // __MAIN_H__
+int find_proto(int base_id, int triad, int mode, bool defend);
+int select_combat(int id, bool sea_base, bool build_ships, int probes, int def_land);
+int opt_list_parse(int* ptr, char* buf, int len, int min_val);
 

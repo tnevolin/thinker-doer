@@ -1,115 +1,111 @@
 #include <math.h>
 #include "tech.h"
+#include "wtp.h"
 
-void init_values(int fac) {
-    Faction* f = &tx_factions[fac];
+void init_save_game(int faction) {
+    Faction* f = &tx_factions[faction];
+    check_zeros((int*)&f->thinker_unused, sizeof(f->thinker_unused));
+
     if (f->thinker_header != THINKER_HEADER) {
         f->thinker_header = THINKER_HEADER;
         f->thinker_flags = 0;
         f->thinker_tech_id = f->tech_research_id;
         f->thinker_tech_cost = f->tech_cost;
+        memset(&f->thinker_unused, 0, sizeof(f->thinker_unused));
+    }
+    if (f->thinker_enemy_range < 2 || f->thinker_enemy_range > 40) {
+        f->thinker_enemy_range = 20;
     }
 }
 
-/**
-Calculates tech level recursively.
-*/
-int tech_level(int id) {
-    if (id < 0 || id > TECH_TranT)
-    {
-        return 0;
+HOOK_API int tech_value(int tech, int faction, int flag) {
+    int value = tx_tech_val(tech, faction, flag);
+    if (conf.tech_balance && ai_enabled(faction)) {
+        if (tech == tx_weapon[WPN_TERRAFORMING_UNIT].preq_tech
+        || tech == tx_weapon[WPN_SUPPLY_TRANSPORT].preq_tech
+        || tech == tx_weapon[WPN_PROBE_TEAM].preq_tech
+        || tech == tx_facility[FAC_RECYCLING_TANKS].preq_tech
+        || tech == tx_facility[FAC_CHILDREN_CRECHE].preq_tech
+        || tech == tx_basic->tech_preq_allow_3_energy_sq
+        || tech == tx_basic->tech_preq_allow_3_minerals_sq
+        || tech == tx_basic->tech_preq_allow_3_nutrients_sq) {
+            value += 40;
+        }
     }
-    else
-    {
-        int v1 = tech_level(tx_techs[id].preq_tech1);
-        int v2 = tech_level(tx_techs[id].preq_tech2);
+    debug("tech_value %d %d value: %3d tech: %2d %s\n",
+        *current_turn, faction, value, tech, tx_techs[tech].name);
+    return value;
+}
 
-        return max(v1, v2) + 1;
+int tech_level(int id, int lvl) {
+    if (id < 0 || id > TECH_TranT || lvl >= 20) {
+        return lvl;
+    } else {
+        int v1 = tech_level(tx_techs[id].preq_tech1, lvl + 1);
+        int v2 = tech_level(tx_techs[id].preq_tech2, lvl + 1);
+        return max(v1, v2);
     }
 }
 
-/**
-Calculates tech cost.
-cost grows cubic from the beginning then linear.
-S  = 20                                     // fixed shift (first tech cost)
-C  = 0.02                                   // cubic coefficient
-B  = 80 * (<map area> / <normal map area>)  // linear slope
-x0 = SQRT(B / (3 * C))                      // break point
-A  = C * x0 ^ 3 - B * x0                    // linear intercept
-x  = (<level> - 1) * 7
-
-cost = S +
-1.
-when x < x0 then
-C * x ^ 3
-2.
-else
-A + B * x
-*/
-int tech_cost(int fac, int tech) {
-    assert(fac >= 0 && fac < 8);
-    FactMeta* m = &tx_factions_meta[fac];
+int tech_cost(int faction, int tech) {
+    assert(faction > 0 && faction < 8);
+    Faction* f = &tx_factions[faction];
+    MetaFaction* m = &tx_metafactions[faction];
     int level = 1;
+    int owned = 0;
+    int links = 0;
 
     if (tech >= 0) {
-        level = tech_level(tech);
+        level = tech_level(tech, 0);
+        for (int i=1; i<8; i++) {
+            if (i != faction && f->diplo_status[i] & DIPLO_COMMLINK) {
+                links |= 1 << i;
+            }
+        }
+        owned = __builtin_popcount(tx_tech_discovered[tech] & links);
     }
-
-    double S = 20.0;
-    double C = 0.02;
-    double B = 80 * (*tx_map_area / 3200.0);
-    double x0 = sqrt(B / (3 * C));
-    double A = C * x0 * x0 * x0 - B * x0;
-    double x = (level - 1) * 7;
-
-    double base = S + (x < x0 ? C * x * x * x : A + B * x);
-
-    double cost =
-        base
-        * (double)m->rule_techcost / 100.0
-        * (*tx_scen_rules & RULES_TECH_STAGNATION ? 1.5 : 1.0)
-        * (double)tx_basic->rules_tech_discovery_rate / 100.0
-    ;
-
-    double dw;
-
-    if (is_human(fac)) {
-        dw = 1.0 + 0.1 * (10.0 - tx_cost_ratios[*tx_diff_level]);
+    double diff_factor = 1.0;
+    if (!is_human(faction)) {
+        diff_factor = (1.0 + 0.08 * (tx_cost_ratios[*diff_level] - 10));
     }
-    else {
-        dw = 1.0;
-    }
+    double cost = (6 * pow(level, 3) + 74 * level - 20)
+        * diff_factor
+        * *map_area_sq_root / 56
+        * m->rule_techcost / 100
+        * (*game_rules & RULES_TECH_STAGNATION ? 1.5 : 1.0)
+        * tx_basic->rules_tech_discovery_rate / 100
+        * (owned > 0 ? (owned > 1 ? 0.75 : 0.85) : 1.0);
 
-    cost *= dw;
-
-    debug("tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %s\n", *tx_current_turn, fac,
-        base, dw, cost, level, tech, (tech >= 0 ? tx_techs[tech].name : NULL));
+    debug("tech_cost %d %d diff: %.4f cost: %8.4f level: %d owned: %d tech: %d %s\n",
+        *current_turn, faction, diff_factor, cost, level, owned, tech,
+        (tech >= 0 ? tx_techs[tech].name : NULL));
 
     return max(2, (int)cost);
-
 }
 
-HOOK_API int tech_rate(int fac) {
+HOOK_API int tech_rate(int faction) {
     /*
     Normally the game engine would recalculate research cost before the next tech
     is selected, but we need to wait until the tech is decided in tech_selection
     before recalculating the cost.
     */
-    Faction* f = &tx_factions[fac];
-    init_values(fac);
+    Faction* f = &tx_factions[faction];
 
     if (f->tech_research_id != f->thinker_tech_id) {
-        f->thinker_tech_cost = tech_cost(fac, f->tech_research_id);
+// [WtP] use different algorithm
+//        f->thinker_tech_cost = tech_cost(faction, f->tech_research_id);
+        f->thinker_tech_cost = wtp_tech_cost(faction, f->tech_research_id);
         f->thinker_tech_id = f->tech_research_id;
     }
     return f->thinker_tech_cost;
 }
 
-HOOK_API int tech_selection(int fac) {
-    Faction* f = &tx_factions[fac];
-    int tech = tx_tech_selection(fac);
-    init_values(fac);
-    f->thinker_tech_cost = tech_cost(fac, tech);
+HOOK_API int tech_selection(int faction) {
+    Faction* f = &tx_factions[faction];
+    int tech = tx_tech_selection(faction);
+// [WtP] use different algorithm
+//    f->thinker_tech_cost = tech_cost(faction, tech);
+    f->thinker_tech_cost = wtp_tech_cost(faction, tech);
     f->thinker_tech_id = tech;
     return tech;
 }

@@ -1,5 +1,4 @@
-#ifndef __MOVE_H__
-#define __MOVE_H__
+#pragma once
 
 #include "main.h"
 #include "game.h"
@@ -33,11 +32,13 @@ typedef int PMTable[MAPSZ*2][MAPSZ];
 
 HOOK_API int enemy_move(int id);
 HOOK_API int log_veh_kill(int a, int b, int c, int d);
-void move_upkeep(int fac);
-bool has_transport(int x, int y, int fac);
-bool non_combat_move(int x, int y, int fac, int triad);
-bool can_build_base(int x, int y, int fac, int triad);
-bool has_base_sites(int x, int y, int fac, int triad);
+void move_upkeep(int faction);
+bool need_formers(int x, int y, int faction);
+bool has_transport(int x, int y, int faction);
+bool non_combat_move(int x, int y, int faction, int triad);
+bool can_build_base(int x, int y, int faction, int triad);
+bool has_base_sites(int x, int y, int faction, int triad);
+int select_item(int x, int y, int faction, MAP* sq);
 int crawler_move(int id);
 int colony_move(int id);
 int former_move(int id);
@@ -49,4 +50,3 @@ int escape_move(int id);
 bool other_in_tile(int fac, MAP* sq);
 int former_tile_score(int x1, int y1, int x2, int y2, int fac, MAP* sq);
 
-#endif // __MOVE_H__

@@ -1,9 +1,7 @@
-#ifndef __TERRANX_TYPES_H__
-#define __TERRANX_TYPES_H__
-
+#pragma once
 #pragma pack(push, 1)
-struct BASE
-{
+
+struct BASE {
     short x;                                // +0x0000
     short y;                                // +0x0002
     char faction_id;                        // +0x0004
@@ -28,17 +26,20 @@ struct BASE
     int queue_items[10];                    // +0x0050
     int worked_tiles;                       // +0x0078
     int specialist_total;
-    int pad3;
-    int pad4;
-    int pad5;                               // +0x0088
-    char facilities_built[12];              // +0x008C
-    int mineral_surplus_final;              // +0x0098
-    int minerals_accumulated_2;             // +0x009C
-    int pad6;                               // +0x00A0
-    int pad7;
-    int pad8;
-    int pad9;
-    int nutrient_intake;                    // +0x00B0
+    int specialist_unk_1;
+    /*
+    Specialist types (R_Citizen, 4 bits per id) for the first 16 specialists in the base.
+    These are assigned in base_yield and base_energy and chosen by best_specialist.
+    */
+    int specialist_types[2];
+    char facilities_built[12];
+    int mineral_surplus_final;
+    int minerals_accumulated_2;
+    int pad_1;
+    int pad_2;
+    int pad_3;
+    int pad_4;
+    int nutrient_intake;
     int mineral_intake;
     int energy_intake;
     int unused_intake;
@@ -61,120 +62,123 @@ struct BASE
     int economy_total;
     int psych_total;
     int labs_total;
-    int unk10;
+    int unk_2;
     short autoforward_land_base_id;
     short autoforward_sea_base_id;
     short autoforward_air_base_id;
-    short pad10;
+    short pad_5;
     int talent_total;
     int drone_total;
     int superdrone_total;
     int random_event_turns;
     int nerve_staple_count;
-    int pad11;
-    int pad12;
+    int pad_6;
+    int pad_7;
 };
 
-struct UNIT
-{
-    char name[32];                  //0x0000
-    int ability_flags;              //0x0020
-    char chassis_type;              //0x0024
-    char weapon_type;               //0x0025
-    char armor_type;                //0x0026
-    char reactor_type;              //0x0027
-    char carry_capacity;            //0x0028
-    char cost;                      //0x0029
-    char unit_plan;                 //0x002A
-    char unk0; // this is used      //0x002B
-    char factions_retired;          //0x002C
-    char factions;                  //0x002D
-    char icon_offset;               //0x002E
-    char unk1; // not used          //0x002F
-    short unit_flags;               //0x0030
-    short preq_tech;                //0x0032
+struct UNIT {
+    char name[32];
+    int ability_flags;
+    char chassis_type;
+    char weapon_type;
+    char armor_type;
+    char reactor_type;
+    char carry_capacity;
+    char cost;
+    char unit_plan;
+    char unk_1;
+    char factions_retired;
+    char factions;
+    char icon_offset;
+    char pad_1; // unused
+    short unit_flags;
+    short preq_tech;
 };
 
-struct VEH
-{
-    short x;                        //0x0000
-    short y;                        //0x0002
-    int flags_1;                    //0x0004
-    short flags_2;                  //0x0008
-    short proto_id;                 //0x000A
-    // used by WtP for AI control
-    short pad_0;                    //0x000C
-    char faction_id;                //0x000E
-    char year_end_lurking;          //0x000F
-    char damage_taken;              //0x0010
-    char move_status;               //0x0011
-    char waypoint_count;            //0x0012
-    char patrol_current_point;      //0x0013
-    short waypoint_1_x;             //0x0014
-    short waypoint_2_x;             //0x0016
-    short waypoint_3_x;             //0x0018
-    short waypoint_4_x;             //0x001A
-    short waypoint_1_y;             //0x001C
-    short waypoint_2_y;             //0x001E
-    short waypoint_3_y;             //0x0020
-    short waypoint_4_y;             //0x0022
-    char morale;                    //0x0024
-    char terraforming_turns;        //0x0025
-    char type_crawling;             //0x0026
-    byte visibility;                //0x0027
-    char road_moves_spent;          //0x0028
-    char unk5;
+struct VEH {
+    short x;
+    short y;
+    int state;
+    short flags;
+    short proto_id;
+    short pad_0; // unused
+    char faction_id;
+    char year_end_lurking;
+    char damage_taken;
+    char move_status;
+    char waypoint_count;
+    char patrol_current_point;
+    short waypoint_1_x;
+    short waypoint_2_x;
+    short waypoint_3_x;
+    short waypoint_4_x;
+    short waypoint_1_y;
+    short waypoint_2_y;
+    short waypoint_3_y;
+    short waypoint_4_y;
+    char morale;
+    char terraforming_turns;
+    char type_crawling;
+    byte visibility;
+    char road_moves_spent;
+    char unk_1;
     char iter_count;
     char status_icon;
-    char unk8;
-    char unk9;
+    char probe_action;
+    char probe_sabotage_id;
     short home_base_id;
     short next_unit_id_stack;
     short prev_unit_id_stack;
 };
 
-struct MAP
-{
-    byte level;             // 0x0000
-    byte altitude;          // 0x0001
-    byte flags;             // 0x0002
-    // continent/sea id
-    byte body_id;           // 0x0003
-    byte visibility;        // 0x0004
-    byte rocks;             // 0x0005
-    byte unk_1;             // 0x0006
-    char owner;             // 0x0007
-    int items;              // 0x0008
-    short landmarks;        // 0x000C
+struct MAP {
+    byte level;
+    byte altitude;
+    /*
+    Flags & 0xf = faction ID of the unit occupying this tile. 0xf = unoccupied.
+    Sometimes faction ID of a deleted unit persists on the tile.
+    */
+    byte flags;
+    /*
+    The game keeps track of disjoint land/water areas and assigns each of them an ID number
+    which is used to index the [128] planning variable arrays in Faction struct.
+    Valid ranges: 1-62 (land), 65-126 (sea).
+    */
+    byte region;
+    byte visibility;
+    byte rocks;
+    byte unk_1;
+    char owner;
+    int items;
+    short landmarks;
     byte unk_2;
     byte art_ref_id;
     int visible_items[7];
 };
 
-struct FactMeta
-{
-    int is_leader_female;           // 0x0000
-    char filename[24];              // 0x0004
-    char search_key[24];            // 0x001C
-    char name_leader[24];           // 0x0034
-    char title_leader[24];          // 0x004C
-    char adj_leader[128];           // 0x0064
-    char adj_insult_leader[128];    // 0x00E4
-    char adj_faction[128];          // 0x0164
-    char adj_insult_faction[128];   // 0x01E4
-    char pad_1[128];                // 0x0264
-    char noun_faction[24];          // 0x02E4
-    int noun_gender;                // 0x02FC
-    int is_noun_plural;             // 0x0300
-    char adj_name_faction[128];     // 0x0304
-    char formal_name_faction[40];   // 0x0384
-    char insult_leader[24];         // 0x03AC
-    char desc_name_faction[24];     // 0x03C4
-    char assistant_name[24];        // 0x03DC
-    char scientist_name[24];        // 0x03F4
-    char assistant_city[24];        // 0x040C
-    char pad_2[176];                // 0x0424
-    int rule_tech_selected;         // 0x04D4
+struct MetaFaction {
+    int is_leader_female;
+    char filename[24];
+    char search_key[24];
+    char name_leader[24];
+    char title_leader[24];
+    char adj_leader[128];
+    char adj_insult_leader[128];
+    char adj_faction[128];
+    char adj_insult_faction[128];
+    char pad_1[128];
+    char noun_faction[24];
+    int noun_gender;
+    int is_noun_plural;
+    char adj_name_faction[128];
+    char formal_name_faction[40];
+    char insult_leader[24];
+    char desc_name_faction[24];
+    char assistant_name[24];
+    char scientist_name[24];
+    char assistant_city[24];
+    char pad_2[176];
+    int rule_tech_selected;
     int rule_morale;
     int rule_research;
     int rule_drone;                 // 0x04E0
@@ -205,48 +209,46 @@ struct FactMeta
     int soc_opposition_effect;
 };
 
-struct Goal
-{
+struct Goal {
     short type;
-    short unk_1;
+    short priority;
     int x;
     int y;
-    int unk_2;
+    int base_id;
 };
 
-struct Faction
-{
-    int diplo_flags;                // 0x0000
-    int ranking;
+struct Faction {
+    int player_flags;
+    int ranking; // 0 (lowest) to 7 (highest)
     int diff_level;
-    int unk_0;
-    int unk_1;                      // 0x0010
-    int tutorial_more_bases;
-    int diplo_status[8];            // 0x0018
-    int diplo_agenda[8];            // 0x0038
-    int diplo_friction_1[8];        // 0x0058
-    int diplo_turn_check[8];        // 0x0078
-    int diplo_treaty_turns[8];      // 0x0098
-    char diplo_friction_2[8];       // 0x00B8
-    int sanction_turns;             // 0x00C0
-    int loan_years[8];              // 0x00C4
-    int loan_payment[8];            // 0x00E4
-    char gap_104[32];               // 0x0104
-    int minor_atrocities;           // 0x0124
+    int base_name_offset; // Keep track which base names have been used
+    int base_sea_name_offset; // Keep track which sea base names have been used
+    int last_base_turn; // Turn for last built, captured or acquired (drone riot) base
+    int diplo_status[8]; // Contains all formal treaties
+    int diplo_agenda[8];
+    int diplo_friction[8];
+    int diplo_spoke[8]; // Turn for the last player-to-AI communication; -1 for never
+    int diplo_merc[8]; // Possibly higher values indicate willingness for deal-making
+    char diplo_patience[8]; // AI-to-player
+    int sanction_turns; // Turns left for economic sanctions imposed by other factions for atrocities
+    int loan_balance[8]; // Loan balance remaining this faction owes another to be paid over term
+    int loan_payment[8]; // The per turn payment amount this faction owes another faction
+    int unk_1[8]; // unused
+    int integrity_blemishes;
     int global_reputation;
-    int diplo_unk1[8];              // 0x012C
-    int diplo_unk2[8];              // 0x014C
-    int diplo_backstabs[8];         // 0x016C
-    int diplo_unk3[8];              // 0x018C
-    int diplo_unk4[8];              // 0x01AC
-    int map_trade_done;             // 0x01CC
-    int governor_def_flags;         // 0x01D0
-    int unk_2;
-    int major_atrocities;
-    int unk_3;
-    int unk_4[8];                   // 0x01E0
-    int unk_5[8];                   // 0x0200
-    int energy_credits;             // 0x0220
+    int diplo_gifts[8]; // ? Gifts and bribes we have received
+    int diplo_wrongs[8]; // Number of times we double crossed this faction
+    int diplo_betrayed[8]; // Number of times double crossed by this faction
+    int diplo_unk_3[8]; // ? combat related
+    int diplo_unk_4[8]; // ? combat related
+    int traded_maps; // bitfield of other factions that have traded maps with faction
+    int base_governor_adv; // default advanced Governor settings
+    int atrocities; // count committed by faction
+    int major_atrocities; // count committed by faction
+    int subvert_total; // ? probe: mind control base (+4) / subvert unit (+1) total
+    int diplo_subvert[8]; // ? probe: mind control base (+4) / subvert unit (+1) per faction
+    int diplo_stolen_techs[8]; // probe: successfully procured research data (tech/map) per faction
+    int energy_credits;
     int energy_cost;
     int SE_Politics_pending;        // 0x0222
     int SE_Economics_pending;
@@ -302,9 +304,9 @@ struct Faction
     int SE_industry_base;
     int SE_research_base;
     int unk_13;
-    int unk_14;                     // 0x0300
-    int tech_commerce_bonus;
-    int unk_16;
+    int unk_14;
+    int tech_commerce_bonus; // Increases commerce income
+    int turn_commerce_income;
     int unk_17;
     int unk_18;                     // 0x0310
     int tech_fungus_nutrient;
@@ -314,80 +316,71 @@ struct Faction
     int SE_alloc_psych;
     int SE_alloc_labs;
     int unk_25;
-    char gap_330[44];               // 0x0330
-    int tech_ranking;               // 0x035C
-    int unk_26;                     // 0x0360
-    int ODP_deployed;               // 0x0364
-    int theory_of_everything;       // 0x0368
-    char tech_trade_source[92];     // 0x036C
-    int tech_accumulated;           // 0x03C8
-    int tech_research_id;           // 0x03CC
-    int tech_cost;                  // 0x03D0
+    int unk_26[11]; // unused
+    int tech_ranking; // Twice the number of techs discovered
+    int unk_27;
+    int ODP_deployed;
+    int theory_of_everything;
+    char tech_trade_source[92];
+    int tech_accumulated;
+    int tech_research_id;
+    int tech_cost;
     int earned_techs_saved;
     int net_random_event;
     int AI_fight;
     int AI_growth;                  // 0x03E0
-    int AI_tech;					// 0x03E4
-    int AI_wealth;					// 0x03E8
-    int AI_power;					// 0x03EC
-    int target_x;                   // 0x03F0
-    int target_y;                   // 0x03F4
-    int unk_28;                     // 0x03F8
-    int council_call_turn;          // 0x03FC
-    int unk_29[11];                 // 0x0400
-    int unk_30[11];
-    int unk_31;
+    int AI_tech;
+    int AI_wealth;
+    int AI_power;
+    int target_x;
+    int target_y;
+    int unk_28;
+    int council_call_turn;
+    int unk_29[11]; // Council related
+    int unk_30[11]; // Council related
+    byte facility_announced[4]; // bitfield - used to determine one time play of fac audio blurb
     int unk_32;
-    char unk_33;
-    char unk_34;
-    char gap_462[2];
+    int unk_33;
     int unk_35;
     int unk_36;
     int unk_37;
-    char gap_470[192];
+    char saved_queue_name[8][24];
     int saved_queue_size[8];
-    int saved_queue_items[78];
-    int unk_38;
-    char unk_39[4];
-    int unk_40;
-    char unk_41[12];
-    int unk_42;
-    char unk_43[12];
+    int saved_queue_items[8][10];
+    int unk_40[8];
+    int unk_41[40];
+    int unk_42[32];
+    int unk_43[8];
     int unk_44;
-    char gap_6B4[80];
     int unk_45;
-    char gap_708[200];
     int unk_46;
-    char gap_7D4[32];
     int unk_47;
-    int unk_48;
-    int unk_49;
-    int unk_50;
+    int nutrient_surplus_total;
     int labs_total;
     int satellites_nutrient;
     int satellites_mineral;
     int satellites_energy;
     int satellites_ODP;
     int best_weapon_value;
-    int unk_55;
-    int unk_56;
+    int best_psi_land_offense;
+    int best_psi_land_defense;
     int best_armor_value;
-    int unk_58;
-    int unk_59;
-    int unk_60;
-    int unk_61;
-    int unk_62;
-    int unk_63;
+    int best_land_speed;
+    int enemy_best_weapon_value; // Enemy refers here to any non-pact faction
+    int enemy_best_armor_value;
+    int enemy_best_land_speed;
+    int enemy_best_psi_land_offense;
+    int enemy_best_psi_land_defense;
     int unk_64;
     int unk_65;
     int unk_66;
     int unk_67;
     int unk_68;
-    char unk_69[4];
+    int unk_69;
     byte units_active[512];
     byte units_queue[512];
     short units_lost[512];
-    int total_mil_units;
+    int total_combat_units;
     int current_num_bases;
     int mil_strength_1;
     int mil_strength_2;
@@ -396,20 +389,26 @@ struct Faction
     int planet_busters;
     int unk_71;
     int unk_72;
-    short unk_73[128];
-    char unk_74[128];
-    char unk_75[128];
-    short unk_76[128];
-    short unk_77[128];
-    short unk_78[128];
-    short unk_79[128];
-    short unk_80[128];
-    short unk_81[128];
-    char unk_82[128];
-    char unk_83[128];
-    char unk_84[128];
+    /*
+    AI planning variables that relate to faction units in specific disjoint land/water areas.
+    All of these are indexed by the region value in MAP struct.
+    */
+    short region_total_combat_units[128];
+    byte region_total_bases[128];
+    byte region_total_offensive_units[128];
+    short region_force_rating[128]; // Combined offensive/morale rating of all units in the area
+    short region_unk_1[128]; // Movement planning flags
+    short region_unk_2[128]; // Unknown reset_territory counter
+    short region_unk_3[128]; // Unknown counter
+    short region_unk_4[128]; // Unknown reset_territory/enemy_move counter
+    short region_unk_5[128]; // Unknown reset_territory/enemy_move counter
+    byte region_unk_6[128]; // Unknown enemy_strategy state
+    byte region_unk_7[128]; // Unknown base_prod_choices state
+    byte region_base_plan[128]; // visible in map UI with omni view + debug mode under base name
+    /* End of block */
     Goal goals_1[75];
     Goal goals_2[25];
+    int unk_92;
     int unk_93;
     int unk_94;
     int unk_95;
@@ -417,38 +416,36 @@ struct Faction
     int unk_97;
     int unk_98;
     int unk_99;
-    char gap_2058[4];
     int unk_100[8];
     int corner_market_turn;
     int corner_market_active;
     int unk_101;
     int unk_102;
     int unk_103;
-    int unk_104;
+    int player_flags_ext;
     int unk_105;
     int unk_106;
     int unk_107;
     int unk_108;
     /*
     Thinker-specific save game variables.
-    The game engine overwrites these locations during the endgame score calculation.
+    The game engine only writes to these locations during the endgame score calculation.
     */
     short thinker_header;
     char thinker_flags;
     char thinker_tech_id;
     int thinker_tech_cost;
-    int unk_111;
-    int unk_112;
-    int unk_113;
-    int unk_114;
-    int unk_115;
-    int unk_116;
-    int unk_117;
-    int unk_118;
+    /*
+    Exponentially weighted moving average of distances to nearest enemy bases.
+    This is updated while choosing base production, and it is used as a
+    general heuristic to determine the level of threat from other factions.
+    When no enemies are present, the range is capped at 40.
+    */
+    float thinker_enemy_range;
+    int thinker_unused[7];
 };
 
-struct R_Basic
-{
+struct R_Basic {
     int mov_rate_along_roads;
     int nutrient_intake_req_citizen;
     int max_airdrop_rng_wo_orbital_insert;
@@ -528,8 +525,7 @@ struct R_Basic
     int subspace_gen_req;
 };
 
-struct R_Resource
-{
+struct R_Resource {
     int ocean_sq_nutrient;
     int ocean_sq_mineral;
     int ocean_sq_energy;
@@ -568,16 +564,14 @@ struct R_Resource
     int pad_8;
 };
 
-struct R_Social
-{
+struct R_Social {
     char* field_name;
     int   soc_preq_tech[4];
     char* soc_name[4];
     int   effects[4][11];
 };
 
-struct R_Facility
-{
+struct R_Facility {
     char* name;
     char* effect;
     int pad;
@@ -592,8 +586,7 @@ struct R_Facility
     int AI_power;
 };
 
-struct R_Tech
-{
+struct R_Tech {
     int flags;
     char* name;
     char short_name[12]; // technology short name that is used as reference in other places (prerequisites, etc.)
@@ -605,19 +598,18 @@ struct R_Tech
     int preq_tech2;
 };
 
-struct R_Ability
-{
+struct R_Ability {
     char* name;
     char* description;
     char* abbreviation;
     int cost;
-    int padding;
+    int unk_1;
     int flags;
-    int preq_tech;
+    short preq_tech;
+    short pad;
 };
 
-struct R_Chassis
-{
+struct R_Chassis {
     char* offsv1_name;
     char* offsv2_name;
     char* offsv_name_lrg;
@@ -653,8 +645,7 @@ struct R_Chassis
     short preq_tech;
 };
 
-struct R_Citizen
-{
+struct R_Citizen {
     char* singular_name;
     char* plural_name;
     int preq_tech;
@@ -664,8 +655,7 @@ struct R_Citizen
     int research_bonus;
 };
 
-struct R_Defense
-{
+struct R_Defense {
     char* name;
     char* name_short;
     char defense_value;
@@ -676,16 +666,14 @@ struct R_Defense
     short padding2;
 };
 
-struct R_Reactor
-{
+struct R_Reactor {
     char* name;
     char* name_short;
     short preq_tech;
     short cost_factor; // Renamed from padding. Will be used to store cost factor.
 };
 
-struct R_Terraform
-{
+struct R_Terraform {
     char* name;
     char* name_sea;
     int preq_tech;
@@ -696,8 +684,7 @@ struct R_Terraform
     char* shortcuts;
 };
 
-struct R_Weapon
-{
+struct R_Weapon {
     char* name;
     char* name_short;
     char offense_value;
@@ -710,4 +697,3 @@ struct R_Weapon
 
 #pragma pack(pop)
 
-#endif // __TERRANX_TYPES_H__
