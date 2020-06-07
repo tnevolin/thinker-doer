@@ -674,18 +674,15 @@ MAP* TileSearch::get_next() {
     return NULL;
 }
 
-BASE *vehicle_home_base(VEH *vehicle)
-{
+BASE *vehicle_home_base(VEH *vehicle) {
     return (vehicle->home_base_id >= 0 ? &tx_bases[vehicle->home_base_id] : NULL);
 }
 
-MAP *base_square(BASE *base)
-{
+MAP *base_square(BASE *base) {
     return mapsq(base->x, base->y);
 }
 
-bool vehicle_has_ability(VEH *vehicle, int ability)
-{
+bool vehicle_has_ability(VEH *vehicle, int ability) {
     return tx_units[vehicle->proto_id].ability_flags & ability;
 }
 

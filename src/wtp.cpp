@@ -1281,6 +1281,15 @@ int map_distance(int x1, int y1, int x2, int y2)
 }
 
 /**
+Verifies two locations are within the base radius of each other.
+*/
+bool isWithinBaseRadius(int x1, int y1, int x2, int y2)
+{
+	return map_distance(x1, y1, x2, y2) <= 2;
+
+}
+
+/**
 Rolls artillery damage.
 */
 HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower)

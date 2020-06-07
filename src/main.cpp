@@ -231,6 +231,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_resourceLifetime = atof(value);
     }
+    else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
+    {
+        cf->ai_terraforming_nutrientWeight = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_mineralWeight"))
     {
         cf->ai_terraforming_mineralWeight = atof(value);
@@ -239,17 +243,17 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_energyWeight = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_workedTileBonus"))
+    else if (MATCH("wtp", "ai_terraforming_roadWeight"))
     {
-        cf->ai_terraforming_workedTileBonus = atof(value);
+        cf->ai_terraforming_roadWeight = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_roadBonus"))
+    else if (MATCH("wtp", "ai_terraforming_tubeWeight"))
     {
-        cf->ai_terraforming_roadBonus = atof(value);
+        cf->ai_terraforming_tubeWeight = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_tubeBonus"))
+    else if (MATCH("wtp", "ai_terraforming_connectionNetworkFactor"))
     {
-        cf->ai_terraforming_tubeBonus = atof(value);
+        cf->ai_terraforming_connectionNetworkFactor = atof(value);
     }
     // Thinker default case
     else {
