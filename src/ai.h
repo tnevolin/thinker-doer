@@ -199,5 +199,6 @@ int getRegionVehicleCount(int region);
 int getBaseTerraformingRank(BASE *base);
 BASE *findAffectedBase(int x, int y);
 char *getTerraformingActionName(int action);
+int calculateClosestAvailableFormerRange(int x, int y, MAP *tile);
 
 #endif // __AI_H__

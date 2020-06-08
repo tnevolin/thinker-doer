@@ -243,6 +243,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_energyWeight = atof(value);
     }
+    else if (MATCH("wtp", "ai_terraforming_landDistanceScale"))
+    {
+        cf->ai_terraforming_landDistanceScale = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_waterDistanceScale"))
+    {
+        cf->ai_terraforming_waterDistanceScale = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_roadWeight"))
     {
         cf->ai_terraforming_roadWeight = atof(value);
