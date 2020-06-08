@@ -54,8 +54,12 @@ const int BASE_CONNECTION_TILE_OFFSETS[BASE_CONNECTION_TILE_OFFSET_COUNT][2] =
 
 struct TERRAFORMING_OPTION
 {
+	// land or sea
 	bool sea;
+	// whether this option applies to rocky tile only
 	bool rocky;
+	// whether this option modifies yield
+	bool yield;
 	int count;
 	int actions[10];
 };
@@ -67,20 +71,20 @@ const int TERRAFORMING_OPTION_COUNT = 13;
 const TERRAFORMING_OPTION TERRAFORMING_OPTIONS[TERRAFORMING_OPTION_COUNT] =
 {
 	// land
-	{false, true , 2, {FORMER_MINE, FORMER_ROAD}},							// 00
-	{false, false, 3, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}},			// 01
-	{false, false, 3, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},		// 02
-	{false, false, 1, {FORMER_CONDENSER}},									// 03
-	{false, false, 1, {FORMER_ECH_MIRROR}},									// 04
-	{false, false, 1, {FORMER_THERMAL_BORE}},								// 05
-	{false, false, 1, {FORMER_FOREST}},										// 06
-	{false, false, 1, {FORMER_PLANT_FUNGUS}},
-	{false, false, 1, {FORMER_AQUIFER}},
-	{false, false, 1, {FORMER_ROAD}},
-	{false, false, 1, {FORMER_MAGTUBE}},
+	{false, true , true , 2, {FORMER_MINE, FORMER_ROAD}},							// 00
+	{false, false, true , 3, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}},			// 01
+	{false, false, true , 3, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},			// 02
+	{false, false, true , 1, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_CONDENSER}},		// 03
+	{false, false, true , 1, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_ECH_MIRROR}},	// 04
+	{false, false, true , 1, {FORMER_THERMAL_BORE}},								// 05
+	{false, false, true , 1, {FORMER_FOREST}},										// 06
+	{false, false, true , 1, {FORMER_PLANT_FUNGUS}},								// 07
+	{false, false, true , 1, {FORMER_AQUIFER}},										// 08
+	{false, false, false, 1, {FORMER_ROAD}},										// 09
+	{false, false, false, 1, {FORMER_MAGTUBE}},										// 10
 	// sea
-	{true , false, 2, {FORMER_FARM, FORMER_MINE}},
-	{true , false, 2, {FORMER_FARM, FORMER_SOLAR}},
+	{true , false, true , 2, {FORMER_FARM, FORMER_MINE}},
+	{true , false, true , 2, {FORMER_FARM, FORMER_SOLAR}},
 };
 
 struct MAP_INFO
@@ -193,5 +197,7 @@ int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle);
 bool isConnectionNetworkLocation(int x, int y, MAP *tile, int improvementFlag);
 int getRegionVehicleCount(int region);
 int getBaseTerraformingRank(BASE *base);
+BASE *findAffectedBase(int x, int y);
+char *getTerraformingActionName(int action);
 
 #endif // __AI_H__
