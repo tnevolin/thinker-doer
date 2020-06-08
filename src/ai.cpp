@@ -500,7 +500,7 @@ void rankTerraformingRequests()
 			// collect request
 
 			TERRAFORMING_REQUEST *terraformingRequest = &(baseTerraformingRequests->operator[](rank));
-			terraformingRequest->rank = getBaseTerraformingRank(base) + rank;
+			terraformingRequest->rank = getBaseTerraformingRank(base) / 2 + rank;
 
 			// get region
 
@@ -632,6 +632,7 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 	int x = mapInfo->x;
 	int y = mapInfo->y;
 	MAP *tile = mapInfo->tile;
+	bool sea = is_ocean(mapInfo->tile);
 
 	debug
 	(
@@ -640,7 +641,10 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 		y
 	)
 
-	bool sea = is_ocean(mapInfo->tile);
+	// calculate range to the closest available former and range penalty multiplier
+
+	int closestAvailableFormerRange = calculateClosestAvailableFormerRange(x, y, tile);
+	double rangePenaltyMultiplier = exp(-(double)closestAvailableFormerRange / (sea ? conf.ai_terraforming_waterDistanceScale : conf.ai_terraforming_landDistanceScale));
 
 	// connection network parameters
 
@@ -701,27 +705,30 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 			{
 				int removeFungusAction = FORMER_REMOVE_FUNGUS;
 
-				// compute terraforming time
-
-				terraformingTime +=
-					calculateTerraformingTime
-					(
-						removeFungusAction,
-						improvedTileTerraformedState->items,
-						improvedTileTerraformedState->rocks,
-						NULL
-					)
-				;
-
 				// generate terraforming change
 
 				generateTerraformingChange(improvedTileTerraformedState, removeFungusAction);
 
-				// store first removeFungusAction
+				// store first action and compute terraforming time
 
 				if (firstAction == -1)
 				{
+					// store first action
+
 					firstAction = removeFungusAction;
+
+					// compute terraforming time
+
+					terraformingTime +=
+						calculateTerraformingTime
+						(
+							removeFungusAction,
+							improvedTileTerraformedState->items,
+							improvedTileTerraformedState->rocks,
+							NULL
+						)
+					;
+
 				}
 
 			}
@@ -732,54 +739,60 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 			{
 				int levelTerrainAction = FORMER_LEVEL_TERRAIN;
 
-				// compute terraforming time
-
-				terraformingTime +=
-					calculateTerraformingTime
-					(
-						levelTerrainAction,
-						improvedTileTerraformedState->items,
-						improvedTileTerraformedState->rocks,
-						NULL
-					)
-				;
-
 				// generate terraforming change
 
 				generateTerraformingChange(improvedTileTerraformedState, levelTerrainAction);
 
-				// store first levelTerrainAction
+				// store first action and compute terraforming time
 
 				if (firstAction == -1)
 				{
+					// store first action
+
 					firstAction = levelTerrainAction;
+
+					// compute terraforming time
+
+					terraformingTime +=
+						calculateTerraformingTime
+						(
+							levelTerrainAction,
+							improvedTileTerraformedState->items,
+							improvedTileTerraformedState->rocks,
+							NULL
+						)
+					;
+
 				}
 
 			}
 
 			// execute main action
 
-			// compute terraforming time
-
-			terraformingTime +=
-				calculateTerraformingTime
-				(
-					action,
-					improvedTileTerraformedState->items,
-					improvedTileTerraformedState->rocks,
-					NULL
-				)
-			;
-
 			// generate terraforming change
 
 			generateTerraformingChange(improvedTileTerraformedState, action);
 
-			// store first action
+			// store first action and compute terraforming time
 
 			if (firstAction == -1)
 			{
+				// store first action
+
 				firstAction = action;
+
+				// compute terraforming time
+
+				terraformingTime +=
+					calculateTerraformingTime
+					(
+						action,
+						improvedTileTerraformedState->items,
+						improvedTileTerraformedState->rocks,
+						NULL
+					)
+				;
+
 			}
 
 			// special cases
@@ -859,16 +872,17 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 		if (affectedBase == NULL || firstAction == -1 || improvementScore <= 0.0)
 			continue;
 
-		// factor improvement score with decay coefficient
+		// factor improvement score with decay coefficient and range penalty
 
-		double terraformingScore = improvementScore * exp(-terraformingTime / conf.ai_terraforming_resourceLifetime);
+		double terraformingScore = improvementScore * exp(-terraformingTime / conf.ai_terraforming_resourceLifetime) * rangePenaltyMultiplier;
 
 		debug
 		(
-			"\t%2d: score=%6.4f, terraformingTime=%2d, terraformingScore=%6.4f\n",
+			"\t%2d: score=%6.4f, terraformingTime=%2d, closestAvailableFormerRange=%2d, terraformingScore=%6.4f\n",
 			optionIndex,
 			improvementScore,
 			terraformingTime,
+			closestAvailableFormerRange,
 			terraformingScore
 		)
 		;
@@ -1832,24 +1846,6 @@ bool isConnectionNetworkLocation(int x, int y, MAP *tile, int improvementFlag)
 	if (is_ocean(tile))
 		return false;
 
-	// check for base connection tiles
-
-	for (int offsetIndex = 0; offsetIndex < BASE_CONNECTION_TILE_OFFSET_COUNT; offsetIndex++)
-	{
-		MAP *baseConnectionTile = mapsq(wrap(x + BASE_CONNECTION_TILE_OFFSETS[offsetIndex][0]), x + BASE_CONNECTION_TILE_OFFSETS[offsetIndex][1]);
-
-		if
-		(
-			baseConnectionTile
-			&&
-			baseLocations.count(baseConnectionTile) != 0
-			&&
-			baseConnectionTile->region == tile->region
-		)
-			return true;
-
-	}
-
 	// ignore already built improvement
 
 	if (tile->items & improvementFlag)
@@ -1863,12 +1859,13 @@ bool isConnectionNetworkLocation(int x, int y, MAP *tile, int improvementFlag)
 	{
 		MAP *adjacentTile = mapsq(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
 
-		improvements[offsetIndex] = (adjacentTile && adjacentTile->items & improvementFlag);
+		improvements[offsetIndex] = (adjacentTile && (adjacentTile->items & (TERRA_BASE_IN_TILE | improvementFlag)));
 
 	}
 
 	// check for connecting unconnected roads on opposite sides
 
+	// needs connection
 	if
 	(
 		// opposite corners
@@ -1907,7 +1904,64 @@ bool isConnectionNetworkLocation(int x, int y, MAP *tile, int improvementFlag)
 		||
 		(improvements[7] && improvements[4] && !improvements[5])
 	)
+	{
 		return true;
+	}
+	// already connected
+	if
+	(
+		// next corners
+		(improvements[2] && improvements[4] && improvements[3])
+		||
+		(improvements[4] && improvements[6] && improvements[5])
+		||
+		(improvements[6] && improvements[8] && improvements[7])
+		||
+		(improvements[8] && improvements[2] && improvements[1])
+		||
+		// opposite sides
+		(improvements[1] && improvements[5] && (improvements[3] || improvements[7]))
+		||
+		(improvements[3] && improvements[7] && (improvements[5] || improvements[1]))
+		||
+		// side to corner
+		(improvements[1] && improvements[4] && improvements[3])
+		||
+		(improvements[1] && improvements[6] && improvements[7])
+		||
+		(improvements[3] && improvements[6] && improvements[5])
+		||
+		(improvements[3] && improvements[8] && improvements[1])
+		||
+		(improvements[5] && improvements[8] && improvements[7])
+		||
+		(improvements[5] && improvements[2] && improvements[3])
+		||
+		(improvements[7] && improvements[2] && improvements[1])
+		||
+		(improvements[7] && improvements[4] && improvements[5])
+	)
+	{
+		return false;
+	}
+
+	// check for base connection tiles
+
+	for (int offsetIndex = 0; offsetIndex < BASE_CONNECTION_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		MAP *baseConnectionTile = mapsq(wrap(x + BASE_CONNECTION_TILE_OFFSETS[offsetIndex][0]), x + BASE_CONNECTION_TILE_OFFSETS[offsetIndex][1]);
+
+		if
+		(
+			baseConnectionTile
+			&&
+			baseLocations.count(baseConnectionTile) != 0
+			&&
+			baseConnectionTile->region == tile->region
+		)
+			return true;
+
+	}
 
 	// false otherwise
 
@@ -1957,6 +2011,48 @@ char *getTerraformingActionName(int action)
 	{
 		return NULL;
 	}
+
+}
+
+int calculateClosestAvailableFormerRange(int x, int y, MAP *tile)
+{
+	// get region
+
+	int region = tile->region;
+
+	// give it max value if there are no formers in this region
+
+	if (formerOrders.count(region) == 0)
+		return INT_MAX;
+
+	// get regionFormerOrders
+
+	std::vector<FORMER_ORDER> *regionFormerOrders = &(formerOrders[region]);
+
+	// find nearest available former in this region
+
+	int closestFormerRange = INT_MAX;
+
+	for
+	(
+		std::vector<FORMER_ORDER>::iterator regionFormerOrderIterator = regionFormerOrders->begin();
+		regionFormerOrderIterator != regionFormerOrders->end();
+		regionFormerOrderIterator++
+	)
+	{
+		FORMER_ORDER *regionFormerOrder = &(*regionFormerOrderIterator);
+		VEH *vehicle = regionFormerOrder->vehicle;
+
+		int range = map_range(x, y, vehicle->x, vehicle->y);
+
+		if (range < closestFormerRange)
+		{
+			closestFormerRange = range;
+		}
+
+	}
+
+	return closestFormerRange;
 
 }
 
