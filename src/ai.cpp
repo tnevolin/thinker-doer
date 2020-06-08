@@ -355,7 +355,7 @@ void generateTerraformingRequests()
 					terraformingRequest->x,
 					terraformingRequest->y,
 					terraformingRequest->score,
-					tx_terraform[terraformingRequest->action].name
+					getTerraformingActionName(terraformingRequest->action)
 				)
 				;
 
@@ -448,7 +448,7 @@ void sortBaseTerraformingRequests()
 					terraformingRequest->x,
 					terraformingRequest->y,
 					terraformingRequest->score,
-					tx_terraform[terraformingRequest->action].name
+					getTerraformingActionName(terraformingRequest->action)
 				)
 				;
 
@@ -579,7 +579,7 @@ void rankTerraformingRequests()
 					terraformingRequest->y,
 					terraformingRequest->rank,
 					terraformingRequest->score,
-					tx_terraform[terraformingRequest->action].name
+					getTerraformingActionName(terraformingRequest->action)
 				)
 				;
 
@@ -674,8 +674,9 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 
 		TERRAFORMING_STATE *improvedTileTerraformedState = &improvedLocalTerraformingState[0];
 		int terraformingTime = 0;
-		int firstAction = -1;
 		int affectedRange = 0;
+		BASE *affectedBase = NULL;
+		int firstAction = -1;
 		double improvementScore = 0.0;
 
 		// process actions
@@ -786,13 +787,19 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 			switch (action)
 			{
 			case FORMER_ROAD:
-				// add road bonus
-				improvementScore += conf.ai_terraforming_roadWeight;
+				// add transportation bonus for not yield options
+				if (!option.yield)
+				{
+					improvementScore += conf.ai_terraforming_roadWeight;
+				}
 				break;
 
 			case FORMER_MAGTUBE:
-				// add road bonus
-				improvementScore += conf.ai_terraforming_tubeWeight;
+				// add transportation bonus for not yield options
+				if (!option.yield)
+				{
+					improvementScore += conf.ai_terraforming_tubeWeight;
+				}
 				break;
 
 			case FORMER_CONDENSER:
@@ -814,28 +821,43 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 
 			}
 
-			// special bonus for connecting network
+			// special bonus for connecting network for non yield options
 
-			if ((action == FORMER_ROAD || action == FORMER_MAGTUBE) && isConnectionNetworkLocation(x, y, tile, action))
+			if (!option.yield)
 			{
-				improvementScore += conf.ai_terraforming_connectionNetworkFactor * regionVehicleCount;
+				if ((action == FORMER_ROAD || action == FORMER_MAGTUBE) && isConnectionNetworkLocation(x, y, tile, action))
+				{
+					improvementScore += conf.ai_terraforming_connectionNetworkFactor * regionVehicleCount;
+				}
 			}
 
 		}
 
-		// calculate yield improvement score
+		if (option.yield)
+		{
+			// calculate yield improvement score
 
-		TERRAFORMING_SCORE optionTerraformingScore;
-		calculateYieldImprovementScore(mapInfo->x, mapInfo->y, affectedRange, currentLocalTerraformingState, improvedLocalTerraformingState, &optionTerraformingScore);
+			TERRAFORMING_SCORE optionTerraformingScore;
+			calculateYieldImprovementScore(mapInfo->x, mapInfo->y, affectedRange, currentLocalTerraformingState, improvedLocalTerraformingState, &optionTerraformingScore);
 
-		// skip ineffective improvements
+			// update improvement score
 
-		if (optionTerraformingScore.base == NULL || optionTerraformingScore.score <= 0.0)
+			affectedBase = optionTerraformingScore.base;
+			improvementScore += optionTerraformingScore.score;
+
+		}
+		else
+		{
+			// find closest base
+
+			affectedBase = findAffectedBase(x, y);
+
+		}
+
+		// skip ineffective or not accepted improvements
+
+		if (affectedBase == NULL || firstAction == -1 || improvementScore <= 0.0)
 			continue;
-
-		// update improvement score
-
-		improvementScore += optionTerraformingScore.score;
 
 		// factor improvement score with decay coefficient
 
@@ -843,7 +865,7 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 
 		debug
 		(
-			"\t%2d: improvementScore=%6.4f, terraformingTime=%2d, terraformingScore=%6.4f\n",
+			"\t%2d: score=%6.4f, terraformingTime=%2d, terraformingScore=%6.4f\n",
 			optionIndex,
 			improvementScore,
 			terraformingTime,
@@ -853,25 +875,16 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 
 		// update score
 
-		if (firstAction != -1 && optionTerraformingScore.base != NULL && terraformingScore > bestTerraformingScore->score)
+		if (affectedBase != NULL && firstAction != -1 && terraformingScore > bestTerraformingScore->score)
 		{
-			bestTerraformingScore->score = terraformingScore;
-			bestTerraformingScore->base = optionTerraformingScore.base;
+			bestTerraformingScore->base = affectedBase;
 			bestTerraformingScore->action = firstAction;
+			bestTerraformingScore->score = terraformingScore;
 
 		}
 
 	}
 
-//	debug
-//	(
-//		"\tbestTerraformingScore=%f, bestTerraformingOptionIndex=%d, bestTerraformingAction=%s\n",
-//		bestTerraformingScore->score,
-//		bestTerraformingOptionIndex,
-//		(bestTerraformingScore->action == -1 ? "none" : tx_terraform[bestTerraformingScore->action].name)
-//	)
-//	;
-//
 }
 
 void optimizeFormerDestinations()
@@ -1050,7 +1063,7 @@ void finalizeFormerOrders()
 				id,
 				formerOrder->x,
 				formerOrder->y,
-				tx_terraform[formerOrder->action].name
+				getTerraformingActionName(formerOrder->action)
 			)
 			;
 
@@ -1109,7 +1122,7 @@ void setFormerOrder(FORMER_ORDER formerOrder)
 			"generateFormerOrder: location=(%d,%d), action=%s\n",
 			vehicle->x,
 			vehicle->y,
-			tx_terraform[action].name
+			getTerraformingActionName(action)
 		)
 		;
 
@@ -1912,3 +1925,38 @@ int getBaseTerraformingRank(BASE *base)
 {
 	return (baseTerraformingRanks.count(base) == 0 ? 0 : baseTerraformingRanks[base]);
 }
+
+BASE *findAffectedBase(int x, int y)
+{
+	for
+	(
+		std::vector<BASE_INFO>::iterator baseIterator = bases.begin();
+		baseIterator != bases.end();
+		baseIterator++
+	)
+	{
+		BASE_INFO *baseInfo = &(*baseIterator);
+		BASE *base = baseInfo->base;
+
+		if (isWithinBaseRadius(base->x, base->y, x, y))
+			return base;
+
+	}
+
+	return NULL;
+
+}
+
+char *getTerraformingActionName(int action)
+{
+	if (action >= FORMER_FARM && action <= FORMER_MONOLITH)
+	{
+		return tx_terraform[action].name;
+	}
+	else
+	{
+		return NULL;
+	}
+
+}
+
