@@ -150,9 +150,9 @@ struct Config {
 	double ai_terraforming_energyWeight;
 	double ai_terraforming_landDistanceScale;
 	double ai_terraforming_waterDistanceScale;
-	double ai_terraforming_roadWeight;
-	double ai_terraforming_tubeWeight;
-	double ai_terraforming_connectionNetworkFactor;
+	double ai_terraforming_networkConnectionValue;
+	double ai_terraforming_networkBaseExtensionValue;
+	double ai_terraforming_networkWildExtensionValue;
 
 };
 
