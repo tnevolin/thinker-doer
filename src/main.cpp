@@ -251,17 +251,17 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_waterDistanceScale = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_roadWeight"))
+    else if (MATCH("wtp", "ai_terraforming_networkConnectionValue"))
     {
-        cf->ai_terraforming_roadWeight = atof(value);
+        cf->ai_terraforming_networkConnectionValue = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_tubeWeight"))
+    else if (MATCH("wtp", "ai_terraforming_networkBaseExtensionValue"))
     {
-        cf->ai_terraforming_tubeWeight = atof(value);
+        cf->ai_terraforming_networkBaseExtensionValue = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_connectionNetworkFactor"))
+    else if (MATCH("wtp", "ai_terraforming_networkWildExtensionValue"))
     {
-        cf->ai_terraforming_connectionNetworkFactor = atof(value);
+        cf->ai_terraforming_networkWildExtensionValue = atof(value);
     }
     // Thinker default case
     else {

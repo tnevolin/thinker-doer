@@ -36,22 +36,6 @@ const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 	{-1,-3},
 };
 
-/**
-Diagonally adjacent tiles.
-*/
-const int BASE_CONNECTION_TILE_OFFSET_COUNT = 8;
-const int BASE_CONNECTION_TILE_OFFSETS[BASE_CONNECTION_TILE_OFFSET_COUNT][2] =
-{
-	{+0,-2},
-	{+0,-4},
-	{+0,+2},
-	{+0,+4},
-	{-2,+0},
-	{-4,+0},
-	{+2,+0},
-	{+4,+0},
-};
-
 struct TERRAFORMING_OPTION
 {
 	// land or sea
@@ -104,7 +88,6 @@ struct BASE_INCOME
 {
 	int id;
 	BASE *base;
-	int population;
 	int workedTiles;
 	int nutrientSurplus;
 	int mineralSurplus;
@@ -150,6 +133,11 @@ struct TERRAFORMING_REQUEST
 	int rank;
 };
 
+struct AFFECTED_BASE_SET
+{
+	std::set<BASE_INFO> affectedBaseSets[2];
+};
+
 void ai_strategy(int id);
 void prepareFormerOrders();
 void populateLists();
@@ -164,7 +152,7 @@ void finalizeFormerOrders();
 int enemyMoveFormer(int vehicleId);
 void setFormerOrder(FORMER_ORDER formerOrder);
 void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore);
-void calculateYieldImprovementScore(int x, int y, int affectedRange, TERRAFORMING_STATE currentLocalTerraformingState[9], TERRAFORMING_STATE improvedLocalTerraformingState[9], TERRAFORMING_SCORE *terraformingScore);
+void calculateYieldImprovementScore(MAP_INFO *mapInfo, int affectedRange, TERRAFORMING_STATE currentLocalTerraformingState[9], TERRAFORMING_STATE improvedLocalTerraformingState[9], TERRAFORMING_SCORE *terraformingScore);
 bool isOwnWorkableTile(int x, int y);
 bool isTerraformingAvailable(int x, int y, int action);
 bool isTerraformingRequired(MAP *tile, int action);
@@ -194,11 +182,15 @@ void copyLocalTerraformingState(TERRAFORMING_STATE sourceLocalTerraformingState[
 void increaseMoistureAround(TERRAFORMING_STATE localTerraformingState[9]);
 void createRiversAround(TERRAFORMING_STATE localTerraformingState[9]);
 int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle);
-bool isConnectionNetworkLocation(int x, int y, MAP *tile, int improvementFlag);
-int getRegionVehicleCount(int region);
 int getBaseTerraformingRank(BASE *base);
 BASE *findAffectedBase(int x, int y);
 char *getTerraformingActionName(int action);
 int calculateClosestAvailableFormerRange(int x, int y, MAP *tile);
+double calculateNetworkScore(MAP_INFO *mapInfo, int action);
+bool isTowardBaseDiagonal(int x, int y, int dxSign, int dySign);
+bool isTowardBaseHorizontal(int x, int y, int dxSign);
+bool isTowardBaseVertical(int x, int y, int dySign);
+MAP *getMapTile(int x, int y);
+int getTerraformingRegion(int region);
 
 #endif // __AI_H__
