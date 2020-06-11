@@ -153,6 +153,11 @@ struct Config {
 	double ai_terraforming_networkConnectionValue;
 	double ai_terraforming_networkBaseExtensionValue;
 	double ai_terraforming_networkWildExtensionValue;
+	int ai_terraforming_nutrientThreshold;
+	double ai_terraforming_nutrientThresholdWeight;
+	int ai_terraforming_mineralThreshold;
+	double ai_terraforming_mineralThresholdWeight;
+	double ai_terraforming_nearbyForestKelpPenalty;
 
 };
 
@@ -199,6 +204,7 @@ HOOK_API int social_ai(int faction, int v1, int v2, int v3, int v4, int v5);
 int need_defense(int id);
 int need_psych(int id);
 int consider_hurry(int id);
+int hurry_item(BASE* b, int mins, int cost);
 int find_project(int id);
 int find_facility(int id);
 int select_prod(int id);

@@ -9,6 +9,8 @@
 
 // global variables
 
+int wtpFactionId = 2;
+
 int factionId;
 std::vector<BASE_INFO> bases;
 std::unordered_set<MAP *> baseLocations;
@@ -33,11 +35,21 @@ AI strategy.
 */
 void ai_strategy(int id)
 {
+	// skip zero faction
+
+	if (id == 0)
+		return;
+
 	// set faction id
 
 	factionId = id;
 
 	debug("ai_strategy: factionId=%d\n", factionId);
+
+	// do not use WTP algorithm for other factions
+
+	if (factionId != wtpFactionId)
+		return;
 
 	// prepare former orders
 
@@ -1260,6 +1272,18 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 
 				generateTerraformingChange(improvedTileTerraformedState, removeFungusAction);
 
+				// compute terraforming time
+
+				terraformingTime +=
+					calculateTerraformingTime
+					(
+						removeFungusAction,
+						improvedTileTerraformedState->items,
+						improvedTileTerraformedState->rocks,
+						NULL
+					)
+				;
+
 				// store first action and compute terraforming time
 
 				if (firstAction == -1)
@@ -1268,19 +1292,12 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 
 					firstAction = removeFungusAction;
 
-					// compute terraforming time
-
-					terraformingTime +=
-						calculateTerraformingTime
-						(
-							removeFungusAction,
-							improvedTileTerraformedState->items,
-							improvedTileTerraformedState->rocks,
-							NULL
-						)
-					;
-
 				}
+
+				// add penalty for nearby forest/kelp
+
+				int nearbyForestKelpCount = nearby_items(x, y, 1, (sea ? TERRA_FARM : TERRA_FOREST));
+				improvementScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestKelpCount;
 
 			}
 
@@ -1294,6 +1311,18 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 
 				generateTerraformingChange(improvedTileTerraformedState, levelTerrainAction);
 
+				// compute terraforming time
+
+				terraformingTime +=
+					calculateTerraformingTime
+					(
+						levelTerrainAction,
+						improvedTileTerraformedState->items,
+						improvedTileTerraformedState->rocks,
+						NULL
+					)
+				;
+
 				// store first action and compute terraforming time
 
 				if (firstAction == -1)
@@ -1301,18 +1330,6 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 					// store first action
 
 					firstAction = levelTerrainAction;
-
-					// compute terraforming time
-
-					terraformingTime +=
-						calculateTerraformingTime
-						(
-							levelTerrainAction,
-							improvedTileTerraformedState->items,
-							improvedTileTerraformedState->rocks,
-							NULL
-						)
-					;
 
 				}
 
@@ -1324,6 +1341,18 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 
 			generateTerraformingChange(improvedTileTerraformedState, action);
 
+			// compute terraforming time
+
+			terraformingTime +=
+				calculateTerraformingTime
+				(
+					action,
+					improvedTileTerraformedState->items,
+					improvedTileTerraformedState->rocks,
+					NULL
+				)
+			;
+
 			// store first action and compute terraforming time
 
 			if (firstAction == -1)
@@ -1332,18 +1361,14 @@ void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerra
 
 				firstAction = action;
 
-				// compute terraforming time
+			}
 
-				terraformingTime +=
-					calculateTerraformingTime
-					(
-						action,
-						improvedTileTerraformedState->items,
-						improvedTileTerraformedState->rocks,
-						NULL
-					)
-				;
+			// add penalty for nearby forest/kelp
 
+			if ((sea && action == TERRA_FARM) || (!sea && action == TERRA_FOREST))
+			{
+				int nearbyForestKelpCount = nearby_items(x, y, 1, (sea ? TERRA_FARM : TERRA_FOREST));
+				improvementScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestKelpCount;
 			}
 
 			// special case configurations
@@ -1438,6 +1463,11 @@ Handles movement phase.
 */
 int enemyMoveFormer(int id)
 {
+	// do not use WTP algorithm for other factions
+
+	if (factionId != wtpFactionId)
+		return former_move(id);
+
 	// skip vehicles without former orders
 
 	if (finalizedFormerOrders.count(id) == 0)
@@ -1541,9 +1571,14 @@ void calculateYieldImprovementScore(MAP_INFO *mapInfo, int affectedRange, TERRAF
 		int mineralSurplus = base->mineral_surplus;
 		int energySurplus = base->economy_total + base->psych_total + base->labs_total;
 
+		// calculate threshold coefficients
+
+		double nutrientThresholdCoefficient = (double)(max(0, conf.ai_terraforming_nutrientThreshold - base->nutrient_surplus)) * conf.ai_terraforming_nutrientThresholdWeight;
+		double mineralThresholdCoefficient = (double)(max(0, conf.ai_terraforming_mineralThreshold - base->mineral_surplus)) * conf.ai_terraforming_mineralThresholdWeight;
+
 		// add base
 
-		nearbyBases.push_back({id, base, base->worked_tiles, nutrientSurplus, mineralSurplus, energySurplus});
+		nearbyBases.push_back({id, base, base->worked_tiles, nutrientSurplus, mineralSurplus, energySurplus, nutrientThresholdCoefficient, mineralThresholdCoefficient});
 
 	}
 
@@ -1584,11 +1619,11 @@ void calculateYieldImprovementScore(MAP_INFO *mapInfo, int affectedRange, TERRAF
 		// calculate base yield score
 
 		double baseYieldImprovementScore =
-			conf.ai_terraforming_nutrientWeight * (double)nutrientSurplusIncrease
+			(conf.ai_terraforming_nutrientWeight + baseIncome->nutrientThresholdCoefficient) * (double)nutrientSurplusIncrease
 			+
-			conf.ai_terraforming_mineralWeight * (double)mineralSurplusIncrease
+			(conf.ai_terraforming_mineralWeight + baseIncome->mineralThresholdCoefficient) * (double)mineralSurplusIncrease
 			+
-			conf.ai_terraforming_energyWeight * (double)energySurplusIncrease
+			(conf.ai_terraforming_energyWeight) * (double)energySurplusIncrease
 		;
 
 		// set affected base

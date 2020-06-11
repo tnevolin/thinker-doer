@@ -60,6 +60,7 @@ typedef char* __cdecl fp_str_void();
 typedef char* __cdecl fp_str_void();
 typedef void __cdecl fp_2int_void(int, int);
 typedef void __cdecl fp_3int_void(int, int, int);
+typedef int __cdecl fp_int_char_int(char *, int);
 
 // params: faction, chassis, module, armor, specials, reactor, unit_plan, name
 extern fp_7intstr* tx_propose_proto;
@@ -112,5 +113,4 @@ extern fp_0void *tx_world_climate;
 extern fp_0void *tx_world_rivers;
 extern fp_0void *tx_world_rainfall;
 extern fp_4void *tx_go_to;
-
-
+extern fp_int_char_int *tx_say_base;

@@ -326,6 +326,8 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Move Hab complex/dome even more earlier.
+
 * Centauri Empathy enables Empath Song.
 * Secrets of the Manifolds enables The Manifold Harmonics.
 * Nerf specialists.
@@ -340,8 +342,7 @@ Initial release. See list of changes in readme.
 * Copy basic units to player unit pool.
 * Don't display basic units in design workshop.
 
-## AI Terraforming
+## AI
 
-* Discourage improvement replacing.
-* Give some value to roads/tubes.
+* Control transports better.
 

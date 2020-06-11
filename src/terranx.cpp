@@ -143,3 +143,8 @@ Send vehicle to destination.
 */
 fp_4void *tx_go_to = (fp_4void *)0x00560AD0;
 
+/**
+Copy base name to string buffer.
+*/
+fp_int_char_int *tx_say_base = (fp_int_char_int *)0x004E3A00;
+
