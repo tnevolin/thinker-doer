@@ -2027,6 +2027,15 @@ void patch_hex_cost()
 
 }
 
+/**
+Displays additional base population info in F4 screen.
+*/
+void patch_display_base_population_info()
+{
+    write_call(0x0049DCB1, (int)sayBase);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2427,6 +2436,10 @@ bool patch_setup(Config* cf) {
     // hex cost
 
     patch_hex_cost();
+
+    // base population info
+
+    patch_display_base_population_info();
 
     // continue with original Thinker checks
 

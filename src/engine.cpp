@@ -3,7 +3,9 @@
 #include "game.h"
 #include "tech.h"
 #include "move.h"
+#include "wtp.h"
 #include "ai.h"
+#include "aiBase.h"
 
 const char* ScriptTxtID = "SCRIPT";
 
@@ -96,6 +98,8 @@ HOOK_API int faction_upkeep(int faction) {
     repair_phase(faction);
     do_all_non_input();
     production_phase(faction);
+    // hurry production in all bases
+    factionHurryProduction(faction);
     do_all_non_input();
     if (!(*game_state & STATE_UNK_1) || *game_state & STATE_UNK_8) {
         allocate_energy(faction);

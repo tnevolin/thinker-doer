@@ -4,14 +4,16 @@
 #include "main.h"
 #include "game.h"
 
+struct BASE_HURRY_ALLOWANCE_PROPORTION
+{
+	BASE *base;
+	double allowanceProportion;
+};
+
 HOOK_API int read_basic_rules();
-
 HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, int attacker_strength_pointer, int defender_strength_pointer, int flags);
-
 HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer, int input_string_pointer);
-
 HOOK_API int proto_cost(int chassisTypeId, int weaponTypeId, int armorTypeId, int abilities, int reactorTypeId);
-
 HOOK_API int upgrade_cost(int faction_id, int new_unit_id, int old_unit_id);
 
 HOOK_API int combat_roll
@@ -94,21 +96,20 @@ double alternative_combat_mechanics_calculate_attacker_winning_probability_follo
 ;
 
 HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int body_id, int unknown_2, int unknown_3);
-
 int map_distance(int x1, int y1, int x2, int y2);
 bool isWithinBaseRadius(int x1, int y1, int x2, int y2);
-
 HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower);
-
 HOOK_API int mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
-
 HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5);
-
 HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7);
-
 int wtp_tech_cost(int fac, int tech);
+HOOK_API int sayBase(char *buffer, int baseId);
+bool isBaseFacilityBuilt(BASE *base, int facilityId);
+int getBasePopulationLimit(BASE *base);
+int refitToGrowthFacility(int id, BASE *base, int buildChoice);
+int getnextAvailableGrowthFacility(BASE *base);
 
 #endif // __PROTOTYPE_H__
 

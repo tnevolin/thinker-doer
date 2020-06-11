@@ -92,6 +92,8 @@ struct BASE_INCOME
 	int nutrientSurplus;
 	int mineralSurplus;
 	int energySurplus;
+	double nutrientThresholdCoefficient;
+	double mineralThresholdCoefficient;
 };
 
 struct VEHICLE_INFO

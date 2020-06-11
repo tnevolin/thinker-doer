@@ -8,6 +8,7 @@
 #include "move.h"
 #include "tech.h"
 #include "lib/ini.h"
+#include "wtp.h"
 
 std::string MOVE_STATUS[] =
 {
@@ -263,6 +264,26 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_networkWildExtensionValue = atof(value);
     }
+    else if (MATCH("wtp", "ai_terraforming_nutrientThreshold"))
+    {
+        cf->ai_terraforming_nutrientThreshold = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_nutrientThresholdSlope"))
+    {
+        cf->ai_terraforming_nutrientThresholdWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_mineralThreshold"))
+    {
+        cf->ai_terraforming_mineralThreshold = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_mineralThresholdSlope"))
+    {
+        cf->ai_terraforming_mineralThresholdWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_nearbyForestKelpPenalty"))
+    {
+        cf->ai_terraforming_nearbyForestKelpPenalty = atof(value);
+    }
     // Thinker default case
     else {
         for (int i=0; i<16; i++) {
@@ -359,6 +380,12 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
         } else if (prod >= 0 && !can_build_unit(faction, prod)) {
             debug("BUILD FACILITY\n");
             choice = find_facility(id);
+        }
+        // do not build unit in 0-1 production base
+        else if (prod >= 0 && base->mineral_surplus <= 1)
+        {
+            debug("BUILD FACILITY\n");
+            choice = find_facility(id);
         } else if (prod < 0 && !can_build(id, abs(prod))) {
             debug("BUILD CHANGE\n");
             if (base->minerals_accumulated > tx_basic->retool_exemption) {
@@ -376,8 +403,14 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
         }
         debug("choice: %d %s\n", choice, prod_name(choice));
     }
+
+    // change choice to growth facility if needed
+
+    choice = refitToGrowthFacility(id, base, choice);
+
     fflush(debug_log);
     return choice;
+
 }
 
 HOOK_API int turn_upkeep() {
@@ -942,6 +975,8 @@ int consider_hurry(int id) {
 
 int find_facility(int id) {
     const int build_order[][2] = {
+        {FAC_HAB_COMPLEX, 0},
+        {FAC_HABITATION_DOME, 0},
         {FAC_RECREATION_COMMONS, 0},
         {FAC_CHILDREN_CRECHE, 0},
         {FAC_PERIMETER_DEFENSE, 2},
@@ -949,11 +984,9 @@ int find_facility(int id) {
         {FAC_NETWORK_NODE, 1},
         {FAC_AEROSPACE_COMPLEX, 0},
         {FAC_TREE_FARM, 0},
-        {FAC_HAB_COMPLEX, 0},
         {FAC_COMMAND_CENTER, 2},
         {FAC_GEOSYNC_SURVEY_POD, 2},
         {FAC_FLECHETTE_DEFENSE_SYS, 2},
-        {FAC_HABITATION_DOME, 0},
         {FAC_FUSION_LAB, 1},
         {FAC_ENERGY_BANK, 1},
         {FAC_RESEARCH_HOSPITAL, 1},
