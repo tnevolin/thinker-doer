@@ -447,6 +447,10 @@ bool is_ocean_shelf(MAP* sq) {
     return (sq && (sq->level >> 5) == LEVEL_OCEAN_SHELF);
 }
 
+bool is_ocean_deep(MAP* sq) {
+    return (sq && (sq->level >> 5) <= LEVEL_OCEAN);
+}
+
 bool is_sea_base(int id) {
     MAP* sq = mapsq(tx_bases[id].x, tx_bases[id].y);
     return is_ocean(sq);

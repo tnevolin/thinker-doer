@@ -256,6 +256,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_networkConnectionValue = atof(value);
     }
+    else if (MATCH("wtp", "ai_terraforming_networkImprovementValue"))
+    {
+        cf->ai_terraforming_networkImprovementValue = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_networkBaseExtensionValue"))
     {
         cf->ai_terraforming_networkBaseExtensionValue = atof(value);
@@ -264,25 +268,17 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_networkWildExtensionValue = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_nutrientThreshold"))
-    {
-        cf->ai_terraforming_nutrientThreshold = atoi(value);
-    }
-    else if (MATCH("wtp", "ai_terraforming_nutrientThresholdSlope"))
-    {
-        cf->ai_terraforming_nutrientThresholdWeight = atof(value);
-    }
-    else if (MATCH("wtp", "ai_terraforming_mineralThreshold"))
-    {
-        cf->ai_terraforming_mineralThreshold = atoi(value);
-    }
-    else if (MATCH("wtp", "ai_terraforming_mineralThresholdSlope"))
-    {
-        cf->ai_terraforming_mineralThresholdWeight = atof(value);
-    }
     else if (MATCH("wtp", "ai_terraforming_nearbyForestKelpPenalty"))
     {
         cf->ai_terraforming_nearbyForestKelpPenalty = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_completionBonus"))
+    {
+        cf->ai_terraforming_completionBonus = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_rankPenalty"))
+    {
+        cf->ai_terraforming_rankPenalty = atof(value);
     }
     // Thinker default case
     else {

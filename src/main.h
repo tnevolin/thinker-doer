@@ -31,6 +31,7 @@
 #define DLL_EXPORT extern "C" __declspec(dllexport)
 #define HOOK_API extern "C"
 
+#include <vector>
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -151,13 +152,12 @@ struct Config {
 	double ai_terraforming_landDistanceScale;
 	double ai_terraforming_waterDistanceScale;
 	double ai_terraforming_networkConnectionValue;
+	double ai_terraforming_networkImprovementValue;
 	double ai_terraforming_networkBaseExtensionValue;
 	double ai_terraforming_networkWildExtensionValue;
-	int ai_terraforming_nutrientThreshold;
-	double ai_terraforming_nutrientThresholdWeight;
-	int ai_terraforming_mineralThreshold;
-	double ai_terraforming_mineralThresholdWeight;
 	double ai_terraforming_nearbyForestKelpPenalty;
+	double ai_terraforming_completionBonus;
+	double ai_terraforming_rankPenalty;
 
 };
 

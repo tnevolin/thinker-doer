@@ -82,6 +82,7 @@ int veh_skip(int id);
 bool at_target(VEH* veh);
 bool is_ocean(MAP* sq);
 bool is_ocean_shelf(MAP* sq);
+bool is_ocean_deep(MAP* sq);
 bool is_sea_base(int id);
 bool workable_tile(int x, int y, int faction);
 bool has_defenders(int x, int y, int faction);

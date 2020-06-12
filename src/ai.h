@@ -40,35 +40,35 @@ struct TERRAFORMING_OPTION
 {
 	// land or sea
 	bool sea;
-	// whether this option applies to rocky tile only
+	// applies to rocky tile only
 	bool rocky;
-	// whether this option modifies yield
+	// modifies yield
 	bool yield;
-	int count;
-	int actions[10];
+	// do not evaluate until last action is available
+	bool lastActionRequired;
+	std::vector<int> actions;
 };
 
 /**
 AI terraforming options
 */
-const int TERRAFORMING_OPTION_COUNT = 13;
-const TERRAFORMING_OPTION TERRAFORMING_OPTIONS[TERRAFORMING_OPTION_COUNT] =
+const std::vector<TERRAFORMING_OPTION> TERRAFORMING_OPTIONS =
 {
 	// land
-	{false, true , true , 2, {FORMER_MINE, FORMER_ROAD}},							// 00
-	{false, false, true , 3, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}},			// 01
-	{false, false, true , 3, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},			// 02
-	{false, false, true , 1, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_CONDENSER}},		// 03
-	{false, false, true , 1, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_ECH_MIRROR}},	// 04
-	{false, false, true , 1, {FORMER_THERMAL_BORE}},								// 05
-	{false, false, true , 1, {FORMER_FOREST}},										// 06
-	{false, false, true , 1, {FORMER_PLANT_FUNGUS}},								// 07
-	{false, false, true , 1, {FORMER_AQUIFER}},										// 08
-	{false, false, false, 1, {FORMER_ROAD}},										// 09
-	{false, false, false, 1, {FORMER_MAGTUBE}},										// 10
+	{false, true , true , false, {FORMER_MINE, FORMER_ROAD}},							// 00
+	{false, false, true , false, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}}, 			// 01
+	{false, false, true , false, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},			// 02
+	{false, false, true , true , {FORMER_FARM, FORMER_SOIL_ENR, FORMER_CONDENSER}},		// 03
+	{false, false, true , true , {FORMER_FARM, FORMER_SOIL_ENR, FORMER_ECH_MIRROR}},	// 04
+	{false, false, true , true , {FORMER_THERMAL_BORE}},								// 05
+	{false, false, true , false, {FORMER_FOREST}},										// 06
+	{false, false, true , true , {FORMER_PLANT_FUNGUS}},								// 07
+	{false, false, true , true , {FORMER_AQUIFER}},										// 08
+	{false, false, false, false, {FORMER_ROAD}},										// 09
+	{false, false, false, true , {FORMER_MAGTUBE}},										// 10
 	// sea
-	{true , false, true , 2, {FORMER_FARM, FORMER_MINE}},
-	{true , false, true , 2, {FORMER_FARM, FORMER_SOLAR}},
+	{true , false, true , false, {FORMER_FARM, FORMER_MINE}},							// 11
+	{true , false, true , false, {FORMER_FARM, FORMER_SOLAR}},							// 12
 };
 
 struct MAP_INFO
@@ -92,8 +92,6 @@ struct BASE_INCOME
 	int nutrientSurplus;
 	int mineralSurplus;
 	int energySurplus;
-	double nutrientThresholdCoefficient;
-	double mineralThresholdCoefficient;
 };
 
 struct VEHICLE_INFO
@@ -120,6 +118,7 @@ struct FORMER_ORDER
 
 struct TERRAFORMING_SCORE
 {
+	bool yield = false;
 	BASE *base = NULL;
 	int action = -1;
 	double score = -DBL_MAX;
@@ -130,6 +129,7 @@ struct TERRAFORMING_REQUEST
 	int x;
 	int y;
 	MAP *tile;
+	bool yield;
 	int action;
 	double score;
 	int rank;
@@ -152,10 +152,11 @@ void assignFormerOrders();
 void optimizeFormerDestinations();
 void finalizeFormerOrders();
 int enemyMoveFormer(int vehicleId);
-void setFormerOrder(FORMER_ORDER formerOrder);
+void setFormerOrder(FORMER_ORDER *formerOrder);
 void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore);
 void calculateYieldImprovementScore(MAP_INFO *mapInfo, int affectedRange, TERRAFORMING_STATE currentLocalTerraformingState[9], TERRAFORMING_STATE improvedLocalTerraformingState[9], TERRAFORMING_SCORE *terraformingScore);
 bool isOwnWorkableTile(int x, int y);
+bool isTerraformingCompleted(int x, int y, int action);
 bool isTerraformingAvailable(int x, int y, int action);
 bool isTerraformingRequired(MAP *tile, int action);
 bool isRemoveFungusRequired(int action);
@@ -187,12 +188,13 @@ int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle);
 int getBaseTerraformingRank(BASE *base);
 BASE *findAffectedBase(int x, int y);
 char *getTerraformingActionName(int action);
-int calculateClosestAvailableFormerRange(int x, int y, MAP *tile);
+int calculateClosestAvailableFormerRange(MAP_INFO *mapInfo);
 double calculateNetworkScore(MAP_INFO *mapInfo, int action);
 bool isTowardBaseDiagonal(int x, int y, int dxSign, int dySign);
 bool isTowardBaseHorizontal(int x, int y, int dxSign);
 bool isTowardBaseVertical(int x, int y, int dySign);
 MAP *getMapTile(int x, int y);
 int getTerraformingRegion(int region);
+bool isBaseWorkedTile(BASE *base, int x, int y);
 
 #endif // __AI_H__
