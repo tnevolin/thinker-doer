@@ -98,7 +98,7 @@ HOOK_API int faction_upkeep(int faction) {
     repair_phase(faction);
     do_all_non_input();
     production_phase(faction);
-    // hurry production in all bases
+//    // hurry production in all bases
     factionHurryProduction(faction);
     do_all_non_input();
     if (!(*game_state & STATE_UNK_1) || *game_state & STATE_UNK_8) {
@@ -107,7 +107,7 @@ HOOK_API int faction_upkeep(int faction) {
         enemy_diplomacy(faction);
         do_all_non_input();
         enemy_strategy(faction);
-		// [WtP] special AI algorithms
+//		// [WtP] special AI algorithms
         ai_strategy(faction);
         do_all_non_input();
         /*

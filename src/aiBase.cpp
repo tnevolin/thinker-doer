@@ -103,28 +103,49 @@ void factionHurryProduction(int factionId)
 
 	if (importantFacilityBases.size() >= 1)
 	{
-		for (BASE_WEIGHT baseWeight : importantFacilityBases)
+		for
+		(
+			std::vector<BASE_WEIGHT>::iterator importantFacilityBasesIterator = importantFacilityBases.begin();
+			importantFacilityBasesIterator != importantFacilityBases.end();
+			importantFacilityBasesIterator++
+		)
 		{
-			int allowance = (int)(floor((double)spendPool * baseWeight.weight / importantFacilityBasesWeightSum));
-			hurryProductionPartially(baseWeight.base, allowance);
+			BASE_WEIGHT *baseWeight = &(*importantFacilityBasesIterator);
+
+			int allowance = (int)(floor((double)spendPool * baseWeight->weight / importantFacilityBasesWeightSum));
+			hurryProductionPartially(baseWeight->base, allowance);
 		}
 
 	}
 	else if (facilityBases.size() >= 1)
 	{
-		for (BASE_WEIGHT baseWeight : facilityBases)
+		for
+		(
+			std::vector<BASE_WEIGHT>::iterator facilityBasesIterator = facilityBases.begin();
+			facilityBasesIterator != facilityBases.end();
+			facilityBasesIterator++
+		)
 		{
-			int allowance = (int)(floor((double)spendPool * baseWeight.weight / importantFacilityBasesWeightSum));
-			hurryProductionPartially(baseWeight.base, allowance);
+			BASE_WEIGHT *baseWeight = &(*facilityBasesIterator);
+
+			int allowance = (int)(floor((double)spendPool * baseWeight->weight / facilityBasesWeightSum));
+			hurryProductionPartially(baseWeight->base, allowance);
 		}
 
 	}
 	else if (unitBases.size() >= 1)
 	{
-		for (BASE_WEIGHT baseWeight : unitBases)
+		for
+		(
+			std::vector<BASE_WEIGHT>::iterator unitBasesIterator = unitBases.begin();
+			unitBasesIterator != unitBases.end();
+			unitBasesIterator++
+		)
 		{
-			int allowance = (int)(floor((double)spendPool * baseWeight.weight / importantFacilityBasesWeightSum));
-			hurryProductionPartially(baseWeight.base, allowance);
+			BASE_WEIGHT *baseWeight = &(*unitBasesIterator);
+
+			int allowance = (int)(floor((double)spendPool * baseWeight->weight / unitBasesWeightSum));
+			hurryProductionPartially(baseWeight->base, allowance);
 		}
 
 	}
