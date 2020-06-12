@@ -10,7 +10,7 @@
 
 // global variables
 
-int wtpFactionId = 3;
+int wtpFactionId = -1;
 
 int factionId;
 std::vector<BASE_INFO> bases;
@@ -43,7 +43,7 @@ void ai_strategy(int id)
 
 	// do not use WTP algorithm for other factions
 
-	if (id != wtpFactionId)
+	if (wtpFactionId != -1 && id != wtpFactionId)
 		return;
 
 	// set faction id
