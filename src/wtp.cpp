@@ -5,6 +5,7 @@
 #include <vector>
 #include "wtp.h"
 #include "main.h"
+#include "patch.h"
 
 /**
 Combat calculation placeholder.

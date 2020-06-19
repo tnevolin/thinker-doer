@@ -96,6 +96,13 @@ void check_zeros(int* ptr, int len);
 void print_map(int x, int y);
 void print_veh(int id);
 void print_base(int id);
+int map_rainfall(MAP *tile);
+int map_level(MAP *tile);
+int map_elevation(MAP *tile);
+int map_rockiness(MAP *tile);
+bool map_base(MAP *tile);
+bool map_has_item(MAP *tile, int item);
+bool map_has_landmark(MAP *tile, int landmark);
 
 struct PathNode {
     int x;
