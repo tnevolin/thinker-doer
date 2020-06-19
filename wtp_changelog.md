@@ -1,3 +1,7 @@
+# Version 66
+
+* Borehole Square,  0, 2, 8, 0. Added some energy to it instead of reduced mineral output. Should compensate for its longest construction time.
+
 # Version 65
 
 * Merged with Thinker 2.0.
