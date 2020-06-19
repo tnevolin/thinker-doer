@@ -132,28 +132,28 @@ struct VEH {
 };
 
 struct MAP {
-    byte level;
-    byte altitude;
+    byte level;				// 0x0000
+    byte altitude;			// 0x0001
     /*
     Flags & 0xf = faction ID of the unit occupying this tile. 0xf = unoccupied.
     Sometimes faction ID of a deleted unit persists on the tile.
     */
-    byte flags;
+    byte flags;				// 0x0002
     /*
     The game keeps track of disjoint land/water areas and assigns each of them an ID number
     which is used to index the [128] planning variable arrays in Faction struct.
     Valid ranges: 1-62 (land), 65-126 (sea).
     */
-    byte region;
-    byte visibility;
-    byte rocks;
-    byte unk_1;
-    char owner;
-    int items;
-    short landmarks;
-    byte unk_2;
-    byte art_ref_id;
-    int visible_items[7];
+    byte region;			// 0x0003
+    byte visibility;		// 0x0004
+    byte rocks;				// 0x0005
+    byte unk_1;				// 0x0006
+    char owner;				// 0x0007
+    int items;				// 0x0008
+    short landmarks;		// 0x000C
+    byte unk_2;				// 0x000E
+    byte art_ref_id;		// 0x000F
+    int visible_items[7];	// 0x0010
 };
 
 struct MetaFaction {

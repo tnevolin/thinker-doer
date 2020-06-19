@@ -49,4 +49,5 @@ int select_item(int x, int y, int fac, MAP* sq);
 int escape_move(int id);
 bool other_in_tile(int fac, MAP* sq);
 int former_tile_score(int x1, int y1, int x2, int y2, int fac, MAP* sq);
+bool isSafe(int x, int y);
 

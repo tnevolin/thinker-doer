@@ -276,9 +276,25 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_completionBonus = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_rankPenalty"))
+    else if (MATCH("wtp", "ai_terraforming_rankMultiplier"))
     {
-        cf->ai_terraforming_rankPenalty = atof(value);
+        cf->ai_terraforming_rankMultiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_exclusivityMultiplier"))
+    {
+        cf->ai_terraforming_exclusivityMultiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_baseNutrientThresholdRatio"))
+    {
+        cf->ai_terraforming_baseNutrientThresholdRatio = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_baseNutrientDemandMultiplier"))
+    {
+        cf->ai_terraforming_baseNutrientDemandMultiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_baseMineralThresholdRatio"))
+    {
+        cf->ai_terraforming_baseMineralThresholdRatio = atof(value);
     }
     // Thinker default case
     else {

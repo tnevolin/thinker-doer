@@ -908,9 +908,7 @@ int former_move(int id) {
         (
             (veh->move_status >= 4 && veh->move_status < 24)
             ||
-//            (triad != TRIAD_LAND && !at_target(veh))
-            // [WtP] do not disturb former in transit any kind including land ones
-            !at_target(veh)
+            (triad != TRIAD_LAND && !at_target(veh))
         )
         {
             return SYNC;
@@ -1072,5 +1070,10 @@ int combat_move(int id) {
         return escape_move(id);
     }
     return tx_enemy_move(id);
+}
+
+bool isSafe(int x, int y)
+{
+	return pm_safety[x][y] >= PM_SAFE;
 }
 

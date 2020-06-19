@@ -38,14 +38,20 @@ const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 
 struct TERRAFORMING_OPTION
 {
+	// recognizable name
+	const char *name;
 	// land or sea
 	bool sea;
 	// applies to rocky tile only
 	bool rocky;
-	// modifies yield
+	// area effect
+	bool area;
+	// requires base yield computation
 	bool yield;
-	// do not evaluate until last action is available
-	bool lastActionRequired;
+	// ignores this option until technology for first action is available
+	bool firstActionRequired;
+	// marks competing terraforming options around same base
+	bool ranked;
 	std::vector<int> actions;
 };
 
@@ -55,20 +61,30 @@ AI terraforming options
 const std::vector<TERRAFORMING_OPTION> TERRAFORMING_OPTIONS =
 {
 	// land
-	{false, true , true , false, {FORMER_MINE, FORMER_ROAD}},							// 00
-	{false, false, true , false, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}}, 			// 01
-	{false, false, true , false, {FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},			// 02
-	{false, false, true , true , {FORMER_FARM, FORMER_SOIL_ENR, FORMER_CONDENSER}},		// 03
-	{false, false, true , true , {FORMER_FARM, FORMER_SOIL_ENR, FORMER_ECH_MIRROR}},	// 04
-	{false, false, true , true , {FORMER_THERMAL_BORE}},								// 05
-	{false, false, true , false, {FORMER_FOREST}},										// 06
-	{false, false, true , true , {FORMER_PLANT_FUNGUS}},								// 07
-	{false, false, true , true , {FORMER_AQUIFER}},										// 08
-	{false, false, false, false, {FORMER_ROAD}},										// 09
-	{false, false, false, true , {FORMER_MAGTUBE}},										// 10
+	{"rocky mine", false, true , false, true , false, true , {FORMER_MINE, FORMER_ROAD}},								// 00
+	{"mine"      , false, false, false, true , false, true , {FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE, FORMER_ROAD}},	// 01
+	{"collector" , false, false, false, true , false, true , {FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},				// 02
+	{"condenser" , false, false, true , true , true , false, {FORMER_CONDENSER, FORMER_FARM, FORMER_SOIL_ENR}},			// 03
+	{"mirror"    , false, false, true , true , true , false, {FORMER_ECH_MIRROR, FORMER_FARM, FORMER_SOIL_ENR}},		// 04
+	{"borehole"  , false, false, false, true , true , true , {FORMER_THERMAL_BORE}},									// 05
+	{"forest"    , false, false, false, true , false, true , {FORMER_FOREST}},											// 06
+	{"fungus"    , false, false, false, true , true , true , {FORMER_PLANT_FUNGUS}},									// 07
+	{"aquifer"   , false, false, true , false, true , false, {FORMER_AQUIFER}},											// 08
+	{"road"      , false, false, false, false, false, false, {FORMER_ROAD}},											// 09
+	{"tube"      , false, false, false, false, true , false, {FORMER_MAGTUBE}},											// 10
 	// sea
-	{true , false, true , false, {FORMER_FARM, FORMER_MINE}},							// 11
-	{true , false, true , false, {FORMER_FARM, FORMER_SOLAR}},							// 12
+	{"platform"  , true , false, false, true , false, true , {FORMER_FARM, FORMER_MINE}},								// 11
+	{"harness"   , true , false, false, true , false, true , {FORMER_FARM, FORMER_SOLAR}},								// 12
+};
+
+/**
+Prohibits building improvements too close to each other or existing improvements.
+*/
+const std::unordered_map<int, int> PROXIMITY_RULES =
+{
+	{FORMER_CONDENSER, 2},
+	{FORMER_THERMAL_BORE, 1},
+	{FORMER_AQUIFER, 1},
 };
 
 struct MAP_INFO
@@ -100,7 +116,7 @@ struct VEHICLE_INFO
 	VEH *vehicle;
 };
 
-struct TERRAFORMING_STATE
+struct MAP_STATE
 {
     byte climate;
     byte rocks;
@@ -118,10 +134,11 @@ struct FORMER_ORDER
 
 struct TERRAFORMING_SCORE
 {
-	bool yield = false;
 	BASE *base = NULL;
+	const TERRAFORMING_OPTION *option = NULL;
 	int action = -1;
-	double score = -DBL_MAX;
+	double score = 0.0;
+	bool ranked = false;
 };
 
 struct TERRAFORMING_REQUEST
@@ -129,9 +146,10 @@ struct TERRAFORMING_REQUEST
 	int x;
 	int y;
 	MAP *tile;
-	bool yield;
+	const TERRAFORMING_OPTION *option;
 	int action;
 	double score;
+	bool ranked;
 	int rank;
 };
 
@@ -140,7 +158,36 @@ struct AFFECTED_BASE_SET
 	std::set<BASE_INFO> affectedBaseSets[2];
 };
 
-void ai_strategy(int id);
+struct PATH_ELEMENT
+{
+	int x;
+	int y;
+	MAP *tile;
+	bool zoc;
+	int movementPoints;
+	int firstStepX;
+	int firstStepY;
+	bool zocEncountered;
+};
+
+struct YIELD
+{
+	int nutrient;
+	int mineral;
+	int energy;
+};
+
+/**
+These terraforming orders affect base terraforming rank.
+*/
+const std::unordered_set<int> yieldTerraformingOrders = {ORDER_FARM, ORDER_SOIL_ENRICHER, ORDER_MINE, ORDER_SOLAR_COLLECTOR, ORDER_PLANT_FOREST, ORDER_REMOVE_FUNGUS, ORDER_PLANT_FUNGUS, ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_THERMAL_BOREHOLE, ORDER_DRILL_AQUIFIER, ORDER_TERRAFORM_LEVEL};
+
+/**
+These terraforming orders affect surrounding tiles.
+*/
+const std::unordered_set<int> wideRangeTerraformingOrders = {ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_DRILL_AQUIFIER};
+
+void ai_moveUpkeep(int id);
 void prepareFormerOrders();
 void populateLists();
 void generateTerraformingRequests();
@@ -152,19 +199,21 @@ void assignFormerOrders();
 void optimizeFormerDestinations();
 void finalizeFormerOrders();
 int enemyMoveFormer(int vehicleId);
-void setFormerOrder(FORMER_ORDER *formerOrder);
+void setFormerOrder(int id, VEH *vehicle, FORMER_ORDER *formerOrder);
 void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore);
-void calculateYieldImprovementScore(MAP_INFO *mapInfo, int affectedRange, TERRAFORMING_STATE currentLocalTerraformingState[9], TERRAFORMING_STATE improvedLocalTerraformingState[9], TERRAFORMING_SCORE *terraformingScore);
+void calculateYieldImprovementScore(MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState, TERRAFORMING_SCORE *terraformingScore);
 bool isOwnWorkableTile(int x, int y);
-bool isTerraformingCompleted(int x, int y, int action);
+bool isTerraformingCompleted(MAP_INFO *mapInfo, int action);
 bool isTerraformingAvailable(int x, int y, int action);
 bool isTerraformingRequired(MAP *tile, int action);
 bool isRemoveFungusRequired(int action);
 bool isLevelTerrainRequired(int action);
-void generateTerraformingChange(TERRAFORMING_STATE *terraformingState, int action);
+void generateTerraformingChange(MAP_STATE *mapState, int action);
 bool isVehicleTerraforming(int vehicleId);
+bool isVehicleSupply(VEH *vehicle);
 bool isVehicleFormer(VEH *vehicle);
 bool isTileTargettedByVehicle(VEH *vehicle, MAP *tile);
+bool isVehicleConvoying(VEH *vehicle);
 bool isVehicleTerraforming(VEH *vehicle);
 bool isVehicleMoving(VEH *vehicle);
 MAP *getVehicleDestination(VEH *vehicle);
@@ -176,14 +225,13 @@ bool isVehicleTargetingTile(int vehicleId, int x, int y);
 void computeBase(int baseId);
 void setTerraformingAction(int vehicleId, int action);
 void buildImprovement(int vehicleId);
-void sendVehicleToDestination(int vehicleId, int x, int y);
+bool sendVehicleToDestination(int id, int x, int y);
+bool isNearbyCondeserUnderConstruction(int x, int y);
 bool isAdjacentBoreholePresentOrUnderConstruction(int x, int y);
 bool isAdjacentRiverPresentOrUnderConstruction(int x, int y);
-void storeLocalTerraformingState(int x, int y, TERRAFORMING_STATE localTerraformingState[9]);
-void setLocalTerraformingState(int x, int y, TERRAFORMING_STATE localTerraformingState[9]);
-void copyLocalTerraformingState(TERRAFORMING_STATE sourceLocalTerraformingState[9], TERRAFORMING_STATE destinationLocalTerraformingState[9]);
-void increaseMoistureAround(TERRAFORMING_STATE localTerraformingState[9]);
-void createRiversAround(TERRAFORMING_STATE localTerraformingState[9]);
+void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
+void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
+void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState);
 int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle);
 int getBaseTerraformingRank(BASE *base);
 BASE *findAffectedBase(int x, int y);
@@ -196,5 +244,14 @@ bool isTowardBaseVertical(int x, int y, int dySign);
 MAP *getMapTile(int x, int y);
 int getTerraformingRegion(int region);
 bool isBaseWorkedTile(BASE *base, int x, int y);
+double calculateLostOpportunityPenalty(MAP_INFO *mapInfo, const std::vector<int> *vectorActions);
+bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::iterator begin, std::vector<TERRAFORMING_REQUEST>::iterator end, int action, int x, int y, int range);
+double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo);
+double estimateEchelonMirrorExtraYieldScore(MAP_INFO *mapInfo);
+double calculateEchelonMirrorRemovalScore(MAP_INFO *mapInfo);
+double estimateAquiferExtraYieldScore(MAP_INFO *mapInfo);
+void findPathStep(int id, int x, int y, MAP_INFO *step);
+bool isInferiorYield(std::vector<YIELD> *yields, int nutrient, int mineral, int energy, std::vector<YIELD>::iterator *self);
+double calculateYieldWeightedScore(double nutrientDemand, double mineralDemand, int nutrient, int mineral, int energy);
 
 #endif // __AI_H__

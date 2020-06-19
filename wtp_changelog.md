@@ -342,6 +342,8 @@ Initial release. See list of changes in readme.
 * Copy basic units to player unit pool.
 * Don't display basic units in design workshop.
 
+* Prototype only new component, not the whole unit.
+
 ## AI
 
 * Control transports better.

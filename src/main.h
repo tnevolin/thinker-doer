@@ -31,7 +31,6 @@
 #define DLL_EXPORT extern "C" __declspec(dllexport)
 #define HOOK_API extern "C"
 
-#include <vector>
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -42,6 +41,9 @@
 #include <algorithm>
 #include <set>
 #include <stdexcept>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
 #include "terranx.h"
 
 typedef std::set<std::pair<int,int>> Points;
@@ -157,7 +159,11 @@ struct Config {
 	double ai_terraforming_networkWildExtensionValue;
 	double ai_terraforming_nearbyForestKelpPenalty;
 	double ai_terraforming_completionBonus;
-	double ai_terraforming_rankPenalty;
+	double ai_terraforming_rankMultiplier;
+	double ai_terraforming_exclusivityMultiplier;
+	double ai_terraforming_baseNutrientThresholdRatio;
+	double ai_terraforming_baseNutrientDemandMultiplier;
+	double ai_terraforming_baseMineralThresholdRatio;
 
 };
 

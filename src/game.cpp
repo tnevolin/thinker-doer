@@ -690,3 +690,53 @@ bool vehicle_has_ability(VEH *vehicle, int ability) {
     return tx_units[vehicle->proto_id].ability_flags & ability;
 }
 
+int map_rainfall(MAP *tile) {
+	int rainfall;
+	if (tile->level & TILE_MOIST) {
+		rainfall = 1;
+	}
+	else if (tile->level & TILE_RAINY) {
+		rainfall = 2;
+	}
+	else {
+		rainfall = 0;
+	}
+	return rainfall;
+}
+
+int map_level(MAP *tile) {
+	return tile->level >> 5;
+}
+
+int map_elevation(MAP *tile) {
+	return map_level(tile) - LEVEL_SHORE_LINE;
+}
+
+int map_rockiness(MAP *tile) {
+	return ((tile->rocks & TILE_ROCKY) ? 2 : ((tile->rocks & TILE_ROLLING) ? 1 : 0));
+}
+
+/**
+Safe check for tile having base.
+NULL pointer returns false.
+*/
+bool map_base(MAP *tile) {
+	return (tile && (tile->items & TERRA_BASE_IN_TILE));
+}
+
+/**
+Safe check for tile having item.
+NULL pointer returns false.
+*/
+bool map_has_item(MAP *tile, int item) {
+	return (tile && (tile->items & item));
+}
+
+/**
+Safe check for tile having landmark.
+NULL pointer returns false.
+*/
+bool map_has_landmark(MAP *tile, int landmark) {
+	return (tile && (tile->landmarks & landmark));
+}
+
