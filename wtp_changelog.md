@@ -1,3 +1,7 @@
+# Version 67
+
+* New AI terraforming algorithm. Off by default. Enable it to try it out.
+
 # Version 66
 
 * Borehole Square,  0, 2, 8, 0. Construction time is down to 18. Compensation for reduced mineral output.
