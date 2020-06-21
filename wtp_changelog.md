@@ -1,6 +1,7 @@
 # Version 66
 
 * Borehole Square,  0, 2, 8, 0. Added some energy to it instead of reduced mineral output. Should compensate for its longest construction time.
+* Hab Complex and Habitation Dome maintenance is removed completely. I don't see much sense it paying for essencial facilities everybody has.
 
 # Version 65
 
