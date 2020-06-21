@@ -437,7 +437,7 @@ MORALE had a balanced scale by itself but morale facilities can easily raise uni
 
 About the same story with PROBE and Covert ops center. Even though it is just one +2 facility the PROBE scale is shorter as well. SE provides +2 PROBE max only.
 
-# Terraforming and land improvements
+# Terraforming and yield
 
 ## Yield restrictions
 
@@ -447,7 +447,7 @@ I guess this was a blind copy of Civ 1 Despotism restrictions. Despotism reduces
 
 ## Forest
 
-Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with combined yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 12 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
+Many people before me mentioned overpowed forest. Indeed, it is capable of turning dry and barren 0-0-0 terrain into 1-2-1 adding 4 resourses in 4 turns with combined yield comparable to rocky mine. It is just insane terraforming effectiveness. As if this is not enough it spreads by itself = zero further investments. It is pretty nice option for poor bases but it should cost more than mine to be not the-only-viable-option. Currently I set its terraforming time to 8 and reduced yield to 1-2-0 to make it just enough helpful option for barren land bases but not too much to beat rocky mine.
 
 ## Fungus production
 
@@ -459,7 +459,7 @@ Get it to at least 1-1-0 yield relatively early in the game to allow minimal sup
 Focus on energy yield in the mid game to compliment forest instead of competing with it.
 Use green/alien technologies for fungus production to streamline research priorities for green/PLANET factions.
 
-| technology | level | fungus production | cumulative yield | comment |
+| technology | level | effect | cumulative yield | comment |
 |----|----:|----|----|----|
 | Centauri Ecology | 1 | +1 nutrient | 1-0-0 |
 | Progenitor Psych | 1 | +1 energy | 1-0-1 | reassigned |
@@ -474,7 +474,7 @@ Use green/alien technologies for fungus production to streamline research priori
 
 Introduced *Sensor Buoy* on sea similar to *Sensor Array* on land. Copied from SMAniaC mod. They do not confer defense bonus but they increase visibility which is very important to track fast moving ships in your territory and around.
 
-# Other changes
+# Miscelaneous
 
 ## Special weapon and armor
 
@@ -522,9 +522,33 @@ These abilities do not improve unit properties directly. Instead they essentiall
 
 Adjusted summary strength and power lines to the bottom in battle computation display. This way it is easier to read and compare them between attacker and defender.
 
-## F4 screen lables
+## F4 screen labels
 
 Shortened some labels in F4 screen to fit longer base names and avoid line wrapping.
+
+## F4 screen markers
+
+Added **<P>** suffix to bases in need of population growth limit facility.
+
+# AI Terraforming
+
+New AI terraforming algorithm replacing Thinker's. These are few notable changes among many.
+
+* Works best tiles first.
+* Properly selects best basic improvement option between rocky mine, farm-mine, farm-collector, forest.
+* Quickly connects new bases to road network.
+* Tries to prevent population loss by emphasizing nutrient development around poorly fed bases.
+* Tends not to build forest/kelp and not to remove fungus next to existing forest/kelp due to its potential spreading.
+* Properly places aquifer 2 squares from existing rivers to maximize river coverage.
+* Properly places condenser to match existing rainfall pattern to maximize rainfall coverage.
+* Properly evaluates additional benefit of condenser/mirror to be used by nearby bases.
+* Prefers better improvement with equal completion time (construction + travel).
+* Prefers quicker improvement with equal benefit (shorter construction time + less travel).
+* Redistributes former orders to minimize construction + travel time. Takes former abilities (fungicide, super) and speed into account.
+* Checks existing improvements and don't build more of them if equal of better one is still unused around base.
+
+* Doesn't plant fungus.
+* Doesn't raise/lower terrain.
 
 # Appendix
 
