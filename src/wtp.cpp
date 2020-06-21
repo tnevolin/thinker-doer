@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
 #include "wtp.h"
+#include "main.h"
+#include "patch.h"
 
 /**
 Combat calculation placeholder.
@@ -1281,6 +1284,15 @@ int map_distance(int x1, int y1, int x2, int y2)
 }
 
 /**
+Verifies two locations are within the base radius of each other.
+*/
+bool isWithinBaseRadius(int x1, int y1, int x2, int y2)
+{
+	return map_distance(x1, y1, x2, y2) <= 2;
+
+}
+
+/**
 Rolls artillery damage.
 */
 HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower)
@@ -1584,6 +1596,140 @@ int wtp_tech_cost(int fac, int tech) {
         base, dw, cost, level, tech, (tech >= 0 ? tx_techs[tech].name : NULL));
 
     return max(2, (int)cost);
+
+}
+
+HOOK_API int sayBase(char *buffer, int id)
+{
+	// execute original code
+
+	int returnValue = tx_say_base(buffer, id);
+
+	// get base
+
+	BASE *base = &(tx_bases[id]);
+
+	// get base population limit
+
+	int populationLimit = getBasePopulationLimit(base);
+
+	// generate symbol
+
+	char symbol[10] = "   <P>";
+
+	if (populationLimit != -1 && base->pop_size >= populationLimit)
+	{
+		strcat(buffer, symbol);
+	}
+
+	// return original value
+
+	return returnValue;
+
+}
+
+bool isBaseFacilityBuilt(BASE *base, int facilityId)
+{
+	return (base->facilities_built[facilityId / 8]) & (1 << (facilityId % 8));
+}
+
+int getBasePopulationLimit(BASE *base)
+{
+    int pop_rule = tx_metafactions[base->faction_id].rule_population;
+    int hab_complex_limit = tx_basic->pop_limit_wo_hab_complex - pop_rule;
+    int hab_dome_limit = tx_basic->pop_limit_wo_hab_dome - pop_rule;
+
+    bool habitationComplexBuilt = isBaseFacilityBuilt(base, FAC_HAB_COMPLEX);
+    bool habitationDomeBuilt = isBaseFacilityBuilt(base, FAC_HABITATION_DOME);
+
+    if (habitationDomeBuilt)
+	{
+		return -1;
+	}
+	else if (habitationComplexBuilt)
+	{
+		return hab_dome_limit;
+	}
+	else
+	{
+		return hab_complex_limit;
+	}
+
+}
+
+/**
+Checks if we need to refit to population growth facility instead.
+*/
+int refitToGrowthFacility(int id, BASE *base, int choice)
+{
+	// growth facility is already chosen
+
+	if (choice == -FAC_HAB_COMPLEX || choice == -FAC_HABITATION_DOME)
+		return choice;
+
+	// get next growth facility
+
+	int nextAvailableGrowthFacility = getnextAvailableGrowthFacility(base);
+
+	// skip if no next growth facility is available
+
+	if (nextAvailableGrowthFacility == -1)
+		return choice;
+
+	// get base population limit
+
+	int populationLimit = getBasePopulationLimit(base);
+
+	// don't refit if there is no limit
+	// this is kinda redundant since we have already asserted there is a growth facility to built
+
+	if (populationLimit == -1)
+		return choice;
+
+	// don't refit if 4 people below limit
+	// this is to prevent some low mineral bases from building it at size 1
+
+	if (base->pop_size <= (populationLimit - 4))
+		return choice;
+
+	// calculate turns to reach the limit
+
+	double turnsToLimit = (double)(((populationLimit + 1 - base->pop_size) * (base->pop_size + 1) * tx_cost_factor(base->faction_id, 0, id)) - base->nutrients_accumulated) / (double)base->nutrient_surplus;
+
+	// calculate turns to build current production and growth facility
+
+	double turnsToBuild = (double)(mineral_cost(base->faction_id, choice) + mineral_cost(base->faction_id, -nextAvailableGrowthFacility) - base->minerals_accumulated) / (double)base->mineral_surplus;
+
+	// return growth facility if we cannot build current production until population limit is reached
+
+	if (turnsToBuild >= turnsToLimit)
+	{
+		return -nextAvailableGrowthFacility;
+	}
+	else
+	{
+		return choice;
+	}
+
+}
+
+/**
+Return next unbuilt growth facility or -1 if there is no next available facility.
+*/
+int getnextAvailableGrowthFacility(BASE *base)
+{
+	if (!isBaseFacilityBuilt(base, FAC_HAB_COMPLEX))
+	{
+		return (has_tech(base->faction_id, tx_facility[FAC_HAB_COMPLEX].preq_tech) ? FAC_HAB_COMPLEX : -1);
+	}
+	else if (!isBaseFacilityBuilt(base, FAC_HABITATION_DOME))
+	{
+		return (has_tech(base->faction_id, tx_facility[FAC_HABITATION_DOME].preq_tech) ? FAC_HABITATION_DOME : -1);
+	}
+	else
+	{
+		return -1;
+	}
 
 }
 

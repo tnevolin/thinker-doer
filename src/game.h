@@ -55,6 +55,8 @@ int prod_count(int faction, int id, int skip);
 int find_hq(int faction);
 int veh_triad(int id);
 int veh_speed(int id);
+int veh_speed_without_roads(int id);
+int veh_chassis_speed(int id);
 int unit_triad(int id);
 int unit_speed(int id);
 int best_armor(int faction, bool cheap);
@@ -73,12 +75,14 @@ MAP* mapsq(int x, int y);
 int unit_in_tile(MAP* sq);
 int set_move_to(int id, int x, int y);
 int set_road_to(int id, int x, int y);
+int set_move_road_tube_to(int id, int x, int y);
 int set_action(int id, int act, char icon);
 int set_convoy(int id, int res);
 int veh_skip(int id);
 bool at_target(VEH* veh);
 bool is_ocean(MAP* sq);
 bool is_ocean_shelf(MAP* sq);
+bool is_ocean_deep(MAP* sq);
 bool is_sea_base(int id);
 bool workable_tile(int x, int y, int faction);
 bool has_defenders(int x, int y, int faction);
@@ -92,6 +96,13 @@ void check_zeros(int* ptr, int len);
 void print_map(int x, int y);
 void print_veh(int id);
 void print_base(int id);
+int map_rainfall(MAP *tile);
+int map_level(MAP *tile);
+int map_elevation(MAP *tile);
+int map_rockiness(MAP *tile);
+bool map_base(MAP *tile);
+bool map_has_item(MAP *tile, int item);
+bool map_has_landmark(MAP *tile, int landmark);
 
 struct PathNode {
     int x;
@@ -122,4 +133,8 @@ class TileSearch {
 BASE *vehicle_home_base(VEH *vehicle);
 MAP *base_square(BASE *base);
 bool vehicle_has_ability(VEH *vehicle, int ability);
+const char *readOrder(int id);
+void setBaseFacility(int base_id, int facility_id, bool add);
+bool has_facility_tech(int faction_id, int facility_id);
+int getDoctorQuelledDrones(int id);
 

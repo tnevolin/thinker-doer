@@ -41,6 +41,9 @@
 #include <algorithm>
 #include <set>
 #include <stdexcept>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
 #include "terranx.h"
 
 typedef std::set<std::pair<int,int>> Points;
@@ -144,6 +147,26 @@ struct Config {
     int territory_combat_bonus = 0;
     int tube_movement_rate_multiplier = 0;
     int road_movement_cost = 0;
+    bool ai_useWTPAlgorithms;
+    double ai_terraforming_resourceLifetime;
+    double ai_terraforming_nutrientWeight;
+    double ai_terraforming_mineralWeight;
+	double ai_terraforming_energyWeight;
+	double ai_terraforming_landDistanceScale;
+	double ai_terraforming_waterDistanceScale;
+	double ai_terraforming_networkConnectionValue;
+	double ai_terraforming_networkImprovementValue;
+	double ai_terraforming_networkBaseExtensionValue;
+	double ai_terraforming_networkWildExtensionValue;
+	double ai_terraforming_networkCoverageThreshold;
+	double ai_terraforming_nearbyForestKelpPenalty;
+	double ai_terraforming_completionBonus;
+	double ai_terraforming_rankMultiplier;
+	double ai_terraforming_exclusivityMultiplier;
+	double ai_terraforming_baseNutrientThresholdRatio;
+	double ai_terraforming_baseNutrientDemandMultiplier;
+	double ai_terraforming_baseMineralThresholdRatio;
+
 };
 
 /*
@@ -189,6 +212,7 @@ HOOK_API int social_ai(int faction, int v1, int v2, int v3, int v4, int v5);
 int need_defense(int id);
 int need_psych(int id);
 int consider_hurry(int id);
+int hurry_item(BASE* b, int mins, int cost);
 int find_project(int id);
 int find_facility(int id);
 int select_prod(int id);

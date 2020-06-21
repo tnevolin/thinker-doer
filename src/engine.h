@@ -50,6 +50,7 @@ extern int* sunspot_duration;
 extern int* diplo_active_faction;
 extern int* diplo_current_friction;
 extern int* diplo_opponent_faction;
+extern char *g_strTEMP;
 
 extern fp_3int* capture_base;
 extern fp_1int* base_kill;
@@ -62,6 +63,8 @@ extern tc_2int* font_width;
 extern tc_4int* buffer_box;
 extern tc_3int* buffer_fill3;
 extern tc_5int* buffer_write_l;
+extern fp_void_charp_int *say_orders;
+extern fp_1void *say_orders2;
 
 HOOK_API int faction_upkeep(int faction);
 

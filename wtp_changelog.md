@@ -335,13 +335,25 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Move Hab complex/dome even more earlier.
+
 * Centauri Empathy enables Empath Song.
 * Secrets of the Manifolds enables The Manifold Harmonics.
 * Nerf specialists.
 * Reduce production multipliers.
+
+* Air unit should not excert ZOC.
+* Air unit should not cover surface unit.
+
 * Make AI build more units, defensive structures, sensors.
 * Rework probe team success rates.
 * Cloning Vats should not grant impunities.
 * Copy basic units to player unit pool.
 * Don't display basic units in design workshop.
+
+* Prototype only new component, not the whole unit.
+
+## AI
+
+* Control transports better.
 
