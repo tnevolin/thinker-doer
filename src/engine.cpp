@@ -40,6 +40,7 @@ int* sunspot_duration = (int*)0x9A6800;
 int* diplo_active_faction = (int*)0x93F7CC;
 int* diplo_current_friction = (int*)0x93FA74;
 int* diplo_opponent_faction = (int*)0x8A4164;
+char *g_strTEMP = (char *)0x009B86A0;
 
 fp_1int* social_upkeep = (fp_1int*)0x5B44D0;
 fp_1int* repair_phase = (fp_1int*)0x526030;
@@ -67,7 +68,8 @@ tc_2int* font_width = (tc_2int*)0x619280;
 tc_4int* buffer_box = (tc_4int*)0x5E3203;
 tc_3int* buffer_fill3 = (tc_3int*)0x5DFCD0;
 tc_5int* buffer_write_l = (tc_5int*)0x5DCEA0;
-
+fp_void_charp_int *say_orders = (fp_void_charp_int *)0x4B43E0;
+fp_1void *say_orders2 = (fp_1void *)0x004B4970;
 
 bool victory_done() {
     // TODO: Check for scenario victory conditions

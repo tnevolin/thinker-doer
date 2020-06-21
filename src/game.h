@@ -133,4 +133,8 @@ class TileSearch {
 BASE *vehicle_home_base(VEH *vehicle);
 MAP *base_square(BASE *base);
 bool vehicle_has_ability(VEH *vehicle, int ability);
+const char *readOrder(int id);
+void setBaseFacility(int base_id, int facility_id, bool add);
+bool has_facility_tech(int faction_id, int facility_id);
+int getDoctorQuelledDrones(int id);
 

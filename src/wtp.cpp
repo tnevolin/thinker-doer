@@ -1686,6 +1686,12 @@ int refitToGrowthFacility(int id, BASE *base, int choice)
 	if (populationLimit == -1)
 		return choice;
 
+	// don't refit if 4 people below limit
+	// this is to prevent some low mineral bases from building it at size 1
+
+	if (base->pop_size <= (populationLimit - 4))
+		return choice;
+
 	// calculate turns to reach the limit
 
 	double turnsToLimit = (double)(((populationLimit + 1 - base->pop_size) * (base->pop_size + 1) * tx_cost_factor(base->faction_id, 0, id)) - base->nutrients_accumulated) / (double)base->nutrient_surplus;

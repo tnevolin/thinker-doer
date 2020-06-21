@@ -55,10 +55,8 @@ struct TERRAFORMING_OPTION
 	std::vector<int> actions;
 };
 
-/**
-AI terraforming options
-*/
-const std::vector<TERRAFORMING_OPTION> TERRAFORMING_OPTIONS =
+// regular terraforming options
+const std::vector<TERRAFORMING_OPTION> REGULAR_TERRAFORMING_OPTIONS =
 {
 	// land
 	{"rocky mine", false, true , false, true , false, true , {FORMER_MINE, FORMER_ROAD}},								// 00
@@ -67,14 +65,23 @@ const std::vector<TERRAFORMING_OPTION> TERRAFORMING_OPTIONS =
 	{"condenser" , false, false, true , true , true , false, {FORMER_CONDENSER, FORMER_FARM, FORMER_SOIL_ENR}},			// 03
 	{"mirror"    , false, false, true , true , true , false, {FORMER_ECH_MIRROR, FORMER_FARM, FORMER_SOIL_ENR}},		// 04
 	{"borehole"  , false, false, false, true , true , true , {FORMER_THERMAL_BORE}},									// 05
-	{"forest"    , false, false, false, true , false, true , {FORMER_FOREST}},											// 06
+	{"forest"    , false, false, false, true , true , true , {FORMER_FOREST}},											// 06
 	{"fungus"    , false, false, false, true , true , true , {FORMER_PLANT_FUNGUS}},									// 07
-	{"aquifer"   , false, false, true , false, true , false, {FORMER_AQUIFER}},											// 08
-	{"road"      , false, false, false, false, false, false, {FORMER_ROAD}},											// 09
-	{"tube"      , false, false, false, false, true , false, {FORMER_MAGTUBE}},											// 10
 	// sea
 	{"platform"  , true , false, false, true , false, true , {FORMER_FARM, FORMER_MINE}},								// 11
 	{"harness"   , true , false, false, true , false, true , {FORMER_FARM, FORMER_SOLAR}},								// 12
+};
+// aquifer
+const std::vector<TERRAFORMING_OPTION> AQUIFER_TERRAFORMING_OPTIONS =
+{
+	// land
+	{"aquifer"   , false, false, true , true , true , false, {FORMER_AQUIFER}},											// 08
+};
+// network
+const std::vector<TERRAFORMING_OPTION> NETWORK_TERRAFORMING_OPTIONS =
+{
+	// land
+	{"road/tube" , false, false, false, false, true , false, {FORMER_ROAD, FORMER_MAGTUBE}},											// 10
 };
 
 /**
@@ -192,15 +199,18 @@ void prepareFormerOrders();
 void populateLists();
 void generateTerraformingRequests();
 void generateTerraformingRequest(MAP_INFO *mapInfo);
-bool compareBaseTerraformingRequests(TERRAFORMING_REQUEST terraformingRequest1,TERRAFORMING_REQUEST terraformingRequest2);
+bool compareTerraformingRequests(TERRAFORMING_REQUEST terraformingRequest1,TERRAFORMING_REQUEST terraformingRequest2);
 void sortBaseTerraformingRequests();
+bool compareRankedTerraformingRequests(TERRAFORMING_REQUEST terraformingRequest1, TERRAFORMING_REQUEST terraformingRequest2);
 void rankTerraformingRequests();
 void assignFormerOrders();
 void optimizeFormerDestinations();
 void finalizeFormerOrders();
 int enemyMoveFormer(int vehicleId);
 void setFormerOrder(int id, VEH *vehicle, FORMER_ORDER *formerOrder);
-void calculateTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore);
+void calculateRegularTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore);
+void calculateAquiferTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore);
+void calculateNetworkTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore);
 void calculateYieldImprovementScore(MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState, TERRAFORMING_SCORE *terraformingScore);
 bool isOwnWorkableTile(int x, int y);
 bool isTerraformingCompleted(MAP_INFO *mapInfo, int action);
@@ -244,7 +254,7 @@ bool isTowardBaseVertical(int x, int y, int dySign);
 MAP *getMapTile(int x, int y);
 int getTerraformingRegion(int region);
 bool isBaseWorkedTile(BASE *base, int x, int y);
-double calculateLostOpportunityPenalty(MAP_INFO *mapInfo, const std::vector<int> *vectorActions);
+double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *actions);
 bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::iterator begin, std::vector<TERRAFORMING_REQUEST>::iterator end, int action, int x, int y, int range);
 double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo);
 double estimateEchelonMirrorExtraYieldScore(MAP_INFO *mapInfo);
@@ -252,6 +262,6 @@ double calculateEchelonMirrorRemovalScore(MAP_INFO *mapInfo);
 double estimateAquiferExtraYieldScore(MAP_INFO *mapInfo);
 void findPathStep(int id, int x, int y, MAP_INFO *step);
 bool isInferiorYield(std::vector<YIELD> *yields, int nutrient, int mineral, int energy, std::vector<YIELD>::iterator *self);
-double calculateYieldWeightedScore(double nutrientDemand, double mineralDemand, int nutrient, int mineral, int energy);
+double calculateYieldWeightedScore(double nutrientDemand, double mineralDemand, double nutrient, double mineral, double energy);
 
 #endif // __AI_H__

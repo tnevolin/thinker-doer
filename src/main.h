@@ -157,6 +157,7 @@ struct Config {
 	double ai_terraforming_networkImprovementValue;
 	double ai_terraforming_networkBaseExtensionValue;
 	double ai_terraforming_networkWildExtensionValue;
+	double ai_terraforming_networkCoverageThreshold;
 	double ai_terraforming_nearbyForestKelpPenalty;
 	double ai_terraforming_completionBonus;
 	double ai_terraforming_rankMultiplier;

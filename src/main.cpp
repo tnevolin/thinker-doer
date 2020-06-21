@@ -268,6 +268,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_networkWildExtensionValue = atof(value);
     }
+    else if (MATCH("wtp", "ai_terraforming_networkCoverageThreshold"))
+    {
+        cf->ai_terraforming_networkCoverageThreshold = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_nearbyForestKelpPenalty"))
     {
         cf->ai_terraforming_nearbyForestKelpPenalty = atof(value);
@@ -386,7 +390,7 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
         tx_base_compute(1);
         if ((choice = need_psych(id)) != 0 && choice != prod) {
             debug("BUILD PSYCH\n");
-        } else if (base->status_flags & BASE_PRODUCTION_DONE) {
+        } else if (base->status_flags & BASE_PRODUCTION_DONE || prod == -FAC_STOCKPILE_ENERGY) {
             choice = select_prod(id);
             base->status_flags &= ~BASE_PRODUCTION_DONE;
         } else if (prod >= 0 && !can_build_unit(faction, prod)) {
@@ -822,9 +826,24 @@ int need_psych(int id) {
     int faction = b->faction_id;
     int unit = unit_in_tile(mapsq(b->x, b->y));
     Faction* f = &tx_factions[faction];
+
+	// calculate number of drones quelled by doctor/empath/transcend
+	// this will be added to total number of drones to determine need for psych facility
+
+	int doctorQuelledDrones = getDoctorQuelledDrones(id);
+
+	// calculate current production time and extra population grown by that time
+	// this extra population also will be added to drones to determine need for psych facility
+
+	int mineralCost = mineral_cost(faction, b->queue_items[0]);
+	int productionTime = (mineralCost - b->minerals_accumulated) / max(1, b->mineral_surplus) + 1;
+	int nutrientProduced = b->nutrients_accumulated + b->nutrient_surplus * productionTime;
+	int nutrientBoxSize = (b->pop_size + 1) * tx_cost_factor(faction, 0, id);
+	int extraPopulation = nutrientProduced / nutrientBoxSize;
+
     if (unit != faction || b->nerve_staple_turns_left > 0 || has_project(faction, FAC_TELEPATHIC_MATRIX))
         return 0;
-    if (b->drone_total > b->talent_total) {
+    if ((b->drone_total + doctorQuelledDrones + extraPopulation) > b->talent_total) {
         if (b->nerve_staple_count < 3 && !un_charter() && f->SE_police >= 0 && b->pop_size >= 4
         && b->faction_id_former == faction) {
             tx_action_staple(id);
@@ -834,8 +853,8 @@ int need_psych(int id) {
             return -FAC_RECREATION_COMMONS;
         if (has_project(faction, FAC_VIRTUAL_WORLD) && can_build(id, FAC_NETWORK_NODE))
             return -FAC_NETWORK_NODE;
-        if (!b->assimilation_turns_left && b->pop_size >= 6 && b->energy_surplus >= 12
-        && can_build(id, FAC_HOLOGRAM_THEATRE))
+        if (/*!b->assimilation_turns_left && b->pop_size >= 6 && b->energy_surplus >= 12
+        && */can_build(id, FAC_HOLOGRAM_THEATRE))
             return -FAC_HOLOGRAM_THEATRE;
     }
     return 0;

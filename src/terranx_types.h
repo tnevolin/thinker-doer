@@ -309,9 +309,9 @@ struct Faction {
     int turn_commerce_income;
     int unk_17;
     int unk_18;                     // 0x0310
-    int tech_fungus_nutrient;
-    int tech_fungus_mineral;
-    int tech_fungus_energy;
+    int tech_fungus_nutrient;		// 0x0314
+    int tech_fungus_mineral;		// 0x0318
+    int tech_fungus_energy;			// 0x031C
     int unk_22;                     // 0x0320
     int SE_alloc_psych;
     int SE_alloc_labs;
