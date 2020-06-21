@@ -129,7 +129,7 @@ Fungus,           None,    Sea Fungus,       None,     6,  Remove $STR0,    F, F
 Fungus,           EcoEng,  Sea Fungus,       EcoEng,   6,  Plant $STR0,     F, Ctrl+F
 Condenser,        EcoEng,  Condenser,        Disable, 12,  Construct $STR0, N, N
 Echelon Mirror,   EcoEng,  Echelon Mirror,   Disable, 12,  Construct $STR0, E, Shift+E
-Thermal Borehole, EcoEng,  Thermal Borehole, Disable, 24,  Construct $STR0, B, Shift+B
+Thermal Borehole, EcoEng,  Thermal Borehole, Disable, 18,  Construct $STR0, B, Shift+B
 Aquifer,          EcoEng,  Aquifer,          Disable, 18,  Drill to $STR0,  Q, Q
 Raise Land,       EcoEng,  Raise Sea Floor,  EcoEng,  12,  Terraform UP,    ], ]]
 Lower Land,       EcoEng,  Lower Sea Floor,  EcoEng,  12,  Terraform DOWN,  [, [[
