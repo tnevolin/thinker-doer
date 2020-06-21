@@ -1,6 +1,6 @@
 # Version 67
 
-* New AI terraforming algorithm. Off by default. Enable it to try it out.
+* New AI terraforming algorithm. See readme for notable changes. Off by default. Set ai_useWTPAlgorithms=1 to enable it.
 
 # Version 66
 
