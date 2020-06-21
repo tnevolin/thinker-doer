@@ -45,6 +45,7 @@ extern char ***tx_labels;
 
 typedef void __cdecl fp_0void();
 typedef void __cdecl fp_1void(int);
+typedef void __cdecl fp_2void(int, int);
 typedef void __cdecl fp_4void(int, int, int, int);
 typedef int __cdecl fp_void();
 typedef int __cdecl fp_0int();
@@ -61,6 +62,7 @@ typedef char* __cdecl fp_str_void();
 typedef void __cdecl fp_2int_void(int, int);
 typedef void __cdecl fp_3int_void(int, int, int);
 typedef int __cdecl fp_int_char_int(char *, int);
+typedef void __cdecl fp_void_charp_int(char *, int);
 
 // params: faction, chassis, module, armor, specials, reactor, unit_plan, name
 extern fp_7intstr* tx_propose_proto;
@@ -75,6 +77,7 @@ extern fp_3int* tx_zoc_any;
 extern fp_3int* tx_best_defender;
 extern fp_5int* tx_battle_compute;
 extern fp_6int* tx_battle_kill;
+extern fp_1void* tx_enemy_move_check;
 extern fp_1int* tx_enemy_move;
 extern fp_1int* tx_monolith;
 extern fp_2int* tx_action_build;
