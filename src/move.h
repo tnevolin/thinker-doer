@@ -30,6 +30,7 @@ typedef int PMTable[MAPSZ*2][MAPSZ];
     which the units will attempt to flee to the square chosen by escape_move.
 */
 
+HOOK_API void enemy_move_check(int id);
 HOOK_API int enemy_move(int id);
 HOOK_API int log_veh_kill(int a, int b, int c, int d);
 void move_upkeep(int faction);
@@ -49,4 +50,5 @@ int select_item(int x, int y, int fac, MAP* sq);
 int escape_move(int id);
 bool other_in_tile(int fac, MAP* sq);
 int former_tile_score(int x1, int y1, int x2, int y2, int fac, MAP* sq);
+bool isSafe(int x, int y);
 

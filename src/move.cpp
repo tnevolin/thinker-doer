@@ -65,9 +65,19 @@ HOOK_API int enemy_move(int id) {
         } else if (w == WPN_SUPPLY_TRANSPORT) {
             return crawler_move(id);
         } else if (w == WPN_TERRAFORMING_UNIT) {
-            // [WtP] redirect to WtP function in future versions
-            return former_move(id);
-//            return giveOrderToFormer(id);
+
+        	// select terraforming algorithm
+        	if (conf.ai_useWTPAlgorithms)
+			{
+				// WTP
+				return enemyMoveFormer(id);
+			}
+			else
+			{
+				// Thinker
+				return former_move(id);
+			}
+
         } else if (w == WPN_TROOP_TRANSPORT && veh_triad(id) == TRIAD_SEA) {
             return trans_move(id);
         } else if (w <= WPN_PSI_ATTACK && veh_triad(id) == TRIAD_LAND) {
@@ -908,9 +918,7 @@ int former_move(int id) {
         (
             (veh->move_status >= 4 && veh->move_status < 24)
             ||
-//            (triad != TRIAD_LAND && !at_target(veh))
-            // [WtP] do not disturb former in transit any kind including land ones
-            !at_target(veh)
+            (triad != TRIAD_LAND && !at_target(veh))
         )
         {
             return SYNC;
@@ -1072,5 +1080,10 @@ int combat_move(int id) {
         return escape_move(id);
     }
     return tx_enemy_move(id);
+}
+
+bool isSafe(int x, int y)
+{
+	return pm_safety[x][y] >= PM_SAFE;
 }
 

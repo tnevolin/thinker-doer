@@ -90,6 +90,8 @@
 		</ExtraCommands>
 		<Unit filename="src/ai.cpp" />
 		<Unit filename="src/ai.h" />
+		<Unit filename="src/aiBase.cpp" />
+		<Unit filename="src/aiBase.h" />
 		<Unit filename="src/engine.cpp" />
 		<Unit filename="src/engine.h" />
 		<Unit filename="src/game.cpp" />

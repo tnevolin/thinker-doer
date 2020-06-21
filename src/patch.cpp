@@ -5,6 +5,7 @@
 #include "tech.h"
 #include "engine.h"
 #include "wtp.h"
+#include "ai.h"
 
 const char* ac_alpha = "ac_mod\\alphax";
 const char* ac_help = "ac_mod\\helpx";
@@ -2026,6 +2027,15 @@ void patch_hex_cost()
 
 }
 
+/**
+Displays additional base population info in F4 screen.
+*/
+void patch_display_base_population_info()
+{
+    write_call(0x0049DCB1, (int)sayBase);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2427,11 +2437,16 @@ bool patch_setup(Config* cf) {
 
     patch_hex_cost();
 
+    // base population info
+
+    patch_display_base_population_info();
+
     // continue with original Thinker checks
 
     if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READ, &attrs))
         return false;
 
     return true;
+
 }
 

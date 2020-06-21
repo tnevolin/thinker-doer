@@ -113,7 +113,7 @@ ProbMec, ; Technology for economic victory
 ;             the actual key mappings in the game)
 ;
 ;# Disabled bunkers.
-;# Tripled price for forest as it is essentially equivalent to farm + mine.
+;# Doubled price for forest as it is essentially equivalent to farm + mine.
 #TERRAIN
 Farm,             None,    Kelp Farm,        None,     4,  Cultivate $STR0, f, F
 Soil Enricher,    EcoEng2, Soil Enricher,    Disable,  8,  Construct $STR0, f, F
