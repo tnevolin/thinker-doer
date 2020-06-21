@@ -10,7 +10,10 @@
 
 // global variables
 
-int wtpFactionId = 4;
+// Controls which faction uses WtP terraforming algorithm.
+// wtpFactionId == -1 : all factions
+// wtpFactionId != -1 : only this faction
+int wtpFactionId = -1;
 
 int factionId;
 Faction *faction;
@@ -45,7 +48,7 @@ std::unordered_map<BASE *, std::vector<YIELD>> unworkedTileYields;
 /**
 AI strategy.
 */
-void ai_moveUpkeep(int id)
+void prepareMoveStrategy(int id)
 {
 	// set faction id
 
@@ -62,7 +65,7 @@ void ai_moveUpkeep(int id)
 	if (wtpFactionId != -1 && factionId != wtpFactionId)
 		return;
 
-	debug("ai_moveUpkeep: factionId=%d\n", factionId);
+	debug("prepareMoveStrategy: factionId=%d\n", factionId);
 
 	// prepare former orders
 

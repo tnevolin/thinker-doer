@@ -194,7 +194,7 @@ These terraforming orders affect surrounding tiles.
 */
 const std::unordered_set<int> wideRangeTerraformingOrders = {ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_DRILL_AQUIFIER};
 
-void ai_moveUpkeep(int id);
+void prepareMoveStrategy(int id);
 void prepareFormerOrders();
 void populateLists();
 void generateTerraformingRequests();

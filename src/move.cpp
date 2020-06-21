@@ -65,9 +65,19 @@ HOOK_API int enemy_move(int id) {
         } else if (w == WPN_SUPPLY_TRANSPORT) {
             return crawler_move(id);
         } else if (w == WPN_TERRAFORMING_UNIT) {
-            // [WtP] use enemy_strategy function for formers
-//            return former_move(id);
-            return enemyMoveFormer(id);
+
+        	// select terraforming algorithm
+        	if (conf.ai_useWTPAlgorithms)
+			{
+				// WTP
+				return enemyMoveFormer(id);
+			}
+			else
+			{
+				// Thinker
+				return former_move(id);
+			}
+
         } else if (w == WPN_TROOP_TRANSPORT && veh_triad(id) == TRIAD_SEA) {
             return trans_move(id);
         } else if (w <= WPN_PSI_ATTACK && veh_triad(id) == TRIAD_LAND) {

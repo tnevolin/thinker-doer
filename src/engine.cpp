@@ -117,8 +117,13 @@ HOOK_API int faction_upkeep(int faction) {
         */
         social_ai(faction, -1, -1, -1, -1, 0);
         move_upkeep(faction);
-//		// [WtP] special AI algorithms
-        ai_moveUpkeep(faction);
+
+		// WTP AI algorithms
+		if (conf.ai_useWTPAlgorithms)
+		{
+			prepareMoveStrategy(faction);
+		}
+
         do_all_non_input();
 
         if (!is_human(faction)) {
