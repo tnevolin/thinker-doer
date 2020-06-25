@@ -100,7 +100,9 @@ HOOK_API int faction_upkeep(int faction) {
     repair_phase(faction);
     do_all_non_input();
     production_phase(faction);
-//    // hurry production in all bases
+    // contribute to project
+    contributeToProject(faction);
+    // hurry production in all bases
     factionHurryProduction(faction);
     do_all_non_input();
     if (!(*game_state & STATE_UNK_1) || *game_state & STATE_UNK_8) {

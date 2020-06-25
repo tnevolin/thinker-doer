@@ -1,7 +1,11 @@
+# Version 69
+
+* Bases contribute about 50% of their production to secret project construction. Contribution proportion is configurable.
+* Every turn the popup shows project completion percentage for each project that was using bases contribution. Neat!
+
 # Version 68
 
 * AI factions get 2 formers at start. This should help out those struggling to built them.
-
 
 # Version 67
 

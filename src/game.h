@@ -137,4 +137,7 @@ const char *readOrder(int id);
 void setBaseFacility(int base_id, int facility_id, bool add);
 bool has_facility_tech(int faction_id, int facility_id);
 int getDoctorQuelledDrones(int id);
+int getBaseBuildingItem(BASE *base);
+bool isBaseBuildingProject(BASE *base);
+int getBaseBuildingItemCost(int factionId, BASE *base);
 
