@@ -228,6 +228,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "tube_movement_rate_multiplier")) {
         cf->tube_movement_rate_multiplier = atoi(value);
     }
+    else if (MATCH("wtp", "project_contribution_threshold"))
+    {
+        cf->project_contribution_threshold = atoi(value);
+    }
+    else if (MATCH("wtp", "project_contribution_proportion"))
+    {
+        cf->project_contribution_proportion = atof(value);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

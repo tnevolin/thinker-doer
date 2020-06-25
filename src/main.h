@@ -147,6 +147,8 @@ struct Config {
     int territory_combat_bonus = 0;
     int tube_movement_rate_multiplier = 0;
     int road_movement_cost = 0;
+    int project_contribution_threshold = 0;
+    double project_contribution_proportion = 0.0;
     bool ai_useWTPAlgorithms;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;

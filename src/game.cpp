@@ -833,3 +833,20 @@ int getDoctorQuelledDrones(int id) {
 
 }
 
+int getBaseBuildingItem(BASE *base)
+{
+	return base->queue_items[0];
+}
+
+bool isBaseBuildingProject(BASE *base)
+{
+	int item = getBaseBuildingItem(base);
+	return (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST);
+}
+
+int getBaseBuildingItemCost(int factionId, BASE *base)
+{
+	int item = getBaseBuildingItem(base);
+	return (item >= 0 ? tx_units[item].cost : tx_facility[-item].cost) * tx_cost_factor(factionId, 1, -1);
+}
+

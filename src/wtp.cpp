@@ -6,6 +6,7 @@
 #include "wtp.h"
 #include "main.h"
 #include "patch.h"
+#include "engine.h"
 
 /**
 Combat calculation placeholder.
@@ -1730,6 +1731,129 @@ int getnextAvailableGrowthFacility(BASE *base)
 	{
 		return -1;
 	}
+
+}
+
+/**
+Directs portion of bases production toward project construction.
+If faction builds more than one project production is directed to the base with smallest id.
+*/
+void contributeToProject(int factionId)
+{
+	MetaFaction *metaFaction = &(tx_metafactions[factionId]);
+
+	debug("\n");
+	debug("PROJECT CONTRIBUTION: %-24s\n", metaFaction->noun_faction);
+
+	// select project base and other faction bases
+
+	BASE *projectBase = NULL;
+	std::vector<BASE *> contributingBases;
+
+	int project = -1;
+	int projectCost = 0;
+	int requiredMinerals = 0;
+
+	for (int id = 0; id < *total_num_bases; id++)
+	{
+		BASE *base = &(tx_bases[id]);
+
+		// ignore not own bases
+
+		if (base->faction_id != factionId)
+			continue;
+
+		// select project base
+
+		if (projectBase == NULL && isBaseBuildingProject(base))
+		{
+			projectBase = base;
+
+			int item = getBaseBuildingItem(base);
+			project = -item;
+			projectCost = mineral_cost(factionId, item);
+			requiredMinerals = getBaseBuildingItemCost(factionId, base) - base->minerals_accumulated;
+
+			continue;
+
+		}
+
+		// collect other bases
+
+		contributingBases.push_back(base);
+
+	}
+
+	// do nothing if there is no project base
+
+	if (projectBase == NULL)
+		return;
+
+	debug("projectBase: %-25s\n", projectBase->name);
+
+	// collect contribution
+
+	int totalContribution = 0;
+
+	// process contributing bases
+
+	for
+	(
+		std::vector<BASE *>::iterator contributingBasesIterator = contributingBases.begin();
+		contributingBasesIterator != contributingBases.end();
+		contributingBasesIterator++
+	)
+	{
+		BASE *base = *contributingBasesIterator;
+
+		// stop cycle if we already have enough
+
+		if (totalContribution >= requiredMinerals)
+			break;
+
+		// exclude base with production to completion
+
+		if (base->minerals_accumulated >= getBaseBuildingItemCost(factionId, base))
+			continue;
+
+		// check if base mineral surplus is above threshold
+
+		if (base->mineral_surplus <= conf.project_contribution_threshold)
+			continue;
+
+		// calculate base contribution
+
+		int baseContribution = (int)floor(conf.project_contribution_proportion * (base->mineral_surplus - conf.project_contribution_threshold));
+		baseContribution = min(base->minerals_accumulated, baseContribution);
+		baseContribution = min(requiredMinerals - totalContribution, baseContribution);
+
+		// contribute
+
+		debug("\t%-25s -%4d, %4d -> %4d\n", base->name, baseContribution, base->minerals_accumulated, base->minerals_accumulated - baseContribution);
+
+		base->minerals_accumulated -= baseContribution;
+		totalContribution += baseContribution;
+
+	}
+
+	// apply contribution
+
+	debug("->\n");
+	debug("\t%-25s +%4d, %4d -> %4d\n", projectBase->name, totalContribution, projectBase->minerals_accumulated, projectBase->minerals_accumulated + totalContribution);
+
+	projectBase->minerals_accumulated += totalContribution;
+
+	// display popup
+
+	int percentageCompleted = projectBase->minerals_accumulated * 100 / projectCost;
+
+	parse_says(0, metaFaction->noun_faction, -1, -1);
+	parse_says(1, tx_facility[project].name, -1, -1);
+	parse_num(2, percentageCompleted);
+	popp(ScriptTxtID, "PROJECTREPORT", 0, "secproj_sm.pcx", 0);
+
+	debug("\n");
+    fflush(debug_log);
 
 }
 

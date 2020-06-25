@@ -10869,5 +10869,11 @@ ALPHA CENTAURI
 ALIEN CROSSFIRE
 CANCEL
 
+#PROJECTREPORT
+#xs 400
+#caption Security Chief
+The $<M1:$FACTIONADJ0> bases contributed to "{$PROJECT1}" project.
+^It is now {$NUM2} % completed!
+
 # ; This line must remain at end of file
 

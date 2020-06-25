@@ -19,6 +19,8 @@ typedef int __thiscall tc_5int(int, int, int, int, int);
 #pragma GCC diagnostic pop
 #endif
 
+extern const char* ScriptTxtID;
+
 extern BASE** current_base_ptr;
 extern int* current_base_id;
 extern int* game_settings;
@@ -52,6 +54,9 @@ extern int* diplo_current_friction;
 extern int* diplo_opponent_faction;
 extern char *g_strTEMP;
 
+extern fp_2int* parse_num;
+extern fp_icii* parse_says;
+extern fp_ccici* popp;
 extern fp_3int* capture_base;
 extern fp_1int* base_kill;
 extern fp_5int* crop_yield;
