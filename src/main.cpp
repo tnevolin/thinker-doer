@@ -232,10 +232,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "ai_terraforming_resourceLifetime"))
-    {
-        cf->ai_terraforming_resourceLifetime = atof(value);
-    }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
         cf->ai_terraforming_nutrientWeight = atof(value);
@@ -280,10 +276,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_nearbyForestKelpPenalty = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_completionBonus"))
-    {
-        cf->ai_terraforming_completionBonus = atof(value);
-    }
     else if (MATCH("wtp", "ai_terraforming_rankMultiplier"))
     {
         cf->ai_terraforming_rankMultiplier = atof(value);
@@ -303,6 +295,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_terraforming_baseMineralThresholdRatio"))
     {
         cf->ai_terraforming_baseMineralThresholdRatio = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_baseMineralDemandMultiplier"))
+    {
+        cf->ai_terraforming_baseMineralDemandMultiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_raiseLandPayoffTime"))
+    {
+        cf->ai_terraforming_raiseLandPayoffTime = atof(value);
     }
     // Thinker default case
     else {

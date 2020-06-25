@@ -546,9 +546,7 @@ New AI terraforming algorithm replacing Thinker's. These are few notable changes
 * Prefers quicker improvement with equal benefit (shorter construction time + less travel).
 * Redistributes former orders to minimize construction + travel time. Takes former abilities (fungicide, super) and speed into account.
 * Checks existing improvements and don't build more of them if equal of better one is still unused around base.
-
-* Doesn't plant fungus.
-* Doesn't raise/lower terrain.
+* Raises land to improve collector energy output.
 
 # Appendix
 

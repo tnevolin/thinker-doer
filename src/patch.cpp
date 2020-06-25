@@ -2198,6 +2198,15 @@ bool patch_setup(Config* cf) {
     // The Will to Power mod changes
     // ==============================
 
+	// patch AI vehicle home base reassignment bug
+	// originally it reassigned to bases with mineral_surplus < 2
+	// this patch reverses the condition
+	{
+		const byte old_bytes[] = {0x0F, 0x8D};
+		const byte new_bytes[] = {0x0F, 0x8C};
+		write_bytes(0x00562094, old_bytes, new_bytes, sizeof(new_bytes));
+	}
+
     // read basic rules
 
     patch_read_basic_rules();
