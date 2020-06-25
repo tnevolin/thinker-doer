@@ -25,23 +25,23 @@ struct BASE {
     int queue_size;
     int queue_items[10];                    // +0x0050
     int worked_tiles;                       // +0x0078
-    int specialist_total;
-    int specialist_unk_1;
+    int specialist_total;					// +0x007C
+    int specialist_unk_1;					// +0x0080
     /*
     Specialist types (R_Citizen, 4 bits per id) for the first 16 specialists in the base.
     These are assigned in base_yield and base_energy and chosen by best_specialist.
     */
-    int specialist_types[2];
-    char facilities_built[12];
-    int mineral_surplus_final;
-    int minerals_accumulated_2;
-    int pad_1;
-    int pad_2;
-    int pad_3;
-    int pad_4;
-    int nutrient_intake;
-    int mineral_intake;
-    int energy_intake;
+    int specialist_types[2];				// +0x0084
+    char facilities_built[12];				// +0x008C
+    int mineral_surplus_final;				// +0x0098
+    int minerals_accumulated_2;				// +0x009C
+    int pad_1;								// +0x00A0
+    int pad_2;								// +0x00A4
+    int pad_3;								// +0x00A8
+    int pad_4;								// +0x00AC
+    int nutrient_intake;					// +0x00B0
+    int mineral_intake;						// +0x00B4
+    int energy_intake;						// +0x00B8
     int unused_intake;
     int nutrient_intake_2;                  // +0x00C0
     int mineral_intake_2;					// +0x00C4
@@ -329,56 +329,56 @@ struct Faction {
     int net_random_event;
     int AI_fight;
     int AI_growth;                  // 0x03E0
-    int AI_tech;
-    int AI_wealth;
-    int AI_power;
-    int target_x;
-    int target_y;
-    int unk_28;
-    int council_call_turn;
-    int unk_29[11]; // Council related
-    int unk_30[11]; // Council related
-    byte facility_announced[4]; // bitfield - used to determine one time play of fac audio blurb
-    int unk_32;
-    int unk_33;
+    int AI_tech;					// 0x03E4
+    int AI_wealth;					// 0x03E8
+    int AI_power;					// 0x03EC
+    int target_x;					// 0x03F0
+    int target_y;					// 0x03F4
+    int unk_28;						// 0x03F8
+    int council_call_turn;			// 0x03FC
+    int unk_29[11]; // Council related	// 0x0400
+    int unk_30[11]; // Council related	// 0x042C
+    byte facility_announced[4]; // bitfield - used to determine one time play of fac audio blurb	// 0x0458
+    int unk_32;						// 0x045C
+    int unk_33;						// 0x0460
     int unk_35;
     int unk_36;
     int unk_37;
-    char saved_queue_name[8][24];
-    int saved_queue_size[8];
-    int saved_queue_items[8][10];
-    int unk_40[8];
-    int unk_41[40];
-    int unk_42[32];
-    int unk_43[8];
-    int unk_44;
-    int unk_45;
-    int unk_46;
+    char saved_queue_name[8][24];	// 0x0470
+    int saved_queue_size[8];		// 0x0530
+    int saved_queue_items[8][10];	// 0x0550
+    int unk_40[8];					// 0x0690
+    int unk_41[40];					// 0x06B0
+    int unk_42[32];					// 0x06D8
+    int unk_43[8];					// 0x0758
+    int unk_44;						// 0x0778
+    int unk_45;						// 0x077C
+    int unk_46;						// 0x0780
     int unk_47;
     int nutrient_surplus_total;
     int labs_total;
-    int satellites_nutrient;
+    int satellites_nutrient;		// 0x0790
     int satellites_mineral;
     int satellites_energy;
     int satellites_ODP;
-    int best_weapon_value;
+    int best_weapon_value;			// 0x07A0
     int best_psi_land_offense;
     int best_psi_land_defense;
     int best_armor_value;
-    int best_land_speed;
+    int best_land_speed;			// 0x07B0
     int enemy_best_weapon_value; // Enemy refers here to any non-pact faction
     int enemy_best_armor_value;
     int enemy_best_land_speed;
-    int enemy_best_psi_land_offense;
+    int enemy_best_psi_land_offense;// 0x07C0
     int enemy_best_psi_land_defense;
     int unk_64;
     int unk_65;
-    int unk_66;
+    int unk_66;						// 0x07D0
     int unk_67;
     int unk_68;
     int unk_69;
-    byte units_active[512];
-    byte units_queue[512];
+    byte units_active[512];			// 0x07E0
+    byte units_queue[512];			// 0x09E0
     short units_lost[512];
     int total_combat_units;
     int current_num_bases;

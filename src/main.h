@@ -148,7 +148,6 @@ struct Config {
     int tube_movement_rate_multiplier = 0;
     int road_movement_cost = 0;
     bool ai_useWTPAlgorithms;
-    double ai_terraforming_resourceLifetime;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
@@ -160,12 +159,13 @@ struct Config {
 	double ai_terraforming_networkWildExtensionValue;
 	double ai_terraforming_networkCoverageThreshold;
 	double ai_terraforming_nearbyForestKelpPenalty;
-	double ai_terraforming_completionBonus;
 	double ai_terraforming_rankMultiplier;
 	double ai_terraforming_exclusivityMultiplier;
 	double ai_terraforming_baseNutrientThresholdRatio;
 	double ai_terraforming_baseNutrientDemandMultiplier;
 	double ai_terraforming_baseMineralThresholdRatio;
+	double ai_terraforming_baseMineralDemandMultiplier;
+    double ai_terraforming_raiseLandPayoffTime;
 
 };
 
