@@ -361,7 +361,7 @@ The Maritime Control Center | 4 | 60 | 80 cost x 10 + 2 maintenance x 100. Reduc
 The Planetary Datalinks	| 5 | 60 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
 The Manifold Harmonics | 5 | 60 | Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
 The Planetary Energy Grid | 5 | 60 | 60 cost x 10 + 1 maintenance x 100.
-The Citizens' Defense Force | 6 | 40 | 50 cost x 10. Reduced slightly as it is not needed in every base.
+The Citizens' Defense Force | 6 | 60 | 50 cost x 10. It worth more than the cost of the facility as it gets built immediatelly in conquered base.
 The Xenoempathy Dome | 6 | 40 | Tactical advantage, aid to fungus terraforming, +1 lifecycle = slight increase.
 The Supercollider | 6 | 30 | Local effect = no change.
 The Ascetic Virtues | 6 | 60 | +POLICE + growth = slight increase.
