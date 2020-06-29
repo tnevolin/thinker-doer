@@ -1,3 +1,9 @@
+# Version 70
+
+* Large technology tree redo for more sensible dependencies.
+* Research Hospital: 8/2. Decreased cost/maint a little bit more to aid with drone quellying.
+* The Citizens' Defense Force cost is 60.
+
 # Version 69
 
 * Bases contribute about 50% of their production to secret project construction. Contribution proportion is configurable.
