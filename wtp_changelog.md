@@ -2,6 +2,7 @@
 
 * Large technology tree redo for more sensible dependencies.
 * Research Hospital: 8/2. Decreased cost/maint a little bit more to aid with drone quellying.
+* Aquafarm: 16/4. Also moved later as it is a most OP out of aqua facilities.
 * The Citizens' Defense Force cost is 60.
 
 # Version 69.1

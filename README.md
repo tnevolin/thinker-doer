@@ -391,28 +391,31 @@ The Ascent to Transcendence | 14 | 300 | End game bases with crawlers should be 
 Foil is available to be researched at start. Other modders said much about that already.
 
 Network Node, Energy Bank: moved to level 3.  
-These facilities are not effective at the beginning. Even with 20 raw energy yield they contribute 5 labs/energy = 2.5 worth of minerals and break even time is 32 turn. Only averagely beneficial and you need to get your first bases at 20 energy yield first.  
-After some playtesting I think they could be moved to level 4. I rarely start building them immediately upon their discovery. They are not that immense critical nor they are super beneficial at the time.
+These facilities are not effective at the beginning. Even with 20 raw energy yield they contribute 5 labs/energy - 1 maintenance = 2 worth of minerals and break even in 30 turns. First base doesn't reach this raw energy intake until turn 50 something.
 
+Hab Complex: moved to 20% in research tree (was 30%).
 Habitaion Dome: moved to 50% in research tree (was 75%).  
-I often struggle to get it when needed. It's too far in the future.
+I don't want AI like Morgan or Pirates to struggle and let their base not grow for an extended period of time. Game is too short already.
 
-Non-lethal methods: moved to 75% in research tree (was 50%).  
+Non-lethal methods: moved to 75% in research tree (was 50%).
 Doubling police power should not come too early.
 
 Bioenhancement Center: moved to 75% in research tree (was 50%).  
 Generic facility should come after all specific ones.
 
-Hybrid Forest: moved to 70% in research tree (was 50%).  
-Not needed immediatelly after Tree Farm. With its price nobody is going to build it right away.
+Tree Farm: moved to 30% in research tree (was 50%).
+Hybrid Forest: moved to 60% in research tree (was 50%).  
+These facilities should be moved apart a little. In vanilla they appear immediatelly one after another. Tree Farm should appear a little bit earlier to support barren lands with forests.
 
 Satellites: moved to 80%, 85%, 90% in research tree (were somewhere at 60-70%).  
-Game breaker goes to the very end. Discussed many times by other modders.
+Game breaker goes to the very end. Discussed many times by other modders. Also rearranged them in order of: energy, nutrients, minerals. Nutrients are stronger than energy thus should come later.
 
 The Living Refinery, The Manifold Harmonics: relatively weak SPs moved earlier.
 
-Reactors are on level 3, 6, 9, correspondingly.  
+Reactors are on level 4, 7, 10, correspondingly.  
 It seems that unit cost reduction is most useful earlier when production power is low. Later on it becomes less relevant. Early Fusion reactor fuels further expansion.
+
+Rearranged aqua facilities. Moved Aquafarm last as most OP facility of them all.
 
 # Social engineering
 
@@ -463,12 +466,12 @@ Use green/alien technologies for fungus production to streamline research priori
 |----|----:|----|----|----|
 | Centauri Ecology | 1 | +1 nutrient | 1-0-0 |
 | Progenitor Psych | 1 | +1 energy | 1-0-1 | reassigned |
-| Field Modulation | 3 | +1 nutrient | 2-0-1 | reassigned |
-| Bioadaptive Resonance | 4 | +1 energy | 2-0-2 | reassigned |
-| Centauri Psi | 5 | +1 nutrient | 3-0-2 |
-| Centauri Meditation | 6 | +1 energy | 3-0-3 |
-| Secrets of Alpha Centauri | 9 | +1 nutrient | 4-0-3 |
-| Centauri Genetics | 10 | +1 energy | 4-0-4 |
+| Field Modulation | 4 | +1 nutrient | 2-0-1 | reassigned |
+| Centauri Meditation | 5 | +1 energy | 2-0-2 |
+| Bioadaptive Resonance | 6 | +1 nutrient | 3-0-2 | reassigned |
+| Centauri Genetics | 7 | +1 energy | 3-0-3 |
+| Centauri Psi | 9 | +1 nutrient | 4-0-3 |
+| Secrets of Alpha Centauri | 11 | +1 energy | 4-0-4 |
 
 ## Sea Sensors
 
@@ -547,200 +550,4 @@ New AI terraforming algorithm replacing Thinker's. These are few notable changes
 * Redistributes former orders to minimize construction + travel time. Takes former abilities (fungicide, super) and speed into account.
 * Checks existing improvements and don't build more of them if equal of better one is still unused around base.
 * Raises land to improve collector energy output.
-
-# Appendix
-
-## Technology feature associations
-
-Feature associations change quite often. This may be stale information.
-
-|Type|Feature|Technology|Level|Primary|
-|----|----|----|----:|----|
-|1 unit types|Foil chassis<br>Troop transport<br> Pressure dome|Doctrine: Flexibility|1|Yes|
-|1 unit types|Speeder chassis|Doctrine: Mobility|1|Yes|
-|1 unit types|Heavy artillery|Polymorphic Software|2|Yes|
-|1 unit types|Probe teams|Optical Computers|3||
-|1 unit types|+ Foil Probe Team|Optical Computers|3||
-|1 unit types|Mind Worms|Centauri Empathy|3|Yes|
-|1 unit types|Spore Launcher|Bioadaptive Resonance|4|Yes|
-|1 unit types|Supply transport|Industrial Automation|4||
-|1 unit types|Sealurk|Centauri Psi|5|Yes|
-|1 unit types|AAA Tracking|Advanced Military Algorithms|5|Yes|
-|1 unit types|Cruiser chassis|Doctrine: Initiative|6||
-|1 unit types|Isle of the Deep|Centauri Meditation|7||
-|1 unit types|Needlejet chassis<br> Air base|Doctrine: Air Power|7|Yes|
-|1 unit types|Hovertank chassis|Nanominiaturization|8|Yes|
-|1 unit types|Copter chassis|Mind/Machine Interface|9|Yes|
-|1 unit types|Missile chassis|Applied Gravitonics|10||
-|1 unit types|Locusts of Chiron|Centauri Genetics|10|Yes|
-|1 unit types|Fungal and tectonic payloads|N-Space Compression|10||
-|1 unit types|Gravship chassis|Graviton Theory|11|Yes|
-|1 unit types|Planet Buster payload|Orbital Spaceflight|11||
-|1 unit types|orbital insertion|Graviton Theory|11||
-|2 ability|Hypnotic trance|Secrets of the Human Brain|2|Yes|
-|2 ability|Comm jammer|Information Networks|3||
-|2 ability|Empath song|Bioadaptive Resonance|4||
-|2 ability|Fungicide tanks|Synthetic Fossil Fuels|4||
-|2 ability|Amphibious pods|Doctrine: Initiative|6||
-|2 ability|High morale|Intellectual Integrity|5||
-|2 ability|Deep radar|Advanced Military Algorithms|5||
-|2 ability|Air superiority|Doctrine: Air Power|7||
-|2 ability|Soporific Gas Pods||||
-|2 ability|Polymorphic encryption|Pre-Sentient Algorithms|8||
-|2 ability|Marine detachment|Adaptive Doctrine|8|Yes|
-|2 ability|Algorithmic Enhancement|Nanominiaturization|8||
-|2 ability|2 special abilities for a unit|Neural Grafting|10||
-|2 ability|Super Formers|Adv. Ecological Engineering|8||
-|2 ability|Dissociative wave|Frictionless Surfaces|10||
-|2 ability|Carrier deck|Nanometallurgy|8|Yes|
-|2 ability|Clean reactor|Bio-Engineering|9|Yes|
-|2 ability|Drop pods|Mind/Machine Interface|9||
-|2 ability|Non-lethal methods|Secrets of Alpha Centauri|10||
-|2 ability|Blink Displacer|Matter Transmission|11||
-|3 terraforming|basic terraforming<br> Terraform unit<br> restrictions lifted|Centauri Ecology|1|Yes|
-|3 terraforming|Aquafarm|Field Modulation|4||
-|3 terraforming|fungus road|Centauri Empathy|3||
-|3 terraforming|Thermocline transducer|Adaptive Economics|5|Yes|
-|3 terraforming|fungus movement|Centauri Psi|5||
-|3 terraforming|improve fungus|Centauri Psi|5||
-|3 terraforming|advanced terraforming|Ecological Engineering|6|Yes|
-|3 terraforming|Subsea Trunkline|Organic Superlubricant|6||
-|3 terraforming|Mag tube|Monopole Magnets|8|Yes|
-|3 terraforming|Soil enricher|Adv. Ecological Engineering|8||
-|3 terraforming|Raise/Lower Land and Sea Floor|Adv. Ecological Engineering|8|Yes|
-|3 terraforming|Mining Platform + 1|Adv. Ecological Engineering|8||
-|3a fungus production|+1 nutrient|Centauri Ecology|1||
-|3a fungus production|+1 mineral|Progenitor Psych|1||
-|3a fungus production|+1 energy|Field Modulation|4||
-|3a fungus production|+1 energy|Bioadaptive Resonance|4||
-|3a fungus production|+1 nutrient|Centauri Psi|5||
-|3a fungus production|+1 energy|Centauri Meditation|7||
-|3a fungus production|+1 energy|Secrets of Alpha Centauri|10||
-|3a fungus production|+1 mineral|Centauri Genetics|10||
-|4a facility - military|Command center|Doctrine: Mobility|1||
-|4a facility - military|Perimeter defense|Doctrine: Loyalty|2|Yes|
-|4a facility - military|Naval Yard|Doctrine: Initiative|6|Yes|
-|4a facility - military|Aerospace complex|Doctrine: Air Power|7||
-|4a facility - military|Bioenhancement center|Neural Grafting|10|Yes|
-|4a facility - military|Tachyon field|The Will to Power|10||
-|4a facility - military|Flechette defense system|N-Space Compression|10|Yes|
-|4a facility - military|Geosynchronous survey pod|N-Space Compression|10||
-|4b facility - drones|Recreation commons|Social Psych|1|Yes|
-|4b facility - drones|Hologram theatre|Polymorphic Software|2|Yes|
-|4b facility - drones|Punishment sphere|Advanced Military Algorithms|5||
-|4b facility - drones|Paradise garden|Sentient Econometrics|11|Yes|
-|4b facility - drones|Brood Pit|Secrets of Alpha Centauri|9||
-|4c facility - misc|Recycling tanks|Biogenetics|2|Yes|
-|4c facility - misc|Children's creche|Ethical Calculus|2|Yes|
-|4c facility - misc|Subspace Generator|Secrets of the Manifolds|13|Yes|
-|4d facility - energy|Biology lab|Progenitor Psych|1|Yes|
-|4d facility - energy|Network node|Information Networks|3|Yes|
-|4d facility - energy|Energy bank|Industrial Economics|3|Yes|
-|4d facility - energy|Research hospital|Gene Splicing|6|Yes|
-|4d facility - energy|Fusion lab|Nanometallurgy|8||
-|4d facility - energy|Nanohospital|Homo Superior|9|Yes|
-|4d facility - energy|Quantum lab|Frictionless Surfaces|10||
-|4e facility - ecodamage|Tree farm|Environmental Economics|6|Yes|
-|4e facility - ecodamage|Centauri preserve|Centauri Meditation|7|Yes|
-|4e facility - ecodamage|Hybrid forest|Planetary Economics|9|Yes|
-|4e facility - ecodamage|Temple of Planet|Secrets of Alpha Centauri|10|Yes|
-|4f facility - minerals|Genejack factory|Retroviral Engineering|6|Yes|
-|4f facility - minerals|Robotic assembly plant|Industrial Nanorobotics|7|Yes|
-|4f facility - minerals|Quantum converter|Quantum Machinery|9||
-|4f facility - minerals|Nanoreplicator|Temporal Mechanics|11||
-|4g facility - space station|Sky hydroponics lab|Orbital Spaceflight|11|Yes|
-|4g facility - space station|Orbital power transmitter|Advanced Spaceflight|12|Yes|
-|4g facility - space station|orbital defense pods|Self-Aware Machines|12||
-|4g facility - space station|Nessus mining station|Secrets of the Manifolds|13||
-|4h facility - prototypes|Skunkworks|Advanced Subatomic Theory|8|Yes|
-|4i facility - movement|Psi gate|Matter Transmission|11|Yes|
-|4j facility - size limit|Hab complex|Industrial Automation|4|Yes|
-|4j facility - size limit|Habitation dome|Super Tensile Solids|7|Yes|
-|5 reactor|Fusion Reactor|Fusion Power|3|Yes|
-|5 reactor|Quantum Chamber|Quantum Power|6|Yes|
-|5 reactor|Singularity Engine|Singularity Mechanics|9|Yes|
-|6 secret project|The Merchant Exchange|Industrial Base|1||
-|6 secret project|The Human Genome Project|Biogenetics|2||
-|6 secret project|The Command Nexus|Doctrine: Loyalty|2||
-|6 secret project|The Universal Translator|Nonlinear Mathematics|2||
-|6 secret project|The Weather Paradigm|High Energy Chemistry|2||
-|6 secret project|The Empath Guild|Centauri Empathy|3||
-|6 secret project|The Citizens' Defense Force|Intellectual Integrity|5|Yes|
-|6 secret project|The Planetary Transit System|Industrial Automation|4||
-|6 secret project|The Supercollider|Applied Relativity|4|Yes|
-|6 secret project|The Living Refinery|Superconductor|3||
-|6 secret project|The Virtual World|Planetary Networks|4|Yes|
-|6 secret project|The Planetary Datalinks|Cyberethics|5|Yes|
-|6 secret project|The Planetary Energy Grid|Adaptive Economics|5||
-|6 secret project|The Maritime Control Center|Doctrine: Initiative|6||
-|6 secret project|The Ascetic Virtues|Gene Splicing|6||
-|6 secret project|The Manifold Harmonics|Environmental Economics|6||
-|6 secret project|The Xenoempathy Dome|Centauri Meditation|7||
-|6 secret project|The Theory of Everything|Unified Field Theory|7||
-|6 secret project|The Nano Factory|Industrial Nanorobotics|7||
-|6 secret project|The Hunter-Seeker Algorithm|Pre-Sentient Algorithms|8|Yes|
-|6 secret project|The Longevity Vaccine|Bio-Engineering|9||
-|6 secret project|The Neural Amplifier|Neural Grafting|10||
-|6 secret project|The Dream Twister|The Will to Power|10|Yes|
-|6 secret project|The Nethack Terminus|Homo Superior|9||
-|6 secret project|The Cloudbase Academy|The Will to Power|10||
-|6 secret project|The Pholus Mutagen|Centauri Genetics|10||
-|6 secret project|The Clinical Immortality|Secrets of Creation|11||
-|6 secret project|The Cyborg Factory|Graviton Theory|11||
-|6 secret project|The Singularity Inductor|Controlled Singularity|11||
-|6 secret project|The Bulk Matter Transmitter|Matter Transmission|11||
-|6 secret project|The Network Backbone|Digital Sentience|12|Yes|
-|6 secret project|The Self-Aware Colony|Self-Aware Machines|12|Yes|
-|6 secret project|The Telepathic Matrix|Secrets of the Manifolds|13||
-|6 secret project|The Cloning Vats|Biomachinery|13|Yes|
-|6 secret project|The Space Elevator|Sentient Resonance|12||
-|6 secret project|The Voice of Planet<br> The Ascent to Transcendence|Threshold of Transcendence|14|Yes|
-|7 weapon|Laser|Applied Physics|1|Yes|
-|7 weapon|Particle impactor|Nonlinear Mathematics|2|Yes|
-|7 weapon|Gatling Laser|Superconductor|3|Yes|
-|7 weapon|Missile launcher|Synthetic Fossil Fuels|4|Yes|
-|7 weapon|Chaos gun|Superstring Theory|5|Yes|
-|7 weapon|Fusion laser|Organic Superlubricant|6|Yes|
-|7 weapon|Tachyon bolt|Unified Field Theory|7|Yes|
-|7 weapon|Plasma shard|Adaptive Doctrine|8||
-|7 weapon|Quantum laser|Quantum Machinery|9|Yes|
-|7 weapon|Graviton gun|Applied Gravitonics|10|Yes|
-|7 weapon|Singularity laser|Controlled Singularity|11|Yes|
-|7 weapon|String disruptor|String Resonance|12|Yes|
-|8 armor|Synthmetal armor|Industrial Base|1|Yes|
-|8 armor|Plasma steel armor|High Energy Chemistry|2|Yes|
-|8 armor|Silksteel armor|Silksteel Alloys|3|Yes|
-|8 armor|Photon wall|Photon/Wave Mechanics|4|Yes|
-|8 armor|Probability sheath|Probability Mechanics|5|Yes|
-|8 armor|Neutronium armor|Matter Compression|7|Yes|
-|8 armor|Antimatter plate|Matter Editation|9|Yes|
-|8 armor|Stasis generator|Temporal Mechanics|11|Yes|
-|9 social enginering 11|Police State|Doctrine: Loyalty|2||
-|9 social enginering 12|Democratic|Ethical Calculus|2||
-|9 social enginering 13|Fundamentalist|Secrets of the Human Brain|2||
-|9 social enginering 21|Free market|Industrial Economics|3||
-|9 social enginering 22|Planned|Information Networks|3||
-|9 social enginering 23|Green|Centauri Empathy|3||
-|9 social enginering 33|Wealth|Adaptive Economics|5||
-|9 social enginering 31|Power|Advanced Military Algorithms|5||
-|9 social enginering 32|Knowledge|Cyberethics|5||
-|9 social enginering 41|Cybernetic|Unified Field Theory|7||
-|9 social enginering 42|Eudaimonic|Eudaimonia|7|Yes|
-|9 social enginering 43|Thought Control|Matter Compression|7||
-|A proposal|Global Trade Pact<br> Repeal Global Trade Pact|Adaptive Economics|5||
-|A proposal|Salvage Unity Fusion Core|Applied Relativity|4||
-|A proposal|Economic victory|Probability Mechanics|5||
-|A proposal|Repeal U.N. Charter<br> Reinstate U.N. Charter|Advanced Military Algorithms|5||
-|A proposal|Melt Polar Caps|Super Tensile Solids|7||
-|A proposal|Diplomatic victory|Mind/Machine Interface|9||
-|A proposal|Launch Solar Shade<br> Increase Solar Shade|Planetary Economics|9||
-|citizens|Librarian|Planetary Networks|4||
-|citizens|Engineer|Superstring Theory|5||
-|citizens|Empath|Centauri Meditation|7||
-|citizens|Thinker|Mind/Machine Interface|9||
-|citizens|Transcend|Secrets of Alpha Centauri|10||
-|free facility|Recycling Tanks|Monopole Magnets|8||
-|free facility|Recreation Commons|Matter Editation|9||
-|free facility|Energy Bank|Sentient Econometrics|11||
-|free facility|Network Node|Secrets of Creation|11||
 
