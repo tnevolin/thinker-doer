@@ -100,10 +100,18 @@ HOOK_API int faction_upkeep(int faction) {
     repair_phase(faction);
     do_all_non_input();
     production_phase(faction);
-    // contribute to project
+
+    // other bases contribute to project
+    // affects both AI and human factions
     contributeToProject(faction);
-    // hurry production in all bases
-    factionHurryProduction(faction);
+
+    // attempt to hurry production in all bases
+    // affects AI factions only
+    if (!is_human(faction))
+	{
+		factionHurryProduction(faction);
+	}
+
     do_all_non_input();
     if (!(*game_state & STATE_UNK_1) || *game_state & STATE_UNK_8) {
         allocate_energy(faction);
@@ -121,9 +129,13 @@ HOOK_API int faction_upkeep(int faction) {
         move_upkeep(faction);
 
 		// WTP AI algorithms
-		if (conf.ai_useWTPAlgorithms)
+		// affects AI factions only
+        if (!is_human(faction))
 		{
-			prepareMoveStrategy(faction);
+			if (conf.ai_useWTPAlgorithms)
+			{
+				prepareMoveStrategy(faction);
+			}
 		}
 
         do_all_non_input();
