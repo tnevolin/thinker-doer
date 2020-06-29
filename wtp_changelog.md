@@ -1,3 +1,7 @@
+# Version 69.1
+
+* [fix] Hurry production algorithm tried to hurry production in huma bases as well. Now it does not affect human.
+
 # Version 69
 
 * Bases contribute about 50% of their production to secret project construction. Contribution proportion is configurable.
