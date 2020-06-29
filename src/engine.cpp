@@ -101,15 +101,6 @@ HOOK_API int faction_upkeep(int faction) {
     do_all_non_input();
     production_phase(faction);
 
-<<<<<<< HEAD
-    // contribute to project
-    // works for both AI and human
-    contributeToProject(faction);
-
-    // hurry production in all bases
-    // for AI only
-	if (!is_human(faction))
-=======
     // other bases contribute to project
     // affects both AI and human factions
     contributeToProject(faction);
@@ -117,7 +108,6 @@ HOOK_API int faction_upkeep(int faction) {
     // attempt to hurry production in all bases
     // affects AI factions only
     if (!is_human(faction))
->>>>>>> bugfix_hurry_production_exclude_human
 	{
 		factionHurryProduction(faction);
 	}
@@ -138,17 +128,10 @@ HOOK_API int faction_upkeep(int faction) {
         social_ai(faction, -1, -1, -1, -1, 0);
         move_upkeep(faction);
 
-<<<<<<< HEAD
-        if (!is_human(faction))
-		{
-			// WTP AI algorithms
-
-=======
 		// WTP AI algorithms
 		// affects AI factions only
         if (!is_human(faction))
 		{
->>>>>>> bugfix_hurry_production_exclude_human
 			if (conf.ai_useWTPAlgorithms)
 			{
 				prepareMoveStrategy(faction);
