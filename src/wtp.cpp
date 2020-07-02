@@ -1811,17 +1811,13 @@ void contributeToProject(int factionId)
 		if (totalContribution >= requiredMinerals)
 			break;
 
-		// exclude base with production to completion
-
-		if (base->minerals_accumulated >= getBaseBuildingItemCost(factionId, base))
-			continue;
-
 		// check if base mineral surplus is above threshold
 
 		if (base->mineral_surplus <= conf.project_contribution_threshold)
 			continue;
 
 		// calculate base contribution
+		// it cannot take more than accumulated minerals
 
 		int baseContribution = (int)floor(conf.project_contribution_proportion * (base->mineral_surplus - conf.project_contribution_threshold));
 		baseContribution = min(base->minerals_accumulated, baseContribution);
@@ -1862,10 +1858,50 @@ Modifies base growth computation.
 */
 HOOK_API int baseGrowth()
 {
+	// execute original code
+
+	int value = tx_base_growth();
+
+	// non zero value means base died
+	// return immediately
+
+	if (value != 0)
+		return value;
+
 	// get current base
 
 	int id = *current_base_id;
 	BASE *base = &(tx_bases[id]);
+
+	// add extra nutrients for population boom
+
+	if (*current_base_growth_rate >= 6)
+	{
+		base->nutrients_accumulated += conf.population_boom_extra_nutrients;
+	}
+
+	// convert minerals to nutrients for The Cloning Vats
+
+	if (has_project(base->faction_id, FAC_CLONING_VATS))
+	{
+		// calculate converted minerals
+
+		int convertedMinerals = (int)floor(conf.cloning_vats_convertion_ratio * (double)base->mineral_surplus);
+
+		// cannot take more than minerals accumulated
+
+		convertedMinerals = min(base->minerals_accumulated, convertedMinerals);
+
+		// calculate additional nutrients
+
+		int extraNutrients = conf.cloning_vats_convertion_multiplier * convertedMinerals;
+
+		// apply conversion
+
+		base->minerals_accumulated -= convertedMinerals;
+		base->nutrients_accumulated += extraNutrients;
+
+	}
 
 	// commented out in main version - this was for testing in fastgame
 //	// modify nutrient accumulated to emulate shorter nutrient box
@@ -1883,9 +1919,9 @@ HOOK_API int baseGrowth()
 //		base->nutrients_accumulated = currentNutrientRequirement;
 //	}
 //
-	// execute original code
+	// return original value
 
-	return tx_base_growth();
+	return value;
 
 }
 

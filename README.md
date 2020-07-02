@@ -505,6 +505,12 @@ This project name suggest global transit system existence that eases population 
 
 For faction with PTS new base attracts up to two additional citizen from most populated faction bases. Citizens are willing to travel only from overcrowded centers only with population more than 3. Citizens are leaving most populated bases first in founding order if there are more than one. If there are not enough extra population in faction bases - nobody will come.
 
+### The Cloning Vats
+
+Permanent population boom in all bases is one of the most game breaking effects in entire SMACX. Modders struggle to mitigate and balance it. This mod moderates this project effect to the level comparable to other project effects.
+
+The Cloning Vats do not create population boom. Instead they convert part of mineral surplus into additional nutrients on top of regular nutrient surplus. Thus fulfilling this project very idea of using production power to speed up population growth. The effect is very beneficial but on that OP anymore. Furthermore, it diminishes for greater base sizes due to increased growth requirements. Therfore, it can safely be unlocked in the mid game.
+
 # Miscelaneous
 
 ## Special weapon and armor
@@ -546,6 +552,12 @@ This mod equalizes border extension distances between land, sea, and coastal bas
 ## Heavy Artillery and Air Superiority cost
 
 These abilities do not improve unit properties directly. Instead they essentially create completely distinct unit type with its own ins and outs. These unit type strengths are controlled by its own settings in alphax.txt. Damage Numerator & Denominator for Heavy Artillery and Combat bonus/penalty for Air Superiority. Their non-zero cost is confusing as if these abilities worth something by themselves. I think it is much clearer to keep them zero and allow player to convert unit type without additional penalty.
+
+## Population boom fix
+
+Population boom is a powerful feature leading to OP strategy: expand - pop boom - repeat. The population boom is a nice feature. However, its cost is obviously negligible comparing to benefits. Therefore, this mod changes the population boom effect to some moderate one. Instead of instant population increase it adds some configurable amound of nutrients to base growth box in addition to regular nutrient surplus. This still boosts base growth significantly but is not that OP anymore. Population boom is easier to acheive in bigger and mode developped bases. However, its value proportionally diminishes with base size as growth requirement increases. That creates a nice cost-effect balance across faction bases.
+
+Population boom effect is not decoupled from The Cloning Vats effect. Both effects are cumulative. See The Cloning Vats fix description.
 
 # UI changes / cosmetics
 

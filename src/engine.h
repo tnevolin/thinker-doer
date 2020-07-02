@@ -53,6 +53,7 @@ extern int* diplo_active_faction;
 extern int* diplo_current_friction;
 extern int* diplo_opponent_faction;
 extern char *g_strTEMP;
+extern int *current_base_growth_rate;
 
 extern fp_2int* parse_num;
 extern fp_icii* parse_says;
