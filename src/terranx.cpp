@@ -136,5 +136,8 @@ fp_4void *tx_go_to = (fp_4void *)0x00560AD0;
 fp_int_char_int *tx_say_base = (fp_int_char_int *)0x004E3A00;
 
 // calculates base growth
-fp_0int* tx_base_growth = (fp_0int*)0x004EF1C0;
+fp_0int *tx_base_growth = (fp_0int*)0x004EF1C0;
+
+// initializes base
+fp_3int *tx_base_init = (fp_3int *)0x004E4B80;
 

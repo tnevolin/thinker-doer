@@ -1,8 +1,14 @@
+# 70
+
+* Both human and AI get extra colony and former as controlled by free_formers, free_colony_pods in thinker.ini.
+* techtree version changes included.
+* The Planetary Transit System fixed. See Readme for details.
+
 # fastgame
 
 Special testing version.
 
-* Human gets same colony and former bonus as AI. Controlled by free_formers, free_colony_pods in thinker.ini.
+* Both human and AI get extra colony and former as controlled by free_formers, free_colony_pods in thinker.ini.
 * Colony Module cost = 3.
 * Terraforming Unit cost = 2.
 * Nutrient requirement for base growth doesn't increas until size 4. Then they increase by 1 as usual.
@@ -367,6 +373,7 @@ Initial release. See list of changes in readme.
 * Strict requirements for Cloning Vats population boom.
 Base should have enough nutrients to feed double population.
 Base producion is halted during growth.
+* PTS fix for redistribuing population.
 
 * Centauri Empathy enables Empath Song.
 * Secrets of the Manifolds enables The Manifold Harmonics.

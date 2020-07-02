@@ -2045,6 +2045,17 @@ void patch_base_growth()
 
 }
 
+/**
+Hooks base init computation.
+*/
+void patch_base_init()
+{
+    write_call(0x004C9870, (int)baseInit);
+    write_call(0x005AF926, (int)baseInit);
+    write_call(0x005B2BB8, (int)baseInit);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2462,6 +2473,10 @@ bool patch_setup(Config* cf) {
     // base growth
 
     patch_base_growth();
+
+    // base init
+
+    patch_base_init();
 
     // continue with original Thinker checks
 
