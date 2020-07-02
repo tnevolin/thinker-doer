@@ -1,4 +1,9 @@
-# 70
+# Version 71
+
+* Population boom fixed. See Readme for details.
+* The Cloning Vats fixed. See Readme for details.
+
+# Version 70
 
 * Both human and AI get extra colony and former as controlled by free_formers, free_colony_pods in thinker.ini.
 * techtree version changes included.

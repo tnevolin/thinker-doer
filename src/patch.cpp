@@ -335,6 +335,7 @@ Replaces old byte sequence to new byte sequence at address.
 Verifies that byte contains old values before replacing.
 */
 void write_bytes(int address, int length, byte old_bytes[], byte new_bytes[]) {
+
     // check address is not out of range
     if ((byte*)address < (byte*)AC_IMAGE_BASE || (byte*)address + length > (byte*)AC_IMAGE_BASE + AC_IMAGE_LEN) {
         throw std::runtime_error("write_bytes: address is out of code range.");
@@ -2056,6 +2057,27 @@ void patch_base_init()
 
 }
 
+/**
+Pathes population boom mechanics.
+*/
+void patch_population_boom()
+{
+	// disable The Cloning Vats effect
+
+	int disable_cv_bytes_length = 1;
+	byte disable_cv_bytes_old[] = {0x7C};
+	byte disable_cv_bytes_new[] = {0xEB};
+	write_bytes(0x004EF389, disable_cv_bytes_length, disable_cv_bytes_old, disable_cv_bytes_new);
+
+	// disable population boom effect
+
+	int disable_pb_bytes_length = 2;
+	byte disable_pb_bytes_old[] = {0x0F, 0x8C};
+	byte disable_pb_bytes_new[] = {0x90, 0xE9};
+	write_bytes(0x004EF3AF, disable_pb_bytes_length, disable_pb_bytes_old, disable_pb_bytes_new);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2477,6 +2499,10 @@ bool patch_setup(Config* cf) {
     // base init
 
     patch_base_init();
+
+    // population boom
+
+    patch_population_boom();
 
     // continue with original Thinker checks
 

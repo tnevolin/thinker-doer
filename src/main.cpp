@@ -236,6 +236,18 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->project_contribution_proportion = atof(value);
     }
+    else if (MATCH("wtp", "population_boom_extra_nutrients"))
+    {
+        cf->population_boom_extra_nutrients = atoi(value);
+    }
+    else if (MATCH("wtp", "cloning_vats_convertion_ratio"))
+    {
+        cf->cloning_vats_convertion_ratio = atof(value);
+    }
+    else if (MATCH("wtp", "cloning_vats_convertion_multiplier"))
+    {
+        cf->cloning_vats_convertion_multiplier = atoi(value);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

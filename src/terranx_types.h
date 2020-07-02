@@ -265,7 +265,7 @@ struct Faction {
     int SE_talent_pending;
     int SE_morale_pending;
     int SE_police_pending;          // 0x0260
-    int SE_growth_pending;
+    int SE_growth_pending;			// 0x0264
     int SE_planet_pending;
     int SE_probe_pending;
     int SE_industry_pending;        // 0x0270

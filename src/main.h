@@ -149,6 +149,9 @@ struct Config {
     int road_movement_cost = 0;
     int project_contribution_threshold = 0;
     double project_contribution_proportion = 0.0;
+    int population_boom_extra_nutrients = 0;
+    double cloning_vats_convertion_ratio = 0.0;
+    int cloning_vats_convertion_multiplier = 1;
     bool ai_useWTPAlgorithms;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
