@@ -1,4 +1,4 @@
-# Version 70
+# techtree
 
 * Large technology tree redo for more sensible dependencies.
 * Research Hospital: 8/2. Decreased cost/maint a little bit more to aid with drone quellying.
@@ -355,7 +355,9 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Move Hab complex/dome even more earlier.
+* Strict requirements for Cloning Vats population boom.
+Base should have enough nutrients to feed double population.
+Base producion is halted during growth.
 
 * Centauri Empathy enables Empath Song.
 * Secrets of the Manifolds enables The Manifold Harmonics.
