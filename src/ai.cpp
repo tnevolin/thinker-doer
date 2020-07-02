@@ -13,7 +13,7 @@
 // Controls which faction uses WtP terraforming algorithm.
 // wtpFactionId == -1 : all factions
 // wtpFactionId != -1 : only this faction
-int wtpFactionId = 6;
+int wtpFactionId = -1;
 
 int factionId;
 Faction *faction;

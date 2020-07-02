@@ -513,8 +513,8 @@ HOOK_API int turn_upkeep() {
     if (*current_turn == 1) {
 
 		// give colony and former bonuses to human too
-        int bonus = ~(*human_players) & 0xfe;
-//        int bonus = ~(0) & 0xfe;
+//        int bonus = ~(*human_players) & 0xfe;
+        int bonus = ~(0) & 0xfe;
 
         for (int i=0; i<*total_num_vehicles; i++) {
             VEH* veh = &tx_vehicles[i];

@@ -711,8 +711,8 @@ Empty Facility 61,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 62,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 63,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 64,            10, 2, Disable, Disable,  Do Not Build Me
-Sky Hydroponics Lab,          12, 0, Space,   Disable,  +1 Nutrient ALL BASES
-Nessus Mining Station,        12, 0, HAL9000, Disable,  +1 Minerals ALL BASES
+Sky Hydroponics Lab,          12, 0, HAL9000, Disable,  +1 Nutrient ALL BASES
+Nessus Mining Station,        12, 0, Space,   Disable,  +1 Minerals ALL BASES
 Orbital Power Transmitter,    12, 0, Orbital, Disable,  +1 Energy ALL BASES
 Orbital Defense Pod,          12, 0, HAL9000, Disable,  Missile Defense
 Stockpile Energy,              0, 0, None,    Disable,  Minerals to Energy
@@ -740,7 +740,7 @@ The Universal Translator,     40, 0, Chaos,   Disable,  Two Free Techs,         
 The Network Backbone,        160, 0, BFG9000, Disable,  +1 Lab Per Commerce/Net Node,    0, 0, 1, 0, 0,
 The Nano Factory,             40, 0, IndRob,  Disable,  Repair Units; Low Upgrade Costs, 2, 1, 0, 0, 0,
 The Living Refinery,          40, 0, Gene,    Disable,  +2 SUPPORT (social),             0, 1, 0, 1, 0,
-The Cloning Vats,            300, 0, BioMac,  Disable,  Population Boom At All Bases,    0, 0, 0, 1, 2,
+The Cloning Vats,            100, 0, BioMac,  Disable,  Population Boom At All Bases,    0, 0, 0, 1, 2,
 The Self-Aware Colony,       200, 0, HAL9000, Disable,  Maintenance Halved; Extra Police,0, 1, 0, 2, 0,
 The Clinical Immortality,    120, 0, Create,  Disable,  Extra Talent Every Base,         0, 0, 1, 1, 0,
 The Space Elevator,          100, 0, Space,   Disable,  Energy +100%/Orbital Cost Halved,0, 0, 2, 2, 0,
