@@ -1,3 +1,7 @@
+# Version 73
+
+* [fix] AI hurrying project sometimes resulted in negative accumulated minerals.
+
 # Version 72
 
 * Satellites appearance order is changed to: Orbital power transmitter, Nessus mining station, Sky hydroponics lab.
