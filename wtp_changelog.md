@@ -1,3 +1,8 @@
+# Version 72
+
+* Satellites appearance order is changed to: Orbital power transmitter, Nessus mining station, Sky hydroponics lab.
+* The Cloning Vats cost: 100.
+
 # Version 71
 
 * Population boom fixed. See Readme for details.
@@ -375,18 +380,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* Strict requirements for Cloning Vats population boom.
-Base should have enough nutrients to feed double population.
-Base producion is halted during growth.
-* PTS fix for redistribuing population.
-
-* Centauri Empathy enables Empath Song.
-* Secrets of the Manifolds enables The Manifold Harmonics.
-* Nerf specialists.
-* Reduce production multipliers.
-
-* Air unit should not excert ZOC.
-* Air unit should not cover surface unit.
+* Nerf satellites.
 
 * Make AI build more units, defensive structures, sensors.
 * Rework probe team success rates.

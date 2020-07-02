@@ -45,8 +45,8 @@ struct BASE {
     int unused_intake;
     int nutrient_intake_2;                  // +0x00C0
     int mineral_intake_2;					// +0x00C4
-    int energy_intake_2;
-    int unused_intake_2;
+    int energy_intake_2;					// +0x00C8
+    int unused_intake_2;					// +0x00CC
     int nutrient_surplus;                   // +0x00D0
     int mineral_surplus;                    // +0x00D4
     int energy_surplus;                     // +0x00D8
@@ -358,8 +358,8 @@ struct Faction {
     int nutrient_surplus_total;
     int labs_total;
     int satellites_nutrient;		// 0x0790
-    int satellites_mineral;
-    int satellites_energy;
+    int satellites_mineral;			// 0x0794
+    int satellites_energy;			// 0x0798
     int satellites_ODP;
     int best_weapon_value;			// 0x07A0
     int best_psi_land_offense;
