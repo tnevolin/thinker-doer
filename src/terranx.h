@@ -118,4 +118,5 @@ extern fp_0void *tx_world_rainfall;
 extern fp_4void *tx_go_to;
 extern fp_int_char_int *tx_say_base;
 extern fp_0int* tx_base_growth;
+extern fp_3int *tx_base_init;
 

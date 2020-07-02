@@ -477,6 +477,34 @@ Use green/alien technologies for fungus production to streamline research priori
 
 Introduced *Sensor Buoy* on sea similar to *Sensor Array* on land. Copied from SMAniaC mod. They do not confer defense bonus but they increase visibility which is very important to track fast moving ships in your territory and around.
 
+# Secret Project logic
+
+AI fails to use crawlers and hurrying for projects effectivelly. These changes help it in this.
+
+Also some projects are quite abusive going beyond OP and breaking game. This is an attempt to fix them to be more sensible.
+
+## Faction bases contribution to project production
+
+All faction bases contribute part of their mineral production to project building. This emphasizes faction building a single project with its whole production power. This is also to aid AI who doesn't rush projects with crawlers. This applied to both AI and human. So human now can benefit from this production redistribution and does not need to rely on crawlers anymore. However, both AI and human can still use them to speed up project production even more.
+
+With more than one project under construction bases contribute to the one currently being built by the oldest base.
+
+This shared power allows erecting projects relatively quicker. The popup with project completion information is shown every turn to aid human in other faction project progress monitoring. The popup displays faction, project name, and completion percentage for each contributed project across all factions including self.
+
+## Hurrying projects
+
+Faction can fully or partially hurry project with credits at its discretion.
+
+## Specific project fixes
+
+### The Planetary Transit System
+
+The main problem of this project reported by many players is that it breaks the game paired with ICS strategy. Essentially, it creates two extra citizens out of thin air in new base. Therefore it just triples the benefit of founding new base and the total faction population growth rate.
+
+This project name suggest global transit system existence that eases population movement accross the planet. So that more people can fast and easy travel to new bases jump starting their growth. I believe that is what this project should do instead of creating population out of nowhere.
+
+For faction with PTS new base attracts up to two additional citizen from most populated faction bases. Citizens are willing to travel only from overcrowded centers only with population more than 3. Citizens are leaving most populated bases first in founding order if there are more than one. If there are not enough extra population in faction bases - nobody will come.
+
 # Miscelaneous
 
 ## Special weapon and armor

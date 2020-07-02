@@ -112,6 +112,7 @@ int refitToGrowthFacility(int id, BASE *base, int buildChoice);
 int getnextAvailableGrowthFacility(BASE *base);
 void contributeToProject(int factionId);
 HOOK_API int baseGrowth();
+HOOK_API int baseInit(int factionId, int x, int y);
 
 #endif // __PROTOTYPE_H__
 

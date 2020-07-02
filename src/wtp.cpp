@@ -1867,24 +1867,112 @@ HOOK_API int baseGrowth()
 	int id = *current_base_id;
 	BASE *base = &(tx_bases[id]);
 
-	// modify nutrient accumulated to emulate shorter nutrient box
-
-	int costFactor = tx_cost_factor(base->faction_id, 0, id);
-
-	int currentNutrientBoxHeight = base->pop_size + 1;
-	int currentNutrientRequirement = costFactor * currentNutrientBoxHeight;
-
-	int modifiedNutrientBoxHeight = max(2, (base->pop_size + 1) - 3);
-	int modifiedNutrientRequirement = costFactor * modifiedNutrientBoxHeight;
-
-	if (base->nutrients_accumulated >= modifiedNutrientRequirement)
-	{
-		base->nutrients_accumulated = currentNutrientRequirement;
-	}
-
+	// commented out in main version - this was for testing in fastgame
+//	// modify nutrient accumulated to emulate shorter nutrient box
+//
+//	int costFactor = tx_cost_factor(base->faction_id, 0, id);
+//
+//	int currentNutrientBoxHeight = base->pop_size + 1;
+//	int currentNutrientRequirement = costFactor * currentNutrientBoxHeight;
+//
+//	int modifiedNutrientBoxHeight = max(2, (base->pop_size + 1) - 3);
+//	int modifiedNutrientRequirement = costFactor * modifiedNutrientBoxHeight;
+//
+//	if (base->nutrients_accumulated >= modifiedNutrientRequirement)
+//	{
+//		base->nutrients_accumulated = currentNutrientRequirement;
+//	}
+//
 	// execute original code
 
 	return tx_base_growth();
+
+}
+
+/**
+Modifies base init computation.
+*/
+HOOK_API int baseInit(int factionId, int x, int y)
+{
+	// execute original code
+
+	int id = tx_base_init(factionId, x, y);
+
+	// return immediatelly if base wasn't created
+
+	if (id < 0)
+		return id;
+
+	// get base
+
+	BASE *base = &(tx_bases[id]);
+
+	// The Planetary Transit System fix
+	// new population comes from existing bases rather than from thin air
+
+	if (has_project(factionId, FAC_PLANETARY_TRANS_SYS) && base->pop_size == 3)
+	{
+		// transit two people
+
+		for (int transit = 0; transit < 2; transit++)
+		{
+			// search base with highest population more than 1
+
+			int highestPopulation = 0;
+			BASE *highestPopulationBase = NULL;
+
+			for (int i = 0; i < *total_num_bases; i++)
+			{
+				BASE *otherBase = &(tx_bases[i]);
+
+				// exclude self
+
+				if (i == id)
+					continue;
+
+				// exclude not own bases
+
+				if (otherBase->faction_id != factionId)
+					continue;
+
+				// exclude bases size 3 or less
+
+				if (otherBase->pop_size <= 3)
+					continue;
+
+				// update best base
+
+				if (otherBase->pop_size > highestPopulation)
+				{
+					highestPopulation = otherBase->pop_size;
+					highestPopulationBase = otherBase;
+				}
+
+			}
+
+			// highest population base found
+			if (highestPopulationBase != NULL)
+			{
+				// citizen left for new base
+
+				highestPopulationBase->pop_size--;
+
+			}
+			else
+			{
+				// no one can come - don't add people to new base
+
+				base->pop_size--;
+
+			}
+
+		}
+
+	}
+
+	// return base id
+
+	return id;
 
 }
 

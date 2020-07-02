@@ -499,9 +499,10 @@ HOOK_API int turn_upkeep() {
         }
     }
     if (*current_turn == 1) {
-		// give colony and former bonuses to human too for testing puposes
-//        int bonus = ~(*human_players) & 0xfe;
-        int bonus = ~(0) & 0xfe;
+
+		// give colony and former bonuses to human too
+        int bonus = ~(*human_players) & 0xfe;
+//        int bonus = ~(0) & 0xfe;
 
         for (int i=0; i<*total_num_vehicles; i++) {
             VEH* veh = &tx_vehicles[i];
@@ -514,7 +515,7 @@ HOOK_API int turn_upkeep() {
                     spawn_veh(former, veh->faction_id, veh->x, veh->y, -1);
                 }
                 for (int j=0; j<conf.free_colony_pods; j++) {
-                    spawn_veh(colony, veh->faction_id, veh->x, veh->y, -1);
+				spawn_veh(colony, veh->faction_id, veh->x, veh->y, -1);
                 }
             }
         }
