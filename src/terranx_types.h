@@ -20,7 +20,7 @@ struct BASE {
     int governor_flags;                     // +0x0038
     int nutrients_accumulated;              // +0x003C
     int minerals_accumulated;               // +0x0040
-    int production_id_last;
+    int production_id_last;					// +0x0044
     int eco_damage;
     int queue_size;
     int queue_items[10];                    // +0x0050

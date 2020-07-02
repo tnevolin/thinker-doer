@@ -81,6 +81,7 @@ void factionHurryProduction(int factionId)
 		else if (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST)
 		{
 			importantFacilityBases.push_back({base, weight});
+			importantFacilityBasesWeightSum += weight;
 		}
 		else
 		{

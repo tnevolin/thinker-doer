@@ -1441,7 +1441,6 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
             if (base->faction_id == faction_id)
             {
                 base->nutrients_accumulated = (int)round((double)base->nutrients_accumulated * conversion_ratio);
-
             }
 
         }
@@ -1464,7 +1463,6 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
             if (base->faction_id == faction_id)
             {
                 base->minerals_accumulated = (int)round((double)base->minerals_accumulated * conversion_ratio);
-
             }
 
         }

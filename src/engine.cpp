@@ -103,12 +103,15 @@ HOOK_API int faction_upkeep(int faction) {
     production_phase(faction);
 
     // other bases contribute to project
-    // affects both AI and human factions
-    contributeToProject(faction);
+    // affects AI and human factions
+    if (faction > 0)
+	{
+		contributeToProject(faction);
+	}
 
     // attempt to hurry production in all bases
     // affects AI factions only
-    if (!is_human(faction))
+    if (faction > 0 && !is_human(faction))
 	{
 		factionHurryProduction(faction);
 	}
