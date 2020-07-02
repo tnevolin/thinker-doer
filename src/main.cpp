@@ -499,7 +499,10 @@ HOOK_API int turn_upkeep() {
         }
     }
     if (*current_turn == 1) {
-        int bonus = ~(*human_players) & 0xfe;
+		// give colony and former bonuses to human too for testing puposes
+//        int bonus = ~(*human_players) & 0xfe;
+        int bonus = ~(0) & 0xfe;
+
         for (int i=0; i<*total_num_vehicles; i++) {
             VEH* veh = &tx_vehicles[i];
             if (1 << veh->faction_id & bonus) {

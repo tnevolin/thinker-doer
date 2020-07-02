@@ -1,3 +1,12 @@
+# fastgame
+
+Special testing version.
+
+* Human gets same colony and former bonus as AI. Controlled by free_formers, free_colony_pods in thinker.ini.
+* Colony Module cost = 3.
+* Terraforming Unit cost = 2.
+* Nutrient requirement for base growth doesn't increas until size 4. Then they increase by 1 as usual.
+
 # techtree
 
 * Large technology tree redo for more sensible dependencies.

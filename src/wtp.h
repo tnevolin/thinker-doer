@@ -111,6 +111,7 @@ int getBasePopulationLimit(BASE *base);
 int refitToGrowthFacility(int id, BASE *base, int buildChoice);
 int getnextAvailableGrowthFacility(BASE *base);
 void contributeToProject(int factionId);
+HOOK_API int baseGrowth();
 
 #endif // __PROTOTYPE_H__
 

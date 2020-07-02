@@ -2036,6 +2036,15 @@ void patch_display_base_population_info()
 
 }
 
+/**
+Hooks base growth computation.
+*/
+void patch_base_growth()
+{
+    write_call(0x004F7A52, (int)baseGrowth);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2449,6 +2458,10 @@ bool patch_setup(Config* cf) {
     // base population info
 
     patch_display_base_population_info();
+
+    // base growth
+
+    patch_base_growth();
 
     // continue with original Thinker checks
 

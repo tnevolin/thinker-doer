@@ -1857,3 +1857,34 @@ void contributeToProject(int factionId)
 
 }
 
+/**
+Modifies base growth computation.
+*/
+HOOK_API int baseGrowth()
+{
+	// get current base
+
+	int id = *current_base_id;
+	BASE *base = &(tx_bases[id]);
+
+	// modify nutrient accumulated to emulate shorter nutrient box
+
+	int costFactor = tx_cost_factor(base->faction_id, 0, id);
+
+	int currentNutrientBoxHeight = base->pop_size + 1;
+	int currentNutrientRequirement = costFactor * currentNutrientBoxHeight;
+
+	int modifiedNutrientBoxHeight = max(2, (base->pop_size + 1) - 3);
+	int modifiedNutrientRequirement = costFactor * modifiedNutrientBoxHeight;
+
+	if (base->nutrients_accumulated >= modifiedNutrientRequirement)
+	{
+		base->nutrients_accumulated = currentNutrientRequirement;
+	}
+
+	// execute original code
+
+	return tx_base_growth();
+
+}
+

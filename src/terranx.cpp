@@ -86,8 +86,6 @@ fp_1int* tx_action_staple = (fp_1int*)0x4CA7F0;
 fp_1int* tx_tech_rate = (fp_1int*)0x5BE6B0;
 fp_1int* tx_tech_selection = (fp_1int*)0x5BE380;
 
-// [WtP]
-
 // read basic rules
 fp_0int *tx_read_basic_rules = (fp_0int* )0x00585170;
 
@@ -118,34 +116,25 @@ fp_5int *tx_set_se_on_dialog_close = (fp_5int* )0x005B4210;
 // hex cost
 fp_7int *tx_hex_cost = (fp_7int* )0x00593510;
 
-/**
-Checks if terraforming action is available.
-(terraforming action, sea flag, returns 0 unless action is advanced terraforming and The Weather Paradigm is owned)
-*/
+// checks if terraforming action is available
+// terraforming action, sea flag, returns 0 unless action is advanced terraforming and The Weather Paradigm is owned
 fp_3int *tx_terrain_avail = (fp_3int *)0x005BAB40;
 
-/**
-Recalculates world climate.
-*/
+// recalculates world climate
 fp_0void *tx_world_climate = (fp_0void *)0x005C5A30;
 
-/**
-Recalculates world rivers.
-*/
+// recalculates world rivers
 fp_0void *tx_world_rivers = (fp_0void *)0x005C38B0;
 
-/**
-Recalculates world rainfall.
-*/
+// recalculates world rainfall
 fp_0void *tx_world_rainfall = (fp_0void *)0x005C4470;
 
-/**
-Send vehicle to destination.
-*/
+// send vehicle to destination
 fp_4void *tx_go_to = (fp_4void *)0x00560AD0;
 
-/**
-Copy base name to string buffer.
-*/
+// copies base name to string buffer
 fp_int_char_int *tx_say_base = (fp_int_char_int *)0x004E3A00;
+
+// calculates base growth
+fp_0int* tx_base_growth = (fp_0int*)0x004EF1C0;
 
