@@ -1,3 +1,13 @@
+# Version 74
+
+* Base Square produces 4 nutrients;
+* Reactor does not discount module cost.
+* Foil chassis cost = 2 (same as infantry).
+* Cruiser chassis cost = 3 (same as speeder).
+* Colony Module cost = 4.
+* The Cloning Vats does not grant impunities.
+* The Cloning Vats help entry is updated.
+
 # Version 73
 
 * [fix] AI hurrying project sometimes resulted in negative accumulated minerals.
@@ -383,8 +393,6 @@ Special testing version.
 Initial release. See list of changes in readme.
 
 # TODO
-
-* Nerf satellites.
 
 * Make AI build more units, defensive structures, sensors.
 * Rework probe team success rates.

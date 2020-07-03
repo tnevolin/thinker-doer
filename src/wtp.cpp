@@ -294,87 +294,65 @@ HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer,
 /**
 Prototype cost calculation.
 
-Select primary and secondary weapon/module/armor items
-primary item = one with higher true cost
-secondary item = one with lower true cost
+1. Calculate reactor cost factor relative to Fission reactor.
+reactor relative cost factor = reactor cost factor / Fission reactor cost factor
 
-Calculate unit base cost
-unit base cost = primary item cost + secondary item cost / 2 - 1
+2. Calculate module inflated cost.
+module inflated cost = module base cost / reactor relative cost factor
 
-Multiply by reactor cost factor
-reactor cost factor = reactor cost / Fission reactor cost
+3. Select primary and secondary weapon/module-armor item.
+module use their inflated cost
+primary item = one with higher cost
+secondary item = one with lower cost
 
-Multiply by chassis cost factor
+4. Calculate unit base cost.
+unit base cost = primary item cost + (secondary item cost - 1) / 2
+
+5. Multiply by chassis cost factor.
 chassis cost factor = chassis cost / 2
 
-Multiply by ability factor or add ability flat cost
-ability bytes 0-3 is unit cost factor
-ability bytes 4-7 is unit cost flat addition
+6. Multiply by ability cost factor.
+ability bytes 0-3 is cost factor
 
-Special rules:
-1. Colony/Former/Supply on foil/cruiser costs same as if on infantry/speeder.
-2. Reactor doesn't change Supply cost.
+7. Multiply by reactor relative cost factor
+
+8. Add ability flat cost
+ability bytes 4-7 is flat cost
 
 */
 HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level)
 {
-    // Special rules
+    // calculate reactor relative cost factor
 
-    // 1. Colony/Former/Supply on foil/cruiser costs same as if on infantry/speeder.
-
-    if
-    (
-        tx_weapon[weapon_id].mode == WMODE_COLONIST
-        ||
-        tx_weapon[weapon_id].mode == WMODE_TERRAFORMER
-        ||
-        tx_weapon[weapon_id].mode == WMODE_CONVOY
-    )
-    {
-        switch(chassis_id)
-        {
-        case CHS_FOIL:
-            chassis_id = CHS_INFANTRY;
-            break;
-
-        case CHS_CRUISER:
-            chassis_id = CHS_SPEEDER;
-            break;
-
-        }
-
-    }
-
-    // 2. Reactor doesn't change Supply cost.
-
-    if (tx_weapon[weapon_id].mode == WMODE_CONVOY)
-    {
-        reactor_level = 1;
-
-    }
-
-    // get Fission reactor cost factor
-
-    double fission_reactor_cost_factor = (double)conf.reactor_cost_factors[REC_FISSION - 1];
-
-    // get reactor cost factor
-
-    double reactor_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1];
+    double reactor_relative_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1] / (double)conf.reactor_cost_factors[REC_FISSION - 1];
 
     // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
 
     int minimal_cost = reactor_level;
 
-    // get pieces cost
+    // get component costs
 
-    double chassis_cost = (double)tx_chassis[chassis_id].cost;
     double weapon_cost = (double)tx_weapon[weapon_id].cost;
     double armor_cost = (double)tx_defense[armor_id].cost;
+    double chassis_cost = (double)tx_chassis[chassis_id].cost;
+
+    // calculate weapon/module inflated cost
+
+    double inflated_weapon_cost;
+
+    if (tx_weapon[weapon_id].mode >= WMODE_TRANSPORT)
+	{
+		inflated_weapon_cost = weapon_cost / reactor_relative_cost_factor;
+	}
+	else
+	{
+		inflated_weapon_cost = weapon_cost;
+	}
 
     // select primary and secondary item cost
 
-    double primary_item_cost = max(weapon_cost, armor_cost);
-    double secondary_item_cost = min(weapon_cost, armor_cost);
+    double primary_item_cost = max(inflated_weapon_cost, armor_cost);
+    double secondary_item_cost = min(inflated_weapon_cost, armor_cost);
 
     // get abilities cost modifications
 
@@ -433,7 +411,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
                 (1.0 + 0.25 * abilities_cost_factor)
                 *
                 // reactor cost factor
-                (reactor_cost_factor / fission_reactor_cost_factor)
+                reactor_relative_cost_factor
             )
             +
             // abilities flat cost

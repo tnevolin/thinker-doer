@@ -2078,6 +2078,29 @@ void patch_population_boom()
 
 }
 
+/**
+Disabes Cloning Vats impunities.
+*/
+void patch_cloning_vats()
+{
+	// disable cloning vats impunities display
+
+	int disable_cv_display_bytes_length = 5;
+	byte disable_cv_display_bytes_old[] = { 0xA1, 0x74, 0x65, 0x9A, 0x00 };
+	byte disable_cv_display_bytes_new[] = { 0xB8, 0xFF, 0xFF, 0xFF, 0xFF };
+	write_bytes(0x004AF514, disable_cv_display_bytes_length, disable_cv_display_bytes_old, disable_cv_display_bytes_new);
+	write_bytes(0x004AF686, disable_cv_display_bytes_length, disable_cv_display_bytes_old, disable_cv_display_bytes_new);
+
+	// disable cloning vats impunities computation
+
+	int disable_cv_compute_bytes_length = 6;
+	byte disable_cv_compute_bytes_old[] = { 0x8B, 0x0D, 0x74, 0x65, 0x9A, 0x00 };
+	byte disable_cv_compute_bytes_new[] = { 0xB9, 0xFF, 0xFF, 0xFF, 0xFF, 0x90 };
+	write_bytes(0x005B4225, disable_cv_compute_bytes_length, disable_cv_compute_bytes_old, disable_cv_compute_bytes_new);
+	write_bytes(0x005B434D, disable_cv_compute_bytes_length, disable_cv_compute_bytes_old, disable_cv_compute_bytes_new);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2503,6 +2526,10 @@ bool patch_setup(Config* cf) {
     // population boom
 
     patch_population_boom();
+
+    // cloning vats
+
+    patch_cloning_vats();
 
     // continue with original Thinker checks
 

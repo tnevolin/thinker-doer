@@ -565,10 +565,10 @@ struct R_Resource {
 };
 
 struct R_Social {
-    char* field_name;
-    int   soc_preq_tech[4];
-    char* soc_name[4];
-    int   effects[4][11];
+    char* field_name;		//0x0000
+    int   soc_preq_tech[4];	//0x0004
+    char* soc_name[4];		//0x0014
+    int   effects[4][11];	//0x0024
 };
 
 struct R_Facility {

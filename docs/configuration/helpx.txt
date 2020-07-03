@@ -556,11 +556,7 @@ on Social Engineering table.
 
 #; The Cloning Vats
 #HELPPROJ24
-All of your bases enter a permanent state of Population Boom and
-will grow every turn provided $LINK<NUTRIENT=41> output
-is sufficient and $LINK<Hab facilities=100024> are adequate.
-The negative effects of the $LINK<Power=120012> and $LINK<Thought
-Control=120019> social engineering choices are eliminated.
+The Cloning Vats establishes clonning facilities at every base increasing population growth rate. These facilities consume 20% of base mineral surplus and add two extra nutrients to base nutrient reserve per each consumed mineral.
 
 #; The Self-Aware Colony
 #HELPPROJ25
