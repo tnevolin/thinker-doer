@@ -542,7 +542,9 @@ For faction with PTS new base attracts up to two additional citizen from most po
 
 Permanent population boom in all bases is one of the most game breaking effects in entire SMACX. Modders struggle to mitigate and balance it. This mod moderates this project effect to the level comparable to other project effects.
 
-The Cloning Vats do not create population boom. Instead they convert part of mineral surplus into additional nutrients on top of regular nutrient surplus. Thus fulfilling this project very idea of using production power to speed up population growth. The effect is very beneficial but on that OP anymore. Furthermore, it diminishes for greater base sizes due to increased growth requirements. Therfore, it can safely be unlocked in the mid game.
+The Cloning Vats do not trigger population boom. Instead they convert part of mineral surplus into additional nutrients on top of regular nutrient surplus. Thus fulfilling this project very idea of using production power to speed up population growth. The effect is very beneficial but on that OP anymore. Furthermore, it diminishes for greater base sizes due to increased growth requirements. Therfore, it can safely be unlocked in the mid game.
+
+The Cloning Vats also does not grant impunities anymore.
 
 # Miscelaneous
 
