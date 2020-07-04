@@ -347,7 +347,7 @@ arbitrary
 Cost in mineral rows.
 
 secret project | cost | explanation
-----|----:|----:|----
+----|----:|----
 The Merchant Exchange | 20 | Local improvement - no change.
 The Human Genome | 40 | 2 minerals worth quelled drone x 200
 The Command Nexus | 40 | 60 cost x 10 + 1 maintenance x 100. Reduced in half as it is not needed in every base.
