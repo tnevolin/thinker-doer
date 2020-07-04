@@ -346,7 +346,7 @@ arbitrary
 
 Cost in mineral rows.
 
-secret project | level | cost | explanation
+secret project | cost | explanation
 ----|----:|----:|----
 The Merchant Exchange | 20 | Local improvement - no change.
 The Human Genome | 40 | 2 minerals worth quelled drone x 200
