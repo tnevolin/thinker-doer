@@ -1988,3 +1988,55 @@ HOOK_API int baseInit(int factionId, int x, int y)
 
 }
 
+/**
+Wraps probe action functionality.
+*/
+HOOK_API int probeAction(int vehicleId, int baseId, int a3, int a4)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	// store defensive facilities
+
+	bool existingDefensiveFacilities[4];
+
+	for (int i = 0; i < DEFENSIVE_FACILITIES_COUNT; i++)
+	{
+		int facilityId = DEFENSIVE_FACILITIES[i];
+
+		existingDefensiveFacilities[i] = base->facilities_built[facilityId / 8] & (1 << (facilityId % 8));
+
+	}
+
+	// remove defensive facilities
+
+	for (int i = 0; i < DEFENSIVE_FACILITIES_COUNT; i++)
+	{
+		int facilityId = DEFENSIVE_FACILITIES[i];
+
+		base->facilities_built[facilityId / 8] &= ~(1 << (facilityId % 8));
+
+	}
+
+	// execute original function
+
+	int value = tx_probe(vehicleId, baseId, a3, a4);
+
+	// restore defensive facilities
+
+	for (int i = 0; i < DEFENSIVE_FACILITIES_COUNT; i++)
+	{
+		int facilityId = DEFENSIVE_FACILITIES[i];
+
+		if (existingDefensiveFacilities[i])
+		{
+			base->facilities_built[facilityId / 8] |= (1 << (facilityId % 8));
+		}
+
+	}
+
+	// return original value
+
+	return value;
+
+}
+

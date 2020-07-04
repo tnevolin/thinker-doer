@@ -10,6 +10,9 @@ struct BASE_HURRY_ALLOWANCE_PROPORTION
 	double allowanceProportion;
 };
 
+const int DEFENSIVE_FACILITIES_COUNT = 4;
+const int DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX, FAC_TACHYON_FIELD};
+
 HOOK_API int read_basic_rules();
 HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, int attacker_strength_pointer, int defender_strength_pointer, int flags);
 HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer, int input_string_pointer);
@@ -113,6 +116,7 @@ int getnextAvailableGrowthFacility(BASE *base);
 void contributeToProject(int factionId);
 HOOK_API int baseGrowth();
 HOOK_API int baseInit(int factionId, int x, int y);
+HOOK_API int probeAction(int vehicleId, int baseId, int a3, int a4);
 
 #endif // __PROTOTYPE_H__
 

@@ -141,3 +141,9 @@ fp_0int *tx_base_growth = (fp_0int*)0x004EF1C0;
 // initializes base
 fp_3int *tx_base_init = (fp_3int *)0x004E4B80;
 
+// probe action
+fp_4int *tx_probe = (fp_4int *)0x0059F120;
+
+// set facility in base
+fp_3int *tx_set_facility = (fp_3int *)0x004E48B0;
+

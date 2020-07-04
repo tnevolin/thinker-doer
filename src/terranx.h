@@ -119,4 +119,6 @@ extern fp_4void *tx_go_to;
 extern fp_int_char_int *tx_say_base;
 extern fp_0int* tx_base_growth;
 extern fp_3int *tx_base_init;
+extern fp_4int *tx_probe;
+extern fp_3int *tx_set_facility;
 

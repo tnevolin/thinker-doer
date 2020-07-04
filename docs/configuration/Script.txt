@@ -8064,13 +8064,13 @@ Planet Buster!
 #HUNTERSEEKER
 #xs 440
 #caption Operations Director
-The Hunter-Seeker Algorithm has destroyed our probe team!
+The Hunter-Seeker Algorithm has disabled our probe team action!
 
 #HUNTERSEEKER2
 #xs 440
 #caption Operations director
-The Hunter-Seeker Algorithm has destroyed a $<M1:$FACTIONADJ0>
-probe team!
+The Hunter-Seeker Algorithm has disabled a $<M1:$FACTIONADJ0>
+probe team action!
 
 #GATENOBASE
 #xs 440
