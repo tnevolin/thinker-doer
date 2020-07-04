@@ -1,3 +1,8 @@
+# Version 75
+
+* The Hunter-Seeker Algorithm prevents regular probe action but don't destroy it.
+* Human probes cannot sabotage defensive facilities either by targetting them or by random sabotage.
+
 # Version 74
 
 * Base Square produces 4 nutrients;

@@ -546,6 +546,10 @@ The Cloning Vats do not trigger population boom. Instead they convert part of mi
 
 The Cloning Vats also does not grant impunities anymore.
 
+## The Hunter-Seeker Algorithm
+
+The Hunter-Seeker Algorithm prevents regular probe action but does not destroy it. This is to aid AI who is stupidly keep sending probes against HSA owner. This is also to reduce human player frustration when they need to remember which enemy faction has HSA to not kill own probes for nothing.
+
 # Miscelaneous
 
 ## Special weapon and armor
@@ -593,6 +597,14 @@ These abilities do not improve unit properties directly. Instead they essentiall
 Population boom is a powerful feature leading to OP strategy: expand - pop boom - repeat. The population boom is a nice feature. However, its cost is obviously negligible comparing to benefits. Therefore, this mod changes the population boom effect to some moderate one. Instead of instant population increase it adds some configurable amound of nutrients to base growth box in addition to regular nutrient surplus. This still boosts base growth significantly but is not that OP anymore. Population boom is easier to acheive in bigger and mode developped bases. However, its value proportionally diminishes with base size as growth requirement increases. That creates a nice cost-effect balance across faction bases.
 
 Population boom effect is not decoupled from The Cloning Vats effect. Both effects are cumulative. See The Cloning Vats fix description.
+
+## Disallowing destroying defensive facilities with probes
+
+Human probes cannot sabotage defensive facilities either by targetting them or by random sabotage.
+
+Disciplined enhanced probe has 50% chance to sabotage targetted PD or TF. Disciplined regular probe has also 100% chance to sabotage random facility which may be a defencive one. Sabotaging PD reduces base defence by 30%. This is too much of a reduction for the cost of a few probe teams especially against AI who doesn't protect their bases with counter probes well.
+
+Overall, many players percieve this as an exploit similar to destroying sensor before waging full scale base assault.
 
 # UI changes / cosmetics
 

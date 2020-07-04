@@ -157,28 +157,28 @@ struct MAP {
 };
 
 struct MetaFaction {
-    int is_leader_female;
-    char filename[24];
-    char search_key[24];
-    char name_leader[24];
-    char title_leader[24];
-    char adj_leader[128];
-    char adj_insult_leader[128];
-    char adj_faction[128];
-    char adj_insult_faction[128];
-    char pad_1[128];
-    char noun_faction[24];
-    int noun_gender;
-    int is_noun_plural;
-    char adj_name_faction[128];
-    char formal_name_faction[40];
-    char insult_leader[24];
-    char desc_name_faction[24];
-    char assistant_name[24];
-    char scientist_name[24];
-    char assistant_city[24];
-    char pad_2[176];
-    int rule_tech_selected;
+    int is_leader_female;			// 0x0000
+    char filename[24];				// 0x0004
+    char search_key[24];			// 0x001C
+    char name_leader[24];			// 0x0034
+    char title_leader[24];			// 0x004C
+    char adj_leader[128];			// 0x0064
+    char adj_insult_leader[128];	// 0x00E4
+    char adj_faction[128];			// 0x0164
+    char adj_insult_faction[128];	// 0x01E4
+    char pad_1[128];				// 0x0264
+    char noun_faction[24];			// 0x02E4
+    int noun_gender;				// 0x02FC
+    int is_noun_plural;				// 0x0300
+    char adj_name_faction[128];		// 0x0304
+    char formal_name_faction[40];	// 0x0384
+    char insult_leader[24];			// 0x03AC
+    char desc_name_faction[24];		// 0x03C4
+    char assistant_name[24];		// 0x03DC
+    char scientist_name[24];		// 0x03F4
+    char assistant_city[24];		// 0x040C
+    char pad_2[176];				// 0x0424
+    int rule_tech_selected;			// 0x04D4
     int rule_morale;
     int rule_research;
     int rule_drone;                 // 0x04E0
