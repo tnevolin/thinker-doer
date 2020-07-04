@@ -1,3 +1,13 @@
+# Version 76
+
+* The Universal Translator cost = 20. Reduced due to early availability and pathetic benfits.
+* The Planetary Datalinks cost = 80. It is too beneficial for 60.
+* The Cyborg Factory cost = 160. It should be more expensive than CBA.
+* The Clinical Immortality cost = 200. Cost increased due to doubling planetary votes. That is quite a big aid for diplomatic victory.
+* The Space Elevator cost = 160. Average cost within era.
+* The Cloning Vats = 120. Increased cost a little to match the era.
+* The Ascent to Transcendence cost = 500. Increased slightly since now all empire bases are contributing to it.
+
 # Version 75
 
 * The Hunter-Seeker Algorithm prevents regular probe action but don't destroy it.
