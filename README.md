@@ -351,14 +351,14 @@ secret project | cost | explanation
 The Merchant Exchange | 20 | Local improvement - no change.
 The Human Genome | 40 | 2 minerals worth quelled drone x 200
 The Command Nexus | 40 | 60 cost x 10 + 1 maintenance x 100. Reduced in half as it is not needed in every base.
-The Universal Translator | 40 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. No change.
+The Universal Translator | 20 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. Reduced in cost as it is now quite early project. It is definitely not better than The Human Genome, for example.
 The Weather Paradigm | 60 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game. Should be most expensive in its time.
 The Empath Guild | 60 | Way to Governorship and energy income multiplier. Should be quite expensive.
 The Living Refinery | 40 | About 2 minerals per base per turn x 200.
-The Virtual World | 60 | 60 cost x 10 + 2 maintenance x 100. Reduced slightly by user requests.
+The Virtual World | 60 | 60 cost x 10 + 2 maintenance x 100. Reduced slightly since it benefits base only when network node is built.
 The Planetary Transit System | 40 | Drone quellying + immediate growth boost. Proportional to empire size but limited to small bases only. Slight increase.
 The Maritime Control Center | 60 | 80 cost x 10 + 2 maintenance x 100. Reduced in half as it is not needed in every base.
-The Planetary Datalinks	| 60 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
+The Planetary Datalinks	| 80 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
 The Manifold Harmonics | 60 | Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
 The Planetary Energy Grid | 60 | 60 cost x 10 + 1 maintenance x 100.
 The Citizens' Defense Force | 60 | 50 cost x 10. It worth more than the cost of the facility as it gets built immediatelly in conquered base.
@@ -374,17 +374,17 @@ The Neural Amplifier | 80 | Tough to evaluate but I tend to price combat effecti
 The Pholus Mutagen | 60 | Allows higher production without ecology impact. Should be slightly more expensive.
 The Dream Twister | 80 | Same as The Neural Amplifier.
 The Cloudbase Academy | 120 | 100 cost x 10 + 3 maintenance x 100. Not reduced at all as AC is needed in every base for satellites later on.
-The Cyborg Factory | 120 | 200 cost x 10 + 5 maintenance x 100. Reduced in half as it is not needed in every base.
-The Clinical Immortality | 120 | Drones and diplomatic victory. Should be quite high.
+The Cyborg Factory | 160 | 200 cost x 10 + 5 maintenance x 100. Reduced by 1/3 as it is not needed in every base.
+The Clinical Immortality | 200 | Drones and diplomatic victory. Should be quite high.
 The Singularity Inductor | 200 | 200 cost x 10.
 The Bulk Matter Transmitter | 200 | 10 minerals x 200.
 The Network Backbone | 160 | Large source of labs multiplied by the number of all world bases. Very high.
 The Self-Aware Colony | 200 | Roughly 20 maintenance x 100.
-The Space Elevator | 100 | Production boost for satellites. The boost itself is limited but satellites are the most lucrative facilities in the game. Priced high.
-The Cloning Vats | 100 | Converts some part of minerals into nutrients. Good for growth but not game breaking.
+The Space Elevator | 160 | Economy boost in base, satellites production boost, planetary orbital insertion. Few good things but not game breaking ones. Should be averagely priced for its era.
+The Cloning Vats | 120 | Converts some part of minerals into nutrients. Good for growth but not game breaking.
 The Telepathic Matrix | 200 | Total drone solution. About 5 times The Human Genome cost. 
 The Voice of Planet | 120 | 
-The Ascent to Transcendence | 300 | End game bases with crawlers should be able to build it in reasonable time but not instantly.
+The Ascent to Transcendence | 500 | Should take some time but not to extreme with all empire bases contribuing to it.
 
 # Feature appearance time
 
