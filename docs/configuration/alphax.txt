@@ -318,7 +318,7 @@ Matter Transmission,           Matter,   2, 2, 3, 2, NanEdit, Create,  000000000
 Centauri Empathy,              CentEmp,  1, 1, 1, 3, FldMod,  Ecology, 000000000
 Environmental Economics,       EnvEcon,  1, 1, 3, 2, AdapEco, EthCalc, 000000100
 Ecological Engineering,        EcoEng,   1, 1, 1, 3, Ecology, EnvEcon, 000000000
-Planetary Economics,           PlaEcon,  0, 0, 2, 0, AdapEco, IndRob,  000000100
+Planetary Economics,           PlaEcon,  0, 0, 0, 0, Disable, Disable, 000000100
 Adv. Ecological Engineering,   EcoEng2,  2, 2, 2, 3, Eudaim,  EcoEng,  000000000
 Centauri Psi,                  CentPsi,  1, 0, 0, 2, CentGen, EcoEng2, 100000000
 Secrets of Alpha Centauri,     AlphCen,  0, 2, 0, 0, CentPsi, SentEco, 001001000
@@ -332,7 +332,7 @@ Matter Editation,              NanEdit,  1, 1, 2, 1, MatComp, QuanMac, 000100000
 Optical Computers,             OptComp,  0, 0, 0, 0, Disable, Disable, 000000000
 Industrial Nanorobotics,       IndRob,   2, 1, 3, 1, NanoMin, IndAuto, 000000100
 Centauri Genetics,             CentGen,  0, 0, 0, 3, CentMed, Neural,  001000000
-Sentient Econometrics,         SentEco,  0, 1, 2, 1, Create,  PlaEcon, 000000100
+Sentient Econometrics,         SentEco,  0, 1, 2, 1, Create,  AdapEco, 000000100
 Retroviral Engineering,        Viral,    3, 1, 2, 1, BioEng,  MilAlg,  000110000
 Orbital Spaceflight,           Orbital,  2, 2, 3, 2, DocAir,  MatComp, 000000000
 Progenitor Psych,              PrPsych,  0, 3, 0, 0, None,    None,    001000000
@@ -345,7 +345,7 @@ Secrets of the Manifolds,      SecMani,  0, 2, 0, 0, ConSing, AlphCen, 000000000
 N-Space Compression,           NewMiss,  0, 2, 2, 3, Magnets, BioMac,  000000000
 String Resonance,              BFG9000,  3, 2, 0, 0, AGrav,   Bioadap, 000000000
 User Technology,               User,     0, 0, 0, 0, Disable, Disable, 000000000
-Bioadaptive Resonance
+Transcendent Thought,          TranT,    0, 2, 0, 0, Thresh,  BFG9000, 000000000
 
 ;
 ; Chassis
@@ -424,7 +424,7 @@ String Disruptor,     String,        30, 1,20, -1, BFG9000,
 Psi Attack,           Psi,           -1, 2,10, -1, Disable,
 Planet Buster,        Planet Buster, 99, 0,32, -1, AGrav,
 Colony Module,        Colony Pod,     0, 8, 4, -1, None,     ; Noncombat packages
-Terraforming Unit,    Formers,        0, 9, 4, -1, Ecology,
+Terraforming Unit,    Formers,        0, 9, 2, -1, Ecology,
 Troop Transport,      Transport,      0, 7, 4, -1, DocFlex,
 Supply Transport,     Supply,         0,10,12, -1, IndAuto,
 Probe Team,           Probe Team,     0,11, 4, -1, InfNet,
@@ -500,7 +500,7 @@ Resonance 8 Armor,   8-Res,       8, 1,11, Disable,
 ;          100000000000 = Only allowed on probe teams
 ;
 #ABILITIES
-Super Former,           3, EcoEng2,  Super,     000000010111, Terraform rate doubled
+Super Former,           2, EcoEng2,  Super,     000000010111, Terraform rate doubled
 Deep Radar,             0, MilAlg,   ,          010000111111, Sees 2 spaces
 Cloaking Device,        1, Disable,  Cloaked,   000001111001, Invisible; Ignores ZOCs
 Amphibious Pods,        1, AdapDoc,  Amphibious,000000001001, Attacks from ship
@@ -513,7 +513,7 @@ Comm Jammer,            1, Physic,   ECM,       000010111001, +50% vs. fast unit
 Antigrav Struts,        2, Gravity,  Grav,      000000111001, +1 movement rate (or +Reactor*2 for Air)
 Empath Song,           32, CentEmp,  Empath,    000010001111, +50% attack vs. Psi
 Polymorphic Encryption, 1, Algor,    Secure,    000000111111, x2 cost to subvert
-Fungicide Tanks,        1, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
+Fungicide Tanks,       16, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
 High Morale,            1, Integ,    Trained,   000000001111, Gains morale upgrade
 Heavy Artillery,        0, Chemist,  Artillery, 000010001001, Bombards
 Clean Reactor,         32, BioEng,   Clean,     000000111111, Requires no support
@@ -603,7 +603,7 @@ Colony Pod,             Infantry, Colony Pod,   Scout,      8, 0, 0, None,    -1
 Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
 Transport Foil,         Foil,     Transport,    Scout,      7, 0, 0, DocFlex, -1, 00000000000000000000000000
-*Sea Formers,           Foil,     Formers,      Scout,      9, 0, 0, Disable, -1, 00000000000000000000000000
+Sea Formers,            Foil,     Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
 Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, IndAuto, -1, 00000000000000000000000000
 Probe Team,             Speeder,  Probe Team,   Scout,     11, 0, 0, InfNet,  -1, 00000000000000000000000000
 Alien Artifact,         Infantry, Artifact,     Scout,     12,10, 0, Disable,  2, 00000000000000000000000000
@@ -614,7 +614,7 @@ Unity Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Disable, -1
 Unity Scout Chopper,    Copter,   Gun,          Scout,      4, 0, 0, Disable, -1, 00000000000000000000100000
 Unity Foil,             Foil,     Transport,    Scout,      7, 0, 0, Disable, -1, 00100000000000000000000000
 Sealurk,                Foil,     Psi,          Psi,        6, 8, 0, Bioadap,  4, 00000000000000000001000000
-Spore Launcher,         Infantry, Psi,          Psi,        0, 4, 0, Bioadap,  5, 00000000001000000000000000
+Spore Launcher,         Infantry, Psi,          Psi,        0, 4, 0, FldMod,   5, 00000000001000000000000000
 Battle Ogre MK1,        Infantry, R-Laser,      3-Res,      0,10, 0, Disable,  6, 00010000000000000000000000
 Battle Ogre MK2,        Infantry, R-Bolt,       8-Res,      0,15, 0, Disable,  6, 10010000000000000000000000
 Battle Ogre MK3,        Speeder,  String,       Stasis,     0,20, 0, Disable,  6, 10010000000000000000000000
