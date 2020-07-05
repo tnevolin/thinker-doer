@@ -7,6 +7,9 @@
 * Fungicide tanks cost = flat 1 mineral row.
 * Super Former cost = 2.
 * Unit cost is rounded before ability cost factor is applied so same ability added to the same cost units result in same total cost.
+* Needlejet chassis cost = 4.
+* Gravship chassis cost = 6.
+* Decifer ability cost to human readable text in Datalink.
 
 # Version 76
 

@@ -116,7 +116,7 @@ int getnextAvailableGrowthFacility(BASE *base);
 void contributeToProject(int factionId);
 HOOK_API int baseGrowth();
 HOOK_API int baseInit(int factionId, int x, int y);
-HOOK_API int probeAction(int vehicleId, int baseId, int a3, int a4);
+HOOK_API char *helpAbility(int number, char *destination, int radix);
 
 #endif // __PROTOTYPE_H__
 

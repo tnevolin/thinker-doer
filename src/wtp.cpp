@@ -343,7 +343,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     // calculate discounted costs
 
     double discounted_weapon_cost = weapon_cost * (module ? 1.0 : reactor_relative_cost_factor);
-    double discounted_armor_cost = weapon_cost * reactor_relative_cost_factor;
+    double discounted_armor_cost = armor_cost * reactor_relative_cost_factor;
 
     // select primary and secondary item cost and discount factor
 
@@ -370,7 +370,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     // calculate base unit cost without abilities
 
-    int base_cost = (int)round(((primary_item_cost + (secondary_item_cost - secondary_item_discount_factor) / 2) * chassis_cost_factor);
+    int base_cost = (int)round((primary_item_cost + (secondary_item_cost - secondary_item_discount_factor) / 2) * chassis_cost_factor);
 
     // get abilities cost modifications
 
@@ -1998,54 +1998,50 @@ HOOK_API int baseInit(int factionId, int x, int y)
 }
 
 /**
-Wraps probe action functionality.
+Wraps display help ability functionality.
 */
-HOOK_API int probeAction(int vehicleId, int baseId, int a3, int a4)
+HOOK_API char *helpAbility(int cost, char *destination, int radix)
 {
-	BASE *base = &(tx_bases[baseId]);
+	// execute original core
 
-	// store defensive facilities
+	char *output = tx_itoa(cost, destination, radix);
 
-	bool existingDefensiveFacilities[4];
+	// clear default output
 
-	for (int i = 0; i < DEFENSIVE_FACILITIES_COUNT; i++)
+	output[0] = '\x0';
+
+	// append help text
+
+	if (cost == 0)
 	{
-		int facilityId = DEFENSIVE_FACILITIES[i];
-
-		existingDefensiveFacilities[i] = base->facilities_built[facilityId / 8] & (1 << (facilityId % 8));
-
+		strcat(output, "Free");
 	}
-
-	// remove defensive facilities
-
-	for (int i = 0; i < DEFENSIVE_FACILITIES_COUNT; i++)
+	else
 	{
-		int facilityId = DEFENSIVE_FACILITIES[i];
+		// cost factor
 
-		base->facilities_built[facilityId / 8] &= ~(1 << (facilityId % 8));
+		int costFactor = (cost & 0xF);
+		int costFactorPercentage = 25 * costFactor;
 
-	}
-
-	// execute original function
-
-	int value = tx_probe(vehicleId, baseId, a3, a4);
-
-	// restore defensive facilities
-
-	for (int i = 0; i < DEFENSIVE_FACILITIES_COUNT; i++)
-	{
-		int facilityId = DEFENSIVE_FACILITIES[i];
-
-		if (existingDefensiveFacilities[i])
+		if (costFactor > 0)
 		{
-			base->facilities_built[facilityId / 8] |= (1 << (facilityId % 8));
+			sprintf(output + strlen(output), "Increases unit cost by %d %%. ", costFactorPercentage);
+		}
+
+		// flat cost
+
+		int flatCost = (cost >> 4);
+
+		if (flatCost > 0)
+		{
+			sprintf(output + strlen(output), "Increases unit cost by %d mineral rows. ", flatCost);
 		}
 
 	}
 
 	// return original value
 
-	return value;
+	return output;
 
 }
 
