@@ -297,24 +297,24 @@ Prototype cost calculation.
 1. Calculate reactor cost factor relative to Fission reactor.
 reactor relative cost factor = reactor cost factor / Fission reactor cost factor
 
-2. Calculate module inflated cost.
-module inflated cost = module base cost / reactor relative cost factor
+2. Calculate weapon and armor discounted cost.
+weapon/armor discounted cost = reactor relative cost factor * cost
+module cost is not discounted
 
-3. Select primary and secondary weapon/module-armor item.
-module use their inflated cost
-primary item = one with higher cost
-secondary item = one with lower cost
+3. Select primary and secondary weapon/module-armor costs.
+primary item cost = higher discounted cost
+secondary item cost = lower discounted cost
 
-4. Calculate unit base cost.
-unit base cost = primary item cost + (secondary item cost - 1) / 2
-
-5. Multiply by chassis cost factor.
+4. Calculate chassis cost factor.
 chassis cost factor = chassis cost / 2
 
-6. Multiply by ability cost factor.
-ability bytes 0-3 is cost factor
+5. Calculate unit base cost.
+unit base cost = [(primary item cost + (secondary item cost - secondary item discount factor) / 2] * chassis cost factor
 
-7. Multiply by reactor relative cost factor
+6. Round.
+
+7. Multiply by ability cost factor.
+ability bytes 0-3 is cost factor
 
 8. Add ability flat cost
 ability bytes 4-7 is flat cost
@@ -330,29 +330,47 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     int minimal_cost = reactor_level;
 
+    // determine whether we have module or weapon
+
+    bool module = (tx_weapon[weapon_id].mode >= WMODE_TRANSPORT);
+
     // get component costs
 
     double weapon_cost = (double)tx_weapon[weapon_id].cost;
     double armor_cost = (double)tx_defense[armor_id].cost;
     double chassis_cost = (double)tx_chassis[chassis_id].cost;
 
-    // calculate weapon/module inflated cost
+    // calculate discounted costs
 
-    double inflated_weapon_cost;
+    double discounted_weapon_cost = weapon_cost * (module ? 1.0 : reactor_relative_cost_factor);
+    double discounted_armor_cost = weapon_cost * reactor_relative_cost_factor;
 
-    if (tx_weapon[weapon_id].mode >= WMODE_TRANSPORT)
+    // select primary and secondary item cost and discount factor
+
+    double primary_item_cost;
+    double secondary_item_cost;
+    double secondary_item_discount_factor;
+
+    if (discounted_weapon_cost >= discounted_armor_cost)
 	{
-		inflated_weapon_cost = weapon_cost / reactor_relative_cost_factor;
+		primary_item_cost = discounted_weapon_cost;
+		secondary_item_cost = discounted_armor_cost;
+		secondary_item_discount_factor = reactor_relative_cost_factor;
 	}
 	else
 	{
-		inflated_weapon_cost = weapon_cost;
+		primary_item_cost = discounted_armor_cost;
+		secondary_item_cost = discounted_weapon_cost;
+		secondary_item_discount_factor = (module ? 1.0 : reactor_relative_cost_factor);
 	}
 
-    // select primary and secondary item cost
+    // calculate chassis cost factor
 
-    double primary_item_cost = max(inflated_weapon_cost, armor_cost);
-    double secondary_item_cost = min(inflated_weapon_cost, armor_cost);
+    double chassis_cost_factor = (chassis_cost / 2.0);
+
+    // calculate base unit cost without abilities
+
+    int base_cost = (int)round(((primary_item_cost + (secondary_item_cost - secondary_item_discount_factor) / 2) * chassis_cost_factor);
 
     // get abilities cost modifications
 
@@ -388,6 +406,8 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     }
 
+    // calculate final cost
+
     int cost =
         max
         (
@@ -396,22 +416,11 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
             (int)
             round
             (
-                (
-                    // primary item cost
-                    primary_item_cost
-                    +
-                    // secondary item cost scaled and halved
-                    (secondary_item_cost - 1.0) / 2.0
-                )
-                *
-                // chassis cost factor
-                (chassis_cost / 2.0)
+				// base cost
+				base_cost
                 *
                 // abilities cost factor
                 (1.0 + 0.25 * abilities_cost_factor)
-                *
-                // reactor cost factor
-                reactor_relative_cost_factor
             )
             +
             // abilities flat cost

@@ -1554,11 +1554,13 @@ would gain 4 moves).
 The {Empath Song} ability confers a +50% attack bonus against units
 which employ a Psi Defense, such as $LINK<Mind Worms=30008>
 and other alien creatures.
+^This ability costs +2 mineral rows regardless of unit cost.
 
 #ABILDESC13
 {Fungicide Tanks} allows a terraformer unit to clear $LINK<Xenofungus=14>
 at twice the normal rate. Only $LINK<terraforming=30001> units can use this
 ability.
+^This ability costs +1 mineral row regardless of unit cost.
 
 #ABILDESC14
 The {High Morale} ability gives a unit a $LINK<+1 morale=11> upgrade when it
@@ -1580,6 +1582,7 @@ sea squares.
 #ABILDESC16
 Units with the {Clean Reactor} ability require no support from their
 home bases.
+^This ability costs +2 mineral rows regardless of unit cost.
 
 #ABILDESC17
 The {Blink Displacer} ability allows a unit to ignore all base
@@ -1591,6 +1594,7 @@ Units with the {Hypnotic Trance} ability are insulated from Psi
 attack, and thus receive a +50% defense bonus when attacked by
 units which employ $LINK<Psi Combat=15>, such as $LINK<Mind Worms=30008>
 and other alien creatures.
+^This ability costs +1 mineral row regardless of unit cost.
 
 #ABILDESC20
 Faction leaders willing to commit atrocities can equip their combat
@@ -1605,6 +1609,7 @@ while in transit.
 #ABILDESC22
 {Non-Lethal Methods} allow a unit to count double when used as Police
 units (each unit eliminates two $LINK<drones=36> rather than one).
+^This ability costs +4 mineral rows regardless of unit cost.
 
 #ABILDESC12
 {Polymorphic Encryption} doubles a unit's resistance to probe team

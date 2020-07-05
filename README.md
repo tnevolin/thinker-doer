@@ -241,18 +241,23 @@ Instead each subsequent reactor decreases unit cost by approximately 20%. Player
 
 ## Unit cost formula
 
+Ability proportional and flat costs are packed into a singe value for ability cost in alphax.txt. First 4 bits are used for proportional cost and second 4 bits are for flat cost. Ability may have both proportional and flat non zero costs.
+
 <pre>
 
-unit cost = [PI cost + (SI cost - 1) / 2] * reactor factor * abilities factor + abilities flat
+unit cost = round(round(\[primary item discounted cost + (secondary item discounted cost - reactor cost factor) / 2\]) \* abilities cost factor + abilities flat cost)
 (rounded normally)
 
-PI (primary item) = most expensive module/weapon/armor
-SI (secondary item) = least expensive module/weapon/armor
+primary item = the one with higher discounted cost
+secondary item = the one with lower discounted cost
 
-reactor factor = reactor cost / Fission reactor cost
+weapon/armor discounted cost = cost \* reactor cost factor
+module is not discounted
 
-abilities factor = (1 + 0.25 * (ability1 proportional value + ability2 proportional value))
-abilities flat = ability1 flat value + ability2 flat value
+reactor cost factor = reactor cost / Fission reactor cost
+
+abilities cost factor = (1 + 0.25 \* (ability1 proportional cost + ability2 proportional cost))
+abilities flat cost = ability1 flat cost + ability2 flat cost
 
 </pre>
 
@@ -488,12 +493,6 @@ Many people before me mentioned overpowed forest. Indeed, it is capable of turni
 ## Fungus production
 
 Fungus production is not some crucial part of the game. However, it is still some alternative yield source that is mostly overlooked due to very slow development comparing to conventional terraforming. I'd like to add few touches on it.
-
-### Fungus production guidelines
-
-Get it to at least 1-1-0 yield relatively early in the game to allow minimal support for barren land and sea bases.
-Focus on energy yield in the mid game to compliment forest instead of competing with it.
-Use green/alien technologies for fungus production to streamline research priorities for green/PLANET factions.
 
 | technology | level | effect | cumulative yield | comment |
 |----|----:|----|----|----|

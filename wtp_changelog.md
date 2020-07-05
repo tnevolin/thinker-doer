@@ -1,3 +1,13 @@
+# Version 77
+
+* Sea Formers is given by Ecology.
+* Sea Formers is given by Ecology.
+* Terraforming Unit cost = 2.
+* Spore Launcher is enabled by Field Modulation.
+* Fungicide tanks cost = flat 1 mineral row.
+* Super Former cost = 2.
+* Unit cost is rounded before ability cost factor is applied so same ability added to the same cost units result in same total cost.
+
 # Version 76
 
 * The Universal Translator cost = 20. Reduced due to early availability and pathetic benfits.
