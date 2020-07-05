@@ -2152,15 +2152,11 @@ void patch_probe_not_destroy_defense()
 }
 
 /**
-Hooks probe action.
+Hooks itoa call in display ability routine.
 */
-void patch_probe()
+void patch_help_ability()
 {
-	write_call(0x0056E19C, (int)probeAction);
-	write_call(0x00578512, (int)probeAction);
-	write_call(0x00595026, (int)probeAction);
-	write_call(0x00596615, (int)probeAction);
-
+    write_call(0x0042EF7A, (int)helpAbility);
 }
 
 // ========================================
@@ -2601,10 +2597,10 @@ bool patch_setup(Config* cf) {
 
     patch_probe_not_destroy_defense();
 
-//    // probe action
-//
-//    patch_probe();
-//
+    // help ability
+
+    patch_help_ability();
+
     // continue with original Thinker checks
 
     if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READ, &attrs))

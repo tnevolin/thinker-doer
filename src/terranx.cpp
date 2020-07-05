@@ -147,3 +147,6 @@ fp_4int *tx_probe = (fp_4int *)0x0059F120;
 // set facility in base
 fp_3int *tx_set_facility = (fp_3int *)0x004E48B0;
 
+// itoa
+fp_charp_int_charp_int *tx_itoa = (fp_charp_int_charp_int *)0x0064FC88;
+
