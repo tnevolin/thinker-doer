@@ -671,7 +671,7 @@ Quantum Converter,            20, 5, QuanMac, Disable,  Minerals Bonus
 Genejack Factory,             10, 2, Gene,    Disable,  Minerals; More Drones
 Punishment Sphere,            10, 2, MilAlg,  Disable,  No Drones/-50% Tech
 Hab Complex,                   8, 0, IndEcon, Disable,  Increase Population Limit
-Habitation Dome,              16, 0, NanoMin, Disable,  Increase Population Limit
+Habitation Dome,              16, 0, Alloys,  Disable,  Increase Population Limit
 Pressure Dome,                 8, 0, DocFlex, Disable,  Submersion/Resources
 Command Center,                6, 1, Mobile,  Disable,  +2 Morale:Land
 Naval Yard,                    8, 2, DocInit, Disable,  +2 Morale:Sea, Sea Def +100%
