@@ -1,3 +1,9 @@
+# Version 79
+
+* Reverted Base Square to 2, 1, 1. With 4 nutrients the growth is too fast and out of balance.
+* Super Former cost = 4 mineral rows.
+* Thermal Borehole construction time = 18.
+
 # Version 78
 
 * New technlogy tree version. Hopefully more lore sensible.
