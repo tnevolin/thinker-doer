@@ -294,41 +294,38 @@ HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer,
 /**
 Prototype cost calculation.
 
-1. Calculate reactor cost factor relative to Fission reactor.
-reactor relative cost factor = reactor cost factor / Fission reactor cost factor
+1. Calculate module and weapon/armor reactor modified costs.
+module reactor modified cost = item cost * (Fission reactor value / 100)
+weapon/armor reactor modified cost = item cost * (reactor value / 100)
 
-2. Calculate weapon and armor discounted cost.
-weapon/armor discounted cost = reactor relative cost factor * cost
-module cost is not discounted
+2. Select primary and secondary item.
+primary item = the one with higher reactor modified cost
+secondary item = the one with lower reactor modified cost
 
-3. Select primary and secondary weapon/module-armor costs.
-primary item cost = higher discounted cost
-secondary item cost = lower discounted cost
+3. Calculate primary item cost and secondary item shifted cost
+primary item cost = item cost * (corresponding reactor value / 100)
+secondary item shifted cost = (item cost - 1) * (corresponding reactor value / 100)
 
-4. Calculate chassis cost factor.
-chassis cost factor = chassis cost / 2
+4. Calculate unit base cost.
+unit base cost = [primary item cost + secondary item shifted cost / 2] * chassis cost / 2
 
-5. Calculate unit base cost.
-unit base cost = [(primary item cost + (secondary item cost - secondary item discount factor) / 2] * chassis cost factor
+5. Round.
 
-6. Round.
-
-7. Multiply by ability cost factor.
+6. Multiply by ability cost factor.
 ability bytes 0-3 is cost factor
 
-8. Add ability flat cost
+7. Add ability flat cost
 ability bytes 4-7 is flat cost
+
+8. Round.
 
 */
 HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level)
 {
-    // calculate reactor relative cost factor
+    // calculate reactor cost factors
 
-    double reactor_relative_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1] / (double)conf.reactor_cost_factors[REC_FISSION - 1];
-
-    // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
-
-    int minimal_cost = reactor_level;
+    double fission_reactor_cost_factor = (double)conf.reactor_cost_factors[0] / 100.0;
+    double reactor_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1] / 100.0;
 
     // determine whether we have module or weapon
 
@@ -340,37 +337,34 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     double armor_cost = (double)tx_defense[armor_id].cost;
     double chassis_cost = (double)tx_chassis[chassis_id].cost;
 
-    // calculate discounted costs
+    // calculate items reactor modified costs
 
-    double discounted_weapon_cost = weapon_cost * (module ? 1.0 : reactor_relative_cost_factor);
-    double discounted_armor_cost = armor_cost * reactor_relative_cost_factor;
+    double weapon_reactor_modified_cost = weapon_cost * (module ? fission_reactor_cost_factor : reactor_cost_factor);
+    double armor_reactor_modified_cost = weapon_cost * reactor_cost_factor;
 
-    // select primary and secondary item cost and discount factor
+    // select primary item and secondary item shifted costs
 
     double primary_item_cost;
-    double secondary_item_cost;
-    double secondary_item_discount_factor;
+    double secondary_item_shifted_cost;
 
-    if (discounted_weapon_cost >= discounted_armor_cost)
+    if (weapon_reactor_modified_cost >= armor_reactor_modified_cost)
 	{
-		primary_item_cost = discounted_weapon_cost;
-		secondary_item_cost = discounted_armor_cost;
-		secondary_item_discount_factor = reactor_relative_cost_factor;
+		primary_item_cost = weapon_reactor_modified_cost;
+		secondary_item_shifted_cost = (armor_cost - 1) * reactor_cost_factor;
 	}
 	else
 	{
-		primary_item_cost = discounted_armor_cost;
-		secondary_item_cost = discounted_weapon_cost;
-		secondary_item_discount_factor = (module ? 1.0 : reactor_relative_cost_factor);
+		primary_item_cost = armor_reactor_modified_cost;
+		secondary_item_shifted_cost = (weapon_cost - 1) * (module ? fission_reactor_cost_factor : reactor_cost_factor);
 	}
 
-    // calculate chassis cost factor
+    // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
 
-    double chassis_cost_factor = (chassis_cost / 2.0);
+    int minimal_cost = reactor_level;
 
     // calculate base unit cost without abilities
 
-    int base_cost = (int)round((primary_item_cost + (secondary_item_cost - secondary_item_discount_factor) / 2) * chassis_cost_factor);
+    int base_cost = (int)round((primary_item_cost + secondary_item_shifted_cost / 2) * chassis_cost / 2);
 
     // get abilities cost modifications
 

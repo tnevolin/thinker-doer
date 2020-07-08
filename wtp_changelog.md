@@ -1,3 +1,8 @@
+# Version 80
+
+* Reactor value is weapon/armor percentage multiplier.
+* Now actually renaming technologies. Didn't work first time.
+
 # Version 79
 
 * Reverted Base Square to 2, 1, 1. With 4 nutrients the growth is too fast and out of balance.
@@ -9,7 +14,7 @@
 * New technlogy tree version. Hopefully more lore sensible.
 * Frictionless Surfaces renamed to Quantum Computers.
 * Super Tensile Solids renamed to Applied Plasmadynamics (for plasma shard).
-* Organic Superlubricants renamed to Cold Fusion (for fusion lab and fusion laser).
+* Organic Superlubricant renamed to Cold Fusion (for fusion lab and fusion laser).
 * Aquifer is enabled by Field Modulation (level 2).
 * Thermal Borehole is enabled by Superconductor (level 3).
 * Condenser is enabled by Ecological Engineering (level 4).

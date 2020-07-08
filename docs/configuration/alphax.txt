@@ -271,7 +271,7 @@ Fusion Power,                  Fusion,   3, 2, 2, 2, Super,   Poly,    000000000
 Silksteel Alloys,              Alloys,   2, 2, 3, 2, IndAuto, Chemist, 000000000
 Advanced Subatomic Theory,     Subat,    6, 1, 1, 1, Poly,    Physic,  000000000
 High Energy Chemistry,         Chemist,  2, 2, 3, 2, Subat,   Physic,  000000000
-Frictionless Surfaces,         Surface,  1, 6, 1, 1, IndRob,  Quantum, 000000000
+Quantum Computers,             Surface,  1, 6, 1, 1, IndRob,  Quantum, 000000000
 Nanometallurgy,                Metal,    2, 2, 3, 2, Orbital, IndRob,  000000000
 Superstring Theory,            String,   6, 1, 1, 1, Fossil,  Subat,   000000000
 Advanced Military Algorithms,  MilAlg,   3, 2, 2, 2, OptComp, Fossil,  000000000
@@ -288,7 +288,7 @@ Controlled Singularity,        ConSing,  4, 1, 3, 1, SingMec, AGrav,   000000000
 Temporal Mechanics,            TempMec,  2, 3, 2, 2, NewMiss, Gravity, 000000000
 Probability Mechanics,         ProbMec,  2, 3, 2, 2, DocSec,  Eudaim,  000000000
 Pre-Sentient Algorithms,       Algor,    4, 3, 1, 1, NanoMin, OptComp, 000000000
-Super Tensile Solids,          Solids,   6, 1, 1, 1, Unified, Cyber,   000000000
+Applied Plasmadynamics,        Solids,   6, 1, 1, 1, Unified, Cyber,   000000000
 Planetary Networks,            PlaNets,  1, 4, 3, 1, InfNet,  DocLoy,  000000000
 Digital Sentience,             DigSent,  2, 5, 1, 1, Surface, MindMac, 000000000
 Self-Aware Machines,           HAL9000,  3, 1, 4, 1, Matter,  DigSent, 000000000
@@ -325,7 +325,7 @@ Secrets of Alpha Centauri,     AlphCen,  1, 6, 1, 1, CentPsi, SentEco, 001001000
 Secrets of Creation,           Create,   2, 3, 2, 2, Unified, Cyber,   000000000
 Advanced Spaceflight,          Space,    1, 1, 6, 1, Orbital, SupLube, 000000000
 Homo Superior,                 HomoSup,  2, 2, 2, 3, BioMac,  WillPow, 000000000
-Organic Superlubricant,        SupLube,  5, 4, 0, 0, String,  Fusion,  000000000
+Cold Fusion,                   SupLube,  5, 4, 0, 0, String,  Fusion,  000000000
 Quantum Machinery,             QuanMac,  3, 2, 2, 2, Surface, Solids,  000000000
 deleted,                       deleted,  0, 0, 0, 0, Disable, Disable, 000000000
 Matter Editation,              NanEdit,  2, 2, 3, 2, MatComp, Metal,   000100000
