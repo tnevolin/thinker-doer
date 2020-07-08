@@ -331,6 +331,13 @@ void populateLists()
 			{
 				MAP *adjacentTile = getMapTile(base->x + BASE_TILE_OFFSETS[offsetIndex][0], base->y + BASE_TILE_OFFSETS[offsetIndex][1]);
 
+				// skip tiles outside of map
+
+				if (adjacentTile == NULL)
+					continue;
+
+				// get sea region
+
 				if (is_ocean(adjacentTile))
 				{
 					int region = adjacentTile->region;
