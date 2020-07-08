@@ -19,10 +19,7 @@ Unpack it to local directory.
 
 Copy files from **core** folder to game directory overriding existing files.
 
-## Factions (optional)
-
-This mod provides slight modifications to factions. These changes are minor and not required to experience the mod.  
-You are welcome to use other faction configurations.
+## Factions
 
 Copy files from **factions** folder to game directory overriding existing files.
 

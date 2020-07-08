@@ -12,7 +12,7 @@
 
 #MORGAN
 Morgan Industries, The Mogul, Morganites, M, 2, Morgan, M, -1,  0, 0, 1, 0,
-  TECH, Indust, ENERGY, 100, SOCIAL, +ECONOMY, SOCIAL, -SUPPORT, SOCIAL, -POLICE, POPULATION, 3, COMMERCE, 1
+  TECH, Indust, ENERGY, 100, SOCIAL, +ECONOMY, SOCIAL, -SUPPORT, POPULATION, 3, COMMERCE, 1
   Economics, Free Market, ECONOMY
   Economics, Planned, nil
   Morganic, Morgan,

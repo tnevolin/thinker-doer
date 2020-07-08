@@ -12,7 +12,7 @@
 
 #GAIANS
 Gaia's Stepdaughters, The Green, Gaians, F, 2, Deirdre, F, -1, 0, 0, 0, 1,
-  TECH, Ecology, SOCIAL, --MORALE, SOCIAL, -POLICE, SOCIAL, +EFFIC, SOCIAL, +PLANET, FUNGNUTRIENT, 1
+  TECH, Ecology, SOCIAL, --MORALE, SOCIAL, +EFFIC, SOCIAL, +PLANET, FUNGNUTRIENT, 1
   Economics, Green, PLANET
   Economics, Free Market, nil
   Gaian, Gaian,

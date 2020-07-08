@@ -1,6 +1,33 @@
+# Version 78
+
+* New technlogy tree version. Hopefully more lore sensible.
+* Frictionless Surfaces renamed to Quantum Computers.
+* Super Tensile Solids renamed to Applied Plasmadynamics (for plasma shard).
+* Organic Superlubricants renamed to Cold Fusion (for fusion lab and fusion laser).
+* Aquifer is enabled by Field Modulation (level 2).
+* Thermal Borehole is enabled by Superconductor (level 3).
+* Condenser is enabled by Ecological Engineering (level 4).
+* Echelon Mirror is enabled by Environmental Economics (level 5).
+* Hab Complex is enabled by Industrial Economics (level 3).
+* Other technology wiring and association see in alpax.txt.
+
+* Removed -1 POLICE shift from all factions. Now this mod does not require tweaking with factions anymore.
+* SEs modified to give more negative POLICE ratings.
+* SEs modified to give higher GROWTH ratings. This is now safe as population boom is fixed and doesn't break game anymore.
+* Borehole Square yield is 0-2-6. Borehole construction time is 12.
+* Forest yield is reverted to 1-2-1. Instead moved HF later in tree and restored its original cost/maint.
+* Tree Farm cost/maint = 12/2.
+* Hybrid Forest cost/maint = 24/4.
+* Nutrient effect in mine square = 0.
+* Centauri Genetics gives +1 mineral in fungus. By request of players to have some minerals in it.
+* Biology Lab cost = 6.
+* Fungicide Tanks cost = 1 row of minerals.
+* Weapons and armors are shifted little bit later and distributed more evenly across the tree.
+* Armor value progression adjusted to keep up with contemporary weapon.
+* The Weather Paradigm cost = 40. Lowered due to plenty of advanced terraforming options are now available early.
+
 # Version 77
 
-* Sea Formers is given by Ecology.
 * Sea Formers is given by Ecology.
 * Terraforming Unit cost = 2.
 * Spore Launcher is enabled by Field Modulation.
@@ -422,6 +449,8 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Revert forest yield, delay HF and make it more expensive.
+* Brood Pit give just +1 POLICE.
 * Make AI build more units, defensive structures, sensors.
 * Rework probe team success rates.
 * Cloning Vats should not grant impunities.

@@ -12,7 +12,7 @@
 
 #CARETAKE
 Manifold Caretakers, The Conservator, Caretakers, F, 2, H'minee, F, 1, 1, 1, 0, 1, 
-  TECH, PrPsych, ALIEN, 0, DEFENSE, 125, SOCIAL, +PLANET, SOCIAL, -INDUSTRY, SOCIAL, -POLICE
+  TECH, PrPsych, ALIEN, 0, DEFENSE, 125, SOCIAL, +PLANET, SOCIAL, -INDUSTRY
   Economics, Planned, PLANET
   nil, nil, nil
   Caretaker, Careta.

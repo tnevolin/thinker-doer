@@ -12,7 +12,7 @@
 
 #HIVE
 Human Hive, The Despot, Hive, M, 1, Yang, M,  1,  1, 0, 1, 0,
-  TECH, Psych, FACILITY, 4, SOCIAL, +GROWTH, SOCIAL, +INDUSTRY, SOCIAL, --ECONOMY, SOCIAL, -POLICE, IMMUNITY, EFFIC
+  TECH, Psych, FACILITY, 4, SOCIAL, +GROWTH, SOCIAL, +INDUSTRY, SOCIAL, --ECONOMY, IMMUNITY, EFFIC
   Politics, Police State, POLICE
   Politics, Democratic, nil
   Hive, Hive,

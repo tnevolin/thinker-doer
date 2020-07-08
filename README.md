@@ -357,7 +357,7 @@ The Merchant Exchange | 20 | Local improvement - no change.
 The Human Genome | 40 | 2 minerals worth quelled drone x 200
 The Command Nexus | 40 | 60 cost x 10 + 1 maintenance x 100. Reduced in half as it is not needed in every base.
 The Universal Translator | 20 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. Reduced in cost as it is now quite early project. It is definitely not better than The Human Genome, for example.
-The Weather Paradigm | 60 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game. Should be most expensive in its time.
+The Weather Paradigm | 40 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game.
 The Empath Guild | 60 | Way to Governorship and energy income multiplier. Should be quite expensive.
 The Living Refinery | 40 | About 2 minerals per base per turn x 200.
 The Virtual World | 60 | 60 cost x 10 + 2 maintenance x 100. Reduced slightly since it benefits base only when network node is built.
@@ -498,12 +498,12 @@ Fungus production is not some crucial part of the game. However, it is still som
 |----|----:|----|----|----|
 | Centauri Ecology | 1 | +1 nutrient | 1-0-0 |
 | Progenitor Psych | 1 | +1 energy | 1-0-1 | reassigned |
-| Field Modulation | 4 | +1 nutrient | 2-0-1 | reassigned |
+| Field Modulation | 2 | +1 nutrient | 2-0-1 | reassigned |
+| Bioadaptive Resonance | 4 | +1 nutrient | 3-0-2 | reassigned |
 | Centauri Meditation | 5 | +1 energy | 2-0-2 |
-| Bioadaptive Resonance | 6 | +1 nutrient | 3-0-2 | reassigned |
-| Centauri Genetics | 7 | +1 energy | 3-0-3 |
-| Centauri Psi | 9 | +1 nutrient | 4-0-3 |
-| Secrets of Alpha Centauri | 11 | +1 energy | 4-0-4 |
+| Centauri Genetics | 8 | +1 mineral | 3-1-2 |
+| Centauri Psi | 11 | +1 nutrient | 4-1-2 |
+| Secrets of Alpha Centauri | 13 | +1 energy | 4-1-3 |
 
 ## Sea Sensors
 
