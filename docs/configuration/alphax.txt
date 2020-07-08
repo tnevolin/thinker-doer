@@ -129,7 +129,7 @@ Fungus,           None,    Sea Fungus,       None,     6,  Remove $STR0,    F, F
 Fungus,           EcoEng,  Sea Fungus,       EcoEng,   6,  Plant $STR0,     F, Ctrl+F
 Condenser,        EcoEng,  Condenser,        Disable, 12,  Construct $STR0, N, N
 Echelon Mirror,   EnvEcon, Echelon Mirror,   Disable, 12,  Construct $STR0, E, Shift+E
-Thermal Borehole, Super,   Thermal Borehole, Disable, 12,  Construct $STR0, B, Shift+B
+Thermal Borehole, Super,   Thermal Borehole, Disable, 18,  Construct $STR0, B, Shift+B
 Aquifer,          FldMod,  Aquifer,          Disable, 18,  Drill to $STR0,  Q, Q
 Raise Land,       EcoEng,  Raise Sea Floor,  EcoEng,  12,  Terraform UP,    ], ]]
 Lower Land,       EcoEng,  Lower Sea Floor,  EcoEng,  12,  Terraform DOWN,  [, [[
@@ -152,7 +152,7 @@ Monolith,         Disable, Monolith,         Disable,  8,  Place Monolith,  ?, ?
 ;
 #RESOURCEINFO
 Ocean Square,     1, 0, 0, 0,
-Base Square,      4, 1, 1, 0,
+Base Square,      2, 1, 1, 0,
 Bonus Square,     2, 2, 2, 0, * Mineral +1 if mine present
 Forest Square,    1, 2, 1, 0,
 Recycling Tanks,  1, 1, 1, 0,
@@ -500,7 +500,7 @@ Resonance 8 Armor,   8-Res,       8, 1,11, Disable,
 ;          100000000000 = Only allowed on probe teams
 ;
 #ABILITIES
-Super Former,           2, EcoEng2,  Super,     000000010111, Terraform rate doubled
+Super Former,          64, EcoEng2,  Super,     000000010111, Terraform rate doubled
 Deep Radar,             0, MilAlg,   ,          010000111111, Sees 2 spaces
 Cloaking Device,        1, Disable,  Cloaked,   000001111001, Invisible; Ignores ZOCs
 Amphibious Pods,        1, AdapDoc,  Amphibious,000000001001, Attacks from ship
