@@ -257,95 +257,95 @@ Custom,   20, 3, 3, 8,  20, 10,  2,
 ;            100000000 = Increases NUTRIENT production in fungus
 ;
 #TECHNOLOGY
-Biogenetics,                   Biogen,   2, 2, 3, 2, None,    None,    000100000
+Biogenetics,                   Biogen,   2, 3, 2, 2, None,    None,    000100000
 Industrial Base,               Indust,   2, 2, 3, 2, Ecology, None,    000000000
-Information Networks,          InfNet,   1, 6, 1, 1, Poly,    DocFlex, 000000000
+Information Networks,          InfNet,   1, 6, 1, 1, Poly,    Mobile,  000000000
 Applied Physics,               Physic,   6, 1, 1, 1, None,    None,    000000000
-Social Psych,                  Psych,    2, 3, 2, 2, None,    None,    000000000
-Doctrine: Mobility,            Mobile,   5, 1, 1, 2, DocFlex, None,    000000000
-Centauri Ecology,              Ecology,  2, 2, 2, 3, None,    None,    100000000
-Superconductor,                Super,    6, 1, 1, 1, DocInit, Chaos,   000000000
-Nonlinear Mathematics,         Chaos,    6, 1, 1, 1, EthCalc, Physic,  000000000
-Applied Relativity,            E=Mc2,    1, 6, 1, 1, Disable, Disable, 000000000
-Fusion Power,                  Fusion,   3, 2, 2, 2, IndEcon, Poly,    000000000
+Social Psych,                  Psych,    2, 2, 3, 2, None,    None,    000000000
+Doctrine: Mobility,            Mobile,   5, 1, 1, 2, None,    None,    000000000
+Centauri Ecology,              Ecology,  2, 2, 3, 2, None,    None,    100000000
+Superconductor,                Super,    6, 1, 1, 1, Chaos,   PrPsych, 000000000
+Nonlinear Mathematics,         Chaos,    6, 1, 1, 1, Physic,  None,    000000000
+Applied Relativity,            E=Mc2,    1, 6, 1, 1, Subat,   FldMod,  000000000
+Fusion Power,                  Fusion,   3, 2, 2, 2, Super,   Poly,    000000000
 Silksteel Alloys,              Alloys,   2, 2, 3, 2, IndAuto, Chemist, 000000000
-Advanced Subatomic Theory,     Subat,    6, 1, 1, 1, Fusion,  Chaos,   000000000
-High Energy Chemistry,         Chemist,  2, 2, 3, 2, InfNet,  Indust,  000000000
-Frictionless Surfaces,         Surface,  0, 0, 0, 0, Disable, Disable, 000000000
-Nanometallurgy,                Metal,    2, 2, 3, 2, QuanCom, NanoMin, 000000000
+Advanced Subatomic Theory,     Subat,    6, 1, 1, 1, Poly,    Physic,  000000000
+High Energy Chemistry,         Chemist,  2, 2, 3, 2, Subat,   Physic,  000000000
+Frictionless Surfaces,         Surface,  1, 6, 1, 1, IndRob,  Quantum, 000000000
+Nanometallurgy,                Metal,    2, 2, 3, 2, Orbital, IndRob,  000000000
 Superstring Theory,            String,   6, 1, 1, 1, Fossil,  Subat,   000000000
-Advanced Military Algorithms,  MilAlg,   3, 2, 2, 2, OptComp, AdapDoc, 000000000
-Monopole Magnets,              Magnets,  3, 2, 2, 2, String,  Metal,   000000000
-Matter Compression,            MatComp,  2, 2, 3, 2, QuanMac, ProbMec, 000000000
-Unified Field Theory,          Unified,  4, 3, 1, 1, ColdFus, Quantum, 000000000
-Graviton Theory,               Gravity,  6, 1, 1, 1, QuanMac, MindMac, 000000000
-Polymorphic Software,          Poly,     3, 4, 1, 1, Physic,  None,    000000000
-Applied Gravitonics,           AGrav,    6, 1, 1, 1, Gravity, TempMec, 000000000
+Advanced Military Algorithms,  MilAlg,   3, 2, 2, 2, OptComp, Fossil,  000000000
+Monopole Magnets,              Magnets,  3, 2, 2, 2, IndRob,  PlaEcon, 000000000
+Matter Compression,            MatComp,  2, 2, 3, 2, ProbMec, Solids,  000000000
+Unified Field Theory,          Unified,  4, 3, 1, 1, SupLube, Quantum, 000000000
+Graviton Theory,               Gravity,  6, 1, 1, 1, QuanMac, Magnets, 000000000
+Polymorphic Software,          Poly,     3, 4, 1, 1, DocFlex, None,    000000000
+Applied Gravitonics,           AGrav,    6, 1, 1, 1, Gravity, Space,   000000000
 deleted,                       delete,   0, 0, 0, 0, Disable, Disable, 000000000
-Quantum Power,                 Quantum,  2, 3, 2, 2, Alloys,  ARelat,  000000000
-Singularity Mechanics,         SingMec,  2, 3, 2, 2, Create,  Magnets, 000000000
-Controlled Singularity,        ConSing,  4, 1, 3, 1, SingMec, TempMec, 000000000
+Quantum Power,                 Quantum,  2, 2, 3, 2, String,  IndAuto, 000000000
+Singularity Mechanics,         SingMec,  2, 3, 2, 2, Create,  WillPow, 000000000
+Controlled Singularity,        ConSing,  4, 1, 3, 1, SingMec, AGrav,   000000000
 Temporal Mechanics,            TempMec,  2, 3, 2, 2, NewMiss, Gravity, 000000000
-Probability Mechanics,         ProbMec,  2, 3, 2, 2, PhotMec, ARelat,  000000000
-Pre-Sentient Algorithms,       Algor,    4, 3, 1, 1, NanoMin, WillPow, 000000000
-Super Tensile Solids,          Solids,   0, 0, 0, 0, Disable, Disable, 000000000
-Planetary Networks,            PlaNets,  1, 4, 3, 1, InfNet,  Brain,   000000000
-Digital Sentience,             DigSent,  2, 5, 1, 1, IndRob,  MindMac, 000000000
+Probability Mechanics,         ProbMec,  2, 3, 2, 2, DocSec,  Eudaim,  000000000
+Pre-Sentient Algorithms,       Algor,    4, 3, 1, 1, NanoMin, OptComp, 000000000
+Super Tensile Solids,          Solids,   6, 1, 1, 1, Unified, Cyber,   000000000
+Planetary Networks,            PlaNets,  1, 4, 3, 1, InfNet,  DocLoy,  000000000
+Digital Sentience,             DigSent,  2, 5, 1, 1, Surface, MindMac, 000000000
 Self-Aware Machines,           HAL9000,  3, 1, 4, 1, Matter,  DigSent, 000000000
-Doctrine: Initiative,          DocInit,  5, 1, 1, 1, Mobile,  DocFlex, 000000000
+Doctrine: Initiative,          DocInit,  5, 1, 1, 1, DocLoy,  DocFlex, 000000000
 Doctrine: Flexibility,         DocFlex,  2, 2, 2, 3, None,    None,    000000000
 Intellectual Integrity,        Integ,    6, 1, 1, 1, DocLoy,  EthCalc, 000000000
-Synthetic Fossil Fuels,        Fossil,   5, 1, 1, 2, Super,   DocInit, 000000000
+Synthetic Fossil Fuels,        Fossil,   5, 1, 1, 2, Chemist, Super,   000000000
 Doctrine: Air Power,           DocAir,   3, 2, 2, 2, MilAlg,  AdapDoc, 000000000
-Photon/Wave Mechanics,         DocSec,   2, 3, 2, 2, Disable, Disable, 000000000
+Photon/Wave Mechanics,         DocSec,   2, 3, 2, 2, Alloys,  OptComp, 000000000
 Mind/Machine Interface,        MindMac,  3, 2, 2, 2, Algor,   Neural,  000000000
-Nanominiaturization,           NanoMin,  2, 2, 3, 2, Subat,   PhotMec, 000000000
+Nanominiaturization,           NanoMin,  2, 2, 3, 2, AdapEco, DocSec,  000000000
 Doctrine: Loyalty,             DocLoy,   3, 2, 2, 2, Mobile,  Psych,   000000000
-Ethical Calculus,              EthCalc,  1, 2, 2, 4, Psych,   None,    000000000
+Ethical Calculus,              EthCalc,  0, 2, 2, 5, Psych,   None,    000000000
 Industrial Economics,          IndEcon,  1, 3, 4, 1, Indust,  Biogen,  000000100
-Industrial Automation,         IndAuto,  1, 1, 4, 3, Super,   IndEcon, 000000100
-Centauri Meditation,           CentMed,  1, 1, 2, 5, Bioadap, CentEmp, 100000000
+Industrial Automation,         IndAuto,  1, 1, 4, 3, PlaNets, IndEcon, 000000100
+Centauri Meditation,           CentMed,  1, 1, 2, 5, EcoEng,  CentEmp, 100000000
 Secrets of the Human Brain,    Brain,    1, 1, 1, 6, Biogen,  None,    000000000
-Gene Splicing,                 Gene,     1, 3, 4, 1, PlaNets, Biogen,  000100000
+Gene Splicing,                 Gene,     2, 2, 3, 2, CentMed, Biogen,  000100000
 Bio-Engineering,               BioEng,   1, 2, 4, 2, Gene,    Neural,  000100000
 Biomachinery,                  BioMac,   1, 2, 2, 4, MindMac, Viral,   000100000
 Neural Grafting,               Neural,   4, 1, 1, 3, MilAlg,  Brain,   000000000
-Cyberethics,                   Cyber,    0, 5, 2, 2, PlaNets, Integ,   000000000
-Eudaimonia,                    Eudaim,   1, 2, 4, 2, Algor,   EcoEng,  000000000
+Cyberethics,                   Cyber,    0, 7, 1, 1, PlaNets, Integ,   000000000
+Eudaimonia,                    Eudaim,   1, 2, 4, 2, BioEng,  EcoEng,  000000000
 The Will to Power,             WillPow,  4, 1, 1, 3, DocAir,  Integ,   000000000
 Threshold of Transcendence,    Thresh,   2, 3, 2, 2, SecMani, HAL9000, 000000000
 Matter Transmission,           Matter,   2, 2, 3, 2, NanEdit, Create,  000000000
-Centauri Empathy,              CentEmp,  1, 1, 1, 6, FldMod,  Ecology, 000000000
+Centauri Empathy,              CentEmp,  1, 1, 1, 6, EthCalc, Ecology, 000000000
 Environmental Economics,       EnvEcon,  2, 2, 3, 2, EcoEng,  IndEcon, 000000100
-Ecological Engineering,        EcoEng,   2, 2, 2, 3, PlaNets, CentEmp, 000000000
+Ecological Engineering,        EcoEng,   2, 2, 2, 3, CentEmp, Indust,  000000000
 Planetary Economics,           PlaEcon,  1, 1, 4, 3, Eudaim,  AdapEco, 000000100
 Adv. Ecological Engineering,   EcoEng2,  2, 2, 2, 3, Viral,   EnvEcon, 000000000
 Centauri Psi,                  CentPsi,  1, 0, 0, 8, CentGen, EcoEng2, 100000000
 Secrets of Alpha Centauri,     AlphCen,  1, 6, 1, 1, CentPsi, SentEco, 001001000
-Secrets of Creation,           Create,   2, 3, 2, 2, Unified, WillPow, 000000000
-Advanced Spaceflight,          Space,    1, 1, 6, 1, Orbital, ColdFus, 000000000
-Homo Superior,                 HomoSup,  2, 2, 2, 3, BioMac,  AdapDoc, 000000000
-Organic Superlubricant,        SupLube,  0, 0, 0, 0, Disable, Disable, 000000000
-Quantum Machinery,             QuanMac,  3, 2, 2, 2, QuanCom, APlasma, 000000000
+Secrets of Creation,           Create,   2, 3, 2, 2, Unified, Cyber,   000000000
+Advanced Spaceflight,          Space,    1, 1, 6, 1, Orbital, SupLube, 000000000
+Homo Superior,                 HomoSup,  2, 2, 2, 3, BioMac,  WillPow, 000000000
+Organic Superlubricant,        SupLube,  5, 4, 0, 0, String,  Fusion,  000000000
+Quantum Machinery,             QuanMac,  3, 2, 2, 2, Surface, Solids,  000000000
 deleted,                       deleted,  0, 0, 0, 0, Disable, Disable, 000000000
 Matter Editation,              NanEdit,  2, 2, 3, 2, MatComp, Metal,   000100000
-Optical Computers,             OptComp,  2, 3, 2, 2, PlaNets, Fusion,  000000000
+Optical Computers,             OptComp,  0, 6, 3, 0, E=Mc2,   InfNet,  000000000
 Industrial Nanorobotics,       IndRob,   2, 1, 5, 1, NanoMin, IndAuto, 000000100
-Centauri Genetics,             CentGen,  1, 1, 1, 6, CentMed, Neural,  001000000
+Centauri Genetics,             CentGen,  1, 1, 1, 6, CentMed, Neural,  010000000
 Sentient Econometrics,         SentEco,  1, 2, 4, 2, DigSent, PlaEcon, 000000100
 Retroviral Engineering,        Viral,    5, 1, 2, 1, BioEng,  MilAlg,  000110000
-Orbital Spaceflight,           Orbital,  2, 2, 3, 2, DocAir,  MatComp, 000000000
-Progenitor Psych,              PrPsych,  1, 6, 1, 1, None,    None,    001000000
+Orbital Spaceflight,           Orbital,  2, 2, 3, 2, DocAir,  Algor,   000000000
+Progenitor Psych,              PrPsych,  1, 1, 1, 6, None,    None,    001000000
 Field Modulation,              FldMod,   1, 1, 2, 5, PrPsych, None,    100000000
-Adaptive Doctrine,             AdapDoc,  6, 1, 1, 1, Bioadap, DocInit, 000000000
+Adaptive Doctrine,             AdapDoc,  6, 1, 1, 1, DocInit, Brain,   000000000
 Adaptive Economics,            AdapEco,  1, 1, 6, 1, AdapDoc, EnvEcon, 000000000
 Bioadaptive Resonance,         Bioadap,  1, 1, 1, 6, CentEmp, FldMod,  001000000
 Sentient Resonance,            SentRes,  3, 2, 2, 2, Bioadap, CentPsi, 000000000
 Secrets of the Manifolds,      SecMani,  2, 3, 2, 2, ConSing, AlphCen, 000000000
-N-Space Compression,           NewMiss,  1, 2, 4, 2, SentRes, BioMac,  000000000
+N-Space Compression,           NewMiss,  1, 2, 4, 2, SentRes, HomoSup, 000000000
 String Resonance,              BFG9000,  6, 1, 1, 1, SecMani, TempMec, 000000000
 User Technology,               User,     0, 0, 0, 0, Disable, Disable, 000000000
-Transcendent Thought,          TranT,    2, 3, 2, 2, Thresh,  ConSing, 000000000
+Transcendent Thought,          TranT,    2, 3, 2, 2, Thresh,  BFG9000, 000000000
 
 ;
 ; Chassis
@@ -412,9 +412,9 @@ Particle Impactor,    Impact,         3, 0, 3, -1, Chaos,
 Gatling Laser,        Gatling,        4, 1, 4, -1, Super,
 Missile Launcher,     Missile,        5, 2, 5, -1, Fossil,
 Chaos Gun,            Chaos,          6, 0, 6, -1, String,
-Fusion Laser,         Fusion,         8, 1, 7, -1, ColdFus,
+Fusion Laser,         Fusion,         8, 1, 7, -1, SupLube,
 Tachyon Bolt,         Tachyon,       10, 1, 8, -1, Unified,
-Plasma Shard,         Shard,         13, 2,10, -1, APlasma,
+Plasma Shard,         Shard,         13, 2,10, -1, Solids,
 Quantum Laser,        Quantum,       16, 1,12, -1, QuanMac,
 Graviton Gun,         Graviton,      20, 0,14, -1, Gravity,
 Singularity Laser,    Singularity,   24, 1,16, -1, ConSing,
@@ -525,7 +525,7 @@ Repair Bay,             1, Disable,  Repair,    000100100111, Repairs ground uni
 Non-Lethal Methods,    64, HomoSup,  Police,    000000001001, x2 Police powers
 Slow Unit,              0, Disable,  Slow,      000000111111, -1 moves
 Soporific Gas Pods,     2, Disable,  Gas,       000001001101, -2 Enemy morale vs. non-native
-Dissociative Wave,      2, QuanCom,  Wave,      000000111111, Fizzles special abilities
+Dissociative Wave,      2, Surface,  Wave,      000000111111, Fizzles special abilities
 Marine Detachment,      1, AdapDoc,  Marine,    000001001010, Capture enemy ships
 Fuel Nanocells,         1, MatComp,  Nanocell,  000000111100, Increased air range
 Algorithmic Enhancement,4, NanoMin,  Enhanced,  100000111111, Halves probe team failure
@@ -661,7 +661,7 @@ Hologram Theatre,              6, 2, Chaos,   Disable,  Psych and Fewer Drones
 Paradise Garden,              12, 4, SentEco, Disable,  +2 Talents
 Tree Farm,                    12, 2, EnvEcon, Disable,  Econ/Psych/Forest
 Hybrid Forest,                24, 4, PlaEcon, Disable,  Econ/Psych/Forest
-Fusion Lab,                   12, 3, ColdFus, Disable,  Econ and Labs Bonus
+Fusion Lab,                   12, 3, SupLube, Disable,  Econ and Labs Bonus
 Quantum Lab,                  24, 4, QuanMac, Disable,  Econ and Labs Bonus
 Research Hospital,             8, 2, OptComp, Disable,  Labs and Psych Bonus
 Nanohospital,                 18, 4, Metal,   Disable,  Labs and Psych Bonus
@@ -1254,7 +1254,7 @@ Global Trade Pact,                 AdapEco, Commerce Rates Doubled
 Repeal Global Trade Pact,          AdapEco, Commerce Rates Halved
 Launch Solar Shade,                Space,   Global Cooling; Sea Levels Drop
 Increase Solar Shade,              Space,   Global Cooling; Sea Levels Drop
-Melt Polar Caps,                   APlasma, Global Warming; Sea Levels Rise
+Melt Polar Caps,                   Solids,  Global Warming; Sea Levels Rise
 Repeal U.N. Charter,               MilAlg,  Atrocity Prohibitions Lifted
 Reinstate U.N. Charter,            MilAlg,  Atrocity Prohibitions Return
 ...,                               Disable, ...
