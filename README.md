@@ -245,16 +245,17 @@ Ability proportional and flat costs are packed into a singe value for ability co
 
 <pre>
 
-unit cost = round(round(\[primary item discounted cost + (secondary item discounted cost - reactor cost factor) / 2\]) \* abilities cost factor + abilities flat cost)
+unit cost = round(round(\[primary item cost + secondary item shifted cost / 2\] \* chassis cost / 2) \* abilities cost factor + abilities flat cost)
 (rounded normally)
 
-primary item = the one with higher discounted cost
-secondary item = the one with lower discounted cost
+item reactor modified cost = item cost \* (reactor value / 100)
+module uses Fission reactor value for their reactor value
 
-weapon/armor discounted cost = cost \* reactor cost factor
-module is not discounted
+primary item = the one with higher reactor modified cost
+secondary item = the one with lower reactor modified cost
 
-reactor cost factor = reactor cost / Fission reactor cost
+primary item cost = item cost \* (reactor value / 100)
+secondary item shifted cost = (item cost - 1) \* (reactor value / 100)
 
 abilities cost factor = (1 + 0.25 \* (ability1 proportional cost + ability2 proportional cost))
 abilities flat cost = ability1 flat cost + ability2 flat cost
