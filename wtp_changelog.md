@@ -1,3 +1,7 @@
+# Version 82
+
+* The Manifold Harmonics is enabled by Sentient Resonance (~80% in research tree).
+
 # Version 81
 
 * \[fix\] Repair rate in base with corresponding facility configuration setting didn't work.
