@@ -15,6 +15,7 @@
 // wtpFactionId != -1 : only this faction
 int wtpFactionId = -1;
 
+// Global values for faction upkeep
 int factionId;
 Faction *faction;
 MetaFaction *metaFaction;
@@ -32,17 +33,15 @@ std::unordered_set<MAP *> terraformedMirrorTiles;
 std::unordered_set<MAP *> terraformedBoreholeTiles;
 std::unordered_set<MAP *> terraformedAquiferTiles;
 std::unordered_set<MAP *> terraformedRaiseTiles;
-std::map<int, std::vector<FORMER_ORDER>> formerOrders;
-std::map<int, FORMER_ORDER> finalizedFormerOrders;
+std::map<int, std::vector<FORMER_ORDER>> regionFormerOrders;
+std::map<int, FORMER_ORDER> vehicleFormerOrders;
 std::vector<MAP_INFO> territoryTiles;
 std::map<MAP *, MAP_INFO> workableTiles;
 std::map<MAP *, MAP_INFO> availableTiles;
-std::map<BASE *, std::vector<TERRAFORMING_REQUEST>> conventionalTerraformingRequests;
-std::map<BASE *, std::vector<TERRAFORMING_REQUEST *>> sortedConventionalTerraformingRequests;
+std::map<BASE *, std::vector<TERRAFORMING_REQUEST>> baseTerraformingRequests;
 std::vector<TERRAFORMING_REQUEST> freeTerraformingRequests;
-std::map<int, std::vector<TERRAFORMING_REQUEST *>> rankedTerraformingRequests;
+std::map<int, std::vector<TERRAFORMING_REQUEST>> regionTerraformingRequests;
 std::unordered_set<MAP *> targetedTiles;
-std::map<int, FORMER_ORDER *> formerOrderReferences;
 std::unordered_set<MAP *> connectionNetworkLocations;
 std::unordered_map<MAP *, std::unordered_map<int, std::vector<BASE_INFO>>> nearbyBaseSets;
 std::unordered_map<int, int> seaRegionMappings;
@@ -138,11 +137,11 @@ void populateLists()
 	territoryTiles.clear();
 	workableTiles.clear();
 	availableTiles.clear();
-	conventionalTerraformingRequests.clear();
+	baseTerraformingRequests.clear();
 	freeTerraformingRequests.clear();
-	rankedTerraformingRequests.clear();
-	formerOrders.clear();
-	finalizedFormerOrders.clear();
+	regionTerraformingRequests.clear();
+	regionFormerOrders.clear();
+	vehicleFormerOrders.clear();
 	targetedTiles.clear();
 	connectionNetworkLocations.clear();
 	nearbyBaseSets.clear();
@@ -310,7 +309,7 @@ void populateLists()
 
 	// populate sea region mappings for coastal bases connecting sea regions
 
-	debug("seaRegionLinkedGroups\n")
+//	debug("seaRegionLinkedGroups\n")
 
 	for
 	(
@@ -351,19 +350,19 @@ void populateLists()
 			{
 				seaRegionLinkedGroups.push_back(seaRegionLinkedGroup);
 
-				if (DEBUG)
-				{
-					for
-					(
-						std::set<int>::iterator seaRegionLinkedGroupIterator = seaRegionLinkedGroup.begin();
-						seaRegionLinkedGroupIterator != seaRegionLinkedGroup.end();
-						seaRegionLinkedGroupIterator++
-					)
-					{
-						debug(" %3d", *seaRegionLinkedGroupIterator);
-					}
-					debug("\n");
-				}
+//				if (DEBUG)
+//				{
+//					for
+//					(
+//						std::set<int>::iterator seaRegionLinkedGroupIterator = seaRegionLinkedGroup.begin();
+//						seaRegionLinkedGroupIterator != seaRegionLinkedGroup.end();
+//						seaRegionLinkedGroupIterator++
+//					)
+//					{
+//						debug(" %3d", *seaRegionLinkedGroupIterator);
+//					}
+//					debug("\n");
+//				}
 
 			}
 
@@ -373,7 +372,7 @@ void populateLists()
 
 	// populate sea region mappings
 
-	debug("aggregation\n");
+//	debug("aggregation\n");
 
 	bool aggregated = true;
 	for (; aggregated == true;)
@@ -393,7 +392,7 @@ void populateLists()
 			{
 				std::set<int> *seaRegionLinkedGroup2 = &(seaRegionLinkedGroups[j]);
 
-				debug("\t%3d, %3d\n", i, j);
+//				debug("\t%3d, %3d\n", i, j);
 
 				for
 				(
@@ -404,11 +403,11 @@ void populateLists()
 				{
 					int seaRegionLinkedGroup2Element = *seaRegionLinkedGroup2Iterator;
 
-					debug("\t\t%3d\n", seaRegionLinkedGroup2Element);
+//					debug("\t\t%3d\n", seaRegionLinkedGroup2Element);
 
 					if (seaRegionLinkedGroup1->count(seaRegionLinkedGroup2Element) != 0)
 					{
-						debug("\t\t\tfound\n");
+//						debug("\t\t\tfound\n");
 
 						seaRegionLinkedGroup1->insert(seaRegionLinkedGroup2->begin(), seaRegionLinkedGroup2->end());
 						seaRegionLinkedGroup2->clear();
@@ -419,7 +418,7 @@ void populateLists()
 
 					}
 
-					debug("\t\t\t%3d %3d\n", seaRegionLinkedGroup1->size(), seaRegionLinkedGroup2->size());
+//					debug("\t\t\t%3d %3d\n", seaRegionLinkedGroup1->size(), seaRegionLinkedGroup2->size());
 
 				}
 
@@ -429,42 +428,42 @@ void populateLists()
 
 	}
 
-	debug("after aggregation\n");
+//	debug("after aggregation\n");
+//
+//	if (DEBUG)
+//	{
+//		for (size_t i = 0; i < seaRegionLinkedGroups.size(); i++)
+//		{
+//			std::set<int> *seaRegionLinkedGroup = &(seaRegionLinkedGroups[i]);
+//
+//			debug("group:");
+//
+//			for
+//			(
+//				std::set<int>::iterator seaRegionLinkedGroupIterator = seaRegionLinkedGroup->begin();
+//				seaRegionLinkedGroupIterator != seaRegionLinkedGroup->end();
+//				seaRegionLinkedGroupIterator++
+//			)
+//			{
+//				int region = *seaRegionLinkedGroupIterator;
+//
+//				debug(" %3d", region);
+//
+//			}
+//
+//			debug("\n");
+//
+//		}
+//
+//	}
 
-	if (DEBUG)
-	{
-		for (size_t i = 0; i < seaRegionLinkedGroups.size(); i++)
-		{
-			std::set<int> *seaRegionLinkedGroup = &(seaRegionLinkedGroups[i]);
-
-			debug("group:");
-
-			for
-			(
-				std::set<int>::iterator seaRegionLinkedGroupIterator = seaRegionLinkedGroup->begin();
-				seaRegionLinkedGroupIterator != seaRegionLinkedGroup->end();
-				seaRegionLinkedGroupIterator++
-			)
-			{
-				int region = *seaRegionLinkedGroupIterator;
-
-				debug(" %3d", region);
-
-			}
-
-			debug("\n");
-
-		}
-
-	}
-
-	debug("seaRegionMappings\n");
+//	debug("seaRegionMappings\n");
 
 	for (size_t i = 0; i < seaRegionLinkedGroups.size(); i++)
 	{
 		std::set<int> *seaRegionLinkedGroup = &(seaRegionLinkedGroups[i]);
 
-		debug("group\n");
+//		debug("group\n");
 
 		// skip empty sets
 
@@ -488,7 +487,7 @@ void populateLists()
 
 			seaRegionMappings[region] = mappingRegion;
 
-			debug("\t%3d => %3d\n", region, mappingRegion);
+//			debug("\t%3d => %3d\n", region, mappingRegion);
 
 		}
 
@@ -496,7 +495,7 @@ void populateLists()
 
 	// populate coastal base sea region mappings
 
-	debug("coastalBaseRegionMappings\n");
+//	debug("coastalBaseRegionMappings\n");
 
 	for
 	(
@@ -521,7 +520,7 @@ void populateLists()
 					int terraformingRegion = getTerraformingRegion(adjacentTile->region);
 					coastalBaseRegionMappings[baseTile] = seaRegionMappings[terraformingRegion];
 
-					debug("\t(%3d,%3d) => %3d\n", base->x, base->y, terraformingRegion);
+//					debug("\t(%3d,%3d) => %3d\n", base->x, base->y, terraformingRegion);
 
 					break;
 
@@ -715,11 +714,11 @@ void populateLists()
 
 				}
 
-				if (formerOrders.count(region) == 0)
+				if (regionFormerOrders.count(region) == 0)
 				{
 					// add new region
 
-					formerOrders[region] = std::vector<FORMER_ORDER>();
+					regionFormerOrders[region] = std::vector<FORMER_ORDER>();
 
 				}
 
@@ -729,7 +728,7 @@ void populateLists()
 
 				// add vehicle
 
-				formerOrders[region].push_back({id, vehicle, -1, -1, -1});
+				regionFormerOrders[region].push_back({id, vehicle, -1, -1, -1});
 
 			}
 
@@ -743,26 +742,26 @@ void populateLists()
 
 		for
 		(
-			std::map<int, std::vector<FORMER_ORDER>>::iterator formerOrdersIterator = formerOrders.begin();
-			formerOrdersIterator != formerOrders.end();
-			formerOrdersIterator++
+			std::map<int, std::vector<FORMER_ORDER>>::iterator regionFormerOrdersIterator = regionFormerOrders.begin();
+			regionFormerOrdersIterator != regionFormerOrders.end();
+			regionFormerOrdersIterator++
 		)
 		{
-			int region = formerOrdersIterator->first;
-			std::vector<FORMER_ORDER> *regionFormerOrders = &(formerOrdersIterator->second);
+			int region = regionFormerOrdersIterator->first;
+			std::vector<FORMER_ORDER> *formerOrders = &(regionFormerOrdersIterator->second);
 
 			debug("\tregion=%d\n", region);
 
 			for
 			(
-				std::vector<FORMER_ORDER>::iterator regionFormerOrdersIterator = regionFormerOrders->begin();
-				regionFormerOrdersIterator != regionFormerOrders->end();
-				regionFormerOrdersIterator++
+				std::vector<FORMER_ORDER>::iterator formerOrdersIterator = formerOrders->begin();
+				formerOrdersIterator != formerOrders->end();
+				formerOrdersIterator++
 			)
 			{
-				FORMER_ORDER *formerOrder = &(*regionFormerOrdersIterator);
+				FORMER_ORDER *formerOrder = &(*formerOrdersIterator);
 
-				debug("\t\t[%3d]\n", formerOrder->id);
+				debug("\t\t%d [%3d] %d\n", (int)formerOrder, formerOrder->id, (int)formerOrder->vehicle);
 
 			}
 
@@ -1018,7 +1017,7 @@ void generateTerraformingRequests()
 {
 	// conventional requests
 
-	debug("CONVENTIONAL TERRAFORMING_REQUESTS\n");
+	debug("BASE TERRAFORMING_REQUESTS\n");
 
 	for
 	(
@@ -1039,13 +1038,13 @@ void generateTerraformingRequests()
 	{
 		for
 		(
-			std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator conventionalTerraformingRequestsIterator = conventionalTerraformingRequests.begin();
-			conventionalTerraformingRequestsIterator != conventionalTerraformingRequests.end();
-			conventionalTerraformingRequestsIterator++
+			std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator baseTerraformingRequestsIterator = baseTerraformingRequests.begin();
+			baseTerraformingRequestsIterator != baseTerraformingRequests.end();
+			baseTerraformingRequestsIterator++
 		)
 		{
-			BASE *base = conventionalTerraformingRequestsIterator->first;
-			std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(conventionalTerraformingRequestsIterator->second);
+			BASE *base = baseTerraformingRequestsIterator->first;
+			std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(baseTerraformingRequestsIterator->second);
 
 			debug("\tBASE: (%3d,%3d)\n", base->x, base->y);
 
@@ -1060,8 +1059,7 @@ void generateTerraformingRequests()
 
 				debug
 				(
-					"\t\t[%d](%3d,%3d) %6.3f %-10s -> %s\n",
-					(int)terraformingRequest,
+					"\t\t(%3d,%3d) %6.3f %-10s -> %s\n",
 					terraformingRequest->x,
 					terraformingRequest->y,
 					terraformingRequest->score,
@@ -1162,14 +1160,14 @@ void generateConventionalTerraformingRequest(MAP_INFO *mapInfo)
 
 		BASE *base = terraformingScore->base;
 
-		// generate conventional terraforming request
+		// generate base terraforming request
 
-		if (conventionalTerraformingRequests.count(base) == 0)
+		if (baseTerraformingRequests.count(base) == 0)
 		{
-			conventionalTerraformingRequests[base] = std::vector<TERRAFORMING_REQUEST>();
+			baseTerraformingRequests[base] = std::vector<TERRAFORMING_REQUEST>();
 		}
 
-		conventionalTerraformingRequests[base].push_back({mapInfo->x, mapInfo->y, mapInfo->tile, terraformingScore->option, terraformingScore->action, terraformingScore->score, 0});
+		baseTerraformingRequests[base].push_back({mapInfo->x, mapInfo->y, mapInfo->tile, terraformingScore->option, terraformingScore->action, terraformingScore->score, 0});
 
 	}
 	else
@@ -1234,49 +1232,23 @@ void generateNetworkTerraformingRequest(MAP_INFO *mapInfo)
 Comparison function for base terraforming requests.
 Sort in scoring order descending.
 */
-bool compareTerraformingRequestPointers(TERRAFORMING_REQUEST *terraformingRequest1, TERRAFORMING_REQUEST *terraformingRequest2)
+bool compareTerraformingRequests(TERRAFORMING_REQUEST terraformingRequest1, TERRAFORMING_REQUEST terraformingRequest2)
 {
-	return (terraformingRequest1->score > terraformingRequest2->score);
+	return (terraformingRequest1.score > terraformingRequest2.score);
 }
 
 void sortBaseTerraformingRequests()
 {
 	for
 	(
-		std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator conventionalTerraformingRequestsIterator = conventionalTerraformingRequests.begin();
-		conventionalTerraformingRequestsIterator != conventionalTerraformingRequests.end();
-		conventionalTerraformingRequestsIterator++
+		std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator baseTerraformingRequestsIterator = baseTerraformingRequests.begin();
+		baseTerraformingRequestsIterator != baseTerraformingRequests.end();
+		baseTerraformingRequestsIterator++
 	)
 	{
-		BASE *base = conventionalTerraformingRequestsIterator->first;
-		std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(conventionalTerraformingRequestsIterator->second);
+		std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(baseTerraformingRequestsIterator->second);
 
-		sortedConventionalTerraformingRequests.insert(std::pair<BASE *, std::vector<TERRAFORMING_REQUEST *>>(base, std::vector<TERRAFORMING_REQUEST *>()));
-
-		std::map<BASE *, std::vector<TERRAFORMING_REQUEST *>>::iterator sortedConventionalTerraformingRequestsIterator = sortedConventionalTerraformingRequests.find(base);
-
-		if (sortedConventionalTerraformingRequestsIterator == sortedConventionalTerraformingRequests.end())
-		{
-			debug("Error fining sortedConventionalTerraformingRequestsIterator for base=(%3d,%3d)\n", base->x, base->y);
-			continue;
-		}
-
-		std::vector<TERRAFORMING_REQUEST *> *baseSortedConventionalTerraformingRequests = &(sortedConventionalTerraformingRequestsIterator->second);
-
-		for
-		(
-			std::vector<TERRAFORMING_REQUEST>::iterator terraformingRequestIterator = terraformingRequests->begin();
-			terraformingRequestIterator != terraformingRequests->end();
-			terraformingRequestIterator++
-		)
-		{
-			TERRAFORMING_REQUEST *terraformingRequest = &(*terraformingRequestIterator);
-
-			baseSortedConventionalTerraformingRequests->push_back(terraformingRequest);
-
-		}
-
-		std::sort(baseSortedConventionalTerraformingRequests->begin(), baseSortedConventionalTerraformingRequests->end(), compareTerraformingRequestPointers);
+		std::sort(terraformingRequests->begin(), terraformingRequests->end(), compareTerraformingRequests);
 
 	}
 
@@ -1288,13 +1260,13 @@ void sortBaseTerraformingRequests()
 
 		for
 		(
-			std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator conventionalTerraformingRequestsIterator = conventionalTerraformingRequests.begin();
-			conventionalTerraformingRequestsIterator != conventionalTerraformingRequests.end();
-			conventionalTerraformingRequestsIterator++
+			std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator baseTerraformingRequestsIterator = baseTerraformingRequests.begin();
+			baseTerraformingRequestsIterator != baseTerraformingRequests.end();
+			baseTerraformingRequestsIterator++
 		)
 		{
-			BASE *base = conventionalTerraformingRequestsIterator->first;
-			std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(conventionalTerraformingRequestsIterator->second);
+			BASE *base = baseTerraformingRequestsIterator->first;
+			std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(baseTerraformingRequestsIterator->second);
 
 			debug("\tBASE: (%3d,%3d)\n", base->x, base->y);
 
@@ -1332,9 +1304,9 @@ void sortBaseTerraformingRequests()
 Comparison function for terraforming requests.
 Sort in ranking order ascending then in scoring order descending.
 */
-bool compareRankedTerraformingRequestPointers(TERRAFORMING_REQUEST *terraformingRequest1, TERRAFORMING_REQUEST *terraformingRequest2)
+bool compareRankedTerraformingRequests(TERRAFORMING_REQUEST terraformingRequest1, TERRAFORMING_REQUEST terraformingRequest2)
 {
-	return (terraformingRequest1->rank != terraformingRequest2->rank ? terraformingRequest1->rank < terraformingRequest2->rank : terraformingRequest1->score > terraformingRequest2->score);
+	return (terraformingRequest1.rank != terraformingRequest2.rank ? terraformingRequest1.rank < terraformingRequest2.rank : terraformingRequest1.score > terraformingRequest2.score);
 }
 
 /**
@@ -1346,13 +1318,13 @@ void rankTerraformingRequests()
 
 	for
 	(
-		std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator conventionalTerraformingRequestsIterator = conventionalTerraformingRequests.begin();
-		conventionalTerraformingRequestsIterator != conventionalTerraformingRequests.end();
-		conventionalTerraformingRequestsIterator++
+		std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator baseTerraformingRequestsIterator = baseTerraformingRequests.begin();
+		baseTerraformingRequestsIterator != baseTerraformingRequests.end();
+		baseTerraformingRequestsIterator++
 	)
 	{
-		BASE *base = conventionalTerraformingRequestsIterator->first;
-		std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(conventionalTerraformingRequestsIterator->second);
+		BASE *base = baseTerraformingRequestsIterator->first;
+		std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(baseTerraformingRequestsIterator->second);
 
 		// rank base requests and generate ranked request by region
 
@@ -1386,24 +1358,14 @@ void rankTerraformingRequests()
 
 			// create region bucket if needed
 
-			if (rankedTerraformingRequests.count(region) == 0)
+			if (regionTerraformingRequests.count(region) == 0)
 			{
-				rankedTerraformingRequests.insert(std::pair<int, std::vector<TERRAFORMING_REQUEST *>>(region, std::vector<TERRAFORMING_REQUEST *>()));
+				regionTerraformingRequests[region] = std::vector<TERRAFORMING_REQUEST>();
 			}
 
 			// add terraforming request
 
-			std::map<int, std::vector<TERRAFORMING_REQUEST *>>::iterator rankedTerraformingRequestsIterator = rankedTerraformingRequests.find(region);
-
-			if (rankedTerraformingRequestsIterator == rankedTerraformingRequests.end())
-			{
-				debug("Error fining rankedTerraformingRequestsIterator for region=%d\n", region);
-				continue;
-			}
-
-			std::vector<TERRAFORMING_REQUEST *> *regionRankedTerraformingRequestsIterator = &(rankedTerraformingRequestsIterator->second);
-
-			regionRankedTerraformingRequestsIterator->push_back(terraformingRequest);
+			regionTerraformingRequests[region].push_back(*terraformingRequest);
 
 		}
 
@@ -1426,24 +1388,14 @@ void rankTerraformingRequests()
 
 		// create region bucket if needed
 
-		if (rankedTerraformingRequests.count(region) == 0)
+		if (regionTerraformingRequests.count(region) == 0)
 		{
-			rankedTerraformingRequests.insert(std::pair<int, std::vector<TERRAFORMING_REQUEST *>>(region, std::vector<TERRAFORMING_REQUEST *>()));
+			regionTerraformingRequests[region] = std::vector<TERRAFORMING_REQUEST>();
 		}
 
 		// add terraforming request
 
-		std::map<int, std::vector<TERRAFORMING_REQUEST *>>::iterator rankedTerraformingRequestsIterator = rankedTerraformingRequests.find(region);
-
-		if (rankedTerraformingRequestsIterator == rankedTerraformingRequests.end())
-		{
-			debug("Error fining rankedTerraformingRequestsIterator for region=%d\n", region);
-			continue;
-		}
-
-		std::vector<TERRAFORMING_REQUEST *> *regionRankedTerraformingRequestsIterator = &(rankedTerraformingRequestsIterator->second);
-
-		regionRankedTerraformingRequestsIterator->push_back(terraformingRequest);
+		regionTerraformingRequests[region].push_back(*terraformingRequest);
 
 	}
 
@@ -1451,26 +1403,26 @@ void rankTerraformingRequests()
 
 	for
 	(
-		std::map<int, std::vector<TERRAFORMING_REQUEST *>>::iterator rankedTerraformingRequestIterator = rankedTerraformingRequests.begin();
-		rankedTerraformingRequestIterator != rankedTerraformingRequests.end();
-		rankedTerraformingRequestIterator++
+		std::map<int, std::vector<TERRAFORMING_REQUEST>>::iterator regionTerraformingRequestsIterator = regionTerraformingRequests.begin();
+		regionTerraformingRequestsIterator != regionTerraformingRequests.end();
+		regionTerraformingRequestsIterator++
 	)
 	{
-		std::vector<TERRAFORMING_REQUEST *> *regionTerraformingRequests = &(rankedTerraformingRequestIterator->second);
+		std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(regionTerraformingRequestsIterator->second);
 
 		// sort requests
 
-		std::sort(regionTerraformingRequests->begin(), regionTerraformingRequests->end(), compareRankedTerraformingRequestPointers);
+		std::sort(terraformingRequests->begin(), terraformingRequests->end(), compareRankedTerraformingRequests);
 
 		// apply proximity rules
 
 		for
 		(
-			std::vector<TERRAFORMING_REQUEST *>::iterator regionTerraformingRequestsIterator = regionTerraformingRequests->begin();
-			regionTerraformingRequestsIterator != regionTerraformingRequests->end();
+			std::vector<TERRAFORMING_REQUEST>::iterator terraformingRequestsIterator = terraformingRequests->begin();
+			terraformingRequestsIterator != terraformingRequests->end();
 		)
 		{
-			TERRAFORMING_REQUEST *terraformingRequest = *regionTerraformingRequestsIterator;
+			TERRAFORMING_REQUEST *terraformingRequest = &(*terraformingRequestsIterator);
 
 			// proximity rule
 
@@ -1486,8 +1438,8 @@ void rankTerraformingRequests()
 				tooClose =
 					hasNearbyTerraformingRequestAction
 					(
-						regionTerraformingRequests->begin(),
-						regionTerraformingRequestsIterator,
+						terraformingRequests->begin(),
+						terraformingRequestsIterator,
 						terraformingRequest->action,
 						terraformingRequest->x,
 						terraformingRequest->y,
@@ -1501,14 +1453,14 @@ void rankTerraformingRequests()
 			{
 				// delete this request and advance iterator
 
-				regionTerraformingRequestsIterator = regionTerraformingRequests->erase(regionTerraformingRequestsIterator);
+				terraformingRequestsIterator = terraformingRequests->erase(terraformingRequestsIterator);
 
 			}
 			else
 			{
 				// advance iterator
 
-				regionTerraformingRequestsIterator++;
+				terraformingRequestsIterator++;
 
 			}
 
@@ -1524,24 +1476,24 @@ void rankTerraformingRequests()
 
 		for
 		(
-			std::map<int, std::vector<TERRAFORMING_REQUEST *>>::iterator rankedTerraformingRequestIterator = rankedTerraformingRequests.begin();
-			rankedTerraformingRequestIterator != rankedTerraformingRequests.end();
+			std::map<int, std::vector<TERRAFORMING_REQUEST>>::iterator rankedTerraformingRequestIterator = regionTerraformingRequests.begin();
+			rankedTerraformingRequestIterator != regionTerraformingRequests.end();
 			rankedTerraformingRequestIterator++
 		)
 		{
 			int region = rankedTerraformingRequestIterator->first;
-			std::vector<TERRAFORMING_REQUEST *> *regionRankedTerraformingRequests = &(rankedTerraformingRequestIterator->second);
+			std::vector<TERRAFORMING_REQUEST> *regionRankedTerraformingRequests = &(rankedTerraformingRequestIterator->second);
 
 			debug("\tregion: %3d\n", region);
 
 			for
 			(
-				std::vector<TERRAFORMING_REQUEST *>::iterator regionRankedTerraformingRequestIterator = regionRankedTerraformingRequests->begin();
+				std::vector<TERRAFORMING_REQUEST>::iterator regionRankedTerraformingRequestIterator = regionRankedTerraformingRequests->begin();
 				regionRankedTerraformingRequestIterator != regionRankedTerraformingRequests->end();
 				regionRankedTerraformingRequestIterator++
 			)
 			{
-				TERRAFORMING_REQUEST *terraformingRequest = *regionRankedTerraformingRequestIterator;
+				TERRAFORMING_REQUEST *terraformingRequest = &(*regionRankedTerraformingRequestIterator);
 
 				debug
 				(
@@ -1569,19 +1521,19 @@ void assignFormerOrders()
 {
 	for
 	(
-		std::map<int, std::vector<FORMER_ORDER>>::iterator formerOrderIterator = formerOrders.begin();
-		formerOrderIterator != formerOrders.end();
+		std::map<int, std::vector<FORMER_ORDER>>::iterator regionFormerOrdersIterator = regionFormerOrders.begin();
+		regionFormerOrdersIterator != regionFormerOrders.end();
 	)
 	{
-		int region = formerOrderIterator->first;
-		std::vector<FORMER_ORDER> *regionFormerOrders = &(formerOrderIterator->second);
+		int region = regionFormerOrdersIterator->first;
+		std::vector<FORMER_ORDER> *formerOrders = &(regionFormerOrdersIterator->second);
 
 		// delete formers without requests in this region
-		if (rankedTerraformingRequests.count(region) == 0)
+		if (regionTerraformingRequests.count(region) == 0)
 		{
 			// erasing region and automatically advance region iterator
 
-			formerOrderIterator = formerOrders.erase(formerOrderIterator);
+			regionFormerOrdersIterator = regionFormerOrders.erase(regionFormerOrdersIterator);
 
 		}
 		// otherwise assign orders
@@ -1589,20 +1541,20 @@ void assignFormerOrders()
 		{
 			// assign as much orders as possible
 
-			std::vector<TERRAFORMING_REQUEST *> *regionRankedTerraformingRequests = &(rankedTerraformingRequests[region]);
+			std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(regionTerraformingRequests[region]);
 
-			std::vector<TERRAFORMING_REQUEST *>::iterator regionRankedTerraformingRequestsIterator = regionRankedTerraformingRequests->begin();
-			std::vector<FORMER_ORDER>::iterator regionFormerOrdersIterator = regionFormerOrders->begin();
+			std::vector<TERRAFORMING_REQUEST>::iterator terraformingRequestsIterator = terraformingRequests->begin();
+			std::vector<FORMER_ORDER>::iterator formerOrdersIterator = formerOrders->begin();
 
 			for
 			(
 				;
-				regionRankedTerraformingRequestsIterator != regionRankedTerraformingRequests->end() && regionFormerOrdersIterator != regionFormerOrders->end();
-				regionFormerOrdersIterator++
+				terraformingRequestsIterator != terraformingRequests->end() && formerOrdersIterator != formerOrders->end();
+				formerOrdersIterator++
 			)
 			{
-				FORMER_ORDER *formerOrder = &(*regionFormerOrdersIterator);
-				TERRAFORMING_REQUEST *terraformingRequest = *regionRankedTerraformingRequestsIterator;
+				FORMER_ORDER *formerOrder = &(*formerOrdersIterator);
+				TERRAFORMING_REQUEST *terraformingRequest = &(*terraformingRequestsIterator);
 
 				formerOrder->x = terraformingRequest->x;
 				formerOrder->y = terraformingRequest->y;
@@ -1610,17 +1562,17 @@ void assignFormerOrders()
 
 				// erase assigned ranked terraforming request
 
-				regionRankedTerraformingRequestsIterator = regionRankedTerraformingRequests->erase(regionRankedTerraformingRequestsIterator);
+				terraformingRequestsIterator = terraformingRequests->erase(terraformingRequestsIterator);
 
 			}
 
-			// erase the rest of unassigned orders if any
+			// erase the rest of unassigned former orders if any
 
-			regionFormerOrders->erase(regionFormerOrdersIterator, regionFormerOrders->end());
+			formerOrders->erase(formerOrdersIterator, formerOrders->end());
 
-			// advance region iterator
+			// advance region former orders iterator
 
-			formerOrderIterator++;
+			regionFormerOrdersIterator++;
 
 		}
 
@@ -1634,24 +1586,24 @@ void assignFormerOrders()
 
 		for
 		(
-			std::map<int, std::vector<FORMER_ORDER>>::iterator formerOrdersIterator = formerOrders.begin();
-			formerOrdersIterator != formerOrders.end();
-			formerOrdersIterator++
+			std::map<int, std::vector<FORMER_ORDER>>::iterator regionFormerOrdersIterator = regionFormerOrders.begin();
+			regionFormerOrdersIterator != regionFormerOrders.end();
+			regionFormerOrdersIterator++
 		)
 		{
-			int region = formerOrdersIterator->first;
-			std::vector<FORMER_ORDER> *regionFormerOrders = &(formerOrdersIterator->second);
+			int region = regionFormerOrdersIterator->first;
+			std::vector<FORMER_ORDER> *formerOrders = &(regionFormerOrdersIterator->second);
 
 			debug("\tregion=%3d\n", region);
 
 			for
 			(
-				std::vector<FORMER_ORDER>::iterator regionFormerOrdersIterator = regionFormerOrders->begin();
-				regionFormerOrdersIterator != regionFormerOrders->end();
-				regionFormerOrdersIterator++
+				std::vector<FORMER_ORDER>::iterator formerOrdersIterator = formerOrders->begin();
+				formerOrdersIterator != formerOrders->end();
+				formerOrdersIterator++
 			)
 			{
-				FORMER_ORDER *formerOrder = &(*regionFormerOrdersIterator);
+				FORMER_ORDER *formerOrder = &(*formerOrdersIterator);
 
 				debug
 				(
@@ -1681,12 +1633,12 @@ void optimizeFormerDestinations()
 
 	for
 	(
-		std::map<int, std::vector<FORMER_ORDER>>::iterator formerOrderIterator = formerOrders.begin();
-		formerOrderIterator != formerOrders.end();
-		formerOrderIterator++
+		std::map<int, std::vector<FORMER_ORDER>>::iterator regionFormerOrdersIterator = regionFormerOrders.begin();
+		regionFormerOrdersIterator != regionFormerOrders.end();
+		regionFormerOrdersIterator++
 	)
 	{
-		std::vector<FORMER_ORDER> *regionFormerOrders = &(formerOrderIterator->second);
+		std::vector<FORMER_ORDER> *formerOrders = &(regionFormerOrdersIterator->second);
 
 		// iterate until optimized or max iterations
 
@@ -1698,20 +1650,20 @@ void optimizeFormerDestinations()
 
 			for
 			(
-				std::vector<FORMER_ORDER>::iterator regionFormerOrderIterator1 = regionFormerOrders->begin();
-				regionFormerOrderIterator1 != regionFormerOrders->end();
-				regionFormerOrderIterator1++
+				std::vector<FORMER_ORDER>::iterator formerOrderIterator1 = formerOrders->begin();
+				formerOrderIterator1 != formerOrders->end();
+				formerOrderIterator1++
 			)
 			{
 				for
 				(
-					std::vector<FORMER_ORDER>::iterator regionFormerOrderIterator2 = regionFormerOrders->begin();
-					regionFormerOrderIterator2 != regionFormerOrders->end();
-					regionFormerOrderIterator2++
+					std::vector<FORMER_ORDER>::iterator formerOrderIterator2 = formerOrders->begin();
+					formerOrderIterator2 != formerOrders->end();
+					formerOrderIterator2++
 				)
 				{
-					FORMER_ORDER *formerOrder1 = &(*regionFormerOrderIterator1);
-					FORMER_ORDER *formerOrder2 = &(*regionFormerOrderIterator2);
+					FORMER_ORDER *formerOrder1 = &(*formerOrderIterator1);
+					FORMER_ORDER *formerOrder2 = &(*formerOrderIterator2);
 
 					// skip itself
 
@@ -1807,23 +1759,23 @@ void finalizeFormerOrders()
 
 	for
 	(
-		std::map<int, std::vector<FORMER_ORDER>>::iterator formerOrderIterator = formerOrders.begin();
-		formerOrderIterator != formerOrders.end();
-		formerOrderIterator++
+		std::map<int, std::vector<FORMER_ORDER>>::iterator regionFormerOrdersIterator = regionFormerOrders.begin();
+		regionFormerOrdersIterator != regionFormerOrders.end();
+		regionFormerOrdersIterator++
 	)
 	{
-		std::vector<FORMER_ORDER> *regionFormerOrders = &(formerOrderIterator->second);
+		std::vector<FORMER_ORDER> *formerOrders = &(regionFormerOrdersIterator->second);
 
 		for
 		(
-			std::vector<FORMER_ORDER>::iterator regionFormerOrderIterator = regionFormerOrders->begin();
-			regionFormerOrderIterator != regionFormerOrders->end();
-			regionFormerOrderIterator++
+			std::vector<FORMER_ORDER>::iterator formerOrderIterator = formerOrders->begin();
+			formerOrderIterator != formerOrders->end();
+			formerOrderIterator++
 		)
 		{
-			FORMER_ORDER *regionFormerOrder = &(*regionFormerOrderIterator);
+			FORMER_ORDER *formerOrder = &(*formerOrderIterator);
 
-			finalizedFormerOrders[regionFormerOrder->id] = *regionFormerOrder;
+			vehicleFormerOrders[formerOrder->id] = *formerOrder;
 
 		}
 
@@ -1837,13 +1789,13 @@ void finalizeFormerOrders()
 
 		for
 		(
-			std::map<int, FORMER_ORDER>::iterator finalizedFormerOrderIterator = finalizedFormerOrders.begin();
-			finalizedFormerOrderIterator != finalizedFormerOrders.end();
-			finalizedFormerOrderIterator++
+			std::map<int, FORMER_ORDER>::iterator vehicleFormerOrdersIterator = vehicleFormerOrders.begin();
+			vehicleFormerOrdersIterator != vehicleFormerOrders.end();
+			vehicleFormerOrdersIterator++
 		)
 		{
-			int id = finalizedFormerOrderIterator->first;
-			FORMER_ORDER *formerOrder = &(finalizedFormerOrderIterator->second);
+			int id = vehicleFormerOrdersIterator->first;
+			FORMER_ORDER *formerOrder = &(vehicleFormerOrdersIterator->second);
 
 			debug
 			(
@@ -2498,12 +2450,12 @@ int enemyMoveFormer(int id)
 
 	// skip vehicles without former orders
 
-	if (finalizedFormerOrders.count(aiVehicleId) == 0)
+	if (vehicleFormerOrders.count(aiVehicleId) == 0)
 		return SYNC;
 
 	// get former order
 
-	FORMER_ORDER *formerOrder = &(finalizedFormerOrders[aiVehicleId]);
+	FORMER_ORDER *formerOrder = &(vehicleFormerOrders[aiVehicleId]);
 
 	// skip orders without action
 
@@ -2558,17 +2510,17 @@ void setFormerOrder(int id, VEH *vehicle, FORMER_ORDER *formerOrder)
 				MAP *location = getMapTile(vehicle->x, vehicle->y);
 				int region = location->region;
 
-				std::vector<TERRAFORMING_REQUEST *> *regionRankedTerraformingRequests = &(rankedTerraformingRequests[region]);
+				std::vector<TERRAFORMING_REQUEST> *regionRankedTerraformingRequests = &(regionTerraformingRequests[region]);
 
 				bool success = false;
 
 				for
 				(
-					std::vector<TERRAFORMING_REQUEST *>::iterator regionRankedTerraformingRequestsIterator = regionRankedTerraformingRequests->begin();
+					std::vector<TERRAFORMING_REQUEST>::iterator regionRankedTerraformingRequestsIterator = regionRankedTerraformingRequests->begin();
 					regionRankedTerraformingRequestsIterator != regionRankedTerraformingRequests->end();
 				)
 				{
-					TERRAFORMING_REQUEST *terraformingRequest = *regionRankedTerraformingRequestsIterator;
+					TERRAFORMING_REQUEST *terraformingRequest = &(*regionRankedTerraformingRequestsIterator);
 
 					// try new destination
 
@@ -3574,12 +3526,12 @@ int calculateClosestAvailableFormerRange(MAP_INFO *mapInfo)
 
 	// give it max value if there are no formers in this region
 
-	if (formerOrders.count(region) == 0)
+	if (regionFormerOrders.count(region) == 0)
 		return INT_MAX;
 
 	// get regionFormerOrders
 
-	std::vector<FORMER_ORDER> *regionFormerOrders = &(formerOrders[region]);
+	std::vector<FORMER_ORDER> *formerOrders = &(regionFormerOrders[region]);
 
 	// find nearest available former in this region
 
@@ -3587,13 +3539,13 @@ int calculateClosestAvailableFormerRange(MAP_INFO *mapInfo)
 
 	for
 	(
-		std::vector<FORMER_ORDER>::iterator regionFormerOrderIterator = regionFormerOrders->begin();
-		regionFormerOrderIterator != regionFormerOrders->end();
-		regionFormerOrderIterator++
+		std::vector<FORMER_ORDER>::iterator formerOrderIterator = formerOrders->begin();
+		formerOrderIterator != formerOrders->end();
+		formerOrderIterator++
 	)
 	{
-		FORMER_ORDER *regionFormerOrder = &(*regionFormerOrderIterator);
-		VEH *vehicle = regionFormerOrder->vehicle;
+		FORMER_ORDER *formerOrder = &(*formerOrderIterator);
+		VEH *vehicle = formerOrder->vehicle;
 
 		int range = map_range(x, y, vehicle->x, vehicle->y);
 
@@ -4065,16 +4017,16 @@ double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *acti
 
 }
 
-bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST *>::iterator begin, std::vector<TERRAFORMING_REQUEST *>::iterator end, int action, int x, int y, int range)
+bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::iterator begin, std::vector<TERRAFORMING_REQUEST>::iterator end, int action, int x, int y, int range)
 {
 	for
 	(
-		std::vector<TERRAFORMING_REQUEST *>::iterator terraformingRequestsIterator = begin;
+		std::vector<TERRAFORMING_REQUEST>::iterator terraformingRequestsIterator = begin;
 		terraformingRequestsIterator != end;
 		terraformingRequestsIterator++
 	)
 	{
-		TERRAFORMING_REQUEST *terraformingRequest = *terraformingRequestsIterator;
+		TERRAFORMING_REQUEST *terraformingRequest = &(*terraformingRequestsIterator);
 
 		if (terraformingRequest->action == action)
 		{

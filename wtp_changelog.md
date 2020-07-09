@@ -1,3 +1,7 @@
+# Version 84
+
+* Cleaned AI terraforming code. It is supposed to work even better now but still use cautions as AI algorithms are very complex.
+
 # Version 83
 
 * \[fix\] Bug in sorting terraforming requests.
