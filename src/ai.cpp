@@ -1059,7 +1059,8 @@ void generateTerraformingRequests()
 
 				debug
 				(
-					"\t\t(%3d,%3d) %6.3f %-10s -> %s\n",
+					"\t\t[%d](%3d,%3d) %6.3f %-10s -> %s\n",
+					(int)terraformingRequest,
 					terraformingRequest->x,
 					terraformingRequest->y,
 					terraformingRequest->score,
@@ -1239,6 +1240,59 @@ bool compareTerraformingRequests(TERRAFORMING_REQUEST terraformingRequest1, TERR
 
 void sortBaseTerraformingRequests()
 {
+	if (DEBUG)
+	{
+		debug("TERRAFORMING_REQUESTS - before SORTED\n");
+
+		for
+		(
+			std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator conventionalTerraformingRequestsIterator = conventionalTerraformingRequests.begin();
+			conventionalTerraformingRequestsIterator != conventionalTerraformingRequests.end();
+			conventionalTerraformingRequestsIterator++
+		)
+		{
+			BASE *base = conventionalTerraformingRequestsIterator->first;
+			std::vector<TERRAFORMING_REQUEST> *terraformingRequests = &(conventionalTerraformingRequestsIterator->second);
+
+			debug("\tBASE: (%3d,%3d)\n", base->x, base->y);
+
+			for
+			(
+				std::vector<TERRAFORMING_REQUEST>::iterator terraformingRequestIterator = terraformingRequests->begin();
+				terraformingRequestIterator != terraformingRequests->end();
+				terraformingRequestIterator++
+			)
+			{
+				TERRAFORMING_REQUEST *terraformingRequest = &(*terraformingRequestIterator);
+
+				debug
+				(
+					"[%d]->%d\n",
+					(int)terraformingRequest,
+					(int)(terraformingRequest->option)
+				);
+
+				fflush(debug_log);
+
+				debug
+				(
+					"\t\t(%3d,%3d) %6.3f %-10s -> %s\n",
+					terraformingRequest->x,
+					terraformingRequest->y,
+					terraformingRequest->score,
+					terraformingRequest->option->name,
+					getTerraformingActionName(terraformingRequest->action)
+				)
+				;
+
+			}
+
+		}
+
+		fflush(debug_log);
+
+	}
+
 	for
 	(
 		std::map<BASE *, std::vector<TERRAFORMING_REQUEST>>::iterator conventionalTerraformingRequestsIterator = conventionalTerraformingRequests.begin();
@@ -1278,6 +1332,15 @@ void sortBaseTerraformingRequests()
 			)
 			{
 				TERRAFORMING_REQUEST *terraformingRequest = &(*terraformingRequestIterator);
+
+				debug
+				(
+					"[%d]->%d\n",
+					(int)terraformingRequest,
+					(int)(terraformingRequest->option)
+				);
+
+				fflush(debug_log);
 
 				debug
 				(
