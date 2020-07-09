@@ -2473,12 +2473,12 @@ bool patch_setup(Config* cf) {
         patch_repair_base_native(cf->repair_base_native);
 
     }
-    if (cf->repair_base_facility != 1)
+    if (cf->repair_base_facility != 10)
     {
         patch_repair_base_facility(cf->repair_base_facility);
 
     }
-    if (cf->repair_nano_factory != 1)
+    if (cf->repair_nano_factory != 10)
     {
         patch_repair_nano_factory(cf->repair_nano_factory);
 

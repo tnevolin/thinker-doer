@@ -1,3 +1,7 @@
+# Version 81
+
+* \[fix\] Repair rate in base with corresponding facility configuration setting didn't work.
+
 # Version 80
 
 * Reactor value is weapon/armor percentage multiplier.
