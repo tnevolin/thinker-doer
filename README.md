@@ -245,7 +245,7 @@ Ability proportional and flat costs are packed into a singe value for ability co
 
 <pre>
 
-unit cost = round(round(\[primary item cost + secondary item shifted cost / 2\] \* chassis cost / 2) \* abilities cost factor + abilities flat cost)
+unit cost = round(round([primary item cost + secondary item shifted cost / 2] * chassis cost / 2) * abilities cost factor + abilities flat cost)
 (rounded normally)
 
 item reactor modified cost = item cost \* (reactor value / 100)
