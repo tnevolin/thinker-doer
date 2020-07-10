@@ -1388,7 +1388,9 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
     // execute original code
 
-    int returnValue = tx_set_se_on_dialog_close(a1, a2, faction_id, a4, a5);
+    // use modified function instead of original code
+//    int returnValue = tx_set_se_on_dialog_close(a1, a2, faction_id, a4, a5);
+    int returnValue = modifiedSocialCalc(a1, a2, faction_id, a4, a5);
 
     // get new ratings
 
@@ -1833,78 +1835,6 @@ void contributeToProject(int factionId)
 }
 
 /**
-Modifies base growth computation.
-*/
-HOOK_API int baseGrowth()
-{
-	// execute original code
-
-	int value = tx_base_growth();
-
-	// non zero value means base died
-	// return immediately
-
-	if (value != 0)
-		return value;
-
-	// get current base
-
-	int id = *current_base_id;
-	BASE *base = &(tx_bases[id]);
-
-	// add extra nutrients for population boom
-
-	if (*current_base_growth_rate >= 6)
-	{
-		base->nutrients_accumulated += conf.population_boom_extra_nutrients;
-	}
-
-	// convert minerals to nutrients for The Cloning Vats
-
-	if (has_project(base->faction_id, FAC_CLONING_VATS))
-	{
-		// calculate converted minerals
-
-		int convertedMinerals = (int)floor(conf.cloning_vats_convertion_ratio * (double)base->mineral_surplus);
-
-		// cannot take more than minerals accumulated
-
-		convertedMinerals = min(base->minerals_accumulated, convertedMinerals);
-
-		// calculate additional nutrients
-
-		int extraNutrients = conf.cloning_vats_convertion_multiplier * convertedMinerals;
-
-		// apply conversion
-
-		base->minerals_accumulated -= convertedMinerals;
-		base->nutrients_accumulated += extraNutrients;
-
-	}
-
-	// commented out in main version - this was for testing in fastgame
-//	// modify nutrient accumulated to emulate shorter nutrient box
-//
-//	int costFactor = tx_cost_factor(base->faction_id, 0, id);
-//
-//	int currentNutrientBoxHeight = base->pop_size + 1;
-//	int currentNutrientRequirement = costFactor * currentNutrientBoxHeight;
-//
-//	int modifiedNutrientBoxHeight = max(2, (base->pop_size + 1) - 3);
-//	int modifiedNutrientRequirement = costFactor * modifiedNutrientBoxHeight;
-//
-//	if (base->nutrients_accumulated >= modifiedNutrientRequirement)
-//	{
-//		base->nutrients_accumulated = currentNutrientRequirement;
-//	}
-//
-	// return original value
-
-	return value;
-
-}
-
-/**
 Modifies base init computation.
 */
 HOOK_API int baseInit(int factionId, int x, int y)
@@ -1993,10 +1923,11 @@ HOOK_API int baseInit(int factionId, int x, int y)
 
 /**
 Wraps display help ability functionality.
+This expands single number packed ability value (proportional + flat) into human readable text.
 */
-HOOK_API char *helpAbility(int cost, char *destination, int radix)
+HOOK_API char *getAbilityCostText(int cost, char *destination, int radix)
 {
-	// execute original core
+	// execute original code
 
 	char *output = tx_itoa(cost, destination, radix);
 
@@ -2036,6 +1967,85 @@ HOOK_API char *helpAbility(int cost, char *destination, int radix)
 	// return original value
 
 	return output;
+
+}
+
+/**
+Wraps social_calc.
+This is initially for CV GROWTH effect.
+*/
+HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly)
+{
+	// execute original code
+
+	int value = tx_social_calc(seSelectionsPointer, seRatingsPointer, factionId, ignored4, seChoiceEffectOnly);
+
+	// CV changes GROWTH rate if applicable
+
+	if (conf.cloning_vats_se_growth != 0)
+	{
+		if (has_project(factionId, FAC_CLONING_VATS))
+		{
+			// calculate GROWTH rating output offset and create pointer to it
+
+			int *seGrowthRating = (int *)seRatingsPointer + (SE_GROWTH - SE_ECONOMY);
+
+			// modify GROWTH rating
+
+			*seGrowthRating += conf.cloning_vats_se_growth;
+
+		}
+
+	}
+
+	// return original value
+
+	return value;
+
+}
+
+void correctcGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer)
+{
+    // call original function
+
+    tx_strcat(destinationStringPointer, sourceStringPointer);
+
+	// get current base
+
+	int id = *current_base_id;
+	BASE *base = *current_base_ptr;
+
+	// get current base faction
+
+	Faction *faction = &(tx_factions[base->faction_id]);
+
+    // calculate base GROWTH rating
+
+    int growthRating = faction->SE_growth_pending;
+
+    if (has_facility(id, FAC_CHILDREN_CRECHE))
+	{
+		growthRating += 2;
+	}
+
+	if (base->status_flags & BASE_GOLDEN_AGE_ACTIVE)
+	{
+		growthRating += 2;
+	}
+
+    // modify output for population boom
+
+    if (growthRating > conf.se_growth_rating_cap)
+	{
+		// set growth turns text offset
+
+		char *growthTurnsText = (char *)destinationStringPointer + 8;
+
+		// rewrtie growth turns text
+
+		strcpy(growthTurnsText, "POP BOOM !");
+
+	}
 
 }
 

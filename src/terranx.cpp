@@ -135,9 +135,6 @@ fp_4void *tx_go_to = (fp_4void *)0x00560AD0;
 // copies base name to string buffer
 fp_int_char_int *tx_say_base = (fp_int_char_int *)0x004E3A00;
 
-// calculates base growth
-fp_0int *tx_base_growth = (fp_0int*)0x004EF1C0;
-
 // initializes base
 fp_3int *tx_base_init = (fp_3int *)0x004E4B80;
 
@@ -149,4 +146,10 @@ fp_3int *tx_set_facility = (fp_3int *)0x004E48B0;
 
 // itoa
 fp_charp_int_charp_int *tx_itoa = (fp_charp_int_charp_int *)0x0064FC88;
+
+// base_nutrient
+fp_0void *tx_base_nutrient = (fp_0void *)0x004E9B70;
+
+// set SE on dialog close
+fp_5int *tx_social_calc = (fp_5int *)0x005B4210;
 

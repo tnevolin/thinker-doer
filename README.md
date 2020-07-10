@@ -387,7 +387,7 @@ The Bulk Matter Transmitter | 200 | 10 minerals x 200.
 The Network Backbone | 160 | Large source of labs multiplied by the number of all world bases. Very high.
 The Self-Aware Colony | 200 | Roughly 20 maintenance x 100.
 The Space Elevator | 160 | Economy boost in base, satellites production boost, planetary orbital insertion. Few good things but not game breaking ones. Should be averagely priced for its era.
-The Cloning Vats | 120 | Converts some part of minerals into nutrients. Good for growth but not game breaking.
+The Cloning Vats | 120 | Adds GROWTH rating. Good for growth but not game breaking.
 The Telepathic Matrix | 200 | Total drone solution. About 5 times The Human Genome cost. 
 The Voice of Planet | 120 | 
 The Ascent to Transcendence | 500 | Should take some time but not to extreme with all empire bases contribuing to it.
@@ -474,6 +474,7 @@ ECONOMY changes are mostly positive in original. Even though negative effects ar
 POLICE scale is assymetric and shifted toward negative values. The true middle point is at -1 rating. In vanilla game everybody essentially starts with inherent +1 rating above the middle point. Moreover, everybody can build Brood Pit to get +2 POLICE later. That is too much inclination toward positive values which results in need of enourmous negative changes for some SE models like FM in vanilla. This mod tries to avoid this by subtracting 1 POLICE from ALL factions shifting starting position to where it should be. This allows applying positive and negative POLICE changes equally across SE choices.
 
 GROWTH is very restricted on negative side. Just -3 rating halts base growth completely which is a pretty strong effect. On the other side of the spectrum +6 rating triggers population boom which is another pretty strong effect. It is a common concern of all modders to limit population boom. In this mod it is attainable by Children Creche + SE + golden age. However, it is not attainable without golden age. One need to pour some amount of gold on people to make them happy and produce more children. Same as in old good Civ 1/2.
+Population boom is now fixed. See changes in Population boom section.
 
 MORALE had a balanced scale by itself but morale facilities can easily raise unit morale even beyond what highest MORALE rating would do. That effectivelly renders high MORALE values useless. As such I do not use too many MORALE modifiers across SE choices. SE provides +2 MORALE max only.
 
@@ -594,9 +595,9 @@ These abilities do not improve unit properties directly. Instead they essentiall
 
 ## Population boom fix
 
-Population boom is a powerful feature leading to OP strategy: expand - pop boom - repeat. The population boom is a nice feature. However, its cost is obviously negligible comparing to benefits. Therefore, this mod changes the population boom effect to some moderate one. Instead of instant population increase it adds some configurable amound of nutrients to base growth box in addition to regular nutrient surplus. This still boosts base growth significantly but is not that OP anymore. Population boom is easier to acheive in bigger and mode developped bases. However, its value proportionally diminishes with base size as growth requirement increases. That creates a nice cost-effect balance across faction bases.
+Population boom is a powerful feature leading to OP strategy: expand - pop boom - repeat. The population boom is a nice feature. However, its cost is obviously negligible comparing to benefits.
 
-Population boom effect is not decoupled from The Cloning Vats effect. Both effects are cumulative. See The Cloning Vats fix description.
+This mod changes the GROWTH upper cap and thus GROWTH rating requirements for population boom making it more difficult to achieve.
 
 ## Disallowing destroying defensive facilities with probes
 

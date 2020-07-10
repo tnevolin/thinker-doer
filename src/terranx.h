@@ -118,8 +118,10 @@ extern fp_0void *tx_world_rivers;
 extern fp_0void *tx_world_rainfall;
 extern fp_4void *tx_go_to;
 extern fp_int_char_int *tx_say_base;
-extern fp_0int* tx_base_growth;
 extern fp_3int *tx_base_init;
 extern fp_4int *tx_probe;
 extern fp_3int *tx_set_facility;
 extern fp_charp_int_charp_int *tx_itoa;
+extern fp_0void *tx_base_nutrient;
+extern fp_5int *tx_social_calc;
+
