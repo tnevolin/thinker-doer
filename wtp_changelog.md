@@ -1,3 +1,13 @@
+# Version cloning_vats_and_population_boom
+
+Test version for new CV and popboom mechanincs
+
+* The Cloning Vats gives +2 GROWTH rating instead of triggering population boom directly.
+* GROWTH rating upper cap = 9. This makes population boom very hard to achieve.
+* Base nutrient view now displays population boom message when appropriate.
+* Planned: --EFFIC, ++GROWTH, +INDUSTRY, -RESEARCH.
+* Eudaimonic: ++ECONOMY, --EFFIC, ---MORALE, ++GROWTH.
+
 # Version 84
 
 * Cleaned AI terraforming code. It is supposed to work even better now but still use cautions as AI algorithms are very complex.

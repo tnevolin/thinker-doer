@@ -114,9 +114,10 @@ int getBasePopulationLimit(BASE *base);
 int refitToGrowthFacility(int id, BASE *base, int buildChoice);
 int getnextAvailableGrowthFacility(BASE *base);
 void contributeToProject(int factionId);
-HOOK_API int baseGrowth();
 HOOK_API int baseInit(int factionId, int x, int y);
-HOOK_API char *helpAbility(int number, char *destination, int radix);
+HOOK_API char *getAbilityCostText(int number, char *destination, int radix);
+HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly);
+void correctcGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer);
 
 #endif // __PROTOTYPE_H__
 

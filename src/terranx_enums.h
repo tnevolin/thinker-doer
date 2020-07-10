@@ -905,3 +905,14 @@ const char veh_status_icon[] = {
 	't',
 };
 
+enum base_event_bitfield {
+	BEVENT_UNK_100 = 0x100,
+	BEVENT_BUMPER = 0x200,
+	BEVENT_FAMINE = 0x400,
+	BEVENT_INDUSTRY = 0x800,
+	BEVENT_BUST = 0x1000,
+	BEVENT_HEAT_WAVE = 0x2000,
+	BEVENT_CLOUD_COVER = 0x4000,
+	BEVENT_OBJECTIVE = 0x8000,
+};
+

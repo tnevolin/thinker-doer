@@ -51,11 +51,11 @@ struct BASE {
     int mineral_surplus;                    // +0x00D4
     int energy_surplus;                     // +0x00D8
     int unused_surplus;                     // +0x00DC
-    int nutrient_inefficiency;
+    int nutrient_inefficiency;				// +0x00E0
     int mineral_inefficiency;
     int energy_inefficiency;
     int unused_inefficiency;
-    int nutrient_consumption;
+    int nutrient_consumption;				// +0x00F0
     int mineral_consumption;
     int energy_consumption;                 // +0xD4
     int unused_consumption;                 // +0xD8
@@ -250,8 +250,8 @@ struct Faction {
     int diplo_stolen_techs[8]; // probe: successfully procured research data (tech/map) per faction
     int energy_credits;
     int energy_cost;
-    int SE_Politics_pending;        // 0x0222
-    int SE_Economics_pending;
+    int SE_Politics_pending;        // 0x0228
+    int SE_Economics_pending;		// 0x022C
     int SE_Values_pending;          // 0x0230
     int SE_Future_pending;
     int SE_Politics;                // 0x0238
@@ -270,7 +270,7 @@ struct Faction {
     int SE_probe_pending;
     int SE_industry_pending;        // 0x0270
     int SE_research_pending;        // 0x0274
-    int SE_economy;
+    int SE_economy;					// 0x0278
     int SE_effic;
     int SE_support;                 // 0x0280
     int SE_talent;
@@ -281,7 +281,7 @@ struct Faction {
     int SE_probe;
     int SE_industry;                // 0x029C
     int SE_research;                // 0x02A0
-    int SE_economy_2;
+    int SE_economy_2;				// 0x02A4
     int SE_effic_2;
     int SE_support_2;
     int SE_talent_2;                // 0x02B0

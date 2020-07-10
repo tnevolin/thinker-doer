@@ -2038,66 +2038,14 @@ void patch_display_base_population_info()
 }
 
 /**
-Hooks base growth computation.
-*/
-void patch_base_growth()
-{
-    write_call(0x004F7A52, (int)baseGrowth);
-
-}
-
-/**
 Hooks base init computation.
+This is for The Planetary Transit System patch.
 */
 void patch_base_init()
 {
     write_call(0x004C9870, (int)baseInit);
     write_call(0x005AF926, (int)baseInit);
     write_call(0x005B2BB8, (int)baseInit);
-
-}
-
-/**
-Pathes population boom mechanics.
-*/
-void patch_population_boom()
-{
-	// disable The Cloning Vats effect
-
-	int disable_cv_bytes_length = 1;
-	byte disable_cv_bytes_old[] = {0x7C};
-	byte disable_cv_bytes_new[] = {0xEB};
-	write_bytes(0x004EF389, disable_cv_bytes_length, disable_cv_bytes_old, disable_cv_bytes_new);
-
-	// disable population boom effect
-
-	int disable_pb_bytes_length = 2;
-	byte disable_pb_bytes_old[] = {0x0F, 0x8C};
-	byte disable_pb_bytes_new[] = {0x90, 0xE9};
-	write_bytes(0x004EF3AF, disable_pb_bytes_length, disable_pb_bytes_old, disable_pb_bytes_new);
-
-}
-
-/**
-Disabes Cloning Vats impunities.
-*/
-void patch_cloning_vats()
-{
-	// disable cloning vats impunities display
-
-	int disable_cv_display_bytes_length = 5;
-	byte disable_cv_display_bytes_old[] = { 0xA1, 0x74, 0x65, 0x9A, 0x00 };
-	byte disable_cv_display_bytes_new[] = { 0xB8, 0xFF, 0xFF, 0xFF, 0xFF };
-	write_bytes(0x004AF514, disable_cv_display_bytes_length, disable_cv_display_bytes_old, disable_cv_display_bytes_new);
-	write_bytes(0x004AF686, disable_cv_display_bytes_length, disable_cv_display_bytes_old, disable_cv_display_bytes_new);
-
-	// disable cloning vats impunities computation
-
-	int disable_cv_compute_bytes_length = 6;
-	byte disable_cv_compute_bytes_old[] = { 0x8B, 0x0D, 0x74, 0x65, 0x9A, 0x00 };
-	byte disable_cv_compute_bytes_new[] = { 0xB9, 0xFF, 0xFF, 0xFF, 0xFF, 0x90 };
-	write_bytes(0x005B4225, disable_cv_compute_bytes_length, disable_cv_compute_bytes_old, disable_cv_compute_bytes_new);
-	write_bytes(0x005B434D, disable_cv_compute_bytes_length, disable_cv_compute_bytes_old, disable_cv_compute_bytes_new);
 
 }
 
@@ -2153,10 +2101,148 @@ void patch_probe_not_destroy_defense()
 
 /**
 Hooks itoa call in display ability routine.
+This is to expand single number packed ability cost into human readable text.
 */
-void patch_help_ability()
+void patch_help_ability_cost_text()
 {
-    write_call(0x0042EF7A, (int)helpAbility);
+    write_call(0x0042EF7A, (int)getAbilityCostText);
+}
+
+/**
+Disabes Cloning Vats impunities.
+*/
+void patch_cloning_vats_impunities()
+{
+	// disable cloning vats impunities display
+
+	int disable_cv_display_bytes_length = 5;
+	byte disable_cv_display_bytes_old[] = { 0xA1, 0x74, 0x65, 0x9A, 0x00 };
+	byte disable_cv_display_bytes_new[] = { 0xB8, 0xFF, 0xFF, 0xFF, 0xFF };
+	write_bytes(0x004AF514, disable_cv_display_bytes_length, disable_cv_display_bytes_old, disable_cv_display_bytes_new);
+	write_bytes(0x004AF686, disable_cv_display_bytes_length, disable_cv_display_bytes_old, disable_cv_display_bytes_new);
+
+	// disable cloning vats impunities computation
+
+	int disable_cv_compute_bytes_length = 6;
+	byte disable_cv_compute_bytes_old[] = { 0x8B, 0x0D, 0x74, 0x65, 0x9A, 0x00 };
+	byte disable_cv_compute_bytes_new[] = { 0xB9, 0xFF, 0xFF, 0xFF, 0xFF, 0x90 };
+	write_bytes(0x005B4225, disable_cv_compute_bytes_length, disable_cv_compute_bytes_old, disable_cv_compute_bytes_new);
+	write_bytes(0x005B434D, disable_cv_compute_bytes_length, disable_cv_compute_bytes_old, disable_cv_compute_bytes_new);
+
+}
+
+/**
+Wraps social_calc.
+This is initially to enable CV GROWTH effect.
+*/
+void patch_social_calc()
+{
+    write_call(0x004AEC6E, (int)modifiedSocialCalc);
+    write_call(0x004AEC45, (int)modifiedSocialCalc);
+    write_call(0x004AECC4, (int)modifiedSocialCalc);
+    write_call(0x004AEE4B, (int)modifiedSocialCalc);
+    write_call(0x004AEE74, (int)modifiedSocialCalc);
+    write_call(0x004AEECD, (int)modifiedSocialCalc);
+    // this particular call is already used by se_accumulated_resource_adjustment function
+    // se_accumulated_resource_adjustment will call modifiedSocialCalc instead of tx_social_calc
+//    write_call(0x004AF0F6, (int)modifiedSocialCalc);
+    write_call(0x004B25B6, (int)modifiedSocialCalc);
+    write_call(0x004B25DF, (int)modifiedSocialCalc);
+    write_call(0x004B2635, (int)modifiedSocialCalc);
+    write_call(0x005B4515, (int)modifiedSocialCalc);
+    write_call(0x005B4527, (int)modifiedSocialCalc);
+    write_call(0x005B4539, (int)modifiedSocialCalc);
+    write_call(0x005B464B, (int)modifiedSocialCalc);
+    write_call(0x005B4AE1, (int)modifiedSocialCalc);
+
+}
+
+/**
+Patches cloning vats mechanics.
+*/
+void patch_cloning_vats_mechanics()
+{
+	// disable triggering population boom
+
+	int disable_cv_population_boom_bytes_length = 1;
+	byte disable_cv_population_boom_bytes_old[] = {0x7C};
+	byte disable_cv_population_boom_bytes_new[] = {0xEB};
+	write_bytes
+	(
+		0x004EF389,
+		disable_cv_population_boom_bytes_length,
+		disable_cv_population_boom_bytes_old,
+		disable_cv_population_boom_bytes_new
+	);
+
+	// CV GROWTH effect is set in modifiedSocialCalc
+
+}
+
+/**
+Modifies SE GROWTH rating cap.
+*/
+void patch_se_growth_rating_cap(int se_growth_rating_cap)
+{
+	// patch population boom condition in base_growth
+
+	int popboom_condition_base_growth_bytes_length = 7;
+	byte popboom_condition_base_growth_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
+	byte popboom_condition_base_growth_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_cap + 1) };
+	write_bytes
+	(
+		0x004EF3A8,
+		popboom_condition_base_growth_bytes_length,
+		popboom_condition_base_growth_bytes_old,
+		popboom_condition_base_growth_bytes_new
+	);
+
+	// patch population boom condition in base_doctors
+
+	int popboom_condition_base_doctors_bytes_length = 7;
+	byte popboom_condition_base_doctors_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
+	byte popboom_condition_base_doctors_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_cap + 1) };
+	write_bytes
+	(
+		0x004F6070,
+		popboom_condition_base_doctors_bytes_length,
+		popboom_condition_base_doctors_bytes_old,
+		popboom_condition_base_doctors_bytes_new
+	);
+
+	// patch cost_factor nutrient cap
+
+	int cost_factor_nutrient_cap_check_bytes_length = 3;
+	byte cost_factor_nutrient_cap_check_bytes_old[] = { 0x83, 0xFB, 0x05 };
+	byte cost_factor_nutrient_cap_check_bytes_new[] = { 0x83, 0xFB, (byte)se_growth_rating_cap };
+	write_bytes
+	(
+		0x004E4577,
+		cost_factor_nutrient_cap_check_bytes_length,
+		cost_factor_nutrient_cap_check_bytes_old,
+		cost_factor_nutrient_cap_check_bytes_new
+	);
+
+	int cost_factor_nutrient_cap_set_bytes_length = 5;
+	byte cost_factor_nutrient_cap_set_bytes_old[] = { 0xB8, 0x05, 0x00, 0x00, 0x00 };
+	byte cost_factor_nutrient_cap_set_bytes_new[] = { 0xB8, (byte)se_growth_rating_cap, 0x00, 0x00, 0x00 };
+	write_bytes
+	(
+		0x004E457C,
+		cost_factor_nutrient_cap_set_bytes_length,
+		cost_factor_nutrient_cap_set_bytes_old,
+		cost_factor_nutrient_cap_set_bytes_new
+	);
+
+}
+
+/**
+Wraps _strcat call in base nutrient display to reflect correct population boom growth turns.
+*/
+void patch_growth_turns_population_boom()
+{
+	write_call(0x004118BE, (int)correctcGrowthTurnsForPopulationBoom);
+
 }
 
 // ========================================
@@ -2573,21 +2659,9 @@ bool patch_setup(Config* cf) {
 
     patch_display_base_population_info();
 
-    // base growth
-
-    patch_base_growth();
-
     // base init
 
     patch_base_init();
-
-    // population boom
-
-    patch_population_boom();
-
-    // cloning vats
-
-    patch_cloning_vats();
 
     // HSA does not kill probe
 
@@ -2599,7 +2673,37 @@ bool patch_setup(Config* cf) {
 
     // help ability
 
-    patch_help_ability();
+    patch_help_ability_cost_text();
+
+	// cloning vats impunities
+
+	if (cf->cloning_vats_disable_impunities)
+	{
+		patch_cloning_vats_impunities();
+	}
+
+	// social_calc
+	// This is initially for cloning vats GROWTH effect but can be used for other modifications
+
+	patch_social_calc();
+
+    // cloning vats effect
+
+    if (cf->cloning_vats_se_growth != 0)
+	{
+		patch_cloning_vats_mechanics();
+	}
+
+    // patch GROWTH rating cap
+
+    if (cf->se_growth_rating_cap != 5)
+	{
+		patch_se_growth_rating_cap(cf->se_growth_rating_cap);
+	}
+
+	// patch growth turns display population boom
+
+	patch_growth_turns_population_boom();
 
     // continue with original Thinker checks
 

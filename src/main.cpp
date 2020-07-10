@@ -236,17 +236,17 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->project_contribution_proportion = atof(value);
     }
-    else if (MATCH("wtp", "population_boom_extra_nutrients"))
+    else if (MATCH("wtp", "cloning_vats_disable_impunities"))
     {
-        cf->population_boom_extra_nutrients = atoi(value);
+        cf->cloning_vats_disable_impunities = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "cloning_vats_convertion_ratio"))
+    else if (MATCH("wtp", "cloning_vats_se_growth"))
     {
-        cf->cloning_vats_convertion_ratio = atof(value);
+        cf->cloning_vats_se_growth = max(0, min(2, atoi(value)));
     }
-    else if (MATCH("wtp", "cloning_vats_convertion_multiplier"))
+    else if (MATCH("wtp", "se_growth_rating_cap"))
     {
-        cf->cloning_vats_convertion_multiplier = atoi(value);
+        cf->se_growth_rating_cap = max(0, min(9, atoi(value)));
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
