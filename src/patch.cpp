@@ -330,7 +330,7 @@ void remove_call(int addr) {
     memset((void*)addr, 0x90, 5);
 }
 
-/**
+/*
 Replaces old byte sequence to new byte sequence at address.
 Verifies that byte contains old values before replacing.
 */
@@ -361,7 +361,7 @@ void write_bytes(int address, int length, byte old_bytes[], byte new_bytes[]) {
 // The Will to Power patch procedures
 // ========================================
 
-/**
+/*
 Patch battle compute wrapper.
 */
 void patch_battle_compute()
@@ -378,7 +378,7 @@ void patch_battle_compute()
 
 }
 
-/**
+/*
 Patch read basic rules.
 */
 void patch_read_basic_rules()
@@ -387,7 +387,7 @@ void patch_read_basic_rules()
 
 }
 
-/**
+/*
 Ignores reactor power multiplier in combat processing.
 */
 void patch_ignore_reactor_power_in_combat_processing()
@@ -421,7 +421,7 @@ void patch_ignore_reactor_power_in_combat_processing()
 
 }
 
-/**
+/*
 Fixes combat roll formula to match odds.
 */
 void patch_combat_roll()
@@ -495,7 +495,7 @@ void patch_combat_roll()
 
 }
 
-/**
+/*
 Calculates odds.
 */
 void patch_calculate_odds()
@@ -611,7 +611,7 @@ void patch_calculate_odds()
 
 }
 
-/**
+/*
 Disables alien guaranteed technologies assignment.
 */
 void patch_alien_guaranteed_technologies()
@@ -630,7 +630,7 @@ void patch_alien_guaranteed_technologies()
 
 }
 
-/**
+/*
 Assigns alternative base values for weapon icon selection algorithm.
 */
 void patch_weapon_icon_selection_algorithm()
@@ -804,7 +804,7 @@ void patch_weapon_icon_selection_algorithm()
 
 }
 
-/**
+/*
 Enables alternative prototype cost formula.
 */
 void patch_alternative_prototype_cost_formula()
@@ -831,7 +831,7 @@ void patch_alternative_prototype_cost_formula()
 
 }
 
-/**
+/*
 Disables hurry penalty threshold.
 */
 void patch_disable_hurry_penalty_threshold()
@@ -892,7 +892,7 @@ void patch_disable_hurry_penalty_threshold()
 
 }
 
-/**
+/*
 Enables alternative unit hurry cost formula.
 */
 void patch_alternative_unit_hurry_formula()
@@ -924,7 +924,7 @@ void patch_alternative_unit_hurry_formula()
 
 }
 
-/**
+/*
 Enables alternative upgrade cost formula.
 */
 void patch_alternative_upgrade_cost_formula()
@@ -936,7 +936,7 @@ void patch_alternative_upgrade_cost_formula()
 
 }
 
-/**
+/*
 Sets Perimeter Defense and Tachyon Field defense bonus.
 */
 void patch_defensive_structures_bonus(int perimeter_defense_multiplier, int tachyon_field_bonus)
@@ -993,7 +993,7 @@ void patch_defensive_structures_bonus(int perimeter_defense_multiplier, int tach
 
 }
 
-/**
+/*
 Uses defender reactor power for collateral damage computation.
 */
 void patch_collateral_damage_defender_reactor()
@@ -1026,7 +1026,7 @@ void patch_collateral_damage_defender_reactor()
 
 }
 
-/**
+/*
 Sets collateral damage value.
 */
 void patch_collateral_damage_value(int collateral_damage_value)
@@ -1058,7 +1058,7 @@ void patch_collateral_damage_value(int collateral_damage_value)
 
 }
 
-/**
+/*
 Disables AQUATIC bonus minerals.
 */
 void patch_disable_aquatic_bonus_minerals()
@@ -1090,7 +1090,7 @@ void patch_disable_aquatic_bonus_minerals()
 
 }
 
-/**
+/*
 Following methods modify repair rates.
 */
 void patch_repair_minimal(int repair_minimal)
@@ -1360,7 +1360,7 @@ void patch_repair_nano_factory(int repair_nano_factory)
 
 }
 
-/**
+/*
 Disables planetpearls collection and corresponding message.
 */
 void patch_disable_planetpearls()
@@ -1405,7 +1405,7 @@ void patch_disable_planetpearls()
 
 }
 
-/**
+/*
 Makes promotions probabilities uniform for all levels.
 */
 void patch_uniform_promotions()
@@ -1605,7 +1605,7 @@ void patch_uniform_promotions()
 
 }
 
-/**
+/*
 Removes Very Green on defense morale bonus.
 */
 void patch_very_green_no_defense_bonus()
@@ -1666,7 +1666,7 @@ void patch_very_green_no_defense_bonus()
 
 }
 
-/**
+/*
 Makes sea base territory distance same as land one.
 */
 void patch_sea_territory_distance_same_as_land()
@@ -1700,7 +1700,7 @@ void patch_sea_territory_distance_same_as_land()
 
 }
 
-/**
+/*
 Makes coastal base territory distance same as sea one.
 */
 void patch_coastal_territory_distance_same_as_sea()
@@ -1711,7 +1711,7 @@ void patch_coastal_territory_distance_same_as_sea()
 
 }
 
-/**
+/*
 Alternative artillery damage.
 */
 void patch_alternative_artillery_damage()
@@ -1775,7 +1775,7 @@ void patch_alternative_artillery_damage()
 
 }
 
-/**
+/*
 Disables home base CC morale bonus.
 */
 void patch_disable_home_base_cc_morale_bonus()
@@ -1809,7 +1809,7 @@ void patch_disable_home_base_cc_morale_bonus()
 
 }
 
-/**
+/*
 Disables current base CC morale bonus.
 */
 void patch_disable_current_base_cc_morale_bonus()
@@ -1897,7 +1897,7 @@ void patch_disable_current_base_cc_morale_bonus()
 
 }
 
-/**
+/*
 Sets default unit morale to Very Green.
 */
 void patch_default_morale_very_green()
@@ -1958,7 +1958,7 @@ void patch_default_morale_very_green()
 
 }
 
-/**
+/*
 Patch tile yield calculation.
 */
 void patch_tile_yield()
@@ -2000,7 +2000,7 @@ void patch_tile_yield()
 
 }
 
-/**
+/*
 SE GROWTH/INDUSTRY change accumulated nutrients/minerals proportionally.
 */
 void patch_se_accumulated_resource_adjustment()
@@ -2010,7 +2010,7 @@ void patch_se_accumulated_resource_adjustment()
 
 }
 
-/**
+/*
 Patch hex_cost.
 */
 void patch_hex_cost()
@@ -2028,7 +2028,7 @@ void patch_hex_cost()
 
 }
 
-/**
+/*
 Displays additional base population info in F4 screen.
 */
 void patch_display_base_population_info()
@@ -2037,7 +2037,7 @@ void patch_display_base_population_info()
 
 }
 
-/**
+/*
 Hooks base init computation.
 This is for The Planetary Transit System patch.
 */
@@ -2049,7 +2049,7 @@ void patch_base_init()
 
 }
 
-/**
+/*
 HSA does not kill probe.
 */
 void patch_hsa_not_kill_probe()
@@ -2063,7 +2063,7 @@ void patch_hsa_not_kill_probe()
 
 }
 
-/**
+/*
 Exclude defensive faciliites from probe target lists.
 */
 void patch_probe_not_destroy_defense()
@@ -2099,7 +2099,7 @@ void patch_probe_not_destroy_defense()
 
 }
 
-/**
+/*
 Hooks itoa call in display ability routine.
 This is to expand single number packed ability cost into human readable text.
 */
@@ -2108,7 +2108,7 @@ void patch_help_ability_cost_text()
     write_call(0x0042EF7A, (int)getAbilityCostText);
 }
 
-/**
+/*
 Disabes Cloning Vats impunities.
 */
 void patch_cloning_vats_impunities()
@@ -2131,7 +2131,7 @@ void patch_cloning_vats_impunities()
 
 }
 
-/**
+/*
 Wraps social_calc.
 This is initially to enable CV GROWTH effect.
 */
@@ -2157,7 +2157,7 @@ void patch_social_calc()
 
 }
 
-/**
+/*
 Patches cloning vats mechanics.
 */
 void patch_cloning_vats_mechanics()
@@ -2179,7 +2179,7 @@ void patch_cloning_vats_mechanics()
 
 }
 
-/**
+/*
 Modifies SE GROWTH rating cap.
 */
 void patch_se_growth_rating_cap(int se_growth_rating_cap)
@@ -2236,7 +2236,7 @@ void patch_se_growth_rating_cap(int se_growth_rating_cap)
 
 }
 
-/**
+/*
 Wraps _strcat call in base nutrient display to reflect correct population boom growth turns.
 */
 void patch_growth_turns_population_boom()
@@ -2704,6 +2704,8 @@ bool patch_setup(Config* cf) {
 	// patch growth turns display population boom
 
 	patch_growth_turns_population_boom();
+
+
 
     // continue with original Thinker checks
 

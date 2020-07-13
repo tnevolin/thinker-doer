@@ -52,17 +52,17 @@ fp_6int* tx_battle_kill = (fp_6int*)0x505D80;
 fp_1void* tx_enemy_move_check = (fp_1void*)0x00579510;
 fp_1int* tx_enemy_move = (fp_1int*)0x56B5B0;
 fp_1int* tx_monolith = (fp_1int*)0x57A050;
-/**
+/*
 Builds base.
 (vehicle id, ?)
 */
 fp_2int* tx_action_build = (fp_2int*)0x4C96E0;
-/**
+/*
 Sets vehicle move_action to given terraform action and returns number of terraforming turns - 1.
 (vehicle id, terrafroming action, 0 = return terraforming turns only or 1 = also set vehicle move_action)
 */
 fp_3int* tx_action_terraform = (fp_3int*)0x004C9B00;
-/**
+/*
 Calculates cost of raising land in energy credits.
 (tile x, tile y, faction id)
 */
@@ -107,8 +107,8 @@ fp_6int *tx_calculate_distance_to_nearest_base = (fp_6int* )0x004E3D50;
 // calculate tile yield
 fp_5int *tx_tile_yield = (fp_5int* )0x004E7DC0;
 
-// base mechanics production
-fp_0int *tx_base_mechanics_production = (fp_0int* )0x004F07E0;
+// base production
+fp_0int *tx_base_production = (fp_0int* )0x004F07E0;
 
 // set SE on dialog close
 fp_5int *tx_set_se_on_dialog_close = (fp_5int* )0x005B4210;

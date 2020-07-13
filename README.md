@@ -262,27 +262,9 @@ abilities flat cost = ability1 flat cost + ability2 flat cost
 
 </pre>
 
-### Special formula cases for non combat units
-
-1. Colony/Former/Supply on foil/cruiser costs same as if on infantry/speeder.
-2. Reactor doesn't change Supply cost.
-
-Here is the reason for #2. Each subsequent reactor reduces unit cost by ~20%. That is like 20% production increase for buiding units. Supply unit harvesting resources is more like a part of production infrastructure rather than part of disposable unit pool that needs to be constantly replenished by the mean of this same production infrastructure. It already has a precisely computed cost to outweigh benefits. Moreover, resources it brings home are multiplied by other facilities increasing its value further into the game. If anything Supply cost should grow with game progress but not fall. Reactors have nothing to do with Supply primary purpose: mineral harvesting. As such they should not affect it in any way.
-
 ## Weapon and armor cost
 
 Weapon and armor cost grows slightly slower than their value. That makes stronger weapon/armor more cost effective against stronger opponent. However, it is still cheaper to build weaker units when top item is overkill.
-
-## Non combat modules cost
-
-Colony now costs 6.  
-Cheap colony pod allows fueling expansion with nutrients excess only and ignores any economical development whatsoever. Nutrient reach faction keeps stamping colony pods and fills up all available space exponentially. Not surprisingly, such simple strategy is also a most effective way to get economical advantage early in the game. Higher colony pod price put expansion speed in check of both nutrients and minerals production encouraging early terraforming and development. Now player needs to invest into base growth and terraforming in order to expand faster.
-
-Former now costs 4.  
-Cheapest of all non combat units. There is no much sense to lower it down even more as it screws abilities cost multiplication.
-
-Supply now costs 12.  
-Harvesting resources by crawler is a very lucrative investment. Harvesting 4 minerals from rocky mine pays for vanilla crawler in 7.5 turns! Then it delivers 4 minerals each turn. That is just insane ROI. I suggest to price it as high as 120 minerals which brings its effectiveness closer to Genejack Factory. Even at this price it is still quite useful but it is not a single ultimate strategy anymore. You would think thrice if you want to build a crawler just to extract 2 units of production.
 
 ## Native units cost
 
@@ -513,17 +495,7 @@ Introduced *Sensor Buoy* on sea similar to *Sensor Array* on land. Copied from S
 
 # Secret Project logic
 
-AI fails to use crawlers and hurrying for projects effectivelly. These changes help it in this.
-
-Also some projects are quite abusive going beyond OP and breaking game. This is an attempt to fix them to be more sensible.
-
-## Faction bases contribution to project production
-
-All faction bases contribute part of their mineral production to project building. This emphasizes faction building a single project with its whole production power. This is also to aid AI who doesn't rush projects with crawlers. This applied to both AI and human. So human now can benefit from this production redistribution and does not need to rely on crawlers anymore. However, both AI and human can still use them to speed up project production even more.
-
-With more than one project under construction bases contribute to the one currently being built by the oldest base.
-
-This shared power allows erecting projects relatively quicker. The popup with project completion information is shown every turn to aid human in other faction project progress monitoring. The popup displays faction, project name, and completion percentage for each contributed project across all factions including self.
+Crawlers are disabled. That solves tons of problems they generate.
 
 ## Hurrying projects
 

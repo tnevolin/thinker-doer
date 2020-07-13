@@ -5,8 +5,9 @@
 #include "main.h"
 #include "game.h"
 #include "move.h"
+#include "wtp.h"
 
-/**
+/*
 This array is used for both adjacent tiles and base radius tiles.
 */
 const int ADJACENT_TILE_OFFSET_COUNT = 9;
@@ -87,7 +88,7 @@ const TERRAFORMING_OPTION NETWORK_TERRAFORMING_OPTION =
 	{"road/tube" , false, false, false, false, true , false, {FORMER_ROAD, FORMER_MAGTUBE}}
 ;
 
-/**
+/*
 Prohibits building improvements too close to each other or existing improvements.
 */
 struct PROXIMITY_RULE
@@ -105,19 +106,6 @@ const std::unordered_map<int, PROXIMITY_RULE> PROXIMITY_RULES =
 	{FORMER_THERMAL_BORE, {1, 1}},
 	{FORMER_AQUIFER, {1, 3}},
 	{FORMER_RAISE_LAND, {0, 1}},
-};
-
-struct MAP_INFO
-{
-	int x;
-	int y;
-	MAP *tile;
-};
-
-struct BASE_INFO
-{
-	int id;
-	BASE *base;
 };
 
 struct BASE_INCOME
@@ -208,12 +196,12 @@ const struct
 	double elevation = 1.0;
 } EXCLUSIVITY_LEVELS;
 
-/**
+/*
 These terraforming orders affect base terraforming rank.
 */
 const std::unordered_set<int> yieldTerraformingOrders = {ORDER_FARM, ORDER_SOIL_ENRICHER, ORDER_MINE, ORDER_SOLAR_COLLECTOR, ORDER_PLANT_FOREST, ORDER_REMOVE_FUNGUS, ORDER_PLANT_FUNGUS, ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_THERMAL_BOREHOLE, ORDER_DRILL_AQUIFIER, ORDER_TERRAFORM_LEVEL};
 
-/**
+/*
 These terraforming orders affect surrounding tiles.
 */
 const std::unordered_set<int> wideRangeTerraformingOrders = {ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_DRILL_AQUIFIER};

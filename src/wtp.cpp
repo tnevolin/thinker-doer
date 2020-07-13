@@ -8,7 +8,12 @@
 #include "patch.h"
 #include "engine.h"
 
-/**
+// global variables for all factions
+
+FACTION_EXTRA factionExtras[8];
+BASE_EXTRA baseExtras[BASES];
+
+/*
 Combat calculation placeholder.
 All custom combat calculation goes here.
 */
@@ -37,7 +42,7 @@ HOOK_API int read_basic_rules()
 
 }
 
-/**
+/*
 Combat calculation placeholder.
 All custom combat calculation goes here.
 */
@@ -247,7 +252,7 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
 }
 
-/**
+/*
 Composes combat effect value percentage.
 Overwrites zero with empty string.
 */
@@ -291,7 +296,7 @@ HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer,
 
 }
 
-/**
+/*
 Prototype cost calculation.
 
 1. Calculate module and weapon/armor reactor modified costs.
@@ -479,7 +484,7 @@ HOOK_API int upgrade_cost(int faction_id, int new_unit_id, int old_unit_id)
 
 }
 
-/**
+/*
 Multipurpose combat roll function.
 Determines which side wins this round. Returns 1 for attacker, 0 for defender.
 */
@@ -548,7 +553,7 @@ HOOK_API int combat_roll
 
 }
 
-/**
+/*
 Standard combat mechanics.
 Determines which side wins this round. Returns 1 for attacker, 0 for defender.
 */
@@ -578,7 +583,7 @@ int standard_combat_mechanics_combat_roll
 
 }
 
-/**
+/*
 Alternative combat mechanics.
 Determines which side wins this round. Returns 1 for attacker, 0 for defender.
 */
@@ -651,7 +656,7 @@ int alternative_combat_mechanics_combat_roll
 
 }
 
-/**
+/*
 Alternative combat mechanics.
 Calculates probabilities.
 */
@@ -676,7 +681,7 @@ void alternative_combat_mechanics_probabilities
 
 }
 
-/**
+/*
 Calculates odds.
 */
 HOOK_API void calculate_odds
@@ -836,7 +841,7 @@ HOOK_API void calculate_odds
 
 }
 
-/**
+/*
 Standard combat mechanics.
 Calculates attacker winning probability.
 */
@@ -896,7 +901,7 @@ double binomial_koefficient(int n, int k)
 
 }
 
-/**
+/*
 Alternative combat mechanics.
 Calculates attacker winning probability.
 */
@@ -1047,7 +1052,7 @@ double alternative_combat_mechanics_calculate_attacker_winning_probability_follo
 
 }
 
-/**
+/*
 For sea squares pretend they are on the same continent as closest reachable coastal base
 if such base is also closer than any other sea base in the same sea.
 */
@@ -1251,7 +1256,7 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
 }
 
-/**
+/*
 Calculates map distance as in vanilla.
 */
 int map_distance(int x1, int y1, int x2, int y2)
@@ -1265,7 +1270,7 @@ int map_distance(int x1, int y1, int x2, int y2)
 
 }
 
-/**
+/*
 Verifies two locations are within the base radius of each other.
 */
 bool isWithinBaseRadius(int x1, int y1, int x2, int y2)
@@ -1274,7 +1279,7 @@ bool isWithinBaseRadius(int x1, int y1, int x2, int y2)
 
 }
 
-/**
+/*
 Rolls artillery damage.
 */
 HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower)
@@ -1324,7 +1329,7 @@ HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength,
 
 }
 
-/**
+/*
 nutrient yield calculation
 */
 HOOK_API int mod_nutrient_yield(int faction_id, int base, int x, int y, int tf)
@@ -1350,7 +1355,7 @@ HOOK_API int mod_nutrient_yield(int faction_id, int base, int x, int y, int tf)
 
 }
 
-/**
+/*
 mineral yield calculation
 */
 HOOK_API int mod_mineral_yield(int faction_id, int base, int x, int y, int tf)
@@ -1361,7 +1366,7 @@ HOOK_API int mod_mineral_yield(int faction_id, int base, int x, int y, int tf)
 
 }
 
-/**
+/*
 energy yield calculation
 */
 HOOK_API int mod_energy_yield(int faction_id, int base, int x, int y, int tf)
@@ -1372,7 +1377,7 @@ HOOK_API int mod_energy_yield(int faction_id, int base, int x, int y, int tf)
 
 }
 
-/**
+/*
 SE accumulated resource adjustment
 */
 HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5)
@@ -1458,7 +1463,7 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
 }
 
-/**
+/*
 hex cost
 */
 HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7)
@@ -1503,7 +1508,7 @@ HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int t
 
 }
 
-/**
+/*
 Calculates tech level recursively.
 */
 int wtp_tech_level(int id) {
@@ -1520,7 +1525,7 @@ int wtp_tech_level(int id) {
     }
 }
 
-/**
+/*
 Calculates tech cost.
 cost grows cubic from the beginning then linear.
 S  = 20                                     // fixed shift (first tech cost)
@@ -1639,7 +1644,7 @@ int getBasePopulationLimit(BASE *base)
 
 }
 
-/**
+/*
 Checks if we need to refit to population growth facility instead.
 */
 int refitToGrowthFacility(int id, BASE *base, int choice)
@@ -1695,7 +1700,7 @@ int refitToGrowthFacility(int id, BASE *base, int choice)
 
 }
 
-/**
+/*
 Return next unbuilt growth facility or -1 if there is no next available facility.
 */
 int getnextAvailableGrowthFacility(BASE *base)
@@ -1715,126 +1720,7 @@ int getnextAvailableGrowthFacility(BASE *base)
 
 }
 
-/**
-Directs portion of bases production toward project construction.
-If faction builds more than one project production is directed to the base with smallest id.
-*/
-void contributeToProject(int factionId)
-{
-	MetaFaction *metaFaction = &(tx_metafactions[factionId]);
-
-	debug("\n");
-	debug("PROJECT CONTRIBUTION: %-24s\n", metaFaction->noun_faction);
-
-	// select project base and other faction bases
-
-	BASE *projectBase = NULL;
-	std::vector<BASE *> contributingBases;
-
-	int project = -1;
-	int projectCost = 0;
-	int requiredMinerals = 0;
-
-	for (int id = 0; id < *total_num_bases; id++)
-	{
-		BASE *base = &(tx_bases[id]);
-
-		// ignore not own bases
-
-		if (base->faction_id != factionId)
-			continue;
-
-		// select project base
-
-		if (projectBase == NULL && isBaseBuildingProject(base))
-		{
-			projectBase = base;
-
-			int item = getBaseBuildingItem(base);
-			project = -item;
-			projectCost = mineral_cost(factionId, item);
-			requiredMinerals = getBaseBuildingItemCost(factionId, base) - base->minerals_accumulated;
-
-			continue;
-
-		}
-
-		// collect other bases
-
-		contributingBases.push_back(base);
-
-	}
-
-	// do nothing if there is no project base
-
-	if (projectBase == NULL)
-		return;
-
-	debug("projectBase: %-25s\n", projectBase->name);
-
-	// collect contribution
-
-	int totalContribution = 0;
-
-	// process contributing bases
-
-	for
-	(
-		std::vector<BASE *>::iterator contributingBasesIterator = contributingBases.begin();
-		contributingBasesIterator != contributingBases.end();
-		contributingBasesIterator++
-	)
-	{
-		BASE *base = *contributingBasesIterator;
-
-		// stop cycle if we already have enough
-
-		if (totalContribution >= requiredMinerals)
-			break;
-
-		// check if base mineral surplus is above threshold
-
-		if (base->mineral_surplus <= conf.project_contribution_threshold)
-			continue;
-
-		// calculate base contribution
-		// it cannot take more than accumulated minerals
-
-		int baseContribution = (int)floor(conf.project_contribution_proportion * (base->mineral_surplus - conf.project_contribution_threshold));
-		baseContribution = min(base->minerals_accumulated, baseContribution);
-		baseContribution = min(requiredMinerals - totalContribution, baseContribution);
-
-		// contribute
-
-		debug("\t%-25s -%4d, %4d -> %4d\n", base->name, baseContribution, base->minerals_accumulated, base->minerals_accumulated - baseContribution);
-
-		base->minerals_accumulated -= baseContribution;
-		totalContribution += baseContribution;
-
-	}
-
-	// apply contribution
-
-	debug("->\n");
-	debug("\t%-25s +%4d, %4d -> %4d\n", projectBase->name, totalContribution, projectBase->minerals_accumulated, projectBase->minerals_accumulated + totalContribution);
-
-	projectBase->minerals_accumulated += totalContribution;
-
-	// display popup
-
-	int percentageCompleted = projectBase->minerals_accumulated * 100 / projectCost;
-
-	parse_says(0, metaFaction->noun_faction, -1, -1);
-	parse_says(1, tx_facility[project].name, -1, -1);
-	parse_num(2, percentageCompleted);
-	popp(ScriptTxtID, "PROJECTREPORT", 0, "secproj_sm.pcx", 0);
-
-	debug("\n");
-    fflush(debug_log);
-
-}
-
-/**
+/*
 Modifies base init computation.
 */
 HOOK_API int baseInit(int factionId, int x, int y)
@@ -1921,7 +1807,7 @@ HOOK_API int baseInit(int factionId, int x, int y)
 
 }
 
-/**
+/*
 Wraps display help ability functionality.
 This expands single number packed ability value (proportional + flat) into human readable text.
 */
@@ -1970,7 +1856,7 @@ HOOK_API char *getAbilityCostText(int cost, char *destination, int radix)
 
 }
 
-/**
+/*
 Wraps social_calc.
 This is initially for CV GROWTH effect.
 */
@@ -1979,6 +1865,11 @@ HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, i
 	// execute original code
 
 	int value = tx_social_calc(seSelectionsPointer, seRatingsPointer, factionId, ignored4, seChoiceEffectOnly);
+
+	// ignore native faction
+
+	if (factionId == 0)
+		return value;
 
 	// CV changes GROWTH rate if applicable
 

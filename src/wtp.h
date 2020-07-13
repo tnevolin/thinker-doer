@@ -4,6 +4,30 @@
 #include "main.h"
 #include "game.h"
 
+struct MAP_INFO
+{
+	int x;
+	int y;
+	MAP *tile;
+};
+
+struct BASE_INFO
+{
+	int id;
+	BASE *base;
+};
+
+struct FACTION_EXTRA
+{
+	std::vector<int> baseIds;
+	int projectBaseId = -1;
+};
+
+struct BASE_EXTRA
+{
+	int projectContribution = 0;
+};
+
 struct BASE_HURRY_ALLOWANCE_PROPORTION
 {
 	BASE *base;
@@ -113,7 +137,6 @@ bool isBaseFacilityBuilt(BASE *base, int facilityId);
 int getBasePopulationLimit(BASE *base);
 int refitToGrowthFacility(int id, BASE *base, int buildChoice);
 int getnextAvailableGrowthFacility(BASE *base);
-void contributeToProject(int factionId);
 HOOK_API int baseInit(int factionId, int x, int y);
 HOOK_API char *getAbilityCostText(int number, char *destination, int radix);
 HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly);
