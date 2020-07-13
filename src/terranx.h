@@ -124,4 +124,5 @@ extern fp_3int *tx_set_facility;
 extern fp_charp_int_charp_int *tx_itoa;
 extern fp_0void *tx_base_nutrient;
 extern fp_5int *tx_social_calc;
+extern fp_0int *tx_base_production;
 

@@ -11,7 +11,7 @@ const std::unordered_set<int> IMPORTANT_FACILITIES =
 	FAC_HABITATION_DOME,
 };
 
-/**
+/*
 Analyzes all bases at once and decides what to hurry.
 This is in addition to consider_hurry().
 It kicks in only with simplified hurry cost set.
@@ -153,7 +153,7 @@ void factionHurryProduction(int factionId)
 
 }
 
-/**
+/*
 Spend maximal available amount not greater than allowance on hurrying production.
 Works only with simplified hurry cost calculation enabled.
 */

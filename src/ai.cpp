@@ -51,7 +51,7 @@ std::unordered_set<MAP *> warzoneLocations;
 std::unordered_set<MAP *> zocLocations;
 std::unordered_map<BASE *, std::vector<YIELD>> unworkedTileYields;
 
-/**
+/*
 AI strategy.
 */
 void prepareMoveStrategy(int id)
@@ -80,7 +80,7 @@ void prepareMoveStrategy(int id)
 
 }
 
-/**
+/*
 Prepares former orders.
 */
 void prepareFormerOrders()
@@ -115,7 +115,7 @@ void prepareFormerOrders()
 
 }
 
-/**
+/*
 Populate global lists before processing faction strategy.
 */
 void populateLists()
@@ -1135,7 +1135,7 @@ void generateTerraformingRequests()
 
 }
 
-/**
+/*
 Generate request for conventional incompatible terraforming options.
 */
 void generateConventionalTerraformingRequest(MAP_INFO *mapInfo)
@@ -1180,7 +1180,7 @@ void generateConventionalTerraformingRequest(MAP_INFO *mapInfo)
 
 }
 
-/**
+/*
 Generate request for aquifer.
 */
 void generateAquiferTerraformingRequest(MAP_INFO *mapInfo)
@@ -1196,7 +1196,7 @@ void generateAquiferTerraformingRequest(MAP_INFO *mapInfo)
 
 }
 
-/**
+/*
 Generate request to raise energy collection.
 */
 void generateRaiseLandTerraformingRequest(MAP_INFO *mapInfo)
@@ -1212,7 +1212,7 @@ void generateRaiseLandTerraformingRequest(MAP_INFO *mapInfo)
 
 }
 
-/**
+/*
 Generate request for network (road/tube).
 */
 void generateNetworkTerraformingRequest(MAP_INFO *mapInfo)
@@ -1228,7 +1228,7 @@ void generateNetworkTerraformingRequest(MAP_INFO *mapInfo)
 
 }
 
-/**
+/*
 Comparison function for base terraforming requests.
 Sort in scoring order descending.
 */
@@ -1300,7 +1300,7 @@ void sortBaseTerraformingRequests()
 
 }
 
-/**
+/*
 Comparison function for terraforming requests.
 Sort in ranking order ascending then in scoring order descending.
 */
@@ -1309,7 +1309,7 @@ bool compareRankedTerraformingRequests(TERRAFORMING_REQUEST terraformingRequest1
 	return (terraformingRequest1.rank != terraformingRequest2.rank ? terraformingRequest1.rank < terraformingRequest2.rank : terraformingRequest1.score > terraformingRequest2.score);
 }
 
-/**
+/*
 Sort terraforming requests within regions by rank and score.
 */
 void rankTerraformingRequests()
@@ -1815,7 +1815,7 @@ void finalizeFormerOrders()
 
 }
 
-/**
+/*
 Selects best terraforming option for given tile and calculates its terraforming score.
 */
 void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore)
@@ -2110,7 +2110,7 @@ void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCOR
 
 }
 
-/**
+/*
 Aquifer calculations.
 */
 void calculateAquiferTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore)
@@ -2200,7 +2200,7 @@ void calculateAquiferTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *be
 
 }
 
-/**
+/*
 Raise land calculations.
 */
 void calculateRaiseLandTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore)
@@ -2296,7 +2296,7 @@ void calculateRaiseLandTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *
 
 }
 
-/**
+/*
 Network calculations.
 */
 void calculateNetworkTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore)
@@ -2421,7 +2421,7 @@ void calculateNetworkTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *be
 
 }
 
-/**
+/*
 Handles movement phase.
 */
 int enemyMoveFormer(int id)
@@ -2567,7 +2567,7 @@ void setFormerOrder(int id, VEH *vehicle, FORMER_ORDER *formerOrder)
 
 }
 
-/**
+/*
 Finds base affected by tile improvement and computes that base surplus effect.
 */
 void computeImprovementSurplusEffect(MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState, SURPLUS_EFFECT *surplusEffect)
@@ -2704,7 +2704,7 @@ void computeImprovementSurplusEffect(MAP_INFO *mapInfo, MAP_STATE *currentMapSta
 
 }
 
-/**
+/*
 Checks whether tile is own workable tile but not base square.
 */
 bool isOwnWorkableTile(int x, int y)
@@ -2744,7 +2744,7 @@ bool isOwnWorkableTile(int x, int y)
 
 }
 
-/**
+/*
 Determines whether terraforming is already completed in this tile.
 */
 bool isTerraformingCompleted(MAP_INFO *mapInfo, int action)
@@ -2755,7 +2755,7 @@ bool isTerraformingCompleted(MAP_INFO *mapInfo, int action)
 
 }
 
-/**
+/*
 Determines whether terraforming can be done in this square with removing fungus and leveling terrain if needed.
 Terraforming is considered available if this item is already built.
 */
@@ -2858,7 +2858,7 @@ bool isTerraformingAvailable(MAP_INFO *mapInfo, int action)
 
 }
 
-/**
+/*
 Determines whether terraforming is required at all.
 */
 bool isTerraformingRequired(MAP *tile, int action)
@@ -2883,7 +2883,7 @@ bool isTerraformingRequired(MAP *tile, int action)
 
 }
 
-/**
+/*
 Determines whether fungus need to be removed before terraforming.
 */
 bool isRemoveFungusRequired(int action)
@@ -2909,7 +2909,7 @@ bool isRemoveFungusRequired(int action)
 
 }
 
-/**
+/*
 Determines whether rocky terrain need to be leveled before terraforming.
 */
 bool isLevelTerrainRequired(int action)
@@ -3060,7 +3060,7 @@ void setTerraformingAction(int id, int action)
 
 }
 
-/**
+/*
 Orders former to build other improvement besides base yield change.
 */
 void buildImprovement(int vehicleId)
@@ -3081,7 +3081,7 @@ void buildImprovement(int vehicleId)
 
 }
 
-/**
+/*
 Sends vehicle to destination.
 For land units calculates ZOC aware path and sends vehicle to correct adjacent tile.
 */
@@ -3361,7 +3361,7 @@ void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState)
 
 }
 
-/**
+/*
 Calculates terraforming time based on faction, tile, and former abilities.
 */
 int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle)
@@ -3560,7 +3560,7 @@ int calculateClosestAvailableFormerRange(MAP_INFO *mapInfo)
 
 }
 
-/**
+/*
 Calculates score for network actions (road, tube)
 */
 double calculateNetworkScore(MAP_INFO *mapInfo, int action)
@@ -3894,7 +3894,7 @@ int getTerraformingRegion(int region)
 	return (seaRegionMappings.count(region) == 0 ? region : seaRegionMappings[region]);
 }
 
-/**
+/*
 Checks whether this tile is worked by base.
 */
 bool isBaseWorkedTile(BASE *base, int x, int y)
@@ -4043,7 +4043,7 @@ bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::itera
 
 }
 
-/**
+/*
 Estimates condenser yield score in adjacent tiles.
 */
 double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int> *actions)
@@ -4342,7 +4342,7 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 
 }
 
-/**
+/*
 Estimates aquifer additional yield score.
 This is very approximate.
 */
@@ -4436,7 +4436,7 @@ double estimateAquiferExtraYieldScore(MAP_INFO *mapInfo)
 
 }
 
-/**
+/*
 Estimates raise land additional yield score.
 */
 double estimateRaiseLandExtraYieldScore(MAP_INFO *mapInfo, int cost)
@@ -4519,7 +4519,7 @@ double estimateRaiseLandExtraYieldScore(MAP_INFO *mapInfo, int cost)
 
 }
 
-/**
+/*
 Finds land path and populates first step.
 */
 void findPathStep(int id, int x, int y, MAP_INFO *step)
@@ -4760,7 +4760,7 @@ bool isInferiorYield(std::vector<YIELD> *yields, int nutrient, int mineral, int 
 
 }
 
-/**
+/*
 Determines whether raising land does not disturb others.
 */
 bool isRaiseLandSafe(MAP_INFO *mapInfo)
@@ -4809,7 +4809,7 @@ bool isRaiseLandSafe(MAP_INFO *mapInfo)
 
 }
 
-/**
+/*
 Calculates combined weighted resource score.
 */
 double calculateResourceScore(double nutrient, double mineral, double energy)
@@ -4824,7 +4824,7 @@ double calculateResourceScore(double nutrient, double mineral, double energy)
 
 }
 
-/**
+/*
 Calculates combined weighted resource score taking base additional demand into account.
 */
 double calculateBaseResourceScore(double populationSize, double nutrientSurplus, double mineralSurplus, double nutrient, double mineral, double energy)
@@ -4862,7 +4862,7 @@ double calculateBaseResourceScore(double populationSize, double nutrientSurplus,
 
 }
 
-/**
+/*
 Calculates yield improvement score for given base and improved tile.
 */
 double computeImprovementBaseSurplusEffectScore(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState, bool requireWorked)

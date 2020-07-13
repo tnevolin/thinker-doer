@@ -359,7 +359,7 @@ int set_road_to(int id, int x, int y) {
     return SYNC;
 }
 
-/**
+/*
 Send unit to destination building a road/tube on a way if applicable.
 */
 int set_move_road_tube_to(int id, int x, int y)
@@ -716,7 +716,7 @@ int map_rockiness(MAP *tile) {
 	return ((tile->rocks & TILE_ROCKY) ? 2 : ((tile->rocks & TILE_ROLLING) ? 1 : 0));
 }
 
-/**
+/*
 Safe check for tile having base.
 NULL pointer returns false.
 */
@@ -724,7 +724,7 @@ bool map_base(MAP *tile) {
 	return (tile && (tile->items & TERRA_BASE_IN_TILE));
 }
 
-/**
+/*
 Safe check for tile having item.
 NULL pointer returns false.
 */
@@ -732,7 +732,7 @@ bool map_has_item(MAP *tile, int item) {
 	return (tile && (tile->items & item));
 }
 
-/**
+/*
 Safe check for tile having landmark.
 NULL pointer returns false.
 */
@@ -740,7 +740,7 @@ bool map_has_landmark(MAP *tile, int landmark) {
 	return (tile && (tile->landmarks & landmark));
 }
 
-/**
+/*
 Reads vehicle order string.
 */
 const char *readOrder(int id) {
@@ -749,7 +749,7 @@ const char *readOrder(int id) {
 	return g_strTEMP;
 }
 
-/**
+/*
 adds/removes base regular facility (not project)
 */
 void setBaseFacility(int base_id, int facility_id, bool add) {
@@ -766,7 +766,7 @@ void setBaseFacility(int base_id, int facility_id, bool add) {
 
 }
 
-/**
+/*
 Checks if faction has tech to build a facility.
 */
 bool has_facility_tech(int faction_id, int facility_id) {

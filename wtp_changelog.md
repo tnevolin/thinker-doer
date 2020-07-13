@@ -1,3 +1,9 @@
+# Version 85
+
+* Disabled crawlers.
+* Version cloning_vats_and_population_boom changes are included.
+* Project contribution mechanics is removed.
+
 # Version cloning_vats_and_population_boom
 
 Test version for new CV and popboom mechanincs
