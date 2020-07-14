@@ -159,7 +159,7 @@ Recycling Tanks,  1, 1, 1, 0,
 Improved Land,    1, *, *, 0, "*" columns are ignored entirely
 Improved Sea,     2, 1, 3, 0, * Mineral +1 with Advanced Ecological Engineering
 Monolith,         2, 2, 2, 0,
-Borehole Square,  0, 2, 6, 0,
+Borehole Square,  0, 2, 4, 0,
 
 ;
 ; WORLDBUILDER
@@ -448,12 +448,12 @@ Fungal Payload,       Fungal,         0,14,24, -1, NewMiss
 #DEFENSES
 No Armor,            Scout,       1, 0, 1, None,
 Synthmetal Armor,    Synthmetal,  2, 0, 2, Indust,
-Plasma Steel Armor,  Plasma,      3, 2, 3, Chemist,
-Silksteel Armor,     Silksteel,   4, 1, 4, Alloys,
-Photon Wall,         Photon,      5, 1, 5, DocSec,
-Probability Sheath,  Probability, 6, 2, 6, ProbMec,
-Neutronium Armor,    Neutronium, 10, 1, 8, MatComp,
-Antimatter Plate,    Antimatter, 16, 2,12, NanEdit,
+Plasma Steel Armor,  Plasma,      4, 2, 3, Chemist,
+Silksteel Armor,     Silksteel,   6, 1, 4, Alloys,
+Photon Wall,         Photon,      8, 1, 5, DocSec,
+Probability Sheath,  Probability,12, 2, 6, ProbMec,
+Neutronium Armor,    Neutronium, 16, 1, 8, MatComp,
+Antimatter Plate,    Antimatter, 20, 2,12, NanEdit,
 Stasis Generator,    Stasis,     24, 2,16, TempMec,
 Psi Defense,         Psi,        -1, 2, 6, Disable,
 Pulse 3 Armor,       3-Pulse,     3, 1, 5, Disable,
@@ -649,9 +649,9 @@ Police Garrison,        Infantry, Gun,          Scout,      2, 0, 0, WillPow, -1
 #FACILITIES
 Headquarters,                  5, 0, None,    Disable,  Efficiency
 Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic/Morale
-Recycling Tanks,               4, 0, Biogen,  Viral,    Bonus Resources
+Recycling Tanks,               4, 0, Biogen,  Create,   Bonus Resources
 Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +100%
-Tachyon Field,                12, 2, SingMec, Disable,  All Defense +100%
+Tachyon Field,                12, 2, Create,  Disable,  All Defense +100%
 Recreation Commons,            4, 1, Psych,   PlaEcon,  Fewer Drones
 Energy Bank,                   6, 1, IndEcon, MatComp,  Economy Bonus
 Network Node,                  6, 1, InfNet,  DigSent,   Labs Bonus
@@ -859,7 +859,7 @@ Doctor,           Doctors,             None,    CentMed, 0, 2, 0, 0000000
 Librarian,        Librarians,          PlaNets, Subat,   0, 0, 3, 0000000
 Engineer,         Engineers,           Quantum, Disable, 3, 0, 2, 0000000
 Empath,           Empathi,             CentMed, AlphCen, 2, 2, 0, 0000000
-Thinker,          Thinkers,            Eudaim,  Disable, 0, 1, 4, 0000000
+Thinker,          Thinkers,            Create,  Disable, 0, 1, 4, 0000000
 Transcend,        Transcendi,          AlphCen, Disable, 2, 2, 2, 0000000
 Drone,            Drones,
 Worker,           Workers,
