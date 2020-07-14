@@ -1,3 +1,8 @@
+# Version 86
+
+* Armor value is adjusted based on its position in the tree.
+* Borehole Square,  0, 2, 4, 0. Further reduces energy flow and limit its usage to barren lands.
+
 # Version 85
 
 * Disabled crawlers.
@@ -492,6 +497,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Move plant fungus later.
 * Revert forest yield, delay HF and make it more expensive.
 * Brood Pit give just +1 POLICE.
 * Make AI build more units, defensive structures, sensors.

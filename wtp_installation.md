@@ -21,6 +21,8 @@ Copy files from **core** folder to game directory overriding existing files.
 
 ## Factions
 
+This is an optional faction modifications. Feel free to use standard or your own customized ones.
+
 Copy files from **factions** folder to game directory overriding existing files.
 
 # Run
