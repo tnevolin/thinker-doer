@@ -3876,19 +3876,6 @@ bool isTowardBaseVertical(int x, int y, int dySign)
 
 }
 
-MAP *getMapTile(int x, int y)
-{
-	// ignore impossible combinations
-
-	if ((x + y)%2 != 0)
-		return NULL;
-
-	// return map tile with wrapped x if needed
-
-	return mapsq(wrap(x), y);
-
-}
-
 int getTerraformingRegion(int region)
 {
 	return (seaRegionMappings.count(region) == 0 ? region : seaRegionMappings[region]);

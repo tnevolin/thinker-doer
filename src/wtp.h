@@ -131,6 +131,7 @@ HOOK_API int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5);
 HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7);
+int wtp_tech_level(int id);
 int wtp_tech_cost(int fac, int tech);
 HOOK_API int sayBase(char *buffer, int baseId);
 bool isBaseFacilityBuilt(BASE *base, int facilityId);
@@ -140,7 +141,9 @@ int getnextAvailableGrowthFacility(BASE *base);
 HOOK_API int baseInit(int factionId, int x, int y);
 HOOK_API char *getAbilityCostText(int number, char *destination, int radix);
 HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly);
-void correctcGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer);
+HOOK_API void correctGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer);
+MAP *getMapTile(int x, int y);
+HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queueSlotId);
 
 #endif // __PROTOTYPE_H__
 
