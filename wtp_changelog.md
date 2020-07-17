@@ -1,3 +1,7 @@
+# Version 88
+
+* Some more adjustment to weapon and armor value and cost.
+
 # Version 87
 
 * [fix] Unit cost were calculated incorrectly sometimes.
