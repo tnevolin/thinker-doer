@@ -248,16 +248,16 @@ Ability proportional and flat costs are packed into a singe value for ability co
 unit cost = round(round([primary item cost + secondary item shifted cost / 2] * chassis cost / 2) * abilities cost factor + abilities flat cost)
 (rounded normally)
 
-item reactor modified cost = item cost \* (reactor value / 100)
+item reactor modified cost = item cost * (reactor value / 100)
 module uses Fission reactor value for their reactor value
 
 primary item = the one with higher reactor modified cost
 secondary item = the one with lower reactor modified cost
 
-primary item cost = item cost \* (reactor value / 100)
-secondary item shifted cost = (item cost - 1) \* (reactor value / 100)
+primary item cost = item cost * (reactor value / 100)
+secondary item shifted cost = (item cost - 1) * (reactor value / 100)
 
-abilities cost factor = (1 + 0.25 \* (ability1 proportional cost + ability2 proportional cost))
+abilities cost factor = (1 + 0.25 * (ability1 proportional cost + ability2 proportional cost))
 abilities flat cost = ability1 flat cost + ability2 flat cost
 
 </pre>
@@ -283,27 +283,6 @@ Since higher reactors now do nothing but decrease unit cost player also gets **R
 This mod removes all hurry cost penalty thresholds. I never could grasp their strategical meaning since they do not affect course of the game but only add annoyance and require use of calculator. Let me know if anyone thinks they need to be kept.
 
 Now all hurry costs are flat x2 for facilities and x4 for units and projects.
-
-# Facilities cost/maintenance
-
-Cost in mineral rows
-
-Base facility | Cost | Maint | Explanation
-------------- | -------------------:| -----------:| -----------
-Command Center | **6** | 2 | This morale boosting facility increases combat effectiveness of land units by 25% which is probably the majority of all units at early age. That translates to 25% stronger army which is otherwise equivalent to 25% production bonus while forging units. It's like +2 INDUSTRY even if for land units only. Taking in account the average combat unit cost of 4+ raising the morale improvement facility cost to the price of 1-2 combat units is not at all excessive. Vanilla cost of 4 is too cheap and makes the building of this facility a no-brainer. With increased cost it will present a choice.
-Naval Yard | 8 | 2 | Reverted to vanilla values. Same reason as for Command Center.
-Aerospace Complex | **12** | 3 | This facility is conceptually same as Naval Yard. However, there are more air units in a game. Plus this facility also provides multiple other benefits like doubling space resource income, preventing airdrops, etc. Very useful facility should cost a little more than similar sea based one.
-Bioenhancement Center | **20** | **5** | Super generic facility that boost *all* units morale up to Commando. Should be priced at least close to raw sum of individual triad facilities.
-Energy Bank | **6** | | Cost is reduced slightly for this and three below facilities. They seem to be a pretty interesing facilities not getting build early because of their price.
-Network Node | **6** | | 
-Research Hospital | **9** | | 
-Nanohospital | **18** | | 
-Biology Lab | **4** | **0** | Unattractive facility with fixed income. I don't see much sense in paying a fixed maintenance for fixed income. What, you pay one energy to get two labs - what's the point? In this mod it has no maintenance and cost is slightly reduced. This gives player incentive to build it before Network Node.
-Geosynchronous Survey Pod | 16 | **2** | Dropped maintenance since this is defense helping facility. I rarely use it myself. Maybe with lower maintenance it'll be more attractive.
-Aquafarm | **12** | **2** | This is the most beneficial facility out of three aquatic yield improvers. It affects all work squares and not only half as other two. Besides, nutrient surplus is the most powerful resource that in time compensates lack of two others due to population growth and increase in workers. I think the above increased price is not even enough to compensate for it but 12 rows is already quite high for early game.
-Brood Pit | **12** | **3** | As lolada pointed out here http://alphacentauri2.info/index.php?topic=21359.msg125058#msg125058, the combined features of this facility make it an awesome native warfare oriented aid on top of extra policae rating. Its cost/maint should be much bigger to compensate it.
-Hab Complex | 8 | **0** | I just recently realized it has maintenance. Water and sewer does require maintenance in real life but there is no point to maintain it in game where it is *forced* on *everybody*.
-Habitation Dome | 16 | **0** | Same as above.
 
 # Secret Project costs
 
@@ -338,14 +317,14 @@ secret project | cost | explanation
 ----|----:|----
 The Merchant Exchange | 20 | Local improvement - no change.
 The Human Genome | 40 | 2 minerals worth quelled drone x 200
-The Command Nexus | 40 | 60 cost x 10 + 1 maintenance x 100. Reduced in half as it is not needed in every base.
+The Command Nexus | 60 | 80 cost x 10 + 2 maintenance x 100. Reduced as it is not needed in every base.
 The Universal Translator | 20 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. Reduced in cost as it is now quite early project. It is definitely not better than The Human Genome, for example.
 The Weather Paradigm | 40 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game.
 The Empath Guild | 60 | Way to Governorship and energy income multiplier. Should be quite expensive.
 The Living Refinery | 40 | About 2 minerals per base per turn x 200.
 The Virtual World | 60 | 60 cost x 10 + 2 maintenance x 100. Reduced slightly since it benefits base only when network node is built.
 The Planetary Transit System | 40 | Drone quellying + immediate growth boost. Proportional to empire size but limited to small bases only. Slight increase.
-The Maritime Control Center | 60 | 80 cost x 10 + 2 maintenance x 100. Reduced in half as it is not needed in every base.
+The Maritime Control Center | 60 | 80 cost x 10 + 2 maintenance x 100. Reduced as it is not needed in every base.
 The Planetary Datalinks	| 80 | Again pretty vague but should be quite high priced since technology advantage is everything in this game.
 The Manifold Harmonics | 60 | Powerful fungus production. However, advantageous for high PLANET rating only and fully develop only in later game.
 The Planetary Energy Grid | 60 | 60 cost x 10 + 1 maintenance x 100.
@@ -361,7 +340,7 @@ The Nethack Terminus | 60 | Some help to probe teams. Other than that nothing mu
 The Neural Amplifier | 80 | Tough to evaluate but I tend to price combat effectiveness boosting projects quite high.
 The Pholus Mutagen | 60 | Allows higher production without ecology impact. Should be slightly more expensive.
 The Dream Twister | 80 | Same as The Neural Amplifier.
-The Cloudbase Academy | 120 | 100 cost x 10 + 3 maintenance x 100. Not reduced at all as AC is needed in every base for satellites later on.
+The Cloudbase Academy | 150 | 120 cost x 10 + 3 maintenance x 100. Not reduced at all as AC is needed in every base for satellites later on.
 The Cyborg Factory | 160 | 200 cost x 10 + 5 maintenance x 100. Reduced by 1/3 as it is not needed in every base.
 The Clinical Immortality | 200 | Drones and diplomatic victory. Should be quite high.
 The Singularity Inductor | 200 | 200 cost x 10.
@@ -373,6 +352,14 @@ The Cloning Vats | 120 | Adds GROWTH rating. Good for growth but not game breaki
 The Telepathic Matrix | 200 | Total drone solution. About 5 times The Human Genome cost. 
 The Voice of Planet | 120 | 
 The Ascent to Transcendence | 500 | Should take some time but not to extreme with all empire bases contribuing to it.
+
+# Multiplying facilities
+
+Multiplying facilities are incentive for base growth vs ICS. Multiplying facilities, especially mineral ones, should start earlier and distributed more evenly across the tree.
+
+Recycling Tanks now is a 50% mineral multplying facilities amongh others of same type. Other multiplying facilities are distributed more smoothly across the tree.
+
+Energy multiplying facilities are generally at good places already. I've reduced cost of some early coming ones to make their benefit appear earlier.
 
 # Feature appearance time
 
@@ -482,12 +469,12 @@ Fungus production is not some crucial part of the game. However, it is still som
 |----|----:|----|----|----|
 | Centauri Ecology | 1 | +1 nutrient | 1-0-0 |
 | Progenitor Psych | 1 | +1 energy | 1-0-1 | reassigned |
-| Field Modulation | 2 | +1 nutrient | 2-0-1 | reassigned |
-| Bioadaptive Resonance | 4 | +1 nutrient | 3-0-2 | reassigned |
-| Centauri Meditation | 5 | +1 energy | 2-0-2 |
-| Centauri Genetics | 8 | +1 mineral | 3-1-2 |
-| Centauri Psi | 11 | +1 nutrient | 4-1-2 |
-| Secrets of Alpha Centauri | 13 | +1 energy | 4-1-3 |
+| Field Modulation | 2 | +1 energy | 1-0-2 | reassigned |
+| Bioadaptive Resonance | 4 | +1 nutrient | 2-0-2 | reassigned |
+| Centauri Meditation | 5 | +1 energy | 2-0-3 |
+| Centauri Genetics | 8 | +1 mineral | 2-1-3 |
+| Centauri Psi | 11 | +1 nutrient | 3-1-3 |
+| Secrets of Alpha Centauri | 13 | +1 energy | 3-1-4 |
 
 ## Sea Sensors
 

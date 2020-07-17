@@ -271,7 +271,6 @@ double calculateNetworkScore(MAP_INFO *mapInfo, int action);
 bool isTowardBaseDiagonal(int x, int y, int dxSign, int dySign);
 bool isTowardBaseHorizontal(int x, int y, int dxSign);
 bool isTowardBaseVertical(int x, int y, int dySign);
-MAP *getMapTile(int x, int y);
 int getTerraformingRegion(int region);
 bool isBaseWorkedTile(BASE *base, int x, int y);
 double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *actions);

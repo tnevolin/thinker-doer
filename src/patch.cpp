@@ -2241,7 +2241,34 @@ Wraps _strcat call in base nutrient display to reflect correct population boom g
 */
 void patch_growth_turns_population_boom()
 {
-	write_call(0x004118BE, (int)correctcGrowthTurnsForPopulationBoom);
+	write_call(0x004118BE, (int)correctGrowthTurnsForPopulationBoom);
+
+}
+
+/*
+Wraps has_fac call in base_minerals to sneak in RT mineral increase.
+*/
+void patch_recycling_tank_minerals()
+{
+	write_call(0x004E9E68, (int)modifiedRecyclingTanksMinerals);
+
+}
+
+/*
+Modifies free minerals.
+*/
+void patch_free_minerals(int freeMinerals)
+{
+	int free_minerals_bytes_length = 3;
+	byte free_minerals_bytes_old[] = { 0x83, 0xC6, 0x10 };
+	byte free_minerals_bytes_new[] = { 0x83, 0xC6, (byte)freeMinerals };
+	write_bytes
+	(
+		0x004E9E41,
+		free_minerals_bytes_length,
+		free_minerals_bytes_old,
+		free_minerals_bytes_new
+	);
 
 }
 
@@ -2705,6 +2732,16 @@ bool patch_setup(Config* cf) {
 
 	patch_growth_turns_population_boom();
 
+	// patch RT -> 50% minerals
+
+	patch_recycling_tank_minerals();
+
+	// patch free minerals
+
+	if (cf->free_minerals != 16)
+	{
+		patch_free_minerals(cf->free_minerals);
+	}
 
 
     // continue with original Thinker checks

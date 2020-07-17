@@ -19,7 +19,9 @@ void init_save_game(int faction) {
 }
 
 HOOK_API int tech_value(int tech, int faction, int flag) {
+
     int value = tx_tech_val(tech, faction, flag);
+
     if (conf.tech_balance && ai_enabled(faction)) {
         if (tech == tx_weapon[WPN_TERRAFORMING_UNIT].preq_tech
         || tech == tx_weapon[WPN_SUPPLY_TRANSPORT].preq_tech
@@ -32,9 +34,16 @@ HOOK_API int tech_value(int tech, int faction, int flag) {
             value += 40;
         }
     }
+
+    // make lower level tech more valuable due to lower tech cost
+
+    value += 20 - wtp_tech_level(tech);
+
     debug("tech_value %d %d value: %3d tech: %2d %s\n",
         *current_turn, faction, value, tech, tx_techs[tech].name);
+
     return value;
+
 }
 
 int tech_level(int id, int lvl) {

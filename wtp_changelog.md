@@ -1,3 +1,16 @@
+# Version 87
+
+* Recycling Tanks now increases minerals by 50% instead of improving base tile.
+* Recycling Tanks,               6, 2.
+* Clean minerals = 24.
+* Research is 1.5 times slower.
+* Fungus yield reshuffled to give energy before nutrients.
+* Weapon and armor appearance and value/cost are adjusted to match each other progression.
+* Some facility costs and maintenances are increased especially later ones.
+* Some SP cost are increased slightly based on increased corresponding facility cost above.
+* Lower tech get preference in blind research and AI pick.
+* [fix] Unit cost were calculated incorrectly sometimes.
+
 # Version 86
 
 * Armor value is adjusted based on its position in the tree.

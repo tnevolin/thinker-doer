@@ -248,6 +248,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->se_growth_rating_cap = max(0, min(9, atoi(value)));
     }
+    else if (MATCH("wtp", "free_minerals"))
+    {
+        cf->free_minerals = max(0, atoi(value));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

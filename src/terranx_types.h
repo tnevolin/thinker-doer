@@ -316,14 +316,14 @@ struct Faction {
     int SE_alloc_psych;
     int SE_alloc_labs;
     int unk_25;
-    int unk_26[11]; // unused
+    int unk_26[11]; // unused		// 0x0330
     int tech_ranking; // Twice the number of techs discovered
-    int unk_27;
+    int unk_27;						// 0x0360
     int ODP_deployed;
-    int theory_of_everything;
-    char tech_trade_source[92];
-    int tech_accumulated;
-    int tech_research_id;
+    int theory_of_everything;		// 0x0368
+    char tech_trade_source[92];		// 0x036C
+    int tech_accumulated;			// 0x03C8
+    int tech_research_id;			// 0x03CC
     int tech_cost;
     int earned_techs_saved;
     int net_random_event;
@@ -341,7 +341,7 @@ struct Faction {
     byte facility_announced[4]; // bitfield - used to determine one time play of fac audio blurb	// 0x0458
     int unk_32;						// 0x045C
     int unk_33;						// 0x0460
-    int unk_35;
+    int extra_free_minerals;
     int unk_36;
     int unk_37;
     char saved_queue_name[8][24];	// 0x0470

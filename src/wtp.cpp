@@ -345,7 +345,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     // calculate items reactor modified costs
 
     double weapon_reactor_modified_cost = weapon_cost * (module ? fission_reactor_cost_factor : reactor_cost_factor);
-    double armor_reactor_modified_cost = weapon_cost * reactor_cost_factor;
+    double armor_reactor_modified_cost = armor_cost * reactor_cost_factor;
 
     // select primary item and secondary item shifted costs
 
@@ -1332,20 +1332,27 @@ HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength,
 /*
 nutrient yield calculation
 */
-HOOK_API int mod_nutrient_yield(int faction_id, int base, int x, int y, int tf)
+HOOK_API int mod_nutrient_yield(int factionId, int baseId, int x, int y, int tf)
 {
-    int value = crop_yield(faction_id, base, x, y, tf);
+    int value = crop_yield(factionId, baseId, x, y, tf);
 
-    MAP* sq = mapsq(x, y);
+    MAP* tile = getMapTile(x, y);
+
+    // bad tile - should not happen, though
+
+    if (!tile)
+		return value;
 
     // condenser does not multiply nutrients
-    if (sq && (sq->items & TERRA_CONDENSER))
+
+    if (tile->items & TERRA_CONDENSER)
     {
         value = (value * 2 + 2) / 3;
     }
 
     // enricher does not multiply nutrients and instead adds 1
-    if (sq && (sq->items & TERRA_SOIL_ENR))
+
+    if (tile->items & TERRA_SOIL_ENR)
     {
         value = (value * 2 + 2) / 3;
         value++;
@@ -1358,9 +1365,9 @@ HOOK_API int mod_nutrient_yield(int faction_id, int base, int x, int y, int tf)
 /*
 mineral yield calculation
 */
-HOOK_API int mod_mineral_yield(int faction_id, int base, int x, int y, int tf)
+HOOK_API int mod_mineral_yield(int factionId, int baseId, int x, int y, int tf)
 {
-    int value = mineral_yield(faction_id, base, x, y, tf);
+    int value = mineral_yield(factionId, baseId, x, y, tf);
 
     return value;
 
@@ -1369,9 +1376,9 @@ HOOK_API int mod_mineral_yield(int faction_id, int base, int x, int y, int tf)
 /*
 energy yield calculation
 */
-HOOK_API int mod_energy_yield(int faction_id, int base, int x, int y, int tf)
+HOOK_API int mod_energy_yield(int factionId, int baseId, int x, int y, int tf)
 {
-    int value = energy_yield(faction_id, base, x, y, tf);
+    int value = energy_yield(factionId, baseId, x, y, tf);
 
     return value;
 
@@ -1528,7 +1535,7 @@ int wtp_tech_level(int id) {
 /*
 Calculates tech cost.
 cost grows cubic from the beginning then linear.
-S  = 20                                     // fixed shift (first tech cost)
+S  = 1nbbbbbbn0                                     // fixed shift (first tech cost)
 C  = 0.02                                   // cubic coefficient
 B  = 80 * (<map area> / <normal map area>)  // linear slope
 x0 = SQRT(B / (3 * C))                      // break point
@@ -1542,6 +1549,9 @@ C * x ^ 3
 2.
 else
 A + B * x
+
+overall scale
+1.5
 */
 int wtp_tech_cost(int fac, int tech) {
     assert(fac >= 0 && fac < 8);
@@ -1552,7 +1562,7 @@ int wtp_tech_cost(int fac, int tech) {
         level = wtp_tech_level(tech);
     }
 
-    double S = 20.0;
+    double S = 10.0;
     double C = 0.02;
     double B = 80 * (*map_area_tiles / 3200.0);
     double x0 = sqrt(B / (3 * C));
@@ -1581,6 +1591,10 @@ int wtp_tech_cost(int fac, int tech) {
 
     debug("tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %s\n", *current_turn, fac,
         base, dw, cost, level, tech, (tech >= 0 ? tx_techs[tech].name : NULL));
+
+	// scale
+
+	cost *= 1.5;
 
     return max(2, (int)cost);
 
@@ -1895,7 +1909,7 @@ HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, i
 
 }
 
-void correctcGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer)
+HOOK_API void correctGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer)
 {
     // call original function
 
@@ -1937,6 +1951,60 @@ void correctcGrowthTurnsForPopulationBoom(int destinationStringPointer, int sour
 		strcpy(growthTurnsText, "POP BOOM !");
 
 	}
+
+}
+
+MAP *getMapTile(int x, int y)
+{
+	// ignore impossible combinations
+
+	if ((x + y)%2 != 0)
+		return NULL;
+
+	// return map tile with wrapped x if needed
+
+	return mapsq(wrap(x), y);
+
+}
+
+HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queueSlotId)
+{
+	// get current base
+
+	int id = *current_base_id;
+	BASE *base = *current_base_ptr;
+
+	// Recycling Tanks increase minerals by 50%
+
+	if (has_facility(id, FAC_RECYCLING_TANKS))
+	{
+		// find mineral multiplier
+
+		int multiplier = (2 * base->mineral_intake_2 + (base->mineral_intake - 1)) / base->mineral_intake;
+
+		// increment multiplier
+
+		multiplier++;
+
+		// calculate updated value and addition
+
+		int updatedMineralIntake2 = (multiplier * base->mineral_intake) / 2;
+		int additionalMinerals = updatedMineralIntake2 - base->mineral_intake_2;
+
+		// update values
+
+		base->mineral_intake_2 += additionalMinerals;
+		base->mineral_surplus += additionalMinerals;
+
+	}
+
+	// execute original function
+
+	int value = tx_has_fac(facilityId, baseId, queueSlotId);
+
+	// return original value
+
+	return value;
 
 }
 
