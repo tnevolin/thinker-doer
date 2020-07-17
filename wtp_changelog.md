@@ -1,5 +1,7 @@
 # Version 87
 
+* [fix] Unit cost were calculated incorrectly sometimes.
+
 * Recycling Tanks now increases minerals by 50% instead of improving base tile.
 * Recycling Tanks,               6, 2.
 * Clean minerals = 24.
@@ -9,20 +11,25 @@
 * Some facility costs and maintenances are increased especially later ones.
 * Some SP cost are increased slightly based on increased corresponding facility cost above.
 * Lower tech get preference in blind research and AI pick.
-* [fix] Unit cost were calculated incorrectly sometimes.
 
 # Version 86
+
+**This version is recalled due to the bug in unit cost calculation**
 
 * Armor value is adjusted based on its position in the tree.
 * Borehole Square,  0, 2, 4, 0. Further reduces energy flow and limit its usage to barren lands.
 
 # Version 85
 
+**This version is recalled due to the bug in unit cost calculation**
+
 * Disabled crawlers.
 * Version cloning_vats_and_population_boom changes are included.
 * Project contribution mechanics is removed.
 
 # Version cloning_vats_and_population_boom
+
+**This version is recalled due to the bug in unit cost calculation**
 
 Test version for new CV and popboom mechanincs
 
@@ -34,21 +41,31 @@ Test version for new CV and popboom mechanincs
 
 # Version 84
 
+**This version is recalled due to the bug in unit cost calculation**
+
 * Cleaned AI terraforming code. It is supposed to work even better now but still use cautions as AI algorithms are very complex.
 
 # Version 83
+
+**This version is recalled due to the bug in unit cost calculation**
 
 * \[fix\] Bug in sorting terraforming requests.
 
 # Version 82
 
+**This version is recalled due to the bug in unit cost calculation**
+
 * The Manifold Harmonics is enabled by Sentient Resonance (~80% in research tree).
 
 # Version 81
 
+**This version is recalled due to the bug in unit cost calculation**
+
 * \[fix\] Repair rate in base with corresponding facility configuration setting didn't work.
 
 # Version 80
+
+**This version is recalled due to the bug in unit cost calculation**
 
 * Reactor value is weapon/armor percentage multiplier.
 * Now actually renaming technologies. Didn't work first time.
