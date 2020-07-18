@@ -1,6 +1,10 @@
 # Version 88
 
-* Some more adjustment to weapon and armor value and cost.
+* Another adjustment to weapons/armors value/cost. Now they use more of less round and same numbers for ease up on player memory.
+
+# Version 88
+
+* Some more adjustment to weapons/armors value and cost.
 
 # Version 87
 
