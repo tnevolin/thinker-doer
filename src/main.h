@@ -152,6 +152,7 @@ struct Config {
     bool cloning_vats_disable_impunities = false;
     int cloning_vats_se_growth = 0;
     int se_growth_rating_cap = 5;
+    bool recycling_tanks_mineral_multiplier = false;
     int free_minerals = 16;
     bool ai_useWTPAlgorithms;
     double ai_terraforming_nutrientWeight;

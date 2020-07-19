@@ -1,3 +1,11 @@
+# Version 90
+
+* recycling_tanks_mineral_multiplier configuration parameter is added.
+
+# Version 89
+
+* Research is 1.25 times slower.
+
 # Version 88
 
 * Another adjustment to weapons/armors value/cost. Now they use more of less round and same numbers for ease up on player memory.

@@ -2736,6 +2736,13 @@ bool patch_setup(Config* cf) {
 
 	patch_recycling_tank_minerals();
 
+	// patch recycling tank minerals
+
+	if (cf->recycling_tanks_mineral_multiplier)
+	{
+		patch_recycling_tank_minerals();
+	}
+
 	// patch free minerals
 
 	if (cf->free_minerals != 16)
