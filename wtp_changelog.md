@@ -1,3 +1,11 @@
+# Version 92
+
+* Police State,    DocLoy,   --EFFIC,     ++SUPPORT,   ++POLICE,    --PLANET. Returned --EFFIC and ++SUPPORT to it and also extra PLANET penalty. Should be a little bit more interesting like that.
+* Democratic,      EthCalc,   +EFFIC,     --SUPPORT,   ++GROWTH,    --PROBE. Reduced SUPPORT penalty. It seemed too harsh especially at the beginning.
+* Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY,  --RESEARCH. Removed +TALENT, added +MORALE to make it more combat oriented and different from Police State drone quellying focus.
+* Cybernetic,      Algor,     +EFFIC,  -----POLICE,    ++PLANET,    ++RESEARCH. More benefits and more penalties. Before it was too not interesting.
+* Thought Control, WillPow, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,      ++TALENT. Added extra TALENT to it. Should be an ultimate war time drone solution. It's pretty good at that but other than war it is not good for anything. So I don't think it become too OP.
+
 # Version 91
 
 * [fix] Removed "+" from SE choice giving talent and reverted to their exact original names. Apparently it messes things up sometimes.

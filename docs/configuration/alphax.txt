@@ -870,9 +870,9 @@ ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
 Frontier,        None,
-Police State,    DocLoy,    -EFFIC,      +SUPPORT,   ++POLICE,     -PLANET
-Democratic,      EthCalc,   +EFFIC,    ---SUPPORT,   ++GROWTH,    --PROBE
-Fundamentalist,  Brain,     +MORALE,     +PROBE,      +INDUSTRY,  --RESEARCH,   +TALENT
+Police State,    DocLoy,   --EFFIC,     ++SUPPORT,   ++POLICE,    --PLANET
+Democratic,      EthCalc,   +EFFIC,     --SUPPORT,   ++GROWTH,    --PROBE
+Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY,  --RESEARCH
 Simple,          None,
 Free Market,     IndEcon,  ++ECONOMY, ----POLICE,    --PLANET,     -PROBE
 Planned,         InfNet,   --EFFIC,     ++GROWTH,     +INDUSTRY,   -RESEARCH
@@ -882,9 +882,9 @@ Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +PROBE,      -INDUSTRY
 Knowledge,       Cyber,     -ECONOMY,    +EFFIC,     --PROBE,    +++RESEARCH
 Wealth,          IndAuto,   +ECONOMY,   --MORALE,     -POLICE,     +INDUSTRY
 None,            None,
-Cybernetic,      Algor,     +EFFIC,    ---POLICE,     +PLANET,     +RESEARCH
+Cybernetic,      Algor,     +EFFIC,  -----POLICE,    ++PLANET,    ++RESEARCH
 Eudaimonic,      Eudaim,   ++ECONOMY,   --EFFIC,    ---MORALE,    ++GROWTH
-Thought Control, WillPow, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,       +TALENT
+Thought Control, WillPow, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,      ++TALENT
 
 
 #SOCECONOMY
