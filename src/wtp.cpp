@@ -1551,7 +1551,7 @@ else
 A + B * x
 
 overall scale
-1.5
+1.25
 */
 int wtp_tech_cost(int fac, int tech) {
     assert(fac >= 0 && fac < 8);
@@ -1562,6 +1562,7 @@ int wtp_tech_cost(int fac, int tech) {
         level = wtp_tech_level(tech);
     }
 
+    double scale = 1.25;
     double S = 10.0;
     double C = 0.02;
     double B = 80 * (*map_area_tiles / 3200.0);
@@ -1594,7 +1595,7 @@ int wtp_tech_cost(int fac, int tech) {
 
 	// scale
 
-	cost *= 1.5;
+	cost *= scale;
 
     return max(2, (int)cost);
 
