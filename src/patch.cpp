@@ -2734,10 +2734,6 @@ bool patch_setup(Config* cf) {
 
 	// patch RT -> 50% minerals
 
-	patch_recycling_tank_minerals();
-
-	// patch recycling tank minerals
-
 	if (cf->recycling_tanks_mineral_multiplier)
 	{
 		patch_recycling_tank_minerals();
