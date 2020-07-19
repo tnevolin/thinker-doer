@@ -1,3 +1,7 @@
+# Version 91
+
+* [fix] Removed "+" from SE choice giving talent and reverted to their exact original names. Apparently it messes things up sometimes.
+
 # Version 90
 
 * recycling_tanks_mineral_multiplier configuration parameter is added.
