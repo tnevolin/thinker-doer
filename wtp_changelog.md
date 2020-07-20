@@ -1,10 +1,39 @@
+# Version 93
+
+More distinct and bold SE modifications in a way to emphasise the lore of each SE.
+
+* Democratic,      EthCalc,  ++EFFIC,     --SUPPORT,   ++GROWTH,     -INDUSTRY
+Returned original ++EFFIC and replaced PROBE penalty to INDUSTRY one. More distinct this way and probe was more of knowledge weakness.
+
+* Planned,         InfNet,   --EFFIC,     ++GROWTH,     +INDUSTRY
+It was pretty fine original way. Didn't know why I changed it.
+
+* Knowledge,       Cyber,     +EFFIC,      -GROWTH     --PROBE,   ++++RESEARCH
+Replaced EFFICIENCY penalty with GROWTH penalty. EFFICIENCY its negative values are quite uninteresting while GROWTH penalty offsets too much positive freebies in the game.
+Also emphasised on research even more. This is, after all, an ultimate research focused SE choice.
+
+* Wealth,          IndAuto,   +ECONOMY,   --MORALE,     -POLICE,    ++INDUSTRY
+This one gets one more well deserved INDUSTRY. This is an ultimate production focused SE choice. It was too weak originally.
+
+* Eudaimonic,      Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,    ++GROWTH
+Looses one of its EFFICIENCY penalty. I think it was too cripled for powerful future society. Should be decently effective now.
+
 # Version 92
 
-* Police State,    DocLoy,   --EFFIC,     ++SUPPORT,   ++POLICE,    --PLANET. Returned --EFFIC and ++SUPPORT to it and also extra PLANET penalty. Should be a little bit more interesting like that.
-* Democratic,      EthCalc,   +EFFIC,     --SUPPORT,   ++GROWTH,    --PROBE. Reduced SUPPORT penalty. It seemed too harsh especially at the beginning.
-* Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY,  --RESEARCH. Removed +TALENT, added +MORALE to make it more combat oriented and different from Police State drone quellying focus.
-* Cybernetic,      Algor,     +EFFIC,  -----POLICE,    ++PLANET,    ++RESEARCH. More benefits and more penalties. Before it was too not interesting.
-* Thought Control, WillPow, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,      ++TALENT. Added extra TALENT to it. Should be an ultimate war time drone solution. It's pretty good at that but other than war it is not good for anything. So I don't think it become too OP.
+* Police State,    DocLoy,   --EFFIC,     ++SUPPORT,   ++POLICE,    --PLANET
+Returned --EFFIC and ++SUPPORT to it and also extra PLANET penalty. Should be a little bit more interesting like that.
+
+* Democratic,      EthCalc,   +EFFIC,     --SUPPORT,   ++GROWTH,    --PROBE
+Reduced SUPPORT penalty. It seemed too harsh especially at the beginning.
+
+* Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY,  --RESEARCH
+Removed +TALENT, added +MORALE to make it more combat oriented and different from Police State drone quellying focus.
+
+* Cybernetic,      Algor,     +EFFIC,  -----POLICE,    ++PLANET,    ++RESEARCH
+More benefits and more penalties. Before it was too not interesting.
+
+* Thought Control, WillPow, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,      ++TALENT
+Added extra TALENT to it. Should be an ultimate war time drone solution. It's pretty good at that but other than war it is not good for anything. So I don't think it become too OP.
 
 # Version 91
 
