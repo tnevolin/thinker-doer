@@ -127,12 +127,9 @@ HOOK_API int faction_upkeep(int faction) {
 
 		// WTP AI algorithms
 		// affects AI factions only
-        if (!is_human(faction))
+        if (faction != 0 && !is_human(faction) && conf.ai_useWTPAlgorithms)
 		{
-			if (conf.ai_useWTPAlgorithms)
-			{
-				prepareMoveStrategy(faction);
-			}
+			aiStrategy(faction);
 		}
 
         do_all_non_input();
