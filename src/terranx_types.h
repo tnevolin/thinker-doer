@@ -57,19 +57,19 @@ struct BASE {
     int unused_inefficiency;
     int nutrient_consumption;				// +0x00F0
     int mineral_consumption;
-    int energy_consumption;                 // +0xD4
-    int unused_consumption;                 // +0xD8
-    int economy_total;
+    int energy_consumption;
+    int unused_consumption;
+    int economy_total;						// +0x0100
     int psych_total;
     int labs_total;
     int unk_2;
-    short autoforward_land_base_id;
+    short autoforward_land_base_id;			// +0x0110
     short autoforward_sea_base_id;
-    short autoforward_air_base_id;
+    short autoforward_air_base_id;			// +0x0114
     short pad_5;
-    int talent_total;
-    int drone_total;
-    int superdrone_total;
+    int talent_total;						// +0x0118
+    int drone_total;						// +0x011C
+    int superdrone_total;					// +0x0120
     int random_event_turns;
     int nerve_staple_count;
     int pad_6;

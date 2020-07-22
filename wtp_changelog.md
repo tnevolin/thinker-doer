@@ -1,3 +1,7 @@
+# Version 95
+
+* [bug] Base screen population incorrectly shows superdrones those are not on psych screen. They do not affect drone riot. This is fixed.
+
 # Version 94
 
 * AI tries to kill spore launcher near their bases.
