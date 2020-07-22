@@ -882,7 +882,7 @@ Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +PROBE,      -INDUSTRY
 Knowledge,       Cyber,     +EFFIC,      -GROWTH     --PROBE,   ++++RESEARCH
 Wealth,          IndAuto,   +ECONOMY,   --MORALE,     -POLICE,    ++INDUSTRY
 None,            None,
-Cybernetic,      Algor,     +EFFIC,  -----POLICE,    ++PLANET,    ++RESEARCH
+Cybernetic,      Algor,    ++EFFIC,  -----POLICE,    ++PLANET,    ++RESEARCH
 Eudaimonic,      Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,    ++GROWTH
 Thought Control, WillPow, ---SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE,      ++TALENT
 
