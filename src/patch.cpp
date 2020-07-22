@@ -2272,6 +2272,21 @@ void patch_free_minerals(int freeMinerals)
 
 }
 
+void patch_base_scren_population_superdrones()
+{
+	int base_screen_population_superdrones_bytes_length = 6;
+	byte base_screen_population_superdrones_bytes_old[] = { 0x2B, 0x8B, 0x20, 0x01, 0x00, 0x00 };
+	byte base_screen_population_superdrones_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x00414ED6,
+		base_screen_population_superdrones_bytes_length,
+		base_screen_population_superdrones_bytes_old,
+		base_screen_population_superdrones_bytes_new
+	);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2745,6 +2760,10 @@ bool patch_setup(Config* cf) {
 	{
 		patch_free_minerals(cf->free_minerals);
 	}
+
+	// patch population incorrect superdrones in base screen population
+
+	patch_base_scren_population_superdrones();
 
 
     // continue with original Thinker checks
