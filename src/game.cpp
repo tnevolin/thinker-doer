@@ -850,3 +850,364 @@ int getBaseBuildingItemCost(int factionId, BASE *base)
 	return (item >= 0 ? tx_units[item].cost : tx_facility[-item].cost) * tx_cost_factor(factionId, 1, -1);
 }
 
+/*
+Returns SE MORALE attack bonus/penalty.
+*/
+int getSEMoraleAttack(int factionId)
+{
+	Faction *faction = &(tx_factions[factionId]);
+
+	int factionSEMoraleAttack;
+
+	if (faction->SE_morale_pending <= -2)
+	{
+		factionSEMoraleAttack = max(-4, faction->SE_morale_pending) + 1;
+	}
+	else if (faction->SE_morale_pending <= +1)
+	{
+		factionSEMoraleAttack = faction->SE_morale_pending;
+	}
+	else
+	{
+		factionSEMoraleAttack = min(+4, faction->SE_morale_pending) - 1;
+	}
+
+	return factionSEMoraleAttack;
+
+}
+
+/*
+Returns SE MORALE defense bonus/penalty.
+*/
+int getSEMoraleDefense(int factionId)
+{
+	Faction *faction = &(tx_factions[factionId]);
+
+	int factionSEMoraleDefense;
+
+	if (faction->SE_morale_pending <= -2)
+	{
+		factionSEMoraleDefense = max(-4, faction->SE_morale_pending) + 1;
+	}
+	else
+	{
+		factionSEMoraleDefense = min(3, faction->SE_morale_pending);
+	}
+
+	return factionSEMoraleDefense;
+
+}
+
+/*
+Returns vehicle morale on attack.
+*/
+int getMoraleAttack(int id)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+	int factionId = vehicle->faction_id;
+
+	return max(0, min(6, vehicle->morale + getSEMoraleAttack(factionId)));
+
+}
+
+/*
+Returns vehicle morale on defense.
+*/
+int getMoraleDefense(int id)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+	int factionId = vehicle->faction_id;
+
+	return max(0, min(6, vehicle->morale + getSEMoraleDefense(factionId)));
+
+}
+
+/*
+Returns vehicle morale modifier on attack.
+*/
+double getMoraleModifierAttack(int id)
+{
+	// get vehicle morale
+
+	int morale = getMoraleAttack(id);
+
+	// calculate modifier
+
+	return 1.0 + 0.125 * (double)(morale - 2);
+
+}
+
+/*
+Returns vehicle morale modifier on defense.
+*/
+double getMoraleModifierDefense(int id)
+{
+	// get vehicle morale
+
+	int morale = getMoraleDefense(id);
+
+	// calculate modifier
+
+	return 1.0 + 0.125 * (double)(morale - 2);
+
+}
+
+double getSEPlanetModifierAttack(int factionId)
+{
+	Faction *faction = &(tx_factions[factionId]);
+
+	return 1.0 + (double)(tx_basic->combat_psi_bonus_per_PLANET * faction->SE_planet_pending) / 100.0;
+
+}
+
+double getSEPlanetModifierDefense(int factionId)
+{
+	Faction *faction = &(tx_factions[factionId]);
+
+	if (conf.planet_combat_bonus_on_defense)
+	{
+		return 1.0 + (double)(tx_basic->combat_psi_bonus_per_PLANET * faction->SE_planet_pending) / 100.0;
+	}
+	else
+	{
+		return 1.0;
+	}
+
+}
+
+double getPsiCombatBaseOdds(int triad)
+{
+	double psiCombatBaseOdds;
+
+	switch (triad)
+	{
+	case TRIAD_LAND:
+		psiCombatBaseOdds = (double)tx_basic->psi_combat_land_numerator / (double)tx_basic->psi_combat_land_denominator;
+		break;
+	case TRIAD_SEA:
+		psiCombatBaseOdds = (double)tx_basic->psi_combat_sea_numerator / (double)tx_basic->psi_combat_sea_denominator;
+		break;
+	case TRIAD_AIR:
+		psiCombatBaseOdds = (double)tx_basic->psi_combat_air_numerator / (double)tx_basic->psi_combat_air_denominator;
+		break;
+	default:
+		psiCombatBaseOdds = 1.0;
+	}
+
+	return psiCombatBaseOdds;
+
+}
+
+bool isCombatVehicle(int id)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+
+	return tx_units[vehicle->proto_id].weapon_type <= WPN_PSI_ATTACK;
+}
+
+/*
+Calculates average maximal damage unit delivers to enemy in psi combat when attacking.
+*/
+double calculatePsiDamageAttack(int id, int enemyId)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+	VEH *enemyVehicle = &(tx_vehicles[enemyId]);
+
+	// calculate base damage (vehicle attacking)
+
+	double damage =
+		1.0
+		*
+		getPsiCombatBaseOdds(veh_triad(id))
+		*
+		(
+			getMoraleModifierAttack(id)
+			*
+			getSEPlanetModifierAttack(vehicle->faction_id)
+		)
+		/
+		(
+			getMoraleModifierDefense(enemyId)
+			*
+			getSEPlanetModifierDefense(enemyVehicle->faction_id)
+		)
+		*
+		(double)(10 - vehicle->damage_taken)
+	;
+
+	// attacker empath increases damage
+
+	if (vehicle_has_ability(vehicle, ABL_EMPATH))
+	{
+		damage *= (1 + (double)tx_basic->combat_bonus_empath_song_vs_psi / 100.0);
+	}
+
+	// defender trance decreases damage
+
+	if (vehicle_has_ability(enemyVehicle, ABL_TRANCE))
+	{
+		damage /= (1 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0);
+	}
+
+	return damage;
+
+}
+
+/*
+Calculates average maximal damage unit delivers to enemy in psi combat when defending.
+*/
+double calculatePsiDamageDefense(int id, int enemyId)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+	VEH *enemyVehicle = &(tx_vehicles[enemyId]);
+
+	// calculate base damage (vehicle defending)
+
+	double damage =
+		1.0
+		/
+		getPsiCombatBaseOdds(veh_triad(enemyId))
+		*
+		(
+			getMoraleModifierDefense(id)
+			*
+			getSEPlanetModifierDefense(vehicle->faction_id)
+		)
+		/
+		(
+			getMoraleModifierAttack(enemyId)
+			*
+			getSEPlanetModifierAttack(enemyVehicle->faction_id)
+		)
+		*
+		(double)(10 - vehicle->damage_taken)
+	;
+
+	// attacker empath decreases damage
+
+	if (vehicle_has_ability(enemyVehicle, ABL_EMPATH))
+	{
+		damage /= (1 + (double)tx_basic->combat_bonus_empath_song_vs_psi / 100.0);
+	}
+
+	// defender trance increases damage
+
+	if (vehicle_has_ability(vehicle, ABL_TRANCE))
+	{
+		damage *= (1 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0);
+	}
+
+	return damage;
+
+}
+
+/*
+Calculates average maximal damage unit delivers to average native when attacking.
+*/
+double calculateNativeDamageAttack(int id)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+
+	// calculate base damage (vehicle attacking)
+
+	double damage =
+		1.0
+		*
+		getPsiCombatBaseOdds(veh_triad(id))
+		*
+		(
+			getMoraleModifierAttack(id)
+			*
+			getSEPlanetModifierAttack(vehicle->faction_id)
+		)
+		/
+		(
+			1.0 // average native without morale modifier
+			*
+			1.0 // natives do not have PLANET rating
+		)
+		*
+		(double)(10 - vehicle->damage_taken)
+	;
+
+	// attacker empath increases damage
+
+	if (vehicle_has_ability(vehicle, ABL_EMPATH))
+	{
+		damage *= (1 + (double)tx_basic->combat_bonus_empath_song_vs_psi / 100.0);
+	}
+
+	return damage;
+
+}
+
+/*
+Calculates average maximal damage unit delivers to average native when defending.
+*/
+double calculateNativeDamageDefense(int id)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+
+	// calculate base damage (vehicle defending)
+
+	double damage =
+		1.0
+		/
+		getPsiCombatBaseOdds(veh_triad(id)) // assuming native has same triad as defender
+		*
+		(
+			getMoraleModifierDefense(id)
+			*
+			getSEPlanetModifierDefense(vehicle->faction_id)
+		)
+		/
+		(
+			1.0 // average native without morale modifier
+			*
+			1.0 // natives do not have PLANET rating
+		)
+		*
+		(double)(10 - vehicle->damage_taken)
+	;
+
+	// defender trance increases damage
+
+	if (vehicle_has_ability(vehicle, ABL_TRANCE))
+	{
+		damage *= (1 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0);
+	}
+
+	return damage;
+
+}
+
+void setVehicleOrder(int id, int order)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+
+    vehicle->move_status = order;
+    vehicle->status_icon = veh_status_icon[order];
+
+}
+
+MAP *getMapTile(int x, int y)
+{
+	// ignore impossible combinations
+
+	if ((x + y)%2 != 0)
+		return NULL;
+
+	// return map tile with wrapped x if needed
+
+	return mapsq(wrap(x), y);
+
+}
+
+bool isImprovedTile(int x, int y)
+{
+	MAP *tile = getMapTile(x, y);
+
+	return (tile->items & (TERRA_ROAD | TERRA_MAGTUBE | TERRA_MINE | TERRA_SOLAR | TERRA_FARM | TERRA_SOIL_ENR | TERRA_FOREST | TERRA_CONDENSER | TERRA_ECH_MIRROR | TERRA_THERMAL_BORE | TERRA_SENSOR)) != 0;
+
+}
+

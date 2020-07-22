@@ -201,8 +201,8 @@ int handler(void* user, const char* section, const char* name, const char* value
 //    else if (MATCH("wtp", "disable_planetpearls")) {
 //        cf->disable_planetpearls = (atoi(value) == 0 ? false : true);
 //    }
-    else if (MATCH("wtp", "apply_planet_combat_bonus_on_defense")) {
-        cf->apply_planet_combat_bonus_on_defense = (atoi(value) == 0 ? false : true);
+    else if (MATCH("wtp", "planet_combat_bonus_on_defense")) {
+        cf->planet_combat_bonus_on_defense = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "sea_territory_distance_same_as_land")) {
         cf->sea_territory_distance_same_as_land = (atoi(value) == 0 ? false : true);

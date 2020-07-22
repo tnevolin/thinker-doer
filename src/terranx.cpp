@@ -49,7 +49,7 @@ fp_3int* tx_zoc_any = (fp_3int*)0x5C89F0;
 fp_3int* tx_best_defender = (fp_3int*)0x5044D0;
 fp_5int* tx_battle_compute = (fp_5int*)0x501DA0;
 fp_6int* tx_battle_kill = (fp_6int*)0x505D80;
-fp_1void* tx_enemy_move_check = (fp_1void*)0x00579510;
+fp_1void* tx_enemy_units_check = (fp_1void*)0x00579510;
 fp_1int* tx_enemy_move = (fp_1int*)0x56B5B0;
 fp_1int* tx_monolith = (fp_1int*)0x57A050;
 /*

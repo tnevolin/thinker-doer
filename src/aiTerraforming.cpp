@@ -10,8 +10,6 @@
 #include "game.h"
 
 double networkDemand = 0.0;
-std::vector<BASE_INFO> bases;
-std::unordered_set<MAP *> baseLocations;
 std::unordered_map<MAP *, BASE_INFO> workedTileBases;
 std::unordered_map<BASE *, int> baseTerraformingRanks;
 std::unordered_set<MAP *> harvestedTiles;
@@ -43,7 +41,7 @@ std::unordered_map<BASE *, std::vector<YIELD>> unworkedTileYields;
 /*
 Prepares former orders.
 */
-void prepareFormerOrders()
+void aiTerraformingStrategy()
 {
 	// populate processing lists
 
@@ -84,8 +82,6 @@ void populateLists()
 
 	// clear lists
 
-	bases.clear();
-	baseLocations.clear();
 	workedTileBases.clear();
 	baseTerraformingRanks.clear();
 	harvestedTiles.clear();
@@ -188,28 +184,13 @@ void populateLists()
 
 	}
 
-	// populate bases
+	// populate base related lists
 
 	std::vector<std::set<int>> seaRegionLinkedGroups;
 
-	for (int id = 0; id < *total_num_bases; id++)
+	for (int id : baseIds)
 	{
-		BASE *base = &tx_bases[id];
-
-		// exclude not own bases
-
-		if (base->faction_id != aiFactionId)
-			continue;
-
-		// add base
-
-		bases.push_back({id, base});
-
-		// add base location
-
-		MAP *baseLocation = getMapTile(base->x, base->y);
-
-		baseLocations.insert(baseLocation);
+		BASE *base = &(tx_bases[id]);
 
 		// populate affected base sets
 
@@ -273,15 +254,9 @@ void populateLists()
 
 //	debug("seaRegionLinkedGroups\n")
 
-	for
-	(
-		std::vector<BASE_INFO>::iterator baseIterator = bases.begin();
-		baseIterator != bases.end();
-		baseIterator++
-	)
+	for (int id : baseIds)
 	{
-		BASE_INFO *baseInfo = &(*baseIterator);
-		BASE *base = baseInfo->base;
+		BASE *base = &(tx_bases[id]);
 
 		MAP *baseTile = getMapTile(base->x, base->y);
 
@@ -459,15 +434,9 @@ void populateLists()
 
 //	debug("coastalBaseRegionMappings\n");
 
-	for
-	(
-		std::vector<BASE_INFO>::iterator baseIterator = bases.begin();
-		baseIterator != bases.end();
-		baseIterator++
-	)
+	for (int id : baseIds)
 	{
-		BASE_INFO *baseInfo = &(*baseIterator);
-		BASE *base = baseInfo->base;
+		BASE *base = &(tx_bases[id]);
 
 		MAP *baseTile = getMapTile(base->x, base->y);
 
@@ -479,7 +448,7 @@ void populateLists()
 
 				if (is_ocean(adjacentTile))
 				{
-					int terraformingRegion = getTerraformingRegion(adjacentTile->region);
+					int terraformingRegion = getConnectedRegion(adjacentTile->region);
 					coastalBaseRegionMappings[baseTile] = seaRegionMappings[terraformingRegion];
 
 //					debug("\t(%3d,%3d) => %3d\n", base->x, base->y, terraformingRegion);
@@ -508,10 +477,6 @@ void populateLists()
 
 		if (vehicle->faction_id != aiFactionId)
 			continue;
-
-		// clear pad_0 field for all formers
-
-		vehicle->pad_0 = -1;
 
 		// process supplies and formers
 
@@ -668,7 +633,7 @@ void populateLists()
 					{
 						// get sea region otherwise
 
-						region = getTerraformingRegion(vehicleTile->region);
+						region = getConnectedRegion(vehicleTile->region);
 
 					}
 
@@ -780,14 +745,9 @@ void populateLists()
 
 	// populate availalbe tiles
 
-	for
-	(
-		std::vector<BASE_INFO>::iterator baseIterator = bases.begin();
-		baseIterator != bases.end();
-		baseIterator++
-	)
+	for (int id : baseIds)
 	{
-		BASE *base = baseIterator->base;
+		BASE *base = &(tx_bases[id]);
 
 		// iterate base tiles
 
@@ -870,16 +830,9 @@ void populateLists()
 
 	// populate unworked tiles
 
-	for
-	(
-		std::vector<BASE_INFO>::iterator basesIterator = bases.begin();
-		basesIterator != bases.end();
-		basesIterator++
-	)
+	for (int id : baseIds)
 	{
-		BASE_INFO *baseInfo = &(*basesIterator);
-		int id = baseInfo->id;
-		BASE *base = baseInfo->base;
+		BASE *base = &(tx_bases[id]);
 
 		unworkedTileYields[base] = std::vector<YIELD>();
 		std::vector<YIELD> *baseunworkedTileYields = &(unworkedTileYields[base]);
@@ -964,7 +917,7 @@ void populateLists()
 
 	}
 
-	double networkThreshold = conf.ai_terraforming_networkCoverageThreshold * (double)bases.size();
+	double networkThreshold = conf.ai_terraforming_networkCoverageThreshold * (double)baseIds.size();
 
 	if (networkCoverage < networkThreshold)
 	{
@@ -3444,15 +3397,9 @@ int getBaseTerraformingRank(BASE *base)
 
 BASE *findAffectedBase(int x, int y)
 {
-	for
-	(
-		std::vector<BASE_INFO>::iterator baseIterator = bases.begin();
-		baseIterator != bases.end();
-		baseIterator++
-	)
+	for (int id : baseIds)
 	{
-		BASE_INFO *baseInfo = &(*baseIterator);
-		BASE *base = baseInfo->base;
+		BASE *base = &(tx_bases[id]);
 
 		if (isWithinBaseRadius(base->x, base->y, x, y))
 			return base;
@@ -3838,7 +3785,7 @@ bool isTowardBaseVertical(int x, int y, int dySign)
 
 }
 
-int getTerraformingRegion(int region)
+int getConnectedRegion(int region)
 {
 	return (seaRegionMappings.count(region) == 0 ? region : seaRegionMappings[region]);
 }

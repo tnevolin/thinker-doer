@@ -58,7 +58,7 @@
 50,      ; Combat penalty % -> attack after airdrop
 50,      ; Combat % -> Fanatic attack bonus
 50,      ; Combat % -> Land based guns vs. ship artillery bonus
-25,      ; Combat % -> Artillery bonus per level of altitude
+0,       ; Combat % -> Artillery bonus per level of altitude
 50,      ; Combat % -> Trance bonus defending vs. psi
 50,      ; Combat % -> Empath Song bonus attacking vs. psi
 50,      ; Combat penalty % -> Air superiority unit vs. ground unit

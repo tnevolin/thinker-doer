@@ -71,9 +71,9 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
     )
     ;
 
-    // apply_planet_combat_bonus_on_defense
+    // planet_combat_bonus_on_defense
 
-    if (conf.apply_planet_combat_bonus_on_defense)
+    if (conf.planet_combat_bonus_on_defense)
     {
         // get attacker/defender vehicles
 
@@ -1952,19 +1952,6 @@ HOOK_API void correctGrowthTurnsForPopulationBoom(int destinationStringPointer, 
 		strcpy(growthTurnsText, "POP BOOM !");
 
 	}
-
-}
-
-MAP *getMapTile(int x, int y)
-{
-	// ignore impossible combinations
-
-	if ((x + y)%2 != 0)
-		return NULL;
-
-	// return map tile with wrapped x if needed
-
-	return mapsq(wrap(x), y);
 
 }
 
