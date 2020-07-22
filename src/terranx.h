@@ -78,7 +78,7 @@ extern fp_3int* tx_zoc_any;
 extern fp_3int* tx_best_defender;
 extern fp_5int* tx_battle_compute;
 extern fp_6int* tx_battle_kill;
-extern fp_1void* tx_enemy_move_check;
+extern fp_1void* tx_enemy_units_check;
 extern fp_1int* tx_enemy_move;
 extern fp_1int* tx_monolith;
 extern fp_2int* tx_action_build;

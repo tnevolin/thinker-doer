@@ -92,6 +92,10 @@
 		<Unit filename="src/ai.h" />
 		<Unit filename="src/aiBase.cpp" />
 		<Unit filename="src/aiBase.h" />
+		<Unit filename="src/aiCombat.cpp" />
+		<Unit filename="src/aiCombat.h" />
+		<Unit filename="src/aiTerraforming.cpp" />
+		<Unit filename="src/aiTerraforming.h" />
 		<Unit filename="src/engine.cpp" />
 		<Unit filename="src/engine.h" />
 		<Unit filename="src/game.cpp" />

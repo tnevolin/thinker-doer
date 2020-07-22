@@ -142,7 +142,6 @@ HOOK_API int baseInit(int factionId, int x, int y);
 HOOK_API char *getAbilityCostText(int number, char *destination, int radix);
 HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly);
 HOOK_API void correctGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer);
-MAP *getMapTile(int x, int y);
 HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queueSlotId);
 
 #endif // __PROTOTYPE_H__

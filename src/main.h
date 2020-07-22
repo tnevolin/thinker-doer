@@ -137,7 +137,7 @@ struct Config {
 //    bool disable_planetpearls = false;
     bool uniform_promotions = true; // internal configuration
     bool very_green_no_defense_bonus = true; // internal configuration
-    bool apply_planet_combat_bonus_on_defense = false;
+    bool planet_combat_bonus_on_defense = false;
     bool sea_territory_distance_same_as_land = false;
     bool coastal_territory_distance_same_as_sea = false;
     bool alternative_artillery_damage = false;

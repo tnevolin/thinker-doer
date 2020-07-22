@@ -67,6 +67,7 @@ HOOK_API int enemy_move(int id) {
         } else if (w == WPN_TERRAFORMING_UNIT) {
 
         	// select terraforming algorithm
+
         	if (conf.ai_useWTPAlgorithms)
 			{
 				// WTP
@@ -81,8 +82,37 @@ HOOK_API int enemy_move(int id) {
         } else if (w == WPN_TROOP_TRANSPORT && veh_triad(id) == TRIAD_SEA) {
             return trans_move(id);
         } else if (w <= WPN_PSI_ATTACK && veh_triad(id) == TRIAD_LAND) {
-            return combat_move(id);
+
+        	// select combat algorithm
+
+        	if (conf.ai_useWTPAlgorithms)
+			{
+				// WTP
+				return enemyMoveCombat(id);
+			}
+			else
+			{
+				// Thinker
+				return combat_move(id);
+			}
+
         }
+        else
+		{
+        	// select combat algorithm
+
+        	if (conf.ai_useWTPAlgorithms)
+			{
+				// WTP
+				return enemyMoveCombat(id);
+			}
+			else
+			{
+				// Thinker
+			}
+
+		}
+
     }
     return tx_enemy_move(id);
 }

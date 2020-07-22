@@ -206,7 +206,7 @@ These terraforming orders affect surrounding tiles.
 */
 const std::unordered_set<int> wideRangeTerraformingOrders = {ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_DRILL_AQUIFIER};
 
-void prepareFormerOrders();
+void aiTerraformingStrategy();
 void populateLists();
 void generateTerraformingRequests();
 void generateConventionalTerraformingRequest(MAP_INFO *mapInfo);
@@ -270,7 +270,7 @@ double calculateNetworkScore(MAP_INFO *mapInfo, int action);
 bool isTowardBaseDiagonal(int x, int y, int dxSign, int dySign);
 bool isTowardBaseHorizontal(int x, int y, int dxSign);
 bool isTowardBaseVertical(int x, int y, int dySign);
-int getTerraformingRegion(int region);
+int getConnectedRegion(int region);
 bool isBaseWorkedTile(BASE *base, int x, int y);
 double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *actions);
 bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::iterator begin, std::vector<TERRAFORMING_REQUEST>::iterator end, int action, int x, int y, int range);
@@ -286,3 +286,4 @@ double computeImprovementBaseSurplusEffectScore(BASE_INFO *baseInfo, MAP_INFO *m
 bool isInferiorImprovedTile(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
 
 #endif // __AITERRAFORMING_H__
+

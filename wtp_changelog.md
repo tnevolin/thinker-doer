@@ -1,3 +1,8 @@
+# Version 94
+
+* AI tries to kill spore launcher near their bases.
+* 0,       ; Combat % -> Artillery bonus per level of altitude. Forgot to remove it earlier. I find it too cumbersome to measure altitudes of every tile around the battlefield. It is too not visual.
+
 # Version 93
 
 More distinct and bold SE modifications in a way to emphasise the lore of each SE.
