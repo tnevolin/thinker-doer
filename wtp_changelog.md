@@ -1,3 +1,8 @@
+# Version 96
+
+* Cybernetic,      Algor,    ++EFFIC,  -----POLICE,    ++PLANET,    ++RESEARCH
+It was too little benefits for such harsh POLICE penalty. Now it is more of less seems like future society.
+
 # Version 95
 
 * [bug] Base screen population incorrectly shows superdrones those are not on psych screen. They do not affect drone riot. This is fixed.
