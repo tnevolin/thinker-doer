@@ -1,3 +1,7 @@
+# Version 97
+
+* [fix] Fixed bug in Knowledge SE.
+
 # Version 96
 
 * Cybernetic,      Algor,    ++EFFIC,  -----POLICE,    ++PLANET,    ++RESEARCH
