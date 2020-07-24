@@ -1056,11 +1056,11 @@ double alternative_combat_mechanics_calculate_attacker_winning_probability_follo
 For sea squares pretend they are on the same continent as closest reachable coastal base
 if such base is also closer than any other sea base in the same sea.
 */
-HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int region, int unknown_2, int unknown_3)
+HOOK_API int base_find3(int x, int y, int unknown_1, int region, int unknown_2, int unknown_3)
 {
     debug
     (
-        "calculate_distance_to_nearest_base(x=%d, y=%d, region=%d)\n",
+        "base_find3(x=%d, y=%d, region=%d)\n",
         x,
         y,
         region
@@ -1226,7 +1226,7 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
     // run original function
 
-    int nearest_base_faction_id = tx_calculate_distance_to_nearest_base(x, y, unknown_1, region, unknown_2, unknown_3);
+    int nearest_base_id = tx_base_find3(x, y, unknown_1, region, unknown_2, unknown_3);
 
     // revert coastal base map square body to original
 
@@ -1252,7 +1252,7 @@ HOOK_API int calculate_distance_to_nearest_base(int x, int y, int unknown_1, int
 
     // return nearest base faction id
 
-    return nearest_base_faction_id;
+    return nearest_base_id;
 
 }
 
