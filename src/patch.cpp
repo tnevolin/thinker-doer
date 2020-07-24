@@ -1705,9 +1705,9 @@ Makes coastal base territory distance same as sea one.
 */
 void patch_coastal_territory_distance_same_as_sea()
 {
-    // wrap calculate_distance_to_nearest_base
+    // wrap base_find3
 
-    write_call(0x00523ED7, (int)calculate_distance_to_nearest_base);
+    write_call(0x00523ED7, (int)base_find3);
 
 }
 
@@ -2272,6 +2272,9 @@ void patch_free_minerals(int freeMinerals)
 
 }
 
+/*
+Fixes population box incorrectly drawn superdrones.
+*/
 void patch_base_scren_population_superdrones()
 {
 	int base_screen_population_superdrones_bytes_length = 6;
@@ -2283,6 +2286,24 @@ void patch_base_scren_population_superdrones()
 		base_screen_population_superdrones_bytes_length,
 		base_screen_population_superdrones_bytes_old,
 		base_screen_population_superdrones_bytes_new
+	);
+
+}
+
+/*
+Equally distant territory is given to base with smaller ID (presumably older one).
+*/
+void patch_conflicting_territory()
+{
+	int conflicting_territory_bytes_length = 2;
+	byte conflicting_territory_bytes_old[] = { 0x7F, 0x09 };
+	byte conflicting_territory_bytes_new[] = { 0x7D, 0x09 };
+	write_bytes
+	(
+		0x004E3EAE,
+		conflicting_territory_bytes_length,
+		conflicting_territory_bytes_old,
+		conflicting_territory_bytes_new
 	);
 
 }
@@ -2764,6 +2785,11 @@ bool patch_setup(Config* cf) {
 	// patch population incorrect superdrones in base screen population
 
 	patch_base_scren_population_superdrones();
+
+	// patch conflicting territory claim
+
+	patch_conflicting_territory();
+
 
 
     // continue with original Thinker checks

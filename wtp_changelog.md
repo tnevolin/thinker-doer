@@ -1,3 +1,7 @@
+# Version 98
+
+* Equally distant territory is given to base with smaller ID (presumably older one).
+
 # Version 97
 
 * [fix] Fixed bug in Knowledge SE.

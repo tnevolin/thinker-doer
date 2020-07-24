@@ -107,7 +107,7 @@ extern fp_5int *tx_proto_cost;
 extern fp_6int *tx_create_prototype;
 extern fp_3int *tx_upgrade_cost;
 extern fp_2int_void *tx_strcat;
-extern fp_6int *tx_calculate_distance_to_nearest_base;
+extern fp_6int *tx_base_find3;
 extern fp_5int *tx_tile_yield;
 extern fp_0int *tx_base_mechanics_production;
 extern fp_5int *tx_set_se_on_dialog_close;
