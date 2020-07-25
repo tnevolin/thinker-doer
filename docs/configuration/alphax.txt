@@ -654,7 +654,7 @@ Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +100%
 Tachyon Field,                12, 2, Create,  Disable,  All Defense +100%
 Recreation Commons,            4, 1, Psych,   PlaEcon,  Fewer Drones
 Energy Bank,                   6, 1, IndEcon, MatComp,  Economy Bonus
-Network Node,                  6, 1, InfNet,  DigSent,   Labs Bonus
+Network Node,                  6, 1, InfNet,  DigSent,  Labs Bonus
 Biology Lab,                   6, 0, PrPsych, Disable,  Research and PSI
 Skunkworks,                    6, 1, Subat,   Disable,  Prototypes Free
 Hologram Theatre,              6, 2, Chaos,   Disable,  Psych and Fewer Drones
