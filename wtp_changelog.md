@@ -1,3 +1,7 @@
+# Version 99
+
+* Pressure Dome increases minerals by 50% instead of improving base tile. Same effect as for Recycling Tank since it replaces it.
+
 # Version 98
 
 * Equally distant territory is given to base with smaller ID (presumably older one).
