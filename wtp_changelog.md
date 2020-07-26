@@ -1,3 +1,8 @@
+# Version 100
+
+* Needlejet cost = 3.
+* Gravship cost = 4.
+
 # Version 99
 
 * Pressure Dome increases minerals by 50% instead of improving base tile. Same effect as for Recycling Tank since it replaces it.
