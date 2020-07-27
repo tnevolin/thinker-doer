@@ -1,3 +1,9 @@
+# Version 102
+
+* Natives appears slightly less often. Previous version spawned too many of them.
+* Police State,    DocLoy,   --EFFIC,     ++SUPPORT,   ++POLICE,     -PLANET\
+With more abundant native life PLANET penalty for this choice is too harsh.
+
 # Version 101
 
 * Native life abundance modification.
