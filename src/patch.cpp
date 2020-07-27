@@ -2308,6 +2308,95 @@ void patch_conflicting_territory()
 
 }
 
+/*
+Modifies abundance of native life.
+*/
+void patch_native_life_abundance()
+{
+	// use difficulty instead of native life to control frequency of natives appearance
+
+	int native_life_bytes_length = 6;
+	byte native_life_bytes_old[] = { 0x8B, 0x0D, 0xB8, 0xA2, 0x94, 0x00 };
+	byte native_life_bytes_new[] = { 0x8B, 0x0D, 0xC4, 0x64, 0x9A, 0x00 };
+	write_bytes
+	(
+		0x00522BF8,
+		native_life_bytes_length,
+		native_life_bytes_old,
+		native_life_bytes_new
+	);
+
+	// increase overall frequency of natives appearance
+
+	int native_life_multiplier1_bytes_length = 4;
+	byte native_life_multiplier1_bytes_old[] = { 0x8D, 0x54, 0x09, 0x02 };
+	byte native_life_multiplier1_bytes_new[] = { 0x8D, 0x54, 0x89, 0x02 };
+	write_bytes
+	(
+		0x00522C02,
+		native_life_multiplier1_bytes_length,
+		native_life_multiplier1_bytes_old,
+		native_life_multiplier1_bytes_new
+	);
+	int native_life_multiplier2_bytes_length = 4;
+	byte native_life_multiplier2_bytes_old[] = { 0x8D, 0x4C, 0x00, 0x02 };
+	byte native_life_multiplier2_bytes_new[] = { 0x8D, 0x4C, 0x80, 0x02 };
+	write_bytes
+	(
+		0x00522C13,
+		native_life_multiplier2_bytes_length,
+		native_life_multiplier2_bytes_old,
+		native_life_multiplier2_bytes_new
+	);
+
+	// sea native appear every turn
+
+	int native_life_sea_ratio1_bytes_length = 5;
+	byte native_life_sea_ratio1_bytes_old[] = { 0xBE, 0x05, 0x00, 0x00, 0x00 };
+	byte native_life_sea_ratio1_bytes_new[] = { 0xBE, 0x01, 0x00, 0x00, 0x00 };
+	write_bytes
+	(
+		0x0052261A,
+		native_life_sea_ratio1_bytes_length,
+		native_life_sea_ratio1_bytes_old,
+		native_life_sea_ratio1_bytes_new
+	);
+	int native_life_sea_ratio2_bytes_length = 2;
+	byte native_life_sea_ratio2_bytes_old[] = { 0x2B, 0xF2 };
+	byte native_life_sea_ratio2_bytes_new[] = { 0x90, 0x90 };
+	write_bytes
+	(
+		0x00522621,
+		native_life_sea_ratio2_bytes_length,
+		native_life_sea_ratio2_bytes_old,
+		native_life_sea_ratio2_bytes_new
+	);
+	int native_life_sea_ratio3_bytes_length = 2;
+	byte native_life_sea_ratio3_bytes_old[] = { 0xD1, 0xE6 };
+	byte native_life_sea_ratio3_bytes_new[] = { 0x90, 0x90 };
+	write_bytes
+	(
+		0x00522624,
+		native_life_sea_ratio3_bytes_length,
+		native_life_sea_ratio3_bytes_old,
+		native_life_sea_ratio3_bytes_new
+	);
+
+	// natives do not die every 8 turns
+
+	int native_life_die_ratio_bytes_length = 3;
+	byte native_life_die_ratio_bytes_old[] = { 0xF6, 0xC2, 0x07 };
+	byte native_life_die_ratio_bytes_new[] = { 0xF6, 0xC2, 0xFF };
+	write_bytes
+	(
+		0x00566E2E,
+		native_life_die_ratio_bytes_length,
+		native_life_die_ratio_bytes_old,
+		native_life_die_ratio_bytes_new
+	);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2789,6 +2878,13 @@ bool patch_setup(Config* cf) {
 	// patch conflicting territory claim
 
 	patch_conflicting_territory();
+
+	// patch native life
+
+	if (cf->native_life_abundance)
+	{
+		patch_native_life_abundance();
+	}
 
 
 

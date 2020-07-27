@@ -1,3 +1,10 @@
+# Version 101
+
+* Native life abundance modification.
+	* Frequency of appearance is based on difficulty level rather than native life level.
+	* Natives appears more often.
+	* Natives do not suddenly die every 8th turn.
+
 # Version 100
 
 * Needlejet cost = 3.

@@ -256,6 +256,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->free_minerals = max(0, atoi(value));
     }
+    else if (MATCH("wtp", "native_life_abundance"))
+    {
+        cf->native_life_abundance = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
