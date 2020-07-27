@@ -2330,7 +2330,7 @@ void patch_native_life_abundance()
 
 	int native_life_multiplier1_bytes_length = 4;
 	byte native_life_multiplier1_bytes_old[] = { 0x8D, 0x54, 0x09, 0x02 };
-	byte native_life_multiplier1_bytes_new[] = { 0x8D, 0x54, 0x89, 0x02 };
+	byte native_life_multiplier1_bytes_new[] = { 0x8D, 0x54, 0x49, 0x02 };
 	write_bytes
 	(
 		0x00522C02,
@@ -2340,7 +2340,7 @@ void patch_native_life_abundance()
 	);
 	int native_life_multiplier2_bytes_length = 4;
 	byte native_life_multiplier2_bytes_old[] = { 0x8D, 0x4C, 0x00, 0x02 };
-	byte native_life_multiplier2_bytes_new[] = { 0x8D, 0x4C, 0x80, 0x02 };
+	byte native_life_multiplier2_bytes_new[] = { 0x8D, 0x4C, 0x40, 0x02 };
 	write_bytes
 	(
 		0x00522C13,
