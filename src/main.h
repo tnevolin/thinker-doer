@@ -154,7 +154,10 @@ struct Config {
     int se_growth_rating_cap = 5;
     bool recycling_tanks_mineral_multiplier = false;
     int free_minerals = 16;
-    bool native_life_abundance = false;
+    int native_life_generator_constant = 2;
+    int native_life_generator_multiplier = 2;
+    bool native_life_generator_more_sea_creatures = false;
+    bool native_disable_sudden_death = false;
     bool ai_useWTPAlgorithms;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;

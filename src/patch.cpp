@@ -2311,26 +2311,36 @@ void patch_conflicting_territory()
 /*
 Modifies abundance of native life.
 */
-void patch_native_life_abundance()
+void patch_native_life_frequency(int constant, int multiplier)
 {
-	// use difficulty instead of native life to control frequency of natives appearance
+	// check allowed values
 
-	int native_life_bytes_length = 6;
-	byte native_life_bytes_old[] = { 0x8B, 0x0D, 0xB8, 0xA2, 0x94, 0x00 };
-	byte native_life_bytes_new[] = { 0x8B, 0x0D, 0xC4, 0x64, 0x9A, 0x00 };
-	write_bytes
-	(
-		0x00522BF8,
-		native_life_bytes_length,
-		native_life_bytes_old,
-		native_life_bytes_new
-	);
+	if (constant < 0 || constant > 255 || !(multiplier == 2 || multiplier == 3 || multiplier == 5))
+		return;
 
-	// increase overall frequency of natives appearance
+	// calculate multiplier code
+
+	int multiplierCode;
+	switch (multiplier)
+	{
+	case 2:
+		multiplierCode = 0x00;
+		break;
+	case 3:
+		multiplierCode = 0x40;
+		break;
+	case 5:
+		multiplierCode = 0x80;
+		break;
+	default:
+		return;
+	}
+
+	// modify number tries for natives appearance
 
 	int native_life_multiplier1_bytes_length = 4;
 	byte native_life_multiplier1_bytes_old[] = { 0x8D, 0x54, 0x09, 0x02 };
-	byte native_life_multiplier1_bytes_new[] = { 0x8D, 0x54, 0x49, 0x02 };
+	byte native_life_multiplier1_bytes_new[] = { 0x8D, 0x54, (byte)(multiplierCode + 0x09), (byte)constant };
 	write_bytes
 	(
 		0x00522C02,
@@ -2340,7 +2350,7 @@ void patch_native_life_abundance()
 	);
 	int native_life_multiplier2_bytes_length = 4;
 	byte native_life_multiplier2_bytes_old[] = { 0x8D, 0x4C, 0x00, 0x02 };
-	byte native_life_multiplier2_bytes_new[] = { 0x8D, 0x4C, 0x40, 0x02 };
+	byte native_life_multiplier2_bytes_new[] = { 0x8D, 0x4C, (byte)(multiplierCode + 0x00), (byte)constant };
 	write_bytes
 	(
 		0x00522C13,
@@ -2349,8 +2359,13 @@ void patch_native_life_abundance()
 		native_life_multiplier2_bytes_new
 	);
 
-	// sea native appear every turn
+}
 
+/*
+Makes sea native appear every turn.
+*/
+void patch_native_life_sea_creatures()
+{
 	int native_life_sea_ratio1_bytes_length = 5;
 	byte native_life_sea_ratio1_bytes_old[] = { 0xBE, 0x05, 0x00, 0x00, 0x00 };
 	byte native_life_sea_ratio1_bytes_new[] = { 0xBE, 0x01, 0x00, 0x00, 0x00 };
@@ -2382,8 +2397,13 @@ void patch_native_life_abundance()
 		native_life_sea_ratio3_bytes_new
 	);
 
-	// natives do not die every 8 turns
+}
 
+/*
+Disable native sudden death.
+*/
+void patch_native_disable_sudden_death()
+{
 	int native_life_die_ratio_bytes_length = 3;
 	byte native_life_die_ratio_bytes_old[] = { 0xF6, 0xC2, 0x07 };
 	byte native_life_die_ratio_bytes_new[] = { 0xF6, 0xC2, 0xFF };
@@ -2881,9 +2901,19 @@ bool patch_setup(Config* cf) {
 
 	// patch native life
 
-	if (cf->native_life_abundance)
+	if (cf->native_life_generator_constant != 2 || cf->native_life_generator_multiplier != 2)
 	{
-		patch_native_life_abundance();
+		patch_native_life_frequency(cf->native_life_generator_constant, cf->native_life_generator_multiplier);
+	}
+
+	if (cf->native_life_generator_more_sea_creatures)
+	{
+		patch_native_life_sea_creatures();
+	}
+
+	if (cf->native_disable_sudden_death)
+	{
+		patch_native_disable_sudden_death();
 	}
 
 
