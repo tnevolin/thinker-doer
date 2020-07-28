@@ -256,9 +256,21 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->free_minerals = max(0, atoi(value));
     }
-    else if (MATCH("wtp", "native_life_abundance"))
+    else if (MATCH("wtp", "native_life_generator_constant"))
     {
-        cf->native_life_abundance = (atoi(value) == 0 ? false : true);
+        cf->native_life_generator_constant = max(0, min(255, atoi(value)));
+    }
+    else if (MATCH("wtp", "native_life_generator_multiplier"))
+    {
+        cf->native_life_generator_multiplier = atoi(value);
+    }
+    else if (MATCH("wtp", "native_life_generator_more_sea_creatures"))
+    {
+        cf->native_life_generator_more_sea_creatures = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "native_disable_sudden_death"))
+    {
+        cf->native_disable_sudden_death = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

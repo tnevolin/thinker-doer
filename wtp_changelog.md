@@ -1,3 +1,10 @@
+# Version 103
+
+* Further modification to native life formulas.
+	* Native life generation frequency is configurable.
+	* Sea creatures generation frequency is configurable.
+	* Native sudden death is configurable.
+
 # Version 102
 
 * Natives appears slightly less often. Previous version spawned too many of them.
