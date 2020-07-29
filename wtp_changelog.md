@@ -1,3 +1,11 @@
+# Version 104
+
+* New basic units.
+	* Gun Foil,               Foil,     Gun,          Scout,      3, 0, 0, DocFlex, -1, 00000000000000000000000000
+	* Scout Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Mobile,  -1, 00000000000000000000000000
+	* Empath Rover,           Speeder,  Gun,          Scout,      3, 0, 0, CentEmp, -1, 00000000000000100000000000
+* Empath Song costs 1 mineral row.
+
 # Version 103
 
 * Further modification to native life formulas.

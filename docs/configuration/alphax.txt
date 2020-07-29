@@ -511,7 +511,7 @@ Carrier Deck,           1, Metal,    Carrier,   000101101010, Mobile Airbase
 AAA Tracking,           2, MilAlg,   AAA,       000010001011, x2 vs. air attacks
 Comm Jammer,            1, Physic,   ECM,       000010111001, +50% vs. fast units
 Antigrav Struts,        2, Gravity,  Grav,      000000111001, +1 movement rate (or +Reactor*2 for Air)
-Empath Song,           32, CentEmp,  Empath,    000010001111, +50% attack vs. Psi
+Empath Song,           16, CentEmp,  Empath,    000010001111, +50% attack vs. Psi
 Polymorphic Encryption, 1, Algor,    Secure,    000000111111, x2 cost to subvert
 Fungicide Tanks,       16, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
 High Morale,            1, Integ,    Trained,   000000001111, Gains morale upgrade
@@ -598,7 +598,7 @@ Missile,    Missile-, Miss., M
 ; Reac    = Reactor level 1–4
 ;
 #UNITS
-29
+32
 Colony Pod,             Infantry, Colony Pod,   Scout,      8, 0, 0, None,    -1, 00000000000000000000000000
 Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
@@ -626,8 +626,11 @@ Foil Probe Team,        Foil,     Probe Team,   Scout,     11, 0, 0, Poly,    -1
 Supply Trawler,         Foil,     Supply,       Scout,     10, 0, 0, Disable, -1, 00000000000000000000000000
 Rover Colony Pod,       Speeder,  Colony Pod,   Scout,      8, 0, 0, Mobile,  -1, 00000000000000000000000000
 Sea Colony Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, DocFlex, -1, 00000000000000000000000000
-Trance Scout Patrol,    Infantry, Gun,          Scout,      3, 0, 0, Brain,   -1, 00000001000000000000000000
+Trance Scout Patrol,    Infantry, Gun,          Scout,      2, 0, 0, Brain,   -1, 00000001000000000000000000
 Police Garrison,        Infantry, Gun,          Scout,      2, 0, 0, WillPow, -1, 00010000000000000000000000
+Gun Foil,               Foil,     Gun,          Scout,      3, 0, 0, DocFlex, -1, 00000000000000000000000000
+Scout Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Mobile,  -1, 00000000000000000000000000
+Empath Rover,           Speeder,  Gun,          Scout,      3, 0, 0, CentEmp, -1, 00000000000000100000000000
 
 ;
 ; Base Facilities
