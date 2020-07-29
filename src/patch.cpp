@@ -2277,15 +2277,26 @@ Fixes population box incorrectly drawn superdrones.
 */
 void patch_base_scren_population_superdrones()
 {
-	int base_screen_population_superdrones_bytes_length = 6;
-	byte base_screen_population_superdrones_bytes_old[] = { 0x2B, 0x8B, 0x20, 0x01, 0x00, 0x00 };
-	byte base_screen_population_superdrones_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	int base_screen_population_superdrones_human_bytes_length = 6;
+	byte base_screen_population_superdrones_human_bytes_old[] = { 0x2B, 0x8B, 0x20, 0x01, 0x00, 0x00 };
+	byte base_screen_population_superdrones_human_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
 	write_bytes
 	(
 		0x00414ED6,
-		base_screen_population_superdrones_bytes_length,
-		base_screen_population_superdrones_bytes_old,
-		base_screen_population_superdrones_bytes_new
+		base_screen_population_superdrones_human_bytes_length,
+		base_screen_population_superdrones_human_bytes_old,
+		base_screen_population_superdrones_human_bytes_new
+	);
+
+	int base_screen_population_superdrones_alien_bytes_length = 6;
+	byte base_screen_population_superdrones_alien_bytes_old[] = { 0x2B, 0x8A, 0x20, 0x01, 0x00, 0x00 };
+	byte base_screen_population_superdrones_alien_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x00414D43,
+		base_screen_population_superdrones_alien_bytes_length,
+		base_screen_population_superdrones_alien_bytes_old,
+		base_screen_population_superdrones_alien_bytes_new
 	);
 
 }

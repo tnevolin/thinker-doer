@@ -1,3 +1,7 @@
+# Version 105
+
+* [bug] Base screen population incorrectly shows superdrones those are not on psych screen. Fixed for alien factions as well.
+
 # Version 104
 
 * New basic units.
