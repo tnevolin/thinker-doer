@@ -192,7 +192,7 @@ struct MetaFaction {
     int rule_sharetech;             // 0x0500
     int rule_commerce;
     int rule_flags;                 // 0x0508
-    int faction_bonus_count;
+    int faction_bonus_count;		// 0x050C
     int faction_bonus_id[8];        // 0x0510
     int faction_bonus_val1[8];      // 0x0530
     int faction_bonus_val2[8];      // 0x0550
@@ -599,14 +599,14 @@ struct R_Tech {
 };
 
 struct R_Ability {
-    char* name;
-    char* description;
-    char* abbreviation;
-    int cost;
-    int unk_1;
-    int flags;
-    short preq_tech;
-    short pad;
+    char* name;				// 0x0000
+    char* description;		// 0x0004
+    char* abbreviation;		// 0x0008
+    int cost;				// 0x000C
+    int unk_1;				// 0x0010
+    int flags;				// 0x0014
+    short preq_tech;		// 0x0018
+    short pad;				// 0x001A
 };
 
 struct R_Chassis {

@@ -1,3 +1,7 @@
+# Version 106
+
+* [fix] Zero division in Recycling Tanks mineral calculation when mineral intake is zero.
+
 # Version 105
 
 * [bug] Base screen population incorrectly shows superdrones those are not on psych screen. Fixed for alien factions as well.

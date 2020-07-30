@@ -1964,7 +1964,7 @@ HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queu
 
 	// Recycling Tanks and Pressure Dome increase minerals by 50%
 
-	if (has_facility(id, FAC_RECYCLING_TANKS) || has_facility(id, FAC_PRESSURE_DOME))
+	if ((has_facility(id, FAC_RECYCLING_TANKS) || has_facility(id, FAC_PRESSURE_DOME)) && base->mineral_intake >= 1)
 	{
 		// find mineral multiplier
 
