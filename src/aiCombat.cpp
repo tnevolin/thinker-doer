@@ -198,6 +198,9 @@ int enemyMoveCombat(int id)
 
 	// skip vehicles without orders
 
+	debug("[%d->%d] (%3d,%3d)\n", aiVehicleId, id, vehicle->x, vehicle->y);
+	fflush(debug_log);
+
 	if (combatOrdersIterator == combatOrders.end())
 		return tx_enemy_move(id);
 
