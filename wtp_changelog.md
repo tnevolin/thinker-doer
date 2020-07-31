@@ -1,6 +1,6 @@
 # Version 108
 
-* Alternative inefficiency formula.
+* Alternative inefficiency formula.\
 https://github.com/tnevolin/thinker-doer#inefficiency
 
 # Version 107
