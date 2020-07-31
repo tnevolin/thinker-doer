@@ -1,7 +1,11 @@
+# Version 108
+
+* Alternative inefficiency formula.
+
 # Version 107
 
-Fungicide Tanks costs 0. I don't think they are so important to cost anything. The ability slot is big enough cost for it.
-Super Former costs 2. Again, not that superimportant ability.
+* Fungicide Tanks costs 0. I don't think they are so important to cost anything. The ability slot is big enough cost for it.
+* Super Former costs 2. Again, not that superimportant ability.
 
 # Version 106
 

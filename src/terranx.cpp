@@ -156,3 +156,6 @@ fp_5int *tx_social_calc = (fp_5int *)0x005B4210;
 // computes base minerals
 fp_3int *tx_has_fac = (fp_3int *)0x00421670;
 
+// computes inefficiency based on given energy intake
+fp_1int *tx_black_market = (fp_1int *)0x004EA1F0;
+

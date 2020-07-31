@@ -486,6 +486,18 @@ The Cloning Vats also does not grant impunities anymore.
 
 The Hunter-Seeker Algorithm prevents regular probe action but does not destroy it. This is to aid AI who is stupidly keep sending probes against HSA owner. This is also to reduce human player frustration when they need to remember which enemy faction has HSA to not kill own probes for nothing.
 
+# Inefficiency
+
+Inefficiency formula reworked. It uses "efficiency" as a complenetary measure for inefficiency.
+
+<pre>
+seEfficiencyRate = (4 + EFFICIENCY) / 8								;limited to [0; 1] interval
+hqEfficiencyRate = 1 - distance to HQ / (1.5 * map width / 4)	;limited to [0; 1] interval
+efficiencyRate = seEfficiencyRate + hqEfficiencyRate				;limited to [0; 1] interval
+efficiency = efficiencyRate * energy intake
+inefficiency = energy intake - efficiency
+</pre>
+
 # Miscelaneous
 
 ## Special weapon and armor

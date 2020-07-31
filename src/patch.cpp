@@ -2428,6 +2428,16 @@ void patch_native_disable_sudden_death()
 
 }
 
+/*
+Modified inefficiency computation.
+*/
+void patch_alternative_inefficiency()
+{
+	write_call(0x004EB5AE, (int)modifiedInefficiency);
+	write_call(0x004EB93C, (int)modifiedInefficiency);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2925,6 +2935,11 @@ bool patch_setup(Config* cf) {
 	if (cf->native_disable_sudden_death)
 	{
 		patch_native_disable_sudden_death();
+	}
+
+	if (cf->alternative_inefficiency)
+	{
+		patch_alternative_inefficiency();
 	}
 
 

@@ -1996,3 +1996,88 @@ HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queu
 
 }
 
+/*
+Computes modified inefficiency based on given energy intake.
+
+inefficiency = energy intake - efficiency; a complementary metric to inefficiency
+
+efficiency = SE EFFICIENCY effect + HQ effect; capped at energy intake
+
+SE EFFICIENCY effect = 1/8 * SE EFFICIENCY rating
+
+HQ effect = (1 - <distance to HQ> / <1.5 * 1/4 of map width>) * energy intake; non negative
+no effect if there is no HQ
+
+*/
+HOOK_API int modifiedInefficiency(int energyIntake)
+{
+	// execute original code
+
+	int inefficiency = tx_black_market(energyIntake);
+
+	// modify formula
+
+	if (conf.alternative_inefficiency)
+	{
+		// accumulate efficiency from all effects
+
+		double efficiencyRate = 0.0;
+
+		// get current base
+
+		int id = *current_base_id;
+		BASE *base = *current_base_ptr;
+
+		// get current base faction
+
+		int factionId = base->faction_id;
+		Faction *faction = &(tx_factions[factionId]);
+
+		// get SE EFFICIENCY rating (with Children Creche effect)
+
+		int seEfficiencyRating = max(-4, min(+4, faction->SE_effic_pending + (has_facility(id, FAC_CHILDREN_CRECHE) ? 1 : 0)));
+
+		// add SE EFFICIENCY effect
+
+		efficiencyRate += (double)(4 + seEfficiencyRating) / 8.0;
+
+		// get HQ base
+
+		int hqBaseId = find_hq(factionId);
+
+		if (hqBaseId != -1)
+		{
+			BASE *hqBase = &(tx_bases[hqBaseId]);
+
+			// calculate distance to HQ
+
+			int hqDistance = map_distance(base->x, base->y, hqBase->x, hqBase->y);
+
+			// calculate HQ effect radius
+
+			double hqEffectRadius = 1.5 * (double)*map_half_x / 4.0;
+
+			// calculate HQ effect
+
+			if (hqDistance < hqEffectRadius)
+			{
+				efficiencyRate += 1.0 - (double)hqDistance / hqEffectRadius;
+
+			}
+
+		}
+
+		// calculate efficiency
+
+		int efficiency = max(0, min(energyIntake, (int)ceil(efficiencyRate * (double)energyIntake)));
+
+		// update inefficiency
+
+		inefficiency = energyIntake - efficiency;
+
+	}
+
+	return inefficiency;
+
+}
+
