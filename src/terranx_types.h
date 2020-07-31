@@ -52,13 +52,13 @@ struct BASE {
     int energy_surplus;                     // +0x00D8
     int unused_surplus;                     // +0x00DC
     int nutrient_inefficiency;				// +0x00E0
-    int mineral_inefficiency;
-    int energy_inefficiency;
-    int unused_inefficiency;
+    int mineral_inefficiency;				// +0x00E4
+    int energy_inefficiency;				// +0x00E8
+    int unused_inefficiency;				// +0x00EC
     int nutrient_consumption;				// +0x00F0
-    int mineral_consumption;
-    int energy_consumption;
-    int unused_consumption;
+    int mineral_consumption;				// +0x00F4
+    int energy_consumption;					// +0x00F8
+    int unused_consumption;					// +0x00FC
     int economy_total;						// +0x0100
     int psych_total;
     int labs_total;

@@ -158,6 +158,7 @@ struct Config {
     int native_life_generator_multiplier = 2;
     bool native_life_generator_more_sea_creatures = false;
     bool native_disable_sudden_death = false;
+    bool alternative_inefficiency = false;
     bool ai_useWTPAlgorithms;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;

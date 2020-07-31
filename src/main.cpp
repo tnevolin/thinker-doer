@@ -272,6 +272,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->native_disable_sudden_death = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "alternative_inefficiency"))
+    {
+        cf->alternative_inefficiency = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
