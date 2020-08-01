@@ -46,6 +46,7 @@ extern char ***tx_labels;
 typedef void __cdecl fp_0void();
 typedef void __cdecl fp_1void(int);
 typedef void __cdecl fp_2void(int, int);
+typedef void __cdecl fp_3void(int, int, int);
 typedef void __cdecl fp_4void(int, int, int, int);
 typedef int __cdecl fp_void();
 typedef int __cdecl fp_0int();
@@ -127,4 +128,6 @@ extern fp_5int *tx_social_calc;
 extern fp_0int *tx_base_production;
 extern fp_3int *tx_has_fac;
 extern fp_1int *tx_black_market;
+extern fp_3void *tx_setup_player;
+extern fp_0void *tx_balance;
 

@@ -8,6 +8,10 @@
 #include "patch.h"
 #include "engine.h"
 
+// game setup info
+
+int initialColonyCount[8];
+
 // global variables for all factions
 
 FACTION_EXTRA factionExtras[8];
@@ -2078,6 +2082,146 @@ HOOK_API int modifiedInefficiency(int energyIntake)
 	}
 
 	return inefficiency;
+
+}
+
+/*
+Wraps setup_player adding custom functionality.
+*/
+HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3)
+{
+	// execute original code
+
+	tx_setup_player(factionId, a2, a3);
+
+	// recreate initial extra colonies
+
+	recreateInitialColonies(factionId);
+
+	// give free former and colony at player start
+
+	createFreeVehicles(factionId);
+
+}
+
+void createFreeVehicles(int factionId)
+{
+	// find first faction vehicle location
+
+	VEH *factionVehicle = NULL;
+
+	for (int id = 0; id < *total_num_vehicles; id++)
+	{
+		VEH* vehicle = &(tx_vehicles[id]);
+
+		if (vehicle->faction_id != factionId)
+			continue;
+
+		factionVehicle = vehicle;
+
+		break;
+
+	}
+
+	// faction vehicle is not found
+
+	if (factionVehicle == NULL)
+		return;
+
+	// get spawn location
+
+	MAP *tile = getMapTile(factionVehicle->x, factionVehicle->y);
+
+	// create free vehicles
+
+	int former = (is_ocean(tile) ? BSC_SEA_FORMERS : BSC_FORMERS);
+	int colony = (is_ocean(tile) ? BSC_SEA_ESCAPE_POD : BSC_COLONY_POD);
+	for (int j = 0; j < conf.free_colony_pods; j++)
+	{
+		spawn_veh(colony, factionId, factionVehicle->x, factionVehicle->y, -1);
+	}
+	for (int j = 0; j < conf.free_formers; j++)
+	{
+		spawn_veh(former, factionId, factionVehicle->x, factionVehicle->y, -1);
+	}
+
+}
+
+/*
+Wraps balance to correctly generate number of colonies at start.
+*/
+HOOK_API void modifiedBalance()
+{
+	// execute original code
+
+	tx_balance();
+
+	// calculate initial colony count
+
+	for (int id = 0; id < *total_num_vehicles; id++)
+	{
+		VEH *vehicle = &(tx_vehicles[id]);
+		int factionId = vehicle->faction_id;
+
+		// real factions only
+
+		if (factionId == 0)
+			continue;
+
+		// check vehicle is a colony
+
+		if (isVehicleColony(vehicle))
+		{
+			initialColonyCount[factionId]++;
+		}
+
+	}
+
+}
+
+void recreateInitialColonies(int factionId)
+{
+	// count current colonies
+
+	int currentColonyCount = 0;
+	VEH *factionVehicle = NULL;
+
+	for (int id = 0; id < *total_num_vehicles; id++)
+	{
+		VEH *vehicle = &(tx_vehicles[id]);
+
+		if (vehicle->faction_id == factionId && factionVehicle == NULL)
+		{
+			factionVehicle = vehicle;
+		}
+
+		if (vehicle->faction_id == factionId && isVehicleColony(vehicle))
+		{
+			currentColonyCount++;
+		}
+
+	}
+
+	// no faction vehicle found
+
+	if (factionVehicle == NULL)
+		return;
+
+	// get faction tile
+
+	MAP *tile = getMapTile(factionVehicle->x, factionVehicle->y);
+
+	// create more colonies as needed
+
+	if (currentColonyCount < initialColonyCount[factionId])
+	{
+		int colony = (is_ocean(tile) ? BSC_SEA_ESCAPE_POD : BSC_COLONY_POD);
+		for (int j = 0; j < initialColonyCount[factionId] - currentColonyCount; j++)
+		{
+			spawn_veh(colony, factionId, factionVehicle->x, factionVehicle->y, -1);
+		}
+
+	}
 
 }
 

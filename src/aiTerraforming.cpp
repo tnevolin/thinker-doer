@@ -2876,16 +2876,6 @@ void generateTerraformingChange(MAP_STATE *mapState, int action)
 
 }
 
-bool isVehicleSupply(VEH *vehicle)
-{
-	return (tx_units[vehicle->proto_id].weapon_type == WPN_SUPPLY_TRANSPORT);
-}
-
-bool isVehicleFormer(VEH *vehicle)
-{
-	return (tx_units[vehicle->proto_id].weapon_type == WPN_TERRAFORMING_UNIT);
-}
-
 bool isTileTargettedByVehicle(VEH *vehicle, MAP *tile)
 {
 	return (vehicle->move_status == ORDER_MOVE_TO && (getVehicleDestination(vehicle) == tile));

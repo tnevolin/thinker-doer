@@ -155,4 +155,7 @@ double calculateNativeDamageDefense(int id);
 void setVehicleOrder(int id, int order);
 MAP *getMapTile(int x, int y);
 bool isImprovedTile(int x, int y);
+bool isVehicleSupply(VEH *vehicle);
+bool isVehicleColony(VEH *vehicle);
+bool isVehicleFormer(VEH *vehicle);
 
