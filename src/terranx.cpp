@@ -159,3 +159,9 @@ fp_3int *tx_has_fac = (fp_3int *)0x00421670;
 // computes inefficiency based on given energy intake
 fp_1int *tx_black_market = (fp_1int *)0x004EA1F0;
 
+// sets up player
+fp_3void *tx_setup_player = (fp_3void *)0x005B0E00;
+
+// balances game by giving extra colony
+fp_0void *tx_balance = (fp_0void *)0x005B0420;
+

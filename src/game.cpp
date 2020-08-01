@@ -1211,3 +1211,18 @@ bool isImprovedTile(int x, int y)
 
 }
 
+bool isVehicleSupply(VEH *vehicle)
+{
+	return (tx_units[vehicle->proto_id].weapon_type == WPN_SUPPLY_TRANSPORT);
+}
+
+bool isVehicleColony(VEH *vehicle)
+{
+	return (tx_units[vehicle->proto_id].weapon_type == WPN_COLONY_MODULE);
+}
+
+bool isVehicleFormer(VEH *vehicle)
+{
+	return (tx_units[vehicle->proto_id].weapon_type == WPN_TERRAFORMING_UNIT);
+}
+

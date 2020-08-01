@@ -236,8 +236,6 @@ bool isRemoveFungusRequired(int action);
 bool isLevelTerrainRequired(int action);
 void generateTerraformingChange(MAP_STATE *mapState, int action);
 bool isVehicleTerraforming(int vehicleId);
-bool isVehicleSupply(VEH *vehicle);
-bool isVehicleFormer(VEH *vehicle);
 bool isTileTargettedByVehicle(VEH *vehicle, MAP *tile);
 bool isVehicleConvoying(VEH *vehicle);
 bool isVehicleTerraforming(VEH *vehicle);

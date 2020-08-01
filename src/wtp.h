@@ -144,6 +144,10 @@ HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, i
 HOOK_API void correctGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer);
 HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queueSlotId);
 HOOK_API int modifiedInefficiency(int energyIntake);
+HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3);
+void createFreeVehicles(int factionId);
+HOOK_API void modifiedBalance();
+void recreateInitialColonies(int factionId);
 
 #endif // __PROTOTYPE_H__
 

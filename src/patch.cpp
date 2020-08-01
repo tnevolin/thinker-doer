@@ -2438,6 +2438,28 @@ void patch_alternative_inefficiency()
 
 }
 
+/*
+Wraps setup_player adding custom functionality.
+*/
+void patch_setup_player()
+{
+	write_call(0x00525CC7, (int)modifiedSetupPlayer);
+	write_call(0x005A3C9B, (int)modifiedSetupPlayer);
+	write_call(0x005B341C, (int)modifiedSetupPlayer);
+	write_call(0x005B3C03, (int)modifiedSetupPlayer);
+	write_call(0x005B3C4C, (int)modifiedSetupPlayer);
+
+}
+
+/*
+Wraps balance to correctly generate number of colonies at start.
+*/
+void patch_balance()
+{
+	write_call(0x005B41F5, (int)modifiedBalance);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2941,6 +2963,10 @@ bool patch_setup(Config* cf) {
 	{
 		patch_alternative_inefficiency();
 	}
+
+	patch_setup_player();
+
+	patch_balance();
 
 
 

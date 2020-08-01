@@ -538,35 +538,39 @@ HOOK_API int turn_upkeep() {
             tx_propose_proto(i, CHS_INFANTRY, WPN_SUPPLY_TRANSPORT, arm2, 0, REC_FUSION, PLAN_DEFENSIVE, name);
         }
     }
-    if (*current_turn == 1) {
 
-		// give colony and former bonuses to human too
-//        int bonus = ~(*human_players) & 0xfe;
-        int bonus = ~(0) & 0xfe;
+    // Creation of free vehicles is moved to modifiedSetupPlayer
 
-        for (int i=0; i<*total_num_vehicles; i++) {
-            VEH* veh = &tx_vehicles[i];
-            if (1 << veh->faction_id & bonus) {
-                bonus &= ~(1 << veh->faction_id);
-                MAP* sq = mapsq(veh->x, veh->y);
-                int former = (is_ocean(sq) ? BSC_SEA_FORMERS : BSC_FORMERS);
-                int colony = (is_ocean(sq) ? BSC_SEA_ESCAPE_POD : BSC_COLONY_POD);
-                for (int j=0; j<conf.free_formers; j++) {
-                    spawn_veh(former, veh->faction_id, veh->x, veh->y, -1);
-                }
-                for (int j=0; j<conf.free_colony_pods; j++) {
-				spawn_veh(colony, veh->faction_id, veh->x, veh->y, -1);
-                }
-            }
-        }
-        for (int i=1; i<8; i++) {
-            if (!is_human(i)) {
-                tx_factions[i].satellites_nutrient = conf.satellites_nutrient;
-                tx_factions[i].satellites_mineral = conf.satellites_mineral;
-                tx_factions[i].satellites_energy = conf.satellites_energy;
-            }
-        }
-    }
+//    if (*current_turn == 1) {
+//
+//		// give colony and former bonuses to human too
+////        int bonus = ~(*human_players) & 0xfe;
+//        int bonus = ~(0) & 0xfe;
+//
+//        for (int i=0; i<*total_num_vehicles; i++) {
+//            VEH* veh = &tx_vehicles[i];
+//            if (1 << veh->faction_id & bonus) {
+//                bonus &= ~(1 << veh->faction_id);
+//                MAP* sq = mapsq(veh->x, veh->y);
+//                int former = (is_ocean(sq) ? BSC_SEA_FORMERS : BSC_FORMERS);
+//                int colony = (is_ocean(sq) ? BSC_SEA_ESCAPE_POD : BSC_COLONY_POD);
+//                for (int j=0; j<conf.free_formers; j++) {
+//                    spawn_veh(former, veh->faction_id, veh->x, veh->y, -1);
+//                }
+//                for (int j=0; j<conf.free_colony_pods; j++) {
+//				spawn_veh(colony, veh->faction_id, veh->x, veh->y, -1);
+//                }
+//            }
+//        }
+//        for (int i=1; i<8; i++) {
+//            if (!is_human(i)) {
+//                tx_factions[i].satellites_nutrient = conf.satellites_nutrient;
+//                tx_factions[i].satellites_mineral = conf.satellites_mineral;
+//                tx_factions[i].satellites_energy = conf.satellites_energy;
+//            }
+//        }
+//    }
+
     if (DEBUG) {
         *game_state |= STATE_DEBUG_MODE;
     }
