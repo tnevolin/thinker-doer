@@ -1,6 +1,8 @@
 # Version 110
 
-* Pressure Dome,                 8, 2. Same maintenance as for Recyclyng Tanks since it delivers same benefits.
+* Pressure Dome,                 8, 2.\
+Same maintenance as for Recyclyng Tanks since it delivers same benefits.\
+Should not be too dificult for sea bases to pay it.
 
 # Version 109
 
@@ -83,7 +85,7 @@ It was too little benefits for such harsh POLICE penalty. Now it is more of less
 # Version 94
 
 * AI tries to kill spore launcher near their bases.
-* 0,       ; Combat % -> Artillery bonus per level of altitude. Forgot to remove it earlier. I find it too cumbersome to measure altitudes of every tile around the battlefield. It is too not visual.
+* Artillery bonus per level of altitude is removed. Forgot to remove it earlier. I find it too cumbersome to measure altitudes of every tile around the battlefield. It is too not visual.
 
 # Version 93
 
@@ -136,7 +138,7 @@ Added extra TALENT to it. Should be an ultimate war time drone solution. It's pr
 
 # Version 88
 
-* Another adjustment to weapons/armors value/cost. Now they use more of less round and same numbers for ease up on player memory.
+* Another adjustment to weapons/armors value/cost. Now they use more of less round and same numbers to ease up on player memory.
 
 # Version 88
 
@@ -147,12 +149,12 @@ Added extra TALENT to it. Should be an ultimate war time drone solution. It's pr
 * [fix] Unit cost were calculated incorrectly sometimes.
 
 * Recycling Tanks now increases minerals by 50% instead of improving base tile.
-* Recycling Tanks,               6, 2.
+* Recycling Tanks cost/maint: 6/2.
 * Clean minerals = 24.
 * Research is 1.5 times slower.
 * Fungus yield reshuffled to give energy before nutrients.
 * Weapon and armor appearance and value/cost are adjusted to match each other progression.
-* Some facility costs and maintenances are increased especially later ones.
+* Some facility costs and maintenance are increased especially later ones.
 * Some SP cost are increased slightly based on increased corresponding facility cost above.
 * Lower tech get preference in blind research and AI pick.
 
