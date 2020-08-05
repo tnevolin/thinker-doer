@@ -2181,6 +2181,14 @@ HOOK_API void modifiedBalance()
 
 void recreateInitialColonies(int factionId)
 {
+	// clear colony count on turn 0 and exit
+
+	if (*current_turn == 0)
+	{
+		initialColonyCount[factionId] = 0;
+		return;
+	}
+
 	// count current colonies
 
 	int currentColonyCount = 0;
