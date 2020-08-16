@@ -159,6 +159,7 @@ struct Config {
     bool native_life_generator_more_sea_creatures = false;
     bool native_disable_sudden_death = false;
     bool alternative_inefficiency = false;
+    int unit_home_base_reassignment_production_threshold = 0;
     bool ai_useWTPAlgorithms;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;

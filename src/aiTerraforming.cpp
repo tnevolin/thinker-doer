@@ -2940,13 +2940,6 @@ bool isTileTargettedByOtherFormer(MAP *tile)
 	return targetedTiles.count(tile) == 1;
 }
 
-void computeBase(int baseId)
-{
-	tx_set_base(baseId);
-	tx_base_compute(1);
-
-}
-
 void setTerraformingAction(int id, int action)
 {
 	VEH *vehicle = &(tx_vehicles[id]);

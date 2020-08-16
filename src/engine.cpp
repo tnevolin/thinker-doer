@@ -95,8 +95,17 @@ HOOK_API int faction_upkeep(int faction) {
     debug("faction_upkeep %d %d\n", *current_turn, faction);
     init_save_game(faction);
 
+    // distributing support across bases
+	// affects normal factions only
+
+	if (faction != 0)
+	{
+		distributeSupport(faction);
+	}
+
 	// WTP AI algorithms
 	// affects AI factions only
+
 	if (faction != 0 && !is_human(faction) && conf.ai_useWTPAlgorithms)
 	{
 		aiStrategy(faction);

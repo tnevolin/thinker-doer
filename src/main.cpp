@@ -277,6 +277,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->alternative_inefficiency = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "unit_home_base_reassignment_production_threshold"))
+    {
+        cf->unit_home_base_reassignment_production_threshold = atoi(value);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

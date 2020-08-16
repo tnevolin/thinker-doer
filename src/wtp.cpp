@@ -2250,3 +2250,95 @@ double getLandVehicleSpeedOnTubes(int id)
 
 }
 
+/*
+Distribute support before production phase to make sure each base has at least 1 mineral surplus.
+*/
+void distributeSupport(int factionId)
+{
+	// exit if functionality is not enabled
+
+	if (conf.unit_home_base_reassignment_production_threshold <= 0)
+		return;
+
+	// iterate through own combat units
+
+	for (int id = 0; id < *total_num_vehicles; id++)
+	{
+		VEH *vehicle = &(tx_vehicles[id]);
+
+		// only own vehicles
+
+		if (vehicle->faction_id != factionId)
+			continue;
+
+		// only combat vehicles
+
+		if (!isCombatVehicle(id))
+			continue;
+
+		// find vehicle base
+
+		int vehicleHomeBaseId = vehicle->home_base_id;
+		BASE *vehicleHomeBase = &(tx_bases[vehicleHomeBaseId]);
+
+		// only own bases (weird but better safe than sorry)
+
+		if (vehicleHomeBase->faction_id != factionId)
+			continue;
+
+		// ignore bases with no support
+
+		if (vehicleHomeBase->mineral_consumption == 0)
+			continue;
+
+		// ignore bases with enough minerals
+
+		if (vehicleHomeBase->mineral_surplus >= conf.unit_home_base_reassignment_production_threshold)
+			continue;
+
+		// search for foster parent candidate
+
+		int bestProductionBaseId = -1;
+		int bestProductionBaseMineralSurplus = 0;
+
+		for (int otherBaseId = 0; otherBaseId < *total_num_bases; otherBaseId++)
+		{
+			BASE *otherBase = &(tx_bases[otherBaseId]);
+
+			// only own bases
+
+			if (otherBase->faction_id != factionId)
+				continue;
+
+			// only bases with enogh production
+
+			if (otherBase->mineral_surplus < (conf.unit_home_base_reassignment_production_threshold + 1))
+				continue;
+
+			// update best
+
+			if (bestProductionBaseId == -1 || otherBase->mineral_surplus > bestProductionBaseMineralSurplus)
+			{
+				bestProductionBaseId = otherBaseId;
+				bestProductionBaseMineralSurplus = otherBase->mineral_surplus;
+			}
+
+		}
+
+		// reassign unit if new home base found
+
+		if (bestProductionBaseId != -1)
+		{
+			vehicle->home_base_id = bestProductionBaseId;
+
+			// recompute bases
+
+			computeBase(vehicleHomeBaseId);
+			computeBase(bestProductionBaseId);
+
+		}
+
+	}
+
+}
+
