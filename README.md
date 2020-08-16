@@ -473,9 +473,7 @@ The main problem of this project reported by many players is that it breaks the 
 This mod limits the size of new base to this value:
 
 <pre>
-
 new base size = <average faction base size> - 2
-
 </pre>
 
 This is to prevent excessive total population growth at very early stages. It also sets limit to **less** than average to make sure the benefit automatically wears off when a lot of new bases created. Since the limit is less than average it guarantees creation of a new base brings the average size down. So player needs to develop the rest of their bases to keep claiming max benefit.
