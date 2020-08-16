@@ -470,9 +470,15 @@ Faction can fully or partially hurry project with credits at its discretion.
 
 The main problem of this project reported by many players is that it breaks the game paired with ICS strategy. Essentially, it creates two extra citizens out of thin air in new base. Therefore it just triples the benefit of founding new base and the total faction population growth rate.
 
-This project name suggest global transit system existence that eases population movement accross the planet. So that more people can fast and easy travel to new bases jump starting their growth. I believe that is what this project should do instead of creating population out of nowhere.
+This mod limits the size of new base to this value:
 
-For faction with PTS new base attracts up to two additional citizen from most populated faction bases. Citizens are willing to travel only from overcrowded centers only with population more than 3. Citizens are leaving most populated bases first in founding order if there are more than one. If there are not enough extra population in faction bases - nobody will come.
+<pre>
+
+new base size = <average faction base size> - 2
+
+</pre>
+
+This is to prevent excessive total population growth at very early stages. It also sets limit to **less** than average to make sure the benefit automatically wears off when a lot of new bases created. Since the limit is less than average it guarantees creation of a new base brings the average size down. So player needs to develop the rest of their bases to keep claiming max benefit.
 
 ### The Cloning Vats
 

@@ -1758,65 +1758,43 @@ HOOK_API int baseInit(int factionId, int x, int y)
 	BASE *base = &(tx_bases[id]);
 
 	// The Planetary Transit System fix
-	// new population comes from existing bases rather than from thin air
+	// new base size is limited by average faction base size
 
 	if (has_project(factionId, FAC_PLANETARY_TRANS_SYS) && base->pop_size == 3)
 	{
-		// transit two people
+		// calculate average faction base size
 
-		for (int transit = 0; transit < 2; transit++)
+		int totalFactionBaseCount = 0;
+		int totalFactionPopulation = 0;
+
+		for (int otherBaseId = 0; otherBaseId < *total_num_bases; otherBaseId++)
 		{
-			// search base with highest population more than 1
+			BASE *otherBase = &(tx_bases[otherBaseId]);
 
-			int highestPopulation = 0;
-			BASE *highestPopulationBase = NULL;
+			// skip this base
 
-			for (int i = 0; i < *total_num_bases; i++)
-			{
-				BASE *otherBase = &(tx_bases[i]);
+			if (otherBaseId == id)
+				continue;
 
-				// exclude self
+			// only own bases
 
-				if (i == id)
-					continue;
+			if (otherBase->faction_id != base->faction_id)
+				continue;
 
-				// exclude not own bases
-
-				if (otherBase->faction_id != factionId)
-					continue;
-
-				// exclude bases size 3 or less
-
-				if (otherBase->pop_size <= 3)
-					continue;
-
-				// update best base
-
-				if (otherBase->pop_size > highestPopulation)
-				{
-					highestPopulation = otherBase->pop_size;
-					highestPopulationBase = otherBase;
-				}
-
-			}
-
-			// highest population base found
-			if (highestPopulationBase != NULL)
-			{
-				// citizen left for new base
-
-				highestPopulationBase->pop_size--;
-
-			}
-			else
-			{
-				// no one can come - don't add people to new base
-
-				base->pop_size--;
-
-			}
+			totalFactionBaseCount++;
+			totalFactionPopulation += otherBase->pop_size;
 
 		}
+
+		double averageFactionBaseSize = (double)totalFactionPopulation / (double)totalFactionBaseCount;
+
+		// calculate new base size
+
+		int newBaseSize = max(1, min(3, (int)floor(averageFactionBaseSize) - 2));
+
+		// set base size
+
+		base->pop_size = newBaseSize;
 
 	}
 
