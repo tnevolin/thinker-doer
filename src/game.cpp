@@ -1226,3 +1226,10 @@ bool isVehicleFormer(VEH *vehicle)
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_TERRAFORMING_UNIT);
 }
 
+void computeBase(int baseId)
+{
+	tx_set_base(baseId);
+	tx_base_compute(1);
+
+}
+

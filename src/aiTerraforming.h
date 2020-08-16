@@ -246,7 +246,6 @@ bool isTileTerraformed(MAP *tile);
 bool isTileTargettedByOtherFormer(MAP *tile);
 bool isTileWorkedByOtherBase(BASE *base, MAP *tile);
 bool isVehicleTargetingTile(int vehicleId, int x, int y);
-void computeBase(int baseId);
 void setTerraformingAction(int vehicleId, int action);
 void buildImprovement(int vehicleId);
 bool sendVehicleToDestination(int id, int x, int y);

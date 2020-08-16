@@ -151,6 +151,7 @@ void recreateInitialColonies(int factionId);
 double getVehicleSpeedWithoutRoads(int id);
 double getLandVehicleSpeedOnRoads(int id);
 double getLandVehicleSpeedOnTubes(int id);
+void distributeSupport(int factionId);
 
 #endif // __PROTOTYPE_H__
 

@@ -158,4 +158,5 @@ bool isImprovedTile(int x, int y);
 bool isVehicleSupply(VEH *vehicle);
 bool isVehicleColony(VEH *vehicle);
 bool isVehicleFormer(VEH *vehicle);
+void computeBase(int baseId);
 

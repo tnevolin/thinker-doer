@@ -1,3 +1,7 @@
+# Version 114
+
+* Combat units are reassigned to avoid oversupport. Configuration parameter: unit_home_base_reassignment_production_threshold.
+
 # Version 113
 
 * Simplification in PTS functionality: https://github.com/tnevolin/thinker-doer#the-planetary-transit-system.
