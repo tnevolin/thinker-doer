@@ -2233,3 +2233,42 @@ void recreateInitialColonies(int factionId)
 
 }
 
+double getVehicleSpeedWithoutRoads(int id)
+{
+	return (double)veh_speed(id) / (double)tx_basic->mov_rate_along_roads;
+}
+
+double getLandVehicleSpeedOnRoads(int id)
+{
+	double landVehicleSpeedOnRoads;
+
+	if (conf.tube_movement_rate_multiplier > 0)
+	{
+		landVehicleSpeedOnRoads = (double)veh_speed(id) / (double)conf.road_movement_cost;
+	}
+	else
+	{
+		landVehicleSpeedOnRoads = (double)veh_speed(id);
+	}
+
+	return landVehicleSpeedOnRoads;
+
+}
+
+double getLandVehicleSpeedOnTubes(int id)
+{
+	double landVehicleSpeedOnTubes;
+
+	if (conf.tube_movement_rate_multiplier > 0)
+	{
+		landVehicleSpeedOnTubes = (double)veh_speed(id);
+	}
+	else
+	{
+		landVehicleSpeedOnTubes = 1000;
+	}
+
+	return landVehicleSpeedOnTubes;
+
+}
+

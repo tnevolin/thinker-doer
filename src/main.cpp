@@ -9,6 +9,7 @@
 #include "tech.h"
 #include "lib/ini.h"
 #include "wtp.h"
+#include "aiProduction.h"
 
 std::string MOVE_STATUS[] =
 {
@@ -431,52 +432,68 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
     int choice = 0;
     print_base(id);
 
-    if (is_human(faction)) {
+    // do not suggest production for human factions
+
+    if (is_human(faction))
+	{
         debug("skipping human base\n");
-        choice = base->queue_items[0];
-    } else if (!ai_enabled(faction)) {
-        debug("skipping computer base\n");
-        choice = tx_base_prod_choices(id, v1, v2, v3);
-    } else {
-        tx_set_base(id);
-        tx_base_compute(1);
-        if ((choice = need_psych(id)) != 0 && choice != prod) {
-            debug("BUILD PSYCH\n");
-        } else if (base->status_flags & BASE_PRODUCTION_DONE || prod == -FAC_STOCKPILE_ENERGY) {
-            choice = select_prod(id);
-            base->status_flags &= ~BASE_PRODUCTION_DONE;
-        } else if (prod >= 0 && !can_build_unit(faction, prod)) {
-            debug("BUILD FACILITY\n");
-            choice = find_facility(id);
-        }
-        // do not build unit in 0-1 production base
-        else if (prod >= 0 && base->mineral_surplus <= 1)
-        {
-            debug("BUILD FACILITY\n");
-            choice = find_facility(id);
-        } else if (prod < 0 && !can_build(id, abs(prod))) {
-            debug("BUILD CHANGE\n");
-            if (base->minerals_accumulated > tx_basic->retool_exemption) {
-                choice = find_facility(id);
-            } else {
-                choice = select_prod(id);
-            }
-        } else if (need_defense(id)) {
-            debug("BUILD DEFENSE\n");
-            choice = find_proto(id, TRIAD_LAND, COMBAT, DEF);
-        } else {
-            consider_hurry(id);
-            debug("BUILD OLD\n");
-            choice = prod;
-        }
-        debug("choice: %d %s\n", choice, prod_name(choice));
+        return base->queue_items[0];
     }
+
+    // do not override production choice for not AI enabled factions
+	if (!ai_enabled(faction))
+	{
+        debug("skipping computer base\n");
+        return tx_base_prod_choices(id, v1, v2, v3);
+    }
+
+	tx_set_base(id);
+	tx_base_compute(1);
+	if ((choice = need_psych(id)) != 0 && choice != prod) {
+		debug("BUILD PSYCH\n");
+	} else if (base->status_flags & BASE_PRODUCTION_DONE || prod == -FAC_STOCKPILE_ENERGY) {
+
+		choice = select_prod(id);
+
+		// [WTP] production choice
+
+		choice = suggestBaseProduction(id, choice);
+
+		base->status_flags &= ~BASE_PRODUCTION_DONE;
+
+	} else if (prod >= 0 && !can_build_unit(faction, prod)) {
+		debug("BUILD FACILITY\n");
+		choice = find_facility(id);
+	}
+	// do not build unit in 0-1 production base
+	else if (prod >= 0 && base->mineral_surplus <= 1)
+	{
+		debug("BUILD FACILITY\n");
+		choice = find_facility(id);
+	} else if (prod < 0 && !can_build(id, abs(prod))) {
+		debug("BUILD CHANGE\n");
+		if (base->minerals_accumulated > tx_basic->retool_exemption) {
+			choice = find_facility(id);
+		} else {
+			choice = select_prod(id);
+		}
+	} else if (need_defense(id)) {
+		debug("BUILD DEFENSE\n");
+		choice = find_proto(id, TRIAD_LAND, COMBAT, DEF);
+	} else {
+		// hurrying is considered globally after production phase
+//		consider_hurry(id);
+		debug("BUILD OLD\n");
+		choice = prod;
+	}
+	debug("choice: %d %s\n", choice, prod_name(choice));
 
     // change choice to growth facility if needed
 
     choice = refitToGrowthFacility(id, base, choice);
 
     fflush(debug_log);
+
     return choice;
 
 }

@@ -94,6 +94,8 @@
 		<Unit filename="src/aiBase.h" />
 		<Unit filename="src/aiCombat.cpp" />
 		<Unit filename="src/aiCombat.h" />
+		<Unit filename="src/aiProduction.cpp" />
+		<Unit filename="src/aiProduction.h" />
 		<Unit filename="src/aiTerraforming.cpp" />
 		<Unit filename="src/aiTerraforming.h" />
 		<Unit filename="src/engine.cpp" />
