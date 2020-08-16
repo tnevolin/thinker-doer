@@ -1,3 +1,7 @@
+# Version 113
+
+* Simplification in PTS functionality: https://github.com/tnevolin/thinker-doer#the-planetary-transit-system.
+
 # Version 112
 
 * AI build more defensive units based on: the combined strength of enemy attacking units, their distance from own bases, the diplomatic status, whether the player is human/AI.
