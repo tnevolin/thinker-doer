@@ -1,3 +1,7 @@
+# Version 112
+
+* AI build more defensive units based on: the combined strength of enemy attacking units, their distance from own bases, the diplomatic status, whether the player is human/AI.
+
 # Version 111
 
 * [fix] Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do. Fixed incorrect calculation on game restart.

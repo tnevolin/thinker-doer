@@ -7,11 +7,13 @@
 #include "ai.h"
 #include "wtp.h"
 #include "game.h"
+#include "aiProduction.h"
 #include "aiTerraforming.h"
 
 // global variables
 
-// Controls which faction uses WtP terraforming algorithm.
+// Controls which faction uses WtP algorithm.
+// for debugging
 // -1 : all factions
 
 int wtpAIFactionId = -1;
@@ -50,6 +52,10 @@ void aiStrategy(int id)
 	// populate shared strategy lists
 
 	populateSharedLists();
+
+	// prepare production orders
+
+	aiProductionStrategy();
 
 	// prepare former orders
 
@@ -201,3 +207,4 @@ bool isReacheable(int id, int x, int y)
 	return (triad == TRIAD_AIR || getConnectedRegion(vehicleLocation->region) == getConnectedRegion(destinationLocation->region));
 
 }
+

@@ -148,6 +148,9 @@ HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3);
 void createFreeVehicles(int factionId);
 HOOK_API void modifiedBalance();
 void recreateInitialColonies(int factionId);
+double getVehicleSpeedWithoutRoads(int id);
+double getLandVehicleSpeedOnRoads(int id);
+double getLandVehicleSpeedOnTubes(int id);
 
 #endif // __PROTOTYPE_H__
 
