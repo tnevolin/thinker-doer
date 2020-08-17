@@ -1,3 +1,7 @@
+# Version 115
+
+* [bug] Ignore independent units in reassignment code.
+
 # Version 114
 
 * Combat units are reassigned to avoid oversupport. Configuration parameter: unit_home_base_reassignment_production_threshold.

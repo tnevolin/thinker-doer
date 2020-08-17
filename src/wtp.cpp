@@ -2276,9 +2276,17 @@ void distributeSupport(int factionId)
 		if (!isCombatVehicle(id))
 			continue;
 
-		// find vehicle base
+		// find vehicle home base ID
 
 		int vehicleHomeBaseId = vehicle->home_base_id;
+
+		// ignore independent units
+
+		if (vehicleHomeBaseId < 0)
+			continue;
+
+		// get vehicle home base
+
 		BASE *vehicleHomeBase = &(tx_bases[vehicleHomeBaseId]);
 
 		// only own bases (weird but better safe than sorry)
