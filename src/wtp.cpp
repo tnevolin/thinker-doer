@@ -1944,9 +1944,10 @@ HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queu
 	int id = *current_base_id;
 	BASE *base = *current_base_ptr;
 
-	// Recycling Tanks and Pressure Dome increase minerals by 50%
+	// Recycling Tanks increases minerals by 50%.
+	// Pressure Dome now do not automatically implies Recycling Tanks so it does not deliver any RT benefits.
 
-	if ((has_facility(id, FAC_RECYCLING_TANKS) || has_facility(id, FAC_PRESSURE_DOME)) && base->mineral_intake >= 1)
+	if (has_facility(id, FAC_RECYCLING_TANKS) && base->mineral_intake >= 1)
 	{
 		// find mineral multiplier
 
@@ -2079,13 +2080,6 @@ HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3)
 	// give free former and colony at player start
 
 	createFreeVehicles(factionId);
-
-	// give aquatic faction extra energy for initial pressure dome support
-
-	if (tx_metafactions[factionId].rule_flags & FACT_AQUATIC)
-	{
-		tx_factions[factionId].energy_credits += 100;
-	}
 
 }
 

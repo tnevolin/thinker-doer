@@ -2460,6 +2460,24 @@ void patch_balance()
 
 }
 
+/*
+Enables building Recycling Tanks even if Pressure Dome presents.
+*/
+void patch_recycling_tanks_not_disabled_by_pressure_dome()
+{
+	int recycling_tanks_disabled_by_pressure_dome_bytes_length = 3;
+	byte recycling_tanks_disabled_by_pressure_dome_bytes_old[] = { 0x83, 0xFB, 0x03 };
+	byte recycling_tanks_disabled_by_pressure_dome_bytes_new[] = { 0x83, 0xFB, 0xFF };
+	write_bytes
+	(
+		0x005BA436,
+		recycling_tanks_disabled_by_pressure_dome_bytes_length,
+		recycling_tanks_disabled_by_pressure_dome_bytes_old,
+		recycling_tanks_disabled_by_pressure_dome_bytes_new
+	);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2967,6 +2985,11 @@ bool patch_setup(Config* cf) {
 	patch_setup_player();
 
 	patch_balance();
+
+	if (cf->recycling_tanks_mineral_multiplier)
+	{
+		patch_recycling_tanks_not_disabled_by_pressure_dome();
+	}
 
 
 
