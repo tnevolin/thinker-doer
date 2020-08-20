@@ -1,3 +1,7 @@
+# Version 116
+
+* Extra energy reserves to aquatic factions to support initial Pressure Dome maintenance.
+
 # Version 115
 
 * [bug] Ignore independent units in reassignment code.
