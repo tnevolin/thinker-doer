@@ -21,8 +21,8 @@ struct BASE {
     int nutrients_accumulated;              // +0x003C
     int minerals_accumulated;               // +0x0040
     int production_id_last;					// +0x0044
-    int eco_damage;
-    int queue_size;
+    int eco_damage;							// +0x0048
+    int queue_size;							// +0x004C
     int queue_items[10];                    // +0x0050
     int worked_tiles;                       // +0x0078
     int specialist_total;					// +0x007C

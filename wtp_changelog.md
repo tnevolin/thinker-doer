@@ -1,3 +1,8 @@
+# Version 117
+
+* Pressure Dome does not imply Recycling Tanks anymore. 
+* [removed] Extra energy reserves to aquatic factions to support initial Pressure Dome maintenance.
+
 # Version 116
 
 * Extra energy reserves to aquatic factions to support initial Pressure Dome maintenance.
