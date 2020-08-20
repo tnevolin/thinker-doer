@@ -2080,6 +2080,13 @@ HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3)
 
 	createFreeVehicles(factionId);
 
+	// give aquatic faction extra energy for initial pressure dome support
+
+	if (tx_metafactions[factionId].rule_flags & FACT_AQUATIC)
+	{
+		tx_factions[factionId].energy_credits += 100;
+	}
+
 }
 
 void createFreeVehicles(int factionId)
