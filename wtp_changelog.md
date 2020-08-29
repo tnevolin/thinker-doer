@@ -1,3 +1,8 @@
+# Version 118
+
+* AAA bonus vs. air units = 50%.
+* AAA Tracking ability cost = 1.
+
 # Version 117
 
 * Pressure Dome does not imply Recycling Tanks anymore. 
