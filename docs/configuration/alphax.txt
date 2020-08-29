@@ -66,7 +66,7 @@
 0,       ; Combat penalty % -> Non-combat unit defending vs. combat unit
 50,      ; Combat % -> Comm Jammer unit defending vs. mobile unit
 0,       ; Combat % -> Bonus vs. ships caught in port
-100,     ; Combat % -> AAA bonus vs. air units
+50,      ; Combat % -> AAA bonus vs. air units
 0,       ; Combat % -> Defend in range of friendly Sensor
 15,      ; Combat % -> Psi attack bonus/penalty per +PLANET
 50,      ; Retool percent penalty for production change
@@ -508,7 +508,7 @@ Drop Pods,              2, MindMac,  Drop,      000000111001, Makes air drops
 Air Superiority,        0, DocAir,   SAM,       000000001111, Attacks air units
 Deep Pressure Hull,     1, Disable,  Sub,       000000111010, Operates underwater
 Carrier Deck,           1, Metal,    Carrier,   000101101010, Mobile Airbase
-AAA Tracking,           2, MilAlg,   AAA,       000010001011, x2 vs. air attacks
+AAA Tracking,           1, MilAlg,   AAA,       000010001011, x2 vs. air attacks
 Comm Jammer,            1, Physic,   ECM,       000010111001, +50% vs. fast units
 Antigrav Struts,        2, Gravity,  Grav,      000000111001, +1 movement rate (or +Reactor*2 for Air)
 Empath Song,           16, CentEmp,  Empath,    000010001111, +50% attack vs. Psi

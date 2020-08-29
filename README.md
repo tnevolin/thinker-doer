@@ -495,11 +495,11 @@ The Hunter-Seeker Algorithm prevents regular probe action but does not destroy i
 Inefficiency formula reworked. It uses "efficiency" as a complenetary measure for inefficiency.
 
 <pre>
-seEfficiencyRate = (4 + EFFICIENCY) / 8                         ;limited to [0; 1] interval
-hqEfficiencyRate = 1 - distance to HQ / (1.5 * map width / 4)   ;limited to [0; 1] interval
-efficiencyRate = seEfficiencyRate + hqEfficiencyRate            ;limited to [0; 1] interval
-efficiency = efficiencyRate * energy intake                     ;rounded up
-inefficiency = energy intake - efficiency                       ;effectivelly rounded down
+seEfficiencyRate = (4 + EFFICIENCY) / 8                          ;limited to [0; 1] interval
+hqEfficiencyRate = 1 - distance to HQ / (1.5 \* map width / 4)   ;limited to [0; 1] interval
+efficiencyRate = seEfficiencyRate + hqEfficiencyRate             ;limited to [0; 1] interval
+efficiency = efficiencyRate \* energy intake                     ;rounded up
+inefficiency = energy intake - efficiency
 </pre>
 
 # Miscelaneous
