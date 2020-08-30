@@ -1,10 +1,10 @@
 # Version 120
 
 * Experimental boost to specialists.
-  * Technician	4, 0, 0
-  * Librarian	0, 0, 4
-  * Engineer	5, 0, 1
-  * Thinker		0, 1, 5
+  * Technician  4, 0, 0
+  * Librarian   0, 0, 4
+  * Engineer    5, 0, 1
+  * Thinker     0, 1, 5
 
 # Version 119
 
