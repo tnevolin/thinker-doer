@@ -837,6 +837,11 @@ void populateLists()
 		unworkedTileYields[base] = std::vector<YIELD>();
 		std::vector<YIELD> *baseunworkedTileYields = &(unworkedTileYields[base]);
 
+		// set base
+		// that is needed because below functions require it and they are usually called in context where base is set already
+
+		tx_set_base(id);
+
 		for (int offsetIndex = 1; offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
 		{
 			int x = wrap(base->x + BASE_TILE_OFFSETS[offsetIndex][0]);
@@ -4826,6 +4831,11 @@ bool isInferiorImprovedTile(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *c
 	// apply changes
 
 	setMapState(mapInfo, improvedMapState);
+
+	// set base
+	// that is needed because below functions require it and they are usually called in context where base is set already
+
+	tx_set_base(id);
 
 	// compute tile yield
 

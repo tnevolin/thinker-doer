@@ -1,3 +1,7 @@
+# Version 119
+
+* [bug] Tile yield calculation didn't set base. That caused crash for collector + mirror when base is not set sometimes. Strangely it didn't bite me earlier.
+
 # Version 118
 
 * AAA bonus vs. air units = 50%.

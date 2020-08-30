@@ -1963,40 +1963,40 @@ Patch tile yield calculation.
 */
 void patch_tile_yield()
 {
-    // nutrient yield
-    write_call(0x00465DD6, (int)mod_nutrient_yield);
-    write_call(0x004B6C44, (int)mod_nutrient_yield);
-    write_call(0x004BCEEB, (int)mod_nutrient_yield);
-    write_call(0x004E7DE4, (int)mod_nutrient_yield);
-    write_call(0x004E7F04, (int)mod_nutrient_yield);
-    write_call(0x004E8034, (int)mod_nutrient_yield);
+	// nutrient yield
+	write_call(0x00465DD6, (int)mod_nutrient_yield);
+	write_call(0x004B6C44, (int)mod_nutrient_yield);
+	write_call(0x004BCEEB, (int)mod_nutrient_yield);
+	write_call(0x004E7DE4, (int)mod_nutrient_yield);
+	write_call(0x004E7F04, (int)mod_nutrient_yield);
+	write_call(0x004E8034, (int)mod_nutrient_yield);
 // this call is already patched by Thinker
 // Thinker code will delegate to mod_nutrient_yield instead of original function
-//    write_call(0x004E888C, (int)mod_nutrient_yield);
-    write_call(0x004E96F4, (int)mod_nutrient_yield);
-    write_call(0x004ED7F1, (int)mod_nutrient_yield);
-    write_call(0x00565878, (int)mod_nutrient_yield);
+//	write_call(0x004E888C, (int)mod_nutrient_yield);
+	write_call(0x004E96F4, (int)mod_nutrient_yield);
+	write_call(0x004ED7F1, (int)mod_nutrient_yield);
+	write_call(0x00565878, (int)mod_nutrient_yield);
 
-    // mineral yield
-    write_call(0x004B6E4F, (int)mod_mineral_yield);
-    write_call(0x004B6EF9, (int)mod_mineral_yield);
-    write_call(0x004B6F84, (int)mod_mineral_yield);
-    write_call(0x004E7E00, (int)mod_mineral_yield);
-    write_call(0x004E7F14, (int)mod_mineral_yield);
-    write_call(0x004E8044, (int)mod_mineral_yield);
-    write_call(0x004E88AC, (int)mod_mineral_yield);
-    write_call(0x004E970A, (int)mod_mineral_yield);
+	// mineral yield
+	write_call(0x004B6E4F, (int)mod_mineral_yield);
+	write_call(0x004B6EF9, (int)mod_mineral_yield);
+	write_call(0x004B6F84, (int)mod_mineral_yield);
+	write_call(0x004E7E00, (int)mod_mineral_yield);
+	write_call(0x004E7F14, (int)mod_mineral_yield);
+	write_call(0x004E8044, (int)mod_mineral_yield);
+	write_call(0x004E88AC, (int)mod_mineral_yield);
+	write_call(0x004E970A, (int)mod_mineral_yield);
 
-    // energy yield
-    write_call(0x004B7028, (int)mod_energy_yield);
-    write_call(0x004B7136, (int)mod_energy_yield);
-    write_call(0x004D3E5C, (int)mod_energy_yield);
-    write_call(0x004E7E1C, (int)mod_energy_yield);
-    write_call(0x004E7F24, (int)mod_energy_yield);
-    write_call(0x004E8054, (int)mod_energy_yield);
-    write_call(0x004E88CA, (int)mod_energy_yield);
-    write_call(0x004E971F, (int)mod_energy_yield);
-    write_call(0x0056C856, (int)mod_energy_yield);
+	// energy yield
+	write_call(0x004B7028, (int)mod_energy_yield);
+	write_call(0x004B7136, (int)mod_energy_yield);
+	write_call(0x004D3E5C, (int)mod_energy_yield);
+	write_call(0x004E7E1C, (int)mod_energy_yield);
+	write_call(0x004E7F24, (int)mod_energy_yield);
+	write_call(0x004E8054, (int)mod_energy_yield);
+	write_call(0x004E88CA, (int)mod_energy_yield);
+	write_call(0x004E971F, (int)mod_energy_yield);
+	write_call(0x0056C856, (int)mod_energy_yield);
 
 }
 
