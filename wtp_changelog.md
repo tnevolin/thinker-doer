@@ -1,10 +1,13 @@
 # Version 120
 
 * Experimental boost to specialists.
-  * Technician  4, 0, 0
-  * Librarian   0, 0, 4
-  * Engineer    5, 0, 1
-  * Thinker     0, 1, 5
+
+| specialist | output (eco,psy,lab) |
+| ---- | ---- |
+| Technician | 4, 0, 0 |
+| Engineer | 5, 0, 1 |
+| Librarian | 0, 0, 4 |
+| Thinker | 0, 1, 5 |
 
 # Version 119
 
