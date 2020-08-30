@@ -1,6 +1,14 @@
+# Version 120
+
+* Experimental boost to specialists.
+  * Technician	4, 0, 0
+  * Librarian	0, 0, 4
+  * Engineer	5, 0, 1
+  * Thinker		0, 1, 5
+
 # Version 119
 
-* [bug] Tile yield calculation didn't set base. That caused crash for collector + mirror when base is not set sometimes. Strangely it didn't bite me earlier.
+* [bug] Tile yield calculation didn't set base. That caused crash for tile yield computation with collector on it and adjacent mirror when base is not set sometimes. Strangely it didn't bite me earlier.
 
 # Version 118
 

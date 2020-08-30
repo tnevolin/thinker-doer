@@ -857,12 +857,12 @@ Labs,  Laboratories,
 ;
 
 #CITIZENS
-Technician,       Technicians,         None,    Quantum, 3, 0, 0, 0000000
+Technician,       Technicians,         None,    Quantum, 4, 0, 0, 0000000
 Doctor,           Doctors,             None,    CentMed, 0, 2, 0, 0000000
-Librarian,        Librarians,          PlaNets, Subat,   0, 0, 3, 0000000
-Engineer,         Engineers,           Quantum, Disable, 3, 0, 2, 0000000
+Librarian,        Librarians,          PlaNets, Subat,   0, 0, 4, 0000000
+Engineer,         Engineers,           Quantum, Disable, 5, 0, 1, 0000000
 Empath,           Empathi,             CentMed, AlphCen, 2, 2, 0, 0000000
-Thinker,          Thinkers,            Create,  Disable, 0, 1, 4, 0000000
+Thinker,          Thinkers,            Create,  Disable, 0, 1, 5, 0000000
 Transcend,        Transcendi,          AlphCen, Disable, 2, 2, 2, 0000000
 Drone,            Drones,
 Worker,           Workers,
