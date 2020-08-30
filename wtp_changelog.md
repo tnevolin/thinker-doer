@@ -2,7 +2,7 @@
 
 * Experimental boost to specialists.
 
-| specialist | output (eco,psy,lab) |
+| specialist | output |
 | ---- | ---- |
 | Technician | 4, 0, 0 |
 | Engineer | 5, 0, 1 |
