@@ -1338,7 +1338,11 @@ nutrient yield calculation
 */
 HOOK_API int mod_nutrient_yield(int factionId, int baseId, int x, int y, int tf)
 {
+	// call original function
+
     int value = crop_yield(factionId, baseId, x, y, tf);
+
+    // get map tile
 
     MAP* tile = getMapTile(x, y);
 
@@ -1371,6 +1375,8 @@ mineral yield calculation
 */
 HOOK_API int mod_mineral_yield(int factionId, int baseId, int x, int y, int tf)
 {
+	// call original function
+
     int value = mineral_yield(factionId, baseId, x, y, tf);
 
     return value;
@@ -1382,6 +1388,8 @@ energy yield calculation
 */
 HOOK_API int mod_energy_yield(int factionId, int baseId, int x, int y, int tf)
 {
+	// call original function
+
     int value = energy_yield(factionId, baseId, x, y, tf);
 
     return value;
