@@ -1,3 +1,8 @@
+# Version 121
+
+* SE reworked a little.\
+http://alphacentauri2.info/wiki/Social_Engineering_Mod
+
 # Version 120
 
 * Experimental boost to specialists.

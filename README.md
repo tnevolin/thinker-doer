@@ -71,6 +71,11 @@ I have selected primary features based on my own understanding of their importan
 
 Keep in mind that technology prerequisites are generally arbitrary and serve as interlevel relations only. Preserving some beelines is an option but not a primary concern. I welcome any suggestions about rearranging and relinking technology tree to match game lore.
 
+# Social Engineering
+
+Modding Social Engineering is the project in itself. There is no right and wrong answer on that. However, I expressed my view in the article here that also contains references to contemporary updates with explanations.
+http://alphacentauri2.info/wiki/Social_Engineering_Mod
+
 # Combat related stuff
 
 ## Attack/defense ratio adjustment
