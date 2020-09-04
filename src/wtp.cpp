@@ -2359,3 +2359,63 @@ void distributeSupport(int factionId)
 
 }
 
+/*
+Overrides world_build.
+*/
+HOOK_API void modifiedWorldBuild()
+{
+	// execute originial function
+
+	tx_world_build();
+
+	// modify ocean depth
+
+	if (conf.ocean_depth_multiplier != 1.0)
+	{
+		debug("modify ocean depth %d\n", *map_area_tiles)
+
+		for (int i = 0; i < *map_area_tiles; i++)
+		{
+			MAP *tile = &((*tx_map_ptr)[i]);
+
+			// process only ocean
+
+			if (!is_ocean(tile))
+				continue;
+
+			// calculate level and altitude
+
+			int oldLevel = tile->level & 0xE0;
+			int oldLevelIndex = oldLevel >> 5;
+			int oldAltitude = tile->altitude;
+			int oldAltitudeM = 50 * (tile->altitude - 60);
+			int oldAltitudeLevelIndex = oldAltitude / 20;
+
+			// modify altitude and level
+
+			int newAltitudeM = (int)floor(conf.ocean_depth_multiplier * (double)oldAltitudeM);
+			int newAltitude = newAltitudeM / 50 + 60;
+			int newAltitudeLevelIndex = newAltitude / 20;
+			int newLevelIndex = newAltitudeLevelIndex;
+			int newLevel = newLevelIndex << 5;
+
+			// update map
+
+			tile->level = (tile->level & ~0xE0) | newLevel;
+			tile->altitude = newAltitude;
+
+			debug("[%4d] %d, %3d, %5d -> %d, %3d, %5d\n", i, oldLevelIndex, oldAltitude, oldAltitudeM, newLevelIndex, newAltitude, newAltitudeM);
+
+			if (oldAltitudeLevelIndex != oldLevelIndex)
+			{
+				debug("\toldAltitudeLevelIndex and oldLevelIndex do not match.\n");
+			}
+
+		}
+
+		debug("\n")
+
+	}
+
+}
+

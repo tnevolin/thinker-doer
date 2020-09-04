@@ -2478,6 +2478,18 @@ void patch_recycling_tanks_not_disabled_by_pressure_dome()
 
 }
 
+/*
+Overrides world_build.
+*/
+void patch_world_build()
+{
+	write_call(0x004E1061, (int)modifiedWorldBuild);
+	write_call(0x004E113B, (int)modifiedWorldBuild);
+	write_call(0x0058B9BF, (int)modifiedWorldBuild);
+	write_call(0x0058DDD8, (int)modifiedWorldBuild);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -2991,6 +3003,7 @@ bool patch_setup(Config* cf) {
 		patch_recycling_tanks_not_disabled_by_pressure_dome();
 	}
 
+	patch_world_build();
 
 
     // continue with original Thinker checks
