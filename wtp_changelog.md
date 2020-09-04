@@ -1,3 +1,7 @@
+# Version 122
+
+* Ocean tiles depth is modified upon world build. Configuration option: ocean_depth_multiplier.
+
 # Version 121
 
 * SE reworked a little.\

@@ -152,6 +152,7 @@ double getVehicleSpeedWithoutRoads(int id);
 double getLandVehicleSpeedOnRoads(int id);
 double getLandVehicleSpeedOnTubes(int id);
 void distributeSupport(int factionId);
+HOOK_API void modifiedWorldBuild();
 
 #endif // __PROTOTYPE_H__
 

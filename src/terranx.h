@@ -130,4 +130,5 @@ extern fp_3int *tx_has_fac;
 extern fp_1int *tx_black_market;
 extern fp_3void *tx_setup_player;
 extern fp_0void *tx_balance;
+extern fp_0void *tx_world_build;
 

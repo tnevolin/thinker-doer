@@ -165,3 +165,6 @@ fp_3void *tx_setup_player = (fp_3void *)0x005B0E00;
 // balances game by giving extra colony
 fp_0void *tx_balance = (fp_0void *)0x005B0420;
 
+// map initialization
+fp_0void *tx_world_build = (fp_0void *)0x005C86E0;
+
