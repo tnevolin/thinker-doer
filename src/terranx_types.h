@@ -569,7 +569,7 @@ struct R_Social {
     int   soc_preq_tech[4];	//0x0004
     char* soc_name[4];		//0x0014
     int   effects[4][11];	//0x0024
-};
+};							//0x00D4
 
 struct R_Facility {
     char* name;

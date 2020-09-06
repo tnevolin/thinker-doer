@@ -28,11 +28,11 @@
 ;
 #RULES
 3,       ; Movement rate along roads
-2,       ; Nutrient intake requirement for citizens
+1,       ; Nutrient intake requirement for citizens
 3,2      ; Numerator & Denominator for artillery fire damage
 2,       ; Max artillery range (larger will break multiplayer)
 8,       ; Max airdrop range w/o orbital insertion
-10,      ; Nutrient cost multiplier
+15,      ; Nutrient cost multiplier
 10,      ; Minerals cost multiplier
 100,     ; Technology discovery rate as a percentage of standard
 1,       ; Limits mineral increase for mine without road in square
@@ -152,7 +152,7 @@ Monolith,         Disable, Monolith,         Disable,  8,  Place Monolith,  ?, ?
 ;
 #RESOURCEINFO
 Ocean Square,     1, 0, 0, 0,
-Base Square,      2, 1, 1, 0,
+Base Square,      1, 1, 1, 0,
 Bonus Square,     2, 2, 2, 0, * Mineral +1 if mine present
 Forest Square,    1, 2, 1, 0,
 Recycling Tanks,  0, 0, 0, 0,

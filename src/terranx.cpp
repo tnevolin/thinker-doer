@@ -168,3 +168,6 @@ fp_0void *tx_balance = (fp_0void *)0x005B0420;
 // map initialization
 fp_0void *tx_world_build = (fp_0void *)0x005C86E0;
 
+// don't exactly know
+fp_3int *tx_order_veh = (fp_3int *)0x005947C0;
+

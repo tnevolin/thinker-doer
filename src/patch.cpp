@@ -2490,6 +2490,15 @@ void patch_world_build()
 
 }
 
+/*
+Overrides check for frendly unit in target tile.
+*/
+void patch_zoc_move_to_friendly_unit_tile_check()
+{
+	write_call(0x005948E5, (int)modifiedZocMoveToFriendlyUnitTileCheck);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3004,6 +3013,11 @@ bool patch_setup(Config* cf) {
 	}
 
 	patch_world_build();
+
+	if (cf->zoc_move_to_friendly_unit_tile_disabled)
+	{
+		patch_zoc_move_to_friendly_unit_tile_check();
+	}
 
 
     // continue with original Thinker checks

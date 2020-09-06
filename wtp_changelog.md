@@ -1,3 +1,14 @@
+# Version 124
+
+* Unit cannot ignore ZoC moving to the tile occupied by friendly unit. Configuration option: zoc_move_to_friendly_unit_tile_disabled.
+
+# Version 123
+
+* Experimental nutrient balance version.
+  * 1,       ; Nutrient intake requirement for citizens
+  * 15,      ; Nutrient cost multiplier
+  * Base Square,      1, 1, 1, 0,
+
 # Version 122
 
 * Ocean tiles depth is modified upon world build. Configuration option: ocean_depth_multiplier.

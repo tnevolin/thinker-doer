@@ -168,7 +168,7 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
             MAP *defender_location = mapsq(defender_vehicle->x, defender_vehicle->y);
 
-            // get defender territory owner
+            // get defender location owner
 
             int defender_location_owner = (int)defender_location->owner;
 
@@ -2416,6 +2416,57 @@ HOOK_API void modifiedWorldBuild()
 		debug("\n")
 
 	}
+
+}
+
+/*
+Overrides ZOC move to friendly unit tile check.
+*/
+HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
+{
+	// execute original function
+
+	int value = tx_veh_at(x, y);
+
+	// modify behavior if instructed by configuration
+
+	if (conf.zoc_move_to_friendly_unit_tile_disabled)
+	{
+		// find if there are non friendly vehicles at location
+
+		bool nonFriendlyUnitsAtLocation = false;
+
+		for (int id = 0; id < *total_num_vehicles; id++)
+		{
+			VEH *vehicle = &(tx_vehicles[id]);
+
+			// only vehicles located in target tile
+
+			if (!(vehicle->x == x && vehicle->y == y))
+				continue;
+
+			// check vehicle is non friendly
+
+			if (vehicle->faction_id != *active_faction && ~tx_factions[*active_faction].diplo_status[vehicle->faction_id] & DIPLO_PACT)
+			{
+				nonFriendlyUnitsAtLocation = true;
+				break;
+			}
+
+		}
+
+		// create original function return value if there are no non friendly units in tile
+
+		if (!nonFriendlyUnitsAtLocation)
+		{
+			value = -1;
+		}
+
+	}
+
+	// return value
+
+	return value;
 
 }
 
