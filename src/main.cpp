@@ -285,6 +285,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ocean_depth_multiplier = atof(value);
     }
+    else if (MATCH("wtp", "zoc_move_to_friendly_unit_tile_disabled"))
+    {
+        cf->zoc_move_to_friendly_unit_tile_disabled = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

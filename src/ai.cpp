@@ -33,14 +33,14 @@ AI strategy.
 */
 void aiStrategy(int id)
 {
+	// set faction
+
+	aiFactionId = id;
+
 	// no natives
 
 	if (id == 0)
 		return;
-
-	// set faction
-
-	aiFactionId = id;
 
 	// use WTP algorithm for selected faction only
 
