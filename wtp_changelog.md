@@ -1,4 +1,8 @@
-# Version 126
+# Version 128
+
+* Returned -1 Nutrient effect in mine square. This is in addition to nutrient balance. Otherwise some landmark mines produce too much nutrients.
+
+# Version 127
 
 * Further refinement to ZoC rule. Unit ignores ZoC only if target tile is occupied by own/pact unit that does not ignore ZoC by itself: probe, cloaked, air.
 

@@ -36,7 +36,7 @@
 10,      ; Minerals cost multiplier
 100,     ; Technology discovery rate as a percentage of standard
 1,       ; Limits mineral increase for mine without road in square
-0,       ; Nutrient effect in mine square (0 or -1)
+-1,      ; Nutrient effect in mine square (0 or -1)
 5,       ; Minimum base size to support specialists
 1,       ; Drones induced by Genejack factory
 7,       ; Population limit w/o hab complex
