@@ -1,3 +1,7 @@
+# Version 125
+
+* Returned Cloaking device into game: cost = 2, enabled by Quantum Computers.
+
 # Version 124
 
 * Unit cannot ignore ZoC moving to the tile occupied by friendly unit. Configuration option: zoc_move_to_friendly_unit_tile_disabled.
