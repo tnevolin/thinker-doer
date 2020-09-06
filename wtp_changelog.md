@@ -1,5 +1,9 @@
 # Version 126
 
+* Further refinement to ZoC rule. Unit ignores ZoC only if target tile is occupied by own/pact unit that does not ignore ZoC by itself: probe, cloaked, air.
+
+# Version 126
+
 * Experimental nutrient balance version #2.
   * Citizen nutrient intake = 2. Reverted to vanilla.
   * Farm nutrient bonus = 2 (both land and ocean).

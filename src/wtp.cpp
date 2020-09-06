@@ -2428,38 +2428,80 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
 
 	int value = tx_veh_at(x, y);
 
-	// modify behavior if instructed by configuration
+	// process only land tiles
 
-	if (conf.zoc_move_to_friendly_unit_tile_disabled)
+	if (!is_ocean(getMapTile(x, y)))
 	{
-		// find if there are non friendly vehicles at location
+		// modify behavior if instructed by configuration
 
-		bool nonFriendlyUnitsAtLocation = false;
-
-		for (int id = 0; id < *total_num_vehicles; id++)
+		if (conf.zoc_move_to_friendly_unit_tile_disabled)
 		{
-			VEH *vehicle = &(tx_vehicles[id]);
+			// search for any unit in target tile disabling ZoC rule
+			// 1. own/pact unit except those ignoring ZoC by themselves (probe, cloaked, air)
+			// 2. any non-friendly
 
-			// only vehicles located in target tile
+			bool disableZOCRule = false;
 
-			if (!(vehicle->x == x && vehicle->y == y))
-				continue;
-
-			// check vehicle is non friendly
-
-			if (vehicle->faction_id != *active_faction && ~tx_factions[*active_faction].diplo_status[vehicle->faction_id] & DIPLO_PACT)
+			for (int id = 0; id < *total_num_vehicles; id++)
 			{
-				nonFriendlyUnitsAtLocation = true;
-				break;
+				VEH *vehicle = &(tx_vehicles[id]);
+
+				// only vehicles located in target tile
+
+				if (!(vehicle->x == x && vehicle->y == y))
+					continue;
+
+				// own/pact
+				if (vehicle->faction_id == *active_faction || tx_factions[*active_faction].diplo_status[vehicle->faction_id] & DIPLO_PACT)
+				{
+					// transport disables ZoC rule
+
+					if (isVehicleTransport(vehicle))
+					{
+						disableZOCRule = true;
+						break;
+					}
+
+					// probe does not disable ZoC rule
+
+					else if (isVehicleProbe(vehicle))
+						continue;
+
+					// cloaked unit does not disable ZoC rule
+
+					else if (vehicle_has_ability(vehicle, ABL_CLOAKED))
+						continue;
+
+					// air unit does not disable ZoC rule
+
+					else if (veh_triad(id) == TRIAD_AIR)
+						continue;
+
+					// any other unit disables ZoC rule
+
+					else
+					{
+						disableZOCRule = true;
+						break;
+					}
+
+				}
+				// non friendly unit disables ZoC rule
+				else
+				{
+					disableZOCRule = true;
+					break;
+				}
+
 			}
 
-		}
+			// clear original function return value if there are no units disabling ZoC rule
 
-		// create original function return value if there are no non friendly units in tile
+			if (!disableZOCRule)
+			{
+				value = -1;
+			}
 
-		if (!nonFriendlyUnitsAtLocation)
-		{
-			value = -1;
 		}
 
 	}
