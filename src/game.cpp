@@ -1226,6 +1226,16 @@ bool isVehicleFormer(VEH *vehicle)
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_TERRAFORMING_UNIT);
 }
 
+bool isVehicleTransport(VEH *vehicle)
+{
+	return (tx_units[vehicle->proto_id].weapon_type == WPN_TROOP_TRANSPORT);
+}
+
+bool isVehicleProbe(VEH *vehicle)
+{
+	return (tx_units[vehicle->proto_id].weapon_type == WPN_PROBE_TEAM);
+}
+
 void computeBase(int baseId)
 {
 	tx_set_base(baseId);
