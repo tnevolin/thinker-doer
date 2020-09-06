@@ -1,3 +1,12 @@
+# Version 126
+
+* Experimental nutrient balance version #2.
+  * 2,       ; Nutrient intake requirement for citizens
+  * Improved Land,    **2**, *, *, 0, "*" columns are ignored entirely
+  * Improved Sea,     **3**, 1, 3, 0, * Mineral +1 with Advanced Ecological Engineering
+  * **15**,      ; Nutrient cost multiplier
+  * Base Square,      **1**, 1, 1, 0,
+
 # Version 125
 
 * Returned Cloaking device into game: cost = 2, enabled by Quantum Computers.
