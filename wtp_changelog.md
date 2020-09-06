@@ -1,11 +1,10 @@
 # Version 126
 
 * Experimental nutrient balance version #2.
-  * 2,       ; Nutrient intake requirement for citizens
-  * Improved Land,    **2**, *, *, 0, "*" columns are ignored entirely
-  * Improved Sea,     **3**, 1, 3, 0, * Mineral +1 with Advanced Ecological Engineering
-  * **15**,      ; Nutrient cost multiplier
-  * Base Square,      **1**, 1, 1, 0,
+  * Citizen nutrient intake = 2. Reverted to vanilla.
+  * Farm nutrient bonus = 2 (both land and ocean).
+  * Nutrient cost multiplier = 15.
+  * Base Square produces 1 nutrient.
 
 # Version 125
 
