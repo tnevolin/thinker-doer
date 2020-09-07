@@ -1,3 +1,11 @@
+# Version 129
+
+* Experimental nutrient balance version #3.
+  * Citizen nutrient intake = 2. Reverted to vanilla.
+  * Farm nutrient bonus = 2 (both land and ocean).
+  * Nutrient cost multiplier = 15.
+  * Base Square produces 2 nutrients.
+
 # Version 128
 
 * Returned -1 Nutrient effect in mine square. This is in addition to nutrient balance. Otherwise some landmark mines produce too much nutrients.

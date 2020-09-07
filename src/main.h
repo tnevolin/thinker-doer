@@ -161,7 +161,7 @@ struct Config {
     bool alternative_inefficiency = false;
     int unit_home_base_reassignment_production_threshold = 0;
     double ocean_depth_multiplier = 1.0;
-    bool zoc_move_to_friendly_unit_tile_disabled = false;
+    bool zoc_regular_army_sneaking_disabled = false;
     bool ai_useWTPAlgorithms;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
