@@ -152,7 +152,7 @@ Monolith,         Disable, Monolith,         Disable,  8,  Place Monolith,  ?, ?
 ;
 #RESOURCEINFO
 Ocean Square,     1, 0, 0, 0,
-Base Square,      1, 1, 1, 0,
+Base Square,      2, 1, 1, 0,
 Bonus Square,     2, 2, 2, 0, * Mineral +1 if mine present
 Forest Square,    1, 2, 1, 0,
 Recycling Tanks,  0, 0, 0, 0,

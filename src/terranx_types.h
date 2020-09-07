@@ -96,19 +96,19 @@ struct UNIT {
 };
 
 struct VEH {
-    short x;
-    short y;
-    int state;
-    short flags;
-    short proto_id;
-    short pad_0; // unused
-    char faction_id;
-    char year_end_lurking;
-    char damage_taken;
-    char move_status;
-    char waypoint_count;
-    char patrol_current_point;
-    short waypoint_1_x;
+    short x;						// 0x0000
+    short y;						// 0x0002
+    int state;						// 0x0004
+    short flags;					// 0x0008
+    short proto_id;					// 0x000A
+    short pad_0; // unused			// 0x000C
+    char faction_id;				// 0x000E
+    char year_end_lurking;			// 0x000F
+    char damage_taken;				// 0x0010
+    char move_status;				// 0x0011
+    char waypoint_count;			// 0x0012
+    char patrol_current_point;		// 0x0013
+    short waypoint_1_x;				// 0x0014
     short waypoint_2_x;
     short waypoint_3_x;
     short waypoint_4_x;
@@ -116,10 +116,10 @@ struct VEH {
     short waypoint_2_y;
     short waypoint_3_y;
     short waypoint_4_y;
-    char morale;
-    char terraforming_turns;
-    char type_crawling;
-    byte visibility;
+    char morale;					// 0x0024
+    char terraforming_turns;		// 0x0025
+    char type_crawling;				// 0x0026
+    byte visibility;				// 0x0027
     char road_moves_spent;
     char unk_1;
     char iter_count;

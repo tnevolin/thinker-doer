@@ -3014,7 +3014,7 @@ bool patch_setup(Config* cf) {
 
 	patch_world_build();
 
-	if (cf->zoc_move_to_friendly_unit_tile_disabled)
+	if (cf->zoc_regular_army_sneaking_disabled)
 	{
 		patch_zoc_move_to_friendly_unit_tile_check();
 	}

@@ -2434,7 +2434,7 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
 	{
 		// modify behavior if instructed by configuration
 
-		if (conf.zoc_move_to_friendly_unit_tile_disabled)
+		if (conf.zoc_regular_army_sneaking_disabled)
 		{
 			// search for any unit in target tile disabling ZoC rule
 			// 1. own/pact unit except those ignoring ZoC by themselves (probe, cloaked, air)
