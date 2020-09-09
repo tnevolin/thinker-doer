@@ -48,6 +48,7 @@ typedef void __cdecl fp_1void(int);
 typedef void __cdecl fp_2void(int, int);
 typedef void __cdecl fp_3void(int, int, int);
 typedef void __cdecl fp_4void(int, int, int, int);
+typedef void __cdecl fp_5void(int, int, int, int, int);
 typedef int __cdecl fp_void();
 typedef int __cdecl fp_0int();
 typedef int __cdecl fp_1int(int);

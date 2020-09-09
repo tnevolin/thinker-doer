@@ -1,3 +1,11 @@
+# Version 130
+
+* AI base production and unit movement adjustment.
+  * Base tries to build native protection if insufficient.
+  * Unit in the base tries to hold to maintain native protection.
+  * Base tries to build colonies if there is room for colonization.
+* [bug] Battle status summary alignment messes up with Hasty and Gas modifiers. Feature removed.
+
 # Version 129
 
 * Experimental nutrient balance version #3.

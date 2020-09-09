@@ -293,6 +293,30 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "ai_production_min_native_protection"))
+    {
+        cf->ai_production_min_native_protection = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_max_native_protection"))
+    {
+        cf->ai_production_max_native_protection = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_native_protection_priority_multiplier"))
+    {
+        cf->ai_production_native_protection_priority_multiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_max_unpopulated_range"))
+    {
+        cf->ai_production_max_unpopulated_range = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_production_min_unpopulated_tiles"))
+    {
+        cf->ai_production_min_unpopulated_tiles = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_production_colony_priority"))
+    {
+        cf->ai_production_colony_priority = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
         cf->ai_terraforming_nutrientWeight = atof(value);
@@ -453,11 +477,16 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
     }
 
     // do not override production choice for not AI enabled factions
+
 	if (!ai_enabled(faction))
 	{
         debug("skipping computer base\n");
         return tx_base_prod_choices(id, v1, v2, v3);
     }
+
+    // store base production done flag
+
+    bool baseProductionDone = (base->status_flags & BASE_PRODUCTION_DONE);
 
 	tx_set_base(id);
 	tx_base_compute(1);
@@ -466,10 +495,6 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
 	} else if (base->status_flags & BASE_PRODUCTION_DONE || prod == -FAC_STOCKPILE_ENERGY) {
 
 		choice = select_prod(id);
-
-		// [WTP] production choice
-
-		choice = suggestBaseProduction(id, choice);
 
 		base->status_flags &= ~BASE_PRODUCTION_DONE;
 
@@ -505,6 +530,10 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
     choice = refitToGrowthFacility(id, base, choice);
 
     fflush(debug_log);
+
+	// [WTP] production choice
+
+	choice = suggestBaseProduction(id, baseProductionDone, choice);
 
     return choice;
 
@@ -916,10 +945,19 @@ int need_psych(int id) {
     int unit = unit_in_tile(mapsq(b->x, b->y));
     Faction* f = &tx_factions[faction];
 
-	// calculate number of drones quelled by doctor/empath/transcend
-	// this will be added to total number of drones to determine need for psych facility
+    if (unit != faction || b->nerve_staple_turns_left > 0 || has_project(faction, FAC_TELEPATHIC_MATRIX))
+	{
+        return 0;
+	}
 
-	int doctorQuelledDrones = getDoctorQuelledDrones(id);
+	// get base doctors
+
+	int doctors = getDoctors(id);
+
+	// do not build psych facility until there are drones or doctors
+
+	if (b->drone_total == 0 && doctors == 0)
+		return 0;
 
 	// calculate current production time and extra population grown by that time
 	// this extra population also will be added to drones to determine need for psych facility
@@ -930,9 +968,9 @@ int need_psych(int id) {
 	int nutrientBoxSize = (b->pop_size + 1) * tx_cost_factor(faction, 0, id);
 	int extraPopulation = nutrientProduced / nutrientBoxSize;
 
-    if (unit != faction || b->nerve_staple_turns_left > 0 || has_project(faction, FAC_TELEPATHIC_MATRIX))
-        return 0;
-    if ((b->drone_total + doctorQuelledDrones + extraPopulation) > b->talent_total) {
+	// consider building psych facility if there are doctors or drones will outnumber talents soon
+
+    if (doctors > 0 || (b->drone_total + extraPopulation) > b->talent_total) {
         if (b->nerve_staple_count < 3 && !un_charter() && f->SE_police >= 0 && b->pop_size >= 4
         && b->faction_id_former == faction) {
             tx_action_staple(id);

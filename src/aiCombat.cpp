@@ -30,6 +30,103 @@ Composes anti-native combat strategy.
 */
 void aiNativeCombatStrategy()
 {
+	// protect bases
+
+	for (int id : baseIds)
+	{
+		BASE *base = &(tx_bases[id]);
+		BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
+
+		// maintain native protection
+
+		double totalNativeProtection = 0.0;
+
+		// police x2
+
+		for (int vehicleId : baseStrategy->garrison)
+		{
+			VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+			// only police x2
+
+			if (!vehicle_has_ability(vehicle, ABL_POLICE_2X))
+				continue;
+
+			// vehicle native protection
+
+			double nativeProtection = estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+
+			// update total
+
+			totalNativeProtection += nativeProtection;
+
+			// check if vehicle is needed
+
+			if (totalNativeProtection < conf.ai_production_max_native_protection)
+			{
+				setDefendOrder(vehicleId, base->x, base->y);
+			}
+
+		}
+
+		// trance
+
+		for (int vehicleId : baseStrategy->garrison)
+		{
+			VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+			// only trance
+
+			if (!vehicle_has_ability(vehicle, ABL_TRANCE))
+				continue;
+
+			// vehicle native protection
+
+			double nativeProtection = estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+
+			// update total
+
+			totalNativeProtection += nativeProtection;
+
+			// check if vehicle is needed
+
+			if (totalNativeProtection < conf.ai_production_max_native_protection)
+			{
+				setDefendOrder(vehicleId, base->x, base->y);
+			}
+
+		}
+
+		// scout patrols
+
+		for (int vehicleId : baseStrategy->garrison)
+		{
+			VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+			// only scout patrols
+
+			if (vehicle->proto_id != BSC_SCOUT_PATROL)
+				continue;
+
+			// vehicle native protection
+
+			double nativeProtection = estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+
+			// update total
+
+			totalNativeProtection += nativeProtection;
+
+			// check if vehicle is needed
+
+			if (totalNativeProtection < conf.ai_production_max_native_protection)
+			{
+				setDefendOrder(vehicleId, base->x, base->y);
+			}
+
+		}
+
+	}
+
 	// check native artillery
 
 	for (int id = 0; id < *total_num_vehicles; id++)
@@ -187,19 +284,13 @@ int enemyMoveCombat(int id)
 
 	int aiVehicleId = vehicle->pad_0;
 
-	if (aiVehicleId != id)
-	{
-		debug("Vehicle ID changed: aiVehicleId = %3d, id = %3d\n", aiVehicleId, id);
-	}
+	debug("[%d->%d] (%3d,%3d)\n", aiVehicleId, id, vehicle->x, vehicle->y);
 
 	// find vehicle order
 
 	std::unordered_map<int, COMBAT_ORDER>::iterator combatOrdersIterator = combatOrders.find(aiVehicleId);
 
 	// skip vehicles without orders
-
-	debug("[%d->%d] (%3d,%3d)\n", aiVehicleId, id, vehicle->x, vehicle->y);
-	fflush(debug_log);
 
 	if (combatOrdersIterator == combatOrders.end())
 		return tx_enemy_move(id);
@@ -216,6 +307,10 @@ int enemyMoveCombat(int id)
 
 int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
 {
+	if (combatOrder->defendX != -1 && combatOrder->defendY != -1)
+	{
+		return applyDefendOrder(id, combatOrder->defendX, combatOrder->defendY);
+	}
 	if (combatOrder->enemyAIId != -1)
 	{
 		return applyAttackOrder(id, combatOrder);
@@ -224,6 +319,31 @@ int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
 	{
 		return tx_enemy_move(id);
 	}
+
+}
+
+int applyDefendOrder(int id, int x, int y)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+
+	// at destination
+
+	if (vehicle->x == x && vehicle->y == y)
+	{
+		// hold position
+
+		setVehicleOrder(id, ORDER_HOLD);
+
+	}
+
+	// not at destination
+
+	else
+	{
+		set_move_to(id, x, y);
+	}
+
+	return SYNC;
 
 }
 
@@ -246,6 +366,17 @@ int applyAttackOrder(int id, COMBAT_ORDER *combatOrder)
 	// set move to order
 
 	return set_move_to(id, enemyVehicle->x, enemyVehicle->y);
+
+}
+
+void setDefendOrder(int id, int x, int y)
+{
+	if (combatOrders.find(id) == combatOrders.end())
+	{
+		combatOrders[id] = {};
+		combatOrders[id].defendX = x;
+		combatOrders[id].defendY = y;
+	}
 
 }
 

@@ -3,9 +3,11 @@
 #include "ai.h"
 #include "engine.h"
 
-FACTION_INFO factionInfos[8];
 std::map<int, double> unitTypeProductionDemands;
-std::unordered_set<int> bestProductionBaseIds;
+std::set<int> bestProductionBaseIds;
+std::map<int, std::map<int, double>> unitDemands;
+std::map<int, PRODUCTION_DEMAND> productionDemands;
+std::map<int, PRODUCTION_CHOICE> productionChoices;
 
 /*
 Prepares production orders.
@@ -16,9 +18,21 @@ void aiProductionStrategy()
 
 	populateProducitonLists();
 
+	// calculate protection demand
+
+	calculateNativeProtectionDemand();
+
+	// calculate expansion demand
+
+	calculateExpansionDemand();
+
 	// calculate defender demand
 
 	calculateConventionalDefenseDemand();
+
+	// sort production demands
+
+	setProductionChoices();
 
 }
 
@@ -26,81 +40,9 @@ void populateProducitonLists()
 {
 	unitTypeProductionDemands.clear();
 	bestProductionBaseIds.clear();
-
-	// populate factions combat modifiers
-
-	debug("%-24s\nfactionCombatModifiers:\n", tx_metafactions[aiFactionId].noun_faction);
-
-	for (int id = 1; id < 8; id++)
-	{
-		// store combat modifiers
-
-		factionInfos[id].conventionalOffenseMultiplier = getFactionConventionalOffenseMultiplier(id);
-		factionInfos[id].conventionalDefenseMultiplier = getFactionConventionalDefenseMultiplier(id);
-
-		debug("\t%-24s: conventionalOffenseMultiplier=%4.2f, conventionalDefenseMultiplier=%4.2f\n", tx_metafactions[id].noun_faction, factionInfos[id].conventionalOffenseMultiplier, factionInfos[id].conventionalDefenseMultiplier);
-
-	}
-
-	debug("\n");
-
-	// populate other factions threat koefficients
-
-	debug("%-24s\notherFactionThreatKoefficients:\n", tx_metafactions[aiFactionId].noun_faction);
-
-	for (int id = 1; id < 8; id++)
-	{
-		// skip self
-
-		if (id == aiFactionId)
-			continue;
-
-		// get relation from other faction
-
-		int otherFactionRelation = tx_factions[id].diplo_status[aiFactionId];
-
-		// calculate threat koefficient
-
-		double threatKoefficient;
-
-		if (otherFactionRelation & DIPLO_VENDETTA)
-		{
-			threatKoefficient = 1.00;
-		}
-		else if (otherFactionRelation & DIPLO_TRUCE)
-		{
-			threatKoefficient = 0.50;
-		}
-		else if (otherFactionRelation & DIPLO_TREATY)
-		{
-			threatKoefficient = 0.25;
-		}
-		else if (otherFactionRelation & DIPLO_PACT)
-		{
-			threatKoefficient = 0.00;
-		}
-		else
-		{
-			// no commlink or unknown status
-			threatKoefficient = 0.50;
-		}
-
-		// add extra for treacherous human player
-
-		if (is_human(id))
-		{
-			threatKoefficient += 0.50;
-		}
-
-		// store threat koefficient
-
-		factionInfos[id].threatKoefficient = threatKoefficient;
-
-		debug("\t%-24s: %08x => %4.2f\n", tx_metafactions[id].noun_faction, otherFactionRelation, threatKoefficient);
-
-	}
-
-	debug("\n");
+	unitDemands.clear();
+	productionDemands.clear();
+	productionChoices.clear();
 
 	// calculate average base production
 
@@ -125,6 +67,194 @@ void populateProducitonLists()
 		if (base->mineral_surplus_final >= averageBaseProduction)
 		{
 			bestProductionBaseIds.insert(id);
+		}
+
+	}
+
+}
+
+/*
+Calculates need for bases protection against natives.
+*/
+void calculateNativeProtectionDemand()
+{
+	for (int id : baseIds)
+	{
+		BASE *base = &(tx_bases[id]);
+		BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
+
+		// calculate current native protection
+
+		double totalNativeProtection = 0.0;
+
+		for (int vehicleId : baseStrategy->garrison)
+		{
+			totalNativeProtection += estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+		}
+
+		// add currently built purely defensive vehicle to protection
+
+		if (base->queue_items[0] >= 0 && isCombatVehicle(base->queue_items[0]) && tx_weapon[tx_units[base->queue_items[0]].weapon_type].offense_value == 1)
+		{
+			totalNativeProtection += estimateUnitBaseLandNativeProtection(base->faction_id, base->queue_items[0]);
+		}
+
+		// add protection demand
+
+		int item = findStrongestNativeDefensePrototype(base->faction_id);
+
+		if (totalNativeProtection < conf.ai_production_min_native_protection)
+		{
+			addProductionDemand(id, true, item, 1.0);
+		}
+		else if (totalNativeProtection < conf.ai_production_max_native_protection)
+		{
+			double protectionPriority = conf.ai_production_native_protection_priority_multiplier * (conf.ai_production_max_native_protection - totalNativeProtection) / (conf.ai_production_max_native_protection - conf.ai_production_min_native_protection);
+			addProductionDemand(id, false, item, protectionPriority);
+		}
+
+	}
+
+}
+
+/*
+Calculates need for colonies.
+*/
+void calculateExpansionDemand()
+{
+	// calculate unpopulated tiles per region
+
+	std::map<int, int> unpopulatedTileCounts;
+
+	for (int x = 0; x < *map_axis_x; x++)
+	{
+		for (int y = 0; y < *map_axis_y; y++)
+		{
+			MAP *tile = getMapTile(x, y);
+
+			if (tile == NULL)
+				continue;
+
+			// exclude territory claimed by someone else
+
+			if (!(tile->owner == -1 || tile->owner == *active_faction))
+				continue;
+
+			// exclude base and base radius
+
+			if (tile->items & (TERRA_BASE_IN_TILE | TERRA_BASE_RADIUS))
+				continue;
+
+			// inhabited regions only
+
+			if (regionBases.find(tile->region) == regionBases.end())
+				continue;
+
+			// get region bases
+
+			std::vector<int> *bases = &(regionBases[tile->region]);
+
+			// calculate distance to nearest own base within region
+
+			BASE *nearestBase = NULL;
+			int nearestBaseRange = 0;
+
+			for (int id : *bases)
+			{
+				BASE *base = &(tx_bases[id]);
+
+				// calculate range to tile
+
+				int range = map_range(x, y, base->x, base->y);
+
+				if (nearestBase == NULL || range < nearestBaseRange)
+				{
+					nearestBase = base;
+					nearestBaseRange = range;
+				}
+
+			}
+
+			// exclude too far or uncertain tiles
+
+			if (nearestBase == NULL || nearestBaseRange > conf.ai_production_max_unpopulated_range)
+				continue;
+
+			// count available tiles
+
+			if (unpopulatedTileCounts.find(tile->region) == unpopulatedTileCounts.end())
+			{
+				unpopulatedTileCounts[tile->region] = 0;
+			}
+
+			unpopulatedTileCounts[tile->region]++;
+
+		}
+
+	}
+
+	if (DEBUG)
+	{
+		debug("unpopulatedTileCounts\n");
+
+		for
+		(
+			std::map<int, int>::iterator unpopulatedTileCountsIterator = unpopulatedTileCounts.begin();
+			unpopulatedTileCountsIterator != unpopulatedTileCounts.end();
+			unpopulatedTileCountsIterator++
+		)
+		{
+			int region = unpopulatedTileCountsIterator->first;
+			int unpopulatedTileCount = unpopulatedTileCountsIterator->second;
+
+			debug("\t[%3d] %3d\n", region, unpopulatedTileCount);
+
+		}
+
+		debug("\n");
+
+	}
+
+	// set colony production demand per region
+
+	for
+	(
+		std::map<int, std::vector<int>>::iterator regionBasesIterator = regionBases.begin();
+		regionBasesIterator != regionBases.end();
+		regionBasesIterator++
+	)
+	{
+		int region = regionBasesIterator->first;
+		std::vector<int> *regionBaseIds = &(regionBasesIterator->second);
+
+		// evaluate need for expansion
+
+		if (unpopulatedTileCounts.find(region) == unpopulatedTileCounts.end())
+			continue;
+
+		if (unpopulatedTileCounts[region] < conf.ai_production_min_unpopulated_tiles)
+			continue;
+
+		// select item
+
+		int item = (isOceanRegion(region) ? BSC_SEA_ESCAPE_POD : BSC_COLONY_POD);
+
+		for (int id : *regionBaseIds)
+		{
+			BASE *base = &(tx_bases[id]);
+
+			// do not build colonies it bases size 1
+
+			if (base->pop_size <= 1)
+				continue;
+
+			if (productionDemands.find(id) == productionDemands.end())
+			{
+				productionDemands[id] = PRODUCTION_DEMAND();
+			}
+
+			addProductionDemand(id, false, item, conf.ai_production_colony_priority);
+
 		}
 
 	}
@@ -238,6 +368,162 @@ void calculateConventionalDefenseDemand()
 
 }
 
+/*
+Set base production choices.
+*/
+void setProductionChoices()
+{
+	for
+	(
+		std::map<int, PRODUCTION_DEMAND>::iterator productionDemandsIterator = productionDemands.begin();
+		productionDemandsIterator != productionDemands.end();
+		productionDemandsIterator++
+	)
+	{
+		int id = productionDemandsIterator->first;
+		PRODUCTION_DEMAND *baseProductionDemands = &(productionDemandsIterator->second);
+
+		// immediate priorities
+
+		if (baseProductionDemands->immediate)
+		{
+			// create immediate production choice
+
+			productionChoices[id] = {baseProductionDemands->immediateItem, true};
+
+		}
+
+		// not immediate priorities
+
+		else if (baseProductionDemands->regular.size() > 0)
+		{
+			std::vector<PRODUCTION_PRIORITY> *regularBaseProductionPriorities = &(baseProductionDemands->regular);
+
+			// summarize priorities
+
+			double sumPriorities = 0.0;
+
+			for
+			(
+				std::vector<PRODUCTION_PRIORITY>::iterator regularBaseProductionPrioritiesIterator = regularBaseProductionPriorities->begin();
+				regularBaseProductionPrioritiesIterator != regularBaseProductionPriorities->end();
+				regularBaseProductionPrioritiesIterator++
+			)
+			{
+				PRODUCTION_PRIORITY *productionPriority = &(*regularBaseProductionPrioritiesIterator);
+
+				sumPriorities += productionPriority->priority;
+
+			}
+
+			// normalize priorities
+
+			if (sumPriorities > 1.0)
+			{
+				for
+				(
+					std::vector<PRODUCTION_PRIORITY>::iterator regularBaseProductionPrioritiesIterator = regularBaseProductionPriorities->begin();
+					regularBaseProductionPrioritiesIterator != regularBaseProductionPriorities->end();
+					regularBaseProductionPrioritiesIterator++
+				)
+				{
+					PRODUCTION_PRIORITY *productionPriority = &(*regularBaseProductionPrioritiesIterator);
+
+					productionPriority->priority /= sumPriorities;
+
+				}
+
+			}
+
+			// random roll
+
+			double randomRoll = (double)rand() / (double)(RAND_MAX + 1);
+
+			// choose item
+
+			for
+			(
+				std::vector<PRODUCTION_PRIORITY>::iterator regularBaseProductionPrioritiesIterator = regularBaseProductionPriorities->begin();
+				regularBaseProductionPrioritiesIterator != regularBaseProductionPriorities->end();
+				regularBaseProductionPrioritiesIterator++
+			)
+			{
+				PRODUCTION_PRIORITY *productionPriority = &(*regularBaseProductionPrioritiesIterator);
+
+				if (randomRoll < productionPriority->priority)
+				{
+					// create non-immediate production choice
+
+					productionChoices[id] = {productionPriority->item, false};
+
+					break;
+
+				}
+				else
+				{
+					randomRoll -= productionPriority->priority;
+				}
+
+			}
+
+		}
+
+	}
+
+	if (DEBUG)
+	{
+		debug("productionDemands:\n");
+
+		for
+		(
+			std::map<int, PRODUCTION_DEMAND>::iterator productionDemandsIterator = productionDemands.begin();
+			productionDemandsIterator != productionDemands.end();
+			productionDemandsIterator++
+		)
+		{
+			int id = productionDemandsIterator->first;
+			PRODUCTION_DEMAND *baseProductionDemands = &(productionDemandsIterator->second);
+
+			debug("\t%-25s\n", tx_bases[id].name);
+
+			debug("\t\timmediate\n");
+
+			if (baseProductionDemands->immediate)
+			{
+				debug("\t\t\t%-25s %4.2f\n", prod_name(baseProductionDemands->immediateItem), baseProductionDemands->immediatePriority);
+
+			}
+
+			debug("\t\tregular\n");
+
+			for
+			(
+				std::vector<PRODUCTION_PRIORITY>::iterator immediateBaseProductionPrioritiesIterator = baseProductionDemands->regular.begin();
+				immediateBaseProductionPrioritiesIterator != baseProductionDemands->regular.end();
+				immediateBaseProductionPrioritiesIterator++
+			)
+			{
+				PRODUCTION_PRIORITY *productionPriority = &(*immediateBaseProductionPrioritiesIterator);
+
+				debug("\t\t\t%-25s %4.2f\n", prod_name(productionPriority->item), productionPriority->priority);
+
+			}
+
+			debug("\t\tselected\n");
+
+			if (productionChoices.find(id) != productionChoices.end())
+			{
+				debug("\t\t\t%-25s %s\n", prod_name(productionChoices[id].item), (productionChoices[id].immediate ? "immediate" : "regular"));
+			}
+
+		}
+
+		debug("\n");
+
+	}
+
+}
+
 double getFactionConventionalOffenseMultiplier(int id)
 {
 	double factionOffenseMultiplier = 1.0;
@@ -322,27 +608,142 @@ int findRangeToNearestOwnBase(int x, int y, int region)
 
 }
 
-int suggestBaseProduction(int id, int choice)
+/*
+Selects base production.
+*/
+int suggestBaseProduction(int id, bool baseProductionDone, int choice)
 {
-	BASE *base = &(tx_bases[id]);
+	debug("selectBaseProduction: %-25s, productionDone=%s\n", tx_bases[id].name, (baseProductionDone ? "y" : "n"));
 
-	// need global defense
+	std::map<int, PRODUCTION_CHOICE>::iterator productionChoicesIterator = productionChoices.find(id);
 
-	if (unitTypeProductionDemands.count(UT_DEFENSE) > 0 && unitTypeProductionDemands[UT_DEFENSE] >= 0.5)
+	if (productionChoicesIterator != productionChoices.end())
 	{
-		// check if this is a best production base
+		PRODUCTION_CHOICE *productionChoice = &(productionChoicesIterator->second);
 
-		if (bestProductionBaseIds.count(id) != 0)
+		debug("\t%-25s\n", prod_name(productionChoice->item));
+
+		if (productionChoice->immediate || baseProductionDone)
 		{
-			choice = find_proto(id, TRIAD_LAND, COMBAT, DEF);
-
-			debug("suggestBaseProduction: [%s] UT_DEFENSE, [%d] %s\n", base->name, choice, tx_units[choice].name);
-
+			choice = productionChoice->item;
+			debug("\t\tselected\n");
 		}
 
 	}
 
+	debug("\n");
+
 	return choice;
+
+}
+
+void addProductionDemand(int id, bool immediate, int item, double priority)
+{
+	// create entry if not created yet
+
+	if (productionDemands.find(id) == productionDemands.end())
+	{
+		productionDemands[id] = PRODUCTION_DEMAND();
+	}
+
+	PRODUCTION_DEMAND *productionDemand = &(productionDemands[id]);
+
+	if (immediate)
+	{
+		if (!productionDemand->immediate)
+		{
+			productionDemand->immediate = true;
+			productionDemand->immediateItem = item;
+			productionDemand->immediatePriority = priority;
+		}
+		else if (priority > productionDemand->immediatePriority)
+		{
+			productionDemand->immediateItem = item;
+			productionDemand->immediatePriority = priority;
+		}
+	}
+	else
+	{
+		// lookup for existing item
+
+		bool found = false;
+
+		for
+		(
+			std::vector<PRODUCTION_PRIORITY>::iterator productionPrioritiesIterator = productionDemand->regular.begin();
+			productionPrioritiesIterator != productionDemand->regular.end();
+			productionPrioritiesIterator++
+		)
+		{
+			PRODUCTION_PRIORITY *productionPriority = &(*productionPrioritiesIterator);
+
+			if (productionPriority->item == item)
+			{
+				productionPriority->priority = max(productionPriority->priority, priority);
+				found = true;
+				break;
+			}
+
+		}
+
+		if (!found)
+		{
+			productionDemand->regular.push_back({item, priority});
+		}
+
+	}
+
+}
+
+int findStrongestNativeDefensePrototype(int factionId)
+{
+	// initial prototype
+
+    int bestUnitId = BSC_SCOUT_PATROL;
+    UNIT *bestUnit = &(tx_units[bestUnitId]);
+
+    for (int i = 0; i < 128; i++)
+	{
+        int id = (i < 64 ? i : (factionId - 1) * 64 + i);
+
+        UNIT *unit = &tx_units[id];
+
+		// skip current
+
+		if (id == bestUnitId)
+			continue;
+
+        // skip empty
+
+        if (strlen(unit->name) == 0)
+			continue;
+
+		// skip not enabled
+
+		if (id < 64 && !has_tech(factionId, unit->preq_tech))
+			continue;
+
+		// skip non land
+
+		if (unit_triad(id) != TRIAD_LAND)
+			continue;
+
+		// prefer trance or police unit
+
+		if
+		(
+			((unit->ability_flags & ABL_TRANCE) && (~bestUnit->ability_flags & ABL_TRANCE))
+			||
+			((unit->ability_flags & ABL_POLICE_2X) && (~bestUnit->ability_flags & ABL_POLICE_2X))
+		)
+		{
+			bestUnitId = id;
+			bestUnit = unit;
+		}
+
+	}
+
+    return bestUnitId;
 
 }
 

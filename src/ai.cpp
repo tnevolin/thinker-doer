@@ -22,8 +22,10 @@ int wtpAIFactionId = -1;
 
 int aiFactionId;
 
+FACTION_INFO factionInfos[8];
 std::vector<int> baseIds;
 std::unordered_map<MAP *, int> baseLocations;
+std::map<int, std::vector<int>> regionBases;
 std::map<int, BASE_STRATEGY> baseStrategies;
 std::vector<int> combatVehicleIds;
 std::vector<int> outsideCombatVehicleIds;
@@ -73,9 +75,85 @@ void populateSharedLists()
 
 	baseIds.clear();
 	baseLocations.clear();
+	regionBases.clear();
 	baseStrategies.clear();
 	combatVehicleIds.clear();
 	outsideCombatVehicleIds.clear();
+
+	// populate factions combat modifiers
+
+	debug("%-24s\nfactionCombatModifiers:\n", tx_metafactions[aiFactionId].noun_faction);
+
+	for (int id = 1; id < 8; id++)
+	{
+		// store combat modifiers
+
+		factionInfos[id].conventionalOffenseMultiplier = getFactionConventionalOffenseMultiplier(id);
+		factionInfos[id].conventionalDefenseMultiplier = getFactionConventionalDefenseMultiplier(id);
+
+		debug("\t%-24s: conventionalOffenseMultiplier=%4.2f, conventionalDefenseMultiplier=%4.2f\n", tx_metafactions[id].noun_faction, factionInfos[id].conventionalOffenseMultiplier, factionInfos[id].conventionalDefenseMultiplier);
+
+	}
+
+	debug("\n");
+
+	// populate other factions threat koefficients
+
+	debug("%-24s\notherFactionThreatKoefficients:\n", tx_metafactions[aiFactionId].noun_faction);
+
+	for (int id = 1; id < 8; id++)
+	{
+		// skip self
+
+		if (id == aiFactionId)
+			continue;
+
+		// get relation from other faction
+
+		int otherFactionRelation = tx_factions[id].diplo_status[aiFactionId];
+
+		// calculate threat koefficient
+
+		double threatKoefficient;
+
+		if (otherFactionRelation & DIPLO_VENDETTA)
+		{
+			threatKoefficient = 1.00;
+		}
+		else if (otherFactionRelation & DIPLO_TRUCE)
+		{
+			threatKoefficient = 0.50;
+		}
+		else if (otherFactionRelation & DIPLO_TREATY)
+		{
+			threatKoefficient = 0.25;
+		}
+		else if (otherFactionRelation & DIPLO_PACT)
+		{
+			threatKoefficient = 0.00;
+		}
+		else
+		{
+			// no commlink or unknown status
+			threatKoefficient = 0.50;
+		}
+
+		// add extra for treacherous human player
+
+		if (is_human(id))
+		{
+			threatKoefficient += 0.50;
+		}
+
+		// store threat koefficient
+
+		factionInfos[id].threatKoefficient = threatKoefficient;
+
+		debug("\t%-24s: %08x => %4.2f\n", tx_metafactions[id].noun_faction, otherFactionRelation, threatKoefficient);
+
+	}
+
+	debug("\n");
 
 	// populate bases
 
@@ -97,7 +175,6 @@ void populateSharedLists()
 		// add base location
 
 		MAP *baseLocation = getMapTile(base->x, base->y);
-
 		baseLocations[baseLocation] = id;
 
 		// add base strategy
@@ -106,6 +183,21 @@ void populateSharedLists()
 		baseStrategies[id].base = base;
 
 		debug("\n[%3d] %-25s\n", id, baseStrategies[id].base->name);
+
+		// add base regions
+
+		std::set<int> baseConnectedRegions = getBaseConnectedRegions(id);
+
+		for (int region : baseConnectedRegions)
+		{
+			if (regionBases.find(region) == regionBases.end())
+			{
+				regionBases[region] = std::vector<int>();
+			}
+
+			regionBases[region].push_back(id);
+
+		}
 
 	}
 
@@ -205,6 +297,64 @@ bool isReacheable(int id, int x, int y)
 	MAP *destinationLocation = getMapTile(x, y);
 
 	return (triad == TRIAD_AIR || getConnectedRegion(vehicleLocation->region) == getConnectedRegion(destinationLocation->region));
+
+}
+
+/*
+Estimates unit odds in base defense agains land native attack.
+This doesn't account for vehicle morale.
+*/
+double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
+{
+	// basic defense odds against land native attack
+
+	double nativeProtection = 1 / getPsiCombatBaseOdds(TRIAD_LAND);
+
+	// add base defense bonus
+
+	nativeProtection *= 1.0 + (double)tx_basic->combat_bonus_intrinsic_base_def / 100.0;
+
+	// add faction defense bonus
+
+	nativeProtection *= factionInfos[factionId].conventionalDefenseMultiplier;
+
+	// add PLANET
+
+	nativeProtection *= getSEPlanetModifierDefense(factionId);
+
+	// add trance
+
+	if (unit_has_ability(unitId, ABL_TRANCE))
+	{
+		nativeProtection *= 1.0 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0;
+	}
+
+	// correction for native base attack penalty until turn 50
+
+	if (*current_turn < 50)
+	{
+		nativeProtection *= 2;
+	}
+
+	return nativeProtection;
+
+}
+
+/*
+Estimates vehicle odds in base defense agains land native attack.
+This accounts for vehicle morale.
+*/
+double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId)
+{
+	// unit native protection
+
+	double nativeProtection = estimateUnitBaseLandNativeProtection(factionId, tx_vehicles[vehicleId].proto_id);
+
+	// add morale
+
+	nativeProtection *= getMoraleModifierDefense(vehicleId);
+
+	return nativeProtection;
 
 }
 

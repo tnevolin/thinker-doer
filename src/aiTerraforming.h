@@ -7,36 +7,6 @@
 #include "move.h"
 #include "wtp.h"
 
-/*
-This array is used for both adjacent tiles and base radius tiles.
-*/
-const int ADJACENT_TILE_OFFSET_COUNT = 9;
-const int BASE_TILE_OFFSET_COUNT = 21;
-const int BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
-{
-	{+0,+0},
-	{+1,-1},
-	{+2,+0},
-	{+1,+1},
-	{+0,+2},
-	{-1,+1},
-	{-2,+0},
-	{-1,-1},
-	{+0,-2},
-	{+2,-2},
-	{+2,+2},
-	{-2,+2},
-	{-2,-2},
-	{+1,-3},
-	{+3,-1},
-	{+3,+1},
-	{+1,+3},
-	{-1,+3},
-	{-3,+1},
-	{-3,-1},
-	{-1,-3},
-};
-
 struct TERRAFORMING_OPTION
 {
 	// recognizable name

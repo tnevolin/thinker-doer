@@ -234,26 +234,27 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     }
 
-    // adjust summary lines to the bottom
-
-    while (*tx_battle_compute_attacker_effect_count < 4)
-    {
-        (*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count][0] = '\x0';
-        (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = 0;
-
-        (*tx_battle_compute_attacker_effect_count)++;
-
-    }
-
-    while (*tx_battle_compute_defender_effect_count < 4)
-    {
-        (*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count][0] = '\x0';
-        (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = 0;
-
-        (*tx_battle_compute_defender_effect_count)++;
-
-    }
-
+    // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
+//    // adjust summary lines to the bottom
+//
+//    while (*tx_battle_compute_attacker_effect_count < 4)
+//    {
+//        (*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count][0] = '\x0';
+//        (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = 0;
+//
+//        (*tx_battle_compute_attacker_effect_count)++;
+//
+//    }
+//
+//    while (*tx_battle_compute_defender_effect_count < 4)
+//    {
+//        (*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count][0] = '\x0';
+//        (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = 0;
+//
+//        (*tx_battle_compute_defender_effect_count)++;
+//
+//    }
+//
 }
 
 /*
@@ -1358,11 +1359,17 @@ HOOK_API int mod_nutrient_yield(int factionId, int baseId, int x, int y, int tf)
         value = (value * 2 + 2) / 3;
     }
 
-    // enricher does not multiply nutrients and instead adds 1
+    // enricher does not multiply nutrients
 
     if (tile->items & TERRA_SOIL_ENR)
     {
         value = (value * 2 + 2) / 3;
+    }
+
+    // enricher adds 1 nutrient
+
+    if (tile->items & TERRA_SOIL_ENR)
+    {
         value++;
     }
 
