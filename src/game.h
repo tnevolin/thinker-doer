@@ -35,6 +35,36 @@ const int offset_tbl[][2] = {
     {-8,0},{-7,-1},{-6,-2},{-5,-3},{-4,-4},{-3,-5},{-2,-6},{-1,-7},
 };
 
+/*
+This array is used for both adjacent tiles and base radius tiles.
+*/
+int const ADJACENT_TILE_OFFSET_COUNT = 9;
+int const BASE_TILE_OFFSET_COUNT = 21;
+int const BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
+{
+	{+0,+0},
+	{+1,-1},
+	{+2,+0},
+	{+1,+1},
+	{+0,+2},
+	{-1,+1},
+	{-2,+0},
+	{-1,-1},
+	{+0,-2},
+	{+2,-2},
+	{+2,+2},
+	{-2,+2},
+	{-2,-2},
+	{+1,-3},
+	{+3,-1},
+	{+3,+1},
+	{+1,+3},
+	{-1,+3},
+	{-3,+1},
+	{-3,-1},
+	{-1,-3},
+};
+
 char* prod_name(int prod);
 int mineral_cost(int faction, int prod);
 bool has_tech(int faction, int tech);
@@ -132,10 +162,12 @@ class TileSearch {
 
 BASE *vehicle_home_base(VEH *vehicle);
 MAP *base_square(BASE *base);
+bool unit_has_ability(int id, int ability);
 bool vehicle_has_ability(VEH *vehicle, int ability);
 const char *readOrder(int id);
 void setBaseFacility(int base_id, int facility_id, bool add);
 bool has_facility_tech(int faction_id, int facility_id);
+int getDoctors(int id);
 int getDoctorQuelledDrones(int id);
 int getBaseBuildingItem(BASE *base);
 bool isBaseBuildingProject(BASE *base);
@@ -146,6 +178,8 @@ int getMoraleAttack(int id);
 int getMoraleDefense(int id);
 double getMoraleModifierAttack(int id);
 double getMoraleModifierDefense(int id);
+double getSEPlanetModifierAttack(int factionId);
+double getSEPlanetModifierDefense(int factionId);
 double getPsiCombatBaseOdds(int triad);
 bool isCombatVehicle(int id);
 double calculatePsiDamageAttack(int id, int enemyId);
@@ -161,4 +195,6 @@ bool isVehicleFormer(VEH *vehicle);
 bool isVehicleTransport(VEH *vehicle);
 bool isVehicleProbe(VEH *vehicle);
 void computeBase(int baseId);
+std::set<int> getBaseConnectedRegions(int id);
+bool isOceanRegion(int region);
 

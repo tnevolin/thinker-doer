@@ -5,7 +5,7 @@
 #include "move.h"
 #include "wtp.h"
 #include "ai.h"
-#include "aiBase.h"
+#include "aiHurry.h"
 
 const char* ScriptTxtID = "SCRIPT";
 

@@ -1,6 +1,6 @@
 #include <vector>
 #include <unordered_set>
-#include "aiBase.h"
+#include "aiHurry.h"
 
 const std::unordered_set<int> IMPORTANT_FACILITIES =
 {

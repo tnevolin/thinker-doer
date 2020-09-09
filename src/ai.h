@@ -10,6 +10,13 @@
 #include "aiTerraforming.h"
 #include "aiCombat.h"
 
+struct FACTION_INFO
+{
+	double conventionalOffenseMultiplier;
+	double conventionalDefenseMultiplier;
+	double threatKoefficient;
+};
+
 struct BASE_STRATEGY
 {
 	BASE *base;
@@ -22,8 +29,10 @@ struct BASE_STRATEGY
 extern int wtpAIFactionId;
 extern int aiFactionId;
 
+extern FACTION_INFO factionInfos[8];
 extern std::vector<int> baseIds;
 extern std::unordered_map<MAP *, int> baseLocations;
+extern std::map<int, std::vector<int>> regionBases;
 extern std::map<int, BASE_STRATEGY> baseStrategies;
 extern std::vector<int> combatVehicleIds;
 extern std::vector<int> outsideCombatVehicleIds;
@@ -32,6 +41,8 @@ void aiStrategy(int id);
 void populateSharedLists();
 VEH *getVehicleByAIId(int aiId);
 bool isReacheable(int id, int x, int y);
+double estimateUnitBaseLandNativeProtection(int factionId, int unitId);
+double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId);
 
 #endif // __AI_H__
 

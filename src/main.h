@@ -163,6 +163,12 @@ struct Config {
     double ocean_depth_multiplier = 1.0;
     bool zoc_regular_army_sneaking_disabled = false;
     bool ai_useWTPAlgorithms;
+    double ai_production_min_native_protection;
+    double ai_production_max_native_protection;
+    double ai_production_native_protection_priority_multiplier;
+    int ai_production_max_unpopulated_range;
+    int ai_production_min_unpopulated_tiles;
+    double ai_production_colony_priority;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
