@@ -1013,6 +1013,11 @@ double getPsiCombatBaseOdds(int triad)
 
 }
 
+bool isCombatUnit(int id)
+{
+	return tx_units[id].weapon_type <= WPN_PSI_ATTACK;
+}
+
 bool isCombatVehicle(int id)
 {
 	VEH *vehicle = &(tx_vehicles[id]);
@@ -1315,5 +1320,45 @@ std::set<int> getBaseConnectedRegions(int id)
 bool isOceanRegion(int region)
 {
 	return region >= 64;
+}
+
+/*
+Evaluates unit defense effectiveness based on defense value and cost.
+*/
+double evaluateUnitDefenseEffectiveness(int id)
+{
+	UNIT *unit = &(tx_units[id]);
+	int cost = unit->cost;
+	int defenseValue = tx_defense[unit->armor_type].defense_value;
+
+	// inflate cost due to support assuming 40 turns of service
+
+	if (!unit_has_ability(id, ABL_CLEAN_REACTOR))
+	{
+		cost += 4;
+	}
+
+	return (double)defenseValue / (double)cost;
+
+}
+
+/*
+Evaluates unit offense effectiveness based on offense value and cost.
+*/
+double evaluateUnitOffenseEffectiveness(int id)
+{
+	UNIT *unit = &(tx_units[id]);
+	int cost = unit->cost;
+	int offenseValue = tx_weapon[unit->armor_type].offense_value;
+
+	// inflate cost due to support assuming 40 turns of service
+
+	if (!unit_has_ability(id, ABL_CLEAN_REACTOR))
+	{
+		cost += 4;
+	}
+
+	return (double)offenseValue / (double)cost;
+
 }
 

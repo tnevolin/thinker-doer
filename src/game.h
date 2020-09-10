@@ -181,6 +181,7 @@ double getMoraleModifierDefense(int id);
 double getSEPlanetModifierAttack(int factionId);
 double getSEPlanetModifierDefense(int factionId);
 double getPsiCombatBaseOdds(int triad);
+bool isCombatUnit(int id);
 bool isCombatVehicle(int id);
 double calculatePsiDamageAttack(int id, int enemyId);
 double calculatePsiDamageDefense(int id, int enemyId);
@@ -197,4 +198,6 @@ bool isVehicleProbe(VEH *vehicle);
 void computeBase(int baseId);
 std::set<int> getBaseConnectedRegions(int id);
 bool isOceanRegion(int region);
+double evaluateUnitDefenseEffectiveness(int id);
+double evaluateUnitOffenseEffectiveness(int id);
 

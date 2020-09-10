@@ -29,6 +29,7 @@ std::map<int, std::vector<int>> regionBases;
 std::map<int, BASE_STRATEGY> baseStrategies;
 std::vector<int> combatVehicleIds;
 std::vector<int> outsideCombatVehicleIds;
+std::vector<int> prototypes;
 
 /*
 AI strategy.
@@ -79,6 +80,7 @@ void populateSharedLists()
 	baseStrategies.clear();
 	combatVehicleIds.clear();
 	outsideCombatVehicleIds.clear();
+	prototypes.clear();
 
 	// populate factions combat modifiers
 
@@ -260,6 +262,30 @@ void populateSharedLists()
 			}
 
 		}
+
+	}
+
+	// populate prototypes
+
+    for (int i = 0; i < 128; i++)
+	{
+        int id = (i < 64 ? i : (*active_faction - 1) * 64 + i);
+
+        UNIT *unit = &tx_units[id];
+
+		// skip not enabled
+
+		if (id < 64 && !has_tech(*active_faction, unit->preq_tech))
+			continue;
+
+        // skip empty
+
+        if (strlen(unit->name) == 0)
+			continue;
+
+		// add prototype
+
+		prototypes.push_back(id);
 
 	}
 

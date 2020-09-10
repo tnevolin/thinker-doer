@@ -1,3 +1,7 @@
+# Version 131
+
+* \[fix\] Captured base now properly receives free facilities from both capturing and captured factions. Didn't work in vanilla.
+
 # Version 130
 
 * AI base production and unit movement adjustment.
