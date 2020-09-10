@@ -36,8 +36,8 @@ enum UNIT_TYPE
 void aiProductionStrategy();
 void populateProducitonLists();
 void calculateNativeProtectionDemand();
-void calculateExpansionDemand();
 void calculateConventionalDefenseDemand();
+void calculateExpansionDemand();
 void setProductionChoices();
 double getFactionConventionalOffenseMultiplier(int id);
 double getFactionConventionalDefenseMultiplier(int id);
@@ -46,5 +46,7 @@ int suggestBaseProduction(int id, bool baseProductionDone, int choice);
 void addProductionDemand(int id, bool immediate, int item, double priority);
 int selectBestNativeDefensePrototype(int factionId);
 int findStrongestNativeDefensePrototype(int factionId);
+int findBaseDefenderUnit();
+int findFastAttackerUnit();
 
 #endif // __AIPRODUCTION_H__

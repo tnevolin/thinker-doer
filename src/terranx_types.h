@@ -248,8 +248,8 @@ struct Faction {
     int subvert_total; // ? probe: mind control base (+4) / subvert unit (+1) total
     int diplo_subvert[8]; // ? probe: mind control base (+4) / subvert unit (+1) per faction
     int diplo_stolen_techs[8]; // probe: successfully procured research data (tech/map) per faction
-    int energy_credits;
-    int energy_cost;
+    int energy_credits;				// 0x0220
+    int energy_cost;				// 0x0224
     int SE_Politics_pending;        // 0x0228
     int SE_Economics_pending;		// 0x022C
     int SE_Values_pending;          // 0x0230

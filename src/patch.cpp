@@ -92,11 +92,24 @@ void check_relocate_hq(int faction) {
 }
 
 HOOK_API int mod_capture_base(int base_id, int faction, int probe) {
+
     int old_faction = tx_bases[base_id].faction_id;
     assert(faction > 0 && faction < 8 && faction != old_faction);
+
+    // set current base to fix free facilities creation bug
+
+    tx_set_base(base_id);
+
+    // execute original code
+
     capture_base(base_id, faction, probe);
+
+    // relocate HQ if needed
+
     check_relocate_hq(old_faction);
+
     return 0;
+
 }
 
 HOOK_API int mod_base_kill(int base_id) {

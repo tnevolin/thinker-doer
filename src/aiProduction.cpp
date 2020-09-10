@@ -18,17 +18,17 @@ void aiProductionStrategy()
 
 	populateProducitonLists();
 
-	// calculate protection demand
+	// calculate native protection demand
 
 	calculateNativeProtectionDemand();
+
+	// calculate conventional defense demand
+
+	calculateConventionalDefenseDemand();
 
 	// calculate expansion demand
 
 	calculateExpansionDemand();
-
-	// calculate defender demand
-
-	calculateConventionalDefenseDemand();
 
 	// sort production demands
 
@@ -111,6 +111,163 @@ void calculateNativeProtectionDemand()
 		{
 			double protectionPriority = conf.ai_production_native_protection_priority_multiplier * (conf.ai_production_max_native_protection - totalNativeProtection) / (conf.ai_production_max_native_protection - conf.ai_production_min_native_protection);
 			addProductionDemand(id, false, item, protectionPriority);
+		}
+
+	}
+
+}
+
+void calculateConventionalDefenseDemand()
+{
+	debug("%-24s calculateConventionalDefenseDemand\n", tx_metafactions[aiFactionId].noun_faction);
+
+	// find total enemy offensive value in the vicinity of our bases
+
+	debug("\tvehicle treat\n");
+
+	double totalEnemyOffensiveStrength = 0.0;
+
+	for (int id = 0; id < *total_num_vehicles; id++)
+	{
+		VEH *vehicle = &(tx_vehicles[id]);
+		int triad = veh_triad(id);
+		MAP *location = getMapTile(vehicle->x, vehicle->y);
+
+		// exclude natives
+
+		if (vehicle->faction_id == 0)
+			continue;
+
+		// exclude own vehicles
+
+		if (vehicle->faction_id == aiFactionId)
+			continue;
+
+		// find vehicle weapon offensive value
+
+		int vehicleWeaponOffensiveValue = tx_weapon[tx_units[vehicle->proto_id].weapon_type].offense_value;
+
+		// count only conventional non zero offensive values
+
+		if (vehicleWeaponOffensiveValue < 1)
+			continue;
+
+		// get vehicle region
+
+		int region = (triad == TRIAD_AIR ? -1 : location->region);
+
+		// calculate range to own nearest base
+
+		int rangeToNearestOwnBase = findRangeToNearestOwnBase(vehicle->x, vehicle->y, region);
+
+		// ignore vehicles on or farther than max range
+
+		if (rangeToNearestOwnBase >= MAX_RANGE)
+			continue;
+
+		// calculate vehicle speed
+		// for land units assuming there are roads everywhere
+
+		double vehicleSpeed = (triad == TRIAD_LAND ? getLandVehicleSpeedOnRoads(id) : getVehicleSpeedWithoutRoads(id));
+
+		// calculate threat time koefficient
+
+		double threatTimeKoefficient = MIN_THREAT_TURNS / max(MIN_THREAT_TURNS, ((double)rangeToNearestOwnBase / vehicleSpeed));
+
+		// calculate vehicle offensive strength
+
+		double vehicleOffensiveStrength = (double)vehicleWeaponOffensiveValue;
+
+		// adjust artillery value
+
+		if (vehicle_has_ability(vehicle, ABL_ARTILLERY))
+		{
+			vehicleOffensiveStrength *= ARTILLERY_OFFENSIVE_VALUE_KOEFFICIENT;
+		}
+
+		// adjust vehicle strenght with faction coefficients
+
+		double enemyOffensiveStrength = factionInfos[vehicle->faction_id].threatKoefficient * factionInfos[vehicle->faction_id].conventionalOffenseMultiplier * threatTimeKoefficient * vehicleOffensiveStrength;
+
+		// update total
+
+		totalEnemyOffensiveStrength += enemyOffensiveStrength;
+
+		debug
+		(
+			"\t\t[%3d](%3d,%3d), %-25s, rangeToNearestOwnBase=%3d, threatTimeKoefficient=%4.2f, vehicleWeaponOffensiveValue=%2d, vehicleOffensiveStrength=%4.1f, enemyOffensiveStrength=%4.1f\n",
+			id,
+			vehicle->x,
+			vehicle->y,
+			tx_metafactions[vehicle->faction_id].noun_faction,
+			rangeToNearestOwnBase,
+			threatTimeKoefficient,
+			vehicleWeaponOffensiveValue,
+			vehicleOffensiveStrength,
+			enemyOffensiveStrength
+		);
+
+	}
+
+	// find total own defense value
+
+	double totalOwnDefensiveStrength = 0.0;
+
+	for (int id : combatVehicleIds)
+	{
+		VEH *vehicle = &(tx_vehicles[id]);
+
+		// find vehicle armor defensive value
+
+		int vehicleArmorDefensiveValue = tx_defense[tx_units[vehicle->proto_id].armor_type].defense_value;
+
+		// calculate vehicle defensive strength
+
+		double vehicleDefensiveStrength = (double)vehicleArmorDefensiveValue;
+
+		// update total
+
+		totalOwnDefensiveStrength += factionInfos[vehicle->faction_id].conventionalDefenseMultiplier * vehicleDefensiveStrength;
+
+	}
+
+	debug("totalEnemyOffensiveStrength=%.0f, totalOwnDefensiveStrength=%.0f, unitTypeProductionDemands[UT_DEFENSE]=%4.2f\n", round(totalEnemyOffensiveStrength), round(totalOwnDefensiveStrength), unitTypeProductionDemands[UT_DEFENSE]);
+	debug("\n");
+
+	// set defensive unit production demand
+
+	if (totalOwnDefensiveStrength < totalEnemyOffensiveStrength)
+	{
+		double priority = (totalEnemyOffensiveStrength - totalOwnDefensiveStrength) / totalOwnDefensiveStrength;
+
+		int baseDefender = findBaseDefenderUnit();
+		int fastAttacker = findFastAttackerUnit();
+
+		double baseDefenderPart = 0.75;
+
+		for (int id : bestProductionBaseIds)
+		{
+			// random roll
+
+			double randomRoll = (double)rand() / (double)(RAND_MAX + 1);
+
+			// chose prodution item
+
+			int item;
+
+			if (randomRoll < baseDefenderPart)
+			{
+				item = baseDefender;
+			}
+			else
+			{
+				item = fastAttacker;
+			}
+
+			// add production demand
+
+			addProductionDemand(id, false, item, priority);
+
 		}
 
 	}
@@ -258,113 +415,6 @@ void calculateExpansionDemand()
 		}
 
 	}
-
-}
-
-void calculateConventionalDefenseDemand()
-{
-	// find total enemy offensive value in the vicinity of our bases
-
-	double totalEnemyOffensiveStrength = 0.0;
-
-	for (int id = 0; id < *total_num_vehicles; id++)
-	{
-		VEH *vehicle = &(tx_vehicles[id]);
-		int triad = veh_triad(id);
-		MAP *location = getMapTile(vehicle->x, vehicle->y);
-
-		// exclude natives
-
-		if (vehicle->faction_id == 0)
-			continue;
-
-		// exclude own vehicles
-
-		if (vehicle->faction_id == aiFactionId)
-			continue;
-
-		// find vehicle weapon offensive value
-
-		int vehicleWeaponOffensiveValue = tx_weapon[tx_units[vehicle->proto_id].weapon_type].offense_value;
-
-		// count only conventional non zero offensive values
-
-		if (vehicleWeaponOffensiveValue < 1)
-			continue;
-
-		// get vehicle region
-
-		int region = (triad == TRIAD_AIR ? -1 : location->region);
-
-		// calculate range to own nearest base
-
-		int rangeToNearestOwnBase = findRangeToNearestOwnBase(vehicle->x, vehicle->y, region);
-
-		// ignore vehicles on or farther than max range
-
-		if (rangeToNearestOwnBase >= MAX_RANGE)
-			continue;
-
-		// calculate vehicle speed
-		// for land units assuming there are roads everywhere
-
-		double vehicleSpeed = (triad == TRIAD_LAND ? getLandVehicleSpeedOnRoads(id) : getVehicleSpeedWithoutRoads(id));
-
-		// calculate threat time koefficient
-
-		double threatTimeKoefficient = MIN_THREAT_TURNS / max(MIN_THREAT_TURNS, ((double)rangeToNearestOwnBase / vehicleSpeed));
-
-		// calculate vehicle offensive strength
-
-		double vehicleOffensiveStrength = (double)vehicleWeaponOffensiveValue;
-
-		// adjust artillery value
-
-		if (vehicle_has_ability(vehicle, ABL_ARTILLERY))
-		{
-			vehicleOffensiveStrength *= ARTILLERY_OFFENSIVE_VALUE_KOEFFICIENT;
-		}
-
-		// update total
-
-		totalEnemyOffensiveStrength += factionInfos[vehicle->faction_id].threatKoefficient * factionInfos[vehicle->faction_id].conventionalOffenseMultiplier * threatTimeKoefficient * vehicleOffensiveStrength;
-
-		debug("\t\t[%3d](%3d,%3d), vehicleFactionId=%d, rangeToNearestOwnBase=%3d, threatTimeKoefficient=%4.2f, vehicleWeaponOffensiveValue=%2d, vehicleOffensiveStrength=%4.1f\n", id, vehicle->x, vehicle->y, vehicle->faction_id, rangeToNearestOwnBase, threatTimeKoefficient, vehicleWeaponOffensiveValue, vehicleOffensiveStrength);
-
-	}
-
-	// find total own defense value
-
-	double totalOwnDefensiveStrength = 0.0;
-
-	for (int id : combatVehicleIds)
-	{
-		VEH *vehicle = &(tx_vehicles[id]);
-
-		// find vehicle armor defensive value
-
-		int vehicleArmorDefensiveValue = tx_defense[tx_units[vehicle->proto_id].armor_type].defense_value;
-
-		// calculate vehicle defensive strength
-
-		double vehicleDefensiveStrength = (double)vehicleArmorDefensiveValue;
-
-		// update total
-
-		totalOwnDefensiveStrength += factionInfos[vehicle->faction_id].conventionalDefenseMultiplier * vehicleDefensiveStrength;
-
-	}
-
-	// set defensive unit production demand
-
-	if (totalOwnDefensiveStrength < totalEnemyOffensiveStrength)
-	{
-		unitTypeProductionDemands[UT_DEFENSE] = (totalEnemyOffensiveStrength - totalOwnDefensiveStrength) / totalEnemyOffensiveStrength;
-	}
-
-	debug("%-24s\ncalculateConventionalDefenseDemand:\n", tx_metafactions[aiFactionId].noun_faction);
-	debug("totalEnemyOffensiveStrength=%.0f, totalOwnDefensiveStrength=%.0f, unitTypeProductionDemands[UT_DEFENSE]=%4.2f\n", round(totalEnemyOffensiveStrength), round(totalOwnDefensiveStrength), unitTypeProductionDemands[UT_DEFENSE]);
-	debug("\n");
 
 }
 
@@ -744,6 +794,70 @@ int findStrongestNativeDefensePrototype(int factionId)
 	}
 
     return bestUnitId;
+
+}
+
+int findBaseDefenderUnit()
+{
+	int bestUnitId = BSC_SCOUT_PATROL;
+	double bestUnitDefenseEffectiveness = evaluateUnitDefenseEffectiveness(bestUnitId);
+
+	for (int id : prototypes)
+	{
+		// skip non combat units
+
+		if (!isCombatUnit(id))
+			continue;
+
+		// skip air units
+
+		if (unit_triad(id) == TRIAD_AIR)
+			continue;
+
+		double unitDefenseEffectiveness = evaluateUnitDefenseEffectiveness(id);
+
+		if (bestUnitId == -1 || unitDefenseEffectiveness > bestUnitDefenseEffectiveness)
+		{
+			bestUnitId = id;
+			bestUnitDefenseEffectiveness = unitDefenseEffectiveness;
+		}
+
+	}
+
+	return bestUnitId;
+
+}
+
+int findFastAttackerUnit()
+{
+	int bestUnitId = BSC_SCOUT_PATROL;
+	double bestUnitOffenseEffectiveness = evaluateUnitOffenseEffectiveness(bestUnitId);
+
+	for (int id : prototypes)
+	{
+		UNIT *unit = &(tx_units[id]);
+
+		// skip non combat units
+
+		if (!isCombatUnit(id))
+			continue;
+
+		// skip infantry units
+
+		if (unit->chassis_type == CHS_INFANTRY)
+			continue;
+
+		double unitOffenseEffectiveness = evaluateUnitOffenseEffectiveness(id);
+
+		if (bestUnitId == -1 || unitOffenseEffectiveness > bestUnitOffenseEffectiveness)
+		{
+			bestUnitId = id;
+			bestUnitOffenseEffectiveness = unitOffenseEffectiveness;
+		}
+
+	}
+
+	return bestUnitId;
 
 }
 

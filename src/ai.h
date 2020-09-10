@@ -36,6 +36,7 @@ extern std::map<int, std::vector<int>> regionBases;
 extern std::map<int, BASE_STRATEGY> baseStrategies;
 extern std::vector<int> combatVehicleIds;
 extern std::vector<int> outsideCombatVehicleIds;
+extern std::vector<int> prototypes;
 
 void aiStrategy(int id);
 void populateSharedLists();
