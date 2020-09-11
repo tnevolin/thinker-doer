@@ -146,9 +146,9 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     }
 
-    // territory_combat_bonus
+    // combat_bonus_territory
 
-    if (conf.territory_combat_bonus != 0)
+    if (conf.combat_bonus_territory != 0)
     {
         // get attacker/defender vehicle
 
@@ -178,7 +178,7 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
             {
                 // territory attack bonus
 
-                int attacker_territory_bonus = conf.territory_combat_bonus;
+                int attacker_territory_bonus = conf.combat_bonus_territory;
 
                 // "Territory:" label
 
@@ -207,7 +207,7 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
             {
                 // territory defense bonus
 
-                int defender_territory_bonus = conf.territory_combat_bonus;
+                int defender_territory_bonus = conf.combat_bonus_territory;
 
                 // "Territory:" label
 
@@ -2164,7 +2164,7 @@ HOOK_API void modifiedBalance()
 
 		// check vehicle is a colony
 
-		if (isVehicleColony(vehicle))
+		if (isVehicleColony(id))
 		{
 			initialColonyCount[factionId]++;
 		}
@@ -2197,7 +2197,7 @@ void recreateInitialColonies(int factionId)
 			factionVehicle = vehicle;
 		}
 
-		if (vehicle->faction_id == factionId && isVehicleColony(vehicle))
+		if (vehicle->faction_id == factionId && isVehicleColony(id))
 		{
 			currentColonyCount++;
 		}

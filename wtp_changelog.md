@@ -1,3 +1,7 @@
+# Version 132
+
+* Bases do not build units taking too much time. Configuration parameter: ai_production_unit_turns_limit.
+
 # Version 131
 
 * \[fix\] Captured base now properly receives free facilities from both capturing and captured factions. Didn't work in vanilla.
@@ -782,6 +786,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Research gene warfare and its unit damaging effect. See if we need to tone this down a bit.
 * Move plant fungus later.
 * Revert forest yield, delay HF and make it more expensive.
 * Brood Pit give just +1 POLICE.
@@ -795,5 +800,8 @@ Initial release. See list of changes in readme.
 
 ## AI
 
+* Expand more.
 * Control transports better.
+* Do not build expensive units taking long to produce.
+* Colony search for base should be more straightforward.
 

@@ -19,6 +19,7 @@ It kicks in only with simplified hurry cost set.
 void factionHurryProduction(int factionId)
 {
     Faction* faction = &tx_factions[factionId];
+    debug("factionHurryProduction\n")
 
 	// apply only when simplified hurry is enabled
 
@@ -150,6 +151,8 @@ void factionHurryProduction(int factionId)
 		}
 
 	}
+
+    debug("\n")
 
 }
 

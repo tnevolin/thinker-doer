@@ -144,7 +144,7 @@ struct Config {
     bool disable_home_base_cc_morale_bonus = false;
     bool disable_current_base_cc_morale_bonus = false;
     bool default_morale_very_green = false;
-    int territory_combat_bonus = 0;
+    int combat_bonus_territory = 0;
     int tube_movement_rate_multiplier = 0;
     int road_movement_cost = 0;
     int project_contribution_threshold = 0;
@@ -163,12 +163,17 @@ struct Config {
     double ocean_depth_multiplier = 1.0;
     bool zoc_regular_army_sneaking_disabled = false;
     bool ai_useWTPAlgorithms;
+    double ai_production_threat_coefficient_vendetta;
+    double ai_production_threat_coefficient_truce;
+    double ai_production_threat_coefficient_treaty;
+    double ai_production_threat_coefficient_pact;
     double ai_production_min_native_protection;
     double ai_production_max_native_protection;
     double ai_production_native_protection_priority_multiplier;
     int ai_production_max_unpopulated_range;
     int ai_production_min_unpopulated_tiles;
     double ai_production_colony_priority;
+    int ai_production_unit_turns_limit;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;

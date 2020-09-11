@@ -118,13 +118,6 @@ HOOK_API int faction_upkeep(int faction) {
     do_all_non_input();
     production_phase(faction);
 
-    // attempt to hurry production in all bases
-    // affects AI factions only
-    if (faction > 0 && !is_human(faction))
-	{
-		factionHurryProduction(faction);
-	}
-
     do_all_non_input();
     if (!(*game_state & STATE_UNK_1) || *game_state & STATE_UNK_8) {
         allocate_energy(faction);
@@ -133,6 +126,14 @@ HOOK_API int faction_upkeep(int faction) {
         do_all_non_input();
         enemy_strategy(faction);
         do_all_non_input();
+
+		// consider hurrying production in all bases
+		// affects AI factions only
+		if (faction != 0 && !is_human(faction))
+		{
+			factionHurryProduction(faction);
+		}
+
         /*
         Thinker-specific AI planning routines.
         If the new social_ai is disabled from the config old version gets called instead.

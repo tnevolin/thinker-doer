@@ -967,6 +967,106 @@ double getMoraleModifierDefense(int id)
 
 }
 
+double getVehiclePsiAttackStrength(int id)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+	int triad = veh_triad(id);
+	Faction *faction = &(tx_factions[vehicle->faction_id]);
+
+	// get psi attack strength
+
+	double psiCombatStrength;
+
+	switch (triad)
+	{
+	case TRIAD_LAND:
+		psiCombatStrength = (double)tx_basic->psi_combat_land_numerator / (double)tx_basic->psi_combat_land_denominator;
+		break;
+	case TRIAD_SEA:
+		psiCombatStrength = (double)tx_basic->psi_combat_sea_numerator / (double)tx_basic->psi_combat_sea_denominator;
+		break;
+	case TRIAD_AIR:
+		psiCombatStrength = (double)tx_basic->psi_combat_air_numerator / (double)tx_basic->psi_combat_air_denominator;
+		break;
+	default:
+		return 1.0;
+	}
+
+	// get vehicle lifecycle modifier
+
+	int lifecycle = vehicle->morale;
+	double lifecycleModifier = 1.0 + 0.125 * (double)(lifecycle - 2);
+
+	// get faction PLANET rating modifier
+
+	int planet = faction->SE_planet_pending;
+	double planetModifier = 1.0 + tx_basic->combat_psi_bonus_per_PLANET * planet;
+
+	// calculate modifier
+
+	return psiCombatStrength * lifecycleModifier * planetModifier;
+
+}
+
+double getVehiclePsiDefenseStrength(int id)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+	Faction *faction = &(tx_factions[vehicle->faction_id]);
+
+	// get psi defense strength
+
+	double psiCombatStrength = 1.0;
+
+	// get vehicle lifecycle modifier
+
+	int lifecycle = vehicle->morale;
+	double lifecycleModifier = 1.0 + 0.125 * (double)(lifecycle - 2);
+
+	// get faction PLANET rating modifier
+
+	int planet = faction->SE_planet_pending;
+	double planetModifier = (conf.planet_combat_bonus_on_defense ? 1.0 + tx_basic->combat_psi_bonus_per_PLANET * planet : 1.0);
+
+	// calculate modifier
+
+	return psiCombatStrength * lifecycleModifier * planetModifier;
+
+}
+
+/*
+Returns new vehicle morale modifier on attack.
+*/
+double getNewVehicleMoraleModifierAttack(int factionId, double averageFacilityMoraleBoost)
+{
+	Faction *faction = &(tx_factions[factionId]);
+
+	// get new vehicle morale
+
+	double morale = max(0.0, min(6.0, 0.0 + averageFacilityMoraleBoost * (faction->SE_morale_pending <= -2 ? 0.5 : 1.0) + (double)getSEMoraleAttack(factionId)));
+
+	// calculate modifier
+
+	return 1.0 + 0.125 * (double)(morale - 2);
+
+}
+
+/*
+Returns new vehicle morale modifier on defense.
+*/
+double getNewVehicleMoraleModifierDefense(int factionId, double averageFacilityMoraleBoost)
+{
+	Faction *faction = &(tx_factions[factionId]);
+
+	// get new vehicle morale
+
+	double morale = max(0.0, min(6.0, 0.0 + averageFacilityMoraleBoost * (faction->SE_morale_pending <= -2 ? 0.5 : 1.0) + (double)getSEMoraleDefense(factionId)));
+
+	// calculate modifier
+
+	return 1.0 + 0.125 * (double)(morale - 2);
+
+}
+
 double getSEPlanetModifierAttack(int factionId)
 {
 	Faction *faction = &(tx_factions[factionId]);
@@ -1236,9 +1336,9 @@ bool isVehicleSupply(VEH *vehicle)
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_SUPPLY_TRANSPORT);
 }
 
-bool isVehicleColony(VEH *vehicle)
+bool isVehicleColony(int id)
 {
-	return (tx_units[vehicle->proto_id].weapon_type == WPN_COLONY_MODULE);
+	return (tx_units[tx_vehicles[id].proto_id].weapon_type == WPN_COLONY_MODULE);
 }
 
 bool isVehicleFormer(VEH *vehicle)
@@ -1359,6 +1459,91 @@ double evaluateUnitOffenseEffectiveness(int id)
 	}
 
 	return (double)offenseValue / (double)cost;
+
+}
+
+/*
+Calculates base defense multiplier different factors taken into account.
+*/
+double getBaseDefenseMultiplier(int id, int triad, bool countDefensiveStructures, bool countTerritoryBonus)
+{
+	double baseDefenseMultiplier;
+
+	bool firstLevelDefense = false;
+	switch (triad)
+	{
+	case TRIAD_LAND:
+		firstLevelDefense = has_facility(id, FAC_PERIMETER_DEFENSE);
+		break;
+	case TRIAD_SEA:
+		firstLevelDefense = has_facility(id, FAC_NAVAL_YARD);
+		break;
+	case TRIAD_AIR:
+		firstLevelDefense = has_facility(id, FAC_AEROSPACE_COMPLEX);
+		break;
+	}
+
+	bool secondLevelDefense = has_facility(id, FAC_TACHYON_FIELD);
+
+	if (countDefensiveStructures && (firstLevelDefense || secondLevelDefense))
+	{
+		baseDefenseMultiplier = 2.0;
+
+		if (firstLevelDefense)
+		{
+			baseDefenseMultiplier = conf.perimeter_defense_multiplier;
+		}
+
+		if (secondLevelDefense)
+		{
+			baseDefenseMultiplier += conf.tachyon_field_bonus;
+		}
+
+		baseDefenseMultiplier /= 2.0;
+
+	}
+	else
+	{
+		baseDefenseMultiplier = 1.0 + (double)tx_basic->combat_bonus_intrinsic_base_def / 100.0;
+	}
+
+	if (countTerritoryBonus)
+	{
+		baseDefenseMultiplier *= 1.0 + (double)conf.combat_bonus_territory / 100.0;
+	}
+
+	return baseDefenseMultiplier;
+
+}
+
+int getUnitOffenseValue(int id)
+{
+	return tx_weapon[tx_units[id].weapon_type].offense_value;
+}
+
+int getUnitDefenseValue(int id)
+{
+	return tx_defense[tx_units[id].armor_type].defense_value;
+}
+
+int getVehicleOffenseValue(int id)
+{
+	return getUnitOffenseValue(tx_vehicles[id].proto_id);
+}
+
+int getVehicleDefenseValue(int id)
+{
+	return getUnitDefenseValue(tx_vehicles[id].proto_id);
+}
+
+/*
+Estimates turns to complete current base production assuming all parameters stays as is.
+*/
+int estimateBaseProductionTurnsToComplete(int id)
+{
+	BASE *base = &(tx_bases[id]);
+
+	return ((mineral_cost(base->faction_id, base->queue_items[0]) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
 
 }
 

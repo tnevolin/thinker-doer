@@ -223,8 +223,8 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "default_morale_very_green")) {
         cf->default_morale_very_green = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "territory_combat_bonus")) {
-        cf->territory_combat_bonus = atoi(value);
+    else if (MATCH("wtp", "combat_bonus_territory")) {
+        cf->combat_bonus_territory = atoi(value);
     }
     else if (MATCH("wtp", "tube_movement_rate_multiplier")) {
         cf->tube_movement_rate_multiplier = atoi(value);
@@ -293,6 +293,22 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "ai_production_threat_coefficient_vendetta"))
+    {
+        cf->ai_production_threat_coefficient_vendetta = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_threat_coefficient_truce"))
+    {
+        cf->ai_production_threat_coefficient_truce = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_threat_coefficient_treaty"))
+    {
+        cf->ai_production_threat_coefficient_treaty = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_threat_coefficient_pact"))
+    {
+        cf->ai_production_threat_coefficient_pact = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_min_native_protection"))
     {
         cf->ai_production_min_native_protection = atof(value);
@@ -316,6 +332,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_production_colony_priority"))
     {
         cf->ai_production_colony_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_unit_turns_limit"))
+    {
+        cf->ai_production_unit_turns_limit = atoi(value);
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
@@ -484,9 +504,9 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
         return tx_base_prod_choices(id, v1, v2, v3);
     }
 
-    // store base production done flag
+    // store production done flag for further use
 
-    bool baseProductionDone = (base->status_flags & BASE_PRODUCTION_DONE);
+    bool productionDone = (base->status_flags & BASE_PRODUCTION_DONE);
 
 	tx_set_base(id);
 	tx_base_compute(1);
@@ -531,9 +551,9 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
 
     fflush(debug_log);
 
-	// [WTP] production choice
+	// [WTP] production choice override
 
-	choice = suggestBaseProduction(id, baseProductionDone, choice);
+	choice = suggestBaseProduction(id, productionDone, choice);
 
     return choice;
 
@@ -885,6 +905,9 @@ Find the best prototype for base production when weighted against cost given the
 and type constraints. For any combat-capable unit, mode is set to COMBAT (= 0).
 */
 int find_proto(int base_id, int triad, int mode, bool defend) {
+
+	BASE *base = &(tx_bases[base_id]);
+
     assert(base_id >= 0 && base_id < *total_num_bases);
     assert(mode >= COMBAT && mode <= WMODE_INFOWAR);
     assert(triad == TRIAD_LAND || triad == TRIAD_SEA || triad == TRIAD_AIR);
@@ -907,9 +930,19 @@ int find_proto(int base_id, int triad, int mode, bool defend) {
     int minerals = b->mineral_surplus;
     int best_val = unit_score(best, faction, cfactor, minerals, defend);
 
+	// calculate cost limit for unit
+
+	int unitCostLimit = base->mineral_surplus * conf.ai_production_unit_turns_limit / tx_cost_factor(faction, 1, -1);
+
     for (int i=0; i < 128; i++) {
         int id = (i < 64 ? i : (faction-1)*64 + i);
         UNIT* u = &tx_units[id];
+
+        // exclude too costly units
+
+        if (u->cost > unitCostLimit)
+			continue;
+
         if (strlen(u->name) > 0 && unit_triad(id) == triad && id != best) {
             if (id < 64 && !has_tech(faction, u->preq_tech))
                 continue;
