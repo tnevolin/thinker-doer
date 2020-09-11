@@ -90,10 +90,18 @@ void populateSharedLists()
 	{
 		// store combat modifiers
 
-		factionInfos[id].conventionalOffenseMultiplier = getFactionConventionalOffenseMultiplier(id);
-		factionInfos[id].conventionalDefenseMultiplier = getFactionConventionalDefenseMultiplier(id);
+		factionInfos[id].offenseMultiplier = getFactionOffenseMultiplier(id);
+		factionInfos[id].defenseMultiplier = getFactionDefenseMultiplier(id);
+		factionInfos[id].fanaticBonusMultiplier = getFactionFanaticBonusMultiplier(id);
 
-		debug("\t%-24s: conventionalOffenseMultiplier=%4.2f, conventionalDefenseMultiplier=%4.2f\n", tx_metafactions[id].noun_faction, factionInfos[id].conventionalOffenseMultiplier, factionInfos[id].conventionalDefenseMultiplier);
+		debug
+		(
+			"\t%-24s: offenseMultiplier=%4.2f, defenseMultiplier=%4.2f, fanaticBonusMultiplier=%4.2f\n",
+			tx_metafactions[id].noun_faction,
+			factionInfos[id].offenseMultiplier,
+			factionInfos[id].defenseMultiplier,
+			factionInfos[id].fanaticBonusMultiplier
+		);
 
 	}
 
@@ -120,24 +128,23 @@ void populateSharedLists()
 
 		if (otherFactionRelation & DIPLO_VENDETTA)
 		{
-			threatKoefficient = 1.00;
+			threatKoefficient = conf.ai_production_threat_coefficient_vendetta;
 		}
 		else if (otherFactionRelation & DIPLO_TRUCE)
 		{
-			threatKoefficient = 0.50;
+			threatKoefficient = conf.ai_production_threat_coefficient_truce;
 		}
 		else if (otherFactionRelation & DIPLO_TREATY)
 		{
-			threatKoefficient = 0.25;
+			threatKoefficient = conf.ai_production_threat_coefficient_treaty;
 		}
 		else if (otherFactionRelation & DIPLO_PACT)
 		{
-			threatKoefficient = 0.00;
+			threatKoefficient = conf.ai_production_threat_coefficient_pact;
 		}
 		else
 		{
-			// no commlink or unknown status
-			threatKoefficient = 0.50;
+			threatKoefficient = conf.ai_production_threat_coefficient_truce;
 		}
 
 		// add extra for treacherous human player
@@ -327,7 +334,7 @@ bool isReacheable(int id, int x, int y)
 }
 
 /*
-Estimates unit odds in base defense agains land native attack.
+Estimates unit odds in base defense against land native attack.
 This doesn't account for vehicle morale.
 */
 double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
@@ -342,7 +349,7 @@ double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
 
 	// add faction defense bonus
 
-	nativeProtection *= factionInfos[factionId].conventionalDefenseMultiplier;
+	nativeProtection *= factionInfos[factionId].defenseMultiplier;
 
 	// add PLANET
 
@@ -381,6 +388,63 @@ double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId)
 	nativeProtection *= getMoraleModifierDefense(vehicleId);
 
 	return nativeProtection;
+
+}
+
+double getFactionOffenseMultiplier(int id)
+{
+	double factionOffenseMultiplier = 1.0;
+
+	MetaFaction *metaFaction = &(tx_metafactions[id]);
+
+	for (int bonusIndex = 0; bonusIndex < metaFaction->faction_bonus_count; bonusIndex++)
+	{
+		int bonusId = metaFaction->faction_bonus_id[bonusIndex];
+
+		if (bonusId == FCB_OFFENSE)
+		{
+			factionOffenseMultiplier *= ((double)metaFaction->faction_bonus_val1[bonusIndex] / 100.0);
+		}
+
+	}
+
+	return factionOffenseMultiplier;
+
+}
+
+double getFactionDefenseMultiplier(int id)
+{
+	double factionDefenseMultiplier = 1.0;
+
+	MetaFaction *metaFaction = &(tx_metafactions[id]);
+
+	for (int bonusIndex = 0; bonusIndex < metaFaction->faction_bonus_count; bonusIndex++)
+	{
+		int bonusId = metaFaction->faction_bonus_id[bonusIndex];
+
+		if (bonusId == FCB_DEFENSE)
+		{
+			factionDefenseMultiplier *= ((double)metaFaction->faction_bonus_val1[bonusIndex] / 100.0);
+		}
+
+	}
+
+	return factionDefenseMultiplier;
+
+}
+
+double getFactionFanaticBonusMultiplier(int id)
+{
+	double factionOffenseMultiplier = 1.0;
+
+	MetaFaction *metaFaction = &(tx_metafactions[id]);
+
+	if (metaFaction->rule_flags & FACT_FANATIC)
+	{
+		factionOffenseMultiplier *= (1.0 + (double)tx_basic->combat_bonus_fanatic / 100.0);
+	}
+
+	return factionOffenseMultiplier;
 
 }
 

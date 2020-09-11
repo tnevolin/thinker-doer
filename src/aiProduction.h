@@ -4,8 +4,7 @@
 #include "main.h"
 #include "game.h"
 
-const int MAX_RANGE = 500;
-const double MIN_THREAT_TURNS = 4.0;
+const double MAX_THREAT_TURNS = 10.0;
 const double ARTILLERY_OFFENSIVE_VALUE_KOEFFICIENT = 0.5;
 
 struct PRODUCTION_PRIORITY
@@ -35,18 +34,16 @@ enum UNIT_TYPE
 
 void aiProductionStrategy();
 void populateProducitonLists();
-void calculateNativeProtectionDemand();
-void calculateConventionalDefenseDemand();
+void evaluateNativeProtectionDemand();
+void evaluateFactionProtectionDemand();
 void calculateExpansionDemand();
 void setProductionChoices();
-double getFactionConventionalOffenseMultiplier(int id);
-double getFactionConventionalDefenseMultiplier(int id);
-int findRangeToNearestOwnBase(int x, int y, int region);
-int suggestBaseProduction(int id, bool baseProductionDone, int choice);
+int findNearestOwnBaseId(int x, int y, int region);
+int suggestBaseProduction(int id, bool productionDone, int choice);
 void addProductionDemand(int id, bool immediate, int item, double priority);
 int selectBestNativeDefensePrototype(int factionId);
 int findStrongestNativeDefensePrototype(int factionId);
-int findBaseDefenderUnit();
+int findDefenderPrototype();
 int findFastAttackerUnit();
 
 #endif // __AIPRODUCTION_H__

@@ -12,8 +12,9 @@
 
 struct FACTION_INFO
 {
-	double conventionalOffenseMultiplier;
-	double conventionalDefenseMultiplier;
+	double offenseMultiplier;
+	double defenseMultiplier;
+	double fanaticBonusMultiplier;
 	double threatKoefficient;
 };
 
@@ -44,6 +45,9 @@ VEH *getVehicleByAIId(int aiId);
 bool isReacheable(int id, int x, int y);
 double estimateUnitBaseLandNativeProtection(int factionId, int unitId);
 double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId);
+double getFactionOffenseMultiplier(int id);
+double getFactionDefenseMultiplier(int id);
+double getFactionFanaticBonusMultiplier(int id);
 
 #endif // __AI_H__
 

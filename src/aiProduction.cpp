@@ -8,6 +8,8 @@ std::set<int> bestProductionBaseIds;
 std::map<int, std::map<int, double>> unitDemands;
 std::map<int, PRODUCTION_DEMAND> productionDemands;
 std::map<int, PRODUCTION_CHOICE> productionChoices;
+double averageFacilityMoraleBoost;
+double territoryBonusMultiplier;
 
 /*
 Prepares production orders.
@@ -20,12 +22,12 @@ void aiProductionStrategy()
 
 	// calculate native protection demand
 
-	calculateNativeProtectionDemand();
+	evaluateNativeProtectionDemand();
 
-	// calculate conventional defense demand
-
-	calculateConventionalDefenseDemand();
-
+//	// calculate conventional defense demand
+//
+//	evaluateFactionProtectionDemand();
+//
 	// calculate expansion demand
 
 	calculateExpansionDemand();
@@ -60,23 +62,46 @@ void populateProducitonLists()
 
 	// populate best production bases
 
+	double sumMoraleFacilityBoost = 0.0;
+
 	for (int id : baseIds)
 	{
 		BASE *base = &(tx_bases[id]);
 
 		if (base->mineral_surplus_final >= averageBaseProduction)
 		{
+			// add best production base
+
 			bestProductionBaseIds.insert(id);
+
+			// summarize morale facility boost
+
+			if (has_facility(id, FAC_COMMAND_CENTER) || has_facility(id, FAC_NAVAL_YARD) || has_facility(id, FAC_AEROSPACE_COMPLEX))
+			{
+				sumMoraleFacilityBoost += 2;
+			}
+
+			if (has_facility(id, FAC_BIOENHANCEMENT_CENTER))
+			{
+				sumMoraleFacilityBoost += 2;
+			}
+
 		}
 
 	}
+
+	averageFacilityMoraleBoost = sumMoraleFacilityBoost / bestProductionBaseIds.size();
+
+	// calculate territory bonus multiplier
+
+	territoryBonusMultiplier = (1.0 + (double)conf.combat_bonus_territory / 100.0);
 
 }
 
 /*
 Calculates need for bases protection against natives.
 */
-void calculateNativeProtectionDemand()
+void evaluateNativeProtectionDemand()
 {
 	for (int id : baseIds)
 	{
@@ -117,53 +142,81 @@ void calculateNativeProtectionDemand()
 
 }
 
-void calculateConventionalDefenseDemand()
+/*
+Calculate demand for protection against other factions.
+*/
+void evaluateFactionProtectionDemand()
 {
-	debug("%-24s calculateConventionalDefenseDemand\n", tx_metafactions[aiFactionId].noun_faction);
+	debug("%-24s evaluateFactionProtectionDemand\n", tx_metafactions[aiFactionId].noun_faction);
 
-	// find total enemy offensive value in the vicinity of our bases
+	// hostile conventional offense
 
-	debug("\tvehicle treat\n");
+	debug("\tconventional offense\n");
 
-	double totalEnemyOffensiveStrength = 0.0;
+	double hostileConventionalToConventionalOffenseStrength = 0.0;
+	double hostileConventionalToPsiOffenseStrength = 0.0;
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
 		VEH *vehicle = &(tx_vehicles[id]);
-		int triad = veh_triad(id);
 		MAP *location = getMapTile(vehicle->x, vehicle->y);
-
-		// exclude natives
-
-		if (vehicle->faction_id == 0)
-			continue;
+		int triad = veh_triad(id);
 
 		// exclude own vehicles
 
 		if (vehicle->faction_id == aiFactionId)
 			continue;
 
-		// find vehicle weapon offensive value
+		// exclude natives
 
-		int vehicleWeaponOffensiveValue = tx_weapon[tx_units[vehicle->proto_id].weapon_type].offense_value;
-
-		// count only conventional non zero offensive values
-
-		if (vehicleWeaponOffensiveValue < 1)
+		if (vehicle->faction_id == 0)
 			continue;
+
+		// exclude non combat
+
+		if (!isCombatVehicle(id))
+			continue;
+
+		// find vehicle weapon offense and defense values
+
+		int vehicleOffenseValue = getVehicleOffenseValue(id);
+		int vehicleDefenseValue = getVehicleDefenseValue(id);
+
+		// only conventional offense
+
+		if (vehicleOffenseValue == -1)
+			continue;
+
+		// exclude conventional vehicle with too low attack/defense ratio
+
+		if (vehicleOffenseValue != -1 && vehicleDefenseValue != -1 && vehicleOffenseValue < vehicleDefenseValue / 2)
+			continue;
+
+		// get morale modifier for attack
+
+		double moraleModifierAttack = getMoraleModifierAttack(id);
+
+		// get PLANET bonus on attack
+
+		double planetModifierAttack = getSEPlanetModifierAttack(vehicle->faction_id);
 
 		// get vehicle region
 
 		int region = (triad == TRIAD_AIR ? -1 : location->region);
 
-		// calculate range to own nearest base
+		// find nearest own base
 
-		int rangeToNearestOwnBase = findRangeToNearestOwnBase(vehicle->x, vehicle->y, region);
+		int nearestOwnBaseId = findNearestOwnBaseId(vehicle->x, vehicle->y, region);
 
-		// ignore vehicles on or farther than max range
+		// base not found
 
-		if (rangeToNearestOwnBase >= MAX_RANGE)
+		if (nearestOwnBaseId == -1)
 			continue;
+
+		// find range to nearest own base
+
+		BASE *nearestOwnBase = &(tx_bases[nearestOwnBaseId]);
+		int nearestOwnBaseRange = map_range(vehicle->x, vehicle->y, nearestOwnBase->x, nearestOwnBase->y);
 
 		// calculate vehicle speed
 		// for land units assuming there are roads everywhere
@@ -172,105 +225,225 @@ void calculateConventionalDefenseDemand()
 
 		// calculate threat time koefficient
 
-		double threatTimeKoefficient = MIN_THREAT_TURNS / max(MIN_THREAT_TURNS, ((double)rangeToNearestOwnBase / vehicleSpeed));
+		double timeThreatKoefficient = max(0.0, (MAX_THREAT_TURNS - ((double)nearestOwnBaseRange / vehicleSpeed)) / MAX_THREAT_TURNS);
 
-		// calculate vehicle offensive strength
+		// calculate conventional anti conventional defense demand
 
-		double vehicleOffensiveStrength = (double)vehicleWeaponOffensiveValue;
+		double conventionalCombatStrength =
+			(double)vehicleOffenseValue
+			* factionInfos[vehicle->faction_id].offenseMultiplier
+			* factionInfos[vehicle->faction_id].fanaticBonusMultiplier
+			* moraleModifierAttack
+			* factionInfos[vehicle->faction_id].threatKoefficient
+			/ getBaseDefenseMultiplier(nearestOwnBaseId, triad, true, true)
+			* timeThreatKoefficient
+		;
 
-		// adjust artillery value
+		// calculate psi anti conventional defense demand
 
-		if (vehicle_has_ability(vehicle, ABL_ARTILLERY))
-		{
-			vehicleOffensiveStrength *= ARTILLERY_OFFENSIVE_VALUE_KOEFFICIENT;
-		}
-
-		// adjust vehicle strenght with faction coefficients
-
-		double enemyOffensiveStrength = factionInfos[vehicle->faction_id].threatKoefficient * factionInfos[vehicle->faction_id].conventionalOffenseMultiplier * threatTimeKoefficient * vehicleOffensiveStrength;
-
-		// update total
-
-		totalEnemyOffensiveStrength += enemyOffensiveStrength;
+		double psiCombatStrength =
+			getPsiCombatBaseOdds(triad)
+			* factionInfos[vehicle->faction_id].offenseMultiplier
+			* moraleModifierAttack
+			* planetModifierAttack
+			* factionInfos[vehicle->faction_id].threatKoefficient
+			/ getBaseDefenseMultiplier(nearestOwnBaseId, triad, false, true)
+			* timeThreatKoefficient
+		;
 
 		debug
 		(
-			"\t\t[%3d](%3d,%3d), %-25s, rangeToNearestOwnBase=%3d, threatTimeKoefficient=%4.2f, vehicleWeaponOffensiveValue=%2d, vehicleOffensiveStrength=%4.1f, enemyOffensiveStrength=%4.1f\n",
+			"\t\t[%3d](%3d,%3d), %-25s\n",
 			id,
 			vehicle->x,
 			vehicle->y,
-			tx_metafactions[vehicle->faction_id].noun_faction,
-			rangeToNearestOwnBase,
-			threatTimeKoefficient,
-			vehicleWeaponOffensiveValue,
-			vehicleOffensiveStrength,
-			enemyOffensiveStrength
+			tx_metafactions[vehicle->faction_id].noun_faction
 		);
+		debug
+		(
+			"\t\t\tvehicleOffenseValue=%2d, offenseMultiplier=%4.1f, fanaticBonusMultiplier=%4.1f, moraleModifierAttack=%4.1f, threatKoefficient=%4.1f, nearestOwnBaseRange=%3d, baseDefenseMultiplier=%4.1f, timeThreatKoefficient=%4.2f, conventionalCombatStrength=%4.1f\n",
+			vehicleOffenseValue,
+			factionInfos[vehicle->faction_id].offenseMultiplier,
+			factionInfos[vehicle->faction_id].fanaticBonusMultiplier,
+			moraleModifierAttack,
+			factionInfos[vehicle->faction_id].threatKoefficient,
+			nearestOwnBaseRange,
+			getBaseDefenseMultiplier(nearestOwnBaseId, triad, true, true),
+			timeThreatKoefficient,
+			conventionalCombatStrength
+		);
+		debug
+		(
+			"\t\t\tpsiCombatBaseOdds=%4.1f, offenseMultiplier=%4.1f, moraleModifierAttack=%4.1f, planetModifierAttack=%4.1f, threatKoefficient=%4.1f, nearestOwnBaseRange=%3d, baseDefenseMultiplier=%4.1f, timeThreatKoefficient=%4.2f, psiCombatStrength=%4.1f\n",
+			getPsiCombatBaseOdds(triad),
+			factionInfos[vehicle->faction_id].offenseMultiplier,
+			moraleModifierAttack,
+			planetModifierAttack,
+			factionInfos[vehicle->faction_id].threatKoefficient,
+			nearestOwnBaseRange,
+			getBaseDefenseMultiplier(nearestOwnBaseId, triad, false, true),
+			timeThreatKoefficient,
+			psiCombatStrength
+		);
+
+		// update total
+
+		hostileConventionalToConventionalOffenseStrength += conventionalCombatStrength;
+		hostileConventionalToPsiOffenseStrength += psiCombatStrength;
 
 	}
 
-	// find total own defense value
+	debug
+	(
+		"\thostileConventionalToConventionalOffenseStrength=%.0f, hostileConventionalToPsiOffenseStrength=%.0f\n",
+		hostileConventionalToConventionalOffenseStrength,
+		hostileConventionalToPsiOffenseStrength
+	);
 
-	double totalOwnDefensiveStrength = 0.0;
+	// own defense strength
+
+	debug("\tanti conventional defense\n");
+
+	double ownConventionalToConventionalDefenseStrength = 0.0;
+	double ownConventionalToPsiDefenseStrength = 0.0;
 
 	for (int id : combatVehicleIds)
 	{
 		VEH *vehicle = &(tx_vehicles[id]);
 
-		// find vehicle armor defensive value
+		// find vehicle defense and offense values
 
-		int vehicleArmorDefensiveValue = tx_defense[tx_units[vehicle->proto_id].armor_type].defense_value;
+		int vehicleDefenseValue = getVehicleDefenseValue(id);
 
-		// calculate vehicle defensive strength
+		// conventional defense
 
-		double vehicleDefensiveStrength = (double)vehicleArmorDefensiveValue;
+		if (vehicleDefenseValue == -1)
+			continue;
+
+		// get vehicle morale multiplier
+
+		double moraleModifierDefense = getMoraleModifierDefense(id);
+
+		// calculate vehicle defense strength
+
+		double vehicleDefenseStrength =
+			(double)vehicleDefenseValue
+			* factionInfos[*active_faction].defenseMultiplier
+			* moraleModifierDefense
+			* territoryBonusMultiplier
+		;
+
+		debug
+		(
+			"\t\t[%3d](%3d,%3d) vehicleDefenseValue=%2d, defenseMultiplier=%4.1f, moraleModifierDefense=%4.1f, vehicleDefenseStrength=%4.1f\n",
+			id,
+			vehicle->x,
+			vehicle->y,
+			vehicleDefenseValue,
+			factionInfos[vehicle->faction_id].defenseMultiplier,
+			moraleModifierDefense,
+			vehicleDefenseStrength
+		);
 
 		// update total
 
-		totalOwnDefensiveStrength += factionInfos[vehicle->faction_id].conventionalDefenseMultiplier * vehicleDefensiveStrength;
+		ownConventionalToConventionalDefenseStrength += vehicleDefenseStrength;
 
 	}
 
-	debug("totalEnemyOffensiveStrength=%.0f, totalOwnDefensiveStrength=%.0f, unitTypeProductionDemands[UT_DEFENSE]=%4.2f\n", round(totalEnemyOffensiveStrength), round(totalOwnDefensiveStrength), unitTypeProductionDemands[UT_DEFENSE]);
-	debug("\n");
-
-	// set defensive unit production demand
-
-	if (totalOwnDefensiveStrength < totalEnemyOffensiveStrength)
+	for (int id : combatVehicleIds)
 	{
-		double priority = (totalEnemyOffensiveStrength - totalOwnDefensiveStrength) / totalOwnDefensiveStrength;
+		VEH *vehicle = &(tx_vehicles[id]);
 
-		int baseDefender = findBaseDefenderUnit();
-		int fastAttacker = findFastAttackerUnit();
+		// find vehicle defense and offense values
 
-		double baseDefenderPart = 0.75;
+		int vehicleDefenseValue = getVehicleDefenseValue(id);
 
-		for (int id : bestProductionBaseIds)
-		{
-			// random roll
+		// psi defense only
 
-			double randomRoll = (double)rand() / (double)(RAND_MAX + 1);
+		if (vehicleDefenseValue != -1)
+			continue;
 
-			// chose prodution item
+		// get vehicle psi combat defense strength
 
-			int item;
+		double psiDefenseStrength = getVehiclePsiDefenseStrength(id);
 
-			if (randomRoll < baseDefenderPart)
-			{
-				item = baseDefender;
-			}
-			else
-			{
-				item = fastAttacker;
-			}
+		// calculate vehicle defense strength
 
-			// add production demand
+		double vehicleDefenseStrength =
+			psiDefenseStrength
+			* factionInfos[*active_faction].defenseMultiplier
+			* territoryBonusMultiplier
+		;
 
-			addProductionDemand(id, false, item, priority);
+		debug
+		(
+			"\t\t[%3d](%3d,%3d) psiDefenseStrength=%4.1f, defenseMultiplier=%4.1f, territoryBonusMultiplier=%4.1f, vehicleDefenseStrength=%4.1f\n",
+			id,
+			vehicle->x,
+			vehicle->y,
+			psiDefenseStrength,
+			factionInfos[vehicle->faction_id].defenseMultiplier,
+			territoryBonusMultiplier,
+			vehicleDefenseStrength
+		);
 
-		}
+		// update total
+
+		ownConventionalToPsiDefenseStrength += vehicleDefenseStrength;
 
 	}
+
+	debug
+	(
+		"\townConventionalToConventionalDefenseStrength=%.0f, ownConventionalToPsiDefenseStrength=%.0f\n",
+		ownConventionalToConventionalDefenseStrength,
+		ownConventionalToPsiDefenseStrength
+	);
+
+	// we have enough protection
+
+	if
+	(
+		(ownConventionalToConventionalDefenseStrength >= hostileConventionalToConventionalOffenseStrength)
+		||
+		(ownConventionalToPsiDefenseStrength >= hostileConventionalToPsiOffenseStrength)
+	)
+	{
+		return;
+	}
+
+//	// get defenders
+//
+//	int conventionalDefenderUnitId = findDefenderPrototype();
+//	int defenderUnitCost = tx_units[defenderUnitId].cost;
+//
+//	int defenderUnitDefenseValue = getUnitDefenseValue(defenderUnitId);
+//	double defenderUnitMoraleModifierDefense = getNewVehicleMoraleModifierDefense(*active_faction, averageFacilityMoraleBoost);
+//	double defenderUnitStrength =
+//		(double)defenderUnitDefenseValue
+//		* factionInfos[*active_faction].defenseMultiplier
+//		* defenderUnitMoraleModifierDefense
+//		* territoryBonusMultiplier
+//	;
+//
+//
+//
+//	// set defensive unit production demand
+//
+//	if (ownConventionalDefenseStrength < hostileConventionalOffenseStrength)
+//	{
+//		double priority = (hostileConventionalOffenseStrength - ownConventionalDefenseStrength) / ownConventionalDefenseStrength;
+//		int item = findDefenderPrototype();
+//
+//		for (int id : bestProductionBaseIds)
+//		{
+//			addProductionDemand(id, true, item, priority);
+//		}
+//
+//	}
+//
+	debug("\n");
 
 }
 
@@ -400,9 +573,11 @@ void calculateExpansionDemand()
 		{
 			BASE *base = &(tx_bases[id]);
 
-			// do not build colonies it bases size 1
+			// do not build colony in base size 1 or base size 2 building colony already
 
 			if (base->pop_size <= 1)
+				continue;
+			if (base->pop_size <= 2 && base->queue_items[0] >= 0 && isVehicleColony(base->queue_items[0]))
 				continue;
 
 			if (productionDemands.find(id) == productionDemands.end())
@@ -469,19 +644,16 @@ void setProductionChoices()
 			// normalize priorities
 
 			if (sumPriorities > 1.0)
+			for
+			(
+				std::vector<PRODUCTION_PRIORITY>::iterator regularBaseProductionPrioritiesIterator = regularBaseProductionPriorities->begin();
+				regularBaseProductionPrioritiesIterator != regularBaseProductionPriorities->end();
+				regularBaseProductionPrioritiesIterator++
+			)
 			{
-				for
-				(
-					std::vector<PRODUCTION_PRIORITY>::iterator regularBaseProductionPrioritiesIterator = regularBaseProductionPriorities->begin();
-					regularBaseProductionPrioritiesIterator != regularBaseProductionPriorities->end();
-					regularBaseProductionPrioritiesIterator++
-				)
-				{
-					PRODUCTION_PRIORITY *productionPriority = &(*regularBaseProductionPrioritiesIterator);
+				PRODUCTION_PRIORITY *productionPriority = &(*regularBaseProductionPrioritiesIterator);
 
-					productionPriority->priority /= sumPriorities;
-
-				}
+				productionPriority->priority /= sumPriorities;
 
 			}
 
@@ -574,70 +746,15 @@ void setProductionChoices()
 
 }
 
-double getFactionConventionalOffenseMultiplier(int id)
+int findNearestOwnBaseId(int x, int y, int region)
 {
-	double factionOffenseMultiplier = 1.0;
+	int nearestOwnBaseId = -1;
+	int nearestOwnBaseRange = 9999;
 
-	MetaFaction *metaFaction = &(tx_metafactions[id]);
-
-	// faction bonus
-
-	for (int bonusIndex = 0; bonusIndex < metaFaction->faction_bonus_count; bonusIndex++)
+	for (int id : baseIds)
 	{
-		int bonusId = metaFaction->faction_bonus_id[bonusIndex];
-
-		if (bonusId == FCB_OFFENSE)
-		{
-			factionOffenseMultiplier *= ((double)metaFaction->faction_bonus_val1[bonusIndex] / 100.0);
-		}
-
-	}
-
-	// fanatic bonus
-
-	if (metaFaction->rule_flags & FACT_FANATIC)
-	{
-		factionOffenseMultiplier *= (1.0 + (double)tx_basic->combat_bonus_fanatic / 100.0);
-	}
-
-	return factionOffenseMultiplier;
-
-}
-
-double getFactionConventionalDefenseMultiplier(int id)
-{
-	double factionDefenseMultiplier = 1.0;
-
-	MetaFaction *metaFaction = &(tx_metafactions[id]);
-
-	// faction bonus
-
-	for (int bonusIndex = 0; bonusIndex < metaFaction->faction_bonus_count; bonusIndex++)
-	{
-		int bonusId = metaFaction->faction_bonus_id[bonusIndex];
-
-		if (bonusId == FCB_DEFENSE)
-		{
-			factionDefenseMultiplier *= ((double)metaFaction->faction_bonus_val1[bonusIndex] / 100.0);
-		}
-
-	}
-
-	return factionDefenseMultiplier;
-
-}
-
-int findRangeToNearestOwnBase(int x, int y, int region)
-{
-	int rangeToNearestOwnBase = MAX_RANGE;
-
-	// iterate through own bases to find the closest
-
-	for (std::pair<MAP *, int> element : baseLocations)
-	{
-		MAP *location = element.first;
-		int id = element.second;
 		BASE *base = &(tx_bases[id]);
+		MAP *location = getMapTile(base->x, base->y);
 
 		// skip bases in other region
 
@@ -648,22 +765,28 @@ int findRangeToNearestOwnBase(int x, int y, int region)
 
 		int range = map_range(base->x, base->y, x, y);
 
-		// find minimal range
+		// update closest base
 
-		rangeToNearestOwnBase = min(rangeToNearestOwnBase, range);
+		if (nearestOwnBaseId == -1 || range < nearestOwnBaseRange)
+		{
+			nearestOwnBaseId = id;
+			nearestOwnBaseRange = range;
+		}
 
 	}
 
-	return rangeToNearestOwnBase;
+	return nearestOwnBaseId;
 
 }
 
 /*
 Selects base production.
 */
-int suggestBaseProduction(int id, bool baseProductionDone, int choice)
+int suggestBaseProduction(int id, bool productionDone, int choice)
 {
-	debug("selectBaseProduction: %-25s, productionDone=%s\n", tx_bases[id].name, (baseProductionDone ? "y" : "n"));
+	BASE *base = &(tx_bases[id]);
+
+	debug("suggestBaseProduction: %-25s, productionDone=%s, (%s)\n", base->name, (productionDone ? "y" : "n"), prod_name(base->queue_items[0]));
 
 	std::map<int, PRODUCTION_CHOICE>::iterator productionChoicesIterator = productionChoices.find(id);
 
@@ -671,12 +794,14 @@ int suggestBaseProduction(int id, bool baseProductionDone, int choice)
 	{
 		PRODUCTION_CHOICE *productionChoice = &(productionChoicesIterator->second);
 
-		debug("\t%-25s\n", prod_name(productionChoice->item));
+		// determine if production change is allowed
 
-		if (productionChoice->immediate || baseProductionDone)
+		if (productionChoice->immediate || productionDone)
 		{
+			debug("\t%-25s\n", prod_name(productionChoice->item));
+
 			choice = productionChoice->item;
-			debug("\t\tselected\n");
+
 		}
 
 	}
@@ -797,7 +922,7 @@ int findStrongestNativeDefensePrototype(int factionId)
 
 }
 
-int findBaseDefenderUnit()
+int findDefenderPrototype()
 {
 	int bestUnitId = BSC_SCOUT_PATROL;
 	double bestUnitDefenseEffectiveness = evaluateUnitDefenseEffectiveness(bestUnitId);
