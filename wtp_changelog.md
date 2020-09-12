@@ -1,3 +1,7 @@
+# Version 134
+
+* Rearranged facility priorities: submerge protection, defense, population limit, psych, growth, mineral, project, energy.
+
 # Version 133
 
 * AI tuning.
