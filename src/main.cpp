@@ -341,6 +341,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_unit_turns_limit = atoi(value);
     }
+    else if (MATCH("wtp", "ai_production_break_event_point_turns"))
+    {
+        cf->ai_production_break_event_point_turns = atoi(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
         cf->ai_terraforming_nutrientWeight = atof(value);
@@ -1168,27 +1172,69 @@ int consider_hurry(int id) {
     return 0;
 }
 
-int find_facility(int id) {
-    const int build_order[][2] = {
-        {FAC_HAB_COMPLEX, 0},
-        {FAC_HABITATION_DOME, 0},
-        {FAC_RECREATION_COMMONS, 0},
-        {FAC_CHILDREN_CRECHE, 0},
-        {FAC_PERIMETER_DEFENSE, 2},
-        {FAC_GENEJACK_FACTORY, 0},
+int find_facility(int id)
+{
+    const int sumbergeProtectionFacilites[] =
+    {
+        FAC_PRESSURE_DOME,
+    };
+
+    const int defenseFacilites[] =
+    {
+        FAC_PERIMETER_DEFENSE,
+        FAC_TACHYON_FIELD,
+    };
+
+    const int populationLimitFacilites[] =
+    {
+        FAC_HAB_COMPLEX,
+        FAC_HABITATION_DOME,
+    };
+
+    const int psychFacilityIds[] =
+    {
+        FAC_RECREATION_COMMONS,
+        FAC_HOLOGRAM_THEATRE,
+        FAC_PARADISE_GARDEN,
+    };
+
+    const int growthFacilityIds[] =
+    {
+        FAC_CHILDREN_CRECHE,
+    };
+
+    const int mineralFacilityIds[] =
+    {
+        FAC_RECYCLING_TANKS,
+        FAC_GENEJACK_FACTORY,
+        FAC_ROBOTIC_ASSEMBLY_PLANT,
+        FAC_QUANTUM_CONVERTER,
+        FAC_NANOREPLICATOR,
+    };
+
+    // bitmask: 1 = labs, 2 = economy, 4 = psych
+    const int energyFacilityIds[][2] =
+    {
         {FAC_NETWORK_NODE, 1},
+        {FAC_ENERGY_BANK, 2},
+        {FAC_HOLOGRAM_THEATRE, 4},
+        {FAC_FUSION_LAB, 3},
+        {FAC_QUANTUM_LAB, 3},
+        {FAC_RESEARCH_HOSPITAL, 5},
+        {FAC_NANOHOSPITAL, 5},
+        {FAC_TREE_FARM, 6},
+        {FAC_HYBRID_FOREST, 6},
+    };
+
+    // TODO refactor these too
+    const int build_order[][2] = {
         {FAC_AEROSPACE_COMPLEX, 0},
-        {FAC_TREE_FARM, 0},
         {FAC_COMMAND_CENTER, 2},
         {FAC_GEOSYNC_SURVEY_POD, 2},
         {FAC_FLECHETTE_DEFENSE_SYS, 2},
-        {FAC_FUSION_LAB, 1},
-        {FAC_ENERGY_BANK, 1},
-        {FAC_RESEARCH_HOSPITAL, 1},
         {FAC_TACHYON_FIELD, 4},
-        {FAC_QUANTUM_LAB, 5},
-        {FAC_NANOHOSPITAL, 5},
     };
+
     BASE* base = &tx_bases[id];
     int faction = base->faction_id;
     int proj;
@@ -1197,44 +1243,170 @@ int find_facility(int id) {
     int pop_rule = tx_metafactions[faction].rule_population;
     int hab_complex_limit = tx_basic->pop_limit_wo_hab_complex - pop_rule;
     int hab_dome_limit = tx_basic->pop_limit_wo_hab_dome - pop_rule;
+    int popuationLimits[] = {hab_complex_limit, hab_dome_limit};
     Faction* f = &tx_factions[faction];
     bool sea_base = is_sea_base(id);
     bool core_base = minerals+extra >= plans[faction].proj_limit;
     bool can_build_units = can_build_unit(faction, -1);
 	int doctors = getDoctors(id);
 
-    if (*climate_future_change > 0) {
+	// submerge protection
+
+    if (*climate_future_change > 0)
+	{
         MAP* sq = mapsq(base->x, base->y);
-        if (sq && (sq->level >> 5) == LEVEL_SHORE_LINE && can_build(id, FAC_PRESSURE_DOME))
-            return -FAC_PRESSURE_DOME;
+        if (sq && (sq->level >> 5) == LEVEL_SHORE_LINE)
+		{
+			for (int sumbergeProtectionFacilityId : sumbergeProtectionFacilites)
+			{
+				if (can_build(id, sumbergeProtectionFacilityId))
+					return -sumbergeProtectionFacilityId;
+
+			}
+
+		}
+
     }
 
-	// consider psych facility if drones outnumbers talents or there are doctors
+    // defense
+
+	for (int defenseFacilityId : defenseFacilites)
+	{
+		if (can_build(id, defenseFacilityId))
+		{
+			if (f->thinker_enemy_range < 40 - min(12, 3 * tx_facility[defenseFacilityId].maint))
+				return -defenseFacilityId;
+		}
+
+	}
+
+	// population limit
+
+	for (int i = 0; i < 2; i++)
+	{
+		int populationLimitFacilityId = populationLimitFacilites[i];
+		int populationLimit = popuationLimits[i];
+
+		if (can_build(id, populationLimitFacilityId))
+		{
+			// project population in as much turns as allowed to build most expensive unit
+
+			int populationSizeProjection = base->pop_size + (base->nutrients_accumulated + base->nutrient_surplus * conf.ai_production_unit_turns_limit) / ((base->pop_size + 1) * tx_cost_factor(faction, 0, id));
+
+			// build facility if population projection is above population limit
+
+			if (populationSizeProjection > populationLimit)
+			{
+				if (can_build(id, populationLimitFacilityId))
+				{
+					return -populationLimitFacilityId;
+				}
+
+			}
+
+		}
+
+	}
+
+	// psych
 
 	if (base->drone_total > base->talent_total || doctors > 0)
 	{
-		if (can_build(id, FAC_RECREATION_COMMONS))
+		for (int psychFacilityId : psychFacilityIds)
 		{
-			return -FAC_RECREATION_COMMONS;
+			if (can_build(id, psychFacilityId))
+				return -psychFacilityId;
+
 		}
-		if (can_build(id, FAC_HOLOGRAM_THEATRE))
-		{
-			return -FAC_RECREATION_COMMONS;
-		}
-		if (can_build(id, FAC_PARADISE_GARDEN))
-		{
-			return -FAC_PARADISE_GARDEN;
-		}
+
 	}
 
-    if (can_build(id, FAC_RECYCLING_TANKS))
-        return -FAC_RECYCLING_TANKS;
-    if (base->pop_size >= hab_complex_limit && can_build(id, FAC_HAB_COMPLEX))
-        return -FAC_HAB_COMPLEX;
-    if (core_base && (proj = find_project(id)) != 0) {
+	// growth
+
+	for (int growthFacilityId : growthFacilityIds)
+	{
+		if (can_build(id, growthFacilityId))
+			return -growthFacilityId;
+
+	}
+
+	// mineral
+
+	for (int mineralFacilityId : mineralFacilityIds)
+	{
+		if (can_build(id, mineralFacilityId))
+		{
+			// calculate break even turns
+
+			int breakEvenTurns =
+				mineral_cost(faction, -mineralFacilityId) / base->mineral_surplus
+				+
+				mineral_cost(faction, -mineralFacilityId) / (base->mineral_intake / 2 - tx_facility[mineralFacilityId].maint / 2)
+			;
+
+			// build facility if it breaks even soon enough
+
+			if (breakEvenTurns <= conf.ai_production_break_event_point_turns)
+				return -mineralFacilityId;
+
+		}
+
+	}
+
+	// project
+
+    if (core_base && (proj = find_project(id)) != 0)
+	{
         return proj;
     }
-    if (core_base && has_facility(id, FAC_AEROSPACE_COMPLEX)) {
+
+	// energy
+
+	for (const int *energyFacilityStruct : energyFacilityIds)
+	{
+		int energyFacilityId = energyFacilityStruct[0];
+		int energyFacilityFocus = energyFacilityStruct[1];
+
+		if (can_build(id, energyFacilityId))
+		{
+			// calculate focus effect
+
+			int effect = 0;
+
+			if (energyFacilityFocus & 0x1)
+			{
+				effect += base->labs_total;
+			}
+			if (energyFacilityFocus & 0x2)
+			{
+				effect += base->economy_total;
+			}
+			if (energyFacilityFocus & 0x3)
+			{
+				effect += base->psych_total;
+			}
+
+			// calculate break even turns
+
+			int breakEvenTurns =
+				mineral_cost(faction, -energyFacilityId) / base->mineral_surplus
+				+
+				mineral_cost(faction, -energyFacilityId) / (effect / 2 / 2 - tx_facility[energyFacilityId].maint / 2)
+			;
+
+			// build facility if it breaks even soon enough
+
+			if (breakEvenTurns <= conf.ai_production_break_event_point_turns)
+				return -energyFacilityId;
+
+		}
+
+	}
+
+	// satellites
+
+    if (core_base && has_facility(id, FAC_AEROSPACE_COMPLEX))
+	{
         if (can_build(id, FAC_ORBITAL_DEFENSE_POD))
             return -FAC_ORBITAL_DEFENSE_POD;
         if (can_build(id, FAC_NESSUS_MINING_STATION))
@@ -1244,6 +1416,7 @@ int find_facility(int id) {
         if (can_build(id, FAC_SKY_HYDRO_LAB))
             return -FAC_SKY_HYDRO_LAB;
     }
+
     for (const int* t : build_order) {
         int c = t[0];
         R_Facility* fc = &tx_facility[c];
@@ -1255,8 +1428,6 @@ int find_facility(int id) {
             continue;
         /* Build these facilities only if the global unit limit is reached. */
         if (t[1] & 4 && can_build_units)
-            continue;
-        if (c == FAC_TREE_FARM && sea_base && base->energy_surplus < 2*fc->maint + fc->cost)
             continue;
         if (c == FAC_COMMAND_CENTER && (sea_base || !core_base || f->SE_morale < 0))
             continue;
@@ -1274,12 +1445,17 @@ int find_facility(int id) {
             return -1*c;
         }
     }
+
     if (!can_build_units) {
         return -FAC_STOCKPILE_ENERGY;
     }
+
     debug("BUILD OFFENSE\n");
+
     bool build_ships = can_build_ships(id) && (sea_base || !random(3));
+
     return select_combat(id, sea_base, build_ships, 0, 0);
+
 }
 
 int select_colony(int id, int pods, bool build_ships) {

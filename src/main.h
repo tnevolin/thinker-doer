@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 133"
+    #define MOD_VERSION "The Will to Power mod - version 134"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -175,6 +175,7 @@ struct Config {
     int ai_production_min_unpopulated_tiles;
     double ai_production_colony_priority;
     int ai_production_unit_turns_limit;
+    int ai_production_break_event_point_turns;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
