@@ -289,6 +289,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->zoc_regular_army_sneaking_disabled = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "pts_new_base_size_less_average"))
+    {
+        cf->pts_new_base_size_less_average = max(0, atoi(value));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
@@ -1197,14 +1201,32 @@ int find_facility(int id) {
     bool sea_base = is_sea_base(id);
     bool core_base = minerals+extra >= plans[faction].proj_limit;
     bool can_build_units = can_build_unit(faction, -1);
+	int doctors = getDoctors(id);
 
     if (*climate_future_change > 0) {
         MAP* sq = mapsq(base->x, base->y);
         if (sq && (sq->level >> 5) == LEVEL_SHORE_LINE && can_build(id, FAC_PRESSURE_DOME))
             return -FAC_PRESSURE_DOME;
     }
-    if (base->drone_total > 0 && can_build(id, FAC_RECREATION_COMMONS))
-        return -FAC_RECREATION_COMMONS;
+
+	// consider psych facility if drones outnumbers talents or there are doctors
+
+	if (base->drone_total > base->talent_total || doctors > 0)
+	{
+		if (can_build(id, FAC_RECREATION_COMMONS))
+		{
+			return -FAC_RECREATION_COMMONS;
+		}
+		if (can_build(id, FAC_HOLOGRAM_THEATRE))
+		{
+			return -FAC_RECREATION_COMMONS;
+		}
+		if (can_build(id, FAC_PARADISE_GARDEN))
+		{
+			return -FAC_PARADISE_GARDEN;
+		}
+	}
+
     if (can_build(id, FAC_RECYCLING_TANKS))
         return -FAC_RECYCLING_TANKS;
     if (base->pop_size >= hab_complex_limit && can_build(id, FAC_HAB_COMPLEX))

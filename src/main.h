@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 74"
+    #define MOD_VERSION "The Will to Power mod - version 133"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -162,6 +162,7 @@ struct Config {
     int unit_home_base_reassignment_production_threshold = 0;
     double ocean_depth_multiplier = 1.0;
     bool zoc_regular_army_sneaking_disabled = false;
+    int pts_new_base_size_less_average = 2;
     bool ai_useWTPAlgorithms;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_truce;

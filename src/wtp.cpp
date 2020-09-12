@@ -1805,7 +1805,7 @@ HOOK_API int baseInit(int factionId, int x, int y)
 
 		// calculate new base size
 
-		int newBaseSize = max(1, min(3, (int)floor(averageFactionBaseSize) - 2));
+		int newBaseSize = max(1, min(3, (int)floor(averageFactionBaseSize) - conf.pts_new_base_size_less_average));
 
 		// set base size
 
