@@ -462,8 +462,11 @@ two and increase $LINK<PSYCH=38> output of base by 50%.
 
 #; The Planetary Transit System
 #HELPPROJ7
-Any new bases you found begin at population level 3. One less $LINK<drone=36>
-at all bases of population level 3 and under.
+Any new bases you found begin at population level at or below the faction average base size.
+^new base size = average faction base size - 2.
+^Configuration parameter in thinker.ini: pts_new_base_size_less_average.
+^
+^One less $LINK<drone=36> at all bases of population level 3 and under.
 
 #; The Xenoempathy Dome
 #HELPPROJ8

@@ -14,6 +14,9 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
 * bvanevery: Play testing and help in design.
 * dino: Play testing and alternative combat mechanics idea.
+* Nevill and Tayta: Multiplyer play testing and multiplier text configuration.
+* Mercantile Interest: Alternative nutrient model idea.
+* EmpathCrawler: Play testing.
 
 ## Difficulty warning
 

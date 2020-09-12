@@ -195,6 +195,7 @@ void setVehicleOrder(int id, int order);
 MAP *getMapTile(int x, int y);
 bool isImprovedTile(int x, int y);
 bool isVehicleSupply(VEH *vehicle);
+bool isUnitColony(int id);
 bool isVehicleColony(int id);
 bool isVehicleFormer(VEH *vehicle);
 bool isVehicleTransport(VEH *vehicle);

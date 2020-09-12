@@ -1336,6 +1336,11 @@ bool isVehicleSupply(VEH *vehicle)
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_SUPPLY_TRANSPORT);
 }
 
+bool isUnitColony(int id)
+{
+	return (tx_units[id].weapon_type == WPN_COLONY_MODULE);
+}
+
 bool isVehicleColony(int id)
 {
 	return (tx_units[tx_vehicles[id].proto_id].weapon_type == WPN_COLONY_MODULE);

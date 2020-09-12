@@ -1,6 +1,16 @@
+# Version 133
+
+* AI tuning.
+  * Psych facilities are considered if drones outnumbers talents or there are doctors.
+  * Psych facilities list is extended to FAC_RECREATION_COMMONS, FAC_HOLOGRAM_THEATRE, FAC_PARADISE_GARDEN
+* Added multiplayer text files folder.
+* Updated help text for The Planetary Transit System.
+* Added configuration parameter for The Planetary Transit System new base size: pts_new_base_size_less_average.
+
 # Version 132
 
-* Bases do not build units taking too much time. Configuration parameter: ai_production_unit_turns_limit.
+* AI tuning.
+  * Bases do not build units taking too much time. Configuration parameter: ai_production_unit_turns_limit.
 
 # Version 131
 
@@ -795,7 +805,6 @@ Initial release. See list of changes in readme.
 * Cloning Vats should not grant impunities.
 * Copy basic units to player unit pool.
 * Don't display basic units in design workshop.
-
 * Prototype only new component, not the whole unit.
 
 ## AI

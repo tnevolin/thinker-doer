@@ -577,7 +577,7 @@ void calculateExpansionDemand()
 
 			if (base->pop_size <= 1)
 				continue;
-			if (base->pop_size <= 2 && base->queue_items[0] >= 0 && isVehicleColony(base->queue_items[0]))
+			if (base->pop_size <= 2 && base->queue_items[0] >= 0 && isUnitColony(base->queue_items[0]))
 				continue;
 
 			if (productionDemands.find(id) == productionDemands.end())
