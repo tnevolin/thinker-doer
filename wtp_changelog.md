@@ -1,3 +1,7 @@
+# Version 135
+
+* Weapon help always shows cost even if it equals to firepower.
+
 # Version 134
 
 * Rearranged facility priorities: submerge protection, defense, population limit, psych, growth, mineral, project, energy, fixed labs.
@@ -802,6 +806,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Transport doesn't carry colony.
 * Research gene warfare and its unit damaging effect. See if we need to tone this down a bit.
 * Move plant fungus later.
 * Revert forest yield, delay HF and make it more expensive.
