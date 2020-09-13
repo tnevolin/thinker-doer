@@ -1,3 +1,7 @@
+# Version 136
+
+* Merged witt scient's 2.1 help.
+
 # Version 135
 
 * Weapon help always shows cost even if it equals to firepower.
