@@ -293,6 +293,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->pts_new_base_size_less_average = max(0, atoi(value));
     }
+    else if (MATCH("wtp", "biology_lab_research_bonus"))
+    {
+        cf->biology_lab_research_bonus = max(0, atoi(value));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
@@ -341,9 +345,13 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_unit_turns_limit = atoi(value);
     }
-    else if (MATCH("wtp", "ai_production_break_event_point_turns"))
+    else if (MATCH("wtp", "ai_production_payoff_turns"))
     {
-        cf->ai_production_break_event_point_turns = atoi(value);
+        cf->ai_production_payoff_turns = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_production_combat_unit_min_mineral_surplus"))
+    {
+        cf->ai_production_combat_unit_min_mineral_surplus = atoi(value);
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
@@ -520,19 +528,13 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
 	tx_base_compute(1);
 	if ((choice = need_psych(id)) != 0 && choice != prod) {
 		debug("BUILD PSYCH\n");
-	} else if (base->status_flags & BASE_PRODUCTION_DONE || prod == -FAC_STOCKPILE_ENERGY) {
+	} else if (base->status_flags & BASE_PRODUCTION_DONE || prod == -FAC_STOCKPILE_ENERGY || undesirableProduction(id)) {
 
 		choice = select_prod(id);
 
 		base->status_flags &= ~BASE_PRODUCTION_DONE;
 
 	} else if (prod >= 0 && !can_build_unit(faction, prod)) {
-		debug("BUILD FACILITY\n");
-		choice = find_facility(id);
-	}
-	// do not build unit in 0-1 production base
-	else if (prod >= 0 && base->mineral_surplus <= 1)
-	{
 		debug("BUILD FACILITY\n");
 		choice = find_facility(id);
 	} else if (prod < 0 && !can_build(id, abs(prod))) {
@@ -1226,6 +1228,11 @@ int find_facility(int id)
         {FAC_HYBRID_FOREST, 6},
     };
 
+    const int fixedLabsFacilityIds[][2] =
+    {
+        {FAC_BIOLOGY_LAB, 4},
+    };
+
     // TODO refactor these too
     const int build_order[][2] = {
         {FAC_AEROSPACE_COMPLEX, 0},
@@ -1338,15 +1345,11 @@ int find_facility(int id)
 		{
 			// calculate break even turns
 
-			int breakEvenTurns =
-				mineral_cost(faction, -mineralFacilityId) / base->mineral_surplus
-				+
-				mineral_cost(faction, -mineralFacilityId) / (base->mineral_intake / 2 - tx_facility[mineralFacilityId].maint / 2)
-			;
+			int payoffTurns = mineral_cost(faction, -mineralFacilityId) / max(1,(base->mineral_intake / 2 - tx_facility[mineralFacilityId].maint / 2));
 
 			// build facility if it breaks even soon enough
 
-			if (breakEvenTurns <= conf.ai_production_break_event_point_turns)
+			if (payoffTurns <= conf.ai_production_payoff_turns)
 				return -mineralFacilityId;
 
 		}
@@ -1388,16 +1391,34 @@ int find_facility(int id)
 
 			// calculate break even turns
 
-			int breakEvenTurns =
-				mineral_cost(faction, -energyFacilityId) / base->mineral_surplus
-				+
-				mineral_cost(faction, -energyFacilityId) / (effect / 2 / 2 - tx_facility[energyFacilityId].maint / 2)
-			;
+			int payoffTurns = mineral_cost(faction, -energyFacilityId) / max(1, (effect / 2 / 2 - tx_facility[energyFacilityId].maint / 2));
 
 			// build facility if it breaks even soon enough
 
-			if (breakEvenTurns <= conf.ai_production_break_event_point_turns)
+			if (payoffTurns <= conf.ai_production_payoff_turns)
 				return -energyFacilityId;
+
+		}
+
+	}
+
+	// fixedLabs
+
+	for (const int *fixedLabsFacilityStruct : fixedLabsFacilityIds)
+	{
+		int fixedLabsFacilityId = fixedLabsFacilityStruct[0];
+		int fixedLabsFacilityBonus = fixedLabsFacilityStruct[1];
+
+		if (can_build(id, fixedLabsFacilityId))
+		{
+			// calculate break even turns
+
+			int payoffTurns = mineral_cost(faction, -fixedLabsFacilityId) / max(1, (fixedLabsFacilityBonus / 2 - tx_facility[fixedLabsFacilityId].maint / 2));
+
+			// build facility if it breaks even soon enough
+
+			if (payoffTurns <= conf.ai_production_payoff_turns)
+				return -fixedLabsFacilityId;
 
 		}
 
@@ -1633,10 +1654,14 @@ int select_prod(int id) {
         } else if (build_ships && !transports && needferry.count({base->x, base->y})) {
             return find_proto(id, TRIAD_SEA, WMODE_TRANSPORT, DEF);
         } else if (build_pods && !can_build(id, FAC_RECYCLING_TANKS)) {
-            int tr = select_colony(id, pods, build_ships);
-            if (tr == TRIAD_LAND || tr == TRIAD_SEA) {
-                return find_proto(id, tr, WMODE_COLONIST, DEF);
-            }
+        	// do not build colony in base size 1
+        	if (base->pop_size >= 2)
+			{
+				int tr = select_colony(id, pods, build_ships);
+				if (tr == TRIAD_LAND || tr == TRIAD_SEA) {
+					return find_proto(id, tr, WMODE_COLONIST, DEF);
+				}
+			}
         }
         return find_facility(id);
     }

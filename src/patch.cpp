@@ -2512,6 +2512,24 @@ void patch_zoc_move_to_friendly_unit_tile_check()
 
 }
 
+/*
+Modifies biology lab research bonus.
+*/
+void patch_biology_lab_research_bonus(int biology_lab_research_bonus)
+{
+	int biology_lab_research_bonus_bytes_length = 7;
+	byte biology_lab_research_bonus_bytes_old[] = { 0x83, 0x80, 0x08, 0x01, 0x00, 0x00, 0x02 };
+	byte biology_lab_research_bonus_bytes_new[] = { 0x83, 0x80, 0x08, 0x01, 0x00, 0x00, (byte)biology_lab_research_bonus };
+	write_bytes
+	(
+		0x004EBC85,
+		biology_lab_research_bonus_bytes_length,
+		biology_lab_research_bonus_bytes_old,
+		biology_lab_research_bonus_bytes_new
+	);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3030,6 +3048,11 @@ bool patch_setup(Config* cf) {
 	if (cf->zoc_regular_army_sneaking_disabled)
 	{
 		patch_zoc_move_to_friendly_unit_tile_check();
+	}
+
+	if (cf->biology_lab_research_bonus != 2)
+	{
+		patch_biology_lab_research_bonus(cf->biology_lab_research_bonus);
 	}
 
 

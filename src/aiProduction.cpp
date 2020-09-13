@@ -986,3 +986,21 @@ int findFastAttackerUnit()
 
 }
 
+bool undesirableProduction(int id)
+{
+	BASE *base = &(tx_bases[id]);
+
+	// colony
+	if (base->queue_items[0] >= 0 && isUnitColony(base->queue_items[0]))
+	{
+		// do not build colonies in base size 1
+
+		if (base->pop_size <= 1)
+			return true;
+
+	}
+
+	return false;
+
+}
+
