@@ -2530,6 +2530,24 @@ void patch_biology_lab_research_bonus(int biology_lab_research_bonus)
 
 }
 
+/*
+Weapon help always shows cost even if it equals to firepower.
+*/
+void patch_weapon_help_always_show_cost()
+{
+	int weapon_help_show_cost_always_bytes_length = 2;
+	byte weapon_help_show_cost_always_bytes_old[] = { 0x75, 0x24 };
+	byte weapon_help_show_cost_always_bytes_new[] = { 0xEB, 0x24 };
+	write_bytes
+	(
+		0x0042E5D5,
+		weapon_help_show_cost_always_bytes_length,
+		weapon_help_show_cost_always_bytes_old,
+		weapon_help_show_cost_always_bytes_new
+	);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3054,6 +3072,8 @@ bool patch_setup(Config* cf) {
 	{
 		patch_biology_lab_research_bonus(cf->biology_lab_research_bonus);
 	}
+
+	patch_weapon_help_always_show_cost();
 
 
     // continue with original Thinker checks
