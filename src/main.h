@@ -163,6 +163,7 @@ struct Config {
     double ocean_depth_multiplier = 1.0;
     bool zoc_regular_army_sneaking_disabled = false;
     int pts_new_base_size_less_average = 2;
+    int biology_lab_research_bonus = 2;
     bool ai_useWTPAlgorithms;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_truce;
@@ -175,7 +176,8 @@ struct Config {
     int ai_production_min_unpopulated_tiles;
     double ai_production_colony_priority;
     int ai_production_unit_turns_limit;
-    int ai_production_break_event_point_turns;
+    int ai_production_payoff_turns;
+    int ai_production_combat_unit_min_mineral_surplus;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;

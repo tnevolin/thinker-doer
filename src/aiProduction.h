@@ -45,5 +45,6 @@ int selectBestNativeDefensePrototype(int factionId);
 int findStrongestNativeDefensePrototype(int factionId);
 int findDefenderPrototype();
 int findFastAttackerUnit();
+bool undesirableProduction(int id);
 
 #endif // __AIPRODUCTION_H__

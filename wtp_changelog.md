@@ -1,6 +1,8 @@
 # Version 134
 
-* Rearranged facility priorities: submerge protection, defense, population limit, psych, growth, mineral, project, energy.
+* Rearranged facility priorities: submerge protection, defense, population limit, psych, growth, mineral, project, energy, fixed labs.
+* Discouraged building colonies in base size 1.
+* Biology Lab costs 4 and produces 4 labs. Without that it seems to be not desirable early choice. Extra labs bonus will diminish later on with higher technology cost anyway.
 
 # Version 133
 
