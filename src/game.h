@@ -86,6 +86,7 @@ int find_hq(int faction);
 int veh_triad(int id);
 int veh_speed(int id);
 int veh_speed_without_roads(int id);
+int unit_chassis_speed(int id);
 int veh_chassis_speed(int id);
 int unit_triad(int id);
 int unit_speed(int id);

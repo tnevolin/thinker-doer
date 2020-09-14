@@ -34,9 +34,11 @@ enum UNIT_TYPE
 
 void aiProductionStrategy();
 void populateProducitonLists();
+void evaluateExplorationDemand();
+void evaluateLandImprovementDemand();
+void evaluateExpansionDemand();
 void evaluateNativeProtectionDemand();
 void evaluateFactionProtectionDemand();
-void calculateExpansionDemand();
 void setProductionChoices();
 int findNearestOwnBaseId(int x, int y, int region);
 int suggestBaseProduction(int id, bool productionDone, int choice);
@@ -46,5 +48,8 @@ int findStrongestNativeDefensePrototype(int factionId);
 int findDefenderPrototype();
 int findFastAttackerUnit();
 bool undesirableProduction(int id);
+int findScoutUnit(int triad);
+int findColonyUnit(int triad);
+int findOptimalColonyUnit(int triad, int mineralSurplus, double infantryTurnsToDestination);
 
 #endif // __AIPRODUCTION_H__

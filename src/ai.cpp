@@ -25,7 +25,7 @@ int aiFactionId;
 FACTION_INFO factionInfos[8];
 std::vector<int> baseIds;
 std::unordered_map<MAP *, int> baseLocations;
-std::map<int, std::vector<int>> regionBases;
+std::map<int, std::vector<int>> regionBaseGroups;
 std::map<int, BASE_STRATEGY> baseStrategies;
 std::vector<int> combatVehicleIds;
 std::vector<int> outsideCombatVehicleIds;
@@ -76,7 +76,7 @@ void populateSharedLists()
 
 	baseIds.clear();
 	baseLocations.clear();
-	regionBases.clear();
+	regionBaseGroups.clear();
 	baseStrategies.clear();
 	combatVehicleIds.clear();
 	outsideCombatVehicleIds.clear();
@@ -199,12 +199,12 @@ void populateSharedLists()
 
 		for (int region : baseConnectedRegions)
 		{
-			if (regionBases.find(region) == regionBases.end())
+			if (regionBaseGroups.find(region) == regionBaseGroups.end())
 			{
-				regionBases[region] = std::vector<int>();
+				regionBaseGroups[region] = std::vector<int>();
 			}
 
-			regionBases[region].push_back(id);
+			regionBaseGroups[region].push_back(id);
 
 		}
 
@@ -322,7 +322,7 @@ VEH *getVehicleByAIId(int aiId)
 
 }
 
-bool isReacheable(int id, int x, int y)
+bool isreachable(int id, int x, int y)
 {
 	VEH *vehicle = &(tx_vehicles[id]);
 	int triad = veh_triad(id);

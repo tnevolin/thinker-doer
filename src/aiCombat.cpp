@@ -195,9 +195,9 @@ void attackNativeArtillery(int enemyVehicleId)
 	{
 		VEH *vehicle = &(tx_vehicles[id]);
 
-		// do not bother if unreacheable
+		// do not bother if unreachable
 
-		if (!isReacheable(id, enemyVehicle->x, enemyVehicle->y))
+		if (!isreachable(id, enemyVehicle->x, enemyVehicle->y))
 			continue;
 
 		// calculate damage
@@ -358,9 +358,9 @@ int applyAttackOrder(int id, COMBAT_ORDER *combatOrder)
 	if (enemyVehicle == NULL)
 		return tx_enemy_move(id);
 
-	// enemy is unreacheable
+	// enemy is unreachable
 
-	if (!isReacheable(id, enemyVehicle->x, enemyVehicle->y))
+	if (!isreachable(id, enemyVehicle->x, enemyVehicle->y))
 		return tx_enemy_move(id);
 
 	// set move to order

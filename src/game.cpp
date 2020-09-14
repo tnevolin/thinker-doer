@@ -208,6 +208,11 @@ int veh_speed_without_roads(int id) {
     return tx_veh_speed(id, 0) / tx_basic->mov_rate_along_roads;
 }
 
+int unit_chassis_speed(int id)
+{
+	return tx_chassis[tx_units[id].chassis_type].speed;
+}
+
 int veh_chassis_speed(int id)
 {
 	VEH *vehicle = &tx_vehicles[id];

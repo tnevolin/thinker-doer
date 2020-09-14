@@ -1,6 +1,12 @@
+# Version 137
+
+* AI:
+  * Set production exploration demand.
+  * Adjusted produciton expansion demand based on range to destination and availabe settlement room.
+
 # Version 136
 
-* Merged witt scient's 2.1 help.
+* Merged with scient's 2.1 help.
 
 # Version 135
 

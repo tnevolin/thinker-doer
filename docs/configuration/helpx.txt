@@ -251,7 +251,7 @@ Reduces number of $LINK<Drones=11> in base by two.
 
 #; Energy Bank
 #HELPFAC7
-Produces the same amount of $LINK<energy=14> as 50% of the energy at base less that lost to <Inefficiency=20>.
+Increases $LINK<Economy=130000> at base by 50%.
 ^
 ^Can absorb a [Power surge] which would destroy all mines in base radius and instead add 50 energy credits to the
 $LINK<Energy Reserves=16>.
