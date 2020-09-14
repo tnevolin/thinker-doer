@@ -1,3 +1,10 @@
+# Version 138
+
+* AI:
+  * Fine tuned colony production in small bases to see if they have enough population issue it at completion.
+  * Fixed exploration calculations to account for combat units explorers only.
+  * Former redundant order are cancelled so they do not create improvement that is already there.
+
 # Version 137
 
 * AI:

@@ -10,6 +10,7 @@
 #include "game.h"
 
 double networkDemand = 0.0;
+std::set<int> formerVehicleIds;
 std::unordered_map<MAP *, BASE_INFO> workedTileBases;
 std::unordered_map<BASE *, int> baseTerraformingRanks;
 std::unordered_set<MAP *> harvestedTiles;
@@ -47,6 +48,10 @@ void aiTerraformingStrategy()
 
 	populateLists();
 
+	// cancel redundant orders
+
+	cancelRedundantOrders();
+
 	// generate terraforming requests
 
 	generateTerraformingRequests();
@@ -82,6 +87,7 @@ void populateLists()
 
 	// clear lists
 
+	formerVehicleIds.clear();
 	workedTileBases.clear();
 	baseTerraformingRanks.clear();
 	harvestedTiles.clear();
@@ -499,6 +505,10 @@ void populateLists()
 		// formers
 		else if (isVehicleFormer(vehicle))
 		{
+			// list formers
+
+			formerVehicleIds.insert(id);
+
 			// terraforming vehicles
 			if (isVehicleTerraforming(vehicle))
 			{
@@ -933,6 +943,22 @@ void populateLists()
 	}
 
 	fflush(debug_log);
+
+}
+
+/*
+Checks and removes redundant orders.
+*/
+void cancelRedundantOrders()
+{
+	for (int id : formerVehicleIds)
+	{
+		if (isVehicleTerrafomingOrderCompleted(id))
+		{
+			setVehicleOrder(id, ORDER_NONE);
+		}
+
+	}
 
 }
 
@@ -2675,6 +2701,22 @@ bool isTerraformingCompleted(MAP_INFO *mapInfo, int action)
 	MAP *tile = mapInfo->tile;
 
 	return (tile->items & tx_terraform[action].added_items_flag);
+
+}
+
+/*
+Determines whether vehicle order is a terraforming order and is already completed in this tile.
+*/
+bool isVehicleTerrafomingOrderCompleted(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+	if (!(vehicle->move_status >= ORDER_FARM && vehicle->move_status <= ORDER_PLACE_MONOLITH))
+		return false;
+
+	MAP *tile = getMapTile(vehicle->x, vehicle->y);
+
+	return (tile->items & tx_terraform[vehicle->move_status - ORDER_FARM].added_items_flag);
 
 }
 

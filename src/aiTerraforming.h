@@ -178,6 +178,7 @@ const std::unordered_set<int> wideRangeTerraformingOrders = {ORDER_CONDENSER, OR
 
 void aiTerraformingStrategy();
 void populateLists();
+void cancelRedundantOrders();
 void generateTerraformingRequests();
 void generateConventionalTerraformingRequest(MAP_INFO *mapInfo);
 void generateAquiferTerraformingRequest(MAP_INFO *mapInfo);
@@ -200,6 +201,7 @@ void calculateRaiseLandTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *
 void calculateNetworkTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *bestTerraformingScore);
 bool isOwnWorkableTile(int x, int y);
 bool isTerraformingCompleted(MAP_INFO *mapInfo, int action);
+bool isVehicleTerrafomingOrderCompleted(int vehicleId);
 bool isTerraformingAvailable(MAP_INFO *mapInfo, int action);
 bool isTerraformingRequired(MAP *tile, int action);
 bool isRemoveFungusRequired(int action);

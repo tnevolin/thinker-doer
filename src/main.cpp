@@ -532,7 +532,7 @@ HOOK_API int base_production(int id, int v1, int v2, int v3) {
 	tx_base_compute(1);
 	if ((choice = need_psych(id)) != 0 && choice != prod) {
 		debug("BUILD PSYCH\n");
-	} else if (base->status_flags & BASE_PRODUCTION_DONE || prod == -FAC_STOCKPILE_ENERGY || undesirableProduction(id)) {
+	} else if (base->status_flags & BASE_PRODUCTION_DONE || prod == -FAC_STOCKPILE_ENERGY) {
 
 		choice = select_prod(id);
 

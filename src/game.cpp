@@ -1120,7 +1120,7 @@ double getPsiCombatBaseOdds(int triad)
 
 bool isCombatUnit(int id)
 {
-	return tx_units[id].weapon_type <= WPN_PSI_ATTACK;
+	return id >= 0 && tx_units[id].weapon_type <= WPN_PSI_ATTACK;
 }
 
 bool isCombatVehicle(int id)
@@ -1343,7 +1343,7 @@ bool isVehicleSupply(VEH *vehicle)
 
 bool isUnitColony(int id)
 {
-	return (tx_units[id].weapon_type == WPN_COLONY_MODULE);
+	return (id >= 0 && tx_units[id].weapon_type == WPN_COLONY_MODULE);
 }
 
 bool isVehicleColony(int id)
