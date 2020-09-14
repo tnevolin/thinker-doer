@@ -24,17 +24,17 @@ void aiProductionStrategy()
 
 	evaluateExplorationDemand();
 
-	// evaluate land improvement demand
+	// evaluate native protection demand
 
-	evaluateLandImprovementDemand();
+	evaluateNativeProtectionDemand();
 
 	// evaluate expansion demand
 
 	evaluateExpansionDemand();
 
-	// evaluate native protection demand
+	// evaluate land improvement demand
 
-	evaluateNativeProtectionDemand();
+	evaluateLandImprovementDemand();
 
 //	// evaluate conventional defense demand
 //
@@ -216,6 +216,16 @@ void evaluateExplorationDemand()
 			if (tile->items & TERRA_BASE_IN_TILE)
 				continue;
 
+			// exclude vehilces in different regions
+
+			if (tile->region != region)
+				continue;
+
+			// exclude non combat units
+
+			if (!isCombatVehicle(id))
+				continue;
+
 			existingExplorersCombinedChassisSpeed += veh_chassis_speed(id);
 
 		}
@@ -281,10 +291,59 @@ void evaluateExplorationDemand()
 }
 
 /*
-Evaluates demand for land improvement.
+Evaluates need for bases protection against natives.
 */
-void evaluateLandImprovementDemand()
+void evaluateNativeProtectionDemand()
 {
+	debug("evaluateNativeProtectionDemand %-25s\n", tx_metafactions[*active_faction].noun_faction);
+
+	for (int id : baseIds)
+	{
+		BASE *base = &(tx_bases[id]);
+		BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
+
+		debug("\t%-25s\n", base->name);
+
+		// calculate current native protection
+
+		double totalNativeProtection = 0.0;
+
+		for (int vehicleId : baseStrategy->garrison)
+		{
+			totalNativeProtection += estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+		}
+
+		// add currently built purely defensive vehicle to protection
+
+		if (base->queue_items[0] >= 0 && isCombatVehicle(base->queue_items[0]) && tx_weapon[tx_units[base->queue_items[0]].weapon_type].offense_value == 1)
+		{
+			totalNativeProtection += estimateUnitBaseLandNativeProtection(base->faction_id, base->queue_items[0]);
+		}
+
+		debug("\t\ttotalNativeProtection=%f\n", totalNativeProtection);
+
+		// add protection demand
+
+		int item = findStrongestNativeDefensePrototype(base->faction_id);
+
+		debug("\t\t%-25s\n", tx_units[item].name);
+
+		if (totalNativeProtection < conf.ai_production_min_native_protection)
+		{
+			addProductionDemand(id, true, item, 1.0);
+			debug("\t\timmediate demand added\n");
+		}
+		else if (totalNativeProtection < conf.ai_production_max_native_protection)
+		{
+			double protectionPriority = conf.ai_production_native_protection_priority_multiplier * (conf.ai_production_max_native_protection - totalNativeProtection) / (conf.ai_production_max_native_protection - conf.ai_production_min_native_protection);
+			addProductionDemand(id, false, item, protectionPriority);
+			debug("\t\tregular demand added\n");
+			debug("\t\tprotectionPriority=%f\n", protectionPriority);
+		}
+
+	}
+
+	debug("\n");
 
 }
 
@@ -294,144 +353,6 @@ Calculates need for colonies.
 void evaluateExpansionDemand()
 {
 	debug("evaluateExpansionDemand %-25s\n", tx_metafactions[*active_faction].noun_faction);
-
-	// calculate unpopulated tiles per region
-
-	std::map<int, int> unpopulatedTileCounts;
-
-	for (int x = 0; x < *map_axis_x; x++)
-	{
-		for (int y = 0; y < *map_axis_y; y++)
-		{
-			MAP *tile = getMapTile(x, y);
-
-			if (tile == NULL)
-				continue;
-
-			// exclude territory claimed by someone else
-
-			if (!(tile->owner == -1 || tile->owner == *active_faction))
-				continue;
-
-			// exclude base and base radius
-
-			if (tile->items & (TERRA_BASE_IN_TILE | TERRA_BASE_RADIUS))
-				continue;
-
-			// inhabited regions only
-
-			if (regionBaseGroups.find(tile->region) == regionBaseGroups.end())
-				continue;
-
-			// only tiles at least one step away from base borders and enemy territory
-
-			bool good = true;
-
-			for (int i = 1; i < ADJACENT_TILE_OFFSET_COUNT; i++)
-			{
-				int adjacentTileX = wrap(x + BASE_TILE_OFFSETS[i][0]);
-				int adjacentTileY = y + BASE_TILE_OFFSETS[i][1];
-				MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
-
-				// only territory good within map
-
-				if (adjacentTile == NULL)
-				{
-					good = false;
-					break;
-				}
-
-				// only claimable territory
-
-				if (!(tile->owner == -1 || tile->owner == *active_faction))
-				{
-					good = false;
-					break;
-				}
-
-			}
-
-			if (!good)
-				continue;
-
-			// get region bases
-
-			std::vector<int> *bases = &(regionBaseGroups[tile->region]);
-
-			// calculate distance to nearest own base within region
-
-			BASE *nearestBase = NULL;
-			int nearestBaseRange = 0;
-
-			for (int id : *bases)
-			{
-				BASE *base = &(tx_bases[id]);
-
-				// calculate range to tile
-
-				int range = map_range(x, y, base->x, base->y);
-
-				if (nearestBase == NULL || range < nearestBaseRange)
-				{
-					nearestBase = base;
-					nearestBaseRange = range;
-				}
-
-			}
-
-			// exclude too far or uncertain tiles
-
-			if (nearestBase == NULL || nearestBaseRange > conf.ai_production_max_unpopulated_range)
-				continue;
-
-			// count available tiles
-
-			if (unpopulatedTileCounts.find(tile->region) == unpopulatedTileCounts.end())
-			{
-				unpopulatedTileCounts[tile->region] = 0;
-			}
-
-			unpopulatedTileCounts[tile->region]++;
-
-			// collect range to unpopulated tile statistics
-
-			for (int id : *bases)
-			{
-				BASE *base = &(tx_bases[id]);
-				BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
-
-				int range = map_range(x, y, base->x, base->y);
-
-				baseStrategy->unpopulatedTileCount++;
-				baseStrategy->unpopulatedTileRangeSum += range;
-
-			}
-
-		}
-
-	}
-
-	if (DEBUG)
-	{
-		debug("\tunpopulatedTileCounts\n");
-
-		for
-		(
-			std::map<int, int>::iterator unpopulatedTileCountsIterator = unpopulatedTileCounts.begin();
-			unpopulatedTileCountsIterator != unpopulatedTileCounts.end();
-			unpopulatedTileCountsIterator++
-		)
-		{
-			int region = unpopulatedTileCountsIterator->first;
-			int unpopulatedTileCount = unpopulatedTileCountsIterator->second;
-
-			debug("\t\t[%3d] %3d\n", region, unpopulatedTileCount);
-
-		}
-
-	}
-
-	// set colony production demand per region
 
 	for
 	(
@@ -446,7 +367,127 @@ void evaluateExpansionDemand()
 
 		debug("\tregion=%d\n", region);
 
-		// find colony unit
+		// reset range to unpopulated tile statistics
+
+		for (int id : *regionBaseIds)
+		{
+			BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
+
+			baseStrategy->unpopulatedTileCount = 0;
+			baseStrategy->unpopulatedTileRangeSum = 0;
+
+		}
+
+		// calculate unpopulated tiles per region
+
+		int unpopulatedTileCount = 0;
+
+		for (int x = 0; x < *map_axis_x; x++)
+		{
+			for (int y = 0; y < *map_axis_y; y++)
+			{
+				MAP *tile = getMapTile(x, y);
+
+				if (tile == NULL)
+					continue;
+
+				// this region only
+
+				if (tile->region != region)
+					continue;
+
+				// exclude territory claimed by someone else
+
+				if (!(tile->owner == -1 || tile->owner == *active_faction))
+					continue;
+
+				// exclude base and base radius
+
+				if (tile->items & (TERRA_BASE_IN_TILE | TERRA_BASE_RADIUS))
+					continue;
+
+				// only tiles at least one step away from base borders and enemy territory
+
+				bool good = true;
+
+				for (int i = 1; i < ADJACENT_TILE_OFFSET_COUNT; i++)
+				{
+					int adjacentTileX = wrap(x + BASE_TILE_OFFSETS[i][0]);
+					int adjacentTileY = y + BASE_TILE_OFFSETS[i][1];
+					MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
+
+					// only territory good within map
+
+					if (adjacentTile == NULL)
+					{
+						good = false;
+						break;
+					}
+
+					// only claimable territory
+
+					if (!(tile->owner == -1 || tile->owner == *active_faction))
+					{
+						good = false;
+						break;
+					}
+
+				}
+
+				if (!good)
+					continue;
+
+				// calculate distance to nearest own base within region
+
+				BASE *nearestBase = NULL;
+				int nearestBaseRange = 0;
+
+				for (int id : *regionBaseIds)
+				{
+					BASE *base = &(tx_bases[id]);
+
+					// calculate range to tile
+
+					int range = map_range(x, y, base->x, base->y);
+
+					if (nearestBase == NULL || range < nearestBaseRange)
+					{
+						nearestBase = base;
+						nearestBaseRange = range;
+					}
+
+				}
+
+				// exclude too far or uncertain tiles
+
+				if (nearestBase == NULL || nearestBaseRange > conf.ai_production_max_unpopulated_range)
+					continue;
+
+				// count available tiles
+
+				unpopulatedTileCount++;
+
+				// collect range to unpopulated tile statistics
+
+				for (int id : *regionBaseIds)
+				{
+					BASE *base = &(tx_bases[id]);
+					BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
+
+					int range = map_range(x, y, base->x, base->y);
+
+					baseStrategy->unpopulatedTileCount++;
+					baseStrategy->unpopulatedTileRangeSum += range;
+
+				}
+
+			}
+
+		}
+
+		debug("\t\tunpopulatedTileCount=%d\n", unpopulatedTileCount);
+
+		// check there is at least one colony unit for given triad
 
 		int colonyUnitId = findColonyUnit(triad);
 
@@ -455,10 +496,7 @@ void evaluateExpansionDemand()
 
 		// evaluate need for expansion
 
-		if (unpopulatedTileCounts.find(region) == unpopulatedTileCounts.end())
-			continue;
-
-		if (unpopulatedTileCounts[region] < conf.ai_production_min_unpopulated_tiles)
+		if (unpopulatedTileCount < conf.ai_production_min_unpopulated_tiles)
 			continue;
 
 		// calcualte max base size in region and max average range to destination
@@ -478,8 +516,8 @@ void evaluateExpansionDemand()
 
 		}
 
-		debug("\tmaxBaseSize=%d\n", maxBaseSize);
-		debug("\tminAverageUnpopulatedTileRange=%f\n", minAverageUnpopulatedTileRange);
+		debug("\t\tmaxBaseSize=%d\n", maxBaseSize);
+		debug("\t\tminAverageUnpopulatedTileRange=%f\n", minAverageUnpopulatedTileRange);
 
 		// set demands
 
@@ -488,30 +526,31 @@ void evaluateExpansionDemand()
 			BASE *base = &(tx_bases[id]);
 			BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
 
-			// exclude bases size 1 or size 2 building colony
-
-			if (base->pop_size <= 1 || (base->pop_size <= 2 && base->queue_items[0] >= 0 && isUnitColony(base->queue_items[0])))
-				continue;
-
-			debug("\t\t%-25s\n", base->name);
+			debug("\t\t\t%-25s\n", base->name);
 
 			// calculate infantry turns to destination assuming land units travel by roads 2/3 of time
 
 			double infantryTurnsToDestination = (triad == TRIAD_LAND ? 0.5 : 1.0) * baseStrategy->averageUnpopulatedTileRange;
 
-			debug("\t\t\tinfantryTurnsToDestination=%f\n", infantryTurnsToDestination);
-
 			// find optimal colony unit
 
 			int optimalColonyUnitId = findOptimalColonyUnit(triad, base->mineral_surplus, infantryTurnsToDestination);
 
-			debug("\t\t\toptimalColonyUnitId=%-25s\n", tx_units[optimalColonyUnitId].name);
+			debug("\t\t\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, infantryTurnsToDestination=%f, optimalColonyUnitId=%-25s\n", triad, base->mineral_surplus, infantryTurnsToDestination, tx_units[optimalColonyUnitId].name);
+
+			// verify base has enough growth potential to build a colony
+
+			if (!canBaseProduceColony(id, optimalColonyUnitId))
+			{
+				debug("\t\t\t\tbase is too small to produce a colony\n");
+				continue;
+			}
 
 			// adjust priority based on base size and range to destination
 
 			double priority = conf.ai_production_colony_priority * ((double)base->pop_size / (double)maxBaseSize) * (minAverageUnpopulatedTileRange / baseStrategy->averageUnpopulatedTileRange);
 
-			debug("\t\t\tpriority=%f\n", priority);
+			debug("\t\t\t\tpop_size=%d, averageUnpopulatedTileRange=%f, priority=%f\n", base->pop_size, baseStrategy->averageUnpopulatedTileRange, priority);
 
 			// set base demand
 
@@ -526,46 +565,10 @@ void evaluateExpansionDemand()
 }
 
 /*
-Evaluates need for bases protection against natives.
+Evaluates demand for land improvement.
 */
-void evaluateNativeProtectionDemand()
+void evaluateLandImprovementDemand()
 {
-	for (int id : baseIds)
-	{
-		BASE *base = &(tx_bases[id]);
-		BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
-
-		// calculate current native protection
-
-		double totalNativeProtection = 0.0;
-
-		for (int vehicleId : baseStrategy->garrison)
-		{
-			totalNativeProtection += estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
-		}
-
-		// add currently built purely defensive vehicle to protection
-
-		if (base->queue_items[0] >= 0 && isCombatVehicle(base->queue_items[0]) && tx_weapon[tx_units[base->queue_items[0]].weapon_type].offense_value == 1)
-		{
-			totalNativeProtection += estimateUnitBaseLandNativeProtection(base->faction_id, base->queue_items[0]);
-		}
-
-		// add protection demand
-
-		int item = findStrongestNativeDefensePrototype(base->faction_id);
-
-		if (totalNativeProtection < conf.ai_production_min_native_protection)
-		{
-			addProductionDemand(id, true, item, 1.0);
-		}
-		else if (totalNativeProtection < conf.ai_production_max_native_protection)
-		{
-			double protectionPriority = conf.ai_production_native_protection_priority_multiplier * (conf.ai_production_max_native_protection - totalNativeProtection) / (conf.ai_production_max_native_protection - conf.ai_production_min_native_protection);
-			addProductionDemand(id, false, item, protectionPriority);
-		}
-
-	}
 
 }
 
@@ -1131,18 +1134,6 @@ void addProductionDemand(int id, bool immediate, int item, double priority)
 
 		}
 
-		// do not build colonies in small bases
-
-		if (item >=0 && isUnitColony(item))
-		{
-			if (base->pop_size <= 1)
-				return;
-
-			if (base->pop_size <= 2 && base->queue_items[0] >= 0 && isUnitColony(base->queue_items[0]))
-				return;
-
-		}
-
 		// lookup for existing item and add to it
 
 		bool found = false;
@@ -1290,24 +1281,6 @@ int findFastAttackerUnit()
 
 }
 
-bool undesirableProduction(int id)
-{
-	BASE *base = &(tx_bases[id]);
-
-	// colony
-	if (base->queue_items[0] >= 0 && isUnitColony(base->queue_items[0]))
-	{
-		// do not build colonies in base size 1
-
-		if (base->pop_size <= 1)
-			return true;
-
-	}
-
-	return false;
-
-}
-
 int findScoutUnit(int triad)
 {
 	int bestUnitId = -1;
@@ -1396,7 +1369,7 @@ int findOptimalColonyUnit(int triad, int mineralSurplus, double infantryTurnsToD
 
 		// calculate total turns
 
-		double totalTurns = (double)unit->cost / (double)mineralSurplus + infantryTurnsToDestination / (double)unit_chassis_speed(id);
+		double totalTurns = (double)(tx_cost_factor(*active_faction, 1, -1) * unit->cost) / (double)mineralSurplus + infantryTurnsToDestination / (double)unit_chassis_speed(id);
 
 		// update best unit
 
@@ -1409,6 +1382,38 @@ int findOptimalColonyUnit(int triad, int mineralSurplus, double infantryTurnsToD
 	}
 
 	return bestUnitId;
+
+}
+
+/*
+Checks if base has enough population to issue a colony by the time it is built.
+*/
+bool canBaseProduceColony(int baseId, int unitId)
+{
+	BASE *base = &(tx_bases[baseId]);
+	UNIT *unit = &(tx_units[unitId]);
+
+	// verify the unit is indeed a colony
+
+	if (!isUnitColony(unitId))
+		return false;
+
+	// do not produce colony in unproductive bases
+
+	if (base->mineral_surplus <= 0)
+		return false;
+
+	// calculate production time
+
+	int productionTurns = (tx_cost_factor(base->faction_id, 1, -1) * unit->cost) / max(1, base->mineral_surplus);
+
+	// calculate base population at the time
+
+	double projectedPopulation = (double)base->pop_size + (double)(base->nutrients_accumulated + base->nutrient_surplus * productionTurns) / (double)(tx_cost_factor(base->faction_id, 0, baseId) * (base->pop_size + 1));
+
+	// verify projected population is at least 2.5 or 3.5 if colony is already in production
+
+	return (projectedPopulation >= (isUnitColony(base->queue_items[0]) ? 3.5 : 2.5));
 
 }
 
