@@ -20,18 +20,26 @@ void aiProductionStrategy()
 
 	populateProducitonLists();
 
-	// calculate native protection demand
+	// evaluate exploration demand
+
+	evaluateExplorationDemand();
+
+	// evaluate land improvement demand
+
+	evaluateLandImprovementDemand();
+
+	// evaluate expansion demand
+
+	evaluateExpansionDemand();
+
+	// evaluate native protection demand
 
 	evaluateNativeProtectionDemand();
 
-//	// calculate conventional defense demand
+//	// evaluate conventional defense demand
 //
 //	evaluateFactionProtectionDemand();
 //
-	// calculate expansion demand
-
-	calculateExpansionDemand();
-
 	// sort production demands
 
 	setProductionChoices();
@@ -99,7 +107,426 @@ void populateProducitonLists()
 }
 
 /*
-Calculates need for bases protection against natives.
+Evalueates need for exploration.
+*/
+void evaluateExplorationDemand()
+{
+	debug("evaluateExplorationDemand %-25s\n", tx_metafactions[*active_faction].noun_faction);
+
+	for
+	(
+		std::map<int, std::vector<int>>::iterator regionBaseGroupsIterator = regionBaseGroups.begin();
+		regionBaseGroupsIterator != regionBaseGroups.end();
+		regionBaseGroupsIterator++
+	)
+	{
+		int region = regionBaseGroupsIterator->first;
+		std::vector<int> *regionBaseIds = &(regionBaseGroupsIterator->second);
+		int triad = (isOceanRegion(region) ? TRIAD_SEA : TRIAD_LAND);
+
+		debug("\tregion=%d\n", region);
+
+		// find scout unit
+
+		int scoutUnitId = findScoutUnit(triad);
+
+		if (scoutUnitId == -1)
+			continue;
+
+		debug("\t\tscoutUnit=%-25s\n", tx_units[scoutUnitId].name);
+
+		// calculate number of unexplored tiles
+
+		int unexploredTileCount = 0;
+
+		for (int x = 0; x < *map_axis_x; x++)
+		{
+			for (int y = 0; y < *map_axis_y; y++)
+			{
+				MAP *tile = getMapTile(x, y);
+
+				if (tile == NULL)
+					continue;
+
+				// this region only
+
+				if (tile->region != region)
+					continue;
+
+				// unexplored only
+
+				if ((tile->visibility & (0x1 << *active_faction)) != 0)
+					continue;
+
+				// search for nearby explored tiles not on unfriendly territory
+
+				bool reachable = false;
+
+				for (int i = 1; i < ADJACENT_TILE_OFFSET_COUNT; i++)
+				{
+					int adjacentTileX = wrap(x + BASE_TILE_OFFSETS[i][0]);
+					int adjacentTileY = y + BASE_TILE_OFFSETS[i][1];
+					MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
+
+					if (adjacentTile == NULL)
+						continue;
+
+					// same region only
+
+					if (adjacentTile->region != region)
+						continue;
+
+					// explored only
+
+					if ((adjacentTile->visibility & (0x1 << *active_faction)) == 0)
+						continue;
+
+					// neutral, own, or pact
+
+					if (adjacentTile->owner == -1 || adjacentTile->owner == *active_faction || tx_factions[*active_faction].diplo_status[adjacentTile->owner] == DIPLO_PACT)
+					{
+						reachable = true;
+						break;
+					}
+
+				}
+
+				if (reachable)
+				{
+					unexploredTileCount++;
+				}
+
+			}
+
+		}
+
+		debug("\t\tunexploredTileCount=%d\n", unexploredTileCount);
+
+		// count existing units outside
+
+		int existingExplorersCombinedChassisSpeed = 0;
+
+		for (int id : combatVehicleIds)
+		{
+			VEH *vehicle = &(tx_vehicles[id]);
+			MAP *tile = getMapTile(vehicle->x, vehicle->y);
+
+			// exclude units in bases
+
+			if (tile->items & TERRA_BASE_IN_TILE)
+				continue;
+
+			existingExplorersCombinedChassisSpeed += veh_chassis_speed(id);
+
+		}
+
+		debug("\t\texistingExplorersCombinedChassisSpeed=%d\n", existingExplorersCombinedChassisSpeed);
+
+		// calculate need for infantry explorers
+
+		double infantryExplorersDemand = (double)unexploredTileCount / conf.ai_production_exploration_coverage - (double)existingExplorersCombinedChassisSpeed;
+
+		debug("\t\tinfantryExplorersTotalDemand=%f\n", (double)unexploredTileCount / conf.ai_production_exploration_coverage);
+		debug("\t\tinfantryExplorersRemainingDemand=%f\n", infantryExplorersDemand);
+
+		// we have enough
+
+		if (infantryExplorersDemand <= 0)
+			continue;
+
+		// otherwise, set priority
+
+		double priority = ((double)unexploredTileCount / conf.ai_production_exploration_coverage - (double)existingExplorersCombinedChassisSpeed) / ((double)unexploredTileCount / conf.ai_production_exploration_coverage);
+
+		debug("\t\tpriority=%f\n", priority);
+
+		// reduce priority for higher explorer speed
+
+		priority /= unit_chassis_speed(scoutUnitId);
+
+		debug("\t\tpriority=%f (speed adjusted)\n", priority);
+
+		// find max mineral surplus in region
+
+		int maxMineralSurplus = 0;
+
+		for (int id : *regionBaseIds)
+		{
+			BASE *base = &(tx_bases[id]);
+
+			maxMineralSurplus = max(maxMineralSurplus, base->mineral_surplus);
+
+		}
+
+		debug("\t\tmaxMineralSurplus=%d\n", maxMineralSurplus);
+
+		// set demand based on mineral surplus
+
+		for (int id : *regionBaseIds)
+		{
+			BASE *base = &(tx_bases[id]);
+
+			double baseProductionAdjustedPriority = priority * (double)base->mineral_surplus / (double)maxMineralSurplus;
+
+			debug("\t\t\t%-25s base->mineral_surplus=%d, baseProductionAdjustedPriority=%f\n", base->name, base->mineral_surplus, baseProductionAdjustedPriority);
+
+			addProductionDemand(id, false, scoutUnitId, baseProductionAdjustedPriority);
+
+		}
+
+	}
+
+	debug("\n");
+
+}
+
+/*
+Evaluates demand for land improvement.
+*/
+void evaluateLandImprovementDemand()
+{
+
+}
+
+/*
+Calculates need for colonies.
+*/
+void evaluateExpansionDemand()
+{
+	debug("evaluateExpansionDemand %-25s\n", tx_metafactions[*active_faction].noun_faction);
+
+	// calculate unpopulated tiles per region
+
+	std::map<int, int> unpopulatedTileCounts;
+
+	for (int x = 0; x < *map_axis_x; x++)
+	{
+		for (int y = 0; y < *map_axis_y; y++)
+		{
+			MAP *tile = getMapTile(x, y);
+
+			if (tile == NULL)
+				continue;
+
+			// exclude territory claimed by someone else
+
+			if (!(tile->owner == -1 || tile->owner == *active_faction))
+				continue;
+
+			// exclude base and base radius
+
+			if (tile->items & (TERRA_BASE_IN_TILE | TERRA_BASE_RADIUS))
+				continue;
+
+			// inhabited regions only
+
+			if (regionBaseGroups.find(tile->region) == regionBaseGroups.end())
+				continue;
+
+			// only tiles at least one step away from base borders and enemy territory
+
+			bool good = true;
+
+			for (int i = 1; i < ADJACENT_TILE_OFFSET_COUNT; i++)
+			{
+				int adjacentTileX = wrap(x + BASE_TILE_OFFSETS[i][0]);
+				int adjacentTileY = y + BASE_TILE_OFFSETS[i][1];
+				MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
+
+				// only territory good within map
+
+				if (adjacentTile == NULL)
+				{
+					good = false;
+					break;
+				}
+
+				// only claimable territory
+
+				if (!(tile->owner == -1 || tile->owner == *active_faction))
+				{
+					good = false;
+					break;
+				}
+
+			}
+
+			if (!good)
+				continue;
+
+			// get region bases
+
+			std::vector<int> *bases = &(regionBaseGroups[tile->region]);
+
+			// calculate distance to nearest own base within region
+
+			BASE *nearestBase = NULL;
+			int nearestBaseRange = 0;
+
+			for (int id : *bases)
+			{
+				BASE *base = &(tx_bases[id]);
+
+				// calculate range to tile
+
+				int range = map_range(x, y, base->x, base->y);
+
+				if (nearestBase == NULL || range < nearestBaseRange)
+				{
+					nearestBase = base;
+					nearestBaseRange = range;
+				}
+
+			}
+
+			// exclude too far or uncertain tiles
+
+			if (nearestBase == NULL || nearestBaseRange > conf.ai_production_max_unpopulated_range)
+				continue;
+
+			// count available tiles
+
+			if (unpopulatedTileCounts.find(tile->region) == unpopulatedTileCounts.end())
+			{
+				unpopulatedTileCounts[tile->region] = 0;
+			}
+
+			unpopulatedTileCounts[tile->region]++;
+
+			// collect range to unpopulated tile statistics
+
+			for (int id : *bases)
+			{
+				BASE *base = &(tx_bases[id]);
+				BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
+
+				int range = map_range(x, y, base->x, base->y);
+
+				baseStrategy->unpopulatedTileCount++;
+				baseStrategy->unpopulatedTileRangeSum += range;
+
+			}
+
+		}
+
+	}
+
+	if (DEBUG)
+	{
+		debug("\tunpopulatedTileCounts\n");
+
+		for
+		(
+			std::map<int, int>::iterator unpopulatedTileCountsIterator = unpopulatedTileCounts.begin();
+			unpopulatedTileCountsIterator != unpopulatedTileCounts.end();
+			unpopulatedTileCountsIterator++
+		)
+		{
+			int region = unpopulatedTileCountsIterator->first;
+			int unpopulatedTileCount = unpopulatedTileCountsIterator->second;
+
+			debug("\t\t[%3d] %3d\n", region, unpopulatedTileCount);
+
+		}
+
+	}
+
+	// set colony production demand per region
+
+	for
+	(
+		std::map<int, std::vector<int>>::iterator regionBaseGroupsIterator = regionBaseGroups.begin();
+		regionBaseGroupsIterator != regionBaseGroups.end();
+		regionBaseGroupsIterator++
+	)
+	{
+		int region = regionBaseGroupsIterator->first;
+		std::vector<int> *regionBaseIds = &(regionBaseGroupsIterator->second);
+		int triad = (isOceanRegion(region) ? TRIAD_SEA : TRIAD_LAND);
+
+		debug("\tregion=%d\n", region);
+
+		// find colony unit
+
+		int colonyUnitId = findColonyUnit(triad);
+
+		if (colonyUnitId == -1)
+			continue;
+
+		// evaluate need for expansion
+
+		if (unpopulatedTileCounts.find(region) == unpopulatedTileCounts.end())
+			continue;
+
+		if (unpopulatedTileCounts[region] < conf.ai_production_min_unpopulated_tiles)
+			continue;
+
+		// calcualte max base size in region and max average range to destination
+
+		int maxBaseSize = 1;
+		double minAverageUnpopulatedTileRange = 9999.0;
+
+		for (int id : *regionBaseIds)
+		{
+			BASE *base = &(tx_bases[id]);
+			BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
+
+			maxBaseSize = max(maxBaseSize, (int)base->pop_size);
+
+			baseStrategy->averageUnpopulatedTileRange = (double)baseStrategy->unpopulatedTileRangeSum / (double)baseStrategy->unpopulatedTileCount;
+			minAverageUnpopulatedTileRange = min(minAverageUnpopulatedTileRange, baseStrategy->averageUnpopulatedTileRange);
+
+		}
+
+		debug("\tmaxBaseSize=%d\n", maxBaseSize);
+		debug("\tminAverageUnpopulatedTileRange=%f\n", minAverageUnpopulatedTileRange);
+
+		// set demands
+
+		for (int id : *regionBaseIds)
+		{
+			BASE *base = &(tx_bases[id]);
+			BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
+
+			// exclude bases size 1 or size 2 building colony
+
+			if (base->pop_size <= 1 || (base->pop_size <= 2 && base->queue_items[0] >= 0 && isUnitColony(base->queue_items[0])))
+				continue;
+
+			debug("\t\t%-25s\n", base->name);
+
+			// calculate infantry turns to destination assuming land units travel by roads 2/3 of time
+
+			double infantryTurnsToDestination = (triad == TRIAD_LAND ? 0.5 : 1.0) * baseStrategy->averageUnpopulatedTileRange;
+
+			debug("\t\t\tinfantryTurnsToDestination=%f\n", infantryTurnsToDestination);
+
+			// find optimal colony unit
+
+			int optimalColonyUnitId = findOptimalColonyUnit(triad, base->mineral_surplus, infantryTurnsToDestination);
+
+			debug("\t\t\toptimalColonyUnitId=%-25s\n", tx_units[optimalColonyUnitId].name);
+
+			// adjust priority based on base size and range to destination
+
+			double priority = conf.ai_production_colony_priority * ((double)base->pop_size / (double)maxBaseSize) * (minAverageUnpopulatedTileRange / baseStrategy->averageUnpopulatedTileRange);
+
+			debug("\t\t\tpriority=%f\n", priority);
+
+			// set base demand
+
+			addProductionDemand(id, false, optimalColonyUnitId, priority);
+
+		}
+
+	}
+
+	debug("\n");
+
+}
+
+/*
+Evaluates need for bases protection against natives.
 */
 void evaluateNativeProtectionDemand()
 {
@@ -448,152 +875,6 @@ void evaluateFactionProtectionDemand()
 }
 
 /*
-Calculates need for colonies.
-*/
-void calculateExpansionDemand()
-{
-	// calculate unpopulated tiles per region
-
-	std::map<int, int> unpopulatedTileCounts;
-
-	for (int x = 0; x < *map_axis_x; x++)
-	{
-		for (int y = 0; y < *map_axis_y; y++)
-		{
-			MAP *tile = getMapTile(x, y);
-
-			if (tile == NULL)
-				continue;
-
-			// exclude territory claimed by someone else
-
-			if (!(tile->owner == -1 || tile->owner == *active_faction))
-				continue;
-
-			// exclude base and base radius
-
-			if (tile->items & (TERRA_BASE_IN_TILE | TERRA_BASE_RADIUS))
-				continue;
-
-			// inhabited regions only
-
-			if (regionBases.find(tile->region) == regionBases.end())
-				continue;
-
-			// get region bases
-
-			std::vector<int> *bases = &(regionBases[tile->region]);
-
-			// calculate distance to nearest own base within region
-
-			BASE *nearestBase = NULL;
-			int nearestBaseRange = 0;
-
-			for (int id : *bases)
-			{
-				BASE *base = &(tx_bases[id]);
-
-				// calculate range to tile
-
-				int range = map_range(x, y, base->x, base->y);
-
-				if (nearestBase == NULL || range < nearestBaseRange)
-				{
-					nearestBase = base;
-					nearestBaseRange = range;
-				}
-
-			}
-
-			// exclude too far or uncertain tiles
-
-			if (nearestBase == NULL || nearestBaseRange > conf.ai_production_max_unpopulated_range)
-				continue;
-
-			// count available tiles
-
-			if (unpopulatedTileCounts.find(tile->region) == unpopulatedTileCounts.end())
-			{
-				unpopulatedTileCounts[tile->region] = 0;
-			}
-
-			unpopulatedTileCounts[tile->region]++;
-
-		}
-
-	}
-
-	if (DEBUG)
-	{
-		debug("unpopulatedTileCounts\n");
-
-		for
-		(
-			std::map<int, int>::iterator unpopulatedTileCountsIterator = unpopulatedTileCounts.begin();
-			unpopulatedTileCountsIterator != unpopulatedTileCounts.end();
-			unpopulatedTileCountsIterator++
-		)
-		{
-			int region = unpopulatedTileCountsIterator->first;
-			int unpopulatedTileCount = unpopulatedTileCountsIterator->second;
-
-			debug("\t[%3d] %3d\n", region, unpopulatedTileCount);
-
-		}
-
-		debug("\n");
-
-	}
-
-	// set colony production demand per region
-
-	for
-	(
-		std::map<int, std::vector<int>>::iterator regionBasesIterator = regionBases.begin();
-		regionBasesIterator != regionBases.end();
-		regionBasesIterator++
-	)
-	{
-		int region = regionBasesIterator->first;
-		std::vector<int> *regionBaseIds = &(regionBasesIterator->second);
-
-		// evaluate need for expansion
-
-		if (unpopulatedTileCounts.find(region) == unpopulatedTileCounts.end())
-			continue;
-
-		if (unpopulatedTileCounts[region] < conf.ai_production_min_unpopulated_tiles)
-			continue;
-
-		// select item
-
-		int item = (isOceanRegion(region) ? BSC_SEA_ESCAPE_POD : BSC_COLONY_POD);
-
-		for (int id : *regionBaseIds)
-		{
-			BASE *base = &(tx_bases[id]);
-
-			// do not build colony in base size 1 or base size 2 building colony already
-
-			if (base->pop_size <= 1)
-				continue;
-			if (base->pop_size <= 2 && base->queue_items[0] >= 0 && isUnitColony(base->queue_items[0]))
-				continue;
-
-			if (productionDemands.find(id) == productionDemands.end())
-			{
-				productionDemands[id] = PRODUCTION_DEMAND();
-			}
-
-			addProductionDemand(id, false, item, conf.ai_production_colony_priority);
-
-		}
-
-	}
-
-}
-
-/*
 Set base production choices.
 */
 void setProductionChoices()
@@ -814,6 +1095,8 @@ int suggestBaseProduction(int id, bool productionDone, int choice)
 
 void addProductionDemand(int id, bool immediate, int item, double priority)
 {
+	BASE *base = &(tx_bases[id]);
+
 	// create entry if not created yet
 
 	if (productionDemands.find(id) == productionDemands.end())
@@ -839,7 +1122,28 @@ void addProductionDemand(int id, bool immediate, int item, double priority)
 	}
 	else
 	{
-		// lookup for existing item
+		// do not build combat unit in weak bases
+
+		if (item >= 0 && isCombatUnit(item))
+		{
+			if (base->mineral_surplus < conf.ai_production_combat_unit_min_mineral_surplus)
+				return;
+
+		}
+
+		// do not build colonies in small bases
+
+		if (item >=0 && isUnitColony(item))
+		{
+			if (base->pop_size <= 1)
+				return;
+
+			if (base->pop_size <= 2 && base->queue_items[0] >= 0 && isUnitColony(base->queue_items[0]))
+				return;
+
+		}
+
+		// lookup for existing item and add to it
 
 		bool found = false;
 
@@ -854,7 +1158,7 @@ void addProductionDemand(int id, bool immediate, int item, double priority)
 
 			if (productionPriority->item == item)
 			{
-				productionPriority->priority = max(productionPriority->priority, priority);
+				productionPriority->priority += priority;
 				found = true;
 				break;
 			}
@@ -1001,6 +1305,110 @@ bool undesirableProduction(int id)
 	}
 
 	return false;
+
+}
+
+int findScoutUnit(int triad)
+{
+	int bestUnitId = -1;
+	int bestUnitChassisSpeed = -1;
+	int bestUnitCost = -1;
+
+	for (int id : prototypes)
+	{
+		UNIT *unit = &(tx_units[id]);
+
+		// skip non combat units
+
+		if (!isCombatUnit(id))
+			continue;
+
+		// given triad only
+
+		if (unit_triad(id) != triad)
+			continue;
+
+		// find fastest cheapest unit
+
+		if
+		(
+			bestUnitId == -1
+			||
+			unit_chassis_speed(id) > bestUnitChassisSpeed
+			||
+			unit->cost < bestUnitCost
+		)
+		{
+			bestUnitId = id;
+			bestUnitChassisSpeed = unit_chassis_speed(id);
+			bestUnitCost = unit->cost;
+		}
+
+	}
+
+	return bestUnitId;
+
+}
+
+int findColonyUnit(int triad)
+{
+	int bestUnitId = -1;
+
+	for (int id : prototypes)
+	{
+		// given triad only
+
+		if (unit_triad(id) != triad)
+			continue;
+
+		// colony only
+
+		if (!isUnitColony(id))
+			continue;
+
+		bestUnitId = id;
+		break;
+
+	}
+
+	return bestUnitId;
+
+}
+
+int findOptimalColonyUnit(int triad, int mineralSurplus, double infantryTurnsToDestination)
+{
+	int bestUnitId = -1;
+	double bestTotalTurns = 0.0;
+
+	for (int id : prototypes)
+	{
+		UNIT *unit = &(tx_units[id]);
+
+		// given triad only
+
+		if (unit_triad(id) != triad)
+			continue;
+
+		// colony only
+
+		if (!isUnitColony(id))
+			continue;
+
+		// calculate total turns
+
+		double totalTurns = (double)unit->cost / (double)mineralSurplus + infantryTurnsToDestination / (double)unit_chassis_speed(id);
+
+		// update best unit
+
+		if (bestUnitId == -1 || totalTurns < bestTotalTurns)
+		{
+			bestUnitId = id;
+			bestTotalTurns = totalTurns;
+		}
+
+	}
+
+	return bestUnitId;
 
 }
 

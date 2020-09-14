@@ -141,6 +141,9 @@ void populateLists()
 				int adjacentTileY = vehicle->y + BASE_TILE_OFFSETS[i][1];
 				MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
 
+				if (adjacentTile == NULL)
+					continue;
+
 				if (!is_ocean(adjacentTile))
 				{
 					zocLocations.insert(adjacentTile);

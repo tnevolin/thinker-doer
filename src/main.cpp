@@ -353,6 +353,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_combat_unit_min_mineral_surplus = atoi(value);
     }
+    else if (MATCH("wtp", "ai_production_exploration_coverage"))
+    {
+        cf->ai_production_exploration_coverage = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
         cf->ai_terraforming_nutrientWeight = atof(value);
