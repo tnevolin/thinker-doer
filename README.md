@@ -190,17 +190,15 @@ Undoubtfully, such complicated rules should not even exist in a game in a first 
 
 Now players need to disassemble game to understand why their units have unexpected morale. Ugh. :unamused:
 
-### Children Creche morale bonuses
+### Children Creche and Brood Pit morale bonuses
 
-#### Removed home base Children Creche morale bonus
+Removed all Children Creche and Brood Pit related morale bonuses. That includes home base bonuses as well as stationed base bonuses.
 
-Reason: undocumented.
+Reason: undocumented, awfully bugged, exceptionally convoluted, apallingly obscure to user formulas.
 
-#### Removed stationning base Children Creche morale bonus
+Children Creche and Brood Pit are quite strong facilities by their primary purpose already. They don't need to invade specialized morale facilities domain.
 
-Reason: undocumented.
-
-Some may refer to this passage from Datalinks: "All negative MORALE effects are cancelled for units in base square; instead such units receive a +1 MORALE modifier." It is hardly a documetation for such complex mechanics. See [Treatise on Morale] at the top of Morale section.
+Some may refer to this passage from Datalinks: "All negative MORALE effects are cancelled for units in base square; instead such units receive a +1 MORALE modifier." It is hardly a documetation for such complex mechanics. See [Treatise on Morale] at the top of Morale section. Psi units also receive similar bonus from Brood Pit on top of Children Creche's one but this is not documented at all.
 
 ### Very Green defense bonus
 

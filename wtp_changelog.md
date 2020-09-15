@@ -1,3 +1,7 @@
+# Version 139
+
+* All Brood Pit morale effects are disables same way as for Children Creche.
+
 # Version 138
 
 * AI:
