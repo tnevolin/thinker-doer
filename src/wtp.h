@@ -4,13 +4,6 @@
 #include "main.h"
 #include "game.h"
 
-struct MAP_INFO
-{
-	int x;
-	int y;
-	MAP *tile;
-};
-
 struct BASE_INFO
 {
 	int id;

@@ -162,15 +162,8 @@ void evaluateExplorationDemand()
 
 				bool reachable = false;
 
-				for (int i = 1; i < ADJACENT_TILE_OFFSET_COUNT; i++)
+				for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
 				{
-					int adjacentTileX = wrap(x + BASE_TILE_OFFSETS[i][0]);
-					int adjacentTileY = y + BASE_TILE_OFFSETS[i][1];
-					MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
-
-					if (adjacentTile == NULL)
-						continue;
-
 					// same region only
 
 					if (adjacentTile->region != region)
@@ -406,27 +399,28 @@ void evaluateExpansionDemand()
 				if (tile->items & (TERRA_BASE_IN_TILE | TERRA_BASE_RADIUS))
 					continue;
 
+				// only tiles not on a map border
+
+				if ((*map_toggle_flat && !(x >= 0 && x < *map_axis_x)) || !(y >= 0 && y < *map_axis_y))
+					continue;
+
 				// only tiles at least one step away from base borders and enemy territory
 
 				bool good = true;
 
-				for (int i = 1; i < ADJACENT_TILE_OFFSET_COUNT; i++)
+				for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
 				{
-					int adjacentTileX = wrap(x + BASE_TILE_OFFSETS[i][0]);
-					int adjacentTileY = y + BASE_TILE_OFFSETS[i][1];
-					MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
+					// only claimable territory
 
-					// only territory good within map
-
-					if (adjacentTile == NULL)
+					if (!(adjacentTile->owner == -1 || adjacentTile->owner == *active_faction))
 					{
 						good = false;
 						break;
 					}
 
-					// only claimable territory
+					// only territory not within base borders
 
-					if (!(tile->owner == -1 || tile->owner == *active_faction))
+					if (adjacentTile->items & TERRA_BASE_RADIUS)
 					{
 						good = false;
 						break;
