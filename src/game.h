@@ -3,6 +3,13 @@
 #include "main.h"
 #include "engine.h"
 
+struct MAP_INFO
+{
+	int x;
+	int y;
+	MAP *tile;
+};
+
 /*
 
 Function parameter naming conventions
@@ -212,4 +219,10 @@ int getUnitDefenseValue(int id);
 int getVehicleOffenseValue(int id);
 int getVehicleDefenseValue(int id);
 int estimateBaseProductionTurnsToComplete(int id);
+std::vector<MAP *> getAdjacentTiles(int x, int y, bool startWithCenter);
+std::vector<MAP_INFO> getAdjacentTileInfos(int x, int y, bool startWithCenter);
+std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool startWithCenter);
+std::vector<MAP_INFO> getBaseRadiusTileInfos(int x, int y, bool startWithCenter);
+std::vector<MAP *> getBaseWorkedTiles(int baseId);
+std::vector<MAP *> getBaseWorkedTiles(BASE *base);
 

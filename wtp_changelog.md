@@ -1,3 +1,7 @@
+# Version 140
+
+* \[bug\] Didn't check map boundaries when iterated through adjacent tiles. That crashes game when base is placed on map border.
+
 # Version 139
 
 * All Brood Pit morale effects are disables same way as for Children Creche.

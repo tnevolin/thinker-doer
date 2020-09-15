@@ -1394,22 +1394,8 @@ std::set<int> getBaseConnectedRegions(int id)
 
 	if (!is_ocean(baseTile))
 	{
-		for (int i = 1; i < ADJACENT_TILE_OFFSET_COUNT; i++)
+		for (MAP *tile : getAdjacentTiles(base->x, base->y, false))
 		{
-			// get tile coordinates
-
-			int x = base->x + BASE_TILE_OFFSETS[i][0];
-			int y = base->y + BASE_TILE_OFFSETS[i][1];
-
-			// get map tile
-
-			MAP *tile = getMapTile(x, y);
-
-			// skip incorrect tiles
-
-			if (tile == NULL)
-				continue;
-
 			// skip land tiles
 
 			if (!is_ocean(tile))
@@ -1554,6 +1540,150 @@ int estimateBaseProductionTurnsToComplete(int id)
 	BASE *base = &(tx_bases[id]);
 
 	return ((mineral_cost(base->faction_id, base->queue_items[0]) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
+
+}
+
+/*
+Returns all valid adjacent map tiles around given point.
+if startFromCenter == true then also return central tile as first element
+*/
+std::vector<MAP *> getAdjacentTiles(int x, int y, bool startWithCenter)
+{
+	std::vector<MAP *> adjacentTiles;
+
+	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
+
+		if (tile == NULL)
+			continue;
+
+		adjacentTiles.push_back(tile);
+
+	}
+
+	return adjacentTiles;
+
+}
+
+/*
+Returns all valid adjacent map tile infos around given point.
+if startFromCenter == true then also return central tile as first element
+*/
+std::vector<MAP_INFO> getAdjacentTileInfos(int x, int y, bool startWithCenter)
+{
+	std::vector<MAP_INFO> adjacentTileInfos;
+
+	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		int tileX = wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]);
+		int tileY = y + BASE_TILE_OFFSETS[offsetIndex][1];
+		MAP *tile = getMapTile(tileX, tileY);
+
+		if (tile == NULL)
+			continue;
+
+		adjacentTileInfos.push_back({tileX, tileY, tile});
+
+	}
+
+	return adjacentTileInfos;
+
+}
+
+/*
+Returns all valid base radius map tiles around given point.
+if startFromCenter == true then also return central tile as first element
+*/
+std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool startWithCenter)
+{
+	std::vector<MAP *> baseRadiusTiles;
+
+	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
+
+		if (tile == NULL)
+			continue;
+
+		baseRadiusTiles.push_back(tile);
+
+	}
+
+	return baseRadiusTiles;
+
+}
+
+/*
+Returns all valid base radius map tile infos around given point.
+if startFromCenter == true then also return central tile as first element
+*/
+std::vector<MAP_INFO> getBaseRadiusTileInfos(int x, int y, bool startWithCenter)
+{
+	std::vector<MAP_INFO> baseRadiusTileInfos;
+
+	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		int tileX = wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]);
+		int tileY = y + BASE_TILE_OFFSETS[offsetIndex][1];
+		MAP *tile = getMapTile(tileX, tileY);
+
+		if (tile == NULL)
+			continue;
+
+		baseRadiusTileInfos.push_back({tileX, tileY, tile});
+
+	}
+
+	return baseRadiusTileInfos;
+
+}
+
+std::vector<MAP *> getBaseWorkedTiles(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	std::vector<MAP *> baseWorkedTiles;
+
+	for (int offsetIndex = 1; offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		if (base->worked_tiles & (0x1 << offsetIndex))
+		{
+			MAP *workedTile = getMapTile(wrap(base->x + BASE_TILE_OFFSETS[offsetIndex][0]), base->y + BASE_TILE_OFFSETS[offsetIndex][1]);
+
+			if (workedTile == NULL)
+				continue;
+
+			baseWorkedTiles.push_back(workedTile);
+
+		}
+
+	}
+
+	return baseWorkedTiles;
+
+}
+
+std::vector<MAP *> getBaseWorkedTiles(BASE *base)
+{
+	std::vector<MAP *> baseWorkedTiles;
+
+	for (int offsetIndex = 1; offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		if (base->worked_tiles & (0x1 << offsetIndex))
+		{
+			MAP *workedTile = getMapTile(wrap(base->x + BASE_TILE_OFFSETS[offsetIndex][0]), base->y + BASE_TILE_OFFSETS[offsetIndex][1]);
+
+			if (workedTile == NULL)
+				continue;
+
+			baseWorkedTiles.push_back(workedTile);
+
+		}
+
+	}
+
+	return baseWorkedTiles;
 
 }
 

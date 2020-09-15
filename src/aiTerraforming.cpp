@@ -141,15 +141,8 @@ void populateLists()
 
 		if (!is_ocean(vehicleLocation))
 		{
-			for (int i = 1; i < ADJACENT_TILE_OFFSET_COUNT; i++)
+			for (MAP *adjacentTile : getAdjacentTiles(vehicle->x, vehicle->y, false))
 			{
-				int adjacentTileX = wrap(vehicle->x + BASE_TILE_OFFSETS[i][0]);
-				int adjacentTileY = vehicle->y + BASE_TILE_OFFSETS[i][1];
-				MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
-
-				if (adjacentTile == NULL)
-					continue;
-
 				if (!is_ocean(adjacentTile))
 				{
 					zocLocations.insert(adjacentTile);
@@ -247,13 +240,9 @@ void populateLists()
 
 		// populate worked tiles
 
-		for (int offsetIndex = 1; offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+		for (MAP *workedTile : getBaseWorkedTiles(id))
 		{
-			if (base->worked_tiles & (0x1 << offsetIndex))
-			{
-				MAP *workedTile = getMapTile(base->x + BASE_TILE_OFFSETS[offsetIndex][0], base->y + BASE_TILE_OFFSETS[offsetIndex][1]);
-				workedTileBases[workedTile] = {id, base};
-			}
+			workedTileBases[workedTile] = {id, base};
 
 		}
 
@@ -273,15 +262,8 @@ void populateLists()
 		{
 			std::set<int> seaRegionLinkedGroup;
 
-			for (int offsetIndex = 1; offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
+			for (MAP *adjacentTile : getAdjacentTiles(base->x, base->y, false))
 			{
-				MAP *adjacentTile = getMapTile(base->x + BASE_TILE_OFFSETS[offsetIndex][0], base->y + BASE_TILE_OFFSETS[offsetIndex][1]);
-
-				// skip tiles outside of map
-
-				if (adjacentTile == NULL)
-					continue;
-
 				// get sea region
 
 				if (is_ocean(adjacentTile))
@@ -451,10 +433,8 @@ void populateLists()
 
 		if (!is_ocean(baseTile))
 		{
-			for (int offsetIndex = 1; offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
+			for (MAP *adjacentTile : getAdjacentTiles(base->x, base->y, false))
 			{
-				MAP *adjacentTile = getMapTile(base->x + BASE_TILE_OFFSETS[offsetIndex][0], base->y + BASE_TILE_OFFSETS[offsetIndex][1]);
-
 				if (is_ocean(adjacentTile))
 				{
 					int terraformingRegion = getConnectedRegion(adjacentTile->region);
@@ -764,16 +744,11 @@ void populateLists()
 
 		// iterate base tiles
 
-		for (int tileOffsetIndex = 1; tileOffsetIndex < BASE_TILE_OFFSET_COUNT; tileOffsetIndex++)
+		for (MAP_INFO mapInfo : getBaseRadiusTileInfos(base->x, base->y, false))
 		{
-			int x = wrap(base->x + BASE_TILE_OFFSETS[tileOffsetIndex][0]);
-			int y = base->y + BASE_TILE_OFFSETS[tileOffsetIndex][1];
-			MAP *tile = getMapTile(x, y);
-
-			// exclude impossible coordinates
-
-			if (!tile)
-				continue;
+			int x = mapInfo.x;
+			int y = mapInfo.y;
+			MAP *tile = mapInfo.tile;
 
 			// only own territory
 
@@ -855,11 +830,11 @@ void populateLists()
 
 		tx_set_base(id);
 
-		for (int offsetIndex = 1; offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+		for (MAP_INFO mapInfo : getBaseRadiusTileInfos(base->x, base->y, false))
 		{
-			int x = wrap(base->x + BASE_TILE_OFFSETS[offsetIndex][0]);
-			int y = base->y + BASE_TILE_OFFSETS[offsetIndex][1];
-			MAP *tile = getMapTile(x, y);
+			int x = mapInfo.x;
+			int y = mapInfo.y;
+			MAP *tile = mapInfo.tile;
 
 			// process available tiles only
 
@@ -3833,19 +3808,19 @@ bool isBaseWorkedTile(BASE *base, int x, int y)
 	if (!isWithinBaseRadius(base->x, base->y, x, y))
 		return false;
 
-	for (int workedTileIndex = 1; workedTileIndex < BASE_TILE_OFFSET_COUNT; workedTileIndex++)
+	// get tile
+
+	MAP *tile = getMapTile(x, y);
+
+	if (tile == NULL)
+		return false;
+
+	// iterate worked tiles
+
+	for (MAP *workedTile : getBaseWorkedTiles(base))
 	{
-		bool worked = (base->worked_tiles & (0x1 << workedTileIndex));
-
-		if (worked)
-		{
-			int workedTileX = wrap(base->x + BASE_TILE_OFFSETS[workedTileIndex][0]);
-			int workedTileY = base->y + BASE_TILE_OFFSETS[workedTileIndex][1];
-
-			if (workedTileX == x && workedTileY == y)
-				return true;
-
-		}
+		if (tile == workedTile)
+			return true;
 
 	}
 
@@ -4072,15 +4047,8 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 	// [0.0, 9.0]
 	double totalRainfallImprovement = 0.0;
 
-	for (int offsetIndex = 0; offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
+	for (MAP *tile : getAdjacentTiles(x, y, true))
 	{
-		int u = wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]);
-		int v = y + BASE_TILE_OFFSETS[offsetIndex][1];
-		MAP *tile = getMapTile(u, v);
-
-		if (!tile)
-			continue;
-
 		// exclude ocean
 
 		if (is_ocean(tile))
@@ -4581,12 +4549,12 @@ void findPathStep(int id, int x, int y, MAP_INFO *step)
 
 			// evaluate adjacent tiles
 
-			for (int offsetIndex = 1; offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
+			for (MAP_INFO adjacentTileInfo : getAdjacentTileInfos(element->x, element->y, false))
 			{
+				int adjacentTileX = adjacentTileInfo.x;
+				int adjacentTileY = adjacentTileInfo.y;
+				MAP *adjacentTile = adjacentTileInfo.tile;
 
-				int adjacentTileX = wrap(element->x + BASE_TILE_OFFSETS[offsetIndex][0]);
-				int adjacentTileY = element->y + BASE_TILE_OFFSETS[offsetIndex][1];
-				MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
 				bool adjacentTileZOC = zocLocations.count(adjacentTile) != 0;
 
 				// exclude already processed and current locations
