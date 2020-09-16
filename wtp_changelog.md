@@ -1,3 +1,7 @@
+# Version 141
+
+* Enhanced Thinker thread computation. Previously sealurks scared land colonies away.
+
 # Version 140
 
 * \[bug\] Didn't check map boundaries when iterated through adjacent tiles. That crashes game when base is placed on map border.
