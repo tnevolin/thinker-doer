@@ -30,7 +30,8 @@ typedef int PMTable[MAPSZ*2][MAPSZ];
     which the units will attempt to flee to the square chosen by escape_move.
 */
 
-HOOK_API void enemy_move_check(int id);
+void adjust_value(PMTable tbl, int x, int y, int range, int value);
+void adjust_value_within_region(PMTable tbl, int x, int y, int range, int value, bool stayInRegion);
 HOOK_API int enemy_move(int id);
 HOOK_API int log_veh_kill(int a, int b, int c, int d);
 void move_upkeep(int faction);

@@ -44,6 +44,50 @@ void adjust_value(PMTable tbl, int x, int y, int range, int value) {
     }
 }
 
+/*
+Adjusts value but stays in region if requested.
+*/
+void adjust_value_within_region(PMTable tbl, int x, int y, int range, int value, bool stayInRegion)
+{
+	// staying in region is not required
+
+	if (!stayInRegion)
+		return adjust_value(tbl, x, y, range, value);
+
+	// get map at location
+
+	MAP *tile = getMapTile(x, y);
+
+	if (tile == NULL)
+		return;
+
+	// iterate nearby tiles
+
+    for (int i=-range*2; i<=range*2; i++) {
+        for (int j=-range*2 + abs(i); j<=range*2 - abs(i); j+=2) {
+            int x2 = wrap(x + i);
+            int y2 = y + j;
+
+            // get map at nearby location
+
+            MAP *nearbyTile = getMapTile(x2, y2);
+
+            if (nearbyTile == NULL)
+				continue;
+
+			// verify nearby location is in same region
+
+			if (nearbyTile->region != tile->region)
+				continue;
+
+			tbl[x2][y2] += value;
+
+        }
+
+    }
+
+}
+
 bool other_in_tile(int faction, MAP* sq) {
     int u = unit_in_tile(sq);
     return (u >= 0 && u != faction);
@@ -191,16 +235,16 @@ void move_upkeep(int faction) {
         }
         if ((1 << veh->faction_id) & enemymask) {
             int val = (u->weapon_type <= WPN_PSI_ATTACK && veh->proto_id != BSC_FUNGAL_TOWER ? -100 : -10);
-            adjust_value(pm_safety, veh->x, veh->y, 1, val);
+            adjust_value_within_region(pm_safety, veh->x, veh->y, 1, val, veh_triad(i) != TRIAD_AIR);
             if (val == -100) {
                 int w = (u->chassis_type == CHS_INFANTRY ? 2 : 1);
-                adjust_value(pm_safety, veh->x, veh->y, 4-w, val/(w*4));
+                adjust_value_within_region(pm_safety, veh->x, veh->y, 4-w, val/(w*4), veh_triad(i) != TRIAD_AIR);
             }
-            adjust_value(pm_enemy_near, veh->x, veh->y, 3, 1);
+            adjust_value_within_region(pm_enemy_near, veh->x, veh->y, 3, 1, veh_triad(i) != TRIAD_AIR);
             pm_enemy[veh->x][veh->y]++;
         } else if (veh->faction_id == faction) {
             if (u->weapon_type <= WPN_PSI_ATTACK) {
-                adjust_value(pm_safety, veh->x, veh->y, 1, 40);
+                adjust_value_within_region(pm_safety, veh->x, veh->y, 1, 40, veh_triad(i) != TRIAD_AIR);
                 pm_safety[veh->x][veh->y] += 60;
             }
             if ((u->weapon_type == WPN_COLONY_MODULE || u->weapon_type == WPN_TERRAFORMING_UNIT)
