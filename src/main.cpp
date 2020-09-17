@@ -297,6 +297,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->biology_lab_research_bonus = max(0, atoi(value));
     }
+    else if (MATCH("wtp", "hsa_does_not_kill_probe"))
+    {
+        cf->hsa_does_not_kill_probe = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
