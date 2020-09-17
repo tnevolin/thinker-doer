@@ -301,6 +301,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->hsa_does_not_kill_probe = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "condenser_and_enricher_do_not_multiply_nutrients"))
+    {
+        cf->condenser_and_enricher_do_not_multiply_nutrients = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

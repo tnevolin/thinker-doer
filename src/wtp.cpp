@@ -1352,26 +1352,32 @@ HOOK_API int mod_nutrient_yield(int factionId, int baseId, int x, int y, int tf)
     if (!tile)
 		return value;
 
-    // condenser does not multiply nutrients
+	// apply condenser and enricher fix if configured
 
-    if (tile->items & TERRA_CONDENSER)
-    {
-        value = (value * 2 + 2) / 3;
-    }
+	if (conf.condenser_and_enricher_do_not_multiply_nutrients)
+	{
+		// condenser does not multiply nutrients
 
-    // enricher does not multiply nutrients
+		if (tile->items & TERRA_CONDENSER)
+		{
+			value = (value * 2 + 2) / 3;
+		}
 
-    if (tile->items & TERRA_SOIL_ENR)
-    {
-        value = (value * 2 + 2) / 3;
-    }
+		// enricher does not multiply nutrients
 
-    // enricher adds 1 nutrient
+		if (tile->items & TERRA_SOIL_ENR)
+		{
+			value = (value * 2 + 2) / 3;
+		}
 
-    if (tile->items & TERRA_SOIL_ENR)
-    {
-        value++;
-    }
+		// enricher adds 1 nutrient
+
+		if (tile->items & TERRA_SOIL_ENR)
+		{
+			value++;
+		}
+
+	}
 
     return value;
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 143"
+    #define MOD_VERSION "The Will to Power mod - version 144"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -165,6 +165,7 @@ struct Config {
     int pts_new_base_size_less_average = 2;
     int biology_lab_research_bonus = 2;
     bool hsa_does_not_kill_probe = false;
+    bool condenser_and_enricher_do_not_multiply_nutrients = false;
     bool ai_useWTPAlgorithms;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_truce;

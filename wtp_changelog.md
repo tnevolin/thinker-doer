@@ -1,3 +1,8 @@
+# Version 144
+
+* Borehole Square,  0, 2, 6.
+* Exposed condenser and enricher fix parameter: condenser_and_enricher_do_not_multiply_nutrients.
+
 # Version 143
 
 * [https://github.com/tnevolin/thinker-doer/issues/3]. HSA now exhausts probe team movement points.
