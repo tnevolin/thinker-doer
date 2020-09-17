@@ -30,6 +30,7 @@ std::map<int, BASE_STRATEGY> baseStrategies;
 std::vector<int> combatVehicleIds;
 std::vector<int> outsideCombatVehicleIds;
 std::vector<int> prototypes;
+std::vector<int> colonyVehicleIds;
 
 /*
 AI strategy.
@@ -81,6 +82,7 @@ void populateSharedLists()
 	combatVehicleIds.clear();
 	outsideCombatVehicleIds.clear();
 	prototypes.clear();
+	colonyVehicleIds.clear();
 
 	// populate factions combat modifiers
 
@@ -268,6 +270,10 @@ void populateSharedLists()
 
 			}
 
+		}
+		else if (isVehicleColony(id))
+		{
+			colonyVehicleIds.push_back(id);
 		}
 
 	}

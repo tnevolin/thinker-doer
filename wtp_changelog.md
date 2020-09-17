@@ -1,6 +1,10 @@
+# Version 142
+
+* Modified expansion parameters to build proportional number of colonies.
+
 # Version 141
 
-* Enhanced Thinker thread computation. Previously sealurks scared land colonies away.
+* Enhanced Thinker threat computation. Previously sealurks scared land colonies away.
 
 # Version 140
 
@@ -835,6 +839,9 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* Make condenser and enricher fixes configurable.
+* HSA should stop the probe movement as well.
+* Sea units are returned to land bases. When pact is cancelled, when sea probe is returned unharmed.
 * Transport doesn't carry colony.
 * Research gene warfare and its unit damaging effect. See if we need to tone this down a bit.
 * Move plant fungus later.

@@ -333,9 +333,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_max_unpopulated_range = atoi(value);
     }
-    else if (MATCH("wtp", "ai_production_min_unpopulated_tiles"))
+    else if (MATCH("wtp", "ai_production_expansion_coverage"))
     {
-        cf->ai_production_min_unpopulated_tiles = atoi(value);
+        cf->ai_production_expansion_coverage = atof(value);
     }
     else if (MATCH("wtp", "ai_production_colony_priority"))
     {
