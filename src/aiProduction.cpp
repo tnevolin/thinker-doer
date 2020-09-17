@@ -243,12 +243,6 @@ void evaluateExplorationDemand()
 
 		debug("\t\tpriority=%f\n", priority);
 
-		// reduce priority for higher explorer speed
-
-		priority /= unit_chassis_speed(scoutUnitId);
-
-		debug("\t\tpriority=%f (speed adjusted)\n", priority);
-
 		// find max mineral surplus in region
 
 		int maxMineralSurplus = 0;
@@ -360,6 +354,13 @@ void evaluateExpansionDemand()
 
 		debug("\tregion=%d\n", region);
 
+		// check there is at least one colony unit for given triad
+
+		int colonyUnitId = findColonyUnit(triad);
+
+		if (colonyUnitId == -1)
+			continue;
+
 		// reset range to unpopulated tile statistics
 
 		for (int id : *regionBaseIds)
@@ -384,12 +385,22 @@ void evaluateExpansionDemand()
 				if (tile == NULL)
 					continue;
 
+				// exclude map border
+
+				if ((*map_toggle_flat && (x <= 1 || x >= *map_axis_x - 2)) || (y <= 1 || y >= *map_axis_y - 2))
+					continue;
+
+				// discovered only
+
+				if (~tile->visibility & (0x1 << *active_faction))
+					continue;
+
 				// this region only
 
 				if (tile->region != region)
 					continue;
 
-				// exclude territory claimed by someone else
+				// exclude territory claimed by other factions
 
 				if (!(tile->owner == -1 || tile->owner == *active_faction))
 					continue;
@@ -399,36 +410,14 @@ void evaluateExpansionDemand()
 				if (tile->items & (TERRA_BASE_IN_TILE | TERRA_BASE_RADIUS))
 					continue;
 
-				// only tiles not on a map border
+				// exclude fungus
 
-				if ((*map_toggle_flat && !(x >= 0 && x < *map_axis_x)) || !(y >= 0 && y < *map_axis_y))
+				if (tile->items & TERRA_FUNGUS)
 					continue;
 
-				// only tiles at least one step away from base borders and enemy territory
+				// exclude land rocky
 
-				bool good = true;
-
-				for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
-				{
-					// only claimable territory
-
-					if (!(adjacentTile->owner == -1 || adjacentTile->owner == *active_faction))
-					{
-						good = false;
-						break;
-					}
-
-					// only territory not within base borders
-
-					if (adjacentTile->items & TERRA_BASE_RADIUS)
-					{
-						good = false;
-						break;
-					}
-
-				}
-
-				if (!good)
+				if (triad == TRIAD_LAND && tile->rocks & TILE_ROCKY)
 					continue;
 
 				// calculate distance to nearest own base within region
@@ -481,17 +470,58 @@ void evaluateExpansionDemand()
 
 		debug("\t\tunpopulatedTileCount=%d\n", unpopulatedTileCount);
 
-		// check there is at least one colony unit for given triad
-
-		int colonyUnitId = findColonyUnit(triad);
-
-		if (colonyUnitId == -1)
-			continue;
-
 		// evaluate need for expansion
 
-		if (unpopulatedTileCount < conf.ai_production_min_unpopulated_tiles)
+		double expansionDemand = (double)unpopulatedTileCount / conf.ai_production_expansion_coverage - 1.0;
+
+		debug("\t\texpansionDemand=%f\n", expansionDemand);
+
+		// calculate existing and building colonies
+
+		int existingColoniesCount = 0;
+
+		for (int vehicleId : colonyVehicleIds)
+		{
+			VEH *vehicle = &(tx_vehicles[vehicleId]);
+			MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
+
+			if (vehicleLocation->region != region)
+				continue;
+
+			existingColoniesCount++;
+
+		}
+
+		for (int baseId : *regionBaseIds)
+		{
+			BASE *base = &(tx_bases[baseId]);
+			int item = base->queue_items[0];
+
+			if (item < 0)
+				continue;
+
+			if (!isUnitColony(item))
+				continue;
+
+			if (unit_triad(item) != triad)
+				continue;
+
+			existingColoniesCount++;
+
+		}
+
+		debug("\t\texistingColoniesCount=%d\n", existingColoniesCount);
+
+		// we have enough
+
+		if (existingColoniesCount >= expansionDemand)
 			continue;
+
+		// calculate priority
+
+		double priority = conf.ai_production_colony_priority * (expansionDemand - (double)existingColoniesCount) / expansionDemand;
+
+		debug("\t\tpriority=%f\n", priority);
 
 		// calcualte max base size in region and max average range to destination
 
@@ -542,7 +572,7 @@ void evaluateExpansionDemand()
 
 			// adjust priority based on base size and range to destination
 
-			double priority = conf.ai_production_colony_priority * ((double)base->pop_size / (double)maxBaseSize) * (minAverageUnpopulatedTileRange / baseStrategy->averageUnpopulatedTileRange);
+			priority *= (((double)base->pop_size / (double)maxBaseSize) + (minAverageUnpopulatedTileRange / baseStrategy->averageUnpopulatedTileRange)) / 2;
 
 			debug("\t\t\t\tpop_size=%d, averageUnpopulatedTileRange=%f, priority=%f\n", base->pop_size, baseStrategy->averageUnpopulatedTileRange, priority);
 
@@ -1278,8 +1308,8 @@ int findFastAttackerUnit()
 int findScoutUnit(int triad)
 {
 	int bestUnitId = -1;
+	double bestProportionalUnitChassisSpeed = -1;
 	int bestUnitChassisSpeed = -1;
-	int bestUnitCost = -1;
 
 	for (int id : prototypes)
 	{
@@ -1295,20 +1325,25 @@ int findScoutUnit(int triad)
 		if (unit_triad(id) != triad)
 			continue;
 
-		// find fastest cheapest unit
+		// calculate speed and proportional speed
+
+		int unitChassisSpeed = unit_chassis_speed(id);
+		double proportionalUnitChassisSpeed = (double)unit_chassis_speed(id) / (double)unit->cost;
+
+		// find fastest/cheapest unit
 
 		if
 		(
 			bestUnitId == -1
 			||
-			unit_chassis_speed(id) > bestUnitChassisSpeed
+			proportionalUnitChassisSpeed > bestProportionalUnitChassisSpeed
 			||
-			unit->cost < bestUnitCost
+			(proportionalUnitChassisSpeed == bestProportionalUnitChassisSpeed && unitChassisSpeed > bestUnitChassisSpeed)
 		)
 		{
 			bestUnitId = id;
-			bestUnitChassisSpeed = unit_chassis_speed(id);
-			bestUnitCost = unit->cost;
+			bestProportionalUnitChassisSpeed = proportionalUnitChassisSpeed;
+			bestUnitChassisSpeed = unitChassisSpeed;
 		}
 
 	}
