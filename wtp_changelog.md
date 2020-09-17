@@ -1,3 +1,7 @@
+# Version 143
+
+* [https://github.com/tnevolin/thinker-doer/issues/3]. HSA now exhausts probe team movement points.
+
 # Version 142
 
 * Modified expansion parameters to build proportional number of colonies.
