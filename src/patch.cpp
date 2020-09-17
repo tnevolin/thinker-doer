@@ -2114,14 +2114,18 @@ void patch_base_init()
 /*
 HSA does not kill probe.
 */
-void patch_hsa_not_kill_probe()
+void patch_hsa_does_not_kill_probe()
 {
-	// disable HSA killing probe
+//	// disable HSA killing probe
+//
+//	int disable_hsa_kill_bytes_length = 12;
+//	byte disable_hsa_kill_bytes_old[] = { 0x8B, 0x4D, 0x08, 0x51, 0xE8, 0x11, 0x14, 0x02, 0x00, 0x83, 0xC4, 0x04 };
+//	byte disable_hsa_kill_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+//	write_bytes(0x0059F6E6, disable_hsa_kill_bytes_length, disable_hsa_kill_bytes_old, disable_hsa_kill_bytes_new);
+//
+	// HSA does not kill probe but exhausts its movement points instead.
 
-	int disable_hsa_kill_bytes_length = 12;
-	byte disable_hsa_kill_bytes_old[] = { 0x8B, 0x4D, 0x08, 0x51, 0xE8, 0x11, 0x14, 0x02, 0x00, 0x83, 0xC4, 0x04 };
-	byte disable_hsa_kill_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-	write_bytes(0x0059F6E6, disable_hsa_kill_bytes_length, disable_hsa_kill_bytes_old, disable_hsa_kill_bytes_new);
+    write_call(0x0059F6EA, (int)tx_veh_skip);
 
 }
 
@@ -3017,7 +3021,10 @@ bool patch_setup(Config* cf) {
 
     // HSA does not kill probe
 
-    patch_hsa_not_kill_probe();
+    if (cf->hsa_does_not_kill_probe)
+	{
+		patch_hsa_does_not_kill_probe();
+	}
 
     // probe does not destroy defense
 
