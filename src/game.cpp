@@ -9,11 +9,13 @@ char* prod_name(int prod) {
         return (char*)(tx_facility[-prod].name);
 }
 
-int mineral_cost(int faction, int prod) {
-    if (prod >= 0)
-        return tx_units[prod].cost * tx_cost_factor(faction, 1, -1);
-    else
-        return tx_facility[-prod].cost * tx_cost_factor(faction, 1, -1);
+/*
+Calculates mineral cost for given faction, production item, and possibly base.
+If base is not negative then its cost modifying facilites are taken into account: Skunkworks and Brood Pits.
+*/
+int mineral_cost(int factionId, int itemId, int baseId)
+{
+	return (itemId >= 0 ? tx_veh_cost(itemId, baseId, 0) : tx_facility[-itemId].cost) * tx_cost_factor(factionId, 1, -1);
 }
 
 bool has_tech(int faction, int tech) {
@@ -853,21 +855,40 @@ int getDoctorQuelledDrones(int id)
 
 }
 
-int getBaseBuildingItem(BASE *base)
+int getBaseBuildingItem(int baseId)
 {
-	return base->queue_items[0];
+	return tx_bases[baseId].queue_items[0];
 }
 
-bool isBaseBuildingProject(BASE *base)
+bool isBaseBuildingProject(int baseId)
 {
-	int item = getBaseBuildingItem(base);
+	int item = getBaseBuildingItem(baseId);
 	return (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST);
 }
 
-int getBaseBuildingItemCost(int factionId, BASE *base)
+bool isBaseProductionWithinRetoolingExemption(int baseId)
 {
-	int item = getBaseBuildingItem(base);
-	return (item >= 0 ? tx_units[item].cost : tx_facility[-item].cost) * tx_cost_factor(factionId, 1, -1);
+	BASE *base = &(tx_bases[baseId]);
+
+	return (base->minerals_accumulated <= tx_basic->retool_exemption);
+
+}
+
+bool isBaseBuildingProjectBeyondRetoolingExemption(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+	int item = base->queue_items[0];
+
+	return (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST && base->minerals_accumulated > tx_basic->retool_exemption);
+
+}
+
+int getBaseBuildingItemCost(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	int item = getBaseBuildingItem(baseId);
+	return (item >= 0 ? tx_veh_cost(item, baseId, 0) : tx_facility[-item].cost) * tx_cost_factor(base->faction_id, 1, -1);
 }
 
 /*
@@ -1341,7 +1362,7 @@ bool isVehicleSupply(VEH *vehicle)
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_SUPPLY_TRANSPORT);
 }
 
-bool isUnitColony(int id)
+bool isColonyUnit(int id)
 {
 	return (id >= 0 && tx_units[id].weapon_type == WPN_COLONY_MODULE);
 }
@@ -1351,6 +1372,15 @@ bool isVehicleColony(int id)
 	return (tx_units[tx_vehicles[id].proto_id].weapon_type == WPN_COLONY_MODULE);
 }
 
+bool isFormerUnit(int unitId)
+{
+	return (tx_units[unitId].weapon_type == WPN_TERRAFORMING_UNIT);
+}
+
+bool isVehicleFormer(int vehicleId)
+{
+	return isVehicleFormer(&(tx_vehicles[vehicleId]));
+}
 bool isVehicleFormer(VEH *vehicle)
 {
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_TERRAFORMING_UNIT);
@@ -1539,7 +1569,7 @@ int estimateBaseProductionTurnsToComplete(int id)
 {
 	BASE *base = &(tx_bases[id]);
 
-	return ((mineral_cost(base->faction_id, base->queue_items[0]) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
+	return ((mineral_cost(base->faction_id, base->queue_items[0], id) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
 
 }
 
@@ -1684,6 +1714,228 @@ std::vector<MAP *> getBaseWorkedTiles(BASE *base)
 	}
 
 	return baseWorkedTiles;
+
+}
+
+/*
+Summarize base garrizon defense value for all conventional combat units with defense value >= 2.
+*/
+int getBaseConventionalDefenseValue(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	int baseConventionalDefenseValue = 0;
+
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+		// own vehicles only
+
+		if (vehicle->faction_id != base->faction_id)
+			continue;
+
+		// combat vehicles only
+
+		if (!isCombatVehicle(vehicleId))
+			continue;
+
+		// get defense value
+
+		int defenseValue = tx_defense[tx_units[vehicle->proto_id].armor_type].defense_value;
+
+		// defense value >= 2 (conventional unit)
+
+		if (defenseValue < 2)
+			continue;
+
+		baseConventionalDefenseValue += defenseValue;
+
+	}
+
+	return baseConventionalDefenseValue;
+
+}
+
+/*
+Returns faction available prototypes.
+*/
+std::vector<int> getFactionPrototypes(int factionId, bool prototypedOnly)
+{
+	std::vector<int> factionPrototypes;
+
+	// only real factions
+
+	if (!(factionId >= 1 && factionId <= 7))
+		return factionPrototypes;
+
+	// iterate faction prototypes space
+
+    for (int unitIndex = 0; unitIndex < 128; unitIndex++)
+	{
+        int unitId = (unitIndex < 64 ? unitIndex : (factionId - 1) * 64 + unitIndex);
+
+        UNIT *unit = &(tx_units[unitId]);
+
+		// skip not enabled
+
+		if (unitId < 64 && !has_tech(factionId, unit->preq_tech))
+			continue;
+
+        // skip empty
+
+        if (strlen(unit->name) == 0)
+			continue;
+
+		// prototyped only if requested
+
+		if (prototypedOnly && !(unit->unit_flags & UNIT_PROTOTYPED))
+			continue;
+
+		// add prototype
+
+		factionPrototypes.push_back(unitId);
+
+	}
+
+	return factionPrototypes;
+
+}
+
+/*
+Determines if vehicle is a native land predefined unit.
+*/
+bool isNativeLandVehicle(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	int unitId = vehicle->proto_id;
+
+	return
+		unitId == BSC_MIND_WORMS
+		||
+		unitId == BSC_SPORE_LAUNCHER
+	;
+
+}
+
+bool isBaseBuildingColony(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+	int item = base->queue_items[0];
+
+	return (item >= 0 && isColonyUnit(item));
+
+}
+
+int estimateBaseProjectedPopulationIncrease(int baseId, int turns)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	int nutrientsAccumulated = base->nutrients_accumulated + base->nutrient_surplus * turns;
+	int populationIncrease = nutrientsAccumulated / (tx_cost_factor(base->faction_id, 0, baseId) * (base->pop_size + 1));
+
+	return populationIncrease;
+
+}
+
+int getBasePopulationLimit(int baseId, int facilityId)
+{
+	BASE *base = &(tx_bases[baseId]);
+	MetaFaction *metaFaction = &(tx_metafactions[base->faction_id]);
+
+	int basePopulationLimit;
+
+	switch (facilityId)
+	{
+	case FAC_HAB_COMPLEX:
+		basePopulationLimit = tx_basic->pop_limit_wo_hab_complex;
+		break;
+	case FAC_HABITATION_DOME:
+		basePopulationLimit = tx_basic->pop_limit_wo_hab_dome;
+		break;
+	default:
+		return 0;
+	}
+
+    int pop_rule = metaFaction->rule_population;
+    int populationLimit = basePopulationLimit - pop_rule;
+
+    return populationLimit;
+
+}
+
+bool isBaseFacilityAvailable(int baseId, int facilityId)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	// already built
+
+	if (has_facility(baseId, facilityId))
+		return false;
+
+	// tech available?
+
+	if (!has_facility_tech(base->faction_id, facilityId))
+		return false;
+
+	// special cases
+
+	switch (facilityId)
+	{
+	case FAC_TACHYON_FIELD:
+		if (!has_facility(baseId, FAC_PERIMETER_DEFENSE))
+			return false;
+		break;
+	case FAC_HOLOGRAM_THEATRE:
+		if (!has_facility(baseId, FAC_RECREATION_COMMONS))
+			return false;
+		break;
+	case FAC_HYBRID_FOREST:
+		if (!has_facility(baseId, FAC_TREE_FARM))
+			return false;
+		break;
+	case FAC_QUANTUM_LAB:
+		if (!has_facility(baseId, FAC_FUSION_LAB))
+			return false;
+		break;
+	case FAC_NANOHOSPITAL:
+		if (!has_facility(baseId, FAC_RESEARCH_HOSPITAL))
+			return false;
+		break;
+	case FAC_GENEJACK_FACTORY:
+		if (!has_facility(baseId, FAC_RECYCLING_TANKS))
+			return false;
+		break;
+	case FAC_ROBOTIC_ASSEMBLY_PLANT:
+		if (!has_facility(baseId, FAC_GENEJACK_FACTORY))
+			return false;
+		break;
+	case FAC_QUANTUM_CONVERTER:
+		if (!has_facility(baseId, FAC_ROBOTIC_ASSEMBLY_PLANT))
+			return false;
+		break;
+	case FAC_NANOREPLICATOR:
+		if (!has_facility(baseId, FAC_QUANTUM_CONVERTER))
+			return false;
+		break;
+	case FAC_HABITATION_DOME:
+		if (!has_facility(baseId, FAC_HAB_COMPLEX))
+			return false;
+		break;
+	case FAC_TEMPLE_OF_PLANET:
+		if (!has_facility(baseId, FAC_CENTAURI_PRESERVE))
+			return false;
+		break;
+	case FAC_SKY_HYDRO_LAB:
+    case FAC_NESSUS_MINING_STATION:
+    case FAC_ORBITAL_POWER_TRANS:
+    case FAC_ORBITAL_DEFENSE_POD:
+		if (!has_facility(baseId, FAC_AEROSPACE_COMPLEX))
+			return false;
+		break;
+	}
+
+	return true;
 
 }
 

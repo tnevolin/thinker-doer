@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 144"
+    #define MOD_VERSION "The Will to Power mod - version 145"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -173,14 +173,17 @@ struct Config {
     double ai_production_threat_coefficient_pact;
     double ai_production_min_native_protection;
     double ai_production_max_native_protection;
-    double ai_production_native_protection_priority_multiplier;
+    double ai_production_native_protection_priority;
     int ai_production_max_unpopulated_range;
     double ai_production_expansion_coverage;
-    double ai_production_colony_priority;
-    int ai_production_unit_turns_limit;
-    int ai_production_payoff_turns;
+    double ai_production_expansion_priority;
+    int ai_production_combat_unit_turns_limit;
+    double ai_production_min_payoff_turns;
+    double ai_production_max_payoff_turns;
     int ai_production_combat_unit_min_mineral_surplus;
     double ai_production_exploration_coverage;
+    double ai_production_improvement_coverage;
+    int ai_production_population_projection_turns;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
@@ -213,7 +216,7 @@ struct AIPlans {
     All faction-owned bases are ranked each turn based on the surplus mineral production,
     and only the top third are selected for project building.
     */
-    int proj_limit = 5;
+    int proj_limit = 10;
     /*
     PSI combat units are only selected for production if this score is higher than zero.
     Higher values will make the prototype picker choose these units more often.

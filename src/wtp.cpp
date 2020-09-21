@@ -1685,62 +1685,6 @@ int getBasePopulationLimit(BASE *base)
 }
 
 /*
-Checks if we need to refit to population growth facility instead.
-*/
-int refitToGrowthFacility(int id, BASE *base, int choice)
-{
-	// growth facility is already chosen
-
-	if (choice == -FAC_HAB_COMPLEX || choice == -FAC_HABITATION_DOME)
-		return choice;
-
-	// get next growth facility
-
-	int nextAvailableGrowthFacility = getnextAvailableGrowthFacility(base);
-
-	// skip if no next growth facility is available
-
-	if (nextAvailableGrowthFacility == -1)
-		return choice;
-
-	// get base population limit
-
-	int populationLimit = getBasePopulationLimit(base);
-
-	// don't refit if there is no limit
-	// this is kinda redundant since we have already asserted there is a growth facility to built
-
-	if (populationLimit == -1)
-		return choice;
-
-	// don't refit if 4 people below limit
-	// this is to prevent some low mineral bases from building it at size 1
-
-	if (base->pop_size <= (populationLimit - 4))
-		return choice;
-
-	// calculate turns to reach the limit
-
-	double turnsToLimit = (double)(((populationLimit + 1 - base->pop_size) * (base->pop_size + 1) * tx_cost_factor(base->faction_id, 0, id)) - base->nutrients_accumulated) / (double)base->nutrient_surplus;
-
-	// calculate turns to build current production and growth facility
-
-	double turnsToBuild = (double)(mineral_cost(base->faction_id, choice) + mineral_cost(base->faction_id, -nextAvailableGrowthFacility) - base->minerals_accumulated) / (double)base->mineral_surplus;
-
-	// return growth facility if we cannot build current production until population limit is reached
-
-	if (turnsToBuild >= turnsToLimit)
-	{
-		return -nextAvailableGrowthFacility;
-	}
-	else
-	{
-		return choice;
-	}
-
-}
-
-/*
 Return next unbuilt growth facility or -1 if there is no next available facility.
 */
 int getnextAvailableGrowthFacility(BASE *base)
@@ -1972,7 +1916,7 @@ HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queu
 	{
 		// find mineral multiplier
 
-		int multiplier = (2 * base->mineral_intake_2 + (base->mineral_intake - 1)) / base->mineral_intake;
+		int multiplier = (2 * base->mineral_intake_multiplied + (base->mineral_intake - 1)) / base->mineral_intake;
 
 		// increment multiplier
 
@@ -1980,12 +1924,12 @@ HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queu
 
 		// calculate updated value and addition
 
-		int updatedMineralIntake2 = (multiplier * base->mineral_intake) / 2;
-		int additionalMinerals = updatedMineralIntake2 - base->mineral_intake_2;
+		int updatedMineralIntakeMultiplied = (multiplier * base->mineral_intake) / 2;
+		int additionalMinerals = updatedMineralIntakeMultiplied - base->mineral_intake_multiplied;
 
 		// update values
 
-		base->mineral_intake_2 += additionalMinerals;
+		base->mineral_intake_multiplied += additionalMinerals;
 		base->mineral_surplus += additionalMinerals;
 
 	}

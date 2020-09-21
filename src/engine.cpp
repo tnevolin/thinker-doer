@@ -92,7 +92,9 @@ HOOK_API int faction_upkeep(int faction) {
     Faction* f = &tx_factions[faction];
     MetaFaction* m = &tx_metafactions[faction];
 
-    debug("faction_upkeep %d %d\n", *current_turn, faction);
+    debug("faction_upkeep %d %d:%-25s\n", *current_turn, faction, tx_metafactions[faction].noun_faction);
+    fflush(debug_log);
+
     init_save_game(faction);
 
     // distributing support across bases
@@ -116,6 +118,14 @@ HOOK_API int faction_upkeep(int faction) {
     do_all_non_input();
     repair_phase(faction);
     do_all_non_input();
+
+	// consider hurrying production in all bases
+	// affects AI factions only
+	if (faction != 0 && !is_human(faction))
+	{
+		factionHurryProduction(faction);
+	}
+
     production_phase(faction);
 
     do_all_non_input();
@@ -126,13 +136,6 @@ HOOK_API int faction_upkeep(int faction) {
         do_all_non_input();
         enemy_strategy(faction);
         do_all_non_input();
-
-		// consider hurrying production in all bases
-		// affects AI factions only
-		if (faction != 0 && !is_human(faction))
-		{
-			factionHurryProduction(faction);
-		}
 
         /*
         Thinker-specific AI planning routines.

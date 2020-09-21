@@ -6,11 +6,11 @@
 
 struct BASE_WEIGHT
 {
-	BASE *base;
+	int baseId;
 	double weight;
 };
 
 void factionHurryProduction(int factionId);
-void hurryProductionPartially(BASE *base, int allowance);
+void hurryProductionPartially(int baseId, int allowance);
 
 #endif // __AIHURRY_H__

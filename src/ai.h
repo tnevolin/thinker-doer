@@ -42,6 +42,7 @@ extern std::vector<int> combatVehicleIds;
 extern std::vector<int> outsideCombatVehicleIds;
 extern std::vector<int> prototypes;
 extern std::vector<int> colonyVehicleIds;
+extern std::vector<int> formerVehicleIds;
 
 void aiStrategy(int id);
 void populateSharedLists();

@@ -30,103 +30,103 @@ Composes anti-native combat strategy.
 */
 void aiNativeCombatStrategy()
 {
-	// protect bases
-
-	for (int id : baseIds)
-	{
-		BASE *base = &(tx_bases[id]);
-		BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
-
-		// maintain native protection
-
-		double totalNativeProtection = 0.0;
-
-		// police x2
-
-		for (int vehicleId : baseStrategy->garrison)
-		{
-			VEH *vehicle = &(tx_vehicles[vehicleId]);
-
-			// only police x2
-
-			if (!vehicle_has_ability(vehicle, ABL_POLICE_2X))
-				continue;
-
-			// vehicle native protection
-
-			double nativeProtection = estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
-
-			// update total
-
-			totalNativeProtection += nativeProtection;
-
-			// check if vehicle is needed
-
-			if (totalNativeProtection < conf.ai_production_max_native_protection)
-			{
-				setDefendOrder(vehicleId, base->x, base->y);
-			}
-
-		}
-
-		// trance
-
-		for (int vehicleId : baseStrategy->garrison)
-		{
-			VEH *vehicle = &(tx_vehicles[vehicleId]);
-
-			// only trance
-
-			if (!vehicle_has_ability(vehicle, ABL_TRANCE))
-				continue;
-
-			// vehicle native protection
-
-			double nativeProtection = estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
-
-			// update total
-
-			totalNativeProtection += nativeProtection;
-
-			// check if vehicle is needed
-
-			if (totalNativeProtection < conf.ai_production_max_native_protection)
-			{
-				setDefendOrder(vehicleId, base->x, base->y);
-			}
-
-		}
-
-		// scout patrols
-
-		for (int vehicleId : baseStrategy->garrison)
-		{
-			VEH *vehicle = &(tx_vehicles[vehicleId]);
-
-			// only scout patrols
-
-			if (vehicle->proto_id != BSC_SCOUT_PATROL)
-				continue;
-
-			// vehicle native protection
-
-			double nativeProtection = estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
-
-			// update total
-
-			totalNativeProtection += nativeProtection;
-
-			// check if vehicle is needed
-
-			if (totalNativeProtection < conf.ai_production_max_native_protection)
-			{
-				setDefendOrder(vehicleId, base->x, base->y);
-			}
-
-		}
-
-	}
-
+//	// protect bases
+//
+//	for (int id : baseIds)
+//	{
+//		BASE *base = &(tx_bases[id]);
+//		BASE_STRATEGY *baseStrategy = &(baseStrategies[id]);
+//
+//		// maintain native protection
+//
+//		double totalNativeProtection = 0.0;
+//
+//		// police x2
+//
+//		for (int vehicleId : baseStrategy->garrison)
+//		{
+//			VEH *vehicle = &(tx_vehicles[vehicleId]);
+//
+//			// only police x2
+//
+//			if (!vehicle_has_ability(vehicle, ABL_POLICE_2X))
+//				continue;
+//
+//			// vehicle native protection
+//
+//			double nativeProtection = estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+//
+//			// update total
+//
+//			totalNativeProtection += nativeProtection;
+//
+//			// check if vehicle is needed
+//
+//			if (totalNativeProtection < conf.ai_production_max_native_protection)
+//			{
+//				setDefendOrder(vehicleId, base->x, base->y);
+//			}
+//
+//		}
+//
+//		// trance
+//
+//		for (int vehicleId : baseStrategy->garrison)
+//		{
+//			VEH *vehicle = &(tx_vehicles[vehicleId]);
+//
+//			// only trance
+//
+//			if (!vehicle_has_ability(vehicle, ABL_TRANCE))
+//				continue;
+//
+//			// vehicle native protection
+//
+//			double nativeProtection = estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+//
+//			// update total
+//
+//			totalNativeProtection += nativeProtection;
+//
+//			// check if vehicle is needed
+//
+//			if (totalNativeProtection < conf.ai_production_max_native_protection)
+//			{
+//				setDefendOrder(vehicleId, base->x, base->y);
+//			}
+//
+//		}
+//
+//		// scout patrols
+//
+//		for (int vehicleId : baseStrategy->garrison)
+//		{
+//			VEH *vehicle = &(tx_vehicles[vehicleId]);
+//
+//			// only scout patrols
+//
+//			if (vehicle->proto_id != BSC_SCOUT_PATROL)
+//				continue;
+//
+//			// vehicle native protection
+//
+//			double nativeProtection = estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+//
+//			// update total
+//
+//			totalNativeProtection += nativeProtection;
+//
+//			// check if vehicle is needed
+//
+//			if (totalNativeProtection < conf.ai_production_max_native_protection)
+//			{
+//				setDefendOrder(vehicleId, base->x, base->y);
+//			}
+//
+//		}
+//
+//	}
+//
 	// check native artillery
 
 	for (int id = 0; id < *total_num_vehicles; id++)
@@ -140,7 +140,7 @@ void aiNativeCombatStrategy()
 
 		// spore launchers
 
-		if (vehicle_has_ability(vehicle, ABL_ARTILLERY))
+		if (vehicle->proto_id == BSC_SPORE_LAUNCHER)
 		{
 			attackNativeArtillery(id);
 		}
@@ -223,7 +223,7 @@ void attackNativeArtillery(int enemyVehicleId)
 	// select attackers
 
 	double enemyVehicleHealth = (double)(10 - enemyVehicle->damage_taken);
-	double requiredDamage = 1.5 * enemyVehicleHealth;
+	double requiredDamage = 2.0 * enemyVehicleHealth;
 	double combinedDamage = 0.0;
 
 	debug
