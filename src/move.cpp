@@ -234,7 +234,7 @@ void move_upkeep(int faction) {
             boreholes.insert(xy);
         }
         if ((1 << veh->faction_id) & enemymask) {
-            int val = (u->weapon_type <= WPN_PSI_ATTACK && veh->proto_id != BSC_FUNGAL_TOWER ? -100 : -10);
+            int val = (u->weapon_type <= WPN_PSI_ATTACK && veh->proto_id != BSC_FUNGAL_TOWER ? -100 : 0);
             adjust_value_within_region(pm_safety, veh->x, veh->y, 1, val, veh_triad(i) != TRIAD_AIR);
             if (val == -100) {
                 int w = (u->chassis_type == CHS_INFANTRY ? 2 : 1);

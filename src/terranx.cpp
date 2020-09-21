@@ -108,7 +108,7 @@ fp_6int *tx_base_find3 = (fp_6int* )0x004E3D50;
 fp_5int *tx_tile_yield = (fp_5int* )0x004E7DC0;
 
 // base production
-fp_0int *tx_base_production = (fp_0int* )0x004F07E0;
+fp_0int *tx_base_production_choice = (fp_0int* )0x004F07E0;
 
 // set SE on dialog close
 fp_5int *tx_set_se_on_dialog_close = (fp_5int* )0x005B4210;
@@ -170,4 +170,10 @@ fp_0void *tx_world_build = (fp_0void *)0x005C86E0;
 
 // don't exactly know
 fp_3int *tx_order_veh = (fp_3int *)0x005947C0;
+
+// calculates unit production cost at base
+// arg1 = unit ID
+// arg2 = base ID, if not negative - Brood Pit and Skunkworks modify the cost when present
+// arg3 = address where to store flag if unit cost is higher than base cost
+fp_3int *tx_veh_cost = (fp_3int *)0x005C1850;
 

@@ -44,7 +44,7 @@ struct BASE {
     int energy_intake;						// +0x00B8
     int unused_intake;
     int nutrient_intake_2;                  // +0x00C0
-    int mineral_intake_2;					// +0x00C4
+    int mineral_intake_multiplied;			// +0x00C4
     int energy_intake_2;					// +0x00C8
     int unused_intake_2;					// +0x00CC
     int nutrient_surplus;                   // +0x00D0
@@ -313,8 +313,8 @@ struct Faction {
     int tech_fungus_mineral;		// 0x0318
     int tech_fungus_energy;			// 0x031C
     int unk_22;                     // 0x0320
-    int SE_alloc_psych;
-    int SE_alloc_labs;
+    int SE_alloc_psych;				// 0x0324
+    int SE_alloc_labs;				// 0x0328
     int unk_25;
     int unk_26[11]; // unused		// 0x0330
     int tech_ranking; // Twice the number of techs discovered

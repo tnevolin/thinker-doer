@@ -126,11 +126,12 @@ extern fp_3int *tx_set_facility;
 extern fp_charp_int_charp_int *tx_itoa;
 extern fp_0void *tx_base_nutrient;
 extern fp_5int *tx_social_calc;
-extern fp_0int *tx_base_production;
+extern fp_0int *tx_base_production_choice;
 extern fp_3int *tx_has_fac;
 extern fp_1int *tx_black_market;
 extern fp_3void *tx_setup_player;
 extern fp_0void *tx_balance;
 extern fp_0void *tx_world_build;
 extern fp_3int *tx_order_veh;
+extern fp_3int *tx_veh_cost;
 

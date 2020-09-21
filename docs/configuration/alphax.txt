@@ -598,7 +598,7 @@ Missile,    Missile-, Miss., M
 ; Reac    = Reactor level 1–4
 ;
 #UNITS
-33
+35
 Colony Pod,             Infantry, Colony Pod,   Scout,      8, 0, 0, None,    -1, 00000000000000000000000000
 Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
@@ -632,6 +632,8 @@ Gun Foil,               Foil,     Gun,          Scout,      3, 0, 0, DocFlex, -1
 Scout Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Mobile,  -1, 00000000000000000000000000
 Empath Rover,           Speeder,  Gun,          Scout,      3, 0, 0, CentEmp, -1, 00000000000000100000000000
 Infantry Probe Team,    Infantry, Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
+Trance Formers,         Infantry, Formers,      Scout,      9, 0, 0, Brain,   -1, 00000001000000000000000000
+Trance Sea Formers,     Foil,     Formers,      Scout,      9, 0, 0, Brain,   -1, 00000001000000000000000000
 
 ;
 ; Base Facilities
@@ -674,7 +676,7 @@ Nanoreplicator,               40,10, TempMec, Disable,  Minerals Bonus
 Quantum Converter,            30, 8, QuanMac, Disable,  Minerals Bonus
 Genejack Factory,             12, 4, Gene,    Disable,  Minerals; More Drones
 Punishment Sphere,            10, 2, MilAlg,  Disable,  No Drones/-50% Tech
-Hab Complex,                   8, 0, IndEcon, Disable,  Increase Population Limit
+Hab Complex,                   8, 0, FldMod,  Disable,  Increase Population Limit
 Habitation Dome,              16, 0, Alloys,  Disable,  Increase Population Limit
 Pressure Dome,                 8, 2, DocFlex, Disable,  Submersion/Resources
 Command Center,                8, 2, Mobile,  Disable,  +2 Morale:Land

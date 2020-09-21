@@ -74,26 +74,26 @@ void factionHurryProduction(int factionId)
 
 			if (mineralSurplus >= 1)
 			{
-				unitBases.push_back({base, weight});
+				unitBases.push_back({baseId, weight});
 				unitBasesWeightSum += weight;
 			}
 
 		}
 		else if (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST)
 		{
-			importantFacilityBases.push_back({base, weight});
+			importantFacilityBases.push_back({baseId, weight});
 			importantFacilityBasesWeightSum += weight;
 		}
 		else
 		{
 			if (IMPORTANT_FACILITIES.count(-item))
 			{
-				importantFacilityBases.push_back({base, weight});
+				importantFacilityBases.push_back({baseId, weight});
 				importantFacilityBasesWeightSum += weight;
 			}
 			else
 			{
-				facilityBases.push_back({base, weight});
+				facilityBases.push_back({baseId, weight});
 				facilityBasesWeightSum += weight;
 			}
 
@@ -115,7 +115,7 @@ void factionHurryProduction(int factionId)
 			BASE_WEIGHT *baseWeight = &(*importantFacilityBasesIterator);
 
 			int allowance = (int)(floor((double)spendPool * baseWeight->weight / importantFacilityBasesWeightSum));
-			hurryProductionPartially(baseWeight->base, allowance);
+			hurryProductionPartially(baseWeight->baseId, allowance);
 		}
 
 	}
@@ -131,7 +131,7 @@ void factionHurryProduction(int factionId)
 			BASE_WEIGHT *baseWeight = &(*facilityBasesIterator);
 
 			int allowance = (int)(floor((double)spendPool * baseWeight->weight / facilityBasesWeightSum));
-			hurryProductionPartially(baseWeight->base, allowance);
+			hurryProductionPartially(baseWeight->baseId, allowance);
 		}
 
 	}
@@ -147,7 +147,7 @@ void factionHurryProduction(int factionId)
 			BASE_WEIGHT *baseWeight = &(*unitBasesIterator);
 
 			int allowance = (int)(floor((double)spendPool * baseWeight->weight / unitBasesWeightSum));
-			hurryProductionPartially(baseWeight->base, allowance);
+			hurryProductionPartially(baseWeight->baseId, allowance);
 		}
 
 	}
@@ -160,8 +160,10 @@ void factionHurryProduction(int factionId)
 Spend maximal available amount not greater than allowance on hurrying production.
 Works only with simplified hurry cost calculation enabled.
 */
-void hurryProductionPartially(BASE *base, int allowance)
+void hurryProductionPartially(int baseId, int allowance)
 {
+	BASE *base = &(tx_bases[baseId]);
+
 	// apply only when simplified hurry cost calculation is enabled
 
 	if (!(conf.disable_hurry_penalty_threshold && conf.alternative_unit_hurry_formula))
@@ -169,20 +171,29 @@ void hurryProductionPartially(BASE *base, int allowance)
 
 	// get item and minerals left to build
 
-	int item = base->queue_items[0];
-	int fullMinerals = mineral_cost(base->faction_id, item) - base->minerals_accumulated;
+	int itemId = base->queue_items[0];
+	int itemMineralCost = mineral_cost(base->faction_id, itemId, baseId);
+
+	// calculate remaining minerals
+
+	int fullMinerals = itemMineralCost - base->minerals_accumulated;
+
+	// already completed
+
+	if (fullMinerals <= 0)
+		return;
 
 	// calculate hurry mineral cost
 
 	int hurryMineralCost;
 
 	// unit
-	if (item >= 0)
+	if (itemId >= 0)
 	{
 		hurryMineralCost = 4;
 	}
 	// project
-	else if (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST)
+	else if (itemId >= -PROJECT_ID_LAST && itemId <= -PROJECT_ID_FIRST)
 	{
 		hurryMineralCost = 4;
 	}

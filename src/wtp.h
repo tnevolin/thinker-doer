@@ -129,7 +129,6 @@ int wtp_tech_cost(int fac, int tech);
 HOOK_API int sayBase(char *buffer, int baseId);
 bool isBaseFacilityBuilt(BASE *base, int facilityId);
 int getBasePopulationLimit(BASE *base);
-int refitToGrowthFacility(int id, BASE *base, int buildChoice);
 int getnextAvailableGrowthFacility(BASE *base);
 HOOK_API int baseInit(int factionId, int x, int y);
 HOOK_API char *getAbilityCostText(int number, char *destination, int radix);

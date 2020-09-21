@@ -1,3 +1,15 @@
+# Version 145
+
+* AI: Added land improvement demand computation.
+* Global production hurry happens before production phase to produce fully completed items.
+* Fixed Thinker production unit mineral cost calculation. Previously it didn't account for prototypes/Skunkworks and Brood Pit.
+* Added predefined units: Trance Formers, Trance Sea Formers.
+* Hab Complex is now enabled by FldMod (level 2). Sea and jungle bases still struggle to get it in time.
+* Restored vanilla emergency retooling after base attack. That was previously overriden by Thinker.
+* AI production: added multiplying facilities.
+* AI production: added psych facilities.
+* AI production: added population limit facilities.
+
 # Version 144
 
 * Borehole Square,  0, 2, 6.

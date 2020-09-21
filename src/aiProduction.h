@@ -7,24 +7,18 @@
 const double MAX_THREAT_TURNS = 10.0;
 const double ARTILLERY_OFFENSIVE_VALUE_KOEFFICIENT = 0.5;
 
-struct PRODUCTION_PRIORITY
-{
-	int item;
-	double priority;
-};
-
 struct PRODUCTION_DEMAND
 {
-	bool immediate;
-	int immediateItem;
-	double immediatePriority;
-	std::vector<PRODUCTION_PRIORITY> regular;
+	int item;
+	bool urgent;
+	double priority;
+	double sumPriorities;
 };
 
 struct PRODUCTION_CHOICE
 {
 	int item;
-	bool immediate;
+	bool urgent;
 };
 
 enum UNIT_TYPE
@@ -34,22 +28,27 @@ enum UNIT_TYPE
 
 void aiProductionStrategy();
 void populateProducitonLists();
+void evaluateFacilitiesDemand();
+void evaluateBasePopulationLimitFacilitiesDemand(int baseId);
+void evaluateBasePsychFacilitiesDemand(int baseId);
+void evaluateBaseMultiplyingFacilitiesDemand(int baseId);
+void evaluateLandImprovementDemand();
+void evaluateExpansionDemand();
 void evaluateExplorationDemand();
 void evaluateNativeProtectionDemand();
-void evaluateExpansionDemand();
-void evaluateLandImprovementDemand();
 void evaluateFactionProtectionDemand();
 void setProductionChoices();
 int findNearestOwnBaseId(int x, int y, int region);
-int suggestBaseProduction(int id, bool productionDone, int choice);
-void addProductionDemand(int id, bool immediate, int item, double priority);
+HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4);
+void addProductionDemand(int baseId, int item, bool immediate, double priority);
 int selectBestNativeDefensePrototype(int factionId);
 int findStrongestNativeDefensePrototype(int factionId);
-int findDefenderPrototype();
+int findConventionalDefenderUnit(int factionId);
 int findFastAttackerUnit();
 int findScoutUnit(int triad);
 int findColonyUnit(int triad);
 int findOptimalColonyUnit(int triad, int mineralSurplus, double infantryTurnsToDestination);
 bool canBaseProduceColony(int baseId, int colonyUnitId);
+int findFormerUnit(int triad);
 
 #endif // __AIPRODUCTION_H__

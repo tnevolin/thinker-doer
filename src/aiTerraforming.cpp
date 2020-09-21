@@ -10,7 +10,6 @@
 #include "game.h"
 
 double networkDemand = 0.0;
-std::set<int> formerVehicleIds;
 std::unordered_map<MAP *, BASE_INFO> workedTileBases;
 std::unordered_map<BASE *, int> baseTerraformingRanks;
 std::unordered_set<MAP *> harvestedTiles;
@@ -87,7 +86,6 @@ void populateLists()
 
 	// clear lists
 
-	formerVehicleIds.clear();
 	workedTileBases.clear();
 	baseTerraformingRanks.clear();
 	harvestedTiles.clear();
@@ -485,10 +483,6 @@ void populateLists()
 		// formers
 		else if (isVehicleFormer(vehicle))
 		{
-			// list formers
-
-			formerVehicleIds.insert(id);
-
 			// terraforming vehicles
 			if (isVehicleTerraforming(vehicle))
 			{
@@ -810,7 +804,7 @@ void populateLists()
 		{
 			MAP_INFO *mapInfo = &(availableTilesIterator->second);
 
-			debug("\t(%3d, %3d)\n", mapInfo->x, mapInfo->y);
+			debug("\t(%3d,%3d)\n", mapInfo->x, mapInfo->y);
 
 		}
 
@@ -1790,7 +1784,7 @@ void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCOR
 
 		// process only correct rockiness
 
-		if (option->rocky && !(tile->rocks & TILE_ROCKY))
+		if (!ocean && option->rocky && !(tile->rocks & TILE_ROCKY))
 			continue;
 
 		// check if main action technology is available when required
@@ -4735,7 +4729,7 @@ double calculateBaseResourceScore(double populationSize, double nutrientSurplus,
 	double nutrientDemand = 0.0;
 	double mineralDemand = 0.0;
 
-	// additional demand turn on only from population = 3
+	// additional demand turns on only from population = 3
 
 	if (populationSize >= 3)
 	{

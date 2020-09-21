@@ -6,6 +6,7 @@
 #include "engine.h"
 #include "wtp.h"
 #include "ai.h"
+#include "aiProduction.h"
 
 const char* ac_alpha = "ac_mod\\alphax";
 const char* ac_help = "ac_mod\\helpx";
@@ -2614,7 +2615,7 @@ bool patch_setup(Config* cf) {
     write_jump(0x527290, (int)faction_upkeep);
     write_call(0x52768A, (int)turn_upkeep);
     write_call(0x52A4AD, (int)turn_upkeep);
-    write_call(0x4E61D0, (int)base_production);
+    write_call(0x4E61D0, (int)suggestBaseProduction);
     write_call(0x5BDC4C, (int)tech_value);
     write_call(0x579362, (int)enemy_move);
     write_call(0x5C0908, (int)log_veh_kill);
@@ -2692,7 +2693,7 @@ bool patch_setup(Config* cf) {
         write_call(0x598778, (int)mod_capture_base);
         write_call(0x5A4AB0, (int)mod_capture_base);
         write_call(0x4CD629, (int)mod_base_kill); // action_oblit
-        write_call(0x4F1466, (int)mod_base_kill); // base_production
+        write_call(0x4F1466, (int)mod_base_kill); // base_production_choice
         write_call(0x4EF319, (int)mod_base_kill); // base_growth
         write_call(0x500FD7, (int)mod_base_kill); // planet_busting
         write_call(0x50ADA8, (int)mod_base_kill); // battle_fight_2
