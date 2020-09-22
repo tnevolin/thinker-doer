@@ -10,7 +10,9 @@
 * Added predefined units: Trance Formers, Trance Sea Formers.
 * Hab Complex is now enabled by FldMod (level 2). Sea and jungle bases still struggle to get it in time.
 * Restored vanilla emergency retooling after base attack. That was previously overridden by Thinker.
+
 * Reduced cost of late mineral facilities. Otherwise, it is pretty difficult to reach the mineral intake when they become beneficial. Here I also listed the mineral intake when they roughly becomes beneficial.
+
 | facility  | cost | mineral intake |
 | ---- | ----:| ----:|
 | Recycling Tanks | 6 | 8 |
