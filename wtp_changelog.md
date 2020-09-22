@@ -11,11 +11,13 @@
 * Hab Complex is now enabled by FldMod (level 2). Sea and jungle bases still struggle to get it in time.
 * Restored vanilla emergency retooling after base attack. That was previously overridden by Thinker.
 * Reduced cost of late mineral facilities. Otherwise, it is pretty difficult to reach the mineral intake when they become beneficial. Here I also listed the mineral intake when they roughly becomes beneficial.
-  * Recycling Tanks        cost  6, needs  8 mineral intake
-  * Genejack Factory       cost 12, needs 20 mineral intake
-  * Robotic Assembly Plant cost 18, needs 40 mineral intake
-  * Quantum Converter      cost 24, needs 65 mineral intake
-  * Nanoreplicator         cost 30, needs 95 mineral intake
+| facility  | cost | mineral intake |
+| ---- | ----:| ----:|
+| Recycling Tanks | 6 | 8 |
+| Genejack Factory | 12 | 20 |
+| Robotic Assembly Plant | 18 | 40 |
+| Quantum Converter | 24 | 65 |
+| Nanoreplicator | 30 | 95 |
 
 # Version 144
 
