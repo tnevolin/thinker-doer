@@ -671,9 +671,9 @@ Fusion Lab,                   15, 3, SupLube, Disable,  Econ and Labs Bonus
 Quantum Lab,                  30, 6, QuanMac, Disable,  Econ and Labs Bonus
 Research Hospital,            12, 3, OptComp, Disable,  Labs and Psych Bonus
 Nanohospital,                 24, 6, Metal,   Disable,  Labs and Psych Bonus
-Robotic Assembly Plant,       20, 6, IndRob,  Disable,  Minerals Bonus
-Nanoreplicator,               40,10, TempMec, Disable,  Minerals Bonus
-Quantum Converter,            30, 8, QuanMac, Disable,  Minerals Bonus
+Robotic Assembly Plant,       18, 6, IndRob,  Disable,  Minerals Bonus
+Nanoreplicator,               30,10, TempMec, Disable,  Minerals Bonus
+Quantum Converter,            24, 8, QuanMac, Disable,  Minerals Bonus
 Genejack Factory,             12, 4, Gene,    Disable,  Minerals; More Drones
 Punishment Sphere,            10, 2, MilAlg,  Disable,  No Drones/-50% Tech
 Hab Complex,                   8, 0, FldMod,  Disable,  Increase Population Limit

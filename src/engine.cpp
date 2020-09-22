@@ -105,14 +105,6 @@ HOOK_API int faction_upkeep(int faction) {
 		distributeSupport(faction);
 	}
 
-	// WTP AI algorithms
-	// affects AI factions only
-
-	if (faction != 0 && !is_human(faction) && conf.ai_useWTPAlgorithms)
-	{
-		aiStrategy(faction);
-	}
-
     *(int*)0x93A934 = 1;
     social_upkeep(faction);
     do_all_non_input();
@@ -144,6 +136,14 @@ HOOK_API int faction_upkeep(int faction) {
         */
         social_ai(faction, -1, -1, -1, -1, 0);
         move_upkeep(faction);
+
+		// WTP AI unit movement algorithms
+		// affects AI factions only
+
+		if (faction != 0 && !is_human(faction) && conf.ai_useWTPAlgorithms)
+		{
+			aiStrategy(faction);
+		}
 
         do_all_non_input();
 

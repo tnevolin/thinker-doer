@@ -1,14 +1,21 @@
 # Version 145
 
-* AI: Added land improvement demand computation.
+* AI:
+  * AI builds some facilities.
+  * AI builds formers when needed.
+  * AI builds explorers when needed.
+  * AI builds colonies when needed.
 * Global production hurry happens before production phase to produce fully completed items.
 * Fixed Thinker production unit mineral cost calculation. Previously it didn't account for prototypes/Skunkworks and Brood Pit.
 * Added predefined units: Trance Formers, Trance Sea Formers.
 * Hab Complex is now enabled by FldMod (level 2). Sea and jungle bases still struggle to get it in time.
-* Restored vanilla emergency retooling after base attack. That was previously overriden by Thinker.
-* AI production: added multiplying facilities.
-* AI production: added psych facilities.
-* AI production: added population limit facilities.
+* Restored vanilla emergency retooling after base attack. That was previously overridden by Thinker.
+* Reduced cost of late mineral facilities. Otherwise, it is pretty difficult to reach the mineral intake when they become beneficial. Here I also listed the mineral intake when they roughly becomes beneficial.
+  * Recycling Tanks        cost  6, needs  8 mineral intake
+  * Genejack Factory       cost 12, needs 20 mineral intake
+  * Robotic Assembly Plant cost 18, needs 40 mineral intake
+  * Quantum Converter      cost 24, needs 65 mineral intake
+  * Nanoreplicator         cost 30, needs 95 mineral intake
 
 # Version 144
 

@@ -10,18 +10,18 @@ struct COMBAT_ORDER
 	int enemyAIId = -1;
 };
 
-struct VEHICLE_DAMAGE_VALUE
+struct VEHICLE_VALUE
 {
 	int id;
-	double damage;
 	double value;
+	double damage;
 };
 
 void aiCombatStrategy();
 void populateCombatLists();
 void aiNativeCombatStrategy();
 void attackNativeArtillery(int vehicleId);
-int compareVehicleDamageValue(VEHICLE_DAMAGE_VALUE o1, VEHICLE_DAMAGE_VALUE o2);
+int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2);
 int enemyMoveCombat(int id);
 int applyCombatOrder(int id, COMBAT_ORDER *combatOrder);
 int applyDefendOrder(int id, int x, int y);

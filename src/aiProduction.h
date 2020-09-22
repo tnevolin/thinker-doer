@@ -9,10 +9,10 @@ const double ARTILLERY_OFFENSIVE_VALUE_KOEFFICIENT = 0.5;
 
 struct PRODUCTION_DEMAND
 {
+	int baseId;
+	BASE *base;
 	int item;
-	bool urgent;
 	double priority;
-	double sumPriorities;
 };
 
 struct PRODUCTION_CHOICE
@@ -26,29 +26,30 @@ enum UNIT_TYPE
 	UT_DEFENSE = 0,
 };
 
-void aiProductionStrategy();
-void populateProducitonLists();
+HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4);
+int aiSuggestBaseProduction(int baseId, int choice);
 void evaluateFacilitiesDemand();
-void evaluateBasePopulationLimitFacilitiesDemand(int baseId);
-void evaluateBasePsychFacilitiesDemand(int baseId);
-void evaluateBaseMultiplyingFacilitiesDemand(int baseId);
+void evaluateBasePopulationLimitFacilitiesDemand();
+void evaluateBasePsychFacilitiesDemand();
+void evaluateBaseMultiplyingFacilitiesDemand();
 void evaluateLandImprovementDemand();
 void evaluateExpansionDemand();
 void evaluateExplorationDemand();
 void evaluateNativeProtectionDemand();
 void evaluateFactionProtectionDemand();
-void setProductionChoices();
-int findNearestOwnBaseId(int x, int y, int region);
-HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4);
-void addProductionDemand(int baseId, int item, bool immediate, double priority);
+void addProductionDemand(int item, double priority);
 int selectBestNativeDefensePrototype(int factionId);
 int findStrongestNativeDefensePrototype(int factionId);
 int findConventionalDefenderUnit(int factionId);
-int findFastAttackerUnit();
-int findScoutUnit(int triad);
-int findColonyUnit(int triad);
-int findOptimalColonyUnit(int triad, int mineralSurplus, double infantryTurnsToDestination);
+int findFastAttackerUnit(int factionId);
+int findScoutUnit(int factionId, int triad);
+int findColonyUnit(int factionId, int triad);
+int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus, double infantryTurnsToDestination);
 bool canBaseProduceColony(int baseId, int colonyUnitId);
-int findFormerUnit(int triad);
+int findFormerUnit(int factionId, int triad);
+std::vector<int> getRegionBases(int factionId, int region);
+int getRegionBasesMaxMineralSurplus(int factionId, int region);
+int getRegionBasesMaxPopulationSize(int factionId, int region);
+int calculateRegionSurfaceUnitTypeCount(int factionId, int region, int weaponType);
 
 #endif // __AIPRODUCTION_H__

@@ -697,6 +697,10 @@ bool unit_has_ability(int id, int ability) {
     return tx_units[id].ability_flags & ability;
 }
 
+bool vehicle_has_ability(int vehicleId, int ability) {
+    return tx_units[tx_vehicles[vehicleId].proto_id].ability_flags & ability;
+}
+
 bool vehicle_has_ability(VEH *vehicle, int ability) {
     return tx_units[vehicle->proto_id].ability_flags & ability;
 }
@@ -1349,6 +1353,22 @@ MAP *getMapTile(int x, int y)
 
 }
 
+MAP *getBaseMapTile(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	return getMapTile(base->x, base->y);
+
+}
+
+MAP *getVehicleMapTile(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+	return getMapTile(vehicle->x, vehicle->y);
+
+}
+
 bool isImprovedTile(int x, int y)
 {
 	MAP *tile = getMapTile(x, y);
@@ -1451,7 +1471,7 @@ bool isOceanRegion(int region)
 /*
 Evaluates unit defense effectiveness based on defense value and cost.
 */
-double evaluateUnitDefenseEffectiveness(int id)
+double evaluateUnitConventionalDefenseEffectiveness(int id)
 {
 	UNIT *unit = &(tx_units[id]);
 	int cost = unit->cost;
@@ -1471,7 +1491,7 @@ double evaluateUnitDefenseEffectiveness(int id)
 /*
 Evaluates unit offense effectiveness based on offense value and cost.
 */
-double evaluateUnitOffenseEffectiveness(int id)
+double evaluateUnitConventionalOffenseEffectiveness(int id)
 {
 	UNIT *unit = &(tx_units[id]);
 	int cost = unit->cost;
@@ -1485,6 +1505,68 @@ double evaluateUnitOffenseEffectiveness(int id)
 	}
 
 	return (double)offenseValue / (double)cost;
+
+}
+
+/*
+Evaluates unit defense effectiveness based on defense value and cost.
+*/
+double evaluateUnitPsiDefenseEffectiveness(int id)
+{
+	UNIT *unit = &(tx_units[id]);
+
+	// value
+
+	double defenseValue = 1.0;
+
+	if (unit_has_ability(id, ABL_TRANCE))
+	{
+		defenseValue *= 1.0 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0;
+	}
+
+	// cost
+
+	int cost = unit->cost;
+
+	// inflate cost due to support assuming 40 turns of service
+
+	if (!unit_has_ability(id, ABL_CLEAN_REACTOR))
+	{
+		cost += 4;
+	}
+
+	return defenseValue / (double)cost;
+
+}
+
+/*
+Evaluates unit offense effectiveness based on offense value and cost.
+*/
+double evaluateUnitPsiOffenseEffectiveness(int id)
+{
+	UNIT *unit = &(tx_units[id]);
+
+	// value
+
+	double offenseValue = 1.0;
+
+	if (unit_has_ability(id, ABL_EMPATH))
+	{
+		offenseValue *= 1.0 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0;
+	}
+
+	// cost
+
+	int cost = unit->cost;
+
+	// inflate cost due to support assuming 40 turns of service
+
+	if (!unit_has_ability(id, ABL_CLEAN_REACTOR))
+	{
+		cost += 4;
+	}
+
+	return offenseValue / (double)cost;
 
 }
 
@@ -1760,7 +1842,7 @@ int getBaseConventionalDefenseValue(int baseId)
 /*
 Returns faction available prototypes.
 */
-std::vector<int> getFactionPrototypes(int factionId, bool prototypedOnly)
+std::vector<int> getFactionPrototypes(int factionId, bool includeNotPrototyped)
 {
 	std::vector<int> factionPrototypes;
 
@@ -1774,7 +1856,6 @@ std::vector<int> getFactionPrototypes(int factionId, bool prototypedOnly)
     for (int unitIndex = 0; unitIndex < 128; unitIndex++)
 	{
         int unitId = (unitIndex < 64 ? unitIndex : (factionId - 1) * 64 + unitIndex);
-
         UNIT *unit = &(tx_units[unitId]);
 
 		// skip not enabled
@@ -1787,9 +1868,9 @@ std::vector<int> getFactionPrototypes(int factionId, bool prototypedOnly)
         if (strlen(unit->name) == 0)
 			continue;
 
-		// prototyped only if requested
+		// do not include not prototyped if not requested
 
-		if (prototypedOnly && !(unit->unit_flags & UNIT_PROTOTYPED))
+		if (unitId >= 64 && !includeNotPrototyped && !(unit->unit_flags & UNIT_PROTOTYPED))
 			continue;
 
 		// add prototype
@@ -1827,21 +1908,31 @@ bool isBaseBuildingColony(int baseId)
 
 }
 
-int estimateBaseProjectedPopulationIncrease(int baseId, int turns)
+int projectBasePopulation(int baseId, int turns)
 {
 	BASE *base = &(tx_bases[baseId]);
 
+	int nutrientCostFactor = tx_cost_factor(base->faction_id, 0, baseId);
 	int nutrientsAccumulated = base->nutrients_accumulated + base->nutrient_surplus * turns;
-	int populationIncrease = nutrientsAccumulated / (tx_cost_factor(base->faction_id, 0, baseId) * (base->pop_size + 1));
+	int projectedBasePopulation = base->pop_size;
 
-	return populationIncrease;
+	while (nutrientsAccumulated >= nutrientCostFactor * (projectedBasePopulation + 1))
+	{
+		nutrientsAccumulated -= nutrientCostFactor * (projectedBasePopulation + 1);
+		projectedBasePopulation++;
+	}
+
+	return projectedBasePopulation;
 
 }
 
-int getBasePopulationLimit(int baseId, int facilityId)
+/*
+Returns faction bases population limit until given facility is built.
+Retruns 0 if given facility is not a population limit facility.
+*/
+int getFactionFacilityPopulationLimit(int factionId, int facilityId)
 {
-	BASE *base = &(tx_bases[baseId]);
-	MetaFaction *metaFaction = &(tx_metafactions[base->faction_id]);
+	MetaFaction *metaFaction = &(tx_metafactions[factionId]);
 
 	int basePopulationLimit;
 
@@ -1864,11 +1955,17 @@ int getBasePopulationLimit(int baseId, int facilityId)
 
 }
 
+/*
+Checks if base can build facility.
+*/
 bool isBaseFacilityAvailable(int baseId, int facilityId)
 {
 	BASE *base = &(tx_bases[baseId]);
 
 	// already built
+
+	if (has_facility(baseId, facilityId))
+		return false;
 
 	if (has_facility(baseId, facilityId))
 		return false;
@@ -1936,6 +2033,387 @@ bool isBaseFacilityAvailable(int baseId, int facilityId)
 	}
 
 	return true;
+
+}
+
+/*
+Checks if base is connected to region.
+Coastal bases can be connected to multiple ocean regions.
+*/
+bool isBaseConnectedToRegion(int baseId, int region)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	return isTileConnectedToRegion(base->x, base->y, region);
+
+}
+
+/*
+Checks if tile is connected to region.
+Coastal tiles can be connected to multiple ocean regions.
+*/
+bool isTileConnectedToRegion(int x, int y, int region)
+{
+	MAP *baseTile = getMapTile(x, y);
+
+	if (baseTile->region == region)
+		return true;
+
+	if (!is_ocean(baseTile))
+	{
+		for (MAP *tile : getAdjacentTiles(x, y, false))
+		{
+			if (is_ocean(tile) && tile->region == region)
+				return true;
+
+		}
+
+	}
+
+	return false;
+
+}
+
+int getXCoordinateByMapIndex(int mapIndex)
+{
+	return (mapIndex % (*map_half_x)) * 2 + (mapIndex / (*map_half_x) % 2);
+}
+
+int getYCoordinateByMapIndex(int mapIndex)
+{
+	return mapIndex / (*map_half_x);
+}
+
+std::vector<int> getRegionBases(int factionId, int region)
+{
+	std::vector<int> regionBases;
+
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(tx_bases[baseId]);
+
+		// only this faction
+
+		if (base->faction_id != factionId)
+			continue;
+
+		// only connected to this region
+
+		if (!isBaseConnectedToRegion(baseId, region))
+			continue;
+
+		regionBases.push_back(baseId);
+
+	}
+
+	return regionBases;
+
+}
+
+/*
+Returns this faction vehicles in given region of the same triad as this region.
+*/
+std::vector<int> getRegionSurfaceVehicles(int factionId, int region, bool includeStationed)
+{
+	std::vector<int> regionVehicles;
+
+	bool ocean = isOceanRegion(region);
+	int triad = (ocean ? TRIAD_SEA : TRIAD_LAND);
+
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(tx_vehicles[vehicleId]);
+		MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
+
+		// only this faction
+
+		if (vehicle->faction_id != factionId)
+			continue;
+
+		// only in this region
+
+		if (map_has_item(vehicleLocation, TERRA_BASE_IN_TILE))
+		{
+			// only if garrison included
+
+			if (!includeStationed)
+				continue;
+
+			// base should be connected to this region
+
+			if (!isTileConnectedToRegion(vehicle->x, vehicle->y, region))
+				continue;
+
+		}
+		else
+		{
+			// vehilce not in base in this region
+
+			if (vehicleLocation->region != region)
+				continue;
+
+		}
+
+		// only matching triad
+
+		if (veh_triad(vehicleId) != triad)
+			continue;
+
+		regionVehicles.push_back(vehicleId);
+
+	}
+
+	return regionVehicles;
+
+}
+
+/*
+Returns base own stationed combat units.
+Combat units only.
+For land bases land units only.
+For sea bases land and sea units only.
+*/
+std::vector<int> getBaseGarrison(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+	MAP *baseLocation = getBaseMapTile(baseId);
+	bool ocean = isOceanRegion(baseLocation->region);
+
+	std::vector<int> baseGarrison;
+
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(tx_vehicles[vehicleId]);
+		int triad = veh_triad(vehicleId);
+
+		// only this faction units
+
+		if (vehicle->faction_id != base->faction_id)
+			continue;
+
+		// only combat units
+
+		if (!isCombatVehicle(vehicleId))
+			continue;
+
+		// only in this base
+
+		if (!(vehicle->x == base->x && vehicle->y == base->y))
+			continue;
+
+		// only corresponding triad
+
+		if (ocean)
+		{
+			if (!(triad == TRIAD_LAND || triad == TRIAD_SEA))
+				continue;
+		}
+		else
+		{
+			if (!(triad == TRIAD_LAND))
+				continue;
+		}
+
+		baseGarrison.push_back(vehicleId);
+
+	}
+
+	return baseGarrison;
+
+}
+
+std::vector<int> getFactionBases(int factionId)
+{
+	std::vector<int> factionBases;
+
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(tx_bases[baseId]);
+
+		if (base->faction_id != factionId)
+			continue;
+
+		factionBases.push_back(baseId);
+
+	}
+
+	return factionBases;
+
+}
+
+/*
+Estimates unit odds in base defense against land native attack.
+This doesn't account for vehicle morale.
+*/
+double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
+{
+	// basic defense odds against land native attack
+
+	double nativeProtection = 1.0 / getPsiCombatBaseOdds(TRIAD_LAND);
+
+	// add base defense bonus
+
+	nativeProtection *= 1.0 + (double)tx_basic->combat_bonus_intrinsic_base_def / 100.0;
+
+	// add faction defense bonus
+
+	nativeProtection *= getFactionDefenseMultiplier(factionId);
+
+	// add PLANET
+
+	nativeProtection *= getSEPlanetModifierDefense(factionId);
+
+	// add trance
+
+	if (unit_has_ability(unitId, ABL_TRANCE))
+	{
+		nativeProtection *= 1.0 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0;
+	}
+
+	// correction for native base attack penalty until turn 50
+
+	if (*current_turn < 50)
+	{
+		nativeProtection *= 2;
+	}
+
+	return nativeProtection;
+
+}
+
+/*
+Estimates vehicle odds in base defense agains land native attack.
+This accounts for vehicle morale.
+*/
+double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId)
+{
+	// unit native protection
+
+	double nativeProtection = estimateUnitBaseLandNativeProtection(factionId, tx_vehicles[vehicleId].proto_id);
+
+	// add morale
+
+	nativeProtection *= getMoraleModifierDefense(vehicleId);
+
+	return nativeProtection;
+
+}
+
+double getFactionOffenseMultiplier(int factionId)
+{
+	double factionOffenseMultiplier = 1.0;
+
+	MetaFaction *metaFaction = &(tx_metafactions[factionId]);
+
+	for (int bonusIndex = 0; bonusIndex < metaFaction->faction_bonus_count; bonusIndex++)
+	{
+		int bonusId = metaFaction->faction_bonus_id[bonusIndex];
+
+		if (bonusId == FCB_OFFENSE)
+		{
+			factionOffenseMultiplier *= ((double)metaFaction->faction_bonus_val1[bonusIndex] / 100.0);
+		}
+
+	}
+
+	return factionOffenseMultiplier;
+
+}
+
+double getFactionDefenseMultiplier(int factionId)
+{
+	double factionDefenseMultiplier = 1.0;
+
+	MetaFaction *metaFaction = &(tx_metafactions[factionId]);
+
+	for (int bonusIndex = 0; bonusIndex < metaFaction->faction_bonus_count; bonusIndex++)
+	{
+		int bonusId = metaFaction->faction_bonus_id[bonusIndex];
+
+		if (bonusId == FCB_DEFENSE)
+		{
+			factionDefenseMultiplier *= ((double)metaFaction->faction_bonus_val1[bonusIndex] / 100.0);
+		}
+
+	}
+
+	return factionDefenseMultiplier;
+
+}
+
+double getFactionFanaticBonusMultiplier(int factionId)
+{
+	double factionOffenseMultiplier = 1.0;
+
+	MetaFaction *metaFaction = &(tx_metafactions[factionId]);
+
+	if (metaFaction->rule_flags & FACT_FANATIC)
+	{
+		factionOffenseMultiplier *= (1.0 + (double)tx_basic->combat_bonus_fanatic / 100.0);
+	}
+
+	return factionOffenseMultiplier;
+
+}
+
+/*
+Calculates average number of native vehicles destroyed in psi combat when defending at base.
+Assuming vehicle will heal in full at base.
+*/
+double getVehicleBaseNativeProtectionPotential(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+	// calculate base damage (vehicle defending)
+
+	double protectionPotential = 1.0 / getPsiCombatBaseOdds(TRIAD_LAND) * getMoraleModifierDefense(vehicleId) * getSEPlanetModifierDefense(vehicle->faction_id) * (1.0 + (double)tx_basic->combat_bonus_intrinsic_base_def / 100.0);
+
+	// defender trance increases combat protectionPotential
+
+	if (vehicle_has_ability(vehicleId, ABL_TRANCE))
+	{
+		protectionPotential *= (1 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0);
+	}
+
+	// double potential before turn 50
+
+	if (*current_turn < 50)
+	{
+		protectionPotential *= 2;
+	}
+
+	// adjustment to native base lifecycle
+
+	protectionPotential /= (1.0 + (double)(*current_turn / 50 - 2) * 0.125);
+
+	return protectionPotential;
+
+}
+
+/*
+Calculates average number of native vehicles destroyed in psi combat when defending at base per cost.
+Assuming vehicle will heal in full at base.
+*/
+double getVehicleBaseNativeProtectionEfficiency(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+	// calculate protection potential
+
+	double protectionPotential = getVehicleBaseNativeProtectionPotential(vehicleId);
+
+	// calculate cost
+
+	int cost = tx_units[vehicle->proto_id].cost;
+
+	// inflate cost due to support assuming 40 turns of service
+
+	if (!unit_has_ability(vehicleId, ABL_CLEAN_REACTOR))
+	{
+		cost += 4;
+	}
+
+	return protectionPotential / (double)cost;
 
 }
 

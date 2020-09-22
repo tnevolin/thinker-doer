@@ -58,10 +58,6 @@ void aiStrategy(int id)
 
 	populateSharedLists();
 
-	// prepare production orders
-
-	aiProductionStrategy();
-
 	// prepare former orders
 
 	aiTerraformingStrategy();
@@ -342,121 +338,6 @@ bool isreachable(int id, int x, int y)
 	MAP *destinationLocation = getMapTile(x, y);
 
 	return (triad == TRIAD_AIR || getConnectedRegion(vehicleLocation->region) == getConnectedRegion(destinationLocation->region));
-
-}
-
-/*
-Estimates unit odds in base defense against land native attack.
-This doesn't account for vehicle morale.
-*/
-double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
-{
-	// basic defense odds against land native attack
-
-	double nativeProtection = 1 / getPsiCombatBaseOdds(TRIAD_LAND);
-
-	// add base defense bonus
-
-	nativeProtection *= 1.0 + (double)tx_basic->combat_bonus_intrinsic_base_def / 100.0;
-
-	// add faction defense bonus
-
-	nativeProtection *= factionInfos[factionId].defenseMultiplier;
-
-	// add PLANET
-
-	nativeProtection *= getSEPlanetModifierDefense(factionId);
-
-	// add trance
-
-	if (unit_has_ability(unitId, ABL_TRANCE))
-	{
-		nativeProtection *= 1.0 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0;
-	}
-
-	// correction for native base attack penalty until turn 50
-
-	if (*current_turn < 50)
-	{
-		nativeProtection *= 2;
-	}
-
-	return nativeProtection;
-
-}
-
-/*
-Estimates vehicle odds in base defense agains land native attack.
-This accounts for vehicle morale.
-*/
-double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId)
-{
-	// unit native protection
-
-	double nativeProtection = estimateUnitBaseLandNativeProtection(factionId, tx_vehicles[vehicleId].proto_id);
-
-	// add morale
-
-	nativeProtection *= getMoraleModifierDefense(vehicleId);
-
-	return nativeProtection;
-
-}
-
-double getFactionOffenseMultiplier(int id)
-{
-	double factionOffenseMultiplier = 1.0;
-
-	MetaFaction *metaFaction = &(tx_metafactions[id]);
-
-	for (int bonusIndex = 0; bonusIndex < metaFaction->faction_bonus_count; bonusIndex++)
-	{
-		int bonusId = metaFaction->faction_bonus_id[bonusIndex];
-
-		if (bonusId == FCB_OFFENSE)
-		{
-			factionOffenseMultiplier *= ((double)metaFaction->faction_bonus_val1[bonusIndex] / 100.0);
-		}
-
-	}
-
-	return factionOffenseMultiplier;
-
-}
-
-double getFactionDefenseMultiplier(int id)
-{
-	double factionDefenseMultiplier = 1.0;
-
-	MetaFaction *metaFaction = &(tx_metafactions[id]);
-
-	for (int bonusIndex = 0; bonusIndex < metaFaction->faction_bonus_count; bonusIndex++)
-	{
-		int bonusId = metaFaction->faction_bonus_id[bonusIndex];
-
-		if (bonusId == FCB_DEFENSE)
-		{
-			factionDefenseMultiplier *= ((double)metaFaction->faction_bonus_val1[bonusIndex] / 100.0);
-		}
-
-	}
-
-	return factionDefenseMultiplier;
-
-}
-
-double getFactionFanaticBonusMultiplier(int id)
-{
-	double factionOffenseMultiplier = 1.0;
-
-	MetaFaction *metaFaction = &(tx_metafactions[id]);
-
-	if (metaFaction->rule_flags & FACT_FANATIC)
-	{
-		factionOffenseMultiplier *= (1.0 + (double)tx_basic->combat_bonus_fanatic / 100.0);
-	}
-
-	return factionOffenseMultiplier;
 
 }
 
