@@ -1,4 +1,6 @@
-# Version 145
+# Version 146
+
+This one lists both #145 and #146 changes. They were mixed up and I could not sort them out. This is only in description. Code wise this version includes everything.
 
 * AI:
   * AI builds some facilities.
@@ -8,12 +10,12 @@
   * AI builds native protectors and police.
   * AI suggests production for new bases.
 * Global production hurry happens before production phase to produce fully completed items.
-* Fixed Thinker production unit mineral cost calculation. Previously it didn't account for prototypes/Skunkworks and Brood Pit.
+* FIX: Thinker production unit mineral cost calculation. Previously it didn't account for prototypes/Skunkworks and Brood Pit.
 * Added predefined units: Trance Formers, Trance Sea Formers.
 * Hab Complex is now enabled by FldMod (level 2). Sea and jungle bases still struggle to get it in time.
 * Restored vanilla emergency retooling after base attack. That was previously overridden by Thinker.
 * FIX: Sea explorers were stuck in land port. Now they are force kicked out of it.
-* FIX: Formers regained their moves after cancelling new terraforming action when old one just completed this turn. They don't anymore.
+* FIX: Formers regained their moves after cancelling new terraforming action when old one just completed this turn. They don't anymore. (Reported by MercantileInterest)
 
 * Reduced cost of late mineral facilities. Otherwise, it is pretty difficult to reach the mineral intake when they become beneficial. Here I also listed the mineral intake when they roughly becomes beneficial.
 
@@ -24,6 +26,18 @@
 | Robotic Assembly Plant | 18 | 48 |
 | Quantum Converter | 24 | 80 |
 | Nanoreplicator | 30 | 120 |
+
+# Version 145
+
+* AI: Added land improvement demand computation.
+* Global production hurry happens before production phase to produce fully completed items.
+* Fixed Thinker production unit mineral cost calculation. Previously it didn't account for prototypes/Skunkworks and Brood Pit.
+* Added predefined units: Trance Formers, Trance Sea Formers.
+* Hab Complex is now enabled by FldMod (level 2). Sea and jungle bases still struggle to get it in time.
+* Restored vanilla emergency retooling after base attack. That was previously overriden by Thinker.
+* AI production: added multiplying facilities.
+* AI production: added psych facilities.
+* AI production: added population limit facilities.
 
 # Version 144
 
