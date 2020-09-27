@@ -25,7 +25,23 @@ HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4)
 	debug("suggestBaseProduction\n========================================\n");
 	debug("%s (%s), active_faction=%s, base_faction=%s, productionDone=%s, withinExemption=%s\n", base->name, prod_name(base->queue_items[0]), tx_metafactions[*active_faction].noun_faction, tx_metafactions[base->faction_id].noun_faction, (productionDone ? "y" : "n"), (withinExemption ? "y" : "n"));
 
-	// defaults to Thinker
+	// skip human
+
+    if (is_human(base->faction_id))
+	{
+        debug("skipping human base\n");
+        return base->queue_items[0];
+    }
+
+    // skip not enabled AI
+
+	if (!ai_enabled(base->faction_id))
+	{
+        debug("skipping computer base\n");
+        return tx_base_prod_choices(baseId, a2, a3, a4);
+	}
+
+	// defaults to Thinker if WTP algorithms are not enabled
 
 	if (!conf.ai_useWTPAlgorithms)
 	{
@@ -590,14 +606,6 @@ void evaluateLandExpansionDemand()
 	// calculate priority
 
 	double priority = conf.ai_production_expansion_priority * (landExpansionDemand - (double)existingLandColoniesCount) / landExpansionDemand;
-
-	// reduce land colony priority if base also can build ships
-
-	if (isBaseCanBuildShips(baseId))
-	{
-		priority /= 2.0;
-	}
-
 	debug("\t\tpriority=%f\n", priority);
 
 	// calculate infantry turns to destination assuming land units travel by roads 2/3 of time
@@ -1372,9 +1380,9 @@ void addProductionDemand(int item, double priority)
 
 	// prechecks
 
-	// do not build combat unit in weak bases
+	// do not exhaust weak base support
 
-	if (item >= 0 && isCombatUnit(item))
+	if (base->mineral_consumption > 0 && item >= 0 && isCombatUnit(item))
 	{
 		if (base->mineral_surplus < conf.ai_production_combat_unit_min_mineral_surplus)
 			return;
@@ -1909,6 +1917,8 @@ HOOK_API void modifiedBaseFirst(int baseId)
 	// execute original code
 
 	tx_base_first(baseId);
+
+	// that's it for human faction
 
 	// override default choice with WTP choice
 
