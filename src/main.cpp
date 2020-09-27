@@ -345,6 +345,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_expansion_coverage = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_ocean_expansion_coverage"))
+    {
+        cf->ai_production_ocean_expansion_coverage = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_expansion_priority"))
     {
         cf->ai_production_expansion_priority = atof(value);
@@ -353,13 +357,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_combat_unit_turns_limit = atoi(value);
     }
-    else if (MATCH("wtp", "ai_production_min_payoff_turns"))
+    else if (MATCH("wtp", "ai_production_facility_effect_coefficient"))
     {
-        cf->ai_production_min_payoff_turns = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_max_payoff_turns"))
-    {
-        cf->ai_production_max_payoff_turns = atof(value);
+        cf->ai_production_facility_effect_coefficient = atof(value);
     }
     else if (MATCH("wtp", "ai_production_combat_unit_min_mineral_surplus"))
     {
@@ -380,6 +380,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_production_population_projection_turns"))
     {
         cf->ai_production_population_projection_turns = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_production_Thinker_proportion"))
+    {
+        cf->ai_production_Thinker_proportion = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {

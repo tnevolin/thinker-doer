@@ -291,6 +291,10 @@ int random(int n) {
     return (n >= 1 ? rand() % n : 0);
 }
 
+double random_double(double scale) {
+    return scale * ((double)rand() / (double)(RAND_MAX + 1));
+}
+
 int map_hash(int x, int y) {
     return ((*map_random_seed ^ x) * 127) ^ (y * 179);
 }
@@ -1463,6 +1467,37 @@ std::set<int> getBaseConnectedRegions(int id)
 
 }
 
+/*
+Returns base tile ocean regions it can issue ships to.
+*/
+std::set<int> getBaseConnectedOceanRegions(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+	MAP *baseLocations = getBaseMapTile(baseId);
+
+	std::set<int> baseConnectedOceanRegions;
+
+	if (is_ocean(baseLocations))
+	{
+		baseConnectedOceanRegions.insert(baseLocations->region);
+	}
+	else
+	{
+		for (MAP *tile : getAdjacentTiles(base->x, base->y, false))
+		{
+			if (!is_ocean(tile))
+				continue;
+
+			baseConnectedOceanRegions.insert(tile->region);
+
+		}
+
+	}
+
+	return baseConnectedOceanRegions;
+
+}
+
 bool isOceanRegion(int region)
 {
 	return region >= 64;
@@ -2168,51 +2203,27 @@ std::vector<int> getRegionSurfaceVehicles(int factionId, int region, bool includ
 }
 
 /*
-Returns base own stationed combat units.
-Combat units only.
-For land bases land units only.
-For sea bases land and sea units only.
+Finds base own stationed units.
 */
 std::vector<int> getBaseGarrison(int baseId)
 {
 	BASE *base = &(tx_bases[baseId]);
-	MAP *baseLocation = getBaseMapTile(baseId);
-	bool ocean = isOceanRegion(baseLocation->region);
 
 	std::vector<int> baseGarrison;
 
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
 		VEH *vehicle = &(tx_vehicles[vehicleId]);
-		int triad = veh_triad(vehicleId);
 
 		// only this faction units
 
 		if (vehicle->faction_id != base->faction_id)
 			continue;
 
-		// only combat units
-
-		if (!isCombatVehicle(vehicleId))
-			continue;
-
 		// only in this base
 
 		if (!(vehicle->x == base->x && vehicle->y == base->y))
 			continue;
-
-		// only corresponding triad
-
-		if (ocean)
-		{
-			if (!(triad == TRIAD_LAND || triad == TRIAD_SEA))
-				continue;
-		}
-		else
-		{
-			if (!(triad == TRIAD_LAND))
-				continue;
-		}
 
 		baseGarrison.push_back(vehicleId);
 
@@ -2250,18 +2261,22 @@ double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
 	// basic defense odds against land native attack
 
 	double nativeProtection = 1.0 / getPsiCombatBaseOdds(TRIAD_LAND);
+	debug("nativeProtection=%f\n", nativeProtection);
 
 	// add base defense bonus
 
 	nativeProtection *= 1.0 + (double)tx_basic->combat_bonus_intrinsic_base_def / 100.0;
+	debug("nativeProtection=%f\n", nativeProtection);
 
 	// add faction defense bonus
 
 	nativeProtection *= getFactionDefenseMultiplier(factionId);
+	debug("nativeProtection=%f\n", nativeProtection);
 
 	// add PLANET
 
 	nativeProtection *= getSEPlanetModifierDefense(factionId);
+	debug("nativeProtection=%f\n", nativeProtection);
 
 	// add trance
 
@@ -2269,6 +2284,7 @@ double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
 	{
 		nativeProtection *= 1.0 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0;
 	}
+	debug("nativeProtection=%f\n", nativeProtection);
 
 	// correction for native base attack penalty until turn 50
 
@@ -2276,6 +2292,7 @@ double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
 	{
 		nativeProtection *= 2;
 	}
+	debug("nativeProtection=%f\n", nativeProtection);
 
 	return nativeProtection;
 
@@ -2294,6 +2311,7 @@ double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId)
 	// add morale
 
 	nativeProtection *= getMoraleModifierDefense(vehicleId);
+	debug("nativeProtection=%f\n", nativeProtection);
 
 	return nativeProtection;
 
@@ -2414,6 +2432,181 @@ double getVehicleBaseNativeProtectionEfficiency(int vehicleId)
 	}
 
 	return protectionPotential / (double)cost;
+
+}
+
+/*
+Calculates number of allowed police units per SE POLICE rating.
+*/
+int getAllowedPolice(int factionId)
+{
+	Faction *faction = &(tx_factions[factionId]);
+
+	int sePoliceRating = faction->SE_police_pending;
+
+	int allowedPolice;
+
+	switch (sePoliceRating)
+	{
+	case -5:
+	case -4:
+	case -3:
+	case -2:
+		allowedPolice = 0;
+		break;
+	case -1:
+	case +0:
+		allowedPolice = 1;
+		break;
+	case +1:
+		allowedPolice = 2;
+		break;
+	case +2:
+	case +3:
+		allowedPolice = 3;
+		break;
+	default:
+		allowedPolice = 0;
+	}
+
+	return allowedPolice;
+
+}
+
+int getVehicleUnitPlan(int vehicleId)
+{
+	return (int)tx_units[vehicleId].unit_plan;
+}
+
+/*
+Counts all police units in the base.
+Police unit = combat unit.
+*/
+int getBasePoliceUnitCount(int baseId)
+{
+	int basePoliceUnitCount = 0;
+
+	for (int vehicleId : getBaseGarrison(baseId))
+	{
+		// only combat units
+
+		if (!isCombatVehicle(vehicleId))
+			continue;
+
+		basePoliceUnitCount++;
+
+	}
+
+	return basePoliceUnitCount;
+
+}
+
+/*
+Estimates base native protection in number of native units killed.
+*/
+double getBaseNativeProtection(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	double baseNativeProtection = 0.0;
+
+	for (int vehicleId : getBaseGarrison(baseId))
+	{
+		// combat vehicles only
+
+		if (!isCombatVehicle(vehicleId))
+			continue;
+
+		baseNativeProtection += estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+
+	}
+
+	return baseNativeProtection;
+
+}
+
+bool isBaseHasAccessToWater(int baseId)
+{
+    BASE* base = &(tx_bases[baseId]);
+
+    for (MAP *tile : getAdjacentTiles(base->x, base->y, true))
+	{
+		if (is_ocean(tile))
+			return true;
+
+	}
+
+    return false;
+
+}
+
+bool isBaseCanBuildShips(int baseId)
+{
+    BASE* base = &(tx_bases[baseId]);
+
+    if (!has_chassis(base->faction_id, CHS_FOIL))
+		return false;
+
+	return isBaseHasAccessToWater(baseId);
+
+}
+
+/*
+Check if given tile is an explored edge for faction.
+*/
+bool isExploredEdge(int factionId, int x, int y)
+{
+	MAP *tile = getMapTile(x, y);
+
+	if (tile == NULL)
+		return false;
+
+	// tile itself should be visible
+
+	if (~tile->visibility & (0x1 << factionId))
+		return false;
+
+	for (MAP_INFO adjacentTileInfo : getAdjacentTileInfos(x, y, false))
+	{
+		MAP *adjacentTile = adjacentTileInfo.tile;
+
+		// if at least one adjacent tile is not visible - we are at edge
+
+		if (~adjacentTile->visibility & (0x1 << factionId))
+			return true;
+
+	}
+
+	return false;
+
+}
+
+MAP_INFO getAdjacentOceanTileInfo(int x, int y)
+{
+	MAP_INFO adjacentOceanTileInfo;
+
+	for (int adjacentTileIndex = 1; adjacentTileIndex < ADJACENT_TILE_OFFSET_COUNT; adjacentTileIndex++)
+	{
+		int adjacentTileX = wrap(x + BASE_TILE_OFFSETS[adjacentTileIndex][0]);
+		int adjacentTileY = y + BASE_TILE_OFFSETS[adjacentTileIndex][1];
+		MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
+
+		if (adjacentTile == NULL)
+			continue;
+
+		if (is_ocean(adjacentTile))
+		{
+			adjacentOceanTileInfo.x = adjacentTileX;
+			adjacentOceanTileInfo.y = adjacentTileY;
+			adjacentOceanTileInfo.tile = adjacentTile;
+
+			break;
+
+		}
+
+	}
+
+	return adjacentOceanTileInfo;
 
 }
 
