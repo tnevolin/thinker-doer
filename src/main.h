@@ -176,14 +176,15 @@ struct Config {
     double ai_production_native_protection_priority;
     int ai_production_max_unpopulated_range;
     double ai_production_expansion_coverage;
+    double ai_production_ocean_expansion_coverage;
     double ai_production_expansion_priority;
     int ai_production_combat_unit_turns_limit;
-    double ai_production_min_payoff_turns;
-    double ai_production_max_payoff_turns;
+    double ai_production_facility_effect_coefficient;
     int ai_production_combat_unit_min_mineral_surplus;
     double ai_production_exploration_coverage;
     double ai_production_improvement_coverage;
     int ai_production_population_projection_turns;
+    double ai_production_Thinker_proportion;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;

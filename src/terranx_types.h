@@ -379,34 +379,34 @@ struct Faction {
     int unk_69;
     byte units_active[512];			// 0x07E0
     byte units_queue[512];			// 0x09E0
-    short units_lost[512];
-    int total_combat_units;
-    int current_num_bases;
-    int mil_strength_1;
-    int mil_strength_2;
-    int pop_total;
-    int unk_70;
-    int planet_busters;
-    int unk_71;
-    int unk_72;
+    short units_lost[512];			// 0x0BE0
+    int total_combat_units;			// 0x0DE0
+    int current_num_bases;			// 0x0DE4
+    int mil_strength_1;				// 0x0DE8
+    int mil_strength_2;				// 0x0DEC
+    int pop_total;					// 0x0DF0
+    int unk_70;						// 0x0DF4
+    int planet_busters;				// 0x0DF8
+    int unk_71;						// 0x0DFC
+    int unk_72;						// 0x0E00
     /*
     AI planning variables that relate to faction units in specific disjoint land/water areas.
     All of these are indexed by the region value in MAP struct.
     */
-    short region_total_combat_units[128];
-    byte region_total_bases[128];
-    byte region_total_offensive_units[128];
-    short region_force_rating[128]; // Combined offensive/morale rating of all units in the area
-    short region_unk_1[128]; // Movement planning flags
-    short region_unk_2[128]; // Unknown reset_territory counter
-    short region_unk_3[128]; // Unknown counter
-    short region_unk_4[128]; // Unknown reset_territory/enemy_move counter
-    short region_unk_5[128]; // Unknown reset_territory/enemy_move counter
-    byte region_unk_6[128]; // Unknown enemy_strategy state
-    byte region_unk_7[128]; // Unknown base_prod_choices state
-    byte region_base_plan[128]; // visible in map UI with omni view + debug mode under base name
+    short region_total_combat_units[128];																// 0x0E04
+    byte region_total_bases[128];																		// 0x0E84
+    byte region_total_offensive_units[128];																// 0x0F04
+    short region_force_rating[128]; // Combined offensive/morale rating of all units in the area		// 0x0F84
+    short region_unk_1[128]; // Movement planning flags													// 0x1004
+    short region_unk_2[128]; // Unknown reset_territory counter											// 0x1084
+    short region_unk_3[128]; // Unknown counter															// 0x1104
+    short region_unk_4[128]; // Unknown reset_territory/enemy_move counter								// 0x1184
+    short region_unk_5[128]; // Unknown reset_territory/enemy_move counter								// 0x1204
+    byte region_unk_6[128]; // Unknown enemy_strategy state												// 0x1284
+    byte region_unk_7[128]; // Unknown base_prod_choices state											// 0x1304
+    byte region_base_plan[128]; // visible in map UI with omni view + debug mode under base name		// 0x1384
     /* End of block */
-    Goal goals_1[75];
+    Goal goals_1[75];				// 0x1404
     Goal goals_2[25];
     int unk_92;
     int unk_93;

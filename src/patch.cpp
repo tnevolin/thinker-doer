@@ -2602,6 +2602,30 @@ void patch_weapon_help_always_show_cost()
 
 }
 
+/*
+Wraps base_first call.
+*/
+void patch_base_first()
+{
+	write_call(0x004E4D47, (int)modifiedBaseFirst);
+	write_call(0x0050D36E, (int)modifiedBaseFirst);
+
+}
+
+/*
+Wraps veh_wake call.
+*/
+void patch_veh_wake()
+{
+	write_call(0x0048CFDD, (int)modifiedVehicleWake);
+	write_call(0x0048D0A1, (int)modifiedVehicleWake);
+	write_call(0x004B8DFC, (int)modifiedVehicleWake);
+	write_call(0x004B8EFB, (int)modifiedVehicleWake);
+	write_call(0x004B9998, (int)modifiedVehicleWake);
+	write_call(0x004D334E, (int)modifiedVehicleWake);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3131,6 +3155,10 @@ bool patch_setup(Config* cf) {
 	}
 
 	patch_weapon_help_always_show_cost();
+
+	patch_base_first();
+
+	patch_veh_wake();
 
 
     // continue with original Thinker checks

@@ -27,6 +27,8 @@ int applyCombatOrder(int id, COMBAT_ORDER *combatOrder);
 int applyDefendOrder(int id, int x, int y);
 int applyAttackOrder(int id, COMBAT_ORDER *combatOrder);
 void setDefendOrder(int id, int x, int y);
+bool isHealthySeaExplorerInLandPort(int vehicleId);
+int kickSeaExplorerFromLandPort(int vehicleId);
 
 #endif // __AICOMBAT_H__
 

@@ -9,11 +9,7 @@ Prepares combat orders.
 */
 void aiCombatStrategy()
 {
-	// populate lists
-
 	populateCombatLists();
-
-	// natives
 
 	aiNativeCombatStrategy();
 
@@ -39,6 +35,8 @@ void aiNativeCombatStrategy()
 	for (int baseId : baseIds)
 	{
 		BASE *base = &(tx_bases[baseId]);
+		MAP *baseLocation = getBaseMapTile(baseId);
+		bool ocean = isOceanRegion(baseLocation->region);
 		debug("\t%s\n", base->name);
 
 		// compose list of available vehicles
@@ -48,9 +46,9 @@ void aiNativeCombatStrategy()
 		std::vector<int> baseGarrison = getBaseGarrison(baseId);
 		availableVehicles.insert(availableVehicles.end(), baseGarrison.begin(), baseGarrison.end());
 
-		for (int region : getBaseConnectedRegions(baseId))
+		if (!ocean)
 		{
-			std::vector<int> regionSurfaceVehicles = getRegionSurfaceVehicles(base->faction_id, region, false);
+			std::vector<int> regionSurfaceVehicles = getRegionSurfaceVehicles(base->faction_id, baseLocation->region, false);
 			availableVehicles.insert(availableVehicles.end(), regionSurfaceVehicles.begin(), regionSurfaceVehicles.end());
 		}
 
@@ -70,6 +68,16 @@ void aiNativeCombatStrategy()
 			// combat vehicles only
 
 			if (!isCombatVehicle(vehicleId))
+				continue;
+
+			// infantry vehicles only
+
+			if (tx_units[vehicle->proto_id].chassis_type != CHS_INFANTRY)
+				continue;
+
+			// exclude battle ogres
+
+			if (vehicle->proto_id == BSC_BATTLE_OGRE_MK1 || vehicle->proto_id == BSC_BATTLE_OGRE_MK2 || vehicle->proto_id == BSC_BATTLE_OGRE_MK3)
 				continue;
 
 			// get protection potential
@@ -350,7 +358,7 @@ int applyAttackOrder(int id, COMBAT_ORDER *combatOrder)
 
 	// enemy not found
 
-	if (enemyVehicle == NULL)
+	if (enemyVehicle == NULL || enemyVehicle->x == -1 || enemyVehicle->y == -1)
 		return tx_enemy_move(id);
 
 	// enemy is unreachable
@@ -376,6 +384,80 @@ void setDefendOrder(int vehicleId, int x, int y)
 		combatOrders[vehicleId].defendX = x;
 		combatOrders[vehicleId].defendY = y;
 	}
+
+}
+
+/*
+Checks if sea explorer is in land port.
+*/
+bool isHealthySeaExplorerInLandPort(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	MAP *vehicleLocation = getVehicleMapTile(vehicleId);
+	int triad = veh_triad(vehicleId);
+	bool ocean = is_ocean(vehicleLocation);
+
+	// only sea units
+
+	if (triad != TRIAD_SEA)
+		return false;
+
+	// only explorers
+
+	if (~vehicle->state & VSTATE_EXPLORE)
+		return false;
+
+	// only in base
+
+	if (!map_has_item(vehicleLocation, TERRA_BASE_IN_TILE))
+		return false;
+
+	// only on land
+
+	if (ocean)
+		return false;
+
+	// only healthy
+
+	if (vehicle->damage_taken > 0)
+		return false;
+
+	// check if this tile has access to ocean
+
+	MAP_INFO adjacentOceanTileInfo = getAdjacentOceanTileInfo(vehicle->x, vehicle->y);
+
+	if (adjacentOceanTileInfo.tile == NULL)
+		return false;
+
+	// all conditions met
+
+	return true;
+
+}
+
+/*
+Fixes vanilla bug when sea explorer is stuck in land port.
+*/
+int kickSeaExplorerFromLandPort(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+	// check if this tile has access to ocean
+
+	MAP_INFO adjacentOceanTileInfo = getAdjacentOceanTileInfo(vehicle->x, vehicle->y);
+
+	if (adjacentOceanTileInfo.tile == NULL)
+		return SYNC;
+
+	debug("kickSeaExplorerFromLandPort: [%3d] (%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, adjacentOceanTileInfo.x, adjacentOceanTileInfo.y);
+
+	// send unit to this tile
+
+//	vehicle->state &= ~VSTATE_EXPLORE;
+	set_move_to(vehicleId, adjacentOceanTileInfo.x, adjacentOceanTileInfo.y);
+	tx_action(vehicleId);
+
+	return tx_enemy_move(vehicleId);
 
 }
 

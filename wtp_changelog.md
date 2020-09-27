@@ -5,21 +5,25 @@
   * AI builds formers when needed.
   * AI builds explorers when needed.
   * AI builds colonies when needed.
+  * AI builds native protectors and police.
+  * AI suggests production for new bases.
 * Global production hurry happens before production phase to produce fully completed items.
 * Fixed Thinker production unit mineral cost calculation. Previously it didn't account for prototypes/Skunkworks and Brood Pit.
 * Added predefined units: Trance Formers, Trance Sea Formers.
 * Hab Complex is now enabled by FldMod (level 2). Sea and jungle bases still struggle to get it in time.
 * Restored vanilla emergency retooling after base attack. That was previously overridden by Thinker.
+* FIX: Sea explorers were stuck in land port. Now they are force kicked out of it.
+* FIX: Formers regained their moves after cancelling new terraforming action when old one just completed this turn. They don't anymore.
 
 * Reduced cost of late mineral facilities. Otherwise, it is pretty difficult to reach the mineral intake when they become beneficial. Here I also listed the mineral intake when they roughly becomes beneficial.
 
 | facility  | cost | mineral intake |
 | ---- | ----:| ----:|
 | Recycling Tanks | 6 | 8 |
-| Genejack Factory | 12 | 20 |
-| Robotic Assembly Plant | 18 | 40 |
-| Quantum Converter | 24 | 65 |
-| Nanoreplicator | 30 | 95 |
+| Genejack Factory | 12 | 24 |
+| Robotic Assembly Plant | 18 | 48 |
+| Quantum Converter | 24 | 80 |
+| Nanoreplicator | 30 | 120 |
 
 # Version 144
 
@@ -40,7 +44,7 @@
 
 # Version 140
 
-* \[bug\] Didn't check map boundaries when iterated through adjacent tiles. That crashes game when base is placed on map border.
+* BUG: Didn't check map boundaries when iterated through adjacent tiles. That crashes game when base is placed on map border.
 
 # Version 139
 
@@ -89,7 +93,7 @@
 
 # Version 131
 
-* \[fix\] Captured base now properly receives free facilities from both capturing and captured factions. Didn't work in vanilla.
+* FIX: Captured base now properly receives free facilities from both capturing and captured factions. Didn't work in vanilla.
 
 # Version 130
 
@@ -97,7 +101,7 @@
   * Base tries to build native protection if insufficient.
   * Unit in the base tries to hold to maintain native protection.
   * Base tries to build colonies if there is room for colonization.
-* [bug] Battle status summary alignment messes up with Hasty and Gas modifiers. Feature removed.
+* BUG: Battle status summary alignment messes up with Hasty and Gas modifiers. Feature removed.
 
 # Version 129
 
@@ -160,7 +164,7 @@ http://alphacentauri2.info/wiki/Social_Engineering_Mod
 
 # Version 119
 
-* [bug] Tile yield calculation didn't set base. That caused crash for tile yield computation with collector on it and adjacent mirror when base is not set sometimes. Strangely it didn't bite me earlier.
+* BUG: Tile yield calculation didn't set base. That caused crash for tile yield computation with collector on it and adjacent mirror when base is not set sometimes. Strangely it didn't bite me earlier.
 
 # Version 118
 
@@ -178,7 +182,7 @@ http://alphacentauri2.info/wiki/Social_Engineering_Mod
 
 # Version 115
 
-* [bug] Ignore independent units in reassignment code.
+* BUG: Ignore independent units in reassignment code.
 
 # Version 114
 
@@ -194,7 +198,7 @@ http://alphacentauri2.info/wiki/Social_Engineering_Mod
 
 # Version 111
 
-* [fix] Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do. Fixed incorrect calculation on game restart.
+* FIX: Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do. Fixed incorrect calculation on game restart.
 
 # Version 110
 
@@ -204,7 +208,7 @@ Should not be too dificult for sea bases to pay it.
 
 # Version 109
 
-* [fix] Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do.
+* FIX: Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do.
 
 # Version 108
 
@@ -220,11 +224,11 @@ Again, not that superimportant ability.
 
 # Version 106
 
-* [fix] Zero division in Recycling Tanks mineral calculation when mineral intake is zero.
+* FIX: Zero division in Recycling Tanks mineral calculation when mineral intake is zero.
 
 # Version 105
 
-* [bug] Base screen population incorrectly shows superdrones those are not on psych screen. Fixed for alien factions as well.
+* BUG: Base screen population incorrectly shows superdrones those are not on psych screen. Fixed for alien factions as well.
 
 # Version 104
 
@@ -269,7 +273,7 @@ With more abundant native life PLANET penalty for this choice is too harsh.
 
 # Version 97
 
-* [fix] Fixed bug in Knowledge SE.
+* FIX: Fixed bug in Knowledge SE.
 
 # Version 96
 
@@ -278,7 +282,7 @@ It was too little benefits for such harsh POLICE penalty. Now it is more of less
 
 # Version 95
 
-* [bug] Base screen population incorrectly shows superdrones those are not on psych screen. They do not affect drone riot. This is fixed.
+* BUG: Base screen population incorrectly shows superdrones those are not on psych screen. They do not affect drone riot. This is fixed.
 
 # Version 94
 
@@ -324,7 +328,7 @@ Added extra TALENT to it. Should be an ultimate war time drone solution. It's pr
 
 # Version 91
 
-* [fix] Removed "+" from SE choice giving talent and reverted to their exact original names. Apparently it messes things up sometimes.
+* FIX: Removed "+" from SE choice giving talent and reverted to their exact original names. Apparently it messes things up sometimes.
 
 # Version 90
 
@@ -344,7 +348,7 @@ Added extra TALENT to it. Should be an ultimate war time drone solution. It's pr
 
 # Version 87
 
-* [fix] Unit cost were calculated incorrectly sometimes.
+* FIX: Unit cost were calculated incorrectly sometimes.
 
 * Recycling Tanks now increases minerals by 50% instead of improving base tile.
 * Recycling Tanks cost/maint: 6/2.
@@ -393,7 +397,7 @@ Test version for new CV and popboom mechanincs
 
 **This version is recalled due to the bug in unit cost calculation**
 
-* \[fix\] Bug in sorting terraforming requests.
+* FIX: Bug in sorting terraforming requests.
 
 # Version 82
 
@@ -405,7 +409,7 @@ Test version for new CV and popboom mechanincs
 
 **This version is recalled due to the bug in unit cost calculation**
 
-* \[fix\] Repair rate in base with corresponding facility configuration setting didn't work.
+* FIX: Repair rate in base with corresponding facility configuration setting didn't work.
 
 # Version 80
 
@@ -487,7 +491,7 @@ Test version for new CV and popboom mechanincs
 
 # Version 73
 
-* [fix] AI hurrying project sometimes resulted in negative accumulated minerals.
+* FIX: AI hurrying project sometimes resulted in negative accumulated minerals.
 
 # Version 72
 
@@ -523,7 +527,7 @@ Special testing version.
 
 # Version 69.1
 
-* [fix] Hurry production algorithm tried to hurry production in huma bases as well. Now it does not affect human.
+* FIX: Hurry production algorithm tried to hurry production in huma bases as well. Now it does not affect human.
 
 # Version 69
 
@@ -871,6 +875,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
+* AI does not clean target settlement spots. Often it canot found base near ruins especially when central tile is rocky.
 * Make condenser and enricher fixes configurable.
 * HSA should stop the probe movement as well.
 * Sea units are returned to land bases. When pact is cancelled, when sea probe is returned unharmed.

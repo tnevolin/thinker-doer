@@ -134,4 +134,7 @@ extern fp_0void *tx_balance;
 extern fp_0void *tx_world_build;
 extern fp_3int *tx_order_veh;
 extern fp_3int *tx_veh_cost;
+extern fp_1void *tx_base_first;
+extern fp_1int *tx_action;
+extern fp_1void *tx_veh_wake;
 
