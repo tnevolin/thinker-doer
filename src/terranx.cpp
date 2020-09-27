@@ -177,3 +177,12 @@ fp_3int *tx_order_veh = (fp_3int *)0x005947C0;
 // arg3 = address where to store flag if unit cost is higher than base cost
 fp_3int *tx_veh_cost = (fp_3int *)0x005C1850;
 
+// set first time base production
+fp_1void *tx_base_first = (fp_1void *)0x004E4AA0;
+
+// executes action on vehicle
+fp_1int *tx_action = (fp_1int *)0x004CF740;
+
+// wakes vehicle
+fp_1void *tx_veh_wake = (fp_1void *)0x005C1D70;
+

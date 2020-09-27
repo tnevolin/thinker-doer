@@ -102,6 +102,14 @@ HOOK_API int enemy_move(int id) {
     assert(id >= 0 && id < UNITS);
     VEH* veh = &tx_vehicles[id];
     int faction = veh->faction_id;
+
+    // kick sea explorers off land port
+
+    if (isHealthySeaExplorerInLandPort(id))
+	{
+		return kickSeaExplorerFromLandPort(id);
+	}
+
     if (ai_enabled(faction)) {
         int w = tx_units[veh->proto_id].weapon_type;
         if (w == WPN_COLONY_MODULE) {
