@@ -2459,31 +2459,3 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
 
 }
 
-HOOK_API void modifiedVehicleWake(int vehicleId)
-{
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
-	int moveStatus = vehicle->move_status;
-	int terraformingTurns = vehicle->terraforming_turns;
-
-	debug("modifiedVehicleWake - before [%3d] (%3d,%3d) move_status=%d, terraforming_turns=%d, road_moves_spent=%d\n", vehicleId, vehicle->x, vehicle->y, vehicle->move_status, vehicle->terraforming_turns, vehicle->road_moves_spent);
-
-	tx_veh_wake(vehicleId);
-
-	// end of terraforming action fix
-	// if vehicle is waken from terraforming with 0 terraforming turns - spend all road moves
-
-	debug("modifiedVehicleWake - after  [%3d] (%3d,%3d) move_status=%d, terraforming_turns=%d, road_moves_spent=%d\n", vehicleId, vehicle->x, vehicle->y, vehicle->move_status, vehicle->terraforming_turns, vehicle->road_moves_spent);
-
-	if ((moveStatus >= ORDER_FARM && moveStatus <= ORDER_PLACE_MONOLITH) && terraformingTurns == 0)
-	{
-		vehicle->road_moves_spent = veh_speed(vehicleId);
-	}
-
-	debug("modifiedVehicleWake - fixed  [%3d] (%3d,%3d) move_status=%d, terraforming_turns=%d, road_moves_spent=%d\n", vehicleId, vehicle->x, vehicle->y, vehicle->move_status, vehicle->terraforming_turns, vehicle->road_moves_spent);
-
-	debug("\n");
-
-	fflush(debug_log);
-
-}
-

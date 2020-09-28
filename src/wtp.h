@@ -146,7 +146,6 @@ double getLandVehicleSpeedOnTubes(int id);
 void distributeSupport(int factionId);
 HOOK_API void modifiedWorldBuild();
 HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y);
-HOOK_API void modifiedVehicleWake(int vehicleId);
 
 #endif // __PROTOTYPE_H__
 
