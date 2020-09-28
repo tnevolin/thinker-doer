@@ -1560,23 +1560,14 @@ int wtp_tech_level(int id) {
 /*
 Calculates tech cost.
 cost grows cubic from the beginning then linear.
-S  = 1nbbbbbbn0                                     // fixed shift (first tech cost)
+S  = 10                                     // constant (first tech cost)
 C  = 0.02                                   // cubic coefficient
 B  = 80 * (<map area> / <normal map area>)  // linear slope
 x0 = SQRT(B / (3 * C))                      // break point
 A  = C * x0 ^ 3 - B * x0                    // linear intercept
 x  = (<level> - 1) * 7
 
-cost = S +
-1.
-when x < x0 then
-C * x ^ 3
-2.
-else
-A + B * x
-
-overall scale
-1.25
+cost = [S + (x < x0 ? C * x ^ 3 : A + B * x)] * scale
 */
 int wtp_tech_cost(int fac, int tech) {
     assert(fac >= 0 && fac < 8);
@@ -1587,7 +1578,6 @@ int wtp_tech_cost(int fac, int tech) {
         level = wtp_tech_level(tech);
     }
 
-    double scale = 1.25;
     double S = 10.0;
     double C = 0.02;
     double B = 80 * (*map_area_tiles / 3200.0);
@@ -1620,7 +1610,7 @@ int wtp_tech_cost(int fac, int tech) {
 
 	// scale
 
-	cost *= scale;
+	cost *= conf.tech_cost_scale;
 
     return max(2, (int)cost);
 
