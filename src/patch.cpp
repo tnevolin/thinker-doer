@@ -2613,16 +2613,20 @@ void patch_base_first()
 }
 
 /*
-Wraps veh_wake call.
+Disables restoring movement points to terraforming vehicle.
 */
 void patch_veh_wake()
 {
-	write_call(0x0048CFDD, (int)modifiedVehicleWake);
-	write_call(0x0048D0A1, (int)modifiedVehicleWake);
-	write_call(0x004B8DFC, (int)modifiedVehicleWake);
-	write_call(0x004B8EFB, (int)modifiedVehicleWake);
-	write_call(0x004B9998, (int)modifiedVehicleWake);
-	write_call(0x004D334E, (int)modifiedVehicleWake);
+	int veh_wake_does_not_restore_movement_points_bytes_length = 2;
+	byte veh_wake_does_not_restore_movement_points_bytes_old[] = { 0x75, 0x45 };
+	byte veh_wake_does_not_restore_movement_points_bytes_new[] = { 0xEB, 0x45 };
+	write_bytes
+	(
+		0x005C1D9A,
+		veh_wake_does_not_restore_movement_points_bytes_length,
+		veh_wake_does_not_restore_movement_points_bytes_old,
+		veh_wake_does_not_restore_movement_points_bytes_new
+	);
 
 }
 

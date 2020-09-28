@@ -1,3 +1,7 @@
+# Version 148
+
+* Redid (FIX: Formers regained their moves after cancelling new terraforming action when old one just completed this turn.) to use patch instead of custom function. More concise this way.
+
 # Version 147
 
 * Increased tech cost steepness. Recent modification made research progress very fast.

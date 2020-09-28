@@ -183,6 +183,3 @@ fp_1void *tx_base_first = (fp_1void *)0x004E4AA0;
 // executes action on vehicle
 fp_1int *tx_action = (fp_1int *)0x004CF740;
 
-// wakes vehicle
-fp_1void *tx_veh_wake = (fp_1void *)0x005C1D70;
-
