@@ -1,3 +1,7 @@
+# Version 147
+
+* Tech cost scale changed to 2.0. It seems that it runs very fast with all recent energy enhancements.
+
 # Version 146
 
 This one lists both #145 and #146 changes. They were mixed up and I could not sort them out. This is only in description. Code wise this version includes everything.
