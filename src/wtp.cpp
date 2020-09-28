@@ -1561,8 +1561,8 @@ int wtp_tech_level(int id) {
 Calculates tech cost.
 cost grows cubic from the beginning then linear.
 S  = 10                                     // constant (first tech cost)
-C  = 0.02                                   // cubic coefficient
-B  = 80 * (<map area> / <normal map area>)  // linear slope
+C  = 0.04                                   // cubic coefficient
+B  = 160 * (<map area> / <normal map area>) // linear slope
 x0 = SQRT(B / (3 * C))                      // break point
 A  = C * x0 ^ 3 - B * x0                    // linear intercept
 x  = (<level> - 1) * 7
@@ -1579,8 +1579,8 @@ int wtp_tech_cost(int fac, int tech) {
     }
 
     double S = 10.0;
-    double C = 0.02;
-    double B = 80 * (*map_area_tiles / 3200.0);
+    double C = 0.04;
+    double B = 160 * (*map_area_tiles / 3200.0);
     double x0 = sqrt(B / (3 * C));
     double A = C * x0 * x0 * x0 - B * x0;
     double x = (level - 1) * 7;

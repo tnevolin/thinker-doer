@@ -1,6 +1,6 @@
 # Version 147
 
-* Tech cost scale changed to 2.0. It seems that it runs very fast with all recent energy enhancements.
+* Increased tech cost steepness. Recent modification made research progress very fast.
 
 # Version 146
 
