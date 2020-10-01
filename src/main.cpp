@@ -309,6 +309,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->tech_cost_scale = atof(value);
     }
+    else if (MATCH("wtp", "flat_extra_prototype_cost"))
+    {
+        cf->flat_extra_prototype_cost = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
