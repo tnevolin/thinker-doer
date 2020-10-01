@@ -259,6 +259,21 @@ Weapon and armor cost grows slightly slower than their value. That makes stronge
 
 Native warfare should be slightly worse to conventional as they have other benefits. They ignore base defensive structures. They are naturally both full scale attacker and defender. Their price is fixed and is much lower comparing to fully equipped top level attacker-defender units. They do not require prototyping. IoD can transport. Sealurk can attack shore units. LoC does not need refueling and can capture bases. They all can repair up to 100% in fungus squares. They do not require maintenance while in fungus square. All together they are no-brainer units and as such should be a little less effective to not become a superior choice. I've increased most native unit cost except spore launcher to encourage its use for bombardment.
 
+## Extra prototype cost
+
+Flat extra prototype cost formula is introduced. It is controlled by flat_extra_prototype_cost property in thinker.ini.
+
+<pre>
+
+extra prototype *unit* cost = sum of extra prototype *component* costs for all not yet prototyped unit components
+extra prototype *component* cost = component costs \* *Extra percentage cost of prototype LAND unit* from alphax.txt
+
+</pre>
+
+##### Prototype cost bug in vanilla
+
+Vanilla uses *Extra percentage cost of prototype LAND unit* percentage for designing brand new unit in design workshop regardless of selected chassis. Therefore *extra percentage costs* for all triads should be kept equal. For the same reason alternative formula above uses LAND percentage only.
+
 # Unit hurry cost and unit upgrade cost
 
 Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? The upgrade cost is, on the contrary, quite low allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten both of them for simplicity and to prevent abovementioned exploit.

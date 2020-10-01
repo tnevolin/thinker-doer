@@ -824,8 +824,9 @@ Enables alternative prototype cost formula.
 void patch_alternative_prototype_cost_formula()
 {
     write_call(0x00436ADD, (int)proto_cost);
-    write_call(0x0043704C, (int)proto_cost);
-    write_call(0x005817C9, (int)proto_cost);
+    // this call special purposed to calculate prototype cost, not unit cost
+//	write_call(0x0043704C, (int)proto_cost);
+	write_call(0x005817C9, (int)proto_cost);
     write_call(0x00581833, (int)proto_cost);
     write_call(0x00581BB3, (int)proto_cost);
     write_call(0x00581BCB, (int)proto_cost);
@@ -2630,6 +2631,85 @@ void patch_veh_wake()
 
 }
 
+/*
+Flattens extra prototype cost.
+*/
+void patch_flat_extra_prototype_cost()
+{
+	// in veh_cost
+
+	write_call(0x005C198D, (int)modifiedExtraPrototypeCost);
+
+	// in DesignWin::draw_unit_preview
+
+	write_call(0x0043704C, (int)calculateExtraPrototypeCostForDesign);
+
+//	int draw_unit_preview_flat_prototype_cost1_bytes_length = 2;
+///*
+//0:  8b f8                   mov    edi,eax
+//*/
+//	byte draw_unit_preview_flat_prototype_cost1_bytes_old[] = { 0x8B, 0xF8 };
+///*
+//0:  89 c2                   mov    edx,eax
+//*/
+//	byte draw_unit_preview_flat_prototype_cost1_bytes_new[] = { 0x89, 0xC2 };
+//	write_bytes
+//	(
+//		0x00437057,
+//		draw_unit_preview_flat_prototype_cost1_bytes_length,
+//		draw_unit_preview_flat_prototype_cost1_bytes_old,
+//		draw_unit_preview_flat_prototype_cost1_bytes_new
+//	);
+//
+	int draw_unit_preview_flat_prototype_cost2_bytes_length = 0x1A;
+/*
+0:  0f af f8                imul   edi,eax
+3:  83 c7 32                add    edi,0x32
+6:  b8 1f 85 eb 51          mov    eax,0x51eb851f
+b:  f7 ef                   imul   edi
+d:  c1 fa 05                sar    edx,0x5
+10: 8b c2                   mov    eax,edx
+12: 8b 7d d8                mov    edi,DWORD PTR [ebp-0x28]
+15: c1 e8 1f                shr    eax,0x1f
+18: 03 d0                   add    edx,eax
+*/
+	byte draw_unit_preview_flat_prototype_cost2_bytes_old[] = { 0x0F, 0xAF, 0xF8, 0x83, 0xC7, 0x32, 0xB8, 0x1F, 0x85, 0xEB, 0x51, 0xF7, 0xEF, 0xC1, 0xFA, 0x05, 0x8B, 0xC2, 0x8B, 0x7D, 0xD8, 0xC1, 0xE8, 0x1F, 0x03, 0xD0 };
+/*
+0:  89 fa                   mov    edx,edi
+2:  90                      nop
+3:  90                      nop
+4:  90                      nop
+5:  90                      nop
+6:  90                      nop
+7:  90                      nop
+8:  90                      nop
+9:  90                      nop
+a:  90                      nop
+b:  90                      nop
+c:  90                      nop
+d:  90                      nop
+e:  90                      nop
+f:  90                      nop
+10: 90                      nop
+11: 90                      nop
+12: 8b 7d d8                mov    edi,DWORD PTR [ebp-0x28]
+15: 90                      nop
+16: 90                      nop
+17: 90                      nop
+18: 90                      nop
+19: 90                      nop
+*/
+	byte draw_unit_preview_flat_prototype_cost2_bytes_new[] = { 0x89, 0xFA, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x8B, 0x7D, 0xD8, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x0043705F,
+		draw_unit_preview_flat_prototype_cost2_bytes_length,
+		draw_unit_preview_flat_prototype_cost2_bytes_old,
+		draw_unit_preview_flat_prototype_cost2_bytes_new
+	);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3163,6 +3243,11 @@ bool patch_setup(Config* cf) {
 	patch_base_first();
 
 	patch_veh_wake();
+
+	if (cf->flat_extra_prototype_cost)
+	{
+		patch_flat_extra_prototype_cost();
+	}
 
 
     // continue with original Thinker checks
