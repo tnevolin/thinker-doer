@@ -4,7 +4,7 @@
 
 Original functionality is scattered across the code and is heavily hardcoded. This modification may make game crash or display incorrect results.
 
-* [Flat extra prototype cost](https://github.com/tnevolin/thinker-doer/tree/feature/%2312#extra-prototype-cost) formula is enabled by flat_extra_prototype_cost parameter in thinker.ini.
+* [Flat extra prototype cost](https://github.com/tnevolin/thinker-doer#flat-extra-prototype-cost) formula is enabled by flat_extra_prototype_cost parameter in thinker.ini.
 
 # Version 148
 
