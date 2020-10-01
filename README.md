@@ -261,7 +261,7 @@ Native warfare should be slightly worse to conventional as they have other benef
 
 ## Flat extra prototype cost
 
-Flat extra prototype cost formula is introduced. It is controlled by flat_extra_prototype_cost property in thinker.ini.
+Flat extra prototype cost formula is introduced.
 
 <pre>
 extra prototype UNIT cost = sum of non yet prototyped extra prototype COMPONENT costs
