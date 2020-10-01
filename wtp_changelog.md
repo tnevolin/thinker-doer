@@ -1,7 +1,6 @@
 # Version 149
 
-* Flat extra prototype cost formula is enabled by flat_extra_prototype_cost parameter in thinker.ini.\
-[Flat extra prototype cost](https://github.com/tnevolin/thinker-doer/tree/feature/%2312#extra-prototype-cost)
+* [Flat extra prototype cost](https://github.com/tnevolin/thinker-doer/tree/feature/%2312#extra-prototype-cost) formula is enabled by flat_extra_prototype_cost parameter in thinker.ini.
 
 # Version 148
 
