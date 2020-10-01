@@ -259,7 +259,7 @@ Weapon and armor cost grows slightly slower than their value. That makes stronge
 
 Native warfare should be slightly worse to conventional as they have other benefits. They ignore base defensive structures. They are naturally both full scale attacker and defender. Their price is fixed and is much lower comparing to fully equipped top level attacker-defender units. They do not require prototyping. IoD can transport. Sealurk can attack shore units. LoC does not need refueling and can capture bases. They all can repair up to 100% in fungus squares. They do not require maintenance while in fungus square. All together they are no-brainer units and as such should be a little less effective to not become a superior choice. I've increased most native unit cost except spore launcher to encourage its use for bombardment.
 
-## Extra prototype cost
+## Flat extra prototype cost
 
 Flat extra prototype cost formula is introduced. It is controlled by flat_extra_prototype_cost property in thinker.ini.
 
@@ -267,6 +267,8 @@ Flat extra prototype cost formula is introduced. It is controlled by flat_extra_
 extra prototype UNIT cost = sum of non yet prototyped extra prototype COMPONENT costs
 extra prototype COMPONENT cost = component costs * Extra percentage cost for LAND unit
 </pre>
+
+This formula changes the actual unit cost. The literal text in base screen item description (like "prototype: +50%") stays the same and displays the percentage value from alphax.txt. This may be confusing. I may change it in future releases.
 
 ##### Prototype cost bug in vanilla
 
