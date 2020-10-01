@@ -1,3 +1,8 @@
+# Version 149
+
+* Flat extra prototype cost formula is enabled by flat_extra_prototype_cost parameter in thinker.ini.
+(https://github.com/tnevolin/thinker-doer/tree/feature/%2312#extra-prototype-cost)
+
 # Version 148
 
 * Redid (FIX: Formers regained their moves after cancelling new terraforming action when old one just completed this turn.) to use patch instead of custom function. More concise this way.
