@@ -166,7 +166,8 @@ struct Config {
     int biology_lab_research_bonus = 2;
     bool hsa_does_not_kill_probe = false;
     bool condenser_and_enricher_do_not_multiply_nutrients = false;
-    double tech_cost_scale = false;
+    double tech_cost_scale = 1.0;
+    bool flat_extra_prototype_cost = false;
     bool ai_useWTPAlgorithms;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_truce;

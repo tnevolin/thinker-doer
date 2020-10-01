@@ -897,21 +897,7 @@ Initial release. See list of changes in readme.
 
 # TODO
 
-* AI does not clean target settlement spots. Often it canot found base near ruins especially when central tile is rocky.
-* Make condenser and enricher fixes configurable.
-* HSA should stop the probe movement as well.
-* Sea units are returned to land bases. When pact is cancelled, when sea probe is returned unharmed.
-* Transport doesn't carry colony.
-* Research gene warfare and its unit damaging effect. See if we need to tone this down a bit.
-* Move plant fungus later.
-* Revert forest yield, delay HF and make it more expensive.
-* Brood Pit give just +1 POLICE.
-* Make AI build more units, defensive structures, sensors.
 * Rework probe team success rates.
-* Cloning Vats should not grant impunities.
-* Copy basic units to player unit pool.
-* Don't display basic units in design workshop.
-* Prototype only new component, not the whole unit.
 
 ## AI
 

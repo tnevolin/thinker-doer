@@ -146,6 +146,9 @@ double getLandVehicleSpeedOnTubes(int id);
 void distributeSupport(int factionId);
 HOOK_API void modifiedWorldBuild();
 HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y);
+int calculateExtraPrototypeCost(int factionId, int chassisId, int weaponId, int armorId);
+HOOK_API int modifiedExtraPrototypeCost(int unitId);
+HOOK_API int calculateExtraPrototypeCostForDesign(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level);
 
 #endif // __PROTOTYPE_H__
 

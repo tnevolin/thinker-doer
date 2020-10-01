@@ -218,9 +218,9 @@ struct Goal {
 };
 
 struct Faction {
-    int player_flags;
-    int ranking; // 0 (lowest) to 7 (highest)
-    int diff_level;
+    int player_flags;																						// 0x0000
+    int ranking; // 0 (lowest) to 7 (highest)																// 0x0004
+    int diff_level;																							// 0x0008
     int base_name_offset; // Keep track which base names have been used
     int base_sea_name_offset; // Keep track which sea base names have been used
     int last_base_turn; // Turn for last built, captured or acquired (drone riot) base

@@ -41,9 +41,9 @@
 1,       ; Drones induced by Genejack factory
 7,       ; Population limit w/o hab complex
 14,      ; Population limit w/o hab dome
-50,      ; Extra percentage cost of prototype LAND unit
-50,      ; Extra percentage cost of prototype SEA unit
-50,      ; Extra percentage cost of prototype AIR unit
+100,     ; Extra percentage cost of prototype LAND unit
+100,     ; Extra percentage cost of prototype SEA unit
+100,     ; Extra percentage cost of prototype AIR unit
 1,1,     ; Psi combat offense-to-defense ratio (LAND unit defending)
 1,1,     ; Psi combat offense-to-defense ratio (SEA unit defending)
 1,1,     ; Psi combat offense-to-defense ratio (AIR unit defending)
