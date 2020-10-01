@@ -265,8 +265,8 @@ Flat extra prototype cost formula is introduced. It is controlled by flat_extra_
 
 <pre>
 
-extra prototype *unit* cost = sum of extra prototype *component* costs for all not yet prototyped unit components
-extra prototype *component* cost = component costs \* *Extra percentage cost of prototype LAND unit* from alphax.txt
+extra prototype UNIT cost = sum of non yet prototyped extra prototype COMPONENT costs
+extra prototype COMPONENT cost = component costs * Extra percentage cost for LAND unit
 
 </pre>
 
