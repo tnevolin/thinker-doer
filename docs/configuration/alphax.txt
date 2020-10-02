@@ -1215,13 +1215,6 @@ USURPER,  USURPER
 ; These should always be the same except for debugging purposes.
 ;
 #CUSTOMFACTIONS
-atlantis
-bree
-empath
-genesis
-ghost
-republic
-templar
 
 #MANDATE
 Explore, EXPLORE
