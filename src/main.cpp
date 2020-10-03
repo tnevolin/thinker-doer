@@ -313,6 +313,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->flat_extra_prototype_cost = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "fix_mineral_contribution"))
+    {
+        cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

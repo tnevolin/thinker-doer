@@ -1,6 +1,7 @@
 #include <vector>
 #include <unordered_set>
 #include "aiHurry.h"
+#include "wtp.h"
 
 const std::unordered_set<int> IMPORTANT_FACILITIES =
 {
@@ -176,12 +177,19 @@ void hurryProductionPartially(int baseId, int allowance)
 
 	// calculate remaining minerals
 
-	int fullMinerals = itemMineralCost - base->minerals_accumulated;
+	int remaininglMinerals = itemMineralCost - base->minerals_accumulated;
 
 	// already completed
 
-	if (fullMinerals <= 0)
+	if (remaininglMinerals <= 0)
 		return;
+
+	// scales remaining minerals to mineral cost multiplier if configured
+
+	if (conf.fix_mineral_contribution)
+	{
+		remaininglMinerals = scaleValueToBasicMinieralCostMultiplier(base->faction_id, remaininglMinerals);
+	}
 
 	// calculate hurry mineral cost
 
@@ -203,17 +211,17 @@ void hurryProductionPartially(int baseId, int allowance)
 		hurryMineralCost = 2;
 	}
 
-	// calculate minerals and credits to hurry
+	// calculate minerals and hurry price
 
-	int fullCredits = fullMinerals * hurryMineralCost;
+	int fullHurryPrice = remaininglMinerals * hurryMineralCost;
 
 	int hurryMinerals;
 	int hurryCredits;
 
-	if (allowance >= fullCredits)
+	if (allowance >= fullHurryPrice)
 	{
-		hurryMinerals = fullMinerals;
-		hurryCredits = fullCredits;
+		hurryMinerals = remaininglMinerals;
+		hurryCredits = fullHurryPrice;
 	}
 	else
 	{

@@ -2644,23 +2644,6 @@ void patch_flat_extra_prototype_cost()
 
 	write_call(0x0043704C, (int)calculateExtraPrototypeCostForDesign);
 
-//	int draw_unit_preview_flat_prototype_cost1_bytes_length = 2;
-///*
-//0:  8b f8                   mov    edi,eax
-//*/
-//	byte draw_unit_preview_flat_prototype_cost1_bytes_old[] = { 0x8B, 0xF8 };
-///*
-//0:  89 c2                   mov    edx,eax
-//*/
-//	byte draw_unit_preview_flat_prototype_cost1_bytes_new[] = { 0x89, 0xC2 };
-//	write_bytes
-//	(
-//		0x00437057,
-//		draw_unit_preview_flat_prototype_cost1_bytes_length,
-//		draw_unit_preview_flat_prototype_cost1_bytes_old,
-//		draw_unit_preview_flat_prototype_cost1_bytes_new
-//	);
-//
 	int draw_unit_preview_flat_prototype_cost2_bytes_length = 0x1A;
 /*
 0:  0f af f8                imul   edi,eax
@@ -2707,6 +2690,107 @@ f:  90                      nop
 		draw_unit_preview_flat_prototype_cost2_bytes_old,
 		draw_unit_preview_flat_prototype_cost2_bytes_new
 	);
+
+}
+
+/*
+Adjusts mineral contribution based on INDUSTRY rating.
+*/
+void patch_mineral_contribution()
+{
+	// adjust artifact mineral contribution
+
+	int artifact_mineral_contribution1_bytes_length = 0x02;
+/*
+0:  8b c2                   mov    eax,edx
+*/
+	byte artifact_mineral_contribution1_bytes_old[] = { 0x8B, 0xC2 };
+/*
+0:  52                      push   edx
+1:  90                      nop
+*/
+	byte artifact_mineral_contribution1_bytes_new[] = { 0x52, 0x90 };
+	write_bytes
+	(
+		0x005996D8,
+		artifact_mineral_contribution1_bytes_length,
+		artifact_mineral_contribution1_bytes_old,
+		artifact_mineral_contribution1_bytes_new
+	);
+
+	int artifact_mineral_contribution2_bytes_length = 0x08;
+/*
+0:  8d 04 80                lea    eax,[eax+eax*4]
+3:  d1 e0                   shl    eax,1
+5:  99                      cdq
+6:  2b c2                   sub    eax,edx
+*/
+	byte artifact_mineral_contribution2_bytes_old[] = { 0x8D, 0x04, 0x80, 0xD1, 0xE0, 0x99, 0x2B, 0xC2 };
+/*
+0:  e8 f1 73 02 00          call   273f6 <_main+0x273f6>
+5:  5a                      pop    edx
+6:  f7 e2                   mul    edx
+*/
+	byte artifact_mineral_contribution2_bytes_new[] = { 0xE8, 0xF1, 0x73, 0x02, 0x00, 0x5A, 0xF7, 0xE2 };
+	write_bytes
+	(
+		0x005996E0,
+		artifact_mineral_contribution2_bytes_length,
+		artifact_mineral_contribution2_bytes_old,
+		artifact_mineral_contribution2_bytes_new
+	);
+
+	write_call(0x005996E0, (int)getActiveFactionMineralCostFactor);
+
+	// display artifact mineral contribution for project
+
+	write_call(0x00594D14, (int)displayArtifactMineralContributionInformation);
+
+	// display artifact mineral contribution for prototype
+
+	write_call(0x00594D8C, (int)displayArtifactMineralContributionInformation);
+
+	// adjust hurry mineral contribution
+
+	int hurry_mineral_contribution_bytes_length = 0x27;
+/*
+0:  33 c9                   xor    ecx,ecx
+2:  6a ff                   push   0xffffffff
+4:  8a 4a 04                mov    cl,BYTE PTR [edx+0x4]
+7:  6a 01                   push   0x1
+9:  51                      push   ecx
+a:  e8 8e b4 0c 00          call   0xcb49d
+f:  8b c8                   mov    ecx,eax
+11: a1 30 ea 90 00          mov    eax,ds:0x90ea30
+16: 0f af ce                imul   ecx,esi
+19: 8b 70 40                mov    esi,DWORD PTR [eax+0x40]
+1c: 8b 50 50                mov    edx,DWORD PTR [eax+0x50]
+1f: 89 4d dc                mov    DWORD PTR [ebp-0x24],ecx
+22: 83 c4 0c                add    esp,0xc
+25: 2b ce                   sub    ecx,esi
+*/
+	byte hurry_mineral_contribution_bytes_old[] = { 0x33, 0xC9, 0x6A, 0xFF, 0x8A, 0x4A, 0x04, 0x6A, 0x01, 0x51, 0xE8, 0x8E, 0xB4, 0x0C, 0x00, 0x8B, 0xC8, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x0F, 0xAF, 0xCE, 0x8B, 0x70, 0x40, 0x8B, 0x50, 0x50, 0x89, 0x4D, 0xDC, 0x83, 0xC4, 0x0C, 0x2B, 0xCE };
+/*
+0:  e8 99 b4 0c 00          call   cb49e <_main+0xcb49e>
+5:  89 45 dc                mov    DWORD PTR [ebp-0x24],eax
+8:  e8 99 b4 0c 00          call   cb4a6 <_main+0xcb4a6>
+d:  89 c1                   mov    ecx,eax
+f:  a1 30 ea 90 00          mov    eax,ds:0x90ea30
+14: 8b 50 50                mov    edx,DWORD PTR [eax+0x50]
+...
+*/
+	byte hurry_mineral_contribution_bytes_new[] = { 0xE8, 0x99, 0xB4, 0x0C, 0x00, 0x89, 0x45, 0xDC, 0xE8, 0x99, 0xB4, 0x0C, 0x00, 0x89, 0xC1, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0x50, 0x50, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x00418F93,
+		hurry_mineral_contribution_bytes_length,
+		hurry_mineral_contribution_bytes_old,
+		hurry_mineral_contribution_bytes_new
+	);
+
+	write_call(0x00418F93, (int)getCurrentBaseProductionMineralCost);
+	write_call(0x00418F9B, (int)getCurrentBaseProductionRemainingMineralsScaledToBasicMineralCostMultiplier);
+	write_call(0x004192A5, (int)displayHurryPriceScaledToBasicMineralCostMultiplierInformation);
 
 }
 
@@ -3247,6 +3331,11 @@ bool patch_setup(Config* cf) {
 	if (cf->flat_extra_prototype_cost)
 	{
 		patch_flat_extra_prototype_cost();
+	}
+
+	if (cf->fix_mineral_contribution)
+	{
+		patch_mineral_contribution();
 	}
 
 

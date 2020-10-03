@@ -2567,3 +2567,111 @@ HOOK_API int calculateExtraPrototypeCostForDesign(int chassisId, int weaponId, i
 
 }
 
+HOOK_API int getActiveFactionMineralCostFactor()
+{
+	return tx_cost_factor(*active_faction, 1, -1);
+}
+
+HOOK_API void displayArtifactMineralContributionInformation(int input_string_pointer, int output_string_pointer)
+{
+	// execute original function
+
+	tx_parse_string(input_string_pointer, output_string_pointer);
+
+	// calculate artifact mineral contribution
+
+	int artifactMineralContribution = tx_units[BSC_ALIEN_ARTIFACT].cost * tx_cost_factor(*active_faction, 1, -1) / 2;
+
+	// get output string pointer
+
+	char *output = (char *)output_string_pointer;
+
+	// append information to string
+
+	sprintf(output + strlen(output), "  %d minerals will be added to production", artifactMineralContribution);
+
+}
+
+/*
+Calculates current base production mineral cost.
+*/
+HOOK_API int getCurrentBaseProductionMineralCost()
+{
+	int baseId = *current_base_id;
+	BASE *base = *current_base_ptr;
+
+	// get current base production mineral cost
+
+	int baseProductionMineralCost = mineral_cost(base->faction_id, base->queue_items[0], baseId);
+
+	// return value
+
+	return baseProductionMineralCost;
+
+}
+
+/*
+Calculates current base production remaining mineral cost and scales it to mineral cost multiplier.
+*/
+HOOK_API int getCurrentBaseProductionRemainingMineralsScaledToBasicMineralCostMultiplier()
+{
+	int baseId = *current_base_id;
+	BASE *base = *current_base_ptr;
+
+	// get current base production mineral cost
+
+	int baseProductionMineralCost = mineral_cost(base->faction_id, base->queue_items[0], baseId);
+
+	// get current base production remaining mineral cost
+
+	int baseProductionRemainingMineralCost = baseProductionMineralCost - base->minerals_accumulated;
+
+	// scale current base production remaining mineral cost to mineral cost multiplier, rounding normally
+
+	int baseProductionRemainingMineralCostIgnoringCostFactor = scaleValueToBasicMinieralCostMultiplier(base->faction_id, baseProductionRemainingMineralCost);
+
+	// return value
+
+	return baseProductionRemainingMineralCostIgnoringCostFactor;
+
+}
+
+HOOK_API void displayHurryPriceScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer)
+{
+	// execute original function
+
+	tx_parse_string(input_string_pointer, output_string_pointer);
+
+	// get output string pointer
+
+	char *output = (char *)output_string_pointer;
+
+	// append information to string
+
+	sprintf(output + strlen(output), "  Price is scaled to basic mineral cost multiplier: %d.", tx_basic->mineral_cost_multi);
+
+}
+
+/*
+Scales value to basic mineral cost multiplier.
+*/
+int scaleValueToBasicMinieralCostMultiplier(int factionId, int value)
+{
+	// get mineral cost multiplier
+
+	int mineralCostMultiplier = tx_basic->mineral_cost_multi;
+
+	// get mineral cost factor
+
+	int mineralCostFactor = tx_cost_factor(factionId, 1, -1);
+
+	// scale value
+
+	int scaledValue = (value * mineralCostMultiplier + mineralCostFactor / 2) / mineralCostFactor;
+
+	// return value
+
+	return scaledValue;
+
+}
+

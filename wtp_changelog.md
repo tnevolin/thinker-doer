@@ -1,8 +1,19 @@
+# Version 150
+
+**Experimental**
+
+*Original functionality is scattered across the code and is heavily hardcoded. This modification may make game crash or display incorrect results.*
+
+* All direct mineral contributions are scaled to basic mineral cost multiplier in alphax.ini. That effectivelly ignores INDUSTRY rating impact on such contributions.
+  * Alien Artifact is cached at base contributing to project or prototype production.
+  * Unit is disbanded at base contributing to current production. This is actually already scaled in vanilla so no changes were needed.
+  * Hurrying production. Hurrying cost is not dependent on INDUSTRY rating anymore.
+
 # Version 149
 
 **Experimental**
 
-Original functionality is scattered across the code and is heavily hardcoded. This modification may make game crash or display incorrect results.
+*Original functionality is scattered across the code and is heavily hardcoded. This modification may make game crash or display incorrect results.*
 
 * [Flat extra prototype cost](https://github.com/tnevolin/thinker-doer#flat-extra-prototype-cost) formula is enabled by flat_extra_prototype_cost parameter in thinker.ini.
 
@@ -902,15 +913,4 @@ Special testing version.
 # Version 20
 
 Initial release. See list of changes in readme.
-
-# TODO
-
-* Rework probe team success rates.
-
-## AI
-
-* Expand more.
-* Control transports better.
-* Do not build expensive units taking long to produce.
-* Colony search for base should be more straightforward.
 

@@ -149,6 +149,12 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y);
 int calculateExtraPrototypeCost(int factionId, int chassisId, int weaponId, int armorId);
 HOOK_API int modifiedExtraPrototypeCost(int unitId);
 HOOK_API int calculateExtraPrototypeCostForDesign(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level);
+HOOK_API int getActiveFactionMineralCostFactor();
+HOOK_API void displayArtifactMineralContributionInformation(int input_string_pointer, int output_string_pointer);
+HOOK_API int getCurrentBaseProductionMineralCost();
+HOOK_API int getCurrentBaseProductionRemainingMineralsScaledToBasicMineralCostMultiplier();
+HOOK_API void displayHurryPriceScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer);
+int scaleValueToBasicMinieralCostMultiplier(int factionId, int value);
 
 #endif // __PROTOTYPE_H__
 
