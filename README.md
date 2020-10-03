@@ -288,6 +288,15 @@ This mod removes all hurry cost penalty thresholds. I never could grasp their st
 
 Now all hurry costs are flat x2 for facilities and x4 for units and projects.
 
+# Mineral contribution exploit fix
+
+INDUSTRY rating is supposed to modify base production speed. Instead it modifies production item mineral cost, due to strange design approach. This allows few exploits as well as tangling between INDUSTRY rating and hurry cost. Following changes were introduced to avoid all these problems.
+
+* All direct mineral contributions are scaled to basic mineral cost multiplier in alphax.ini. That effectivelly ignores INDUSTRY rating impact on such contributions.
+  * Alien Artifact is cached at base contributing to project or prototype production.
+  * Unit is disbanded at base contributing to current production. This is actually already scaled in vanilla so no changes were needed.
+  * Hurrying production. Hurrying cost is not dependent on INDUSTRY rating anymore.
+
 # Secret Project costs
 
 Increasing cost of SP to make AI build it longer so that other AI and human can compete longer for them and less research advanced factions can still get some of them.
