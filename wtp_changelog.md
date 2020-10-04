@@ -1,3 +1,7 @@
+# Version 151
+
+Spore Launcher cost = 8. Otherwise people prefer to build it for defense. They should be equal in price with other low psi unit types.
+
 # Version 150
 
 **Experimental**
