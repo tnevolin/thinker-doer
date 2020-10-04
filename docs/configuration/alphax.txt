@@ -614,7 +614,7 @@ Unity Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Disable, -1
 Unity Scout Chopper,    Copter,   Gun,          Scout,      4, 0, 0, Disable, -1, 00000000000000000000100000
 Unity Foil,             Foil,     Transport,    Scout,      7, 0, 0, Disable, -1, 00100000000000000000000000
 Sealurk,                Foil,     Psi,          Psi,        6, 8, 0, Bioadap,  4, 00000000000000000001000000
-Spore Launcher,         Infantry, Psi,          Psi,        0, 4, 0, Bioadap,  5, 00000000001000000000000000
+Spore Launcher,         Infantry, Psi,          Psi,        0, 8, 0, Bioadap,  5, 00000000001000000000000000
 Battle Ogre MK1,        Infantry, R-Laser,      3-Res,      0,10, 0, Disable,  6, 00010000000000000000000000
 Battle Ogre MK2,        Infantry, R-Bolt,       8-Res,      0,15, 0, Disable,  6, 10010000000000000000000000
 Battle Ogre MK3,        Speeder,  String,       Stasis,     0,20, 0, Disable,  6, 10010000000000000000000000
