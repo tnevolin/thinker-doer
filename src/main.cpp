@@ -317,6 +317,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "fix_former_wake"))
+    {
+        cf->fix_former_wake = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

@@ -3326,7 +3326,10 @@ bool patch_setup(Config* cf) {
 
 	patch_base_first();
 
-	patch_veh_wake();
+	if (cf->fix_former_wake)
+	{
+		patch_veh_wake();
+	}
 
 	if (cf->flat_extra_prototype_cost)
 	{
