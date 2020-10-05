@@ -44,7 +44,7 @@
 100,     ; Extra percentage cost of prototype LAND unit
 100,     ; Extra percentage cost of prototype SEA unit
 100,     ; Extra percentage cost of prototype AIR unit
-1,1,     ; Psi combat offense-to-defense ratio (LAND unit defending)
+3,2,     ; Psi combat offense-to-defense ratio (LAND unit defending)
 1,1,     ; Psi combat offense-to-defense ratio (SEA unit defending)
 1,1,     ; Psi combat offense-to-defense ratio (AIR unit defending)
 10,      ; Players' starting energy reserves
@@ -119,7 +119,7 @@ Farm,             None,    Kelp Farm,        None,     4,  Cultivate $STR0, f, F
 Soil Enricher,    EcoEng2, Soil Enricher,    Disable,  8,  Construct $STR0, f, F
 Mine,             None,    Mining Platform,  None,     8,  Construct $STR0, M, M
 Solar Collector,  None,    Tidal Harness,    None,     4,  Construct $STR0, S, S
-Forest,           None,    ...,              Disable,  8,  Plant $STR0,     F, Shift+F
+Forest,           None,    ...,              Disable,  4,  Plant $STR0,     F, Shift+F
 Road,             None,    Road,             Disable,  1,  Build $STR0,     R, R
 Mag Tube,         Magnets, Mag Tube,         Disable,  3,  Build $STR0,     R, R
 Bunker,           Disable, Bunker,           Disable,  5,  Construct $STR0, K, K

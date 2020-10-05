@@ -1,7 +1,14 @@
+# Version 155
+
+* Reverting few things to vanilla defaults. They still can be changed in thinker.ini. People seem to like vanilla preferences.
+  * 3,2,     ; Psi combat offense-to-defense ratio (LAND unit defending)
+  * disable_planetpearls=0
+  * default_morale_very_green=0
+  * Forest terraforming rate = 4
+
 # Version 154
 
 * Disabled enhanced native life generator. Now it is back to vanilla values. Players still can turn on on by using these properties: native_life_generator_constant, native_life_generator_multiplier.
-
 
 # Version 153
 
