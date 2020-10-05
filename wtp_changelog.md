@@ -1,6 +1,10 @@
+# Version 152
+
+* BUG: Forgot to revert Pressure Dome maintenance back to 0 when detached Recycling Tanks functionality from it.
+
 # Version 151
 
-Spore Launcher cost = 8. Otherwise people prefer to build it for defense. They should be equal in price with other low psi unit types.
+* Spore Launcher cost = 8. Otherwise people prefer to build it for defense. They should be equal in price with other low psi unit types.
 
 # Version 150
 
