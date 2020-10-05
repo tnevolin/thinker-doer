@@ -1,3 +1,8 @@
+# Version 154
+
+* Disabled enhanced native life generator. Now it is back to vanilla values. Players still can turn on on by using these properties: native_life_generator_constant, native_life_generator_multiplier.
+
+
 # Version 153
 
 * Added configuration option for former wake fix: fix_former_wake.
