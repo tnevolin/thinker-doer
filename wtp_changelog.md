@@ -1,3 +1,7 @@
+# Version 153
+
+* Added configuration option for former wake fix: fix_former_wake.
+
 # Version 152
 
 * BUG: Forgot to revert Pressure Dome maintenance back to 0 when detached Recycling Tanks functionality from it.

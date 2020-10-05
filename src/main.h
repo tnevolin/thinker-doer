@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 152"
+    #define MOD_VERSION "The Will to Power mod - version 153"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -169,6 +169,7 @@ struct Config {
     double tech_cost_scale = 1.0;
     bool flat_extra_prototype_cost = false;
     bool fix_mineral_contribution = false;
+    bool fix_former_wake = false;
     bool ai_useWTPAlgorithms;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_truce;
