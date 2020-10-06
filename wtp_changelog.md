@@ -1,3 +1,7 @@
+# Version 156
+
+* Reinstating forest terraforming rate = 8. Sorry about musical chair.
+
 # Version 155
 
 * Reverting few things to vanilla defaults. They still can be changed in thinker.ini. People seem to like vanilla preferences.
