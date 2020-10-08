@@ -1,3 +1,7 @@
+# Version 156
+
+* Added build support and installation step for multiplayer configuration files.
+
 # Version 155
 
 * BUG: Version 150: Alien Artifact is cached at base contributing to project or prototype production. \
