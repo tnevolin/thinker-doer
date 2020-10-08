@@ -1,12 +1,20 @@
-# Version 156
+# Version 158
 
 * Added build support and installation step for multiplayer configuration files.
 
-# Version 155
+# Version 157
 
 * BUG: Version 150: Alien Artifact is cached at base contributing to project or prototype production. \
 That didn't actuially contributed anything due to incorrect ASM sequence. As warned! :)\
 Should be fixed now. At least I have tested the case with not first base and with some existing accumulated minerals.
+
+# Version 156
+
+Cancelled.
+
+# Version 155
+
+Cancelled.
 
 # Version 154
 
