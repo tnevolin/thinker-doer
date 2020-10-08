@@ -1,3 +1,9 @@
+# Version 155
+
+* BUG: Version 150: Alien Artifact is cached at base contributing to project or prototype production. \
+That didn't actuially contributed anything due to incorrect ASM sequence. As warned! :)\
+Should be fixed now. At least I have tested the case with not first base and with some existing accumulated minerals.
+
 # Version 154
 
 * Disabled enhanced native life generator. Now it is back to vanilla values. Players still can turn on on by using these properties: native_life_generator_constant, native_life_generator_multiplier.

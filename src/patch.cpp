@@ -2700,47 +2700,46 @@ void patch_mineral_contribution()
 {
 	// adjust artifact mineral contribution
 
-	int artifact_mineral_contribution1_bytes_length = 0x02;
+	int artifact_mineral_contribution_bytes_length = 0x1f;
 /*
-0:  8b c2                   mov    eax,edx
+0:  8d 14 f6                lea    edx,[esi+esi*8]
+3:  53                      push   ebx
+4:  8d 0c 56                lea    ecx,[esi+edx*2]
+7:  33 d2                   xor    edx,edx
+9:  8a 90 91 b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab891]
+f:  8b c2                   mov    eax,edx
+11: 8d 0c 8e                lea    ecx,[esi+ecx*4]
+14: c1 e1 02                shl    ecx,0x2
+17: 8d 04 80                lea    eax,[eax+eax*4]
+1a: d1 e0                   shl    eax,1
+1c: 99                      cdq
+1d: 2b c2                   sub    eax,edx
 */
-	byte artifact_mineral_contribution1_bytes_old[] = { 0x8B, 0xC2 };
+	byte artifact_mineral_contribution_bytes_old[] = { 0x8D, 0x14, 0xF6, 0x53, 0x8D, 0x0C, 0x56, 0x33, 0xD2, 0x8A, 0x90, 0x91, 0xB8, 0x9A, 0x00, 0x8B, 0xC2, 0x8D, 0x0C, 0x8E, 0xC1, 0xE1, 0x02, 0x8D, 0x04, 0x80, 0xD1, 0xE0, 0x99, 0x2B, 0xC2 };
 /*
-0:  52                      push   edx
-1:  90                      nop
+0:  53                      push   ebx
+1:  31 d2                   xor    edx,edx
+3:  8a 90 91 b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab891]
+9:  52                      push   edx
+a:  e8 fd ff ff ff          call   c <_main+0xc>     ; getActiveFactionMineralCostFactor
+f:  5a                      pop    edx
+10: f7 e2                   mul    edx
+12: 8d 14 f6                lea    edx,[esi+esi*8]
+15: 8d 0c 56                lea    ecx,[esi+edx*2]
+18: 8d 0c 8e                lea    ecx,[esi+ecx*4]
+1b: c1 e1 02                shl    ecx,0x2
+1e: 90                      nop
 */
-	byte artifact_mineral_contribution1_bytes_new[] = { 0x52, 0x90 };
+	byte artifact_mineral_contribution_bytes_new[] = { 0x53, 0x31, 0xD2, 0x8A, 0x90, 0x91, 0xB8, 0x9A, 0x00, 0x52, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x5A, 0xF7, 0xE2, 0x8D, 0x14, 0xF6, 0x8D, 0x0C, 0x56, 0x8D, 0x0C, 0x8E, 0xC1, 0xE1, 0x02, 0x90 };
 	write_bytes
 	(
-		0x005996D8,
-		artifact_mineral_contribution1_bytes_length,
-		artifact_mineral_contribution1_bytes_old,
-		artifact_mineral_contribution1_bytes_new
+		0x005996C9,
+		artifact_mineral_contribution_bytes_length,
+		artifact_mineral_contribution_bytes_old,
+		artifact_mineral_contribution_bytes_new
 	);
 
-	int artifact_mineral_contribution2_bytes_length = 0x08;
-/*
-0:  8d 04 80                lea    eax,[eax+eax*4]
-3:  d1 e0                   shl    eax,1
-5:  99                      cdq
-6:  2b c2                   sub    eax,edx
-*/
-	byte artifact_mineral_contribution2_bytes_old[] = { 0x8D, 0x04, 0x80, 0xD1, 0xE0, 0x99, 0x2B, 0xC2 };
-/*
-0:  e8 f1 73 02 00          call   273f6 <_main+0x273f6>
-5:  5a                      pop    edx
-6:  f7 e2                   mul    edx
-*/
-	byte artifact_mineral_contribution2_bytes_new[] = { 0xE8, 0xF1, 0x73, 0x02, 0x00, 0x5A, 0xF7, 0xE2 };
-	write_bytes
-	(
-		0x005996E0,
-		artifact_mineral_contribution2_bytes_length,
-		artifact_mineral_contribution2_bytes_old,
-		artifact_mineral_contribution2_bytes_new
-	);
-
-	write_call(0x005996E0, (int)getActiveFactionMineralCostFactor);
+	write_call(0x005996D3, (int)getActiveFactionMineralCostFactor);
 
 	// display artifact mineral contribution for project
 
