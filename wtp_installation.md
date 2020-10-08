@@ -25,6 +25,10 @@ This is an optional faction modifications. Feel free to use standard or your own
 
 Copy files from **factions** folder to game directory overriding existing files.
 
+## Multiplayer
+
+Copy files from **multiplayer** folder to game directory overriding existing files. These are multiplayer version of game configuration.
+
 # Run
 
 Run terranx_mod.exe
