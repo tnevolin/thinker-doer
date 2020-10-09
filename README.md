@@ -14,7 +14,8 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
 * bvanevery: Play testing and help in design. Especially nice ideas and analysis in area of reactors and combat.
 * dino: Play testing and alternative combat round resolution mechanics idea.
-* Nevill and Tayta: Multiplyer play testing and multiplier text configuration.
+* Nevill and Tayta Malikai: Multiplyer play testing and multiplier text configuration.
+* Tayta Malikai: crash reports and test cases investigations.
 * Mercantile Interest: Alternative nutrient model idea.
 * EmpathCrawler: Play testing. Discovered Brood Pit morale bug.
 

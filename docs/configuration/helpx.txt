@@ -240,10 +240,11 @@ Disables base intrinsic defense bonus.
 #; Tachyon Field
 #HELPFAC5
 Disables base intrinsic defense bonus.
-Adds 50% defense bonus to units at base against all conventional attacks cumulative with other defensive facilities. This effectively raises unit defense bonus to 150% when combined with $LINK<Perimeter Defense=100004>, $LINK<Naval Yard=100028> or $LINK<Aerospace Complex=100029>.
-^Defensife facilities do not work against $LINK<Psi Attacks=38>.
-^
+Adds 50% defense bonus to units at base against all conventional attacks cumulative with other defensive facilities.
+This effectively raises unit defense bonus to 150% when combined with $LINK<Perimeter Defense=100004>, $LINK<Naval Yard=100028> or $LINK<Aerospace Complex=100029>.
 ^Can only be constructed in a base which already has a $LINK<Perimeter Defense=100004>.
+^
+^$LINK<Psi Attacks=38> ignores this and other defensive facilities.
 
 #; Recreation Commons
 #HELPFAC6
