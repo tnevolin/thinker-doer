@@ -143,7 +143,6 @@ void recreateInitialColonies(int factionId);
 double getVehicleSpeedWithoutRoads(int id);
 double getLandVehicleSpeedOnRoads(int id);
 double getLandVehicleSpeedOnTubes(int id);
-void distributeSupport(int factionId);
 HOOK_API void modifiedWorldBuild();
 HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y);
 int calculateExtraPrototypeCost(int factionId, int chassisId, int weaponId, int armorId);

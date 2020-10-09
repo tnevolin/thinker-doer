@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 159"
+    #define MOD_VERSION "The Will to Power mod - version 160"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -159,7 +159,6 @@ struct Config {
     bool native_life_generator_more_sea_creatures = false;
     bool native_disable_sudden_death = false;
     bool alternative_inefficiency = false;
-    int unit_home_base_reassignment_production_threshold = 0;
     double ocean_depth_multiplier = 1.0;
     bool zoc_regular_army_sneaking_disabled = false;
     int pts_new_base_size_less_average = 2;
