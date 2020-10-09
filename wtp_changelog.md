@@ -1,3 +1,8 @@
+# Version 160
+
+* Removed: Combat units are reassigned to avoid oversupport. Configuration parameter: unit_home_base_reassignment_production_threshold.\
+Apparently, this is too narrow focused fix that breaks AI in other areas. Not worth it.
+
 # Version 159
 
 * BUG: Too long line in help entry caused game crash. Fixed Tachyon Field, Growth, Industry entries.

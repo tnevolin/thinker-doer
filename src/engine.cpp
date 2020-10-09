@@ -97,14 +97,6 @@ HOOK_API int faction_upkeep(int faction) {
 
     init_save_game(faction);
 
-    // distributing support across bases
-	// affects normal factions only
-
-	if (faction != 0)
-	{
-		distributeSupport(faction);
-	}
-
     *(int*)0x93A934 = 1;
     social_upkeep(faction);
     do_all_non_input();
