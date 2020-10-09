@@ -1054,8 +1054,12 @@ from home):
 
 #;Growth
 #HELPEFFECT6
-{Growth} affects the number of columns in base population growth rate. The higher the score, the fewer
-$LINK<Nutrients=31> bases need in order to grow. Numbers below represent an actual percentage change, not number of columns. For example, AI starts with 7 nutrient columns at Transcend difficulty. +5 GROWTH then will reduce this to 7 * 0.5 = 3.5 columns, not 2.
+{Growth} affects the number of columns in base accumulated nutrients box.
+The higher the rating, the fewer $LINK<Nutrients=31> bases need in order to grow.
+Numbers below represent an actual percentage change, not number of columns.
+^Example, AI starts with 7 nutrient columns at Transcend difficulty. +5 GROWTH then will reduce this to 7 * 0.5 = 3.5 = 4 columns, not 2.
+^WtP extends scale to +10.
+^
 ^    -3 = [population does not grow]
 ^    -2 = +20% nutrient required =   83% growth rate
 ^    -1 = +10% nutrient required =   91% growth rate
@@ -1065,13 +1069,9 @@ $LINK<Nutrients=31> bases need in order to grow. Numbers below represent an actu
 ^    +3 = -30% nutrient required =  143% growth rate
 ^    +4 = -40% nutrient required =  167% growth rate
 ^    +5 = -50% nutrient required =  200% growth rate!
-^    +6 = [Population Boom!!]
-^
-^=WtP=
-^Scale is extended up to +10.
 ^    +6 = -60% nutrient required =  250% growth rate!
 ^    +7 = -70% nutrient required =  333% growth rate!
-^    +8 = -80% nutrient required =  500% growth rate!
+^    +8 = -80% nutrient required =   500% growth rate!
 ^    +9 = -90% nutrient required = 1000% growth rate!
 ^    +10= [Population Boom!!]
 
@@ -1100,17 +1100,20 @@ unit is equipped with the $LINK<Algorithmic Enhancement=80028> special ability
 
 #;Industry
 #HELPEFFECT9
-{Industry} affects number of columns in base production box. A higher score reduces the
-number of $LINK<Minerals=27> required to build units and facilities. Numbers below represent an actual percentage change, not number of columns. For example, AI starts with 7 mineral columns at Transcend difficulty. +5 INDUSTRY then will reduce this to 7 * 0.5 = 3.5 columns, not 2.
-^    -3 = Mineral costs increased by 30%    =  77% production speed
-^    -2 = Mineral costs increased by 20%    =  83% production speed
-^    -1 = Mineral costs increased by 10%    =  91% production speed
+{Industry} affects number of columns in base production box.
+A higher score reduces the number of $LINK<Minerals=27> required to build units and facilities.
+Numbers below represent an actual percentage change, not number of columns.
+^Example, AI starts with 7 mineral columns at Transcend difficulty. +5 INDUSTRY then will reduce this to 7 * 0.5 = 3.5 = 4 columns, not 2.
+^
+^    -3 = Mineral costs increased by 30%    =   77% production speed
+^    -2 = Mineral costs increased by 20%    =   83% production speed
+^    -1 = Mineral costs increased by 10%    =   91% production speed
 ^    0 = Normal production rate
 ^    +1 = Mineral costs decreased by 10%    = 111% production speed
 ^    +2 = Mineral costs decreased by 20%    = 125% production speed
-^    +3 = Mineral costs decreased by 30%!   = 143% production speed
-^    +4 = Mineral costs decreased by 40%!!  = 167% production speed
-^    +5 = Mineral costs decreased by 50%!!! = 200% production speed
+^    +3 = Mineral costs decreased by 30%    = 143% production speed !
+^    +4 = Mineral costs decreased by 40%    = 167% production speed !!
+^    +5 = Mineral costs decreased by 50%    = 200% production speed !!!
 
 #;Research
 #HELPEFFECT10

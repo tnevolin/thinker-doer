@@ -1,6 +1,6 @@
 # Version 159
 
-* BUG: Too long line in Tachyon Field help entry caused game crash. Fixed now.
+* BUG: Too long line in help entry caused game crash. Fixed Tachyon Field, Growth, Industry entries.
 
 # Version 158
 
