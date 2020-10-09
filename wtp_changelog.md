@@ -1,3 +1,7 @@
+# Version 159
+
+* BUG: Too long line in Tachyon Field help entry caused game crash. Fixed now.
+
 # Version 158
 
 * Added build support and installation step for multiplayer configuration files.
