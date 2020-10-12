@@ -1,3 +1,7 @@
+# Version 161
+
+* Police State: replaced -INDUSTRY with -GROWTH. People say former is to harsh penalty for it.
+
 # Version 160
 
 * Removed: Combat units are reassigned to avoid oversupport. Configuration parameter: unit_home_base_reassignment_production_threshold.\
