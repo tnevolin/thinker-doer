@@ -1,3 +1,14 @@
+# Version 163
+
+* Reverted all native life generator parameters to vanilla. Native life should be back to normal.
+  * native_life_generator_constant=2
+	* native_life_generator_multiplier=2
+	* native_life_generator_more_sea_creatures=0
+	* native_disable_sudden_death=0
+
+* Scaled tech cost up a little. It seems that research are coming in too quick succestion. This'll also give some value back to RESEARCH.
+  * tech_cost_scale=1.25
+
 # Version 162
 
 * Partial hurry option in hurry dialog displays addition information on minimal hurry cost to completion.
