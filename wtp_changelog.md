@@ -1,3 +1,7 @@
+# Version 162
+
+* Partial hurry option in hurry dialog displays addition information on minimal hurry cost to completion.
+
 # Version 161
 
 * Police State: replaced -INDUSTRY with -GROWTH. People say former is to harsh penalty for it.

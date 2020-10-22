@@ -152,8 +152,11 @@ HOOK_API int getActiveFactionMineralCostFactor();
 HOOK_API void displayArtifactMineralContributionInformation(int input_string_pointer, int output_string_pointer);
 HOOK_API int getCurrentBaseProductionMineralCost();
 HOOK_API int getCurrentBaseProductionRemainingMineralsScaledToBasicMineralCostMultiplier();
-HOOK_API void displayHurryPriceScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer);
+HOOK_API void displayHurryCostScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer);
 int scaleValueToBasicMinieralCostMultiplier(int factionId, int value);
+HOOK_API void displayPartialHurryCostToCompleteNextTurnInformation(int input_string_pointer, int output_string_pointer);
+int getPartialHurryCostToCompleteNextTurn();
+int getProportionalHurryCost(int factionId, int item, int minerals);
 
 #endif // __PROTOTYPE_H__
 
