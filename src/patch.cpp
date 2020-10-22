@@ -2789,7 +2789,8 @@ f:  a1 30 ea 90 00          mov    eax,ds:0x90ea30
 
 	write_call(0x00418F93, (int)getCurrentBaseProductionMineralCost);
 	write_call(0x00418F9B, (int)getCurrentBaseProductionRemainingMineralsScaledToBasicMineralCostMultiplier);
-	write_call(0x004192A5, (int)displayHurryPriceScaledToBasicMineralCostMultiplierInformation);
+	write_call(0x004192A5, (int)displayHurryCostScaledToBasicMineralCostMultiplierInformation);
+	write_call(0x004192FF, (int)displayPartialHurryCostToCompleteNextTurnInformation);
 
 }
 

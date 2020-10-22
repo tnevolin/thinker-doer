@@ -2536,7 +2536,7 @@ HOOK_API int getCurrentBaseProductionRemainingMineralsScaledToBasicMineralCostMu
 
 }
 
-HOOK_API void displayHurryPriceScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer)
+HOOK_API void displayHurryCostScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer)
 {
 	// execute original function
 
@@ -2548,7 +2548,7 @@ HOOK_API void displayHurryPriceScaledToBasicMineralCostMultiplierInformation(int
 
 	// append information to string
 
-	sprintf(output + strlen(output), "  Price is scaled to basic mineral cost multiplier: %d.", tx_basic->mineral_cost_multi);
+	sprintf(output + strlen(output), " (hurry cost is scaled to basic mineral cost multiplier: %d)", tx_basic->mineral_cost_multi);
 
 }
 
@@ -2567,11 +2567,100 @@ int scaleValueToBasicMinieralCostMultiplier(int factionId, int value)
 
 	// scale value
 
-	int scaledValue = (value * mineralCostMultiplier + mineralCostFactor / 2) / mineralCostFactor;
+	int scaledValue = (int)round((double)(value * mineralCostMultiplier) / (double)mineralCostFactor);
 
 	// return value
 
 	return scaledValue;
+
+}
+
+HOOK_API void displayPartialHurryCostToCompleteNextTurnInformation(int input_string_pointer, int output_string_pointer)
+{
+	// execute original function
+
+	tx_parse_string(input_string_pointer, output_string_pointer);
+
+	// apply additional information message only when simplified hurry cost calculation is enabled
+
+	if (!(conf.disable_hurry_penalty_threshold && conf.alternative_unit_hurry_formula))
+		return;
+
+	// get output string pointer
+
+	char *output = (char *)output_string_pointer;
+
+	// append information to string
+
+	sprintf(output + strlen(output), " (minimal hurry cost to complete production next turn = %d)", getPartialHurryCostToCompleteNextTurn());
+
+}
+
+/*
+Calculates partial hurry cost to complete next turn.
+Applied to the current base.
+*/
+int getPartialHurryCostToCompleteNextTurn()
+{
+	// get current base
+
+	int baseId = *current_base_id;
+	BASE *base = *current_base_ptr;
+
+	// get minerals neede to hurry for next turn completion
+
+	int mineralsToHurry = mineral_cost(base->faction_id, base->queue_items[0], baseId) - base->minerals_accumulated - base->mineral_surplus;
+
+	// calculate partial hurry cost
+
+	int partialHurryCost = getProportionalHurryCost(base->faction_id, base->queue_items[0], mineralsToHurry);
+
+	return partialHurryCost;
+
+}
+
+/*
+Calculates hurry cost for alternative (flat) cost formula.
+*/
+int getProportionalHurryCost(int factionId, int item, int minerals)
+{
+	// apply only when simplified hurry cost calculation is enabled
+
+	if (!(conf.disable_hurry_penalty_threshold && conf.alternative_unit_hurry_formula))
+		return 0;
+
+	// scales minerals to mineral cost multiplier if configured
+
+	if (conf.fix_mineral_contribution)
+	{
+		minerals = scaleValueToBasicMinieralCostMultiplier(factionId, minerals);
+	}
+
+	// calculate hurry mineral cost
+
+	int hurryMineralCost;
+
+	// unit
+	if (item >= 0)
+	{
+		hurryMineralCost = 4;
+	}
+	// project
+	else if (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST)
+	{
+		hurryMineralCost = 4;
+	}
+	// facility
+	else
+	{
+		hurryMineralCost = 2;
+	}
+
+	// calculate hurry cost
+
+	int hurryCost = hurryMineralCost * minerals;
+
+	return hurryCost;
 
 }
 
