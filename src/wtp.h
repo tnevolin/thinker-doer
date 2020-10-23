@@ -1,5 +1,5 @@
-#ifndef __PROTOTYPE_H__
-#define __PROTOTYPE_H__
+#ifndef __WTP_H__
+#define __WTP_H__
 
 #include "main.h"
 #include "game.h"
@@ -158,5 +158,5 @@ HOOK_API void displayPartialHurryCostToCompleteNextTurnInformation(int input_str
 int getPartialHurryCostToCompleteNextTurn();
 int getProportionalHurryCost(int factionId, int item, int minerals);
 
-#endif // __PROTOTYPE_H__
+#endif // __WTP_H__
 

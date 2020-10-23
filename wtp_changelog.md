@@ -1,3 +1,11 @@
+# Version 165
+
+* Introduced negative ability values into unit cost calculation.
+* Introduced (010000000000 = Cost increased for land units) ability flag into unit cost calculation.
+* Deep Radar is free for sea/air and 1 for land.
+* Air Superiority is free for sea/air and 1 for land.
+
+
 # Version 164
 
 * Wealth,          IndAuto,   +ECONOMY,   --MORALE,     -PLANET,    ++INDUSTRY. Replaced POLICE penalty with PLANET one.
