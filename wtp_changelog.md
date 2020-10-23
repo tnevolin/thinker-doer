@@ -1,3 +1,7 @@
+# Version 164
+
+* Wealth,          IndAuto,   +ECONOMY,   --MORALE,     -PLANET,    ++INDUSTRY. Replaced POLICE penalty with PLANET one.
+
 # Version 163
 
 * Reverted all native life generator parameters to vanilla. Native life should be back to normal.

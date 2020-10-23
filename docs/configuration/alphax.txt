@@ -886,7 +886,7 @@ Green,           CentEmp,  ++EFFIC,     --GROWTH,    ++PLANET,    ++TALENT
 Survival,        None,
 Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +GROWTH,    --INDUSTRY
 Knowledge,       Cyber,    ++EFFIC,      -GROWTH,    --PROBE,  +++++RESEARCH
-Wealth,          IndAuto,   +ECONOMY,   --MORALE,     -POLICE,    ++INDUSTRY
+Wealth,          IndAuto,   +ECONOMY,   --MORALE,     -PLANET,    ++INDUSTRY
 None,            None,
 Cybernetic,      Algor,    ++EFFIC,   ----POLICE,    ++PLANET,    ++RESEARCH
 Eudaimonic,      Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,     +GROWTH
