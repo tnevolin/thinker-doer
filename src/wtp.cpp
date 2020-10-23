@@ -337,20 +337,26 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     double fission_reactor_cost_factor = (double)conf.reactor_cost_factors[0] / 100.0;
     double reactor_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1] / 100.0;
 
+    // get component values
+
+    int weapon_offence_value = tx_weapon[weapon_id].offense_value;
+    int armor_defense_value = tx_defense[armor_id].defense_value;
+    int chassis_speed = tx_chassis[chassis_id].speed;
+
     // determine whether we have module or weapon
 
     bool module = (tx_weapon[weapon_id].mode >= WMODE_TRANSPORT);
 
     // get component costs
 
-    double weapon_cost = (double)tx_weapon[weapon_id].cost;
-    double armor_cost = (double)tx_defense[armor_id].cost;
-    double chassis_cost = (double)tx_chassis[chassis_id].cost;
+    int weapon_cost = tx_weapon[weapon_id].cost;
+    int armor_cost = tx_defense[armor_id].cost;
+    int chassis_cost = tx_chassis[chassis_id].cost;
 
     // calculate items reactor modified costs
 
-    double weapon_reactor_modified_cost = weapon_cost * (module ? fission_reactor_cost_factor : reactor_cost_factor);
-    double armor_reactor_modified_cost = armor_cost * reactor_cost_factor;
+    double weapon_reactor_modified_cost = (double)weapon_cost * (module ? fission_reactor_cost_factor : reactor_cost_factor);
+    double armor_reactor_modified_cost = (double)armor_cost * reactor_cost_factor;
 
     // select primary item and secondary item shifted costs
 
@@ -360,12 +366,12 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     if (weapon_reactor_modified_cost >= armor_reactor_modified_cost)
 	{
 		primary_item_cost = weapon_reactor_modified_cost;
-		secondary_item_shifted_cost = (armor_cost - 1) * reactor_cost_factor;
+		secondary_item_shifted_cost = ((double)armor_cost - 1) * reactor_cost_factor;
 	}
 	else
 	{
 		primary_item_cost = armor_reactor_modified_cost;
-		secondary_item_shifted_cost = (weapon_cost - 1) * (module ? fission_reactor_cost_factor : reactor_cost_factor);
+		secondary_item_shifted_cost = ((double)weapon_cost - 1) * (module ? fission_reactor_cost_factor : reactor_cost_factor);
 	}
 
     // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
@@ -374,37 +380,87 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     // calculate base unit cost without abilities
 
-    int base_cost = (int)round((primary_item_cost + secondary_item_shifted_cost / 2) * chassis_cost / 2);
+    double base_cost = (primary_item_cost + secondary_item_shifted_cost / 2) * chassis_cost / 2;
 
     // get abilities cost modifications
 
-    double abilities_cost_factor = 0;
+    int abilities_cost_factor = 0;
     int abilities_cost_addition = 0;
+
     for (int ability_id = 0; ability_id < 32; ability_id++)
     {
         if (((abilities >> ability_id) & 0x1) == 0x1)
         {
             int ability_cost = tx_ability[ability_id].cost;
 
-            // take ability cost factor bits: 0-3
-
-            int ability_cost_factor = (ability_cost & 0xF);
-
-            if (ability_cost_factor > 0)
+            switch (ability_cost)
             {
-                abilities_cost_factor += (double)ability_cost_factor;
+            	// increased with weapon/armor ratio
+			case -1:
+				abilities_cost_factor += min(2, max(0, weapon_offence_value / armor_defense_value));
+				break;
+
+            	// increased with weapon
+			case -2:
+				abilities_cost_factor += weapon_offence_value;
+				break;
+
+            	// increased with armor
+			case -3:
+				abilities_cost_factor += armor_defense_value;
+				break;
+
+            	// increased with speed
+			case -4:
+				abilities_cost_factor += chassis_speed;
+				break;
+
+            	// increased with weapon + armor
+			case -5:
+				abilities_cost_factor += weapon_offence_value + armor_defense_value;
+				break;
+
+            	// increased with weapon + speed
+			case -6:
+				abilities_cost_factor += weapon_offence_value + chassis_speed;
+				break;
+
+            	// increased with armor + speed
+			case -7:
+				abilities_cost_factor += armor_defense_value + chassis_speed;
+				break;
+
+				// positive values
+			default:
+
+				// take ability cost factor bits: 0-3
+
+				int ability_proportional_value = (ability_cost & 0xF);
+
+				if (ability_proportional_value > 0)
+				{
+					abilities_cost_factor += ability_proportional_value;
+
+				}
+
+				// take ability cost addition bits: 4-7
+
+				int ability_flat_value = ((ability_cost >> 4) & 0xF);
+
+				if (ability_flat_value > 0)
+				{
+					abilities_cost_addition += ability_flat_value;
+
+				}
 
             }
 
-            // take ability cost addition bits: 4-7
+            // special case: cost increased for land units
 
-            int ability_cost_addition = ((ability_cost >> 4) & 0xF);
-
-            if (ability_cost_addition > 0)
-            {
-                abilities_cost_addition += ability_cost_addition;
-
-            }
+            if ((tx_ability[ability_id].flags & AFLAG_COST_INC_LAND_UNIT) && tx_chassis[chassis_id].triad == TRIAD_LAND)
+			{
+				abilities_cost_factor += 1;
+			}
 
         }
 
@@ -424,7 +480,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 				base_cost
                 *
                 // abilities cost factor
-                (1.0 + 0.25 * abilities_cost_factor)
+                (1.0 + 0.25 * (double)abilities_cost_factor)
             )
             +
             // abilities flat cost
