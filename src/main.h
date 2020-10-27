@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 165"
+    #define MOD_VERSION "The Will to Power mod - version 167"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -170,6 +170,9 @@ struct Config {
     bool fix_mineral_contribution = false;
     bool fix_former_wake = false;
     bool ai_useWTPAlgorithms;
+    double ai_production_vanilla_priority_unit;
+    double ai_production_vanilla_priority_project;
+    double ai_production_vanilla_priority_facility;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_truce;
     double ai_production_threat_coefficient_treaty;
@@ -182,7 +185,7 @@ struct Config {
     double ai_production_ocean_expansion_coverage;
     double ai_production_expansion_priority;
     int ai_production_combat_unit_turns_limit;
-    double ai_production_facility_effect_coefficient;
+    double ai_production_facility_priority_penalty;
     int ai_production_combat_unit_min_mineral_surplus;
     double ai_production_exploration_coverage;
     double ai_production_improvement_coverage;

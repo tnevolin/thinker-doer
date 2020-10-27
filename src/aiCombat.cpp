@@ -272,7 +272,7 @@ int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2)
 	return (o1.value > o2.value);
 }
 
-int enemyMoveCombat(int id)
+int enemyMoveCombat(int vehicleId)
 {
 	// use WTP algorithm for selected faction only
 
@@ -281,30 +281,38 @@ int enemyMoveCombat(int id)
 
 	// get vehicle
 
-	VEH *vehicle = &(tx_vehicles[id]);
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
 
-	// restore ai id
+	// restore ai vehicleId
 
 	int aiVehicleId = vehicle->pad_0;
 
-	debug("[%d->%d] (%3d,%3d)\n", aiVehicleId, id, vehicle->x, vehicle->y);
+	debug("[%d->%d] (%3d,%3d)\n", aiVehicleId, vehicleId, vehicle->x, vehicle->y);
 
-	// find vehicle order
+	// process vehicle order if any assigned
 
-	std::unordered_map<int, COMBAT_ORDER>::iterator combatOrdersIterator = combatOrders.find(aiVehicleId);
+	if (combatOrders.count(aiVehicleId) != 0)
+	{
+		// get order
 
-	// skip vehicles without orders
+		COMBAT_ORDER *combatOrder = &(combatOrders[aiVehicleId]);
 
-	if (combatOrdersIterator == combatOrders.end())
-		return tx_enemy_move(id);
+		// apply order
 
-	// get order
+		return applyCombatOrder(vehicleId, combatOrder);
 
-	COMBAT_ORDER *combatOrder = &(combatOrdersIterator->second);
+	}
 
-	// apply order
+	// process sea explorers
 
-	return applyCombatOrder(id, combatOrder);
+    if (veh_triad(vehicleId) == TRIAD_SEA && tx_units[vehicle->proto_id].unit_plan == PLAN_RECONNAISANCE && vehicle->move_status == ORDER_NONE)
+	{
+		return processSeaExplorer(vehicleId);
+	}
+
+	// default to vanilla
+
+	return tx_enemy_move(vehicleId);
 
 }
 
@@ -388,6 +396,45 @@ void setDefendOrder(int vehicleId, int x, int y)
 }
 
 /*
+Overrides sea explorer routine.
+*/
+int processSeaExplorer(int vehicleId)
+{
+	VEH* vehicle = &(tx_vehicles[vehicleId]);
+
+	// keep healing if can
+
+	if (isVehicleCanHealAtThisLocation(vehicleId))
+	{
+		return tx_enemy_move(vehicleId);
+	}
+
+	// find the nearest unexplored connected ocean region tile
+
+	MAP_INFO nearestUnexploredTile = getNearestUnexploredConnectedOceanRegionTile(vehicle->faction_id, vehicle->x, vehicle->y);
+
+	if (nearestUnexploredTile.tile == NULL)
+	{
+		// nothing more to explore
+
+		// kill unit
+
+		debug("vehicle killed: [%3d] (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y);
+		return killVehicle(vehicleId);
+
+	}
+	else
+	{
+		// move vehicle to unexplored destination
+
+		debug("vehicle moved: [%3d] (%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, nearestUnexploredTile.x, nearestUnexploredTile.y);
+		return moveVehicle(vehicleId, nearestUnexploredTile.x, nearestUnexploredTile.y);
+
+	}
+
+}
+
+/*
 Checks if sea explorer is in land port.
 */
 bool isHealthySeaExplorerInLandPort(int vehicleId)
@@ -458,6 +505,96 @@ int kickSeaExplorerFromLandPort(int vehicleId)
 	tx_action(vehicleId);
 
 	return tx_enemy_move(vehicleId);
+
+}
+
+/*
+Kills vehicle and returns proper value as tx_enemy_move would.
+*/
+int killVehicle(int vehicleId)
+{
+	tx_kill(vehicleId);
+	return NO_SYNC;
+
+}
+
+/*
+Sets vehicle move to order AND moves it there exhausting moves along the way.
+This is used in enemy_move routines to avoid vanilla code overriding move_to order.
+*/
+int moveVehicle(int vehicleId, int x, int y)
+{
+	set_move_to(vehicleId, x, y);
+	tx_action(vehicleId);
+	return SYNC;
+
+}
+
+MAP_INFO getNearestUnexploredConnectedOceanRegionTile(int factionId, int initialLocationX, int initialLocationY)
+{
+	debug("getNearestUnexploredConnectedOceanRegionTile: factionId=%d, initialLocationX=%d, initialLocationY=%d\n", factionId, initialLocationX, initialLocationY);
+
+	MAP_INFO mapInfo;
+
+	// get ocean connected regions
+
+	std::unordered_set<int> connectedOceanRegions = getConnectedOceanRegions(factionId, initialLocationX, initialLocationY);
+
+	debug("\tconnectedOceanRegions\n");
+
+	if (DEBUG)
+	{
+		for (int connectedOceanRegion : connectedOceanRegions)
+		{
+			debug("\t\t%d\n", connectedOceanRegion);
+
+		}
+
+	}
+
+	// search map
+
+	int nearestUnexploredConnectedOceanRegionTileRange = 9999;
+
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		int x = getXCoordinateByMapIndex(mapIndex);
+		int y = getYCoordinateByMapIndex(mapIndex);
+		MAP *tile = getMapTile(x, y);
+		int region = tile->region;
+
+		// only ocean regions
+
+		if (!isOceanRegion(region))
+			continue;
+
+		// only connected regions
+
+		if (!connectedOceanRegions.count(region))
+			continue;
+
+		// only undiscovered tiles
+
+		if (isMapTileVisibleToFaction(factionId, tile))
+			continue;
+
+		// calculate range
+
+		int range = map_range(initialLocationX, initialLocationY, x, y);
+
+		// update map info
+
+		if (mapInfo.tile == NULL || range < nearestUnexploredConnectedOceanRegionTileRange)
+		{
+			mapInfo.x = x;
+			mapInfo.y = y;
+			mapInfo.tile = tile;
+			nearestUnexploredConnectedOceanRegionTileRange = range;
+		}
+
+	}
+
+	return mapInfo;
 
 }
 
