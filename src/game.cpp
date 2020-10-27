@@ -2610,3 +2610,174 @@ MAP_INFO getAdjacentOceanTileInfo(int x, int y)
 
 }
 
+bool isVehicleExploring(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+
+	return vehicle->state & VSTATE_EXPLORE;
+
+}
+
+bool isVehicleCanHealAtThisLocation(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	MAP *vehilceMapTile = getVehicleMapTile(vehicleId);
+
+	// calculate vehicle field damage healing threshold
+
+	int fieldDamageHealingThreshold = tx_units[vehicle->proto_id].reactor_type * 2;
+
+	return
+		(vehicle->damage_taken > fieldDamageHealingThreshold)
+		||
+		(map_has_item(vehilceMapTile, TERRA_BASE_IN_TILE) && (vehicle->damage_taken > 0))
+	;
+
+}
+
+/*
+Returns all ocean regions this location is adjacent to.
+*/
+std::unordered_set<int> getAdjacentOceanRegions(int x, int y)
+{
+	debug("getAdjacentOceanRegions: x=%d, y=%d\n", x, y);
+
+	std::unordered_set<int> adjacentOceanRegions;
+
+	MAP *tile = getMapTile(x, y);
+
+	if (tile == NULL)
+		return adjacentOceanRegions;
+
+	if (is_ocean(tile))
+	{
+		debug("\tocean\n");
+
+		// ocean base is adjacent to one ocean region
+
+		adjacentOceanRegions.insert(tile->region);
+
+		debug("\t\tregion=%d\n", tile->region);
+
+	}
+	else
+	{
+		debug("\tland\n");
+
+		// iterate adjacent tiles
+
+		for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+		{
+			debug("\t\tadjacentTile\n");
+
+			if (is_ocean(adjacentTile))
+			{
+				debug("\t\tocean\n");
+
+				adjacentOceanRegions.insert(adjacentTile->region);
+
+			}
+
+		}
+
+	}
+
+	debug("\n");
+
+	return adjacentOceanRegions;
+
+}
+
+/*
+Returns all ocean regions this location is connected to.
+*/
+std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y)
+{
+	debug("getConnectedOceanRegions: factionId=%d, x=%d, y=%d\n", factionId, x, y);
+
+	std::unordered_set<int> connectedOceanRegions;
+
+	MAP *tile = getMapTile(x, y);
+
+	if (tile == NULL)
+		return connectedOceanRegions;
+
+	// add adjacent tiles regions first
+
+	std::unordered_set<int> adjacentOceanRegions = getAdjacentOceanRegions(x, y);
+	connectedOceanRegions.insert(adjacentOceanRegions.begin(), adjacentOceanRegions.end());
+
+	// iterate own bases
+
+	while (true)
+	{
+		size_t currentRegionSize = connectedOceanRegions.size();
+		debug("\tcurrentRegionSize=%d\n", currentRegionSize);
+
+		for (int baseId = 0; baseId < *total_num_bases; baseId++)
+		{
+			BASE *base = &(tx_bases[baseId]);
+			MAP *baseTile = getBaseMapTile(baseId);
+
+			debug("\t\t%-25s factionId=%d, base->faction_id=%d, is_ocean(baseTile)=%d\n", tx_bases[baseId].name, factionId, base->faction_id, is_ocean(baseTile));
+
+			// only own and allied bases
+
+			if (base->faction_id != factionId)
+				continue;
+
+			// only land bases
+
+			if (is_ocean(baseTile))
+				continue;
+
+			// get this base adjacent ocean regions
+
+			std::unordered_set<int> baseAdjacentOceanRegions = getAdjacentOceanRegions(base->x, base->y);
+
+			// check for adjacent regions intersection
+
+			for (int baseAdjacentOceanRegion : baseAdjacentOceanRegions)
+			{
+				debug("\t\t\tbaseAdjacentOceanRegion=%d\n", baseAdjacentOceanRegion);
+				if (connectedOceanRegions.count(baseAdjacentOceanRegion) != 0)
+				{
+					debug("\t\t\t\tintersect=1\n");
+
+					// union region sets
+
+					connectedOceanRegions.insert(baseAdjacentOceanRegions.begin(), baseAdjacentOceanRegions.end());
+
+					break;
+
+				}
+
+			}
+
+		}
+
+		if (connectedOceanRegions.size() == currentRegionSize)
+			break;
+
+	}
+
+	debug("\n");
+
+	return connectedOceanRegions;
+
+}
+
+bool isMapTileVisibleToFaction(int factionId, MAP *tile)
+{
+	return (tile->visibility & (0x1 << factionId));
+
+}
+
+/*
+Verifies that faction1 and faction2 has given diplo_status.
+*/
+bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus)
+{
+	return (tx_factions[faction1Id].diplo_status[faction2Id] & diploStatus);
+}
+

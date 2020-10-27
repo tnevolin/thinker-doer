@@ -137,4 +137,5 @@ extern fp_3int *tx_veh_cost;
 extern fp_1void *tx_base_first;
 extern fp_1int *tx_action;
 extern fp_2void *tx_parse_string;
+extern fp_1void *tx_kill;
 

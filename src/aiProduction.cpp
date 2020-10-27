@@ -54,7 +54,7 @@ HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4)
     int choice = tx_base_prod_choices(baseId, a2, a3, a4);
 	debug("\n===>    %-10s: %-25s\n\n", "Vanilla", prod_name(choice));
 
-	// do not override vanilla choice in emergency scrambling - it does pretty goood job on it
+	// do not override vanilla choice in emergency scrambling - it does pretty goood job at it
 
 	if (base->faction_id != *active_faction)
 	{
@@ -139,10 +139,31 @@ int aiSuggestBaseProduction(int baseId, int choice)
 
 //	evaluateFactionProtectionDemand();
 //
-	// update choice
-	// WTP choice overrides previous choice with high enough priority.
+	// calculate vanilla priority
 
-	if (random_double(0.5) < productionDemand.priority)
+	double vanillaPriority = 0.0;
+
+	// unit
+	if (choice > 0)
+	{
+		vanillaPriority = conf.ai_production_vanilla_priority_unit;
+	}
+	// project
+	else if (choice <= -PROJECT_ID_FIRST)
+	{
+		vanillaPriority = conf.ai_production_vanilla_priority_project;
+	}
+	// facility
+	else
+	{
+		vanillaPriority = conf.ai_production_vanilla_priority_facility;
+	}
+
+	debug("vanillaPriority=%f, priority=%f, item=%s\n", vanillaPriority, productionDemand.priority, prod_name(productionDemand.item));
+
+	// update choice if production demand is high enough
+
+	if (productionDemand.priority > vanillaPriority)
 	{
 		choice = productionDemand.item;
 	}
@@ -292,17 +313,17 @@ void evaluateBaseMultiplyingFacilitiesDemand()
 
 	// calculate base values for multiplication
 
-	double mineralSurplus = (double)base->mineral_surplus;
+	int mineralSurplus = base->mineral_surplus;
 	double mineralIntake = (double)base->mineral_intake;
 	double economyIntake = (double)base->energy_surplus * (double)(10 - faction->SE_alloc_psych - faction->SE_alloc_labs) / 10.0;
 	double psychIntake = (double)base->energy_surplus * (double)(faction->SE_alloc_psych) / 10.0;
 	double labsIntake = (double)base->energy_surplus * (double)(faction->SE_alloc_labs) / 10.0;
 
-	debug("\tmineralSurplus=%f, mineralIntake=%f, economyIntake=%f, psychIntake=%f, labsIntake=%f\n", mineralSurplus, mineralIntake, economyIntake, psychIntake, labsIntake);
+	debug("\tmineralSurplus=%d, mineralIntake=%f, economyIntake=%f, psychIntake=%f, labsIntake=%f\n", mineralSurplus, mineralIntake, economyIntake, psychIntake, labsIntake);
 
 	// no production power - multiplying facilities are useless
 
-	if (mineralSurplus <= 0.0)
+	if (mineralSurplus <= 0)
 		return;
 
 	// multipliers
@@ -344,8 +365,9 @@ void evaluateBaseMultiplyingFacilitiesDemand()
 		// get facility parameters
 
 		int cost = facility->cost;
+		int mineralCost = mineral_cost(base->faction_id, -facilityId, baseId);
 		int maintenance = facility->maint;
-		debug("\t\t\tcost=%d, maintenance=%d\n", cost, maintenance);
+		debug("\t\t\tcost=%d, mineralCost=%d, maintenance=%d\n", cost, mineralCost, maintenance);
 
 		// calculate bonus
 
@@ -391,11 +413,24 @@ void evaluateBaseMultiplyingFacilitiesDemand()
 		if (benefit <= 0)
 			continue;
 
-		// calculate effect and priority
+		// calculate construction time
 
-		double effect = benefit / (double)cost;
-		double priority = conf.ai_production_facility_effect_coefficient * effect;
-		debug("\t\t\teffect=%f, priority=%f\n", effect, priority);
+		double constructionTime = (double)mineralCost / (double)(max(1, mineralSurplus));
+
+		// calculate payoff time
+
+		double payoffTime = (double)mineralCost / benefit;
+
+		// calculate priority
+
+		double priority = 1 / (constructionTime + payoffTime) - conf.ai_production_facility_priority_penalty;
+
+		debug("\t\t\tconstructionTime=%f, payoffTime=%f, ai_production_facility_priority_penalty=%f, priority=%f\n", constructionTime, payoffTime, conf.ai_production_facility_priority_penalty, priority);
+
+		// priority is too low
+
+		if (priority <= 0)
+			continue;
 
 		// add demand
 
@@ -501,7 +536,7 @@ void evaluateLandImprovementDemand()
 
 		// set demand based on mineral surplus
 
-		double baseProductionAdjustedPriority = priority * (double)base->mineral_surplus / (double)maxMineralSurplus;
+		double baseProductionAdjustedPriority = priority * (double)base->mineral_surplus / (double)(max(1, maxMineralSurplus));
 		debug("\t\t\tmineral_surplus=%d, baseProductionAdjustedPriority=%f\n", base->mineral_surplus, baseProductionAdjustedPriority);
 
 		addProductionDemand(formerUnitId, baseProductionAdjustedPriority);
@@ -565,7 +600,7 @@ void evaluateLandExpansionDemand()
 
 		// count available tiles
 
-		globalUnpopulatedLandTileWeighedCount += min(1.0 , (double)conf.ai_production_max_unpopulated_range / (double)nearestBaseRange );
+		globalUnpopulatedLandTileWeighedCount += min(1.0 , (double)conf.ai_production_max_unpopulated_range / (double)(nearestBaseRange * nearestBaseRange) );
 
 		// gather distance statistics
 
@@ -595,7 +630,7 @@ void evaluateLandExpansionDemand()
 
 	// calculate existing and building colonies
 
-	int existingLandColoniesCount = calculateUnitTypeCount(base->faction_id, WPN_COLONY_MODULE, TRIAD_LAND);
+	int existingLandColoniesCount = calculateUnitTypeCount(base->faction_id, WPN_COLONY_MODULE, TRIAD_LAND, baseId);
 	debug("\t\texistingLandColoniesCount=%d\n", existingLandColoniesCount);
 
 	// we have enough
@@ -744,7 +779,7 @@ void evaluateOceanExpansionDemand()
 
 		// calculate existing and building colonies
 
-		int existingSeaColoniesCount = calculateUnitTypeCount(base->faction_id, WPN_COLONY_MODULE, TRIAD_SEA);
+		int existingSeaColoniesCount = calculateUnitTypeCount(base->faction_id, WPN_COLONY_MODULE, TRIAD_SEA, baseId);
 		debug("\t\texistingSeaColoniesCount=%d\n", existingSeaColoniesCount);
 
 		// we have enough
@@ -918,6 +953,11 @@ void evaluateExplorationDemand()
 		}
 
 		debug("\t\tunexploredTileCount=%d\n", unexploredTileCount);
+
+		// no more unexplored tiles
+
+		if (unexploredTileCount == 0)
+			continue;
 
 		// summarize existing explorers' speed
 
@@ -1808,7 +1848,7 @@ int calculateRegionSurfaceUnitTypeCount(int factionId, int region, int weaponTyp
 Calculates number of units with specific weaponType: existing and building.
 Only corresponding triad units are counted.
 */
-int calculateUnitTypeCount(int factionId, int weaponType, int triad)
+int calculateUnitTypeCount(int factionId, int weaponType, int triad, int excludedBaseId)
 {
 	int unitTypeCount = 0;
 
@@ -1831,6 +1871,11 @@ int calculateUnitTypeCount(int factionId, int weaponType, int triad)
 
 	for (int baseId = 0; baseId < *total_num_bases; baseId++)
 	{
+		// exclude this base
+
+		if (baseId == excludedBaseId)
+			continue;
+
 		BASE *base = &(tx_bases[baseId]);
 		int item = base->queue_items[0];
 

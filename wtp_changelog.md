@@ -1,3 +1,29 @@
+# Version 167
+
+* AI expansion demand algorithm. The populatable tile weight is now reduced by distance quadratically, not linearly as before to reduce the need to populate whole planet.
+* AI unit move algorithm now manages sea explorers without order.
+  * Send to other connected ocean region through connected base (own or allied).
+	* Disband immediatelly if there is nothing more to explore in this region to save on support.
+* ai_production_expansion_priority=1.0. Experimental settings to see how it affects expansion.
+* Introduced more fine grained control on when WTP production suggestion beats default one (Vanilla + Thinker). Added thresholds for each category.
+  * ai_production_vanilla_priority_unit=0.50
+  * ai_production_vanilla_priority_project=1.00
+  * ai_production_vanilla_priority_facility=0.25
+* Adjusted terraforming resouce priorities. Previously it was too high on minerals IMHO.
+  * ai_terraforming_nutrientWeight=1.00
+  * ai_terraforming_mineralWeight=1.25
+  * ai_terraforming_energyWeight=0.75
+* Synchronized MP configuration. Sorry, it gets behind sometimes.
+
+# Version 166
+
+* Removed Combat bonus: Infantry vs. Base. Attacker does not need any more economical advantage. Infantry is still preferrable for base attack since it is cheaper.
+* Increased native life generation frequency. Now it will be 2-5-8 by levels (vanilla was 2-4-6).
+  * native_life_generator_constant=2
+  * native_life_generator_multiplier=3
+* Reinstated "natives doesn't die" parameters. This alone should slightly increase native pressure.
+  * native_disable_sudden_death=1
+
 # Version 165
 
 * Introduced negative ability values into unit cost calculation.

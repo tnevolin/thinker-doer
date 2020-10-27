@@ -183,5 +183,9 @@ fp_1void *tx_base_first = (fp_1void *)0x004E4AA0;
 // executes action on vehicle
 fp_1int *tx_action = (fp_1int *)0x004CF740;
 
+// string formatting
 fp_2void *tx_parse_string = (fp_2void *)0x00625880;
+
+// kills vehicle
+fp_1void *tx_kill = (fp_1void *)0x005C0B00;
 

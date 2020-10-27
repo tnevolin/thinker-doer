@@ -321,6 +321,18 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "ai_production_vanilla_priority_unit"))
+    {
+        cf->ai_production_vanilla_priority_unit = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_vanilla_priority_project"))
+    {
+        cf->ai_production_vanilla_priority_project = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_vanilla_priority_facility"))
+    {
+        cf->ai_production_vanilla_priority_facility = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_threat_coefficient_vendetta"))
     {
         cf->ai_production_threat_coefficient_vendetta = atof(value);
@@ -369,9 +381,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_combat_unit_turns_limit = atoi(value);
     }
-    else if (MATCH("wtp", "ai_production_facility_effect_coefficient"))
+    else if (MATCH("wtp", "ai_production_facility_priority_penalty"))
     {
-        cf->ai_production_facility_effect_coefficient = atof(value);
+        cf->ai_production_facility_priority_penalty = atof(value);
     }
     else if (MATCH("wtp", "ai_production_combat_unit_min_mineral_surplus"))
     {

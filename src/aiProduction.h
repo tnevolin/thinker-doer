@@ -85,7 +85,7 @@ int getRegionBasesMaxMineralSurplus(int factionId, int region);
 int getRegionBasesMaxPopulationSize(int factionId, int region);
 int getMaxBaseSize(int factionId);
 int calculateRegionSurfaceUnitTypeCount(int factionId, int region, int weaponType);
-int calculateUnitTypeCount(int factionId, int weaponType, int triad);
+int calculateUnitTypeCount(int baseId, int weaponType, int triad, int excludedBaseId);
 bool isBaseNeedPsych(int baseId);
 int findPoliceUnit(int factionId);
 HOOK_API void modifiedBaseFirst(int baseId);

@@ -8,6 +8,16 @@ struct MAP_INFO
 	int x;
 	int y;
 	MAP *tile;
+
+	MAP_INFO() : tile(NULL) {}
+
+	MAP_INFO(int argument_x, int argument_y, MAP *argument_tile)
+	{
+		this->x = argument_x;
+		this->y = argument_y;
+		this->tile = argument_tile;
+	}
+
 };
 
 /*
@@ -266,4 +276,10 @@ bool isBaseHasAccessToWater(int baseId);
 bool isBaseCanBuildShips(int baseId);
 bool isExploredEdge(int factionId, int x, int y);
 MAP_INFO getAdjacentOceanTileInfo(int x, int y);
+bool isVehicleExploring(int vehicleId);
+bool isVehicleCanHealAtThisLocation(int vehicleId);
+std::unordered_set<int> getAdjacentOceanRegions(int x, int y);
+std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y);
+bool isMapTileVisibleToFaction(int factionId, MAP *tile);
+bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus);
 
