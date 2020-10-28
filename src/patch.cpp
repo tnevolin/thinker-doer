@@ -2637,8 +2637,41 @@ Flattens extra prototype cost.
 void patch_flat_extra_prototype_cost()
 {
 	// in veh_cost
+	// change call for base_cost to custom extra prototype cost
 
 	write_call(0x005C198D, (int)modifiedExtraPrototypeCost);
+
+	// in veh_cost
+	// use the output of custom extra prototype cost and store it in EDX without computations
+
+	int veh_cost_store_extra_prototype_cost_bytes_length = 0x1C;
+/*
+0:  8b c8                   mov    ecx,eax
+2:  b8 1f 85 eb 51          mov    eax,0x51eb851f
+7:  0f af cf                imul   ecx,edi
+a:  83 c1 32                add    ecx,0x32
+d:  83 c4 04                add    esp,0x4
+10: f7 e9                   imul   ecx
+12: c1 fa 05                sar    edx,0x5
+15: 8b c2                   mov    eax,edx
+17: c1 e8 1f                shr    eax,0x1f
+1a: 03 d0                   add    edx,eax
+*/
+	byte veh_cost_store_extra_prototype_cost_bytes_old[] = { 0x8B, 0xC8, 0xB8, 0x1F, 0x85, 0xEB, 0x51, 0x0F, 0xAF, 0xCF, 0x83, 0xC1, 0x32, 0x83, 0xC4, 0x04, 0xF7, 0xE9, 0xC1, 0xFA, 0x05, 0x8B, 0xC2, 0xC1, 0xE8, 0x1F, 0x03, 0xD0 };
+/*
+0:  83 c4 04                add    esp,0x4
+3:  89 c2                   mov    edx,eax
+...
+1b: 90                      nop
+*/
+	byte veh_cost_store_extra_prototype_cost_bytes_new[] = { 0x83, 0xC4, 0x04, 0x89, 0xC2, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x005C1992,
+		veh_cost_store_extra_prototype_cost_bytes_length,
+		veh_cost_store_extra_prototype_cost_bytes_old,
+		veh_cost_store_extra_prototype_cost_bytes_new
+	);
 
 	// in DesignWin::draw_unit_preview
 

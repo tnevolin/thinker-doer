@@ -1,3 +1,7 @@
+# Version 168
+
+* BUG: Base production prototype cost was incorrectly calculated.
+
 # Version 167
 
 * AI expansion demand algorithm. The populatable tile weight is now reduced by distance quadratically, not linearly as before to reduce the need to populate whole planet.

@@ -221,10 +221,10 @@ struct Faction {
     int player_flags;																						// 0x0000
     int ranking; // 0 (lowest) to 7 (highest)																// 0x0004
     int diff_level;																							// 0x0008
-    int base_name_offset; // Keep track which base names have been used
-    int base_sea_name_offset; // Keep track which sea base names have been used
-    int last_base_turn; // Turn for last built, captured or acquired (drone riot) base
-    int diplo_status[8]; // Contains all formal treaties
+    int base_name_offset; // Keep track which base names have been used										// 0x000C
+    int base_sea_name_offset; // Keep track which sea base names have been used								// 0x0010
+    int last_base_turn; // Turn for last built, captured or acquired (drone riot) base						// 0x0014
+    int diplo_status[8]; // Contains all formal treaties													// 0x0018
     int diplo_agenda[8];
     int diplo_friction[8];
     int diplo_spoke[8]; // Turn for the last player-to-AI communication; -1 for never
@@ -277,8 +277,8 @@ struct Faction {
     int SE_morale;                  // 0x0288
     int SE_police;
     int SE_growth;                  // 0x0290
-    int SE_planet;
-    int SE_probe;
+    int SE_planet;					// 0x0294
+    int SE_probe;					// 0x0298
     int SE_industry;                // 0x029C
     int SE_research;                // 0x02A0
     int SE_economy_2;				// 0x02A4
