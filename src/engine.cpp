@@ -97,6 +97,13 @@ HOOK_API int faction_upkeep(int faction) {
 
     init_save_game(faction);
 
+    // expire infiltrations
+
+    if (faction > 0)
+	{
+		expireInfiltrations(faction);
+	}
+
     *(int*)0x93A934 = 1;
     social_upkeep(faction);
     do_all_non_input();

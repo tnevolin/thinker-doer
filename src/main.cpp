@@ -317,6 +317,18 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->fix_former_wake = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "infiltration_expire"))
+    {
+        cf->infiltration_expire = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "infiltration_expire_probability_base"))
+    {
+        cf->infiltration_expire_probability_base = max(0.0, atof(value));
+    }
+    else if (MATCH("wtp", "infiltration_expire_probability_probe_effect_multiplier"))
+    {
+        cf->infiltration_expire_probability_probe_effect_multiplier = atof(value);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
