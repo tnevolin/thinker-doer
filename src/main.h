@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 173"
+    #define MOD_VERSION "The Will to Power mod - version 174"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -171,8 +171,10 @@ struct Config {
     bool fix_former_wake = false;
     bool infiltration_expire = false;
     int infiltration_devices = 1;
-    double infiltration_device_lifetime_base = 1.0;
-    double infiltration_device_lifetime_probe_effect = 0.0;
+    double human_infiltration_device_lifetime_base = 1.0;
+    double human_infiltration_device_lifetime_probe_effect = 0.0;
+    double computer_infiltration_device_lifetime_base = 1.0;
+    double computer_infiltration_device_lifetime_probe_effect = 0.0;
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
     double ai_production_vanilla_priority_project;

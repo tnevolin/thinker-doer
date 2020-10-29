@@ -1,3 +1,9 @@
+# Version 174
+
+* Computer players do not lose their infiltration.
+* Human player to human player infiltration lasts 20 turns on average.
+* Human player to computer player infiltration lasts 60 turns on average.
+
 # Version 173
 
 * Infiltration expiration is not broken into multiple steps providing slightly more predictable infiltration lifetime and more insigth for player.
