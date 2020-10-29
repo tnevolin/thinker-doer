@@ -10875,17 +10875,29 @@ CANCEL
 The $<M1:$FACTIONADJ0> bases contributed to "{$PROJECT1}" project.
 ^It is now {$NUM2} % completed!
 
-#SPYEXPOSEDENEMY
+#INFILTRATIONDEACTIVATEDENEMY
 #xs 440
 #caption Operations Director
-We have discovered and neutralized a {$FACTION0} infiltration of our networks!
+We have discovered and neutralized last {$FACTION0} infiltration device connected to our networks!
 ^They no longer have access to our datalinks.
 
-#SPYEXPOSEDOURS
+#INFILTRATIONDEACTIVATEDOURS
 #xs 440
 #caption Operations Director
-Our infiltration of the {$FACTION0} networks was discovered and eliminated!
+Our last infiltration device connected to the {$FACTION0} networks was discovered and disabled!
 ^We have lost access to their datalinks.
+
+#INFILTRATIONDEVICEDISABLEDENEMY
+#xs 440
+#caption Operations Director
+We have discovered and disabled a {$FACTION0} infiltration device connected to our networks!
+^Our cyber security analysts believe there are {$NUM1} more of their devices out there.
+
+#INFILTRATIONDEVICEDISABLEDOURS
+#xs 440
+#caption Operations Director
+Our infiltration device connected to the {$FACTION0} networks was discovered and disabled!
+^Luckily we still have {$NUM1} other devices maintaining access to their datalinks.
 
 # ; This line must remain at end of file
 
