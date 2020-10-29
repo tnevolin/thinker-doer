@@ -101,7 +101,7 @@ HOOK_API int faction_upkeep(int faction) {
 
     if (faction > 0)
 	{
-		expireInfiltrations(faction);
+		exposeSpies(faction);
 	}
 
     *(int*)0x93A934 = 1;

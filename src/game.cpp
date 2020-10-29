@@ -2785,11 +2785,11 @@ void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on)
 {
 	if (on)
 	{
-		tx_factions[faction1Id].diplo_status[faction2Id] | diploStatus);
+		tx_factions[faction1Id].diplo_status[faction2Id] |= diploStatus;
 	}
 	else
 	{
-		tx_factions[faction1Id].diplo_status[faction2Id] & ~diploStatus);
+		tx_factions[faction1Id].diplo_status[faction2Id] &= ~diploStatus;
 	}
 
 }

@@ -1,3 +1,11 @@
+# Version 168
+
+* Infiltration may randomly expire every turn. Infiltrated faction PROBE rating increases probability in exposing infiltrator.
+  * infiltration_expire
+  * infiltration_expire_probability_base
+  * infiltration_expire_probability_probe_effect_multiplier
+
+
 # Version 167
 
 * Pact bases display production on a map.

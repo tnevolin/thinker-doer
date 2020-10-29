@@ -158,7 +158,7 @@ HOOK_API void displayPartialHurryCostToCompleteNextTurnInformation(int input_str
 int getPartialHurryCostToCompleteNextTurn();
 int getProportionalHurryCost(int factionId, int item, int minerals);
 HOOK_API int modifiedSpyingForPactBaseProductionDisplay(int factionId);
-void expireInfiltrations(int factionId);
+void exposeSpies(int factionId);
 
 #endif // __WTP_H__
 

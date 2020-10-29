@@ -10875,5 +10875,17 @@ CANCEL
 The $<M1:$FACTIONADJ0> bases contributed to "{$PROJECT1}" project.
 ^It is now {$NUM2} % completed!
 
+#SPYEXPOSEDENEMY
+#xs 400
+#caption {Enemy} Infiltrator Caught
+Our counterintelligence tracked down and caught {$FACTION0} infiltrator!
+^They are no longer spying on us.
+
+#SPYEXPOSEDOURS
+#xs 400
+#caption {Our} Infiltrator Exposed
+Our infiltrator at {$FACTION0} was exposed and caught!
+^We are no longer spying on them.
+
 # ; This line must remain at end of file
 
