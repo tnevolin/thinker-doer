@@ -1,3 +1,7 @@
+# Version 172
+
+* Changed infiltration expiration configuration parameters to lifetime based instead of probability.
+
 # Version 171
 
 * Updated infiltration expired dialogs text.
