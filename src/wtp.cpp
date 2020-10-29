@@ -2725,25 +2725,30 @@ Adds pact condition to the spying check giving pact faction all benfits of the s
 */
 HOOK_API int modifiedSpyingForPactBaseProductionDisplay(int factionId)
 {
+	// execute vanilla code
+
+	int spying = tx_spying(factionId);
+
 	// check if there is a pact with faction
 
-	if (isDiploStatus(*current_player_faction, factionId, DIPLO_PACT))
-		return 1;
+	bool pact = isDiploStatus(*current_player_faction, factionId, DIPLO_PACT);
 
-	// otherwise, fall to default
+	// return value based on combined condition
 
-	return tx_spying(factionId);
+	return ((spying != 0 || pact) ? 1 : 0);
 
 }
 
-void expireInfiltrations(int factionId)
+void exposeSpies(int factionId)
 {
+	debug("exposeSpies: %s\n", tx_metafactions[factionId].noun_faction);
+
 	// check if feature is on
 
 	if (!conf.infiltration_expire)
 		return;
 
-	// try to expire infiltration with other factions
+	// try to expose other faction spies
 
 	for (int otherFactionId = 1; otherFactionId <= 7; otherFactionId++)
 	{
@@ -2752,38 +2757,54 @@ void expireInfiltrations(int factionId)
 		if (otherFactionId == factionId)
 			continue;
 
-		// skip no infiltrations
+		// skip faction not spying on us
 
-		if (!isDiploStatus(factionId, otherFactionId, DIPLO_HAVE_INFILTRATOR))
+		if (!isDiploStatus(otherFactionId, factionId, DIPLO_HAVE_INFILTRATOR))
 			continue;
 
-		// get other faction PROBE rating
+		debug("\t%s\n", tx_metafactions[otherFactionId].noun_faction);
 
-		int otherFactionProbeRating = tx_factions[otherFactionId].SE_probe_pending;
+		// get our PROBE rating
 
+		int probeRating = tx_factions[factionId].SE_probe_pending;
+		debug("\t\tprobeRating=%d\n", probeRating);
 
-		// calculate infiltration expire probability
+		// calculate exposure probability
 
-		double infiltrationExpireProbability = min(1.0, max(0.0, conf.infiltration_expire_probability_base + conf.infiltration_expire_probability_probe_effect_multiplier * otherFactionProbeRating));
+		double exposureProbability = min(1.0, max(0.0, conf.infiltration_expire_probability_base + conf.infiltration_expire_probability_probe_effect_multiplier * probeRating));
+		debug("\t\texposureProbability=%f\n", exposureProbability);
 
 		// roll dice
 
-		if (random_double(1.0) < infiltrationExpireProbability)
+		double probabilityRoll = random_double(1.0);
+		debug("\t\tprobabilityRoll=%f\n", probabilityRoll);
+		debug("\t\texpired=%d\n", (probabilityRoll < exposureProbability ? 1 : 0));
+
+		if (probabilityRoll < exposureProbability)
 		{
-			// expire infiltration
+			// inactivate infiltration
 
-			setDiploStatus(factionId, otherFactionId, DIPLO_HAVE_INFILTRATOR, false);
+			setDiploStatus(otherFactionId, factionId, DIPLO_HAVE_INFILTRATOR, false);
 
-			// show info to human
+			// show info to humans
 
 			if (is_human(factionId))
 			{
+                parse_says(0, tx_metafactions[otherFactionId].noun_faction, -1, -1);
+                popp(ScriptTxtID, "SPYEXPOSEDENEMY", 0, "capture_sm.pcx", 0);
+			}
 
+			if (is_human(otherFactionId))
+			{
+                parse_says(0, tx_metafactions[factionId].noun_faction, -1, -1);
+                popp(ScriptTxtID, "SPYEXPOSEDOURS", 0, "capture_sm.pcx", 0);
 			}
 
 		}
 
 	}
+
+	debug("\n");
 
 }
 
