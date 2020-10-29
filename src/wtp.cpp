@@ -2757,6 +2757,11 @@ void expireInfiltrations(int factionId)
 		if (infiltratingFactionId == factionId)
 			continue;
 
+		// skip computer factions
+
+		if (!is_human(infiltratingFactionId))
+			continue;
+
 		// skip faction not spying on us
 
 		if (!isDiploStatus(infiltratingFactionId, factionId, DIPLO_HAVE_INFILTRATOR))
@@ -2777,6 +2782,22 @@ void expireInfiltrations(int factionId)
 			setInfiltrationDeviceCount(infiltratingFactionId, factionId, conf.infiltration_devices);
 		}
 
+		// retrieve lifetime formula parameters
+
+		double lifetimeBase;
+		double lifetimeProbeEffect;
+
+		if (is_human(factionId))
+		{
+			lifetimeBase = conf.human_infiltration_device_lifetime_base;
+			lifetimeProbeEffect = conf.human_infiltration_device_lifetime_probe_effect;
+		}
+		else
+		{
+			lifetimeBase = conf.computer_infiltration_device_lifetime_base;
+			lifetimeProbeEffect = conf.computer_infiltration_device_lifetime_probe_effect;
+		}
+
 		// get our PROBE rating
 
 		int probeRating = tx_factions[factionId].SE_probe_pending;
@@ -2784,7 +2805,7 @@ void expireInfiltrations(int factionId)
 
 		// calculate lifetime
 
-		double lifetime = max(1.0, conf.infiltration_device_lifetime_base + conf.infiltration_device_lifetime_probe_effect * probeRating);
+		double lifetime = max(1.0, lifetimeBase + lifetimeProbeEffect * probeRating);
 		debug("\t\tlifetime=%f\n", lifetime);
 
 		// calculate probability
