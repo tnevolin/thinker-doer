@@ -321,13 +321,13 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->infiltration_expire = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "infiltration_expire_probability_base"))
+    else if (MATCH("wtp", "infiltration_lifetime_base"))
     {
-        cf->infiltration_expire_probability_base = max(0.0, atof(value));
+        cf->infiltration_lifetime_base = max(0.0, atof(value));
     }
-    else if (MATCH("wtp", "infiltration_expire_probability_probe_effect_multiplier"))
+    else if (MATCH("wtp", "infiltration_lifetime_probe_effect_delta"))
     {
-        cf->infiltration_expire_probability_probe_effect_multiplier = atof(value);
+        cf->infiltration_lifetime_probe_effect_delta = atof(value);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

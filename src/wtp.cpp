@@ -2769,20 +2769,25 @@ void exposeSpies(int factionId)
 		int probeRating = tx_factions[factionId].SE_probe_pending;
 		debug("\t\tprobeRating=%d\n", probeRating);
 
-		// calculate exposure probability
+		// calculate lifetime
 
-		double exposureProbability = min(1.0, max(0.0, conf.infiltration_expire_probability_base + conf.infiltration_expire_probability_probe_effect_multiplier * probeRating));
-		debug("\t\texposureProbability=%f\n", exposureProbability);
+		double lifetime = max(1.0, conf.infiltration_lifetime_base + conf.infiltration_lifetime_probe_effect_delta * probeRating);
+		debug("\t\tlifetime=%f\n", lifetime);
+
+		// calculate probability
+
+		double probability = 1.0 / lifetime;
+		debug("\t\tprobability=%f\n", probability);
 
 		// roll dice
 
 		double probabilityRoll = random_double(1.0);
 		debug("\t\tprobabilityRoll=%f\n", probabilityRoll);
-		debug("\t\texpired=%d\n", (probabilityRoll < exposureProbability ? 1 : 0));
+		debug("\t\texpired=%d\n", (probabilityRoll < probability ? 1 : 0));
 
-		if (probabilityRoll < exposureProbability)
+		if (probabilityRoll < probability)
 		{
-			// inactivate infiltration
+			// deactivate infiltration
 
 			setDiploStatus(otherFactionId, factionId, DIPLO_HAVE_INFILTRATOR, false);
 
