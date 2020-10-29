@@ -321,13 +321,17 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->infiltration_expire = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "infiltration_lifetime_base"))
+    else if (MATCH("wtp", "infiltration_devices"))
     {
-        cf->infiltration_lifetime_base = max(0.0, atof(value));
+        cf->infiltration_devices = max(1, atoi(value));
     }
-    else if (MATCH("wtp", "infiltration_lifetime_probe_effect_delta"))
+    else if (MATCH("wtp", "infiltration_device_lifetime_base"))
     {
-        cf->infiltration_lifetime_probe_effect_delta = atof(value);
+        cf->infiltration_device_lifetime_base = max(1.0, atof(value));
+    }
+    else if (MATCH("wtp", "infiltration_device_lifetime_probe_effect"))
+    {
+        cf->infiltration_device_lifetime_probe_effect = atof(value);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

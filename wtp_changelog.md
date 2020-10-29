@@ -1,3 +1,7 @@
+# Version 173
+
+* Infiltration expiration is not broken into multiple steps providing slightly more predictable infiltration lifetime and more insigth for player.
+
 # Version 172
 
 * Changed infiltration expiration configuration parameters to lifetime based instead of probability.

@@ -2739,30 +2739,43 @@ HOOK_API int modifiedSpyingForPactBaseProductionDisplay(int factionId)
 
 }
 
-void exposeSpies(int factionId)
+void expireInfiltrations(int factionId)
 {
-	debug("exposeSpies: %s\n", tx_metafactions[factionId].noun_faction);
-
 	// check if feature is on
 
 	if (!conf.infiltration_expire)
 		return;
 
-	// try to expose other faction spies
+	debug("expireInfiltrations: %s\n", tx_metafactions[factionId].noun_faction);
 
-	for (int otherFactionId = 1; otherFactionId <= 7; otherFactionId++)
+	// try to discover other faction infiltration devices
+
+	for (int infiltratingFactionId = 1; infiltratingFactionId <= 7; infiltratingFactionId++)
 	{
 		// skip self
 
-		if (otherFactionId == factionId)
+		if (infiltratingFactionId == factionId)
 			continue;
 
 		// skip faction not spying on us
 
-		if (!isDiploStatus(otherFactionId, factionId, DIPLO_HAVE_INFILTRATOR))
+		if (!isDiploStatus(infiltratingFactionId, factionId, DIPLO_HAVE_INFILTRATOR))
 			continue;
 
-		debug("\t%s\n", tx_metafactions[otherFactionId].noun_faction);
+		debug("\t%s\n", tx_metafactions[infiltratingFactionId].noun_faction);
+
+		// get infiltration device count
+
+		int infiltrationDeviceCount = getInfiltrationDeviceCount(infiltratingFactionId, factionId);
+
+		debug("\t\tinfiltrationDeviceCount=%d\n", infiltrationDeviceCount);
+
+		// set up initial devices if not set
+
+		if (getInfiltrationDeviceCount(infiltratingFactionId, factionId) == 0)
+		{
+			setInfiltrationDeviceCount(infiltratingFactionId, factionId, conf.infiltration_devices);
+		}
 
 		// get our PROBE rating
 
@@ -2771,38 +2784,66 @@ void exposeSpies(int factionId)
 
 		// calculate lifetime
 
-		double lifetime = max(1.0, conf.infiltration_lifetime_base + conf.infiltration_lifetime_probe_effect_delta * probeRating);
+		double lifetime = max(1.0, conf.infiltration_device_lifetime_base + conf.infiltration_device_lifetime_probe_effect * probeRating);
 		debug("\t\tlifetime=%f\n", lifetime);
 
 		// calculate probability
 
-		double probability = 1.0 / lifetime;
+		double probability = min(1.0, 1.0 / lifetime);
 		debug("\t\tprobability=%f\n", probability);
 
 		// roll dice
 
 		double probabilityRoll = random_double(1.0);
 		debug("\t\tprobabilityRoll=%f\n", probabilityRoll);
-		debug("\t\texpired=%d\n", (probabilityRoll < probability ? 1 : 0));
+		debug("\t\tdisabled=%d\n", (probabilityRoll < probability ? 1 : 0));
 
 		if (probabilityRoll < probability)
 		{
-			// deactivate infiltration
+			// deactivate infiltration device
 
-			setDiploStatus(otherFactionId, factionId, DIPLO_HAVE_INFILTRATOR, false);
+			infiltrationDeviceCount--;
+			setInfiltrationDeviceCount(infiltratingFactionId, factionId, infiltrationDeviceCount);
 
-			// show info to humans
-
-			if (is_human(factionId))
+			if (infiltrationDeviceCount == 0)
 			{
-                parse_says(0, tx_metafactions[otherFactionId].noun_faction, -1, -1);
-                popp(ScriptTxtID, "SPYEXPOSEDENEMY", 0, "capture_sm.pcx", 0);
+				// deactivate infiltration if number of devices reaches zero
+
+				setDiploStatus(infiltratingFactionId, factionId, DIPLO_HAVE_INFILTRATOR, false);
+
+				// display info to humans
+
+				if (is_human(factionId))
+				{
+					parse_says(0, tx_metafactions[infiltratingFactionId].noun_faction, -1, -1);
+					popp(ScriptTxtID, "INFILTRATIONDEACTIVATEDENEMY", 0, "capture_sm.pcx", 0);
+				}
+
+				if (is_human(infiltratingFactionId))
+				{
+					parse_says(0, tx_metafactions[factionId].noun_faction, -1, -1);
+					popp(ScriptTxtID, "INFILTRATIONDEACTIVATEDOURS", 0, "capture_sm.pcx", 0);
+				}
+
 			}
-
-			if (is_human(otherFactionId))
+			else
 			{
-                parse_says(0, tx_metafactions[factionId].noun_faction, -1, -1);
-                popp(ScriptTxtID, "SPYEXPOSEDOURS", 0, "capture_sm.pcx", 0);
+				// display info to humans
+
+				if (is_human(factionId))
+				{
+					parse_says(0, tx_metafactions[infiltratingFactionId].noun_faction, -1, -1);
+					parse_num(1, infiltrationDeviceCount);
+					popp(ScriptTxtID, "INFILTRATIONDEVICEDISABLEDENEMY", 0, "capture_sm.pcx", 0);
+				}
+
+				if (is_human(infiltratingFactionId))
+				{
+					parse_says(0, tx_metafactions[factionId].noun_faction, -1, -1);
+					parse_num(1, infiltrationDeviceCount);
+					popp(ScriptTxtID, "INFILTRATIONDEVICEDISABLEDOURS", 0, "capture_sm.pcx", 0);
+				}
+
 			}
 
 		}
@@ -2810,6 +2851,28 @@ void exposeSpies(int factionId)
 	}
 
 	debug("\n");
+
+}
+
+void setInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId, int deviceCount)
+{
+	// device count is in range 0-0x7FFF
+
+	deviceCount = min(0x7FFF, max(0x0, deviceCount));
+
+	// clear infiltration devices count
+
+	tx_factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] &= 0x0000FFFF;
+
+	// set infiltration devices count
+
+	tx_factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] |= (deviceCount << 16);
+
+}
+
+int getInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId)
+{
+	return tx_factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] >> 16;
 
 }
 
