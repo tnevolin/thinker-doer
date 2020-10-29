@@ -1,10 +1,13 @@
+# Version 171
+
+* Updated infiltration expired dialogs text.
+
 # Version 170
 
 * Infiltration may randomly expire every turn. Infiltrated faction PROBE rating increases probability in exposing infiltrator.
   * infiltration_expire
   * infiltration_expire_probability_base
   * infiltration_expire_probability_probe_effect_multiplier
-
 
 # Version 169
 

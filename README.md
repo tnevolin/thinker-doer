@@ -15,7 +15,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * bvanevery: Play testing and help in design. Especially nice ideas and analysis in area of reactors and combat.
 * dino: Play testing and alternative combat round resolution mechanics idea.
 * Nevill and Tayta Malikai: Multiplyer play testing and multiplier text configuration.
-* Tayta Malikai: crash reports, debugging, and test cases investigations!
+* Tayta Malikai: text designer, crash reports, debugging, and test cases investigations!
 * Mercantile Interest: Alternative nutrient model idea.
 * EmpathCrawler: Play testing. Discovered Brood Pit morale bug.
 
