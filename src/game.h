@@ -282,4 +282,5 @@ std::unordered_set<int> getAdjacentOceanRegions(int x, int y);
 std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y);
 bool isMapTileVisibleToFaction(int factionId, MAP *tile);
 bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus);
+void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
 

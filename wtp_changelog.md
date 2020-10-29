@@ -1,3 +1,7 @@
+# Version 167
+
+* Pact bases display production on a map.
+
 # Version 168
 
 * BUG: Base production prototype cost was incorrectly calculated.

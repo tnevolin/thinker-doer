@@ -157,6 +157,8 @@ int scaleValueToBasicMinieralCostMultiplier(int factionId, int value);
 HOOK_API void displayPartialHurryCostToCompleteNextTurnInformation(int input_string_pointer, int output_string_pointer);
 int getPartialHurryCostToCompleteNextTurn();
 int getProportionalHurryCost(int factionId, int item, int minerals);
+HOOK_API int modifiedSpyingForPactBaseProductionDisplay(int factionId);
+void expireInfiltrations(int factionId);
 
 #endif // __WTP_H__
 

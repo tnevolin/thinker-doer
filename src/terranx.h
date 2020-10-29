@@ -138,4 +138,5 @@ extern fp_1void *tx_base_first;
 extern fp_1int *tx_action;
 extern fp_2void *tx_parse_string;
 extern fp_1void *tx_kill;
+extern fp_1int *tx_spying;
 

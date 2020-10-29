@@ -2720,3 +2720,70 @@ int getProportionalHurryCost(int factionId, int item, int minerals)
 
 }
 
+/*
+Adds pact condition to the spying check giving pact faction all benfits of the spying.
+*/
+HOOK_API int modifiedSpyingForPactBaseProductionDisplay(int factionId)
+{
+	// check if there is a pact with faction
+
+	if (isDiploStatus(*current_player_faction, factionId, DIPLO_PACT))
+		return 1;
+
+	// otherwise, fall to default
+
+	return tx_spying(factionId);
+
+}
+
+void expireInfiltrations(int factionId)
+{
+	// check if feature is on
+
+	if (!conf.infiltration_expire)
+		return;
+
+	// try to expire infiltration with other factions
+
+	for (int otherFactionId = 1; otherFactionId <= 7; otherFactionId++)
+	{
+		// skip self
+
+		if (otherFactionId == factionId)
+			continue;
+
+		// skip no infiltrations
+
+		if (!isDiploStatus(factionId, otherFactionId, DIPLO_HAVE_INFILTRATOR))
+			continue;
+
+		// get other faction PROBE rating
+
+		int otherFactionProbeRating = tx_factions[otherFactionId].SE_probe_pending;
+
+
+		// calculate infiltration expire probability
+
+		double infiltrationExpireProbability = min(1.0, max(0.0, conf.infiltration_expire_probability_base + conf.infiltration_expire_probability_probe_effect_multiplier * otherFactionProbeRating));
+
+		// roll dice
+
+		if (random_double(1.0) < infiltrationExpireProbability)
+		{
+			// expire infiltration
+
+			setDiploStatus(factionId, otherFactionId, DIPLO_HAVE_INFILTRATOR, false);
+
+			// show info to human
+
+			if (is_human(factionId))
+			{
+
+			}
+
+		}
+
+	}
+
+}
+

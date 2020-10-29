@@ -2827,6 +2827,15 @@ f:  a1 30 ea 90 00          mov    eax,ds:0x90ea30
 
 }
 
+/*
+Displays base production for pact faction bases same way as for infiltration.
+*/
+void patch_pact_base_map_production_display()
+{
+	write_call(0x0046836E, (int)modifiedSpyingForPactBaseProductionDisplay);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3373,6 +3382,8 @@ bool patch_setup(Config* cf) {
 	{
 		patch_mineral_contribution();
 	}
+
+	patch_pact_base_map_production_display();
 
 
     // continue with original Thinker checks

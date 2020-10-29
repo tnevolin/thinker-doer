@@ -189,3 +189,6 @@ fp_2void *tx_parse_string = (fp_2void *)0x00625880;
 // kills vehicle
 fp_1void *tx_kill = (fp_1void *)0x005C0B00;
 
+// determing if g_CURRENT_PC_FACT_ID has infiltration to given faction
+fp_1int *tx_spying = (fp_1int *)0x0046836E;
+
