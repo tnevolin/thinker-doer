@@ -162,6 +162,8 @@ void expireInfiltrations(int factionId);
 void setInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId, int deviceCount);
 int getInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId);
 HOOK_API void modifiedProbeActionRisk(int action, int riskPointer);
+HOOK_API int modifiedInfiltrateDatalinksOptionTextGet();
+HOOK_API void modifiedSetTreatyForInfiltrationExpiration(int initiatingFactionId, int targetFactionId, int diploState, int set_clear);
 
 #endif // __WTP_H__
 

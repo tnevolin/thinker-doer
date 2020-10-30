@@ -2874,6 +2874,59 @@ f:  83 c4 08                add    esp,0x8
 
 }
 
+/*
+Patches Infiltrate Datalinks option for infiltration expiration.
+*/
+void patch_infiltrate_datalinks()
+{
+	// always display Infiltrate Datalinks option
+
+	int infiltrate_datalinks_option_always_on_bytes_length = 0x2;
+/*
+0:  75 14                   jne    0x16
+*/
+	byte infiltrate_datalinks_option_always_on_bytes_old[] = { 0x75, 0x14 };
+/*
+...
+*/
+	byte infiltrate_datalinks_option_always_on_bytes_new[] = { 0x90, 0x90 };
+	write_bytes
+	(
+		0x0059F90F,
+		infiltrate_datalinks_option_always_on_bytes_length,
+		infiltrate_datalinks_option_always_on_bytes_old,
+		infiltrate_datalinks_option_always_on_bytes_new
+	);
+
+	// adds number of planted devices information to Infiltrate Datalinks option text
+
+	write_call(0x0059F8ED, (int)modifiedInfiltrateDatalinksOptionTextGet);
+
+	// always set infiltrator flag even if it is already set
+
+	int always_set_infiltrator_flag_bytes_length = 0x2;
+/*
+0:  75 23                   jne    0x25
+*/
+	byte always_set_infiltrator_flag_bytes_old[] = { 0x75, 0x23 };
+/*
+...
+*/
+	byte always_set_infiltrator_flag_bytes_new[] = { 0x90, 0x90 };
+	write_bytes
+	(
+		0x0059FB9C,
+		always_set_infiltrator_flag_bytes_length,
+		always_set_infiltrator_flag_bytes_old,
+		always_set_infiltrator_flag_bytes_new
+	);
+
+	// wrap set_treaty call for infiltration flag to also set number of devices
+
+	write_call(0x0059FBA7, (int)modifiedSetTreatyForInfiltrationExpiration);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3426,6 +3479,11 @@ bool patch_setup(Config* cf) {
 	if (cf->modified_probe_action_risks)
 	{
 		patch_modified_probe_action_risks();
+	}
+
+	if (cf->infiltration_expire)
+	{
+		patch_infiltrate_datalinks();
 	}
 
 
