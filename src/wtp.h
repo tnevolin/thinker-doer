@@ -161,6 +161,7 @@ HOOK_API int modifiedSpyingForPactBaseProductionDisplay(int factionId);
 void expireInfiltrations(int factionId);
 void setInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId, int deviceCount);
 int getInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId);
+HOOK_API void modifiedProbeActionRisk(int action, int riskPointer);
 
 #endif // __WTP_H__
 

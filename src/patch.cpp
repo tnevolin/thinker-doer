@@ -2836,6 +2836,44 @@ void patch_pact_base_map_production_display()
 
 }
 
+/*
+Introduce a hook to modify probe action risks.
+*/
+void patch_modified_probe_action_risks()
+{
+	int modified_probe_action_risk_hook_bytes_length = 0x13;
+/*
+0:  8b 55 08                mov    edx,DWORD PTR [ebp+0x8]
+3:  6a 00                   push   0x0
+5:  6a 01                   push   0x1
+7:  52                      push   edx
+8:  e8 f2 dc 01 00          call   0x1dcff
+d:  83 c4 0c                add    esp,0xc
+10: 89 45 b4                mov    DWORD PTR [ebp-0x4c],eax
+*/
+	byte modified_probe_action_risk_hook_bytes_old[] = { 0x8B, 0x55, 0x08, 0x6A, 0x00, 0x6A, 0x01, 0x52, 0xE8, 0xF2, 0xDC, 0x01, 0x00, 0x83, 0xC4, 0x0C, 0x89, 0x45, 0xB4 };
+/*
+0:  89 45 b4                mov    DWORD PTR [ebp-0x4c],eax
+3:  8d 45 d0                lea    eax,[ebp-0x30]
+6:  50                      push   eax
+7:  ff 75 e8                push   DWORD PTR [ebp-0x18]
+a:  e8 fd ff ff ff          call   c <_main+0xc>
+f:  83 c4 08                add    esp,0x8
+...
+*/
+	byte modified_probe_action_risk_hook_bytes_new[] = { 0x89, 0x45, 0xB4, 0x8D, 0x45, 0xD0, 0x50, 0xFF, 0x75, 0xE8, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x08, 0x90 };
+	write_bytes
+	(
+		0x005A3141,
+		modified_probe_action_risk_hook_bytes_length,
+		modified_probe_action_risk_hook_bytes_old,
+		modified_probe_action_risk_hook_bytes_new
+	);
+
+	write_call(0x005A314B, (int)modifiedProbeActionRisk);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3384,6 +3422,11 @@ bool patch_setup(Config* cf) {
 	}
 
 	patch_pact_base_map_production_display();
+
+	if (cf->modified_probe_action_risks)
+	{
+		patch_modified_probe_action_risks();
+	}
 
 
     // continue with original Thinker checks

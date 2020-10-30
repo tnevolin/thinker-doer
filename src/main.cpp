@@ -341,6 +341,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->computer_infiltration_device_lifetime_probe_effect = atof(value);
     }
+    else if (MATCH("wtp", "modified_probe_action_risks"))
+    {
+        cf->modified_probe_action_risks = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "probe_action_risk_genetic_plague"))
+    {
+        cf->probe_action_risk_genetic_plague = max(0, atoi(value));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
