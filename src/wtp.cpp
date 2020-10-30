@@ -2775,13 +2775,6 @@ void expireInfiltrations(int factionId)
 
 		debug("\t\tinfiltrationDeviceCount=%d\n", infiltrationDeviceCount);
 
-		// set up initial devices if not set
-
-		if (getInfiltrationDeviceCount(infiltratingFactionId, factionId) == 0)
-		{
-			setInfiltrationDeviceCount(infiltratingFactionId, factionId, conf.infiltration_devices);
-		}
-
 		// retrieve lifetime formula parameters
 
 		double lifetimeBase;
@@ -2913,6 +2906,52 @@ HOOK_API void modifiedProbeActionRisk(int action, int riskPointer)
 		*risk = 2;
 		break;
 	}
+
+}
+
+/*
+Overrides Infiltrate Datalinks option text.
+*/
+HOOK_API int modifiedInfiltrateDatalinksOptionTextGet()
+{
+	// execute original code
+
+	int textPointer = tx_text_get();
+
+	// apply only when infiltration expiration is enabled
+
+	if (conf.infiltration_expire)
+	{
+		// get number of devices
+
+		int infiltrationDeviceCount = getInfiltrationDeviceCount(*current_player_faction, *g_PROBE_FACT_TARGET);
+
+		// convert pointer to char *
+
+		char *text = (char *)textPointer;
+
+		// modify text
+
+		sprintf(text + strlen(text), " (%d/%d devices planted)", infiltrationDeviceCount, conf.infiltration_devices);
+
+	}
+
+	return textPointer;
+
+}
+
+/*
+Wraps set_treaty call for infiltration flag to also set number of devices.
+*/
+HOOK_API void modifiedSetTreatyForInfiltrationExpiration(int initiatingFactionId, int targetFactionId, int diploState, int set_clear)
+{
+	// execute original code
+
+	tx_set_treaty(initiatingFactionId, targetFactionId, diploState, set_clear);
+
+	// plant devices
+
+	setInfiltrationDeviceCount(initiatingFactionId, targetFactionId, conf.infiltration_devices);
 
 }
 

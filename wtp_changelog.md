@@ -1,3 +1,9 @@
+# Version 176
+
+* Infiltrate Datalinks option is always available even if already infiltrated.
+* Infiltrate Datalinks option displays number of currently planted infiltration devices.
+* Infiltrating Datalinks sets number of infiltration devices to the maximum regardless of current device number.
+
 # Version 175
 
 * Hooked up probe actions. Now I can set risks for them manually.
