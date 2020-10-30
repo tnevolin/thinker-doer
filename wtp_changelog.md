@@ -1,3 +1,9 @@
+# Version 175
+
+* Hooked up probe actions. Now I can set risks for them manually.
+  * Set Itroducting Genetic Plague action risk to 2 (was 0 in vanilla). Now Disciplined and Hardened probes cannot even succeed in it without opponent negaitve PROBE help.
+* Put risk values on all probe team action options. This allows roughly estimate success chances.
+
 # Version 174
 
 * Computer players do not lose their infiltration.

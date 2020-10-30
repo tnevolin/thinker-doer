@@ -6166,15 +6166,15 @@ Our probe team has linked to the $<M1:$FACTIONADJ1> network and is
 awaiting instructions.
 
 #PROBEMENU
-Infiltrate Datalinks
-Procure Research Data
-Activate Sabotage Virus
-Drain Energy Reserves
-Incite Drone Riots
-Assassinate Prominent Researchers
-Engage Mind Control Probe
-Introduce Genetic Plague (Atrocity)
-Free Captured Faction Leader
+Infiltrate Datalinks                              / RISK: 0
+Procure Research Data                       / RISK: 0 - first time, 1 - against security interlock
+Activate Sabotage Virus                     / RISK: 0 - random, 1 - spesific, 2 - defensive structure or any in HQ
+Drain Energy Reserves                       / RISK: 0
+Incite Drone Riots                              / RISK: 0
+Assassinate Prominent Researchers   / RISK: 1
+Engage Mind Control Probe               / RISK: 0 - basic, 1 - total
+Introduce Genetic Plague (Atrocity)    / RISK: 2 !
+Free Captured Faction Leader        / RISK: ?
 
 #DRONEINCITE0
 #xs 440

@@ -2897,3 +2897,22 @@ int getInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFaction
 
 }
 
+/*
+Returns modified probe action risk.
+*/
+HOOK_API void modifiedProbeActionRisk(int action, int riskPointer)
+{
+	// convert risk pointer
+
+	int *risk = (int *)riskPointer;
+
+	switch (action)
+	{
+		// genetic plague
+	case 7:
+		*risk = 2;
+		break;
+	}
+
+}
+
