@@ -1,3 +1,7 @@
+# Version 177
+
+* Computer player won't buy technology from human player when explicitly offered if they don't have enough cash.
+
 # Version 176
 
 * Infiltrate Datalinks option is always available even if already infiltrated.

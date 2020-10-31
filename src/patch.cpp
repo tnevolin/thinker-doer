@@ -2927,6 +2927,30 @@ void patch_infiltrate_datalinks()
 
 }
 
+/*
+Disable setting knowledge price over the credits.
+*/
+void patch_min_knowledge_price()
+{
+	int disable_min_knowledge_price_bytes_length = 0x2;
+/*
+0:  8b c1                   mov    eax,ecx
+*/
+	byte disable_min_knowledge_price_bytes_old[] = { 0x8B, 0xC1 };
+/*
+...
+*/
+	byte disable_min_knowledge_price_bytes_new[] = { 0x90, 0x90 };
+	write_bytes
+	(
+		0x00540A35,
+		disable_min_knowledge_price_bytes_length,
+		disable_min_knowledge_price_bytes_old,
+		disable_min_knowledge_price_bytes_new
+	);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3485,6 +3509,8 @@ bool patch_setup(Config* cf) {
 	{
 		patch_infiltrate_datalinks();
 	}
+
+	patch_min_knowledge_price();
 
 
     // continue with original Thinker checks
