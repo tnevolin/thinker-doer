@@ -83,7 +83,7 @@ int const BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 };
 
 char* prod_name(int prod);
-int mineral_cost(int factionId, int itemId, int baseId);
+int mineral_cost(int baseId, int itemId);
 bool has_tech(int faction, int tech);
 bool has_ability(int faction, int abl);
 bool has_chassis(int faction, int chs);
@@ -190,6 +190,8 @@ bool has_facility_tech(int faction_id, int facility_id);
 int getDoctors(int id);
 int getDoctorQuelledDrones(int id);
 int getBaseBuildingItem(int baseId);
+bool isBaseBuildingUnit(int baseId);
+bool isBaseBuildingFacility(int baseId);
 bool isBaseBuildingProject(int baseId);
 bool isBaseProductionWithinRetoolingExemption(int baseId);
 bool isBaseBuildingProjectBeyondRetoolingExemption(int baseId);
@@ -283,4 +285,5 @@ std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y);
 bool isMapTileVisibleToFaction(int factionId, MAP *tile);
 bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus);
 void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
+int getRemainingMinerals(int baseId);
 

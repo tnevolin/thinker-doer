@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 177"
+    #define MOD_VERSION "The Will to Power mod - version 178"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -111,8 +111,10 @@ struct Config {
     bool ignore_reactor_power_in_combat = false;
     bool alternative_prototype_cost_formula = false;
     int reactor_cost_factors[4];
-    bool disable_hurry_penalty_threshold = false;
-    bool alternative_unit_hurry_formula = false;
+    bool flat_hurry_cost = false;
+    int flat_hurry_cost_multiplier_unit = 1;
+    int flat_hurry_cost_multiplier_facility = 1;
+    int flat_hurry_cost_multiplier_project = 1;
     bool alternative_upgrade_cost_formula = false;
     bool alternative_base_defensive_structure_bonuses = false;
     int perimeter_defense_multiplier = 0;

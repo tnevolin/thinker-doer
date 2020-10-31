@@ -186,7 +186,7 @@ struct MetaFaction {
     int rule_energy;
     int rule_interest;
     int rule_population;            // 0x04F0
-    int rule_hurry;
+    int rule_hurry;					// 0x04F4
     int rule_techcost;
     int rule_psi;
     int rule_sharetech;             // 0x0500
@@ -275,7 +275,7 @@ struct Faction {
     int SE_support;                 // 0x0280
     int SE_talent;
     int SE_morale;                  // 0x0288
-    int SE_police;
+    int SE_police;					// 0x028C
     int SE_growth;                  // 0x0290
     int SE_planet;					// 0x0294
     int SE_probe;					// 0x0298

@@ -15,16 +15,16 @@ const std::unordered_set<int> IMPORTANT_FACILITIES =
 /*
 Analyzes all bases at once and decides what to hurry.
 This is in addition to consider_hurry().
-It kicks in only with simplified hurry cost set.
+It kicks in only when flat hurry cost is enabled.
 */
 void factionHurryProduction(int factionId)
 {
     Faction* faction = &tx_factions[factionId];
     debug("factionHurryProduction\n")
 
-	// apply only when simplified hurry is enabled
+	// apply only when flat hurry cost is enabled
 
-	if (!(conf.disable_hurry_penalty_threshold && conf.alternative_unit_hurry_formula))
+	if (!conf.flat_hurry_cost)
 		return;
 
 	// calculate spend pool
@@ -159,79 +159,54 @@ void factionHurryProduction(int factionId)
 
 /*
 Spend maximal available amount not greater than allowance on hurrying production.
-Works only with simplified hurry cost calculation enabled.
+Works only when flat hurry cost is enabled.
 */
 void hurryProductionPartially(int baseId, int allowance)
 {
 	BASE *base = &(tx_bases[baseId]);
 
-	// apply only when simplified hurry cost calculation is enabled
+	// apply only when flat hurry cost is enabled
 
-	if (!(conf.disable_hurry_penalty_threshold && conf.alternative_unit_hurry_formula))
+	if (!conf.flat_hurry_cost)
 		return;
 
-	// get item and minerals left to build
+	// get remaining minerals
 
-	int itemId = base->queue_items[0];
-	int itemMineralCost = mineral_cost(base->faction_id, itemId, baseId);
-
-	// calculate remaining minerals
-
-	int remaininglMinerals = itemMineralCost - base->minerals_accumulated;
+	int remainingMinerals = getRemainingMinerals(baseId);
 
 	// already completed
 
-	if (remaininglMinerals <= 0)
+	if (remainingMinerals <= 0)
 		return;
 
-	// scales remaining minerals to mineral cost multiplier if configured
+	// get flat hurry cost
 
-	if (conf.fix_mineral_contribution)
-	{
-		remaininglMinerals = scaleValueToBasicMinieralCostMultiplier(base->faction_id, remaininglMinerals);
-	}
+	int hurryCost = getFlatHurryCost(baseId);
 
-	// calculate hurry mineral cost
+	// nothing to hurry
 
-	int hurryMineralCost;
-
-	// unit
-	if (itemId >= 0)
-	{
-		hurryMineralCost = 4;
-	}
-	// project
-	else if (itemId >= -PROJECT_ID_LAST && itemId <= -PROJECT_ID_FIRST)
-	{
-		hurryMineralCost = 4;
-	}
-	// facility
-	else
-	{
-		hurryMineralCost = 2;
-	}
+	if (hurryCost <= 0)
+		return;
 
 	// calculate minerals and hurry price
 
-	int fullHurryPrice = remaininglMinerals * hurryMineralCost;
+	int partialHurryMinerals;
+	int partialHurryCost;
 
-	int hurryMinerals;
-	int hurryCredits;
-
-	if (allowance >= fullHurryPrice)
+	if (allowance >= hurryCost)
 	{
-		hurryMinerals = remaininglMinerals;
-		hurryCredits = fullHurryPrice;
+		partialHurryMinerals = remainingMinerals;
+		partialHurryCost = hurryCost;
 	}
 	else
 	{
-		hurryMinerals = allowance / hurryMineralCost;
-		hurryCredits = hurryMinerals * hurryMineralCost;
+		partialHurryMinerals = remainingMinerals * allowance / hurryCost;
+		partialHurryCost = allowance;
 	}
 
 	// hurry production
 
-	hurry_item(base, hurryMinerals, hurryCredits);
+	hurry_item(base, partialHurryMinerals, partialHurryCost);
 
 }
 
