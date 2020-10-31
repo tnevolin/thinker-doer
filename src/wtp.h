@@ -156,7 +156,6 @@ HOOK_API void displayHurryCostScaledToBasicMineralCostMultiplierInformation(int 
 int scaleValueToBasicMinieralCostMultiplier(int factionId, int value);
 HOOK_API void displayPartialHurryCostToCompleteNextTurnInformation(int input_string_pointer, int output_string_pointer);
 int getPartialHurryCostToCompleteNextTurn();
-int getProportionalHurryCost(int factionId, int item, int minerals);
 HOOK_API int modifiedSpyingForPactBaseProductionDisplay(int factionId);
 void expireInfiltrations(int factionId);
 void setInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId, int deviceCount);
@@ -164,6 +163,9 @@ int getInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFaction
 HOOK_API void modifiedProbeActionRisk(int action, int riskPointer);
 HOOK_API int modifiedInfiltrateDatalinksOptionTextGet();
 HOOK_API void modifiedSetTreatyForInfiltrationExpiration(int initiatingFactionId, int targetFactionId, int diploState, int set_clear);
+HOOK_API int modifiedHurryCost();
+int getFlatHurryCost(int baseId);
+int getPartialFlatHurryCost(int baseId, int minerals);
 
 #endif // __WTP_H__
 

@@ -2080,6 +2080,8 @@ Wraps setup_player adding custom functionality.
 */
 HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3)
 {
+	debug("modifiedSetupPlayer: %s\n", tx_metafactions[factionId].noun_faction);
+
 	// execute original code
 
 	tx_setup_player(factionId, a2, a3);
@@ -2558,7 +2560,7 @@ HOOK_API int getCurrentBaseProductionMineralCost()
 
 	// get current base production mineral cost
 
-	int baseProductionMineralCost = mineral_cost(base->faction_id, base->queue_items[0], baseId);
+	int baseProductionMineralCost = mineral_cost(baseId, base->queue_items[0]);
 
 	// return value
 
@@ -2576,7 +2578,7 @@ HOOK_API int getCurrentBaseProductionRemainingMineralsScaledToBasicMineralCostMu
 
 	// get current base production mineral cost
 
-	int baseProductionMineralCost = mineral_cost(base->faction_id, base->queue_items[0], baseId);
+	int baseProductionMineralCost = mineral_cost(baseId, base->queue_items[0]);
 
 	// get current base production remaining mineral cost
 
@@ -2637,9 +2639,9 @@ HOOK_API void displayPartialHurryCostToCompleteNextTurnInformation(int input_str
 
 	tx_parse_string(input_string_pointer, output_string_pointer);
 
-	// apply additional information message only when simplified hurry cost calculation is enabled
+	// apply additional information message only when flat hurry cost is enabled
 
-	if (!(conf.disable_hurry_penalty_threshold && conf.alternative_unit_hurry_formula))
+	if (!conf.flat_hurry_cost)
 		return;
 
 	// get output string pointer
@@ -2665,58 +2667,11 @@ int getPartialHurryCostToCompleteNextTurn()
 
 	// get minerals neede to hurry for next turn completion
 
-	int mineralsToHurry = mineral_cost(base->faction_id, base->queue_items[0], baseId) - base->minerals_accumulated - base->mineral_surplus;
+	int mineralsToHurry = mineral_cost(baseId, base->queue_items[0]) - base->minerals_accumulated - base->mineral_surplus;
 
 	// calculate partial hurry cost
 
-	int partialHurryCost = getProportionalHurryCost(base->faction_id, base->queue_items[0], mineralsToHurry);
-
-	return partialHurryCost;
-
-}
-
-/*
-Calculates hurry cost for alternative (flat) cost formula.
-*/
-int getProportionalHurryCost(int factionId, int item, int minerals)
-{
-	// apply only when simplified hurry cost calculation is enabled
-
-	if (!(conf.disable_hurry_penalty_threshold && conf.alternative_unit_hurry_formula))
-		return 0;
-
-	// scales minerals to mineral cost multiplier if configured
-
-	if (conf.fix_mineral_contribution)
-	{
-		minerals = scaleValueToBasicMinieralCostMultiplier(factionId, minerals);
-	}
-
-	// calculate hurry mineral cost
-
-	int hurryMineralCost;
-
-	// unit
-	if (item >= 0)
-	{
-		hurryMineralCost = 4;
-	}
-	// project
-	else if (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST)
-	{
-		hurryMineralCost = 4;
-	}
-	// facility
-	else
-	{
-		hurryMineralCost = 2;
-	}
-
-	// calculate hurry cost
-
-	int hurryCost = hurryMineralCost * minerals;
-
-	return hurryCost;
+	return getPartialFlatHurryCost(baseId, mineralsToHurry);
 
 }
 
@@ -2952,6 +2907,109 @@ HOOK_API void modifiedSetTreatyForInfiltrationExpiration(int initiatingFactionId
 	// plant devices
 
 	setInfiltrationDeviceCount(initiatingFactionId, targetFactionId, conf.infiltration_devices);
+
+}
+
+/*
+Substitutes vanilla hurry cost with flat hurry cost.
+*/
+HOOK_API int modifiedHurryCost()
+{
+	// get current base
+
+	int baseId = *current_base_id;
+
+	// calculate flat hurry cost
+
+	return getFlatHurryCost(baseId);
+
+}
+
+/*
+Calculates flat hurry cost.
+Applies only when flat hurry cost is enabled.
+*/
+int getFlatHurryCost(int baseId)
+{
+	// apply only when flat hurry cost is enabled
+
+	if (!conf.flat_hurry_cost)
+		return 0;
+
+	// get base
+
+	BASE *base = &(tx_bases[baseId]);
+
+	// get hurry cost multiplier
+
+	int hurryCostMultiplier;
+
+	if (isBaseBuildingUnit(baseId))
+	{
+		hurryCostMultiplier = conf.flat_hurry_cost_multiplier_unit;
+	}
+	else if (isBaseBuildingFacility(baseId))
+	{
+		hurryCostMultiplier = conf.flat_hurry_cost_multiplier_facility;
+	}
+	else if (isBaseBuildingProject(baseId))
+	{
+		hurryCostMultiplier = conf.flat_hurry_cost_multiplier_project;
+	}
+	else
+	{
+		// should not happen
+		hurryCostMultiplier = 1;
+	}
+
+	// get production remaining minerals
+
+	int remainingMinerals = getRemainingMinerals(baseId);
+
+	// calculate hurry cost
+
+	int hurryCost = hurryCostMultiplier * remainingMinerals;
+
+	// scale value to mineral cost multiplier if configured
+
+	if (conf.fix_mineral_contribution)
+	{
+		hurryCost = scaleValueToBasicMinieralCostMultiplier(base->faction_id, hurryCost);
+	}
+
+	return hurryCost;
+
+}
+
+/*
+Calculates partial flat hurry cost.
+Applies only when flat hurry cost is enabled.
+*/
+int getPartialFlatHurryCost(int baseId, int minerals)
+{
+	// apply only when flat hurry cost is enabled
+
+	if (!conf.flat_hurry_cost)
+		return 0;
+
+	// get remaining minerals
+
+	int remainingMinerals = getRemainingMinerals(baseId);
+
+	// nothing to hurry
+
+	if (remainingMinerals == 0)
+		return 0;
+
+	// get hurry cost
+
+	int hurryCost = getFlatHurryCost(baseId);
+
+	// calculate partial flat hurry cost
+
+	int partialHurryCost = (hurryCost * minerals + remainingMinerals / 2) / remainingMinerals;
+
+	return partialHurryCost;
 
 }
 

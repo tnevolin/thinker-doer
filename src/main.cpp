@@ -136,11 +136,17 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "reactor_cost_factor_3")) {
         cf->reactor_cost_factors[3] = atoi(value);
     }
-    else if (MATCH("wtp", "disable_hurry_penalty_threshold")) {
-        cf->disable_hurry_penalty_threshold = (atoi(value) == 0 ? false : true);
+    else if (MATCH("wtp", "flat_hurry_cost")) {
+        cf->flat_hurry_cost = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "alternative_unit_hurry_formula")) {
-        cf->alternative_unit_hurry_formula = (atoi(value) == 0 ? false : true);
+    else if (MATCH("wtp", "flat_hurry_cost_multiplier_unit")) {
+        cf->flat_hurry_cost_multiplier_unit = max(1, atoi(value));
+    }
+    else if (MATCH("wtp", "flat_hurry_cost_multiplier_facility")) {
+        cf->flat_hurry_cost_multiplier_facility = max(1, atoi(value));
+    }
+    else if (MATCH("wtp", "flat_hurry_cost_multiplier_project")) {
+        cf->flat_hurry_cost_multiplier_project = max(1, atoi(value));
     }
     else if (MATCH("wtp", "alternative_upgrade_cost_formula")) {
         cf->alternative_upgrade_cost_formula = (atoi(value) == 0 ? false : true);
@@ -1133,7 +1139,7 @@ int consider_hurry(int id) {
     if (t >= -PROJECT_ID_LAST && t <= -PROJECT_ID_FIRST)
     {
         // no threshold
-        if (conf.disable_hurry_penalty_threshold)
+        if (conf.flat_hurry_cost)
         {
             cheap = true;
         }
@@ -1148,7 +1154,7 @@ int consider_hurry(int id) {
     else
     {
         // no threshold
-        if (conf.disable_hurry_penalty_threshold)
+        if (conf.flat_hurry_cost)
         {
             cheap = true;
         }
@@ -1160,7 +1166,7 @@ int consider_hurry(int id) {
     }
 
     int reserve = 20 + min(900, max(0, f->current_num_bases * min(30, (*current_turn - 20)/5)));
-    int mins = mineral_cost(faction, t, id) - b->minerals_accumulated;
+    int mins = mineral_cost(id, t) - b->minerals_accumulated;
     int turns = (int)ceil(mins / max(0.01, 1.0 * b->mineral_surplus));
 
     // hurry cost calculation
@@ -1178,10 +1184,10 @@ int consider_hurry(int id) {
     // units
     else if (t >= 0)
     {
-        // alternative formula
-        if (conf.alternative_unit_hurry_formula)
+        // flat cost
+        if (conf.flat_hurry_cost)
         {
-            cost = (cheap ? 1 : 2) * 4 * mins;
+            cost = getFlatHurryCost(id);
         }
         // vanilla default formula
         else

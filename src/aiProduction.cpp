@@ -365,7 +365,7 @@ void evaluateBaseMultiplyingFacilitiesDemand()
 		// get facility parameters
 
 		int cost = facility->cost;
-		int mineralCost = mineral_cost(base->faction_id, -facilityId, baseId);
+		int mineralCost = mineral_cost(baseId, -facilityId);
 		int maintenance = facility->maint;
 		debug("\t\t\tcost=%d, mineralCost=%d, maintenance=%d\n", cost, mineralCost, maintenance);
 

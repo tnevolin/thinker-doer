@@ -13,9 +13,12 @@ char* prod_name(int prod) {
 Calculates mineral cost for given faction, production item, and possibly base.
 If base is not negative then its cost modifying facilites are taken into account: Skunkworks and Brood Pits.
 */
-int mineral_cost(int factionId, int itemId, int baseId)
+int mineral_cost(int baseId, int itemId)
 {
-	return (itemId >= 0 ? tx_veh_cost(itemId, baseId, 0) : tx_facility[-itemId].cost) * tx_cost_factor(factionId, 1, -1);
+	BASE *base = &(tx_bases[baseId]);
+
+	return (itemId >= 0 ? tx_veh_cost(itemId, baseId, 0) : tx_facility[-itemId].cost) * tx_cost_factor(base->faction_id, 1, -1);
+
 }
 
 bool has_tech(int faction, int tech) {
@@ -868,6 +871,18 @@ int getBaseBuildingItem(int baseId)
 	return tx_bases[baseId].queue_items[0];
 }
 
+bool isBaseBuildingUnit(int baseId)
+{
+	int item = getBaseBuildingItem(baseId);
+	return (item >= 0);
+}
+
+bool isBaseBuildingFacility(int baseId)
+{
+	int item = getBaseBuildingItem(baseId);
+	return (item > -PROJECT_ID_FIRST && item < 0);
+}
+
 bool isBaseBuildingProject(int baseId)
 {
 	int item = getBaseBuildingItem(baseId);
@@ -1686,7 +1701,7 @@ int estimateBaseProductionTurnsToComplete(int id)
 {
 	BASE *base = &(tx_bases[id]);
 
-	return ((mineral_cost(base->faction_id, base->queue_items[0], id) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
+	return ((mineral_cost(id, base->queue_items[0]) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
 
 }
 
@@ -2791,6 +2806,17 @@ void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on)
 	{
 		tx_factions[faction1Id].diplo_status[faction2Id] &= ~diploStatus;
 	}
+
+}
+
+/*
+Calculates amount of minerals to complete production in the base.
+*/
+int getRemainingMinerals(int baseId)
+{
+	BASE *base = &(tx_bases[baseId]);
+
+	return max(0, mineral_cost(baseId, base->queue_items[0]) - base->minerals_accumulated);
 
 }
 

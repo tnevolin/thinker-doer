@@ -847,95 +847,77 @@ void patch_alternative_prototype_cost_formula()
 }
 
 /*
-Disables hurry penalty threshold.
+Applies flat hurry cost mechanics.
 */
-void patch_disable_hurry_penalty_threshold()
+void patch_flat_hurry_cost()
 {
-    int disable_hurry_penalty_threshold_bytes_length = 0x6;
+	// BaseWin__hurry
 
-    /*
-    cmp     esi, dword_949830
-    */
-    byte old_disable_hurry_penalty_threshold_bytes[] =
-        { 0x3B, 0x35, 0x30, 0x98, 0x94, 0x00 }
-    ;
-
-    /*
-    cmp     esi, 0x0
-    nop
-    nop
-    nop
-    */
-    byte new_disable_hurry_penalty_threshold_bytes[] =
-        { 0x83, 0xFE, 0x00, 0x90, 0x90, 0x90 }
-    ;
-
-    write_bytes
-    (
-        0x00419007,
-        disable_hurry_penalty_threshold_bytes_length,
-        old_disable_hurry_penalty_threshold_bytes,
-        new_disable_hurry_penalty_threshold_bytes
-    )
-    ;
-
-    int disable_sp_hurry_penalty_threshold_bytes_length = 0x3;
-
-    /*
-    shl     eax, 2
-    */
-    byte old_disable_sp_hurry_penalty_threshold_bytes[] =
-        { 0xC1, 0xE0, 0x02 }
-    ;
-
-    /*
-    xor     eax, eax
-    nop
-    */
-    byte new_disable_sp_hurry_penalty_threshold_bytes[] =
-        { 0x31, 0xC0, 0x90 }
-    ;
-
-    write_bytes
-    (
-        0x00418FFB,
-        disable_sp_hurry_penalty_threshold_bytes_length,
-        old_disable_sp_hurry_penalty_threshold_bytes,
-        new_disable_sp_hurry_penalty_threshold_bytes
-    )
-    ;
-
-}
+    int flat_hurry_cost_bytes_length = 0x59;
 
 /*
-Enables alternative unit hurry cost formula.
+0:  2b ce                   sub    ecx,esi
+2:  3b d7                   cmp    edx,edi
+4:  7c 1b                   jl     0x21
+6:  8b d1                   mov    edx,ecx
+8:  b8 67 66 66 66          mov    eax,0x66666667
+d:  0f af d1                imul   edx,ecx
+10: f7 ea                   imul   edx
+12: c1 fa 03                sar    edx,0x3
+15: 8b c2                   mov    eax,edx
+17: c1 e8 1f                shr    eax,0x1f
+1a: 03 d0                   add    edx,eax
+1c: 8d 3c 4a                lea    edi,[edx+ecx*2]
+1f: eb 03                   jmp    0x24
+21: 8d 3c 09                lea    edi,[ecx+ecx*1]
+24: 83 7d e4 46             cmp    DWORD PTR [ebp-0x1c],0x46
+28: 7c 25                   jl     0x4f
+2a: a1 30 ea 90 00          mov    eax,ds:0x90ea30
+2f: 33 c9                   xor    ecx,ecx
+31: 6a ff                   push   0xffffffff
+33: 6a 01                   push   0x1
+35: 8a 48 04                mov    cl,BYTE PTR [eax+0x4]
+38: 8b 70 40                mov    esi,DWORD PTR [eax+0x40]
+3b: 51                      push   ecx
+3c: 03 ff                   add    edi,edi
+3e: e8 35 b4 0c 00          call   0xcb478
+43: c1 e0 02                shl    eax,0x2
+46: 83 c4 0c                add    esp,0xc
+49: 3b f0                   cmp    esi,eax
+4b: 7d 02                   jge    0x4f
+4d: 03 ff                   add    edi,edi
+4f: 3b 35 30 98 94 00       cmp    esi,DWORD PTR ds:0x949830
+55: 7d 02                   jge    0x59
+57: 03 ff                   add    edi,edi
 */
-void patch_alternative_unit_hurry_formula()
-{
-    int alternative_unit_hurry_formula_bytes_length = 0x3;
-
-    /*
-    lea    edi,[edx+ecx*2]
-    */
-    byte old_alternative_unit_hurry_formula_bytes[] =
-        { 0x8D, 0x3C, 0x4A }
+    byte flat_hurry_cost_bytes_old[] =
+        { 0x2B, 0xCE, 0x3B, 0xD7, 0x7C, 0x1B, 0x8B, 0xD1, 0xB8, 0x67, 0x66, 0x66, 0x66, 0x0F, 0xAF, 0xD1, 0xF7, 0xEA, 0xC1, 0xFA, 0x03, 0x8B, 0xC2, 0xC1, 0xE8, 0x1F, 0x03, 0xD0, 0x8D, 0x3C, 0x4A, 0xEB, 0x03, 0x8D, 0x3C, 0x09, 0x83, 0x7D, 0xE4, 0x46, 0x7C, 0x25, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x33, 0xC9, 0x6A, 0xFF, 0x6A, 0x01, 0x8A, 0x48, 0x04, 0x8B, 0x70, 0x40, 0x51, 0x03, 0xFF, 0xE8, 0x35, 0xB4, 0x0C, 0x00, 0xC1, 0xE0, 0x02, 0x83, 0xC4, 0x0C, 0x3B, 0xF0, 0x7D, 0x02, 0x03, 0xFF, 0x3B, 0x35, 0x30, 0x98, 0x94, 0x00, 0x7D, 0x02, 0x03, 0xFF }
     ;
 
-    /*
-    lea    edi,[edi+ecx*4]
-    */
-    byte new_alternative_unit_hurry_formula_bytes[] =
-        { 0x8D, 0x3C, 0x8F }
+/*
+0:  e8 fd ff ff ff          call   2 <_main+0x2>
+5:  89 c7                   mov    edi,eax
+...
+*/
+    byte flat_hurry_cost_bytes_new[] =
+        { 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x89, 0xC7, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
 
     write_bytes
     (
-        0x00418FD4,
-        alternative_unit_hurry_formula_bytes_length,
-        old_alternative_unit_hurry_formula_bytes,
-        new_alternative_unit_hurry_formula_bytes
+        0x00418FB8,
+        flat_hurry_cost_bytes_length,
+        flat_hurry_cost_bytes_old,
+        flat_hurry_cost_bytes_new
     )
     ;
+
+    write_call(0x00418FB8, (int)modifiedHurryCost);
+
+	// display additional hurry information
+
+	write_call(0x004192A5, (int)displayHurryCostScaledToBasicMineralCostMultiplierInformation);
+	write_call(0x004192FF, (int)displayPartialHurryCostToCompleteNextTurnInformation);
 
 }
 
@@ -2782,49 +2764,6 @@ f:  5a                      pop    edx
 
 	write_call(0x00594D8C, (int)displayArtifactMineralContributionInformation);
 
-	// adjust hurry mineral contribution
-
-	int hurry_mineral_contribution_bytes_length = 0x27;
-/*
-0:  33 c9                   xor    ecx,ecx
-2:  6a ff                   push   0xffffffff
-4:  8a 4a 04                mov    cl,BYTE PTR [edx+0x4]
-7:  6a 01                   push   0x1
-9:  51                      push   ecx
-a:  e8 8e b4 0c 00          call   0xcb49d
-f:  8b c8                   mov    ecx,eax
-11: a1 30 ea 90 00          mov    eax,ds:0x90ea30
-16: 0f af ce                imul   ecx,esi
-19: 8b 70 40                mov    esi,DWORD PTR [eax+0x40]
-1c: 8b 50 50                mov    edx,DWORD PTR [eax+0x50]
-1f: 89 4d dc                mov    DWORD PTR [ebp-0x24],ecx
-22: 83 c4 0c                add    esp,0xc
-25: 2b ce                   sub    ecx,esi
-*/
-	byte hurry_mineral_contribution_bytes_old[] = { 0x33, 0xC9, 0x6A, 0xFF, 0x8A, 0x4A, 0x04, 0x6A, 0x01, 0x51, 0xE8, 0x8E, 0xB4, 0x0C, 0x00, 0x8B, 0xC8, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x0F, 0xAF, 0xCE, 0x8B, 0x70, 0x40, 0x8B, 0x50, 0x50, 0x89, 0x4D, 0xDC, 0x83, 0xC4, 0x0C, 0x2B, 0xCE };
-/*
-0:  e8 99 b4 0c 00          call   cb49e <_main+0xcb49e>
-5:  89 45 dc                mov    DWORD PTR [ebp-0x24],eax
-8:  e8 99 b4 0c 00          call   cb4a6 <_main+0xcb4a6>
-d:  89 c1                   mov    ecx,eax
-f:  a1 30 ea 90 00          mov    eax,ds:0x90ea30
-14: 8b 50 50                mov    edx,DWORD PTR [eax+0x50]
-...
-*/
-	byte hurry_mineral_contribution_bytes_new[] = { 0xE8, 0x99, 0xB4, 0x0C, 0x00, 0x89, 0x45, 0xDC, 0xE8, 0x99, 0xB4, 0x0C, 0x00, 0x89, 0xC1, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0x50, 0x50, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-	write_bytes
-	(
-		0x00418F93,
-		hurry_mineral_contribution_bytes_length,
-		hurry_mineral_contribution_bytes_old,
-		hurry_mineral_contribution_bytes_new
-	);
-
-	write_call(0x00418F93, (int)getCurrentBaseProductionMineralCost);
-	write_call(0x00418F9B, (int)getCurrentBaseProductionRemainingMineralsScaledToBasicMineralCostMultiplier);
-	write_call(0x004192A5, (int)displayHurryCostScaledToBasicMineralCostMultiplierInformation);
-	write_call(0x004192FF, (int)displayPartialHurryCostToCompleteNextTurnInformation);
-
 }
 
 /*
@@ -3170,19 +3109,11 @@ bool patch_setup(Config* cf) {
 
     }
 
-    // patch facility hurry penalty threshold
+    // patch flat hurry cost
 
-    if (cf->disable_hurry_penalty_threshold)
+    if (cf->flat_hurry_cost)
     {
-        patch_disable_hurry_penalty_threshold();
-
-    }
-
-    // patch unit hurry cost formula
-
-    if (cf->alternative_unit_hurry_formula)
-    {
-        patch_alternative_unit_hurry_formula();
+        patch_flat_hurry_cost();
 
     }
 

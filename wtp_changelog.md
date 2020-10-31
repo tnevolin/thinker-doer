@@ -1,3 +1,9 @@
+# Version 178
+
+A lot of ASM code redone. May break some previously working functionality related to hurrying and minerals. Proceed with caution.
+
+* Exposed hurry cost multipliers for all categories.
+
 # Version 177
 
 * Computer player won't buy technology from human player when explicitly offered if they don't have enough cash.
