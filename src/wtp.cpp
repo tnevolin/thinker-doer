@@ -3013,3 +3013,50 @@ int getPartialFlatHurryCost(int baseId, int minerals)
 
 }
 
+/*
+Searches base for returned probe.
+Specifically makes sure sea probe is returned to same ocean region.
+*/
+HOOK_API int modifiedFindReturnedProbeBase(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	int vehicleTriad = veh_triad(vehicleId);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+
+	// search nearest base
+
+	int nearestBaseId = -1;
+	int nearestBaseRange = -1;
+
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(tx_bases[baseId]);
+
+		// own bases only
+
+		if (base->faction_id != vehicle->faction_id)
+			continue;
+
+		// only having access to same water region for sea probes
+
+		if (vehicleTriad == TRIAD_SEA && !isBaseConnectedToRegion(baseId, vehicleTile->region))
+			continue;
+
+		// calculate range to base
+
+		int range = map_range(vehicle->x, vehicle->y, base->x, base->y);
+
+		// update nearest base
+
+		if (nearestBaseId == -1 || range < nearestBaseRange)
+		{
+			nearestBaseId = baseId;
+			nearestBaseRange = range;
+		}
+
+	}
+
+	return nearestBaseId;
+
+}
+

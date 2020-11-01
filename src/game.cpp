@@ -2104,16 +2104,16 @@ Coastal tiles can be connected to multiple ocean regions.
 */
 bool isTileConnectedToRegion(int x, int y, int region)
 {
-	MAP *baseTile = getMapTile(x, y);
+	MAP *tile = getMapTile(x, y);
 
-	if (baseTile->region == region)
+	if (tile->region == region)
 		return true;
 
-	if (!is_ocean(baseTile))
+	if (!is_ocean(tile))
 	{
-		for (MAP *tile : getAdjacentTiles(x, y, false))
+		for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
 		{
-			if (is_ocean(tile) && tile->region == region)
+			if (is_ocean(adjacentTile) && adjacentTile->region == region)
 				return true;
 
 		}
