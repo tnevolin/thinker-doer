@@ -2890,6 +2890,55 @@ void patch_min_knowledge_price()
 
 }
 
+/*
+Search right base for returned sea probe.
+*/
+void patch_find_returned_probe_base()
+{
+	int find_returned_probe_base_bytes_length = 0x37;
+/*
+0:  8b 1d cc 64 9a 00       mov    ebx,DWORD PTR ds:0x9a64cc
+6:  83 ce ff                or     esi,0xffffffff
+9:  83 cf ff                or     edi,0xffffffff
+c:  33 c0                   xor    eax,eax
+e:  85 db                   test   ebx,ebx
+10: 7e 76                   jle    0x88
+12: ba 46 d0 97 00          mov    edx,0x97d046
+17: 33 c9                   xor    ecx,ecx
+19: 8a 4a fe                mov    cl,BYTE PTR [edx-0x2]
+1c: 3b 4d e4                cmp    ecx,DWORD PTR [ebp-0x1c]
+1f: 75 0b                   jne    0x2c
+21: 0f be 0a                movsx  ecx,BYTE PTR [edx]
+24: 3b cf                   cmp    ecx,edi
+26: 7e 04                   jle    0x2c
+28: 8b f9                   mov    edi,ecx
+2a: 8b f0                   mov    esi,eax
+2c: 40                      inc    eax
+2d: 81 c2 34 01 00 00       add    edx,0x134
+33: 3b c3                   cmp    eax,ebx
+35: 7c e0                   jl     0x17
+*/
+	byte find_returned_probe_base_bytes_old[] = { 0x8B, 0x1D, 0xCC, 0x64, 0x9A, 0x00, 0x83, 0xCE, 0xFF, 0x83, 0xCF, 0xFF, 0x33, 0xC0, 0x85, 0xDB, 0x7E, 0x76, 0xBA, 0x46, 0xD0, 0x97, 0x00, 0x33, 0xC9, 0x8A, 0x4A, 0xFE, 0x3B, 0x4D, 0xE4, 0x75, 0x0B, 0x0F, 0xBE, 0x0A, 0x3B, 0xCF, 0x7E, 0x04, 0x8B, 0xF9, 0x8B, 0xF0, 0x40, 0x81, 0xC2, 0x34, 0x01, 0x00, 0x00, 0x3B, 0xC3, 0x7C, 0xE0 };
+/*
+0:  ff 75 e0                push   DWORD PTR [ebp-0x20]
+3:  e8 fd ff ff ff          call   5 <_main+0x5>
+8:  83 c4 04                add    esp,0x4
+b:  89 c6                   mov    esi,eax
+...
+*/
+	byte find_returned_probe_base_bytes_new[] = { 0xFF, 0x75, 0xE0, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x04, 0x89, 0xC6, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x0059700F,
+		find_returned_probe_base_bytes_length,
+		find_returned_probe_base_bytes_old,
+		find_returned_probe_base_bytes_new
+	);
+
+	write_call(0x0059700F + 0x3, (int)modifiedFindReturnedProbeBase);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3442,6 +3491,8 @@ bool patch_setup(Config* cf) {
 	}
 
 	patch_min_knowledge_price();
+
+	patch_find_returned_probe_base();
 
 
     // continue with original Thinker checks

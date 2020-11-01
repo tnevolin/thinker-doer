@@ -166,6 +166,7 @@ HOOK_API void modifiedSetTreatyForInfiltrationExpiration(int initiatingFactionId
 HOOK_API int modifiedHurryCost();
 int getFlatHurryCost(int baseId);
 int getPartialFlatHurryCost(int baseId, int minerals);
+HOOK_API int modifiedFindReturnedProbeBase(int vehicleId);
 
 #endif // __WTP_H__
 

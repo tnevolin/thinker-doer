@@ -1,3 +1,7 @@
+# Version 179
+
+* FIX: Probe expelled from other faction territory was sent to largest population base which could be not appropriate for sea probes. Now probes are sent to **closest** base and for sea probes they also should be connected to same region so it should not get stranded on land or magically appear in another ocean. If such base cannot be found the probe is killed.
+
 # Version 178
 
 A lot of ASM code redone. May break some previously working functionality related to hurrying and minerals. Proceed with caution.
