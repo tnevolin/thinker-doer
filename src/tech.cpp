@@ -106,7 +106,15 @@ HOOK_API int tech_rate(int faction) {
         f->thinker_tech_cost = wtp_tech_cost(faction, f->tech_research_id);
         f->thinker_tech_id = f->tech_research_id;
     }
+
+    // safety setting to make sure we don't return zero
+
+    f->thinker_tech_cost = max(2, f->thinker_tech_cost);
+
+    // return saved value
+
     return f->thinker_tech_cost;
+
 }
 
 HOOK_API int tech_selection(int faction) {
