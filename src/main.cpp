@@ -74,6 +74,8 @@ int handler(void* user, const char* section, const char* name, const char* value
         cf->factions_enabled = atoi(value);
     } else if (MATCH("thinker", "social_ai")) {
         cf->social_ai = atoi(value);
+    } else if (MATCH("thinker", "social_ai_soft_priority")) {
+        cf->social_ai_soft_priority = (atoi(value) == 0 ? false : true);
     } else if (MATCH("thinker", "tech_balance")) {
         cf->tech_balance = atoi(value);
     } else if (MATCH("thinker", "hurry_items")) {
@@ -1643,8 +1645,12 @@ HOOK_API int social_ai(int faction, int v1, int v2, int v3, int v4, int v5) {
         impunity |= (1 << (4*3 + 1));
     }
     if (has_project(faction, FAC_CLONING_VATS)) {
-        /* Power & Thought Control */
-        impunity |= (1 << (4*2 + 1)) | (1 << (4*3 + 3));
+		// Cloning VATs impunities are configurable
+		if (!conf.cloning_vats_disable_impunities)
+		{
+			/* Power & Thought Control */
+			impunity |= (1 << (4*2 + 1)) | (1 << (4*3 + 3));
+		}
     } else if (has_tech(faction, tx_facility[FAC_CHILDREN_CRECHE].preq_tech)) {
         for (int i=0; i<*total_num_bases; i++) {
             BASE* b = &tx_bases[i];
@@ -1661,26 +1667,52 @@ HOOK_API int social_ai(int faction, int v1, int v2, int v3, int v4, int v5) {
     debug("social_params %d %d %8s pop_boom: %d want_pop: %3d pop_total: %3d range: %2d "\
         "immunity: %04x impunity: %04x penalty: %04x\n", *current_turn, faction, m->filename,
         pop_boom, want_pop, pop_total, range, immunity, impunity, penalty);
+
     int score_diff = 1 + random(6);
     int sf = -1;
     int sm2 = -1;
 
-    for (int i=0; i<4; i++) {
-        int sm1 = (&f->SE_Politics)[i];
-        int sc1 = social_score(faction, i, sm1, pop_boom, range, immunity, impunity, penalty);
+	if
+	(
+		m->soc_priority_category >= 0 && m->soc_priority_model >= 0
+		&&
+		has_tech(faction, s[m->soc_priority_category].soc_preq_tech[m->soc_priority_model])
+		&&
+		(&f->SE_Politics)[m->soc_priority_category] != m->soc_priority_model
+		&&
+		!conf.social_ai_soft_priority
+	)
+	{
+		// stick to priority choice if this is configured and avilalble
+		// it should exist for this faction, be available, and not yet selected
 
-        for (int j=0; j<4; j++) {
-            if (j == sm1 || !has_tech(faction, s[i].soc_preq_tech[j]) ||
-            (i == m->soc_opposition_category && j == m->soc_opposition_model))
-                continue;
-            int sc2 = social_score(faction, i, j, pop_boom, range, immunity, impunity, penalty);
-            if (sc2 - sc1 > score_diff) {
-                sf = i;
-                sm2 = j;
-                score_diff = sc2 - sc1;
-            }
-        }
-    }
+		sf = m->soc_priority_category;
+		sm2 = m->soc_priority_model;
+
+	}
+	else
+	{
+		// otherwise, do a normal Thinker selection routine
+
+		for (int i=0; i<4; i++) {
+			int sm1 = (&f->SE_Politics)[i];
+			int sc1 = social_score(faction, i, sm1, pop_boom, range, immunity, impunity, penalty);
+
+			for (int j=0; j<4; j++) {
+				if (j == sm1 || !has_tech(faction, s[i].soc_preq_tech[j]) ||
+				(i == m->soc_opposition_category && j == m->soc_opposition_model))
+					continue;
+				int sc2 = social_score(faction, i, j, pop_boom, range, immunity, impunity, penalty);
+				if (sc2 - sc1 > score_diff) {
+					sf = i;
+					sm2 = j;
+					score_diff = sc2 - sc1;
+				}
+			}
+		}
+
+	}
+
     int cost = (m->rule_flags & FACT_ALIEN ? 36 : 24);
     if (sf >= 0 && f->energy_credits > cost) {
         int sm1 = (&f->SE_Politics)[sf];

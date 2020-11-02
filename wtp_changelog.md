@@ -1,3 +1,7 @@
+# Version 181
+
+* Configuration option to allow AI deviate from its social priority choice (social_ai_soft_priority). Turned off by default.
+
 # Version 180
 
 * BUG: Accumulated minerals scaling to changed INDUSTRY rating didn't account for mid turn retooling. Fixed. https://github.com/tnevolin/thinker-doer/issues/36

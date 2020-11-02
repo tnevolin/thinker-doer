@@ -134,9 +134,7 @@ HOOK_API int faction_upkeep(int faction) {
         If the new social_ai is disabled from the config old version gets called instead.
         Player factions always skip the new social_ai function.
         */
-        debug("%-25s SE_planet_pending=%d\n", tx_metafactions[faction].noun_faction, tx_factions[faction].SE_planet_pending);
         social_ai(faction, -1, -1, -1, -1, 0);
-        debug("%-25s SE_planet_pending=%d\n", tx_metafactions[faction].noun_faction, tx_factions[faction].SE_planet_pending);
         move_upkeep(faction);
 
 		// WTP AI unit movement algorithms
