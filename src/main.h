@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 180"
+    #define MOD_VERSION "The Will to Power mod - version 181"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -87,6 +87,7 @@ struct Config {
     int design_units = 1;
     int factions_enabled = 7;
     int social_ai = 1;
+    bool social_ai_soft_priority = false;
     int tech_balance = 0;
     int hurry_items = 1;
     double expansion_factor = 1;
