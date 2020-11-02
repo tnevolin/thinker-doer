@@ -1,3 +1,7 @@
+# Version 182
+
+* BUG: Sometimes tech cost is stored as zero in savegame. Didn't find why it happened but added a safety code that overrides it with some small positive value when calculated for F2 screen.
+
 # Version 181
 
 * Configuration option to allow AI deviate from its social priority choice (social_ai_soft_priority). Turned off by default.
