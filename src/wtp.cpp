@@ -1482,7 +1482,7 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
     // execute original code
 
     // use modified function instead of original code
-//    int returnValue = tx_set_se_on_dialog_close(a1, a2, faction_id, a4, a5);
+//	int returnValue = tx_set_se_on_dialog_close(a1, a2, faction_id, a4, a5);
     int returnValue = modifiedSocialCalc(a1, a2, faction_id, a4, a5);
 
     // get new ratings
@@ -1492,7 +1492,7 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
     debug
     (
-        "se_accumulated_resource_adjustment: faction_id=%d, SE_growth: %+d -> %+d, SE_industry: %+d -> %+d\n",
+        "se_accumulated_resource_adjustment: faction_id=%d, SE_growth_pending: %+d -> %+d, SE_industry_pending: %+d -> %+d\n",
         faction_id,
         SE_growth_pending_old,
         SE_growth_pending_new,
@@ -1527,8 +1527,8 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
     if (SE_industry_pending_new != SE_industry_pending_old)
     {
-        int row_size_old = 10 - SE_industry_pending_old;
-        int row_size_new = 10 - SE_industry_pending_new;
+        int row_size_old = tx_basic->nutrient_cost_multi - SE_industry_pending_old;
+        int row_size_new = tx_basic->nutrient_cost_multi - SE_industry_pending_new;
 
         double conversion_ratio = (double)row_size_new / (double)row_size_old;
 
@@ -1539,6 +1539,7 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
             if (base->faction_id == faction_id)
             {
                 base->minerals_accumulated = (int)round((double)base->minerals_accumulated * conversion_ratio);
+                base->minerals_accumulated_2 = (int)round((double)base->minerals_accumulated_2 * conversion_ratio);
             }
 
         }
@@ -2568,32 +2569,6 @@ HOOK_API int getCurrentBaseProductionMineralCost()
 
 }
 
-/*
-Calculates current base production remaining mineral cost and scales it to mineral cost multiplier.
-*/
-HOOK_API int getCurrentBaseProductionRemainingMineralsScaledToBasicMineralCostMultiplier()
-{
-	int baseId = *current_base_id;
-	BASE *base = *current_base_ptr;
-
-	// get current base production mineral cost
-
-	int baseProductionMineralCost = mineral_cost(baseId, base->queue_items[0]);
-
-	// get current base production remaining mineral cost
-
-	int baseProductionRemainingMineralCost = baseProductionMineralCost - base->minerals_accumulated;
-
-	// scale current base production remaining mineral cost to mineral cost multiplier, rounding normally
-
-	int baseProductionRemainingMineralCostIgnoringCostFactor = scaleValueToBasicMinieralCostMultiplier(base->faction_id, baseProductionRemainingMineralCost);
-
-	// return value
-
-	return baseProductionRemainingMineralCostIgnoringCostFactor;
-
-}
-
 HOOK_API void displayHurryCostScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer)
 {
 	// execute original function
@@ -2625,7 +2600,7 @@ int scaleValueToBasicMinieralCostMultiplier(int factionId, int value)
 
 	// scale value
 
-	int scaledValue = (int)round((double)(value * mineralCostMultiplier) / (double)mineralCostFactor);
+	int scaledValue = (value * mineralCostMultiplier + mineralCostFactor / 2) / mineralCostFactor;
 
 	// return value
 

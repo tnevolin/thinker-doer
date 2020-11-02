@@ -301,7 +301,7 @@ struct Faction {
     int SE_growth_base;
     int SE_planet_base;
     int SE_probe_base;              // 0x02F0
-    int SE_industry_base;
+    int SE_industry_base;			// 0x02F4
     int SE_research_base;
     int unk_13;
     int unk_14;
