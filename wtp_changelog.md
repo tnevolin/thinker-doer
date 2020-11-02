@@ -1,3 +1,7 @@
+# Version 180
+
+* BUG: Accumulated minerals scaling to changed INDUSTRY rating didn't account for mid turn retooling. Fixed. https://github.com/tnevolin/thinker-doer/issues/36
+
 # Version 179
 
 * FIX: Probe expelled from other faction territory was sent to largest population base which could be not appropriate for sea probes. Now probes are sent to **closest** base and for sea probes they also should be connected to same region so it should not get stranded on land or magically appear in another ocean. If such base cannot be found the probe is killed.
