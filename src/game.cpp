@@ -750,7 +750,7 @@ bool map_base(MAP *tile) {
 Safe check for tile having item.
 NULL pointer returns false.
 */
-bool map_has_item(MAP *tile, int item) {
+bool map_has_item(MAP *tile, unsigned int item) {
 	return (tile && (tile->items & item));
 }
 
@@ -2817,6 +2817,29 @@ int getRemainingMinerals(int baseId)
 	BASE *base = &(tx_bases[baseId]);
 
 	return max(0, mineral_cost(baseId, base->queue_items[0]) - base->minerals_accumulated);
+
+}
+
+std::vector<int> getStackedVehicleIds(int vehicleId)
+{
+	std::vector<int> stackedVehicleIds;
+
+	// get top of the stack vehicle
+
+	int topStackVehicleId = vehicleId;
+	while (tx_vehicles[topStackVehicleId].prev_unit_id_stack != -1)
+	{
+		topStackVehicleId = tx_vehicles[topStackVehicleId].prev_unit_id_stack;
+	}
+
+	// collect all vehicles in the stack
+
+	for (int stackedVehicleId = topStackVehicleId; stackedVehicleId != -1; stackedVehicleId = tx_vehicles[stackedVehicleId].next_unit_id_stack)
+	{
+		stackedVehicleIds.push_back(stackedVehicleId);
+	}
+
+	return stackedVehicleIds;
 
 }
 

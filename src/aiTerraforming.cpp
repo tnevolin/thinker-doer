@@ -1169,7 +1169,7 @@ void generateSensorTerraformingRequest(MAP_INFO mapInfo)
 
 	if (terraformingScore->action != -1 && terraformingScore->score > 0.0)
 	{
-		freeTerraformingRequests.push_back({mapInfo->x, mapInfo->y, mapInfo->tile, terraformingScore->option, terraformingScore->action, terraformingScore->score, 0});
+		freeTerraformingRequests.push_back({mapInfo.x, mapInfo.y, mapInfo.tile, terraformingScore->option, terraformingScore->action, terraformingScore->score, 0});
 	}
 
 }
@@ -2393,7 +2393,7 @@ void calculateSensorTerraformingScore(MAP_INFO mapInfo, TERRAFORMING_SCORE *best
 
 	if (!map_has_item(tile, TERRA_SENSOR))
 	{
-		action = TERRA_SENSOR;
+		action = FORMER_SENSOR;
 	}
 	else
 	{
@@ -2403,7 +2403,7 @@ void calculateSensorTerraformingScore(MAP_INFO mapInfo, TERRAFORMING_SCORE *best
 
 	// skip unavailable actions
 
-	if (!isTerraformingAvailable(mapInfo, action))
+	if (!isTerraformingAvailable(&mapInfo, action))
 		return;
 
 	// remove fungus if needed
@@ -2452,7 +2452,7 @@ void calculateSensorTerraformingScore(MAP_INFO mapInfo, TERRAFORMING_SCORE *best
 
 	// calculate range time penalty
 
-	int closestAvailableFormerRange = calculateClosestAvailableFormerRange(mapInfo);
+	int closestAvailableFormerRange = calculateClosestAvailableFormerRange(&mapInfo);
 	double rangePenaltyTime = (double)closestAvailableFormerRange * (ocean ? conf.ai_terraforming_waterDistanceScale : conf.ai_terraforming_landDistanceScale);
 
 	// calculate terraforming score
@@ -3945,212 +3945,15 @@ double calculateSensorScore(MAP_INFO mapInfo, int action)
 	if (!(action == FORMER_SENSOR))
 		return 0.0;
 
-	// get terrain improvement flag
+	// don't build if already built
 
-	int improvementFlag = TERRA_SENSOR;
+	if (map_has_item(tile, TERRA_SENSOR))
+		return 0.0;
 
 	// compute bonus
 
-	double bonus
-
-	for (int dx = -4; dx <= +4; dx++)
-	{
-		for (int dy = -(4 - abs(x)); dy <= +(4 - abs(x)); dy += 2)
-		{
-			MAP *tile = getMapTile(x + dx, y + dy);
-
-			if (tile == NULL)
-				continue;
-
-			// discovered tiles only
-
-			if (!isMapTileVisibleToFaction(*active_faction, tile))
-				continue;
-
-			// own tile only
-
-			if (tile->owner != *active_faction)
-				continue;
-
-			if (map_has_item(tile, TERRA_BASE_IN_TILE))
-			{
-
-			}
-			else
-			{
-
-			}
-
-		}
-
-	}
-
-	bool m[ADJACENT_TILE_OFFSET_COUNT];
-
-	for (int offsetIndex = 1; offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
-	{
-		MAP *adjacentTile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
-
-		m[offsetIndex] = (adjacentTile && (adjacentTile->items & (TERRA_BASE_IN_TILE | improvementFlag)));
-
-	}
-
-	// don't build connection to nothing
-
-	if(!m[1] && !m[2] && !m[3] && !m[4] && !m[5] && !m[6] && !m[7] && !m[8])
-	{
-		return 0.0;
-	}
-
-	// needs connection
-
-	if
-	(
-		// opposite corners
-		(m[2] && m[6] && (!m[3] || !m[5]) && (!m[7] || !m[1]))
-		||
-		(m[4] && m[8] && (!m[5] || !m[7]) && (!m[1] || !m[3]))
-		||
-		// do not connect next corners
-//		// next corners
-//		(m[2] && m[4] && !m[3] && (!m[5] || !m[7] || !m[1]))
-//		||
-//		(m[4] && m[6] && !m[5] && (!m[7] || !m[1] || !m[3]))
-//		||
-//		(m[6] && m[8] && !m[7] && (!m[1] || !m[3] || !m[5]))
-//		||
-//		(m[8] && m[2] && !m[1] && (!m[3] || !m[5] || !m[7]))
-//		||
-		// opposite sides
-		(m[1] && m[5] && !m[3] && !m[7])
-		||
-		(m[3] && m[7] && !m[5] && !m[1])
-		||
-		// side to corner
-		(m[1] && m[4] && !m[3] && (!m[5] || !m[7]))
-		||
-		(m[1] && m[6] && !m[7] && (!m[3] || !m[5]))
-		||
-		(m[3] && m[6] && !m[5] && (!m[7] || !m[1]))
-		||
-		(m[3] && m[8] && !m[1] && (!m[5] || !m[7]))
-		||
-		(m[5] && m[8] && !m[7] && (!m[1] || !m[3]))
-		||
-		(m[5] && m[2] && !m[3] && (!m[7] || !m[1]))
-		||
-		(m[7] && m[2] && !m[1] && (!m[3] || !m[5]))
-		||
-		(m[7] && m[4] && !m[5] && (!m[1] || !m[3]))
-	)
-	{
-		// return connection value
-
-		return conf.ai_terraforming_SensorConnectionValue;
-
-	}
-
-	// needs improvement
-
-	if
-	(
-		// opposite corners
-		(m[2] && m[6])
-		||
-		(m[4] && m[8])
-		||
-		// do not connect next corners
-//		// next corners
-//		(m[2] && m[4] && !m[3])
-//		||
-//		(m[4] && m[6] && !m[5])
-//		||
-//		(m[6] && m[8] && !m[7])
-//		||
-//		(m[8] && m[2] && !m[1])
-//		||
-		// opposite sides
-		(m[1] && m[5] && !m[3] && !m[7])
-		||
-		(m[3] && m[7] && !m[5] && !m[1])
-		||
-		// side to corner
-		(m[1] && m[4] && !m[3])
-		||
-		(m[1] && m[6] && !m[7])
-		||
-		(m[3] && m[6] && !m[5])
-		||
-		(m[3] && m[8] && !m[1])
-		||
-		(m[5] && m[8] && !m[7])
-		||
-		(m[5] && m[2] && !m[3])
-		||
-		(m[7] && m[2] && !m[1])
-		||
-		(m[7] && m[4] && !m[5])
-	)
-	{
-		// return connection value
-
-		return conf.ai_terraforming_SensorImprovementValue;
-
-	}
-
-	// needs extension
-
-	bool towardBase = false;
-
-	if (m[1] && !m[3] && !m[4] && !m[5] && !m[6] && !m[7])
-	{
-		towardBase |= isTowardBaseDiagonal(x, y, -1, +1);
-	}
-	if (m[3] && !m[5] && !m[6] && !m[7] && !m[8] && !m[1])
-	{
-		towardBase |= isTowardBaseDiagonal(x, y, -1, -1);
-	}
-	if (m[5] && !m[7] && !m[8] && !m[1] && !m[2] && !m[3])
-	{
-		towardBase |= isTowardBaseDiagonal(x, y, +1, -1);
-	}
-	if (m[7] && !m[1] && !m[2] && !m[3] && !m[4] && !m[5])
-	{
-		towardBase |= isTowardBaseDiagonal(x, y, +1, +1);
-	}
-
-	if (m[2] && !m[4] && !m[5] && !m[6] && !m[7] && !m[8])
-	{
-		towardBase |= isTowardBaseHorizontal(x, y, -1);
-	}
-	if (m[6] && !m[8] && !m[1] && !m[2] && !m[3] && !m[4])
-	{
-		towardBase |= isTowardBaseHorizontal(x, y, +1);
-	}
-
-	if (m[4] && !m[6] && !m[7] && !m[8] && !m[1] && !m[2])
-	{
-		towardBase |= isTowardBaseVertical(x, y, -1);
-	}
-	if (m[8] && !m[2] && !m[3] && !m[4] && !m[5] && !m[6])
-	{
-		towardBase |= isTowardBaseVertical(x, y, +1);
-	}
-
-	if (towardBase)
-	{
-		// return base extension value
-
-		return conf.ai_terraforming_SensorBaseExtensionValue;
-
-	}
-	else
-	{
-		// return wild extension value
-
-		return conf.ai_terraforming_SensorWildExtensionValue;
-
-	}
+	//
+	return 0.0;
 
 }
 

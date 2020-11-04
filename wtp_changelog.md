@@ -1,3 +1,7 @@
+# Version 184
+
+* FIX: Sea unit directly attacking sea unit stack would pick a defender with higher weapon rather than higher armor. Fixed.
+
 # Version 183
 
 * BUG: Extra prototype cost was not reduced to zero for factions with free prototype bonus.

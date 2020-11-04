@@ -150,7 +150,7 @@ int map_level(MAP *tile);
 int map_elevation(MAP *tile);
 int map_rockiness(MAP *tile);
 bool map_base(MAP *tile);
-bool map_has_item(MAP *tile, int item);
+bool map_has_item(MAP *tile, unsigned int item);
 bool map_has_landmark(MAP *tile, int landmark);
 
 struct PathNode {
@@ -286,4 +286,5 @@ bool isMapTileVisibleToFaction(int factionId, MAP *tile);
 bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus);
 void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
 int getRemainingMinerals(int baseId);
+std::vector<int> getStackedVehicleIds(int vehicleId);
 
