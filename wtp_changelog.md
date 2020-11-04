@@ -1,3 +1,7 @@
+# Version 183
+
+* BUG: Extra prototype cost was not reduced to zero for factions with free prototype bonus.
+
 # Version 182
 
 * BUG: Sometimes tech cost is stored as zero in savegame. Didn't find why it happened but added a safety code that overrides it with some small positive value when calculated for F2 screen.
