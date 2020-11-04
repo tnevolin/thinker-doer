@@ -55,6 +55,7 @@ extern int* diplo_opponent_faction;
 extern char *g_strTEMP;
 extern int *current_base_growth_rate;
 extern int *g_PROBE_FACT_TARGET;
+extern int *g_UNK_ATTACK_FLAGS;
 
 extern fp_2int* parse_num;
 extern fp_icii* parse_says;

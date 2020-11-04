@@ -1,3 +1,7 @@
+# Version 185
+
+* FIX: Bombarding empty square with adjacent enemy artillery exhausted attacker movement points and initiated artillery duel resulting in imminient and untimely attacker death. Fixed.
+
 # Version 184
 
 * FIX: Sea unit directly attacking sea unit stack would pick a defender with higher weapon rather than higher armor. Fixed.
