@@ -2924,6 +2924,15 @@ void patch_best_defender()
 
 }
 
+/*
+Fixes global variable when action_destroy is called.
+*/
+void patch_action_destroy()
+{
+	write_call(0x004CAA7C, (int)modifiedVehSkipForActionDestroy);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3480,6 +3489,8 @@ bool patch_setup(Config* cf) {
 	patch_find_returned_probe_base();
 
 	patch_best_defender();
+
+	patch_action_destroy();
 
 
     // continue with original Thinker checks

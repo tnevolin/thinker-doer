@@ -3085,3 +3085,18 @@ HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, 
 
 }
 
+/*
+Fixes empty square bombardment and prevents subsequent artillery duel.
+*/
+HOOK_API void modifiedVehSkipForActionDestroy(int vehicleId)
+{
+	// execute original code
+
+	tx_veh_skip(vehicleId);
+
+	// clear global combat variable
+
+	*g_UNK_ATTACK_FLAGS = 0x0;
+
+}
+

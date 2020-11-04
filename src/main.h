@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 184"
+    #define MOD_VERSION "The Will to Power mod - version 185"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif

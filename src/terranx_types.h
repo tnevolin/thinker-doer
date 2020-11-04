@@ -120,7 +120,7 @@ struct VEH {
     char terraforming_turns;		// 0x0025
     char type_crawling;				// 0x0026
     byte visibility;				// 0x0027
-    char road_moves_spent;
+    char road_moves_spent;			// 0x0028
     char unk_1;
     char iter_count;
     char status_icon;
