@@ -57,6 +57,15 @@ const TERRAFORMING_OPTION NETWORK_TERRAFORMING_OPTION =
 	// land
 	{"road/tube" , false, false, false, false, true , false, {FORMER_ROAD, FORMER_MAGTUBE}}
 ;
+// sensor
+const TERRAFORMING_OPTION LAND_SENSOR_TERRAFORMING_OPTION =
+	// land
+	{"sensor"    , false, false, false, false, true , false, {FORMER_ROAD, FORMER_MAGTUBE}}
+;
+const TERRAFORMING_OPTION OCEAN_SENSOR_TERRAFORMING_OPTION =
+	// ocean
+	{"sensor"    , true , false, false, false, true , false, {FORMER_ROAD, FORMER_MAGTUBE}}
+;
 
 /*
 Prohibits building improvements too close to each other or existing improvements.
@@ -76,6 +85,7 @@ const std::unordered_map<int, PROXIMITY_RULE> PROXIMITY_RULES =
 	{FORMER_THERMAL_BORE, {1, 1}},
 	{FORMER_AQUIFER, {1, 3}},
 	{FORMER_RAISE_LAND, {0, 1}},
+	{FORMER_SENSOR, {2, 2}},
 };
 
 struct BASE_INCOME
