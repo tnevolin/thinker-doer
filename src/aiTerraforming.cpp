@@ -2352,14 +2352,27 @@ int enemyMoveFormer(int id)
 	// get vehicle
 
 	VEH *vehicle = &(tx_vehicles[id]);
-	MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
+	MAP *vehicleLocationMapTile = getMapTile(vehicle->x, vehicle->y);
 
 	// use Thinker algorithm if in warzoone and in danger
 
-	if (warzoneLocations.count(vehicleLocation) != 0 && !isSafe(vehicle->x, vehicle->y))
+	if (warzoneLocations.count(vehicleLocationMapTile) != 0 && !isSafe(vehicle->x, vehicle->y))
 	{
 		debug("warzone/unsafe - use Thinker escape algorithm: [%3d]\n", id);
 		return former_move(id);
+	}
+
+	// get Thinker proposed action
+
+	int thinkerTerraformingAction = select_item(vehicle->x, vehicle->y, vehicle->faction_id, vehicleLocationMapTile);
+
+	// let Thinker build sensors if it likes
+
+	if (thinkerTerraformingAction == (int)TERRA_SENSOR)
+	{
+		debug("enemyMoveFormer: %-25s (%3d,%3d) thinkerTerraformingAction = %s\n", tx_metafactions[vehicle->faction_id].noun_faction, vehicle->x, vehicle->y, tx_terraform[thinkerTerraformingAction].name);
+		setTerraformingAction(id, thinkerTerraformingAction);
+		return SYNC;
 	}
 
 	// restore ai id

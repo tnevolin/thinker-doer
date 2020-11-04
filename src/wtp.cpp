@@ -3032,3 +3032,11 @@ HOOK_API int modifiedFindReturnedProbeBase(int vehicleId)
 
 }
 
+///*
+//Fixes bugs in best defender selection.
+//*/
+//HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, int bombardment)
+//{
+//	// sea unit attacking sea unit
+//}
+//
