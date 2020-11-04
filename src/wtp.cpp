@@ -3032,11 +3032,56 @@ HOOK_API int modifiedFindReturnedProbeBase(int vehicleId)
 
 }
 
-///*
-//Fixes bugs in best defender selection.
-//*/
-//HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, int bombardment)
-//{
-//	// sea unit attacking sea unit
-//}
-//
+/*
+Fixes bugs in best defender selection.
+*/
+HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, int bombardment)
+{
+	VEH *defenderVehicle = &(tx_vehicles[defenderVehicleId]);
+	VEH *attackerVehicle = &(tx_vehicles[attackerVehicleId]);
+
+	int defenderTriad = veh_triad(defenderVehicleId);
+	int attackerTriad = veh_triad(attackerVehicleId);
+
+	// best defender
+
+	int bestDefenderVehicleId = defenderVehicleId;
+
+	// sea unit directly attacking sea unit
+
+	if (attackerTriad == TRIAD_SEA && defenderTriad == TRIAD_SEA && bombardment == 0)
+	{
+		// iterate the stack
+
+		double bestDefenderEffectiveness = 0.0;
+
+		for (int stackedVehicleId : getStackedVehicleIds(defenderVehicleId))
+		{
+			VEH *stackedVehicle = &(tx_vehicles[stackedVehicleId]);
+			UNIT *stackedVehicleUnit = &(tx_units[stackedVehicle->proto_id]);
+
+			int attackerStrength;
+			int defenderStrength;
+			battle_compute(attackerVehicleId, stackedVehicleId, (int)&attackerStrength, (int)&defenderStrength, 0);
+
+			double defenderEffectiveness = ((double)defenderStrength / (double)attackerStrength) * ((stackedVehicleUnit->reactor_type * 10 - stackedVehicle->damage_taken) / (stackedVehicleUnit->reactor_type * 10));
+
+			if (bestDefenderVehicleId == -1 || defenderEffectiveness > bestDefenderEffectiveness)
+			{
+				bestDefenderVehicleId = stackedVehicleId;
+				bestDefenderEffectiveness = defenderEffectiveness;
+			}
+
+		}
+
+	}
+	else
+	{
+		bestDefenderVehicleId = tx_best_defender(defenderVehicleId, attackerVehicleId, bombardment);
+
+	}
+
+	return bestDefenderVehicleId;
+
+}
+

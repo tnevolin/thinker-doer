@@ -2915,15 +2915,15 @@ b:  89 c6                   mov    esi,eax
 
 }
 
-///*
-//Wraps best_defender call.
-//*/
-//void patch_best_defender()
-//{
-//	write_call(0x00506D07, (int)modifiedBestDefender);
-//
-//}
-//
+/*
+Wraps best_defender call.
+*/
+void patch_best_defender()
+{
+	write_call(0x00506D07, (int)modifiedBestDefender);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3479,8 +3479,8 @@ bool patch_setup(Config* cf) {
 
 	patch_find_returned_probe_base();
 
-//	patch_best_defender();
-//
+	patch_best_defender();
+
 
     // continue with original Thinker checks
 
