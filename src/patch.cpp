@@ -2618,93 +2618,69 @@ Flattens extra prototype cost.
 */
 void patch_flat_extra_prototype_cost()
 {
-	// in veh_cost
-	// change call for base_cost to custom extra prototype cost
-
-	write_call(0x005C198D, (int)modifiedExtraPrototypeCost);
-
-	// in veh_cost
-	// use the output of custom extra prototype cost and store it in EDX without computations
-
-	int veh_cost_store_extra_prototype_cost_bytes_length = 0x1C;
-/*
-0:  8b c8                   mov    ecx,eax
-2:  b8 1f 85 eb 51          mov    eax,0x51eb851f
-7:  0f af cf                imul   ecx,edi
-a:  83 c1 32                add    ecx,0x32
-d:  83 c4 04                add    esp,0x4
-10: f7 e9                   imul   ecx
-12: c1 fa 05                sar    edx,0x5
-15: 8b c2                   mov    eax,edx
-17: c1 e8 1f                shr    eax,0x1f
-1a: 03 d0                   add    edx,eax
-*/
-	byte veh_cost_store_extra_prototype_cost_bytes_old[] = { 0x8B, 0xC8, 0xB8, 0x1F, 0x85, 0xEB, 0x51, 0x0F, 0xAF, 0xCF, 0x83, 0xC1, 0x32, 0x83, 0xC4, 0x04, 0xF7, 0xE9, 0xC1, 0xFA, 0x05, 0x8B, 0xC2, 0xC1, 0xE8, 0x1F, 0x03, 0xD0 };
-/*
-0:  83 c4 04                add    esp,0x4
-3:  89 c2                   mov    edx,eax
-...
-1b: 90                      nop
-*/
-	byte veh_cost_store_extra_prototype_cost_bytes_new[] = { 0x83, 0xC4, 0x04, 0x89, 0xC2, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-	write_bytes
-	(
-		0x005C1992,
-		veh_cost_store_extra_prototype_cost_bytes_length,
-		veh_cost_store_extra_prototype_cost_bytes_old,
-		veh_cost_store_extra_prototype_cost_bytes_new
-	);
-
 	// in DesignWin::draw_unit_preview
 
-	write_call(0x0043704C, (int)calculateExtraPrototypeCostForDesign);
+	// prepare parameters for non prototyped components cost calculation
 
-	int draw_unit_preview_flat_prototype_cost2_bytes_length = 0x1A;
+	int draw_unit_preview_flat_prototype_cost_bytes_length = 0x1e;
 /*
-0:  0f af f8                imul   edi,eax
-3:  83 c7 32                add    edi,0x32
-6:  b8 1f 85 eb 51          mov    eax,0x51eb851f
-b:  f7 ef                   imul   edi
-d:  c1 fa 05                sar    edx,0x5
-10: 8b c2                   mov    eax,edx
-12: 8b 7d d8                mov    edi,DWORD PTR [ebp-0x28]
-15: c1 e8 1f                shr    eax,0x1f
-18: 03 d0                   add    edx,eax
+0:  8b 86 0c 42 01 00       mov    eax,DWORD PTR [esi+0x1420c]
+6:  8b 8e 04 42 01 00       mov    ecx,DWORD PTR [esi+0x14204]
+c:  8b 96 00 42 01 00       mov    edx,DWORD PTR [esi+0x14200]
+12: 50                      push   eax
+13: 8b 86 fc 41 01 00       mov    eax,DWORD PTR [esi+0x141fc]
+19: 6a 00                   push   0x0
+1b: 51                      push   ecx
+1c: 52                      push   edx
+1d: 50                      push   eax
 */
-	byte draw_unit_preview_flat_prototype_cost2_bytes_old[] = { 0x0F, 0xAF, 0xF8, 0x83, 0xC7, 0x32, 0xB8, 0x1F, 0x85, 0xEB, 0x51, 0xF7, 0xEF, 0xC1, 0xFA, 0x05, 0x8B, 0xC2, 0x8B, 0x7D, 0xD8, 0xC1, 0xE8, 0x1F, 0x03, 0xD0 };
+	byte draw_unit_preview_flat_prototype_cost_bytes_old[] = { 0x8B, 0x86, 0x0C, 0x42, 0x01, 0x00, 0x8B, 0x8E, 0x04, 0x42, 0x01, 0x00, 0x8B, 0x96, 0x00, 0x42, 0x01, 0x00, 0x50, 0x8B, 0x86, 0xFC, 0x41, 0x01, 0x00, 0x6A, 0x00, 0x51, 0x52, 0x50 };
 /*
-0:  89 fa                   mov    edx,edi
-2:  90                      nop
-3:  90                      nop
-4:  90                      nop
-5:  90                      nop
-6:  90                      nop
-7:  90                      nop
-8:  90                      nop
-9:  90                      nop
-a:  90                      nop
-b:  90                      nop
-c:  90                      nop
-d:  90                      nop
-e:  90                      nop
-f:  90                      nop
-10: 90                      nop
-11: 90                      nop
-12: 8b 7d d8                mov    edi,DWORD PTR [ebp-0x28]
-15: 90                      nop
-16: 90                      nop
-17: 90                      nop
-18: 90                      nop
-19: 90                      nop
+0:  ff 75 cc                push   DWORD PTR [ebp-0x34]
+3:  ff 75 d0                push   DWORD PTR [ebp-0x30]
+6:  ff 75 d4                push   DWORD PTR [ebp-0x2c]
+9:  ff b6 04 42 01 00       push   DWORD PTR [esi+0x14204]
+f:  ff b6 00 42 01 00       push   DWORD PTR [esi+0x14200]
+15: ff b6 fc 41 01 00       push   DWORD PTR [esi+0x141fc]
+...
 */
-	byte draw_unit_preview_flat_prototype_cost2_bytes_new[] = { 0x89, 0xFA, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x8B, 0x7D, 0xD8, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	byte draw_unit_preview_flat_prototype_cost_bytes_new[] = { 0xFF, 0x75, 0xCC, 0xFF, 0x75, 0xD0, 0xFF, 0x75, 0xD4, 0xFF, 0xB6, 0x04, 0x42, 0x01, 0x00, 0xFF, 0xB6, 0x00, 0x42, 0x01, 0x00, 0xFF, 0xB6, 0xFC, 0x41, 0x01, 0x00, 0x90, 0x90, 0x90 };
 	write_bytes
 	(
-		0x0043705F,
-		draw_unit_preview_flat_prototype_cost2_bytes_length,
-		draw_unit_preview_flat_prototype_cost2_bytes_old,
-		draw_unit_preview_flat_prototype_cost2_bytes_new
+		0x0043702E,
+		draw_unit_preview_flat_prototype_cost_bytes_length,
+		draw_unit_preview_flat_prototype_cost_bytes_old,
+		draw_unit_preview_flat_prototype_cost_bytes_new
 	);
+
+	// call non prototyped components cost calculation
+
+	write_call(0x0043704C, (int)calculateNotPrototypedComponentsCostForDesign);
+
+	// correct stack pointer after the call as we passed 6 parameters instead of 5
+
+	int calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_length = 0x3;
+/*
+0:  83 c4 20                add    esp,0x20
+*/
+	byte calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_old[] = { 0x83, 0xC4, 0x20 };
+/*
+0:  83 c4 24                add    esp,0x24
+*/
+	byte calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_new[] = { 0x83, 0xC4, 0x24 };
+	write_bytes
+	(
+		0x0043709E,
+		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_length,
+		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_old,
+		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_new
+	);
+
+	// in veh_cost
+
+	// change call for base_cost to calculate non prototyped components cost
+
+	write_call(0x005C198D, (int)calculateNotPrototypedComponentsCostForProduction);
 
 }
 

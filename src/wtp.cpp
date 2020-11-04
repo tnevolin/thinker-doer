@@ -2419,74 +2419,41 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
 }
 
 /*
-Calculates extra prototype cost based on specs.
+Calculates summary cost of all not prototyped components.
 */
-int calculateExtraPrototypeCost(int factionId, int chassisId, int weaponId, int armorId)
+int calculateNotPrototypedComponentsCost(int chassisId, int weaponId, int armorId, int chassisPrototyped, int weaponPrototyped, int armorPrototyped)
 {
-	debug("calculateExtraPrototypeCost: chassis=%d, weapon=%d, armor=%d\n", chassisId, weaponId, armorId);
+	debug("calculateNotPrototypedComponentsCost: chassis=%d, weapon=%d, armor=%d, chassisPrototyped=%d, weaponPrototyped=%d, armorPrototyped=%d\n", chassisId, weaponId, armorId, chassisPrototyped, weaponPrototyped, armorPrototyped);
 
-	// check all prototyped components
+	// summarize all non prototyped component costs
 
-	bool chassisTypePrototyped = false;
-	bool weaponTypePrototyped = false;
-	bool armorTypePrototyped = false;
+	int notPrototypedComponentsCost = 0;
 
-	for (int factionPrototypedUnitId : getFactionPrototypes(factionId, false))
+	if (!chassisPrototyped)
 	{
-		UNIT *factionPrototypedUnit = &(tx_units[factionPrototypedUnitId]);
-
-		if (chassisId == factionPrototypedUnit->chassis_type)
-		{
-			chassisTypePrototyped = true;
-		}
-
-		if (weaponId == factionPrototypedUnit->weapon_type)
-		{
-			weaponTypePrototyped = true;
-		}
-
-		if (armorId == factionPrototypedUnit->armor_type)
-		{
-			armorTypePrototyped = true;
-		}
-
+		notPrototypedComponentsCost += tx_chassis[chassisId].cost;
 	}
 
-	debug("chassisTypePrototyped=%d, weaponTypePrototyped=%d, armorTypePrototyped=%d\n", chassisTypePrototyped, weaponTypePrototyped, armorTypePrototyped);
-
-	// summarize all non prototype component costs
-
-	int extraPrototypeUnitCost = 0;
-
-	if (!chassisTypePrototyped)
+	if (!weaponPrototyped)
 	{
-		extraPrototypeUnitCost += (tx_chassis[chassisId].cost * tx_basic->extra_cost_prototype_land + 50) / 100;
+		notPrototypedComponentsCost += tx_weapon[weaponId].cost;
 	}
 
-	if (!weaponTypePrototyped)
+	if (!armorPrototyped)
 	{
-		extraPrototypeUnitCost += (tx_weapon[weaponId].cost * tx_basic->extra_cost_prototype_land + 50) / 100;
+		notPrototypedComponentsCost += tx_defense[armorId].cost;
 	}
 
-	if (!armorTypePrototyped)
-	{
-		extraPrototypeUnitCost += (tx_defense[armorId].cost * tx_basic->extra_cost_prototype_land + 50) / 100;
-	}
+	debug("notPrototypedComponentsCost=%d\n", notPrototypedComponentsCost);
 
-	debug("extraPrototypeUnitCost=%d\n", extraPrototypeUnitCost);
-
-	debug("\n");
-	fflush(debug_log);
-
-	return extraPrototypeUnitCost;
+	return notPrototypedComponentsCost;
 
 }
 
 /*
-Calculates extra prototype cost for unit.
-Modified version for flat prototype cost.
+Calculates not prototyped components cost.
 */
-HOOK_API int modifiedExtraPrototypeCost(int unitId)
+HOOK_API int calculateNotPrototypedComponentsCostForProduction(int unitId)
 {
 	UNIT *unit = &(tx_units[unitId]);
 
@@ -2509,20 +2476,50 @@ HOOK_API int modifiedExtraPrototypeCost(int unitId)
 
 	int factionId = unitId / 64;
 
-	// calculate extra prototype cost
+	// check all prototyped components
 
-	return calculateExtraPrototypeCost(factionId, unit->chassis_type, unit->weapon_type, unit->armor_type);
+	bool chassisPrototyped = false;
+	bool weaponPrototyped = false;
+	bool armorPrototyped = false;
+
+	for (int factionPrototypedUnitId : getFactionPrototypes(factionId, false))
+	{
+		UNIT *factionPrototypedUnit = &(tx_units[factionPrototypedUnitId]);
+
+		if (unit->chassis_type == factionPrototypedUnit->chassis_type || tx_chassis[unit->chassis_type].speed == tx_chassis[factionPrototypedUnit->chassis_type].speed)
+		{
+			chassisPrototyped = true;
+		}
+
+		if (unit->weapon_type == factionPrototypedUnit->weapon_type || tx_weapon[unit->weapon_type].offense_value == tx_weapon[factionPrototypedUnit->weapon_type].offense_value)
+		{
+			weaponPrototyped = true;
+		}
+
+		if (unit->armor_type == factionPrototypedUnit->armor_type || tx_defense[unit->armor_type].defense_value == tx_defense[factionPrototypedUnit->armor_type].defense_value)
+		{
+			armorPrototyped = true;
+		}
+
+	}
+
+	debug("chassisPrototyped=%d, weaponPrototyped=%d, armorPrototyped=%d\n", chassisPrototyped, weaponPrototyped, armorPrototyped);
+
+	// calculate not prototyped components cost
+
+	return calculateNotPrototypedComponentsCost(unit->chassis_type, unit->weapon_type, unit->armor_type, chassisPrototyped, weaponPrototyped, armorPrototyped);
 
 }
 
 /*
 Calculates extra prototype cost for design workshop INSTEAD of calculating base unit cost.
+The prototype cost is calculated without regard to faction bonuses.
 */
-HOOK_API int calculateExtraPrototypeCostForDesign(int chassisId, int weaponId, int armorId, int /*abilities*/, int /*reactor_level*/)
+HOOK_API int calculateNotPrototypedComponentsCostForDesign(int chassisId, int weaponId, int armorId, int chassisPrototyped, int weaponPrototyped, int armorPrototyped)
 {
 	// calculate modified extra prototype cost
 
-	return calculateExtraPrototypeCost(*active_faction, chassisId, weaponId, armorId);
+	return calculateNotPrototypedComponentsCost(chassisId, weaponId, armorId, chassisPrototyped, weaponPrototyped, armorPrototyped);
 
 }
 
