@@ -1051,6 +1051,18 @@ void generateTerraformingRequests()
 
 	}
 
+	// sensors
+
+	debug("SENSOR TERRAFORMING_REQUESTS\n");
+
+	for (MAP_INFO mapInfo : territoryTiles)
+	{
+		// generate request
+
+		generateSensorTerraformingRequest(mapInfo);
+
+	}
+
 }
 
 /*
@@ -1138,6 +1150,22 @@ void generateNetworkTerraformingRequest(MAP_INFO *mapInfo)
 	TERRAFORMING_SCORE terraformingScoreObject;
 	TERRAFORMING_SCORE *terraformingScore = &terraformingScoreObject;
 	calculateNetworkTerraformingScore(mapInfo, terraformingScore);
+
+	if (terraformingScore->action != -1 && terraformingScore->score > 0.0)
+	{
+		freeTerraformingRequests.push_back({mapInfo->x, mapInfo->y, mapInfo->tile, terraformingScore->option, terraformingScore->action, terraformingScore->score, 0});
+	}
+
+}
+
+/*
+Generate request for Sensor (road/tube).
+*/
+void generateSensorTerraformingRequest(MAP_INFO mapInfo)
+{
+	TERRAFORMING_SCORE terraformingScoreObject;
+	TERRAFORMING_SCORE *terraformingScore = &terraformingScoreObject;
+	calculateSensorTerraformingScore(mapInfo, terraformingScore);
 
 	if (terraformingScore->action != -1 && terraformingScore->score > 0.0)
 	{
@@ -2340,6 +2368,122 @@ void calculateNetworkTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *be
 }
 
 /*
+Sensor calculations.
+*/
+void calculateSensorTerraformingScore(MAP_INFO mapInfo, TERRAFORMING_SCORE *bestTerraformingScore)
+{
+	int x = mapInfo.x;
+	int y = mapInfo.y;
+	MAP *tile = mapInfo.tile;
+	bool ocean = is_ocean(tile);
+
+	// get option
+
+	const TERRAFORMING_OPTION *option = (ocean ? &(OCEAN_SENSOR_TERRAFORMING_OPTION) : &(LAND_SENSOR_TERRAFORMING_OPTION));
+
+	// initialize variables
+
+	int firstAction = -1;
+	int terraformingTime = 0;
+	double improvementScore = 0.0;
+
+	// process actions
+
+	int action;
+
+	if (!map_has_item(tile, TERRA_SENSOR))
+	{
+		action = TERRA_SENSOR;
+	}
+	else
+	{
+		// everything is built
+		return;
+	}
+
+	// skip unavailable actions
+
+	if (!isTerraformingAvailable(mapInfo, action))
+		return;
+
+	// remove fungus if needed
+
+	if (map_has_item(tile, TERRA_FUNGUS) && isRemoveFungusRequired(action))
+	{
+		int removeFungusAction = FORMER_REMOVE_FUNGUS;
+
+		// store first action
+
+		if (firstAction == -1)
+		{
+			firstAction = removeFungusAction;
+		}
+
+		// compute terraforming time
+
+		terraformingTime += calculateTerraformingTime(removeFungusAction, tile->items, tile->rocks, NULL);
+
+		// add penalty for nearby forest/kelp
+
+		int nearbyForestKelpCount = nearby_items(x, y, 1, (ocean ? TERRA_FARM : TERRA_FOREST));
+		improvementScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestKelpCount;
+
+	}
+
+	// store first action
+
+	if (firstAction == -1)
+	{
+		firstAction = action;
+	}
+
+	// compute terraforming time
+
+	terraformingTime += calculateTerraformingTime(action, tile->items, tile->rocks, NULL);
+
+	// special sensor bonus
+
+	improvementScore += calculateSensorScore(mapInfo, action);
+
+	// do not create request for zero score
+
+	if (improvementScore <= 0.0)
+		return;
+
+	// calculate range time penalty
+
+	int closestAvailableFormerRange = calculateClosestAvailableFormerRange(mapInfo);
+	double rangePenaltyTime = (double)closestAvailableFormerRange * (ocean ? conf.ai_terraforming_waterDistanceScale : conf.ai_terraforming_landDistanceScale);
+
+	// calculate terraforming score
+
+	double terraformingScore =
+		improvementScore
+		/
+		((double)terraformingTime + rangePenaltyTime)
+	;
+
+	// update return values
+
+	bestTerraformingScore->option = option;
+	bestTerraformingScore->action = firstAction;
+	bestTerraformingScore->score = terraformingScore;
+
+	debug("calculateTerraformingScore: (%3d,%3d)\n", x, y);
+	debug
+	(
+		"\t%-10s: score=%6.3f, time=%2d, range=%2d, final=%6.3f\n",
+		option->name,
+		improvementScore,
+		terraformingTime,
+		closestAvailableFormerRange,
+		terraformingScore
+	)
+	;
+
+}
+
+/*
 Handles movement phase.
 */
 int enemyMoveFormer(int id)
@@ -2360,19 +2504,6 @@ int enemyMoveFormer(int id)
 	{
 		debug("warzone/unsafe - use Thinker escape algorithm: [%3d]\n", id);
 		return former_move(id);
-	}
-
-	// get Thinker proposed action
-
-	int thinkerTerraformingAction = select_item(vehicle->x, vehicle->y, vehicle->faction_id, vehicleLocationMapTile);
-
-	// let Thinker build sensors if it likes
-
-	if (thinkerTerraformingAction == (int)TERRA_SENSOR)
-	{
-		debug("enemyMoveFormer: %-25s (%3d,%3d) thinkerTerraformingAction = %s\n", tx_metafactions[vehicle->faction_id].noun_faction, vehicle->x, vehicle->y, tx_terraform[thinkerTerraformingAction].name);
-		setTerraformingAction(id, thinkerTerraformingAction);
-		return SYNC;
 	}
 
 	// restore ai id
@@ -3797,6 +3928,229 @@ bool isTowardBaseVertical(int x, int y, int dySign)
 	}
 
 	return false;
+
+}
+
+/*
+Calculates score for sensor actions (road, tube)
+*/
+double calculateSensorScore(MAP_INFO mapInfo, int action)
+{
+	int x = mapInfo.x;
+	int y = mapInfo.y;
+	MAP *tile = mapInfo.tile;
+
+	// ignore anything but sensors
+
+	if (!(action == FORMER_SENSOR))
+		return 0.0;
+
+	// get terrain improvement flag
+
+	int improvementFlag = TERRA_SENSOR;
+
+	// compute bonus
+
+	double bonus
+
+	for (int dx = -4; dx <= +4; dx++)
+	{
+		for (int dy = -(4 - abs(x)); dy <= +(4 - abs(x)); dy += 2)
+		{
+			MAP *tile = getMapTile(x + dx, y + dy);
+
+			if (tile == NULL)
+				continue;
+
+			// discovered tiles only
+
+			if (!isMapTileVisibleToFaction(*active_faction, tile))
+				continue;
+
+			// own tile only
+
+			if (tile->owner != *active_faction)
+				continue;
+
+			if (map_has_item(tile, TERRA_BASE_IN_TILE))
+			{
+
+			}
+			else
+			{
+
+			}
+
+		}
+
+	}
+
+	bool m[ADJACENT_TILE_OFFSET_COUNT];
+
+	for (int offsetIndex = 1; offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		MAP *adjacentTile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
+
+		m[offsetIndex] = (adjacentTile && (adjacentTile->items & (TERRA_BASE_IN_TILE | improvementFlag)));
+
+	}
+
+	// don't build connection to nothing
+
+	if(!m[1] && !m[2] && !m[3] && !m[4] && !m[5] && !m[6] && !m[7] && !m[8])
+	{
+		return 0.0;
+	}
+
+	// needs connection
+
+	if
+	(
+		// opposite corners
+		(m[2] && m[6] && (!m[3] || !m[5]) && (!m[7] || !m[1]))
+		||
+		(m[4] && m[8] && (!m[5] || !m[7]) && (!m[1] || !m[3]))
+		||
+		// do not connect next corners
+//		// next corners
+//		(m[2] && m[4] && !m[3] && (!m[5] || !m[7] || !m[1]))
+//		||
+//		(m[4] && m[6] && !m[5] && (!m[7] || !m[1] || !m[3]))
+//		||
+//		(m[6] && m[8] && !m[7] && (!m[1] || !m[3] || !m[5]))
+//		||
+//		(m[8] && m[2] && !m[1] && (!m[3] || !m[5] || !m[7]))
+//		||
+		// opposite sides
+		(m[1] && m[5] && !m[3] && !m[7])
+		||
+		(m[3] && m[7] && !m[5] && !m[1])
+		||
+		// side to corner
+		(m[1] && m[4] && !m[3] && (!m[5] || !m[7]))
+		||
+		(m[1] && m[6] && !m[7] && (!m[3] || !m[5]))
+		||
+		(m[3] && m[6] && !m[5] && (!m[7] || !m[1]))
+		||
+		(m[3] && m[8] && !m[1] && (!m[5] || !m[7]))
+		||
+		(m[5] && m[8] && !m[7] && (!m[1] || !m[3]))
+		||
+		(m[5] && m[2] && !m[3] && (!m[7] || !m[1]))
+		||
+		(m[7] && m[2] && !m[1] && (!m[3] || !m[5]))
+		||
+		(m[7] && m[4] && !m[5] && (!m[1] || !m[3]))
+	)
+	{
+		// return connection value
+
+		return conf.ai_terraforming_SensorConnectionValue;
+
+	}
+
+	// needs improvement
+
+	if
+	(
+		// opposite corners
+		(m[2] && m[6])
+		||
+		(m[4] && m[8])
+		||
+		// do not connect next corners
+//		// next corners
+//		(m[2] && m[4] && !m[3])
+//		||
+//		(m[4] && m[6] && !m[5])
+//		||
+//		(m[6] && m[8] && !m[7])
+//		||
+//		(m[8] && m[2] && !m[1])
+//		||
+		// opposite sides
+		(m[1] && m[5] && !m[3] && !m[7])
+		||
+		(m[3] && m[7] && !m[5] && !m[1])
+		||
+		// side to corner
+		(m[1] && m[4] && !m[3])
+		||
+		(m[1] && m[6] && !m[7])
+		||
+		(m[3] && m[6] && !m[5])
+		||
+		(m[3] && m[8] && !m[1])
+		||
+		(m[5] && m[8] && !m[7])
+		||
+		(m[5] && m[2] && !m[3])
+		||
+		(m[7] && m[2] && !m[1])
+		||
+		(m[7] && m[4] && !m[5])
+	)
+	{
+		// return connection value
+
+		return conf.ai_terraforming_SensorImprovementValue;
+
+	}
+
+	// needs extension
+
+	bool towardBase = false;
+
+	if (m[1] && !m[3] && !m[4] && !m[5] && !m[6] && !m[7])
+	{
+		towardBase |= isTowardBaseDiagonal(x, y, -1, +1);
+	}
+	if (m[3] && !m[5] && !m[6] && !m[7] && !m[8] && !m[1])
+	{
+		towardBase |= isTowardBaseDiagonal(x, y, -1, -1);
+	}
+	if (m[5] && !m[7] && !m[8] && !m[1] && !m[2] && !m[3])
+	{
+		towardBase |= isTowardBaseDiagonal(x, y, +1, -1);
+	}
+	if (m[7] && !m[1] && !m[2] && !m[3] && !m[4] && !m[5])
+	{
+		towardBase |= isTowardBaseDiagonal(x, y, +1, +1);
+	}
+
+	if (m[2] && !m[4] && !m[5] && !m[6] && !m[7] && !m[8])
+	{
+		towardBase |= isTowardBaseHorizontal(x, y, -1);
+	}
+	if (m[6] && !m[8] && !m[1] && !m[2] && !m[3] && !m[4])
+	{
+		towardBase |= isTowardBaseHorizontal(x, y, +1);
+	}
+
+	if (m[4] && !m[6] && !m[7] && !m[8] && !m[1] && !m[2])
+	{
+		towardBase |= isTowardBaseVertical(x, y, -1);
+	}
+	if (m[8] && !m[2] && !m[3] && !m[4] && !m[5] && !m[6])
+	{
+		towardBase |= isTowardBaseVertical(x, y, +1);
+	}
+
+	if (towardBase)
+	{
+		// return base extension value
+
+		return conf.ai_terraforming_SensorBaseExtensionValue;
+
+	}
+	else
+	{
+		// return wild extension value
+
+		return conf.ai_terraforming_SensorWildExtensionValue;
+
+	}
 
 }
 

@@ -521,6 +521,22 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_raiseLandPayoffTime = atof(value);
     }
+    else if (MATCH("wtp", "ai_terraforming_sensorFieldValue"))
+    {
+        cf->ai_terraforming_sensorFieldValue = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_sensorBaseValue"))
+    {
+        cf->ai_terraforming_sensorBaseValue = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_sensorBorderRange"))
+    {
+        cf->ai_terraforming_sensorBorderRange = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_sensorShoreRange"))
+    {
+        cf->ai_terraforming_sensorShoreRange = atof(value);
+    }
     // Thinker default case
     else {
         for (int i=0; i<16; i++) {

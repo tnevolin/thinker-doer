@@ -220,6 +220,10 @@ struct Config {
 	double ai_terraforming_baseMineralThresholdRatio;
 	double ai_terraforming_baseMineralDemandMultiplier;
     double ai_terraforming_raiseLandPayoffTime;
+    double ai_terraforming_sensorFieldValue;
+    double ai_terraforming_sensorBaseValue;
+    double ai_terraforming_sensorBorderRange;
+    double ai_terraforming_sensorShoreRange;
 
 };
 
