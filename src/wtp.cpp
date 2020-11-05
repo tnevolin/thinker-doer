@@ -63,6 +63,15 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
     )
     ;
 
+	// get attacker/defender vehicle
+
+	VEH *attacker_vehicle = &tx_vehicles[attacker_vehicle_id];
+	VEH *defender_vehicle = &tx_vehicles[defender_vehicle_id];
+
+	// get combat map tile
+
+	MAP *combatMapTile = getVehicleMapTile(defender_vehicle_id);
+
     // run original function
 
     tx_battle_compute(attacker_vehicle_id, defender_vehicle_id, attacker_strength_pointer, defender_strength_pointer, flags);
@@ -79,15 +88,10 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     if (conf.planet_combat_bonus_on_defense)
     {
-        // get attacker/defender vehicles
-
-        VEH attacker_vehicle = tx_vehicles[attacker_vehicle_id];
-        VEH defender_vehicle = tx_vehicles[defender_vehicle_id];
-
         // get attacker/defender units
 
-        UNIT attacker_unit = tx_units[attacker_vehicle.proto_id];
-        UNIT defender_unit = tx_units[defender_vehicle.proto_id];
+        UNIT attacker_unit = tx_units[attacker_vehicle->proto_id];
+        UNIT defender_unit = tx_units[defender_vehicle->proto_id];
 
         // get attacker/defender weapon/armor id
 
@@ -150,11 +154,6 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     if (conf.combat_bonus_territory != 0)
     {
-        // get attacker/defender vehicle
-
-        VEH *attacker_vehicle = &tx_vehicles[attacker_vehicle_id];
-        VEH *defender_vehicle = &tx_vehicles[defender_vehicle_id];
-
         // get attacker/defender owner
 
         int attacker_faction_id = attacker_vehicle->faction_id;
@@ -233,6 +232,64 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
         }
 
     }
+
+    // sensor defense bonus on ocean against not natives
+
+	if (is_ocean(combatMapTile) && (attacker_vehicle->faction_id != 0 && defender_vehicle->faction_id != 0))
+	{
+		// search for sensor in the vicinity
+
+		bool sensor = false;
+
+		for (int dx = -4; dx <= 4; dx++)
+		{
+			for (int dy = -(abs(4 - dx)); dy <= +(abs(4 - dx)); dy += 2)
+			{
+				MAP *tile = getMapTile(defender_vehicle->x + dx, defender_vehicle->y + dy);
+
+				if (tile == NULL)
+					continue;
+
+				// only defender territory
+
+				if (tile->owner != defender_vehicle->faction_id)
+					continue;
+
+				if (map_has_item(tile, TERRA_SENSOR))
+					sensor = true;
+
+			}
+
+		}
+
+		if (sensor)
+		{
+			// sensor defense bonus
+
+			int defender_sensor_bonus = tx_basic->combat_defend_sensor;
+
+			// "Sensor:" label
+
+			const char label_sensor[] = "Sensor:";
+
+			// add effect description
+
+			if (*tx_battle_compute_defender_effect_count < 4)
+			{
+				strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label_sensor);
+				(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_sensor_bonus;
+
+				(*tx_battle_compute_defender_effect_count)++;
+
+			}
+
+			// modify defender strength
+
+			*(int *)defender_strength_pointer = (int)round((double)(*(int *)defender_strength_pointer) * (100.0 + (double)defender_sensor_bonus) / 100.0);
+
+		}
+
+	}
 
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
@@ -3037,9 +3094,6 @@ Fixes bugs in best defender selection.
 */
 HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, int bombardment)
 {
-	VEH *defenderVehicle = &(tx_vehicles[defenderVehicleId]);
-	VEH *attackerVehicle = &(tx_vehicles[attackerVehicleId]);
-
 	int defenderTriad = veh_triad(defenderVehicleId);
 	int attackerTriad = veh_triad(attackerVehicleId);
 
@@ -3097,6 +3151,51 @@ HOOK_API void modifiedVehSkipForActionDestroy(int vehicleId)
 	// clear global combat variable
 
 	*g_UNK_ATTACK_FLAGS = 0x0;
+
+}
+
+HOOK_API void appendAbilityCostTextInWorkshop(int output_string_pointer, int input_string_pointer)
+{
+	const char *COST_PREFIX = "Cost: ";
+
+    debug
+    (
+        "appendAbilityCostTextInWorkshop:input(output_string=%s, input_string=%s)\n",
+        (char *)output_string_pointer,
+        (char *)input_string_pointer
+    )
+    ;
+
+    // call original function
+
+    tx_strcat(output_string_pointer, input_string_pointer);
+
+    // get output string
+
+    char *outputString = (char *)output_string_pointer;
+
+    // find cost entry
+
+    char *costEntry = strstr(outputString, COST_PREFIX);
+
+    // not found
+
+    if (costEntry == NULL)
+		return;
+
+	// extract number
+
+	int cost = atoi(costEntry + strlen(COST_PREFIX));
+
+	// generate explanaroty text
+
+	int proportionalCost = (cost & 0xF);
+	int flatCost = (cost >> 4);
+
+    // add explanatory text
+
+    sprintf(outputString + strlen(outputString), " | +%02d%%, +%2d rows", proportionalCost * 25, flatCost);
+    debug("appendAbilityCostTextInWorkshop: %s\n", outputString);
 
 }
 

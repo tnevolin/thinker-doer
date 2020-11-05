@@ -2155,7 +2155,21 @@ This is to expand single number packed ability cost into human readable text.
 */
 void patch_help_ability_cost_text()
 {
+	// in Datalinks
+
     write_call(0x0042EF7A, (int)getAbilityCostText);
+
+    // in workshop
+
+    write_call(0x0043B202, (int)appendAbilityCostTextInWorkshop);
+    write_call(0x0043B29D, (int)appendAbilityCostTextInWorkshop);
+    write_call(0x0043B334, (int)appendAbilityCostTextInWorkshop);
+    write_call(0x0043B168, (int)appendAbilityCostTextInWorkshop);
+    write_call(0x0043B417, (int)appendAbilityCostTextInWorkshop);
+    write_call(0x0043B4FC, (int)appendAbilityCostTextInWorkshop);
+    write_call(0x0043B5E1, (int)appendAbilityCostTextInWorkshop);
+    write_call(0x0043B6A7, (int)appendAbilityCostTextInWorkshop);
+
 }
 
 /*

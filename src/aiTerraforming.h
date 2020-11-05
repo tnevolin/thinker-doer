@@ -60,11 +60,11 @@ const TERRAFORMING_OPTION NETWORK_TERRAFORMING_OPTION =
 // sensor
 const TERRAFORMING_OPTION LAND_SENSOR_TERRAFORMING_OPTION =
 	// land
-	{"sensor"    , false, false, false, false, true , false, {FORMER_ROAD, FORMER_MAGTUBE}}
+	{"sensor"    , false, false, false, false, true , false, {FORMER_SENSOR}}
 ;
 const TERRAFORMING_OPTION OCEAN_SENSOR_TERRAFORMING_OPTION =
 	// ocean
-	{"sensor"    , true , false, false, false, true , false, {FORMER_ROAD, FORMER_MAGTUBE}}
+	{"sensor"    , true , false, false, false, true , false, {FORMER_SENSOR}}
 ;
 
 /*
@@ -239,6 +239,7 @@ bool isNearbyMirrorUnderConstruction(int x, int y);
 bool isNearbyBoreholePresentOrUnderConstruction(int x, int y);
 bool isNearbyRiverPresentOrUnderConstruction(int x, int y);
 bool isNearbyRaiseUnderConstruction(int x, int y);
+bool isNearbySensorPresentOrUnderConstruction(int x, int y);
 void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
 void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
 void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState);

@@ -521,13 +521,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_raiseLandPayoffTime = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_sensorFieldValue"))
+    else if (MATCH("wtp", "ai_terraforming_sensorValue"))
     {
-        cf->ai_terraforming_sensorFieldValue = atof(value);
-    }
-    else if (MATCH("wtp", "ai_terraforming_sensorBaseValue"))
-    {
-        cf->ai_terraforming_sensorBaseValue = atof(value);
+        cf->ai_terraforming_sensorValue = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_sensorBorderRange"))
     {

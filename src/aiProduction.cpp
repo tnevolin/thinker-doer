@@ -1673,7 +1673,6 @@ Checks if base has enough population to issue a colony by the time it is built.
 bool canBaseProduceColony(int baseId, int unitId)
 {
 	BASE *base = &(tx_bases[baseId]);
-	UNIT *unit = &(tx_units[unitId]);
 
 	// verify the unit is indeed a colony
 
@@ -1682,23 +1681,16 @@ bool canBaseProduceColony(int baseId, int unitId)
 
 	// do not produce colony in unproductive bases
 
-	if (base->mineral_surplus <= 0)
+	if (base->mineral_surplus < 1)
 		return false;
 
 	// calculate production time
 
-	int productionTurns = (tx_cost_factor(base->faction_id, 1, -1) * unit->cost) / max(1, base->mineral_surplus);
+	int productionTurns = (mineral_cost(baseId, unitId) - base->minerals_accumulated) / max(1, base->mineral_surplus);
 
 	// calculate base population at the time
 
 	double projectedPopulation = (double)base->pop_size + (double)(base->nutrients_accumulated + base->nutrient_surplus * productionTurns) / (double)(tx_cost_factor(base->faction_id, 0, baseId) * (base->pop_size + 1));
-
-	// reduce projected population if colony is being built
-
-	if (isBaseBuildingColony(baseId))
-	{
-		projectedPopulation--;
-	}
 
 	// verify projected population is at least 2.5
 
