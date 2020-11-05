@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 185"
+    #define MOD_VERSION "The Will to Power mod - version 187"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -220,8 +220,7 @@ struct Config {
 	double ai_terraforming_baseMineralThresholdRatio;
 	double ai_terraforming_baseMineralDemandMultiplier;
     double ai_terraforming_raiseLandPayoffTime;
-    double ai_terraforming_sensorFieldValue;
-    double ai_terraforming_sensorBaseValue;
+    double ai_terraforming_sensorValue;
     double ai_terraforming_sensorBorderRange;
     double ai_terraforming_sensorShoreRange;
 

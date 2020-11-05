@@ -20,6 +20,7 @@ std::unordered_set<MAP *> terraformedMirrorTiles;
 std::unordered_set<MAP *> terraformedBoreholeTiles;
 std::unordered_set<MAP *> terraformedAquiferTiles;
 std::unordered_set<MAP *> terraformedRaiseTiles;
+std::unordered_set<MAP *> terraformedSensorTiles;
 std::map<int, std::vector<FORMER_ORDER>> regionFormerOrders;
 std::map<int, FORMER_ORDER> vehicleFormerOrders;
 std::vector<MAP_INFO> territoryTiles;
@@ -96,6 +97,7 @@ void populateLists()
 	terraformedBoreholeTiles.clear();
 	terraformedAquiferTiles.clear();
 	terraformedRaiseTiles.clear();
+	terraformedSensorTiles.clear();
 	territoryTiles.clear();
 	workableTiles.clear();
 	availableTiles.clear();
@@ -533,6 +535,13 @@ void populateLists()
 				if (vehicle->move_status == ORDER_TERRAFORM_UP)
 				{
 					terraformedRaiseTiles.insert(terraformedTile);
+				}
+
+				// populate terraformed sensor tiles
+
+				if (vehicle->move_status == ORDER_SENSOR_ARRAY)
+				{
+					terraformedSensorTiles.insert(terraformedTile);
 				}
 
 				// update base terraforming ranks for yield terraforming actions
@@ -2443,7 +2452,15 @@ void calculateSensorTerraformingScore(MAP_INFO mapInfo, TERRAFORMING_SCORE *best
 
 	// special sensor bonus
 
-	improvementScore += calculateSensorScore(mapInfo, action);
+	double sensorScore = calculateSensorScore(mapInfo, action);
+
+	// calculate exclusivity bonus
+
+	double exclusivityBonus = calculateExclusivityBonus(&mapInfo, &(option->actions)) / 4.0;
+
+	// summarize score
+
+	improvementScore = sensorScore + exclusivityBonus;
 
 	// do not create request for zero score
 
@@ -2472,8 +2489,10 @@ void calculateSensorTerraformingScore(MAP_INFO mapInfo, TERRAFORMING_SCORE *best
 	debug("calculateTerraformingScore: (%3d,%3d)\n", x, y);
 	debug
 	(
-		"\t%-10s: score=%6.3f, time=%2d, range=%2d, final=%6.3f\n",
+		"\t%-10s: sensorScore=%6.3f, exclusivityBonus=%6.3f, improvementScore=%6.3f, time=%2d, range=%2d, final=%6.3f\n",
 		option->name,
+		sensorScore,
+		exclusivityBonus,
 		improvementScore,
 		terraformingTime,
 		closestAvailableFormerRange,
@@ -2930,6 +2949,11 @@ bool isTerraformingAvailable(MAP_INFO *mapInfo, int action)
 		// TODO
 		return false;
 		break;
+	case FORMER_SENSOR:
+		// sensor don't need to be build too close to each other
+		if (isNearbySensorPresentOrUnderConstruction(x, y))
+			return  false;
+		break;
 	}
 
 	return true;
@@ -3297,7 +3321,7 @@ bool isNearbyBoreholePresentOrUnderConstruction(int x, int y)
 
 	// check existing items
 
-	if (nearby_items(x, y, proximityRule->buildingDistance, TERRA_THERMAL_BORE) >= 1)
+	if (nearby_items(x, y, proximityRule->existingDistance, TERRA_THERMAL_BORE) >= 1)
 		return true;
 
 	// check building items
@@ -3384,6 +3408,45 @@ bool isNearbyRaiseUnderConstruction(int x, int y)
 			MAP *tile = getMapTile(wrap(x + dx), y + dy);
 
 			if (terraformedRaiseTiles.count(tile) == 1)
+                return true;
+
+        }
+
+    }
+
+    return false;
+
+}
+
+bool isNearbySensorPresentOrUnderConstruction(int x, int y)
+{
+	std::unordered_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_SENSOR);
+
+	// do not do anything if proximity rule is not defined
+
+	if (proximityRulesIterator == PROXIMITY_RULES.end())
+		return false;
+
+	// get proximity rule
+
+	const PROXIMITY_RULE *proximityRule = &(proximityRulesIterator->second);
+
+	// check existing items
+
+	if (nearby_items(x, y, proximityRule->existingDistance, TERRA_SENSOR) >= 1)
+		return true;
+
+	// check building items
+
+	int range = proximityRule->buildingDistance;
+
+	for (int dx = -2 * range; dx <= 2 * range; dx++)
+	{
+		for (int dy = -2 * range + abs(dx); dy <= 2 * range - abs(dx); dy += 2)
+		{
+			MAP *tile = getMapTile(wrap(x + dx), y + dy);
+
+			if (terraformedSensorTiles.count(tile) == 1)
                 return true;
 
         }
@@ -3950,10 +4013,81 @@ double calculateSensorScore(MAP_INFO mapInfo, int action)
 	if (map_has_item(tile, TERRA_SENSOR))
 		return 0.0;
 
-	// compute bonus
+	// compute distance from border
 
-	//
-	return 0.0;
+	int borderRange = 9999;
+
+	for (int otherX = 0; otherX < *map_axis_x; otherX++)
+	{
+		for (int otherY = 0; otherY < *map_axis_y; otherY++)
+		{
+			MAP *otherTile = getMapTile(otherX, otherY);
+
+			if (otherTile == NULL)
+				continue;
+
+			// only same region
+
+			if (otherTile->region != tile->region)
+				continue;
+
+			// not own
+
+			if (otherTile->owner == *active_faction)
+				continue;
+
+			// calculate range
+
+			int range = map_range(x, y, otherX, otherY);
+
+			// update range
+
+			borderRange = min(borderRange, range);
+
+		}
+
+	}
+
+	// compute distance from shore for land region
+
+	int shoreRange = 9999;
+
+	if (!isOceanRegion(tile->region))
+	{
+		for (int otherX = 0; otherX < *map_axis_x; otherX++)
+		{
+			for (int otherY = 0; otherY < *map_axis_y; otherY++)
+			{
+				MAP *otherTile = getMapTile(otherX, otherY);
+
+				if (otherTile == NULL)
+					continue;
+
+				// ocean only
+
+				if (!isOceanRegion(otherTile->region))
+					continue;
+
+				// calculate range
+
+				int range = map_range(x, y, otherX, otherY);
+
+				// update range
+
+				shoreRange = min(shoreRange, range);
+
+			}
+
+		}
+
+	}
+
+	// calculate values
+
+	double borderRangeValue = conf.ai_terraforming_sensorBorderRange / max(conf.ai_terraforming_sensorBorderRange, (double)borderRange);
+	double shoreRangeValue = conf.ai_terraforming_sensorShoreRange / max(conf.ai_terraforming_sensorShoreRange, (double)shoreRange);
+
+	return conf.ai_terraforming_sensorValue * max(borderRangeValue, shoreRangeValue);
 
 }
 
@@ -3996,11 +4130,6 @@ double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *acti
 {
 	MAP *tile = mapInfo->tile;
 
-	// ocean has not exclusivity
-
-	if (is_ocean(tile))
-		return 0.0;
-
 	// collect tile values
 
 	int rainfall = map_rainfall(tile);
@@ -4029,49 +4158,66 @@ double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *acti
 	double mineral = 0.0;
 	double energy = 0.0;
 
-	// improvements ignoring everything
-	if
-	(
-		actionSet.count(FORMER_FOREST)
-		||
-		actionSet.count(FORMER_PLANT_FUNGUS)
-		||
-		actionSet.count(FORMER_THERMAL_BORE)
-	)
+	if (!is_ocean(tile))
 	{
-		// nothing is used
+		// improvements ignoring everything
+		if
+		(
+			actionSet.count(FORMER_FOREST)
+			||
+			actionSet.count(FORMER_PLANT_FUNGUS)
+			||
+			actionSet.count(FORMER_THERMAL_BORE)
+		)
+		{
+			// nothing is used
 
-		nutrient = EXCLUSIVITY_LEVELS.rainfall - rainfall;
-		mineral = EXCLUSIVITY_LEVELS.rockiness - rockiness;
-		energy = EXCLUSIVITY_LEVELS.elevation - elevation;
+			nutrient = EXCLUSIVITY_LEVELS.rainfall - rainfall;
+			mineral = EXCLUSIVITY_LEVELS.rockiness - rockiness;
+			energy = EXCLUSIVITY_LEVELS.elevation - elevation;
 
+		}
+		else
+		{
+			// mine is better built low
+
+			if (actionSet.count(FORMER_MINE))
+			{
+				energy += EXCLUSIVITY_LEVELS.elevation - elevation;
+			}
+
+			// rocky mine is also better built in dry tiles
+
+			if (actionSet.count(FORMER_MINE) && rockiness == 2)
+			{
+				nutrient += EXCLUSIVITY_LEVELS.rainfall - rainfall;
+			}
+
+			// condenser is better built low
+
+			if (actionSet.count(FORMER_CONDENSER))
+			{
+				energy += EXCLUSIVITY_LEVELS.elevation - elevation;
+			}
+
+			// sensor is better built low
+
+			if (actionSet.count(FORMER_SENSOR))
+			{
+				energy += EXCLUSIVITY_LEVELS.elevation - elevation;
+			}
+
+			// sensor is better built in flat
+
+			if (actionSet.count(FORMER_SENSOR))
+			{
+				mineral += EXCLUSIVITY_LEVELS.rockiness - rockiness;
+			}
+
+		}
 	}
-	else
-	{
-		// mine is better built low
 
-		if (actionSet.count(FORMER_MINE))
-		{
-			energy += EXCLUSIVITY_LEVELS.elevation - elevation;
-		}
-
-		// rocky mine is also better built in dry tiles
-
-		if (actionSet.count(FORMER_MINE) && rockiness == 2)
-		{
-			nutrient += EXCLUSIVITY_LEVELS.rainfall - rainfall;
-		}
-
-		// condenser is better built low
-
-		if (actionSet.count(FORMER_CONDENSER))
-		{
-			energy += EXCLUSIVITY_LEVELS.elevation - elevation;
-		}
-
-	}
-
-	return
+	double exclusivityBonus =
 		conf.ai_terraforming_exclusivityMultiplier
 		*
 		(
@@ -4082,6 +4228,57 @@ double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *acti
 			conf.ai_terraforming_energyWeight * energy
 		)
 	;
+
+	debug
+	(
+		"calculateExclusivityBonus\n\trainfall=%d, rockiness=%d, elevation=%d, nutrient=%f, mineral=%f, energy=%f, exclusivityBonus=%f\n",
+		rainfall,
+		rockiness,
+		elevation,
+		nutrient,
+		mineral,
+		energy,
+		exclusivityBonus
+	);
+
+	// additional penalty for replaced improvements
+
+	if (actionSet.count(FORMER_SENSOR))
+	{
+		if (map_has_item(tile, TERRA_MINE))
+		{
+			exclusivityBonus -= 1.0;
+		}
+
+		if (map_has_item(tile, TERRA_SOLAR))
+		{
+			exclusivityBonus -= 1.0;
+		}
+
+		if (map_has_item(tile, TERRA_CONDENSER))
+		{
+			exclusivityBonus -= 2.0;
+		}
+
+		if (map_has_item(tile, TERRA_ECH_MIRROR))
+		{
+			exclusivityBonus -= 1.0;
+		}
+
+		if (map_has_item(tile, TERRA_THERMAL_BORE))
+		{
+			exclusivityBonus -= 2.0;
+		}
+
+	}
+
+	debug
+	(
+		"\texclusivityBonus=%f\n",
+		exclusivityBonus
+	);
+
+	return exclusivityBonus;
 
 }
 

@@ -1,3 +1,14 @@
+# Version 187
+
+* Territory bonus = 25%.
+* Sensor defense bonus = 25%.
+* AI constructs sensors on land and sea.
+* Sensor confers defense bonus on sea too.
+
+# Version 186
+
+* Added ability cost explanation to the end of the ability selection rows in workshop.
+
 # Version 185
 
 * FIX: Bombarding empty square with adjacent enemy artillery exhausted attacker movement points and initiated artillery duel resulting in imminient and untimely attacker death. Fixed.
