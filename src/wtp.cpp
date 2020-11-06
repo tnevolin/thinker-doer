@@ -3170,3 +3170,37 @@ HOOK_API void appendAbilityCostTextInWorkshop(int output_string_pointer, int inp
 
 }
 
+/*
+Request for break treaty before combat actions.
+*/
+HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2)
+{
+	VEH *attackerVehicle = &(tx_vehicles[attackerVehicleId]);
+
+	if (attackerVehicle->faction_id == *current_player_faction)
+	{
+		int defenderVehicleId = tx_veh_at(tx, ty);
+
+		if (defenderVehicleId >= 0)
+		{
+			VEH *defenderVehicle = &(tx_vehicles[defenderVehicleId]);
+
+			int treatyNotBroken = tx_break_treaty(attackerVehicle->faction_id, defenderVehicle->faction_id, 0xB);
+
+			if (treatyNotBroken)
+				return;
+
+			// break treaty really
+
+			tx_act_of_aggression(attackerVehicle->faction_id, defenderVehicle->faction_id);
+
+		}
+
+	}
+
+	// execute original code
+
+	tx_battle_fight_2(attackerVehicleId, angle, tx, ty, do_arty, flag1, flag2);
+
+}
+
