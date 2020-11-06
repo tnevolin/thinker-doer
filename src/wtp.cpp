@@ -50,98 +50,78 @@ HOOK_API int read_basic_rules()
 Combat calculation placeholder.
 All custom combat calculation goes here.
 */
-HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, int attacker_strength_pointer, int defender_strength_pointer, int flags)
+HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int attackerStrengthPointer, int defenderStrengthPointer, int flags)
 {
     debug
     (
-        "battle_compute(attacker_vehicle_id=%d, defender_vehicle_id=%d, attacker_strength_pointer=%d, defender_strength_pointer=%d, flags=%d)\n",
-        attacker_vehicle_id,
-        defender_vehicle_id,
-        attacker_strength_pointer,
-        defender_strength_pointer,
+        "battle_compute(attackerVehicleId=%d, defenderVehicleId=%d, attackerStrengthPointer=%d, defenderStrengthPointer=%d, flags=%d)\n",
+        attackerVehicleId,
+        defenderVehicleId,
+        attackerStrengthPointer,
+        defenderStrengthPointer,
         flags
     )
     ;
 
 	// get attacker/defender vehicle
 
-	VEH *attacker_vehicle = &tx_vehicles[attacker_vehicle_id];
-	VEH *defender_vehicle = &tx_vehicles[defender_vehicle_id];
+	VEH *attackerVehicle = &tx_vehicles[attackerVehicleId];
+	VEH *defenderVehicle = &tx_vehicles[defenderVehicleId];
 
 	// get combat map tile
 
-	MAP *combatMapTile = getVehicleMapTile(defender_vehicle_id);
+	int combatLocationX = defenderVehicle->x;
+	int combatLocationY = defenderVehicle->y;
+	MAP *combatMapTile = getVehicleMapTile(defenderVehicleId);
 
     // run original function
 
-    tx_battle_compute(attacker_vehicle_id, defender_vehicle_id, attacker_strength_pointer, defender_strength_pointer, flags);
+    tx_battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
 
-    debug
-    (
-        "attacker_strength=%d, defender_strength=%d\n",
-        *(int *)attacker_strength_pointer,
-        *(int *)defender_strength_pointer
-    )
-    ;
+    // PLANET combat bonus on defense
 
-    // planet_combat_bonus_on_defense
+	int LABEL_OFFSET_PLANET = 0x271;
 
     if (conf.planet_combat_bonus_on_defense)
     {
-        // get attacker/defender units
+        // PLANET bonus applies to psi combat only
+        // psi combat is triggered by either attacker negative weapon value or defender negative armor value
 
-        UNIT attacker_unit = tx_units[attacker_vehicle->proto_id];
-        UNIT defender_unit = tx_units[defender_vehicle->proto_id];
-
-        // get attacker/defender weapon/armor id
-
-        R_Weapon attacker_weapon = tx_weapon[attacker_unit.weapon_type];
-        R_Defense defender_armor = tx_defense[defender_unit.armor_type];
-
-        // get attacker/defender weapon/armor value
-
-        int attacker_weapon_value = attacker_weapon.offense_value;
-        int defender_armor_value = defender_armor.defense_value;
-
-        // check if it is a psi combat
-
-        if (attacker_weapon_value < 0 || defender_armor_value < 0)
+        if (tx_weapon[tx_units[attackerVehicle->proto_id].weapon_type].offense_value < 0 || tx_defense[tx_units[defenderVehicle->proto_id].armor_type].defense_value < 0)
         {
             // get defender faction id
 
-            int defender_faction_id = tx_vehicles[defender_vehicle_id].faction_id;
+            int defenderFactionId = tx_vehicles[defenderVehicleId].faction_id;
 
-            if (defender_faction_id != 0)
+			// PLANET bonus applies to normal factions only
+
+            if (defenderFactionId > 0)
             {
-                // get defender planet rating
+                // get defender planet rating at the beginning of the turn (not pending)
 
-                int defender_planet_rating = tx_factions[defender_faction_id].SE_planet;
+                int defenderPlanetRating = tx_factions[defenderFactionId].SE_planet;
 
-                if (defender_planet_rating != 0)
+                if (defenderPlanetRating != 0)
                 {
                     // calculate defender psi combat bonus
 
-                    int defender_psi_combat_bonus = tx_basic->combat_psi_bonus_per_PLANET * defender_planet_rating;
+                    int defenderPsiCombatBonus = tx_basic->combat_psi_bonus_per_PLANET * defenderPlanetRating;
 
-                    // calculate "Planet" label pointer
+                    // modify defender strength
 
-                    char *label_planet = *(*tx_labels + LABEL_OFFSET_PLANET);
+                    *(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)defenderPsiCombatBonus / 100.0));
 
                     // add effect description
 
                     if (*tx_battle_compute_defender_effect_count < 4)
                     {
-                        strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label_planet);
-                        (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_psi_combat_bonus;
+                        strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_PLANET));
+                        (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defenderPsiCombatBonus;
 
                         (*tx_battle_compute_defender_effect_count)++;
 
                     }
 
-                    // modify defender strength
-
-                    *(int *)defender_strength_pointer = (int)round((double)(*(int *)defender_strength_pointer) * (100.0 + (double)defender_psi_combat_bonus) / 100.0);
-
                 }
 
             }
@@ -150,82 +130,55 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     }
 
-    // combat_bonus_territory
+    // territory combat bonus
+
+	const char *LABEL_TERRITORY = "Territory";
 
     if (conf.combat_bonus_territory != 0)
     {
-        // get attacker/defender owner
+        // apply territory defense bonus for non natives combat only
 
-        int attacker_faction_id = attacker_vehicle->faction_id;
-        int defender_faction_id = defender_vehicle->faction_id;
-
-        // apply territory defense bonus for non alien combat only
-
-        if (attacker_faction_id != 0 && defender_faction_id != 0)
+        if (attackerVehicle->faction_id > 0 && defenderVehicle->faction_id > 0)
         {
-            // get defender location
+            // attacker gets territory combat bonus for battling in own territory
 
-            MAP *defender_location = mapsq(defender_vehicle->x, defender_vehicle->y);
-
-            // get defender location owner
-
-            int defender_location_owner = (int)defender_location->owner;
-
-            // verify defender is in attacker's territory
-
-            if (defender_location_owner == attacker_faction_id)
+            if (combatMapTile->owner == attackerVehicle->faction_id)
             {
-                // territory attack bonus
+                // modify attacker strength
 
-                int attacker_territory_bonus = conf.combat_bonus_territory;
-
-                // "Territory:" label
-
-                const char label_territory[] = "Territory:";
+                *(int *)attackerStrengthPointer = (int)round((double)(*(int *)attackerStrengthPointer) * (1.0 + (double)conf.combat_bonus_territory / 100.0));
 
                 // add effect description
 
                 if (*tx_battle_compute_attacker_effect_count < 4)
                 {
-                    strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], label_territory);
-                    (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = attacker_territory_bonus;
+                    strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], LABEL_TERRITORY);
+                    (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = conf.combat_bonus_territory;
 
                     (*tx_battle_compute_attacker_effect_count)++;
 
                 }
 
-                // modify attacker strength
-
-                *(int *)attacker_strength_pointer = (int)round((double)(*(int *)attacker_strength_pointer) * (100.0 + (double)attacker_territory_bonus) / 100.0);
-
             }
 
-            // verify defender is in defender's territory
+            // defender gets territory combat bonus for battling in own territory
 
-            if (defender_location_owner == defender_faction_id)
+            if (combatMapTile->owner == defenderVehicle->faction_id)
             {
-                // territory defense bonus
+                // modify defender strength
 
-                int defender_territory_bonus = conf.combat_bonus_territory;
-
-                // "Territory:" label
-
-                const char label_territory[] = "Territory:";
+                *(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)conf.combat_bonus_territory / 100.0));
 
                 // add effect description
 
                 if (*tx_battle_compute_defender_effect_count < 4)
                 {
-                    strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label_territory);
-                    (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_territory_bonus;
+                    strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], LABEL_TERRITORY);
+                    (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = conf.combat_bonus_territory;
 
                     (*tx_battle_compute_defender_effect_count)++;
 
                 }
-
-                // modify defender strength
-
-                *(int *)defender_strength_pointer = (int)round((double)(*(int *)defender_strength_pointer) * (100.0 + (double)defender_territory_bonus) / 100.0);
 
             }
 
@@ -233,59 +186,77 @@ HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, i
 
     }
 
-    // sensor defense bonus on ocean against not natives
+    // sensor
 
-	if (is_ocean(combatMapTile) && (attacker_vehicle->faction_id != 0 && defender_vehicle->faction_id != 0))
+    int LABEL_OFFSET_SENSOR = 0x265;
+
+    // sensor bonus on attack
+
+    if (conf.combat_bonus_sensor_offense)
 	{
-		// search for sensor in the vicinity
-
-		bool sensor = false;
-
-		for (int dx = -4; dx <= 4; dx++)
+		if
+		(
+			// either combat is on land or sensor bonus is applicable on ocean
+			(!is_ocean(combatMapTile))
+			||
+			(is_ocean(combatMapTile) && conf.combat_bonus_sensor_ocean)
+		)
 		{
-			for (int dy = -(abs(4 - dx)); dy <= +(abs(4 - dx)); dy += 2)
+			// attacker is in range of friendly sensor
+
+			if (isInRangeOfFriendlySensor(combatLocationX, combatLocationY, 2, attackerVehicle->faction_id))
 			{
-				MAP *tile = getMapTile(defender_vehicle->x + dx, defender_vehicle->y + dy);
+				// modify attacker strength
 
-				if (tile == NULL)
-					continue;
+				*(int *)attackerStrengthPointer = (int)round((double)(*(int *)attackerStrengthPointer) * (1.0 + (double)tx_basic->combat_defend_sensor / 100.0));
 
-				// only defender territory
+				// add effect description
 
-				if (tile->owner != defender_vehicle->faction_id)
-					continue;
+				if (*tx_battle_compute_defender_effect_count < 4)
+				{
+					strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], *(*tx_labels + LABEL_OFFSET_SENSOR));
+					(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = tx_basic->combat_defend_sensor;
 
-				if (map_has_item(tile, TERRA_SENSOR))
-					sensor = true;
+					(*tx_battle_compute_attacker_effect_count)++;
+
+				}
 
 			}
 
 		}
 
-		if (sensor)
+	}
+
+    // sensor bonus on defense
+
+	{
+		if
+		(
+			// ocean combat only
+			// land defence is already covered by vanilla
+			(is_ocean(combatMapTile) && conf.combat_bonus_sensor_ocean)
+		)
 		{
-			// sensor defense bonus
+			// defender is in range of friendly sensor
 
-			int defender_sensor_bonus = tx_basic->combat_defend_sensor;
-
-			// "Sensor:" label
-
-			const char label_sensor[] = "Sensor:";
-
-			// add effect description
-
-			if (*tx_battle_compute_defender_effect_count < 4)
+			if (isInRangeOfFriendlySensor(combatLocationX, combatLocationY, 2, defenderVehicle->faction_id))
 			{
-				strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label_sensor);
-				(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defender_sensor_bonus;
+				// modify defender strength
 
-				(*tx_battle_compute_defender_effect_count)++;
+				*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)tx_basic->combat_defend_sensor / 100.0));
+
+				// add effect description
+
+				if (*tx_battle_compute_defender_effect_count < 4)
+				{
+					strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_SENSOR));
+					(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = tx_basic->combat_defend_sensor;
+
+					(*tx_battle_compute_defender_effect_count)++;
+
+				}
 
 			}
-
-			// modify defender strength
-
-			*(int *)defender_strength_pointer = (int)round((double)(*(int *)defender_strength_pointer) * (100.0 + (double)defender_sensor_bonus) / 100.0);
 
 		}
 

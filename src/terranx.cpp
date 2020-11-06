@@ -198,3 +198,6 @@ fp_0int *tx_text_get = (fp_0int *)0x005FD570;
 // manipulates diplo_status flags
 fp_4void *tx_set_treaty = (fp_4void *)0x0055BB30;
 
+// places vehicle at tile
+fp_3int *tx_veh_drop = (fp_3int *)0x005C0080;
+

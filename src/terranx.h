@@ -141,4 +141,5 @@ extern fp_1void *tx_kill;
 extern fp_1int *tx_spying;
 extern fp_0int *tx_text_get;
 extern fp_4void *tx_set_treaty;
+extern fp_3int *tx_veh_drop;
 

@@ -169,6 +169,7 @@ HOOK_API int modifiedFindReturnedProbeBase(int vehicleId);
 HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, int bombardment);
 HOOK_API void modifiedVehSkipForActionDestroy(int vehicleId);
 HOOK_API void appendAbilityCostTextInWorkshop(int output_string_pointer, int input_string_pointer);
+bool isInRangeOfFriendlySensor(int x, int y, int range, int factionId);
 
 #endif // __WTP_H__
 

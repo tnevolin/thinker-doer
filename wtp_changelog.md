@@ -1,3 +1,7 @@
+# Version 188
+
+* Sensor bonus applies on ocean and on attack. Exposed options.
+
 # Version 187
 
 * Territory bonus = 25%.
