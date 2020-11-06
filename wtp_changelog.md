@@ -1,3 +1,7 @@
+# Version 190
+
+* FIX: Vanilla counted only predefined colonies for purpose of player elimination computation which caused some aquatic factions to be incorrectly eliminated. Now it counts all of them.
+
 # Version 189
 
 * FIX: Game now requests to breaking a treaty before goind into combat stuff preventing many treaty related bugs. Setting: break_treaty_before_fight. Off by default due to unknown consequences.
