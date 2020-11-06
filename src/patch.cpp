@@ -2947,6 +2947,18 @@ void patch_action_destroy()
 
 }
 
+/*
+Requests for break treaty before fight.
+*/
+void patch_break_treaty_before_fight()
+{
+	write_call(0x00506ADE, (int)modifiedBattleFight2);
+	write_call(0x00568B1C, (int)modifiedBattleFight2);
+	write_call(0x005697AC, (int)modifiedBattleFight2);
+	write_call(0x0056A2E2, (int)modifiedBattleFight2);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3505,6 +3517,11 @@ bool patch_setup(Config* cf) {
 	patch_best_defender();
 
 	patch_action_destroy();
+
+	if (cf->break_treaty_before_fight)
+	{
+		patch_break_treaty_before_fight();
+	}
 
 
     // continue with original Thinker checks

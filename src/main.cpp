@@ -365,6 +365,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->combat_bonus_sensor_offense = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "break_treaty_before_fight"))
+    {
+        cf->break_treaty_before_fight = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

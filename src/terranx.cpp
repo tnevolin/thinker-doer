@@ -201,3 +201,12 @@ fp_4void *tx_set_treaty = (fp_4void *)0x0055BB30;
 // places vehicle at tile
 fp_3int *tx_veh_drop = (fp_3int *)0x005C0080;
 
+// combat computation stage
+fp_7void *tx_battle_fight_2 = (fp_7void *)0x00506AF0;
+
+// breaks treaty
+fp_3int *tx_break_treaty = (fp_3int *)0x0055F770;
+
+// act of aggression
+fp_2void *tx_act_of_aggression = (fp_2void *)0x0050C2E0;
+
