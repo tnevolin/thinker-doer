@@ -197,14 +197,14 @@ struct MetaFaction {
     int faction_bonus_val1[8];      // 0x0530
     int faction_bonus_val2[8];      // 0x0550
     int AI_fight;                   // 0x0570
-    int AI_growth;
-    int AI_tech;
-    int AI_wealth;
-    int AI_power;
-    int soc_priority_category;
-    int soc_opposition_category;
-    int soc_priority_model;
-    int soc_opposition_model;
+    int AI_growth;					// 0x0574
+    int AI_tech;					// 0x0578
+    int AI_wealth;					// 0x057C
+    int AI_power;					// 0x0580
+    int soc_priority_category;		// 0x0584
+    int soc_opposition_category;	// 0x0588
+    int soc_priority_model;			// 0x058C
+    int soc_opposition_model;		// 0X0590
     int soc_priority_effect;
     int soc_opposition_effect;
 };

@@ -180,9 +180,30 @@ HOOK_API int faction_upkeep(int faction) {
     if (f->energy_credits < 0) {
         f->energy_credits = 0;
     }
-    if (!f->current_num_bases && !f->units_active[BSC_COLONY_POD] && !f->units_active[BSC_SEA_ESCAPE_POD]) {
-        eliminate_player(faction, 0);
+
+    // eliminate player if they don't have base or ANY colonies
+
+    if (f->current_num_bases == 0)
+	{
+		bool hasColonies = false;
+
+		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+		{
+			VEH *vehicle = &(tx_vehicles[vehicleId]);
+			if (vehicle->faction_id == faction && isVehicleColony(vehicleId))
+			{
+				hasColonies = true;
+				break;
+			}
+		}
+
+		if (!hasColonies)
+		{
+			eliminate_player(faction, 0);
+		}
+
     }
+
     *(int*)0x93A934 = 0;
     *(int*)0x945B18 = -1;
     *(int*)0x945B1C = -1;
