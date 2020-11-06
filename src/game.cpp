@@ -2782,7 +2782,7 @@ std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y)
 
 }
 
-bool isMapTileVisibleToFaction(int factionId, MAP *tile)
+bool isMapTileVisibleToFaction(MAP *tile, int factionId)
 {
 	return (tile->visibility & (0x1 << factionId));
 
@@ -2840,6 +2840,35 @@ std::vector<int> getStackedVehicleIds(int vehicleId)
 	}
 
 	return stackedVehicleIds;
+
+}
+
+/*
+Searches for friendly sensor in given range.
+*/
+bool isInRangeOfFriendlySensor(int x, int y, int range, int factionId)
+{
+	bool sensor = false;
+
+	for (int dx = -(2 * range); dx <= (2 * range); dx++)
+	{
+		for (int dy = -((2 * range) - abs(dx)); dy <= +((2 * range) - abs(dx)); dy += 2)
+		{
+			MAP *tile = getMapTile(x + dx, y + dy);
+
+			if (tile == NULL)
+				continue;
+
+			// return true for friendly sensor
+
+			if (tile->owner == factionId && map_has_item(tile, TERRA_SENSOR))
+				sensor = true;
+
+		}
+
+	}
+
+	return sensor;
 
 }
 

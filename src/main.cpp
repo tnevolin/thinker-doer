@@ -357,6 +357,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->probe_action_risk_genetic_plague = max(0, atoi(value));
     }
+    else if (MATCH("wtp", "combat_bonus_sensor_ocean"))
+    {
+        cf->combat_bonus_sensor_ocean = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "combat_bonus_sensor_offense"))
+    {
+        cf->combat_bonus_sensor_offense = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

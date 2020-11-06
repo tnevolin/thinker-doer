@@ -869,10 +869,6 @@ enum ai_goal_types {
     AI_GOAL_UNK_2 = 121,
 };
 
-enum label_offsets {
-    LABEL_OFFSET_PLANET = 0x271,
-};
-
 const char veh_status_icon[] = {
 	'-',
 	'L',

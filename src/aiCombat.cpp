@@ -575,7 +575,7 @@ MAP_INFO getNearestUnexploredConnectedOceanRegionTile(int factionId, int initial
 
 		// only undiscovered tiles
 
-		if (isMapTileVisibleToFaction(factionId, tile))
+		if (isMapTileVisibleToFaction(tile, factionId))
 			continue;
 
 		// calculate range
