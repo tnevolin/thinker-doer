@@ -2959,6 +2959,142 @@ void patch_break_treaty_before_fight()
 
 }
 
+void patch_talent_display()
+{
+	// in SocialWin__draw_social
+
+//	// extract up to 11 icon rows from socwin.pcx instead of 10
+//
+//	int talent_extract_icon__bytes_length = 0x7;
+///*
+//0:  c7 45 dc 0a 00 00 00    mov    DWORD PTR [ebp-0x24],0xa
+//*/
+//	byte talent_extract_icon__bytes_old[] = { 0xC7, 0x45, 0xDC, 0x0A, 0x00, 0x00, 0x00 };
+///*
+//0:  c7 45 dc 0b 00 00 00    mov    DWORD PTR [ebp-0x24],0xb
+//*/
+//	byte talent_extract_icon__bytes_new[] = { 0xC7, 0x45, 0xDC, 0x0B, 0x00, 0x00, 0x00 };
+//	write_bytes
+//	(
+//		0x004B30A9,
+//		talent_extract_icon__bytes_length,
+//		talent_extract_icon__bytes_old,
+//		talent_extract_icon__bytes_new
+//	);
+//
+	// do not skip TALENT when counting icon display width
+
+	int talent_count_width_bytes_length = 0xb;
+/*
+0:  3d d8 b2 94 00          cmp    eax,0x94b2d8
+5:  0f 84 e9 00 00 00       je     0xf4
+*/
+	byte talent_count_width_bytes_old[] = { 0x3D, 0xD8, 0xB2, 0x94, 0x00, 0x0F, 0x84, 0xE9, 0x00, 0x00, 0x00 };
+/*
+...
+*/
+	byte talent_count_width_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x004AF509,
+		talent_count_width_bytes_length,
+		talent_count_width_bytes_old,
+		talent_count_width_bytes_new
+	);
+
+	// do not skip TALENT when displaying icons
+
+	int talent_display_icon_bytes_length = 0xb;
+/*
+0:  3d d8 b2 94 00          cmp    eax,0x94b2d8
+5:  0f 84 d9 01 00 00       je     0x1e4
+*/
+	byte talent_display_icon_bytes_old[] = { 0x3D, 0xD8, 0xB2, 0x94, 0x00, 0x0F, 0x84, 0xD9, 0x01, 0x00, 0x00 };
+/*
+...
+*/
+	byte talent_display_icon_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x004AF67B,
+		talent_display_icon_bytes_length,
+		talent_display_icon_bytes_old,
+		talent_display_icon_bytes_new
+	);
+
+	// do not shift icon index by -1 for all effects starting from TALENT and above
+
+	int talent_index_shift_bytes_length = 0x7;
+/*
+0:  3d d8 b2 94 00          cmp    eax,0x94b2d8
+5:  7d 25                   jge    0x2c
+*/
+	byte talent_index_shift_bytes_old[] = { 0x3D, 0xD8, 0xB2, 0x94, 0x00, 0x7D, 0x25 };
+/*
+...
+*/
+	byte talent_index_shift_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x004AF7F3,
+		talent_index_shift_bytes_length,
+		talent_index_shift_bytes_old,
+		talent_index_shift_bytes_new
+	);
+
+	// calculate sprite offset
+
+	int calculate_sprite_offset_bytes_length = 0x28;
+/*
+0:  33 c9                   xor    ecx,ecx
+2:  83 fe 01                cmp    esi,0x1
+5:  0f 9d c1                setge  cl
+8:  41                      inc    ecx
+9:  6a 01                   push   0x1
+b:  03 c1                   add    eax,ecx
+d:  6a 01                   push   0x1
+f:  8d 0c 80                lea    ecx,[eax+eax*4]
+12: 8d 04 48                lea    eax,[eax+ecx*2]
+15: 8d 8c 87 20 2f 00 00    lea    ecx,[edi+eax*4+0x2f20]
+1c: 8b 45 e8                mov    eax,DWORD PTR [ebp-0x18]
+1f: 50                      push   eax
+20: 33 c0                   xor    eax,eax
+22: 8a 41 08                mov    al,BYTE PTR [ecx+0x8]
+25: 53                      push   ebx
+26: 50                      push   eax
+27: 52                      push   edx
+*/
+	byte calculate_sprite_offset_bytes_old[] = { 0x33, 0xC9, 0x83, 0xFE, 0x01, 0x0F, 0x9D, 0xC1, 0x41, 0x6A, 0x01, 0x03, 0xC1, 0x6A, 0x01, 0x8D, 0x0C, 0x80, 0x8D, 0x04, 0x48, 0x8D, 0x8C, 0x87, 0x20, 0x2F, 0x00, 0x00, 0x8B, 0x45, 0xE8, 0x50, 0x33, 0xC0, 0x8A, 0x41, 0x08, 0x53, 0x50, 0x52 };
+/*
+0:  6a 01                   push   0x1
+2:  6a 01                   push   0x1
+4:  ff 75 e8                push   DWORD PTR [ebp-0x18]
+7:  53                      push   ebx
+8:  52                      push   edx
+9:  56                      push   esi
+a:  50                      push   eax
+b:  e8 fd ff ff ff          call   d <_main+0xd>
+10: 83 c4 08                add    esp,0x8
+13: 89 c1                   mov    ecx,eax
+15: 5a                      pop    edx
+16: 31 c0                   xor    eax,eax
+18: 8a 41 08                mov    al,BYTE PTR [ecx+0x8]
+1b: 50                      push   eax
+1c: 52                      push   edx
+*/
+	byte calculate_sprite_offset_bytes_new[] = { 0x6A, 0x01, 0x6A, 0x01, 0xFF, 0x75, 0xE8, 0x53, 0x52, 0x56, 0x50, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x08, 0x89, 0xC1, 0x5A, 0x31, 0xC0, 0x8A, 0x41, 0x08, 0x50, 0x52, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x004AF825,
+		calculate_sprite_offset_bytes_length,
+		calculate_sprite_offset_bytes_old,
+		calculate_sprite_offset_bytes_new
+	);
+
+	write_call(0x004AF825 + 0xb, (int)modifiedSocialWinDrawSocialCalculateSpriteOffset);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3522,6 +3658,8 @@ bool patch_setup(Config* cf) {
 	{
 		patch_break_treaty_before_fight();
 	}
+
+	patch_talent_display();
 
 
     // continue with original Thinker checks

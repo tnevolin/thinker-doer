@@ -171,6 +171,7 @@ HOOK_API void modifiedVehSkipForActionDestroy(int vehicleId);
 HOOK_API void appendAbilityCostTextInWorkshop(int output_string_pointer, int input_string_pointer);
 bool isInRangeOfFriendlySensor(int x, int y, int range, int factionId);
 HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2);
+HOOK_API int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteIndex, int effectValue);
 
 #endif // __WTP_H__
 
