@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 191"
+    #define MOD_VERSION "The Will to Power mod - version 192"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -183,6 +183,7 @@ struct Config {
     bool combat_bonus_sensor_ocean = false;
     bool combat_bonus_sensor_offense = false;
     bool break_treaty_before_fight = false;
+    bool compact_effect_icons = false;
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
     double ai_production_vanilla_priority_project;
