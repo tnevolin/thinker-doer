@@ -1,3 +1,7 @@
+# Version 192
+
+* Display compact effect icons in SE dialog to fit 5 of them in model description. Off by default because it also requires large icons redesign.
+
 # Version 191
 
 * Display TALENT effect in SE dialog. Only for SE choices! Max buttons and faction inherent bonuses are not changed. Currently using some ugly icon waiting for better design.

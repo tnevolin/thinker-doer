@@ -2959,29 +2959,13 @@ void patch_break_treaty_before_fight()
 
 }
 
+/*
+Displays TALENT icon in SE dialog.
+*/
 void patch_talent_display()
 {
 	// in SocialWin__draw_social
 
-//	// extract up to 11 icon rows from socwin.pcx instead of 10
-//
-//	int talent_extract_icon__bytes_length = 0x7;
-///*
-//0:  c7 45 dc 0a 00 00 00    mov    DWORD PTR [ebp-0x24],0xa
-//*/
-//	byte talent_extract_icon__bytes_old[] = { 0xC7, 0x45, 0xDC, 0x0A, 0x00, 0x00, 0x00 };
-///*
-//0:  c7 45 dc 0b 00 00 00    mov    DWORD PTR [ebp-0x24],0xb
-//*/
-//	byte talent_extract_icon__bytes_new[] = { 0xC7, 0x45, 0xDC, 0x0B, 0x00, 0x00, 0x00 };
-//	write_bytes
-//	(
-//		0x004B30A9,
-//		talent_extract_icon__bytes_length,
-//		talent_extract_icon__bytes_old,
-//		talent_extract_icon__bytes_new
-//	);
-//
 	// do not skip TALENT when counting icon display width
 
 	int talent_count_width_bytes_length = 0xb;
@@ -3092,6 +3076,104 @@ b:  e8 fd ff ff ff          call   d <_main+0xd>
 	);
 
 	write_call(0x004AF825 + 0xb, (int)modifiedSocialWinDrawSocialCalculateSpriteOffset);
+
+}
+
+/*
+Jams effect icons closer together for 5 icons to fit model box.
+*/
+void patch_compact_effect_icons()
+{
+	// sprite display position shifts before and after
+
+	int originalWidth = 26;
+	int shiftBefore = -2;
+	int shiftAfter = -4;
+	int shiftInitial = -3;
+	int shiftCombined = shiftBefore + shiftAfter;
+	int modifiedWidth = originalWidth + shiftCombined;
+
+	// modify effect sprite width for the purpose total diplayed width
+
+	int effect_sprite_width_bytes_length = 0x3;
+/*
+0:  8d 51 01                lea    edx,[ecx+0x1]
+*/
+	byte effect_sprite_width_bytes_old[] = { 0x8D, 0x51, 0x01 };
+/*
+0:  8d 51 f7                lea    edx,[ecx+<1 + shiftCombined>]
+...
+*/
+	byte effect_sprite_width_bytes_new[] = { 0x8D, 0x51, (byte)((1 + shiftCombined) & 0xFF) };
+	write_bytes
+	(
+		0x004AF628,
+		effect_sprite_width_bytes_length,
+		effect_sprite_width_bytes_old,
+		effect_sprite_width_bytes_new
+	);
+
+	// modify starting horizontal position
+
+	int starting_horizontal_position_bytes_length = 0x7;
+/*
+0:  8b 45 d4                mov    eax,DWORD PTR [ebp-0x2c]
+3:  d1 fb                   sar    ebx,1
+5:  03 d8                   add    ebx,eax
+*/
+	byte starting_horizontal_position_bytes_old[] = { 0x8B, 0x45, 0xD4, 0xD1, 0xFB, 0x03, 0xD8 };
+/*
+0:  d1 fb                   sar    ebx,1
+2:  83 c3 13                add    ebx,<29 + shiftInitial>
+...
+*/
+	byte starting_horizontal_position_bytes_new[] = { 0xD1, 0xFB, 0x83, 0xC3, (byte)((29 + shiftInitial) & 0xFF), 0x90, 0x90 };
+	write_bytes
+	(
+		0x004AF650,
+		starting_horizontal_position_bytes_length,
+		starting_horizontal_position_bytes_old,
+		starting_horizontal_position_bytes_new
+	);
+
+	// modify current horizontal position before effect sprite
+
+	int horizontal_position_before_effect_bytes_length = 0x7;
+/*
+...
+*/
+	byte horizontal_position_before_effect_bytes_old[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+/*
+0:  8d 5b 01                lea    ebx,[ebx+<shiftBefore>]
+...
+*/
+	byte horizontal_position_before_effect_bytes_new[] = { 0x8D, 0x5B, (byte)((shiftBefore) & 0xFF), 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x004AF7F3,
+		horizontal_position_before_effect_bytes_length,
+		horizontal_position_before_effect_bytes_old,
+		horizontal_position_before_effect_bytes_new
+	);
+
+	// modify current horizontal position after effect sprite
+
+	int horizontal_position_after_effect_bytes_length = 0x4;
+/*
+0:  8d 5c 0b 01             lea    ebx,[ebx+ecx*1+0x1]
+*/
+	byte horizontal_position_after_effect_bytes_old[] = { 0x8D, 0x5C, 0x0B, 0x01 };
+/*
+0:  8d 5c 0b f7             lea    ebx,[ebx+ecx*1+<1 + shiftAfter>]
+*/
+	byte horizontal_position_after_effect_bytes_new[] = { 0x8D, 0x5C, 0x0B, (byte)((1 + shiftAfter) & 0xFF) };
+	write_bytes
+	(
+		0x004AF858,
+		horizontal_position_after_effect_bytes_length,
+		horizontal_position_after_effect_bytes_old,
+		horizontal_position_after_effect_bytes_new
+	);
 
 }
 
@@ -3660,6 +3742,11 @@ bool patch_setup(Config* cf) {
 	}
 
 	patch_talent_display();
+
+	if (cf->compact_effect_icons)
+	{
+		patch_compact_effect_icons();
+	}
 
 
     // continue with original Thinker checks

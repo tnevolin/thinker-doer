@@ -369,6 +369,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->break_treaty_before_fight = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "compact_effect_icons"))
+    {
+        cf->compact_effect_icons = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
