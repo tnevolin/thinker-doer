@@ -1,3 +1,7 @@
+# Version 191
+
+* Display TALENT effect in SE dialog. Only for SE choices! Max buttons and faction inherent bonuses are not changed. Currently using some ugly icon waiting for better design.
+
 # Version 190
 
 * FIX: Vanilla counted only predefined colonies for purpose of player elimination computation which caused some aquatic factions to be incorrectly eliminated. Now it counts all of them.

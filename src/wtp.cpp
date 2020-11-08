@@ -3204,3 +3204,62 @@ HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int
 
 }
 
+/*
+Calculates sprite offset in SocialWin__draw_social to display TALENT icon properly.
+*/
+HOOK_API int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteBaseIndex, int effectValue)
+{
+	// calculate sprite color index for negative/positive value
+
+	int colorIndex = (effectValue >= 1 ? 2 : 1);
+
+	// calculate sprite index
+
+	int spriteIndex = spriteBaseIndex + colorIndex;
+
+	// adjust sprite index based on effect
+
+	switch (spriteBaseIndex / 9)
+	{
+		// before TALENT
+	case 0:
+	case 1:
+	case 2:
+		// no change
+		break;
+		// TALENT
+	case 3:
+		// 6 sprites left
+		spriteIndex -= 6;
+		break;
+		// after TALENT
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+	case 8:
+	case 9:
+	case 10:
+	case 11:
+		// previous row
+		spriteIndex -= 9;
+		break;
+	default:
+		// should not happen
+		return 0;
+	}
+
+	// calculate sprite offset
+
+	int spriteOffset = spriteIndex * 0x2C;
+
+	// calculate sprite address
+
+	byte *sprite = g_SOCIALWIN + 0x2F20 + spriteOffset;
+
+	// convert and return value
+
+	return (int)sprite;
+
+}
+

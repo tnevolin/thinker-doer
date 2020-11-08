@@ -44,6 +44,7 @@ char *g_strTEMP = (char *)0x009B86A0;
 int *current_base_growth_rate = (int *)0x0090E918;
 int *g_PROBE_FACT_TARGET = (int *)0x00945B34;
 int *g_UNK_ATTACK_FLAGS = (int *)0x0093E904;
+byte *g_SOCIALWIN = (byte *)0x008A6270;
 
 fp_1int* social_upkeep = (fp_1int*)0x5B44D0;
 fp_1int* repair_phase = (fp_1int*)0x526030;
