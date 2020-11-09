@@ -12,7 +12,7 @@
 
 #UNIV
 University of Planet, The Scientist, University, M, 1, Zakharov, M,  0,  0, 1, 0, 0,
-  TECH, DocFlex, SOCIAL, ++RESEARCH, SOCIAL, --PROBE, DRONE, 4, FACILITY, 8
+  TECH, DocFlex, SOCIAL, +++RESEARCH, SOCIAL, --PROBE, DRONE, 4, FACILITY, 8
   Values, Knowledge, RESEARCH
   Politics, Fundamentalist, nil
   University, Univ.,

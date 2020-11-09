@@ -885,7 +885,7 @@ Planned,         InfNet,   --EFFIC,      -SUPPORT,   ++GROWTH,     +INDUSTRY
 Green,           CentEmp,  ++EFFIC,     --GROWTH,    ++PLANET,    ++TALENT
 Survival,        None,
 Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +GROWTH,    --INDUSTRY
-Knowledge,       Cyber,    ++EFFIC,      -GROWTH,    --PROBE,  +++++RESEARCH
+Knowledge,       Cyber,    ++EFFIC,    --PROBE,     +++RESEARCH
 Wealth,          IndAuto,   +ECONOMY,   --MORALE,     -PLANET,    ++INDUSTRY
 None,            None,
 Cybernetic,      Algor,    ++EFFIC,   ----POLICE,    ++PLANET,    ++RESEARCH
