@@ -1,3 +1,9 @@
+# Version 194
+
+* Knowledge,       Cyber,    ++EFFIC,    --PROBE,     +++RESEARCH. Lost GROWTH penalty and some RESEARCH bonus.
+* University gets +3 RESEARCH.
+* Also removed test effects in Frontier.
+
 # Version 193
 
 * Also made lines in SE description help window more compact to fit 5 effects as well (down-left when player hover mouse over SE choice).
