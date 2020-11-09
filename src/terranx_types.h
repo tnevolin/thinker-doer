@@ -60,8 +60,8 @@ struct BASE {
     int energy_consumption;					// +0x00F8
     int unused_consumption;					// +0x00FC
     int economy_total;						// +0x0100
-    int psych_total;
-    int labs_total;
+    int psych_total;						// +0x0104
+    int labs_total;							// +0x0108
     int unk_2;
     short autoforward_land_base_id;			// +0x0110
     short autoforward_sea_base_id;
@@ -324,9 +324,9 @@ struct Faction {
     char tech_trade_source[92];		// 0x036C
     int tech_accumulated;			// 0x03C8
     int tech_research_id;			// 0x03CC
-    int tech_cost;
-    int earned_techs_saved;
-    int net_random_event;
+    int tech_cost;					// 0x03D0
+    int earned_techs_saved;			// 0x03D4
+    int net_random_event;			// 0x03D8
     int AI_fight;
     int AI_growth;                  // 0x03E0
     int AI_tech;					// 0x03E4

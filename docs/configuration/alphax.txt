@@ -878,7 +878,7 @@ Politics, Economics, Values, Future Society
 Frontier,        None,
 Police State,    DocLoy,   --EFFIC,     ++SUPPORT,   ++POLICE,     -GROWTH
 Democratic,      EthCalc,  ++EFFIC,     --SUPPORT,   ++GROWTH,     -PLANET
-Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY, ---RESEARCH
+Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY,  --RESEARCH
 Simple,          None,
 Free Market,     IndEcon,  ++ECONOMY, ----POLICE,    --PLANET,     -PROBE
 Planned,         InfNet,   --EFFIC,      -SUPPORT,   ++GROWTH,     +INDUSTRY

@@ -3263,3 +3263,24 @@ HOOK_API int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteBaseInde
 
 }
 
+HOOK_API void modifiedTechResearch(int factionId, int labs)
+{
+	Faction *faction = &(tx_factions[factionId]);
+
+	// modify labs contribution from base
+
+	if (conf.se_research_bonus_percentage != 10 && faction->SE_research_pending != 0)
+	{
+		int currentMultiplierPercentage = 100 + 10 * faction->SE_research_pending;
+		int modifiedMultiplierPercentage = 100 + conf.se_research_bonus_percentage * faction->SE_research_pending;
+
+		labs = (labs * modifiedMultiplierPercentage + currentMultiplierPercentage / 2) / currentMultiplierPercentage;
+
+	}
+
+	// pass labs to original function
+
+	tx_tech_research(factionId, labs);
+
+}
+
