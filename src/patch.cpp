@@ -3077,6 +3077,46 @@ b:  e8 fd ff ff ff          call   d <_main+0xd>
 
 	write_call(0x004AF825 + 0xb, (int)modifiedSocialWinDrawSocialCalculateSpriteOffset);
 
+	// do not skip TALENT when counting icons in description
+
+	int talent_count_icon_description_bytes_length = 0xc;
+/*
+0:  81 fa d8 b2 94 00       cmp    edx,0x94b2d8
+6:  0f 84 ca 01 00 00       je     0x1d6
+*/
+	byte talent_count_icon_description_bytes_old[] = { 0x81, 0xFA, 0xD8, 0xB2, 0x94, 0x00, 0x0F, 0x84, 0xCA, 0x01, 0x00, 0x00 };
+/*
+...
+*/
+	byte talent_count_icon_description_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x004B122E,
+		talent_count_icon_description_bytes_length,
+		talent_count_icon_description_bytes_old,
+		talent_count_icon_description_bytes_new
+	);
+
+	// do not skip TALENT when displaying icons in description
+
+	int talent_display_icon_description_bytes_length = 0xc;
+/*
+0:  81 fa d8 b2 94 00       cmp    edx,0x94b2d8
+6:  0f 84 8d 02 00 00       je     0x299
+*/
+	byte talent_display_icon_description_bytes_old[] = { 0x81, 0xFA, 0xD8, 0xB2, 0x94, 0x00, 0x0F, 0x84, 0x8D, 0x02, 0x00, 0x00 };
+/*
+...
+*/
+	byte talent_display_icon_description_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x004B149B,
+		talent_display_icon_description_bytes_length,
+		talent_display_icon_description_bytes_old,
+		talent_display_icon_description_bytes_new
+	);
+
 }
 
 /*
@@ -3084,6 +3124,8 @@ Jams effect icons closer together for 5 icons to fit model box.
 */
 void patch_compact_effect_icons()
 {
+	// === in SE dialog under model name ===
+
 	// sprite display position shifts before and after
 
 	int originalWidth = 26;
@@ -3173,6 +3215,57 @@ void patch_compact_effect_icons()
 		horizontal_position_after_effect_bytes_length,
 		horizontal_position_after_effect_bytes_old,
 		horizontal_position_after_effect_bytes_new
+	);
+
+	// === in description window when hovering mouse over SE choice ===
+
+	// vertical positions and steps
+
+	int descriptionVerticalStepOriginal = 26;
+	int descriptionVerticalStep = 20;
+	int topMarginExtra = -2;
+	int topMargin = (descriptionVerticalStep - descriptionVerticalStepOriginal) / 2 + topMarginExtra;
+
+	// set top margin to half of the vertical step difference
+
+	int description_top_margin_bytes_length = 0x8;
+/*
+0:  99                      cdq
+1:  2b c2                   sub    eax,edx
+3:  8b 55 d4                mov    edx,DWORD PTR [ebp-0x2c]
+6:  d1 f8                   sar    eax,1
+*/
+	byte description_top_margin_bytes_old[] = { 0x99, 0x2B, 0xC2, 0x8B, 0x55, 0xD4, 0xD1, 0xF8 };
+/*
+0:  b8 01 00 00 00          mov    eax,<top margin>
+5:  8b 55 d4                mov    edx,DWORD PTR [ebp-0x2c]
+*/
+	byte description_top_margin_bytes_new[] = { 0xB8, (byte)((topMargin >> 0) & 0xFF), (byte)((topMargin >> 8) & 0xFF), (byte)((topMargin >> 16) & 0xFF), (byte)((topMargin >> 24) & 0xFF), 0x8B, 0x55, 0xD4 };
+	write_bytes
+	(
+		0x004B1458,
+		description_top_margin_bytes_length,
+		description_top_margin_bytes_old,
+		description_top_margin_bytes_new
+	);
+
+	// change vertical step in description
+
+	int description_vertical_step_bytes_length = 0x7;
+/*
+0:  8b 97 34 2e 00 00       mov    edx,DWORD PTR [edi+0x2e34]
+*/
+	byte description_vertical_step_bytes_old[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+/*
+0:  c7 45 d4 01 00 00 00    mov    DWORD PTR [ebp-0x2c],<vertical step>
+*/
+	byte description_vertical_step_bytes_new[] = { 0xC7, 0x45, 0xD4, (byte)(descriptionVerticalStep & 0xFF), 0x00, 0x00, 0x00 };
+	write_bytes
+	(
+		0x004B149B,
+		description_vertical_step_bytes_length,
+		description_vertical_step_bytes_old,
+		description_vertical_step_bytes_new
 	);
 
 }

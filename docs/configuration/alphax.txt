@@ -875,7 +875,7 @@ Talent,           Talents,
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
-Frontier,        None, +ECONOMY, +POLICE, ++PROBE, --MORALE, --GROWTH
+Frontier,        None, ++POLICE, --ECONOMY, --PROBE, --MORALE, --GROWTH
 Police State,    DocLoy,   --EFFIC,     ++SUPPORT,   ++POLICE,     -GROWTH
 Democratic,      EthCalc,  ++EFFIC,     --SUPPORT,   ++GROWTH,     -PLANET
 Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY, ---RESEARCH
