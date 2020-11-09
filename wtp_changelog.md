@@ -1,3 +1,7 @@
+# Version 193
+
+* Also made lines in SE description help window more compact to fit 5 effects as well (down-left when player hover mouse over SE choice).
+
 # Version 192
 
 * Display compact effect icons in SE dialog to fit 5 of them in model description. Off by default because it also requires large icons redesign.
