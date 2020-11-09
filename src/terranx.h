@@ -147,4 +147,5 @@ extern fp_3int *tx_veh_drop;
 extern fp_7void *tx_battle_fight_2;
 extern fp_3int *tx_break_treaty;
 extern fp_2void *tx_act_of_aggression;
+extern fp_2void *tx_tech_research;
 

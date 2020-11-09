@@ -1,3 +1,9 @@
+# Version 195
+
+* RESEARCH bonus percentage parameter is added in thiker.ini: se_research_bonus_percentage.
+* RESEARCH bonus is doubled.
+* Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY,  --RESEARCH. It loses extra RESEARCH penalty which was added previously just because RESEARCH bonus was too weak.
+
 # Version 194
 
 * Knowledge,       Cyber,    ++EFFIC,    --PROBE,     +++RESEARCH. Lost GROWTH penalty and some RESEARCH bonus.

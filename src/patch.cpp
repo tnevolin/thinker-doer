@@ -3270,6 +3270,15 @@ void patch_compact_effect_icons()
 
 }
 
+/*
+Wraps tech_research to modify SE RESEARCH bonus.
+*/
+void patch_research_bonus_multiplier()
+{
+	write_call(0x004F4F9C, (int)modifiedTechResearch);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3839,6 +3848,11 @@ bool patch_setup(Config* cf) {
 	if (cf->compact_effect_icons)
 	{
 		patch_compact_effect_icons();
+	}
+
+	if (cf->se_research_bonus_percentage != 10)
+	{
+		patch_research_bonus_multiplier();
 	}
 
 
