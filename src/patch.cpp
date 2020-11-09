@@ -3279,6 +3279,30 @@ void patch_research_bonus_multiplier()
 
 }
 
+/*
+Removes fungal tower defense bonus.
+*/
+void patch_remove_fungal_tower_defense_bonus()
+{
+	int disable_fungal_tower_defense_bonus_bytes_length = 0x2;
+/*
+0:  75 09                   jne    0xb
+*/
+	byte disable_fungal_tower_defense_bonus_bytes_old[] = { 0x75, 0x09 };
+/*
+0:  eb 09                   jmp    0xb
+*/
+	byte disable_fungal_tower_defense_bonus_bytes_new[] = { 0xEB, 0x09 };
+	write_bytes
+	(
+		0x00501D0F,
+		disable_fungal_tower_defense_bonus_bytes_length,
+		disable_fungal_tower_defense_bonus_bytes_old,
+		disable_fungal_tower_defense_bonus_bytes_new
+	);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -3853,6 +3877,11 @@ bool patch_setup(Config* cf) {
 	if (cf->se_research_bonus_percentage != 10)
 	{
 		patch_research_bonus_multiplier();
+	}
+
+	if (cf->remove_fungal_tower_defense_bonus)
+	{
+		patch_remove_fungal_tower_defense_bonus();
 	}
 
 

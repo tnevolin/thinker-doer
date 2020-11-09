@@ -1,3 +1,7 @@
+# Version 196
+
+* Removed +50% fungal tower defense bonus. Configuration parameter: remove_fungal_tower_defense_bonus. They don't need it anymore with 1:1 land psi combat odds.
+
 # Version 195
 
 * RESEARCH bonus percentage parameter is added in thiker.ini: se_research_bonus_percentage.
