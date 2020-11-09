@@ -377,6 +377,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->se_research_bonus_percentage = max(0, min(100, atoi(value)));
     }
+    else if (MATCH("wtp", "remove_fungal_tower_defense_bonus"))
+    {
+        cf->remove_fungal_tower_defense_bonus = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
