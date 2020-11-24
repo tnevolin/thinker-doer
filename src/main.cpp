@@ -381,6 +381,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->remove_fungal_tower_defense_bonus = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "aliens_fight_half_strength_unit_turn"))
+    {
+        cf->aliens_fight_half_strength_unit_turn = max(1, atoi(value));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

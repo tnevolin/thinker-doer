@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 196"
+    #define MOD_VERSION "The Will to Power mod - version 197"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -186,6 +186,7 @@ struct Config {
     bool compact_effect_icons = false;
     int se_research_bonus_percentage = 10;
     bool remove_fungal_tower_defense_bonus = false;
+    int aliens_fight_half_strength_unit_turn = 15;
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
     double ai_production_vanilla_priority_project;

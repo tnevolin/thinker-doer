@@ -1,3 +1,7 @@
+# Version 197
+
+* Exposed turn until aliens fight at half strength in thinker.ini: aliens_fight_half_strength_unit_turn.
+
 # Version 196
 
 * Removed +50% fungal tower defense bonus. Configuration parameter: remove_fungal_tower_defense_bonus. They don't need it anymore with 1:1 land psi combat odds.
