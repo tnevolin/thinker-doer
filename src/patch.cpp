@@ -3284,6 +3284,8 @@ Removes fungal tower defense bonus.
 */
 void patch_remove_fungal_tower_defense_bonus()
 {
+	// fungal tower defense bonus
+
 	int disable_fungal_tower_defense_bonus_bytes_length = 0x2;
 /*
 0:  75 09                   jne    0xb
@@ -3299,6 +3301,25 @@ void patch_remove_fungal_tower_defense_bonus()
 		disable_fungal_tower_defense_bonus_bytes_length,
 		disable_fungal_tower_defense_bonus_bytes_old,
 		disable_fungal_tower_defense_bonus_bytes_new
+	);
+
+	// fungal tower defense bonus display
+
+	int disable_fungal_tower_defense_bonus_display_bytes_length = 0x2;
+/*
+0:  75 39                   jne    0x3b
+*/
+	byte disable_fungal_tower_defense_bonus_display_bytes_old[] = { 0x75, 0x39 };
+/*
+0:  eb 39                   jmp    0x3b
+*/
+	byte disable_fungal_tower_defense_bonus_display_bytes_new[] = { 0xEB, 0x39 };
+	write_bytes
+	(
+		0x005020C7,
+		disable_fungal_tower_defense_bonus_display_bytes_length,
+		disable_fungal_tower_defense_bonus_display_bytes_old,
+		disable_fungal_tower_defense_bonus_display_bytes_new
 	);
 
 }
