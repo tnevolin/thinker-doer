@@ -1,6 +1,6 @@
 # SMACX The Will to Power mod
 
-The Will to Power is a playing experience enhancement mod for Alpha Centauri: Alien Crossfire.  
+The Will to Power is a playing experience enhancement mod for Alpha Centauri: Alien Crossfire.
 It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker_Details.md, Thinker_Changelog.md).
 
 ##### Links
@@ -23,7 +23,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 
 I put this at the very top to avoid first impression frustration for those used to easily win every vanilla game on highest difficulty level.
 
-This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to try it out first on **three(!)** difficulty levels below your usual vanilla comfortable level. I also recommend lowering activity of native life from medium to lowest at first. It also plays a little differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accommodate to play style and AI strength feel free to crank up the difficulty for bigger challenge! :)
+This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to try it out first on **three(!)** difficulty levels below your usual vanilla comfortable level. I also recommend lowering activity of native life from medium to lowest at first. It also plays a little differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accommodate to play style and AI strength feel free to crank up the difficulty for a bigger challenge! :)
 
 ## Main highlights
 
@@ -371,7 +371,7 @@ The Ascent to Transcendence | 500 | Should take some time but not to extreme wit
 
 Multiplying facilities are incentive for base growth vs ICS. Multiplying facilities, especially mineral ones, should start earlier and distributed more evenly across the tree.
 
-Recycling Tanks now is a 50% mineral multplying facilities amongh others of same type. Other multiplying facilities are distributed more smoothly across the tree.
+Recycling Tanks now is a 50% mineral multplying facilities among others of same type. Other multiplying facilities are distributed more smoothly across the tree.
 
 Energy multiplying facilities are generally at good places already. I've reduced cost of some early coming ones to make their benefit appear earlier.
 
@@ -413,7 +413,7 @@ Tree Farm: moved to 30% in research tree (was 50%).
 
 Hybrid Forest: moved to 60% in research tree (was 50%).
 
-These facilities should be moved apart a little. In vanilla they appear immediatelly one after another. Tree Farm should appear a little bit earlier to support barren lands with forests.
+These facilities should be moved apart a little. In vanilla they appear immediately one after another. Tree Farm should appear a little bit earlier to support barren lands with forests.
 
 ## Satellites
 
@@ -423,11 +423,11 @@ Sky hydroponics lab is moved to the last as most base affecting. Other two are c
 
 ## The Living Refinery
 
-This project effect diminishes with time as SUPPORT effect becomes less importanw when bases produce more minerals.
+This project effect diminishes with time as SUPPORT effect becomes less important when bases produce more minerals.
 
 ## The Manifold Harmonics
 
-It is not too strong project and it is not too beneficial eaarly in a game when base fungus production is yet too low. There is not harm to place it early for owner to benefit its advantage for longer period of time.
+It is not too strong a project and it is not too beneficial early in a game when base fungus production is yet too low. There is not harm to place it early for owner to benefit its advantage for longer period of time.
 
 ## Reactors
 
@@ -476,33 +476,33 @@ Crawlers are disabled. That solves tons of problems they generate.
 
 ## Hurrying projects
 
-Faction can fully or partially hurry project with credits at its discretion.
+Factions can fully or partially hurry projects with credits at their discretion.
 
 ## Specific project fixes
 
 ### The Planetary Transit System
 
-The main problem of this project reported by many players is that it breaks the game paired with ICS strategy. Essentially, it creates two extra citizens out of thin air in new base. Therefore it just triples the benefit of founding new base and the total faction population growth rate.
+The main problem of this project reported by many players is that it breaks the game paired with ICS strategy. Essentially, it creates two extra citizens out of thin air in a new base. Therefore it just triples the benefit of founding a new base and the total faction population growth rate.
 
-This mod limits the size of new base to this value:
+This mod limits the size of a new base to this value:
 
 <pre>
 new base size = average faction base size - 2
 </pre>
 
-This is to prevent excessive total population growth at very early stages. It also sets limit to **less** than average to make sure the benefit automatically wears off when a lot of new bases created. Since the limit is less than average it guarantees creation of a new base brings the average size down. So player needs to develop the rest of their bases to keep claiming max benefit.
+This is to prevent excessive total population growth at very early stages. It also sets the limit to **less** than average to make sure the benefit automatically wears off when a lot of new bases created. Since the limit is less than average it guarantees that the creation of a new base brings the average size down. So player needs to develop the rest of their bases to keep claiming the maximum benefit.
 
 ### The Cloning Vats
 
 Permanent population boom in all bases is one of the most game breaking effects in entire SMACX. Modders struggle to mitigate and balance it. This mod moderates this project effect to the level comparable to other project effects.
 
-The Cloning Vats do not trigger population boom. Instead they convert part of mineral surplus into additional nutrients on top of regular nutrient surplus. Thus fulfilling this project very idea of using production power to speed up population growth. The effect is very beneficial but on that OP anymore. Furthermore, it diminishes for greater base sizes due to increased growth requirements. Therfore, it can safely be unlocked in the mid game.
+The Cloning Vats do not trigger population boom. Instead they convert part of mineral surplus into additional nutrients on top of regular nutrient surplus. Thus fulfilling this project very idea of using production power to speed up population growth. The effect is very beneficial but not that overpowered anymore. Furthermore, it diminishes for greater base sizes due to increased growth requirements. Therefore, it can safely be unlocked in the mid game.
 
 The Cloning Vats also does not grant impunities anymore.
 
 ## The Hunter-Seeker Algorithm
 
-The Hunter-Seeker Algorithm prevents regular probe action but does not destroy it. This is to aid AI who is stupidly keep sending probes against HSA owner. This is also to reduce human player frustration when they need to remember which enemy faction has HSA to not kill own probes for nothing.
+The Hunter-Seeker Algorithm prevents regular probe action but does not destroy it. This is to aid the AI that stupidly keeps sending probes against the HSA owner. This is also to reduce human player frustration when they need to remember which enemy faction has HSA to not kill own probes for nothing.
 
 # Inefficiency
 
@@ -516,13 +516,13 @@ efficiency = efficiencyRate \* energy intake                     ;rounded up
 inefficiency = energy intake - efficiency
 </pre>
 
-# Miscelaneous
+# Miscellaneous
 
 ## Special weapon and armor
 
 Disabled all hybrid and psi items.
 
-I really cannot grasp this concept. Why having half strength ability while you can attach fully powered one for the same price? Besides, mere melting ability to the item breaks the unique SMACX unit workshop build-it-yourself paradigm! Why to introduce constructor tool and then provide pieces those cannot be disassembled to elementary properties. I almost never use them for their added ability. Merely like another regular piece of equipment. And now in my mod they don't exist anymore and nobody cries.
+I really cannot grasp this concept. Why having a half strength ability while you can attach a fully powered one for the same price? Besides, the mere melting ability to the item breaks the unique SMACX unit workshop build-it-yourself paradigm! Why to introduce a constructor tool and then provide pieces that cannot be disassembled to elementary properties. I almost never use them for their added ability. Merely like another regular piece of equipment. And now in my mod they don't exist anymore and nobody cries.
 
 Same story with psi weapon and armor. By the time you get them you have full spectrum of natives who are much cheaper than psi attack + psi defense unit. I personally never used them. Anybody does? Let me know if you think they are valuable assets.
 
@@ -530,13 +530,13 @@ Same story with psi weapon and armor. By the time you get them you have full spe
 
 Cloaking device and Deep pressure hull abilities are broken by game shared map implementation. Other people said enough about it. Disabled them.
 
-Repair Bay ability is useless in my mind as well. I cannot even imagine where would you massively transport wounded units.
+Repair Bay ability is useless in my mind as well. I cannot even imagine where one would massively transport wounded units.
 
-Soporific Gas Pods. People reported AI doesn't use them due to the bug. I think it would be fair not to give them to humans too until this is fixed.
+Soporific Gas Pods. People reported AI doesn't use them due to a bug. I think it would be fair not to give them to humans too until this is fixed.
 
 ## Aquatic faction +1 mineral advantage
 
-I was able to remove AQUATIC +1 sea mineral advantage. Now they are back to normal and expected growth. They will be slow on start but they have 50-100 years of undisturbed development. Once their old bases are developped enough to stamp sea pods they explosivly expand but then other factions start barraging waters and set their sea colonies. Seems to be a good balance. However, aquatic factions still develop quite differently. That requires a lot of play testing.
+I was able to remove AQUATIC +1 sea mineral advantage. Now they are back to normal and expected growth. They will be slow on start but they have 50-100 years of undisturbed development. Once their old bases are developed enough to stamp sea pods they explosivly expand but then other factions start barraging waters and set their sea colonies. Seems to be a good balance. However, aquatic factions still develop quite differently. That requires a lot of play testing.
 
 ## Disabled probe morale boosting technologies
 
@@ -544,31 +544,31 @@ Some vanilla technologies boost probe team morale for free. That makes all new p
 
 ## Removed planetpearls energy reserve bonus
 
-Planetpearl is a pretty weird bonus that player gets when killing land only natives (not sea, not air). This bonus goes from 10 to 70 based on killed unit lifecycle. Attacking unit with 3:2 strenght advantage has pretty good winning chances. That least to harvesting Planetpearl exploit when player induces natives appearance by trying to enter fungus tile on purpose. Gameplay wise I percieve it as gold coins falling off defeated monsters in Mario. Purely arcade element quite strategically disconnected from the rest of the game and very distracting. Native lifeforms should be percieved as a threat not as a treasure.
+Planetpearls give a pretty weird bonus that player gets when killing land only natives (not sea, not air). This bonus goes from 10 to 70 based on killed unit lifecycle. Attacking unit with 3:2 strength advantage has pretty good winning chances. That leads to the harvesting planetpearl exploit when player induces natives appearance by trying to enter fungus tiles on purpose. Gameplay-wise I percieve it as gold coins falling off defeated monsters in Mario. Such a purely arcade element seems quite strategically disconnected from the rest of the game and is very distracting. Native lifeforms should be percieved as a threat not as a treasure.
 
 ## Territory distance from sea and coastal bases
 
-SMACX introduces a brilliant concept of a territory. Now no one can stick their own bases in between other faction bases. This prevents a constant micromanagement of shooing **friendly and especially ally** colonies from your territory. It also lets player more high level control of keeping other faction units far enough from your bases. It is a definite playability improvement.
+SMACX introduces a brilliant concept of a territory. Now no one can stick their own bases in between other faction bases. This prevents a constant micromanagement of shooing **friendly and especially ally** colonies from your territory. It also gives players more high level control of keeping other faction units far enough from your bases. It is a definite playability improvement.
 
-Interestingly that when SMAXC treats land and sea bases equally (which is an epic feature by itself) the sea territory borders do not extend from sea bases as much as on land. Essentially they fail to secure territory even in between already placed sea bases which is a primary purpose of the territory. It also doesn't serve secondary purpose of the territory to keep other faction sea units at bay. Sea units move fast and 3 square extended borders is just a one turn cross distance. The situation with coastal bases is even worse. They extend their sea border 1 square away. It is just ridiculous. It doesn't prevent other players to place sea colony just 2 tiles away denying **ALL** water resources to coastal base. It is a major complaint of may players.
+Interestingly, even though SMACX treats land and sea bases equally (which is an epic feature by itself) the sea territory borders do not extend from sea bases as much as on land. Essentially they fail to secure territory even in between already placed sea bases, which is a primary purpose of the territory. It also doesn't serve the secondary purpose of the territory to keep other faction sea units at bay. Sea units move fast and 3 square extended borders equal just a one turn cross distance. The situation with coastal bases is even worse. They extend their sea border 1 square away. It is just ridiculous. It doesn't prevent other players to place sea colony just 2 tiles away denying **ALL** water resources to coastal base. It is a major complaint of many players.
 
 This mod equalizes border extension distances between land, sea, and coastal bases. Even though I believe this is a must have feature the configuration parameter is still in thinker.ini in case anyone wants to switch it off.
 
 ## Heavy Artillery and Air Superiority cost
 
-These abilities do not improve unit properties directly. Instead they essentially create completely distinct unit type with its own ins and outs. These unit type strengths are controlled by its own settings in alphax.txt. Damage Numerator & Denominator for Heavy Artillery and Combat bonus/penalty for Air Superiority. Their non-zero cost is confusing as if these abilities worth something by themselves. I think it is much clearer to keep them zero and allow player to convert unit type without additional penalty.
+These abilities do not improve unit properties directly. Instead they essentially create completely distinct unit type with its own ins and outs. These unit type strengths are controlled by its own settings in alphax.txt. Damage Numerator & Denominator for Heavy Artillery and Combat bonus/penalty for Air Superiority. Their non-zero cost is confusing as if these abilities are worth something by themselves. I think it is much clearer to keep them zero and allow player to convert the unit type without any additional penalty.
 
 ## Population boom fix
 
-Population boom is a powerful feature leading to OP strategy: expand - pop boom - repeat. The population boom is a nice feature. However, its cost is obviously negligible comparing to benefits.
+Population boom is a powerful feature leading to OP strategy: expand - pop boom - repeat. The population boom is a nice feature. However, its cost is obviously negligible comparing to its benefits.
 
-This mod changes the GROWTH upper cap and thus GROWTH rating requirements for population boom making it more difficult to achieve.
+This mod changes the GROWTH upper cap and thus GROWTH rating requirements for population boom, making it more difficult to achieve.
 
 ## Disallowing destroying defensive facilities with probes
 
 Human probes cannot sabotage defensive facilities either by targetting them or by random sabotage.
 
-Disciplined enhanced probe has 50% chance to sabotage targetted PD or TF. Disciplined regular probe has also 100% chance to sabotage random facility which may be a defencive one. Sabotaging PD reduces base defence by 30%. This is too much of a reduction for the cost of a few probe teams especially against AI who doesn't protect their bases with counter probes well.
+A disciplined enhanced probe has 50% chance to sabotage targetted PD or TF. A disciplined regular probe has also 100% chance to sabotage a random facility which may be a defensive one. Sabotaging PD reduces base defence by 30%. This is too much of a reduction for the cost of a few probe teams especially against the AI that doesn't protect their bases with counter probes well.
 
 Overall, many players percieve this as an exploit similar to destroying sensor before waging full scale base assault.
 
@@ -584,7 +584,7 @@ Shortened some labels in F4 screen to fit longer base names and avoid line wrapp
 
 ## F4 screen markers
 
-Added **<P>** suffix to bases in need of population growth limit facility.
+Added a suffix to bases in need of population growth limit facility.
 
 # AI Terraforming
 
@@ -597,10 +597,10 @@ New AI terraforming algorithm replacing Thinker's. These are few notable changes
 * Tends not to build forest/kelp and not to remove fungus next to existing forest/kelp due to its potential spreading.
 * Properly places aquifer 2 squares from existing rivers to maximize river coverage.
 * Properly places condenser to match existing rainfall pattern to maximize rainfall coverage.
-* Properly evaluates additional benefit of condenser/mirror to be used by nearby bases.
+* Properly evaluates additional benefits of condensers/mirrors to be used by nearby bases.
 * Prefers better improvement with equal completion time (construction + travel).
 * Prefers quicker improvement with equal benefit (shorter construction time + less travel).
 * Redistributes former orders to minimize construction + travel time. Takes former abilities (fungicide, super) and speed into account.
-* Checks existing improvements and don't build more of them if equal of better one is still unused around base.
+* Checks existing improvements and doesn't build more of them if an equal of better one is still unused around base.
 * Raises land to improve collector energy output.
 
