@@ -2301,11 +2301,82 @@ void patch_se_growth_rating_cap(int se_growth_rating_cap)
 }
 
 /*
-Wraps _strcat call in base nutrient display to reflect correct population boom growth turns.
+Wraps _strcat call in base nutrient display to display nutrient cost factor.
+*/
+void patch_display_base_nutrient_cost_factor()
+{
+	// change color
+
+	int base_nutrient_header_color_bytes_length = 0x5;
+	/*
+	0:  a1 a4 6c 8c 00          mov    eax,ds:0x8c6ca4
+	*/
+	byte base_nutrient_header_color_bytes_old[] = { 0xA1, 0xA4, 0x6C, 0x8C, 0x00 };
+	/*
+	0:  8b 15 c4 6c 8c 00       mov    edx,DWORD PTR ds:0x8c6cc4
+	*/
+	byte base_nutrient_header_color_bytes_new[] = { 0xA1, 0xC4, 0x6C, 0x8C, 0x00 };
+	write_bytes
+	(
+		0x0041137A,
+		base_nutrient_header_color_bytes_length,
+		base_nutrient_header_color_bytes_old,
+		base_nutrient_header_color_bytes_new
+	);
+
+	// overwrite text
+
+	write_call(0x004113B0, (int)displayBaseNutrientCostFactor);
+
+}
+
+/*
+Wraps _strcat call in base nutrient display to display correct indicator for pop boom and stagnation.
 */
 void patch_growth_turns_population_boom()
 {
-	write_call(0x004118BE, (int)correctGrowthTurnsForPopulationBoom);
+	// change font
+
+	int base_nutrient_turns_font_bytes_length = 0x6;
+	/*
+	0:  8d 85 48 ff ff ff       lea    eax,[ebp-0xb8]
+	*/
+	byte base_nutrient_turns_font_bytes_old[] = { 0x8D, 0x85, 0x48, 0xFF, 0xFF, 0xFF };
+	/*
+	0:  b8 b4 84 6e 00          mov    eax,0x6e84b4
+	...
+	*/
+	byte base_nutrient_turns_font_bytes_new[] = { 0xB8, 0xB4, 0x84, 0x6E, 0x00, 0x90 };
+	write_bytes
+	(
+		0x0041142A,
+		base_nutrient_turns_font_bytes_length,
+		base_nutrient_turns_font_bytes_old,
+		base_nutrient_turns_font_bytes_new
+	);
+
+	// change color
+
+	int base_nutrient_turns_color_bytes_length = 0x6;
+	/*
+	0:  8b 15 fc 6c 8c 00       mov    edx,DWORD PTR ds:0x8c6cfc
+	*/
+	byte base_nutrient_turns_color_bytes_old[] = { 0x8B, 0x15, 0xFC, 0x6C, 0x8C, 0x00 };
+	/*
+	0:  8b 15 c4 6c 8c 00       mov    edx,DWORD PTR ds:0x8c6cc4
+	*/
+	byte base_nutrient_turns_color_bytes_new[] = { 0x8B, 0x15, 0xC4, 0x6C, 0x8C, 0x00 };
+	write_bytes
+	(
+		0x0041144D,
+		base_nutrient_turns_color_bytes_length,
+		base_nutrient_turns_color_bytes_old,
+		base_nutrient_turns_color_bytes_new
+	);
+
+	// overwrite text
+
+	write_call(0x004118BE, (int)correctGrowthTurnsIndicator);
 
 }
 
@@ -3128,12 +3199,10 @@ void patch_compact_effect_icons()
 
 	// sprite display position shifts before and after
 
-	int originalWidth = 26;
 	int shiftBefore = -2;
 	int shiftAfter = -4;
 	int shiftInitial = -3;
 	int shiftCombined = shiftBefore + shiftAfter;
-	int modifiedWidth = originalWidth + shiftCombined;
 
 	// modify effect sprite width for the purpose total diplayed width
 
@@ -3345,6 +3414,105 @@ void patch_aliens_fight_half_strength_unit_turn(int turn)
                aliens_fight_half_strength_unit_turn_bytes_old,
                aliens_fight_half_strength_unit_turn_bytes_new
        );
+
+}
+
+/*
+habitation facilities do not stop growth
+*/
+void patch_habitation_facility_disable_explicit_population_limit()
+{
+	tx_basic->pop_limit_wo_hab_complex = 1000;
+	tx_basic->pop_limit_wo_hab_dome = 1000;
+	int habitation_complex_does_not_stop_growth_bytes_length = 0x5;
+	/*
+	0:  a1 6c 97 94 00          mov    eax,ds:0x94976c
+	*/
+	byte habitation_complex_does_not_stop_growth_bytes_old[] = { 0xA1, 0x6C, 0x97, 0x94, 0x00 };
+	/*
+	0:  b8 00 10 00 00          mov    eax,0x1000
+	*/
+	byte habitation_complex_does_not_stop_growth_bytes_new[] = { 0xB8, 0x00, 0x10, 0x00, 0x00 };
+	write_bytes
+	(
+		0x004EF577,
+		habitation_complex_does_not_stop_growth_bytes_length,
+		habitation_complex_does_not_stop_growth_bytes_old,
+		habitation_complex_does_not_stop_growth_bytes_new
+	);
+
+	int habitation_dome_does_not_stop_growth_bytes_length = 0x6;
+	/*
+	0:  8b 0d 70 97 94 00       mov    ecx,DWORD PTR ds:0x949770
+	*/
+	byte habitation_dome_does_not_stop_growth_bytes_old[] = { 0x8B, 0x0D, 0x70, 0x97, 0x94, 0x00 };
+	/*
+	0:  b9 00 10 00 00          mov    ecx,0x1000
+	...
+	*/
+	byte habitation_dome_does_not_stop_growth_bytes_new[] = { 0xB9, 0x00, 0x10, 0x00, 0x00, 0x90 };
+	write_bytes
+	(
+		0x004EF5AC,
+		habitation_dome_does_not_stop_growth_bytes_length,
+		habitation_dome_does_not_stop_growth_bytes_old,
+		habitation_dome_does_not_stop_growth_bytes_new
+	);
+
+}
+
+/*
+modified base GROWTH
+*/
+void patch_modified_base_growth()
+{
+	// patch current_base_GROWTH
+
+	write_call(0x004E9BB1, (int)modifiedBaseGrowth);
+
+	// patch nutrient cost_factor
+
+	int nutrient_cost_factor_bytes_length = 0x1c;
+	/*
+	0:  8b cf                   mov    ecx,edi
+	2:  c1 e1 06                shl    ecx,0x6
+	5:  03 cf                   add    ecx,edi
+	7:  8d 14 4f                lea    edx,[edi+ecx*2]
+	a:  8d 04 d7                lea    eax,[edi+edx*8]
+	d:  8d 0c 47                lea    ecx,[edi+eax*2]
+	10: 8b 7d 10                mov    edi,DWORD PTR [ebp+0x10]
+	13: 85 ff                   test   edi,edi
+	15: 8b 1c 8d 44 cc 96 00    mov    ebx,DWORD PTR [ecx*4+0x96cc44]
+	*/
+	byte nutrient_cost_factor_bytes_old[] = { 0x8B, 0xCF, 0xC1, 0xE1, 0x06, 0x03, 0xCF, 0x8D, 0x14, 0x4F, 0x8D, 0x04, 0xD7, 0x8D, 0x0C, 0x47, 0x8B, 0x7D, 0x10, 0x85, 0xFF, 0x8B, 0x1C, 0x8D, 0x44, 0xCC, 0x96, 0x00 };
+	/*
+	0:  8b 4d 10                mov    ecx,DWORD PTR [ebp+0x10]
+	3:  51                      push   ecx
+	4:  57                      push   edi
+	5:  e8 fd ff ff ff          call   7 <_main+0x7>
+	a:  83 c4 08                add    esp,0x8
+	d:  89 c3                   mov    ebx,eax
+	f:  90                      nop
+	10: 90                      nop
+	11: 90                      nop
+	12: 90                      nop
+	13: 90                      nop
+	14: 90                      nop
+	15: 90                      nop
+	16: 90                      nop
+	17: 8b 7d 10                mov    edi,DWORD PTR [ebp+0x10]
+	1a: 85 ff                   test   edi,edi
+	*/
+	byte nutrient_cost_factor_bytes_new[] = { 0x8B, 0x4D, 0x10, 0x51, 0x57, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x08, 0x89, 0xC3, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x8B, 0x7D, 0x10, 0x85, 0xFF };
+	write_bytes
+	(
+		0x004E450D,
+		nutrient_cost_factor_bytes_length,
+		nutrient_cost_factor_bytes_old,
+		nutrient_cost_factor_bytes_new
+	);
+
+	write_call(0x004E450D + 0x5, (int)modifiedNutrientCostFactorSEGrowth);
 
 }
 
@@ -3799,7 +3967,7 @@ bool patch_setup(Config* cf) {
 		patch_se_growth_rating_cap(cf->se_growth_rating_cap);
 	}
 
-	// patch growth turns display population boom
+	patch_display_base_nutrient_cost_factor();
 
 	patch_growth_turns_population_boom();
 
@@ -3934,6 +4102,15 @@ bool patch_setup(Config* cf) {
 		patch_aliens_fight_half_strength_unit_turn(cf->aliens_fight_half_strength_unit_turn);
 	}
 
+	if (cf->habitation_facility_disable_explicit_population_limit)
+	{
+		patch_habitation_facility_disable_explicit_population_limit();
+	}
+
+	if (cf->habitation_facility_present_growth_bonus_max != 0.0 || cf->habitation_facility_absent_growth_penalty != 0.0)
+	{
+		patch_modified_base_growth();
+	}
 
     // continue with original Thinker checks
 

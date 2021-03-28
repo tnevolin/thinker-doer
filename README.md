@@ -14,7 +14,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
 * bvanevery: Play testing and help in design. Especially nice ideas and analysis in area of reactors and combat.
 * dino: Play testing and alternative combat round resolution mechanics idea.
-* Nevill and Tayta Malikai: Multiplyer play testing and multiplier text configuration.
+* Nevill and Tayta Malikai: Multiplayer play testing and multiplayer text configuration.
 * Tayta Malikai: text designer, crash reports, debugging, and test cases investigations!
 * Mercantile Interest: Alternative nutrient model idea.
 * EmpathCrawler: Play testing. Discovered Brood Pit morale bug.
@@ -28,7 +28,7 @@ This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I stron
 ## Main highlights
 
 * AI is **shockingly** smart, thanks to Induktio's work. Last game I was about to heal my damaged mindworm at a monolith so that I can later attack a nearby enemy base. AI sent a unity copter 6 tiles away just to take my damaged mindworm out before it reached the monolith!
-* Major revamping of unit/cost/combat system. Primary purpose is to significantly improve defense effectiveness. Attacker investments are much larger than defender ones. Building a prepared defense and deflecting enemy attacks on a frontline with minimal losses is a completely viable and economically profitable strategy.
+* Major revamping of unit/cost/combat system. Primary purpose is to significantly improve defense effectiveness. Attacker investments are much larger than defender ones. Building a prepared defense and deflecting enemy attacks on a front line with minimal losses is a completely viable and economically profitable strategy.
 * Major revamping in combat probability also results in more battle outcome randomness than in vanilla. It is still not that random as in Civ 1 but somewhere in between. That makes native life a real **threat**. Beware! There is no point in hunting natives for planetpearls anymore. Player should minimize native life spawning and seriously prepare to deflect worm attacks or suffer consequences. Native life acts like an opponent as it should.
 * Many formulas and rules are simplified to achieve better clarity. Things are more intuitive and understandable now.
 * A lot of micro exploits are eliminated. Game is more streamlined toward general competition without logically irrelevant grinding.
@@ -37,13 +37,13 @@ This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I stron
 
 There are tons of interesting features in the game. Many of them are revolutionary for 4X games world. I don't think there is another so feature reach game. I **DO** want to try them all!
 
-With great power comes great responsibility, though. The more features you have the more difficult to make them work together. A slightest change in parameters or implementation may renders any of them completely broken, unusable, strategically unviable, or shadowed by other features. It is time consuming art and craft of game testing and perfecting. There is no doubt SMACX is the greatest games of all time. It is also clear it was hastily pushed to the market to earn quick money in its unfinished form. It definitely contains quite playable core - thanks to previous Civ 1/2 play testing. However, most of new features do not compose an integral game experience. Instead they look like unframed gems scattered here and there. Their description sounds exciting but current implementation renders them unusable which is to a great sadness to all true strategical game lovers.
+With great power comes great responsibility, though. The more features you have the more difficult to make them work together. A slightest change in parameters or implementation may renders any of them completely broken, unusable, strategically inviable, or shadowed by other features. It is time consuming art and craft of game testing and perfecting. There is no doubt SMACX is the greatest games of all time. It is also clear it was hastily pushed to the market to earn quick money in its unfinished form. It definitely contains quite playable core - thanks to previous Civ 1/2 play testing. However, most of new features do not compose an integral game experience. Instead they look like unframed gems scattered here and there. Their description sounds exciting but current implementation renders them unusable which is to a great sadness to all true strategical game lovers.
 
 I have started this mod initially to myself to give such underused features and strategies a chance to shine and to increase overall game challenge and replayability. In such option reach games like SMAX variations are endless. Due to such variations some strategical choice may sometimes shine depending on current conditions. Changing strategy in response to changing game situation is the nature of the play and that's why we have many to chose from. However, there should not be options those are never (or quite rarely) viable. Such unused option would just clutter game interface and player memory. Well thought game should not have any unusable elements. In this mod I try to make all options/features/strategies viable in one way or another.
 
 ### This mod motto
 
-Any option/feature/strategy should be undoubtfully advantegeous in some play style of game situation. Proportion of games where it provides such advantage should be noticeable too.
+Any option/feature/strategy should be undoubtedly advantageous in some play style of game situation. Proportion of games where it provides such advantage should be noticeable too.
 
 # Design concepts
 
@@ -566,11 +566,21 @@ This mod changes the GROWTH upper cap and thus GROWTH rating requirements for po
 
 ## Disallowing destroying defensive facilities with probes
 
-Human probes cannot sabotage defensive facilities either by targetting them or by random sabotage.
+Human probes cannot sabotage defensive facilities either by targeting them or by random sabotage.
 
-A disciplined enhanced probe has 50% chance to sabotage targetted PD or TF. A disciplined regular probe has also 100% chance to sabotage a random facility which may be a defensive one. Sabotaging PD reduces base defence by 30%. This is too much of a reduction for the cost of a few probe teams especially against the AI that doesn't protect their bases with counter probes well.
+A disciplined enhanced probe has 50% chance to sabotage targeted PD or TF. A disciplined regular probe has also 100% chance to sabotage a random facility which may be a defensive one. Sabotaging PD reduces base defense by 30%. This is too much of a reduction for the cost of a few probe teams especially against the AI that doesn't protect their bases with counter probes well.
 
-Overall, many players percieve this as an exploit similar to destroying sensor before waging full scale base assault.
+Overall, many players perceive this as an exploit similar to destroying sensor before waging full scale base assault.
+
+## Habitation facilities redesign
+
+There were few exploits related to habitation facilities preventing base growth beyond the limit. It is this single increasing population turn that matters. Yet they require maintenance. Therefore people considered to selling them while not needed. This mod widens their influence to affect bases with population below and above the limit as well.
+
+Explicit population growth limit is removed. Bases can grow beyond the limit when not in stagnation.
+
+Base without habitation facility receives -3 GROWTH penalty when at limit. Penalty gets higher with higher population and lower with lower population. Therefore, with zero faction GROWTH rating and without CC at the base population growth naturally halts at limit which simulates vanilla behavior. However, this functionality affects base sizes below the limit too. For example, base with size two below the limit receives -1 GROWTH and base with size one below the limit receives -2 GROWTH. The situation is also affected by other GROWTH sources besides the habitation facilities (including CC). Higher rating raises population limit while lower rating correspondingly lowers it.
+
+Base with habitation facility receives GROWTH bonus for each citizen below the limit but no more than +3. That allows to speed up base growth when such facilities are built earlier. They require maintenance, though.
 
 # UI changes / cosmetics
 

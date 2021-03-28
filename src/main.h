@@ -154,6 +154,7 @@ struct Config {
     double project_contribution_proportion = 0.0;
     bool cloning_vats_disable_impunities = false;
     int cloning_vats_se_growth = 0;
+    int se_growth_rating_min = -2;
     int se_growth_rating_cap = 5;
     bool recycling_tanks_mineral_multiplier = false;
     int free_minerals = 16;
@@ -187,6 +188,9 @@ struct Config {
     int se_research_bonus_percentage = 10;
     bool remove_fungal_tower_defense_bonus = false;
     int aliens_fight_half_strength_unit_turn = 15;
+    bool habitation_facility_disable_explicit_population_limit = false;
+    int habitation_facility_absent_growth_penalty = 0;
+    int habitation_facility_present_growth_bonus_max = 0;
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
     double ai_production_vanilla_priority_project;

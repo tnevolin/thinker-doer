@@ -676,8 +676,8 @@ Nanoreplicator,               30,10, TempMec, Disable,  Minerals Bonus
 Quantum Converter,            24, 8, QuanMac, Disable,  Minerals Bonus
 Genejack Factory,             12, 4, Gene,    Disable,  Minerals; More Drones
 Punishment Sphere,            10, 2, MilAlg,  Disable,  No Drones/-50% Tech
-Hab Complex,                   8, 0, FldMod,  Disable,  Increase Population Limit
-Habitation Dome,              16, 0, Alloys,  Disable,  Increase Population Limit
+Hab Complex,                   8, 3, FldMod,  Disable,  Increase Population Limit
+Habitation Dome,              16, 6, Alloys,  Disable,  Increase Population Limit
 Pressure Dome,                 8, 0, DocFlex, Disable,  Submersion/Resources
 Command Center,                8, 2, Mobile,  Disable,  +2 Morale:Land
 Naval Yard,                    8, 2, DocInit, Disable,  +2 Morale:Sea, Sea Def +100%

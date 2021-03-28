@@ -29,6 +29,8 @@ struct BASE_HURRY_ALLOWANCE_PROPORTION
 
 const int DEFENSIVE_FACILITIES_COUNT = 4;
 const int DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX, FAC_TACHYON_FIELD};
+const int HABITATION_FACILITIES_COUNT = 2;
+const int HABITATION_FACILITIES[] = {FAC_HAB_COMPLEX, FAC_HABITATION_DOME, };
 
 HOOK_API int read_basic_rules();
 HOOK_API void battle_compute(int attacker_vehicle_id, int defender_vehicle_id, int attacker_strength_pointer, int defender_strength_pointer, int flags);
@@ -133,7 +135,8 @@ int getnextAvailableGrowthFacility(BASE *base);
 HOOK_API int baseInit(int factionId, int x, int y);
 HOOK_API char *getAbilityCostText(int number, char *destination, int radix);
 HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly);
-HOOK_API void correctGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer);
+HOOK_API void displayBaseNutrientCostFactor(int destinationStringPointer, int sourceStringPointer);
+HOOK_API void correctGrowthTurnsIndicator(int destinationStringPointer, int sourceStringPointer);
 HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queueSlotId);
 HOOK_API int modifiedInefficiency(int energyIntake);
 HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3);
@@ -173,6 +176,9 @@ bool isInRangeOfFriendlySensor(int x, int y, int range, int factionId);
 HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2);
 HOOK_API int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteIndex, int effectValue);
 HOOK_API void modifiedTechResearch(int factionId, int labs);
+HOOK_API void modifiedBaseGrowth(int a1, int a2, int a3);
+HOOK_API int modifiedNutrientCostFactorSEGrowth(int factionId, int baseId);
+int getHabitationFacilitiesBaseGrowthModifier(int baseId);
 
 #endif // __WTP_H__
 
