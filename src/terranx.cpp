@@ -210,6 +210,9 @@ fp_3int *tx_break_treaty = (fp_3int *)0x0055F770;
 // act of aggression
 fp_2void *tx_act_of_aggression = (fp_2void *)0x0050C2E0;
 
-// act of aggression
+// tech research
 fp_2void *tx_tech_research = (fp_2void *)0x005BE940;
+
+// bitmask
+fp_3void *tx_bitmask = (fp_3void *)0x0050BA00;
 

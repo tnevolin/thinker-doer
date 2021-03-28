@@ -1984,22 +1984,32 @@ int getFactionFacilityPopulationLimit(int factionId, int facilityId)
 {
 	MetaFaction *metaFaction = &(tx_metafactions[factionId]);
 
-	int basePopulationLimit;
+	int populationLimit;
+
+	// basic population limit for facility
 
 	switch (facilityId)
 	{
 	case FAC_HAB_COMPLEX:
-		basePopulationLimit = tx_basic->pop_limit_wo_hab_complex;
+		populationLimit = tx_basic->pop_limit_wo_hab_complex;
 		break;
 	case FAC_HABITATION_DOME:
-		basePopulationLimit = tx_basic->pop_limit_wo_hab_dome;
+		populationLimit = tx_basic->pop_limit_wo_hab_dome;
 		break;
 	default:
 		return 0;
 	}
 
-    int pop_rule = metaFaction->rule_population;
-    int populationLimit = basePopulationLimit - pop_rule;
+	// faction penalty
+
+    populationLimit -= metaFaction->rule_population;
+
+    // Ascetic Virtue
+
+    if (has_project(factionId, FAC_ASCETIC_VIRTUES))
+	{
+		populationLimit += 2;
+	}
 
     return populationLimit;
 

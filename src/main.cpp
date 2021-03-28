@@ -253,6 +253,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->cloning_vats_se_growth = max(0, min(2, atoi(value)));
     }
+    else if (MATCH("wtp", "se_growth_rating_min"))
+    {
+        cf->se_growth_rating_min = min(0, atoi(value));
+    }
     else if (MATCH("wtp", "se_growth_rating_cap"))
     {
         cf->se_growth_rating_cap = max(0, min(9, atoi(value)));
@@ -384,6 +388,18 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "aliens_fight_half_strength_unit_turn"))
     {
         cf->aliens_fight_half_strength_unit_turn = max(1, atoi(value));
+    }
+    else if (MATCH("wtp", "habitation_facility_disable_explicit_population_limit"))
+    {
+        cf->habitation_facility_disable_explicit_population_limit = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "habitation_facility_absent_growth_penalty"))
+    {
+        cf->habitation_facility_absent_growth_penalty = max(0, atoi(value));
+    }
+    else if (MATCH("wtp", "habitation_facility_present_growth_bonus_max"))
+    {
+        cf->habitation_facility_present_growth_bonus_max = max(0, atoi(value));
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

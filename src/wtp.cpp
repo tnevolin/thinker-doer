@@ -1932,46 +1932,53 @@ HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, i
 
 }
 
-HOOK_API void correctGrowthTurnsForPopulationBoom(int destinationStringPointer, int sourceStringPointer)
+/*
+Displays base nutrient cost factor in nutrient header.
+*/
+HOOK_API void displayBaseNutrientCostFactor(int destinationStringPointer, int sourceStringPointer)
 {
     // call original function
 
     tx_strcat(destinationStringPointer, sourceStringPointer);
 
-	// get current base
+	// get current variables
 
-	int id = *current_base_id;
+	int baseid = *current_base_id;
 	BASE *base = *current_base_ptr;
-
-	// get current base faction
-
 	Faction *faction = &(tx_factions[base->faction_id]);
 
-    // calculate base GROWTH rating
+	// get current base nutrient cost factor
 
-    int growthRating = faction->SE_growth_pending;
+	int nutrientCostFactor = tx_cost_factor(base->faction_id, 0, baseid);
 
-    if (has_facility(id, FAC_CHILDREN_CRECHE))
+    // modify output
+
+    char *destinationString = (char *)destinationStringPointer;
+	sprintf(destinationString + strlen("NUT"), " (%+1d) %+1d => %02d", faction->SE_growth_pending, *current_base_growth_rate, nutrientCostFactor);
+
+}
+
+/*
+Replaces growth turn indicator with correct information for pop boom and stagnation.
+*/
+HOOK_API void correctGrowthTurnsIndicator(int destinationStringPointer, int sourceStringPointer)
+{
+    // call original function
+
+    tx_strcat(destinationStringPointer, sourceStringPointer);
+
+    if (*current_base_growth_rate > conf.se_growth_rating_cap)
 	{
-		growthRating += 2;
+		// update indicator for population boom
+
+		strcpy((char *)destinationStringPointer, "-- POP BOOM --");
+
 	}
-
-	if (base->status_flags & BASE_GOLDEN_AGE_ACTIVE)
+    else if (*current_base_growth_rate < conf.se_growth_rating_min)
 	{
-		growthRating += 2;
-	}
+		// update indicator for stagnation
 
-    // modify output for population boom
-
-    if (growthRating > conf.se_growth_rating_cap)
-	{
-		// set growth turns text offset
-
-		char *growthTurnsText = (char *)destinationStringPointer + 8;
-
-		// rewrtie growth turns text
-
-		strcpy(growthTurnsText, "POP BOOM !");
+		strcpy((char *)destinationStringPointer, "-- STAGNATION --");
 
 	}
 
@@ -3281,6 +3288,98 @@ HOOK_API void modifiedTechResearch(int factionId, int labs)
 	// pass labs to original function
 
 	tx_tech_research(factionId, labs);
+
+}
+
+/*
+This is a bitmask call within base_nutrient that has nothing to do with base GROWTH.
+I just highjack it to modify base GROWTH.
+*/
+HOOK_API void modifiedBaseGrowth(int a1, int a2, int a3)
+{
+	// execute original code
+
+	tx_bitmask(a1, a2, a3);
+
+	// get current base
+
+	int baseId = *current_base_id;
+
+	// modify base GROWTH by habitation facilities
+
+	*current_base_growth_rate += getHabitationFacilitiesBaseGrowthModifier(baseId);
+
+}
+
+/*
+Replaces SE_growth_pending reads in cost_factor to introduce habitation facilities effect.
+*/
+HOOK_API int modifiedNutrientCostFactorSEGrowth(int factionId, int baseId)
+{
+	// get faction
+
+	Faction *faction = &(tx_factions[factionId]);
+
+	// get faction GROWTH
+
+	int baseGrowth = faction->SE_growth_pending;
+
+	// update GROWTH if base id is set
+
+	if (baseId >= 0)
+	{
+		// modify base GROWTH by habitation facilities
+
+		baseGrowth += getHabitationFacilitiesBaseGrowthModifier(baseId);
+
+	}
+
+	return baseGrowth;
+
+}
+
+/*
+Computes habitation facilties base GROWTH modifier.
+
+for each present facility
+	bonus at limit = 0
+	less population => more bonus
+	restricted by range [0, habitation_facility_present_growth_bonus_max]
+
+for each missing facility
+	penalty at limit = habitation_facility_absent_growth_penalty
+	more population => more penalty
+	restricted by range [-infinity, 0]
+*/
+int getHabitationFacilitiesBaseGrowthModifier(int baseId)
+{
+	// get base
+
+	BASE *base = &(tx_bases[baseId]);
+
+	// calculate habitation facilities base GROWTH modifier
+
+	int baseGrowthModifier = 0;
+
+	for (int i = 0; i < HABITATION_FACILITIES_COUNT; i++)
+	{
+		int habitationFacility = HABITATION_FACILITIES[i];
+
+		bool habitationFacilityPresent = has_facility(baseId, habitationFacility);
+		int populationLimit = getFactionFacilityPopulationLimit(base->faction_id, habitationFacility);
+
+		if (habitationFacilityPresent)
+		{
+			baseGrowthModifier += min(conf.habitation_facility_present_growth_bonus_max, max(0, (populationLimit - base->pop_size)));
+		}
+		else
+		{
+			baseGrowthModifier += min(0, (populationLimit - base->pop_size) - conf.habitation_facility_absent_growth_penalty);
+		}
+
+	}
+
+	return baseGrowthModifier;
 
 }
 

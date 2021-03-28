@@ -1,3 +1,15 @@
+# Version 199
+
+* Habitation facilities functionality seriously changed.
+	* Explicit population growth limit is removed. Bases can grow beyond the limit when not in stagnation.
+	* Base without habitation facility receives -3 GROWTH penalty when at limit. Penalty gets higher with higher population.
+	* Base with habitation facility receives GROWTH bonus for each citizen below the limit but no more than +3.
+	* Habitation facilities maintenance is increased by 50% comparing to vanilla.
+* Added visual aid to base nutrient display.
+	* Header displays: (faction GROWTH) base GROWTH => nutrient box width. Much easier to understand numbers at work. No need to count bricks with mouse anymore.
+	* Footer displays clear indication of pop boom (when GROWTH rating is above max) and stagnation (when it is below min).
+	* Lighter text color and bolder font makes it more readable now. It was real pain to my eyes before.
+
 # Version 198
 
 * Removed +50% fungal tower defense bonus effect display in combat effects list.

@@ -369,11 +369,27 @@ control=60021> but reduces $LINK<Labs=22> output by half.
 
 #; Hab Complex
 #HELPFAC24
+Base without this facility cannot grow beyond size 7.
 Increases maximum population of a base by seven.
+^
+^=WtP=
+^Base without the facility still can grow beyond the limit.
+Instead base receives GROWTH penalty when its population approaches the limit.
+^thinker.ini: {habitation_facility_absent_growth_penalty}
+^Existing facility grants base GROWTH bonus for population below the limit.
+^thinker.ini: {habitation_facility_present_growth_bonus_max}
 
 #; Habitation Dome
 #HELPFAC25
+Base without this facility cannot grow beyond size 14.
 Increases population limit to 127. Can only be constructed in a base which already has a $LINK<Hab Complex=100024>.
+^
+^=WtP=
+^Base without the facility still can grow beyond the limit.
+Instead base receives GROWTH penalty when its population approaches the limit.
+^thinker.ini: {habitation_facility_absent_growth_penalty}
+^Existing facility grants base GROWTH bonus for population below the limit.
+^thinker.ini: {habitation_facility_present_growth_bonus_max}
 
 #; Pressure Dome
 #HELPFAC26
