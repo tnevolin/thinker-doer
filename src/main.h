@@ -191,6 +191,7 @@ struct Config {
     bool habitation_facility_disable_explicit_population_limit = false;
     int habitation_facility_absent_growth_penalty = 0;
     int habitation_facility_present_growth_bonus_max = 0;
+    bool unit_upgrade_ignores_movement = false;
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
     double ai_production_vanilla_priority_project;
