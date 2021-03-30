@@ -3516,6 +3516,117 @@ void patch_modified_base_growth()
 
 }
 
+/*
+unit upgrade does not require whole turn
+*/
+void patch_unit_upgrade_ignores_movement()
+{
+	// disable no movement requirement
+
+	int unit_upgrade_disable_no_movement_requirement_1_bytes_length = 0x2;
+
+	/*
+	0:  84 c9                   test   cl,cl
+	*/
+	byte unit_upgrade_disable_no_movement_requirement_1_bytes_old[] = { 0x84, 0xC9 };
+
+	/*
+	0:  30 c9                   xor    cl,cl
+	*/
+	byte unit_upgrade_disable_no_movement_requirement_1_bytes_new[] = { 0x30, 0xC9 };
+
+	write_bytes
+	(
+		0x004D078A,
+		unit_upgrade_disable_no_movement_requirement_1_bytes_length,
+		unit_upgrade_disable_no_movement_requirement_1_bytes_old,
+		unit_upgrade_disable_no_movement_requirement_1_bytes_new
+	);
+
+	int unit_upgrade_disable_no_movement_requirement_2_bytes_length = 0x2;
+
+	/*
+	0:  84 c9                   test   cl,cl
+	*/
+	byte unit_upgrade_disable_no_movement_requirement_2_bytes_old[] = { 0x84, 0xC9 };
+
+	/*
+	0:  30 c9                   xor    cl,cl
+	*/
+	byte unit_upgrade_disable_no_movement_requirement_2_bytes_new[] = { 0x30, 0xC9 };
+
+	write_bytes
+	(
+		0x004D0928,
+		unit_upgrade_disable_no_movement_requirement_2_bytes_length,
+		unit_upgrade_disable_no_movement_requirement_2_bytes_old,
+		unit_upgrade_disable_no_movement_requirement_2_bytes_new
+	);
+
+	// do not skip vehicle after upgrade
+
+	int unit_upgrade_disable_skip_1_bytes_length = 0x5;
+
+	/*
+	0:  e8 d8 0a 0f 00          call   0xf0add
+	*/
+	byte unit_upgrade_disable_skip_1_bytes_old[] = { 0xE8, 0xD8, 0x0A, 0x0F, 0x00 };
+
+	/*
+	...
+	*/
+	byte unit_upgrade_disable_skip_1_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+	write_bytes
+	(
+		0x004D1243,
+		unit_upgrade_disable_skip_1_bytes_length,
+		unit_upgrade_disable_skip_1_bytes_old,
+		unit_upgrade_disable_skip_1_bytes_new
+	);
+
+	int unit_upgrade_disable_skip_2_bytes_length = 0x5;
+
+	/*
+	0:  e8 6e 04 0f 00          call   0xf0473
+	*/
+	byte unit_upgrade_disable_skip_2_bytes_old[] = { 0xE8, 0x6E, 0x04, 0x0F, 0x00 };
+
+	/*
+	...
+	*/
+	byte unit_upgrade_disable_skip_2_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+	write_bytes
+	(
+		0x004D18AD,
+		unit_upgrade_disable_skip_2_bytes_length,
+		unit_upgrade_disable_skip_2_bytes_old,
+		unit_upgrade_disable_skip_2_bytes_new
+	);
+
+	int unit_upgrade_disable_skip_3_bytes_length = 0x5;
+
+	/*
+	0:  e8 a2 02 0f 00          call   0xf02a7
+	*/
+	byte unit_upgrade_disable_skip_3_bytes_old[] = { 0xE8, 0xA2, 0x02, 0x0F, 0x00 };
+
+	/*
+	...
+	*/
+	byte unit_upgrade_disable_skip_3_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+	write_bytes
+	(
+		0x004D1A79,
+		unit_upgrade_disable_skip_3_bytes_length,
+		unit_upgrade_disable_skip_3_bytes_old,
+		unit_upgrade_disable_skip_3_bytes_new
+	);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -4110,6 +4221,11 @@ bool patch_setup(Config* cf) {
 	if (cf->habitation_facility_present_growth_bonus_max != 0.0 || cf->habitation_facility_absent_growth_penalty != 0.0)
 	{
 		patch_modified_base_growth();
+	}
+
+	if (cf->unit_upgrade_ignores_movement)
+	{
+		patch_unit_upgrade_ignores_movement();
 	}
 
     // continue with original Thinker checks

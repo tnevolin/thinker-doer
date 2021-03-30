@@ -401,6 +401,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->habitation_facility_present_growth_bonus_max = max(0, atoi(value));
     }
+    else if (MATCH("wtp", "unit_upgrade_ignores_movement"))
+    {
+        cf->unit_upgrade_ignores_movement = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

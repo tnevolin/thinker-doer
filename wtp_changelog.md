@@ -1,3 +1,8 @@
+# Version 200
+
+* Alternative upgrade cost is disabled by default.
+* Individual unit upgrade does not require full movement points and does not consume them upon upgrade.
+
 # Version 199
 
 * Habitation facilities functionality seriously changed.
