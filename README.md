@@ -275,13 +275,11 @@ This formula changes the actual unit cost. The literal text in base screen item 
 
 Vanilla uses *Extra percentage cost of prototype LAND unit* percentage for designing brand new unit in design workshop regardless of selected chassis. Therefore *extra percentage costs* for all triads should be kept equal. For the same reason alternative formula above uses LAND percentage only.
 
-# Unit hurry cost and unit upgrade cost
+# Unit hurry cost
 
-Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units? The upgrade cost is, on the contrary, quite low allowing "Building SP with upgraded crawler" exploit. I decided to simplify and flatten both of them for simplicity and to prevent abovementioned exploit.
+Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units?
 
-In this mod unit hurry cost is four times its mineral cost. The base upgrade cost now is an exact difference of new and old units hurry cost! Could anyone imagine game design could be that simple and transparent? :rofl:
-
-Since higher reactors now do nothing but decrease unit cost player also gets **REFUND** when upgrading to cheaper version of unit with higher reactor. How more fairer could it get? :smile:
+In this mod unit hurry cost is four times its mineral cost.
 
 ## Hurry cost penalty thresholds
 

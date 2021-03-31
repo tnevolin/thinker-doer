@@ -1,3 +1,9 @@
+# Version 201
+
+* Fanatic bonus = 25.
+* Believers do not have PLANET penalty.
+* Aliens do not have combat bonuses.
+
 # Version 200
 
 * Alternative upgrade cost is disabled by default.
