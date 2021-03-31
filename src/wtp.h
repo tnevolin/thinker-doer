@@ -180,6 +180,7 @@ HOOK_API void modifiedBaseGrowth(int a1, int a2, int a3);
 HOOK_API int modifiedNutrientCostFactorSEGrowth(int factionId, int baseId);
 int getHabitationFacilitiesBaseGrowthModifier(int baseId);
 HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute);
+HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y);
 
 #endif // __WTP_H__
 

@@ -3444,3 +3444,23 @@ HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute)
 
 }
 
+/*
+Disable artillery in transport fire by right click.
+*/
+HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	bool ocean = is_ocean(vehicleTile);
+
+	// disable bombardment if vehicle is land unit at sea and not in a base
+
+	if (ocean && veh_triad(vehicleId) == 0 && !map_base(vehicleTile))
+		return;
+
+	// execute action
+
+	tx_action_move(vehicleId, x, y);
+
+}
+

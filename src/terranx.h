@@ -149,4 +149,5 @@ extern fp_3int *tx_break_treaty;
 extern fp_2void *tx_act_of_aggression;
 extern fp_2void *tx_tech_research;
 extern fp_3void *tx_bitmask;
+extern fp_3void *tx_action_move;
 

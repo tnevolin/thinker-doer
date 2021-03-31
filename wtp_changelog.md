@@ -1,3 +1,7 @@
+# Version 203
+
+* BUG: Right click long range fire option allowed land artillery to fire from transport. Fixed.
+
 # Version 202
 
 * Group terraforming option: group_terraforming.
