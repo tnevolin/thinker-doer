@@ -3637,6 +3637,15 @@ void patch_group_terraforming()
 
 }
 
+/*
+Disable artillery in transport fire by right click.
+*/
+void patch_right_click_land_artillery_from_sea()
+{
+    write_call(0x0046D42F, (int)modifiedActionMoveForArtillery);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -4242,6 +4251,8 @@ bool patch_setup(Config* cf) {
 	{
 		patch_group_terraforming();
 	}
+
+	patch_right_click_land_artillery_from_sea();
 
     // continue with original Thinker checks
 

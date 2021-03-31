@@ -216,3 +216,6 @@ fp_2void *tx_tech_research = (fp_2void *)0x005BE940;
 // bitmask
 fp_3void *tx_bitmask = (fp_3void *)0x0050BA00;
 
+// action move
+fp_3void *tx_action_move = (fp_3void *)0x004CD090;
+
