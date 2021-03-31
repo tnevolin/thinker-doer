@@ -3383,3 +3383,64 @@ int getHabitationFacilitiesBaseGrowthModifier(int baseId)
 
 }
 
+/*
+; When one former starts terraforming action all idle formers in same tile do too.
+; May have unwanted consequenses of intercepting idle formers.
+*/
+HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute)
+{
+	// execute action
+
+	int returnValue = tx_action_terraform(vehicleId, action, execute);
+
+	// execute action for other idle formers in tile
+
+	if (execute == 1)
+	{
+		VEH *vehicle = &(tx_vehicles[vehicleId]);
+		int vehicleFactionId = vehicle->faction_id;
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+
+		for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
+		{
+			VEH *otherVehicle = &(tx_vehicles[otherVehicleId]);
+			int otherVehicleFactionId = otherVehicle->faction_id;
+			MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
+
+			// only ours
+
+			if (otherVehicleFactionId != vehicleFactionId)
+				continue;
+
+			// only formers
+
+			if (!isVehicleFormer(otherVehicleId))
+				continue;
+
+			// only same locaton
+
+			if (otherVehicleTile != vehicleTile)
+				continue;
+
+			// only idle
+
+			if (!isVehicleIdle(otherVehicleId))
+				continue;
+
+			// only idle
+
+			if (!isVehicleIdle(otherVehicleId))
+				continue;
+
+			// set other vehicle terraforming action
+
+			setTerraformingAction(otherVehicleId, action);
+
+		}
+
+	}
+
+	return returnValue;
+
+}
+

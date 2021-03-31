@@ -2517,7 +2517,7 @@ int enemyMoveFormer(int id)
 	VEH *vehicle = &(tx_vehicles[id]);
 	MAP *vehicleLocationMapTile = getMapTile(vehicle->x, vehicle->y);
 
-	// use Thinker algorithm if in warzoone and in danger
+	// use Thinker algorithm if in warzone and in danger
 
 	if (warzoneLocations.count(vehicleLocationMapTile) != 0 && !isSafe(vehicle->x, vehicle->y))
 	{
@@ -3125,24 +3125,6 @@ bool isTileTerraformed(MAP *tile)
 bool isTileTargettedByOtherFormer(MAP *tile)
 {
 	return targetedTiles.count(tile) == 1;
-}
-
-void setTerraformingAction(int id, int action)
-{
-	VEH *vehicle = &(tx_vehicles[id]);
-
-	// subtract raise/lower land cost
-
-	if (action == FORMER_RAISE_LAND || action == FORMER_LOWER_LAND)
-	{
-		int cost = tx_terraform_cost(vehicle->x, vehicle->y, aiFactionId);
-		tx_factions[aiFactionId].energy_credits -= cost;
-	}
-
-	// set action
-
-	set_action(id, action + 4, veh_status_icon[action + 4]);
-
 }
 
 /*

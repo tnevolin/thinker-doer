@@ -1435,6 +1435,11 @@ bool isVehicleProbe(VEH *vehicle)
 	return (tx_units[vehicle->proto_id].weapon_type == WPN_PROBE_TEAM);
 }
 
+bool isVehicleIdle(int vehicleId)
+{
+	return (tx_vehicles[vehicleId].move_status == ORDER_NONE);
+}
+
 void computeBase(int baseId)
 {
 	tx_set_base(baseId);
@@ -2879,6 +2884,23 @@ bool isInRangeOfFriendlySensor(int x, int y, int range, int factionId)
 	}
 
 	return sensor;
+
+}
+
+void setTerraformingAction(int id, int action)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+
+	// subtract raise/lower land cost
+
+	if (action == FORMER_RAISE_LAND || action == FORMER_LOWER_LAND)
+	{
+		tx_factions[vehicle->faction_id].energy_credits -= tx_terraform_cost(vehicle->x, vehicle->y, vehicle->faction_id);
+	}
+
+	// set action
+
+	set_action(id, action + 4, veh_status_icon[action + 4]);
 
 }
 

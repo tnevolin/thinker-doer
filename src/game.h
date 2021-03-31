@@ -228,6 +228,7 @@ bool isVehicleFormer(int vehicleId);
 bool isVehicleFormer(VEH *vehicle);
 bool isVehicleTransport(VEH *vehicle);
 bool isVehicleProbe(VEH *vehicle);
+bool isVehicleIdle(int vehicleId);
 void computeBase(int baseId);
 std::set<int> getBaseConnectedRegions(int id);
 std::set<int> getBaseConnectedOceanRegions(int baseId);
@@ -287,4 +288,5 @@ bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus);
 void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
 int getRemainingMinerals(int baseId);
 std::vector<int> getStackedVehicleIds(int vehicleId);
+void setTerraformingAction(int vehicleId, int action);
 
