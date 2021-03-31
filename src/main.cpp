@@ -405,6 +405,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->unit_upgrade_ignores_movement = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "group_terraforming"))
+    {
+        cf->group_terraforming = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

@@ -3627,6 +3627,16 @@ void patch_unit_upgrade_ignores_movement()
 
 }
 
+/*
+; When one former starts terraforming action all idle formers in same tile do too.
+; May have unwanted consequenses of intercepting idle formers.
+*/
+void patch_group_terraforming()
+{
+    write_call(0x004CF766, (int)modifiedActionTerraform);
+
+}
+
 // ========================================
 // patch setup
 // ========================================
@@ -4226,6 +4236,11 @@ bool patch_setup(Config* cf) {
 	if (cf->unit_upgrade_ignores_movement)
 	{
 		patch_unit_upgrade_ignores_movement();
+	}
+
+	if (cf->group_terraforming)
+	{
+		patch_group_terraforming();
 	}
 
     // continue with original Thinker checks

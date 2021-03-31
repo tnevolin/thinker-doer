@@ -1,3 +1,7 @@
+# Version 202
+
+* Group terraforming option: group_terraforming.
+
 # Version 201
 
 * Fanatic bonus = 25.
