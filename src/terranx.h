@@ -150,4 +150,5 @@ extern fp_2void *tx_act_of_aggression;
 extern fp_2void *tx_tech_research;
 extern fp_3void *tx_bitmask;
 extern fp_3void *tx_action_move;
+extern fp_1int *tx_veh_cargo;
 

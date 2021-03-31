@@ -181,6 +181,7 @@ HOOK_API int modifiedNutrientCostFactorSEGrowth(int factionId, int baseId);
 int getHabitationFacilitiesBaseGrowthModifier(int baseId);
 HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute);
 HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y);
+HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId);
 
 #endif // __WTP_H__
 

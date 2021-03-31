@@ -3445,7 +3445,7 @@ HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute)
 }
 
 /*
-Disable artillery in transport fire by right click.
+Disables land artillery bombard from sea.
 */
 HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y)
 {
@@ -3461,6 +3461,36 @@ HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y)
 	// execute action
 
 	tx_action_move(vehicleId, x, y);
+
+}
+
+/*
+Disables air transport unload everywhere.
+Pretends that air transport has zero cargo capacity when in not appropriate unload location.
+*/
+HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
+{
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+
+	// disable air transport unload not in base
+
+	if
+	(
+		veh_triad(vehicleId) == TRIAD_AIR
+		&&
+		isVehicleTransport(vehicle)
+		&&
+		!
+		(
+			map_has_item(vehicleTile, TERRA_BASE_IN_TILE) || map_has_item(vehicleTile, TERRA_AIRBASE)
+		)
+	)
+		return 0;
+
+	// return default value
+
+	return tx_veh_cargo(vehicleId);
 
 }
 
