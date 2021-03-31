@@ -219,3 +219,6 @@ fp_3void *tx_bitmask = (fp_3void *)0x0050BA00;
 // action move
 fp_3void *tx_action_move = (fp_3void *)0x004CD090;
 
+// how many units can this vehicle carry
+fp_1int *tx_veh_cargo = (fp_1int *)0x005C1760;
+

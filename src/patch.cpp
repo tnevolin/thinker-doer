@@ -3638,11 +3638,20 @@ void patch_group_terraforming()
 }
 
 /*
-Disable artillery in transport fire by right click.
+Disables land artillery bombard from sea.
 */
-void patch_right_click_land_artillery_from_sea()
+void patch_disable_land_artillery_bombard_from_sea()
 {
     write_call(0x0046D42F, (int)modifiedActionMoveForArtillery);
+
+}
+
+/*
+Disables air transport unload everywhere.
+*/
+void patch_disable_air_transport_unload_everywhere()
+{
+    write_call(0x004D0509, (int)modifiedVehicleCargoForAirTransportUnload);
 
 }
 
@@ -4252,7 +4261,9 @@ bool patch_setup(Config* cf) {
 		patch_group_terraforming();
 	}
 
-	patch_right_click_land_artillery_from_sea();
+	patch_disable_land_artillery_bombard_from_sea();
+
+	patch_disable_air_transport_unload_everywhere();
 
     // continue with original Thinker checks
 

@@ -1,3 +1,7 @@
+# Version 204
+
+* BUG: Air transport can unload in flight with keyboard shortcut or right action menu. Fixed.
+
 # Version 203
 
 * BUG: Right click long range fire option allowed land artillery to fire from transport. Fixed.
