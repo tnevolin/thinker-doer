@@ -12,7 +12,7 @@
 
 #BELIEVE
 The Lord's Believers, The Fundamentalist, Believers, M, 2, Miriam, F, 1,  1, 0, 0, 1,
-  TECH, Psych, SOCIAL, --RESEARCH, SOCIAL, +PROBE, SOCIAL, +SUPPORT, SOCIAL, -PLANET, FANATIC, 0
+  TECH, Psych, SOCIAL, --RESEARCH, SOCIAL, +PROBE, SOCIAL, +SUPPORT, FANATIC, 0
   Politics, Fundamentalist, PROBE
   Values, Knowledge, nil
   Believing, Belv.,
