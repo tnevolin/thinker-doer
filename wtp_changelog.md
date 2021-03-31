@@ -1,3 +1,24 @@
+# Version 205
+
+Further SE models tuning.
+
+Frontier,        None,
+Police State,    DocLoy,   --EFFIC,     ++SUPPORT,   ++POLICE,     -GROWTH
+Democratic,      EthCalc,  ++EFFIC,     --SUPPORT,   ++GROWTH,     -PLANET
+Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY,  --RESEARCH
+Simple,          None,
+Free Market,     IndEcon,  ++ECONOMY, ----POLICE,    --PLANET,     -PROBE
+Planned,         InfNet,   --EFFIC,      -SUPPORT,   ++GROWTH,     +INDUSTRY
+Green,           CentEmp,   +EFFIC,     --GROWTH,    ++PLANET,     +TALENT
+Survival,        None,
+Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +GROWTH,    --INDUSTRY
+Knowledge,       Cyber,     +EFFIC,      -GROWTH     --PROBE,    +++RESEARCH
+Wealth,          IndAuto,   +ECONOMY,  ---MORALE,     -PLANET,     +INDUSTRY
+None,            None,
+Cybernetic,      Algor,    ++EFFIC,    ---POLICE,    ++PLANET,    ++RESEARCH
+Eudaimonic,      Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,    ++GROWTH
+Thought Control, WillPow,  --SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE
+
 # Version 204
 
 * BUG: Air transport can unload in flight with keyboard shortcut or right action menu. Fixed.
