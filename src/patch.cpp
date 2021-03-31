@@ -3201,20 +3201,20 @@ void patch_compact_effect_icons()
 
 	int shiftBefore = -2;
 	int shiftAfter = -4;
-	int shiftInitial = -3;
+	int shiftInitial = 0;
 	int shiftCombined = shiftBefore + shiftAfter;
 
 	// modify effect sprite width for the purpose total diplayed width
 
 	int effect_sprite_width_bytes_length = 0x3;
-/*
-0:  8d 51 01                lea    edx,[ecx+0x1]
-*/
+	/*
+	0:  8d 51 01                lea    edx,[ecx+0x1]
+	*/
 	byte effect_sprite_width_bytes_old[] = { 0x8D, 0x51, 0x01 };
-/*
-0:  8d 51 f7                lea    edx,[ecx+<1 + shiftCombined>]
-...
-*/
+	/*
+	0:  8d 51 f7                lea    edx,[ecx+<1 + shiftCombined>]
+	...
+	*/
 	byte effect_sprite_width_bytes_new[] = { 0x8D, 0x51, (byte)((1 + shiftCombined) & 0xFF) };
 	write_bytes
 	(
@@ -3224,40 +3224,41 @@ void patch_compact_effect_icons()
 		effect_sprite_width_bytes_new
 	);
 
-	// modify starting horizontal position
-
-	int starting_horizontal_position_bytes_length = 0x7;
-/*
-0:  8b 45 d4                mov    eax,DWORD PTR [ebp-0x2c]
-3:  d1 fb                   sar    ebx,1
-5:  03 d8                   add    ebx,eax
-*/
-	byte starting_horizontal_position_bytes_old[] = { 0x8B, 0x45, 0xD4, 0xD1, 0xFB, 0x03, 0xD8 };
-/*
-0:  d1 fb                   sar    ebx,1
-2:  83 c3 13                add    ebx,<29 + shiftInitial>
-...
-*/
-	byte starting_horizontal_position_bytes_new[] = { 0xD1, 0xFB, 0x83, 0xC3, (byte)((29 + shiftInitial) & 0xFF), 0x90, 0x90 };
-	write_bytes
-	(
-		0x004AF650,
-		starting_horizontal_position_bytes_length,
-		starting_horizontal_position_bytes_old,
-		starting_horizontal_position_bytes_new
-	);
-
+//	// modify starting horizontal position
+//
+//	int starting_horizontal_position_bytes_length = 0x9;
+//	/*
+//	0:  8b d8                   mov    ebx,eax
+//	2:  8b 45 d4                mov    eax,DWORD PTR [ebp-0x2c]
+//	5:  d1 fb                   sar    ebx,1
+//	7:  03 d8                   add    ebx,eax
+//	*/
+//	byte starting_horizontal_position_bytes_old[] = { 0x8B, 0xD8, 0x8B, 0x45, 0xD4, 0xD1, 0xFB, 0x03, 0xD8 };
+//	/*
+//	0:  8b 5d d4                mov    ebx,DWORD PTR [ebp-0x2c]
+//	3:  83 c3 1a                add    ebx,<shiftInitial>
+//	...
+//	*/
+//	byte starting_horizontal_position_bytes_new[] = { 0x8B, 0x5D, 0xD4, 0x83, 0xC3, (byte)shiftInitial, 0x90, 0x90, 0x90 };
+//	write_bytes
+//	(
+//		0x004AF64E,
+//		starting_horizontal_position_bytes_length,
+//		starting_horizontal_position_bytes_old,
+//		starting_horizontal_position_bytes_new
+//	);
+//
 	// modify current horizontal position before effect sprite
 
 	int horizontal_position_before_effect_bytes_length = 0x7;
-/*
-...
-*/
+	/*
+	...
+	*/
 	byte horizontal_position_before_effect_bytes_old[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-/*
-0:  8d 5b 01                lea    ebx,[ebx+<shiftBefore>]
-...
-*/
+	/*
+	0:  8d 5b 01                lea    ebx,[ebx+<shiftBefore>]
+	...
+	*/
 	byte horizontal_position_before_effect_bytes_new[] = { 0x8D, 0x5B, (byte)((shiftBefore) & 0xFF), 0x90, 0x90, 0x90, 0x90 };
 	write_bytes
 	(
@@ -3270,13 +3271,13 @@ void patch_compact_effect_icons()
 	// modify current horizontal position after effect sprite
 
 	int horizontal_position_after_effect_bytes_length = 0x4;
-/*
-0:  8d 5c 0b 01             lea    ebx,[ebx+ecx*1+0x1]
-*/
+	/*
+	0:  8d 5c 0b 01             lea    ebx,[ebx+ecx*1+0x1]
+	*/
 	byte horizontal_position_after_effect_bytes_old[] = { 0x8D, 0x5C, 0x0B, 0x01 };
-/*
-0:  8d 5c 0b f7             lea    ebx,[ebx+ecx*1+<1 + shiftAfter>]
-*/
+	/*
+	0:  8d 5c 0b f7             lea    ebx,[ebx+ecx*1+<1 + shiftAfter>]
+	*/
 	byte horizontal_position_after_effect_bytes_new[] = { 0x8D, 0x5C, 0x0B, (byte)((1 + shiftAfter) & 0xFF) };
 	write_bytes
 	(
@@ -3298,17 +3299,17 @@ void patch_compact_effect_icons()
 	// set top margin to half of the vertical step difference
 
 	int description_top_margin_bytes_length = 0x8;
-/*
-0:  99                      cdq
-1:  2b c2                   sub    eax,edx
-3:  8b 55 d4                mov    edx,DWORD PTR [ebp-0x2c]
-6:  d1 f8                   sar    eax,1
-*/
+	/*
+	0:  99                      cdq
+	1:  2b c2                   sub    eax,edx
+	3:  8b 55 d4                mov    edx,DWORD PTR [ebp-0x2c]
+	6:  d1 f8                   sar    eax,1
+	*/
 	byte description_top_margin_bytes_old[] = { 0x99, 0x2B, 0xC2, 0x8B, 0x55, 0xD4, 0xD1, 0xF8 };
-/*
-0:  b8 01 00 00 00          mov    eax,<top margin>
-5:  8b 55 d4                mov    edx,DWORD PTR [ebp-0x2c]
-*/
+	/*
+	0:  b8 01 00 00 00          mov    eax,<top margin>
+	5:  8b 55 d4                mov    edx,DWORD PTR [ebp-0x2c]
+	*/
 	byte description_top_margin_bytes_new[] = { 0xB8, (byte)((topMargin >> 0) & 0xFF), (byte)((topMargin >> 8) & 0xFF), (byte)((topMargin >> 16) & 0xFF), (byte)((topMargin >> 24) & 0xFF), 0x8B, 0x55, 0xD4 };
 	write_bytes
 	(
@@ -3321,13 +3322,13 @@ void patch_compact_effect_icons()
 	// change vertical step in description
 
 	int description_vertical_step_bytes_length = 0x7;
-/*
-0:  8b 97 34 2e 00 00       mov    edx,DWORD PTR [edi+0x2e34]
-*/
+	/*
+	0:  8b 97 34 2e 00 00       mov    edx,DWORD PTR [edi+0x2e34]
+	*/
 	byte description_vertical_step_bytes_old[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-/*
-0:  c7 45 d4 01 00 00 00    mov    DWORD PTR [ebp-0x2c],<vertical step>
-*/
+	/*
+	0:  c7 45 d4 01 00 00 00    mov    DWORD PTR [ebp-0x2c],<vertical step>
+	*/
 	byte description_vertical_step_bytes_new[] = { 0xC7, 0x45, 0xD4, (byte)(descriptionVerticalStep & 0xFF), 0x00, 0x00, 0x00 };
 	write_bytes
 	(
