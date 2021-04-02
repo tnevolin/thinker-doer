@@ -9,6 +9,7 @@
 #include "wtp.h"
 #include "aiTerraforming.h"
 #include "aiCombat.h"
+#include "aiColony.h"
 
 struct FACTION_INFO
 {
@@ -47,7 +48,6 @@ extern std::vector<int> formerVehicleIds;
 void aiStrategy(int id);
 void populateSharedLists();
 VEH *getVehicleByAIId(int aiId);
-bool isreachable(int id, int x, int y);
 double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId);
 
 #endif // __AI_H__

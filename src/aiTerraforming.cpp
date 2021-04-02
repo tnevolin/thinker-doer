@@ -3022,47 +3022,6 @@ bool isLevelTerrainRequired(int action)
 
 }
 
-void generateTerraformingChange(MAP_STATE *mapState, int action)
-{
-	// level terrain changes rockiness
-	if (action == FORMER_LEVEL_TERRAIN)
-	{
-		if (mapState->rocks & TILE_ROCKY)
-		{
-			mapState->rocks &= ~TILE_ROCKY;
-			mapState->rocks |= TILE_ROLLING;
-		}
-		else if (mapState->rocks & TILE_ROLLING)
-		{
-			mapState->rocks &= ~TILE_ROLLING;
-		}
-
-	}
-	// other actions change items
-	else
-	{
-		// special cases
-		if (action == FORMER_AQUIFER)
-		{
-			mapState->items |= (TERRA_RIVER_SRC | TERRA_RIVER);
-		}
-		// regular cases
-		else
-		{
-			// remove items
-
-			mapState->items &= ~tx_terraform[action].removed_items_flag;
-
-			// add items
-
-			mapState->items |= tx_terraform[action].added_items_flag;
-
-		}
-
-	}
-
-}
-
 bool isTileTargettedByVehicle(VEH *vehicle, MAP *tile)
 {
 	return (vehicle->move_status == ORDER_MOVE_TO && (getVehicleDestination(vehicle) == tile));
@@ -3436,34 +3395,6 @@ bool isNearbySensorPresentOrUnderConstruction(int x, int y)
     }
 
     return false;
-
-}
-
-void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState)
-{
-	MAP *tile = mapInfo->tile;
-
-	mapState->climate = tile->level;
-	mapState->rocks = tile->rocks;
-	mapState->items = tile->items;
-
-}
-
-void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState)
-{
-	MAP *tile = mapInfo->tile;
-
-	tile->level = mapState->climate;
-	tile->rocks = mapState->rocks;
-	tile->items = mapState->items;
-
-}
-
-void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState)
-{
-	destinationMapState->climate = sourceMapState->climate;
-	destinationMapState->rocks = sourceMapState->rocks;
-	destinationMapState->items = sourceMapState->items;
 
 }
 
@@ -4071,11 +4002,6 @@ double calculateSensorScore(MAP_INFO mapInfo, int action)
 
 	return conf.ai_terraforming_sensorValue * max(borderRangeValue, shoreRangeValue);
 
-}
-
-int getConnectedRegion(int region)
-{
-	return (seaRegionMappings.count(region) == 0 ? region : seaRegionMappings[region]);
 }
 
 /*
@@ -5207,5 +5133,21 @@ bool isInferiorImprovedTile(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *c
 
 	return isInferiorYield(&(unworkedTileYields[base]), nutrient, mineral, energy, NULL);
 
+}
+
+bool isreachable(int id, int x, int y)
+{
+	VEH *vehicle = &(tx_vehicles[id]);
+	int triad = veh_triad(id);
+	MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
+	MAP *destinationLocation = getMapTile(x, y);
+
+	return (triad == TRIAD_AIR || getConnectedRegion(vehicleLocation->region) == getConnectedRegion(destinationLocation->region));
+
+}
+
+int getConnectedRegion(int region)
+{
+	return (seaRegionMappings.count(region) == 0 ? region : seaRegionMappings[region]);
 }
 

@@ -1,3 +1,14 @@
+# Version 206
+
+* BUG: Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do.
+* Modified Thinker base placement search algorithm.
+	* Searches wider area.
+	* Accounts for potential yield (farm+mine, farm+solar).
+	* Emphasizes extra high yield tiles.
+	* Tries to minimize base radiuses overlap.
+	* Tries to keep base radiuses connected to minimize land waste.
+	* Prefers coastal sites.
+
 # Version 205
 
 Further SE models tuning.
@@ -537,7 +548,7 @@ http://alphacentauri2.info/wiki/Social_Engineering_Mod
 
 # Version 111
 
-* FIX: Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do. Fixed incorrect calculation on game restart.
+* BUG: Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do. Fixed incorrect calculation on game restart.
 
 # Version 110
 
@@ -547,7 +558,7 @@ Should not be too dificult for sea bases to pay it.
 
 # Version 109
 
-* FIX: Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do.
+* BUG: Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do.
 
 # Version 108
 

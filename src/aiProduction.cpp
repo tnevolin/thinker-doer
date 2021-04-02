@@ -555,6 +555,14 @@ void evaluateLandExpansionDemand()
 
 	debug("evaluateLandExpansionDemand\n");
 
+	// verify base can build a colony
+
+	if (!canBaseProduceColony(baseId))
+	{
+		debug("\t\t\t\tbase cannot build a colony\n");
+		return;
+	}
+
 	// calcualte max base size
 
 	int maxBaseSize = getMaxBaseSize(base->faction_id);
@@ -653,14 +661,6 @@ void evaluateLandExpansionDemand()
 
 	debug("\t\t\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, infantryTurnsToDestination=%f, optimalColonyUnitId=%-25s\n", TRIAD_LAND, base->mineral_surplus, infantryTurnsToDestination, tx_units[optimalColonyUnitId].name);
 
-	// verify base has enough growth potential to build a colony
-
-	if (!canBaseProduceColony(baseId, optimalColonyUnitId))
-	{
-		debug("\t\t\t\tbase is too small to produce a colony\n");
-		return;
-	}
-
 	// adjust priority based on base size
 
 	double baseAdjustedPriority = priority * ((double)base->pop_size / (double)maxBaseSize);
@@ -682,6 +682,14 @@ void evaluateOceanExpansionDemand()
 	BASE *base = productionDemand.base;
 
 	debug("evaluateOceanExpansionDemand\n");
+
+	// verify base can build a colony
+
+	if (!canBaseProduceColony(baseId))
+	{
+		debug("\t\t\t\tbase cannot build a colony\n");
+		return;
+	}
 
 	// base cannot build ships
 
@@ -802,14 +810,6 @@ void evaluateOceanExpansionDemand()
 		int optimalOceanRegionColonyUnitId = findOptimalColonyUnit(base->faction_id, TRIAD_SEA, base->mineral_surplus, infantryTurnsToDestination);
 
 		debug("\t\t\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, infantryTurnsToDestination=%f, optimalOceanRegionColonyUnitId=%-25s\n", TRIAD_SEA, base->mineral_surplus, infantryTurnsToDestination, tx_units[optimalOceanRegionColonyUnitId].name);
-
-		// verify base has enough growth potential to build a colony
-
-		if (!canBaseProduceColony(baseId, optimalOceanRegionColonyUnitId))
-		{
-			debug("\t\t\t\tbase is too small to produce a colony\n");
-			continue;
-		}
 
 		// adjust priority based on base size
 
@@ -1670,31 +1670,23 @@ int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus, double i
 /*
 Checks if base has enough population to issue a colony by the time it is built.
 */
-bool canBaseProduceColony(int baseId, int unitId)
+bool canBaseProduceColony(int baseId)
 {
 	BASE *base = &(tx_bases[baseId]);
 
-	// verify the unit is indeed a colony
+	// do not produce colony if insufficient population
 
-	if (!isColonyUnit(unitId))
+	if (base->pop_size < 2)
 		return false;
 
-	// do not produce colony in unproductive bases
+	// do not produce colony in low productive bases
 
-	if (base->mineral_surplus < 1)
+	if (base->mineral_surplus < 2)
 		return false;
 
-	// calculate production time
+	// true otherwise
 
-	int productionTurns = (mineral_cost(baseId, unitId) - base->minerals_accumulated) / max(1, base->mineral_surplus);
-
-	// calculate base population at the time
-
-	double projectedPopulation = (double)base->pop_size + (double)(base->nutrients_accumulated + base->nutrient_surplus * productionTurns) / (double)(tx_cost_factor(base->faction_id, 0, baseId) * (base->pop_size + 1));
-
-	// verify projected population is at least 2.5
-
-	return (projectedPopulation >= 2.5);
+	return true;
 
 }
 

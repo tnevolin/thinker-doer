@@ -330,14 +330,3 @@ VEH *getVehicleByAIId(int aiId)
 
 }
 
-bool isreachable(int id, int x, int y)
-{
-	VEH *vehicle = &(tx_vehicles[id]);
-	int triad = veh_triad(id);
-	MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
-	MAP *destinationLocation = getMapTile(x, y);
-
-	return (triad == TRIAD_AIR || getConnectedRegion(vehicleLocation->region) == getConnectedRegion(destinationLocation->region));
-
-}
-
