@@ -104,13 +104,6 @@ struct VEHICLE_INFO
 	VEH *vehicle;
 };
 
-struct MAP_STATE
-{
-    byte climate;
-    byte rocks;
-    int items;
-};
-
 struct FORMER_ORDER
 {
 	int id;
@@ -218,7 +211,6 @@ bool isTerraformingAvailable(MAP_INFO *mapInfo, int action);
 bool isTerraformingRequired(MAP *tile, int action);
 bool isRemoveFungusRequired(int action);
 bool isLevelTerrainRequired(int action);
-void generateTerraformingChange(MAP_STATE *mapState, int action);
 bool isVehicleTerraforming(int vehicleId);
 bool isTileTargettedByVehicle(VEH *vehicle, MAP *tile);
 bool isVehicleConvoying(VEH *vehicle);
@@ -239,9 +231,6 @@ bool isNearbyBoreholePresentOrUnderConstruction(int x, int y);
 bool isNearbyRiverPresentOrUnderConstruction(int x, int y);
 bool isNearbyRaiseUnderConstruction(int x, int y);
 bool isNearbySensorPresentOrUnderConstruction(int x, int y);
-void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
-void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
-void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState);
 int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle);
 int getBaseTerraformingRank(BASE *base);
 BASE *findAffectedBase(int x, int y);
@@ -252,7 +241,6 @@ bool isTowardBaseDiagonal(int x, int y, int dxSign, int dySign);
 bool isTowardBaseHorizontal(int x, int y, int dxSign);
 bool isTowardBaseVertical(int x, int y, int dySign);
 double calculateSensorScore(MAP_INFO mapInfo, int action);
-int getConnectedRegion(int region);
 bool isBaseWorkedTile(BASE *base, int x, int y);
 double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *actions);
 bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::iterator begin, std::vector<TERRAFORMING_REQUEST>::iterator end, int action, int x, int y, int range);
@@ -266,6 +254,8 @@ double calculateResourceScore(double nutrient, double mineral, double energy);
 double calculateBaseResourceScore(double populationSize, double nutrientSurplus, double mineralSurplus, double nutrient, double mineral, double energy);
 double computeImprovementBaseSurplusEffectScore(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState, bool requireWorked);
 bool isInferiorImprovedTile(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
+bool isreachable(int id, int x, int y);
+int getConnectedRegion(int region);
 
 #endif // __AITERRAFORMING_H__
 

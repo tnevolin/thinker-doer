@@ -2587,11 +2587,11 @@ void patch_setup_player()
 }
 
 /*
-Wraps balance to correctly generate number of colonies at start.
+Wraps veh_init to correctly generate number of colonies at start.
 */
-void patch_balance()
+void patch_veh_init_in_balance()
 {
-	write_call(0x005B41F5, (int)modifiedBalance);
+	write_call(0x005B08B1, (int)modifiedVehInitInBalance);
 
 }
 
@@ -3201,7 +3201,7 @@ void patch_compact_effect_icons()
 
 	int shiftBefore = -2;
 	int shiftAfter = -4;
-	int shiftInitial = 0;
+//	int shiftInitial = 0;
 	int shiftCombined = shiftBefore + shiftAfter;
 
 	// modify effect sprite width for the purpose total diplayed width
@@ -4156,8 +4156,7 @@ bool patch_setup(Config* cf) {
 	}
 
 	patch_setup_player();
-
-	patch_balance();
+	patch_veh_init_in_balance();
 
 	if (cf->recycling_tanks_mineral_multiplier)
 	{

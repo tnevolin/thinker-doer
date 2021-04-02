@@ -121,9 +121,6 @@ HOOK_API int base_find3(int x, int y, int unknown_1, int body_id, int unknown_2,
 int map_distance(int x1, int y1, int x2, int y2);
 bool isWithinBaseRadius(int x1, int y1, int x2, int y2);
 HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower);
-HOOK_API int mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
-HOOK_API int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
-HOOK_API int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5);
 HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7);
 int wtp_tech_level(int id);
@@ -140,9 +137,8 @@ HOOK_API void correctGrowthTurnsIndicator(int destinationStringPointer, int sour
 HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queueSlotId);
 HOOK_API int modifiedInefficiency(int energyIntake);
 HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3);
+HOOK_API void modifiedVehInitInBalance(int unitId, int factionId, int x, int y);
 void createFreeVehicles(int factionId);
-HOOK_API void modifiedBalance();
-void recreateInitialColonies(int factionId);
 double getVehicleSpeedWithoutRoads(int id);
 double getLandVehicleSpeedOnRoads(int id);
 double getLandVehicleSpeedOnTubes(int id);

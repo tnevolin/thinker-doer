@@ -8,9 +8,9 @@
 #include "patch.h"
 #include "engine.h"
 
-// game setup info
+// player setup helper variable
 
-int initialColonyCount[8];
+int balanceFactionId = -1;
 
 // global variables for all factions
 
@@ -1419,81 +1419,6 @@ HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength,
 }
 
 /*
-nutrient yield calculation
-*/
-HOOK_API int mod_nutrient_yield(int factionId, int baseId, int x, int y, int tf)
-{
-	// call original function
-
-    int value = crop_yield(factionId, baseId, x, y, tf);
-
-    // get map tile
-
-    MAP* tile = getMapTile(x, y);
-
-    // bad tile - should not happen, though
-
-    if (!tile)
-		return value;
-
-	// apply condenser and enricher fix if configured
-
-	if (conf.condenser_and_enricher_do_not_multiply_nutrients)
-	{
-		// condenser does not multiply nutrients
-
-		if (tile->items & TERRA_CONDENSER)
-		{
-			value = (value * 2 + 2) / 3;
-		}
-
-		// enricher does not multiply nutrients
-
-		if (tile->items & TERRA_SOIL_ENR)
-		{
-			value = (value * 2 + 2) / 3;
-		}
-
-		// enricher adds 1 nutrient
-
-		if (tile->items & TERRA_SOIL_ENR)
-		{
-			value++;
-		}
-
-	}
-
-    return value;
-
-}
-
-/*
-mineral yield calculation
-*/
-HOOK_API int mod_mineral_yield(int factionId, int baseId, int x, int y, int tf)
-{
-	// call original function
-
-    int value = mineral_yield(factionId, baseId, x, y, tf);
-
-    return value;
-
-}
-
-/*
-energy yield calculation
-*/
-HOOK_API int mod_energy_yield(int factionId, int baseId, int x, int y, int tf)
-{
-	// call original function
-
-    int value = energy_yield(factionId, baseId, x, y, tf);
-
-    return value;
-
-}
-
-/*
 SE accumulated resource adjustment
 */
 HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5)
@@ -2122,13 +2047,43 @@ HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3)
 
 	tx_setup_player(factionId, a2, a3);
 
-	// recreate initial extra colonies
+	// rerun balance for late starting faction
 
-	recreateInitialColonies(factionId);
+	if (a2 == -282)
+	{
+		// set balanceFactionId
 
-	// give free former and colony at player start
+		balanceFactionId = factionId;
+
+		// run balance
+
+		tx_balance();
+
+		// clear balanceFactionId
+
+		balanceFactionId = -1;
+
+	}
+
+	// give free formers and colonies at player start
 
 	createFreeVehicles(factionId);
+
+}
+
+/*
+Wraps veh_init in balance to correctly generate number of colonies at start.
+*/
+HOOK_API void modifiedVehInitInBalance(int unitId, int factionId, int x, int y)
+{
+	// do nothing for not target factions
+
+	if (balanceFactionId != -1 && factionId != balanceFactionId)
+		return;
+
+	// execute original code
+
+	tx_veh_init(unitId, factionId, x, y);
 
 }
 
@@ -2171,92 +2126,6 @@ void createFreeVehicles(int factionId)
 	for (int j = 0; j < conf.free_formers; j++)
 	{
 		spawn_veh(former, factionId, factionVehicle->x, factionVehicle->y, -1);
-	}
-
-}
-
-/*
-Wraps balance to correctly generate number of colonies at start.
-*/
-HOOK_API void modifiedBalance()
-{
-	// execute original code
-
-	tx_balance();
-
-	// calculate initial colony count
-
-	for (int id = 0; id < *total_num_vehicles; id++)
-	{
-		VEH *vehicle = &(tx_vehicles[id]);
-		int factionId = vehicle->faction_id;
-
-		// real factions only
-
-		if (factionId == 0)
-			continue;
-
-		// check vehicle is a colony
-
-		if (isVehicleColony(id))
-		{
-			initialColonyCount[factionId]++;
-		}
-
-	}
-
-}
-
-void recreateInitialColonies(int factionId)
-{
-	// clear colony count on turn 0 and exit
-
-	if (*current_turn == 0)
-	{
-		initialColonyCount[factionId] = 0;
-		return;
-	}
-
-	// count current colonies
-
-	int currentColonyCount = 0;
-	VEH *factionVehicle = NULL;
-
-	for (int id = 0; id < *total_num_vehicles; id++)
-	{
-		VEH *vehicle = &(tx_vehicles[id]);
-
-		if (vehicle->faction_id == factionId && factionVehicle == NULL)
-		{
-			factionVehicle = vehicle;
-		}
-
-		if (vehicle->faction_id == factionId && isVehicleColony(id))
-		{
-			currentColonyCount++;
-		}
-
-	}
-
-	// no faction vehicle found
-
-	if (factionVehicle == NULL)
-		return;
-
-	// get faction tile
-
-	MAP *tile = getMapTile(factionVehicle->x, factionVehicle->y);
-
-	// create more colonies as needed
-
-	if (currentColonyCount < initialColonyCount[factionId])
-	{
-		int colony = (is_ocean(tile) ? BSC_SEA_ESCAPE_POD : BSC_COLONY_POD);
-		for (int j = 0; j < initialColonyCount[factionId] - currentColonyCount; j++)
-		{
-			spawn_veh(colony, factionId, factionVehicle->x, factionVehicle->y, -1);
-		}
-
 	}
 
 }
@@ -3449,7 +3318,6 @@ Disables land artillery bombard from sea.
 */
 HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	bool ocean = is_ocean(vehicleTile);
 

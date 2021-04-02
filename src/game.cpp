@@ -653,8 +653,9 @@ bool TileSearch::has_zoc(int faction) {
 /*
 Implement a breadth-first search of adjacent map tiles to iterate possible movement paths.
 Pathnodes are also used to keep track of the route to reach the current destination.
+Returns first tile if instructed.
 */
-MAP* TileSearch::get_next() {
+MAP* TileSearch::get_next(bool returnFirstTile) {
     while (items > 0) {
         bool first = oldtiles.size() == 1;
         cur = head;
@@ -677,19 +678,28 @@ MAP* TileSearch::get_next() {
         for (const int* t : offset) {
             int x2 = wrap(rx + t[0]);
             int y2 = ry + t[1];
-            if (y2 >= y_skip && y2 < *map_axis_y - y_skip
-            && items < QSIZE && !oldtiles.count({x2, y2})) {
+            if (y2 >= y_skip && y2 < *map_axis_y - y_skip && items < QSIZE && !oldtiles.count({x2, y2}))
+			{
                 newtiles[tail] = {x2, y2, dist+1, cur};
                 tail = (tail + 1) % QSIZE;
                 items++;
                 oldtiles.insert({x2, y2});
             }
         }
-        if (!first) {
+        if (returnFirstTile || !first)
+		{
             return sq;
         }
     }
     return NULL;
+}
+
+/*
+Does not return first tile by default.
+*/
+MAP* TileSearch::get_next()
+{
+	return get_next(false);
 }
 
 BASE *vehicle_home_base(VEH *vehicle) {
@@ -1766,7 +1776,7 @@ std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool startWithCenter)
 {
 	std::vector<MAP *> baseRadiusTiles;
 
-	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
 	{
 		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
 
@@ -1789,7 +1799,7 @@ std::vector<MAP_INFO> getBaseRadiusTileInfos(int x, int y, bool startWithCenter)
 {
 	std::vector<MAP_INFO> baseRadiusTileInfos;
 
-	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
 	{
 		int tileX = wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]);
 		int tileY = y + BASE_TILE_OFFSETS[offsetIndex][1];
@@ -1806,13 +1816,67 @@ std::vector<MAP_INFO> getBaseRadiusTileInfos(int x, int y, bool startWithCenter)
 
 }
 
+/*
+Returns all tiles within base radius belonging to friendly base radiuses.
+*/
+int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y)
+{
+	int friendlyIntersectedBaseRadiusTileCount = 0;
+
+	for (int offsetIndex = 0; offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
+
+		if (tile == NULL)
+			continue;
+
+		// add friendly intersected base radius
+
+		if (tile->owner == factionId && map_has_item(tile, TERRA_BASE_RADIUS))
+		{
+			friendlyIntersectedBaseRadiusTileCount++;
+		}
+
+	}
+
+	return friendlyIntersectedBaseRadiusTileCount;
+
+}
+
+/*
+Returns all land tiles side adjacent to base radius belonging to friendly base radiuses.
+*/
+int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y)
+{
+	int friendlyLandBorderedBaseRadiusTileCount = 0;
+
+	for (int offsetIndex = BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex < BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT; offsetIndex++)
+	{
+		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
+
+		if (tile == NULL)
+			continue;
+
+		// add friendly bordered base radius
+
+		if (!is_ocean(tile) && tile->owner == factionId && map_has_item(tile, TERRA_BASE_RADIUS))
+		{
+			friendlyLandBorderedBaseRadiusTileCount++;
+		}
+
+	}
+
+	return friendlyLandBorderedBaseRadiusTileCount;
+
+}
+
 std::vector<MAP *> getBaseWorkedTiles(int baseId)
 {
 	BASE *base = &(tx_bases[baseId]);
 
 	std::vector<MAP *> baseWorkedTiles;
 
-	for (int offsetIndex = 1; offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+	for (int offsetIndex = 1; offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
 	{
 		if (base->worked_tiles & (0x1 << offsetIndex))
 		{
@@ -1835,7 +1899,7 @@ std::vector<MAP *> getBaseWorkedTiles(BASE *base)
 {
 	std::vector<MAP *> baseWorkedTiles;
 
-	for (int offsetIndex = 1; offsetIndex < BASE_TILE_OFFSET_COUNT; offsetIndex++)
+	for (int offsetIndex = 1; offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
 	{
 		if (base->worked_tiles & (0x1 << offsetIndex))
 		{
@@ -2901,6 +2965,285 @@ void setTerraformingAction(int id, int action)
 	// set action
 
 	set_action(id, action + 4, veh_status_icon[action + 4]);
+
+}
+
+double getImprovedTileWeightedYield(MAP_INFO *tileInfo, int terraformingActionsCount, int terraformingActions[], double nutrientWeight, double mineralWeight, double energyWeight)
+{
+	int x = tileInfo->x;
+	int y = tileInfo->y;
+
+	// populate current map states
+
+	MAP_STATE currentMapState;
+
+	getMapState(tileInfo, &currentMapState);
+
+	// populate improved map state
+
+	MAP_STATE improvedMapState;
+
+	copyMapState(&improvedMapState, &currentMapState);
+
+	generateTerraformingChange(&improvedMapState, FORMER_REMOVE_FUNGUS);
+	for (int i = 0; i < terraformingActionsCount; i++)
+	{
+		generateTerraformingChange(&improvedMapState, terraformingActions[i]);
+	}
+
+	// apply changes
+
+	setMapState(tileInfo, &improvedMapState);
+
+	// gather improved yield
+
+	int nutrientYield = mod_nutrient_yield(0, -1, x, y, 0);
+	int mineralYield = mod_mineral_yield(0, -1, x, y, 0);
+	int energyYield = mod_energy_yield(0, -1, x, y, 0);
+
+	// restore original state
+
+	setMapState(tileInfo, &currentMapState);
+
+	// return weighted yield
+
+	return nutrientWeight * (double)nutrientYield + mineralWeight * (double)mineralYield + energyWeight * (double)energyYield;
+
+}
+
+void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState)
+{
+	MAP *tile = mapInfo->tile;
+
+	mapState->climate = tile->level;
+	mapState->rocks = tile->rocks;
+	mapState->items = tile->items;
+
+}
+
+void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState)
+{
+	MAP *tile = mapInfo->tile;
+
+	tile->level = mapState->climate;
+	tile->rocks = mapState->rocks;
+	tile->items = mapState->items;
+
+}
+
+void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState)
+{
+	destinationMapState->climate = sourceMapState->climate;
+	destinationMapState->rocks = sourceMapState->rocks;
+	destinationMapState->items = sourceMapState->items;
+
+}
+
+void generateTerraformingChange(MAP_STATE *mapState, int action)
+{
+	// level terrain changes rockiness
+	if (action == FORMER_LEVEL_TERRAIN)
+	{
+		if (mapState->rocks & TILE_ROCKY)
+		{
+			mapState->rocks &= ~TILE_ROCKY;
+			mapState->rocks |= TILE_ROLLING;
+		}
+		else if (mapState->rocks & TILE_ROLLING)
+		{
+			mapState->rocks &= ~TILE_ROLLING;
+		}
+
+	}
+	// other actions change items
+	else
+	{
+		// special cases
+		if (action == FORMER_AQUIFER)
+		{
+			mapState->items |= (TERRA_RIVER_SRC | TERRA_RIVER);
+		}
+		// regular cases
+		else
+		{
+			// remove items
+
+			mapState->items &= ~tx_terraform[action].removed_items_flag;
+
+			// add items
+
+			mapState->items |= tx_terraform[action].added_items_flag;
+
+		}
+
+	}
+
+}
+
+/*
+nutrient yield calculation
+*/
+HOOK_API int mod_nutrient_yield(int factionId, int baseId, int x, int y, int tf)
+{
+	// call original function
+
+    int value = crop_yield(factionId, baseId, x, y, tf);
+
+    // get map tile
+
+    MAP* tile = getMapTile(x, y);
+
+    // bad tile - should not happen, though
+
+    if (!tile)
+		return value;
+
+	// apply condenser and enricher fix if configured
+
+	if (conf.condenser_and_enricher_do_not_multiply_nutrients)
+	{
+		// condenser does not multiply nutrients
+
+		if (tile->items & TERRA_CONDENSER)
+		{
+			value = (value * 2 + 2) / 3;
+		}
+
+		// enricher does not multiply nutrients
+
+		if (tile->items & TERRA_SOIL_ENR)
+		{
+			value = (value * 2 + 2) / 3;
+		}
+
+		// enricher adds 1 nutrient
+
+		if (tile->items & TERRA_SOIL_ENR)
+		{
+			value++;
+		}
+
+	}
+
+    return value;
+
+}
+
+/*
+mineral yield calculation
+*/
+HOOK_API int mod_mineral_yield(int factionId, int baseId, int x, int y, int tf)
+{
+	// call original function
+
+    int value = mineral_yield(factionId, baseId, x, y, tf);
+
+    return value;
+
+}
+
+/*
+energy yield calculation
+*/
+HOOK_API int mod_energy_yield(int factionId, int baseId, int x, int y, int tf)
+{
+	// call original function
+
+    int value = energy_yield(factionId, baseId, x, y, tf);
+
+    return value;
+
+}
+
+/*
+Checks whether given tile is closest to this colony than to any other friendly colony.
+*/
+bool isRightfulBuildSite(int x, int y, int vehicleId)
+{
+	MAP *tile = getMapTile(x, y);
+	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	MAP *vehicleLocation = getVehicleMapTile(vehicleId);
+	int triad = veh_triad(vehicleId);
+	int factionId = vehicle->faction_id;
+	int vehicleRange = map_range(vehicle->x, vehicle->y, x, y);
+
+	// vehicle should be a colony
+
+	if (!isVehicleColony(vehicleId))
+		return false;
+
+	// site should be in same region
+
+	if (triad != TRIAD_AIR && !(triad == TRIAD_SEA && map_has_item(vehicleLocation, TERRA_BASE_IN_TILE)) && vehicleLocation->region != tile->region)
+		return false;
+
+	// get nearest friendly colony range
+
+	int nearestFriendlyColonyRange = INT_MAX;
+
+	for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
+	{
+		VEH *otherVehicle = &(tx_vehicles[otherVehicleId]);
+		MAP *otherVehicleLocation = getVehicleMapTile(otherVehicleId);
+		int otherVehicleTriad = veh_triad(otherVehicleId);
+
+		// skip current vehicle
+
+		if (otherVehicleId == vehicleId)
+			continue;
+
+		// only this faction
+
+		if (otherVehicle->faction_id != factionId)
+			continue;
+
+		// only colony
+
+		if (!isVehicleColony(otherVehicleId))
+			continue;
+
+		// only able to reach destination
+
+		if (otherVehicleTriad != TRIAD_AIR && !(otherVehicleTriad == TRIAD_SEA && map_has_item(otherVehicleLocation, TERRA_BASE_IN_TILE)) && otherVehicleLocation->region != tile->region)
+			continue;
+
+		// calculate range
+
+		int otherVehicleRange = map_range(otherVehicle->x, otherVehicle->y, x, y);
+
+		// add 1 for vehicles with bigger id
+
+		if (otherVehicleId > vehicleId)
+		{
+			otherVehicleRange++;
+		}
+
+		// update nearest range
+
+		nearestFriendlyColonyRange = min(nearestFriendlyColonyRange, otherVehicleRange);
+
+	}
+
+	// check rightfullness
+
+	return vehicleRange < nearestFriendlyColonyRange;
+
+}
+
+bool isCoast(int x, int y)
+{
+	MAP *tile = getMapTile(x, y);
+
+	if (is_ocean(tile))
+		return false;
+
+	for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+	{
+		if (is_ocean(adjacentTile))
+			return true;
+	}
+
+	return false;
 
 }
 

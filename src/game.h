@@ -20,6 +20,13 @@ struct MAP_INFO
 
 };
 
+struct MAP_STATE
+{
+    byte climate;
+    byte rocks;
+    int items;
+};
+
 /*
 
 Function parameter naming conventions
@@ -56,10 +63,13 @@ const int offset_tbl[][2] = {
 This array is used for both adjacent tiles and base radius tiles.
 */
 int const ADJACENT_TILE_OFFSET_COUNT = 9;
-int const BASE_TILE_OFFSET_COUNT = 21;
-int const BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
+int const BASE_RADIUS_TILE_OFFSET_COUNT = 21;
+int const BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT = 37;
+int const BASE_TILE_OFFSETS[BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT][2] =
 {
+	// center
 	{+0,+0},
+	// adjacent tiles
 	{+1,-1},
 	{+2,+0},
 	{+1,+1},
@@ -68,6 +78,7 @@ int const BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 	{-2,+0},
 	{-1,-1},
 	{+0,-2},
+	// base radius outer tiles
 	{+2,-2},
 	{+2,+2},
 	{-2,+2},
@@ -80,6 +91,23 @@ int const BASE_TILE_OFFSETS[BASE_TILE_OFFSET_COUNT][2] =
 	{-3,+1},
 	{-3,-1},
 	{-1,-3},
+	// base radius bordered tiles
+	{+3,-3},
+	{+3,+3},
+	{-3,+3},
+	{-3,-3},
+	{-0,-4},
+	{+4,+0},
+	{+0,+4},
+	{-4,-0},
+	{+2,-4},
+	{+4,-2},
+	{+4,+2},
+	{+2,+4},
+	{-2,+4},
+	{-4,+2},
+	{-4,-2},
+	{-2,-4},
 };
 
 char* prod_name(int prod);
@@ -176,6 +204,7 @@ class TileSearch {
     void init(int, int, int);
     void init(int, int, int, int);
     bool has_zoc(int);
+	MAP* get_next(bool returnFirstTile);
     MAP* get_next();
 };
 
@@ -247,6 +276,8 @@ std::vector<MAP *> getAdjacentTiles(int x, int y, bool startWithCenter);
 std::vector<MAP_INFO> getAdjacentTileInfos(int x, int y, bool startWithCenter);
 std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool startWithCenter);
 std::vector<MAP_INFO> getBaseRadiusTileInfos(int x, int y, bool startWithCenter);
+int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y);
+int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y);
 std::vector<MAP *> getBaseWorkedTiles(int baseId);
 std::vector<MAP *> getBaseWorkedTiles(BASE *base);
 int getBaseConventionalDefenseValue(int baseId);
@@ -289,4 +320,14 @@ void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
 int getRemainingMinerals(int baseId);
 std::vector<int> getStackedVehicleIds(int vehicleId);
 void setTerraformingAction(int vehicleId, int action);
+double getImprovedTileWeightedYield(MAP_INFO *tileInfo, int terraformingActionsCount, int terraformingActions[], double nutrientWeight, double mineralWeight, double energyWeight);
+void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
+void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
+void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState);
+void generateTerraformingChange(MAP_STATE *mapState, int action);
+HOOK_API int mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
+HOOK_API int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
+HOOK_API int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
+bool isRightfulBuildSite(int x, int y, int vehicleId);
+bool isCoast(int x, int y);
 

@@ -78,7 +78,7 @@ int findFastAttackerUnit(int factionId);
 int findScoutUnit(int factionId, int triad);
 int findColonyUnit(int factionId, int triad);
 int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus, double infantryTurnsToDestination);
-bool canBaseProduceColony(int baseId, int colonyUnitId);
+bool canBaseProduceColony(int baseId);
 int findFormerUnit(int factionId, int triad);
 std::vector<int> getRegionBases(int factionId, int region);
 int getRegionBasesMaxMineralSurplus(int factionId, int region);

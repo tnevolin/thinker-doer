@@ -151,4 +151,5 @@ extern fp_2void *tx_tech_research;
 extern fp_3void *tx_bitmask;
 extern fp_3void *tx_action_move;
 extern fp_1int *tx_veh_cargo;
+extern fp_3int *tx_zoc_move;
 

@@ -562,7 +562,8 @@ bool can_build_base(int x, int y, int faction, int triad) {
     if ((x + y)%2) // Invalid map coordinates
         return false;
     MAP* sq = mapsq(x, y);
-    if (!sq || y < 3 || y >= *map_axis_y-3 || (~sq->landmarks & LM_JUNGLE && pm_former[x][y] > 0))
+    // formers orders should not prevent building colony
+    if (!sq || y < 3 || y >= *map_axis_y-3 /*|| (~sq->landmarks & LM_JUNGLE && pm_former[x][y] > 0)*/)
         return false;
     if ((sq->rocks & TILE_ROCKY && !is_ocean(sq)) || (sq->items & (BASE_DISALLOWED | IMP_ADVANCED)))
         return false;
@@ -587,50 +588,70 @@ bool can_build_base(int x, int y, int faction, int triad) {
     return false;
 }
 
-int base_tile_score(int x1, int y1, int range, int triad) {
-    const int priority[][2] = {
-        {TERRA_RIVER, 1},
-        {TERRA_FUNGUS, -2},
-        {TERRA_FARM, 2},
-        {TERRA_FOREST, 2},
-        {TERRA_MONOLITH, 4},
-    };
-    MAP* sq = mapsq(x1, y1);
-    int score = (!is_ocean(sq) && sq->items & TERRA_RIVER ? 4 : 0);
-    int land = 0;
-    range *= (triad == TRIAD_LAND ? 3 : 1);
+double base_tile_score(int factionId, int x1, int y1, int range, int triad)
+{
+	double positionScore = getBasePositionScore(factionId, x1, y1);
 
-    for (int i=0; i<20; i++) {
-        int x2 = wrap(x1 + offset_tbl[i][0]);
-        int y2 = y1 + offset_tbl[i][1];
-        sq = mapsq(x2, y2);
-        if (sq) {
-            int items = sq->items;
-            score += (tx_bonus_at(x2, y2) ? 6 : 0);
-            if (sq->landmarks && !(sq->landmarks & (LM_DUNES | LM_SARGASSO | LM_UNITY))) {
-                score += (sq->landmarks & LM_JUNGLE ? 3 : 2);
-            }
-            if (i < 8) { // Only adjacent tiles
-                if (triad == TRIAD_SEA && !is_ocean(sq)
-                && nearby_tiles(x2, y2, TRIAD_LAND, 20) >= 20 && ++land < 3) {
-                    score += (sq->owner < 1 ? 20 : 3);
-                }
-                if (is_ocean_shelf(sq)) {
-                    score += (triad == TRIAD_SEA ? 3 : 2);
-                }
-            }
-            if (!is_ocean(sq)) {
-                if (sq->level & TILE_RAINY) {
-                    score += 2;
-                }
-                if (sq->level & TILE_MOIST && sq->rocks & TILE_ROLLING) {
-                    score += 2;
-                }
-            }
-            for (const int* p : priority) if (items & p[0]) score += p[1];
-        }
-    }
-    return score - range + random(4) + min(0, pm_safety[x1][y1]);
+//    const int priority[][2] = {
+//        {TERRA_RIVER, 1},
+//        {TERRA_FUNGUS, -2},
+//        {TERRA_FARM, 2},
+//        {TERRA_FOREST, 2},
+//        {TERRA_MONOLITH, 4},
+//    };
+//    MAP* sq = mapsq(x1, y1);
+//    int score = (!is_ocean(sq) && sq->items & TERRA_RIVER ? 4 : 0);
+//    int land = 0;
+//
+//    for (int i=0; i<20; i++) {
+//        int x2 = wrap(x1 + offset_tbl[i][0]);
+//        int y2 = y1 + offset_tbl[i][1];
+//        sq = mapsq(x2, y2);
+//        if (sq) {
+//            int items = sq->items;
+//            score += (tx_bonus_at(x2, y2) ? 6 : 0);
+//            if (sq->landmarks && !(sq->landmarks & (LM_DUNES | LM_SARGASSO | LM_UNITY))) {
+//                score += (sq->landmarks & LM_JUNGLE ? 3 : 2);
+//            }
+//            if (i < 8) { // Only adjacent tiles
+//                if (triad == TRIAD_SEA && !is_ocean(sq)
+//                && nearby_tiles(x2, y2, TRIAD_LAND, 20) >= 20 && ++land < 3) {
+//                    score += (sq->owner < 1 ? 20 : 3);
+//                }
+//                if (is_ocean_shelf(sq)) {
+//                    score += (triad == TRIAD_SEA ? 3 : 2);
+//                }
+//            }
+//            if (!is_ocean(sq)) {
+//                if (sq->level & TILE_RAINY) {
+//                    score += 2;
+//                }
+//                if (sq->level & TILE_MOIST && sq->rocks & TILE_ROLLING) {
+//                    score += 2;
+//                }
+//            }
+//            for (const int* p : priority) if (items & p[0]) score += p[1];
+//        }
+//    }
+//
+    double rangeScore = (double)range / (double)(triad == TRIAD_LAND ? 1 : 4) / 2.0;
+
+    double score = positionScore - rangeScore + (double)min(0, pm_safety[x1][y1]);
+
+    debug
+    (
+		"\t(%3d,%3d) positionScore=%5.1f, rangeScore=%5.1f, safetyScore=%5.1f, score=%5.1f\n",
+		x1,
+		y1,
+		positionScore,
+		rangeScore,
+		(double)min(0, pm_safety[x1][y1]),
+		score
+	)
+	;
+
+    return score;
+
 }
 
 int colony_move(int id) {
@@ -644,10 +665,11 @@ int colony_move(int id) {
     if (pm_safety[veh->x][veh->y] < PM_SAFE) {
         return escape_move(id);
     }
-    if ((at_target(veh) || triad == TRIAD_LAND) && can_build_base(veh->x, veh->y, faction, triad)) {
-        tx_action_build(id, 0);
-        return SYNC;
-    }
+    // don't build base just any place
+//    if ((at_target(veh) || triad == TRIAD_LAND) && can_build_base(veh->x, veh->y, faction, triad)) {
+//        tx_action_build(id, 0);
+//        return SYNC;
+//    }
     if (is_ocean(sq) && triad == TRIAD_LAND) {
         if (!has_transport(veh->x, veh->y, faction)) {
             needferry.insert({veh->x, veh->y});
@@ -662,34 +684,71 @@ int colony_move(int id) {
             }
         }
     }
-    if (!valid_colony_path(id)) {
+    // recompute path every turn
+//    if (!valid_colony_path(id))
+	{
+		debug("\nBase placement: %s (%3d,%3d)\n", tx_metafactions[faction].noun_faction, veh->x, veh->y);
+
         int i = 0;
         int k = 0;
-        int tscore = INT_MIN;
+        double tscore = -DBL_MAX;
         int tx = -1;
         int ty = -1;
         int limit = (!((*current_turn + id) % 8) ? 500 : 200);
+
         TileSearch ts;
-        ts.init(veh->x, veh->y, triad, 2);
-        while (++i < limit && k < 30 && (sq = ts.get_next()) != NULL) {
+        // y_skip is not needed as we compute base yield
+        ts.init(veh->x, veh->y, triad, 0);
+        while (++i < limit && k < 400 && (sq = ts.get_next(true)) != NULL)
+		{
             if (!can_build_base(ts.rx, ts.ry, faction, triad) || !safe_path(ts, faction))
                 continue;
-            int score = base_tile_score(ts.rx, ts.ry, ts.dist, triad);
+
+			// ignore tiles closer to other friendly colonies
+
+			if (!isRightfulBuildSite(ts.rx, ts.ry, id))
+				continue;
+
+			// compute score
+
+            double score = base_tile_score(veh->faction_id, ts.rx, ts.ry, ts.dist, triad);
             k++;
             if (score > tscore) {
                 tx = ts.rx;
                 ty = ts.ry;
                 tscore = score;
             }
+
         }
         if (tx >= 0) {
-            debug("colony_move %d %d -> %d %d | %d %d | %d\n", veh->x, veh->y, tx, ty, faction, id, tscore);
+            debug("colony_move %d %d -> %d %d | %d %d | %f\n\n", veh->x, veh->y, tx, ty, faction, id, tscore);
             adjust_value(pm_former, tx, ty, 1, 1);
             // Set these flags to disable any non-Thinker unit automation.
             veh->state |= VSTATE_UNK_40000;
             veh->state &= ~VSTATE_UNK_2000;
-            return set_move_to(id, tx, ty);
+
+			// move to location
+
+            set_move_to(id, tx, ty);
+
+            // build base if at target
+
+			if (at_target(veh) && can_build_base(veh->x, veh->y, faction, triad))
+			{
+				tx_action_build(id, 0);
+			}
+
+			return SYNC;
+
         }
+        else
+		{
+			// do not move colony
+			return veh_skip(id);
+		}
+
+		debug("\n");
+
     }
     if (!at_target(veh)) {
         return SYNC;
