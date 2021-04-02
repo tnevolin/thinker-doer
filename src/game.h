@@ -3,6 +3,12 @@
 #include "main.h"
 #include "engine.h"
 
+struct LOCATION
+{
+	int x;
+	int y;
+};
+
 struct MAP_INFO
 {
 	int x;
@@ -330,4 +336,6 @@ HOOK_API int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
 bool isRightfulBuildSite(int x, int y, int vehicleId);
 bool isCoast(int x, int y);
+bool isOceanRegionCoast(int x, int y, int oceanRegion);
+std::vector<int> getLoadedVehicleIds(int vehicleId);
 
