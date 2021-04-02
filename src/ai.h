@@ -10,6 +10,7 @@
 #include "aiTerraforming.h"
 #include "aiCombat.h"
 #include "aiColony.h"
+#include "aiTransport.h"
 
 struct FACTION_INFO
 {

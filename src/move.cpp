@@ -125,7 +125,9 @@ HOOK_API int enemy_move(int id) {
 			}
 
         } else if (w == WPN_TROOP_TRANSPORT && veh_triad(id) == TRIAD_SEA) {
-            return trans_move(id);
+//            return trans_move(id);
+			moveTransport(id);
+			return SYNC;
         } else if (w <= WPN_PSI_ATTACK && veh_triad(id) == TRIAD_LAND) {
 
         	// select combat algorithm
@@ -251,9 +253,9 @@ void move_upkeep(int faction) {
             if ((u->weapon_type == WPN_COLONY_MODULE || u->weapon_type == WPN_TERRAFORMING_UNIT)
             && veh_triad(i) == TRIAD_LAND) {
                 MAP* sq = mapsq(veh->x, veh->y);
-                if (sq && is_ocean(sq) && sq->items & TERRA_BASE_IN_TILE
-                && coast_tiles(veh->x, veh->y) < 8) {
-                    needferry.insert(xy);
+                if (sq && is_ocean(sq) && sq->items & TERRA_BASE_IN_TILE)
+				{
+					needferry.insert(xy);
                 }
             }
         }
@@ -434,7 +436,8 @@ int trans_move(int id) {
         needferry.erase(xy);
         return veh_skip(id);
     }
-    if (needferry.size() > 0 && triad == TRIAD_SEA && at_target(veh)) {
+    // need to recalculate movement every time
+    if (needferry.size() > 0 && triad == TRIAD_SEA/* && at_target(veh)*/) {
         MAP* sq;
         int i = 0;
         TileSearch ts;
@@ -442,7 +445,8 @@ int trans_move(int id) {
         while (i++ < 120 && (sq = ts.get_next()) != NULL) {
             xy = mp(ts.rx, ts.ry);
             if (needferry.count(xy) && non_combat_move(ts.rx, ts.ry, faction, triad)) {
-                needferry.erase(xy);
+				// keep ferry point for future computations
+//                needferry.erase(xy);
                 debug("trans_move %d %d -> %d %d\n", veh->x, veh->y, ts.rx, ts.ry);
                 return set_move_to(id, ts.rx, ts.ry);
             }

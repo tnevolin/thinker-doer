@@ -100,6 +100,8 @@
 		<Unit filename="src/aiProduction.h" />
 		<Unit filename="src/aiTerraforming.cpp" />
 		<Unit filename="src/aiTerraforming.h" />
+		<Unit filename="src/aiTransport.cpp" />
+		<Unit filename="src/aiTransport.h" />
 		<Unit filename="src/engine.cpp" />
 		<Unit filename="src/engine.h" />
 		<Unit filename="src/game.cpp" />

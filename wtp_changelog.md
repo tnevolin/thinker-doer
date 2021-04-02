@@ -1,3 +1,7 @@
+# Version 207
+
+* Sea transport delivers colony and former to proper landmass.
+
 # Version 206
 
 * BUG: Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do.

@@ -3247,3 +3247,51 @@ bool isCoast(int x, int y)
 
 }
 
+bool isOceanRegionCoast(int x, int y, int oceanRegion)
+{
+	MAP *tile = getMapTile(x, y);
+
+	if (is_ocean(tile))
+		return false;
+
+	for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+	{
+		if (is_ocean(adjacentTile) && adjacentTile->region == oceanRegion)
+			return true;
+	}
+
+	return false;
+
+}
+
+/*
+Returns vehicle in the same stack and attached for give transport.
+*/
+std::vector<int> getLoadedVehicleIds(int vehicleId)
+{
+	std::vector<int> loadedVehicleIds;
+
+	// select those in stack attached to this one
+
+	for (int stackedVehicleId : getStackedVehicleIds(vehicleId))
+	{
+		VEH *stackedVehicle = &(tx_vehicles[stackedVehicleId]);
+
+		// exclude self
+
+		if (stackedVehicleId == vehicleId)
+			continue;
+
+		// get loaded vehicles
+
+		if (stackedVehicle->move_status == ORDER_SENTRY_BOARD && stackedVehicle->waypoint_1_x == vehicleId)
+		{
+			loadedVehicleIds.push_back(stackedVehicleId);
+		}
+
+	}
+
+	return loadedVehicleIds;
+
+}
+
