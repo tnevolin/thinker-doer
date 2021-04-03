@@ -1,7 +1,6 @@
 #pragma once
 
 #include "main.h"
-#include "engine.h"
 
 struct LOCATION
 {
@@ -34,7 +33,6 @@ struct MAP_STATE
 };
 
 /*
-
 Function parameter naming conventions
 
 Faction ID is always written as "faction". It is also written with a number suffix
@@ -42,27 +40,47 @@ Faction ID is always written as "faction". It is also written with a number suff
 
 Generic "id" is used to denote any parameter for base, unit, or vehicle IDs.
 It is assumed the meaning of the parameter is clear from the function context.
-
-If there multiple non-faction ID parameters, the first one is written with a full name
-"base_id" etc. and the second can be "id" if the meaning is clear from the context.
-
 */
 
-const int offset[][2] = {
+const int NearbyTiles[][2] = {
     {1,-1},{2,0},{1,1},{0,2},{-1,1},{-2,0},{-1,-1},{0,-2}
 };
-
-const int offset_tbl[][2] = {
-    {1,-1},{2,0},{1,1},{0,2},{-1,1},{-2,0},{-1,-1},{0,-2},
-    {2,-2},{2,2},{-2,2},{-2,-2},{1,-3},{3,-1},{3,1},{1,3},
-    {-1,3},{-3,1},{-3,-1},{-1,-3},{4,0},{-4,0},{0,4},{0,-4},
-    {1,-5},{2,-4},{3,-3},{4,-2},{5,-1},{5,1},{4,2},{3,3},
-    {2,4},{1,5},{-1,5},{-2,4},{-3,3},{-4,2},{-5,1},{-5,-1},
-    {-4,-2},{-3,-3},{-2,-4},{-1,-5},{0,6},{6,0},{0,-6},{-6,0},
-    {0,-8},{1,-7},{2,-6},{3,-5},{4,-4},{5,-3},{6,-2},{7,-1},
-    {8,0},{7,1},{6,2},{5,3},{4,4},{3,5},{2,6},{1,7},
-    {0,8},{-1,7},{-2,6},{-3,5},{-4,4},{-5,3},{-6,2},{-7,1},
-    {-8,0},{-7,-1},{-6,-2},{-5,-3},{-4,-4},{-3,-5},{-2,-6},{-1,-7},
+const int BaseOffsetX[] = { 1, 2, 1, 0, -1, -2, -1,  0, 0};
+const int BaseOffsetY[] = {-1, 0, 1, 2,  1,  0, -1, -2, 0};
+const int TableRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
+const int TableOffsetX[] = {
+     0,  1,  2,  1,  0, -1, -2,  -1,   0,   2,   2,  -2,  -2,   1,   3,   3,   1,  -1,  -3,  -3,
+    -1,  4, -4,  0,  0,  1,  2,   3,   4,   5,   5,   4,   3,   2,   1,  -1,  -2,  -3,  -4,  -5,
+    -5, -4, -3, -2, -1,  0,  6,   0,  -6,   0,   1,   2,   3,   4,   5,   6,   7,   8,   7,   6,
+     5,  4,  3,  2,  1,  0, -1,  -2,  -3,  -4,  -5,  -6,  -7,  -8,  -7,  -6,  -5,  -4,  -3,  -2,
+    -1,  0,  1,  2,  3,  4,  5,   6,   7,   8,   9,  10,   9,   8,   7,   6,   5,   4,   3,   2,
+     1,  0, -1, -2, -3, -4, -5,  -6,  -7,  -8,  -9, -10,  -9,  -8,  -7,  -6,  -5,  -4,  -3,  -2,
+    -1,  0,  1,  2,  3,  4,  5,   6,   7,   8,   9,  10,  11,  12,  11,  10,   9,   8,   7,   6,
+     5,  4,  3,  2,  1,  0, -1,  -2,  -3,  -4,  -5,  -6,  -7,  -8,  -9, -10, -11, -12, -11, -10,
+    -9, -8, -7, -6, -5, -4, -3,  -2,  -1,   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,
+    11, 12, 13, 14, 13, 12, 11,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0,  -1,  -2,
+    -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -13, -12, -11, -10,  -9,  -8,  -7,  -6,
+    -5, -4, -3, -2, -1,  0,  1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,
+    15, 16, 15, 14, 13, 12, 11,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0,  -1,  -2,
+    -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, -15, -14, -13, -12, -11, -10,
+    -9, -8, -7, -6, -5, -4, -3,  -2,  -1,
+};
+const int TableOffsetY[] = {
+     0,  -1,   0,   1,   2,   1,   0,  -1,  -2,  -2,   2,   2,  -2,  -3, -1,  1,  3,  3,  1, -1,
+    -3,   0,   0,   4,  -4,  -5,  -4,  -3,  -2,  -1,   1,   2,   3,   4,  5,  5,  4,  3,  2,  1,
+    -1,  -2,  -3,  -4,  -5,   6,   0,  -6,   0,  -8,  -7,  -6,  -5,  -4, -3, -2, -1,  0,  1,  2,
+     3,   4,   5,   6,   7,   8,   7,   6,   5,   4,   3,   2,   1,   0, -1, -2, -3, -4, -5, -6,
+    -7, -10,  -9,  -8,  -7,  -6,  -5,  -4,  -3,  -2,  -1,   0,   1,   2,  3,  4,  5,  6,  7,  8,
+     9,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0,  -1,  -2, -3, -4, -5, -6, -7, -8,
+    -9, -12, -11, -10,  -9,  -8,  -7,  -6,  -5,  -4,  -3,  -2,  -1,   0,  1,  2,  3,  4,  5,  6,
+     7,   8,   9,  10,  11,  12,  11,  10,   9,   8,   7,   6,   5,   4,  3,  2,  1,  0, -1, -2,
+    -3,  -4,  -5,  -6,  -7,  -8,  -9, -10, -11, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4,
+    -3,  -2,  -1,   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10, 11, 12, 13, 14, 13, 12,
+    11,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0,  -1,  -2, -3, -4, -5, -6, -7, -8,
+    -9, -10, -11, -12, -13, -16, -15, -14, -13, -12, -11, -10,  -9,  -8, -7, -6, -5, -4, -3, -2,
+    -1,   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12, 13, 14, 15, 16, 15, 14,
+    13,  12,  11,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0, -1, -2, -3, -4, -5, -6,
+    -7,  -8,  -9, -10, -11, -12, -13, -14, -15,
 };
 
 /*
@@ -128,51 +146,55 @@ bool has_facility(int base_id, int id);
 bool can_build(int base_id, int id);
 bool can_build_unit(int faction, int id);
 bool is_human(int faction);
-bool ai_faction(int faction);
+bool is_alien(int faction);
 bool ai_enabled(int faction);
 bool at_war(int faction1, int faction2);
+bool has_pact(int faction1, int faction2);
 bool un_charter();
+bool valid_player(int faction);
+bool valid_triad(int triad);
 int prod_count(int faction, int id, int skip);
+int facility_count(int faction, int facility);
 int find_hq(int faction);
-int veh_triad(int id);
-int veh_speed(int id);
-int veh_speed_without_roads(int id);
-int unit_chassis_speed(int id);
-int veh_chassis_speed(int id);
-int unit_triad(int id);
-int unit_speed(int id);
+int manifold_nexus_owner();
+int mod_veh_speed(int veh_id);
 int best_armor(int faction, bool cheap);
 int best_weapon(int faction);
 int best_reactor(int faction);
 int offense_value(UNIT* u);
 int defense_value(UNIT* u);
+int faction_might(int faction);
+double expansion_ratio(int faction);
 int random(int n);
 double random_double(double scale);
 int map_hash(int x, int y);
-double lerp(double a, double b, double t);
 int wrap(int a);
 int map_range(int x1, int y1, int x2, int y2);
-int point_range(const Points& S, int x, int y);
-double mean_range(const Points& S, int x, int y);
+int vector_dist(int x1, int y1, int x2, int y2);
+int min_range(const Points& S, int x, int y);
+double avg_range(const Points& S, int x, int y);
 MAP* mapsq(int x, int y);
 int unit_in_tile(MAP* sq);
-int set_move_to(int id, int x, int y);
-int set_road_to(int id, int x, int y);
-int set_move_road_tube_to(int id, int x, int y);
-int set_action(int id, int act, char icon);
-int set_convoy(int id, int res);
-int veh_skip(int id);
+int set_move_to(int veh_id, int x, int y);
+int set_move_next(int veh_id, int offset);
+int set_road_to(int veh_id, int x, int y);
+int set_action(int veh_id, int act, char icon);
+int set_convoy(int veh_id, int res);
+int set_board_to(int veh_id, int trans_veh_id);
+int cargo_loaded(int veh_id);
+int cargo_capacity(int veh_id);
+int mod_veh_skip(int veh_id);
 bool at_target(VEH* veh);
 bool is_ocean(MAP* sq);
+bool is_ocean(BASE* base);
 bool is_ocean_shelf(MAP* sq);
-bool is_ocean_deep(MAP* sq);
-bool is_sea_base(int id);
-bool workable_tile(int x, int y, int faction);
+bool is_shore_level(MAP* sq);
 bool has_defenders(int x, int y, int faction);
 int nearby_items(int x, int y, int range, uint32_t item);
 int bases_in_range(int x, int y, int range);
 int nearby_tiles(int x, int y, int type, int limit);
 int coast_tiles(int x, int y);
+int set_base_facility(int base_id, int facility_id, bool add);
 int spawn_veh(int unit_id, int faction, int x, int y, int base_id);
 char* parse_str(char* buf, int len, const char* s1, const char* s2, const char* s3, const char* s4);
 void check_zeros(int* ptr, int len);
@@ -187,6 +209,26 @@ bool map_base(MAP *tile);
 bool map_has_item(MAP *tile, unsigned int item);
 bool map_has_landmark(MAP *tile, int landmark);
 
+bool __cdecl can_arty(int unit_id, bool allow_sea_arty);
+void __cdecl add_goal(int faction, int type, int priority, int x, int y, int base_id);
+void __cdecl wipe_goals(int faction);
+int has_goal(int faction, int type, int x, int y);
+std::vector<MapTile> iterate_tiles(int x, int y, int start_index, int end_index);
+
+const int PathLimit = 60;
+const int QueueSize = 4096;
+const int MaxTileSearchType = 6;
+
+enum tilesearch_types {
+    TS_TRIAD_LAND = 0,
+    TS_TRIAD_SEA = 1,
+    TS_TRIAD_AIR = 2,
+    TS_NEAR_ROADS = 3,
+    TS_TERRITORY_LAND = 4,
+    TS_TERRITORY_BORDERS = 5,
+    TS_SEA_AND_SHORE = 6,
+};
+
 struct PathNode {
     int x;
     int y;
@@ -199,143 +241,20 @@ class TileSearch {
     int head;
     int tail;
     int roads;
-    int items;
     int y_skip;
     int owner;
     MAP* sq;
+    void reset();
+    void add_start(int x, int y);
     public:
     int rx, ry, dist, cur;
-    PathNode newtiles[QSIZE];
+    PathNode paths[QueueSize];
     Points oldtiles;
-    void init(int, int, int);
-    void init(int, int, int, int);
-    bool has_zoc(int);
-	MAP* get_next(bool returnFirstTile);
+    void init(int x, int y, int tp);
+    void init(int x, int y, int tp, int y_skip);
+    void init(const PointList& points, int tp, int y_skip);
+    bool has_zoc(int faction);
+    PointList& get_route(PointList& pp);
     MAP* get_next();
 };
-
-BASE *vehicle_home_base(VEH *vehicle);
-MAP *base_square(BASE *base);
-bool unit_has_ability(int id, int ability);
-bool vehicle_has_ability(int vehicleId, int ability);
-bool vehicle_has_ability(VEH *vehicle, int ability);
-const char *readOrder(int id);
-void setBaseFacility(int base_id, int facility_id, bool add);
-bool has_facility_tech(int faction_id, int facility_id);
-int getDoctors(int id);
-int getDoctorQuelledDrones(int id);
-int getBaseBuildingItem(int baseId);
-bool isBaseBuildingUnit(int baseId);
-bool isBaseBuildingFacility(int baseId);
-bool isBaseBuildingProject(int baseId);
-bool isBaseProductionWithinRetoolingExemption(int baseId);
-bool isBaseBuildingProjectBeyondRetoolingExemption(int baseId);
-int getBaseBuildingItemCost(int baseId);
-int getSEMoraleAttack(int factionId);
-int getSEMoraleDefense(int factionId);
-int getMoraleAttack(int id);
-int getMoraleDefense(int id);
-double getMoraleModifierAttack(int id);
-double getMoraleModifierDefense(int id);
-double getVehiclePsiAttackStrength(int id);
-double getVehiclePsiDefenseStrength(int id);
-double getNewVehicleMoraleModifierAttack(int factionId, double averageFacilityMoraleBoost);
-double getNewVehicleMoraleModifierDefense(int factionId, double averageFacilityMoraleBoost);
-double getSEPlanetModifierAttack(int factionId);
-double getSEPlanetModifierDefense(int factionId);
-double getPsiCombatBaseOdds(int triad);
-bool isCombatUnit(int id);
-bool isCombatVehicle(int id);
-double calculatePsiDamageAttack(int id, int enemyId);
-double calculatePsiDamageDefense(int id, int enemyId);
-double calculateNativeDamageAttack(int id);
-double calculateNativeDamageDefense(int id);
-void setVehicleOrder(int id, int order);
-MAP *getMapTile(int x, int y);
-MAP *getBaseMapTile(int baseId);
-MAP *getVehicleMapTile(int vehicleId);
-bool isImprovedTile(int x, int y);
-bool isVehicleSupply(VEH *vehicle);
-bool isColonyUnit(int id);
-bool isVehicleColony(int id);
-bool isFormerUnit(int unitId);
-bool isVehicleFormer(int vehicleId);
-bool isVehicleFormer(VEH *vehicle);
-bool isVehicleTransport(VEH *vehicle);
-bool isVehicleProbe(VEH *vehicle);
-bool isVehicleIdle(int vehicleId);
-void computeBase(int baseId);
-std::set<int> getBaseConnectedRegions(int id);
-std::set<int> getBaseConnectedOceanRegions(int baseId);
-bool isOceanRegion(int region);
-double evaluateUnitConventionalDefenseEffectiveness(int id);
-double evaluateUnitConventionalOffenseEffectiveness(int id);
-double evaluateUnitPsiDefenseEffectiveness(int id);
-double evaluateUnitPsiOffenseEffectiveness(int id);
-double getBaseDefenseMultiplier(int id, int triad, bool countDefensiveStructures, bool countTerritoryBonus);
-int getUnitOffenseValue(int id);
-int getUnitDefenseValue(int id);
-int getVehicleOffenseValue(int id);
-int getVehicleDefenseValue(int id);
-int estimateBaseProductionTurnsToComplete(int id);
-std::vector<MAP *> getAdjacentTiles(int x, int y, bool startWithCenter);
-std::vector<MAP_INFO> getAdjacentTileInfos(int x, int y, bool startWithCenter);
-std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool startWithCenter);
-std::vector<MAP_INFO> getBaseRadiusTileInfos(int x, int y, bool startWithCenter);
-int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y);
-int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y);
-std::vector<MAP *> getBaseWorkedTiles(int baseId);
-std::vector<MAP *> getBaseWorkedTiles(BASE *base);
-int getBaseConventionalDefenseValue(int baseId);
-std::vector<int> getFactionPrototypes(int factionId, bool includeNotPrototyped);
-bool isNativeLandVehicle(int vehicleId);
-bool isBaseBuildingColony(int baseId);
-int projectBasePopulation(int baseId, int turns);
-int getFactionFacilityPopulationLimit(int factionId, int facilityId);
-bool isBaseFacilityAvailable(int baseId, int facilityId);
-bool isBaseConnectedToRegion(int baseId, int region);
-bool isTileConnectedToRegion(int x, int y, int region);
-int getXCoordinateByMapIndex(int mapIndex);
-int getYCoordinateByMapIndex(int mapIndex);
-std::vector<int> getRegionBases(int factionId, int region);
-std::vector<int> getRegionSurfaceVehicles(int factionId, int region, bool includeStationed);
-std::vector<int> getBaseGarrison(int baseId);
-std::vector<int> getFactionBases(int factionId);
-double estimateUnitBaseLandNativeProtection(int factionId, int unitId);
-double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId);
-double getFactionOffenseMultiplier(int factionId);
-double getFactionDefenseMultiplier(int factionId);
-double getFactionFanaticBonusMultiplier(int factionId);
-double getVehicleBaseNativeProtectionPotential(int vehicleId);
-double getVehicleBaseNativeProtectionEfficiency(int vehicleId);
-int getAllowedPolice(int factionId);
-int getVehicleUnitPlan(int vehicleId);
-int getBasePoliceUnitCount(int baseId);
-double getBaseNativeProtection(int baseId);
-bool isBaseHasAccessToWater(int baseId);
-bool isBaseCanBuildShips(int baseId);
-bool isExploredEdge(int factionId, int x, int y);
-MAP_INFO getAdjacentOceanTileInfo(int x, int y);
-bool isVehicleExploring(int vehicleId);
-bool isVehicleCanHealAtThisLocation(int vehicleId);
-std::unordered_set<int> getAdjacentOceanRegions(int x, int y);
-std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y);
-bool isMapTileVisibleToFaction(MAP *tile, int factionId);
-bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus);
-void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
-int getRemainingMinerals(int baseId);
-std::vector<int> getStackedVehicleIds(int vehicleId);
-void setTerraformingAction(int vehicleId, int action);
-double getImprovedTileWeightedYield(MAP_INFO *tileInfo, int terraformingActionsCount, int terraformingActions[], double nutrientWeight, double mineralWeight, double energyWeight);
-void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
-void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
-void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState);
-void generateTerraformingChange(MAP_STATE *mapState, int action);
-HOOK_API int mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
-HOOK_API int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
-HOOK_API int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
-bool isRightfulBuildSite(int x, int y, int vehicleId);
-bool isCoast(int x, int y);
-bool isOceanRegionCoast(int x, int y, int oceanRegion);
-std::vector<int> getLoadedVehicleIds(int vehicleId);
 

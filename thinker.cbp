@@ -21,9 +21,6 @@
 					<Add option="-DBUILD_DLL" />
 					<Add option="-DBUILD_DEBUG" />
 				</Compiler>
-				<Linker>
-					<Add library="user32" />
-				</Linker>
 			</Target>
 			<Target title="Develop">
 				<Option output="build/bin/develop/thinker" prefix_auto="1" extension_auto="1" />
@@ -36,13 +33,11 @@
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
-					<Add option="-O2" />
-					<Add option="-fno-delete-null-pointer-checks -fno-strict-aliasing" />
+					<Add option="-O3 -fno-strict-aliasing -fno-delete-null-pointer-checks" />
 					<Add option="-DBUILD_DLL" />
 				</Compiler>
 				<Linker>
 					<Add option="-s -static" />
-					<Add library="user32" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -56,14 +51,12 @@
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
-					<Add option="-O2" />
-					<Add option="-fno-delete-null-pointer-checks -fno-strict-aliasing" />
+					<Add option="-O3 -fno-strict-aliasing -fno-delete-null-pointer-checks" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-DBUILD_REL" />
 				</Compiler>
 				<Linker>
 					<Add option="-s -static" />
-					<Add library="user32" />
 				</Linker>
 				<ExtraCommands>
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_Changelog.md&quot; &quot;releases\TheWillToPower\&quot;  /iy' />
@@ -84,6 +77,12 @@
 		<Compiler>
 			<Add option="-std=c++11 -pedantic -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-align -Wfloat-conversion" />
 		</Compiler>
+		<Linker>
+			<Add library="user32" />
+			<Add library="winmm" />
+			<Add library="gdi32" />
+			<Add library="psapi" />
+		</Linker>
 		<ExtraCommands>
 			<Add after='cmd /c copy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; patch\' />
 			<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; patch\ /Y' />
@@ -106,6 +105,8 @@
 		<Unit filename="src/engine.h" />
 		<Unit filename="src/game.cpp" />
 		<Unit filename="src/game.h" />
+		<Unit filename="src/gui.cpp" />
+		<Unit filename="src/gui.h" />
 		<Unit filename="src/lib/ini.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -116,18 +117,17 @@
 		<Unit filename="src/move.h" />
 		<Unit filename="src/patch.cpp" />
 		<Unit filename="src/patch.h" />
+		<Unit filename="src/path.cpp" />
+		<Unit filename="src/path.h" />
 		<Unit filename="src/tech.cpp" />
 		<Unit filename="src/tech.h" />
 		<Unit filename="src/terranx.cpp" />
 		<Unit filename="src/terranx.h" />
 		<Unit filename="src/terranx_enums.h" />
 		<Unit filename="src/terranx_types.h" />
-		<Unit filename="src/wtp.cpp" />
-		<Unit filename="src/wtp.h" />
+		<Unit filename="src/test.cpp" />
+		<Unit filename="src/test.h" />
 		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
 			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>
