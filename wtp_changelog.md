@@ -1,3 +1,8 @@
+# Version 208
+
+* Merged with Thinker 2.4.
+	* A lot of code changes. I have fixed some but there could be others lurking around. Please use caution and report any problems.
+
 # Version 207
 
 * Sea transport delivers colony and former to proper landmass.
