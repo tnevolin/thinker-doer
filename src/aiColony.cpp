@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "aiColony.h"
 
 double getBasePositionScore(int factionId, int x, int y)
@@ -27,7 +28,10 @@ double getBasePositionScore(int factionId, int x, int y)
 
 	}
 
-	// summarize top scores
+	// summarize top scores from top down
+
+	std::sort(tileScores.begin(), tileScores.end());
+	std::reverse(tileScores.begin(), tileScores.end());
 
 	double score = 0.0;
 
@@ -45,7 +49,7 @@ double getBasePositionScore(int factionId, int x, int y)
 
 	// encourage land usage
 
-	score += 2.0 * (double)getFriendlyLandBorderedBaseRadiusTileCount(factionId, x, y);
+	score += 1.0 * (double)getFriendlyLandBorderedBaseRadiusTileCount(factionId, x, y);
 
 	// prefer coast
 
@@ -68,23 +72,60 @@ double getBaseRadiusTileScore(MAP_INFO tileInfo)
 	double mineralWeight = 1.0;
 	double energyWeight = 0.5;
 
-	// calculate farm + mine score
+	// select best weighted yield
 
-	int farmMineTerraformingActionsCount = 2;
-	int farmMineTerraformingActions[] = {FORMER_FARM, FORMER_MINE};
+	double bestWeightedYield = 0.0;
 
-	double farmMineWeightedYield = getImprovedTileWeightedYield(&tileInfo, farmMineTerraformingActionsCount, farmMineTerraformingActions, nutrientWeight, mineralWeight, energyWeight);
+	if (map_rockiness(tileInfo.tile) == 2)
+	{
+		// mine
 
-	// calculate farm + collector score
+		{
+			int actionsCount = 1;
+			int actions[] = {FORMER_MINE};
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+		}
 
-	int farmSolarTerraformingActionsCount = 2;
-	int farmSolarTerraformingActions[] = {FORMER_FARM, FORMER_SOLAR};
+		// level, farm, mine
 
-	double farmSolarWeightedYield = getImprovedTileWeightedYield(&tileInfo, farmSolarTerraformingActionsCount, farmSolarTerraformingActions, nutrientWeight, mineralWeight, energyWeight);
+		{
+			int actionsCount = 3;
+			int actions[] = {FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_MINE};
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+		}
 
-	// add best yield score
+		// level, farm, solar
 
-	score += max(farmMineWeightedYield, farmSolarWeightedYield);
+		{
+			int actionsCount = 3;
+			int actions[] = {FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_SOLAR};
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+		}
+
+	}
+	else
+	{
+		// farm, mine
+
+		{
+			int actionsCount = 2;
+			int actions[] = {FORMER_FARM, FORMER_MINE};
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+		}
+
+		// farm, solar
+
+		{
+			int actionsCount = 2;
+			int actions[] = {FORMER_FARM, FORMER_SOLAR};
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+		}
+
+	}
+
+	// add best weighted yield to score
+
+	score += bestWeightedYield;
 
 	// discourage base radius overlap
 

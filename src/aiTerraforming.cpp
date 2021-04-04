@@ -4,10 +4,11 @@
 #include <unordered_set>
 #include <map>
 #include <unordered_map>
-#include "aiTerraforming.h"
-#include "ai.h"
-#include "wtp.h"
 #include "game.h"
+#include "terranx_wtp.h"
+#include "wtp.h"
+#include "ai.h"
+#include "aiTerraforming.h"
 
 double networkDemand = 0.0;
 std::unordered_map<MAP *, BASE_INFO> workedTileBases;
@@ -83,7 +84,7 @@ Populate global lists before processing faction strategy.
 */
 void populateLists()
 {
-	Faction *aiFaction = &(tx_factions[aiFactionId]);
+	Faction *aiFaction = &(Factions[aiFactionId]);
 
 	// clear lists
 
@@ -120,7 +121,7 @@ void populateLists()
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
-		VEH *vehicle = &(tx_vehicles[id]);
+		VEH *vehicle = &(Vehicles[id]);
 		MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
 
 		// exclude own vehicles
@@ -160,7 +161,7 @@ void populateLists()
 			(aiFaction->diplo_status[vehicle->faction_id] & DIPLO_VENDETTA)
 			&&
 			// except fungal tower
-			vehicle->proto_id != BSC_FUNGAL_TOWER
+			vehicle->unit_id != BSC_FUNGAL_TOWER
 		)
 		{
 			// 2 steps from artillery 1 step from anyone else
@@ -192,7 +193,7 @@ void populateLists()
 
 	for (int id : baseIds)
 	{
-		BASE *base = &(tx_bases[id]);
+		BASE *base = &(Bases[id]);
 
 		// populate affected base sets
 
@@ -254,7 +255,7 @@ void populateLists()
 
 	for (int id : baseIds)
 	{
-		BASE *base = &(tx_bases[id]);
+		BASE *base = &(Bases[id]);
 
 		MAP *baseTile = getMapTile(base->x, base->y);
 
@@ -427,7 +428,7 @@ void populateLists()
 
 	for (int id : baseIds)
 	{
-		BASE *base = &(tx_bases[id]);
+		BASE *base = &(Bases[id]);
 
 		MAP *baseTile = getMapTile(base->x, base->y);
 
@@ -456,7 +457,7 @@ void populateLists()
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
-		VEH *vehicle = &tx_vehicles[id];
+		VEH *vehicle = &Vehicles[id];
 		MAP *vehicleTile = getMapTile(vehicle->x, vehicle->y);
 
 		if (!vehicleTile)
@@ -743,7 +744,7 @@ void populateLists()
 
 	for (int id : baseIds)
 	{
-		BASE *base = &(tx_bases[id]);
+		BASE *base = &(Bases[id]);
 
 		// iterate base tiles
 
@@ -823,7 +824,7 @@ void populateLists()
 
 	for (int id : baseIds)
 	{
-		BASE *base = &(tx_bases[id]);
+		BASE *base = &(Bases[id]);
 
 		unworkedTileYields[base] = std::vector<YIELD>();
 		std::vector<YIELD> *baseunworkedTileYields = &(unworkedTileYields[base]);
@@ -831,7 +832,7 @@ void populateLists()
 		// set base
 		// that is needed because below functions require it and they are usually called in context where base is set already
 
-		tx_set_base(id);
+		set_base(id);
 
 		for (MAP_INFO mapInfo : getBaseRadiusTileInfos(base->x, base->y, false))
 		{
@@ -884,7 +885,7 @@ void populateLists()
 
 	// calculate network demand
 
-	int networkType = (has_tech(aiFactionId, tx_terraform[FORMER_MAGTUBE].preq_tech) ? TERRA_MAGTUBE : TERRA_ROAD);
+	int networkType = (has_tech(aiFactionId, Terraform[FORMER_MAGTUBE].preq_tech) ? TERRA_MAGTUBE : TERRA_ROAD);
 
 	double networkCoverage = 0.0;
 
@@ -892,7 +893,7 @@ void populateLists()
 	{
 		// build tile
 
-		MAP *tile = &((*tx_map_ptr)[i]);
+		MAP *tile = &((*MapPtr)[i]);
 
 		// exclude ocean
 
@@ -2172,8 +2173,8 @@ void calculateRaiseLandTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *
 
 	// verify we have enough money
 
-	int cost = tx_terraform_cost(x, y, aiFactionId);
-	if (cost > tx_factions[aiFactionId].energy_credits / 10)
+	int cost = terraform_cost(x, y, aiFactionId);
+	if (cost > Factions[aiFactionId].energy_credits / 10)
 		return;
 
 	// get option
@@ -2514,7 +2515,7 @@ int enemyMoveFormer(int id)
 
 	// get vehicle
 
-	VEH *vehicle = &(tx_vehicles[id]);
+	VEH *vehicle = &(Vehicles[id]);
 	MAP *vehicleLocationMapTile = getMapTile(vehicle->x, vehicle->y);
 
 	// use Thinker algorithm if in warzone and in danger
@@ -2806,7 +2807,7 @@ bool isOwnWorkableTile(int x, int y)
 
 	for (int baseIndex = 0; baseIndex < *total_num_bases; baseIndex++)
 	{
-		BASE *base = &tx_bases[baseIndex];
+		BASE *base = &Bases[baseIndex];
 
 		// skip not own bases
 
@@ -2832,7 +2833,7 @@ bool isTerraformingCompleted(MAP_INFO *mapInfo, int action)
 {
 	MAP *tile = mapInfo->tile;
 
-	return (tile->items & tx_terraform[action].added_items_flag);
+	return (tile->items & Terraform[action].items_added);
 
 }
 
@@ -2841,14 +2842,14 @@ Determines whether vehicle order is a terraforming order and is already complete
 */
 bool isVehicleTerrafomingOrderCompleted(int vehicleId)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
 
 	if (!(vehicle->move_status >= ORDER_FARM && vehicle->move_status <= ORDER_PLACE_MONOLITH))
 		return false;
 
 	MAP *tile = getMapTile(vehicle->x, vehicle->y);
 
-	return (tile->items & tx_terraform[vehicle->move_status - ORDER_FARM].added_items_flag);
+	return (tile->items & Terraform[vehicle->move_status - ORDER_FARM].items_added);
 
 }
 
@@ -2864,11 +2865,11 @@ bool isTerraformingAvailable(MAP_INFO *mapInfo, int action)
 	bool ocean = is_ocean(tile);
 	bool oceanDeep = is_ocean_deep(tile);
 
-	bool aquatic = tx_metafactions[aiFactionId].rule_flags & FACT_AQUATIC;
+	bool aquatic = MFactions[aiFactionId].rule_flags & FACT_AQUATIC;
 
 	// action is considered available if is already built
 
-	if (map_has_item(tile, tx_terraform[action].added_items_flag))
+	if (map_has_item(tile, Terraform[action].items_added))
 		return true;
 
 	// action is available only when enabled and researched
@@ -3002,12 +3003,12 @@ bool isRemoveFungusRequired(int action)
 
 	// no need to remove fungus for road with fungus road technology
 
-	if (action == FORMER_ROAD && has_tech(aiFactionId, tx_basic->tech_preq_build_road_fungus))
+	if (action == FORMER_ROAD && has_tech(aiFactionId, Rules->tech_preq_build_road_fungus))
 		return false;
 
 	// for everything else remove fungus only without fungus improvement technology
 
-	return !has_tech(aiFactionId, tx_basic->tech_preq_improv_fungus);
+	return !has_tech(aiFactionId, Rules->tech_preq_improv_fungus);
 
 }
 
@@ -3091,7 +3092,7 @@ Orders former to build other improvement besides base yield change.
 */
 void buildImprovement(int vehicleId)
 {
-	VEH *vehicle = &tx_vehicles[vehicleId];
+	VEH *vehicle = &Vehicles[vehicleId];
 
 	// TODO
 	// currently only skip turn
@@ -3407,7 +3408,7 @@ int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle)
 
 	// get base terraforming time
 
-	int terraformingTime = tx_terraform[action].rate;
+	int terraformingTime = Terraform[action].rate;
 
 	// adjust for terrain properties
 
@@ -3521,7 +3522,7 @@ BASE *findAffectedBase(int x, int y)
 {
 	for (int id : baseIds)
 	{
-		BASE *base = &(tx_bases[id]);
+		BASE *base = &(Bases[id]);
 
 		if (isWithinBaseRadius(base->x, base->y, x, y))
 			return base;
@@ -3536,7 +3537,7 @@ char *getTerraformingActionName(int action)
 {
 	if (action >= FORMER_FARM && action <= FORMER_MONOLITH)
 	{
-		return tx_terraform[action].name;
+		return Terraform[action].name;
 	}
 	else
 	{
@@ -3955,7 +3956,7 @@ double calculateSensorScore(MAP_INFO mapInfo, int action)
 
 			// update range
 
-			borderRange = min(borderRange, range);
+			borderRange = std::min(borderRange, range);
 
 		}
 
@@ -3987,7 +3988,7 @@ double calculateSensorScore(MAP_INFO mapInfo, int action)
 
 				// update range
 
-				shoreRange = min(shoreRange, range);
+				shoreRange = std::min(shoreRange, range);
 
 			}
 
@@ -3997,10 +3998,10 @@ double calculateSensorScore(MAP_INFO mapInfo, int action)
 
 	// calculate values
 
-	double borderRangeValue = conf.ai_terraforming_sensorBorderRange / max(conf.ai_terraforming_sensorBorderRange, (double)borderRange);
-	double shoreRangeValue = conf.ai_terraforming_sensorShoreRange / max(conf.ai_terraforming_sensorShoreRange, (double)shoreRange);
+	double borderRangeValue = conf.ai_terraforming_sensorBorderRange / std::max(conf.ai_terraforming_sensorBorderRange, (double)borderRange);
+	double shoreRangeValue = conf.ai_terraforming_sensorShoreRange / std::max(conf.ai_terraforming_sensorShoreRange, (double)shoreRange);
 
-	return conf.ai_terraforming_sensorValue * max(borderRangeValue, shoreRangeValue);
+	return conf.ai_terraforming_sensorValue * std::max(borderRangeValue, shoreRangeValue);
 
 }
 
@@ -4225,7 +4226,7 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 	int y = mapInfo->y;
 	MAP *improvedTile = mapInfo->tile;
 
-	Faction *faction = &(tx_factions[aiFactionId]);
+	Faction *faction = &(Factions[aiFactionId]);
 
 	// build action set
 
@@ -4265,9 +4266,9 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 
 	// calculate forest yield with best forest facilities available
 
-	int forestNutrient = tx_resource->forest_sq_nutrient;
-	int forestMineral = tx_resource->forest_sq_mineral;
-	int forestEnergy = tx_resource->forest_sq_energy;
+	int forestNutrient = Resource->forest_sq_nutrient;
+	int forestMineral = Resource->forest_sq_mineral;
+	int forestEnergy = Resource->forest_sq_energy;
 
 	if (has_facility_tech(aiFactionId, FAC_TREE_FARM))
 	{
@@ -4290,16 +4291,16 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 
 	if (faction->SE_planet_pending < 0)
 	{
-		fungusNutrient = max(0, fungusNutrient + faction->SE_planet_pending);
-		fungusMineral = max(0, fungusMineral + faction->SE_planet_pending);
-		fungusEnergy = max(0, fungusEnergy + faction->SE_planet_pending);
+		fungusNutrient = std::max(0, fungusNutrient + faction->SE_planet_pending);
+		fungusMineral = std::max(0, fungusMineral + faction->SE_planet_pending);
+		fungusEnergy = std::max(0, fungusEnergy + faction->SE_planet_pending);
 	}
 
 	double fungusYieldScore = calculateResourceScore(fungusNutrient, fungusMineral, fungusEnergy);
 
 	// pick the best yield score
 
-	double alternativeYieldScore = max(forestYieldScore, fungusYieldScore);
+	double alternativeYieldScore = std::max(forestYieldScore, fungusYieldScore);
 
 	// calculate rocky mine yield score
 
@@ -4353,7 +4354,7 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 			// calculate yield score
 
 			double nutrient = (double)map_rainfall(tile) + extraNutrient;
-			double mineral = (double)min(1, map_rockiness(tile));
+			double mineral = (double)std::min(1, map_rockiness(tile));
 			double energy = (double)(1 + map_elevation(tile)) + extraEnergy;
 
 			double yieldScore = calculateResourceScore(nutrient, mineral, energy);
@@ -4388,8 +4389,8 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 		{
 			// calculate yield score with improved rainfall
 
-			double nutrient = (double)max(2, map_rainfall(tile) + 1) + extraNutrient;
-			double mineral = (double)min(1, map_rockiness(tile));
+			double nutrient = (double)std::max(2, map_rainfall(tile) + 1) + extraNutrient;
+			double mineral = (double)std::min(1, map_rockiness(tile));
 			double energy = (double)(1 + map_elevation(tile)) + extraEnergy;
 
 			double yieldScore = calculateResourceScore(nutrient, mineral, energy);
@@ -4692,10 +4693,10 @@ Finds land path and populates first step.
 */
 void findPathStep(int id, int x, int y, MAP_INFO *step)
 {
-	VEH *vehicle = &(tx_vehicles[id]);
+	VEH *vehicle = &(Vehicles[id]);
 	MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
 	int vehicleTriad = veh_triad(id);
-	int vehicleSpeed = veh_speed(id);
+	int vehicleSpeed = mod_veh_speed(id);
 
 	// process land vehicles only
 
@@ -4848,13 +4849,13 @@ void findPathStep(int id, int x, int y, MAP_INFO *step)
 
 				// calculate movement cost
 
-				int movementCost = hex_cost(vehicle->proto_id, aiFactionId, element->x, element->y, adjacentTileX, adjacentTileY, 0);
+				int movementCost = mod_hex_cost(vehicle->unit_id, aiFactionId, element->x, element->y, adjacentTileX, adjacentTileY, 0);
 
 				// calculate new movement points after move
 
 				int wholeMoves = element->movementPoints / vehicleSpeed;
 				int maxNextTurnMovementPoints = (wholeMoves + 1) * vehicleSpeed;
-				int adjacentTileMovementPoints = min(maxNextTurnMovementPoints, element->movementPoints + movementCost);
+				int adjacentTileMovementPoints = std::min(maxNextTurnMovementPoints, element->movementPoints + movementCost);
 
 				if (further.count(adjacentTile) == 0)
 				{
@@ -4937,7 +4938,7 @@ bool isRaiseLandSafe(MAP_INFO *mapInfo)
 	int y = mapInfo->y;
 	MAP *raisedTile = mapInfo->tile;
 
-	Faction *faction = &(tx_factions[aiFactionId]);
+	Faction *faction = &(Factions[aiFactionId]);
 
 	// raising ocena is always safe
 
@@ -5080,8 +5081,8 @@ double computeImprovementBaseSurplusEffectScore(BASE_INFO *baseInfo, MAP_INFO *m
 
 	// calculate minimal nutrient and mineral surplus for demand calculation
 
-	int minimalNutrientSurplus = min(currentNutrientSurplus, improvedNutrientSurplus);
-	int minimalMineralSurplus = min(currentMineralSurplus, improvedMineralSurplus);
+	int minimalNutrientSurplus = std::min(currentNutrientSurplus, improvedNutrientSurplus);
+	int minimalMineralSurplus = std::min(currentMineralSurplus, improvedMineralSurplus);
 
 	// calculate improvement score
 
@@ -5117,7 +5118,7 @@ bool isInferiorImprovedTile(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *c
 	// set base
 	// that is needed because below functions require it and they are usually called in context where base is set already
 
-	tx_set_base(id);
+	set_base(id);
 
 	// compute tile yield
 
@@ -5137,7 +5138,7 @@ bool isInferiorImprovedTile(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *c
 
 bool isreachable(int id, int x, int y)
 {
-	VEH *vehicle = &(tx_vehicles[id]);
+	VEH *vehicle = &(Vehicles[id]);
 	int triad = veh_triad(id);
 	MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
 	MAP *destinationLocation = getMapTile(x, y);

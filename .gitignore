@@ -3,3 +3,4 @@ patch/
 releases/TheWillToPower
 *.layout
 *.depend
+*.cscope_file_list

@@ -3,19 +3,16 @@
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
-#include "wtp.h"
 #include "main.h"
+#include "terranx_wtp.h"
+#include "wtp.h"
 #include "patch.h"
 #include "engine.h"
+#include "game_wtp.h"
 
 // player setup helper variable
 
 int balanceFactionId = -1;
-
-// global variables for all factions
-
-FACTION_EXTRA factionExtras[8];
-BASE_EXTRA baseExtras[BASES];
 
 /*
 Combat calculation placeholder.
@@ -36,7 +33,7 @@ HOOK_API int read_basic_rules()
             // set road movement cost
             conf.road_movement_cost = conf.tube_movement_rate_multiplier;
             // set tube movement rate
-            tx_basic->mov_rate_along_roads *= conf.tube_movement_rate_multiplier;
+            Rules->mov_rate_along_roads *= conf.tube_movement_rate_multiplier;
 
         }
 
@@ -50,11 +47,11 @@ HOOK_API int read_basic_rules()
 Combat calculation placeholder.
 All custom combat calculation goes here.
 */
-HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int attackerStrengthPointer, int defenderStrengthPointer, int flags)
+HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, int attackerStrengthPointer, int defenderStrengthPointer, int flags)
 {
     debug
     (
-        "battle_compute(attackerVehicleId=%d, defenderVehicleId=%d, attackerStrengthPointer=%d, defenderStrengthPointer=%d, flags=%d)\n",
+        "mod_battle_compute(attackerVehicleId=%d, defenderVehicleId=%d, attackerStrengthPointer=%d, defenderStrengthPointer=%d, flags=%d)\n",
         attackerVehicleId,
         defenderVehicleId,
         attackerStrengthPointer,
@@ -65,8 +62,8 @@ HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int a
 
 	// get attacker/defender vehicle
 
-	VEH *attackerVehicle = &tx_vehicles[attackerVehicleId];
-	VEH *defenderVehicle = &tx_vehicles[defenderVehicleId];
+	VEH *attackerVehicle = &Vehicles[attackerVehicleId];
+	VEH *defenderVehicle = &Vehicles[defenderVehicleId];
 
 	// get combat map tile
 
@@ -76,7 +73,7 @@ HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int a
 
     // run original function
 
-    tx_battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
+    battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
 
     // PLANET combat bonus on defense
 
@@ -87,11 +84,11 @@ HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int a
         // PLANET bonus applies to psi combat only
         // psi combat is triggered by either attacker negative weapon value or defender negative armor value
 
-        if (tx_weapon[tx_units[attackerVehicle->proto_id].weapon_type].offense_value < 0 || tx_defense[tx_units[defenderVehicle->proto_id].armor_type].defense_value < 0)
+        if (Weapon[Units[attackerVehicle->unit_id].weapon_type].offense_value < 0 || Armor[Units[defenderVehicle->unit_id].armor_type].defense_value < 0)
         {
             // get defender faction id
 
-            int defenderFactionId = tx_vehicles[defenderVehicleId].faction_id;
+            int defenderFactionId = Vehicles[defenderVehicleId].faction_id;
 
 			// PLANET bonus applies to normal factions only
 
@@ -99,13 +96,13 @@ HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int a
             {
                 // get defender planet rating at the beginning of the turn (not pending)
 
-                int defenderPlanetRating = tx_factions[defenderFactionId].SE_planet;
+                int defenderPlanetRating = Factions[defenderFactionId].SE_planet;
 
                 if (defenderPlanetRating != 0)
                 {
                     // calculate defender psi combat bonus
 
-                    int defenderPsiCombatBonus = tx_basic->combat_psi_bonus_per_PLANET * defenderPlanetRating;
+                    int defenderPsiCombatBonus = Rules->combat_psi_bonus_per_PLANET * defenderPlanetRating;
 
                     // modify defender strength
 
@@ -208,14 +205,14 @@ HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int a
 			{
 				// modify attacker strength
 
-				*(int *)attackerStrengthPointer = (int)round((double)(*(int *)attackerStrengthPointer) * (1.0 + (double)tx_basic->combat_defend_sensor / 100.0));
+				*(int *)attackerStrengthPointer = (int)round((double)(*(int *)attackerStrengthPointer) * (1.0 + (double)Rules->combat_defend_sensor / 100.0));
 
 				// add effect description
 
 				if (*tx_battle_compute_defender_effect_count < 4)
 				{
 					strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], *(*tx_labels + LABEL_OFFSET_SENSOR));
-					(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = tx_basic->combat_defend_sensor;
+					(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = Rules->combat_defend_sensor;
 
 					(*tx_battle_compute_attacker_effect_count)++;
 
@@ -243,14 +240,14 @@ HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int a
 			{
 				// modify defender strength
 
-				*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)tx_basic->combat_defend_sensor / 100.0));
+				*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)Rules->combat_defend_sensor / 100.0));
 
 				// add effect description
 
 				if (*tx_battle_compute_defender_effect_count < 4)
 				{
 					strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_SENSOR));
-					(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = tx_basic->combat_defend_sensor;
+					(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_defend_sensor;
 
 					(*tx_battle_compute_defender_effect_count)++;
 
@@ -265,21 +262,21 @@ HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int a
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
 //
-//    while (*tx_battle_compute_attacker_effect_count < 4)
+//    while (*battle_compute_attacker_effect_count < 4)
 //    {
-//        (*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count][0] = '\x0';
-//        (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = 0;
+//        (*battle_compute_attacker_effect_labels)[*battle_compute_attacker_effect_count][0] = '\x0';
+//        (*battle_compute_attacker_effect_values)[*battle_compute_attacker_effect_count] = 0;
 //
-//        (*tx_battle_compute_attacker_effect_count)++;
+//        (*battle_compute_attacker_effect_count)++;
 //
 //    }
 //
-//    while (*tx_battle_compute_defender_effect_count < 4)
+//    while (*battle_compute_defender_effect_count < 4)
 //    {
-//        (*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count][0] = '\x0';
-//        (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = 0;
+//        (*battle_compute_defender_effect_labels)[*battle_compute_defender_effect_count][0] = '\x0';
+//        (*battle_compute_defender_effect_values)[*battle_compute_defender_effect_count] = 0;
 //
-//        (*tx_battle_compute_defender_effect_count)++;
+//        (*battle_compute_defender_effect_count)++;
 //
 //    }
 //
@@ -289,11 +286,11 @@ HOOK_API void battle_compute(int attackerVehicleId, int defenderVehicleId, int a
 Composes combat effect value percentage.
 Overwrites zero with empty string.
 */
-HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer, int input_string_pointer)
+HOOK_API void mod_battle_compute_compose_value_percentage(int output_string_pointer, int input_string_pointer)
 {
     debug
     (
-        "battle_compute_compose_value_percentage:input(output_string=%s, input_string=%s)\n",
+        "mod_battle_compute_compose_value_percentage:input(output_string=%s, input_string=%s)\n",
         (char *)output_string_pointer,
         (char *)input_string_pointer
     )
@@ -305,7 +302,7 @@ HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer,
 
     debug
     (
-        "battle_compute_compose_value_percentage:output(output_string=%s, input_string=%s)\n",
+        "mod_battle_compute_compose_value_percentage:output(output_string=%s, input_string=%s)\n",
         (char *)output_string_pointer,
         (char *)input_string_pointer
     )
@@ -321,7 +318,7 @@ HOOK_API void battle_compute_compose_value_percentage(int output_string_pointer,
 
     debug
     (
-        "battle_compute_compose_value_percentage:corrected(output_string=%s, input_string=%s)\n",
+        "mod_battle_compute_compose_value_percentage:corrected(output_string=%s, input_string=%s)\n",
         (char *)output_string_pointer,
         (char *)input_string_pointer
     )
@@ -367,19 +364,19 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     // get component values
 
-    int weapon_offence_value = tx_weapon[weapon_id].offense_value;
-    int armor_defense_value = tx_defense[armor_id].defense_value;
-    int chassis_speed = tx_chassis[chassis_id].speed;
+    int weapon_offence_value = Weapon[weapon_id].offense_value;
+    int armor_defense_value = Armor[armor_id].defense_value;
+    int chassis_speed = Chassis[chassis_id].speed;
 
     // determine whether we have module or weapon
 
-    bool module = (tx_weapon[weapon_id].mode >= WMODE_TRANSPORT);
+    bool module = (Weapon[weapon_id].mode >= WMODE_TRANSPORT);
 
     // get component costs
 
-    int weapon_cost = tx_weapon[weapon_id].cost;
-    int armor_cost = tx_defense[armor_id].cost;
-    int chassis_cost = tx_chassis[chassis_id].cost;
+    int weapon_cost = Weapon[weapon_id].cost;
+    int armor_cost = Armor[armor_id].cost;
+    int chassis_cost = Chassis[chassis_id].cost;
 
     // calculate items reactor modified costs
 
@@ -419,13 +416,13 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     {
         if (((abilities >> ability_id) & 0x1) == 0x1)
         {
-            int ability_cost = tx_ability[ability_id].cost;
+            int ability_cost = Ability[ability_id].cost;
 
             switch (ability_cost)
             {
             	// increased with weapon/armor ratio
 			case -1:
-				abilities_cost_factor += min(2, max(0, weapon_offence_value / armor_defense_value));
+				abilities_cost_factor += std::min(2, std::max(0, weapon_offence_value / armor_defense_value));
 				break;
 
             	// increased with weapon
@@ -485,7 +482,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
             // special case: cost increased for land units
 
-            if ((tx_ability[ability_id].flags & AFLAG_COST_INC_LAND_UNIT) && tx_chassis[chassis_id].triad == TRIAD_LAND)
+            if ((Ability[ability_id].flags & AFLAG_COST_INC_LAND_UNIT) && Chassis[chassis_id].triad == TRIAD_LAND)
 			{
 				abilities_cost_factor += 1;
 			}
@@ -497,7 +494,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     // calculate final cost
 
     int cost =
-        max
+        std::max
         (
             // minimal cost
             minimal_cost,
@@ -524,15 +521,15 @@ HOOK_API int upgrade_cost(int faction_id, int new_unit_id, int old_unit_id)
 {
     // get old unit cost
 
-    int old_unit_cost = tx_units[old_unit_id].cost;
+    int old_unit_cost = Units[old_unit_id].cost;
 
     // get new unit cost
 
-    int new_unit_cost = tx_units[new_unit_id].cost;
+    int new_unit_cost = Units[new_unit_id].cost;
 
     // double new unit cost if not prototyped
 
-    if ((tx_units[new_unit_id].unit_flags & 0x4) == 0)
+    if ((Units[new_unit_id].unit_flags & 0x4) == 0)
     {
         new_unit_cost *= 2;
     }
@@ -553,13 +550,13 @@ HOOK_API int upgrade_cost(int faction_id, int new_unit_id, int old_unit_id)
     {
         // get The Nano Factory base id
 
-        int nano_factory_base_id = tx_secret_projects[0x16];
+        int nano_factory_base_id = SecretProjects[0x16];
 
         // get The Nano Factory faction id
 
         if (nano_factory_base_id >= 0)
         {
-            if (tx_bases[nano_factory_base_id].faction_id == faction_id)
+            if (Bases[nano_factory_base_id].faction_id == faction_id)
             {
                 upgrade_cost /= 2;
 
@@ -710,11 +707,11 @@ int alternative_combat_mechanics_combat_roll
 
     // determine whether we are on first round
 
-    VEH attacker_vehicle = tx_vehicles[attacker_vehicle_offset / 0x34];
-    VEH defender_vehicle = tx_vehicles[defender_vehicle_offset / 0x34];
+    VEH attacker_vehicle = Vehicles[attacker_vehicle_offset / 0x34];
+    VEH defender_vehicle = Vehicles[defender_vehicle_offset / 0x34];
 
-    UNIT attacker_unit = tx_units[attacker_vehicle.proto_id];
-    UNIT defender_unit = tx_units[defender_vehicle.proto_id];
+    UNIT attacker_unit = Units[attacker_vehicle.unit_id];
+    UNIT defender_unit = Units[defender_vehicle.unit_id];
 
     int attacker_power = attacker_unit.reactor_type * 0xA - attacker_vehicle.damage_taken;
     int defender_power = defender_unit.reactor_type * 0xA - defender_vehicle.damage_taken;
@@ -793,13 +790,13 @@ HOOK_API void calculate_odds
 
     // get attacker and defender vehicles
 
-    VEH attacker_vehicle = tx_vehicles[attacker_vehicle_offset / sizeof(VEH)];
-    VEH defender_vehicle = tx_vehicles[defender_vehicle_offset / sizeof(VEH)];
+    VEH attacker_vehicle = Vehicles[attacker_vehicle_offset / sizeof(VEH)];
+    VEH defender_vehicle = Vehicles[defender_vehicle_offset / sizeof(VEH)];
 
     // get attacker and defender units
 
-    UNIT attacker_unit = tx_units[attacker_vehicle.proto_id];
-    UNIT defender_unit = tx_units[defender_vehicle.proto_id];
+    UNIT attacker_unit = Units[attacker_vehicle.unit_id];
+    UNIT defender_unit = Units[defender_vehicle.unit_id];
 
     // calculate attacker and defender power
     // artifact gets 1 HP regardless of reactor
@@ -807,14 +804,14 @@ HOOK_API void calculate_odds
     int attacker_power = (attacker_unit.unit_plan == PLAN_ALIEN_ARTIFACT ? 1 : attacker_unit.reactor_type * 10 - attacker_vehicle.damage_taken);
     int defender_power = (defender_unit.unit_plan == PLAN_ALIEN_ARTIFACT ? 1 : defender_unit.reactor_type * 10 - defender_vehicle.damage_taken);
 
-    // determine if we are ignoring reactor power
+    // determine if reactor power is ignored
 
     bool ignore_reactor_power =
         conf.ignore_reactor_power_in_combat
         ||
-        tx_weapon[attacker_unit.weapon_type].offense_value < 0
+        Weapon[attacker_unit.weapon_type].offense_value < 0
         ||
-        tx_defense[defender_unit.armor_type].defense_value < 0
+        Armor[defender_unit.armor_type].defense_value < 0
     ;
 
     // calculate firepower
@@ -1141,210 +1138,210 @@ double alternative_combat_mechanics_calculate_attacker_winning_probability_follo
 
 }
 
-/*
-For sea squares pretend they are on the same continent as closest reachable coastal base
-if such base is also closer than any other sea base in the same sea.
-*/
-HOOK_API int base_find3(int x, int y, int unknown_1, int region, int unknown_2, int unknown_3)
-{
-    debug
-    (
-        "base_find3(x=%d, y=%d, region=%d)\n",
-        x,
-        y,
-        region
-    )
-    ;
-
-    bool closest_reachable_base_found = false;
-    bool closest_reachable_base_is_coastal = false;
-    int closest_reachable_base_distance = 9999;
-    BASE *closest_reachable_base = NULL;
-    MAP *closest_reachable_base_square = NULL;
-
-    int saved_coastal_base_region = -1;
-
-    // check if given square is at sea
-
-    if (region >= 0x41)
-    {
-        // loop through bases
-
-        for (int base_id = 0; base_id < *total_num_bases; base_id++)
-        {
-            // get base
-
-            BASE *base = &tx_bases[base_id];
-
-            // get base map square
-
-            MAP *base_map_square = mapsq(base->x, base->y);
-
-            // get base map square body id
-
-            int base_map_square_region = base_map_square->region;
-
-            // check if it is the same body
-            if (base_map_square_region == region)
-            {
-                // calculate base distance
-
-                int base_distance = map_distance(x, y, base->x, base->y);
-
-                // improve distance if smaller
-
-                if (!closest_reachable_base_found || base_distance < closest_reachable_base_distance)
-                {
-                    closest_reachable_base_found = true;
-                    closest_reachable_base_is_coastal = false;
-                    closest_reachable_base_distance = base_distance;
-                    closest_reachable_base = base;
-                    closest_reachable_base_square = base_map_square;
-
-                }
-
-            }
-            // otherwise, check it it is a land base
-            else if (base_map_square_region < 0x41)
-            {
-                // iterate over nearby base squares
-
-                for (int dx = -2; dx <= 2; dx++)
-                {
-                    for (int dy = -(2 - abs(dx)); dy <= (2 - abs(dx)); dy += 2)
-                    {
-                        int near_x = base->x + dx;
-                        int near_y = base->y + dy;
-
-                        // exclude squares beyond the map
-
-                        if (near_y < 0 || near_y >= *map_axis_y)
-                            continue;
-
-                        if (*map_toggle_flat && (near_x < 0 || near_x >= *map_axis_x))
-                            continue;
-
-                        // wrap x on cylinder map
-
-                        if (!*map_toggle_flat && near_x < 0)
-                        {
-                            near_x += *map_axis_x;
-
-                        }
-
-                        if (!*map_toggle_flat && near_x >= *map_axis_x)
-                        {
-                            near_x -= *map_axis_x;
-
-                        }
-
-                        // get near map square
-
-                        MAP *near_map_square = mapsq(near_x, near_y);
-
-                        // get near map square body id
-
-                        int near_map_square_region = near_map_square->region;
-
-                        // check if it is a matching body id
-
-                        if (near_map_square_region == region)
-                        {
-                            // calculate base distance
-
-                            int base_distance = map_distance(x, y, base->x, base->y);
-
-                            // improve distance if smaller
-
-                            if (!closest_reachable_base_found || base_distance < closest_reachable_base_distance)
-                            {
-                                closest_reachable_base_found = true;
-                                closest_reachable_base_is_coastal = true;
-                                closest_reachable_base_distance = base_distance;
-                                closest_reachable_base = base;
-                                closest_reachable_base_square = base_map_square;
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-        debug
-        (
-            "closest_reachable_base_found=%d, closest_reachable_base_is_coastal=%d, closest_reachable_base_distance=%d\n",
-            closest_reachable_base_found,
-            closest_reachable_base_is_coastal,
-            closest_reachable_base_distance
-        )
-        ;
-
-        // if closest coastal base is found - pretend it is placed on same body
-
-        if (closest_reachable_base_found && closest_reachable_base_is_coastal)
-        {
-            saved_coastal_base_region = closest_reachable_base_square->region;
-
-            debug
-            (
-                "Before emulation: closest_reachable_base->x=%d, closest_reachable_base->y=%d, closest_reachable_base_square->region=%d\n",
-                closest_reachable_base->x,
-                closest_reachable_base->y,
-                closest_reachable_base_square->region
-            )
-            ;
-
-            closest_reachable_base_square->region = region;
-
-            debug
-            (
-                "After emulation: closest_reachable_base_square->region=%d\n",
-                closest_reachable_base_square->region
-            )
-            ;
-
-        }
-
-    }
-
-    // run original function
-
-    int nearest_base_id = tx_base_find3(x, y, unknown_1, region, unknown_2, unknown_3);
-
-    // revert coastal base map square body to original
-
-    if (closest_reachable_base_found && closest_reachable_base_is_coastal)
-    {
-        debug
-        (
-            "Before restoration: closest_reachable_base_square->region=%d\n",
-            closest_reachable_base_square->region
-        )
-        ;
-
-        closest_reachable_base_square->region = saved_coastal_base_region;
-
-        debug
-        (
-            "After restoration: closest_reachable_base_square->region=%d\n",
-            closest_reachable_base_square->region
-        )
-        ;
-
-    }
-
-    // return nearest base faction id
-
-    return nearest_base_id;
-
-}
-
+///*
+//For sea squares pretend they are on the same continent as closest reachable coastal base
+//if such base is also closer than any other sea base in the same sea.
+//*/
+//HOOK_API int base_find3(int x, int y, int unknown_1, int region, int unknown_2, int unknown_3)
+//{
+//    debug
+//    (
+//        "base_find3(x=%d, y=%d, region=%d)\n",
+//        x,
+//        y,
+//        region
+//    )
+//    ;
+//
+//    bool closest_reachable_base_found = false;
+//    bool closest_reachable_base_is_coastal = false;
+//    int closest_reachable_base_distance = 9999;
+//    BASE *closest_reachable_base = NULL;
+//    MAP *closest_reachable_base_square = NULL;
+//
+//    int saved_coastal_base_region = -1;
+//
+//    // check if given square is at sea
+//
+//    if (region >= 0x41)
+//    {
+//        // loop through bases
+//
+//        for (int base_id = 0; base_id < *total_num_bases; base_id++)
+//        {
+//            // get base
+//
+//            BASE *base = &Bases[base_id];
+//
+//            // get base map square
+//
+//            MAP *base_map_square = mapsq(base->x, base->y);
+//
+//            // get base map square body id
+//
+//            int base_map_square_region = base_map_square->region;
+//
+//            // check if it is the same body
+//            if (base_map_square_region == region)
+//            {
+//                // calculate base distance
+//
+//                int base_distance = map_distance(x, y, base->x, base->y);
+//
+//                // improve distance if smaller
+//
+//                if (!closest_reachable_base_found || base_distance < closest_reachable_base_distance)
+//                {
+//                    closest_reachable_base_found = true;
+//                    closest_reachable_base_is_coastal = false;
+//                    closest_reachable_base_distance = base_distance;
+//                    closest_reachable_base = base;
+//                    closest_reachable_base_square = base_map_square;
+//
+//                }
+//
+//            }
+//            // otherwise, check it it is a land base
+//            else if (base_map_square_region < 0x41)
+//            {
+//                // iterate over nearby base squares
+//
+//                for (int dx = -2; dx <= 2; dx++)
+//                {
+//                    for (int dy = -(2 - abs(dx)); dy <= (2 - abs(dx)); dy += 2)
+//                    {
+//                        int near_x = base->x + dx;
+//                        int near_y = base->y + dy;
+//
+//                        // exclude squares beyond the map
+//
+//                        if (near_y < 0 || near_y >= *map_axis_y)
+//                            continue;
+//
+//                        if (*map_toggle_flat && (near_x < 0 || near_x >= *map_axis_x))
+//                            continue;
+//
+//                        // wrap x on cylinder map
+//
+//                        if (!*map_toggle_flat && near_x < 0)
+//                        {
+//                            near_x += *map_axis_x;
+//
+//                        }
+//
+//                        if (!*map_toggle_flat && near_x >= *map_axis_x)
+//                        {
+//                            near_x -= *map_axis_x;
+//
+//                        }
+//
+//                        // get near map square
+//
+//                        MAP *near_map_square = mapsq(near_x, near_y);
+//
+//                        // get near map square body id
+//
+//                        int near_map_square_region = near_map_square->region;
+//
+//                        // check if it is a matching body id
+//
+//                        if (near_map_square_region == region)
+//                        {
+//                            // calculate base distance
+//
+//                            int base_distance = map_distance(x, y, base->x, base->y);
+//
+//                            // improve distance if smaller
+//
+//                            if (!closest_reachable_base_found || base_distance < closest_reachable_base_distance)
+//                            {
+//                                closest_reachable_base_found = true;
+//                                closest_reachable_base_is_coastal = true;
+//                                closest_reachable_base_distance = base_distance;
+//                                closest_reachable_base = base;
+//                                closest_reachable_base_square = base_map_square;
+//
+//                            }
+//
+//                        }
+//
+//                    }
+//
+//                }
+//
+//            }
+//
+//        }
+//
+//        debug
+//        (
+//            "closest_reachable_base_found=%d, closest_reachable_base_is_coastal=%d, closest_reachable_base_distance=%d\n",
+//            closest_reachable_base_found,
+//            closest_reachable_base_is_coastal,
+//            closest_reachable_base_distance
+//        )
+//        ;
+//
+//        // if closest coastal base is found - pretend it is placed on same body
+//
+//        if (closest_reachable_base_found && closest_reachable_base_is_coastal)
+//        {
+//            saved_coastal_base_region = closest_reachable_base_square->region;
+//
+//            debug
+//            (
+//                "Before emulation: closest_reachable_base->x=%d, closest_reachable_base->y=%d, closest_reachable_base_square->region=%d\n",
+//                closest_reachable_base->x,
+//                closest_reachable_base->y,
+//                closest_reachable_base_square->region
+//            )
+//            ;
+//
+//            closest_reachable_base_square->region = region;
+//
+//            debug
+//            (
+//                "After emulation: closest_reachable_base_square->region=%d\n",
+//                closest_reachable_base_square->region
+//            )
+//            ;
+//
+//        }
+//
+//    }
+//
+//    // run original function
+//
+//    int nearest_base_id = tx_base_find3(x, y, unknown_1, region, unknown_2, unknown_3);
+//
+//    // revert coastal base map square body to original
+//
+//    if (closest_reachable_base_found && closest_reachable_base_is_coastal)
+//    {
+//        debug
+//        (
+//            "Before restoration: closest_reachable_base_square->region=%d\n",
+//            closest_reachable_base_square->region
+//        )
+//        ;
+//
+//        closest_reachable_base_square->region = saved_coastal_base_region;
+//
+//        debug
+//        (
+//            "After restoration: closest_reachable_base_square->region=%d\n",
+//            closest_reachable_base_square->region
+//        )
+//        ;
+//
+//    }
+//
+//    // return nearest base faction id
+//
+//    return nearest_base_id;
+//
+//}
+//
 /*
 Calculates map distance as in vanilla.
 */
@@ -1425,7 +1422,7 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 {
     // get faction
 
-    Faction* faction = &tx_factions[faction_id];
+    Faction* faction = &Factions[faction_id];
 
     // get old ratings
 
@@ -1465,7 +1462,7 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
         for (int i = 0; i < *total_num_bases; i++)
         {
-            BASE* base = &tx_bases[i];
+            BASE* base = &Bases[i];
 
             if (base->faction_id == faction_id)
             {
@@ -1480,14 +1477,14 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
     if (SE_industry_pending_new != SE_industry_pending_old)
     {
-        int row_size_old = tx_basic->nutrient_cost_multi - SE_industry_pending_old;
-        int row_size_new = tx_basic->nutrient_cost_multi - SE_industry_pending_new;
+        int row_size_old = Rules->nutrient_cost_multi - SE_industry_pending_old;
+        int row_size_new = Rules->nutrient_cost_multi - SE_industry_pending_new;
 
         double conversion_ratio = (double)row_size_new / (double)row_size_old;
 
         for (int i = 0; i < *total_num_bases; i++)
         {
-            BASE* base = &tx_bases[i];
+            BASE* base = &Bases[i];
 
             if (base->faction_id == faction_id)
             {
@@ -1508,11 +1505,11 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 /*
 hex cost
 */
-HOOK_API int hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7)
+HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7)
 {
     // execute original code
 
-    int value = tx_hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, a7);
+    int value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, a7);
 
     // correct road/tube movement rate
 
@@ -1560,10 +1557,10 @@ int wtp_tech_level(int id) {
     }
     else
     {
-        int v1 = wtp_tech_level(tx_techs[id].preq_tech1);
-        int v2 = wtp_tech_level(tx_techs[id].preq_tech2);
+        int v1 = wtp_tech_level(Tech[id].preq_tech1);
+        int v2 = wtp_tech_level(Tech[id].preq_tech2);
 
-        return max(v1, v2) + 1;
+        return std::max(v1, v2) + 1;
     }
 }
 
@@ -1581,7 +1578,7 @@ cost = [S + (x < x0 ? C * x ^ 3 : A + B * x)] * scale
 */
 int wtp_tech_cost(int fac, int tech) {
     assert(fac >= 0 && fac < 8);
-    MetaFaction* m = &tx_metafactions[fac];
+    MFaction* m = &MFactions[fac];
     int level = 1;
 
     if (tech >= 0) {
@@ -1601,13 +1598,13 @@ int wtp_tech_cost(int fac, int tech) {
         base
         * (double)m->rule_techcost / 100.0
         * (*game_rules & RULES_TECH_STAGNATION ? 1.5 : 1.0)
-        * (double)tx_basic->rules_tech_discovery_rate / 100.0
+        * (double)Rules->rules_tech_discovery_rate / 100.0
     ;
 
     double dw;
 
     if (is_human(fac)) {
-        dw = 1.0 + 0.1 * (10.0 - tx_cost_ratios[*diff_level]);
+        dw = 1.0 + 0.1 * (10.0 - CostRatios[*diff_level]);
     }
     else {
         dw = 1.0;
@@ -1616,13 +1613,13 @@ int wtp_tech_cost(int fac, int tech) {
     cost *= dw;
 
     debug("tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %s\n", *current_turn, fac,
-        base, dw, cost, level, tech, (tech >= 0 ? tx_techs[tech].name : NULL));
+        base, dw, cost, level, tech, (tech >= 0 ? Tech[tech].name : NULL));
 
 	// scale
 
 	cost *= conf.tech_cost_scale;
 
-    return max(2, (int)cost);
+    return std::max(2, (int)cost);
 
 }
 
@@ -1634,7 +1631,7 @@ HOOK_API int sayBase(char *buffer, int id)
 
 	// get base
 
-	BASE *base = &(tx_bases[id]);
+	BASE *base = &(Bases[id]);
 
 	// get base population limit
 
@@ -1662,9 +1659,9 @@ bool isBaseFacilityBuilt(BASE *base, int facilityId)
 
 int getBasePopulationLimit(BASE *base)
 {
-    int pop_rule = tx_metafactions[base->faction_id].rule_population;
-    int hab_complex_limit = tx_basic->pop_limit_wo_hab_complex - pop_rule;
-    int hab_dome_limit = tx_basic->pop_limit_wo_hab_dome - pop_rule;
+    int pop_rule = MFactions[base->faction_id].rule_population;
+    int hab_complex_limit = Rules->pop_limit_wo_hab_complex - pop_rule;
+    int hab_dome_limit = Rules->pop_limit_wo_hab_dome - pop_rule;
 
     bool habitationComplexBuilt = isBaseFacilityBuilt(base, FAC_HAB_COMPLEX);
     bool habitationDomeBuilt = isBaseFacilityBuilt(base, FAC_HABITATION_DOME);
@@ -1691,11 +1688,11 @@ int getnextAvailableGrowthFacility(BASE *base)
 {
 	if (!isBaseFacilityBuilt(base, FAC_HAB_COMPLEX))
 	{
-		return (has_tech(base->faction_id, tx_facility[FAC_HAB_COMPLEX].preq_tech) ? FAC_HAB_COMPLEX : -1);
+		return (has_tech(base->faction_id, Facility[FAC_HAB_COMPLEX].preq_tech) ? FAC_HAB_COMPLEX : -1);
 	}
 	else if (!isBaseFacilityBuilt(base, FAC_HABITATION_DOME))
 	{
-		return (has_tech(base->faction_id, tx_facility[FAC_HABITATION_DOME].preq_tech) ? FAC_HABITATION_DOME : -1);
+		return (has_tech(base->faction_id, Facility[FAC_HABITATION_DOME].preq_tech) ? FAC_HABITATION_DOME : -1);
 	}
 	else
 	{
@@ -1720,7 +1717,7 @@ HOOK_API int baseInit(int factionId, int x, int y)
 
 	// get base
 
-	BASE *base = &(tx_bases[id]);
+	BASE *base = &(Bases[id]);
 
 	// The Planetary Transit System fix
 	// new base size is limited by average faction base size
@@ -1734,7 +1731,7 @@ HOOK_API int baseInit(int factionId, int x, int y)
 
 		for (int otherBaseId = 0; otherBaseId < *total_num_bases; otherBaseId++)
 		{
-			BASE *otherBase = &(tx_bases[otherBaseId]);
+			BASE *otherBase = &(Bases[otherBaseId]);
 
 			// skip this base
 
@@ -1755,7 +1752,7 @@ HOOK_API int baseInit(int factionId, int x, int y)
 
 		// calculate new base size
 
-		int newBaseSize = max(1, min(3, (int)floor(averageFactionBaseSize) - conf.pts_new_base_size_less_average));
+		int newBaseSize = std::max(1, std::min(3, (int)floor(averageFactionBaseSize) - conf.pts_new_base_size_less_average));
 
 		// set base size
 
@@ -1870,11 +1867,11 @@ HOOK_API void displayBaseNutrientCostFactor(int destinationStringPointer, int so
 
 	int baseid = *current_base_id;
 	BASE *base = *current_base_ptr;
-	Faction *faction = &(tx_factions[base->faction_id]);
+	Faction *faction = &(Factions[base->faction_id]);
 
 	// get current base nutrient cost factor
 
-	int nutrientCostFactor = tx_cost_factor(base->faction_id, 0, baseid);
+	int nutrientCostFactor = cost_factor(base->faction_id, 0, baseid);
 
     // modify output
 
@@ -1923,7 +1920,7 @@ HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queu
 	{
 		// find mineral multiplier
 
-		int multiplier = (2 * base->mineral_intake_multiplied + (base->mineral_intake - 1)) / base->mineral_intake;
+		int multiplier = (2 * base->mineral_intake_2 + (base->mineral_intake - 1)) / base->mineral_intake;
 
 		// increment multiplier
 
@@ -1932,11 +1929,11 @@ HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queu
 		// calculate updated value and addition
 
 		int updatedMineralIntakeMultiplied = (multiplier * base->mineral_intake) / 2;
-		int additionalMinerals = updatedMineralIntakeMultiplied - base->mineral_intake_multiplied;
+		int additionalMinerals = updatedMineralIntakeMultiplied - base->mineral_intake_2;
 
 		// update values
 
-		base->mineral_intake_multiplied += additionalMinerals;
+		base->mineral_intake_2 += additionalMinerals;
 		base->mineral_surplus += additionalMinerals;
 
 	}
@@ -1986,11 +1983,11 @@ HOOK_API int modifiedInefficiency(int energyIntake)
 		// get current base faction
 
 		int factionId = base->faction_id;
-		Faction *faction = &(tx_factions[factionId]);
+		Faction *faction = &(Factions[factionId]);
 
 		// get SE EFFICIENCY rating (with Children Creche effect)
 
-		int seEfficiencyRating = max(-4, min(+4, faction->SE_effic_pending + (has_facility(id, FAC_CHILDREN_CRECHE) ? 1 : 0)));
+		int seEfficiencyRating = std::max(-4, std::min(+4, faction->SE_effic_pending + (has_facility(id, FAC_CHILDREN_CRECHE) ? 1 : 0)));
 
 		// add SE EFFICIENCY effect
 
@@ -2002,7 +1999,7 @@ HOOK_API int modifiedInefficiency(int energyIntake)
 
 		if (hqBaseId != -1)
 		{
-			BASE *hqBase = &(tx_bases[hqBaseId]);
+			BASE *hqBase = &(Bases[hqBaseId]);
 
 			// calculate distance to HQ
 
@@ -2024,7 +2021,7 @@ HOOK_API int modifiedInefficiency(int energyIntake)
 
 		// calculate efficiency
 
-		int efficiency = max(0, min(energyIntake, (int)ceil(efficiencyRate * (double)energyIntake)));
+		int efficiency = std::max(0, std::min(energyIntake, (int)ceil(efficiencyRate * (double)energyIntake)));
 
 		// update inefficiency
 
@@ -2041,7 +2038,7 @@ Wraps setup_player adding custom functionality.
 */
 HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3)
 {
-	debug("modifiedSetupPlayer: %s\n", tx_metafactions[factionId].noun_faction);
+	debug("modifiedSetupPlayer: %s\n", MFactions[factionId].noun_faction);
 
 	// execute original code
 
@@ -2083,7 +2080,7 @@ HOOK_API void modifiedVehInitInBalance(int unitId, int factionId, int x, int y)
 
 	// execute original code
 
-	tx_veh_init(unitId, factionId, x, y);
+	veh_init(unitId, factionId, x, y);
 
 }
 
@@ -2095,7 +2092,7 @@ void createFreeVehicles(int factionId)
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
-		VEH* vehicle = &(tx_vehicles[id]);
+		VEH* vehicle = &(Vehicles[id]);
 
 		if (vehicle->faction_id != factionId)
 			continue;
@@ -2132,7 +2129,7 @@ void createFreeVehicles(int factionId)
 
 double getVehicleSpeedWithoutRoads(int id)
 {
-	return (double)veh_speed(id) / (double)tx_basic->mov_rate_along_roads;
+	return (double)mod_veh_speed(id) / (double)Rules->mov_rate_along_roads;
 }
 
 double getLandVehicleSpeedOnRoads(int id)
@@ -2141,11 +2138,11 @@ double getLandVehicleSpeedOnRoads(int id)
 
 	if (conf.tube_movement_rate_multiplier > 0)
 	{
-		landVehicleSpeedOnRoads = (double)veh_speed(id) / (double)conf.road_movement_cost;
+		landVehicleSpeedOnRoads = (double)mod_veh_speed(id) / (double)conf.road_movement_cost;
 	}
 	else
 	{
-		landVehicleSpeedOnRoads = (double)veh_speed(id);
+		landVehicleSpeedOnRoads = (double)mod_veh_speed(id);
 	}
 
 	return landVehicleSpeedOnRoads;
@@ -2158,7 +2155,7 @@ double getLandVehicleSpeedOnTubes(int id)
 
 	if (conf.tube_movement_rate_multiplier > 0)
 	{
-		landVehicleSpeedOnTubes = (double)veh_speed(id);
+		landVehicleSpeedOnTubes = (double)mod_veh_speed(id);
 	}
 	else
 	{
@@ -2186,7 +2183,7 @@ HOOK_API void modifiedWorldBuild()
 
 		for (int i = 0; i < *map_area_tiles; i++)
 		{
-			MAP *tile = &((*tx_map_ptr)[i]);
+			MAP *tile = &((*MapPtr)[i]);
 
 			// process only ocean
 
@@ -2236,7 +2233,7 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
 {
 	// execute original function
 
-	int value = tx_veh_at(x, y);
+	int value = veh_at(x, y);
 
 	// process only land tiles
 
@@ -2254,7 +2251,7 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
 
 			for (int id = 0; id < *total_num_vehicles; id++)
 			{
-				VEH *vehicle = &(tx_vehicles[id]);
+				VEH *vehicle = &(Vehicles[id]);
 
 				// only vehicles located in target tile
 
@@ -2262,7 +2259,7 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
 					continue;
 
 				// own/pact
-				if (vehicle->faction_id == *active_faction || tx_factions[*active_faction].diplo_status[vehicle->faction_id] & DIPLO_PACT)
+				if (vehicle->faction_id == *active_faction || Factions[*active_faction].diplo_status[vehicle->faction_id] & DIPLO_PACT)
 				{
 					// transport disables ZoC rule
 
@@ -2335,17 +2332,17 @@ int calculateNotPrototypedComponentsCost(int chassisId, int weaponId, int armorI
 
 	if (!chassisPrototyped)
 	{
-		notPrototypedComponentsCost += tx_chassis[chassisId].cost;
+		notPrototypedComponentsCost += Chassis[chassisId].cost;
 	}
 
 	if (!weaponPrototyped)
 	{
-		notPrototypedComponentsCost += tx_weapon[weaponId].cost;
+		notPrototypedComponentsCost += Weapon[weaponId].cost;
 	}
 
 	if (!armorPrototyped)
 	{
-		notPrototypedComponentsCost += tx_defense[armorId].cost;
+		notPrototypedComponentsCost += Armor[armorId].cost;
 	}
 
 	debug("notPrototypedComponentsCost=%d\n", notPrototypedComponentsCost);
@@ -2359,7 +2356,7 @@ Calculates not prototyped components cost.
 */
 HOOK_API int calculateNotPrototypedComponentsCostForProduction(int unitId)
 {
-	UNIT *unit = &(tx_units[unitId]);
+	UNIT *unit = &(Units[unitId]);
 
 	// predefined units are all prototyped
 
@@ -2388,19 +2385,19 @@ HOOK_API int calculateNotPrototypedComponentsCostForProduction(int unitId)
 
 	for (int factionPrototypedUnitId : getFactionPrototypes(factionId, false))
 	{
-		UNIT *factionPrototypedUnit = &(tx_units[factionPrototypedUnitId]);
+		UNIT *factionPrototypedUnit = &(Units[factionPrototypedUnitId]);
 
-		if (unit->chassis_type == factionPrototypedUnit->chassis_type || tx_chassis[unit->chassis_type].speed == tx_chassis[factionPrototypedUnit->chassis_type].speed)
+		if (unit->chassis_type == factionPrototypedUnit->chassis_type || Chassis[unit->chassis_type].speed == Chassis[factionPrototypedUnit->chassis_type].speed)
 		{
 			chassisPrototyped = true;
 		}
 
-		if (unit->weapon_type == factionPrototypedUnit->weapon_type || tx_weapon[unit->weapon_type].offense_value == tx_weapon[factionPrototypedUnit->weapon_type].offense_value)
+		if (unit->weapon_type == factionPrototypedUnit->weapon_type || Weapon[unit->weapon_type].offense_value == Weapon[factionPrototypedUnit->weapon_type].offense_value)
 		{
 			weaponPrototyped = true;
 		}
 
-		if (unit->armor_type == factionPrototypedUnit->armor_type || tx_defense[unit->armor_type].defense_value == tx_defense[factionPrototypedUnit->armor_type].defense_value)
+		if (unit->armor_type == factionPrototypedUnit->armor_type || Armor[unit->armor_type].defense_value == Armor[factionPrototypedUnit->armor_type].defense_value)
 		{
 			armorPrototyped = true;
 		}
@@ -2429,7 +2426,7 @@ HOOK_API int calculateNotPrototypedComponentsCostForDesign(int chassisId, int we
 
 HOOK_API int getActiveFactionMineralCostFactor()
 {
-	return tx_cost_factor(*active_faction, 1, -1);
+	return cost_factor(*active_faction, 1, -1);
 }
 
 HOOK_API void displayArtifactMineralContributionInformation(int input_string_pointer, int output_string_pointer)
@@ -2440,7 +2437,7 @@ HOOK_API void displayArtifactMineralContributionInformation(int input_string_poi
 
 	// calculate artifact mineral contribution
 
-	int artifactMineralContribution = tx_units[BSC_ALIEN_ARTIFACT].cost * tx_cost_factor(*active_faction, 1, -1) / 2;
+	int artifactMineralContribution = Units[BSC_ALIEN_ARTIFACT].cost * cost_factor(*active_faction, 1, -1) / 2;
 
 	// get output string pointer
 
@@ -2462,7 +2459,7 @@ HOOK_API int getCurrentBaseProductionMineralCost()
 
 	// get current base production mineral cost
 
-	int baseProductionMineralCost = mineral_cost(baseId, base->queue_items[0]);
+	int baseProductionMineralCost = getBaseMineralCost(baseId, base->queue_items[0]);
 
 	// return value
 
@@ -2482,7 +2479,7 @@ HOOK_API void displayHurryCostScaledToBasicMineralCostMultiplierInformation(int 
 
 	// append information to string
 
-	sprintf(output + strlen(output), " (hurry cost is scaled to basic mineral cost multiplier: %d)", tx_basic->mineral_cost_multi);
+	sprintf(output + strlen(output), " (hurry cost is scaled to basic mineral cost multiplier: %d)", Rules->mineral_cost_multi);
 
 }
 
@@ -2493,11 +2490,11 @@ int scaleValueToBasicMinieralCostMultiplier(int factionId, int value)
 {
 	// get mineral cost multiplier
 
-	int mineralCostMultiplier = tx_basic->mineral_cost_multi;
+	int mineralCostMultiplier = Rules->mineral_cost_multi;
 
 	// get mineral cost factor
 
-	int mineralCostFactor = tx_cost_factor(factionId, 1, -1);
+	int mineralCostFactor = cost_factor(factionId, 1, -1);
 
 	// scale value
 
@@ -2543,7 +2540,7 @@ int getPartialHurryCostToCompleteNextTurn()
 
 	// get minerals neede to hurry for next turn completion
 
-	int mineralsToHurry = mineral_cost(baseId, base->queue_items[0]) - base->minerals_accumulated - base->mineral_surplus;
+	int mineralsToHurry = getBaseMineralCost(baseId, base->queue_items[0]) - base->minerals_accumulated - base->mineral_surplus;
 
 	// calculate partial hurry cost
 
@@ -2577,7 +2574,7 @@ void expireInfiltrations(int factionId)
 	if (!conf.infiltration_expire)
 		return;
 
-	debug("expireInfiltrations: %s\n", tx_metafactions[factionId].noun_faction);
+	debug("expireInfiltrations: %s\n", MFactions[factionId].noun_faction);
 
 	// try to discover other faction infiltration devices
 
@@ -2598,7 +2595,7 @@ void expireInfiltrations(int factionId)
 		if (!isDiploStatus(infiltratingFactionId, factionId, DIPLO_HAVE_INFILTRATOR))
 			continue;
 
-		debug("\t%s\n", tx_metafactions[infiltratingFactionId].noun_faction);
+		debug("\t%s\n", MFactions[infiltratingFactionId].noun_faction);
 
 		// get infiltration device count
 
@@ -2624,17 +2621,17 @@ void expireInfiltrations(int factionId)
 
 		// get our PROBE rating
 
-		int probeRating = tx_factions[factionId].SE_probe_pending;
+		int probeRating = Factions[factionId].SE_probe_pending;
 		debug("\t\tprobeRating=%d\n", probeRating);
 
 		// calculate lifetime
 
-		double lifetime = max(1.0, lifetimeBase + lifetimeProbeEffect * probeRating);
+		double lifetime = std::max(1.0, lifetimeBase + lifetimeProbeEffect * probeRating);
 		debug("\t\tlifetime=%f\n", lifetime);
 
 		// calculate probability
 
-		double probability = min(1.0, 1.0 / lifetime);
+		double probability = std::min(1.0, 1.0 / lifetime);
 		debug("\t\tprobability=%f\n", probability);
 
 		// roll dice
@@ -2660,13 +2657,13 @@ void expireInfiltrations(int factionId)
 
 				if (is_human(factionId))
 				{
-					parse_says(0, tx_metafactions[infiltratingFactionId].noun_faction, -1, -1);
+					parse_says(0, MFactions[infiltratingFactionId].noun_faction, -1, -1);
 					popp(ScriptTxtID, "INFILTRATIONDEACTIVATEDENEMY", 0, "capture_sm.pcx", 0);
 				}
 
 				if (is_human(infiltratingFactionId))
 				{
-					parse_says(0, tx_metafactions[factionId].noun_faction, -1, -1);
+					parse_says(0, MFactions[factionId].noun_faction, -1, -1);
 					popp(ScriptTxtID, "INFILTRATIONDEACTIVATEDOURS", 0, "capture_sm.pcx", 0);
 				}
 
@@ -2677,14 +2674,14 @@ void expireInfiltrations(int factionId)
 
 				if (is_human(factionId))
 				{
-					parse_says(0, tx_metafactions[infiltratingFactionId].noun_faction, -1, -1);
+					parse_says(0, MFactions[infiltratingFactionId].noun_faction, -1, -1);
 					parse_num(1, infiltrationDeviceCount);
 					popp(ScriptTxtID, "INFILTRATIONDEVICEDISABLEDENEMY", 0, "capture_sm.pcx", 0);
 				}
 
 				if (is_human(infiltratingFactionId))
 				{
-					parse_says(0, tx_metafactions[factionId].noun_faction, -1, -1);
+					parse_says(0, MFactions[factionId].noun_faction, -1, -1);
 					parse_num(1, infiltrationDeviceCount);
 					popp(ScriptTxtID, "INFILTRATIONDEVICEDISABLEDOURS", 0, "capture_sm.pcx", 0);
 				}
@@ -2703,21 +2700,21 @@ void setInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactio
 {
 	// device count is in range 0-0x7FFF
 
-	deviceCount = min(0x7FFF, max(0x0, deviceCount));
+	deviceCount = std::min(0x7FFF, std::max(0x0, deviceCount));
 
 	// clear infiltration devices count
 
-	tx_factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] &= 0x0000FFFF;
+	Factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] &= 0x0000FFFF;
 
 	// set infiltration devices count
 
-	tx_factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] |= (deviceCount << 16);
+	Factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] |= (deviceCount << 16);
 
 }
 
 int getInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId)
 {
-	return tx_factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] >> 16;
+	return Factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] >> 16;
 
 }
 
@@ -2814,7 +2811,7 @@ int getFlatHurryCost(int baseId)
 
 	// get base
 
-	BASE *base = &(tx_bases[baseId]);
+	BASE *base = &(Bases[baseId]);
 
 	// get hurry cost multiplier
 
@@ -2895,8 +2892,8 @@ Specifically makes sure sea probe is returned to same ocean region.
 */
 HOOK_API int modifiedFindReturnedProbeBase(int vehicleId)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
-	int vehicleTriad = veh_triad(vehicleId);
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	int vehicleTriad = vehicle->triad();
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 
 	// search nearest base
@@ -2906,7 +2903,7 @@ HOOK_API int modifiedFindReturnedProbeBase(int vehicleId)
 
 	for (int baseId = 0; baseId < *total_num_bases; baseId++)
 	{
-		BASE *base = &(tx_bases[baseId]);
+		BASE *base = &(Bases[baseId]);
 
 		// own bases only
 
@@ -2958,12 +2955,12 @@ HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, 
 
 		for (int stackedVehicleId : getStackedVehicleIds(defenderVehicleId))
 		{
-			VEH *stackedVehicle = &(tx_vehicles[stackedVehicleId]);
-			UNIT *stackedVehicleUnit = &(tx_units[stackedVehicle->proto_id]);
+			VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
+			UNIT *stackedVehicleUnit = &(Units[stackedVehicle->unit_id]);
 
 			int attackerStrength;
 			int defenderStrength;
-			battle_compute(attackerVehicleId, stackedVehicleId, (int)&attackerStrength, (int)&defenderStrength, 0);
+			mod_battle_compute(attackerVehicleId, stackedVehicleId, (int)&attackerStrength, (int)&defenderStrength, 0);
 
 			double defenderEffectiveness = ((double)defenderStrength / (double)attackerStrength) * ((stackedVehicleUnit->reactor_type * 10 - stackedVehicle->damage_taken) / (stackedVehicleUnit->reactor_type * 10));
 
@@ -2978,7 +2975,7 @@ HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, 
 	}
 	else
 	{
-		bestDefenderVehicleId = tx_best_defender(defenderVehicleId, attackerVehicleId, bombardment);
+		bestDefenderVehicleId = best_defender(defenderVehicleId, attackerVehicleId, bombardment);
 
 	}
 
@@ -2993,7 +2990,7 @@ HOOK_API void modifiedVehSkipForActionDestroy(int vehicleId)
 {
 	// execute original code
 
-	tx_veh_skip(vehicleId);
+	veh_skip(vehicleId);
 
 	// clear global combat variable
 
@@ -3051,15 +3048,15 @@ Request for break treaty before combat actions.
 */
 HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2)
 {
-	VEH *attackerVehicle = &(tx_vehicles[attackerVehicleId]);
+	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
 
 	if (attackerVehicle->faction_id == *current_player_faction)
 	{
-		int defenderVehicleId = tx_veh_at(tx, ty);
+		int defenderVehicleId = veh_at(tx, ty);
 
 		if (defenderVehicleId >= 0)
 		{
-			VEH *defenderVehicle = &(tx_vehicles[defenderVehicleId]);
+			VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
 
 			int treatyNotBroken = tx_break_treaty(attackerVehicle->faction_id, defenderVehicle->faction_id, 0xB);
 
@@ -3141,7 +3138,7 @@ HOOK_API int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteBaseInde
 
 HOOK_API void modifiedTechResearch(int factionId, int labs)
 {
-	Faction *faction = &(tx_factions[factionId]);
+	Faction *faction = &(Factions[factionId]);
 
 	// modify labs contribution from base
 
@@ -3187,7 +3184,7 @@ HOOK_API int modifiedNutrientCostFactorSEGrowth(int factionId, int baseId)
 {
 	// get faction
 
-	Faction *faction = &(tx_factions[factionId]);
+	Faction *faction = &(Factions[factionId]);
 
 	// get faction GROWTH
 
@@ -3224,7 +3221,7 @@ int getHabitationFacilitiesBaseGrowthModifier(int baseId)
 {
 	// get base
 
-	BASE *base = &(tx_bases[baseId]);
+	BASE *base = &(Bases[baseId]);
 
 	// calculate habitation facilities base GROWTH modifier
 
@@ -3239,11 +3236,11 @@ int getHabitationFacilitiesBaseGrowthModifier(int baseId)
 
 		if (habitationFacilityPresent)
 		{
-			baseGrowthModifier += min(conf.habitation_facility_present_growth_bonus_max, max(0, (populationLimit - base->pop_size)));
+			baseGrowthModifier += std::min(conf.habitation_facility_present_growth_bonus_max, std::max(0, (populationLimit - base->pop_size)));
 		}
 		else
 		{
-			baseGrowthModifier += min(0, (populationLimit - base->pop_size) - conf.habitation_facility_absent_growth_penalty);
+			baseGrowthModifier += std::min(0, (populationLimit - base->pop_size) - conf.habitation_facility_absent_growth_penalty);
 		}
 
 	}
@@ -3260,19 +3257,19 @@ HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute)
 {
 	// execute action
 
-	int returnValue = tx_action_terraform(vehicleId, action, execute);
+	int returnValue = action_terraform(vehicleId, action, execute);
 
 	// execute action for other idle formers in tile
 
 	if (execute == 1)
 	{
-		VEH *vehicle = &(tx_vehicles[vehicleId]);
+		VEH *vehicle = &(Vehicles[vehicleId]);
 		int vehicleFactionId = vehicle->faction_id;
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 
 		for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
 		{
-			VEH *otherVehicle = &(tx_vehicles[otherVehicleId]);
+			VEH *otherVehicle = &(Vehicles[otherVehicleId]);
 			int otherVehicleFactionId = otherVehicle->faction_id;
 			MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
 
@@ -3319,11 +3316,10 @@ Disables land artillery bombard from sea.
 HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y)
 {
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	bool ocean = is_ocean(vehicleTile);
 
 	// disable bombardment if vehicle is land unit at sea and not in a base
 
-	if (ocean && veh_triad(vehicleId) == 0 && !map_base(vehicleTile))
+	if (is_ocean(vehicleTile) && veh_triad(vehicleId) == TRIAD_LAND && !map_base(vehicleTile))
 		return;
 
 	// execute action
@@ -3338,14 +3334,14 @@ Pretends that air transport has zero cargo capacity when in not appropriate unlo
 */
 HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 
 	// disable air transport unload not in base
 
 	if
 	(
-		veh_triad(vehicleId) == TRIAD_AIR
+		vehicle->triad() == TRIAD_AIR
 		&&
 		isVehicleTransport(vehicle)
 		&&
