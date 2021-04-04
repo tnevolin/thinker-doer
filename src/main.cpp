@@ -6,54 +6,20 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Thinker is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Thinker.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "main.h"
 #include "lib/ini.h"
+#include "game_wtp.h"
 #include "wtp.h"
-#include "aiProduction.h"
-
-std::string MOVE_STATUS[] =
-{
-	"ORDER_NONE",              //  -
-	"ORDER_SENTRY_BOARD",      // (L)
-	"ORDER_HOLD",              // (H); Hold (set 1st waypoint (-1, 0)), Hold 10 (-1, 10), On Alert
-	"ORDER_CONVOY",            // (O)
-	"ORDER_FARM",              // (f)
-	"ORDER_SOIL_ENRICHER",     // (f)
-	"ORDER_MINE",              // (M)
-	"ORDER_SOLAR_COLLECTOR",   // (S)
-	"ORDER_PLANT_FOREST",      // (F)
-	"ORDER_ROAD",              // (R)
-	"ORDER_MAGTUBE",          // (R)
-	"ORDER_BUNKER",           // (K)
-	"ORDER_AIRBASE",          // (.)
-	"ORDER_SENSOR_ARRAY",     // (O)
-	"ORDER_REMOVE_FUNGUS",    // (F)
-	"ORDER_PLANT_FUNGUS",     // (F)
-	"ORDER_CONDENSER",        // (N)
-	"ORDER_ECHELON_MIRROR",   // (E)
-	"ORDER_THERMAL_BOREHOLE", // (B)
-	"ORDER_DRILL_AQUIFIER",   // (Q)
-	"ORDER_TERRAFORM_UP",     // (])
-	"ORDER_TERRAFORM_DOWN",   // ([)
-	"ORDER_TERRAFORM_LEVEL",  // (_)
-	"ORDER_PLACE_MONOLITH",   // (?)
-	"ORDER_MOVE_TO",          // (G); Move unit to here, Go to Base, Group go to, Patrol
-	"ORDER_MOVE",             // (>); Only used in a few places, seems to be buggy mechanic
-	"ORDER_EXPLORE",          // (/); not set via shortcut, AI related?
-	"ORDER_ROADS_TO",         // (r)
-	"ORDER_MAGTUBE_TO",       // (t)
-}
-;
 
 bool unknown_option = false;
 FILE* debug_log = NULL;
@@ -78,27 +44,35 @@ int handler(void* user, const char* section, const char* name, const char* value
     } else if (MATCH("thinker", "smooth_scrolling")) {
         cf->smooth_scrolling = atoi(value);
     } else if (MATCH("thinker", "scroll_area")) {
-        cf->scroll_area = max(0, atoi(value));
+        cf->scroll_area = std::max(0, atoi(value));
     } else if (MATCH("thinker", "world_map_labels")) {
         cf->world_map_labels = atoi(value);
     } else if (MATCH("thinker", "windowed")) {
         cf->windowed = atoi(value);
     } else if (MATCH("thinker", "window_width")) {
-        cf->window_width = max(800, atoi(value));
+        cf->window_width = std::max(800, atoi(value));
     } else if (MATCH("thinker", "window_height")) {
-        cf->window_height = max(600, atoi(value));
+        cf->window_height = std::max(600, atoi(value));
     } else if (MATCH("thinker", "smac_only")) {
         cf->smac_only = atoi(value);
     } else if (MATCH("thinker", "free_formers")) {
         cf->free_formers = atoi(value);
     } else if (MATCH("thinker", "free_colony_pods")) {
         cf->free_colony_pods = atoi(value);
+	// =WTP=
+	// extra values in thinker section - begin
+    } else if (MATCH("thinker", "human_free_formers")) {
+        cf->human_free_formers = atoi(value);
+    } else if (MATCH("thinker", "human_free_colony_pods")) {
+        cf->human_free_colony_pods = atoi(value);
+	// =WTP=
+	// extra values in thinker section - end
     } else if (MATCH("thinker", "satellites_nutrient")) {
-        cf->satellites_nutrient = max(0, atoi(value));
+        cf->satellites_nutrient = std::max(0, atoi(value));
     } else if (MATCH("thinker", "satellites_mineral")) {
-        cf->satellites_mineral = max(0, atoi(value));
+        cf->satellites_mineral = std::max(0, atoi(value));
     } else if (MATCH("thinker", "satellites_energy")) {
-        cf->satellites_energy = max(0, atoi(value));
+        cf->satellites_energy = std::max(0, atoi(value));
     } else if (MATCH("thinker", "design_units")) {
         cf->design_units = atoi(value);
     } else if (MATCH("thinker", "factions_enabled")) {
@@ -106,17 +80,17 @@ int handler(void* user, const char* section, const char* name, const char* value
     } else if (MATCH("thinker", "social_ai")) {
         cf->social_ai = atoi(value);
     } else if (MATCH("thinker", "social_ai_bias")) {
-        cf->social_ai = min(1000, max(0, atoi(value)));
+        cf->social_ai = std::min(1000, std::max(0, atoi(value)));
     } else if (MATCH("thinker", "tech_balance")) {
         cf->tech_balance = atoi(value);
     } else if (MATCH("thinker", "hurry_items")) {
         cf->hurry_items = atoi(value);
     } else if (MATCH("thinker", "base_spacing")) {
-        cf->base_spacing = min(8, max(2, atoi(value)));
+        cf->base_spacing = std::min(8, std::max(2, atoi(value)));
     } else if (MATCH("thinker", "base_nearby_limit")) {
         cf->base_nearby_limit = atoi(value);
     } else if (MATCH("thinker", "expansion_factor")) {
-        cf->expansion_factor = max(0, atoi(value));
+        cf->expansion_factor = std::max(0, atoi(value));
     } else if (MATCH("thinker", "expansion_autoscale")) {
         cf->expansion_autoscale = atoi(value);
     } else if (MATCH("thinker", "limit_project_start")) {
@@ -140,7 +114,7 @@ int handler(void* user, const char* section, const char* name, const char* value
     } else if (MATCH("thinker", "eco_damage_fix")) {
         cf->eco_damage_fix = atoi(value);
     } else if (MATCH("thinker", "clean_minerals")) {
-        cf->clean_minerals = max(0, atoi(value));
+        cf->clean_minerals = std::max(0, atoi(value));
     } else if (MATCH("thinker", "spawn_fungal_towers")) {
         cf->spawn_fungal_towers = atoi(value);
     } else if (MATCH("thinker", "spawn_spore_launchers")) {
@@ -150,7 +124,7 @@ int handler(void* user, const char* section, const char* name, const char* value
     } else if (MATCH("thinker", "spawn_battle_ogres")) {
         cf->spawn_battle_ogres = atoi(value);
     } else if (MATCH("thinker", "collateral_damage_value")) {
-        cf->collateral_damage_value = min(127, max(0, atoi(value)));
+        cf->collateral_damage_value = std::min(127, std::max(0, atoi(value)));
     } else if (MATCH("thinker", "disable_planetpearls")) {
         cf->disable_planetpearls = atoi(value);
     } else if (MATCH("thinker", "disable_aquatic_bonus_minerals")) {
@@ -166,9 +140,9 @@ int handler(void* user, const char* section, const char* name, const char* value
         opt_list_parse(cf->content_pop_computer, buf, 6, 0);
         cf->patch_content_pop = 1;
     } else if (MATCH("thinker", "repair_minimal")) {
-        cf->repair_minimal = min(10, max(0, atoi(value)));
+        cf->repair_minimal = std::min(10, std::max(0, atoi(value)));
     } else if (MATCH("thinker", "repair_fungus")) {
-        cf->repair_fungus = min(10, max(0, atoi(value)));
+        cf->repair_fungus = std::min(10, std::max(0, atoi(value)));
     } else if (MATCH("thinker", "repair_friendly")) {
         cf->repair_friendly = !!atoi(value);
     } else if (MATCH("thinker", "repair_airbase")) {
@@ -176,14 +150,492 @@ int handler(void* user, const char* section, const char* name, const char* value
     } else if (MATCH("thinker", "repair_bunker")) {
         cf->repair_bunker = !!atoi(value);
     } else if (MATCH("thinker", "repair_base")) {
-        cf->repair_base = min(10, max(0, atoi(value)));
+        cf->repair_base = std::min(10, std::max(0, atoi(value)));
     } else if (MATCH("thinker", "repair_base_native")) {
-        cf->repair_base_native = min(10, max(0, atoi(value)));
+        cf->repair_base_native = std::min(10, std::max(0, atoi(value)));
     } else if (MATCH("thinker", "repair_base_facility")) {
-        cf->repair_base_facility = min(10, max(0, atoi(value)));
+        cf->repair_base_facility = std::min(10, std::max(0, atoi(value)));
     } else if (MATCH("thinker", "repair_nano_factory")) {
-        cf->repair_nano_factory = min(10, max(0, atoi(value)));
-    } else {
+        cf->repair_nano_factory = std::min(10, std::max(0, atoi(value)));
+    }
+    // =WTP= configuratoin begin
+    else if (MATCH("wtp", "disable_alien_guaranteed_technologies")) {
+        cf->disable_alien_guaranteed_technologies = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_weapon_icon_selection_algorithm")) {
+        cf->alternative_weapon_icon_selection_algorithm = (atoi(value) == 0 ? false : true);
+    }
+    // implemented in Thinker?
+	else if (MATCH("wtp", "ignore_reactor_power_in_combat")) {
+		cf->ignore_reactor_power_in_combat = (atoi(value) == 0 ? false : true);
+	}
+    else if (MATCH("wtp", "alternative_prototype_cost_formula")) {
+        cf->alternative_prototype_cost_formula = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "reactor_cost_factor_0")) {
+        cf->reactor_cost_factors[0] = atoi(value);
+    }
+    else if (MATCH("wtp", "reactor_cost_factor_1")) {
+        cf->reactor_cost_factors[1] = atoi(value);
+    }
+    else if (MATCH("wtp", "reactor_cost_factor_2")) {
+        cf->reactor_cost_factors[2] = atoi(value);
+    }
+    else if (MATCH("wtp", "reactor_cost_factor_3")) {
+        cf->reactor_cost_factors[3] = atoi(value);
+    }
+    else if (MATCH("wtp", "flat_hurry_cost")) {
+        cf->flat_hurry_cost = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "flat_hurry_cost_multiplier_unit")) {
+        cf->flat_hurry_cost_multiplier_unit = std::max(1, atoi(value));
+    }
+    else if (MATCH("wtp", "flat_hurry_cost_multiplier_facility")) {
+        cf->flat_hurry_cost_multiplier_facility = std::max(1, atoi(value));
+    }
+    else if (MATCH("wtp", "flat_hurry_cost_multiplier_project")) {
+        cf->flat_hurry_cost_multiplier_project = std::max(1, atoi(value));
+    }
+    else if (MATCH("wtp", "alternative_upgrade_cost_formula")) {
+        cf->alternative_upgrade_cost_formula = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_base_defensive_structure_bonuses")) {
+        cf->alternative_base_defensive_structure_bonuses = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "perimeter_defense_multiplier")) {
+        cf->perimeter_defense_multiplier = atoi(value);
+    }
+    else if (MATCH("wtp", "tachyon_field_bonus")) {
+        cf->tachyon_field_bonus = atoi(value);
+    }
+    else if (MATCH("wtp", "collateral_damage_defender_reactor")) {
+        cf->collateral_damage_defender_reactor = (atoi(value) == 0 ? false : true);
+    }
+	// integrated into Thinker
+//	else if (MATCH("wtp", "collateral_damage_value")) {
+//		cf->collateral_damage_value = atoi(value);
+//	}
+	// integrated into Thinker
+//	else if (MATCH("wtp", "disable_aquatic_bonus_minerals")) {
+//		cf->disable_aquatic_bonus_minerals = (atoi(value) == 0 ? false : true);
+//	}
+	// integrated into Thinker
+//	else if (MATCH("wtp", "repair_minimal")) {
+//		cf->repair_minimal = std::min(10, std::max(0, atoi(value)));
+//	}
+//	else if (MATCH("wtp", "repair_fungus")) {
+//		cf->repair_fungus = std::min(10, std::max(0, atoi(value)));
+//	}
+//	else if (MATCH("wtp", "repair_friendly")) {
+//		cf->repair_friendly = (atoi(value) == 0 ? false : true);
+//	}
+//	else if (MATCH("wtp", "repair_airbase")) {
+//		cf->repair_airbase = (atoi(value) == 0 ? false : true);
+//	}
+//	else if (MATCH("wtp", "repair_bunker")) {
+//		cf->repair_bunker = (atoi(value) == 0 ? false : true);
+//	}
+//	else if (MATCH("wtp", "repair_base")) {
+//		cf->repair_base = std::min(10, std::max(0, atoi(value)));
+//	}
+//	else if (MATCH("wtp", "repair_base_native")) {
+//		cf->repair_base_native = std::min(10, std::max(0, atoi(value)));
+//	}
+//	else if (MATCH("wtp", "repair_base_facility")) {
+//		cf->repair_base_facility = std::min(10, std::max(0, atoi(value)));
+//	}
+//	else if (MATCH("wtp", "repair_nano_factory")) {
+//		cf->repair_nano_factory = std::min(10, std::max(0, atoi(value)));
+//	}
+    else if (MATCH("wtp", "alternative_combat_mechanics")) {
+        cf->alternative_combat_mechanics = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_combat_mechanics_loss_divider")) {
+        cf->alternative_combat_mechanics_loss_divider = std::max(1.0, atof(value));
+    }
+	// integrated into Thinker
+//	else if (MATCH("wtp", "disable_planetpearls")) {
+//		cf->disable_planetpearls = (atoi(value) == 0 ? false : true);
+//	}
+    else if (MATCH("wtp", "planet_combat_bonus_on_defense")) {
+        cf->planet_combat_bonus_on_defense = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "sea_territory_distance_same_as_land")) {
+        cf->sea_territory_distance_same_as_land = (atoi(value) == 0 ? false : true);
+    }
+    // integrated into Thinker
+//	else if (MATCH("wtp", "coastal_territory_distance_same_as_sea")) {
+//		cf->coastal_territory_distance_same_as_sea = (atoi(value) == 0 ? false : true);
+//	}
+    else if (MATCH("wtp", "alternative_artillery_damage")) {
+        cf->alternative_artillery_damage = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "disable_home_base_cc_morale_bonus")) {
+        cf->disable_home_base_cc_morale_bonus = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "disable_current_base_cc_morale_bonus")) {
+        cf->disable_current_base_cc_morale_bonus = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "default_morale_very_green")) {
+        cf->default_morale_very_green = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "combat_bonus_territory")) {
+        cf->combat_bonus_territory = atoi(value);
+    }
+    else if (MATCH("wtp", "tube_movement_rate_multiplier")) {
+        cf->tube_movement_rate_multiplier = atoi(value);
+    }
+    else if (MATCH("wtp", "project_contribution_threshold"))
+    {
+        cf->project_contribution_threshold = atoi(value);
+    }
+    else if (MATCH("wtp", "project_contribution_proportion"))
+    {
+        cf->project_contribution_proportion = atof(value);
+    }
+    else if (MATCH("wtp", "cloning_vats_disable_impunities"))
+    {
+        cf->cloning_vats_disable_impunities = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "cloning_vats_se_growth"))
+    {
+        cf->cloning_vats_se_growth = std::max(0, std::min(2, atoi(value)));
+    }
+    else if (MATCH("wtp", "se_growth_rating_min"))
+    {
+        cf->se_growth_rating_min = std::min(0, atoi(value));
+    }
+    else if (MATCH("wtp", "se_growth_rating_cap"))
+    {
+        cf->se_growth_rating_cap = std::max(0, std::min(9, atoi(value)));
+    }
+    else if (MATCH("wtp", "recycling_tanks_mineral_multiplier"))
+    {
+        cf->recycling_tanks_mineral_multiplier = (atoi(value) == 0 ? false : true);
+    }
+    // integrated into Thinker
+//	else if (MATCH("wtp", "free_minerals"))
+//	{
+//		cf->free_minerals = std::max(0, atoi(value));
+//	}
+    else if (MATCH("wtp", "native_life_generator_constant"))
+    {
+        cf->native_life_generator_constant = std::max(0, std::min(255, atoi(value)));
+    }
+    else if (MATCH("wtp", "native_life_generator_multiplier"))
+    {
+        cf->native_life_generator_multiplier = atoi(value);
+    }
+    else if (MATCH("wtp", "native_life_generator_more_sea_creatures"))
+    {
+        cf->native_life_generator_more_sea_creatures = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "native_disable_sudden_death"))
+    {
+        cf->native_disable_sudden_death = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_inefficiency"))
+    {
+        cf->alternative_inefficiency = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "ocean_depth_multiplier"))
+    {
+        cf->ocean_depth_multiplier = atof(value);
+    }
+    else if (MATCH("wtp", "zoc_regular_army_sneaking_disabled"))
+    {
+        cf->zoc_regular_army_sneaking_disabled = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "pts_new_base_size_less_average"))
+    {
+        cf->pts_new_base_size_less_average = std::max(0, atoi(value));
+    }
+    else if (MATCH("wtp", "biology_lab_research_bonus"))
+    {
+        cf->biology_lab_research_bonus = std::max(0, atoi(value));
+    }
+    else if (MATCH("wtp", "hsa_does_not_kill_probe"))
+    {
+        cf->hsa_does_not_kill_probe = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "condenser_and_enricher_do_not_multiply_nutrients"))
+    {
+        cf->condenser_and_enricher_do_not_multiply_nutrients = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "tech_cost_scale"))
+    {
+        cf->tech_cost_scale = atof(value);
+    }
+    else if (MATCH("wtp", "flat_extra_prototype_cost"))
+    {
+        cf->flat_extra_prototype_cost = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "fix_mineral_contribution"))
+    {
+        cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "fix_former_wake"))
+    {
+        cf->fix_former_wake = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "infiltration_expire"))
+    {
+        cf->infiltration_expire = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "infiltration_devices"))
+    {
+        cf->infiltration_devices = std::max(1, atoi(value));
+    }
+    else if (MATCH("wtp", "human_infiltration_device_lifetime_base"))
+    {
+        cf->human_infiltration_device_lifetime_base = std::max(1.0, atof(value));
+    }
+    else if (MATCH("wtp", "human_infiltration_device_lifetime_probe_effect"))
+    {
+        cf->human_infiltration_device_lifetime_probe_effect = atof(value);
+    }
+    else if (MATCH("wtp", "computer_infiltration_device_lifetime_base"))
+    {
+        cf->computer_infiltration_device_lifetime_base = std::max(1.0, atof(value));
+    }
+    else if (MATCH("wtp", "computer_infiltration_device_lifetime_probe_effect"))
+    {
+        cf->computer_infiltration_device_lifetime_probe_effect = atof(value);
+    }
+    else if (MATCH("wtp", "modified_probe_action_risks"))
+    {
+        cf->modified_probe_action_risks = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "probe_action_risk_genetic_plague"))
+    {
+        cf->probe_action_risk_genetic_plague = std::max(0, atoi(value));
+    }
+    else if (MATCH("wtp", "combat_bonus_sensor_ocean"))
+    {
+        cf->combat_bonus_sensor_ocean = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "combat_bonus_sensor_offense"))
+    {
+        cf->combat_bonus_sensor_offense = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "break_treaty_before_fight"))
+    {
+        cf->break_treaty_before_fight = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "compact_effect_icons"))
+    {
+        cf->compact_effect_icons = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "se_research_bonus_percentage"))
+    {
+        cf->se_research_bonus_percentage = std::max(0, std::min(100, atoi(value)));
+    }
+    else if (MATCH("wtp", "remove_fungal_tower_defense_bonus"))
+    {
+        cf->remove_fungal_tower_defense_bonus = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "aliens_fight_half_strength_unit_turn"))
+    {
+        cf->aliens_fight_half_strength_unit_turn = std::max(1, atoi(value));
+    }
+    else if (MATCH("wtp", "habitation_facility_disable_explicit_population_limit"))
+    {
+        cf->habitation_facility_disable_explicit_population_limit = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "habitation_facility_absent_growth_penalty"))
+    {
+        cf->habitation_facility_absent_growth_penalty = std::max(0, atoi(value));
+    }
+    else if (MATCH("wtp", "habitation_facility_present_growth_bonus_max"))
+    {
+        cf->habitation_facility_present_growth_bonus_max = std::max(0, atoi(value));
+    }
+    else if (MATCH("wtp", "unit_upgrade_ignores_movement"))
+    {
+        cf->unit_upgrade_ignores_movement = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "group_terraforming"))
+    {
+        cf->group_terraforming = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "ai_useWTPAlgorithms"))
+    {
+        cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "ai_production_vanilla_priority_unit"))
+    {
+        cf->ai_production_vanilla_priority_unit = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_vanilla_priority_project"))
+    {
+        cf->ai_production_vanilla_priority_project = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_vanilla_priority_facility"))
+    {
+        cf->ai_production_vanilla_priority_facility = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_threat_coefficient_vendetta"))
+    {
+        cf->ai_production_threat_coefficient_vendetta = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_threat_coefficient_truce"))
+    {
+        cf->ai_production_threat_coefficient_truce = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_threat_coefficient_treaty"))
+    {
+        cf->ai_production_threat_coefficient_treaty = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_threat_coefficient_pact"))
+    {
+        cf->ai_production_threat_coefficient_pact = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_min_native_protection"))
+    {
+        cf->ai_production_min_native_protection = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_max_native_protection"))
+    {
+        cf->ai_production_max_native_protection = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_native_protection_priority"))
+    {
+        cf->ai_production_native_protection_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_max_unpopulated_range"))
+    {
+        cf->ai_production_max_unpopulated_range = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_production_expansion_coverage"))
+    {
+        cf->ai_production_expansion_coverage = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_ocean_expansion_coverage"))
+    {
+        cf->ai_production_ocean_expansion_coverage = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_expansion_priority"))
+    {
+        cf->ai_production_expansion_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_combat_unit_turns_limit"))
+    {
+        cf->ai_production_combat_unit_turns_limit = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_production_facility_priority_penalty"))
+    {
+        cf->ai_production_facility_priority_penalty = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_combat_unit_min_mineral_surplus"))
+    {
+        cf->ai_production_combat_unit_min_mineral_surplus = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_production_exploration_coverage"))
+    {
+        cf->ai_production_exploration_coverage = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_improvement_coverage"))
+    {
+        cf->ai_production_improvement_coverage = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_improvement_coverage"))
+    {
+        cf->ai_production_improvement_coverage = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_population_projection_turns"))
+    {
+        cf->ai_production_population_projection_turns = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_production_Thinker_proportion"))
+    {
+        cf->ai_production_Thinker_proportion = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
+    {
+        cf->ai_terraforming_nutrientWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_mineralWeight"))
+    {
+        cf->ai_terraforming_mineralWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_energyWeight"))
+    {
+        cf->ai_terraforming_energyWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_landDistanceScale"))
+    {
+        cf->ai_terraforming_landDistanceScale = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_waterDistanceScale"))
+    {
+        cf->ai_terraforming_waterDistanceScale = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_networkConnectionValue"))
+    {
+        cf->ai_terraforming_networkConnectionValue = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_networkImprovementValue"))
+    {
+        cf->ai_terraforming_networkImprovementValue = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_networkBaseExtensionValue"))
+    {
+        cf->ai_terraforming_networkBaseExtensionValue = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_networkWildExtensionValue"))
+    {
+        cf->ai_terraforming_networkWildExtensionValue = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_networkCoverageThreshold"))
+    {
+        cf->ai_terraforming_networkCoverageThreshold = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_nearbyForestKelpPenalty"))
+    {
+        cf->ai_terraforming_nearbyForestKelpPenalty = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_rankMultiplier"))
+    {
+        cf->ai_terraforming_rankMultiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_exclusivityMultiplier"))
+    {
+        cf->ai_terraforming_exclusivityMultiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_baseNutrientThresholdRatio"))
+    {
+        cf->ai_terraforming_baseNutrientThresholdRatio = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_baseNutrientDemandMultiplier"))
+    {
+        cf->ai_terraforming_baseNutrientDemandMultiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_baseMineralThresholdRatio"))
+    {
+        cf->ai_terraforming_baseMineralThresholdRatio = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_baseMineralDemandMultiplier"))
+    {
+        cf->ai_terraforming_baseMineralDemandMultiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_raiseLandPayoffTime"))
+    {
+        cf->ai_terraforming_raiseLandPayoffTime = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_sensorValue"))
+    {
+        cf->ai_terraforming_sensorValue = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_sensorBorderRange"))
+    {
+        cf->ai_terraforming_sensorBorderRange = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_sensorShoreRange"))
+    {
+        cf->ai_terraforming_sensorShoreRange = atof(value);
+    }
+    // =WTP= configuratoin end
+    else {
         for (int i=0; i<16; i++) {
             if (MATCH("thinker", landmark_params[i])) {
                 cf->landmarks &= ~((atoi(value) ? 0 : 1) << i);
@@ -191,6 +643,13 @@ int handler(void* user, const char* section, const char* name, const char* value
             }
         }
         unknown_option = true;
+
+        // =WTP=
+        // display unknown option
+        char message[100];
+        sprintf(message, "Unknown configuration option in thinker.ini.\n[%s]\n%s", section, name);
+		MessageBoxA(0, message, MOD_VERSION, MB_OK | MB_ICONWARNING);
+
         return 0;  /* unknown section/name, error */
     }
     return 1;
@@ -201,7 +660,7 @@ int opt_list_parse(int* ptr, char* buf, int len, int min_val) {
     char *s, *p;
     p = strtok_r(buf, d, &s);
     for (int i=0; i<len && p != NULL; i++, p = strtok_r(NULL, d, &s)) {
-        ptr[i] = max(min_val, atoi(p));
+        ptr[i] = std::max(min_val, atoi(p));
     }
     return 1;
 }
@@ -357,7 +816,7 @@ int plans_upkeep(int faction) {
         int wpn = best_weapon(i);
         int arm = best_armor(i, false);
         int arm2 = best_armor(i, true);
-        int chs = has_chassis(i, CHS_HOVERTANK) ? CHS_HOVERTANK : 
+        int chs = has_chassis(i, CHS_HOVERTANK) ? CHS_HOVERTANK :
             (has_chassis(i, CHS_SPEEDER) ? CHS_SPEEDER : CHS_INFANTRY);
         bool twoabl = has_tech(i, Rules->tech_preq_allow_2_spec_abil);
         char buf[200];
@@ -442,11 +901,11 @@ int plans_upkeep(int faction) {
             }
         }
         std::sort(minerals, minerals+n);
-        plans[i].proj_limit = max(8, minerals[n*2/3]);
+        plans[i].proj_limit = std::max(8, minerals[n*2/3]);
         plans[i].need_police = (f->SE_police > -2 && f->SE_police < 3
             && !has_project(i, FAC_TELEPATHIC_MATRIX));
 
-        int psi = max(-4, 2 - f->best_weapon_value);
+        int psi = std::max(-4, 2 - f->best_weapon_value);
         if (has_project(i, FAC_NEURAL_AMPLIFIER)) {
             psi += 2;
         }
@@ -462,12 +921,12 @@ int plans_upkeep(int faction) {
         if (MFactions[i].rule_flags & FACT_WORMPOLICE && plans[i].need_police) {
             psi += 2;
         }
-        psi += min(2, max(-2, (f->enemy_best_weapon_value - f->best_weapon_value)/2));
+        psi += std::min(2, std::max(-2, (f->enemy_best_weapon_value - f->best_weapon_value)/2));
         psi += MFactions[i].rule_psi/10 + 2*f->SE_planet;
         plans[i].psi_score = psi;
 
         const int manifold[][3] = {{0,0,0}, {0,1,0}, {1,1,0}, {1,1,1}, {1,2,1}};
-        int p = (has_project(i, FAC_MANIFOLD_HARMONICS) ? min(4, max(0, f->SE_planet + 1)) : 0);
+        int p = (has_project(i, FAC_MANIFOLD_HARMONICS) ? std::min(4, std::max(0, f->SE_planet + 1)) : 0);
         int dn = manifold[p][0] + f->tech_fungus_nutrient - Resource->forest_sq_nutrient;
         int dm = manifold[p][1] + f->tech_fungus_mineral - Resource->forest_sq_mineral;
         int de = manifold[p][2] + f->tech_fungus_energy - Resource->forest_sq_energy;
@@ -597,7 +1056,7 @@ int find_project(int id) {
             && (similar_limit > 1 || !redundant_project(faction, i))) {
                 int sc = project_score(faction, i);
                 choice = (sc > score ? i : choice);
-                score = max(score, sc);
+                score = std::max(score, sc);
                 debug("find_project %d %d %d %s\n", faction, i, sc, Facility[i].name);
             }
         }
@@ -639,7 +1098,7 @@ bool relocate_hq(int id) {
     Base IDs are assigned in the foundation order, so this pseudorandom selection tends
     towards bases that were founded at an earlier date and have many neighboring friendly bases.
     */
-    return random(100) < 30.0 * (1.0 - 1.0 * k / bases) + 30.0 * min(15, n) / min(15, bases);
+    return random(100) < 30.0 * (1.0 - 1.0 * k / bases) + 30.0 * std::min(15, n) / std::min(15, bases);
 }
 
 bool can_build_ships(int id) {
@@ -702,7 +1161,7 @@ int unit_score(int id, int faction, int cfactor, int minerals, bool def) {
             v += 8 * i[1];
         }
     }
-    int turns = u->cost * cfactor / max(2, minerals);
+    int turns = u->cost * cfactor / std::max(2, minerals);
     int score = v - turns * (u->weapon_type == WPN_COLONY_MODULE ? 18 : 9);
     debug("unit_score %s cfactor: %d minerals: %d cost: %d turns: %d score: %d\n",
         u->name, cfactor, minerals, u->cost, turns, score);
@@ -714,9 +1173,6 @@ Find the best prototype for base production when weighted against cost given the
 and type constraints. For any combat-capable unit, mode is set to COMBAT (= 0).
 */
 int find_proto(int base_id, int triad, int mode, bool defend) {
-
-	BASE *base = &(tx_bases[base_id]);
-
     assert(base_id >= 0 && base_id < *total_num_bases);
     assert(mode >= COMBAT && mode <= WMODE_INFOWAR);
     assert(triad == TRIAD_LAND || triad == TRIAD_SEA || triad == TRIAD_AIR);
@@ -782,17 +1238,19 @@ int need_psych(int id) {
     int faction = b->faction_id;
     int unit = unit_in_tile(mapsq(b->x, b->y));
     Faction* f = &Factions[faction];
-    if (unit != faction || b->nerve_staple_turns_left > 0 || has_project(faction, FAC_TELEPATHIC_MATRIX))
-	{
-        return 0;
-	}
+
+    // =WTP=
+    // Fixed indentation. Otherwise compiler complains.
+	if (unit != faction || b->nerve_staple_turns_left > 0 || has_project(faction, FAC_TELEPATHIC_MATRIX))
+		return 0;
+
+	// =WTP=
+	// better computation with using doctors
 
 	// get base doctors
-
 	int doctors = getDoctors(id);
 
 	// do not build psych facility until there are drones or doctors
-
 	if (b->drone_total == 0 && doctors == 0)
 		return 0;
 
@@ -800,9 +1258,9 @@ int need_psych(int id) {
 	// this extra population also will be added to drones to determine need for psych facility
 
 	int mineralCost = getBaseBuildingItemCost(id);
-	int productionTime = (mineralCost - b->minerals_accumulated) / max(1, b->mineral_surplus) + 1;
+	int productionTime = (mineralCost - b->minerals_accumulated) / std::max(1, b->mineral_surplus) + 1;
 	int nutrientProduced = b->nutrients_accumulated + b->nutrient_surplus * productionTime;
-	int nutrientBoxSize = (b->pop_size + 1) * tx_cost_factor(faction, 0, id);
+	int nutrientBoxSize = (b->pop_size + 1) * cost_factor(faction, 0, id);
 	int extraPopulation = nutrientProduced / nutrientBoxSize;
 
 	// consider building psych facility if there are doctors or drones will outnumber talents soon
@@ -817,8 +1275,8 @@ int need_psych(int id) {
             return -FAC_RECREATION_COMMONS;
         if (has_project(faction, FAC_VIRTUAL_WORLD) && can_build(id, FAC_NETWORK_NODE))
             return -FAC_NETWORK_NODE;
-        if (/*!b->assimilation_turns_left && b->pop_size >= 6 && b->energy_surplus >= 12
-        && */can_build(id, FAC_HOLOGRAM_THEATRE))
+        if (!b->assimilation_turns_left && b->pop_size >= 6 && b->energy_surplus >= 12
+        && can_build(id, FAC_HOLOGRAM_THEATRE))
             return -FAC_HOLOGRAM_THEATRE;
     }
     return 0;
@@ -841,6 +1299,9 @@ int consider_hurry(int id) {
     Faction* f = &Factions[faction];
     MFaction* m = &MFactions[faction];
 
+    // =WTP=
+    // modified logic in case flat hurrying cost is used
+
     // applicability condition
     if
     (
@@ -859,10 +1320,42 @@ int consider_hurry(int id) {
          )
     )
         return 0;
-    bool cheap = b->minerals_accumulated >= Rules->retool_exemption;
-    int reserve = 20 + min(900, max(0, f->current_num_bases * min(30, (*current_turn - 20)/5)));
+
+    // determine hurry penalty threshold and hurry cost
+    bool cheap;
+    // projects
+    if (t >= -PROJECT_ID_LAST && t <= -PROJECT_ID_FIRST)
+    {
+        // no threshold
+        if (conf.flat_hurry_cost)
+        {
+            cheap = true;
+        }
+        // vanilla default threshold
+        else
+        {
+            int rowMinerals = 10 - std::max(-5, std::min(5, f->SE_industry));
+            cheap = b->minerals_accumulated >= 4 * rowMinerals;
+        }
+    }
+    // facilities and units
+    else
+    {
+        // no threshold
+        if (conf.flat_hurry_cost)
+        {
+            cheap = true;
+        }
+        // vanilla default threshold
+        else
+        {
+            cheap = b->minerals_accumulated >= Rules->retool_exemption;
+        }
+    }
+
+    int reserve = 20 + std::min(900, std::max(0, f->current_num_bases * std::min(30, (*current_turn - 20)/5)));
     int mins = mineral_cost(id, t) - b->minerals_accumulated;
-    int turns = (int)ceil(mins / max(0.01, 1.0 * b->mineral_surplus));
+    int turns = (int)ceil(mins / std::max(0.01, 1.0 * b->mineral_surplus));
 
     // hurry cost calculation
     int cost;
@@ -899,15 +1392,13 @@ int consider_hurry(int id) {
 
     // VoP doubles hurry cost
 
-    if (tx_secret_projects[FAC_VOICE_OF_PLANET - PROJECT_ID_FIRST] > PROJECT_UNBUILT)
+    if (SecretProjects[FAC_VOICE_OF_PLANET - PROJECT_ID_FIRST] > PROJECT_UNBUILT)
 	{
 		cost *= 2;
 	}
 
-    // hurry only cheap cases
     if (!(cheap && mins > 0 && cost > 0 && f->energy_credits - cost > reserve))
         return 0;
-
     if (b->drone_total > b->talent_total && t < 0 && t == need_psych(id))
         return hurry_item(b, mins, cost);
     if (t < 0 && turns > 1) {
@@ -921,9 +1412,11 @@ int consider_hurry(int id) {
             return hurry_item(b, mins, cost);
         if (t == -FAC_AEROSPACE_COMPLEX && has_tech(faction, TECH_Orbital))
             return hurry_item(b, mins, cost);
+
         // [WtP] hurry SP always
         if (t >= -PROJECT_ID_LAST && t <= -PROJECT_ID_FIRST)
             return hurry_item(b, mins, cost);
+
     }
     if (t >= 0 && turns > 1) {
         if (m->thinker_enemy_range < 15 && Units[t].weapon_type <= WPN_PSI_ATTACK
@@ -936,7 +1429,6 @@ int consider_hurry(int id) {
     }
     return 0;
 }
-
 
 int find_facility(int id) {
     const int build_order[][2] = {
@@ -999,7 +1491,7 @@ int find_facility(int id) {
         if (t[1] & 1 && base->energy_surplus < 2*fc->maint + fc->cost/(f->AI_tech ? 2 : 1))
             continue;
         /* Avoid building combat-related facilities in peacetime. */
-        if (t[1] & 2 && m->thinker_enemy_range > 40 - min(12, 3*fc->maint))
+        if (t[1] & 2 && m->thinker_enemy_range > 40 - std::min(12, 3*fc->maint))
             continue;
         /* Build these facilities only if the global unit limit is reached. */
         if (t[1] & 4 && can_build_units)
@@ -1099,7 +1591,7 @@ int select_prod(int id) {
     MFaction* m = &MFactions[faction];
     AIPlans* p = &plans[faction];
 
-    int reserve = max(2, base->mineral_intake / 2);
+    int reserve = std::max(2, base->mineral_intake / 2);
     bool has_formers = has_weapon(faction, WPN_TERRAFORMING_UNIT);
     bool has_supply = has_weapon(faction, WPN_SUPPLY_TRANSPORT);
     bool build_ships = can_build_ships(id);
@@ -1119,11 +1611,11 @@ int select_prod(int id) {
         if (i == faction || ~f->diplo_status[i] & DIPLO_COMMLINK) {
             continue;
         }
-        double mil = min(5.0, (is_human(faction) ? 2.0 : 1.0) * faction_might(i) / might);
+        double mil = std::min(5.0, (is_human(faction) ? 2.0 : 1.0) * faction_might(i) / might);
         if (at_war(faction, i)) {
-            enemymil = max(enemymil, 1.0 * mil);
+            enemymil = std::max(enemymil, 1.0 * mil);
         } else if (!has_pact(faction, i)) {
-            enemymil = max(enemymil, 0.3 * mil);
+            enemymil = std::max(enemymil, 0.3 * mil);
         }
     }
     for (int i=0; i<*total_num_bases; i++) {
@@ -1134,7 +1626,7 @@ int select_prod(int id) {
             if (sq1 && sq2 && sq1->region != sq2->region) {
                 range = 3*range/2;
             }
-            enemyrange = min(enemyrange, range);
+            enemyrange = std::min(enemyrange, range);
         }
     }
     for (int i=0; i<*total_num_vehicles; i++) {
@@ -1177,10 +1669,10 @@ int select_prod(int id) {
     m->thinker_enemy_range = (enemyrange + 9 * m->thinker_enemy_range)/10;
     bool need_scouts = plans[faction].unknown_factions > 1 && plans[faction].contacted_factions < 2;
 
-    double w1 = min(1.0, max(0.5, 1.0 * minerals / p->proj_limit));
+    double w1 = std::min(1.0, std::max(0.5, 1.0 * minerals / p->proj_limit));
     double w2 = 2.0 * enemymil / (m->thinker_enemy_range * 0.1 + 0.1) + 0.5 * p->enemy_bases
-        + min(1.0, expansion_ratio(faction)) * (f->AI_fight * 0.2 + 0.8);
-    double threat = 1 - (1 / (1 + max(0.0, w1 * w2)));
+        + std::min(1.0, expansion_ratio(faction)) * (f->AI_fight * 0.2 + 0.8);
+    double threat = 1 - (1 / (1 + std::max(0.0, w1 * w2)));
     int def_target = (*current_turn < 50 && !sea_base && !random(3) ? 2 : 1);
 
     debug("select_prod %d %d %2d %2d def: %d frm: %d prb: %d crw: %d pods: %d expand: %d "\
@@ -1226,7 +1718,7 @@ int select_prod(int id) {
         return find_proto(id, TRIAD_SEA, WMODE_INFOWAR, DEF);
 
     } else {
-        int crawl_target = 1 + min(base->pop_size/4,
+        int crawl_target = 1 + std::min(base->pop_size/4,
             (minerals >= p->proj_limit ? 2 : 1));
 
         if (minerals >= 12 && base->eco_damage > 0 && can_build(id, FAC_TREE_FARM)
@@ -1254,7 +1746,7 @@ int robust, int immunity, int impunity, int penalty) {
     enum {ECO, EFF, SUP, TAL, MOR, POL, GRW, PLA, PRO, IND, RES};
     Faction* f = &Factions[faction];
     MFaction* m = &MFactions[faction];
-    double base_ratio = min(1.0, f->current_num_bases / min(40.0, *map_area_sq_root * 0.5));
+    double base_ratio = std::min(1.0, f->current_num_bases / std::min(40.0, *map_area_sq_root * 0.5));
     int morale = (has_project(faction, FAC_COMMAND_NEXUS) ? 2 : 0)
         + (has_project(faction, FAC_CYBORG_FACTORY) ? 2 : 0);
     int sc = 0;
@@ -1272,7 +1764,7 @@ int robust, int immunity, int impunity, int penalty) {
             for (int k=0; k<11; k++) {
                 int val = Social[i].effects[j][k];
                 if ((1 << (i*4 + j)) & impunity) {
-                    val = max(0, val);
+                    val = std::max(0, val);
                 } else if ((1 << (i*4 + j)) & penalty) {
                     val = val * (val < 0 ? 2 : 1);
                 }
@@ -1293,7 +1785,7 @@ int robust, int immunity, int impunity, int penalty) {
         }
         for (int k=0; k<11; k++) {
             if ((1 << k) & immunity) {
-                vals[k] = max(0, vals[k]);
+                vals[k] = std::max(0, vals[k]);
             } else if ((1 << k) & robust && vals[k] < 0) {
                 vals[k] /= 2;
             }
@@ -1330,27 +1822,27 @@ int robust, int immunity, int impunity, int penalty) {
         sc += 10;
     }
     if (vals[PRO] >= 3 && !has_project(faction, FAC_HUNTER_SEEKER_ALGO)) {
-        sc += 4 * max(0, 4 - range/8);
+        sc += 4 * std::max(0, 4 - range/8);
     }
-    sc += max(2, 2 + 4*f->AI_wealth + 3*f->AI_tech - f->AI_fight)
-        * min(5, max(-3, vals[ECO]));
-    sc += max(2, 2*(f->AI_wealth + f->AI_tech) - f->AI_fight + (int)(4*base_ratio))
-        * (min(6, vals[EFF]) + (vals[EFF] >= 3 ? 2 : 0));
-    sc += max(3, 3 + 2*f->AI_power + 2*f->AI_fight)
-        * min(3, max(-4, vals[SUP]));
-    sc += max(2, 4 - range/8 + 2*f->AI_power + 2*f->AI_fight)
-        * min(4, max(-4, vals[MOR]));
+    sc += std::max(2, 2 + 4*f->AI_wealth + 3*f->AI_tech - f->AI_fight)
+        * std::min(5, std::max(-3, vals[ECO]));
+    sc += std::max(2, 2*(f->AI_wealth + f->AI_tech) - f->AI_fight + (int)(4*base_ratio))
+        * (std::min(6, vals[EFF]) + (vals[EFF] >= 3 ? 2 : 0));
+    sc += std::max(3, 3 + 2*f->AI_power + 2*f->AI_fight)
+        * std::min(3, std::max(-4, vals[SUP]));
+    sc += std::max(2, 4 - range/8 + 2*f->AI_power + 2*f->AI_fight)
+        * std::min(4, std::max(-4, vals[MOR]));
     if (!has_project(faction, FAC_TELEPATHIC_MATRIX)) {
-        sc += (vals[POL] < 0 ? 2 : 4) * min(3, max(-5, vals[POL]));
+        sc += (vals[POL] < 0 ? 2 : 4) * std::min(3, std::max(-5, vals[POL]));
         if (vals[POL] < -2) {
-            sc -= (vals[POL] < -3 ? 4 : 2) * max(0, 4 - range/8)
+            sc -= (vals[POL] < -3 ? 4 : 2) * std::max(0, 4 - range/8)
                 * (has_chassis(faction, CHS_NEEDLEJET) ? 2 : 1);
         }
         if (has_project(faction, FAC_LONGEVITY_VACCINE) && sf == SOCIAL_C_ECONOMICS) {
             sc += (sm == SOCIAL_M_PLANNED ? 10 : 0);
             sc += (sm == SOCIAL_M_SIMPLE || sm == SOCIAL_M_GREEN ? 5 : 0);
         }
-        sc += min(5, max(-5, vals[TAL])) * 3;
+        sc += std::min(5, std::max(-5, vals[TAL])) * 3;
     }
     if (!has_project(faction, FAC_CLONING_VATS)) {
         if (pop_boom && vals[GRW] >= 4) {
@@ -1359,14 +1851,14 @@ int robust, int immunity, int impunity, int penalty) {
         if (vals[GRW] < -2) {
             sc -= 10;
         }
-        sc += (pop_boom ? 6 : 3) * min(6, max(-3, vals[GRW]));
+        sc += (pop_boom ? 6 : 3) * std::min(6, std::max(-3, vals[GRW]));
     }
-    sc += max(2, (f->SE_planet_base > 0 ? 5 : 2) + m->rule_psi/10
-        + (has_project(faction, FAC_MANIFOLD_HARMONICS) ? 6 : 0)) * min(3, max(-3, vals[PLA]));
-    sc += max(2, 4 - range/8 + 2*f->AI_power + 2*f->AI_fight) * min(3, max(-2, vals[PRO]));
-    sc += 8 * min(8 - *diff_level, max(-3, vals[IND]));
-    sc += max(2, 3 + 4*f->AI_tech + 2*(f->AI_wealth - f->AI_fight))
-        * min(5, max(-5, vals[RES]));
+    sc += std::max(2, (f->SE_planet_base > 0 ? 5 : 2) + m->rule_psi/10
+        + (has_project(faction, FAC_MANIFOLD_HARMONICS) ? 6 : 0)) * std::min(3, std::max(-3, vals[PLA]));
+    sc += std::max(2, 4 - range/8 + 2*f->AI_power + 2*f->AI_fight) * std::min(3, std::max(-2, vals[PRO]));
+    sc += 8 * std::min(8 - *diff_level, std::max(-3, vals[IND]));
+    sc += std::max(2, 3 + 4*f->AI_tech + 2*(f->AI_wealth - f->AI_fight))
+        * std::min(5, std::max(-5, vals[RES]));
 
     debug("social_score %d %d %d %d %s\n", faction, sf, sm, sc, Social[sf].soc_name[sm]);
     return sc;
@@ -1390,7 +1882,7 @@ HOOK_API int mod_social_ai(int faction, int v1, int v2, int v3, int v4, int v5) 
         social_set(faction);
         return 0;
     }
-    int range = (int)(m->thinker_enemy_range / (1.0 + 0.1 * min(4, plans[faction].enemy_bases)));
+    int range = (int)(m->thinker_enemy_range / (1.0 + 0.1 * std::min(4, plans[faction].enemy_bases)));
     bool has_nexus = (manifold_nexus_owner() == faction);
     assert(!memcmp(&f->SE_Politics, &f->SE_Politics_pending, 16));
 
@@ -1468,4 +1960,7 @@ HOOK_API int mod_social_ai(int faction, int v1, int v2, int v3, int v4, int v5) 
     consider_designs(faction);
     return 0;
 }
+
+
+
 

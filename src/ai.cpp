@@ -84,7 +84,7 @@ void populateSharedLists()
 
 	// populate factions combat modifiers
 
-	debug("%-24s\nfactionCombatModifiers:\n", tx_metafactions[aiFactionId].noun_faction);
+	debug("%-24s\nfactionCombatModifiers:\n", MFactions[aiFactionId].noun_faction);
 
 	for (int id = 1; id < 8; id++)
 	{
@@ -97,7 +97,7 @@ void populateSharedLists()
 		debug
 		(
 			"\t%-24s: offenseMultiplier=%4.2f, defenseMultiplier=%4.2f, fanaticBonusMultiplier=%4.2f\n",
-			tx_metafactions[id].noun_faction,
+			MFactions[id].noun_faction,
 			factionInfos[id].offenseMultiplier,
 			factionInfos[id].defenseMultiplier,
 			factionInfos[id].fanaticBonusMultiplier
@@ -109,7 +109,7 @@ void populateSharedLists()
 
 	// populate other factions threat koefficients
 
-	debug("%-24s\notherFactionThreatKoefficients:\n", tx_metafactions[aiFactionId].noun_faction);
+	debug("%-24s\notherFactionThreatKoefficients:\n", MFactions[aiFactionId].noun_faction);
 
 	for (int id = 1; id < 8; id++)
 	{
@@ -120,7 +120,7 @@ void populateSharedLists()
 
 		// get relation from other faction
 
-		int otherFactionRelation = tx_factions[id].diplo_status[aiFactionId];
+		int otherFactionRelation = Factions[id].diplo_status[aiFactionId];
 
 		// calculate threat koefficient
 
@@ -158,7 +158,7 @@ void populateSharedLists()
 
 		factionInfos[id].threatKoefficient = threatKoefficient;
 
-		debug("\t%-24s: %08x => %4.2f\n", tx_metafactions[id].noun_faction, otherFactionRelation, threatKoefficient);
+		debug("\t%-24s: %08x => %4.2f\n", MFactions[id].noun_faction, otherFactionRelation, threatKoefficient);
 
 	}
 
@@ -170,7 +170,7 @@ void populateSharedLists()
 
 	for (int id = 0; id < *total_num_bases; id++)
 	{
-		BASE *base = &(tx_bases[id]);
+		BASE *base = &(Bases[id]);
 
 		// exclude not own bases
 
@@ -216,7 +216,7 @@ void populateSharedLists()
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
-		VEH *vehicle = &(tx_vehicles[id]);
+		VEH *vehicle = &(Vehicles[id]);
 
 		// store all vehicle current id in pad_0 field
 
@@ -261,7 +261,7 @@ void populateSharedLists()
 
 				if (vehicle_has_ability(vehicle, ABL_TRANCE))
 				{
-					nativeProtection *= (1 + (double)tx_basic->combat_bonus_trance_vs_psi / 100.0);
+					nativeProtection *= (1 + (double)Rules->combat_bonus_trance_vs_psi / 100.0);
 				}
 
 				baseStrategy->nativeProtection += nativeProtection;
@@ -286,7 +286,7 @@ void populateSharedLists()
 	{
         int id = (i < 64 ? i : (*active_faction - 1) * 64 + i);
 
-        UNIT *unit = &tx_units[id];
+        UNIT *unit = &Units[id];
 
 		// skip not enabled
 
@@ -310,7 +310,7 @@ VEH *getVehicleByAIId(int aiId)
 {
 	// check if ID didn't change
 
-	VEH *oldVehicle = &(tx_vehicles[aiId]);
+	VEH *oldVehicle = &(Vehicles[aiId]);
 
 	if (oldVehicle->pad_0 == aiId)
 		return oldVehicle;
@@ -319,7 +319,7 @@ VEH *getVehicleByAIId(int aiId)
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
-		VEH *vehicle = &(tx_vehicles[id]);
+		VEH *vehicle = &(Vehicles[id]);
 
 		if (vehicle->pad_0 == aiId)
 			return vehicle;

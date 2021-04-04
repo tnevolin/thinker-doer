@@ -1,9 +1,8 @@
-#ifndef __AI_H__
-#define __AI_H__
+#pragma once
 
+#include "main.h"
 #include <float.h>
 #include <map>
-#include "main.h"
 #include "game.h"
 #include "move.h"
 #include "wtp.h"
@@ -50,6 +49,4 @@ void aiStrategy(int id);
 void populateSharedLists();
 VEH *getVehicleByAIId(int aiId);
 double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId);
-
-#endif // __AI_H__
 

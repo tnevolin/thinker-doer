@@ -102,10 +102,16 @@
 		<Unit filename="src/aiTransport.cpp" />
 		<Unit filename="src/aiTransport.h" />
 		<Unit filename="src/engine.cpp" />
+		<Unit filename="src/engine.cpp.bak" />
 		<Unit filename="src/engine.h" />
+		<Unit filename="src/engine.h.bak" />
 		<Unit filename="src/game.cpp" />
+		<Unit filename="src/game.cpp.bak" />
 		<Unit filename="src/game.h" />
+		<Unit filename="src/game_wtp.cpp" />
+		<Unit filename="src/game_wtp.h" />
 		<Unit filename="src/gui.cpp" />
+		<Unit filename="src/gui.cpp.bak" />
 		<Unit filename="src/gui.h" />
 		<Unit filename="src/lib/ini.c">
 			<Option compilerVar="CC" />
@@ -117,18 +123,28 @@
 		<Unit filename="src/move.h" />
 		<Unit filename="src/patch.cpp" />
 		<Unit filename="src/patch.h" />
+		<Unit filename="src/patch_wtp.cpp" />
+		<Unit filename="src/patch_wtp.h" />
 		<Unit filename="src/path.cpp" />
 		<Unit filename="src/path.h" />
 		<Unit filename="src/tech.cpp" />
 		<Unit filename="src/tech.h" />
 		<Unit filename="src/terranx.cpp" />
 		<Unit filename="src/terranx.h" />
+		<Unit filename="src/terranx.h.bak" />
 		<Unit filename="src/terranx_enums.h" />
 		<Unit filename="src/terranx_types.h" />
+		<Unit filename="src/terranx_wtp.cpp" />
+		<Unit filename="src/terranx_wtp.h" />
 		<Unit filename="src/test.cpp" />
 		<Unit filename="src/test.h" />
+		<Unit filename="src/wtp.cpp" />
+		<Unit filename="src/wtp.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
+			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

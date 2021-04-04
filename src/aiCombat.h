@@ -1,8 +1,8 @@
-#ifndef __AICOMBAT_H__
-#define __AICOMBAT_H__
+#pragma once
 
 #include "main.h"
 #include "game.h"
+#include "game_wtp.h"
 
 struct COMBAT_ORDER
 {
@@ -34,6 +34,4 @@ int kickSeaExplorerFromLandPort(int vehicleId);
 int killVehicle(int vehicleId);
 int moveVehicle(int vehicleId, int x, int y);
 MAP_INFO getNearestUnexploredConnectedOceanRegionTile(int factionId, int initialLocationX, int initialLocationY);
-
-#endif // __AICOMBAT_H__
 

@@ -1,5 +1,9 @@
 
 #include "patch.h"
+#include "terranx_wtp.h"
+#include "patch_wtp.h"
+#include "game_wtp.h"
+#include "wtp.h"
 
 const char* ac_alpha = "ac_mod\\alphax";
 const char* ac_help = "ac_mod\\helpx";
@@ -33,7 +37,8 @@ bool FileExists(const char* path) {
 }
 
 HOOK_API int mod_crop_yield(int faction, int base, int x, int y, int tf) {
-// [WtP] delegate to generic function instead
+	// =WTP=
+	// use modified nutrient yield computation
 //    int value = crop_yield(faction, base, x, y, tf);
     int value = mod_nutrient_yield(faction, base, x, y, tf);
     MAP* sq = mapsq(x, y);
@@ -109,13 +114,8 @@ HOOK_API int mod_capture_base(int base_id, int faction, int probe) {
     int old_faction = Bases[base_id].faction_id;
     assert(valid_player(faction) && faction != old_faction);
     capture_base(base_id, faction, probe);
-
-    // relocate HQ if needed
-
     check_relocate_hq(old_faction);
-
     return 0;
-
 }
 
 HOOK_API int mod_base_kill(int base_id) {
@@ -137,17 +137,25 @@ HOOK_API int content_pop() {
 
 HOOK_API int mod_setup_player(int faction, int v1, int v2) {
     setup_player(faction, v1, v2);
-    if (faction > 0 && !is_human(faction)) {
+    // =WTP=
+    // human faction also may get extra units
+    if (faction > 0 /*&& !is_human(faction)*/) {
         for (int i=0; i<*total_num_vehicles; i++) {
             VEH* veh = &Vehicles[i];
             if (veh->faction_id == faction) {
                 MAP* sq = mapsq(veh->x, veh->y);
                 int former = (is_ocean(sq) ? BSC_SEA_FORMERS : BSC_FORMERS);
                 int colony = (is_ocean(sq) ? BSC_SEA_ESCAPE_POD : BSC_COLONY_POD);
-                for (int j=0; j<conf.free_formers; j++) {
+				// =WTP=
+				// human faction also may get extra units
+//				for (int j=0; j<conf.free_formers; j++) {
+				for (int j=0; j<(is_human(faction) ? conf.human_free_formers : conf.free_formers); j++) {
                     spawn_veh(former, faction, veh->x, veh->y, -1);
                 }
-                for (int j=0; j<conf.free_colony_pods; j++) {
+				// =WTP=
+				// human faction also may get extra units
+//				for (int j=0; j<conf.free_colony_pods; j++) {
+				for (int j=0; j<(is_human(faction) ? conf.human_free_colony_pods : conf.free_colony_pods); j++) {
                     spawn_veh(colony, faction, veh->x, veh->y, -1);
                 }
                 break;
@@ -156,6 +164,27 @@ HOOK_API int mod_setup_player(int faction, int v1, int v2) {
         Factions[faction].satellites_nutrient = conf.satellites_nutrient;
         Factions[faction].satellites_mineral = conf.satellites_mineral;
         Factions[faction].satellites_energy = conf.satellites_energy;
+
+        // =WTP=
+
+		// rerun balance for late starting faction
+
+		if (v1 == -282)
+		{
+			// set balanceFactionId
+
+			balanceFactionId = faction;
+
+			// run balance
+
+			tx_balance();
+
+			// clear balanceFactionId
+
+			balanceFactionId = -1;
+
+		}
+
     }
     return 0;
 }
@@ -248,7 +277,7 @@ bool valid_start (int faction, int iter, int x, int y, bool aquatic) {
     if (aquatic != is_ocean(sq) || bonus_at(x, y) != RES_NONE) {
         return false;
     }
-    if (min_range(natives, x, y) < max(4, 8 - iter/16)) {
+    if (min_range(natives, x, y) < std::max(4, 8 - iter/16)) {
         return false;
     }
     int sc = 0;
@@ -336,7 +365,7 @@ HOOK_API void find_start(int faction, int* tx, int* ty) {
             y = (random(*map_axis_y - k*2) + k);
             x = (random(*map_axis_x) &~1) + (y&1);
         }
-        int limit = max(8, *map_area_sq_root/3 - i/6);
+        int limit = std::max(8, *map_area_sq_root/3 - i/6);
         z = min_range(spawns, x, y);
         debug("find_iter  %d %d x: %3d y: %3d limit: %2d range: %2d\n", faction, i, x, y, limit, z);
         if (z >= limit && valid_start(faction, i, x, y, aquatic)) {
@@ -622,26 +651,8 @@ bool patch_setup(Config* cf) {
     }
 
     /*
-    0:  8b 75 ec                mov    esi,DWORD PTR [ebp-0x14]
-    3:  8d 46 ff                lea    eax,[esi-0x1]
-    6:  85 c0                   test   eax,eax
-    8:  7f 04                   jg     0xe
-    a:  33 ff                   xor    edi,edi
-    c:  eb 0a                   jmp    0x18
-    e:  E8 65 CE 13 00          call   <randomizer>
-    13: 99                      cdq
-    14: f7 fe                   idiv   esi
-    16: 8b fa                   mov    edi,edx
-    18: 8b 75 e4                mov    esi,DWORD PTR [ebp-0x1c]
-    1b: 8d 4e ff                lea    ecx,[esi-0x1]
-    1e: 85 c9                   test   ecx,ecx
-    20: 7f 04                   jg     0x26
-    22: 33 d2                   xor    edx,edx
-    24: eb 08                   jmp    0x2e
-    26: E8 4D CE 13 00          call   <randomizer>
-    2b: 99                      cdq
-    2c: f7 fe                   idiv   esi
-    2e: 3b fa                   cmp    edi,edx
+    Fixes issue where attacking other satellites doesn't work in
+    Orbital Attack View when smac_only is activated.
     */
     {
         const byte old_bytes[] = {0xD2,0x01,0x00,0x00};
@@ -661,37 +672,30 @@ bool patch_setup(Config* cf) {
     }
 
     /*
-    0:  8d bd 10 ff ff ff       lea    edi,[ebp-0xf0]
-    6:  57                      push   edi
-    7:  8b 7d a4                mov    edi,DWORD PTR [ebp-0x5c]
-    a:  57                      push   edi
-    b:  8b 7d a0                mov    edi,DWORD PTR [ebp-0x60]
-    e:  57                      push   edi
-    f:  8b 7d f8                mov    edi,DWORD PTR [ebp-0x8]
-    12: 57                      push   edi
-    13: 8b 7d fc                mov    edi,DWORD PTR [ebp-0x4]
-    16: 57                      push   edi
-    17: 8b 7d e4                mov    edi,DWORD PTR [ebp-0x1c]
-    1a: 57                      push   edi
-    1b: 8b 7d ec                mov    edi,DWORD PTR [ebp-0x14]
-    1e: 57                      push   edi
-    1f: e8 fc ff ff ff          call   20 <_main+0x20>
-    24: 83 c4 1c                add    esp,0x1c
-    27: 85 c0                   test   eax,eax
-    ...
+    Make sure the game engine can read movie settings from "movlistx.txt".
     */
-    byte combat_roll_new_bytes[] =
-        { 0x8D, 0xBD, 0x10, 0xFF, 0xFF, 0xFF, 0x57, 0x8B, 0x7D, 0xA4, 0x57, 0x8B, 0x7D, 0xA0, 0x57, 0x8B, 0x7D, 0xF8, 0x57, 0x8B, 0x7D, 0xFC, 0x57, 0x8B, 0x7D, 0xE4, 0x57, 0x8B, 0x7D, 0xEC, 0x57, 0xE8, 0xFC, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x1C, 0x85, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
-    ;
+    if (FileExists(ac_movlist_txt) && !FileExists(ac_movlistx_txt)) {
+        CopyFile(ac_movlist_txt, ac_movlistx_txt, TRUE);
+    }
 
-    write_bytes
-    (
-        0x005091A5,
-        combat_roll_bytes_length,
-        combat_roll_old_bytes,
-        combat_roll_new_bytes
-    )
-    ;
+    if (cf->smac_only) {
+        if (!FileExists("ac_mod/alphax.txt") || !FileExists("ac_mod/conceptsx.txt")
+        || !FileExists("ac_mod/tutor.txt") || !FileExists("ac_mod/helpx.txt")) {
+            MessageBoxA(0, "Error while opening ac_mod folder. Unable to start smac_only mode.",
+                MOD_VERSION, MB_OK | MB_ICONSTOP);
+            exit(EXIT_FAILURE);
+        }
+        *(int*)0x45F97A = 0;
+        *(const char**)0x691AFC = ac_alpha;
+        *(const char**)0x691B00 = ac_help;
+        *(const char**)0x691B14 = ac_tutor;
+        write_offset(0x42B30E, ac_concepts);
+        write_offset(0x42B49E, ac_concepts);
+        write_offset(0x42C450, ac_concepts);
+        write_offset(0x42C7C2, ac_concepts);
+        write_offset(0x403BA8, ac_movlist);
+        write_offset(0x4BEF8D, ac_movlist);
+        write_offset(0x52AB68, ac_opening);
 
         /* Enable custom faction selection during the game setup. */
         memset((void*)0x58A5E1, 0x90, 6);
@@ -848,7 +852,22 @@ bool patch_setup(Config* cf) {
         *(byte*)0x5921C8 = 0xEB; // goody_at
     }
 
-}
+    if (lm & LM_JUNGLE) remove_call(0x5C88A0);
+    if (lm & LM_CRATER) remove_call(0x5C88A9);
+    if (lm & LM_VOLCANO) remove_call(0x5C88B5);
+    if (lm & LM_MESA) remove_call(0x5C88BE);
+    if (lm & LM_RIDGE) remove_call(0x5C88C7);
+    if (lm & LM_URANIUM) remove_call(0x5C88D0);
+    if (lm & LM_RUINS) remove_call(0x5C88D9);
+    if (lm & LM_UNITY) remove_call(0x5C88EE);
+    if (lm & LM_FOSSIL) remove_call(0x5C88F7);
+    if (lm & LM_CANYON) remove_call(0x5C8903);
+    if (lm & LM_NEXUS) remove_call(0x5C890F);
+    if (lm & LM_BOREHOLE) remove_call(0x5C8918);
+    if (lm & LM_SARGASSO) remove_call(0x5C8921);
+    if (lm & LM_DUNES) remove_call(0x5C892A);
+    if (lm & LM_FRESH) remove_call(0x5C8933);
+    if (lm & LM_GEOTHERMAL) remove_call(0x5C893C);
 
     if (cf->repair_minimal != 1) {
         const byte old_bytes[] = {0xC7,0x45,0xFC,0x01,0x00,0x00,0x00};
@@ -903,6 +922,9 @@ bool patch_setup(Config* cf) {
             0x83,0x45,0xFC,(byte)cf->repair_nano_factory,0x90,0x90,0x90,0x90,0x90,0x90,0x90};
         write_bytes(0x526540, old_bytes, new_bytes, sizeof(new_bytes));
     }
+
+    // =WTP=
+    patch_setup_wtp(cf);
 
     if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READ, &attrs)) {
         return false;

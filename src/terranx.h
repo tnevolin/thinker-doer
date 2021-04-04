@@ -6,6 +6,14 @@ typedef uint8_t byte;
 #include "terranx_enums.h"
 #include "terranx_types.h"
 
+typedef void __cdecl fp_0void();
+typedef void __cdecl fp_1void(int);
+typedef void __cdecl fp_2void(int, int);
+typedef void __cdecl fp_3void(int, int, int);
+typedef void __cdecl fp_4void(int, int, int, int);
+typedef void __cdecl fp_5void(int, int, int, int, int);
+typedef void __cdecl fp_6void(int, int, int, int, int, int);
+typedef void __cdecl fp_7void(int, int, int, int, int, int, int);
 typedef int __cdecl fp_void();
 typedef int __cdecl fp_0int();
 typedef int __cdecl fp_1int(int);
@@ -15,6 +23,14 @@ typedef int __cdecl fp_4int(int, int, int, int);
 typedef int __cdecl fp_5int(int, int, int, int, int);
 typedef int __cdecl fp_6int(int, int, int, int, int, int);
 typedef int __cdecl fp_7int(int, int, int, int, int, int, int);
+typedef int __cdecl fp_7intstr(int, int, int, int, int, int, int, const char*);
+typedef char* __cdecl fp_str_void();
+typedef char* __cdecl fp_str_void();
+typedef void __cdecl fp_2int_void(int, int);
+typedef void __cdecl fp_3int_void(int, int, int);
+typedef int __cdecl fp_int_char_int(char *, int);
+typedef void __cdecl fp_void_charp_int(char *, int);
+typedef char *__cdecl fp_charp_int_charp_int(int, char *, int);
 
 /* Temporarily disable warnings for thiscall parameter type. */
 #pragma GCC diagnostic push
@@ -177,6 +193,10 @@ extern fp_2int* parse_num;
 extern fp_3int* capture_base;
 extern fp_1int* base_kill;
 extern fp_5int* crop_yield;
+// =WTP=
+// put is here to keep them in family
+extern fp_5int* mineral_yield;
+extern fp_5int* energy_yield;
 extern fp_6int* base_draw;
 extern fp_6int* base_find3;
 extern fp_3int* draw_tile;

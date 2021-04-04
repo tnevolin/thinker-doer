@@ -124,7 +124,7 @@ content_pop_computer=3,3,3,3,3,3
 ; Make the combat calculation ignore reactor power and treat every unit as having
 ; a fission reactor. Combat odds are also properly displayed in the confirmation dialog.
 ; More advanced reactors still provide their usual cost discounts.
-ignore_reactor_power=0
+ignore_reactor_power=1
 
 ; Modifies how territory borders are drawn on the map. In vanilla game mechanics, tiles
 ; that are equidistant between two different faction bases are claimed by the newest base.
@@ -219,7 +219,7 @@ satellites_energy=0
 ; place nutrient/mineral/energy bonus resources on the same tiles instead.
 rare_supply_pods=0
 
-; Balance faction starting locations more evenly on random maps and
+; Balance faction starting locations more evenly on random maps and 
 ; maintain a minimum distance to any nearest neighbors.
 faction_placement=1
 
@@ -260,8 +260,6 @@ disable_alien_guaranteed_technologies=1
 ; disable it if you want to use vanilla algorithm
 alternative_weapon_icon_selection_algorithm=1
 
-; <integrated into Thinker>
-; However, it seems to be badly replaced. I am disabling Thinker change and reinstating mine.
 ; Ignores unit reactor HP multiplier in combat processing.
 ; Units effectively have 10 HP even with higher reactor.
 ; This is a cornerstone of this mod. Better not change it.
@@ -326,31 +324,30 @@ collateral_damage_defender_reactor=1
 ; (integrated into Thinker configuration above)
 ;disable_aquatic_bonus_minerals=1
 
-; <integrated into Thinker>
 ; Unit repair rates
 ; Each unit corresponds to 10% healing.
 ; allowed values: 0-10
 ; minimal repair rate (vanilla = 1)
-;repair_minimal=1
+repair_minimal=1
 ; repair rate for native in fungus (vanilla = 2)
-;repair_fungus=1
+repair_fungus=1
 ; repair rate increment in friendly territory (vanilla = 1/yes)
 ; allowed values: 0,1
-;repair_friendly=0
+repair_friendly=0
 ; repair rate increment for air unit in airbase (vanilla = 1/yes)
 ; allowed values: 0,1
-;repair_airbase=0
+repair_airbase=0
 ; repair rate increment for land unit in bunker (vanilla = 1/yes)
 ; allowed values: 0,1
-;repair_bunker=0
+repair_bunker=0
 ; repair rate increment in non-rioting base (vanilla = 1)
-;repair_base=0
+repair_base=0
 ; repair rate for native in base with SPs (vanilla = 10)
-;repair_base_native=1
+repair_base_native=1
 ; repair rate for conventional in base with facility (vanilla = 10)
-;repair_base_facility=1
+repair_base_facility=1
 ; repair rate for Nano Factory (vanilla = 10)
-;repair_nano_factory=1
+repair_nano_factory=1
 
 ; disable planetpearls
 ; (integrated into Thinker configuration above)
@@ -414,10 +411,9 @@ se_growth_rating_cap=9
 ; Recycling Tanks don't add to yield but work like a mineral multiplier instead.
 recycling_tanks_mineral_multiplier=1
 
-; <integrated into Thinker>
 ; free minerals (vanilla = 16)
 ; value is increased due to RT now multiplying minerals too
-;free_minerals=24
+free_minerals=24
 
 ; Native life number of tries to create it at random location: tries = constant + multiplier * <native life level>.
 ; Higher number of tries increases the chance of native appearing. The dependency is not linear and chance is obviously capped at 100%. So there is no point in making these values too high.
@@ -435,11 +431,10 @@ native_disable_sudden_death=1
 ; Alternative corruption formula
 alternative_inefficiency=1
 
-; <integrated into Thinker>
 ; unit home base reassignment production threshold
 ; Reassign unit from bases with production below threshold to best production bases with production on or above threshold
 ; allowed values = non negative (0 = no reassignment)
-;unit_home_base_reassignment_production_threshold=1
+unit_home_base_reassignment_production_threshold=1
 
 ; changes ocean depth upon map creation to make ocean more shallow (<1) or deeper (>1)
 ; allowed values: >0 (vanilla = 1.0)
@@ -511,7 +506,7 @@ combat_bonus_sensor_offense=1
 
 ; request break treaty with all unit owners in defending stack before going into combat computations (vanilla = 0)
 ; this is a special functionality aimed to prevent any combat related actions *before* treaty is broken
-break_treaty_before_fight=1
+break_treaty_before_fight=0
 
 ; compacting effect icons in SE dialog to fit 5 in each model
 compact_effect_icons=0
@@ -572,6 +567,8 @@ ai_production_expansion_coverage=20.0
 ai_production_ocean_expansion_coverage=40.0
 ; expansion production priority
 ai_production_expansion_priority=1.0
+; avoid building too expensive units
+ai_production_unit_turns_limit=10
 ; only facilities with priority above that get built
 ai_production_facility_priority_penalty=0.25
 ; production minimal mineral surplus for combat units

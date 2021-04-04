@@ -1,7 +1,10 @@
+#include <set>
 #include <map>
-#include "aiProduction.h"
 #include "engine.h"
 #include "game.h"
+#include "game_wtp.h"
+#include "terranx_wtp.h"
+#include "aiProduction.h"
 
 std::set<int> bestProductionBaseIds;
 std::map<int, std::map<int, double>> unitDemands;
@@ -18,12 +21,12 @@ Selects base production.
 */
 HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4)
 {
-    BASE* base = &(tx_bases[baseId]);
+    BASE* base = &(Bases[baseId]);
     bool productionDone = (base->status_flags & BASE_PRODUCTION_DONE);
     bool withinExemption = isBaseProductionWithinRetoolingExemption(baseId);
 
 	debug("suggestBaseProduction\n========================================\n");
-	debug("%s (%s), active_faction=%s, base_faction=%s, productionDone=%s, withinExemption=%s\n", base->name, prod_name(base->queue_items[0]), tx_metafactions[*active_faction].noun_faction, tx_metafactions[base->faction_id].noun_faction, (productionDone ? "y" : "n"), (withinExemption ? "y" : "n"));
+	debug("%s (%s), active_faction=%s, base_faction=%s, productionDone=%s, withinExemption=%s\n", base->name, prod_name(base->queue_items[0]), MFactions[*active_faction].noun_faction, MFactions[base->faction_id].noun_faction, (productionDone ? "y" : "n"), (withinExemption ? "y" : "n"));
 
 	// skip human
 
@@ -38,7 +41,7 @@ HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4)
 	if (!ai_enabled(base->faction_id))
 	{
         debug("skipping computer base\n");
-        return tx_base_prod_choices(baseId, a2, a3, a4);
+        return base_prod_choices(baseId, a2, a3, a4);
 	}
 
 	// defaults to Thinker if WTP algorithms are not enabled
@@ -46,12 +49,12 @@ HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4)
 	if (!conf.ai_useWTPAlgorithms)
 	{
 		debug("Not using WTP algorithms. Switcthing to Thinker code.\n");
-		return base_production(baseId, a2, a3, a4);
+		return mod_base_production(baseId, a2, a3, a4);
 	}
 
 	// set default choice to vanilla
 
-    int choice = tx_base_prod_choices(baseId, a2, a3, a4);
+    int choice = base_prod_choices(baseId, a2, a3, a4);
 	debug("\n===>    %-10s: %-25s\n\n", "Vanilla", prod_name(choice));
 
 	// do not override vanilla choice in emergency scrambling - it does pretty goood job at it
@@ -87,7 +90,7 @@ HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4)
 
 	// Thinker
 
-	int thinkerChoice = base_production(baseId, a2, a3, a4);
+	int thinkerChoice = mod_base_production(baseId, a2, a3, a4);
 	debug("\n===>    %-10s: %-25s\n", "Thinker", prod_name(thinkerChoice));
 
 	if (random_double(1.0) < conf.ai_production_Thinker_proportion)
@@ -115,7 +118,7 @@ HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4)
 
 int aiSuggestBaseProduction(int baseId, int choice)
 {
-	BASE *base = &(tx_bases[baseId]);
+	BASE *base = &(Bases[baseId]);
 
     // initialize productionDemand
 
@@ -207,7 +210,7 @@ void evaluateBasePopulationLimitFacilitiesDemand()
 		if (!isBaseFacilityAvailable(baseId, facilityId))
 			continue;
 
-		debug("\t\t\t%s\n", tx_facility[facilityId].name);
+		debug("\t\t\t%s\n", Facility[facilityId].name);
 
 		// get limit
 
@@ -291,7 +294,7 @@ void evaluateBasePsychFacilitiesDemand()
 		if (!isBaseFacilityAvailable(baseId, facilityId))
 			continue;
 
-		debug("\t\t\t%s\n", tx_facility[facilityId].name);
+		debug("\t\t\t%s\n", Facility[facilityId].name);
 
 		// add demand
 
@@ -307,7 +310,7 @@ void evaluateBaseMultiplyingFacilitiesDemand()
 {
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
-	Faction *faction = &(tx_factions[base->faction_id]);
+	Faction *faction = &(Factions[base->faction_id]);
 
 	debug("\tevaluateBaseMultiplyingFacilitiesDemand\n");
 
@@ -353,7 +356,7 @@ void evaluateBaseMultiplyingFacilitiesDemand()
 	{
 		int facilityId = multiplyingFacility[0];
 		int mask = multiplyingFacility[1];
-		R_Facility *facility = &(tx_facility[facilityId]);
+		CFacility *facility = &(Facility[facilityId]);
 
 		// check if base can build facility
 
@@ -365,7 +368,7 @@ void evaluateBaseMultiplyingFacilitiesDemand()
 		// get facility parameters
 
 		int cost = facility->cost;
-		int mineralCost = mineral_cost(baseId, -facilityId);
+		int mineralCost = getBaseMineralCost(baseId, -facilityId);
 		int maintenance = facility->maint;
 		debug("\t\t\tcost=%d, mineralCost=%d, maintenance=%d\n", cost, mineralCost, maintenance);
 
@@ -415,7 +418,7 @@ void evaluateBaseMultiplyingFacilitiesDemand()
 
 		// calculate construction time
 
-		double constructionTime = (double)mineralCost / (double)(max(1, mineralSurplus));
+		double constructionTime = (double)mineralCost / (double)(std::max(1, mineralSurplus));
 
 		// calculate payoff time
 
@@ -477,7 +480,7 @@ void evaluateLandImprovementDemand()
 			continue;
 		}
 
-		debug("\t\tformerUnit=%-25s\n", tx_units[formerUnitId].name);
+		debug("\t\tformerUnit=%-25s\n", Units[formerUnitId].name);
 
 		// count not improved worked tiles
 
@@ -536,7 +539,7 @@ void evaluateLandImprovementDemand()
 
 		// set demand based on mineral surplus
 
-		double baseProductionAdjustedPriority = priority * (double)base->mineral_surplus / (double)(max(1, maxMineralSurplus));
+		double baseProductionAdjustedPriority = priority * (double)base->mineral_surplus / (double)(std::max(1, maxMineralSurplus));
 		debug("\t\t\tmineral_surplus=%d, baseProductionAdjustedPriority=%f\n", base->mineral_surplus, baseProductionAdjustedPriority);
 
 		addProductionDemand(formerUnitId, baseProductionAdjustedPriority);
@@ -608,7 +611,7 @@ void evaluateLandExpansionDemand()
 
 		// count available tiles
 
-		globalUnpopulatedLandTileWeighedCount += min(1.0 , (double)conf.ai_production_max_unpopulated_range / (double)(nearestBaseRange * nearestBaseRange) );
+		globalUnpopulatedLandTileWeighedCount += std::min(1.0 , (double)conf.ai_production_max_unpopulated_range / (double)(nearestBaseRange * nearestBaseRange) );
 
 		// gather distance statistics
 
@@ -659,7 +662,7 @@ void evaluateLandExpansionDemand()
 
 	int optimalColonyUnitId = findOptimalColonyUnit(base->faction_id, TRIAD_LAND, base->mineral_surplus, infantryTurnsToDestination);
 
-	debug("\t\t\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, infantryTurnsToDestination=%f, optimalColonyUnitId=%-25s\n", TRIAD_LAND, base->mineral_surplus, infantryTurnsToDestination, tx_units[optimalColonyUnitId].name);
+	debug("\t\t\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, infantryTurnsToDestination=%f, optimalColonyUnitId=%-25s\n", TRIAD_LAND, base->mineral_surplus, infantryTurnsToDestination, Units[optimalColonyUnitId].name);
 
 	// adjust priority based on base size
 
@@ -757,7 +760,7 @@ void evaluateOceanExpansionDemand()
 
 			// count available tiles
 
-			oceanRegionUnpopulatedLandTileWeighedCount += min(1.0 , (double)conf.ai_production_max_unpopulated_range / (double)nearestBaseRange );
+			oceanRegionUnpopulatedLandTileWeighedCount += std::min(1.0 , (double)conf.ai_production_max_unpopulated_range / (double)nearestBaseRange );
 
 			// gather distance statistics
 
@@ -809,7 +812,7 @@ void evaluateOceanExpansionDemand()
 
 		int optimalOceanRegionColonyUnitId = findOptimalColonyUnit(base->faction_id, TRIAD_SEA, base->mineral_surplus, infantryTurnsToDestination);
 
-		debug("\t\t\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, infantryTurnsToDestination=%f, optimalOceanRegionColonyUnitId=%-25s\n", TRIAD_SEA, base->mineral_surplus, infantryTurnsToDestination, tx_units[optimalOceanRegionColonyUnitId].name);
+		debug("\t\t\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, infantryTurnsToDestination=%f, optimalOceanRegionColonyUnitId=%-25s\n", TRIAD_SEA, base->mineral_surplus, infantryTurnsToDestination, Units[optimalOceanRegionColonyUnitId].name);
 
 		// adjust priority based on base size
 
@@ -862,7 +865,7 @@ void evaluateExplorationDemand()
 			continue;
 		}
 
-		debug("\t\tscoutUnit=%-25s\n", tx_units[scoutUnitId].name);
+		debug("\t\tscoutUnit=%-25s\n", Units[scoutUnitId].name);
 
 		// calculate number of unexplored tiles
 
@@ -905,7 +908,7 @@ void evaluateExplorationDemand()
 
 					// neutral, own, or pact
 
-					if (adjacentTile->owner == -1 || adjacentTile->owner == *active_faction || tx_factions[*active_faction].diplo_status[adjacentTile->owner] == DIPLO_PACT)
+					if (adjacentTile->owner == -1 || adjacentTile->owner == *active_faction || Factions[*active_faction].diplo_status[adjacentTile->owner] == DIPLO_PACT)
 					{
 						reachable = true;
 						break;
@@ -925,7 +928,7 @@ void evaluateExplorationDemand()
 
 				for (int regionBaseId : getRegionBases(base->faction_id, region))
 				{
-					BASE *regionBase = &(tx_bases[regionBaseId]);
+					BASE *regionBase = &(Bases[regionBaseId]);
 
 					// calculate range to tile
 
@@ -965,7 +968,7 @@ void evaluateExplorationDemand()
 
 		for (int vehicleId : getRegionSurfaceVehicles(base->faction_id, region, true))
 		{
-			VEH *vehicle = &(tx_vehicles[vehicleId]);
+			VEH *vehicle = &(Vehicles[vehicleId]);
 			MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
 
 			// exclude non combat units
@@ -975,12 +978,12 @@ void evaluateExplorationDemand()
 
 			// only units with hand weapon
 
-			if (tx_units[vehicle->proto_id].weapon_type != WPN_HAND_WEAPONS)
+			if (Units[vehicle->unit_id].weapon_type != WPN_HAND_WEAPONS)
 				continue;
 
 			// exclude infantry units at base
 
-			if (tx_units[vehicle->proto_id].chassis_type == CHS_INFANTRY && (vehicleLocation->items & TERRA_BASE_IN_TILE))
+			if (Units[vehicle->unit_id].chassis_type == CHS_INFANTRY && (vehicleLocation->items & TERRA_BASE_IN_TILE))
 				continue;
 
 			// estimate vehicle speed
@@ -1086,7 +1089,7 @@ void evaluatePoliceDemand()
 
 	if (policeUnitId >= 0 && priority > 0.0)
 	{
-		debug("\tpoliceUnitId=%s, priority=%f\n", tx_units[policeUnitId].name, priority);
+		debug("\tpoliceUnitId=%s, priority=%f\n", Units[policeUnitId].name, priority);
 		addProductionDemand(policeUnitId, priority);
 	}
 
@@ -1111,7 +1114,7 @@ void evaluateNativeProtectionDemand()
 
 	int item = findStrongestNativeDefensePrototype(base->faction_id);
 
-	debug("\tprotectionUnit=%-25s\n", tx_units[item].name);
+	debug("\tprotectionUnit=%-25s\n", Units[item].name);
 
 	// calculate priority
 
@@ -1144,7 +1147,7 @@ void evaluateNativeProtectionDemand()
 //*/
 //void evaluateFactionProtectionDemand()
 //{
-//	debug("%-24s evaluateFactionProtectionDemand\n", tx_metafactions[aiFactionId].noun_faction);
+//	debug("%-24s evaluateFactionProtectionDemand\n", MFactions[aiFactionId].noun_faction);
 //
 //	// hostile conventional offense
 //
@@ -1155,7 +1158,7 @@ void evaluateNativeProtectionDemand()
 //
 //	for (int id = 0; id < *total_num_vehicles; id++)
 //	{
-//		VEH *vehicle = &(tx_vehicles[id]);
+//		VEH *vehicle = &(Vehicles[id]);
 //		MAP *location = getMapTile(vehicle->x, vehicle->y);
 //		int triad = veh_triad(id);
 //
@@ -1212,7 +1215,7 @@ void evaluateNativeProtectionDemand()
 //
 //		// find range to nearest own base
 //
-//		BASE *nearestOwnBase = &(tx_bases[nearestOwnBaseId]);
+//		BASE *nearestOwnBase = &(Bases[nearestOwnBaseId]);
 //		int nearestOwnBaseRange = map_range(vehicle->x, vehicle->y, nearestOwnBase->x, nearestOwnBase->y);
 //
 //		// calculate vehicle speed
@@ -1222,7 +1225,7 @@ void evaluateNativeProtectionDemand()
 //
 //		// calculate threat time koefficient
 //
-//		double timeThreatKoefficient = max(0.0, (MAX_THREAT_TURNS - ((double)nearestOwnBaseRange / vehicleSpeed)) / MAX_THREAT_TURNS);
+//		double timeThreatKoefficient = std::max(0.0, (MAX_THREAT_TURNS - ((double)nearestOwnBaseRange / vehicleSpeed)) / MAX_THREAT_TURNS);
 //
 //		// calculate conventional anti conventional defense demand
 //
@@ -1254,7 +1257,7 @@ void evaluateNativeProtectionDemand()
 //			id,
 //			vehicle->x,
 //			vehicle->y,
-//			tx_metafactions[vehicle->faction_id].noun_faction
+//			MFactions[vehicle->faction_id].noun_faction
 //		);
 //		debug
 //		(
@@ -1306,7 +1309,7 @@ void evaluateNativeProtectionDemand()
 //
 //	for (int id : combatVehicleIds)
 //	{
-//		VEH *vehicle = &(tx_vehicles[id]);
+//		VEH *vehicle = &(Vehicles[id]);
 //
 //		// find vehicle defense and offense values
 //
@@ -1350,7 +1353,7 @@ void evaluateNativeProtectionDemand()
 //
 //	for (int id : combatVehicleIds)
 //	{
-//		VEH *vehicle = &(tx_vehicles[id]);
+//		VEH *vehicle = &(Vehicles[id]);
 //
 //		// find vehicle defense and offense values
 //
@@ -1444,13 +1447,13 @@ int findStrongestNativeDefensePrototype(int factionId)
 	// initial prototype
 
     int bestUnitId = BSC_SCOUT_PATROL;
-    UNIT *bestUnit = &(tx_units[bestUnitId]);
+    UNIT *bestUnit = &(Units[bestUnitId]);
 
     for (int i = 0; i < 128; i++)
 	{
         int id = (i < 64 ? i : (factionId - 1) * 64 + i);
 
-        UNIT *unit = &tx_units[id];
+        UNIT *unit = &Units[id];
 
 		// skip current
 
@@ -1532,7 +1535,7 @@ int findFastAttackerUnit(int factionId)
 
 	for (int unitId : getFactionPrototypes(factionId, false))
 	{
-		UNIT *unit = &(tx_units[unitId]);
+		UNIT *unit = &(Units[unitId]);
 
 		// skip non combat units
 
@@ -1566,7 +1569,7 @@ int findScoutUnit(int factionId, int triad)
 
 	for (int unitId : getFactionPrototypes(factionId, false))
 	{
-		UNIT *unit = &(tx_units[unitId]);
+		UNIT *unit = &(Units[unitId]);
 
 		// skip non combat units
 
@@ -1637,7 +1640,7 @@ int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus, double i
 
 	for (int unitId : getFactionPrototypes(factionId, false))
 	{
-		UNIT *unit = &(tx_units[unitId]);
+		UNIT *unit = &(Units[unitId]);
 
 		// given triad only
 
@@ -1651,7 +1654,7 @@ int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus, double i
 
 		// calculate total turns
 
-		double totalTurns = (double)(tx_cost_factor(*active_faction, 1, -1) * unit->cost) / (double)mineralSurplus + infantryTurnsToDestination / (double)unit_chassis_speed(unitId);
+		double totalTurns = (double)(cost_factor(*active_faction, 1, -1) * unit->cost) / (double)mineralSurplus + infantryTurnsToDestination / (double)unit_chassis_speed(unitId);
 
 		// update best unit
 
@@ -1672,7 +1675,7 @@ Checks if base has enough population to issue a colony by the time it is built.
 */
 bool canBaseProduceColony(int baseId)
 {
-	BASE *base = &(tx_bases[baseId]);
+	BASE *base = &(Bases[baseId]);
 
 	// do not produce colony if insufficient population
 
@@ -1697,7 +1700,7 @@ int findFormerUnit(int factionId, int triad)
 
 	for (int unitId : getFactionPrototypes(factionId, false))
 	{
-		UNIT *unit = &(tx_units[unitId]);
+		UNIT *unit = &(Units[unitId]);
 
 		// formers only
 
@@ -1736,9 +1739,9 @@ int getRegionBasesMaxMineralSurplus(int factionId, int region)
 
 	for (int baseId : getRegionBases(factionId, region))
 	{
-		BASE *base = &(tx_bases[baseId]);
+		BASE *base = &(Bases[baseId]);
 
-		maxMineralSurplus = max(maxMineralSurplus, base->mineral_surplus);
+		maxMineralSurplus = std::max(maxMineralSurplus, base->mineral_surplus);
 
 	}
 
@@ -1752,9 +1755,9 @@ int getRegionBasesMaxPopulationSize(int factionId, int region)
 
 	for (int baseId : getRegionBases(factionId, region))
 	{
-		BASE *base = &(tx_bases[baseId]);
+		BASE *base = &(Bases[baseId]);
 
-		maxPopulationSize = max(maxPopulationSize, (int)base->pop_size);
+		maxPopulationSize = std::max(maxPopulationSize, (int)base->pop_size);
 
 	}
 
@@ -1768,12 +1771,12 @@ int getMaxBaseSize(int factionId)
 
 	for (int baseId = 0; baseId < *total_num_bases; baseId++)
 	{
-		BASE *base = &(tx_bases[baseId]);
+		BASE *base = &(Bases[baseId]);
 
 		if (base->faction_id != factionId)
 			continue;
 
-		maxBaseSize = max(maxBaseSize, (int)base->pop_size);
+		maxBaseSize = std::max(maxBaseSize, (int)base->pop_size);
 
 	}
 
@@ -1794,12 +1797,12 @@ int calculateRegionSurfaceUnitTypeCount(int factionId, int region, int weaponTyp
 
 	for (int vehicleId : getRegionSurfaceVehicles(factionId, region, true))
 	{
-		VEH *vehicle = &(tx_vehicles[vehicleId]);
+		VEH *vehicle = &(Vehicles[vehicleId]);
 
-		if (tx_units[vehicle->proto_id].weapon_type != weaponType)
+		if (Units[vehicle->unit_id].weapon_type != weaponType)
 			continue;
 
-		if (veh_triad(vehicleId) != triad)
+		if (vehicle->triad() != triad)
 			continue;
 
 		regionUnitTypeCount++;
@@ -1808,13 +1811,13 @@ int calculateRegionSurfaceUnitTypeCount(int factionId, int region, int weaponTyp
 
 	for (int baseId : getRegionBases(factionId, region))
 	{
-		BASE *base = &(tx_bases[baseId]);
+		BASE *base = &(Bases[baseId]);
 		int item = base->queue_items[0];
 
 		if (item < 0)
 			continue;
 
-		if (tx_units[item].weapon_type != weaponType)
+		if (Units[item].weapon_type != weaponType)
 			continue;
 
 		if (unit_triad(item) != triad)
@@ -1838,15 +1841,15 @@ int calculateUnitTypeCount(int factionId, int weaponType, int triad, int exclude
 
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
-		VEH *vehicle = &(tx_vehicles[vehicleId]);
+		VEH *vehicle = &(Vehicles[vehicleId]);
 
 		if (vehicle->faction_id != factionId)
 			continue;
 
-		if (tx_units[vehicle->proto_id].weapon_type != weaponType)
+		if (Units[vehicle->unit_id].weapon_type != weaponType)
 			continue;
 
-		if (veh_triad(vehicleId) != triad)
+		if (vehicle->triad() != triad)
 			continue;
 
 		unitTypeCount++;
@@ -1860,7 +1863,7 @@ int calculateUnitTypeCount(int factionId, int weaponType, int triad, int exclude
 		if (baseId == excludedBaseId)
 			continue;
 
-		BASE *base = &(tx_bases[baseId]);
+		BASE *base = &(Bases[baseId]);
 		int item = base->queue_items[0];
 
 		if (base->faction_id != factionId)
@@ -1869,7 +1872,7 @@ int calculateUnitTypeCount(int factionId, int weaponType, int triad, int exclude
 		if (item < 0)
 			continue;
 
-		if (tx_units[item].weapon_type != weaponType)
+		if (Units[item].weapon_type != weaponType)
 			continue;
 
 		if (unit_triad(item) != triad)
@@ -1885,7 +1888,7 @@ int calculateUnitTypeCount(int factionId, int weaponType, int triad, int exclude
 
 bool isBaseNeedPsych(int baseId)
 {
-	BASE *base = &(tx_bases[baseId]);
+	BASE *base = &(Bases[baseId]);
 
 	int doctors = getDoctors(baseId);
 	int projectedPopulationIncrease = projectBasePopulation(baseId, conf.ai_production_population_projection_turns) - base->pop_size;
@@ -1901,7 +1904,7 @@ int findPoliceUnit(int factionId)
 
 	for (int unitId : getFactionPrototypes(factionId, false))
 	{
-		UNIT *unit = &(tx_units[unitId]);
+		UNIT *unit = &(Units[unitId]);
 
 		double value = 1.0;
 
@@ -1941,7 +1944,7 @@ Wraps first time base production setup.
 */
 HOOK_API void modifiedBaseFirst(int baseId)
 {
-	BASE *base = &(tx_bases[baseId]);
+	BASE *base = &(Bases[baseId]);
 
 	// execute original code
 
@@ -1961,14 +1964,14 @@ int getNearestFactionBaseRange(int factionId, int x, int y)
 
 	for (int baseId = 0; baseId < *total_num_bases; baseId++)
 	{
-		BASE *base = &(tx_bases[baseId]);
+		BASE *base = &(Bases[baseId]);
 
 		// own bases
 
 		if (base->faction_id != factionId)
 			continue;
 
-		nearestFactionBaseRange = min(nearestFactionBaseRange, map_range(x, y, base->x, base->y));
+		nearestFactionBaseRange = std::min(nearestFactionBaseRange, map_range(x, y, base->x, base->y));
 
 	}
 

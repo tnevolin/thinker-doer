@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <vector>
 #include <unordered_set>
 #include "aiHurry.h"
 #include "wtp.h"
+#include "game_wtp.h"
 
 const std::unordered_set<int> IMPORTANT_FACILITIES =
 {
@@ -19,7 +21,7 @@ It kicks in only when flat hurry cost is enabled.
 */
 void factionHurryProduction(int factionId)
 {
-    Faction* faction = &tx_factions[factionId];
+    Faction* faction = &Factions[factionId];
     debug("factionHurryProduction\n")
 
 	// apply only when flat hurry cost is enabled
@@ -29,8 +31,8 @@ void factionHurryProduction(int factionId)
 
 	// calculate spend pool
 
-	int reserve = 20 + min(900, max(0, faction->current_num_bases * min(30, (*current_turn - 20)/5)));
-	int spendPool = max(0, faction->energy_credits - reserve);
+	int reserve = 20 + std::min(900, std::max(0, faction->current_num_bases * std::min(30, (*current_turn - 20)/5)));
+	int spendPool = std::max(0, faction->energy_credits - reserve);
 
 	// apply only when there is something to spend
 
@@ -48,7 +50,7 @@ void factionHurryProduction(int factionId)
 
 	for (int baseId = 0; baseId < *total_num_bases; baseId++)
 	{
-		BASE *base = &tx_bases[baseId];
+		BASE *base = &Bases[baseId];
 
 		// skip not own bases
 
@@ -65,7 +67,7 @@ void factionHurryProduction(int factionId)
 
 		// calculate weight
 
-		double weight = 1.0 / (double)(max(1, mineralSurplus));
+		double weight = 1.0 / (double)(std::max(1, mineralSurplus));
 
 		// sort bases
 
@@ -163,7 +165,7 @@ Works only when flat hurry cost is enabled.
 */
 void hurryProductionPartially(int baseId, int allowance)
 {
-	BASE *base = &(tx_bases[baseId]);
+	BASE *base = &(Bases[baseId]);
 
 	// apply only when flat hurry cost is enabled
 

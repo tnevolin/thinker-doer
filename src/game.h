@@ -2,36 +2,6 @@
 
 #include "main.h"
 
-struct LOCATION
-{
-	int x;
-	int y;
-};
-
-struct MAP_INFO
-{
-	int x;
-	int y;
-	MAP *tile;
-
-	MAP_INFO() : tile(NULL) {}
-
-	MAP_INFO(int argument_x, int argument_y, MAP *argument_tile)
-	{
-		this->x = argument_x;
-		this->y = argument_y;
-		this->tile = argument_tile;
-	}
-
-};
-
-struct MAP_STATE
-{
-    byte climate;
-    byte rocks;
-    int items;
-};
-
 /*
 Function parameter naming conventions
 
@@ -83,59 +53,8 @@ const int TableOffsetY[] = {
     -7,  -8,  -9, -10, -11, -12, -13, -14, -15,
 };
 
-/*
-This array is used for both adjacent tiles and base radius tiles.
-*/
-int const ADJACENT_TILE_OFFSET_COUNT = 9;
-int const BASE_RADIUS_TILE_OFFSET_COUNT = 21;
-int const BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT = 37;
-int const BASE_TILE_OFFSETS[BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT][2] =
-{
-	// center
-	{+0,+0},
-	// adjacent tiles
-	{+1,-1},
-	{+2,+0},
-	{+1,+1},
-	{+0,+2},
-	{-1,+1},
-	{-2,+0},
-	{-1,-1},
-	{+0,-2},
-	// base radius outer tiles
-	{+2,-2},
-	{+2,+2},
-	{-2,+2},
-	{-2,-2},
-	{+1,-3},
-	{+3,-1},
-	{+3,+1},
-	{+1,+3},
-	{-1,+3},
-	{-3,+1},
-	{-3,-1},
-	{-1,-3},
-	// base radius bordered tiles
-	{+3,-3},
-	{+3,+3},
-	{-3,+3},
-	{-3,-3},
-	{-0,-4},
-	{+4,+0},
-	{+0,+4},
-	{-4,-0},
-	{+2,-4},
-	{+4,-2},
-	{+4,+2},
-	{+2,+4},
-	{-2,+4},
-	{-4,+2},
-	{-4,-2},
-	{-2,-4},
-};
-
 char* prod_name(int prod);
-int mineral_cost(int baseId, int itemId);
+int mineral_cost(int faction, int prod);
 bool has_tech(int faction, int tech);
 bool has_ability(int faction, int abl);
 bool has_chassis(int faction, int chs);
@@ -166,7 +85,6 @@ int defense_value(UNIT* u);
 int faction_might(int faction);
 double expansion_ratio(int faction);
 int random(int n);
-double random_double(double scale);
 int map_hash(int x, int y);
 int wrap(int a);
 int map_range(int x1, int y1, int x2, int y2);
@@ -201,13 +119,6 @@ void check_zeros(int* ptr, int len);
 void print_map(int x, int y);
 void print_veh(int id);
 void print_base(int id);
-int map_rainfall(MAP *tile);
-int map_level(MAP *tile);
-int map_elevation(MAP *tile);
-int map_rockiness(MAP *tile);
-bool map_base(MAP *tile);
-bool map_has_item(MAP *tile, unsigned int item);
-bool map_has_landmark(MAP *tile, int landmark);
 
 bool __cdecl can_arty(int unit_id, bool allow_sea_arty);
 void __cdecl add_goal(int faction, int type, int priority, int x, int y, int base_id);
@@ -255,6 +166,7 @@ class TileSearch {
     void init(const PointList& points, int tp, int y_skip);
     bool has_zoc(int faction);
     PointList& get_route(PointList& pp);
-    MAP* get_next();
+	MAP* get_next(bool returnFirstTile);
+	MAP* get_next();
 };
 

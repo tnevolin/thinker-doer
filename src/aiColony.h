@@ -1,10 +1,7 @@
-#ifndef __AICOLONY_H__
-#define __AICOLONY_H__
+#pragma once
 
-#include "game.h"
+#include "game_wtp.h"
 
 double getBasePositionScore(int factionId, int x, int y);
 double getBaseRadiusTileScore(MAP_INFO tileInfo);
-
-#endif // __AICOLONY_H__
 

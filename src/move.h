@@ -27,4 +27,7 @@ int former_move(const int id);
 int trans_move(const int id);
 int aircraft_move(const int id);
 int combat_move(const int id);
+// =WTP=
+// accessing pm_safety from elsewhere
+bool isSafe(int x, int y);
 

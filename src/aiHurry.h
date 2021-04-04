@@ -1,5 +1,4 @@
-#ifndef __AIHURRY_H__
-#define __AIHURRY_H__
+#pragma once
 
 #include "main.h"
 #include "game.h"
@@ -13,4 +12,3 @@ struct BASE_WEIGHT
 void factionHurryProduction(int factionId);
 void hurryProductionPartially(int baseId, int allowance);
 
-#endif // __AIHURRY_H__

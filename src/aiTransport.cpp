@@ -1,19 +1,21 @@
-#include "aiTransport.h"
 #include <float.h>
+#include <unordered_map>
+#include "aiTransport.h"
+#include "game_wtp.h"
 
-void moveTransport(int vehicleId)
+int moveTransport(int vehicleId)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
 
 	// only ship
 
-	if (veh_triad(vehicleId) != TRIAD_SEA)
-		return;
+	if (vehicle->triad() != TRIAD_SEA)
+		return SYNC;
 
 	// only transport
 
 	if (!isVehicleTransport(vehicle))
-		return;
+		return SYNC;
 
 	// deliver
 
@@ -25,6 +27,13 @@ void moveTransport(int vehicleId)
 	{
 		transportFormerToMostDemandingLandmass(vehicleId);
 	}
+	else
+	{
+		// default to Thinker
+		return trans_move(vehicleId);
+	}
+
+	return SYNC;
 
 }
 
@@ -42,7 +51,7 @@ bool isCarryingColony(int vehicleId)
 
 void transportColonyToClosestUnoccupiedCoast(int vehicleId)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
 	MAP *vehicleLocation = getVehicleMapTile(vehicleId);
 
 	// search for closest uninhabitable coast
@@ -120,7 +129,7 @@ bool isCarryingFormer(int vehicleId)
 
 void transportFormerToMostDemandingLandmass(int vehicleId)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
 	MAP *vehicleLocation = getVehicleMapTile(vehicleId);
 
 	// search for reachable regions
@@ -160,7 +169,7 @@ void transportFormerToMostDemandingLandmass(int vehicleId)
 
 	for (int baseId = 0; baseId < *total_num_bases; baseId++)
 	{
-		BASE *base = &(tx_bases[baseId]);
+		BASE *base = &(Bases[baseId]);
 		MAP *baseLocation = getBaseMapTile(baseId);
 
 		// only own bases
@@ -186,7 +195,7 @@ void transportFormerToMostDemandingLandmass(int vehicleId)
 
 	for (int formerVehicleId = 0; formerVehicleId < *total_num_bases; formerVehicleId++)
 	{
-		VEH *formerVehicle = &(tx_vehicles[formerVehicleId]);
+		VEH *formerVehicle = &(Vehicles[formerVehicleId]);
 		MAP *formerVehicleLocation = getVehicleMapTile(formerVehicleId);
 
 		// only own vehicles
