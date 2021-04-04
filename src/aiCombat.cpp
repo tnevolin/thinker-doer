@@ -1,6 +1,8 @@
-#include "aiCombat.h"
-#include "ai.h"
+#include <unordered_map>
 #include "engine.h"
+#include "terranx_wtp.h"
+#include "ai.h"
+#include "aiCombat.h"
 
 std::unordered_map<int, COMBAT_ORDER> combatOrders;
 
@@ -26,7 +28,7 @@ Composes anti-native combat strategy.
 */
 void aiNativeCombatStrategy()
 {
-	debug("aiNativeCombatStrategy %s\n", tx_metafactions[*active_faction].noun_faction);
+	debug("aiNativeCombatStrategy %s\n", MFactions[*active_faction].noun_faction);
 
 	// protect bases
 
@@ -34,7 +36,7 @@ void aiNativeCombatStrategy()
 
 	for (int baseId : baseIds)
 	{
-		BASE *base = &(tx_bases[baseId]);
+		BASE *base = &(Bases[baseId]);
 		MAP *baseLocation = getBaseMapTile(baseId);
 		bool ocean = isOceanRegion(baseLocation->region);
 		debug("\t%s\n", base->name);
@@ -58,7 +60,7 @@ void aiNativeCombatStrategy()
 
 		for (int vehicleId : availableVehicles)
 		{
-			VEH *vehicle = &(tx_vehicles[vehicleId]);
+			VEH *vehicle = &(Vehicles[vehicleId]);
 
 			// not having orders already
 
@@ -72,12 +74,12 @@ void aiNativeCombatStrategy()
 
 			// infantry vehicles only
 
-			if (tx_units[vehicle->proto_id].chassis_type != CHS_INFANTRY)
+			if (Units[vehicle->unit_id].chassis_type != CHS_INFANTRY)
 				continue;
 
 			// exclude battle ogres
 
-			if (vehicle->proto_id == BSC_BATTLE_OGRE_MK1 || vehicle->proto_id == BSC_BATTLE_OGRE_MK2 || vehicle->proto_id == BSC_BATTLE_OGRE_MK3)
+			if (vehicle->unit_id == BSC_BATTLE_OGRE_MK1 || vehicle->unit_id == BSC_BATTLE_OGRE_MK2 || vehicle->unit_id == BSC_BATTLE_OGRE_MK3)
 				continue;
 
 			// get protection potential
@@ -98,7 +100,7 @@ void aiNativeCombatStrategy()
 
 			// reduce value with range
 
-			value /= max(1.0, (double)map_range(vehicle->x, vehicle->y, base->x, base->y));
+			value /= std::max(1.0, (double)map_range(vehicle->x, vehicle->y, base->x, base->y));
 
 			// add vehicle
 
@@ -132,7 +134,7 @@ void aiNativeCombatStrategy()
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
-		VEH *vehicle = &(tx_vehicles[id]);
+		VEH *vehicle = &(Vehicles[id]);
 
 		// native units only
 
@@ -141,7 +143,7 @@ void aiNativeCombatStrategy()
 
 		// spore launchers
 
-		if (vehicle->proto_id == BSC_SPORE_LAUNCHER)
+		if (vehicle->unit_id == BSC_SPORE_LAUNCHER)
 		{
 			attackNativeArtillery(id);
 		}
@@ -154,7 +156,7 @@ void aiNativeCombatStrategy()
 
 void attackNativeArtillery(int enemyVehicleId)
 {
-	VEH *enemyVehicle = &(tx_vehicles[enemyVehicleId]);
+	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
 
 	// check if there are our improvements in bombardment range
 
@@ -196,7 +198,7 @@ void attackNativeArtillery(int enemyVehicleId)
 
 	for (int id : combatVehicleIds)
 	{
-		VEH *vehicle = &(tx_vehicles[id]);
+		VEH *vehicle = &(Vehicles[id]);
 
 		// do not bother if unreachable
 
@@ -210,7 +212,7 @@ void attackNativeArtillery(int enemyVehicleId)
 		// calculate value
 
 		int distance = map_range(vehicle->x, vehicle->y, enemyVehicle->x, enemyVehicle->y);
-		int cost = tx_units[vehicle->proto_id].cost;
+		int cost = Units[vehicle->unit_id].cost;
 		double value = damage / (double)cost / (double)distance;
 
 		// store vehicle
@@ -281,7 +283,7 @@ int enemyMoveCombat(int vehicleId)
 
 	// get vehicle
 
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
 
 	// restore ai vehicleId
 
@@ -305,14 +307,14 @@ int enemyMoveCombat(int vehicleId)
 
 	// process sea explorers
 
-    if (veh_triad(vehicleId) == TRIAD_SEA && tx_units[vehicle->proto_id].unit_plan == PLAN_RECONNAISANCE && vehicle->move_status == ORDER_NONE)
+    if (vehicle->triad() == TRIAD_SEA && Units[vehicle->unit_id].unit_plan == PLAN_RECONNAISANCE && vehicle->move_status == ORDER_NONE)
 	{
 		return processSeaExplorer(vehicleId);
 	}
 
 	// default to vanilla
 
-	return tx_enemy_move(vehicleId);
+	return enemy_move(vehicleId);
 
 }
 
@@ -328,14 +330,14 @@ int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
 	}
 	else
 	{
-		return tx_enemy_move(id);
+		return enemy_move(id);
 	}
 
 }
 
 int applyDefendOrder(int id, int x, int y)
 {
-	VEH *vehicle = &(tx_vehicles[id]);
+	VEH *vehicle = &(Vehicles[id]);
 
 	// at destination
 
@@ -367,12 +369,12 @@ int applyAttackOrder(int id, COMBAT_ORDER *combatOrder)
 	// enemy not found
 
 	if (enemyVehicle == NULL || enemyVehicle->x == -1 || enemyVehicle->y == -1)
-		return tx_enemy_move(id);
+		return enemy_move(id);
 
 	// enemy is unreachable
 
 	if (!isreachable(id, enemyVehicle->x, enemyVehicle->y))
-		return tx_enemy_move(id);
+		return enemy_move(id);
 
 	// set move to order
 
@@ -382,7 +384,7 @@ int applyAttackOrder(int id, COMBAT_ORDER *combatOrder)
 
 void setDefendOrder(int vehicleId, int x, int y)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
 
 	debug("setDefendOrder: [%3d](%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, x, y);
 
@@ -400,13 +402,13 @@ Overrides sea explorer routine.
 */
 int processSeaExplorer(int vehicleId)
 {
-	VEH* vehicle = &(tx_vehicles[vehicleId]);
+	VEH* vehicle = &(Vehicles[vehicleId]);
 
 	// keep healing if can
 
 	if (isVehicleCanHealAtThisLocation(vehicleId))
 	{
-		return tx_enemy_move(vehicleId);
+		return enemy_move(vehicleId);
 	}
 
 	// find the nearest unexplored connected ocean region tile
@@ -439,9 +441,9 @@ Checks if sea explorer is in land port.
 */
 bool isHealthySeaExplorerInLandPort(int vehicleId)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
 	MAP *vehicleLocation = getVehicleMapTile(vehicleId);
-	int triad = veh_triad(vehicleId);
+	int triad = vehicle->triad();
 	bool ocean = is_ocean(vehicleLocation);
 
 	// only sea units
@@ -487,7 +489,7 @@ Fixes vanilla bug when sea explorer is stuck in land port.
 */
 int kickSeaExplorerFromLandPort(int vehicleId)
 {
-	VEH *vehicle = &(tx_vehicles[vehicleId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
 
 	// check if this tile has access to ocean
 
@@ -504,12 +506,12 @@ int kickSeaExplorerFromLandPort(int vehicleId)
 	set_move_to(vehicleId, adjacentOceanTileInfo.x, adjacentOceanTileInfo.y);
 	tx_action(vehicleId);
 
-	return tx_enemy_move(vehicleId);
+	return enemy_move(vehicleId);
 
 }
 
 /*
-Kills vehicle and returns proper value as tx_enemy_move would.
+Kills vehicle and returns proper value as enemy_move would.
 */
 int killVehicle(int vehicleId)
 {

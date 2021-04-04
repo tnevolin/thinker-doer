@@ -1,11 +1,12 @@
-#ifndef __AITERRAFORMING_H__
-#define __AITERRAFORMING_H__
+#pragma once
 
 #include <float.h>
+#include <unordered_map>
 #include "main.h"
 #include "game.h"
 #include "move.h"
 #include "wtp.h"
+#include "game_wtp.h"
 
 struct TERRAFORMING_OPTION
 {
@@ -256,6 +257,4 @@ double computeImprovementBaseSurplusEffectScore(BASE_INFO *baseInfo, MAP_INFO *m
 bool isInferiorImprovedTile(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
 bool isreachable(int id, int x, int y);
 int getConnectedRegion(int region);
-
-#endif // __AITERRAFORMING_H__
 

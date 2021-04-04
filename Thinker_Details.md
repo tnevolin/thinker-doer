@@ -5,11 +5,11 @@ Thinker has several advanced planning routines that enhance the base game AI to 
 
 Thinker does not have any special save game format, so it's possible to open an old save and have the factions switch to the new AI and vice-versa. None of the config options are preserved in the save game either, but the units or resources spawned at the game start will remain.
 
-Enabling Thinker AI will affect many AI behaviors as it is described in the list below. Thinker will not change the automated behaviour of units or governors in player-controlled factions.
+Enabling Thinker AI will affect many AI behaviors as it is described in the list below. Thinker will not change the automated behaviour of units or governors in player-controlled factions. For an exhaustive list of all features provided by this mod, refer to both this file and `thinker.ini`.
 
 For testing purposes it is also possible to run old/new AIs side-by-side by setting `factions_enabled=3` or similar. In that case, only the factions in the first 3 slots will use Thinker AI if they are not player-controlled. By default, `factions_enabled=7` setting enables Thinker AI for all computer factions.
 
-1. Thinker fully controls the movement of colony pods, terraformers and crawlers to manage the base placement and production much more effectively than usual.
+1. Thinker fully controls the movement of most units, combat and non-combat alike, to manage the base placement and production much more effectively than usual.
 2. New combat routines for land-based units will attempt to counter-attack nearby enemy units more often. If the odds are good enough, hasty attacks are executed more often than usual. The AI will fight the native units more aggressively, and it will also try to heal its units at monoliths.
 3. Thinker base production AI will decide every item that is produced in a base. The build order can differ substantially from anything the normal AIs might decide to produce, and the difference can be easily noted in the vastly increased quantity of formers and crawlers the AIs might have.
 4. Social AI feature will decide the social engineering models the AI factions will choose. It will attempt to take into account the various cumulative/non-linear effects of the society models and any bonuses provided by the secret projects. The AI is now capable of pop-booming if enough growth is attainable, and it will also try to avoid pacifist drones by switching out of SE models with too many police penalties. All the SE model effects are moddable because the AI is not hardcoded in any particular choices. This feature is also capable of managing all the custom factions.
@@ -25,14 +25,26 @@ In addition to the bugfix patches listed separately, items that are listed after
 5. All expansion related content can be disabled by using the `smac_only` setting, see further below.
 6. AI mineral/nutrient production cost factors for each difficulty level can be changed from the `cost_factor` setting. Does not affect other difficulty related modifiers.
 7. Content (non-drone) base population for each difficulty level can be adjusted from `content_pop_player` and `content_pop_computer` variables. By default these have the same values than vanilla game mechanics.
-8. Game draws a white marker around the population label of HQ bases to identify them more easily. Optional `auto_relocate_hq` feature will import a game mechanic from Civilization 3 where lost/captured headquarters are automatically moved to another suitable base.
+8. New `wold_map_labels` feature draws a white marker around the population label of HQ bases to identify them more easily. Bases in golden age are also highlighted with a yellow label.
+9. New `auto_relocate_hq` feature imports a game mechanic from Civilization 3 where lost/captured headquarters are automatically moved to another suitable base.
+
+
+Improved unit movement
+======================
+Since v2.3 Thinker also controls the movement of nearly all combat units, not just non-combat units like formers or colony pods. AI code for land, sea and air units has been almost entirely rewritten. The only major exception here are any units with the missile chassis which are still handled by the default AI. Note that the interceptor behaviour for AI air units is not implemented, so they will not activate needlejets to intercept enemy units during the other factions turn. For balance reasons it is recommended to disable Copter chassis in any case.
+
+Another novel addition has been naval invasions executed by the AI. This has been traditionally been a weak spot for many AIs since they lack the coordination between many units to pull off such strategies. Thinker however is capable of gathering an invasion fleet with many transports and using other warships as cover to move them to a landing zone.
+
+Thinker prioritizes naval invasions if the closest enemy is located on another continent. Otherwise, most of the focus is spent on building land and air units. At any given time, only one priority landing zone can be active for the AI. Maximum distance for invasions depends slightly on pathfinding but it should be possible on all Huge maps.
+
+Base garrisoning priorities are also handled entirely by the new logic which tries prioritize vulnerable border bases much more than usual. Air units also utilize the same priorities when deciding where to rebase. You might notice there's less massive AI stacks being rebased around for no meaningful reason. Instead Thinker tries to rebase the aircraft in much smaller stacks to more bases so that they can cover a larger area.
 
 
 Revised tech costs
 ==================
 In the original game, research costs were mainly decided by how many techs a faction had already researched. That meant the current research target was irrelevant as far as the costs were concerned. For speed runs, it made sense to avoid researching any techs that were not strictly necessary to keep the cost of discovering new techs as low as possible.
 
-The config option `revised_tech_cost` attempts to remake this mechanic so that the research cost for any particular tech is fixed and depends mainly on the level of the tech. This follows the game design choices that were also made in later Civilization games. For example, in the default tech tree, Social Psych is level 1 and Transcendent Thought is level 16. Enabling this feature should notably delay the tech race in mid to late game. See also [a helpful chart](http://alphacentauri2.info/index.php?action=downloads;sa=view;down=355) of the standard tech tree. The base cost for any particular tech is determined by this formula:
+The config option `revised_tech_cost` attempts to remake this mechanic so that the research cost for any particular tech is fixed and depends mainly on the level of the tech. This follows the game design choices that were also made in later Civilization games. For example, in the default tech tree, Social Psych is level 1 and Transcendent Thought is level 16. Enabling this feature should notably delay the tech race in mid to late game. See also [a helpful chart](https://alphacentauri2.info/index.php?action=downloads;sa=view;down=355) of the standard tech tree. The base cost for any particular tech is determined by this formula:
 
     6 * Level^3 + 74 * Level - 20
 
@@ -40,29 +52,32 @@ For example, on standard maps level 1 techs cost 60 labs before other factors ar
 
 * For AI factions, each unit of `cost_factor` applies a 8% bonus/penalty, e.g. `cost_factor=10` equals 100% of human cost while `cost_factor=7` equals 76% of human cost.
 * Multiply by the square root of the map size divided by the square root of a standard map size (56).
-* Multiply by faction specific TECHCOST modifier.
-* Multiply by Technology discovery rate set in alphax.txt.
+* Multiply by faction specific TECHCOST modifier (lower values means faster progress).
+* Divide by Technology discovery rate set in alphax.txt (lower values means slower progress).
 * If tech stagnation is enabled, multiply by 1.5.
 * If 2 or more factions with commlink to the current faction has the tech, multiply by 0.75.
 * If only 1 commlink faction has it, multiply by 0.85.
 
-The final cost calculated by this formula is visible in the F2 status screen after the label "TECH COST".
+The final cost calculated by this formula is visible in the F2 status screen after the label "TECH COST". Note that the social engineering RESEARCH rating does not affect this number. Instead it changes "TECH PER TURN" value displayed on the same screen.
 
 
 SMAC in SMACX mod
 =================
-Thinker includes the files necessary to play a game similar to the original SMAC while disabling all expansion-related content. See the original release posts of SMAC in SMACX [here](https://github.com/DrazharLn/smac-in-smax/) and [here](http://alphacentauri2.info/index.php?topic=17869.0).
+Thinker includes the files necessary to play a game similar to the original SMAC while disabling all expansion-related content. See the original release posts of SMAC in SMACX [here](https://github.com/DrazharLn/smac-in-smax/) and [here](https://alphacentauri2.info/index.php?topic=17869.0).
 
 Thinker also adds support for custom factions that are not aliens while using this feature. Installing this mod doesn't require any extra steps since the files are bundled in the zip file.
 
-1. Download the latest develop build that includes `ac_mod` folder in the zip.
+1. Download the latest version that includes `ac_mod` folder in the zip.
 2. Extract all the files to Alpha Centauri game folder.
 3. Open `thinker.ini` and change the configuration to `smac_only=1` ***OR*** start the game with command line parameter `terranx_mod.exe -smac`
 4. When smac_only is started properly, the main menu will change color to blue as it was in the original SMAC, instead of the SMACX green color scheme.
 5. The game reads these files from `ac_mod` folder while smac_only is enabled: alphax.txt, helpx.txt, conceptsx.txt, tutor.txt. Therefore it is possible to keep the mod installed without overwriting any of the files from the base game.
 6. To install custom factions while using this mod, just edit `ac_mod/alphax.txt` instead of the normal `alphax.txt` file and add the faction names to `#CUSTOMFACTIONS` section. Note that you only have to extract the faction definitions to the main game folder because the same files are used in smac_only mode.
 
-See also [Sigma Faction Set](http://alphacentauri2.info/index.php?action=downloads;sa=view;down=264). The factions can be played in both game modes and they are also fairly balanced overall.
+See below for some custom faction sets. The factions can be played in both game modes and they are also fairly balanced overall.
+
+* [Sigma Faction Set](https://alphacentauri2.info/index.php?action=downloads;sa=view;down=264)
+* [Tayta's Dystopian Faction Set](https://alphacentauri2.info/index.php?topic=21515)
 
 
 Recommended alphax.txt settings
@@ -78,27 +93,36 @@ Proposed alphax.txt settings for Thinker can be found from [this file](docs/alph
 7. Add new predefined units Trance Scout Patrol and Police Garrison.
 
 
+Compatibility with other mods
+=============================
+While it is possible to run both Thinker and PRACX at the same time, some optional features provided by Thinker will be disabled because they would patch conflicting areas of the game binary. As of v2.4, these disabled features include:
+
+* Smooth scrolling config option.
+* Windowed mode config option.
+* Any keyboard/mouse shortcuts provided by Thinker.
+
+Scient's patch is already included in the Thinker binary and does not need any additional installation steps from the user. Yitzi's patch or any other mod that uses a custom patched game binary is NOT supported while running Thinker. Note also that Yitzi's patch uses an incompatible version of alphax.txt that can't be used by the vanilla game binary or Thinker.
+
+
 Features not supported
 ======================
-Currently the features listed here are not supported while Thinker is enabled. The list may be subject to change in future releases.
+Currently the features listed here are not supported while Thinker is enabled. The list may be subject to change in future releases. Some requested features are not feasible to implement due to the limitations of patching a game binary.
 
-1. Network multiplayer is not supported because of the extra code required to synchronize the game state across computers.
-2. Some custom scenario rules in "Edit Scenario Rules" menus are not supported fully. This will not affect randomly generated maps.
-
-In addition, there are several often requested features that unfortunately are not feasible to implement due to the limitations of patching a game binary. These include at least:
-
-1. More factions/units/bases. These limits were hardcoded in the game binary at compilation time and are not feasible to change without a full open source port.
-2. Moddable hit points for each reactor level. Currently these values are fixed at 10x reactor level.
+1. Network multiplayer (excluding PBEM) is not supported because of the large amounts of extra code required to synchronize the game state across computers.
+2. More factions/units/bases. These limits were hardcoded in the game binary at compilation time and are not feasible to change without a full open source port.
+3. Some custom scenario rules in "Edit Scenario Rules" menus are not supported fully. This will not affect randomly generated maps. However these rules are supported: No terraforming, No colony pods can be built and No secret projects can be built.
 
 
 Known bugs
 ==========
 1. While `collateral_damage_value` is set to 0, the game might still display temporary messages about collateral damage being inflicted on units on the stack, but none of them will actually take any damage.
+2. The faction selection dialog in game setup is limited to showing only the first 24 factions even if installed factions in alphax.txt exceed this number.
+3. Maximum supported map size by Thinker is 256x256. This is also the largest map that the game interface will allow selecting.
 
 
 Bugfix patches included
 =======================
-Thinker includes the binary patches from both [Scient's patch v2.0 and v2.1](http://alphacentauri2.info/index.php?action=downloads;sa=view;down=365). The differences between these versions include only changes to the txt files to prevent the game from crashing when opening certain datalinks entries.
+Thinker includes the binary patches from both [Scient's patch v2.0 and v2.1](https://alphacentauri2.info/index.php?action=downloads;sa=view;down=365). The differences between these versions include only changes to the txt files to prevent the game from crashing when opening certain datalinks entries.
 Installing the modded txt files is purely optional, and Thinker does not include those files by default. The following fixes from Scient's binary patch are included in `terranx_mod.exe`.
 
 1.  [BUG] If a faction's cumulative PROBE value is greater than 3 (SE morale, covert ops center) it is possible to "mind control" their bases when they should be immune. If the University uses SE Knowledge putting PROBE value down to -4, it would act as if it were 0 erroneously increasing "mind control" costs. After patch, PROBE values greater than 3 will always be immune to regular probes and values less than -2 will be treated as if they were -2.

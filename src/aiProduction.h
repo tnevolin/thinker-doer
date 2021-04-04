@@ -1,5 +1,4 @@
-#ifndef __AIPRODUCTION_H__
-#define __AIPRODUCTION_H__
+#pragma once
 
 #include "main.h"
 #include "game.h"
@@ -91,4 +90,3 @@ int findPoliceUnit(int factionId);
 HOOK_API void modifiedBaseFirst(int baseId);
 int getNearestFactionBaseRange(int factionId, int x, int y);
 
-#endif // __AIPRODUCTION_H__
