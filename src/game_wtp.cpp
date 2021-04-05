@@ -823,7 +823,7 @@ bool isColonyUnit(int id)
 	return (id >= 0 && Units[id].weapon_type == WPN_COLONY_MODULE);
 }
 
-bool isVehicleColony(int id)
+bool isColonyVehicle(int id)
 {
 	return (Units[Vehicles[id].unit_id].weapon_type == WPN_COLONY_MODULE);
 }
@@ -833,11 +833,11 @@ bool isFormerUnit(int unitId)
 	return (Units[unitId].weapon_type == WPN_TERRAFORMING_UNIT);
 }
 
-bool isVehicleFormer(int vehicleId)
+bool isFormerVehicle(int vehicleId)
 {
-	return isVehicleFormer(&(Vehicles[vehicleId]));
+	return isFormerVehicle(&(Vehicles[vehicleId]));
 }
-bool isVehicleFormer(VEH *vehicle)
+bool isFormerVehicle(VEH *vehicle)
 {
 	return (Units[vehicle->unit_id].weapon_type == WPN_TERRAFORMING_UNIT);
 }
@@ -935,9 +935,14 @@ std::set<int> getBaseConnectedOceanRegions(int baseId)
 
 }
 
+bool isLandRegion(int region)
+{
+	return region < MaxRegionNum/2;
+}
+
 bool isOceanRegion(int region)
 {
-	return region >= 64;
+	return region >= MaxRegionNum/2;
 }
 
 /*
@@ -2563,40 +2568,18 @@ HOOK_API int mod_energy_yield(int factionId, int baseId, int x, int y, int tf)
 }
 
 /*
-Checks whether given tile is closest to this colony than to any other friendly colony.
+Checks whether given tile is not targeted by other colony.
+Given colony is excluded from check if set (>=0).
 */
-bool isRightfulBuildSite(int x, int y, int vehicleId)
+bool isAvailableBuildSite(int factionId, int x, int y, int colonyVehicleId)
 {
-	MAP *tile = getMapTile(x, y);
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	MAP *vehicleLocation = getVehicleMapTile(vehicleId);
-	int triad = veh_triad(vehicleId);
-	int factionId = vehicle->faction_id;
-	int vehicleRange = map_range(vehicle->x, vehicle->y, x, y);
-
-	// vehicle should be a colony
-
-	if (!isVehicleColony(vehicleId))
-		return false;
-
-	// site should be in same region
-
-	if (triad != TRIAD_AIR && !(triad == TRIAD_SEA && map_has_item(vehicleLocation, TERRA_BASE_IN_TILE)) && vehicleLocation->region != tile->region)
-		return false;
-
-	// get nearest friendly colony range
-
-	int nearestFriendlyColonyRange = INT_MAX;
-
 	for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
 	{
 		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
-		MAP *otherVehicleLocation = getVehicleMapTile(otherVehicleId);
-		int otherVehicleTriad = veh_triad(otherVehicleId);
 
 		// skip current vehicle
 
-		if (otherVehicleId == vehicleId)
+		if (otherVehicleId == colonyVehicleId)
 			continue;
 
 		// only this faction
@@ -2606,34 +2589,17 @@ bool isRightfulBuildSite(int x, int y, int vehicleId)
 
 		// only colony
 
-		if (!isVehicleColony(otherVehicleId))
+		if (!isColonyVehicle(otherVehicleId))
 			continue;
 
-		// only able to reach destination
+		// check destination
 
-		if (otherVehicleTriad != TRIAD_AIR && !(otherVehicleTriad == TRIAD_SEA && map_has_item(otherVehicleLocation, TERRA_BASE_IN_TILE)) && otherVehicleLocation->region != tile->region)
-			continue;
-
-		// calculate range
-
-		int otherVehicleRange = map_range(otherVehicle->x, otherVehicle->y, x, y);
-
-		// add 1 for vehicles with smaller id
-
-		if (otherVehicleId < vehicleId)
-		{
-			otherVehicleRange++;
-		}
-
-		// update nearest range
-
-		nearestFriendlyColonyRange = std::min(nearestFriendlyColonyRange, otherVehicleRange);
+		if (otherVehicle->x == x && otherVehicle->y == y)
+			return false;
 
 	}
 
-	// check rightfullness
-
-	return vehicleRange < nearestFriendlyColonyRange;
+	return true;
 
 }
 
@@ -2704,5 +2670,63 @@ std::vector<int> getLoadedVehicleIds(int vehicleId)
 
 bool is_ocean_deep(MAP* sq) {
     return (sq && (sq->level >> 5) <= LEVEL_OCEAN);
+}
+
+bool isVehicleAtLocation(int vehicleId, Location location)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+
+	return vehicle->x == location.x && vehicle->y == location.y;
+
+}
+
+std::vector<int> getFactionLocationVehicleIds(int factionId, Location location)
+{
+	std::vector<int> vehicleIds;
+
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+
+		if
+		(
+			vehicle->faction_id == factionId
+			&&
+			isVehicleAtLocation(vehicleId, location)
+		)
+		{
+			vehicleIds.push_back(vehicleId);
+		}
+
+	}
+
+	return vehicleIds;
+
+}
+
+/*
+Checks if given location is adjacent to given region.
+*/
+Location getAdjacentRegionLocation(int x, int y, int region)
+{
+	Location location;
+
+	for (MAP *tile : getAdjacentTiles(x, y, false))
+	{
+		if (tile->region == region)
+		{
+			location.set(x, y);
+			break;
+		}
+
+	}
+
+	return location;
+
+}
+
+bool isValidLocation(Location location)
+{
+	return (location.x >= 0 && location.x < *map_axis_x && location.y >= 0 && location.y < *map_axis_y);
 }
 

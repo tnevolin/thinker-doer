@@ -6,10 +6,29 @@
 #include <set>
 #include "terranx_types.h"
 
-struct LOCATION
+struct Location
 {
 	int x;
 	int y;
+
+	Location()
+	{
+		this->x = -1;
+		this->y = -1;
+	}
+
+	Location(int newX, int newY)
+	{
+		this->x = newX;
+		this->y = newY;
+	}
+
+	void set(int newX, int newY)
+	{
+		this->x = newX;
+		this->y = newY;
+	}
+
 };
 
 struct MAP_INFO
@@ -146,16 +165,17 @@ MAP *getVehicleMapTile(int vehicleId);
 bool isImprovedTile(int x, int y);
 bool isVehicleSupply(VEH *vehicle);
 bool isColonyUnit(int id);
-bool isVehicleColony(int id);
+bool isColonyVehicle(int id);
 bool isFormerUnit(int unitId);
-bool isVehicleFormer(int vehicleId);
-bool isVehicleFormer(VEH *vehicle);
+bool isFormerVehicle(int vehicleId);
+bool isFormerVehicle(VEH *vehicle);
 bool isVehicleTransport(VEH *vehicle);
 bool isVehicleProbe(VEH *vehicle);
 bool isVehicleIdle(int vehicleId);
 void computeBase(int baseId);
 std::set<int> getBaseConnectedRegions(int id);
 std::set<int> getBaseConnectedOceanRegions(int baseId);
+bool isLandRegion(int region);
 bool isOceanRegion(int region);
 double evaluateUnitConventionalDefenseEffectiveness(int id);
 double evaluateUnitConventionalOffenseEffectiveness(int id);
@@ -223,9 +243,13 @@ void generateTerraformingChange(MAP_STATE *mapState, int action);
 HOOK_API int mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
-bool isRightfulBuildSite(int x, int y, int vehicleId);
+bool isAvailableBuildSite(int x, int y, int vehicleId);
 bool isCoast(int x, int y);
 bool isOceanRegionCoast(int x, int y, int oceanRegion);
 std::vector<int> getLoadedVehicleIds(int vehicleId);
 bool is_ocean_deep(MAP* sq);
+bool isVehicleAtLocation(int vehicleId, Location location);
+std::vector<int> getFactionLocationVehicleIds(int factionId, Location location);
+Location getAdjacentRegionLocation(int x, int y, int region);
+bool isValidLocation(Location location);
 

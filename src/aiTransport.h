@@ -11,7 +11,10 @@ struct LOCATION_RANGE
 
 int moveTransport(int vehicleId);
 bool isCarryingColony(int vehicleId);
-void transportColonyToClosestUnoccupiedCoast(int vehicleId);
 bool isCarryingFormer(int vehicleId);
-void transportFormerToMostDemandingLandmass(int vehicleId);
+bool isCarryingVehicle(int vehicleId);
+bool transportColony(int transportVehicleId);
+void transportFormer(int vehicleId);
+bool pickupColony(int vehicleId);
+bool pickupFormer(int vehicleId);
 
