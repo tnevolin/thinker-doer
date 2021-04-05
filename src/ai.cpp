@@ -269,11 +269,11 @@ void populateSharedLists()
 			}
 
 		}
-		else if (isVehicleColony(id))
+		else if (isColonyVehicle(id))
 		{
 			colonyVehicleIds.push_back(id);
 		}
-		else if (isVehicleFormer(id))
+		else if (isFormerVehicle(id))
 		{
 			formerVehicleIds.push_back(id);
 		}

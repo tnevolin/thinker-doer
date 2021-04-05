@@ -165,7 +165,7 @@ HOOK_API int mod_setup_player(int faction, int v1, int v2) {
         Factions[faction].satellites_mineral = conf.satellites_mineral;
         Factions[faction].satellites_energy = conf.satellites_energy;
 
-        // =WTP=
+		// =WTP=
 
 		// rerun balance for late starting faction
 

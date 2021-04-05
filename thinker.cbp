@@ -102,16 +102,12 @@
 		<Unit filename="src/aiTransport.cpp" />
 		<Unit filename="src/aiTransport.h" />
 		<Unit filename="src/engine.cpp" />
-		<Unit filename="src/engine.cpp.bak" />
 		<Unit filename="src/engine.h" />
-		<Unit filename="src/engine.h.bak" />
 		<Unit filename="src/game.cpp" />
-		<Unit filename="src/game.cpp.bak" />
 		<Unit filename="src/game.h" />
 		<Unit filename="src/game_wtp.cpp" />
 		<Unit filename="src/game_wtp.h" />
 		<Unit filename="src/gui.cpp" />
-		<Unit filename="src/gui.cpp.bak" />
 		<Unit filename="src/gui.h" />
 		<Unit filename="src/lib/ini.c">
 			<Option compilerVar="CC" />
@@ -131,7 +127,6 @@
 		<Unit filename="src/tech.h" />
 		<Unit filename="src/terranx.cpp" />
 		<Unit filename="src/terranx.h" />
-		<Unit filename="src/terranx.h.bak" />
 		<Unit filename="src/terranx_enums.h" />
 		<Unit filename="src/terranx_types.h" />
 		<Unit filename="src/terranx_wtp.cpp" />

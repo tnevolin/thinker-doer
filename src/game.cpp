@@ -391,15 +391,26 @@ int unit_in_tile(MAP* sq) {
 int set_move_to(int veh_id, int x, int y) {
     VEH* veh = &Vehicles[veh_id];
     debug("set_move_to %2d %2d -> %2d %2d %s\n", veh->x, veh->y, x, y, veh->name());
+
+    // =WTP=
+    // clear order when at destination
+	if (veh->x == x && veh->y == y)
+	{
+		veh->move_status = ORDER_NONE;
+		return SYNC;
+	}
+
     veh->waypoint_1_x = x;
     veh->waypoint_1_y = y;
     veh->move_status = ORDER_MOVE_TO;
     veh->status_icon = 'G';
     veh->terraforming_turns = 0;
     mapnodes.erase({x, y, NODE_PATROL});
-    if (veh->x == x && veh->y == y) {
-        return mod_veh_skip(veh_id);
-    }
+    // =WTP=
+    // do not skip vehicle when at destination
+//	if (veh->x == x && veh->y == y) {
+//		return mod_veh_skip(veh_id);
+//	}
     return SYNC;
 }
 

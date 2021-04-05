@@ -484,7 +484,7 @@ void populateLists()
 
 		}
 		// formers
-		else if (isVehicleFormer(vehicle))
+		else if (isFormerVehicle(vehicle))
 		{
 			// terraforming vehicles
 			if (isVehicleTerraforming(vehicle))

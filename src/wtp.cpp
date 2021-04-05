@@ -3280,7 +3280,7 @@ HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute)
 
 			// only formers
 
-			if (!isVehicleFormer(otherVehicleId))
+			if (!isFormerVehicle(otherVehicleId))
 				continue;
 
 			// only same locaton

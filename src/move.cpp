@@ -994,76 +994,54 @@ bool can_build_base(int x, int y, int faction, int triad) {
     return false;
 }
 
-double base_tile_score(int factionId, int x1, int y1, int range, int triad) {
-	// =WTP=
-	// change score computation algorithm
-	double positionScore = getBasePositionScore(factionId, x1, y1);
+int base_tile_score(int x1, int y1, int range, int triad) {
+    const int priority[][2] = {
+        {TERRA_RIVER, 1},
+        {TERRA_FUNGUS, -2},
+        {TERRA_FARM, 2},
+        {TERRA_FOREST, 2},
+        {TERRA_MONOLITH, 4},
+    };
+    MAP* sq = mapsq(x1, y1);
+    int score = 0;
+    int land = 0;
+    range *= (triad == TRIAD_LAND ? 3 : 1);
 
-//    const int priority[][2] = {
-//        {TERRA_RIVER, 1},
-//        {TERRA_FUNGUS, -2},
-//        {TERRA_FARM, 2},
-//        {TERRA_FOREST, 2},
-//        {TERRA_MONOLITH, 4},
-//    };
-//    MAP* sq = mapsq(x1, y1);
-//    int score = 0;
-//    int land = 0;
-//    range *= (triad == TRIAD_LAND ? 3 : 1);
-//
-//    if (!is_ocean(sq)) {
-//        score += (ocean_shoreline(x1, y1) ? 14 : 0);
-//        score += (sq->items & TERRA_RIVER ? 5 : 0);
-//    }
-//    for (int i=1; i <= 20; i++) {
-//        int x2 = wrap(x1 + TableOffsetX[i]);
-//        int y2 = y1 + TableOffsetY[i];
-//
-//        if ((sq = mapsq(x2, y2)) && !sq->is_base()) {
-//            score += (bonus_at(x2, y2) ? 6 : 0);
-//            if (sq->landmarks && !(sq->landmarks & (LM_DUNES | LM_SARGASSO | LM_UNITY))) {
-//                score += (sq->landmarks & LM_JUNGLE ? 3 : 2);
-//            }
-//            if (i <= 8) { // Only adjacent tiles
-//                if (triad == TRIAD_SEA && !is_ocean(sq)
-//                && nearby_tiles(x2, y2, TRIAD_LAND, 20) >= 20 && ++land < 3) {
-//                    score += (sq->owner < 1 ? 20 : 3);
-//                }
-//                if (is_ocean_shelf(sq)) {
-//                    score += (triad == TRIAD_SEA ? 3 : 2);
-//                }
-//            }
-//            if (!is_ocean(sq)) {
-//                if (sq->level & TILE_RAINY) {
-//                    score += 2;
-//                }
-//                if (sq->level & TILE_MOIST && sq->rocks & TILE_ROLLING) {
-//                    score += 2;
-//                }
-//            }
-//            for (const int* p : priority) if (sq->items & p[0]) score += p[1];
-//        }
-//    }
-//    return score - range + std::min(0, pm_safety[x1][y1]);
+    if (!is_ocean(sq)) {
+        score += (ocean_shoreline(x1, y1) ? 14 : 0);
+        score += (sq->items & TERRA_RIVER ? 5 : 0);
+    }
+    for (int i=1; i <= 20; i++) {
+        int x2 = wrap(x1 + TableOffsetX[i]);
+        int y2 = y1 + TableOffsetY[i];
 
-    double rangeScore = (double)range / (double)(triad == TRIAD_LAND ? 1 : 4) / 2.0;
-
-    double score = positionScore - rangeScore + (double)std::min(0, pm_safety[x1][y1]);
-
-    debug
-    (
-		"\t(%3d,%3d) positionScore=%5.1f, rangeScore=%5.1f, safetyScore=%5.1f, score=%5.1f\n",
-		x1,
-		y1,
-		positionScore,
-		rangeScore,
-		(double)std::min(0, pm_safety[x1][y1]),
-		score
-	)
-	;
-
-    return score;
-
+        if ((sq = mapsq(x2, y2)) && !sq->is_base()) {
+            assert(map_range(x1, y1, x2, y2) == 1 + (i > 8));
+            score += (bonus_at(x2, y2) ? 6 : 0);
+            if (sq->landmarks && !(sq->landmarks & (LM_DUNES | LM_SARGASSO | LM_UNITY))) {
+                score += (sq->landmarks & LM_JUNGLE ? 3 : 2);
+            }
+            if (i <= 8) { // Only adjacent tiles
+                if (triad == TRIAD_SEA && !is_ocean(sq)
+                && nearby_tiles(x2, y2, TRIAD_LAND, 20) >= 20 && ++land < 3) {
+                    score += (sq->owner < 1 ? 20 : 3);
+                }
+                if (is_ocean_shelf(sq)) {
+                    score += (triad == TRIAD_SEA ? 3 : 2);
+                }
+            }
+            if (!is_ocean(sq)) {
+                if (sq->is_rainy()) {
+                    score += 2;
+                }
+                if (sq->is_moist() && sq->is_rolling()) {
+                    score += 2;
+                }
+            }
+            for (const int* p : priority) if (sq->items & p[0]) score += p[1];
+        }
+    }
+    return score - range + min(0, pm_safety[x1][y1]);
 }
 
 int colony_move(const int id) {
@@ -1135,14 +1113,14 @@ int colony_move(const int id) {
 			// =WTP=
 			// ignore tiles closer to other friendly colonies
 
-			if (!isRightfulBuildSite(ts.rx, ts.ry, id))
+			if (!isAvailableBuildSite(ts.rx, ts.ry, id))
 				continue;
 
 			// =WTP=
 			// compute score with different algorithm
 
-//            int score = base_tile_score(ts.rx, ts.ry, ts.dist, triad);
-            double score = base_tile_score(veh->faction_id, ts.rx, ts.ry, ts.dist, triad);
+//			int score = base_tile_score(ts.rx, ts.ry, ts.dist, triad);
+            double score = getBuildLocationScore(factionId, ts.rx, ts.ry, ts.dist, (triad == TRIAD_LAND ? 1 : 4), pm_safety);
 
             k++;
             if (score > tscore) {
