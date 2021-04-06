@@ -1,8 +1,28 @@
 #include "patch_wtp.h"
 
 #include "game_wtp.h"
+#include "ai.h"
 #include "wtp.h"
 #include "aiProduction.h"
+
+void exit_fail_over()
+{
+	MessageBoxA(0, "Error while patching game binary over existing patch call. Game will now exit.", MOD_VERSION, MB_OK | MB_ICONSTOP);
+	exit(EXIT_FAILURE);
+}
+
+/*
+Patches the call that has already been patched by previous write_call.
+Does not check for existing pointer to be in image length.
+*/
+void write_call_over(int addr, int func)
+{
+	if (*(byte*)addr != 0xE8)
+		exit_fail_over();
+	
+	*(int*)(addr+1) = func - addr - 5;
+	
+}
 
 /*
 Patch battle compute wrapper.
@@ -3274,7 +3294,6 @@ Disables land artillery bombard from sea.
 void patch_disable_land_artillery_bombard_from_sea()
 {
     write_call(0x0046D42F, (int)modifiedActionMoveForArtillery);
-
 }
 
 /*
@@ -3283,7 +3302,22 @@ Disables air transport unload everywhere.
 void patch_disable_air_transport_unload_everywhere()
 {
     write_call(0x004D0509, (int)modifiedVehicleCargoForAirTransportUnload);
+}
 
+void patch_base_production()
+{
+    write_call_over(0x004E61D0, (int)modifiedBaseProductionChoice);
+}
+
+void patch_enemy_move()
+{
+    write_call_over(0x00579362, (int)modifiedEnemyMove);
+}
+
+void patch_faction_upkeep()
+{
+    write_call(0x00528214, (int)modifiedFactionUpkeep);
+    write_call(0x0052918F, (int)modifiedFactionUpkeep);
 }
 
 void patch_setup_wtp(Config* cf)
@@ -3740,6 +3774,12 @@ void patch_setup_wtp(Config* cf)
 	patch_disable_land_artillery_bombard_from_sea();
 
 	patch_disable_air_transport_unload_everywhere();
+	
+	patch_base_production();
+	
+	patch_enemy_move();
 
+    patch_faction_upkeep();
+    
 }
 

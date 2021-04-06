@@ -56,7 +56,7 @@ const int WTP_MANAGED_UNIT_PLANS[] =
     PLAN_TERRAFORMING,
 };
 
-HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4);
+HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
 int aiSuggestBaseProduction(int baseId, int choice);
 void evaluateFacilitiesDemand();
 void evaluateBasePopulationLimitFacilitiesDemand();

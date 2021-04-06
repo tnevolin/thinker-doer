@@ -225,8 +225,8 @@ rare_supply_pods=0
 faction_placement=1
 
 ; Faction placement can also add two nutrient bonuses for each land-based faction.
-; 0 = disable for all, 1 = enable for AIs only, 2 = enable for all.
-nutrient_bonus=0
+; 0 = disable for all, 1 = enable for AIs only, 2 = enable for all
+nutrient_bonus=1
 
 ; Select which landmarks to place on randomly generated maps.
 crater=1
@@ -544,9 +544,6 @@ unit_upgrade_ignores_movement=1
 ; May have unwanted consequences of intercepting idle formers.
 group_terraforming=0
 
-; Allows AI to build bases in fungus and rocky tiles.
-ai_base_allowed_fungus_rocky=1
-
 ; AI parameters
 ; WtP overrides some of Thinker AI algorithms.
 ; Turns WtP algorithms on/off.
@@ -586,6 +583,8 @@ ai_production_exploration_coverage=5.0
 ai_production_improvement_coverage=1.0
 ; number of turns to project future population - used to predict need for pop limit and psych facilities
 ai_production_population_projection_turns=20
+; proportion of time Thinker's choice replaces Vanilla's.
+ai_production_Thinker_proportion=0.50
 
 ; AI terraforming parameters
 ;

@@ -243,7 +243,6 @@ void generateTerraformingChange(MAP_STATE *mapState, int action);
 HOOK_API int mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
 HOOK_API int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
-bool isAvailableBuildSite(int x, int y, int vehicleId);
 bool isCoast(int x, int y);
 bool isOceanRegionCoast(int x, int y, int oceanRegion);
 std::vector<int> getLoadedVehicleIds(int vehicleId);
@@ -252,4 +251,7 @@ bool isVehicleAtLocation(int vehicleId, Location location);
 std::vector<int> getFactionLocationVehicleIds(int factionId, Location location);
 Location getAdjacentRegionLocation(int x, int y, int region);
 bool isValidLocation(Location location);
+void hurryProduction(BASE* base, int minerals, int cost);
+MAP* getMapTile(int mapTileIndex);
+Location getMapIndexLocation(int mapIndex);
 
