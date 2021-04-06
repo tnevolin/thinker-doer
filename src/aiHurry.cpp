@@ -19,10 +19,10 @@ Analyzes all bases at once and decides what to hurry.
 This is in addition to consider_hurry().
 It kicks in only when flat hurry cost is enabled.
 */
-void factionHurryProduction(int factionId)
+void considerHurryingProduction(int factionId)
 {
     Faction* faction = &Factions[factionId];
-    debug("factionHurryProduction\n")
+    debug("considerHurryingProduction\n")
 
 	// apply only when flat hurry cost is enabled
 
@@ -208,7 +208,7 @@ void hurryProductionPartially(int baseId, int allowance)
 
 	// hurry production
 
-	hurry_item(base, partialHurryMinerals, partialHurryCost);
+	hurryProduction(base, partialHurryMinerals, partialHurryCost);
 
 }
 

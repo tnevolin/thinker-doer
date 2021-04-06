@@ -9,6 +9,7 @@
 #include "patch.h"
 #include "engine.h"
 #include "game_wtp.h"
+#include "ai.h"
 
 // player setup helper variable
 
@@ -2192,10 +2193,10 @@ HOOK_API void modifiedWorldBuild()
 
 			// calculate level and altitude
 
-			int oldLevel = tile->level & 0xE0;
+			int oldLevel = tile->climate & 0xE0;
 			int oldLevelIndex = oldLevel >> 5;
-			int oldAltitude = tile->altitude;
-			int oldAltitudeM = 50 * (tile->altitude - 60);
+			int oldAltitude = tile->contour;
+			int oldAltitudeM = 50 * (tile->contour - 60);
 			int oldAltitudeLevelIndex = oldAltitude / 20;
 
 			// modify altitude and level
@@ -2208,8 +2209,8 @@ HOOK_API void modifiedWorldBuild()
 
 			// update map
 
-			tile->level = (tile->level & ~0xE0) | newLevel;
-			tile->altitude = newAltitude;
+			tile->climate = (tile->climate & ~0xE0) | newLevel;
+			tile->contour = newAltitude;
 
 			debug("[%4d] %d, %3d, %5d -> %d, %3d, %5d\n", i, oldLevelIndex, oldAltitude, oldAltitudeM, newLevelIndex, newAltitude, newAltitudeM);
 
@@ -2658,13 +2659,13 @@ void expireInfiltrations(int factionId)
 				if (is_human(factionId))
 				{
 					parse_says(0, MFactions[infiltratingFactionId].noun_faction, -1, -1);
-					popp(ScriptTxtID, "INFILTRATIONDEACTIVATEDENEMY", 0, "capture_sm.pcx", 0);
+//					popp(scriptTxtID, "INFILTRATIONDEACTIVATEDENEMY", 0, "capture_sm.pcx", 0);
 				}
 
 				if (is_human(infiltratingFactionId))
 				{
 					parse_says(0, MFactions[factionId].noun_faction, -1, -1);
-					popp(ScriptTxtID, "INFILTRATIONDEACTIVATEDOURS", 0, "capture_sm.pcx", 0);
+//					popp(scriptTxtID, "INFILTRATIONDEACTIVATEDOURS", 0, "capture_sm.pcx", 0);
 				}
 
 			}
@@ -2676,14 +2677,14 @@ void expireInfiltrations(int factionId)
 				{
 					parse_says(0, MFactions[infiltratingFactionId].noun_faction, -1, -1);
 					parse_num(1, infiltrationDeviceCount);
-					popp(ScriptTxtID, "INFILTRATIONDEVICEDISABLEDENEMY", 0, "capture_sm.pcx", 0);
+//					popp(scriptTxtID, "INFILTRATIONDEVICEDISABLEDENEMY", 0, "capture_sm.pcx", 0);
 				}
 
 				if (is_human(infiltratingFactionId))
 				{
 					parse_says(0, MFactions[factionId].noun_faction, -1, -1);
 					parse_num(1, infiltrationDeviceCount);
-					popp(ScriptTxtID, "INFILTRATIONDEVICEDISABLEDOURS", 0, "capture_sm.pcx", 0);
+//					popp(scriptTxtID, "INFILTRATIONDEVICEDISABLEDOURS", 0, "capture_sm.pcx", 0);
 				}
 
 			}
@@ -3356,5 +3357,21 @@ HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 
 	return tx_veh_cargo(vehicleId);
 
+}
+
+/*
+Overrides enemy_move call to replace vanilla and Thinker functionality.
+*/
+HOOK_API int modifiedEnemyMove(const int vehicleId)
+{
+	return aiEnemyMove(vehicleId);
+}
+
+/*
+Overrides faction_upkeep calls to amend vanilla and Thinker functionality.
+*/
+HOOK_API int modifiedFactionUpkeep(const int factionId)
+{
+    return aiFactionUpkeep(factionId);
 }
 

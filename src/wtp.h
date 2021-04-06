@@ -181,4 +181,6 @@ int getHabitationFacilitiesBaseGrowthModifier(int baseId);
 HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute);
 HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y);
 HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId);
+HOOK_API int modifiedEnemyMove(const int vehicleId);
+HOOK_API int modifiedFactionUpkeep(const int factionId);
 

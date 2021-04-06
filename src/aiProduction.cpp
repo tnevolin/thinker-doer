@@ -19,42 +19,49 @@ PRODUCTION_DEMAND productionDemand;
 /*
 Selects base production.
 */
-HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4)
+HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 {
     BASE* base = &(Bases[baseId]);
     bool productionDone = (base->status_flags & BASE_PRODUCTION_DONE);
     bool withinExemption = isBaseProductionWithinRetoolingExemption(baseId);
 
-	debug("suggestBaseProduction\n========================================\n");
+	debug("modifiedBaseProductionChoice\n========================================\n");
 	debug("%s (%s), active_faction=%s, base_faction=%s, productionDone=%s, withinExemption=%s\n", base->name, prod_name(base->queue_items[0]), MFactions[*active_faction].noun_faction, MFactions[base->faction_id].noun_faction, (productionDone ? "y" : "n"), (withinExemption ? "y" : "n"));
 
-	// skip human
+	// execute original code for human bases
 
     if (is_human(base->faction_id))
 	{
         debug("skipping human base\n");
-        return base->queue_items[0];
+        return base_prod_choice(baseId, a2, a3, a4);
     }
 
-    // skip not enabled AI
+	// execute original code for not enabled computer bases
 
 	if (!ai_enabled(base->faction_id))
 	{
         debug("skipping computer base\n");
-        return base_prod_choices(baseId, a2, a3, a4);
+        return base_prod_choice(baseId, a2, a3, a4);
 	}
 
 	// defaults to Thinker if WTP algorithms are not enabled
 
 	if (!conf.ai_useWTPAlgorithms)
 	{
-		debug("Not using WTP algorithms. Switcthing to Thinker code.\n");
+		debug("not using WTP algorithms - default to Thinker\n");
 		return mod_base_production(baseId, a2, a3, a4);
 	}
 
-	// set default choice to vanilla
+	// do not disturb base building project
 
-    int choice = base_prod_choices(baseId, a2, a3, a4);
+	if (isBaseBuildingProjectBeyondRetoolingExemption(baseId))
+	{
+		return getBaseBuildingItem(baseId);
+	}
+
+	// vanilla choice
+
+    int choice = base_prod_choice(baseId, a2, a3, a4);
 	debug("\n===>    %-10s: %-25s\n\n", "Vanilla", prod_name(choice));
 
 	// do not override vanilla choice in emergency scrambling - it does pretty goood job at it
@@ -64,46 +71,6 @@ HOOK_API int suggestBaseProduction(int baseId, int a2, int a3, int a4)
         debug("use Vanilla algorithm for emergency scrambe\n\n");
 		return choice;
 	}
-
-    // do not suggest production for human factions
-
-    if (is_human(base->faction_id))
-	{
-        debug("skipping human base\n");
-        return choice;
-    }
-
-    // do not override production choice for not AI enabled factions
-
-	if (!ai_enabled(base->faction_id))
-	{
-        debug("skipping not AI enabled computer base\n");
-        return choice;
-    }
-
-	// do not disturb base building project
-
-	if (isBaseBuildingProjectBeyondRetoolingExemption(baseId))
-	{
-		return choice;
-	}
-
-	// Thinker
-
-	int thinkerChoice = mod_base_production(baseId, a2, a3, a4);
-	debug("\n===>    %-10s: %-25s\n", "Thinker", prod_name(thinkerChoice));
-
-	if (random_double(1.0) < conf.ai_production_Thinker_proportion)
-	{
-		choice = thinkerChoice;
-		debug("\t\tused: YES\n");
-	}
-	else
-	{
-		debug("\t\tused: NO\n");
-	}
-	debug("\n");
-
 
     // WTP
 
@@ -1225,7 +1192,7 @@ void evaluateNativeProtectionDemand()
 //
 //		// calculate threat time koefficient
 //
-//		double timeThreatKoefficient = std::max(0.0, (MAX_THREAT_TURNS - ((double)nearestOwnBaseRange / vehicleSpeed)) / MAX_THREAT_TURNS);
+//		double timeThreatKoefficient = std::max(0.0, (std::max(_THREAT_TURNS - ((double)nearestOwnBaseRange / vehicleSpeed)) / std::max(_THREAT_TURNS);
 //
 //		// calculate conventional anti conventional defense demand
 //
@@ -1950,11 +1917,14 @@ HOOK_API void modifiedBaseFirst(int baseId)
 
 	tx_base_first(baseId);
 
-	// that's it for human faction
+	// override default choice with WTP choice for enabled computer factions
+	
+	// execute original code for not enabled computer faction bases
 
-	// override default choice with WTP choice
-
-	base->queue_items[0] = suggestBaseProduction(baseId, 0, 0, 0);
+	if (!is_human(base->faction_id) && ai_enabled(base->faction_id) && conf.ai_useWTPAlgorithms)
+	{
+		base->queue_items[0] = modifiedBaseProductionChoice(baseId, 0, 0, 0);
+	}
 
 }
 

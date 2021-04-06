@@ -9,6 +9,7 @@
 #include "game.h"
 #include "aiProduction.h"
 #include "aiTerraforming.h"
+#include "aiHurry.h"
 
 // global variables
 
@@ -19,6 +20,9 @@
 int wtpAIFactionId = -1;
 
 // global variables for faction upkeep
+
+int processedTurn = -1;
+int processedFactionId = -1;
 
 int aiFactionId;
 
@@ -32,6 +36,62 @@ std::vector<int> outsideCombatVehicleIds;
 std::vector<int> prototypes;
 std::vector<int> colonyVehicleIds;
 std::vector<int> formerVehicleIds;
+
+/*
+Top level AI enemy move entry point
+*/
+int aiEnemyMove(const int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// recalculate global faction parameters on this turn if not yet done
+	
+	if (*current_turn != processedTurn || vehicle->faction_id != processedFactionId)
+	{
+		aiStrategy(vehicle->faction_id);
+		
+		processedTurn = *current_turn;
+		processedFactionId = vehicle->faction_id;
+		
+	}
+	
+	if (isColonyVehicle(vehicleId))
+	{
+		return moveColony(vehicleId);
+	}
+	
+	// unhandled cases default to Thinker
+	
+	return mod_enemy_move(vehicleId);
+	
+}
+
+/*
+Top level faction upkeep entry point.
+*/
+int aiFactionUpkeep(const int factionId)
+{
+    // expire infiltrations for normal factions
+    
+    if (factionId > 0)
+	{
+		expireInfiltrations(factionId);
+	}
+
+	// consider hurrying production in all bases
+	// affects AI factions only
+	
+	if (factionId > 0 && !is_human(factionId))
+	{
+		considerHurryingProduction(factionId);
+	}
+
+	// redirect to vanilla function for the rest of processing
+	// that, in turn, is overriden by Thinker
+	
+	return faction_upkeep(factionId);
+	
+}
 
 /*
 AI strategy.

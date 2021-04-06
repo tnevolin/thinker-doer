@@ -2,7 +2,13 @@
 
 #include "terranx.h"
 
+// global constants
+
+extern const int NO_SYNC;
+extern const char* scriptTxtID;
+
 // battle computation display variables
+
 extern int *tx_battle_compute_attacker_effect_count;
 extern char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50];
 extern int (*tx_battle_compute_attacker_effect_values)[0x4];
@@ -11,6 +17,7 @@ extern char (*tx_battle_compute_defender_effect_labels)[0x4][0x50];
 extern int (*tx_battle_compute_defender_effect_values)[0x4];
 
 // labels pointer
+
 extern char ***tx_labels;
 
 extern char *g_strTEMP;
@@ -44,7 +51,7 @@ extern fp_3int *tx_set_facility;
 extern fp_charp_int_charp_int *tx_itoa;
 extern fp_0void *tx_base_nutrient;
 extern fp_5int *tx_social_calc;
-extern fp_0int *tx_base_production_choice;
+extern fp_0int *tx_base_production;
 extern fp_3int *tx_has_fac;
 extern fp_1int *tx_black_market;
 extern fp_3void *tx_setup_player;
@@ -68,4 +75,5 @@ extern fp_3void *tx_bitmask;
 extern fp_3void *tx_action_move;
 extern fp_1int *tx_veh_cargo;
 extern fp_3int *tx_zoc_move;
+extern fp_4int* base_prod_choice;
 

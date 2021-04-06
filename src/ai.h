@@ -45,6 +45,8 @@ extern std::vector<int> prototypes;
 extern std::vector<int> colonyVehicleIds;
 extern std::vector<int> formerVehicleIds;
 
+int aiEnemyMove(const int vehicleId);
+int aiFactionUpkeep(const int factionId);
 void aiStrategy(int id);
 void populateSharedLists();
 VEH *getVehicleByAIId(int aiId);

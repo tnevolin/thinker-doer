@@ -6,12 +6,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- *
+ * 
  * Thinker is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with Thinker.  If not, see <https://www.gnu.org/licenses/>.
  */
@@ -66,8 +66,8 @@
 #define HOOK_API extern "C"
 // =WTP=
 // macros cause confution with original std:: functions
-//#define min(x, y) std::min(x, y)
-//#define max(x, y) std::max(x, y)
+//#define std::min(x, y) std::min(x, y)
+//#define std::max(x, y) std::max(x, y)
 
 #ifdef BUILD_DEBUG
 #ifdef assert
@@ -81,9 +81,6 @@
 
 const int COMBAT = 0;
 const int SYNC = 0;
-// =WTP=
-// for cases when synchronization is not needed
-const int NO_SYNC = 1;
 const bool DEF = true;
 const bool ATT = false;
 const bool SEA = true;
@@ -131,14 +128,9 @@ struct Config {
     int window_width = 1024;
     int window_height = 768;
     int smac_only = 0;
+    int player_free_units = 0;
     int free_formers = 0;
     int free_colony_pods = 0;
-	// =WTP=
-	// extra values in thinker section - begin
-    int human_free_formers = 0;
-    int human_free_colony_pods = 0;
-	// =WTP=
-	// extra values in thinker section - end
     int satellites_nutrient = 0;
     int satellites_mineral = 0;
     int satellites_energy = 0;
@@ -153,7 +145,7 @@ struct Config {
     int expansion_factor = 100;
     int expansion_autoscale = 1;
     int limit_project_start = 3;
-    int max_sat = 10;
+    int max_satellites = 20;
     int faction_placement = 1;
     int nutrient_bonus = 0;
     int rare_supply_pods = 0;
@@ -275,6 +267,7 @@ struct Config {
     int habitation_facility_present_growth_bonus_max = 0;
     bool unit_upgrade_ignores_movement = false;
     bool group_terraforming = false;
+    bool ai_base_allowed_fungus_rocky = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
@@ -297,7 +290,6 @@ struct Config {
     double ai_production_exploration_coverage;
     double ai_production_improvement_coverage;
     int ai_production_population_projection_turns;
-    double ai_production_Thinker_proportion;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
@@ -363,6 +355,7 @@ struct AIPlans {
     int need_police = 1;
     int keep_fungus = 0;
     int plant_fungus = 0;
+    int satellites_goal = 0;
     /*
     Number of our bases captured by another faction we're currently at war with.
     Important heuristic in threat calculation.
@@ -387,6 +380,7 @@ enum nodeset_types {
     NODE_GOAL_NAVAL_BEACH = 7,
     NODE_GOAL_NAVAL_END = 8,
     NODE_PATROL = 9,
+    NODE_BASE_SITE = 10,
 };
 
 struct MapTile {
@@ -439,7 +433,6 @@ extern FILE* debug_log;
 extern Config conf;
 extern NodeSet mapnodes;
 extern AIPlans plans[MaxPlayerNum];
-extern int TechCostRatios[MaxDiffNum];
 
 DLL_EXPORT int ThinkerDecide();
 HOOK_API int mod_turn_upkeep();
@@ -450,9 +443,6 @@ int plans_upkeep(int faction);
 int need_defense(int id);
 int need_psych(int id);
 int consider_hurry(int id);
-// =WTP=
-// needed elsewhere
-int hurry_item(BASE* b, int mins, int cost);
 int find_project(int id);
 int find_facility(int id);
 int select_prod(int id);

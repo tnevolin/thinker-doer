@@ -9,6 +9,6 @@ struct BASE_WEIGHT
 	double weight;
 };
 
-void factionHurryProduction(int factionId);
+void considerHurryingProduction(int factionId);
 void hurryProductionPartially(int baseId, int allowance);
 
