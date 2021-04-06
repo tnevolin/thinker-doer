@@ -1,8 +1,5 @@
 
 #include "engine.h"
-#include "wtp.h"
-#include "ai.h"
-#include "aiHurry.h"
 
 const char* ScriptTxtID = "SCRIPT";
 
@@ -68,27 +65,11 @@ HOOK_API int mod_faction_upkeep(int faction) {
         plans_upkeep(faction);
     }
 
-    // =WTP=
-    // expire infiltrations
-    if (faction > 0)
-	{
-		expireInfiltrations(faction);
-	}
-
     *dword_93A934 = 1;
     social_upkeep(faction);
     do_all_non_input();
     repair_phase(faction);
     do_all_non_input();
-
-    // =WTP=
-	// consider hurrying production in all bases
-	// affects AI factions only
-	if (faction != 0 && !is_human(faction))
-	{
-		factionHurryProduction(faction);
-	}
-
     production_phase(faction);
     do_all_non_input();
     if (!(*game_state & STATE_GAME_DONE) || *game_state & STATE_FINAL_SCORE_DONE) {
@@ -109,14 +90,6 @@ HOOK_API int mod_faction_upkeep(int faction) {
         mod_social_ai(faction, -1, -1, -1, -1, 0);
         move_upkeep(faction, false);
         do_all_non_input();
-
-        // =WTP=
-		// WTP AI unit movement algorithms
-		// affects AI factions only
-		if (faction != 0 && !is_human(faction) && conf.ai_useWTPAlgorithms)
-		{
-			aiStrategy(faction);
-		}
 
         if (!is_human(faction)) {
             int cost = corner_market(faction);

@@ -131,10 +131,10 @@ bool vehicle_has_ability(VEH *vehicle, int ability) {
 
 int map_rainfall(MAP *tile) {
 	int rainfall;
-	if (tile->level & TILE_MOIST) {
+	if (tile->climate & TILE_MOIST) {
 		rainfall = 1;
 	}
-	else if (tile->level & TILE_RAINY) {
+	else if (tile->climate & TILE_RAINY) {
 		rainfall = 2;
 	}
 	else {
@@ -144,15 +144,15 @@ int map_rainfall(MAP *tile) {
 }
 
 int map_level(MAP *tile) {
-	return tile->level >> 5;
+	return tile->climate >> 5;
 }
 
 int map_elevation(MAP *tile) {
-	return map_level(tile) - LEVEL_SHORE_LINE;
+	return map_level(tile) - ALT_SHORE_LINE;
 }
 
 int map_rockiness(MAP *tile) {
-	return ((tile->rocks & TILE_ROCKY) ? 2 : ((tile->rocks & TILE_ROLLING) ? 1 : 0));
+	return ((tile->val3 & TILE_ROCKY) ? 2 : ((tile->val3 & TILE_ROLLING) ? 1 : 0));
 }
 
 /*
@@ -2427,8 +2427,8 @@ void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState)
 {
 	MAP *tile = mapInfo->tile;
 
-	mapState->climate = tile->level;
-	mapState->rocks = tile->rocks;
+	mapState->climate = tile->climate;
+	mapState->rocks = tile->val3;
 	mapState->items = tile->items;
 
 }
@@ -2437,8 +2437,8 @@ void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState)
 {
 	MAP *tile = mapInfo->tile;
 
-	tile->level = mapState->climate;
-	tile->rocks = mapState->rocks;
+	tile->climate = mapState->climate;
+	tile->val3 = mapState->rocks;
 	tile->items = mapState->items;
 
 }
@@ -2480,11 +2480,11 @@ void generateTerraformingChange(MAP_STATE *mapState, int action)
 		{
 			// remove items
 
-			mapState->items &= ~Terraform[action].items_removed;
+			mapState->items &= ~Terraform[action].flag_sea;
 
 			// add items
 
-			mapState->items |= Terraform[action].items_added;
+			mapState->items |= Terraform[action].flag;
 
 		}
 
@@ -2567,42 +2567,6 @@ HOOK_API int mod_energy_yield(int factionId, int baseId, int x, int y, int tf)
 
 }
 
-/*
-Checks whether given tile is not targeted by other colony.
-Given colony is excluded from check if set (>=0).
-*/
-bool isAvailableBuildSite(int factionId, int x, int y, int colonyVehicleId)
-{
-	for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
-	{
-		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
-
-		// skip current vehicle
-
-		if (otherVehicleId == colonyVehicleId)
-			continue;
-
-		// only this faction
-
-		if (otherVehicle->faction_id != factionId)
-			continue;
-
-		// only colony
-
-		if (!isColonyVehicle(otherVehicleId))
-			continue;
-
-		// check destination
-
-		if (otherVehicle->x == x && otherVehicle->y == y)
-			return false;
-
-	}
-
-	return true;
-
-}
-
 bool isCoast(int x, int y)
 {
 	MAP *tile = getMapTile(x, y);
@@ -2669,7 +2633,7 @@ std::vector<int> getLoadedVehicleIds(int vehicleId)
 }
 
 bool is_ocean_deep(MAP* sq) {
-    return (sq && (sq->level >> 5) <= LEVEL_OCEAN);
+    return (sq && (sq->climate >> 5) <= ALT_OCEAN);
 }
 
 bool isVehicleAtLocation(int vehicleId, Location location)
@@ -2728,5 +2692,42 @@ Location getAdjacentRegionLocation(int x, int y, int region)
 bool isValidLocation(Location location)
 {
 	return (location.x >= 0 && location.x < *map_axis_x && location.y >= 0 && location.y < *map_axis_y);
+}
+
+/*
+Hurries base production and subtracts the cost from reserves.
+*/
+void hurryProduction(BASE* base, int minerals, int cost)
+{
+	// hurry once only
+	
+    if (base->status_flags | BASE_HURRY_PRODUCTION)
+		return;
+	
+	// apply hurry parameters
+    
+    Faction* faction = &(Factions[base->faction_id]);
+    base->minerals_accumulated += minerals;
+    faction->energy_credits -= cost;
+    base->status_flags |= BASE_HURRY_PRODUCTION;
+    
+}
+
+MAP* getMapTile(int mapTileIndex)
+{
+	assert(mapTileIndex >= 0 && mapTileIndex < *map_area_tiles);
+	
+	return &((*MapPtr)[mapTileIndex]);
+	
+}
+
+Location getMapIndexLocation(int mapIndex)
+{
+	return
+	{
+		(mapIndex % (*map_half_x)) * 2 + (mapIndex / (*map_half_x) % 2),
+		mapIndex / (*map_half_x)
+	};
+	
 }
 

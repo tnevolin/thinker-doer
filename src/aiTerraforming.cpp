@@ -1651,8 +1651,8 @@ void optimizeFormerDestinations()
 
 					// calculate current terraforming time
 
-					double vehicle1CurrentTerraformingTime = calculateTerraformingTime(action1, destination1Tile->items, destination1Tile->rocks, vehicle1);
-					double vehicle2CurrentTerraformingTime = calculateTerraformingTime(action2, destination2Tile->items, destination2Tile->rocks, vehicle2);
+					double vehicle1CurrentTerraformingTime = calculateTerraformingTime(action1, destination1Tile->items, destination1Tile->val3, vehicle1);
+					double vehicle2CurrentTerraformingTime = calculateTerraformingTime(action2, destination2Tile->items, destination2Tile->val3, vehicle2);
 
 					double currentTerraformingTime = vehicle1CurrentTerraformingTime + vehicle2CurrentTerraformingTime;
 
@@ -1669,8 +1669,8 @@ void optimizeFormerDestinations()
 
 					// calculate swapped terraforming time
 
-					double vehicle1SwappedTerraformingTime = calculateTerraformingTime(action2, destination2Tile->items, destination2Tile->rocks, vehicle1);
-					double vehicle2SwappedTerraformingTime = calculateTerraformingTime(action1, destination1Tile->items, destination1Tile->rocks, vehicle2);
+					double vehicle1SwappedTerraformingTime = calculateTerraformingTime(action2, destination2Tile->items, destination2Tile->val3, vehicle1);
+					double vehicle2SwappedTerraformingTime = calculateTerraformingTime(action1, destination1Tile->items, destination1Tile->val3, vehicle2);
 
 					double swappedTerraformingTime = vehicle1SwappedTerraformingTime + vehicle2SwappedTerraformingTime;
 
@@ -1822,7 +1822,7 @@ void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCOR
 
 		// process only correct rockiness
 
-		if (!ocean && option->rocky && !(tile->rocks & TILE_ROCKY))
+		if (!ocean && option->rocky && !(tile->val3 & TILE_ROCKY))
 			continue;
 
 		// check if main action technology is available when required
@@ -2112,7 +2112,7 @@ void calculateAquiferTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *be
 
 	// compute terraforming time
 
-	terraformingTime = calculateTerraformingTime(action, tile->items, tile->rocks, NULL);
+	terraformingTime = calculateTerraformingTime(action, tile->items, tile->val3, NULL);
 
 	// skip if no action or no terraforming time
 
@@ -2203,7 +2203,7 @@ void calculateRaiseLandTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *
 
 	// compute terraforming time
 
-	terraformingTime = calculateTerraformingTime(action, tile->items, tile->rocks, NULL);
+	terraformingTime = calculateTerraformingTime(action, tile->items, tile->val3, NULL);
 
 	// skip if no action or no terraforming time
 
@@ -2315,7 +2315,7 @@ void calculateNetworkTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *be
 
 		// compute terraforming time
 
-		terraformingTime += calculateTerraformingTime(removeFungusAction, tile->items, tile->rocks, NULL);
+		terraformingTime += calculateTerraformingTime(removeFungusAction, tile->items, tile->val3, NULL);
 
 		// add penalty for nearby forest/kelp
 
@@ -2333,7 +2333,7 @@ void calculateNetworkTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *be
 
 	// compute terraforming time
 
-	terraformingTime += calculateTerraformingTime(action, tile->items, tile->rocks, NULL);
+	terraformingTime += calculateTerraformingTime(action, tile->items, tile->val3, NULL);
 
 	// special network bonus
 
@@ -2431,7 +2431,7 @@ void calculateSensorTerraformingScore(MAP_INFO mapInfo, TERRAFORMING_SCORE *best
 
 		// compute terraforming time
 
-		terraformingTime += calculateTerraformingTime(removeFungusAction, tile->items, tile->rocks, NULL);
+		terraformingTime += calculateTerraformingTime(removeFungusAction, tile->items, tile->val3, NULL);
 
 		// add penalty for nearby forest/kelp
 
@@ -2449,7 +2449,7 @@ void calculateSensorTerraformingScore(MAP_INFO mapInfo, TERRAFORMING_SCORE *best
 
 	// compute terraforming time
 
-	terraformingTime += calculateTerraformingTime(action, tile->items, tile->rocks, NULL);
+	terraformingTime += calculateTerraformingTime(action, tile->items, tile->val3, NULL);
 
 	// special sensor bonus
 
@@ -2520,7 +2520,7 @@ int enemyMoveFormer(int id)
 
 	// use Thinker algorithm if in warzone and in danger
 
-	if (warzoneLocations.count(vehicleLocationMapTile) != 0 && !isSafe(vehicle->x, vehicle->y))
+	if (warzoneLocations.count(vehicleLocationMapTile) != 0)
 	{
 		debug("warzone/unsafe - use Thinker escape algorithm: [%3d]\n", id);
 		return former_move(id);
@@ -2833,7 +2833,7 @@ bool isTerraformingCompleted(MAP_INFO *mapInfo, int action)
 {
 	MAP *tile = mapInfo->tile;
 
-	return (tile->items & Terraform[action].items_added);
+	return (tile->items & Terraform[action].flag);
 
 }
 
@@ -2849,7 +2849,7 @@ bool isVehicleTerrafomingOrderCompleted(int vehicleId)
 
 	MAP *tile = getMapTile(vehicle->x, vehicle->y);
 
-	return (tile->items & Terraform[vehicle->move_status - ORDER_FARM].items_added);
+	return (tile->items & Terraform[vehicle->move_status - ORDER_FARM].flag);
 
 }
 
@@ -2869,7 +2869,7 @@ bool isTerraformingAvailable(MAP_INFO *mapInfo, int action)
 
 	// action is considered available if is already built
 
-	if (map_has_item(tile, Terraform[action].items_added))
+	if (map_has_item(tile, Terraform[action].flag))
 		return true;
 
 	// action is available only when enabled and researched
@@ -2936,7 +2936,7 @@ bool isTerraformingAvailable(MAP_INFO *mapInfo, int action)
 		break;
 	case FORMER_RAISE_LAND:
 		// cannot raise beyond limit
-		if (map_level(tile) == (is_ocean(tile) ? LEVEL_OCEAN_SHELF : LEVEL_THREE_ABOVE_SEA))
+		if (map_level(tile) == (is_ocean(tile) ? ALT_OCEAN_SHELF : ALT_THREE_ABOVE_SEA))
 			return false;
 		// raise land should not disturb other faction bases
 		if (!isRaiseLandSafe(mapInfo))

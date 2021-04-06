@@ -1,5 +1,10 @@
 #include "terranx_wtp.h"
 
+// global constants
+
+const int NO_SYNC = 1;
+const char* scriptTxtID = "SCRIPT";
+
 // battle computation display variables
 int *tx_battle_compute_attacker_effect_count = (int *)0x915614;
 char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F554;
@@ -42,7 +47,7 @@ fp_6int *tx_base_find3 = (fp_6int* )0x004E3D50;
 fp_5int *tx_tile_yield = (fp_5int* )0x004E7DC0;
 
 // base production
-fp_0int *tx_base_production_choice = (fp_0int* )0x004F07E0;
+fp_0int *tx_base_production = (fp_0int* )0x004F07E0;
 
 // set SE on dialog close
 fp_5int *tx_set_se_on_dialog_close = (fp_5int* )0x005B4210;
@@ -155,4 +160,6 @@ fp_1int *tx_veh_cargo = (fp_1int *)0x005C1760;
 
 // ZOC check
 fp_3int *tx_zoc_move = (fp_3int *)0x005C8D40;
+
+fp_4int* base_prod_choice = (fp_4int*)0x004F81A0;
 

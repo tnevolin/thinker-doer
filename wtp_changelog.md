@@ -1,3 +1,8 @@
+# Version 209
+
+* Merged with updated Thinker code (no version).
+* AI factions are allowed to build bases in fungus and rocky tiles.
+
 # Version 208
 
 * Merged with Thinker 2.4.
@@ -10,7 +15,7 @@
 # Version 206
 
 * BUG: Late starting factions (aliens and Planet Cult) never got their extra colony. Now they do.
-* Modified Thinker base placement search algorithm.
+* Modified base placement search algorithm.
 	* Searches wider area.
 	* Accounts for potential yield (farm+mine, farm+solar).
 	* Emphasizes extra high yield tiles.
