@@ -8253,8 +8253,7 @@ Proceed with the attack. You have your orders.
 #caption Security Chief
 #xs 440
 Our forces are ready to begin the assault, $TITLE0 $NAME1.
-^Their chances to win the battle are {$NUM0} %
-^Shall I order them to proceed?
+Their odds are {$NUM0 to $NUM1:} shall I order them to proceed?
 
 No. Call off the attack.
 Yes. Proceed as ordered.
@@ -8263,8 +8262,8 @@ Yes. Proceed as ordered.
 #caption Security Chief
 #xs 440
 Our forces are ready to begin the assault, $TITLE0 $NAME1.
-^Taking damage into account, their chances to win the battle are {$NUM0} %.
-^Shall I order them to proceed?
+Taking damage into account, their odds are
+{$NUM0 to $NUM1:} shall I order them to proceed?
 
 No. Call off the attack.
 Yes. Proceed as ordered.
@@ -10900,4 +10899,17 @@ Our infiltration device connected to the {$FACTION0} networks was discovered and
 ^Luckily we still have {$NUM1} other devices maintaining access to their datalinks.
 
 # ; This line must remain at end of file
+
+#GOODIDEA_IGNORE_REACTOR
+#caption Security Chief
+#xs 440
+Our forces are ready to begin the assault, $TITLE0 $NAME1.
+^Reactor power is [ignored] in combat. Both units have {10} max HP.
+^Their odds are {$NUM0 to $NUM1} (vanilla estimate).
+^Their odds are {$NUM2 to $NUM3} (exact simulation).
+^Their winning chances are {$NUM4} %.
+^Shall I order them to proceed?
+
+No. Call off the attack.
+Yes. Proceed as ordered.
 

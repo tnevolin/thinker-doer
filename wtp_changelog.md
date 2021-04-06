@@ -1,3 +1,10 @@
+# Version 210
+
+* Massively modified display odds dialog.
+	* Vanilla odds are corrected to account for ignored reactor in combat.
+	* An exact computer simulation winning odds are added as well for reference.
+	* An exact computer simulation winning chances are added as well for reference.
+
 # Version 209
 
 * Merged with updated Thinker code (no version).

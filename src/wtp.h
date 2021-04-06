@@ -93,10 +93,9 @@ HOOK_API void calculate_odds
 
 double standard_combat_mechanics_calculate_attacker_winning_probability
 (
-    int attacker_strength,
-    int defender_strength,
-    int attacker_power,
-    int defender_power
+    double p,
+    int attacker_hp,
+    int defender_hp
 )
 ;
 
@@ -104,10 +103,9 @@ double binomial_koefficient(int n, int k);
 
 double alternative_combat_mechanics_calculate_attacker_winning_probability
 (
-    int attacker_strength,
-    int defender_strength,
-    int attacker_power,
-    int defender_power
+    double p,
+    int attacker_hp,
+    int defender_hp
 )
 ;
 
@@ -183,4 +181,8 @@ HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y);
 HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId);
 HOOK_API int modifiedEnemyMove(const int vehicleId);
 HOOK_API int modifiedFactionUpkeep(const int factionId);
+HOOK_API void captureAttackerOdds(const int position, const int value);
+HOOK_API void captureDefenderOdds(const int position, const int value);
+HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int a3, const char* pcx_file_name, int a5);
+double calculateWinningProbability(double p, int attackerHP, int defenderHP);
 
