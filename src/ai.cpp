@@ -36,6 +36,7 @@ std::vector<int> outsideCombatVehicleIds;
 std::vector<int> prototypes;
 std::vector<int> colonyVehicleIds;
 std::vector<int> formerVehicleIds;
+double threatLevel;
 
 /*
 Top level AI enemy move entry point
