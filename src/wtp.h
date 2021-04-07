@@ -80,17 +80,6 @@ void alternative_combat_mechanics_probabilities
 )
 ;
 
-HOOK_API void calculate_odds
-(
-    int attacker_vehicle_offset,
-    int defender_vehicle_offset,
-    int attacker_weapon_strength,
-    int defender_armor_strength,
-    int *attacker_odd,
-    int *defender_odd
-)
-;
-
 double standard_combat_mechanics_calculate_attacker_winning_probability
 (
     double p,
@@ -185,4 +174,5 @@ HOOK_API void captureAttackerOdds(const int position, const int value);
 HOOK_API void captureDefenderOdds(const int position, const int value);
 HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int a3, const char* pcx_file_name, int a5);
 double calculateWinningProbability(double p, int attackerHP, int defenderHP);
+void simplifyOdds(int *attackerOdds, int *defenderOdds);
 

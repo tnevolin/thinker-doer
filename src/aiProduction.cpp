@@ -219,7 +219,7 @@ void evaluateBasePsychFacilitiesDemand()
 
 	if (base->queue_items[0] >= 0)
 	{
-		if (isColonyUnit(base->queue_items[0]))
+		if (isUnitColony(base->queue_items[0]))
 		{
 			buildingPsychFacilityOrColony = true;
 		}
@@ -940,7 +940,7 @@ void evaluateExplorationDemand()
 
 			// exclude non combat units
 
-			if (!isCombatVehicle(vehicleId))
+			if (!isVehicleCombat(vehicleId))
 				continue;
 
 			// only units with hand weapon
@@ -959,7 +959,7 @@ void evaluateExplorationDemand()
 
 			// adjust native speed assuming there is a lot of fungus
 
-			if (!ocean && isNativeLandVehicle(vehicleId))
+			if (!ocean && isVehicleNativeLand(vehicleId))
 			{
 				vehicleSpeed *= 2;
 			}
@@ -1114,7 +1114,7 @@ void evaluateNativeProtectionDemand()
 //*/
 //void evaluateFactionProtectionDemand()
 //{
-//	debug("%-24s evaluateFactionProtectionDemand\n", MFactions[aiFactionId].noun_faction);
+//	debug("%-24s evaluateFactionProtectionDemand\n", MFactions[*active_faction].noun_faction);
 //
 //	// hostile conventional offense
 //
@@ -1131,7 +1131,7 @@ void evaluateNativeProtectionDemand()
 //
 //		// exclude own vehicles
 //
-//		if (vehicle->faction_id == aiFactionId)
+//		if (vehicle->faction_id == *active_faction)
 //			continue;
 //
 //		// exclude natives
@@ -1141,7 +1141,7 @@ void evaluateNativeProtectionDemand()
 //
 //		// exclude non combat
 //
-//		if (!isCombatVehicle(id))
+//		if (!isVehicleCombat(id))
 //			continue;
 //
 //		// find vehicle weapon offense and defense values
@@ -1392,7 +1392,7 @@ void addProductionDemand(int item, double priority)
 
 	// do not exhaust weak base support
 
-	if (base->mineral_consumption > 0 && item >= 0 && isCombatUnit(item))
+	if (base->mineral_consumption > 0 && item >= 0 && isUnitCombat(item))
 	{
 		if (base->mineral_surplus < conf.ai_production_combat_unit_min_mineral_surplus)
 			return;
@@ -1473,7 +1473,7 @@ int findConventionalDefenderUnit(int factionId)
 	{
 		// skip non combat units
 
-		if (!isCombatUnit(unitId))
+		if (!isUnitCombat(unitId))
 			continue;
 
 		// skip air units
@@ -1506,7 +1506,7 @@ int findFastAttackerUnit(int factionId)
 
 		// skip non combat units
 
-		if (!isCombatUnit(unitId))
+		if (!isUnitCombat(unitId))
 			continue;
 
 		// skip infantry units
@@ -1540,7 +1540,7 @@ int findScoutUnit(int factionId, int triad)
 
 		// skip non combat units
 
-		if (!isCombatUnit(unitId))
+		if (!isUnitCombat(unitId))
 			continue;
 
 		// given triad only
@@ -1588,7 +1588,7 @@ int findColonyUnit(int factionId, int triad)
 
 		// colony only
 
-		if (!isColonyUnit(unitId))
+		if (!isUnitColony(unitId))
 			continue;
 
 		bestUnitId = unitId;
@@ -1616,7 +1616,7 @@ int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus, double i
 
 		// colony only
 
-		if (!isColonyUnit(unitId))
+		if (!isUnitColony(unitId))
 			continue;
 
 		// calculate total turns
@@ -1671,7 +1671,7 @@ int findFormerUnit(int factionId, int triad)
 
 		// formers only
 
-		if (!isFormerUnit(unitId))
+		if (!isUnitFormer(unitId))
 			continue;
 
 		// given triad only

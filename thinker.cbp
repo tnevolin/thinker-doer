@@ -93,12 +93,12 @@
 		<Unit filename="src/aiColony.h" />
 		<Unit filename="src/aiCombat.cpp" />
 		<Unit filename="src/aiCombat.h" />
+		<Unit filename="src/aiFormer.cpp" />
+		<Unit filename="src/aiFormer.h" />
 		<Unit filename="src/aiHurry.cpp" />
 		<Unit filename="src/aiHurry.h" />
 		<Unit filename="src/aiProduction.cpp" />
 		<Unit filename="src/aiProduction.h" />
-		<Unit filename="src/aiTerraforming.cpp" />
-		<Unit filename="src/aiTerraforming.h" />
 		<Unit filename="src/aiTransport.cpp" />
 		<Unit filename="src/aiTransport.h" />
 		<Unit filename="src/engine.cpp" />

@@ -69,7 +69,7 @@ void aiNativeCombatStrategy()
 
 			// combat vehicles only
 
-			if (!isCombatVehicle(vehicleId))
+			if (!isVehicleCombat(vehicleId))
 				continue;
 
 			// infantry vehicles only
@@ -130,22 +130,26 @@ void aiNativeCombatStrategy()
 
 	}
 
-	// check native artillery
+	// check native artillery and towers
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
 		VEH *vehicle = &(Vehicles[id]);
-
-		// native units only
-
-		if (vehicle->faction_id != 0)
-			continue;
-
-		// spore launchers
-
-		if (vehicle->unit_id == BSC_SPORE_LAUNCHER)
+		
+		// native unit
+		if (vehicle->faction_id == 0)
 		{
-			attackNativeArtillery(id);
+			// spore launcher
+			if (vehicle->unit_id == BSC_SPORE_LAUNCHER)
+			{
+				attackNativeArtillery(id);
+			}
+			// spore launcher
+			else if (vehicle->unit_id == BSC_FUNGAL_TOWER)
+			{
+				attackNativeTower(id);
+			}
+			
 		}
 
 	}
@@ -154,6 +158,9 @@ void aiNativeCombatStrategy()
 
 }
 
+/*
+Checks whether native artillery is dangerous and attack it if so.
+*/
 void attackNativeArtillery(int enemyVehicleId)
 {
 	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
@@ -173,7 +180,7 @@ void attackNativeArtillery(int enemyVehicleId)
 			if (!tile)
 				continue;
 
-			if (tile->owner != aiFactionId)
+			if (tile->owner != *active_faction)
 				continue;
 
 			if (map_base(tile) || isImprovedTile(x, y))
@@ -185,12 +192,34 @@ void attackNativeArtillery(int enemyVehicleId)
 		}
 	}
 
-	if (!danger)
-		return;
+	if (danger)
+	{
+		attackVehicle(enemyVehicleId);
+	}
+	
+}
 
+/*
+Checks whether native tower is within our borders and attack it if so.
+*/
+void attackNativeTower(int enemyVehicleId)
+{
+	MAP *enemyVehicleTile = getVehicleMapTile(enemyVehicleId);
+	
+	if (enemyVehicleTile->owner == *active_faction)
+	{
+		attackVehicle(enemyVehicleId);
+	}
+	
+}
+
+void attackVehicle(int enemyVehicleId)
+{
+	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
+	
 	// assemble attacking forces
 
-	debug("attackNativeArtillery (%3d,%3d)\n", enemyVehicle->x, enemyVehicle->y);
+	debug("attackVehicle (%3d,%3d)\n", enemyVehicle->x, enemyVehicle->y);
 
 	// list available units
 
@@ -274,12 +303,12 @@ int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2)
 	return (o1.value > o2.value);
 }
 
-int enemyMoveCombat(int vehicleId)
+int moveCombat(int vehicleId)
 {
 	// use WTP algorithm for selected faction only
 
-	if (wtpAIFactionId != -1 && aiFactionId != wtpAIFactionId)
-		return SYNC;
+	if (wtpAIFactionId != -1 && *active_faction != wtpAIFactionId)
+		return mod_enemy_move(vehicleId);
 
 	// get vehicle
 
@@ -312,9 +341,9 @@ int enemyMoveCombat(int vehicleId)
 		return processSeaExplorer(vehicleId);
 	}
 
-	// default to vanilla
+	// default to Thinker
 
-	return enemy_move(vehicleId);
+	return mod_enemy_move(vehicleId);
 
 }
 
@@ -353,7 +382,7 @@ int applyDefendOrder(int id, int x, int y)
 
 	else
 	{
-		set_move_to(id, x, y);
+		setMoveTo(id, x, y);
 	}
 
 	return SYNC;
@@ -378,7 +407,7 @@ int applyAttackOrder(int id, COMBAT_ORDER *combatOrder)
 
 	// set move to order
 
-	return set_move_to(id, enemyVehicle->x, enemyVehicle->y);
+	return setMoveTo(id, enemyVehicle->x, enemyVehicle->y);
 
 }
 
@@ -503,7 +532,7 @@ int kickSeaExplorerFromLandPort(int vehicleId)
 	// send unit to this tile
 
 //	vehicle->state &= ~VSTATE_EXPLORE;
-	set_move_to(vehicleId, adjacentOceanTileInfo.x, adjacentOceanTileInfo.y);
+	setMoveTo(vehicleId, adjacentOceanTileInfo.x, adjacentOceanTileInfo.y);
 	tx_action(vehicleId);
 
 	return enemy_move(vehicleId);
@@ -526,7 +555,7 @@ This is used in enemy_move routines to avoid vanilla code overriding move_to ord
 */
 int moveVehicle(int vehicleId, int x, int y)
 {
-	set_move_to(vehicleId, x, y);
+	setMoveTo(vehicleId, x, y);
 	tx_action(vehicleId);
 	return SYNC;
 

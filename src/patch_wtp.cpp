@@ -3330,6 +3330,34 @@ void patch_faction_upkeep()
     write_call(0x0052918F, (int)modifiedFactionUpkeep);
 }
 
+/*
+Normally vanilla discards move_to order to not allowed territory.
+Disabling this restriction to allow easier AI navigation.
+*/
+void patch_disable_move_territory_restrictions()
+{
+	int disable_move_territory_restriction_bytes_length = 0x7;
+
+	/*
+	0:  80 be 39 28 95 00 18    cmp    BYTE PTR [esi+0x952839],0x18
+	*/
+	byte disable_move_territory_restriction_bytes_old[] = { 0x80, 0xBE, 0x39, 0x28, 0x95, 0x00, 0x18 };
+
+	/*
+	0:  80 be 39 28 95 00 ff    cmp    BYTE PTR [esi+0x952839],0xff
+	*/
+	byte disable_move_territory_restriction_bytes_new[] = { 0x80, 0xBE, 0x39, 0x28, 0x95, 0x00, 0xFF };
+
+	write_bytes
+	(
+		0x00594A0B,
+		disable_move_territory_restriction_bytes_old,
+		disable_move_territory_restriction_bytes_new,
+		disable_move_territory_restriction_bytes_length
+	);
+
+}
+
 void patch_setup_wtp(Config* cf)
 {
 	// integrated into Thinker
@@ -3790,6 +3818,8 @@ void patch_setup_wtp(Config* cf)
 	patch_enemy_move();
 
     patch_faction_upkeep();
+    
+    patch_disable_move_territory_restrictions();
     
 }
 

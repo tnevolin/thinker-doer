@@ -1,3 +1,15 @@
+# Version 212
+
+* Corrected odds computation for unequal HPs.
+
+# Version 211
+
+* Restored terraforming functionality.
+* Restored anti-native combat functionality.
+* Restored transport functionality.
+	* Transports pickup artifacts, colonies, formers from sea bases.
+	* Transports deliver them to sensible destinations.
+
 # Version 210
 
 * Massively modified display odds dialog.

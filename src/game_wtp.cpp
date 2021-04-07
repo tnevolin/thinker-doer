@@ -579,12 +579,12 @@ double getPsiCombatBaseOdds(int triad)
 
 }
 
-bool isCombatUnit(int id)
+bool isUnitCombat(int id)
 {
 	return id >= 0 && Units[id].weapon_type <= WPN_PSI_ATTACK;
 }
 
-bool isCombatVehicle(int id)
+bool isVehicleCombat(int id)
 {
 	VEH *vehicle = &(Vehicles[id]);
 
@@ -818,26 +818,31 @@ bool isVehicleSupply(VEH *vehicle)
 	return (Units[vehicle->unit_id].weapon_type == WPN_SUPPLY_TRANSPORT);
 }
 
-bool isColonyUnit(int id)
+bool isUnitColony(int id)
 {
 	return (id >= 0 && Units[id].weapon_type == WPN_COLONY_MODULE);
 }
 
-bool isColonyVehicle(int id)
+bool isVehicleArtifact(int id)
+{
+	return (Units[Vehicles[id].unit_id].weapon_type == WPN_ALIEN_ARTIFACT);
+}
+
+bool isVehicleColony(int id)
 {
 	return (Units[Vehicles[id].unit_id].weapon_type == WPN_COLONY_MODULE);
 }
 
-bool isFormerUnit(int unitId)
+bool isUnitFormer(int unitId)
 {
 	return (Units[unitId].weapon_type == WPN_TERRAFORMING_UNIT);
 }
 
-bool isFormerVehicle(int vehicleId)
+bool isVehicleFormer(int vehicleId)
 {
-	return isFormerVehicle(&(Vehicles[vehicleId]));
+	return isVehicleFormer(&(Vehicles[vehicleId]));
 }
-bool isFormerVehicle(VEH *vehicle)
+bool isVehicleFormer(VEH *vehicle)
 {
 	return (Units[vehicle->unit_id].weapon_type == WPN_TERRAFORMING_UNIT);
 }
@@ -845,6 +850,16 @@ bool isFormerVehicle(VEH *vehicle)
 bool isVehicleTransport(VEH *vehicle)
 {
 	return (Units[vehicle->unit_id].weapon_type == WPN_TROOP_TRANSPORT);
+}
+
+bool isVehicleTransport(int vehicleId)
+{
+	return (Units[Vehicles[vehicleId].unit_id].weapon_type == WPN_TROOP_TRANSPORT);
+}
+
+bool isVehicleSeaTransport(int vehicleId)
+{
+	return (Units[Vehicles[vehicleId].unit_id].weapon_type == WPN_TROOP_TRANSPORT && veh_triad(vehicleId) == TRIAD_SEA);
 }
 
 bool isVehicleProbe(VEH *vehicle)
@@ -1350,7 +1365,7 @@ int getBaseConventionalDefenseValue(int baseId)
 
 		// combat vehicles only
 
-		if (!isCombatVehicle(vehicleId))
+		if (!isVehicleCombat(vehicleId))
 			continue;
 
 		// get defense value
@@ -1417,7 +1432,7 @@ std::vector<int> getFactionPrototypes(int factionId, bool includeNotPrototyped)
 /*
 Determines if vehicle is a native land predefined unit.
 */
-bool isNativeLandVehicle(int vehicleId)
+bool isVehicleNativeLand(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	int unitId = vehicle->unit_id;
@@ -1435,7 +1450,7 @@ bool isBaseBuildingColony(int baseId)
 	BASE *base = &(Bases[baseId]);
 	int item = base->queue_items[0];
 
-	return (item >= 0 && isColonyUnit(item));
+	return (item >= 0 && isUnitColony(item));
 
 }
 
@@ -1996,7 +2011,7 @@ int getBasePoliceUnitCount(int baseId)
 	{
 		// only combat units
 
-		if (!isCombatVehicle(vehicleId))
+		if (!isVehicleCombat(vehicleId))
 			continue;
 
 		basePoliceUnitCount++;
@@ -2020,7 +2035,7 @@ double getBaseNativeProtection(int baseId)
 	{
 		// combat vehicles only
 
-		if (!isCombatVehicle(vehicleId))
+		if (!isVehicleCombat(vehicleId))
 			continue;
 
 		baseNativeProtection += estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
@@ -2729,5 +2744,40 @@ Location getMapIndexLocation(int mapIndex)
 		mapIndex / (*map_half_x)
 	};
 	
+}
+
+bool isVehicleLandUnitOnTransport(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	return vehicle->triad() == TRIAD_LAND && vehicle->move_status == ORDER_SENTRY_BOARD && vehicle->waypoint_1_x >= 0;
+}
+
+int setMoveTo(int vehicleId, Location location)
+{
+	return setMoveTo(vehicleId, location.x, location.y);
+}
+	
+int setMoveTo(int vehicleId, int x, int y)
+{
+    VEH* vehicle = &(Vehicles[vehicleId]);
+    
+    debug("setMoveTo (%3d,%3d) -> (%3d,%3d)\n", vehicle->x, vehicle->y, x, y);
+    
+    vehicle->waypoint_1_x = x;
+    vehicle->waypoint_1_y = y;
+    vehicle->move_status = ORDER_MOVE_TO;
+    vehicle->status_icon = 'G';
+    vehicle->terraforming_turns = 0;
+    
+    return SYNC;
+    
+}
+
+/*
+Checks if territory belongs to nobody, us or ally.
+*/
+bool isFriendlyTerritory(int factionId, MAP* tile)
+{
+	return tile->owner == -1 || tile->owner == factionId || has_pact(factionId, tile->owner);
 }
 

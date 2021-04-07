@@ -207,7 +207,7 @@ struct Config {
 //	int repair_base_facility = 10;
 //	int repair_nano_factory = 10;
     bool alternative_combat_mechanics = false;
-    double alternative_combat_mechanics_loss_divider = 1.0;
+    double alternative_combat_mechanics_loss_divisor = 1.0;
 	// integrated into Thinker
 //	bool disable_planetpearls = false;
     bool uniform_promotions = true; // internal configuration

@@ -21,9 +21,11 @@ struct VEHICLE_VALUE
 void aiCombatStrategy();
 void populateCombatLists();
 void aiNativeCombatStrategy();
-void attackNativeArtillery(int vehicleId);
+void attackNativeArtillery(int enemyVehicleId);
+void attackNativeTower(int enemyVehicleId);
+void attackVehicle(int enemyVehicleId);
 int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2);
-int enemyMoveCombat(int id);
+int moveCombat(int id);
 int applyCombatOrder(int id, COMBAT_ORDER *combatOrder);
 int applyDefendOrder(int id, int x, int y);
 int applyAttackOrder(int id, COMBAT_ORDER *combatOrder);

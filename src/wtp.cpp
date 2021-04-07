@@ -768,172 +768,12 @@ void alternative_combat_mechanics_probabilities
 
     // determine following rounds probabilities
 
-    *qA = *q / conf.alternative_combat_mechanics_loss_divider;
+    *qA = *q / conf.alternative_combat_mechanics_loss_divisor;
     *pA = 1 - *qA;
-    *pD = *p / conf.alternative_combat_mechanics_loss_divider;
+    *pD = *p / conf.alternative_combat_mechanics_loss_divisor;
     *qD = 1 - *pD;
 
 }
-
-///*
-//Calculates odds.
-//*/
-//HOOK_API void calculate_odds
-//(
-//    int attacker_vehicle_offset,
-//    int defender_vehicle_offset,
-//    int attacker_strength,
-//    int defender_strength,
-//    int *attacker_odd,
-//    int *defender_odd
-//)
-//{
-//    debug("calculate_odds(attacker_vehicle_offset=%d, defender_vehicle_offset=%d, attacker_strength=%d, defender_strength=%d)\n",
-//        attacker_vehicle_offset,
-//        defender_vehicle_offset,
-//        attacker_strength,
-//        defender_strength
-//    )
-//    ;
-//
-//    // get attacker and defender vehicles
-//
-//    VEH attacker_vehicle = Vehicles[attacker_vehicle_offset / sizeof(VEH)];
-//    VEH defender_vehicle = Vehicles[defender_vehicle_offset / sizeof(VEH)];
-//
-//    // get attacker and defender units
-//
-//    UNIT attacker_unit = Units[attacker_vehicle.unit_id];
-//    UNIT defender_unit = Units[defender_vehicle.unit_id];
-//
-//    // calculate attacker and defender power
-//    // artifact gets 1 HP regardless of reactor
-//
-//    int attacker_power = (attacker_unit.unit_plan == PLAN_ALIEN_ARTIFACT ? 1 : attacker_unit.reactor_type * 10 - attacker_vehicle.damage_taken);
-//    int defender_power = (defender_unit.unit_plan == PLAN_ALIEN_ARTIFACT ? 1 : defender_unit.reactor_type * 10 - defender_vehicle.damage_taken);
-//
-//    // determine if reactor power is ignored
-//
-//    bool ignore_reactor_power =
-//        conf.ignore_reactor_power_in_combat
-//        ||
-//        Weapon[attacker_unit.weapon_type].offense_value < 0
-//        ||
-//        Armor[defender_unit.armor_type].defense_value < 0
-//    ;
-//
-//    // calculate firepower
-//
-//    int attacker_fp =
-//        (ignore_reactor_power ? defender_unit.reactor_type : 1)
-//    ;
-//    int defender_fp =
-//        (ignore_reactor_power ? attacker_unit.reactor_type : 1)
-//    ;
-//
-//    // calculate HP
-//
-//    int attacker_hp = (int)ceil((double)attacker_power / defender_fp);
-//    int defender_hp = (int)ceil((double)defender_power / attacker_fp);
-//
-//    // calculate attacker winning probability
-//
-//    double attacker_winning_probability;
-//
-//    if (defender_hp <= 0)
-//    {
-//        attacker_winning_probability = 1.0;
-//
-//    }
-//    else if (attacker_hp <= 0)
-//    {
-//        attacker_winning_probability = 0.0;
-//
-//    }
-//    else
-//    {
-//        if (!conf.alternative_combat_mechanics)
-//        {
-//            attacker_winning_probability =
-//                standard_combat_mechanics_calculate_attacker_winning_probability
-//                (
-//                    attacker_strength,
-//                    defender_strength,
-//                    attacker_hp,
-//                    defender_hp
-//                )
-//            ;
-//
-//        }
-//        else
-//        {
-//            attacker_winning_probability =
-//                alternative_combat_mechanics_calculate_attacker_winning_probability
-//                (
-//                    attacker_strength,
-//                    defender_strength,
-//                    attacker_hp,
-//                    defender_hp
-//                )
-//            ;
-//
-//        }
-//
-//    }
-//
-//    /*
-//    // calculate odds
-//
-//    double odds = 1.0 / (1.0 / attacker_winning_probability - 1.0);
-//
-//    bool attacker_advantage = (odds >= 1.0);
-//    double normalized_odds = (attacker_advantage ? odds : 1.0 / odds);
-//
-//    // find good odds ratio
-//
-//    int best_numerator = 0;
-//    int best_denominator = 0;
-//    double best_difference = -1.0;
-//
-//    for (int denominator = 0x1; denominator <= 0xA; denominator++)
-//    {
-//        int numerator = (int)round(normalized_odds * denominator);
-//        double odds_ratio = (double)numerator / (double)denominator;
-//        double difference = abs(odds_ratio - normalized_odds);
-//
-//        if (best_difference == -1 || difference < best_difference)
-//        {
-//            best_difference = difference;
-//            best_numerator = numerator;
-//            best_denominator = denominator;
-//
-//        }
-//
-//    }
-//
-//    // set odds
-//
-//    if (attacker_advantage)
-//    {
-//        *attacker_odd = best_numerator;
-//        *defender_odd = best_denominator;
-//
-//    }
-//    else
-//    {
-//        *attacker_odd = best_denominator;
-//        *defender_odd = best_numerator;
-//
-//    }
-//    */
-//
-//    // set attacker odd to attacker winning probability percentage
-//    // set defender odd to 1 to disable fraction simplification
-//
-//    *attacker_odd = (int)round(attacker_winning_probability * 100.0);
-//    *defender_odd = 1;
-//
-//}
 
 /*
 Standard combat mechanics.
@@ -1044,9 +884,9 @@ double alternative_combat_mechanics_calculate_attacker_winning_probability
 
         // determine following rounds probabilities
 
-        double qA = q / conf.alternative_combat_mechanics_loss_divider;
+        double qA = q / conf.alternative_combat_mechanics_loss_divisor;
         double pA = 1 - qA;
-        double pD = p / conf.alternative_combat_mechanics_loss_divider;
+        double pD = p / conf.alternative_combat_mechanics_loss_divisor;
         double qD = 1 - pD;
 
         debug("p=%f, q=%f, pA=%f, qA=%f, pD=%f, qD=%f\n", p, q, pA, qA, pD, qD);
@@ -3300,7 +3140,7 @@ HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute)
 
 			// only formers
 
-			if (!isFormerVehicle(otherVehicleId))
+			if (!isVehicleFormer(otherVehicleId))
 				continue;
 
 			// only same locaton
@@ -3458,20 +3298,26 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 			int attackerHP = (attackerPower + (defenderFP - 1)) / defenderFP;
 			int defenderHP = (defenderPower + (attackerFP - 1)) / attackerFP;
 
-			// calculate correct odds
+			// calculate correct strengths and odds
+			
+			double attackerStrength;
+			double defenderStrength;
 			
 			int attackerOdds;
 			int defenderOdds;
 			
 			if (Weapon[attackerUnit->weapon_type].offense_value >= 0 && Armor[defenderUnit->armor_type].defense_value >= 0)
 			{
+				// conventional combat odds are strengths time powers
+				
+				attackerStrength = (double)currentAttackerOdds / (double)attackerPower;
+				defenderStrength = (double)currentDefenderOdds / (double)defenderPower;
+				
 				// reverse engineer conventional combat odds in case of ignored reactor
 				
 				attackerOdds = currentAttackerOdds * attackerHP * defenderPower;
 				defenderOdds = currentDefenderOdds * defenderHP * attackerPower;
-				int gcd = std::__gcd(attackerOdds, defenderOdds);
-				attackerOdds /= gcd;
-				defenderOdds /= gcd;
+				simplifyOdds(&attackerOdds, &defenderOdds);
 				
 				// reparse their odds into dialog
 				
@@ -3481,7 +3327,12 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 			}
 			else
 			{
-				// psi combat odds are already correct
+				// psi combat odds are same as strength
+				
+				attackerStrength = (double)currentAttackerOdds;
+				defenderStrength = (double)currentDefenderOdds;
+				
+				// psi combat odds are same
 				
 				attackerOdds = currentAttackerOdds;
 				defenderOdds = currentDefenderOdds;
@@ -3490,7 +3341,7 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 			
 			// calculate round probabilty
 			
-			double p = (double)attackerOdds / ((double)attackerOdds + (double)defenderOdds);
+			double p = attackerStrength / (attackerStrength + defenderStrength);
 			
 			// calculate attacker winning probability
 			
@@ -3525,6 +3376,13 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 		}
 			
 	}
+	
+	// clear global variables
+	
+	currentAttackerVehicleId = -1;
+	currentDefenderVehicleId = -1;
+	currentAttackerOdds = -1;
+	currentDefenderOdds = -1;
 	
 }
 
@@ -3583,5 +3441,19 @@ double calculateWinningProbability(double p, int attackerHP, int defenderHP)
 	
 	return attackerWinningProbability;
 
+}
+
+void simplifyOdds(int *attackerOdds, int *defenderOdds)
+{
+	for (int divisor = 2; divisor < *attackerOdds && divisor < *defenderOdds; divisor++)
+	{
+		while (*attackerOdds % divisor == 0 && *defenderOdds % divisor == 0 && *attackerOdds > divisor && *defenderOdds > divisor)
+		{
+			*attackerOdds /= divisor;
+			*defenderOdds /= divisor;
+		}
+		
+	}
+	
 }
 

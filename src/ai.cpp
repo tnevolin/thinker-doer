@@ -8,7 +8,7 @@
 #include "wtp.h"
 #include "game.h"
 #include "aiProduction.h"
-#include "aiTerraforming.h"
+#include "aiFormer.h"
 #include "aiHurry.h"
 
 // global variables
@@ -24,7 +24,7 @@ int wtpAIFactionId = -1;
 int processedTurn = -1;
 int processedFactionId = -1;
 
-int aiFactionId;
+// global faction precomputed values
 
 FACTION_INFO factionInfos[8];
 std::vector<int> baseIds;
@@ -39,6 +39,28 @@ std::vector<int> formerVehicleIds;
 
 /*
 Top level AI enemy move entry point
+*/
+/*
+
+Transporting land vehicles by sea transports idea.
+
+- Land vehicle not on transport
+Land vehicle moves wherever it wants regardless if destination is reachable.
+Land vehicle waits ferry pickup when it is at ocean or at the coast and wants to get to another land region.
+
+- Empty transport
+Empty transport rushes to nearest higher priority vehicle waiting for ferry.
+When at or next to awaiting land vehicle it stops and explicitly commands passenger to board.
+
+- Land vehicle on transport
+Land vehicle on transport is not controlled by this AI code.
+
+- Loaded transport
+Loaded transport selects highest priority passenger.
+Loaded transport then request highest priority passenger to generate desired destination.
+Loaded transport then computes unload location closest to passenger destination location.
+When at or next unload location it stops and explicitly commands passenger to unboard to unload location.
+
 */
 int aiEnemyMove(const int vehicleId)
 {
@@ -55,9 +77,32 @@ int aiEnemyMove(const int vehicleId)
 		
 	}
 	
-	if (isColonyVehicle(vehicleId))
+	// land vehicle on transport
+	
+	if (isVehicleLandUnitOnTransport(vehicleId))
+	{
+		// do not control boarded land units
+		return mod_enemy_move(vehicleId);
+	}
+	
+	if (isVehicleColony(vehicleId))
 	{
 		return moveColony(vehicleId);
+	}
+	
+	if (isVehicleFormer(vehicleId))
+	{
+		return moveFormer(vehicleId);
+	}
+	
+	if (isVehicleSeaTransport(vehicleId))
+	{
+		return moveSeaTransport(vehicleId);
+	}
+	
+	if (isVehicleCombat(vehicleId))
+	{
+		return moveCombat(vehicleId);
 	}
 	
 	// unhandled cases default to Thinker
@@ -98,10 +143,6 @@ AI strategy.
 */
 void aiStrategy(int id)
 {
-	// set faction
-
-	aiFactionId = id;
-
 	// no natives
 
 	if (id == 0)
@@ -109,10 +150,10 @@ void aiStrategy(int id)
 
 	// use WTP algorithm for selected faction only
 
-	if (wtpAIFactionId != -1 && aiFactionId != wtpAIFactionId)
+	if (wtpAIFactionId != -1 && *active_faction != wtpAIFactionId)
 		return;
 
-	debug("aiStrategy: aiFactionId=%d\n", aiFactionId);
+	debug("aiStrategy: *active_faction=%d\n", *active_faction);
 
 	// populate shared strategy lists
 
@@ -144,7 +185,7 @@ void populateSharedLists()
 
 	// populate factions combat modifiers
 
-	debug("%-24s\nfactionCombatModifiers:\n", MFactions[aiFactionId].noun_faction);
+	debug("%-24s\nfactionCombatModifiers:\n", MFactions[*active_faction].noun_faction);
 
 	for (int id = 1; id < 8; id++)
 	{
@@ -169,18 +210,18 @@ void populateSharedLists()
 
 	// populate other factions threat koefficients
 
-	debug("%-24s\notherFactionThreatKoefficients:\n", MFactions[aiFactionId].noun_faction);
+	debug("%-24s\notherFactionThreatKoefficients:\n", MFactions[*active_faction].noun_faction);
 
 	for (int id = 1; id < 8; id++)
 	{
 		// skip self
 
-		if (id == aiFactionId)
+		if (id == *active_faction)
 			continue;
 
 		// get relation from other faction
 
-		int otherFactionRelation = Factions[id].diplo_status[aiFactionId];
+		int otherFactionRelation = Factions[id].diplo_status[*active_faction];
 
 		// calculate threat koefficient
 
@@ -234,7 +275,7 @@ void populateSharedLists()
 
 		// exclude not own bases
 
-		if (base->faction_id != aiFactionId)
+		if (base->faction_id != *active_faction)
 			continue;
 
 		// add base
@@ -284,12 +325,12 @@ void populateSharedLists()
 
 		// further process only own vehicles
 
-		if (vehicle->faction_id != aiFactionId)
+		if (vehicle->faction_id != *active_faction)
 			continue;
 
 		// combat vehicles
 
-		if (isCombatVehicle(id))
+		if (isVehicleCombat(id))
 		{
 			// add vehicle
 
@@ -329,11 +370,11 @@ void populateSharedLists()
 			}
 
 		}
-		else if (isColonyVehicle(id))
+		else if (isVehicleColony(id))
 		{
 			colonyVehicleIds.push_back(id);
 		}
-		else if (isFormerVehicle(id))
+		else if (isVehicleFormer(id))
 		{
 			formerVehicleIds.push_back(id);
 		}
