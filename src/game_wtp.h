@@ -29,6 +29,12 @@ struct Location
 		this->y = newY;
 	}
 
+	void set(Location newLocation)
+	{
+		this->x = newLocation.x;
+		this->y = newLocation.y;
+	}
+
 };
 
 struct MAP_INFO
@@ -152,8 +158,8 @@ double getNewVehicleMoraleModifierDefense(int factionId, double averageFacilityM
 double getSEPlanetModifierAttack(int factionId);
 double getSEPlanetModifierDefense(int factionId);
 double getPsiCombatBaseOdds(int triad);
-bool isCombatUnit(int id);
-bool isCombatVehicle(int id);
+bool isUnitCombat(int id);
+bool isVehicleCombat(int id);
 double calculatePsiDamageAttack(int id, int enemyId);
 double calculatePsiDamageDefense(int id, int enemyId);
 double calculateNativeDamageAttack(int id);
@@ -164,12 +170,15 @@ MAP *getBaseMapTile(int baseId);
 MAP *getVehicleMapTile(int vehicleId);
 bool isImprovedTile(int x, int y);
 bool isVehicleSupply(VEH *vehicle);
-bool isColonyUnit(int id);
-bool isColonyVehicle(int id);
-bool isFormerUnit(int unitId);
-bool isFormerVehicle(int vehicleId);
-bool isFormerVehicle(VEH *vehicle);
+bool isUnitColony(int id);
+bool isVehicleArtifact(int id);
+bool isVehicleColony(int id);
+bool isUnitFormer(int unitId);
+bool isVehicleFormer(int vehicleId);
+bool isVehicleFormer(VEH *vehicle);
 bool isVehicleTransport(VEH *vehicle);
+bool isVehicleTransport(int vehicleId);
+bool isVehicleSeaTransport(int vehicleId);
 bool isVehicleProbe(VEH *vehicle);
 bool isVehicleIdle(int vehicleId);
 void computeBase(int baseId);
@@ -197,7 +206,7 @@ std::vector<MAP *> getBaseWorkedTiles(int baseId);
 std::vector<MAP *> getBaseWorkedTiles(BASE *base);
 int getBaseConventionalDefenseValue(int baseId);
 std::vector<int> getFactionPrototypes(int factionId, bool includeNotPrototyped);
-bool isNativeLandVehicle(int vehicleId);
+bool isVehicleNativeLand(int vehicleId);
 bool isBaseBuildingColony(int baseId);
 int projectBasePopulation(int baseId, int turns);
 int getFactionFacilityPopulationLimit(int factionId, int facilityId);
@@ -254,4 +263,8 @@ bool isValidLocation(Location location);
 void hurryProduction(BASE* base, int minerals, int cost);
 MAP* getMapTile(int mapTileIndex);
 Location getMapIndexLocation(int mapIndex);
+bool isVehicleLandUnitOnTransport(int vehicleId);
+int setMoveTo(int vehicleId, Location location);
+int setMoveTo(int vehicleId, int x, int y);
+bool isFriendlyTerritory(int factionId, MAP* tile);
 

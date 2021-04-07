@@ -6,7 +6,7 @@
 #include "game.h"
 #include "move.h"
 #include "wtp.h"
-#include "aiTerraforming.h"
+#include "aiFormer.h"
 #include "aiCombat.h"
 #include "aiColony.h"
 #include "aiTransport.h"
@@ -32,7 +32,7 @@ struct BASE_STRATEGY
 };
 
 extern int wtpAIFactionId;
-extern int aiFactionId;
+extern int *active_faction;
 
 extern FACTION_INFO factionInfos[8];
 extern std::vector<int> baseIds;

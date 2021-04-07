@@ -115,7 +115,7 @@ double getBuildLocationScore(int colonyVehicleId, int x, int y)
 	
 	// compute range score
 	// reaching another continent requires 2 times more time than traveling on ground
-	// 40 extra travel turns reduce score in half
+	// 20 extra travel turns reduce score in half
 	
 	int range = map_range(colonyVehicle->x, colonyVehicle->y, x, y);
 	int speed = veh_speed_without_roads(colonyVehicleId);
@@ -126,7 +126,7 @@ double getBuildLocationScore(int colonyVehicleId, int x, int y)
 		turns *= 5.0;
 	}
 	
-    double turnsMultiplier = pow(0.5, turns / 40.0);
+    double turnsMultiplier = pow(0.5, turns / 20.0);
     
 	// summarize the score
 
@@ -415,23 +415,6 @@ Searches for best land base location for transport with colony.
 Location findTransportLandBaseBuildLocation(int transportVehicleId)
 {
 	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
-	MAP *transportVehicleTile = getVehicleMapTile(transportVehicleId);
-
-	// search reachable land regions
-
-	std::unordered_set<int> reachableLandRegions;
-
-	for (int mapTileIndex = 0; mapTileIndex < *map_area_tiles; mapTileIndex++)
-	{
-		Location location = getMapIndexLocation(mapTileIndex);
-		MAP* tile = getMapTile(mapTileIndex);
-		
-		if (isOceanRegionCoast(location.x, location.y, transportVehicleTile->region))
-		{
-			reachableLandRegions.insert(tile->region);
-		}
-		
-	}
 
 	// search best build location
 
@@ -454,9 +437,6 @@ Location findTransportLandBaseBuildLocation(int transportVehicleId)
 		(
 			// land region
 			isLandRegion(tile->region)
-			&&
-			// reachable region
-			reachableLandRegions.count(tile->region) == 1
 			&&
 			// unclaimed territory
 			(tile->owner == -1 || tile->owner == transportVehicle->faction_id)
@@ -560,7 +540,7 @@ bool isUnclaimedBuildSite(int factionId, int x, int y, int colonyVehicleId)
 
 		// only colony
 
-		if (!isColonyVehicle(otherVehicleId))
+		if (!isVehicleColony(otherVehicleId))
 			continue;
 
 		// detect colony destination

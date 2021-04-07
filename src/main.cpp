@@ -241,8 +241,8 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "alternative_combat_mechanics")) {
         cf->alternative_combat_mechanics = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "alternative_combat_mechanics_loss_divider")) {
-        cf->alternative_combat_mechanics_loss_divider = std::max(1.0, atof(value));
+    else if (MATCH("wtp", "alternative_combat_mechanics_loss_divisor")) {
+        cf->alternative_combat_mechanics_loss_divisor = std::max(1.0, atof(value));
     }
 	// integrated into Thinker
 //	else if (MATCH("wtp", "disable_planetpearls")) {
