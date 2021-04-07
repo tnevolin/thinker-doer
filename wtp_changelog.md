@@ -1,6 +1,7 @@
 # Version 212
 
 * Corrected odds computation for unequal HPs.
+* Updated multiplayer configurations.
 
 # Version 211
 
