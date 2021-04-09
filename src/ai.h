@@ -31,24 +31,31 @@ struct BASE_STRATEGY
 	double averageUnpopulatedTileRange;
 };
 
+struct ActiveFactionInfo
+{
+	FACTION_INFO factionInfos[8];
+	std::vector<int> baseIds;
+	std::unordered_map<MAP *, int> baseLocations;
+	std::map<int, std::vector<int>> regionBaseGroups;
+	std::map<int, BASE_STRATEGY> baseStrategies;
+	std::vector<int> combatVehicleIds;
+	std::vector<int> outsideCombatVehicleIds;
+	std::vector<int> prototypes;
+	std::vector<int> colonyVehicleIds;
+	std::vector<int> formerVehicleIds;
+	double threatLevel;
+};
+
 extern int wtpAIFactionId;
-extern int *active_faction;
 
-extern FACTION_INFO factionInfos[8];
-extern std::vector<int> baseIds;
-extern std::unordered_map<MAP *, int> baseLocations;
-extern std::map<int, std::vector<int>> regionBaseGroups;
-extern std::map<int, BASE_STRATEGY> baseStrategies;
-extern std::vector<int> combatVehicleIds;
-extern std::vector<int> outsideCombatVehicleIds;
-extern std::vector<int> prototypes;
-extern std::vector<int> colonyVehicleIds;
-extern std::vector<int> formerVehicleIds;
+extern int currentTurn;
+extern int aiFactionId;
+extern ActiveFactionInfo activeFactionInfo;
 
-int aiEnemyMove(const int vehicleId);
 int aiFactionUpkeep(const int factionId);
-void aiStrategy(int id);
-void populateSharedLists();
+int aiEnemyMove(const int vehicleId);
+void aiStrategy();
+void populateGlobalVariables();
 VEH *getVehicleByAIId(int aiId);
 double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId);
 

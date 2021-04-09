@@ -204,30 +204,29 @@ disable_planetpearls=1
 ; Remove AQUATIC faction bonus minerals from sea mining platforms.
 disable_aquatic_bonus_minerals=1
 
-; Spawn this many extra formers/colony pods for every faction at the game start.
+; Also spawn free units/satellites for player-controlled factions as specified by below options.
+player_free_units=1
+
+; Spawn this many extra formers/colony pods for every computer faction at the game start.
 free_formers=2
 free_colony_pods=0
+
 ; Spawn this many nutrient/mineral/energy satellites for every computer faction.
 satellites_nutrient=0
 satellites_mineral=0
 satellites_energy=0
 
-; When smac_only is selected, all expansion-related content is removed from the game.
-; Alien Crossfire techs, units, facilities, or abilities will not be available.
-; This can also be selected by a command line parameter, e.g. "terranx_mod.exe -smac"
-; While it is still possible to select alien factions during the game setup, 
-; it is not supported and may cause glitches.
-; The following files must be placed in "ac_mod" folder for smac_only to work:
-; alphax.txt, helpx.txt, conceptsx.txt, tutor.txt
-smac_only=0
+; Significantly reduce the frequency of supply pods on random maps and
+; place nutrient/mineral/energy bonus resources on the same tiles instead.
+rare_supply_pods=0
 
-; Balance faction starting locations more evenly on random maps and 
+; Balance faction starting locations more evenly on random maps and
 ; maintain a minimum distance to any nearest neighbors.
 faction_placement=1
 
 ; Faction placement can also add two nutrient bonuses for each land-based faction.
-; 0 = disable for all, 1 = enable for AIs only, 2 = enable for all
-nutrient_bonus=1
+; 0 = disable for all, 1 = enable for AIs only, 2 = enable for all.
+nutrient_bonus=0
 
 ; Select which landmarks to place on randomly generated maps.
 crater=1
@@ -262,6 +261,8 @@ disable_alien_guaranteed_technologies=1
 ; disable it if you want to use vanilla algorithm
 alternative_weapon_icon_selection_algorithm=1
 
+; <integrated into Thinker>
+; However, it seems to be badly replaced. I am disabling Thinker change and reinstating mine.
 ; Ignores unit reactor HP multiplier in combat processing.
 ; Units effectively have 10 HP even with higher reactor.
 ; This is a cornerstone of this mod. Better not change it.
@@ -280,7 +281,7 @@ alternative_combat_mechanics=1
 ; vanilla = 1.0 (or just disable alternative combat mechanics above)
 ; Recommended setting is 3.0 for better randomization.
 ; However I set default value to 2.0 to ease vanilla user adaptation.
-alternative_combat_mechanics_loss_divider=2.0
+alternative_combat_mechanics_loss_divisor=2.0
 
 ; enables alternative prototype cost formula
 alternative_prototype_cost_formula=1
@@ -301,7 +302,7 @@ flat_hurry_cost_multiplier_facility=3
 flat_hurry_cost_multiplier_project=6
 
 ; enables alternative upgrade cost formula
-alternative_upgrade_cost_formula=1
+alternative_upgrade_cost_formula=0
 
 ; enables base defense bonus modifications
 alternative_base_defensive_structure_bonuses=1
@@ -326,30 +327,31 @@ collateral_damage_defender_reactor=1
 ; (integrated into Thinker configuration above)
 ;disable_aquatic_bonus_minerals=1
 
+; <integrated into Thinker>
 ; Unit repair rates
 ; Each unit corresponds to 10% healing.
 ; allowed values: 0-10
 ; minimal repair rate (vanilla = 1)
-repair_minimal=1
+;repair_minimal=1
 ; repair rate for native in fungus (vanilla = 2)
-repair_fungus=1
+;repair_fungus=1
 ; repair rate increment in friendly territory (vanilla = 1/yes)
 ; allowed values: 0,1
-repair_friendly=0
+;repair_friendly=0
 ; repair rate increment for air unit in airbase (vanilla = 1/yes)
 ; allowed values: 0,1
-repair_airbase=0
+;repair_airbase=0
 ; repair rate increment for land unit in bunker (vanilla = 1/yes)
 ; allowed values: 0,1
-repair_bunker=0
+;repair_bunker=0
 ; repair rate increment in non-rioting base (vanilla = 1)
-repair_base=0
+;repair_base=0
 ; repair rate for native in base with SPs (vanilla = 10)
-repair_base_native=1
+;repair_base_native=1
 ; repair rate for conventional in base with facility (vanilla = 10)
-repair_base_facility=1
+;repair_base_facility=1
 ; repair rate for Nano Factory (vanilla = 10)
-repair_nano_factory=1
+;repair_nano_factory=1
 
 ; disable planetpearls
 ; (integrated into Thinker configuration above)
@@ -360,8 +362,9 @@ planet_combat_bonus_on_defense=1
 
 ; makes sea base territory distance same as land one
 sea_territory_distance_same_as_land=1
+; integrated into Thinker
 ; makes coastal base territory distance same as sea one
-coastal_territory_distance_same_as_sea=1
+;coastal_territory_distance_same_as_sea=1
 
 ; makes even weaker artillery to make damage occationally
 alternative_artillery_damage=1
@@ -382,7 +385,7 @@ combat_bonus_territory=25
 
 ; how much faster tube is comparing to road
 ; set to 0 for vanilla behavior
-tube_movement_rate_multiplier=3
+tube_movement_rate_multiplier=2
 
 ; Other bases contribute to faction projects.
 ; Base contributes to project the proportion of mineral surplus above threshold.
@@ -412,9 +415,10 @@ se_growth_rating_cap=9
 ; Recycling Tanks don't add to yield but work like a mineral multiplier instead.
 recycling_tanks_mineral_multiplier=1
 
+; <integrated into Thinker>
 ; free minerals (vanilla = 16)
 ; value is increased due to RT now multiplying minerals too
-free_minerals=24
+;free_minerals=24
 
 ; Native life number of tries to create it at random location: tries = constant + multiplier * <native life level>.
 ; Higher number of tries increases the chance of native appearing. The dependency is not linear and chance is obviously capped at 100%. So there is no point in making these values too high.
@@ -432,10 +436,11 @@ native_disable_sudden_death=1
 ; Alternative corruption formula
 alternative_inefficiency=1
 
+; <integrated into Thinker>
 ; unit home base reassignment production threshold
 ; Reassign unit from bases with production below threshold to best production bases with production on or above threshold
 ; allowed values = non negative (0 = no reassignment)
-unit_home_base_reassignment_production_threshold=1
+;unit_home_base_reassignment_production_threshold=1
 
 ; changes ocean depth upon map creation to make ocean more shallow (<1) or deeper (>1)
 ; allowed values: >0 (vanilla = 1.0)
@@ -507,7 +512,7 @@ combat_bonus_sensor_offense=1
 
 ; request break treaty with all unit owners in defending stack before going into combat computations (vanilla = 0)
 ; this is a special functionality aimed to prevent any combat related actions *before* treaty is broken
-break_treaty_before_fight=0
+break_treaty_before_fight=1
 
 ; compacting effect icons in SE dialog to fit 5 in each model
 compact_effect_icons=0
@@ -532,6 +537,16 @@ habitation_facility_absent_growth_penalty=3
 ; this value sets max GROWTH bonus that facility can generate at a base
 habitation_facility_present_growth_bonus_max=3
 
+; unit upgrade does not require whole turn
+unit_upgrade_ignores_movement=1
+
+; When one former starts terraforming action all idle formers in same tile do too.
+; May have unwanted consequences of intercepting idle formers.
+group_terraforming=0
+
+; Allows AI to build bases in fungus and rocky tiles.
+ai_base_allowed_fungus_rocky=1
+
 ; AI parameters
 ; WtP overrides some of Thinker AI algorithms.
 ; Turns WtP algorithms on/off.
@@ -539,7 +554,7 @@ ai_useWTPAlgorithms=1
 
 ; AI production parameters
 ;
-; Vanilla + Thinker choice is given this prioirity to compete with WTP
+; Vanilla + Thinker choice is given this priority to compete with WTP
 ; Due to very convoluted code I give them a chance to pass in case I missed some case in my code
 ai_production_vanilla_priority_unit=0.50
 ai_production_vanilla_priority_project=1.00
@@ -561,8 +576,6 @@ ai_production_expansion_coverage=20.0
 ai_production_ocean_expansion_coverage=40.0
 ; expansion production priority
 ai_production_expansion_priority=1.0
-; avoid building too expensive units
-ai_production_unit_turns_limit=10
 ; only facilities with priority above that get built
 ai_production_facility_priority_penalty=0.25
 ; production minimal mineral surplus for combat units
@@ -573,8 +586,6 @@ ai_production_exploration_coverage=5.0
 ai_production_improvement_coverage=1.0
 ; number of turns to project future population - used to predict need for pop limit and psych facilities
 ai_production_population_projection_turns=20
-; proportion of time Thinker's choice replaces Vanilla's.
-ai_production_Thinker_proportion=0.50
 
 ; AI terraforming parameters
 ;
@@ -615,7 +626,7 @@ ai_terraforming_baseNutrientDemandMultiplier=2.0
 ; Base mineral surplus threshold = (nutrient surplus - nutrient threshold) * ratio. Anything lower increases base mineral demand.
 ai_terraforming_baseMineralThresholdRatio=3.0
 ; Base mineral demand = (mineral threshold - mineral surplus) / mineral threshold * demand multiplier
-ai_terraforming_baseMineralDemandMultiplier=1.0
+ai_terraforming_baseMineralDemandMultiplier=2.0
 ; How many turn is required for raise land energy boost to pay off terraforming cost.
 ; Bigger value encourages raising land for smaller benefits and higher cost.
 ai_terraforming_raiseLandPayoffTime=10.0

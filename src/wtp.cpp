@@ -3223,7 +3223,18 @@ Overrides enemy_move call to replace vanilla and Thinker functionality.
 */
 HOOK_API int modifiedEnemyMove(const int vehicleId)
 {
-	return aiEnemyMove(vehicleId);
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// run AI code for AI eanbled factions
+	if (ai_enabled(vehicle->faction_id))
+	{
+		return aiEnemyMove(vehicleId);
+	}
+	// otherwise, fall to default
+	{
+		return mod_enemy_move(vehicleId);
+	}
+	
 }
 
 /*
@@ -3231,7 +3242,16 @@ Overrides faction_upkeep calls to amend vanilla and Thinker functionality.
 */
 HOOK_API int modifiedFactionUpkeep(const int factionId)
 {
-    return aiFactionUpkeep(factionId);
+	// run AI code for AI eanbled factions
+	if (ai_enabled(factionId))
+	{
+		return aiFactionUpkeep(factionId);
+	}
+	// otherwise, fall to default
+	{
+		return faction_upkeep(factionId);
+	}
+	
 }
 
 HOOK_API void captureAttackerOdds(const int position, const int value)

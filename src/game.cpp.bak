@@ -135,7 +135,7 @@ bool can_build(int base_id, int id) {
     if (id >= FAC_SKY_HYDRO_LAB && id <= FAC_ORBITAL_DEFENSE_POD) {
         int n = prod_count(faction, -id, base_id);
         int goal = (id == FAC_ORBITAL_DEFENSE_POD ?
-            min(10, conf.max_satellites/2) : plans[faction].satellites_goal);
+            std::min(10, conf.max_satellites/2) : plans[faction].satellites_goal);
 
         if ((id == FAC_SKY_HYDRO_LAB && f->satellites_nutrient + n >= goal)
         || (id == FAC_ORBITAL_POWER_TRANS && f->satellites_energy + n >= goal)
@@ -307,7 +307,7 @@ int defense_value(UNIT* u) {
 
 int faction_might(int faction) {
     Faction* f = &Factions[faction];
-    return max(1, f->mil_strength_1 + f->mil_strength_2 + f->pop_total);
+    return std::max(1, f->mil_strength_1 + f->mil_strength_2 + f->pop_total);
 }
 
 double expansion_ratio(int faction) {
@@ -318,8 +318,8 @@ double expansion_ratio(int faction) {
             break;
         }
     }
-    double limit = max(1.0 * bases, (pow(*map_half_x * *map_axis_y, 0.4) *
-        min(1.0, max(0.4, *map_area_sq_root / 56.0)) * conf.expansion_factor / 100.0));
+    double limit = std::max(1.0 * bases, (pow(*map_half_x * *map_axis_y, 0.4) *
+        std::min(1.0, std::max(0.4, *map_area_sq_root / 56.0)) * conf.expansion_factor / 100.0));
     return (limit > 0 ? Factions[faction].current_num_bases / limit : 1);
 }
 
@@ -354,13 +354,13 @@ int vector_dist(int x1, int y1, int x2, int y2) {
     if (!*map_toggle_flat & 1 && dx > *map_half_x) {
         dx = *map_axis_x - dx;
     }
-    return max(dx, dy) - ((((dx + dy) / 2) - min(dx, dy) + 1) / 2);
+    return std::max(dx, dy) - ((((dx + dy) / 2) - std::min(dx, dy) + 1) / 2);
 }
 
 int min_range(const Points& S, int x, int y) {
     int z = MaxMapW;
     for (auto& p : S) {
-        z = min(z, map_range(x, y, p.x, p.y));
+        z = std::min(z, map_range(x, y, p.x, p.y));
     }
     return z;
 }
@@ -400,11 +400,9 @@ int set_move_to(int veh_id, int x, int y) {
     veh->status_icon = 'G';
     veh->terraforming_turns = 0;
     mapnodes.erase({x, y, NODE_PATROL});
-    // =WTP=
-    // do not skip vehicle when at destination
-//	if (veh->x == x && veh->y == y) {
-//		return mod_veh_skip(veh_id);
-//	}
+    if (veh->x == x && veh->y == y) {
+        return mod_veh_skip(veh_id);
+    }
     return SYNC;
 }
 

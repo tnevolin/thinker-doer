@@ -84,7 +84,7 @@ Populate global lists before processing faction strategy.
 */
 void populateLists()
 {
-	Faction *aiFaction = &(Factions[*active_faction]);
+	Faction *aiFaction = &(Factions[aiFactionId]);
 
 	// clear lists
 
@@ -126,7 +126,7 @@ void populateLists()
 
 		// exclude own vehicles
 
-		if (vehicle->faction_id == *active_faction)
+		if (vehicle->faction_id == aiFactionId)
 			continue;
 
 		// exclude vehicles with pact
@@ -191,7 +191,7 @@ void populateLists()
 
 	std::vector<std::set<int>> seaRegionLinkedGroups;
 
-	for (int id : baseIds)
+	for (int id : activeFactionInfo.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -253,7 +253,7 @@ void populateLists()
 
 //	debug("seaRegionLinkedGroups\n")
 
-	for (int id : baseIds)
+	for (int id : activeFactionInfo.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -426,7 +426,7 @@ void populateLists()
 
 //	debug("coastalBaseRegionMappings\n");
 
-	for (int id : baseIds)
+	for (int id : activeFactionInfo.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -465,7 +465,7 @@ void populateLists()
 
 		// exclude not own vehicles
 
-		if (vehicle->faction_id != *active_faction)
+		if (vehicle->faction_id != aiFactionId)
 			continue;
 
 		// process supplies and formers
@@ -709,7 +709,7 @@ void populateLists()
 
 			// only own territory
 
-			if (tile->owner != *active_faction)
+			if (tile->owner != aiFactionId)
 				continue;
 
 			// exclude volcano mouth
@@ -742,7 +742,7 @@ void populateLists()
 
 	// populate availalbe tiles
 
-	for (int id : baseIds)
+	for (int id : activeFactionInfo.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -756,7 +756,7 @@ void populateLists()
 
 			// only own territory
 
-			if (tile->owner != *active_faction)
+			if (tile->owner != aiFactionId)
 				continue;
 
 			// exclude volcano mouth
@@ -822,7 +822,7 @@ void populateLists()
 
 	// populate unworked tiles
 
-	for (int id : baseIds)
+	for (int id : activeFactionInfo.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -852,9 +852,9 @@ void populateLists()
 
 			// calculate and store yield
 
-			int nutrient = mod_nutrient_yield(*active_faction, id, x, y, 0);
-			int mineral = mod_mineral_yield(*active_faction, id, x, y, 0);
-			int energy = mod_energy_yield(*active_faction, id, x, y, 0);
+			int nutrient = mod_nutrient_yield(aiFactionId, id, x, y, 0);
+			int mineral = mod_mineral_yield(aiFactionId, id, x, y, 0);
+			int energy = mod_energy_yield(aiFactionId, id, x, y, 0);
 
 			baseunworkedTileYields->push_back({nutrient, mineral, energy});
 
@@ -885,7 +885,7 @@ void populateLists()
 
 	// calculate network demand
 
-	int networkType = (has_tech(*active_faction, Terraform[FORMER_MAGTUBE].preq_tech) ? TERRA_MAGTUBE : TERRA_ROAD);
+	int networkType = (has_tech(aiFactionId, Terraform[FORMER_MAGTUBE].preq_tech) ? TERRA_MAGTUBE : TERRA_ROAD);
 
 	double networkCoverage = 0.0;
 
@@ -902,7 +902,7 @@ void populateLists()
 
 		// exclude not own territory
 
-		if (tile->owner != *active_faction)
+		if (tile->owner != aiFactionId)
 			continue;
 
 		// count network coverage
@@ -914,7 +914,7 @@ void populateLists()
 
 	}
 
-	double networkThreshold = conf.ai_terraforming_networkCoverageThreshold * (double)baseIds.size();
+	double networkThreshold = conf.ai_terraforming_networkCoverageThreshold * (double)activeFactionInfo.baseIds.size();
 
 	if (networkCoverage < networkThreshold)
 	{
@@ -930,7 +930,7 @@ Checks and removes redundant orders.
 */
 void cancelRedundantOrders()
 {
-	for (int id : formerVehicleIds)
+	for (int id : activeFactionInfo.formerVehicleIds)
 	{
 		if (isVehicleTerrafomingOrderCompleted(id))
 		{
@@ -2173,8 +2173,8 @@ void calculateRaiseLandTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCORE *
 
 	// verify we have enough money
 
-	int cost = terraform_cost(x, y, *active_faction);
-	if (cost > Factions[*active_faction].energy_credits / 10)
+	int cost = terraform_cost(x, y, aiFactionId);
+	if (cost > Factions[aiFactionId].energy_credits / 10)
 		return;
 
 	// get option
@@ -2508,11 +2508,6 @@ Handles movement phase.
 */
 int moveFormer(int vehicleId)
 {
-	// use WTP algorithm for selected faction only
-
-	if (wtpAIFactionId != -1 && *active_faction != wtpAIFactionId)
-		return mod_enemy_move(vehicleId);
-
 	// get vehicle
 
 	VEH *vehicle = &(Vehicles[vehicleId]);
@@ -2801,7 +2796,7 @@ bool isOwnWorkableTile(int x, int y)
 
 	// exclude not own territory
 
-	if (tile->owner != *active_faction)
+	if (tile->owner != aiFactionId)
 		return false;
 
 	// iterate through own bases
@@ -2812,7 +2807,7 @@ bool isOwnWorkableTile(int x, int y)
 
 		// skip not own bases
 
-		if (base->faction_id != *active_faction)
+		if (base->faction_id != aiFactionId)
 			continue;
 
 		// check base radius
@@ -2834,7 +2829,7 @@ bool isTerraformingCompleted(MAP_INFO *mapInfo, int action)
 {
 	MAP *tile = mapInfo->tile;
 
-	return (tile->items & Terraform[action].flag);
+	return (tile->items & Terraform[action].bit);
 
 }
 
@@ -2850,7 +2845,7 @@ bool isVehicleTerrafomingOrderCompleted(int vehicleId)
 
 	MAP *tile = getMapTile(vehicle->x, vehicle->y);
 
-	return (tile->items & Terraform[vehicle->move_status - ORDER_FARM].flag);
+	return (tile->items & Terraform[vehicle->move_status - ORDER_FARM].bit);
 
 }
 
@@ -2866,16 +2861,16 @@ bool isTerraformingAvailable(MAP_INFO *mapInfo, int action)
 	bool ocean = is_ocean(tile);
 	bool oceanDeep = is_ocean_deep(tile);
 
-	bool aquatic = MFactions[*active_faction].rule_flags & FACT_AQUATIC;
+	bool aquatic = MFactions[aiFactionId].rule_flags & FACT_AQUATIC;
 
 	// action is considered available if is already built
 
-	if (map_has_item(tile, Terraform[action].flag))
+	if (map_has_item(tile, Terraform[action].bit))
 		return true;
 
 	// action is available only when enabled and researched
 
-	if (!has_terra(*active_faction, action, ocean))
+	if (!has_terra(aiFactionId, action, ocean))
 		return false;
 
 	// terraforming is not available in base square
@@ -2887,7 +2882,7 @@ bool isTerraformingAvailable(MAP_INFO *mapInfo, int action)
 
 	if (oceanDeep)
 	{
-		if (!(aquatic && has_tech(*active_faction, TECH_EcoEng2)))
+		if (!(aquatic && has_tech(aiFactionId, TECH_EcoEng2)))
 			return false;
 	}
 
@@ -2975,7 +2970,7 @@ bool isTerraformingRequired(MAP *tile, int action)
 		&&
 		(action == FORMER_ROAD)
 		&&
-		(has_project(*active_faction, FAC_XENOEMPATHY_DOME))
+		(has_project(aiFactionId, FAC_XENOEMPATHY_DOME))
 	)
 	{
 		return false;
@@ -3004,12 +2999,12 @@ bool isRemoveFungusRequired(int action)
 
 	// no need to remove fungus for road with fungus road technology
 
-	if (action == FORMER_ROAD && has_tech(*active_faction, Rules->tech_preq_build_road_fungus))
+	if (action == FORMER_ROAD && has_tech(aiFactionId, Rules->tech_preq_build_road_fungus))
 		return false;
 
 	// for everything else remove fungus only without fungus improvement technology
 
-	return !has_tech(*active_faction, Rules->tech_preq_improv_fungus);
+	return !has_tech(aiFactionId, Rules->tech_preq_improv_fungus);
 
 }
 
@@ -3472,7 +3467,7 @@ int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle)
 
 	// adjust for faction projects
 
-	if (has_project(*active_faction, FAC_WEATHER_PARADIGM))
+	if (has_project(aiFactionId, FAC_WEATHER_PARADIGM))
 	{
 		// reduce all terraforming time except fungus by 1/3
 
@@ -3483,7 +3478,7 @@ int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle)
 
 	}
 
-	if (has_project(*active_faction, FAC_XENOEMPATHY_DOME))
+	if (has_project(aiFactionId, FAC_XENOEMPATHY_DOME))
 	{
 		// reduce fungus terraforming time by half
 
@@ -3521,7 +3516,7 @@ int getBaseTerraformingRank(BASE *base)
 
 BASE *findAffectedBase(int x, int y)
 {
-	for (int id : baseIds)
+	for (int id : activeFactionInfo.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -3826,7 +3821,7 @@ bool isTowardBaseDiagonal(int x, int y, int dxSign, int dySign)
 
 			// check base in tile
 
-			if (baseLocations.count(tile) != 0)
+			if (activeFactionInfo.baseLocations.count(tile) != 0)
 			{
 				return true;
 			}
@@ -3861,7 +3856,7 @@ bool isTowardBaseHorizontal(int x, int y, int dxSign)
 
 			// check base in tile
 
-			if (baseLocations.count(tile) != 0)
+			if (activeFactionInfo.baseLocations.count(tile) != 0)
 			{
 				return true;
 			}
@@ -3896,7 +3891,7 @@ bool isTowardBaseVertical(int x, int y, int dySign)
 
 			// check base in tile
 
-			if (baseLocations.count(tile) != 0)
+			if (activeFactionInfo.baseLocations.count(tile) != 0)
 			{
 				return true;
 			}
@@ -3948,7 +3943,7 @@ double calculateSensorScore(MAP_INFO mapInfo, int action)
 
 			// not own
 
-			if (otherTile->owner == *active_faction)
+			if (otherTile->owner == aiFactionId)
 				continue;
 
 			// calculate range
@@ -4227,7 +4222,7 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 	int y = mapInfo->y;
 	MAP *improvedTile = mapInfo->tile;
 
-	Faction *faction = &(Factions[*active_faction]);
+	Faction *faction = &(Factions[aiFactionId]);
 
 	// build action set
 
@@ -4271,12 +4266,12 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 	int forestMineral = Resource->forest_sq_mineral;
 	int forestEnergy = Resource->forest_sq_energy;
 
-	if (has_facility_tech(*active_faction, FAC_TREE_FARM))
+	if (has_facility_tech(aiFactionId, FAC_TREE_FARM))
 	{
 		forestNutrient++;
 	}
 
-	if (has_facility_tech(*active_faction, FAC_HYBRID_FOREST))
+	if (has_facility_tech(aiFactionId, FAC_HYBRID_FOREST))
 	{
 		forestNutrient++;
 		forestNutrient++;
@@ -4310,8 +4305,8 @@ double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int
 
 	// calculate extra yield with technology
 
-	double extraNutrient = (has_terra(*active_faction, FORMER_SOIL_ENR, false) ? 2.0 : 1.0);
-	double extraEnergy = (has_terra(*active_faction, FORMER_ECH_MIRROR, false) ? 1.0 : 0.0);
+	double extraNutrient = (has_terra(aiFactionId, FORMER_SOIL_ENR, false) ? 2.0 : 1.0);
+	double extraEnergy = (has_terra(aiFactionId, FORMER_ECH_MIRROR, false) ? 1.0 : 0.0);
 
 	// estimate rainfall improvement
 
@@ -4845,12 +4840,12 @@ void findPathStep(int id, int x, int y, MAP_INFO *step)
 
 				// exclude zoc to zoc movement
 
-				if (baseLocations.count(element->tile) == 0 && baseLocations.count(adjacentTile) == 0 && element->zoc && adjacentTileZOC)
+				if (activeFactionInfo.baseLocations.count(element->tile) == 0 && activeFactionInfo.baseLocations.count(adjacentTile) == 0 && element->zoc && adjacentTileZOC)
 					continue;
 
 				// calculate movement cost
 
-				int movementCost = mod_hex_cost(vehicle->unit_id, *active_faction, element->x, element->y, adjacentTileX, adjacentTileY, 0);
+				int movementCost = mod_hex_cost(vehicle->unit_id, aiFactionId, element->x, element->y, adjacentTileX, adjacentTileY, 0);
 
 				// calculate new movement points after move
 
@@ -4939,7 +4934,7 @@ bool isRaiseLandSafe(MAP_INFO *mapInfo)
 	int y = mapInfo->y;
 	MAP *raisedTile = mapInfo->tile;
 
-	Faction *faction = &(Factions[*active_faction]);
+	Faction *faction = &(Factions[aiFactionId]);
 
 	// raising ocena is always safe
 
@@ -4965,7 +4960,7 @@ bool isRaiseLandSafe(MAP_INFO *mapInfo)
 
 			if
 			(
-				(tile->owner != *active_faction)
+				(tile->owner != aiFactionId)
 				&&
 				(faction->diplo_status[tile->owner] & (DIPLO_TRUCE | DIPLO_TREATY | DIPLO_PACT))
 			)
@@ -5123,9 +5118,9 @@ bool isInferiorImprovedTile(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *c
 
 	// compute tile yield
 
-	int nutrient = mod_nutrient_yield(*active_faction, id, x, y, 0);
-	int mineral = mod_mineral_yield(*active_faction, id, x, y, 0);
-	int energy = mod_energy_yield(*active_faction, id, x, y, 0);
+	int nutrient = mod_nutrient_yield(aiFactionId, id, x, y, 0);
+	int mineral = mod_mineral_yield(aiFactionId, id, x, y, 0);
+	int energy = mod_energy_yield(aiFactionId, id, x, y, 0);
 
 	// revert changes
 

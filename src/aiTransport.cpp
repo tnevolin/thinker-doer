@@ -159,7 +159,7 @@ bool transportArtifact(int transportVehicleId, int /*artifactVehicleId*/)
 	Location baseLocation;
 	int minRange = INT_MAX;
 	
-	for (int baseId : baseIds)
+	for (int baseId : activeFactionInfo.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
 		

@@ -267,4 +267,6 @@ bool isVehicleLandUnitOnTransport(int vehicleId);
 int setMoveTo(int vehicleId, Location location);
 int setMoveTo(int vehicleId, int x, int y);
 bool isFriendlyTerritory(int factionId, MAP* tile);
+bool isVehicleHasAbility(int vehicleId, int abilityId);
+bool isDiplomaticStatus(int faction1Id, int faction2Id, int diplomaticStatus);
 

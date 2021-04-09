@@ -1,7 +1,12 @@
+# Version 213
+
+* Integrated few more changes from Thinker.
+
 # Version 212
 
 * Corrected odds computation for unequal HPs.
 * Updated multiplayer configurations.
+* Set road movement rate to 2 and tube movement rate to 4.
 
 # Version 211
 

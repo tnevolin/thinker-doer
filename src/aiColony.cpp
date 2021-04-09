@@ -3,9 +3,6 @@
 
 int moveColony(int vehicleId)
 {
-//	// disable for now
-//	return mod_enemy_move(vehicleId);
-	
 	switch (veh_triad(vehicleId))
 	{
 	case TRIAD_LAND:
@@ -74,6 +71,8 @@ int moveLandColonyOnLand(int vehicleId)
 		debug("move colony (%3d,%3d) -> (%3d,%3d)\n\n", Vehicles[vehicleId].x, Vehicles[vehicleId].y, location.x, location.y)
 		return set_move_to(vehicleId, location.x, location.y);
 	}
+	
+	return mod_enemy_move(vehicleId);
 	
 }
 

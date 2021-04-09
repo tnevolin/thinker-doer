@@ -45,7 +45,7 @@ int __cdecl mod_crop_yield(int faction, int base, int x, int y, int tf) {
     return value;
 }
 
-int __cdecl mod_base_draw(int ptr, int base_id, int x, int y, int zoom, int v1) {
+HOOK_API int mod_base_draw(int ptr, int base_id, int x, int y, int zoom, int v1) {
     int color = -1;
     int width = 1;
     BASE* b = &Bases[base_id];
@@ -107,7 +107,7 @@ void check_relocate_hq(int faction) {
     }
 }
 
-int __cdecl mod_capture_base(int base_id, int faction, int probe) {
+HOOK_API int mod_capture_base(int base_id, int faction, int probe) {
     int old_faction = Bases[base_id].faction_id;
     assert(valid_player(faction) && faction != old_faction);
     capture_base(base_id, faction, probe);
@@ -115,7 +115,7 @@ int __cdecl mod_capture_base(int base_id, int faction, int probe) {
     return 0;
 }
 
-int __cdecl mod_base_kill(int base_id) {
+HOOK_API int mod_base_kill(int base_id) {
     int old_faction = Bases[base_id].faction_id;
     assert(base_id >= 0 && base_id < *total_num_bases);
     base_kill(base_id);
@@ -123,7 +123,7 @@ int __cdecl mod_base_kill(int base_id) {
     return 0;
 }
 
-int __cdecl content_pop() {
+HOOK_API int content_pop() {
     int faction = (*current_base_ptr)->faction_id;
     assert(valid_player(faction));
     if (is_human(faction)) {
@@ -132,18 +132,9 @@ int __cdecl content_pop() {
     return conf.content_pop_computer[*diff_level];
 }
 
-int __cdecl mod_setup_player(int faction, int v1, int v2) {
+HOOK_API int mod_setup_player(int faction, int v1, int v2) {
     setup_player(faction, v1, v2);
     if (faction > 0 && (!is_human(faction) || conf.player_free_units > 0)) {
-		
-		// that is not a right fix
-        /*
-        Fix missing extra colony pods for Progenitors as mentioned by the datalinks.
-        */
-//        const char* name = MFactions[faction].filename;
-        int colonies = conf.free_colony_pods
-        /*    + (!stricmp(name, "usurper") || !stricmp(name, "caretake") ? 1 : 0)*/;
-
         for (int i=0; i < *total_num_vehicles; i++) {
             VEH* veh = &Vehicles[i];
             if (veh->faction_id == faction) {
@@ -153,7 +144,7 @@ int __cdecl mod_setup_player(int faction, int v1, int v2) {
                 for (int j=0; j < conf.free_formers; j++) {
                     spawn_veh(former, faction, veh->x, veh->y, -1);
                 }
-                for (int j=0; j < colonies; j++) {
+                for (int j=0; j < conf.free_colony_pods; j++) {
                     spawn_veh(colony, faction, veh->x, veh->y, -1);
                 }
                 break;
@@ -187,13 +178,13 @@ int __cdecl mod_setup_player(int faction, int v1, int v2) {
     return 0;
 }
 
-int __cdecl skip_action_destroy(int id) {
+HOOK_API int skip_action_destroy(int id) {
     veh_skip(id);
     *veh_attack_flags = 0;
     return 0;
 }
 
-int __cdecl render_ocean_fungus(int x, int y) {
+HOOK_API int render_ocean_fungus(int x, int y) {
     MAP* sq;
     int k = 0;
     for (int i=0; i<8; i++) {
@@ -382,8 +373,6 @@ Read more about the idea behind idle loop patch: https://github.com/vinceho/smac
 */
 BOOL WINAPI ModPeekMessage(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
 {
-    int* top_menu_handle = (int*)0x945824;
-    int* peek_msg_status = (int*)0x9B7B9C;
     static bool wait_next = false;
     int wait_time = (wait_next && (*top_menu_handle != 0 || *peek_msg_status == 0) ? 8 : 0);
     int wait_result = MsgWaitForMultipleObjectsEx(0, 0, wait_time, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
@@ -619,11 +608,6 @@ bool patch_setup(Config* cf) {
         write_call(0x48BA15, (int)zoom_process);
     }
 
-    if (DEBUG) {
-        remove_call(0x4E5F96); // #BEGINPROJECT
-        remove_call(0x4E5E0D); // #CHANGEPROJECT
-        remove_call(0x4F4817); // #DONEPROJECT
-    }
     /*
     Hide unnecessary region_base_plan display next to base names in debug mode.
     */
@@ -707,11 +691,6 @@ bool patch_setup(Config* cf) {
         memset((void*)0x58B76F, 0x90, 2);
         memset((void*)0x58B9F3, 0x90, 2);
     }
-    if (cf->new_base_names) {
-        write_call(0x4CFF47, (int)mod_name_base);
-        write_call(0x4E4CFC, (int)mod_name_base);
-        write_call(0x4F7E18, (int)mod_name_base);
-    }
     if (cf->faction_placement) {
         const byte asm_find_start[] = {
             0x8D,0x45,0xF8,0x50,0x8D,0x45,0xFC,0x50,0x8B,0x45,
@@ -725,14 +704,26 @@ bool patch_setup(Config* cf) {
         write_call(0x5B221B, (int)find_start);
     }
     if (cf->ignore_reactor_power) {
-        const byte old_bytes[] = {0x7C};
-        const byte new_bytes[] = {0xEB};
-        write_bytes(0x506F90, old_bytes, new_bytes, sizeof(new_bytes));
-        write_bytes(0x506FF6, old_bytes, new_bytes, sizeof(new_bytes));
-        // Adjust combat odds confirmation dialog to match new odds
-        write_call(0x506D07, (int)mod_best_defender);
-        write_call(0x5082AF, (int)battle_fight_parse_num);
-        write_call(0x5082B7, (int)battle_fight_parse_num);
+        const int unit_reactor = 0x9AB88F;
+        const int locations[][2] = {
+            {(int)battle_fight_2, 0x4DA0},
+            {(int)best_defender,  0x5CB},
+        };
+        memset(fission_reactor, 1, sizeof(fission_reactor));
+        int num = 0;
+        for (const int* loc : locations) {
+            int p = loc[0];
+            while (p < loc[0] + loc[1]) {
+                if (*(int*)p == unit_reactor) {
+                    *(int*)p = (int)&fission_reactor;
+                    num++;
+                }
+                p++;
+            }
+        }
+        if (num != 48) {
+            exit_fail();
+        }
     }
     if (cf->territory_border_fix || DEBUG) {
         write_call(0x523ED7, (int)mod_base_find3);
@@ -827,11 +818,6 @@ bool patch_setup(Config* cf) {
             0x8B,0x06,0xD1,0xE1,0x03,0xC1,0x89,0x06
         };
         write_bytes(0x5060ED, old_bytes, NULL, sizeof(old_bytes));
-    }
-    if (cf->disable_alien_guaranteed_techs) {
-        byte old_bytes[] = {0x74};
-        byte new_bytes[] = {0xEB};
-        write_bytes(0x5B29F8, old_bytes, new_bytes, sizeof(new_bytes));
     }
     if (cf->patch_content_pop) {
         const byte old_bytes[] = {
