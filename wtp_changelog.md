@@ -1,3 +1,8 @@
+# Version 214
+
+* Reinstated alien faction offense and defense bonuses. Not sure they need to be crippled even more.
+* Reinstated fanatic attack bonus to 50%. Also not sure Believers are too powerful with it.
+
 # Version 213
 
 * Integrated few more changes from Thinker.
