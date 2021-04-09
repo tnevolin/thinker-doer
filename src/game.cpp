@@ -318,17 +318,19 @@ double expansion_ratio(int faction) {
             break;
         }
     }
-    double limit = std::max(1.0 * bases, (pow(*map_half_x * *map_axis_y, 0.4) *
-        std::min(1.0, std::max(0.4, *map_area_sq_root / 56.0)) * conf.expansion_factor / 100.0));
-    return (limit > 0 ? Factions[faction].current_num_bases / limit : 1);
+    if (conf.expansion_factor > 0) {
+        return Factions[faction].current_num_bases / (1.0*std::max(bases, conf.expansion_factor));
+    }
+    return 0;
 }
 
 int random(int n) {
     return (n > 0 ? rand() % n : 0);
 }
 
-int map_hash(int x, int y) {
-    return ((*map_random_seed ^ x) * 127) ^ (y * 179);
+uint32_t map_hash(uint32_t a, uint32_t b) {
+    int h = (*map_random_seed ^ (a << 8) ^ (b << 16) ^ b) * 2654435761;
+    return h ^ (h>>16);
 }
 
 int wrap(int a) {

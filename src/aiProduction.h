@@ -68,7 +68,7 @@ void evaluateOceanExpansionDemand();
 void evaluateExplorationDemand();
 void evaluatePoliceDemand();
 void evaluateNativeProtectionDemand();
-void evaluateFactionProtectionDemand();
+void evaluateCombatDemand();
 void addProductionDemand(int item, double priority);
 int selectBestNativeDefensePrototype(int factionId);
 int findStrongestNativeDefensePrototype(int factionId);
@@ -89,4 +89,6 @@ bool isBaseNeedPsych(int baseId);
 int findPoliceUnit(int factionId);
 HOOK_API void modifiedBaseFirst(int baseId);
 int getNearestFactionBaseRange(int factionId, int x, int y);
+bool isMilitaryItem(int item);
+int thinker_base_prod_choice(int id, int v1, int v2, int v3);
 

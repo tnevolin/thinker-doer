@@ -9,91 +9,91 @@ struct VEH;
 extern VEH* Vehicles;
 
 struct BASE {
-    short x;
-    short y;
-    char faction_id;
-    char faction_id_former;
-    char pop_size;
-    char assimilation_turns_left;
-    char nerve_staple_turns_left;
-    char ai_plan_status;
-    char factions_spotted_flags;
-    char factions_pop_size_intel[8];
-    char name[25];
-    short unk_x_coord;
-    short unk_y_coord;
-    int status_flags;
-    int event_flags;
-    int governor_flags;
-    int nutrients_accumulated;
-    int minerals_accumulated;
-    int production_id_last;
-    int eco_damage;
-    int queue_size;
-    int queue_items[10];
-    int worked_tiles;
-    int specialist_total;
-    int specialist_unk_1;
-    /*
-    Specialist types (R_Citizen, 4 bits per id) for the first 16 specialists in the base.
-    These are assigned in base_yield and base_energy and chosen by best_specialist.
-    */
-    int specialist_types[2];
-    char facilities_built[12];
-    int mineral_surplus_final;
-    int minerals_accumulated_2;
-    int pad_1;
-    int pad_2;
-    int pad_3;
-    int pad_4;
-    int nutrient_intake;
-    int mineral_intake;
-    int energy_intake;
-    int unused_intake;
-    int nutrient_intake_2;
-    int mineral_intake_2;
-    int energy_intake_2;
-    int unused_intake_2;
-    int nutrient_surplus;
-    int mineral_surplus;
-    int energy_surplus;
-    int unused_surplus;
-    int nutrient_inefficiency;
-    int mineral_inefficiency;
-    int energy_inefficiency;
-    int unused_inefficiency;
-    int nutrient_consumption;
-    int mineral_consumption;
-    int energy_consumption;
-    int unused_consumption;
-    int economy_total;
-    int psych_total;
-    int labs_total;
-    int unk_2;
-    short autoforward_land_base_id;
-    short autoforward_sea_base_id;
-    short autoforward_air_base_id;
-    short pad_5;
-    int talent_total;
-    int drone_total;
-    int superdrone_total;
-    int random_event_turns;
-    int nerve_staple_count;
-    int pad_6;
-    int pad_7;
+/*0000*/	short x;
+/*0002*/	short y;
+/*0004*/	char faction_id;
+/*0005*/	char faction_id_former;
+/*0006*/	char pop_size;
+/*0007*/	char assimilation_turns_left;
+/*0008*/	char nerve_staple_turns_left;
+/*0009*/	char ai_plan_status;
+/*000A*/	char factions_spotted_flags;
+/*000B*/	char factions_pop_size_intel[8];
+/*0013*/	char name[25];
+/*002C*/	short unk_x_coord;
+/*002E*/	short unk_y_coord;
+/*0030*/	int status_flags;
+/*0034*/	int event_flags;
+/*0038*/	int governor_flags;
+/*003C*/	int nutrients_accumulated;
+/*0040*/	int minerals_accumulated;
+/*0044*/	int production_id_last;
+/*0048*/	int eco_damage;
+/*004C*/	int queue_size;
+/*0050*/	int queue_items[10];
+/*0078*/	int worked_tiles;
+/*007C*/	int specialist_total;
+/*0080*/	int specialist_unk_1;
+			/*
+			Specialist types (R_Citizen, 4 bits per id) for the first 16 specialists in the base.
+			These are assigned in base_yield and base_energy and chosen by best_specialist.
+			*/
+/*0084*/	int specialist_types[2];
+/*008C*/	char facilities_built[12];
+/*0098*/	int mineral_surplus_final;
+/*009C*/	int minerals_accumulated_2;
+/*00A0*/	int pad_1;
+/*00A4*/	int pad_2;
+/*00A8*/	int pad_3;
+/*00AC*/	int pad_4;
+/*00B0*/	int nutrient_intake;
+/*00B4*/	int mineral_intake;
+/*00B8*/	int energy_intake;
+/*00BC*/	int unused_intake;
+/*00C0*/	int nutrient_intake_2;
+/*00C4*/	int mineral_intake_2;
+/*00C8*/	int energy_intake_2;
+/*00CC*/	int unused_intake_2;
+/*00D0*/	int nutrient_surplus;
+/*00D4*/	int mineral_surplus;
+/*00D8*/	int energy_surplus;
+/*00DC*/	int unused_surplus;
+/*00E0*/	int nutrient_inefficiency;
+/*00E4*/	int mineral_inefficiency;
+/*00E8*/	int energy_inefficiency;
+/*00EC*/	int unused_inefficiency;
+/*00F0*/	int nutrient_consumption;
+/*00F4*/	int mineral_consumption;
+/*00F8*/	int energy_consumption;
+/*00FC*/	int unused_consumption;
+/*0100*/	int economy_total;
+/*0104*/	int psych_total;
+/*0108*/	int labs_total;
+/*0000*/	int unk_2;
+/*0000*/	short autoforward_land_base_id;
+/*0000*/	short autoforward_sea_base_id;
+/*0000*/	short autoforward_air_base_id;
+/*0000*/	short pad_5;
+/*0000*/	int talent_total;
+/*0000*/	int drone_total;
+/*0000*/	int superdrone_total;
+/*0000*/	int random_event_turns;
+/*0000*/	int nerve_staple_count;
+/*0000*/	int pad_6;
+/*0000*/	int pad_7;
 };
 
 struct MAP {
     byte climate; // 000 00 000 | altitude (3 bit) ; rainfall (2 bit) ; temperature (3 bit)
     byte contour; // altitude details
     /*
-    val2 & 0xF0:
+    flags & 0xF0:
     AI colonization priority returned by world_site()
     This is written to the map struct by site_set()
     0 = unknown/not available, 1..15 higher numbers indicate a better location.
     When AltGr+4 debug overlay is enabled, MapWin_gen_terrain_poly renders
     this number on land tiles where value > 0.
-    val2 & 0xF:
+    flags & 0xF:
     Faction ID of the unit occupying this tile. 0xF = unoccupied.
     Sometimes faction ID of a deleted unit persists on the tile.
     */
@@ -228,224 +228,224 @@ struct Goal {
 };
 
 struct Faction {
-    int player_flags;
-    int ranking; // 0 (lowest) to 7 (highest)
-    int diff_level;
-    int base_name_offset; // Keep track which base names have been used
-    int base_sea_name_offset; // Keep track which sea base names have been used
-    int last_base_turn; // Turn for last built, captured or acquired (drone riot) base
-    int diplo_status[8]; // Contains all formal treaties
-    int diplo_agenda[8];
-    int diplo_friction[8];
-    int diplo_spoke[8]; // Turn for the last player-to-AI communication; -1 for never
-    int diplo_merc[8]; // Possibly higher values indicate willingness for deal-making
-    char diplo_patience[8]; // AI-to-player
-    int sanction_turns; // Turns left for economic sanctions imposed by other factions for atrocities
-    int loan_balance[8]; // Loan balance remaining this faction owes another to be paid over term
-    int loan_payment[8]; // The per turn payment amount this faction owes another faction
-    int unk_1[8]; // unused
-    int integrity_blemishes;
-    int global_reputation;
-    int diplo_gifts[8]; // ? Gifts and bribes we have received
-    int diplo_wrongs[8]; // Number of times we double crossed this faction
-    int diplo_betrayed[8]; // Number of times double crossed by this faction
-    int diplo_unk_3[8]; // ? combat related
-    int diplo_unk_4[8]; // ? combat related
-    int traded_maps; // bitfield of other factions that have traded maps with faction
-    int base_governor_adv; // default advanced Governor settings
-    int atrocities; // count committed by faction
-    int major_atrocities; // count committed by faction
-    int subvert_total; // ? probe: mind control base (+4) / subvert unit (+1) total
-    int diplo_subvert[8]; // ? probe: mind control base (+4) / subvert unit (+1) per faction
-    int diplo_stolen_techs[8]; // probe: successfully procured research data (tech/map) per faction
-    int energy_credits;
-    int energy_cost;
-    int SE_Politics_pending;
-    int SE_Economics_pending;
-    int SE_Values_pending;
-    int SE_Future_pending;
-    int SE_Politics;
-    int SE_Economics;
-    int SE_Values;
-    int SE_Future;
-    int SE_upheaval_cost_paid;
-    int SE_economy_pending;
-    int SE_effic_pending;
-    int SE_support_pending;
-    int SE_talent_pending;
-    int SE_morale_pending;
-    int SE_police_pending;
-    int SE_growth_pending;
-    int SE_planet_pending;
-    int SE_probe_pending;
-    int SE_industry_pending;
-    int SE_research_pending;
-    int SE_economy;
-    int SE_effic;
-    int SE_support;
-    int SE_talent;
-    int SE_morale;
-    int SE_police;
-    int SE_growth;
-    int SE_planet;
-    int SE_probe;
-    int SE_industry;
-    int SE_research;
-    int SE_economy_2;
-    int SE_effic_2;
-    int SE_support_2;
-    int SE_talent_2;
-    int SE_morale_2;
-    int SE_police_2;
-    int SE_growth_2;
-    int SE_planet_2;
-    int SE_probe_2;
-    int SE_industry_2;
-    int SE_research_2;
-    int SE_economy_base;
-    int SE_effic_base;
-    int SE_support_base;
-    int SE_talent_base;
-    int SE_morale_base;
-    int SE_police_base;
-    int SE_growth_base;
-    int SE_planet_base;
-    int SE_probe_base;
-    int SE_industry_base;
-    int SE_research_base;
-    int unk_13;
-    int unk_14;
-    int tech_commerce_bonus; // Increases commerce income
-    int turn_commerce_income;
-    int unk_17;
-    int unk_18;
-    int tech_fungus_nutrient;
-    int tech_fungus_mineral;
-    int tech_fungus_energy;
-    int unk_22;
-    int SE_alloc_psych;
-    int SE_alloc_labs;
-    int unk_25;
-    int unk_26[11]; // unused
-    int tech_ranking; // Twice the number of techs discovered
-    int unk_27;
-    int ODP_deployed;
-    int theory_of_everything;
-    char tech_trade_source[92];
-    int tech_accumulated;
-    int tech_research_id;
-    int tech_cost;
-    int earned_techs_saved;
-    int net_random_event;
-    int AI_fight;
-    int AI_growth;
-    int AI_tech;
-    int AI_wealth;
-    int AI_power;
-    int target_x;
-    int target_y;
-    int unk_28;
-    int council_call_turn;
-    int unk_29[11]; // Council related
-    int unk_30[11]; // Council related
-    byte facility_announced[4]; // bitfield - used to determine one time play of fac audio blurb
-    int unk_32;
-    int unk_33;
-    int clean_minerals_modifier; // Starts from zero and increases by one after each fungal pop.
-    int unk_36;
-    int unk_37;
-    char saved_queue_name[8][24];
-    int saved_queue_size[8];
-    int saved_queue_items[8][10];
-    int unk_40[8];
-    int unk_41[40];
-    int unk_42[32];
-    int unk_43[8];
-    int unk_44;
-    int unk_45;
-    int unk_46;
-    int unk_47;
-    int nutrient_surplus_total;
-    int labs_total;
-    int satellites_nutrient;
-    int satellites_mineral;
-    int satellites_energy;
-    int satellites_ODP;
-    int best_weapon_value;
-    int best_psi_land_offense;
-    int best_psi_land_defense;
-    int best_armor_value;
-    int best_land_speed;
-    int enemy_best_weapon_value; // Enemy refers here to any non-pact faction
-    int enemy_best_armor_value;
-    int enemy_best_land_speed;
-    int enemy_best_psi_land_offense;
-    int enemy_best_psi_land_defense;
-    int unk_64;
-    int unk_65;
-    int unk_66;
-    int unk_67;
-    int unk_68;
-    int unk_69;
-    byte units_active[512];
-    byte units_queue[512];
-    short units_lost[512];
-    int total_combat_units;
-    int current_num_bases;
-    int mil_strength_1;
-    int mil_strength_2;
-    int pop_total;
-    int unk_70;
-    int planet_busters;
-    int unk_71;
-    int unk_72;
-    /*
-    AI planning variables that relate to faction units in specific disjoint land/water areas.
-    All of these are indexed by the region value in MAP struct.
-    */
-    short region_total_combat_units[128];
-    byte region_total_bases[128];
-    byte region_total_offensive_units[128];
-    short region_force_rating[128]; // Combined offensive/morale rating of all units in the area
-    short region_flags[128]; // Movement planning flags
-    short region_territory_tiles[128];
-    short region_visible_tiles[128];
-    short region_good_tiles[128];
-    short region_unk_5[128]; // Unknown reset_territory/enemy_move counter
-    byte region_unk_6[128]; // Unknown enemy_strategy state
-    byte region_territory_goodies[128];
-    byte region_base_plan[128]; // visible in map UI with omni view + debug mode under base name
-    /* End of block */
-    Goal goals[75];
-    Goal sites[25];
-    int unk_92;
-    int unk_93;
-    int unk_94;
-    int unk_95;
-    int unk_96;
-    int unk_97;
-    int unk_98;
-    int unk_99;
-    int unk_100[8];
-    int corner_market_turn;
-    int corner_market_active;
-    int unk_101;
-    int unk_102;
-    int unk_103;
-    int player_flags_ext;
-    int unk_105;
-    int unk_106;
-    int unk_107;
-    int unk_108;
-    /*
-    Thinker variables in the old save game format.
-    */
-    short old_thinker_header;
-    char old_thinker_flags;
-    char old_thinker_tech_id;
-    int old_thinker_tech_cost;
-    float old_thinker_enemy_range;
-    int padding[7];
+/*0000*/	int player_flags;
+/*0004*/	int ranking; // 0 (lowest) to 7 (highest)
+/*0008*/	int diff_level;
+/*000C*/	int base_name_offset; // Keep track which base names have been used
+/*0010*/	int base_sea_name_offset; // Keep track which sea base names have been used
+/*0014*/	int last_base_turn; // Turn for last built, captured or acquired (drone riot) base
+/*0018*/	int diplo_status[8]; // Contains all formal treaties
+/*0038*/	int diplo_agenda[8];
+/*0058*/	int diplo_friction[8];
+/*0078*/	int diplo_spoke[8]; // Turn for the last player-to-AI communication; -1 for never
+/*0098*/	int diplo_merc[8]; // Possibly higher values indicate willingness for deal-making
+/*00B8*/	char diplo_patience[8]; // AI-to-player
+/*00C0*/	int sanction_turns; // Turns left for economic sanctions imposed by other factions for atrocities
+/*00C4*/	int loan_balance[8]; // Loan balance remaining this faction owes another to be paid over term
+/*00D4*/	int loan_payment[8]; // The per turn payment amount this faction owes another faction
+/*0104*/	int unk_1[8]; // unused
+/*0124*/	int integrity_blemishes;
+/*0128*/	int global_reputation;
+/*012C*/	int diplo_gifts[8]; // ? Gifts and bribes we have received
+/*014C*/	int diplo_wrongs[8]; // Number of times we double crossed this faction
+/*016C*/	int diplo_betrayed[8]; // Number of times double crossed by this faction
+/*018C*/	int diplo_unk_3[8]; // ? combat related
+/*01AC*/	int diplo_unk_4[8]; // ? combat related
+/*01EC*/	int traded_maps; // bitfield of other factions that have traded maps with faction
+/*01D0*/	int base_governor_adv; // default advanced Governor settings
+/*01D4*/	int atrocities; // count committed by faction
+/*01D8*/	int major_atrocities; // count committed by faction
+/*01DC*/	int subvert_total; // ? probe: mind control base (+4) / subvert unit (+1) total
+/*01E0*/	int diplo_subvert[8]; // ? probe: mind control base (+4) / subvert unit (+1) per faction
+/*0200*/	int diplo_stolen_techs[8]; // probe: successfully procured research data (tech/map) per faction
+/*0220*/	int energy_credits;
+/*0224*/	int energy_cost;
+/*0228*/	int SE_Politics_pending;
+/*022C*/	int SE_Economics_pending;
+/*0230*/	int SE_Values_pending;
+/*0234*/	int SE_Future_pending;
+/*0238*/	int SE_Politics;
+/*023C*/	int SE_Economics;
+/*0240*/	int SE_Values;
+/*0244*/	int SE_Future;
+/*0248*/	int SE_upheaval_cost_paid;
+/*024C*/	int SE_economy_pending;
+/*0250*/	int SE_effic_pending;
+/*0254*/	int SE_support_pending;
+/*0258*/	int SE_talent_pending;
+/*025C*/	int SE_morale_pending;
+/*0260*/	int SE_police_pending;
+/*0264*/	int SE_growth_pending;
+/*0268*/	int SE_planet_pending;
+/*026C*/	int SE_probe_pending;
+/*0270*/	int SE_industry_pending;
+/*0274*/	int SE_research_pending;
+/*0278*/	int SE_economy;
+/*027C*/	int SE_effic;
+/*0280*/	int SE_support;
+/*0284*/	int SE_talent;
+/*0288*/	int SE_morale;
+/*028C*/	int SE_police;
+/*0290*/	int SE_growth;
+/*0294*/	int SE_planet;
+/*0298*/	int SE_probe;
+/*029C*/	int SE_industry;
+/*02A0*/	int SE_research;
+/*02A4*/	int SE_economy_2;
+/*02A8*/	int SE_effic_2;
+/*02AC*/	int SE_support_2;
+/*02B0*/	int SE_talent_2;
+/*02B4*/	int SE_morale_2;
+/*02B8*/	int SE_police_2;
+/*02BC*/	int SE_growth_2;
+/*02C0*/	int SE_planet_2;
+/*02C4*/	int SE_probe_2;
+/*02C8*/	int SE_industry_2;
+/*02CC*/	int SE_research_2;
+/*02D0*/	int SE_economy_base;
+/*02D4*/	int SE_effic_base;
+/*02D8*/	int SE_support_base;
+/*02DC*/	int SE_talent_base;
+/*02E0*/	int SE_morale_base;
+/*02E4*/	int SE_police_base;
+/*02E8*/	int SE_growth_base;
+/*02EC*/	int SE_planet_base;
+/*02F0*/	int SE_probe_base;
+/*02F4*/	int SE_industry_base;
+/*02F8*/	int SE_research_base;
+/*02FC*/	int unk_13;
+/*0300*/	int unk_14;
+/*0304*/	int tech_commerce_bonus; // Increases commerce income
+/*0308*/	int turn_commerce_income;
+/*030C*/	int unk_17;
+/*0310*/	int unk_18;
+/*0314*/	int tech_fungus_nutrient;
+/*0318*/	int tech_fungus_mineral;
+/*031C*/	int tech_fungus_energy;
+/*0320*/	int unk_22;
+/*0324*/	int SE_alloc_psych;
+/*0328*/	int SE_alloc_labs;
+/*032C*/	int unk_25;
+/*0330*/	int unk_26[11]; // unused
+/*035C*/	int tech_ranking; // Twice the number of techs discovered
+/*0360*/	int unk_27;
+/*0364*/	int ODP_deployed;
+/*0368*/	int theory_of_everything;
+/*036C*/	char tech_trade_source[92];
+/*03C8*/	int tech_accumulated;
+/*03CC*/	int tech_research_id;
+/*03D0*/	int tech_cost;
+/*03D4*/	int earned_techs_saved;
+/*03D8*/	int net_random_event;
+/*0000*/	int AI_fight;
+/*0000*/	int AI_growth;
+/*0000*/	int AI_tech;
+/*0000*/	int AI_wealth;
+/*0000*/	int AI_power;
+/*0000*/	int target_x;
+/*0000*/	int target_y;
+/*0000*/	int unk_28;
+/*0000*/	int council_call_turn;
+/*0000*/	int unk_29[11]; // Council related
+/*0000*/	int unk_30[11]; // Council related
+/*0000*/	byte facility_announced[4]; // bitfield - used to determine one time play of fac audio blurb
+/*0000*/	int unk_32;
+/*0000*/	int unk_33;
+/*0000*/	int clean_minerals_modifier; // Starts from zero and increases by one after each fungal pop.
+/*0000*/	int unk_36;
+/*0000*/	int unk_37;
+/*0000*/	char saved_queue_name[8][24];
+/*0000*/	int saved_queue_size[8];
+/*0000*/	int saved_queue_items[8][10];
+/*0000*/	int unk_40[8];
+/*0000*/	int unk_41[40];
+/*0000*/	int unk_42[32];
+/*0000*/	int unk_43[8];
+/*0000*/	int unk_44;
+/*0000*/	int unk_45;
+/*0000*/	int unk_46;
+/*0000*/	int unk_47;
+/*0000*/	int nutrient_surplus_total;
+/*0000*/	int labs_total;
+/*0000*/	int satellites_nutrient;
+/*0000*/	int satellites_mineral;
+/*0000*/	int satellites_energy;
+/*0000*/	int satellites_ODP;
+/*0000*/	int best_weapon_value;
+/*0000*/	int best_psi_land_offense;
+/*0000*/	int best_psi_land_defense;
+/*0000*/	int best_armor_value;
+/*0000*/	int best_land_speed;
+/*0000*/	int enemy_best_weapon_value; // Enemy refers here to any non-pact faction
+/*0000*/	int enemy_best_armor_value;
+/*0000*/	int enemy_best_land_speed;
+/*0000*/	int enemy_best_psi_land_offense;
+/*0000*/	int enemy_best_psi_land_defense;
+/*0000*/	int unk_64;
+/*0000*/	int unk_65;
+/*0000*/	int unk_66;
+/*0000*/	int unk_67;
+/*0000*/	int unk_68;
+/*0000*/	int unk_69;
+/*0000*/	byte units_active[512];
+/*0000*/	byte units_queue[512];
+/*0000*/	short units_lost[512];
+/*0000*/	int total_combat_units;
+/*0000*/	int current_num_bases;
+/*0000*/	int mil_strength_1;
+/*0000*/	int mil_strength_2;
+/*0000*/	int pop_total;
+/*0000*/	int unk_70;
+/*0000*/	int planet_busters;
+/*0000*/	int unk_71;
+/*0000*/	int unk_72;
+			/*
+			AI planning variables that relate to faction units in specific disjoint land/water areas.
+			All of these are indexed by the region value in MAP struct.
+			*/
+/*0000*/	short region_total_combat_units[128];
+/*0000*/	byte region_total_bases[128];
+/*0000*/	byte region_total_offensive_units[128];
+/*0000*/	short region_force_rating[128]; // Combined offensive/morale rating of all units in the area
+/*0000*/	short region_flags[128]; // Movement planning flags
+/*0000*/	short region_territory_tiles[128];
+/*0000*/	short region_visible_tiles[128];
+/*0000*/	short region_good_tiles[128];
+/*0000*/	short region_unk_5[128]; // Unknown reset_territory/enemy_move counter
+/*0000*/	byte region_unk_6[128]; // Unknown enemy_strategy state
+/*0000*/	byte region_territory_goodies[128];
+/*0000*/	byte region_base_plan[128]; // visible in map UI with omni view + debug mode under base name
+/*0000*/	/* End of block */
+/*0000*/	Goal goals[75];
+/*0000*/	Goal sites[25];
+/*0000*/	int unk_92;
+/*0000*/	int unk_93;
+/*0000*/	int unk_94;
+/*0000*/	int unk_95;
+/*0000*/	int unk_96;
+/*0000*/	int unk_97;
+/*0000*/	int unk_98;
+/*0000*/	int unk_99;
+/*0000*/	int unk_100[8];
+/*0000*/	int corner_market_turn;
+/*0000*/	int corner_market_active;
+/*0000*/	int unk_101;
+/*0000*/	int unk_102;
+/*0000*/	int unk_103;
+/*0000*/	int player_flags_ext;
+/*0000*/	int unk_105;
+/*0000*/	int unk_106;
+/*0000*/	int unk_107;
+/*0000*/	int unk_108;
+			/*
+			Thinker variables in the old save game format.
+			*/
+/*0000*/	short old_thinker_header;
+/*0000*/	char old_thinker_flags;
+/*0000*/	char old_thinker_tech_id;
+/*0000*/	int old_thinker_tech_cost;
+/*0000*/	float old_thinker_enemy_range;
+/*0000*/	int padding[7];
 };
 
 struct CRules {
@@ -681,8 +681,8 @@ struct CTerraform {
     char* name_sea;
     int preq_tech;
     int preq_tech_sea;
-    uint32_t bit;
-    uint32_t bit_incompatible;
+    int flag;
+    int flag_sea;
     int rate;
     char* shortcuts;
 };
@@ -725,19 +725,19 @@ struct UNIT {
 };
 
 struct VEH {
-    short x;
-    short y;
-    int state;
-    short flags;
-    short unit_id;
-    short pad_0; // unused
-    char faction_id;
-    char year_end_lurking;
-    char damage_taken;
-    char move_status;
-    char waypoint_count;
-    char patrol_current_point;
-    short waypoint_1_x;
+    short x;					//0000
+    short y;					//0002
+    int state;					//0004
+    short flags;				//0008
+    short unit_id;				//000A
+    short pad_0; // unused		//000C
+    char faction_id;			//000E
+    char year_end_lurking;		//000F
+    char damage_taken;			//0010
+    char move_status;			//0011
+    char waypoint_count;		//0012
+    char patrol_current_point;	//0013
+    short waypoint_1_x;			//0014
     short waypoint_2_x;
     short waypoint_3_x;
     short waypoint_4_x;
@@ -745,11 +745,11 @@ struct VEH {
     short waypoint_2_y;
     short waypoint_3_y;
     short waypoint_4_y;
-    char morale;
-    char terraforming_turns;
-    char type_crawling;
-    byte visibility;
-    char road_moves_spent;
+    char morale;				//0024
+    char terraforming_turns;	//0025
+    char type_crawling;			//0026
+    byte visibility;			//0027
+    char road_moves_spent;		//0028
     char rotate_angle;
     char iter_count;
     char status_icon;
@@ -765,9 +765,6 @@ struct VEH {
     int triad() {
         return Chassis[(int)Units[unit_id].chassis_type].triad;
     }
-    int reactor_type() {
-        return Units[unit_id].reactor_type;
-    }
     int weapon_type() {
         return Units[unit_id].weapon_type;
     }
@@ -779,12 +776,6 @@ struct VEH {
     }
     bool is_visible(int faction) {
         return visibility & (1 << faction);
-    }
-    bool mid_damage() {
-        return damage_taken > 3*Units[unit_id].reactor_type;
-    }
-    bool high_damage() {
-        return damage_taken > 5*Units[unit_id].reactor_type;
     }
 };
 

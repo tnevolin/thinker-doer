@@ -163,115 +163,6 @@ Display more information and more correct one in odds display dialog.
 */
 void patch_display_odds()
 {
-//    // replace calculate odds code
-//
-//    int calculate_odds_bytes_length = 0xC3;
-//
-//    /*
-//    0:  8b 5d fc                mov    ebx,DWORD PTR [ebp-0x4]
-//    3:  83 c4 18                add    esp,0x18
-//    6:  0f bf 83 32 28 95 00    movsx  eax,WORD PTR [ebx+0x952832]
-//    d:  8d 0c 40                lea    ecx,[eax+eax*2]
-//    10: 8d 04 88                lea    eax,[eax+ecx*4]
-//    13: c1 e0 02                shl    eax,0x2
-//    16: 80 b8 92 b8 9a 00 0c    cmp    BYTE PTR [eax+0x9ab892],0xc
-//    1d: 75 07                   jne    0x26
-//    1f: b8 01 00 00 00          mov    eax,0x1
-//    24: eb 1c                   jmp    0x42
-//    26: 33 d2                   xor    edx,edx
-//    28: 6a 64                   push   0x64
-//    2a: 8a 90 8f b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab88f]
-//    30: 6a 01                   push   0x1
-//    32: 8b c2                   mov    eax,edx
-//    34: 50                      push   eax
-//    35: e8 92 ae f1 ff          call   0xfff1aecc
-//    3a: 8d 04 80                lea    eax,[eax+eax*4]
-//    3d: 83 c4 0c                add    esp,0xc
-//    40: d1 e0                   shl    eax,1
-//    42: 33 c9                   xor    ecx,ecx
-//    44: 8a 8b 38 28 95 00       mov    cl,BYTE PTR [ebx+0x952838]
-//    4a: 2b c1                   sub    eax,ecx
-//    4c: 78 0e                   js     0x5c
-//    4e: 3d 0f 27 00 00          cmp    eax,0x270f
-//    53: be 0f 27 00 00          mov    esi,0x270f
-//    58: 7f 02                   jg     0x5c
-//    5a: 8b f0                   mov    esi,eax
-//    5c: 8b 7d f8                mov    edi,DWORD PTR [ebp-0x8]
-//    5f: 0f af 75 ec             imul   esi,DWORD PTR [ebp-0x14]
-//    63: 0f bf 87 32 28 95 00    movsx  eax,WORD PTR [edi+0x952832]
-//    6a: 8d 14 40                lea    edx,[eax+eax*2]
-//    6d: 8d 04 90                lea    eax,[eax+edx*4]
-//    70: c1 e0 02                shl    eax,0x2
-//    73: 80 b8 92 b8 9a 00 0c    cmp    BYTE PTR [eax+0x9ab892],0xc
-//    7a: 75 07                   jne    0x83
-//    7c: b8 01 00 00 00          mov    eax,0x1
-//    81: eb 1c                   jmp    0x9f
-//    83: 33 c9                   xor    ecx,ecx
-//    85: 6a 64                   push   0x64
-//    87: 8a 88 8f b8 9a 00       mov    cl,BYTE PTR [eax+0x9ab88f]
-//    8d: 6a 01                   push   0x1
-//    8f: 8b c1                   mov    eax,ecx
-//    91: 50                      push   eax
-//    92: e8 35 ae f1 ff          call   0xfff1aecc
-//    97: 8d 04 80                lea    eax,[eax+eax*4]
-//    9a: 83 c4 0c                add    esp,0xc
-//    9d: d1 e0                   shl    eax,1
-//    9f: 33 d2                   xor    edx,edx
-//    a1: 8a 97 38 28 95 00       mov    dl,BYTE PTR [edi+0x952838]
-//    a7: 2b c2                   sub    eax,edx
-//    a9: 78 12                   js     0xbd
-//    ab: 3d 0f 27 00 00          cmp    eax,0x270f
-//    b0: 7e 07                   jle    0xb9
-//    b2: bf 0f 27 00 00          mov    edi,0x270f
-//    b7: eb 06                   jmp    0xbf
-//    b9: 8b f8                   mov    edi,eax
-//    bb: eb 02                   jmp    0xbf
-//    bd: 33 ff                   xor    edi,edi
-//    bf: 0f af 7d e4             imul   edi,DWORD PTR [ebp-0x1c]
-//    */
-//    byte calculate_odds_old_bytes[] =
-//        { 0x8B, 0x5D, 0xFC, 0x83, 0xC4, 0x18, 0x0F, 0xBF, 0x83, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x0C, 0x40, 0x8D, 0x04, 0x88, 0xC1, 0xE0, 0x02, 0x80, 0xB8, 0x92, 0xB8, 0x9A, 0x00, 0x0C, 0x75, 0x07, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xEB, 0x1C, 0x33, 0xD2, 0x6A, 0x64, 0x8A, 0x90, 0x8F, 0xB8, 0x9A, 0x00, 0x6A, 0x01, 0x8B, 0xC2, 0x50, 0xE8, 0x92, 0xAE, 0xF1, 0xFF, 0x8D, 0x04, 0x80, 0x83, 0xC4, 0x0C, 0xD1, 0xE0, 0x33, 0xC9, 0x8A, 0x8B, 0x38, 0x28, 0x95, 0x00, 0x2B, 0xC1, 0x78, 0x0E, 0x3D, 0x0F, 0x27, 0x00, 0x00, 0xBE, 0x0F, 0x27, 0x00, 0x00, 0x7F, 0x02, 0x8B, 0xF0, 0x8B, 0x7D, 0xF8, 0x0F, 0xAF, 0x75, 0xEC, 0x0F, 0xBF, 0x87, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x14, 0x40, 0x8D, 0x04, 0x90, 0xC1, 0xE0, 0x02, 0x80, 0xB8, 0x92, 0xB8, 0x9A, 0x00, 0x0C, 0x75, 0x07, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xEB, 0x1C, 0x33, 0xC9, 0x6A, 0x64, 0x8A, 0x88, 0x8F, 0xB8, 0x9A, 0x00, 0x6A, 0x01, 0x8B, 0xC1, 0x50, 0xE8, 0x35, 0xAE, 0xF1, 0xFF, 0x8D, 0x04, 0x80, 0x83, 0xC4, 0x0C, 0xD1, 0xE0, 0x33, 0xD2, 0x8A, 0x97, 0x38, 0x28, 0x95, 0x00, 0x2B, 0xC2, 0x78, 0x12, 0x3D, 0x0F, 0x27, 0x00, 0x00, 0x7E, 0x07, 0xBF, 0x0F, 0x27, 0x00, 0x00, 0xEB, 0x06, 0x8B, 0xF8, 0xEB, 0x02, 0x33, 0xFF, 0x0F, 0xAF, 0x7D, 0xE4 }
-//    ;
-//
-//    /*
-//    0:  83 c4 18                add    esp,0x18
-//    3:  89 e0                   mov    eax,esp
-//    5:  83 e8 04                sub    eax,0x4
-//    8:  50                      push   eax
-//    9:  89 e0                   mov    eax,esp
-//    b:  83 e8 04                sub    eax,0x4
-//    e:  50                      push   eax
-//    f:  8b 7d e4                mov    edi,DWORD PTR [ebp-0x1c]
-//    12: 57                      push   edi
-//    13: 8b 75 ec                mov    esi,DWORD PTR [ebp-0x14]
-//    16: 56                      push   esi
-//    17: 8b 7d f8                mov    edi,DWORD PTR [ebp-0x8]
-//    1a: 57                      push   edi
-//    1b: 8b 5d fc                mov    ebx,DWORD PTR [ebp-0x4]
-//    1e: 53                      push   ebx
-//    1f: e8 fc ff ff ff          call   20 <_main+0x20>
-//    24: 83 c4 10                add    esp,0x10
-//    27: 5e                      pop    esi
-//    28: 5f                      pop    edi
-//    ...
-//    */
-//    byte calculate_odds_new_bytes[] =
-//        { 0x83, 0xC4, 0x18, 0x89, 0xE0, 0x83, 0xE8, 0x04, 0x50, 0x89, 0xE0, 0x83, 0xE8, 0x04, 0x50, 0x8B, 0x7D, 0xE4, 0x57, 0x8B, 0x75, 0xEC, 0x56, 0x8B, 0x7D, 0xF8, 0x57, 0x8B, 0x5D, 0xFC, 0x53, 0xE8, 0xFC, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x10, 0x5E, 0x5F, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
-//    ;
-//
-//    write_bytes
-//    (
-//        0x00508034,
-//        calculate_odds_old_bytes,
-//        calculate_odds_new_bytes,
-//        calculate_odds_bytes_length
-//    )
-//    ;
-//
-//    // set call pointer to custom calculate_odds function
-//
-//    write_call(0x00508034 + 0x1f, (int)calculate_odds);
-	
 	// intercept parse_num call to capture attacker odds
 	
 	write_call(0x005082AF, (int)captureAttackerOdds);
@@ -3370,15 +3261,17 @@ void patch_setup_wtp(Config* cf)
 //		write_bytes(0x00562094, old_bytes, new_bytes, sizeof(old_bytes));
 //	}
 
-    // read basic rules
+	// read basic rules
 
-    patch_read_basic_rules();
+	patch_read_basic_rules();
 
-    // patch battle_compute
+	// patch battle_compute
 
-    patch_battle_compute();
+	patch_battle_compute();
 
-    // implemented in Thinker?
+	// integrated into Thinker
+	// but it is not 1:1 match
+	// so I disabled Thinker's setting and keep using mine instead
 	// patch ignore_reactor_power_in_combat_processing
 
 	if (cf->ignore_reactor_power_in_combat)
@@ -3386,69 +3279,70 @@ void patch_setup_wtp(Config* cf)
 		patch_ignore_reactor_power_in_combat_processing();
 	}
 
-    // patch combat roll
+	// patch combat roll
 
-    patch_combat_roll();
-
-    // patch odds display
-    
+	patch_combat_roll();
+	
+	// patch odds display
+	
 	patch_display_odds();
 	
-    // patch ALIEN guaranteed technologies
+	// integrated into Thinker
+//	// patch ALIEN guaranteed technologies
+//
+//	if (cf->disable_alien_guaranteed_technologies)
+//	{
+//		patch_alien_guaranteed_technologies();
+//
+//	}
 
-    if (cf->disable_alien_guaranteed_technologies)
-    {
-        patch_alien_guaranteed_technologies();
+	// patch weapon icon selection algorithm
 
-    }
+	if (cf->alternative_weapon_icon_selection_algorithm)
+	{
+		patch_weapon_icon_selection_algorithm();
 
-    // patch weapon icon selection algorithm
+	}
 
-    if (cf->alternative_weapon_icon_selection_algorithm)
-    {
-        patch_weapon_icon_selection_algorithm();
+	// patch prototype cost formula
 
-    }
+	if (cf->alternative_prototype_cost_formula)
+	{
+		patch_alternative_prototype_cost_formula();
 
-    // patch prototype cost formula
+	}
 
-    if (cf->alternative_prototype_cost_formula)
-    {
-        patch_alternative_prototype_cost_formula();
+	// patch flat hurry cost
 
-    }
+	if (cf->flat_hurry_cost)
+	{
+		patch_flat_hurry_cost();
 
-    // patch flat hurry cost
+	}
 
-    if (cf->flat_hurry_cost)
-    {
-        patch_flat_hurry_cost();
+	// patch upgrade cost formula
 
-    }
+	if (cf->alternative_upgrade_cost_formula)
+	{
+		patch_alternative_upgrade_cost_formula();
 
-    // patch upgrade cost formula
+	}
 
-    if (cf->alternative_upgrade_cost_formula)
-    {
-        patch_alternative_upgrade_cost_formula();
+	// patch base defense structure bonuses
 
-    }
+	if (cf->alternative_base_defensive_structure_bonuses)
+	{
+		patch_defensive_structures_bonus(cf->perimeter_defense_multiplier, cf->tachyon_field_bonus);
 
-    // patch base defense structure bonuses
+	}
 
-    if (cf->alternative_base_defensive_structure_bonuses)
-    {
-        patch_defensive_structures_bonus(cf->perimeter_defense_multiplier, cf->tachyon_field_bonus);
+	// patch collateral damage defender reactor
 
-    }
+	if (cf->collateral_damage_defender_reactor)
+	{
+		patch_collateral_damage_defender_reactor();
 
-    // patch collateral damage defender reactor
-
-    if (cf->collateral_damage_defender_reactor)
-    {
-        patch_collateral_damage_defender_reactor();
-
-    }
+	}
 
 	// integrated into Thinker
 //	// patch collateral damage value
@@ -3526,30 +3420,30 @@ void patch_setup_wtp(Config* cf)
 //
 //	}
 
-    // patch uniform_promotions
+	// patch uniform_promotions
 
-    if (cf->uniform_promotions)
-    {
+	if (cf->uniform_promotions)
+	{
 		patch_uniform_promotions();
-    }
+	}
 
-    // patch very_green_no_defense_bonus
+	// patch very_green_no_defense_bonus
 
-    if (cf->very_green_no_defense_bonus)
-    {
-        patch_very_green_no_defense_bonus();
+	if (cf->very_green_no_defense_bonus)
+	{
+		patch_very_green_no_defense_bonus();
 
-    }
+	}
 
-    // patch sea_territory_distance_same_as_land
+	// patch sea_territory_distance_same_as_land
 
-    if (cf->sea_territory_distance_same_as_land)
-    {
-        patch_sea_territory_distance_same_as_land();
+	if (cf->sea_territory_distance_same_as_land)
+	{
+		patch_sea_territory_distance_same_as_land();
 
-    }
+	}
 
-    // integrated into Thinker
+	// integrated into Thinker
 //	// patch coastal_territory_distance_same_as_sea
 //
 //	if (cf->coastal_territory_distance_same_as_sea)
@@ -3558,72 +3452,72 @@ void patch_setup_wtp(Config* cf)
 //
 //	}
 
-    // patch alternative_artillery_damage
+	// patch alternative_artillery_damage
 
-    if (cf->alternative_artillery_damage)
-    {
-        patch_alternative_artillery_damage();
+	if (cf->alternative_artillery_damage)
+	{
+		patch_alternative_artillery_damage();
 
-    }
+	}
 
-    // patch disable_home_base_cc_morale_bonus
+	// patch disable_home_base_cc_morale_bonus
 
-    if (cf->disable_home_base_cc_morale_bonus)
-    {
-        patch_disable_home_base_cc_morale_bonus();
+	if (cf->disable_home_base_cc_morale_bonus)
+	{
+		patch_disable_home_base_cc_morale_bonus();
 
-    }
+	}
 
-    // patch disable_current_base_cc_morale_bonus
+	// patch disable_current_base_cc_morale_bonus
 
-    if (cf->disable_current_base_cc_morale_bonus)
-    {
-        patch_disable_current_base_cc_morale_bonus();
+	if (cf->disable_current_base_cc_morale_bonus)
+	{
+		patch_disable_current_base_cc_morale_bonus();
 
-    }
+	}
 
-    // patch default_morale_very_green
+	// patch default_morale_very_green
 
-    if (cf->default_morale_very_green)
-    {
-        patch_default_morale_very_green();
+	if (cf->default_morale_very_green)
+	{
+		patch_default_morale_very_green();
 
-    }
+	}
 
-    // patch tile_yield
+	// patch tile_yield
 
-    patch_tile_yield();
+	patch_tile_yield();
 
-    // se_accumulated_resource_adjustment
+	// se_accumulated_resource_adjustment
 
-    patch_se_accumulated_resource_adjustment();
+	patch_se_accumulated_resource_adjustment();
 
-    // hex cost
+	// hex cost
 
-    patch_mod_hex_cost();
+	patch_mod_hex_cost();
 
-    // base population info
+	// base population info
 
-    patch_display_base_population_info();
+	patch_display_base_population_info();
 
-    // base init
+	// base init
 
-    patch_base_init();
+	patch_base_init();
 
-    // HSA does not kill probe
+	// HSA does not kill probe
 
-    if (cf->hsa_does_not_kill_probe)
+	if (cf->hsa_does_not_kill_probe)
 	{
 		patch_hsa_does_not_kill_probe();
 	}
 
-    // probe does not destroy defense
+	// probe does not destroy defense
 
-    patch_probe_not_destroy_defense();
+	patch_probe_not_destroy_defense();
 
-    // help ability
+	// help ability
 
-    patch_help_ability_cost_text();
+	patch_help_ability_cost_text();
 
 	// cloning vats impunities
 
@@ -3637,16 +3531,16 @@ void patch_setup_wtp(Config* cf)
 
 	patch_social_calc();
 
-    // cloning vats effect
+	// cloning vats effect
 
-    if (cf->cloning_vats_se_growth != 0)
+	if (cf->cloning_vats_se_growth != 0)
 	{
 		patch_cloning_vats_mechanics();
 	}
 
-    // patch GROWTH rating cap
+	// patch GROWTH rating cap
 
-    if (cf->se_growth_rating_cap != 5)
+	if (cf->se_growth_rating_cap != 5)
 	{
 		patch_se_growth_rating_cap(cf->se_growth_rating_cap);
 	}
@@ -3817,9 +3711,9 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_enemy_move();
 
-    patch_faction_upkeep();
-    
-    patch_disable_move_territory_restrictions();
-    
+	patch_faction_upkeep();
+	
+	patch_disable_move_territory_restrictions();
+	
 }
 

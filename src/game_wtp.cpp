@@ -9,20 +9,13 @@ int getBaseMineralCost(int baseId, int itemId)
 {
 	if (baseId < 0)
 		return 0;
+	
+	BASE *base = &(Bases[baseId]);
 
-	int mineralCost;
+	int mineralCost = (itemId >= 0 ? tx_veh_cost(itemId, baseId, 0) : Facility[-itemId].cost) * cost_factor(base->faction_id, 1, -1);
 
-	// vehicle
-	if (itemId >= 0)
-	{
-		mineralCost = tx_veh_cost(itemId, baseId, 0);
-	}
-	// facility
-	else
-	{
-		mineralCost = mineral_cost(Bases[baseId].faction_id, itemId);
-	}
-
+	debug("mineralCost=%d\n", mineralCost);
+	
 	return mineralCost;
 
 }
@@ -1143,7 +1136,7 @@ int estimateBaseProductionTurnsToComplete(int id)
 {
 	BASE *base = &(Bases[id]);
 
-	return ((mineral_cost(id, base->queue_items[0]) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
+	return ((getBaseMineralCost(id, base->queue_items[0]) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
 
 }
 
@@ -1782,22 +1775,18 @@ double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
 	// basic defense odds against land native attack
 
 	double nativeProtection = 1.0 / getPsiCombatBaseOdds(TRIAD_LAND);
-	debug("nativeProtection=%f\n", nativeProtection);
 
 	// add base defense bonus
 
 	nativeProtection *= 1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0;
-	debug("nativeProtection=%f\n", nativeProtection);
 
 	// add faction defense bonus
 
 	nativeProtection *= getFactionDefenseMultiplier(factionId);
-	debug("nativeProtection=%f\n", nativeProtection);
 
 	// add PLANET
 
 	nativeProtection *= getSEPlanetModifierDefense(factionId);
-	debug("nativeProtection=%f\n", nativeProtection);
 
 	// add trance
 
@@ -1805,7 +1794,6 @@ double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
 	{
 		nativeProtection *= 1.0 + (double)Rules->combat_bonus_trance_vs_psi / 100.0;
 	}
-	debug("nativeProtection=%f\n", nativeProtection);
 
 	// correction for native base attack penalty until turn 50
 
@@ -1813,7 +1801,6 @@ double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
 	{
 		nativeProtection *= 2;
 	}
-	debug("nativeProtection=%f\n", nativeProtection);
 
 	return nativeProtection;
 
@@ -2322,7 +2309,7 @@ int getRemainingMinerals(int baseId)
 {
 	BASE *base = &(Bases[baseId]);
 
-	return std::max(0, mineral_cost(baseId, base->queue_items[0]) - base->minerals_accumulated);
+	return std::max(0, getBaseMineralCost(baseId, base->queue_items[0]) - base->minerals_accumulated);
 
 }
 
@@ -2495,11 +2482,11 @@ void generateTerraformingChange(MAP_STATE *mapState, int action)
 		{
 			// remove items
 
-			mapState->items &= ~Terraform[action].flag_sea;
+			mapState->items &= ~Terraform[action].bit_incompatible;
 
 			// add items
 
-			mapState->items |= Terraform[action].flag;
+			mapState->items |= Terraform[action].bit;
 
 		}
 
@@ -2779,5 +2766,16 @@ Checks if territory belongs to nobody, us or ally.
 bool isFriendlyTerritory(int factionId, MAP* tile)
 {
 	return tile->owner == -1 || tile->owner == factionId || has_pact(factionId, tile->owner);
+}
+
+bool isVehicleHasAbility(int vehicleId, int abilityId)
+{
+	return unit_has_ability(Vehicles[vehicleId].unit_id, abilityId);
+}
+
+bool isDiplomaticStatus(int faction1Id, int faction2Id, int diplomaticStatus)
+{
+    return faction1Id != faction2Id && faction1Id >= 0 && faction2Id >= 0
+        && (Factions[faction1Id].diplo_status[faction2Id] & diplomaticStatus);
 }
 

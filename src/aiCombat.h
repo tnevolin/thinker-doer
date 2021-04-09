@@ -36,4 +36,11 @@ int kickSeaExplorerFromLandPort(int vehicleId);
 int killVehicle(int vehicleId);
 int moveVehicle(int vehicleId, int x, int y);
 MAP_INFO getNearestUnexploredConnectedOceanRegionTile(int factionId, int initialLocationX, int initialLocationY);
+double getVehicleMoraleModifier(int vehicleId);
+double getVehicleConventionalOffenseValue(int vehicleId);
+double getVehicleConventionalDefenseValue(int vehicleId);
+double getVehiclePsiOffenseValue(int vehicleId);
+double getVehiclePsiDefenseValue(int vehicleId);
+double getThreatLevel();
+int getRangeToNearestActiveFactionBase(int x, int y);
 
