@@ -76,5 +76,4 @@ extern fp_3void *tx_action_move;
 extern fp_1int *tx_veh_cargo;
 extern fp_3int *tx_zoc_move;
 extern fp_4int* base_prod_choice;
-extern fp_4int *tech_pick;
 

@@ -161,9 +161,5 @@ fp_1int *tx_veh_cargo = (fp_1int *)0x005C1760;
 // ZOC check
 fp_3int *tx_zoc_move = (fp_3int *)0x005C8D40;
 
-// propose base production
-fp_4int *base_prod_choice = (fp_4int*)0x004F81A0;
-
-// select technology to research
-fp_4int *tech_pick = (fp_4int *)0x005BEB70;
+fp_4int* base_prod_choice = (fp_4int*)0x004F81A0;
 

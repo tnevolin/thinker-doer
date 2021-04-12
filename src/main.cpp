@@ -357,6 +357,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->condenser_and_enricher_do_not_multiply_nutrients = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "alternative_tech_cost"))
+    {
+        cf->alternative_tech_cost = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "tech_cost_scale"))
     {
         cf->tech_cost_scale = atof(value);
@@ -456,6 +460,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_base_allowed_fungus_rocky"))
     {
         cf->ai_base_allowed_fungus_rocky = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "sensor_indestructible_bombardment"))
+    {
+        cf->sensor_indestructible_bombardment = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

@@ -175,9 +175,4 @@ HOOK_API void captureDefenderOdds(const int position, const int value);
 HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int a3, const char* pcx_file_name, int a5);
 double calculateWinningProbability(double p, int attackerHP, int defenderHP);
 void simplifyOdds(int *attackerOdds, int *defenderOdds);
-HOOK_API int modifiedTechRate(int factionId);
-HOOK_API int modifiedTechPick(int factionId, int a2, int a3, int a4);
-int getLowestLevelAvilableTech(int factionId);
-bool isTechDiscovered(int factionId, int techId);
-bool isTechAvailable(int factionId, int techId);
 

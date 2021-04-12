@@ -1,3 +1,8 @@
+# Version 215
+
+* Disabling territory bonus temporarily to see how it behaves.
+* Tech cost computation is simplified by reusing game variables. It is not stored in save anymore reducing risk of multiplayer corruption.
+
 # Version 214
 
 * Reinstated alien faction offense and defense bonuses. Not sure they need to be crippled even more.

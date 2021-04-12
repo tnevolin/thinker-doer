@@ -44,6 +44,8 @@ int handler(void* user, const char* section, const char* name, const char* value
         cf->scroll_area = std::max(0, atoi(value));
     } else if (MATCH("thinker", "world_map_labels")) {
         cf->world_map_labels = atoi(value);
+    } else if (MATCH("thinker", "new_base_names")) {
+        cf->new_base_names = atoi(value);
     } else if (MATCH("thinker", "windowed")) {
         cf->windowed = atoi(value);
     } else if (MATCH("thinker", "window_width")) {
@@ -52,12 +54,12 @@ int handler(void* user, const char* section, const char* name, const char* value
         cf->window_height = std::max(600, atoi(value));
     } else if (MATCH("thinker", "smac_only")) {
         cf->smac_only = atoi(value);
-    } else if (MATCH("thinker", "free_formers")) {
-        cf->free_formers = atoi(value);
     } else if (MATCH("thinker", "player_free_units")) {
         cf->player_free_units = atoi(value);
+    } else if (MATCH("thinker", "free_formers")) {
+        cf->free_formers = std::max(0, atoi(value));
     } else if (MATCH("thinker", "free_colony_pods")) {
-        cf->free_colony_pods = atoi(value);
+        cf->free_colony_pods = std::max(0, atoi(value));
     } else if (MATCH("thinker", "satellites_nutrient")) {
         cf->satellites_nutrient = std::max(0, atoi(value));
     } else if (MATCH("thinker", "satellites_mineral")) {
@@ -120,6 +122,8 @@ int handler(void* user, const char* section, const char* name, const char* value
         cf->disable_planetpearls = atoi(value);
     } else if (MATCH("thinker", "disable_aquatic_bonus_minerals")) {
         cf->disable_aquatic_bonus_minerals = atoi(value);
+    } else if (MATCH("thinker", "disable_alien_guaranteed_techs")) {
+        cf->disable_alien_guaranteed_techs = atoi(value);
     } else if (MATCH("thinker", "cost_factor")) {
         opt_list_parse(CostRatios, buf, MaxDiffNum, 1);
     } else if (MATCH("thinker", "tech_cost_factor")) {
@@ -1582,7 +1586,7 @@ int select_prod(int id) {
 
     double w1 = std::min(1.0, std::max(0.5, 1.0 * minerals / p->proj_limit));
     double w2 = 2.0 * enemymil / (m->thinker_enemy_range * 0.1 + 0.1) + 0.5 * p->enemy_bases
-        + std::min(1.0, expansion_ratio(faction)) * (f->AI_fight * 0.2 + 0.8);
+        + std::min(1.0, f->current_num_bases / 24.0) * (f->AI_fight * 0.2 + 0.8);
     double threat = 1 - (1 / (1 + std::max(0.0, w1 * w2)));
 
     debug("select_prod %d %d %2d %2d def: %d frm: %d prb: %d crw: %d pods: %d expand: %d "\
