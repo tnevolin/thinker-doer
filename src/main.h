@@ -246,6 +246,7 @@ struct Config {
     int biology_lab_research_bonus = 2;
     bool hsa_does_not_kill_probe = false;
     bool condenser_and_enricher_do_not_multiply_nutrients = false;
+    bool alternative_tech_cost = false;
     double tech_cost_scale = 1.0;
     bool flat_extra_prototype_cost = false;
     bool fix_mineral_contribution = false;
@@ -271,6 +272,7 @@ struct Config {
     bool unit_upgrade_ignores_movement = false;
     bool group_terraforming = false;
     bool ai_base_allowed_fungus_rocky = false;
+    bool sensor_indestructible_bombardment = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

@@ -86,8 +86,8 @@ HOOK_API int mod_tech_rate(int faction) {
 
 		// =WTP=
 		// alternative tech cost computation
-		m->thinker_tech_cost = tech_cost(faction, f->tech_research_id);
-//		m->thinker_tech_cost = wtp_tech_cost(faction, f->tech_research_id);
+//		m->thinker_tech_cost = tech_cost(faction, f->tech_research_id);
+		m->thinker_tech_cost = wtp_tech_cost(faction, f->tech_research_id);
 
         m->thinker_tech_id = f->tech_research_id;
     }

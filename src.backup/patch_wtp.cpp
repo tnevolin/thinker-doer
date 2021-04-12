@@ -3249,70 +3249,6 @@ void patch_disable_move_territory_restrictions()
 
 }
 
-void patch_tech_cost()
-{
-	// intercept tech_rate to substitute alternative tech cost
-	
-	write_call(0x4452D5, (int)modifiedTechRate);
-	write_call(0x498D26, (int)modifiedTechRate);
-	write_call(0x4A77DA, (int)modifiedTechRate);
-	write_call(0x521872, (int)modifiedTechRate);
-	write_call(0x5218BE, (int)modifiedTechRate);
-	write_call(0x5581E9, (int)modifiedTechRate);
-	write_call(0x5BEA4D, (int)modifiedTechRate);
-	write_call(0x5BEAC7, (int)modifiedTechRate);
-	
-	// intercept tech_pick to recompute tech cost based on tech ID
-	
-    write_call(0x00515080, (int)modifiedTechPick);
-    write_call(0x005BE4AC, (int)modifiedTechPick);
-    
-}
-
-void patch_sensor_indestructible_bombardment()
-{
-	int sensor_indestructible_bombardment_1_bytes_length = 0x5;
-
-	/*
-	0:  25 01 00 00 80          and    eax,0x80000001
-	*/
-	byte sensor_indestructible_bombardment_1_bytes_old[] = { 0x25, 0x01, 0x00, 0x00, 0x80 };
-
-	/*
-	0:  25 01 00 00 40          and    eax,0x40000001
-	*/
-	byte sensor_indestructible_bombardment_1_bytes_new[] = { 0x25, 0x01, 0x00, 0x00, 0x40 };
-
-	write_bytes
-	(
-		0x004CAB1E,
-		sensor_indestructible_bombardment_1_bytes_old,
-		sensor_indestructible_bombardment_1_bytes_new,
-		sensor_indestructible_bombardment_1_bytes_length
-	);
-
-	int sensor_indestructible_bombardment_2_bytes_length = 0x5;
-
-	/*
-	0:  25 03 00 00 80          and    eax,0x80000003
-	*/
-	byte sensor_indestructible_bombardment_2_bytes_old[] = { 0x25, 0x03, 0x00, 0x00, 0x80 };
-
-	/*
-	0:  25 01 00 00 40          and    eax,0x40000001
-	*/
-	byte sensor_indestructible_bombardment_2_bytes_new[] = { 0x25, 0x01, 0x00, 0x00, 0x40 };
-
-	write_bytes
-	(
-		0x004CAD54,
-		sensor_indestructible_bombardment_2_bytes_old,
-		sensor_indestructible_bombardment_2_bytes_new,
-		sensor_indestructible_bombardment_2_bytes_length
-	);
-
-}
-
 void patch_setup_wtp(Config* cf)
 {
 	// integrated into Thinker
@@ -3778,16 +3714,6 @@ void patch_setup_wtp(Config* cf)
 	patch_faction_upkeep();
 	
 	patch_disable_move_territory_restrictions();
-	
-	if (cf->alternative_tech_cost)
-	{
-		patch_tech_cost();
-	}
-	
-	if (cf->sensor_indestructible_bombardment)
-	{
-		patch_sensor_indestructible_bombardment();
-	}
 	
 }
 

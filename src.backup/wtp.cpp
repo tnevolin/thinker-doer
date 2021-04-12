@@ -1394,8 +1394,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 /*
 Calculates tech level recursively.
 */
-int wtp_tech_level(int id)
-{
+int wtp_tech_level(int id) {
     if (id < 0 || id > TECH_TranT)
     {
         return 0;
@@ -1406,9 +1405,7 @@ int wtp_tech_level(int id)
         int v2 = wtp_tech_level(Tech[id].preq_tech2);
 
         return std::max(v1, v2) + 1;
-        
     }
-    
 }
 
 /*
@@ -3477,122 +3474,6 @@ void simplifyOdds(int *attackerOdds, int *defenderOdds)
 		}
 		
 	}
-	
-}
-
-HOOK_API int modifiedTechRate(int factionId)
-{
-	Faction *faction = &(Factions[factionId]);
-	
-	// find technology to compute the rate for
-	
-	int techId = 0;
-	
-	if (faction->tech_research_id >= 0)
-	{
-		// use selected tech ID
-		
-		techId = faction->tech_research_id;
-		
-	}
-	else
-	{
-		// search for lowest available tech instead
-		
-		techId = getLowestLevelAvilableTech(factionId);
-		
-	}
-	
-	// return alternative tech cost computation
-	
-	return wtp_tech_cost(factionId, techId);
-	
-}
-
-HOOK_API int modifiedTechPick(int factionId, int a2, int a3, int a4)
-{
-	Faction *faction = &(Factions[factionId]);
-	
-	// call original function
-	
-	int techId = tech_pick(factionId, a2, a3, a4);
-	
-	// check if techId is about to change
-	
-	if (techId != faction->tech_research_id)
-	{
-		// recalculate tech cost
-		
-		faction->tech_cost = wtp_tech_cost(factionId, techId);
-		
-	}
-	
-	// return techId
-	
-	return techId;
-	
-}
-
-int getLowestLevelAvilableTech(int factionId)
-{
-	int lowestLevelTechId = -1;
-	int minLevel = INT_MAX;
-	
-	for (int techId = 0; techId < MaxTechnologyNum; techId++)
-	{
-		// only faction available techs
-		
-		if (!isTechAvailable(factionId, techId))
-			continue;
-		
-		// get level
-		
-		int level = wtp_tech_level(techId);
-		
-		// update min level
-		
-		if (level < minLevel)
-		{
-			lowestLevelTechId = techId;
-			minLevel = level;
-		}
-		
-	}
-	
-	return lowestLevelTechId;
-	
-}
-
-bool isTechDiscovered(int factionId, int techId)
-{
-	return (TechOwners[techId] & (0x1 << factionId)) != 0;
-}
-
-bool isTechAvailable(int factionId, int techId)
-{
-	// check prerequisite tech 1 is discovered
-	
-	int preqTech1Id = Tech[techId].preq_tech1;
-	
-	if (preqTech1Id >= 0)
-	{
-		if (!isTechDiscovered(factionId, preqTech1Id))
-			return false;
-	}
-	
-	// check prerequisite tech 2 is discovered
-	
-	int preqTech2Id = Tech[techId].preq_tech2;
-	
-	if (preqTech2Id >= 0)
-	{
-		if (!isTechDiscovered(factionId, preqTech2Id))
-			return false;
-	}
-	
-	// no undiscovered prerequisites
-	
-	return true;
 	
 }
 

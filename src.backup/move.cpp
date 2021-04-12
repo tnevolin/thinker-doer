@@ -2139,9 +2139,7 @@ int combat_move(const int id) {
         }
     }
     if (tx >= 0) {
-		// =WTP=
-		// next line breaks good combat movement
-//        attack_check(id, &tx, &ty, false);
+        attack_check(id, &tx, &ty, false);
         debug("combat_attack %2d %2d -> %2d %2d\n", veh->x, veh->y, tx, ty);
         return set_move_to(id, tx, ty);
     }
