@@ -9,7 +9,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * [Changelog](https://github.com/tnevolin/thinker-doer/blob/master/wtp_changelog.md)
 * [Strategy tips](https://github.com/tnevolin/thinker-doer/blob/master/wtp_strategy.md)
 
-## Credits
+## Special thanks and acknowledgements
 
 * Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
 * bvanevery: Play testing and help in design. Especially nice ideas and analysis in area of reactors and combat.
