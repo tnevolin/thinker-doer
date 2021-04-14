@@ -180,4 +180,6 @@ HOOK_API int modifiedTechPick(int factionId, int a2, int a3, int a4);
 int getLowestLevelAvilableTech(int factionId);
 bool isTechDiscovered(int factionId, int techId);
 bool isTechAvailable(int factionId, int techId);
+HOOK_API void modifiedBattleReportItemNameDisplay(int destinationPointer, int sourcePointer);
+HOOK_API void modifiedBattleReportItemValueDisplay(int destinationPointer, int sourcePointer);
 

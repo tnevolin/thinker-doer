@@ -10,15 +10,17 @@ extern const char* scriptTxtID;
 // battle computation display variables
 
 extern int *tx_battle_compute_attacker_effect_count;
-extern char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50];
-extern int (*tx_battle_compute_attacker_effect_values)[0x4];
 extern int *tx_battle_compute_defender_effect_count;
+extern char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50];
 extern char (*tx_battle_compute_defender_effect_labels)[0x4][0x50];
+extern int (*tx_battle_compute_attacker_effect_values)[0x4];
 extern int (*tx_battle_compute_defender_effect_values)[0x4];
 
 // labels pointer
 
 extern char ***tx_labels;
+const int LABEL_OFFSET_PLANET = 0x271;
+const int LABEL_OFFSET_AIRTOAIR = 0x1C1;
 
 extern char *g_strTEMP;
 extern int *current_base_growth_rate;

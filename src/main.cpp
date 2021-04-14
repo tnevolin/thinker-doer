@@ -461,9 +461,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_base_allowed_fungus_rocky = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "sensor_indestructible_bombardment"))
+    else if (MATCH("wtp", "interceptor_scramble_fix"))
     {
-        cf->sensor_indestructible_bombardment = (atoi(value) == 0 ? false : true);
+        cf->interceptor_scramble_fix = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

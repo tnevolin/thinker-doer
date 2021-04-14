@@ -3269,48 +3269,13 @@ void patch_tech_cost()
     
 }
 
-void patch_sensor_indestructible_bombardment()
+void patch_interceptor_scramble_fix_display()
 {
-	int sensor_indestructible_bombardment_1_bytes_length = 0x5;
-
-	/*
-	0:  25 01 00 00 80          and    eax,0x80000001
-	*/
-	byte sensor_indestructible_bombardment_1_bytes_old[] = { 0x25, 0x01, 0x00, 0x00, 0x80 };
-
-	/*
-	0:  25 01 00 00 40          and    eax,0x40000001
-	*/
-	byte sensor_indestructible_bombardment_1_bytes_new[] = { 0x25, 0x01, 0x00, 0x00, 0x40 };
-
-	write_bytes
-	(
-		0x004CAB1E,
-		sensor_indestructible_bombardment_1_bytes_old,
-		sensor_indestructible_bombardment_1_bytes_new,
-		sensor_indestructible_bombardment_1_bytes_length
-	);
-
-	int sensor_indestructible_bombardment_2_bytes_length = 0x5;
-
-	/*
-	0:  25 03 00 00 80          and    eax,0x80000003
-	*/
-	byte sensor_indestructible_bombardment_2_bytes_old[] = { 0x25, 0x03, 0x00, 0x00, 0x80 };
-
-	/*
-	0:  25 01 00 00 40          and    eax,0x40000001
-	*/
-	byte sensor_indestructible_bombardment_2_bytes_new[] = { 0x25, 0x01, 0x00, 0x00, 0x40 };
-
-	write_bytes
-	(
-		0x004CAD54,
-		sensor_indestructible_bombardment_2_bytes_old,
-		sensor_indestructible_bombardment_2_bytes_new,
-		sensor_indestructible_bombardment_2_bytes_length
-	);
-
+	// modify the weapon/armor display
+	
+    write_call(0x00422600, (int)modifiedBattleReportItemNameDisplay);
+    write_call(0x0042277A, (int)modifiedBattleReportItemValueDisplay);
+    
 }
 
 void patch_setup_wtp(Config* cf)
@@ -3784,9 +3749,9 @@ void patch_setup_wtp(Config* cf)
 		patch_tech_cost();
 	}
 	
-	if (cf->sensor_indestructible_bombardment)
+	if (cf->interceptor_scramble_fix)
 	{
-		patch_sensor_indestructible_bombardment();
+		patch_interceptor_scramble_fix_display();
 	}
 	
 }

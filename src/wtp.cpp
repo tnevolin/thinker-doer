@@ -22,6 +22,13 @@ int currentDefenderVehicleId = -1;
 int currentAttackerOdds = -1;
 int currentDefenderOdds = -1;
 
+// storage variables for attacking interceptor
+
+bool bomberAttacksInterceptor = false;
+int bomberAttacksInterceptorAttackerVehicleId = -1;
+int bomberAttacksInterceptorDefenderVehicleId = -1;
+int bomberAttacksInterceptorPass = 0;
+
 /*
 Combat calculation placeholder.
 All custom combat calculation goes here.
@@ -73,19 +80,90 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 	VEH *attackerVehicle = &Vehicles[attackerVehicleId];
 	VEH *defenderVehicle = &Vehicles[defenderVehicleId];
 
+	// get attacker/defender unit
+
+	UNIT *attackerUnit = &Units[attackerVehicle->unit_id];
+	UNIT *defenderUnit = &Units[defenderVehicle->unit_id];
+
 	// get combat map tile
 
 	int combatLocationX = defenderVehicle->x;
 	int combatLocationY = defenderVehicle->y;
 	MAP *combatMapTile = getVehicleMapTile(defenderVehicleId);
 
-    // run original function
+	// run original function
 
-    battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
+	battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
+	
+    // --------------------------------------------------
+    // interceptor scramble fix
+    // --------------------------------------------------
+    
+    if
+	(
+		// fix is enabled
+		conf.interceptor_scramble_fix
+		&&
+		// attacker uses conventional weapon
+		Weapon[attackerUnit->weapon_type].offense_value > 0
+		&&
+		// attacker is an air unit
+		attackerUnit->triad() == TRIAD_AIR
+		&&
+		// attacker has no air superiority
+		!unit_has_ability(attackerVehicle->unit_id, ABL_AIR_SUPERIORITY)
+		&&
+		// defender uses conventional armor
+		Armor[defenderUnit->armor_type].defense_value > 0
+		&&
+		// defender is an air unit
+		defenderUnit->triad() == TRIAD_AIR
+		&&
+		// defender has air superiority
+		unit_has_ability(defenderVehicle->unit_id, ABL_AIR_SUPERIORITY)
+	)
+	{
+		// attacker uses armor, not weapon
+		
+		int attackerWeaponOffenseValue = Weapon[attackerUnit->weapon_type].offense_value;
+		int attackerArmorDefenseValue = Armor[attackerUnit->armor_type].defense_value;
+		
+		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * attackerArmorDefenseValue / attackerWeaponOffenseValue;
+		
+		// defender strength is increased due to air superiority
+		
+		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (100 + Rules->combat_bonus_air_supr_vs_air) / 100;
+		
+		// add defender effect description
+
+		if (*tx_battle_compute_defender_effect_count < 4)
+		{
+			strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_AIRTOAIR));
+			(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_bonus_air_supr_vs_air;
+
+			(*tx_battle_compute_defender_effect_count)++;
+
+		}
+
+		// set interceptor global variables
+		
+		bomberAttacksInterceptor = true;
+		bomberAttacksInterceptorAttackerVehicleId = attackerVehicleId;
+		bomberAttacksInterceptorDefenderVehicleId = defenderVehicleId;
+		bomberAttacksInterceptorPass = 0;
+		
+	}
+	else
+	{
+		// clear interceptor global variables
+		
+		bomberAttacksInterceptor = false;
+		bomberAttacksInterceptorAttackerVehicleId = -1;
+		bomberAttacksInterceptorDefenderVehicleId = -1;
+		
+	}
 
     // PLANET combat bonus on defense
-
-	int LABEL_OFFSET_PLANET = 0x271;
 
     if (conf.planet_combat_bonus_on_defense)
     {
@@ -3593,6 +3671,50 @@ bool isTechAvailable(int factionId, int techId)
 	// no undiscovered prerequisites
 	
 	return true;
+	
+}
+
+HOOK_API void modifiedBattleReportItemNameDisplay(int destinationPointer, int sourcePointer)
+{
+	if (bomberAttacksInterceptor)
+	{
+		if (bomberAttacksInterceptorPass % 2 == 0)
+		{
+			// use armor for attacker
+			
+			sourcePointer = (int)Armor[Units[Vehicles[bomberAttacksInterceptorAttackerVehicleId].unit_id].armor_type].name;
+			
+		}
+		
+	}
+	
+	// execute original function
+	
+	tx_strcat(destinationPointer, sourcePointer);
+	
+}
+
+HOOK_API void modifiedBattleReportItemValueDisplay(int destinationPointer, int sourcePointer)
+{
+	if (bomberAttacksInterceptor)
+	{
+		if (bomberAttacksInterceptorPass % 2 == 0)
+		{
+			// use armor for attacker
+			
+			itoa(Armor[Units[Vehicles[bomberAttacksInterceptorAttackerVehicleId].unit_id].armor_type].defense_value, (char *)sourcePointer, 10);
+			
+		}
+		
+		// increment pass number
+		
+		bomberAttacksInterceptorPass++;
+		
+	}
+	
+	// execute original function
+	
+	tx_strcat(destinationPointer, sourcePointer);
 	
 }
 

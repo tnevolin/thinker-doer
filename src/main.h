@@ -272,7 +272,7 @@ struct Config {
     bool unit_upgrade_ignores_movement = false;
     bool group_terraforming = false;
     bool ai_base_allowed_fungus_rocky = false;
-    bool sensor_indestructible_bombardment = false;
+    bool interceptor_scramble_fix = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

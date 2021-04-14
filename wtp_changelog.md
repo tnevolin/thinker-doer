@@ -1,3 +1,7 @@
+# Version 216
+
+* Fixed interceptor scrambling.
+
 # Version 215
 
 * Disabling territory bonus temporarily to see how it behaves.
