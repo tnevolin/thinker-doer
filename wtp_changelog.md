@@ -1,6 +1,6 @@
 # Version 216
 
-* Fixed interceptor scrambling.
+* Fixed interceptor scrambling. https://github.com/tnevolin/thinker-doer#scrambling-interceptor-fix
 
 # Version 215
 
