@@ -7,10 +7,10 @@ const char* scriptTxtID = "SCRIPT";
 
 // battle computation display variables
 int *tx_battle_compute_attacker_effect_count = (int *)0x915614;
-char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F554;
-int (*tx_battle_compute_attacker_effect_values)[0x4] = (int (*)[0x4])0x9155F0;
 int *tx_battle_compute_defender_effect_count = (int *)0x915618;
+char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F554;
 char (*tx_battle_compute_defender_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F694;
+int (*tx_battle_compute_attacker_effect_values)[0x4] = (int (*)[0x4])0x9155F0;
 int (*tx_battle_compute_defender_effect_values)[0x4] = (int (*)[0x4])0x915600;
 
 // labels pointer

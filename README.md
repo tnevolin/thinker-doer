@@ -580,6 +580,18 @@ Base without habitation facility receives -3 GROWTH penalty when at limit. Penal
 
 Base with habitation facility receives GROWTH bonus for each citizen below the limit but no more than +3. That allows to speed up base growth when such facilities are built earlier. They require maintenance, though.
 
+## Scrambling interceptor fix
+
+Air units without air superiority (bombers) cannot attack needlejets in flight. That leads to a conclusion that bomber's weapon fit to bomb ground targets and cannot possibly attack or damage air units.
+
+From the other hand air units with air superiority (interceptors) have their weapon fit to attack air targets in flight weapon to **armor** and receive air superiority bonus on top of that. That makes perfect sense since, as we established above, bombers cannot attack air units with their weapon so they use their armor to defend instead. Their defense in this case can be considered as a combination of anti-interceptor measures those include an actual body armor plus maybe some light weapon turret for counter fire.
+
+All the above works well until interceptor decides to scramble. Scrambling interceptor is supposed to intercept a bomber in flight and counter attack it preventing bombing run. Unfortunately, game mechanics cannot handle this case properly due to code limitations. It computes battle as if a bomber attacks an interceptor resulting bomber using its weapon and interceptor not receiving its air superiority bonus. It looks like a bomber actually bombs an interceptor with its main weapon which makes no sense. Gameplay wise this reduce scrambling interceptor effectiveness by about 20 times comparing to when it attacks bomber on its own turn making this otherwise wonderful air protection idea completely useless.
+
+This mod fixes the type of combat when bomber attacks an interceptor. Besides attacking scrambling interceptor that also may happen when bomber attacks interceptor in (air)base or when bomber attacks low flying units such as copters and gravships. When air units without air superiority attacks another air unit with air superiority it uses its armor value for combat strength and interceptor also receives its usual air superiority bonus. Odds confirmation dialog is not shown and the battle starts right away not giving player a chance to change their mind. In other words combat is happening and computed as if interceptor actively counter attacks bomber not giving player a chance to understand and retreat from their mistake.
+
+Now interceptors become a very useful anti-bombers units. They protect surface units and destroy bombers effectivelly.
+
 # UI changes / cosmetics
 
 ## Battle computation display
