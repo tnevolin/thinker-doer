@@ -1616,7 +1616,7 @@ void patch_se_accumulated_resource_adjustment()
 /*
 Patch mod_hex_cost.
 */
-void patch_mod_hex_cost()
+void patch_hex_cost()
 {
     write_call(0x00467711, (int)mod_hex_cost);
     write_call(0x00572518, (int)mod_hex_cost);
@@ -3278,6 +3278,15 @@ void patch_interceptor_scramble_fix_display()
     
 }
 
+void patch_burned_ground()
+{
+	// wrap reset_territory when base is captured or killed
+	
+    write_call(0x0050D16A, (int)modifiedResetTerritory);
+    write_call(0x004E5A40, (int)modifiedResetTerritory);
+    
+}
+
 void patch_setup_wtp(Config* cf)
 {
 	// integrated into Thinker
@@ -3523,7 +3532,7 @@ void patch_setup_wtp(Config* cf)
 
 	// hex cost
 
-	patch_mod_hex_cost();
+	patch_hex_cost();
 
 	// base population info
 
@@ -3752,6 +3761,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->interceptor_scramble_fix)
 	{
 		patch_interceptor_scramble_fix_display();
+	}
+	
+	if (cf->burned_ground)
+	{
+		patch_burned_ground();
 	}
 	
 }
