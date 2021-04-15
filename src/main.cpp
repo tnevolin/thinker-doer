@@ -465,6 +465,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->interceptor_scramble_fix = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "right_of_passage_agreement"))
+    {
+        cf->right_of_passage_agreement = std::max(0, std::min(2, atoi(value)));
+    }
+    else if (MATCH("wtp", "burned_ground"))
+    {
+        cf->burned_ground = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

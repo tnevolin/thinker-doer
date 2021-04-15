@@ -167,3 +167,6 @@ fp_4int *base_prod_choice = (fp_4int*)0x004F81A0;
 // select technology to research
 fp_4int *tech_pick = (fp_4int *)0x005BEB70;
 
+// put territory borders on a map
+fp_0void *reset_territory = (fp_0void *)0x00523DD0;
+

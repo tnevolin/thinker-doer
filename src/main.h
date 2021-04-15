@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 216 (Thinker Mod v2.4)"
+    #define MOD_VERSION "The Will to Power mod - version 217 (Thinker Mod v2.4)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -273,6 +273,8 @@ struct Config {
     bool group_terraforming = false;
     bool ai_base_allowed_fungus_rocky = false;
     bool interceptor_scramble_fix = false;
+    int right_of_passage_agreement = 0;
+    bool burned_ground = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

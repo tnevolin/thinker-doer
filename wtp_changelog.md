@@ -1,3 +1,10 @@
+# Version 217
+
+* Reverted road movement ratio to 3. Anything other than will probably throw player off.
+* Reworded odds confirmation dialog. Hopefully should be much clearer now.
+* Roads/tubes can be used only on own or ally territory with right of passage.
+* When faction looses a base (captured or killed) all terrain improvement on lost territory are destroyed.
+
 # Version 216
 
 * Fixed interceptor scrambling. https://github.com/tnevolin/thinker-doer#scrambling-interceptor-fix

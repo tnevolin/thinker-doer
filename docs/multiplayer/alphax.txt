@@ -5,11 +5,6 @@
 ;
 ; Copyright (c) 1997, 1998 by Firaxis Games, Inc.
 ;
-; *************************************************************
-; *  Contains changes made for SMACX Thinker Mod by Induktio  *
-; *  https://github.com/induktio/thinker                      *
-; *************************************************************
-;
 ; ALPHA CENTAURI reads the rules of the game from this file at
 ; startup. Feel free, at your own risk, to experiment with editing
 ; this file. We recommend you make a backup copy of the original.
@@ -27,7 +22,7 @@
 ;   gameplay.
 ;
 #RULES
-2,       ; Movement rate along roads
+3,       ; Movement rate along roads
 2,       ; Nutrient intake requirement for citizens
 3,2      ; Numerator & Denominator for artillery fire damage
 2,       ; Max artillery range (larger will break multiplayer)
@@ -56,7 +51,7 @@
 0,       ; Combat % -> Defend vs. mobile in rough
 0,       ; Combat % -> Infantry vs. Base
 50,      ; Combat penalty % -> attack after airdrop
-25,      ; Combat % -> Fanatic attack bonus
+50,      ; Combat % -> Fanatic attack bonus
 50,      ; Combat % -> Land based guns vs. ship artillery bonus
 0,       ; Combat % -> Artillery bonus per level of altitude
 50,      ; Combat % -> Trance bonus defending vs. psi

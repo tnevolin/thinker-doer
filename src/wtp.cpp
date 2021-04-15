@@ -1452,15 +1452,78 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
             )
             {
                 value = 1;
-
             }
             // set road movement cost
             else if (value == 1)
             {
                 value = conf.road_movement_cost;
-
             }
 
+        }
+
+    }
+
+    // right of passage agreement
+
+    if (conf.right_of_passage_agreement > 0)
+    {
+        MAP* square_from = mapsq(from_x, from_y);
+        MAP* square_to = mapsq(to_x, to_y);
+
+        if (square_from && square_to)
+        {
+        	// check if we don't have right of passage
+        	
+        	if
+			(
+				(
+					square_from->owner != -1 && square_from->owner != faction_id
+					&&
+					(
+						(conf.right_of_passage_agreement == 1 && at_war(faction_id, square_from->owner))
+						||
+						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_from->owner))
+					)
+				)
+				||
+				(
+					square_to->owner != -1 && square_to->owner != faction_id
+					&&
+					(
+						(conf.right_of_passage_agreement == 1 && at_war(faction_id, square_to->owner))
+						||
+						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_to->owner))
+					)
+				)
+			)
+			{
+				// get road/tube improvements
+				
+				int squareFromRoadTube = square_from->items & (TERRA_ROAD | TERRA_MAGTUBE);
+				int squareToRoadTube = square_to->items & (TERRA_ROAD | TERRA_MAGTUBE);
+				
+				// at least one tile has road/tube
+				
+				if (squareFromRoadTube != 0 || squareToRoadTube != 0)
+				{
+					// remove road/tube from the map
+					
+					square_from->items &= ~(TERRA_ROAD | TERRA_MAGTUBE);
+					square_to->items &= ~(TERRA_ROAD | TERRA_MAGTUBE);
+					
+					// recalculate value without road/tube
+					
+					value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, a7);
+					
+					// restore road/tube to the map
+					
+					square_from->items |= squareFromRoadTube;
+					square_to->items |= squareToRoadTube;
+					
+				}
+				
+			}
+        	
         }
 
     }
@@ -3715,6 +3778,67 @@ HOOK_API void modifiedBattleReportItemValueDisplay(int destinationPointer, int s
 	// execute original function
 	
 	tx_strcat(destinationPointer, sourcePointer);
+	
+}
+
+/*
+Destroys all improvement on lost territory.
+*/
+HOOK_API void modifiedResetTerritory()
+{
+	// build all destroyable terrain improvements
+	
+	uint32_t destroyableImprovments =
+		Terraform[FORMER_FARM].bit |
+		Terraform[FORMER_SOIL_ENR].bit |
+		Terraform[FORMER_MINE].bit |
+		Terraform[FORMER_SOLAR].bit |
+		Terraform[FORMER_FOREST].bit |
+		Terraform[FORMER_ROAD].bit |
+		Terraform[FORMER_MAGTUBE].bit |
+		Terraform[FORMER_BUNKER].bit |
+		Terraform[FORMER_AIRBASE].bit |
+		Terraform[FORMER_SENSOR].bit |
+		Terraform[FORMER_CONDENSER].bit |
+		Terraform[FORMER_ECH_MIRROR].bit |
+		Terraform[FORMER_THERMAL_BORE].bit
+	;
+
+	// record exising map owners
+	
+	int *oldMapOwners = new int[*map_area_tiles];
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		MAP *tile = &((*MapPtr)[mapIndex]);
+		
+		oldMapOwners[mapIndex] = tile->owner;
+		
+	}
+	
+	// execute original function
+	
+	reset_territory();
+	
+	// destroy improvements on lost territory
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		MAP *tile = &((*MapPtr)[mapIndex]);
+		
+		int oldMapOwner = oldMapOwners[mapIndex];
+		int newMapOwner = tile->owner;
+		
+		if (oldMapOwner > 0 && newMapOwner != oldMapOwner)
+		{
+			tile->items &= ~destroyableImprovments;
+		}
+		
+	}
+	
+	// delete allocated array
+	
+	delete[] oldMapOwners;
 	
 }
 
