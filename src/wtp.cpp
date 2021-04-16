@@ -2526,7 +2526,7 @@ int getPartialHurryCostToCompleteNextTurn()
 	int baseId = *current_base_id;
 	BASE *base = *current_base_ptr;
 
-	// get minerals neede to hurry for next turn completion
+	// get minerals needed to hurry for next turn completion
 
 	int mineralsToHurry = getBaseMineralCost(baseId, base->queue_items[0]) - base->minerals_accumulated - base->mineral_surplus;
 
@@ -2868,7 +2868,7 @@ int getPartialFlatHurryCost(int baseId, int minerals)
 
 	// calculate partial flat hurry cost
 
-	int partialHurryCost = (hurryCost * minerals + remainingMinerals / 2) / remainingMinerals;
+	int partialHurryCost = (hurryCost * minerals + remainingMinerals - 1) / remainingMinerals;
 
 	return partialHurryCost;
 

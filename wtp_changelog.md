@@ -1,3 +1,7 @@
+# Version 220
+
+* Fixed partial hurry cost computation that was off sometimes due to rounding problems. It is still can be off sometimes but will err on safe side.
+
 # Version 219
 
 * Merged with Thinker 2.5.
@@ -5,8 +9,8 @@
 # Version 218
 
 * Added orbital_yield_limit parameter to limit orbital yield proportional to base population. I have left it as 1.0 currently as I don't believe satellites are that OP in end game. Suggestions are welcome.
-* Reverted orbital facilities to their vanilla order of appearance. I have reconcidered my view on them and now I believe that nutrient satellites are less OP of them all.
-* Further doubled orbital facilities cost to the level of small global SP. I believe it is fair as they excert similar faction global effect. Now it will take a significant investment to harvest a benefit.
+* Reverted orbital facilities to their vanilla order of appearance. I have reconsidered my view on them and now I believe that nutrient satellites are less OP of them all.
+* Further doubled orbital facilities cost to the level of small global SP. I believe it is fair as they produce similar faction global effect. Now it will take a significant investment to harvest a benefit.
 
 # Version 217
 
