@@ -3287,6 +3287,41 @@ void patch_burned_ground()
     
 }
 
+void patch_orbital_yield_limit()
+{
+	int orbital_yield_limit_bytes_length = 0x13;
+
+	/*
+	0:  8b 15 30 ea 90 00       mov    edx,DWORD PTR ds:0x90ea30
+	6:  0f be 42 06             movsx  eax,BYTE PTR [edx+0x6]
+	a:  8b 0c 17                mov    ecx,DWORD PTR [edi+edx*1]
+	d:  3b c1                   cmp    eax,ecx
+	f:  7c 02                   jl     0x13
+	11: 8b c1                   mov    eax,ecx
+	*/
+	byte orbital_yield_limit_bytes_old[] = { 0x8B, 0x15, 0x30, 0xEA, 0x90, 0x00, 0x0F, 0xBE, 0x42, 0x06, 0x8B, 0x0C, 0x17, 0x3B, 0xC1, 0x7C, 0x02, 0x8B, 0xC1 };
+
+	/*
+	0:  e8 fd ff ff ff          call   2 <_main+0x2>
+	5:  8b 15 30 ea 90 00       mov    edx,DWORD PTR ds:0x90ea30
+	b:  8b 0c 17                mov    ecx,DWORD PTR [edi+edx*1]
+	e:  39 c8                   cmp    eax,ecx
+	10: 0f 4f c1                cmovg  eax,ecx
+	*/
+	byte orbital_yield_limit_bytes_new[] = { 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x8B, 0x15, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0x0C, 0x17, 0x39, 0xC8, 0x0F, 0x4F, 0xC1 };
+
+	write_bytes
+	(
+		0x004E8210,
+		orbital_yield_limit_bytes_old,
+		orbital_yield_limit_bytes_new,
+		orbital_yield_limit_bytes_length
+	);
+
+    write_call(0x004E8210 + 0x0, (int)modifiedOrbitalYieldLimit);
+    
+}
+
 void patch_setup_wtp(Config* cf)
 {
 	// integrated into Thinker
@@ -3766,6 +3801,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->burned_ground)
 	{
 		patch_burned_ground();
+	}
+	
+	if (cf->orbital_yield_limit != 1.0)
+	{
+		patch_orbital_yield_limit();
 	}
 	
 }

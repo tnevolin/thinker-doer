@@ -1,3 +1,9 @@
+# Version 218
+
+* Added orbital_yield_limit parameter to limit orbital yield proportional to base population. I have left it as 1.0 currently as I don't believe satellites are that OP in end game. Suggestions are welcome.
+* Reverted orbital facilities to their vanilla order of appearance. I have reconcidered my view on them and now I believe that nutrient satellites are less OP of them all.
+* Further doubled orbital facilities cost to the level of small global SP. I believe it is fair as they excert similar faction global effect. Now it will take a significant investment to harvest a benefit.
+
 # Version 217
 
 * Reverted road movement ratio to 3. Anything other than will probably throw player off.

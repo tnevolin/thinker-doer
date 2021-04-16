@@ -473,6 +473,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->burned_ground = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "orbital_yield_limit"))
+    {
+        cf->orbital_yield_limit = (atof(value));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

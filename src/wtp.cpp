@@ -3842,3 +3842,14 @@ HOOK_API void modifiedResetTerritory()
 	
 }
 
+/*
+Returns modified limited orbital yield based on configured limit.
+*/
+HOOK_API int modifiedOrbitalYieldLimit()
+{
+	int limit = (int)floor(conf.orbital_yield_limit * (double)(*current_base_ptr)->pop_size);
+	
+	return limit;
+	
+}
+

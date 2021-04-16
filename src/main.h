@@ -275,6 +275,7 @@ struct Config {
     bool interceptor_scramble_fix = false;
     int right_of_passage_agreement = 0;
     bool burned_ground = false;
+    double orbital_yield_limit = 1.0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
