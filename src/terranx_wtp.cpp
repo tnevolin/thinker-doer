@@ -170,3 +170,6 @@ fp_4int *tech_pick = (fp_4int *)0x005BEB70;
 // put territory borders on a map
 fp_0void *reset_territory = (fp_0void *)0x00523DD0;
 
+// breaks treaty
+fp_3int *break_treaty = (fp_3int *)0x0055F770;
+

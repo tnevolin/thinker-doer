@@ -184,4 +184,5 @@ HOOK_API void modifiedBattleReportItemNameDisplay(int destinationPointer, int so
 HOOK_API void modifiedBattleReportItemValueDisplay(int destinationPointer, int sourcePointer);
 HOOK_API void modifiedResetTerritory();
 HOOK_API int modifiedOrbitalYieldLimit();
+HOOK_API int modifiedBreakTreaty(int actingFactionId, int targetFactionId, int bitmask);
 

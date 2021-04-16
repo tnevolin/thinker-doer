@@ -64,12 +64,27 @@ int moveLandColonyOnLand(int vehicleId)
 	
 	if (isVehicleAtLocation(vehicleId, location))
 	{
+		// remove fungus and rocks if any before building
+		
+		MAP *tile = getMapTile(location.x, location.y);
+		
+		tile->items &= ~((uint32_t)TERRA_FUNGUS);
+		tile->val3 &= ~((byte)TILE_ROCKY);
+		tile->val3 |= (byte)TILE_ROLLING;
+		
+		// build base
+		
 		return action_build(vehicleId, 0);
+		
 	}
 	else
 	{
 		debug("move colony (%3d,%3d) -> (%3d,%3d)\n\n", Vehicles[vehicleId].x, Vehicles[vehicleId].y, location.x, location.y)
+		
+		// move to site
+		
 		return set_move_to(vehicleId, location.x, location.y);
+		
 	}
 	
 	return mod_enemy_move(vehicleId);

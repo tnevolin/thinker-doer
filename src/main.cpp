@@ -469,13 +469,17 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->right_of_passage_agreement = std::max(0, std::min(2, atoi(value)));
     }
-    else if (MATCH("wtp", "burned_ground"))
+    else if (MATCH("wtp", "scorched_earth"))
     {
-        cf->burned_ground = (atoi(value) == 0 ? false : true);
+        cf->scorched_earth = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "orbital_yield_limit"))
     {
         cf->orbital_yield_limit = (atof(value));
+    }
+    else if (MATCH("wtp", "silent_vendetta_warning"))
+    {
+        cf->silent_vendetta_warning = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

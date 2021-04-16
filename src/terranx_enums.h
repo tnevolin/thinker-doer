@@ -665,7 +665,7 @@ enum game_diff_level {
 enum diplo_status {
     DIPLO_PACT = 0x1,
     DIPLO_TREATY = 0x2,
-    DIPLO_TRUCE = 0x4,
+    DIPLO_TRUCE = 0x4, // this bit is cleared at first contact
     DIPLO_COMMLINK = 0x8,
     DIPLO_VENDETTA = 0x10,
     DIPLO_WANT_REVENGE = 0x20,
@@ -683,13 +683,13 @@ enum diplo_status {
     DIPLO_UNK_20000 = 0x20000,
     DIPLO_ATROCITY_VICTIM = 0x40000,
     DIPLO_UNK_80000 = 0x80000,
-    DIPLO_UNK_100000 = 0x100000,
+    DIPLO_UNK_100000 = 0x100000, // this bit is cleared at first contact
     DIPLO_UNK_200000 = 0x200000,
     DIPLO_UNK_400000 = 0x400000,
     DIPLO_UNK_800000 = 0x800000,
-    DIPLO_UNK_1000000 = 0x1000000,
+    DIPLO_UNK_1000000 = 0x1000000, // this bit is cleared at first contact
     DIPLO_HAVE_SURRENDERED = 0x2000000,
-    DIPLO_UNK_4000000 = 0x4000000,
+    DIPLO_UNK_4000000 = 0x4000000, // this bit is cleared at first contact
     DIPLO_UNK_8000000 = 0x8000000,
     DIPLO_UNK_10000000 = 0x10000000,
     DIPLO_UNK_20000000 = 0x20000000,
