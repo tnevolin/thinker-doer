@@ -1847,17 +1847,17 @@ int thinker_base_prod_choice(int id, int v1, int v2, int v3) {
 
     if (is_human(faction)) {
         debug("skipping human base\n");
-        choice = base_prod_choice(id, v1, v2, v3);
+        choice = base_prod_choices(id, v1, v2, v3);
     } else if (!ai_enabled(faction)) {
         debug("skipping computer base\n");
-        choice = base_prod_choice(id, v1, v2, v3);
+        choice = base_prod_choices(id, v1, v2, v3);
     } else {
         set_base(id);
         base_compute(1);
         if ((choice = need_psych(id)) != 0 && choice != prod) {
             debug("BUILD PSYCH\n");
         } else if (base->status_flags & BASE_PRODUCTION_DONE) {
-            choice = select_prod(id);
+            choice = select_production(id);
             base->status_flags &= ~BASE_PRODUCTION_DONE;
         } else if (prod >= 0 && !can_build_unit(faction, prod)) {
             debug("BUILD FACILITY\n");
@@ -1867,7 +1867,7 @@ int thinker_base_prod_choice(int id, int v1, int v2, int v3) {
             if (base->minerals_accumulated > Rules->retool_exemption) {
                 choice = find_facility(id);
             } else {
-                choice = select_prod(id);
+                choice = select_production(id);
             }
         } else if (need_defense(id)) {
             debug("BUILD DEFENSE\n");

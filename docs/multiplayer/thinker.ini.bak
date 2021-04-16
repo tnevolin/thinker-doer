@@ -46,7 +46,7 @@ windowed=0
 window_width=1024
 window_height=768
 
-; When SMAC-in-SMACX mod is enabled, all expansion content is removed from the game.
+; When smac_only is selected, all expansion-related content is removed from the game.
 ; Alien Crossfire techs, units, facilities, or abilities will not be available.
 ; This can also be selected by a command line parameter, e.g. "terranx_mod.exe -smac"
 ; While it is still possible to select alien factions during the game setup,
