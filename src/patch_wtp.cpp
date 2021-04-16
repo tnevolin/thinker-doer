@@ -3278,7 +3278,7 @@ void patch_interceptor_scramble_fix_display()
     
 }
 
-void patch_burned_ground()
+void patch_scorched_earth()
 {
 	// wrap reset_territory when base is captured or killed
 	
@@ -3319,6 +3319,18 @@ void patch_orbital_yield_limit()
 	);
 
     write_call(0x004E8210 + 0x0, (int)modifiedOrbitalYieldLimit);
+    
+}
+
+void patch_silent_vendetta_warning()
+{
+    write_call(0x004A050D, (int)modifiedBreakTreaty);
+    write_call(0x004CC766, (int)modifiedBreakTreaty);
+    write_call(0x004D498F, (int)modifiedBreakTreaty);
+    write_call(0x004D5A06, (int)modifiedBreakTreaty);
+    write_call(0x004D8334, (int)modifiedBreakTreaty);
+    write_call(0x00507117, (int)modifiedBreakTreaty);
+    write_call(0x00597551, (int)modifiedBreakTreaty);
     
 }
 
@@ -3798,14 +3810,19 @@ void patch_setup_wtp(Config* cf)
 		patch_interceptor_scramble_fix_display();
 	}
 	
-	if (cf->burned_ground)
+	if (cf->scorched_earth)
 	{
-		patch_burned_ground();
+		patch_scorched_earth();
 	}
 	
 	if (cf->orbital_yield_limit != 1.0)
 	{
 		patch_orbital_yield_limit();
+	}
+	
+	if (cf->silent_vendetta_warning)
+	{
+		patch_silent_vendetta_warning();
 	}
 	
 }

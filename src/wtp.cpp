@@ -3853,3 +3853,18 @@ HOOK_API int modifiedOrbitalYieldLimit()
 	
 }
 
+/*
+Modifies bitmask to invoke vendetta dialog if there commlink.
+*/
+HOOK_API int modifiedBreakTreaty(int actingFactionId, int targetFactionId, int bitmask)
+{
+	// include commlink mask
+	
+	bitmask |= DIPLO_COMMLINK;
+	
+	// call original function
+	
+	return break_treaty(actingFactionId, targetFactionId, bitmask);
+	
+}
+

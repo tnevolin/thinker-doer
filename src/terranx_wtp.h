@@ -80,4 +80,5 @@ extern fp_3int *tx_zoc_move;
 extern fp_4int* base_prod_choice;
 extern fp_4int *tech_pick;
 extern fp_0void *reset_territory;
+extern fp_3int *break_treaty;
 

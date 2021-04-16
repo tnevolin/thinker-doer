@@ -1,3 +1,11 @@
+# Version 222
+
+* Invokes hostile action vendetta dialog when commlink is established. Vanilla did not invoke it for non-combat hostile actions without pact/treaty/truce.
+
+# Version 221
+
+* AI removes fungus/rockiness when settles in such places.
+
 # Version 220
 
 * Fixed partial hurry cost computation that was off sometimes due to rounding problems. It is still can be off sometimes but will err on safe side.
