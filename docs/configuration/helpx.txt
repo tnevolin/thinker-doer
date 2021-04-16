@@ -211,40 +211,34 @@ Produces +1 $LINK<Energy=14> output on base square.
 #; Children's Creche
 #HELPFAC2
 Base receives +2 to $LINK<Growth=130006> rating and +1 to $LINK<Efficiency=130001> rating.
-^
 ^Reduces a base’s vulnerability to enemy $LINK<mind control=60021>.
-^
-^All units are determined to protect {Children’s Crèches}. If the social
-engineering $LINK<Morale=130004> settings for a faction are “0” or less, they will be
-treated as “+1” for [all] units defending at, or attacking from,
-this base.
+^[Does not] grant [ANY] morale bonuses!
 ^
 ^Base may experience [Major population surge] until base’s population limit reached (based on current food production and
-facilities), if there is no crèche there will be a [Citizens Protest] (extra drone for five years.
+facilities), if there is no crèche there will be a [Citizens Protest] (extra drone for five years).
 
 #; Recycling Tanks
 #HELPFAC3
-Produces +1 $LINK<nutrients=31>, $LINK<minerals=27>, and $LINK<energy=14> output on base square.
-^
-^=WtP=
-^Increases mineral intake at base by 50%. Cumulative with other mineral multiplying facilities.
-^Configuration parameter in thinker.ini: recycling_tanks_mineral_multiplier.
+Increases mineral intake at base by 50%. Cumulative with other mineral multiplying facilities.
+^(thinker.ini: recycling_tanks_mineral_multiplier)
 
 #; Perimeter Defense
 #HELPFAC4
-Disables base intrinsic defense bonus.
-^Adds 100% defense bonus to units at base against conventional ground attacks.
-^Defensife facilities do not work against $LINK<Psi Attacks=38>.
-^ Prevents population loss if the last defender is destroyed.
+Primary defensive structure.
+^Units at base receive 100% defense bonus against [conventional] ground attacks.
+^$LINK<Psi Attacks=38> ignores this and other defensive facilities.
+^
+^Prevents population loss if the last defender is destroyed.
 
 #; Tachyon Field
 #HELPFAC5
-Disables base intrinsic defense bonus.
-Adds 50% defense bonus to units at base against all conventional attacks cumulative with other defensive facilities.
-This effectively raises unit defense bonus to 150% when combined with $LINK<Perimeter Defense=100004>, $LINK<Naval Yard=100028> or $LINK<Aerospace Complex=100029>.
-^Can only be constructed in a base which already has a $LINK<Perimeter Defense=100004>.
-^
+Secondary defensive structure.
+^Units at base receive 50% defense bonus against all conventional attacks.
+^Cumulative with primary defensive facilities.
+^This effectively raises unit defense bonus to 150% when combined with $LINK<Perimeter Defense=100004>, $LINK<Naval Yard=100028> or $LINK<Aerospace Complex=100029>.
 ^$LINK<Psi Attacks=38> ignores this and other defensive facilities.
+^
+^Can only be constructed in a base which already has a $LINK<Perimeter Defense=100004>.
 
 #; Recreation Commons
 #HELPFAC6
@@ -264,7 +258,7 @@ all accumulated research) and enables [Major research breakthrough] (free tech).
 
 #; Biology Lab
 #HELPFAC9
-Repairs $LINK<Native life forms=30> quickly. +2 $LINK<Labs=22> per turn. Any Native life forms bred at this base gains a +1
+Repairs $LINK<Native life forms=30> quickly. {+4} $LINK<Labs=22> per turn. Any Native life forms bred at this base gains a +1
 lifecycle bonus.
 ^
 ^Enables researchers to prevent $LINK<PlanetBlight=41> from destroying all forests and farms within base’s production
@@ -296,9 +290,7 @@ Increases $LINK<nutrient=41> output in $LINK<forest=90004> squares by 1.
 Eliminates at least half the $LINK<ecological damage=26> caused by terraforming ($LINK<farms=90000>, $LINK<mines=90002>,
 $LINK<roads=90005>, etc.)
 ^
-^If constructed after a faction’s first report of $LINK<fungus=18> growth, the amount of $LINK<minerals=27>  that can be
-produced by any of that faction’s bases before causing ecological damage will be increased by one. This effect is permanent
-even if the facility is destroyed or the base lost.
+^Increases the amount of $LINK<minerals=27> that can be produced by any of that faction’s bases before causing ecological damage by one.
 
 #; Hybrid Forest
 #HELPFAC14
@@ -307,33 +299,29 @@ base less that lost to inefficiency. Increases $LINK<nutrient=31> and energy out
 Eliminates at least half the $LINK<ecological damage=10004> caused by terraforming ($LINK<Farms=90000>, $LINK<Mines=90002>,
 $LINK<Roads=90005>, etc.).
 ^
-^If constructed after a faction’s first report of $LINK<fungus=18> growth, the amount of $LINK<minerals=27>  that can be
-produced by any of that faction’s bases before causing ecological damage will be increased by one. This effect is permanent
-even if the facility is destroyed or the base lost.
+^Increases the amount of $LINK<minerals=27> that can be produced by any of that faction’s bases before causing ecological damage by one.
 ^
 ^Can only be constructed in a base which already has a $LINK<Tree Farm=100013>.
 
 #; Fusion Lab
 #HELPFAC15
-Produces the same amount of $LINK<energy=16> as 50% of the energy at base less that lost to inefficiency and increases
-$LINK<Labs=22> at base by 50%.
+Increases base output: $LINK<energy=16> by {50%} and $LINK<Labs=22> by {50%}.
 
 #; Quantum Lab
 #HELPFAC16
-Produces the same amount of $LINK<energy=16> as 50% of the energy at base less that lost to inefficiency and increases
-$LINK<Labs=22> at base by 50%.
+Increases base output: $LINK<energy=16> by {50%} and $LINK<Labs=22> by {50%}.
 ^
 ^Can only be constructed in a base which already has a $LINK<Fusion Lab=100015>.
 
 #; Research Hospital
 #HELPFAC17
-Increases $LINK<Psych=39> at base by 25% and $LINK<Labs=22> by 50%. Reduces the number of $LINK<Drones=11> by one.
+Increases base output: $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}. Reduces the number of $LINK<Drones=11> by one.
 ^
 ^Reduces population loss caused by $LINK<genetic warfare=60021> and prevents other, natural, $LINK<disease outbreaks=41>.
 
 #; Nanohospital
 #HELPFAC18
-Increases $LINK<Psych=39> at base by 25% and $LINK<Labs=22> by 50%. Reduces the number of $LINK<Drone=11> by one.
+Increases base output: $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}. Reduces the number of $LINK<Drones=11> by one.
 ^
 ^Reduces population loss caused by $LINK<genetic warfare=60021> and prevents other, natural, $LINK<disease outbreaks=41>.
 ^
@@ -369,35 +357,31 @@ control=60021> but reduces $LINK<Labs=22> output by half.
 
 #; Hab Complex
 #HELPFAC24
-Base without this facility cannot grow beyond size 7.
-Increases maximum population of a base by seven.
+Default population limit without this facility is {7}. It could be modified by faction settings and SPs.
 ^
-^=WtP=
-^Base without the facility still can grow beyond the limit.
-Instead base receives GROWTH penalty when its population approaches the limit.
-^thinker.ini: {habitation_facility_absent_growth_penalty}
-^Existing facility grants base GROWTH bonus for population below the limit.
-^thinker.ini: {habitation_facility_present_growth_bonus_max}
+^Base without this facility receives GROWTH penalty when its population approaches the limit.
+^GROWTH penalty = max(0, population - limit + 3)
+^(thinker.ini: habitation_facility_absent_growth_penalty)
+^
+^Base with this facility receives GROWTH bonus when population below the limit.
+^GROWTH bonus = min(3, limit - population)
+^(thinker.ini: habitation_facility_present_growth_bonus_max)
 
 #; Habitation Dome
 #HELPFAC25
-Base without this facility cannot grow beyond size 14.
-Increases population limit to 127. Can only be constructed in a base which already has a $LINK<Hab Complex=100024>.
+Default population limit without this facility is {14}. It could be modified by faction settings and SPs.
 ^
-^=WtP=
-^Base without the facility still can grow beyond the limit.
-Instead base receives GROWTH penalty when its population approaches the limit.
-^thinker.ini: {habitation_facility_absent_growth_penalty}
-^Existing facility grants base GROWTH bonus for population below the limit.
-^thinker.ini: {habitation_facility_present_growth_bonus_max}
+^Base without this facility receives GROWTH penalty when its population approaches the limit.
+^GROWTH penalty = max(0, population - limit + 3)
+^(thinker.ini: habitation_facility_absent_growth_penalty)
+^
+^Base with this facility receives GROWTH bonus when population below the limit.
+^GROWTH bonus = min(3, limit - population)
+^(thinker.ini: habitation_facility_present_growth_bonus_max)
 
 #; Pressure Dome
 #HELPFAC26
-Allows base to survive submersion. Also counts as $LINK<Recycling Tanks=100003> for this base. Bonus resources are not
-cumulative with $LINK<Recycling Tanks=100003>.
-^
-^=WtP=
-^Does not count as $LINK<Recycling Tanks=100003> anymore. $LINK<Recycling Tanks=100003> can be built at sea bases same way as on land.
+Allows base to survive submersion. [Does not] count as $LINK<Recycling Tanks=100003> for this base!
 
 #; Command Center
 #HELPFAC27
@@ -408,19 +392,22 @@ $LINK<fusion reactors=50002> two and $LINK<quantum chambers=50003> and $LINK<sin
 
 #; Naval Yard
 #HELPFAC28
-Repairs damaged naval units quickly. Naval units built here receive two $LINK<morale=29> upgrades. Increases defense
-multiplier of base to one against naval attacks. This effectively increases defensive bonus by +75% (or +175% when combined
-with a $LINK<Tachyon Field=100005>). Defensive bonus does not apply against $LINK<Psi Attacks=38>.
+Repairs damaged naval units quickly. Naval units built here receive two $LINK<morale=29> upgrades.
+^
+^Units at base receive 100% defense bonus against [conventional] naval attacks.
+^$LINK<Psi Attacks=38> ignores this and other defensive facilities.
 
 #; Aerospace Complex
 #HELPFAC29
-Repairs damaged air units quickly. Air units built here receive two $LINK<morale=29>
-upgrades.
+Repairs damaged air units quickly. Air units built here receive two $LINK<morale=29> upgrades.
+^
+^
+^Units at base receive 100% defense bonus against [conventional] air attacks.
+^$LINK<Psi Attacks=38> ignores this and other defensive facilities.
 ^
 ^Base must have an Aerospace complex before it can produce space-based improvements.
 ^
-^Defensive bonus against air attacks +75% (or +175% when combined with a $LINK<Tachyon Field=100005>). Defensive bonus does
-not apply against $LINK<Psi Attacks=38>. Prevents hostile $LINK<Drop pods=80004> within two squares.
+^Prevents hostile $LINK<Drop pods=80004> within two squares.
 
 #; Bioenhancement Center
 #HELPFAC30
@@ -432,19 +419,14 @@ a +1 lifecycle bonus.
 Reduces effect of industry on Planet’s $LINK<ecological=12>. Any $LINK<Native life forms=30>
 bred at this base gain a +1 lifecycle bonus.
 ^
-^If constructed after a faction’s first report of $LINK<fungus=18> growth, the
-amount of $LINK<minerals=27> that can be produced by any of that faction’s bases
-before causing ecological damage will be increased by one. This effect is
-permanent even if the facility is destroyed or the base lost.
+^Increases the amount of $LINK<minerals=27> that can be produced by any of that faction’s bases before causing ecological damage by one.
 
 #; Temple of Planet
 #HELPFAC32
 Reduces effect of industry on Planet’s $LINK<ecological=12>. Any $LINK<Native life forms=30> bred at this base gain a +1
 lifecycle bonus.
 ^
-^If constructed after a faction’s first report of $LINK<fungus=18> growth, the amount of $LINK<minerals=27> that can be
-produced by any of that faction’s bases before causing ecological damage will be increased by one. This effect is permanent
-even if the facility is destroyed or the base lost.
+^Increases the amount of $LINK<minerals=27> that can be produced by any of that faction’s bases before causing ecological damage by one.
 ^
 ^Can only be constructed in a base which already has a $LINK<Centauri Preserve=100031>.
 
@@ -467,8 +449,7 @@ punishment area.
 ^
 ^Decreases the cost of Native life forms bred at this base by 25%. Base receives +2 to $LINK<Police=130005> rating.
 ^
-^In the absence of a $LINK<Children’s Crèche=100002> to defend, Native life forms can be expected to protect a {Brood Pit}
-in the same manner.
+^[Does not] grant [ANY] morale bonuses!
 
 #; Aquafarm
 #HELPFAC36
@@ -620,9 +601,9 @@ reduces number of $LINK<Drones=11> by two and increases $LINK<Psych=39> output o
 
 #; The Planetary Transit System
 #HELPPROJ7
-Any new bases you found begin at population level at or below the faction average base size.
-^new base size = average faction base size - 2.
-^Configuration parameter in thinker.ini: pts_new_base_size_less_average.
+Any new bases you found could begin at population level higher than 1.
+^new base size = average faction base size (rounded down) - 2
+^(thinker.ini: pts_new_base_size_less_average)
 ^
 ^One less $LINK<drone=36> at all bases of population level 3 and under.
 ^
@@ -726,8 +707,10 @@ eliminated.
 $LINK<The Ascetic Virtues=110013>, and then even further by constructing a $LINK<Habitation Dome=100025>.
 ^
 ^=WtP=
-^Does not trigger [Population Boom]. Instead adds +2 GROWTH. Configuration parameter in thinker.ini: cloning_vats_se_growth.
-^Does not grant impunity to negative effects of any SE choice. Configuration parameter in thinker.ini: cloning_vats_disable_impunities.
+^Does not trigger [Population Boom]. Instead adds +2 GROWTH.
+^(thinker.ini: cloning_vats_se_growth)
+^Does not grant impunity to negative effects of any SE choice.
+^(thinker.ini: cloning_vats_disable_impunities)
 
 #; The Self-Aware Colony
 #HELPPROJ25
@@ -1074,22 +1057,22 @@ from home):
 The higher the rating, the fewer $LINK<Nutrients=31> bases need in order to grow.
 Numbers below represent an actual percentage change, not number of columns.
 ^Example, AI starts with 7 nutrient columns at Transcend difficulty. +5 GROWTH then will reduce this to 7 * 0.5 = 3.5 = 4 columns, not 2.
-^WtP extends scale to +10.
+^WtP extends upper limit to +10.
 ^
-^    -3 = [population does not grow]
-^    -2 = +20% nutrient required =   83% growth rate
-^    -1 = +10% nutrient required =   91% growth rate
-^     0 = Normal growth rate
-^    +1 = -10% nutrient required =  111% growth rate
-^    +2 = -20% nutrient required =  125% growth rate
-^    +3 = -30% nutrient required =  143% growth rate
-^    +4 = -40% nutrient required =  167% growth rate
-^    +5 = -50% nutrient required =  200% growth rate!
-^    +6 = -60% nutrient required =  250% growth rate!
-^    +7 = -70% nutrient required =  333% growth rate!
-^    +8 = -80% nutrient required =   500% growth rate!
-^    +9 = -90% nutrient required = 1000% growth rate!
-^    +10= [Population Boom!!]
+^    -3  = [population does not grow]
+^    -2  = +20% nutrient required =   83% growth rate
+^    -1  = +10% nutrient required =   91% growth rate
+^     0  = Normal growth rate
+^    +1  = -10% nutrient required =  111% growth rate
+^    +2  = -20% nutrient required =  125% growth rate
+^    +3  = -30% nutrient required =  143% growth rate
+^    +4  = -40% nutrient required =  167% growth rate
+^    +5  = -50% nutrient required =  200% growth rate!
+^    +6  = -60% nutrient required =  250% growth rate!
+^    +7  = -70% nutrient required =  333% growth rate!
+^    +8  = -80% nutrient required =   500% growth rate!
+^    +9  = -90% nutrient required = 1000% growth rate!
+^    +10 = [Population Boom!!]
 
 #;Planet
 #HELPEFFECT7
@@ -1159,7 +1142,7 @@ A {farm} increases the $LINK<Nutrient=31> production of a square by 1.
 #HELPTERRALAND1
 A {Soil Enricher} increases the $LINK<Nutrient production=31> of a square by one.
 ^
-^=WtP
+^=WtP=
 ^This is fixed to match the description. In vanilla it actually added 50% to nutrient production.			  
 ^
 ^Soil Enrichers can be built only in squares which already contain a
@@ -1220,7 +1203,8 @@ points.
 ^¹Requires $LINK<Centauri Psi=140063> to be constructed on $LINK<Fungus=18>.
 ^
 ^=WtP=
-^Unit moving on tubes can travel 3 times farther than on roads. Configuration parameter in thinker.ini: tube_movement_rate_multiplier.
+^Unit moving on tubes can travel {2} times farther than on roads.
+^(thinker.ini: tube_movement_rate_multiplier)
 
 #;Bunker
 #HELPTERRALAND7
@@ -1248,7 +1232,7 @@ faction’s unit within two squares.
 ^Requires $LINK<Centauri Psi=140063> to be constructed on $LINK<Fungus=18>.
 ^
 ^=WtP=
-^Sensor does not confer defense bonus. Instead unit fighting in own territory receives 50% bonus to both attack and defense.
+^Sensor works everywhere and confers both attack and defense bonuses.
 
 #;Remove Fungus
 #HELPTERRALAND10
@@ -2253,7 +2237,8 @@ eliminated. More advanced reactor technology also tends to make complex units ch
 ^
 ^=WtP=
 ^Reactor does not change the units max power.
-^Each more advanced reactor reduces unit cost by 20%. Configuration parameter in thinker.ini: reactor_cost_factor.
+^Each more advanced reactor reduces unit cost by 20%.
+^(thinker.ini: reactor_cost_factor)
 ^
 ^    Rating: 32655 kW
 ^    Throughput: 29377 kW
@@ -2268,7 +2253,8 @@ eliminated. More advanced reactor technology also tends to make complex units ch
 ^
 ^=WtP=
 ^Reactor does not change the units max power.
-^Each more advanced reactor reduces unit cost by 20%. Configuration parameter in thinker.ini: reactor_cost_factor.
+^Each more advanced reactor reduces unit cost by 20%.
+^(thinker.ini: reactor_cost_factor)
 ^
 ^    Rating: 68003 kW
 ^    Throughput: 62821 kW
@@ -2283,7 +2269,8 @@ eliminated. More advanced reactor technology also tends to make complex units ch
 ^
 ^=WtP=
 ^Reactor does not change the units max power.
-^Each more advanced reactor reduces unit cost by 20%. Configuration parameter in thinker.ini: reactor_cost_factor.
+^Each more advanced reactor reduces unit cost by 20%.
+^(thinker.ini: reactor_cost_factor)
 ^
 ^    Rating: 147893 kW
 ^    Throughput: 141977 kW
@@ -2298,7 +2285,8 @@ eliminated. More advanced reactor technology also tends to make complex units ch
 ^
 ^=WtP=
 ^Reactor does not change the units max power.
-^Each more advanced reactor reduces unit cost by 20%. Configuration parameter in thinker.ini: reactor_cost_factor.
+^Each more advanced reactor reduces unit cost by 20%.
+^(thinker.ini: reactor_cost_factor)
 ^
 ^    Rating: >4000000 kW
 ^    Throughput: Var

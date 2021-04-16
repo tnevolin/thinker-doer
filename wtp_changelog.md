@@ -1,3 +1,7 @@
+# Version 219
+
+* Merged with Thinker 2.5.
+
 # Version 218
 
 * Added orbital_yield_limit parameter to limit orbital yield proportional to base population. I have left it as 1.0 currently as I don't believe satellites are that OP in end game. Suggestions are welcome.
