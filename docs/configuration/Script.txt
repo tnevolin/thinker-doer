@@ -10903,13 +10903,13 @@ Our infiltration device connected to the {$FACTION0} networks was discovered and
 #GOODIDEA_IGNORE_REACTOR
 #caption Security Chief
 #xs 440
-Our forces are ready to begin the assault, $TITLE0 $NAME1. Their odds and winning chances are:
-^
-^odds: {$NUM0 to $NUM1} (vanilla estimate)
-^odds: {$NUM2 to $NUM3} (exact simulation)
-^winnind chances: {$NUM4} %
+Our forces are ready to begin the assault, $TITLE0 $NAME1.
+^Winning odds are {$NUM0 to $NUM1} (vanilla odds are $NUM2 to $NUM3).
+^Winning chances are {$NUM4} %.
 ^
 ^Shall I order them to proceed?
+^
+^* Reactor power is set to be [ignored] in combat. Both units have {10} max HP.
 
 No. Call off the attack.
 Yes. Proceed as ordered.

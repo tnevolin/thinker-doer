@@ -712,10 +712,10 @@ Empty Facility 61,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 62,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 63,            10, 2, Disable, Disable,  Do Not Build Me
 Empty Facility 64,            10, 2, Disable, Disable,  Do Not Build Me
-Sky Hydroponics Lab,          20, 0, HAL9000, Disable,  +1 Nutrient ALL BASES
-Nessus Mining Station,        20, 0, Space,   Disable,  +1 Minerals ALL BASES
-Orbital Power Transmitter,    20, 0, Orbital, Disable,  +1 Energy ALL BASES
-Orbital Defense Pod,          20, 0, HAL9000, Disable,  Missile Defense
+Sky Hydroponics Lab,          40, 0, Orbital, Disable,  +1 Nutrient ALL BASES
+Nessus Mining Station,        40, 0, HAL9000, Disable,  +1 Minerals ALL BASES
+Orbital Power Transmitter,    40, 0, Space,   Disable,  +1 Energy ALL BASES
+Orbital Defense Pod,          40, 0, HAL9000, Disable,  Missile Defense
 Stockpile Energy,              0, 0, None,    Disable,  Minerals to Energy
 The Human Genome Project,     40, 0, Biogen,  Disable,  +1 Talent Each Base,            -1, 0, 0, 1, 1,
 The Command Nexus,            60, 0, DocLoy,  Disable,  Command Center Each Base,        1, 2, 0,-1, 0,

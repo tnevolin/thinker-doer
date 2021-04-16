@@ -183,4 +183,5 @@ bool isTechAvailable(int factionId, int techId);
 HOOK_API void modifiedBattleReportItemNameDisplay(int destinationPointer, int sourcePointer);
 HOOK_API void modifiedBattleReportItemValueDisplay(int destinationPointer, int sourcePointer);
 HOOK_API void modifiedResetTerritory();
+HOOK_API int modifiedOrbitalYieldLimit();
 
