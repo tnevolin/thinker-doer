@@ -1,3 +1,11 @@
+# Version 224
+
+* Design workshop display unit cost in rows.
+
+# Version 223
+
+* Sea transport delivers scouts to pods.
+
 # Version 222
 
 * Invokes hostile action vendetta dialog when commlink is established. Vanilla did not invoke it for non-combat hostile actions without pact/treaty/truce.

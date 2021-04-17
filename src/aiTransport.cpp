@@ -9,12 +9,12 @@ int moveSeaTransport(int vehicleId)
 {
 	assert(isVehicleSeaTransport(vehicleId));
 	
-	// transport artifact
+	// deliver artifact
 	
 	int carryingArtifactVehicleId = getCarryingArtifactVehicleId(vehicleId);
 	if (carryingArtifactVehicleId >= 0)
 	{
-		if (transportArtifact(vehicleId, carryingArtifactVehicleId))
+		if (deliverArtifact(vehicleId, carryingArtifactVehicleId))
 		{
 			return SYNC;
 		}
@@ -24,12 +24,12 @@ int moveSeaTransport(int vehicleId)
 		}
 	}
 
-	// transport colony
+	// deliver colony
 	
 	int carryingColonyVehicleId = getCarryingColonyVehicleId(vehicleId);
 	if (carryingColonyVehicleId >= 0)
 	{
-		if (transportColony(vehicleId, carryingColonyVehicleId))
+		if (deliverColony(vehicleId, carryingColonyVehicleId))
 		{
 			return SYNC;
 		}
@@ -40,12 +40,27 @@ int moveSeaTransport(int vehicleId)
 	}
 
 
-	// transport former
+	// deliver former
 	
 	int carryingFormerVehicleId = getCarryingFormerVehicleId(vehicleId);
 	if (carryingFormerVehicleId >= 0)
 	{
-		if (transportFormer(vehicleId, carryingFormerVehicleId))
+		if (deliverFormer(vehicleId, carryingFormerVehicleId))
+		{
+			return SYNC;
+		}
+		else
+		{
+			return mod_enemy_move(vehicleId);
+		}
+	}
+
+	// deliver scout
+	
+	int carryingScoutVehicleId = getCarryingScoutVehicleId(vehicleId);
+	if (isCarryingVehicle(vehicleId))
+	{
+		if (deliverScout(vehicleId, carryingScoutVehicleId))
 		{
 			return SYNC;
 		}
@@ -72,6 +87,13 @@ int moveSeaTransport(int vehicleId)
 	// pickup former
 	
 	if (pickupFormer(vehicleId))
+	{
+		return SYNC;
+	}
+	
+	// pop pod
+	
+	if (popPod(vehicleId))
 	{
 		return SYNC;
 	}
@@ -150,7 +172,7 @@ bool isCarryingVehicle(int vehicleId)
 	return getLoadedVehicleIds(vehicleId).size() >= 1;
 }
 
-bool transportArtifact(int transportVehicleId, int /*artifactVehicleId*/)
+bool deliverArtifact(int transportVehicleId, int artifactVehicleId)
 {
 	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
 
@@ -187,13 +209,13 @@ bool transportArtifact(int transportVehicleId, int /*artifactVehicleId*/)
 	if (minRange == INT_MAX)
 		return false;
 	
-	// transport vehicles
+	// deliver vehicle
 	
-	return transportVehicles(transportVehicleId, baseLocation);
+	return deliverVehicle(transportVehicleId, baseLocation, artifactVehicleId);
 	
 }
 
-bool transportColony(int transportVehicleId, int colonyVehicleId)
+bool deliverColony(int transportVehicleId, int colonyVehicleId)
 {
 	// find best base location
 	
@@ -202,18 +224,18 @@ bool transportColony(int transportVehicleId, int colonyVehicleId)
 	if (!isValidLocation(buildLocation))
 		return false;
 
-	// transport vehicles
+	// deliver vehicle
 	
-	return transportVehicles(transportVehicleId, buildLocation);
+	return deliverVehicle(transportVehicleId, buildLocation, colonyVehicleId);
 	
 }
 
-bool transportFormer(int transportVehicleId, int /*formerVehicleId*/)
+bool deliverFormer(int transportVehicleId, int formerVehicleId)
 {
 	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
 	MAP *transportVehicleTile = getVehicleMapTile(transportVehicleId);
 	
-	debug("\ntransportFormer (%3d,%3d)\n", transportVehicle->x, transportVehicle->y);
+	debug("\ndeliverFormer (%3d,%3d)\n", transportVehicle->x, transportVehicle->y);
 
 	// search for reachable regions
 
@@ -345,7 +367,52 @@ bool transportFormer(int transportVehicleId, int /*formerVehicleId*/)
 
 	// transport vehicles
 	
-	return transportVehicles(transportVehicleId, {regionClosestBase->x, regionClosestBase->y});
+	return deliverVehicle(transportVehicleId, {regionClosestBase->x, regionClosestBase->y}, formerVehicleId);
+
+}
+
+bool deliverScout(int transportVehicleId, int scoutVehicleId)
+{
+	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
+	
+	debug("\ndeliverScount (%3d,%3d)\n", transportVehicle->x, transportVehicle->y);
+
+	// find nearest pod
+	
+	Location nearestPodLocation;
+	int minRange = INT_MAX;
+
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		Location location = getMapIndexLocation(mapIndex);
+		
+		// exclude targetted locations
+		
+		if (isTargettedLocation(location))
+			continue;
+		
+		if (goody_at(location.x, location.y) != 0)
+		{
+			int range = map_range(transportVehicle->x, transportVehicle->y, location.x, location.y);
+			
+			if (range < minRange)
+			{
+				nearestPodLocation.set(location);
+				minRange = range;
+			}
+			
+		}
+		
+	}
+	
+	// not found
+	
+	if (!isValidLocation(nearestPodLocation))
+		return false;
+	
+	// deliver scout
+	
+	return deliverVehicle(transportVehicleId, nearestPodLocation, scoutVehicleId);
 
 }
 
@@ -533,6 +600,21 @@ bool pickupFormer(int transportVehicleId)
 
 }
 
+bool popPod(int transportVehicleId)
+{
+	Location nearestPodLocation = getNearestPodLocation(transportVehicleId);
+	
+	if (!isValidLocation(nearestPodLocation))
+		return false;
+	
+	// go to destination
+	
+	setMoveTo(transportVehicleId, nearestPodLocation.x, nearestPodLocation.y);
+
+	return true;
+
+}
+
 /*
 Searches for closest location reachable by transport.
 */
@@ -580,7 +662,7 @@ Location getSeaTransportUnloadLocation(int transportVehicleId, const Location de
 	
 }
 
-bool transportVehicles(const int transportVehicleId, const Location destinationLocation)
+bool deliverVehicle(const int transportVehicleId, const Location destinationLocation, const int vehicleId)
 {
 	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
 	
@@ -602,12 +684,9 @@ bool transportVehicles(const int transportVehicleId, const Location destinationL
 
 		veh_skip(transportVehicleId);
 
-		// wake up vehicles
+		// wake up vehicle
 
-		for (int passengerVehicleId : getLoadedVehicleIds(transportVehicleId))
-		{
-			setVehicleOrder(passengerVehicleId, ORDER_NONE);
-		}
+		setVehicleOrder(vehicleId, ORDER_NONE);
 
 	}
 	// next to unload location
@@ -622,12 +701,9 @@ bool transportVehicles(const int transportVehicleId, const Location destinationL
 
 		veh_skip(transportVehicleId);
 
-		// wake up vehicles and move them to the coast
+		// wake up vehicle and move it to the coast
 
-		for (int passengerVehicleId : getLoadedVehicleIds(transportVehicleId))
-		{
-			setMoveTo(passengerVehicleId, unloadLocation.x, unloadLocation.y);
-		}
+		setMoveTo(vehicleId, unloadLocation.x, unloadLocation.y);
 
 	}
 	else
@@ -671,15 +747,37 @@ bool transportVehicles(const int transportVehicleId, const Location destinationL
 
 bool isInOceanRegion(int vehicleId, int region)
 {
+	if (!isOceanRegion(region))
+		return false;
+	
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
 	for (MAP *tile : getAdjacentTiles(vehicle->x, vehicle->y, true))
 	{
+		if (!isOceanRegion(tile->region))
+			continue;
+		
 		if (tile->region == region)
 			return true;
 	}
 	
 	return false;
 	
+}
+
+int getCarryingScoutVehicleId(int transportVehicleId)
+{
+	int carriedVehicleId = -1;
+	
+	for (int loadedVehicleId : getLoadedVehicleIds(transportVehicleId))
+	{
+		if (isScoutVehicle(loadedVehicleId))
+		{
+			carriedVehicleId = loadedVehicleId;
+		}
+	}
+
+	return carriedVehicleId;
+
 }
 

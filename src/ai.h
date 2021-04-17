@@ -44,6 +44,8 @@ struct ActiveFactionInfo
 	std::vector<int> colonyVehicleIds;
 	std::vector<int> formerVehicleIds;
 	double threatLevel;
+	std::unordered_map<int, std::vector<int>> regionSurfaceCombatVehicleIds;
+	std::unordered_map<int, std::vector<int>> regionSurfaceScoutVehicleIds;
 };
 
 extern int wtpAIFactionId;
@@ -58,4 +60,5 @@ void aiStrategy();
 void populateGlobalVariables();
 VEH *getVehicleByAIId(int aiId);
 double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId);
+Location getNearestPodLocation(int vehicleId);
 

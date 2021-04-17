@@ -84,6 +84,7 @@ When at or next unload location it stops and explicitly commands passenger to un
 */
 int aiEnemyMove(const int vehicleId)
 {
+//	return mod_enemy_move(vehicleId);
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
 	// do not try multiple iterations
@@ -161,6 +162,8 @@ void populateGlobalVariables()
 	activeFactionInfo.colonyVehicleIds.clear();
 	activeFactionInfo.formerVehicleIds.clear();
 	activeFactionInfo.threatLevel = 0.0;
+	activeFactionInfo.regionSurfaceCombatVehicleIds.clear();
+	activeFactionInfo.regionSurfaceScoutVehicleIds.clear();
 
 	// populate factions combat modifiers
 
@@ -285,10 +288,12 @@ void populateGlobalVariables()
 	debug("\n");
 
 	// populate vehicles
-
+	
+	debug("populate vehicles - %s\n", MFactions[aiFactionId].noun_faction);
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
 		VEH *vehicle = &(Vehicles[id]);
+		MAP *vehicleTile = getVehicleMapTile(id);
 
 		// store all vehicle current id in pad_0 field
 
@@ -298,14 +303,40 @@ void populateGlobalVariables()
 
 		if (vehicle->faction_id != aiFactionId)
 			continue;
-
+		
+		debug("\t[%3d] (%3d,%3d) region = %3d\n", id, vehicle->x, vehicle->y, vehicleTile->region);
+		
 		// combat vehicles
 
 		if (isVehicleCombat(id))
 		{
-			// add vehicle
+			// add vehicle to global list
 
 			activeFactionInfo.combatVehicleIds.push_back(id);
+
+			// add surface vehicle to region list
+			// except land unit in ocean
+			
+			if (vehicle->triad() != TRIAD_AIR && !(vehicle->triad() == TRIAD_LAND && isOceanRegion(vehicleTile->region)))
+			{
+				if (activeFactionInfo.regionSurfaceCombatVehicleIds.count(vehicleTile->region) == 0)
+				{
+					activeFactionInfo.regionSurfaceCombatVehicleIds[vehicleTile->region] = std::vector<int>();
+				}
+				activeFactionInfo.regionSurfaceCombatVehicleIds[vehicleTile->region].push_back(id);
+				
+				// add scout to region list
+				
+				if (isScoutVehicle(id))
+				{
+					if (activeFactionInfo.regionSurfaceScoutVehicleIds.count(vehicleTile->region) == 0)
+					{
+						activeFactionInfo.regionSurfaceScoutVehicleIds[vehicleTile->region] = std::vector<int>();
+					}
+					activeFactionInfo.regionSurfaceScoutVehicleIds[vehicleTile->region].push_back(id);
+				}
+				
+			}
 
 			// find if vehicle is at base
 
@@ -406,5 +437,42 @@ VEH *getVehicleByAIId(int aiId)
 
 	return NULL;
 
+}
+
+Location getNearestPodLocation(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehilceTile = getVehicleMapTile(vehicleId);
+	int triad = vehicle->triad();
+	
+	Location nearestPodLocation;
+	int minRange = INT_MAX;
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		Location location = getMapIndexLocation(mapIndex);
+		MAP* tile = getMapTile(mapIndex);
+		
+		if
+		(
+			(triad == TRIAD_AIR || tile->region == vehilceTile->region)
+			&&
+			map_has_item(tile, TERRA_SUPPLY_POD)
+		)
+		{
+			int range = map_range(vehicle->x, vehicle->y, location.x, location.y);
+			
+			if (range < minRange)
+			{
+				location.set(location);
+				minRange = range;
+			}
+			
+		}
+		
+	}
+	
+	return nearestPodLocation;
+	
 }
 

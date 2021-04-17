@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 221 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 224 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -277,6 +277,7 @@ struct Config {
     bool scorched_earth = false;
     double orbital_yield_limit = 1.0;
     bool silent_vendetta_warning = false;
+    bool design_cost_in_rows = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

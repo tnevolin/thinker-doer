@@ -6,8 +6,9 @@
 
 struct COMBAT_ORDER
 {
-	int defendX = -1;
-	int defendY = -1;
+	int x = -1;
+	int y = -1;
+	bool hold = false;
 	int enemyAIId = -1;
 };
 
@@ -21,15 +22,16 @@ struct VEHICLE_VALUE
 void aiCombatStrategy();
 void populateCombatLists();
 void aiNativeCombatStrategy();
+void popPods();
 void attackNativeArtillery(int enemyVehicleId);
 void attackNativeTower(int enemyVehicleId);
 void attackVehicle(int enemyVehicleId);
 int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2);
 int moveCombat(int id);
 int applyCombatOrder(int id, COMBAT_ORDER *combatOrder);
-int applyDefendOrder(int id, int x, int y);
+int applyMoveOrder(int id, COMBAT_ORDER *combatOrder);
 int applyAttackOrder(int id, COMBAT_ORDER *combatOrder);
-void setDefendOrder(int id, int x, int y);
+void setMoveOrder(int id, int x, int y, bool hold);
 int processSeaExplorer(int vehicleId);
 bool isHealthySeaExplorerInLandPort(int vehicleId);
 int kickSeaExplorerFromLandPort(int vehicleId);

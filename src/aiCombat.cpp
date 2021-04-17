@@ -13,7 +13,9 @@ void aiCombatStrategy()
 {
 	populateCombatLists();
 
-//	aiNativeCombatStrategy();
+	aiNativeCombatStrategy();
+	
+	popPods();
 
 }
 
@@ -123,7 +125,7 @@ void aiNativeCombatStrategy()
 
 			if (remainingProtection > 0.0)
 			{
-				setDefendOrder(vehicleId, base->x, base->y);
+				setMoveOrder(vehicleId, base->x, base->y, true);
 				remainingProtection -= damage;
 			}
 		}
@@ -156,6 +158,105 @@ void aiNativeCombatStrategy()
 
 	debug("\n");
 
+}
+
+void popPods()
+{
+	// collect pods in regions
+	
+	std::unordered_map<int, std::vector<Location>> regionPodLocations;
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		Location location = getMapIndexLocation(mapIndex);
+		MAP *tile = getMapTile(mapIndex);
+		
+		if (goody_at(location.x, location.y) != 0)
+		{
+			if (regionPodLocations.count(tile->region) == 0)
+			{
+				regionPodLocations[tile->region] = std::vector<Location>();
+			}
+			regionPodLocations[tile->region].push_back(location);
+		}
+		
+	}
+	
+	if (DEBUG)
+	{
+		debug("\n");
+		debug("regionPodLocations - %s\n", MFactions[aiFactionId].noun_faction);
+		for (const auto &kv : regionPodLocations)
+		{
+			debug("\tregion = %3d\n", kv.first);
+			for (Location location : kv.second)
+			{
+				debug("\t\t(%3d,%3d)\n", location.x, location.y);
+			}
+		}
+		debug("\n");
+	}
+	
+	// match scouts with pods
+	
+	for (auto const& x : activeFactionInfo.regionSurfaceScoutVehicleIds)
+	{
+		int region = x.first;
+		std::vector<int> vehicleIds = x.second;
+		debug("region = %3d\n", region);
+		
+		// no pods in region
+		
+		if (regionPodLocations.count(region) == 0)
+			continue;
+		
+		// get pod locations
+		
+		std::vector<Location> podLocations = regionPodLocations[region];
+		
+		// iterate scouts
+		
+		for (int vehicleId : vehicleIds)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			// without combat orders
+			
+			if (combatOrders.count(vehicleId) > 0)
+				continue;
+			
+			debug("\t[%3d] (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y);
+			
+			// find nearest pod
+			
+			std::vector<Location>::iterator nearestPodLocationIterator = podLocations.end();
+			int minRange = INT_MAX;
+			
+			for (std::vector<Location>::iterator podLocationsIterator = podLocations.begin(); podLocationsIterator != podLocations.end(); podLocationsIterator++)
+			{
+				Location location = *podLocationsIterator;
+				
+				int range = map_range(vehicle->x, vehicle->y, location.x, location.y);
+				
+				if (range < minRange)
+				{
+					nearestPodLocationIterator = podLocationsIterator;
+					minRange = range;
+				}
+				
+			}
+			
+			if (nearestPodLocationIterator != podLocations.end())
+			{
+				Location nearestPodLocation = *nearestPodLocationIterator;
+				setMoveOrder(vehicleId, nearestPodLocation.x, nearestPodLocation.y, false);
+				podLocations.erase(nearestPodLocationIterator);
+			}
+			
+		}
+		
+	}
+	
 }
 
 /*
@@ -370,9 +471,9 @@ int moveCombat(int vehicleId)
 
 int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
 {
-	if (combatOrder->defendX != -1 && combatOrder->defendY != -1)
+	if (combatOrder->x != -1 && combatOrder->y != -1)
 	{
-		return applyDefendOrder(id, combatOrder->defendX, combatOrder->defendY);
+		return applyMoveOrder(id, combatOrder);
 	}
 	if (combatOrder->enemyAIId != -1)
 	{
@@ -380,22 +481,25 @@ int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
 	}
 	else
 	{
-		return enemy_move(id);
+		return mod_enemy_move(id);
 	}
 
 }
 
-int applyDefendOrder(int id, int x, int y)
+int applyMoveOrder(int id, COMBAT_ORDER *combatOrder)
 {
 	VEH *vehicle = &(Vehicles[id]);
 
 	// at destination
 
-	if (vehicle->x == x && vehicle->y == y)
+	if (vehicle->x == combatOrder->x && vehicle->y == combatOrder->y)
 	{
-		// hold position
-
-		setVehicleOrder(id, ORDER_HOLD);
+		// hold if instructed
+		
+		if (combatOrder->hold)
+		{
+			setVehicleOrder(id, ORDER_HOLD);
+		}
 
 	}
 
@@ -403,7 +507,7 @@ int applyDefendOrder(int id, int x, int y)
 
 	else
 	{
-		setMoveTo(id, x, y);
+		setMoveTo(id, combatOrder->x, combatOrder->y);
 	}
 
 	return SYNC;
@@ -432,17 +536,18 @@ int applyAttackOrder(int id, COMBAT_ORDER *combatOrder)
 
 }
 
-void setDefendOrder(int vehicleId, int x, int y)
+void setMoveOrder(int vehicleId, int x, int y, bool hold)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
-	debug("setDefendOrder: [%3d](%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, x, y);
+	debug("setMoveOrder: [%3d](%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, x, y);
 
 	if (combatOrders.find(vehicleId) == combatOrders.end())
 	{
 		combatOrders[vehicleId] = {};
-		combatOrders[vehicleId].defendX = x;
-		combatOrders[vehicleId].defendY = y;
+		combatOrders[vehicleId].x = x;
+		combatOrders[vehicleId].y = y;
+		combatOrders[vehicleId].hold = hold;
 	}
 
 }

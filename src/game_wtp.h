@@ -263,10 +263,14 @@ bool isValidLocation(Location location);
 void hurryProduction(BASE* base, int minerals, int cost);
 MAP* getMapTile(int mapTileIndex);
 Location getMapIndexLocation(int mapIndex);
+int getLocationMapIndex(Location location);
 bool isVehicleLandUnitOnTransport(int vehicleId);
 int setMoveTo(int vehicleId, Location location);
 int setMoveTo(int vehicleId, int x, int y);
 bool isFriendlyTerritory(int factionId, MAP* tile);
 bool isVehicleHasAbility(int vehicleId, int abilityId);
 bool isDiplomaticStatus(int faction1Id, int faction2Id, int diplomaticStatus);
+bool isScoutVehicle(int vehicleId);
+Location getNearestItemLocation(int x, int y, uint32_t item);
+bool isTargettedLocation(Location location);
 
