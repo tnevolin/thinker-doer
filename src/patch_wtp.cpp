@@ -3334,6 +3334,91 @@ void patch_silent_vendetta_warning()
     
 }
 
+void patch_design_cost_in_rows()
+{
+	int design_cost_in_rows_bytes_length = 0x3;
+
+	/*
+	0:  0f af c7                imul   eax,edi
+	*/
+	byte design_cost_in_rows_bytes_old[] = { 0x0F, 0xAF, 0xC7 };
+
+	/*
+	0:  89 f8                   mov    eax,edi
+	...
+	*/
+	byte design_cost_in_rows_bytes_new[] = { 0x89, 0xF8, 0x90 };
+
+	write_bytes
+	(
+		0x00436BEF,
+		design_cost_in_rows_bytes_old,
+		design_cost_in_rows_bytes_new,
+		design_cost_in_rows_bytes_length
+	);
+
+	int design_cost_in_rows_prototyping_bytes_length = 0x7;
+
+	/*
+	0:  0f af 96 14 42 01 00    imul   edx,DWORD PTR [esi+0x14214]
+	*/
+	byte design_cost_in_rows_prototyping_bytes_old[] = { 0x0F, 0xAF, 0x96, 0x14, 0x42, 0x01, 0x00 };
+
+	/*
+	...
+	*/
+	byte design_cost_in_rows_prototyping_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+	write_bytes
+	(
+		0x0043707E,
+		design_cost_in_rows_prototyping_bytes_old,
+		design_cost_in_rows_prototyping_bytes_new,
+		design_cost_in_rows_prototyping_bytes_length
+	);
+
+	int design_cost_color_bytes_length = 0x5;
+
+	/*
+	0:  a1 9c 6d 8c 00          mov    eax,ds:0x8c6d9c
+	*/
+	byte design_cost_color_bytes_old[] = { 0xA1, 0x9C, 0x6D, 0x8C, 0x00 };
+
+	/*
+	0:  b8 ff 00 00 00          mov    eax,0xff
+	*/
+	byte design_cost_color_bytes_new[] = { 0xB8, 0xFF, 0x00, 0x00, 0x00 };
+
+	write_bytes
+	(
+		0x00436A67,
+		design_cost_color_bytes_old,
+		design_cost_color_bytes_new,
+		design_cost_color_bytes_length
+	);
+
+	int design_cost_color_prototyping_bytes_length = 0x5;
+
+	/*
+	0:  a1 ac 6d 8c 00          mov    eax,ds:0x8c6dac
+	*/
+	byte design_cost_color_prototyping_bytes_old[] = { 0xA1, 0xAC, 0x6D, 0x8C, 0x00 };
+
+	/*
+	0:  b8 ff 00 00 00          mov    eax,0xff
+	*/
+	byte design_cost_color_prototyping_bytes_new[] = { 0xB8, 0xFF, 0x00, 0x00, 0x00 };
+
+	write_bytes
+	(
+		0x00436FF2,
+		design_cost_color_prototyping_bytes_old,
+		design_cost_color_prototyping_bytes_new,
+		design_cost_color_prototyping_bytes_length
+	);
+
+}
+
 void patch_setup_wtp(Config* cf)
 {
 	// integrated into Thinker
@@ -3823,6 +3908,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->silent_vendetta_warning)
 	{
 		patch_silent_vendetta_warning();
+	}
+	
+	if (cf->design_cost_in_rows)
+	{
+		patch_design_cost_in_rows();
 	}
 	
 }

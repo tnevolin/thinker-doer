@@ -2733,6 +2733,19 @@ Location getMapIndexLocation(int mapIndex)
 	
 }
 
+int getLocationMapIndex(Location location)
+{
+    if (location.x >= 0 && location.y >= 0 && location.x < *map_axis_x && location.y < *map_axis_y && !((location.x + location.y)&1))
+	{
+        return location.x / 2 + (*map_half_x) * location.y;
+    }
+	else
+	{
+        return -1;
+    }
+	
+}
+
 bool isVehicleLandUnitOnTransport(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
@@ -2777,5 +2790,102 @@ bool isDiplomaticStatus(int faction1Id, int faction2Id, int diplomaticStatus)
 {
     return faction1Id != faction2Id && faction1Id >= 0 && faction2Id >= 0
         && (Factions[faction1Id].diplo_status[faction2Id] & diplomaticStatus);
+}
+
+bool isScoutVehicle(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	UNIT *unit = &(Units[vehicle->unit_id]);
+	
+	return unit->weapon_type == WPN_HAND_WEAPONS && unit->armor_type == ARM_NO_ARMOR;
+	
+}
+
+Location getNearestItemLocation(int x, int y, uint32_t item)
+{
+	Location nearestItemLocation;
+	
+	int maxRange = *map_axis_x + *map_axis_y;
+	
+	for (int range = 0; range < maxRange; range += 2)
+	{
+		bool inMap = false;
+		
+		for (int dx = 0; dx <= range; dx++)
+		{
+			int dy = range - dx;
+			
+			int x1 = wrap(x + dx); int y1 = y + dy; MAP *tile1 = getMapTile(x1, y1);
+			int x2 = wrap(x + dx); int y2 = y - dy; MAP *tile2 = getMapTile(x2, y2);
+			int x3 = wrap(x - dx); int y3 = y + dy; MAP *tile3 = getMapTile(x3, y3);
+			int x4 = wrap(x - dx); int y4 = y - dy; MAP *tile4 = getMapTile(x4, y4);
+			
+			if (tile1)
+			{
+				inMap = true;
+			}
+			if (map_has_item(tile1, item))
+			{
+				nearestItemLocation.set(x1, y1);
+				return nearestItemLocation;
+			}
+			
+			if (tile2)
+			{
+				inMap = true;
+			}
+			if (map_has_item(tile2, item))
+			{
+				nearestItemLocation.set(x2, y2);
+				return nearestItemLocation;
+			}
+			
+			if (tile3)
+			{
+				inMap = true;
+			}
+			if (map_has_item(tile3, item))
+			{
+				nearestItemLocation.set(x3, y3);
+				return nearestItemLocation;
+			}
+			
+			if (tile4)
+			{
+				inMap = true;
+			}
+			if (map_has_item(tile4, item))
+			{
+				nearestItemLocation.set(x4, y4);
+				return nearestItemLocation;
+			}
+			
+		}
+		
+		if (!inMap)
+			break;
+		
+	}
+	
+	return nearestItemLocation;
+	
+}
+
+/*
+Checks if location is targetted by any vehicle.
+*/
+bool isTargettedLocation(Location location)
+{
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		if (vehicle->move_status == ORDER_MOVE_TO && vehicle->x == location.x && vehicle->y == location.y)
+			return true;
+		
+	}
+	
+	return false;
+	
 }
 

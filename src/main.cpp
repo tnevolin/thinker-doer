@@ -481,6 +481,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->silent_vendetta_warning = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "design_cost_in_rows"))
+    {
+        cf->design_cost_in_rows = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
