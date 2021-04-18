@@ -278,6 +278,7 @@ struct Config {
     double orbital_yield_limit = 1.0;
     bool silent_vendetta_warning = false;
     bool design_cost_in_rows = false;
+    int energy_market_crash_numerator = 4;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
