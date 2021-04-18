@@ -3419,6 +3419,35 @@ void patch_design_cost_in_rows()
 
 }
 
+void patch_energy_market_crash(int numerator)
+{
+	int energy_market_crash_bytes_length = 0x9;
+
+	/*
+	0:  99                      cdq
+	1:  83 e2 03                and    edx,0x3
+	4:  03 c2                   add    eax,edx
+	6:  c1 f8 02                sar    eax,0x2
+	*/
+	byte energy_market_crash_bytes_old[] = { 0x99, 0x83, 0xE2, 0x03, 0x03, 0xC2, 0xC1, 0xF8, 0x02 };
+
+	/*
+	0:  c1 f8 04                sar    eax,0x4
+	3:  6b c0 0c                imul   eax,eax,<numerator>
+	...
+	*/
+	byte energy_market_crash_bytes_new[] = { 0xC1, 0xF8, 0x04, 0x6B, 0xC0, (byte)numerator, 0x90, 0x90, 0x90 };
+
+	write_bytes
+	(
+		0x00520725,
+		energy_market_crash_bytes_old,
+		energy_market_crash_bytes_new,
+		energy_market_crash_bytes_length
+	);
+
+}
+
 void patch_setup_wtp(Config* cf)
 {
 	// integrated into Thinker
@@ -3913,6 +3942,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->design_cost_in_rows)
 	{
 		patch_design_cost_in_rows();
+	}
+	
+	if (cf->energy_market_crash_numerator != 4)
+	{
+		patch_energy_market_crash(cf->energy_market_crash_numerator);
 	}
 	
 }

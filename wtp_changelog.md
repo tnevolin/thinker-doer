@@ -1,3 +1,8 @@
+# Version 225
+
+* Increased military production priority. Hopefully, this will make AI build more units.
+* Energy market crash is multiplying energy reservers by 3/4 now, not 1/4 as it was in vanilla.
+
 # Version 224
 
 * Design workshop display unit cost in rows.
