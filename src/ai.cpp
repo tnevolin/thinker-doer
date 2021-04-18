@@ -164,6 +164,8 @@ void populateGlobalVariables()
 	activeFactionInfo.threatLevel = 0.0;
 	activeFactionInfo.regionSurfaceCombatVehicleIds.clear();
 	activeFactionInfo.regionSurfaceScoutVehicleIds.clear();
+	activeFactionInfo.baseAnticipatedNativeAttackStrengths.clear();
+	activeFactionInfo.baseRemainingNativeProtectionDemands.clear();
 
 	// populate factions combat modifiers
 
@@ -413,6 +415,10 @@ void populateGlobalVariables()
 	
 	activeFactionInfo.threatLevel = getThreatLevel();
 	
+	// bases native defense
+	
+	evaluateBaseNativeDefenseDemands();
+	
 }
 
 VEH *getVehicleByAIId(int aiId)
@@ -473,6 +479,85 @@ Location getNearestPodLocation(int vehicleId)
 	}
 	
 	return nearestPodLocation;
+	
+}
+
+/*
+Evaluates need for bases protection against natives.
+*/
+void evaluateBaseNativeDefenseDemands()
+{
+	debug("evaluateBaseNativeDefenseDemands\n");
+	
+	for (int baseId : activeFactionInfo.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		bool ocean = isOceanRegion(baseTile->region);
+		
+		debug("\t%s\n", base->name);
+		
+		// estimate native attack strength
+		
+		double nativePsiAttackStrength = getNativePsiAttackStrength(ocean ? TRIAD_SEA : TRIAD_LAND);
+		debug("\t\tnativePsiAttackStrength = %f\n", nativePsiAttackStrength);
+		
+		// calculate count of the nearest unpopulated tiles
+		
+		int unpopulatedTiles = 28 - (nearby_items(base->x, base->y, 3, TERRA_BASE_RADIUS) - 21);
+		debug("\t\tunpopulatedTiles = %d\n", unpopulatedTiles);
+		
+		// estimate count
+		
+		double anticipatedCount = 0.5 + 1.0 * ((double)unpopulatedTiles / 28.0);
+		debug("\t\tanticipatedCount = %f\n", anticipatedCount);
+		
+		// calculate pop chance
+		
+		double popChance = 0.0;
+		
+		for (int otherBaseId : activeFactionInfo.baseIds)
+		{
+			BASE *otherBase =&(Bases[otherBaseId]);
+			MAP *otherBaseTile = getBaseMapTile(otherBaseId);
+			
+			// same region only
+			
+			if (otherBaseTile->region != baseTile->region)
+				continue;
+			
+			// calculate range
+			
+			int range = map_range(base->x, base->y, otherBase->x, otherBase->y);
+			
+			// only in vicinity
+			
+			if (range >= 10)
+				continue;
+			
+			// compute contribution
+			
+			popChance += ((double)std::min(100, otherBase->eco_damage) / 100.0) * (1.0 - (double)range / 10.0);
+			
+		}
+		
+		anticipatedCount += (double)((Factions[aiFactionId].pop_total + 1) / 3) * popChance;
+		
+		double anticipatedNativePsiAttackStrength = std::max(0.0, nativePsiAttackStrength * anticipatedCount);
+
+		// calculate current native protectors in base
+
+		double baseNativeProtection = std::max(0.0, getBaseNativeProtection(baseId));
+		double remainingBaseNativeProtection = anticipatedNativePsiAttackStrength - baseNativeProtection;
+		
+		debug("\t\tbaseNativeProtection=%f, remainingBaseNativeProtection=%f\n", baseNativeProtection, remainingBaseNativeProtection);
+		
+		// store demand
+		
+		activeFactionInfo.baseAnticipatedNativeAttackStrengths[baseId] = anticipatedNativePsiAttackStrength;
+		activeFactionInfo.baseRemainingNativeProtectionDemands[baseId] = remainingBaseNativeProtection;
+		
+	}
 	
 }
 

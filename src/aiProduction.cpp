@@ -83,16 +83,6 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 		return choice;
 	}
 	
-	// Thinker
-	
-    int thinkerChoice = thinker_base_prod_choice(baseId, a2, a3, a4);
-	debug("\n===>    %-10s: %-25s\n\n", "Thinker", prod_name(thinkerChoice));
-
-    // WTP
-
-    int wtpChoice = aiSuggestBaseProduction(baseId, choice);
-	debug("\n===>    %-10s: %-25s\n\n", "WTP", prod_name(choice));
-	
 	// calculate vanilla priority
 
 	double vanillaPriority = 0.0;
@@ -128,6 +118,11 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 		
 	}
 	
+	// Thinker
+	
+    int thinkerChoice = thinker_base_prod_choice(baseId, a2, a3, a4);
+	debug("\n===>    %-10s: %-25s\n\n", "Thinker", prod_name(thinkerChoice));
+
 	// calculate Thinker priority
 	
 	double thinkerPriority = conf.ai_production_thinker_priority;
@@ -146,6 +141,11 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 		}
 		
 	}
+	
+    // WTP
+
+    int wtpChoice = aiSuggestBaseProduction(baseId, choice);
+	debug("\n===>    %-10s: %-25s\n\n", "WTP", prod_name(wtpChoice));
 	
 	// calculate wtp priority
 	
@@ -203,11 +203,10 @@ int aiSuggestBaseProduction(int baseId, int choice)
 	evaluateLandExpansionDemand();
 	evaluateOceanExpansionDemand();
 
-	evaluateExplorationDemand();
-
 	evaluatePoliceDemand();
 
-	evaluateNativeProtectionDemand();
+	evaluateNativeDefenseDemand();
+	evaluateTerritoryNativeProtectionDemand();
 
 //	evaluateCombatDemand();
 
@@ -869,216 +868,6 @@ void evaluateOceanExpansionDemand()
 }
 
 /*
-Evaluates need for exploration.
-*/
-void evaluateExplorationDemand()
-{
-	int baseId = productionDemand.baseId;
-	BASE *base = productionDemand.base;
-
-	debug("evaluateExplorationDemand\n");
-
-	// get base connected regions
-
-	std::set<int> baseConnectedRegions = getBaseConnectedRegions(baseId);
-
-	for
-	(
-		std::set<int>::iterator baseConnectedRegionsIterator = baseConnectedRegions.begin();
-		baseConnectedRegionsIterator != baseConnectedRegions.end();
-		baseConnectedRegionsIterator++
-	)
-	{
-		int region =  *baseConnectedRegionsIterator;
-		bool ocean = isOceanRegion(region);
-		int triad = (ocean ? TRIAD_SEA : TRIAD_LAND);
-
-		debug("\tregion=%d, type=%s\n", region, (ocean ? "ocean" : "land"));
-
-		// find scout unit
-
-		int scoutUnitId = findScoutUnit(base->faction_id, triad);
-
-		if (scoutUnitId == -1)
-		{
-			debug("\t\tno scout unit\n");
-			continue;
-		}
-
-		debug("\t\tscoutUnit=%-25s\n", Units[scoutUnitId].name);
-
-		// calculate number of unexplored tiles
-
-		int unexploredTileCount = 0;
-
-		for (int x = 0; x < *map_axis_x; x++)
-		{
-			for (int y = 0; y < *map_axis_y; y++)
-			{
-				MAP *tile = getMapTile(x, y);
-
-				if (tile == NULL)
-					continue;
-
-				// this region only
-
-				if (tile->region != region)
-					continue;
-
-				// unexplored only
-
-				if ((tile->visibility & (0x1 << aiFactionId)) != 0)
-					continue;
-
-				// search for nearby explored tiles not on unfriendly territory
-
-				bool reachable = false;
-
-				for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
-				{
-					// same region only
-
-					if (adjacentTile->region != region)
-						continue;
-
-					// explored only
-
-					if ((adjacentTile->visibility & (0x1 << aiFactionId)) == 0)
-						continue;
-
-					// neutral, own, or pact
-
-					if (adjacentTile->owner == -1 || adjacentTile->owner == aiFactionId || Factions[aiFactionId].diplo_status[adjacentTile->owner] == DIPLO_PACT)
-					{
-						reachable = true;
-						break;
-					}
-
-				}
-
-				// not reachable
-
-				if (!reachable)
-					continue;
-
-				// calculate distance to nearest own base within region
-
-				BASE *nearestBase = NULL;
-				int nearestBaseRange = 0;
-
-				for (int regionBaseId : getRegionBases(base->faction_id, region))
-				{
-					BASE *regionBase = &(Bases[regionBaseId]);
-
-					// calculate range to tile
-
-					int range = map_range(x, y, regionBase->x, regionBase->y);
-
-					if (nearestBase == NULL || range < nearestBaseRange)
-					{
-						nearestBase = regionBase;
-						nearestBaseRange = range;
-					}
-
-				}
-
-				// exclude too far or uncertain tiles
-
-				if (nearestBase == NULL || nearestBaseRange > conf.ai_production_max_unpopulated_range)
-					continue;
-
-				// all conditions are met
-
-				unexploredTileCount++;
-
-			}
-
-		}
-
-		debug("\t\tunexploredTileCount=%d\n", unexploredTileCount);
-
-		// no more unexplored tiles
-
-		if (unexploredTileCount == 0)
-			continue;
-
-		// summarize existing explorers' speed
-
-		int existingExplorersCombinedSpeed = 0;
-
-		for (int vehicleId : getRegionSurfaceVehicles(base->faction_id, region, true))
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
-
-			// exclude non combat units
-
-			if (!isVehicleCombat(vehicleId))
-				continue;
-
-			// only units with hand weapon
-
-			if (Units[vehicle->unit_id].weapon_type != WPN_HAND_WEAPONS)
-				continue;
-
-			// exclude infantry units at base
-
-			if (Units[vehicle->unit_id].chassis_type == CHS_INFANTRY && (vehicleLocation->items & TERRA_BASE_IN_TILE))
-				continue;
-
-			// estimate vehicle speed
-
-			int vehicleSpeed = veh_chassis_speed(vehicleId);
-
-			// adjust native speed assuming there is a lot of fungus
-
-			if (!ocean && isVehicleNativeLand(vehicleId))
-			{
-				vehicleSpeed *= 2;
-			}
-
-			existingExplorersCombinedSpeed += vehicleSpeed;
-
-		}
-
-		debug("\t\texistingExplorersCombinedSpeed=%d\n", existingExplorersCombinedSpeed);
-
-		// calculate need for infantry explorers
-
-		double infantryExplorersTotalDemand = (double)unexploredTileCount / conf.ai_production_exploration_coverage;
-		double infantryExplorersRemainingDemand = infantryExplorersTotalDemand - (double)existingExplorersCombinedSpeed;
-
-		debug("\t\tinfantryExplorersTotalDemand=%f, infantryExplorersRemainingDemand=%f\n", infantryExplorersTotalDemand, infantryExplorersRemainingDemand);
-
-		// we have enough
-
-		if (infantryExplorersRemainingDemand <= 0)
-			continue;
-
-		// otherwise, set priority
-
-		double priority = infantryExplorersRemainingDemand / infantryExplorersTotalDemand;
-
-		debug("\t\tpriority=%f\n", priority);
-
-		// find max mineral surplus in region
-
-		int maxMineralSurplus = getRegionBasesMaxMineralSurplus(base->faction_id, region);
-		debug("\t\tmaxMineralSurplus=%d\n", maxMineralSurplus);
-
-		// set demand based on mineral surplus
-
-		double baseProductionAdjustedPriority = priority * (double)base->mineral_surplus / (double)maxMineralSurplus;
-
-		debug("\t\t\t%-25s mineral_surplus=%d, baseProductionAdjustedPriority=%f\n", base->name, base->mineral_surplus, baseProductionAdjustedPriority);
-
-		addProductionDemand(scoutUnitId, baseProductionAdjustedPriority);
-
-	}
-
-}
-
-/*
 Evaluates need for police units.
 */
 void evaluatePoliceDemand()
@@ -1138,74 +927,162 @@ void evaluatePoliceDemand()
 /*
 Evaluates need for bases protection against natives.
 */
-void evaluateNativeProtectionDemand()
+void evaluateNativeDefenseDemand()
 {
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
-
-	debug("evaluateNativeProtectionDemand\n");
-
-	// calculate current native protection
-
-	double baseNativeProtection = getBaseNativeProtection(baseId);
-	debug("\tbaseNativeProtection=%f\n", baseNativeProtection);
-
-	// add protection demand
-
-	int item = findStrongestNativeDefensePrototype(base->faction_id);
-
-	debug("\tprotectionUnit=%-25s\n", Units[item].name);
+	
+	debug("evaluateNativeDefenseDemand\n");
+	
+	// get base native protection demand
+	
+	if (activeFactionInfo.baseAnticipatedNativeAttackStrengths.count(baseId) == 0 || activeFactionInfo.baseRemainingNativeProtectionDemands.count(baseId) == 0)
+		return;
+	
+	double baseAnticipatedNativeAttackStrength = activeFactionInfo.baseAnticipatedNativeAttackStrengths[baseId];
+	double baseRemainingNativeProtectionDemand = activeFactionInfo.baseRemainingNativeProtectionDemands[baseId];
+	
+	debug("\tbaseAnticipatedNativeAttackStrength=%f, baseRemainingNativeProtectionDemand=%f\n", baseAnticipatedNativeAttackStrength, baseRemainingNativeProtectionDemand);
+	
+	if (baseAnticipatedNativeAttackStrength <= 0.0 || baseRemainingNativeProtectionDemand <= 0.0)
+		return;
 
 	// calculate priority
 
-	double priority;
-
-	if (baseNativeProtection < conf.ai_production_min_native_protection)
-	{
-		priority = 1.0;
-	}
-	else if (baseNativeProtection < conf.ai_production_max_native_protection)
-	{
-		priority = conf.ai_production_native_protection_priority * (conf.ai_production_max_native_protection - baseNativeProtection) / (conf.ai_production_max_native_protection - conf.ai_production_min_native_protection);
-	}
-	else
-	{
-		priority = 0.0;
-	}
+	double priority = baseRemainingNativeProtectionDemand / baseAnticipatedNativeAttackStrength;
 
 	debug("\tpriority=%f\n", priority);
 
 	if (priority > 0.0)
 	{
+		int item = findStrongestNativeDefensePrototype(base->faction_id);
+		debug("\tprotectionUnit=%-25s\n", Units[item].name);
+
 		addProductionDemand(item, priority);
+		
 	}
 
 }
 
-///*
-//Calculate demand for protection against other factions.
-//*/
-//void evaluateCombatDemand()
-//{
-//	debug("evaluateCombatDemand - %s\n", MFactions[aiFactionId].noun_faction);
-//	debug("\tthreatLevel = %f\n", activeFactionInfo.threatLevel);
-//	
-//	// do nothing until we below threshold
-//	
-//	if (activeFactionInfo.threatLevel <= conf.ai_production_threat_level_threshold)
-//		return;
-//	
-//	// compute combat priority
-//	
-//	double combatPriority = conf.ai_production_combat_choice_priority * (activeFactionInfo.threatLevel - conf.ai_production_threat_level_threshold);
-//
-//	debug("\tcombatPriority = %f\n", combatPriority);
-//	
-//	// get vanilla suggestion
-//	
-//	int vanillaChoice = base_prod_choice()
-//	
-//}
+/*
+Evaluates need for patrolling natives.
+*/
+void evaluateTerritoryNativeProtectionDemand()
+{
+	int baseId = productionDemand.baseId;
+	BASE *base = productionDemand.base;
+
+	debug("evaluateTerritoryNativeProtectionDemand - %s\n", base->name);
+
+	// get base connected regions
+
+	std::set<int> baseConnectedRegions = getBaseConnectedRegions(baseId);
+
+	for (int region : baseConnectedRegions)
+	{
+		bool ocean = isOceanRegion(region);
+
+		debug("\tregion=%d, type=%s\n", region, (ocean ? "ocean" : "land"));
+
+		// find native attack unit
+
+		int nativeAttackUnitId = findNativeAttackPrototype(ocean);
+
+		if (nativeAttackUnitId == -1)
+		{
+			debug("\t\tno native attack unit\n");
+			continue;
+		}
+
+		debug("\t\tnativeAttackUnit=%-25s\n", Units[nativeAttackUnitId].name);
+
+		// calculate natives defense value
+
+		double nativePsiDefenseValue = 0.0;
+
+		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			MAP *vehicleTile = getVehicleMapTile(vehicleId);
+			
+			if (vehicle->faction_id == 0 && vehicleTile->region == region && vehicleTile->owner == aiFactionId)
+			{
+				nativePsiDefenseValue += getVehiclePsiDefenseValue(vehicleId);
+			}
+			
+		}
+
+		debug("\t\tnativePsiDefenseValue=%f\n", nativePsiDefenseValue);
+
+		// none
+
+		if (nativePsiDefenseValue == 0.0)
+			continue;
+
+		// summarize existing attack value
+
+		double existingPsiAttackValue = 0.0;
+
+		for (int vehicleId : activeFactionInfo.combatVehicleIds)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			MAP *vehicleTile = getVehicleMapTile(vehicleId);
+			
+			// exclude wrong triad
+			
+			if (vehicle->triad() == (ocean ? TRIAD_LAND : TRIAD_AIR))
+				continue;
+
+			// exclude wrong region
+			
+			if (!(vehicle->triad() == TRIAD_AIR || vehicleTile->region == region))
+				continue;
+
+			// only units with hand weapon and no armor
+
+			if (!(Units[vehicle->unit_id].weapon_type == WPN_HAND_WEAPONS || Units[vehicle->unit_id].armor_type == ARM_NO_ARMOR))
+				continue;
+
+			existingPsiAttackValue += getVehiclePsiAttackStrength(vehicleId);
+
+		}
+
+		debug("\t\texistingPsiAttackValue=%f\n", existingPsiAttackValue);
+
+		// calculate need for psi attackers
+
+		double nativeAttackTotalDemand = (double)nativePsiDefenseValue;
+		double nativeAttackRemainingDemand = nativeAttackTotalDemand - (double)existingPsiAttackValue;
+
+		debug("\t\tnativeAttackTotalDemand=%f, nativeAttackRemainingDemand=%f\n", nativeAttackTotalDemand, nativeAttackRemainingDemand);
+
+		// we have enough
+
+		if (nativeAttackRemainingDemand <= 0.0)
+			continue;
+
+		// otherwise, set priority
+
+		double priority = nativeAttackRemainingDemand / nativeAttackTotalDemand;
+
+		debug("\t\tpriority=%f\n", priority);
+
+		// find max mineral surplus in region
+
+		int maxMineralSurplus = getRegionBasesMaxMineralSurplus(base->faction_id, region);
+		debug("\t\tmaxMineralSurplus=%d\n", maxMineralSurplus);
+
+		// set demand based on mineral surplus
+
+		double baseProductionAdjustedPriority = priority * (double)base->mineral_surplus / (double)maxMineralSurplus;
+
+		debug("\t\t\t%-25s mineral_surplus=%d, baseProductionAdjustedPriority=%f\n", base->name, base->mineral_surplus, baseProductionAdjustedPriority);
+
+		addProductionDemand(nativeAttackUnitId, baseProductionAdjustedPriority);
+
+	}
+
+}
 
 void addProductionDemand(int item, double priority)
 {
@@ -1275,6 +1152,52 @@ int findStrongestNativeDefensePrototype(int factionId)
 		)
 		{
 			bestUnitId = id;
+			bestUnit = unit;
+		}
+
+	}
+
+    return bestUnitId;
+
+}
+
+int findNativeAttackPrototype(bool ocean)
+{
+	// initial prototype
+
+    int bestUnitId = -1;
+    UNIT *bestUnit = NULL;
+
+    for (int unitId : activeFactionInfo.prototypes)
+	{
+		UNIT *unit = &(Units[unitId]);
+		
+		// skip wrong triad
+
+		if (!(unit->triad() == (ocean ? TRIAD_SEA : TRIAD_LAND)))
+			continue;
+
+		// only with no weapon and armor
+		
+		if (!isScoutUnit(unitId))
+			continue;
+		
+		if
+		(
+			// initial assignment
+			(bestUnitId == -1)
+			||
+			// prefer empath
+			(!unit_has_ability(bestUnitId, ABL_EMPATH) && unit_has_ability(unitId, ABL_EMPATH))
+			||
+			// prefer faster
+			(unit->speed() > bestUnit->speed())
+			||
+			// prefer cheaper
+			(unit->cost < bestUnit->cost)
+		)
+		{
+			bestUnitId = unitId;
 			bestUnit = unit;
 		}
 

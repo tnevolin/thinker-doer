@@ -43,115 +43,177 @@ void aiNativeCombatStrategy()
 		bool ocean = isOceanRegion(baseLocation->region);
 		debug("\t%s\n", base->name);
 
-		// compose list of available vehicles
+		// get base native protection demand
+		
+		if (activeFactionInfo.baseAnticipatedNativeAttackStrengths.count(baseId) == 0)
+			continue;
+		
+		double baseAnticipatedNativeAttackStrength = activeFactionInfo.baseAnticipatedNativeAttackStrengths[baseId];
+		
+		debug("\tbaseAnticipatedNativeAttackStrength=%f\n", baseAnticipatedNativeAttackStrength);
+		
+		if (baseAnticipatedNativeAttackStrength <= 0.0)
+			continue;
 
+		// collect available vehicles
+		
 		std::vector<int> availableVehicles;
-
+		
 		std::vector<int> baseGarrison = getBaseGarrison(baseId);
-		availableVehicles.insert(availableVehicles.end(), baseGarrison.begin(), baseGarrison.end());
-
-		if (!ocean)
+		
+		for (int vehicleId : baseGarrison)
 		{
-			std::vector<int> regionSurfaceVehicles = getRegionSurfaceVehicles(base->faction_id, baseLocation->region, false);
-			availableVehicles.insert(availableVehicles.end(), regionSurfaceVehicles.begin(), regionSurfaceVehicles.end());
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			if
+			(
+				// no orders
+				combatOrders.count(vehicleId) == 0
+				&&
+				// combat
+				isVehicleCombat(vehicleId)
+				&&
+				// infantry
+				Units[vehicle->unit_id].chassis_type == CHS_INFANTRY
+				&&
+				// defender
+				vehicle->weapon_type() == WPN_HAND_WEAPONS
+				&&
+				// trance
+				vehicle_has_ability(vehicleId, ABL_TRANCE)
+			)
+			{
+				availableVehicles.push_back(vehicleId);
+			}
+			
 		}
 
-		// compose list of protectors
+		for (int vehicleId : baseGarrison)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			if
+			(
+				// no orders
+				combatOrders.count(vehicleId) == 0
+				&&
+				// combat
+				isVehicleCombat(vehicleId)
+				&&
+				// infantry
+				Units[vehicle->unit_id].chassis_type == CHS_INFANTRY
+				&&
+				// defender
+				vehicle->weapon_type() == WPN_HAND_WEAPONS
+				&&
+				// not trance
+				!vehicle_has_ability(vehicleId, ABL_TRANCE)
+			)
+			{
+				availableVehicles.push_back(vehicleId);
+			}
+			
+		}
+		
+		// for land bases also add vehicles in vicinity
+		
+		if (!ocean && activeFactionInfo.regionSurfaceScoutVehicleIds.count(baseLocation->region) > 0)
+		{
+			for (int vehicleId : activeFactionInfo.regionSurfaceScoutVehicleIds[baseLocation->region])
+			{
+				VEH *vehicle = &(Vehicles[vehicleId]);
+				MAP *vehicleTile = getVehicleMapTile(vehicleId);
+				
+				if
+				(
+					// no orders
+					combatOrders.count(vehicleId) == 0
+					&&
+					// combat
+					isVehicleCombat(vehicleId)
+					&&
+					// scout
+					isScoutVehicle(vehicleId)
+					&&
+					// not in base
+					!map_has_item(vehicleTile, TERRA_BASE_IN_TILE)
+					&&
+					// close
+					map_range(base->x, base->y, vehicle->x, vehicle->y) < 10
+				)
+				{
+					availableVehicles.push_back(vehicleId);
+				}
+				
+			}
+			
+		}
 
-		std::vector<VEHICLE_VALUE> protectors;
+		// set remaining protection
+
+		double remainingProtection = baseAnticipatedNativeAttackStrength;
+		
+		// assign protectors
 
 		for (int vehicleId : availableVehicles)
 		{
+			if (remainingProtection <= 0.0)
+				break;
+			
 			VEH *vehicle = &(Vehicles[vehicleId]);
-
-			// not having orders already
-
-			if (combatOrders.find(vehicleId) != combatOrders.end())
-				continue;
-
-			// combat vehicles only
-
-			if (!isVehicleCombat(vehicleId))
-				continue;
-
-			// infantry vehicles only
-
-			if (Units[vehicle->unit_id].chassis_type != CHS_INFANTRY)
-				continue;
-
-			// exclude battle ogres
-
-			if (vehicle->unit_id == BSC_BATTLE_OGRE_MK1 || vehicle->unit_id == BSC_BATTLE_OGRE_MK2 || vehicle->unit_id == BSC_BATTLE_OGRE_MK3)
-				continue;
 
 			// get protection potential
 
-			double protectionPotential = getVehicleBaseNativeProtectionPotential(vehicleId);
+			double protectionPotential = getVehicleBaseNativeProtection(baseId, vehicleId);
 			debug("\t\t[%3d](%3d,%3d) protectionPotential=%f\n", vehicleId, vehicle->x, vehicle->y, protectionPotential);
-
-			// build vehicle value
-
-			double value = getVehicleBaseNativeProtectionEfficiency(vehicleId);
-
-			// pull police into bases
-
-			if (vehicle_has_ability(vehicleId, ABL_POLICE_2X))
-			{
-				value *= 4.0;
-			}
-
-			// reduce value with range
-
-			value /= std::max(1.0, (double)map_range(vehicle->x, vehicle->y, base->x, base->y));
 
 			// add vehicle
 
-			protectors.push_back({vehicleId, value, protectionPotential});
+			setMoveOrder(vehicleId, base->x, base->y, true);
+			remainingProtection -= protectionPotential;
 
-		}
-
-		// sort protectors
-
-		std::sort(protectors.begin(), protectors.end(), compareVehicleValue);
-
-		// assign protectors
-
-		double remainingProtection = (base->pop_size == 1 ? 2.5 : 2.0);
-
-		for (VEHICLE_VALUE vehicleValue : protectors)
-		{
-			int vehicleId = vehicleValue.id;
-			double damage = vehicleValue.damage;
-
-			if (remainingProtection > 0.0)
-			{
-				setMoveOrder(vehicleId, base->x, base->y, true);
-				remainingProtection -= damage;
-			}
 		}
 
 	}
 
-	// check native artillery and towers
+	// spore launchers
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
 		VEH *vehicle = &(Vehicles[id]);
+		MAP *vehicleTile = getVehicleMapTile(id);
 		
-		// native unit
-		if (vehicle->faction_id == 0)
+		if (vehicle->faction_id == 0 && vehicle->unit_id == BSC_SPORE_LAUNCHER && vehicleTile->owner == aiFactionId)
 		{
-			// spore launcher
-			if (vehicle->unit_id == BSC_SPORE_LAUNCHER)
-			{
-				attackNativeArtillery(id);
-			}
-			// spore launcher
-			else if (vehicle->unit_id == BSC_FUNGAL_TOWER)
-			{
-				attackNativeTower(id);
-			}
-			
+			attackVehicle(id);
+		}
+
+	}
+
+	// mind worms
+
+	for (int id = 0; id < *total_num_vehicles; id++)
+	{
+		VEH *vehicle = &(Vehicles[id]);
+		MAP *vehicleTile = getVehicleMapTile(id);
+		
+		if (vehicle->faction_id == 0 && vehicle->unit_id == BSC_MIND_WORMS && vehicleTile->owner == aiFactionId)
+		{
+			attackVehicle(id);
+		}
+
+	}
+
+	// fungal towers
+
+	for (int id = 0; id < *total_num_vehicles; id++)
+	{
+		VEH *vehicle = &(Vehicles[id]);
+		MAP *vehicleTile = getVehicleMapTile(id);
+		
+		if (vehicle->faction_id == 0 && vehicle->unit_id == BSC_FUNGAL_TOWER && vehicleTile->owner == aiFactionId)
+		{
+			attackVehicle(id);
 		}
 
 	}
@@ -259,87 +321,6 @@ void popPods()
 	
 }
 
-/*
-Checks whether native artillery is dangerous and attack it if so.
-*/
-void attackNativeArtillery(int enemyVehicleId)
-{
-	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
-
-	// check if they are our improvements or non combat units in bombardment range
-
-	bool danger = false;
-
-	for (int dx = -4; dx <= +4; dx++)
-	{
-		for (int dy = -(4 - abs(dx)); dy <= +(4 - abs(dx)); dy += 2)
-		{
-			int x = enemyVehicle->x + dx;
-			int y = enemyVehicle->y + dy;
-			MAP *tile = getMapTile(x, y);
-
-			if (!tile)
-				continue;
-
-			if
-			(
-				tile->owner == aiFactionId
-				&&
-				(map_base(tile) || isImprovedTile(x, y))
-			)
-			{
-				danger = true;
-				break;
-			}
-			
-			bool ourNonCombatVehicleIsInDanger = false;
-			for (int vehicleId : getStackedVehicleIds(veh_at(x, y)))
-			{
-				VEH *vehicle = &(Vehicles[vehicleId]);
-				
-				if
-				(
-					vehicle->faction_id == aiFactionId
-					&&
-					!isVehicleCombat(vehicleId)
-				)
-				{
-					ourNonCombatVehicleIsInDanger = true;
-					break;
-				}
-				
-			}
-			
-			if (ourNonCombatVehicleIsInDanger)
-			{
-				danger = true;
-				break;
-			}
-			
-		}
-	}
-
-	if (danger)
-	{
-		attackVehicle(enemyVehicleId);
-	}
-	
-}
-
-/*
-Checks whether native tower is within our borders and attack it if so.
-*/
-void attackNativeTower(int enemyVehicleId)
-{
-	MAP *enemyVehicleTile = getVehicleMapTile(enemyVehicleId);
-	
-	if (enemyVehicleTile->owner == aiFactionId)
-	{
-		attackVehicle(enemyVehicleId);
-	}
-	
-}
-
 void attackVehicle(int enemyVehicleId)
 {
 	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
@@ -355,6 +336,11 @@ void attackVehicle(int enemyVehicleId)
 	for (int id : activeFactionInfo.combatVehicleIds)
 	{
 		VEH *vehicle = &(Vehicles[id]);
+
+		// skip those with orders already
+
+		if (combatOrders.count(id) != 0)
+			continue;
 
 		// do not bother if unreachable
 
@@ -971,7 +957,11 @@ double getThreatLevel()
 		
 		double threatCoefficient;
 		
-		if (isDiplomaticStatus(aiFactionId, vehicle->faction_id, DIPLO_VENDETTA))
+		if (is_human(vehicle->faction_id))
+		{
+			threatCoefficient = conf.ai_production_threat_coefficient_vendetta;
+		}
+		else if (isDiplomaticStatus(aiFactionId, vehicle->faction_id, DIPLO_VENDETTA))
 		{
 			threatCoefficient = conf.ai_production_threat_coefficient_vendetta;
 		}

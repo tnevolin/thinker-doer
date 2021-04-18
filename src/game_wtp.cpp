@@ -451,19 +451,19 @@ double getVehiclePsiAttackStrength(int id)
 		return 1.0;
 	}
 
-	// get vehicle lifecycle modifier
+	// get vehicle morale modifier
 
-	int lifecycle = vehicle->morale;
-	double lifecycleModifier = 1.0 + 0.125 * (double)(lifecycle - 2);
+	int morale = vehicle->morale;
+	double moraleModifier = 1.0 + 0.125 * (double)(morale - 2);
 
 	// get faction PLANET rating modifier
 
 	int planet = faction->SE_planet_pending;
-	double planetModifier = 1.0 + Rules->combat_psi_bonus_per_PLANET * planet;
+	double planetModifier = 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * planet;
 
 	// calculate modifier
-
-	return psiCombatStrength * lifecycleModifier * planetModifier;
+	
+	return psiCombatStrength * moraleModifier * planetModifier;
 
 }
 
@@ -1770,11 +1770,11 @@ std::vector<int> getFactionBases(int factionId)
 Estimates unit odds in base defense against land native attack.
 This doesn't account for vehicle morale.
 */
-double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
+double estimateUnitBaseLandNativeProtection(int unitId, int factionId, bool ocean)
 {
 	// basic defense odds against land native attack
 
-	double nativeProtection = 1.0 / getPsiCombatBaseOdds(TRIAD_LAND);
+	double nativeProtection = 1.0 / getPsiCombatBaseOdds(ocean ? TRIAD_SEA : TRIAD_LAND);
 
 	// add base defense bonus
 
@@ -1807,19 +1807,21 @@ double estimateUnitBaseLandNativeProtection(int factionId, int unitId)
 }
 
 /*
-Estimates vehicle odds in base defense agains land native attack.
+Estimates vehicle odds in base defense against native attack.
 This accounts for vehicle morale.
 */
-double estimateVehicleBaseLandNativeProtection(int factionId, int vehicleId)
+double getVehicleBaseNativeProtection(int baseId, int vehicleId)
 {
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *baseTile = getBaseMapTile(baseId);
+	
 	// unit native protection
 
-	double nativeProtection = estimateUnitBaseLandNativeProtection(factionId, Vehicles[vehicleId].unit_id);
+	double nativeProtection = estimateUnitBaseLandNativeProtection(Vehicles[vehicleId].unit_id, vehicle->faction_id, isOceanRegion(baseTile->region));
 
 	// add morale
 
 	nativeProtection *= getMoraleModifierDefense(vehicleId);
-	debug("nativeProtection=%f\n", nativeProtection);
 
 	return nativeProtection;
 
@@ -2014,8 +2016,6 @@ Estimates base native protection in number of native units killed.
 */
 double getBaseNativeProtection(int baseId)
 {
-	BASE *base = &(Bases[baseId]);
-
 	double baseNativeProtection = 0.0;
 
 	for (int vehicleId : getBaseGarrison(baseId))
@@ -2025,7 +2025,7 @@ double getBaseNativeProtection(int baseId)
 		if (!isVehicleCombat(vehicleId))
 			continue;
 
-		baseNativeProtection += estimateVehicleBaseLandNativeProtection(base->faction_id, vehicleId);
+		baseNativeProtection += getVehicleBaseNativeProtection(baseId, vehicleId);
 
 	}
 
@@ -2792,6 +2792,14 @@ bool isDiplomaticStatus(int faction1Id, int faction2Id, int diplomaticStatus)
         && (Factions[faction1Id].diplo_status[faction2Id] & diplomaticStatus);
 }
 
+bool isScoutUnit(int unitId)
+{
+	UNIT *unit = &(Units[unitId]);
+	
+	return unit->weapon_type == WPN_HAND_WEAPONS && unit->armor_type == ARM_NO_ARMOR;
+	
+}
+
 bool isScoutVehicle(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
@@ -2887,5 +2895,54 @@ bool isTargettedLocation(Location location)
 	
 	return false;
 	
+}
+
+/*
+Computes newborn native psi attack strength.
+*/
+double getNativePsiAttackStrength(int triad)
+{
+	// get base odds
+	
+	double baseOdds = getPsiCombatBaseOdds(triad);
+	
+	// get morale
+	
+	int morale;
+	
+	if (*current_turn < 45)
+	{
+		morale = 0;
+	}
+	else if (*current_turn < 90)
+	{
+		morale = 1;
+	}
+	else if (*current_turn < 170)
+	{
+		morale = 2;
+	}
+	else if (*current_turn < 250)
+	{
+		morale = 3;
+	}
+	else if (*current_turn < 330)
+	{
+		morale = 4;
+	}
+	else
+	{
+		morale = 5;
+	}
+	
+	// compute strength
+	
+	return baseOdds * getMoraleModifier(morale);
+	
+}
+
+double getMoraleModifier(int morale)
+{
+	return (1.0 + 0.125 * (morale - 2));
 }
 
