@@ -1,7 +1,10 @@
 # Version 225
 
 * Increased military production priority. Hopefully, this will make AI build more units.
-* Energy market crash is multiplying energy reservers by 3/4 now, not 1/4 as it was in vanilla.
+* Removed AI need for exploration. Instead made them attack natives on their territory.
+* Adusted AI base protector movement and holding.
+* Energy market crash is multiplying energy reserves by 3/4 now, not 1/4 as it was in vanilla.
+* Increased cost of level 1 technologies. They were coming too fast.
 
 # Version 224
 

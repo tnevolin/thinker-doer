@@ -23,8 +23,6 @@ void aiCombatStrategy();
 void populateCombatLists();
 void aiNativeCombatStrategy();
 void popPods();
-void attackNativeArtillery(int enemyVehicleId);
-void attackNativeTower(int enemyVehicleId);
 void attackVehicle(int enemyVehicleId);
 int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2);
 int moveCombat(int id);

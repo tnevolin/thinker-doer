@@ -1573,7 +1573,7 @@ int wtp_tech_cost(int fac, int tech) {
         level = wtp_tech_level(tech);
     }
 
-    double S = 10.0;
+    double S = 30.0;
     double C = 0.04;
     double B = 160 * (*map_area_tiles / 3200.0);
     double x0 = sqrt(B / (3 * C));
