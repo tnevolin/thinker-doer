@@ -509,6 +509,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_thinker_priority = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_military_priority"))
+    {
+        cf->ai_production_military_priority = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_threat_coefficient_vendetta"))
     {
         cf->ai_production_threat_coefficient_vendetta = atof(value);
@@ -584,10 +588,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_production_threat_level_threshold"))
     {
         cf->ai_production_threat_level_threshold = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_combat_choice_priority"))
-    {
-        cf->ai_production_combat_choice_priority = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {

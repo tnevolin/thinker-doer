@@ -3485,8 +3485,8 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 				
 				// reparse their odds into dialog
 				
-				parse_num(0, attackerOdds);
-				parse_num(1, defenderOdds);
+				parse_num(2, attackerOdds);
+				parse_num(3, defenderOdds);
 				
 			}
 			else
@@ -3515,8 +3515,8 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 			
 			int attackerExactOdds = (int)round(attackerWinningProbability / (1.0 - attackerWinningProbability) * (double)defenderOdds);
 			
-			parse_num(2, attackerExactOdds);
-			parse_num(3, defenderOdds);
+			parse_num(0, attackerExactOdds);
+			parse_num(1, defenderOdds);
 			
 			// convert to percentage
 			

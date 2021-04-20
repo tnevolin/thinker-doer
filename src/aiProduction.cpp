@@ -15,7 +15,7 @@ double territoryBonusMultiplier;
 
 // combat priority used globally
 
-double combatPriority;
+double militaryPriority;
 
 // currently processing base production demand
 
@@ -66,9 +66,9 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 	
 	// compute combat priority
 	
-	combatPriority = conf.ai_production_combat_choice_priority * (activeFactionInfo.threatLevel - conf.ai_production_threat_level_threshold);
+	militaryPriority = conf.ai_production_military_priority;
 	
-	debug("\tcombatPriority = %f\n", combatPriority);
+	debug("\tmilitaryPriority = %f\n", militaryPriority);
 	
 	// vanilla choice
 
@@ -103,17 +103,17 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 		vanillaPriority = conf.ai_production_vanilla_priority_facility;
 	}
 	
-	// raise vanilla priority for combat items
+	// raise vanilla priority for military items
 	
 	if (isMilitaryItem(choice))
 	{
-		debug("vanilla choice is combat item\n");
+		debug("vanilla choice is military item\n");
 		
-		// raise vanilla priority to combat priority
+		// raise vanilla priority to military priority
 		
-		if (combatPriority > vanillaPriority)
+		if (militaryPriority > vanillaPriority)
 		{
-			vanillaPriority = combatPriority;
+			vanillaPriority = militaryPriority;
 		}
 		
 	}
@@ -135,9 +135,9 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 		
 		// raise thinker priority to combat priority
 		
-		if (combatPriority > thinkerPriority)
+		if (militaryPriority > thinkerPriority)
 		{
-			thinkerPriority = combatPriority;
+			thinkerPriority = militaryPriority;
 		}
 		
 	}
@@ -159,9 +159,9 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 		
 		// raise wtp priority to combat priority
 		
-		if (combatPriority > wtpPriority)
+		if (militaryPriority > wtpPriority)
 		{
-			wtpPriority = combatPriority;
+			wtpPriority = militaryPriority;
 		}
 		
 	}
