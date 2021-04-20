@@ -285,6 +285,7 @@ struct Config {
     double ai_production_vanilla_priority_project;
     double ai_production_vanilla_priority_facility;
     double ai_production_thinker_priority;
+    double ai_production_military_priority;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_pact;
     double ai_production_threat_coefficient_treaty;
@@ -303,7 +304,6 @@ struct Config {
     double ai_production_improvement_coverage;
     int ai_production_population_projection_turns;
     double ai_production_threat_level_threshold;
-    double ai_production_combat_choice_priority;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;

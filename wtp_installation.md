@@ -22,6 +22,7 @@ Copy files from **core** folder to game directory overriding existing files.
 ## Factions
 
 This is an optional faction modifications. Feel free to use standard or your own customized ones.
+Although some faction Datalinks text were updated to reflect WTP functionality change.
 
 Copy files from **factions** folder to game directory overriding existing files.
 
