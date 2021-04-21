@@ -22,10 +22,21 @@ double militaryPriority;
 PRODUCTION_DEMAND productionDemand;
 
 /*
+Evaluates production choices.
+*/
+void aiProductionStrategy()
+{
+	// evaluate base defense demands
+}
+
+/*
 Selects base production.
 */
 HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 {
+	// fallback to Thinker for test
+	return mod_base_production(baseId, a2, a3, a4);
+	
     BASE* base = &(Bases[baseId]);
     bool productionDone = (base->status_flags & BASE_PRODUCTION_DONE);
     bool withinExemption = isBaseProductionWithinRetoolingExemption(baseId);
