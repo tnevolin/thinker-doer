@@ -443,8 +443,8 @@ Fungal Payload,       Fungal,         0,14,24, -1, NewMiss
 #DEFENSES
 No Armor,            Scout,       1, 0, 1, None,
 Synthmetal Armor,    Synthmetal,  2, 0, 2, Indust,
-Plasma Steel Armor,  Plasma,      4, 2, 4, Chemist,
-Silksteel Armor,     Silksteel,   6, 1, 6, Alloys,
+Plasma Steel Armor,  Plasma,      3, 2, 3, Chemist,
+Silksteel Armor,     Silksteel,   5, 1, 5, Alloys,
 Photon Wall,         Photon,      8, 1, 8, DocSec,
 Probability Sheath,  Probability,12, 2,12, ProbMec,
 Neutronium Armor,    Neutronium, 16, 1,16, MatComp,

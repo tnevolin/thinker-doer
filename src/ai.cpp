@@ -151,21 +151,8 @@ void aiStrategy()
 void populateGlobalVariables()
 {
 	// clear lists
-
-	activeFactionInfo.baseIds.clear();
-	activeFactionInfo.baseLocations.clear();
-	activeFactionInfo.regionBaseGroups.clear();
-	activeFactionInfo.baseStrategies.clear();
-	activeFactionInfo.combatVehicleIds.clear();
-	activeFactionInfo.outsideCombatVehicleIds.clear();
-	activeFactionInfo.prototypes.clear();
-	activeFactionInfo.colonyVehicleIds.clear();
-	activeFactionInfo.formerVehicleIds.clear();
-	activeFactionInfo.threatLevel = 0.0;
-	activeFactionInfo.regionSurfaceCombatVehicleIds.clear();
-	activeFactionInfo.regionSurfaceScoutVehicleIds.clear();
-	activeFactionInfo.baseAnticipatedNativeAttackStrengths.clear();
-	activeFactionInfo.baseRemainingNativeProtectionDemands.clear();
+	
+	activeFactionInfo.clear();
 
 	// populate factions combat modifiers
 
@@ -198,6 +185,11 @@ void populateGlobalVariables()
 
 	for (int id = 1; id < 8; id++)
 	{
+		// skip aliens
+
+		if (id == 0)
+			continue;
+
 		// skip self
 
 		if (id == aiFactionId)
@@ -211,7 +203,11 @@ void populateGlobalVariables()
 
 		double threatKoefficient;
 
-		if (otherFactionRelation & DIPLO_VENDETTA)
+		if (is_human(id))
+		{
+			threatKoefficient = conf.ai_production_threat_coefficient_vendetta;
+		}
+		else if (otherFactionRelation & DIPLO_VENDETTA)
 		{
 			threatKoefficient = conf.ai_production_threat_coefficient_vendetta;
 		}
@@ -219,16 +215,13 @@ void populateGlobalVariables()
 		{
 			threatKoefficient = conf.ai_production_threat_coefficient_pact;
 		}
+		else if (otherFactionRelation & DIPLO_TREATY)
+		{
+			threatKoefficient = conf.ai_production_threat_coefficient_treaty;
+		}
 		else
 		{
 			threatKoefficient = conf.ai_production_threat_coefficient_other;
-		}
-
-		// add extra for treacherous human player
-
-		if (is_human(id))
-		{
-			threatKoefficient += 0.50;
 		}
 
 		// store threat koefficient
@@ -271,6 +264,8 @@ void populateGlobalVariables()
 		debug("\n[%3d] %-25s\n", id, activeFactionInfo.baseStrategies[id].base->name);
 
 		// add base regions
+		
+		activeFactionInfo.presenceRegions.insert(getBaseMapTile(id)->region);
 
 		std::set<int> baseConnectedRegions = getBaseConnectedRegions(id);
 
@@ -409,15 +404,17 @@ void populateGlobalVariables()
 
 	}
 	
-	// ==================================================
 	// threat level
-	// ==================================================
 	
 	activeFactionInfo.threatLevel = getThreatLevel();
 	
 	// bases native defense
 	
 	evaluateBaseNativeDefenseDemands();
+	
+	// conventional
+	
+	evaluateConventionalDefenseDemands();
 	
 }
 
@@ -482,9 +479,6 @@ Location getNearestPodLocation(int vehicleId)
 	
 }
 
-/*
-Evaluates need for bases protection against natives.
-*/
 void evaluateBaseNativeDefenseDemands()
 {
 	debug("evaluateBaseNativeDefenseDemands\n");
@@ -556,6 +550,200 @@ void evaluateBaseNativeDefenseDemands()
 		
 		activeFactionInfo.baseAnticipatedNativeAttackStrengths[baseId] = anticipatedNativePsiAttackStrength;
 		activeFactionInfo.baseRemainingNativeProtectionDemands[baseId] = remainingBaseNativeProtection;
+		
+	}
+	
+}
+
+void evaluateConventionalDefenseDemands()
+{
+	debug("evaluateConventionalDefenseDemands - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	// evaluate own strength in regions
+	
+	std::unordered_map<int, double> regionOwnStrengths;
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		
+		// only region with own bases
+		
+		if (activeFactionInfo.presenceRegions.count(vehicleTile->region) == 0)
+			continue;
+		
+		// not alien
+		
+		if (vehicle->faction_id == 0)
+			continue;
+		
+		// own
+		
+		if (vehicle->faction_id != aiFactionId)
+			continue;
+		
+		// combat only
+		
+		if (!isVehicleCombat(vehicleId))
+			continue;
+		
+		// compute vehicle value
+		
+		double offenseValue = getVehicleConventionalOffenseValue(vehicleId);
+		double defenseValue = getVehicleConventionalDefenseValue(vehicleId);
+		
+		// vehicle in different realm can defend only if in base and cannot attack
+		
+		if
+		(
+			(vehicle->triad() == TRIAD_LAND && is_ocean(vehicleTile))
+			||
+			(vehicle->triad() == TRIAD_SEA && !is_ocean(vehicleTile))
+		)
+		{
+			if (!map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
+			{
+				// exclude units in different realm and not in base
+				continue;
+			}
+			else
+			{
+				// if in base, don't count their offense value
+				offenseValue = 0;
+			}
+		}
+		
+		// compute strength
+		
+		double strength = (offenseValue * offenseValue + defenseValue * defenseValue);
+		
+		// add to region strength
+		
+		if (regionOwnStrengths.count(vehicleTile->region) == 0)
+		{
+			regionOwnStrengths[vehicleTile->region] = 0.0;
+		}
+		regionOwnStrengths[vehicleTile->region] += strength;
+		
+	}
+	if (DEBUG)
+	{
+		debug("\tregionOwnStrengths\n")
+		for (auto &kv : regionOwnStrengths)
+		{
+			debug("\t\t%3d: %f\n", kv.first, kv.second);
+		}
+	}
+	
+	// evaluate opponents strength in regions
+	
+	std::unordered_map<int, double> regionOpponentStrengths;
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		
+		// only region with own bases
+		
+		if (activeFactionInfo.presenceRegions.count(vehicleTile->region) == 0)
+			continue;
+		
+		// not alien
+		
+		if (vehicle->faction_id == 0)
+			continue;
+		
+		// not own
+		
+		if (vehicle->faction_id == aiFactionId)
+			continue;
+		
+		// combat only
+		
+		if (!isVehicleCombat(vehicleId))
+			continue;
+		
+		// compute vehicle value
+		
+		double offenseValue = getVehicleConventionalOffenseValue(vehicleId);
+		double defenseValue = getVehicleConventionalDefenseValue(vehicleId);
+		
+		// vehicle in different realm can defend only if in base and cannot attack
+		
+		if
+		(
+			(vehicle->triad() == TRIAD_LAND && is_ocean(vehicleTile))
+			||
+			(vehicle->triad() == TRIAD_SEA && !is_ocean(vehicleTile))
+		)
+		{
+			if (!map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
+			{
+				// exclude units in different realm and not in base
+				continue;
+			}
+			else
+			{
+				// if in base, don't count their offense value
+				offenseValue = 0;
+			}
+		}
+		
+		// compute strength
+		
+		double strength = activeFactionInfo.factionInfos[vehicle->faction_id].threatKoefficient * (offenseValue * offenseValue + defenseValue * defenseValue);
+		
+		// compute distance to own base
+		
+		int nearestFactionBaseRange = getNearestFactionBaseRange(aiFactionId, vehicle->x, vehicle->y);
+		
+		// reduce strength based on range
+		
+		strength /= std::max(1.0, (double)nearestFactionBaseRange / 10.0);
+		
+		// add to region strength
+		
+		if (regionOpponentStrengths.count(vehicleTile->region) == 0)
+		{
+			regionOpponentStrengths[vehicleTile->region] = 0.0;
+		}
+		regionOpponentStrengths[vehicleTile->region] += strength;
+		
+	}
+	if (DEBUG)
+	{
+		debug("\tregionOpponentStrengths\n")
+		for (auto &kv : regionOpponentStrengths)
+		{
+			debug("\t\t%3d: %f\n", kv.first, kv.second);
+		}
+	}
+	
+	// compute region defense demands
+	
+	debug("\tregionDefenseDemands\n");
+	for (auto &kv : regionOpponentStrengths)
+	{
+		int region = kv.first;
+		double opponentStrength = kv.second;
+		
+		double defenseDemand;
+		
+		if (regionOwnStrengths.count(region) == 0)
+		{
+			defenseDemand = 1.0;
+		}
+		else
+		{
+			double ownStrength = regionOwnStrengths[region];
+			defenseDemand = (opponentStrength - ownStrength) / opponentStrength;
+		}
+		
+		activeFactionInfo.regionConventionalDefenseDemand[region] = defenseDemand;
+		
+		debug("\t\t%3d: %f\n", region, defenseDemand);
 		
 	}
 	
