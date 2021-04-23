@@ -1685,27 +1685,6 @@ HOOK_API void modifiedBaseFirst(int baseId)
 
 }
 
-int getNearestFactionBaseRange(int factionId, int x, int y)
-{
-	int nearestFactionBaseRange = 9999;
-
-	for (int baseId = 0; baseId < *total_num_bases; baseId++)
-	{
-		BASE *base = &(Bases[baseId]);
-
-		// own bases
-
-		if (base->faction_id != factionId)
-			continue;
-
-		nearestFactionBaseRange = std::min(nearestFactionBaseRange, map_range(x, y, base->x, base->y));
-
-	}
-
-	return nearestFactionBaseRange;
-
-}
-
 /*
 Checks for military purpose unit/structure.
 */

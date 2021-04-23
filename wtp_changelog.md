@@ -1,3 +1,9 @@
+# Version 227
+
+* Updated Angels description to not require infiltration to get technology from other factions.
+* Temporarily disabled right of passage agreement and scorched earth modifications until teaching AI how to defend better.
+* Removed morale mention from Childrens' Creche short description.
+
 # Version 226
 
 * Slightly adjusted some armor values.
@@ -10,7 +16,7 @@
 * Energy market crash is multiplying energy reserves by 3/4 now, not 1/4 as it was in vanilla.
 * Increased cost of level 1 technologies. They were coming too fast.
 * Increased overall priority for military production (units, facilities). I hope this will make AI at least as aggressive as in vanilla/Thinker.
-* Modified Morganites Datalinks description about popluation limit. For this to work morgan.txt need to be copied to game directory or the corrected description need to be pasted into existing morgan.txt file.
+* Modified Morganites Datalinks description about population limit. For this to work morgan.txt need to be copied to game directory or the corrected description need to be pasted into existing morgan.txt file.
 
 AI military production is not very well tested yet but it is endless iterative process anyway. I'll continue improving that in following versions.
 

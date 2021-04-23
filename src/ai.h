@@ -38,12 +38,27 @@ struct ESTIMATED_VALUE
 	double remaining;
 };
 
+struct MILITARY_STRENGTH
+{
+	double conventionalCount;
+	double psiCount;
+	double conventionalConventionalStrength;
+	double conventionalPsiStrength;
+	double psiPsiStrength;
+};
+struct FACTION_MILITARY_STRENGTH
+{
+	MILITARY_STRENGTH offense;
+	MILITARY_STRENGTH defense;
+};
+
 struct ActiveFactionInfo
 {
 	FACTION_INFO factionInfos[8];
 	std::vector<int> baseIds;
 	std::unordered_map<MAP *, int> baseLocations;
 	std::unordered_set<int> presenceRegions;
+	std::unordered_map<int, std::unordered_set<int>> regionBaseIds;
 	std::map<int, std::vector<int>> regionBaseGroups;
 	std::map<int, BASE_STRATEGY> baseStrategies;
 	std::vector<int> combatVehicleIds;
@@ -63,6 +78,7 @@ struct ActiveFactionInfo
 		baseIds.clear();
 		baseLocations.clear();
 		presenceRegions.clear();
+		regionBaseIds.clear();
 		regionBaseGroups.clear();
 		baseStrategies.clear();
 		combatVehicleIds.clear();
@@ -93,5 +109,7 @@ void populateGlobalVariables();
 VEH *getVehicleByAIId(int aiId);
 Location getNearestPodLocation(int vehicleId);
 void evaluateBaseNativeDefenseDemands();
-void evaluateConventionalDefenseDemands();
+void evaluateDefenseDemand();
+int getNearestFactionBaseRange(int factionId, int x, int y);
+int getNearestBaseRange(int x, int y, std::unordered_set<int> baseIds);
 

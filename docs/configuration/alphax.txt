@@ -649,7 +649,7 @@ Trance Sea Formers,     Foil,     Formers,      Scout,      9, 0, 0, Brain,   -1
 ;
 #FACILITIES
 Headquarters,                  5, 0, None,    Disable,  Efficiency
-Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic/Morale
+Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic
 Recycling Tanks,               6, 2, Biogen,  Create,   Bonus Resources
 Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +100%
 Tachyon Field,                12, 2, Create,  Disable,  All Defense +100%

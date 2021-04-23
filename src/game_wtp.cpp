@@ -2898,6 +2898,29 @@ bool isTargettedLocation(Location location)
 }
 
 /*
+Checks if location is targetted by faction vehicle.
+*/
+bool isFactionTargettedLocation(Location location, int factionId)
+{
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// only given faction
+		
+		if (vehicle->faction_id != factionId)
+			continue;
+		
+		if (vehicle->move_status == ORDER_MOVE_TO && vehicle->x == location.x && vehicle->y == location.y)
+			return true;
+		
+	}
+	
+	return false;
+	
+}
+
+/*
 Computes newborn native psi attack strength.
 */
 double getNativePsiAttackStrength(int triad)
