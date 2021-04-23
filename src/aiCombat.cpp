@@ -13,10 +13,10 @@ void aiCombatStrategy()
 {
 	populateCombatLists();
 
-	aiNativeCombatStrategy();
-	
 	popPods();
 
+	aiNativeCombatStrategy();
+	
 }
 
 void populateCombatLists()
@@ -185,7 +185,7 @@ void aiNativeCombatStrategy()
 		
 		if (vehicle->faction_id == 0 && vehicle->unit_id == BSC_SPORE_LAUNCHER && vehicleTile->owner == aiFactionId)
 		{
-			attackVehicle(id);
+			attackNative(id);
 		}
 
 	}
@@ -199,7 +199,7 @@ void aiNativeCombatStrategy()
 		
 		if (vehicle->faction_id == 0 && vehicle->unit_id == BSC_MIND_WORMS && vehicleTile->owner == aiFactionId)
 		{
-			attackVehicle(id);
+			attackNative(id);
 		}
 
 	}
@@ -213,7 +213,7 @@ void aiNativeCombatStrategy()
 		
 		if (vehicle->faction_id == 0 && vehicle->unit_id == BSC_FUNGAL_TOWER && vehicleTile->owner == aiFactionId)
 		{
-			attackVehicle(id);
+			attackNative(id);
 		}
 
 	}
@@ -235,6 +235,11 @@ void popPods()
 		
 		if (goody_at(location.x, location.y) != 0)
 		{
+			// exclude those targetted by own vehicle
+			
+			if (isFactionTargettedLocation(location, aiFactionId))
+				continue;
+			
 			if (regionPodLocations.count(tile->region) == 0)
 			{
 				regionPodLocations[tile->region] = std::vector<Location>();
@@ -282,6 +287,11 @@ void popPods()
 		{
 			VEH *vehicle = &(Vehicles[vehicleId]);
 			
+			// scouts only
+			
+			if (!isScoutVehicle(vehicleId))
+				continue;
+			
 			// without combat orders
 			
 			if (combatOrders.count(vehicleId) > 0)
@@ -321,13 +331,13 @@ void popPods()
 	
 }
 
-void attackVehicle(int enemyVehicleId)
+void attackNative(int enemyVehicleId)
 {
 	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
 	
 	// assemble attacking forces
 
-	debug("attackVehicle (%3d,%3d)\n", enemyVehicle->x, enemyVehicle->y);
+	debug("attackNative (%3d,%3d)\n", enemyVehicle->x, enemyVehicle->y);
 
 	// list available units
 
@@ -336,8 +346,13 @@ void attackVehicle(int enemyVehicleId)
 	for (int id : activeFactionInfo.combatVehicleIds)
 	{
 		VEH *vehicle = &(Vehicles[id]);
+		
+		// skip not scouts
+		
+		if (!isScoutVehicle(id))
+			continue;
 
-		// skip those with orders already
+		// skip those with orders
 
 		if (combatOrders.count(id) != 0)
 			continue;
@@ -768,7 +783,7 @@ double getVehicleConventionalOffenseValue(int vehicleId)
 	
 	// get offense value
 	
-	double offenseValue = Weapon[unit->weapon_type].offense_value;
+	double offenseValue = (double)Weapon[unit->weapon_type].offense_value;
 	
 	// psi weapon is evaluated as psi
 	

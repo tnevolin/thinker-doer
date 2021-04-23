@@ -274,6 +274,7 @@ bool isScoutUnit(int unitId);
 bool isScoutVehicle(int vehicleId);
 Location getNearestItemLocation(int x, int y, uint32_t item);
 bool isTargettedLocation(Location location);
+bool isFactionTargettedLocation(Location location, int factionId);
 double getNativePsiAttackStrength(int triad);
 double getMoraleModifier(int morale);
 
