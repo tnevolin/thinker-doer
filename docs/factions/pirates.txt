@@ -107,7 +107,6 @@ landlubbers a lesson in humility.
 ^Free NAVAL YARD with discovery of Doctrine: Initiative: {Skilled shipwrights}
 ^Enhancements may be built in ocean and trench squares with the discovery of Advanced Ecological Engineering: {Trained for life at sea}
 ^Sea colony pod & sea former prototypes FREE: {Advanced oceanic technology}
-^Bonus mineral from ocean shelf squares: {Culture and technology adapted for the ocean}
 ^Marine Detachment ability FREE to all naval combat units upon discovery of Adaptive Doctrine
 
 #FACTIONTRUCE

@@ -2236,7 +2236,7 @@ A unit’s {reactor} determines its {power}, the amount of $LINK<damage=7> the uni
 eliminated. More advanced reactor technology also tends to make complex units cheaper to build.
 ^
 ^=WtP=
-^Reactor does not change the units max power.
+^Reactor does not change unit max power.
 ^Each more advanced reactor reduces unit cost by 20%.
 ^(thinker.ini: reactor_cost_factor)
 ^
@@ -2252,7 +2252,7 @@ A unit’s {reactor} determines its {power}, the amount of $LINK<damage=7> the uni
 eliminated. More advanced reactor technology also tends to make complex units cheaper to build.
 ^
 ^=WtP=
-^Reactor does not change the units max power.
+^Reactor does not change unit max power.
 ^Each more advanced reactor reduces unit cost by 20%.
 ^(thinker.ini: reactor_cost_factor)
 ^
@@ -2268,7 +2268,7 @@ A unit’s {reactor} determines its {power}, the amount of $LINK<damage=7> the uni
 eliminated. More advanced reactor technology also tends to make complex units cheaper to build.
 ^
 ^=WtP=
-^Reactor does not change the units max power.
+^Reactor does not change unit max power.
 ^Each more advanced reactor reduces unit cost by 20%.
 ^(thinker.ini: reactor_cost_factor)
 ^
@@ -2284,7 +2284,7 @@ A unit’s {reactor} determines its {power}, the amount of $LINK<damage=7> the uni
 eliminated. More advanced reactor technology also tends to make complex units cheaper to build.
 ^
 ^=WtP=
-^Reactor does not change the units max power.
+^Reactor does not change unit max power.
 ^Each more advanced reactor reduces unit cost by 20%.
 ^(thinker.ini: reactor_cost_factor)
 ^
