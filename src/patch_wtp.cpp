@@ -1330,7 +1330,7 @@ void patch_alternative_artillery_damage()
 }
 
 /*
-Disables home base Children Creche morale bonus.
+Disables home base Children's Creche morale bonus.
 Disables home base Brood Pit morale bonus.
 */
 void patch_disable_home_base_cc_morale_bonus()
@@ -1364,7 +1364,7 @@ void patch_disable_home_base_cc_morale_bonus()
 }
 
 /*
-Disables current base Children Creche morale bonus.
+Disables current base Children's Creche morale bonus.
 Disables current base Brood Pit morale bonus.
 */
 void patch_disable_current_base_cc_morale_bonus()

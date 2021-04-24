@@ -1,3 +1,8 @@
+# Version 228
+
+* BUG FOUND: Faction alien units mistakenly get "+1 on defense at base" bonus when MORALE is 2 or 3. Decided not to fix it as it happens very rare.
+* Removed Pirates bonus minerals from their description.
+
 # Version 227
 
 * Updated Angels description to not require infiltration to get technology from other factions.
