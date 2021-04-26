@@ -56,6 +56,7 @@ const int WTP_MANAGED_UNIT_PLANS[] =
     PLAN_TERRAFORMING,
 };
 
+void aiProductionStrategy();
 HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
 int aiSuggestBaseProduction(int baseId, int choice);
 void evaluateFacilitiesDemand();
@@ -91,4 +92,5 @@ int findPoliceUnit(int factionId);
 HOOK_API void modifiedBaseFirst(int baseId);
 bool isMilitaryItem(int item);
 int thinker_base_prod_choice(int id, int v1, int v2, int v3);
+void evaluateDefenseDemand();
 

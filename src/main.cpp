@@ -513,6 +513,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_military_priority = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_threat_coefficient_human"))
+    {
+        cf->ai_production_threat_coefficient_human = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_threat_coefficient_vendetta"))
     {
         cf->ai_production_threat_coefficient_vendetta = atof(value);
