@@ -286,6 +286,7 @@ struct Config {
     double ai_production_vanilla_priority_facility;
     double ai_production_thinker_priority;
     double ai_production_military_priority;
+    double ai_production_threat_coefficient_human;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_pact;
     double ai_production_threat_coefficient_treaty;

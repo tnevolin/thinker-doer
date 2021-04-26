@@ -324,108 +324,6 @@ int getBaseBuildingItemCost(int baseId)
 	return (item >= 0 ? tx_veh_cost(item, baseId, 0) : Facility[-item].cost) * cost_factor(base->faction_id, 1, -1);
 }
 
-/*
-Returns SE MORALE attack bonus/penalty.
-*/
-int getSEMoraleAttack(int factionId)
-{
-	Faction *faction = &(Factions[factionId]);
-
-	int factionSEMoraleAttack;
-
-	if (faction->SE_morale_pending <= -2)
-	{
-		factionSEMoraleAttack = std::max(-4, faction->SE_morale_pending) + 1;
-	}
-	else if (faction->SE_morale_pending <= +1)
-	{
-		factionSEMoraleAttack = faction->SE_morale_pending;
-	}
-	else
-	{
-		factionSEMoraleAttack = std::min(+4, faction->SE_morale_pending) - 1;
-	}
-
-	return factionSEMoraleAttack;
-
-}
-
-/*
-Returns SE MORALE defense bonus/penalty.
-*/
-int getSEMoraleDefense(int factionId)
-{
-	Faction *faction = &(Factions[factionId]);
-
-	int factionSEMoraleDefense;
-
-	if (faction->SE_morale_pending <= -2)
-	{
-		factionSEMoraleDefense = std::max(-4, faction->SE_morale_pending) + 1;
-	}
-	else
-	{
-		factionSEMoraleDefense = std::min(3, faction->SE_morale_pending);
-	}
-
-	return factionSEMoraleDefense;
-
-}
-
-/*
-Returns vehicle morale on attack.
-*/
-int getMoraleAttack(int id)
-{
-	VEH *vehicle = &(Vehicles[id]);
-	int factionId = vehicle->faction_id;
-
-	return std::max(0, std::min(6, vehicle->morale + getSEMoraleAttack(factionId)));
-
-}
-
-/*
-Returns vehicle morale on defense.
-*/
-int getMoraleDefense(int id)
-{
-	VEH *vehicle = &(Vehicles[id]);
-	int factionId = vehicle->faction_id;
-
-	return std::max(0, std::min(6, vehicle->morale + getSEMoraleDefense(factionId)));
-
-}
-
-/*
-Returns vehicle morale modifier on attack.
-*/
-double getMoraleModifierAttack(int id)
-{
-	// get vehicle morale
-
-	int morale = getMoraleAttack(id);
-
-	// calculate modifier
-
-	return 1.0 + 0.125 * (double)(morale - 2);
-
-}
-
-/*
-Returns vehicle morale modifier on defense.
-*/
-double getMoraleModifierDefense(int id)
-{
-	// get vehicle morale
-
-	int morale = getMoraleDefense(id);
-
-	// calculate modifier
-
-	return 1.0 + 0.125 * (double)(morale - 2);
-
-}
-
 double getVehiclePsiAttackStrength(int id)
 {
 	VEH *vehicle = &(Vehicles[id]);
@@ -492,41 +390,7 @@ double getVehiclePsiDefenseStrength(int id)
 
 }
 
-/*
-Returns new vehicle morale modifier on attack.
-*/
-double getNewVehicleMoraleModifierAttack(int factionId, double averageFacilityMoraleBoost)
-{
-	Faction *faction = &(Factions[factionId]);
-
-	// get new vehicle morale
-
-	double morale = std::max(0.0, std::min(6.0, 0.0 + averageFacilityMoraleBoost * (faction->SE_morale_pending <= -2 ? 0.5 : 1.0) + (double)getSEMoraleAttack(factionId)));
-
-	// calculate modifier
-
-	return 1.0 + 0.125 * (double)(morale - 2);
-
-}
-
-/*
-Returns new vehicle morale modifier on defense.
-*/
-double getNewVehicleMoraleModifierDefense(int factionId, double averageFacilityMoraleBoost)
-{
-	Faction *faction = &(Factions[factionId]);
-
-	// get new vehicle morale
-
-	double morale = std::max(0.0, std::min(6.0, 0.0 + averageFacilityMoraleBoost * (faction->SE_morale_pending <= -2 ? 0.5 : 1.0) + (double)getSEMoraleDefense(factionId)));
-
-	// calculate modifier
-
-	return 1.0 + 0.125 * (double)(morale - 2);
-
-}
-
-double getSEPlanetModifierAttack(int factionId)
+double getFactionSEPlanetAttackModifier(int factionId)
 {
 	Faction *faction = &(Factions[factionId]);
 
@@ -534,7 +398,7 @@ double getSEPlanetModifierAttack(int factionId)
 
 }
 
-double getSEPlanetModifierDefense(int factionId)
+double getFactionSEPlanetDefenseModifier(int factionId)
 {
 	Faction *faction = &(Factions[factionId]);
 
@@ -585,30 +449,28 @@ bool isVehicleCombat(int id)
 }
 
 /*
-Calculates average maximal damage unit delivers to enemy in psi combat when attacking.
+Calculates average maximal damage vehicle delivers to enemy in psi combat when attacking.
 */
-double calculatePsiDamageAttack(int id, int enemyId)
+double calculatePsiDamageAttack(int vehicleId, int enemyVehicleId)
 {
-	VEH *vehicle = &(Vehicles[id]);
-	VEH *enemyVehicle = &(Vehicles[enemyId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
 
 	// calculate base damage (vehicle attacking)
 
 	double damage =
-		1.0
-		*
-		getPsiCombatBaseOdds(veh_triad(id))
+		1.0 * getPsiCombatBaseOdds(vehicle->triad())
 		*
 		(
-			getMoraleModifierAttack(id)
+			getVehicleMoraleModifier(vehicleId, false)
 			*
-			getSEPlanetModifierAttack(vehicle->faction_id)
+			getFactionSEPlanetAttackModifier(vehicle->faction_id)
 		)
 		/
 		(
-			getMoraleModifierDefense(enemyId)
+			getVehicleMoraleModifier(enemyVehicleId, false)
 			*
-			getSEPlanetModifierDefense(enemyVehicle->faction_id)
+			getFactionSEPlanetDefenseModifier(enemyVehicle->faction_id)
 		)
 		*
 		(double)(10 - vehicle->damage_taken)
@@ -635,28 +497,26 @@ double calculatePsiDamageAttack(int id, int enemyId)
 /*
 Calculates average maximal damage unit delivers to enemy in psi combat when defending.
 */
-double calculatePsiDamageDefense(int id, int enemyId)
+double calculatePsiDamageDefense(int vehicleId, int enemyVehicleId)
 {
-	VEH *vehicle = &(Vehicles[id]);
-	VEH *enemyVehicle = &(Vehicles[enemyId]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
 
 	// calculate base damage (vehicle defending)
 
 	double damage =
-		1.0
-		/
-		getPsiCombatBaseOdds(veh_triad(enemyId))
+		1.0 / getPsiCombatBaseOdds(enemyVehicle->triad())
 		*
 		(
-			getMoraleModifierDefense(id)
+			getVehicleMoraleModifier(vehicleId, false)
 			*
-			getSEPlanetModifierDefense(vehicle->faction_id)
+			getFactionSEPlanetDefenseModifier(vehicle->faction_id)
 		)
 		/
 		(
-			getMoraleModifierAttack(enemyId)
+			getVehicleMoraleModifier(enemyVehicleId, false)
 			*
-			getSEPlanetModifierAttack(enemyVehicle->faction_id)
+			getFactionSEPlanetAttackModifier(enemyVehicle->faction_id)
 		)
 		*
 		(double)(10 - vehicle->damage_taken)
@@ -695,9 +555,9 @@ double calculateNativeDamageAttack(int id)
 		getPsiCombatBaseOdds(veh_triad(id))
 		*
 		(
-			getMoraleModifierAttack(id)
+			getVehicleMoraleModifier(id, false)
 			*
-			getSEPlanetModifierAttack(vehicle->faction_id)
+			getFactionSEPlanetAttackModifier(vehicle->faction_id)
 		)
 		/
 		(
@@ -735,9 +595,9 @@ double calculateNativeDamageDefense(int id)
 		getPsiCombatBaseOdds(veh_triad(id)) // assuming native has same triad as defender
 		*
 		(
-			getMoraleModifierDefense(id)
+			getVehicleMoraleModifier(id, false)
 			*
-			getSEPlanetModifierDefense(vehicle->faction_id)
+			getFactionSEPlanetDefenseModifier(vehicle->faction_id)
 		)
 		/
 		(
@@ -1786,7 +1646,7 @@ double estimateUnitBaseLandNativeProtection(int unitId, int factionId, bool ocea
 
 	// add PLANET
 
-	nativeProtection *= getSEPlanetModifierDefense(factionId);
+	nativeProtection *= getFactionSEPlanetDefenseModifier(factionId);
 
 	// add trance
 
@@ -1821,7 +1681,7 @@ double getVehicleBaseNativeProtection(int baseId, int vehicleId)
 
 	// add morale
 
-	nativeProtection *= getMoraleModifierDefense(vehicleId);
+	nativeProtection *= getVehicleMoraleModifier(vehicleId, true);
 
 	return nativeProtection;
 
@@ -1894,7 +1754,7 @@ double getVehicleBaseNativeProtectionPotential(int vehicleId)
 
 	// calculate base damage (vehicle defending)
 
-	double protectionPotential = 1.0 / getPsiCombatBaseOdds(TRIAD_LAND) * getMoraleModifierDefense(vehicleId) * getSEPlanetModifierDefense(vehicle->faction_id) * (1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0);
+	double protectionPotential = 1.0 / getPsiCombatBaseOdds(TRIAD_LAND) * getVehicleMoraleModifier(vehicleId, true) * getFactionSEPlanetDefenseModifier(vehicle->faction_id) * (1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0);
 
 	// defender trance increases combat protectionPotential
 
@@ -2286,7 +2146,11 @@ Verifies that faction1 and faction2 has given diplo_status.
 */
 bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus)
 {
-	return (Factions[faction1Id].diplo_status[faction2Id] & diploStatus);
+	return
+		faction1Id != faction2Id && faction1Id >= 0 && faction2Id >= 0 && faction1Id < 8 && faction2Id < 8
+		&&
+		Factions[faction1Id].diplo_status[faction2Id] & diploStatus
+	;
 }
 
 void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on)
@@ -2786,12 +2650,6 @@ bool isVehicleHasAbility(int vehicleId, int abilityId)
 	return unit_has_ability(Vehicles[vehicleId].unit_id, abilityId);
 }
 
-bool isDiplomaticStatus(int faction1Id, int faction2Id, int diplomaticStatus)
-{
-    return faction1Id != faction2Id && faction1Id >= 0 && faction2Id >= 0
-        && (Factions[faction1Id].diplo_status[faction2Id] & diplomaticStatus);
-}
-
 bool isScoutUnit(int unitId)
 {
 	UNIT *unit = &(Units[unitId]);
@@ -2967,5 +2825,206 @@ double getNativePsiAttackStrength(int triad)
 double getMoraleModifier(int morale)
 {
 	return (1.0 + 0.125 * (morale - 2));
+}
+
+/*
+Returns SE MORALE bonus.
+*/
+int getFactionSEMoraleBonus(int factionId, bool defendingAtBase)
+{
+	Faction *faction = &(Factions[factionId]);
+	int factionSEMoraleRating = std::max(-4, std::min(4, faction->SE_morale));
+	
+	int factionSEMoraleBonus = 0;
+
+	switch (factionSEMoraleRating)
+	{
+	case -4:
+		factionSEMoraleBonus = -3;
+		break;
+	case -3:
+		factionSEMoraleBonus = -2;
+		break;
+	case -2:
+		factionSEMoraleBonus = -1;
+		break;
+	case -1:
+		factionSEMoraleBonus = -1;
+		break;
+	case 0:
+		factionSEMoraleBonus = 0;
+		break;
+	case 1:
+		factionSEMoraleBonus = 1;
+		break;
+	case 2:
+		factionSEMoraleBonus = (defendingAtBase ? 2 : 1);
+		break;
+	case 3:
+		factionSEMoraleBonus = (defendingAtBase ? 3 : 2);
+		break;
+	case 4:
+		factionSEMoraleBonus = 3;
+		break;
+	}
+
+	return factionSEMoraleBonus;
+
+}
+
+/*
+Returns vehicle morale.
+*/
+int getVehicleMorale(int vehicleId, bool defendingAtBase)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+
+	return std::max(0, std::min(6, vehicle->morale + getFactionSEMoraleBonus(vehicle->faction_id, defendingAtBase)));
+
+}
+
+/*
+Returns vehicle morale modifier.
+*/
+double getVehicleMoraleModifier(int vehicleId, bool defendingAtBase)
+{
+	return getMoraleModifier(getVehicleMorale(vehicleId, defendingAtBase));
+}
+
+double getBaseConventionalDefenseMultiplier(int baseId, int triad)
+{
+	assert(baseId >= 0 && baseId < MaxBaseNum);
+	assert(triad == TRIAD_LAND || triad == TRIAD_SEA || triad == TRIAD_AIR);
+	
+	double baseConventionalDefenseMultiplier;
+	
+	int firstLevelDefensiveStructure;
+	switch (triad)
+	{
+	case TRIAD_LAND:
+		firstLevelDefensiveStructure = FAC_PERIMETER_DEFENSE;
+		break;
+	case TRIAD_SEA:
+		firstLevelDefensiveStructure = FAC_NAVAL_YARD;
+		break;
+	case TRIAD_AIR:
+		firstLevelDefensiveStructure = FAC_AEROSPACE_COMPLEX;
+		break;
+	default:
+		firstLevelDefensiveStructure = 0;
+	}
+	
+	bool firstLevelDefensiveStructureExists = has_facility(baseId, firstLevelDefensiveStructure);
+	bool secondLevelDefensiveStructureExists = has_facility(baseId, FAC_TACHYON_FIELD);
+	
+	if (!firstLevelDefensiveStructureExists && !secondLevelDefensiveStructureExists)
+	{
+		baseConventionalDefenseMultiplier = (1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0);
+	}
+	else if (firstLevelDefensiveStructureExists && !secondLevelDefensiveStructureExists)
+	{
+		baseConventionalDefenseMultiplier = (double)conf.perimeter_defense_multiplier / 2.0;
+	}
+	else if (!firstLevelDefensiveStructureExists && secondLevelDefensiveStructureExists)
+	{
+		baseConventionalDefenseMultiplier = (double)(2 + conf.tachyon_field_bonus) / 2.0;
+	}
+	else
+	{
+		baseConventionalDefenseMultiplier = (double)(conf.perimeter_defense_multiplier + conf.tachyon_field_bonus) / 2.0;
+	}
+	
+	return baseConventionalDefenseMultiplier;
+	
+}
+
+bool isWithinFriendlySensorRange(int factionId, int x, int y)
+{
+	// find real sensors
+	
+	for (int dx = -4; dx <= +4; dx++)
+	{
+		for (int dy = -(4 - abs(dx)); dy <= +(4 - abs(dx)); dy += 2)
+		{
+			MAP *tile = getMapTile(wrap(x + dx), y + dy);
+			if (tile == NULL)
+				continue;
+			
+			if (tile->owner != factionId)
+				continue;
+			
+			if (map_has_item(tile, TERRA_SENSOR))
+				return true;
+			
+		}
+	}
+	
+	// find bases with survey pod
+	
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+		
+		if (base->faction_id != factionId)
+			continue;
+		
+		if (map_range(x, y, base->x, base->y) > 2)
+			continue;
+		
+		if (has_facility(baseId, FAC_GEOSYNC_SURVEY_POD))
+			return true;
+		
+	}
+	
+	// not found
+	
+	return false;
+	
+}
+
+std::vector<Location> getRegionPodLocations(int region)
+{
+	std::vector<Location> regionPodLocations;
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		Location location = getMapIndexLocation(mapIndex);
+		MAP *tile = getMapTile(mapIndex);
+		
+		if (tile->region != region)
+			continue;
+		
+		if (goody_at(location.x, location.y) != 0)
+		{
+			regionPodLocations.push_back(location);
+		}
+		
+	}
+	
+	return regionPodLocations;
+	
+}
+
+int getRegionPodCount(int region)
+{
+	int regionPodCount;
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		Location location = getMapIndexLocation(mapIndex);
+		MAP *tile = getMapTile(mapIndex);
+		
+		if (tile->region != region)
+			continue;
+		
+		if (goody_at(location.x, location.y) != 0)
+		{
+			regionPodCount++;
+		}
+		
+	}
+	
+	return regionPodCount;
+	
 }
 

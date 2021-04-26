@@ -21,7 +21,8 @@ struct VEHICLE_VALUE
 
 void aiCombatStrategy();
 void populateCombatLists();
-void aiNativeCombatStrategy();
+void nativeCombatStrategy();
+void factionCombatStrategy();
 void popPods();
 void attackNative(int enemyVehicleId);
 int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2);
@@ -36,11 +37,9 @@ int kickSeaExplorerFromLandPort(int vehicleId);
 int killVehicle(int vehicleId);
 int moveVehicle(int vehicleId, int x, int y);
 MAP_INFO getNearestUnexploredConnectedOceanRegionTile(int factionId, int initialLocationX, int initialLocationY);
-double getVehicleMoraleModifier(int vehicleId);
 double getVehicleConventionalOffenseValue(int vehicleId);
 double getVehicleConventionalDefenseValue(int vehicleId);
 double getVehiclePsiOffenseValue(int vehicleId);
 double getVehiclePsiDefenseValue(int vehicleId);
-double getThreatLevel();
 int getRangeToNearestActiveFactionBase(int x, int y);
 
