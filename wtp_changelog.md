@@ -1,3 +1,7 @@
+# Version 229
+
+* Reverted Gaians to vanilla configuration. Don't remember why I changed them in first place.
+
 # Version 228
 
 * BUG FOUND: Faction alien units mistakenly get "+1 on defense at base" bonus when MORALE is 2 or 3. Decided not to fix it as it happens very rare.
