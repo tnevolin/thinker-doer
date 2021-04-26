@@ -13,10 +13,12 @@ void aiCombatStrategy()
 {
 	populateCombatLists();
 
+	nativeCombatStrategy();
+	
+	factionCombatStrategy();
+	
 	popPods();
 
-	aiNativeCombatStrategy();
-	
 }
 
 void populateCombatLists()
@@ -28,9 +30,9 @@ void populateCombatLists()
 /*
 Composes anti-native combat strategy.
 */
-void aiNativeCombatStrategy()
+void nativeCombatStrategy()
 {
-	debug("aiNativeCombatStrategy %s\n", MFactions[aiFactionId].noun_faction);
+	debug("nativeCombatStrategy %s\n", MFactions[aiFactionId].noun_faction);
 
 	// protect bases
 
@@ -220,6 +222,11 @@ void aiNativeCombatStrategy()
 
 	debug("\n");
 
+}
+
+void factionCombatStrategy()
+{
+	
 }
 
 void popPods()
@@ -757,23 +764,6 @@ MAP_INFO getNearestUnexploredConnectedOceanRegionTile(int factionId, int initial
 }
 
 /*
-Returns vehicle own morale modifier regardless of SE settings.
-*/
-double getVehicleMoraleModifier(int vehicleId)
-{
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	
-	// get vehicle morale
-	
-	int vehicleMorale = std::max(0, std::min(6, (int)vehicle->morale));
-
-	// calculate modifier
-
-	return 1.0 + 0.125 * (double)(vehicleMorale - 2);
-
-}
-
-/*
 Returns vehicle own conventional offense value counting weapon, morale, abilities.
 */
 double getVehicleConventionalOffenseValue(int vehicleId)
@@ -794,7 +784,7 @@ double getVehicleConventionalOffenseValue(int vehicleId)
 	
 	// times morale modifier
 	
-	offenseValue *= getVehicleMoraleModifier(vehicleId);
+	offenseValue *= getVehicleMoraleModifier(vehicleId, false);
 	
 	// times some abilities
 	
@@ -838,7 +828,7 @@ double getVehicleConventionalDefenseValue(int vehicleId)
 	
 	// times morale modifier
 	
-	defenseValue *= getVehicleMoraleModifier(vehicleId);
+	defenseValue *= getVehicleMoraleModifier(vehicleId, false);
 	
 	// times some abilities
 	
@@ -863,7 +853,7 @@ double getVehiclePsiOffenseValue(int vehicleId)
 {
 	// get offense value
 	
-	double offenseValue = getVehicleMoraleModifier(vehicleId);
+	double offenseValue = getVehicleMoraleModifier(vehicleId, false);
 	
 	// times some abilities
 	
@@ -883,7 +873,7 @@ double getVehiclePsiDefenseValue(int vehicleId)
 {
 	// get defense value
 	
-	double defenseValue = getVehicleMoraleModifier(vehicleId);
+	double defenseValue = getVehicleMoraleModifier(vehicleId, false);
 	
 	// times some abilities
 	
@@ -894,130 +884,6 @@ double getVehiclePsiDefenseValue(int vehicleId)
 	
 	return defenseValue;
 	
-}
-
-/*
-Computes estimated threat level as ratio of potential thread to defense.
-*/
-double getThreatLevel()
-{
-	debug("\ngetThreatLevel - %s\n", MFactions[aiFactionId].noun_faction);
-	
-	// compute faction strength
-	
-	double factionStrength = 0.0;
-	
-	for (int vehicleId : activeFactionInfo.combatVehicleIds)
-	{
-		// get vehicle combat values
-		
-		double offenseValue = (getVehicleConventionalOffenseValue(vehicleId) + getVehiclePsiOffenseValue(vehicleId)) / 2.0;
-		double defenseValue = (getVehicleConventionalDefenseValue(vehicleId) + getVehiclePsiDefenseValue(vehicleId)) / 2.0;
-		
-		// store
-		
-		factionStrength += (offenseValue + defenseValue);
-		
-	}
-	
-	debug("\tfactionStrength = %f\n", factionStrength);
-	
-	// zero strength - return some arbitrary big value
-	
-	if (factionStrength == 0)
-		return 10.0;
-	
-	// compute enemy faction strengths
-	
-	std::unordered_map<int, double> enemyFactionStrengths;
-	
-	for (int factionId = 1; factionId < 8; factionId++)
-	{
-		if (factionId == aiFactionId)
-			continue;
-		
-		enemyFactionStrengths[factionId] = 0.0;
-		
-	}
-	
-	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		
-		// enemy factions only
-		
-		if (vehicle->faction_id == 0 || vehicle->faction_id == aiFactionId)
-			continue;
-		
-		// combat only
-		
-		if (!isVehicleCombat(vehicleId))
-			continue;
-		
-		// get vehicle combat values
-		
-		double offenseValue = (getVehicleConventionalOffenseValue(vehicleId) + getVehiclePsiOffenseValue(vehicleId)) / 2.0;
-		double defenseValue = (getVehicleConventionalDefenseValue(vehicleId) + getVehiclePsiDefenseValue(vehicleId)) / 2.0;
-		
-		// calculate range to nearest faction base
-		
-		int rangeToNearestActiveFactionBase = getRangeToNearestActiveFactionBase(vehicle->x, vehicle->y);
-		
-		// compute range multiplier
-		// every 20 tiles threat halves
-		
-		double rangeMultiplier = pow(0.5, (double)rangeToNearestActiveFactionBase / 20.0);
-		
-		// get threat coefficient
-		
-		double threatCoefficient;
-		
-		if (is_human(vehicle->faction_id))
-		{
-			threatCoefficient = conf.ai_production_threat_coefficient_vendetta;
-		}
-		else if (isDiplomaticStatus(aiFactionId, vehicle->faction_id, DIPLO_VENDETTA))
-		{
-			threatCoefficient = conf.ai_production_threat_coefficient_vendetta;
-		}
-		else if (isDiplomaticStatus(aiFactionId, vehicle->faction_id, DIPLO_PACT))
-		{
-			threatCoefficient = conf.ai_production_threat_coefficient_pact;
-		}
-		else if (isDiplomaticStatus(aiFactionId, vehicle->faction_id, DIPLO_TREATY))
-		{
-			threatCoefficient = conf.ai_production_threat_coefficient_treaty;
-		}
-		else
-		{
-			threatCoefficient = conf.ai_production_threat_coefficient_other;
-		}
-		
-		// store value
-		
-		enemyFactionStrengths[vehicle->faction_id] += threatCoefficient * (offenseValue + defenseValue) * rangeMultiplier;
-		
-	}
-	
-	// select strongest enemy faction
-	
-	double maxEnemyFactionStrength = 0.0;
-	
-	for (auto const& kv : enemyFactionStrengths)
-	{
-		maxEnemyFactionStrength = std::max(maxEnemyFactionStrength, kv.second);
-	}
-	
-	debug("\tmaxEnemyFactionStrength = %f\n", maxEnemyFactionStrength);
-	
-	// compose threat level
-	
-	double threatLevel = maxEnemyFactionStrength / factionStrength;
-
-	debug("\tthreatLevel = %f\n\n", maxEnemyFactionStrength / factionStrength);
-	
-	return threatLevel;
-
 }
 
 int getRangeToNearestActiveFactionBase(int x, int y)

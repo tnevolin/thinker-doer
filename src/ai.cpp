@@ -11,6 +11,7 @@
 #include "aiProduction.h"
 #include "aiFormer.h"
 #include "aiHurry.h"
+#include "aiProduction.h"
 
 // global variables
 
@@ -138,6 +139,10 @@ void aiStrategy()
 
 	populateGlobalVariables();
 
+	// compute production demands
+
+	aiProductionStrategy();
+
 	// prepare former orders
 
 	aiTerraformingStrategy();
@@ -260,6 +265,10 @@ void populateGlobalVariables()
 
 		activeFactionInfo.baseStrategies[id] = {};
 		activeFactionInfo.baseStrategies[id].base = base;
+		activeFactionInfo.baseStrategies[id].conventionalDefenseMultiplier[TRIAD_LAND] = getBaseConventionalDefenseMultiplier(id, TRIAD_LAND);
+		activeFactionInfo.baseStrategies[id].conventionalDefenseMultiplier[TRIAD_SEA] = getBaseConventionalDefenseMultiplier(id, TRIAD_SEA);
+		activeFactionInfo.baseStrategies[id].conventionalDefenseMultiplier[TRIAD_AIR] = getBaseConventionalDefenseMultiplier(id, TRIAD_AIR);
+		activeFactionInfo.baseStrategies[id].withinFriendlySensorRange = isWithinFriendlySensorRange(base->faction_id, base->x, base->y);
 
 		debug("\n[%3d] %-25s\n", id, activeFactionInfo.baseStrategies[id].base->name);
 
@@ -407,17 +416,9 @@ void populateGlobalVariables()
 
 	}
 	
-	// threat level
-	
-	activeFactionInfo.threatLevel = getThreatLevel();
-	
 	// bases native defense
 	
 	evaluateBaseNativeDefenseDemands();
-	
-	// conventional
-	
-	evaluateDefenseDemand();
 	
 }
 
@@ -558,230 +559,6 @@ void evaluateBaseNativeDefenseDemands()
 	
 }
 
-void evaluateDefenseDemand()
-{
-//	debug("evaluateDefenseDemand; - %s\n", MFactions[aiFactionId].noun_faction);
-//	
-//	// evaluate region defense demands
-//	
-//	for (int region : activeFactionInfo.presenceRegions)
-//	{
-//		bool ocean = isOceanRegion(region);
-//		
-//		debug("\tregion=%3d, ocean=%d\n", region, ocean);
-//		
-//		// evaluate own military strength in region
-//		
-//		FACTION_MILITARY_STRENGTH ownStrength;
-//		
-//		for (int vehicleId : activeFactionInfo.combatVehicleIds)
-//		{
-//			VEH *vehicle = &(Vehicles[vehicleId]);
-//			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-//			UNIT *unit = &(Units[vehicle->unit_id]);
-//			bool psiWeapon = Weapon[unit->weapon_type].offense_value < 0;
-//			bool psiArmor = Weapon[unit->weapon_type].offense_value < 0;
-//			
-//			// this region
-//			
-//			if (vehicleTile->region != region)
-//				continue;
-//			
-//			// compute vehicle value
-//			
-//			double conventionalOffenseValue = (psiWeapon ? 0 : getVehicleConventionalOffenseValue(vehicleId));
-//			double psiOffenseValue = getVehiclePsiOffenseValue(vehicleId);
-//			double conventionalDefenseValue = (psiArmor ? 0 : getVehicleConventionalDefenseValue(vehicleId));
-//			double psiDefenseValue = getVehiclePsiDefenseValue(vehicleId);
-//			
-//			// check vehicles in opposite realm
-//			
-//			if (vehicle->triad() == (is_ocean(vehicleTile) ? TRIAD_LAND : TRIAD_SEA))
-//			{
-//				if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
-//				{
-//					// vehicle in opposite realm at base can defend only and cannot attack
-//					
-//					conventionalOffenseValue = 0.0;
-//					psiOffenseValue = 0.0;
-//					
-//				}
-//				else
-//				{
-//					// vehicle in opposite realm and not at base is assumed to be transported and does not contribute to this realm defense
-//					
-//					continue;
-//					
-//				}
-//				
-//			}
-//			
-//			// add to region strength
-//			
-//			if (psiArmor)
-//			{
-//				ownStrength.offense.psiCount++;
-//				ownStrength.offense.psiPsiStrength += psiOffenseValue * psiOffenseValue;
-//			}
-//			else
-//			{
-//				ownStrength.offense.conventionalCount++;
-//				ownStrength.offense.conventionalPsiStrength += psiOffenseValue * psiOffenseValue;
-//				ownStrength.offense.conventionalConventionalStrength += conventionalOffenseValue * conventionalOffenseValue;
-//			}
-//			
-//			if (psiWeapon)
-//			{
-//				ownStrength.defense.psiCount++;
-//				ownStrength.defense.psiPsiStrength += psiDefenseValue * psiDefenseValue;
-//			}
-//			else
-//			{
-//				ownStrength.defense.conventionalCount++;
-//				ownStrength.defense.conventionalPsiStrength += psiDefenseValue * psiDefenseValue;
-//				ownStrength.defense.conventionalConventionalStrength += conventionalDefenseValue * conventionalDefenseValue;
-//			}
-//			
-//		}
-//		debug("\t\townStrengths\n");
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.offense.psiCount);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.offense.psiPsiStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.offense.conventionalCount);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.offense.conventionalPsiStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.offense.conventionalConventionalStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.defense.psiCount);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.defense.psiPsiStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.defense.conventionalCount);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.defense.conventionalPsiStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", ownStrength.defense.conventionalConventionalStrength);
-//		
-//		// evaluate opponents military strength in region
-//		
-//		FACTION_MILITARY_STRENGTH opponentStrength;
-//		
-//		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-//		{
-//			VEH *vehicle = &(Vehicles[vehicleId]);
-//			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-//			UNIT *unit = &(Units[vehicle->unit_id]);
-//			bool psiWeapon = Weapon[unit->weapon_type].offense_value < 0;
-//			bool psiArmor = Weapon[unit->weapon_type].offense_value < 0;
-//			
-//			// not alien
-//			
-//			if (vehicle->faction_id == 0)
-//				continue;
-//			
-//			// not own
-//			
-//			if (vehicle->faction_id == aiFactionId)
-//				continue;
-//			
-//			// combat only
-//			
-//			if (!isVehicleCombat(vehicleId))
-//				continue;
-//			
-//			// exclude vehicles of opposite region realm
-//			
-//			if (vehicle->triad() == (ocean ? TRIAD_LAND : TRIAD_SEA))
-//				continue;
-//			
-//			// exclude sea units in different region - they cannot possibly reach us
-//			
-//			if (vehicle->triad() == TRIAD_SEA && vehicleTile->region != region)
-//				continue;
-//			
-//			// compute vehicle value
-//			
-//			double conventionalOffenseValue = (psiWeapon ? 0 : getVehicleConventionalOffenseValue(vehicleId));
-//			double psiOffenseValue = getVehiclePsiOffenseValue(vehicleId);
-//			double conventionalDefenseValue = (psiArmor ? 0 : getVehicleConventionalDefenseValue(vehicleId));
-//			double psiDefenseValue = getVehiclePsiDefenseValue(vehicleId);
-//			
-//			// compute strength multiplier
-//			
-//			double strengthMultiplier = 1.0;
-//			
-//			// compute distance to nearest base in region
-//			
-//			int nearestRegionBaseRange = getNearestBaseRange(vehicle->x, vehicle->y, activeFactionInfo.regionBaseIds[region]);
-//			
-//			// reduce strength based on range
-//			
-//			strengthMultiplier /= std::max(1.0, (double)nearestRegionBaseRange / 10.0);
-//			
-//			// apply region penalty for land units in other region and not yet transported - it is difficult for them to reach us
-//			
-//			if (vehicle->triad() == TRIAD_LAND && vehicleTile->region != region && !isVehicleLandUnitOnTransport(vehicleId))
-//			{
-//				strengthMultiplier /= 5.0;
-//			}
-//			
-//			// add to region strength
-//			
-//			if (psiArmor)
-//			{
-//				opponentStrength.offense.psiCount++;
-//				opponentStrength.offense.psiPsiStrength += psiOffenseValue * psiOffenseValue * strengthMultiplier;
-//			}
-//			else
-//			{
-//				opponentStrength.offense.conventionalCount++;
-//				opponentStrength.offense.conventionalPsiStrength += psiOffenseValue * psiOffenseValue * strengthMultiplier;
-//				opponentStrength.offense.conventionalConventionalStrength += conventionalOffenseValue * conventionalOffenseValue * strengthMultiplier;
-//			}
-//			
-//			if (psiWeapon)
-//			{
-//				opponentStrength.defense.psiCount++;
-//				opponentStrength.defense.psiPsiStrength += psiDefenseValue * psiDefenseValue;
-//			}
-//			else
-//			{
-//				opponentStrength.defense.conventionalCount++;
-//				opponentStrength.defense.conventionalPsiStrength += psiDefenseValue * psiDefenseValue;
-//				opponentStrength.defense.conventionalConventionalStrength += conventionalDefenseValue * conventionalDefenseValue;
-//			}
-//			
-//		}
-//		debug("\t\townStrengths\n");
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.offense.psiCount);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.offense.psiPsiStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.offense.conventionalCount);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.offense.conventionalPsiStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.offense.conventionalConventionalStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.defense.psiCount);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.defense.psiPsiStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.defense.conventionalCount);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.defense.conventionalPsiStrength);
-//		debug("\t\t\t%-40s = %7.2f\n", "offense.psiCount", opponentStrength.defense.conventionalConventionalStrength);
-//		
-//		// compute region defense demands
-//		
-//		double conventionalDefenseDemand;
-//		double psiDefenseDemand;
-//		double antiPsiDefenseDemand;
-//		
-//		if (opponentStrength == 0.0)
-//		{
-//			defenseDemand = 0.0;
-//		}
-//		else if (ownStrength == 0.0)
-//		{
-//			defenseDemand = 1.0;
-//		}
-//		else
-//		{
-//			defenseDemand = std::max(0.0, (opponentStrength - ownStrength) / opponentStrength);
-//		}
-//		
-//		debug("\t\t%-20s = %7.2f\n", "defenseDemand", defenseDemand);
-//		
-//	}
-//	
-}
-
 int getNearestFactionBaseRange(int factionId, int x, int y)
 {
 	int nearestFactionBaseRange = 9999;
@@ -800,6 +577,29 @@ int getNearestFactionBaseRange(int factionId, int x, int y)
 	}
 
 	return nearestFactionBaseRange;
+
+}
+
+int getNearestBaseId(int x, int y, std::unordered_set<int> baseIds)
+{
+	int nearestBaseId = -1;
+	int nearestBaseRange = INT_MAX;
+
+	for (int baseId : baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		
+		int range = map_range(x, y, base->x, base->y);
+		
+		if (nearestBaseId == -1 || range < nearestBaseRange)
+		{
+			nearestBaseId = baseId;
+			nearestBaseRange = range;
+		}
+
+	}
+
+	return nearestBaseId;
 
 }
 
