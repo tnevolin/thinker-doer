@@ -1,6 +1,6 @@
 build/
 patch/
-releases/TheWillToPower
+releases/
 *.layout
 *.depend
 *.cscope_file_list
