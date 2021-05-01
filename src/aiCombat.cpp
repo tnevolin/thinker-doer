@@ -12,7 +12,9 @@ Prepares combat orders.
 void aiCombatStrategy()
 {
 	populateCombatLists();
-
+	
+	healStrategy();
+	
 	nativeCombatStrategy();
 	
 	factionCombatStrategy();
@@ -25,6 +27,50 @@ void populateCombatLists()
 {
 	combatOrders.clear();
 
+}
+
+void healStrategy()
+{
+	for (int vehicleId : activeFactionInfo.combatVehicleIds)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		
+		// damaged at base
+		
+		if (vehicle->damage_taken > 0 && map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
+		{
+			setMoveOrder(vehicleId, vehicle->x, vehicle->y, ORDER_SENTRY_BOARD);
+		}
+		
+		// damaged in field
+		
+		else if (vehicle->damage_taken > 2 * vehicle->reactor_type())
+		{
+			// find nearest monolith
+			
+			Location nearestMonolithLocation = getNearestMonolithLocation(vehicle->x, vehicle->y, vehicle->triad());
+			
+			if (isValidLocation(nearestMonolithLocation) && map_range(vehicle->x, vehicle->y, nearestMonolithLocation.x, nearestMonolithLocation.y) <= 10)
+			{
+				setMoveOrder(vehicleId, nearestMonolithLocation.x, nearestMonolithLocation.y, -1);
+				continue;
+			}
+			
+			// find nearest base
+			
+			Location nearestBaseLocation = getNearestBaseLocation(vehicle->x, vehicle->y, vehicle->triad());
+			
+			if (isValidLocation(nearestBaseLocation) && map_range(vehicle->x, vehicle->y, nearestBaseLocation.x, nearestBaseLocation.y) <= 5)
+			{
+				setMoveOrder(vehicleId, nearestBaseLocation.x, nearestBaseLocation.y, ORDER_SENTRY_BOARD);
+				continue;
+			}
+			
+		}
+		
+	}
+	
 }
 
 /*
@@ -171,53 +217,78 @@ void nativeCombatStrategy()
 
 			// add vehicle
 
-			setMoveOrder(vehicleId, base->x, base->y, true);
+			setMoveOrder(vehicleId, base->x, base->y, ORDER_HOLD);
 			remainingProtection -= protectionPotential;
 
 		}
 
 	}
 
-	// spore launchers
+	// list natives on territory
+	
+	std::unordered_set<int> nativeVehicleIds;
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
 		VEH *vehicle = &(Vehicles[id]);
 		MAP *vehicleTile = getVehicleMapTile(id);
 		
-		if (vehicle->faction_id == 0 && vehicle->unit_id == BSC_SPORE_LAUNCHER && vehicleTile->owner == aiFactionId)
+		if (vehicle->faction_id == 0 && vehicleTile->owner == aiFactionId)
 		{
-			attackNative(id);
+			nativeVehicleIds.insert(id);
 		}
 
 	}
-
-	// mind worms
-
-	for (int id = 0; id < *total_num_vehicles; id++)
+	
+	// direct scouts
+	
+	for (int scoutVehicleId : activeFactionInfo.scoutVehicleIds)
 	{
-		VEH *vehicle = &(Vehicles[id]);
-		MAP *vehicleTile = getVehicleMapTile(id);
+		VEH *scoutVehicle = &(Vehicles[scoutVehicleId]);
+		MAP *scoutVehicleTile = getVehicleMapTile(scoutVehicleId);
 		
-		if (vehicle->faction_id == 0 && vehicle->unit_id == BSC_MIND_WORMS && vehicleTile->owner == aiFactionId)
-		{
-			attackNative(id);
-		}
+		// skip those with orders
 
-	}
+		if (combatOrders.count(scoutVehicleId) != 0)
+			continue;
 
-	// fungal towers
-
-	for (int id = 0; id < *total_num_vehicles; id++)
-	{
-		VEH *vehicle = &(Vehicles[id]);
-		MAP *vehicleTile = getVehicleMapTile(id);
+		// exclude immobile
 		
-		if (vehicle->faction_id == 0 && vehicle->unit_id == BSC_FUNGAL_TOWER && vehicleTile->owner == aiFactionId)
+		if (scoutVehicle->triad() == (isOceanRegion(scoutVehicleTile->region) ? TRIAD_LAND : TRIAD_SEA))
+			continue;
+		
+		// find nearest native
+		
+		int targetNativeVehicleId = -1;
+		int minRange = INT_MAX;
+		
+		for (int nativeVehicleId : nativeVehicleIds)
 		{
-			attackNative(id);
+			VEH *nativeVehicle = &(Vehicles[nativeVehicleId]);
+			MAP *nativeVehicleTile = getVehicleMapTile(nativeVehicleId);
+			
+			// same region
+			
+			if (nativeVehicleTile->region != scoutVehicleTile->region)
+				continue;
+			
+			// get range
+			
+			int range = map_range(scoutVehicle->x, scoutVehicle->y, nativeVehicle->x, nativeVehicle->y);
+			
+			if (range < minRange)
+			{
+				targetNativeVehicleId = nativeVehicleId;
+				minRange = range;
+			}
+			
 		}
-
+		
+		if (minRange <= 10)
+		{
+			setAttackOrder(scoutVehicleId, targetNativeVehicleId);
+		}
+		
 	}
 
 	debug("\n");
@@ -328,7 +399,7 @@ void popPods()
 			if (nearestPodLocationIterator != podLocations.end())
 			{
 				Location nearestPodLocation = *nearestPodLocationIterator;
-				setMoveOrder(vehicleId, nearestPodLocation.x, nearestPodLocation.y, false);
+				setMoveOrder(vehicleId, nearestPodLocation.x, nearestPodLocation.y, -1);
 				podLocations.erase(nearestPodLocationIterator);
 			}
 			
@@ -336,101 +407,6 @@ void popPods()
 		
 	}
 	
-}
-
-void attackNative(int enemyVehicleId)
-{
-	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
-	
-	// assemble attacking forces
-
-	debug("attackNative (%3d,%3d)\n", enemyVehicle->x, enemyVehicle->y);
-
-	// list available units
-
-	std::vector<VEHICLE_VALUE> vehicleDamageValues;
-
-	for (int id : activeFactionInfo.combatVehicleIds)
-	{
-		VEH *vehicle = &(Vehicles[id]);
-		
-		// skip not scouts
-		
-		if (!isScoutVehicle(id))
-			continue;
-
-		// skip those with orders
-
-		if (combatOrders.count(id) != 0)
-			continue;
-
-		// do not bother if unreachable
-
-		if (!isreachable(id, enemyVehicle->x, enemyVehicle->y))
-			continue;
-
-		// calculate damage
-
-		double damage = (*current_turn < 15 ? 2.0 : 1.0) * calculatePsiDamageAttack(id, enemyVehicleId);
-
-		// calculate value
-
-		int distance = map_range(vehicle->x, vehicle->y, enemyVehicle->x, enemyVehicle->y);
-		int cost = Units[vehicle->unit_id].cost;
-		double value = damage / (double)cost / (double)distance;
-
-		// store vehicle
-
-		vehicleDamageValues.push_back({id, damage, value});
-
-	}
-
-	// sort vehicles
-
-	std::sort(vehicleDamageValues.begin(), vehicleDamageValues.end(), compareVehicleValue);
-
-	// select attackers
-
-	double enemyVehicleHealth = (double)(10 - enemyVehicle->damage_taken);
-	double requiredDamage = 2.0 * enemyVehicleHealth;
-	double combinedDamage = 0.0;
-
-	debug
-	(
-		"enemyVehicleHealth=%4.1f, requiredDamage=%4.1f\n",
-		enemyVehicleHealth,
-		requiredDamage
-	);
-
-	for (VEHICLE_VALUE vehicleDamageValue : vehicleDamageValues)
-	{
-		// store order
-
-		combatOrders[vehicleDamageValue.id] = {};
-		combatOrders[vehicleDamageValue.id].enemyAIId = enemyVehicleId;
-
-		// deliver damage
-
-		combinedDamage += vehicleDamageValue.damage;
-
-		debug
-		(
-			"\t[%3d] value=%4.1f, damage=%4.1f, combinedDamage=%4.1f\n",
-			vehicleDamageValue.id,
-			vehicleDamageValue.value,
-			vehicleDamageValue.damage,
-			combinedDamage
-		);
-
-		// enough!
-
-		if (combinedDamage >= requiredDamage)
-			break;
-
-	}
-
-	debug("\n");
-
 }
 
 int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2)
@@ -479,34 +455,56 @@ int moveCombat(int vehicleId)
 
 int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
 {
+	VEH *vehicle = &(Vehicles[id]);
+	
+	// get coordinates
+	
+	int x;
+	int y;
+	
 	if (combatOrder->x != -1 && combatOrder->y != -1)
 	{
-		return applyMoveOrder(id, combatOrder);
+		x = combatOrder->x;
+		y = combatOrder->y;
 	}
-	if (combatOrder->enemyAIId != -1)
+	else if (combatOrder->enemyAIId != -1)
 	{
-		return applyAttackOrder(id, combatOrder);
+		VEH *enemyVehicle = getVehicleByAIId(combatOrder->enemyAIId);
+
+		// enemy not found
+
+		if (enemyVehicle == NULL || enemyVehicle->x == -1 || enemyVehicle->y == -1)
+			return enemy_move(id);
+		
+		x = enemyVehicle->x;
+		y = enemyVehicle->y;
+		
 	}
 	else
 	{
-		return mod_enemy_move(id);
+		x = vehicle->x;
+		y = vehicle->y;
+		
 	}
 
-}
+	// destination is unreachable
 
-int applyMoveOrder(int id, COMBAT_ORDER *combatOrder)
-{
-	VEH *vehicle = &(Vehicles[id]);
-
+	if (!isreachable(id, x, y))
+		return enemy_move(id);
+	
 	// at destination
 
-	if (vehicle->x == combatOrder->x && vehicle->y == combatOrder->y)
+	if (vehicle->x == x && vehicle->y == y)
 	{
-		// hold if instructed
+		// execute order if instructed
 		
-		if (combatOrder->hold)
+		if (combatOrder->order != -1)
 		{
-			setVehicleOrder(id, ORDER_HOLD);
+			setVehicleOrder(id, combatOrder->order);
+		}
+		else
+		{
+			mod_veh_skip(id);
 		}
 
 	}
@@ -515,36 +513,14 @@ int applyMoveOrder(int id, COMBAT_ORDER *combatOrder)
 
 	else
 	{
-		setMoveTo(id, combatOrder->x, combatOrder->y);
+		setMoveTo(id, x, y);
 	}
 
 	return SYNC;
 
 }
 
-int applyAttackOrder(int id, COMBAT_ORDER *combatOrder)
-{
-	// find enemy vehicle by AI ID
-
-	VEH *enemyVehicle = getVehicleByAIId(combatOrder->enemyAIId);
-
-	// enemy not found
-
-	if (enemyVehicle == NULL || enemyVehicle->x == -1 || enemyVehicle->y == -1)
-		return enemy_move(id);
-
-	// enemy is unreachable
-
-	if (!isreachable(id, enemyVehicle->x, enemyVehicle->y))
-		return enemy_move(id);
-
-	// set move to order
-
-	return setMoveTo(id, enemyVehicle->x, enemyVehicle->y);
-
-}
-
-void setMoveOrder(int vehicleId, int x, int y, bool hold)
+void setMoveOrder(int vehicleId, int x, int y, int order)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
@@ -555,7 +531,21 @@ void setMoveOrder(int vehicleId, int x, int y, bool hold)
 		combatOrders[vehicleId] = {};
 		combatOrders[vehicleId].x = x;
 		combatOrders[vehicleId].y = y;
-		combatOrders[vehicleId].hold = hold;
+		combatOrders[vehicleId].order = order;
+	}
+
+}
+
+void setAttackOrder(int vehicleId, int enemyVehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+
+	debug("setAttackOrder: [%3d](%3d,%3d) -> [%3d]\n", vehicleId, vehicle->x, vehicle->y, enemyVehicleId);
+
+	if (combatOrders.find(vehicleId) == combatOrders.end())
+	{
+		combatOrders[vehicleId] = {};
+		combatOrders[vehicleId].enemyAIId = enemyVehicleId;
 	}
 
 }
@@ -899,6 +889,101 @@ int getRangeToNearestActiveFactionBase(int x, int y)
 	}
 	
 	return minRange;
+	
+}
+
+/*
+Searches for nearest accessible monolith on non-enemy territory.
+*/
+Location getNearestMonolithLocation(int x, int y, int triad)
+{
+	MAP *startingTile = getMapTile(x, y);
+	bool ocean = isOceanRegion(startingTile->region);
+	
+	Location nearestMonolithLocation;
+	
+	// search only for realm unit can move on
+	
+	if (!(triad == TRIAD_AIR || triad == (ocean ? TRIAD_SEA : TRIAD_LAND)))
+		return nearestMonolithLocation;
+	
+	int minRange = INT_MAX;
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		Location location = getMapIndexLocation(mapIndex);
+		MAP* tile = getMapTile(mapIndex);
+		
+		// same region for non-air units
+		
+		if (triad != TRIAD_AIR && tile->region != startingTile->region)
+			continue;
+		
+		// friendly territory only
+		
+		if (tile->owner != -1 && tile->owner != aiFactionId && at_war(tile->owner, aiFactionId))
+			continue;
+		
+		// monolith
+		
+		if (!map_has_item(tile, TERRA_MONOLITH))
+			continue;
+		
+		int range = map_range(x, y, location.x, location.y);
+		
+		if (range < minRange)
+		{
+			nearestMonolithLocation.set(location);
+			minRange = range;
+		}
+		
+	}
+		
+	return nearestMonolithLocation;
+	
+}
+
+/*
+Searches for allied base.
+*/
+Location getNearestBaseLocation(int x, int y, int triad)
+{
+	MAP *startingTile = getMapTile(x, y);
+	bool ocean = isOceanRegion(startingTile->region);
+	
+	// search only for realm unit can move on
+	
+	Location nearestBaseLocation;
+	
+	if (!(triad == TRIAD_AIR || triad == (ocean ? TRIAD_SEA : TRIAD_LAND)))
+		return nearestBaseLocation;
+	
+	int minRange = INT_MAX;
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		// same region for non-air units
+		
+		if (triad != TRIAD_AIR && baseTile->region != startingTile->region)
+			continue;
+		
+		// friendly base only
+		
+		if (!(base->faction_id == aiFactionId || has_pact(base->faction_id, aiFactionId)))
+			continue;
+		
+		int range = map_range(x, y, base->x, base->y);
+		
+		if (range < minRange)
+		{
+			nearestBaseLocation.set(base->x, base->y);
+			minRange = range;
+		}
+		
+	}
+		
+	return nearestBaseLocation;
 	
 }
 

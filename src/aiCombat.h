@@ -8,8 +8,8 @@ struct COMBAT_ORDER
 {
 	int x = -1;
 	int y = -1;
-	bool hold = false;
 	int enemyAIId = -1;
+	int order = -1;
 };
 
 struct VEHICLE_VALUE
@@ -21,16 +21,17 @@ struct VEHICLE_VALUE
 
 void aiCombatStrategy();
 void populateCombatLists();
+void healStrategy();
 void nativeCombatStrategy();
 void factionCombatStrategy();
 void popPods();
-void attackNative(int enemyVehicleId);
 int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2);
 int moveCombat(int id);
 int applyCombatOrder(int id, COMBAT_ORDER *combatOrder);
 int applyMoveOrder(int id, COMBAT_ORDER *combatOrder);
 int applyAttackOrder(int id, COMBAT_ORDER *combatOrder);
-void setMoveOrder(int id, int x, int y, bool hold);
+void setMoveOrder(int vehicleId, int x, int y, int order);
+void setAttackOrder(int vehicleId, int enemyVehicleId);
 int processSeaExplorer(int vehicleId);
 bool isHealthySeaExplorerInLandPort(int vehicleId);
 int kickSeaExplorerFromLandPort(int vehicleId);
@@ -42,4 +43,6 @@ double getVehicleConventionalDefenseValue(int vehicleId);
 double getVehiclePsiOffenseValue(int vehicleId);
 double getVehiclePsiDefenseValue(int vehicleId);
 int getRangeToNearestActiveFactionBase(int x, int y);
+Location getNearestMonolithLocation(int x, int y, int triad);
+Location getNearestBaseLocation(int x, int y, int triad);
 

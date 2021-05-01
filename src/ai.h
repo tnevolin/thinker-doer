@@ -57,7 +57,9 @@ struct ActiveFactionInfo
 	std::unordered_map<int, std::unordered_set<int>> regionBaseIds;
 	std::map<int, std::vector<int>> regionBaseGroups;
 	std::map<int, BASE_STRATEGY> baseStrategies;
+	std::vector<int> vehicleIds;
 	std::vector<int> combatVehicleIds;
+	std::vector<int> scoutVehicleIds;
 	std::vector<int> outsideCombatVehicleIds;
 	std::vector<int> prototypes;
 	std::vector<int> colonyVehicleIds;
@@ -77,7 +79,9 @@ struct ActiveFactionInfo
 		regionBaseIds.clear();
 		regionBaseGroups.clear();
 		baseStrategies.clear();
+		vehicleIds.clear();
 		combatVehicleIds.clear();
+		scoutVehicleIds.clear();
 		outsideCombatVehicleIds.clear();
 		prototypes.clear();
 		colonyVehicleIds.clear();

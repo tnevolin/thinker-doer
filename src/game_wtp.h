@@ -275,4 +275,6 @@ double getBaseConventionalDefenseMultiplier(int baseId, int triad);
 bool isWithinFriendlySensorRange(int factionId, int x, int y);
 std::vector<Location> getRegionPodLocations(int region);
 int getRegionPodCount(int region);
+Location getNearbyItemLocation(int x, int y, int range, int item);
+bool isVehicleHealing(int vehicleId);
 
