@@ -69,6 +69,7 @@ void evaluateOceanExpansionDemand();
 void evaluatePoliceDemand();
 void evaluateNativeDefenseDemand();
 void evaluateTerritoryNativeProtectionDemand();
+void evaluatePodPoppingDemand();
 void evaluateCombatDemand();
 void addProductionDemand(int item, double priority);
 int selectBestNativeDefensePrototype(int factionId);

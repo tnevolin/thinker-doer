@@ -315,6 +315,10 @@ void populateGlobalVariables()
 		
 		debug("\t[%3d] (%3d,%3d) region = %3d\n", id, vehicle->x, vehicle->y, vehicleTile->region);
 		
+		// add vehicle
+		
+		activeFactionInfo.vehicleIds.push_back(id);
+
 		// combat vehicles
 
 		if (isVehicleCombat(id))
@@ -322,6 +326,13 @@ void populateGlobalVariables()
 			// add vehicle to global list
 
 			activeFactionInfo.combatVehicleIds.push_back(id);
+			
+			// scout
+			
+			if (isScoutVehicle(id))
+			{
+				activeFactionInfo.scoutVehicleIds.push_back(id);
+			}
 
 			// add surface vehicle to region list
 			// except land unit in ocean

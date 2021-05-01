@@ -1120,86 +1120,47 @@ void evaluatePodPoppingDemand()
 		
 		int regionPodCount = getRegionPodCount(region);
 		
+		// none
+
+		if (regionPodCount == 0)
+			continue;
+
 		// count scouts
 		
-		int nativeAttackUnitId = findNativeAttackPrototype(ocean);
-
-		if (nativeAttackUnitId == -1)
+		int scoutCount = 0;
+		
+		for (int vehicleId : activeFactionInfo.combatVehicleIds)
 		{
-			debug("\t\tno native attack unit\n");
-			continue;
-		}
-
-		debug("\t\tnativeAttackUnit=%-25s\n", Units[nativeAttackUnitId].name);
-
-		// calculate natives defense value
-
-		double nativePsiDefenseValue = 0.0;
-
-		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
 			MAP *vehicleTile = getVehicleMapTile(vehicleId);
 			
-			if (vehicle->faction_id == 0 && vehicleTile->region == region && vehicleTile->owner == aiFactionId)
+			if (isVehicleLandUnitOnTransport(vehicleId))
+				continue;
+			
+			if (vehicleTile->region != region)
+				continue;
+			
+			if (isScoutVehicle(vehicleId))
 			{
-				nativePsiDefenseValue += getVehiclePsiDefenseValue(vehicleId);
+				scoutCount++;
 			}
 			
 		}
+		
+		// calculate need for pod poppers
 
-		debug("\t\tnativePsiDefenseValue=%f\n", nativePsiDefenseValue);
+		double podPoppersNeeded = (double)regionPodCount / 5.0;
+		double podPoppingDemand = (podPoppersNeeded - scoutCount) / podPoppersNeeded;
 
-		// none
-
-		if (nativePsiDefenseValue == 0.0)
-			continue;
-
-		// summarize existing attack value
-
-		double existingPsiAttackValue = 0.0;
-
-		for (int vehicleId : activeFactionInfo.combatVehicleIds)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-			
-			// exclude wrong triad
-			
-			if (vehicle->triad() == (ocean ? TRIAD_LAND : TRIAD_AIR))
-				continue;
-
-			// exclude wrong region
-			
-			if (!(vehicle->triad() == TRIAD_AIR || vehicleTile->region == region))
-				continue;
-
-			// only units with hand weapon and no armor
-
-			if (!(Units[vehicle->unit_id].weapon_type == WPN_HAND_WEAPONS || Units[vehicle->unit_id].armor_type == ARM_NO_ARMOR))
-				continue;
-
-			existingPsiAttackValue += getVehiclePsiAttackStrength(vehicleId);
-
-		}
-
-		debug("\t\texistingPsiAttackValue=%f\n", existingPsiAttackValue);
-
-		// calculate need for psi attackers
-
-		double nativeAttackTotalDemand = (double)nativePsiDefenseValue;
-		double nativeAttackRemainingDemand = nativeAttackTotalDemand - (double)existingPsiAttackValue;
-
-		debug("\t\tnativeAttackTotalDemand=%f, nativeAttackRemainingDemand=%f\n", nativeAttackTotalDemand, nativeAttackRemainingDemand);
+		debug("\t\tregionPodCount=%d, scoutCount=%d, podPoppingDemand=%f\n", regionPodCount, scoutCount, podPoppingDemand);
 
 		// we have enough
 
-		if (nativeAttackRemainingDemand <= 0.0)
+		if (podPoppingDemand <= 0.0)
 			continue;
 
 		// otherwise, set priority
 
-		double priority = nativeAttackRemainingDemand / nativeAttackTotalDemand;
+		double priority = podPoppingDemand;
 
 		debug("\t\tpriority=%f\n", priority);
 
@@ -1213,8 +1174,17 @@ void evaluatePodPoppingDemand()
 		double baseProductionAdjustedPriority = priority * (double)base->mineral_surplus / (double)maxMineralSurplus;
 
 		debug("\t\t\t%-25s mineral_surplus=%d, baseProductionAdjustedPriority=%f\n", base->name, base->mineral_surplus, baseProductionAdjustedPriority);
-
-		addProductionDemand(nativeAttackUnitId, baseProductionAdjustedPriority);
+		
+		// select pod popper
+		
+		int podPopperUnitId = findScoutUnit(aiFactionId, ocean ? TRIAD_SEA : TRIAD_LAND);
+		
+		if (podPopperUnitId < 0)
+			continue;
+		
+		// add production demand
+		
+		addProductionDemand(podPopperUnitId, baseProductionAdjustedPriority);
 
 	}
 

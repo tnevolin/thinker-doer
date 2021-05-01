@@ -473,7 +473,7 @@ double calculatePsiDamageAttack(int vehicleId, int enemyVehicleId)
 			getFactionSEPlanetDefenseModifier(enemyVehicle->faction_id)
 		)
 		*
-		(double)(10 - vehicle->damage_taken)
+		(double)(10 * vehicle->reactor_type() - vehicle->damage_taken) / (double)vehicle->reactor_type()
 	;
 
 	// attacker empath increases damage
@@ -3007,7 +3007,7 @@ std::vector<Location> getRegionPodLocations(int region)
 
 int getRegionPodCount(int region)
 {
-	int regionPodCount;
+	int regionPodCount = 0;
 	
 	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
@@ -3028,3 +3028,39 @@ int getRegionPodCount(int region)
 	
 }
 
+Location getNearbyItemLocation(int x, int y, int range, int item)
+{
+	Location nearbyItemLocation;
+	
+	for (int dx = -(2 * range); dx <= (2 * range); dx++)
+	{
+		for (int dy = -(2 * range - abs(x)); dx <= +(2 * range - abs(x)); dy += 2)
+		{
+			int tileX = wrap(x + dx);
+			int tileY = y + dy;
+			
+			MAP *tile = getMapTile(tileX, tileY);
+			if (tile == NULL)
+				continue;
+			
+			if (map_has_item(tile, item))
+			{
+				nearbyItemLocation.set(tileX, tileY);
+				return nearbyItemLocation;
+			}
+			
+		}
+	}
+	
+	return nearbyItemLocation;
+	
+}
+
+/*
+Return true if vehicle order == ORDER_SENTRY_BOARD and damage > 0.
+*/
+bool isVehicleHealing(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	return vehicle->move_status == ORDER_SENTRY_BOARD && vehicle->damage_taken > 0;
+}
