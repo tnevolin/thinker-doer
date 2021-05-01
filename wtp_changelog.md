@@ -1,3 +1,12 @@
+# Version 231
+
+* Wounded units go to monolith or base.
+
+# Version 230
+
+* AI computes relative threat from other factions to priorities military production.
+* Injured units try to heal.
+
 # Version 229
 
 * Reverted Gaians to vanilla configuration. Don't remember why I changed them in first place.
