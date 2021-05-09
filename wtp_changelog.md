@@ -1,3 +1,10 @@
+# Version 232
+
+* Fixed combat odds display for psi combat.
+* Made combat odds display computation more precise by taking actual unit strength instead of reverse engineering them from odds. Vanilla sometimes screws odds calculation pretty badly.
+* Increased combat unit priority a little to make sure AI builds them.
+* Forced prototype production to reduce AI unwillingness to build modern units.
+
 # Version 231
 
 * Wounded units go to monolith or base.

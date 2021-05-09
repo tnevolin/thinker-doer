@@ -27,6 +27,7 @@ Prepare production choices.
 void aiProductionStrategy()
 {
 	evaluateDefenseDemand();
+	findBestUnits();
 	
 }
 
@@ -77,9 +78,9 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 		return getBaseBuildingItem(baseId);
 	}
 	
-	// compute combat priority
+	// compute military priority
 	
-	militaryPriority = conf.ai_production_military_priority * activeFactionInfo.regionDefenseDemand[baseTile->region];
+	militaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.regionDefenseDemand[baseTile->region]);
 	
 	debug("\tmilitaryPriority = %f\n", militaryPriority);
 	
@@ -164,21 +165,6 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 	
 	double wtpPriority = productionDemand.priority;
 	
-	// raise wtp priority for combat items
-	
-	if (isMilitaryItem(wtpChoice))
-	{
-		debug("WTP choice is combat item\n");
-		
-		// raise wtp priority to combat priority
-		
-		if (militaryPriority > wtpPriority)
-		{
-			wtpPriority = militaryPriority;
-		}
-		
-	}
-	
 	debug("production selection between algorithms\n\t%-10s: (%5.2f) %s\n\t%-10s: (%5.2f) %s\n\t%-10s: (%5.2f) %s\n", "vanilla", vanillaPriority, prod_name(choice), "thinker", thinkerPriority, prod_name(thinkerChoice), "wtp", wtpPriority, prod_name(wtpChoice));
 
 	// select production based on priority
@@ -191,6 +177,8 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 	{
 		choice = thinkerChoice;
 	}
+	
+	debug("===>    %-25s\n", prod_name(choice));
 
 	debug("========================================\n\n");
 
@@ -223,7 +211,8 @@ int aiSuggestBaseProduction(int baseId, int choice)
 	
 	evaluatePodPoppingDemand();
 
-//	evaluateCombatDemand();
+	evaluatePrototypingDemand();
+	evaluateCombatDemand();
 
 	return productionDemand.item;
 
@@ -233,18 +222,20 @@ void evaluateFacilitiesDemand()
 {
 	debug("evaluateFacilitiesDemand\n");
 
-	evaluateBasePopulationLimitFacilitiesDemand();
-	evaluateBasePsychFacilitiesDemand();
-	evaluateBaseMultiplyingFacilitiesDemand();
+	evaluatePopulationLimitFacilitiesDemand();
+	evaluatePsychFacilitiesDemand();
+	evaluateMultiplyingFacilitiesDemand();
+	evaluateDefensiveFacilitiesDemand();
+	evaluateMilitaryFacilitiesDemand();
 
 }
 
-void evaluateBasePopulationLimitFacilitiesDemand()
+void evaluatePopulationLimitFacilitiesDemand()
 {
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 
-	debug("\tevaluateBasePopulationLimitFacilitiesDemand\n");
+	debug("\tevaluatePopulationLimitFacilitiesDemand\n");
 
 	const int POPULATION_LIMIT_FACILITIES[] =
 	{
@@ -287,7 +278,7 @@ void evaluateBasePopulationLimitFacilitiesDemand()
 
 }
 
-void evaluateBasePsychFacilitiesDemand()
+void evaluatePsychFacilitiesDemand()
 {
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
@@ -327,7 +318,7 @@ void evaluateBasePsychFacilitiesDemand()
 	if (buildingPsychFacilityOrColony)
 		return;
 
-	debug("\tevaluateBasePsychFacilitiesDemand\n");
+	debug("\tevaluatePsychFacilitiesDemand\n");
 
 	// calculate variables
 
@@ -360,13 +351,13 @@ void evaluateBasePsychFacilitiesDemand()
 
 }
 
-void evaluateBaseMultiplyingFacilitiesDemand()
+void evaluateMultiplyingFacilitiesDemand()
 {
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	Faction *faction = &(Factions[base->faction_id]);
 
-	debug("\tevaluateBaseMultiplyingFacilitiesDemand\n");
+	debug("\tevaluateMultiplyingFacilitiesDemand\n");
 
 	// calculate base values for multiplication
 
@@ -495,6 +486,77 @@ void evaluateBaseMultiplyingFacilitiesDemand()
 
 	}
 
+}
+
+void evaluateDefensiveFacilitiesDemand()
+{
+	debug("\tevaluateDefensiveFacilitiesDemand\n");
+	
+	int baseId = productionDemand.baseId;
+	MAP *baseTile = getBaseMapTile(baseId);
+	bool ocean = isOceanRegion(baseTile->region);
+	
+	// select facility
+	
+	int facilityId = -1;
+	
+	if (ocean)
+	{
+		if (has_facility_tech(aiFactionId, FAC_NAVAL_YARD) && !has_facility(baseId, FAC_NAVAL_YARD))
+		{
+			facilityId = FAC_NAVAL_YARD;
+		}
+		else if (has_facility_tech(aiFactionId, FAC_AEROSPACE_COMPLEX) && !has_facility(baseId, FAC_AEROSPACE_COMPLEX))
+		{
+			facilityId = FAC_AEROSPACE_COMPLEX;
+		}
+		else if (has_facility_tech(aiFactionId, FAC_PERIMETER_DEFENSE) && has_facility_tech(aiFactionId, FAC_TACHYON_FIELD) && !has_facility(baseId, FAC_PERIMETER_DEFENSE))
+		{
+			facilityId = FAC_PERIMETER_DEFENSE;
+		}
+		else if (has_facility_tech(aiFactionId, FAC_PERIMETER_DEFENSE) && has_facility_tech(aiFactionId, FAC_TACHYON_FIELD) && has_facility(baseId, FAC_PERIMETER_DEFENSE) && !has_facility(baseId, FAC_TACHYON_FIELD))
+		{
+			facilityId = FAC_TACHYON_FIELD;
+		}
+		
+	}
+	else
+	{
+		if (has_facility_tech(aiFactionId, FAC_PERIMETER_DEFENSE) && !has_facility(baseId, FAC_PERIMETER_DEFENSE))
+		{
+			facilityId = FAC_PERIMETER_DEFENSE;
+		}
+		else if (has_facility_tech(aiFactionId, FAC_AEROSPACE_COMPLEX) && !has_facility(baseId, FAC_AEROSPACE_COMPLEX))
+		{
+			facilityId = FAC_AEROSPACE_COMPLEX;
+		}
+		else if (has_facility_tech(aiFactionId, FAC_TACHYON_FIELD) && has_facility(baseId, FAC_PERIMETER_DEFENSE) && !has_facility(baseId, FAC_TACHYON_FIELD))
+		{
+			facilityId = FAC_TACHYON_FIELD;
+		}
+		
+	}
+	
+	// nothing selected
+	
+	if (facilityId == -1)
+		return;
+	
+	// calculate priority
+	
+	double priority = conf.ai_production_military_priority * activeFactionInfo.regionDefenseDemand[baseTile->region] * activeFactionInfo.baseStrategies[baseId].exposure;
+	
+	// add demand
+
+	addProductionDemand(-facilityId, priority);
+
+	debug("\t\tfacility=%-25s, ai_production_military_priority=%f, regionDefenseDemand=%f, exposure=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_military_priority, activeFactionInfo.regionDefenseDemand[baseTile->region], activeFactionInfo.baseStrategies[baseId].exposure, priority);
+	
+}
+
+void evaluateMilitaryFacilitiesDemand()
+{
+	
 }
 
 /*
@@ -1190,6 +1252,99 @@ void evaluatePodPoppingDemand()
 
 }
 
+void evaluatePrototypingDemand()
+{
+	debug("evaluatePrototypingDemand\n");
+	
+	int baseId = productionDemand.baseId;
+	BASE *base = productionDemand.base;
+	bool inSharedOceanRegion = activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion;
+	
+	// check if any base is prototyping unit already
+	
+	int prototypingBaseId = -1;
+	
+	for (int otherBaseId : activeFactionInfo.baseIds)
+	{
+		BASE *otherBase = &(Bases[otherBaseId]);
+		
+		int item = otherBase->queue_items[0];
+		
+		if (item >= 0 && (Units[item].unit_flags & UNIT_PROTOTYPED == 0))
+		{
+			prototypingBaseId = otherBaseId;
+			break;
+		}
+		
+	}
+	
+	if (prototypingBaseId >= 0)
+	{
+		debug("\talready prototyping: %s\n", Bases[prototypingBaseId].name);
+		return;
+	}
+	
+	// find first unprototyped unit
+	
+	int unprototypedUnitId = -1;
+	
+	for (int unitId : activeFactionInfo.prototypes)
+	{
+		UNIT *unit = &(Units[unitId]);
+		
+		// skip sea units for bases without shared ocean region
+		
+		if (unit->triad() == TRIAD_SEA && !inSharedOceanRegion)
+			continue;
+		
+		// find unprototyped
+		
+		if (unitId >= 64 && !(unit->unit_flags & UNIT_PROTOTYPED))
+		{
+			unprototypedUnitId = unitId;
+			break;
+		}
+		
+	}
+	
+	if (unprototypedUnitId == -1)
+	{
+		debug("\tno unprototyped\n");
+		return;
+	}
+	
+	// get unit
+	
+	UNIT *unprototypedUnit = &(Units[unprototypedUnitId]);
+	
+	debug("\tunprototypedUnit=%s\n", unprototypedUnit->name);
+	
+	// calculate priority
+	
+	double priority = 1.0;
+	
+	// calculate adjusted priority based on mineral surplus
+	
+	double adjustedPriority = priority * ((double)base->mineral_surplus_final / (double)activeFactionInfo.maxMineralSurplus);
+	
+	debug("\tpriority=%f, adjustedPriority=%f", priority, adjustedPriority);
+	
+	// add production demand
+	
+	addProductionDemand(unprototypedUnitId, adjustedPriority);
+
+}
+
+void evaluateCombatDemand()
+{
+//	debug("evaluateCombatDemand\n");
+//
+//	int baseId = productionDemand.baseId;
+//	BASE *base = productionDemand.base;
+//	
+//	
+}
+
 void addProductionDemand(int item, double priority)
 {
 	BASE *base = productionDemand.base;
@@ -1790,13 +1945,8 @@ bool isMilitaryItem(int item)
 		UNIT *unit = &(Units[item]);
 		int weaponId = unit->weapon_type;
 		
-		// exclude reconnaissance units
-		
-		if (unit->unit_plan == PLAN_RECONNAISANCE)
-			return false;
-		
 		return
-			isUnitCombat(item)
+			(isUnitCombat(item) && !isScoutUnit(item))
 			||
 			weaponId == WPN_PROBE_TEAM
 			||
@@ -1808,35 +1958,36 @@ bool isMilitaryItem(int item)
 	}
 	else
 	{
-		int facilityId = -item;
-		
-		return
-			facilityId == FAC_PERIMETER_DEFENSE
-			||
-			facilityId == FAC_TACHYON_FIELD
-			||
-			facilityId == FAC_COMMAND_CENTER
-			||
-			facilityId == FAC_NAVAL_YARD
-			||
-			facilityId == FAC_AEROSPACE_COMPLEX
-			||
-			facilityId == FAC_BIOENHANCEMENT_CENTER
-			||
-			facilityId == FAC_BIOLOGY_LAB
-			||
-			facilityId == FAC_CENTAURI_PRESERVE
-			||
-			facilityId == FAC_TEMPLE_OF_PLANET
-			||
-			facilityId == FAC_BROOD_PIT
-			||
-			facilityId == FAC_FLECHETTE_DEFENSE_SYS
-			||
-			facilityId == FAC_GEOSYNC_SURVEY_POD
-			||
-			facilityId == FAC_COVERT_OPS_CENTER
-		;
+		return false;
+//		int facilityId = -item;
+//		
+//		return
+//			facilityId == FAC_PERIMETER_DEFENSE
+//			||
+//			facilityId == FAC_TACHYON_FIELD
+//			||
+//			facilityId == FAC_COMMAND_CENTER
+//			||
+//			facilityId == FAC_NAVAL_YARD
+//			||
+//			facilityId == FAC_AEROSPACE_COMPLEX
+//			||
+//			facilityId == FAC_BIOENHANCEMENT_CENTER
+//			||
+//			facilityId == FAC_BIOLOGY_LAB
+//			||
+//			facilityId == FAC_CENTAURI_PRESERVE
+//			||
+//			facilityId == FAC_TEMPLE_OF_PLANET
+//			||
+//			facilityId == FAC_BROOD_PIT
+//			||
+//			facilityId == FAC_FLECHETTE_DEFENSE_SYS
+//			||
+//			facilityId == FAC_GEOSYNC_SURVEY_POD
+//			||
+//			facilityId == FAC_COVERT_OPS_CENTER
+//		;
 		
 	}
 	
@@ -1906,6 +2057,8 @@ void evaluateDefenseDemand()
 		
 		// evaluate own military strength in region
 		
+		debug("\t\townStrengths\n");
+		
 		MILITARY_STRENGTH ownStrength;
 		
 		for (int vehicleId : activeFactionInfo.combatVehicleIds)
@@ -1915,9 +2068,9 @@ void evaluateDefenseDemand()
 			UNIT *unit = &(Units[vehicle->unit_id]);
 			bool regularUnit = !(Weapon[unit->weapon_type].offense_value < 0 || Armor[unit->armor_type].defense_value < 0);
 			
-			// this region
+			// exclude vehicle not in region
 			
-			if (vehicleTile->region != region)
+			if (!isVehicleInRegion(vehicleId, region))
 				continue;
 			
 			// vehicle value
@@ -1941,8 +2094,8 @@ void evaluateDefenseDemand()
 				{
 					// vehicle in opposite realm at base can defend only and cannot attack
 					
-					psiOffenseValue = psiDefenseValue;
-					conventionalOffenseValue = conventionalDefenseValue;
+					psiOffenseValue = 0.0;
+					conventionalOffenseValue = 0.0;
 					
 				}
 				else
@@ -1955,7 +2108,7 @@ void evaluateDefenseDemand()
 				
 			}
 			
-			debug("\t\t\t(%3d,%3d) %-25s: psiOffenseValue=%f, psiDefenseValue=%f, conventionalOffenseValue=%f, conventionalDefenseValue=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, psiOffenseValue, psiDefenseValue, conventionalOffenseValue, conventionalDefenseValue);
+			debug("\t\t\t\t(%3d,%3d) %-25s: psiOff=%f, psiDef=%f, conOff=%f, conDef=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, psiOffenseValue, psiDefenseValue, conventionalOffenseValue, conventionalDefenseValue);
 			
 			// add to region strength
 			
@@ -1968,13 +2121,14 @@ void evaluateDefenseDemand()
 			}
 			
 		}
-		debug("\t\townStrengths\n");
 		debug("\t\t\t%-40s = %7d\n", "totalUnitCount", ownStrength.totalUnitCount);
 		debug("\t\t\t%-40s = %7d\n", "regularUnitCount", ownStrength.regularUnitCount);
 		debug("\t\t\t%-40s = %7.2f\n", "psiStrength", ownStrength.psiStrength);
 		debug("\t\t\t%-40s = %7.2f\n", "conventionalStrength", ownStrength.conventionalStrength);
 		
 		// evaluate opponents military strength in region
+		
+		debug("\t\topponentStrengths\n");
 		
 		MILITARY_STRENGTH opponentStrength;
 		
@@ -2086,7 +2240,7 @@ void evaluateDefenseDemand()
 			int nearestRegionBaseRange = map_range(vehicle->x, vehicle->y, nearestRegionBase->x, nearestRegionBase->y);
 			strengthMultiplier /= std::max(1.0, (double)nearestRegionBaseRange / 10.0);
 			
-			debug("\t\t\t(%3d,%3d) %-25s -> (%3d,%3d) %-25s: psiOffenseValue=%f, psiDefenseValue=%f, conventionalOffenseValue=%f, conventionalDefenseValue=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, nearestRegionBase->x, nearestRegionBase->y, nearestRegionBase->name, psiOffenseValue, psiDefenseValue, conventionalOffenseValue, conventionalDefenseValue);
+			debug("\t\t\t\t(%3d,%3d) %-25s -> (%3d,%3d) %-25s: psiOffenseValue=%f, psiDefenseValue=%f, conventionalOffenseValue=%f, conventionalDefenseValue=%f, strengthMultiplier=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, nearestRegionBase->x, nearestRegionBase->y, nearestRegionBase->name, psiOffenseValue, psiDefenseValue, conventionalOffenseValue, conventionalDefenseValue, strengthMultiplier);
 			
 			// add to region strength
 			
@@ -2099,7 +2253,6 @@ void evaluateDefenseDemand()
 			}
 			
 		}
-		debug("\t\topponentStrengths\n");
 		debug("\t\t\t%-40s = %7d\n", "totalUnitCount", opponentStrength.totalUnitCount);
 		debug("\t\t\t%-40s = %7d\n", "regularUnitCount", opponentStrength.regularUnitCount);
 		debug("\t\t\t%-40s = %7.2f\n", "psiStrength", opponentStrength.psiStrength);
@@ -2143,6 +2296,65 @@ void evaluateDefenseDemand()
 		debug("\t\t%-20s = %7.2f\n", "defenseDemand", defenseDemand);
 		
 		activeFactionInfo.regionDefenseDemand[region] = defenseDemand;
+		
+	}
+	
+	// find average defense demand across all regions
+	
+	activeFactionInfo.defenseDemand = 0.0;
+	
+	for (const auto &kv : activeFactionInfo.regionDefenseDemand)
+	{
+		activeFactionInfo.defenseDemand += kv.second;
+	}
+	
+	activeFactionInfo.defenseDemand /= activeFactionInfo.regionDefenseDemand.size();
+	
+}
+
+/*
+unfinished
+...
+*/
+void findBestUnits()
+{
+	// select factions to iterate through
+	
+	std::unordered_set<int> otherFactionIds;
+	std::unordered_set<int> enemyFactionIds;
+	
+	for (int otherFactionId = 1; otherFactionId < 8; otherFactionId++)
+	{
+		// skip self
+		
+		if (otherFactionId == aiFactionId)
+			continue;
+		
+		// add other faction id
+		
+		otherFactionIds.insert(otherFactionId);
+		
+		// add enemy faction id
+		
+		if (at_war(aiFactionId, otherFactionId))
+		{
+			enemyFactionIds.insert(otherFactionId);
+		}
+		
+	}
+	
+	std::unordered_set<int> factionIds = (enemyFactionIds.size() > 0 ? enemyFactionIds : otherFactionIds);
+	
+	// evaluate best unit components
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// skip not evaluated factions
+		
+		if (factionIds.count(vehicle->faction_id) == 0)
+			continue;
 		
 	}
 	

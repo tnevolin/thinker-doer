@@ -21,6 +21,7 @@ struct VEHICLE_VALUE
 
 void aiCombatStrategy();
 void populateCombatLists();
+void baseProtection();
 void healStrategy();
 void nativeCombatStrategy();
 void factionCombatStrategy();

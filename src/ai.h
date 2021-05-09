@@ -32,6 +32,8 @@ struct BASE_STRATEGY
 	double conventionalDefenseDemand;
 	double conventionalDefenseMultiplier[3];
 	bool withinFriendlySensorRange;
+	double exposure;
+	bool inSharedOceanRegion;
 };
 
 struct ESTIMATED_VALUE
@@ -69,7 +71,13 @@ struct ActiveFactionInfo
 	std::unordered_map<int, std::vector<int>> regionSurfaceScoutVehicleIds;
 	std::unordered_map<int, double> baseAnticipatedNativeAttackStrengths;
 	std::unordered_map<int, double> baseRemainingNativeProtectionDemands;
+	double defenseDemand;
 	std::unordered_map<int, double> regionDefenseDemand;
+	int maxMineralSurplus;
+	std::unordered_map<int, int> regionMaxMineralSurpluses;
+	int bestLandUnitId;
+	int bestSeaUnitId;
+	int bestAirUnitId;
 	
 	void clear()
 	{
@@ -92,6 +100,7 @@ struct ActiveFactionInfo
 		baseAnticipatedNativeAttackStrengths.clear();
 		baseRemainingNativeProtectionDemands.clear();
 		regionDefenseDemand.clear();
+		regionMaxMineralSurpluses.clear();
 	}
 	
 };
@@ -106,10 +115,12 @@ int aiFactionUpkeep(const int factionId);
 int aiEnemyMove(const int vehicleId);
 void aiStrategy();
 void populateGlobalVariables();
+void setSharedOceanRegions();
 VEH *getVehicleByAIId(int aiId);
 Location getNearestPodLocation(int vehicleId);
 void evaluateBaseNativeDefenseDemands();
 int getNearestFactionBaseRange(int factionId, int x, int y);
 int getNearestBaseId(int x, int y, std::unordered_set<int> baseIds);
 int getNearestBaseRange(int x, int y, std::unordered_set<int> baseIds);
+void evaluateBaseExposures();
 
