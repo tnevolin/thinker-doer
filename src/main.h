@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 228 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 232 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -286,6 +286,7 @@ struct Config {
     double ai_production_vanilla_priority_facility;
     double ai_production_thinker_priority;
     double ai_production_military_priority;
+    double ai_production_military_priority_minimal;
     double ai_production_threat_coefficient_human;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_pact;

@@ -19,6 +19,8 @@ int balanceFactionId = -1;
 
 int currentAttackerVehicleId = -1;
 int currentDefenderVehicleId = -1;
+int currentAttackerStrength = -1;
+int currentDefenderStrength = -1;
 int currentAttackerOdds = -1;
 int currentDefenderOdds = -1;
 
@@ -366,6 +368,11 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 //
 //    }
 //
+	// store strengths
+	
+	currentAttackerStrength = *(int *)attackerStrengthPointer;
+	currentDefenderStrength = *(int *)defenderStrengthPointer;
+	
 }
 
 /*
@@ -3462,50 +3469,20 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 			int attackerHP = (attackerPower + (defenderFP - 1)) / defenderFP;
 			int defenderHP = (defenderPower + (attackerFP - 1)) / attackerFP;
 
-			// calculate correct strengths and odds
+			// compute vanilla odds
 			
-			double attackerStrength;
-			double defenderStrength;
+			int attackerOdds = currentAttackerOdds * attackerHP * defenderPower;
+			int defenderOdds = currentDefenderOdds * defenderHP * attackerPower;
+			simplifyOdds(&attackerOdds, &defenderOdds);
 			
-			int attackerOdds;
-			int defenderOdds;
+			// reparse vanilla odds into dialog
 			
-			if (Weapon[attackerUnit->weapon_type].offense_value >= 0 && Armor[defenderUnit->armor_type].defense_value >= 0)
-			{
-				// conventional combat odds are strengths time powers
-				
-				attackerStrength = (double)currentAttackerOdds / (double)attackerPower;
-				defenderStrength = (double)currentDefenderOdds / (double)defenderPower;
-				
-				// reverse engineer conventional combat odds in case of ignored reactor
-				
-				attackerOdds = currentAttackerOdds * attackerHP * defenderPower;
-				defenderOdds = currentDefenderOdds * defenderHP * attackerPower;
-				simplifyOdds(&attackerOdds, &defenderOdds);
-				
-				// reparse their odds into dialog
-				
-				parse_num(2, attackerOdds);
-				parse_num(3, defenderOdds);
-				
-			}
-			else
-			{
-				// psi combat odds are same as strength
-				
-				attackerStrength = (double)currentAttackerOdds;
-				defenderStrength = (double)currentDefenderOdds;
-				
-				// psi combat odds are same
-				
-				attackerOdds = currentAttackerOdds;
-				defenderOdds = currentDefenderOdds;
-				
-			}
+			parse_num(2, attackerOdds);
+			parse_num(3, defenderOdds);
 			
 			// calculate round probabilty
 			
-			double p = attackerStrength / (attackerStrength + defenderStrength);
+			double p = (double)currentAttackerStrength / ((double)currentAttackerStrength + (double)currentDefenderStrength);
 			
 			// calculate attacker winning probability
 			

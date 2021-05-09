@@ -3064,3 +3064,55 @@ bool isVehicleHealing(int vehicleId)
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	return vehicle->move_status == ORDER_SENTRY_BOARD && vehicle->damage_taken > 0;
 }
+
+/*
+Finds if vehicle is in region including sea units in ports.
+Air units are assumed to be in all regions at once.
+*/
+bool isVehicleInRegion(int vehicleId, int region)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	int triad = vehicle->triad();
+	
+	bool vehicleInRegion = false;
+	
+	if (triad == TRIAD_AIR)
+	{
+		// air units are in all regions at once
+		
+		vehicleInRegion = true;
+		
+	}
+	else if (triad == TRIAD_LAND)
+	{
+		// land units same region only
+		
+		if (vehicleTile->region == region)
+		{
+			vehicleInRegion = true;
+		}
+		
+	}
+	else if (triad == TRIAD_SEA)
+	{
+		// sea units same region
+		
+		if (vehicleTile->region == region)
+		{
+			vehicleInRegion = true;
+		}
+		
+		// sea units in ports
+		
+		if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE) && isTileConnectedToRegion(vehicle->x, vehicle->y, region))
+		{
+			vehicleInRegion = true;
+		}
+		
+	}
+	
+	return vehicleInRegion;
+	
+}
+

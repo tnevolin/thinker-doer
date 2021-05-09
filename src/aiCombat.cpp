@@ -13,6 +13,8 @@ void aiCombatStrategy()
 {
 	populateCombatLists();
 	
+	baseProtection();
+	
 	healStrategy();
 	
 	nativeCombatStrategy();
@@ -27,6 +29,20 @@ void populateCombatLists()
 {
 	combatOrders.clear();
 
+}
+
+/*
+unfinished
+*/
+void baseProtection()
+{
+//	for (int baseId : activeFactionInfo.baseIds)
+//	{
+//		BASE *base = &(Bases[baseId]);
+//		MAP *baseTile = getBaseMapTile(baseId);
+//		
+//	}
+	
 }
 
 void healStrategy()

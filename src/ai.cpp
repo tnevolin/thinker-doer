@@ -136,9 +136,11 @@ void aiStrategy()
 	debug("aiStrategy: aiFactionId=%d\n", aiFactionId);
 
 	// populate shared strategy lists
-
+	
 	populateGlobalVariables();
-
+	evaluateBaseExposures();
+	setSharedOceanRegions();
+	
 	// compute production demands
 
 	aiProductionStrategy();
@@ -158,7 +160,7 @@ void populateGlobalVariables()
 	// clear lists
 	
 	activeFactionInfo.clear();
-
+	
 	// populate factions combat modifiers
 
 	debug("%-24s\nfactionCombatModifiers:\n", MFactions[aiFactionId].noun_faction);
@@ -431,6 +433,81 @@ void populateGlobalVariables()
 	
 	evaluateBaseNativeDefenseDemands();
 	
+	// max mineral surplus
+	
+	activeFactionInfo.maxMineralSurplus = 0;
+	
+	for (int baseId : activeFactionInfo.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		activeFactionInfo.maxMineralSurplus = std::max(activeFactionInfo.maxMineralSurplus, base->mineral_surplus_final);
+		
+		if (activeFactionInfo.regionMaxMineralSurpluses.count(baseTile->region) == 0)
+		{
+			activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = 0;
+		}
+		
+		activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = std::max(activeFactionInfo.regionMaxMineralSurpluses[baseTile->region], base->mineral_surplus_final);
+		
+	}
+	
+}
+
+/*
+Finds all regions those are accessible by other factions.
+Set bases accessible to shared ocean regions.
+*/
+void setSharedOceanRegions()
+{
+	// find shared ocean regions
+	
+	std::unordered_set<int> sharedOceanRegions;
+	
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+		
+		// skip own
+		
+		if (base->faction_id == aiFactionId)
+			continue;
+		
+		// get connected ocean regions
+		
+		std::set<int> baseConnectedOceanRegions = getBaseConnectedOceanRegions(baseId);
+		
+		// add regions
+		
+		sharedOceanRegions.insert(baseConnectedOceanRegions.begin(), baseConnectedOceanRegions.end());
+		
+	}
+	
+	// update own bases
+	
+	for (int baseId : activeFactionInfo.baseIds)
+	{
+		// clear flag by default
+		
+		activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion = false;
+		
+		// get connected ocean regions
+		
+		std::set<int> baseConnectedOceanRegions = getBaseConnectedOceanRegions(baseId);
+		
+		for (int baseConnectedOceanRegion : baseConnectedOceanRegions)
+		{
+			if (sharedOceanRegions.count(baseConnectedOceanRegion))
+			{
+				activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion = true;
+				break;
+			}
+			
+		}
+		
+	}
+	
 }
 
 VEH *getVehicleByAIId(int aiId)
@@ -628,5 +705,49 @@ int getNearestBaseRange(int x, int y, std::unordered_set<int> baseIds)
 
 	return nearestBaseRange;
 
+}
+
+void evaluateBaseExposures()
+{
+	for (int baseId : activeFactionInfo.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		bool ocean = isOceanRegion(baseTile->region);
+		
+		// find nearest not own tile
+		
+		int nearestNotOwnTileRange = INT_MAX;
+
+		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+		{
+			Location location = getMapIndexLocation(mapIndex);
+			MAP* tile = getMapTile(mapIndex);
+			
+			// exclude own tiles
+			
+			if (tile->owner == aiFactionId)
+				continue;
+			
+			// calculate range
+			
+			int range = map_range(base->x, base->y, location.x, location.y);
+			
+			nearestNotOwnTileRange = std::min(nearestNotOwnTileRange, range);
+			
+		}
+		
+		// set base distance based on realm
+		
+		double baseDistance = (ocean ? 7.0 : 3.0);
+		
+		// estimate exposure
+		
+		double exposure = 1.0 / std::max(1.0, (double)nearestNotOwnTileRange / baseDistance);
+		
+		activeFactionInfo.baseStrategies[baseId].exposure = exposure;
+		
+	}
+	
 }
 
