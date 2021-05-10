@@ -3448,6 +3448,93 @@ void patch_energy_market_crash(int numerator)
 
 }
 
+void patch_carry_over_minerals()
+{
+	// disable cutting carry over minerals
+	
+	int carry_over_minerals_unit_bytes_length = 0x3;
+
+	/*
+	0:  39 56 40                cmp    DWORD PTR [esi+0x40],edx
+	*/
+	byte carry_over_minerals_unit_bytes_old[] = { 0x39, 0x56, 0x40 };
+
+	/*
+	0:  39 d2                   cmp    edx,edx
+	...
+	*/
+	byte carry_over_minerals_unit_bytes_new[] = { 0x39, 0xD2, 0x90 };
+
+	write_bytes
+	(
+		0x004F103E,
+		carry_over_minerals_unit_bytes_old,
+		carry_over_minerals_unit_bytes_new,
+		carry_over_minerals_unit_bytes_length
+	);
+	
+	int carry_over_minerals_facility_bytes_length = 0x3;
+
+	/*
+	0:  39 56 40                cmp    DWORD PTR [esi+0x40],edx
+	*/
+	byte carry_over_minerals_facility_bytes_old[] = { 0x39, 0x56, 0x40 };
+
+	/*
+	0:  39 d2                   cmp    edx,edx
+	...
+	*/
+	byte carry_over_minerals_facility_bytes_new[] = { 0x39, 0xD2, 0x90 };
+
+	write_bytes
+	(
+		0x004F1FC7,
+		carry_over_minerals_facility_bytes_old,
+		carry_over_minerals_facility_bytes_new,
+		carry_over_minerals_facility_bytes_length
+	);
+	
+	// do not clear production flag at production popup
+	
+	int retain_production_flag_bytes_length = 0xb;
+
+	/*
+	0:  8b 41 30                mov    eax,DWORD PTR [ecx+0x30]
+	3:  25 ff ff 7f ff          and    eax,0xff7fffff
+	8:  89 41 30                mov    DWORD PTR [ecx+0x30],eax
+	*/
+	byte retain_production_flag_bytes_old[] = { 0x8B, 0x41, 0x30, 0x25, 0xFF, 0xFF, 0x7F, 0xFF, 0x89, 0x41, 0x30 };
+
+	/*
+	...
+	*/
+	byte retain_production_flag_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+	write_bytes
+	(
+		0x004173AB,
+		retain_production_flag_bytes_old,
+		retain_production_flag_bytes_new,
+		retain_production_flag_bytes_length
+	);
+	
+	// disable penalty after base production
+	
+    write_call(0x004179A8, (int)modifiedBaseMaking);
+    write_call(0x004179BC, (int)modifiedBaseMaking);
+    write_call(0x00417A2E, (int)modifiedBaseMaking);
+    write_call(0x00417A3F, (int)modifiedBaseMaking);
+    write_call(0x004932D3, (int)modifiedBaseMaking);
+    write_call(0x004932E5, (int)modifiedBaseMaking);
+    write_call(0x0049365A, (int)modifiedBaseMaking);
+    write_call(0x0049366B, (int)modifiedBaseMaking);
+    write_call(0x004E4850, (int)modifiedBaseMaking);
+    write_call(0x004E485F, (int)modifiedBaseMaking);
+    write_call(0x004E5B06, (int)modifiedBaseMaking);
+    write_call(0x004E5B1B, (int)modifiedBaseMaking);
+
+}
+
 void patch_setup_wtp(Config* cf)
 {
 	// integrated into Thinker
@@ -3947,6 +4034,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->energy_market_crash_numerator != 4)
 	{
 		patch_energy_market_crash(cf->energy_market_crash_numerator);
+	}
+	
+	if (cf->carry_over_minerals)
+	{
+		patch_carry_over_minerals();
 	}
 	
 }

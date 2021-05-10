@@ -173,3 +173,6 @@ fp_0void *reset_territory = (fp_0void *)0x00523DD0;
 // breaks treaty
 fp_3int *break_treaty = (fp_3int *)0x0055F770;
 
+// base production change
+fp_2int *base_making = (fp_2int *)0x004E4700;
+

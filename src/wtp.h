@@ -185,4 +185,5 @@ HOOK_API void modifiedBattleReportItemValueDisplay(int destinationPointer, int s
 HOOK_API void modifiedResetTerritory();
 HOOK_API int modifiedOrbitalYieldLimit();
 HOOK_API int modifiedBreakTreaty(int actingFactionId, int targetFactionId, int bitmask);
+int __cdecl modifiedBaseMaking(int item, int baseId);
 

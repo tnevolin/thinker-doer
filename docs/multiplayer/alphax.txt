@@ -443,12 +443,12 @@ Fungal Payload,       Fungal,         0,14,24, -1, NewMiss
 #DEFENSES
 No Armor,            Scout,       1, 0, 1, None,
 Synthmetal Armor,    Synthmetal,  2, 0, 2, Indust,
-Plasma Steel Armor,  Plasma,      4, 2, 4, Chemist,
-Silksteel Armor,     Silksteel,   6, 1, 6, Alloys,
+Plasma Steel Armor,  Plasma,      3, 2, 3, Chemist,
+Silksteel Armor,     Silksteel,   5, 1, 5, Alloys,
 Photon Wall,         Photon,      8, 1, 8, DocSec,
-Probability Sheath,  Probability,10, 2,10, ProbMec,
+Probability Sheath,  Probability,12, 2,12, ProbMec,
 Neutronium Armor,    Neutronium, 16, 1,16, MatComp,
-Antimatter Plate,    Antimatter, 20, 2,20, NanEdit,
+Antimatter Plate,    Antimatter, 22, 2,22, NanEdit,
 Stasis Generator,    Stasis,     30, 2,30, TempMec,
 Psi Defense,         Psi,        -1, 2, 6, Disable,
 Pulse 3 Armor,       3-Pulse,     3, 1, 5, Disable,
@@ -649,7 +649,7 @@ Trance Sea Formers,     Foil,     Formers,      Scout,      9, 0, 0, Brain,   -1
 ;
 #FACILITIES
 Headquarters,                  5, 0, None,    Disable,  Efficiency
-Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic/Morale
+Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic
 Recycling Tanks,               6, 2, Biogen,  Create,   Bonus Resources
 Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +100%
 Tachyon Field,                12, 2, Create,  Disable,  All Defense +100%

@@ -3845,3 +3845,38 @@ HOOK_API int modifiedBreakTreaty(int actingFactionId, int targetFactionId, int b
 	
 }
 
+/*
+Returns 0 on base production turn to disable retooling penalty after production.
+*/
+int __cdecl modifiedBaseMaking(int item, int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	int currentItem = base->queue_items[0];
+	
+	// do not penalize retooling on first turn
+	
+	if (base->status_flags & BASE_PRODUCTION_DONE)
+	{
+		return 0;
+	}
+	
+	// do not penalize retooling from already built facility
+	
+	if (currentItem < 0 && -currentItem < PROJECT_ID_FIRST && has_facility(baseId, -currentItem))
+	{
+		return 0;
+	}
+	
+	// do not penalize retooling from already built project
+	
+	if (currentItem < 0 && -currentItem >= PROJECT_ID_FIRST && SecretProjects[-currentItem - PROJECT_ID_FIRST] >= 0)
+	{
+		return 0;
+	}
+	
+	// run original code in all other cases
+	
+	return base_making(item, baseId);
+	
+}
+
