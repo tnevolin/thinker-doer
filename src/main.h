@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 232 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 233 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -279,6 +279,7 @@ struct Config {
     bool silent_vendetta_warning = false;
     bool design_cost_in_rows = false;
     int energy_market_crash_numerator = 4;
+    bool carry_over_minerals = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

@@ -489,6 +489,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->energy_market_crash_numerator = std::max(0, atoi(value));
     }
+    else if (MATCH("wtp", "carry_over_minerals"))
+    {
+        cf->carry_over_minerals = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
