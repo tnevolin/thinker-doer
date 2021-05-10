@@ -5,6 +5,15 @@
   * Retooling is not penalized on the first production turn right after previous production completed.
   * Retooling is not penalized when changing from already built facility or project.
 
+* Item 1
+* Item 2
+* Item 3\
+  second line
+  * Item 3a
+  * Item 3b
+  * Item 3c
+
+
 That completely eliminates the fear to lose accumulated minerals in case project is completed by other base. Production can be retooled without penalty and losing accumulated minerals. There is also no need to select costly item to utilize all these excess minerals. Minerals will continue to carry over to next production without loss.
 
 Moreover, retooling is free on the turn when base just completed previous production. That allows human player to change their mind multiple time this turn.
