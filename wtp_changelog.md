@@ -1,3 +1,7 @@
+# Version 234
+
+* Marine Detachment cost 2 (50%). It is reportedly too good.
+
 # Version 233
 
 ## Minerals carry over and retooling penalty functionality
