@@ -521,7 +521,7 @@ Non-Lethal Methods,    64, HomoSup,  Police,    000000001001, x2 Police powers
 Slow Unit,              0, Disable,  Slow,      000000111111, -1 moves
 Soporific Gas Pods,     2, Disable,  Gas,       000001001101, -2 Enemy morale vs. non-native
 Dissociative Wave,      2, Surface,  Wave,      000000111111, Fizzles special abilities
-Marine Detachment,      1, AdapDoc,  Marine,    000001001010, Capture enemy ships
+Marine Detachment,      2, AdapDoc,  Marine,    000001001010, Capture enemy ships
 Fuel Nanocells,         1, MatComp,  Nanocell,  000000111100, Increased air range
 Algorithmic Enhancement,4, NanoMin,  Enhanced,  100000111111, Halves probe team failure
 
