@@ -1,3 +1,7 @@
+# Version 235
+
+* Reverted combat randomness to vanilla state.
+
 # Version 234
 
 * Marine Detachment cost 2 (50%). It is reportedly too good.
