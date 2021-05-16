@@ -596,7 +596,7 @@ Now interceptors become a very useful anti-bombers units. They protect surface u
 
 Right of passage allows units to use road/tube on ally territory. That makes sense as not ally units are not even allowed on faction territory let alone use their artificial improvements like road/tube.
 
-## Burned ground
+## Scorched earth
 
 When faction looses a base (captured or killed) all terrain improvement on lost territory are destroyed.
 
@@ -631,4 +631,49 @@ New AI terraforming algorithm replacing Thinker's. These are few notable changes
 * Redistributes former orders to minimize construction + travel time. Takes former abilities (fungicide, super) and speed into account.
 * Checks existing improvements and doesn't build more of them if an equal of better one is still unused around base.
 * Raises land to improve collector energy output.
+
+# Alternative mind control and subversion mechanics
+
+## Subverting unit from stack
+
+The restriction for probe teams to not be able to subvert more than one unit in stack comes from hardcoding and inability to properly handle different units in stack after subversion. There is no any lore to it. 
+I have implemented minimal changes to allow subverting units from stack while protecting game from crashing. The subversion functionality is changed as follow.
+
+* Probe attempts to subvert top unit from stack. Player cannot choose. Most of the time this is the unit that is visible on top but there is no guarantee.
+* All the normal attack checks are performed: air superiority, amphibious, etc.
+* Probe looses all its turns after action and stays on the same tile from where it subverted the unit.
+* Subverted unit is moved to the probe tile. Thus avoiding stacking it with enemy after subversion.
+* AI check is also modified to allow computer subvert from the stack.
+
+## Subvertion cost
+
+* Base cost:
+  * 3 * unit cost
+* Vector distance to HQ coefficient:
+  * 1.0 if no HQ or more than than half the map width
+  * 2.0 if at HQ
+	* linearly prorated if anywhere in between
+* Polymorphic Encryption effect:
+  * Multiplies subversion cost by (1 + number of stacked or adjacent PE units).
+
+### Polymorphic Encryption effect
+
+In vanilla PE is not really helpful. It would require to equip every unit with it to protect against subversion as any unit can be targetted. Such passive defense is obviously a waste of ability slot. PE gets a second life with ability to protect surrounded units. Now player may just mix few of them with the army to extend their effect. No need to equip each and every unit.
+
+## Mind control cost
+
+* Base cost:
+  * 4 * each surplus nutrient
+	* 4 * each surplus mineral
+	* 2 * each economy, psych, lab
+	* 10 * each facility cost
+	* 80 * each SP cost
+* Vector distance to HQ coefficient:
+  * 1.0 if no HQ or more than than half the map width
+  * 2.0 if at HQ
+	* linearly prorated if anywhere in between
+* Happiness coefficient:
+  * (0.5 + (1.0 * talents + 0.5 * content) / population).
+* Previous MCs and subversions coefficient:
+  * (1.0 + (0.1 * (previous MCs + previous subversions / 4)).
 

@@ -493,6 +493,18 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->carry_over_minerals = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "mind_control_cost_includes_subversion_cost"))
+    {
+        cf->mind_control_cost_includes_subversion_cost = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "mind_control_destroys_unsubverted"))
+    {
+        cf->mind_control_destroys_unsubverted = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "subversion_allow_stacked_units"))
+    {
+        cf->subversion_allow_stacked_units = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
