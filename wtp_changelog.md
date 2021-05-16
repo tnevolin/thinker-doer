@@ -1,6 +1,7 @@
 # Version 236
 
-## Mind control and subversion cost revamping
+* Mind control and subversion cost revamping: (https://github.com/tnevolin/thinker-doer#alternative-mind-control-and-subversion-mechanics).
+* Polymorphic encryption is assigned to Polymorphic Software. Now it is available at the same time with probes to protect against subversion.
 
 # Version 235
 
