@@ -1,3 +1,7 @@
+# Version 236
+
+## Mind control and subversion cost revamping
+
 # Version 235
 
 * Reverted combat randomness to vanilla state.

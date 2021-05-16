@@ -3490,10 +3490,22 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 			
 			// compute exact odds
 			
-			int attackerExactOdds = (int)round(attackerWinningProbability / (1.0 - attackerWinningProbability) * (double)defenderOdds);
+			int attackerExactOdds;
+			int defenderExactOdds;
+			
+			if (attackerWinningProbability >= 0.5)
+			{
+				attackerExactOdds = (int)round(attackerWinningProbability / (1.0 - attackerWinningProbability) * (double)defenderOdds);
+				defenderExactOdds = defenderOdds;
+			}
+			else
+			{
+				attackerExactOdds = attackerOdds;
+				defenderExactOdds = (int)round((1.0 - attackerWinningProbability) / attackerWinningProbability * (double)attackerOdds);
+			}
 			
 			parse_num(0, attackerExactOdds);
-			parse_num(1, defenderOdds);
+			parse_num(1, defenderExactOdds);
 			
 			// convert to percentage
 			
@@ -3877,6 +3889,195 @@ int __cdecl modifiedBaseMaking(int item, int baseId)
 	// run original code in all other cases
 	
 	return base_making(item, baseId);
+	
+}
+
+/*
+Adds base and adjacent vehicle costs to mind control cost.
+Excluding probe faction vehicles.
+*/
+int __cdecl modifiedMindControl(int baseId, int probeFactionId, int cornerMarket)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	// execute original code
+	
+	int mindControlCost = mind_control(baseId, probeFactionId, cornerMarket);
+	
+	// negative value return as is
+	
+	if (mindControlCost < 0)
+		return mindControlCost;
+	
+	// find HQ
+	
+	int hqBaseId = -1;
+	
+	for (int otherBaseId = 0; otherBaseId < *total_num_bases; otherBaseId++)
+	{
+		BASE *otherBase = &(Bases[otherBaseId]);
+		
+		// only same faction as MC base
+		
+		if (otherBase->faction_id != base->faction_id)
+			continue;
+		
+		// check HQ
+		
+		if (has_facility(otherBaseId, FAC_HEADQUARTERS))
+		{
+			hqBaseId = otherBaseId;
+			break;
+		}
+		
+	}
+	
+	// get hqDistance
+	
+	int hqDistance;
+	
+	if (hqBaseId == -1)
+	{
+		hqDistance = 0xC;
+	}
+	else
+	{
+		BASE *hqBase = &(Bases[hqBaseId]);
+		hqDistance = vector_dist(base->x, base->y, hqBase->x, hqBase->y);
+	}
+	
+	// summarize all adjacent vehicles subversion cost
+	
+	int totalSubversionCost = 0;
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// skip not base faction
+		
+		if (vehicle->faction_id != base->faction_id)
+			continue;
+		
+		// get range to base
+		
+		int range = map_range(base->x, base->y, vehicle->x, vehicle->y);
+		
+		// skip not adjacent
+		
+		if (range > 1)
+			continue;
+		
+		totalSubversionCost += getMindControlSubversionCost(probeFactionId, vehicleId, hqDistance);
+		
+	}
+	
+	// add total subversion cost to mind control cost
+	
+	mindControlCost += totalSubversionCost;
+	
+	return mindControlCost;
+	
+}
+
+int getMindControlSubversionCost(int probeFactionId, int vehicleId, int hqDistance)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	UNIT *vehicleUnit = &(Units[vehicle->unit_id]);
+	Faction *vehicleFaction = &(Factions[vehicle->faction_id]);
+	
+	// calculate base subversion cost
+	
+	int subversionCost = (800 + vehicleFaction->energy_credits) / (2 + hqDistance) * vehicleUnit->cost;
+	
+	// PE factor
+	
+	if (unit_has_ability(vehicle->unit_id, ABL_POLY_ENCRYPTION))
+	{
+		subversionCost *= 2;
+	}
+	
+	// unit plan factor
+	
+	if (!(vehicleUnit->unit_plan == PLAN_COLONIZATION || vehicleUnit->unit_plan == PLAN_TERRAFORMING))
+	{
+		subversionCost /= 2;
+	}
+	
+	// difficulty bonus
+	
+	if (!is_human(probeFactionId) && is_human(vehicle->faction_id) && vehicleFaction->diff_level > 3)
+	{
+		subversionCost *= 3;
+		subversionCost /= vehicleFaction->diff_level;
+	}
+	
+	return subversionCost;
+	
+}
+
+/*
+Destroys unsubverted units in MC-d base.
+*/
+int __cdecl modifiedMindControlCaptureBase(int baseId, int faction, int probe)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	// call orinal code
+	// this actually skips mod_capture_base HQ relocation code but we should believe MD-d base wasn't HQ
+	
+	int value = capture_base(baseId, faction, probe);
+	
+	// destroy not base faction units in base
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// ignore base faction
+		
+		if (vehicle->faction_id == base->faction_id)
+			continue;
+		
+		// check vehicle is at base
+		
+		if (vehicle->x == base->x && vehicle->y == base->y)
+		{
+			// kill vehicle
+			
+			killVehicle(vehicleId);
+			
+		}
+		
+	}
+	
+	return value;
+	
+}
+
+/*
+Moves subverted vehicle on probe tile and stops probe.
+*/
+void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVehicleId, int radius)
+{
+	// store subverted vehicle original location
+	
+	VEH *subvertedVehicle = &(Vehicles[subvertedVehicleId]);
+	int targetX = subvertedVehicle->x;
+	int targetY = subvertedVehicle->y;
+	
+	// move subverted vehicle to probe tile
+	
+	VEH *probeVehicle = &(Vehicles[probeVehicleId]);
+	veh_put(subvertedVehicleId, probeVehicle->x, probeVehicle->y);
+	
+	// stop probe
+	
+	mod_veh_skip(probeVehicleId);
+	
+	// redraw original target tile
+	
+	draw_tile(targetX, targetY, radius);
 	
 }
 

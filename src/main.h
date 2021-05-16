@@ -280,6 +280,9 @@ struct Config {
     bool design_cost_in_rows = false;
     int energy_market_crash_numerator = 4;
     bool carry_over_minerals = false;
+    bool mind_control_cost_includes_subversion_cost = false;
+    bool mind_control_destroys_unsubverted = false;
+    bool subversion_allow_stacked_units = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

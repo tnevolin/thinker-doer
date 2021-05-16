@@ -82,4 +82,6 @@ extern fp_4int *tech_pick;
 extern fp_0void *reset_territory;
 extern fp_3int *break_treaty;
 extern fp_2int *base_making;
+extern fp_3int *mind_control;
+extern fp_3int *veh_put;
 

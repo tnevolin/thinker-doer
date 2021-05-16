@@ -176,3 +176,9 @@ fp_3int *break_treaty = (fp_3int *)0x0055F770;
 // base production change
 fp_2int *base_making = (fp_2int *)0x004E4700;
 
+// mind control cost
+fp_3int *mind_control = (fp_3int *)0x0059EA80;
+
+// put vehicle on target tile
+fp_3int *veh_put = (fp_3int *)0x005A59B0;
+
