@@ -664,14 +664,14 @@ In vanilla PE is not really helpful. It would require to equip every unit with i
 
 * Base cost:
   * 4 x each surplus nutrient
-	* 4 x each surplus mineral
-	* 2 x each economy, psych, lab
-	* 10 x each facility cost
-	* 80 x each SP cost
+  * 4 x each surplus mineral
+  * 2 x each economy, psych, lab
+  * 10 x each facility cost
+  * 80 x each SP cost
 * Vector distance to HQ coefficient:
   * 1.0 if no HQ or more than than half the map width
   * 2.0 if at HQ
-	* linearly prorated if anywhere in between
+  * linearly prorated if anywhere in between
 * Happiness coefficient:
   * (0.5 + (1.0 x talents + 0.5 x content) / population).
 * Previous MCs and subversions coefficient:
