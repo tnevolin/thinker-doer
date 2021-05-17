@@ -116,6 +116,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 int wtp_tech_level(int id);
 int wtp_tech_cost(int fac, int tech);
 HOOK_API int sayBase(char *buffer, int baseId);
+bool isBaseFacilityBuilt(int baseId, int facilityId);
 bool isBaseFacilityBuilt(BASE *base, int facilityId);
 int getBasePopulationLimit(BASE *base);
 int getnextAvailableGrowthFacility(BASE *base);
@@ -187,7 +188,8 @@ HOOK_API int modifiedOrbitalYieldLimit();
 HOOK_API int modifiedBreakTreaty(int actingFactionId, int targetFactionId, int bitmask);
 int __cdecl modifiedBaseMaking(int item, int baseId);
 int __cdecl modifiedMindControl(int baseId, int probeFactionId, int cornerMarket);
-int getMindControlSubversionCost(int probeFactionId, int vehicleId, int hqBaseId);
+int __cdecl getBasicAlternativeSubversionCost(int vehicleId);
+int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistance);
 int __cdecl modifiedMindControlCaptureBase(int baseId, int faction, int probe);
 void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVehicleId, int radius);
 

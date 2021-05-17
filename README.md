@@ -632,11 +632,11 @@ New AI terraforming algorithm replacing Thinker's. These are few notable changes
 * Checks existing improvements and doesn't build more of them if an equal of better one is still unused around base.
 * Raises land to improve collector energy output.
 
-# Alternative mind control and subversion mechanics
+# Alternative subversion and mind control formulas and mechanics
 
 ## Subverting unit from stack
 
-The restriction for probe teams to not be able to subvert more than one unit in stack comes from hardcoding and inability to properly handle different units in stack after subversion. There is no any lore to it. 
+The restriction for probe teams to not be able to subvert more than one unit in stack comes from hard-coding and inability to properly handle different units in stack after subversion. There is no any lore to it. 
 I have implemented minimal changes to allow subverting units from stack while protecting game from crashing. The subversion functionality is changed as follow.
 
 * Probe attempts to subvert top unit from stack. Player cannot choose. Most of the time this is the unit that is visible on top but there is no guarantee.
@@ -645,35 +645,48 @@ I have implemented minimal changes to allow subverting units from stack while pr
 * Subverted unit is moved to the probe tile. Thus avoiding stacking it with enemy after subversion.
 * AI check is also modified to allow computer subvert from the stack.
 
-## Subvertion cost
+## Subversion cost
 
-* Base cost:
-  * 3 * unit cost
-* Vector distance to HQ coefficient:
+* Base cost
+  * 30 * unit cost
+* Vector distance to HQ coefficient
   * 1.0 if no HQ or more than than half the map width
   * 2.0 if at HQ
 	* linearly prorated if anywhere in between
-* Polymorphic Encryption effect:
+* Polymorphic Encryption effect
   * Multiplies subversion cost by (1 + number of stacked or adjacent PE units).
+* Unit type coefficient
+  * Colony and former cost is doubled
 
 ### Polymorphic Encryption effect
 
-In vanilla PE is not really helpful. It would require to equip every unit with it to protect against subversion as any unit can be targetted. Such passive defense is obviously a waste of ability slot. PE gets a second life with ability to protect surrounded units. Now player may just mix few of them with the army to extend their effect. No need to equip each and every unit.
+In vanilla PE is not really helpful. It would require to equip every unit with it to protect against subversion as any unit can be targeted. Such passive defense is obviously a waste of ability slot. PE gets a second life with ability to protect surrounded units. Now player may just mix few of them with the army to extend their effect. No need to equip each and every unit.
 
 ## Mind control cost
 
-* Base cost:
-  * 4 x each surplus nutrient
-  * 4 x each surplus mineral
-  * 2 x each economy, psych, lab
+* Base cost
+  * 8 x each surplus nutrient
+  * 8 x each surplus mineral
+  * 4 x each economy, psych, lab
   * 10 x each facility cost
   * 80 x each SP cost
-* Vector distance to HQ coefficient:
+* Vector distance to HQ coefficient
   * 1.0 if no HQ or more than than half the map width
   * 2.0 if at HQ
   * linearly prorated if anywhere in between
-* Happiness coefficient:
-  * (0.5 + (1.0 x talents + 0.5 x content) / population).
+* Happiness coefficient
+  * (2.0 x talents + 1.0 x content) / population
 * Previous MCs and subversions coefficient:
   * (1.0 + (0.1 x (previous MCs + previous subversions / 4)).
+* Recapturing factor
+  * Cost is halved if base previously belonged to probing faction.
+* Diplomacy factors
+  * 2                 ; if base faction is an atrocity victim of probe faction
+	* 1.5               ; if base faction is NOT an atrocity victim of the probe faction but wants revenge against them
+
+### Mind control subversion cost component
+
+The above formula for MC cost is used for corner market computation.
+
+Actual base MC also includes subversion cost of all target faction units in or adjacent to base. All non target faction units in base after MC are destroyed after MC.
 
