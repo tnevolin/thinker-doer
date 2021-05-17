@@ -507,7 +507,7 @@ AAA Tracking,           1, MilAlg,   AAA,       000010001011, x2 vs. air attacks
 Comm Jammer,            1, Physic,   ECM,       000010111001, +50% vs. fast units
 Antigrav Struts,        2, Gravity,  Grav,      000000111001, +1 movement rate (or +Reactor*2 for Air)
 Empath Song,           16, CentEmp,  Empath,    000010001111, +50% attack vs. Psi
-Polymorphic Encryption, 1, Algor,    Secure,    000000111111, x2 cost to subvert
+Polymorphic Encryption, 1, Poly,     Secure,    000000111111, x2 cost to subvert
 Fungicide Tanks,        0, Fossil,   Fungicidal,000000010111, Clear fungus at double speed
 High Morale,            1, Integ,    Trained,   000000001111, Gains morale upgrade
 Heavy Artillery,        0, Chemist,  Artillery, 000010001001, Bombards

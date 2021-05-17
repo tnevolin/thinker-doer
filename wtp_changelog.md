@@ -1,7 +1,14 @@
 # Version 236
 
-* [Alternative mind control and subversion cost mechanics](https://github.com/tnevolin/thinker-doer#alternative-mind-control-and-subversion-mechanics).
+* [Alternative subversion and mind control formulas and mechanics](https://github.com/tnevolin/thinker-doer#alternative-mind-control-and-subversion-mechanics).
+	* Can subvert unit from stack.
+	* Extended effect of Polymorphic Encryption.
+	* Base MC cost is based on its value and citizen happiness.
+	* Base MC cost includes subverted unit cost.
+	* Distance to HQ factor is now more linear and moderate.
 * Polymorphic encryption is assigned to Polymorphic Software to allow subversion protection when probes appear.
+
+Usual word of caution: a lot of vanilla code patching. Could be unstable or work not as expected.
 
 # Version 235
 

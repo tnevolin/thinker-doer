@@ -3535,44 +3535,6 @@ void patch_carry_over_minerals()
 
 }
 
-void patch_mind_control_cost_includes_subversion_cost()
-{
-	// ignore units contribution in mind control cost
-	
-	int mind_control_cost_includes_subversion_cost_ignore_units_bytes_length = 0x2;
-
-	/*
-	0:  03 f0                   add    esi,eax
-	*/
-	byte mind_control_cost_includes_subversion_cost_ignore_units_bytes_old[] = { 0x03, 0xF0 };
-
-	/*
-	0:  31 f6                   xor    esi,esi
-	...
-	*/
-	byte mind_control_cost_includes_subversion_cost_ignore_units_bytes_new[] = { 0x31, 0xF6 };
-
-	write_bytes
-	(
-		0x0059ECD6,
-		mind_control_cost_includes_subversion_cost_ignore_units_bytes_old,
-		mind_control_cost_includes_subversion_cost_ignore_units_bytes_new,
-		mind_control_cost_includes_subversion_cost_ignore_units_bytes_length
-	);
-	
-	// wrap mind_cost to add plain unit cost
-	
-    write_call(0x0059EEA1, (int)modifiedMindControl);
-    write_call(0x005A20E8, (int)modifiedMindControl);
-
-}
-
-void patch_mind_control_destroys_unsubverted()
-{
-    write_call_over(0x005A4AB0, (int)modifiedMindControlCaptureBase);
-
-}
-
 void patch_subversion_allow_stacked_units()
 {
 	// ignore stack count in probe
@@ -3669,6 +3631,146 @@ void patch_subversion_allow_stacked_units()
 	
     write_call(0x005A4250, (int)modifiedSubveredVehicleDrawTile);
     
+}
+
+void patch_mind_control_destroys_unsubverted()
+{
+    write_call_over(0x005A4AB0, (int)modifiedMindControlCaptureBase);
+
+}
+
+void patch_alternative_subversion_and_mind_control_cost()
+{
+	// alternative subversion cost
+	
+	int alternative_subversion_cost_bytes_length = 0x59;
+
+	/*
+	0:  8b 45 ec                mov    eax,DWORD PTR [ebp-0x14]
+	3:  83 c6 02                add    esi,0x2
+	6:  8b d0                   mov    edx,eax
+	8:  c1 e2 06                shl    edx,0x6
+	b:  03 d0                   add    edx,eax
+	d:  8d 0c 50                lea    ecx,[eax+edx*2]
+	10: 8d 14 c8                lea    edx,[eax+ecx*8]
+	13: 0f bf 8f 32 28 95 00    movsx  ecx,WORD PTR [edi+0x952832]
+	1a: 8d 04 50                lea    eax,[eax+edx*2]
+	1d: c1 e0 02                shl    eax,0x2
+	20: 89 45 e0                mov    DWORD PTR [ebp-0x20],eax
+	23: 8b 80 00 cc 96 00       mov    eax,DWORD PTR [eax+0x96cc00]
+	29: 05 20 03 00 00          add    eax,0x320
+	2e: 99                      cdq
+	2f: f7 fe                   idiv   esi
+	31: 33 d2                   xor    edx,edx
+	33: 8b f0                   mov    esi,eax
+	35: 8d 04 49                lea    eax,[ecx+ecx*2]
+	38: 8d 0c 81                lea    ecx,[ecx+eax*4]
+	3b: a1 e8 64 9a 00          mov    eax,ds:0x9a64e8
+	40: 25 ff 00 00 00          and    eax,0xff
+	45: 8a 14 8d 91 b8 9a 00    mov    dl,BYTE PTR [ecx*4+0x9ab891]
+	4c: 8b cb                   mov    ecx,ebx
+	4e: 0f af f2                imul   esi,edx
+	51: ba 01 00 00 00          mov    edx,0x1
+	56: 89 75 f0                mov    DWORD PTR [ebp-0x10],esi
+	*/
+	byte alternative_subversion_cost_bytes_old[] = { 0x8B, 0x45, 0xEC, 0x83, 0xC6, 0x02, 0x8B, 0xD0, 0xC1, 0xE2, 0x06, 0x03, 0xD0, 0x8D, 0x0C, 0x50, 0x8D, 0x14, 0xC8, 0x0F, 0xBF, 0x8F, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x04, 0x50, 0xC1, 0xE0, 0x02, 0x89, 0x45, 0xE0, 0x8B, 0x80, 0x00, 0xCC, 0x96, 0x00, 0x05, 0x20, 0x03, 0x00, 0x00, 0x99, 0xF7, 0xFE, 0x33, 0xD2, 0x8B, 0xF0, 0x8D, 0x04, 0x49, 0x8D, 0x0C, 0x81, 0xA1, 0xE8, 0x64, 0x9A, 0x00, 0x25, 0xFF, 0x00, 0x00, 0x00, 0x8A, 0x14, 0x8D, 0x91, 0xB8, 0x9A, 0x00, 0x8B, 0xCB, 0x0F, 0xAF, 0xF2, 0xBA, 0x01, 0x00, 0x00, 0x00, 0x89, 0x75, 0xF0 };
+
+	/*
+	0:  ff 75 10                push   DWORD PTR [ebp+0x10]
+	3:  e8 fd ff ff ff          call   5 <_main+0x5>
+	8:  83 c4 04                add    esp,0x4
+	b:  89 c6                   mov    esi,eax
+	d:  89 75 f0                mov    DWORD PTR [ebp-0x10],esi
+	...
+	48: a1 e8 64 9a 00          mov    eax,ds:0x9a64e8
+	4d: 25 ff 00 00 00          and    eax,0xff
+	52: 89 d9                   mov    ecx,ebx
+	54: ba 01 00 00 00          mov    edx,0x1
+	*/
+	byte alternative_subversion_cost_bytes_new[] = { 0xFF, 0x75, 0x10, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x04, 0x89, 0xC6, 0x89, 0x75, 0xF0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xA1, 0xE8, 0x64, 0x9A, 0x00, 0x25, 0xFF, 0x00, 0x00, 0x00, 0x89, 0xD9, 0xBA, 0x01, 0x00, 0x00, 0x00 };
+
+	write_bytes
+	(
+		0x005A1517,
+		alternative_subversion_cost_bytes_old,
+		alternative_subversion_cost_bytes_new,
+		alternative_subversion_cost_bytes_length
+	);
+	
+    write_call(0x005A1517 + 0x3, (int)getBasicAlternativeSubversionCost);
+	
+	// disable vanilla PE effect computation - it is already accounted for
+	
+	int disable_pe_computation_bytes_length = 0x2;
+
+	/*
+	0:  85 c0                   test   eax,eax
+	*/
+	byte disable_pe_computation_bytes_old[] = { 0x85, 0xC0 };
+
+	/*
+	0:  31 c0                   xor    eax,eax
+	*/
+	byte disable_pe_computation_bytes_new[] = { 0x31, 0xC0 };
+
+	write_bytes
+	(
+		0x005A17CE,
+		disable_pe_computation_bytes_old,
+		disable_pe_computation_bytes_new,
+		disable_pe_computation_bytes_length
+	);
+	
+	// disable vanilla unit plan effect computation - it is already accounted for
+	
+	int disable_unit_type_computation_bytes_length = 0x2;
+
+	/*
+	0:  3c 08                   cmp    al,0x8
+	*/
+	byte disable_unit_type_computation_bytes_old[] = { 0x3C, 0x08 };
+
+	/*
+	0:  31 c0                   xor    eax,eax
+	*/
+	byte disable_unit_type_computation_bytes_new[] = { 0x31, 0xC0 };
+
+	write_bytes
+	(
+		0x005A17ED,
+		disable_unit_type_computation_bytes_old,
+		disable_unit_type_computation_bytes_new,
+		disable_unit_type_computation_bytes_length
+	);
+	
+	// ignore units contribution in mind control cost
+	
+	int alternative_subversion_and_mind_control_cost_ignore_units_bytes_length = 0x2;
+
+	/*
+	0:  03 f0                   add    esi,eax
+	*/
+	byte alternative_subversion_and_mind_control_cost_ignore_units_bytes_old[] = { 0x03, 0xF0 };
+
+	/*
+	0:  31 f6                   xor    esi,esi
+	...
+	*/
+	byte alternative_subversion_and_mind_control_cost_ignore_units_bytes_new[] = { 0x31, 0xF6 };
+
+	write_bytes
+	(
+		0x0059ECD6,
+		alternative_subversion_and_mind_control_cost_ignore_units_bytes_old,
+		alternative_subversion_and_mind_control_cost_ignore_units_bytes_new,
+		alternative_subversion_and_mind_control_cost_ignore_units_bytes_length
+	);
+	
+	// wrap mind_cost to add plain unit cost
+	
+    write_call(0x0059EEA1, (int)modifiedMindControl);
+    write_call(0x005A20E8, (int)modifiedMindControl);
+
 }
 
 void patch_setup_wtp(Config* cf)
@@ -4177,9 +4279,9 @@ void patch_setup_wtp(Config* cf)
 		patch_carry_over_minerals();
 	}
 	
-	if (cf->mind_control_cost_includes_subversion_cost)
+	if (cf->subversion_allow_stacked_units)
 	{
-		patch_mind_control_cost_includes_subversion_cost();
+		patch_subversion_allow_stacked_units();
 	}
 	
 	if (cf->mind_control_destroys_unsubverted)
@@ -4187,9 +4289,9 @@ void patch_setup_wtp(Config* cf)
 		patch_mind_control_destroys_unsubverted();
 	}
 	
-	if (cf->subversion_allow_stacked_units)
+	if (cf->alternative_subversion_and_mind_control_cost)
 	{
-		patch_subversion_allow_stacked_units();
+		patch_alternative_subversion_and_mind_control_cost();
 	}
 	
 }

@@ -493,17 +493,41 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->carry_over_minerals = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "mind_control_cost_includes_subversion_cost"))
+    else if (MATCH("wtp", "subversion_allow_stacked_units"))
     {
-        cf->mind_control_cost_includes_subversion_cost = (atoi(value) == 0 ? false : true);
+        cf->subversion_allow_stacked_units = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "mind_control_destroys_unsubverted"))
     {
         cf->mind_control_destroys_unsubverted = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "subversion_allow_stacked_units"))
+    else if (MATCH("wtp", "alternative_subversion_and_mind_control_cost"))
     {
-        cf->subversion_allow_stacked_units = (atoi(value) == 0 ? false : true);
+        cf->alternative_subversion_and_mind_control_cost = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_subversion_unit_cost_multiplier"))
+    {
+        cf->alternative_subversion_unit_cost_multiplier = atof(value);
+    }
+    else if (MATCH("wtp", "alternative_mind_control_nutrient_cost"))
+    {
+        cf->alternative_mind_control_nutrient_cost = atof(value);
+    }
+    else if (MATCH("wtp", "alternative_mind_control_mineral_cost"))
+    {
+        cf->alternative_mind_control_mineral_cost = atof(value);
+    }
+    else if (MATCH("wtp", "alternative_mind_control_energy_cost"))
+    {
+        cf->alternative_mind_control_energy_cost = atof(value);
+    }
+    else if (MATCH("wtp", "alternative_mind_control_facility_cost_multiplier"))
+    {
+        cf->alternative_mind_control_facility_cost_multiplier = atof(value);
+    }
+    else if (MATCH("wtp", "alternative_mind_control_project_cost_multiplier"))
+    {
+        cf->alternative_mind_control_project_cost_multiplier = atof(value);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

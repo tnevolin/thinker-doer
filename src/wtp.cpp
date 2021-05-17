@@ -1647,6 +1647,11 @@ HOOK_API int sayBase(char *buffer, int id)
 
 }
 
+bool isBaseFacilityBuilt(int baseId, int facilityId)
+{
+	return (Bases[baseId].facilities_built[facilityId / 8]) & (1 << (facilityId % 8));
+}
+
 bool isBaseFacilityBuilt(BASE *base, int facilityId)
 {
 	return (base->facilities_built[facilityId / 8]) & (1 << (facilityId % 8));
@@ -3893,52 +3898,62 @@ int __cdecl modifiedBaseMaking(int item, int baseId)
 }
 
 /*
+Computes alternative MC cost.
 Adds base and adjacent vehicle costs to mind control cost.
-Excluding probe faction vehicles.
 */
 int __cdecl modifiedMindControl(int baseId, int probeFactionId, int cornerMarket)
 {
 	BASE *base = &(Bases[baseId]);
+	Faction *baseFaction = &(Factions[base->faction_id]);
 	
-	// execute original code
+	// if HQ and not corner market - return negative value
 	
-	int mindControlCost = mind_control(baseId, probeFactionId, cornerMarket);
+	if (isBaseFacilityBuilt(baseId, FAC_HEADQUARTERS) && cornerMarket == 0)
+		return -1;
 	
-	// negative value return as is
+	// calculate MC cost
 	
-	if (mindControlCost < 0)
-		return mindControlCost;
+	double mindControlCost = 0.0;
 	
-	// find HQ
+	// count surplus
 	
-	int hqBaseId = -1;
+	mindControlCost += conf.alternative_mind_control_nutrient_cost * (double)base->nutrient_surplus;
+	mindControlCost += conf.alternative_mind_control_mineral_cost * (double)base->mineral_surplus;
+	mindControlCost += conf.alternative_mind_control_energy_cost * (double)base->economy_total;
+	mindControlCost += conf.alternative_mind_control_energy_cost * (double)base->psych_total;
+	mindControlCost += conf.alternative_mind_control_energy_cost * (double)base->labs_total;
 	
-	for (int otherBaseId = 0; otherBaseId < *total_num_bases; otherBaseId++)
+	// count built facilities
+	
+	for (int facilityId = FAC_HEADQUARTERS; facilityId <= FAC_GEOSYNC_SURVEY_POD; facilityId++)
 	{
-		BASE *otherBase = &(Bases[otherBaseId]);
-		
-		// only same faction as MC base
-		
-		if (otherBase->faction_id != base->faction_id)
-			continue;
-		
-		// check HQ
-		
-		if (has_facility(otherBaseId, FAC_HEADQUARTERS))
+		if (isBaseFacilityBuilt(baseId, facilityId))
 		{
-			hqBaseId = otherBaseId;
-			break;
+			mindControlCost += conf.alternative_mind_control_facility_cost_multiplier * (double)Facility[facilityId].cost;
 		}
-		
 	}
 	
-	// get hqDistance
+	// count projects
+	
+	for (int facilityId = PROJECT_ID_FIRST; facilityId <= PROJECT_ID_LAST; facilityId++)
+	{
+		if (has_facility(baseId, facilityId))
+		{
+			mindControlCost += conf.alternative_mind_control_project_cost_multiplier * (double)Facility[facilityId].cost;
+		}
+	}
+	
+	// find HQ base
+	
+	int hqBaseId = find_hq(base->faction_id);
+	
+	// find HQ distance
 	
 	int hqDistance;
 	
 	if (hqBaseId == -1)
 	{
-		hqDistance = 0xC;
+		hqDistance = -1;
 	}
 	else
 	{
@@ -3946,9 +3961,54 @@ int __cdecl modifiedMindControl(int baseId, int probeFactionId, int cornerMarket
 		hqDistance = vector_dist(base->x, base->y, hqBase->x, hqBase->y);
 	}
 	
+	// distance to HQ factor
+	
+	if (hqDistance >= 0 && hqDistance < *map_half_x / 2)
+	{
+		mindControlCost *= (2.0 - (double)hqDistance / (double)(*map_half_x / 2));
+	}
+	
+	// happiness factor
+	
+	mindControlCost *= (2.0 * (double)base->talent_total + 1.0 * (double)(base->pop_size - base->talent_total - base->drone_total - base->specialist_total)) / (double)base->pop_size;
+	
+	// previous MC factor
+	
+	mindControlCost *= 1.0 + (0.1 * (double)(baseFaction->subvert_total / 4));
+	
+	// recapturing factor
+	
+	if (base->faction_id_former == probeFactionId)
+	{
+		mindControlCost /= 2.0;
+	}
+	
+	// diplomatic factors
+	
+	if (isDiploStatus(base->faction_id, probeFactionId, DIPLO_ATROCITY_VICTIM))
+	{
+		mindControlCost *= 2.0;
+	}
+	else if (isDiploStatus(base->faction_id, probeFactionId, DIPLO_WANT_REVENGE))
+	{
+		mindControlCost *= 1.5;
+	}
+	
+	// difficulty bonus
+	
+	if (!is_human(probeFactionId) && is_human(base->faction_id) && baseFaction->diff_level > 3)
+	{
+		mindControlCost *= 3.0 / (double)baseFaction->diff_level;
+	}
+	
+	// corner market ends here
+	
+	if (cornerMarket != 0)
+		return (int)round(mindControlCost);
+	
 	// summarize all adjacent vehicles subversion cost
 	
-	int totalSubversionCost = 0;
+	double totalSubversionCost = 0;
 	
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
@@ -3959,60 +4019,131 @@ int __cdecl modifiedMindControl(int baseId, int probeFactionId, int cornerMarket
 		if (vehicle->faction_id != base->faction_id)
 			continue;
 		
-		// get range to base
+		// nearby only
 		
-		int range = map_range(base->x, base->y, vehicle->x, vehicle->y);
-		
-		// skip not adjacent
-		
-		if (range > 1)
+		if (map_range(base->x, base->y, vehicle->x, vehicle->y) > 1)
 			continue;
 		
-		totalSubversionCost += getMindControlSubversionCost(probeFactionId, vehicleId, hqDistance);
+		// add subversion cost
 		
+		totalSubversionCost += (double)getBasicAlternativeSubversionCostWithHQDistance(vehicleId, hqDistance);
+		
+	}
+	
+	// difficulty bonus
+	
+	if (!is_human(probeFactionId) && is_human(base->faction_id) && baseFaction->diff_level > 3)
+	{
+		totalSubversionCost *= 3.0 / (double)baseFaction->diff_level;
 	}
 	
 	// add total subversion cost to mind control cost
 	
 	mindControlCost += totalSubversionCost;
 	
-	return mindControlCost;
+	// return rounded value
+	
+	return (int)round(mindControlCost);
 	
 }
 
-int getMindControlSubversionCost(int probeFactionId, int vehicleId, int hqDistance)
+/*
+Calculates vehicle alternative subversion cost.
+*/
+int __cdecl getBasicAlternativeSubversionCost(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	int hqDistance;
+	
+	// find HQ
+	
+	int hqBaseId = find_hq(vehicle->faction_id);
+	
+	if (hqBaseId == -1)
+	{
+		// no HQ
+		
+		hqDistance = -1;
+	}
+	else
+	{
+		// get HQ base
+		
+		BASE *hqBase = &(Bases[hqBaseId]);
+		
+		// calculate hqDistance
+		
+		hqDistance = vector_dist(vehicle->x, vehicle->y, hqBase->x, hqBase->y);
+		
+	}
+	
+	// compute subversion cost
+	
+	return getBasicAlternativeSubversionCostWithHQDistance(vehicleId, hqDistance);
+	
+}
+
+/*
+Calculates vehicle alternative subversion cost.
+*/
+int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistance)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	UNIT *vehicleUnit = &(Units[vehicle->unit_id]);
-	Faction *vehicleFaction = &(Factions[vehicle->faction_id]);
 	
-	// calculate base subversion cost
+	// calculate base unit subversion cost
 	
-	int subversionCost = (800 + vehicleFaction->energy_credits) / (2 + hqDistance) * vehicleUnit->cost;
+	double subversionCost = 10.0 * conf.alternative_subversion_unit_cost_multiplier * (double)vehicleUnit->cost;
+	
+	// distance to HQ factor
+	
+	if (hqDistance >= 0 && hqDistance < *map_half_x / 2)
+	{
+		subversionCost *= (2.0 - (double)hqDistance / (double)(*map_half_x / 2));
+	}
+	
+	// count number of friendly PE units in vicinity
+	
+	int peVehicleCount = 0;
+	
+	for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
+	{
+		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		
+		// same faction only
+		
+		if (otherVehicle->faction_id != vehicle->faction_id)
+			continue;
+		
+		// nearby only
+		
+		if (map_range(vehicle->x, vehicle->y, otherVehicle->x, otherVehicle->y) > 1)
+			continue;
+		
+		// with PE
+		
+		if (vehicle_has_ability(otherVehicleId, ABL_POLY_ENCRYPTION))
+		{
+			peVehicleCount++;
+		}
+		
+	}
 	
 	// PE factor
 	
-	if (unit_has_ability(vehicle->unit_id, ABL_POLY_ENCRYPTION))
-	{
-		subversionCost *= 2;
-	}
+	subversionCost *= (1.0 + (double)peVehicleCount);
 	
 	// unit plan factor
 	
-	if (!(vehicleUnit->unit_plan == PLAN_COLONIZATION || vehicleUnit->unit_plan == PLAN_TERRAFORMING))
+	if (vehicleUnit->unit_plan == PLAN_COLONIZATION || vehicleUnit->unit_plan == PLAN_TERRAFORMING)
 	{
-		subversionCost /= 2;
+		subversionCost *= 2.0;
 	}
 	
-	// difficulty bonus
+	// return rounded value
 	
-	if (!is_human(probeFactionId) && is_human(vehicle->faction_id) && vehicleFaction->diff_level > 3)
-	{
-		subversionCost *= 3;
-		subversionCost /= vehicleFaction->diff_level;
-	}
-	
-	return subversionCost;
+	return (int)round(subversionCost);
 	
 }
 
