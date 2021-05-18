@@ -648,15 +648,15 @@ I have implemented minimal changes to allow subverting units from stack while pr
 ## Subversion cost
 
 * Base cost
-  * 30 * unit cost
+	* 30 * unit cost
 * Vector distance to HQ coefficient
-  * 1.0 if no HQ or more than than quarter the map width
-  * 2.0 if at HQ
+	* 1.0 if no HQ or more than than quarter the map width
+	* 2.0 if at HQ
 	* linearly prorated if anywhere in between
 * Polymorphic Encryption effect
-  * Multiplies subversion cost by (1 + number of stacked or adjacent PE units).
+	* Multiplies subversion cost by (1 + number of stacked or adjacent PE units).
 * Unit type coefficient
-  * Colony and former cost is doubled
+	* Colony and former cost is doubled
 
 ### Polymorphic Encryption effect
 
@@ -664,7 +664,7 @@ In vanilla PE is not really helpful. It would require to equip every unit with i
 
 ## Mind control cost
 
-* Base cost
+* Base cost is the sum of below
 	* 8 * each surplus nutrient
 	* 8 * each surplus mineral
 	* 4 * each economy, psych, lab

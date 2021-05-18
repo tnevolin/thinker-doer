@@ -3773,6 +3773,32 @@ void patch_alternative_subversion_and_mind_control()
 
 }
 
+void patch_disable_guaranteed_facilities_destruction()
+{
+	// alternative subversion cost
+	
+	int disable_guaranteed_facilities_destruction_bytes_length = 0x3;
+
+	/*
+	0:  8b 45 c8                mov    eax,DWORD PTR [ebp-0x38]
+	*/
+	byte disable_guaranteed_facilities_destruction_bytes_old[] = { 0x8B, 0x45, 0xC8 };
+
+	/*
+	0:  83 c8 ff                or     eax,0xffffffff
+	*/
+	byte disable_guaranteed_facilities_destruction_bytes_new[] = { 0x83, 0xC8, 0xFF };
+
+	write_bytes
+	(
+		0x0050D05B,
+		disable_guaranteed_facilities_destruction_bytes_old,
+		disable_guaranteed_facilities_destruction_bytes_new,
+		disable_guaranteed_facilities_destruction_bytes_length
+	);
+	
+}
+
 void patch_setup_wtp(Config* cf)
 {
 	// integrated into Thinker
@@ -4292,6 +4318,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->alternative_subversion_and_mind_control)
 	{
 		patch_alternative_subversion_and_mind_control();
+	}
+	
+	if (cf->disable_guaranteed_facilities_destruction)
+	{
+		patch_disable_guaranteed_facilities_destruction();
 	}
 	
 }
