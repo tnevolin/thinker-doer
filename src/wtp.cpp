@@ -3901,7 +3901,7 @@ int __cdecl modifiedBaseMaking(int item, int baseId)
 Computes alternative MC cost.
 Adds base and adjacent vehicle costs to mind control cost.
 */
-int __cdecl modifiedMindControl(int baseId, int probeFactionId, int cornerMarket)
+int __cdecl modifiedMindControlCost(int baseId, int probeFactionId, int cornerMarket)
 {
 	BASE *base = &(Bases[baseId]);
 	Faction *baseFaction = &(Factions[base->faction_id]);
@@ -3970,7 +3970,7 @@ int __cdecl modifiedMindControl(int baseId, int probeFactionId, int cornerMarket
 	
 	// happiness factor
 	
-	mindControlCost *= (2.0 * (double)base->talent_total + 1.0 * (double)(base->pop_size - base->talent_total - base->drone_total - base->specialist_total)) / (double)base->pop_size;
+	mindControlCost *= pow(conf.alternative_mind_control_happiness_power_base, ((double)base->talent_total - (double)base->drone_total) / (double)base->pop_size);
 	
 	// previous MC factor
 	

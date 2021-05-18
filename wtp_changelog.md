@@ -1,3 +1,9 @@
+# Version 237
+
+* [Alternative subversion and mind control formulas and mechanics](https://github.com/tnevolin/thinker-doer#alternative-mind-control-and-subversion-mechanics).
+	* Made happiness effect exponential to cover more dynamic range. All talents/drones increase/reduce cost four times.
+	* Updated description for subversion and mind control.
+
 # Version 236
 
 * [Alternative subversion and mind control formulas and mechanics](https://github.com/tnevolin/thinker-doer#alternative-mind-control-and-subversion-mechanics).
