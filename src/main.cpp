@@ -501,9 +501,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->mind_control_destroys_unsubverted = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "alternative_subversion_and_mind_control_cost"))
+    else if (MATCH("wtp", "alternative_subversion_and_mind_control"))
     {
-        cf->alternative_subversion_and_mind_control_cost = (atoi(value) == 0 ? false : true);
+        cf->alternative_subversion_and_mind_control = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "alternative_subversion_unit_cost_multiplier"))
     {
@@ -528,6 +528,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "alternative_mind_control_project_cost_multiplier"))
     {
         cf->alternative_mind_control_project_cost_multiplier = atof(value);
+    }
+    else if (MATCH("wtp", "alternative_mind_control_happiness_power_base"))
+    {
+        cf->alternative_mind_control_happiness_power_base = atof(value);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

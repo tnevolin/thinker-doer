@@ -187,7 +187,7 @@ HOOK_API void modifiedResetTerritory();
 HOOK_API int modifiedOrbitalYieldLimit();
 HOOK_API int modifiedBreakTreaty(int actingFactionId, int targetFactionId, int bitmask);
 int __cdecl modifiedBaseMaking(int item, int baseId);
-int __cdecl modifiedMindControl(int baseId, int probeFactionId, int cornerMarket);
+int __cdecl modifiedMindControlCost(int baseId, int probeFactionId, int cornerMarket);
 int __cdecl getBasicAlternativeSubversionCost(int vehicleId);
 int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistance);
 int __cdecl modifiedMindControlCaptureBase(int baseId, int faction, int probe);

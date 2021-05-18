@@ -3639,7 +3639,7 @@ void patch_mind_control_destroys_unsubverted()
 
 }
 
-void patch_alternative_subversion_and_mind_control_cost()
+void patch_alternative_subversion_and_mind_control()
 {
 	// alternative subversion cost
 	
@@ -3745,31 +3745,31 @@ void patch_alternative_subversion_and_mind_control_cost()
 	
 	// ignore units contribution in mind control cost
 	
-	int alternative_subversion_and_mind_control_cost_ignore_units_bytes_length = 0x2;
+	int alternative_subversion_and_mind_control_ignore_units_bytes_length = 0x2;
 
 	/*
 	0:  03 f0                   add    esi,eax
 	*/
-	byte alternative_subversion_and_mind_control_cost_ignore_units_bytes_old[] = { 0x03, 0xF0 };
+	byte alternative_subversion_and_mind_control_ignore_units_bytes_old[] = { 0x03, 0xF0 };
 
 	/*
 	0:  31 f6                   xor    esi,esi
 	...
 	*/
-	byte alternative_subversion_and_mind_control_cost_ignore_units_bytes_new[] = { 0x31, 0xF6 };
+	byte alternative_subversion_and_mind_control_ignore_units_bytes_new[] = { 0x31, 0xF6 };
 
 	write_bytes
 	(
 		0x0059ECD6,
-		alternative_subversion_and_mind_control_cost_ignore_units_bytes_old,
-		alternative_subversion_and_mind_control_cost_ignore_units_bytes_new,
-		alternative_subversion_and_mind_control_cost_ignore_units_bytes_length
+		alternative_subversion_and_mind_control_ignore_units_bytes_old,
+		alternative_subversion_and_mind_control_ignore_units_bytes_new,
+		alternative_subversion_and_mind_control_ignore_units_bytes_length
 	);
 	
 	// wrap mind_cost to add plain unit cost
 	
-    write_call(0x0059EEA1, (int)modifiedMindControl);
-    write_call(0x005A20E8, (int)modifiedMindControl);
+    write_call(0x0059EEA1, (int)modifiedMindControlCost);
+    write_call(0x005A20E8, (int)modifiedMindControlCost);
 
 }
 
@@ -4289,9 +4289,9 @@ void patch_setup_wtp(Config* cf)
 		patch_mind_control_destroys_unsubverted();
 	}
 	
-	if (cf->alternative_subversion_and_mind_control_cost)
+	if (cf->alternative_subversion_and_mind_control)
 	{
-		patch_alternative_subversion_and_mind_control_cost();
+		patch_alternative_subversion_and_mind_control();
 	}
 	
 }

@@ -282,13 +282,14 @@ struct Config {
     bool carry_over_minerals = false;
     bool subversion_allow_stacked_units = false;
     bool mind_control_destroys_unsubverted = false;
-    bool alternative_subversion_and_mind_control_cost = false;
+    bool alternative_subversion_and_mind_control = false;
     double alternative_subversion_unit_cost_multiplier;
 	double alternative_mind_control_nutrient_cost;
 	double alternative_mind_control_mineral_cost;
 	double alternative_mind_control_energy_cost;
 	double alternative_mind_control_facility_cost_multiplier;
 	double alternative_mind_control_project_cost_multiplier;
+	double alternative_mind_control_happiness_power_base;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

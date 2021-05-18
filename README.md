@@ -650,7 +650,7 @@ I have implemented minimal changes to allow subverting units from stack while pr
 * Base cost
   * 30 * unit cost
 * Vector distance to HQ coefficient
-  * 1.0 if no HQ or more than than half the map width
+  * 1.0 if no HQ or more than than quarter the map width
   * 2.0 if at HQ
 	* linearly prorated if anywhere in between
 * Polymorphic Encryption effect
@@ -665,23 +665,24 @@ In vanilla PE is not really helpful. It would require to equip every unit with i
 ## Mind control cost
 
 * Base cost
-  * 8 x each surplus nutrient
-  * 8 x each surplus mineral
-  * 4 x each economy, psych, lab
-  * 10 x each facility cost
-  * 80 x each SP cost
+	* 8 * each surplus nutrient
+	* 8 * each surplus mineral
+	* 4 * each economy, psych, lab
+	* 10 * each facility cost
+	* 80 * each SP cost
 * Vector distance to HQ coefficient
-  * 1.0 if no HQ or more than than half the map width
-  * 2.0 if at HQ
-  * linearly prorated if anywhere in between
+	* 1.0 if no HQ or more than than quarter the map width
+	* 2.0 if at HQ
+	* linearly prorated if anywhere in between
 * Happiness coefficient
-  * (2.0 x talents + 1.0 x content) / population
+	* 4 ^ [(talents - drones) / population]
+	* This is an exponential coefficient to give happiness more meaning in this formula.
 * Previous MCs and subversions coefficient:
-  * (1.0 + (0.1 x (previous MCs + previous subversions / 4)).
+	* (1 + (0.1 * (previous MCs + previous subversions / 4))
 * Recapturing factor
-  * Cost is halved if base previously belonged to probing faction.
+	* Cost is halved if base previously belonged to probing faction.
 * Diplomacy factors
-  * 2                 ; if base faction is an atrocity victim of probe faction
+	* 2                 ; if base faction is an atrocity victim of probe faction
 	* 1.5               ; if base faction is NOT an atrocity victim of the probe faction but wants revenge against them
 
 ### Mind control subversion cost component

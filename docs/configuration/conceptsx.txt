@@ -79,6 +79,7 @@ Might Formula
 Drones (Advanced)
 Bureaucracy
 Victory (Progenitor)
+Subversion/MC cost
 
 #CONCEPT0
 The {Rainfall} level of a region determines the amount of $LINK<Nutrients=41> which
@@ -961,5 +962,31 @@ Players who build the Resonance Communicator are awarded 2000 points minus
 2 for every game turn elapsed. No cooperative victory is possible for this victory condition;
 if either Progenitor faction succeeds in the completion of such a Communicator, it
 heralds the end of human habitation on Planet.
+
+#ADVCONCEPT15
+{Subversion} basic cost = 30 * unit cost
+^modifiers:
+^  * (2 - distance to HQ / (map width / 4)), if HQ is closer than (map width / 4)
+^  * (1 + number of units with PE on same or adjacent tiles)
+^  * (2), for colony and former
+^
+{Mind Control} basic cost is the sum of below
+^  8 * each surplus nutrient
+^  8 * each surplus mineral
+^  4 * each economy, psych, lab
+^  10 * each facility cost
+^  80 * each SP cost
+^modifiers:
+^  * (2 - distance to HQ / (map width / 4)), if HQ is closer than (map width / 4)
+^  * (4 ^ [(talents - drones) / population])
+^  * (1 + (0.1 * (previous MCs + previous subversions / 4))
+^  / (2), if base previously belonged to probing faction
+^diplomacy modifiers:
+^  * (2), if base faction is an atrocity victim of probing faction
+^  OR
+^  * (1.5), if base faction wants revenge against probing faction
+^
+^ {Corner market} cost calculation uses the above value.
+^ {Mind Control} also adds the cost of all subverted units on top of that.
 
 # ; This line must remain at end of file
