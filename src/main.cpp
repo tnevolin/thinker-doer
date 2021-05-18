@@ -533,6 +533,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->alternative_mind_control_happiness_power_base = atof(value);
     }
+    else if (MATCH("wtp", "disable_guaranteed_facilities_destruction"))
+    {
+        cf->disable_guaranteed_facilities_destruction = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

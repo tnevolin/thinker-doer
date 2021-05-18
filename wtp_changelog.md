@@ -1,8 +1,12 @@
+# Version 238
+
+* Capturing base guaranteed destroys Recreation Common and Recycling Tanks in vanilla. Now they have same 1/3 destruction probability as other facilities.
+
 # Version 237
 
 * [Alternative subversion and mind control formulas and mechanics](https://github.com/tnevolin/thinker-doer#alternative-mind-control-and-subversion-mechanics).
 	* Made happiness effect exponential to cover more dynamic range. All talents/drones increase/reduce cost four times.
-	* Updated description for subversion and mind control.
+	* Added help description for subversion and mind control.
 
 # Version 236
 
