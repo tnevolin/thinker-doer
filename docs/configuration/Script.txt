@@ -6401,7 +6401,7 @@ mind control at $BASENAME0. We presently have $NUM1 energy credits in reserve.
 #itemlist
 Abort mission.
 Engage Mind Control Probe. ($CHANCES1)
-Attempt Total Thought Control. ($CHANCES2)
+Attempt Total Thought Control. ($CHANCES2) /useless during vendetta/
 
 #SUBVERT
 #xs 440

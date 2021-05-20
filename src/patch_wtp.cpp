@@ -3799,6 +3799,62 @@ void patch_disable_guaranteed_facilities_destruction()
 	
 }
 
+void patch_total_thought_control_no_diplomatic_consequences()
+{
+	// alternative subversion cost
+	
+	int total_thought_control_no_diplomatic_consequences_bytes_length = 0x5;
+
+	/*
+	0:  e8 9f 6f fb ff          call   0xfffb6fa4
+	*/
+	byte total_thought_control_no_diplomatic_consequences_bytes_old[] = { 0xE8, 0x9F, 0x6F, 0xFB, 0xFF };
+
+	/*
+	...
+	*/
+	byte total_thought_control_no_diplomatic_consequences_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+	write_bytes
+	(
+		0x005A4B8C,
+		total_thought_control_no_diplomatic_consequences_bytes_old,
+		total_thought_control_no_diplomatic_consequences_bytes_new,
+		total_thought_control_no_diplomatic_consequences_bytes_length
+	);
+	
+}
+
+void patch_supply_convoy_and_info_warfare_require_support()
+{
+	// Supply Convoy and Info Warfare require support
+	
+	int supply_convoy_and_info_warfare_requires_support_bytes_length = 0x3;
+
+	/*
+	0:  80 fa 09                cmp    dl,0x9
+	*/
+	byte supply_convoy_and_info_warfare_requires_support_bytes_old[] = { 0x80, 0xFA, 0x09 };
+
+	/*
+	0:  80 fa 0b                cmp    dl,0xb
+	*/
+	byte supply_convoy_and_info_warfare_requires_support_bytes_new[] = { 0x80, 0xFA, 0x0B };
+
+	write_bytes
+	(
+		0x004E980E,
+		supply_convoy_and_info_warfare_requires_support_bytes_old,
+		supply_convoy_and_info_warfare_requires_support_bytes_new,
+		supply_convoy_and_info_warfare_requires_support_bytes_length
+	);
+	
+}
+
+// =======================================================
+// main patch option selection
+// =======================================================
+
 void patch_setup_wtp(Config* cf)
 {
 	// integrated into Thinker
@@ -4323,6 +4379,16 @@ void patch_setup_wtp(Config* cf)
 	if (cf->disable_guaranteed_facilities_destruction)
 	{
 		patch_disable_guaranteed_facilities_destruction();
+	}
+	
+	if (cf->total_thought_control_no_diplomatic_consequences)
+	{
+		patch_total_thought_control_no_diplomatic_consequences();
+	}
+	
+	if (cf->supply_convoy_and_info_warfare_require_support)
+	{
+		patch_supply_convoy_and_info_warfare_require_support();
 	}
 	
 }
