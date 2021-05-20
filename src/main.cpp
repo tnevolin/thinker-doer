@@ -537,6 +537,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->disable_guaranteed_facilities_destruction = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "total_thought_control_no_diplomatic_consequences"))
+    {
+        cf->total_thought_control_no_diplomatic_consequences = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "supply_convoy_and_info_warfare_require_support"))
+    {
+        cf->supply_convoy_and_info_warfare_require_support = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 238 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 240 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -291,6 +291,8 @@ struct Config {
 	double alternative_mind_control_project_cost_multiplier;
 	double alternative_mind_control_happiness_power_base;
 	double disable_guaranteed_facilities_destruction;
+	double total_thought_control_no_diplomatic_consequences;
+	double supply_convoy_and_info_warfare_require_support;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

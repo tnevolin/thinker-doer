@@ -1,3 +1,15 @@
+# Version 240
+
+* Supply Convoy and Info Warfare require support.
+
+* Thought control doesn't cause controlled faction to wish betrayal and revenge against controlling faction.
+* Added note that TC is useless during vendetta.
+
+# Version 239
+
+* Thought control doesn't cause controlled faction to wish betrayal and revenge against controlling faction.
+* Added note that TC is useless during vendetta.
+
 # Version 238
 
 * Capturing base guaranteed destroys Recreation Common and Recycling Tanks in vanilla. Now they have same 1/3 destruction probability as other facilities.
