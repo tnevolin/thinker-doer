@@ -84,11 +84,6 @@ HOOK_API int mod_enemy_move(const int id) {
     UNIT* u = &Units[veh->unit_id];
     debug("enemy_move %2d %2d %s\n", veh->x, veh->y, veh->name());
     
-    // don't control probes
-    
-    if (veh->weapon_type() == WPN_PROBE_TEAM)
-		return enemy_move(id);
-
     if (ai_enabled(veh->faction_id)) {
         int triad = u->triad();
         if (!mapsq(veh->x, veh->y)) {

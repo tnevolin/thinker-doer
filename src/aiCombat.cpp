@@ -463,9 +463,16 @@ int moveCombat(int vehicleId)
 		return processSeaExplorer(vehicleId);
 	}
 
-	// default to Thinker
-
-	return mod_enemy_move(vehicleId);
+	// choose default
+	
+	if (isProbeVehicle(vehicleId))
+	{
+		return enemy_move(vehicleId);
+	}
+	else
+	{
+		return mod_enemy_move(vehicleId);
+	}
 
 }
 

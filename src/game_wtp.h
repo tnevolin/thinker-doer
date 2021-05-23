@@ -278,4 +278,5 @@ int getRegionPodCount(int region);
 Location getNearbyItemLocation(int x, int y, int range, int item);
 bool isVehicleHealing(int vehicleId);
 bool isVehicleInRegion(int vehicleId, int region);
+bool isProbeVehicle(int vehicleId);
 

@@ -3116,3 +3116,8 @@ bool isVehicleInRegion(int vehicleId, int region)
 	
 }
 
+bool isProbeVehicle(int vehicleId)
+{
+	return (Units[Vehicles[vehicleId].unit_id].weapon_type == WPN_PROBE_TEAM);
+}
+

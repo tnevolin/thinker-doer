@@ -662,6 +662,16 @@ I have implemented minimal changes to allow subverting units from stack while pr
 
 In vanilla PE is not really helpful. It would require to equip every unit with it to protect against subversion as any unit can be targeted. Such passive defense is obviously a waste of ability slot. PE gets a second life with ability to protect surrounded units. Now player may just mix few of them with the army to extend their effect. No need to equip each and every unit.
 
+## Mind control changes
+
+Completely revamped the formula based on multiple complaints and requests.
+
+* Removed all easily fluctuating or easily influencable factors such as riot/GA.
+* Removed direct cost effect from facilities like GF, CC, and the like.
+* Distance to HQ is still a factor but it works in more smooth and sane way, though. Like absense of HQ does not increase cost in some case as in vanilla. Also bases next to HQ won't cost exorbitant anymore.
+* Added more base value factors: production, facilities, projects. Bases with project now are not cheap.
+* Explicitly and directly added cost of simultaneously subverted units into MC cost!
+
 ## Mind control cost
 
 * Base cost is the sum of below
