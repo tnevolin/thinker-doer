@@ -1,3 +1,7 @@
+# Version 241
+
+* Fixed incorrect combat odd computation in some cases when best defender is not on the top of the stack.
+
 # Version 240
 
 * Supply Convoy and Info Warfare require support.
