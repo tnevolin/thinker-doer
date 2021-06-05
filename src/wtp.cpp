@@ -725,7 +725,7 @@ HOOK_API int combat_roll
         ;
 
     }
-
+	
     // return outcome
 
     return attacker_wins;
@@ -2989,7 +2989,7 @@ HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, 
 	else
 	{
 		currentAttackerVehicleId = attackerVehicleId;
-		currentDefenderVehicleId = defenderVehicleId;
+		currentDefenderVehicleId = bestDefenderVehicleId;
 	}
 	
 	
