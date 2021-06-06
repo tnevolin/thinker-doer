@@ -1,3 +1,7 @@
+# Version 242
+
+* Excluded probe attack from sea-to-sea best defender selection fix.
+
 # Version 241
 
 * Fixed incorrect combat odd computation in some cases when best defender is not on the top of the stack.

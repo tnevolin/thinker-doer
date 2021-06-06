@@ -2945,9 +2945,14 @@ HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, 
 
 	int bestDefenderVehicleId = defenderVehicleId;
 
-	// sea unit directly attacking sea unit
+	// sea unit directly attacking sea unit except probe
 
-	if (attackerTriad == TRIAD_SEA && defenderTriad == TRIAD_SEA && bombardment == 0)
+	if
+	(
+		Units[Vehicles[attackerVehicleId].unit_id].weapon_type != WPN_PROBE_TEAM
+		&&
+		attackerTriad == TRIAD_SEA && defenderTriad == TRIAD_SEA && bombardment == 0
+	)
 	{
 		// iterate the stack
 
