@@ -1,6 +1,6 @@
 # Version 243
 
-* Fixed probe subversion cost computation causing crash.
+* Fixed subversion crash.
 
 # Version 242
 
