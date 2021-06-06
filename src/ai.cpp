@@ -95,6 +95,14 @@ int aiEnemyMove(const int vehicleId)
 		return mod_enemy_move(vehicleId);
 	}
 	
+    // do not control probes
+    // Thinker ignores subversion opportunities
+
+    if (vehicle->weapon_type() == WPN_PROBE_TEAM)
+	{
+		return enemy_move(vehicleId);
+	}
+
 	// do not control boarded land units
 	
 	if (isVehicleLandUnitOnTransport(vehicleId))

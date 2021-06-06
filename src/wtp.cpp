@@ -3392,6 +3392,7 @@ HOOK_API int modifiedEnemyMove(const int vehicleId)
 		return aiEnemyMove(vehicleId);
 	}
 	// otherwise, fall to default
+	else
 	{
 		return mod_enemy_move(vehicleId);
 	}

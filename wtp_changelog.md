@@ -1,3 +1,7 @@
+# Version 243
+
+* Fixed probe subversion cost computation causing crash.
+
 # Version 242
 
 * Excluded probe attack from sea-to-sea best defender selection fix.
