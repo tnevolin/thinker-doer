@@ -58,7 +58,7 @@ int moveSeaTransport(int vehicleId)
 	// deliver scout
 	
 	int carryingScoutVehicleId = getCarryingScoutVehicleId(vehicleId);
-	if (isCarryingVehicle(vehicleId))
+	if (carryingScoutVehicleId >= 0)
 	{
 		if (deliverScout(vehicleId, carryingScoutVehicleId))
 		{

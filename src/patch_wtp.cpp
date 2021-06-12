@@ -3840,6 +3840,33 @@ void patch_supply_convoy_and_info_warfare_require_support()
 	
 }
 
+void patch_alternative_support()
+{
+	// support free units
+	
+	int support_free_units_bytes_length = 0x4;
+
+	/*
+	0:  3b 54 85 c4             cmp    edx,DWORD PTR [ebp+eax*4-0x3c]
+	*/
+	byte support_free_units_bytes_old[] = { 0x3B, 0x54, 0x85, 0xC4 };
+
+	/*
+	0:  83 fa 02                cmp    edx,0x2
+	...
+	*/
+	byte support_free_units_bytes_new[] = { 0x83, 0xFA, 0x02, 0x90 };
+
+	write_bytes
+	(
+		0x004E98D3,
+		support_free_units_bytes_old,
+		support_free_units_bytes_new,
+		support_free_units_bytes_length
+	);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4378,6 +4405,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->supply_convoy_and_info_warfare_require_support)
 	{
 		patch_supply_convoy_and_info_warfare_require_support();
+	}
+	
+	if (cf->alternative_support)
+	{
+		patch_alternative_support();
 	}
 	
 }

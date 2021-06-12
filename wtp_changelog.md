@@ -1,3 +1,7 @@
+# Version 244
+
+* Fixed my bug that sometimes garbled reactor name in technology advancement screen.
+
 # Version 243
 
 * Fixed subversion crash.

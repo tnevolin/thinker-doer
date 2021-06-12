@@ -545,6 +545,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->supply_convoy_and_info_warfare_require_support = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "alternative_support"))
+    {
+        cf->alternative_support = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "alternative_support_free_units"))
+    {
+        cf->alternative_support_free_units = std::min(255, std::max(0, atoi(value)));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
