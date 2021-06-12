@@ -19,8 +19,6 @@ int balanceFactionId = -1;
 
 int currentAttackerVehicleId = -1;
 int currentDefenderVehicleId = -1;
-int currentAttackerStrength = -1;
-int currentDefenderStrength = -1;
 int currentAttackerOdds = -1;
 int currentDefenderOdds = -1;
 
@@ -368,11 +366,6 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 //
 //    }
 //
-	// store strengths
-	
-	currentAttackerStrength = *(int *)attackerStrengthPointer;
-	currentDefenderStrength = *(int *)defenderStrengthPointer;
-	
 }
 
 /*
@@ -3493,7 +3486,7 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 			
 			// calculate round probabilty
 			
-			double p = (double)currentAttackerStrength / ((double)currentAttackerStrength + (double)currentDefenderStrength);
+			double p = (double)attackerOdds / ((double)attackerOdds + (double)defenderOdds);
 			
 			// calculate attacker winning probability
 			

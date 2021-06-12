@@ -5,3 +5,6 @@ text eol=lf
 *.txt eol=crlf
 *.md eol=crlf
 
+# archiving
+src export-ignore
+

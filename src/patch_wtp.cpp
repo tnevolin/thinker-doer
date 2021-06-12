@@ -3867,6 +3867,126 @@ void patch_alternative_support()
 	
 }
 
+void patch_exact_odds()
+{
+	int exact_odds_1_bytes_length = 0x3;
+
+	/*
+	0:  c1 fa 06                sar    edx,0x6
+	*/
+	byte exact_odds_1_bytes_old[] = { 0xC1, 0xFA, 0x06 };
+
+	/*
+	0:  c1 fa 02                sar    edx,0x2
+	...
+	*/
+	byte exact_odds_1_bytes_new[] = { 0xC1, 0xFA, 0x02 };
+
+	write_bytes
+	(
+		0x005081CA,
+		exact_odds_1_bytes_old,
+		exact_odds_1_bytes_new,
+		exact_odds_1_bytes_length
+	);
+	
+	write_bytes
+	(
+		0x005081DD,
+		exact_odds_1_bytes_old,
+		exact_odds_1_bytes_new,
+		exact_odds_1_bytes_length
+	);
+	
+	int exact_odds_2_bytes_length = 0x3;
+
+	/*
+	0:  c1 fa 06                sar    edx,0x5
+	*/
+	byte exact_odds_2_bytes_old[] = { 0xC1, 0xFA, 0x05 };
+
+	/*
+	0:  c1 fa 02                sar    edx,0x1
+	...
+	*/
+	byte exact_odds_2_bytes_new[] = { 0xC1, 0xFA, 0x01 };
+
+	write_bytes
+	(
+		0x00508208,
+		exact_odds_2_bytes_old,
+		exact_odds_2_bytes_new,
+		exact_odds_2_bytes_length
+	);
+	
+	write_bytes
+	(
+		0x0050821B,
+		exact_odds_2_bytes_old,
+		exact_odds_2_bytes_new,
+		exact_odds_2_bytes_length
+	);
+	
+	int exact_odds_3_bytes_length = 0x3;
+
+	/*
+	0:  c1 fa 06                sar    edx,0x5
+	*/
+	byte exact_odds_3_bytes_old[] = { 0xC1, 0xFA, 0x05 };
+
+	/*
+	0:  c1 fa 02                sar    edx,0x1
+	...
+	*/
+	byte exact_odds_3_bytes_new[] = { 0xC1, 0xFA, 0x01 };
+
+	write_bytes
+	(
+		0x00508246,
+		exact_odds_3_bytes_old,
+		exact_odds_3_bytes_new,
+		exact_odds_3_bytes_length
+	);
+	
+	write_bytes
+	(
+		0x00508259,
+		exact_odds_3_bytes_old,
+		exact_odds_3_bytes_new,
+		exact_odds_3_bytes_length
+	);
+	
+	int exact_odds_4_bytes_length = 0x3;
+
+	/*
+	0:  c1 fa 06                sar    edx,0x4
+	*/
+	byte exact_odds_4_bytes_old[] = { 0xC1, 0xFA, 0x04 };
+
+	/*
+	0:  c1 fa 02                sar    edx,0x0
+	...
+	*/
+	byte exact_odds_4_bytes_new[] = { 0xC1, 0xFA, 0x00 };
+
+	write_bytes
+	(
+		0x0050827E,
+		exact_odds_4_bytes_old,
+		exact_odds_4_bytes_new,
+		exact_odds_4_bytes_length
+	);
+	
+	write_bytes
+	(
+		0x00508291,
+		exact_odds_4_bytes_old,
+		exact_odds_4_bytes_new,
+		exact_odds_4_bytes_length
+	);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4411,6 +4531,8 @@ void patch_setup_wtp(Config* cf)
 	{
 		patch_alternative_support();
 	}
+	
+	patch_exact_odds();
 	
 }
 

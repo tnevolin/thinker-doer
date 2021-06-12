@@ -1,3 +1,7 @@
+# Version 245
+
+* Fixed incorrect vanilla combat odds oversimplification that often looses 50% of value. Now odds are more precise.
+
 # Version 244
 
 * Fixed my bug that sometimes garbled reactor name in technology advancement screen.
