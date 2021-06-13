@@ -4005,6 +4005,10 @@ int __cdecl modifiedMindControlCost(int baseId, int probeFactionId, int cornerMa
 	if (cornerMarket != 0)
 		return (int)round(mindControlCost);
 	
+	// global scaling factor
+	
+	mindControlCost *= conf.alternative_subversion_and_mind_control_scale;
+	
 	// summarize all adjacent vehicles subversion cost
 	
 	double totalSubversionCost = 0;
@@ -4139,6 +4143,10 @@ int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistanc
 	{
 		subversionCost *= 2.0;
 	}
+	
+	// global scaling factor
+	
+	subversionCost *= conf.alternative_subversion_and_mind_control_scale;
 	
 	// return rounded value
 	

@@ -505,6 +505,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->alternative_subversion_and_mind_control = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "alternative_subversion_and_mind_control_scale"))
+    {
+        cf->alternative_subversion_and_mind_control_scale = std::max(0.0, atof(value));
+    }
     else if (MATCH("wtp", "alternative_subversion_unit_cost_multiplier"))
     {
         cf->alternative_subversion_unit_cost_multiplier = atof(value);

@@ -6,5 +6,5 @@ text eol=lf
 *.md eol=crlf
 
 # archiving
-src export-ignore
+* export-ignore
 

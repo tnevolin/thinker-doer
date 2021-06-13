@@ -1,3 +1,7 @@
+# Version 246
+
+* Added global scaling factor multiplying actual subversion and mind control cost (alternative_subversion_and_mind_control_scale). This does not change corner market cost!
+
 # Version 245
 
 * Fixed incorrect vanilla combat odds oversimplification that often looses 50% of value. Now odds are more precise.

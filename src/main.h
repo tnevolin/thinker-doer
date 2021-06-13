@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 245 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 246 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -283,6 +283,7 @@ struct Config {
     bool subversion_allow_stacked_units = false;
     bool mind_control_destroys_unsubverted = false;
     bool alternative_subversion_and_mind_control = false;
+    double alternative_subversion_and_mind_control_scale;
     double alternative_subversion_unit_cost_multiplier;
 	double alternative_mind_control_nutrient_cost;
 	double alternative_mind_control_mineral_cost;

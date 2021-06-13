@@ -385,7 +385,7 @@ Moved to level 3.
 
 These facilities are not effective at the beginning. Even with 20 raw energy yield they contribute 5 labs/energy - 1 maintenance = 2 worth of minerals and break even in 30 turns. First base doesn't reach this raw energy intake until turn 50 something.
 
-# Hab Complex, Habitaion Dome
+## Hab Complex, Habitaion Dome
 
 Hab Complex: moved to 20% in research tree (was 30%).
 
