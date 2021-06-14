@@ -290,7 +290,7 @@ Increases $LINK<nutrient=41> output in $LINK<forest=90004> squares by 1.
 Eliminates at least half the $LINK<ecological damage=26> caused by terraforming ($LINK<farms=90000>, $LINK<mines=90002>,
 $LINK<roads=90005>, etc.)
 ^
-^Increases the amount of $LINK<minerals=27> that can be produced by any of that faction’s bases before causing ecological damage by one.
+^Increases the amount of $LINK<minerals=42> that can be produced by any of that faction’s bases before causing ecological damage by one.
 
 #; Hybrid Forest
 #HELPFAC14
@@ -299,7 +299,7 @@ base less that lost to inefficiency. Increases $LINK<nutrient=31> and energy out
 Eliminates at least half the $LINK<ecological damage=10004> caused by terraforming ($LINK<Farms=90000>, $LINK<Mines=90002>,
 $LINK<Roads=90005>, etc.).
 ^
-^Increases the amount of $LINK<minerals=27> that can be produced by any of that faction’s bases before causing ecological damage by one.
+^Increases the amount of $LINK<minerals=42> that can be produced by any of that faction’s bases before causing ecological damage by one.
 ^
 ^Can only be constructed in a base which already has a $LINK<Tree Farm=100013>.
 
@@ -329,11 +329,11 @@ Increases base output: $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}. Red
 
 #; Robotic Assembly Plant
 #HELPFAC19
-Increases $LINK<Minerals=27> output at base by 50%.
+Increases $LINK<Minerals=42> output at base by 50%.
 
 #; Nanoreplicator
 #HELPFAC20
-Increases $LINK<Minerals=27> output at base by 50%. The {Nanoreplicator} reduces the impact of industry on Planet’s
+Increases $LINK<Minerals=42> output at base by 50%. The {Nanoreplicator} reduces the impact of industry on Planet’s
 $LINK<Ecology=12> and the minerals it produces [do not] contribute to ecological damage.
 ^
 ^Can only be constructed in a base which already has a $LINK<Robotic Assembly Plant=100019> or a $LINK<Genejack
@@ -341,13 +341,13 @@ Factory=100022>.
 
 #; Quantum Converter
 #HELPFAC21
-Increases $LINK<Minerals=27> output at base by 50%.
+Increases $LINK<Minerals=42> output at base by 50%.
 ^
 ^Can only be constructed in a base which already has a $LINK<Robotic Assembly Plant=100019>.
 
 #; Genejack Factory
 #HELPFAC22
-Increases $LINK<Minerals=27> output at base by 50% but increases the number of $LINK<Drone=11> at base by one and increases
+Increases $LINK<Minerals=42> output at base by 50% but increases the number of $LINK<Drone=11> at base by one and increases
 vulnerability to enemy $LINK<mind control=60021>.
 
 #; Punishment Sphere
@@ -419,14 +419,14 @@ a +1 lifecycle bonus.
 Reduces effect of industry on Planet’s $LINK<ecological=12>. Any $LINK<Native life forms=30>
 bred at this base gain a +1 lifecycle bonus.
 ^
-^Increases the amount of $LINK<minerals=27> that can be produced by any of that faction’s bases before causing ecological damage by one.
+^Increases the amount of $LINK<minerals=42> that can be produced by any of that faction’s bases before causing ecological damage by one.
 
 #; Temple of Planet
 #HELPFAC32
 Reduces effect of industry on Planet’s $LINK<ecological=12>. Any $LINK<Native life forms=30> bred at this base gain a +1
 lifecycle bonus.
 ^
-^Increases the amount of $LINK<minerals=27> that can be produced by any of that faction’s bases before causing ecological damage by one.
+^Increases the amount of $LINK<minerals=42> that can be produced by any of that faction’s bases before causing ecological damage by one.
 ^
 ^Can only be constructed in a base which already has a $LINK<Centauri Preserve=100031>.
 
@@ -563,7 +563,7 @@ $LINK<Aerospace Complex=100029> or by a faction that controls $LINK<The Space El
 
 #; Stockpile Energy
 #HELPFAC69
-This causes the base to immediately sell off every excess $LINK<Minerals=27> it produces in exchange for energy credits,
+This causes the base to immediately sell off every excess $LINK<Minerals=42> it produces in exchange for energy credits,
 which are then deposited in the $LINK<Energy Reserves=14> (each two minerals makes one energy rounded up).
 
 #; The Human Genome Project
@@ -728,7 +728,7 @@ One extra $LINK<Talent=45> at every base.
 
 #; The Space Elevator
 #HELPPROJ27
-Doubles $LINK<Economy=130000> energy production at this base, and doubles $LINK<Minerals=27> production rate at all bases
+Doubles $LINK<Economy=130000> energy production at this base, and doubles $LINK<Minerals=42> production rate at all bases
 whilst they are producing satellites. The minerals it produces do not contribute to $LINK<ecological damage=12>.
 ^
 ^Units equipped with $LINK<drop pods=80004> may now make Orbital Insertions [anywhere] on the Planet.
@@ -743,7 +743,7 @@ production.
 
 #; The Bulk Matter Transmitter
 #HELPPROJ29
-+50% $LINK<Minerals=27> at every base (before facility multipliers are applied, and the multipliers do not boost these
++50% $LINK<Minerals=42> at every base (before facility multipliers are applied, and the multipliers do not boost these
 extra minerals).
 
 #; The Telepathic Matrix
@@ -1009,15 +1009,20 @@ effects are eliminated by control of $LINK<The Cloning Vats=110024>).
 
 #;Support
 #HELPEFFECT2
-{Support} affects the $LINK<Minerals=27> support costs of units:
-^    -4 = Each unit costs 2 to support; no free $LINK<minerals=27> for new base
-^    -3 = Each unit costs 1 to support; no free minerals for new base
-^    -2 = Support 1 unit free per base; no free minerals for new base
-^    -1 = Support 1 unit free per base
-^    0 = Support 2 units free per base
-^    +1 = Support 3 units free per base
-^    +2 = Support 4 units free per base!
-^    +3 = Support 4 units [or] up to base size for free!!
+{Support} affects the $LINK<Minerals=42> support costs of units:
+^Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
+^Out of the others first [4] units are also free.
+^
+^Each non free unit support goes in 1/4 increments rounded down as below.
+^
+^-4 = Unit costs 2 and 0/4 to support; no free $LINK<minerals=42> for new base
+^-3 = Unit costs 1 and 3/4 to support; no free minerals for new base
+^-2 = Unit costs 1 and 2/4 to support; no free minerals for new base
+^-1 = Unit costs 1 and 1/4 to support
+^ 0 = Unit costs 1 and 0/4 to support
+^ +1 = Unit costs 0 and 3/4 to support
+^ +2 = Unit costs 0 and 2/4 to support!
+^ +3 = Unit costs 0 and 1/4 to support!!
 
 #;Morale
 #HELPEFFECT4
@@ -1100,7 +1105,7 @@ unit is equipped with the $LINK<Algorithmic Enhancement=80028> special ability
 #;Industry
 #HELPEFFECT9
 {Industry} affects number of columns in base production box.
-A higher score reduces the number of $LINK<Minerals=27> required to build units and facilities.
+A higher score reduces the number of $LINK<Minerals=42> required to build units and facilities.
 Numbers below represent an actual percentage change, not number of columns.
 ^Example, AI starts with 7 mineral columns at Transcend difficulty. +5 INDUSTRY then will reduce this to 7 * 0.5 = 3.5 = 4 columns, not 2.
 ^
@@ -1171,7 +1176,7 @@ construction of an $LINK<Echelon Mirror=90013>.
 
 #;Forest
 #HELPTERRALAND4
-{Forest} squares provide one $LINK<Nutrient=31>, two $LINK<Minerals=27>, and one $LINK<Energy=14>. Forest square production
+{Forest} squares provide one $LINK<Nutrient=31>, two $LINK<Minerals=42>, and one $LINK<Energy=14>. Forest square production
 can be improved by constructing $LINK<Tree Farms=100013> and $LINK<Hybrid Forests=100014>.
 ^
 ^Forests provide a 50% defensive bonus and will sometimes expand into adjacent non-rocky squares, even driving out
@@ -1274,7 +1279,7 @@ whilst also increasing the solar $LINK<Energy=14> collected by {solar collectors
 #;Thermal Borehole
 #HELPTERRALAND14
 A {Thermal Borehole} penetrates to Planet’s mantle and provides significant minerals and energy. Borehole squares provide
-+6 $LINK<Minerals=27> and +6 $LINK<Energy=14>, but no $LINK<Nutrients=31>. They are unaffected by $LINK<Fungus=18>.
++6 $LINK<Minerals=42> and +6 $LINK<Energy=14>, but no $LINK<Nutrients=31>. They are unaffected by $LINK<Fungus=18>.
 ^
 ^Boreholes cannot be built adjacent to other boreholes, nor on $LINK<sloping=10000> squares.
 ^
@@ -1318,7 +1323,7 @@ can, with the discovery of $LINK<Adv. Ecological Engineering=140062>, plant Kelp
 ^Kelp Farm increases nutrient production of an ocean tile by +3.
 
 #HELPTERRASEA2
-A {Mining Platform} can be constructed by a $LINK<terraforming unit=60018> and increases the $LINK<Minerals=27> output of
+A {Mining Platform} can be constructed by a $LINK<terraforming unit=60018> and increases the $LINK<Minerals=42> output of
 an ocean square by +1, or by +2 if $LINK<Adv. Ecological Engineering=140062> has been discovered.
 ^
 ^A mining platforms can only be built on ocean shelf squares (depth less than 1000 m). Aquatic factions such as the
@@ -1864,7 +1869,7 @@ action menu will allow the passengers to unload while the air transport is in fl
 #;Supply Transport
 #WEAPONDESC20
 The {Supply Transport} module can be used to create $LINK<units=30005> that harvest or transport $LINK<nutrients=31>, or
-$LINK<minerals=27>, or $LINK<energy=14>. Any unit with the Supply Transport module has no $LINK<support=130002> cost.
+$LINK<minerals=42>, or $LINK<energy=14>. Any unit with the Supply Transport module has no $LINK<support=130002> cost.
 ^
 ^Selecting the ‘Convoy’ (‘O’) option on the ‘Action Menu’ brings up a menu from which can be selected the resources to
 convoy:

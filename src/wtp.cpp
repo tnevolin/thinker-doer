@@ -4219,3 +4219,48 @@ void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVe
 	
 }
 
+/*
+Moves subverted vehicle on probe tile and stops probe.
+*/
+void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_string_pointer)
+{
+    // call original function
+
+    tx_strcat(output_string_pointer, input_string_pointer);
+    
+    // get current base variables
+    
+    int baseId = *current_base_id;
+    BASE *base = *current_base_ptr;
+    Faction *faction = &(Factions[base->faction_id]);
+    
+    // calculate support numerator
+    
+    int supportNumerator = 4 - std::max(-4, std::min(3, faction->SE_support_pending));
+    
+    // set units support
+    
+    int supportedVehicleCount = 0;
+    
+    for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		if (vehicle->home_base_id != baseId)
+			continue;
+		
+		if ((vehicle->state & VSTATE_REQUIRES_SUPPORT) == 0)
+			continue;
+		
+		vehicle->pad_0 =
+			(supportNumerator * (supportedVehicleCount + 1)) / 4
+			-
+			(supportNumerator * supportedVehicleCount) / 4
+		;
+		
+		supportedVehicleCount++;
+		
+	}
+	
+}
+

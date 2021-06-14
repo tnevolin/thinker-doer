@@ -911,14 +911,14 @@ Thought Control, WillPow,  --SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE
  4, PARADIGM ECONOMY!!
 
 #SOCSUPPORT
--4, Each unit costs 2 to support; no free minerals for new base.
--3, Each unit costs 1 to support; no free minerals for new base.
--2, Support 1 unit free per base; no free minerals for new base.
--1, Support 1 unit free per base
- 0, Support 2 units free per base
- 1, Support 3 units free per base
- 2, Support 4 units free per base!
- 3, Support 4 units OR up to base size for free!!
+-4, Unit costs 2 and 0/4 to support; no free minerals for new base
+-3, Unit costs 1 and 3/4 to support; no free minerals for new base
+-2, Unit costs 1 and 2/4 to support; no free minerals for new base
+-1, Unit costs 1 and 1/4 to support
+ 0, Unit costs 1 and 0/4 to support
+ 1, Unit costs 0 and 3/4 to support
+ 2, Unit costs 0 and 2/4 to support!
+ 3, Unit costs 0 and 1/4 to support!!
 
 #SOCTALENT
 -1, Extra drones at each base

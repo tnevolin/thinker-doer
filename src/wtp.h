@@ -192,4 +192,5 @@ int __cdecl getBasicAlternativeSubversionCost(int vehicleId);
 int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistance);
 int __cdecl modifiedMindControlCaptureBase(int baseId, int faction, int probe);
 void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVehicleId, int radius);
+void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_string_pointer);
 

@@ -389,7 +389,7 @@ These facilities are not effective at the beginning. Even with 20 raw energy yie
 
 Hab Complex: moved to 20% in research tree (was 30%).
 
-Habitaion Dome: moved to 50% in research tree (was 75%).
+Habitation Dome: moved to 50% in research tree (was 75%).
 
 I don't want AI like Morgan or Pirates to struggle and let their base not grow for an extended period of time. Game is too short already.
 
@@ -700,4 +700,21 @@ Completely revamped the formula based on multiple complaints and requests.
 The above formula for MC cost is used for corner market computation.
 
 Actual base MC also includes subversion cost of all target faction units in or adjacent to base. All non target faction units in base after MC are destroyed after MC.
+
+# Alternative support
+
+Support per unit is modified to produce smoother scale without sudden increase between -3 and -4 ratings.
+
+<pre>
+
+base support = (<number of supported units> * (4 - SUPPORT)) / 4
+round down
+
+Supported units are those not free of support.
+Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
+Out of the others first N units are also free.
+
+Number of first free units is constant and set with alternative_support_free_units parameter in thinker.ini.
+
+</pre>
 

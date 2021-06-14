@@ -1,3 +1,7 @@
+# Version 247
+
+* Support formula changed.
+
 # Version 246
 
 * Added global scaling factor multiplying actual subversion and mind control cost (alternative_subversion_and_mind_control_scale). This does not change corner market cost!
