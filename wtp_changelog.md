@@ -1,3 +1,10 @@
+# Version 248
+
+* Reverted subversion and MC cost global multiplier back to 1. Instead tuned specific cost parameters.
+* Changed subversion and MC cost parameters.
+  * Subversion cost multiplier = 6. Twice as much as hurry cost multiplier.
+	* Doubled resource intake cost multipliers.
+
 # Version 247
 
 * Support formula changed.

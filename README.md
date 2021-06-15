@@ -668,7 +668,7 @@ Completely revamped the formula based on multiple complaints and requests.
 
 * Removed all easily fluctuating or easily influencable factors such as riot/GA.
 * Removed direct cost effect from facilities like GF, CC, and the like.
-* Distance to HQ is still a factor but it works in more smooth and sane way, though. Like absense of HQ does not increase cost in some case as in vanilla. Also bases next to HQ won't cost exorbitant anymore.
+* Distance to HQ is still a factor but it works in more smooth and sane way, though. Like absence of HQ does not increase cost in some case as in vanilla. Also bases next to HQ won't cost exorbitant anymore.
 * Added more base value factors: production, facilities, projects. Bases with project now are not cheap.
 * Explicitly and directly added cost of simultaneously subverted units into MC cost!
 
@@ -714,7 +714,7 @@ Supported units are those not free of support.
 Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
 Out of the others first N units are also free.
 
-Number of first free units is constant and set with alternative_support_free_units parameter in thinker.ini.
+Number of free units is constant and set with alternative_support_free_units parameter in thinker.ini.
 
 </pre>
 
