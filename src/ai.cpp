@@ -25,17 +25,6 @@ Top level faction upkeep entry point.
 */
 int aiFactionUpkeep(const int factionId)
 {
-	// recalculate global faction parameters on this turn if not yet done
-	
-	if (*current_turn != currentTurn || factionId != aiFactionId)
-	{
-		currentTurn = *current_turn;
-		aiFactionId = factionId;
-		
-		aiStrategy();
-		
-	}
-	
     // expire infiltrations for normal factions
     
     if (factionId > 0)
@@ -50,7 +39,18 @@ int aiFactionUpkeep(const int factionId)
 	{
 		considerHurryingProduction(factionId);
 	}
-
+	
+	// recalculate global faction parameters on this turn if not yet done
+	
+	if (*current_turn != currentTurn || factionId != aiFactionId)
+	{
+		currentTurn = *current_turn;
+		aiFactionId = factionId;
+		
+		aiStrategy();
+		
+	}
+	
 	// redirect to vanilla function for the rest of processing
 	// that, in turn, is overriden by Thinker
 	
@@ -149,6 +149,18 @@ void aiStrategy()
 	evaluateBaseExposures();
 	setSharedOceanRegions();
 	
+	// design units
+	
+	designUnits();
+	
+	// bases native defense
+	
+	evaluateBaseNativeDefenseDemands();
+	
+//	// bases defense
+//	
+//	evaluateBaseDefenseDemands();
+//	
 	// compute production demands
 
 	aiProductionStrategy();
@@ -220,7 +232,7 @@ void populateGlobalVariables()
 
 		if (is_human(id))
 		{
-			threatKoefficient = conf.ai_production_threat_coefficient_vendetta;
+			threatKoefficient = conf.ai_production_threat_coefficient_human;
 		}
 		else if (otherFactionRelation & DIPLO_VENDETTA)
 		{
@@ -245,6 +257,14 @@ void populateGlobalVariables()
 
 		debug("\t%-24s: %08x => %4.2f\n", MFactions[id].noun_faction, otherFactionRelation, threatKoefficient);
 
+	}
+
+	// populate factions best combat item values
+	
+	for (int factionId = 1; factionId < 8; factionId++)
+	{
+		activeFactionInfo.factionInfos[factionId].bestWeaponOffenseValue = getFactionBestPrototypedWeaponOffenseValue(factionId);
+		activeFactionInfo.factionInfos[factionId].bestArmorDefenseValue = getFactionBestPrototypedArmorDefenseValue(factionId);
 	}
 
 	debug("\n");
@@ -274,11 +294,14 @@ void populateGlobalVariables()
 		// add base strategy
 
 		activeFactionInfo.baseStrategies[id] = {};
-		activeFactionInfo.baseStrategies[id].base = base;
-		activeFactionInfo.baseStrategies[id].conventionalDefenseMultiplier[TRIAD_LAND] = getBaseConventionalDefenseMultiplier(id, TRIAD_LAND);
-		activeFactionInfo.baseStrategies[id].conventionalDefenseMultiplier[TRIAD_SEA] = getBaseConventionalDefenseMultiplier(id, TRIAD_SEA);
-		activeFactionInfo.baseStrategies[id].conventionalDefenseMultiplier[TRIAD_AIR] = getBaseConventionalDefenseMultiplier(id, TRIAD_AIR);
-		activeFactionInfo.baseStrategies[id].withinFriendlySensorRange = isWithinFriendlySensorRange(base->faction_id, base->x, base->y);
+		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[id]);
+		
+		baseStrategy->base = base;
+		baseStrategy->psiDefenseMultiplier = getBasePsiDefenseMultiplier();
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_LAND] = getBaseConventionalDefenseMultiplier(id, TRIAD_LAND);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_SEA] = getBaseConventionalDefenseMultiplier(id, TRIAD_SEA);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_AIR] = getBaseConventionalDefenseMultiplier(id, TRIAD_AIR);
+		baseStrategy->withinFriendlySensorRange = isWithinFriendlySensorRange(base->faction_id, base->x, base->y);
 
 		debug("\n[%3d] %-25s\n", id, activeFactionInfo.baseStrategies[id].base->name);
 
@@ -382,7 +405,7 @@ void populateGlobalVariables()
 			}
 			else
 			{
-				BASE_STRATEGY *baseStrategy = &(activeFactionInfo.baseStrategies[baseLocationsIterator->second]);
+				BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseLocationsIterator->second]);
 
 				// add to garrison
 
@@ -437,10 +460,6 @@ void populateGlobalVariables()
 
 	}
 	
-	// bases native defense
-	
-	evaluateBaseNativeDefenseDemands();
-	
 	// max mineral surplus
 	
 	activeFactionInfo.maxMineralSurplus = 0;
@@ -458,6 +477,51 @@ void populateGlobalVariables()
 		}
 		
 		activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = std::max(activeFactionInfo.regionMaxMineralSurpluses[baseTile->region], base->mineral_surplus_final);
+		
+	}
+	
+	// populate factions airbases
+	
+	for (int factionId = 1; factionId < 8; factionId++)
+	{
+		activeFactionInfo.factionInfos[factionId].airbases.clear();
+		
+		// stationary airbases
+		
+		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+		{
+			Location location = getMapIndexLocation(mapIndex);
+			MAP *tile = getMapTile(mapIndex);
+			
+			if
+			(
+				map_has_item(tile, TERRA_BASE_IN_TILE | TERRA_AIRBASE)
+				&&
+				(tile->owner == factionId || has_pact(factionId, tile->owner))
+			)
+			{
+				activeFactionInfo.factionInfos[factionId].airbases.push_back(location);
+			}
+			
+		}
+		
+		// mobile airbases
+		
+		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			if
+			(
+				vehicle_has_ability(vehicleId, ABL_CARRIER)
+				&&
+				(vehicle->faction_id == factionId || has_pact(factionId, vehicle->faction_id))
+			)
+			{
+				activeFactionInfo.factionInfos[factionId].airbases.push_back(Location(vehicle->x, vehicle->y));
+			}
+			
+		}
 		
 	}
 	
@@ -576,6 +640,47 @@ Location getNearestPodLocation(int vehicleId)
 	}
 	
 	return nearestPodLocation;
+	
+}
+
+void designUnits()
+{
+	// get best reactor
+	
+	int bestReactor = best_reactor(aiFactionId);
+	
+	// defenders
+	
+	int bestArmor = getFactionBestArmor(aiFactionId);
+	
+	propose_proto(aiFactionId, CHS_INFANTRY, WPN_HAND_WEAPONS, bestArmor, 0, bestReactor, PLAN_DEFENSIVE, NULL);
+	
+	if (has_tech(aiFactionId, Chassis[CHS_FOIL].preq_tech))
+	{
+		propose_proto(aiFactionId, CHS_FOIL, WPN_HAND_WEAPONS, bestArmor, 0, bestReactor, PLAN_DEFENSIVE, NULL);
+	}
+	
+	if (has_tech(aiFactionId, Ability[ABL_ID_COMM_JAMMER].preq_tech))
+	{
+		propose_proto(aiFactionId, CHS_INFANTRY, WPN_HAND_WEAPONS, bestArmor, ABL_COMM_JAMMER, bestReactor, PLAN_DEFENSIVE, NULL);
+		
+		if (has_tech(aiFactionId, Chassis[CHS_FOIL].preq_tech))
+		{
+			propose_proto(aiFactionId, CHS_FOIL, WPN_HAND_WEAPONS, bestArmor, ABL_COMM_JAMMER, bestReactor, PLAN_DEFENSIVE, NULL);
+		}
+		
+	}
+	
+	if (has_tech(aiFactionId, Ability[ABL_ID_AAA].preq_tech))
+	{
+		propose_proto(aiFactionId, CHS_INFANTRY, WPN_HAND_WEAPONS, bestArmor, ABL_AAA, bestReactor, PLAN_DEFENSIVE, NULL);
+		
+		if (has_tech(aiFactionId, Chassis[CHS_FOIL].preq_tech))
+		{
+			propose_proto(aiFactionId, CHS_FOIL, WPN_HAND_WEAPONS, bestArmor, ABL_AAA, bestReactor, PLAN_DEFENSIVE, NULL);
+		}
+		
+	}
 	
 }
 
@@ -756,6 +861,478 @@ void evaluateBaseExposures()
 		activeFactionInfo.baseStrategies[baseId].exposure = exposure;
 		
 	}
+	
+}
+
+int getFactionBestPrototypedWeaponOffenseValue(int factionId)
+{
+	int bestWeaponOffenseValue = 0;
+	
+	for (int unitId : getFactionPrototypes(factionId, false))
+	{
+		UNIT *unit = &(Units[unitId]);
+		
+		// skip non combat units
+
+		if (!isUnitCombat(unitId))
+			continue;
+		
+		// get weapon offense value
+		
+		int weaponOffenseValue = Weapon[unit->weapon_type].offense_value;
+		
+		// update best weapon offense value
+		
+		bestWeaponOffenseValue = std::max(bestWeaponOffenseValue, weaponOffenseValue);
+		
+	}
+	
+	return bestWeaponOffenseValue;
+
+}
+
+int getFactionBestPrototypedArmorDefenseValue(int factionId)
+{
+	int bestArmorDefenseValue = 0;
+	
+	for (int unitId : getFactionPrototypes(factionId, false))
+	{
+		UNIT *unit = &(Units[unitId]);
+		
+		// skip non combat units
+
+		if (!isUnitCombat(unitId))
+			continue;
+		
+		// get armor defense value
+		
+		int armorDefenseValue = Armor[unit->armor_type].defense_value;
+		
+		// update best armor defense value
+		
+		bestArmorDefenseValue = std::max(bestArmorDefenseValue, armorDefenseValue);
+		
+	}
+	
+	return bestArmorDefenseValue;
+
+}
+
+/*
+Arbitrary algorithm to evaluate generic combat strength.
+*/
+double evaluateCombatStrength(double offenseValue, double defenseValue)
+{
+	double adjustedOffenseValue = evaluateOffenseStrength(offenseValue);
+	double adjustedDefenseValue = evaluateDefenseStrength(defenseValue);
+	
+	double combatStrength = std::max(adjustedOffenseValue, adjustedDefenseValue) + 0.5 * std::max(adjustedOffenseValue, adjustedDefenseValue);
+	
+	return combatStrength;
+	
+}
+
+/*
+Arbitrary algorithm to evaluate generic offense strength.
+*/
+double evaluateOffenseStrength(double offenseValue)
+{
+	double adjustedOffenseValue = offenseValue * offenseValue;
+	
+	return adjustedOffenseValue;
+	
+}
+
+/*
+Arbitrary algorithm to evaluate generic oefense strength.
+*/
+double evaluateDefenseStrength(double DefenseValue)
+{
+	double adjustedDefenseValue = DefenseValue * DefenseValue;
+	
+	return adjustedDefenseValue;
+	
+}
+
+//void evaluateBaseDefenseDemands()
+//{
+//	debug("evaluateBaseDefenseDemands - %s\n", MFactions[aiFactionId].noun_faction);
+//	
+//	// evaluate base defense demand
+//	
+//	for (int baseId : activeFactionInfo.baseIds)
+//	{
+//		MAP *baseTile = getBaseMapTile(baseId);
+//		bool ocean = isOceanRegion(baseTile->region);
+//		
+//		if (!ocean)
+//		{
+//			evaluateLandBaseDefenseDemand(baseId);
+//		}
+//		else
+//		{
+//			evaluateOceanBaseDefenseDemand(baseId);
+//		}
+//		
+//	}
+//	
+//}
+//
+//void evaluateLandBaseDefenseDemand(int baseId)
+//{
+//	BASE *base = &(Bases[baseId]);
+//	
+//	// get ocean regions in bombardment range
+//	
+//	std::unordered_set<int> bombardmentRangeOceanRegions;
+//	
+//	for (int dx = -4; dx <= +4; dx++)
+//	{
+//		for (int dy = -(4 - abs(dx)); dy <= +(4 - abs(dx)); dy += 2)
+//		{
+//			MAP *tile = getMapTile(base->x + dx, base->y + dy);
+//			
+//			if (tile == NULL)
+//				continue;
+//			
+//			if (isOceanRegion(tile->region))
+//			{
+//				bombardmentRangeOceanRegions.insert(tile->region);
+//			}
+//			
+//		}
+//		
+//	}
+//	
+//	// iterate enemy vehicles
+//	
+//	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+//	{
+//		VEH *vehicle = &(Vehicles[vehicleId]);
+//		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+//		UNIT *unit = &(Units[vehicle->unit_id]);
+//		bool regularUnit = !(Weapon[unit->weapon_type].offense_value < 0 || Armor[unit->armor_type].defense_value < 0);
+//		
+//		// exclude alien
+//		
+//		if (vehicle->faction_id == 0)
+//			continue;
+//		
+//		// exclude own
+//		
+//		if (vehicle->faction_id == aiFactionId)
+//			continue;
+//		
+//		// exclude non combat
+//		
+//		if (!isVehicleCombat(vehicleId))
+//			continue;
+//		
+//		// exclude sea units not in bombardment range regions
+//		
+//		if (vehicle->triad() == TRIAD_SEA && bombardmentRangeOceanRegions.count(vehicleTile->region) == 0)
+//			continue;
+//		
+//		// calculate threat
+//		
+//		
+//	}
+//	
+//}
+//
+//void evaluateOceanBaseDefenseDemand(int baseId)
+//{
+//	
+//}
+//
+/*
+Checks if vehicle can be reached by enemy in field.
+*/
+bool isVehicleThreatenedByEnemyInField(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	
+	// not in base
+	
+	if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
+		return false;
+	
+	// check other units
+	
+	bool threatened = false;
+	
+	for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
+	{
+		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
+		
+		// exclude non alien units not in war
+		
+		if (otherVehicle->faction_id != 0 && !at_war(otherVehicle->faction_id, vehicle->faction_id))
+			continue;
+		
+		// exclude non combat units
+		
+		if (!isVehicleCombat(otherVehicleId))
+			continue;
+		
+		// unit is in different region and not air
+		
+		if (otherVehicle->triad() != TRIAD_AIR && otherVehicleTile->region != vehicleTile->region)
+			continue;
+		
+		// calculate range
+		
+		int range = map_range(otherVehicle->x, otherVehicle->y, vehicle->x, vehicle->y);
+		
+		// threatened in one turn
+		
+		if (getVehicleSpeedWithoutRoads(otherVehicleId) >= range)
+		{
+			threatened = true;
+			break;
+		}
+		
+	}
+	
+	return threatened;
+	
+}
+
+bool isDestinationReachable(int vehicleId, int x, int y)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	MAP *destinationTile = getMapTile(x, y);
+	
+	assert(vehicleTile != NULL);
+	assert(destinationTile != NULL);
+	
+	bool reachable = false;
+	
+	switch (Units[vehicle->unit_id].chassis_type)
+	{
+	case CHS_GRAVSHIP:
+		
+		reachable = true;
+		
+		break;
+		
+	case CHS_NEEDLEJET:
+	case CHS_COPTER:
+	case CHS_MISSILE:
+		
+		{
+			int rangeToNearestFactionAirbase = getRangeToNearestFactionAirbase(x, y, vehicle->faction_id);
+			int turns = (vehicle->triad() == CHS_COPTER ? 2 : 1);
+			int reachableRange = rangeToNearestFactionAirbase * turns;
+			int range = map_range(vehicle->x, vehicle->y, x, y);
+			
+			reachable = (range <= reachableRange);
+			
+		}
+		
+		break;
+		
+	case CHS_FOIL:
+	case CHS_CRUISER:
+		
+		{
+			std::unordered_set<int> vehicleAdjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
+			std::unordered_set<int> destinationAdjacentOceanRegions = getAdjacentOceanRegions(x, y);
+			
+			for (int destinationAdjacentOceanRegion : destinationAdjacentOceanRegions)
+			{
+				if (vehicleAdjacentOceanRegions.count(destinationAdjacentOceanRegion) != 0)
+				{
+					reachable = true;
+					break;
+				}
+			}
+			
+		}
+		
+		break;
+		
+	case CHS_INFANTRY:
+	case CHS_SPEEDER:
+	case CHS_HOVERTANK:
+		
+		reachable = (destinationTile->region == vehicleTile->region);
+		
+		break;
+		
+	}
+	
+	return reachable;
+	
+}
+
+int getRangeToNearestFactionAirbase(int x, int y, int factionId)
+{
+	int rangeToNearestFactionAirbase = INT_MAX;
+	
+	for (Location location : activeFactionInfo.factionInfos[factionId].airbases)
+	{
+		int range = map_range(x, y, location.x, location.y);
+		
+		rangeToNearestFactionAirbase = std::min(rangeToNearestFactionAirbase, range);
+		
+	}
+	
+	return rangeToNearestFactionAirbase;
+	
+}
+
+/*
+Calculates movement points.
+*/
+int getVehicleTurnsToDestination(int vehicleId, int x, int y)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	MAP *destinationTile = getMapTile(x, y);
+	
+	assert(vehicleTile != NULL);
+	assert(destinationTile != NULL);
+	
+	int turns = INT_MAX;
+	
+	if (!isDestinationReachable(vehicleId, x, y))
+		return turns;
+	
+	switch (vehicle->triad())
+	{
+	case TRIAD_AIR:
+	case TRIAD_SEA:
+		
+		{
+			int range = map_range(vehicle->x, vehicle->y, x, y);
+			int speed = getVehicleSpeedWithoutRoads(vehicleId);
+			turns = (range + (speed - 1)) / speed;
+			
+		}
+		
+		break;
+		
+	case TRIAD_LAND:
+		
+		{
+			int vehicleMovementPoints = mod_veh_speed(vehicleId);
+			int destinationMapIndex = getLocationMapIndex(x, y);
+			std::unordered_map<int, int> currentLocations;
+			std::unordered_set<int> deletedLocations;
+			std::unordered_set<int> minCostLocations;
+			currentLocations[getLocationMapIndex(vehicle->x, vehicle->y)] = 0;
+			int minCost = 0;
+			
+			bool run = true;
+			while (true)
+			{
+				minCostLocations.clear();
+				
+				for (std::pair<int, int> element : currentLocations)
+				{
+					int mapIndex = element.first;
+					int cost = element.second;
+					
+					// process only min cost locations
+					
+					if (cost > minCost)
+						continue;
+					
+					// register min cost location
+					
+					minCostLocations.insert(mapIndex);
+					
+					// iterate adjacent tiles
+					
+					for (int dx = -2; dx <= +2; dx++)
+					{
+						for (int dy = -(2 - abs(dx)); dy <= +(2 - abs(dx)); dy += 2)
+						{
+							// exclude center
+							
+							if (dx == 0 && dy == 0)
+								continue;
+							
+							int adjacentTileMapIndex = getLocationMapIndex(x + dx, y + dy);
+							MAP *adjacentTile = getMapTile(x + dx, y + dy);
+							
+							if (adjacentTile == NULL)
+								continue;
+							
+							// exclude ocean
+							
+							if (is_ocean(adjacentTile))
+								continue;
+							
+							// exclude deleted
+							
+							if (deletedLocations.count(adjacentTileMapIndex) != 0)
+								continue;
+							
+							// calculate cost
+							
+							int adjacentTileCost = cost + mod_hex_cost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, x, y, 0);
+							
+							// create/update node
+							
+							if (currentLocations.count(adjacentTileMapIndex) == 0 || adjacentTileCost < currentLocations[adjacentTileMapIndex])
+							{
+								currentLocations[adjacentTileMapIndex] = adjacentTileCost;
+								
+								// exit condition
+								
+								if (adjacentTileMapIndex == destinationMapIndex)
+								{
+									turns = (cost + vehicleMovementPoints) / vehicleMovementPoints;
+									run = false;
+								}
+								
+							}
+							
+						}
+						
+					}
+					
+				}
+				
+				if (!run)
+				{
+					break;
+				}
+				
+				// remove min cost locations
+				
+				for (int mapIndex : minCostLocations)
+				{
+					deletedLocations.insert(mapIndex);
+					currentLocations.erase(mapIndex);
+				}
+				
+				// calculate new min cost
+				
+				minCost = INT_MAX;
+				
+				for (std::pair<int, int> element : currentLocations)
+				{
+					int cost = element.second;
+					
+					minCost = std::min(minCost, cost);
+					
+				}
+				
+			}
+			
+		}
+		
+		break;
+		
+	}
+	
+	return turns;
 	
 }
 

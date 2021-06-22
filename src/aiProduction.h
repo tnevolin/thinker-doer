@@ -97,5 +97,4 @@ HOOK_API void modifiedBaseFirst(int baseId);
 bool isMilitaryItem(int item);
 int thinker_base_prod_choice(int id, int v1, int v2, int v3);
 void evaluateDefenseDemand();
-void findBestUnits();
 

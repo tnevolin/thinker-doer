@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 248 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 249 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -323,6 +323,7 @@ struct Config {
     double ai_production_improvement_coverage;
     int ai_production_population_projection_turns;
     double ai_production_threat_level_threshold;
+    double ai_production_prototyping_priority;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;

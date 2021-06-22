@@ -438,14 +438,18 @@ double getPsiCombatBaseOdds(int triad)
 
 bool isUnitCombat(int id)
 {
-	return id >= 0 && Units[id].weapon_type <= WPN_PSI_ATTACK;
+	assert(id >= 0);
+	
+	return Weapon[Units[id].weapon_type].offense_value != 0;
+	
 }
 
 bool isVehicleCombat(int id)
 {
-	VEH *vehicle = &(Vehicles[id]);
-
-	return Units[vehicle->unit_id].weapon_type <= WPN_PSI_ATTACK;
+	assert(id >= 0);
+	
+	return Weapon[Units[Vehicles[id].unit_id].weapon_type].offense_value != 0;
+	
 }
 
 /*
@@ -2597,17 +2601,22 @@ Location getMapIndexLocation(int mapIndex)
 	
 }
 
-int getLocationMapIndex(Location location)
+int getLocationMapIndex(int x, int y)
 {
-    if (location.x >= 0 && location.y >= 0 && location.x < *map_axis_x && location.y < *map_axis_y && !((location.x + location.y)&1))
+    if (x >= 0 && y >= 0 && x < *map_axis_x && y < *map_axis_y && !((x + y)&1))
 	{
-        return location.x / 2 + (*map_half_x) * location.y;
+        return x / 2 + (*map_half_x) * y;
     }
 	else
 	{
         return -1;
     }
 	
+}
+
+int getLocationMapIndex(Location location)
+{
+	return getLocationMapIndex(location.x, location. y);
 }
 
 bool isVehicleLandUnitOnTransport(int vehicleId)
@@ -2891,12 +2900,17 @@ double getVehicleMoraleModifier(int vehicleId, bool defendingAtBase)
 	return getMoraleModifier(getVehicleMorale(vehicleId, defendingAtBase));
 }
 
+double getBasePsiDefenseMultiplier()
+{
+	return (1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0);
+}
+
 double getBaseConventionalDefenseMultiplier(int baseId, int triad)
 {
 	assert(baseId >= 0 && baseId < MaxBaseNum);
 	assert(triad == TRIAD_LAND || triad == TRIAD_SEA || triad == TRIAD_AIR);
 	
-	double baseConventionalDefenseMultiplier;
+	double baseconventionalDefenseMultipliers;
 	
 	int firstLevelDefensiveStructure;
 	switch (triad)
@@ -2919,22 +2933,22 @@ double getBaseConventionalDefenseMultiplier(int baseId, int triad)
 	
 	if (!firstLevelDefensiveStructureExists && !secondLevelDefensiveStructureExists)
 	{
-		baseConventionalDefenseMultiplier = (1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0);
+		baseconventionalDefenseMultipliers = (1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0);
 	}
 	else if (firstLevelDefensiveStructureExists && !secondLevelDefensiveStructureExists)
 	{
-		baseConventionalDefenseMultiplier = (double)conf.perimeter_defense_multiplier / 2.0;
+		baseconventionalDefenseMultipliers = (double)conf.perimeter_defense_multiplier / 2.0;
 	}
 	else if (!firstLevelDefensiveStructureExists && secondLevelDefensiveStructureExists)
 	{
-		baseConventionalDefenseMultiplier = (double)(2 + conf.tachyon_field_bonus) / 2.0;
+		baseconventionalDefenseMultipliers = (double)(2 + conf.tachyon_field_bonus) / 2.0;
 	}
 	else
 	{
-		baseConventionalDefenseMultiplier = (double)(conf.perimeter_defense_multiplier + conf.tachyon_field_bonus) / 2.0;
+		baseconventionalDefenseMultipliers = (double)(conf.perimeter_defense_multiplier + conf.tachyon_field_bonus) / 2.0;
 	}
 	
-	return baseConventionalDefenseMultiplier;
+	return baseconventionalDefenseMultipliers;
 	
 }
 
@@ -3119,5 +3133,118 @@ bool isVehicleInRegion(int vehicleId, int region)
 bool isProbeVehicle(int vehicleId)
 {
 	return (Units[Vehicles[vehicleId].unit_id].weapon_type == WPN_PROBE_TEAM);
+}
+
+/*
+Computes relative attacker/defender strength.
+*/
+double battleCompute(int attackerVehicleId, int defenderVehicleId)
+{
+	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
+	VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+	MAP *defenderVehicleTile = getMapTile(defenderVehicleId);
+	
+	// set flags
+	
+	int flags = 0x00;
+	
+	if
+	(
+		attackerVehicle->triad() == TRIAD_LAND && can_arty(attackerVehicleId, 1)
+		||
+		attackerVehicle->triad() == TRIAD_SEA && can_arty(attackerVehicleId, 1) && defenderVehicle->triad() == TRIAD_LAND && !is_ocean(defenderVehicleTile)
+	)
+	{
+		flags |= 0x01;
+		
+		if (can_arty(defenderVehicleId, 1))
+		{
+			flags |= 0x02;
+		}
+		
+	}
+	
+	if
+	(
+		attackerVehicle->triad() == TRIAD_AIR && Chassis[Units[attackerVehicle->unit_id].chassis_type].missile == 0
+		&&
+		attackerVehicle->offense_value() > 0 && attackerVehicle->defense_value() > 0
+		&&
+		vehicle_has_ability(defenderVehicleId, ABL_AIR_SUPERIORITY) && Chassis[Units[attackerVehicle->unit_id].chassis_type].missile == 0
+		&&
+		defenderVehicle->offense_value() > 0
+	)
+	{
+		flags |= 0x0A;
+		
+		if (defenderVehicle->triad() == TRIAD_AIR)
+		{
+			flags |= 0x10;
+		}
+		
+	}
+	
+	// compute battle
+	
+	int attackerStrength;
+	int defenderStrength;
+	
+	battle_compute(attackerVehicleId, defenderVehicleId, (int)&attackerStrength, (int)&defenderStrength, flags);
+	
+	// calculate relative strength
+	
+	return (double)attackerStrength / (double)defenderStrength;
+	
+}
+
+int getVehicleSpeedWithoutRoads(int id)
+{
+	return mod_veh_speed(id) / Rules->mov_rate_along_roads;
+}
+
+int getFactionBestWeapon(int factionId)
+{
+	int bestWeapon = WPN_HAND_WEAPONS;
+	int bestWeaponOffenseValue = 1;
+	
+	for (int weaponId = WPN_LASER; weaponId <= WPN_STRING_DISRUPTOR; weaponId++)
+	{
+		if (has_tech(factionId, Weapon[weaponId].preq_tech))
+		{
+			if (Weapon[weaponId].offense_value > bestWeaponOffenseValue)
+			{
+				bestWeapon = weaponId;
+				bestWeaponOffenseValue = Weapon[weaponId].offense_value;
+			}
+			
+		}
+		
+	}
+	
+	return bestWeapon;
+	
+}
+
+int getFactionBestArmor(int factionId)
+{
+	int bestArmor = ARM_NO_ARMOR;
+	int bestArmorDefenseValue = 1;
+	
+	for (int armorId = ARM_SYNTHMETAL_ARMOR; armorId <= ARM_RESONANCE_8_ARMOR; armorId++)
+	{
+		if (has_tech(factionId, Armor[armorId].preq_tech))
+		{
+			if (Armor[armorId].defense_value > bestArmorDefenseValue)
+			{
+				bestArmor = armorId;
+				bestArmorDefenseValue = Armor[armorId].defense_value;
+			}
+			
+		}
+		
+	}
+	
+	return bestArmor;
+	
 }
 

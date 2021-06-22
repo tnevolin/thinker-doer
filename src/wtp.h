@@ -130,7 +130,6 @@ HOOK_API int modifiedInefficiency(int energyIntake);
 HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3);
 HOOK_API void modifiedVehInitInBalance(int unitId, int factionId, int x, int y);
 void createFreeVehicles(int factionId);
-double getVehicleSpeedWithoutRoads(int id);
 double getLandVehicleSpeedOnRoads(int id);
 double getLandVehicleSpeedOnTubes(int id);
 HOOK_API void modifiedWorldBuild();

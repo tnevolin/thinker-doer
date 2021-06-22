@@ -11,15 +11,50 @@
 #include "aiColony.h"
 #include "aiTransport.h"
 
-struct FACTION_INFO
+struct FactionInfo
 {
 	double offenseMultiplier;
 	double defenseMultiplier;
 	double fanaticBonusMultiplier;
 	double threatKoefficient;
+	int bestWeaponOffenseValue;
+	int bestArmorDefenseValue;
+	std::vector<Location> airbases;
 };
 
-struct BASE_STRATEGY
+struct Threat
+{
+	double psi;
+	double infantry;
+	double psiDefense;
+	double psiOffense;
+	double conventionalDefense;
+	double conventionalOffense;
+	double artillery;
+	double psiDefenseDemand;
+	double psiOffenseDemand;
+	double conventionalDefenseDemand;
+	double conventionalOffenseDemand;
+	double artilleryDemand;
+};
+
+struct DefenseDemand
+{
+	double psiThreat;
+	double conventionalThreat;
+	double psiDefense;
+	double psiOffense;
+	double conventionalDefense;
+	double conventionalOffense;
+	double artillery;
+	double psiDefenseDemand;
+	double psiOffenseDemand;
+	double conventionalDefenseDemand;
+	double conventionalOffenseDemand;
+	double artilleryDemand;
+};
+
+struct BaseStrategy
 {
 	BASE *base;
 	std::vector<int> garrison;
@@ -29,11 +64,13 @@ struct BASE_STRATEGY
 	int unpopulatedTileCount;
 	int unpopulatedTileRangeSum;
 	double averageUnpopulatedTileRange;
+	double psiDefenseMultiplier;
+	double conventionalDefenseMultipliers[3];
 	double conventionalDefenseDemand;
-	double conventionalDefenseMultiplier[3];
 	bool withinFriendlySensorRange;
 	double exposure;
 	bool inSharedOceanRegion;
+	DefenseDemand defenseDemand;
 };
 
 struct ESTIMATED_VALUE
@@ -52,13 +89,13 @@ struct MILITARY_STRENGTH
 
 struct ActiveFactionInfo
 {
-	FACTION_INFO factionInfos[8];
+	FactionInfo factionInfos[8];
 	std::vector<int> baseIds;
 	std::unordered_map<MAP *, int> baseLocations;
 	std::unordered_set<int> presenceRegions;
 	std::unordered_map<int, std::unordered_set<int>> regionBaseIds;
 	std::map<int, std::vector<int>> regionBaseGroups;
-	std::map<int, BASE_STRATEGY> baseStrategies;
+	std::map<int, BaseStrategy> baseStrategies;
 	std::vector<int> vehicleIds;
 	std::vector<int> combatVehicleIds;
 	std::vector<int> scoutVehicleIds;
@@ -118,9 +155,22 @@ void populateGlobalVariables();
 void setSharedOceanRegions();
 VEH *getVehicleByAIId(int aiId);
 Location getNearestPodLocation(int vehicleId);
+void designUnits();
 void evaluateBaseNativeDefenseDemands();
 int getNearestFactionBaseRange(int factionId, int x, int y);
 int getNearestBaseId(int x, int y, std::unordered_set<int> baseIds);
 int getNearestBaseRange(int x, int y, std::unordered_set<int> baseIds);
 void evaluateBaseExposures();
+int getFactionBestPrototypedWeaponOffenseValue(int factionId);
+int getFactionBestPrototypedArmorDefenseValue(int factionId);
+double evaluateCombatStrength(double offenseValue, double defenseValue);
+double evaluateOffenseStrength(double offenseValue);
+double evaluateDefenseStrength(double DefenseValue);
+//void evaluateBaseDefenseDemands();
+//void evaluateLandBaseDefenseDemand(int baseId);
+//void evaluateOceanBaseDefenseDemand(int baseId);
+bool isVehicleThreatenedByEnemyInField(int vehicleId);
+bool isDestinationReachable(int vehicleId, int x, int y);
+int getRangeToNearestFactionAirbase(int x, int y, int factionId);
+int getVehicleTurnsToDestination(int vehicleId, int x, int y);
 

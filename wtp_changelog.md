@@ -1,3 +1,8 @@
+# Version 249
+
+* AI production, prototype, combat modifications.
+* Tech cost formula adjusted to use by level cost. Early levels are cheaper.
+
 # Version 248
 
 * Reverted subversion and MC cost global multiplier back to 1. Instead tuned specific cost parameters.

@@ -15,7 +15,8 @@ double territoryBonusMultiplier;
 
 // combat priority used globally
 
-double militaryPriority;
+double globalMilitaryPriority;
+double regionMilitaryPriority;
 
 // currently processing base production demand
 
@@ -27,7 +28,6 @@ Prepare production choices.
 void aiProductionStrategy()
 {
 	evaluateDefenseDemand();
-	findBestUnits();
 	
 }
 
@@ -80,9 +80,10 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 	
 	// compute military priority
 	
-	militaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.regionDefenseDemand[baseTile->region]);
+	globalMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.defenseDemand);
+	regionMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.regionDefenseDemand[baseTile->region]);
 	
-	debug("\tmilitaryPriority = %f\n", militaryPriority);
+	debug("\tglobalMilitaryPriority = %f, regionMilitaryPriority = %f\n", globalMilitaryPriority, regionMilitaryPriority);
 	
 	// vanilla choice
 
@@ -123,6 +124,8 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 	{
 		debug("vanilla choice is military item\n");
 		
+		double militaryPriority = (choice >= 0 && Units[choice].triad() == TRIAD_AIR ? globalMilitaryPriority : regionMilitaryPriority);
+		
 		// raise vanilla priority to military priority
 		
 		if (militaryPriority > vanillaPriority)
@@ -145,9 +148,11 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 	
 	if (isMilitaryItem(thinkerChoice))
 	{
-		debug("Thinker choice is combat item\n");
+		debug("Thinker choice is militray item\n");
 		
-		// raise thinker priority to combat priority
+		double militaryPriority = (thinkerChoice >= 0 && Units[thinkerChoice].triad() == TRIAD_AIR ? globalMilitaryPriority : regionMilitaryPriority);
+		
+		// raise thinker priority to military priority
 		
 		if (militaryPriority > thinkerPriority)
 		{
@@ -1254,39 +1259,16 @@ void evaluatePodPoppingDemand()
 
 void evaluatePrototypingDemand()
 {
-	debug("evaluatePrototypingDemand\n");
+	debug("evaluatePrototypingDemand - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	bool inSharedOceanRegion = activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion;
 	
-	// check if any base is prototyping unit already
-	
-	int prototypingBaseId = -1;
-	
-	for (int otherBaseId : activeFactionInfo.baseIds)
-	{
-		BASE *otherBase = &(Bases[otherBaseId]);
-		
-		int item = otherBase->queue_items[0];
-		
-		if (item >= 0 && (Units[item].unit_flags & UNIT_PROTOTYPED == 0))
-		{
-			prototypingBaseId = otherBaseId;
-			break;
-		}
-		
-	}
-	
-	if (prototypingBaseId >= 0)
-	{
-		debug("\talready prototyping: %s\n", Bases[prototypingBaseId].name);
-		return;
-	}
-	
-	// find first unprototyped unit
+	// find cheapest unprototyped unit
 	
 	int unprototypedUnitId = -1;
+	int unprototypedUnitCost = INT_MAX;
 	
 	for (int unitId : activeFactionInfo.prototypes)
 	{
@@ -1301,8 +1283,14 @@ void evaluatePrototypingDemand()
 		
 		if (unitId >= 64 && !(unit->unit_flags & UNIT_PROTOTYPED))
 		{
-			unprototypedUnitId = unitId;
-			break;
+			int cost = Units[unitId].cost;
+			
+			if (cost < unprototypedUnitCost)
+			{
+				unprototypedUnitId = unitId;
+				unprototypedUnitCost = cost;
+			}
+			
 		}
 		
 	}
@@ -1321,7 +1309,7 @@ void evaluatePrototypingDemand()
 	
 	// calculate priority
 	
-	double priority = 1.0;
+	double priority = conf.ai_production_prototyping_priority;
 	
 	// calculate adjusted priority based on mineral surplus
 	
@@ -2113,11 +2101,11 @@ void evaluateDefenseDemand()
 			// add to region strength
 			
 			ownStrength.totalUnitCount++;
-			ownStrength.psiStrength += (psiOffenseValue + psiDefenseValue) / 2;
+			ownStrength.psiStrength += evaluateCombatStrength(psiOffenseValue, psiDefenseValue);
 			if (regularUnit)
 			{
 				ownStrength.regularUnitCount++;
-				ownStrength.conventionalStrength += (conventionalOffenseValue + conventionalDefenseValue) / 2;
+				ownStrength.conventionalStrength += evaluateCombatStrength(conventionalOffenseValue, conventionalDefenseValue);
 			}
 			
 		}
@@ -2188,8 +2176,8 @@ void evaluateDefenseDemand()
 			
 			// reduce attack and defense based on base bonuses
 			
-			psiOffenseValue /= (1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0);
-			conventionalOffenseValue /= activeFactionInfo.baseStrategies[nearestRegionBaseId].conventionalDefenseMultiplier[vehicle->triad()];
+			psiOffenseValue /= activeFactionInfo.baseStrategies[nearestRegionBaseId].psiDefenseMultiplier;
+			conventionalOffenseValue /= activeFactionInfo.baseStrategies[nearestRegionBaseId].conventionalDefenseMultipliers[vehicle->triad()];
 			
 			double sensorCombatStrengthMultiplier = (1.0 + (double)Rules->combat_defend_sensor / 100.0);
 			if (activeFactionInfo.baseStrategies[nearestRegionBaseId].withinFriendlySensorRange)
@@ -2205,28 +2193,7 @@ void evaluateDefenseDemand()
 			
 			// compute strength multiplier based on diplomatic relations
 			
-			double strengthMultiplier;
-			
-			if (is_human(vehicle->faction_id))
-			{
-				strengthMultiplier = conf.ai_production_threat_coefficient_human;
-			}
-			else if (isDiploStatus(aiFactionId, vehicle->faction_id, DIPLO_VENDETTA))
-			{
-				strengthMultiplier = conf.ai_production_threat_coefficient_vendetta;
-			}
-			else if (isDiploStatus(aiFactionId, vehicle->faction_id, DIPLO_PACT))
-			{
-				strengthMultiplier = conf.ai_production_threat_coefficient_pact;
-			}
-			else if (isDiploStatus(aiFactionId, vehicle->faction_id, DIPLO_TREATY))
-			{
-				strengthMultiplier = conf.ai_production_threat_coefficient_treaty;
-			}
-			else
-			{
-				strengthMultiplier = conf.ai_production_threat_coefficient_other;
-			}
+			double strengthMultiplier = activeFactionInfo.factionInfos[vehicle->faction_id].threatKoefficient;
 			
 			// apply region penalty for land units in other region and not yet transported - it is difficult for them to reach us
 			
@@ -2235,21 +2202,22 @@ void evaluateDefenseDemand()
 				strengthMultiplier /= 5.0;
 			}
 			
-			// reduce strength based on range
+			// reduce strength based on time to reach the base
 			
 			int nearestRegionBaseRange = map_range(vehicle->x, vehicle->y, nearestRegionBase->x, nearestRegionBase->y);
-			strengthMultiplier /= std::max(1.0, (double)nearestRegionBaseRange / 10.0);
+			double timeToReachTheBase = (double)nearestRegionBaseRange / getVehicleSpeedWithoutRoads(vehicleId);
+			strengthMultiplier /= std::max(1.0, timeToReachTheBase / 5.0);
 			
 			debug("\t\t\t\t(%3d,%3d) %-25s -> (%3d,%3d) %-25s: psiOffenseValue=%f, psiDefenseValue=%f, conventionalOffenseValue=%f, conventionalDefenseValue=%f, strengthMultiplier=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, nearestRegionBase->x, nearestRegionBase->y, nearestRegionBase->name, psiOffenseValue, psiDefenseValue, conventionalOffenseValue, conventionalDefenseValue, strengthMultiplier);
 			
 			// add to region strength
 			
 			opponentStrength.totalUnitCount++;
-			opponentStrength.psiStrength += strengthMultiplier * (psiOffenseValue + psiDefenseValue) / 2;
+			opponentStrength.psiStrength += strengthMultiplier * evaluateCombatStrength(psiOffenseValue, psiDefenseValue);
 			if (regularUnit)
 			{
 				opponentStrength.regularUnitCount++;
-				opponentStrength.conventionalStrength += strengthMultiplier * (conventionalOffenseValue + conventionalDefenseValue) / 2;
+				opponentStrength.conventionalStrength += strengthMultiplier * evaluateCombatStrength(conventionalOffenseValue, conventionalDefenseValue);
 			}
 			
 		}
@@ -2309,54 +2277,6 @@ void evaluateDefenseDemand()
 	}
 	
 	activeFactionInfo.defenseDemand /= activeFactionInfo.regionDefenseDemand.size();
-	
-}
-
-/*
-unfinished
-...
-*/
-void findBestUnits()
-{
-	// select factions to iterate through
-	
-	std::unordered_set<int> otherFactionIds;
-	std::unordered_set<int> enemyFactionIds;
-	
-	for (int otherFactionId = 1; otherFactionId < 8; otherFactionId++)
-	{
-		// skip self
-		
-		if (otherFactionId == aiFactionId)
-			continue;
-		
-		// add other faction id
-		
-		otherFactionIds.insert(otherFactionId);
-		
-		// add enemy faction id
-		
-		if (at_war(aiFactionId, otherFactionId))
-		{
-			enemyFactionIds.insert(otherFactionId);
-		}
-		
-	}
-	
-	std::unordered_set<int> factionIds = (enemyFactionIds.size() > 0 ? enemyFactionIds : otherFactionIds);
-	
-	// evaluate best unit components
-	
-	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		
-		// skip not evaluated factions
-		
-		if (factionIds.count(vehicle->faction_id) == 0)
-			continue;
-		
-	}
 	
 }
 

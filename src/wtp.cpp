@@ -1555,12 +1555,12 @@ int wtp_tech_level(int id)
 /*
 Calculates tech cost.
 cost grows cubic from the beginning then linear.
-S  = 10                                     // constant (first tech cost)
-C  = 0.04                                   // cubic coefficient
-B  = 160 * (<map area> / <normal map area>) // linear slope
+S  = 20                                     // constant (first tech cost)
+C  = 10										// cubic coefficient
+B  = 1200 * (<map area> / <normal map area>)// linear slope
 x0 = SQRT(B / (3 * C))                      // break point
 A  = C * x0 ^ 3 - B * x0                    // linear intercept
-x  = (<level> - 1) * 7
+x  = (<level> - 1)
 
 cost = [S + (x < x0 ? C * x ^ 3 : A + B * x)] * scale
 */
@@ -1573,12 +1573,12 @@ int wtp_tech_cost(int fac, int tech) {
         level = wtp_tech_level(tech);
     }
 
-    double S = 30.0;
-    double C = 0.04;
-    double B = 160 * (*map_area_tiles / 3200.0);
+    double S = 20.0;
+    double C = 10.0;
+    double B = 1200 * (*map_area_tiles / 3200.0);
     double x0 = sqrt(B / (3 * C));
     double A = C * x0 * x0 * x0 - B * x0;
-    double x = (level - 1) * 7;
+    double x = (level - 1);
 
     double base = S + (x < x0 ? C * x * x * x : A + B * x);
 
@@ -2120,11 +2120,6 @@ void createFreeVehicles(int factionId)
 
 }
 
-double getVehicleSpeedWithoutRoads(int id)
-{
-	return (double)mod_veh_speed(id) / (double)Rules->mov_rate_along_roads;
-}
-
 double getLandVehicleSpeedOnRoads(int id)
 {
 	double landVehicleSpeedOnRoads;
@@ -2651,13 +2646,13 @@ void expireInfiltrations(int factionId)
 				if (is_human(factionId))
 				{
 					parse_says(0, MFactions[infiltratingFactionId].noun_faction, -1, -1);
-//					popp(scriptTxtID, "INFILTRATIONDEACTIVATEDENEMY", 0, "capture_sm.pcx", 0);
+					popp(scriptTxtID, "INFILTRATIONDEACTIVATEDENEMY", 0, "capture_sm.pcx", 0);
 				}
 
 				if (is_human(infiltratingFactionId))
 				{
 					parse_says(0, MFactions[factionId].noun_faction, -1, -1);
-//					popp(scriptTxtID, "INFILTRATIONDEACTIVATEDOURS", 0, "capture_sm.pcx", 0);
+					popp(scriptTxtID, "INFILTRATIONDEACTIVATEDOURS", 0, "capture_sm.pcx", 0);
 				}
 
 			}
@@ -2669,14 +2664,14 @@ void expireInfiltrations(int factionId)
 				{
 					parse_says(0, MFactions[infiltratingFactionId].noun_faction, -1, -1);
 					parse_num(1, infiltrationDeviceCount);
-//					popp(scriptTxtID, "INFILTRATIONDEVICEDISABLEDENEMY", 0, "capture_sm.pcx", 0);
+					popp(scriptTxtID, "INFILTRATIONDEVICEDISABLEDENEMY", 0, "capture_sm.pcx", 0);
 				}
 
 				if (is_human(infiltratingFactionId))
 				{
 					parse_says(0, MFactions[factionId].noun_faction, -1, -1);
 					parse_num(1, infiltrationDeviceCount);
-//					popp(scriptTxtID, "INFILTRATIONDEVICEDISABLEDOURS", 0, "capture_sm.pcx", 0);
+					popp(scriptTxtID, "INFILTRATIONDEVICEDISABLEDOURS", 0, "capture_sm.pcx", 0);
 				}
 
 			}

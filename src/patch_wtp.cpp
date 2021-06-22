@@ -4059,6 +4059,48 @@ void patch_exact_odds()
 	
 }
 
+/*
+Vanilla obsoletes unit if there is similar one but with and ability.
+With exception of: AMPHIBIOUS | DROP_POD | ANTIGRAV_STRUTS | ARTILLERY | POLICE_2X.
+This patch adds more exception to the above list.
+ABL_CLOAKED
+ABL_AIR_SUPERIORITY
+ABL_DEEP_PRESSURE_HULL
+ABL_CARRIER
+ABL_AAA
+ABL_COMM_JAMMER
+ABL_EMPATH
+ABL_POLY_ENCRYPTION
+ABL_BLINK_DISPLACER
+ABL_TRANCE
+ABL_NERVE_GAS
+ABL_DISSOCIATIVE_WAVE
+*/
+void patch_obsoletion()
+{
+	int obsolete_ability_exceptions_bytes_length = 0x5;
+
+	/*
+	0:  a9 18 84 40 00          test   eax,0x408418
+	*/
+	byte obsolete_ability_exceptions_bytes_old[] = { 0xA9, 0x18, 0x84, 0x40, 0x00 };
+
+	/*
+	0:  a9 fc 9f 56 02          test   eax,0x2569ffc
+	...
+	*/
+	byte obsolete_ability_exceptions_bytes_new[] = { 0xA9, 0xFC, 0x9F, 0x56, 0x02 };
+
+	write_bytes
+	(
+		0x0057FC8C,
+		obsolete_ability_exceptions_bytes_old,
+		obsolete_ability_exceptions_bytes_new,
+		obsolete_ability_exceptions_bytes_length
+	);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4605,6 +4647,8 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_exact_odds();
+	
+	patch_obsoletion();
 	
 }
 

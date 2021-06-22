@@ -665,6 +665,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_threat_level_threshold = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_prototyping_priority"))
+    {
+        cf->ai_production_prototyping_priority = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
         cf->ai_terraforming_nutrientWeight = atof(value);
