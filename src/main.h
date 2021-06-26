@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 249 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 250 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -296,6 +296,7 @@ struct Config {
 	double supply_convoy_and_info_warfare_require_support;
 	bool alternative_support = false;
 	int alternative_support_free_units;
+	int instant_completion_fixed_minerals;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
@@ -324,6 +325,9 @@ struct Config {
     int ai_production_population_projection_turns;
     double ai_production_threat_level_threshold;
     double ai_production_prototyping_priority;
+    double ai_production_command_center_priority;
+    double ai_production_naval_yard_priority;
+    double ai_production_aerospace_complex_priority;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;

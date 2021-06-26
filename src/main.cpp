@@ -557,6 +557,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->alternative_support_free_units = std::min(255, std::max(0, atoi(value)));
     }
+    else if (MATCH("wtp", "instant_completion_fixed_minerals"))
+    {
+        cf->instant_completion_fixed_minerals = std::min(50, std::max(0, atoi(value)));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
@@ -668,6 +672,18 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_production_prototyping_priority"))
     {
         cf->ai_production_prototyping_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_command_center_priority"))
+    {
+        cf->ai_production_command_center_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_naval_yard_priority"))
+    {
+        cf->ai_production_naval_yard_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_aerospace_complex_priority"))
+    {
+        cf->ai_production_aerospace_complex_priority = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {

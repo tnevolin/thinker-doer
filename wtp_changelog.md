@@ -1,3 +1,13 @@
+# Version 250
+
+* AI adjustment: expand vs. defend.
+* AI adjustment: facilities.
+* Tech rate growth steeper.
+* Tech cost corrected based on total discovered tech by all factions.
+* Faster chassis are cheaper: speeder +25%, hovertank +50%, cruiser +25%.
+* Colony costs 6.
+* Pod instant completion is modified to add 20 minerals instead.
+
 # Version 249
 
 * AI production, prototype, combat modifications.

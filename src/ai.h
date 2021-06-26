@@ -173,4 +173,6 @@ bool isVehicleThreatenedByEnemyInField(int vehicleId);
 bool isDestinationReachable(int vehicleId, int x, int y);
 int getRangeToNearestFactionAirbase(int x, int y, int factionId);
 int getVehicleTurnsToDestination(int vehicleId, int x, int y);
+void populateBaseExposures();
+int getNearestEnemyBaseDistance(int baseId);
 

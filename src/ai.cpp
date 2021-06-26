@@ -525,6 +525,10 @@ void populateGlobalVariables()
 		
 	}
 	
+	// base exposure
+	
+	populateBaseExposures();
+	
 }
 
 /*
@@ -1333,6 +1337,68 @@ int getVehicleTurnsToDestination(int vehicleId, int x, int y)
 	}
 	
 	return turns;
+	
+}
+
+void populateBaseExposures()
+{
+	for (int baseId : activeFactionInfo.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		bool ocean = isOceanRegion(baseTile->region);
+		
+		// find nearest enemy base distance
+		
+		int nearestEnemyBaseDistance = getNearestEnemyBaseDistance(baseId);
+		
+		// get exposure decay distance
+		
+		double exposureDecayDistance = (ocean ? 10.0 : 5.0);
+		
+		// calculate exposure
+		
+		double exposure = std::max(exposureDecayDistance, (double)nearestEnemyBaseDistance) / exposureDecayDistance;
+		
+		// set exposure
+		
+		activeFactionInfo.baseStrategies[baseId].exposure = exposure;
+		
+	}
+	
+}
+
+int getNearestEnemyBaseDistance(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	BASE *nearestEnemyBase = NULL;
+	int nearestEnemyBaseDistance = INT_MAX;
+	
+	for (int otherBaseId = 0; otherBaseId < *total_num_bases; otherBaseId++)
+	{
+		BASE *otherBase = &(Bases[otherBaseId]);
+		
+		// skip own
+		
+		if (otherBase->faction_id == base->faction_id)
+			continue;
+		
+		// get distance
+		
+		int distance = vector_dist(base->x, base->y, otherBase->x, otherBase->y);
+		
+		// update best values
+		
+		if (distance < nearestEnemyBaseDistance)
+		{
+			nearestEnemyBase = otherBase;
+			nearestEnemyBaseDistance = distance;
+		}
+		
+	}
+	
+	return nearestEnemyBaseDistance;
 	
 }
 

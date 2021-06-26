@@ -428,7 +428,7 @@ primary item cost = item cost * (corresponding reactor value / 100)
 secondary item shifted cost = (item cost - 1) * (corresponding reactor value / 100)
 
 4. Calculate unit base cost.
-unit base cost = [primary item cost + secondary item shifted cost / 2] * chassis cost / 2
+unit base cost = [primary item cost + secondary item shifted cost / 2] * chassis cost / <infrantry chassis cost>
 
 5. Round.
 
@@ -491,7 +491,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     // calculate base unit cost without abilities
 
-    double base_cost = (primary_item_cost + secondary_item_shifted_cost / 2) * chassis_cost / 2;
+    double base_cost = (primary_item_cost + secondary_item_shifted_cost / 2) * chassis_cost / Chassis[CHS_INFANTRY].cost;
 
     // get abilities cost modifications
 
@@ -1553,16 +1553,20 @@ int wtp_tech_level(int id)
 }
 
 /*
+
 Calculates tech cost.
 cost grows cubic from the beginning then linear.
 S  = 20                                     // constant (first tech cost)
-C  = 10										// cubic coefficient
-B  = 1200 * (<map area> / <normal map area>)// linear slope
+C  = 20										// cubic coefficient
+B  = 1200 * <map root>						// linear slope
 x0 = SQRT(B / (3 * C))                      // break point
 A  = C * x0 ^ 3 - B * x0                    // linear intercept
 x  = (<level> - 1)
 
-cost = [S + (x < x0 ? C * x ^ 3 : A + B * x)] * scale
+correction = (number of tech discovered by anybody / 85) / (turn / 350)
+
+cost = [S + (x < x0 ? C * x ^ 3 : A + B * x)] * scale * correction
+
 */
 int wtp_tech_cost(int fac, int tech) {
     assert(fac >= 0 && fac < 8);
@@ -1574,8 +1578,8 @@ int wtp_tech_cost(int fac, int tech) {
     }
 
     double S = 20.0;
-    double C = 10.0;
-    double B = 1200 * (*map_area_tiles / 3200.0);
+    double C = 20.0;
+    double B = 1200 * sqrt(*map_area_tiles / 3200.0);
     double x0 = sqrt(B / (3 * C));
     double A = C * x0 * x0 * x0 - B * x0;
     double x = (level - 1);
@@ -1602,11 +1606,41 @@ int wtp_tech_cost(int fac, int tech) {
 
     debug("tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %s\n", *current_turn, fac,
         base, dw, cost, level, tech, (tech >= 0 ? Tech[tech].name : NULL));
-
+	
 	// scale
 
 	cost *= conf.tech_cost_scale;
 
+	// correction
+	
+	if (level >= 3 && *current_turn >= 25)
+	{
+		int totalTechCount = 0;
+		int discoveredTechCount = 0;
+		
+		for (int otherTechId = TECH_Biogen; otherTechId <= TECH_BFG9000; otherTechId++)
+		{
+			CTech *otherTech = &(Tech[otherTechId]);
+			
+			if (otherTech->preq_tech1 == TECH_Disable)
+				continue;
+			
+			totalTechCount++;
+			
+			if (TechOwners[otherTechId] != 0)
+			{
+				discoveredTechCount++;
+			}
+			
+		}
+		
+		double correction = ((double)discoveredTechCount / (double)totalTechCount) / ((double)*current_turn / (double)350);
+		debug("tech_cost correction: discoveredTechCount = %d, totalTechCount = %d, current_turn = %d, end_turn = %d, correction = %f\n", discoveredTechCount, totalTechCount, *current_turn, 350, correction);
+		
+		cost *= correction;
+		
+	}
+	
     return std::max(2, (int)cost);
 
 }

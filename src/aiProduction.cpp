@@ -7,6 +7,35 @@
 #include "aiProduction.h"
 #include "ai.h"
 
+const std::unordered_set<int> MANAGED_FACILITIES
+	{
+		FAC_HAB_COMPLEX,
+		FAC_HABITATION_DOME,
+		FAC_RECREATION_COMMONS,
+		FAC_HOLOGRAM_THEATRE,
+		FAC_PARADISE_GARDEN,
+		FAC_RECYCLING_TANKS,
+		FAC_ENERGY_BANK,
+		FAC_NETWORK_NODE,
+		FAC_BIOLOGY_LAB,
+		FAC_HOLOGRAM_THEATRE,
+		FAC_TREE_FARM,
+		FAC_HYBRID_FOREST,
+		FAC_FUSION_LAB,
+		FAC_QUANTUM_LAB,
+		FAC_RESEARCH_HOSPITAL,
+		FAC_NANOHOSPITAL,
+		FAC_GENEJACK_FACTORY,
+		FAC_ROBOTIC_ASSEMBLY_PLANT,
+		FAC_QUANTUM_CONVERTER,
+		FAC_NANOREPLICATOR,
+		FAC_PERIMETER_DEFENSE,
+		FAC_TACHYON_FIELD,
+		FAC_NAVAL_YARD,
+		FAC_AEROSPACE_COMPLEX,
+	}
+;
+
 std::set<int> bestProductionBaseIds;
 std::map<int, std::map<int, double>> unitDemands;
 std::map<int, PRODUCTION_DEMAND> productionDemands;
@@ -115,7 +144,11 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 	// facility
 	else
 	{
-		vanillaPriority = conf.ai_production_vanilla_priority_facility;
+		// only not managed facilities
+		if (MANAGED_FACILITIES.count(-choice) == 0)
+		{
+			vanillaPriority = conf.ai_production_vanilla_priority_facility;
+		}
 	}
 	
 	// raise vanilla priority for military items
@@ -143,6 +176,12 @@ HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
 	// calculate Thinker priority
 	
 	double thinkerPriority = conf.ai_production_thinker_priority;
+	
+	// drop priority for managed facilities
+	if (thinkerChoice < 0 && MANAGED_FACILITIES.count(-thinkerChoice) != 0)
+	{
+		thinkerPriority = 0.0;
+	}
 
 	// raise thinker priority for combat items
 	
@@ -515,11 +554,11 @@ void evaluateDefensiveFacilitiesDemand()
 		{
 			facilityId = FAC_AEROSPACE_COMPLEX;
 		}
-		else if (has_facility_tech(aiFactionId, FAC_PERIMETER_DEFENSE) && has_facility_tech(aiFactionId, FAC_TACHYON_FIELD) && !has_facility(baseId, FAC_PERIMETER_DEFENSE))
+		else if (has_facility_tech(aiFactionId, FAC_PERIMETER_DEFENSE) && !has_facility(baseId, FAC_PERIMETER_DEFENSE))
 		{
 			facilityId = FAC_PERIMETER_DEFENSE;
 		}
-		else if (has_facility_tech(aiFactionId, FAC_PERIMETER_DEFENSE) && has_facility_tech(aiFactionId, FAC_TACHYON_FIELD) && has_facility(baseId, FAC_PERIMETER_DEFENSE) && !has_facility(baseId, FAC_TACHYON_FIELD))
+		else if (has_facility_tech(aiFactionId, FAC_TACHYON_FIELD) && has_facility(baseId, FAC_PERIMETER_DEFENSE) && !has_facility(baseId, FAC_TACHYON_FIELD))
 		{
 			facilityId = FAC_TACHYON_FIELD;
 		}
@@ -561,6 +600,44 @@ void evaluateDefensiveFacilitiesDemand()
 
 void evaluateMilitaryFacilitiesDemand()
 {
+	debug("\tevaluateMilitaryFacilitiesDemand\n");
+	
+	int baseId = productionDemand.baseId;
+	BASE *base = &(Bases[baseId]);
+	MAP *baseTile = getBaseMapTile(baseId);
+	int region = baseTile->region;
+	bool ocean = isOceanRegion(region);
+	std::set<int> connectedOceanRegions = getBaseConnectedOceanRegions(baseId);
+	
+	// command center
+	
+	if (has_facility_tech(aiFactionId, FAC_COMMAND_CENTER) && !has_facility(baseId, FAC_COMMAND_CENTER) && !ocean)
+	{
+		int facilityId = FAC_COMMAND_CENTER;
+		double priority = conf.ai_production_command_center_priority * base->mineral_surplus_final / activeFactionInfo.regionMaxMineralSurpluses[region];
+		addProductionDemand(-facilityId, priority);
+		debug("\t\tfacility=%-25s, ai_production_command_center_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_command_center_priority, priority);
+	}
+	
+	// naval yard
+	
+	if (has_facility_tech(aiFactionId, FAC_NAVAL_YARD) && !has_facility(baseId, FAC_NAVAL_YARD) && (ocean || connectedOceanRegions.size() >= 1))
+	{
+		int facilityId = FAC_NAVAL_YARD;
+		double priority = conf.ai_production_naval_yard_priority * base->mineral_surplus_final / activeFactionInfo.regionMaxMineralSurpluses[region];
+		addProductionDemand(-facilityId, priority);
+		debug("\t\tfacility=%-25s, ai_production_naval_yard_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_naval_yard_priority, priority);
+	}
+	
+	// aerospace complex
+	
+	if (has_facility_tech(aiFactionId, FAC_AEROSPACE_COMPLEX) && !has_facility(baseId, FAC_AEROSPACE_COMPLEX))
+	{
+		int facilityId = FAC_AEROSPACE_COMPLEX;
+		double priority = conf.ai_production_aerospace_complex_priority * base->mineral_surplus_final / activeFactionInfo.maxMineralSurplus;
+		addProductionDemand(-facilityId, priority);
+		debug("\t\tfacility=%-25s, ai_production_aerospace_complex_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_aerospace_complex_priority, priority);
+	}
 	
 }
 
@@ -1947,36 +2024,6 @@ bool isMilitaryItem(int item)
 	else
 	{
 		return false;
-//		int facilityId = -item;
-//		
-//		return
-//			facilityId == FAC_PERIMETER_DEFENSE
-//			||
-//			facilityId == FAC_TACHYON_FIELD
-//			||
-//			facilityId == FAC_COMMAND_CENTER
-//			||
-//			facilityId == FAC_NAVAL_YARD
-//			||
-//			facilityId == FAC_AEROSPACE_COMPLEX
-//			||
-//			facilityId == FAC_BIOENHANCEMENT_CENTER
-//			||
-//			facilityId == FAC_BIOLOGY_LAB
-//			||
-//			facilityId == FAC_CENTAURI_PRESERVE
-//			||
-//			facilityId == FAC_TEMPLE_OF_PLANET
-//			||
-//			facilityId == FAC_BROOD_PIT
-//			||
-//			facilityId == FAC_FLECHETTE_DEFENSE_SYS
-//			||
-//			facilityId == FAC_GEOSYNC_SURVEY_POD
-//			||
-//			facilityId == FAC_COVERT_OPS_CENTER
-//		;
-		
 	}
 	
 }
