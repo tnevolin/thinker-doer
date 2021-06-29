@@ -707,10 +707,11 @@ Support per unit is modified to produce smoother scale without sudden increase b
 
 <pre>
 
-base support = (<number of supported units> * (4 - SUPPORT)) / 4
+base support = (number of supported units * (4 - SUPPORT)) / 4
 round down
 
-Supported units are those not free of support.
+number of supported units = number of all units - free units
+
 Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
 Out of the others first N units are also free.
 

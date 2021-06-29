@@ -4133,6 +4133,12 @@ void patch_instant_completion_fixed_minerals(int minerals)
 	
 }
 
+void patch_turn_upkeep()
+{
+    write_call_over(0x52768A, (int)modifiedTurnUpkeep);
+    write_call_over(0x52A4AD, (int)modifiedTurnUpkeep);
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4686,6 +4692,8 @@ void patch_setup_wtp(Config* cf)
 	{
 		patch_instant_completion_fixed_minerals(cf->instant_completion_fixed_minerals);
 	}
+	
+	patch_turn_upkeep();
 	
 }
 

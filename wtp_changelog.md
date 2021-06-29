@@ -1,3 +1,8 @@
+# Version 251
+
+* All weapons and armor cost 1 less than their value. Unit still has minimal cost.
+* Reduced native units cost.
+
 # Version 250
 
 * AI adjustment: expand vs. defend.

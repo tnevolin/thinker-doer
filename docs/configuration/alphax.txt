@@ -401,21 +401,21 @@ Singularity Engine,   Singularity, 4, SingMec,
 ; Preq   = Technology prerequisite (see TECHNOLOGY)
 ;
 #WEAPONS
-Hand Weapons,         Gun,            1, 0, 1, -1, None,
-Laser,                Laser,          2, 0, 2, -1, Physic,
-Particle Impactor,    Impact,         3, 0, 3, -1, Chaos,
-Gatling Laser,        Gatling,        4, 1, 4, -1, Super,
-Missile Launcher,     Missile,        5, 2, 5, -1, Fossil,
-Chaos Gun,            Chaos,          6, 0, 6, -1, String,
-Fusion Laser,         Fusion,         8, 1, 8, -1, SupLube,
-Tachyon Bolt,         Tachyon,       10, 1,10, -1, Unified,
-Plasma Shard,         Shard,         12, 2,12, -1, Solids,
-Quantum Laser,        Quantum,       16, 1,16, -1, QuanMac,
-Graviton Gun,         Graviton,      20, 0,20, -1, Gravity,
-Singularity Laser,    Singularity,   24, 1,24, -1, ConSing,
+Hand Weapons,         Gun,            1, 0, 0, -1, None,
+Laser,                Laser,          2, 0, 1, -1, Physic,
+Particle Impactor,    Impact,         3, 0, 2, -1, Chaos,
+Gatling Laser,        Gatling,        4, 1, 3, -1, Super,
+Missile Launcher,     Missile,        5, 2, 4, -1, Fossil,
+Chaos Gun,            Chaos,          6, 0, 5, -1, String,
+Fusion Laser,         Fusion,         8, 1, 7, -1, SupLube,
+Tachyon Bolt,         Tachyon,       10, 1, 9, -1, Unified,
+Plasma Shard,         Shard,         12, 2,11, -1, Solids,
+Quantum Laser,        Quantum,       16, 1,15, -1, QuanMac,
+Graviton Gun,         Graviton,      20, 0,19, -1, Gravity,
+Singularity Laser,    Singularity,   24, 1,23, -1, ConSing,
 Resonance Laser,      R-Laser,        3, 1,11, -1, Disable,
 Resonance Bolt,       R-Bolt,        12, 1,22, -1, Disable,
-String Disruptor,     String,        30, 1,30, -1, BFG9000,
+String Disruptor,     String,        30, 1,29, -1, BFG9000,
 Psi Attack,           Psi,           -1, 2,10, -1, Disable,
 Planet Buster,        Planet Buster, 99, 0,32, -1, AGrav,
 Colony Module,        Colony Pod,     0, 8, 6, -1, None,     ; Noncombat packages
@@ -441,15 +441,15 @@ Fungal Payload,       Fungal,         0,14,24, -1, NewMiss
 ; Preq    = Technology prerequisite (see TECHNOLOGY)
 ;
 #DEFENSES
-No Armor,            Scout,       1, 0, 1, None,
-Synthmetal Armor,    Synthmetal,  2, 0, 2, Indust,
-Plasma Steel Armor,  Plasma,      3, 2, 3, Chemist,
-Silksteel Armor,     Silksteel,   5, 1, 5, Alloys,
-Photon Wall,         Photon,      8, 1, 8, DocSec,
-Probability Sheath,  Probability,12, 2,12, ProbMec,
-Neutronium Armor,    Neutronium, 16, 1,16, MatComp,
-Antimatter Plate,    Antimatter, 22, 2,22, NanEdit,
-Stasis Generator,    Stasis,     30, 2,30, TempMec,
+No Armor,            Scout,       1, 0, 0, None,
+Synthmetal Armor,    Synthmetal,  2, 0, 1, Indust,
+Plasma Steel Armor,  Plasma,      3, 2, 2, Chemist,
+Silksteel Armor,     Silksteel,   5, 1, 4, Alloys,
+Photon Wall,         Photon,      8, 1, 7, DocSec,
+Probability Sheath,  Probability,12, 2,11, ProbMec,
+Neutronium Armor,    Neutronium, 16, 1,15, MatComp,
+Antimatter Plate,    Antimatter, 22, 2,21, NanEdit,
+Stasis Generator,    Stasis,     30, 2,29, TempMec,
 Psi Defense,         Psi,        -1, 2, 6, Disable,
 Pulse 3 Armor,       3-Pulse,     3, 1, 5, Disable,
 Resonance 3 Armor,   3-Res,       3, 1, 5, Disable,
@@ -602,14 +602,14 @@ Sea Formers,            Foil,     Formers,      Scout,      9, 0, 0, Ecology, -1
 Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, Disable, -1, 00000000000000000000000000
 Speeder Probe Team,     Speeder,  Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
 Alien Artifact,         Infantry, Artifact,     Scout,     12,10, 0, Disable,  2, 00000000000000000000000000
-Mind Worms,             Infantry, Psi,          Psi,        1, 8, 0, CentEmp,  3, 00000000000000000000000000
-Isle of the Deep,       Foil,     Psi,          Psi,        7,12, 4, CentMed, -1, 00000000000000000000000000
-Locusts of Chiron,      Gravship, Psi,          Psi,        4,16, 0, CentPsi, -1, 00000000000000000000100000
+Mind Worms,             Infantry, Psi,          Psi,        1, 6, 0, CentEmp,  3, 00000000000000000000000000
+Isle of the Deep,       Foil,     Psi,          Psi,        7, 9, 4, CentMed, -1, 00000000000000000000000000
+Locusts of Chiron,      Gravship, Psi,          Psi,        4,12, 0, CentPsi, -1, 00000000000000000000100000
 Unity Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Disable, -1, 00000000000000000000000000
 Unity Scout Chopper,    Copter,   Gun,          Scout,      4, 0, 0, Disable, -1, 00000000000000000000100000
 Unity Foil,             Foil,     Transport,    Scout,      7, 0, 0, Disable, -1, 00100000000000000000000000
-Sealurk,                Foil,     Psi,          Psi,        6, 8, 0, Bioadap,  4, 00000000000000000001000000
-Spore Launcher,         Infantry, Psi,          Psi,        0, 8, 0, Bioadap,  5, 00000000001000000000000000
+Sealurk,                Foil,     Psi,          Psi,        6, 6, 0, Bioadap,  4, 00000000000000000001000000
+Spore Launcher,         Infantry, Psi,          Psi,        0, 6, 0, Bioadap,  5, 00000000001000000000000000
 Battle Ogre MK1,        Infantry, R-Laser,      3-Res,      0,10, 0, Disable,  6, 00010000000000000000000000
 Battle Ogre MK2,        Infantry, R-Bolt,       8-Res,      0,15, 0, Disable,  6, 10010000000000000000000000
 Battle Ogre MK3,        Speeder,  String,       Stasis,     0,20, 0, Disable,  6, 10010000000000000000000000

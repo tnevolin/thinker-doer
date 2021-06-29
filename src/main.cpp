@@ -561,6 +561,30 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->instant_completion_fixed_minerals = std::min(50, std::max(0, atoi(value)));
     }
+    else if (MATCH("wtp", "native_unit_cost_time_multiplier"))
+    {
+        cf->native_unit_cost_time_multiplier = std::min(2.0, std::max(1.0, atof(value)));
+    }
+    else if (MATCH("wtp", "native_unit_cost_initial_mind_worm"))
+    {
+        cf->native_unit_cost_initial_mind_worm = std::min(20, std::max(1, atoi(value)));
+    }
+    else if (MATCH("wtp", "native_unit_cost_initial_spore_launcher"))
+    {
+        cf->native_unit_cost_initial_spore_launcher = std::min(20, std::max(1, atoi(value)));
+    }
+    else if (MATCH("wtp", "native_unit_cost_initial_sealurk"))
+    {
+        cf->native_unit_cost_initial_sealurk = std::min(20, std::max(1, atoi(value)));
+    }
+    else if (MATCH("wtp", "native_unit_cost_initial_isle_of_the_deep"))
+    {
+        cf->native_unit_cost_initial_isle_of_the_deep = std::min(20, std::max(1, atoi(value)));
+    }
+    else if (MATCH("wtp", "native_unit_cost_initial_locusts_of_chiron"))
+    {
+        cf->native_unit_cost_initial_locusts_of_chiron = std::min(20, std::max(1, atoi(value)));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 250 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 251 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -297,6 +297,12 @@ struct Config {
 	bool alternative_support = false;
 	int alternative_support_free_units;
 	int instant_completion_fixed_minerals;
+	double native_unit_cost_time_multiplier;
+	int native_unit_cost_initial_mind_worm;
+	int native_unit_cost_initial_spore_launcher;
+	int native_unit_cost_initial_sealurk;
+	int native_unit_cost_initial_isle_of_the_deep;
+	int native_unit_cost_initial_locusts_of_chiron;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

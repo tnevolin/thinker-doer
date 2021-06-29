@@ -1442,7 +1442,7 @@ and swallowed the pod!
 #wave 0
 #caption Operations Director
 We have discovered a {materials pod} from the Unity!
-It has provided some minerals to aid in building the $ITEM0 at $BASENAME1!
+It has provided minerals to aid in building the $ITEM0 at $BASENAME1!
 
 #GOODYARTIFACT
 #xs 320

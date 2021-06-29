@@ -447,6 +447,11 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     double fission_reactor_cost_factor = (double)conf.reactor_cost_factors[0] / 100.0;
     double reactor_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1] / 100.0;
+    
+    // calculate minimal item costs
+    
+    int minimal_weapon_cost = Weapon[WPN_HAND_WEAPONS].cost;
+    int minimal_armor_cost = Armor[ARM_NO_ARMOR].cost;
 
     // get component values
 
@@ -477,12 +482,12 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     if (weapon_reactor_modified_cost >= armor_reactor_modified_cost)
 	{
 		primary_item_cost = weapon_reactor_modified_cost;
-		secondary_item_shifted_cost = ((double)armor_cost - 1) * reactor_cost_factor;
+		secondary_item_shifted_cost = ((double)armor_cost - minimal_armor_cost) * reactor_cost_factor;
 	}
 	else
 	{
 		primary_item_cost = armor_reactor_modified_cost;
-		secondary_item_shifted_cost = ((double)weapon_cost - 1) * (module ? fission_reactor_cost_factor : reactor_cost_factor);
+		secondary_item_shifted_cost = ((double)weapon_cost - minimal_weapon_cost) * (module ? fission_reactor_cost_factor : reactor_cost_factor);
 	}
 
     // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
@@ -4290,6 +4295,26 @@ void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_st
 		supportedVehicleCount++;
 		
 	}
+	
+}
+
+int __cdecl modifiedTurnUpkeep()
+{
+	if (conf.native_unit_cost_time_multiplier > 1.0)
+	{
+		// modify native units cost
+		
+		double multiplier = pow(conf.native_unit_cost_time_multiplier, *current_turn);
+		
+		Units[BSC_MIND_WORMS].cost = (int)floor((double)conf.native_unit_cost_initial_mind_worm * multiplier);
+		Units[BSC_SPORE_LAUNCHER].cost = (int)floor((double)conf.native_unit_cost_initial_spore_launcher * multiplier);
+		Units[BSC_SEALURK].cost = (int)floor((double)conf.native_unit_cost_initial_sealurk * multiplier);
+		Units[BSC_ISLE_OF_THE_DEEP].cost = (int)floor((double)conf.native_unit_cost_initial_isle_of_the_deep * multiplier);
+		Units[BSC_LOCUSTS_OF_CHIRON].cost = (int)floor((double)conf.native_unit_cost_initial_locusts_of_chiron * multiplier);
+		
+	}
+	
+	return mod_turn_upkeep();
 	
 }
 
