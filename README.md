@@ -306,7 +306,9 @@ I also clearly understand that exact SP cost is not that relevant. It easily can
 
 ##### SP replacing facilities those are beneficial in every base (The Planetary Energy Grid)
 
- 10 \* <facility cost in minerals> + 100 \* <facility maintenance in credits>
+<pre>
+10 * facility cost in minerals + 100 * facility maintenance in credits
+</pre>
 
 ##### SP replacing facilities those are not beneficial in every base (The Command Nexus)
 
@@ -314,8 +316,10 @@ Same as above but reduced by some arbitrary usability factor.
 
 ##### SP providing tangible benefit (The Human Genome)
 
- 100 \* <facility benefit in energy>
- 200 \* <facility benefit in minerals>
+<pre>
+100 * facility benefit in energy
+200 * facility benefit in minerals
+</pre>
 
 ##### SP with unique abilities (The Xenoempathy Dome)
 
