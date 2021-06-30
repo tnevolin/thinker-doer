@@ -2,6 +2,7 @@
 
 * All weapons and armor cost 1 less than their value. Unit still has minimal cost.
 * Reduced native units cost.
+* Fixed Knowledge SE effect list.
 
 # Version 250
 
