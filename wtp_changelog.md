@@ -1,8 +1,16 @@
+# Version 252
+
+* Reduced free units to 2 to match vanilla closer. Anything higher seems excessive.
+* Set base weapon and armor cost to 1. Previously it was set to 0 making Trance Scout Patrol too cheap.
+* Updated Hive description to highlight EFFICIENCY immunity.
+* Updated Cyborgs description to reflect their correct innate SE bonuses.
+
 # Version 251
 
 * All weapons and armor cost 1 less than their value. Unit still has minimal cost.
 * Reduced native units cost.
 * Fixed Knowledge SE effect list.
+* Stopped maintaning multiplayer configuration. Nobody ever requested me any specific for that. They are just identical copies.
 
 # Version 250
 

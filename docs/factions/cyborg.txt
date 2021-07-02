@@ -90,8 +90,8 @@ personalities can only be attributed to archaic evolutionary tendencies.
 ^
 
 #DATALINKS2
-^+2 RESEARCH: {Human research abilities enhanced by algorithmic control}
-^+2 EFFICIENCY: {Cybernetic biologicals extremely efficient}
+^+1 RESEARCH: {Human research abilities enhanced by algorithmic control}
+^+1 EFFICIENCY: {Cybernetic biologicals extremely efficient}
 ^-1 GROWTH: {Humans 'possessed by an algorithm' find reproduction awkward} 
 ^Impunity to CYBERNETIC penalty: {Cybernetic social choice is 'rational' and not dissented by citizens}
 ^Can steal technology when capturing a base

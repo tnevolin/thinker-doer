@@ -107,6 +107,7 @@ enlightenment.
 ^+1 GROWTH:   {Rapid population growth}
 ^+1 INDUSTRY: {Brutal serfdom}
 ^-2 ECONOMY:  {Little political freedom}
+^IMMUNITY to EFFICIENCY penalty
 ^Underground bunkers: {Free PERIMETER DEFENSE at each base}
 ^{May not use Democratic politics.}
 
