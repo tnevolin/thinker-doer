@@ -550,14 +550,13 @@ $LINK<Pholus Mutagen=110086>) and is not adjacent to an enemy unit.
 
 #CONCEPT34
 Every unit exerts a {Zone of Control} into every adjacent
-square (but units in sea squares do not exert zones of control into land
-squares, nor vice versa).
+square of the same type unit is on (land or sea).
 ^
 Land units may not normally move between two squares in an enemy
 zone of control, with the following exceptions:
 ^* Units may freely move into and out of bases.
 ^* Units may freely attack any adjacent unit.
-^* Units may freely enter squares already containing friendly units.
+^* Units may freely enter squares already containing friendly non probe units.
 ^* $LINK<Probe teams=30006> and units with the $LINK<Cloaking ability=80002>
 may ignore this rule.
 ^
