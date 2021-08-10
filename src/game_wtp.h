@@ -112,6 +112,8 @@ int const BASE_TILE_OFFSETS[BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT][2] =
 	{-2,-4},
 };
 
+bool has_armor(int factionId, int armorId);
+bool has_reactor(int factionId, int reactorId);
 int getBaseMineralCost(int baseId, int itemId);
 int veh_triad(int id);
 int map_rainfall(MAP *tile);

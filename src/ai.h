@@ -156,6 +156,8 @@ void setSharedOceanRegions();
 VEH *getVehicleByAIId(int aiId);
 Location getNearestPodLocation(int vehicleId);
 void designUnits();
+void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::vector<int> weaponIds, std::vector<int> armorIds, std::vector<int> abilitiesSets, int reactorId, int plan, char *name);
+void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
 void evaluateBaseNativeDefenseDemands();
 int getNearestFactionBaseRange(int factionId, int x, int y);
 int getNearestBaseId(int x, int y, std::unordered_set<int> baseIds);

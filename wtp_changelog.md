@@ -1,3 +1,7 @@
+# Version 253
+
+* AI verifies prototype is legit before proposing it. Previously some not allowed combinations were generated. Not tested.
+
 # Version 252
 
 * Reduced free units to 2 to match vanilla closer. Anything higher seems excessive.

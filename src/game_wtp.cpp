@@ -1,6 +1,16 @@
 #include "game_wtp.h"
 #include "terranx_wtp.h"
 
+bool has_armor(int factionId, int armorId)
+{
+	return has_tech(factionId, Armor[armorId].preq_tech);
+}
+
+bool has_reactor(int factionId, int reactorId)
+{
+	return has_tech(factionId, Reactor[reactorId].preq_tech);
+}
+
 /*
 Calculates mineral cost for given item at base.
 Base cost modifying facilites (Skunkworks and Brood Pits) are taken into account.
