@@ -3101,20 +3101,37 @@ HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int
 	if (attackerVehicle->faction_id == *current_player_faction)
 	{
 		int defenderVehicleId = veh_at(tx, ty);
-
+		
 		if (defenderVehicleId >= 0)
 		{
-			VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+			bool nonArtifactUnitExists = false;
+			
+			std::vector<int> stackedVehicleIds = getStackedVehicleIds(defenderVehicleId);
+			
+			for (int vehicleId : stackedVehicleIds)
+			{
+				if (Units[Vehicles[vehicleId].unit_id].weapon_type != WPN_ALIEN_ARTIFACT)
+				{
+					nonArtifactUnitExists = true;
+					break;
+				}
+			}
+			
+			if (nonArtifactUnitExists)
+			{
+				VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
 
-			int treatyNotBroken = tx_break_treaty(attackerVehicle->faction_id, defenderVehicle->faction_id, 0xB);
+				int treatyNotBroken = tx_break_treaty(attackerVehicle->faction_id, defenderVehicle->faction_id, 0xB);
 
-			if (treatyNotBroken)
-				return;
+				if (treatyNotBroken)
+					return;
 
-			// break treaty really
+				// break treaty really
 
-			tx_act_of_aggression(attackerVehicle->faction_id, defenderVehicle->faction_id);
-
+				tx_act_of_aggression(attackerVehicle->faction_id, defenderVehicle->faction_id);
+				
+			}
+			
 		}
 
 	}

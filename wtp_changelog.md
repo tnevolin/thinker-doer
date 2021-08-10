@@ -1,3 +1,7 @@
+# Version 254
+
+* Do not break treaty when attacking artifacts only stack.
+
 # Version 253
 
 * AI verifies prototype is legit before proposing it. Previously some not allowed combinations were generated. Not tested.
