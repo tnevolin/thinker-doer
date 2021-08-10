@@ -1,6 +1,7 @@
 # Version 254
 
 * Do not break treaty when attacking artifacts only stack.
+* Updated Zone of Control concept wording.
 
 # Version 253
 
