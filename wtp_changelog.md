@@ -1,3 +1,70 @@
+# Version 255
+
+* Attempt to revise factions and make them closer to original ones. At least in idea.
+
+## Angels
+
+* TECH: Flexibility -> Polymorphic Software. To allow immediate land/sea probes production.
+* SHARETECH, 3. Infiltration is not required to steal research.
+* SOCIAL: ---RESEARCH. Increased penalty to compensate for research stealing.
+
+## Beleviers
+
+* Reverted to original.
+
+## Caretakers
+
+* TECH: Progenitor Psych, Centauri Ecology. Both suit them well.
+* SOCIAL, +PLANET, SOCIAL, -INDUSTRY. Industry penalty to compensate their extra colony at start.
+
+## Cyborgs
+
+* Reverted to original except below.
+* SOCIAL: ++RESEARCH, ++EFFIC, --GROWTH. I decided to keep their original bonuses but penalize growth more instead.
+
+## Drones
+
+* Identical to original.
+
+## Cultists
+
+* Reverted to original.
+
+## Gaians
+
+* Identical to original.
+
+## Hive
+
+* Reverted to original.
+
+## Morganites
+
+* Identical to original.
+
+## Peacekeepers
+
+* Reverted to original.
+
+## Pirates
+
+* Reverted to original except below.
+* Neither aquatic faction receives extra minelar from sea.
+
+## Spartans
+
+* Identical to original.
+
+## University
+
+* Reverted to original except below.
+* SOCIAL: +++RESEARCH. Their lore is to be distinct researchers beyond anyone else in the game.
+
+## Usurpers
+
+* TECH: Progenitor Psych, Applied Physics. Both suit them well.
+* SOCIAL, +GROWTH, SOCIAL, +MORALE, SOCIAL, -PLANET, SOCIAL, -INDUSTRY. Industry penalty to compensate their extra colony at start.
+
 # Version 254
 
 * Do not break treaty when attacking artifacts only stack.

@@ -12,7 +12,7 @@
 
 #PEACE
 Peacekeeping Forces, The Humanitarian, Peacekeepers, M, 2, Lal, M,  0,  0, 1, 0, 1,
-  TECH, Physic, TALENT, 4, SOCIAL, -EFFIC, POPULATION, -2, VOTES, 2
+  TECH, Biogen, TALENT, 4, SOCIAL, -EFFIC, POPULATION, -2, VOTES, 2
   Politics, Democratic, GROWTH
   Politics, Police State, nil
   Peacekeeper, Peace,
