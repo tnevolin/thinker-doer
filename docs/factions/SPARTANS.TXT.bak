@@ -88,7 +88,7 @@ brethren than linear arithmetic would seem to indicate.
 ^+2 MORALE:  {Well-armed survivalist movement}
 ^+1 POLICE:  {Highly disciplined followers}
 ^-1 INDUSTRY:  {Extravagant weapons are costly}
-^-1 EFFIC:  {Waisteful war oriented society}
+^-1 EFFIC:  {Waistful war oriented society}
 ^Prototype units do not cost extra minerals.
 ^{May not use Wealth value in Social Engineering.}
 

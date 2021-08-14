@@ -1,66 +1,82 @@
+# Version 256
+
+* Updated alien factions description to match their bonuses.
+* Nerve Gas Pods is allowed for sea units.
+* Removed Infantry Probe Team predefined unit.
+
+## Experimental faction balancing.
+
+### Spartans
+
+People say they are very strong with their +1 POLICE that turns into +3 POLICE while running PS and double police power. Adding -1 EFFICIENCY penalty to make their PS choice more difficult to support.
+
+### Cult of Planet
+
+People say they are very strong with their +2 PLANET and double police power for native units. Adding -1 POLICE penalty to make them more difficult to achieve higher police ratings.
+
 # Version 255
 
-* Attempt to revise factions and make them closer to original ones. At least in idea.
+## Attempt to revise factions and make them closer to original ones. At least in idea.
 
-## Angels
+### Angels
 
 * TECH: Flexibility -> Polymorphic Software. To allow immediate land/sea probes production.
 * SHARETECH, 3. Infiltration is not required to steal research.
 * SOCIAL: ---RESEARCH. Increased penalty to compensate for research stealing.
 
-## Beleviers
+### Beleviers
 
 * Reverted to original.
 
-## Caretakers
+### Caretakers
 
 * TECH: Progenitor Psych, Centauri Ecology. Both suit them well.
 * SOCIAL, +PLANET, SOCIAL, -INDUSTRY. Industry penalty to compensate their extra colony at start.
 
-## Cyborgs
+### Cyborgs
 
 * Reverted to original except below.
 * SOCIAL: ++RESEARCH, ++EFFIC, --GROWTH. I decided to keep their original bonuses but penalize growth more instead.
 
-## Drones
+### Drones
 
 * Identical to original.
 
-## Cultists
+### Cultists
 
 * Reverted to original.
 
-## Gaians
+### Gaians
 
 * Identical to original.
 
-## Hive
+### Hive
 
 * Reverted to original.
 
-## Morganites
+### Morganites
 
 * Identical to original.
 
-## Peacekeepers
+### Peacekeepers
 
 * Reverted to original.
 
-## Pirates
+### Pirates
 
 * Reverted to original except below.
 * Neither aquatic faction receives extra minelar from sea.
 
-## Spartans
+### Spartans
 
 * Identical to original.
 
-## University
+### University
 
 * Reverted to original except below.
 * SOCIAL: +++RESEARCH. Their lore is to be distinct researchers beyond anyone else in the game.
 
-## Usurpers
+### Usurpers
 
 * TECH: Progenitor Psych, Applied Physics. Both suit them well.
 * SOCIAL, +GROWTH, SOCIAL, +MORALE, SOCIAL, -PLANET, SOCIAL, -INDUSTRY. Industry penalty to compensate their extra colony at start.
