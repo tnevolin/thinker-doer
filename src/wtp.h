@@ -193,4 +193,5 @@ int __cdecl modifiedMindControlCaptureBase(int baseId, int faction, int probe);
 void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVehicleId, int radius);
 void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_string_pointer);
 int __cdecl modifiedTurnUpkeep();
+int __cdecl isDestroyableImprovement(int terraformIndex, int items);
 

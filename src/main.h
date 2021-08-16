@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 256 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 257 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -303,6 +303,7 @@ struct Config {
 	int native_unit_cost_initial_sealurk;
 	int native_unit_cost_initial_isle_of_the_deep;
 	int native_unit_cost_initial_locusts_of_chiron;
+	bool disable_sensor_destroying;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

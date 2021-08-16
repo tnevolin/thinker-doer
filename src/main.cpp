@@ -585,6 +585,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->native_unit_cost_initial_locusts_of_chiron = std::min(20, std::max(1, atoi(value)));
     }
+    else if (MATCH("wtp", "disable_sensor_destroying"))
+    {
+        cf->disable_sensor_destroying = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

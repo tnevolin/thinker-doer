@@ -4335,3 +4335,34 @@ int __cdecl modifiedTurnUpkeep()
 	
 }
 
+/*
+Returns 1 if terraform improvement is destroyable, 0 otherwise.
+*/
+int __cdecl isDestroyableImprovement(int terraformIndex, int items)
+{
+	// exclude road if there is magtube
+	
+	if (terraformIndex == FORMER_ROAD && (items & TERRA_MAGTUBE))
+		return 0;
+	
+	// exclude farm if there is soil enricher
+	
+	if (terraformIndex == FORMER_FARM && (items & TERRA_SOIL_ENR))
+		return 0;
+	
+	// exclude plant fungus
+	
+	if (terraformIndex == FORMER_PLANT_FUNGUS)
+		return 0;
+	
+	// exclude sensor
+	
+	if (terraformIndex == FORMER_SENSOR)
+		return 0;
+	
+	// return 1 by default
+	
+	return 1;
+	
+}
+

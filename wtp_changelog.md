@@ -1,3 +1,8 @@
+# Version 257
+
+* Reverted weapon and armor cost to match their strength. It was an interesting experiment but I didn't see it adding much value.
+* Disable destroying sensors. Tested in single player.
+
 # Version 256
 
 * Updated alien factions description to match their bonuses.

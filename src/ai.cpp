@@ -1451,7 +1451,6 @@ void populateBaseExposures()
 {
 	for (int baseId : activeFactionInfo.baseIds)
 	{
-		BASE *base = &(Bases[baseId]);
 		MAP *baseTile = getBaseMapTile(baseId);
 		bool ocean = isOceanRegion(baseTile->region);
 		
@@ -1479,7 +1478,6 @@ int getNearestEnemyBaseDistance(int baseId)
 {
 	BASE *base = &(Bases[baseId]);
 	
-	BASE *nearestEnemyBase = NULL;
 	int nearestEnemyBaseDistance = INT_MAX;
 	
 	for (int otherBaseId = 0; otherBaseId < *total_num_bases; otherBaseId++)
@@ -1499,7 +1497,6 @@ int getNearestEnemyBaseDistance(int baseId)
 		
 		if (distance < nearestEnemyBaseDistance)
 		{
-			nearestEnemyBase = otherBase;
 			nearestEnemyBaseDistance = distance;
 		}
 		

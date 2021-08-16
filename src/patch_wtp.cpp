@@ -4133,6 +4133,70 @@ void patch_instant_completion_fixed_minerals(int minerals)
 	
 }
 
+void patch_disable_sensor_destroying()
+{
+	int disable_sensor_destroying_select_bytes_length = 0x1f;
+
+	/*
+	0:  83 fe 05                cmp    esi,0x5
+	3:  75 08                   jne    0xd
+	5:  f6 45 ec 08             test   BYTE PTR [ebp-0x14],0x8
+	9:  75 5a                   jne    0x65
+	b:  eb 14                   jmp    0x21
+	d:  85 f6                   test   esi,esi
+	f:  75 0b                   jne    0x1c
+	11: f7 45 ec 00 00 08 00    test   DWORD PTR [ebp-0x14],0x80000
+	18: 75 4b                   jne    0x65
+	1a: eb 05                   jmp    0x21
+	1c: 83 fe 0b                cmp    esi,0xb
+	*/
+	byte disable_sensor_destroying_select_bytes_old[] = { 0x83, 0xFE, 0x05, 0x75, 0x08, 0xF6, 0x45, 0xEC, 0x08, 0x75, 0x5A, 0xEB, 0x14, 0x85, 0xF6, 0x75, 0x0B, 0xF7, 0x45, 0xEC, 0x00, 0x00, 0x08, 0x00, 0x75, 0x4B, 0xEB, 0x05, 0x83, 0xFE, 0x0B };
+
+	/*
+	0:  ff 75 ec                push   DWORD PTR [ebp-0x14]
+	3:  56                      push   esi
+	4:  e8 fd ff ff ff          call   6 <_main+0x6>
+	9:  83 c4 08                add    esp,0x8
+	c:  85 c0                   test   eax,eax
+	...
+	*/
+	byte disable_sensor_destroying_select_bytes_new[] = { 0xFF, 0x75, 0xEC, 0x56, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x08, 0x85, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+	write_bytes
+	(
+		0x004D57FD,
+		disable_sensor_destroying_select_bytes_old,
+		disable_sensor_destroying_select_bytes_new,
+		disable_sensor_destroying_select_bytes_length
+	);
+	
+    write_call(0x004D57FD + 0x4, (int)isDestroyableImprovement);
+    
+	int disable_sensor_destroying_exclude_bytes_length = 0x8;
+
+	/*
+	0:  8b 45 14                mov    eax,DWORD PTR [ebp+0x14]
+	3:  24 df                   and    al,0xdf
+	5:  89 45 14                mov    DWORD PTR [ebp+0x14],eax
+	*/
+	byte disable_sensor_destroying_exclude_bytes_old[] = { 0x8B, 0x45, 0x14, 0x24, 0xDF, 0x89, 0x45, 0x14 };
+
+	/*
+	0:  81 65 14 df ff ff 7f    and    DWORD PTR [ebp+0x14],0x7fffffdf
+	...
+	*/
+	byte disable_sensor_destroying_exclude_bytes_new[] = { 0x81, 0x65, 0x14, 0xDF, 0xFF, 0xFF, 0x7F, 0x90 };
+
+	write_bytes
+	(
+		0x004CAE0A,
+		disable_sensor_destroying_exclude_bytes_old,
+		disable_sensor_destroying_exclude_bytes_new,
+		disable_sensor_destroying_exclude_bytes_length
+	);
+	
+}
+
 void patch_turn_upkeep()
 {
     write_call_over(0x52768A, (int)modifiedTurnUpkeep);
@@ -4694,6 +4758,11 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_turn_upkeep();
+	
+	if (cf->disable_sensor_destroying)
+	{
+		patch_disable_sensor_destroying();
+	}
 	
 }
 
