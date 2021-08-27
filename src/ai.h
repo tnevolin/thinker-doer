@@ -10,6 +10,9 @@
 #include "aiCombat.h"
 #include "aiColony.h"
 #include "aiTransport.h"
+#include "terranx_enums.h"
+
+const int COMBAT_ABILITY_FLAGS = ABL_AMPHIBIOUS | ABL_AIR_SUPERIORITY | ABL_AAA | ABL_COMM_JAMMER | ABL_EMPATH | ABL_ARTILLERY | ABL_BLINK_DISPLACER | ABL_TRANCE | ABL_NERVE_GAS | ABL_SOPORIFIC_GAS | ABL_DISSOCIATIVE_WAVE;
 
 struct FactionInfo
 {
@@ -40,12 +43,16 @@ struct Threat
 
 struct DefenseDemand
 {
-	double psiThreat;
-	double conventionalThreat;
+	double landPsiOffense;
+	double landPsiDefense;
+	double seaPsiOffense;
+	double seaPsiDefense;
+	double airPsiOffense;
+	double airPsiDefense;
+	double conventionalOffense;
+	double conventionalDefense;
 	double psiDefense;
 	double psiOffense;
-	double conventionalDefense;
-	double conventionalOffense;
 	double artillery;
 	double psiDefenseDemand;
 	double psiOffenseDemand;
@@ -64,13 +71,15 @@ struct BaseStrategy
 	int unpopulatedTileCount;
 	int unpopulatedTileRangeSum;
 	double averageUnpopulatedTileRange;
-	double psiDefenseMultiplier;
+	double sensorOffenseMultiplier;
+	double sensorDefenseMultiplier;
+	double intrinsicDefenseMultiplier;
 	double conventionalDefenseMultipliers[3];
-	double conventionalDefenseDemand;
-	bool withinFriendlySensorRange;
 	double exposure;
 	bool inSharedOceanRegion;
-	DefenseDemand defenseDemand;
+	double defenseDemand;
+	int targetBaseId;
+	std::map<int, double> defenderDestroyedByTypes;
 };
 
 struct ESTIMATED_VALUE
@@ -79,17 +88,59 @@ struct ESTIMATED_VALUE
 	double remaining;
 };
 
-struct MILITARY_STRENGTH
+struct UnitTypeStrength
 {
-	int totalUnitCount = 0;
-	int regularUnitCount = 0;
-	double psiStrength = 0.0;
-	double conventionalStrength = 0.0;
+	double weight = 0.0;
+	double psiOffense = 0.0;
+	double psiDefense = 0.0;
+	double conventionalOffense = 0.0;
+	double conventionalDefense = 0.0;
+	
+	void normalize(double totalWeight)
+	{
+		this->psiOffense /= this->weight;
+		this->psiDefense /= this->weight;
+		this->conventionalOffense /= this->weight;
+		this->conventionalDefense /= this->weight;
+		this->weight /= totalWeight;
+	}
+	
+};
+
+struct MilitaryStrength
+{
+	double totalWeight = 0.0;
+	std::map<int, UnitTypeStrength> unitTypeStrengths;
+	
+	void normalize()
+	{
+		for
+		(
+			std::map<int, UnitTypeStrength>::iterator unitTypeStrengthIterator = this->unitTypeStrengths.begin();
+			unitTypeStrengthIterator != this->unitTypeStrengths.end();
+			unitTypeStrengthIterator++
+		)
+		{
+			UnitTypeStrength *unitTypeStrength = &(unitTypeStrengthIterator->second);
+			unitTypeStrength->normalize(this->totalWeight);
+			
+		}
+		
+	}
+	
+};
+
+struct VehicleWeight
+{
+	int id;
+	double weight;
 };
 
 struct ActiveFactionInfo
 {
 	FactionInfo factionInfos[8];
+	int bestWeaponOffenseValue;
+	int bestArmorDefenseValue;
 	std::vector<int> baseIds;
 	std::unordered_map<MAP *, int> baseLocations;
 	std::unordered_set<int> presenceRegions;
@@ -100,7 +151,8 @@ struct ActiveFactionInfo
 	std::vector<int> combatVehicleIds;
 	std::vector<int> scoutVehicleIds;
 	std::vector<int> outsideCombatVehicleIds;
-	std::vector<int> prototypes;
+	std::vector<int> unitIds;
+	std::vector<int> combatUnitIds;
 	std::vector<int> colonyVehicleIds;
 	std::vector<int> formerVehicleIds;
 	double threatLevel;
@@ -108,13 +160,19 @@ struct ActiveFactionInfo
 	std::unordered_map<int, std::vector<int>> regionSurfaceScoutVehicleIds;
 	std::unordered_map<int, double> baseAnticipatedNativeAttackStrengths;
 	std::unordered_map<int, double> baseRemainingNativeProtectionDemands;
-	double defenseDemand;
+	int mostVulnerableBaseId;
+	double mostVulnerableBaseDefenseDemand;
 	std::unordered_map<int, double> regionDefenseDemand;
 	int maxMineralSurplus;
 	std::unordered_map<int, int> regionMaxMineralSurpluses;
 	int bestLandUnitId;
 	int bestSeaUnitId;
 	int bestAirUnitId;
+	std::vector<int> landCombatUnitIds;
+	std::vector<int> seaCombatUnitIds;
+	std::vector<int> airCombatUnitIds;
+	std::vector<int> landAndAirCombatUnitIds;
+	std::vector<int> seaAndAirCombatUnitIds;
 	
 	void clear()
 	{
@@ -128,7 +186,8 @@ struct ActiveFactionInfo
 		combatVehicleIds.clear();
 		scoutVehicleIds.clear();
 		outsideCombatVehicleIds.clear();
-		prototypes.clear();
+		unitIds.clear();
+		combatUnitIds.clear();
 		colonyVehicleIds.clear();
 		formerVehicleIds.clear();
 		threatLevel = 0.0;
@@ -138,6 +197,11 @@ struct ActiveFactionInfo
 		baseRemainingNativeProtectionDemands.clear();
 		regionDefenseDemand.clear();
 		regionMaxMineralSurpluses.clear();
+		landCombatUnitIds.clear();
+		seaCombatUnitIds.clear();
+		airCombatUnitIds.clear();
+		landAndAirCombatUnitIds.clear();
+		seaAndAirCombatUnitIds.clear();
 	}
 	
 };
@@ -177,4 +241,13 @@ int getRangeToNearestFactionAirbase(int x, int y, int factionId);
 int getVehicleTurnsToDestination(int vehicleId, int x, int y);
 void populateBaseExposures();
 int getNearestEnemyBaseDistance(int baseId);
+void evaluateDefenseDemand();
+int packUnitType(int unitId);
+int isUnitTypeNative(int unitType);
+int getUnitTypeChassisType(int unitType);
+int isUnitTypeHasChassisType(int unitType, int chassisType);
+int getUnitTypeTriad(int unitType);
+int isUnitTypeHasTriad(int unitType, int triad);
+int isUnitTypeHasAbility(int unitType, int abilityFlag);
+double getConventionalCombatBonusMultiplier(int attackerUnitType, int defenderUnitType);
 

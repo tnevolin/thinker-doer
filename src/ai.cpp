@@ -31,21 +31,16 @@ int aiFactionUpkeep(const int factionId)
 	{
 		expireInfiltrations(factionId);
 	}
-
-	// consider hurrying production in all bases
-	// affects AI factions only
 	
-	if (factionId > 0 && !is_human(factionId))
+	// strategy for AI enabled faction
+	
+	if (conf.ai_useWTPAlgorithms && factionId != 0 && !is_human(factionId) && ai_enabled(factionId))
 	{
-		considerHurryingProduction(factionId);
-	}
-	
-	// recalculate global faction parameters on this turn if not yet done
-	
-	if (*current_turn != currentTurn || factionId != aiFactionId)
-	{
-		currentTurn = *current_turn;
+		// set AI faction id for future reference
+		
 		aiFactionId = factionId;
+		
+		// recalculate global faction parameters on this turn if not yet done
 		
 		aiStrategy();
 		
@@ -54,7 +49,25 @@ int aiFactionUpkeep(const int factionId)
 	// redirect to vanilla function for the rest of processing
 	// that, in turn, is overriden by Thinker
 	
-	return faction_upkeep(factionId);
+	int returnValue = faction_upkeep(factionId);
+	
+	// post turn operations for AI enabled factions
+	
+	if (conf.ai_useWTPAlgorithms && factionId != 0 && !is_human(factionId) && ai_enabled(factionId))
+	{
+		// update base productions
+		
+		setProduction();
+		
+		// consider hurrying production in all bases
+		
+		considerHurryingProduction(factionId);
+		
+	}
+	
+	// return value
+	
+	return returnValue;
 	
 }
 
@@ -157,10 +170,10 @@ void aiStrategy()
 	
 	evaluateBaseNativeDefenseDemands();
 	
-//	// bases defense
-//	
-//	evaluateBaseDefenseDemands();
-//	
+	// bases defense
+	
+	evaluateDefenseDemand();
+	
 	// compute production demands
 
 	aiProductionStrategy();
@@ -180,6 +193,11 @@ void populateGlobalVariables()
 	// clear lists
 	
 	activeFactionInfo.clear();
+	
+	// best weapon and armor
+	
+	activeFactionInfo.bestWeaponOffenseValue = getFactionBestPrototypedWeaponOffenseValue(aiFactionId);
+	activeFactionInfo.bestArmorDefenseValue = getFactionBestPrototypedArmorDefenseValue(aiFactionId);
 	
 	// populate factions combat modifiers
 
@@ -283,9 +301,9 @@ void populateGlobalVariables()
 			continue;
 
 		// add base
-
+		
 		activeFactionInfo.baseIds.push_back(id);
-
+		
 		// add base location
 
 		MAP *baseLocation = getMapTile(base->x, base->y);
@@ -297,11 +315,12 @@ void populateGlobalVariables()
 		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[id]);
 		
 		baseStrategy->base = base;
-		baseStrategy->psiDefenseMultiplier = getBasePsiDefenseMultiplier();
-		baseStrategy->conventionalDefenseMultipliers[TRIAD_LAND] = getBaseConventionalDefenseMultiplier(id, TRIAD_LAND);
-		baseStrategy->conventionalDefenseMultipliers[TRIAD_SEA] = getBaseConventionalDefenseMultiplier(id, TRIAD_SEA);
-		baseStrategy->conventionalDefenseMultipliers[TRIAD_AIR] = getBaseConventionalDefenseMultiplier(id, TRIAD_AIR);
-		baseStrategy->withinFriendlySensorRange = isWithinFriendlySensorRange(base->faction_id, base->x, base->y);
+		baseStrategy->intrinsicDefenseMultiplier = getBaseDefenseMultiplier(id, -1);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_LAND] = getBaseDefenseMultiplier(id, TRIAD_LAND);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_SEA] = getBaseDefenseMultiplier(id, TRIAD_SEA);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_AIR] = getBaseDefenseMultiplier(id, TRIAD_AIR);
+		baseStrategy->sensorOffenseMultiplier = getSensorOffenseMultiplier(base->faction_id, base->x, base->y);
+		baseStrategy->sensorDefenseMultiplier = getSensorDefenseMultiplier(base->faction_id, base->x, base->y);
 
 		debug("\n[%3d] %-25s\n", id, activeFactionInfo.baseStrategies[id].base->name);
 
@@ -407,9 +426,12 @@ void populateGlobalVariables()
 			{
 				BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseLocationsIterator->second]);
 
-				// add to garrison
-
-				baseStrategy->garrison.push_back(id);
+				// add combat vehicle to garrison
+				
+				if (isVehicleCombat(id))
+				{
+					baseStrategy->garrison.push_back(id);
+				}
 
 				// add to native protection
 
@@ -436,7 +458,7 @@ void populateGlobalVariables()
 
 	}
 
-	// populate prototypes
+	// populate units
 
     for (int i = 0; i < 128; i++)
 	{
@@ -454,15 +476,65 @@ void populateGlobalVariables()
         if (strlen(unit->name) == 0)
 			continue;
 
-		// add prototype
+        // skip obsolete
 
-		activeFactionInfo.prototypes.push_back(id);
+        if ((unit->obsolete_factions & (0x1 << aiFactionId)) != 0)
+			continue;
 
+		// add unit
+
+		activeFactionInfo.unitIds.push_back(id);
+		
+		// add combat unit
+		// either psi or anti psi unit or conventional with best weapon/armor
+		
+		if
+		(
+			isUnitCombat(id)
+			&&
+			(
+				Weapon[unit->weapon_type].offense_value < 0
+				||
+				Armor[unit->armor_type].defense_value < 0
+				||
+				unit_has_ability(id, ABL_TRANCE)
+				||
+				unit_has_ability(id, ABL_EMPATH)
+				||
+				Weapon[unit->weapon_type].offense_value >= activeFactionInfo.bestWeaponOffenseValue
+				||
+				Armor[unit->armor_type].defense_value >= activeFactionInfo.bestArmorDefenseValue
+			)
+		)
+		{
+			activeFactionInfo.combatUnitIds.push_back(id);
+			
+			// populate specific triads
+			
+			switch (unit->triad())
+			{
+			case TRIAD_LAND:
+				activeFactionInfo.landCombatUnitIds.push_back(id);
+				activeFactionInfo.landAndAirCombatUnitIds.push_back(id);
+				break;
+			case TRIAD_SEA:
+				activeFactionInfo.seaCombatUnitIds.push_back(id);
+				activeFactionInfo.seaAndAirCombatUnitIds.push_back(id);
+				break;
+			case TRIAD_AIR:
+				activeFactionInfo.airCombatUnitIds.push_back(id);
+				activeFactionInfo.landAndAirCombatUnitIds.push_back(id);
+				activeFactionInfo.seaAndAirCombatUnitIds.push_back(id);
+				break;
+			}
+			
+		}
+		
 	}
 	
 	// max mineral surplus
 	
-	activeFactionInfo.maxMineralSurplus = 0;
+	activeFactionInfo.maxMineralSurplus = 1;
 	
 	for (int baseId : activeFactionInfo.baseIds)
 	{
@@ -473,7 +545,7 @@ void populateGlobalVariables()
 		
 		if (activeFactionInfo.regionMaxMineralSurpluses.count(baseTile->region) == 0)
 		{
-			activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = 0;
+			activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = 1;
 		}
 		
 		activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = std::max(activeFactionInfo.regionMaxMineralSurpluses[baseTile->region], base->mineral_surplus_final);
@@ -1037,7 +1109,7 @@ double evaluateCombatStrength(double offenseValue, double defenseValue)
 	double adjustedOffenseValue = evaluateOffenseStrength(offenseValue);
 	double adjustedDefenseValue = evaluateDefenseStrength(defenseValue);
 	
-	double combatStrength = std::max(adjustedOffenseValue, adjustedDefenseValue) + 0.5 * std::max(adjustedOffenseValue, adjustedDefenseValue);
+	double combatStrength = std::max(adjustedOffenseValue, adjustedDefenseValue) + 0.5 * std::min(adjustedOffenseValue, adjustedDefenseValue);
 	
 	return combatStrength;
 	
@@ -1065,100 +1137,6 @@ double evaluateDefenseStrength(double DefenseValue)
 	
 }
 
-//void evaluateBaseDefenseDemands()
-//{
-//	debug("evaluateBaseDefenseDemands - %s\n", MFactions[aiFactionId].noun_faction);
-//	
-//	// evaluate base defense demand
-//	
-//	for (int baseId : activeFactionInfo.baseIds)
-//	{
-//		MAP *baseTile = getBaseMapTile(baseId);
-//		bool ocean = isOceanRegion(baseTile->region);
-//		
-//		if (!ocean)
-//		{
-//			evaluateLandBaseDefenseDemand(baseId);
-//		}
-//		else
-//		{
-//			evaluateOceanBaseDefenseDemand(baseId);
-//		}
-//		
-//	}
-//	
-//}
-//
-//void evaluateLandBaseDefenseDemand(int baseId)
-//{
-//	BASE *base = &(Bases[baseId]);
-//	
-//	// get ocean regions in bombardment range
-//	
-//	std::unordered_set<int> bombardmentRangeOceanRegions;
-//	
-//	for (int dx = -4; dx <= +4; dx++)
-//	{
-//		for (int dy = -(4 - abs(dx)); dy <= +(4 - abs(dx)); dy += 2)
-//		{
-//			MAP *tile = getMapTile(base->x + dx, base->y + dy);
-//			
-//			if (tile == NULL)
-//				continue;
-//			
-//			if (isOceanRegion(tile->region))
-//			{
-//				bombardmentRangeOceanRegions.insert(tile->region);
-//			}
-//			
-//		}
-//		
-//	}
-//	
-//	// iterate enemy vehicles
-//	
-//	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-//	{
-//		VEH *vehicle = &(Vehicles[vehicleId]);
-//		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-//		UNIT *unit = &(Units[vehicle->unit_id]);
-//		bool regularUnit = !(Weapon[unit->weapon_type].offense_value < 0 || Armor[unit->armor_type].defense_value < 0);
-//		
-//		// exclude alien
-//		
-//		if (vehicle->faction_id == 0)
-//			continue;
-//		
-//		// exclude own
-//		
-//		if (vehicle->faction_id == aiFactionId)
-//			continue;
-//		
-//		// exclude non combat
-//		
-//		if (!isVehicleCombat(vehicleId))
-//			continue;
-//		
-//		// exclude sea units not in bombardment range regions
-//		
-//		if (vehicle->triad() == TRIAD_SEA && bombardmentRangeOceanRegions.count(vehicleTile->region) == 0)
-//			continue;
-//		
-//		// calculate threat
-//		
-//		
-//	}
-//	
-//}
-//
-//void evaluateOceanBaseDefenseDemand(int baseId)
-//{
-//	
-//}
-//
-/*
-Checks if vehicle can be reached by enemy in field.
-*/
 bool isVehicleThreatenedByEnemyInField(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
@@ -1503,6 +1481,726 @@ int getNearestEnemyBaseDistance(int baseId)
 	}
 	
 	return nearestEnemyBaseDistance;
+	
+}
+
+void evaluateDefenseDemand()
+{
+	debug("evaluateDefenseDemand - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	// evaluate base defense demands
+	
+	activeFactionInfo.mostVulnerableBaseId = -1;
+	activeFactionInfo.mostVulnerableBaseDefenseDemand = 0.0;
+	
+	for (int baseId : activeFactionInfo.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		bool ocean = is_ocean(baseTile);
+		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseId]);
+		
+		debug
+		(
+			"\t(%3d,%3d) %s, sensorOffenseMultiplier=%f, sensorDefenseMultiplier=%f, intrinsicDefenseMultiplier=%f, conventionalDefenseMultipliers[TRIAD_LAND]=%f, conventionalDefenseMultipliers[TRIAD_SEA]=%f, conventionalDefenseMultipliers[TRIAD_AIR]=%f\n",
+			base->x,
+			base->y,
+			base->name,
+			baseStrategy->sensorOffenseMultiplier,
+			baseStrategy->sensorDefenseMultiplier,
+			baseStrategy->intrinsicDefenseMultiplier,
+			baseStrategy->conventionalDefenseMultipliers[TRIAD_LAND],
+			baseStrategy->conventionalDefenseMultipliers[TRIAD_SEA],
+			baseStrategy->conventionalDefenseMultipliers[TRIAD_AIR]
+		);
+		
+		// calculate defender strength
+		
+		MilitaryStrength defenderStrength;
+		
+		debug("\t\tdefenderMilitaryStrength\n");
+		
+		for (int vehicleId : activeFactionInfo.combatVehicleIds)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			int unitId = vehicle->unit_id;
+			UNIT *unit = &(Units[unitId]);
+			int chassisId = unit->chassis_type;
+			CChassis *chassis = &(Chassis[chassisId]);
+			int triad = chassis->triad;
+			MAP *vehicleTile = getVehicleMapTile(vehicleId);
+			
+			// exclude sea vehicle not in the region
+			
+			if (triad == TRIAD_SEA && !isVehicleInRegion(vehicleId, baseTile->region))
+				continue;
+			
+			// calculate vehicle distance to base
+			
+			int distance = map_range(base->x, base->y, vehicle->x, vehicle->y);
+			
+			// limit only vehicle by no farther than 20 tiles away
+			
+			if (distance > 20)
+				continue;
+			
+			// calculate vehicle speed
+			
+			double speed = (double)veh_speed_without_roads(vehicleId);
+			double roadSpeed = (double)mod_veh_speed(vehicleId);
+			
+			// increase land vehicle speed based on game stage
+			
+			if (triad == TRIAD_LAND)
+			{
+				speed = speed + (roadSpeed - speed) * (double)std::min(250, std::max(0, *current_turn - 50)) / 250.0;
+			}
+			
+			// calculate number of turns to reach the base
+			
+			double turns = (double)distance / speed;
+			
+			// increase effective turns for land unit in different region or in ocean
+			
+			if (triad == TRIAD_LAND && distance > 0 && (isOceanRegion(vehicleTile->region) || vehicleTile->region != baseTile->region))
+			{
+				turns *= 5;
+			}
+			
+			// reduce weight based on time to reach the base
+			// every 10 turns reduce weight in half
+			
+			double weight = pow(0.5, turns / 10.0);
+			
+			debug("\t\t\t(%3d,%3d) %-25s: distance=%3d, turns=%6.2f, weight=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, distance, turns, weight);
+			
+			// update total weight
+			
+			defenderStrength.totalWeight += weight;
+			
+			// pack unit type, create and get entry
+			
+			int unitType = packUnitType(unitId);
+			
+			if (defenderStrength.unitTypeStrengths.count(unitType) == 0)
+			{
+				defenderStrength.unitTypeStrengths[unitType] = UnitTypeStrength();
+			}
+			
+			UnitTypeStrength *unitTypeStrength = &(defenderStrength.unitTypeStrengths[unitType]);
+			
+			// calculate strength
+			
+			if (isUnitTypeNative(unitType))
+			{
+				unitTypeStrength->weight += weight;
+				
+				// native unit initiates psi combat only
+				
+				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId);
+				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId);
+				
+				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
+				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
+				
+			}
+			else
+			{
+				unitTypeStrength->weight += weight;
+				
+				// regular unit initiates psi combat when engage native unit
+				
+				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId);
+				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId);
+				
+				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
+				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
+				
+				// regular unit initiates conventional combat when engage regular unit
+				
+				double conventionalOffenseStrength = getVehicleConventionalOffenseStrength(vehicleId);
+				double conventionalDefenseStrength = getVehicleConventionalDefenseStrength(vehicleId, true);
+				
+				unitTypeStrength->conventionalOffense += weight * conventionalOffenseStrength;
+				unitTypeStrength->conventionalDefense += weight * conventionalDefenseStrength;
+				
+			}
+			
+		}
+		
+		// normalize weights
+		
+		defenderStrength.normalize();
+		
+		debug("\t\t\ttotalWeight=%f\n", defenderStrength.totalWeight);
+		if (DEBUG)
+		{
+			for (const auto &k : defenderStrength.unitTypeStrengths)
+			{
+				const int unitType = k.first;
+				const UnitTypeStrength *unitTypeStrength = &(k.second);
+				
+				debug("\t\t\t\tnative=%d, chassisType=%d, unitType=%8x, weight=%f, psiOffense=%f, psiDefense=%f, conventionalOffense=%f, conventionalDefense=%f\n", (isUnitTypeNative(unitType) ? 1 : 0), getUnitTypeChassisType(unitType), unitType, unitTypeStrength->weight, unitTypeStrength->psiOffense, unitTypeStrength->psiDefense, unitTypeStrength->conventionalOffense, unitTypeStrength->conventionalDefense);
+				
+			}
+			
+		}
+		
+		// calculate opponent strength
+		
+		MilitaryStrength opponentStrength;
+		
+		debug("\t\topponentMilitaryStrength\n");
+		
+		for (int vehicleId = 1; vehicleId < *total_num_vehicles; vehicleId++)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			int unitId = vehicle->unit_id;
+			UNIT *unit = &(Units[unitId]);
+			int chassisId = unit->chassis_type;
+			CChassis *chassis = &(Chassis[chassisId]);
+			int triad = chassis->triad;
+			MAP *vehicleTile = getVehicleMapTile(vehicleId);
+			
+			// not alien
+			
+			if (vehicle->faction_id == 0)
+				continue;
+			
+			// not own
+			
+			if (vehicle->faction_id == aiFactionId)
+				continue;
+			
+			// combat only
+			
+			if (!isVehicleCombat(vehicleId))
+				continue;
+			
+			// exclude vehicles unable to attack base
+			
+			if (!ocean && triad == TRIAD_SEA || ocean && triad == TRIAD_LAND && !vehicle_has_ability(vehicleId, ABL_AMPHIBIOUS))
+				continue;
+			
+			// exclude sea units in different region - they cannot possibly reach us
+			
+			if (triad == TRIAD_SEA && vehicleTile->region != baseTile->region)
+				continue;
+			
+			// calculate vehicle distance to base
+			
+			int distance = map_range(base->x, base->y, vehicle->x, vehicle->y);
+			
+			// limit only vehicle by no farther than 20 tiles away
+			
+			if (distance > 20)
+				continue;
+			
+			// calculate vehicle speed
+			
+			double speed = (double)veh_chassis_speed(vehicleId);
+			double roadSpeed = (double)mod_veh_speed(vehicleId);
+			
+			// increase land vehicle speed based on game stage
+			
+			if (triad == TRIAD_LAND)
+			{
+				speed = speed + (roadSpeed - speed) * (double)std::min(250, std::max(0, *current_turn - 50)) / 250.0;
+			}
+			
+			// calculate number of turns to reach the base
+			
+			double turns = (double)distance / speed;
+			
+			// increase effective turns for land unit in different region or in ocean
+			
+			if (triad == TRIAD_LAND && distance > 0 && (isOceanRegion(vehicleTile->region) || vehicleTile->region != baseTile->region))
+			{
+				turns *= 5;
+			}
+			
+			// reduce weight based on time to reach the base
+			// every 10 turns reduce weight in half
+			
+			double weight = pow(0.5, turns / 10.0);
+			
+			// modify strength multiplier based on diplomatic relations
+			
+			weight *= activeFactionInfo.factionInfos[vehicle->faction_id].threatKoefficient;
+			
+			debug("\t\t\t(%3d,%3d) %-25s: distance=%3d, turns=%6.2f, weight=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, distance, turns, weight);
+			
+			// update total weight
+			
+			opponentStrength.totalWeight += weight;
+			
+			// pack unit type, create and get entry
+			
+			int unitType = packUnitType(unitId);
+			
+			if (opponentStrength.unitTypeStrengths.count(unitType) == 0)
+			{
+				opponentStrength.unitTypeStrengths[unitType] = UnitTypeStrength();
+			}
+			
+			UnitTypeStrength *unitTypeStrength = &(opponentStrength.unitTypeStrengths[unitType]);
+			
+			// calculate strength
+			
+			if (isUnitTypeNative(unitType))
+			{
+				unitTypeStrength->weight += weight;
+				
+				// native unit initiates psi combat only
+				
+				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseStrategy->intrinsicDefenseMultiplier;
+				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId) / baseStrategy->sensorOffenseMultiplier;
+				
+				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
+				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
+				
+			}
+			else
+			{
+				unitTypeStrength->weight += weight;
+				
+				// regular unit initiates psi combat when engage native unit
+				
+				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseStrategy->intrinsicDefenseMultiplier;
+				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId) / baseStrategy->sensorOffenseMultiplier;
+				
+				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
+				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
+				
+				// regular unit initiates conventional combat when engage regular unit
+				
+				double baseDefenseMultiplier = (isUnitTypeHasAbility(unitType, ABL_BLINK_DISPLACER) ? baseStrategy->intrinsicDefenseMultiplier : baseStrategy->conventionalDefenseMultipliers[triad]);
+				
+				double conventionalOffenseStrength = getVehicleConventionalOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseDefenseMultiplier;
+				double conventionalDefenseStrength = getVehicleConventionalDefenseStrength(vehicleId, false) / baseStrategy->sensorOffenseMultiplier;
+				
+				unitTypeStrength->conventionalOffense += weight * conventionalOffenseStrength;
+				unitTypeStrength->conventionalDefense += weight * conventionalDefenseStrength;
+				
+			}
+			
+		}
+		
+		// normalize weights
+		
+		opponentStrength.normalize();
+		
+		debug("\t\t\ttotalWeight=%f\n", opponentStrength.totalWeight);
+		if (DEBUG)
+		{
+			for (const auto &k : opponentStrength.unitTypeStrengths)
+			{
+				const int unitType = k.first;
+				const UnitTypeStrength *unitTypeStrength = &(k.second);
+				
+				debug("\t\t\t\tnative=%d, chassisType=%d, unitType=%8x, weight=%f, psiOffense=%f, psiDefense=%f, conventionalOffense=%f, conventionalDefense=%f\n", (isUnitTypeNative(unitType) ? 1 : 0), getUnitTypeChassisType(unitType), unitType, unitTypeStrength->weight, unitTypeStrength->psiOffense, unitTypeStrength->psiDefense, unitTypeStrength->conventionalOffense, unitTypeStrength->conventionalDefense);
+				
+			}
+			
+		}
+		
+		// evaluate relative portion of defender destroyed
+		
+		debug("\t\tdefenderDestroyed\n");
+		
+		double defenderDestroyed = 0.0;
+		
+		for (const auto opponentUnitTypeStrengthEntry : opponentStrength.unitTypeStrengths)
+		{
+			const int opponentUnitType = opponentUnitTypeStrengthEntry.first;
+			const UnitTypeStrength *opponentUnitTypeStrength = &(opponentUnitTypeStrengthEntry.second);
+			
+			for (const auto defenderStrengthEntry : defenderStrength.unitTypeStrengths)
+			{
+				const int defenderUnitType = defenderStrengthEntry.first;
+				const UnitTypeStrength *defenderUnitTypeStrength = &(defenderStrengthEntry.second);
+				
+				// impossible combinations
+				
+				// two needlejets without air superiority
+				if
+				(
+					(isUnitTypeHasChassisType(opponentUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(defenderUnitType, ABL_AIR_SUPERIORITY))
+					&&
+					(isUnitTypeHasChassisType(defenderUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(opponentUnitType, ABL_AIR_SUPERIORITY))
+				)
+				{
+					continue;
+				}
+				
+				// use proper strength type
+				
+				double opponentOffense;
+				double opponentDefense;
+				double defenderOffense;
+				double defenderDefense;
+				
+				if (isUnitTypeNative(opponentUnitType) || isUnitTypeNative(defenderUnitType))
+				{
+					opponentOffense = opponentUnitTypeStrength->psiOffense;
+					opponentDefense = opponentUnitTypeStrength->psiDefense;
+					defenderOffense = defenderUnitTypeStrength->psiOffense;
+					defenderDefense = defenderUnitTypeStrength->psiDefense;
+				}
+				else
+				{
+					opponentOffense = opponentUnitTypeStrength->conventionalOffense;
+					opponentDefense = opponentUnitTypeStrength->conventionalDefense;
+					defenderOffense = defenderUnitTypeStrength->conventionalOffense;
+					defenderDefense = defenderUnitTypeStrength->conventionalDefense;
+				}
+				
+				// calculate attack and defend probabilities
+				
+				double attackProbability;
+				double defendProbability;
+				
+				// unit without air superiority cannot attack neeglejet
+				if (isUnitTypeHasChassisType(opponentUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(defenderUnitType, ABL_AIR_SUPERIORITY))
+				{
+					attackProbability = 1.0;
+					defendProbability = 0.0;
+				}
+				else if (isUnitTypeHasChassisType(defenderUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(opponentUnitType, ABL_AIR_SUPERIORITY))
+				{
+					attackProbability = 0.0;
+					defendProbability = 1.0;
+				}
+				else
+				{
+					attackProbability = 0.5;
+					defendProbability = 0.5;
+				}
+				
+				// work out defender choice
+				// defender can choose not to attack if it worse than defending
+				
+				if
+				(
+					defendProbability > 0.0
+					&&
+					(defenderDefense / opponentOffense) > (defenderOffense / opponentDefense)
+				)
+				{
+					attackProbability = 1.0;
+					defendProbability = 0.0;
+				}
+				
+				// calculate odds
+				
+				double attackOdds = (opponentOffense / defenderDefense);
+				double defendOdds = (opponentDefense / defenderOffense);
+				
+				// calculate combat bonus multipliers
+				
+				double attackCombatBonusMultiplier = getConventionalCombatBonusMultiplier(opponentUnitType, defenderUnitType);
+				double defendCombatBonusMultiplier = getConventionalCombatBonusMultiplier(defenderUnitType, opponentUnitType);
+				
+				// calculate defender destroyed
+				
+				double defenderDestroyedTypeVsType =
+					// occurence probability
+					(opponentUnitTypeStrength->weight * defenderUnitTypeStrength->weight)
+					*
+					(
+						attackProbability * attackOdds * attackCombatBonusMultiplier
+						+
+						defendProbability * defendOdds * defendCombatBonusMultiplier
+					)
+				;
+				
+				debug
+				(
+					"\t\t\topponent: native=%d, chassisType=%d, unitType=%8x, weight=%f, offense=%f, defense=%f\n\t\t\tdefender: native=%d, chassisType=%d, unitType=%8x, weight=%f, offense=%f, defense=%f\n\t\t\t\tattack: probability=%f, odds=%f, multiplier=%f\n\t\t\t\tdefend: probatility=%f, odds=%f, multiplier=%f\n\t\t\t\tdefenderDestroyedTypeVsType=%f\n",
+					(isUnitTypeNative(opponentUnitType) ? 1 : 0), getUnitTypeChassisType(opponentUnitType), opponentUnitType, 
+					opponentUnitTypeStrength->weight,
+					opponentOffense,
+					opponentDefense,
+					(isUnitTypeNative(defenderUnitType) ? 1 : 0), getUnitTypeChassisType(defenderUnitType), defenderUnitType, 
+					defenderUnitTypeStrength->weight,
+					defenderOffense,
+					defenderDefense,
+					attackProbability,
+					attackOdds,
+					attackCombatBonusMultiplier,
+					defendProbability,
+					defendOdds,
+					defendCombatBonusMultiplier,
+					defenderDestroyedTypeVsType
+				)
+				;
+				
+				// update summaries
+				
+				defenderDestroyed += defenderDestroyedTypeVsType;
+				baseStrategy->defenderDestroyedByTypes[opponentUnitType] += defenderDestroyedTypeVsType;
+				
+			}
+			
+		}
+		
+		// defender destroyed total
+		
+		double defenderDestroyedTotal =
+			defenderDestroyed
+			*
+			// proportion of total weight
+			(opponentStrength.totalWeight / defenderStrength.totalWeight)
+		;
+		
+		debug("\t\tdefenderDestroyed=%f, defenderDestroyedTotal=%f\n", defenderDestroyed, defenderDestroyedTotal);
+		
+		// set defenseDemand
+		
+		activeFactionInfo.baseStrategies[baseId].defenseDemand = (defenderDestroyedTotal - 1.0) / defenderDestroyedTotal;
+		
+		debug("\t\tdefenseDemand=%f\n", activeFactionInfo.baseStrategies[baseId].defenseDemand);
+		
+		if (DEBUG)
+		{
+			for (const auto &k : baseStrategy->defenderDestroyedByTypes)
+			{
+				int opponentUnitType = k.first;
+				double defenderDestroyedByType = k.second;
+				
+				debug
+				(
+					"\t\topponentUnitType: native=%d, chassisType=%d, unitType=%8x; defenderDestroyedByType=%f\n",
+					(isUnitTypeNative(opponentUnitType) ? 1 : 0), getUnitTypeChassisType(opponentUnitType), opponentUnitType, 
+					defenderDestroyedByType
+				)
+				;
+				
+			}
+			
+		}
+		
+		// update global values
+		
+		if (activeFactionInfo.baseStrategies[baseId].defenseDemand > activeFactionInfo.mostVulnerableBaseDefenseDemand)
+		{
+			activeFactionInfo.mostVulnerableBaseId = baseId;
+			activeFactionInfo.mostVulnerableBaseDefenseDemand = activeFactionInfo.baseStrategies[baseId].defenseDemand;
+		}
+		
+	}
+	
+	debug("\tmostVulnerableBase = %s, mostVulnerableBaseDefenseDemand = %f\n", Bases[activeFactionInfo.mostVulnerableBaseId].name, activeFactionInfo.mostVulnerableBaseDefenseDemand);
+	
+	// assign defense demand targets
+	
+	debug("\ttargetBases\n");
+	
+	for (int baseId : activeFactionInfo.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		int bestTargetBaseId = -1;
+		double bestTargetBasePreference = 0.0;
+		
+		for (int targetBaseId : activeFactionInfo.baseIds)
+		{
+			BASE *targetBase = &(Bases[targetBaseId]);
+			MAP *targetBaseTile = getBaseMapTile(targetBaseId);
+			
+			// get range
+			
+			double range = (double)map_range(base->x, base->y, targetBase->x, targetBase->y);
+			
+			// adjust range for different regions
+			
+			if (baseTile->region != targetBaseTile->region)
+			{
+				range *= 5;
+			}
+			
+			// calculate range coefficient
+			// preference halves every 20 tiles
+			
+			double rangeCoefficient = pow(0.5, range / 20.0);
+			
+			// calculate preference
+			
+			double targetBasePreference = rangeCoefficient * activeFactionInfo.baseStrategies[targetBaseId].defenseDemand;
+			
+			// update best
+			
+			if (targetBasePreference > bestTargetBasePreference)
+			{
+				bestTargetBaseId = targetBaseId;
+				bestTargetBasePreference = targetBasePreference;
+			}
+			
+		}
+		
+		activeFactionInfo.baseStrategies[baseId].targetBaseId = bestTargetBaseId;
+		
+		debug("\t\t%-25s -> %-25s\n", Bases[baseId].name, (bestTargetBaseId == -1 ? "" : Bases[bestTargetBaseId].name));
+		
+	}
+	
+}
+
+/*
+Packs significant combat unit type values into integer.
+*/
+int packUnitType(int unitId)
+{
+	UNIT *unit = &(Units[unitId]);
+	
+	return
+		// combat ability flags
+		(unit->ability_flags & COMBAT_ABILITY_FLAGS)
+		|
+		// chassis type
+		(unit->chassis_type << (ABL_ID_DISSOCIATIVE_WAVE + 1))
+		|
+		// native
+		((isNativeUnit(unitId) ? 1 : 0) << (ABL_ID_DISSOCIATIVE_WAVE + 1 + 4))
+	;
+	
+}
+
+int isUnitTypeNative(int unitType)
+{
+	return (unitType >> (ABL_ID_DISSOCIATIVE_WAVE + 1 + 4));
+}
+
+int getUnitTypeChassisType(int unitType)
+{
+	return (unitType >> (ABL_ID_ALGO_ENHANCEMENT + 1));
+}
+
+int isUnitTypeHasChassisType(int unitType, int chassisType)
+{
+	return getUnitTypeChassisType(unitType) == chassisType;
+}
+
+int getUnitTypeTriad(int unitType)
+{
+	return Chassis[getUnitTypeChassisType(unitType)].triad;
+}
+
+int isUnitTypeHasTriad(int unitType, int triad)
+{
+	return getUnitTypeTriad(unitType) == triad;
+}
+
+int isUnitTypeHasAbility(int unitType, int abilityFlag)
+{
+	return ((unitType & abilityFlag) != 0);
+}
+
+/*
+Returns combat bonus multiplier for specific unit types.
+Conventional combat only.
+
+ABL_DISSOCIATIVE_WAVE cancels following abilities:
+ABL_EMPATH
+ABL_TRANCE
+ABL_COMM_JAMMER
+ABL_AAA
+ABL_SOPORIFIC_GAS
+*/
+double getConventionalCombatBonusMultiplier(int attackerUnitType, int defenderUnitType)
+{
+	// do not modify psi combat
+	
+	if (isUnitTypeNative(attackerUnitType) || isUnitTypeNative(defenderUnitType))
+		return 1.0;
+	
+	// conventional combat
+	
+	int attackerChassisType = getUnitTypeChassisType(attackerUnitType);
+	CChassis *attackerChassis = &(Chassis[attackerChassisType]);
+	int defenderChassisType = getUnitTypeChassisType(defenderUnitType);
+	CChassis *defenderChassis = &(Chassis[defenderChassisType]);
+	
+	double combatBonusMultiplier = 1.0;
+	
+	// fast unit without blink displacer against comm jammer
+	
+	if
+	(
+		isUnitTypeHasAbility(defenderUnitType, ABL_COMM_JAMMER)
+		&&
+		attackerChassis->triad == TRIAD_LAND && attackerChassis->speed > 1
+		&&
+		!isUnitTypeHasAbility(attackerUnitType, ABL_DISSOCIATIVE_WAVE)
+	)
+	{
+		combatBonusMultiplier /= getPercentageBonusMultiplier(Rules->combat_comm_jammer_vs_mobile);
+	}
+	
+	// air unit without blink displacer against air tracking
+	
+	if
+	(
+		isUnitTypeHasAbility(defenderUnitType, ABL_AAA)
+		&&
+		attackerChassis->triad == TRIAD_AIR
+		&&
+		!isUnitTypeHasAbility(attackerUnitType, ABL_DISSOCIATIVE_WAVE)
+	)
+	{
+		combatBonusMultiplier /= getPercentageBonusMultiplier(Rules->combat_AAA_bonus_vs_air);
+	}
+	
+	// soporific unit against conventional unit without blink displacer
+	
+	if
+	(
+		isUnitTypeHasAbility(attackerUnitType, ABL_SOPORIFIC_GAS)
+		&&
+		!isUnitTypeNative(defenderUnitType)
+		&&
+		!isUnitTypeHasAbility(defenderUnitType, ABL_DISSOCIATIVE_WAVE)
+	)
+	{
+		combatBonusMultiplier *= 1.25;
+	}
+	
+	// interceptor ground strike
+	
+	if
+	(
+		attackerChassis->triad == TRIAD_AIR && isUnitTypeHasAbility(attackerUnitType, ABL_AIR_SUPERIORITY)
+		&&
+		defenderChassis->triad != TRIAD_AIR
+	)
+	{
+		combatBonusMultiplier *= getPercentageBonusMultiplier(-Rules->combat_penalty_air_supr_vs_ground);
+	}
+	
+	// interceptor air-to-air
+		
+	if
+	(
+		attackerChassis->triad == TRIAD_AIR && isUnitTypeHasAbility(attackerUnitType, ABL_AIR_SUPERIORITY)
+		&&
+		defenderChassis->triad == TRIAD_AIR
+	)
+	{
+		combatBonusMultiplier *= getPercentageBonusMultiplier(Rules->combat_bonus_air_supr_vs_air);
+	}
+	
+	// gas
+	
+	if
+	(
+		isUnitTypeHasAbility(attackerUnitType, ABL_NERVE_GAS)
+	)
+	{
+		combatBonusMultiplier *= 1.5;
+	}
+	
+	return combatBonusMultiplier;
 	
 }
 

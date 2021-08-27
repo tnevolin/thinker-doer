@@ -1,3 +1,36 @@
+# Version 259
+
+* Mineral multiplying facilities affect all minerals. Whereas energy multiplyers affect only 1/2 - 2/3 of energy. Modified prices for all multiplying facilities accordingly.
+  * Energy Bank,                   4, 1 (lowered cost)
+  * Network Node,                  4, 1 (lowered cost)
+	* Fusion Lab,                   16, 4 (increased cost/maint)
+  * Quantum Lab,                  32, 8 (increased cost/maint)
+  * Research Hospital,            12, 3 (no change)
+  * Nanohospital,                 24, 6 (no change)
+  * Tree Farm,                    18, 2 (no change)
+  * Hybrid Forest,                36, 4 (no change)
+  * Recycling Tanks,               8, 2 (increased cost)
+	* Genejack Factory,             12, 4 (no change)
+	* Robotic Assembly Plant,       18, 6 (no change)
+	* Quantum Converter,            26, 8 (increased cost)
+	* Nanoreplicator,               40,12 (increased cost/maint)
+* Increased AI lust for minerals.
+  * Base placement favors minerals.
+	* Terraforming favors minerals.
+	* Base favors mineral multiplying facilities.
+* Reduced sea based chassis cost for non combat related modules (colony, former, transport). I forgot to do it when I changed the sea chassis cost in previous release.
+* Some adjustment to production choices.
+* Fixed bug when AI didn't hurry production. That could be a reason for major flaw in AI performance in recent versions. Should be better now.
+* Reintroduced: Lower tech get preference in blind research and AI pick.
+* Conventional artillery duel use weapon+armor value. This is to disable ship attack/bombardment exploit and add additional dimension to the duel. This does not change display info, though. Only the total strength.
+* Modified combat production choices to respond to threat.
+* Increased coast bases attractiveness.
+* Disabled resource restriction alltogether. There is no need to discover Centauri Ecology for that anymore. I never knew this is possible!
+
+# Version 258
+
+* Reverted relative chassis cost to make infantry the cheapest one. Other chassis: speeder/foil and hovertank/cruiser are 50% more expensive each.
+
 # Version 257
 
 * Reverted weapon and armor cost to match their strength. It was an interesting experiment but I didn't see it adding much value.
@@ -1050,7 +1083,7 @@ Added extra TALENT to it. Should be an ultimate war time drone solution. It's pr
 
 # Version 87
 
-* FIX: Unit cost were calculated incorrectly sometimes.
+* FIX: Unit cost was calculated incorrectly sometimes.
 
 * Recycling Tanks now increases minerals by 50% instead of improving base tile.
 * Recycling Tanks cost/maint: 6/2.

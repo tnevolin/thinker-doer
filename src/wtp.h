@@ -158,7 +158,6 @@ HOOK_API int modifiedFindReturnedProbeBase(int vehicleId);
 HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, int bombardment);
 HOOK_API void modifiedVehSkipForActionDestroy(int vehicleId);
 HOOK_API void appendAbilityCostTextInWorkshop(int output_string_pointer, int input_string_pointer);
-bool isInRangeOfFriendlySensor(int x, int y, int range, int factionId);
 HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2);
 HOOK_API int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteIndex, int effectValue);
 HOOK_API void modifiedTechResearch(int factionId, int labs);
@@ -194,4 +193,6 @@ void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVe
 void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_string_pointer);
 int __cdecl modifiedTurnUpkeep();
 int __cdecl isDestroyableImprovement(int terraformIndex, int items);
+int __cdecl modifiedTechValue(int techId, int factionId, int flag);
+int getFactionHighestResearchedTechLevel(int factionId);
 

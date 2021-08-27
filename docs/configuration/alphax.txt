@@ -75,9 +75,9 @@ CentPsi, ; Technology to improve fungus squares
 CentPsi, ; Technology to ease fungus movement
 CentEmp, ; Technology to build roads in fungus
 Neural,  ; Technology to allow 2 special abilities for a unit
-Ecology, ; Technology to allow 3 nutrients in a square
-Ecology, ; Technology to allow 3 minerals in a square
-Ecology, ; Technology to allow 3 energy in a square
+None,    ; Technology to allow 3 nutrients in a square
+None,    ; Technology to allow 3 minerals in a square
+None,    ; Technology to allow 3 energy in a square
 AGrav,   ; Technology to allow orbital insertion w/o Space Elevator
 EcoEng2, ; Technology for +1 mining platform bonus
 AdapEco, ; Technology for economic victory
@@ -363,10 +363,10 @@ Transcendent Thought,          TranT,    2, 3, 2, 2, Thresh,  BFG9000, 000000000
 ;
 #CHASSIS
 Infantry,M1,  Squad,M1,      Sentinels,M2,   Garrison,M1,  1, 0, 0, 0, 1, 4, None,     Shock Troops,M2,   Elite Guard,M1,
-Speeder,M1,   Rover,M1,      Defensive,M1,   Skirmisher,M1,2, 0, 0, 0, 1, 5, Mobile,   Dragon,M1,         Enforcer,M1,
-Hovertank,M1, Tank,M1,       Skimmer,M1,     Evasive,M1,   3, 0, 0, 0, 1, 6, Magnets,  Behemoth,M1,       Guardian,M1,
-Foil,M1,      Skimship,M1,   Hoverboat,M1,   Coastal,M1,   4, 1, 0, 0, 2, 4, DocFlex,  Megafoil,M1,       Superfoil,M1,
-Cruiser,M1,   Destroyer,M1,  Cutter,M1,      Gunboat,M1,   6, 1, 0, 0, 4, 5, DocInit,  Battleship,M1,     Monitor,M1,
+Speeder,M1,   Rover,M1,      Defensive,M1,   Skirmisher,M1,2, 0, 0, 0, 1, 6, Mobile,   Dragon,M1,         Enforcer,M1,
+Hovertank,M1, Tank,M1,       Skimmer,M1,     Evasive,M1,   3, 0, 0, 0, 1, 8, Magnets,  Behemoth,M1,       Guardian,M1,
+Foil,M1,      Skimship,M1,   Hoverboat,M1,   Coastal,M1,   4, 1, 0, 0, 2, 6, DocFlex,  Megafoil,M1,       Superfoil,M1,
+Cruiser,M1,   Destroyer,M1,  Cutter,M1,      Gunboat,M1,   6, 1, 0, 0, 4, 8, DocInit,  Battleship,M1,     Monitor,M1,
 Needlejet,M1, Penetrator,M1, Interceptor,M1, Tactical,M1,  8, 2, 2, 0, 1, 6, DocAir,   Thunderbolt,M1,    Sovereign,M1,
 Copter,M1,    Chopper,M1,    Rotor,M1,       Lifter,M1,    8, 2, 1, 0, 1, 6, MindMac,  Gunship,M1,        Warbird,M1,
 Gravship,M1,  Skybase,M1,    Antigrav,M1,    Skyfort,M1,   8, 2, 0, 0, 1, 8, AGrav,    Deathsphere,M1,    Doomwall,M1,
@@ -649,25 +649,25 @@ Trance Sea Formers,     Foil,     Formers,      Scout,      9, 0, 0, Brain,   -1
 #FACILITIES
 Headquarters,                  5, 0, None,    Disable,  Efficiency
 Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic
-Recycling Tanks,               6, 2, Biogen,  Create,   Bonus Resources
+Recycling Tanks,               8, 2, Biogen,  Create,   Bonus Resources
 Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +100%
 Tachyon Field,                12, 2, Create,  Disable,  All Defense +100%
 Recreation Commons,            4, 1, Psych,   PlaEcon,  Fewer Drones
-Energy Bank,                   6, 1, IndEcon, MatComp,  Economy Bonus
-Network Node,                  6, 1, InfNet,  DigSent,  Labs Bonus
+Energy Bank,                   4, 1, IndEcon, MatComp,  Economy Bonus
+Network Node,                  4, 1, InfNet,  DigSent,  Labs Bonus
 Biology Lab,                   4, 0, PrPsych, Disable,  Research and PSI
 Skunkworks,                    6, 1, Subat,   Disable,  Prototypes Free
 Hologram Theatre,              6, 2, Chaos,   Disable,  Psych and Fewer Drones
 Paradise Garden,              18, 4, SentEco, Disable,  +2 Talents
 Tree Farm,                    18, 2, EnvEcon, Disable,  Econ/Psych/Forest
 Hybrid Forest,                36, 4, PlaEcon, Disable,  Econ/Psych/Forest
-Fusion Lab,                   15, 3, SupLube, Disable,  Econ and Labs Bonus
-Quantum Lab,                  30, 6, QuanMac, Disable,  Econ and Labs Bonus
+Fusion Lab,                   16, 4, SupLube, Disable,  Econ and Labs Bonus
+Quantum Lab,                  32, 8, QuanMac, Disable,  Econ and Labs Bonus
 Research Hospital,            12, 3, OptComp, Disable,  Labs and Psych Bonus
 Nanohospital,                 24, 6, Metal,   Disable,  Labs and Psych Bonus
 Robotic Assembly Plant,       18, 6, IndRob,  Disable,  Minerals Bonus
-Nanoreplicator,               30,10, TempMec, Disable,  Minerals Bonus
-Quantum Converter,            24, 8, QuanMac, Disable,  Minerals Bonus
+Nanoreplicator,               40,12, TempMec, Disable,  Minerals Bonus
+Quantum Converter,            26, 8, QuanMac, Disable,  Minerals Bonus
 Genejack Factory,             12, 4, Gene,    Disable,  Minerals; More Drones
 Punishment Sphere,            10, 2, MilAlg,  Disable,  No Drones/-50% Tech
 Hab Complex,                   8, 3, FldMod,  Disable,  Increase Population Limit

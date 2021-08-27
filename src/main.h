@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 257 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 259 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -223,7 +223,6 @@ struct Config {
     bool disable_home_base_cc_morale_bonus = false;
     bool disable_current_base_cc_morale_bonus = false;
     bool default_morale_very_green = false;
-    int combat_bonus_territory = 0;
     int tube_movement_rate_multiplier = 0;
     int road_movement_cost = 0;
     int project_contribution_threshold = 0;
@@ -304,6 +303,7 @@ struct Config {
 	int native_unit_cost_initial_isle_of_the_deep;
 	int native_unit_cost_initial_locusts_of_chiron;
 	bool disable_sensor_destroying;
+	bool artillery_duel_uses_weapon_and_armor;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
@@ -329,12 +329,14 @@ struct Config {
     int ai_production_combat_unit_min_mineral_surplus;
     double ai_production_exploration_coverage;
     double ai_production_improvement_coverage;
+    double ai_production_improvement_priority;
     int ai_production_population_projection_turns;
     double ai_production_threat_level_threshold;
     double ai_production_prototyping_priority;
     double ai_production_command_center_priority;
     double ai_production_naval_yard_priority;
     double ai_production_aerospace_complex_priority;
+    double ai_production_facility_priority_time;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;

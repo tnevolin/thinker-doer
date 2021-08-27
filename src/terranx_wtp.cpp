@@ -182,3 +182,9 @@ fp_3int *mind_control = (fp_3int *)0x0059EA80;
 // put vehicle on target tile
 fp_3int *veh_put = (fp_3int *)0x005A59B0;
 
+// base conventional morale modifier
+fp_3int *morale_mod = (fp_3int *)0x004E6400;
+
+// updates base production
+fp_2void *base_prod_change = (fp_2void *)0x004E5A60;
+

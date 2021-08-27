@@ -120,6 +120,7 @@ Computes build location score for given colony.
 double getBuildLocationScore(int colonyVehicleId, int x, int y)
 {
 	VEH *colonyVehicle = &(Vehicles[colonyVehicleId]);
+	int triad = colonyVehicle->triad();
 	MAP *colonyVehicleTile = getVehicleMapTile(colonyVehicleId);
 	MAP *buildLocationTile = getMapTile(x, y);
 	
@@ -128,8 +129,7 @@ double getBuildLocationScore(int colonyVehicleId, int x, int y)
 	double placementScore = getBuildLocationPlacementScore(colonyVehicle->faction_id, x, y);
 	
 	// compute range score
-	// reaching another continent requires 2 times more time than traveling on ground
-	// 20 extra travel turns reduce score in half
+	// 10 extra travel turns reduce score in half
 	
 	int range = map_range(colonyVehicle->x, colonyVehicle->y, x, y);
 	int speed = veh_speed_without_roads(colonyVehicleId);
@@ -137,7 +137,18 @@ double getBuildLocationScore(int colonyVehicleId, int x, int y)
     
     if (buildLocationTile->region != colonyVehicleTile->region)
 	{
-		turns *= 5.0;
+		switch (triad)
+		{
+		case TRIAD_SEA:
+			// sea unit cannot reach another region
+			return 0.0;
+			break;
+		case TRIAD_LAND:
+			// reaching another continent requires 2 times more time than traveling on ground
+			turns *= 5.0;
+			break;
+		}
+		
 	}
 	
     double turnsMultiplier = pow(0.5, turns / 20.0);
@@ -219,7 +230,7 @@ double getBuildLocationPlacementScore(int factionId, int x, int y)
 
 	if (isCoast(x, y))
 	{
-		score += 2.0;
+		score += 4.0;
 	}
 
 	// return score
@@ -233,8 +244,8 @@ double getBaseRadiusTileScore(MAP_INFO tileInfo)
 	double score = 0.0;
 
 	double nutrientWeight = 1.0;
-	double mineralWeight = 1.0;
-	double energyWeight = 0.5;
+	double mineralWeight = 2.0;
+	double energyWeight = 1.0;
 
 	// select best weighted yield
 

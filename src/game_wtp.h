@@ -23,6 +23,12 @@ struct Location
 		this->y = newY;
 	}
 
+	Location(const Location &location)
+	{
+		this->x = location.x;
+		this->y = location.y;
+	}
+
 	void set(int newX, int newY)
 	{
 		this->x = newX;
@@ -33,6 +39,11 @@ struct Location
 	{
 		this->x = newLocation.x;
 		this->y = newLocation.y;
+	}
+	
+	bool operator ==(const Location &location)
+	{
+		return this->x == location.x && this->y == location.y;
 	}
 
 };
@@ -145,10 +156,11 @@ bool isBaseBuildingUnit(int baseId);
 bool isBaseBuildingFacility(int baseId);
 bool isBaseBuildingProject(int baseId);
 bool isBaseProductionWithinRetoolingExemption(int baseId);
-bool isBaseBuildingProjectBeyondRetoolingExemption(int baseId);
 int getBaseBuildingItemCost(int baseId);
-double getVehiclePsiAttackStrength(int id);
+double getVehiclePsiOffenseStrength(int id);
 double getVehiclePsiDefenseStrength(int id);
+double getVehicleConventionalOffenseStrength(int id);
+double getVehicleConventionalDefenseStrength(int id, bool defendingAtBase);
 double getFactionSEPlanetAttackModifier(int factionId);
 double getFactionSEPlanetDefenseModifier(int factionId);
 double getPsiCombatBaseOdds(int triad);
@@ -184,7 +196,7 @@ double evaluateUnitConventionalDefenseEffectiveness(int id);
 double evaluateUnitConventionalOffenseEffectiveness(int id);
 double evaluateUnitPsiDefenseEffectiveness(int id);
 double evaluateUnitPsiOffenseEffectiveness(int id);
-double getBaseDefenseMultiplier(int id, int triad, bool countDefensiveStructures, bool countTerritoryBonus);
+double getBaseDefenseMultiplier(int id, int triad);
 int getUnitOffenseValue(int id);
 int getUnitDefenseValue(int id);
 int getVehicleOffenseValue(int id);
@@ -273,9 +285,9 @@ double getNativePsiAttackStrength(int triad);
 double getMoraleModifier(int morale);
 int getFactionSEMoraleBonus(int factionId);
 int getVehicleMorale(int vehicleId, bool defendingAtBase);
+int getNewVehicleMorale(int unitId, int baseId, bool defendingAtBase);
 double getVehicleMoraleModifier(int vehicleId, bool defendingAtBase);
 double getBasePsiDefenseMultiplier();
-double getBaseConventionalDefenseMultiplier(int baseId, int triad);
 bool isWithinFriendlySensorRange(int factionId, int x, int y);
 std::vector<Location> getRegionPodLocations(int region);
 int getRegionPodCount(int region);
@@ -287,4 +299,13 @@ double battleCompute(int attackerVehicleId, int defenderVehicleId);
 int getVehicleSpeedWithoutRoads(int id);
 int getFactionBestWeapon(int factionId);
 int getFactionBestArmor(int factionId);
+bool isPrototypeUnit(int unitId);
+bool isSensorBonusApplied(int factionId, int x, int y, bool attacker);
+int getBaseIdInTile(int x, int y);
+double getSensorOffenseMultiplier(int factionId, int x, int y);
+double getSensorDefenseMultiplier(int factionId, int x, int y);
+bool isNativeUnit(int unitId);
+bool isNativeVehicle(int vehicleId);
+double getPercentageBonusMultiplier(int percentageBonus);
+int getMaintenanceUnitCost(int unitId);
 

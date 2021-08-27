@@ -2222,16 +2222,16 @@ void patch_weapon_help_always_show_cost()
 
 }
 
-/*
-Wraps base_first call.
-*/
-void patch_base_first()
-{
-	write_call(0x004E4D47, (int)modifiedBaseFirst);
-	write_call(0x0050D36E, (int)modifiedBaseFirst);
-
-}
-
+///*
+//Wraps base_first call.
+//*/
+//void patch_base_first()
+//{
+//	write_call(0x004E4D47, (int)modifiedBaseFirst);
+//	write_call(0x0050D36E, (int)modifiedBaseFirst);
+//
+//}
+//
 /*
 Disables restoring movement points to terraforming vehicle.
 */
@@ -3205,11 +3205,11 @@ void patch_disable_air_transport_unload_everywhere()
     write_call(0x004D0509, (int)modifiedVehicleCargoForAirTransportUnload);
 }
 
-void patch_base_production()
-{
-    write_call_over(0x004E61D0, (int)modifiedBaseProductionChoice);
-}
-
+//void patch_base_production()
+//{
+//    write_call_over(0x004E61D0, (int)modifiedBaseProductionChoice);
+//}
+//
 void patch_enemy_move()
 {
     write_call_over(0x00579362, (int)modifiedEnemyMove);
@@ -4133,6 +4133,12 @@ void patch_instant_completion_fixed_minerals(int minerals)
 	
 }
 
+void patch_turn_upkeep()
+{
+    write_call_over(0x52768A, (int)modifiedTurnUpkeep);
+    write_call_over(0x52A4AD, (int)modifiedTurnUpkeep);
+}
+
 void patch_disable_sensor_destroying()
 {
 	int disable_sensor_destroying_select_bytes_length = 0x1f;
@@ -4197,10 +4203,9 @@ void patch_disable_sensor_destroying()
 	
 }
 
-void patch_turn_upkeep()
+void patch_tech_value()
 {
-    write_call_over(0x52768A, (int)modifiedTurnUpkeep);
-    write_call_over(0x52A4AD, (int)modifiedTurnUpkeep);
+	write_call_over(0x005BDC4C, (int)modifiedTechValue);
 }
 
 // =======================================================
@@ -4576,8 +4581,8 @@ void patch_setup_wtp(Config* cf)
 
 	patch_weapon_help_always_show_cost();
 
-	patch_base_first();
-
+//	patch_base_first();
+//
 	if (cf->fix_former_wake)
 	{
 		patch_veh_wake();
@@ -4665,8 +4670,8 @@ void patch_setup_wtp(Config* cf)
 
 	patch_disable_air_transport_unload_everywhere();
 	
-	patch_base_production();
-	
+//	patch_base_production();
+//	
 	patch_enemy_move();
 
 	patch_faction_upkeep();
@@ -4763,6 +4768,8 @@ void patch_setup_wtp(Config* cf)
 	{
 		patch_disable_sensor_destroying();
 	}
+	
+	patch_tech_value();
 	
 }
 

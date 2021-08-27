@@ -84,4 +84,6 @@ extern fp_3int *break_treaty;
 extern fp_2int *base_making;
 extern fp_3int *mind_control;
 extern fp_3int *veh_put;
+extern fp_3int *morale_mod;
+extern fp_2void *base_prod_change;
 

@@ -1845,7 +1845,9 @@ void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCOR
 		double improvementScore = 0.0;
 
 		// process actions
-
+		
+		int availableActionCount = 0;
+		int incompleteActionCount = 0;
 		for
 		(
 			std::vector<int>::const_iterator actionsIterator = option->actions.begin();
@@ -1859,11 +1861,19 @@ void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCOR
 
 			if (!isTerraformingAvailable(mapInfo, action))
 				continue;
-
+			
+			// increment available actions
+			
+			availableActionCount++;
+			
 			// generate terraforming change and add terraforming time for non completed action
 
 			if (!isTerraformingCompleted(mapInfo, action))
 			{
+				// increment incomplete actions
+				
+				incompleteActionCount++;
+				
 				// remove fungus if needed
 
 				if ((improvedMapState->items & TERRA_FUNGUS) && isRemoveFungusRequired(action))
@@ -2016,6 +2026,10 @@ void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCOR
 
 		if (improvementScore <= 0.0)
 			continue;
+		
+		// increase score for less partial actions left
+		
+		improvementScore *= (1.0 + 0.2 * (double)(availableActionCount - incompleteActionCount));
 
 		// calculate terraforming score
 
@@ -5001,22 +5015,20 @@ double calculateBaseResourceScore(double populationSize, double nutrientSurplus,
 	double nutrientDemand = 0.0;
 	double mineralDemand = 0.0;
 
-	// additional demand turns on only from population = 3
+	// additional demand
 
-	if (populationSize >= 3)
+	double nutrientThreshold = (populationSize + 1) * conf.ai_terraforming_baseNutrientThresholdRatio;
+	
+	if (nutrientSurplus < nutrientThreshold)
 	{
-		double nutrientThreshold = conf.ai_terraforming_baseNutrientThresholdRatio * (populationSize + 1);
-		if (nutrientSurplus < nutrientThreshold)
-		{
-			nutrientDemand = conf.ai_terraforming_baseNutrientDemandMultiplier * ((nutrientThreshold - nutrientSurplus) / nutrientThreshold);
-		}
-
-		double mineralThreshold = conf.ai_terraforming_baseMineralThresholdRatio * (nutrientSurplus - nutrientThreshold);
-		if (mineralSurplus < mineralThreshold)
-		{
-			mineralDemand = conf.ai_terraforming_baseMineralDemandMultiplier * ((mineralThreshold - mineralSurplus) / mineralThreshold);
-		}
-
+		nutrientDemand = (nutrientThreshold - nutrientSurplus) * conf.ai_terraforming_baseNutrientDemandMultiplier;
+	}
+	
+	double mineralThreshold = (nutrientSurplus) * conf.ai_terraforming_baseMineralThresholdRatio;
+	
+	if (mineralSurplus < mineralThreshold)
+	{
+		mineralDemand = (mineralThreshold - mineralSurplus) * conf.ai_terraforming_baseMineralDemandMultiplier;
 	}
 
 	return
@@ -5038,6 +5050,11 @@ double computeImprovementBaseSurplusEffectScore(BASE_INFO *baseInfo, MAP_INFO *m
 	BASE *base = baseInfo->base;
 	int x = mapInfo->x;
 	int y = mapInfo->y;
+
+	// set original state
+
+	setMapState(mapInfo, currentMapState);
+	computeBase(id);
 
 	// gather current surplus
 

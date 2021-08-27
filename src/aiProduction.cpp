@@ -31,6 +31,7 @@ const std::unordered_set<int> MANAGED_FACILITIES
 		FAC_NANOREPLICATOR,
 		FAC_PERIMETER_DEFENSE,
 		FAC_TACHYON_FIELD,
+		FAC_COMMAND_CENTER,
 		FAC_NAVAL_YARD,
 		FAC_AEROSPACE_COMPLEX,
 	}
@@ -56,177 +57,300 @@ Prepare production choices.
 */
 void aiProductionStrategy()
 {
-	evaluateDefenseDemand();
 	
 }
 
+///*
+//Selects base production.
+//*/
+//HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
+//{
+//	// fallback to Thinker for test
+////	return mod_base_production(baseId, a2, a3, a4);
+//	
+//    BASE* base = &(Bases[baseId]);
+//    bool productionDone = (base->status_flags & BASE_PRODUCTION_DONE);
+//    bool withinExemption = isBaseProductionWithinRetoolingExemption(baseId);
+//
+//	debug("\n========================================\n");
+//	debug("modifiedBaseProductionChoice - %s (%s), active_faction=%s, base_faction=%s, productionDone=%s, withinExemption=%s\n", base->name, prod_name(base->queue_items[0]), MFactions[*active_faction].noun_faction, MFactions[base->faction_id].noun_faction, (productionDone ? "y" : "n"), (withinExemption ? "y" : "n"));
+//
+//	// execute original code for human bases
+//
+//    if (is_human(base->faction_id))
+//	{
+//        debug("skipping human base\n");
+//        return base_prod_choice(baseId, a2, a3, a4);
+//    }
+//
+//	// execute original code for not enabled computer bases
+//
+//	if (!ai_enabled(base->faction_id))
+//	{
+//        debug("skipping computer base\n");
+//        return base_prod_choice(baseId, a2, a3, a4);
+//	}
+//
+//	// defaults to Thinker if WTP algorithms are not enabled
+//
+//	if (!conf.ai_useWTPAlgorithms)
+//	{
+//		debug("not using WTP algorithms - default to Thinker\n");
+//		return mod_base_production(baseId, a2, a3, a4);
+//	}
+//
+//	// do not disturb base building project
+//
+//	if (isBaseBuildingProject(baseId))
+//	{
+//		return getBaseBuildingItem(baseId);
+//	}
+//	
+//	// compute military priority
+//	
+//	globalMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.mostVulnerableBaseDefenseDemand);
+//	
+//	debug("\tglobalMilitaryPriority = %f\n", globalMilitaryPriority);
+//	
+//	// vanilla choice
+//
+//    int choice = base_prod_choice(baseId, a2, a3, a4);
+//	debug("\n===>    %-10s: %-25s\n\n", "vanilla", prod_name(choice));
+//
+//	// do not override vanilla choice in emergency scrambling - it does pretty goood job at it
+//
+//	if (base->faction_id != *active_faction)
+//	{
+//        debug("use Vanilla algorithm for emergency scrambe\n\n");
+//        
+//        // except replace non-combat unit to Scout Patrol
+//        
+//        if (choice < 0 || !isUnitCombat(choice))
+//		{
+//			choice = BSC_SCOUT_PATROL;
+//		}
+//        
+//		return choice;
+//		
+//	}
+//	
+//	// calculate vanilla priority
+//
+//	double vanillaPriority = 0.0;
+//	
+//	// unit
+//	if (choice > 0)
+//	{
+//		vanillaPriority = conf.ai_production_vanilla_priority_unit;
+//	}
+//	// project
+//	else if (choice <= -PROJECT_ID_FIRST)
+//	{
+//		vanillaPriority = conf.ai_production_vanilla_priority_project;
+//	}
+//	// facility
+//	else
+//	{
+//		// only not managed facilities
+//		if (MANAGED_FACILITIES.count(-choice) == 0)
+//		{
+//			vanillaPriority = conf.ai_production_vanilla_priority_facility;
+//		}
+//	}
+//	
+//	// raise vanilla priority for military items
+//	
+//	if (isMilitaryItem(choice))
+//	{
+//		debug("vanilla choice is military item\n");
+//		
+//		double militaryPriority = (choice >= 0 && Units[choice].triad() == TRIAD_AIR ? globalMilitaryPriority : regionMilitaryPriority);
+//		
+//		// raise vanilla priority to military priority
+//		
+//		if (militaryPriority > vanillaPriority)
+//		{
+//			vanillaPriority = militaryPriority;
+//		}
+//		
+//	}
+//	
+//	// drop priority for impossible colony
+//	
+//	if (choice >= 0 && isUnitColony(choice) && !canBaseProduceColony(baseId))
+//	{
+//		vanillaPriority = 0.0;
+//	}
+//	
+//	// Thinker
+//	
+//    int thinkerChoice = thinker_base_prod_choice(baseId, a2, a3, a4);
+//	debug("\n===>    %-10s: %-25s\n\n", "Thinker", prod_name(thinkerChoice));
+//
+//	// calculate Thinker priority
+//	
+//	double thinkerPriority = conf.ai_production_thinker_priority;
+//	
+//	// drop priority for managed facilities
+//	if (thinkerChoice < 0 && MANAGED_FACILITIES.count(-thinkerChoice) != 0)
+//	{
+//		thinkerPriority = 0.0;
+//	}
+//
+//	// raise thinker priority for combat items
+//	
+//	if (isMilitaryItem(thinkerChoice))
+//	{
+//		debug("Thinker choice is militray item\n");
+//		
+//		double militaryPriority = (thinkerChoice >= 0 && Units[thinkerChoice].triad() == TRIAD_AIR ? globalMilitaryPriority : regionMilitaryPriority);
+//		
+//		// raise thinker priority to military priority
+//		
+//		if (militaryPriority > thinkerPriority)
+//		{
+//			thinkerPriority = militaryPriority;
+//		}
+//		
+//	}
+//	
+//	// drop priority for impossible colony
+//	
+//	if (thinkerChoice >= 0 && isUnitColony(thinkerChoice) && !canBaseProduceColony(baseId))
+//	{
+//		thinkerPriority = 0.0;
+//	}
+//	
+//    // WTP
+//
+//    int wtpChoice = aiSuggestBaseProduction(baseId, choice);
+//
+//	debug("\n===>    %-10s: %-25s\n\n", "WTP", prod_name(wtpChoice));
+//	
+//	// calculate wtp priority
+//	
+//	double wtpPriority = productionDemand.priority;
+//	
+//	debug("production selection between algorithms\n\t%-10s: (%5.2f) %s\n\t%-10s: (%5.2f) %s\n\t%-10s: (%5.2f) %s\n", "vanilla", vanillaPriority, prod_name(choice), "thinker", thinkerPriority, prod_name(thinkerChoice), "wtp", wtpPriority, prod_name(wtpChoice));
+//
+//	// select production based on priority
+//
+//	if (wtpPriority >= thinkerPriority && wtpPriority >= vanillaPriority)
+//	{
+//		choice = wtpChoice;
+//	}
+//	else if (thinkerPriority >= vanillaPriority && thinkerPriority >= wtpPriority)
+//	{
+//		choice = thinkerChoice;
+//	}
+//	
+//	debug("===>    %-25s\n", prod_name(choice));
+//
+//	debug("========================================\n\n");
+//
+//	return choice;
+//
+//}
+//
 /*
-Selects base production.
+Sets faction all bases production.
 */
-HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
+void setProduction()
 {
-	// fallback to Thinker for test
-//	return mod_base_production(baseId, a2, a3, a4);
-	
-    BASE* base = &(Bases[baseId]);
-    bool productionDone = (base->status_flags & BASE_PRODUCTION_DONE);
-    bool withinExemption = isBaseProductionWithinRetoolingExemption(baseId);
-    MAP *baseTile = getBaseMapTile(baseId);
-
-	debug("\nmodifiedBaseProductionChoice\n========================================\n");
-	debug("%s (%s), active_faction=%s, base_faction=%s, productionDone=%s, withinExemption=%s\n", base->name, prod_name(base->queue_items[0]), MFactions[aiFactionId].noun_faction, MFactions[base->faction_id].noun_faction, (productionDone ? "y" : "n"), (withinExemption ? "y" : "n"));
-
-	// execute original code for human bases
-
-    if (is_human(base->faction_id))
+    debug("\nsetProduction - %s\n\n", MFactions[*active_faction].noun_faction);
+    
+    for (int baseId : activeFactionInfo.baseIds)
 	{
-        debug("skipping human base\n");
-        return base_prod_choice(baseId, a2, a3, a4);
-    }
+		BASE* base = &(Bases[baseId]);
+		
+		debug("%s\n", base->name);
 
-	// execute original code for not enabled computer bases
+		// current production choice
 
-	if (!ai_enabled(base->faction_id))
-	{
-        debug("skipping computer base\n");
-        return base_prod_choice(baseId, a2, a3, a4);
-	}
+		int choice = base->queue_items[0];
+		
+		debug("(%s)\n", prod_name(choice));
 
-	// defaults to Thinker if WTP algorithms are not enabled
+		// compute military priority
+		
+		globalMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.mostVulnerableBaseDefenseDemand);
+		
+		debug("globalMilitaryPriority = %f\n", globalMilitaryPriority);
+		
+		// calculate vanilla priority
 
-	if (!conf.ai_useWTPAlgorithms)
-	{
-		debug("not using WTP algorithms - default to Thinker\n");
-		return mod_base_production(baseId, a2, a3, a4);
-	}
-
-	// do not disturb base building project
-
-	if (isBaseBuildingProjectBeyondRetoolingExemption(baseId))
-	{
-		return getBaseBuildingItem(baseId);
-	}
-	
-	// compute military priority
-	
-	globalMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.defenseDemand);
-	regionMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.regionDefenseDemand[baseTile->region]);
-	
-	debug("\tglobalMilitaryPriority = %f, regionMilitaryPriority = %f\n", globalMilitaryPriority, regionMilitaryPriority);
-	
-	// vanilla choice
-
-    int choice = base_prod_choice(baseId, a2, a3, a4);
-	debug("\n===>    %-10s: %-25s\n\n", "vanilla", prod_name(choice));
-
-	// do not override vanilla choice in emergency scrambling - it does pretty goood job at it
-
-	if (base->faction_id != aiFactionId)
-	{
-        debug("use Vanilla algorithm for emergency scrambe\n\n");
-		return choice;
-	}
-	
-	// calculate vanilla priority
-
-	double vanillaPriority = 0.0;
-	
-	// unit
-	if (choice > 0)
-	{
-		vanillaPriority = conf.ai_production_vanilla_priority_unit;
-	}
-	// project
-	else if (choice <= -PROJECT_ID_FIRST)
-	{
-		vanillaPriority = conf.ai_production_vanilla_priority_project;
-	}
-	// facility
-	else
-	{
-		// only not managed facilities
-		if (MANAGED_FACILITIES.count(-choice) == 0)
+		double vanillaPriority = 0.0;
+		
+		// unit
+		if (choice > 0)
 		{
-			vanillaPriority = conf.ai_production_vanilla_priority_facility;
+			vanillaPriority = conf.ai_production_vanilla_priority_unit;
 		}
-	}
-	
-	// raise vanilla priority for military items
-	
-	if (isMilitaryItem(choice))
-	{
-		debug("vanilla choice is military item\n");
-		
-		double militaryPriority = (choice >= 0 && Units[choice].triad() == TRIAD_AIR ? globalMilitaryPriority : regionMilitaryPriority);
-		
-		// raise vanilla priority to military priority
-		
-		if (militaryPriority > vanillaPriority)
+		// project
+		else if (choice <= -PROJECT_ID_FIRST)
 		{
-			vanillaPriority = militaryPriority;
+			vanillaPriority = conf.ai_production_vanilla_priority_project;
+		}
+		// facility
+		else
+		{
+			// only not managed facilities
+			if (MANAGED_FACILITIES.count(-choice) == 0)
+			{
+				vanillaPriority = conf.ai_production_vanilla_priority_facility;
+			}
 		}
 		
-	}
-	
-	// Thinker
-	
-    int thinkerChoice = thinker_base_prod_choice(baseId, a2, a3, a4);
-	debug("\n===>    %-10s: %-25s\n\n", "Thinker", prod_name(thinkerChoice));
-
-	// calculate Thinker priority
-	
-	double thinkerPriority = conf.ai_production_thinker_priority;
-	
-	// drop priority for managed facilities
-	if (thinkerChoice < 0 && MANAGED_FACILITIES.count(-thinkerChoice) != 0)
-	{
-		thinkerPriority = 0.0;
-	}
-
-	// raise thinker priority for combat items
-	
-	if (isMilitaryItem(thinkerChoice))
-	{
-		debug("Thinker choice is militray item\n");
+		// raise vanilla priority for military items
 		
-		double militaryPriority = (thinkerChoice >= 0 && Units[thinkerChoice].triad() == TRIAD_AIR ? globalMilitaryPriority : regionMilitaryPriority);
-		
-		// raise thinker priority to military priority
-		
-		if (militaryPriority > thinkerPriority)
+		if (isMilitaryItem(choice))
 		{
-			thinkerPriority = militaryPriority;
+			debug("\t\tvanilla choice is military item\n");
+			
+			double militaryPriority = (choice >= 0 && Units[choice].triad() == TRIAD_AIR ? globalMilitaryPriority : regionMilitaryPriority);
+			
+			// raise vanilla priority to military priority
+			
+			if (militaryPriority > vanillaPriority)
+			{
+				vanillaPriority = militaryPriority;
+			}
+			
 		}
 		
+		// drop priority for impossible colony
+		
+		if (choice >= 0 && isUnitColony(choice) && !canBaseProduceColony(baseId))
+		{
+			vanillaPriority = 0.0;
+		}
+		
+		// WTP
+
+		int wtpChoice = aiSuggestBaseProduction(baseId, choice);
+
+		// get wtp priority
+		
+		double wtpPriority = productionDemand.priority;
+		
+		debug("production selection\n\t%-10s(%5.2f) %s\n\t%-10s(%5.2f) %s\n", "vanilla", vanillaPriority, prod_name(choice), "wtp", wtpPriority, prod_name(wtpChoice));
+
+		// select production based on priority
+
+		if (wtpPriority >= vanillaPriority)
+		{
+			choice = wtpChoice;
+		}
+		
+		debug("=> %-25s\n", prod_name(choice));
+		
+		// set base production
+		
+		base_prod_change(baseId, choice);
+		
+		debug("\n");
+
 	}
-	
-    // WTP
-
-    int wtpChoice = aiSuggestBaseProduction(baseId, choice);
-	debug("\n===>    %-10s: %-25s\n\n", "WTP", prod_name(wtpChoice));
-	
-	// calculate wtp priority
-	
-	double wtpPriority = productionDemand.priority;
-	
-	debug("production selection between algorithms\n\t%-10s: (%5.2f) %s\n\t%-10s: (%5.2f) %s\n\t%-10s: (%5.2f) %s\n", "vanilla", vanillaPriority, prod_name(choice), "thinker", thinkerPriority, prod_name(thinkerChoice), "wtp", wtpPriority, prod_name(wtpChoice));
-
-	// select production based on priority
-
-	if (wtpPriority >= thinkerPriority && wtpPriority >= vanillaPriority)
-	{
-		choice = wtpChoice;
-	}
-	else if (thinkerPriority >= vanillaPriority && thinkerPriority >= wtpPriority)
-	{
-		choice = thinkerChoice;
-	}
-	
-	debug("===>    %-25s\n", prod_name(choice));
-
-	debug("========================================\n\n");
-
-	return choice;
 
 }
 
@@ -240,7 +364,14 @@ int aiSuggestBaseProduction(int baseId, int choice)
     productionDemand.base = base;
     productionDemand.item = choice;
     productionDemand.priority = 0.0;
-
+    
+	// ignore new bases
+	
+	if (activeFactionInfo.baseStrategies.count(baseId) == 0)
+		return productionDemand.item;
+	
+	// evaluate other demands
+	
 	evaluateFacilitiesDemand();
 
 	evaluateLandImprovementDemand();
@@ -334,34 +465,19 @@ void evaluatePsychFacilitiesDemand()
 		FAC_PARADISE_GARDEN,
 	};
 
-	// do not evaluate psych facility if psych facility or colony is currently building or just completed one
-	// this is because program does not recompute doctors at this time and we have no clue whether just produced psych facility or colony changed anything
-
-	bool buildingPsychFacilityOrColony = false;
-
-	if (base->queue_items[0] >= 0)
-	{
-		if (isUnitColony(base->queue_items[0]))
-		{
-			buildingPsychFacilityOrColony = true;
-		}
-	}
-	else
-	{
-		for (int psychFacilityId : PSYCH_FACILITIES)
-		{
-			if (-base->queue_items[0] == psychFacilityId)
-			{
-				buildingPsychFacilityOrColony = true;
-				break;
-			}
-
-		}
-	}
-
-	if (buildingPsychFacilityOrColony)
-		return;
-
+//	// do not evaluate psych facility if psych facility is currently building
+//	// this is because program does not recompute doctors at this time and we have no clue whether just produced psych facility or colony changed anything
+//
+//	if (base->queue_items[0] < 0)
+//	{
+//		for (int psychFacilityId : PSYCH_FACILITIES)
+//		{
+//			if (-base->queue_items[0] == psychFacilityId)
+//				return;
+//			
+//		}
+//	}
+//
 	debug("\tevaluatePsychFacilitiesDemand\n");
 
 	// calculate variables
@@ -402,6 +518,13 @@ void evaluateMultiplyingFacilitiesDemand()
 	Faction *faction = &(Factions[base->faction_id]);
 
 	debug("\tevaluateMultiplyingFacilitiesDemand\n");
+	
+	// set energy to mineral conversion ratio
+	
+	int hurryCostUnit = (conf.flat_hurry_cost ? conf.flat_hurry_cost_multiplier_unit : 4);
+	int hurryCostFacility = (conf.flat_hurry_cost ? conf.flat_hurry_cost_multiplier_facility : 2);
+
+	double hurryCost = ((double)hurryCostUnit + (double)hurryCostFacility) / 2.0;
 
 	// calculate base values for multiplication
 
@@ -419,7 +542,7 @@ void evaluateMultiplyingFacilitiesDemand()
 		return;
 
 	// multipliers
-	// bit flag: 1 = minerals, 2 = economy, 4 = psych, 8 = fixed labs for biology lab (value >> 16 = fixed value)
+	// bit flag: 1 = minerals, 2 = economy, 4 = psych, 8 = labs, 16 = fixed labs for biology lab (value >> 16 = fixed value)
 	// for simplicity sake, hospitals are assumed to add 50% psych instead of 25% psych and -1 drone
 
 	const int MULTIPLYING_FACILITIES[][2] =
@@ -474,30 +597,30 @@ void evaluateMultiplyingFacilitiesDemand()
 		// economy multiplication
 		if (mask & 2)
 		{
-			bonus += economyIntake / 2.0 / 2.0;
+			bonus += economyIntake / 2.0 / hurryCost;
 		}
 
 		// psych multiplication
 		if (mask & 4)
 		{
-			bonus += psychIntake / 2.0 / 2.0;
+			bonus += psychIntake / 2.0 / hurryCost;
 		}
 
 		// labs multiplication
 		if (mask & 8)
 		{
-			bonus += labsIntake / 2.0 / 2.0;
+			bonus += labsIntake / 2.0 / hurryCost;
 		}
 
 		// labs fixed
 		if (mask & 16)
 		{
-			bonus += (double)(mask >> 16) / 2.0;
+			bonus += (double)(mask >> 16) / hurryCost;
 		}
 
 		// calculate benefit
 
-		double benefit = bonus - ((double)maintenance / 2.0);
+		double benefit = bonus - ((double)maintenance / hurryCost);
 		debug("\t\t\tbonus=%f, benefit=%f\n", bonus, benefit);
 
 		// no benefit
@@ -515,7 +638,7 @@ void evaluateMultiplyingFacilitiesDemand()
 
 		// calculate priority
 
-		double priority = 1 / (constructionTime + payoffTime) - conf.ai_production_facility_priority_penalty;
+		double priority = conf.ai_production_facility_priority_time / (constructionTime + payoffTime) - conf.ai_production_facility_priority_penalty;
 
 		debug("\t\t\tconstructionTime=%f, payoffTime=%f, ai_production_facility_priority_penalty=%f, priority=%f\n", constructionTime, payoffTime, conf.ai_production_facility_priority_penalty, priority);
 
@@ -587,8 +710,9 @@ void evaluateDefensiveFacilitiesDemand()
 		return;
 	
 	// calculate priority
+	// defensive facility is more desirable if there is a bigger guarrison
 	
-	double priority = conf.ai_production_military_priority * activeFactionInfo.regionDefenseDemand[baseTile->region] * activeFactionInfo.baseStrategies[baseId].exposure;
+	double priority = conf.ai_production_military_priority * activeFactionInfo.baseStrategies[baseId].defenseDemand * (activeFactionInfo.baseStrategies[baseId].garrison.size() / 2.0);
 	
 	// add demand
 
@@ -614,7 +738,7 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_COMMAND_CENTER) && !has_facility(baseId, FAC_COMMAND_CENTER) && !ocean)
 	{
 		int facilityId = FAC_COMMAND_CENTER;
-		double priority = conf.ai_production_command_center_priority * base->mineral_surplus_final / activeFactionInfo.regionMaxMineralSurpluses[region];
+		double priority = conf.ai_production_command_center_priority * regionMilitaryPriority * base->mineral_surplus_final / activeFactionInfo.regionMaxMineralSurpluses[region];
 		addProductionDemand(-facilityId, priority);
 		debug("\t\tfacility=%-25s, ai_production_command_center_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_command_center_priority, priority);
 	}
@@ -624,7 +748,7 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_NAVAL_YARD) && !has_facility(baseId, FAC_NAVAL_YARD) && (ocean || connectedOceanRegions.size() >= 1))
 	{
 		int facilityId = FAC_NAVAL_YARD;
-		double priority = conf.ai_production_naval_yard_priority * base->mineral_surplus_final / activeFactionInfo.regionMaxMineralSurpluses[region];
+		double priority = conf.ai_production_naval_yard_priority * regionMilitaryPriority * base->mineral_surplus_final / activeFactionInfo.regionMaxMineralSurpluses[region];
 		addProductionDemand(-facilityId, priority);
 		debug("\t\tfacility=%-25s, ai_production_naval_yard_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_naval_yard_priority, priority);
 	}
@@ -634,7 +758,7 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_AEROSPACE_COMPLEX) && !has_facility(baseId, FAC_AEROSPACE_COMPLEX))
 	{
 		int facilityId = FAC_AEROSPACE_COMPLEX;
-		double priority = conf.ai_production_aerospace_complex_priority * base->mineral_surplus_final / activeFactionInfo.maxMineralSurplus;
+		double priority = conf.ai_production_aerospace_complex_priority * globalMilitaryPriority * base->mineral_surplus_final / activeFactionInfo.maxMineralSurplus;
 		addProductionDemand(-facilityId, priority);
 		debug("\t\tfacility=%-25s, ai_production_aerospace_complex_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_aerospace_complex_priority, priority);
 	}
@@ -713,20 +837,24 @@ void evaluateLandImprovementDemand()
 		int formerCount = calculateRegionSurfaceUnitTypeCount(base->faction_id, region, WPN_TERRAFORMING_UNIT);
 		debug("\t\tformerCount=%d\n", formerCount);
 
-		// calculate improvement demand
+		// calculate required formers
 
-		double improvementDemand = (double)notImprovedWorkedTileCount / conf.ai_production_improvement_coverage - (double)formerCount;
+		double requiredFormers = (double)notImprovedWorkedTileCount / conf.ai_production_improvement_coverage;
 
-		debug("\t\timprovementDemand=%f\n", improvementDemand);
+		// formers are not needed
 
-		// we have enough
-
-		if (improvementDemand <= 0)
+		if (requiredFormers <= 0 || requiredFormers <= formerCount)
 			continue;
 
-		// otherwise, set priority
+		// calculate improvement demand
 
-		double priority = ((double)notImprovedWorkedTileCount / conf.ai_production_improvement_coverage - (double)formerCount) / ((double)notImprovedWorkedTileCount / conf.ai_production_improvement_coverage);
+		double improvementDemand = (requiredFormers - (double)formerCount) / requiredFormers;
+
+		debug("\t\tformerCount=%d, requiredFormers=%f, improvementDemand=%f\n", formerCount, requiredFormers, improvementDemand);
+
+		// set priority
+
+		double priority = conf.ai_production_improvement_priority * improvementDemand;
 
 		debug("\t\tpriority=%f\n", priority);
 
@@ -1202,7 +1330,7 @@ void evaluateTerritoryNativeProtectionDemand()
 			if (!(Units[vehicle->unit_id].weapon_type == WPN_HAND_WEAPONS || Units[vehicle->unit_id].armor_type == ARM_NO_ARMOR))
 				continue;
 
-			existingPsiAttackValue += getVehiclePsiAttackStrength(vehicleId);
+			existingPsiAttackValue += getVehiclePsiOffenseStrength(vehicleId);
 
 		}
 
@@ -1277,6 +1405,9 @@ void evaluatePodPoppingDemand()
 		{
 			MAP *vehicleTile = getVehicleMapTile(vehicleId);
 			
+			if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
+				continue;
+			
 			if (isVehicleLandUnitOnTransport(vehicleId))
 				continue;
 			
@@ -1292,7 +1423,7 @@ void evaluatePodPoppingDemand()
 		
 		// calculate need for pod poppers
 
-		double podPoppersNeeded = (double)regionPodCount / 5.0;
+		double podPoppersNeeded = (double)regionPodCount / (ocean ? 6.0 : 3.0);
 		double podPoppingDemand = (podPoppersNeeded - scoutCount) / podPoppersNeeded;
 
 		debug("\t\tregionPodCount=%d, scoutCount=%d, podPoppingDemand=%f\n", regionPodCount, scoutCount, podPoppingDemand);
@@ -1326,6 +1457,8 @@ void evaluatePodPoppingDemand()
 		if (podPopperUnitId < 0)
 			continue;
 		
+		debug("\t\t%s\n", prod_name(podPopperUnitId));
+		
 		// add production demand
 		
 		addProductionDemand(podPopperUnitId, baseProductionAdjustedPriority);
@@ -1342,12 +1475,33 @@ void evaluatePrototypingDemand()
 	BASE *base = productionDemand.base;
 	bool inSharedOceanRegion = activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion;
 	
+	// do not produce prototype if other bases already produce them
+	
+	for (int otherBaseId : activeFactionInfo.baseIds)
+	{
+		BASE *otherBase = &(Bases[otherBaseId]);
+		
+		// skip self
+		
+		if (otherBaseId == baseId)
+			continue;
+		
+		int otherBaseProductionItem = otherBase->queue_items[0];
+		
+		if (otherBaseProductionItem >= 0)
+		{
+			if (isPrototypeUnit(otherBaseProductionItem))
+				return;
+		}
+		
+	}
+	
 	// find cheapest unprototyped unit
 	
 	int unprototypedUnitId = -1;
 	int unprototypedUnitCost = INT_MAX;
 	
-	for (int unitId : activeFactionInfo.prototypes)
+	for (int unitId : activeFactionInfo.unitIds)
 	{
 		UNIT *unit = &(Units[unitId]);
 		
@@ -1358,7 +1512,7 @@ void evaluatePrototypingDemand()
 		
 		// find unprototyped
 		
-		if (unitId >= 64 && !(unit->unit_flags & UNIT_PROTOTYPED))
+		if (isPrototypeUnit(unitId))
 		{
 			int cost = Units[unitId].cost;
 			
@@ -1386,13 +1540,13 @@ void evaluatePrototypingDemand()
 	
 	// calculate priority
 	
-	double priority = conf.ai_production_prototyping_priority;
+	double priority = conf.ai_production_prototyping_priority * globalMilitaryPriority;
 	
 	// calculate adjusted priority based on mineral surplus
 	
-	double adjustedPriority = priority * ((double)base->mineral_surplus_final / (double)activeFactionInfo.maxMineralSurplus);
+	double adjustedPriority = priority * ((double)base->mineral_surplus / (double)activeFactionInfo.maxMineralSurplus);
 	
-	debug("\tpriority=%f, adjustedPriority=%f", priority, adjustedPriority);
+	debug("\tpriority=%f, mineral_surplus=%d, maxMineralSurplus=%d, adjustedPriority=%f\n", priority, base->mineral_surplus, activeFactionInfo.maxMineralSurplus, adjustedPriority);
 	
 	// add production demand
 	
@@ -1402,12 +1556,44 @@ void evaluatePrototypingDemand()
 
 void evaluateCombatDemand()
 {
-//	debug("evaluateCombatDemand\n");
-//
-//	int baseId = productionDemand.baseId;
-//	BASE *base = productionDemand.base;
-//	
-//	
+	int baseId = productionDemand.baseId;
+	BASE *base = productionDemand.base;
+	
+	// get target base
+	
+	int targetBaseId = activeFactionInfo.baseStrategies[baseId].targetBaseId;
+	
+	// no target base
+	
+	if (targetBaseId == -1)
+		return;
+	
+	debug("evaluateCombatDemand %s -> %s\n", Bases[baseId].name, Bases[targetBaseId].name);
+
+	// get target base defense demand
+	
+	BaseStrategy *targetBaseStrategy = &(activeFactionInfo.baseStrategies[targetBaseId]);
+//	MAP *targetBaseTile = getBaseMapTile(targetBaseId);
+	
+	// find best anti native unit
+	
+	int unitId = -1;
+	
+	if (unitId == -1)
+		return;
+	
+	debug("\t%s\n", Units[unitId].name);
+	
+	// calculate priority
+	
+	double priority = conf.ai_production_military_priority * targetBaseStrategy->defenseDemand * ((double)base->mineral_surplus / (double)activeFactionInfo.maxMineralSurplus);
+	
+	// add demand
+	
+	addProductionDemand(unitId, priority);
+	
+	debug("\t%s -> %s, %s, ai_production_military_priority=%f, defenseDemand=%f, priority=%f\n", base->name, Bases[targetBaseId].name, Units[unitId].name, conf.ai_production_military_priority, targetBaseStrategy->defenseDemand, priority);
+	
 }
 
 void addProductionDemand(int item, double priority)
@@ -1494,7 +1680,7 @@ int findNativeAttackPrototype(bool ocean)
     int bestUnitId = -1;
     UNIT *bestUnit = NULL;
 
-    for (int unitId : activeFactionInfo.prototypes)
+    for (int unitId : activeFactionInfo.unitIds)
 	{
 		UNIT *unit = &(Units[unitId]);
 		
@@ -1978,28 +2164,28 @@ int findPoliceUnit(int factionId)
 
 }
 
-/*
-Wraps first time base production setup.
-*/
-HOOK_API void modifiedBaseFirst(int baseId)
-{
-	BASE *base = &(Bases[baseId]);
-
-	// execute original code
-
-	tx_base_first(baseId);
-
-	// override default choice with WTP choice for enabled computer factions
-	
-	// execute original code for not enabled computer faction bases
-
-	if (!is_human(base->faction_id) && ai_enabled(base->faction_id) && conf.ai_useWTPAlgorithms)
-	{
-		base->queue_items[0] = modifiedBaseProductionChoice(baseId, 0, 0, 0);
-	}
-
-}
-
+///*
+//Wraps first time base production setup.
+//*/
+//HOOK_API void modifiedBaseFirst(int baseId)
+//{
+//	BASE *base = &(Bases[baseId]);
+//
+//	// execute original code
+//
+//	tx_base_first(baseId);
+//
+//	// override default choice with WTP choice for enabled computer factions
+//	
+//	// execute original code for not enabled computer faction bases
+//
+//	if (!is_human(base->faction_id) && ai_enabled(base->faction_id) && conf.ai_useWTPAlgorithms)
+//	{
+//		base->queue_items[0] = modifiedBaseProductionChoice(baseId, 0, 0, 0);
+//	}
+//
+//}
+//
 /*
 Checks for military purpose unit/structure.
 */
@@ -2078,252 +2264,166 @@ int thinker_base_prod_choice(int id, int v1, int v2, int v3) {
     return choice;
 }
 
-void evaluateDefenseDemand()
+int findBestAntiNativeUnitId(int baseId, int targetBaseId, int opponentTriad)
 {
-	debug("evaluateDefenseDemand - %s\n", MFactions[aiFactionId].noun_faction);
+	MAP *targetBaseTile = getBaseMapTile(targetBaseId);
+	bool targetBaseOcean = isOceanRegion(targetBaseTile->region);
 	
-	// evaluate region defense demands
-	
-	for (int region : activeFactionInfo.presenceRegions)
+    int bestUnitId = -1;
+    double bestUnitEffectiveness = 0.0;
+
+    for (int unitId : activeFactionInfo.combatUnitIds)
 	{
-		bool ocean = isOceanRegion(region);
-		
-		debug("\tregion=%3d, ocean=%d\n", region, ocean);
-		
-		// evaluate own military strength in region
-		
-		debug("\t\townStrengths\n");
-		
-		MILITARY_STRENGTH ownStrength;
-		
-		for (int vehicleId : activeFactionInfo.combatVehicleIds)
+        UNIT *unit = &Units[unitId];
+        int triad = unit->triad();
+
+		// skip unmatching triad
+
+		if (targetBaseOcean)
 		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-			UNIT *unit = &(Units[vehicle->unit_id]);
-			bool regularUnit = !(Weapon[unit->weapon_type].offense_value < 0 || Armor[unit->armor_type].defense_value < 0);
-			
-			// exclude vehicle not in region
-			
-			if (!isVehicleInRegion(vehicleId, region))
+			if (triad == TRIAD_LAND)
 				continue;
-			
-			// vehicle value
-			
-			double psiOffenseValue = getVehiclePsiOffenseValue(vehicleId);
-			double psiDefenseValue = getVehiclePsiDefenseValue(vehicleId);
-			double conventionalOffenseValue = 0.0;
-			double conventionalDefenseValue = 0.0;
-			
-			if (regularUnit)
-			{
-				conventionalOffenseValue = getVehicleConventionalOffenseValue(vehicleId);
-				conventionalDefenseValue = getVehicleConventionalDefenseValue(vehicleId);
-			}
-			
-			// check vehicles in opposite realm
-			
-			if (vehicle->triad() == (is_ocean(vehicleTile) ? TRIAD_LAND : TRIAD_SEA))
-			{
-				if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
-				{
-					// vehicle in opposite realm at base can defend only and cannot attack
-					
-					psiOffenseValue = 0.0;
-					conventionalOffenseValue = 0.0;
-					
-				}
-				else
-				{
-					// vehicle in opposite realm and not at base is assumed to be transported and does not contribute to this realm defense
-					
-					continue;
-					
-				}
-				
-			}
-			
-			debug("\t\t\t\t(%3d,%3d) %-25s: psiOff=%f, psiDef=%f, conOff=%f, conDef=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, psiOffenseValue, psiDefenseValue, conventionalOffenseValue, conventionalDefenseValue);
-			
-			// add to region strength
-			
-			ownStrength.totalUnitCount++;
-			ownStrength.psiStrength += evaluateCombatStrength(psiOffenseValue, psiDefenseValue);
-			if (regularUnit)
-			{
-				ownStrength.regularUnitCount++;
-				ownStrength.conventionalStrength += evaluateCombatStrength(conventionalOffenseValue, conventionalDefenseValue);
-			}
-			
-		}
-		debug("\t\t\t%-40s = %7d\n", "totalUnitCount", ownStrength.totalUnitCount);
-		debug("\t\t\t%-40s = %7d\n", "regularUnitCount", ownStrength.regularUnitCount);
-		debug("\t\t\t%-40s = %7.2f\n", "psiStrength", ownStrength.psiStrength);
-		debug("\t\t\t%-40s = %7.2f\n", "conventionalStrength", ownStrength.conventionalStrength);
-		
-		// evaluate opponents military strength in region
-		
-		debug("\t\topponentStrengths\n");
-		
-		MILITARY_STRENGTH opponentStrength;
-		
-		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-			UNIT *unit = &(Units[vehicle->unit_id]);
-			bool regularUnit = !(Weapon[unit->weapon_type].offense_value < 0 || Armor[unit->armor_type].defense_value < 0);
-			
-			// not alien
-			
-			if (vehicle->faction_id == 0)
-				continue;
-			
-			// not own
-			
-			if (vehicle->faction_id == aiFactionId)
-				continue;
-			
-			// combat only
-			
-			if (!isVehicleCombat(vehicleId))
-				continue;
-			
-			// exclude vehicles of opposite region realm
-			
-			if (vehicle->triad() == (ocean ? TRIAD_LAND : TRIAD_SEA))
-				continue;
-			
-			// exclude sea units in different region - they cannot possibly reach us
-			
-			if (vehicle->triad() == TRIAD_SEA && vehicleTile->region != region)
-				continue;
-			
-			// vehicle value
-			
-			double psiOffenseValue = getVehiclePsiOffenseValue(vehicleId);
-			double psiDefenseValue = getVehiclePsiDefenseValue(vehicleId);
-			double conventionalOffenseValue = 0.0;
-			double conventionalDefenseValue = 0.0;
-			
-			if (regularUnit)
-			{
-				conventionalOffenseValue = getVehicleConventionalOffenseValue(vehicleId);
-				conventionalDefenseValue = getVehicleConventionalDefenseValue(vehicleId);
-			}
-			
-			// get nearest base
-			
-			int nearestRegionBaseId = getNearestBaseId(vehicle->x, vehicle->y, activeFactionInfo.regionBaseIds[region]);
-			
-			if (nearestRegionBaseId < 0)
-				continue;
-			
-			BASE *nearestRegionBase = &(Bases[nearestRegionBaseId]);
-			
-			// reduce attack and defense based on base bonuses
-			
-			psiOffenseValue /= activeFactionInfo.baseStrategies[nearestRegionBaseId].psiDefenseMultiplier;
-			conventionalOffenseValue /= activeFactionInfo.baseStrategies[nearestRegionBaseId].conventionalDefenseMultipliers[vehicle->triad()];
-			
-			double sensorCombatStrengthMultiplier = (1.0 + (double)Rules->combat_defend_sensor / 100.0);
-			if (activeFactionInfo.baseStrategies[nearestRegionBaseId].withinFriendlySensorRange)
-			{
-				psiOffenseValue /= sensorCombatStrengthMultiplier;
-				conventionalOffenseValue /= sensorCombatStrengthMultiplier;
-				if (conf.combat_bonus_sensor_offense)
-				{
-					psiDefenseValue /= sensorCombatStrengthMultiplier;
-					conventionalDefenseValue /= sensorCombatStrengthMultiplier;
-				}
-			}
-			
-			// compute strength multiplier based on diplomatic relations
-			
-			double strengthMultiplier = activeFactionInfo.factionInfos[vehicle->faction_id].threatKoefficient;
-			
-			// apply region penalty for land units in other region and not yet transported - it is difficult for them to reach us
-			
-			if (vehicle->triad() == TRIAD_LAND && vehicleTile->region != region && !isVehicleLandUnitOnTransport(vehicleId))
-			{
-				strengthMultiplier /= 5.0;
-			}
-			
-			// reduce strength based on time to reach the base
-			
-			int nearestRegionBaseRange = map_range(vehicle->x, vehicle->y, nearestRegionBase->x, nearestRegionBase->y);
-			double timeToReachTheBase = (double)nearestRegionBaseRange / getVehicleSpeedWithoutRoads(vehicleId);
-			strengthMultiplier /= std::max(1.0, timeToReachTheBase / 5.0);
-			
-			debug("\t\t\t\t(%3d,%3d) %-25s -> (%3d,%3d) %-25s: psiOffenseValue=%f, psiDefenseValue=%f, conventionalOffenseValue=%f, conventionalDefenseValue=%f, strengthMultiplier=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, nearestRegionBase->x, nearestRegionBase->y, nearestRegionBase->name, psiOffenseValue, psiDefenseValue, conventionalOffenseValue, conventionalDefenseValue, strengthMultiplier);
-			
-			// add to region strength
-			
-			opponentStrength.totalUnitCount++;
-			opponentStrength.psiStrength += strengthMultiplier * evaluateCombatStrength(psiOffenseValue, psiDefenseValue);
-			if (regularUnit)
-			{
-				opponentStrength.regularUnitCount++;
-				opponentStrength.conventionalStrength += strengthMultiplier * evaluateCombatStrength(conventionalOffenseValue, conventionalDefenseValue);
-			}
-			
-		}
-		debug("\t\t\t%-40s = %7d\n", "totalUnitCount", opponentStrength.totalUnitCount);
-		debug("\t\t\t%-40s = %7d\n", "regularUnitCount", opponentStrength.regularUnitCount);
-		debug("\t\t\t%-40s = %7.2f\n", "psiStrength", opponentStrength.psiStrength);
-		debug("\t\t\t%-40s = %7.2f\n", "conventionalStrength", opponentStrength.conventionalStrength);
-		
-		// compute region defense demands
-		
-		double defenseDemand;
-		
-		if (opponentStrength.totalUnitCount == 0)
-		{
-			defenseDemand = 0.0;
-		}
-		else if (ownStrength.totalUnitCount == 0)
-		{
-			defenseDemand = 1.0;
 		}
 		else
 		{
-			double conventionalCombatPortion =
-				((double)ownStrength.regularUnitCount / (double)ownStrength.totalUnitCount)
-				*
-				((double)opponentStrength.regularUnitCount / (double)opponentStrength.totalUnitCount)
-			;
-			double psiCombatPortion = 1.0 - conventionalCombatPortion;
-			
-			double psiStrengthRatio = (opponentStrength.psiStrength == 0.0 ? 1.0 : ownStrength.psiStrength / opponentStrength.psiStrength);
-			double conventionalStrengthRatio = (opponentStrength.conventionalStrength == 0.0 ? 1.0 : ownStrength.conventionalStrength / opponentStrength.conventionalStrength);
-			double weightedStrengthRatio = psiCombatPortion * psiStrengthRatio + conventionalCombatPortion * conventionalStrengthRatio;
-			
-			debug("\t\t%-30s = %7.2f\n", "psiCombatPortion", psiCombatPortion);
-			debug("\t\t%-30s = %7.2f\n", "conventionalCombatPortion", conventionalCombatPortion);
-			debug("\t\t%-30s = %7.2f\n", "psiStrengthRatio", psiStrengthRatio);
-			debug("\t\t%-30s = %7.2f\n", "conventionalStrengthRatio", conventionalStrengthRatio);
-			debug("\t\t%-30s = %7.2f\n", "weightedStrengthRatio", weightedStrengthRatio);
-			
-			defenseDemand = 1.0 - weightedStrengthRatio;
-			
+			if (triad == TRIAD_SEA)
+				continue;
 		}
 		
-		debug("\t\t%-20s = %7.2f\n", "defenseDemand", defenseDemand);
+		// skip units unable to attack each other
 		
-		activeFactionInfo.regionDefenseDemand[region] = defenseDemand;
+		if
+		(
+			opponentTriad == TRIAD_LAND && triad == TRIAD_SEA
+			||
+			opponentTriad == TRIAD_SEA && triad == TRIAD_LAND
+		)
+			continue;
+		
+		// strength
+
+		double offenseStrength = getPsiCombatBaseOdds(triad) * getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
+		double defenseStrength = (1 / getPsiCombatBaseOdds(opponentTriad)) * getMoraleModifier(getNewVehicleMorale(unitId, baseId, true));
+		
+		// ability modifiers
+		
+		if (unit_has_ability(unitId, ABL_EMPATH))
+		{
+			offenseStrength *= getPercentageBonusMultiplier(Rules->combat_bonus_empath_song_vs_psi);
+		}
+		
+		if (unit_has_ability(unitId, ABL_TRANCE))
+		{
+			defenseStrength *= getPercentageBonusMultiplier(Rules->combat_bonus_trance_vs_psi);
+		}
+		
+		if (unit_has_ability(unitId, ABL_AAA) && opponentTriad == TRIAD_AIR)
+		{
+			defenseStrength *= getPercentageBonusMultiplier(Rules->combat_AAA_bonus_vs_air);
+		}
+		
+		// pick strongest trait
+		
+		double strength = std::max(offenseStrength, defenseStrength);
+		
+		// calculate cost counting maintenance
+		
+		int cost = getMaintenanceUnitCost(unitId);
+		
+		// calculate effectiveness
+		
+		double effectiveness = strength / (double)cost;
+		
+		// update best effectiveness
+		
+		if (effectiveness > bestUnitEffectiveness)
+		{
+			bestUnitId = unitId;
+			bestUnitEffectiveness = effectiveness;
+		}
 		
 	}
+
+    return bestUnitId;
+
+}
+
+int findBestAntiRegularUnitId(int baseId, int targetBaseId, int opponentTriad)
+{
+	MAP *targetBaseTile = getBaseMapTile(targetBaseId);
+	bool targetBaseOcean = isOceanRegion(targetBaseTile->region);
 	
-	// find average defense demand across all regions
-	
-	activeFactionInfo.defenseDemand = 0.0;
-	
-	for (const auto &kv : activeFactionInfo.regionDefenseDemand)
+    int bestUnitId = -1;
+    double bestUnitEffectiveness = 0.0;
+
+    for (int unitId : activeFactionInfo.combatUnitIds)
 	{
-		activeFactionInfo.defenseDemand += kv.second;
+        UNIT *unit = &Units[unitId];
+        int triad = unit->triad();
+
+		// skip unmatching triad
+
+		if (targetBaseOcean)
+		{
+			if (triad == TRIAD_LAND)
+				continue;
+		}
+		else
+		{
+			if (triad == TRIAD_SEA)
+				continue;
+		}
+		
+		// skip units unable to attack each other
+		
+		if (opponentTriad == TRIAD_LAND && triad == TRIAD_SEA || opponentTriad == TRIAD_SEA && triad == TRIAD_LAND)
+			continue;
+		
+		// strength
+
+		double offenseStrength = getPsiCombatBaseOdds(triad) * getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
+		double defenseStrength = (1 / getPsiCombatBaseOdds(opponentTriad)) * getMoraleModifier(getNewVehicleMorale(unitId, baseId, true));
+		
+		// ability modifiers
+		
+		if (unit_has_ability(unitId, ABL_EMPATH))
+		{
+			offenseStrength *= getPercentageBonusMultiplier(Rules->combat_bonus_empath_song_vs_psi);
+		}
+		
+		if (unit_has_ability(unitId, ABL_TRANCE))
+		{
+			defenseStrength *= getPercentageBonusMultiplier(Rules->combat_bonus_trance_vs_psi);
+		}
+		
+		if (unit_has_ability(unitId, ABL_AAA) && opponentTriad == TRIAD_AIR)
+		{
+			defenseStrength *= getPercentageBonusMultiplier(Rules->combat_AAA_bonus_vs_air);
+		}
+		
+		// pick strongest trait
+		
+		double strength = std::max(offenseStrength, defenseStrength);
+		
+		// calculate cost counting maintenance
+		
+		int cost = getMaintenanceUnitCost(unitId);
+		
+		// calculate effectiveness
+		
+		double effectiveness = strength / (double)cost;
+		
+		// update best effectiveness
+		
+		if (effectiveness > bestUnitEffectiveness)
+		{
+			bestUnitId = unitId;
+			bestUnitEffectiveness = effectiveness;
+		}
+		
 	}
-	
-	activeFactionInfo.defenseDemand /= activeFactionInfo.regionDefenseDemand.size();
-	
+
+    return bestUnitId;
+
 }
 

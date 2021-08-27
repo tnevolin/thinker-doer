@@ -10,6 +10,7 @@
 #include "engine.h"
 #include "game_wtp.h"
 #include "ai.h"
+#include "tech.h"
 
 // player setup helper variable
 
@@ -64,17 +65,17 @@ All custom combat calculation goes here.
 */
 HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, int attackerStrengthPointer, int defenderStrengthPointer, int flags)
 {
-    debug
-    (
-        "mod_battle_compute(attackerVehicleId=%d, defenderVehicleId=%d, attackerStrengthPointer=%d, defenderStrengthPointer=%d, flags=%d)\n",
-        attackerVehicleId,
-        defenderVehicleId,
-        attackerStrengthPointer,
-        defenderStrengthPointer,
-        flags
-    )
-    ;
-
+//    debug
+//    (
+//        "mod_battle_compute(attackerVehicleId=%d, defenderVehicleId=%d, attackerStrengthPointer=%d, defenderStrengthPointer=%d, flags=%d)\n",
+//        attackerVehicleId,
+//        defenderVehicleId,
+//        attackerStrengthPointer,
+//        defenderStrengthPointer,
+//        flags
+//    )
+//    ;
+//
 	// get attacker/defender vehicle
 
 	VEH *attackerVehicle = &Vehicles[attackerVehicleId];
@@ -95,6 +96,32 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 
 	battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
 	
+    // --------------------------------------------------
+    // Artillery duel defender uses best of weapon/armor value
+    // --------------------------------------------------
+    
+    if
+	(
+		// fix is enabled
+		conf.artillery_duel_uses_weapon_and_armor
+		&&
+		// artillery duel
+		(flags & 0x3) == 0x3
+		&&
+		// attacker uses conventional weapon
+		Weapon[attackerUnit->weapon_type].offense_value > 0
+		&&
+		// defender uses conventional weapon
+		Weapon[defenderUnit->weapon_type].offense_value > 0
+	)
+	{
+		// artillery duel uses weapon+armor value
+		
+		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * (Weapon[attackerUnit->weapon_type].offense_value + Armor[attackerUnit->armor_type].defense_value) / Weapon[attackerUnit->weapon_type].offense_value;
+		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (Weapon[defenderUnit->weapon_type].offense_value + Armor[defenderUnit->armor_type].defense_value) / Weapon[defenderUnit->weapon_type].offense_value;
+		
+	}
+    
     // --------------------------------------------------
     // interceptor scramble fix
     // --------------------------------------------------
@@ -213,62 +240,6 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 
     }
 
-    // territory combat bonus
-
-	const char *LABEL_TERRITORY = "Territory";
-
-    if (conf.combat_bonus_territory != 0)
-    {
-        // apply territory defense bonus for non natives combat only
-
-        if (attackerVehicle->faction_id > 0 && defenderVehicle->faction_id > 0)
-        {
-            // attacker gets territory combat bonus for battling in own territory
-
-            if (combatMapTile->owner == attackerVehicle->faction_id)
-            {
-                // modify attacker strength
-
-                *(int *)attackerStrengthPointer = (int)round((double)(*(int *)attackerStrengthPointer) * (1.0 + (double)conf.combat_bonus_territory / 100.0));
-
-                // add effect description
-
-                if (*tx_battle_compute_attacker_effect_count < 4)
-                {
-                    strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], LABEL_TERRITORY);
-                    (*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = conf.combat_bonus_territory;
-
-                    (*tx_battle_compute_attacker_effect_count)++;
-
-                }
-
-            }
-
-            // defender gets territory combat bonus for battling in own territory
-
-            if (combatMapTile->owner == defenderVehicle->faction_id)
-            {
-                // modify defender strength
-
-                *(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)conf.combat_bonus_territory / 100.0));
-
-                // add effect description
-
-                if (*tx_battle_compute_defender_effect_count < 4)
-                {
-                    strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], LABEL_TERRITORY);
-                    (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = conf.combat_bonus_territory;
-
-                    (*tx_battle_compute_defender_effect_count)++;
-
-                }
-
-            }
-
-        }
-
-    }
-
     // sensor
 
     int LABEL_OFFSET_SENSOR = 0x265;
@@ -287,7 +258,7 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 		{
 			// attacker is in range of friendly sensor
 
-			if (isInRangeOfFriendlySensor(combatLocationX, combatLocationY, 2, attackerVehicle->faction_id))
+			if (isWithinFriendlySensorRange(attackerVehicle->faction_id, combatLocationX, combatLocationY))
 			{
 				// modify attacker strength
 
@@ -322,7 +293,7 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 		{
 			// defender is in range of friendly sensor
 
-			if (isInRangeOfFriendlySensor(combatLocationX, combatLocationY, 2, defenderVehicle->faction_id))
+			if (isWithinFriendlySensorRange(defenderVehicle->faction_id, combatLocationX, combatLocationY))
 			{
 				// modify defender strength
 
@@ -415,6 +386,11 @@ HOOK_API void mod_battle_compute_compose_value_percentage(int output_string_poin
 /*
 Prototype cost calculation.
 
+0.
+All non combat related modules (colony, former, transport) have their chassis cost reduced to match land analogues.
+foil = infantry
+cruiser = speeder
+
 1. Calculate module and weapon/armor reactor modified costs.
 module reactor modified cost = item cost * (Fission reactor value / 100)
 weapon/armor reactor modified cost = item cost * (reactor value / 100)
@@ -468,6 +444,21 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
     int weapon_cost = Weapon[weapon_id].cost;
     int armor_cost = Armor[armor_id].cost;
     int chassis_cost = Chassis[chassis_id].cost;
+    
+    // modify chassis cost for sea based non combat related modules
+    
+    if (weapon_id == WPN_COLONY_MODULE || weapon_id == WPN_TERRAFORMING_UNIT || weapon_id == WPN_TROOP_TRANSPORT)
+	{
+		switch (chassis_id)
+		{
+		case CHS_FOIL:
+			chassis_cost = Chassis[CHS_INFANTRY].cost;
+			break;
+		case CHS_CRUISER:
+			chassis_cost = Chassis[CHS_SPEEDER].cost;
+			break;
+		}
+	}
 
     // calculate items reactor modified costs
 
@@ -2831,14 +2822,12 @@ Applies only when flat hurry cost is enabled.
 */
 int getFlatHurryCost(int baseId)
 {
+	BASE *base = &(Bases[baseId]);
+	
 	// apply only when flat hurry cost is enabled
 
 	if (!conf.flat_hurry_cost)
 		return 0;
-
-	// get base
-
-	BASE *base = &(Bases[baseId]);
 
 	// get hurry cost multiplier
 
@@ -2872,7 +2861,7 @@ int getFlatHurryCost(int baseId)
 
 	// scale value to mineral cost multiplier if configured
 
-	if (conf.fix_mineral_contribution)
+	if (is_human(base->faction_id) && conf.fix_mineral_contribution)
 	{
 		hurryCost = scaleValueToBasicMinieralCostMultiplier(base->faction_id, hurryCost);
 	}
@@ -4363,6 +4352,81 @@ int __cdecl isDestroyableImprovement(int terraformIndex, int items)
 	// return 1 by default
 	
 	return 1;
+	
+}
+
+int __cdecl modifiedTechValue(int techId, int factionId, int flag)
+{
+	debug("modifiedTechValue: %-25s %s\n", MFactions[factionId].noun_faction, Tech[techId].name);
+	
+	// read original value
+	
+	int value = tech_val(techId, factionId, flag);
+	
+	debug("\tvalue(o)=%d\n", value);
+	
+	// adjust value
+	
+    if (conf.tech_balance && ai_enabled(factionId))
+	{
+		if
+		(
+			techId == Rules->tech_preq_allow_3_energy_sq
+			||
+			techId == Rules->tech_preq_allow_3_minerals_sq
+			||
+			techId == Rules->tech_preq_allow_3_nutrients_sq
+			||
+			techId == Weapon[WPN_TERRAFORMING_UNIT].preq_tech
+		)
+		{
+			value += 2000;
+		}
+		
+		if
+		(
+			techId == Weapon[WPN_SUPPLY_TRANSPORT].preq_tech
+			||
+			techId == Facility[FAC_RECYCLING_TANKS].preq_tech
+			||
+			techId == Facility[FAC_CHILDREN_CRECHE].preq_tech
+			||
+			techId == Facility[FAC_RECREATION_COMMONS].preq_tech
+		)
+		{
+			value += 400;
+		}
+		
+	}
+	
+	debug("\tvalue(a)=%d\n", value);
+	
+	// give extra value for lower level techs
+	
+	int levelDiff = (getFactionHighestResearchedTechLevel(factionId) + 1) - wtp_tech_level(techId);
+	
+	value <<= levelDiff;
+	
+	debug("\tvalue(l)=%d\n", value);
+	
+	return value;
+	
+}
+
+int getFactionHighestResearchedTechLevel(int factionId)
+{
+	int highestResearchedTechLevel = 0;
+	
+	for (int techId = TECH_Biogen; techId <= TECH_TranT; techId++)
+	{
+		if (has_tech(factionId, techId))
+		{
+			highestResearchedTechLevel = std::max(highestResearchedTechLevel, wtp_tech_level(techId));
+		}
+		
+	}
+	
+	return highestResearchedTechLevel;
 	
 }
 

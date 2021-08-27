@@ -24,8 +24,6 @@ int getBaseMineralCost(int baseId, int itemId)
 
 	int mineralCost = (itemId >= 0 ? tx_veh_cost(itemId, baseId, 0) : Facility[-itemId].cost) * cost_factor(base->faction_id, 1, -1);
 
-	debug("mineralCost=%d\n", mineralCost);
-	
 	return mineralCost;
 
 }
@@ -317,15 +315,6 @@ bool isBaseProductionWithinRetoolingExemption(int baseId)
 
 }
 
-bool isBaseBuildingProjectBeyondRetoolingExemption(int baseId)
-{
-	BASE *base = &(Bases[baseId]);
-	int item = base->queue_items[0];
-
-	return (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST && base->minerals_accumulated > Rules->retool_exemption);
-
-}
-
 int getBaseBuildingItemCost(int baseId)
 {
 	BASE *base = &(Bases[baseId]);
@@ -334,44 +323,49 @@ int getBaseBuildingItemCost(int baseId)
 	return (item >= 0 ? tx_veh_cost(item, baseId, 0) : Facility[-item].cost) * cost_factor(base->faction_id, 1, -1);
 }
 
-double getVehiclePsiAttackStrength(int id)
+double getVehiclePsiOffenseStrength(int id)
 {
 	VEH *vehicle = &(Vehicles[id]);
 	int triad = veh_triad(id);
 	Faction *faction = &(Factions[vehicle->faction_id]);
 
-	// get psi attack strength
+	// psi attack strength
 
-	double psiCombatStrength;
+	double psiOffenseStrength;
 
 	switch (triad)
 	{
 	case TRIAD_LAND:
-		psiCombatStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
+		psiOffenseStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
 		break;
 	case TRIAD_SEA:
-		psiCombatStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
+		psiOffenseStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
 		break;
 	case TRIAD_AIR:
-		psiCombatStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
+		psiOffenseStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
 		break;
 	default:
 		return 1.0;
 	}
 
-	// get vehicle morale modifier
+	// morale modifier
 
-	int morale = vehicle->morale;
-	double moraleModifier = 1.0 + 0.125 * (double)(morale - 2);
+	psiOffenseStrength *= getVehicleMoraleModifier(id, false);
 
-	// get faction PLANET rating modifier
+	// faction PLANET rating modifier
 
-	int planet = faction->SE_planet_pending;
-	double planetModifier = 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * planet;
+	psiOffenseStrength *= 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * faction->SE_planet_pending;
 
-	// calculate modifier
+	// abilities modifier
 	
-	return psiCombatStrength * moraleModifier * planetModifier;
+	if (isVehicleHasAbility(id, ABL_EMPATH))
+	{
+		psiOffenseStrength *= 1.0 + (double)Rules->combat_bonus_empath_song_vs_psi / 100.0;
+	}
+	
+	// return strength
+	
+	return psiOffenseStrength;
 
 }
 
@@ -380,23 +374,67 @@ double getVehiclePsiDefenseStrength(int id)
 	VEH *vehicle = &(Vehicles[id]);
 	Faction *faction = &(Factions[vehicle->faction_id]);
 
-	// get psi defense strength
+	// psi defense strength
 
-	double psiCombatStrength = 1.0;
+	double psiDefenseStrength = 1.0;
 
-	// get vehicle lifecycle modifier
+	// morale modifier
 
-	int lifecycle = vehicle->morale;
-	double lifecycleModifier = 1.0 + 0.125 * (double)(lifecycle - 2);
+	psiDefenseStrength *= getVehicleMoraleModifier(id, false);
 
-	// get faction PLANET rating modifier
+	// faction PLANET rating modifier
+	
+	if (conf.planet_combat_bonus_on_defense)
+	{
+		psiDefenseStrength *= 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * faction->SE_planet_pending;
+	}
 
-	int planet = faction->SE_planet_pending;
-	double planetModifier = (conf.planet_combat_bonus_on_defense ? 1.0 + Rules->combat_psi_bonus_per_PLANET * planet : 1.0);
+	// abilities modifier
+	
+	if (isVehicleHasAbility(id, ABL_TRANCE))
+	{
+		psiDefenseStrength *= 1.0 + (double)Rules->combat_bonus_trance_vs_psi / 100.0;
+	}
+	
+	// return strength
+	
+	return psiDefenseStrength;
 
-	// calculate modifier
+}
 
-	return psiCombatStrength * lifecycleModifier * planetModifier;
+double getVehicleConventionalOffenseStrength(int id)
+{
+	VEH *vehicle = &(Vehicles[id]);
+
+	// strength
+
+	double conventionalOffenseStrength = (double)vehicle->offense_value();
+	
+	// morale modifier
+
+	conventionalOffenseStrength *= getVehicleMoraleModifier(id, false);
+
+	// return strength
+	
+	return conventionalOffenseStrength;
+
+}
+
+double getVehicleConventionalDefenseStrength(int id, bool defendingAtBase)
+{
+	VEH *vehicle = &(Vehicles[id]);
+
+	// conventional defense strength
+
+	double conventionalDefenseStrength = (double)vehicle->defense_value();
+
+	// morale modifier
+
+	conventionalDefenseStrength *= getVehicleMoraleModifier(id, defendingAtBase);
+
+	// return strength
+	
+	return conventionalDefenseStrength;
 
 }
 
@@ -741,9 +779,13 @@ bool isVehicleIdle(int vehicleId)
 
 void computeBase(int baseId)
 {
+	// clear worked tiles
+	Bases[baseId].worked_tiles = 0;
+	
+	// compute base
 	set_base(baseId);
 	base_compute(1);
-
+	
 }
 
 /*
@@ -931,54 +973,61 @@ double evaluateUnitPsiOffenseEffectiveness(int id)
 
 /*
 Calculates base defense multiplier different factors taken into account.
+If triad is non negative it defines which defensive structures to apply.
+Otherwise, only base intrinsic defense is applied.
 */
-double getBaseDefenseMultiplier(int id, int triad, bool countDefensiveStructures, bool countTerritoryBonus)
+double getBaseDefenseMultiplier(int id, int triad)
 {
+	assert(triad < 0 || (triad >= TRIAD_LAND && triad <= TRIAD_AIR));
+	
 	double baseDefenseMultiplier;
-
-	bool firstLevelDefense = false;
-	switch (triad)
+	
+	if (triad < 0)
 	{
-	case TRIAD_LAND:
-		firstLevelDefense = has_facility(id, FAC_PERIMETER_DEFENSE);
-		break;
-	case TRIAD_SEA:
-		firstLevelDefense = has_facility(id, FAC_NAVAL_YARD);
-		break;
-	case TRIAD_AIR:
-		firstLevelDefense = has_facility(id, FAC_AEROSPACE_COMPLEX);
-		break;
-	}
-
-	bool secondLevelDefense = has_facility(id, FAC_TACHYON_FIELD);
-
-	if (countDefensiveStructures && (firstLevelDefense || secondLevelDefense))
-	{
-		baseDefenseMultiplier = 2.0;
-
-		if (firstLevelDefense)
-		{
-			baseDefenseMultiplier = conf.perimeter_defense_multiplier;
-		}
-
-		if (secondLevelDefense)
-		{
-			baseDefenseMultiplier += conf.tachyon_field_bonus;
-		}
-
-		baseDefenseMultiplier /= 2.0;
-
+		baseDefenseMultiplier = getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def);
 	}
 	else
 	{
-		baseDefenseMultiplier = 1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0;
-	}
+		bool firstLevelDefense = false;
+		switch (triad)
+		{
+		case TRIAD_LAND:
+			firstLevelDefense = has_facility(id, FAC_PERIMETER_DEFENSE);
+			break;
+		case TRIAD_SEA:
+			firstLevelDefense = has_facility(id, FAC_NAVAL_YARD);
+			break;
+		case TRIAD_AIR:
+			firstLevelDefense = has_facility(id, FAC_AEROSPACE_COMPLEX);
+			break;
+		}
 
-	if (countTerritoryBonus)
-	{
-		baseDefenseMultiplier *= 1.0 + (double)conf.combat_bonus_territory / 100.0;
-	}
+		bool secondLevelDefense = has_facility(id, FAC_TACHYON_FIELD);
+		
+		if (firstLevelDefense || secondLevelDefense)
+		{
+			baseDefenseMultiplier = 2.0;
 
+			if (firstLevelDefense)
+			{
+				baseDefenseMultiplier = conf.perimeter_defense_multiplier;
+			}
+
+			if (secondLevelDefense)
+			{
+				baseDefenseMultiplier += conf.tachyon_field_bonus;
+			}
+
+			baseDefenseMultiplier /= 2.0;
+
+		}
+		else
+		{
+			baseDefenseMultiplier = getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def);
+		}
+		
+	}
+	
 	return baseDefenseMultiplier;
 
 }
@@ -1279,6 +1328,11 @@ std::vector<int> getFactionPrototypes(int factionId, bool includeNotPrototyped)
         // skip empty
 
         if (strlen(unit->name) == 0)
+			continue;
+		
+		// skip obsolete
+		
+		if ((unit->obsolete_factions & (0x1 << factionId)) != 0)
 			continue;
 
 		// do not include not prototyped if not requested
@@ -2214,35 +2268,6 @@ std::vector<int> getStackedVehicleIds(int vehicleId)
 
 }
 
-/*
-Searches for friendly sensor in given range.
-*/
-bool isInRangeOfFriendlySensor(int x, int y, int range, int factionId)
-{
-	bool sensor = false;
-
-	for (int dx = -(2 * range); dx <= (2 * range); dx++)
-	{
-		for (int dy = -((2 * range) - abs(dx)); dy <= +((2 * range) - abs(dx)); dy += 2)
-		{
-			MAP *tile = getMapTile(x + dx, y + dy);
-
-			if (tile == NULL)
-				continue;
-
-			// return true for friendly sensor
-
-			if (tile->owner == factionId && map_has_item(tile, TERRA_SENSOR))
-				sensor = true;
-
-		}
-
-	}
-
-	return sensor;
-
-}
-
 void setTerraformingAction(int id, int action)
 {
 	VEH *vehicle = &(Vehicles[id]);
@@ -2579,10 +2604,14 @@ Hurries base production and subtracts the cost from reserves.
 */
 void hurryProduction(BASE* base, int minerals, int cost)
 {
+	debug("hurryProduction - %s\n", base->name);
+	
 	// hurry once only
 	
-    if (base->status_flags | BASE_HURRY_PRODUCTION)
+    if (base->status_flags & BASE_HURRY_PRODUCTION)
 		return;
+	
+	debug("\tminerals = %d, cost = %d\n", minerals, cost);
 	
 	// apply hurry parameters
     
@@ -2897,8 +2926,98 @@ Returns vehicle morale.
 int getVehicleMorale(int vehicleId, bool defendingAtBase)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// get basis vehicle morale
+	
+	int morale = vehicle->morale;
+	
+	// faction MORALE bonus for regular units
+	
+	if (!isNativeVehicle(vehicleId))
+	{
+		morale += getFactionSEMoraleBonus(vehicle->faction_id, defendingAtBase);
+	}
+	
+	// return morale limited by edge values
 
-	return std::max(0, std::min(6, vehicle->morale + getFactionSEMoraleBonus(vehicle->faction_id, defendingAtBase)));
+	return std::max((int)MORALE_VERY_GREEN, std::min((int)MORALE_ELITE, morale));
+
+}
+
+/*
+Returns new vehicle morale built at base.
+*/
+int getNewVehicleMorale(int unitId, int baseId, bool defendingAtBase)
+{
+	UNIT *unit = &(Units[unitId]);
+	BASE *base = &(Bases[baseId]);
+	
+	// get default unit morale
+	
+	int morale = (conf.default_morale_very_green ? MORALE_VERY_GREEN : MORALE_GREEN);
+	
+	// modify morale for trained unit
+	
+	if (unit_has_ability(unitId, ABL_TRAINED))
+	{
+		morale++;
+	}
+	
+	// modify morale based on morale facilities
+	
+	if (isNativeUnit(unitId))
+	{
+		if (has_project(base->faction_id, FAC_XENOEMPATHY_DOME))
+		{
+			morale++;
+		}
+		
+		if (has_project(base->faction_id, FAC_PHOLUS_MUTAGEN))
+		{
+			morale++;
+		}
+		
+		if (has_project(base->faction_id, FAC_VOICE_OF_PLANET))
+		{
+			morale++;
+		}
+		
+		if (has_facility(baseId, FAC_CENTAURI_PRESERVE))
+		{
+			morale++;
+		}
+		
+		if (has_facility(baseId, FAC_TEMPLE_OF_PLANET))
+		{
+			morale++;
+		}
+		
+		if (has_facility(baseId, FAC_BIOLOGY_LAB))
+		{
+			morale++;
+		}
+		
+		if (has_facility(baseId, FAC_BIOENHANCEMENT_CENTER))
+		{
+			morale++;
+		}
+		
+	}
+	else
+	{
+		morale += morale_mod(baseId, base->faction_id, unit->triad());
+	}
+	
+	// faction MORALE bonus for regular units
+	
+	if (!isNativeUnit(unitId))
+	{
+		morale += getFactionSEMoraleBonus(base->faction_id, defendingAtBase);
+	}
+	
+	// return morale limited by edge values
+
+	return std::max((int)MORALE_VERY_GREEN, std::min((int)MORALE_ELITE, morale));
 
 }
 
@@ -2913,53 +3032,6 @@ double getVehicleMoraleModifier(int vehicleId, bool defendingAtBase)
 double getBasePsiDefenseMultiplier()
 {
 	return (1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0);
-}
-
-double getBaseConventionalDefenseMultiplier(int baseId, int triad)
-{
-	assert(baseId >= 0 && baseId < MaxBaseNum);
-	assert(triad == TRIAD_LAND || triad == TRIAD_SEA || triad == TRIAD_AIR);
-	
-	double baseconventionalDefenseMultipliers;
-	
-	int firstLevelDefensiveStructure;
-	switch (triad)
-	{
-	case TRIAD_LAND:
-		firstLevelDefensiveStructure = FAC_PERIMETER_DEFENSE;
-		break;
-	case TRIAD_SEA:
-		firstLevelDefensiveStructure = FAC_NAVAL_YARD;
-		break;
-	case TRIAD_AIR:
-		firstLevelDefensiveStructure = FAC_AEROSPACE_COMPLEX;
-		break;
-	default:
-		firstLevelDefensiveStructure = 0;
-	}
-	
-	bool firstLevelDefensiveStructureExists = has_facility(baseId, firstLevelDefensiveStructure);
-	bool secondLevelDefensiveStructureExists = has_facility(baseId, FAC_TACHYON_FIELD);
-	
-	if (!firstLevelDefensiveStructureExists && !secondLevelDefensiveStructureExists)
-	{
-		baseconventionalDefenseMultipliers = (1.0 + (double)Rules->combat_bonus_intrinsic_base_def / 100.0);
-	}
-	else if (firstLevelDefensiveStructureExists && !secondLevelDefensiveStructureExists)
-	{
-		baseconventionalDefenseMultipliers = (double)conf.perimeter_defense_multiplier / 2.0;
-	}
-	else if (!firstLevelDefensiveStructureExists && secondLevelDefensiveStructureExists)
-	{
-		baseconventionalDefenseMultipliers = (double)(2 + conf.tachyon_field_bonus) / 2.0;
-	}
-	else
-	{
-		baseconventionalDefenseMultipliers = (double)(conf.perimeter_defense_multiplier + conf.tachyon_field_bonus) / 2.0;
-	}
-	
-	return baseconventionalDefenseMultipliers;
-	
 }
 
 bool isWithinFriendlySensorRange(int factionId, int x, int y)
@@ -3258,3 +3330,132 @@ int getFactionBestArmor(int factionId)
 	
 }
 
+/*
+Return true if unit is a prototype.
+*/
+bool isPrototypeUnit(int unitId)
+{
+	return (unitId >= 64 && !(Units[unitId].unit_flags & UNIT_PROTOTYPED));
+}
+
+bool isSensorBonusApplied(int factionId, int x, int y, bool attacker)
+{
+	MAP *tile = getMapTile(x, y);
+	
+	// check if within friendly sensor range
+	
+	if (!isWithinFriendlySensorRange(factionId, x, y))
+		return false;
+	
+	// check if at sea and sensor is applicable at sea
+	
+	if (is_ocean(tile) && !conf.combat_bonus_sensor_ocean)
+		return false;
+	
+	// check if attacker and sensor is applicable for attack
+	
+	if (attacker && !conf.combat_bonus_sensor_offense)
+		return false;
+	
+	// otherwise return true
+	
+	return true;
+	
+}
+
+/*
+Finds base in tile.
+Returns base id if found. Otherwise, -1.
+*/
+int getBaseIdInTile(int x, int y)
+{
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+		
+		if (base->x == x && base->y == y)
+			return baseId;
+		
+	}
+	
+	return -1;
+	
+}
+
+double getSensorOffenseMultiplier(int factionId, int x, int y)
+{
+	MAP *tile = getMapTile(x, y);
+	
+	return
+		(
+			isWithinFriendlySensorRange(factionId, x, y)
+			&&
+			conf.combat_bonus_sensor_offense
+			&&
+			(!isOceanRegion(tile->region) || conf.combat_bonus_sensor_ocean)
+		)
+		?
+		Rules->combat_defend_sensor
+		:
+		1.0
+	;
+	
+}
+
+double getSensorDefenseMultiplier(int factionId, int x, int y)
+{
+	MAP *tile = getMapTile(x, y);
+	
+	return
+		(
+			isWithinFriendlySensorRange(factionId, x, y)
+			&&
+			(!isOceanRegion(tile->region) || conf.combat_bonus_sensor_ocean)
+		)
+		?
+		Rules->combat_defend_sensor
+		:
+		1.0
+	;
+	
+}
+
+/*
+Determines if unit is a native predefined unit.
+*/
+bool isNativeUnit(int unitId)
+{
+	return
+		unitId == BSC_MIND_WORMS
+		||
+		unitId == BSC_SPORE_LAUNCHER
+		||
+		unitId == BSC_SEALURK
+		||
+		unitId == BSC_ISLE_OF_THE_DEEP
+		||
+		unitId == BSC_LOCUSTS_OF_CHIRON
+	;
+
+}
+
+/*
+Determines if vehicle is a native predefined unit.
+*/
+bool isNativeVehicle(int vehicleId)
+{
+	return isNativeUnit(Vehicles[vehicleId].unit_id);
+}
+
+double getPercentageBonusMultiplier(int percentageBonus)
+{
+	return 1.0 + (double)percentageBonus / 100.0;
+}
+
+/*
+Returns unit cost accounting for roughly 40 turns of maintenance.
+*/
+int getMaintenanceUnitCost(int unitId)
+{
+	return Units[unitId].cost + 4;
+}

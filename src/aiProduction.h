@@ -57,7 +57,8 @@ const int WTP_MANAGED_UNIT_PLANS[] =
 };
 
 void aiProductionStrategy();
-HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
+//HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
+void setProduction();
 int aiSuggestBaseProduction(int baseId, int choice);
 void evaluateFacilitiesDemand();
 void evaluatePopulationLimitFacilitiesDemand();
@@ -93,8 +94,9 @@ int calculateRegionSurfaceUnitTypeCount(int factionId, int region, int weaponTyp
 int calculateUnitTypeCount(int baseId, int weaponType, int triad, int excludedBaseId);
 bool isBaseNeedPsych(int baseId);
 int findPoliceUnit(int factionId);
-HOOK_API void modifiedBaseFirst(int baseId);
+//HOOK_API void modifiedBaseFirst(int baseId);
 bool isMilitaryItem(int item);
 int thinker_base_prod_choice(int id, int v1, int v2, int v3);
-void evaluateDefenseDemand();
+int findBestAntiNativeUnitId(int baseId, int targetBaseId, int opponentTriad);
+int findBestAntiRegularUnitId(int baseId, int targetBaseId, int opponentTriad);
 

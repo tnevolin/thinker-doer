@@ -274,9 +274,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "default_morale_very_green")) {
         cf->default_morale_very_green = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "combat_bonus_territory")) {
-        cf->combat_bonus_territory = atoi(value);
-    }
     else if (MATCH("wtp", "tube_movement_rate_multiplier")) {
         cf->tube_movement_rate_multiplier = atoi(value);
     }
@@ -589,6 +586,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->disable_sensor_destroying = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "artillery_duel_uses_weapon_and_armor"))
+    {
+        cf->artillery_duel_uses_weapon_and_armor = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
@@ -685,9 +686,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_improvement_coverage = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_improvement_coverage"))
+    else if (MATCH("wtp", "ai_production_improvement_priority"))
     {
-        cf->ai_production_improvement_coverage = atof(value);
+        cf->ai_production_improvement_priority = atof(value);
     }
     else if (MATCH("wtp", "ai_production_population_projection_turns"))
     {
@@ -712,6 +713,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_production_aerospace_complex_priority"))
     {
         cf->ai_production_aerospace_complex_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_facility_priority_time"))
+    {
+        cf->ai_production_facility_priority_time = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {

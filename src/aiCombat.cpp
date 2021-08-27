@@ -19,10 +19,10 @@ void aiCombatStrategy()
 	
 	nativeCombatStrategy();
 	
-	factionCombatStrategy();
-	
 	popPods();
 
+	factionCombatStrategy();
+	
 }
 
 void populateCombatLists()
@@ -36,252 +36,28 @@ Rank bases based on protection need.
 */
 void baseProtection()
 {
-//	debug("baseProtection - %s\n", MFactions[aiFactionId].noun_faction);
-//	
-//	// compute base threats
-//	
-//	for (int baseId : activeFactionInfo.baseIds)
-//	{
-//		BASE *base = &(Bases[baseId]);
-//		MAP *baseTile = getBaseMapTile(baseId);
-//		int region = baseTile->region;
-//		bool ocean = isOceanRegion(region);
-//		
-//		debug("%s\n", base->name);
-//		
-//		double defenderDemand = 0.0;
-//		double attackerDemand = 0.0;
-//		
-//		// compute threat
-//		
-//		debug("\t\topponentStrengths\n");
-//		
-//		activeFactionInfo.baseStrategies[baseId].baseCombatDemand.psiThreat = 0.0;
-//		activeFactionInfo.baseStrategies[baseId].baseCombatDemand.conventionalThreat = 0.0;
-//		
-//		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-//		{
-//			VEH *vehicle = &(Vehicles[vehicleId]);
-//			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-//			UNIT *unit = &(Units[vehicle->unit_id]);
-//			bool regularUnit = !(Weapon[unit->weapon_type].offense_value < 0 || Armor[unit->armor_type].defense_value < 0);
-//			
-//			// not alien
-//			
-//			if (vehicle->faction_id == 0)
-//				continue;
-//			
-//			// not own
-//			
-//			if (vehicle->faction_id == aiFactionId)
-//				continue;
-//			
-//			// combat only
-//			
-//			if (!isVehicleCombat(vehicleId))
-//				continue;
-//			
-//			// exclude vehicles of opposite region realm
-//			
-//			if (vehicle->triad() == (ocean ? TRIAD_LAND : TRIAD_SEA))
-//				continue;
-//			
-//			// exclude sea units in different region - they cannot possibly reach us
-//			
-//			if (vehicle->triad() == TRIAD_SEA && vehicleTile->region != region)
-//				continue;
-//			
-//			// vehicle value
-//			
-//			double psiOffenseValue = getVehiclePsiOffenseValue(vehicleId);
-//			double conventionalOffenseValue = 0.0;
-//			
-//			if (regularUnit)
-//			{
-//				conventionalOffenseValue = getVehicleConventionalOffenseValue(vehicleId);
-//			}
-//			
-//			// reduce offense and defense based on base defense bonuses
-//			
-//			psiOffenseValue /= activeFactionInfo.baseStrategies[baseId].psiDefenseMultiplier;
-//			conventionalOffenseValue /= activeFactionInfo.baseStrategies[baseId].conventionalDefenseMultipliers[vehicle->triad()];
-//			
-//			double sensorCombatStrengthMultiplier = (1.0 + (double)Rules->combat_defend_sensor / 100.0);
-//			if (activeFactionInfo.baseStrategies[nearestRegionBaseId].withinFriendlySensorRange)
-//			{
-//				psiOffenseValue /= sensorCombatStrengthMultiplier;
-//				conventionalOffenseValue /= sensorCombatStrengthMultiplier;
-//			}
-//			
-//			// evaluate offense strengths
-//			
-//			double psiOffenseStrength = evaluateOffenseStrength(psiOffenseValue);
-//			double conventionalOffenseStrength = evaluateOffenseStrength(conventionalOffenseValue);
-//			
-//			// compute strength multiplier based on diplomatic relations
-//			
-//			double strengthMultiplier;
-//			
-//			if (is_human(vehicle->faction_id))
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_human;
-//			}
-//			else if (isDiploStatus(aiFactionId, vehicle->faction_id, DIPLO_VENDETTA))
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_vendetta;
-//			}
-//			else if (isDiploStatus(aiFactionId, vehicle->faction_id, DIPLO_PACT))
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_pact;
-//			}
-//			else if (isDiploStatus(aiFactionId, vehicle->faction_id, DIPLO_TREATY))
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_treaty;
-//			}
-//			else
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_other;
-//			}
-//			
-//			// apply region penalty for land units in other region and not yet transported - it is difficult for them to reach us
-//			
-//			if (vehicle->triad() == TRIAD_LAND && vehicleTile->region != region && !isVehicleLandUnitOnTransport(vehicleId))
-//			{
-//				strengthMultiplier /= 5.0;
-//			}
-//			
-//			// reduce strength based on range
-//			
-//			int range = map_range(base->x, base->y, vehicle->x, vehicle->y);
-//			strengthMultiplier *= pow(3.0, -((double)range / 5.0));
-//			
-//			debug("\t\t\t\t(%3d,%3d) %-25s -> (%3d,%3d) %-25s: psiOffenseValue=%f, psiDefenseValue=%f, conventionalOffenseValue=%f, conventionalDefenseValue=%f, strengthMultiplier=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, nearestRegionBase->x, nearestRegionBase->y, nearestRegionBase->name, psiOffenseValue, psiDefenseValue, conventionalOffenseValue, conventionalDefenseValue, strengthMultiplier);
-//			
-//			// add to opponent strength
-//			
-//			activeFactionInfo.baseStrategies[baseId].baseCombatDemand.psiThreat += strengthMultiplier * psiOffenseStrength;
-//			activeFactionInfo.baseStrategies[baseId].baseCombatDemand.conventionalThreat = strengthMultiplier * conventionalOffenseStrength;
-//			
-//		}
-//		
-//		debug("\t\t\t%-40s = %7.2f\n", "psiThreat", activeFactionInfo.baseStrategies[baseId].baseCombatDemand.psiThreat);
-//		debug("\t\t\t%-40s = %7.2f\n", "conventionalThreat", activeFactionInfo.baseStrategies[baseId].baseCombatDemand.conventionalThreat);
-//		
-//		// compute existing values
-//		
-//		activeFactionInfo.baseStrategies[baseId].baseCombatDemand.psiThreat += strengthMultiplier * psiOffenseStrength;
-//		activeFactionInfo.baseStrategies[baseId].baseCombatDemand.conventionalThreat = strengthMultiplier * conventionalOffenseStrength;
-//		
-//		double defenseDemand;
-//		
-//		if (opponentStrength.totalUnitCount == 0)
-//		{
-//			defenseDemand = 0.0;
-//		}
-//		else if (ownStrength.totalUnitCount == 0)
-//		{
-//			defenseDemand = 1.0;
-//		}
-//		else
-//		{
-//			double conventionalCombatPortion =
-//				((double)ownStrength.regularUnitCount / (double)ownStrength.totalUnitCount)
-//				*
-//				((double)opponentStrength.regularUnitCount / (double)opponentStrength.totalUnitCount)
-//			;
-//			double psiCombatPortion = 1.0 - conventionalCombatPortion;
-//			
-//			double psiStrengthRatio = (opponentStrength.psiStrength == 0.0 ? 1.0 : ownStrength.psiStrength / opponentStrength.psiStrength);
-//			double conventionalStrengthRatio = (opponentStrength.conventionalStrength == 0.0 ? 1.0 : ownStrength.conventionalStrength / opponentStrength.conventionalStrength);
-//			double weightedStrengthRatio = psiCombatPortion * psiStrengthRatio + conventionalCombatPortion * conventionalStrengthRatio;
-//			
-//			debug("\t\t%-30s = %7.2f\n", "psiCombatPortion", psiCombatPortion);
-//			debug("\t\t%-30s = %7.2f\n", "conventionalCombatPortion", conventionalCombatPortion);
-//			debug("\t\t%-30s = %7.2f\n", "psiStrengthRatio", psiStrengthRatio);
-//			debug("\t\t%-30s = %7.2f\n", "conventionalStrengthRatio", conventionalStrengthRatio);
-//			debug("\t\t%-30s = %7.2f\n", "weightedStrengthRatio", weightedStrengthRatio);
-//			
-//			defenseDemand = 1.0 - weightedStrengthRatio;
-//			
-//		}
-//		
-//		debug("\t\t%-20s = %7.2f\n", "defenseDemand", defenseDemand);
-//		
-//		activeFactionInfo.regionDefenseDemand[region] = defenseDemand;
-//		
-//	}
-//	
-//		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-//		{
-//			VEH *vehicle = &(Vehicles[vehicleId]);
-//			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-//			
-//			// skip own
-//			
-//			if (vehicle->faction_id == aiFactionId)
-//				continue;
-//			
-//			// skip units of different realm unable to attack the base
-//			
-//			if (ocean)
-//			{
-//				if (vehicle->triad() == TRIAD_LAND && vehicle_has_ability(vehicleId, ABL_AMPHIBIOUS))
-//					continue;
-//			}
-//			else
-//			{
-//				if (vehicle->triad() == TRIAD_SEA)
-//					continue;
-//			}
-//			
-//			// skip sea units in other region
-//			
-//			if (ocean)
-//			{
-//				if (vehicle->triad() == TRIAD_SEA && vehicleTile->region != region)
-//					continue;
-//			}
-//			
-//			// get vehicle offense strength
-//			
-//			double vehicleOffenseStrength = evaluateOffenseStrength(get)
-//			
-//			// compute strength multiplier based on diplomatic relations
-//			
-//			double strengthMultiplier;
-//			
-//			if (is_human(vehicle->faction_id))
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_human;
-//			}
-//			else if (isDiploStatus(aiFactionId, vehicle->faction_id, DIPLO_VENDETTA))
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_vendetta;
-//			}
-//			else if (isDiploStatus(aiFactionId, vehicle->faction_id, DIPLO_PACT))
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_pact;
-//			}
-//			else if (isDiploStatus(aiFactionId, vehicle->faction_id, DIPLO_TREATY))
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_treaty;
-//			}
-//			else
-//			{
-//				strengthMultiplier = conf.ai_production_threat_coefficient_other;
-//			}
-//			
-//			// apply region penalty for land units in other region and not yet transported - it is difficult for them to reach us
-//			
-//			if (vehicle->triad() == TRIAD_LAND && vehicleTile->region != region && !isVehicleLandUnitOnTransport(vehicleId))
-//			{
-//				strengthMultiplier /= 5.0;
-//			}
-//			
-//		}
-//		
-//	}
-//	
+	debug("baseProtection - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	for (int baseId : activeFactionInfo.baseIds)
+	{
+		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseId]);
+		
+		// hold guarrison if base needs defense
+		
+		if (baseStrategy->defenseDemand > 0.0)
+		{
+			for (int vehicleId : baseStrategy->garrison)
+			{
+				VEH *vehicle = &(Vehicles[vehicleId]);
+				
+				setMoveOrder(vehicleId, vehicle->x, vehicle->y, ORDER_HOLD);
+				
+			}
+			
+		}
+		
+	}
+		
 }
 
 void healStrategy()
@@ -567,6 +343,62 @@ void nativeCombatStrategy()
 
 void factionCombatStrategy()
 {
+	// clear orders for vehicles in war zone
+	
+	for (int vehicleId : activeFactionInfo.combatVehicleIds)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		int vehicleTriad = vehicle->triad();
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		
+		for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
+		{
+			VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+			int otherVehicleTriad = otherVehicle->triad();
+			MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
+			
+			// skip alien faction
+			
+			if (otherVehicle->faction_id == 0)
+				continue;
+			
+			// skip not hostile
+			
+			if (!at_war(aiFactionId, otherVehicle->faction_id))
+				continue;
+			
+			// skip different realm
+			
+			if
+			(
+				(vehicleTriad == TRIAD_LAND && otherVehicleTriad == TRIAD_SEA)
+				||
+				(vehicleTriad == TRIAD_SEA && otherVehicleTriad == TRIAD_LAND)
+			)
+			{
+				continue;
+			}
+			
+			// skip different regions
+			
+			if (vehicleTriad != TRIAD_AIR && vehicleTile->region != otherVehicleTile->region)
+				continue;
+			
+			// skip not within two turns reach
+			
+			int reachRange = 2 * Chassis[Units[vehicle->unit_id].chassis_type].speed;
+			int range = map_range(vehicle->x, vehicle->y, otherVehicle->x, otherVehicle->y);
+			
+			if (range > reachRange)
+				continue;
+			
+			// otherwise clear order
+			
+			combatOrders.erase(vehicleId);
+			
+		}
+		
+	}
 	
 }
 
@@ -694,7 +526,7 @@ int moveCombat(int vehicleId)
 
 	int aiVehicleId = vehicle->pad_0;
 
-	debug("[%d->%d] (%3d,%3d)\n", aiVehicleId, vehicleId, vehicle->x, vehicle->y);
+	debug("moveCombat: [%d->%d] (%3d,%3d)\n", aiVehicleId, vehicleId, vehicle->x, vehicle->y);
 
 	// process vehicle order if any assigned
 
