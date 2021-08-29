@@ -165,8 +165,8 @@ struct YIELD
 
 const struct
 {
-	double rainfall = 0.5;
-	double rockiness = 0.5;
+	double rainfall = 1.0;
+	double rockiness = 1.0;
 	double elevation = 1.0;
 } EXCLUSIVITY_LEVELS;
 
@@ -243,7 +243,7 @@ bool isTowardBaseHorizontal(int x, int y, int dxSign);
 bool isTowardBaseVertical(int x, int y, int dySign);
 double calculateSensorScore(MAP_INFO mapInfo, int action);
 bool isBaseWorkedTile(BASE *base, int x, int y);
-double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *actions);
+double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *actions, bool levelTerrain);
 bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::iterator begin, std::vector<TERRAFORMING_REQUEST>::iterator end, int action, int x, int y, int range);
 double estimateCondenserExtraYieldScore(MAP_INFO *mapInfo, const std::vector<int> *actions);
 double estimateAquiferExtraYieldScore(MAP_INFO *mapInfo);

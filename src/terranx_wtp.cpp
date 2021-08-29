@@ -188,3 +188,5 @@ fp_3int *morale_mod = (fp_3int *)0x004E6400;
 // updates base production
 fp_2void *base_prod_change = (fp_2void *)0x004E5A60;
 
+fp_0void *base_hurry = (fp_0void *)0x004F3FE0;
+

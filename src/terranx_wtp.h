@@ -86,4 +86,5 @@ extern fp_3int *mind_control;
 extern fp_3int *veh_put;
 extern fp_3int *morale_mod;
 extern fp_2void *base_prod_change;
+extern fp_0void *base_hurry;
 

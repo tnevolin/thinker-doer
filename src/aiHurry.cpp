@@ -23,7 +23,7 @@ It kicks in only when flat hurry cost is enabled.
 void considerHurryingProduction(int factionId)
 {
     Faction* faction = &Factions[factionId];
-    debug("considerHurryingProduction\n")
+    debug("considerHurryingProduction - %s\n", MFactions[factionId].noun_faction)
 
 	// apply only when flat hurry cost is enabled
 
@@ -42,8 +42,8 @@ void considerHurryingProduction(int factionId)
 
 	// sort out bases
 
-	double defenseDemandingBasesWeightSum = 0.0;
-	std::vector<BASE_WEIGHT> defenseDemandingBases;
+	double defenseDemandBasesWeightSum = 0.0;
+	std::vector<BASE_WEIGHT> defenseDemandBases;
 	double importantFacilityBasesWeightSum = 0.0;
 	std::vector<BASE_WEIGHT> importantFacilityBases;
 	double facilityBasesWeightSum = 0.0;
@@ -67,6 +67,11 @@ void considerHurryingProduction(int factionId)
 		// get base mineral surplus
 
 		int mineralSurplus = base->mineral_surplus;
+		
+		// do not rush unit production in bases with low mineral surplus
+		
+		if (item >= 0 && mineralSurplus < conf.ai_production_unit_min_mineral_surplus)
+			continue;
 
 		// calculate weight
 
@@ -83,13 +88,13 @@ void considerHurryingProduction(int factionId)
 				unitBases.push_back({baseId, weight});
 				unitBasesWeightSum += weight;
 				
-				// special case combat unit in defenseDemanding base
+				// special case combat unit in defenseDemand base
 				
 				if (isUnitCombat(item) && activeFactionInfo.baseStrategies[baseId].defenseDemand > 0.0)
 				{
-					weight *= activeFactionInfo.baseStrategies[baseId].defenseDemand;
-					defenseDemandingBases.push_back({baseId, weight});
-					defenseDemandingBasesWeightSum += weight;
+					weight = activeFactionInfo.baseStrategies[baseId].defenseDemand;
+					defenseDemandBases.push_back({baseId, weight});
+					defenseDemandBasesWeightSum += weight;
 				}
 					
 			}
@@ -119,18 +124,18 @@ void considerHurryingProduction(int factionId)
 
 	// hurry production by priority
 
-	if (defenseDemandingBases.size() >= 1)
+	if (defenseDemandBases.size() >= 1)
 	{
 		for
 		(
-			std::vector<BASE_WEIGHT>::iterator defenseDemandingBasesIterator = defenseDemandingBases.begin();
-			defenseDemandingBasesIterator != defenseDemandingBases.end();
-			defenseDemandingBasesIterator++
+			std::vector<BASE_WEIGHT>::iterator defenseDemandBasesIterator = defenseDemandBases.begin();
+			defenseDemandBasesIterator != defenseDemandBases.end();
+			defenseDemandBasesIterator++
 		)
 		{
-			BASE_WEIGHT *baseWeight = &(*defenseDemandingBasesIterator);
+			BASE_WEIGHT *baseWeight = &(*defenseDemandBasesIterator);
 
-			int allowance = (int)(floor((double)spendPool * baseWeight->weight / defenseDemandingBasesWeightSum));
+			int allowance = (int)(floor((double)spendPool * baseWeight->weight / defenseDemandBasesWeightSum));
 			hurryProductionPartially(baseWeight->baseId, allowance);
 		}
 

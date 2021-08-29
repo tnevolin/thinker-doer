@@ -22,48 +22,30 @@ ActiveFactionInfo activeFactionInfo;
 
 /*
 Top level faction upkeep entry point.
+This is called for AI enabled factions only.
 */
 int aiFactionUpkeep(const int factionId)
 {
-    // expire infiltrations for normal factions
-    
-    if (factionId > 0)
-	{
-		expireInfiltrations(factionId);
-	}
+	// set AI faction id for future reference
 	
-	// strategy for AI enabled faction
+	aiFactionId = factionId;
 	
-	if (conf.ai_useWTPAlgorithms && factionId != 0 && !is_human(factionId) && ai_enabled(factionId))
-	{
-		// set AI faction id for future reference
-		
-		aiFactionId = factionId;
-		
-		// recalculate global faction parameters on this turn if not yet done
-		
-		aiStrategy();
-		
-	}
+	// recalculate global faction parameters on this turn if not yet done
+	
+	aiStrategy();
 	
 	// redirect to vanilla function for the rest of processing
 	// that, in turn, is overriden by Thinker
 	
 	int returnValue = faction_upkeep(factionId);
 	
-	// post turn operations for AI enabled factions
+	// update base productions
 	
-	if (conf.ai_useWTPAlgorithms && factionId != 0 && !is_human(factionId) && ai_enabled(factionId))
-	{
-		// update base productions
-		
-		setProduction();
-		
-		// consider hurrying production in all bases
-		
-		considerHurryingProduction(factionId);
-		
-	}
+	setProduction();
+	
+	// consider hurrying production in all bases
+	
+	considerHurryingProduction(factionId);
 	
 	// return value
 	
@@ -226,7 +208,7 @@ void populateGlobalVariables()
 
 	// populate other factions threat koefficients
 
-	debug("%-24s\notherFactionThreatKoefficients:\n", MFactions[aiFactionId].noun_faction);
+	debug("%-24s\notherFactionthreatCoefficients:\n", MFactions[aiFactionId].noun_faction);
 
 	for (int id = 1; id < 8; id++)
 	{
@@ -246,34 +228,34 @@ void populateGlobalVariables()
 
 		// calculate threat koefficient
 
-		double threatKoefficient;
+		double threatCoefficient;
 
 		if (is_human(id))
 		{
-			threatKoefficient = conf.ai_production_threat_coefficient_human;
+			threatCoefficient = conf.ai_production_threat_coefficient_human;
 		}
 		else if (otherFactionRelation & DIPLO_VENDETTA)
 		{
-			threatKoefficient = conf.ai_production_threat_coefficient_vendetta;
+			threatCoefficient = conf.ai_production_threat_coefficient_vendetta;
 		}
 		else if (otherFactionRelation & DIPLO_PACT)
 		{
-			threatKoefficient = conf.ai_production_threat_coefficient_pact;
+			threatCoefficient = conf.ai_production_threat_coefficient_pact;
 		}
 		else if (otherFactionRelation & DIPLO_TREATY)
 		{
-			threatKoefficient = conf.ai_production_threat_coefficient_treaty;
+			threatCoefficient = conf.ai_production_threat_coefficient_treaty;
 		}
 		else
 		{
-			threatKoefficient = conf.ai_production_threat_coefficient_other;
+			threatCoefficient = conf.ai_production_threat_coefficient_other;
 		}
 
 		// store threat koefficient
 
-		activeFactionInfo.factionInfos[id].threatKoefficient = threatKoefficient;
+		activeFactionInfo.factionInfos[id].threatCoefficient = threatCoefficient;
 
-		debug("\t%-24s: %08x => %4.2f\n", MFactions[id].noun_faction, otherFactionRelation, threatKoefficient);
+		debug("\t%-24s: %08x => %4.2f\n", MFactions[id].noun_faction, otherFactionRelation, threatCoefficient);
 
 	}
 
@@ -1486,7 +1468,7 @@ int getNearestEnemyBaseDistance(int baseId)
 
 void evaluateDefenseDemand()
 {
-	debug("evaluateDefenseDemand - %s\n", MFactions[aiFactionId].noun_faction);
+	debug("\n\n==================================================\nevaluateDefenseDemand - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	// evaluate base defense demands
 	
@@ -1502,7 +1484,7 @@ void evaluateDefenseDemand()
 		
 		debug
 		(
-			"\t(%3d,%3d) %s, sensorOffenseMultiplier=%f, sensorDefenseMultiplier=%f, intrinsicDefenseMultiplier=%f, conventionalDefenseMultipliers[TRIAD_LAND]=%f, conventionalDefenseMultipliers[TRIAD_SEA]=%f, conventionalDefenseMultipliers[TRIAD_AIR]=%f\n",
+			"\n\t<>\n\t(%3d,%3d) %s, sensorOffenseMultiplier=%f, sensorDefenseMultiplier=%f, intrinsicDefenseMultiplier=%f, conventionalDefenseMultipliers[TRIAD_LAND]=%f, conventionalDefenseMultipliers[TRIAD_SEA]=%f, conventionalDefenseMultipliers[TRIAD_AIR]=%f\n",
 			base->x,
 			base->y,
 			base->name,
@@ -1516,7 +1498,7 @@ void evaluateDefenseDemand()
 		
 		// calculate defender strength
 		
-		MilitaryStrength defenderStrength;
+		MilitaryStrength *defenderStrength = &(baseStrategy->defenderStrength);
 		
 		debug("\t\tdefenderMilitaryStrength\n");
 		
@@ -1576,18 +1558,18 @@ void evaluateDefenseDemand()
 			
 			// update total weight
 			
-			defenderStrength.totalWeight += weight;
+			defenderStrength->totalWeight += weight;
 			
 			// pack unit type, create and get entry
 			
 			int unitType = packUnitType(unitId);
 			
-			if (defenderStrength.unitTypeStrengths.count(unitType) == 0)
+			if (defenderStrength->unitTypeStrengths.count(unitType) == 0)
 			{
-				defenderStrength.unitTypeStrengths[unitType] = UnitTypeStrength();
+				defenderStrength->unitTypeStrengths[unitType] = UnitTypeStrength();
 			}
 			
-			UnitTypeStrength *unitTypeStrength = &(defenderStrength.unitTypeStrengths[unitType]);
+			UnitTypeStrength *unitTypeStrength = &(defenderStrength->unitTypeStrengths[unitType]);
 			
 			// calculate strength
 			
@@ -1598,7 +1580,7 @@ void evaluateDefenseDemand()
 				// native unit initiates psi combat only
 				
 				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId);
-				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId);
+				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, true);
 				
 				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
 				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
@@ -1611,7 +1593,7 @@ void evaluateDefenseDemand()
 				// regular unit initiates psi combat when engage native unit
 				
 				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId);
-				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId);
+				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, true);
 				
 				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
 				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
@@ -1630,17 +1612,17 @@ void evaluateDefenseDemand()
 		
 		// normalize weights
 		
-		defenderStrength.normalize();
+		defenderStrength->normalize();
 		
-		debug("\t\t\ttotalWeight=%f\n", defenderStrength.totalWeight);
+		debug("\t\t\ttotalWeight=%f\n", defenderStrength->totalWeight);
 		if (DEBUG)
 		{
-			for (const auto &k : defenderStrength.unitTypeStrengths)
+			for (const auto &k : defenderStrength->unitTypeStrengths)
 			{
 				const int unitType = k.first;
 				const UnitTypeStrength *unitTypeStrength = &(k.second);
 				
-				debug("\t\t\t\tnative=%d, chassisType=%d, unitType=%8x, weight=%f, psiOffense=%f, psiDefense=%f, conventionalOffense=%f, conventionalDefense=%f\n", (isUnitTypeNative(unitType) ? 1 : 0), getUnitTypeChassisType(unitType), unitType, unitTypeStrength->weight, unitTypeStrength->psiOffense, unitTypeStrength->psiDefense, unitTypeStrength->conventionalOffense, unitTypeStrength->conventionalDefense);
+				debug("\t\t\t\tweight=%f, native=%d, chassisType=%d, psiOffense=%f, psiDefense=%f, conventionalOffense=%f, conventionalDefense=%f, unitType=%s\n", unitTypeStrength->weight, (isUnitTypeNative(unitType) ? 1 : 0), getUnitTypeChassisType(unitType), unitTypeStrength->psiOffense, unitTypeStrength->psiDefense, unitTypeStrength->conventionalOffense, unitTypeStrength->conventionalDefense, getUnitTypeAbilitiesString(unitType).c_str());
 				
 			}
 			
@@ -1648,11 +1630,11 @@ void evaluateDefenseDemand()
 		
 		// calculate opponent strength
 		
-		MilitaryStrength opponentStrength;
+		MilitaryStrength *opponentStrength = &(baseStrategy->opponentStrength);
 		
 		debug("\t\topponentMilitaryStrength\n");
 		
-		for (int vehicleId = 1; vehicleId < *total_num_vehicles; vehicleId++)
+		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 		{
 			VEH *vehicle = &(Vehicles[vehicleId]);
 			int unitId = vehicle->unit_id;
@@ -1726,24 +1708,29 @@ void evaluateDefenseDemand()
 			
 			// modify strength multiplier based on diplomatic relations
 			
-			weight *= activeFactionInfo.factionInfos[vehicle->faction_id].threatKoefficient;
+			weight *= activeFactionInfo.factionInfos[vehicle->faction_id].threatCoefficient;
+			
+			// exclude empty weight
+			
+			if (weight == 0.0)
+				continue;
 			
 			debug("\t\t\t(%3d,%3d) %-25s: distance=%3d, turns=%6.2f, weight=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, distance, turns, weight);
 			
 			// update total weight
 			
-			opponentStrength.totalWeight += weight;
+			opponentStrength->totalWeight += weight;
 			
 			// pack unit type, create and get entry
 			
 			int unitType = packUnitType(unitId);
 			
-			if (opponentStrength.unitTypeStrengths.count(unitType) == 0)
+			if (opponentStrength->unitTypeStrengths.count(unitType) == 0)
 			{
-				opponentStrength.unitTypeStrengths[unitType] = UnitTypeStrength();
+				opponentStrength->unitTypeStrengths[unitType] = UnitTypeStrength();
 			}
 			
-			UnitTypeStrength *unitTypeStrength = &(opponentStrength.unitTypeStrengths[unitType]);
+			UnitTypeStrength *unitTypeStrength = &(opponentStrength->unitTypeStrengths[unitType]);
 			
 			// calculate strength
 			
@@ -1754,7 +1741,7 @@ void evaluateDefenseDemand()
 				// native unit initiates psi combat only
 				
 				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseStrategy->intrinsicDefenseMultiplier;
-				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId) / baseStrategy->sensorOffenseMultiplier;
+				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, false) / baseStrategy->sensorOffenseMultiplier;
 				
 				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
 				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
@@ -1767,7 +1754,7 @@ void evaluateDefenseDemand()
 				// regular unit initiates psi combat when engage native unit
 				
 				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseStrategy->intrinsicDefenseMultiplier;
-				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId) / baseStrategy->sensorOffenseMultiplier;
+				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, false) / baseStrategy->sensorOffenseMultiplier;
 				
 				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
 				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
@@ -1788,17 +1775,17 @@ void evaluateDefenseDemand()
 		
 		// normalize weights
 		
-		opponentStrength.normalize();
+		opponentStrength->normalize();
 		
-		debug("\t\t\ttotalWeight=%f\n", opponentStrength.totalWeight);
+		debug("\t\t\ttotalWeight=%f\n", opponentStrength->totalWeight);
 		if (DEBUG)
 		{
-			for (const auto &k : opponentStrength.unitTypeStrengths)
+			for (const auto &k : opponentStrength->unitTypeStrengths)
 			{
 				const int unitType = k.first;
 				const UnitTypeStrength *unitTypeStrength = &(k.second);
 				
-				debug("\t\t\t\tnative=%d, chassisType=%d, unitType=%8x, weight=%f, psiOffense=%f, psiDefense=%f, conventionalOffense=%f, conventionalDefense=%f\n", (isUnitTypeNative(unitType) ? 1 : 0), getUnitTypeChassisType(unitType), unitType, unitTypeStrength->weight, unitTypeStrength->psiOffense, unitTypeStrength->psiDefense, unitTypeStrength->conventionalOffense, unitTypeStrength->conventionalDefense);
+				debug("\t\t\t\tweight=%f, native=%d, chassisType=%d, psiOffense=%f, psiDefense=%f, conventionalOffense=%f, conventionalDefense=%f, unitType=%s\n", unitTypeStrength->weight, (isUnitTypeNative(unitType) ? 1 : 0), getUnitTypeChassisType(unitType), unitTypeStrength->psiOffense, unitTypeStrength->psiDefense, unitTypeStrength->conventionalOffense, unitTypeStrength->conventionalDefense, getUnitTypeAbilitiesString(unitType).c_str());
 				
 			}
 			
@@ -1810,12 +1797,12 @@ void evaluateDefenseDemand()
 		
 		double defenderDestroyed = 0.0;
 		
-		for (const auto opponentUnitTypeStrengthEntry : opponentStrength.unitTypeStrengths)
+		for (const auto &opponentUnitTypeStrengthEntry : opponentStrength->unitTypeStrengths)
 		{
 			const int opponentUnitType = opponentUnitTypeStrengthEntry.first;
 			const UnitTypeStrength *opponentUnitTypeStrength = &(opponentUnitTypeStrengthEntry.second);
 			
-			for (const auto defenderStrengthEntry : defenderStrength.unitTypeStrengths)
+			for (const auto defenderStrengthEntry : defenderStrength->unitTypeStrengths)
 			{
 				const int defenderUnitType = defenderStrengthEntry.first;
 				const UnitTypeStrength *defenderUnitTypeStrength = &(defenderStrengthEntry.second);
@@ -1833,26 +1820,20 @@ void evaluateDefenseDemand()
 					continue;
 				}
 				
-				// use proper strength type
+				// calculate odds
 				
-				double opponentOffense;
-				double opponentDefense;
-				double defenderOffense;
-				double defenderDefense;
+				double attackOdds;
+				double defendOdds;
 				
 				if (isUnitTypeNative(opponentUnitType) || isUnitTypeNative(defenderUnitType))
 				{
-					opponentOffense = opponentUnitTypeStrength->psiOffense;
-					opponentDefense = opponentUnitTypeStrength->psiDefense;
-					defenderOffense = defenderUnitTypeStrength->psiOffense;
-					defenderDefense = defenderUnitTypeStrength->psiDefense;
+					attackOdds = opponentUnitTypeStrength->psiOffense / defenderUnitTypeStrength->psiDefense;
+					defendOdds = opponentUnitTypeStrength->psiDefense / defenderUnitTypeStrength->psiOffense;
 				}
 				else
 				{
-					opponentOffense = opponentUnitTypeStrength->conventionalOffense;
-					opponentDefense = opponentUnitTypeStrength->conventionalDefense;
-					defenderOffense = defenderUnitTypeStrength->conventionalOffense;
-					defenderDefense = defenderUnitTypeStrength->conventionalDefense;
+					attackOdds = opponentUnitTypeStrength->conventionalOffense / defenderUnitTypeStrength->conventionalDefense * getConventionalCombatBonusMultiplier(opponentUnitType, defenderUnitType);
+					defendOdds = opponentUnitTypeStrength->conventionalDefense / defenderUnitTypeStrength->conventionalOffense * getConventionalCombatBonusMultiplier(defenderUnitType, opponentUnitType);
 				}
 				
 				// calculate attack and defend probabilities
@@ -1860,16 +1841,22 @@ void evaluateDefenseDemand()
 				double attackProbability;
 				double defendProbability;
 				
-				// unit without air superiority cannot attack neeglejet
-				if (isUnitTypeHasChassisType(opponentUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(defenderUnitType, ABL_AIR_SUPERIORITY))
+				// cases when unit at base cannot attack
+				
+				if
+				(
+					// unit without air superiority cannot attack neeglejet
+					(isUnitTypeHasChassisType(opponentUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(defenderUnitType, ABL_AIR_SUPERIORITY))
+					||
+					// land unit cannot attack from sea base
+					(ocean && getUnitTypeTriad(defenderUnitType) == TRIAD_LAND)
+					||
+					// sea unit cannot attack from land base
+					(!ocean && getUnitTypeTriad(defenderUnitType) == TRIAD_SEA)
+				)
 				{
 					attackProbability = 1.0;
 					defendProbability = 0.0;
-				}
-				else if (isUnitTypeHasChassisType(defenderUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(opponentUnitType, ABL_AIR_SUPERIORITY))
-				{
-					attackProbability = 0.0;
-					defendProbability = 1.0;
 				}
 				else
 				{
@@ -1884,22 +1871,12 @@ void evaluateDefenseDemand()
 				(
 					defendProbability > 0.0
 					&&
-					(defenderDefense / opponentOffense) > (defenderOffense / opponentDefense)
+					attackOdds < defendOdds
 				)
 				{
 					attackProbability = 1.0;
 					defendProbability = 0.0;
 				}
-				
-				// calculate odds
-				
-				double attackOdds = (opponentOffense / defenderDefense);
-				double defendOdds = (opponentDefense / defenderOffense);
-				
-				// calculate combat bonus multipliers
-				
-				double attackCombatBonusMultiplier = getConventionalCombatBonusMultiplier(opponentUnitType, defenderUnitType);
-				double defendCombatBonusMultiplier = getConventionalCombatBonusMultiplier(defenderUnitType, opponentUnitType);
 				
 				// calculate defender destroyed
 				
@@ -1908,29 +1885,23 @@ void evaluateDefenseDemand()
 					(opponentUnitTypeStrength->weight * defenderUnitTypeStrength->weight)
 					*
 					(
-						attackProbability * attackOdds * attackCombatBonusMultiplier
+						attackProbability * attackOdds
 						+
-						defendProbability * defendOdds * defendCombatBonusMultiplier
+						defendProbability * defendOdds
 					)
 				;
 				
 				debug
 				(
-					"\t\t\topponent: native=%d, chassisType=%d, unitType=%8x, weight=%f, offense=%f, defense=%f\n\t\t\tdefender: native=%d, chassisType=%d, unitType=%8x, weight=%f, offense=%f, defense=%f\n\t\t\t\tattack: probability=%f, odds=%f, multiplier=%f\n\t\t\t\tdefend: probatility=%f, odds=%f, multiplier=%f\n\t\t\t\tdefenderDestroyedTypeVsType=%f\n",
-					(isUnitTypeNative(opponentUnitType) ? 1 : 0), getUnitTypeChassisType(opponentUnitType), opponentUnitType, 
+					"\t\t\topponent: weight=%f, native=%d, chassisType=%d, unitType=%s\n\t\t\tdefender: weight=%f, native=%d, chassisType=%d, unitType=%s\n\t\t\t\tattack: probability=%f, odds=%f\n\t\t\t\tdefend: probatility=%f, odds=%f\n\t\t\t\tdefenderDestroyedTypeVsType=%f\n",
 					opponentUnitTypeStrength->weight,
-					opponentOffense,
-					opponentDefense,
-					(isUnitTypeNative(defenderUnitType) ? 1 : 0), getUnitTypeChassisType(defenderUnitType), defenderUnitType, 
+					(isUnitTypeNative(opponentUnitType) ? 1 : 0), getUnitTypeChassisType(opponentUnitType), getUnitTypeAbilitiesString(opponentUnitType).c_str(),
 					defenderUnitTypeStrength->weight,
-					defenderOffense,
-					defenderDefense,
+					(isUnitTypeNative(defenderUnitType) ? 1 : 0), getUnitTypeChassisType(defenderUnitType), getUnitTypeAbilitiesString(defenderUnitType).c_str(),
 					attackProbability,
 					attackOdds,
-					attackCombatBonusMultiplier,
 					defendProbability,
 					defendOdds,
-					defendCombatBonusMultiplier,
 					defenderDestroyedTypeVsType
 				)
 				;
@@ -1938,7 +1909,6 @@ void evaluateDefenseDemand()
 				// update summaries
 				
 				defenderDestroyed += defenderDestroyedTypeVsType;
-				baseStrategy->defenderDestroyedByTypes[opponentUnitType] += defenderDestroyedTypeVsType;
 				
 			}
 			
@@ -1950,35 +1920,19 @@ void evaluateDefenseDemand()
 			defenderDestroyed
 			*
 			// proportion of total weight
-			(opponentStrength.totalWeight / defenderStrength.totalWeight)
+			(opponentStrength->totalWeight / defenderStrength->totalWeight)
 		;
 		
 		debug("\t\tdefenderDestroyed=%f, defenderDestroyedTotal=%f\n", defenderDestroyed, defenderDestroyedTotal);
 		
 		// set defenseDemand
 		
-		activeFactionInfo.baseStrategies[baseId].defenseDemand = (defenderDestroyedTotal - 1.0) / defenderDestroyedTotal;
+		if (defenderDestroyedTotal > 1.0)
+		{
+			activeFactionInfo.baseStrategies[baseId].defenseDemand = (defenderDestroyedTotal - 1.0) / defenderDestroyedTotal;
+		}
 		
 		debug("\t\tdefenseDemand=%f\n", activeFactionInfo.baseStrategies[baseId].defenseDemand);
-		
-		if (DEBUG)
-		{
-			for (const auto &k : baseStrategy->defenderDestroyedByTypes)
-			{
-				int opponentUnitType = k.first;
-				double defenderDestroyedByType = k.second;
-				
-				debug
-				(
-					"\t\topponentUnitType: native=%d, chassisType=%d, unitType=%8x; defenderDestroyedByType=%f\n",
-					(isUnitTypeNative(opponentUnitType) ? 1 : 0), getUnitTypeChassisType(opponentUnitType), opponentUnitType, 
-					defenderDestroyedByType
-				)
-				;
-				
-			}
-			
-		}
 		
 		// update global values
 		
@@ -1990,11 +1944,11 @@ void evaluateDefenseDemand()
 		
 	}
 	
-	debug("\tmostVulnerableBase = %s, mostVulnerableBaseDefenseDemand = %f\n", Bases[activeFactionInfo.mostVulnerableBaseId].name, activeFactionInfo.mostVulnerableBaseDefenseDemand);
+	debug("\n\tmostVulnerableBase = %s, mostVulnerableBaseDefenseDemand = %f\n", Bases[activeFactionInfo.mostVulnerableBaseId].name, activeFactionInfo.mostVulnerableBaseDefenseDemand);
 	
 	// assign defense demand targets
 	
-	debug("\ttargetBases\n");
+	debug("\n\t->\n\ttargetBases\n");
 	
 	for (int baseId : activeFactionInfo.baseIds)
 	{
@@ -2009,13 +1963,23 @@ void evaluateDefenseDemand()
 			BASE *targetBase = &(Bases[targetBaseId]);
 			MAP *targetBaseTile = getBaseMapTile(targetBaseId);
 			
+			// ignore target ocean base without access to it
+			
+			if (isOceanRegion(targetBaseTile->region) && !isBaseConnectedToRegion(baseId, targetBaseTile->region))
+				continue;
+			
+			// ignore target land base in different region
+			
+			if (isLandRegion(targetBaseTile->region) && baseTile->region != targetBaseTile->region)
+				continue;
+			
 			// get range
 			
 			double range = (double)map_range(base->x, base->y, targetBase->x, targetBase->y);
 			
-			// adjust range for different regions
+			// adjust range for different regions except coastal base supplying sea units to ocean base
 			
-			if (baseTile->region != targetBaseTile->region)
+			if (baseTile->region != targetBaseTile->region && !(isOceanRegion(targetBaseTile->region) && isBaseConnectedToRegion(baseId, targetBaseTile->region)))
 			{
 				range *= 5;
 			}
@@ -2044,6 +2008,8 @@ void evaluateDefenseDemand()
 		debug("\t\t%-25s -> %-25s\n", Bases[baseId].name, (bestTargetBaseId == -1 ? "" : Bases[bestTargetBaseId].name));
 		
 	}
+	
+	debug("\n");
 	
 }
 
@@ -2074,7 +2040,7 @@ int isUnitTypeNative(int unitType)
 
 int getUnitTypeChassisType(int unitType)
 {
-	return (unitType >> (ABL_ID_ALGO_ENHANCEMENT + 1));
+	return (unitType >> (ABL_ID_DISSOCIATIVE_WAVE + 1));
 }
 
 int isUnitTypeHasChassisType(int unitType, int chassisType)
@@ -2201,6 +2167,69 @@ double getConventionalCombatBonusMultiplier(int attackerUnitType, int defenderUn
 	}
 	
 	return combatBonusMultiplier;
+	
+}
+
+std::string getUnitTypeAbilitiesString(int unitType)
+{
+	std::string unitTypeAbilitiesString;
+	
+	if ((unitType & ABL_AMPHIBIOUS) != 0)
+	{
+		unitTypeAbilitiesString += " AMPHIBIOUS";
+	}
+	
+	if ((unitType & ABL_AIR_SUPERIORITY) != 0)
+	{
+		unitTypeAbilitiesString += " AIR_SUPERIORITY";
+	}
+	
+	if ((unitType & ABL_AAA) != 0)
+	{
+		unitTypeAbilitiesString += " AAA";
+	}
+	
+	if ((unitType & ABL_COMM_JAMMER) != 0)
+	{
+		unitTypeAbilitiesString += " ECM";
+	}
+	
+	if ((unitType & ABL_EMPATH) != 0)
+	{
+		unitTypeAbilitiesString += " EMPATH";
+	}
+	
+	if ((unitType & ABL_ARTILLERY) != 0)
+	{
+		unitTypeAbilitiesString += " ARTILLERY";
+	}
+	
+	if ((unitType & ABL_BLINK_DISPLACER) != 0)
+	{
+		unitTypeAbilitiesString += " BLINK_DISPLACER";
+	}
+	
+	if ((unitType & ABL_TRANCE) != 0)
+	{
+		unitTypeAbilitiesString += " TRANCE";
+	}
+	
+	if ((unitType & ABL_NERVE_GAS) != 0)
+	{
+		unitTypeAbilitiesString += " NERVE_GAS";
+	}
+	
+	if ((unitType & ABL_SOPORIFIC_GAS) != 0)
+	{
+		unitTypeAbilitiesString += " SOPORIFIC_GAS";
+	}
+	
+	if ((unitType & ABL_DISSOCIATIVE_WAVE) != 0)
+	{
+		unitTypeAbilitiesString += " DISSOCIATIVE_WAVE";
+	}
+	
+	return unitTypeAbilitiesString;
 	
 }
 

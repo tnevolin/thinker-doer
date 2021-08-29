@@ -455,7 +455,22 @@ void popPods()
 		// no pods in region
 		
 		if (regionPodLocations.count(region) == 0)
+		{
+			// kill all scouts in ocean region
+			
+			if (isOceanRegion(region))
+			{
+				for (int vehicleId : vehicleIds)
+				{
+					setKillOrder(vehicleId);
+					
+				}
+					
+			}
+			
 			continue;
+		
+		}
 		
 		// get pod locations
 		
@@ -475,6 +490,11 @@ void popPods()
 			// without combat orders
 			
 			if (combatOrders.count(vehicleId) > 0)
+				continue;
+			
+			// not damaged
+			
+			if (isVehicleCanHealAtThisLocation(vehicleId))
 				continue;
 			
 			debug("\t[%3d] (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y);
@@ -541,15 +561,8 @@ int moveCombat(int vehicleId)
 		return applyCombatOrder(vehicleId, combatOrder);
 
 	}
-
-	// process sea explorers
-
-    if (vehicle->triad() == TRIAD_SEA && Units[vehicle->unit_id].unit_plan == PLAN_RECONNAISANCE && vehicle->move_status == ORDER_NONE)
-	{
-		return processSeaExplorer(vehicleId);
-	}
-
-	// choose default
+	
+	// default to Thinker for war algorithms
 	
 	if (isProbeVehicle(vehicleId))
 	{
@@ -558,14 +571,20 @@ int moveCombat(int vehicleId)
 	else
 	{
 		return mod_enemy_move(vehicleId);
-//		return enemy_move(vehicleId);
 	}
-
+	
 }
 
 int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
 {
 	VEH *vehicle = &(Vehicles[id]);
+	
+	// kill
+	
+	if (combatOrder->kill)
+	{
+		veh_kill(id);
+	}
 	
 	// get coordinates
 	
@@ -658,6 +677,12 @@ void setAttackOrder(int vehicleId, int enemyVehicleId)
 		combatOrders[vehicleId].enemyAIId = enemyVehicleId;
 	}
 
+}
+
+void setKillOrder(int vehicleId)
+{
+	combatOrders[vehicleId].kill = true;
+	
 }
 
 /*
@@ -1117,6 +1142,102 @@ Location getNearestBaseLocation(int x, int y, int triad)
 	}
 		
 	return nearestBaseLocation;
+	
+}
+
+/*
+Checks if vehicle can be used in war operations.
+*/
+bool isInWarZone(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	int triad = vehicle->triad();
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	
+	debug("isInWarZone (%3d,%3d) %s - %s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, MFactions[vehicle->faction_id].noun_faction);
+	
+	for (int otherBaseId = 0; otherBaseId < *total_num_bases; otherBaseId++)
+	{
+		BASE *otherBase = &(Bases[otherBaseId]);
+		MAP *otherBaseTile = getBaseMapTile(otherBaseId);
+		
+		if (otherBase->faction_id == vehicle->faction_id)
+			continue;
+		
+		if (at_war(vehicle->faction_id, otherBase->faction_id))
+		{
+			if
+			(
+				// air vehicle can attack any base
+				triad == TRIAD_AIR
+				||
+				// land vehicle can attack land base within same region
+				(triad = TRIAD_LAND && isLandRegion(otherBaseTile->region) && vehicleTile->region == otherBaseTile->region)
+				||
+				// sea vehicle can attack ocean base within same region
+				(triad = TRIAD_SEA && isOceanRegion(otherBaseTile->region) && isInOceanRegion(vehicleId, otherBaseTile->region))
+			)
+			{
+				return true;
+			}
+			
+		}
+		
+	}
+	
+	for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
+	{
+		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		int otherVehicleTriad = otherVehicle->triad();
+		MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
+		
+		if (otherVehicle->faction_id == 0)
+			continue;
+		
+		if (otherVehicle->faction_id == vehicle->faction_id)
+			continue;
+		
+		if (!at_war(vehicle->faction_id, otherVehicle->faction_id))
+			continue;
+		
+		if (!isVehicleCombat(otherVehicleId))
+			continue;
+		
+		debug("\t(%3d,%3d) %s - %s\n", otherVehicle->x, otherVehicle->y, Units[otherVehicle->unit_id].name, MFactions[otherVehicle->faction_id].noun_faction);
+		
+		if
+		(
+			// air vehicle can attack everywhere
+			triad == TRIAD_AIR
+			||
+			// land vehicle can attack on the same land region
+			(triad = TRIAD_LAND && isLandRegion(otherVehicleTile->region) && vehicleTile->region == otherVehicleTile->region)
+			||
+			// sea vehicle can attacl on the same ocean region
+			(triad = TRIAD_SEA && isOceanRegion(otherVehicleTile->region) && isInOceanRegion(vehicleId, otherVehicleTile->region))
+		)
+		{
+			return true;
+		}
+		
+		if
+		(
+			// air vehicle can attack everywhere
+			otherVehicleTriad == TRIAD_AIR
+			||
+			// land vehicle can attack on the same land region
+			(otherVehicleTriad = TRIAD_LAND && isLandRegion(vehicleTile->region) && otherVehicleTile->region == vehicleTile->region)
+			||
+			// sea vehicle can attacl on the same ocean region
+			(otherVehicleTriad = TRIAD_SEA && isOceanRegion(vehicleTile->region) && isInOceanRegion(otherVehicleId, vehicleTile->region))
+		)
+		{
+			return true;
+		}
+		
+	}
+	
+	return false;
 	
 }
 

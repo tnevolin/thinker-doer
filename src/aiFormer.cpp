@@ -1848,6 +1848,7 @@ void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCOR
 		
 		int availableActionCount = 0;
 		int incompleteActionCount = 0;
+		bool levelTerrain = false;
 		for
 		(
 			std::vector<int>::const_iterator actionsIterator = option->actions.begin();
@@ -1915,6 +1916,7 @@ void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCOR
 				if (!ocean && (improvedMapState->rocks & TILE_ROCKY) && isLevelTerrainRequired(action))
 				{
 					int levelTerrainAction = FORMER_LEVEL_TERRAIN;
+					levelTerrain = true;
 
 					// store first action
 
@@ -2016,7 +2018,7 @@ void calculateConventionalTerraformingScore(MAP_INFO *mapInfo, TERRAFORMING_SCOR
 
 		// calculate exclusivity bonus
 
-		double exclusivityBonus = calculateExclusivityBonus(mapInfo, &(option->actions));
+		double exclusivityBonus = calculateExclusivityBonus(mapInfo, &(option->actions), levelTerrain);
 
 		// summarize score
 
@@ -2471,7 +2473,7 @@ void calculateSensorTerraformingScore(MAP_INFO mapInfo, TERRAFORMING_SCORE *best
 
 	// calculate exclusivity bonus
 
-	double exclusivityBonus = calculateExclusivityBonus(&mapInfo, &(option->actions)) / 4.0;
+	double exclusivityBonus = calculateExclusivityBonus(&mapInfo, &(option->actions), false) / 4.0;
 
 	// summarize score
 
@@ -4045,7 +4047,7 @@ bool isBaseWorkedTile(BASE *base, int x, int y)
 
 }
 
-double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *actions)
+double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *actions, bool levelTerrain)
 {
 	MAP *tile = mapInfo->tile;
 
@@ -4070,6 +4072,11 @@ double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *acti
 		actionSet.insert(action);
 
 	}
+	
+	if (levelTerrain)
+	{
+		actionSet.insert(FORMER_LEVEL_TERRAIN);
+	}
 
 	// calculate resource exclusivity bonuses
 
@@ -4082,11 +4089,11 @@ double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *acti
 		// improvements ignoring everything
 		if
 		(
-			actionSet.count(FORMER_FOREST)
+			actionSet.count(FORMER_FOREST) != 0
 			||
-			actionSet.count(FORMER_PLANT_FUNGUS)
+			actionSet.count(FORMER_PLANT_FUNGUS) != 0
 			||
-			actionSet.count(FORMER_THERMAL_BORE)
+			actionSet.count(FORMER_THERMAL_BORE) != 0
 		)
 		{
 			// nothing is used
@@ -4098,30 +4105,69 @@ double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *acti
 		}
 		else
 		{
-			// mine is better built low
+			// leveling rocky tile wastes 2 minerals
 
-			if (actionSet.count(FORMER_MINE))
+			if (actionSet.count(FORMER_LEVEL_TERRAIN) != 0 && rockiness == 2)
 			{
-				energy += EXCLUSIVITY_LEVELS.elevation - elevation;
+				mineral += -2;
+				
+				// plus additional penalty if there are not many rocky tiles around
+				
+				debug("nearbyRockyTileCount (%3d,%3d)\n", mapInfo->x, mapInfo->y);
+				
+				int nearbyRockyTileCount = 0;
+				
+				for (int dx = -4; dx <= +4; dx++)
+				{
+					for (int dy = -(4 - abs(dx)); dy <= +(4 - abs(dx)); dy += 2)
+					{
+						MAP *nearbyTile = getMapTile(mapInfo->x + dx, mapInfo->y + dy);
+						
+						if (dx == 0 && dy == 0)
+							continue;
+						
+						if (nearbyTile == NULL)
+							continue;
+						
+						if (is_ocean(nearbyTile))
+							continue;
+						
+						if (map_has_item(nearbyTile, TERRA_BASE_IN_TILE))
+							continue;
+						
+						if (map_rockiness(nearbyTile) == 2)
+						{
+							nearbyRockyTileCount++;
+							
+							debug("\t(%3d,%3d)\n", mapInfo->x + dx, mapInfo->y + dy);
+							
+						}
+						
+					}
+					
+				}
+				
+				if (nearbyRockyTileCount < 2)
+				{
+					mineral += -2;
+				}
+				else if (nearbyRockyTileCount < 4)
+				{
+					mineral += -1;
+				}
+				
 			}
 
-			// rocky mine is also better built in dry tiles
-
-			if (actionSet.count(FORMER_MINE) && rockiness == 2)
+			// not building mine on mineral bonus wastes 1 mineral
+			
+			if (actionSet.count(FORMER_MINE) == 0 && isMineBonus(mapInfo->x, mapInfo->y))
 			{
-				nutrient += EXCLUSIVITY_LEVELS.rainfall - rainfall;
+				mineral += -1;
 			}
 
-			// condenser is better built low
+			// not building solar collector or echelon mirror wastes elevation
 
-			if (actionSet.count(FORMER_CONDENSER))
-			{
-				energy += EXCLUSIVITY_LEVELS.elevation - elevation;
-			}
-
-			// sensor is better built low
-
-			if (actionSet.count(FORMER_SENSOR))
+			if (actionSet.count(FORMER_SOLAR) == 0 && actionSet.count(FORMER_ECH_MIRROR) == 0)
 			{
 				energy += EXCLUSIVITY_LEVELS.elevation - elevation;
 			}
@@ -4134,6 +4180,7 @@ double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *acti
 			}
 
 		}
+		
 	}
 
 	double exclusivityBonus =

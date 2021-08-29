@@ -323,6 +323,124 @@ int getBaseBuildingItemCost(int baseId)
 	return (item >= 0 ? tx_veh_cost(item, baseId, 0) : Facility[-item].cost) * cost_factor(base->faction_id, 1, -1);
 }
 
+/*
+Calculates psi offense strength for new vehicle built at base.
+*/
+double getUnitPsiOffenseStrength(int unitId, int baseId)
+{
+	UNIT *unit = &(Units[unitId]);
+	int triad = unit->triad();
+	
+	BASE *base = &(Bases[baseId]);
+	Faction *faction = &(Factions[base->faction_id]);
+
+	double psiOffenseStrength;
+
+	switch (triad)
+	{
+	case TRIAD_LAND:
+		psiOffenseStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
+		break;
+	case TRIAD_SEA:
+		psiOffenseStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
+		break;
+	case TRIAD_AIR:
+		psiOffenseStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
+		break;
+	default:
+		return 1.0;
+	}
+
+	// morale modifier
+
+	psiOffenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
+
+	// faction PLANET rating modifier
+
+	psiOffenseStrength *= 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * faction->SE_planet_pending;
+
+	// abilities modifier
+	
+	if (unit_has_ability(unitId, ABL_EMPATH))
+	{
+		psiOffenseStrength *= 1.0 + (double)Rules->combat_bonus_empath_song_vs_psi / 100.0;
+	}
+	
+	// return strength
+	
+	return psiOffenseStrength;
+
+}
+
+double getUnitPsiDefenseStrength(int unitId, int baseId, bool defendAtBase)
+{
+	BASE *base = &(Bases[baseId]);
+	Faction *faction = &(Factions[base->faction_id]);
+
+	// psi defense strength
+
+	double psiDefenseStrength = 1.0;
+
+	// morale modifier
+
+	psiDefenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, defendAtBase));
+
+	// faction PLANET rating modifier
+	
+	if (conf.planet_combat_bonus_on_defense)
+	{
+		psiDefenseStrength *= 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * faction->SE_planet_pending;
+	}
+
+	// abilities modifier
+	
+	if (unit_has_ability(unitId, ABL_TRANCE))
+	{
+		psiDefenseStrength *= 1.0 + (double)Rules->combat_bonus_trance_vs_psi / 100.0;
+	}
+	
+	// return strength
+	
+	return psiDefenseStrength;
+
+}
+
+double getUnitConventionalOffenseStrength(int unitId, int baseId)
+{
+	UNIT *unit = &(Units[unitId]);
+
+	// strength
+
+	double conventionalOffenseStrength = (double)Weapon[unit->weapon_type].offense_value;
+	
+	// morale modifier
+
+	conventionalOffenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
+
+	// return strength
+	
+	return conventionalOffenseStrength;
+
+}
+
+double getUnitConventionalDefenseStrength(int unitId, int baseId, bool defendAtBase)
+{
+	UNIT *unit = &(Units[unitId]);
+
+	// conventional defense strength
+
+	double conventionalDefenseStrength = (double)Armor[unit->armor_type].defense_value;
+
+	// morale modifier
+
+	conventionalDefenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, defendAtBase));
+
+	// return strength
+	
+	return conventionalDefenseStrength;
+
+}
+
 double getVehiclePsiOffenseStrength(int id)
 {
 	VEH *vehicle = &(Vehicles[id]);
@@ -369,7 +487,7 @@ double getVehiclePsiOffenseStrength(int id)
 
 }
 
-double getVehiclePsiDefenseStrength(int id)
+double getVehiclePsiDefenseStrength(int id, bool defendAtBase)
 {
 	VEH *vehicle = &(Vehicles[id]);
 	Faction *faction = &(Factions[vehicle->faction_id]);
@@ -380,7 +498,7 @@ double getVehiclePsiDefenseStrength(int id)
 
 	// morale modifier
 
-	psiDefenseStrength *= getVehicleMoraleModifier(id, false);
+	psiDefenseStrength *= getVehicleMoraleModifier(id, defendAtBase);
 
 	// faction PLANET rating modifier
 	
@@ -420,7 +538,7 @@ double getVehicleConventionalOffenseStrength(int id)
 
 }
 
-double getVehicleConventionalDefenseStrength(int id, bool defendingAtBase)
+double getVehicleConventionalDefenseStrength(int id, bool defendAtBase)
 {
 	VEH *vehicle = &(Vehicles[id]);
 
@@ -430,7 +548,7 @@ double getVehicleConventionalDefenseStrength(int id, bool defendingAtBase)
 
 	// morale modifier
 
-	conventionalDefenseStrength *= getVehicleMoraleModifier(id, defendingAtBase);
+	conventionalDefenseStrength *= getVehicleMoraleModifier(id, defendAtBase);
 
 	// return strength
 	
@@ -2878,7 +2996,7 @@ double getMoraleModifier(int morale)
 /*
 Returns SE MORALE bonus.
 */
-int getFactionSEMoraleBonus(int factionId, bool defendingAtBase)
+int getFactionSEMoraleBonus(int factionId, bool defendAtBase)
 {
 	Faction *faction = &(Factions[factionId]);
 	int factionSEMoraleRating = std::max(-4, std::min(4, faction->SE_morale));
@@ -2906,10 +3024,10 @@ int getFactionSEMoraleBonus(int factionId, bool defendingAtBase)
 		factionSEMoraleBonus = 1;
 		break;
 	case 2:
-		factionSEMoraleBonus = (defendingAtBase ? 2 : 1);
+		factionSEMoraleBonus = (defendAtBase ? 2 : 1);
 		break;
 	case 3:
-		factionSEMoraleBonus = (defendingAtBase ? 3 : 2);
+		factionSEMoraleBonus = (defendAtBase ? 3 : 2);
 		break;
 	case 4:
 		factionSEMoraleBonus = 3;
@@ -2923,7 +3041,7 @@ int getFactionSEMoraleBonus(int factionId, bool defendingAtBase)
 /*
 Returns vehicle morale.
 */
-int getVehicleMorale(int vehicleId, bool defendingAtBase)
+int getVehicleMorale(int vehicleId, bool defendAtBase)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
@@ -2935,7 +3053,7 @@ int getVehicleMorale(int vehicleId, bool defendingAtBase)
 	
 	if (!isNativeVehicle(vehicleId))
 	{
-		morale += getFactionSEMoraleBonus(vehicle->faction_id, defendingAtBase);
+		morale += getFactionSEMoraleBonus(vehicle->faction_id, defendAtBase);
 	}
 	
 	// return morale limited by edge values
@@ -2947,7 +3065,7 @@ int getVehicleMorale(int vehicleId, bool defendingAtBase)
 /*
 Returns new vehicle morale built at base.
 */
-int getNewVehicleMorale(int unitId, int baseId, bool defendingAtBase)
+int getNewVehicleMorale(int unitId, int baseId, bool defendAtBase)
 {
 	UNIT *unit = &(Units[unitId]);
 	BASE *base = &(Bases[baseId]);
@@ -3012,7 +3130,7 @@ int getNewVehicleMorale(int unitId, int baseId, bool defendingAtBase)
 	
 	if (!isNativeUnit(unitId))
 	{
-		morale += getFactionSEMoraleBonus(base->faction_id, defendingAtBase);
+		morale += getFactionSEMoraleBonus(base->faction_id, defendAtBase);
 	}
 	
 	// return morale limited by edge values
@@ -3024,9 +3142,9 @@ int getNewVehicleMorale(int unitId, int baseId, bool defendingAtBase)
 /*
 Returns vehicle morale modifier.
 */
-double getVehicleMoraleModifier(int vehicleId, bool defendingAtBase)
+double getVehicleMoraleModifier(int vehicleId, bool defendAtBase)
 {
-	return getMoraleModifier(getVehicleMorale(vehicleId, defendingAtBase));
+	return getMoraleModifier(getVehicleMorale(vehicleId, defendAtBase));
 }
 
 double getBasePsiDefenseMultiplier()
@@ -3459,3 +3577,15 @@ int getMaintenanceUnitCost(int unitId)
 {
 	return Units[unitId].cost + 4;
 }
+
+/*
+Checks if building mine at this location grants +1 mineral bonus.
+*/
+bool isMineBonus(int x, int y)
+{
+	MAP *tile = getMapTile(x, y);
+	
+	return (bonus_at(x, y) == RES_MINERAL || map_has_landmark(tile, LM_VOLCANO) || map_has_landmark(tile, LM_CRATER) || map_has_landmark(tile, LM_CANYON));
+	
+}
+

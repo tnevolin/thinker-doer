@@ -2903,53 +2903,6 @@ int getPartialFlatHurryCost(int baseId, int minerals)
 }
 
 /*
-Searches base for returned probe.
-Specifically makes sure sea probe is returned to same ocean region.
-*/
-HOOK_API int modifiedFindReturnedProbeBase(int vehicleId)
-{
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	int vehicleTriad = vehicle->triad();
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-
-	// search nearest base
-
-	int nearestBaseId = -1;
-	int nearestBaseRange = -1;
-
-	for (int baseId = 0; baseId < *total_num_bases; baseId++)
-	{
-		BASE *base = &(Bases[baseId]);
-
-		// own bases only
-
-		if (base->faction_id != vehicle->faction_id)
-			continue;
-
-		// only having access to same water region for sea probes
-
-		if (vehicleTriad == TRIAD_SEA && !isBaseConnectedToRegion(baseId, vehicleTile->region))
-			continue;
-
-		// calculate range to base
-
-		int range = map_range(vehicle->x, vehicle->y, base->x, base->y);
-
-		// update nearest base
-
-		if (nearestBaseId == -1 || range < nearestBaseRange)
-		{
-			nearestBaseId = baseId;
-			nearestBaseRange = range;
-		}
-
-	}
-
-	return nearestBaseId;
-
-}
-
-/*
 Fixes bugs in best defender selection.
 */
 HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, int bombardment)
@@ -3437,13 +3390,23 @@ Overrides faction_upkeep calls to amend vanilla and Thinker functionality.
 */
 HOOK_API int modifiedFactionUpkeep(const int factionId)
 {
-	// run AI code for AI eanbled factions
-	if (ai_enabled(factionId))
+    // expire infiltrations for normal factions
+    
+    if (factionId > 0)
 	{
+		expireInfiltrations(factionId);
+	}
+	
+	// choose AI logic
+	
+	if (conf.ai_useWTPAlgorithms && factionId != 0 && !is_human(factionId) && ai_enabled(factionId))
+	{
+		// run AI code for AI eanbled factions
 		return aiFactionUpkeep(factionId);
 	}
-	// otherwise, fall to default
+	else
 	{
+		// otherwise, fall to default
 		return faction_upkeep(factionId);
 	}
 	
@@ -4428,5 +4391,14 @@ int getFactionHighestResearchedTechLevel(int factionId)
 	
 	return highestResearchedTechLevel;
 	
+}
+
+/*
+This method explicitly returns 0 to disable return sea probe first port check.
+This enables full scale search instead of just settling in closest port.
+*/
+int __cdecl modifiedReturnSeaProbeFirstPortCheck(int /*baseId*/, int /*radiusType*/)
+{
+	return 0;
 }
 

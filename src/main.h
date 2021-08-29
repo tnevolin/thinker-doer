@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 259 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 260 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -304,6 +304,7 @@ struct Config {
 	int native_unit_cost_initial_locusts_of_chiron;
 	bool disable_sensor_destroying;
 	bool artillery_duel_uses_weapon_and_armor;
+	bool disable_vanilla_base_hurry;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;
@@ -324,9 +325,10 @@ struct Config {
     double ai_production_expansion_coverage;
     double ai_production_ocean_expansion_coverage;
     double ai_production_expansion_priority;
+    double ai_production_expansion_priority_per_population;
     int ai_production_combat_unit_turns_limit;
     double ai_production_facility_priority_penalty;
-    int ai_production_combat_unit_min_mineral_surplus;
+    int ai_production_unit_min_mineral_surplus;
     double ai_production_exploration_coverage;
     double ai_production_improvement_coverage;
     double ai_production_improvement_priority;

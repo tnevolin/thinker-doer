@@ -745,20 +745,35 @@ bool deliverVehicle(const int transportVehicleId, const Location destinationLoca
 	
 }
 
+/*
+Checks if sea vehicle is in ocean region or coastal base.
+*/
 bool isInOceanRegion(int vehicleId, int region)
 {
 	if (!isOceanRegion(region))
 		return false;
 	
 	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
-	for (MAP *tile : getAdjacentTiles(vehicle->x, vehicle->y, true))
+	if (vehicle->triad() != TRIAD_SEA)
+		return false;
+	
+	if (vehicleTile->region == region)
+		return true;
+	
+	if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
 	{
-		if (!isOceanRegion(tile->region))
-			continue;
+		for (MAP *tile : getAdjacentTiles(vehicle->x, vehicle->y, false))
+		{
+			if (!isOceanRegion(tile->region))
+				continue;
+			
+			if (tile->region == region)
+				return true;
+			
+		}
 		
-		if (tile->region == region)
-			return true;
 	}
 	
 	return false;

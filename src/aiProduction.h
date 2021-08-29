@@ -99,4 +99,5 @@ bool isMilitaryItem(int item);
 int thinker_base_prod_choice(int id, int v1, int v2, int v3);
 int findBestAntiNativeUnitId(int baseId, int targetBaseId, int opponentTriad);
 int findBestAntiRegularUnitId(int baseId, int targetBaseId, int opponentTriad);
+int findBestDefenseUnit(int sourceBaseId, int targetBaseId);
 

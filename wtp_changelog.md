@@ -1,3 +1,9 @@
+# Version 260
+
+* Disabled vanilla and Thinker base hurry algorithms. WTP does it itself.
+* Enabled combat unit production in case of defense demand.
+* Reworked returning sea probe to base algorithm. Apparenly, previous attempt didn't work well.
+
 # Version 259
 
 * Mineral multiplying facilities affect all minerals. Whereas energy multiplyers affect only 1/2 - 2/3 of energy. Modified prices for all multiplying facilities accordingly.

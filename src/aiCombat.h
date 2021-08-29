@@ -10,6 +10,7 @@ struct COMBAT_ORDER
 	int y = -1;
 	int enemyAIId = -1;
 	int order = -1;
+	bool kill = false;
 };
 
 struct VEHICLE_VALUE
@@ -33,6 +34,7 @@ int applyMoveOrder(int id, COMBAT_ORDER *combatOrder);
 int applyAttackOrder(int id, COMBAT_ORDER *combatOrder);
 void setMoveOrder(int vehicleId, int x, int y, int order);
 void setAttackOrder(int vehicleId, int enemyVehicleId);
+void setKillOrder(int vehicleId);
 int processSeaExplorer(int vehicleId);
 bool isHealthySeaExplorerInLandPort(int vehicleId);
 int kickSeaExplorerFromLandPort(int vehicleId);
@@ -46,4 +48,5 @@ double getVehiclePsiDefenseValue(int vehicleId);
 int getRangeToNearestActiveFactionBase(int x, int y);
 Location getNearestMonolithLocation(int x, int y, int triad);
 Location getNearestBaseLocation(int x, int y, int triad);
+bool isInWarZone(int vehicleId);
 

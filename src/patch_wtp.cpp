@@ -2508,47 +2508,9 @@ Search right base for returned sea probe.
 */
 void patch_find_returned_probe_base()
 {
-	int find_returned_probe_base_bytes_length = 0x37;
-/*
-0:  8b 1d cc 64 9a 00       mov    ebx,DWORD PTR ds:0x9a64cc
-6:  83 ce ff                or     esi,0xffffffff
-9:  83 cf ff                or     edi,0xffffffff
-c:  33 c0                   xor    eax,eax
-e:  85 db                   test   ebx,ebx
-10: 7e 76                   jle    0x88
-12: ba 46 d0 97 00          mov    edx,0x97d046
-17: 33 c9                   xor    ecx,ecx
-19: 8a 4a fe                mov    cl,BYTE PTR [edx-0x2]
-1c: 3b 4d e4                cmp    ecx,DWORD PTR [ebp-0x1c]
-1f: 75 0b                   jne    0x2c
-21: 0f be 0a                movsx  ecx,BYTE PTR [edx]
-24: 3b cf                   cmp    ecx,edi
-26: 7e 04                   jle    0x2c
-28: 8b f9                   mov    edi,ecx
-2a: 8b f0                   mov    esi,eax
-2c: 40                      inc    eax
-2d: 81 c2 34 01 00 00       add    edx,0x134
-33: 3b c3                   cmp    eax,ebx
-35: 7c e0                   jl     0x17
-*/
-	byte find_returned_probe_base_bytes_old[] = { 0x8B, 0x1D, 0xCC, 0x64, 0x9A, 0x00, 0x83, 0xCE, 0xFF, 0x83, 0xCF, 0xFF, 0x33, 0xC0, 0x85, 0xDB, 0x7E, 0x76, 0xBA, 0x46, 0xD0, 0x97, 0x00, 0x33, 0xC9, 0x8A, 0x4A, 0xFE, 0x3B, 0x4D, 0xE4, 0x75, 0x0B, 0x0F, 0xBE, 0x0A, 0x3B, 0xCF, 0x7E, 0x04, 0x8B, 0xF9, 0x8B, 0xF0, 0x40, 0x81, 0xC2, 0x34, 0x01, 0x00, 0x00, 0x3B, 0xC3, 0x7C, 0xE0 };
-/*
-0:  ff 75 e0                push   DWORD PTR [ebp-0x20]
-3:  e8 fd ff ff ff          call   5 <_main+0x5>
-8:  83 c4 04                add    esp,0x4
-b:  89 c6                   mov    esi,eax
-...
-*/
-	byte find_returned_probe_base_bytes_new[] = { 0xFF, 0x75, 0xE0, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x04, 0x89, 0xC6, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-	write_bytes
-	(
-		0x0059700F,
-		find_returned_probe_base_bytes_old,
-		find_returned_probe_base_bytes_new,
-		find_returned_probe_base_bytes_length
-	);
-
-	write_call(0x0059700F + 0x3, (int)modifiedFindReturnedProbeBase);
+	// disable first port check for nearest base
+	
+	write_call(0x005A4372, (int)modifiedReturnSeaProbeFirstPortCheck);
 
 }
 
@@ -4208,6 +4170,30 @@ void patch_tech_value()
 	write_call_over(0x005BDC4C, (int)modifiedTechValue);
 }
 
+void patch_disable_vanilla_base_hurry()
+{
+	int disable_vanilla_base_hurry_bytes_length = 0x5;
+
+	/*
+	0:  e8 a3 c5 ff ff          call   0xffffc5a8
+	*/
+	byte disable_vanilla_base_hurry_bytes_old[] = { 0xE8, 0xA3, 0xC5, 0xFF, 0xFF };
+	
+	/*
+	...
+	*/
+	byte disable_vanilla_base_hurry_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+	write_bytes
+	(
+		0x004F7A38,
+		disable_vanilla_base_hurry_bytes_old,
+		disable_vanilla_base_hurry_bytes_new,
+		disable_vanilla_base_hurry_bytes_length
+	);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4770,6 +4756,11 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_tech_value();
+	
+	if (cf->disable_vanilla_base_hurry)
+	{
+		patch_disable_vanilla_base_hurry();
+	}
 	
 }
 

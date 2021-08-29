@@ -590,6 +590,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->artillery_duel_uses_weapon_and_armor = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "disable_vanilla_base_hurry"))
+    {
+        cf->disable_vanilla_base_hurry = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
@@ -666,6 +670,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_expansion_priority = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_expansion_priority_per_population"))
+    {
+        cf->ai_production_expansion_priority_per_population = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_combat_unit_turns_limit"))
     {
         cf->ai_production_combat_unit_turns_limit = atoi(value);
@@ -674,9 +682,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_facility_priority_penalty = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_combat_unit_min_mineral_surplus"))
+    else if (MATCH("wtp", "ai_production_unit_min_mineral_surplus"))
     {
-        cf->ai_production_combat_unit_min_mineral_surplus = atoi(value);
+        cf->ai_production_unit_min_mineral_surplus = atoi(value);
     }
     else if (MATCH("wtp", "ai_production_exploration_coverage"))
     {

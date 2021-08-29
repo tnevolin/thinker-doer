@@ -154,7 +154,6 @@ HOOK_API void modifiedSetTreatyForInfiltrationExpiration(int initiatingFactionId
 HOOK_API int modifiedHurryCost();
 int getFlatHurryCost(int baseId);
 int getPartialFlatHurryCost(int baseId, int minerals);
-HOOK_API int modifiedFindReturnedProbeBase(int vehicleId);
 HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, int bombardment);
 HOOK_API void modifiedVehSkipForActionDestroy(int vehicleId);
 HOOK_API void appendAbilityCostTextInWorkshop(int output_string_pointer, int input_string_pointer);
@@ -195,4 +194,5 @@ int __cdecl modifiedTurnUpkeep();
 int __cdecl isDestroyableImprovement(int terraformIndex, int items);
 int __cdecl modifiedTechValue(int techId, int factionId, int flag);
 int getFactionHighestResearchedTechLevel(int factionId);
+int __cdecl modifiedReturnSeaProbeFirstPortCheck(int baseId, int radiusType);
 

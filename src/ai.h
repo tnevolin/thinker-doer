@@ -19,7 +19,7 @@ struct FactionInfo
 	double offenseMultiplier;
 	double defenseMultiplier;
 	double fanaticBonusMultiplier;
-	double threatKoefficient;
+	double threatCoefficient;
 	int bestWeaponOffenseValue;
 	int bestArmorDefenseValue;
 	std::vector<Location> airbases;
@@ -59,33 +59,6 @@ struct DefenseDemand
 	double conventionalDefenseDemand;
 	double conventionalOffenseDemand;
 	double artilleryDemand;
-};
-
-struct BaseStrategy
-{
-	BASE *base;
-	std::vector<int> garrison;
-	double nativeProtection;
-	double nativeThreat;
-	double nativeDefenseDemand;
-	int unpopulatedTileCount;
-	int unpopulatedTileRangeSum;
-	double averageUnpopulatedTileRange;
-	double sensorOffenseMultiplier;
-	double sensorDefenseMultiplier;
-	double intrinsicDefenseMultiplier;
-	double conventionalDefenseMultipliers[3];
-	double exposure;
-	bool inSharedOceanRegion;
-	double defenseDemand;
-	int targetBaseId;
-	std::map<int, double> defenderDestroyedByTypes;
-};
-
-struct ESTIMATED_VALUE
-{
-	double demanding;
-	double remaining;
 };
 
 struct UnitTypeStrength
@@ -128,6 +101,34 @@ struct MilitaryStrength
 		
 	}
 	
+};
+
+struct BaseStrategy
+{
+	BASE *base;
+	std::vector<int> garrison;
+	double nativeProtection;
+	double nativeThreat;
+	double nativeDefenseDemand;
+	int unpopulatedTileCount;
+	int unpopulatedTileRangeSum;
+	double averageUnpopulatedTileRange;
+	double sensorOffenseMultiplier;
+	double sensorDefenseMultiplier;
+	double intrinsicDefenseMultiplier;
+	double conventionalDefenseMultipliers[3];
+	double exposure;
+	bool inSharedOceanRegion;
+	double defenseDemand;
+	int targetBaseId;
+	MilitaryStrength defenderStrength;
+	MilitaryStrength opponentStrength;
+};
+
+struct ESTIMATED_VALUE
+{
+	double demanding;
+	double remaining;
 };
 
 struct VehicleWeight
@@ -250,4 +251,5 @@ int getUnitTypeTriad(int unitType);
 int isUnitTypeHasTriad(int unitType, int triad);
 int isUnitTypeHasAbility(int unitType, int abilityFlag);
 double getConventionalCombatBonusMultiplier(int attackerUnitType, int defenderUnitType);
+std::string getUnitTypeAbilitiesString(int unitType);
 
