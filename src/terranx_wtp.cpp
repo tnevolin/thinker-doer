@@ -188,5 +188,12 @@ fp_3int *morale_mod = (fp_3int *)0x004E6400;
 // updates base production
 fp_2void *base_prod_change = (fp_2void *)0x004E5A60;
 
+// base hurr routine
 fp_0void *base_hurry = (fp_0void *)0x004F3FE0;
+
+// checks if base is on sea region
+fp_2int *base_on_sea = (fp_2int *)0x0050DE50;
+
+// finds nearest base for given faction
+fp_3int *base_find2 = (fp_3int *)0x004E3C60;
 

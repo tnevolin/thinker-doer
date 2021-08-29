@@ -2508,9 +2508,24 @@ Search right base for returned sea probe.
 */
 void patch_find_returned_probe_base()
 {
-	// disable first port check for nearest base
-	
-	write_call(0x005A4372, (int)modifiedReturnSeaProbeFirstPortCheck);
+	int find_returned_probe_base_bytes_length = 0x1;
+	/*
+	0:  53                      push   ebx
+	*/
+	byte find_returned_probe_base_bytes_old[] = { 0x53 };
+	/*
+	0:  50                      push   eax
+	*/
+	byte find_returned_probe_base_bytes_new[] = { 0x50 };
+	write_bytes
+	(
+		0x005A430F,
+		find_returned_probe_base_bytes_old,
+		find_returned_probe_base_bytes_new,
+		find_returned_probe_base_bytes_length
+	);
+
+	write_call(0x005A432C, (int)modifiedReturnProbeBaseFind2);
 
 }
 

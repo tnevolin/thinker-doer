@@ -87,4 +87,6 @@ extern fp_3int *veh_put;
 extern fp_3int *morale_mod;
 extern fp_2void *base_prod_change;
 extern fp_0void *base_hurry;
+extern fp_2int *base_on_sea;
+extern fp_3int *base_find2;
 

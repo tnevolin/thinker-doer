@@ -189,8 +189,6 @@ void considerHurryingProduction(int factionId)
 
 	}
 
-    debug("\n")
-
 }
 
 /*

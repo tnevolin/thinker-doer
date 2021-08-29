@@ -4343,7 +4343,7 @@ int __cdecl modifiedTechValue(int techId, int factionId, int flag)
 			techId == Weapon[WPN_TERRAFORMING_UNIT].preq_tech
 		)
 		{
-			value += 2000;
+			value += 4000;
 		}
 		
 		if
@@ -4357,7 +4357,7 @@ int __cdecl modifiedTechValue(int techId, int factionId, int flag)
 			techId == Facility[FAC_RECREATION_COMMONS].preq_tech
 		)
 		{
-			value += 400;
+			value += 1000;
 		}
 		
 	}
@@ -4394,11 +4394,60 @@ int getFactionHighestResearchedTechLevel(int factionId)
 }
 
 /*
-This method explicitly returns 0 to disable return sea probe first port check.
-This enables full scale search instead of just settling in closest port.
+Replacement for base_find2 in searching for probe retreat base.
+For sea units searches for closest own base on same ocean.
 */
-int __cdecl modifiedReturnSeaProbeFirstPortCheck(int /*baseId*/, int /*radiusType*/)
+int __cdecl modifiedReturnProbeBaseFind2(int x, int y, int vehicleId)
 {
-	return 0;
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	
+	int nearestBaseId = -1;
+	
+	if (vehicle->triad() == TRIAD_SEA && isOceanRegion(vehicleTile->region))
+	{
+		// for sea unit search nearest own base on same ocean region
+		
+		int nearestBaseRange = 0;
+		
+		for (int baseId = 0; baseId < *total_num_bases; baseId++)
+		{
+			BASE *base = &(Bases[baseId]);
+			
+			// own bases
+			
+			if (base->faction_id != vehicle->faction_id)
+				continue;
+			
+			// on same ocean region only
+			
+			if (base_on_sea(baseId, vehicleTile->region) == 0)
+				continue;
+			
+			// measure range
+			
+			int range = map_range(vehicle->x, vehicle->y, base->x, base->y);
+			
+			// update nearest base
+			
+			if (nearestBaseId == -1 || range < nearestBaseRange)
+			{
+				nearestBaseId = baseId;
+				nearestBaseRange = range;
+			}
+			
+		}
+		
+	}
+	else
+	{
+		// otherwise, fallback to vanilla function
+		
+		nearestBaseId = base_find2(x, y, vehicle->faction_id);
+		
+	}
+	
+	return nearestBaseId;
+	
 }
 

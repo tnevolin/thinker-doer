@@ -46,6 +46,7 @@ int aiFactionUpkeep(const int factionId)
 	// consider hurrying production in all bases
 	
 	considerHurryingProduction(factionId);
+	debug("\n")
 	
 	// return value
 	

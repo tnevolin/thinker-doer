@@ -244,7 +244,7 @@ double getBaseRadiusTileScore(MAP_INFO tileInfo)
 	double score = 0.0;
 
 	double nutrientWeight = 1.0;
-	double mineralWeight = 2.0;
+	double mineralWeight = 3.0;
 	double energyWeight = 1.0;
 
 	// select best weighted yield

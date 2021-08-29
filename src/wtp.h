@@ -194,5 +194,5 @@ int __cdecl modifiedTurnUpkeep();
 int __cdecl isDestroyableImprovement(int terraformIndex, int items);
 int __cdecl modifiedTechValue(int techId, int factionId, int flag);
 int getFactionHighestResearchedTechLevel(int factionId);
-int __cdecl modifiedReturnSeaProbeFirstPortCheck(int baseId, int radiusType);
+int __cdecl modifiedReturnProbeBaseFind2(int x, int y, int vehicleId);
 

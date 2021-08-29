@@ -1,8 +1,12 @@
+# Version 261
+
+* Further enhanced returning sea probe to the base algorithm. Now it should find the nearest one.
+
 # Version 260
 
 * Disabled vanilla and Thinker base hurry algorithms. WTP does it itself.
 * Enabled combat unit production in case of defense demand.
-* Reworked returning sea probe to base algorithm. Apparenly, previous attempt didn't work well.
+* Reworked returning sea probe to the base algorithm. Apparenly, previous attempt didn't work well.
 
 # Version 259
 

@@ -535,7 +535,7 @@ void evaluateMultiplyingFacilitiesDemand()
 	double psychIntake = (double)base->energy_surplus * (double)(faction->SE_alloc_psych) / 10.0;
 	double labsIntake = (double)base->energy_surplus * (double)(faction->SE_alloc_labs) / 10.0;
 
-	debug("\tmineralSurplus=%d, mineralIntake=%f, economyIntake=%f, psychIntake=%f, labsIntake=%f\n", mineralSurplus, mineralIntake, economyIntake, psychIntake, labsIntake);
+	debug("\t\tmineralSurplus=%d, mineralIntake=%f, economyIntake=%f, psychIntake=%f, labsIntake=%f\n", mineralSurplus, mineralIntake, economyIntake, psychIntake, labsIntake);
 
 	// no production power - multiplying facilities are useless
 
@@ -1383,6 +1383,11 @@ void evaluatePodPoppingDemand()
 	BASE *base = productionDemand.base;
 
 	debug("evaluatePodPoppingDemand\n");
+	
+	// base requires at least twice minimal mineral surplus requirement to build pod popper
+	
+	if (base->mineral_surplus < conf.ai_production_unit_min_mineral_surplus * 2)
+		return;
 
 	// get base connected regions
 
@@ -1481,14 +1486,11 @@ void evaluatePrototypingDemand()
 	BASE *base = productionDemand.base;
 	bool inSharedOceanRegion = activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion;
 	
-	// do not produce unit in weak base
+	// base requires at least twice minimal mineral surplus requirement to build prototype
 	
-	if (base->mineral_surplus < conf.ai_production_unit_min_mineral_surplus)
-	{
-		debug("\tnot enough mineral suprlus\n");
+	if (base->mineral_surplus < conf.ai_production_unit_min_mineral_surplus * 2)
 		return;
-	}
-	
+
 	// do not produce prototype if other bases already produce them
 	
 	for (int otherBaseId : activeFactionInfo.baseIds)

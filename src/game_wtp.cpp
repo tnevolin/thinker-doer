@@ -3585,7 +3585,19 @@ bool isMineBonus(int x, int y)
 {
 	MAP *tile = getMapTile(x, y);
 	
-	return (bonus_at(x, y) == RES_MINERAL || map_has_landmark(tile, LM_VOLCANO) || map_has_landmark(tile, LM_CRATER) || map_has_landmark(tile, LM_CANYON));
+	return
+	(
+		bonus_at(x, y) == RES_MINERAL
+		||
+		(map_has_landmark(tile, LM_VOLCANO) && tile->art_ref_id < 9)
+		||
+		(map_has_landmark(tile, LM_CRATER) && tile->art_ref_id < 9)
+		||
+		(map_has_landmark(tile, LM_FOSSIL) && tile->art_ref_id < 6)
+		||
+		map_has_landmark(tile, LM_CANYON)
+	)
+	;
 	
 }
 
