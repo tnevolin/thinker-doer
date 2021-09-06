@@ -622,6 +622,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_military_priority_minimal = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_project_build_time"))
+    {
+        cf->ai_production_project_build_time = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_threat_coefficient_human"))
     {
         cf->ai_production_threat_coefficient_human = atof(value);
@@ -641,6 +645,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_production_threat_coefficient_other"))
     {
         cf->ai_production_threat_coefficient_other = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_defense_superiority_coefficient"))
+    {
+        cf->ai_production_defense_superiority_coefficient = atof(value);
     }
     else if (MATCH("wtp", "ai_production_min_native_protection"))
     {
@@ -726,6 +734,18 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_facility_priority_time = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_alien_threat_per_tile"))
+    {
+        cf->ai_production_alien_threat_per_tile = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_alien_threat_per_base"))
+    {
+        cf->ai_production_alien_threat_per_base = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_alien_hunting_outnumbering"))
+    {
+        cf->ai_production_alien_hunting_outnumbering = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
         cf->ai_terraforming_nutrientWeight = atof(value);
@@ -738,13 +758,21 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_energyWeight = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_landDistanceScale"))
+    else if (MATCH("wtp", "ai_terraforming_rank_multiplier"))
     {
-        cf->ai_terraforming_landDistanceScale = atof(value);
+        cf->ai_terraforming_rank_multiplier = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_waterDistanceScale"))
+    else if (MATCH("wtp", "ai_terraforming_land_rocky_tile_threshold"))
     {
-        cf->ai_terraforming_waterDistanceScale = atof(value);
+        cf->ai_terraforming_land_rocky_tile_threshold = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_travel_time_multiplier"))
+    {
+        cf->ai_terraforming_travel_time_multiplier = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_time_scale"))
+    {
+        cf->ai_terraforming_time_scale = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_networkConnectionValue"))
     {

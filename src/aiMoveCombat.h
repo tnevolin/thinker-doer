@@ -20,13 +20,19 @@ struct VEHICLE_VALUE
 	double damage;
 };
 
-void aiCombatStrategy();
+void moveCombatStrategy();
 void populateCombatLists();
 void baseProtection();
 void healStrategy();
+void moveScoutStrategy();
+void moveLandScoutStrategy();
+void moveSeaScoutStrategy();
 void nativeCombatStrategy();
 void factionCombatStrategy();
+void fightStrategy();
 void popPods();
+void popLandPods();
+void popOceanPods();
 int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2);
 int moveCombat(int id);
 int applyCombatOrder(int id, COMBAT_ORDER *combatOrder);
@@ -49,4 +55,6 @@ int getRangeToNearestActiveFactionBase(int x, int y);
 Location getNearestMonolithLocation(int x, int y, int triad);
 Location getNearestBaseLocation(int x, int y, int triad);
 bool isInWarZone(int vehicleId);
+void countTransportableVehicles();
+std::vector<int> getReachableEnemies(int vehicleId);
 

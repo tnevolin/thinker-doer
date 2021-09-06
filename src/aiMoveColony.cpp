@@ -1,116 +1,103 @@
+#include "aiMoveColony.h"
 #include <algorithm>
-#include "aiColony.h"
+#include "game_wtp.h"
+#include "ai.h"
+#include "aiMove.h"
 
-int moveColony(int vehicleId)
+void moveColonyStrategy()
 {
-	switch (veh_triad(vehicleId))
+	// land colonies
+	
+	VehicleFilter landColonyFilter;
+	landColonyFilter.factionId = aiFactionId;
+	landColonyFilter.weaponType = WPN_COLONY_MODULE;
+	landColonyFilter.triad = TRIAD_LAND;
+	for (int vehicleId : selectVehicles(landColonyFilter))
 	{
-	case TRIAD_LAND:
-		return moveLandColony(vehicleId);
-		break;
-	case TRIAD_SEA:
-		return moveSeaColony(vehicleId);
-		break;
-	default:
-		return mod_enemy_move(vehicleId);
+		moveLandColonyStrategy(vehicleId);
+	}
+	
+	// sea colonies
+	
+	VehicleFilter seaColonyFilter;
+	seaColonyFilter.factionId = aiFactionId;
+	seaColonyFilter.weaponType = WPN_COLONY_MODULE;
+	seaColonyFilter.triad = TRIAD_SEA;
+	for (int vehicleId : selectVehicles(seaColonyFilter))
+	{
+		moveSeaColonyStrategy(vehicleId);
 	}
 	
 }
 
-int moveLandColony(int vehicleId)
+void moveLandColonyStrategy(int vehicleId)
 {
-	MAP *vehicleLocation = getVehicleMapTile(vehicleId);
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	Location vehicleLocation{vehicle->x, vehicle->y};
 	
-	// on land
+	debug("moveLandColonyStrategy\n");
 	
-	if (!is_ocean(vehicleLocation))
-	{
-		return moveLandColonyOnLand(vehicleId);
-	}
-	
-	// default to Thinker
-	
-	return mod_enemy_move(vehicleId);
-	
-}
-
-int moveSeaColony(int vehicleId)
-{
-	MAP *vehicleLocation = getVehicleMapTile(vehicleId);
-	
-	// on ocean
-	
-	if (is_ocean(vehicleLocation))
-	{
-		return moveSeaColonyOnOcean(vehicleId);
-	}
-	
-	// default to Thinker
-	
-	return mod_enemy_move(vehicleId);
-	
-}
-
-int moveLandColonyOnLand(int vehicleId)
-{
 	// search for best build site
 	
-	Location location = findLandBaseBuildLocation(vehicleId);
+	Location buildLocation = findLandBaseBuildLocation(vehicleId);
 	
-	if (!isValidLocation(location))
-		return mod_enemy_move(vehicleId);
-	
-	// act upon it
-	
-	if (isVehicleAtLocation(vehicleId, location))
+	if (!isValidLocation(buildLocation))
 	{
-		// remove fungus and rocks if any before building
-		
-		MAP *tile = getMapTile(location.x, location.y);
-		
-		tile->items &= ~((uint32_t)TERRA_FUNGUS);
-		tile->val3 &= ~((byte)TILE_ROCKY);
-		tile->val3 |= (byte)TILE_ROLLING;
-		
-		// build base
-		
-		return action_build(vehicleId, 0);
-		
-	}
-	else
-	{
-		debug("move colony (%3d,%3d) -> (%3d,%3d)\n\n", Vehicles[vehicleId].x, Vehicles[vehicleId].y, location.x, location.y)
-		
-		// move to site
-		
-		return set_move_to(vehicleId, location.x, location.y);
-		
+		debug("\tcannot find build location\n");
+		return;
 	}
 	
-	return mod_enemy_move(vehicleId);
+	debug("\t(%3d,%3d) -> (%3d,%3d)\n", vehicle->x, vehicle->y, buildLocation.x, buildLocation.y)
+	
+	// get build location tile
+	
+	MAP *buildLocationTile = getMapTile(buildLocation);
+	
+	if (!isLandRegion(buildLocationTile->region))
+	{
+		debug("\tbuild location is not on land\n");
+		return;
+	}
+	
+	// transit vehicle
+	
+	transitVehicle(vehicleId, std::shared_ptr<Task>(new BuildTask(vehicleId, buildLocation.x, buildLocation.y)));
 	
 }
 
-int moveSeaColonyOnOcean(int vehicleId)
+void moveSeaColonyStrategy(int vehicleId)
 {
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	Location vehicleLocation{vehicle->x, vehicle->y};
+	
+	debug("moveSeaColonyStrategy\n");
+	
 	// search for best build site
 	
-	Location location = findOceanBaseBuildLocation(vehicleId);
+	Location buildLocation = findOceanBaseBuildLocation(vehicleId);
 	
-	if (!isValidLocation(location))
-		return mod_enemy_move(vehicleId);
-	
-	// act upon it
-	
-	if (isVehicleAtLocation(vehicleId, location))
+	if (!isValidLocation(buildLocation))
 	{
-		return action_build(vehicleId, 0);
+		debug("\tcannot find build location\n");
+		return;
 	}
-	else
+	
+	debug("\t(%3d,%3d) -> (%3d,%3d)\n", vehicle->x, vehicle->y, buildLocation.x, buildLocation.y)
+	
+	// get build location tile
+	
+	MAP *buildLocationTile = getMapTile(buildLocation);
+	
+	if (!isOceanRegion(buildLocationTile->region))
 	{
-		debug("move colony (%3d,%3d) -> (%3d,%3d)\n\n", Vehicles[vehicleId].x, Vehicles[vehicleId].y, location.x, location.y)
-		return set_move_to(vehicleId, location.x, location.y);
+		debug("\tbuild location is not on ocean\n");
+		return;
 	}
+	
+	// transit vehicle
+	
+	setMoveTo(vehicleId, buildLocation);
+	transitVehicle(vehicleId, std::shared_ptr<Task>(new BuildTask(vehicleId, buildLocation.x, buildLocation.y)));
 	
 }
 
@@ -132,7 +119,7 @@ double getBuildLocationScore(int colonyVehicleId, int x, int y)
 	// 10 extra travel turns reduce score in half
 	
 	int range = map_range(colonyVehicle->x, colonyVehicle->y, x, y);
-	int speed = veh_speed_without_roads(colonyVehicleId);
+	int speed = veh_chassis_speed(colonyVehicleId);
     double turns = (double)range / (double)speed;
     
     if (buildLocationTile->region != colonyVehicleTile->region)
@@ -145,13 +132,13 @@ double getBuildLocationScore(int colonyVehicleId, int x, int y)
 			break;
 		case TRIAD_LAND:
 			// reaching another continent requires 2 times more time than traveling on ground
-			turns *= 5.0;
+			turns *= 2.0;
 			break;
 		}
 		
 	}
 	
-    double turnsMultiplier = pow(0.5, turns / 20.0);
+    double turnsMultiplier = pow(0.5, turns / 15.0);
     
 	// summarize the score
 
@@ -159,7 +146,7 @@ double getBuildLocationScore(int colonyVehicleId, int x, int y)
 
     debug
     (
-		"\t(%3d,%3d) placementScore=%5.2f, turns=%5.2f, turnsMultiplier=%5.3f, score=%5.2f\n",
+		"\t(%3d,%3d) placementScore=%5.2f, turns=%5.1f, turnsMultiplier=%5.3f, score=%5.2f\n",
 		x,
 		y,
 		placementScore,
@@ -199,7 +186,7 @@ double getBuildLocationPlacementScore(int factionId, int x, int y)
 
 		// collect yield score
 
-		tileScores.push_back(getBaseRadiusTileScore(tileInfo));
+		tileScores.push_back(getBaseRadiusTileScore(&tileInfo));
 
 	}
 
@@ -211,16 +198,16 @@ double getBuildLocationPlacementScore(int factionId, int x, int y)
 	double score = 0.0;
 
 	double weight = 1.0;
-	double weightMultiplier = 0.90;
+	double weightMultiplier = 0.80;
 	for (double tileScore : tileScores)
 	{
 		score += weight * tileScore;
 		weight *= weightMultiplier;
 	}
-
+	
 	// discourage border radius intersection
 
-	score -= 1.0 * (double)getFriendlyIntersectedBaseRadiusTileCount(factionId, x, y);
+	score -= 2.0 * (double)getFriendlyIntersectedBaseRadiusTileCount(factionId, x, y);
 
 	// encourage land usage
 
@@ -239,7 +226,7 @@ double getBuildLocationPlacementScore(int factionId, int x, int y)
 
 }
 
-double getBaseRadiusTileScore(MAP_INFO tileInfo)
+double getBaseRadiusTileScore(MAP_INFO *tileInfo)
 {
 	double score = 0.0;
 
@@ -251,14 +238,14 @@ double getBaseRadiusTileScore(MAP_INFO tileInfo)
 
 	double bestWeightedYield = 0.0;
 
-	if (map_rockiness(tileInfo.tile) == 2)
+	if (map_rockiness(tileInfo->tile) == 2)
 	{
 		// mine
 
 		{
 			int actionsCount = 1;
 			int actions[] = {FORMER_MINE};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
 		}
 
 		// level, farm, mine
@@ -266,7 +253,7 @@ double getBaseRadiusTileScore(MAP_INFO tileInfo)
 		{
 			int actionsCount = 3;
 			int actions[] = {FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_MINE};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
 		}
 
 		// level, farm, solar
@@ -274,7 +261,7 @@ double getBaseRadiusTileScore(MAP_INFO tileInfo)
 		{
 			int actionsCount = 3;
 			int actions[] = {FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_SOLAR};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
 		}
 
 	}
@@ -285,7 +272,7 @@ double getBaseRadiusTileScore(MAP_INFO tileInfo)
 		{
 			int actionsCount = 2;
 			int actions[] = {FORMER_FARM, FORMER_MINE};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
 		}
 
 		// farm, solar
@@ -293,18 +280,18 @@ double getBaseRadiusTileScore(MAP_INFO tileInfo)
 		{
 			int actionsCount = 2;
 			int actions[] = {FORMER_FARM, FORMER_SOLAR};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(&tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
 		}
 
 	}
-
+	
 	// add best weighted yield to score
 
 	score += bestWeightedYield;
 
 	// discourage base radius overlap
 
-	if (map_has_item(tileInfo.tile, TERRA_BASE_RADIUS))
+	if (map_has_item(tileInfo->tile, TERRA_BASE_RADIUS))
 	{
 		score /= 2.0;
 	}
@@ -357,7 +344,7 @@ Location findLandBaseBuildLocation(int colonyVehicleId)
 		)
 		{
 			double score = getBuildLocationScore(colonyVehicleId, location.x, location.y);
-
+			
 			if (score > maxScore)
 			{
 				buildLocation.set(location.x, location.y);
@@ -367,8 +354,6 @@ Location findLandBaseBuildLocation(int colonyVehicleId)
 		}
 
 	}
-
-    debug("\n");
 
 	return buildLocation;
 
@@ -417,63 +402,6 @@ Location findOceanBaseBuildLocation(int colonyVehicleId)
 		)
 		{
 			double score = getBuildLocationScore(colonyVehicleId, location.x, location.y);
-
-			if (score > maxScore)
-			{
-				buildLocation.set(location.x, location.y);
-				maxScore = score;
-			}
-
-		}
-
-	}
-
-    debug("\n");
-
-	return buildLocation;
-
-}
-
-/*
-Searches for best land base location for transport with colony.
-*/
-Location findTransportLandBaseBuildLocation(int transportVehicleId)
-{
-	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
-
-	// search best build location
-
-	Location buildLocation;
-	double maxScore = 0.0;
-
-	for (int mapTileIndex = 0; mapTileIndex < *map_area_tiles; mapTileIndex++)
-	{
-		Location location = getMapIndexLocation(mapTileIndex);
-		MAP* tile = getMapTile(mapTileIndex);
-		
-		// limit search area with 20 range
-		
-		if (map_range(transportVehicle->x, transportVehicle->y, location.x, location.y) > 20)
-			continue;
-		
-		// check location
-		
-		if
-		(
-			// land region
-			isLandRegion(tile->region)
-			&&
-			// unclaimed territory
-			(tile->owner == -1 || tile->owner == transportVehicle->faction_id)
-			&&
-			// can build base
-			isValidBuildSite(transportVehicle->faction_id, TRIAD_LAND, location.x, location.y)
-			&&
-			// only sites unclaimed by other colonies
-			isUnclaimedBuildSite(transportVehicle->faction_id, location.x, location.y, -1)
-		)
-		{
-			double score = getBuildLocationScore(transportVehicleId, location.x, location.y);
 
 			if (score > maxScore)
 			{
@@ -565,7 +493,7 @@ bool isUnclaimedBuildSite(int factionId, int x, int y, int colonyVehicleId)
 
 		// only colony
 
-		if (!isVehicleColony(otherVehicleId))
+		if (!isColonyVehicle(otherVehicleId))
 			continue;
 
 		// detect colony destination
@@ -573,34 +501,55 @@ bool isUnclaimedBuildSite(int factionId, int x, int y, int colonyVehicleId)
 		int otherVehicleDestinationX;
 		int otherVehicleDestinationY;
 
-		switch (otherVehicle->move_status)
+		if (hasTask(otherVehicleId))
 		{
-		case ORDER_NONE:
-			// destination is location
-			otherVehicleDestinationX = otherVehicle->x;
-			otherVehicleDestinationY = otherVehicle->y;
-			break;
+			Location destination = getTask(otherVehicleId)->getDestination();
 			
-		case ORDER_MOVE_TO:
-			// destination is waypont
-			otherVehicleDestinationX = otherVehicle->waypoint_1_x;
-			otherVehicleDestinationY = otherVehicle->waypoint_1_y;
-			break;
-			
-		default:
-			// no destination
-			continue;
+			otherVehicleDestinationX = destination.x;
+			otherVehicleDestinationY = destination.y;
 			
 		}
+		else
+		{
+			switch (otherVehicle->move_status)
+			{
+			case ORDER_NONE:
+				// destination is location
+				otherVehicleDestinationX = otherVehicle->x;
+				otherVehicleDestinationY = otherVehicle->y;
+				break;
+				
+			case ORDER_MOVE_TO:
+				// destination is waypont
+				otherVehicleDestinationX = otherVehicle->waypoint_1_x;
+				otherVehicleDestinationY = otherVehicle->waypoint_1_y;
+				break;
+				
+			default:
+				// no destination
+				continue;
+				
+			}
 
-		// check build site is not close to someone's destination
+		}
+		
+		// check build site is not touching someone's destination base radius
 
-		if (map_range(otherVehicleDestinationX, otherVehicleDestinationY, x, y) <= 2)
+		if (isTouchingBaseRadius(otherVehicleDestinationX, otherVehicleDestinationY, x, y))
 			return false;
 
 	}
 
 	return true;
 
+}
+
+/*
+Check if two base locations would be touching each other radius.
+*/
+bool isTouchingBaseRadius(int x1, int y1, int x2, int y2)
+{
+	return map_range(x1, y1, x2, y2) <= 3 && (abs(x2 - x1) < 6 && abs(y2 - y1) < 6);
+	
 }
 

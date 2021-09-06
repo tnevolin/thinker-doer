@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 261 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 262 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -313,11 +313,13 @@ struct Config {
     double ai_production_thinker_priority;
     double ai_production_military_priority;
     double ai_production_military_priority_minimal;
+    double ai_production_project_build_time;
     double ai_production_threat_coefficient_human;
     double ai_production_threat_coefficient_vendetta;
     double ai_production_threat_coefficient_pact;
     double ai_production_threat_coefficient_treaty;
     double ai_production_threat_coefficient_other;
+    double ai_production_defense_superiority_coefficient;
     double ai_production_min_native_protection;
     double ai_production_max_native_protection;
     double ai_production_native_protection_priority;
@@ -339,11 +341,16 @@ struct Config {
     double ai_production_naval_yard_priority;
     double ai_production_aerospace_complex_priority;
     double ai_production_facility_priority_time;
+    double ai_production_alien_threat_per_tile;
+    double ai_production_alien_threat_per_base;
+    double ai_production_alien_hunting_outnumbering;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
-	double ai_terraforming_landDistanceScale;
-	double ai_terraforming_waterDistanceScale;
+	double ai_terraforming_rank_multiplier;
+	double ai_terraforming_land_rocky_tile_threshold;
+	double ai_terraforming_travel_time_multiplier;
+	double ai_terraforming_time_scale;
 	double ai_terraforming_networkConnectionValue;
 	double ai_terraforming_networkImprovementValue;
 	double ai_terraforming_networkBaseExtensionValue;

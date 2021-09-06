@@ -4,6 +4,7 @@
 #include "ai.h"
 #include "wtp.h"
 #include "aiProduction.h"
+#include "aiMove.h"
 
 void exit_fail_over()
 {
@@ -1574,7 +1575,7 @@ void patch_tile_yield()
 	write_call(0x004E7F04, (int)mod_nutrient_yield);
 	write_call(0x004E8034, (int)mod_nutrient_yield);
 	// this call is already patched by Thinker
-	// Thinker code will delegate to mod_nutrient_yield instead of original function
+	// Thinker will delegate to it
 //	write_call(0x004E888C, (int)mod_nutrient_yield);
 	write_call(0x004E96F4, (int)mod_nutrient_yield);
 	write_call(0x004ED7F1, (int)mod_nutrient_yield);
@@ -3189,7 +3190,7 @@ void patch_disable_air_transport_unload_everywhere()
 //
 void patch_enemy_move()
 {
-    write_call_over(0x00579362, (int)modifiedEnemyMove);
+    write_call_over(0x00579362, (int)modified_enemy_move);
 }
 
 void patch_faction_upkeep()
@@ -4182,7 +4183,7 @@ void patch_disable_sensor_destroying()
 
 void patch_tech_value()
 {
-	write_call_over(0x005BDC4C, (int)modifiedTechValue);
+	write_call_over(0x005BDC4C, (int)modified_tech_value);
 }
 
 void patch_disable_vanilla_base_hurry()
@@ -4207,6 +4208,126 @@ void patch_disable_vanilla_base_hurry()
 		disable_vanilla_base_hurry_bytes_length
 	);
 	
+}
+
+/*
+Vehicle moves entry point.
+*/
+void patch_enemy_units_check()
+{
+	write_call(0x00528289, (int)modified_enemy_units_check);
+	write_call(0x005295C0, (int)modified_enemy_units_check);
+	
+}
+
+/*
+Shows enemies treaty message as popup.
+*/
+void patch_enemies_treaty_popup()
+{
+    int popup_bytes_length = 0x5;
+
+    /*
+    0:  68 88 13 00 00          push   0x1388
+    */
+    byte popup_bytes_old[] =
+        { 0x68, 0x88, 0x13, 0x00, 0x00 }
+    ;
+
+    /*
+    0:  6a ff                   push   0xffffffff
+    ...
+    */
+    byte popup_bytes_new[] =
+        { 0x6A, 0xFF, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x0055DACC,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+
+    write_bytes
+    (
+        0x0055DBF1,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+
+    write_bytes
+    (
+        0x0055DDD0,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+
+    write_bytes
+    (
+        0x0055DEF5,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+
+    write_bytes
+    (
+        0x0055E355,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+
+    write_bytes
+    (
+        0x0055CB24,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+
+}
+
+/*
+Replaces short random with int random because short is too small for tech value.
+*/
+void patch_tech_ai_randomization()
+{
+    int tech_ai_randomization_bytes_length = 0x3;
+
+    /*
+    0:  c1 e0 08                shl    eax,0x8
+    */
+    byte tech_ai_randomization_bytes_old[] =
+        { 0xC1, 0xE0, 0x08 }
+    ;
+
+    /*
+    0:  c1 e0 02                shl    eax,0x2
+    */
+    byte tech_ai_randomization_bytes_new[] =
+        { 0xC1, 0xE0, 0x02 }
+    ;
+
+    write_bytes
+    (
+        0x005BDCE7,
+        tech_ai_randomization_bytes_old,
+        tech_ai_randomization_bytes_new,
+        tech_ai_randomization_bytes_length
+    )
+    ;
+
 }
 
 // =======================================================
@@ -4776,6 +4897,12 @@ void patch_setup_wtp(Config* cf)
 	{
 		patch_disable_vanilla_base_hurry();
 	}
+	
+	patch_enemy_units_check();
+	
+	patch_enemies_treaty_popup();
+	
+	patch_tech_ai_randomization();
 	
 }
 

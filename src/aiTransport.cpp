@@ -3,11 +3,15 @@
 #include "aiTransport.h"
 #include "game_wtp.h"
 #include "ai.h"
-#include "aiColony.h"
+#include "aiMoveColony.h"
 
 int moveSeaTransport(int vehicleId)
 {
-	assert(isVehicleSeaTransport(vehicleId));
+	assert(isSeaTransportVehicle(vehicleId));
+	
+	debug("moveSeaTransport\n");
+	
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
 	// deliver artifact
 	
@@ -97,6 +101,16 @@ int moveSeaTransport(int vehicleId)
 	{
 		return SYNC;
 	}
+	
+	// no transportable vehicles - destroy transport
+	
+	debug("\tregion=%d, seaTransportRequest=%d\n", vehicleTile->region, activeFactionInfo.seaTransportRequests[vehicleTile->region]);
+	
+	if (activeFactionInfo.seaTransportRequests.count(vehicleTile->region) == 0 || activeFactionInfo.seaTransportRequests[vehicleTile->region] == 0)
+	{
+		veh_kill(vehicleId);
+		return EM_DONE;
+	}		
 
 	// default to Thinker
 	
@@ -131,7 +145,7 @@ int getCarryingColonyVehicleId(int transportVehicleId)
 	
 	for (int loadedVehicleId : getLoadedVehicleIds(transportVehicleId))
 	{
-		if (isVehicleColony(loadedVehicleId))
+		if (isColonyVehicle(loadedVehicleId))
 		{
 			carriedVehicleId = loadedVehicleId;
 		}
@@ -152,7 +166,7 @@ int getCarryingFormerVehicleId(int transportVehicleId)
 	
 	for (int loadedVehicleId : getLoadedVehicleIds(transportVehicleId))
 	{
-		if (isVehicleFormer(loadedVehicleId))
+		if (isFormerVehicle(loadedVehicleId))
 		{
 			carriedVehicleId = loadedVehicleId;
 		}
@@ -197,7 +211,7 @@ bool deliverArtifact(int transportVehicleId, int artifactVehicleId)
 			if (range < minRange)
 			{
 				baseLocation.set(base->x, base->y);
-				minRange = 0;
+				minRange = range;
 			}
 			
 		}
@@ -437,7 +451,7 @@ bool pickupColony(int transportVehicleId)
 			otherVehicle->faction_id == transportVehicle->faction_id
 			&&
 			// colony
-			isVehicleColony(otherVehicleId)
+			isColonyVehicle(otherVehicleId)
 			&&
 			// land colony
 			veh_triad(otherVehicleId) == TRIAD_LAND
@@ -480,7 +494,7 @@ bool pickupColony(int transportVehicleId)
 			{
 				if
 				(
-					isVehicleColony(otherVehicleId)
+					isColonyVehicle(otherVehicleId)
 					&&
 					veh_triad(otherVehicleId) == TRIAD_LAND
 				)
@@ -529,7 +543,7 @@ bool pickupFormer(int transportVehicleId)
 			otherVehicle->faction_id == transportVehicle->faction_id
 			&&
 			// Former
-			isVehicleFormer(otherVehicleId)
+			isFormerVehicle(otherVehicleId)
 			&&
 			// land Former
 			veh_triad(otherVehicleId) == TRIAD_LAND
@@ -572,7 +586,7 @@ bool pickupFormer(int transportVehicleId)
 			{
 				if
 				(
-					isVehicleFormer(otherVehicleId)
+					isFormerVehicle(otherVehicleId)
 					&&
 					veh_triad(otherVehicleId) == TRIAD_LAND
 				)
@@ -618,40 +632,53 @@ bool popPod(int transportVehicleId)
 /*
 Searches for closest location reachable by transport.
 */
-Location getSeaTransportUnloadLocation(int transportVehicleId, const Location destinationLocation)
+Location getSeaTransportUnloadLocation(int oceanRegion, const Location destination)
 {
-	MAP *transportVehicleTile = getVehicleMapTile(transportVehicleId);
-	MAP *destinationLocationTile = getMapTile(destinationLocation.x, destinationLocation.y);
-	
 	Location unloadLocation;
 	
-	if (isInOceanRegion(transportVehicleId, destinationLocationTile->region))
+	// region should be ocean region
+	
+	if (!isOceanRegion(oceanRegion))
+		return unloadLocation;
+	
+	// destination should be valid
+	
+	if (!isValidLocation(destination))
+		return unloadLocation;
+	
+	// get destination tile
+	
+	MAP *destinationTile = getMapTile(destination);
+	
+	if (destinationTile == NULL)
+		return unloadLocation;
+	
+	// destination is in same ocean region
+	
+	if (destinationTile->region == oceanRegion)
 	{
-		// same region
-		unloadLocation.set(destinationLocation);
+		unloadLocation.set(destination);
+		return unloadLocation;
 	}
-	else
+	
+	// search for closest reachable location
+	
+	int minRange = INT_MAX;
+	
+	for (int mapTileIndex = 0; mapTileIndex < *map_area_tiles; mapTileIndex++)
 	{
-		// search for closest reachable location
+		Location location = getMapIndexLocation(mapTileIndex);
 		
-		int minRange = INT_MAX;
+		// ocean region coast
 		
-		for (int mapTileIndex = 0; mapTileIndex < *map_area_tiles; mapTileIndex++)
+		if (isOceanRegionCoast(location.x, location.y, oceanRegion))
 		{
-			Location location = getMapIndexLocation(mapTileIndex);
+			int range = map_range(destination.x, destination.y, location.x, location.y);
 			
-			// transport ocean region coast
-			
-			if (isOceanRegionCoast(location.x, location.y, transportVehicleTile->region))
+			if (range < minRange)
 			{
-				int range = map_range(destinationLocation.x, destinationLocation.y, location.x, location.y);
-				
-				if (range < minRange)
-				{
-					unloadLocation.set(location);
-					minRange = range;
-				}
-				
+				unloadLocation.set(location);
+				minRange = range;
 			}
 			
 		}
@@ -665,12 +692,13 @@ Location getSeaTransportUnloadLocation(int transportVehicleId, const Location de
 bool deliverVehicle(const int transportVehicleId, const Location destinationLocation, const int vehicleId)
 {
 	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
+	MAP *transportVehicleTile = getVehicleMapTile(transportVehicleId);
 	
 	debug("\ntransportVehicles (%3d,%3d) -> (%3d,%3d)\n", transportVehicle->x, transportVehicle->y, destinationLocation.x, destinationLocation.y);
 	
 	// determine unload location
 	
-	Location unloadLocation = getSeaTransportUnloadLocation(transportVehicleId, destinationLocation);
+	Location unloadLocation = getSeaTransportUnloadLocation(transportVehicleTile->region, destinationLocation);
 	
 	if (!isValidLocation(unloadLocation))
 		return false;
@@ -708,33 +736,6 @@ bool deliverVehicle(const int transportVehicleId, const Location destinationLoca
 	}
 	else
 	{
-//		// put other units at hold if at base to not pick them up
-//
-//		if (map_base(transportVehicleTile))
-//		{
-//			for (int stackedVehicleId : getStackedVehicleIds(transportVehicleId))
-//			{
-//				VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
-//
-//				// skip self
-//
-//				if (stackedVehicleId == transportVehicleId)
-//					continue;
-//
-//				if
-//				(
-//					veh_triad(stackedVehicleId) == TRIAD_LAND
-//					&&
-//					stackedVehicle->move_status == ORDER_NONE
-//				)
-//				{
-//					stackedVehicle->move_status = ORDER_HOLD;
-//				}
-//
-//			}
-//			
-//		}
-//
 		// move to destination
 
 		setMoveTo(transportVehicleId, unloadLocation.x, unloadLocation.y);
@@ -794,5 +795,185 @@ int getCarryingScoutVehicleId(int transportVehicleId)
 
 	return carriedVehicleId;
 
+}
+
+/*
+Finds the first ocean that is needed to be crossed in order to get to destination.
+*/
+int getCrossOceanRegion(Location initialLocation, Location terminalLocation)
+{
+	// check locations
+	
+	if (!isValidLocation(initialLocation) || !isValidLocation(terminalLocation))
+		return -1;
+	
+	// get tiles
+	
+	MAP *initialLocationTile = getMapTile(initialLocation);
+	MAP *terminalLocationTile = getMapTile(terminalLocation);
+	
+	if (initialLocationTile == NULL || terminalLocationTile == NULL)
+		return -1;
+	
+	// should be different regions
+	
+	if (initialLocationTile->region == terminalLocationTile->region)
+		return -1;
+	
+	// initial ocean location => same ocean to cross
+	
+	if (isOceanRegion(initialLocationTile->region))
+		return initialLocationTile->region;
+	
+	// track path
+	
+	int initialX = initialLocation.x;
+	int initialY = initialLocation.y;
+	int terminalX = terminalLocation.x;
+	int terminalY = terminalLocation.y;
+	
+	if (!*map_toggle_flat && abs(terminalX - initialX) > *map_half_x)
+	{
+		if (initialX < terminalX)
+		{
+			initialX += *map_axis_x;
+		}
+		else
+		{
+			terminalX += *map_axis_x;
+		}
+		
+	}
+	
+	// iterate path
+	
+	int currentX = terminalX;
+	int currentY = terminalY;
+	
+	int lastOceanRegion = -1;
+	
+	while (true)
+	{
+		// check map tile
+		
+		MAP *currentTile = getMapTile(currentX, currentY);
+		
+		if (currentTile == NULL)
+			return -1;
+		
+		if (isOceanRegion(currentTile->region))
+		{
+			lastOceanRegion = currentTile->region;
+		}
+		
+		// exit condition
+		
+		if (currentTile->region == initialLocationTile->region)
+		{
+			return lastOceanRegion;
+		}
+		
+		// check end condition and move one tile
+		
+		int dx = initialX - currentX;
+		int dy = initialY - currentY;
+		
+		if (dx == 0 && dy == 0)
+		{
+			// some weird thing happened
+			
+			return -1;
+	
+		}
+		else if (abs(dx) == abs(dy))
+		{
+			currentX += (dx > 0 ? +1 : -1);
+			currentY += (dy > 0 ? +1 : -1);
+		}
+		else if (abs(dx) > abs(dy))
+		{
+			currentX += (dx > 0 ? +1 : -1);
+		}
+		else
+		{
+			currentY += (dx > 0 ? +1 : -1);
+		}
+		
+	}
+	
+}
+
+/*
+Searches for available sea transport in given region.
+Full transport is not selected.
+Transport without go to order is selected right away.
+Transport with go to order is selected only if given location is closer than its current destination.
+If such transport is found set its destination to the vehicle.
+*/
+int getAvailableSeaTransport(int region, int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	Location vehicleLocation{vehicle->x, vehicle->y};
+	
+	// find closest available sea transport in this region
+	
+	int closestAvailableSeaTransportVehicleId = -1;
+	int closestAvailableSeaTransportVehicleRange = INT_MAX;
+	
+	VehicleFilter seaTransportFilter;
+	seaTransportFilter.factionId = vehicle->faction_id;
+	seaTransportFilter.weaponType = WPN_TROOP_TRANSPORT;
+	seaTransportFilter.triad = TRIAD_SEA;
+	for (int seaTransportVehicleId : selectVehicles(seaTransportFilter))
+	{
+		VEH *seaTransportVehicle = &(Vehicles[seaTransportVehicleId]);
+		MAP *seaTransportVehicleTile = getVehicleMapTile(seaTransportVehicleId);
+		
+		// within given region
+		
+		if (seaTransportVehicleTile->region != region)
+		
+		// with remaining cargo capacity
+		
+		if ((cargo_capacity(vehicleId) - cargo_loaded(vehicleId)) <= 0)
+			continue;
+		
+		// get range
+		
+		int range = map_range(seaTransportVehicle->x, seaTransportVehicle->y, vehicle->x, vehicle->y);
+		
+		// compare to task range if any
+		
+		if (hasTask(seaTransportVehicleId))
+		{
+			std::shared_ptr<Task> seaTransportTask = getTask(seaTransportVehicleId);
+			
+			Location destination = seaTransportTask->getDestination();
+			
+			if (isValidLocation(destination))
+			{
+				int destinationRange = map_range(seaTransportVehicle->x, seaTransportVehicle->y, destination.x, destination.y);
+				
+				if (destinationRange <= range)
+					continue;
+			
+			}
+			
+		}
+		
+		// update closest
+		
+		if (closestAvailableSeaTransportVehicleId == -1 || range < closestAvailableSeaTransportVehicleRange)
+		{
+			closestAvailableSeaTransportVehicleId = seaTransportVehicleId;
+			closestAvailableSeaTransportVehicleRange = range;
+		}
+		
+	}
+	
+	// return
+	
+	return closestAvailableSeaTransportVehicleId;
+	
 }
 

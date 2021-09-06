@@ -89,14 +89,16 @@
 		</ExtraCommands>
 		<Unit filename="src/ai.cpp" />
 		<Unit filename="src/ai.h" />
-		<Unit filename="src/aiColony.cpp" />
-		<Unit filename="src/aiColony.h" />
-		<Unit filename="src/aiCombat.cpp" />
-		<Unit filename="src/aiCombat.h" />
-		<Unit filename="src/aiFormer.cpp" />
-		<Unit filename="src/aiFormer.h" />
 		<Unit filename="src/aiHurry.cpp" />
 		<Unit filename="src/aiHurry.h" />
+		<Unit filename="src/aiMove.cpp" />
+		<Unit filename="src/aiMove.h" />
+		<Unit filename="src/aiMoveColony.cpp" />
+		<Unit filename="src/aiMoveColony.h" />
+		<Unit filename="src/aiMoveCombat.cpp" />
+		<Unit filename="src/aiMoveCombat.h" />
+		<Unit filename="src/aiMoveFormer.cpp" />
+		<Unit filename="src/aiMoveFormer.h" />
 		<Unit filename="src/aiProduction.cpp" />
 		<Unit filename="src/aiProduction.h" />
 		<Unit filename="src/aiTransport.cpp" />

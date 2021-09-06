@@ -89,4 +89,6 @@ extern fp_2void *base_prod_change;
 extern fp_0void *base_hurry;
 extern fp_2int *base_on_sea;
 extern fp_3int *base_find2;
+extern fp_1void *enemy_units_check;
+extern fp_2int *veh_who;
 

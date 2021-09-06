@@ -4,12 +4,13 @@
 #include <unordered_set>
 #include <map>
 #include <unordered_map>
+#include "terranx_wtp.h"
 #include "ai.h"
 #include "wtp.h"
 #include "game.h"
 #include "ai.h"
 #include "aiProduction.h"
-#include "aiFormer.h"
+#include "aiMoveFormer.h"
 #include "aiHurry.h"
 #include "aiProduction.h"
 
@@ -46,89 +47,10 @@ int aiFactionUpkeep(const int factionId)
 	// consider hurrying production in all bases
 	
 	considerHurryingProduction(factionId);
-	debug("\n")
 	
 	// return value
 	
 	return returnValue;
-	
-}
-
-/*
-Top level AI enemy move entry point
-*/
-/*
-
-Transporting land vehicles by sea transports idea.
-
-- Land vehicle not on transport
-Land vehicle moves wherever it wants regardless if destination is reachable.
-Land vehicle waits ferry pickup when it is at ocean or at the coast and wants to get to another land region.
-
-- Empty transport
-Empty transport rushes to nearest higher priority vehicle waiting for ferry.
-When at or next to awaiting land vehicle it stops and explicitly commands passenger to board.
-
-- Land vehicle on transport
-Land vehicle on transport is not controlled by this AI code.
-
-- Loaded transport
-Loaded transport selects highest priority passenger.
-Loaded transport then request highest priority passenger to generate desired destination.
-Loaded transport then computes unload location closest to passenger destination location.
-When at or next unload location it stops and explicitly commands passenger to unboard to unload location.
-
-*/
-int aiEnemyMove(const int vehicleId)
-{
-//	return mod_enemy_move(vehicleId);
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	
-	// do not try multiple iterations
-	
-	if (vehicle->iter_count > 0)
-	{
-		return mod_enemy_move(vehicleId);
-	}
-	
-    // do not control probes
-    // Thinker ignores subversion opportunities
-
-    if (vehicle->weapon_type() == WPN_PROBE_TEAM)
-	{
-		return enemy_move(vehicleId);
-	}
-
-	// do not control boarded land units
-	
-	if (isVehicleLandUnitOnTransport(vehicleId))
-	{
-		return mod_enemy_move(vehicleId);
-	}
-	
-	if (isVehicleColony(vehicleId))
-	{
-		return moveColony(vehicleId);
-	}
-	
-	if (isVehicleFormer(vehicleId))
-	{
-		return moveFormer(vehicleId);
-	}
-	
-	if (isVehicleSeaTransport(vehicleId))
-	{
-		return moveSeaTransport(vehicleId);
-	}
-	
-	if (isVehicleCombat(vehicleId))
-	{
-		return moveCombat(vehicleId);
-	}
-	
-	// unhandled cases default to Thinker
-	
-	return mod_enemy_move(vehicleId);
 	
 }
 
@@ -160,14 +82,6 @@ void aiStrategy()
 	// compute production demands
 
 	aiProductionStrategy();
-
-	// prepare former orders
-
-	aiTerraformingStrategy();
-
-	// prepare combat orders
-
-	aiCombatStrategy();
 
 }
 
@@ -356,15 +270,15 @@ void populateGlobalVariables()
 
 		// combat vehicles
 
-		if (isVehicleCombat(id))
+		if (isCombatVehicle(id))
 		{
 			// add vehicle to global list
 
 			activeFactionInfo.combatVehicleIds.push_back(id);
 			
-			// scout
+			// scout and native
 			
-			if (isScoutVehicle(id))
+			if (isScoutVehicle(id) || isNativeVehicle(id))
 			{
 				activeFactionInfo.scoutVehicleIds.push_back(id);
 			}
@@ -411,7 +325,7 @@ void populateGlobalVariables()
 
 				// add combat vehicle to garrison
 				
-				if (isVehicleCombat(id))
+				if (isCombatVehicle(id))
 				{
 					baseStrategy->garrison.push_back(id);
 				}
@@ -430,11 +344,11 @@ void populateGlobalVariables()
 			}
 
 		}
-		else if (isVehicleColony(id))
+		else if (isColonyVehicle(id))
 		{
 			activeFactionInfo.colonyVehicleIds.push_back(id);
 		}
-		else if (isVehicleFormer(id))
+		else if (isFormerVehicle(id))
 		{
 			activeFactionInfo.formerVehicleIds.push_back(id);
 		}
@@ -524,14 +438,14 @@ void populateGlobalVariables()
 		BASE *base = &(Bases[baseId]);
 		MAP *baseTile = getBaseMapTile(baseId);
 		
-		activeFactionInfo.maxMineralSurplus = std::max(activeFactionInfo.maxMineralSurplus, base->mineral_surplus_final);
+		activeFactionInfo.maxMineralSurplus = std::max(activeFactionInfo.maxMineralSurplus, base->mineral_surplus);
 		
 		if (activeFactionInfo.regionMaxMineralSurpluses.count(baseTile->region) == 0)
 		{
 			activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = 1;
 		}
 		
-		activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = std::max(activeFactionInfo.regionMaxMineralSurpluses[baseTile->region], base->mineral_surplus_final);
+		activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = std::max(activeFactionInfo.regionMaxMineralSurpluses[baseTile->region], base->mineral_surplus);
 		
 	}
 	
@@ -668,8 +582,6 @@ VEH *getVehicleByAIId(int aiId)
 Location getNearestPodLocation(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
-	MAP *vehilceTile = getVehicleMapTile(vehicleId);
-	int triad = vehicle->triad();
 	
 	Location nearestPodLocation;
 	int minRange = INT_MAX;
@@ -677,20 +589,14 @@ Location getNearestPodLocation(int vehicleId)
 	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
 		Location location = getMapIndexLocation(mapIndex);
-		MAP* tile = getMapTile(mapIndex);
 		
-		if
-		(
-			(triad == TRIAD_AIR || tile->region == vehilceTile->region)
-			&&
-			map_has_item(tile, TERRA_SUPPLY_POD)
-		)
+		if (isDestinationReachable(vehicleId, location.x, location.y, false) && (goody_at(location.x, location.y) != 0))
 		{
 			int range = map_range(vehicle->x, vehicle->y, location.x, location.y);
 			
 			if (range < minRange)
 			{
-				location.set(location);
+				nearestPodLocation.set(location);
 				minRange = range;
 			}
 			
@@ -712,7 +618,7 @@ void designUnits()
 	
 	int bestArmor = getFactionBestArmor(aiFactionId);
 	
-	std::vector<int> chassisIds = {CHS_INFANTRY, CHS_FOIL};
+	std::vector<int> chassisIds = {CHS_INFANTRY};
 	std::vector<int> weaponIds = {WPN_HAND_WEAPONS};
 	std::vector<int> armorIds = {bestArmor};
 	std::vector<int> abilitiesSets = {0, ABL_COMM_JAMMER, ABL_AAA};
@@ -947,6 +853,27 @@ int getNearestFactionBaseRange(int factionId, int x, int y)
 
 }
 
+int getNearestOtherFactionBaseRange(int factionId, int x, int y)
+{
+	int nearestFactionBaseRange = INT_MAX;
+
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+
+		// other faction bases
+
+		if (base->faction_id == factionId)
+			continue;
+
+		nearestFactionBaseRange = std::min(nearestFactionBaseRange, map_range(x, y, base->x, base->y));
+
+	}
+
+	return nearestFactionBaseRange;
+
+}
+
 int getNearestBaseId(int x, int y, std::unordered_set<int> baseIds)
 {
 	int nearestBaseId = -1;
@@ -1146,7 +1073,7 @@ bool isVehicleThreatenedByEnemyInField(int vehicleId)
 		
 		// exclude non combat units
 		
-		if (!isVehicleCombat(otherVehicleId))
+		if (!isCombatVehicle(otherVehicleId))
 			continue;
 		
 		// unit is in different region and not air
@@ -1154,13 +1081,17 @@ bool isVehicleThreatenedByEnemyInField(int vehicleId)
 		if (otherVehicle->triad() != TRIAD_AIR && otherVehicleTile->region != vehicleTile->region)
 			continue;
 		
+		// calculate threat range
+		
+		int threatRange = (otherVehicle->triad() == TRIAD_LAND ? 2 : 1) * Units[otherVehicle->unit_id].speed();
+		
 		// calculate range
 		
 		int range = map_range(otherVehicle->x, otherVehicle->y, vehicle->x, vehicle->y);
 		
-		// threatened in one turn
+		// compare ranges
 		
-		if (getVehicleSpeedWithoutRoads(otherVehicleId) >= range)
+		if (range <= threatRange)
 		{
 			threatened = true;
 			break;
@@ -1172,7 +1103,7 @@ bool isVehicleThreatenedByEnemyInField(int vehicleId)
 	
 }
 
-bool isDestinationReachable(int vehicleId, int x, int y)
+bool isDestinationReachable(int vehicleId, int x, int y, bool accountForSeaTransport)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
@@ -1210,17 +1141,13 @@ bool isDestinationReachable(int vehicleId, int x, int y)
 	case CHS_FOIL:
 	case CHS_CRUISER:
 		
+		// only sea region is rechable by sea vehicle
+		if (isOceanRegion(destinationTile->region))
 		{
-			std::unordered_set<int> vehicleAdjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
-			std::unordered_set<int> destinationAdjacentOceanRegions = getAdjacentOceanRegions(x, y);
-			
-			for (int destinationAdjacentOceanRegion : destinationAdjacentOceanRegions)
+			// same region
+			if (destinationTile->region == vehicleTile->region)
 			{
-				if (vehicleAdjacentOceanRegions.count(destinationAdjacentOceanRegion) != 0)
-				{
-					reachable = true;
-					break;
-				}
+				reachable = true;
 			}
 			
 		}
@@ -1231,7 +1158,41 @@ bool isDestinationReachable(int vehicleId, int x, int y)
 	case CHS_SPEEDER:
 	case CHS_HOVERTANK:
 		
-		reachable = (destinationTile->region == vehicleTile->region);
+		// only land region is rechable by land vehicle
+		if (isLandRegion(destinationTile->region))
+		{
+			// same region
+			if (destinationTile->region == vehicleTile->region)
+			{
+				reachable = true;
+			}
+			// different ocean region
+			else if (isOceanRegion(vehicleTile->region))
+			{
+				// next to the destination region
+				if (isNextToRegion(vehicle->x, vehicle->y, destinationTile->region))
+				{
+					if
+					(
+						// amphibious at a base
+						(map_has_item(vehicleTile, TERRA_BASE_IN_TILE) && vehicle_has_ability(vehicleId, ABL_AMPHIBIOUS))
+						||
+						// transported by sea transport
+						(accountForSeaTransport && isLandVehicleOnSeaTransport(vehicleId))
+					)
+					{
+						reachable = true;
+					}
+					
+				}
+				
+			}
+			
+		}
+		else
+		{
+			reachable = false;
+		}
 		
 		break;
 		
@@ -1254,157 +1215,6 @@ int getRangeToNearestFactionAirbase(int x, int y, int factionId)
 	}
 	
 	return rangeToNearestFactionAirbase;
-	
-}
-
-/*
-Calculates movement points.
-*/
-int getVehicleTurnsToDestination(int vehicleId, int x, int y)
-{
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	MAP *destinationTile = getMapTile(x, y);
-	
-	assert(vehicleTile != NULL);
-	assert(destinationTile != NULL);
-	
-	int turns = INT_MAX;
-	
-	if (!isDestinationReachable(vehicleId, x, y))
-		return turns;
-	
-	switch (vehicle->triad())
-	{
-	case TRIAD_AIR:
-	case TRIAD_SEA:
-		
-		{
-			int range = map_range(vehicle->x, vehicle->y, x, y);
-			int speed = getVehicleSpeedWithoutRoads(vehicleId);
-			turns = (range + (speed - 1)) / speed;
-			
-		}
-		
-		break;
-		
-	case TRIAD_LAND:
-		
-		{
-			int vehicleMovementPoints = mod_veh_speed(vehicleId);
-			int destinationMapIndex = getLocationMapIndex(x, y);
-			std::unordered_map<int, int> currentLocations;
-			std::unordered_set<int> deletedLocations;
-			std::unordered_set<int> minCostLocations;
-			currentLocations[getLocationMapIndex(vehicle->x, vehicle->y)] = 0;
-			int minCost = 0;
-			
-			bool run = true;
-			while (true)
-			{
-				minCostLocations.clear();
-				
-				for (std::pair<int, int> element : currentLocations)
-				{
-					int mapIndex = element.first;
-					int cost = element.second;
-					
-					// process only min cost locations
-					
-					if (cost > minCost)
-						continue;
-					
-					// register min cost location
-					
-					minCostLocations.insert(mapIndex);
-					
-					// iterate adjacent tiles
-					
-					for (int dx = -2; dx <= +2; dx++)
-					{
-						for (int dy = -(2 - abs(dx)); dy <= +(2 - abs(dx)); dy += 2)
-						{
-							// exclude center
-							
-							if (dx == 0 && dy == 0)
-								continue;
-							
-							int adjacentTileMapIndex = getLocationMapIndex(x + dx, y + dy);
-							MAP *adjacentTile = getMapTile(x + dx, y + dy);
-							
-							if (adjacentTile == NULL)
-								continue;
-							
-							// exclude ocean
-							
-							if (is_ocean(adjacentTile))
-								continue;
-							
-							// exclude deleted
-							
-							if (deletedLocations.count(adjacentTileMapIndex) != 0)
-								continue;
-							
-							// calculate cost
-							
-							int adjacentTileCost = cost + mod_hex_cost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, x, y, 0);
-							
-							// create/update node
-							
-							if (currentLocations.count(adjacentTileMapIndex) == 0 || adjacentTileCost < currentLocations[adjacentTileMapIndex])
-							{
-								currentLocations[adjacentTileMapIndex] = adjacentTileCost;
-								
-								// exit condition
-								
-								if (adjacentTileMapIndex == destinationMapIndex)
-								{
-									turns = (cost + vehicleMovementPoints) / vehicleMovementPoints;
-									run = false;
-								}
-								
-							}
-							
-						}
-						
-					}
-					
-				}
-				
-				if (!run)
-				{
-					break;
-				}
-				
-				// remove min cost locations
-				
-				for (int mapIndex : minCostLocations)
-				{
-					deletedLocations.insert(mapIndex);
-					currentLocations.erase(mapIndex);
-				}
-				
-				// calculate new min cost
-				
-				minCost = INT_MAX;
-				
-				for (std::pair<int, int> element : currentLocations)
-				{
-					int cost = element.second;
-					
-					minCost = std::min(minCost, cost);
-					
-				}
-				
-			}
-			
-		}
-		
-		break;
-		
-	}
-	
-	return turns;
 	
 }
 
@@ -1480,7 +1290,7 @@ void evaluateDefenseDemand()
 	{
 		BASE *base = &(Bases[baseId]);
 		MAP *baseTile = getBaseMapTile(baseId);
-		bool ocean = is_ocean(baseTile);
+		bool ocean = isOceanRegion(baseTile->region);
 		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseId]);
 		
 		debug
@@ -1513,7 +1323,36 @@ void evaluateDefenseDemand()
 			int triad = chassis->triad;
 			MAP *vehicleTile = getVehicleMapTile(vehicleId);
 			
-			// exclude sea vehicle not in the region
+			// land base
+			if (isLandRegion(baseTile->region))
+			{
+				// no sea vehicle for land base protection
+				
+				if (triad == TRIAD_SEA)
+					continue;
+				
+				// no land vehicle in other region for land base protection
+				
+				if (triad == TRIAD_LAND && vehicleTile->region != baseTile->region)
+					continue;
+				
+			}
+			// ocean base
+			else
+			{
+				// no land vehicle everywhere besides base for ocean base protection
+				
+				if (triad == TRIAD_LAND && !(vehicle->x == base->x && vehicle->y == base->y))
+					continue;
+				
+				// no sea vehicle in other region for ocean base protection
+				
+				if (triad == TRIAD_SEA && vehicleTile->region != baseTile->region)
+					continue;
+				
+			}
+			
+			// sea and land vehicle in the region
 			
 			if (triad == TRIAD_SEA && !isVehicleInRegion(vehicleId, baseTile->region))
 				continue;
@@ -1555,8 +1394,6 @@ void evaluateDefenseDemand()
 			
 			double weight = pow(0.5, turns / 10.0);
 			
-			debug("\t\t\t(%3d,%3d) %-25s: distance=%3d, turns=%6.2f, weight=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, distance, turns, weight);
-			
 			// update total weight
 			
 			defenderStrength->totalWeight += weight;
@@ -1574,14 +1411,17 @@ void evaluateDefenseDemand()
 			
 			// calculate strength
 			
+			double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId);
+			double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, true);
+			
+			double conventionalOffenseStrength = getVehicleConventionalOffenseStrength(vehicleId);
+			double conventionalDefenseStrength = getVehicleConventionalDefenseStrength(vehicleId, true);
+			
+			unitTypeStrength->weight += weight;
+			
 			if (isUnitTypeNative(unitType))
 			{
-				unitTypeStrength->weight += weight;
-				
 				// native unit initiates psi combat only
-				
-				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId);
-				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, true);
 				
 				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
 				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
@@ -1589,25 +1429,24 @@ void evaluateDefenseDemand()
 			}
 			else
 			{
-				unitTypeStrength->weight += weight;
-				
 				// regular unit initiates psi combat when engage native unit
-				
-				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId);
-				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, true);
 				
 				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
 				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
 				
 				// regular unit initiates conventional combat when engage regular unit
 				
-				double conventionalOffenseStrength = getVehicleConventionalOffenseStrength(vehicleId);
-				double conventionalDefenseStrength = getVehicleConventionalDefenseStrength(vehicleId, true);
-				
 				unitTypeStrength->conventionalOffense += weight * conventionalOffenseStrength;
 				unitTypeStrength->conventionalDefense += weight * conventionalDefenseStrength;
 				
 			}
+			
+			debug
+			(
+				"\t\t\t(%3d,%3d) %-25s: distance=%3d, turns=%6.2f, weight=%f, psiOffenseStrength=%f, psiDefenseStrength=%f, conventionalOffenseStrength=%f, conventionalDefenseStrength=%f\n",
+				vehicle->x, vehicle->y, Units[vehicle->unit_id].name, distance, turns, weight,
+				psiOffenseStrength, psiDefenseStrength, conventionalOffenseStrength, conventionalDefenseStrength
+			);
 			
 		}
 		
@@ -1623,7 +1462,7 @@ void evaluateDefenseDemand()
 				const int unitType = k.first;
 				const UnitTypeStrength *unitTypeStrength = &(k.second);
 				
-				debug("\t\t\t\tweight=%f, native=%d, chassisType=%d, psiOffense=%f, psiDefense=%f, conventionalOffense=%f, conventionalDefense=%f, unitType=%s\n", unitTypeStrength->weight, (isUnitTypeNative(unitType) ? 1 : 0), getUnitTypeChassisType(unitType), unitTypeStrength->psiOffense, unitTypeStrength->psiDefense, unitTypeStrength->conventionalOffense, unitTypeStrength->conventionalDefense, getUnitTypeAbilitiesString(unitType).c_str());
+				debug("\t\t\t\tweight=%f, native=%d, chassisType=%2d, psiOffense=%f, psiDefense=%f, conventionalOffense=%f, conventionalDefense=%f, unitType=%s\n", unitTypeStrength->weight, (isUnitTypeNative(unitType) ? 1 : 0), getUnitTypeChassisType(unitType), unitTypeStrength->psiOffense, unitTypeStrength->psiDefense, unitTypeStrength->conventionalOffense, unitTypeStrength->conventionalDefense, getUnitTypeAbilitiesString(unitType).c_str());
 				
 			}
 			
@@ -1657,8 +1496,11 @@ void evaluateDefenseDemand()
 			
 			// combat only
 			
-			if (!isVehicleCombat(vehicleId))
+			if (!isCombatVehicle(vehicleId))
 				continue;
+			
+			// land base
+			if (isLandRegion(baseTile->region))
 			
 			// exclude vehicles unable to attack base
 			
@@ -1716,8 +1558,6 @@ void evaluateDefenseDemand()
 			if (weight == 0.0)
 				continue;
 			
-			debug("\t\t\t(%3d,%3d) %-25s: distance=%3d, turns=%6.2f, weight=%f\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, distance, turns, weight);
-			
 			// update total weight
 			
 			opponentStrength->totalWeight += weight;
@@ -1735,14 +1575,18 @@ void evaluateDefenseDemand()
 			
 			// calculate strength
 			
+			double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseStrategy->intrinsicDefenseMultiplier;
+			double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, false) / baseStrategy->sensorOffenseMultiplier;
+			
+			double baseDefenseMultiplier = (isUnitTypeHasAbility(unitType, ABL_BLINK_DISPLACER) ? baseStrategy->intrinsicDefenseMultiplier : baseStrategy->conventionalDefenseMultipliers[triad]);
+			double conventionalOffenseStrength = getVehicleConventionalOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseDefenseMultiplier;
+			double conventionalDefenseStrength = getVehicleConventionalDefenseStrength(vehicleId, false) / baseStrategy->sensorOffenseMultiplier;
+			
+			unitTypeStrength->weight += weight;
+			
 			if (isUnitTypeNative(unitType))
 			{
-				unitTypeStrength->weight += weight;
-				
 				// native unit initiates psi combat only
-				
-				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseStrategy->intrinsicDefenseMultiplier;
-				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, false) / baseStrategy->sensorOffenseMultiplier;
 				
 				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
 				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
@@ -1750,27 +1594,24 @@ void evaluateDefenseDemand()
 			}
 			else
 			{
-				unitTypeStrength->weight += weight;
-				
 				// regular unit initiates psi combat when engage native unit
-				
-				double psiOffenseStrength = getVehiclePsiOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseStrategy->intrinsicDefenseMultiplier;
-				double psiDefenseStrength = getVehiclePsiDefenseStrength(vehicleId, false) / baseStrategy->sensorOffenseMultiplier;
 				
 				unitTypeStrength->psiOffense += weight * psiOffenseStrength;
 				unitTypeStrength->psiDefense += weight * psiDefenseStrength;
 				
 				// regular unit initiates conventional combat when engage regular unit
 				
-				double baseDefenseMultiplier = (isUnitTypeHasAbility(unitType, ABL_BLINK_DISPLACER) ? baseStrategy->intrinsicDefenseMultiplier : baseStrategy->conventionalDefenseMultipliers[triad]);
-				
-				double conventionalOffenseStrength = getVehicleConventionalOffenseStrength(vehicleId) / baseStrategy->sensorDefenseMultiplier / baseDefenseMultiplier;
-				double conventionalDefenseStrength = getVehicleConventionalDefenseStrength(vehicleId, false) / baseStrategy->sensorOffenseMultiplier;
-				
 				unitTypeStrength->conventionalOffense += weight * conventionalOffenseStrength;
 				unitTypeStrength->conventionalDefense += weight * conventionalDefenseStrength;
 				
 			}
+			
+			debug
+			(
+				"\t\t\t(%3d,%3d) %-25s: distance=%3d, turns=%6.2f, weight=%f, psiOffenseStrength=%f, psiDefenseStrength=%f, conventionalOffenseStrength=%f, conventionalDefenseStrength=%f\n",
+				vehicle->x, vehicle->y, Units[vehicle->unit_id].name, distance, turns, weight,
+				psiOffenseStrength, psiDefenseStrength, conventionalOffenseStrength, conventionalDefenseStrength
+			);
 			
 		}
 		
@@ -1919,12 +1760,15 @@ void evaluateDefenseDemand()
 		
 		double defenderDestroyedTotal =
 			defenderDestroyed
-			*
 			// proportion of total weight
+			*
 			(opponentStrength->totalWeight / defenderStrength->totalWeight)
+			// defense superiority coefficient
+			*
+			conf.ai_production_defense_superiority_coefficient
 		;
 		
-		debug("\t\tdefenderDestroyed=%f, defenderDestroyedTotal=%f\n", defenderDestroyed, defenderDestroyedTotal);
+		debug("\t\tdefenderDestroyed=%f, strengthProportion=%f, superiorityCoefficient=%f, defenderDestroyedTotal=%f\n", defenderDestroyed, (opponentStrength->totalWeight / defenderStrength->totalWeight), conf.ai_production_defense_superiority_coefficient, defenderDestroyedTotal);
 		
 		// set defenseDemand
 		
@@ -2232,5 +2076,30 @@ std::string getUnitTypeAbilitiesString(int unitType)
 	
 	return unitTypeAbilitiesString;
 	
+}
+
+bool isWithinAlienArtilleryRange(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
+	{
+		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		
+		if (otherVehicle->faction_id == 0 && otherVehicle->unit_id == BSC_SPORE_LAUNCHER && map_range(vehicle->x, vehicle->y, otherVehicle->x, otherVehicle->y) <= 2)
+			return true;
+		
+	}
+	
+	return false;
+	
+}
+
+/*
+Checks if faction is enabled to use WTP algorithms.
+*/
+bool isUseWtpAlgorithms(int factionId)
+{
+	return (factionId != 0 && !is_human(factionId) && ai_enabled(factionId) && conf.ai_useWTPAlgorithms);
 }
 

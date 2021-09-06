@@ -5471,9 +5471,9 @@ Our Blood Truce pledge to $TITLE0 $NAME1 of the $FACTION2 has been renewed.
 Our Blood Truce pledge to $TITLE0 $NAME1 of the $FACTION2 has expired.
 
 #ENEMIESTEAMUP
-#xs 440
+#xs 520
 #caption Protocol Director
-The $FACTION0 and $FACTION1 have agreed
+The {$FACTION0} and {$FACTION1} have agreed
 to combine forces against us!
 
 #ENEMIESTEAMUP
@@ -5499,16 +5499,16 @@ $PACTOFBROTHERHOODORSISTERHOOD2.
 The $FACTION0 $<0:has:have> pronounced Vendetta against us!
 
 #PACTTRUCE
-#xs 440
+#xs 520
 #caption Communications Officer
-$TITLE0 $NAME1 of the $FACTION2 sends word that $HESHE3 has
-pledged Blood Truce with the $TITLE4 $NAME5 of the $FACTION6.
+$TITLE0 $NAME1 of the {$FACTION2} sends word that $HESHE3 has
+pledged {Blood Truce} with the $TITLE4 $NAME5 of the {$FACTION6}.
 
 #PACTTREATY
-#xs 440
+#xs 520
 #caption Communications Officer
-$TITLE0 $NAME1 of the $FACTION2 sends word that $HESHE3 has
-signed a Treaty of Friendship with the $FACTION4.
+$TITLE0 $NAME1 of the {$FACTION2} sends word that $HESHE3 has
+signed a {Treaty of Friendship} with the {$FACTION4}.
 
 #PACTATTACKS
 #xs 440
@@ -5523,9 +5523,9 @@ $TITLE0 $NAME1 of the $FACTION2 sends word that $HESHE3 has
 renounced $HISHER4 $PACTOFBORS5 with $TITLE6 $NAME7 of the $FACTION8.
 
 #ENEMYTREATY
-#xs 440
+#xs 520
 #caption Protocol Director
-The $FACTION0 $<0:has:have> signed a Treaty of Friendship with the $FACTION1.
+The {$FACTION0} $<0:has:have> signed a {Treaty of Friendship} with the {$FACTION1}.
 
 #ENEMYPACTENDS
 #xs 440
@@ -5533,14 +5533,14 @@ The $FACTION0 $<0:has:have> signed a Treaty of Friendship with the $FACTION1.
 The $FACTION0 and the $FACTION1 have renounced their $PACTOFBROTHERHOODORSISTERHOOD2.
 
 #ENEMYTRUCE
-#xs 440
+#xs 520
 #caption Protocol Director
-The $FACTION0 and $FACTION1 have pledged Blood Truce.
+The {$FACTION0} and {$FACTION1} have pledged {Blood Truce}.
 
 #ENEMYWAR
-#xs 440
+#xs 520
 #caption Protocol Director
-The $FACTION0 $<0:has:have> pronounced Vendetta against the $FACTION1.
+The {$FACTION0} $<0:has:have> pronounced {Vendetta} against the {$FACTION1}.
 
 #BREAKINGPACT
 #xs 440

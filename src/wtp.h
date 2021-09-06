@@ -166,7 +166,6 @@ int getHabitationFacilitiesBaseGrowthModifier(int baseId);
 HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute);
 HOOK_API void modifiedActionMoveForArtillery(int vehicleId, int x, int y);
 HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId);
-HOOK_API int modifiedEnemyMove(const int vehicleId);
 HOOK_API int modifiedFactionUpkeep(const int factionId);
 HOOK_API void captureAttackerOdds(const int position, const int value);
 HOOK_API void captureDefenderOdds(const int position, const int value);
@@ -192,7 +191,7 @@ void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVe
 void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_string_pointer);
 int __cdecl modifiedTurnUpkeep();
 int __cdecl isDestroyableImprovement(int terraformIndex, int items);
-int __cdecl modifiedTechValue(int techId, int factionId, int flag);
+int __cdecl modified_tech_value(int techId, int factionId, int flag);
 int getFactionHighestResearchedTechLevel(int factionId);
 int __cdecl modifiedReturnProbeBaseFind2(int x, int y, int vehicleId);
 

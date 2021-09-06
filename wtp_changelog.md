@@ -1,3 +1,14 @@
+# Version 262
+
+* Adjusted scout production priority.
+* Ocean bases build transports when needed.
+* Updated colony shipping algorithm.
+* Updated alien hunting algorithm.
+* Updated pod popping algorithm.
+* Streamlined terraforming a little.
+* QoL: Enemy treaties message now pops up. Previously it hid under other popups unnoticed.
+* Fixed blind research tech randomization.
+
 # Version 261
 
 * Further enhanced returning sea probe to the base algorithm. Now it should find the nearest one.

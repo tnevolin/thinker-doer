@@ -3,12 +3,14 @@
 #include "main.h"
 #include <float.h>
 #include <map>
+#include <memory>
 #include "game.h"
 #include "move.h"
 #include "wtp.h"
-#include "aiFormer.h"
-#include "aiCombat.h"
-#include "aiColony.h"
+#include "aiMove.h"
+#include "aiMoveFormer.h"
+#include "aiMoveCombat.h"
+#include "aiMoveColony.h"
 #include "aiTransport.h"
 #include "terranx_enums.h"
 
@@ -174,6 +176,9 @@ struct ActiveFactionInfo
 	std::vector<int> airCombatUnitIds;
 	std::vector<int> landAndAirCombatUnitIds;
 	std::vector<int> seaAndAirCombatUnitIds;
+	std::unordered_map<int, int> regionAlienHunterDemands;
+	std::unordered_map<int, int> seaTransportRequests;
+	std::unordered_map<int, std::shared_ptr<Task>> tasks;
 	
 	void clear()
 	{
@@ -203,6 +208,9 @@ struct ActiveFactionInfo
 		airCombatUnitIds.clear();
 		landAndAirCombatUnitIds.clear();
 		seaAndAirCombatUnitIds.clear();
+		regionAlienHunterDemands.clear();
+		seaTransportRequests.clear();
+		tasks.clear();
 	}
 	
 };
@@ -214,7 +222,6 @@ extern int aiFactionId;
 extern ActiveFactionInfo activeFactionInfo;
 
 int aiFactionUpkeep(const int factionId);
-int aiEnemyMove(const int vehicleId);
 void aiStrategy();
 void populateGlobalVariables();
 void setSharedOceanRegions();
@@ -225,6 +232,7 @@ void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::
 void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
 void evaluateBaseNativeDefenseDemands();
 int getNearestFactionBaseRange(int factionId, int x, int y);
+int getNearestOtherFactionBaseRange(int factionId, int x, int y);
 int getNearestBaseId(int x, int y, std::unordered_set<int> baseIds);
 int getNearestBaseRange(int x, int y, std::unordered_set<int> baseIds);
 void evaluateBaseExposures();
@@ -237,9 +245,8 @@ double evaluateDefenseStrength(double DefenseValue);
 //void evaluateLandBaseDefenseDemand(int baseId);
 //void evaluateOceanBaseDefenseDemand(int baseId);
 bool isVehicleThreatenedByEnemyInField(int vehicleId);
-bool isDestinationReachable(int vehicleId, int x, int y);
+bool isDestinationReachable(int vehicleId, int x, int y, bool accountForSeaTransport);
 int getRangeToNearestFactionAirbase(int x, int y, int factionId);
-int getVehicleTurnsToDestination(int vehicleId, int x, int y);
 void populateBaseExposures();
 int getNearestEnemyBaseDistance(int baseId);
 void evaluateDefenseDemand();
@@ -252,4 +259,6 @@ int isUnitTypeHasTriad(int unitType, int triad);
 int isUnitTypeHasAbility(int unitType, int abilityFlag);
 double getConventionalCombatBonusMultiplier(int attackerUnitType, int defenderUnitType);
 std::string getUnitTypeAbilitiesString(int unitType);
+bool isWithinAlienArtilleryRange(int vehicleId);
+bool isUseWtpAlgorithms(int factionId);
 

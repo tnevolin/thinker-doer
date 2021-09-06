@@ -1553,7 +1553,7 @@ int wtp_tech_level(int id)
 Calculates tech cost.
 cost grows cubic from the beginning then linear.
 S  = 20                                     // constant (first tech cost)
-C  = 20										// cubic coefficient
+C  = 30										// cubic coefficient
 B  = 1200 * <map root>						// linear slope
 x0 = SQRT(B / (3 * C))                      // break point
 A  = C * x0 ^ 3 - B * x0                    // linear intercept
@@ -1574,7 +1574,7 @@ int wtp_tech_cost(int fac, int tech) {
     }
 
     double S = 20.0;
-    double C = 20.0;
+    double C = 30.0;
     double B = 1200 * sqrt(*map_area_tiles / 3200.0);
     double x0 = sqrt(B / (3 * C));
     double A = C * x0 * x0 * x0 - B * x0;
@@ -2342,8 +2342,6 @@ Calculates summary cost of all not prototyped components.
 */
 int calculateNotPrototypedComponentsCost(int chassisId, int weaponId, int armorId, int chassisPrototyped, int weaponPrototyped, int armorPrototyped)
 {
-	debug("calculateNotPrototypedComponentsCost: chassis=%d, weapon=%d, armor=%d, chassisPrototyped=%d, weaponPrototyped=%d, armorPrototyped=%d\n", chassisId, weaponId, armorId, chassisPrototyped, weaponPrototyped, armorPrototyped);
-
 	// summarize all non prototyped component costs
 
 	int notPrototypedComponentsCost = 0;
@@ -2362,8 +2360,6 @@ int calculateNotPrototypedComponentsCost(int chassisId, int weaponId, int armorI
 	{
 		notPrototypedComponentsCost += Armor[armorId].cost;
 	}
-
-	debug("notPrototypedComponentsCost=%d\n", notPrototypedComponentsCost);
 
 	return notPrototypedComponentsCost;
 
@@ -3287,7 +3283,7 @@ HOOK_API int modifiedActionTerraform(int vehicleId, int action, int execute)
 
 			// only formers
 
-			if (!isVehicleFormer(otherVehicleId))
+			if (!isFormerVehicle(otherVehicleId))
 				continue;
 
 			// only same locaton
@@ -3366,26 +3362,6 @@ HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 }
 
 /*
-Overrides enemy_move call to replace vanilla and Thinker functionality.
-*/
-HOOK_API int modifiedEnemyMove(const int vehicleId)
-{
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	
-	// run AI code for AI eanbled factions
-	if (ai_enabled(vehicle->faction_id))
-	{
-		return aiEnemyMove(vehicleId);
-	}
-	// otherwise, fall to default
-	else
-	{
-		return mod_enemy_move(vehicleId);
-	}
-	
-}
-
-/*
 Overrides faction_upkeep calls to amend vanilla and Thinker functionality.
 */
 HOOK_API int modifiedFactionUpkeep(const int factionId)
@@ -3399,14 +3375,14 @@ HOOK_API int modifiedFactionUpkeep(const int factionId)
 	
 	// choose AI logic
 	
-	if (conf.ai_useWTPAlgorithms && factionId != 0 && !is_human(factionId) && ai_enabled(factionId))
+	// run WTP AI code for AI eanbled factions
+	if (isUseWtpAlgorithms(factionId))
 	{
-		// run AI code for AI eanbled factions
 		return aiFactionUpkeep(factionId);
 	}
+	// default
 	else
 	{
-		// otherwise, fall to default
 		return faction_upkeep(factionId);
 	}
 	
@@ -4318,15 +4294,15 @@ int __cdecl isDestroyableImprovement(int terraformIndex, int items)
 	
 }
 
-int __cdecl modifiedTechValue(int techId, int factionId, int flag)
+int __cdecl modified_tech_value(int techId, int factionId, int flag)
 {
-	debug("modifiedTechValue: %-25s %s\n", MFactions[factionId].noun_faction, Tech[techId].name);
+	debug("modified_tech_value: %-25s %s\n", MFactions[factionId].noun_faction, Tech[techId].name);
 	
 	// read original value
 	
 	int value = tech_val(techId, factionId, flag);
 	
-	debug("\tvalue(o)=%d\n", value);
+	debug("\tvalue(o)=%4x\n", value);
 	
 	// adjust value
 	
@@ -4357,20 +4333,12 @@ int __cdecl modifiedTechValue(int techId, int factionId, int flag)
 			techId == Facility[FAC_RECREATION_COMMONS].preq_tech
 		)
 		{
-			value += 1000;
+			value += 500;
 		}
 		
 	}
 	
-	debug("\tvalue(a)=%d\n", value);
-	
-	// give extra value for lower level techs
-	
-	int levelDiff = (getFactionHighestResearchedTechLevel(factionId) + 1) - wtp_tech_level(techId);
-	
-	value <<= levelDiff;
-	
-	debug("\tvalue(l)=%d\n", value);
+	debug("\tvalue(a)=%4x\n", value);
 	
 	return value;
 	

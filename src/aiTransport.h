@@ -25,8 +25,10 @@ bool deliverScout(int transportVehicleId, int scoutVehicleId);
 bool pickupColony(int vehicleId);
 bool pickupFormer(int vehicleId);
 bool popPod(int transportVehicleId);
-Location getSeaTransportUnloadLocation(int transportVehicleId, const Location targetLocation);
+Location getSeaTransportUnloadLocation(int oceanRegion, const Location destination);
 bool deliverVehicle(const int transportVehicleId, const Location destinationLocation, const int vehicleId);
 bool isInOceanRegion(int vehicleId, int region);
 int getCarryingScoutVehicleId(int transportVehicleId);
+int getCrossOceanRegion(Location initialLocation, Location terminalLocation);
+int getAvailableSeaTransport(int oceanRegion, int vehicleId);
 

@@ -1,5 +1,6 @@
 #include "game_wtp.h"
 #include "terranx_wtp.h"
+#include "wtp.h"
 
 bool has_armor(int factionId, int armorId)
 {
@@ -520,9 +521,14 @@ double getVehiclePsiDefenseStrength(int id, bool defendAtBase)
 
 }
 
-double getVehicleConventionalOffenseStrength(int id)
+double getVehicleConventionalOffenseStrength(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[id]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// native unit do not have conventional strength
+	
+	if (isNativeVehicle(vehicleId))
+		return 0;
 
 	// strength
 
@@ -530,7 +536,7 @@ double getVehicleConventionalOffenseStrength(int id)
 	
 	// morale modifier
 
-	conventionalOffenseStrength *= getVehicleMoraleModifier(id, false);
+	conventionalOffenseStrength *= getVehicleMoraleModifier(vehicleId, false);
 
 	// return strength
 	
@@ -538,9 +544,14 @@ double getVehicleConventionalOffenseStrength(int id)
 
 }
 
-double getVehicleConventionalDefenseStrength(int id, bool defendAtBase)
+double getVehicleConventionalDefenseStrength(int vehicleId, bool defendAtBase)
 {
-	VEH *vehicle = &(Vehicles[id]);
+	VEH *vehicle = &(Vehicles[vehicleId]);
+
+	// native unit do not have conventional strength
+	
+	if (isNativeVehicle(vehicleId))
+		return 0;
 
 	// conventional defense strength
 
@@ -548,7 +559,7 @@ double getVehicleConventionalDefenseStrength(int id, bool defendAtBase)
 
 	// morale modifier
 
-	conventionalDefenseStrength *= getVehicleMoraleModifier(id, defendAtBase);
+	conventionalDefenseStrength *= getVehicleMoraleModifier(vehicleId, defendAtBase);
 
 	// return strength
 	
@@ -610,7 +621,7 @@ bool isUnitCombat(int id)
 	
 }
 
-bool isVehicleCombat(int id)
+bool isCombatVehicle(int id)
 {
 	assert(id >= 0);
 	
@@ -812,6 +823,11 @@ MAP *getMapTile(int x, int y)
 
 }
 
+MAP *getMapTile(Location location)
+{
+	return getMapTile(location.x, location.y);
+}
+
 MAP *getBaseMapTile(int baseId)
 {
 	BASE *base = &(Bases[baseId]);
@@ -851,7 +867,7 @@ bool isVehicleArtifact(int id)
 	return (Units[Vehicles[id].unit_id].weapon_type == WPN_ALIEN_ARTIFACT);
 }
 
-bool isVehicleColony(int id)
+bool isColonyVehicle(int id)
 {
 	return (Units[Vehicles[id].unit_id].weapon_type == WPN_COLONY_MODULE);
 }
@@ -861,11 +877,11 @@ bool isUnitFormer(int unitId)
 	return (Units[unitId].weapon_type == WPN_TERRAFORMING_UNIT);
 }
 
-bool isVehicleFormer(int vehicleId)
+bool isFormerVehicle(int vehicleId)
 {
-	return isVehicleFormer(&(Vehicles[vehicleId]));
+	return isFormerVehicle(&(Vehicles[vehicleId]));
 }
-bool isVehicleFormer(VEH *vehicle)
+bool isFormerVehicle(VEH *vehicle)
 {
 	return (Units[vehicle->unit_id].weapon_type == WPN_TERRAFORMING_UNIT);
 }
@@ -875,12 +891,17 @@ bool isVehicleTransport(VEH *vehicle)
 	return (Units[vehicle->unit_id].weapon_type == WPN_TROOP_TRANSPORT);
 }
 
+bool isTransportUnit(int unitId)
+{
+	return (Units[unitId].weapon_type == WPN_TROOP_TRANSPORT);
+}
+
 bool isVehicleTransport(int vehicleId)
 {
 	return (Units[Vehicles[vehicleId].unit_id].weapon_type == WPN_TROOP_TRANSPORT);
 }
 
-bool isVehicleSeaTransport(int vehicleId)
+bool isSeaTransportVehicle(int vehicleId)
 {
 	return (Units[Vehicles[vehicleId].unit_id].weapon_type == WPN_TROOP_TRANSPORT && veh_triad(vehicleId) == TRIAD_SEA);
 }
@@ -1305,24 +1326,53 @@ int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y)
 }
 
 /*
-Returns all land tiles side adjacent to base radius belonging to friendly base radiuses.
+Returns all land tiles withing base radius adjacent to friendly base radiuses.
 */
 int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y)
 {
 	int friendlyLandBorderedBaseRadiusTileCount = 0;
-
-	for (int offsetIndex = BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex < BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT; offsetIndex++)
+	
+	for (MAP_INFO internalTileInfo : getBaseRadiusTileInfos(x, y, false))
 	{
-		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
-
-		if (tile == NULL)
+		int internalX = internalTileInfo.x;
+		int internalY = internalTileInfo.y;
+		MAP *internalTile = internalTileInfo.tile;
+		
+		// land
+		
+		if (is_ocean(internalTile))
 			continue;
-
-		// add friendly bordered base radius
-
-		if (!is_ocean(tile) && tile->owner == factionId && map_has_item(tile, TERRA_BASE_RADIUS))
+		
+		for (MAP_INFO externalTileInfo : getAdjacentTileInfos(internalX, internalY, false))
 		{
+			int externalX = externalTileInfo.x;
+			int externalY = externalTileInfo.y;
+			MAP *externalTile = externalTileInfo.tile;
+			
+			// external
+			
+			if (isWithinBaseRadius(x, y, externalX, externalY))
+				continue;
+			
+			// no corner touching
+			
+			if (abs(externalX - internalX) == 2 || abs(externalY - internalY) == 2)
+				continue;
+			
+			// our territory
+			
+			if (externalTile->owner != factionId)
+				continue;
+			
+			// base radius
+			
+			if (!map_has_item(externalTile, TERRA_BASE_RADIUS))
+				continue;
+			
+			// add friendly bordered base radius
+			
 			friendlyLandBorderedBaseRadiusTileCount++;
+			
 		}
 
 	}
@@ -1399,7 +1449,7 @@ int getBaseConventionalDefenseValue(int baseId)
 
 		// combat vehicles only
 
-		if (!isVehicleCombat(vehicleId))
+		if (!isCombatVehicle(vehicleId))
 			continue;
 
 		// get defense value
@@ -1763,7 +1813,7 @@ std::vector<int> getRegionSurfaceVehicles(int factionId, int region, bool includ
 }
 
 /*
-Finds base own stationed units.
+Finds combat units at base.
 */
 std::vector<int> getBaseGarrison(int baseId)
 {
@@ -1774,19 +1824,24 @@ std::vector<int> getBaseGarrison(int baseId)
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
-
+		
 		// only this faction units
-
+		
 		if (vehicle->faction_id != base->faction_id)
 			continue;
-
+		
 		// only in this base
-
+		
 		if (!(vehicle->x == base->x && vehicle->y == base->y))
 			continue;
-
+		
+		// combat
+		
+		if (!isCombatVehicle(vehicleId))
+			continue;
+		
 		baseGarrison.push_back(vehicleId);
-
+		
 	}
 
 	return baseGarrison;
@@ -2046,7 +2101,7 @@ int getBasePoliceUnitCount(int baseId)
 	{
 		// only combat units
 
-		if (!isVehicleCombat(vehicleId))
+		if (!isCombatVehicle(vehicleId))
 			continue;
 
 		basePoliceUnitCount++;
@@ -2068,7 +2123,7 @@ double getBaseNativeProtection(int baseId)
 	{
 		// combat vehicles only
 
-		if (!isVehicleCombat(vehicleId))
+		if (!isCombatVehicle(vehicleId))
 			continue;
 
 		baseNativeProtection += getVehicleBaseNativeProtection(baseId, vehicleId);
@@ -2659,12 +2714,17 @@ bool is_ocean_deep(MAP* sq) {
     return (sq && (sq->climate >> 5) <= ALT_OCEAN);
 }
 
-bool isVehicleAtLocation(int vehicleId, Location location)
+bool isVehicleAtLocation(int vehicleId, int x, int y)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
-	return vehicle->x == location.x && vehicle->y == location.y;
+	return vehicle->x == x && vehicle->y == y;
 
+}
+
+bool isVehicleAtLocation(int vehicleId, Location location)
+{
+	return isVehicleAtLocation(vehicleId, location.x, location.y);
 }
 
 std::vector<int> getFactionLocationVehicleIds(int factionId, Location location)
@@ -2776,10 +2836,40 @@ int getLocationMapIndex(Location location)
 	return getLocationMapIndex(location.x, location. y);
 }
 
-bool isVehicleLandUnitOnTransport(int vehicleId)
+bool isLandVehicleOnSeaTransport(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
-	return vehicle->triad() == TRIAD_LAND && vehicle->move_status == ORDER_SENTRY_BOARD && vehicle->waypoint_1_x >= 0;
+	
+	return
+		(
+			// land vehicle
+			vehicle->triad() == TRIAD_LAND
+			&&
+			// on transport
+			vehicle->move_status == ORDER_SENTRY_BOARD
+			&&
+			vehicle->waypoint_1_x >= 0
+			&&
+			// on sea transport
+			Vehicles[vehicle->waypoint_1_x].triad() == TRIAD_SEA
+		)
+	;
+		
+}
+
+int getLandVehicleSeaTransportVehicleId(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	if (isLandVehicleOnSeaTransport(vehicleId))
+	{
+		return vehicle->waypoint_1_x;
+	}
+	else
+	{
+		return -1;
+	}
+		
 }
 
 int setMoveTo(int vehicleId, Location location)
@@ -3219,7 +3309,7 @@ std::vector<Location> getRegionPodLocations(int region)
 	
 }
 
-int getRegionPodCount(int region)
+int getRegionPodCount(int x, int y, int range, int region)
 {
 	int regionPodCount = 0;
 	
@@ -3228,8 +3318,17 @@ int getRegionPodCount(int region)
 		Location location = getMapIndexLocation(mapIndex);
 		MAP *tile = getMapTile(mapIndex);
 		
-		if (tile->region != region)
+		// within range
+		
+		if (map_range(x, y, location.x, location.y) > range)
 			continue;
+		
+		// within region if given
+		
+		if (region >= 0 && tile->region != region)
+			continue;
+		
+		// count pods
 		
 		if (goody_at(location.x, location.y) != 0)
 		{
@@ -3513,7 +3612,7 @@ double getSensorOffenseMultiplier(int factionId, int x, int y)
 			(!isOceanRegion(tile->region) || conf.combat_bonus_sensor_ocean)
 		)
 		?
-		Rules->combat_defend_sensor
+		getPercentageBonusMultiplier(Rules->combat_defend_sensor)
 		:
 		1.0
 	;
@@ -3531,7 +3630,7 @@ double getSensorDefenseMultiplier(int factionId, int x, int y)
 			(!isOceanRegion(tile->region) || conf.combat_bonus_sensor_ocean)
 		)
 		?
-		Rules->combat_defend_sensor
+		getPercentageBonusMultiplier(Rules->combat_defend_sensor)
 		:
 		1.0
 	;
@@ -3598,6 +3697,157 @@ bool isMineBonus(int x, int y)
 		map_has_landmark(tile, LM_CANYON)
 	)
 	;
+	
+}
+
+std::vector<int> selectVehicles(const VehicleFilter filter)
+{
+	std::vector<int> vehicleIds;
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		if (filter.factionId >= 0 && vehicle->faction_id != filter.factionId)
+			continue;
+		
+		if (filter.triad >= 0 && vehicle->triad() != filter.triad)
+			continue;
+		
+		if (filter.weaponType >= 0 && vehicle->weapon_type() != filter.weaponType)
+			continue;
+		
+		vehicleIds.push_back(vehicleId);
+		
+	}
+	
+	return vehicleIds;
+	
+}
+
+/*
+Checks if next to region
+*/
+bool isNextToRegion(int x, int y, int region)
+{
+	for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+	{
+		if (adjacentTile->region == region)
+			return true;
+	}
+	
+	return false;
+
+}
+
+int getSeaTransportInStack(int vehicleId)
+{
+	for (int stackedVehicleId : getStackedVehicleIds(vehicleId))
+	{
+		VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
+		
+		if (stackedVehicle->weapon_type() == WPN_TROOP_TRANSPORT)
+			return stackedVehicleId;
+		
+	}
+	
+	return -1;
+	
+}
+
+bool isSeaTransportInStack(int vehicleId)
+{
+	return getSeaTransportInStack(vehicleId) != -1;
+	
+}
+
+int countPodsInBaseRadius(int x, int y)
+{
+	int podCount = 0;
+	
+	for (MAP_INFO tileInfo : getBaseRadiusTileInfos(x, y, true))
+	{
+		if ((goody_at(tileInfo.x, tileInfo.y) != 0))
+		{
+			podCount++;
+		}
+	}
+	
+	return podCount;
+	
+}
+
+Location getTileLocation(MAP *tile)
+{
+	int tileIndex = ((int)tile - (int)(*MapPtr)) / 0x2C;
+	return getMapIndexLocation(tileIndex);
+}
+
+/*
+Checks if tile is in ZOC.
+*/
+bool isZoc(int factionId, int x, int y)
+{
+	MAP *tile = getMapTile(x, y);
+	
+	if (tile == NULL)
+		return false;
+	
+	// no ZOC on ocean
+	
+	if (is_ocean(tile))
+		return false;
+	
+	// search for unfriendly unit in adjacent tiles
+	
+	for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+	{
+		// vehicle on ocean does not excert ZOC
+		
+		if (is_ocean(adjacentTile))
+			continue;
+		
+		Location adjacentLocation = getTileLocation(tile);
+		
+		int adjacentTileOwner = veh_who(adjacentLocation.x, adjacentLocation.y);
+		
+		if (adjacentTileOwner != -1 && adjacentTileOwner != factionId && !has_pact(factionId, adjacentTileOwner))
+			return true;
+		
+	}
+	
+	return false;
+	
+}
+
+/*
+Calculates relative attacker ods (= relative strength * relative power) taking damage and reactor into account.
+*/
+double getBattleOdds(int attackerVehicleId, int defenderVehicleId)
+{
+	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
+	VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+	
+	// calculate relative strength
+	
+	double relativeStrength =battleCompute(attackerVehicleId, defenderVehicleId);
+	
+	// check whether battle ignores reactor
+	
+	bool ignoreReactor =
+		Weapon[attackerVehicle->weapon_type()].offense_value < 0 || Armor[defenderVehicle->armor_type()].defense_value < 0
+		||
+		conf.ignore_reactor_power_in_combat
+	;
+	
+	// calculate attacker and defender power
+	
+	int attackerPower = 10 * (ignoreReactor ? 1 : attackerVehicle->reactor_type()) - attackerVehicle->damage_taken / (ignoreReactor ? attackerVehicle->reactor_type() : 1);
+	int defenderPower = 10 * (ignoreReactor ? 1 : defenderVehicle->reactor_type()) - defenderVehicle->damage_taken / (ignoreReactor ? defenderVehicle->reactor_type() : 1);
+	
+	// calculate odds
+	
+	return relativeStrength * ((double)attackerPower / (double)defenderPower);
 	
 }
 

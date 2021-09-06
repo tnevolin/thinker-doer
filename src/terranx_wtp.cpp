@@ -197,3 +197,7 @@ fp_2int *base_on_sea = (fp_2int *)0x0050DE50;
 // finds nearest base for given faction
 fp_3int *base_find2 = (fp_3int *)0x004E3C60;
 
+fp_1void *enemy_units_check = (fp_1void *)0x00579510;
+
+fp_2int *veh_who = (fp_2int *)0x00500250;
+
