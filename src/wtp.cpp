@@ -4324,6 +4324,8 @@ int __cdecl modified_tech_value(int techId, int factionId, int flag)
 		
 		if
 		(
+			techId == Weapon[WPN_TROOP_TRANSPORT].preq_tech
+			||
 			techId == Weapon[WPN_SUPPLY_TRANSPORT].preq_tech
 			||
 			techId == Facility[FAC_RECYCLING_TANKS].preq_tech

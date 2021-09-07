@@ -1,3 +1,22 @@
+# Version 263
+
+* Reverting cost of early energy multiplying facilities back to higher values. They seem to be rightly priced with abundance of energy after invention of boreholes.
+  * Energy Bank,                   6, 1
+  * Network Node,                  6, 1
+	* Fusion Lab,                   16, 4
+  * Quantum Lab,                  32, 8
+  * Research Hospital,            12, 3
+  * Nanohospital,                 24, 6
+  * Tree Farm,                    18, 3
+  * Hybrid Forest,                36, 6
+* Increasing maintenance of mineral multiplying facilities to match the 3:1 energy to mineral default conversion ratio.
+  * Recycling Tanks,               8, 3
+	* Genejack Factory,             12, 6
+	* Robotic Assembly Plant,       18, 9
+	* Quantum Converter,            27,12
+	* Nanoreplicator,               40,15
+* Moved weapon and armor discoveries slightly later. There is no much need it weapon escalation early in the game as conflicts are rare.
+
 # Version 262
 
 * Adjusted scout production priority.
@@ -22,19 +41,19 @@
 # Version 259
 
 * Mineral multiplying facilities affect all minerals. Whereas energy multiplyers affect only 1/2 - 2/3 of energy. Modified prices for all multiplying facilities accordingly.
-  * Energy Bank,                   4, 1 (lowered cost)
-  * Network Node,                  4, 1 (lowered cost)
-	* Fusion Lab,                   16, 4 (increased cost/maint)
-  * Quantum Lab,                  32, 8 (increased cost/maint)
-  * Research Hospital,            12, 3 (no change)
-  * Nanohospital,                 24, 6 (no change)
-  * Tree Farm,                    18, 2 (no change)
-  * Hybrid Forest,                36, 4 (no change)
-  * Recycling Tanks,               8, 2 (increased cost)
-	* Genejack Factory,             12, 4 (no change)
-	* Robotic Assembly Plant,       18, 6 (no change)
-	* Quantum Converter,            26, 8 (increased cost)
-	* Nanoreplicator,               40,12 (increased cost/maint)
+  * Energy Bank,                   4, 1
+  * Network Node,                  4, 1
+	* Fusion Lab,                   16, 4
+  * Quantum Lab,                  32, 8
+  * Research Hospital,            12, 3
+  * Nanohospital,                 24, 6
+  * Tree Farm,                    18, 2
+  * Hybrid Forest,                36, 4
+  * Recycling Tanks,               8, 2
+	* Genejack Factory,             12, 4
+	* Robotic Assembly Plant,       18, 6
+	* Quantum Converter,            26, 8
+	* Nanoreplicator,               40,12
 * Increased AI lust for minerals.
   * Base placement favors minerals.
 	* Terraforming favors minerals.

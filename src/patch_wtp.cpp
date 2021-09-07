@@ -4241,43 +4241,8 @@ void patch_enemies_treaty_popup()
     byte popup_bytes_new[] =
         { 0x6A, 0xFF, 0x90, 0x90, 0x90 }
     ;
-
-    write_bytes
-    (
-        0x0055DACC,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    write_bytes
-    (
-        0x0055DBF1,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    write_bytes
-    (
-        0x0055DDD0,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    write_bytes
-    (
-        0x0055DEF5,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
+    
+	// ENEMIESTEAMUP
     write_bytes
     (
         0x0055E355,
@@ -4286,7 +4251,88 @@ void patch_enemies_treaty_popup()
         popup_bytes_length
     )
     ;
-
+    
+	// TEAM
+    write_bytes
+    (
+        0x0055D389,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+    
+    // PACTTRUCE
+    write_bytes
+    (
+        0x0055DACC,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+    
+    // PACTTREATY
+    write_bytes
+    (
+        0x0055DDD0,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+    
+    // PACTATTACKS
+    write_bytes
+    (
+        0x0055C9FF,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+    
+    // PACTUNPACT
+    write_bytes
+    (
+        0x0055CE01,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+    
+    // ENEMYTREATY
+    write_bytes
+    (
+        0x0055DEF5,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+    
+    // ENEMYPACTENDS
+    write_bytes
+    (
+        0x0055CFEC,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+    
+    // ENEMYTRUCE
+    write_bytes
+    (
+        0x0055DBF1,
+        popup_bytes_old,
+        popup_bytes_new,
+        popup_bytes_length
+    )
+    ;
+    
+    // ENEMYWAR
     write_bytes
     (
         0x0055CB24,
@@ -4295,7 +4341,7 @@ void patch_enemies_treaty_popup()
         popup_bytes_length
     )
     ;
-
+    
 }
 
 /*
