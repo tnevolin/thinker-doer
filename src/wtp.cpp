@@ -4421,3 +4421,88 @@ int __cdecl modifiedReturnProbeBaseFind2(int x, int y, int vehicleId)
 	
 }
 
+/*
+Moves all faction sea units from pact faction territory into proper ports on pact termination.
+*/
+int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
+{
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		if (vehicle->faction_id != factionId)
+			continue;
+		
+		if (vehicle->triad() != TRIAD_SEA)
+			continue;
+		
+		int closestBaseId = base_find(vehicle->x, vehicle->y);
+		
+		if (closestBaseId < 0)
+			continue;
+		
+		BASE *closestBase = &(Bases[closestBaseId]);
+		
+		int territoryOwner = whose_territory(factionId, vehicle->x, vehicle->y, 0, 0);
+		
+		if (!(closestBase->faction_id == pactFactionId || territoryOwner == pactFactionId))
+			continue;
+		
+		// find accessible ocean regions
+		
+		std::unordered_set<int> adjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
+		
+		// find proper port
+		
+		int portBaseId = -1;
+		
+		for (int baseId = 0; baseId < *total_num_bases; baseId++)
+		{
+			BASE *base = &(Bases[baseId]);
+			
+			if (base->faction_id != factionId)
+				continue;
+			
+			// default base
+			
+			if (portBaseId == -1)
+			{
+				portBaseId = baseId;
+			}
+			
+			// find port base
+			
+			bool portBaseFound = false;
+			
+			for (int oceanRegion : adjacentOceanRegions)
+			{
+				if (base_on_sea(baseId, oceanRegion))
+				{
+					portBaseId =baseId;
+					portBaseFound = true;
+					break;
+				}
+				
+			}
+			
+			if (portBaseFound)
+				break;
+			
+		}
+		
+		if (portBaseId != -1)
+		{
+			BASE *portBase = &(Bases[portBaseId]);
+			
+			veh_put(vehicleId, portBase->x, portBase->y);
+			
+		}
+		
+	}
+	
+	// execute original code
+	
+	return pact_withdraw(factionId, pactFactionId);
+	
+}
+

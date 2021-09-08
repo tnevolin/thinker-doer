@@ -91,4 +91,7 @@ extern fp_2int *base_on_sea;
 extern fp_3int *base_find2;
 extern fp_1void *enemy_units_check;
 extern fp_2int *veh_who;
+extern fp_2int *pact_withdraw;
+extern fp_2int *base_find;
+extern fp_5int *whose_territory;
 

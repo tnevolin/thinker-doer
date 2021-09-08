@@ -1,6 +1,10 @@
+# Version 264
+
+* Fixed pact withdrawal sea unit moving to land locked base.
+
 # Version 263
 
-* Reverting cost of early energy multiplying facilities back to higher values. They seem to be rightly priced with abundance of energy after invention of boreholes.
+* Reverted cost of early energy multiplying facilities back to higher values. They seem to be rightly priced with abundance of energy after invention of boreholes.
   * Energy Bank,                   6, 1
   * Network Node,                  6, 1
 	* Fusion Lab,                   16, 4
@@ -9,7 +13,7 @@
   * Nanohospital,                 24, 6
   * Tree Farm,                    18, 3
   * Hybrid Forest,                36, 6
-* Increasing maintenance of mineral multiplying facilities to match the 3:1 energy to mineral default conversion ratio.
+* Increased maintenance of mineral multiplying facilities to match the 3:1 energy to mineral default conversion ratio.
   * Recycling Tanks,               8, 3
 	* Genejack Factory,             12, 6
 	* Robotic Assembly Plant,       18, 9

@@ -197,7 +197,18 @@ fp_2int *base_on_sea = (fp_2int *)0x0050DE50;
 // finds nearest base for given faction
 fp_3int *base_find2 = (fp_3int *)0x004E3C60;
 
+// enemy unit movement entry point
 fp_1void *enemy_units_check = (fp_1void *)0x00579510;
 
+// vehicle owner occupying tile
 fp_2int *veh_who = (fp_2int *)0x00500250;
+
+// vehicle withdrawal after breaking pact
+fp_2int *pact_withdraw = (fp_2int *)0x00500250;
+
+// finds nearest base to location
+fp_2int *base_find = (fp_2int *)0x004E3B80;
+
+// checks territory
+fp_5int *whose_territory = (fp_5int *)0x004E3EF0;
 

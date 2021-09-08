@@ -4376,6 +4376,13 @@ void patch_tech_ai_randomization()
 
 }
 
+void patch_pact_withdraw()
+{
+	write_call(0x0053C69E, (int)modified_pact_withdraw);
+	write_call(0x0053C6A8, (int)modified_pact_withdraw);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4949,6 +4956,8 @@ void patch_setup_wtp(Config* cf)
 	patch_enemies_treaty_popup();
 	
 	patch_tech_ai_randomization();
+	
+	patch_pact_withdraw();
 	
 }
 
