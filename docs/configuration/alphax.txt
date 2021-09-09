@@ -519,7 +519,7 @@ Nerve Gas Pods,         1, Chemist,  X,         000011001111, Can +50% offense (
 Repair Bay,             1, Disable,  Repair,    000100100111, Repairs ground units on board
 Non-Lethal Methods,    64, HomoSup,  Police,    000000001001, x2 Police powers
 Slow Unit,              0, Disable,  Slow,      000000111111, -1 moves
-Soporific Gas Pods,     2, Disable,  Gas,       000001001101, -2 Enemy morale vs. non-native
+Soporific Gas Pods,     2, Bioadap,  Gas,       000001001101, -2 Enemy morale vs. non-native
 Dissociative Wave,      2, Surface,  Wave,      000000111111, Fizzles special abilities
 Marine Detachment,      2, AdapDoc,  Marine,    000001001010, Capture enemy ships
 Fuel Nanocells,         1, MatComp,  Nanocell,  000000111100, Increased air range
@@ -593,7 +593,7 @@ Missile,    Missile-, Miss., M
 ; Reac    = Reactor level 1–4
 ;
 #UNITS
-34
+35
 Colony Pod,             Infantry, Colony Pod,   Scout,      8, 0, 0, None,    -1, 00000000000000000000000000
 Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
@@ -625,7 +625,8 @@ Trance Scout Patrol,    Infantry, Gun,          Scout,      2, 0, 0, Brain,   -1
 Police Garrison,        Infantry, Gun,          Scout,      2, 0, 0, WillPow, -1, 00010000000000000000000000
 Gun Foil,               Foil,     Gun,          Scout,      3, 0, 0, DocFlex, -1, 00000000000000000000000000
 Scout Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Mobile,  -1, 00000000000000000000000000
-Empath Rover,           Speeder,  Gun,          Scout,      3, 0, 0, CentEmp, -1, 00000000000000100000000000
+Empath Rover,           Speeder,  Gun,          Scout,      0, 0, 0, CentEmp, -1, 00000000000000100000000000
+Empath Foil,            Foil,     Gun,          Scout,      0, 0, 0, CentEmp, -1, 00000000000000100000000000
 Trance Formers,         Infantry, Formers,      Scout,      9, 0, 0, Brain,   -1, 00000001000000000000000000
 Trance Sea Formers,     Foil,     Formers,      Scout,      9, 0, 0, Brain,   -1, 00000001000000000000000000
 

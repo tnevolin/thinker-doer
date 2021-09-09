@@ -4506,3 +4506,33 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 	
 }
 
+/*
+Prototype proposal entry point.
+*/
+int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name)
+{
+	int weaponOffenseValue = Weapon[weaponId].offense_value;
+	int armorDefenseValue = Armor[armorId].defense_value;
+	
+	// do not build defender ships
+	
+	if
+	(
+		(chassisId == CHS_FOIL || chassisId == CHS_CRUISER)
+		&&
+		(weaponOffenseValue > 0 && armorDefenseValue > 0 && weaponOffenseValue < armorDefenseValue)
+	)
+	{
+		debug("modified_propose_proto: rejected defender ship\n")
+		debug("\treactorId=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactorId, chassisId, weaponId, armorId, getUnitTypeAbilitiesString(abilities).c_str());
+		
+		return -1;
+		
+	}
+	
+	// otherwise execute original code
+	
+	return propose_proto(factionId, chassisId, weaponId, armorId, abilities, reactorId, plan, name);
+	
+}
+

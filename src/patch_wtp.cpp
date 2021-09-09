@@ -4383,6 +4383,41 @@ void patch_pact_withdraw()
 	
 }
 
+void patch_propose_proto()
+{
+	write_call(0x004CEF64, (int)modified_propose_proto);
+	write_call(0x004F59B2, (int)modified_propose_proto);
+	write_call(0x0058188D, (int)modified_propose_proto);
+	write_call(0x00581C1A, (int)modified_propose_proto);
+	write_call(0x00581CA3, (int)modified_propose_proto);
+	write_call(0x00581D16, (int)modified_propose_proto);
+	write_call(0x0058215E, (int)modified_propose_proto);
+	write_call(0x005821C5, (int)modified_propose_proto);
+	write_call(0x00582210, (int)modified_propose_proto);
+	write_call(0x005825F3, (int)modified_propose_proto);
+	write_call(0x00582961, (int)modified_propose_proto);
+	write_call(0x00582C22, (int)modified_propose_proto);
+	write_call(0x0058306D, (int)modified_propose_proto);
+	write_call(0x00583183, (int)modified_propose_proto);
+	write_call(0x005832D1, (int)modified_propose_proto);
+	write_call(0x00583401, (int)modified_propose_proto);
+	write_call(0x00583437, (int)modified_propose_proto);
+	write_call(0x00583631, (int)modified_propose_proto);
+	write_call(0x005836F9, (int)modified_propose_proto);
+	write_call(0x005838F3, (int)modified_propose_proto);
+	write_call(0x005839B9, (int)modified_propose_proto);
+	write_call(0x005839EC, (int)modified_propose_proto);
+	write_call(0x00583A1A, (int)modified_propose_proto);
+	write_call(0x00583A64, (int)modified_propose_proto);
+	write_call(0x00583B6A, (int)modified_propose_proto);
+	write_call(0x00583C80, (int)modified_propose_proto);
+	write_call(0x005A4173, (int)modified_propose_proto);
+	write_call(0x005A49F5, (int)modified_propose_proto);
+	write_call(0x005BB364, (int)modified_propose_proto);
+	write_call(0x005BB5CD, (int)modified_propose_proto);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4958,6 +4993,8 @@ void patch_setup_wtp(Config* cf)
 	patch_tech_ai_randomization();
 	
 	patch_pact_withdraw();
+	
+	patch_propose_proto();
 	
 }
 

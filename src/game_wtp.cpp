@@ -7,9 +7,9 @@ bool has_armor(int factionId, int armorId)
 	return has_tech(factionId, Armor[armorId].preq_tech);
 }
 
-bool has_reactor(int factionId, int reactorId)
+bool has_reactor(int factionId, int reactor)
 {
-	return has_tech(factionId, Reactor[reactorId].preq_tech);
+	return has_tech(factionId, Reactor[reactor - 1].preq_tech);
 }
 
 /*

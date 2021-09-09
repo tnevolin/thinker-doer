@@ -195,4 +195,5 @@ int __cdecl modified_tech_value(int techId, int factionId, int flag);
 int getFactionHighestResearchedTechLevel(int factionId);
 int __cdecl modifiedReturnProbeBaseFind2(int x, int y, int vehicleId);
 int __cdecl modified_pact_withdraw(int factionId, int pactFactionId);
+int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
 

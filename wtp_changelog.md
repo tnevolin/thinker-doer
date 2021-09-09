@@ -1,3 +1,8 @@
+# Version 265
+
+* Disabled AI designing defender ships.
+* Reinstated Soporific Gas Pods ability and taught AI to design it.
+
 # Version 264
 
 * Fixed pact withdrawal sea unit moving to land locked base.
