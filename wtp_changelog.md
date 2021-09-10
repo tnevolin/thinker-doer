@@ -1,3 +1,10 @@
+# Version 266
+
+* Found a purpose for pathetic Universal Translator and other single base labs multiplying projects. They were not that impactful and interesting in vanilla. This verstion turns them into regular faction wide projects affecting all bases with small labs bonus. This bonus is applied in the same order as before: after regular multiplying facilities like Network Node and before The Network Backbone.
+  * The Supercollider,            30, Base labs +10%
+	* The Theory of Everything,     60, Base labs +20%
+	* The Universal Translator,    100, Base labs +30% + Two Free Techs
+
 # Version 265
 
 * Disabled AI designing defender ships.
@@ -244,9 +251,6 @@ People say they are very strong with their +2 PLANET and double police power for
 # Version 240
 
 * Supply Convoy and Info Warfare require support.
-
-* Thought control doesn't cause controlled faction to wish betrayal and revenge against controlling faction.
-* Added note that TC is useless during vendetta.
 
 # Version 239
 

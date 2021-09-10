@@ -636,7 +636,7 @@ Automatically discover any technology discovered by at least three other faction
 
 #; The Supercollider
 #HELPPROJ12
-$LINK<Research=22> output at this base is doubled.
+$LINK<Labs=22> output +10% (round up) at all faction bases.
 
 #; The Ascetic Virtues
 #HELPPROJ13
@@ -669,7 +669,7 @@ Counts as a $LINK<Bioenhancement center=100030> at every base.
 
 #; The Theory of Everything
 #HELPPROJ18
-$LINK<Labs=22> output doubled at this base.
+$LINK<Labs=22> output +20% (round up) at all faction bases.
 
 #; The Dream Twister
 #HELPPROJ19
@@ -677,7 +677,8 @@ $LINK<Labs=22> output doubled at this base.
 
 #; The Universal Translator
 #HELPPROJ20
-Two free tech advances on completion. Any number of $LINK<Alien Artifacts=30007> can be linked at this base.
+$LINK<Labs=22> output +30% (round up) at all faction bases.
+^Two free tech advances on completion. Any number of $LINK<Alien Artifacts=30007> can be linked at this base.
 
 #; The Network Backbone
 #HELPPROJ21

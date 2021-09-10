@@ -159,7 +159,7 @@ HOOK_API void modifiedVehSkipForActionDestroy(int vehicleId);
 HOOK_API void appendAbilityCostTextInWorkshop(int output_string_pointer, int input_string_pointer);
 HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2);
 HOOK_API int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteIndex, int effectValue);
-HOOK_API void modifiedTechResearch(int factionId, int labs);
+HOOK_API void modified_tech_research(int factionId, int labs);
 HOOK_API void modifiedBaseGrowth(int a1, int a2, int a3);
 HOOK_API int modifiedNutrientCostFactorSEGrowth(int factionId, int baseId);
 int getHabitationFacilitiesBaseGrowthModifier(int baseId);
@@ -196,4 +196,5 @@ int getFactionHighestResearchedTechLevel(int factionId);
 int __cdecl modifiedReturnProbeBaseFind2(int x, int y, int vehicleId);
 int __cdecl modified_pact_withdraw(int factionId, int pactFactionId);
 int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
+int __cdecl modified_base_double_labs(int labs);
 

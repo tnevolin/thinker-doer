@@ -1795,15 +1795,15 @@ void patch_cloning_vats_mechanics()
 }
 
 /*
-Modifies SE GROWTH rating cap.
+Modifies SE GROWTH rating max.
 */
-void patch_se_growth_rating_cap(int se_growth_rating_cap)
+void patch_se_growth_rating_max(int se_growth_rating_max)
 {
 	// patch population boom condition in base_growth
 
 	int popboom_condition_base_growth_bytes_length = 7;
 	byte popboom_condition_base_growth_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
-	byte popboom_condition_base_growth_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_cap + 1) };
+	byte popboom_condition_base_growth_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_max + 1) };
 	write_bytes
 	(
 		0x004EF3A8,
@@ -1816,7 +1816,7 @@ void patch_se_growth_rating_cap(int se_growth_rating_cap)
 
 	int popboom_condition_base_doctors_bytes_length = 7;
 	byte popboom_condition_base_doctors_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
-	byte popboom_condition_base_doctors_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_cap + 1) };
+	byte popboom_condition_base_doctors_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_max + 1) };
 	write_bytes
 	(
 		0x004F6070,
@@ -1825,28 +1825,72 @@ void patch_se_growth_rating_cap(int se_growth_rating_cap)
 		popboom_condition_base_doctors_bytes_length
 	);
 
-	// patch cost_factor nutrient cap
+	// patch cost_factor nutrient max
 
-	int cost_factor_nutrient_cap_check_bytes_length = 3;
-	byte cost_factor_nutrient_cap_check_bytes_old[] = { 0x83, 0xFB, 0x05 };
-	byte cost_factor_nutrient_cap_check_bytes_new[] = { 0x83, 0xFB, (byte)se_growth_rating_cap };
+	int cost_factor_nutrient_max_check_bytes_length = 3;
+	byte cost_factor_nutrient_max_check_bytes_old[] = { 0x83, 0xFB, 0x05 };
+	byte cost_factor_nutrient_max_check_bytes_new[] = { 0x83, 0xFB, (byte)se_growth_rating_max };
 	write_bytes
 	(
 		0x004E4577,
-		cost_factor_nutrient_cap_check_bytes_old,
-		cost_factor_nutrient_cap_check_bytes_new,
-		cost_factor_nutrient_cap_check_bytes_length
+		cost_factor_nutrient_max_check_bytes_old,
+		cost_factor_nutrient_max_check_bytes_new,
+		cost_factor_nutrient_max_check_bytes_length
 	);
 
-	int cost_factor_nutrient_cap_set_bytes_length = 5;
-	byte cost_factor_nutrient_cap_set_bytes_old[] = { 0xB8, 0x05, 0x00, 0x00, 0x00 };
-	byte cost_factor_nutrient_cap_set_bytes_new[] = { 0xB8, (byte)se_growth_rating_cap, 0x00, 0x00, 0x00 };
+	int cost_factor_nutrient_max_set_bytes_length = 5;
+	byte cost_factor_nutrient_max_set_bytes_old[] = { 0xB8, 0x05, 0x00, 0x00, 0x00 };
+	byte cost_factor_nutrient_max_set_bytes_new[] = { 0xB8, (byte)se_growth_rating_max, 0x00, 0x00, 0x00 };
 	write_bytes
 	(
 		0x004E457C,
-		cost_factor_nutrient_cap_set_bytes_old,
-		cost_factor_nutrient_cap_set_bytes_new,
-		cost_factor_nutrient_cap_set_bytes_length
+		cost_factor_nutrient_max_set_bytes_old,
+		cost_factor_nutrient_max_set_bytes_new,
+		cost_factor_nutrient_max_set_bytes_length
+	);
+
+}
+
+/*
+Modifies SE GROWTH rating min.
+*/
+void patch_se_growth_rating_min(int se_growth_rating_min)
+{
+	// patch population boom condition in base_growth
+
+	int popboom_condition_base_growth_bytes_length = 7;
+	byte popboom_condition_base_growth_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0xFD };
+	byte popboom_condition_base_growth_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_min - 1) };
+	write_bytes
+	(
+		0x004EF4F9,
+		popboom_condition_base_growth_bytes_old,
+		popboom_condition_base_growth_bytes_new,
+		popboom_condition_base_growth_bytes_length
+	);
+
+	// patch cost_factor nutrient min
+
+	int cost_factor_nutrient_min_check_bytes_length = 3;
+	byte cost_factor_nutrient_min_check_bytes_old[] = { 0x83, 0xFB, 0xFE };
+	byte cost_factor_nutrient_min_check_bytes_new[] = { 0x83, 0xFB, (byte)se_growth_rating_min };
+	write_bytes
+	(
+		0x004E4572,
+		cost_factor_nutrient_min_check_bytes_old,
+		cost_factor_nutrient_min_check_bytes_new,
+		cost_factor_nutrient_min_check_bytes_length
+	);
+
+	int cost_factor_nutrient_min_set_bytes_length = 5;
+	byte cost_factor_nutrient_min_set_bytes_old[] = { 0xB8, 0xFE, 0xFF, 0xFF, 0xFF };
+	byte cost_factor_nutrient_min_set_bytes_new[] = { 0xB8, (byte)se_growth_rating_min, 0x00, 0x00, 0x00 };
+	write_bytes
+	(
+		0x004E4587,
+		cost_factor_nutrient_min_set_bytes_old,
+		cost_factor_nutrient_min_set_bytes_new,
+		cost_factor_nutrient_min_set_bytes_length
 	);
 
 }
@@ -2874,7 +2918,7 @@ Wraps tech_research to modify SE RESEARCH bonus.
 */
 void patch_research_bonus_multiplier()
 {
-	write_call(0x004F4F9C, (int)modifiedTechResearch);
+	write_call(0x004F4F9C, (int)modified_tech_research);
 
 }
 
@@ -4418,6 +4462,55 @@ void patch_propose_proto()
 	
 }
 
+void patch_science_projects_alternative_labs_bonus()
+{
+    int science_projects_alternative_labs_bonus_bytes_length = 0x43;
+
+    /*
+    0:  8b 15 44 65 9a 00       mov    edx,DWORD PTR ds:0x9a6544
+	6:  3b 15 70 93 68 00       cmp    edx,DWORD PTR ds:0x689370
+	c:  75 13                   jne    0x21
+	e:  a1 30 ea 90 00          mov    eax,ds:0x90ea30
+	13: 8b 88 08 01 00 00       mov    ecx,DWORD PTR [eax+0x108]
+	19: d1 e1                   shl    ecx,1
+	1b: 89 88 08 01 00 00       mov    DWORD PTR [eax+0x108],ecx
+	21: 8b 15 70 93 68 00       mov    edx,DWORD PTR ds:0x689370
+	27: a1 5c 65 9a 00          mov    eax,ds:0x9a655c
+	2c: 3b c2                   cmp    eax,edx
+	2e: 75 13                   jne    0x43
+	30: a1 30 ea 90 00          mov    eax,ds:0x90ea30
+	35: 8b 88 08 01 00 00       mov    ecx,DWORD PTR [eax+0x108]
+	3b: d1 e1                   shl    ecx,1
+	3d: 89 88 08 01 00 00       mov    DWORD PTR [eax+0x108],ecx
+    */
+    byte science_projects_alternative_labs_bonus_bytes_old[] =
+		{ 0x8B, 0x15, 0x44, 0x65, 0x9A, 0x00, 0x3B, 0x15, 0x70, 0x93, 0x68, 0x00, 0x75, 0x13, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0x88, 0x08, 0x01, 0x00, 0x00, 0xD1, 0xE1, 0x89, 0x88, 0x08, 0x01, 0x00, 0x00, 0x8B, 0x15, 0x70, 0x93, 0x68, 0x00, 0xA1, 0x5C, 0x65, 0x9A, 0x00, 0x3B, 0xC2, 0x75, 0x13, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0x88, 0x08, 0x01, 0x00, 0x00, 0xD1, 0xE1, 0x89, 0x88, 0x08, 0x01, 0x00, 0x00 }
+    ;
+
+    /*
+    0:  ff b1 08 01 00 00       push   DWORD PTR [ecx+0x108]
+	6:  e8 fd ff ff ff          call   8 <_main+0x8>
+	b:  83 c4 04                add    esp,0x4
+	e:  89 81 08 01 00 00       mov    DWORD PTR [ecx+0x108],eax
+	...
+    */
+    byte science_projects_alternative_labs_bonus_bytes_new[] =
+        { 0xFF, 0xB1, 0x08, 0x01, 0x00, 0x00, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x04, 0x89, 0x81, 0x08, 0x01, 0x00, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x004EBFC0,
+        science_projects_alternative_labs_bonus_bytes_old,
+        science_projects_alternative_labs_bonus_bytes_new,
+        science_projects_alternative_labs_bonus_bytes_length
+    )
+    ;
+    
+   	write_call(0x004EBFC0 + 0x6, (int)modified_base_double_labs);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4711,11 +4804,18 @@ void patch_setup_wtp(Config* cf)
 		patch_cloning_vats_mechanics();
 	}
 
-	// patch GROWTH rating cap
+	// patch GROWTH rating max
 
-	if (cf->se_growth_rating_cap != 5)
+	if (cf->se_growth_rating_max != 5)
 	{
-		patch_se_growth_rating_cap(cf->se_growth_rating_cap);
+		patch_se_growth_rating_max(cf->se_growth_rating_max);
+	}
+
+	// patch GROWTH rating min
+
+	if (cf->se_growth_rating_min != -2)
+	{
+		patch_se_growth_rating_min(cf->se_growth_rating_min);
 	}
 
 	patch_display_base_nutrient_cost_factor();
@@ -4995,6 +5095,11 @@ void patch_setup_wtp(Config* cf)
 	patch_pact_withdraw();
 	
 	patch_propose_proto();
+	
+	if (cf->science_projects_alternative_labs_bonus)
+	{
+		patch_science_projects_alternative_labs_bonus();
+	}
 	
 }
 

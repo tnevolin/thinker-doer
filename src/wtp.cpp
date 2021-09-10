@@ -1912,7 +1912,7 @@ HOOK_API void correctGrowthTurnsIndicator(int destinationStringPointer, int sour
 
     tx_strcat(destinationStringPointer, sourceStringPointer);
 
-    if (*current_base_growth_rate > conf.se_growth_rating_cap)
+    if (*current_base_growth_rate > conf.se_growth_rating_max)
 	{
 		// update indicator for population boom
 
@@ -3139,7 +3139,7 @@ HOOK_API int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteBaseInde
 
 }
 
-HOOK_API void modifiedTechResearch(int factionId, int labs)
+HOOK_API void modified_tech_research(int factionId, int labs)
 {
 	Faction *faction = &(Factions[factionId]);
 
@@ -3153,7 +3153,7 @@ HOOK_API void modifiedTechResearch(int factionId, int labs)
 		labs = (labs * modifiedMultiplierPercentage + currentMultiplierPercentage / 2) / currentMultiplierPercentage;
 
 	}
-
+	
 	// pass labs to original function
 
 	tx_tech_research(factionId, labs);
@@ -4533,6 +4533,47 @@ int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, i
 	// otherwise execute original code
 	
 	return propose_proto(factionId, chassisId, weaponId, armorId, abilities, reactorId, plan, name);
+	
+}
+
+/*
+Modified base lab doubling function to account for Universal Translator and alternative labs bonuses.
+*/
+int __cdecl modified_base_double_labs(int labs)
+{
+	int baseId = *current_base_id;
+	BASE *base = &(Bases[baseId]);
+	
+	// summarize bonus
+	
+	int bonus = 0;
+	
+	if (has_project(base->faction_id, FAC_SUPERCOLLIDER))
+	{
+		bonus += conf.science_projects_supercollider_labs_bonus;
+	}
+	
+	if (has_project(base->faction_id, FAC_THEORY_OF_EVERYTHING))
+	{
+		bonus += conf.science_projects_theoryofeverything_labs_bonus;
+	}
+	
+	if (has_project(base->faction_id, FAC_UNIVERSAL_TRANSLATOR))
+	{
+		bonus += conf.science_projects_universaltranslator_labs_bonus;
+	}
+	
+	// apply bonus
+	// round up
+	
+	if (bonus > 0)
+	{
+		labs = (labs * (100 + bonus) + (100 - 1)) / 100;
+	}
+	
+	// return labs
+	
+	return labs;
 	
 }
 

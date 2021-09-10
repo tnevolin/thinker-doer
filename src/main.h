@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 265 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 266 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -230,7 +230,7 @@ struct Config {
     bool cloning_vats_disable_impunities = false;
     int cloning_vats_se_growth = 0;
     int se_growth_rating_min = -2;
-    int se_growth_rating_cap = 5;
+    int se_growth_rating_max = 5;
     bool recycling_tanks_mineral_multiplier = false;
     // integrated into Thinker
 //	int free_minerals = 16;
@@ -305,6 +305,10 @@ struct Config {
 	bool disable_sensor_destroying;
 	bool artillery_duel_uses_weapon_and_armor;
 	bool disable_vanilla_base_hurry;
+	bool science_projects_alternative_labs_bonus;
+	int science_projects_supercollider_labs_bonus;
+	int science_projects_theoryofeverything_labs_bonus;
+	int science_projects_universaltranslator_labs_bonus;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

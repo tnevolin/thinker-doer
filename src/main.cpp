@@ -297,9 +297,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->se_growth_rating_min = std::min(0, atoi(value));
     }
-    else if (MATCH("wtp", "se_growth_rating_cap"))
+    else if (MATCH("wtp", "se_growth_rating_max"))
     {
-        cf->se_growth_rating_cap = std::max(0, std::min(9, atoi(value)));
+        cf->se_growth_rating_max = std::max(0, std::min(9, atoi(value)));
     }
     else if (MATCH("wtp", "recycling_tanks_mineral_multiplier"))
     {
@@ -593,6 +593,22 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "disable_vanilla_base_hurry"))
     {
         cf->disable_vanilla_base_hurry = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "science_projects_alternative_labs_bonus"))
+    {
+        cf->science_projects_alternative_labs_bonus = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "science_projects_supercollider_labs_bonus"))
+    {
+        cf->science_projects_supercollider_labs_bonus = atoi(value);
+    }
+    else if (MATCH("wtp", "science_projects_theoryofeverything_labs_bonus"))
+    {
+        cf->science_projects_theoryofeverything_labs_bonus = atoi(value);
+    }
+    else if (MATCH("wtp", "science_projects_universaltranslator_labs_bonus"))
+    {
+        cf->science_projects_universaltranslator_labs_bonus = atoi(value);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
