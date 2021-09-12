@@ -125,7 +125,7 @@ void aiProductionStrategy()
 //        
 //        // except replace non-combat unit to Scout Patrol
 //        
-//        if (choice < 0 || !isUnitCombat(choice))
+//        if (choice < 0 || !isCombatUnit(choice))
 //		{
 //			choice = BSC_SCOUT_PATROL;
 //		}
@@ -263,7 +263,7 @@ void setProduction()
 	{
 		BASE* base = &(Bases[baseId]);
 		
-		debug("%s\n", base->name);
+		debug("setProduction - %s\n", base->name);
 
 		// current production choice
 
@@ -1914,10 +1914,15 @@ void evaluateCombatDemand()
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	
+	debug("evaluateCombatDemand\n");
+
 	// check mineral surplus
 	
 	if (base->mineral_surplus < conf.ai_production_unit_min_mineral_surplus)
+	{
+		debug("\tweak production\n");
 		return;
+	}
 	
 	// get target base
 	
@@ -1926,27 +1931,36 @@ void evaluateCombatDemand()
 	// no target base
 	
 	if (targetBaseId == -1)
+	{
+		debug("\tno target base\n");
 		return;
+	}
 	
+	debug("\t-> %s\n", Bases[targetBaseId].name);
+
 	// get target base strategy
 	
 	BaseStrategy *targetBaseStrategy = &(activeFactionInfo.baseStrategies[targetBaseId]);
 	
-	// no target base defense demand
+	// no defense demand
 	
 	if (targetBaseStrategy->defenseDemand <= 0.0)
+	{
+		debug("\tno defense demand\n");
 		return;
+	}
 	
-	debug("evaluateCombatDemand %s -> %s\n", Bases[baseId].name, Bases[targetBaseId].name);
-
 	// find unit
 	
-	int unitId = findBestDefenseUnit(baseId, targetBaseId);
+	int unitId = selectCombatUnit(baseId, targetBaseId);
 	
-	// no good unit found
+	// no unit found
 	
 	if (unitId == -1)
+	{
+		debug("\tno unit found\n");
 		return;
+	}
 	
 	debug("\t%s\n", Units[unitId].name);
 	
@@ -2125,7 +2139,7 @@ int findRegularDefenderUnit(int factionId)
 	{
 		// skip non combat units
 
-		if (!isUnitCombat(unitId))
+		if (!isCombatUnit(unitId))
 			continue;
 
 		// skip air units
@@ -2158,7 +2172,7 @@ int findFastAttackerUnit(int factionId)
 
 		// skip non combat units
 
-		if (!isUnitCombat(unitId))
+		if (!isCombatUnit(unitId))
 			continue;
 
 		// skip infantry units
@@ -2192,7 +2206,7 @@ int findScoutUnit(int factionId, int triad)
 
 		// skip non combat units
 
-		if (!isUnitCombat(unitId))
+		if (!isCombatUnit(unitId))
 			continue;
 
 		// given triad only
@@ -2558,28 +2572,6 @@ int findPoliceUnit(int factionId)
 
 }
 
-///*
-//Wraps first time base production setup.
-//*/
-//HOOK_API void modifiedBaseFirst(int baseId)
-//{
-//	BASE *base = &(Bases[baseId]);
-//
-//	// execute original code
-//
-//	tx_base_first(baseId);
-//
-//	// override default choice with WTP choice for enabled computer factions
-//	
-//	// execute original code for not enabled computer faction bases
-//
-//	if (!is_human(base->faction_id) && ai_enabled(base->faction_id) && conf.ai_useWTPAlgorithms)
-//	{
-//		base->queue_items[0] = modifiedBaseProductionChoice(baseId, 0, 0, 0);
-//	}
-//
-//}
-//
 /*
 Checks for military purpose unit/structure.
 */
@@ -2591,7 +2583,7 @@ bool isMilitaryItem(int item)
 		int weaponId = unit->weapon_type;
 		
 		return
-			(isUnitCombat(item) && !isScoutUnit(item))
+			(isCombatUnit(item) && !isScoutUnit(item))
 			||
 			weaponId == WPN_PROBE_TEAM
 			||
@@ -2722,7 +2714,7 @@ int findBestAntiNativeUnitId(int baseId, int targetBaseId, int opponentTriad)
 		
 		// calculate cost counting maintenance
 		
-		int cost = getMaintenanceUnitCost(unitId);
+		int cost = getUnitMaintenanceCost(unitId);
 		
 		// calculate effectiveness
 		
@@ -2801,7 +2793,7 @@ int findBestAntiRegularUnitId(int baseId, int targetBaseId, int opponentTriad)
 		
 		// calculate cost counting maintenance
 		
-		int cost = getMaintenanceUnitCost(unitId);
+		int cost = getUnitMaintenanceCost(unitId);
 		
 		// calculate effectiveness
 		
@@ -2822,17 +2814,24 @@ int findBestAntiRegularUnitId(int baseId, int targetBaseId, int opponentTriad)
 }
 
 /*
-Finds best defense unit shipped from source base to target base against target base threats.
+Finds best combat unit built at source base to help target base against target base threats.
 */
-int findBestDefenseUnit(int baseId, int targetBaseId)
+int selectCombatUnit(int baseId, int targetBaseId)
 {
+	debug("selectCombatUnit\n");
+	
 	MAP *baseTile = getBaseMapTile(baseId);
 	bool ocean = isOceanRegion(baseTile->region);
 	
 	// no target base
 	
 	if (targetBaseId == -1)
+	{
+		debug("\tno target base\n");
 		return -1;
+	}
+	
+	debug("\t-> %s\n", Bases[targetBaseId].name);
 	
 	// get target base info
 	
@@ -2841,135 +2840,168 @@ int findBestDefenseUnit(int baseId, int targetBaseId)
 	// get target base strategy
 	
 	BaseStrategy *targetBaseStrategy = &(activeFactionInfo.baseStrategies[targetBaseId]);
+	MilitaryStrength *defenderStrength = &(targetBaseStrategy->defenderStrength);
 	MilitaryStrength *opponentStrength = &(targetBaseStrategy->opponentStrength);
 	
 	// no defense demand
 	
 	if (targetBaseStrategy->defenseDemand <= 0.0)
+	{
+		debug("\tno defense demand\n");
 		return -1;
+	}
 	
 	// no opponents
 	
-	if (opponentStrength->unitTypeStrengths.size() == 0)
+	if (opponentStrength->unitStrengths.size() == 0)
+	{
+		debug("\tno opponents\n");
 		return -1;
-	
-	// allow sea units for ocean target base only if it is accessible by water
-	
-	bool seaUnitAllowed = isOceanRegion(targetBaseTile->region) && isBaseConnectedToRegion(baseId, targetBaseTile->region);
-	
-	// allow land units for land base only
-	
-	bool landUnitAllowed = isLandRegion(targetBaseTile->region);
-	
-	// reduce land units preference for bases in different regions
-	
-	double landUnitPreference = (baseTile->region == targetBaseTile->region ? 1.0 : 0.5);
+	}
 	
 	// process units
 	
-	int bestUnitId = -1;
-	double bestUnitEffectiveness = 0.0;
+	std::map<int, int> unitClassBestUnits;
+	std::map<int, double> unitEffectivenesses;
 	
 	for (int unitId : activeFactionInfo.combatUnitIds)
 	{
 		UNIT *unit = &(Units[unitId]);
 		int triad = unit->triad();
+		int unitWeaponOffenseValue = getUnitWeaponOffenseValue(unitId);
+		int unitArmorDefenseValue = getUnitArmorDefenseValue(unitId);
+		
+		int defenderUnitId = unitId;
+		UNIT *defenderUnit = unit;
 		
 		debug("\t%s\n", unit->name);
 		
-		// exclude not scouts with not the best weapon or armor
+		// ocean base
+		if (ocean)
+		{
+			// only land infantry defenders
+			
+			if (triad == TRIAD_LAND && (unit->chassis_type != CHS_INFANTRY || unitWeaponOffenseValue > 1))
+			{
+				debug("\t\tocean base: no land fast or attacker units\n");
+				continue;
+			}
+			
+			// same base
+			if (baseId == targetBaseId)
+			{
+				// no restrictions
+			}
+			// other base
+			else
+			{
+				// connected ocean region
+				if (isBaseConnectedToRegion(baseId, targetBaseTile->region))
+				{
+					// sea and air only
+					if (!(triad == TRIAD_SEA || triad == TRIAD_AIR))
+					{
+						debug("\t\tocean base, connected ocean region: sea and air only\n");
+						continue;
+					}
+					
+				}
+				// not connected ocean region
+				else
+				{
+					// air only
+					if (!(triad == TRIAD_AIR))
+					{
+						debug("\t\tocean base, not connected ocean region: air only\n");
+						continue;
+					}
+					
+				}
+				
+			}
+			
+		}
+		// land base
+		else
+		{
+			// same base
+			if (baseId == targetBaseId)
+			{
+				// no restrictions
+			}
+			// other base
+			else
+			{
+				// same region
+				if (baseTile->region == targetBaseTile->region)
+				{
+					// land and air only
+					if (!(triad == TRIAD_LAND || triad == TRIAD_AIR))
+					{
+						debug("\t\tland base, same region: land and air only\n");
+						continue;
+					}
+					
+				}
+				// not same region
+				else
+				{
+					// air only
+					if (!(triad == TRIAD_AIR))
+					{
+						debug("\t\tland base, not same region: air only\n");
+						continue;
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+		// exclude regular with mediocre weapon or armor
 		
 		if
 		(
-			!isScoutUnit(unitId)
+			!isNativeUnit(unitId)
 			&&
-			Weapon[unit->weapon_type].offense_value < activeFactionInfo.bestWeaponOffenseValue
+			unitWeaponOffenseValue > 1 && unitWeaponOffenseValue < activeFactionInfo.bestWeaponOffenseValue
 			&&
-			Armor[unit->armor_type].defense_value < activeFactionInfo.bestArmorDefenseValue
+			unitArmorDefenseValue > 1 && unitArmorDefenseValue < activeFactionInfo.bestArmorDefenseValue
 		)
 		{
+			debug("\t\tmediocre unit\n");
 			continue;
 		}
-		
-		// exclude land if not allowed
-		
-		if (triad == TRIAD_LAND && !landUnitAllowed)
-			continue;
-		
-		// exclude sea if not allowed
-		
-		if (triad == TRIAD_SEA && !seaUnitAllowed)
-			continue;
-		
-		// calculate cost
-		
-		int cost = getMaintenanceUnitCost(unitId);
-		
-		// pack type
-		
-		int unitType = packUnitType(unitId);
 		
 		// calculate unit strength
 		
-		UnitTypeStrength unitTypeStrengthObject;
-		UnitTypeStrength *unitTypeStrength = &(unitTypeStrengthObject);
+		double psiOffenseStrenght = getUnitPsiOffenseStrength(unitId, baseId);
+		double psiDefenseStrenght = getUnitPsiDefenseStrength(unitId, baseId, true);
 		
-		double weight = 1.0;
-		unitTypeStrength->weight = weight;
+		double conventionalOffenseStrenght = getUnitConventionalOffenseStrength(unitId, baseId);
+		double conventionalDefenseStrenght = getUnitConventionalDefenseStrength(unitId, baseId, true);
 		
-		if (isUnitTypeNative(unitType))
+		// determine unit relative strength
+		
+		double totalWeight = 0.0;
+		double totalWeightedRelativeStrength = 0.0;
+		
+		for (std::pair<const int, UnitStrength> &opponentUnitStrengthEntry : opponentStrength->unitStrengths)
 		{
-			// native unit initiates psi combat only
+			int opponentUnitId = opponentUnitStrengthEntry.first;
+			UnitStrength *opponentUnitStrength = &(opponentUnitStrengthEntry.second);
 			
-			double psiOffenseStrength = getUnitPsiOffenseStrength(unitId, baseId);
-			double psiDefenseStrength = getUnitPsiDefenseStrength(unitId, baseId, true);
+			UNIT *opponentUnit = &(Units[opponentUnitId]);
 			
-			unitTypeStrength->psiOffense += weight * psiOffenseStrength;
-			unitTypeStrength->psiDefense += weight * psiDefenseStrength;
-			
-		}
-		else
-		{
-			// regular unit initiates psi combat when engage native unit
-			
-			double psiOffenseStrength = getUnitPsiOffenseStrength(unitId, baseId);
-			double psiDefenseStrength = getUnitPsiDefenseStrength(unitId, baseId, true);
-			
-			unitTypeStrength->psiOffense += weight * psiOffenseStrength;
-			unitTypeStrength->psiDefense += weight * psiDefenseStrength;
-			
-			// regular unit initiates conventional combat when engage regular unit
-			
-			double conventionalOffenseStrength = getUnitConventionalOffenseStrength(unitId, baseId);
-			double conventionalDefenseStrength = getUnitConventionalDefenseStrength(unitId, baseId, true);
-			
-			unitTypeStrength->conventionalOffense += weight * conventionalOffenseStrength;
-			unitTypeStrength->conventionalDefense += weight * conventionalDefenseStrength;
-			
-		}
-		
-		// process opponent unit types
-		
-		debug("\t\tdefenderDestroyed\n");
-		
-		double defenderDestroyed = 0.0;
-		
-		for (const auto &opponentUnitTypeStrengthEntry : opponentStrength->unitTypeStrengths)
-		{
-			const int opponentUnitType = opponentUnitTypeStrengthEntry.first;
-			const UnitTypeStrength *opponentUnitTypeStrength = &(opponentUnitTypeStrengthEntry.second);
-			
-			const int defenderUnitType = unitType;
-			const UnitTypeStrength *defenderUnitTypeStrength = unitTypeStrength;
-				
 			// impossible combinations
 			
 			// two needlejets without air superiority
 			if
 			(
-				(isUnitTypeHasChassisType(opponentUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(defenderUnitType, ABL_AIR_SUPERIORITY))
+				(opponentUnit->chassis_type == CHS_NEEDLEJET && !unit_has_ability(defenderUnitId, ABL_AIR_SUPERIORITY))
 				&&
-				(isUnitTypeHasChassisType(defenderUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(opponentUnitType, ABL_AIR_SUPERIORITY))
+				(defenderUnit->chassis_type == CHS_NEEDLEJET && !unit_has_ability(opponentUnitId, ABL_AIR_SUPERIORITY))
 			)
 			{
 				continue;
@@ -2980,15 +3012,41 @@ int findBestDefenseUnit(int baseId, int targetBaseId)
 			double attackOdds;
 			double defendOdds;
 			
-			if (isUnitTypeNative(opponentUnitType) || isUnitTypeNative(defenderUnitType))
+			if (isNativeUnit(opponentUnitId) || isNativeUnit(defenderUnitId))
 			{
-				attackOdds = opponentUnitTypeStrength->psiOffense / defenderUnitTypeStrength->psiDefense;
-				defendOdds = opponentUnitTypeStrength->psiDefense / defenderUnitTypeStrength->psiOffense;
+				attackOdds =
+					opponentUnitStrength->psiOffense
+					/
+					psiDefenseStrenght
+				;
+				
+				defendOdds =
+					opponentUnitStrength->psiDefense
+					/
+					psiOffenseStrenght
+				;
+				
 			}
 			else
 			{
-				attackOdds = opponentUnitTypeStrength->conventionalOffense / defenderUnitTypeStrength->conventionalDefense * getConventionalCombatBonusMultiplier(opponentUnitType, defenderUnitType);
-				defendOdds = opponentUnitTypeStrength->conventionalDefense / defenderUnitTypeStrength->conventionalOffense * getConventionalCombatBonusMultiplier(defenderUnitType, opponentUnitType);
+				attackOdds =
+					opponentUnitStrength->conventionalOffense
+					/
+					conventionalDefenseStrenght
+					// type to type combat modifier (opponent attacks)
+					*
+					getConventionalCombatBonusMultiplier(opponentUnitId, defenderUnitId)
+				;
+				
+				defendOdds =
+					opponentUnitStrength->conventionalDefense
+					/
+					conventionalOffenseStrenght
+					// type to type combat modifier (defender attacks)
+					/
+					getConventionalCombatBonusMultiplier(defenderUnitId, opponentUnitId)
+				;
+				
 			}
 			
 			// calculate attack and defend probabilities
@@ -2996,22 +3054,58 @@ int findBestDefenseUnit(int baseId, int targetBaseId)
 			double attackProbability;
 			double defendProbability;
 			
-			// cases when unit at base cannot attack
-			
+			// defender cannot attack
 			if
 			(
 				// unit without air superiority cannot attack neeglejet
-				(isUnitTypeHasChassisType(opponentUnitType, CHS_NEEDLEJET) && !isUnitTypeHasAbility(defenderUnitType, ABL_AIR_SUPERIORITY))
+				(opponentUnit->chassis_type == CHS_NEEDLEJET && !unit_has_ability(defenderUnitId, ABL_AIR_SUPERIORITY))
 				||
 				// land unit cannot attack from sea base
-				(ocean && getUnitTypeTriad(defenderUnitType) == TRIAD_LAND)
-				||
-				// sea unit cannot attack from land base
-				(!ocean && getUnitTypeTriad(defenderUnitType) == TRIAD_SEA)
+				(ocean && defenderUnit->triad() == TRIAD_LAND)
 			)
 			{
 				attackProbability = 1.0;
 				defendProbability = 0.0;
+			}
+			// opponent cannot attack
+			else if
+			(
+				// unit without air superiority cannot attack neeglejet
+				(defenderUnit->chassis_type == CHS_NEEDLEJET && !unit_has_ability(opponentUnitId, ABL_AIR_SUPERIORITY))
+			)
+			{
+				attackProbability = 0.0;
+				defendProbability = 1.0;
+			}
+			// opponent disengages
+			else if
+			(
+				(
+					(opponentUnit->triad() == TRIAD_LAND && defenderUnit->triad() == TRIAD_LAND)
+					||
+					(opponentUnit->triad() == TRIAD_SEA && defenderUnit->triad() == TRIAD_SEA)
+				)
+				&&
+				(unit_chassis_speed(opponentUnitId) > unit_chassis_speed(defenderUnitId))
+			)
+			{
+				attackProbability = 1.0;
+				defendProbability = 0.0;
+			}
+			// defender disengages
+			else if
+			(
+				(
+					(opponentUnit->triad() == TRIAD_LAND && defenderUnit->triad() == TRIAD_LAND)
+					||
+					(opponentUnit->triad() == TRIAD_SEA && defenderUnit->triad() == TRIAD_SEA)
+				)
+				&&
+				(unit_chassis_speed(defenderUnitId) > unit_chassis_speed(opponentUnitId))
+			)
+			{
+				attackProbability = 0.0;
+				defendProbability = 1.0;
 			}
 			else
 			{
@@ -3036,9 +3130,6 @@ int findBestDefenseUnit(int baseId, int targetBaseId)
 			// calculate defender destroyed
 			
 			double defenderDestroyedTypeVsType =
-				// occurence probability
-				(opponentUnitTypeStrength->weight * defenderUnitTypeStrength->weight)
-				*
 				(
 					attackProbability * attackOdds
 					+
@@ -3048,11 +3139,10 @@ int findBestDefenseUnit(int baseId, int targetBaseId)
 			
 			debug
 			(
-				"\t\t\topponent: weight=%f, native=%d, chassisType=%d, unitType=%s\n\t\t\tdefender: weight=%f, native=%d, chassisType=%d, unitType=%s\n\t\t\t\tattack: probability=%f, odds=%f\n\t\t\t\tdefend: probatility=%f, odds=%f\n\t\t\t\tdefenderDestroyedTypeVsType=%f\n",
-				opponentUnitTypeStrength->weight,
-				(isUnitTypeNative(opponentUnitType) ? 1 : 0), getUnitTypeChassisType(opponentUnitType), getUnitTypeAbilitiesString(opponentUnitType).c_str(),
-				defenderUnitTypeStrength->weight,
-				(isUnitTypeNative(defenderUnitType) ? 1 : 0), getUnitTypeChassisType(defenderUnitType), getUnitTypeAbilitiesString(defenderUnitType).c_str(),
+				"\t\t\topponent: %-32s weight=%f\n\t\t\tdefender: %-32s\n\t\t\t\tattack: probability=%f, odds=%f\n\t\t\t\tdefend: probatility=%f, odds=%f\n\t\t\t\tdefenderDestroyedTypeVsType=%f\n",
+				opponentUnit->name,
+				opponentUnitStrength->weight,
+				defenderUnit->name,
 				attackProbability,
 				attackOdds,
 				defendProbability,
@@ -3061,38 +3151,119 @@ int findBestDefenseUnit(int baseId, int targetBaseId)
 			)
 			;
 			
-			// update summaries
+			// calculate weightedRelativeStrength
 			
-			defenderDestroyed += defenderDestroyedTypeVsType;
+			double weightedRelativeStrength = opponentUnitStrength->weight * (1.0 / defenderDestroyedTypeVsType);
+			debug("\t\topponentUnitStrength->weight=%f, weightedRelativeStrength=%f\n", opponentUnitStrength->weight, weightedRelativeStrength);
+			
+			// update totals
+			
+			totalWeight += opponentUnitStrength->weight;
+			totalWeightedRelativeStrength += weightedRelativeStrength;
 			
 		}
 		
-		debug("\t\tdefenderDestroyed=%f\n", defenderDestroyed);
+		// calculate normalizedRelativeStrength
+		
+		double normalizedRelativeStrength = totalWeightedRelativeStrength / totalWeight;
+		debug("\t\tnormalizedRelativeStrength=%f\n", normalizedRelativeStrength);
+		
+		// get maintenance cost
+		
+		int maintenanceCost = getUnitMaintenanceCost(unitId);
+		debug("\t\tmaintenanceCost=%d\n", maintenanceCost);
 		
 		// calculate effectiveness
 		
-		double effectiveness = (1.0 / defenderDestroyed) / (double)cost;
+		double effectiveness = normalizedRelativeStrength / (double)maintenanceCost;
+		debug("\t\teffectiveness=%f\n", effectiveness);
 		
-		// apply land unit preference
+		// add to list and to total
 		
-		if (triad == TRIAD_LAND)
+		unitEffectivenesses.insert({unitId, effectiveness});
+		
+		// update best in class
+		
+		int unitClass = getUnitClass(unitId);
+		debug("\t\tunitClass=%d\n", unitClass);
+		
+		if (unitClassBestUnits.find(unitClass) == unitClassBestUnits.end())
 		{
-			effectiveness *= landUnitPreference;
+			unitClassBestUnits[unitClass] = unitId;
+			debug("\t\tbest in class\n");
 		}
-		
-		debug("\t\tcost=%d, effectiveness=%f\n", cost, effectiveness);
-		
-		// update best values
-		
-		if (bestUnitId == -1 || effectiveness > bestUnitEffectiveness)
+		else
 		{
-			bestUnitId = unitId;
-			bestUnitEffectiveness = effectiveness;
+			int bestUnitId = unitClassBestUnits[unitClass];
+			double bestUnitEffectiveness = unitEffectivenesses[bestUnitId];
+			
+			if (effectiveness > bestUnitEffectiveness)
+			{
+				unitClassBestUnits[unitClass] = unitId;
+				debug("\t\tbest in class\n");
+			}
+			
 		}
 		
 	}
 	
-	return bestUnitId;
+	if (unitClassBestUnits.size() == 0)
+		return -1;
+	
+	// calculate existing unit class proportions
+	
+	std::unordered_map<int, double> existingUnitClassWeights;
+	
+	for (const std::pair<int, UnitStrength> &defenderUnitStrengthEntry : defenderStrength->unitStrengths)
+	{
+		int unitId = defenderUnitStrengthEntry.first;
+		const UnitStrength *unitStrength = &(defenderUnitStrengthEntry.second);
+		
+		int unitClass = getUnitClass(unitId);
+		
+		existingUnitClassWeights[unitClass] += unitStrength->weight;
+		
+	}
+	
+	// select class to produce
+	
+	debug("\tselect unit class to produce\n");
+	
+	int bestUnitClass = -1;
+	double bestUnitClassPriority = 0.0;
+	
+	for (const std::pair<int, int> &unitClassBestUnitEntry : unitClassBestUnits)
+	{
+		int unitClass = unitClassBestUnitEntry.first;
+		
+		debug("\t\tunitClass=%d\n", unitClass);
+		
+		// get existing unit class proportion
+		
+		std::unordered_map<int, double>::iterator existingUnitClassWeightsIterator = existingUnitClassWeights.find(unitClass);
+		double existingUnitClassWeight = (existingUnitClassWeightsIterator == existingUnitClassWeights.end() ? 0.0 : existingUnitClassWeightsIterator->second);
+		
+		// calculate priority
+		
+		double priority = 1.0 - (existingUnitClassWeight / COMBAT_UNIT_CLASS_WEIGHTS[unitClass]);
+		debug("\t\tCOMBAT_UNIT_CLASS_WEIGHT=%f, existingUnitClassWeight=%f, priority=%f\n", COMBAT_UNIT_CLASS_WEIGHTS[unitClass], existingUnitClassWeight, priority);
+		
+		// update best
+		
+		if (bestUnitClass == -1 || priority > bestUnitClassPriority)
+		{
+			bestUnitClass = unitClass;
+			bestUnitClassPriority = priority;
+		}
+		
+	}
+	
+	if (bestUnitClass == -1)
+		return -1;
+	
+	// return best unit in class
+	
+	return unitClassBestUnits[bestUnitClass];
 	
 }
 
@@ -3224,6 +3395,73 @@ int findTransportUnit()
 	}
 	
 	return bestUnitId;
+	
+}
+
+int getUnitClass(int unitId)
+{
+	UNIT *unit = &(Units[unitId]);
+	int unitWeaponOffenseValue = getUnitWeaponOffenseValue(unitId);
+	
+	if (!isCombatUnit(unitId))
+	{
+		return UC_NOT_COMBAT;
+	}
+	
+	switch (unit->triad())
+	{
+	case TRIAD_LAND:
+		
+		// that includes spore launcher
+		if (unit_has_ability(unitId, ABL_ARTILLERY))
+		{
+			return UC_LAND_ARTILLERY;
+		}
+		else
+		{
+			if (unit_chassis_speed(unitId) > 1)
+			{
+				return UC_LAND_FAST_ATTACKER;
+			}
+			else
+			{
+				if (unitWeaponOffenseValue == 1)
+				{
+					return UC_INFANTRY_DEFENDER;
+				}
+				// that includes mind worms
+				else
+				{
+					return UC_INFANTRY_ATTACKER;
+				}
+				
+			}
+			
+		}
+		
+		break;
+		
+	case TRIAD_SEA:
+		
+		// that includes sealurk and isle of deep
+		return UC_SHIP;
+		
+		break;
+		
+	case TRIAD_AIR:
+		
+		if (unit_has_ability(unitId, ABL_AIR_SUPERIORITY))
+		{
+			return UC_INTERCEPTOR;
+		}
+		else
+		{
+			return UC_BOMBER;
+		}
+		
+	}
+	
+	return UC_NOT_COMBAT;
 	
 }
 

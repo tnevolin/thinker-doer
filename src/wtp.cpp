@@ -256,9 +256,14 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 			(is_ocean(combatMapTile) && conf.combat_bonus_sensor_ocean)
 		)
 		{
-			// attacker is in range of friendly sensor
+			// attacker is in range of friendly sensor and combat is happening on attacker territory
 
-			if (isWithinFriendlySensorRange(attackerVehicle->faction_id, combatLocationX, combatLocationY))
+			if
+			(
+				isWithinFriendlySensorRange(attackerVehicle->faction_id, combatLocationX, combatLocationY)
+				&&
+				combatMapTile->owner == attackerVehicle->faction_id
+			)
 			{
 				// modify attacker strength
 
@@ -4524,7 +4529,7 @@ int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, i
 	)
 	{
 		debug("modified_propose_proto: rejected defender ship\n")
-		debug("\treactorId=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactorId, chassisId, weaponId, armorId, getUnitTypeAbilitiesString(abilities).c_str());
+		debug("\treactorId=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactorId, chassisId, weaponId, armorId, getAbilitiesString(abilities).c_str());
 		
 		return -1;
 		

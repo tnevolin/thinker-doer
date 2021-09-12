@@ -63,7 +63,7 @@ struct DefenseDemand
 	double artilleryDemand;
 };
 
-struct UnitTypeStrength
+struct UnitStrength
 {
 	double weight = 0.0;
 	double psiOffense = 0.0;
@@ -85,19 +85,19 @@ struct UnitTypeStrength
 struct MilitaryStrength
 {
 	double totalWeight = 0.0;
-	std::map<int, UnitTypeStrength> unitTypeStrengths;
+	std::map<int, UnitStrength> unitStrengths;
 	
 	void normalize()
 	{
 		for
 		(
-			std::map<int, UnitTypeStrength>::iterator unitTypeStrengthIterator = this->unitTypeStrengths.begin();
-			unitTypeStrengthIterator != this->unitTypeStrengths.end();
-			unitTypeStrengthIterator++
+			std::map<int, UnitStrength>::iterator unitStrengthsIterator = this->unitStrengths.begin();
+			unitStrengthsIterator != this->unitStrengths.end();
+			unitStrengthsIterator++
 		)
 		{
-			UnitTypeStrength *unitTypeStrength = &(unitTypeStrengthIterator->second);
-			unitTypeStrength->normalize(this->totalWeight);
+			UnitStrength *unitStrength = &(unitStrengthsIterator->second);
+			unitStrength->normalize(this->totalWeight);
 			
 		}
 		
@@ -122,6 +122,7 @@ struct BaseStrategy
 	double exposure;
 	bool inSharedOceanRegion;
 	double defenseDemand;
+	int combatUnitId;
 	int targetBaseId;
 	MilitaryStrength defenderStrength;
 	MilitaryStrength opponentStrength;
@@ -179,6 +180,8 @@ struct ActiveFactionInfo
 	std::unordered_map<int, int> regionAlienHunterDemands;
 	std::unordered_map<int, int> seaTransportRequests;
 	std::unordered_map<int, std::shared_ptr<Task>> tasks;
+	int bestVehicleWeaponOffenseValue;
+	int bestVehicleArmorDefenseValue;
 	
 	void clear()
 	{
@@ -241,24 +244,14 @@ int getFactionBestPrototypedArmorDefenseValue(int factionId);
 double evaluateCombatStrength(double offenseValue, double defenseValue);
 double evaluateOffenseStrength(double offenseValue);
 double evaluateDefenseStrength(double DefenseValue);
-//void evaluateBaseDefenseDemands();
-//void evaluateLandBaseDefenseDemand(int baseId);
-//void evaluateOceanBaseDefenseDemand(int baseId);
 bool isVehicleThreatenedByEnemyInField(int vehicleId);
 bool isDestinationReachable(int vehicleId, int x, int y, bool accountForSeaTransport);
 int getRangeToNearestFactionAirbase(int x, int y, int factionId);
 void populateBaseExposures();
 int getNearestEnemyBaseDistance(int baseId);
 void evaluateDefenseDemand();
-int packUnitType(int unitId);
-int isUnitTypeNative(int unitType);
-int getUnitTypeChassisType(int unitType);
-int isUnitTypeHasChassisType(int unitType, int chassisType);
-int getUnitTypeTriad(int unitType);
-int isUnitTypeHasTriad(int unitType, int triad);
-int isUnitTypeHasAbility(int unitType, int abilityFlag);
-double getConventionalCombatBonusMultiplier(int attackerUnitType, int defenderUnitType);
-std::string getUnitTypeAbilitiesString(int unitType);
+double getConventionalCombatBonusMultiplier(int attackerUnitId, int defenderUnitId);
+std::string getAbilitiesString(int unitType);
 bool isWithinAlienArtilleryRange(int vehicleId);
 bool isUseWtpAlgorithms(int factionId);
 

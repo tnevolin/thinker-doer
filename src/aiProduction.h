@@ -56,6 +56,30 @@ const int WTP_MANAGED_UNIT_PLANS[] =
     PLAN_TERRAFORMING,
 };
 
+enum COMBAT_UNIT_CLASS
+{
+	UC_NOT_COMBAT,
+	UC_INFANTRY_DEFENDER,
+	UC_INFANTRY_ATTACKER,
+	UC_LAND_FAST_ATTACKER,
+	UC_LAND_ARTILLERY,
+	UC_SHIP,
+	UC_BOMBER,
+	UC_INTERCEPTOR,
+};
+
+const double COMBAT_UNIT_CLASS_WEIGHTS[] =
+{
+	0.0,
+	1.0,
+	0.5,
+	0.5,
+	1.0,
+	1.0,
+	0.5,
+	0.1,
+};
+
 void aiProductionStrategy();
 //HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
 void setProduction();
@@ -96,12 +120,12 @@ int calculateRegionSurfaceUnitTypeCount(int factionId, int region, int weaponTyp
 int calculateUnitTypeCount(int baseId, int weaponType, int triad, int excludedBaseId);
 bool isBaseNeedPsych(int baseId);
 int findPoliceUnit(int factionId);
-//HOOK_API void modifiedBaseFirst(int baseId);
 bool isMilitaryItem(int item);
 int thinker_base_prod_choice(int id, int v1, int v2, int v3);
 int findBestAntiNativeUnitId(int baseId, int targetBaseId, int opponentTriad);
 int findBestAntiRegularUnitId(int baseId, int targetBaseId, int opponentTriad);
-int findBestDefenseUnit(int sourceBaseId, int targetBaseId);
+int selectCombatUnit(int baseId, int targetBaseId);
 void evaluateTransportDemand();
 int findTransportUnit();
+int getUnitClass(int unitId);
 

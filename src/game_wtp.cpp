@@ -613,7 +613,7 @@ double getPsiCombatBaseOdds(int triad)
 
 }
 
-bool isUnitCombat(int id)
+bool isCombatUnit(int id)
 {
 	assert(id >= 0);
 	
@@ -3449,14 +3449,14 @@ double battleCompute(int attackerVehicleId, int defenderVehicleId)
 	
 	if
 	(
-		attackerVehicle->triad() == TRIAD_LAND && can_arty(attackerVehicleId, 1)
+		attackerVehicle->triad() == TRIAD_LAND && can_arty(attackerVehicle->unit_id, 1)
 		||
-		attackerVehicle->triad() == TRIAD_SEA && can_arty(attackerVehicleId, 1) && defenderVehicle->triad() == TRIAD_LAND && !is_ocean(defenderVehicleTile)
+		attackerVehicle->triad() == TRIAD_SEA && can_arty(attackerVehicle->unit_id, 1) && defenderVehicle->triad() == TRIAD_LAND && !is_ocean(defenderVehicleTile)
 	)
 	{
 		flags |= 0x01;
 		
-		if (can_arty(defenderVehicleId, 1))
+		if (can_arty(defenderVehicle->unit_id, 1))
 		{
 			flags |= 0x02;
 		}
@@ -3672,7 +3672,7 @@ double getPercentageBonusMultiplier(int percentageBonus)
 /*
 Returns unit cost accounting for roughly 40 turns of maintenance.
 */
-int getMaintenanceUnitCost(int unitId)
+int getUnitMaintenanceCost(int unitId)
 {
 	return Units[unitId].cost + 4;
 }
@@ -3830,7 +3830,7 @@ double getBattleOdds(int attackerVehicleId, int defenderVehicleId)
 	
 	// calculate relative strength
 	
-	double relativeStrength =battleCompute(attackerVehicleId, defenderVehicleId);
+	double relativeStrength = battleCompute(attackerVehicleId, defenderVehicleId);
 	
 	// check whether battle ignores reactor
 	
@@ -3849,5 +3849,15 @@ double getBattleOdds(int attackerVehicleId, int defenderVehicleId)
 	
 	return relativeStrength * ((double)attackerPower / (double)defenderPower);
 	
+}
+
+int getUnitWeaponOffenseValue(int unitId)
+{
+	return Weapon[Units[unitId].weapon_type].offense_value;
+}
+
+int getUnitArmorDefenseValue(int unitId)
+{
+	return Armor[Units[unitId].armor_type].defense_value;
 }
 

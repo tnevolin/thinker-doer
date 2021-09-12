@@ -2267,16 +2267,6 @@ void patch_weapon_help_always_show_cost()
 
 }
 
-///*
-//Wraps base_first call.
-//*/
-//void patch_base_first()
-//{
-//	write_call(0x004E4D47, (int)modifiedBaseFirst);
-//	write_call(0x0050D36E, (int)modifiedBaseFirst);
-//
-//}
-//
 /*
 Disables restoring movement points to terraforming vehicle.
 */
@@ -4892,8 +4882,6 @@ void patch_setup_wtp(Config* cf)
 
 	patch_weapon_help_always_show_cost();
 
-//	patch_base_first();
-//
 	if (cf->fix_former_wake)
 	{
 		patch_veh_wake();

@@ -1,3 +1,24 @@
+# Version 267
+
+* Further combat units production optimization.
+* Reduced some early facilities maintenance. They put too much pressure on early factions.
+  * Recycling Tanks,               8, 2
+	* Genejack Factory,             12, 4
+	* Robotic Assembly Plant,       18, 6
+	* Quantum Converter,            27, 8
+	* Nanoreplicator,               40,10
+	* Hab Complex,                   8, 1
+	* Habitation Dome,              16, 2
+	* Command Center,                8, 1
+	* Naval Yard,                    8, 1
+	* Temple of Planet,             20, 4
+	* Aquafarm,                     16, 3
+	* Subsea Trunkline,             12, 2
+	* Thermocline Transducer,        8, 1
+
+
+
+
 # Version 266
 
 * Found a purpose for pathetic Universal Translator and other single base labs multiplying projects. They were not that impactful and interesting in vanilla. This verstion turns them into regular faction wide projects affecting all bases with small labs bonus. This bonus is applied in the same order as before: after regular multiplying facilities like Network Node and before The Network Backbone.
