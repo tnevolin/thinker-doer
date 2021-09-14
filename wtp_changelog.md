@@ -2,7 +2,7 @@
 
 * Further combat units production optimization.
 * Reduced some early facilities maintenance. They put too much pressure on early factions.
-  * Recycling Tanks,               8, 2
+	* Recycling Tanks,               8, 2
 	* Genejack Factory,             12, 4
 	* Robotic Assembly Plant,       18, 6
 	* Quantum Converter,            27, 8
