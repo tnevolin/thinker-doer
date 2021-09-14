@@ -16,13 +16,10 @@
 	* Subsea Trunkline,             12, 2
 	* Thermocline Transducer,        8, 1
 
-
-
-
 # Version 266
 
 * Found a purpose for pathetic Universal Translator and other single base labs multiplying projects. They were not that impactful and interesting in vanilla. This verstion turns them into regular faction wide projects affecting all bases with small labs bonus. This bonus is applied in the same order as before: after regular multiplying facilities like Network Node and before The Network Backbone.
-  * The Supercollider,            30, Base labs +10%
+	* The Supercollider,            30, Base labs +10%
 	* The Theory of Everything,     60, Base labs +20%
 	* The Universal Translator,    100, Base labs +30% + Two Free Techs
 
