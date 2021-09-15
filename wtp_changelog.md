@@ -1,3 +1,7 @@
+# Version 268
+
+* Removed free Recycling Tank from Usurpers. Forgot to do it when I repurposed it.
+
 # Version 267
 
 * Further combat units production optimization.
