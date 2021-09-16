@@ -1,3 +1,10 @@
+# Version 269
+
+* Reduced Comm Jammer bonus to +25%.
+* Mag Tubes are moved earlier on the tech tree (75%->50%). Somewhere when Air power is discovered. There is no big deal in having them earlier now since they are limited in speed.
+* Mag Tube base terraforming time is increased to 6 to make it slightly more expensive even when it appears earlier.
+* Hovertank chassis is reassigned to Probability Mechanics to keep them at about same time since Monopole Magnets moved earlier.
+
 # Version 268
 
 * Removed free Recycling Tank from Usurpers. Forgot to do it when I repurposed it.

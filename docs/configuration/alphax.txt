@@ -59,7 +59,7 @@
 50,      ; Combat penalty % -> Air superiority unit vs. ground unit
 100,     ; Combat % -> Air superiority unit vs. air unit
 0,       ; Combat penalty % -> Non-combat unit defending vs. combat unit
-50,      ; Combat % -> Comm Jammer unit defending vs. mobile unit
+25,      ; Combat % -> Comm Jammer unit defending vs. mobile unit
 0,       ; Combat % -> Bonus vs. ships caught in port
 50,      ; Combat % -> AAA bonus vs. air units
 25,      ; Combat % -> Defend in range of friendly Sensor
@@ -116,7 +116,7 @@ Mine,             None,    Mining Platform,  None,     8,  Construct $STR0, M, M
 Solar Collector,  None,    Tidal Harness,    None,     4,  Construct $STR0, S, S
 Forest,           None,    ...,              Disable,  8,  Plant $STR0,     F, Shift+F
 Road,             None,    Road,             Disable,  1,  Build $STR0,     R, R
-Mag Tube,         Magnets, Mag Tube,         Disable,  3,  Build $STR0,     R, R
+Mag Tube,         Magnets, Mag Tube,         Disable,  6,  Build $STR0,     R, R
 Bunker,           Disable, Bunker,           Disable,  5,  Construct $STR0, K, K
 Airbase,          DocAir,  Airbase,          Disable, 10,  Construct $STR0, ., .
 Sensor Array,     None,    Sensor Buoy,      None,     4,  Construct $STR0, O, O
@@ -270,10 +270,10 @@ Quantum Computers,             Surface,  1, 6, 1, 1, IndRob,  Quantum, 000000000
 Nanometallurgy,                Metal,    2, 2, 3, 2, SupLube, IndRob,  000000000
 Superstring Theory,            String,   6, 1, 1, 1, Fossil,  E=Mc2,   000000000
 Advanced Military Algorithms,  MilAlg,   3, 2, 2, 2, OptComp, Fossil,  000000000
-Monopole Magnets,              Magnets,  3, 2, 2, 2, IndRob,  PlaEcon, 000000000
+Monopole Magnets,              Magnets,  3, 2, 2, 2, String,  Alloys,  000000000
 Matter Compression,            MatComp,  2, 2, 3, 2, ProbMec, Metal,   000000000
-Unified Field Theory,          Unified,  4, 3, 1, 1, SupLube, Quantum, 000000000
-Graviton Theory,               Gravity,  6, 1, 1, 1, QuanMac, Magnets, 000000000
+Unified Field Theory,          Unified,  4, 3, 1, 1, SupLube, Magnets, 000000000
+Graviton Theory,               Gravity,  6, 1, 1, 1, QuanMac, SingMec, 000000000
 Polymorphic Software,          Poly,     3, 4, 1, 1, DocFlex, None,    000000000
 Applied Gravitonics,           AGrav,    6, 1, 1, 1, Gravity, Space,   000000000
 deleted,                       delete,   0, 0, 0, 0, Disable, Disable, 000000000
@@ -364,7 +364,7 @@ Transcendent Thought,          TranT,    2, 3, 2, 2, Thresh,  BFG9000, 000000000
 #CHASSIS
 Infantry,M1,  Squad,M1,      Sentinels,M2,   Garrison,M1,  1, 0, 0, 0, 1, 4, None,     Shock Troops,M2,   Elite Guard,M1,
 Speeder,M1,   Rover,M1,      Defensive,M1,   Skirmisher,M1,2, 0, 0, 0, 1, 6, Mobile,   Dragon,M1,         Enforcer,M1,
-Hovertank,M1, Tank,M1,       Skimmer,M1,     Evasive,M1,   3, 0, 0, 0, 1, 8, Magnets,  Behemoth,M1,       Guardian,M1,
+Hovertank,M1, Tank,M1,       Skimmer,M1,     Evasive,M1,   3, 0, 0, 0, 1, 8, ProbMec,  Behemoth,M1,       Guardian,M1,
 Foil,M1,      Skimship,M1,   Hoverboat,M1,   Coastal,M1,   4, 1, 0, 0, 2, 6, DocFlex,  Megafoil,M1,       Superfoil,M1,
 Cruiser,M1,   Destroyer,M1,  Cutter,M1,      Gunboat,M1,   6, 1, 0, 0, 4, 8, DocInit,  Battleship,M1,     Monitor,M1,
 Needlejet,M1, Penetrator,M1, Interceptor,M1, Tactical,M1,  8, 2, 2, 0, 1, 6, DocAir,   Thunderbolt,M1,    Sovereign,M1,
@@ -448,8 +448,8 @@ Silksteel Armor,     Silksteel,   5, 1, 5, Alloys,
 Photon Wall,         Photon,      8, 1, 8, DocSec,
 Probability Sheath,  Probability,12, 2,12, ProbMec,
 Neutronium Armor,    Neutronium, 16, 1,16, MatComp,
-Antimatter Plate,    Antimatter, 22, 2,22, NanEdit,
-Stasis Generator,    Stasis,     28, 2,28, TempMec,
+Antimatter Plate,    Antimatter, 20, 2,20, NanEdit,
+Stasis Generator,    Stasis,     26, 2,26, TempMec,
 Psi Defense,         Psi,        -1, 2, 6, Disable,
 Pulse 3 Armor,       3-Pulse,     3, 1, 5, Disable,
 Resonance 3 Armor,   3-Res,       3, 1, 5, Disable,
