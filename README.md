@@ -80,7 +80,7 @@ Keep in mind that technology prerequisites are generally arbitrary and serve as 
 Modding Social Engineering is the project in itself. There is no right and wrong answer on that. However, I expressed my view in the article here that also contains references to contemporary updates with explanations.
 http://alphacentauri2.info/wiki/Social_Engineering_Mod
 
-# Combat related stuff
+# Combat
 
 ## Attack/defense ratio adjustment
 
@@ -274,6 +274,21 @@ This formula changes the actual unit cost. The literal text in base screen item 
 ##### Prototype cost bug in vanilla
 
 Vanilla uses *Extra percentage cost of prototype LAND unit* percentage for designing brand new unit in design workshop regardless of selected chassis. Therefore *extra percentage costs* for all triads should be kept equal. For the same reason alternative formula above uses LAND percentage only.
+
+## Mobilie attack bonus
+
+I find mobile in open vanilla combat bonus inconvenient to balance. The game already provides defensive terrain combat bonuses that alters combat outcome. Adding offensive terrain combat bonus doesn't change the combat system in general but adds another variable instead that need t obe taken into account when balancing values. I have decided to replace offensive terrain combat bonus with generic offensive mobility combat bonus that has nothing to do with terrain but with the chassis speed instead. That is faster surface unit attacking unit of the same triad in a field (not base or bunker) gets an offensive bonus regardless of terrain. This allows easily balance faster unit extra cost as well as build different battle configuration combinations involving terrain and mobility.
+
+| attacker chassis | defender chassis | attack bonus, % |
+|----|----|----:|
+| Speeder | Infantry | 25 |
+| Hovertank | Infantry | 50 |
+| Hovertank | Speeder | 25 |
+| Cruiser | Foil | 25 |
+
+Provided that terrain bonus could be somewhere between 0% and 50% the 25% mobility bonus is not that big taking 50% higher cost into account. The 50% bonus for hovertank vs. infantry is huge but again is no bigger than 100% increase in cost. So hovertank still does not have superior combat effectiveness and does not override previous chassis completely. Also keep in mind that this bonus applies on offense only. Defensively wise mobile units are same exactly vulnerable as they were before.
+
+I have some reservation giving cruiser advantage over foil in ocean battles as there is no defensive terrain. However, foil is relatively mobile itself and able to spot cruisers within own territory using sensors and counterattack effectively with 25% sensor attack bonus. Same sensors give it 25% defense bonus nullifying its mobility bonus. Besides, this mobility bonus does not apply to base assault and cruser freezes after a single battle providing excellent counter attack target. Thus, this small bonus gives some incentive building cruiser units because previously I didn't even bother with them. Now they divide their roles same way as for land units. Faster cruiser is for ocean superiority and quick response (partolling, territory defense, counter attacking, destroying formers and improvements, intercepting transports). Slower but cheaper foils are for base capturing.
 
 # Unit hurry cost
 

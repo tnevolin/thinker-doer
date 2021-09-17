@@ -86,19 +86,31 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 	UNIT *attackerUnit = &Units[attackerVehicle->unit_id];
 	UNIT *defenderUnit = &Units[defenderVehicle->unit_id];
 
+	// get unit chassis
+	
+	int attackerChassisType = attackerUnit->chassis_type;
+	int defenderChassisType = defenderUnit->chassis_type;
+	
+	// get item values
+	
+	int attackerWeaponOffenseValue = Weapon[attackerUnit->weapon_type].offense_value;
+	int attackerArmorDefenseValue = Armor[attackerUnit->armor_type].defense_value;
+	int defenderWeaponOffenseValue = Weapon[defenderUnit->weapon_type].offense_value;
+	int defenderArmorDefenseValue = Armor[defenderUnit->armor_type].defense_value;
+
 	// get combat map tile
 
 	int combatLocationX = defenderVehicle->x;
 	int combatLocationY = defenderVehicle->y;
 	MAP *combatMapTile = getVehicleMapTile(defenderVehicleId);
-
+	
 	// run original function
 
 	battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
 	
-    // --------------------------------------------------
-    // Artillery duel defender uses best of weapon/armor value
-    // --------------------------------------------------
+    // ----------------------------------------------------------------------------------------------------
+    // artillery duelants uses weapon + armor value
+    // ----------------------------------------------------------------------------------------------------
     
     if
 	(
@@ -115,16 +127,16 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 		Weapon[defenderUnit->weapon_type].offense_value > 0
 	)
 	{
-		// artillery duel uses weapon+armor value
+		// artillery duelants use weapon + armor value
 		
-		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * (Weapon[attackerUnit->weapon_type].offense_value + Armor[attackerUnit->armor_type].defense_value) / Weapon[attackerUnit->weapon_type].offense_value;
-		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (Weapon[defenderUnit->weapon_type].offense_value + Armor[defenderUnit->armor_type].defense_value) / Weapon[defenderUnit->weapon_type].offense_value;
+		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * (attackerWeaponOffenseValue + attackerArmorDefenseValue) / attackerWeaponOffenseValue;
+		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (defenderWeaponOffenseValue + defenderArmorDefenseValue) / defenderWeaponOffenseValue;
 		
 	}
     
-    // --------------------------------------------------
+    // ----------------------------------------------------------------------------------------------------
     // interceptor scramble fix
-    // --------------------------------------------------
+    // ----------------------------------------------------------------------------------------------------
     
     if
 	(
@@ -151,9 +163,6 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 	)
 	{
 		// attacker uses armor, not weapon
-		
-		int attackerWeaponOffenseValue = Weapon[attackerUnit->weapon_type].offense_value;
-		int attackerArmorDefenseValue = Armor[attackerUnit->armor_type].defense_value;
 		
 		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * attackerArmorDefenseValue / attackerWeaponOffenseValue;
 		
@@ -190,7 +199,9 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 		
 	}
 
+    // ----------------------------------------------------------------------------------------------------
     // PLANET combat bonus on defense
+    // ----------------------------------------------------------------------------------------------------
 
     if (conf.planet_combat_bonus_on_defense)
     {
@@ -240,7 +251,9 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 
     }
 
+    // ----------------------------------------------------------------------------------------------------
     // sensor
+    // ----------------------------------------------------------------------------------------------------
 
     int LABEL_OFFSET_SENSOR = 0x265;
 
@@ -321,6 +334,52 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 
 	}
 
+    // ----------------------------------------------------------------------------------------------------
+    // fast unit bonus
+    // ----------------------------------------------------------------------------------------------------
+    
+    if (!map_has_item(combatMapTile, TERRA_BASE_IN_TILE | TERRA_BUNKER))
+	{
+		int combatBonusFieldFasterUnitAttack = 0;
+		
+		if (attackerChassisType == CHS_SPEEDER && defenderChassisType == CHS_INFANTRY)
+		{
+			combatBonusFieldFasterUnitAttack = conf.combat_bonus_field_attack_speeder_vs_infantry;
+		}
+		else if (attackerChassisType == CHS_HOVERTANK && defenderChassisType == CHS_INFANTRY)
+		{
+			combatBonusFieldFasterUnitAttack = conf.combat_bonus_field_attack_hovertank_vs_infantry;
+		}
+		else if (attackerChassisType == CHS_HOVERTANK && defenderChassisType == CHS_SPEEDER)
+		{
+			combatBonusFieldFasterUnitAttack = conf.combat_bonus_field_attack_hovertank_vs_speeder;
+		}
+		else if (attackerChassisType == CHS_CRUISER && defenderChassisType == CHS_FOIL)
+		{
+			combatBonusFieldFasterUnitAttack = conf.combat_bonus_field_attack_cruiser_vs_foil;
+		}
+		
+		if (combatBonusFieldFasterUnitAttack != 0)
+		{
+			// modify attacker strength
+
+			*(int *)attackerStrengthPointer = getPercentageBonusModifiedValue(*(int *)attackerStrengthPointer, combatBonusFieldFasterUnitAttack);
+
+			// add effect description
+
+			if (*tx_battle_compute_defender_effect_count < 4)
+			{
+				strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], "Faster unit");
+				(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = combatBonusFieldFasterUnitAttack;
+
+				(*tx_battle_compute_attacker_effect_count)++;
+
+			}
+
+		}
+		
+	}
+    
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
 //

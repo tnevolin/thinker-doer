@@ -47,7 +47,7 @@
 0,       ; Combat % -> attacking along road
 0,       ; Combat % -> for attacking from higher elevation
 0,       ; Combat penalty % -> attacking from lower elevation
-25,      ; Combat % -> Mobile unit in open ground
+0,       ; Combat % -> Mobile unit in open ground
 0,       ; Combat % -> Defend vs. mobile in rough
 0,       ; Combat % -> Infantry vs. Base
 50,      ; Combat penalty % -> attack after airdrop

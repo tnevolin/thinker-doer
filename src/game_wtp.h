@@ -336,6 +336,7 @@ double getSensorDefenseMultiplier(int factionId, int x, int y);
 bool isNativeUnit(int unitId);
 bool isNativeVehicle(int vehicleId);
 double getPercentageBonusMultiplier(int percentageBonus);
+int getPercentageBonusModifiedValue(int value, int percentageBonus);
 int getUnitMaintenanceCost(int unitId);
 bool isMineBonus(int x, int y);
 std::vector<int> selectVehicles(const VehicleFilter filter);

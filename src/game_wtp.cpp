@@ -3669,6 +3669,11 @@ double getPercentageBonusMultiplier(int percentageBonus)
 	return 1.0 + (double)percentageBonus / 100.0;
 }
 
+int getPercentageBonusModifiedValue(int value, int percentageBonus)
+{
+	return value * (100 + percentageBonus) / 100;
+}
+
 /*
 Returns unit cost accounting for roughly 40 turns of maintenance.
 */

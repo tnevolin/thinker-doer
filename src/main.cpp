@@ -610,6 +610,22 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->science_projects_universaltranslator_labs_bonus = atoi(value);
     }
+    else if (MATCH("wtp", "combat_bonus_field_attack_speeder_vs_infantry"))
+    {
+        cf->combat_bonus_field_attack_speeder_vs_infantry = atoi(value);
+    }
+    else if (MATCH("wtp", "combat_bonus_field_attack_hovertank_vs_speeder"))
+    {
+        cf->combat_bonus_field_attack_hovertank_vs_speeder = atoi(value);
+    }
+    else if (MATCH("wtp", "combat_bonus_field_attack_hovertank_vs_infantry"))
+    {
+        cf->combat_bonus_field_attack_hovertank_vs_infantry = atoi(value);
+    }
+    else if (MATCH("wtp", "combat_bonus_field_attack_cruiser_vs_foil"))
+    {
+        cf->combat_bonus_field_attack_cruiser_vs_foil = atoi(value);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

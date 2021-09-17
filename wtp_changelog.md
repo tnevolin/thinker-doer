@@ -1,3 +1,7 @@
+# Version 270
+
+* Removed "mobile in open" bonus. Introduced "faster unit" bonus that consistently applies to any faster unit attacking slower one on any terrain. Experimental.
+
 # Version 269
 
 * Reduced Comm Jammer bonus to +25%.
