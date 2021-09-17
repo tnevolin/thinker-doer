@@ -3674,6 +3674,11 @@ int getPercentageBonusModifiedValue(int value, int percentageBonus)
 	return value * (100 + percentageBonus) / 100;
 }
 
+int getPercentageSubstituteBonusModifiedValue(int value, int oldPercentageBonus, int newPercentageBonus)
+{
+	return value * (100 + newPercentageBonus) / (100 + oldPercentageBonus);
+}
+
 /*
 Returns unit cost accounting for roughly 40 turns of maintenance.
 */

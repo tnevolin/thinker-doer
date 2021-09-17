@@ -626,6 +626,22 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->combat_bonus_field_attack_cruiser_vs_foil = atoi(value);
     }
+    else if (MATCH("wtp", "combat_bonus_terrain_defense_rocky"))
+    {
+        cf->combat_bonus_terrain_defense_rocky = atoi(value);
+    }
+    else if (MATCH("wtp", "combat_bonus_terrain_defense_forest"))
+    {
+        cf->combat_bonus_terrain_defense_forest = atoi(value);
+    }
+    else if (MATCH("wtp", "combat_bonus_terrain_defense_fungus"))
+    {
+        cf->combat_bonus_terrain_defense_fungus = atoi(value);
+    }
+    else if (MATCH("wtp", "disengagement_from_stack"))
+    {
+        cf->disengagement_from_stack = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

@@ -284,7 +284,7 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 
 				// add effect description
 
-				if (*tx_battle_compute_defender_effect_count < 4)
+				if (*tx_battle_compute_attacker_effect_count < 4)
 				{
 					strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], *(*tx_labels + LABEL_OFFSET_SENSOR));
 					(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = Rules->combat_defend_sensor;
@@ -338,7 +338,7 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
     // fast unit bonus
     // ----------------------------------------------------------------------------------------------------
     
-    if (!map_has_item(combatMapTile, TERRA_BASE_IN_TILE | TERRA_BUNKER))
+    if (!map_has_item(combatMapTile, TERRA_BASE_IN_TILE | TERRA_BUNKER | TERRA_AIRBASE))
 	{
 		int combatBonusFieldFasterUnitAttack = 0;
 		
@@ -367,7 +367,7 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 
 			// add effect description
 
-			if (*tx_battle_compute_defender_effect_count < 4)
+			if (*tx_battle_compute_attacker_effect_count < 4)
 			{
 				strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], "Faster unit");
 				(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = combatBonusFieldFasterUnitAttack;
@@ -380,6 +380,98 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 		
 	}
     
+    // ----------------------------------------------------------------------------------------------------
+    // terrain defense value
+    // ----------------------------------------------------------------------------------------------------
+    
+    // rocky
+    
+    if (map_rockiness(combatMapTile) == 2 && conf.combat_bonus_terrain_defense_rocky != 50)
+	{
+		// modify defender strength
+
+		*(int *)defenderStrengthPointer = getPercentageSubstituteBonusModifiedValue(*(int *)defenderStrengthPointer, 50, conf.combat_bonus_terrain_defense_rocky);
+
+		// modify effect description
+
+		for (int effectIndex = 0; effectIndex < *tx_battle_compute_defender_effect_count; effectIndex++)
+		{
+			if (strcmp((*tx_battle_compute_defender_effect_labels)[effectIndex], "Terrain (Rocky)") == 0)
+			{
+				(*tx_battle_compute_defender_effect_values)[effectIndex] = conf.combat_bonus_terrain_defense_rocky;
+				break;
+			}
+			
+		}
+		
+	}
+    
+    // forest
+    
+    else if (map_has_item(combatMapTile, TERRA_FOREST) && conf.combat_bonus_terrain_defense_forest != 50)
+	{
+		// modify defender strength
+
+		*(int *)defenderStrengthPointer = getPercentageSubstituteBonusModifiedValue(*(int *)defenderStrengthPointer, 50, conf.combat_bonus_terrain_defense_forest);
+
+		// modify effect description
+
+		for (int effectIndex = 0; effectIndex < *tx_battle_compute_defender_effect_count; effectIndex++)
+		{
+			if (strcmp((*tx_battle_compute_defender_effect_labels)[effectIndex], "Terrain (Forest)") == 0)
+			{
+				(*tx_battle_compute_defender_effect_values)[effectIndex] = conf.combat_bonus_terrain_defense_forest;
+				break;
+			}
+			
+		}
+		
+	}
+	
+    // fungus regular vs. regular
+    
+    else if (map_has_item(combatMapTile, TERRA_FUNGUS) && conf.combat_bonus_terrain_defense_fungus != 50 && attackerWeaponOffenseValue > 0 && defenderArmorDefenseValue > 0)
+	{
+		// modify defender strength
+
+		*(int *)defenderStrengthPointer = getPercentageSubstituteBonusModifiedValue(*(int *)defenderStrengthPointer, 50, conf.combat_bonus_terrain_defense_fungus);
+
+		// modify effect description
+
+		for (int effectIndex = 0; effectIndex < *tx_battle_compute_defender_effect_count; effectIndex++)
+		{
+			if (strcmp((*tx_battle_compute_defender_effect_labels)[effectIndex], "Terrain (Fungus)") == 0)
+			{
+				(*tx_battle_compute_defender_effect_values)[effectIndex] = conf.combat_bonus_terrain_defense_fungus;
+				break;
+			}
+			
+		}
+		
+	}
+	
+    // fungus native vs. regular
+    
+    else if (map_has_item(combatMapTile, TERRA_FUNGUS) && conf.combat_bonus_terrain_defense_fungus != 50 && attackerWeaponOffenseValue < 0 && defenderArmorDefenseValue > 0)
+	{
+		// modify attacker strength
+
+		*(int *)attackerStrengthPointer = getPercentageSubstituteBonusModifiedValue(*(int *)attackerStrengthPointer, 50, conf.combat_bonus_terrain_defense_fungus);
+
+		// modify effect description
+
+		for (int effectIndex = 0; effectIndex < *tx_battle_compute_attacker_effect_count; effectIndex++)
+		{
+			if (strcmp((*tx_battle_compute_attacker_effect_labels)[effectIndex], "Fungus") == 0)
+			{
+				(*tx_battle_compute_attacker_effect_values)[effectIndex] = conf.combat_bonus_terrain_defense_fungus;
+				break;
+			}
+			
+		}
+		
+	}
+	
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
 //

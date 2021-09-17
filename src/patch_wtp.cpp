@@ -4502,6 +4502,36 @@ void patch_science_projects_alternative_labs_bonus()
 	
 }
 
+void patch_disengagement_from_stack()
+{
+    int disengagement_from_stack_bytes_length = 0x3;
+
+    /*
+    0:  83 f8 01                cmp    eax,0x1
+    */
+    byte disengagement_from_stack_bytes_old[] =
+		{ 0x83, 0xF8, 0x01 }
+    ;
+
+    /*
+    0:  39 c0                   cmp    eax,eax
+	...
+    */
+    byte disengagement_from_stack_bytes_new[] =
+        { 0x39, 0xC0, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00508DCA,
+        disengagement_from_stack_bytes_old,
+        disengagement_from_stack_bytes_new,
+        disengagement_from_stack_bytes_length
+    )
+    ;
+    
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -5088,6 +5118,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->science_projects_alternative_labs_bonus)
 	{
 		patch_science_projects_alternative_labs_bonus();
+	}
+	
+	if (cf->disengagement_from_stack)
+	{
+		patch_disengagement_from_stack();
 	}
 	
 }

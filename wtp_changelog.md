@@ -1,6 +1,8 @@
 # Version 270
 
 * Removed "mobile in open" bonus. Introduced "faster unit" bonus that consistently applies to any faster unit attacking slower one on any terrain. Experimental. https://github.com/tnevolin/thinker-doer/blob/master/README.md#mobilie-attack-bonus
+* Fine grained terrain defensive bonuses. Rocks keep their hefty 50% bonus due to its rarity and impossibility to create with terraforming. Other more often and creatable rough terrains have 25%.
+* Allowed disengagement from stack. Never understood that vanilla restriction. Not that victor is going to step on the battle tile anyway.
 
 # Version 269
 

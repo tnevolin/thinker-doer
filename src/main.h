@@ -313,6 +313,10 @@ struct Config {
 	int combat_bonus_field_attack_hovertank_vs_speeder;
 	int combat_bonus_field_attack_hovertank_vs_infantry;
 	int combat_bonus_field_attack_cruiser_vs_foil;
+	int combat_bonus_terrain_defense_rocky;
+	int combat_bonus_terrain_defense_forest;
+	int combat_bonus_terrain_defense_fungus;
+	bool disengagement_from_stack;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

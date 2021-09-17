@@ -337,6 +337,7 @@ bool isNativeUnit(int unitId);
 bool isNativeVehicle(int vehicleId);
 double getPercentageBonusMultiplier(int percentageBonus);
 int getPercentageBonusModifiedValue(int value, int percentageBonus);
+int getPercentageSubstituteBonusModifiedValue(int value, int oldPercentageBonus, int newPercentageBonus);
 int getUnitMaintenanceCost(int unitId);
 bool isMineBonus(int x, int y);
 std::vector<int> selectVehicles(const VehicleFilter filter);
