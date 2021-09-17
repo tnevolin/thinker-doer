@@ -1,6 +1,6 @@
 # Version 270
 
-* Removed "mobile in open" bonus. Introduced "faster unit" bonus that consistently applies to any faster unit attacking slower one on any terrain. Experimental. (https://github.com/tnevolin/thinker-doer/blob/master/README.md#mobilie-attack-bonus)
+* Removed "mobile in open" bonus. Introduced "faster unit" bonus that consistently applies to any faster unit attacking slower one on any terrain. Experimental. https://github.com/tnevolin/thinker-doer/blob/master/README.md#mobilie-attack-bonus
 
 # Version 269
 
