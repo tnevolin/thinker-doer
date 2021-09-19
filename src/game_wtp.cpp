@@ -56,10 +56,6 @@ int unit_triad(int id) {
     return triad;
 }
 
-int unit_speed(int id) {
-    return Chassis[Units[id].chassis_type].speed;
-}
-
 double random_double(double scale) {
     return scale * ((double)rand() / (double)(RAND_MAX + 1));
 }

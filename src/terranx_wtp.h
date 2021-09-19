@@ -21,6 +21,12 @@ extern int (*tx_battle_compute_defender_effect_values)[0x4];
 extern char ***tx_labels;
 const int LABEL_OFFSET_PLANET = 0x271;
 const int LABEL_OFFSET_AIRTOAIR = 0x1C1;
+const int LABEL_OFFSET_SENSOR = 0x265;
+const int LABEL_OFFSET_TERRAIN = 0x14B;
+const int LABEL_OFFSET_ROCKY = 0x152;
+const int LABEL_OFFSET_FOREST = 0x123;
+const int LABEL_OFFSET_FUNGUS = 0x5B;
+const int LABEL_OFFSET_ROAD_ATTACK = 0x25E;
 
 extern char *g_strTEMP;
 extern int *current_base_growth_rate;
@@ -94,4 +100,5 @@ extern fp_2int *veh_who;
 extern fp_2int *pact_withdraw;
 extern fp_2int *base_find;
 extern fp_5int *whose_territory;
+extern fp_1int* unit_speed;
 

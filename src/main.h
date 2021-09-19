@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 270 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 271 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -309,13 +309,7 @@ struct Config {
 	int science_projects_supercollider_labs_bonus;
 	int science_projects_theoryofeverything_labs_bonus;
 	int science_projects_universaltranslator_labs_bonus;
-	int combat_bonus_field_attack_speeder_vs_infantry;
-	int combat_bonus_field_attack_hovertank_vs_speeder;
-	int combat_bonus_field_attack_hovertank_vs_infantry;
-	int combat_bonus_field_attack_cruiser_vs_foil;
-	int combat_bonus_terrain_defense_rocky;
-	int combat_bonus_terrain_defense_forest;
-	int combat_bonus_terrain_defense_fungus;
+	int combat_bonus_attacking_along_road;
 	bool disengagement_from_stack;
     // AI configurations
     bool ai_useWTPAlgorithms;

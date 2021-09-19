@@ -17,6 +17,9 @@ int (*tx_battle_compute_defender_effect_values)[0x4] = (int (*)[0x4])0x915600;
 char ***tx_labels = (char ***)0x009B90F8;
 
 char *g_strTEMP = (char *)0x009B86A0;
+char *SPACE = (char *)0x00682820;
+char *PARENTHESES_LEFT = (char *)0x00682E9C;
+char *PARENTHESES_RIGHT = (char *)0x00682E98;
 int *current_base_growth_rate = (int *)0x0090E918;
 int *g_PROBE_FACT_TARGET = (int *)0x00945B34;
 int *g_UNK_ATTACK_FLAGS = (int *)0x0093E904;
@@ -211,4 +214,7 @@ fp_2int *base_find = (fp_2int *)0x004E3B80;
 
 // checks territory
 fp_5int *whose_territory = (fp_5int *)0x004E3EF0;
+
+// unit speed
+fp_1int* unit_speed = (fp_1int*)0x005C13B0;
 

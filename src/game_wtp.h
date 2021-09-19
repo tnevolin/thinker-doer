@@ -159,7 +159,6 @@ int veh_speed_without_roads(int id);
 int unit_chassis_speed(int id);
 int veh_chassis_speed(int id);
 int unit_triad(int id);
-int unit_speed(int id);
 double random_double(double scale);
 bool is_sea_base(int id);
 BASE *vehicle_home_base(VEH *vehicle);

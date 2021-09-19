@@ -610,33 +610,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->science_projects_universaltranslator_labs_bonus = atoi(value);
     }
-    else if (MATCH("wtp", "combat_bonus_field_attack_speeder_vs_infantry"))
+    else if (MATCH("wtp", "combat_bonus_attacking_along_road"))
     {
-        cf->combat_bonus_field_attack_speeder_vs_infantry = atoi(value);
-    }
-    else if (MATCH("wtp", "combat_bonus_field_attack_hovertank_vs_speeder"))
-    {
-        cf->combat_bonus_field_attack_hovertank_vs_speeder = atoi(value);
-    }
-    else if (MATCH("wtp", "combat_bonus_field_attack_hovertank_vs_infantry"))
-    {
-        cf->combat_bonus_field_attack_hovertank_vs_infantry = atoi(value);
-    }
-    else if (MATCH("wtp", "combat_bonus_field_attack_cruiser_vs_foil"))
-    {
-        cf->combat_bonus_field_attack_cruiser_vs_foil = atoi(value);
-    }
-    else if (MATCH("wtp", "combat_bonus_terrain_defense_rocky"))
-    {
-        cf->combat_bonus_terrain_defense_rocky = atoi(value);
-    }
-    else if (MATCH("wtp", "combat_bonus_terrain_defense_forest"))
-    {
-        cf->combat_bonus_terrain_defense_forest = atoi(value);
-    }
-    else if (MATCH("wtp", "combat_bonus_terrain_defense_fungus"))
-    {
-        cf->combat_bonus_terrain_defense_fungus = atoi(value);
+        cf->combat_bonus_attacking_along_road = atoi(value);
     }
     else if (MATCH("wtp", "disengagement_from_stack"))
     {

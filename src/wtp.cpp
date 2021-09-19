@@ -97,12 +97,20 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 	int attackerArmorDefenseValue = Armor[attackerUnit->armor_type].defense_value;
 	int defenderWeaponOffenseValue = Weapon[defenderUnit->weapon_type].offense_value;
 	int defenderArmorDefenseValue = Armor[defenderUnit->armor_type].defense_value;
+	
+	// determine psi combat
+	
+	bool psiCombat = attackerWeaponOffenseValue < 0 || defenderArmorDefenseValue < 0;
+	
+	// get vehicle unit speeds
+	
+	int attackerUnitSpeed = unit_speed(attackerVehicle->unit_id);
+	int defenderUnitSpeed = unit_speed(defenderVehicle->unit_id);
 
 	// get combat map tile
 
-	int combatLocationX = defenderVehicle->x;
-	int combatLocationY = defenderVehicle->y;
-	MAP *combatMapTile = getVehicleMapTile(defenderVehicleId);
+	MAP *attackerMapTile = getVehicleMapTile(attackerVehicleId);
+	MAP *defenderMapTile = getVehicleMapTile(defenderVehicleId);
 	
 	// run original function
 
@@ -255,8 +263,6 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
     // sensor
     // ----------------------------------------------------------------------------------------------------
 
-    int LABEL_OFFSET_SENSOR = 0x265;
-
     // sensor bonus on attack
 
     if (conf.combat_bonus_sensor_offense)
@@ -264,18 +270,18 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 		if
 		(
 			// either combat is on land or sensor bonus is applicable on ocean
-			(!is_ocean(combatMapTile))
+			(!is_ocean(defenderMapTile))
 			||
-			(is_ocean(combatMapTile) && conf.combat_bonus_sensor_ocean)
+			(is_ocean(defenderMapTile) && conf.combat_bonus_sensor_ocean)
 		)
 		{
 			// attacker is in range of friendly sensor and combat is happening on attacker territory
 
 			if
 			(
-				isWithinFriendlySensorRange(attackerVehicle->faction_id, combatLocationX, combatLocationY)
+				isWithinFriendlySensorRange(attackerVehicle->faction_id, defenderVehicle->x, defenderVehicle->y)
 				&&
-				combatMapTile->owner == attackerVehicle->faction_id
+				defenderMapTile->owner == attackerVehicle->faction_id
 			)
 			{
 				// modify attacker strength
@@ -306,12 +312,12 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 		(
 			// ocean combat only
 			// land defence is already covered by vanilla
-			(is_ocean(combatMapTile) && conf.combat_bonus_sensor_ocean)
+			(is_ocean(defenderMapTile) && conf.combat_bonus_sensor_ocean)
 		)
 		{
 			// defender is in range of friendly sensor
 
-			if (isWithinFriendlySensorRange(defenderVehicle->faction_id, combatLocationX, combatLocationY))
+			if (isWithinFriendlySensorRange(defenderVehicle->faction_id, defenderVehicle->x, defenderVehicle->y))
 			{
 				// modify defender strength
 
@@ -335,143 +341,44 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 	}
 
     // ----------------------------------------------------------------------------------------------------
-    // fast unit bonus
+    // attacking along the road
     // ----------------------------------------------------------------------------------------------------
     
-    if (!map_has_item(combatMapTile, TERRA_BASE_IN_TILE | TERRA_BUNKER | TERRA_AIRBASE))
-	{
-		int combatBonusFieldFasterUnitAttack = 0;
-		
-		if (attackerChassisType == CHS_SPEEDER && defenderChassisType == CHS_INFANTRY)
-		{
-			combatBonusFieldFasterUnitAttack = conf.combat_bonus_field_attack_speeder_vs_infantry;
-		}
-		else if (attackerChassisType == CHS_HOVERTANK && defenderChassisType == CHS_INFANTRY)
-		{
-			combatBonusFieldFasterUnitAttack = conf.combat_bonus_field_attack_hovertank_vs_infantry;
-		}
-		else if (attackerChassisType == CHS_HOVERTANK && defenderChassisType == CHS_SPEEDER)
-		{
-			combatBonusFieldFasterUnitAttack = conf.combat_bonus_field_attack_hovertank_vs_speeder;
-		}
-		else if (attackerChassisType == CHS_CRUISER && defenderChassisType == CHS_FOIL)
-		{
-			combatBonusFieldFasterUnitAttack = conf.combat_bonus_field_attack_cruiser_vs_foil;
-		}
-		
-		if (combatBonusFieldFasterUnitAttack != 0)
-		{
-			// modify attacker strength
-
-			*(int *)attackerStrengthPointer = getPercentageBonusModifiedValue(*(int *)attackerStrengthPointer, combatBonusFieldFasterUnitAttack);
-
-			// add effect description
-
-			if (*tx_battle_compute_attacker_effect_count < 4)
-			{
-				strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], "Faster unit");
-				(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = combatBonusFieldFasterUnitAttack;
-
-				(*tx_battle_compute_attacker_effect_count)++;
-
-			}
-
-		}
-		
-	}
-    
-    // ----------------------------------------------------------------------------------------------------
-    // terrain defense value
-    // ----------------------------------------------------------------------------------------------------
-    
-    // rocky
-    
-    if (map_rockiness(combatMapTile) == 2 && conf.combat_bonus_terrain_defense_rocky != 50)
-	{
-		// modify defender strength
-
-		*(int *)defenderStrengthPointer = getPercentageSubstituteBonusModifiedValue(*(int *)defenderStrengthPointer, 50, conf.combat_bonus_terrain_defense_rocky);
-
-		// modify effect description
-
-		for (int effectIndex = 0; effectIndex < *tx_battle_compute_defender_effect_count; effectIndex++)
-		{
-			if (strcmp((*tx_battle_compute_defender_effect_labels)[effectIndex], "Terrain (Rocky)") == 0)
-			{
-				(*tx_battle_compute_defender_effect_values)[effectIndex] = conf.combat_bonus_terrain_defense_rocky;
-				break;
-			}
-			
-		}
-		
-	}
-    
-    // forest
-    
-    else if (map_has_item(combatMapTile, TERRA_FOREST) && conf.combat_bonus_terrain_defense_forest != 50)
-	{
-		// modify defender strength
-
-		*(int *)defenderStrengthPointer = getPercentageSubstituteBonusModifiedValue(*(int *)defenderStrengthPointer, 50, conf.combat_bonus_terrain_defense_forest);
-
-		// modify effect description
-
-		for (int effectIndex = 0; effectIndex < *tx_battle_compute_defender_effect_count; effectIndex++)
-		{
-			if (strcmp((*tx_battle_compute_defender_effect_labels)[effectIndex], "Terrain (Forest)") == 0)
-			{
-				(*tx_battle_compute_defender_effect_values)[effectIndex] = conf.combat_bonus_terrain_defense_forest;
-				break;
-			}
-			
-		}
-		
-	}
-	
-    // fungus regular vs. regular
-    
-    else if (map_has_item(combatMapTile, TERRA_FUNGUS) && conf.combat_bonus_terrain_defense_fungus != 50 && attackerWeaponOffenseValue > 0 && defenderArmorDefenseValue > 0)
-	{
-		// modify defender strength
-
-		*(int *)defenderStrengthPointer = getPercentageSubstituteBonusModifiedValue(*(int *)defenderStrengthPointer, 50, conf.combat_bonus_terrain_defense_fungus);
-
-		// modify effect description
-
-		for (int effectIndex = 0; effectIndex < *tx_battle_compute_defender_effect_count; effectIndex++)
-		{
-			if (strcmp((*tx_battle_compute_defender_effect_labels)[effectIndex], "Terrain (Fungus)") == 0)
-			{
-				(*tx_battle_compute_defender_effect_values)[effectIndex] = conf.combat_bonus_terrain_defense_fungus;
-				break;
-			}
-			
-		}
-		
-	}
-	
-    // fungus native vs. regular
-    
-    else if (map_has_item(combatMapTile, TERRA_FUNGUS) && conf.combat_bonus_terrain_defense_fungus != 50 && attackerWeaponOffenseValue < 0 && defenderArmorDefenseValue > 0)
+    if
+	(
+		// not psi combat
+		!psiCombat
+		&&
+		// attacking along roads bonus is enabled
+		conf.combat_bonus_attacking_along_road != 0
+		&&
+		// attacker is on road or in base
+		map_has_item(attackerMapTile, TERRA_ROAD | TERRA_MAGTUBE | TERRA_BASE_IN_TILE)
+		&&
+		// defender is on road and NOT in base/bunker/airbase
+		map_has_item(defenderMapTile, TERRA_ROAD | TERRA_MAGTUBE) && !map_has_item(defenderMapTile, TERRA_BASE_IN_TILE | TERRA_BUNKER | TERRA_AIRBASE)
+		&&
+		// attacker unit speed is greater than defender unit speed
+		attackerUnitSpeed > defenderUnitSpeed
+	)
 	{
 		// modify attacker strength
 
-		*(int *)attackerStrengthPointer = getPercentageSubstituteBonusModifiedValue(*(int *)attackerStrengthPointer, 50, conf.combat_bonus_terrain_defense_fungus);
+		*(int *)attackerStrengthPointer = getPercentageBonusModifiedValue(*(int *)attackerStrengthPointer, conf.combat_bonus_attacking_along_road);
 
-		// modify effect description
-
-		for (int effectIndex = 0; effectIndex < *tx_battle_compute_attacker_effect_count; effectIndex++)
+		// add effect description
+		
+		if (*tx_battle_compute_attacker_effect_count < 4)
 		{
-			if (strcmp((*tx_battle_compute_attacker_effect_labels)[effectIndex], "Fungus") == 0)
-			{
-				(*tx_battle_compute_attacker_effect_values)[effectIndex] = conf.combat_bonus_terrain_defense_fungus;
-				break;
-			}
+			strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], *(*tx_labels + LABEL_OFFSET_ROAD_ATTACK));
+			(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = conf.combat_bonus_attacking_along_road;
+			
+			(*tx_battle_compute_attacker_effect_count)++;
 			
 		}
 		
 	}
-	
+    
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
 //

@@ -1,3 +1,10 @@
+# Version 271
+
+* Revorked combat bonuses from previous version to use more of vanilla existing bonuses with minimal fix.
+	* Reverted terrain bonuses.
+	* Removed "faster unit" special bonus.
+	* Introduced +25% attacking along the road bonus (in thinker.ini).
+
 # Version 270
 
 * Removed "mobile in open" bonus. Introduced "faster unit" bonus that consistently applies to any faster unit attacking slower one on any terrain. Experimental. https://github.com/tnevolin/thinker-doer/blob/master/README.md#mobilie-attack-bonus
