@@ -86,11 +86,6 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 	UNIT *attackerUnit = &Units[attackerVehicle->unit_id];
 	UNIT *defenderUnit = &Units[defenderVehicle->unit_id];
 
-	// get unit chassis
-	
-	int attackerChassisType = attackerUnit->chassis_type;
-	int defenderChassisType = defenderUnit->chassis_type;
-	
 	// get item values
 	
 	int attackerWeaponOffenseValue = Weapon[attackerUnit->weapon_type].offense_value;
@@ -3539,7 +3534,17 @@ HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int 
 			int attackerExactOdds;
 			int defenderExactOdds;
 			
-			if (attackerWinningProbability >= 0.5)
+			if (attackerWinningProbability >= 0.99)
+			{
+				attackerExactOdds = 100;
+				defenderExactOdds = 1;
+			}
+			else if (attackerWinningProbability <= 0.01)
+			{
+				attackerExactOdds = 1;
+				defenderExactOdds = 100;
+			}
+			else if (attackerWinningProbability >= 0.5)
 			{
 				attackerExactOdds = (int)round(attackerWinningProbability / (1.0 - attackerWinningProbability) * (double)defenderOdds);
 				defenderExactOdds = defenderOdds;

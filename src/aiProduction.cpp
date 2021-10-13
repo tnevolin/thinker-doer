@@ -2876,6 +2876,11 @@ int selectCombatUnit(int baseId, int targetBaseId)
 		
 		debug("\t%s\n", unit->name);
 		
+		// do not produce sea unit in base that is not in shared ocean region
+		
+		if (triad == TRIAD_SEA && !activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion)
+			continue;
+		
 		// ocean base
 		if (ocean)
 		{

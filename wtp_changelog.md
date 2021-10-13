@@ -1,3 +1,10 @@
+# Version 272
+
+* Fixed my bug when base can produce sea unit without access to ocean.
+* Doubled average number of turns to discover an infiltration device.
+* Native unit cost now grows slower with time (2 times in 350 turns, not 4 times as before).
+* Limited displayed combat odds to 1:100 - 100:1 range to avoid displaying huge numbers.
+
 # Version 271
 
 * Revorked combat bonuses from previous version to use more of vanilla existing bonuses with minimal fix.
@@ -148,7 +155,7 @@ People say they are very strong with their +1 POLICE that turns into +3 POLICE w
 
 ### Cult of Planet
 
-People say they are very strong with their +2 PLANET and double police power for native units. Adding -1 POLICE penalty to make them more difficult to achieve higher police ratings.
+People say they are very strong with their +2 PLANET and double police power for mind worms. Adding -1 POLICE penalty to make them more difficult to achieve higher police ratings.
 
 # Version 255
 

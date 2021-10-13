@@ -188,9 +188,9 @@ void populateGlobalVariables()
 
 	debug("activeFactionInfo.baseStrategies\n");
 
-	for (int id = 0; id < *total_num_bases; id++)
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
 	{
-		BASE *base = &(Bases[id]);
+		BASE *base = &(Bases[baseId]);
 
 		// exclude not own bases
 
@@ -199,36 +199,36 @@ void populateGlobalVariables()
 
 		// add base
 		
-		activeFactionInfo.baseIds.push_back(id);
+		activeFactionInfo.baseIds.push_back(baseId);
 		
 		// add base location
 
 		MAP *baseLocation = getMapTile(base->x, base->y);
-		activeFactionInfo.baseLocations[baseLocation] = id;
+		activeFactionInfo.baseLocations[baseLocation] = baseId;
 
 		// add base strategy
 
-		activeFactionInfo.baseStrategies[id] = {};
-		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[id]);
+		activeFactionInfo.baseStrategies[baseId] = {};
+		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseId]);
 		
 		baseStrategy->base = base;
-		baseStrategy->intrinsicDefenseMultiplier = getBaseDefenseMultiplier(id, -1);
-		baseStrategy->conventionalDefenseMultipliers[TRIAD_LAND] = getBaseDefenseMultiplier(id, TRIAD_LAND);
-		baseStrategy->conventionalDefenseMultipliers[TRIAD_SEA] = getBaseDefenseMultiplier(id, TRIAD_SEA);
-		baseStrategy->conventionalDefenseMultipliers[TRIAD_AIR] = getBaseDefenseMultiplier(id, TRIAD_AIR);
+		baseStrategy->intrinsicDefenseMultiplier = getBaseDefenseMultiplier(baseId, -1);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_LAND] = getBaseDefenseMultiplier(baseId, TRIAD_LAND);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_SEA] = getBaseDefenseMultiplier(baseId, TRIAD_SEA);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_AIR] = getBaseDefenseMultiplier(baseId, TRIAD_AIR);
 		baseStrategy->sensorOffenseMultiplier = getSensorOffenseMultiplier(base->faction_id, base->x, base->y);
 		baseStrategy->sensorDefenseMultiplier = getSensorDefenseMultiplier(base->faction_id, base->x, base->y);
 
-		debug("\n[%3d] %-25s\n", id, activeFactionInfo.baseStrategies[id].base->name);
+		debug("\n[%3d] %-25s\n", baseId, activeFactionInfo.baseStrategies[baseId].base->name);
 
 		// add base regions
 		
-		int baseRegion = getBaseMapTile(id)->region;
+		int baseRegion = getBaseMapTile(baseId)->region;
 		
-		activeFactionInfo.presenceRegions.insert(getBaseMapTile(id)->region);
-		activeFactionInfo.regionBaseIds[baseRegion].insert(id);
+		activeFactionInfo.presenceRegions.insert(getBaseMapTile(baseId)->region);
+		activeFactionInfo.regionBaseIds[baseRegion].insert(baseId);
 
-		std::set<int> baseConnectedRegions = getBaseConnectedRegions(id);
+		std::set<int> baseConnectedRegions = getBaseConnectedRegions(baseId);
 
 		for (int region : baseConnectedRegions)
 		{
@@ -237,7 +237,7 @@ void populateGlobalVariables()
 				activeFactionInfo.regionBaseGroups[region] = std::vector<int>();
 			}
 
-			activeFactionInfo.regionBaseGroups[region].push_back(id);
+			activeFactionInfo.regionBaseGroups[region].push_back(baseId);
 
 		}
 
