@@ -112,21 +112,21 @@
 # Version 259
 
 * Mineral multiplying facilities affect all minerals. Whereas energy multiplyers affect only 1/2 - 2/3 of energy. Modified prices for all multiplying facilities accordingly.
-  * Energy Bank,                   4, 1
-  * Network Node,                  4, 1
+	* Energy Bank,                   4, 1
+	* Network Node,                  4, 1
 	* Fusion Lab,                   16, 4
-  * Quantum Lab,                  32, 8
-  * Research Hospital,            12, 3
-  * Nanohospital,                 24, 6
-  * Tree Farm,                    18, 2
-  * Hybrid Forest,                36, 4
-  * Recycling Tanks,               8, 2
+	* Quantum Lab,                  32, 8
+	* Research Hospital,            12, 3
+	* Nanohospital,                 24, 6
+	* Tree Farm,                    18, 2
+	* Hybrid Forest,                36, 4
+	* Recycling Tanks,               8, 2
 	* Genejack Factory,             12, 4
 	* Robotic Assembly Plant,       18, 6
 	* Quantum Converter,            26, 8
 	* Nanoreplicator,               40,12
 * Increased AI lust for minerals.
-  * Base placement favors minerals.
+	* Base placement favors minerals.
 	* Terraforming favors minerals.
 	* Base favors mineral multiplying facilities.
 * Reduced sea based chassis cost for non combat related modules (colony, former, transport). I forgot to do it when I changed the sea chassis cost in previous release.
