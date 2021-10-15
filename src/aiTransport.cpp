@@ -880,10 +880,7 @@ int getCrossOceanRegion(Location initialLocation, Location terminalLocation)
 		
 		if (dx == 0 && dy == 0)
 		{
-			// some weird thing happened
-			
-			return -1;
-	
+			return lastOceanRegion;
 		}
 		else if (abs(dx) == abs(dy))
 		{
@@ -892,11 +889,11 @@ int getCrossOceanRegion(Location initialLocation, Location terminalLocation)
 		}
 		else if (abs(dx) > abs(dy))
 		{
-			currentX += (dx > 0 ? +1 : -1);
+			currentX += (dx > 0 ? +2 : -2);
 		}
 		else
 		{
-			currentY += (dx > 0 ? +1 : -1);
+			currentY += (dx > 0 ? +2 : -2);
 		}
 		
 	}

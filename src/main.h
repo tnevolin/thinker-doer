@@ -373,6 +373,9 @@ struct Config {
     double ai_terraforming_sensorValue;
     double ai_terraforming_sensorBorderRange;
     double ai_terraforming_sensorShoreRange;
+    double ai_combat_native_protection_minimal;
+    double ai_combat_native_protection_per_pop;
+    double ai_combat_defense_demand_threshold;
 
 };
 

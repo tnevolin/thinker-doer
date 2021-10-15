@@ -862,6 +862,18 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_sensorShoreRange = atof(value);
     }
+    else if (MATCH("wtp", "ai_combat_native_protection_minimal"))
+    {
+        cf->ai_combat_native_protection_minimal = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_native_protection_per_pop"))
+    {
+        cf->ai_combat_native_protection_per_pop = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_defense_demand_threshold"))
+    {
+        cf->ai_combat_defense_demand_threshold = atof(value);
+    }
     // =WTP= configuratoin end
     else {
         for (int i=0; i<16; i++) {

@@ -896,7 +896,7 @@ void evaluateFormerDemand()
 Evaluates need for colonies.
 */
 void evaluateLandColonyDemand()
-{
+ {
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 

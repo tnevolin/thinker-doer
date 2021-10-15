@@ -32,6 +32,32 @@ struct Task
 		this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
 	}
 	
+	int getDestinationRange()
+	{
+		Location destination = getDestination();
+		
+		if (isValidLocation(destination))
+		{
+			int vehicleId = getVehicleIdByPad0(this->vehiclePad0);
+			
+			if (vehicleId == -1)
+			{
+				debug("ERROR: Task::getDestinationRange: cannot find vehicle id by pad_0.\n");
+				return 0;
+			}
+			
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			return map_range(vehicle->x, vehicle->y, destination.x, destination.y);
+			
+		}
+		else
+		{
+			return 0;
+		}
+		
+	}
+	
 	int execute()
 	{
 		int vehicleId = getVehicleIdByPad0(this->vehiclePad0);
@@ -63,7 +89,7 @@ struct KillTask : Task
 	
 	virtual int execute(int vehicleId)
 	{
-		debug("KillTask::execute(int vehicleId)\n");
+		debug("KillTask::execute(%d)\n", vehicleId);
 		
 		veh_kill(vehicleId);
 		return EM_DONE;
@@ -87,7 +113,7 @@ struct SkipTask : Task
 	
 	virtual int execute(int vehicleId)
 	{
-		debug("SkipTask::execute(int vehicleId)\n");
+		debug("SkipTask::execute(%d)\n", vehicleId);
 		
 		mod_veh_skip(vehicleId);
 		return EM_DONE;
@@ -115,7 +141,7 @@ struct DestinationTask : Task
 	
 	virtual int execute(int vehicleId)
 	{
-		debug("DestinationTask::execute(int vehicleId)\n");
+		debug("DestinationTask::execute(%d)\n", vehicleId);
 		
 		VEH *vehicle = &(Vehicles[vehicleId]);
 		
@@ -353,6 +379,26 @@ struct TerraformingTask : MoveTask
 		// execute terraforming action
 		
 		setTerraformingAction(vehicleId, this->action);
+		return EM_DONE;
+		
+	}
+	
+};
+
+struct OrderTask : MoveTask
+{
+	int order;
+	
+	OrderTask(int _vehicleId, int _x, int _y, int _order) : MoveTask(_vehicleId, _x, _y)
+	{
+		this->order = _order;
+	}
+	
+	virtual int executeAction(int vehicleId)
+	{
+		// set order
+		
+		setVehicleOrder(vehicleId, order);
 		return EM_DONE;
 		
 	}

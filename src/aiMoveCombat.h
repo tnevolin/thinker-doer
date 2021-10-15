@@ -20,6 +20,12 @@ struct VEHICLE_VALUE
 	double damage;
 };
 
+struct VehicleRange
+{
+	int id;
+	int range;
+};
+
 void moveCombatStrategy();
 void populateCombatLists();
 void baseProtection();
@@ -57,4 +63,5 @@ Location getNearestBaseLocation(int x, int y, int triad);
 bool isInWarZone(int vehicleId);
 void countTransportableVehicles();
 std::vector<int> getReachableEnemies(int vehicleId);
+bool isVehicleAvailable(int vehicleId);
 

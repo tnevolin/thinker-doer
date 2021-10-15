@@ -1378,7 +1378,7 @@ void finalizeFormerOrders()
 
 	for (FORMER_ORDER &formerOrder : formerOrders)
 	{
-		setTask(formerOrder.id, std::shared_ptr<Task>(new TerraformingTask(formerOrder.id, formerOrder.x, formerOrder.y, formerOrder.action)));
+		transitVehicle(formerOrder.id, std::shared_ptr<Task>(new TerraformingTask(formerOrder.id, formerOrder.x, formerOrder.y, formerOrder.action)));
 	}
 
 }

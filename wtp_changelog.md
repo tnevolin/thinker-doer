@@ -1,3 +1,9 @@
+# Version 273
+
+* Returned assigning dedicated defenders.
+* Increased former production priority.
+* Increased road network building priority.
+
 # Version 272
 
 * Fixed my bug when base can produce sea unit without access to ocean.

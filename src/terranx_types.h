@@ -355,7 +355,7 @@ struct Faction {
     byte facility_announced[4]; // bitfield - used to determine one time play of fac audio blurb
     int unk_32;
     int unk_33;
-    int clean_minerals_modifier; // Starts from zero and increases by one after each fungal pop.
+    int fungal_pop_count; // Starts from zero and increases by one after each fungal pop.
     int unk_36;
     int unk_37;
     char saved_queue_name[8][24];

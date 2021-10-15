@@ -37,32 +37,300 @@ void populateCombatLists()
 }
 
 /*
-Rank bases based on protection need.
+Comparison function for base defenders.
+Sort by police then trance then range.
 */
+bool compareDefenderVehicleRanges(VehicleRange &vehicleRange1, VehicleRange &vehicleRange2)
+{
+	return
+		vehicle_has_ability(vehicleRange1.id, ABL_POLICE_2X) && !vehicle_has_ability(vehicleRange2.id, ABL_POLICE_2X)
+		||
+		vehicle_has_ability(vehicleRange1.id, ABL_TRANCE) && !vehicle_has_ability(vehicleRange2.id, ABL_TRANCE)
+		||
+		vehicleRange1.range < vehicleRange2.range
+	;
+	
+}
+
 void baseProtection()
 {
 	debug("baseProtection - %s\n", MFactions[aiFactionId].noun_faction);
 	
-//	for (int baseId : activeFactionInfo.baseIds)
-//	{
-//		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseId]);
-//		
-//		// hold guarrison if base needs defense
-//		
-//		if (baseStrategy->defenseDemand > 0.0)
-//		{
-//			for (int vehicleId : baseStrategy->garrison)
-//			{
-//				VEH *vehicle = &(Vehicles[vehicleId]);
-//				
-//				setMoveOrder(vehicleId, vehicle->x, vehicle->y, ORDER_HOLD);
-//				
-//			}
-//			
-//		}
-//		
-//	}
-//		
+	for (int baseId : activeFactionInfo.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		int factionId = base->faction_id;
+		Faction *faction = &(Factions[factionId]);
+		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseId]);
+		std::vector<int> garrison = baseStrategy->garrison;
+		
+		debug("\t%-25s\n", base->name);
+		
+		// calculate base psi defense modifier
+		
+		double basePsiDefenseMultiplier;
+		
+		if (is_ocean(base))
+		{
+			basePsiDefenseMultiplier = 1.0 / ((double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator);
+		}
+		else
+		{
+			basePsiDefenseMultiplier = 1.0 / ((double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator);
+		}
+		
+		basePsiDefenseMultiplier *= getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def);
+		
+		if (isWithinFriendlySensorRange(base->faction_id, base->x, base->y))
+		{
+			if (is_ocean(base))
+			{
+				if (conf.combat_bonus_sensor_ocean)
+				{
+					basePsiDefenseMultiplier *= Rules->combat_defend_sensor;
+				}
+				
+			}
+			else
+			{
+				basePsiDefenseMultiplier *= Rules->combat_defend_sensor;
+			}
+			
+		}
+		
+		// get allowed police unit count
+		
+		int allowedPoliceUnitCount;
+		
+		switch (faction->SE_police_pending)
+		{
+		case 3:
+		case 2:
+			allowedPoliceUnitCount = 3;
+			break;
+		case 1:
+			allowedPoliceUnitCount = 2;
+			break;
+		case 0:
+		case -1:
+			allowedPoliceUnitCount = 1;
+			break;
+		default:
+			allowedPoliceUnitCount = 0;
+		}
+		
+		// get required police unit count
+		
+		int garrisonSize = (int)garrison.size();
+		int requiredPoliceUnitCount = ((base->talent_total == 0 && base->drone_total == 0) ? 0 : std::min(allowedPoliceUnitCount, garrisonSize + (base->talent_total - base->drone_total)));
+		
+		// get required native protection
+		
+		double requiredNativeProtection = (*current_turn <= conf.aliens_fight_half_strength_unit_turn ? 0.5 : 1.0) * conf.ai_combat_native_protection_minimal + conf.ai_combat_native_protection_per_pop * (double)faction->fungal_pop_count * ((double)base->eco_damage / 100.0);
+		
+		debug("\t\trequiredPoliceUnitCount=%d, requiredNativeProtection=%f\n", requiredPoliceUnitCount, requiredNativeProtection);
+		
+		// running variables
+		
+		int policeUnitCount = 0;
+		double nativeProtection = 0.0;
+		
+		// select defenders
+		
+		debug("\t\tselect defenders\n");
+		
+		std::vector<VehicleRange> defenders;
+		
+		for (int vehicleId : activeFactionInfo.combatVehicleIds)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			UNIT *unit = &(Units[vehicle->unit_id]);
+			int vehicleWeaponOffenseValue = getVehicleWeaponOffenseValue(vehicleId);
+			int vehicleArmorDefenseValue = getVehicleArmorDefenseValue(vehicleId);
+			
+			// without task and order
+			
+			if (!isVehicleAvailable(vehicleId))
+				continue;
+			
+			// land
+			
+			if (vehicle->triad() != TRIAD_LAND)
+				continue;
+			
+			// infantry
+			
+			if (unit->chassis_type != CHS_INFANTRY)
+				continue;
+			
+			// scout or defensive
+			
+			if (vehicleWeaponOffenseValue > vehicleArmorDefenseValue)
+				continue;
+			
+			// not in other base
+			
+			if (!(vehicle->x == base->x && vehicle->y == base->y) && map_has_item(getVehicleMapTile(vehicleId), TERRA_BASE_IN_TILE))
+				continue;
+			
+			// close
+			
+			int range = map_range(base->x, base->y, vehicle->x, vehicle->y);
+			
+			if (range > 10)
+				continue;
+			
+			// add defender
+			
+			defenders.push_back({vehicleId, range});
+			
+			debug("\t\t\t(%3d,%3d) %-32s \n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+			
+		}
+		
+		// sort defenders
+		
+		std::sort(defenders.begin(), defenders.end(), compareDefenderVehicleRanges);
+		
+		// assign defenders
+		
+		debug("\t\tassign defenders\n");
+		
+		while (defenders.size() > 0)
+		{
+			int vehicleId = defenders.front().id;
+			defenders.erase(defenders.begin());
+			
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			// hold defender
+			
+			transitVehicle(vehicleId, std::shared_ptr<Task>(new OrderTask(vehicleId, base->x, base->y, ORDER_HOLD)));
+			
+			debug("\t\t\t(%3d,%3d) %-32s \n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+			
+			// update counters
+			
+			policeUnitCount++;
+			nativeProtection += getVehiclePsiDefenseStrength(vehicleId, true) * basePsiDefenseMultiplier;
+			
+			debug("\t\t\t\tpoliceUnitCount=%d, nativeProtection=%f\n", policeUnitCount, nativeProtection);
+			
+			// exit condition
+			
+			if (policeUnitCount >= requiredPoliceUnitCount && nativeProtection >= requiredNativeProtection)
+				break;
+			
+		}
+		
+		// handle defense demand
+		
+		if (baseStrategy->defenseDemand <= 0.0)
+		{
+			// release one defender without task
+			
+			debug("\t\trelease defender\n");
+			
+			for (VehicleRange vehicleRange : defenders)
+			{
+				int vehicleId = vehicleRange.id;
+				VEH *vehicle = &(Vehicles[vehicleId]);
+				
+				// in base
+				
+				if (!(vehicle->x == base->x && vehicle->y == base->y))
+					continue;
+				
+				// on hold
+				
+				if (vehicle->move_status != ORDER_HOLD)
+					continue;
+				
+				// release
+				
+				vehicle->move_status = ORDER_NONE;
+				
+				debug("\t\t\t(%3d,%3d) %-32s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+				
+				break;
+				
+			}
+			
+		}
+		else if (baseStrategy->defenseDemand <= conf.ai_combat_defense_demand_threshold)
+		{
+			// do nothing
+		}
+		else
+		{
+			// keep current defender
+			
+			debug("\t\tkeep defender\n");
+			
+			for (VehicleRange vehicleRange : defenders)
+			{
+				int vehicleId = vehicleRange.id;
+				VEH *vehicle = &(Vehicles[vehicleId]);
+				
+				// in base
+				
+				if (!(vehicle->x == base->x && vehicle->y == base->y))
+					continue;
+				
+				// send to base
+				
+				transitVehicle(vehicleId, std::shared_ptr<Task>(new OrderTask(vehicleId, base->x, base->y, ORDER_HOLD)));
+				
+				debug("\t\t\t(%3d,%3d) %-32s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+				
+			}
+			
+			// pull one more defender
+			
+			debug("\t\tpull defender\n");
+			
+			for (VehicleRange vehicleRange : defenders)
+			{
+				int vehicleId = vehicleRange.id;
+				VEH *vehicle = &(Vehicles[vehicleId]);
+				
+				// not in base
+				
+				if ((vehicle->x == base->x && vehicle->y == base->y))
+					continue;
+				
+				// send to base
+				
+				transitVehicle(vehicleId, std::shared_ptr<Task>(new OrderTask(vehicleId, base->x, base->y, ORDER_HOLD)));
+				
+				debug("\t\t\t(%3d,%3d) %-32s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+				
+				break;
+				
+			}
+			
+		}
+		
+	}
+	
+	if (DEBUG)
+	{
+		debug("- tasks\n");
+		
+		for (std::pair<const int, std::shared_ptr<Task>> &taskEntry : activeFactionInfo.tasks)
+		{
+			int vehiclePad0 = taskEntry.first;
+			std::shared_ptr<Task> *task = &(taskEntry.second);
+			
+			int vehicleId = getVehicleIdByPad0(vehiclePad0);
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			debug("(%3d,%3d) vehiclePad0=%d, vehicleId=%d, taskType=%s, range=%d\n", vehicle->x, vehicle->y, vehiclePad0, vehicleId, typeid((*task).get()).name(), (*task)->getDestinationRange());
+			
+		}
+			
+	}
+		
 }
 
 void healStrategy()
@@ -148,150 +416,6 @@ void nativeCombatStrategy()
 {
 	debug("nativeCombatStrategy %s\n", MFactions[aiFactionId].noun_faction);
 
-	// protect bases
-
-	debug("\tbase native protection\n");
-
-	for (int baseId : activeFactionInfo.baseIds)
-	{
-		BASE *base = &(Bases[baseId]);
-		MAP *baseLocation = getBaseMapTile(baseId);
-		bool ocean = isOceanRegion(baseLocation->region);
-		debug("\t%s\n", base->name);
-
-		// get base native protection demand
-		
-		if (activeFactionInfo.baseAnticipatedNativeAttackStrengths.count(baseId) == 0)
-			continue;
-		
-		double baseAnticipatedNativeAttackStrength = activeFactionInfo.baseAnticipatedNativeAttackStrengths[baseId];
-		
-		debug("\tbaseAnticipatedNativeAttackStrength=%f\n", baseAnticipatedNativeAttackStrength);
-		
-		if (baseAnticipatedNativeAttackStrength <= 0.0)
-			continue;
-
-		// collect available vehicles
-		
-		std::vector<int> availableVehicles;
-		
-		std::vector<int> baseGarrison = getBaseGarrison(baseId);
-		
-		for (int vehicleId : baseGarrison)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			
-			if
-			(
-				// no orders
-				combatOrders.count(vehicleId) == 0
-				&&
-				// combat
-				isCombatVehicle(vehicleId)
-				&&
-				// infantry
-				Units[vehicle->unit_id].chassis_type == CHS_INFANTRY
-				&&
-				// defender
-				vehicle->weapon_type() == WPN_HAND_WEAPONS
-				&&
-				// trance
-				vehicle_has_ability(vehicleId, ABL_TRANCE)
-			)
-			{
-				availableVehicles.push_back(vehicleId);
-			}
-			
-		}
-
-		for (int vehicleId : baseGarrison)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			
-			if
-			(
-				// no orders
-				combatOrders.count(vehicleId) == 0
-				&&
-				// combat
-				isCombatVehicle(vehicleId)
-				&&
-				// infantry
-				Units[vehicle->unit_id].chassis_type == CHS_INFANTRY
-				&&
-				// defender
-				vehicle->weapon_type() == WPN_HAND_WEAPONS
-				&&
-				// not trance
-				!vehicle_has_ability(vehicleId, ABL_TRANCE)
-			)
-			{
-				availableVehicles.push_back(vehicleId);
-			}
-			
-		}
-		
-		// for land bases also add vehicles in vicinity
-		
-		if (!ocean && activeFactionInfo.regionSurfaceScoutVehicleIds.count(baseLocation->region) > 0)
-		{
-			for (int vehicleId : activeFactionInfo.regionSurfaceScoutVehicleIds[baseLocation->region])
-			{
-				VEH *vehicle = &(Vehicles[vehicleId]);
-				MAP *vehicleTile = getVehicleMapTile(vehicleId);
-				
-				if
-				(
-					// no orders
-					combatOrders.count(vehicleId) == 0
-					&&
-					// combat
-					isCombatVehicle(vehicleId)
-					&&
-					// scout
-					isScoutVehicle(vehicleId)
-					&&
-					// not in base
-					!map_has_item(vehicleTile, TERRA_BASE_IN_TILE)
-					&&
-					// close
-					map_range(base->x, base->y, vehicle->x, vehicle->y) < 10
-				)
-				{
-					availableVehicles.push_back(vehicleId);
-				}
-				
-			}
-			
-		}
-
-		// set remaining protection
-
-		double remainingProtection = baseAnticipatedNativeAttackStrength;
-		
-		// assign protectors
-
-		for (int vehicleId : availableVehicles)
-		{
-			if (remainingProtection <= 0.0)
-				break;
-			
-			VEH *vehicle = &(Vehicles[vehicleId]);
-
-			// get protection potential
-
-			double protectionPotential = getVehicleBaseNativeProtection(baseId, vehicleId);
-			debug("\t\t[%3d](%3d,%3d) protectionPotential=%f\n", vehicleId, vehicle->x, vehicle->y, protectionPotential);
-
-			// add vehicle
-
-			setMoveOrder(vehicleId, base->x, base->y, ORDER_HOLD);
-			remainingProtection -= protectionPotential;
-
-		}
-
-	}
-
 	// list aliens on land territory
 	
 	std::unordered_set<int> alienVehicleIds;
@@ -317,9 +441,9 @@ void nativeCombatStrategy()
 		VEH *scoutVehicle = &(Vehicles[scoutVehicleId]);
 		MAP *scoutVehicleTile = getVehicleMapTile(scoutVehicleId);
 		
-		// skip those with orders
+		// no task or order
 
-		if (combatOrders.count(scoutVehicleId) != 0)
+		if (!isVehicleAvailable(scoutVehicleId))
 			continue;
 
 		// exclude immobile
@@ -505,9 +629,9 @@ void fightStrategy()
 		if (hasTask(vehicleId))
 			continue;
 		
-		// without order
+		// no task or order
 		
-		if (combatOrders.count(vehicleId) != 0)
+		if (!isVehicleAvailable(vehicleId))
 			continue;
 		
 		VEH *vehicle = &(Vehicles[vehicleId]);
@@ -539,7 +663,7 @@ void fightStrategy()
 		
 		if (bestEnemyVehicleId != -1)
 		{
-			setTask(vehicleId, std::shared_ptr<Task>(new TargetTask(vehicleId, bestEnemyVehicleId)));
+			transitVehicle(vehicleId, std::shared_ptr<Task>(new TargetTask(vehicleId, bestEnemyVehicleId)));
 			
 			VEH *bestEnemyVehicle = &(Vehicles[bestEnemyVehicleId]);
 			debug("\t\t->(%3d,%3d) %s\n", bestEnemyVehicle->x, bestEnemyVehicle->y, Units[bestEnemyVehicle->unit_id].name);
@@ -567,21 +691,10 @@ void popLandPods()
 	for (int vehicleId : activeFactionInfo.scoutVehicleIds)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		
-		// exclude in bases with order
+		// no task or order
 		
-		if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE) && vehicle->move_status != ORDER_NONE)
-			continue;
-		
-		// without combat orders
-		
-		if (combatOrders.count(vehicleId) > 0)
-			continue;
-		
-		// without task
-		
-		if (hasTask(vehicleId))
+		if (!isVehicleAvailable(vehicleId))
 			continue;
 		
 		// not damaged
@@ -738,7 +851,7 @@ void popOceanPods()
 			
 			// without combat orders
 			
-			if (combatOrders.count(vehicleId) > 0)
+			if (!isVehicleAvailable(vehicleId))
 				continue;
 			
 			// without task
@@ -970,10 +1083,11 @@ void setMoveOrder(int vehicleId, int x, int y, int order)
 
 	if (combatOrders.find(vehicleId) == combatOrders.end())
 	{
-		combatOrders[vehicleId] = {};
-		combatOrders[vehicleId].x = x;
-		combatOrders[vehicleId].y = y;
-		combatOrders[vehicleId].order = order;
+//		combatOrders[vehicleId] = {};
+//		combatOrders[vehicleId].x = x;
+//		combatOrders[vehicleId].y = y;
+//		combatOrders[vehicleId].order = order;
+		transitVehicle(vehicleId, std::shared_ptr<Task>(new OrderTask(vehicleId, x, y, order)));
 	}
 
 }
@@ -986,15 +1100,17 @@ void setAttackOrder(int vehicleId, int enemyVehicleId)
 
 	if (combatOrders.find(vehicleId) == combatOrders.end())
 	{
-		combatOrders[vehicleId] = {};
-		combatOrders[vehicleId].enemyAIId = enemyVehicleId;
+//		combatOrders[vehicleId] = {};
+//		combatOrders[vehicleId].enemyAIId = enemyVehicleId;
+		transitVehicle(vehicleId, std::shared_ptr<Task>(new TargetTask(vehicleId, enemyVehicleId)));
 	}
 
 }
 
 void setKillOrder(int vehicleId)
 {
-	combatOrders[vehicleId].kill = true;
+//	combatOrders[vehicleId].kill = true;
+	setTask(vehicleId, std::shared_ptr<Task>(new KillTask(vehicleId)));
 	
 }
 
@@ -1563,6 +1679,11 @@ void countTransportableVehicles()
 		VEH *vehicle = &(Vehicles[vehicleId]);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		
+		// land triad
+		
+		if (vehicle->triad() != TRIAD_LAND)
+			continue;
+		
 		// at ocean base without orders and not being transported
 		
 		if
@@ -1573,7 +1694,7 @@ void countTransportableVehicles()
 			&&
 			!isLandVehicleOnSeaTransport(vehicleId)
 			&&
-			combatOrders.count(vehicleId) == 0
+			isVehicleAvailable(vehicleId)
 		)
 		{
 			if (activeFactionInfo.seaTransportRequests.count(vehicleTile->region) == 0)
@@ -1732,5 +1853,13 @@ std::vector<int> getReachableEnemies(int vehicleId)
 	
 	return reachableEnemies;
 	
+}
+
+/*
+Checks if unit has not task/order.
+*/
+bool isVehicleAvailable(int vehicleId)
+{
+	return (!hasTask(vehicleId) && combatOrders.count(vehicleId) == 0);
 }
 

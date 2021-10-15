@@ -2836,20 +2836,31 @@ bool isLandVehicleOnSeaTransport(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
-	return
-		(
-			// land vehicle
-			vehicle->triad() == TRIAD_LAND
-			&&
-			// on transport
-			vehicle->move_status == ORDER_SENTRY_BOARD
-			&&
-			vehicle->waypoint_1_x >= 0
-			&&
-			// on sea transport
-			Vehicles[vehicle->waypoint_1_x].triad() == TRIAD_SEA
-		)
-	;
+	bool onTransport = false;
+	
+	if
+	(
+		// land vehicle
+		vehicle->triad() == TRIAD_LAND
+		&&
+		// sentry
+		vehicle->move_status == ORDER_SENTRY_BOARD
+		&&
+		// on sea transport
+		vehicle->waypoint_1_x >= 0
+	)
+	{
+		int transportVehicleId = vehicle->waypoint_1_x;
+		VEH *transportVehicle = &(Vehicles[transportVehicleId]);
+		
+		if (transportVehicle->x == vehicle->x && transportVehicle->y == vehicle->y)
+		{
+			onTransport = true;
+		}
+		
+	}
+	
+	return onTransport;
 		
 }
 
@@ -3865,5 +3876,35 @@ int getUnitWeaponOffenseValue(int unitId)
 int getUnitArmorDefenseValue(int unitId)
 {
 	return Armor[Units[unitId].armor_type].defense_value;
+}
+
+int getVehicleWeaponOffenseValue(int vehicleId)
+{
+	return getUnitWeaponOffenseValue(Vehicles[vehicleId].unit_id);
+}
+
+int getVehicleArmorDefenseValue(int vehicleId)
+{
+	return getUnitArmorDefenseValue(Vehicles[vehicleId].unit_id);
+}
+
+bool factionHasSpecial(int factionId, int special)
+{
+    return MFactions[factionId].rule_flags & special;
+}
+
+bool factionHasBonus(int factionId, int bonusId)
+{
+	MFaction *metaFaction = &(MFactions[factionId]);
+
+	for (int bonusIndex = 0; bonusIndex < metaFaction->faction_bonus_count; bonusIndex++)
+	{
+		if (metaFaction->faction_bonus_id[bonusIndex] == bonusId)
+			return true;
+		
+	}
+
+	return false;
+
 }
 

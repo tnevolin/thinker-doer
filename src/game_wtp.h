@@ -349,4 +349,8 @@ bool isZoc(int factionId, int x, int y);
 double getBattleOdds(int attackerVehicleId, int defenderVehicleId);
 int getUnitWeaponOffenseValue(int unitId);
 int getUnitArmorDefenseValue(int unitId);
+int getVehicleWeaponOffenseValue(int vehicleId);
+int getVehicleArmorDefenseValue(int vehicleId);
+bool factionHasSpecial(int factionId, int special);
+bool factionHasBonus(int factionId, int bonusId);
 
