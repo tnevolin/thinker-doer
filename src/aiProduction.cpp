@@ -60,198 +60,6 @@ void aiProductionStrategy()
 	
 }
 
-///*
-//Selects base production.
-//*/
-//HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4)
-//{
-//	// fallback to Thinker for test
-////	return mod_base_production(baseId, a2, a3, a4);
-//	
-//    BASE* base = &(Bases[baseId]);
-//    bool productionDone = (base->status_flags & BASE_PRODUCTION_DONE);
-//    bool withinExemption = isBaseProductionWithinRetoolingExemption(baseId);
-//
-//	debug("\n========================================\n");
-//	debug("modifiedBaseProductionChoice - %s (%s), active_faction=%s, base_faction=%s, productionDone=%s, withinExemption=%s\n", base->name, prod_name(base->queue_items[0]), MFactions[*active_faction].noun_faction, MFactions[base->faction_id].noun_faction, (productionDone ? "y" : "n"), (withinExemption ? "y" : "n"));
-//
-//	// execute original code for human bases
-//
-//    if (is_human(base->faction_id))
-//	{
-//        debug("skipping human base\n");
-//        return base_prod_choice(baseId, a2, a3, a4);
-//    }
-//
-//	// execute original code for not enabled computer bases
-//
-//	if (!ai_enabled(base->faction_id))
-//	{
-//        debug("skipping computer base\n");
-//        return base_prod_choice(baseId, a2, a3, a4);
-//	}
-//
-//	// defaults to Thinker if WTP algorithms are not enabled
-//
-//	if (!conf.ai_useWTPAlgorithms)
-//	{
-//		debug("not using WTP algorithms - default to Thinker\n");
-//		return mod_base_production(baseId, a2, a3, a4);
-//	}
-//
-//	// do not disturb base building project
-//
-//	if (isBaseBuildingProject(baseId))
-//	{
-//		return getBaseBuildingItem(baseId);
-//	}
-//	
-//	// compute military priority
-//	
-//	globalMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.mostVulnerableBaseDefenseDemand);
-//	
-//	debug("\tglobalMilitaryPriority = %f\n", globalMilitaryPriority);
-//	
-//	// vanilla choice
-//
-//    int choice = base_prod_choice(baseId, a2, a3, a4);
-//	debug("\n===>    %-10s: %-25s\n\n", "vanilla", prod_name(choice));
-//
-//	// do not override vanilla choice in emergency scrambling - it does pretty goood job at it
-//
-//	if (base->faction_id != *active_faction)
-//	{
-//        debug("use Vanilla algorithm for emergency scrambe\n\n");
-//        
-//        // except replace non-combat unit to Scout Patrol
-//        
-//        if (choice < 0 || !isCombatUnit(choice))
-//		{
-//			choice = BSC_SCOUT_PATROL;
-//		}
-//        
-//		return choice;
-//		
-//	}
-//	
-//	// calculate vanilla priority
-//
-//	double vanillaPriority = 0.0;
-//	
-//	// unit
-//	if (choice > 0)
-//	{
-//		vanillaPriority = conf.ai_production_vanilla_priority_unit;
-//	}
-//	// project
-//	else if (choice <= -PROJECT_ID_FIRST)
-//	{
-//		vanillaPriority = conf.ai_production_vanilla_priority_project;
-//	}
-//	// facility
-//	else
-//	{
-//		// only not managed facilities
-//		if (MANAGED_FACILITIES.count(-choice) == 0)
-//		{
-//			vanillaPriority = conf.ai_production_vanilla_priority_facility;
-//		}
-//	}
-//	
-//	// raise vanilla priority for military items
-//	
-//	if (isMilitaryItem(choice))
-//	{
-//		debug("vanilla choice is military item\n");
-//		
-//		double militaryPriority = (choice >= 0 && Units[choice].triad() == TRIAD_AIR ? globalMilitaryPriority : regionMilitaryPriority);
-//		
-//		// raise vanilla priority to military priority
-//		
-//		if (militaryPriority > vanillaPriority)
-//		{
-//			vanillaPriority = militaryPriority;
-//		}
-//		
-//	}
-//	
-//	// drop priority for impossible colony
-//	
-//	if (choice >= 0 && isUnitColony(choice) && !canBaseProduceColony(baseId))
-//	{
-//		vanillaPriority = 0.0;
-//	}
-//	
-//	// Thinker
-//	
-//    int thinkerChoice = thinker_base_prod_choice(baseId, a2, a3, a4);
-//	debug("\n===>    %-10s: %-25s\n\n", "Thinker", prod_name(thinkerChoice));
-//
-//	// calculate Thinker priority
-//	
-//	double thinkerPriority = conf.ai_production_thinker_priority;
-//	
-//	// drop priority for managed facilities
-//	if (thinkerChoice < 0 && MANAGED_FACILITIES.count(-thinkerChoice) != 0)
-//	{
-//		thinkerPriority = 0.0;
-//	}
-//
-//	// raise thinker priority for combat items
-//	
-//	if (isMilitaryItem(thinkerChoice))
-//	{
-//		debug("Thinker choice is militray item\n");
-//		
-//		double militaryPriority = (thinkerChoice >= 0 && Units[thinkerChoice].triad() == TRIAD_AIR ? globalMilitaryPriority : regionMilitaryPriority);
-//		
-//		// raise thinker priority to military priority
-//		
-//		if (militaryPriority > thinkerPriority)
-//		{
-//			thinkerPriority = militaryPriority;
-//		}
-//		
-//	}
-//	
-//	// drop priority for impossible colony
-//	
-//	if (thinkerChoice >= 0 && isUnitColony(thinkerChoice) && !canBaseProduceColony(baseId))
-//	{
-//		thinkerPriority = 0.0;
-//	}
-//	
-//    // WTP
-//
-//    int wtpChoice = aiSuggestBaseProduction(baseId, choice);
-//
-//	debug("\n===>    %-10s: %-25s\n\n", "WTP", prod_name(wtpChoice));
-//	
-//	// calculate wtp priority
-//	
-//	double wtpPriority = productionDemand.priority;
-//	
-//	debug("production selection between algorithms\n\t%-10s: (%5.2f) %s\n\t%-10s: (%5.2f) %s\n\t%-10s: (%5.2f) %s\n", "vanilla", vanillaPriority, prod_name(choice), "thinker", thinkerPriority, prod_name(thinkerChoice), "wtp", wtpPriority, prod_name(wtpChoice));
-//
-//	// select production based on priority
-//
-//	if (wtpPriority >= thinkerPriority && wtpPriority >= vanillaPriority)
-//	{
-//		choice = wtpChoice;
-//	}
-//	else if (thinkerPriority >= vanillaPriority && thinkerPriority >= wtpPriority)
-//	{
-//		choice = thinkerChoice;
-//	}
-//	
-//	debug("===>    %-25s\n", prod_name(choice));
-//
-//	debug("========================================\n\n");
-//
-//	return choice;
-//
-//}
-//
 /*
 Sets faction all bases production.
 */
@@ -2884,11 +2692,11 @@ int selectCombatUnit(int baseId, int targetBaseId)
 		// ocean base
 		if (ocean)
 		{
-			// only land infantry defenders
+			// no land attackers
 			
 			if (triad == TRIAD_LAND && (unit->chassis_type != CHS_INFANTRY || unitWeaponOffenseValue > 1))
 			{
-				debug("\t\tocean base: no land fast or attacker units\n");
+				debug("\t\tocean base: no land attackers\n");
 				continue;
 			}
 			
@@ -2929,6 +2737,14 @@ int selectCombatUnit(int baseId, int targetBaseId)
 		// land base
 		else
 		{
+			// no land attackers
+			
+			if (triad == TRIAD_SEA)
+			{
+				debug("\t\tland base: no sea units\n");
+				continue;
+			}
+			
 			// same base
 			if (baseId == targetBaseId)
 			{

@@ -68,35 +68,15 @@ void baseProtection()
 		
 		// calculate base psi defense modifier
 		
-		double basePsiDefenseMultiplier;
-		
-		if (is_ocean(base))
-		{
-			basePsiDefenseMultiplier = 1.0 / ((double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator);
-		}
-		else
-		{
-			basePsiDefenseMultiplier = 1.0 / ((double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator);
-		}
-		
-		basePsiDefenseMultiplier *= getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def);
-		
-		if (isWithinFriendlySensorRange(base->faction_id, base->x, base->y))
-		{
-			if (is_ocean(base))
-			{
-				if (conf.combat_bonus_sensor_ocean)
-				{
-					basePsiDefenseMultiplier *= Rules->combat_defend_sensor;
-				}
-				
-			}
-			else
-			{
-				basePsiDefenseMultiplier *= Rules->combat_defend_sensor;
-			}
-			
-		}
+		double basePsiDefenseMultiplier =
+			(!is_ocean(base) ? (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator : (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator)
+			*
+			getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def)
+			*
+			(isWithinFriendlySensorRange(base->faction_id, base->x, base->y) && (!is_ocean(base) || conf.combat_bonus_sensor_ocean) ? getPercentageBonusMultiplier(Rules->combat_defend_sensor) : 1.0)
+			*
+			getFactionSEPlanetDefenseModifier(aiFactionId)
+		;
 		
 		// get allowed police unit count
 		
@@ -126,7 +106,7 @@ void baseProtection()
 		
 		// get required native protection
 		
-		double requiredNativeProtection = (*current_turn <= conf.aliens_fight_half_strength_unit_turn ? 0.5 : 1.0) * conf.ai_combat_native_protection_minimal + conf.ai_combat_native_protection_per_pop * (double)faction->fungal_pop_count * ((double)base->eco_damage / 100.0);
+		double requiredNativeProtection = (*current_turn <= conf.aliens_fight_half_strength_unit_turn ? 0.5 : 1.0) * getAlienMoraleModifier() * conf.ai_combat_native_protection_minimal + conf.ai_combat_native_protection_per_pop * (double)faction->fungal_pop_count * ((double)base->eco_damage / 100.0);
 		
 		debug("\t\trequiredPoliceUnitCount=%d, requiredNativeProtection=%f\n", requiredPoliceUnitCount, requiredNativeProtection);
 		

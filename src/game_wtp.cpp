@@ -3908,3 +3908,43 @@ bool factionHasBonus(int factionId, int bonusId)
 
 }
 
+/*
+Computes newborn native psi attack strength.
+*/
+double getAlienMoraleModifier()
+{
+	// get morale
+	
+	int morale;
+	
+	if (*current_turn < 45)
+	{
+		morale = 0;
+	}
+	else if (*current_turn < 90)
+	{
+		morale = 1;
+	}
+	else if (*current_turn < 170)
+	{
+		morale = 2;
+	}
+	else if (*current_turn < 250)
+	{
+		morale = 3;
+	}
+	else if (*current_turn < 330)
+	{
+		morale = 4;
+	}
+	else
+	{
+		morale = 5;
+	}
+	
+	// compute morale modifier
+	
+	return getMoraleModifier(morale);
+	
+}
+

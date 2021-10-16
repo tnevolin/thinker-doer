@@ -1201,10 +1201,29 @@ void assignFormerOrders()
 			if (formerOrder.action != -1)
 				continue;
 			
-			// skip other ocean region
+			// reachable
 			
-			if (ocean && vehicleTile->region != tile->region)
-				continue;
+			if (!ocean)
+			{
+				// no sea former for land tile
+				
+				if (vehicle->triad() == TRIAD_SEA)
+					continue;
+					
+			}
+			else
+			{
+				// no land former for ocean tile
+				
+				if (vehicle->triad() == TRIAD_LAND)
+					continue;
+				
+				// same ocean region
+				
+				if (vehicleTile->region != tile->region)
+					continue;
+				
+			}
 			
 			// get range
 			

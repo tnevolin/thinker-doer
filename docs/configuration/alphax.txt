@@ -87,7 +87,7 @@ AdapEco, ; Technology for economic victory
 50,      ; Maximum % damage inflicted by arty versus units in base/bunker
 99,      ; Maximum % damage inflicted by arty versus units in open
 100,     ; Maximum % damage inflicted by arty versus units at sea
-1, 3     ; Numerator/Denominator for frequency of global warming (1,2 would be "half" normal warming).
+1, 1     ; Numerator/Denominator for frequency of global warming (1,2 would be "half" normal warming).
 2100     ; Normal starting year
 2600     ; Normal ending year for lowest 3 difficulty levels
 2500     ; Normal ending year for highest 3 difficulty levels

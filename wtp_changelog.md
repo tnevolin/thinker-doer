@@ -1,8 +1,9 @@
 # Version 273
 
-* Returned assigning dedicated defenders.
+* Explicitly defend bases.
 * Increased former production priority.
 * Increased road network building priority.
+* Returned global warming frequency back to original.
 
 # Version 272
 
@@ -133,7 +134,7 @@
 * Some adjustment to production choices.
 * Fixed bug when AI didn't hurry production. That could be a reason for major flaw in AI performance in recent versions. Should be better now.
 * Reintroduced: Lower tech get preference in blind research and AI pick.
-* Conventional artillery duel use weapon+armor value. This is to disable ship attack/bombardment exploit and add additional dimension to the duel. This does not change display info, though. Only the total strength.
+* Conventional artillery duel uses weapon+armor value. This is to disable ship attack/bombardment exploit and add additional dimension to the duel. This does not change display info, though. Only the total strength.
 * Modified combat production choices to respond to threat.
 * Increased coast bases attractiveness.
 * Disabled resource restriction alltogether. There is no need to discover Centauri Ecology for that anymore. I never knew this is possible!

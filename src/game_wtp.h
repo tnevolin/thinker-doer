@@ -353,4 +353,5 @@ int getVehicleWeaponOffenseValue(int vehicleId);
 int getVehicleArmorDefenseValue(int vehicleId);
 bool factionHasSpecial(int factionId, int special);
 bool factionHasBonus(int factionId, int bonusId);
+double getAlienMoraleModifier();
 

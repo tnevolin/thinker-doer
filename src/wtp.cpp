@@ -112,7 +112,7 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 	battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
 	
     // ----------------------------------------------------------------------------------------------------
-    // artillery duelants uses weapon + armor value
+    // artillery duel uses weapon + armor value
     // ----------------------------------------------------------------------------------------------------
     
     if
