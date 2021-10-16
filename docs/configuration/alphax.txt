@@ -123,7 +123,7 @@ Sensor Array,     None,    Sensor Buoy,      None,     4,  Construct $STR0, O, O
 Fungus,           None,    Sea Fungus,       None,     6,  Remove $STR0,    F, F
 Fungus,           EcoEng,  Sea Fungus,       EcoEng,   6,  Plant $STR0,     F, Ctrl+F
 Condenser,        EcoEng,  Condenser,        Disable, 12,  Construct $STR0, N, N
-Echelon Mirror,   EnvEcon, Echelon Mirror,   Disable, 12,  Construct $STR0, E, Shift+E
+Echelon Mirror,   EcoEng,  Echelon Mirror,   Disable, 12,  Construct $STR0, E, Shift+E
 Thermal Borehole, Super,   Thermal Borehole, Disable, 18,  Construct $STR0, B, Shift+B
 Aquifer,          FldMod,  Aquifer,          Disable, 18,  Drill to $STR0,  Q, Q
 Raise Land,       EcoEng,  Raise Sea Floor,  EcoEng,  12,  Terraform UP,    ], ]]
@@ -278,10 +278,10 @@ Polymorphic Software,          Poly,     3, 4, 1, 1, DocFlex, None,    000000000
 Applied Gravitonics,           AGrav,    6, 1, 1, 1, Gravity, Space,   000000000
 deleted,                       delete,   0, 0, 0, 0, Disable, Disable, 000000000
 Quantum Power,                 Quantum,  2, 2, 3, 2, String,  IndAuto, 000000000
-Singularity Mechanics,         SingMec,  2, 3, 2, 2, Create,  WillPow, 000000000
+Singularity Mechanics,         SingMec,  2, 3, 2, 2, Create,  Eudaim,  000000000
 Controlled Singularity,        ConSing,  4, 1, 3, 1, SingMec, AGrav,   000000000
-Temporal Mechanics,            TempMec,  2, 3, 2, 2, NewMiss, NanEdit, 000000000
-Probability Mechanics,         ProbMec,  2, 3, 2, 2, WillPow, DocSec,  000000000
+Temporal Mechanics,            TempMec,  2, 3, 2, 2, SecMani, NanEdit, 000000000
+Probability Mechanics,         ProbMec,  2, 3, 2, 2, Magnets, DocSec,  000000000
 Pre-Sentient Algorithms,       Algor,    4, 3, 1, 1, NanoMin, OptComp, 000000000
 Applied Plasmadynamics,        Solids,   6, 1, 1, 1, Unified, Cyber,   000000000
 Planetary Networks,            PlaNets,  1, 4, 3, 1, InfNet,  DocLoy,  000000000
@@ -292,16 +292,16 @@ Doctrine: Flexibility,         DocFlex,  2, 2, 2, 3, None,    None,    000000000
 Intellectual Integrity,        Integ,    6, 1, 1, 1, DocLoy,  EthCalc, 000000000
 Synthetic Fossil Fuels,        Fossil,   5, 1, 1, 2, Chemist, Super,   000000000
 Doctrine: Air Power,           DocAir,   3, 2, 2, 2, MilAlg,  AdapDoc, 000000000
-Photon/Wave Mechanics,         DocSec,   2, 3, 2, 2, CentMed, Alloys,  000000000
+Photon/Wave Mechanics,         DocSec,   2, 3, 2, 2, AdapEco, Alloys,  000000000
 Mind/Machine Interface,        MindMac,  3, 2, 2, 2, Algor,   Neural,  000000000
 Nanominiaturization,           NanoMin,  2, 2, 3, 2, Bioadap, Gene,    000000000
 Doctrine: Loyalty,             DocLoy,   3, 2, 2, 2, Mobile,  Psych,   000000000
-Ethical Calculus,              EthCalc,  0, 2, 2, 5, Chaos,   Psych,   000000000
+Ethical Calculus,              EthCalc,  0, 2, 2, 5, PrPsych, Psych,   000000000
 Industrial Economics,          IndEcon,  1, 3, 4, 1, Indust,  Biogen,  000000100
 Industrial Automation,         IndAuto,  1, 1, 4, 3, PlaNets, IndEcon, 000000100
-Centauri Meditation,           CentMed,  1, 1, 2, 5, EcoEng,  CentEmp, 001000000
+Centauri Meditation,           CentMed,  1, 1, 2, 5, EnvEcon, CentEmp, 001000000
 Secrets of the Human Brain,    Brain,    1, 1, 1, 6, Psych,   None,    000000000
-Gene Splicing,                 Gene,     2, 2, 3, 2, DocInit, Biogen,  000100000
+Gene Splicing,                 Gene,     2, 2, 3, 2, EthCalc, Biogen,  000100000
 Bio-Engineering,               BioEng,   1, 2, 4, 2, Gene,    Neural,  000100000
 Biomachinery,                  BioMac,   1, 2, 2, 4, MindMac, Viral,   000100000
 Neural Grafting,               Neural,   4, 1, 1, 3, MilAlg,  Brain,   000000000
@@ -310,11 +310,11 @@ Eudaimonia,                    Eudaim,   1, 2, 4, 2, BioEng,  EcoEng,  000000000
 The Will to Power,             WillPow,  4, 1, 1, 3, DocAir,  Integ,   000000000
 Threshold of Transcendence,    Thresh,   2, 3, 2, 2, SecMani, HAL9000, 000000000
 Matter Transmission,           Matter,   2, 2, 3, 2, NanEdit, Create,  000000000
-Centauri Empathy,              CentEmp,  1, 1, 1, 6, EthCalc, Ecology, 000000000
-Environmental Economics,       EnvEcon,  2, 2, 3, 2, EcoEng,  IndEcon, 000000100
+Centauri Empathy,              CentEmp,  1, 1, 1, 6, Brain,   Ecology, 000000000
+Environmental Economics,       EnvEcon,  2, 2, 3, 2, FldMod,  IndEcon, 000000100
 Ecological Engineering,        EcoEng,   2, 2, 2, 3, Gene,    Fusion,  000000000
-Planetary Economics,           PlaEcon,  1, 1, 4, 3, Eudaim,  AdapEco, 000000100
-Adv. Ecological Engineering,   EcoEng2,  2, 2, 2, 3, Viral,   EnvEcon, 000000000
+Planetary Economics,           PlaEcon,  1, 1, 4, 3, EcoEng,  AdapEco, 000000100
+Adv. Ecological Engineering,   EcoEng2,  2, 2, 2, 3, Quantum, EnvEcon, 000000000
 Centauri Psi,                  CentPsi,  1, 0, 0, 8, CentGen, EcoEng2, 100000000
 Secrets of Alpha Centauri,     AlphCen,  1, 6, 1, 1, CentPsi, SentEco, 001001000
 Secrets of Creation,           Create,   2, 3, 2, 2, Unified, Cyber,   000000000
@@ -517,7 +517,7 @@ Hypnotic Trance,       16, Brain,    Trance,    000010111111, +50% defense vs. P
 Heavy Transport,        1, Disable,  Heavy,     000100100111, +50% transport capacity
 Nerve Gas Pods,         1, Chemist,  X,         000011001111, Can +50% offense (Atrocity)
 Repair Bay,             1, Disable,  Repair,    000100100111, Repairs ground units on board
-Non-Lethal Methods,    64, HomoSup,  Police,    000000001001, x2 Police powers
+Non-Lethal Methods,    64, Integ,    Police,    000000001001, x2 Police powers
 Slow Unit,              0, Disable,  Slow,      000000111111, -1 moves
 Soporific Gas Pods,     2, Bioadap,  Gas,       000001001101, -2 Enemy morale vs. non-native
 Dissociative Wave,      2, Surface,  Wave,      000000111111, Fizzles special abilities
@@ -679,7 +679,7 @@ Naval Yard,                    8, 1, DocInit, Disable,  +2 Morale:Sea, Sea Def +
 Aerospace Complex,            12, 3, DocAir,  Disable,  +2 Morale:Air, Air Def +100%
 Bioenhancement Center,        20, 5, Viral,   Disable,  +2 Morale:ALL
 Centauri Preserve,            10, 2, CentMed, Disable,  Ecology Bonus
-Temple of Planet,             20, 4, SentRes, Disable,  Ecology Bonus
+Temple of Planet,             20, 4, CentGen, Disable,  Ecology Bonus
 Psi Gate,                     10, 2, Matter,  Disable,  Teleport
 Covert Ops Center,            10, 2, Algor,   Disable,  Stronger Probe Teams
 Brood Pit,                    18, 4, CentPsi, Disable,  Police/Morale
@@ -1251,8 +1251,8 @@ Pathetic,    pathetic little
 Elect Planetary Governor,          None,    New Governor Appointed
 Unite Behind Me As Supreme Leader, MindMac, Diplomatic Victory; Game Ends
 Salvage Unity Fusion Core,         OptComp, +500 Energy Credits Every Faction
-Global Trade Pact,                 AdapEco, Commerce Rates Doubled
-Repeal Global Trade Pact,          AdapEco, Commerce Rates Halved
+Global Trade Pact,                 PlaEcon, Commerce Rates Doubled
+Repeal Global Trade Pact,          PlaEcon, Commerce Rates Halved
 Launch Solar Shade,                Space,   Global Cooling; Sea Levels Drop
 Increase Solar Shade,              Space,   Global Cooling; Sea Levels Drop
 Melt Polar Caps,                   Solids,  Global Warming; Sea Levels Rise

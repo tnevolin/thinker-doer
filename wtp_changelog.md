@@ -1,3 +1,8 @@
+# Version 274
+
+* Moved **Non-lethal methods** much earlier. Police is generally not that effective due to unit maintenance. This can make it more useful.
+* Moved ecodamage reducing facilities earlier. The need for them arise much earlier in this improvement and mineral reach mod.
+
 # Version 273
 
 * Explicitly defend bases.
