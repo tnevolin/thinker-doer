@@ -779,5 +779,5 @@ Vanilla:  (minerals - clean minerals) / (1 + reducing facilities)
 This fix: (minerals) / (1 + reducing facilities) - clean minerals
 ```
 
-Now base mineral limit unit it starts polluting is TF + HF = 16, TF + HF and Centauri Preserve = 16\*2, TF + HF and Centauri Preserve + Temple Of Planet = 16\*3, and so on. Easy, simple, and player can even build these facilities proactively to protect themselves from future pollution increase. Neat!
+Now base can produce that much minerals without pollution: TF + HF = 16, TF + HF and Centauri Preserve = 16\*2, TF + HF and Centauri Preserve + Temple Of Planet = 16\*3, and so on. Easy, simple, and player can even build these facilities proactively to protect themselves from future pollution increase. Neat!
 
