@@ -311,6 +311,7 @@ struct Config {
 	int science_projects_universaltranslator_labs_bonus;
 	int combat_bonus_attacking_along_road;
 	bool disengagement_from_stack;
+	bool eco_damage_alternative_industry_effect_reduction_formula;
     // AI configurations
     bool ai_useWTPAlgorithms;
     double ai_production_vanilla_priority_unit;

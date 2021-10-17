@@ -4532,6 +4532,41 @@ void patch_disengagement_from_stack()
     
 }
 
+void patch_eco_damage_alternative_industry_effect_reduction_formula()
+{
+    int eco_damage_alternative_industry_effect_reduction_formula_bytes_length = 0x9;
+
+    /*
+	0:  2b c6                   sub    eax,esi
+	2:  8b 71 48                mov    esi,DWORD PTR [ecx+0x48]
+	5:  99                      cdq
+	6:  f7 7d fc                idiv   DWORD PTR [ebp-0x4]
+    */
+    byte eco_damage_alternative_industry_effect_reduction_formula_bytes_old[] =
+		{ 0x2B, 0xC6, 0x8B, 0x71, 0x48, 0x99, 0xF7, 0x7D, 0xFC }
+    ;
+
+    /*
+	0:  99                      cdq
+	1:  f7 7d fc                idiv   DWORD PTR [ebp-0x4]
+	4:  29 f0                   sub    eax,esi
+	6:  8b 71 48                mov    esi,DWORD PTR [ecx+0x48]
+    */
+    byte eco_damage_alternative_industry_effect_reduction_formula_bytes_new[] =
+        { 0x99, 0xF7, 0x7D, 0xFC, 0x29, 0xF0, 0x8B, 0x71, 0x48 }
+    ;
+
+    write_bytes
+    (
+        0x004E9F7E,
+        eco_damage_alternative_industry_effect_reduction_formula_bytes_old,
+        eco_damage_alternative_industry_effect_reduction_formula_bytes_new,
+        eco_damage_alternative_industry_effect_reduction_formula_bytes_length
+    )
+    ;
+    
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -5123,6 +5158,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->disengagement_from_stack)
 	{
 		patch_disengagement_from_stack();
+	}
+	
+	if (cf->eco_damage_alternative_industry_effect_reduction_formula)
+	{
+		patch_eco_damage_alternative_industry_effect_reduction_formula();
 	}
 	
 }

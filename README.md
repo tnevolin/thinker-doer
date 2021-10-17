@@ -738,3 +738,12 @@ Number of free units is constant and set with alternative_support_free_units par
 
 </pre>
 
+# Alternative eco damage industry effect reduction formula
+
+[Vanilla formula](https://alphacentauri2.info/wiki/Ecology_(Revised))
+
+As you can see, the (1 + DamageReductionInBase) factor reduces resulting eco damage **after** both terraforming and industry effects are combined and clean minerals are subtracted. That causes two problems.
+
+First, it directly contradicts the in game description which for Centauri Preserve reads:
+> Reduces effect of industry on Planet’s ecological.
+

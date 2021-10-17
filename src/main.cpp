@@ -618,6 +618,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->disengagement_from_stack = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "eco_damage_alternative_industry_effect_reduction_formula"))
+    {
+        cf->eco_damage_alternative_industry_effect_reduction_formula = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
