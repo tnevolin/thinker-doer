@@ -1,3 +1,8 @@
+# Version 275
+
+* Clean minerals are reverted to vanilla default: 16.
+* Reworked eco damage industry effect reduction formula (https://github.com/tnevolin/thinker-doer#alternative-eco-damage-industry-effect-reduction-formula).
+
 # Version 274
 
 * Moved **Non-lethal methods** much earlier. Police is generally not that effective due to unit maintenance. This can make it more useful.
