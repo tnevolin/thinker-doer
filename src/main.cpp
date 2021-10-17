@@ -774,6 +774,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_alien_hunting_outnumbering = atof(value);
     }
+    else if (MATCH("wtp", "ai_terraforming_factions_enabled"))
+    {
+        cf->ai_terraforming_factions_enabled = atoi(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
         cf->ai_terraforming_nutrientWeight = atof(value);

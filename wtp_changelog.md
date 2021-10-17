@@ -1,3 +1,7 @@
+# Version 276
+
+* Added configuration parameter to compare WTP and Thinker terraforming.
+
 # Version 275
 
 * Clean minerals are reverted to vanilla default: 16.

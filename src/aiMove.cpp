@@ -125,7 +125,12 @@ int moveVehicle(const int vehicleId)
 	
 	if (isFormerVehicle(vehicleId))
 	{
-		return moveFormer(vehicleId);
+//		return moveFormer(vehicleId);
+		
+		// WTP vs. Thinker terraforming comparison
+		
+		return (aiFactionId <= conf.ai_terraforming_factions_enabled ? moveFormer(vehicleId) : mod_enemy_move(vehicleId));
+		
 	}
 	
 	// sea transport
