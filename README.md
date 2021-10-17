@@ -740,10 +740,44 @@ Number of free units is constant and set with alternative_support_free_units par
 
 # Alternative eco damage industry effect reduction formula
 
+## Problem
+
 [Vanilla formula](https://alphacentauri2.info/wiki/Ecology_(Revised))
 
 As you can see, the (1 + DamageReductionInBase) factor reduces resulting eco damage **after** both terraforming and industry effects are combined and clean minerals are subtracted. That causes two problems.
 
-First, it directly contradicts the in game description which for Centauri Preserve reads:
-> Reduces effect of industry on Planet’s ecological.
+### Lore
+
+It directly contradicts the in game description which for Centauri Preserve reads:
+
+> Reduces **effect of industry** on Planet’s ecological.
+
+Whereas, as programmed, it does not reduces the effect of industry but instead reduces the resulting eco damage after terraforming, industry, and clean mineral effects are applied.
+
+### Game play
+
+Tree Farm and Hybrid Forest are good facilities. They are exceptionally useful as they **proportionally** reduce eco damage terraforming effect. The more eco damage terraforming causes the more effective and helpful these facilities are.
+
+Centauri Preserve, Temple Of Planet and other similar facilites are just laghingstock compared to above ones. Based on description they are supposed to reduce industry effect on ecology. In simple words it means they are supposed to **proportionally** reduce base mineral production impact on eco damage. For example, base without such facilities producing 20 minerals and base with Centauri Preserve producing 40 minerals should equally impact ecology. Unfortunately, the way this formula is programmed it does absolutely different and useless thing. It reduces the damage **after** clean mineral limit is applied. Which results in two things.
+
+#### Impossibility to eliminate eco damage
+
+No amount of these industry effect reduction facilities completely eliminates eco damage if it is already there. They only can reduce it to some extent. That leads to inevitable global warmings coming at increased frequencies as the total global eco damage will only grow with time and nothing can be done about it.
+
+#### Seriously diminishing efficiency
+
+Ridiculously, as clean mineral limit grows with number of fungal blooms and constructed eco facilities (**including Centauri Preserve and Temple Of Planet!!!**) the reducing effect of such facilities diminishes and eventually disappears as clean minerals grow big enough to compensate eco damage. Think about it. TF and HF doing their work even if base doesn't show positive eco damage. Destroy them and damage will jump back up right away. Whereas player can simply destroy Centauri Preserve and Temple Of Planet as soon as eco damage gets to zero (or close). They don't do anything in this case.
+
+TH and HF are getting more effective with time as base evolves. They are expensive but they are doing their job for the money. It is useful to build them early and keep them running to the end of the game significantly reducing cumulative damage. Whereas, with Centauri Preserve and Temple Of Planet player is facing a strange choice. They are useful to reduce already existing heavy eco damage like 50+. Otherwise, building many of them is a waste of money. For example, Centauri Preserve reduces 30 damage to 15 (-15 damage is not completely bad) but following Temple Of Planet for about twice facility cost reduces it down to 10 (-5 damage). Thus, second of such facilities is twice as costly but three times less effective. It makes sense to build second one only in highly damaged (60+) bases. If you are thinking to build third one (NanoReplicator, PholusMutagen, SingularityInductor) to postpone grolbal warming - think thrice as it will be exceptionally expensive and 1/12 as effective as first one. You need base with some 240+ initial damage (reduced to 80+ by first two facilities) to make it worth the money.
+
+## Solution
+
+Just swap reduction effect and subtracting clean minerals operations and voila! Everything works like a magic.
+
+```
+Vanilla:  (minerals - clean minerals) / (1 + reducing facilities)
+This fix: (minerals) / (1 + reducing facilities) - clean minerals
+```
+
+Now base mineral limit unit it starts polluting is TF + HF = 16, TF + HF and Centauri Preserve = 16\*2, TF + HF and Centauri Preserve + Temple Of Planet = 16\*3, and so on. Easy, simple, and player can even build these facilities proactively to protect themselves from future pollution increase. Neat!
 
