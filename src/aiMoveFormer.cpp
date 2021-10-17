@@ -1250,11 +1250,19 @@ void assignFormerOrders()
 		
 	}
 	
-	// kill formers without orders
+	// kill supported formers without orders
 	
 	for (FORMER_ORDER &formerOrder : formerOrders)
 	{
 		int vehicleId = formerOrder.id;
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// supported
+		
+		if (vehicle->home_base_id < 0)
+			continue;
+		
+		// disband former without order
 		
 		if (formerOrder.action == -1)
 		{
@@ -2199,6 +2207,11 @@ int moveFormer(int vehicleId)
 	// retrieve ai id
 
 	int aiVehicleId = vehicle->pad_0;
+	
+	// do not move formers with terraforming order
+	
+	if (vehicle->move_status >= ORDER_FARM && vehicle->move_status <= ORDER_PLACE_MONOLITH)
+		return SYNC;
 
 	// ignore vehicles without former orders
 
@@ -2365,7 +2378,7 @@ double computeImprovementSurplusEffectScore(MAP_INFO *mapInfo, MAP_STATE *curren
 	{
 		// compute base score
 
-		double score = computeImprovementBaseSurplusEffectScore(baseId, mapInfo, currentMapState, improvedMapState);
+		double score = computeImprovementBaseSurplusEffectScore(baseId, mapInfo, currentMapState, improvedMapState, affectedTiles);
 		
 		// update total
 		
@@ -3817,11 +3830,11 @@ double calculateExclusivityBonus(MAP_INFO *mapInfo, const std::vector<int> *acti
 				
 			}
 
-			// not building mine on mineral bonus wastes 1 mineral
+			// not building mine on mineral bonus wastes 3 mineral
 			
 			if (actionSet.count(FORMER_MINE) == 0 && isMineBonus(mapInfo->x, mapInfo->y))
 			{
-				mineral += -1;
+				mineral += -3;
 			}
 
 			// not building solar collector or echelon mirror wastes elevation
@@ -4750,9 +4763,11 @@ double calculateBaseResourceScore(double populationSize, double nutrientSurplus,
 /*
 Calculates yield improvement score for given base and improved tile.
 */
-double computeImprovementBaseSurplusEffectScore(int baseId, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState)
+double computeImprovementBaseSurplusEffectScore(int baseId, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState, std::vector<MAP *> affectedTiles)
 {
 	BASE *base = &(Bases[baseId]);
+	
+	bool worked = false;
 
 	// set initial state
 	
@@ -4775,11 +4790,37 @@ double computeImprovementBaseSurplusEffectScore(int baseId, MAP_INFO *mapInfo, M
 	int improvedNutrientSurplus = base->nutrient_surplus;
 	int improvedMineralSurplus = base->mineral_surplus;
 	int improvedEnergySurplus = base->economy_total + base->psych_total + base->labs_total;
+	
+	// verify at least one affected tile is worked after improvement
+	
+	std::vector<MAP *> workedTiles = getBaseWorkedTiles(baseId);
+	
+	for (MAP *affectedTile : affectedTiles)
+	{
+		for (MAP *workedTile : workedTiles)
+		{
+			if (workedTile == affectedTile)
+			{
+				worked = true;
+				break;
+			}
+			
+		}
+		
+		if (worked)
+			break;
+		
+	}
 
 	// restore original state
 	
 	setMapState(mapInfo, currentMapState);
 	computeBase(baseId);
+
+	// return zero if not worked
+	
+	if (!worked)
+		return 0.0;
 
 	// return zero if no changes at all
 

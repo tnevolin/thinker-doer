@@ -216,6 +216,7 @@ void evaluateFacilitiesDemand()
 
 	evaluatePopulationLimitFacilitiesDemand();
 	evaluatePsychFacilitiesDemand();
+	evaluateEcoDamageFacilitiesDemand();
 	evaluateMultiplyingFacilitiesDemand();
 	evaluateDefensiveFacilitiesDemand();
 	evaluateMilitaryFacilitiesDemand();
@@ -260,7 +261,7 @@ void evaluatePopulationLimitFacilitiesDemand()
 		{
 			// add demand
 
-			addProductionDemand(-facilityId, 1.0);
+			addProductionDemand(-facilityId, conf.ai_production_population_limit_priority);
 
 			break;
 
@@ -320,7 +321,53 @@ void evaluatePsychFacilitiesDemand()
 
 		// add demand
 
-		addProductionDemand(-facilityId, 3.0);
+		addProductionDemand(-facilityId, conf.ai_production_psych_priority);
+
+		break;
+
+	}
+
+}
+
+void evaluateEcoDamageFacilitiesDemand()
+{
+	int baseId = productionDemand.baseId;
+	BASE *base = productionDemand.base;
+
+	const int ECO_DAMAGE_FACILITIES[] =
+	{
+		FAC_TREE_FARM,
+		FAC_CENTAURI_PRESERVE,
+		FAC_HYBRID_FOREST,
+		FAC_TEMPLE_OF_PLANET,
+		FAC_NANOREPLICATOR,
+		FAC_SINGULARITY_INDUCTOR,
+	};
+
+	debug("\tevaluateEcoDamageFacilitiesDemand\n");
+	
+	// calculate priority
+	
+	double priority = (double)base->eco_damage / conf.ai_production_eco_damage_threshold * conf.ai_production_eco_damage_priority;
+	debug("\t\teco_damage=%d, priority=%f\n", base->eco_damage, priority);
+
+	// no eco damage
+
+	if (base->eco_damage <= 0)
+		return;
+
+	for (const int facilityId : ECO_DAMAGE_FACILITIES)
+	{
+		// only available
+
+		if (!isBaseFacilityAvailable(baseId, facilityId))
+			continue;
+
+		debug("\t\t\t%s\n", Facility[facilityId].name);
+
+		// add demand
+
+		addProductionDemand(-facilityId, priority);
 
 		break;
 
@@ -380,6 +427,11 @@ void evaluateMultiplyingFacilitiesDemand()
 		{FAC_ROBOTIC_ASSEMBLY_PLANT, 1},
 		{FAC_QUANTUM_CONVERTER, 1},
 		{FAC_NANOREPLICATOR, 1},
+		{FAC_TREE_FARM, 0},
+		{FAC_HYBRID_FOREST, 0},
+		{FAC_AQUAFARM, 0},
+		{FAC_THERMOCLINE_TRANSDUCER, 0},
+		{FAC_SUBSEA_TRUNKLINE, 0},
 	};
 
 	for (const int *multiplyingFacility : MULTIPLYING_FACILITIES)
@@ -407,11 +459,12 @@ void evaluateMultiplyingFacilitiesDemand()
 		double bonus = 0.0;
 
 		// minerals multiplication
+		
 		if (mask & 1)
 		{
 			bonus += mineralIntake / 2.0;
 			
-			// extra bonus for ocean bases
+			// extra weight for ocean bases
 			
 			if (isOceanRegion(baseTile->region))
 			{
@@ -421,29 +474,196 @@ void evaluateMultiplyingFacilitiesDemand()
 		}
 
 		// economy multiplication
+		
 		if (mask & 2)
 		{
 			bonus += economyIntake / 2.0 / hurryCost;
 		}
 
 		// psych multiplication
+		
 		if (mask & 4)
 		{
 			bonus += psychIntake / 2.0 / hurryCost;
 		}
 
 		// labs multiplication
+		
 		if (mask & 8)
 		{
 			bonus += labsIntake / 2.0 / hurryCost;
 		}
 
 		// labs fixed
+		
 		if (mask & 16)
 		{
 			bonus += (double)(mask >> 16) / hurryCost;
 		}
-
+		
+		// special case for forest facilities
+		
+		if (facilityId == FAC_TREE_FARM || facilityId == FAC_HYBRID_FOREST)
+		{
+			// count improvements around base
+			
+			int improvementCount = 0;
+			int workedImprovementCount = 0;
+			
+			for (MAP *tile : getBaseWorkableTiles(baseId, false))
+			{
+				if (map_has_item(tile, TERRA_FOREST))
+				{
+					improvementCount++;
+				}
+				
+			}
+			
+			for (MAP *tile : getBaseWorkedTiles(baseId))
+			{
+				if (map_has_item(tile, TERRA_FOREST))
+				{
+					workedImprovementCount++;
+				}
+				
+			}
+			
+			// estimate potentially worked improvements after facility is built
+			
+			double potentialImprovementCount = (double)workedImprovementCount + 0.5 * (double)(improvementCount - workedImprovementCount);
+			
+			// count bonus
+			
+			switch (facilityId)
+			{
+			case FAC_TREE_FARM:
+				// +1 nutrient
+				bonus += 1.0 * potentialImprovementCount;
+				break;
+				
+			case FAC_HYBRID_FOREST:
+				// +1 nutrient +1 energy
+				bonus += (1.0 +  1.0 / hurryCost) * potentialImprovementCount;
+				break;
+				
+			}
+			
+		}
+		
+		// special case for aquafarm
+		
+		if (facilityId == FAC_AQUAFARM)
+		{
+			// count improvements around base
+			
+			int improvementCount = 0;
+			int workedImprovementCount = 0;
+			
+			for (MAP *tile : getBaseWorkableTiles(baseId, false))
+			{
+				if (is_ocean(tile) && map_has_item(tile, TERRA_FARM))
+				{
+					improvementCount++;
+				}
+				
+			}
+			
+			for (MAP *tile : getBaseWorkedTiles(baseId))
+			{
+				if (is_ocean(tile) && map_has_item(tile, TERRA_FARM))
+				{
+					workedImprovementCount++;
+				}
+				
+			}
+			
+			// estimate potentially worked improvements after facility is built
+			
+			double potentialImprovementCount = (double)workedImprovementCount + 0.5 * (double)(improvementCount - workedImprovementCount);
+			
+			// count bonus
+			
+			// +1 nutrient
+			bonus += 1.0 * potentialImprovementCount;
+			
+		}
+		
+		// special case for themrocline transducer
+		
+		if (facilityId == FAC_THERMOCLINE_TRANSDUCER)
+		{
+			// count improvements around base
+			
+			int improvementCount = 0;
+			int workedImprovementCount = 0;
+			
+			for (MAP *tile : getBaseWorkableTiles(baseId, false))
+			{
+				if (is_ocean(tile) && map_has_item(tile, TERRA_SOLAR))
+				{
+					improvementCount++;
+				}
+				
+			}
+			
+			for (MAP *tile : getBaseWorkedTiles(baseId))
+			{
+				if (is_ocean(tile) && map_has_item(tile, TERRA_SOLAR))
+				{
+					workedImprovementCount++;
+				}
+				
+			}
+			
+			// estimate potentially worked improvements after facility is built
+			
+			double potentialImprovementCount = (double)workedImprovementCount + 0.5 * (double)(improvementCount - workedImprovementCount);
+			
+			// count bonus
+			
+			// +1 energy
+			bonus += 1.0 / hurryCost * potentialImprovementCount;
+			
+		}
+		
+		// special case for subsea trunkline
+		
+		if (facilityId == FAC_SUBSEA_TRUNKLINE)
+		{
+			// count improvements around base
+			
+			int improvementCount = 0;
+			int workedImprovementCount = 0;
+			
+			for (MAP *tile : getBaseWorkableTiles(baseId, false))
+			{
+				if (is_ocean(tile) && map_has_item(tile, TERRA_MINE))
+				{
+					improvementCount++;
+				}
+				
+			}
+			
+			for (MAP *tile : getBaseWorkedTiles(baseId))
+			{
+				if (is_ocean(tile) && map_has_item(tile, TERRA_MINE))
+				{
+					workedImprovementCount++;
+				}
+				
+			}
+			
+			// estimate potentially worked improvements after facility is built
+			
+			double potentialImprovementCount = (double)workedImprovementCount + 0.5 * (double)(improvementCount - workedImprovementCount);
+			
+			// count bonus
+			
+			// +1 mineral
+			bonus += 1.0 * potentialImprovementCount;
+			
+		}
+		
 		// calculate benefit
 
 		double benefit = bonus - ((double)maintenance / hurryCost);

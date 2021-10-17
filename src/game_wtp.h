@@ -231,6 +231,7 @@ int estimateBaseProductionTurnsToComplete(int id);
 std::vector<MAP *> getAdjacentTiles(int x, int y, bool startWithCenter);
 std::vector<MAP_INFO> getAdjacentTileInfos(int x, int y, bool startWithCenter);
 std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool startWithCenter);
+std::vector<MAP *> getBaseWorkableTiles(int baseId, bool startWithCenter);
 std::vector<MAP_INFO> getBaseRadiusTileInfos(int x, int y, bool startWithCenter);
 int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y);
 int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y);

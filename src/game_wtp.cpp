@@ -1270,6 +1270,18 @@ std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool startWithCenter)
 }
 
 /*
+Returns all valid base radius map tiles around base.
+if startFromCenter == true then also return central tile as first element
+*/
+std::vector<MAP *> getBaseWorkableTiles(int baseId, bool startWithCenter)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	return getBaseRadiusTiles(base->x, base->y, startWithCenter);
+
+}
+
+/*
 Returns all valid base radius map tile infos around given point.
 if startFromCenter == true then also return central tile as first element
 */
@@ -1604,9 +1616,6 @@ bool isBaseFacilityAvailable(int baseId, int facilityId)
 	BASE *base = &(Bases[baseId]);
 
 	// already built
-
-	if (has_facility(baseId, facilityId))
-		return false;
 
 	if (has_facility(baseId, facilityId))
 		return false;

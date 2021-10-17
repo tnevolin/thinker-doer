@@ -258,7 +258,7 @@ bool isInferiorYield(std::vector<YIELD> *yields, int nutrient, int mineral, int 
 bool isRaiseLandSafe(MAP_INFO *mapInfo);
 double calculateResourceScore(double nutrient, double mineral, double energy);
 double calculateBaseResourceScore(double populationSize, double nutrientSurplus, double mineralSurplus, double nutrient, double mineral, double energy);
-double computeImprovementBaseSurplusEffectScore(int baseId, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
+double computeImprovementBaseSurplusEffectScore(int baseId, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState, std::vector<MAP *> affectedTiles);
 bool isInferiorImprovedTile(BASE_INFO *baseInfo, MAP_INFO *mapInfo, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
 bool isreachable(int id, int x, int y);
 int getConnectedRegion(int region);

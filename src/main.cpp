@@ -774,6 +774,22 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_alien_hunting_outnumbering = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_population_limit_priority"))
+    {
+        cf->ai_production_population_limit_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_psych_priority"))
+    {
+        cf->ai_production_psych_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_eco_damage_threshold"))
+    {
+        cf->ai_production_eco_damage_threshold = atoi(value);
+    }
+    else if (MATCH("wtp", "ai_production_eco_damage_priority"))
+    {
+        cf->ai_production_eco_damage_priority = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_factions_enabled"))
     {
         cf->ai_terraforming_factions_enabled = atoi(value);

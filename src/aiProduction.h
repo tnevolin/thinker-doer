@@ -87,6 +87,7 @@ int aiSuggestBaseProduction(int baseId, int choice);
 void evaluateFacilitiesDemand();
 void evaluatePopulationLimitFacilitiesDemand();
 void evaluatePsychFacilitiesDemand();
+void evaluateEcoDamageFacilitiesDemand();
 void evaluateMultiplyingFacilitiesDemand();
 void evaluateDefensiveFacilitiesDemand();
 void evaluateMilitaryFacilitiesDemand();

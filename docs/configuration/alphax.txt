@@ -683,9 +683,9 @@ Temple of Planet,             20, 4, CentGen, Disable,  Ecology Bonus
 Psi Gate,                     10, 2, Matter,  Disable,  Teleport
 Covert Ops Center,            10, 2, Algor,   Disable,  Stronger Probe Teams
 Brood Pit,                    18, 4, CentPsi, Disable,  Police/Morale
-Aquafarm,                     16, 3, AdapEco, Disable,  Sea Nutrients
-Subsea Trunkline,             12, 2, Fusion,  Disable,  Sea Minerals
-Thermocline Transducer,        8, 1, Super,   Disable,  Sea Energy
+Aquafarm,                     16, 3, DocSec,  Disable,  Sea Nutrients
+Subsea Trunkline,             12, 2, NanoMin, Disable,  Sea Minerals
+Thermocline Transducer,        6, 1, Super,   Disable,  Sea Energy
 Flechette Defense System,     12, 2, NewMiss, Disable,  Missile Defense
 Subspace Generator,           60, 5, SecMani, Disable,  Alien Victory
 Geosynchronous Survey Pod,    16, 2, NewMiss, Disable,  Increase sight\sensor bonus

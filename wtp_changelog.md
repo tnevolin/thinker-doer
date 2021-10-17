@@ -1,3 +1,10 @@
+# Version 277
+
+* Returned initial clean minerals to 24.
+* Added dco damage facilities production.
+* Reverted WTP and Thiker terraforming comparison parameter back to "all WTP".
+* Revorked tech cost a little.
+
 # Version 276
 
 * Added configuration parameter to compare WTP and Thinker terraforming.

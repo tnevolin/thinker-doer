@@ -1609,36 +1609,40 @@ int wtp_tech_level(int id)
 /*
 
 Calculates tech cost.
-cost grows cubic from the beginning then linear.
-S  = 20                                     // constant (first tech cost)
-C  = 30										// cubic coefficient
-B  = 1200 * <map root>						// linear slope
-x0 = SQRT(B / (3 * C))                      // break point
-A  = C * x0 ^ 3 - B * x0                    // linear intercept
+cost grow accelerated from the beginning then linear.
+a1 = 20                                     // constant (first tech cost)
+b1 =-20										// linear coefficient
+c1 = 40										// quadratic coefficient
+b2 = 600 * <map size>						// linear slope
+x0 = (b2 - b1) / (2 * c1)                   // break point
+a2 = a1 + b1 * x0 + c1 * x0 ^ 2 - b2 * x0   // linear intercept
 x  = (<level> - 1)
 
-correction = (number of tech discovered by anybody / 85) / (turn / 350)
+correction = (number of tech discovered by anybody / total tech count) / (turn / 350)
 
 cost = [S + (x < x0 ? C * x ^ 3 : A + B * x)] * scale * correction
 
 */
-int wtp_tech_cost(int fac, int tech) {
+int wtp_tech_cost(int fac, int tech)
+{
     assert(fac >= 0 && fac < 8);
     MFaction* m = &MFactions[fac];
     int level = 1;
 
-    if (tech >= 0) {
+    if (tech >= 0)
+	{
         level = wtp_tech_level(tech);
     }
 
-    double S = 20.0;
-    double C = 30.0;
-    double B = 1200 * sqrt(*map_area_tiles / 3200.0);
-    double x0 = sqrt(B / (3 * C));
-    double A = C * x0 * x0 * x0 - B * x0;
-    double x = (level - 1);
+    double a1 = 20.0;
+    double b1 =-20.0;
+    double c1 = 40.0;
+    double b2 = 600.0 * ((double)*map_area_tiles / 3200.0);
+    double x0 = (b2 - b1) / (2 * c1);
+    double a2 = a1 + b1 * x0 + c1 * x0 * x0 - b2 * x0;
+    double x = (double)(level - 1);
 
-    double base = S + (x < x0 ? C * x * x * x : A + B * x);
+    double base = (x < x0 ? a1 + b1 * x + c1 * x * x : a2 + b2 * x);
 
     double cost =
         base
@@ -1649,17 +1653,29 @@ int wtp_tech_cost(int fac, int tech) {
 
     double dw;
 
-    if (is_human(fac)) {
+    if (is_human(fac))
+	{
         dw = 1.0 + 0.1 * (10.0 - CostRatios[*diff_level]);
     }
-    else {
+    else
+    {
         dw = 1.0;
     }
 
     cost *= dw;
 
-    debug("tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %s\n", *current_turn, fac,
-        base, dw, cost, level, tech, (tech >= 0 ? Tech[tech].name : NULL));
+    debug
+    (
+		"tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %s\n",
+		*current_turn,
+		fac,
+        base,
+        dw,
+        cost,
+        level,
+        tech,
+        (tech >= 0 ? Tech[tech].name : NULL)
+	);
 	
 	// scale
 
@@ -1688,7 +1704,7 @@ int wtp_tech_cost(int fac, int tech) {
 			
 		}
 		
-		double correction = ((double)discoveredTechCount / (double)totalTechCount) / ((double)*current_turn / (double)350);
+		double correction = ((double)discoveredTechCount / (double)totalTechCount) / ((double)*current_turn / 350.0);
 		debug("tech_cost correction: discoveredTechCount = %d, totalTechCount = %d, current_turn = %d, end_turn = %d, correction = %f\n", discoveredTechCount, totalTechCount, *current_turn, 350, correction);
 		
 		cost *= correction;
