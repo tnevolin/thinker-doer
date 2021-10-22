@@ -793,7 +793,7 @@ Infiltration action is now always available even if currently active. The number
 |----|----|
 | infiltration_expire | Enables the feature. |
 | infiltration_devices | Max number of infiltration devices. |
-| human_infiltration_device_lifetime_base | Average number of turns to discover a device attached to own network for human player. |
+| human_infiltration_device_lifetime_base | Average number of turns to discover a device for human player. |
 | human_infiltration_device_lifetime_probe_effect | More turns on average to discover a device per each PROBE rating for human player. |
 | computer_infiltration_device_lifetime_base | Average number of turns to discover a device for computer player. |
 | computer_infiltration_device_lifetime_probe_effect | More turns to discover a device per each PROBE rating for computer player. |
