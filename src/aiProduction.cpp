@@ -2470,24 +2470,6 @@ int calculateRegionSurfaceUnitTypeCount(int factionId, int region, int weaponTyp
 
 	}
 
-	for (int baseId : getRegionBases(factionId, region))
-	{
-		BASE *base = &(Bases[baseId]);
-		int item = base->queue_items[0];
-
-		if (item < 0)
-			continue;
-
-		if (Units[item].weapon_type != weaponType)
-			continue;
-
-		if (unit_triad(item) != triad)
-			continue;
-
-		regionUnitTypeCount++;
-
-	}
-
 	return regionUnitTypeCount;
 
 }

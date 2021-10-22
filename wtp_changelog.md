@@ -697,7 +697,7 @@ A lot of ASM code redone. May break some previously working functionality relate
 
 # Version 173
 
-* Infiltration expiration is not broken into multiple steps providing slightly more predictable infiltration lifetime and more insigth for player.
+* Infiltration expiration is now broken into multiple steps providing slightly more predictable infiltration lifetime and more insigth for player.
 
 # Version 172
 

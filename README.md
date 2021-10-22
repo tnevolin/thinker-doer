@@ -781,3 +781,20 @@ This fix: (minerals) / (1 + reducing facilities) - clean minerals
 
 Now base can produce that many minerals without pollution: TF + HF = 16, TF + HF and Centauri Preserve = 16\*2, TF + HF and Centauri Preserve + Temple Of Planet = 16\*3, and so on. Easy, simple, and player can even build these facilities proactively to protect themselves from future pollution increase. Neat!
 
+# Infiltration expiration
+
+Some players complained about infiltration to be permanent and, thus, not presenting any challenge especially in multiplayer games. This modification introduce infiltration expiration. To smoothen expiration process and also to give player early expirtation notice single infiltration act is conssidered as planting up to N number of devices attached to opponent network. Infiltrated faction then search for such devices and disable them one by one. The speed of discovery depends on infiltrated faction PROBE rating. Every time another device is disabled the notification popup is shown to human device owner listing remaining devices count and whether they still have infiltration active. That helps player planning further infiltration renewal attemps.
+
+Infiltration action is now always available even if currently infiltrated. The number of planted devices is also displayed on infiltration dialog to help player decide whether they want to attempt infiltration at the time.
+
+## Settings in thinker.ini
+
+| setting | description |
+|----|----|
+| infiltration_expire | Enables the feature. |
+| infiltration_devices | Max number of infiltration devices. |
+| human_infiltration_device_lifetime_base | Average number of turns to discover a device attached to own network for human player. |
+| human_infiltration_device_lifetime_probe_effect | More turns on average to discover a device per each PROBE rating for human player. |
+| computer_infiltration_device_lifetime_base | Average number of turns to discover a device for computer player. |
+| computer_infiltration_device_lifetime_probe_effect | More turns to discover a device per each PROBE rating for computer player. |
+
