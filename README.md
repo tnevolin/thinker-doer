@@ -13,7 +13,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 
 I think it includes everything I have planned for it. So I am no longer actively working on it. However, I still see some traffic on this repository. With that in mind please feel free to:
 
-* Let me know that you are using or used it so I can get sense of user base coverage. Unfortunately, github is not tracking downloads. :(
+* Let me know that you are using or used it so I can get sense of user base coverage. Unfortunately, github is not tracking downloads. 😥
 * File bug report (or feature requst) by creating issue in this project or post it to the forum https://alphacentauri2.info/index.php?topic=21359.0.
 
 ## Special thanks and acknowledgements
