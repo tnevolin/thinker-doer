@@ -9,6 +9,14 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * [Changelog](https://github.com/tnevolin/thinker-doer/blob/master/wtp_changelog.md)
 * [Strategy tips](https://github.com/tnevolin/thinker-doer/blob/master/wtp_strategy.md)
 
+## Note to users
+
+I think it includes everything I have planned for it. So I am no longer actively working on it. However, I still see some traffic on this repository. With that in mind please feel free to:
+
+* Let me know that you are using or used it so I can get sense of user base coverage. Unfortunately, github is not tracking downloads. :(
+* File bug report by creating issue in this project or posting it to the forum https://alphacentauri2.info/index.php?topic=21359.0.
+* Post on the forum that you are using this mod and would like more features or modifications or to merge it into some bigger mod.
+
 ## Special thanks and acknowledgements
 
 * Induktio: Created Thinker mod which greatly improves AI intelligence and makes game much more challenging.
