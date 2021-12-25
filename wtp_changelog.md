@@ -1,3 +1,7 @@
+# Version 278
+
+* [Bug] Fixed the bug during pact withdrawal that prevented units to be sent home.
+
 # Version 277
 
 * Returned initial clean minerals to 24.

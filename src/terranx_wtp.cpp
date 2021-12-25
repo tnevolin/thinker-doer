@@ -207,7 +207,7 @@ fp_1void *enemy_units_check = (fp_1void *)0x00579510;
 fp_2int *veh_who = (fp_2int *)0x00500250;
 
 // vehicle withdrawal after breaking pact
-fp_2int *pact_withdraw = (fp_2int *)0x00500250;
+fp_2int *pact_withdraw = (fp_2int *)0x0053C370;
 
 // finds nearest base to location
 fp_2int *base_find = (fp_2int *)0x004E3B80;
