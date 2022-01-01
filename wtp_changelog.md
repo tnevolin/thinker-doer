@@ -1,3 +1,7 @@
+# Version 279
+
+* [Bug] Forced AI colony not to build bases adjacent to other bases. That happened in some cases.
+
 # Version 278
 
 * [Bug] Fixed the bug during pact withdrawal that prevented units to be sent home.

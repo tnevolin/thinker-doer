@@ -259,7 +259,22 @@ struct BuildTask : MoveTask
 	
 	virtual int executeAction(int vehicleId)
 	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		
+		// check there is no adjacent bases
+		
+		for (MAP* adjacentTile : getAdjacentTiles(vehicle->x, vehicle->y, false))
+		{
+			// base in tile
+			
+			if (map_has_item(adjacentTile, TERRA_BASE_IN_TILE))
+			{
+				mod_veh_skip(vehicleId);
+				return EM_DONE;
+			}
+			
+		}
 		
 		// remove fungus and rocks if any before building
 		
