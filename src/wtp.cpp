@@ -3006,7 +3006,7 @@ HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, 
 			int defenderStrength;
 			mod_battle_compute(attackerVehicleId, stackedVehicleId, (int)&attackerStrength, (int)&defenderStrength, 0);
 
-			double defenderEffectiveness = ((double)defenderStrength / (double)attackerStrength) * ((stackedVehicleUnit->reactor_type * 10 - stackedVehicle->damage_taken) / (stackedVehicleUnit->reactor_type * 10));
+			double defenderEffectiveness = ((double)defenderStrength / (double)attackerStrength) * ((double)(stackedVehicleUnit->reactor_type * 10 - stackedVehicle->damage_taken) / (double)(stackedVehicleUnit->reactor_type * 10));
 
 			if (bestDefenderVehicleId == -1 || defenderEffectiveness > bestDefenderEffectiveness)
 			{

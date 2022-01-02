@@ -1,3 +1,7 @@
+# Version 280
+
+* [Bug] My code that fixed incorrect best defender selection for sea to sea combat was flawed itself ignoring damaged units. Should be fixed now.
+
 # Version 279
 
 * [Bug] Forced AI colony not to build bases adjacent to other bases. That happened in some cases.
