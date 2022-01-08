@@ -1,3 +1,7 @@
+# Version 281
+
+* Set Clean Reactor ability cost to 32 (again). Somehow it got changed and this change is undocumented. Maybe some random edit I didn't plan.
+
 # Version 280
 
 * [Bug] My code that fixed incorrect best defender selection for sea to sea combat was flawed itself ignoring damaged units. Should be fixed now.
