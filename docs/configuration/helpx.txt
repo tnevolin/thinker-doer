@@ -359,7 +359,7 @@ control=60021> but reduces $LINK<Labs=22> output by half.
 #HELPFAC24
 Helps base grow faster by improving living conditions. Eliminates population limit GROWTH penalty.
 ^Default base population limit without this facility is {7}. Faction settings may alter it.
-
+^
 ^Base with this facility receives GROWTH bonus when population is below the limit.
 ^GROWTH bonus = min(3, limit - population)
 ^
@@ -370,7 +370,7 @@ Helps base grow faster by improving living conditions. Eliminates population lim
 #HELPFAC25
 Helps base grow faster by improving living conditions. Eliminates population limit GROWTH penalty.
 ^Default base population limit without this facility is {14}. Faction settings may alter it.
-
+^
 ^Base with this facility receives GROWTH bonus when population is below the limit.
 ^GROWTH bonus = min(3, limit - population)
 ^
