@@ -357,29 +357,25 @@ control=60021> but reduces $LINK<Labs=22> output by half.
 
 #; Hab Complex
 #HELPFAC24
-Eases population growth beyond defalut limit {7}.
-^The limit can be modified faction settings and SPs.
+Helps base grow faster by improving living conditions. Eliminates population limit GROWTH penalty.
+^Default base population limit without this facility is {7}. Faction settings may alter it.
+
+^Base with this facility receives GROWTH bonus when population is below the limit.
+^GROWTH bonus = min(3, limit - population)
 ^
 ^Base without this facility receives GROWTH penalty when its population approaches the limit.
 ^GROWTH penalty = max(0, population - limit + 3)
-^(thinker.ini: habitation_facility_absent_growth_penalty)
-^
-^Base with this facility receives GROWTH bonus when population is below the limit.
-^GROWTH bonus = min(3, limit - population)
-^(thinker.ini: habitation_facility_present_growth_bonus_max)
 
 #; Habitation Dome
 #HELPFAC25
-Eases population growth beyond defalut limit {14}.
-^The limit can be modified faction settings and SPs.
+Helps base grow faster by improving living conditions. Eliminates population limit GROWTH penalty.
+^Default base population limit without this facility is {14}. Faction settings may alter it.
+
+^Base with this facility receives GROWTH bonus when population is below the limit.
+^GROWTH bonus = min(3, limit - population)
 ^
 ^Base without this facility receives GROWTH penalty when its population approaches the limit.
 ^GROWTH penalty = max(0, population - limit + 3)
-^(thinker.ini: habitation_facility_absent_growth_penalty)
-^
-^Base with this facility receives GROWTH bonus when population is below the limit.
-^GROWTH bonus = min(3, limit - population)
-^(thinker.ini: habitation_facility_present_growth_bonus_max)
 
 #; Pressure Dome
 #HELPFAC26

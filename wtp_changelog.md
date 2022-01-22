@@ -771,7 +771,6 @@ A lot of ASM code redone. May break some previously working functionality relate
 * Deep Radar is free for sea/air and 1 for land.
 * Air Superiority is free for sea/air and 1 for land.
 
-
 # Version 164
 
 * Wealth,          IndAuto,   +ECONOMY,   --MORALE,     -PLANET,    ++INDUSTRY. Replaced POLICE penalty with PLANET one.
