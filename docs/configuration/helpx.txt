@@ -357,24 +357,26 @@ control=60021> but reduces $LINK<Labs=22> output by half.
 
 #; Hab Complex
 #HELPFAC24
-Helps base grow faster by improving living conditions. Eliminates population limit GROWTH penalty.
-^Default base population limit without this facility is {7}. Faction settings may alter it.
+Helps base grow faster by improving living conditions.
+^Eliminates population limit GROWTH penalty.
+^Default limit without this facility is {7} (alterable by faction settings).
 ^
-^Base with this facility receives GROWTH bonus when population is below the limit.
+^Base with this facility gets GROWTH bonus below the limit.
 ^GROWTH bonus = min(3, limit - population)
 ^
-^Base without this facility receives GROWTH penalty when its population approaches the limit.
+^Base without this facility gets GROWTH penalty approaching the limit.
 ^GROWTH penalty = max(0, population - limit + 3)
 
 #; Habitation Dome
 #HELPFAC25
-Helps base grow faster by improving living conditions. Eliminates population limit GROWTH penalty.
-^Default base population limit without this facility is {14}. Faction settings may alter it.
+Helps base grow faster by improving living conditions.
+^Eliminates population limit GROWTH penalty.
+^Default limit without this facility is {14} (alterable by faction settings).
 ^
-^Base with this facility receives GROWTH bonus when population is below the limit.
+^Base with this facility gets GROWTH bonus below the limit.
 ^GROWTH bonus = min(3, limit - population)
 ^
-^Base without this facility receives GROWTH penalty when its population approaches the limit.
+^Base without this facility gets GROWTH penalty approaching the limit.
 ^GROWTH penalty = max(0, population - limit + 3)
 
 #; Pressure Dome
