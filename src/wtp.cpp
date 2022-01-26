@@ -445,13 +445,14 @@ HOOK_API void mod_battle_compute_compose_value_percentage(int output_string_poin
 Prototype cost calculation.
 
 0.
-All non combat related modules (colony, former, transport) have their chassis cost reduced to match land analogues.
+All non combat sea unit (colony, former, transport) have their chassis cost reduced to match land analogues.
 foil = infantry
 cruiser = speeder
 
 1. Calculate module and weapon/armor reactor modified costs.
 module reactor modified cost = item cost * (Fission reactor value / 100)
 weapon/armor reactor modified cost = item cost * (reactor value / 100)
+1a. Planet Buster is treated as module.
 
 2. Select primary and secondary item.
 primary item = the one with higher reactor modified cost
@@ -495,7 +496,7 @@ HOOK_API int proto_cost(int chassis_id, int weapon_id, int armor_id, int abiliti
 
     // determine whether we have module or weapon
 
-    bool module = (Weapon[weapon_id].mode >= WMODE_TRANSPORT);
+    bool module = (weapon_id >= WPN_PLANET_BUSTER && weapon_id <= WPN_ALIEN_ARTIFACT || weapon_id == WPN_TECTONIC_PAYLOAD || weapon_id == WPN_FUNGAL_PAYLOAD);
 
     // get component costs
 

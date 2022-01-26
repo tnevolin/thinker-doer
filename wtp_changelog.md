@@ -1,3 +1,12 @@
+# Version 282
+
+* Intellectual Integrity unlocks Non-Lethal Methods and corresponding Police Garrison predesigned unit.
+* Amphibious Pods allowed for non-combat units including probes.
+* Missile chassis cost increased to twice infantry chassis cost.
+* Conventional Payload strength reduced to 15 (was 18).
+* Conventional Payload cost is reduced by reactor. Same way as other weapons.
+* Planet Buster cost is NOT reduced by reactor. This is to compensate its significant reactor power increase.
+
 # Version 281
 
 * Set Clean Reactor ability cost to 32 (again). Somehow it got changed and this change is undocumented. Maybe some random edit I didn't plan.

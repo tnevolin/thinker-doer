@@ -370,7 +370,7 @@ Cruiser,M1,   Destroyer,M1,  Cutter,M1,      Gunboat,M1,   6, 1, 0, 0, 4, 8, Doc
 Needlejet,M1, Penetrator,M1, Interceptor,M1, Tactical,M1,  8, 2, 2, 0, 1, 6, DocAir,   Thunderbolt,M1,    Sovereign,M1,
 Copter,M1,    Chopper,M1,    Rotor,M1,       Lifter,M1,    8, 2, 1, 0, 1, 6, MindMac,  Gunship,M1,        Warbird,M1,
 Gravship,M1,  Skybase,M1,    Antigrav,M1,    Skyfort,M1,   8, 2, 0, 0, 1, 8, AGrav,    Deathsphere,M1,    Doomwall,M1,
-Missile,M1,   Missile,M1,    Missile,M1,     Missile,M1,  12, 2, 1, 1, 0, 4, Orbital,  Missile,M1,        Missile,M1,
+Missile,M1,   Missile,M1,    Missile,M1,     Missile,M1,  12, 2, 1, 1, 0, 8, Orbital,  Missile,M1,        Missile,M1,
 
 ;
 ; Reactors
@@ -424,7 +424,7 @@ Troop Transport,      Transport,      0, 7, 4, -1, DocFlex,
 Supply Transport,     Supply,         0,10,12, -1, Disable,
 Probe Team,           Probe Team,     0,11, 4, -1, Poly,
 Alien Artifact,       Artifact,       0,12,36, -1, Disable,
-Conventional Payload, Conventional,  12, 0,12, -1, Orbital,
+Conventional Payload, Conventional,  10, 0,12, -1, Orbital,
 Tectonic Payload,     Tectonic,       0,13,24, -1, NewMiss
 Fungal Payload,       Fungal,         0,14,24, -1, NewMiss
 
@@ -498,7 +498,7 @@ Resonance 8 Armor,   8-Res,       8, 1,11, Disable,
 Super Former,           2, EcoEng2,  Super,     000000010111, Terraform rate doubled
 Deep Radar,             0, MilAlg,   ,          010000111111, Sees 2 spaces
 Cloaking Device,        2, Surface,  Cloaked,   000001111001, Invisible; Ignores ZOCs
-Amphibious Pods,        1, AdapDoc,  Amphibious,000000001001, Attacks from ship
+Amphibious Pods,        1, AdapDoc,  Amphibious,000000101001, Attacks from ship
 Drop Pods,              2, MindMac,  Drop,      000000111001, Makes air drops
 Air Superiority,        0, DocAir,   SAM,       010000001111, Attacks air units
 Deep Pressure Hull,     1, Disable,  Sub,       000000111010, Operates underwater
@@ -622,7 +622,7 @@ Supply Trawler,         Foil,     Supply,       Scout,     10, 0, 0, Disable, -1
 Rover Colony Pod,       Speeder,  Colony Pod,   Scout,      8, 0, 0, Mobile,  -1, 00000000000000000000000000
 Sea Colony Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, DocFlex, -1, 00000000000000000000000000
 Trance Scout Patrol,    Infantry, Gun,          Scout,      2, 0, 0, Brain,   -1, 00000001000000000000000000
-Police Garrison,        Infantry, Gun,          Scout,      2, 0, 0, WillPow, -1, 00010000000000000000000000
+Police Garrison,        Infantry, Gun,          Scout,      2, 0, 0, Integ,   -1, 00010000000000000000000000
 Gun Foil,               Foil,     Gun,          Scout,      3, 0, 0, DocFlex, -1, 00000000000000000000000000
 Scout Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Mobile,  -1, 00000000000000000000000000
 Empath Rover,           Speeder,  Gun,          Scout,      0, 0, 0, CentEmp, -1, 00000000000000100000000000
