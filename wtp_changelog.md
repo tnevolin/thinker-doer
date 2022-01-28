@@ -1,6 +1,10 @@
+# Version 284
+
+* Fixed vanilla bug causing turn not to advance when force-ending turn while needlejet in flight has moves left.
+
 # Version 283
 
-* Fixed some nasty C++ std::sort bug.
+* Fixed some nasty C++ std::sort bug causing crash on AI turn.
 
 # Version 282
 

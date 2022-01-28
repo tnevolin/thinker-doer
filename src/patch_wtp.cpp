@@ -4567,6 +4567,35 @@ void patch_eco_damage_alternative_industry_effect_reduction_formula()
     
 }
 
+void patch_unfinished_needlejet_turn()
+{
+    int unfinished_needlejet_turn_bytes_length = 0x2;
+
+    /*
+	0:  3b c8                   cmp    ecx,eax
+	*/
+    byte unfinished_needlejet_turn_bytes_old[] =
+		{ 0x3B, 0xC8 }
+    ;
+
+    /*
+	0:  39 c9                   cmp    ecx,ecx
+    */
+    byte unfinished_needlejet_turn_bytes_new[] =
+        { 0x39, 0xC9 }
+    ;
+
+    write_bytes
+    (
+        0x005259CE,
+        unfinished_needlejet_turn_bytes_old,
+        unfinished_needlejet_turn_bytes_new,
+        unfinished_needlejet_turn_bytes_length
+    )
+    ;
+    
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -5164,6 +5193,8 @@ void patch_setup_wtp(Config* cf)
 	{
 		patch_eco_damage_alternative_industry_effect_reduction_formula();
 	}
+	
+	patch_unfinished_needlejet_turn();
 	
 }
 
