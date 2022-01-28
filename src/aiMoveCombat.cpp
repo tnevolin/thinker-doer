@@ -40,14 +40,19 @@ void populateCombatLists()
 Comparison function for base defenders.
 Sort by police then trance then range.
 */
-bool compareDefenderVehicleRanges(VehicleRange &vehicleRange1, VehicleRange &vehicleRange2)
+bool compareDefenderVehicleRanges(const int vehicleRange1, const int vehicleRange2)
 {
+	int id1 = vehicleRange1 % 10000;
+	int range1 = vehicleRange1 / 10000;
+	int id2 = vehicleRange2 % 10000;
+	int range2 = vehicleRange2 / 10000;
+	
 	return
-		vehicle_has_ability(vehicleRange1.id, ABL_POLICE_2X) && !vehicle_has_ability(vehicleRange2.id, ABL_POLICE_2X)
+		vehicle_has_ability(id1, ABL_POLICE_2X) && !vehicle_has_ability(id2, ABL_POLICE_2X)
 		||
-		vehicle_has_ability(vehicleRange1.id, ABL_TRANCE) && !vehicle_has_ability(vehicleRange2.id, ABL_TRANCE)
+		vehicle_has_ability(id1, ABL_TRANCE) && !vehicle_has_ability(id2, ABL_TRANCE)
 		||
-		vehicleRange1.range < vehicleRange2.range
+		range1 < range2
 	;
 	
 }
@@ -119,7 +124,7 @@ void baseProtection()
 		
 		debug("\t\tselect defenders\n");
 		
-		std::vector<VehicleRange> defenders;
+		std::vector<int> defenders;
 		
 		for (int vehicleId : activeFactionInfo.combatVehicleIds)
 		{
@@ -160,17 +165,46 @@ void baseProtection()
 			if (range > 10)
 				continue;
 			
+			// police and trance abilities
+			
+			int abilityMarker;
+			
+			if (vehicle_has_ability(vehicleId, ABL_POLICE_2X))
+			{
+				abilityMarker = 0;
+			}
+			else if (vehicle_has_ability(vehicleId, ABL_TRANCE))
+			{
+				abilityMarker = 1;
+			}
+			else
+			{
+				abilityMarker = 2;
+			}
+			
 			// add defender
 			
-			defenders.push_back({vehicleId, range});
+			defenders.push_back(vehicleId + 10000 * range + 100000 * abilityMarker);
 			
-			debug("\t\t\t(%3d,%3d) %-32s \n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+			debug("\t\t\t[%4d] (%3d,%3d) %-32s \n", vehicleId, vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+			
+		}
+		
+		if (DEBUG)
+		{
+			debug("\t\tvehicleRange\n");
+			for(int vehicleRange : defenders)
+			{
+				debug("\t\t\t%8d = {%4d, %5d}\n", vehicleRange, vehicleRange % 10000, vehicleRange / 10000);
+			}
+			
+			fflush(debug_log);
 			
 		}
 		
 		// sort defenders
 		
-		std::sort(defenders.begin(), defenders.end(), compareDefenderVehicleRanges);
+		std::sort(defenders.begin(), defenders.end());
 		
 		// assign defenders
 		
@@ -178,7 +212,7 @@ void baseProtection()
 		
 		while (defenders.size() > 0)
 		{
-			int vehicleId = defenders.front().id;
+			int vehicleId = defenders.front() % 10000;
 			defenders.erase(defenders.begin());
 			
 			VEH *vehicle = &(Vehicles[vehicleId]);
@@ -211,9 +245,9 @@ void baseProtection()
 			
 			debug("\t\trelease defender\n");
 			
-			for (VehicleRange vehicleRange : defenders)
+			for (int vehicleRange : defenders)
 			{
-				int vehicleId = vehicleRange.id;
+				int vehicleId = vehicleRange % 10000;
 				VEH *vehicle = &(Vehicles[vehicleId]);
 				
 				// in base
@@ -247,9 +281,9 @@ void baseProtection()
 			
 			debug("\t\tkeep defender\n");
 			
-			for (VehicleRange vehicleRange : defenders)
+			for (int vehicleRange : defenders)
 			{
-				int vehicleId = vehicleRange.id;
+				int vehicleId = vehicleRange % 10000;
 				VEH *vehicle = &(Vehicles[vehicleId]);
 				
 				// in base
@@ -269,9 +303,9 @@ void baseProtection()
 			
 			debug("\t\tpull defender\n");
 			
-			for (VehicleRange vehicleRange : defenders)
+			for (int vehicleRange : defenders)
 			{
-				int vehicleId = vehicleRange.id;
+				int vehicleId = vehicleRange % 10000;
 				VEH *vehicle = &(Vehicles[vehicleId]);
 				
 				// not in base

@@ -28,6 +28,7 @@ struct VehicleRange
 
 void moveCombatStrategy();
 void populateCombatLists();
+bool compareDefenderVehicleRanges(const VehicleRange &vehicleRange1, const VehicleRange &vehicleRange2);
 void baseProtection();
 void healStrategy();
 void moveScoutStrategy();

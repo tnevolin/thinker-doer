@@ -1,3 +1,7 @@
+# Version 283
+
+* Fixed some nasty C++ std::sort bug.
+
 # Version 282
 
 * Intellectual Integrity unlocks Non-Lethal Methods and corresponding Police Garrison predesigned unit.
