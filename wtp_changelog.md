@@ -1,3 +1,7 @@
+# Version 285
+
+* Fixed Thinker bug not setting social agenda bias and set such bias to 1000 to ensure AI sticks to their agenda.
+
 # Version 284
 
 * Fixed vanilla bug causing turn not to advance when force-ending turn while needlejet in flight has moves left.

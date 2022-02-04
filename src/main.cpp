@@ -73,7 +73,7 @@ int handler(void* user, const char* section, const char* name, const char* value
     } else if (MATCH("thinker", "social_ai")) {
         cf->social_ai = atoi(value);
     } else if (MATCH("thinker", "social_ai_bias")) {
-        cf->social_ai = std::min(1000, std::max(0, atoi(value)));
+        cf->social_ai_bias = std::min(1000, std::max(0, atoi(value)));
     } else if (MATCH("thinker", "tech_balance")) {
         cf->tech_balance = atoi(value);
     } else if (MATCH("thinker", "hurry_items")) {
