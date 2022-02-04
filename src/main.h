@@ -139,7 +139,7 @@ struct Config {
     int design_units = 1;
     int factions_enabled = 7;
     int social_ai = 1;
-    int social_ai_bias = 10;
+    int social_ai_bias = 1000;
     int tech_balance = 0;
     int hurry_items = 0;
     int base_spacing = 3;
@@ -355,6 +355,7 @@ struct Config {
     double ai_production_psych_priority;
     double ai_production_eco_damage_threshold;
     double ai_production_eco_damage_priority;
+    double ai_production_transport_priority;
     double ai_terraforming_nutrientWeight;
     int ai_terraforming_factions_enabled;
     double ai_terraforming_mineralWeight;

@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <map>
 #include <unordered_map>
+#include <ctime>
 #include "terranx_wtp.h"
 #include "ai.h"
 #include "wtp.h"
@@ -19,7 +20,9 @@
 int currentTurn = -1;
 int aiFactionId = -1;
 
-ActiveFactionInfo activeFactionInfo;
+AIData data;
+
+std::clock_t start;
 
 /*
 Top level faction upkeep entry point.
@@ -27,6 +30,8 @@ This is called for AI enabled factions only.
 */
 int aiFactionUpkeep(const int factionId)
 {
+	debug("aiFactionUpkeep - %s\n", MFactions[factionId].noun_faction);
+	
 	// set AI faction id for future reference
 	
 	aiFactionId = factionId;
@@ -40,10 +45,10 @@ int aiFactionUpkeep(const int factionId)
 	
 	int returnValue = faction_upkeep(factionId);
 	
-	// update base productions
-	
-	setProduction();
-	
+//	// update base productions
+//	
+//	setProduction();
+//	
 	// consider hurrying production in all bases
 	
 	considerHurryingProduction(factionId);
@@ -61,11 +66,16 @@ void aiStrategy()
 {
 	debug("aiStrategy: aiFactionId=%d\n", aiFactionId);
 
+	// clear lists
+	
+	data.clear();
+	
 	// populate shared strategy lists
 	
+	analyzeGeography();
+	setSharedOceanRegions();
 	populateGlobalVariables();
 	evaluateBaseExposures();
-	setSharedOceanRegions();
 	
 	// design units
 	
@@ -85,430 +95,324 @@ void aiStrategy()
 
 }
 
-void populateGlobalVariables()
+/*
+Analyzes and sets geographical parameters.
+*/
+void analyzeGeography()
 {
-	// clear lists
-	
-	activeFactionInfo.clear();
-	
-	// best weapon and armor
-	
-	activeFactionInfo.bestWeaponOffenseValue = getFactionBestPrototypedWeaponOffenseValue(aiFactionId);
-	activeFactionInfo.bestArmorDefenseValue = getFactionBestPrototypedArmorDefenseValue(aiFactionId);
-	
-	// populate factions combat modifiers
-
-	debug("%-24s\nfactionCombatModifiers:\n", MFactions[aiFactionId].noun_faction);
-
-	for (int id = 1; id < 8; id++)
+	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
 	{
-		// store combat modifiers
-
-		activeFactionInfo.factionInfos[id].offenseMultiplier = getFactionOffenseMultiplier(id);
-		activeFactionInfo.factionInfos[id].defenseMultiplier = getFactionDefenseMultiplier(id);
-		activeFactionInfo.factionInfos[id].fanaticBonusMultiplier = getFactionFanaticBonusMultiplier(id);
-
-		debug
-		(
-			"\t%-24s: offenseMultiplier=%4.2f, defenseMultiplier=%4.2f, fanaticBonusMultiplier=%4.2f\n",
-			MFactions[id].noun_faction,
-			activeFactionInfo.factionInfos[id].offenseMultiplier,
-			activeFactionInfo.factionInfos[id].defenseMultiplier,
-			activeFactionInfo.factionInfos[id].fanaticBonusMultiplier
-		);
-
-	}
-
-	debug("\n");
-
-	// populate other factions threat koefficients
-
-	debug("%-24s\notherFactionthreatCoefficients:\n", MFactions[aiFactionId].noun_faction);
-
-	for (int id = 1; id < 8; id++)
-	{
-		// skip aliens
-
-		if (id == 0)
-			continue;
-
-		// skip self
-
-		if (id == aiFactionId)
-			continue;
-
-		// get relation from other faction
-
-		int otherFactionRelation = Factions[id].diplo_status[aiFactionId];
-
-		// calculate threat koefficient
-
-		double threatCoefficient;
-
-		if (is_human(id))
+		// populate friendly bases
+		
+		std::unordered_set<MAP *> *friendlyCoastalBases = &(data.geography[factionId].friendlyCoastalBases);
+		std::unordered_map<MAP *, std::set<int>> *friendlyCoastalBaseOceanRegionGroups = &(data.geography[factionId].friendlyCoastalBaseOceanRegionGroups);
+		std::unordered_map<MAP *, int> *friendlyCoastalBaseOceanAssociations = &(data.geography[factionId].friendlyCoastalBaseOceanAssociations);
+		
+		for (int baseId = 0; baseId < *total_num_bases; baseId++)
 		{
-			threatCoefficient = conf.ai_production_threat_coefficient_human;
-		}
-		else if (otherFactionRelation & DIPLO_VENDETTA)
-		{
-			threatCoefficient = conf.ai_production_threat_coefficient_vendetta;
-		}
-		else if (otherFactionRelation & DIPLO_PACT)
-		{
-			threatCoefficient = conf.ai_production_threat_coefficient_pact;
-		}
-		else if (otherFactionRelation & DIPLO_TREATY)
-		{
-			threatCoefficient = conf.ai_production_threat_coefficient_treaty;
-		}
-		else
-		{
-			threatCoefficient = conf.ai_production_threat_coefficient_other;
-		}
-
-		// store threat koefficient
-
-		activeFactionInfo.factionInfos[id].threatCoefficient = threatCoefficient;
-
-		debug("\t%-24s: %08x => %4.2f\n", MFactions[id].noun_faction, otherFactionRelation, threatCoefficient);
-
-	}
-
-	// populate factions best combat item values
-	
-	for (int factionId = 1; factionId < 8; factionId++)
-	{
-		activeFactionInfo.factionInfos[factionId].bestWeaponOffenseValue = getFactionBestPrototypedWeaponOffenseValue(factionId);
-		activeFactionInfo.factionInfos[factionId].bestArmorDefenseValue = getFactionBestPrototypedArmorDefenseValue(factionId);
-	}
-
-	debug("\n");
-
-	// populate bases
-
-	debug("activeFactionInfo.baseStrategies\n");
-
-	for (int baseId = 0; baseId < *total_num_bases; baseId++)
-	{
-		BASE *base = &(Bases[baseId]);
-
-		// exclude not own bases
-
-		if (base->faction_id != aiFactionId)
-			continue;
-
-		// add base
-		
-		activeFactionInfo.baseIds.push_back(baseId);
-		
-		// add base location
-
-		MAP *baseLocation = getMapTile(base->x, base->y);
-		activeFactionInfo.baseLocations[baseLocation] = baseId;
-
-		// add base strategy
-
-		activeFactionInfo.baseStrategies[baseId] = {};
-		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseId]);
-		
-		baseStrategy->base = base;
-		baseStrategy->intrinsicDefenseMultiplier = getBaseDefenseMultiplier(baseId, -1);
-		baseStrategy->conventionalDefenseMultipliers[TRIAD_LAND] = getBaseDefenseMultiplier(baseId, TRIAD_LAND);
-		baseStrategy->conventionalDefenseMultipliers[TRIAD_SEA] = getBaseDefenseMultiplier(baseId, TRIAD_SEA);
-		baseStrategy->conventionalDefenseMultipliers[TRIAD_AIR] = getBaseDefenseMultiplier(baseId, TRIAD_AIR);
-		baseStrategy->sensorOffenseMultiplier = getSensorOffenseMultiplier(base->faction_id, base->x, base->y);
-		baseStrategy->sensorDefenseMultiplier = getSensorDefenseMultiplier(base->faction_id, base->x, base->y);
-
-		debug("\n[%3d] %-25s\n", baseId, activeFactionInfo.baseStrategies[baseId].base->name);
-
-		// add base regions
-		
-		int baseRegion = getBaseMapTile(baseId)->region;
-		
-		activeFactionInfo.presenceRegions.insert(getBaseMapTile(baseId)->region);
-		activeFactionInfo.regionBaseIds[baseRegion].insert(baseId);
-
-		std::set<int> baseConnectedRegions = getBaseConnectedRegions(baseId);
-
-		for (int region : baseConnectedRegions)
-		{
-			if (activeFactionInfo.regionBaseGroups.find(region) == activeFactionInfo.regionBaseGroups.end())
-			{
-				activeFactionInfo.regionBaseGroups[region] = std::vector<int>();
-			}
-
-			activeFactionInfo.regionBaseGroups[region].push_back(baseId);
-
-		}
-
-	}
-
-	debug("\n");
-
-	// populate vehicles
-	
-	debug("populate vehicles - %s\n", MFactions[aiFactionId].noun_faction);
-	for (int id = 0; id < *total_num_vehicles; id++)
-	{
-		VEH *vehicle = &(Vehicles[id]);
-		MAP *vehicleTile = getVehicleMapTile(id);
-
-		// store all vehicle current id in pad_0 field
-
-		vehicle->pad_0 = id;
-
-		// further process only own vehicles
-
-		if (vehicle->faction_id != aiFactionId)
-			continue;
-		
-		debug("\t[%3d] (%3d,%3d) region = %3d\n", id, vehicle->x, vehicle->y, vehicleTile->region);
-		
-		// add vehicle
-		
-		activeFactionInfo.vehicleIds.push_back(id);
-
-		// combat vehicles
-
-		if (isCombatVehicle(id))
-		{
-			// add vehicle to global list
-
-			activeFactionInfo.combatVehicleIds.push_back(id);
+			BASE *base = &(Bases[baseId]);
 			
-			// scout and native
-			
-			if (isScoutVehicle(id) || isNativeVehicle(id))
+			if (base->faction_id == factionId || has_pact(factionId, base->faction_id))
 			{
-				activeFactionInfo.scoutVehicleIds.push_back(id);
-			}
-
-			// add surface vehicle to region list
-			// except land unit in ocean
-			
-			if (vehicle->triad() != TRIAD_AIR && !(vehicle->triad() == TRIAD_LAND && isOceanRegion(vehicleTile->region)))
-			{
-				if (activeFactionInfo.regionSurfaceCombatVehicleIds.count(vehicleTile->region) == 0)
-				{
-					activeFactionInfo.regionSurfaceCombatVehicleIds[vehicleTile->region] = std::vector<int>();
-				}
-				activeFactionInfo.regionSurfaceCombatVehicleIds[vehicleTile->region].push_back(id);
+				MAP *baseTile = getBaseMapTile(baseId);
 				
-				// add scout to region list
+				// land base
 				
-				if (isScoutVehicle(id))
-				{
-					if (activeFactionInfo.regionSurfaceScoutVehicleIds.count(vehicleTile->region) == 0)
-					{
-						activeFactionInfo.regionSurfaceScoutVehicleIds[vehicleTile->region] = std::vector<int>();
-					}
-					activeFactionInfo.regionSurfaceScoutVehicleIds[vehicleTile->region].push_back(id);
-				}
+				if (isOceanRegion(baseTile->region))
+					continue;
+				
+				// get base connected ocean regions
+				
+				std::set<int> baseConnectedOceanRegions = getBaseConnectedOceanRegions(baseId);
+				
+				// coastal base
+				
+				if (baseConnectedOceanRegions.size() == 0)
+					continue;
+				
+				friendlyCoastalBases->insert(baseTile);
+				friendlyCoastalBaseOceanRegionGroups->insert({baseTile, baseConnectedOceanRegions});
 				
 			}
-
-			// find if vehicle is at base
-
-			MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
-			std::unordered_map<MAP *, int>::iterator baseLocationsIterator = activeFactionInfo.baseLocations.find(vehicleLocation);
-
-			if (baseLocationsIterator == activeFactionInfo.baseLocations.end())
+			
+		}
+		
+		if (DEBUG)
+		{
+			debug("friendlyCoastalBases - %d\n", factionId);
+			
+			for (MAP *baseTile : *friendlyCoastalBases)
 			{
-				// add outside vehicle
-
-				activeFactionInfo.outsideCombatVehicleIds.push_back(id);
-
-			}
-			else
-			{
-				BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseLocationsIterator->second]);
-
-				// add combat vehicle to garrison
+				Location baseLocation = getLocation(baseTile);
 				
-				if (isCombatVehicle(id))
-				{
-					baseStrategy->garrison.push_back(id);
-				}
-
-				// add to native protection
-
-				double nativeProtection = calculateNativeDamageDefense(id) / 10.0;
-
-				if (vehicle_has_ability(vehicle, ABL_TRANCE))
-				{
-					nativeProtection *= (1 + (double)Rules->combat_bonus_trance_vs_psi / 100.0);
-				}
-
-				baseStrategy->nativeProtection += nativeProtection;
-
+				debug("\t(%3d,%3d)\n", baseLocation.x, baseLocation.y);
+				
 			}
-
-		}
-		else if (isColonyVehicle(id))
-		{
-			activeFactionInfo.colonyVehicleIds.push_back(id);
-		}
-		else if (isFormerVehicle(id))
-		{
-			activeFactionInfo.formerVehicleIds.push_back(id);
-		}
-
-	}
-
-	// populate units
-
-    for (int i = 0; i < 128; i++)
-	{
-        int id = (i < 64 ? i : (aiFactionId - 1) * 64 + i);
-
-        UNIT *unit = &Units[id];
-
-		// skip not enabled
-
-		if (id < 64 && !has_tech(aiFactionId, unit->preq_tech))
-			continue;
-
-        // skip empty
-
-        if (strlen(unit->name) == 0)
-			continue;
-
-        // skip obsolete
-
-        if ((unit->obsolete_factions & (0x1 << aiFactionId)) != 0)
-			continue;
-
-		// add unit
-
-		activeFactionInfo.unitIds.push_back(id);
-		
-		// add combat unit
-		// either psi or anti psi unit or conventional with best weapon/armor
-		
-		if
-		(
-			isCombatUnit(id)
-			&&
-			(
-				Weapon[unit->weapon_type].offense_value < 0
-				||
-				Armor[unit->armor_type].defense_value < 0
-				||
-				unit_has_ability(id, ABL_TRANCE)
-				||
-				unit_has_ability(id, ABL_EMPATH)
-				||
-				Weapon[unit->weapon_type].offense_value >= activeFactionInfo.bestWeaponOffenseValue
-				||
-				Armor[unit->armor_type].defense_value >= activeFactionInfo.bestArmorDefenseValue
-			)
-		)
-		{
-			activeFactionInfo.combatUnitIds.push_back(id);
 			
-			// populate specific triads
+			debug("\n");
 			
-			switch (unit->triad())
+			debug("friendlyCoastalBaseOceanRegionGroups - %d\n", factionId);
+			
+			for (const auto &friendlyCoastalBaseOceanRegionGroupsEntry : *friendlyCoastalBaseOceanRegionGroups)
 			{
-			case TRIAD_LAND:
-				activeFactionInfo.landCombatUnitIds.push_back(id);
-				activeFactionInfo.landAndAirCombatUnitIds.push_back(id);
-				break;
-			case TRIAD_SEA:
-				activeFactionInfo.seaCombatUnitIds.push_back(id);
-				activeFactionInfo.seaAndAirCombatUnitIds.push_back(id);
-				break;
-			case TRIAD_AIR:
-				activeFactionInfo.airCombatUnitIds.push_back(id);
-				activeFactionInfo.landAndAirCombatUnitIds.push_back(id);
-				activeFactionInfo.seaAndAirCombatUnitIds.push_back(id);
-				break;
+				MAP *baseTile = friendlyCoastalBaseOceanRegionGroupsEntry.first;
+				const std::set<int> *friendlyCoastalBaseOceanRegionGroup = &(friendlyCoastalBaseOceanRegionGroupsEntry.second);
+				
+				Location baseLocation = getLocation(baseTile);
+				
+				debug("\t(%3d,%3d) -> ", baseLocation.x, baseLocation.y);
+				
+				for (int oceanRegion : *friendlyCoastalBaseOceanRegionGroup)
+				{
+					debug(" %3d", oceanRegion);
+					
+				}
+				
+				debug("\n");
+				
 			}
+			
+			debug("\n");
 			
 		}
 		
-	}
-	
-	// max mineral surplus
-	
-	activeFactionInfo.maxMineralSurplus = 1;
-	
-	for (int baseId : activeFactionInfo.baseIds)
-	{
-		BASE *base = &(Bases[baseId]);
-		MAP *baseTile = getBaseMapTile(baseId);
+		// populate regions
 		
-		activeFactionInfo.maxMineralSurplus = std::max(activeFactionInfo.maxMineralSurplus, base->mineral_surplus);
-		
-		if (activeFactionInfo.regionMaxMineralSurpluses.count(baseTile->region) == 0)
-		{
-			activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = 1;
-		}
-		
-		activeFactionInfo.regionMaxMineralSurpluses[baseTile->region] = std::max(activeFactionInfo.regionMaxMineralSurpluses[baseTile->region], base->mineral_surplus);
-		
-	}
-	
-	// populate factions airbases
-	
-	for (int factionId = 1; factionId < 8; factionId++)
-	{
-		activeFactionInfo.factionInfos[factionId].airbases.clear();
-		
-		// stationary airbases
+		std::set<int> *regions = &(data.geography[factionId].regions);
 		
 		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 		{
-			Location location = getMapIndexLocation(mapIndex);
 			MAP *tile = getMapTile(mapIndex);
+			int extendedRegion = getExtendedRegion(tile);
 			
-			if
-			(
-				map_has_item(tile, TERRA_BASE_IN_TILE | TERRA_AIRBASE)
-				&&
-				(tile->owner == factionId || has_pact(factionId, tile->owner))
-			)
-			{
-				activeFactionInfo.factionInfos[factionId].airbases.push_back(location);
-			}
+//			// exclude polar regions
+//			
+//			if (isPolarRegion(tile))
+//				continue;
+//			
+			regions->insert(extendedRegion);
 			
 		}
 		
-		// mobile airbases
+		// populate region groups
 		
-		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+		std::map<int, std::set<int>> *regionGroups = &(data.geography[factionId].regionGroups);
+		
+		for (int region : *regions)
 		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
+			regionGroups->insert({region, {region}});
+		}
+		
+		// link ocean groups through friendly coastal bases
+		
+		for (auto &friendlyCoastalBaseOceanRegionGroupsEntry : *friendlyCoastalBaseOceanRegionGroups)
+		{
+			std::set<int> *friendlyCoastalBaseOceanRegionGroup = &(friendlyCoastalBaseOceanRegionGroupsEntry.second);
 			
-			if
-			(
-				vehicle_has_ability(vehicleId, ABL_CARRIER)
-				&&
-				(vehicle->faction_id == factionId || has_pact(factionId, vehicle->faction_id))
-			)
+			std::unordered_set<int> extendedRegionGroup;
+			extendedRegionGroup.insert(friendlyCoastalBaseOceanRegionGroup->begin(), friendlyCoastalBaseOceanRegionGroup->end());
+			
+			for (int region : *friendlyCoastalBaseOceanRegionGroup)
 			{
-				activeFactionInfo.factionInfos[factionId].airbases.push_back(Location(vehicle->x, vehicle->y));
+				extendedRegionGroup.insert(regionGroups->at(region).begin(), regionGroups->at(region).end());
+				
+			}
+			
+			for (int region : extendedRegionGroup)
+			{
+				regionGroups->at(region).insert(extendedRegionGroup.begin(), extendedRegionGroup.end());
+				
 			}
 			
 		}
 		
-	}
-	
-	// base exposure
-	
-	populateBaseExposures();
-	
-	// best vehicle armor
-	
-	activeFactionInfo.bestVehicleWeaponOffenseValue = 0;
-	activeFactionInfo.bestVehicleArmorDefenseValue = 0;
-	
-	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		// link polar region groups
 		
-		activeFactionInfo.bestVehicleWeaponOffenseValue = std::max(activeFactionInfo.bestVehicleWeaponOffenseValue, vehicle->offense_value());
-		activeFactionInfo.bestVehicleArmorDefenseValue = std::max(activeFactionInfo.bestVehicleArmorDefenseValue, vehicle->defense_value());
+		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+		{
+			MAP *tile = getMapTile(mapIndex);
+			bool ocean = isOceanRegion(tile->region);
+			int region = getExtendedRegion(tile);
+			Location location = getLocation(mapIndex);
+			
+			// polar regions
+			
+			if (!isPolarRegion(tile))
+				continue;
+			
+			for (MAP *adjacentTile : getAdjacentTiles(location.x, location.y, false))
+			{
+				bool adjacentOcean = isOceanRegion(adjacentTile->region);
+				int adjacentRegion = getExtendedRegion(adjacentTile);
+				
+				// don't link polar region with each other
+				
+				if (isPolarRegion(adjacentTile))
+					continue;
+				
+				if (adjacentOcean == ocean)
+				{
+					// one directional link to regular region
+					
+					regionGroups->at(region).insert(regionGroups->at(adjacentRegion).begin(), regionGroups->at(adjacentRegion).end());
+					
+				}
+				
+			}
+			
+		}
+		
+		// populate associations
+		
+		std::map<int, int> *associations = &(data.geography[factionId].associations);
+		
+		for (int region : *regions)
+		{
+			associations->insert({region, *(regionGroups->at(region).begin())});
+			
+		}
+		
+		// populate friendlyCoastalBaseOceanAssociations
+		
+		for (auto &friendlyCoastalBaseOceanRegionGroupsEntry : *friendlyCoastalBaseOceanRegionGroups)
+		{
+			MAP *baseTile = friendlyCoastalBaseOceanRegionGroupsEntry.first;
+			std::set<int> *baseOceanRegionGroup = &(friendlyCoastalBaseOceanRegionGroupsEntry.second);
+			
+			friendlyCoastalBaseOceanAssociations->insert({baseTile, associations->at(*(baseOceanRegionGroup->begin()))});
+			
+		}
+		
+		// populate connections
+		
+		std::map<int, std::set<int>> *connections = &(data.geography[factionId].connections);
+		
+		for (int region : *regions)
+		{
+			connections->insert({region, {}});
+			
+		}
+		
+		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+		{
+			MAP *tile = getMapTile(mapIndex);
+			bool ocean = isOceanRegion(tile->region);
+			int region = getExtendedRegion(tile);
+			Location location = getMapIndexLocation(mapIndex);
+			
+			std::set<int> *regionConnections = &(connections->at(region));
+			
+			// check adjacent regions
+			
+			for (MAP *adjacentTile : getAdjacentTiles(location.x, location.y, false))
+			{
+//				// exclude polar regions
+//				
+//				if (isPolarRegion(adjacentTile))
+//					continue;
+//				
+				bool adjacentOcean = isOceanRegion(adjacentTile->region);
+				int adjacentRegion = getExtendedRegion(adjacentTile);
+				int adjacentAssociation = associations->at(adjacentRegion);
+				
+				// populate ocean/continent connections
+				
+				if (adjacentOcean != ocean)
+				{
+					regionConnections->insert(adjacentAssociation);
+				}
+				
+			}
+			
+		}
+		
+		// enhance connections
+		
+		for (auto &regionGroupsEntry : *regionGroups)
+		{
+			int region = regionGroupsEntry.first;
+			std::set<int> *regionGroup = &(regionGroupsEntry.second);
+			
+			for (int regionGroupRegion : *regionGroup)
+			{
+				for (int transitiveRegionGroupConnection : connections->at(regionGroupRegion))
+				{
+					connections->at(region).insert(transitiveRegionGroupConnection);
+					
+				}
+				
+			}
+			
+		}
+		
+		if (DEBUG)
+		{
+			debug("regions - %d\n", factionId);
+			
+			for (int region : *regions)
+			{
+				debug("\t%4d\n", region);
+				
+			}
+			
+			debug("\n");
+			
+			debug("regionGroups\n");
+			
+			for (auto const &regionGroupsEntry : *regionGroups)
+			{
+				int region = regionGroupsEntry.first;
+				const std::set<int> *regionGroup = &(regionGroupsEntry.second);
+				
+				debug("\t%4d ->", region);
+				
+				for (int regionGroupRegion : *regionGroup)
+				{
+					debug(" %4d", regionGroupRegion);
+				
+				}
+				
+				debug("\n");
+				
+			}
+			
+			debug("\n");
+			
+			debug("associations\n");
+			
+			for (auto const &associationsEntry : *associations)
+			{
+				int region = associationsEntry.first;
+				int association = associationsEntry.second;
+				
+				debug("\t%4d -> %4d\n", region, association);
+				
+			}
+			
+			debug("\n");
+			
+			debug("connections\n");
+			
+			for (auto const &connectionsEntry : data.geography[factionId].connections)
+			{
+				int region = connectionsEntry.first;
+				const std::set<int> *regionConnections = &(connectionsEntry.second);
+				
+				debug("\t%4d ->", region);
+				
+				for (int connectionRegion : *regionConnections)
+				{
+					debug(" %4d", connectionRegion);
+				
+				}
+				
+				debug("\n");
+				
+			}
+			
+			debug("\n");
+			
+		}
 		
 	}
 	
@@ -545,11 +449,11 @@ void setSharedOceanRegions()
 	
 	// update own bases
 	
-	for (int baseId : activeFactionInfo.baseIds)
+	for (int baseId : data.baseIds)
 	{
 		// clear flag by default
 		
-		activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion = false;
+		data.baseStrategies[baseId].inSharedOceanRegion = false;
 		
 		// get connected ocean regions
 		
@@ -559,11 +463,439 @@ void setSharedOceanRegions()
 		{
 			if (sharedOceanRegions.count(baseConnectedOceanRegion))
 			{
-				activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion = true;
+				data.baseStrategies[baseId].inSharedOceanRegion = true;
 				break;
 			}
 			
 		}
+		
+	}
+	
+}
+
+void populateGlobalVariables()
+{
+	// best weapon and armor
+	
+	data.bestWeaponOffenseValue = getFactionBestPrototypedWeaponOffenseValue(aiFactionId);
+	data.bestArmorDefenseValue = getFactionBestPrototypedArmorDefenseValue(aiFactionId);
+	
+	// populate factions combat modifiers
+
+	debug("%-24s\nfactionCombatModifiers:\n", MFactions[aiFactionId].noun_faction);
+
+	for (int id = 1; id < 8; id++)
+	{
+		// store combat modifiers
+
+		data.factionInfos[id].offenseMultiplier = getFactionOffenseMultiplier(id);
+		data.factionInfos[id].defenseMultiplier = getFactionDefenseMultiplier(id);
+		data.factionInfos[id].fanaticBonusMultiplier = getFactionFanaticBonusMultiplier(id);
+
+		debug
+		(
+			"\t%-24s: offenseMultiplier=%4.2f, defenseMultiplier=%4.2f, fanaticBonusMultiplier=%4.2f\n",
+			MFactions[id].noun_faction,
+			data.factionInfos[id].offenseMultiplier,
+			data.factionInfos[id].defenseMultiplier,
+			data.factionInfos[id].fanaticBonusMultiplier
+		);
+
+	}
+
+	debug("\n");
+
+	// populate other factions threat koefficients
+
+	debug("%-24s\notherFactionthreatCoefficients:\n", MFactions[aiFactionId].noun_faction);
+
+	for (int id = 1; id < 8; id++)
+	{
+		// skip aliens
+
+		if (id == 0)
+			continue;
+
+		// skip self
+
+		if (id == aiFactionId)
+			continue;
+
+		// get relation from other faction
+
+		int otherFactionRelation = Factions[id].diplo_status[aiFactionId];
+
+		// calculate threat koefficient
+
+		double threatCoefficient;
+
+		if (otherFactionRelation & DIPLO_VENDETTA)
+		{
+			threatCoefficient = conf.ai_production_threat_coefficient_vendetta;
+		}
+		else if (otherFactionRelation & DIPLO_PACT)
+		{
+			threatCoefficient = conf.ai_production_threat_coefficient_pact;
+		}
+		else if (otherFactionRelation & DIPLO_TREATY)
+		{
+			threatCoefficient = conf.ai_production_threat_coefficient_treaty;
+		}
+		else
+		{
+			threatCoefficient = conf.ai_production_threat_coefficient_other;
+		}
+		
+		// human threat is increased
+		
+		if (is_human(id))
+		{
+			threatCoefficient += conf.ai_production_threat_coefficient_human;
+		}
+		
+		// store threat koefficient
+
+		data.factionInfos[id].threatCoefficient = threatCoefficient;
+
+		debug("\t%-24s: %08x => %4.2f\n", MFactions[id].noun_faction, otherFactionRelation, threatCoefficient);
+
+	}
+
+	// populate factions best combat item values
+	
+	for (int factionId = 1; factionId < 8; factionId++)
+	{
+		data.factionInfos[factionId].bestWeaponOffenseValue = getFactionBestPrototypedWeaponOffenseValue(factionId);
+		data.factionInfos[factionId].bestArmorDefenseValue = getFactionBestPrototypedArmorDefenseValue(factionId);
+	}
+
+	debug("\n");
+
+	// populate bases
+
+	debug("data.baseStrategies\n");
+
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+
+		// exclude not own bases
+
+		if (base->faction_id != aiFactionId)
+			continue;
+
+		// add base
+		
+		data.baseIds.push_back(baseId);
+		
+		// add base location
+
+		MAP *baseLocation = getMapTile(base->x, base->y);
+		data.baseLocations[baseLocation] = baseId;
+
+		// add base strategy
+
+		data.baseStrategies[baseId] = {};
+		BaseStrategy *baseStrategy = &(data.baseStrategies[baseId]);
+		
+		baseStrategy->base = base;
+		baseStrategy->intrinsicDefenseMultiplier = getBaseDefenseMultiplier(baseId, -1);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_LAND] = getBaseDefenseMultiplier(baseId, TRIAD_LAND);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_SEA] = getBaseDefenseMultiplier(baseId, TRIAD_SEA);
+		baseStrategy->conventionalDefenseMultipliers[TRIAD_AIR] = getBaseDefenseMultiplier(baseId, TRIAD_AIR);
+		baseStrategy->sensorOffenseMultiplier = getSensorOffenseMultiplier(base->faction_id, base->x, base->y);
+		baseStrategy->sensorDefenseMultiplier = getSensorDefenseMultiplier(base->faction_id, base->x, base->y);
+
+		debug("\n[%3d] %-25s\n", baseId, data.baseStrategies[baseId].base->name);
+
+		// add base regions
+		
+		int baseRegion = getBaseMapTile(baseId)->region;
+		
+		data.presenceRegions.insert(getBaseMapTile(baseId)->region);
+		data.regionBaseIds[baseRegion].insert(baseId);
+
+		std::set<int> baseConnectedRegions = getBaseConnectedRegions(baseId);
+
+		for (int region : baseConnectedRegions)
+		{
+			if (data.regionBaseGroups.find(region) == data.regionBaseGroups.end())
+			{
+				data.regionBaseGroups[region] = std::vector<int>();
+			}
+
+			data.regionBaseGroups[region].push_back(baseId);
+
+		}
+
+	}
+
+	debug("\n");
+
+	// populate vehicles
+	
+	debug("populate vehicles - %s\n", MFactions[aiFactionId].noun_faction);
+	for (int id = 0; id < *total_num_vehicles; id++)
+	{
+		VEH *vehicle = &(Vehicles[id]);
+		MAP *vehicleTile = getVehicleMapTile(id);
+
+		// store all vehicle current id in pad_0 field
+
+		vehicle->pad_0 = id;
+
+		// further process only own vehicles
+
+		if (vehicle->faction_id != aiFactionId)
+			continue;
+		
+		debug("\t[%3d] (%3d,%3d) region = %3d\n", id, vehicle->x, vehicle->y, vehicleTile->region);
+		
+		// add vehicle
+		
+		data.vehicleIds.push_back(id);
+
+		// combat vehicles
+
+		if (isCombatVehicle(id))
+		{
+			// add vehicle to global list
+
+			data.combatVehicleIds.push_back(id);
+			
+			// scout and native
+			
+			if (isScoutVehicle(id) || isNativeVehicle(id))
+			{
+				data.scoutVehicleIds.push_back(id);
+			}
+
+			// add surface vehicle to region list
+			// except land unit in ocean
+			
+			if (vehicle->triad() != TRIAD_AIR && !(vehicle->triad() == TRIAD_LAND && isOceanRegion(vehicleTile->region)))
+			{
+				if (data.regionSurfaceCombatVehicleIds.count(vehicleTile->region) == 0)
+				{
+					data.regionSurfaceCombatVehicleIds[vehicleTile->region] = std::vector<int>();
+				}
+				data.regionSurfaceCombatVehicleIds[vehicleTile->region].push_back(id);
+				
+				// add scout to region list
+				
+				if (isScoutVehicle(id))
+				{
+					if (data.regionSurfaceScoutVehicleIds.count(vehicleTile->region) == 0)
+					{
+						data.regionSurfaceScoutVehicleIds[vehicleTile->region] = std::vector<int>();
+					}
+					data.regionSurfaceScoutVehicleIds[vehicleTile->region].push_back(id);
+				}
+				
+			}
+
+			// find if vehicle is at base
+
+			MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
+			std::unordered_map<MAP *, int>::iterator baseLocationsIterator = data.baseLocations.find(vehicleLocation);
+
+			if (baseLocationsIterator == data.baseLocations.end())
+			{
+				// add outside vehicle
+
+				data.outsideCombatVehicleIds.push_back(id);
+
+			}
+			else
+			{
+				BaseStrategy *baseStrategy = &(data.baseStrategies[baseLocationsIterator->second]);
+
+				// add combat vehicle to garrison
+				
+				if (isCombatVehicle(id))
+				{
+					baseStrategy->garrison.push_back(id);
+				}
+
+				// add to native protection
+
+				double nativeProtection = calculateNativeDamageDefense(id) / 10.0;
+
+				if (vehicle_has_ability(vehicle, ABL_TRANCE))
+				{
+					nativeProtection *= (1 + (double)Rules->combat_bonus_trance_vs_psi / 100.0);
+				}
+
+				baseStrategy->nativeProtection += nativeProtection;
+
+			}
+
+		}
+		else if (isColonyVehicle(id))
+		{
+			data.colonyVehicleIds.push_back(id);
+		}
+		else if (isFormerVehicle(id))
+		{
+			data.formerVehicleIds.push_back(id);
+		}
+
+	}
+
+	// populate units
+
+    for (int i = 0; i < 128; i++)
+	{
+        int id = (i < 64 ? i : (aiFactionId - 1) * 64 + i);
+
+        UNIT *unit = &Units[id];
+
+		// skip not enabled
+
+		if (id < 64 && !has_tech(aiFactionId, unit->preq_tech))
+			continue;
+
+        // skip empty
+
+        if (strlen(unit->name) == 0)
+			continue;
+
+        // skip obsolete
+
+        if ((unit->obsolete_factions & (0x1 << aiFactionId)) != 0)
+			continue;
+
+		// add unit
+
+		data.unitIds.push_back(id);
+		
+		// add combat unit
+		// either psi or anti psi unit or conventional with best weapon/armor
+		
+		if
+		(
+			isCombatUnit(id)
+			&&
+			(
+				Weapon[unit->weapon_type].offense_value < 0
+				||
+				Armor[unit->armor_type].defense_value < 0
+				||
+				unit_has_ability(id, ABL_TRANCE)
+				||
+				unit_has_ability(id, ABL_EMPATH)
+				||
+				Weapon[unit->weapon_type].offense_value >= data.bestWeaponOffenseValue
+				||
+				Armor[unit->armor_type].defense_value >= data.bestArmorDefenseValue
+			)
+		)
+		{
+			data.combatUnitIds.push_back(id);
+			
+			// populate specific triads
+			
+			switch (unit->triad())
+			{
+			case TRIAD_LAND:
+				data.landCombatUnitIds.push_back(id);
+				data.landAndAirCombatUnitIds.push_back(id);
+				break;
+			case TRIAD_SEA:
+				data.seaCombatUnitIds.push_back(id);
+				data.seaAndAirCombatUnitIds.push_back(id);
+				break;
+			case TRIAD_AIR:
+				data.airCombatUnitIds.push_back(id);
+				data.landAndAirCombatUnitIds.push_back(id);
+				data.seaAndAirCombatUnitIds.push_back(id);
+				break;
+			}
+			
+		}
+		
+	}
+	
+	// max mineral surplus
+	
+	data.maxMineralSurplus = 1;
+	
+	for (int baseId : data.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		data.maxMineralSurplus = std::max(data.maxMineralSurplus, base->mineral_surplus);
+		
+		if (data.regionMaxMineralSurpluses.count(baseTile->region) == 0)
+		{
+			data.regionMaxMineralSurpluses[baseTile->region] = 1;
+		}
+		
+		data.regionMaxMineralSurpluses[baseTile->region] = std::max(data.regionMaxMineralSurpluses[baseTile->region], base->mineral_surplus);
+		
+	}
+	
+	// populate factions airbases
+	
+	for (int factionId = 1; factionId < 8; factionId++)
+	{
+		data.factionInfos[factionId].airbases.clear();
+		
+		// stationary airbases
+		
+		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+		{
+			Location location = getMapIndexLocation(mapIndex);
+			MAP *tile = getMapTile(mapIndex);
+			
+			if
+			(
+				map_has_item(tile, TERRA_BASE_IN_TILE | TERRA_AIRBASE)
+				&&
+				(tile->owner == factionId || has_pact(factionId, tile->owner))
+			)
+			{
+				data.factionInfos[factionId].airbases.push_back(location);
+			}
+			
+		}
+		
+		// mobile airbases
+		
+		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			if
+			(
+				vehicle_has_ability(vehicleId, ABL_CARRIER)
+				&&
+				(vehicle->faction_id == factionId || has_pact(factionId, vehicle->faction_id))
+			)
+			{
+				data.factionInfos[factionId].airbases.push_back(Location(vehicle->x, vehicle->y));
+			}
+			
+		}
+		
+	}
+	
+	// base exposure
+	
+	populateBaseExposures();
+	
+	// best vehicle armor
+	
+	data.bestVehicleWeaponOffenseValue = 0;
+	data.bestVehicleArmorDefenseValue = 0;
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		data.bestVehicleWeaponOffenseValue = std::max(data.bestVehicleWeaponOffenseValue, vehicle->offense_value());
+		data.bestVehicleArmorDefenseValue = std::max(data.bestVehicleArmorDefenseValue, vehicle->defense_value());
 		
 	}
 	
@@ -855,7 +1187,7 @@ void evaluateBaseNativeDefenseDemands()
 {
 	debug("evaluateBaseNativeDefenseDemands\n");
 	
-	for (int baseId : activeFactionInfo.baseIds)
+	for (int baseId : data.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
 		MAP *baseTile = getBaseMapTile(baseId);
@@ -882,7 +1214,7 @@ void evaluateBaseNativeDefenseDemands()
 		
 		double popChance = 0.0;
 		
-		for (int otherBaseId : activeFactionInfo.baseIds)
+		for (int otherBaseId : data.baseIds)
 		{
 			BASE *otherBase =&(Bases[otherBaseId]);
 			MAP *otherBaseTile = getBaseMapTile(otherBaseId);
@@ -920,8 +1252,8 @@ void evaluateBaseNativeDefenseDemands()
 		
 		// store demand
 		
-		activeFactionInfo.baseAnticipatedNativeAttackStrengths[baseId] = anticipatedNativePsiAttackStrength;
-		activeFactionInfo.baseRemainingNativeProtectionDemands[baseId] = remainingBaseNativeProtection;
+		data.baseAnticipatedNativeAttackStrengths[baseId] = anticipatedNativePsiAttackStrength;
+		data.baseRemainingNativeProtectionDemands[baseId] = remainingBaseNativeProtection;
 		
 	}
 	
@@ -1010,7 +1342,7 @@ int getNearestBaseRange(int x, int y, std::unordered_set<int> baseIds)
 
 void evaluateBaseExposures()
 {
-	for (int baseId : activeFactionInfo.baseIds)
+	for (int baseId : data.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
 		MAP *baseTile = getBaseMapTile(baseId);
@@ -1046,7 +1378,7 @@ void evaluateBaseExposures()
 		
 		double exposure = 1.0 / std::max(1.0, (double)nearestNotOwnTileRange / baseDistance);
 		
-		activeFactionInfo.baseStrategies[baseId].exposure = exposure;
+		data.baseStrategies[baseId].exposure = exposure;
 		
 	}
 	
@@ -1198,6 +1530,9 @@ bool isVehicleThreatenedByEnemyInField(int vehicleId)
 	
 }
 
+/*
+This function uses frendly ports as connections for current faction vehicles.
+*/
 bool isDestinationReachable(int vehicleId, int x, int y, bool accountForSeaTransport)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
@@ -1221,28 +1556,30 @@ bool isDestinationReachable(int vehicleId, int x, int y, bool accountForSeaTrans
 	case CHS_COPTER:
 	case CHS_MISSILE:
 		
-		{
-			int rangeToNearestFactionAirbase = getRangeToNearestFactionAirbase(x, y, vehicle->faction_id);
-			int turns = (vehicle->triad() == CHS_COPTER ? 2 : 1);
-			int reachableRange = rangeToNearestFactionAirbase * turns;
-			int range = map_range(vehicle->x, vehicle->y, x, y);
-			
-			reachable = (range <= reachableRange);
-			
-		}
+		// Some complex logic here. For now disable it.
+		
+		reachable = false;
 		
 		break;
 		
 	case CHS_FOIL:
 	case CHS_CRUISER:
 		
-		// only sea region is rechable by sea vehicle
-		if (isOceanRegion(destinationTile->region))
 		{
-			// same region
-			if (destinationTile->region == vehicleTile->region)
+			if (vehicle->faction_id == aiFactionId)
 			{
-				reachable = true;
+				int vehicleOceanAssociation = getOceanAssociation(vehicleTile, vehicle->faction_id);
+				int destinationOceanAssociation = getOceanAssociation(destinationTile, vehicle->faction_id);
+				
+				if (vehicleOceanAssociation != -1 && destinationOceanAssociation != -1 && destinationOceanAssociation == vehicleOceanAssociation)
+				{
+					reachable = true;
+				}
+				
+			}
+			else
+			{
+				reachable = (destinationTile->region == vehicleTile->region);
 			}
 			
 		}
@@ -1301,7 +1638,7 @@ int getRangeToNearestFactionAirbase(int x, int y, int factionId)
 {
 	int rangeToNearestFactionAirbase = INT_MAX;
 	
-	for (Location location : activeFactionInfo.factionInfos[factionId].airbases)
+	for (Location location : data.factionInfos[factionId].airbases)
 	{
 		int range = map_range(x, y, location.x, location.y);
 		
@@ -1315,7 +1652,7 @@ int getRangeToNearestFactionAirbase(int x, int y, int factionId)
 
 void populateBaseExposures()
 {
-	for (int baseId : activeFactionInfo.baseIds)
+	for (int baseId : data.baseIds)
 	{
 		MAP *baseTile = getBaseMapTile(baseId);
 		bool ocean = isOceanRegion(baseTile->region);
@@ -1334,7 +1671,7 @@ void populateBaseExposures()
 		
 		// set exposure
 		
-		activeFactionInfo.baseStrategies[baseId].exposure = exposure;
+		data.baseStrategies[baseId].exposure = exposure;
 		
 	}
 	
@@ -1378,15 +1715,15 @@ void evaluateDefenseDemand()
 	
 	// evaluate base defense demands
 	
-	activeFactionInfo.mostVulnerableBaseId = -1;
-	activeFactionInfo.mostVulnerableBaseDefenseDemand = 0.0;
+	data.mostVulnerableBaseId = -1;
+	data.mostVulnerableBaseDefenseDemand = 0.0;
 	
-	for (int baseId : activeFactionInfo.baseIds)
+	for (int baseId : data.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
 		MAP *baseTile = getBaseMapTile(baseId);
 		bool ocean = isOceanRegion(baseTile->region);
-		BaseStrategy *baseStrategy = &(activeFactionInfo.baseStrategies[baseId]);
+		BaseStrategy *baseStrategy = &(data.baseStrategies[baseId]);
 		
 		debug
 		(
@@ -1408,7 +1745,7 @@ void evaluateDefenseDemand()
 		
 		debug("\t\tdefenderMilitaryStrength\n");
 		
-		for (int vehicleId : activeFactionInfo.combatVehicleIds)
+		for (int vehicleId : data.combatVehicleIds)
 		{
 			VEH *vehicle = &(Vehicles[vehicleId]);
 			int unitId = vehicle->unit_id;
@@ -1631,7 +1968,7 @@ void evaluateDefenseDemand()
 			
 			// modify strength multiplier based on diplomatic relations
 			
-			weight *= activeFactionInfo.factionInfos[vehicle->faction_id].threatCoefficient;
+			weight *= data.factionInfos[vehicle->faction_id].threatCoefficient;
 			
 			// exclude empty weight
 			
@@ -1916,28 +2253,28 @@ void evaluateDefenseDemand()
 		
 		if (defenderDestroyedTotal > 1.0)
 		{
-			activeFactionInfo.baseStrategies[baseId].defenseDemand = (defenderDestroyedTotal - 1.0) / defenderDestroyedTotal;
+			data.baseStrategies[baseId].defenseDemand = (defenderDestroyedTotal - 1.0) / defenderDestroyedTotal;
 		}
 		
-		debug("\t\tdefenseDemand=%f\n", activeFactionInfo.baseStrategies[baseId].defenseDemand);
+		debug("\t\tdefenseDemand=%f\n", data.baseStrategies[baseId].defenseDemand);
 		
 		// update global values
 		
-		if (activeFactionInfo.baseStrategies[baseId].defenseDemand > activeFactionInfo.mostVulnerableBaseDefenseDemand)
+		if (data.baseStrategies[baseId].defenseDemand > data.mostVulnerableBaseDefenseDemand)
 		{
-			activeFactionInfo.mostVulnerableBaseId = baseId;
-			activeFactionInfo.mostVulnerableBaseDefenseDemand = activeFactionInfo.baseStrategies[baseId].defenseDemand;
+			data.mostVulnerableBaseId = baseId;
+			data.mostVulnerableBaseDefenseDemand = data.baseStrategies[baseId].defenseDemand;
 		}
 		
 	}
 	
-	debug("\n\tmostVulnerableBase = %s, mostVulnerableBaseDefenseDemand = %f\n", Bases[activeFactionInfo.mostVulnerableBaseId].name, activeFactionInfo.mostVulnerableBaseDefenseDemand);
+	debug("\n\tmostVulnerableBase = %s, mostVulnerableBaseDefenseDemand = %f\n", Bases[data.mostVulnerableBaseId].name, data.mostVulnerableBaseDefenseDemand);
 	
 	// assign defense demand targets
 	
 	debug("\n\t->\n\ttargetBases\n");
 	
-	for (int baseId : activeFactionInfo.baseIds)
+	for (int baseId : data.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
 		MAP *baseTile = getBaseMapTile(baseId);
@@ -1945,7 +2282,7 @@ void evaluateDefenseDemand()
 		int bestTargetBaseId = -1;
 		double bestTargetBasePreference = 0.0;
 		
-		for (int targetBaseId : activeFactionInfo.baseIds)
+		for (int targetBaseId : data.baseIds)
 		{
 			BASE *targetBase = &(Bases[targetBaseId]);
 			MAP *targetBaseTile = getBaseMapTile(targetBaseId);
@@ -1978,7 +2315,7 @@ void evaluateDefenseDemand()
 			
 			// calculate preference
 			
-			double targetBasePreference = rangeCoefficient * activeFactionInfo.baseStrategies[targetBaseId].defenseDemand;
+			double targetBasePreference = rangeCoefficient * data.baseStrategies[targetBaseId].defenseDemand;
 			
 			// update best
 			
@@ -1990,7 +2327,7 @@ void evaluateDefenseDemand()
 			
 		}
 		
-		activeFactionInfo.baseStrategies[baseId].targetBaseId = bestTargetBaseId;
+		data.baseStrategies[baseId].targetBaseId = bestTargetBaseId;
 		
 		debug("\t\t%-25s -> %-25s\n", Bases[baseId].name, (bestTargetBaseId == -1 ? "" : Bases[bestTargetBaseId].name));
 		
@@ -2191,5 +2528,143 @@ Checks if faction is enabled to use WTP algorithms.
 bool isUseWtpAlgorithms(int factionId)
 {
 	return (factionId != 0 && !is_human(factionId) && ai_enabled(factionId) && conf.ai_useWTPAlgorithms);
+}
+
+bool isSameAssociation(MAP *tile1, MAP *tile2, int factionId)
+{
+	int extendedRegion1 = getExtendedRegion(tile1);
+	int extendedRegion2 = getExtendedRegion(tile2);
+	
+	int association1 = data.geography[factionId].associations.at(extendedRegion1);
+	int association2 = data.geography[factionId].associations.at(extendedRegion2);
+	
+	return association2 == association1;
+	
+}
+
+bool isSameAssociation(int extendedRegion1, MAP *tile2, int factionId)
+{
+	int extendedRegion2 = getExtendedRegion(tile2);
+	
+	int association1 = data.geography[factionId].associations.at(extendedRegion1);
+	int association2 = data.geography[factionId].associations.at(extendedRegion2);
+	
+	return association2 == association1;
+	
+}
+
+/*
+Returns region for all map tiles.
+Returns shifted map index for polar regions.
+*/
+int getExtendedRegion(MAP *tile)
+{
+	if (tile->region == 0x3f || tile->region == 0x7f)
+	{
+		return 0x80 + getMapIndex(tile);
+	}
+	else
+	{
+		return tile->region;
+	}
+	
+}
+
+/*
+Checks for polar region
+*/
+bool isPolarRegion(MAP *tile)
+{
+	return (tile->region == 0x3f || tile->region == 0x7f);
+	
+}
+
+/*
+Returns association.
+*/
+int getAssociation(MAP *tile, int factionId)
+{
+	return data.geography[factionId].associations.at(getExtendedRegion(tile));
+}
+
+/*
+Returns vehicle region association.
+*/
+int getVehicleAssociation(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	
+	int vehicleAssociation = -1;
+	
+	if (vehicle->triad() == TRIAD_LAND)
+	{
+		if (isLandRegion(vehicleTile->region))
+		{
+			vehicleAssociation = data.geography[vehicle->faction_id].associations.at(getExtendedRegion(vehicleTile));
+		}
+		
+	}
+	else if (vehicle->triad() == TRIAD_SEA)
+	{
+		if (isOceanRegion(vehicleTile->region))
+		{
+			vehicleAssociation = data.geography[vehicle->faction_id].associations.at(getExtendedRegion(vehicleTile));
+		}
+		else
+		{
+			if (data.geography[vehicle->faction_id].friendlyCoastalBaseOceanAssociations.count(vehicleTile) != 0)
+			{
+				vehicleAssociation = data.geography[vehicle->faction_id].friendlyCoastalBaseOceanAssociations.at(vehicleTile);
+			}
+			
+		}
+		
+	}
+	
+	return vehicleAssociation;
+	
+}
+
+/*
+Returns location ocean association.
+*/
+int getOceanAssociation(MAP *tile, int factionId)
+{
+	int oceanAssociation = -1;
+	
+	if (isOceanRegion(tile->region))
+	{
+		oceanAssociation = getAssociation(tile, factionId);
+	}
+	else
+	{
+		if (data.geography[factionId].friendlyCoastalBaseOceanAssociations.count(tile) != 0)
+		{
+			oceanAssociation = data.geography[factionId].friendlyCoastalBaseOceanAssociations.count(tile);
+		}
+	}
+	
+	return oceanAssociation;
+
+}
+
+bool isOceanAssociationCoast(int x, int y, int oceanAssociation, int factionId)
+{
+	MAP *tile = getMapTile(x, y);
+
+	if (is_ocean(tile))
+		return false;
+
+	for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+	{
+		int adjacentTileOceanAssociation = getOceanAssociation(adjacentTile, factionId);
+		
+		if (adjacentTileOceanAssociation == oceanAssociation)
+			return true;
+	}
+
+	return false;
+
 }
 

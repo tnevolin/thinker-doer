@@ -67,7 +67,7 @@ void setProduction()
 {
     debug("\nsetProduction - %s\n\n", MFactions[*active_faction].noun_faction);
     
-    for (int baseId : activeFactionInfo.baseIds)
+    for (int baseId : data.baseIds)
 	{
 		BASE* base = &(Bases[baseId]);
 		
@@ -81,7 +81,7 @@ void setProduction()
 
 		// compute military priority
 		
-		globalMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * activeFactionInfo.mostVulnerableBaseDefenseDemand);
+		globalMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * data.mostVulnerableBaseDefenseDemand);
 		
 		debug("globalMilitaryPriority = %f\n", globalMilitaryPriority);
 		
@@ -182,7 +182,7 @@ int aiSuggestBaseProduction(int baseId, int choice)
     
 	// ignore new bases
 	
-	if (activeFactionInfo.baseStrategies.count(baseId) == 0)
+	if (data.baseStrategies.count(baseId) == 0)
 		return productionDemand.item;
 	
 	// evaluate other demands
@@ -758,13 +758,13 @@ void evaluateDefensiveFacilitiesDemand()
 	// calculate priority
 	// defensive facility is more desirable if there is a bigger guarrison
 	
-	double priority = conf.ai_production_military_priority * activeFactionInfo.baseStrategies[baseId].defenseDemand * (activeFactionInfo.baseStrategies[baseId].garrison.size() / 2.0);
+	double priority = conf.ai_production_military_priority * data.baseStrategies[baseId].defenseDemand * (data.baseStrategies[baseId].garrison.size() / 2.0);
 	
 	// add demand
 
 	addProductionDemand(-facilityId, priority);
 
-	debug("\t\tfacility=%-25s, ai_production_military_priority=%f, regionDefenseDemand=%f, exposure=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_military_priority, activeFactionInfo.regionDefenseDemand[baseTile->region], activeFactionInfo.baseStrategies[baseId].exposure, priority);
+	debug("\t\tfacility=%-25s, ai_production_military_priority=%f, regionDefenseDemand=%f, exposure=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_military_priority, data.regionDefenseDemand[baseTile->region], data.baseStrategies[baseId].exposure, priority);
 	
 }
 
@@ -784,7 +784,7 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_COMMAND_CENTER) && !has_facility(baseId, FAC_COMMAND_CENTER) && !ocean)
 	{
 		int facilityId = FAC_COMMAND_CENTER;
-		double priority = conf.ai_production_command_center_priority * regionMilitaryPriority * base->mineral_surplus_final / activeFactionInfo.regionMaxMineralSurpluses[region];
+		double priority = conf.ai_production_command_center_priority * regionMilitaryPriority * base->mineral_surplus_final / data.regionMaxMineralSurpluses[region];
 		addProductionDemand(-facilityId, priority);
 		debug("\t\tfacility=%-25s, ai_production_command_center_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_command_center_priority, priority);
 	}
@@ -794,7 +794,7 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_NAVAL_YARD) && !has_facility(baseId, FAC_NAVAL_YARD) && (ocean || connectedOceanRegions.size() >= 1))
 	{
 		int facilityId = FAC_NAVAL_YARD;
-		double priority = conf.ai_production_naval_yard_priority * regionMilitaryPriority * base->mineral_surplus_final / activeFactionInfo.regionMaxMineralSurpluses[region];
+		double priority = conf.ai_production_naval_yard_priority * regionMilitaryPriority * base->mineral_surplus_final / data.regionMaxMineralSurpluses[region];
 		addProductionDemand(-facilityId, priority);
 		debug("\t\tfacility=%-25s, ai_production_naval_yard_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_naval_yard_priority, priority);
 	}
@@ -804,7 +804,7 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_AEROSPACE_COMPLEX) && !has_facility(baseId, FAC_AEROSPACE_COMPLEX))
 	{
 		int facilityId = FAC_AEROSPACE_COMPLEX;
-		double priority = conf.ai_production_aerospace_complex_priority * globalMilitaryPriority * base->mineral_surplus_final / activeFactionInfo.maxMineralSurplus;
+		double priority = conf.ai_production_aerospace_complex_priority * globalMilitaryPriority * base->mineral_surplus_final / data.maxMineralSurplus;
 		addProductionDemand(-facilityId, priority);
 		debug("\t\tfacility=%-25s, ai_production_aerospace_complex_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_aerospace_complex_priority, priority);
 	}
@@ -950,8 +950,8 @@ void evaluateLandColonyDemand()
 
 	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
-		int x = getXCoordinateByMapIndex(mapIndex);
-		int y = getYCoordinateByMapIndex(mapIndex);
+		int x = getX(mapIndex);
+		int y = getY(mapIndex);
 		MAP *tile = getMapTile(x, y);
 		int region = tile->region;
 
@@ -1098,8 +1098,8 @@ void evaluateSeaColonyDemand()
 
 		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 		{
-			int x = getXCoordinateByMapIndex(mapIndex);
-			int y = getYCoordinateByMapIndex(mapIndex);
+			int x = getX(mapIndex);
+			int y = getY(mapIndex);
 			MAP *tile = getMapTile(x, y);
 
 			// this region only
@@ -1391,7 +1391,7 @@ void evaluateLandAlienDefenseDemand()
 	
 	double scoutPsiDefense = 0.0;
 	
-	for (int vehicleId : activeFactionInfo.combatVehicleIds)
+	for (int vehicleId : data.combatVehicleIds)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
@@ -1711,7 +1711,7 @@ void evaluateLandAlienHuntingDemand()
 	
 	// no demand
 	
-	if (activeFactionInfo.regionAlienHunterDemands.count(region) == 0)
+	if (data.regionAlienHunterDemands.count(region) == 0)
 	{
 		debug("\tno hunters requested.\n");
 		return;
@@ -1734,9 +1734,9 @@ void evaluateLandAlienHuntingDemand()
 	// set priority
 	// ocean bases producing land defenders do not reduce their priority by minearal surplus
 
-	double priority = conf.ai_production_native_protection_priority * ((double)base->mineral_surplus / (double)activeFactionInfo.regionMaxMineralSurpluses[region]);
+	double priority = conf.ai_production_native_protection_priority * ((double)base->mineral_surplus / (double)data.regionMaxMineralSurpluses[region]);
 
-	debug("\tregionMaxMineralSurplus=%d, mineral_surplus=%d, priority=%f\n", activeFactionInfo.regionMaxMineralSurpluses[region], base->mineral_surplus, priority);
+	debug("\tregionMaxMineralSurplus=%d, mineral_surplus=%d, priority=%f\n", data.regionMaxMineralSurpluses[region], base->mineral_surplus, priority);
 	
 	// add production demand
 
@@ -1779,7 +1779,7 @@ void evaluatePodPoppingDemand()
 		
 		int scoutCount = 0;
 		
-		for (int vehicleId : activeFactionInfo.combatVehicleIds)
+		for (int vehicleId : data.combatVehicleIds)
 		{
 			MAP *vehicleTile = getVehicleMapTile(vehicleId);
 			
@@ -1851,7 +1851,7 @@ void evaluatePrototypingDemand()
 	
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
-	bool inSharedOceanRegion = activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion;
+	bool inSharedOceanRegion = data.baseStrategies[baseId].inSharedOceanRegion;
 	
 	// base requires at least two times minimal mineral surplus requirement to build prototype
 	
@@ -1860,7 +1860,7 @@ void evaluatePrototypingDemand()
 
 	// do not produce prototype if other bases already produce them
 	
-	for (int otherBaseId : activeFactionInfo.baseIds)
+	for (int otherBaseId : data.baseIds)
 	{
 		BASE *otherBase = &(Bases[otherBaseId]);
 		
@@ -1884,7 +1884,7 @@ void evaluatePrototypingDemand()
 	int unprototypedUnitId = -1;
 	int unprototypedUnitMineralCost = INT_MAX;
 	
-	for (int unitId : activeFactionInfo.unitIds)
+	for (int unitId : data.unitIds)
 	{
 		UNIT *unit = &(Units[unitId]);
 		
@@ -1927,9 +1927,9 @@ void evaluatePrototypingDemand()
 	
 	// calculate adjusted priority based on mineral surplus
 	
-	double adjustedPriority = priority * ((double)base->mineral_surplus / (double)activeFactionInfo.maxMineralSurplus);
+	double adjustedPriority = priority * ((double)base->mineral_surplus / (double)data.maxMineralSurplus);
 	
-	debug("\tpriority=%f, mineral_surplus=%d, maxMineralSurplus=%d, adjustedPriority=%f\n", priority, base->mineral_surplus, activeFactionInfo.maxMineralSurplus, adjustedPriority);
+	debug("\tpriority=%f, mineral_surplus=%d, maxMineralSurplus=%d, adjustedPriority=%f\n", priority, base->mineral_surplus, data.maxMineralSurplus, adjustedPriority);
 	
 	// add production demand
 	
@@ -1954,7 +1954,7 @@ void evaluateCombatDemand()
 	
 	// get target base
 	
-	int targetBaseId = activeFactionInfo.baseStrategies[baseId].targetBaseId;
+	int targetBaseId = data.baseStrategies[baseId].targetBaseId;
 	
 	// no target base
 	
@@ -1968,7 +1968,7 @@ void evaluateCombatDemand()
 
 	// get target base strategy
 	
-	BaseStrategy *targetBaseStrategy = &(activeFactionInfo.baseStrategies[targetBaseId]);
+	BaseStrategy *targetBaseStrategy = &(data.baseStrategies[targetBaseId]);
 	
 	// no defense demand
 	
@@ -2000,7 +2000,7 @@ void evaluateCombatDemand()
 	
 	if (targetBaseId != baseId)
 	{
-		priority *= ((double)base->mineral_surplus / (double)activeFactionInfo.maxMineralSurplus);
+		priority *= ((double)base->mineral_surplus / (double)data.maxMineralSurplus);
 	}
 	
 	// add demand
@@ -2057,7 +2057,7 @@ int findNativeDefenderUnit()
     int bestUnitId = -1;
     double bestUnitEffectiveness = 0.0;
 
-    for (int unitId : activeFactionInfo.unitIds)
+    for (int unitId : data.unitIds)
 	{
         UNIT *unit = &Units[unitId];
 
@@ -2107,7 +2107,7 @@ int findNativeAttackerUnit(bool ocean)
     int bestUnitId = -1;
     double bestUnitEffectiveness = 0.0;
 
-    for (int unitId : activeFactionInfo.unitIds)
+    for (int unitId : data.unitIds)
 	{
 		UNIT *unit = &(Units[unitId]);
 		
@@ -2668,7 +2668,7 @@ int findBestAntiNativeUnitId(int baseId, int targetBaseId, int opponentTriad)
     int bestUnitId = -1;
     double bestUnitEffectiveness = 0.0;
 
-    for (int unitId : activeFactionInfo.combatUnitIds)
+    for (int unitId : data.combatUnitIds)
 	{
         UNIT *unit = &Units[unitId];
         int triad = unit->triad();
@@ -2752,7 +2752,7 @@ int findBestAntiRegularUnitId(int baseId, int targetBaseId, int opponentTriad)
     int bestUnitId = -1;
     double bestUnitEffectiveness = 0.0;
 
-    for (int unitId : activeFactionInfo.combatUnitIds)
+    for (int unitId : data.combatUnitIds)
 	{
         UNIT *unit = &Units[unitId];
         int triad = unit->triad();
@@ -2849,7 +2849,7 @@ int selectCombatUnit(int baseId, int targetBaseId)
 	
 	// get target base strategy
 	
-	BaseStrategy *targetBaseStrategy = &(activeFactionInfo.baseStrategies[targetBaseId]);
+	BaseStrategy *targetBaseStrategy = &(data.baseStrategies[targetBaseId]);
 	MilitaryStrength *defenderStrength = &(targetBaseStrategy->defenderStrength);
 	MilitaryStrength *opponentStrength = &(targetBaseStrategy->opponentStrength);
 	
@@ -2874,7 +2874,7 @@ int selectCombatUnit(int baseId, int targetBaseId)
 	std::map<int, int> unitClassBestUnits;
 	std::map<int, double> unitEffectivenesses;
 	
-	for (int unitId : activeFactionInfo.combatUnitIds)
+	for (int unitId : data.combatUnitIds)
 	{
 		UNIT *unit = &(Units[unitId]);
 		int triad = unit->triad();
@@ -2888,7 +2888,7 @@ int selectCombatUnit(int baseId, int targetBaseId)
 		
 		// do not produce sea unit in base that is not in shared ocean region
 		
-		if (triad == TRIAD_SEA && !activeFactionInfo.baseStrategies[baseId].inSharedOceanRegion)
+		if (triad == TRIAD_SEA && !data.baseStrategies[baseId].inSharedOceanRegion)
 			continue;
 		
 		// ocean base
@@ -2988,9 +2988,9 @@ int selectCombatUnit(int baseId, int targetBaseId)
 		(
 			!isNativeUnit(unitId)
 			&&
-			unitWeaponOffenseValue > 1 && unitWeaponOffenseValue < activeFactionInfo.bestWeaponOffenseValue
+			unitWeaponOffenseValue > 1 && unitWeaponOffenseValue < data.bestWeaponOffenseValue
 			&&
-			unitArmorDefenseValue > 1 && unitArmorDefenseValue < activeFactionInfo.bestArmorDefenseValue
+			unitArmorDefenseValue > 1 && unitArmorDefenseValue < data.bestArmorDefenseValue
 		)
 		{
 			debug("\t\tmediocre unit\n");
@@ -3296,7 +3296,7 @@ void evaluateTransportDemand()
 	
 	debug("evaluateTransportDemand\n");
 	
-	for (const auto &k : activeFactionInfo.seaTransportRequests)
+	for (const auto &k : data.seaTransportRequests)
 	{
 		int region = k.first;
 		int seaTransportRequest = k.second;
@@ -3317,7 +3317,7 @@ void evaluateTransportDemand()
 		
 		int transportCount = 0;
 		
-		for (int vehicleId : activeFactionInfo.vehicleIds)
+		for (int vehicleId : data.vehicleIds)
 		{
 			MAP *vehicleTile = getVehicleMapTile(vehicleId);
 			
@@ -3348,7 +3348,7 @@ void evaluateTransportDemand()
 		
 		// set priority
 		
-		double priority = transportDemand;
+		double priority = conf.ai_production_transport_priority * transportDemand;
 		
 		debug("\tpriority=%f\n", priority);
 		
@@ -3377,7 +3377,7 @@ int findTransportUnit()
 	int bestUnitId = -1;
 	double bestUnitEffectiveness = 0.0;
 	
-	for (int unitId : activeFactionInfo.unitIds)
+	for (int unitId : data.unitIds)
 	{
 		UNIT *unit = &(Units[unitId]);
 		int triad = unit->triad();

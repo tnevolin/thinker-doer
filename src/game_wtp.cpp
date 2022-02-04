@@ -2,6 +2,138 @@
 #include "terranx_wtp.h"
 #include "wtp.h"
 
+// =======================================================
+// MAP conversions
+// =======================================================
+
+bool isOnMap(int x, int y)
+{
+	return (((x + y) & 0x1) == 0 && (x >= 0 && y >= 0 && x < *map_axis_x && y < *map_axis_y));
+}
+
+/*
+coordinates -> map index
+*/
+
+int getMapIndex(int x, int y)
+{
+	if (!isOnMap(x, y))
+		return -1;
+	
+	return x / 2 + (*map_half_x) * y;
+    
+}
+
+/*
+location -> map index
+*/
+
+int getMapIndex(Location location)
+{
+	return getMapIndex(location.x, location.y);
+    
+}
+
+/*
+tile -> map index
+*/
+
+int getMapIndex(MAP *tile)
+{
+	if (tile == nullptr)
+		return -1;
+	
+	int mapIndex = (tile - (*MapPtr));
+	
+	if (!(mapIndex >= 0 && mapIndex < *map_area_tiles))
+		return -1;
+	
+	return mapIndex;
+	
+}
+
+/*
+map index -> coordinates
+*/
+
+int getX(int mapIndex)
+{
+	if (!(mapIndex >= 0 && mapIndex < *map_area_tiles))
+		return -1;
+	
+	return (mapIndex % (*map_half_x)) * 2 + (mapIndex / (*map_half_x) % 2);
+	
+}
+
+int getY(int mapIndex)
+{
+	if (!(mapIndex >= 0 && mapIndex < *map_area_tiles))
+		return -1;
+	
+	return mapIndex / (*map_half_x);
+	
+}
+
+/*
+map index -> location
+*/
+
+Location getLocation(int mapIndex)
+{
+	if (!(mapIndex >= 0 && mapIndex < *map_area_tiles))
+		return Location();
+	
+	return {getX(mapIndex), getY(mapIndex)};
+    
+}
+
+/*
+map tile -> location
+*/
+
+Location getLocation(MAP *tile)
+{
+	return getLocation(getMapIndex(tile));
+    
+}
+
+/*
+map index -> tile
+*/
+
+MAP *getMapTile(int mapIndex)
+{
+	if (!(mapIndex >= 0 && mapIndex < *map_area_tiles))
+		return nullptr;
+	
+	return &((*MapPtr)[mapIndex]);
+
+}
+
+/*
+coordinates -> tile
+*/
+
+MAP *getMapTile(int x, int y)
+{
+	return getMapTile(getMapIndex(x, y));
+
+}
+
+/*
+location -> tile
+*/
+
+MAP *getMapTile(Location location)
+{
+	return getMapTile(location.x, location.y);
+
+}
+
+// =======================================================
+// MAP conversions - end
+// =======================================================
+
 bool has_armor(int factionId, int armorId)
 {
 	return has_tech(factionId, Armor[armorId].preq_tech);
@@ -806,24 +938,6 @@ void setVehicleOrder(int id, int order)
 
 }
 
-MAP *getMapTile(int x, int y)
-{
-	// ignore impossible combinations
-
-	if ((x + y)%2 != 0)
-		return NULL;
-
-	// return map tile with wrapped x if needed
-
-	return mapsq(wrap(x), y);
-
-}
-
-MAP *getMapTile(Location location)
-{
-	return getMapTile(location.x, location.y);
-}
-
 MAP *getBaseMapTile(int baseId)
 {
 	BASE *base = &(Bases[baseId]);
@@ -996,12 +1110,32 @@ std::set<int> getBaseConnectedOceanRegions(int baseId)
 
 bool isLandRegion(int region)
 {
+	// convert extended region back to region
+	
+	if (region >= MaxRegionNum)
+	{
+		int mapIndex = region - MaxRegionNum;
+		MAP *tile = getMapTile(mapIndex);
+		region = tile->region;
+	}
+	
 	return region < MaxRegionNum/2;
+	
 }
 
 bool isOceanRegion(int region)
 {
+	// convert extended region back to region
+	
+	if (region >= MaxRegionNum)
+	{
+		int mapIndex = region - MaxRegionNum;
+		MAP *tile = getMapTile(mapIndex);
+		region = tile->region;
+	}
+	
 	return region >= MaxRegionNum/2;
+	
 }
 
 /*
@@ -1722,16 +1856,6 @@ bool isTileConnectedToRegion(int x, int y, int region)
 
 	return false;
 
-}
-
-int getXCoordinateByMapIndex(int mapIndex)
-{
-	return (mapIndex % (*map_half_x)) * 2 + (mapIndex / (*map_half_x) % 2);
-}
-
-int getYCoordinateByMapIndex(int mapIndex)
-{
-	return mapIndex / (*map_half_x);
 }
 
 std::vector<int> getRegionBases(int factionId, int region)
@@ -2805,14 +2929,6 @@ void hurryProduction(BASE* base, int minerals, int cost)
     
 }
 
-MAP* getMapTile(int mapTileIndex)
-{
-	assert(mapTileIndex >= 0 && mapTileIndex < *map_area_tiles);
-	
-	return &((*MapPtr)[mapTileIndex]);
-	
-}
-
 Location getMapIndexLocation(int mapIndex)
 {
 	return
@@ -2936,76 +3052,6 @@ bool isScoutVehicle(int vehicleId)
 	UNIT *unit = &(Units[vehicle->unit_id]);
 	
 	return unit->weapon_type == WPN_HAND_WEAPONS && unit->armor_type == ARM_NO_ARMOR;
-	
-}
-
-Location getNearestItemLocation(int x, int y, uint32_t item)
-{
-	Location nearestItemLocation;
-	
-	int maxRange = *map_axis_x + *map_axis_y;
-	
-	for (int range = 0; range < maxRange; range += 2)
-	{
-		bool inMap = false;
-		
-		for (int dx = 0; dx <= range; dx++)
-		{
-			int dy = range - dx;
-			
-			int x1 = wrap(x + dx); int y1 = y + dy; MAP *tile1 = getMapTile(x1, y1);
-			int x2 = wrap(x + dx); int y2 = y - dy; MAP *tile2 = getMapTile(x2, y2);
-			int x3 = wrap(x - dx); int y3 = y + dy; MAP *tile3 = getMapTile(x3, y3);
-			int x4 = wrap(x - dx); int y4 = y - dy; MAP *tile4 = getMapTile(x4, y4);
-			
-			if (tile1)
-			{
-				inMap = true;
-			}
-			if (map_has_item(tile1, item))
-			{
-				nearestItemLocation.set(x1, y1);
-				return nearestItemLocation;
-			}
-			
-			if (tile2)
-			{
-				inMap = true;
-			}
-			if (map_has_item(tile2, item))
-			{
-				nearestItemLocation.set(x2, y2);
-				return nearestItemLocation;
-			}
-			
-			if (tile3)
-			{
-				inMap = true;
-			}
-			if (map_has_item(tile3, item))
-			{
-				nearestItemLocation.set(x3, y3);
-				return nearestItemLocation;
-			}
-			
-			if (tile4)
-			{
-				inMap = true;
-			}
-			if (map_has_item(tile4, item))
-			{
-				nearestItemLocation.set(x4, y4);
-				return nearestItemLocation;
-			}
-			
-		}
-		
-		if (!inMap)
-			break;
-		
-	}
-	
-	return nearestItemLocation;
 	
 }
 
@@ -3954,6 +4000,47 @@ double getAlienMoraleModifier()
 	// compute morale modifier
 	
 	return getMoraleModifier(morale);
+	
+}
+
+/*
+Finds nearest land location owned by faction.
+*/
+Location getNearestLandTerritory(int x, int y, int factionId)
+{
+	Location nearestTerritory;
+	int minRange = INT_MAX;
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		Location spot = getLocation(mapIndex);
+		MAP *tile = getMapTile(mapIndex);
+		
+		// land
+		
+		if (is_ocean(tile))
+			continue;
+		
+		// faction owned
+		
+		if (tile->owner != factionId)
+			continue;
+		
+		// get range
+		
+		int range = map_range(x, y, spot.x, spot.y);
+		
+		// update best spot
+		
+		if (range < minRange)
+		{
+			nearestTerritory.set(spot);
+			minRange = range;
+		}
+		
+	}
+	
+	return nearestTerritory;
 	
 }
 

@@ -144,6 +144,26 @@ struct VehicleFilter
 	int weaponType = -1;
 };
 
+// =======================================================
+// MAP conversions
+// =======================================================
+
+bool isOnMap(int x, int y);
+int getMapIndex(int x, int y);
+int getMapIndex(Location location);
+int getMapIndex(MAP *tile);
+int getX(int mapIndex);
+int getY(int mapIndex);
+Location getLocation(int mapIndex);
+Location getLocation(MAP *tile);
+MAP *getMapTile(int mapIndex);
+MAP *getMapTile(int x, int y);
+MAP *getMapTile(Location location);
+
+// =======================================================
+// MAP conversions - end
+// =======================================================
+
 bool has_armor(int factionId, int armorId);
 bool has_reactor(int factionId, int reactorId);
 int getBaseMineralCost(int baseId, int itemId);
@@ -195,8 +215,6 @@ double calculatePsiDamageDefense(int id, int enemyId);
 double calculateNativeDamageAttack(int id);
 double calculateNativeDamageDefense(int id);
 void setVehicleOrder(int id, int order);
-MAP *getMapTile(int x, int y);
-MAP *getMapTile(Location location);
 MAP *getBaseMapTile(int baseId);
 MAP *getVehicleMapTile(int vehicleId);
 bool isImprovedTile(int x, int y);
@@ -246,8 +264,6 @@ int getFactionFacilityPopulationLimit(int factionId, int facilityId);
 bool isBaseFacilityAvailable(int baseId, int facilityId);
 bool isBaseConnectedToRegion(int baseId, int region);
 bool isTileConnectedToRegion(int x, int y, int region);
-int getXCoordinateByMapIndex(int mapIndex);
-int getYCoordinateByMapIndex(int mapIndex);
 std::vector<int> getRegionBases(int factionId, int region);
 std::vector<int> getRegionSurfaceVehicles(int factionId, int region, bool includeStationed);
 std::vector<int> getBaseGarrison(int baseId);
@@ -296,6 +312,7 @@ Location getAdjacentRegionLocation(int x, int y, int region);
 bool isValidLocation(Location location);
 void hurryProduction(BASE* base, int minerals, int cost);
 MAP* getMapTile(int mapTileIndex);
+int getMapIndex(MAP *tile);
 Location getMapIndexLocation(int mapIndex);
 int getLocationMapIndex(Location location);
 int getLocationMapIndex(int x, int y);
@@ -307,7 +324,6 @@ bool isFriendlyTerritory(int factionId, MAP* tile);
 bool isVehicleHasAbility(int vehicleId, int abilityId);
 bool isScoutUnit(int unitId);
 bool isScoutVehicle(int vehicleId);
-Location getNearestItemLocation(int x, int y, uint32_t item);
 bool isTargettedLocation(Location location);
 bool isFactionTargettedLocation(Location location, int factionId);
 double getNativePsiAttackStrength(int triad);
@@ -355,4 +371,5 @@ int getVehicleArmorDefenseValue(int vehicleId);
 bool factionHasSpecial(int factionId, int special);
 bool factionHasBonus(int factionId, int bonusId);
 double getAlienMoraleModifier();
+Location getNearestLandTerritory(int x, int y, int factionId);
 
