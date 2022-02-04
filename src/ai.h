@@ -140,11 +140,38 @@ struct VehicleWeight
 	double weight;
 };
 
-struct ActiveFactionInfo
+struct Geography
+{
+	std::set<int> regions;
+	std::map<int, std::set<int>> regionGroups;
+	std::map<int, int> associations;
+	std::map<int, std::set<int>> connections;
+	std::unordered_set<MAP *> friendlyCoastalBases;
+	std::unordered_map<MAP *, std::set<int>> friendlyCoastalBaseOceanRegionGroups;
+	std::unordered_map<MAP *, int> friendlyCoastalBaseOceanAssociations;
+	
+	void clear()
+	{
+		regions.clear();
+		regionGroups.clear();
+		associations.clear();
+		connections.clear();
+		friendlyCoastalBases.clear();
+		friendlyCoastalBaseOceanRegionGroups.clear();
+		friendlyCoastalBaseOceanAssociations.clear();
+	}
+	
+};
+	
+struct AIData
 {
 	FactionInfo factionInfos[8];
 	int bestWeaponOffenseValue;
 	int bestArmorDefenseValue;
+	
+	// geography
+	Geography geography[MaxPlayerNum];
+	
 	std::vector<int> baseIds;
 	std::unordered_map<MAP *, int> baseLocations;
 	std::unordered_set<int> presenceRegions;
@@ -179,12 +206,18 @@ struct ActiveFactionInfo
 	std::vector<int> seaAndAirCombatUnitIds;
 	std::unordered_map<int, int> regionAlienHunterDemands;
 	std::unordered_map<int, int> seaTransportRequests;
-	std::unordered_map<int, std::shared_ptr<Task>> tasks;
+	std::unordered_map<int, Task> tasks;
 	int bestVehicleWeaponOffenseValue;
 	int bestVehicleArmorDefenseValue;
 	
 	void clear()
 	{
+		// geography
+		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+		{
+			geography[factionId].clear();
+		}
+		
 		baseIds.clear();
 		baseLocations.clear();
 		presenceRegions.clear();
@@ -222,12 +255,13 @@ extern int wtpAIFactionId;
 
 extern int currentTurn;
 extern int aiFactionId;
-extern ActiveFactionInfo activeFactionInfo;
+extern AIData data;
 
 int aiFactionUpkeep(const int factionId);
 void aiStrategy();
-void populateGlobalVariables();
+void analyzeGeography();
 void setSharedOceanRegions();
+void populateGlobalVariables();
 VEH *getVehicleByAIId(int aiId);
 Location getNearestPodLocation(int vehicleId);
 void designUnits();
@@ -254,4 +288,12 @@ double getConventionalCombatBonusMultiplier(int attackerUnitId, int defenderUnit
 std::string getAbilitiesString(int unitType);
 bool isWithinAlienArtilleryRange(int vehicleId);
 bool isUseWtpAlgorithms(int factionId);
+bool isSameAssociation(MAP *tile1, MAP *tile2, int factionId);
+bool isSameAssociation(int extendedRegion1, MAP *tile2, int factionId);
+int getExtendedRegion(MAP *tile);
+bool isPolarRegion(MAP *tile);
+int getAssociation(MAP *tile, int factionId);
+int getVehicleAssociation(int vehicleId);
+int getOceanAssociation(MAP *tile, int factionId);
+bool isOceanAssociationCoast(int x, int y, int oceanAssociation, int factionId);
 

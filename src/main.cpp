@@ -802,6 +802,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_eco_damage_priority = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_transport_priority"))
+    {
+        cf->ai_production_transport_priority = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_factions_enabled"))
     {
         cf->ai_terraforming_factions_enabled = atoi(value);

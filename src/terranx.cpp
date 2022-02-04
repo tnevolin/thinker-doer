@@ -126,7 +126,7 @@ fp_3int* capture_base = (fp_3int*)0x50C510;
 fp_1int* base_kill = (fp_1int*)0x4E5250;
 fp_5int* crop_yield = (fp_5int*)0x4E6E50;
 // =WTP=
-// put is here to keep them in family
+// put it here to keep them in family
 fp_5int* mineral_yield = (fp_5int*)0x4E7310;
 fp_5int* energy_yield = (fp_5int*)0x4E7750;
 fp_6int* base_draw = (fp_6int*)0x55AF20;

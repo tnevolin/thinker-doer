@@ -188,7 +188,7 @@ void populateLists()
 
 	std::vector<std::set<int>> seaRegionLinkedGroups;
 
-	for (int id : activeFactionInfo.baseIds)
+	for (int id : data.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -250,7 +250,7 @@ void populateLists()
 
 //	debug("seaRegionLinkedGroups\n")
 
-	for (int id : activeFactionInfo.baseIds)
+	for (int id : data.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -423,7 +423,7 @@ void populateLists()
 
 //	debug("coastalBaseRegionMappings\n");
 
-	for (int id : activeFactionInfo.baseIds)
+	for (int id : data.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -663,7 +663,7 @@ void populateLists()
 
 	// populate availalbe tiles
 
-	for (int baseId : activeFactionInfo.baseIds)
+	for (int baseId : data.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
 
@@ -779,7 +779,7 @@ void populateLists()
 
 	// populate unworked tiles
 
-	for (int id : activeFactionInfo.baseIds)
+	for (int id : data.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -871,7 +871,7 @@ void populateLists()
 
 	}
 
-	double networkThreshold = conf.ai_terraforming_networkCoverageThreshold * (double)activeFactionInfo.baseIds.size();
+	double networkThreshold = conf.ai_terraforming_networkCoverageThreshold * (double)data.baseIds.size();
 
 	if (networkCoverage < networkThreshold)
 	{
@@ -897,7 +897,7 @@ Checks and removes redundant orders.
 */
 void cancelRedundantOrders()
 {
-	for (int id : activeFactionInfo.formerVehicleIds)
+	for (int id : data.formerVehicleIds)
 	{
 		if (isVehicleTerrafomingOrderCompleted(id))
 		{
@@ -1182,8 +1182,6 @@ void assignFormerOrders()
 	{
 		int x = terraformingRequest.x;
 		int y = terraformingRequest.y;
-		MAP *tile = terraformingRequest.tile;
-		bool ocean = isOceanRegion(tile->region);
 		
 		// find nearest available former
 		
@@ -1194,7 +1192,6 @@ void assignFormerOrders()
 		{
 			int vehicleId = formerOrder.id;
 			VEH *vehicle = &(Vehicles[vehicleId]);
-			MAP *vehicleTile = getVehicleMapTile(vehicleId);
 			
 			// skip assigned
 			
@@ -1203,27 +1200,8 @@ void assignFormerOrders()
 			
 			// reachable
 			
-			if (!ocean)
-			{
-				// no sea former for land tile
-				
-				if (vehicle->triad() == TRIAD_SEA)
-					continue;
-					
-			}
-			else
-			{
-				// no land former for ocean tile
-				
-				if (vehicle->triad() == TRIAD_LAND)
-					continue;
-				
-				// same ocean region
-				
-				if (vehicleTile->region != tile->region)
-					continue;
-				
-			}
+			if (!isDestinationReachable(vehicleId, x, y, false))
+				continue;
 			
 			// get range
 			
@@ -1266,7 +1244,7 @@ void assignFormerOrders()
 		
 		if (formerOrder.action == -1)
 		{
-			setTask(vehicleId, std::shared_ptr<Task>(new KillTask(vehicleId)));
+			setTask(vehicleId, Task(KILL, vehicleId));
 		}
 		
 	}
@@ -1405,7 +1383,7 @@ void finalizeFormerOrders()
 
 	for (FORMER_ORDER &formerOrder : formerOrders)
 	{
-		transitVehicle(formerOrder.id, std::shared_ptr<Task>(new TerraformingTask(formerOrder.id, formerOrder.x, formerOrder.y, formerOrder.action)));
+		transitVehicle(formerOrder.id, Task(TERRAFORMING, formerOrder.id, {formerOrder.x, formerOrder.y}, -1, formerOrder.action, -1));
 	}
 
 }
@@ -3122,7 +3100,7 @@ int getBaseTerraformingRank(BASE *base)
 
 BASE *findAffectedBase(int x, int y)
 {
-	for (int id : activeFactionInfo.baseIds)
+	for (int id : data.baseIds)
 	{
 		BASE *base = &(Bases[id]);
 
@@ -3153,11 +3131,11 @@ double getSmallestAvailableFormerTravelTime(MAP_INFO *mapInfo)
 	int x = mapInfo->x;
 	int y = mapInfo->y;
 	MAP *tile = mapInfo->tile;
-	int region = tile->region;
 	
-	double smallestTravelTime = 1000;
+	bool updated = false;
+	double smallestTravelTime = 0;
 	
-	if (isLandRegion(region))
+	if (isLandRegion(tile->region))
 	{
 		// iterate land former in all regions
 		
@@ -3181,21 +3159,25 @@ double getSmallestAvailableFormerTravelTime(MAP_INFO *mapInfo)
 			
 			// penalize time for different regions
 			
-			if (vehicleTile->region != region)
+			if (vehicleTile->region != tile->region)
 			{
 				time *= 2;
 			}
 			
 			// update the best
-
-			smallestTravelTime = std::min(smallestTravelTime, time);
+			
+			if (!updated || time < smallestTravelTime)
+			{
+				smallestTravelTime = time;
+				updated = true;
+			}
 
 		}
 
 	}
 	else
 	{
-		// iterate sea former in this regions
+		// iterate sea former able to serve this tile
 		
 		for (FORMER_ORDER formerOrder : formerOrders)
 		{
@@ -3208,9 +3190,12 @@ double getSmallestAvailableFormerTravelTime(MAP_INFO *mapInfo)
 			if (vehicle->triad() != TRIAD_SEA)
 				continue;
 			
-			// this region
+			// serving this tile
 			
-			if (vehicleTile->region != region)
+			int vehicleOceanAssociation = getOceanAssociation(vehicleTile, vehicle->faction_id);
+			int tileOceanAssociation = getOceanAssociation(tile, vehicle->faction_id);
+			
+			if (tileOceanAssociation != vehicleOceanAssociation)
 				continue;
 			
 			// calculate time
@@ -3222,7 +3207,11 @@ double getSmallestAvailableFormerTravelTime(MAP_INFO *mapInfo)
 
 			// update the best
 
-			smallestTravelTime = std::min(smallestTravelTime, time);
+			if (!updated || time < smallestTravelTime)
+			{
+				smallestTravelTime = time;
+				updated = true;
+			}
 
 		}
 
@@ -3465,7 +3454,7 @@ bool isTowardBaseDiagonal(int x, int y, int dxSign, int dySign)
 
 			// check base in tile
 
-			if (activeFactionInfo.baseLocations.count(tile) != 0)
+			if (data.baseLocations.count(tile) != 0)
 			{
 				return true;
 			}
@@ -3500,7 +3489,7 @@ bool isTowardBaseHorizontal(int x, int y, int dxSign)
 
 			// check base in tile
 
-			if (activeFactionInfo.baseLocations.count(tile) != 0)
+			if (data.baseLocations.count(tile) != 0)
 			{
 				return true;
 			}
@@ -3535,7 +3524,7 @@ bool isTowardBaseVertical(int x, int y, int dySign)
 
 			// check base in tile
 
-			if (activeFactionInfo.baseLocations.count(tile) != 0)
+			if (data.baseLocations.count(tile) != 0)
 			{
 				return true;
 			}
@@ -3647,7 +3636,7 @@ double calculateSensorScore(MAP_INFO mapInfo, int action)
 	
 	bool coveringBase = false;
 	
-	for (int baseId : activeFactionInfo.baseIds)
+	for (int baseId : data.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
 		
@@ -4573,7 +4562,7 @@ void findPathStep(int id, int x, int y, MAP_INFO *step)
 
 				// exclude zoc to zoc movement
 
-				if (activeFactionInfo.baseLocations.count(element->tile) == 0 && activeFactionInfo.baseLocations.count(adjacentTile) == 0 && element->zoc && adjacentTileZOC)
+				if (data.baseLocations.count(element->tile) == 0 && data.baseLocations.count(adjacentTile) == 0 && element->zoc && adjacentTileZOC)
 					continue;
 
 				// calculate movement cost
@@ -4935,7 +4924,7 @@ int getOngoingYieldTerraformingCount(int baseId)
 	
 	int ongoingYieldTerraformingCount = 0;
 
-	for (int vehicleId : activeFactionInfo.vehicleIds)
+	for (int vehicleId : data.vehicleIds)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
 		

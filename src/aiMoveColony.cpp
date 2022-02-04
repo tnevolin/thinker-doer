@@ -61,7 +61,7 @@ void moveLandColonyStrategy(int vehicleId)
 	
 	// transit vehicle
 	
-	transitVehicle(vehicleId, std::shared_ptr<Task>(new BuildTask(vehicleId, buildLocation.x, buildLocation.y)));
+	transitVehicle(vehicleId, Task(BUILD, vehicleId, buildLocation));
 	
 }
 
@@ -97,7 +97,7 @@ void moveSeaColonyStrategy(int vehicleId)
 	// transit vehicle
 	
 	setMoveTo(vehicleId, buildLocation);
-	transitVehicle(vehicleId, std::shared_ptr<Task>(new BuildTask(vehicleId, buildLocation.x, buildLocation.y)));
+	transitVehicle(vehicleId, Task(BUILD, vehicleId, buildLocation));
 	
 }
 
