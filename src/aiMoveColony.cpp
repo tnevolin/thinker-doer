@@ -4,8 +4,16 @@
 #include "ai.h"
 #include "aiMove.h"
 
+double averageExistingLandBaseValue;
+double averageExistingSeaBaseValue;
+
 void moveColonyStrategy()
 {
+	// clear best placement scores
+	
+	data.bestLandBuildLocationPlacementScore = 0.0;
+	data.bestSeaBuildLocationPlacementScore = 0.0;
+	
 	// land colonies
 	
 	VehicleFilter landColonyFilter;
@@ -115,6 +123,19 @@ double getBuildLocationScore(int colonyVehicleId, int x, int y)
 	
 	double placementScore = getBuildLocationPlacementScore(colonyVehicle->faction_id, x, y);
 	
+	// update best placement score
+	
+	if (!is_ocean(colonyVehicleTile))
+	{
+		data.bestLandBuildLocationPlacementScore = std::max(data.bestLandBuildLocationPlacementScore, placementScore);
+	}
+	else
+	{
+		data.bestSeaBuildLocationPlacementScore = std::max(data.bestSeaBuildLocationPlacementScore, placementScore);
+	}
+	
+	debug("placementScore(%3d,%3d) = %f\n", x, y, placementScore);
+	
 	// compute range score
 	// 10 extra travel turns reduce score in half
 	
@@ -205,6 +226,13 @@ double getBuildLocationPlacementScore(int factionId, int x, int y)
 		weight *= weightMultiplier;
 	}
 	
+	// prefer coast
+
+	if (isCoast(x, y))
+	{
+		score += 4.0;
+	}
+	
 	// discourage border radius intersection
 
 	score -= 2.0 * (double)getFriendlyIntersectedBaseRadiusTileCount(factionId, x, y);
@@ -212,13 +240,6 @@ double getBuildLocationPlacementScore(int factionId, int x, int y)
 	// encourage land usage
 
 	score += 2.0 * (double)getFriendlyLandBorderedBaseRadiusTileCount(factionId, x, y);
-
-	// prefer coast
-
-	if (isCoast(x, y))
-	{
-		score += 4.0;
-	}
 
 	// return score
 
@@ -326,31 +347,34 @@ Location findLandBaseBuildLocation(int colonyVehicleId)
 		if (map_range(colonyVehicle->x, colonyVehicle->y, location.x, location.y) > 20)
 			continue;
 		
-		// check location
+		// land
 		
-		if
-		(
-			// land region
-			isLandRegion(tile->region)
-			&&
-			// unclaimed territory
-			(tile->owner == -1 || tile->owner == colonyVehicle->faction_id)
-			&&
-			// can build base
-			isValidBuildSite(colonyVehicle->faction_id, TRIAD_LAND, location.x, location.y)
-			&&
-			// only available site
-			isUnclaimedBuildSite(colonyVehicle->faction_id, location.x, location.y, colonyVehicleId)
-		)
+		if (!isLandRegion(tile->region))
+			continue;
+		
+		// available territory
+		
+		if (!(tile->owner == -1 || tile->owner == colonyVehicle->faction_id))
+			continue;
+		
+		// can build base
+		
+		if (!isValidBuildSite(colonyVehicle->faction_id, TRIAD_LAND, location.x, location.y))
+			continue;
+		
+		// not targetted by other colonies
+		
+		if (!isUnclaimedBuildSite(colonyVehicle->faction_id, location.x, location.y, colonyVehicleId))
+			continue;
+		
+		// calculate score
+		
+		double score = getBuildLocationScore(colonyVehicleId, location.x, location.y);
+		
+		if (score > maxScore)
 		{
-			double score = getBuildLocationScore(colonyVehicleId, location.x, location.y);
-			
-			if (score > maxScore)
-			{
-				buildLocation.set(location.x, location.y);
-				maxScore = score;
-			}
-
+			buildLocation.set(location.x, location.y);
+			maxScore = score;
 		}
 
 	}

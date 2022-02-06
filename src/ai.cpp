@@ -22,8 +22,6 @@ int aiFactionId = -1;
 
 AIData data;
 
-std::clock_t start;
-
 /*
 Top level faction upkeep entry point.
 This is called for AI enabled factions only.
@@ -72,7 +70,12 @@ void aiStrategy()
 	
 	// populate shared strategy lists
 	
+	clock_t s = clock();
 	analyzeGeography();
+	clock_t e = clock();
+    double elapsed = (double)(e - s) / (double)CLOCKS_PER_SEC;
+    debug("(time) analyzeGeography: %f\n", elapsed);
+	
 	setSharedOceanRegions();
 	populateGlobalVariables();
 	evaluateBaseExposures();
@@ -89,10 +92,6 @@ void aiStrategy()
 	
 	evaluateDefenseDemand();
 	
-	// compute production demands
-
-	aiProductionStrategy();
-
 }
 
 /*
@@ -100,307 +99,281 @@ Analyzes and sets geographical parameters.
 */
 void analyzeGeography()
 {
-	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+	debug("analyzeGeography - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	// populate associations
+	
+	std::unordered_set<int> polarMapIndexes;
+	
+	std::unordered_map<int, int> *associations = &(data.geography.associations);
+	associations->clear();
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
-		// populate friendly bases
+		MAP *tile = getMapTile(mapIndex);
+		int region = getExtendedRegion(tile);
 		
-		std::unordered_set<MAP *> *friendlyCoastalBases = &(data.geography[factionId].friendlyCoastalBases);
-		std::unordered_map<MAP *, std::set<int>> *friendlyCoastalBaseOceanRegionGroups = &(data.geography[factionId].friendlyCoastalBaseOceanRegionGroups);
-		std::unordered_map<MAP *, int> *friendlyCoastalBaseOceanAssociations = &(data.geography[factionId].friendlyCoastalBaseOceanAssociations);
+		associations->insert({region, {region}});
 		
-		for (int baseId = 0; baseId < *total_num_bases; baseId++)
+		if (isPolarRegion(tile))
 		{
-			BASE *base = &(Bases[baseId]);
+			bool ocean = is_ocean(tile);
 			
-			if (base->faction_id == factionId || has_pact(factionId, base->faction_id))
+			polarMapIndexes.insert(mapIndex);
+			
+			for (MAP * adjacentTile : getAdjacentTiles(mapIndex, false))
 			{
-				MAP *baseTile = getBaseMapTile(baseId);
-				
-				// land base
-				
-				if (isOceanRegion(baseTile->region))
-					continue;
-				
-				// get base connected ocean regions
-				
-				std::set<int> baseConnectedOceanRegions = getBaseConnectedOceanRegions(baseId);
-				
-				// coastal base
-				
-				if (baseConnectedOceanRegions.size() == 0)
-					continue;
-				
-				friendlyCoastalBases->insert(baseTile);
-				friendlyCoastalBaseOceanRegionGroups->insert({baseTile, baseConnectedOceanRegions});
-				
-			}
-			
-		}
-		
-		if (DEBUG)
-		{
-			debug("friendlyCoastalBases - %d\n", factionId);
-			
-			for (MAP *baseTile : *friendlyCoastalBases)
-			{
-				Location baseLocation = getLocation(baseTile);
-				
-				debug("\t(%3d,%3d)\n", baseLocation.x, baseLocation.y);
-				
-			}
-			
-			debug("\n");
-			
-			debug("friendlyCoastalBaseOceanRegionGroups - %d\n", factionId);
-			
-			for (const auto &friendlyCoastalBaseOceanRegionGroupsEntry : *friendlyCoastalBaseOceanRegionGroups)
-			{
-				MAP *baseTile = friendlyCoastalBaseOceanRegionGroupsEntry.first;
-				const std::set<int> *friendlyCoastalBaseOceanRegionGroup = &(friendlyCoastalBaseOceanRegionGroupsEntry.second);
-				
-				Location baseLocation = getLocation(baseTile);
-				
-				debug("\t(%3d,%3d) -> ", baseLocation.x, baseLocation.y);
-				
-				for (int oceanRegion : *friendlyCoastalBaseOceanRegionGroup)
-				{
-					debug(" %3d", oceanRegion);
-					
-				}
-				
-				debug("\n");
-				
-			}
-			
-			debug("\n");
-			
-		}
-		
-		// populate regions
-		
-		std::set<int> *regions = &(data.geography[factionId].regions);
-		
-		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
-		{
-			MAP *tile = getMapTile(mapIndex);
-			int extendedRegion = getExtendedRegion(tile);
-			
-//			// exclude polar regions
-//			
-//			if (isPolarRegion(tile))
-//				continue;
-//			
-			regions->insert(extendedRegion);
-			
-		}
-		
-		// populate region groups
-		
-		std::map<int, std::set<int>> *regionGroups = &(data.geography[factionId].regionGroups);
-		
-		for (int region : *regions)
-		{
-			regionGroups->insert({region, {region}});
-		}
-		
-		// link ocean groups through friendly coastal bases
-		
-		for (auto &friendlyCoastalBaseOceanRegionGroupsEntry : *friendlyCoastalBaseOceanRegionGroups)
-		{
-			std::set<int> *friendlyCoastalBaseOceanRegionGroup = &(friendlyCoastalBaseOceanRegionGroupsEntry.second);
-			
-			std::unordered_set<int> extendedRegionGroup;
-			extendedRegionGroup.insert(friendlyCoastalBaseOceanRegionGroup->begin(), friendlyCoastalBaseOceanRegionGroup->end());
-			
-			for (int region : *friendlyCoastalBaseOceanRegionGroup)
-			{
-				extendedRegionGroup.insert(regionGroups->at(region).begin(), regionGroups->at(region).end());
-				
-			}
-			
-			for (int region : extendedRegionGroup)
-			{
-				regionGroups->at(region).insert(extendedRegionGroup.begin(), extendedRegionGroup.end());
-				
-			}
-			
-		}
-		
-		// link polar region groups
-		
-		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
-		{
-			MAP *tile = getMapTile(mapIndex);
-			bool ocean = isOceanRegion(tile->region);
-			int region = getExtendedRegion(tile);
-			Location location = getLocation(mapIndex);
-			
-			// polar regions
-			
-			if (!isPolarRegion(tile))
-				continue;
-			
-			for (MAP *adjacentTile : getAdjacentTiles(location.x, location.y, false))
-			{
-				bool adjacentOcean = isOceanRegion(adjacentTile->region);
+				bool adjacentOcean = is_ocean(adjacentTile);
 				int adjacentRegion = getExtendedRegion(adjacentTile);
 				
-				// don't link polar region with each other
+				// do not associate polar region with polar region
 				
 				if (isPolarRegion(adjacentTile))
 					continue;
 				
 				if (adjacentOcean == ocean)
 				{
-					// one directional link to regular region
-					
-					regionGroups->at(region).insert(regionGroups->at(adjacentRegion).begin(), regionGroups->at(adjacentRegion).end());
-					
+					associations->at(region) = adjacentRegion;
+					break;
 				}
 				
 			}
 			
 		}
 		
-		// populate associations
+	}
+	
+	// populate connections
+	
+	std::unordered_map<int, std::unordered_set<int>> *connections = &(data.geography.connections);
+	connections->clear();
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		MAP *tile = getMapTile(mapIndex);
+		bool ocean = is_ocean(tile);
+		int region = getExtendedRegion(tile);
 		
-		std::map<int, int> *associations = &(data.geography[factionId].associations);
+		connections->insert({region, {}});
 		
-		for (int region : *regions)
+		for (MAP * adjacentTile : getAdjacentTiles(mapIndex, false))
 		{
-			associations->insert({region, *(regionGroups->at(region).begin())});
+			bool adjacentOcean = is_ocean(adjacentTile);
+			int adjacentRegion = getExtendedRegion(adjacentTile);
+			int adjacentAssociation = associations->at(adjacentRegion);
 			
-		}
-		
-		// populate friendlyCoastalBaseOceanAssociations
-		
-		for (auto &friendlyCoastalBaseOceanRegionGroupsEntry : *friendlyCoastalBaseOceanRegionGroups)
-		{
-			MAP *baseTile = friendlyCoastalBaseOceanRegionGroupsEntry.first;
-			std::set<int> *baseOceanRegionGroup = &(friendlyCoastalBaseOceanRegionGroupsEntry.second);
-			
-			friendlyCoastalBaseOceanAssociations->insert({baseTile, associations->at(*(baseOceanRegionGroup->begin()))});
-			
-		}
-		
-		// populate connections
-		
-		std::map<int, std::set<int>> *connections = &(data.geography[factionId].connections);
-		
-		for (int region : *regions)
-		{
-			connections->insert({region, {}});
-			
-		}
-		
-		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
-		{
-			MAP *tile = getMapTile(mapIndex);
-			bool ocean = isOceanRegion(tile->region);
-			int region = getExtendedRegion(tile);
-			Location location = getMapIndexLocation(mapIndex);
-			
-			std::set<int> *regionConnections = &(connections->at(region));
-			
-			// check adjacent regions
-			
-			for (MAP *adjacentTile : getAdjacentTiles(location.x, location.y, false))
+			if (adjacentOcean != ocean)
 			{
-//				// exclude polar regions
-//				
-//				if (isPolarRegion(adjacentTile))
-//					continue;
-//				
-				bool adjacentOcean = isOceanRegion(adjacentTile->region);
-				int adjacentRegion = getExtendedRegion(adjacentTile);
-				int adjacentAssociation = associations->at(adjacentRegion);
+				connections->at(region).insert(adjacentAssociation);
+			}
+			
+		}
+		
+	}
+	
+	// extend polar region connections
+	
+	for (int mapIndex : polarMapIndexes)
+	{
+		MAP *tile = getMapTile(mapIndex);
+		int region = getExtendedRegion(tile);
+		int association = associations->at(region);
+		
+		if (association != region)
+		{
+			connections->at(region).insert(connections->at(association).begin(), connections->at(association).end());
+		}
+		
+	}
+	
+	// populate faction specific data
+	
+	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+	{
+		std::unordered_map<int, int> *factionAssociations = &(data.geography.faction[factionId].associations);
+		factionAssociations->clear();
+		
+		std::unordered_map<MAP *, int> *factionCoastalBaseOceanAssociations = &(data.geography.faction[factionId].coastalBaseOceanAssociations);
+		factionCoastalBaseOceanAssociations->clear();
+		
+		std::unordered_map<int, std::unordered_set<int>> *factionConnections = &(data.geography.faction[factionId].connections);
+		factionConnections->clear();
+		
+		// populate friendly base ocean region sets
+		
+		std::unordered_map<MAP *, std::unordered_set<int>> coastalBaseOceanRegionSets;
+		std::vector<std::unordered_set<int>> joinedOceanRegionSets;
+		
+		for (int baseId = 0; baseId < *total_num_bases; baseId++)
+		{
+			BASE *base = &(Bases[baseId]);
+			MAP *baseTile = getBaseMapTile(baseId);
+			
+			// friendly base
+			
+			if (!(base->faction_id == factionId || has_pact(factionId, base->faction_id)))
+				continue;
+			
+			// land base
+			
+			if (isOceanRegion(baseTile->region))
+				continue;
+			
+			// get base ocean regions
+			
+			std::unordered_set<int> baseOceanRegionSet = getBaseOceanRegions(baseId);
+			
+			// coastal base
+			
+			if (baseOceanRegionSet.size() == 0)
+				continue;
+			
+			// store base ocean regions
+			
+			coastalBaseOceanRegionSets.insert({baseTile, baseOceanRegionSet});
+			factionCoastalBaseOceanAssociations->insert({baseTile, associations->at(*(baseOceanRegionSet.begin()))});
+			
+			// joined oceans
+			
+			if (baseOceanRegionSet.size() >= 2)
+			{
+				joinedOceanRegionSets.push_back(baseOceanRegionSet);
+			}
+			
+		}
+		
+		// no joined oceans
+		
+		if (joinedOceanRegionSets.size() == 0)
+			continue;
+		
+		// populate faction associations and connections
+		
+		factionAssociations->insert(associations->begin(), associations->end());
+		factionConnections->insert(connections->begin(), connections->end());
+		
+		// update faction associations
+		
+		for (std::unordered_set<int> &joinedOceanRegionSet : joinedOceanRegionSets)
+		{
+			// find affected associations
+			
+			std::unordered_set<int> affectedAssociations;
+			int resultingAssociation = INT_MAX;
+			std::unordered_set<int> joinedConnections;
+			
+			for (int joinedOceanRegion : joinedOceanRegionSet)
+			{
+				int joinedOceanAssociation = factionAssociations->at(joinedOceanRegion);
 				
-				// populate ocean/continent connections
+				affectedAssociations.insert(joinedOceanAssociation);
+				resultingAssociation = std::min(resultingAssociation, joinedOceanAssociation);
+				joinedConnections.insert(factionConnections->at(joinedOceanAssociation).begin(), factionConnections->at(joinedOceanAssociation).end());
 				
-				if (adjacentOcean != ocean)
+			}
+			
+			// update affected associations and connections
+			
+			for (const auto &factionAssociationsEntry : *factionAssociations)
+			{
+				int region = factionAssociationsEntry.first;
+				int association = factionAssociationsEntry.second;
+				
+				if (affectedAssociations.count(association) != 0)
 				{
-					regionConnections->insert(adjacentAssociation);
+					factionAssociations->at(region) = resultingAssociation;
+					factionConnections->at(region).insert(joinedConnections.begin(), joinedConnections.end());
 				}
 				
 			}
 			
 		}
 		
-		// enhance connections
+		// update coastalBaseOceanAssociations
 		
-		for (auto &regionGroupsEntry : *regionGroups)
+		for (const auto &factionCoastalBaseOceanAssociationsEntry : *factionCoastalBaseOceanAssociations)
 		{
-			int region = regionGroupsEntry.first;
-			std::set<int> *regionGroup = &(regionGroupsEntry.second);
+			MAP *baseTile = factionCoastalBaseOceanAssociationsEntry.first;
+			int association = factionCoastalBaseOceanAssociationsEntry.second;
 			
-			for (int regionGroupRegion : *regionGroup)
-			{
-				for (int transitiveRegionGroupConnection : connections->at(regionGroupRegion))
-				{
-					connections->at(region).insert(transitiveRegionGroupConnection);
-					
-				}
-				
-			}
+			factionCoastalBaseOceanAssociations->at(baseTile) = factionAssociations->at(association);
 			
 		}
 		
-		if (DEBUG)
+	}
+	
+	if (DEBUG)
+	{
+		debug("\tassociations\n");
+		
+		std::map<int, int> sortedAssociations;
+		sortedAssociations.insert(data.geography.associations.begin(), data.geography.associations.end());
+		
+		for (const auto &association : sortedAssociations)
 		{
-			debug("regions - %d\n", factionId);
+			debug("\t\t%4d -> %4d\n", association.first, association.second);
 			
-			for (int region : *regions)
+		}
+		
+		debug("\tconnections\n");
+		
+		std::map<int, std::unordered_set<int>> sortedConnections;
+		sortedConnections.insert(data.geography.connections.begin(), data.geography.connections.end());
+		
+		for (auto const &connectionsEntry : sortedConnections)
+		{
+			int region = connectionsEntry.first;
+			const std::unordered_set<int> *regionConnections = &(connectionsEntry.second);
+			
+			debug("\t%4d ->", region);
+			
+			std::set<int> sortedRegionConnections;
+			sortedRegionConnections.insert(regionConnections->begin(), regionConnections->end());
+			
+			for (int connectionRegion : sortedRegionConnections)
 			{
-				debug("\t%4d\n", region);
-				
+				debug(" %4d", connectionRegion);
+			
 			}
 			
 			debug("\n");
 			
-			debug("regionGroups\n");
+		}
+		
+		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+		{
+			debug("\tfactionId=%d\n", factionId);
 			
-			for (auto const &regionGroupsEntry : *regionGroups)
-			{
-				int region = regionGroupsEntry.first;
-				const std::set<int> *regionGroup = &(regionGroupsEntry.second);
-				
-				debug("\t%4d ->", region);
-				
-				for (int regionGroupRegion : *regionGroup)
-				{
-					debug(" %4d", regionGroupRegion);
-				
-				}
-				
-				debug("\n");
-				
-			}
+			debug("\t\tassociations\n");
 			
-			debug("\n");
+			std::map<int, int> sortedFactionAssociations;
+			sortedFactionAssociations.insert(data.geography.faction[factionId].associations.begin(), data.geography.faction[factionId].associations.end());
 			
-			debug("associations\n");
-			
-			for (auto const &associationsEntry : *associations)
+			for (auto const &associationsEntry : sortedFactionAssociations)
 			{
 				int region = associationsEntry.first;
 				int association = associationsEntry.second;
 				
-				debug("\t%4d -> %4d\n", region, association);
+				debug("\t\t\t%4d -> %4d\n", region, association);
 				
 			}
 			
-			debug("\n");
+			debug("\t\tconnections\n");
 			
-			debug("connections\n");
+			std::map<int, std::unordered_set<int>> sortedFactionConnections;
+			sortedFactionConnections.insert(data.geography.faction[factionId].connections.begin(), data.geography.faction[factionId].connections.end());
 			
-			for (auto const &connectionsEntry : data.geography[factionId].connections)
+			for (auto const &connectionsEntry : sortedFactionConnections)
 			{
 				int region = connectionsEntry.first;
-				const std::set<int> *regionConnections = &(connectionsEntry.second);
+				const std::unordered_set<int> *regionConnections = &(connectionsEntry.second);
 				
-				debug("\t%4d ->", region);
+				debug("\t\t\t%4d ->", region);
 				
-				for (int connectionRegion : *regionConnections)
+				std::set<int> sortedRegionConnections;
+				sortedRegionConnections.insert(regionConnections->begin(), regionConnections->end());
+				
+				for (int connectionRegion : sortedRegionConnections)
 				{
 					debug(" %4d", connectionRegion);
 				
@@ -410,12 +383,28 @@ void analyzeGeography()
 				
 			}
 			
+			debug("\t\tcoastalBaseOceanAssociations\n");
+			
+			std::map<MAP *, int> sortedFactionCoastalBaseOceanAssociations;
+			sortedFactionCoastalBaseOceanAssociations.insert(data.geography.faction[factionId].coastalBaseOceanAssociations.begin(), data.geography.faction[factionId].coastalBaseOceanAssociations.end());
+			
+			for (auto const &coastalBaseOceanAssociationsEntry : sortedFactionCoastalBaseOceanAssociations)
+			{
+				MAP *baseTile = coastalBaseOceanAssociationsEntry.first;
+				int coastalBaseOceanAssociation = coastalBaseOceanAssociationsEntry.second;
+				
+				Location baseLocation = getLocation(baseTile);
+				
+				debug("\t\t\t(%3d,%3d) -> %d", baseLocation.x, baseLocation.y, coastalBaseOceanAssociation);
+				
+			}
+			
 			debug("\n");
 			
 		}
 		
 	}
-	
+		
 }
 
 /*
@@ -475,6 +464,10 @@ void setSharedOceanRegions()
 
 void populateGlobalVariables()
 {
+	// maxBaseSize
+	
+	data.maxBaseSize = getMaxBaseSize(aiFactionId);
+	
 	// best weapon and armor
 	
 	data.bestWeaponOffenseValue = getFactionBestPrototypedWeaponOffenseValue(aiFactionId);
@@ -2530,27 +2523,71 @@ bool isUseWtpAlgorithms(int factionId)
 	return (factionId != 0 && !is_human(factionId) && ai_enabled(factionId) && conf.ai_useWTPAlgorithms);
 }
 
-bool isSameAssociation(MAP *tile1, MAP *tile2, int factionId)
+int getCoastalBaseOceanAssociation(MAP *tile, int factionId)
 {
-	int extendedRegion1 = getExtendedRegion(tile1);
-	int extendedRegion2 = getExtendedRegion(tile2);
+	int coastalBaseOceanAssociation = -1;
 	
-	int association1 = data.geography[factionId].associations.at(extendedRegion1);
-	int association2 = data.geography[factionId].associations.at(extendedRegion2);
+	if (data.geography.faction[factionId].coastalBaseOceanAssociations.count(tile) != 0)
+	{
+		coastalBaseOceanAssociation = data.geography.faction[factionId].coastalBaseOceanAssociations.at(tile);
+	}
 	
-	return association2 == association1;
+	return coastalBaseOceanAssociation;
 	
 }
 
-bool isSameAssociation(int extendedRegion1, MAP *tile2, int factionId)
+int getAssociation(MAP *tile, int factionId)
 {
-	int extendedRegion2 = getExtendedRegion(tile2);
+	return getAssociation(getExtendedRegion(tile), factionId);
+}
+
+int getAssociation(int region, int factionId)
+{
+	int association;
 	
-	int association1 = data.geography[factionId].associations.at(extendedRegion1);
-	int association2 = data.geography[factionId].associations.at(extendedRegion2);
+	if (data.geography.faction[factionId].associations.count(region) != 0)
+	{
+		association = data.geography.faction[factionId].associations.at(region);
+	}
+	else
+	{
+		association = data.geography.associations.at(region);
+	}
 	
-	return association2 == association1;
+	return association;
 	
+}
+
+std::unordered_set<int> *getConnections(MAP *tile, int factionId)
+{
+	return getConnections(getExtendedRegion(tile), factionId);
+}
+	
+std::unordered_set<int> *getConnections(int region, int factionId)
+{
+	std::unordered_set<int> *connections;
+	
+	if (data.geography.faction[factionId].connections.count(region) != 0)
+	{
+		connections = &(data.geography.faction[factionId].connections.at(region));
+	}
+	else
+	{
+		connections = &(data.geography.connections.at(region));
+	}
+	
+	return connections;
+	
+}
+
+bool isSameAssociation(MAP *tile1, MAP *tile2, int factionId)
+{
+	return getAssociation(tile1, factionId) == getAssociation(tile2, factionId);
+}
+
+bool isSameAssociation(int association1, MAP *tile2, int factionId)
+{
+	return association1 == getAssociation(tile2, factionId);
 }
 
 /*
@@ -2580,14 +2617,6 @@ bool isPolarRegion(MAP *tile)
 }
 
 /*
-Returns association.
-*/
-int getAssociation(MAP *tile, int factionId)
-{
-	return data.geography[factionId].associations.at(getExtendedRegion(tile));
-}
-
-/*
 Returns vehicle region association.
 */
 int getVehicleAssociation(int vehicleId)
@@ -2601,7 +2630,7 @@ int getVehicleAssociation(int vehicleId)
 	{
 		if (isLandRegion(vehicleTile->region))
 		{
-			vehicleAssociation = data.geography[vehicle->faction_id].associations.at(getExtendedRegion(vehicleTile));
+			vehicleAssociation = getAssociation(vehicleTile, vehicle->faction_id);
 		}
 		
 	}
@@ -2609,13 +2638,15 @@ int getVehicleAssociation(int vehicleId)
 	{
 		if (isOceanRegion(vehicleTile->region))
 		{
-			vehicleAssociation = data.geography[vehicle->faction_id].associations.at(getExtendedRegion(vehicleTile));
+			vehicleAssociation = getAssociation(vehicleTile, vehicle->faction_id);
 		}
-		else
+		else if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
 		{
-			if (data.geography[vehicle->faction_id].friendlyCoastalBaseOceanAssociations.count(vehicleTile) != 0)
+			int coastalBaseOceanAssociation = getCoastalBaseOceanAssociation(vehicleTile, vehicle->faction_id);
+			
+			if (coastalBaseOceanAssociation != -1)
 			{
-				vehicleAssociation = data.geography[vehicle->faction_id].friendlyCoastalBaseOceanAssociations.at(vehicleTile);
+				vehicleAssociation = coastalBaseOceanAssociation;
 			}
 			
 		}
@@ -2637,12 +2668,15 @@ int getOceanAssociation(MAP *tile, int factionId)
 	{
 		oceanAssociation = getAssociation(tile, factionId);
 	}
-	else
+	else if (map_has_item(tile, TERRA_BASE_IN_TILE))
 	{
-		if (data.geography[factionId].friendlyCoastalBaseOceanAssociations.count(tile) != 0)
+		int coastalBaseOceanAssociation = getCoastalBaseOceanAssociation(tile, factionId);
+		
+		if (coastalBaseOceanAssociation != -1)
 		{
-			oceanAssociation = data.geography[factionId].friendlyCoastalBaseOceanAssociations.count(tile);
+			oceanAssociation = coastalBaseOceanAssociation;
 		}
+		
 	}
 	
 	return oceanAssociation;
@@ -2665,6 +2699,56 @@ bool isOceanAssociationCoast(int x, int y, int oceanAssociation, int factionId)
 	}
 
 	return false;
+
+}
+
+int getMaxBaseSize(int factionId)
+{
+	int maxBaseSize = 0;
+
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+
+		if (base->faction_id != factionId)
+			continue;
+
+		maxBaseSize = std::max(maxBaseSize, (int)base->pop_size);
+
+	}
+
+	return maxBaseSize;
+
+}
+
+/*
+Returns base ocean regions.
+*/
+std::unordered_set<int> getBaseOceanRegions(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	MAP *baseTile = getBaseMapTile(baseId);
+
+	std::unordered_set<int> baseOceanRegions;
+
+	if (is_ocean(baseTile))
+	{
+		baseOceanRegions.insert(getExtendedRegion(baseTile));
+	}
+	else
+	{
+		for (MAP *adjacentTile : getAdjacentTiles(base->x, base->y, false))
+		{
+			if (!is_ocean(adjacentTile))
+				continue;
+
+			baseOceanRegions.insert(getExtendedRegion(adjacentTile));
+
+		}
+
+	}
+
+	return baseOceanRegions;
 
 }
 

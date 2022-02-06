@@ -192,24 +192,6 @@ bool deliverArtifact(int transportVehicleId, int artifactVehicleId)
 	
 }
 
-bool deliverColony(int colonyVehicleId)
-{
-	// find best base location
-	
-	Location buildLocation = findLandBaseBuildLocation(colonyVehicleId);
-
-	if (!isValidLocation(buildLocation))
-		return false;
-
-	// deliver vehicle
-	
-//	return deliverVehicle(transportVehicleId, buildLocation, colonyVehicleId);
-	transitVehicle(colonyVehicleId, Task(BUILD, colonyVehicleId, buildLocation));
-	
-	return true;
-	
-}
-
 bool deliverFormer(int transportVehicleId, int formerVehicleId)
 {
 	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
@@ -688,9 +670,9 @@ Location getSeaTransportUnloadLocation(int seaTransportVehicleId, const Location
 	if (isOceanRegion(destinationTile->region) && !map_has_item(destinationTile, TERRA_BASE_IN_TILE))
 		return unloadLocation;
 	
-	// destination is ocean and is same association and is frendly coastal base
+	// destination is ocean and is same association
 	
-	if (isOceanRegion(destinationTile->region) && isSameAssociation(seaTransportVehicleAssociation, destinationTile, seaTransportVehicle->faction_id) && data.geography[seaTransportVehicle->faction_id].friendlyCoastalBaseOceanAssociations.count(destinationTile) != 0)
+	if (isOceanRegion(destinationTile->region) && isSameAssociation(seaTransportVehicleAssociation, destinationTile, seaTransportVehicle->faction_id))
 	{
 		unloadLocation.set(destination);
 		return unloadLocation;
@@ -838,35 +820,35 @@ int getCrossOceanAssociation(Location initialLocation, Location terminalLocation
 	
 	// get tiles
 	
-	MAP *initialLocationTile = getMapTile(initialLocation);
-	MAP *terminalLocationTile = getMapTile(terminalLocation);
+	MAP *initialTile = getMapTile(initialLocation);
+	MAP *terminalTile = getMapTile(terminalLocation);
 	
-	if (initialLocationTile == NULL || terminalLocationTile == NULL)
+	if (initialTile == NULL || terminalTile == NULL)
 		return -1;
 	
 	// get associations
 	
-	int initialLocationAssociation = getAssociation(initialLocationTile, factionId);
-	int terminalLocationAssociation = getAssociation(terminalLocationTile, factionId);
+	int initialAssociation = getAssociation(initialTile, factionId);
+	int terminalAssociation = getAssociation(terminalTile, factionId);
 	
 	// if in ocean already this is the ocean to cross
 	
-	if (isOceanRegion(initialLocationTile->region))
-		return initialLocationAssociation;
+	if (isOceanRegion(initialTile->region))
+		return initialAssociation;
 	
 	// get connections
 	
-	std::set<int> initialLocationAssociationConnections = data.geography[factionId].connections.at(initialLocationAssociation);
+	std::unordered_set<int> *initialConnections = getConnections(initialAssociation, factionId);
 	
-	if (initialLocationAssociationConnections.size() == 0)
+	if (initialConnections->size() == 0)
 		return -1;
 	
 	// preset path variables
 	
 	std::unordered_map<int, std::unordered_set<int>> paths;
-	for (int connection : initialLocationAssociationConnections)
+	for (int connection : *initialConnections)
 	{
-		paths.insert({connection, {initialLocationAssociation, connection}});
+		paths.insert({connection, {initialAssociation, connection}});
 	}
 	
 	// select best path
@@ -883,9 +865,10 @@ int getCrossOceanAssociation(Location initialLocation, Location terminalLocation
 			std::unordered_set<int> newPathAssociations;
 			for (int pathAssociation : *pathAssociations)
 			{
-				for (int connection : data.geography[factionId].connections.at(pathAssociation))
+				std::unordered_set<int> *pathConnections = getConnections(pathAssociation, factionId);
+				for (int connection : *pathConnections)
 				{
-					if (connection == terminalLocationAssociation)
+					if (connection == terminalAssociation)
 						return crossOceanAssociation;
 					
 					if (pathAssociations->count(connection) != 0)

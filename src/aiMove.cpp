@@ -21,7 +21,11 @@ void __cdecl modified_enemy_units_check(int factionId)
 		
 		moveStrategy();
 		
-		// update base productions
+		// compute production demands
+
+		aiProductionStrategy();
+
+		// update base production
 		
 		setProduction();
 		
@@ -500,12 +504,19 @@ void transitVehicle(int vehicleId, Task task)
 		
 	}
 	
+	// get load location
+	
+	Location availableSeaTransportLoadLocation = getSeaTransportLoadLocation(availableSeaTransportVehicleId, vehicleId);
+	
+	if (!isValidLocation(availableSeaTransportLoadLocation))
+		return;
+	
 	// add boarding tasks
 	
 	debug("\tadd boarding tasks: [%3d]\n", availableSeaTransportVehicleId);
 	
 	setTask(vehicleId, Task(BOARD, vehicleId, {-1, -1}, availableSeaTransportVehicleId));
-	setTaskIfCloser(availableSeaTransportVehicleId, Task(LOAD, availableSeaTransportVehicleId, {-1, -1}, vehicleId));
+	setTaskIfCloser(availableSeaTransportVehicleId, Task(LOAD, availableSeaTransportVehicleId, availableSeaTransportLoadLocation));
 	
 	return;
 	
