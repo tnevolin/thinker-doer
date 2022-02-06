@@ -140,25 +140,27 @@ struct VehicleWeight
 	double weight;
 };
 
+struct FactionGeography
+{
+	std::unordered_map<int, int> associations;
+	std::unordered_map<MAP *, int> coastalBaseOceanAssociations;
+	std::unordered_map<int, std::unordered_set<int>> connections;
+	
+};
+	
 struct Geography
 {
-	std::set<int> regions;
-	std::map<int, std::set<int>> regionGroups;
-	std::map<int, int> associations;
-	std::map<int, std::set<int>> connections;
-	std::unordered_set<MAP *> friendlyCoastalBases;
-	std::unordered_map<MAP *, std::set<int>> friendlyCoastalBaseOceanRegionGroups;
-	std::unordered_map<MAP *, int> friendlyCoastalBaseOceanAssociations;
+	std::unordered_map<int, int> associations;
+	std::unordered_map<int, std::unordered_set<int>> connections;
+	FactionGeography faction[MaxPlayerNum];
 	
-	void clear()
+	Geography()
 	{
-		regions.clear();
-		regionGroups.clear();
-		associations.clear();
-		connections.clear();
-		friendlyCoastalBases.clear();
-		friendlyCoastalBaseOceanRegionGroups.clear();
-		friendlyCoastalBaseOceanAssociations.clear();
+		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+		{
+			faction[MaxPlayerNum] = FactionGeography();
+		}
+		
 	}
 	
 };
@@ -170,7 +172,7 @@ struct AIData
 	int bestArmorDefenseValue;
 	
 	// geography
-	Geography geography[MaxPlayerNum];
+	Geography geography;
 	
 	std::vector<int> baseIds;
 	std::unordered_map<MAP *, int> baseLocations;
@@ -194,6 +196,7 @@ struct AIData
 	int mostVulnerableBaseId;
 	double mostVulnerableBaseDefenseDemand;
 	std::unordered_map<int, double> regionDefenseDemand;
+	int maxBaseSize;
 	int maxMineralSurplus;
 	std::unordered_map<int, int> regionMaxMineralSurpluses;
 	int bestLandUnitId;
@@ -209,15 +212,11 @@ struct AIData
 	std::unordered_map<int, Task> tasks;
 	int bestVehicleWeaponOffenseValue;
 	int bestVehicleArmorDefenseValue;
+	double bestLandBuildLocationPlacementScore;
+	double bestSeaBuildLocationPlacementScore;
 	
 	void clear()
 	{
-		// geography
-		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-		{
-			geography[factionId].clear();
-		}
-		
 		baseIds.clear();
 		baseLocations.clear();
 		presenceRegions.clear();
@@ -288,12 +287,18 @@ double getConventionalCombatBonusMultiplier(int attackerUnitId, int defenderUnit
 std::string getAbilitiesString(int unitType);
 bool isWithinAlienArtilleryRange(int vehicleId);
 bool isUseWtpAlgorithms(int factionId);
+int getCoastalBaseOceanAssociation(MAP *tile, int factionId);
+int getAssociation(MAP *tile, int factionId);
+int getAssociation(int region, int factionId);
+std::unordered_set<int> *getConnections(MAP *tile, int factionId);
+std::unordered_set<int> *getConnections(int region, int factionId);
 bool isSameAssociation(MAP *tile1, MAP *tile2, int factionId);
 bool isSameAssociation(int extendedRegion1, MAP *tile2, int factionId);
 int getExtendedRegion(MAP *tile);
 bool isPolarRegion(MAP *tile);
-int getAssociation(MAP *tile, int factionId);
 int getVehicleAssociation(int vehicleId);
 int getOceanAssociation(MAP *tile, int factionId);
 bool isOceanAssociationCoast(int x, int y, int oceanAssociation, int factionId);
+int getMaxBaseSize(int factionId);
+std::unordered_set<int> getBaseOceanRegions(int baseId);
 

@@ -81,6 +81,7 @@ const double COMBAT_UNIT_CLASS_WEIGHTS[] =
 };
 
 void aiProductionStrategy();
+void evaluateGlobalLandColoniesDemand();
 //HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
 void setProduction();
 int aiSuggestBaseProduction(int baseId, int choice);
@@ -116,7 +117,6 @@ int findFormerUnit(int factionId, int triad);
 std::vector<int> getRegionBases(int factionId, int region);
 int getRegionBasesMaxMineralSurplus(int factionId, int region);
 int getRegionBasesMaxPopulationSize(int factionId, int region);
-int getMaxBaseSize(int factionId);
 int calculateRegionSurfaceUnitTypeCount(int factionId, int region, int weaponType);
 int calculateUnitTypeCount(int baseId, int weaponType, int triad, int excludedBaseId);
 bool isBaseNeedPsych(int baseId);

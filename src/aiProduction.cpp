@@ -1,11 +1,14 @@
 #include <set>
+#include <unordered_set>
 #include <map>
+#include <unordered_map>
 #include "engine.h"
 #include "game.h"
 #include "game_wtp.h"
 #include "terranx_wtp.h"
 #include "aiProduction.h"
 #include "ai.h"
+#include "aiMoveColony.h"
 
 const std::unordered_set<int> MANAGED_FACILITIES
 	{
@@ -48,6 +51,13 @@ double territoryBonusMultiplier;
 double globalMilitaryPriority;
 double regionMilitaryPriority;
 
+// global parameters
+
+// total land colonies needed
+int landColoniesDemand;
+// total sea colonies needed per association
+std::unordered_map<int, int> seaColoniesDemands;
+
 // currently processing base production demand
 
 PRODUCTION_DEMAND productionDemand;
@@ -57,7 +67,118 @@ Prepare production choices.
 */
 void aiProductionStrategy()
 {
-	
+	evaluateGlobalLandColoniesDemand();
+}
+
+/*
+Evaluates need for colonies.
+*/
+void evaluateGlobalLandColoniesDemand()
+{
+//	// calculate placement score for all tiles
+//
+//	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+//	{
+//		Location location = getLocation(mapIndex);
+//		MAP *tile = getMapTile(mapIndex);
+//		int region = tile->region;
+//		
+//		// land
+//		
+//		if (is_ocean(tile))
+//			continue;
+//		
+//		// calculate placement score
+//		
+//		double score = getFactionBuildLocationScore(aiFactionId, location.x, location.y);
+//
+//		// land regions
+//
+//		if (isOceanRegion(region))
+//			continue;
+//
+//		// exclude territory claimed by other factions
+//
+//		if (!(tile->owner == -1 || tile->owner == base->faction_id))
+//			continue;
+//
+//		// exclude base radius
+//
+//		if (map_has_item(tile, TERRA_BASE_RADIUS))
+//			continue;
+//
+//		// calculate distance to nearest faction base
+//
+//		int nearestFactionBaseRange = getNearestFactionBaseRange(base->faction_id, x, y);
+//
+//		// calculate distance to nearest other faction base
+//
+//		int nearestOtherFactionBaseRange = getNearestOtherFactionBaseRange(base->faction_id, x, y);
+//		
+//		// exclude tiles closer to other bases
+//		
+//		if (nearestOtherFactionBaseRange <= nearestFactionBaseRange)
+//			continue;
+//
+//		// count available tiles
+//
+//		globalUnpopulatedLandTileWeighedCount++;
+//
+//		// gather distance statistics
+//		
+//		closestUnpopulatedTileRange = std::min(closestUnpopulatedTileRange, map_range(x, y, base->x, base->y));
+//
+//	}
+//
+//	debug("\t\tglobalUnpopulatedLandTileWeighedCount=%d, closestUnpopulatedTileRange=%d\n", globalUnpopulatedLandTileWeighedCount, closestUnpopulatedTileRange);
+//
+//	// evaluate need for land expansion
+//
+//	double landExpansionDemand = (double)globalUnpopulatedLandTileWeighedCount / conf.ai_production_expansion_coverage;
+//	debug("\t\tlandExpansionDemand=%f\n", landExpansionDemand);
+//
+//	// too low demand
+//
+//	if (landExpansionDemand < 1.0)
+//		return;
+//
+//	// calculate existing and building colonies
+//
+//	int existingLandColoniesCount = calculateUnitTypeCount(base->faction_id, WPN_COLONY_MODULE, TRIAD_LAND, baseId);
+//	debug("\t\texistingLandColoniesCount=%d\n", existingLandColoniesCount);
+//
+//	// we have enough
+//
+//	if (existingLandColoniesCount >= landExpansionDemand)
+//		return;
+//
+//	// calculate priority
+//
+//	double priority =
+//		(conf.ai_production_expansion_priority + conf.ai_production_expansion_priority_per_population * base->pop_size)
+//		*
+//		(landExpansionDemand - (double)existingLandColoniesCount) / landExpansionDemand
+//		*
+//		// drop priority in half for every 10 tiles to reach
+//		pow(0.5, (double)closestUnpopulatedTileRange / 10.0)
+//	;
+//	
+//	debug("\t\tmultiplier=%f, priorityDemand=%f, distancePenalty=%f, priority=%f\n", conf.ai_production_expansion_priority + conf.ai_production_expansion_priority_per_population * base->pop_size, (landExpansionDemand - (double)existingLandColoniesCount) / landExpansionDemand, pow(0.5, (double)closestUnpopulatedTileRange / 10.0), priority);
+//
+//	// calculate infantry turns to destination assuming land units travel by roads 2/3 of time
+//
+//	double infantryTurnsToDestination = closestUnpopulatedTileRange;
+//
+//	// find optimal colony unit
+//
+//	int optimalColonyUnitId = findOptimalColonyUnit(base->faction_id, TRIAD_LAND, base->mineral_surplus, infantryTurnsToDestination);
+//
+//	debug("\t\t\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, infantryTurnsToDestination=%f, optimalColonyUnitId=%-25s\n", TRIAD_LAND, base->mineral_surplus, infantryTurnsToDestination, Units[optimalColonyUnitId].name);
+//
+//	// set base demand
+//
+//	addProductionDemand(optimalColonyUnitId, priority);
+//
 }
 
 /*
@@ -924,7 +1045,7 @@ void evaluateFormerDemand()
 Evaluates need for colonies.
 */
 void evaluateLandColonyDemand()
- {
+{
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 
@@ -2423,25 +2544,6 @@ int getRegionBasesMaxPopulationSize(int factionId, int region)
 	}
 
 	return maxPopulationSize;
-
-}
-
-int getMaxBaseSize(int factionId)
-{
-	int maxBaseSize = 0;
-
-	for (int baseId = 0; baseId < *total_num_bases; baseId++)
-	{
-		BASE *base = &(Bases[baseId]);
-
-		if (base->faction_id != factionId)
-			continue;
-
-		maxBaseSize = std::max(maxBaseSize, (int)base->pop_size);
-
-	}
-
-	return maxBaseSize;
 
 }
 

@@ -75,6 +75,20 @@ int getY(int mapIndex)
 }
 
 /*
+map tile -> coordinates
+*/
+
+int getX(MAP *tile)
+{
+	return getX(getMapIndex(tile));
+}
+
+int getY(MAP *tile)
+{
+	return getY(getMapIndex(tile));
+}
+
+/*
 map index -> location
 */
 
@@ -1330,6 +1344,16 @@ int estimateBaseProductionTurnsToComplete(int id)
 
 	return ((getBaseMineralCost(id, base->queue_items[0]) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
 
+}
+
+std::vector<MAP *> getAdjacentTiles(int mapIndex, bool startWithCenter)
+{
+	return getAdjacentTiles(getX(mapIndex), getY(mapIndex), startWithCenter);
+}
+
+std::vector<MAP *> getAdjacentTiles(MAP *tile, bool startWithCenter)
+{
+	return getAdjacentTiles(getX(tile), getY(tile), startWithCenter);
 }
 
 /*
@@ -4041,6 +4065,33 @@ Location getNearestLandTerritory(int x, int y, int factionId)
 	}
 	
 	return nearestTerritory;
+	
+}
+
+int getRangeToNearestFactionBase(int x, int y, int factionId)
+{
+	int minRange = INT_MAX;
+	
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+		
+		// faction base
+		
+		if (base->faction_id != factionId)
+			continue;
+		
+		// calculate range
+		
+		int range = map_range(x, y, base->x, base->y);
+		
+		// update min range
+		
+		minRange = std::min(minRange, range);
+		
+	}
+	
+	return minRange;
 	
 }
 

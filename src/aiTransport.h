@@ -22,7 +22,6 @@ int getCarryingFormerVehicleId(int transportVehicleId);
 bool isCarryingFormer(int vehicleId);
 bool isCarryingVehicle(int vehicleId);
 bool deliverArtifact(int transportVehicleId, int carryingVehicleId);
-bool deliverColony(int colonyVehicleId);
 bool deliverFormer(int transportVehicleId, int formerVehicleId);
 bool deliverScout(int transportVehicleId, int scoutVehicleId);
 bool pickupColony(int vehicleId);
