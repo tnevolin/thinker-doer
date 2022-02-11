@@ -359,6 +359,14 @@ struct Config {
     double ai_production_eco_damage_threshold;
     double ai_production_eco_damage_priority;
     double ai_production_transport_priority;
+    double ai_production_build_weight_nutrient_bonus;
+    double ai_production_build_weight_mineral_bonus;
+    double ai_production_build_weight_energy_bonus;
+    double ai_production_build_weight_rainfall;
+    double ai_production_build_weight_rockiness;
+    double ai_production_build_weight_elevation;
+    double ai_production_build_weight_deep;
+    double ai_production_build_turn_penalty;
     double ai_terraforming_nutrientWeight;
     int ai_terraforming_factions_enabled;
     double ai_terraforming_mineralWeight;

@@ -3,458 +3,622 @@
 #include "game_wtp.h"
 #include "ai.h"
 #include "aiMove.h"
+#include "terranx_wtp.h"
 
-double averageExistingLandBaseValue;
-double averageExistingSeaBaseValue;
+double averageLandRainfall;
+double averageLandRockiness;
+double averageLandElevation;
+double averageSeaShelf;
 
 void moveColonyStrategy()
 {
-	// clear best placement scores
+	// analyze base placement sites
 	
-	data.bestLandBuildLocationPlacementScore = 0.0;
-	data.bestSeaBuildLocationPlacementScore = 0.0;
-	
-	// land colonies
-	
-	VehicleFilter landColonyFilter;
-	landColonyFilter.factionId = aiFactionId;
-	landColonyFilter.weaponType = WPN_COLONY_MODULE;
-	landColonyFilter.triad = TRIAD_LAND;
-	for (int vehicleId : selectVehicles(landColonyFilter))
-	{
-		moveLandColonyStrategy(vehicleId);
-	}
-	
-	// sea colonies
-	
-	VehicleFilter seaColonyFilter;
-	seaColonyFilter.factionId = aiFactionId;
-	seaColonyFilter.weaponType = WPN_COLONY_MODULE;
-	seaColonyFilter.triad = TRIAD_SEA;
-	for (int vehicleId : selectVehicles(seaColonyFilter))
-	{
-		moveSeaColonyStrategy(vehicleId);
-	}
+	clock_t s = clock();
+	analyzeBasePlacementSites();
+    debug("(time) [WTP] analyzeBasePlacementSites: %6.3f\n", (double)(clock() - s) / (double)CLOCKS_PER_SEC);
 	
 }
 
-void moveLandColonyStrategy(int vehicleId)
+void analyzeBasePlacementSites()
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	Location vehicleLocation{vehicle->x, vehicle->y};
+	std::vector<std::pair<int, double>> sortedBuildSiteScores;
+	std::unordered_set<int> colonyVehicleIds;
+	std::unordered_set<int> accessibleAssociations;
 	
-	debug("moveLandColonyStrategy\n");
+	debug("analyzeBasePlacementSites - %s\n", MFactions[aiFactionId].noun_faction);
 	
-	// search for best build site
+	// calculate accessible associations by current colonies
 	
-	Location buildLocation = findLandBaseBuildLocation(vehicleId);
-	
-	if (!isValidLocation(buildLocation))
+	for (int vehicleId : aiData.vehicleIds)
 	{
-		debug("\tcannot find build location\n");
-		return;
+		// colony
+		
+		if (!isColonyVehicle(vehicleId))
+			continue;
+		
+		// get vehicle associations
+		
+		int vehicleAssociation = getVehicleAssociation(vehicleId);
+		
+		// update accessible associations
+		
+		accessibleAssociations.insert(vehicleAssociation);
+		
 	}
 	
-	debug("\t(%3d,%3d) -> (%3d,%3d)\n", vehicle->x, vehicle->y, buildLocation.x, buildLocation.y)
+	// calculate average quality values on overall map
 	
-	// get build location tile
+	int landTileCount = 0;
+	int seaTileCount = 0;
+	int sumLandRainfall = 0;
+	int sumLandRockiness = 0;
+	int sumLandElevation = 0;
+	int sumSeaShelf = 0;
 	
-	MAP *buildLocationTile = getMapTile(buildLocation);
-	
-	if (!isLandRegion(buildLocationTile->region))
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
-		debug("\tbuild location is not on land\n");
-		return;
-	}
-	
-	// transit vehicle
-	
-	transitVehicle(vehicleId, Task(BUILD, vehicleId, buildLocation));
-	
-}
-
-void moveSeaColonyStrategy(int vehicleId)
-{
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	Location vehicleLocation{vehicle->x, vehicle->y};
-	
-	debug("moveSeaColonyStrategy\n");
-	
-	// search for best build site
-	
-	Location buildLocation = findOceanBaseBuildLocation(vehicleId);
-	
-	if (!isValidLocation(buildLocation))
-	{
-		debug("\tcannot find build location\n");
-		return;
-	}
-	
-	debug("\t(%3d,%3d) -> (%3d,%3d)\n", vehicle->x, vehicle->y, buildLocation.x, buildLocation.y)
-	
-	// get build location tile
-	
-	MAP *buildLocationTile = getMapTile(buildLocation);
-	
-	if (!isOceanRegion(buildLocationTile->region))
-	{
-		debug("\tbuild location is not on ocean\n");
-		return;
-	}
-	
-	// transit vehicle
-	
-	setMoveTo(vehicleId, buildLocation);
-	transitVehicle(vehicleId, Task(BUILD, vehicleId, buildLocation));
-	
-}
-
-/*
-Computes build location score for given colony.
-*/
-double getBuildLocationScore(int colonyVehicleId, int x, int y)
-{
-	VEH *colonyVehicle = &(Vehicles[colonyVehicleId]);
-	int triad = colonyVehicle->triad();
-	MAP *colonyVehicleTile = getVehicleMapTile(colonyVehicleId);
-	MAP *buildLocationTile = getMapTile(x, y);
-	
-	// compute placement score
-	
-	double placementScore = getBuildLocationPlacementScore(colonyVehicle->faction_id, x, y);
-	
-	// update best placement score
-	
-	if (!is_ocean(colonyVehicleTile))
-	{
-		data.bestLandBuildLocationPlacementScore = std::max(data.bestLandBuildLocationPlacementScore, placementScore);
-	}
-	else
-	{
-		data.bestSeaBuildLocationPlacementScore = std::max(data.bestSeaBuildLocationPlacementScore, placementScore);
-	}
-	
-	debug("placementScore(%3d,%3d) = %f\n", x, y, placementScore);
-	
-	// compute range score
-	// 10 extra travel turns reduce score in half
-	
-	int range = map_range(colonyVehicle->x, colonyVehicle->y, x, y);
-	int speed = veh_chassis_speed(colonyVehicleId);
-    double turns = (double)range / (double)speed;
-    
-    if (buildLocationTile->region != colonyVehicleTile->region)
-	{
-		switch (triad)
+		MAP *tile = getMapTile(mapIndex);
+		bool ocean = is_ocean(tile);
+		
+		if (!ocean)
 		{
-		case TRIAD_SEA:
-			// sea unit cannot reach another region
-			return 0.0;
-			break;
-		case TRIAD_LAND:
-			// reaching another continent requires 2 times more time than traveling on ground
-			turns *= 2.0;
-			break;
+			landTileCount++;
+			sumLandRainfall += map_rainfall(tile);
+			sumLandRockiness += map_rockiness(tile);
+			sumLandElevation += map_elevation(tile);
+		}
+		else
+		{
+			seaTileCount++;
+			sumSeaShelf = (map_elevation(tile) == -1 ? 1 : 0);
 		}
 		
 	}
 	
-    double turnsMultiplier = pow(0.5, turns / 15.0);
-    
-	// summarize the score
-
-    double score = placementScore * turnsMultiplier;
-
-    debug
-    (
-		"\t(%3d,%3d) placementScore=%5.2f, turns=%5.1f, turnsMultiplier=%5.3f, score=%5.2f\n",
-		x,
-		y,
-		placementScore,
-		turns,
-		turnsMultiplier,
-		score
+	averageLandRainfall = (double)sumLandRainfall / (double)landTileCount;
+	averageLandRockiness = (double)sumLandRockiness / (double)landTileCount;
+	averageLandElevation = (double)sumLandElevation / (double)landTileCount;
+	averageSeaShelf = (double)sumSeaShelf / (double)seaTileCount;
+	
+	// populate tile yield scores
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		MAP *tile = getMapTile(mapIndex);
+		int association = getAssociation(tile, aiFactionId);
+		
+		// calculate and store expansionRange
+		
+		int expansionRange = std::min(getNearestBaseRange(mapIndex), getNearestColonyRange(mapIndex));
+		
+		aiData.mapData[mapIndex].expansionRange = expansionRange;
+		
+		// limit expansion range
+		
+		if (expansionRange > MAX_EXPANSION_RANGE + 2)
+			continue;
+		
+		// accessible or reachable
+		
+		if (!(accessibleAssociations.count(association) != 0 || isReachableAssociation(association, aiFactionId)))
+			continue;
+		
+		// valid work site
+		
+		if (!isValidWorkSite(tile, aiFactionId))
+		{
+			aiData.mapData[mapIndex].qualityScore = 0.0;
+			continue;
+		}
+		
+		// calculate tileQualityScore
+		
+		double tileQualityScore = getTileQualityScore(tile);
+		
+		// store tileQualityScore
+		
+		aiData.mapData[mapIndex].qualityScore = tileQualityScore;
+		
+	}
+	
+	// populate buildSiteScores and set production priorities
+	
+	aiData.production.landColonyDemand = -INT_MAX;
+	aiData.production.seaColonyDemands.clear();
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		MAP *tile = getMapTile(mapIndex);
+		int association = getAssociation(tile, aiFactionId);
+		
+		// limit expansion range
+		
+		int expansionRange = std::min(getNearestBaseRange(mapIndex), getNearestColonyRange(mapIndex));
+		
+		if (expansionRange > MAX_EXPANSION_RANGE)
+			continue;
+		
+		// accessible or reachable
+		
+		if (!(accessibleAssociations.count(association) != 0 || isReachableAssociation(association, aiFactionId)))
+			continue;
+		
+		// valid build site
+		
+		if (!isValidBuildSite(tile, aiFactionId))
+		{
+			aiData.mapData[mapIndex].buildScore = 0.0;
+			continue;
+		}
+		
+		// calculate and store the score
+		
+		double buildSiteScore = getBuildSiteRangeScore(tile);
+		aiData.mapData[mapIndex].buildScore = buildSiteScore;
+		sortedBuildSiteScores.push_back({mapIndex, buildSiteScore});
+		
+		// update build priorities
+		
+		if (!is_ocean(tile))
+		{
+			aiData.production.landColonyDemand = std::max(aiData.production.landColonyDemand, buildSiteScore);
+			
+		}
+		else
+		{
+			if (aiData.production.seaColonyDemands.count(association) == 0)
+			{
+				aiData.production.seaColonyDemands.insert({association, -INT_MAX});
+			}
+			aiData.production.seaColonyDemands.at(association) = std::max(aiData.production.seaColonyDemands.at(association), buildSiteScore);
+			
+		}
+		
+	}
+	
+	// normalize production priorities
+	
+	aiData.production.landColonyDemand = std::max(0.0, 1.0 + aiData.production.landColonyDemand);
+	for (auto &seaColonyDemandsEntry : aiData.production.seaColonyDemands)
+	{
+		int association = seaColonyDemandsEntry.first;
+		aiData.production.seaColonyDemands.at(association) = std::max(0.0, 1.0 + aiData.production.seaColonyDemands.at(association));
+	}
+	
+	if (DEBUG)
+	{
+		debug("\tlandColonyDemand = %6.2f\n", aiData.production.landColonyDemand);
+		debug("\tseaColonyDemands\n");
+		for (const auto &seaColonyDemandsEntry : aiData.production.seaColonyDemands)
+		{
+			int association = seaColonyDemandsEntry.first;
+			double priority = seaColonyDemandsEntry.second;
+			
+			debug("\t\t%4d = %6.2f\n", association, priority);
+			
+		}
+		
+	}
+	
+	// sort sites by score descending
+	
+	std::sort
+	(
+		sortedBuildSiteScores.begin(),
+		sortedBuildSiteScores.end(),
+		[ ](const std::pair<int, double> &buildSiteScore1, const std::pair<int, double> &buildSiteScore2)
+		{
+			return buildSiteScore1.second > buildSiteScore2.second;
+		}
 	)
 	;
-
-    return score;
-
+	
+	// collect existing colonies
+	
+	colonyVehicleIds.insert(aiData.colonyVehicleIds.begin(), aiData.colonyVehicleIds.end());
+	
+	// match build sites with existing colonies and set colony production priorities
+	
+	debug("\tmatch build sites with existing colonies\n");
+	
+	std::vector<int> matchedBuildSiteMapIndexes;
+	
+	for (const auto &sortedBuildSiteScoresEntry : sortedBuildSiteScores)
+	{
+		int buildSiteMapIndex = sortedBuildSiteScoresEntry.first;
+		double buildSiteScore = sortedBuildSiteScoresEntry.second;
+		
+		int x = getX(buildSiteMapIndex);
+		int y = getY(buildSiteMapIndex);
+		MAP *buildSiteTile = getMapTile(buildSiteMapIndex);
+		bool ocean = is_ocean(buildSiteTile);
+		
+		if (DEBUG)
+		{
+			int association = getAssociation(buildSiteTile, aiFactionId);
+			debug("\t\t(%3d,%3d) = %6.2f %-4s %4d\n", x, y, buildSiteScore, (ocean ? "sea" : "land"), association);
+		}
+		
+		// verify this build site is within allowed distance from already matched ones
+		
+		bool validBuildSite = true;
+		
+		for (int matchedBuildSiteMapIndex : matchedBuildSiteMapIndexes)
+		{
+			int matchedX = getX(matchedBuildSiteMapIndex);
+			int matchedY = getY(matchedBuildSiteMapIndex);
+			
+			int range = map_range(matchedX, matchedY, x, y);
+			
+			if (range < conf.base_spacing)
+			{
+				validBuildSite = false;
+				debug("\t\t\ttoo close to other matched site: (%3d,%3d)\n", matchedX, matchedY);
+				break;
+			}
+			
+		}
+		
+		if (!validBuildSite)
+			continue;
+		
+		// find nearest colony that can reach the site
+		
+		int nearestColonyVehicleId = -1;
+		int nearestColonyVehicleRange = INT_MAX;
+		
+		for (int vehicleId : colonyVehicleIds)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			// proper triad
+			
+			if (!(vehicle->triad() == TRIAD_AIR || vehicle->triad() == ocean))
+				continue;
+			
+			// can reach
+			
+			if (!isDestinationReachable(vehicleId, x, y))
+				continue;
+			
+			// get range
+			
+			int range = map_range(vehicle->x, vehicle->y, x, y);
+			
+			// update best
+			
+			if (range < nearestColonyVehicleRange)
+			{
+				nearestColonyVehicleId = vehicleId;
+				nearestColonyVehicleRange = range;
+			}
+			
+		}
+		
+		// not found
+		
+		if (nearestColonyVehicleId == -1)
+		{
+			debug("\t\t\tno colony can reach the destination\n");
+			continue;
+		}
+		
+		// add to matched build sites
+		
+		matchedBuildSiteMapIndexes.push_back(buildSiteMapIndex);
+		
+		// set order
+		
+		transitVehicle(nearestColonyVehicleId, Task(BUILD, nearestColonyVehicleId, getMapTile(x, y)));
+		
+		// remove nearestColonyVehicleId from list
+		
+		colonyVehicleIds.erase(nearestColonyVehicleId);
+		
+		debug("\t\t\t[%3d] (%3d,%3d) ->\n", nearestColonyVehicleId, Vehicles[nearestColonyVehicleId].x, Vehicles[nearestColonyVehicleId].y);
+		
+		// exit if no more colonies left
+		
+		if (colonyVehicleIds.size() == 0)
+			break;
+			
+	}
+	
 }
 
 /*
-Computes build location placement score irrespective to the range to it.
+Evaluates build location score based on yield score, base radius overlap and distance to existing bases.
 */
-double getBuildLocationPlacementScore(int factionId, int x, int y)
+double getBuildSiteRangeScore(MAP *tile)
 {
-	MAP *tile = getMapTile(x, y);
-	bool oceanBase = is_ocean(tile);
+	// compute placement score
+	
+	double placementScore = getBuildSitePlacementScore(tile);
+	
+	// reduce placement score with range
+	// site score at the edge of max expansion range is reduced by 1
+	
+	int range = aiData.mapData[getMapIndexByPointer(tile)].expansionRange;
+	double speed = (is_ocean(tile) ? 4.0 : 1.5);
+	double turns = (double)range / speed;
+    double turnPenalty = conf.ai_production_build_turn_penalty * turns;
+    
+    double score = placementScore - turnPenalty;
 
-	// collect tile yield scores
+//    debug
+//    (
+//		"\t(%3d,%3d) placementScore=%5.2f, turns=%5.1f, turnsMultiplier=%5.3f, score=%5.2f\n",
+//		x,
+//		y,
+//		placementScore,
+//		turns,
+//		turnsMultiplier,
+//		score
+//	)
+//	;
+
+    return score;
+    
+}
+
+/*
+Computes build location placement score.
+*/
+double getBuildSitePlacementScore(MAP *tile)
+{
+	int x = getX(tile);
+	int y = getY(tile);
+	bool ocean = is_ocean(tile);
+	
+	debug("getBuildSitePlacementScore (%3d,%3d)\n", x, y);
+
+	// summarize tile yield scores
 
 	std::vector<double> tileScores;
 
-	for (MAP_INFO tileInfo : getBaseRadiusTileInfos(x, y, false))
+	for (MAP *workTile : getBaseRadiusTiles(tile, false))
 	{
-		// ignore claimed tiles
-
-		if (tileInfo.tile->owner != -1 && tileInfo.tile->owner != factionId)
+		bool workTileOcean = is_ocean(workTile);
+		
+		// valid work site
+		
+		if (!isValidWorkSite(workTile, aiFactionId))
 			continue;
-
+		
 		// ignore not owned land tiles for ocean base
 
-		if (oceanBase && !is_ocean(tileInfo.tile) && tileInfo.tile->owner != factionId)
+		if (ocean && !workTileOcean && workTile->owner != aiFactionId)
 			continue;
 
 		// collect yield score
 
-		tileScores.push_back(getBaseRadiusTileScore(&tileInfo));
-
-	}
-
-	// summarize top scores from top down
-
-	std::sort(tileScores.begin(), tileScores.end());
-	std::reverse(tileScores.begin(), tileScores.end());
-
-	double score = 0.0;
-
-	double weight = 1.0;
-	double weightMultiplier = 0.80;
-	for (double tileScore : tileScores)
-	{
-		score += weight * tileScore;
-		weight *= weightMultiplier;
+		tileScores.push_back(aiData.mapData[getMapIndexByPointer(workTile)].qualityScore);
+		
 	}
 	
-	// prefer coast
-
-	if (isCoast(x, y))
+	// sort scores
+	
+	std::sort(tileScores.begin(), tileScores.end(), std::greater<int>());
+	
+	// average weigthed score
+	
+	double weight = 1.0;
+	double weightMultiplier = 0.8;
+	double sumWeights = 0.0;
+	double sumWeightedScore = 0.0;
+	
+	for (double tileScore : tileScores)
 	{
-		score += 4.0;
+		double weightedScore = weight * tileScore;
+		
+		sumWeights += weight;
+		sumWeightedScore += weightedScore;
+		
+		weight *= weightMultiplier;
+		
+	}
+	
+	double score = 0.0;
+	
+	if (sumWeights > 0.0)
+	{
+		score = sumWeightedScore / sumWeights;
+	}
+	
+	// prefer land coast over land internal tiles
+	
+	if (!ocean)
+	{
+		if (isCoast(x, y))
+		{
+			score += 0.10;
+		}
+		else
+		{
+			score -= 0.10;
+		}
+		
 	}
 	
 	// discourage border radius intersection
-
-	score -= 2.0 * (double)getFriendlyIntersectedBaseRadiusTileCount(factionId, x, y);
-
+	
+	score -= 0.10 * (double)getFriendlyIntersectedBaseRadiusTileCount(aiFactionId, x, y);
+	
 	// encourage land usage
-
-	score += 2.0 * (double)getFriendlyLandBorderedBaseRadiusTileCount(factionId, x, y);
-
+	
+	score += 0.20 * (double)getFriendlyLandBorderedBaseRadiusTileCount(aiFactionId, x, y);
+	
 	// return score
-
+	
 	return score;
-
+	
 }
 
-double getBaseRadiusTileScore(MAP_INFO *tileInfo)
+/*
+Evaluates tile quality score based on how territory is more beneficial than average.
+* resource/landmark bonus
+* rainfall 
+* rockiness
+* altitude
+*/
+double getTileQualityScore(MAP *tile)
 {
+	bool ocean = is_ocean(tile);
+	
 	double score = 0.0;
-
-	double nutrientWeight = 1.0;
-	double mineralWeight = 3.0;
-	double energyWeight = 1.0;
-
-	// select best weighted yield
-
-	double bestWeightedYield = 0.0;
-
-	if (map_rockiness(tileInfo->tile) == 2)
+	
+	// bonus
+	
+	int nutrientBonus = getNutrientBonus(tile);
+	int mineralBonus = getMineralBonus(tile);
+	int energyBonus = getEnergyBonus(tile);
+	
+	if (!ocean)
 	{
-		// mine
-
+		if (map_has_item(tile, TERRA_MONOLITH))
 		{
-			int actionsCount = 1;
-			int actions[] = {FORMER_MINE};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+			score +=
+				conf.ai_production_build_weight_nutrient_bonus * (double)nutrientBonus
+				+
+				conf.ai_production_build_weight_mineral_bonus * (double)mineralBonus
+				+
+				conf.ai_production_build_weight_energy_bonus * (double)energyBonus
+				+
+				conf.ai_production_build_weight_rainfall * 0.0
+				+
+				conf.ai_production_build_weight_rockiness * 1.0
+				+
+				conf.ai_production_build_weight_elevation * 1.0
+			;
+			
 		}
-
-		// level, farm, mine
-
+		else
 		{
-			int actionsCount = 3;
-			int actions[] = {FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_MINE};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+			// quality
+			
+			double rainfall = (double)map_rainfall(tile) - averageLandRainfall;
+			double rockiness = (double)map_rockiness(tile) - averageLandRockiness;
+			double elevation = (double)map_elevation(tile) - averageLandElevation;
+			
+			if (map_rockiness(tile) == 2)
+			{
+				double rockyMineYieldScore =
+					conf.ai_production_build_weight_nutrient_bonus * (double)nutrientBonus
+					+
+					conf.ai_production_build_weight_mineral_bonus * (double)(mineralBonus == 0 ? 0 : mineralBonus + 1)
+					+
+					conf.ai_production_build_weight_energy_bonus * (double)energyBonus
+					+
+					conf.ai_production_build_weight_rockiness * rockiness
+				;
+				
+				double solarYieldScore =
+					conf.ai_production_build_weight_nutrient_bonus * (double)nutrientBonus
+					+
+					conf.ai_production_build_weight_mineral_bonus * (double)mineralBonus
+					+
+					conf.ai_production_build_weight_energy_bonus * (double)energyBonus
+					+
+					conf.ai_production_build_weight_rainfall * rainfall
+					+
+					conf.ai_production_build_weight_rockiness * (rockiness - 1.0)
+					+
+					conf.ai_production_build_weight_elevation * elevation
+				;
+				
+				score += std::max(rockyMineYieldScore, solarYieldScore);
+				
+			}
+			else
+			{
+				double mineYieldScore =
+					conf.ai_production_build_weight_nutrient_bonus * (double)nutrientBonus
+					+
+					conf.ai_production_build_weight_mineral_bonus * (double)(mineralBonus == 0 ? 0 : mineralBonus + 1)
+					+
+					conf.ai_production_build_weight_energy_bonus * (double)energyBonus
+					+
+					conf.ai_production_build_weight_rainfall * (rainfall + Rules->nutrient_effect_mine_sq)
+					+
+					conf.ai_production_build_weight_rockiness * rockiness
+				;
+				
+				double solarYieldScore =
+					conf.ai_production_build_weight_nutrient_bonus * (double)nutrientBonus
+					+
+					conf.ai_production_build_weight_mineral_bonus * (double)mineralBonus
+					+
+					conf.ai_production_build_weight_energy_bonus * (double)energyBonus
+					+
+					conf.ai_production_build_weight_rainfall * rainfall
+					+
+					conf.ai_production_build_weight_rockiness * rockiness
+					+
+					conf.ai_production_build_weight_elevation * elevation
+				;
+				
+				score += std::max(mineYieldScore, solarYieldScore);
+				
+			}
+			
 		}
-
-		// level, farm, solar
-
+		
+		// add extra energy bonus for river
+		
+		if (map_has_item(tile, TERRA_RIVER))
 		{
-			int actionsCount = 3;
-			int actions[] = {FORMER_LEVEL_TERRAIN, FORMER_FARM, FORMER_SOLAR};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+			score += conf.ai_production_build_weight_elevation;
 		}
-
+		
+		// mine adds to mineral bonus but reduces nutrients
+		
+		double mineEffectOnMineralBonus = 0.0;
+		
+		if (mineralBonus > 0)
+		{
+			mineEffectOnMineralBonus =
+				conf.ai_production_build_weight_rainfall * (double)Rules->nutrient_effect_mine_sq
+				+
+				conf.ai_production_build_weight_mineral_bonus * 1.0
+			;
+				
+		}
+		
+		mineEffectOnMineralBonus = std::max(0.0, mineEffectOnMineralBonus);
+		
+		score += mineEffectOnMineralBonus;
+		
 	}
 	else
 	{
-		// farm, mine
-
+		score +=
+			conf.ai_production_build_weight_nutrient_bonus * (double)nutrientBonus
+			+
+			conf.ai_production_build_weight_mineral_bonus * (double)mineralBonus
+			+
+			conf.ai_production_build_weight_energy_bonus * (double)energyBonus
+		;
+		
+		// devalue deep ocean
+		
+		if (map_elevation(tile) < -1)
 		{
-			int actionsCount = 2;
-			int actions[] = {FORMER_FARM, FORMER_MINE};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
+			score += conf.ai_production_build_weight_deep;
 		}
-
-		// farm, solar
-
-		{
-			int actionsCount = 2;
-			int actions[] = {FORMER_FARM, FORMER_SOLAR};
-			bestWeightedYield = std::max(bestWeightedYield, getImprovedTileWeightedYield(tileInfo, actionsCount, actions, nutrientWeight, mineralWeight, energyWeight));
-		}
-
+		
 	}
 	
-	// add best weighted yield to score
-
-	score += bestWeightedYield;
-
-	// discourage base radius overlap
-
-	if (map_has_item(tileInfo->tile, TERRA_BASE_RADIUS))
-	{
-		score /= 2.0;
-	}
-
 	// return score
-
+	
 	return score;
-
+	
 }
 
-/*
-Searches for best land base location on all continents.
-*/
-Location findLandBaseBuildLocation(int colonyVehicleId)
+bool isValidBuildSite(MAP *tile, int factionId)
 {
-	VEH *colonyVehicle = &(Vehicles[colonyVehicleId]);
-
-    debug("findLandBaseBuildLocation - %s (%3d,%3d)\n", MFactions[colonyVehicle->faction_id].noun_faction, colonyVehicle->x, colonyVehicle->y);
-
-	// search best build location
-
-	Location buildLocation;
-	double maxScore = 0.0;
-
-	for (int mapTileIndex = 0; mapTileIndex < *map_area_tiles; mapTileIndex++)
-	{
-		Location location = getMapIndexLocation(mapTileIndex);
-		MAP* tile = getMapTile(mapTileIndex);
-		
-		// limit search area with 20 range
-		
-		if (map_range(colonyVehicle->x, colonyVehicle->y, location.x, location.y) > 20)
-			continue;
-		
-		// land
-		
-		if (!isLandRegion(tile->region))
-			continue;
-		
-		// available territory
-		
-		if (!(tile->owner == -1 || tile->owner == colonyVehicle->faction_id))
-			continue;
-		
-		// can build base
-		
-		if (!isValidBuildSite(colonyVehicle->faction_id, TRIAD_LAND, location.x, location.y))
-			continue;
-		
-		// not targetted by other colonies
-		
-		if (!isUnclaimedBuildSite(colonyVehicle->faction_id, location.x, location.y, colonyVehicleId))
-			continue;
-		
-		// calculate score
-		
-		double score = getBuildLocationScore(colonyVehicleId, location.x, location.y);
-		
-		if (score > maxScore)
-		{
-			buildLocation.set(location.x, location.y);
-			maxScore = score;
-		}
-
-	}
-
-	return buildLocation;
-
-}
-
-/*
-Searches for best ocean base location in same region.
-*/
-Location findOceanBaseBuildLocation(int colonyVehicleId)
-{
-	VEH *colonyVehicle = &(Vehicles[colonyVehicleId]);
-	MAP *colonyVehicleMapTile = getVehicleMapTile(colonyVehicleId);
-
-    debug("findOceanBaseBuildLocation - %s (%3d,%3d)\n", MFactions[colonyVehicle->faction_id].noun_faction, colonyVehicle->x, colonyVehicle->y);
-
-	// search best build location
-
-	Location buildLocation;
-	double maxScore = 0.0;
-
-	for (int mapTileIndex = 0; mapTileIndex < *map_area_tiles; mapTileIndex++)
-	{
-		Location location = getMapIndexLocation(mapTileIndex);
-		MAP* tile = getMapTile(mapTileIndex);
-		
-		// limit search area with 20 range
-		
-		if (map_range(colonyVehicle->x, colonyVehicle->y, location.x, location.y) > 20)
-			continue;
-		
-		// check location
-		
-		if
-		(
-			// same region
-			tile->region == colonyVehicleMapTile->region
-			&&
-			// unclaimed territory
-			(tile->owner == -1 || tile->owner == colonyVehicle->faction_id)
-			&&
-			// can build base
-			isValidBuildSite(colonyVehicle->faction_id, TRIAD_SEA, location.x, location.y)
-			&&
-			// only available site
-			isUnclaimedBuildSite(colonyVehicle->faction_id, location.x, location.y, colonyVehicleId)
-		)
-		{
-			double score = getBuildLocationScore(colonyVehicleId, location.x, location.y);
-
-			if (score > maxScore)
-			{
-				buildLocation.set(location.x, location.y);
-				maxScore = score;
-			}
-
-		}
-
-	}
-
-	return buildLocation;
-
-}
-
-/*
-Checks if base can be built in this location.
-*/
-bool isValidBuildSite(int factionId, int triad, int x, int y)
-{
-	MAP *tile = getMapTile(x, y);
-	
-	if (!tile)
-		return false;
-	
-	// no unmatching triad location
-	
-	if ((triad == TRIAD_LAND && is_ocean(tile)) || (triad == TRIAD_SEA && !is_ocean(tile)))
-		return false;
+	int x = getX(tile);
+	int y = getY(tile);
 	
 	// cannot build at volcano
 	
@@ -476,9 +640,9 @@ bool isValidBuildSite(int factionId, int triad, int x, int y)
 	if (map_has_item(tile, TERRA_FUNGUS) && !conf.ai_base_allowed_fungus_rocky)
 		return false;
 	
-	// cannot build in friend territory
+	// allowed territory
 	
-	if (tile->owner > 0 && tile->owner != factionId && !at_war(factionId, tile->owner))
+	if (!(tile->owner == -1 || tile->owner == factionId))
 		return false;
 	
 	// no bases closer than allowed spacing
@@ -491,89 +655,36 @@ bool isValidBuildSite(int factionId, int triad, int x, int y)
 	if (conf.base_nearby_limit >= 0 && nearby_items(x, y, conf.base_spacing, TERRA_BASE_IN_TILE) > conf.base_nearby_limit)
 		return false;
 	
+	// not occupied by unfrendly vehicles
+	
+	int otherVehicleId = veh_at(x, y);
+	
+	if (otherVehicleId >= 0)
+	{
+		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		
+		if (!(otherVehicle->faction_id == factionId || has_pact(otherVehicle->faction_id, factionId)))
+			return false;
+		
+	}
+	
 	return true;
 	
 }
 
-/*
-Checks whether given tile/area is not targeted by other colony.
-Given colony is excluded from check if set (>=0).
-*/
-bool isUnclaimedBuildSite(int factionId, int x, int y, int colonyVehicleId)
+bool isValidWorkSite(MAP *tile, int factionId)
 {
-	for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
-	{
-		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
-
-		// skip current vehicle
-
-		if (otherVehicleId == colonyVehicleId)
-			continue;
-
-		// only this faction
-
-		if (otherVehicle->faction_id != factionId)
-			continue;
-
-		// only colony
-
-		if (!isColonyVehicle(otherVehicleId))
-			continue;
-
-		// detect colony destination
-		
-		int otherVehicleDestinationX;
-		int otherVehicleDestinationY;
-
-		if (hasTask(otherVehicleId))
-		{
-			Location destination = getTask(otherVehicleId)->getDestination();
-			
-			otherVehicleDestinationX = destination.x;
-			otherVehicleDestinationY = destination.y;
-			
-		}
-		else
-		{
-			switch (otherVehicle->move_status)
-			{
-			case ORDER_NONE:
-				// destination is location
-				otherVehicleDestinationX = otherVehicle->x;
-				otherVehicleDestinationY = otherVehicle->y;
-				break;
-				
-			case ORDER_MOVE_TO:
-				// destination is waypont
-				otherVehicleDestinationX = otherVehicle->waypoint_1_x;
-				otherVehicleDestinationY = otherVehicle->waypoint_1_y;
-				break;
-				
-			default:
-				// no destination
-				continue;
-				
-			}
-
-		}
-		
-		// check build site is not touching someone's destination base radius
-
-		if (isTouchingBaseRadius(otherVehicleDestinationX, otherVehicleDestinationY, x, y))
-			return false;
-
-	}
-
+	// available territory
+	
+	if (!(tile->owner == -1 || tile->owner == factionId))
+		return false;
+	
+	// not in base radius
+	
+	if (map_has_item(tile, TERRA_BASE_RADIUS))
+		return false;
+	
 	return true;
-
-}
-
-/*
-Check if two base locations would be touching each other radius.
-*/
-bool isTouchingBaseRadius(int x1, int y1, int x2, int y2)
-{
-	return map_range(x1, y1, x2, y2) <= 3 && (abs(x2 - x1) < 6 && abs(y2 - y1) < 6);
 	
 }
 

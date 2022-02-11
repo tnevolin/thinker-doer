@@ -24,7 +24,7 @@ struct FactionInfo
 	double threatCoefficient;
 	int bestWeaponOffenseValue;
 	int bestArmorDefenseValue;
-	std::vector<Location> airbases;
+	std::vector<MAP *> airbases;
 };
 
 struct Threat
@@ -144,7 +144,9 @@ struct FactionGeography
 {
 	std::unordered_map<int, int> associations;
 	std::unordered_map<MAP *, int> coastalBaseOceanAssociations;
+	std::unordered_set<MAP *> oceanBaseTiles;
 	std::unordered_map<int, std::unordered_set<int>> connections;
+	std::unordered_set<int> reachableAssociations;
 	
 };
 	
@@ -164,8 +166,22 @@ struct Geography
 	}
 	
 };
+
+struct MapData
+{
+	int expansionRange = -1;
+	double qualityScore = 0.0;
+	double buildScore = 0.0;
+};
 	
-struct AIData
+struct Production
+{
+	double landColonyDemand;
+	std::unordered_map<int, double> seaColonyDemands;
+	
+};
+	
+struct Data
 {
 	FactionInfo factionInfos[8];
 	int bestWeaponOffenseValue;
@@ -173,9 +189,10 @@ struct AIData
 	
 	// geography
 	Geography geography;
+	MapData *mapData = nullptr;
 	
 	std::vector<int> baseIds;
-	std::unordered_map<MAP *, int> baseLocations;
+	std::unordered_map<MAP *, int> baseTiles;
 	std::unordered_set<int> presenceRegions;
 	std::unordered_map<int, std::unordered_set<int>> regionBaseIds;
 	std::map<int, std::vector<int>> regionBaseGroups;
@@ -212,13 +229,18 @@ struct AIData
 	std::unordered_map<int, Task> tasks;
 	int bestVehicleWeaponOffenseValue;
 	int bestVehicleArmorDefenseValue;
-	double bestLandBuildLocationPlacementScore;
-	double bestSeaBuildLocationPlacementScore;
+	double airColonyProductionPriority;
+	double landColonyProductionPriority;
+	std::unordered_map<int, double> seaColonyProductionPriorities;
+	Production production;
+	
+	void createMapArrays();
+	void deleteMapArrays();
 	
 	void clear()
 	{
 		baseIds.clear();
-		baseLocations.clear();
+		baseTiles.clear();
 		presenceRegions.clear();
 		regionBaseIds.clear();
 		regionBaseGroups.clear();
@@ -254,7 +276,7 @@ extern int wtpAIFactionId;
 
 extern int currentTurn;
 extern int aiFactionId;
-extern AIData data;
+extern Data aiData;
 
 int aiFactionUpkeep(const int factionId);
 void aiStrategy();
@@ -262,7 +284,7 @@ void analyzeGeography();
 void setSharedOceanRegions();
 void populateGlobalVariables();
 VEH *getVehicleByAIId(int aiId);
-Location getNearestPodLocation(int vehicleId);
+MAP *getNearestPod(int vehicleId);
 void designUnits();
 void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::vector<int> weaponIds, std::vector<int> armorIds, std::vector<int> abilitiesSets, int reactorId, int plan, char *name);
 void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
@@ -278,7 +300,7 @@ double evaluateCombatStrength(double offenseValue, double defenseValue);
 double evaluateOffenseStrength(double offenseValue);
 double evaluateDefenseStrength(double DefenseValue);
 bool isVehicleThreatenedByEnemyInField(int vehicleId);
-bool isDestinationReachable(int vehicleId, int x, int y, bool accountForSeaTransport);
+bool isDestinationReachable(int vehicleId, int x, int y);
 int getRangeToNearestFactionAirbase(int x, int y, int factionId);
 void populateBaseExposures();
 int getNearestEnemyBaseDistance(int baseId);
@@ -288,17 +310,23 @@ std::string getAbilitiesString(int unitType);
 bool isWithinAlienArtilleryRange(int vehicleId);
 bool isUseWtpAlgorithms(int factionId);
 int getCoastalBaseOceanAssociation(MAP *tile, int factionId);
+bool isOceanBaseTile(MAP *tile, int factionId);
 int getAssociation(MAP *tile, int factionId);
 int getAssociation(int region, int factionId);
 std::unordered_set<int> *getConnections(MAP *tile, int factionId);
 std::unordered_set<int> *getConnections(int region, int factionId);
 bool isSameAssociation(MAP *tile1, MAP *tile2, int factionId);
 bool isSameAssociation(int extendedRegion1, MAP *tile2, int factionId);
+bool isReachableAssociation(int association, int factionId);
 int getExtendedRegion(MAP *tile);
 bool isPolarRegion(MAP *tile);
 int getVehicleAssociation(int vehicleId);
 int getOceanAssociation(MAP *tile, int factionId);
+int getBaseOceanAssociation(int baseId);
+bool isOceanAssociationCoast(MAP *tile, int oceanAssociation, int factionId);
 bool isOceanAssociationCoast(int x, int y, int oceanAssociation, int factionId);
 int getMaxBaseSize(int factionId);
 std::unordered_set<int> getBaseOceanRegions(int baseId);
+int getNearestBaseRange(int mapIndex);
+int getNearestColonyRange(int mapIndex);
 

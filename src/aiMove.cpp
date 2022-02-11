@@ -13,27 +13,52 @@ void __cdecl modified_enemy_units_check(int factionId)
 	
 	if (isUseWtpAlgorithms(factionId))
 	{
+		clock_t s = clock();
+		clock_t s1;
+		
 		// should be same faction that had upkeep earlier this turn
 		
 		assert(factionId == aiFactionId);
 		
+		// create map arrays
+		
+		s1 = clock();
+		aiData.createMapArrays();
+		debug("(time) [WTP] aiData.createMapArrays: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
+		
 		// generate move strategy
 		
+		s1 = clock();
 		moveStrategy();
+		debug("(time) [WTP] moveStrategy: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 		
 		// compute production demands
 
+		s1 = clock();
 		aiProductionStrategy();
+		debug("(time) [WTP] aiProductionStrategy: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
 		// update base production
 		
+		s1 = clock();
 		setProduction();
+		debug("(time) [WTP] setProduction: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
+		
+		// delete map arrays
+		
+		s1 = clock();
+		aiData.deleteMapArrays();
+		debug("(time) [WTP] aiData.deleteMapArrays: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
+		
+		debug("(time) [WTP] modified_enemy_units_check: %6.3f\n", (double)(clock() - s) / (double)CLOCKS_PER_SEC);
 		
 	}
 	
 	// execute original code
 	
+	clock_t s = clock();
 	enemy_units_check(factionId);
+	debug("(time) [vanilla] enemy_units_check: %6.3f\n", (double)(clock() - s) / (double)CLOCKS_PER_SEC);
 	
 }
 
@@ -63,29 +88,169 @@ void moveStrategy()
 {
 	debug("moveStrategy - %s\n", MFactions[aiFactionId].noun_faction);
 	
+	clock_t s1;
+	
+	// update variables
+	
+	s1 = clock();
+	updateGlobalVariables();
+	debug("(time) [WTP] -updateGlobalVariables: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
+	
 	// generic
 	
-	moveAllStrategly();
+	s1 = clock();
+	moveAllStrategy();
+	debug("(time) [WTP] -moveAllStrategy: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 	
 	// combat
 
+	s1 = clock();
 	moveCombatStrategy();
+	debug("(time) [WTP] -moveCombatStrategy: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
 	// colony
 	
+	s1 = clock();
 	moveColonyStrategy();
+	debug("(time) [WTP] -moveColonyStrategy: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 	
 	// former
 
+	s1 = clock();
 	moveFormerStrategy();
+	debug("(time) [WTP] -moveFormerStrategy: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
 	// transport
 
+	s1 = clock();
 	moveTranportStrategy();
+	debug("(time) [WTP] -moveTranportStrategy: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
 }
 
-void moveAllStrategly()
+void updateGlobalVariables()
+{
+	// populate vehicles
+	
+	aiData.vehicleIds.clear();
+	aiData.combatVehicleIds.clear();
+	aiData.scoutVehicleIds.clear();
+	aiData.regionSurfaceCombatVehicleIds.clear();
+	aiData.outsideCombatVehicleIds.clear();
+	aiData.colonyVehicleIds.clear();
+	aiData.formerVehicleIds.clear();
+	
+	debug("populate vehicles - %s\n", MFactions[aiFactionId].noun_faction);
+	for (int id = 0; id < *total_num_vehicles; id++)
+	{
+		VEH *vehicle = &(Vehicles[id]);
+		MAP *vehicleTile = getVehicleMapTile(id);
+
+		// store all vehicle current id in pad_0 field
+
+		vehicle->pad_0 = id;
+
+		// further process only own vehicles
+
+		if (vehicle->faction_id != aiFactionId)
+			continue;
+		
+		debug("\t[%3d] (%3d,%3d) region = %3d\n", id, vehicle->x, vehicle->y, vehicleTile->region);
+		
+		// add vehicle
+		
+		aiData.vehicleIds.push_back(id);
+
+		// combat vehicles
+
+		if (isCombatVehicle(id))
+		{
+			// add vehicle to global list
+
+			aiData.combatVehicleIds.push_back(id);
+			
+			// scout and native
+			
+			if (isScoutVehicle(id) || isNativeVehicle(id))
+			{
+				aiData.scoutVehicleIds.push_back(id);
+			}
+
+			// add surface vehicle to region list
+			// except land unit in ocean
+			
+			if (vehicle->triad() != TRIAD_AIR && !(vehicle->triad() == TRIAD_LAND && isOceanRegion(vehicleTile->region)))
+			{
+				if (aiData.regionSurfaceCombatVehicleIds.count(vehicleTile->region) == 0)
+				{
+					aiData.regionSurfaceCombatVehicleIds[vehicleTile->region] = std::vector<int>();
+				}
+				aiData.regionSurfaceCombatVehicleIds[vehicleTile->region].push_back(id);
+				
+				// add scout to region list
+				
+				if (isScoutVehicle(id))
+				{
+					if (aiData.regionSurfaceScoutVehicleIds.count(vehicleTile->region) == 0)
+					{
+						aiData.regionSurfaceScoutVehicleIds[vehicleTile->region] = std::vector<int>();
+					}
+					aiData.regionSurfaceScoutVehicleIds[vehicleTile->region].push_back(id);
+				}
+				
+			}
+
+			// find if vehicle is at base
+
+			std::unordered_map<MAP *, int>::iterator baseTilesIterator = aiData.baseTiles.find(vehicleTile);
+
+			if (baseTilesIterator == aiData.baseTiles.end())
+			{
+				// add outside vehicle
+
+				aiData.outsideCombatVehicleIds.push_back(id);
+
+			}
+			else
+			{
+				// temporarily disable as I don't know what to do with it
+//				BaseStrategy *baseStrategy = &(aiData.baseStrategies[baseTilesIterator->second]);
+//
+//				// add combat vehicle to garrison
+//				
+//				if (isCombatVehicle(id))
+//				{
+//					baseStrategy->garrison.push_back(id);
+//				}
+//
+//				// add to native protection
+//
+//				double nativeProtection = calculateNativeDamageDefense(id) / 10.0;
+//
+//				if (vehicle_has_ability(vehicle, ABL_TRANCE))
+//				{
+//					nativeProtection *= (1 + (double)Rules->combat_bonus_trance_vs_psi / 100.0);
+//				}
+//
+//				baseStrategy->nativeProtection += nativeProtection;
+//
+			}
+
+		}
+		else if (isColonyVehicle(id))
+		{
+			aiData.colonyVehicleIds.push_back(id);
+		}
+		else if (isFormerVehicle(id))
+		{
+			aiData.formerVehicleIds.push_back(id);
+		}
+
+	}
+
+}
+
+void moveAllStrategy()
 {
 	// heal
 	
@@ -95,7 +260,7 @@ void moveAllStrategly()
 
 void healStrategy()
 {
-	for (int vehicleId : data.vehicleIds)
+	for (int vehicleId : aiData.vehicleIds)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
@@ -137,23 +302,21 @@ void healStrategy()
 			
 			// find nearest monolith
 			
-			Location nearestMonolithLocation = getNearestMonolithLocation(vehicle->x, vehicle->y, vehicle->triad());
+			MAP *nearestMonolith = getNearestMonolith(vehicle->x, vehicle->y, vehicle->triad());
 			
-			if (isValidLocation(nearestMonolithLocation) && map_range(vehicle->x, vehicle->y, nearestMonolithLocation.x, nearestMonolithLocation.y) <= (vehicle->triad() == TRIAD_SEA ? 10 : 5))
+			if (nearestMonolith != nullptr && map_range(vehicle->x, vehicle->y, getX(nearestMonolith), getY(nearestMonolith)) <= (vehicle->triad() == TRIAD_SEA ? 10 : 5))
 			{
-//				setMoveOrder(vehicleId, nearestMonolithLocation.x, nearestMonolithLocation.y, -1);
-				setTask(vehicleId, Task(MOVE, vehicleId, nearestMonolithLocation));
+				setTask(vehicleId, Task(MOVE, vehicleId, nearestMonolith));
 				continue;
 			}
 			
 			// find nearest base
 			
-			Location nearestBaseLocation = getNearestBaseLocation(vehicle->x, vehicle->y, vehicle->triad());
+			MAP *nearestBase = getNearestBase(vehicle->x, vehicle->y, vehicle->triad());
 			
-			if (isValidLocation(nearestBaseLocation) && map_range(vehicle->x, vehicle->y, nearestBaseLocation.x, nearestBaseLocation.y) <= (vehicle->triad() == TRIAD_SEA ? 10 : 5))
+			if (nearestBase != nullptr && map_range(vehicle->x, vehicle->y, getX(nearestBase), getY(nearestBase)) <= (vehicle->triad() == TRIAD_SEA ? 10 : 5))
 			{
-//				setMoveOrder(vehicleId, nearestBaseLocation.x, nearestBaseLocation.y, ORDER_SENTRY_BOARD);
-				setTask(vehicleId, Task(HOLD, vehicleId, nearestBaseLocation));
+				setTask(vehicleId, Task(HOLD, vehicleId, nearestBase));
 				continue;
 			}
 			
@@ -249,7 +412,7 @@ void setTask(int vehicleId, Task task)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
-	data.tasks.insert({vehicle->pad_0, task});
+	aiData.tasks.insert({vehicle->pad_0, task});
 	
 }
 
@@ -257,7 +420,7 @@ bool hasTask(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
-	return (data.tasks.count(vehicle->pad_0) != 0);
+	return (aiData.tasks.count(vehicle->pad_0) != 0);
 	
 }
 
@@ -267,13 +430,13 @@ Task *getTask(int vehicleId)
 	
 	Task *task;
 	
-	if (data.tasks.count(vehicle->pad_0) == 0)
+	if (aiData.tasks.count(vehicle->pad_0) == 0)
 	{
 		task = nullptr;
 	}
 	else
 	{
-		task = &(data.tasks.at(vehicle->pad_0));
+		task = &(aiData.tasks.at(vehicle->pad_0));
 	}
 	
 	return task;
@@ -358,23 +521,22 @@ void transitVehicle(int vehicleId, Task task)
 	
 	// get destination
 	
-	Location destination = task.getDestination();
+	MAP *destination = task.getDestination();
 	
-	if (!isValidLocation(destination))
+	if (destination == nullptr)
 	{
 		debug("\tinvalid destination\n");
 		return;
 	}
 	
-	// get destination tile
+	int x = getX(destination);
+	int y = getY(destination);
 	
-	MAP *destinationTile = getMapTile(destination);
-	
-	debug("\t->(%3d,%3d)\n", destination.x, destination.y);
+	debug("\t->(%3d,%3d)\n", x, y);
 	
 	// vehicle is at destination already
 	
-	if (vehicle->x == destination.x && vehicle->y == destination.y)
+	if (vehicle->x == x && vehicle->y == y)
 	{
 		debug("\tat destination\n");
 		setTask(vehicleId, task);
@@ -392,7 +554,7 @@ void transitVehicle(int vehicleId, Task task)
 	
 	// vehicle is on land same association
 	
-	if (isLandRegion(vehicleTile->region) && isLandRegion(destinationTile->region) && isSameAssociation(vehicleTile, destinationTile, vehicle->faction_id))
+	if (isLandRegion(vehicleTile->region) && isLandRegion(destination->region) && isSameAssociation(vehicleTile, destination, vehicle->faction_id))
 	{
 		debug("\tsame association\n");
 		setTask(vehicleId, task);
@@ -411,29 +573,35 @@ void transitVehicle(int vehicleId, Task task)
 		
 		// find unboard location
 		
-		Location unboardLocation = getSeaTransportUnboardLocation(seaTransportVehicleId, destination);
+		MAP *unboardLocation = getSeaTransportUnboardLocation(seaTransportVehicleId, destination);
 		
-		if (!isValidLocation(unboardLocation))
+		if (unboardLocation == nullptr)
 		{
 			debug("\tcannot find unboard location\n");
 			return;
 		}
 		
-		debug("\tunboardLocation=(%3d,%3d)\n", unboardLocation.x, unboardLocation.y);
+		int unboardLocationX = getX(unboardLocation);
+		int unboardLocationY = getY(unboardLocation);
+		
+		debug("\tunboardLocation=(%3d,%3d)\n", unboardLocationX, unboardLocationY);
 		
 		// find unload location
 		
-		Location unloadLocation = getSeaTransportUnloadLocation(seaTransportVehicleId, destination, unboardLocation);
+		MAP *unloadLocation = getSeaTransportUnloadLocation(seaTransportVehicleId, destination, unboardLocation);
 		
-		if (!isValidLocation(unloadLocation))
+		if (unloadLocation == nullptr)
 		{
 			debug("\tcannot find unload location\n");
 			return;
 		}
 		
-		debug("\tunloadLocation=(%3d,%3d)\n", unloadLocation.x, unloadLocation.y);
+		int unloadLocationX = getX(unloadLocation);
+		int unloadLocationY = getY(unloadLocation);
 		
-		if (vehicle->x == unloadLocation.x && vehicle->y == unloadLocation.y)
+		debug("\tunloadLocation=(%3d,%3d)\n", unloadLocationX, unloadLocationY);
+		
+		if (vehicle->x == unloadLocationX && vehicle->y == unloadLocationY)
 		{
 			debug("\tat unload location\n");
 			
@@ -465,7 +633,7 @@ void transitVehicle(int vehicleId, Task task)
 	
 	// get cross ocean association
 	
-	int crossOceanAssociation = getCrossOceanAssociation({vehicle->x, vehicle->y}, destination, vehicle->faction_id);
+	int crossOceanAssociation = getCrossOceanAssociation(getMapTile(vehicle->x, vehicle->y), destination, vehicle->faction_id);
 	
 	if (crossOceanAssociation == -1)
 	{
@@ -485,11 +653,11 @@ void transitVehicle(int vehicleId, Task task)
 		
 		// request a transport to be built
 		
-		std::unordered_map<int, int>::iterator seaTransportRequestIterator = data.seaTransportRequests.find(crossOceanAssociation);
+		std::unordered_map<int, int>::iterator seaTransportRequestIterator = aiData.seaTransportRequests.find(crossOceanAssociation);
 		
-		if (seaTransportRequestIterator == data.seaTransportRequests.end())
+		if (seaTransportRequestIterator == aiData.seaTransportRequests.end())
 		{
-			data.seaTransportRequests.insert({crossOceanAssociation, 1});
+			aiData.seaTransportRequests.insert({crossOceanAssociation, 1});
 		}
 		else
 		{
@@ -506,16 +674,16 @@ void transitVehicle(int vehicleId, Task task)
 	
 	// get load location
 	
-	Location availableSeaTransportLoadLocation = getSeaTransportLoadLocation(availableSeaTransportVehicleId, vehicleId);
+	MAP *availableSeaTransportLoadLocation = getSeaTransportLoadLocation(availableSeaTransportVehicleId, vehicleId);
 	
-	if (!isValidLocation(availableSeaTransportLoadLocation))
+	if (availableSeaTransportLoadLocation == nullptr)
 		return;
 	
 	// add boarding tasks
 	
 	debug("\tadd boarding tasks: [%3d]\n", availableSeaTransportVehicleId);
 	
-	setTask(vehicleId, Task(BOARD, vehicleId, {-1, -1}, availableSeaTransportVehicleId));
+	setTask(vehicleId, Task(BOARD, vehicleId, nullptr, availableSeaTransportVehicleId));
 	setTaskIfCloser(availableSeaTransportVehicleId, Task(LOAD, availableSeaTransportVehicleId, availableSeaTransportLoadLocation));
 	
 	return;

@@ -90,9 +90,9 @@ void considerHurryingProduction(int factionId)
 				
 				// special case combat unit in defenseDemand base
 				
-				if (isCombatUnit(item) && data.baseStrategies[baseId].defenseDemand > 0.0)
+				if (isCombatUnit(item) && aiData.baseStrategies[baseId].defenseDemand > 0.0)
 				{
-					weight = data.baseStrategies[baseId].defenseDemand;
+					weight = aiData.baseStrategies[baseId].defenseDemand;
 					defenseDemandBases.push_back({baseId, weight});
 					defenseDemandBasesWeightSum += weight;
 				}
