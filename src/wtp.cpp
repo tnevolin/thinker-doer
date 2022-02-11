@@ -2356,7 +2356,7 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
 				{
 					// transport disables ZoC rule
 
-					if (isVehicleTransport(vehicle))
+					if (isTransportVehicle(vehicle))
 					{
 						disableZOCRule = true;
 						break;
@@ -3421,7 +3421,7 @@ HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 	(
 		vehicle->triad() == TRIAD_AIR
 		&&
-		isVehicleTransport(vehicle)
+		isTransportVehicle(vehicle)
 		&&
 		!
 		(

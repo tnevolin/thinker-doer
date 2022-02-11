@@ -81,7 +81,7 @@ const double COMBAT_UNIT_CLASS_WEIGHTS[] =
 };
 
 void aiProductionStrategy();
-void evaluateGlobalLandColoniesDemand();
+void evaluateGlobalBaseDemand();
 //HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
 void setProduction();
 int aiSuggestBaseProduction(int baseId, int choice);
@@ -111,7 +111,7 @@ int findRegularDefenderUnit(int factionId);
 int findFastAttackerUnit(int factionId);
 int findScoutUnit(int factionId, int triad);
 int findColonyUnit(int factionId, int triad);
-int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus, double infantryTurnsToDestination);
+int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus);
 bool canBaseProduceColony(int baseId);
 int findFormerUnit(int factionId, int triad);
 std::vector<int> getRegionBases(int factionId, int region);

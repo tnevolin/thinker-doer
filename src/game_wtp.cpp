@@ -15,7 +15,7 @@ bool isOnMap(int x, int y)
 coordinates -> map index
 */
 
-int getMapIndex(int x, int y)
+int getMapIndexByCoordinates(int x, int y)
 {
 	if (!isOnMap(x, y))
 		return -1;
@@ -25,20 +25,10 @@ int getMapIndex(int x, int y)
 }
 
 /*
-location -> map index
-*/
-
-int getMapIndex(Location location)
-{
-	return getMapIndex(location.x, location.y);
-    
-}
-
-/*
 tile -> map index
 */
 
-int getMapIndex(MAP *tile)
+int getMapIndexByPointer(MAP *tile)
 {
 	if (tile == nullptr)
 		return -1;
@@ -80,35 +70,12 @@ map tile -> coordinates
 
 int getX(MAP *tile)
 {
-	return getX(getMapIndex(tile));
+	return getX(getMapIndexByPointer(tile));
 }
 
 int getY(MAP *tile)
 {
-	return getY(getMapIndex(tile));
-}
-
-/*
-map index -> location
-*/
-
-Location getLocation(int mapIndex)
-{
-	if (!(mapIndex >= 0 && mapIndex < *map_area_tiles))
-		return Location();
-	
-	return {getX(mapIndex), getY(mapIndex)};
-    
-}
-
-/*
-map tile -> location
-*/
-
-Location getLocation(MAP *tile)
-{
-	return getLocation(getMapIndex(tile));
-    
+	return getY(getMapIndexByPointer(tile));
 }
 
 /*
@@ -130,22 +97,147 @@ coordinates -> tile
 
 MAP *getMapTile(int x, int y)
 {
-	return getMapTile(getMapIndex(x, y));
-
-}
-
-/*
-location -> tile
-*/
-
-MAP *getMapTile(Location location)
-{
-	return getMapTile(location.x, location.y);
+	return getMapTile(getMapIndexByCoordinates(x, y));
 
 }
 
 // =======================================================
 // MAP conversions - end
+// =======================================================
+
+// =======================================================
+// iterating surrounding locations - end
+// =======================================================
+
+std::vector<MAP *> getBaseOffsetTiles(int x, int y, int offsetBegin, int offsetEnd)
+{
+	std::vector<MAP *> baseOffsetLocations;
+
+	for (int offset = offsetBegin; offset < offsetEnd; offset++)
+	{
+		MAP *baseOffsetLocation = getMapTile(wrap(x + BASE_TILE_OFFSETS[offset][0]), y + BASE_TILE_OFFSETS[offset][1]);
+
+		if (baseOffsetLocation == nullptr)
+			continue;
+
+		baseOffsetLocations.push_back(baseOffsetLocation);
+
+	}
+
+	return baseOffsetLocations;
+
+}
+
+std::vector<MAP *> getBaseOffsetTiles(MAP *tile, int offsetBegin, int offsetEnd)
+{
+	return getBaseOffsetTiles(getX(tile), getY(tile), offsetBegin, offsetEnd);
+}
+
+std::vector<MAP *> getBaseAdjacentTiles(int x, int y, bool includeCenter)
+{
+	return getBaseOffsetTiles(x, y, (includeCenter ? 0 : 1), BASE_OFFSET_COUNT_ADJACENT);
+}
+
+std::vector<MAP *> getBaseAdjacentTiles(MAP *tile, bool includeCenter)
+{
+	return getBaseAdjacentTiles(getX(tile), getY(tile), includeCenter);
+}
+
+std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool includeCenter)
+{
+	return getBaseOffsetTiles(x, y, (includeCenter ? 0 : 1), BASE_OFFSET_COUNT_RADIUS);
+}
+
+std::vector<MAP *> getBaseRadiusTiles(MAP *tile, bool includeCenter)
+{
+	return getBaseRadiusTiles(getX(tile), getY(tile), includeCenter);
+}
+
+std::vector<MAP *> getBaseRadiusAdjacentTiles(int x, int y, bool includeCenter)
+{
+	return getBaseOffsetTiles(x, y, (includeCenter ? 0 : 1), BASE_OFFSET_COUNT_RADIUS_ADJACENT);
+}
+
+std::vector<MAP *> getBaseRadiusAdjacentTiles(MAP *tile, bool includeCenter)
+{
+	return getBaseRadiusAdjacentTiles(getX(tile), getY(tile), includeCenter);
+}
+
+/*
+Returns tile equally ranged from given center.
+*/
+std::vector<MAP *> getEqualRangeTiles(int x, int y, int range)
+{
+	std::vector<MAP *> tiles;
+	
+	int dMax = 2 * range;
+	
+	for (int i = 0; i < dMax; i++)
+	{
+		MAP *tile0 = getMapTile(x - dMax + i, y + 0 - i);
+		if (tile0 != nullptr)
+		{
+			tiles.push_back(tile0);
+		}
+		
+		MAP *tile1 = getMapTile(x + 0 + i, y - dMax + i);
+		if (tile1 != nullptr)
+		{
+			tiles.push_back(tile1);
+		}
+		
+		MAP *tile2 = getMapTile(x + dMax - i, y + 0 + i);
+		if (tile2 != nullptr)
+		{
+			tiles.push_back(tile2);
+		}
+		
+		MAP *tile3 = getMapTile(x + 0 - i, y + dMax - i);
+		if (tile3 != nullptr)
+		{
+			tiles.push_back(tile3);
+		}
+		
+	}
+	
+	return tiles;
+	
+}
+
+std::vector<MAP *> getEqualRangeTiles(MAP *tile, int range)
+{
+	return getEqualRangeTiles(getX(tile), getY(tile), range);
+}
+
+/*
+Returns tiles withing given range from given center.
+*/
+std::vector<MAP *> getRangeTiles(int x, int y, int range, bool includeCenter)
+{
+	std::vector<MAP *> tiles;
+	
+	if (includeCenter)
+	{
+		tiles.push_back(getMapTile(x, y));
+	}
+	
+	for (int ringRange = 1; ringRange < range; ringRange++)
+	{
+		std::vector<MAP *> equalRangeTiles = getEqualRangeTiles(x, y, range);
+		tiles.insert(tiles.end(), equalRangeTiles.begin(), equalRangeTiles.end());
+	}
+	
+	return tiles;
+	
+}
+
+std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter)
+{
+	return getRangeTiles(getX(tile), getY(tile), range, includeCenter);
+}
+
+// =======================================================
+// iterating surrounding locations - end
 // =======================================================
 
 bool has_armor(int factionId, int armorId)
@@ -319,8 +411,170 @@ bool map_has_item(MAP *tile, unsigned int item) {
 Safe check for tile having landmark.
 NULL pointer returns false.
 */
-bool map_has_landmark(MAP *tile, int landmark) {
-	return (tile && (tile->landmarks & landmark));
+bool map_has_landmark(MAP *tile, int landmark)
+{
+	// null pointer
+	
+	if (tile == nullptr)
+		return false;
+	
+	// ladmark should be present
+	
+	if ((tile->landmarks & landmark) == 0)
+		return false;
+	
+	// high bit in art_ref_id should not be set
+	
+	if ((tile->art_ref_id & 0x80) != 0)
+		return false;
+	
+	// special conditions
+	
+	switch (landmark)
+	{
+	case LM_CRATER:
+		return (tile->art_ref_id < 9);
+		break;
+		
+	case LM_VOLCANO:
+		return (tile->art_ref_id < 9);
+		break;
+		
+	case LM_JUNGLE:
+		return (!is_ocean(tile));
+		break;
+		
+	case LM_URANIUM:
+		return true;
+		break;
+		
+	case LM_FRESH:
+		return (is_ocean(tile));
+		break;
+		
+	case LM_CANYON:
+		return true;
+		break;
+		
+	case LM_GEOTHERMAL:
+		return true;
+		break;
+		
+	case LM_RIDGE:
+		return true;
+		break;
+		
+	case LM_FOSSIL:
+		return (tile->art_ref_id < 6);
+		break;
+		
+	}
+	
+	return true;
+	
+}
+
+int getNutrientBonus(MAP *tile)
+{
+	if (tile == nullptr)
+		return 0;
+	
+	int x = getX(tile);
+	int y = getY(tile);
+	
+	int bonus = 0;
+	
+	// resource
+	
+	if (bonus_at(x, y) == 1)
+	{
+		bonus += *TERRA_BONUS_SQ_NUTRIENT;
+	}
+	
+	// ladmarks
+	
+	if
+	(
+		map_has_landmark(tile, LM_JUNGLE)
+		||
+		map_has_landmark(tile, LM_FRESH)
+	)
+	{
+		bonus += 1;
+	}
+	
+	return bonus;
+	
+}
+
+int getMineralBonus(MAP *tile)
+{
+	if (tile == nullptr)
+		return 0;
+	
+	int x = getX(tile);
+	int y = getY(tile);
+	
+	int bonus = 0;
+	
+	// resource
+	
+	if (bonus_at(x, y) == 2)
+	{
+		bonus += *TERRA_BONUS_SQ_MINERALS;
+	}
+	
+	// ladmarks
+	
+	if
+	(
+		map_has_landmark(tile, LM_CRATER)
+		||
+		map_has_landmark(tile, LM_VOLCANO)
+		||
+		map_has_landmark(tile, LM_CANYON)
+		||
+		map_has_landmark(tile, LM_FOSSIL)
+	)
+	{
+		bonus += 1;
+	}
+	
+	return bonus;
+	
+}
+
+int getEnergyBonus(MAP *tile)
+{
+	if (tile == nullptr)
+		return 0;
+	
+	int x = getX(tile);
+	int y = getY(tile);
+	
+	int bonus = 0;
+	
+	// resource
+	
+	if (bonus_at(x, y) == 3)
+	{
+		bonus += *TERRA_BONUS_SQ_NUTRIENT;
+	}
+	
+	// ladmarks
+	
+	if
+	(
+		map_has_landmark(tile, LM_JUNGLE)
+		||
+		map_has_landmark(tile, LM_FRESH)
+	)
+	{
+		bonus += 1;
+	}
+	
+	return bonus;
+	
 }
 
 /*
@@ -981,7 +1235,7 @@ bool isVehicleSupply(VEH *vehicle)
 	return (Units[vehicle->unit_id].weapon_type == WPN_SUPPLY_TRANSPORT);
 }
 
-bool isUnitColony(int id)
+bool isColonyUnit(int id)
 {
 	return (id >= 0 && Units[id].weapon_type == WPN_COLONY_MODULE);
 }
@@ -1010,7 +1264,7 @@ bool isFormerVehicle(VEH *vehicle)
 	return (Units[vehicle->unit_id].weapon_type == WPN_TERRAFORMING_UNIT);
 }
 
-bool isVehicleTransport(VEH *vehicle)
+bool isTransportVehicle(VEH *vehicle)
 {
 	return (Units[vehicle->unit_id].weapon_type == WPN_TROOP_TRANSPORT);
 }
@@ -1020,7 +1274,7 @@ bool isTransportUnit(int unitId)
 	return (Units[unitId].weapon_type == WPN_TROOP_TRANSPORT);
 }
 
-bool isVehicleTransport(int vehicleId)
+bool isTransportVehicle(int vehicleId)
 {
 	return (Units[Vehicles[vehicleId].unit_id].weapon_type == WPN_TROOP_TRANSPORT);
 }
@@ -1072,7 +1326,7 @@ std::set<int> getBaseConnectedRegions(int id)
 
 	if (!is_ocean(baseTile))
 	{
-		for (MAP *tile : getAdjacentTiles(base->x, base->y, false))
+		for (MAP *tile : getBaseAdjacentTiles(base->x, base->y, false))
 		{
 			// skip land tiles
 
@@ -1107,7 +1361,7 @@ std::set<int> getBaseConnectedOceanRegions(int baseId)
 	}
 	else
 	{
-		for (MAP *tile : getAdjacentTiles(base->x, base->y, false))
+		for (MAP *tile : getBaseAdjacentTiles(base->x, base->y, false))
 		{
 			if (!is_ocean(tile))
 				continue;
@@ -1346,87 +1600,6 @@ int estimateBaseProductionTurnsToComplete(int id)
 
 }
 
-std::vector<MAP *> getAdjacentTiles(int mapIndex, bool startWithCenter)
-{
-	return getAdjacentTiles(getX(mapIndex), getY(mapIndex), startWithCenter);
-}
-
-std::vector<MAP *> getAdjacentTiles(MAP *tile, bool startWithCenter)
-{
-	return getAdjacentTiles(getX(tile), getY(tile), startWithCenter);
-}
-
-/*
-Returns all valid adjacent map tiles around given point.
-if startFromCenter == true then also return central tile as first element
-*/
-std::vector<MAP *> getAdjacentTiles(int x, int y, bool startWithCenter)
-{
-	std::vector<MAP *> adjacentTiles;
-
-	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
-	{
-		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
-
-		if (tile == NULL)
-			continue;
-
-		adjacentTiles.push_back(tile);
-
-	}
-
-	return adjacentTiles;
-
-}
-
-/*
-Returns all valid adjacent map tile infos around given point.
-if startFromCenter == true then also return central tile as first element
-*/
-std::vector<MAP_INFO> getAdjacentTileInfos(int x, int y, bool startWithCenter)
-{
-	std::vector<MAP_INFO> adjacentTileInfos;
-
-	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < ADJACENT_TILE_OFFSET_COUNT; offsetIndex++)
-	{
-		int tileX = wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]);
-		int tileY = y + BASE_TILE_OFFSETS[offsetIndex][1];
-		MAP *tile = getMapTile(tileX, tileY);
-
-		if (tile == NULL)
-			continue;
-
-		adjacentTileInfos.push_back({tileX, tileY, tile});
-
-	}
-
-	return adjacentTileInfos;
-
-}
-
-/*
-Returns all valid base radius map tiles around given point.
-if startFromCenter == true then also return central tile as first element
-*/
-std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool startWithCenter)
-{
-	std::vector<MAP *> baseRadiusTiles;
-
-	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
-	{
-		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
-
-		if (tile == NULL)
-			continue;
-
-		baseRadiusTiles.push_back(tile);
-
-	}
-
-	return baseRadiusTiles;
-
-}
-
 /*
 Returns all valid base radius map tiles around base.
 if startFromCenter == true then also return central tile as first element
@@ -1440,38 +1613,13 @@ std::vector<MAP *> getBaseWorkableTiles(int baseId, bool startWithCenter)
 }
 
 /*
-Returns all valid base radius map tile infos around given point.
-if startFromCenter == true then also return central tile as first element
-*/
-std::vector<MAP_INFO> getBaseRadiusTileInfos(int x, int y, bool startWithCenter)
-{
-	std::vector<MAP_INFO> baseRadiusTileInfos;
-
-	for (int offsetIndex = (startWithCenter ? 0 : 1); offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
-	{
-		int tileX = wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]);
-		int tileY = y + BASE_TILE_OFFSETS[offsetIndex][1];
-		MAP *tile = getMapTile(tileX, tileY);
-
-		if (tile == NULL)
-			continue;
-
-		baseRadiusTileInfos.push_back({tileX, tileY, tile});
-
-	}
-
-	return baseRadiusTileInfos;
-
-}
-
-/*
 Returns all tiles within base radius belonging to friendly base radiuses.
 */
 int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y)
 {
 	int friendlyIntersectedBaseRadiusTileCount = 0;
 
-	for (int offsetIndex = 0; offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
+	for (int offsetIndex = 0; offsetIndex < BASE_OFFSET_COUNT_RADIUS; offsetIndex++)
 	{
 		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
 
@@ -1498,22 +1646,20 @@ int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y)
 {
 	int friendlyLandBorderedBaseRadiusTileCount = 0;
 	
-	for (MAP_INFO internalTileInfo : getBaseRadiusTileInfos(x, y, false))
+	for (MAP *internalTile : getBaseRadiusTiles(x, y, false))
 	{
-		int internalX = internalTileInfo.x;
-		int internalY = internalTileInfo.y;
-		MAP *internalTile = internalTileInfo.tile;
+		int internalX = getX(internalTile);
+		int internalY = getY(internalTile);
 		
 		// land
 		
 		if (is_ocean(internalTile))
 			continue;
 		
-		for (MAP_INFO externalTileInfo : getAdjacentTileInfos(internalX, internalY, false))
+		for (MAP *externalTile : getBaseAdjacentTiles(internalX, internalY, false))
 		{
-			int externalX = externalTileInfo.x;
-			int externalY = externalTileInfo.y;
-			MAP *externalTile = externalTileInfo.tile;
+			int externalX = getX(externalTile);
+			int externalY = getY(externalTile);
 			
 			// external
 			
@@ -1553,7 +1699,7 @@ std::vector<MAP *> getBaseWorkedTiles(int baseId)
 
 	std::vector<MAP *> baseWorkedTiles;
 
-	for (int offsetIndex = 1; offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
+	for (int offsetIndex = 1; offsetIndex < BASE_OFFSET_COUNT_RADIUS; offsetIndex++)
 	{
 		if (base->worked_tiles & (0x1 << offsetIndex))
 		{
@@ -1576,7 +1722,7 @@ std::vector<MAP *> getBaseWorkedTiles(BASE *base)
 {
 	std::vector<MAP *> baseWorkedTiles;
 
-	for (int offsetIndex = 1; offsetIndex < BASE_RADIUS_TILE_OFFSET_COUNT; offsetIndex++)
+	for (int offsetIndex = 1; offsetIndex < BASE_OFFSET_COUNT_RADIUS; offsetIndex++)
 	{
 		if (base->worked_tiles & (0x1 << offsetIndex))
 		{
@@ -1705,7 +1851,7 @@ bool isBaseBuildingColony(int baseId)
 	BASE *base = &(Bases[baseId]);
 	int item = base->queue_items[0];
 
-	return (item >= 0 && isUnitColony(item));
+	return (item >= 0 && isColonyUnit(item));
 
 }
 
@@ -1869,7 +2015,7 @@ bool isTileConnectedToRegion(int x, int y, int region)
 
 	if (!is_ocean(tile))
 	{
-		for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+		for (MAP *adjacentTile : getBaseAdjacentTiles(x, y, false))
 		{
 			if (is_ocean(adjacentTile) && adjacentTile->region == region)
 				return true;
@@ -2237,6 +2383,32 @@ int getAllowedPolice(int factionId)
 
 }
 
+/*
+Calculates number of police units in base.
+*/
+int getBasePolice(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	// get allowed police adjusted for Brood Pit
+	
+	int allowedPolice = getAllowedPolice(base->faction_id);
+	
+	if (has_facility(baseId, FAC_BROOD_PIT))
+	{
+		allowedPolice = std::min(3, allowedPolice + 2);
+	}
+	
+	// get base garrison
+	
+	int baseGarrisonSize = getBaseGarrison(baseId).size();
+	
+	// return minimal of above
+	
+	return std::min(allowedPolice, baseGarrisonSize);
+	
+}
+
 int getVehicleUnitPlan(int vehicleId)
 {
 	return (int)Units[vehicleId].unit_plan;
@@ -2291,7 +2463,7 @@ bool isBaseHasAccessToWater(int baseId)
 {
     BASE* base = &(Bases[baseId]);
 
-    for (MAP *tile : getAdjacentTiles(base->x, base->y, true))
+    for (MAP *tile : getBaseAdjacentTiles(base->x, base->y, true))
 	{
 		if (is_ocean(tile))
 			return true;
@@ -2328,10 +2500,8 @@ bool isExploredEdge(int factionId, int x, int y)
 	if (~tile->visibility & (0x1 << factionId))
 		return false;
 
-	for (MAP_INFO adjacentTileInfo : getAdjacentTileInfos(x, y, false))
+	for (MAP *adjacentTile : getBaseAdjacentTiles(x, y, false))
 	{
-		MAP *adjacentTile = adjacentTileInfo.tile;
-
 		// if at least one adjacent tile is not visible - we are at edge
 
 		if (~adjacentTile->visibility & (0x1 << factionId))
@@ -2340,35 +2510,6 @@ bool isExploredEdge(int factionId, int x, int y)
 	}
 
 	return false;
-
-}
-
-MAP_INFO getAdjacentOceanTileInfo(int x, int y)
-{
-	MAP_INFO adjacentOceanTileInfo;
-
-	for (int adjacentTileIndex = 1; adjacentTileIndex < ADJACENT_TILE_OFFSET_COUNT; adjacentTileIndex++)
-	{
-		int adjacentTileX = wrap(x + BASE_TILE_OFFSETS[adjacentTileIndex][0]);
-		int adjacentTileY = y + BASE_TILE_OFFSETS[adjacentTileIndex][1];
-		MAP *adjacentTile = getMapTile(adjacentTileX, adjacentTileY);
-
-		if (adjacentTile == NULL)
-			continue;
-
-		if (is_ocean(adjacentTile))
-		{
-			adjacentOceanTileInfo.x = adjacentTileX;
-			adjacentOceanTileInfo.y = adjacentTileY;
-			adjacentOceanTileInfo.tile = adjacentTile;
-
-			break;
-
-		}
-
-	}
-
-	return adjacentOceanTileInfo;
 
 }
 
@@ -2428,7 +2569,7 @@ std::unordered_set<int> getAdjacentOceanRegions(int x, int y)
 
 		// iterate adjacent tiles
 
-		for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+		for (MAP *adjacentTile : getBaseAdjacentTiles(x, y, false))
 		{
 			debug("\t\tadjacentTile\n");
 
@@ -2611,63 +2752,16 @@ void setTerraformingAction(int id, int action)
 
 }
 
-double getImprovedTileWeightedYield(MAP_INFO *tileInfo, int terraformingActionsCount, int terraformingActions[], double nutrientWeight, double mineralWeight, double energyWeight)
+void getMapState(MAP *tile, MAP_STATE *mapState)
 {
-	int x = tileInfo->x;
-	int y = tileInfo->y;
-
-	// populate current map states
-
-	MAP_STATE currentMapState;
-
-	getMapState(tileInfo, &currentMapState);
-
-	// populate improved map state
-
-	MAP_STATE improvedMapState;
-
-	copyMapState(&improvedMapState, &currentMapState);
-
-	generateTerraformingChange(&improvedMapState, FORMER_REMOVE_FUNGUS);
-	for (int i = 0; i < terraformingActionsCount; i++)
-	{
-		generateTerraformingChange(&improvedMapState, terraformingActions[i]);
-	}
-
-	// apply changes
-
-	setMapState(tileInfo, &improvedMapState);
-
-	// gather improved yield
-
-	int nutrientYield = mod_nutrient_yield(0, -1, x, y, 0);
-	int mineralYield = mod_mineral_yield(0, -1, x, y, 0);
-	int energyYield = mod_energy_yield(0, -1, x, y, 0);
-
-	// restore original state
-
-	setMapState(tileInfo, &currentMapState);
-
-	// return weighted yield
-
-	return nutrientWeight * (double)nutrientYield + mineralWeight * (double)mineralYield + energyWeight * (double)energyYield;
-
-}
-
-void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState)
-{
-	MAP *tile = mapInfo->tile;
-
 	mapState->climate = tile->climate;
 	mapState->rocks = tile->val3;
 	mapState->items = tile->items;
 
 }
 
-void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState)
+void setMapState(MAP *tile, MAP_STATE *mapState)
 {
-	MAP *tile = mapInfo->tile;
-
 	tile->climate = mapState->climate;
 	tile->val3 = mapState->rocks;
 	tile->items = mapState->items;
@@ -2805,7 +2899,7 @@ bool isCoast(int x, int y)
 	if (is_ocean(tile))
 		return false;
 
-	for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+	for (MAP *adjacentTile : getBaseAdjacentTiles(x, y, false))
 	{
 		if (is_ocean(adjacentTile))
 			return true;
@@ -2822,7 +2916,7 @@ bool isOceanRegionCoast(int x, int y, int oceanRegion)
 	if (is_ocean(tile))
 		return false;
 
-	for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+	for (MAP *adjacentTile : getBaseAdjacentTiles(x, y, false))
 	{
 		if (is_ocean(adjacentTile) && adjacentTile->region == oceanRegion)
 			return true;
@@ -2875,12 +2969,12 @@ bool isVehicleAtLocation(int vehicleId, int x, int y)
 
 }
 
-bool isVehicleAtLocation(int vehicleId, Location location)
+bool isVehicleAtLocation(int vehicleId, MAP *tile)
 {
-	return isVehicleAtLocation(vehicleId, location.x, location.y);
+	return isVehicleAtLocation(vehicleId, getX(tile), getY(tile));
 }
 
-std::vector<int> getFactionLocationVehicleIds(int factionId, Location location)
+std::vector<int> getFactionLocationVehicleIds(int factionId, MAP *tile)
 {
 	std::vector<int> vehicleIds;
 
@@ -2892,7 +2986,7 @@ std::vector<int> getFactionLocationVehicleIds(int factionId, Location location)
 		(
 			vehicle->faction_id == factionId
 			&&
-			isVehicleAtLocation(vehicleId, location)
+			isVehicleAtLocation(vehicleId, tile)
 		)
 		{
 			vehicleIds.push_back(vehicleId);
@@ -2902,32 +2996,6 @@ std::vector<int> getFactionLocationVehicleIds(int factionId, Location location)
 
 	return vehicleIds;
 
-}
-
-/*
-Checks if given location is adjacent to given region.
-*/
-Location getAdjacentRegionLocation(int x, int y, int region)
-{
-	Location location;
-
-	for (MAP *tile : getAdjacentTiles(x, y, false))
-	{
-		if (tile->region == region)
-		{
-			location.set(x, y);
-			break;
-		}
-
-	}
-
-	return location;
-
-}
-
-bool isValidLocation(Location location)
-{
-	return (location.x >= 0 && location.x < *map_axis_x && location.y >= 0 && location.y < *map_axis_y);
 }
 
 /*
@@ -2951,34 +3019,6 @@ void hurryProduction(BASE* base, int minerals, int cost)
     faction->energy_credits -= cost;
     base->status_flags |= BASE_HURRY_PRODUCTION;
     
-}
-
-Location getMapIndexLocation(int mapIndex)
-{
-	return
-	{
-		(mapIndex % (*map_half_x)) * 2 + (mapIndex / (*map_half_x) % 2),
-		mapIndex / (*map_half_x)
-	};
-	
-}
-
-int getLocationMapIndex(int x, int y)
-{
-    if (x >= 0 && y >= 0 && x < *map_axis_x && y < *map_axis_y && !((x + y)&1))
-	{
-        return x / 2 + (*map_half_x) * y;
-    }
-	else
-	{
-        return -1;
-    }
-	
-}
-
-int getLocationMapIndex(Location location)
-{
-	return getLocationMapIndex(location.x, location. y);
 }
 
 bool isLandVehicleOnSeaTransport(int vehicleId)
@@ -3028,9 +3068,9 @@ int getLandVehicleSeaTransportVehicleId(int vehicleId)
 		
 }
 
-int setMoveTo(int vehicleId, Location location)
+int setMoveTo(int vehicleId, MAP *tile)
 {
-	return setMoveTo(vehicleId, location.x, location.y);
+	return setMoveTo(vehicleId, getX(tile), getY(tile));
 }
 	
 int setMoveTo(int vehicleId, int x, int y)
@@ -3082,13 +3122,16 @@ bool isScoutVehicle(int vehicleId)
 /*
 Checks if location is targetted by any vehicle.
 */
-bool isTargettedLocation(Location location)
+bool isTargettedLocation(MAP *tile)
 {
+	int x = getX(tile);
+	int y = getY(tile);
+	
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
 		
-		if (vehicle->move_status == ORDER_MOVE_TO && vehicle->x == location.x && vehicle->y == location.y)
+		if (vehicle->move_status == ORDER_MOVE_TO && vehicle->x == x && vehicle->y == y)
 			return true;
 		
 	}
@@ -3100,8 +3143,11 @@ bool isTargettedLocation(Location location)
 /*
 Checks if location is targetted by faction vehicle.
 */
-bool isFactionTargettedLocation(Location location, int factionId)
+bool isFactionTargettedLocation(MAP *tile, int factionId)
 {
+	int x = getX(tile);
+	int y = getY(tile);
+	
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
@@ -3111,7 +3157,7 @@ bool isFactionTargettedLocation(Location location, int factionId)
 		if (vehicle->faction_id != factionId)
 			continue;
 		
-		if (vehicle->move_status == ORDER_MOVE_TO && vehicle->x == location.x && vehicle->y == location.y)
+		if (vehicle->move_status == ORDER_MOVE_TO && vehicle->x == x && vehicle->y == y)
 			return true;
 		
 	}
@@ -3372,41 +3418,17 @@ bool isWithinFriendlySensorRange(int factionId, int x, int y)
 	
 }
 
-std::vector<Location> getRegionPodLocations(int region)
-{
-	std::vector<Location> regionPodLocations;
-	
-	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
-	{
-		Location location = getMapIndexLocation(mapIndex);
-		MAP *tile = getMapTile(mapIndex);
-		
-		if (tile->region != region)
-			continue;
-		
-		if (goody_at(location.x, location.y) != 0)
-		{
-			regionPodLocations.push_back(location);
-		}
-		
-	}
-	
-	return regionPodLocations;
-	
-}
-
 int getRegionPodCount(int x, int y, int range, int region)
 {
 	int regionPodCount = 0;
 	
 	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
-		Location location = getMapIndexLocation(mapIndex);
 		MAP *tile = getMapTile(mapIndex);
 		
 		// within range
 		
-		if (map_range(x, y, location.x, location.y) > range)
+		if (map_range(x, y, getX(tile), getY(tile)) > range)
 			continue;
 		
 		// within region if given
@@ -3416,7 +3438,7 @@ int getRegionPodCount(int x, int y, int range, int region)
 		
 		// count pods
 		
-		if (goody_at(location.x, location.y) != 0)
+		if (goody_at(getX(tile), getY(tile)) != 0)
 		{
 			regionPodCount++;
 		}
@@ -3427,9 +3449,9 @@ int getRegionPodCount(int x, int y, int range, int region)
 	
 }
 
-Location getNearbyItemLocation(int x, int y, int range, int item)
+MAP *getNearbyItemLocation(int x, int y, int range, int item)
 {
-	Location nearbyItemLocation;
+	MAP *nearbyItemLocation = nullptr;
 	
 	for (int dx = -(2 * range); dx <= (2 * range); dx++)
 	{
@@ -3444,11 +3466,12 @@ Location getNearbyItemLocation(int x, int y, int range, int item)
 			
 			if (map_has_item(tile, item))
 			{
-				nearbyItemLocation.set(tileX, tileY);
+				nearbyItemLocation = getMapTile(tileX, tileY);
 				return nearbyItemLocation;
 			}
 			
 		}
+		
 	}
 	
 	return nearbyItemLocation;
@@ -3826,7 +3849,7 @@ Checks if next to region
 */
 bool isNextToRegion(int x, int y, int region)
 {
-	for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+	for (MAP *adjacentTile : getBaseAdjacentTiles(x, y, false))
 	{
 		if (adjacentTile->region == region)
 			return true;
@@ -3861,9 +3884,9 @@ int countPodsInBaseRadius(int x, int y)
 {
 	int podCount = 0;
 	
-	for (MAP_INFO tileInfo : getBaseRadiusTileInfos(x, y, true))
+	for (MAP *tile : getBaseRadiusTiles(x, y, true))
 	{
-		if ((goody_at(tileInfo.x, tileInfo.y) != 0))
+		if ((goody_at(getX(tile), getY(tile)) != 0))
 		{
 			podCount++;
 		}
@@ -3871,12 +3894,6 @@ int countPodsInBaseRadius(int x, int y)
 	
 	return podCount;
 	
-}
-
-Location getTileLocation(MAP *tile)
-{
-	int tileIndex = ((int)tile - (int)(*MapPtr)) / 0x2C;
-	return getMapIndexLocation(tileIndex);
 }
 
 /*
@@ -3896,16 +3913,14 @@ bool isZoc(int factionId, int x, int y)
 	
 	// search for unfriendly unit in adjacent tiles
 	
-	for (MAP *adjacentTile : getAdjacentTiles(x, y, false))
+	for (MAP *adjacentTile : getBaseAdjacentTiles(x, y, false))
 	{
 		// vehicle on ocean does not excert ZOC
 		
 		if (is_ocean(adjacentTile))
 			continue;
 		
-		Location adjacentLocation = getTileLocation(tile);
-		
-		int adjacentTileOwner = veh_who(adjacentLocation.x, adjacentLocation.y);
+		int adjacentTileOwner = veh_who(getX(adjacentTile), getY(adjacentTile));
 		
 		if (adjacentTileOwner != -1 && adjacentTileOwner != factionId && !has_pact(factionId, adjacentTileOwner))
 			return true;
@@ -4030,14 +4045,15 @@ double getAlienMoraleModifier()
 /*
 Finds nearest land location owned by faction.
 */
-Location getNearestLandTerritory(int x, int y, int factionId)
+MAP *getNearestLandTerritory(int x, int y, int factionId)
 {
-	Location nearestTerritory;
+	MAP *nearestTerritory = nullptr;
 	int minRange = INT_MAX;
 	
 	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
-		Location spot = getLocation(mapIndex);
+		int mapX = getX(mapIndex);
+		int mapY = getY(mapIndex);
 		MAP *tile = getMapTile(mapIndex);
 		
 		// land
@@ -4052,13 +4068,13 @@ Location getNearestLandTerritory(int x, int y, int factionId)
 		
 		// get range
 		
-		int range = map_range(x, y, spot.x, spot.y);
+		int range = map_range(x, y, mapX, mapY);
 		
 		// update best spot
 		
 		if (range < minRange)
 		{
-			nearestTerritory.set(spot);
+			nearestTerritory = tile;
 			minRange = range;
 		}
 		
@@ -4084,6 +4100,38 @@ int getRangeToNearestFactionBase(int x, int y, int factionId)
 		// calculate range
 		
 		int range = map_range(x, y, base->x, base->y);
+		
+		// update min range
+		
+		minRange = std::min(minRange, range);
+		
+	}
+	
+	return minRange;
+	
+}
+
+int getRangeToNearestFactionColony(int x, int y, int factionId)
+{
+	int minRange = INT_MAX;
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// faction vehicle
+		
+		if (vehicle->faction_id != factionId)
+			continue;
+		
+		// colony
+		
+		if (!isColonyVehicle(vehicleId))
+			continue;
+		
+		// calculate range
+		
+		int range = map_range(x, y, vehicle->x, vehicle->y);
 		
 		// update min range
 		

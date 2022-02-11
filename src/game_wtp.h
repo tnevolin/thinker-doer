@@ -6,79 +6,6 @@
 #include <set>
 #include "terranx_types.h"
 
-struct Location
-{
-	int x;
-	int y;
-
-	Location()
-	{
-		this->x = -1;
-		this->y = -1;
-	}
-
-	Location(int newX, int newY)
-	{
-		this->x = newX;
-		this->y = newY;
-	}
-
-	Location(const Location &location)
-	{
-		this->x = location.x;
-		this->y = location.y;
-	}
-
-	void set(int newX, int newY)
-	{
-		this->x = newX;
-		this->y = newY;
-	}
-
-	void set(Location newLocation)
-	{
-		this->x = newLocation.x;
-		this->y = newLocation.y;
-	}
-	
-	bool operator ==(const Location &location) const
-	{
-		return this->x == location.x && this->y == location.y;
-	}
-
-};
-
-namespace std
-{
-	template <>
-		class hash<Location>
-		{
-			public:
-				size_t operator()(const Location &location) const
-				{
-					return std::hash<int>()(location.x) ^ std::hash<int>()(location.y);
-				}
-		
-		};
-}
-
-struct MAP_INFO
-{
-	int x;
-	int y;
-	MAP *tile;
-
-	MAP_INFO() : tile(NULL) {}
-
-	MAP_INFO(int argument_x, int argument_y, MAP *argument_tile)
-	{
-		this->x = argument_x;
-		this->y = argument_y;
-		this->tile = argument_tile;
-	}
-
-};
-
 struct MAP_STATE
 {
     byte climate;
@@ -86,17 +13,20 @@ struct MAP_STATE
     int items;
 };
 
-/*
-This array is used for both adjacent tiles and base radius tiles.
-*/
-int const ADJACENT_TILE_OFFSET_COUNT = 9;
-int const BASE_RADIUS_TILE_OFFSET_COUNT = 21;
-int const BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT = 37;
-int const BASE_TILE_OFFSETS[BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT][2] =
+// =======================================================
+// iterating surrounding locations structures
+// =======================================================
+
+int const BASE_OFFSET_COUNT_CENTER = 1;
+int const BASE_OFFSET_COUNT_ADJACENT = 9;
+int const BASE_OFFSET_COUNT_RADIUS = 21;
+int const BASE_OFFSET_COUNT_RADIUS_ADJACENT = 37;
+
+int const BASE_TILE_OFFSETS[BASE_OFFSET_COUNT_RADIUS_ADJACENT][2] =
 {
 	// center
 	{+0,+0},
-	// adjacent tiles
+	// adjacent
 	{+1,-1},
 	{+2,+0},
 	{+1,+1},
@@ -105,7 +35,7 @@ int const BASE_TILE_OFFSETS[BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT][2] =
 	{-2,+0},
 	{-1,-1},
 	{+0,-2},
-	// base radius outer tiles
+	// base radius outer
 	{+2,-2},
 	{+2,+2},
 	{-2,+2},
@@ -118,7 +48,7 @@ int const BASE_TILE_OFFSETS[BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT][2] =
 	{-3,+1},
 	{-3,-1},
 	{-1,-3},
-	// base radius bordered tiles
+	// base radius adjacent
 	{+3,-3},
 	{+3,+3},
 	{-3,+3},
@@ -137,6 +67,10 @@ int const BASE_TILE_OFFSETS[BASE_RADIUS_BORDERED_TILE_OFFSET_COUNT][2] =
 	{-2,-4},
 };
 
+// =======================================================
+// iterating surrounding locations structures - end
+// =======================================================
+
 struct VehicleFilter
 {
 	int factionId = -1;
@@ -149,21 +83,39 @@ struct VehicleFilter
 // =======================================================
 
 bool isOnMap(int x, int y);
-int getMapIndex(int x, int y);
-int getMapIndex(Location location);
-int getMapIndex(MAP *tile);
+int getMapIndexByCoordinates(int x, int y);
+int getMapIndexByPointer(MAP *tile);
 int getX(int mapIndex);
 int getY(int mapIndex);
 int getX(MAP *tile);
 int getY(MAP *tile);
-Location getLocation(int mapIndex);
-Location getLocation(MAP *tile);
 MAP *getMapTile(int mapIndex);
 MAP *getMapTile(int x, int y);
-MAP *getMapTile(Location location);
 
 // =======================================================
 // MAP conversions - end
+// =======================================================
+
+// =======================================================
+// iterating surrounding locations
+// =======================================================
+
+std::vector<MAP *> getBaseOffsetTiles(int x, int y, int offsetBegin, int offsetEnd);
+std::vector<MAP *> getBaseOffsetTiles(MAP *tile, int offsetBegin, int offsetEnd);
+std::vector<MAP *> getBaseAdjacentTiles(int x, int y, bool includeCenter);
+std::vector<MAP *> getBaseAdjacentTiles(MAP *tile, bool includeCenter);
+std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool includeCenter);
+std::vector<MAP *> getBaseRadiusTiles(MAP *tile, bool includeCenter);
+std::vector<MAP *> getBaseRadiusAdjacentTiles(int x, int y, bool includeCenter);
+std::vector<MAP *> getBaseRadiusAdjacentTiles(MAP *tile, bool includeCenter);
+
+std::vector<MAP *> getEqualRangeTiles(int x, int y, int range);
+std::vector<MAP *> getEqualRangeTiles(MAP *tile, int range);
+std::vector<MAP *> getRangeTiles(int x, int y, int range, bool includeCenter);
+std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter);
+
+// =======================================================
+// iterating surrounding locations - end
 // =======================================================
 
 bool has_armor(int factionId, int armorId);
@@ -177,6 +129,9 @@ int map_rockiness(MAP *tile);
 bool map_base(MAP *tile);
 bool map_has_item(MAP *tile, unsigned int item);
 bool map_has_landmark(MAP *tile, int landmark);
+int getNutrientBonus(MAP *tile);
+int getMineralBonus(MAP *tile);
+int getEnergyBonus(MAP *tile);
 int veh_speed_without_roads(int id);
 int unit_chassis_speed(int id);
 int veh_chassis_speed(int id);
@@ -221,15 +176,15 @@ MAP *getBaseMapTile(int baseId);
 MAP *getVehicleMapTile(int vehicleId);
 bool isImprovedTile(int x, int y);
 bool isVehicleSupply(VEH *vehicle);
-bool isUnitColony(int id);
+bool isColonyUnit(int id);
 bool isVehicleArtifact(int id);
 bool isColonyVehicle(int id);
 bool isUnitFormer(int unitId);
 bool isFormerVehicle(int vehicleId);
 bool isFormerVehicle(VEH *vehicle);
-bool isVehicleTransport(VEH *vehicle);
+bool isTransportVehicle(VEH *vehicle);
 bool isTransportUnit(int unitId);
-bool isVehicleTransport(int vehicleId);
+bool isTransportVehicle(int vehicleId);
 bool isSeaTransportVehicle(int vehicleId);
 bool isVehicleProbe(VEH *vehicle);
 bool isVehicleIdle(int vehicleId);
@@ -248,13 +203,7 @@ int getUnitDefenseValue(int id);
 int getVehicleOffenseValue(int id);
 int getVehicleDefenseValue(int id);
 int estimateBaseProductionTurnsToComplete(int id);
-std::vector<MAP *> getAdjacentTiles(int mapIndex, bool startWithCenter);
-std::vector<MAP *> getAdjacentTiles(MAP *tile, bool startWithCenter);
-std::vector<MAP *> getAdjacentTiles(int x, int y, bool startWithCenter);
-std::vector<MAP_INFO> getAdjacentTileInfos(int x, int y, bool startWithCenter);
-std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool startWithCenter);
 std::vector<MAP *> getBaseWorkableTiles(int baseId, bool startWithCenter);
-std::vector<MAP_INFO> getBaseRadiusTileInfos(int x, int y, bool startWithCenter);
 int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y);
 int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y);
 std::vector<MAP *> getBaseWorkedTiles(int baseId);
@@ -280,13 +229,13 @@ double getFactionFanaticBonusMultiplier(int factionId);
 double getVehicleBaseNativeProtectionPotential(int vehicleId);
 double getVehicleBaseNativeProtectionEfficiency(int vehicleId);
 int getAllowedPolice(int factionId);
+int getBasePolice(int baseId);
 int getVehicleUnitPlan(int vehicleId);
 int getBasePoliceUnitCount(int baseId);
 double getBaseNativeProtection(int baseId);
 bool isBaseHasAccessToWater(int baseId);
 bool isBaseCanBuildShips(int baseId);
 bool isExploredEdge(int factionId, int x, int y);
-MAP_INFO getAdjacentOceanTileInfo(int x, int y);
 bool isVehicleExploring(int vehicleId);
 bool isVehicleCanHealAtThisLocation(int vehicleId);
 std::unordered_set<int> getAdjacentOceanRegions(int x, int y);
@@ -297,9 +246,8 @@ void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
 int getRemainingMinerals(int baseId);
 std::vector<int> getStackedVehicleIds(int vehicleId);
 void setTerraformingAction(int vehicleId, int action);
-double getImprovedTileWeightedYield(MAP_INFO *tileInfo, int terraformingActionsCount, int terraformingActions[], double nutrientWeight, double mineralWeight, double energyWeight);
-void getMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
-void setMapState(MAP_INFO *mapInfo, MAP_STATE *mapState);
+void getMapState(MAP *tile, MAP_STATE *mapState);
+void setMapState(MAP *tile, MAP_STATE *mapState);
 void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState);
 void generateTerraformingChange(MAP_STATE *mapState, int action);
 HOOK_API int mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
@@ -310,26 +258,19 @@ bool isOceanRegionCoast(int x, int y, int oceanRegion);
 std::vector<int> getLoadedVehicleIds(int vehicleId);
 bool is_ocean_deep(MAP* sq);
 bool isVehicleAtLocation(int vehicleId, int x, int y);
-bool isVehicleAtLocation(int vehicleId, Location location);
-std::vector<int> getFactionLocationVehicleIds(int factionId, Location location);
-Location getAdjacentRegionLocation(int x, int y, int region);
-bool isValidLocation(Location location);
+bool isVehicleAtLocation(int vehicleId, MAP *tile);
+std::vector<int> getFactionLocationVehicleIds(int factionId, MAP *tile);
 void hurryProduction(BASE* base, int minerals, int cost);
-MAP* getMapTile(int mapTileIndex);
-int getMapIndex(MAP *tile);
-Location getMapIndexLocation(int mapIndex);
-int getLocationMapIndex(Location location);
-int getLocationMapIndex(int x, int y);
 bool isLandVehicleOnSeaTransport(int vehicleId);
 int getLandVehicleSeaTransportVehicleId(int vehicleId);
-int setMoveTo(int vehicleId, Location location);
+int setMoveTo(int vehicleId, MAP *tile);
 int setMoveTo(int vehicleId, int x, int y);
 bool isFriendlyTerritory(int factionId, MAP* tile);
 bool isVehicleHasAbility(int vehicleId, int abilityId);
 bool isScoutUnit(int unitId);
 bool isScoutVehicle(int vehicleId);
-bool isTargettedLocation(Location location);
-bool isFactionTargettedLocation(Location location, int factionId);
+bool isTargettedLocation(MAP *tile);
+bool isFactionTargettedLocation(MAP *tile, int factionId);
 double getNativePsiAttackStrength(int triad);
 double getMoraleModifier(int morale);
 int getFactionSEMoraleBonus(int factionId);
@@ -338,9 +279,8 @@ int getNewVehicleMorale(int unitId, int baseId, bool defendAtBase);
 double getVehicleMoraleModifier(int vehicleId, bool defendAtBase);
 double getBasePsiDefenseMultiplier();
 bool isWithinFriendlySensorRange(int factionId, int x, int y);
-std::vector<Location> getRegionPodLocations(int region);
 int getRegionPodCount(int x, int y, int range, int region);
-Location getNearbyItemLocation(int x, int y, int range, int item);
+MAP *getNearbyItemLocation(int x, int y, int range, int item);
 bool isVehicleHealing(int vehicleId);
 bool isVehicleInRegion(int vehicleId, int region);
 bool isProbeVehicle(int vehicleId);
@@ -365,7 +305,6 @@ bool isNextToRegion(int x, int y, int region);
 int getSeaTransportInStack(int vehicleId);
 bool isSeaTransportInStack(int vehicleId);
 int countPodsInBaseRadius(int x, int y);
-Location getTileLocation(MAP *tile);
 bool isZoc(int factionId, int x, int y);
 double getBattleOdds(int attackerVehicleId, int defenderVehicleId);
 int getUnitWeaponOffenseValue(int unitId);
@@ -375,6 +314,7 @@ int getVehicleArmorDefenseValue(int vehicleId);
 bool factionHasSpecial(int factionId, int special);
 bool factionHasBonus(int factionId, int bonusId);
 double getAlienMoraleModifier();
-Location getNearestLandTerritory(int x, int y, int factionId);
+MAP *getNearestLandTerritory(int x, int y, int factionId);
 int getRangeToNearestFactionBase(int x, int y, int factionId);
+int getRangeToNearestFactionColony(int x, int y, int factionId);
 

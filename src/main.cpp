@@ -794,6 +794,38 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_transport_priority = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_build_weight_nutrient_bonus"))
+    {
+        cf->ai_production_build_weight_nutrient_bonus = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_build_weight_mineral_bonus"))
+    {
+        cf->ai_production_build_weight_mineral_bonus = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_build_weight_energy_bonus"))
+    {
+        cf->ai_production_build_weight_energy_bonus = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_build_weight_rainfall"))
+    {
+        cf->ai_production_build_weight_rainfall = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_build_weight_rockiness"))
+    {
+        cf->ai_production_build_weight_rockiness = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_build_weight_elevation"))
+    {
+        cf->ai_production_build_weight_elevation = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_build_weight_deep"))
+    {
+        cf->ai_production_build_weight_deep = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_build_turn_penalty"))
+    {
+        cf->ai_production_build_turn_penalty = atof(value);
+    }
     else if (MATCH("wtp", "ai_terraforming_factions_enabled"))
     {
         cf->ai_terraforming_factions_enabled = atoi(value);
