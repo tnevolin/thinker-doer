@@ -45,46 +45,34 @@ Prepares former orders.
 */
 void moveFormerStrategy()
 {
-	clock_t s1;
-	
 	// populate processing lists
 
-	s1 = clock();
 	populateLists();
-	debug("(time) [WTP] --populateLists: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 	
 	// formers
 	
-	s1 = clock();
 	moveLandFormerStrategy();
-	debug("(time) [WTP] --moveLandFormerStrategy: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
-	s1 = clock();
 	moveSeaFormerStrategy();
-	debug("(time) [WTP] --moveSeaFormerStrategy: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
-	s1 = clock();
 	cancelRedundantOrders();
-	debug("(time) [WTP] --cancelRedundantOrders: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
-	s1 = clock();
 	generateTerraformingRequests();
-	debug("(time) [WTP] --generateTerraformingRequests: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
-	s1 = clock();
+//	// sort terraforming requests
+//
+//	sortBaseTerraformingRequests();
+//
 	sortTerraformingRequests();
-	debug("(time) [WTP] --sortTerraformingRequests: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 	
-	s1 = clock();
 	applyProximityRules();
-	debug("(time) [WTP] --applyProximityRules: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
-	s1 = clock();
 	assignFormerOrders();
-	debug("(time) [WTP] --assignFormerOrders: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
-	s1 = clock();
+//	// optimize former destinations
+//
+//	optimizeFormerDestinations();
+//
 	finalizeFormerOrders();
-	debug("(time) [WTP] --finalizeFormerOrders: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
 
 }
 
