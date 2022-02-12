@@ -1741,6 +1741,46 @@ std::vector<MAP *> getBaseWorkedTiles(BASE *base)
 
 }
 
+bool isBaseWorkedTile(int baseId, int x, int y)
+{
+	if (!(baseId >= 0 && baseId < *total_num_bases && isOnMap(x, y)))
+		return false;
+	
+	BASE *base = &(Bases[baseId]);
+	int dx = x - base->x;
+	int dy = y - base->y;
+
+	for (int offset = 0; offset < BASE_OFFSET_COUNT_RADIUS; offset++)
+	{
+		if (BASE_TILE_OFFSETS[offset][0] == dx && BASE_TILE_OFFSETS[offset][1] == dy)
+		{
+			if ((base->worked_tiles & (0x1 << offset)) == 0)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+			
+		}
+		
+	}
+
+	return false;
+
+}
+
+bool isBaseWorkedTile(int baseId, MAP *tile)
+{
+	int tileMapIndex = getMapIndexByPointer(tile);
+	int x = getX(tileMapIndex);
+	int y = getY(tileMapIndex);
+
+	return isBaseWorkedTile(baseId, x, y);
+	
+}
+
 /*
 Summarize base garrizon defense value for all conventional combat units with defense value >= 2.
 */

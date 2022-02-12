@@ -208,6 +208,8 @@ int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y);
 int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y);
 std::vector<MAP *> getBaseWorkedTiles(int baseId);
 std::vector<MAP *> getBaseWorkedTiles(BASE *base);
+bool isBaseWorkedTile(int baseId, int x, int y);
+bool isBaseWorkedTile(int baseId, MAP *tile);
 int getBaseConventionalDefenseValue(int baseId);
 std::vector<int> getFactionPrototypes(int factionId, bool includeNotPrototyped);
 bool isVehicleNativeLand(int vehicleId);
