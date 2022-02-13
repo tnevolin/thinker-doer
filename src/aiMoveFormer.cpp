@@ -10,9 +10,15 @@
 #include "ai.h"
 #include "aiMoveFormer.h"
 
+// global precomputed values
+
+BaseTerraformingInfo *baseTerraformingInfos = new BaseTerraformingInfo[MaxBaseNum];
+TileTerraformingInfo *tileTerraformingInfos;
+
+std::vector<MAP *> terraformingSites;
+std::vector<MAP *> conventionalTerraformingSites;
+
 double networkDemand = 0.0;
-std::unordered_map<MAP *, BASE_INFO> workedTileBases;
-std::unordered_map<BASE *, int> baseTerraformingRanks;
 std::unordered_set<MAP *> harvestedTiles;
 std::unordered_set<MAP *> terraformedTiles;
 std::unordered_set<MAP *> terraformedForestTiles;
@@ -25,8 +31,6 @@ std::unordered_set<MAP *> terraformedSensorTiles;
 std::vector<FORMER_ORDER> formerOrders;
 std::map<int, FORMER_ORDER *> vehicleFormerOrders;
 std::vector<MAP *> territoryTiles;
-std::unordered_set<MAP *> workableTiles;
-std::unordered_set<MAP *> availableTiles;
 std::vector<TERRAFORMING_REQUEST> terraformingRequests;
 std::unordered_set<MAP *> targetedTiles;
 std::unordered_set<MAP *> connectionNetworkLocations;
@@ -36,83 +40,57 @@ std::unordered_map<MAP *, int> coastalBaseRegionMappings;
 std::unordered_set<MAP *> blockedLocations;
 std::unordered_set<MAP *> warzoneLocations;
 std::unordered_set<MAP *> zocLocations;
-std::unordered_map<BASE *, std::vector<YIELD>> unworkedTileYields;
-std::unordered_map<MAP *, std::unordered_set<int>> workableTileBases;
-std::unordered_map<int, BaseTerraformingInfo> baseTerraformingInfos;
 
 /*
 Prepares former orders.
 */
 void moveFormerStrategy()
 {
-	// populate processing lists
+	// initialize data
+	
+	initializeData();
+	
+	// populate data
 
-	populateLists();
+	populateData();
 	
 	// formers
 	
-	moveLandFormerStrategy();
-	moveSeaFormerStrategy();
-
 	cancelRedundantOrders();
 
 	generateTerraformingRequests();
 
-//	// sort terraforming requests
-//
-//	sortBaseTerraformingRequests();
-//
 	sortTerraformingRequests();
 	
 	applyProximityRules();
 
 	assignFormerOrders();
 
-//	// optimize former destinations
-//
-//	optimizeFormerDestinations();
-//
 	finalizeFormerOrders();
 
+	// clean up data
+
+	cleanupData();
+	
 }
 
 /*
 Populate global lists before processing faction strategy.
 */
-void populateLists()
+void initializeData()
+{
+	// create tile terraforming info
+	
+	tileTerraformingInfos = new TileTerraformingInfo[*map_area_tiles];
+	
+}
+
+/*
+Populate global lists before processing faction strategy.
+*/
+void populateData()
 {
 	Faction *aiFaction = &(Factions[aiFactionId]);
-
-	// clear lists
-
-	workedTileBases.clear();
-	baseTerraformingRanks.clear();
-	harvestedTiles.clear();
-	terraformedTiles.clear();
-	terraformedForestTiles.clear();
-	terraformedCondenserTiles.clear();
-	terraformedMirrorTiles.clear();
-	terraformedBoreholeTiles.clear();
-	terraformedAquiferTiles.clear();
-	terraformedRaiseTiles.clear();
-	terraformedSensorTiles.clear();
-	territoryTiles.clear();
-	workableTiles.clear();
-	availableTiles.clear();
-	terraformingRequests.clear();
-	formerOrders.clear();
-	vehicleFormerOrders.clear();
-	targetedTiles.clear();
-	connectionNetworkLocations.clear();
-	nearbyBaseSets.clear();
-	seaRegionMappings.clear();
-	coastalBaseRegionMappings.clear();
-	blockedLocations.clear();
-	warzoneLocations.clear();
-	zocLocations.clear();
-	unworkedTileYields.clear();
-	workableTileBases.clear();
-	baseTerraformingInfos.clear();
 
 	// populate blocked/warzone and zoc locations
 
@@ -236,19 +214,9 @@ void populateLists()
 
 		}
 
-		// populate worked tiles
-
-		for (MAP *workedTile : getBaseWorkedTiles(id))
-		{
-			workedTileBases[workedTile] = {id, base};
-
-		}
-
 	}
 
 	// populate sea region mappings for coastal bases connecting sea regions
-
-//	debug("seaRegionLinkedGroups\n")
 
 	for (int id : aiData.baseIds)
 	{
@@ -276,20 +244,6 @@ void populateLists()
 			{
 				seaRegionLinkedGroups.push_back(seaRegionLinkedGroup);
 
-//				if (DEBUG)
-//				{
-//					for
-//					(
-//						std::set<int>::iterator seaRegionLinkedGroupIterator = seaRegionLinkedGroup.begin();
-//						seaRegionLinkedGroupIterator != seaRegionLinkedGroup.end();
-//						seaRegionLinkedGroupIterator++
-//					)
-//					{
-//						debug(" %3d", *seaRegionLinkedGroupIterator);
-//					}
-//					debug("\n");
-//				}
-
 			}
 
 		}
@@ -297,8 +251,6 @@ void populateLists()
 	}
 
 	// populate sea region mappings
-
-//	debug("aggregation\n");
 
 	bool aggregated = true;
 	for (; aggregated == true;)
@@ -318,8 +270,6 @@ void populateLists()
 			{
 				std::set<int> *seaRegionLinkedGroup2 = &(seaRegionLinkedGroups[j]);
 
-//				debug("\t%3d, %3d\n", i, j);
-
 				for
 				(
 					std::set<int>::iterator seaRegionLinkedGroup2Iterator = seaRegionLinkedGroup2->begin();
@@ -329,12 +279,8 @@ void populateLists()
 				{
 					int seaRegionLinkedGroup2Element = *seaRegionLinkedGroup2Iterator;
 
-//					debug("\t\t%3d\n", seaRegionLinkedGroup2Element);
-
 					if (seaRegionLinkedGroup1->count(seaRegionLinkedGroup2Element) != 0)
 					{
-//						debug("\t\t\tfound\n");
-
 						seaRegionLinkedGroup1->insert(seaRegionLinkedGroup2->begin(), seaRegionLinkedGroup2->end());
 						seaRegionLinkedGroup2->clear();
 
@@ -344,8 +290,6 @@ void populateLists()
 
 					}
 
-//					debug("\t\t\t%3d %3d\n", seaRegionLinkedGroup1->size(), seaRegionLinkedGroup2->size());
-
 				}
 
 			}
@@ -354,42 +298,9 @@ void populateLists()
 
 	}
 
-//	debug("after aggregation\n");
-//
-//	if (DEBUG)
-//	{
-//		for (size_t i = 0; i < seaRegionLinkedGroups.size(); i++)
-//		{
-//			std::set<int> *seaRegionLinkedGroup = &(seaRegionLinkedGroups[i]);
-//
-//			debug("group:");
-//
-//			for
-//			(
-//				std::set<int>::iterator seaRegionLinkedGroupIterator = seaRegionLinkedGroup->begin();
-//				seaRegionLinkedGroupIterator != seaRegionLinkedGroup->end();
-//				seaRegionLinkedGroupIterator++
-//			)
-//			{
-//				int region = *seaRegionLinkedGroupIterator;
-//
-//				debug(" %3d", region);
-//
-//			}
-//
-//			debug("\n");
-//
-//		}
-//
-//	}
-
-//	debug("seaRegionMappings\n");
-
 	for (size_t i = 0; i < seaRegionLinkedGroups.size(); i++)
 	{
 		std::set<int> *seaRegionLinkedGroup = &(seaRegionLinkedGroups[i]);
-
-//		debug("group\n");
 
 		// skip empty sets
 
@@ -413,15 +324,11 @@ void populateLists()
 
 			seaRegionMappings[region] = mappingRegion;
 
-//			debug("\t%3d => %3d\n", region, mappingRegion);
-
 		}
 
 	}
 
 	// populate coastal base sea region mappings
-
-//	debug("coastalBaseRegionMappings\n");
 
 	for (int id : aiData.baseIds)
 	{
@@ -437,8 +344,6 @@ void populateLists()
 				{
 					int terraformingRegion = getConnectedRegion(adjacentTile->region);
 					coastalBaseRegionMappings[baseTile] = seaRegionMappings[terraformingRegion];
-
-//					debug("\t(%3d,%3d) => %3d\n", base->x, base->y, terraformingRegion);
 
 					break;
 
@@ -542,42 +447,6 @@ void populateLists()
 					terraformedSensorTiles.insert(terraformedTile);
 				}
 
-				// update base terraforming ranks for yield terraforming actions
-
-				if (yieldTerraformingOrders.count(vehicle->move_status))
-				{
-					// this tile affects single base only
-					if (wideRangeTerraformingOrders.count(vehicle->move_status) == 0 && workedTileBases.count(terraformedTile) != 0)
-					{
-						BASE_INFO *baseInfo = &(workedTileBases.find(terraformedTile)->second);
-						BASE *base = baseInfo->base;
-						baseTerraformingRanks[base]++;
-					}
-					// this tile may affect multiple nearby bases
-					else
-					{
-						// get terraforming affecting range
-
-						int affectingRange = (wideRangeTerraformingOrders.count(vehicle->move_status) == 0 ? 0 : 1);
-						std::vector<BASE_INFO> *nearbyBases = &(nearbyBaseSets[terraformedTile][affectingRange]);
-						for
-						(
-							std::vector<BASE_INFO>::iterator nearbyBasesIterator = nearbyBases->begin();
-							nearbyBasesIterator != nearbyBases->end();
-							nearbyBasesIterator++
-						)
-						{
-							BASE_INFO *baseInfo = &(*nearbyBasesIterator);
-							BASE *base = baseInfo->base;
-
-							baseTerraformingRanks[base]++;
-
-						}
-
-					}
-
-				}
-
 			}
 			// available vehicles
 			else
@@ -661,17 +530,51 @@ void populateLists()
 
 	}
 
-	// populate availalbe tiles
-
+	// populate tileTerraformingInfos
+	// populate validTerraformingSites
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		TileTerraformingInfo *tileTerraformingInfo = &(tileTerraformingInfos[mapIndex]);
+		MAP *tile = getMapTile(mapIndex);
+		
+		// valid terraforming site
+		
+		if (!isValidTerraformingSite(tile))
+			continue;
+		
+		// tile map data
+		
+		tileTerraformingInfo->ocean = is_ocean(tile);
+		tileTerraformingInfo->fungus = map_has_item(tile, TERRA_FUNGUS);
+		tileTerraformingInfo->rocky = (tileTerraformingInfo->ocean ? false : map_rockiness(tile) == 2);
+		
+		// add to valid terraforming sites
+		
+		terraformingSites.push_back(tile);
+		
+		if (isValidConventionalTerraformingSite(tile))
+		{
+			// add to valid conventional terraforming sites
+			
+			conventionalTerraformingSites.push_back(tile);
+			
+		}
+		
+	}
+	
+	// populate base terraforming infos
+	
 	for (int baseId : aiData.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
-
-		// crete base terraforming info
+		BaseTerraformingInfo *baseTerraformingInfo = &(baseTerraformingInfos[baseId]);
 		
-		baseTerraformingInfos[baseId] = {};
-		baseTerraformingInfos[baseId].unimprovedWorkedTileCount = getUnimprovedWorkedTileCount(baseId);
-		baseTerraformingInfos[baseId].ongoingYieldTerraformingCount = getOngoingYieldTerraformingCount(baseId);
+		// initialize base terraforming info
+		
+		baseTerraformingInfo->unimprovedWorkedTileCount = getUnimprovedWorkedTileCount(baseId);
+		baseTerraformingInfo->ongoingYieldTerraformingCount = getOngoingYieldTerraformingCount(baseId);
+		baseTerraformingInfo->rockyLandTileCount = 0;
 
 		// count formers currently improving base yield
 		
@@ -679,155 +582,62 @@ void populateLists()
 
 		// iterate base tiles
 
-		for (MAP *tile : getBaseRadiusTiles(base->x, base->y, false))
+		for (int offset = 1; offset < BASE_OFFSET_COUNT_RADIUS; offset++)
 		{
-			// own or unclaimed territory
-
-			if (!(tile->owner == -1 || tile->owner == aiFactionId))
-				continue;
-
-			// exclude volcano mouth
-
-			if ((tile->landmarks & LM_VOLCANO) && (tile->art_ref_id == 0))
-				continue;
-
-			// exclude base in tile
-
-			if (tile->items & TERRA_BASE_IN_TILE)
-				continue;
-
-			// exclude blocked locations
-
-			if (blockedLocations.count(tile) != 0)
-				continue;
-
-			// exclude warzone locations
-
-			if (warzoneLocations.count(tile) != 0)
-				continue;
-
-			// store workable tile
-
-			workableTiles.insert(tile);
-
-			// store workable tile to bases reference
+			int x = base->x + BASE_TILE_OFFSETS[offset][0];
+			int y = base->y + BASE_TILE_OFFSETS[offset][1];
+			int mapIndex = getMapIndexByCoordinates(x, y);
+			MAP *tile = getMapTile(mapIndex);
+			TileTerraformingInfo *tileTerraformingInfo = &(tileTerraformingInfos[mapIndex]);
 			
-			workableTileBases[tile].insert(baseId);
-
-			// exclude harvested tiles
-
-			if (harvestedTiles.count(tile) != 0)
+			// valid base terraforming site
+			
+			if (!isValidTerraformingSite(tile))
 				continue;
+			
+			// update worked base
+			
+			tileTerraformingInfos->workedBaseId = ((base->worked_tiles & (0x1 << offset)) != 0);
+			
+			// update workable bases
+			
+			tileTerraformingInfos->workableBaseIds.push_back(baseId);
+			
+			// update base rocky land tile count
+			
+			if (isValidConventionalTerraformingSite(tile) && tileTerraformingInfo->rocky)
+			{
+				baseTerraformingInfo->rockyLandTileCount++;
+			}
+			
+		}
+		
+		// iterate base area expanded tiles
 
-			// exclude terraformed tiles
-
-			if (terraformedTiles.count(tile) != 0)
+		for (int offset = 1; offset < BASE_OFFSET_COUNT_RADIUS_ADJACENT; offset++)
+		{
+			int x = base->x + BASE_TILE_OFFSETS[offset][0];
+			int y = base->y + BASE_TILE_OFFSETS[offset][1];
+			int mapIndex = getMapIndexByCoordinates(x, y);
+			MAP *tile = getMapTile(mapIndex);
+			
+			// valid terraforming site
+			
+			if (!isValidTerraformingSite(tile))
 				continue;
-
-			// store available tile
-
-			availableTiles.insert(tile);
+			
+			// update area workable bases
+			
+			tileTerraformingInfos->areaWorkableBaseIds.push_back(baseId);
 			
 		}
 		
 		// store ongoing terraforming count
 		
-		baseTerraformingInfos[baseId].ongoingYieldTerraformingCount = ongoingYieldTerraformingCount;
-
-	}
-
-	if (DEBUG)
-	{
-		debug("availableTiles\n");
-
-		for (MAP *availableTile : availableTiles)
-		{
-			debug("\t(%3d,%3d)\n", getX(availableTile), getY(availableTile));
-
-		}
+		baseTerraformingInfo->ongoingYieldTerraformingCount = ongoingYieldTerraformingCount;
 
 	}
 	
-	// populate base rocky tile count
-	
-	for (const auto &k : workableTileBases)
-	{
-		MAP *tile = k.first;
-		const std::unordered_set<int> *baseIds = &(k.second);
-		
-		if (isLandRockyTile(tile))
-		{
-			for (int baseId : *baseIds)
-			{
-				baseTerraformingInfos[baseId].landRockyTiles.push_back(tile);
-			}
-			
-		}
-		
-	}
-
-	// populate unworked tiles
-
-	for (int id : aiData.baseIds)
-	{
-		BASE *base = &(Bases[id]);
-
-		unworkedTileYields[base] = std::vector<YIELD>();
-		std::vector<YIELD> *baseunworkedTileYields = &(unworkedTileYields[base]);
-
-		// set base
-		// that is needed because below functions require it and they are usually called in context where base is set already
-
-		set_base(id);
-
-		for (MAP *tile : getBaseRadiusTiles(base->x, base->y, false))
-		{
-			int x = getX(tile);
-			int y = getY(tile);
-
-			// process available tiles only
-
-			if (availableTiles.count(tile) == 0)
-				continue;
-
-			// exclude worked tiles
-
-			if (workedTileBases.count(tile) != 0)
-				continue;
-
-			// calculate and store yield
-
-			int nutrient = mod_nutrient_yield(aiFactionId, id, x, y, 0);
-			int mineral = mod_mineral_yield(aiFactionId, id, x, y, 0);
-			int energy = mod_energy_yield(aiFactionId, id, x, y, 0);
-
-			baseunworkedTileYields->push_back({nutrient, mineral, energy});
-
-		}
-
-		// remove inferior yields
-
-		for
-		(
-			std::vector<YIELD>::iterator baseUnworkedTileYieldsIterator = baseunworkedTileYields->begin();
-			baseUnworkedTileYieldsIterator != baseunworkedTileYields->end();
-		)
-		{
-			YIELD *yield = &(*baseUnworkedTileYieldsIterator);
-
-			if (isInferiorYield(baseunworkedTileYields, yield->nutrient, yield->mineral, yield->energy, &baseUnworkedTileYieldsIterator))
-			{
-				baseUnworkedTileYieldsIterator = baseunworkedTileYields->erase(baseUnworkedTileYieldsIterator);
-			}
-			else
-			{
-				baseUnworkedTileYieldsIterator++;
-			}
-
-		}
-
-	}
-
 	// calculate network demand
 
 	int networkType = (has_tech(aiFactionId, Terraform[FORMER_MAGTUBE].preq_tech) ? TERRA_MAGTUBE : TERRA_ROAD);
@@ -865,19 +675,42 @@ void populateLists()
 	{
 		networkDemand = (networkThreshold - networkCoverage) / networkThreshold;
 	}
-
-	fflush(debug_log);
-
+	
 }
 
-void moveLandFormerStrategy()
+void cleanupData()
 {
-	// 
-}
+	// delete tile terraforming info
+	
+	delete[] tileTerraformingInfos;
+	
+	// clear lists
 
-void moveSeaFormerStrategy()
-{
-	//
+	terraformingSites.clear();
+	conventionalTerraformingSites.clear();
+	
+	harvestedTiles.clear();
+	terraformedTiles.clear();
+	terraformedForestTiles.clear();
+	terraformedCondenserTiles.clear();
+	terraformedMirrorTiles.clear();
+	terraformedBoreholeTiles.clear();
+	terraformedAquiferTiles.clear();
+	terraformedRaiseTiles.clear();
+	terraformedSensorTiles.clear();
+	territoryTiles.clear();
+	terraformingRequests.clear();
+	formerOrders.clear();
+	vehicleFormerOrders.clear();
+	targetedTiles.clear();
+	connectionNetworkLocations.clear();
+	nearbyBaseSets.clear();
+	seaRegionMappings.clear();
+	coastalBaseRegionMappings.clear();
+	blockedLocations.clear();
+	warzoneLocations.clear();
+	zocLocations.clear();
+
 }
 
 /*
@@ -900,13 +733,13 @@ void generateTerraformingRequests()
 {
 	// conventional requests
 
-	debug("BASE TERRAFORMING_REQUESTS\n");
+	debug("CONVENTIONAL TERRAFORMING_REQUESTS\n");
 
-	for (MAP *availableTile : availableTiles)
+	for (MAP *tile : conventionalTerraformingSites)
 	{
 		// generate request
 
-		generateConventionalTerraformingRequest(availableTile);
+		generateConventionalTerraformingRequest(tile);
 
 	}
 
@@ -914,11 +747,11 @@ void generateTerraformingRequests()
 
 	debug("AQUIFER TERRAFORMING_REQUESTS\n");
 
-	for (MAP *workableTile : workableTiles)
+	for (MAP *tile : terraformingSites)
 	{
 		// generate request
 
-		generateAquiferTerraformingRequest(workableTile);
+		generateAquiferTerraformingRequest(tile);
 
 	}
 
@@ -926,11 +759,11 @@ void generateTerraformingRequests()
 
 	debug("RAISE LAND TERRAFORMING_REQUESTS\n");
 
-	for (MAP *workableTile : workableTiles)
+	for (MAP *tile : terraformingSites)
 	{
 		// generate request
 
-		generateRaiseLandTerraformingRequest(workableTile);
+		generateRaiseLandTerraformingRequest(tile);
 
 	}
 
@@ -938,15 +771,8 @@ void generateTerraformingRequests()
 
 	debug("NETWORK TERRAFORMING_REQUESTS\n");
 
-	for
-	(
-		std::vector<MAP *>::iterator territoryTilesIterator = territoryTiles.begin();
-		territoryTilesIterator != territoryTiles.end();
-		territoryTilesIterator++
-	)
+	for (MAP *tile : terraformingSites)
 	{
-		MAP *tile = *territoryTilesIterator;
-
 		// generate request
 
 		generateNetworkTerraformingRequest(tile);
@@ -957,7 +783,7 @@ void generateTerraformingRequests()
 
 	debug("SENSOR TERRAFORMING_REQUESTS\n");
 
-	for (MAP *tile : territoryTiles)
+	for (MAP *tile : terraformingSites)
 	{
 		// generate request
 
@@ -972,18 +798,17 @@ Generate request for conventional incompatible terraforming options.
 */
 void generateConventionalTerraformingRequest(MAP *tile)
 {
-	TERRAFORMING_SCORE terraformingScoreObject;
-	TERRAFORMING_SCORE *terraformingScore = &terraformingScoreObject;
-	calculateConventionalTerraformingScore(tile, terraformingScore);
+	TERRAFORMING_SCORE terraformingScore;
+	calculateConventionalTerraformingScore(tile, &terraformingScore);
 
 	// terraforming request should have option, action and score set
 
-	if (terraformingScore->option == NULL || terraformingScore->action == -1 || terraformingScore->score <= 0.0)
+	if (terraformingScore.option == NULL || terraformingScore.action == -1 || terraformingScore.score <= 0.0)
 		return;
 
-	// generate free terraforming request
+	// add terraforming request
 
-	terraformingRequests.push_back({tile, terraformingScore->option, terraformingScore->action, terraformingScore->score});
+	terraformingRequests.push_back({tile, terraformingScore.option, terraformingScore.action, terraformingScore.score});
 
 }
 
@@ -1224,132 +1049,6 @@ void assignFormerOrders()
 
 }
 
-//void optimizeFormerDestinations()
-//{
-//	// iterate through regions
-//
-//	for
-//	(
-//		std::map<int, std::vector<FORMER_ORDER>>::iterator regionFormerOrdersIterator = regionFormerOrders.begin();
-//		regionFormerOrdersIterator != regionFormerOrders.end();
-//		regionFormerOrdersIterator++
-//	)
-//	{
-//		std::vector<FORMER_ORDER> *formerOrders = &(regionFormerOrdersIterator->second);
-//
-//		// iterate until optimized or max iterations
-//
-//		for (int iteration = 0; iteration < 100; iteration++)
-//		{
-//			bool swapped = false;
-//
-//			// iterate through former order pairs
-//
-//			for
-//			(
-//				std::vector<FORMER_ORDER>::iterator formerOrderIterator1 = formerOrders->begin();
-//				formerOrderIterator1 != formerOrders->end();
-//				formerOrderIterator1++
-//			)
-//			{
-//				for
-//				(
-//					std::vector<FORMER_ORDER>::iterator formerOrderIterator2 = formerOrders->begin();
-//					formerOrderIterator2 != formerOrders->end();
-//					formerOrderIterator2++
-//				)
-//				{
-//					FORMER_ORDER *formerOrder1 = &(*formerOrderIterator1);
-//					FORMER_ORDER *formerOrder2 = &(*formerOrderIterator2);
-//
-//					// skip itself
-//
-//					if (formerOrder1->id == formerOrder2->id)
-//						continue;
-//
-//					VEH *vehicle1 = formerOrder1->vehicle;
-//					VEH *vehicle2 = formerOrder2->vehicle;
-//
-//					int vehicle1Speed = veh_speed_without_roads(formerOrder1->id);
-//					int vehicle2Speed = veh_speed_without_roads(formerOrder2->id);
-//
-//					int destination1X = formerOrder1->x;
-//					int destination1Y = formerOrder1->y;
-//					MAP *destination1Tile = getMapTile(destination1X, destination1Y);
-//					int destination2X = formerOrder2->x;
-//					int destination2Y = formerOrder2->y;
-//					MAP *destination2Tile = getMapTile(destination2X, destination2Y);
-//
-//					int action1 = formerOrder1->action;
-//					int action2 = formerOrder2->action;
-//
-//					// calculate current travel time
-//
-//					double vehicle1CurrentTravelTime = (double)map_range(vehicle1->x, vehicle1->y, destination1X, destination1Y) / (double)vehicle1Speed;
-//					double vehicle2CurrentTravelTime = (double)map_range(vehicle2->x, vehicle2->y, destination2X, destination2Y) / (double)vehicle2Speed;
-//
-//					double currentTravelTime = vehicle1CurrentTravelTime + vehicle2CurrentTravelTime;
-//
-//					// calculate current terraforming time
-//
-//					double vehicle1CurrentTerraformingTime = calculateTerraformingTime(action1, destination1Tile->items, destination1Tile->val3, vehicle1);
-//					double vehicle2CurrentTerraformingTime = calculateTerraformingTime(action2, destination2Tile->items, destination2Tile->val3, vehicle2);
-//
-//					double currentTerraformingTime = vehicle1CurrentTerraformingTime + vehicle2CurrentTerraformingTime;
-//
-//					// calculate current completion time
-//
-//					double currentCompletionTime = currentTravelTime + currentTerraformingTime;
-//
-//					// calculate swapped travel time
-//
-//					double vehicle1SwappedTravelTime = (double)map_range(vehicle1->x, vehicle1->y, destination2X, destination2Y) / (double)vehicle1Speed;
-//					double vehicle2SwappedTravelTime = (double)map_range(vehicle2->x, vehicle2->y, destination1X, destination1Y) / (double)vehicle2Speed;
-//
-//					double swappedTravelTime = vehicle1SwappedTravelTime + vehicle2SwappedTravelTime;
-//
-//					// calculate swapped terraforming time
-//
-//					double vehicle1SwappedTerraformingTime = calculateTerraformingTime(action2, destination2Tile->items, destination2Tile->val3, vehicle1);
-//					double vehicle2SwappedTerraformingTime = calculateTerraformingTime(action1, destination1Tile->items, destination1Tile->val3, vehicle2);
-//
-//					double swappedTerraformingTime = vehicle1SwappedTerraformingTime + vehicle2SwappedTerraformingTime;
-//
-//					// calculate swapped completion time
-//
-//					double swappedCompletionTime = swappedTravelTime + swappedTerraformingTime;
-//
-//					// swap orders if beneficial
-//
-//					if (swappedCompletionTime < currentCompletionTime)
-//					{
-//						formerOrder1->x = destination2X;
-//						formerOrder1->y = destination2Y;
-//						formerOrder1->action = action2;
-//
-//						formerOrder2->x = destination1X;
-//						formerOrder2->y = destination1Y;
-//						formerOrder2->action = action1;
-//
-//						swapped = true;
-//
-//					}
-//
-//				}
-//
-//			}
-//
-//			// stop cycle if nothing is swapped
-//
-//			if (!swapped)
-//				break;
-//
-//		}
-//
-//	}
-//
-//}
-//
 void finalizeFormerOrders()
 {
 	// iterate former orders
@@ -1366,22 +1065,15 @@ Selects best terraforming option around given base and calculates its terraformi
 */
 void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerraformingScore)
 {
-	int x = getX(tile);
-	int y = getY(tile);
-	bool ocean = is_ocean(tile);
+	int mapIndex = getMapIndexByPointer(tile);
+	TileTerraformingInfo *tileTerraformingInfo = &(tileTerraformingInfos[mapIndex]);
+	bool ocean = tileTerraformingInfo->ocean;
+	bool fungus = tileTerraformingInfo->fungus;
+	bool rocky = tileTerraformingInfo->rocky;
+	int x = getX(mapIndex);
+	int y = getY(mapIndex);
 
-	// do not evavluate monolith for conventional options
-
-	if (map_has_item(tile, TERRA_MONOLITH))
-		return;
-
-	debug
-	(
-		"calculateTerraformingScore: (%3d,%3d)\n",
-		x,
-		y
-	)
-	;
+	debug("calculateTerraformingScore: (%3d,%3d)\n", x, y);
 
 	// calculate travel time
 
@@ -1389,42 +1081,38 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 
 	// store tile values
 
-	MAP_STATE currentMapStateObject;
-	MAP_STATE *currentMapState = &currentMapStateObject;
-	getMapState(tile, currentMapState);
+	MAP_STATE currentMapState;
+	getMapState(tile, &currentMapState);
 
 	// find best terraforming option
 
-	const TERRAFORMING_OPTION *bestOption = NULL;
+	const TERRAFORMING_OPTION *bestOption = nullptr;
 	int bestOptionFirstAction = -1;
 	double bestOptionTerraformingScore = 0.0;
 
-	for (size_t optionIndex = 0; optionIndex < CONVENTIONAL_TERRAFORMING_OPTIONS.size(); optionIndex++)
+	for (const TERRAFORMING_OPTION &option : CONVENTIONAL_TERRAFORMING_OPTIONS)
 	{
-		const TERRAFORMING_OPTION *option = &(CONVENTIONAL_TERRAFORMING_OPTIONS[optionIndex]);
-
 		// process only correct region type
 
-		if (option->ocean != ocean)
+		if (option.ocean != tileTerraformingInfo->ocean)
 			continue;
 
 		// process only correct rockiness
 
-		if (!ocean && option->rocky && !(tile->val3 & TILE_ROCKY))
+		if (option.rocky && (!ocean && !rocky))
 			continue;
 
 		// check if required action technology is available when required
 
-		if (option->requiredAction != -1 && !isTerraformingAvailable(tile, option->requiredAction))
+		if (option.requiredAction != -1 && !isTerraformingAvailable(tile, option.requiredAction))
 			continue;
 		
-		debug("\t%s\n", option->name);
+		debug("\t%s\n", option.name);
 		
 		// initialize variables
 
-		MAP_STATE improvedMapStateObject;
-		MAP_STATE *improvedMapState = &improvedMapStateObject;
-		copyMapState(improvedMapState, currentMapState);
+		MAP_STATE improvedMapState;
+		copyMapState(&improvedMapState, &currentMapState);
 		
 		int firstAction = -1;
 		int terraformingTime = 0;
@@ -1434,19 +1122,13 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 		// process actions
 		
 		int availableActionCount = 0;
-		int incompleteActionCount = 0;
+		int completedActionCount = 0;
 		bool levelTerrain = false;
-		for
-		(
-			std::vector<int>::const_iterator actionsIterator = option->actions.begin();
-			actionsIterator != option->actions.end();
-			actionsIterator++
-		)
+		
+		for(int action : option.actions)
 		{
-			int action = *actionsIterator;
-
-			// skip unavailable actions
-
+			// skip unavailable action
+			
 			if (!isTerraformingAvailable(tile, action))
 				continue;
 			
@@ -1454,90 +1136,25 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 			
 			availableActionCount++;
 			
-			// generate terraforming change and add terraforming time for non completed action
+			// skip completed action
 
-			if (!isTerraformingCompleted(tile, action))
+			if (isTerraformingCompleted(tile, action))
 			{
-				// increment incomplete actions
+				completedActionCount++;
+				continue;
+			}
 				
-				incompleteActionCount++;
-				
-				// remove fungus if needed
+			// remove fungus if needed
 
-				if ((improvedMapState->items & TERRA_FUNGUS) && isRemoveFungusRequired(action))
-				{
-					int removeFungusAction = FORMER_REMOVE_FUNGUS;
-
-					// store first action
-
-					if (firstAction == -1)
-					{
-						firstAction = removeFungusAction;
-					}
-
-					// compute terraforming time
-
-					terraformingTime +=
-						calculateTerraformingTime
-						(
-							removeFungusAction,
-							improvedMapState->items,
-							improvedMapState->rocks,
-							NULL
-						)
-					;
-
-					// generate terraforming change
-
-					generateTerraformingChange(improvedMapState, removeFungusAction);
-
-					// add penalty for nearby forest/kelp
-
-					int nearbyForestKelpCount = nearby_items(x, y, 1, (ocean ? TERRA_FARM : TERRA_FOREST));
-					penaltyScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestKelpCount;
-
-				}
-
-				// level terrain if needed
-
-				if (!ocean && (improvedMapState->rocks & TILE_ROCKY) && isLevelTerrainRequired(ocean, action))
-				{
-					int levelTerrainAction = FORMER_LEVEL_TERRAIN;
-					
-					levelTerrain = true;
-
-					// store first action
-
-					if (firstAction == -1)
-					{
-						firstAction = levelTerrainAction;
-					}
-
-					// compute terraforming time
-
-					terraformingTime +=
-						calculateTerraformingTime
-						(
-							levelTerrainAction,
-							improvedMapState->items,
-							improvedMapState->rocks,
-							NULL
-						)
-					;
-
-					// generate terraforming change
-
-					generateTerraformingChange(improvedMapState, levelTerrainAction);
-
-				}
-
-				// execute main action
+			if (fungus && isRemoveFungusRequired(action))
+			{
+				int removeFungusAction = FORMER_REMOVE_FUNGUS;
 
 				// store first action
 
 				if (firstAction == -1)
 				{
-					firstAction = action;
+					firstAction = removeFungusAction;
 				}
 
 				// compute terraforming time
@@ -1545,40 +1162,103 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 				terraformingTime +=
 					calculateTerraformingTime
 					(
-						action,
-						improvedMapState->items,
-						improvedMapState->rocks,
-						NULL
+						removeFungusAction,
+						improvedMapState.items,
+						improvedMapState.rocks,
+						nullptr
 					)
 				;
 
 				// generate terraforming change
 
-				generateTerraformingChange(improvedMapState, action);
+				generateTerraformingChange(&improvedMapState, removeFungusAction);
 
 				// add penalty for nearby forest/kelp
 
-				if (ocean)
+				int nearbyForestKelpCount = nearby_items(x, y, 1, (ocean ? TERRA_FARM : TERRA_FOREST));
+				penaltyScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestKelpCount;
+
+			}
+
+			// level terrain if needed
+
+			if (!ocean && rocky && isLevelTerrainRequired(ocean, action))
+			{
+				levelTerrain = true;
+
+				int levelTerrainAction = FORMER_LEVEL_TERRAIN;
+				
+				// store first action
+
+				if (firstAction == -1)
 				{
-					// kelp farm
-
-					if (action == FORMER_FARM)
-					{
-						int nearbyKelpCount = nearby_items(x, y, 1, TERRA_FARM);
-						penaltyScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyKelpCount;
-					}
-
+					firstAction = levelTerrainAction;
 				}
-				else
+
+				// compute terraforming time
+
+				terraformingTime +=
+					calculateTerraformingTime
+					(
+						levelTerrainAction,
+						improvedMapState.items,
+						improvedMapState.rocks,
+						nullptr
+					)
+				;
+
+				// generate terraforming change
+
+				generateTerraformingChange(&improvedMapState, levelTerrainAction);
+
+			}
+
+			// execute main action
+
+			// store first action
+
+			if (firstAction == -1)
+			{
+				firstAction = action;
+			}
+
+			// compute terraforming time
+
+			terraformingTime +=
+				calculateTerraformingTime
+				(
+					action,
+					improvedMapState.items,
+					improvedMapState.rocks,
+					NULL
+				)
+			;
+
+			// generate terraforming change
+
+			generateTerraformingChange(&improvedMapState, action);
+
+			// add penalty for nearby forest/kelp
+
+			if (ocean)
+			{
+				// kelp farm
+
+				if (action == FORMER_FARM)
 				{
-					// forest
+					int nearbyKelpCount = nearby_items(x, y, 1, TERRA_FARM);
+					penaltyScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyKelpCount;
+				}
 
-					if (action == FORMER_FOREST)
-					{
-						int nearbyForestCount = nearby_items(x, y, 1, TERRA_FOREST);
-						penaltyScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestCount;
-					}
+			}
+			else
+			{
+				// forest
 
+				if (action == FORMER_FOREST)
+				{
+					int nearbyForestCount = nearby_items(x, y, 1, TERRA_FOREST);
+					penaltyScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestCount;
 				}
 
 			}
@@ -1592,7 +1272,7 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 
 		// calculate yield improvement score
 
-		double surplusEffectScore = computeImprovementSurplusEffectScore(tile, currentMapState, improvedMapState);
+		double surplusEffectScore = computeImprovementSurplusEffectScore(tile, &currentMapState, &improvedMapState);
 		
 		// ignore options not increasing yield
 
@@ -1601,50 +1281,29 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 		
 		// special yield computation for area effects
 
-		double condenserExtraYieldScore = estimateCondenserExtraYieldScore(tile, &(option->actions));
+		double condenserExtraYieldScore = estimateCondenserExtraYieldScore(tile, &(option.actions));
 
 		// calculate exclusivity bonus
 
-		double exclusivityBonus = calculateExclusivityBonus(tile, &(option->actions), levelTerrain);
+		double exclusivityBonus = calculateExclusivityBonus(tile, &(option.actions), levelTerrain);
 		
 		// summarize score
 
 		improvementScore = penaltyScore + surplusEffectScore + condenserExtraYieldScore + exclusivityBonus;
 		
-		// apply rank penalty
-		
-		int maxExtraTerraformingCount = 0;
-		
-		for (int baseId : workableTileBases[tile])
-		{
-			int extraTerraformingCount = std::max(0, baseTerraformingInfos[baseId].ongoingYieldTerraformingCount - baseTerraformingInfos[baseId].unimprovedWorkedTileCount);
-			maxExtraTerraformingCount = std::max(maxExtraTerraformingCount, extraTerraformingCount);
-		}
-		
-		improvementScore *= pow(conf.ai_terraforming_rank_multiplier, (double)maxExtraTerraformingCount);
-		
-		// apply resource bonus
-		
-		if (bonus_at(x, y) != 0)
-		{
-			improvementScore += 2.0;
-		}
-
 		// calculate terraforming score
-		// every 15 turns reduce score in half
 
-		double terraformingScore = improvementScore * pow(0.5, ((double)terraformingTime + conf.ai_terraforming_travel_time_multiplier * travelTime) / conf.ai_terraforming_time_scale);
+		double terraformingScore = improvementScore / ((double)terraformingTime + conf.ai_terraforming_travel_time_multiplier * travelTime);
 
 		debug
 		(
-			"\t\t%-20s=%6.3f : penalty=%6.3f, surplusEffect=%6.3f, condenser=%6.3f, exclusivity=%6.3f, maxExtraTerraformingCount=%d, combined=%6.3f, time=%2d, travel=%f\n",
+			"\t\t%-20s=%6.3f : penalty=%6.3f, surplusEffect=%6.3f, condenser=%6.3f, exclusivity=%6.3f, combined=%6.3f, time=%2d, travel=%f\n",
 			"terraformingScore",
 			terraformingScore,
 			penaltyScore,
 			surplusEffectScore,
 			condenserExtraYieldScore,
 			exclusivityBonus,
-			maxExtraTerraformingCount,
 			improvementScore,
 			terraformingTime,
 			travelTime
@@ -1655,7 +1314,7 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 
 		if (bestOption == NULL || terraformingScore > bestOptionTerraformingScore)
 		{
-			bestOption = option;
+			bestOption = &(option);
 			bestOptionFirstAction = firstAction;
 			bestOptionTerraformingScore = terraformingScore;
 		}
@@ -2173,124 +1832,22 @@ int moveFormer(int vehicleId)
 	if (formerOrder->action == -1)
 		return mod_enemy_move(vehicleId);
 
-//	// execute order
-//
-//	setFormerOrder(vehicleId, formerOrder);
-//
 	return SYNC;
 
 }
 
-//void setFormerOrder(int vehicleId, FORMER_ORDER *formerOrder)
-//{
-//	VEH *vehicle = &(Vehicles[vehicleId]);
-//	int triad = veh_triad(vehicleId);
-//	int x = formerOrder->x;
-//	int y = formerOrder->y;
-//	int action = formerOrder->action;
-//
-//	// at destination
-//	if (vehicle->x == x && vehicle->y == y)
-//	{
-//		// execute terraforming action
-//
-//		setTerraformingAction(vehicleId, action);
-//
-//		debug
-//		(
-//			"generateFormerOrder: location=(%3d,%3d), action=%s\n",
-//			vehicle->x,
-//			vehicle->y,
-//			getTerraformingActionName(action)
-//		)
-//		;
-//
-//	}
-//	// not at destination
-//	else
-//	{
-//		// send former to destination
-//
-//		if (triad == TRIAD_LAND)
-//		{
-//			if (!sendVehicleToDestination(vehicleId, x, y))
-//			{
-//				debug("location inaccessible: [%d] (%3d,%3d)\n", vehicleId, x, y);
-//
-//				// get vehicle region
-//
-//				MAP *location = getMapTile(vehicle->x, vehicle->y);
-//				int region = location->region;
-//
-//				std::vector<TERRAFORMING_REQUEST> *regionRankedTerraformingRequests = &(regionTerraformingRequests[region]);
-//
-//				bool success = false;
-//
-//				for
-//				(
-//					std::vector<TERRAFORMING_REQUEST>::iterator regionRankedTerraformingRequestsIterator = regionRankedTerraformingRequests->begin();
-//					regionRankedTerraformingRequestsIterator != regionRankedTerraformingRequests->end();
-//				)
-//				{
-//					TERRAFORMING_REQUEST *terraformingRequest = &(*regionRankedTerraformingRequestsIterator);
-//
-//					// try new destination
-//
-//					debug("send vehicle to another destination: [%d] (%3d,%3d)\n", vehicleId, terraformingRequest->x, terraformingRequest->y);
-//
-//					success = sendVehicleToDestination(vehicleId, terraformingRequest->x, terraformingRequest->y);
-//
-//					// erase request
-//
-//					regionRankedTerraformingRequestsIterator = regionRankedTerraformingRequests->erase(regionRankedTerraformingRequestsIterator);
-//
-//					// quit the cycle if successful
-//
-//					if (success)
-//						break;
-//
-//				}
-//
-//				// skip turn if unsuccessful
-//
-//				if (!success)
-//				{
-//					veh_skip(vehicleId);
-//				}
-//
-//			}
-//
-//		}
-//		else
-//		{
-//			sendVehicleToDestination(vehicleId, x, y);
-//		}
-//
-//		debug
-//		(
-//			"generateFormerOrder: location=(%3d,%3d), move_to(%3d,%3d)\n",
-//			vehicle->x,
-//			vehicle->y,
-//			vehicle->waypoint_1_x,
-//			vehicle->waypoint_1_y
-//		)
-//
-//	}
-//
-//}
-//
 /*
-Computes all sharing bases combined surplus effect.
+Computes workable bases surplus effect.
 */
 double computeImprovementSurplusEffectScore(MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState)
 {
-	int x = getX(tile);
-	int y = getY(tile);
+	int mapIndex = getMapIndexByPointer(tile);
+	TileTerraformingInfo *tileTerraformingInfo = &(tileTerraformingInfos[mapIndex]);
+	
+	double resultScore = 0.0;
 
 	// calculate affected range
 	// building or destroying mirror requires recomputation of all bases in range 1
-
-	int affectedRange = 0;
 
 	if
 	(
@@ -2299,39 +1856,49 @@ double computeImprovementSurplusEffectScore(MAP *tile, MAP_STATE *currentMapStat
 		((currentMapState->items & TERRA_ECH_MIRROR) == 0 && (improvedMapState->items & TERRA_ECH_MIRROR) != 0)
 	)
 	{
-		affectedRange = 1;
-	}
-	
-	// collect affected tiles
-	
-	std::vector<MAP *> affectedTiles = (affectedRange == 1 ? getBaseAdjacentTiles(x, y, true) : std::vector<MAP *>{tile});
-	
-	// collect affected bases
-	
-	std::unordered_set<int> affectedBases;
-	
-	for (MAP *affectedTile : affectedTiles)
-	{
-		affectedBases.insert(workableTileBases[affectedTile].begin(), workableTileBases[affectedTile].end());
-	}
-	
-	// compute base scores
-	
-	double bestScore = 0.0;
-	
-	for (int baseId : affectedBases)
-	{
-		// compute base score
+		// compute score
+		// summarize all scores
+		
+		for (int baseId : tileTerraformingInfo->areaWorkableBaseIds)
+		{
+			// compute base score
 
-		double score = computeImprovementBaseSurplusEffectScore(baseId, tile, currentMapState, improvedMapState, affectedTiles);
+			double score = computeImprovementBaseSurplusEffectScore(baseId, tile, currentMapState, improvedMapState);
+			
+			// update best score
+			
+			if (score > 0.0)
+			{
+				resultScore += score;
+			}
+			
+		}
 		
-		// update total
+	}
+	else
+	{
+		// compute score
+		// return first non zero score
 		
-		bestScore = std::max(bestScore, score);
+		for (int baseId : tileTerraformingInfo->workableBaseIds)
+		{
+			// compute base score
+
+			double score = computeImprovementBaseSurplusEffectScore(baseId, tile, currentMapState, improvedMapState);
+			
+			// update best score
+			
+			if (score > 0.0)
+			{
+				resultScore = score;
+				break;
+			}
+			
+		}
 		
 	}
 	
-	return bestScore;
+	return resultScore;
 
 }
 
@@ -3056,11 +2623,6 @@ int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle)
 
 }
 
-int getBaseTerraformingRank(BASE *base)
-{
-	return (baseTerraformingRanks.count(base) == 0 ? 0 : baseTerraformingRanks[base]);
-}
-
 BASE *findAffectedBase(int x, int y)
 {
 	for (int id : aiData.baseIds)
@@ -3658,6 +3220,9 @@ bool isBaseWorkedTile(BASE *base, int x, int y)
 
 double calculateExclusivityBonus(MAP *tile, const std::vector<int> *actions, bool levelTerrain)
 {
+	int mapIndex = getMapIndexByPointer(tile);
+	TileTerraformingInfo *tileTerraformingInfo = &(tileTerraformingInfos[mapIndex]);
+	
 	// collect tile values
 
 	int rainfall = map_rainfall(tile);
@@ -3718,10 +3283,9 @@ double calculateExclusivityBonus(MAP *tile, const std::vector<int> *actions, boo
 			{
 				int minBaseLandRockyTileCount = INT_MAX;
 				
-				for (int baseId : workableTileBases[tile])
+				for (int baseId : tileTerraformingInfo->workableBaseIds)
 				{
-					minBaseLandRockyTileCount = std::min(minBaseLandRockyTileCount, (int)baseTerraformingInfos[baseId].landRockyTiles.size());
-					
+					minBaseLandRockyTileCount = std::min(minBaseLandRockyTileCount, (int)baseTerraformingInfos[baseId].rockyLandTileCount);
 				}
 				
 				debug("(%3d,%3d) minBaseLandRockyTileCount=%d\n", getX(tile), getY(tile), minBaseLandRockyTileCount);
@@ -3730,50 +3294,6 @@ double calculateExclusivityBonus(MAP *tile, const std::vector<int> *actions, boo
 				{
 					mineral += minBaseLandRockyTileCount - conf.ai_terraforming_land_rocky_tile_threshold;
 				}
-				
-			}
-
-			// leveling rocky tile is penalizable if there are other rocky tiles at higher elevation
-
-			if (actionSet.count(FORMER_LEVEL_TERRAIN) != 0 && rockiness == 2)
-			{
-				int minBaseHigherElevationLandRockyTileCount = INT_MAX;
-				
-				for (int baseId : workableTileBases[tile])
-				{
-					// get base higher elevation rocky tile count
-					
-					int baseHigherElevationLandRockyTileCount = 0;
-					
-					for (MAP *otherTile : baseTerraformingInfos[baseId].landRockyTiles)
-					{
-						// skip self
-						
-						if (otherTile == tile)
-							continue;
-						
-						// get other tile elevation
-						
-						int otherTileElevation = map_elevation(otherTile);
-						
-						// update total
-						
-						if (otherTileElevation > elevation)
-						{
-							baseHigherElevationLandRockyTileCount += otherTileElevation - elevation;
-						}
-						
-					}
-					
-					// update total across bases
-					
-					minBaseHigherElevationLandRockyTileCount = std::min(minBaseHigherElevationLandRockyTileCount, baseHigherElevationLandRockyTileCount);
-					
-				}
-				
-				debug("(%3d,%3d) minBaseHigherElevationLandRockyTileCount=%d\n", getX(tile), getY(tile), minBaseHigherElevationLandRockyTileCount);
-				
-				mineral += -minBaseHigherElevationLandRockyTileCount;
 				
 			}
 
@@ -3898,8 +3418,9 @@ Estimates condenser yield score in adjacent tiles.
 */
 double estimateCondenserExtraYieldScore(MAP *improvedTile, const std::vector<int> *actions)
 {
-	int x = getX(improvedTile);
-	int y = getY(improvedTile);
+	int mapIndex = getMapIndexByPointer(improvedTile);
+	int x = getX(mapIndex);
+	int y = getY(mapIndex);
 
 	Faction *faction = &(Factions[aiFactionId]);
 
@@ -3994,29 +3515,24 @@ double estimateCondenserExtraYieldScore(MAP *improvedTile, const std::vector<int
 
 	for (MAP *tile : getBaseAdjacentTiles(x, y, true))
 	{
-		// exclude ocean
+		// exclude non terraformable site
+		
+		if (!isValidTerraformingSite(tile))
+			continue;
+		
+		// exclude non conventional terraformable site
+		
+		if (!isValidConventionalTerraformingSite(tile))
+			continue;
+		
+		// exclude ocean - not affected by condenser
 
 		if (is_ocean(tile))
 			continue;
 
-		// exclude base
-
-		if (map_has_item(tile, TERRA_BASE_IN_TILE))
-			continue;
-
-		// exclude great dunes - they don't get more wet
+		// exclude great dunes - not affected by condenser
 
 		if (map_has_landmark(tile, LM_DUNES))
-			continue;
-
-		// exclude monotith - it is not affected by rainfall
-
-		if (map_has_item(tile, TERRA_MONOLITH))
-			continue;
-
-		// exclude not workable tiles
-
-		if (workableTiles.count(tile) == 0)
 			continue;
 
 		// estimate rainfall improved by condenser
@@ -4113,69 +3629,9 @@ double estimateCondenserExtraYieldScore(MAP *improvedTile, const std::vector<int
 
 	}
 
-//	// calculate good placement
-//	// add a mismatch point for rainfall level below max for each side tile using rainfall
-//
-//	// [0.0, 24.0]
-//	double borderMismatch = 0.0;
-//
-//	for (int dx = -4; dx <= +4; dx++)
-//	{
-//		for (int dy = -(4 - abs(dx)); dy <= +(4 - abs(dx)); dy += 2)
-//		{
-//			// only outer rim tiles
-//
-//			if (abs(dx) + abs(dy) != 4)
-//				continue;
-//
-//			// exclude corners
-//
-//			if (abs(dx) == 4 || abs(dy) == 4)
-//				continue;
-//
-//			// build tile
-//
-//			MAP *tile = getMapTile(x + dx, y + dy);
-//			if (!tile)
-//				continue;
-//
-//			// exclude ocean
-//
-//			if (is_ocean(tile))
-//				continue;
-//
-//			// exclude base
-//
-//			if (map_has_item(tile, TERRA_BASE_IN_TILE))
-//				continue;
-//
-//			// exclude great dunes - they don't get more wet
-//
-//			if (map_has_landmark(tile, LM_DUNES))
-//				continue;
-//
-//			// exclude monotith - it is not affected by rainfall
-//
-//			if (map_has_item(tile, TERRA_MONOLITH))
-//				continue;
-//
-//			// exclude current rocky tiles
-//
-//			if (map_rockiness(tile) == 2)
-//				continue;
-//
-//			// add to borderMismatch
-//
-//			borderMismatch += (double)(2 - map_rainfall(tile));
-//
-//		}
-//
-//	}
-//
 	// calculate bonus
 	// rainfall bonus should be at least 2 for condenser to make sense
 
-//	double bonus = sign * (conf.ai_terraforming_nutrientWeight * (2.0 * (totalRainfallImprovement - 4.0)) - borderMismatch / 4.0);
 	double bonus = sign * (conf.ai_terraforming_nutrientWeight * (totalRainfallImprovement - 2.0));
 
 	debug("\t\tsign=%+1d, totalRainfallImprovement=%6.3f, bonus=%+6.3f\n", sign, totalRainfallImprovement, bonus);
@@ -4192,8 +3648,9 @@ This is very approximate.
 */
 double estimateAquiferExtraYieldScore(MAP *tile)
 {
-	int x = getX(tile);
-	int y = getY(tile);
+	int mapIndex = getMapIndexByPointer(tile);
+	int x = getX(mapIndex);
+	int y = getY(mapIndex);
 
 	// evaluate elevation
 
@@ -4214,8 +3671,10 @@ double estimateAquiferExtraYieldScore(MAP *tile)
 				continue;
 
 			totalTileCount++;
-
-			if (workedTileBases.count(closeTile) != 0)
+			
+			// our territory within base radius
+			
+			if (isValidYieldSite(closeTile))
 				workedTileCount++;
 
 		}
@@ -4307,9 +3766,9 @@ double estimateRaiseLandExtraYieldScore(MAP *terrafromingTile, int cost)
 	{
 		for (int dy = -(2 * affectedRange - abs(dx)); dy <= +(2 * affectedRange - abs(dx)); dy += 2)
 		{
-			// build tile
-
-			MAP *tile = getMapTile(x + dx, y + dy);
+			int mapIndex = getMapIndexByCoordinates(x + dx, y + dy);
+			TileTerraformingInfo *tileTerraformingInfo = &(tileTerraformingInfos[mapIndex]);
+			MAP *tile = getMapTile(mapIndex);
 
 			if (!tile)
 				continue;
@@ -4341,7 +3800,7 @@ double estimateRaiseLandExtraYieldScore(MAP *terrafromingTile, int cost)
 
 				// halve if not worked tile
 
-				if (workedTileBases.count(tile) == 0)
+				if (!(isValidTerraformingSite(tile) && isValidConventionalTerraformingSite(tile) && tileTerraformingInfo->workableBaseIds.size() > 0))
 				{
 					energyImprovement /= 2.0;
 				}
@@ -4706,7 +4165,7 @@ double calculateBaseResourceScore(double populationSize, double nutrientSurplus,
 /*
 Calculates yield improvement score for given base and improved tile.
 */
-double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState, std::vector<MAP *> affectedTiles)
+double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState)
 {
 	BASE *base = &(Bases[baseId]);
 	
@@ -4734,27 +4193,10 @@ double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP_STATE
 	int improvedMineralSurplus = base->mineral_surplus;
 	int improvedEnergySurplus = base->economy_total + base->psych_total + base->labs_total;
 	
-	// verify at least one affected tile is worked after improvement
+	// verify tile is worked after improvement
 	
-	std::vector<MAP *> workedTiles = getBaseWorkedTiles(baseId);
+	worked = isBaseWorkedTile(baseId, tile);
 	
-	for (MAP *affectedTile : affectedTiles)
-	{
-		for (MAP *workedTile : workedTiles)
-		{
-			if (workedTile == affectedTile)
-			{
-				worked = true;
-				break;
-			}
-			
-		}
-		
-		if (worked)
-			break;
-		
-	}
-
 	// restore original state
 	
 	setMapState(tile, currentMapState);
@@ -4890,5 +4332,91 @@ int getOngoingYieldTerraformingCount(int baseId)
 	
 	return ongoingYieldTerraformingCount;
 	
+}
+
+bool isValidYieldSite(MAP *tile)
+{
+	if (tile == nullptr)
+		return false;
+
+	// own territory
+
+	if (tile->owner != aiFactionId)
+		return false;
+
+	// base radius
+
+	if (map_has_item(tile, TERRA_BASE_RADIUS))
+		return false;
+
+	// exclude volcano mouth
+
+	if ((tile->landmarks & LM_VOLCANO) && (tile->art_ref_id == 0))
+		return false;
+
+	// all conditions met
+
+	return true;
+
+}
+
+bool isValidTerraformingSite(MAP *tile)
+{
+	if (tile == nullptr)
+		return false;
+
+	// own territory
+
+	if (tile->owner != aiFactionId)
+		return false;
+
+	// base radius
+
+	if (map_has_item(tile, TERRA_BASE_RADIUS))
+		return false;
+
+	// exclude base in tile
+
+	if (tile->items & TERRA_BASE_IN_TILE)
+		return false;
+
+	// exclude volcano mouth
+
+	if ((tile->landmarks & LM_VOLCANO) && (tile->art_ref_id == 0))
+		return false;
+
+	// exclude blocked locations
+
+	if (blockedLocations.count(tile) != 0)
+		return false;
+
+	// exclude warzone locations
+
+	if (warzoneLocations.count(tile) != 0)
+		return false;
+
+	// all conditions met
+
+	return true;
+
+}
+
+/*
+Check if this tile can be worked by base and can be terraformed.
+*/
+bool isValidConventionalTerraformingSite(MAP *tile)
+{
+	if (tile == nullptr)
+		return false;
+	
+	// no monolith
+	
+	if (map_has_item(tile, TERRA_MONOLITH))
+		return false;
+	
+	// all conditions met
+
+	return true;
+
 }
 
