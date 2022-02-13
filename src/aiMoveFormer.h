@@ -8,6 +8,25 @@
 #include "wtp.h"
 #include "game_wtp.h"
 
+struct BaseTerraformingInfo
+{
+	int unimprovedWorkedTileCount;
+	int ongoingYieldTerraformingCount;
+//	std::vector<MAP *> landRockyTiles;
+	int rockyLandTileCount;
+};
+
+struct TileTerraformingInfo
+{
+	bool ocean;
+	bool fungus;
+	bool rocky;
+	bool workable = false;
+	int workedBaseId = -1;
+	std::vector<int> workableBaseIds;
+	std::vector<int> areaWorkableBaseIds;
+};
+
 struct TERRAFORMING_OPTION
 {
 	// recognizable name
@@ -175,17 +194,10 @@ These terraforming orders affect surrounding tiles.
 */
 const std::unordered_set<int> wideRangeTerraformingOrders = {ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_DRILL_AQUIFIER};
 
-struct BaseTerraformingInfo
-{
-	int unimprovedWorkedTileCount;
-	int ongoingYieldTerraformingCount;
-	std::vector<MAP *> landRockyTiles;
-};
-
 void moveFormerStrategy();
-void populateLists();
-void moveLandFormerStrategy();
-void moveSeaFormerStrategy();
+void initializeData();
+void populateData();
+void cleanupData();
 void cancelRedundantOrders();
 void generateTerraformingRequests();
 void generateConventionalTerraformingRequest(MAP *tile);
@@ -236,7 +248,6 @@ bool isNearbyRiverPresentOrUnderConstruction(int x, int y);
 bool isNearbyRaiseUnderConstruction(int x, int y);
 bool isNearbySensorPresentOrUnderConstruction(int x, int y);
 int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle);
-int getBaseTerraformingRank(BASE *base);
 BASE *findAffectedBase(int x, int y);
 char *getTerraformingActionName(int action);
 double getSmallestAvailableFormerTravelTime(MAP *tile);
@@ -256,10 +267,13 @@ bool isInferiorYield(std::vector<YIELD> *yields, int nutrient, int mineral, int 
 bool isRaiseLandSafe(MAP *tile);
 double calculateResourceScore(double nutrient, double mineral, double energy);
 double calculateBaseResourceScore(double populationSize, double nutrientSurplus, double mineralSurplus, double nutrient, double mineral, double energy);
-double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState, std::vector<MAP *> affectedTiles);
+double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
 bool isreachable(int id, int x, int y);
 int getConnectedRegion(int region);
 bool isLandRockyTile(MAP *tile);
 int getUnimprovedWorkedTileCount(int baseId);
 int getOngoingYieldTerraformingCount(int baseId);
+bool isValidYieldSite(MAP *tile);
+bool isValidTerraformingSite(MAP *tile);
+bool isValidConventionalTerraformingSite(MAP *tile);
 
