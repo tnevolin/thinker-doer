@@ -11,4 +11,6 @@ double getBuildSitePlacementScore(MAP *tile);
 double getTileQualityScore(MAP *tile);
 bool isValidBuildSite(MAP *tile, int factionId);
 bool isValidWorkSite(MAP *tile, int factionId);
+bool isWithinExpansionRangeSameAssociation(int x, int y, int expansionRange);
+bool isWithinExpansionRange(int x, int y, int expansionRange);
 

@@ -1,12 +1,11 @@
 #include <algorithm>
 #include <vector>
-#include <unordered_set>
+#include <set>
 #include "aiHurry.h"
 #include "wtp.h"
 #include "game_wtp.h"
-#include "ai.h"
 
-const std::unordered_set<int> IMPORTANT_FACILITIES =
+const std::set<int> IMPORTANT_FACILITIES =
 {
 	FAC_RECYCLING_TANKS,
 	FAC_RECREATION_COMMONS,
@@ -42,8 +41,6 @@ void considerHurryingProduction(int factionId)
 
 	// sort out bases
 
-	double defenseDemandBasesWeightSum = 0.0;
-	std::vector<BASE_WEIGHT> defenseDemandBases;
 	double importantFacilityBasesWeightSum = 0.0;
 	std::vector<BASE_WEIGHT> importantFacilityBases;
 	double facilityBasesWeightSum = 0.0;
@@ -88,15 +85,6 @@ void considerHurryingProduction(int factionId)
 				unitBases.push_back({baseId, weight});
 				unitBasesWeightSum += weight;
 				
-				// special case combat unit in defenseDemand base
-				
-				if (isCombatUnit(item) && aiData.baseStrategies[baseId].defenseDemand > 0.0)
-				{
-					weight = aiData.baseStrategies[baseId].defenseDemand;
-					defenseDemandBases.push_back({baseId, weight});
-					defenseDemandBasesWeightSum += weight;
-				}
-					
 			}
 
 		}
@@ -124,23 +112,7 @@ void considerHurryingProduction(int factionId)
 
 	// hurry production by priority
 
-	if (defenseDemandBases.size() >= 1)
-	{
-		for
-		(
-			std::vector<BASE_WEIGHT>::iterator defenseDemandBasesIterator = defenseDemandBases.begin();
-			defenseDemandBasesIterator != defenseDemandBases.end();
-			defenseDemandBasesIterator++
-		)
-		{
-			BASE_WEIGHT *baseWeight = &(*defenseDemandBasesIterator);
-
-			int allowance = (int)(floor((double)spendPool * baseWeight->weight / defenseDemandBasesWeightSum));
-			hurryProductionPartially(baseWeight->baseId, allowance);
-		}
-
-	}
-	else if (importantFacilityBases.size() >= 1)
+	if (importantFacilityBases.size() >= 1)
 	{
 		for
 		(

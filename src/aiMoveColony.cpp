@@ -1,14 +1,18 @@
 #include "aiMoveColony.h"
 #include <algorithm>
+#include "terranx_wtp.h"
 #include "game_wtp.h"
 #include "ai.h"
+#include "aiData.h"
 #include "aiMove.h"
-#include "terranx_wtp.h"
 
 double averageLandRainfall;
 double averageLandRockiness;
 double averageLandElevation;
 double averageSeaShelf;
+std::set<MAP *> landColonyLocations;
+std::set<MAP *> seaColonyLocations;
+std::set<MAP *> airColonyLocations;
 
 void moveColonyStrategy()
 {
@@ -23,20 +27,16 @@ void moveColonyStrategy()
 void analyzeBasePlacementSites()
 {
 	std::vector<std::pair<int, double>> sortedBuildSiteScores;
-	std::unordered_set<int> colonyVehicleIds;
-	std::unordered_set<int> accessibleAssociations;
+	std::set<int> colonyVehicleIds;
+	std::set<int> accessibleAssociations;
 	
 	debug("analyzeBasePlacementSites - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	// calculate accessible associations by current colonies
+	// populate colonyLocations
 	
-	for (int vehicleId : aiData.vehicleIds)
+	for (int vehicleId : aiData.colonyVehicleIds)
 	{
-		// colony
-		
-		if (!isColonyVehicle(vehicleId))
-			continue;
-		
 		// get vehicle associations
 		
 		int vehicleAssociation = getVehicleAssociation(vehicleId);
@@ -44,6 +44,49 @@ void analyzeBasePlacementSites()
 		// update accessible associations
 		
 		accessibleAssociations.insert(vehicleAssociation);
+		
+		// populate colonyLocation
+		
+		switch (veh_triad(vehicleId))
+		{
+		case TRIAD_LAND:
+			landColonyLocations.insert(getVehicleMapTile(vehicleId));
+			break;
+			
+		case TRIAD_SEA:
+			seaColonyLocations.insert(getVehicleMapTile(vehicleId));
+			break;
+			
+		case TRIAD_AIR:
+			airColonyLocations.insert(getVehicleMapTile(vehicleId));
+			break;
+			
+		}
+		
+	}
+	
+	// calculate accessible associations by bases
+	
+	for (int baseId : aiData.baseIds)
+	{
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		// get base associations
+		
+		int baseAssociation = getAssociation(baseTile, aiFactionId);
+		
+		// update accessible associations
+		
+		accessibleAssociations.insert(baseAssociation);
+		
+		// same for ocean association
+		
+		int baseOceanAssociation = getOceanAssociation(baseTile, aiFactionId);
+		
+		if (baseOceanAssociation != -1)
+		{
+			accessibleAssociations.insert(baseOceanAssociation);
+		}
 		
 	}
 	
@@ -90,7 +133,11 @@ void analyzeBasePlacementSites()
 		
 		// calculate and store expansionRange
 		
-		int expansionRange = std::min(getNearestBaseRange(mapIndex), getNearestColonyRange(mapIndex));
+		int expansionRange = getNearestBaseRange(mapIndex);
+		if (expansionRange == INT_MAX)
+		{
+			expansionRange = getNearestColonyRange(mapIndex);
+		}
 		
 		aiData.mapData[mapIndex].expansionRange = expansionRange;
 		
@@ -99,9 +146,9 @@ void analyzeBasePlacementSites()
 		if (expansionRange > MAX_EXPANSION_RANGE + 2)
 			continue;
 		
-		// accessible or reachable
+		// accessible or potentially reachable
 		
-		if (!(accessibleAssociations.count(association) != 0 || isReachableAssociation(association, aiFactionId)))
+		if (!(accessibleAssociations.count(association) != 0 || isPotentiallyReachableAssociation(association, aiFactionId)))
 			continue;
 		
 		// valid work site
@@ -110,6 +157,20 @@ void analyzeBasePlacementSites()
 		{
 			aiData.mapData[mapIndex].qualityScore = 0.0;
 			continue;
+		}
+		
+		// accessible
+		
+		if (accessibleAssociations.count(association) != 0)
+		{
+			aiData.mapData[mapIndex].accessible = true;
+		}
+		
+		// immediately reachable
+		
+		if (accessibleAssociations.count(association) != 0 || isImmediatelyReachableAssociation(association, aiFactionId))
+		{
+			aiData.mapData[mapIndex].immediatelyReachable = true;
 		}
 		
 		// calculate tileQualityScore
@@ -139,10 +200,17 @@ void analyzeBasePlacementSites()
 		if (expansionRange > MAX_EXPANSION_RANGE)
 			continue;
 		
-		// accessible or reachable
+		// accessible or potentially reachable
 		
-		if (!(accessibleAssociations.count(association) != 0 || isReachableAssociation(association, aiFactionId)))
+		if (!(accessibleAssociations.count(association) != 0 || isPotentiallyReachableAssociation(association, aiFactionId)))
 			continue;
+
+		// disabled it for now as it takes too long
+//		// should be within expansion range of bases or colonies
+//		// important: accounting for same realm colonies ability to reach destination
+//		
+//		if (!isWithinExpansionRange(getX(tile), getY(tile), MAX_EXPANSION_RANGE))
+//			continue;
 		
 		// valid build site
 		
@@ -279,7 +347,7 @@ void analyzeBasePlacementSites()
 			
 			// can reach
 			
-			if (!isDestinationReachable(vehicleId, x, y))
+			if (!isDestinationReachable(vehicleId, x, y, false))
 				continue;
 			
 			// get range
@@ -325,6 +393,12 @@ void analyzeBasePlacementSites()
 			
 	}
 	
+	// cleanup global collections
+	
+	landColonyLocations.clear();
+	seaColonyLocations.clear();
+	airColonyLocations.clear();
+	
 }
 
 /*
@@ -332,17 +406,58 @@ Evaluates build location score based on yield score, base radius overlap and dis
 */
 double getBuildSiteRangeScore(MAP *tile)
 {
+	int mapIndex = getMapIndexByPointer(tile);
+	MapData *mapData = &(aiData.mapData[mapIndex]);
+	bool ocean = is_ocean(tile);
+	
 	// compute placement score
 	
 	double placementScore = getBuildSitePlacementScore(tile);
 	
-	// reduce placement score with range
-	// site score at the edge of max expansion range is reduced by 1
+	// estimate number of turns to destination
 	
 	int range = aiData.mapData[getMapIndexByPointer(tile)].expansionRange;
 	double speed = (is_ocean(tile) ? 4.0 : 1.5);
 	double turns = (double)range / speed;
-    double turnPenalty = conf.ai_production_build_turn_penalty * turns;
+	
+	// penalize not accessible but immediatelly reachable site with pickup time
+	// land only
+	
+	if (!ocean && !mapData->accessible && mapData->immediatelyReachable)
+	{
+		turns += 5.0;
+	}
+	
+	// penalize not accessible and not immediatelly reachable site with transport build time
+	
+	if (!ocean && !mapData->accessible && !mapData->immediatelyReachable)
+	{
+		turns += 10.0;
+	}
+	
+	// turn penalty coefficient
+	
+	double turnPenaltyCoefficient =
+		conf.ai_production_build_turn_penalty
+		+
+		(
+			(double)aiData.baseIds.size() >= conf.ai_production_build_turn_penalty_base_threshold
+			?
+				0.0
+				:
+				(conf.ai_production_build_turn_penalty_early - conf.ai_production_build_turn_penalty)
+				*
+				(conf.ai_production_build_turn_penalty_base_threshold - (double)aiData.baseIds.size())
+				/
+				conf.ai_production_build_turn_penalty_base_threshold
+		)
+	;
+	
+	// calculate turnPenalty
+	
+    double turnPenalty = turnPenaltyCoefficient * turns;
+    
+    // update score
     
     double score = placementScore - turnPenalty;
 
@@ -426,13 +541,15 @@ double getBuildSitePlacementScore(MAP *tile)
 		score = sumWeightedScore / sumWeights;
 	}
 	
+	debug("\tyield score = %6.2f\n", score);
+
 	// prefer land coast over land internal tiles
 	
 	if (!ocean)
 	{
 		if (isCoast(x, y))
 		{
-			score += 0.10;
+			score += 0.40;
 		}
 		else
 		{
@@ -441,14 +558,20 @@ double getBuildSitePlacementScore(MAP *tile)
 		
 	}
 	
-	// discourage border radius intersection
+	debug("\t+coast = %6.2f\n", score);
+
+	// discourage base radius overlap
 	
-	score -= 0.10 * (double)getFriendlyIntersectedBaseRadiusTileCount(aiFactionId, x, y);
+	score -= 0.20 * (double)getBaseRadiusTileOverlapCount(x, y);
 	
+	debug("\t+radius overlap = %6.2f\n", score);
+
 	// encourage land usage
 	
 	score += 0.20 * (double)getFriendlyLandBorderedBaseRadiusTileCount(aiFactionId, x, y);
 	
+	debug("\t+land usage = %6.2f\n", score);
+
 	// return score
 	
 	return score;
@@ -685,6 +808,161 @@ bool isValidWorkSite(MAP *tile, int factionId)
 		return false;
 	
 	return true;
+	
+}
+
+/*
+Verifies destination is reachable within same region by expansionRange steps.
+Quick check not counting ZOC.
+*/
+bool isWithinExpansionRangeSameAssociation(int x, int y, int expansionRange)
+{
+	debug("isWithinExpansionRangeSameAssociation (%3d,%3d)\n", x, y);
+	
+	MAP *tile = getMapTile(x, y);
+	bool ocean = is_ocean(tile);
+	int association = getAssociation(tile, aiFactionId);
+	std::set<MAP *> *colonyLocations = (ocean ? &seaColonyLocations : &landColonyLocations);
+	
+	debug("association = %4d\n", association);
+	
+	if (DEBUG)
+	{
+		debug("colonyLocations\n");
+		
+		for (MAP *colonyLocation : *colonyLocations)
+		{
+			debug("\t(%3d,%3d)\n", getX(colonyLocation), getY(colonyLocation));
+		}
+			
+	}
+	
+	// check initial condition
+	
+	if (aiData.baseTiles.count(tile) != 0 || colonyLocations->count(tile) != 0)
+		return true;
+	
+	// create processing arrays
+
+	std::set<MAP *> visitedTiles;
+	std::set<MAP *> currentTiles;
+	std::set<MAP *> furtherTiles;
+	
+	// initialize search
+	
+	visitedTiles.insert(tile);
+	currentTiles.insert(tile);
+	
+	// run search
+	
+	for (int step = 0; step <= expansionRange; step++)
+	{
+		// populate further Tiles
+		
+		for (MAP *currentTile : currentTiles)
+		{
+			debug("currentTile (%3d,%3d)\n", getX(currentTile), getY(currentTile));
+	
+			for (MAP *adjacentTile : getAdjacentTiles(currentTile, false))
+			{
+				debug("adjacentTile (%3d,%3d)\n", getX(adjacentTile), getY(adjacentTile));
+		
+				int adjacentAssociation = getAssociation(adjacentTile, aiFactionId);
+				debug("adjacentAssociation = %4d\n", adjacentAssociation);
+				
+				// exit condition
+				
+				if (aiData.baseTiles.count(adjacentTile) != 0 || colonyLocations->count(adjacentTile) != 0)
+					return true;
+				
+				// same association
+				
+				if (adjacentAssociation != association)
+					continue;
+				
+				// not visited one
+				
+				if (visitedTiles.count(adjacentTile) != 0)
+					continue;
+				
+				// add further Tile
+				
+				furtherTiles.insert(adjacentTile);
+				debug("added\n");
+				
+			}
+
+		}
+		
+		// rotate tiles
+		
+		currentTiles.clear();
+		currentTiles.insert(furtherTiles.begin(), furtherTiles.end());
+		visitedTiles.insert(furtherTiles.begin(), furtherTiles.end());
+		furtherTiles.clear();
+		
+	}
+	
+	return false;
+
+}
+
+/*
+Verifies destination is either:
+reachable within same region by expansionRange steps
+or in direct range for other regions or air colonies
+*/
+bool isWithinExpansionRange(int x, int y, int expansionRange)
+{
+	MAP *tile = getMapTile(x, y);
+	bool ocean = is_ocean(tile);
+	int association = getAssociation(tile, aiFactionId);
+	
+	// air colony in range
+	
+	for (MAP *airColonyLocation : airColonyLocations)
+	{
+		int range = map_range(x, y, getX(airColonyLocation), getY(airColonyLocation));
+		
+		if (range <= expansionRange)
+			return true;
+		
+	}
+	
+	if (!ocean)
+	{
+		// other association land colony in range
+		
+		for (MAP *landColonyLocation : landColonyLocations)
+		{
+			int vehicleAssociation = (ocean ? getOceanAssociation(landColonyLocation, aiFactionId) : getAssociation(landColonyLocation, aiFactionId));
+			int range = map_range(x, y, getX(landColonyLocation), getY(landColonyLocation));
+			
+			if ((vehicleAssociation == -1 || vehicleAssociation != association) && range <= expansionRange)
+				return true;
+			
+		}
+		
+	}
+	
+	// other association base in range
+	
+	for (int baseId : aiData.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		int baseAssociation = (ocean ? getOceanAssociation(baseTile, aiFactionId) : getAssociation(baseTile, aiFactionId));
+		int range = map_range(x, y, base->x, base->y);
+		
+		if ((baseAssociation == -1 || baseAssociation != association) && range <= expansionRange)
+			return true;
+		
+	}
+	
+	// direct access same association
+	
+	return isWithinExpansionRangeSameAssociation(x, y, expansionRange);
 	
 }
 

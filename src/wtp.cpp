@@ -3437,7 +3437,7 @@ HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 }
 
 /*
-Overrides faction_upkeep calls to amend vanilla and Thinker functionality.
+Overrides faction_upkeep calls to amend vanilla and Thinker AI functionality.
 */
 HOOK_API int modifiedFactionUpkeep(const int factionId)
 {
@@ -4535,7 +4535,7 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 		
 		// find accessible ocean regions
 		
-		std::unordered_set<int> adjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
+		std::set<int> adjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
 		
 		// find proper port
 		

@@ -1,9 +1,10 @@
 #include <float.h>
-#include <unordered_map>
-#include "aiTransport.h"
+#include <map>
 #include "game_wtp.h"
 #include "ai.h"
+#include "aiData.h"
 #include "aiMoveColony.h"
+#include "aiTransport.h"
 
 void moveTranportStrategy()
 {
@@ -84,7 +85,7 @@ int getCarryingArtifactVehicleId(int transportVehicleId)
 	
 	for (int loadedVehicleId : getLoadedVehicleIds(transportVehicleId))
 	{
-		if (isVehicleArtifact(loadedVehicleId))
+		if (isArtifactVehicle(loadedVehicleId))
 		{
 			carriedVehicleId = loadedVehicleId;
 		}
@@ -200,7 +201,7 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 
 	// search for reachable regions
 
-	std::unordered_set<int> reachableRegions;
+	std::set<int> reachableRegions;
 
 	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
@@ -221,10 +222,10 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 	
 	// populate region former ratios
 
-	std::unordered_map<int, int> regionBaseCounts;
-	std::unordered_map<int, int> regionFormerCounts;
-	std::unordered_map<int, BASE *> regionClosestBases;
-	std::unordered_map<int, int> regionClosestBaseRanges;
+	std::map<int, int> regionBaseCounts;
+	std::map<int, int> regionFormerCounts;
+	std::map<int, BASE *> regionClosestBases;
+	std::map<int, int> regionClosestBaseRanges;
 
 	for (int baseId = 0; baseId < *total_num_bases; baseId++)
 	{
@@ -820,14 +821,14 @@ int getCrossOceanAssociation(MAP *initialTile, MAP *terminalTile, int factionId)
 	
 	// get connections
 	
-	std::unordered_set<int> *initialConnections = getConnections(initialAssociation, factionId);
+	std::set<int> *initialConnections = getConnections(initialAssociation, factionId);
 	
 	if (initialConnections->size() == 0)
 		return -1;
 	
 	// preset path variables
 	
-	std::unordered_map<int, std::unordered_set<int>> paths;
+	std::map<int, std::set<int>> paths;
 	for (int connection : *initialConnections)
 	{
 		paths.insert({connection, {initialAssociation, connection}});
@@ -842,12 +843,12 @@ int getCrossOceanAssociation(MAP *initialTile, MAP *terminalTile, int factionId)
 		for (auto &path : paths)
 		{
 			int crossOceanAssociation = path.first;
-			std::unordered_set<int> *pathAssociations = &(path.second);
+			std::set<int> *pathAssociations = &(path.second);
 			
-			std::unordered_set<int> newPathAssociations;
+			std::set<int> newPathAssociations;
 			for (int pathAssociation : *pathAssociations)
 			{
-				std::unordered_set<int> *pathConnections = getConnections(pathAssociation, factionId);
+				std::set<int> *pathConnections = getConnections(pathAssociation, factionId);
 				for (int connection : *pathConnections)
 				{
 					if (connection == terminalAssociation)
