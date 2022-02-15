@@ -660,8 +660,8 @@ Biology Lab,                   4, 0, PrPsych, Disable,  Research and PSI
 Skunkworks,                    6, 1, Subat,   Disable,  Prototypes Free
 Hologram Theatre,              6, 2, Chaos,   Disable,  Psych and Fewer Drones
 Paradise Garden,              18, 4, SentEco, Disable,  +2 Talents
-Tree Farm,                    18, 3, EnvEcon, Disable,  Econ/Psych/Forest
-Hybrid Forest,                36, 6, PlaEcon, Disable,  Econ/Psych/Forest
+Tree Farm,                    16, 4, EnvEcon, Disable,  Econ/Psych/Forest
+Hybrid Forest,                24, 6, PlaEcon, Disable,  Econ/Psych/Forest
 Fusion Lab,                   16, 4, SupLube, Disable,  Econ and Labs Bonus
 Quantum Lab,                  32, 8, QuanMac, Disable,  Econ and Labs Bonus
 Research Hospital,            12, 3, OptComp, Disable,  Labs and Psych Bonus

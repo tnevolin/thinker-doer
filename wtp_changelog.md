@@ -1,3 +1,9 @@
+# Version 286
+
+* Reduced Tree Farm and Hybrid Forest cost and adjusted their maintenance a little
+	* Tree Farm,                    16, 3, EnvEcon, Disable,  Econ/Psych/Forest
+	* Hybrid Forest,                24, 6, PlaEcon, Disable,  Econ/Psych/Forest
+
 # Version 285
 
 * Fixed Thinker bug not setting social agenda bias and set such bias to 1000 to ensure AI sticks to their agenda.
