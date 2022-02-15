@@ -1,7 +1,7 @@
 #pragma once
 
 #include <float.h>
-#include <unordered_map>
+#include <map>
 #include "main.h"
 #include "game.h"
 #include "move.h"
@@ -98,7 +98,7 @@ struct PROXIMITY_RULE
 	// cannot build within this range of same building improvement
 	int buildingDistance;
 };
-const std::unordered_map<int, PROXIMITY_RULE> PROXIMITY_RULES =
+const std::map<int, PROXIMITY_RULE> PROXIMITY_RULES =
 {
 	{FORMER_FOREST, {0, 2}},
 	{FORMER_CONDENSER, {0, 2}},
@@ -187,12 +187,12 @@ const struct
 /*
 These terraforming orders affect base terraforming rank.
 */
-const std::unordered_set<int> yieldTerraformingOrders = {ORDER_FARM, ORDER_SOIL_ENRICHER, ORDER_MINE, ORDER_SOLAR_COLLECTOR, ORDER_PLANT_FOREST, ORDER_REMOVE_FUNGUS, ORDER_PLANT_FUNGUS, ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_THERMAL_BOREHOLE, ORDER_DRILL_AQUIFIER, ORDER_TERRAFORM_LEVEL};
+const std::set<int> yieldTerraformingOrders = {ORDER_FARM, ORDER_SOIL_ENRICHER, ORDER_MINE, ORDER_SOLAR_COLLECTOR, ORDER_PLANT_FOREST, ORDER_REMOVE_FUNGUS, ORDER_PLANT_FUNGUS, ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_THERMAL_BOREHOLE, ORDER_DRILL_AQUIFIER, ORDER_TERRAFORM_LEVEL};
 
 /*
 These terraforming orders affect surrounding tiles.
 */
-const std::unordered_set<int> wideRangeTerraformingOrders = {ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_DRILL_AQUIFIER};
+const std::set<int> wideRangeTerraformingOrders = {ORDER_CONDENSER, ORDER_ECHELON_MIRROR, ORDER_DRILL_AQUIFIER};
 
 void moveFormerStrategy();
 void initializeData();
@@ -257,7 +257,7 @@ bool isTowardBaseHorizontal(int x, int y, int dxSign);
 bool isTowardBaseVertical(int x, int y, int dySign);
 double calculateSensorScore(MAP *tile, int action);
 bool isBaseWorkedTile(BASE *base, int x, int y);
-double calculateExclusivityBonus(MAP *tile, const std::vector<int> *actions, bool levelTerrain);
+double calculateFitnessScore(MAP *tile, const TERRAFORMING_OPTION *option, bool levelTerrain);
 bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::iterator begin, std::vector<TERRAFORMING_REQUEST>::iterator end, int action, int x, int y, int range);
 double estimateCondenserExtraYieldScore(MAP *tile, const std::vector<int> *actions);
 double estimateAquiferExtraYieldScore(MAP *tile);
@@ -268,7 +268,6 @@ bool isRaiseLandSafe(MAP *tile);
 double calculateResourceScore(double nutrient, double mineral, double energy);
 double calculateBaseResourceScore(double populationSize, double nutrientSurplus, double mineralSurplus, double nutrient, double mineral, double energy);
 double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
-bool isreachable(int id, int x, int y);
 int getConnectedRegion(int region);
 bool isLandRockyTile(MAP *tile);
 int getUnimprovedWorkedTileCount(int baseId);

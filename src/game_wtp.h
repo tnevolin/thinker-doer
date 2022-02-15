@@ -2,7 +2,7 @@
 
 #include "main.h"
 #include <vector>
-#include <unordered_set>
+#include <set>
 #include <set>
 #include "terranx_types.h"
 
@@ -113,6 +113,8 @@ std::vector<MAP *> getEqualRangeTiles(int x, int y, int range);
 std::vector<MAP *> getEqualRangeTiles(MAP *tile, int range);
 std::vector<MAP *> getRangeTiles(int x, int y, int range, bool includeCenter);
 std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter);
+std::vector<MAP *> getAdjacentTiles(int x, int y, bool includeCenter);
+std::vector<MAP *> getAdjacentTiles(MAP *tile, bool includeCenter);
 
 // =======================================================
 // iterating surrounding locations - end
@@ -177,7 +179,7 @@ MAP *getVehicleMapTile(int vehicleId);
 bool isImprovedTile(int x, int y);
 bool isVehicleSupply(VEH *vehicle);
 bool isColonyUnit(int id);
-bool isVehicleArtifact(int id);
+bool isArtifactVehicle(int id);
 bool isColonyVehicle(int id);
 bool isUnitFormer(int unitId);
 bool isFormerVehicle(int vehicleId);
@@ -204,7 +206,7 @@ int getVehicleOffenseValue(int id);
 int getVehicleDefenseValue(int id);
 int estimateBaseProductionTurnsToComplete(int id);
 std::vector<MAP *> getBaseWorkableTiles(int baseId, bool startWithCenter);
-int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y);
+int getBaseRadiusTileOverlapCount(int x, int y);
 int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y);
 std::vector<MAP *> getBaseWorkedTiles(int baseId);
 std::vector<MAP *> getBaseWorkedTiles(BASE *base);
@@ -240,8 +242,8 @@ bool isBaseCanBuildShips(int baseId);
 bool isExploredEdge(int factionId, int x, int y);
 bool isVehicleExploring(int vehicleId);
 bool isVehicleCanHealAtThisLocation(int vehicleId);
-std::unordered_set<int> getAdjacentOceanRegions(int x, int y);
-std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y);
+std::set<int> getAdjacentOceanRegions(int x, int y);
+std::set<int> getConnectedOceanRegions(int factionId, int x, int y);
 bool isMapTileVisibleToFaction(MAP *tile, int factionId);
 bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus);
 void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
@@ -319,4 +321,5 @@ double getAlienMoraleModifier();
 MAP *getNearestLandTerritory(int x, int y, int factionId);
 int getRangeToNearestFactionBase(int x, int y, int factionId);
 int getRangeToNearestFactionColony(int x, int y, int factionId);
+void killVehicle(int vehicleId);
 

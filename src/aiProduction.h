@@ -102,6 +102,8 @@ void evaluateSeaAlienDefenseDemand();
 void evaluateAlienHuntingDemand();
 void evaluateLandAlienHuntingDemand();
 void evaluatePodPoppingDemand();
+void evaluateLandPodPoppingDemand();
+void evaluateSeaPodPoppingDemand();
 void evaluatePrototypingDemand();
 void evaluateCombatDemand();
 void addProductionDemand(int item, double priority);

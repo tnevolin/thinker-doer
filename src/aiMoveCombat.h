@@ -4,6 +4,8 @@
 #include "game.h"
 #include "game_wtp.h"
 
+const int MAX_PODPOP_DISTANCE = 10;
+
 struct COMBAT_ORDER
 {
 	int x = -1;
@@ -47,8 +49,6 @@ int applyAttackOrder(int id, COMBAT_ORDER *combatOrder);
 void setMoveOrder(int vehicleId, int x, int y, int order);
 void setAttackOrder(int vehicleId, int enemyVehicleId);
 void setKillOrder(int vehicleId);
-int processSeaExplorer(int vehicleId);
-int killVehicle(int vehicleId);
 int moveVehicle(int vehicleId, int x, int y);
 MAP *getNearestUnexploredConnectedOceanRegionLocation(int factionId, int initialLocationX, int initialLocationY);
 double getVehicleConventionalOffenseValue(int vehicleId);

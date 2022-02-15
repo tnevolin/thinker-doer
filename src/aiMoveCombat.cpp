@@ -1,11 +1,14 @@
 #include <map>
-#include <unordered_map>
+#include <map>
 #include "engine.h"
 #include "terranx_wtp.h"
+#include "wtp.h"
 #include "ai.h"
+#include "aiData.h"
 #include "aiMoveCombat.h"
+#include "aiTransport.h"
 
-std::unordered_map<int, COMBAT_ORDER> combatOrders;
+std::map<int, COMBAT_ORDER> combatOrders;
 
 /*
 Prepares combat orders.
@@ -352,7 +355,7 @@ void nativeCombatStrategy()
 
 	// list aliens on land territory
 	
-	std::unordered_set<int> alienVehicleIds;
+	std::set<int> alienVehicleIds;
 
 	for (int id = 0; id < *total_num_vehicles; id++)
 	{
@@ -368,7 +371,7 @@ void nativeCombatStrategy()
 	
 	// list scouts
 	
-	std::unordered_set<int> scoutVehicleIds;
+	std::set<int> scoutVehicleIds;
 	
 	for (int scoutVehicleId : aiData.scoutVehicleIds)
 	{
@@ -450,7 +453,7 @@ void nativeCombatStrategy()
 			{
 				// add to hunter demand
 				
-				std::unordered_map<int, int>::iterator regionAlienHunterDemandsIterator = aiData.regionAlienHunterDemands.find(alienVehicleTile->region);
+				std::map<int, int>::iterator regionAlienHunterDemandsIterator = aiData.regionAlienHunterDemands.find(alienVehicleTile->region);
 				
 				if (regionAlienHunterDemandsIterator == aiData.regionAlienHunterDemands.end())
 				{
@@ -618,9 +621,45 @@ void popLandPods()
 {
 	debug("popLandPods\n");
 	
-	// collect scouts
+	std::vector<MAP *> podLocations;
+	int assignedScouts = 0;
 	
-	std::unordered_set<int> scoutVehicleIds;
+	// collect land pods
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		int x = getX(mapIndex);
+		int y = getY(mapIndex);
+		MAP *tile = getMapTile(mapIndex);
+		
+		// exclude tile without pod
+		
+		if (goody_at(x, y) == 0)
+			continue;
+		
+		// exclude blocked location
+		
+		if (aiData.blockedLocations.count(tile) != 0)
+			continue;
+		
+		// store pod location
+		
+		podLocations.push_back(tile);
+		
+	}
+	
+	// no pods
+	
+	if (podLocations.size() == 0)
+	{
+		debug("\tno pods\n");
+		aiData.production.landPodPoppingDemand = 0.0;
+		return;
+	}
+	
+	debug("\t%d total pods\n", podLocations.size());
+	
+	// iterate available scouts
 	
 	for (int vehicleId : aiData.scoutVehicleIds)
 	{
@@ -641,122 +680,59 @@ void popLandPods()
 		if (vehicle->triad() != TRIAD_LAND)
 			continue;
 		
-		// if next to alien attack immediatelly and don't use for pod popping
+		// search for the nearest land pod
 		
-		bool reactionFire = false;
+		std::vector<MAP *>::iterator nearestPodLocationIterator = podLocations.end();
+		int nearestPodRange = INT_MAX;
 		
-		for (int alienVehicleId = 0; alienVehicleId < *total_num_vehicles; alienVehicleId++)
+		for (std::vector<MAP *>::iterator podLocationsIterator = podLocations.begin(); podLocationsIterator != podLocations.end(); podLocationsIterator++)
 		{
-			VEH *alienVehicle = &(Vehicles[alienVehicleId]);
+			MAP *tile = *podLocationsIterator;
 			
-			if (alienVehicle->faction_id != 0)
+			// skip assigned
+			
+			if (tile == nullptr)
 				continue;
 			
-			if (alienVehicle->triad() != TRIAD_LAND)
-				continue;
+			// range
 			
-			if (map_range(vehicle->x, vehicle->y, alienVehicle->x, alienVehicle->y) <= 2)
+			int range = map_range(vehicle->x, vehicle->y, getX(tile), getY(tile));
+			
+			// update best range
+			
+			if (range < nearestPodRange)
 			{
-				// set task
-				
-				transitVehicle(vehicleId, Task(MOVE, vehicleId, nullptr, alienVehicleId));
-				
-				debug("\t(%3d,%3d) -> (%3d,%3d)\n", vehicle->x, vehicle->y, alienVehicle->x, alienVehicle->y);
-				
-				// do not add to list
-				
-				reactionFire = true;
-				
-				break;
-				
+				nearestPodLocationIterator = podLocationsIterator;
+				nearestPodRange = range;
 			}
 			
 		}
 		
-		if (reactionFire)
-			continue;
-		
-		// add to list
-		
-		scoutVehicleIds.insert(vehicleId);
-		
-	}
-	
-	// collect pods
-	
-	std::unordered_set<MAP *> podLocations;
-	
-	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
-	{
-		int x = getX(mapIndex);
-		int y = getY(mapIndex);
-		MAP *tile = getMapTile(mapIndex);
-		
-		// land
-		
-		if (!isLandRegion(tile->region))
-			continue;
-		
-		if (goody_at(x, y) != 0)
+		if (nearestPodLocationIterator == podLocations.end())
 		{
-			// exclude those targetted by own vehicle
+			// no more pods
 			
-			if (isFactionTargettedLocation(tile, aiFactionId))
-				continue;
+			aiData.production.landPodPoppingDemand = 0.0;
+			debug("\t%d pods assigned\n", assignedScouts);
+			debug("\tno more pods\n");
 			
-			podLocations.insert(tile);
+			return;
 			
 		}
 		
-	}
-	
-	// match scouts with pods
-	
-	while (scoutVehicleIds.size() > 0 && podLocations.size() > 0)
-	{
-		int closestScoutVehicleId = -1;
-		MAP *closestPodLocation;
-		int minRange = INT_MAX;
+		// transit vehicle and clear pod location
 		
-		for (int vehicleId : scoutVehicleIds)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			
-			for (MAP *podLocation : podLocations)
-			{
-				int podLocationX = getX(podLocation);
-				int podLocationY = getY(podLocation);
-				
-				int range = map_range(vehicle->x, vehicle->y, podLocationX, podLocationY);
-				
-				if (range < minRange)
-				{
-					closestScoutVehicleId = vehicleId;
-					closestPodLocation = podLocation;
-					minRange = range;
-				}
-				
-			}
-			
-		}
-		
-		// not found or too far
-		
-		if (!(closestScoutVehicleId != -1 && closestPodLocation != nullptr && minRange <= 10))
-			break;
-		
-		// set tasks
-		
-		transitVehicle(closestScoutVehicleId, Task(MOVE, closestScoutVehicleId, closestPodLocation));
-		
-		debug("\t(%3d,%3d) -> (%3d,%3d)\n", Vehicles[closestScoutVehicleId].x, Vehicles[closestScoutVehicleId].y, getX(closestPodLocation), getY(closestPodLocation));
-		
-		// remove mathed pair
-		
-		scoutVehicleIds.erase(closestScoutVehicleId);
-		podLocations.erase(closestPodLocation);
+		transitVehicle(vehicleId, Task(MOVE, vehicleId, *nearestPodLocationIterator));
+		*nearestPodLocationIterator = nullptr;
+		assignedScouts++;
 		
 	}
+	
+	// update remaining demand
+	
+	aiData.production.landPodPoppingDemand = std::max(0.0, 1.0 - conf.ai_production_pod_per_scout * (double)assignedScouts / (double)podLocations.size());
+	debug("\t%d pods assigned\n", assignedScouts);
+	debug("\tlandPodPoppingDemand = %f\n", aiData.production.landPodPoppingDemand);
 	
 }
 
@@ -775,7 +751,7 @@ void popOceanPods()
 		
 		// collect scouts
 		
-		std::unordered_set<int> scoutVehicleIds;
+		std::set<int> scoutVehicleIds;
 		
 		for (int vehicleId : aiData.scoutVehicleIds)
 		{
@@ -820,7 +796,7 @@ void popOceanPods()
 		
 		// collect pods
 		
-		std::unordered_set<MAP *> podLocations;
+		std::set<MAP *> podLocations;
 		
 		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 		{
@@ -986,7 +962,7 @@ int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
 
 	// destination is unreachable
 
-	if (!isreachable(id, x, y))
+	if (!isDestinationReachable(id, x, y, false))
 		return mod_enemy_move(id);
 	
 	// at destination
@@ -1050,58 +1026,6 @@ void setKillOrder(int vehicleId)
 }
 
 /*
-Overrides sea explorer routine.
-*/
-int processSeaExplorer(int vehicleId)
-{
-	VEH* vehicle = &(Vehicles[vehicleId]);
-
-	// keep healing if can
-
-	if (isVehicleCanHealAtThisLocation(vehicleId))
-	{
-		return mod_enemy_move(vehicleId);
-	}
-
-	// find the nearest unexplored connected ocean region tile
-
-	MAP *nearestUnexploredLocation = getNearestUnexploredConnectedOceanRegionLocation(vehicle->faction_id, vehicle->x, vehicle->y);
-
-	if (nearestUnexploredLocation == nullptr)
-	{
-		// nothing more to explore
-
-		// kill unit
-
-		debug("vehicle killed: [%3d] (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y);
-		return killVehicle(vehicleId);
-
-	}
-	else
-	{
-		int nearestUnexploredLocationX = getX(nearestUnexploredLocation);
-		int nearestUnexploredLocationY = getY(nearestUnexploredLocation);
-		
-		// move vehicle to unexplored destination
-
-		debug("vehicle moved: [%3d] (%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, nearestUnexploredLocationX, nearestUnexploredLocationY);
-		return moveVehicle(vehicleId, nearestUnexploredLocationX, nearestUnexploredLocationY);
-
-	}
-
-}
-
-/*
-Kills vehicle and returns proper value as enemy_move would.
-*/
-int killVehicle(int vehicleId)
-{
-	tx_kill(vehicleId);
-	return NO_SYNC;
-
-}
-
-/*
 Sets vehicle move to order AND moves it there exhausting moves along the way.
 This is used in enemy_move routines to avoid vanilla code overriding move_to order.
 */
@@ -1121,7 +1045,7 @@ MAP *getNearestUnexploredConnectedOceanRegionLocation(int factionId, int initial
 
 	// get ocean connected regions
 
-	std::unordered_set<int> connectedOceanRegions = getConnectedOceanRegions(factionId, initialLocationX, initialLocationY);
+	std::set<int> connectedOceanRegions = getConnectedOceanRegions(factionId, initialLocationX, initialLocationY);
 
 	debug("\tconnectedOceanRegions\n");
 
@@ -1593,7 +1517,7 @@ std::vector<int> getReachableEnemies(int vehicleId)
 	
 	int remainedMovementPoints = mod_veh_speed(vehicleId) - vehicle->road_moves_spent;
 	
-	std::unordered_map<MAP *, int> travelCosts;
+	std::map<MAP *, int> travelCosts;
 	travelCosts.insert({vehicleTile, 0});
 	
 	std::set<MAP *> iterableLocations;
@@ -1603,7 +1527,7 @@ std::vector<int> getReachableEnemies(int vehicleId)
 	{
 		// iterate iterable locations
 		
-		std::unordered_set<MAP *> newIterableLocations;
+		std::set<MAP *> newIterableLocations;
 		
 		for
 		(

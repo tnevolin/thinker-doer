@@ -333,6 +333,8 @@ struct Config {
     double ai_production_min_native_protection;
     double ai_production_max_native_protection;
     double ai_production_native_protection_priority;
+    double ai_production_pod_per_scout;
+    double ai_production_pod_popping_priority;
     int ai_production_max_unpopulated_range;
     double ai_production_expansion_coverage;
     double ai_production_ocean_expansion_coverage;
@@ -366,11 +368,14 @@ struct Config {
     double ai_production_build_weight_rockiness;
     double ai_production_build_weight_elevation;
     double ai_production_build_weight_deep;
+    double ai_production_build_turn_penalty_base_threshold;
+    double ai_production_build_turn_penalty_early;
     double ai_production_build_turn_penalty;
     double ai_terraforming_nutrientWeight;
     int ai_terraforming_factions_enabled;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
+	double ai_terraforming_completion_bonus;
 	double ai_terraforming_rank_multiplier;
 	double ai_terraforming_land_rocky_tile_threshold;
 	double ai_terraforming_travel_time_multiplier;
@@ -382,7 +387,7 @@ struct Config {
 	double ai_terraforming_networkCoverageThreshold;
 	double ai_terraforming_nearbyForestKelpPenalty;
 	double ai_terraforming_rankMultiplier;
-	double ai_terraforming_exclusivityMultiplier;
+	double ai_terraforming_fitnessMultiplier;
 	double ai_terraforming_baseNutrientThresholdRatio;
 	double ai_terraforming_baseNutrientDemandMultiplier;
 	double ai_terraforming_baseMineralThresholdRatio;

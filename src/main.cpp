@@ -702,6 +702,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_native_protection_priority = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_pod_per_scout"))
+    {
+        cf->ai_production_pod_per_scout = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_pod_popping_priority"))
+    {
+        cf->ai_production_pod_popping_priority = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_max_unpopulated_range"))
     {
         cf->ai_production_max_unpopulated_range = atoi(value);
@@ -834,6 +842,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_build_weight_deep = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_build_turn_penalty_base_threshold"))
+    {
+        cf->ai_production_build_turn_penalty_base_threshold = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_build_turn_penalty_early"))
+    {
+        cf->ai_production_build_turn_penalty_early = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_build_turn_penalty"))
     {
         cf->ai_production_build_turn_penalty = atof(value);
@@ -853,6 +869,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_terraforming_energyWeight"))
     {
         cf->ai_terraforming_energyWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_completion_bonus"))
+    {
+        cf->ai_terraforming_completion_bonus = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_rank_multiplier"))
     {
@@ -898,9 +918,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_rankMultiplier = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_exclusivityMultiplier"))
+    else if (MATCH("wtp", "ai_terraforming_fitnessMultiplier"))
     {
-        cf->ai_terraforming_exclusivityMultiplier = atof(value);
+        cf->ai_terraforming_fitnessMultiplier = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_baseNutrientThresholdRatio"))
     {

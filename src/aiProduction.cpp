@@ -1,16 +1,17 @@
 #include <set>
-#include <unordered_set>
+#include <set>
 #include <map>
-#include <unordered_map>
+#include <map>
 #include "engine.h"
 #include "game.h"
 #include "game_wtp.h"
 #include "terranx_wtp.h"
-#include "aiProduction.h"
 #include "ai.h"
+#include "aiData.h"
+#include "aiProduction.h"
 #include "aiMoveColony.h"
 
-const std::unordered_set<int> MANAGED_FACILITIES
+const std::set<int> MANAGED_FACILITIES
 	{
 		FAC_HAB_COMPLEX,
 		FAC_HABITATION_DOME,
@@ -1129,6 +1130,12 @@ void evaluateLandColonyDemand()
 
 	int optimalColonyUnitId = findOptimalColonyUnit(base->faction_id, TRIAD_LAND, base->mineral_surplus);
 
+	if (optimalColonyUnitId == -1)
+	{
+		debug("\t\tno land/air colony unit found\n");
+		return;
+	}
+
 	debug("\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, optimalColonyUnitId=%-25s\n", TRIAD_LAND, base->mineral_surplus, Units[optimalColonyUnitId].name);
 
 	// set base demand
@@ -1194,6 +1201,12 @@ void evaluateSeaColonyDemand()
 	// find optimal colony unit
 
 	int optimalColonyUnitId = findOptimalColonyUnit(base->faction_id, TRIAD_SEA, base->mineral_surplus);
+	
+	if (optimalColonyUnitId == -1)
+	{
+		debug("\t\tno sea/air colony unit found\n");
+		return;
+	}
 
 	debug("\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, optimalColonyUnitId=%-25s\n", TRIAD_SEA, base->mineral_surplus, Units[optimalColonyUnitId].name);
 
@@ -1757,16 +1770,74 @@ void evaluateLandAlienHuntingDemand()
 
 void evaluatePodPoppingDemand()
 {
+	evaluateLandPodPoppingDemand();
+	evaluateSeaPodPoppingDemand();
+}
+
+void evaluateLandPodPoppingDemand()
+{
+	BASE *base = productionDemand.base;
+
+	debug("evaluateLandPodPoppingDemand\n");
+	
+	// base requires at least twice minimal mineral surplus requirement to build scout
+	
+	if (base->mineral_surplus < conf.ai_production_unit_min_mineral_surplus)
+	{
+		debug("\tmineral surplus < %d\n", conf.ai_production_unit_min_mineral_surplus);
+		return;
+	}
+	
+	// no demand
+	
+	if (aiData.production.landPodPoppingDemand <= 0.0)
+	{
+		debug("\tlandPodPoppingDemand < 0.0\n");
+		return;
+	}
+
+	// set priority
+
+	double priority =
+		conf.ai_production_pod_popping_priority
+		*
+		aiData.production.landPodPoppingDemand
+		*
+		((double)base->mineral_surplus / (double)aiData.maxMineralSurplus)
+	;
+	
+	debug("\tlandPodPoppingDemand=%f, mineral_surplus=%d, priority=%f\n", aiData.production.landPodPoppingDemand, base->mineral_surplus, priority);
+	
+	// select scout unit
+	
+	int podPopperUnitId = findScoutUnit(aiFactionId, TRIAD_LAND);
+	
+	if (podPopperUnitId < 0)
+	{
+		debug("\tno scout unit\n");
+		return;
+	}
+	
+	debug("\tscout unit: %s\n", prod_name(podPopperUnitId));
+	
+	// add production demand
+	
+	addProductionDemand(podPopperUnitId, priority);
+
+}
+
+void evaluateSeaPodPoppingDemand()
+{
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 
 	debug("evaluatePodPoppingDemand\n");
 	
-	// base requires at least twice minimal mineral surplus requirement to build pod popper
+	// base requires at least twice minimal mineral surplus requirement to build scout
 	
 	if (base->mineral_surplus < conf.ai_production_unit_min_mineral_surplus)
 	{
-		debug("\tbase cannot build unit\n");
+		debug("\tmineral surplus < %d\n", conf.ai_production_unit_min_mineral_surplus);
 		return;
 	}
 
@@ -3234,7 +3305,7 @@ int selectCombatUnit(int baseId, int targetBaseId)
 	
 	// calculate existing unit class proportions
 	
-	std::unordered_map<int, double> existingUnitClassWeights;
+	std::map<int, double> existingUnitClassWeights;
 	
 	for (const std::pair<int, UnitStrength> &defenderUnitStrengthEntry : defenderStrength->unitStrengths)
 	{
@@ -3262,7 +3333,7 @@ int selectCombatUnit(int baseId, int targetBaseId)
 		
 		// get existing unit class proportion
 		
-		std::unordered_map<int, double>::iterator existingUnitClassWeightsIterator = existingUnitClassWeights.find(unitClass);
+		std::map<int, double>::iterator existingUnitClassWeightsIterator = existingUnitClassWeights.find(unitClass);
 		double existingUnitClassWeight = (existingUnitClassWeightsIterator == existingUnitClassWeights.end() ? 0.0 : existingUnitClassWeightsIterator->second);
 		
 		// calculate priority

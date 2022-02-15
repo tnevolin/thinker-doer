@@ -1,13 +1,14 @@
 #include <float.h>
 #include <math.h>
 #include <vector>
-#include <unordered_set>
+#include <set>
 #include <map>
-#include <unordered_map>
+#include <map>
 #include "game.h"
 #include "terranx_wtp.h"
 #include "wtp.h"
 #include "ai.h"
+#include "aiData.h"
 #include "aiMoveFormer.h"
 
 // global precomputed values
@@ -19,27 +20,28 @@ std::vector<MAP *> terraformingSites;
 std::vector<MAP *> conventionalTerraformingSites;
 
 double networkDemand = 0.0;
-std::unordered_set<MAP *> harvestedTiles;
-std::unordered_set<MAP *> terraformedTiles;
-std::unordered_set<MAP *> terraformedForestTiles;
-std::unordered_set<MAP *> terraformedCondenserTiles;
-std::unordered_set<MAP *> terraformedMirrorTiles;
-std::unordered_set<MAP *> terraformedBoreholeTiles;
-std::unordered_set<MAP *> terraformedAquiferTiles;
-std::unordered_set<MAP *> terraformedRaiseTiles;
-std::unordered_set<MAP *> terraformedSensorTiles;
+std::set<MAP *> harvestedTiles;
+std::set<MAP *> terraformedTiles;
+std::set<MAP *> terraformedConventionalTiles;
+std::set<MAP *> terraformedForestTiles;
+std::set<MAP *> terraformedCondenserTiles;
+std::set<MAP *> terraformedMirrorTiles;
+std::set<MAP *> terraformedBoreholeTiles;
+std::set<MAP *> terraformedAquiferTiles;
+std::set<MAP *> terraformedRaiseTiles;
+std::set<MAP *> terraformedSensorTiles;
 std::vector<FORMER_ORDER> formerOrders;
 std::map<int, FORMER_ORDER *> vehicleFormerOrders;
 std::vector<MAP *> territoryTiles;
 std::vector<TERRAFORMING_REQUEST> terraformingRequests;
-std::unordered_set<MAP *> targetedTiles;
-std::unordered_set<MAP *> connectionNetworkLocations;
-std::unordered_map<MAP *, std::unordered_map<int, std::vector<BASE_INFO>>> nearbyBaseSets;
-std::unordered_map<int, int> seaRegionMappings;
-std::unordered_map<MAP *, int> coastalBaseRegionMappings;
-std::unordered_set<MAP *> blockedLocations;
-std::unordered_set<MAP *> warzoneLocations;
-std::unordered_set<MAP *> zocLocations;
+std::set<MAP *> targetedTiles;
+std::set<MAP *> connectionNetworkLocations;
+std::map<MAP *, std::map<int, std::vector<BASE_INFO>>> nearbyBaseSets;
+std::map<int, int> seaRegionMappings;
+std::map<MAP *, int> coastalBaseRegionMappings;
+std::set<MAP *> blockedLocations;
+std::set<MAP *> warzoneLocations;
+std::set<MAP *> zocLocations;
 
 /*
 Prepares former orders.
@@ -196,7 +198,7 @@ void populateData()
 
 				if (nearbyBaseSets.count(tile) == 0)
 				{
-					nearbyBaseSets[tile] = std::unordered_map<int, std::vector<BASE_INFO>>();
+					nearbyBaseSets[tile] = std::map<int, std::vector<BASE_INFO>>();
 					nearbyBaseSets[tile][0] = std::vector<BASE_INFO>();
 					nearbyBaseSets[tile][1] = std::vector<BASE_INFO>();
 				}
@@ -396,6 +398,32 @@ void populateData()
 				MAP *terraformedTile = getMapTile(vehicle->x, vehicle->y);
 
 				terraformedTiles.insert(terraformedTile);
+				
+				// conventional terraforming sites
+				
+				if
+				(
+					vehicle->move_status == ORDER_FARM
+					||
+					vehicle->move_status == ORDER_SOIL_ENRICHER
+					||
+					vehicle->move_status == ORDER_MINE
+					||
+					vehicle->move_status == ORDER_SOLAR_COLLECTOR
+					||
+					vehicle->move_status == ORDER_CONDENSER
+					||
+					vehicle->move_status == ORDER_ECHELON_MIRROR
+					||
+					vehicle->move_status == ORDER_THERMAL_BOREHOLE
+					||
+					vehicle->move_status == ORDER_PLANT_FOREST
+					||
+					vehicle->move_status == ORDER_PLANT_FUNGUS
+				)
+				{
+					terraformedConventionalTiles.insert(terraformedTile);
+				}
 
 				// populate terraformed forest tiles
 
@@ -532,6 +560,7 @@ void populateData()
 
 	// populate tileTerraformingInfos
 	// populate validTerraformingSites
+	// populate validConventionalTerraformingSites
 	
 	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
@@ -584,24 +613,24 @@ void populateData()
 
 		for (int offset = 1; offset < BASE_OFFSET_COUNT_RADIUS; offset++)
 		{
-			int x = base->x + BASE_TILE_OFFSETS[offset][0];
+			int x = wrap(base->x + BASE_TILE_OFFSETS[offset][0]);
 			int y = base->y + BASE_TILE_OFFSETS[offset][1];
 			int mapIndex = getMapIndexByCoordinates(x, y);
 			MAP *tile = getMapTile(mapIndex);
 			TileTerraformingInfo *tileTerraformingInfo = &(tileTerraformingInfos[mapIndex]);
 			
-			// valid base terraforming site
+			// valid terraforming site
 			
 			if (!isValidTerraformingSite(tile))
 				continue;
 			
 			// update worked base
 			
-			tileTerraformingInfos->workedBaseId = ((base->worked_tiles & (0x1 << offset)) != 0);
+			tileTerraformingInfo->workedBaseId = ((base->worked_tiles & (0x1 << offset)) != 0);
 			
 			// update workable bases
 			
-			tileTerraformingInfos->workableBaseIds.push_back(baseId);
+			tileTerraformingInfo->workableBaseIds.push_back(baseId);
 			
 			// update base rocky land tile count
 			
@@ -691,6 +720,7 @@ void cleanupData()
 	
 	harvestedTiles.clear();
 	terraformedTiles.clear();
+	terraformedConventionalTiles.clear();
 	terraformedForestTiles.clear();
 	terraformedCondenserTiles.clear();
 	terraformedMirrorTiles.clear();
@@ -926,7 +956,7 @@ void applyProximityRules()
 
 		bool tooClose = false;
 
-		std::unordered_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(terraformingRequest->action);
+		std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(terraformingRequest->action);
 		if (proximityRulesIterator != PROXIMITY_RULES.end())
 		{
 			const PROXIMITY_RULE *proximityRule = &(proximityRulesIterator->second);
@@ -998,7 +1028,7 @@ void assignFormerOrders()
 			
 			// reachable
 			
-			if (!isDestinationReachable(vehicleId, x, y))
+			if (!isDestinationReachable(vehicleId, x, y, false))
 				continue;
 			
 			// get range
@@ -1118,12 +1148,12 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 		int terraformingTime = 0;
 		double penaltyScore = 0.0;
 		double improvementScore = 0.0;
+		bool levelTerrain = false;
 
 		// process actions
 		
 		int availableActionCount = 0;
 		int completedActionCount = 0;
-		bool levelTerrain = false;
 		
 		for(int action : option.actions)
 		{
@@ -1185,7 +1215,7 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 			if (!ocean && rocky && isLevelTerrainRequired(ocean, action))
 			{
 				levelTerrain = true;
-
+				
 				int levelTerrainAction = FORMER_LEVEL_TERRAIN;
 				
 				// store first action
@@ -1283,27 +1313,51 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 
 		double condenserExtraYieldScore = estimateCondenserExtraYieldScore(tile, &(option.actions));
 
-		// calculate exclusivity bonus
-
-		double exclusivityBonus = calculateExclusivityBonus(tile, &(option.actions), levelTerrain);
+		// fit score
+		
+		double fitnessScore = calculateFitnessScore(tile, &option, levelTerrain);
+		
+		// completion bonus is given if improvement set is partially completed and no improvement will be destroyed in the process
+		
+		double completionScore;
+		
+		if
+		(
+			completedActionCount > 0
+			&&
+			// no leveling
+			!levelTerrain
+			&&
+			// current state (except fungus) is a subset of improved state
+			((currentMapState.items & ~TERRA_FUNGUS) & improvedMapState.items) == (currentMapState.items & ~TERRA_FUNGUS)
+		)
+		{
+			completionScore = conf.ai_terraforming_completion_bonus;
+		}
+		else
+		{
+			completionScore = 0.0;
+		}
 		
 		// summarize score
 
-		improvementScore = penaltyScore + surplusEffectScore + condenserExtraYieldScore + exclusivityBonus;
+		improvementScore = penaltyScore + surplusEffectScore + condenserExtraYieldScore + fitnessScore + completionScore;
 		
 		// calculate terraforming score
 
-		double terraformingScore = improvementScore / ((double)terraformingTime + conf.ai_terraforming_travel_time_multiplier * travelTime);
+		double terraformingScore = improvementScore * pow(0.5, ((double)terraformingTime + conf.ai_terraforming_travel_time_multiplier * travelTime) / conf.ai_terraforming_time_scale);
+
 
 		debug
 		(
-			"\t\t%-20s=%6.3f : penalty=%6.3f, surplusEffect=%6.3f, condenser=%6.3f, exclusivity=%6.3f, combined=%6.3f, time=%2d, travel=%f\n",
+			"\t\t%-20s=%6.3f : penalty=%6.3f, surplusEffect=%6.3f, condenser=%6.3f, fitness=%6.3f, completion=%6.3f, combined=%6.3f, time=%2d, travel=%f\n",
 			"terraformingScore",
 			terraformingScore,
 			penaltyScore,
 			surplusEffectScore,
 			condenserExtraYieldScore,
-			exclusivityBonus,
+			fitnessScore,
+			completionScore,
 			improvementScore,
 			terraformingTime,
 			travelTime
@@ -1743,11 +1797,11 @@ void calculateSensorTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerrafo
 
 	// calculate exclusivity bonus
 
-	double exclusivityBonus = calculateExclusivityBonus(tile, &(option->actions), false) / 4.0;
+	double fitnessScore = calculateFitnessScore(tile, option, false);
 
 	// summarize score
 
-	improvementScore = sensorScore + exclusivityBonus;
+	improvementScore = sensorScore + fitnessScore;
 
 	// do not create request for zero score
 
@@ -1778,10 +1832,10 @@ void calculateSensorTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerrafo
 	debug("calculateTerraformingScore: (%3d,%3d)\n", x, y);
 	debug
 	(
-		"\t%-10s: sensorScore=%6.3f, exclusivityBonus=%6.3f, improvementScore=%6.3f, terraformingTime=%2d, travelTime=%f, final=%6.3f\n",
+		"\t%-10s: sensorScore=%6.3f, fitnessScore=%6.3f, improvementScore=%6.3f, terraformingTime=%2d, travelTime=%f, final=%6.3f\n",
 		option->name,
 		sensorScore,
-		exclusivityBonus,
+		fitnessScore,
 		improvementScore,
 		terraformingTime,
 		travelTime,
@@ -2255,7 +2309,7 @@ bool sendVehicleToDestination(int id, int x, int y)
 
 bool isNearbyForestUnderConstruction(int x, int y)
 {
-	std::unordered_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_FOREST);
+	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_FOREST);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2288,7 +2342,7 @@ bool isNearbyForestUnderConstruction(int x, int y)
 
 bool isNearbyCondeserUnderConstruction(int x, int y)
 {
-	std::unordered_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_CONDENSER);
+	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_CONDENSER);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2321,7 +2375,7 @@ bool isNearbyCondeserUnderConstruction(int x, int y)
 
 bool isNearbyMirrorUnderConstruction(int x, int y)
 {
-	std::unordered_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_ECH_MIRROR);
+	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_ECH_MIRROR);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2360,7 +2414,7 @@ bool isNearbyMirrorUnderConstruction(int x, int y)
 
 bool isNearbyBoreholePresentOrUnderConstruction(int x, int y)
 {
-	std::unordered_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_THERMAL_BORE);
+	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_THERMAL_BORE);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2399,7 +2453,7 @@ bool isNearbyBoreholePresentOrUnderConstruction(int x, int y)
 
 bool isNearbyRiverPresentOrUnderConstruction(int x, int y)
 {
-	std::unordered_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_AQUIFER);
+	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_AQUIFER);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2438,7 +2492,7 @@ bool isNearbyRiverPresentOrUnderConstruction(int x, int y)
 
 bool isNearbyRaiseUnderConstruction(int x, int y)
 {
-	std::unordered_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_RAISE_LAND);
+	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_RAISE_LAND);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2472,7 +2526,7 @@ bool isNearbyRaiseUnderConstruction(int x, int y)
 
 bool isNearbySensorPresentOrUnderConstruction(int x, int y)
 {
-	std::unordered_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_SENSOR);
+	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_SENSOR);
 
 	// do not do anything if proximity rule is not defined
 
@@ -3218,172 +3272,186 @@ bool isBaseWorkedTile(BASE *base, int x, int y)
 
 }
 
-double calculateExclusivityBonus(MAP *tile, const std::vector<int> *actions, bool levelTerrain)
+/*
+Evaluates how fit this improvement is at this place based on resources it DOES NOT use.
+*/
+double calculateFitnessScore(MAP *tile, const TERRAFORMING_OPTION *option, bool levelTerrain)
 {
 	int mapIndex = getMapIndexByPointer(tile);
 	TileTerraformingInfo *tileTerraformingInfo = &(tileTerraformingInfos[mapIndex]);
+	int x = getX(mapIndex);
+	int y = getY(mapIndex);
+	
+	// no fitness score for ocean
+	
+	if (is_ocean(tile))
+		return 0.0;
+	
+	// average levels
+	
+	double averageRainfall = 1.0;
+	double averageRockiness = 1.0;
+	double averageElevation = 1.0;
 	
 	// collect tile values
 
 	int rainfall = map_rainfall(tile);
 	int rockiness = map_rockiness(tile);
 	int elevation = map_elevation(tile);
-
-	// build action set
-
-	std::set<int> actionSet;
-	for
-	(
-		std::vector<int>::const_iterator actionsIterator = actions->begin();
-		actionsIterator != actions->end();
-		actionsIterator++
-	)
-	{
-		int action = *actionsIterator;
-
-		actionSet.insert(action);
-
-	}
 	
-	if (levelTerrain)
+	// evaluate effect
+	
+	double nutrientEffect = 0.0;
+	double mineralEffect = 0.0;
+	double energyEffect = 0.0;
+	
+	switch(option->requiredAction)
 	{
-		actionSet.insert(FORMER_LEVEL_TERRAIN);
-	}
-
-	// calculate resource exclusivity bonuses
-
-	double nutrient = 0.0;
-	double mineral = 0.0;
-	double energy = 0.0;
-
-	if (!is_ocean(tile))
-	{
-		// improvements ignoring everything
-		if
-		(
-			actionSet.count(FORMER_FOREST) != 0
-			||
-			actionSet.count(FORMER_PLANT_FUNGUS) != 0
-			||
-			actionSet.count(FORMER_THERMAL_BORE) != 0
-		)
+	case FORMER_MINE:
+		
+		if (rockiness == 2)
 		{
-			// nothing is used
-
-			nutrient = EXCLUSIVITY_LEVELS.rainfall - rainfall;
-			mineral = EXCLUSIVITY_LEVELS.rockiness - rockiness;
-			energy = EXCLUSIVITY_LEVELS.elevation - elevation;
-
+			// not used nutrients and not used energy
+			
+			nutrientEffect += -((double)rainfall - averageRainfall);
+			energyEffect += -((double)elevation - averageElevation);
+			
+			// reduced nutrients from nutrient bonus
+			
+			if (bonus_at(x, y) == 1)
+			{
+				nutrientEffect += (double)(std::max(1, (2 + Rules->nutrient_effect_mine_sq)) - 2);
+			}
+			
 		}
 		else
 		{
-			// leveling rocky tile is penalizable if there are not many rocky tiles around bases
-
-			if (actionSet.count(FORMER_LEVEL_TERRAIN) != 0 && rockiness == 2)
-			{
-				int minBaseLandRockyTileCount = INT_MAX;
-				
-				for (int baseId : tileTerraformingInfo->workableBaseIds)
-				{
-					minBaseLandRockyTileCount = std::min(minBaseLandRockyTileCount, (int)baseTerraformingInfos[baseId].rockyLandTileCount);
-				}
-				
-				debug("(%3d,%3d) minBaseLandRockyTileCount=%d\n", getX(tile), getY(tile), minBaseLandRockyTileCount);
-				
-				if (minBaseLandRockyTileCount < conf.ai_terraforming_land_rocky_tile_threshold)
-				{
-					mineral += minBaseLandRockyTileCount - conf.ai_terraforming_land_rocky_tile_threshold;
-				}
-				
-			}
-
-			// not building mine on mineral bonus wastes 3 mineral
+			// not used energy
 			
-			if (actionSet.count(FORMER_MINE) == 0 && isMineBonus(getX(tile), getY(tile)))
+			energyEffect += -((double)elevation - averageElevation);
+			
+			// reduced nutrients
+			
+			int nutrientYield = rainfall + *TERRA_IMPROVED_LAND_NUTRIENT + (bonus_at(x, y) == 1 ? 2 : 0);
+			
+			if (nutrientYield > 1)
 			{
-				mineral += -3;
+				nutrientEffect += (double)(std::max(1, (nutrientYield + Rules->nutrient_effect_mine_sq)) - nutrientYield);
 			}
-
-			// not building solar collector or echelon mirror wastes elevation
-
-			if (actionSet.count(FORMER_SOLAR) == 0 && actionSet.count(FORMER_ECH_MIRROR) == 0)
-			{
-				energy += EXCLUSIVITY_LEVELS.elevation - elevation;
-			}
-
-			// sensor is better built in flat
-
-			if (actionSet.count(FORMER_SENSOR))
-			{
-				mineral += EXCLUSIVITY_LEVELS.rockiness - rockiness;
-			}
-
+			
+		}
+		
+		break;
+		
+	case FORMER_SOLAR:
+		
+		// no fitness
+		
+		break;
+		
+	case FORMER_CONDENSER:
+		
+		// not used energy
+		
+		energyEffect += -((double)elevation - averageElevation);
+			
+		break;
+		
+	case FORMER_ECH_MIRROR:
+		
+		// no fitness
+		
+		break;
+		
+	case FORMER_THERMAL_BORE:
+	case FORMER_FOREST:
+	case FORMER_PLANT_FUNGUS:
+		
+		// not used nutrients and not used minerals and not used energy
+		
+		nutrientEffect += -((double)rainfall - averageRainfall);
+		mineralEffect += -((double)rockiness - averageRockiness);
+		energyEffect += -((double)elevation - averageElevation);
+		
+		break;
+		
+	case FORMER_SENSOR:
+		
+		if (map_has_item(tile, TERRA_FOREST | TERRA_FUNGUS | TERRA_MONOLITH))
+		{
+			// compatible with these items
+		}
+		else
+		{
+			// not used energy
+			
+			energyEffect += -((double)elevation - averageElevation);
+			
+		}
+		
+		break;
+		
+	}
+	
+	// levelTerrain
+	
+	if (levelTerrain)
+	{
+		// find min rocky tile count
+		
+		int minRockyTileCount = INT_MAX;
+		
+		for (int baseId : tileTerraformingInfo->workableBaseIds)
+		{
+			minRockyTileCount = std::min(minRockyTileCount, baseTerraformingInfos[baseId].rockyLandTileCount);
+		}
+		
+		// compute penalty
+		
+		if (minRockyTileCount < conf.ai_terraforming_land_rocky_tile_threshold)
+		{
+			mineralEffect += (double)(minRockyTileCount - conf.ai_terraforming_land_rocky_tile_threshold);
+		}
+		
+		// additional penalty for minerals in rocky tile
+		
+		if (bonus_at(getX(mapIndex), getY(mapIndex)) == 2)
+		{
+			mineralEffect += -1.0;
 		}
 		
 	}
-
-	// additional penalty for replaced improvements
 	
-	double replacedImprovementPenalty = 0.0;
+	// compute total fitness score
 
-	if (actionSet.count(FORMER_SENSOR))
-	{
-		if (map_has_item(tile, TERRA_MINE))
-		{
-			replacedImprovementPenalty -= 1.0;
-		}
-
-		if (map_has_item(tile, TERRA_SOLAR))
-		{
-			replacedImprovementPenalty -= 1.0;
-		}
-
-		if (map_has_item(tile, TERRA_CONDENSER))
-		{
-			replacedImprovementPenalty -= 2.0;
-		}
-
-		if (map_has_item(tile, TERRA_ECH_MIRROR))
-		{
-			replacedImprovementPenalty -= 1.0;
-		}
-
-		if (map_has_item(tile, TERRA_THERMAL_BORE))
-		{
-			replacedImprovementPenalty -= 2.0;
-		}
-
-	}
-	
-	double exclusivityBonus =
-		conf.ai_terraforming_exclusivityMultiplier
+	double fitnessScore =
+		conf.ai_terraforming_fitnessMultiplier
 		*
 		(
-			conf.ai_terraforming_nutrientWeight * nutrient
+			conf.ai_terraforming_nutrientWeight * nutrientEffect
 			+
-			conf.ai_terraforming_mineralWeight * mineral
+			conf.ai_terraforming_mineralWeight * mineralEffect
 			+
-			conf.ai_terraforming_energyWeight * energy
+			conf.ai_terraforming_energyWeight * energyEffect
 		)
-		+
-		replacedImprovementPenalty
 	;
 
 	debug
 	(
-		"\t\t%-20s=%6.3f : rainfall=%d, rockiness=%d, elevation=%d, nutrient=%f, mineral=%f, energy=%f, replacedImprovementPenalty=%f\n",
-		"exclusivityBonus",
-		exclusivityBonus,
+		"\t\t%-20s=%6.3f : rainfall=%d, rockiness=%d, elevation=%d, nutrientEffect=%f, mineralEffect=%f, energyEffect=%f, multiplier=%f\n",
+		"fitnessScore",
+		fitnessScore,
 		rainfall,
 		rockiness,
 		elevation,
-		nutrient,
-		mineral,
-		energy,
-		replacedImprovementPenalty
+		nutrientEffect,
+		mineralEffect,
+		energyEffect,
+		conf.ai_terraforming_fitnessMultiplier
+
 	);
 
-	return exclusivityBonus;
+	return fitnessScore;
 
 }
 
@@ -3422,35 +3490,28 @@ double estimateCondenserExtraYieldScore(MAP *improvedTile, const std::vector<int
 	int x = getX(mapIndex);
 	int y = getY(mapIndex);
 
-	Faction *faction = &(Factions[aiFactionId]);
-
-	// build action set
-
-	std::set<int> actionSet;
-	for
-	(
-		std::vector<int>::const_iterator actionsIterator = actions->begin();
-		actionsIterator != actions->end();
-		actionsIterator++
-	)
+	// check whether condenser was built or destroyed
+	
+	bool condenserAction = false;
+	
+	for (int action : *actions)
 	{
-		int action = *actionsIterator;
-
-		actionSet.insert(action);
-
+		if (action == FORMER_CONDENSER)
+		{
+			condenserAction = true;
+			break;
+		}
 	}
-
-	// check whether condenser was built or destroyed and set score sign as well
 
 	int sign;
 
 	// condenser is built
-	if (!map_has_item(improvedTile, TERRA_CONDENSER) && actionSet.count(FORMER_CONDENSER) != 0)
+	if (!map_has_item(improvedTile, TERRA_CONDENSER) && condenserAction)
 	{
 		sign = +1;
 	}
 	// condenser is destroyed
-	else if (map_has_item(improvedTile, TERRA_CONDENSER) && actionSet.count(FORMER_CONDENSER) == 0)
+	else if (map_has_item(improvedTile, TERRA_CONDENSER) && !condenserAction)
 	{
 		sign = -1;
 	}
@@ -3459,156 +3520,69 @@ double estimateCondenserExtraYieldScore(MAP *improvedTile, const std::vector<int
 	{
 		return 0.0;
 	}
-
-	// calculate forest yield with best forest facilities available
-
-	int forestNutrient = Resource->forest_sq_nutrient;
-	int forestMineral = Resource->forest_sq_mineral;
-	int forestEnergy = Resource->forest_sq_energy;
-
-	if (has_facility_tech(aiFactionId, FAC_TREE_FARM))
-	{
-		forestNutrient++;
-	}
-
-	if (has_facility_tech(aiFactionId, FAC_HYBRID_FOREST))
-	{
-		forestNutrient++;
-		forestNutrient++;
-	}
-
-	double forestYieldScore = calculateResourceScore(forestNutrient, forestMineral, forestEnergy);
-
-	// calculate fungus yield with current technologies and PLANET rating
-
-	int fungusNutrient = faction->tech_fungus_nutrient;
-	int fungusMineral = faction->tech_fungus_mineral;
-	int fungusEnergy = faction->tech_fungus_energy;
-
-	if (faction->SE_planet_pending < 0)
-	{
-		fungusNutrient = std::max(0, fungusNutrient + faction->SE_planet_pending);
-		fungusMineral = std::max(0, fungusMineral + faction->SE_planet_pending);
-		fungusEnergy = std::max(0, fungusEnergy + faction->SE_planet_pending);
-	}
-
-	double fungusYieldScore = calculateResourceScore(fungusNutrient, fungusMineral, fungusEnergy);
-
-	// pick the best yield score
-
-	double alternativeYieldScore = std::max(forestYieldScore, fungusYieldScore);
-
-	// calculate rocky mine yield score
-
-	int rockyMineMineral = 4;
-	double rockyMineYieldScore = calculateResourceScore(0.0, (double)rockyMineMineral, 0.0);
-
-	// calculate extra yield with technology
-
-	double extraNutrient = (has_terra(aiFactionId, FORMER_SOIL_ENR, false) ? 2.0 : 1.0);
-	double extraEnergy = (has_terra(aiFactionId, FORMER_ECH_MIRROR, false) ? 1.0 : 0.0);
-
+	
 	// estimate rainfall improvement
-
 	// [0.0, 9.0]
+	
 	double totalRainfallImprovement = 0.0;
 
-	for (MAP *tile : getBaseAdjacentTiles(x, y, true))
+	for (MAP *adjacentTile : getAdjacentTiles(x, y, true))
 	{
 		// exclude non terraformable site
 		
-		if (!isValidTerraformingSite(tile))
+		if (!isValidTerraformingSite(adjacentTile))
 			continue;
 		
 		// exclude non conventional terraformable site
 		
-		if (!isValidConventionalTerraformingSite(tile))
+		if (!isValidConventionalTerraformingSite(adjacentTile))
 			continue;
 		
 		// exclude ocean - not affected by condenser
 
-		if (is_ocean(tile))
+		if (is_ocean(adjacentTile))
 			continue;
 
 		// exclude great dunes - not affected by condenser
 
-		if (map_has_landmark(tile, LM_DUNES))
+		if (map_has_landmark(adjacentTile, LM_DUNES))
 			continue;
 
-		// estimate rainfall improved by condenser
+		// exclude borehole
 
-		double rainfallImprovement = 0.0;
+		if (map_has_item(adjacentTile, TERRA_THERMAL_BORE))
+			continue;
+
+		// exclude rocky areas
+
+		if (map_rockiness(adjacentTile) == 2)
+			continue;
 
 		// condenser was there but removed
 		if (sign == -1)
 		{
-			// calculate yield score
-
-			double nutrient = (double)map_rainfall(tile) + extraNutrient;
-			double mineral = (double)std::min(1, map_rockiness(tile));
-			double energy = (double)(1 + map_elevation(tile)) + extraEnergy;
-
-			double yieldScore = calculateResourceScore(nutrient, mineral, energy);
-
-			// add to improvement if it no less than alternative or rocky mine one
-
-			if
-			(
-				yieldScore > alternativeYieldScore
-				&&
-				(map_rockiness(tile) < 2 || yieldScore > rockyMineYieldScore)
-			)
+			switch(map_rainfall(adjacentTile))
 			{
-				switch (map_rainfall(tile))
-				{
-				case 0:
-					// this case probably won't happen ever but just in case
-					break;
-				case 1:
-					rainfallImprovement = 1.0;
-					break;
-				case 2:
-					// give just half because this tile could be already rainy before - we don't know
-					rainfallImprovement = 0.5;
-					break;
-				}
+			case 1:
+				totalRainfallImprovement += 1.0;
+				break;
+			case 2:
+				totalRainfallImprovement += 0.5;
+				break;
 			}
-
+			
 		}
 		// condenser wasn't there and built
 		else if (sign == +1)
 		{
-			// calculate yield score with improved rainfall
-
-			double nutrient = (double)std::max(2, map_rainfall(tile) + 1) + extraNutrient;
-			double mineral = (double)std::min(1, map_rockiness(tile));
-			double energy = (double)(1 + map_elevation(tile)) + extraEnergy;
-
-			double yieldScore = calculateResourceScore(nutrient, mineral, energy);
-
-			// add to improvement if it no less than forest one
-
-			if
-			(
-				yieldScore > alternativeYieldScore
-				&&
-				(map_rockiness(tile) < 2 || yieldScore > rockyMineYieldScore)
-			)
+			switch(map_rainfall(adjacentTile))
 			{
-				switch (map_rainfall(tile))
-				{
-				case 0:
-					rainfallImprovement = 1.0;
-					break;
-				case 1:
-					rainfallImprovement = 1.0;
-					break;
-				case 2:
-					// rainy tile won't get better
-					break;
-				}
+			case 0:
+			case 1:
+				totalRainfallImprovement += 1.0;
+				break;
 			}
-
+			
 		}
 		// safety check
 		else
@@ -3616,29 +3590,18 @@ double estimateCondenserExtraYieldScore(MAP *improvedTile, const std::vector<int
 			return 0.0;
 		}
 
-		// halve score for borehole
-
-		if (map_has_item(tile, TERRA_THERMAL_BORE))
-		{
-			rainfallImprovement /= 2.0;
-		}
-
-		// update totalRainfallImprovement
-
-		totalRainfallImprovement += rainfallImprovement;
-
 	}
 
 	// calculate bonus
 	// rainfall bonus should be at least 2 for condenser to make sense
 
-	double bonus = sign * (conf.ai_terraforming_nutrientWeight * (totalRainfallImprovement - 2.0));
+	double extraScore = sign * (conf.ai_terraforming_nutrientWeight * (totalRainfallImprovement - 2.0));
 
-	debug("\t\tsign=%+1d, totalRainfallImprovement=%6.3f, bonus=%+6.3f\n", sign, totalRainfallImprovement, bonus);
+	debug("\t\tsign=%+1d, totalRainfallImprovement=%6.3f, extraScore=%+6.3f\n", sign, totalRainfallImprovement, extraScore);
 
-	// return bonus
+	// return score
 
-	return bonus;
+	return extraScore;
 
 }
 
@@ -3840,7 +3803,7 @@ MAP *findPathStep(int id, int x, int y)
 
 	// create processing arrays
 
-	std::unordered_set<MAP *> processed;
+	std::set<MAP *> processed;
 	std::map<MAP *, PATH_ELEMENT> current;
 	std::map<MAP *, PATH_ELEMENT> further;
 
@@ -4237,17 +4200,6 @@ double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP_STATE
 
 }
 
-bool isreachable(int id, int x, int y)
-{
-	VEH *vehicle = &(Vehicles[id]);
-	int triad = veh_triad(id);
-	MAP *vehicleLocation = getMapTile(vehicle->x, vehicle->y);
-	MAP *destinationLocation = getMapTile(x, y);
-
-	return (triad == TRIAD_AIR || getConnectedRegion(vehicleLocation->region) == getConnectedRegion(destinationLocation->region));
-
-}
-
 int getConnectedRegion(int region)
 {
 	return (seaRegionMappings.count(region) == 0 ? region : seaRegionMappings[region]);
@@ -4364,7 +4316,7 @@ bool isValidTerraformingSite(MAP *tile)
 {
 	if (tile == nullptr)
 		return false;
-
+	
 	// own territory
 
 	if (tile->owner != aiFactionId)
@@ -4372,7 +4324,7 @@ bool isValidTerraformingSite(MAP *tile)
 
 	// base radius
 
-	if (map_has_item(tile, TERRA_BASE_RADIUS))
+	if (!map_has_item(tile, TERRA_BASE_RADIUS))
 		return false;
 
 	// exclude base in tile
@@ -4395,6 +4347,11 @@ bool isValidTerraformingSite(MAP *tile)
 	if (warzoneLocations.count(tile) != 0)
 		return false;
 
+	// no current terraforming
+	
+	if (terraformedTiles.count(tile) != 0)
+		return false;
+	
 	// all conditions met
 
 	return true;

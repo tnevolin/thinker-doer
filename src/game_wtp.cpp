@@ -203,7 +203,6 @@ std::vector<MAP *> getEqualRangeTiles(int x, int y, int range)
 	return tiles;
 	
 }
-
 std::vector<MAP *> getEqualRangeTiles(MAP *tile, int range)
 {
 	return getEqualRangeTiles(getX(tile), getY(tile), range);
@@ -221,7 +220,7 @@ std::vector<MAP *> getRangeTiles(int x, int y, int range, bool includeCenter)
 		tiles.push_back(getMapTile(x, y));
 	}
 	
-	for (int ringRange = 1; ringRange < range; ringRange++)
+	for (int ringRange = 1; ringRange <= range; ringRange++)
 	{
 		std::vector<MAP *> equalRangeTiles = getEqualRangeTiles(x, y, range);
 		tiles.insert(tiles.end(), equalRangeTiles.begin(), equalRangeTiles.end());
@@ -230,10 +229,21 @@ std::vector<MAP *> getRangeTiles(int x, int y, int range, bool includeCenter)
 	return tiles;
 	
 }
-
 std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter)
 {
 	return getRangeTiles(getX(tile), getY(tile), range, includeCenter);
+}
+
+/*
+Returns tiles withing range 1 from given center.
+*/
+std::vector<MAP *> getAdjacentTiles(int x, int y, bool includeCenter)
+{
+	return getRangeTiles(x, y, 1, includeCenter);
+}
+std::vector<MAP *> getAdjacentTiles(MAP *tile, bool includeCenter)
+{
+	return getAdjacentTiles(getX(tile), getY(tile), includeCenter);
 }
 
 // =======================================================
@@ -1240,7 +1250,7 @@ bool isColonyUnit(int id)
 	return (id >= 0 && Units[id].weapon_type == WPN_COLONY_MODULE);
 }
 
-bool isVehicleArtifact(int id)
+bool isArtifactVehicle(int id)
 {
 	return (Units[Vehicles[id].unit_id].weapon_type == WPN_ALIEN_ARTIFACT);
 }
@@ -1615,20 +1625,20 @@ std::vector<MAP *> getBaseWorkableTiles(int baseId, bool startWithCenter)
 /*
 Returns all tiles within base radius belonging to friendly base radiuses.
 */
-int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y)
+int getBaseRadiusTileOverlapCount(int x, int y)
 {
 	int friendlyIntersectedBaseRadiusTileCount = 0;
 
-	for (int offsetIndex = 0; offsetIndex < BASE_OFFSET_COUNT_RADIUS; offsetIndex++)
+	for (int offset = 0; offset < BASE_OFFSET_COUNT_RADIUS; offset++)
 	{
-		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offsetIndex][0]), y + BASE_TILE_OFFSETS[offsetIndex][1]);
+		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offset][0]), y + BASE_TILE_OFFSETS[offset][1]);
 
-		if (tile == NULL)
+		if (tile == nullptr)
 			continue;
 
-		// add friendly intersected base radius
+		// add overlapped base radius
 
-		if (tile->owner == factionId && map_has_item(tile, TERRA_BASE_RADIUS))
+		if (map_has_item(tile, TERRA_BASE_RADIUS))
 		{
 			friendlyIntersectedBaseRadiusTileCount++;
 		}
@@ -1640,45 +1650,57 @@ int getFriendlyIntersectedBaseRadiusTileCount(int factionId, int x, int y)
 }
 
 /*
-Returns all land tiles withing base radius adjacent to friendly base radiuses.
+Returns all base radius adjacent land tiles overlapping friendly base radiuses.
 */
 int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y)
 {
 	int friendlyLandBorderedBaseRadiusTileCount = 0;
 	
-	for (MAP *internalTile : getBaseRadiusTiles(x, y, false))
+	for (int offset = BASE_OFFSET_COUNT_ADJACENT; offset < BASE_OFFSET_COUNT_RADIUS; offset++)
 	{
-		int internalX = getX(internalTile);
-		int internalY = getY(internalTile);
+		int radiusTileX = wrap(x + BASE_TILE_OFFSETS[offset][0]);
+		int radiusTileY = y + BASE_TILE_OFFSETS[offset][1];
+		
+		if (!isOnMap(radiusTileX, radiusTileY))
+			continue;
+		
+		MAP *radiusTile = getMapTile(radiusTileX, radiusTileY);
 		
 		// land
 		
-		if (is_ocean(internalTile))
+		if (is_ocean(radiusTile))
 			continue;
 		
-		for (MAP *externalTile : getBaseAdjacentTiles(internalX, internalY, false))
+		// our territory
+		
+		if (radiusTile->owner != factionId)
+			continue;
+		
+		// not map radius
+		
+		if (map_has_item(radiusTile, TERRA_BASE_RADIUS))
+			continue;
+		
+		// iterate edge touching tiles
+		
+		for (int touchingOffset = BASE_OFFSET_COUNT_CENTER; touchingOffset < BASE_OFFSET_COUNT_ADJACENT; touchingOffset++)
 		{
-			int externalX = getX(externalTile);
-			int externalY = getY(externalTile);
+			int touchingTileX = wrap(radiusTileX + BASE_TILE_OFFSETS[touchingOffset][0]);
+			int touchingTileY = radiusTileY + BASE_TILE_OFFSETS[touchingOffset][1];
 			
-			// external
-			
-			if (isWithinBaseRadius(x, y, externalX, externalY))
+			if (!isOnMap(touchingTileX, touchingTileY))
 				continue;
 			
-			// no corner touching
-			
-			if (abs(externalX - internalX) == 2 || abs(externalY - internalY) == 2)
-				continue;
+			MAP *touchingTile = getMapTile(touchingTileX, touchingTileY);
 			
 			// our territory
 			
-			if (externalTile->owner != factionId)
+			if (touchingTile->owner != factionId)
 				continue;
 			
-			// base radius
+			// map radius
 			
-			if (!map_has_item(externalTile, TERRA_BASE_RADIUS))
+			if (!map_has_item(touchingTile, TERRA_BASE_RADIUS))
 				continue;
 			
 			// add friendly bordered base radius
@@ -1686,7 +1708,7 @@ int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y)
 			friendlyLandBorderedBaseRadiusTileCount++;
 			
 		}
-
+		
 	}
 
 	return friendlyLandBorderedBaseRadiusTileCount;
@@ -1747,12 +1769,13 @@ bool isBaseWorkedTile(int baseId, int x, int y)
 		return false;
 	
 	BASE *base = &(Bases[baseId]);
-	int dx = x - base->x;
-	int dy = y - base->y;
 
 	for (int offset = 0; offset < BASE_OFFSET_COUNT_RADIUS; offset++)
 	{
-		if (BASE_TILE_OFFSETS[offset][0] == dx && BASE_TILE_OFFSETS[offset][1] == dy)
+		int baseRadiusTileX = wrap(base->x + BASE_TILE_OFFSETS[offset][0]);
+		int baseRadiusTileY = base->y + BASE_TILE_OFFSETS[offset][1];
+		
+		if (baseRadiusTileX == x && baseRadiusTileY == y)
 		{
 			if ((base->worked_tiles & (0x1 << offset)) == 0)
 			{
@@ -2581,11 +2604,11 @@ bool isVehicleCanHealAtThisLocation(int vehicleId)
 /*
 Returns all ocean regions this location is adjacent to.
 */
-std::unordered_set<int> getAdjacentOceanRegions(int x, int y)
+std::set<int> getAdjacentOceanRegions(int x, int y)
 {
 	debug("getAdjacentOceanRegions: x=%d, y=%d\n", x, y);
 
-	std::unordered_set<int> adjacentOceanRegions;
+	std::set<int> adjacentOceanRegions;
 
 	MAP *tile = getMapTile(x, y);
 
@@ -2634,11 +2657,11 @@ std::unordered_set<int> getAdjacentOceanRegions(int x, int y)
 /*
 Returns all ocean regions this location is connected to.
 */
-std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y)
+std::set<int> getConnectedOceanRegions(int factionId, int x, int y)
 {
 	debug("getConnectedOceanRegions: factionId=%d, x=%d, y=%d\n", factionId, x, y);
 
-	std::unordered_set<int> connectedOceanRegions;
+	std::set<int> connectedOceanRegions;
 
 	MAP *tile = getMapTile(x, y);
 
@@ -2647,7 +2670,7 @@ std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y)
 
 	// add adjacent tiles regions first
 
-	std::unordered_set<int> adjacentOceanRegions = getAdjacentOceanRegions(x, y);
+	std::set<int> adjacentOceanRegions = getAdjacentOceanRegions(x, y);
 	connectedOceanRegions.insert(adjacentOceanRegions.begin(), adjacentOceanRegions.end());
 
 	// iterate own bases
@@ -2676,7 +2699,7 @@ std::unordered_set<int> getConnectedOceanRegions(int factionId, int x, int y)
 
 			// get this base adjacent ocean regions
 
-			std::unordered_set<int> baseAdjacentOceanRegions = getAdjacentOceanRegions(base->x, base->y);
+			std::set<int> baseAdjacentOceanRegions = getAdjacentOceanRegions(base->x, base->y);
 
 			// check for adjacent regions intersection
 
@@ -4181,5 +4204,13 @@ int getRangeToNearestFactionColony(int x, int y, int factionId)
 	
 	return minRange;
 	
+}
+
+/*
+Kills vehicle properly with transport check.
+*/
+void killVehicle(int vehicleId)
+{
+	tx_kill(vehicleId);
 }
 
