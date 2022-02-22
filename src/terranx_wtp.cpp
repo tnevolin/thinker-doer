@@ -216,5 +216,11 @@ fp_2int *base_find = (fp_2int *)0x004E3B80;
 fp_5int *whose_territory = (fp_5int *)0x004E3EF0;
 
 // unit speed
-fp_1int* unit_speed = (fp_1int*)0x005C13B0;
+fp_1int *unit_speed = (fp_1int *)0x005C13B0;
+
+// base upkeep
+fp_1int *base_upkeep = (fp_1int *)0x004F79C0;
+
+// base ecology
+fp_0int *base_ecology = (fp_0int *)0x004F67F0;
 

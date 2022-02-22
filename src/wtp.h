@@ -197,4 +197,6 @@ int __cdecl modifiedReturnProbeBaseFind2(int x, int y, int vehicleId);
 int __cdecl modified_pact_withdraw(int factionId, int pactFactionId);
 int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
 int __cdecl modified_base_double_labs(int labs);
+int __cdecl modified_base_production();
+int __cdecl modified_base_ecology();
 

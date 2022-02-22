@@ -101,4 +101,6 @@ extern fp_2int *pact_withdraw;
 extern fp_2int *base_find;
 extern fp_5int *whose_territory;
 extern fp_1int* unit_speed;
+extern fp_1int* base_upkeep;
+extern fp_0int* base_ecology;
 

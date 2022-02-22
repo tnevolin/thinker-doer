@@ -1,3 +1,8 @@
+# Version 287
+
+* FIX: Stockpile energy bug/exploit. Somehow it was not fixed in Thinker which includes scient patch which claimed this fixed.
+	* The fix adds stockpile energy at production phase and subtract stockpile energy at energy phase. Thus moving this check to the right place.
+
 # Version 286
 
 * Reduced Tree Farm and Hybrid Forest cost and adjusted their maintenance a little

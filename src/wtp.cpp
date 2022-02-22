@@ -4662,3 +4662,47 @@ int __cdecl modified_base_double_labs(int labs)
 	
 }
 
+/*
+Highjack this function to fix stockpile energy bug.
+*/
+int __cdecl modified_base_production()
+{
+	int baseId = *current_base_id;
+	BASE *base = &(Bases[baseId]);
+	Faction *faction = &(Factions[base->faction_id]);
+	
+	// add stockpile energy to faction credits
+	
+	if (base->queue_items[0] == -FAC_STOCKPILE_ENERGY)
+	{
+		faction->energy_credits += (base->mineral_surplus + 1) / 2;
+	}
+	
+	// execute original function
+	
+	return tx_base_production();
+	
+}
+
+/*
+Highjack this function to fix stockpile energy bug.
+*/
+int __cdecl modified_base_ecology()
+{
+	int baseId = *current_base_id;
+	BASE *base = &(Bases[baseId]);
+	Faction *faction = &(Factions[base->faction_id]);
+	
+	// subtract stockpile energy from faction credits
+	
+	if (base->queue_items[0] == -FAC_STOCKPILE_ENERGY)
+	{
+		faction->energy_credits -= (base->mineral_surplus + 1) / 2;
+	}
+	
+	// execute original function
+	
+	return base_ecology();
+	
+}
+
