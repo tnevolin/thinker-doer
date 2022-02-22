@@ -1,3 +1,7 @@
+# Version ai
+
+* Pressure Dome adds minerals (thinker.ini: pressure_dome_minerals).
+
 # Version 285
 
 * Fixed Thinker bug not setting social agenda bias and set such bias to 1000 to ensure AI sticks to their agenda.
@@ -38,9 +42,9 @@
 # Version 277
 
 * Returned initial clean minerals to 24.
-* Added dco damage facilities production.
-* Reverted WTP and Thiker terraforming comparison parameter back to "all WTP".
-* Revorked tech cost a little.
+* Added eco damage facilities production.
+* Reverted WTP and Thinker terraforming comparison parameter back to "all WTP".
+* Reworked tech cost a little.
 
 # Version 276
 
@@ -114,7 +118,7 @@
 
 # Version 266
 
-* Found a purpose for pathetic Universal Translator and other single base labs multiplying projects. They were not that impactful and interesting in vanilla. This verstion turns them into regular faction wide projects affecting all bases with small labs bonus. This bonus is applied in the same order as before: after regular multiplying facilities like Network Node and before The Network Backbone.
+* Found a purpose for pathetic Universal Translator and other single base labs multiplying projects. They were not that impactful and interesting in vanilla. This version turns them into regular faction wide projects affecting all bases with small labs bonus. This bonus is applied in the same order as before: after regular multiplying facilities like Network Node and before The Network Backbone.
 	* The Supercollider,            30, Base labs +10%
 	* The Theory of Everything,     60, Base labs +20%
 	* The Universal Translator,    100, Base labs +30% + Two Free Techs

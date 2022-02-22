@@ -3,6 +3,7 @@
 #include "game_wtp.h"
 #include "ai.h"
 #include "aiData.h"
+#include "aiMove.h"
 #include "aiMoveColony.h"
 #include "aiTransport.h"
 
@@ -56,7 +57,10 @@ void moveEmptySeaTransportStrategy(int vehicleId)
 	
 	popPodStrategy(vehicleId);
 	
-	// no transportable vehicles - destroy transport
+	if (hasTask(vehicleId))
+		return;
+	
+	// no pods - destroy transport
 	
 	setTask(vehicleId, Task(KILL, vehicleId));
 
@@ -826,6 +830,11 @@ int getCrossOceanAssociation(MAP *initialTile, MAP *terminalTile, int factionId)
 	if (initialConnections->size() == 0)
 		return -1;
 	
+	// destination is ocean and is immediatelly connected
+	
+	if (initialConnections->count(terminalAssociation) != 0)
+		return terminalAssociation;
+	
 	// preset path variables
 	
 	std::map<int, std::set<int>> paths;
@@ -878,17 +887,17 @@ int getCrossOceanAssociation(MAP *initialTile, MAP *terminalTile, int factionId)
 }
 
 /*
-Searches for available sea transport in given region.
+Searches for available sea transport in given association.
 Full transport is not selected.
 Transport without go to order is selected right away.
 Transport with go to order is selected only if given location is closer than its current destination.
 If such transport is found set its destination to the vehicle.
 */
-int getAvailableSeaTransport(int region, int vehicleId)
+int getAvailableSeaTransport(int association, int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
-	// find closest available sea transport in this region
+	// find closest available sea transport in this association
 	
 	int closestAvailableSeaTransportVehicleId = -1;
 	int closestAvailableSeaTransportVehicleRange = INT_MAX;
@@ -905,12 +914,12 @@ int getAvailableSeaTransport(int region, int vehicleId)
 		
 		// within same assosiation
 		
-		if (seaTransportVehicleAssociation != region)
+		if (seaTransportVehicleAssociation != association)
 			continue;
 		
 		// with remaining cargo capacity
 		
-		if ((cargo_capacity(seaTransportVehicleId) - cargo_loaded(seaTransportVehicleId)) <= 0)
+		if (getTransportRemainingCapacity(seaTransportVehicleId) <= 0)
 			continue;
 		
 		// get range
@@ -949,6 +958,39 @@ int getAvailableSeaTransport(int region, int vehicleId)
 	// return
 	
 	return closestAvailableSeaTransportVehicleId;
+	
+}
+
+/*
+Searches for available sea transport in vehicle stack.
+*/
+int getAvailableSeaTransportInStack(int vehicleId)
+{
+	// iterate vehicle stack
+	
+	for (int stackVehicleId : getStackVehicles(vehicleId))
+	{
+		VEH *stackVehicle = &(Vehicles[stackVehicleId]);
+		
+		// sea transport
+		
+		if (!(stackVehicle->triad() == TRIAD_SEA && isTransportVehicle(stackVehicleId)))
+			continue;
+		
+		// available
+		
+		if (getTransportRemainingCapacity(stackVehicleId) == 0)
+			continue;
+		
+		// found
+		
+		return stackVehicleId;
+		
+	}
+	
+	// not found
+	
+	return -1;
 	
 }
 
@@ -998,8 +1040,9 @@ MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicle
 		int seaTransportRange = map_range(seaTransportVehicle->x, seaTransportVehicle->y, getX(tileLocation), getY(tileLocation));
 		
 		// check adjacent tiles
+		// including center tile to account for land ports
 		
-		for (MAP *adjacentTile : getBaseAdjacentTiles(getX(tileLocation), getY(tileLocation), false))
+		for (MAP *adjacentTile : getBaseAdjacentTiles(getX(tileLocation), getY(tileLocation), true))
 		{
 			int adjacentTileAssociation = getAssociation(adjacentTile, seaTransportVehicle->faction_id);
 			

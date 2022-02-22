@@ -4596,6 +4596,12 @@ void patch_unfinished_needlejet_turn()
     
 }
 
+void patch_ai_transport_change()
+{
+   	write_call(0x004CB3BA, (int)modified_order_veh);
+    
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -5195,6 +5201,8 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_unfinished_needlejet_turn();
+	
+	patch_ai_transport_change();
 	
 }
 

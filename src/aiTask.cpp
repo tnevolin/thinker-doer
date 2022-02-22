@@ -38,21 +38,54 @@ Task::Task(TaskType _type, int _vehicleId, MAP *_targetLocation, int _targetVehi
 	
 }
 
+int Task::getVehicleId()
+{
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		if (vehicle->pad_0 == vehiclePad0)
+		{
+			return vehicleId;
+		}
+		
+	}
+	
+	return -1;
+	
+}
+
+int Task::getTargetVehicleId()
+{
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		if (vehicle->pad_0 == targetVehiclePad0)
+		{
+			return vehicleId;
+		}
+		
+	}
+	
+	return -1;
+	
+}
+
 MAP *Task::getDestination()
 {
-	debug("Task::getDestination()\n");
-	
 	if (targetLocation != nullptr)
 	{
 		return targetLocation;
 	}
 	else if (targetVehiclePad0 != -1)
 	{
-		int targetVehicleId = getVehicleIdByPad0(this->targetVehiclePad0);
+		int targetVehicleId = getTargetVehicleId();
 		
 		if (targetVehicleId == -1)
 		{
-			debug("ERROR: cannot find target vehicle id by pad_0.\n");
+			debug("Task::getDestination()\n");
+			debug("\tERROR: cannot find target vehicle id by pad_0.\n");
 			return nullptr;
 		}
 		
@@ -70,8 +103,6 @@ MAP *Task::getDestination()
 
 int Task::getDestinationRange()
 {
-	debug("Task::getDestinationRange()\n");
-	
 	MAP *destination = getDestination();
 	
 	// no range for no destination
@@ -82,11 +113,12 @@ int Task::getDestinationRange()
 	int x = getX(destination);
 	int y = getY(destination);
 	
-	int vehicleId = getVehicleIdByPad0(this->vehiclePad0);
+	int vehicleId = getVehicleId();
 	
 	if (vehicleId == -1)
 	{
-		debug("ERROR: cannot find vehicle id by pad_0.\n");
+		debug("Task::getDestinationRange()\n");
+		debug("\tERROR: cannot find vehicle id by pad_0.\n");
 		return 0;
 	}
 	
@@ -100,7 +132,7 @@ int Task::execute()
 {
 	debug("Task::execute()\n");
 	
-	int vehicleId = getVehicleIdByPad0(this->vehiclePad0);
+	int vehicleId = getVehicleId();
 	
 	if (vehicleId == -1)
 	{
@@ -154,6 +186,10 @@ int Task::executeAction(int vehicleId)
 	
 	switch (type)
 	{
+	case NONE:
+		return executeNone(vehicleId);
+		break;
+		
 	case KILL:
 		return executeKill(vehicleId);
 		break;
@@ -198,10 +234,22 @@ int Task::executeAction(int vehicleId)
 		return executeMove(vehicleId);
 		break;
 		
+	case ARTIFACT_CONTRIBUTE:
+		return executeArtifactContribute(vehicleId);
+		break;
+		
 	default:
 		return EM_DONE;
 		
 	}
+	
+}
+
+int Task::executeNone(int)
+{
+	debug("SYNC\n");
+	
+	return EM_SYNC;
 	
 }
 
@@ -271,23 +319,39 @@ int Task::executeLoad(int vehicleId)
 
 int Task::executeBoard(int vehicleId)
 {
-	int targetVehicleId = getVehicleIdByPad0(this->targetVehiclePad0);
+	int targetVehicleId = getTargetVehicleId();
 	
 	if (targetVehicleId == -1)
 	{
-		veh_skip(vehicleId);
+		mod_veh_skip(vehicleId);
 		return EM_DONE;
 	}
 	
 	// board
 	
-	set_board_to(vehicleId, targetVehicleId);
+	board(vehicleId, targetVehicleId);
 	return EM_DONE;
 	
 }
 
 int Task::executeUnload(int vehicleId)
 {
+	// wake up passenger
+	
+	if (targetVehiclePad0 != -1)
+	{
+		int targetVehicleId = getTargetVehicleId();
+		
+		if (targetVehicleId != -1)
+		{
+			setVehicleOrder(targetVehicleId, ORDER_NONE);
+		}
+		
+	}
+	
+	mod_veh_skip(vehicleId);
+	return EM_DONE;
+	
 	// wait
 	
 	mod_veh_skip(vehicleId);
@@ -297,13 +361,21 @@ int Task::executeUnload(int vehicleId)
 
 int Task::executeUnboard(int vehicleId)
 {
+	assert(vehicleId >= 0 && vehicleId < *total_num_vehicles);
+	
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// unboard
+	
+	unboard(vehicleId);
+	
 	// get destination
 	
 	MAP *destination = getDestination();
 	
 	// no destination
 	
-	if (destination != nullptr)
+	if (destination == nullptr)
 	{
 		mod_veh_skip(vehicleId);
 		return EM_DONE;
@@ -314,10 +386,24 @@ int Task::executeUnboard(int vehicleId)
 	int x = getX(destination);
 	int y = getY(destination);
 	
-	// unboard
+	// next action
 	
-	setMoveTo(vehicleId, x, y);
-	return EM_DONE;
+	if (vehicle->x == x && vehicle->y == y)
+	{
+		// at location - do nothing
+		
+		mod_veh_skip(vehicleId);
+		return EM_DONE;
+		
+	}
+	else
+	{
+		// not at location - move to unboard location
+		
+		setMoveTo(vehicleId, x, y);
+		return EM_DONE;
+		
+	}
 	
 }
 
@@ -357,20 +443,36 @@ int Task::executeMove(int vehicleId)
 	
 }
 
-int getVehicleIdByPad0(int vehiclePad0)
+int Task::executeArtifactContribute(int vehicleId)
 {
-	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	MAP *vechileTile = getVehicleMapTile(vehicleId);
+	
+	// in own base
+	
+	if (aiData.baseTiles.count(vechileTile) != 0)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		int baseId = aiData.baseTiles.at(vechileTile);
+		BASE *base = &(Bases[baseId]);
 		
-		if (vehicle->pad_0 == vehiclePad0)
+		// base is building project
+		
+		if (isBaseBuildingProject(baseId))
 		{
-			return vehicleId;
+			// destroy vehicle and contribute to project
+			
+			killVehicle(vehicleId);
+			base->minerals_accumulated += 50;
+			
+			return EM_DONE;
+			
 		}
 		
 	}
 	
-	return -1;
+	// otherwise, skip
+	
+	mod_veh_skip(vehicleId);
+	return EM_DONE;
 	
 }
 
@@ -378,7 +480,14 @@ void setTask(int vehicleId, Task task)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
-	aiData.tasks.insert({vehicle->pad_0, task});
+	if (aiData.tasks.count(vehicle->pad_0) == 0)
+	{
+		aiData.tasks.insert({vehicle->pad_0, task});
+	}
+	else
+	{
+		aiData.tasks.at(vehicle->pad_0) = task;
+	}
 	
 }
 

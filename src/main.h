@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 285 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version ai (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -312,8 +312,10 @@ struct Config {
 	int combat_bonus_attacking_along_road;
 	bool disengagement_from_stack;
 	bool eco_damage_alternative_industry_effect_reduction_formula;
+	int pressure_dome_minerals = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
+    int wtp_factions_enabled;
     double ai_production_vanilla_priority_unit;
     double ai_production_vanilla_priority_project;
     double ai_production_vanilla_priority_facility;
@@ -358,18 +360,21 @@ struct Config {
     double ai_production_eco_damage_threshold;
     double ai_production_eco_damage_priority;
     double ai_production_transport_priority;
-    double ai_production_build_weight_nutrient_bonus;
-    double ai_production_build_weight_mineral_bonus;
-    double ai_production_build_weight_energy_bonus;
-    double ai_production_build_weight_rainfall;
-    double ai_production_build_weight_rockiness;
-    double ai_production_build_weight_elevation;
-    double ai_production_build_weight_deep;
-    double ai_production_build_turn_penalty_base_threshold;
-    double ai_production_build_turn_penalty_early;
-    double ai_production_build_turn_penalty;
+    double ai_expansion_weight_nutrient_bonus;
+    double ai_expansion_weight_mineral_bonus;
+    double ai_expansion_weight_energy_bonus;
+    double ai_expansion_weight_rainfall;
+    double ai_expansion_weight_rockiness;
+    double ai_expansion_weight_elevation;
+    double ai_expansion_weight_deep;
+    double ai_expansion_turn_penalty_base_threshold;
+    double ai_expansion_turn_penalty_early;
+    double ai_expansion_turn_penalty;
+    double ai_expansion_coastal_base;
+    double ai_expansion_inland_base;
+    double ai_expansion_radius_touch;
+    double ai_expansion_radius_overlap;
     double ai_terraforming_nutrientWeight;
-    int ai_terraforming_factions_enabled;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
 	double ai_terraforming_completion_bonus;
