@@ -4673,9 +4673,9 @@ int __cdecl modified_base_production()
 	
 	// add stockpile energy to faction credits
 	
-	if (base->queue_items[0] == -FAC_STOCKPILE_ENERGY)
+	if (base->queue_items[0] == -FAC_STOCKPILE_ENERGY && base->production_id_last == -FAC_STOCKPILE_ENERGY)
 	{
-		faction->energy_credits += (base->mineral_surplus + 1) / 2;
+		faction->energy_credits += getStockpileEnergy(baseId);
 	}
 	
 	// execute original function
@@ -4695,14 +4695,35 @@ int __cdecl modified_base_ecology()
 	
 	// subtract stockpile energy from faction credits
 	
-	if (base->queue_items[0] == -FAC_STOCKPILE_ENERGY)
+	if (base->queue_items[0] == -FAC_STOCKPILE_ENERGY && base->production_id_last == -FAC_STOCKPILE_ENERGY)
 	{
-		faction->energy_credits -= (base->mineral_surplus + 1) / 2;
+		faction->energy_credits -= getStockpileEnergy(baseId);
 	}
 	
 	// execute original function
 	
 	return base_ecology();
+	
+}
+
+/*
+Calculates stockpile energy as vanilla does it.
+*/
+int getStockpileEnergy(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	if (base->mineral_surplus <= 0)
+		return 0;
+	
+	int credits = (base->mineral_surplus + 1) / 2;
+	
+	if (has_project(base->faction_id, FAC_PLANETARY_ENERGY_GRID))
+	{
+		credits = (credits * 5 + 3) / 4;
+	}
+	
+	return credits;
 	
 }
 
