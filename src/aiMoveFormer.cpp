@@ -515,7 +515,6 @@ void selectConventionalTerraformingLocations()
 	for (int baseId : aiData.baseIds)
 	{
 		selectRockyMineLocation(baseId);
-		selectRockyMineLocation(baseId);
 		selectBoreholeLocation(baseId);
 		selectForestLocation(baseId);
 		selectFungusLocation(baseId);
@@ -996,7 +995,18 @@ void assignFormerOrders()
 		}
 		
 	}
-
+	
+	// normalize production demand
+	
+	double normalYieldScore = conf.ai_terraforming_nutrientWeight + conf.ai_terraforming_mineralWeight + conf.ai_terraforming_energyWeight;
+	
+	aiData.production.landFormerDemand /= normalYieldScore;
+	
+	for (auto &seaFormerDemandEntry : aiData.production.seaFormerDemands)
+	{
+		seaFormerDemandEntry.second /= normalYieldScore;
+	}
+	
 }
 
 void finalizeFormerOrders()
@@ -1150,7 +1160,7 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 				// compute terraforming time
 
 				terraformingTime +=
-					calculateTerraformingTime
+					getDestructionAdjustedTerraformingTime
 					(
 						removeFungusAction,
 						improvedMapState.items,
@@ -1188,7 +1198,7 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 				// compute terraforming time
 
 				terraformingTime +=
-					calculateTerraformingTime
+					getDestructionAdjustedTerraformingTime
 					(
 						levelTerrainAction,
 						improvedMapState.items,
@@ -1215,7 +1225,7 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 			// compute terraforming time
 
 			terraformingTime +=
-				calculateTerraformingTime
+				getDestructionAdjustedTerraformingTime
 				(
 					action,
 					improvedMapState.items,
@@ -1393,7 +1403,7 @@ void calculateAquiferTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerraf
 
 	// compute terraforming time
 
-	terraformingTime = calculateTerraformingTime(action, tile->items, tile->val3, NULL);
+	terraformingTime = getDestructionAdjustedTerraformingTime(action, tile->items, tile->val3, NULL);
 
 	// skip if no action or no terraforming time
 
@@ -1489,7 +1499,7 @@ void calculateRaiseLandTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerr
 
 	// compute terraforming time
 
-	terraformingTime = calculateTerraformingTime(action, tile->items, tile->val3, NULL);
+	terraformingTime = getDestructionAdjustedTerraformingTime(action, tile->items, tile->val3, NULL);
 
 	// skip if no action or no terraforming time
 
@@ -1606,7 +1616,7 @@ void calculateNetworkTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerraf
 
 		// compute terraforming time
 
-		terraformingTime += calculateTerraformingTime(removeFungusAction, tile->items, tile->val3, NULL);
+		terraformingTime += getDestructionAdjustedTerraformingTime(removeFungusAction, tile->items, tile->val3, NULL);
 
 		// add penalty for nearby forest/kelp
 
@@ -1624,7 +1634,7 @@ void calculateNetworkTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerraf
 
 	// compute terraforming time
 
-	terraformingTime += calculateTerraformingTime(action, tile->items, tile->val3, NULL);
+	terraformingTime += getDestructionAdjustedTerraformingTime(action, tile->items, tile->val3, NULL);
 
 	// special network bonus
 
@@ -1727,7 +1737,7 @@ void calculateSensorTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerrafo
 
 		// compute terraforming time
 
-		terraformingTime += calculateTerraformingTime(removeFungusAction, tile->items, tile->val3, NULL);
+		terraformingTime += getDestructionAdjustedTerraformingTime(removeFungusAction, tile->items, tile->val3, NULL);
 
 		// add penalty for nearby forest/kelp
 
@@ -1745,7 +1755,7 @@ void calculateSensorTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerrafo
 
 	// compute terraforming time
 
-	terraformingTime += calculateTerraformingTime(action, tile->items, tile->val3, NULL);
+	terraformingTime += getDestructionAdjustedTerraformingTime(action, tile->items, tile->val3, NULL);
 
 	// special sensor bonus
 
@@ -2345,7 +2355,7 @@ bool isNearbySensorPresentOrUnderConstruction(int x, int y)
 /*
 Calculates terraforming time based on faction, tile, and former abilities.
 */
-int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle)
+int getTerraformingTime(int action, int items, int rocks, VEH* vehicle)
 {
 	assert(action >= FORMER_FARM && action <= FORMER_MONOLITH);
 
@@ -2454,6 +2464,62 @@ int calculateTerraformingTime(int action, int items, int rocks, VEH* vehicle)
 
 	return terraformingTime;
 
+}
+
+/*
+Calculates terraforming time adjusted on improvement destruction.
+*/
+int getDestructionAdjustedTerraformingTime(int action, int items, int rocks, VEH* vehicle)
+{
+	// get pure terraforming time
+	
+	int terraformingTime = getTerraformingTime(action, items, rocks, vehicle);
+	
+	// process improvements
+	
+	switch (action)
+	{
+	case FORMER_MINE:
+		if ((items & (TERRA_SOLAR | TERRA_CONDENSER | TERRA_ECH_MIRROR | TERRA_THERMAL_BORE)) != 0)
+		{
+			terraformingTime += Terraform[FORMER_MINE].rate;
+		}
+		break;
+		
+	case FORMER_SOLAR:
+		// no penalty for replacing collector<->mirror
+		if ((items & (TERRA_MINE | TERRA_CONDENSER | TERRA_THERMAL_BORE)) != 0)
+		{
+			terraformingTime += Terraform[FORMER_SOLAR].rate;
+		}
+		break;
+		
+	case FORMER_CONDENSER:
+		if ((items & (TERRA_MINE | TERRA_SOLAR | TERRA_ECH_MIRROR | TERRA_THERMAL_BORE)) != 0)
+		{
+			terraformingTime += Terraform[FORMER_CONDENSER].rate;
+		}
+		break;
+		
+	case FORMER_ECH_MIRROR:
+		// no penalty for replacing collector<->mirror
+		if ((items & (TERRA_MINE | TERRA_CONDENSER | TERRA_THERMAL_BORE)) != 0)
+		{
+			terraformingTime += Terraform[FORMER_ECH_MIRROR].rate;
+		}
+		break;
+		
+	case FORMER_THERMAL_BORE:
+		if ((items & (TERRA_MINE | TERRA_SOLAR | TERRA_CONDENSER | TERRA_ECH_MIRROR)) != 0)
+		{
+			terraformingTime += Terraform[FORMER_THERMAL_BORE].rate;
+		}
+		break;
+		
+	}
+	
+	return terraformingTime;
+	
 }
 
 double getSmallestAvailableFormerTravelTime(MAP *tile)
@@ -3609,129 +3675,50 @@ double calculateBaseResourceScore(int baseId, int currentNutrientSurplus, int cu
 		}
 		
 	}
-//	debug("> workerCount=%d\n", workerCount);
 	
 	// calculate nutrient and mineral extra score
 	
-	double nutrientExtraScore;
-	double mineralExtraScore;
+	double nutrientCostMultiplier = 1.0;
+	double mineralCostMultiplier = 1.0;
 	
-	// calculate nutrient extra score
+	// multipliers are for bases size 3 and above
 	
-	double nutrientThreshold = conf.ai_terraforming_baseNutrientThresholdRatio * (double)(workerCount + 1);
-//	debug("> nutrientThreshold=%f\n", nutrientThreshold);
-	
-	double currentNutrientExtraScore;
-	
-	if (currentNutrientSurplus >= nutrientThreshold)
+	if (base->pop_size >= 3)
 	{
-		currentNutrientExtraScore = 0.0;
-	}
-	else
-	{
-		double proportion = 1.0 - (double)currentNutrientSurplus / nutrientThreshold;
+		// calculate nutrient cost multiplier
 		
-		currentNutrientExtraScore =
-			-
-			conf.ai_terraforming_baseNutrientDemandMultiplier
-			*
-			conf.ai_terraforming_nutrientWeight
-			*
-			(proportion * proportion / 2)
-		;
+		double nutrientThreshold = conf.ai_terraforming_baseNutrientThresholdRatio * (double)(workerCount + 1);
 		
-	}
-//	debug("> currentNutrientExtraScore=%f\n", currentNutrientExtraScore);
-	
-	double improvedNutrientExtraScore;
-	
-	if (improvedNutrientSurplus >= nutrientThreshold)
-	{
-		improvedNutrientExtraScore = 0.0;
-	}
-	else
-	{
-		double proportion = 1.0 - (double)improvedNutrientSurplus / nutrientThreshold;
+		int minNutrientSurplus = std::min(currentNutrientSurplus, improvedNutrientSurplus);
 		
-		improvedNutrientExtraScore =
-			-
-			conf.ai_terraforming_baseNutrientDemandMultiplier
-			*
-			conf.ai_terraforming_nutrientWeight
-			*
-			(proportion * proportion / 2)
-		;
+		if (minNutrientSurplus < nutrientThreshold)
+		{
+			double proportion = 1.0 - (double)minNutrientSurplus / nutrientThreshold;
+			nutrientCostMultiplier += (conf.ai_terraforming_baseMineralDemandMultiplier - 1.0) * proportion;
+		}
+		
+		// calculate mineral cost multiplier
+		
+		double mineralThreshold = conf.ai_terraforming_baseMineralThresholdRatio * (double)minNutrientSurplus;
+		
+		int minMineralSurplus = std::min(currentMineralSurplus, improvedMineralSurplus);
+		
+		if (minMineralSurplus < mineralThreshold)
+		{
+			double proportion = 1.0 - (double)minMineralSurplus / mineralThreshold;
+			mineralCostMultiplier += (conf.ai_terraforming_baseMineralDemandMultiplier - 1.0) * proportion;
+		}
 		
 	}
-//	debug("> improvedNutrientExtraScore=%f\n", improvedNutrientExtraScore);
-	
-	nutrientExtraScore = (improvedNutrientExtraScore - currentNutrientExtraScore);
-//	debug("> nutrientExtraScore=%f\n", nutrientExtraScore);
-	
-	// calculate mineral extra score
-	
-	double mineralThreshold = conf.ai_terraforming_baseMineralThresholdRatio * currentNutrientSurplus;
-//	debug("> mineralThreshold=%f\n", mineralThreshold);
-	
-	double currentMineralExtraScore;
-	
-	if (currentMineralSurplus >= mineralThreshold)
-	{
-		currentMineralExtraScore = 0.0;
-	}
-	else
-	{
-		double proportion = 1.0 - (double)currentMineralSurplus / mineralThreshold;
-		
-		currentMineralExtraScore =
-			-
-			conf.ai_terraforming_baseNutrientDemandMultiplier
-			*
-			conf.ai_terraforming_nutrientWeight
-			*
-			(proportion * proportion / 2)
-		;
-		
-	}
-//	debug("> currentMineralExtraScore=%f\n", currentMineralExtraScore);
-	
-	double improvedMineralExtraScore;
-	
-	if (improvedMineralSurplus >= mineralThreshold)
-	{
-		improvedMineralExtraScore = 0.0;
-	}
-	else
-	{
-		double proportion = 1.0 - (double)improvedMineralSurplus / mineralThreshold;
-		
-		improvedMineralExtraScore =
-			-
-			conf.ai_terraforming_baseNutrientDemandMultiplier
-			*
-			conf.ai_terraforming_nutrientWeight
-			*
-			(proportion * proportion / 2)
-		;
-		
-	}
-//	debug("> improvedMineralExtraScore=%f\n", improvedMineralExtraScore);
-	
-	mineralExtraScore = (improvedMineralExtraScore - currentMineralExtraScore);
-//	debug("> mineralExtraScore=%f\n", mineralExtraScore);
 	
 	// compute final score
 	
 	return
-		conf.ai_terraforming_nutrientWeight * (improvedNutrientSurplus - currentNutrientSurplus)
+		(conf.ai_terraforming_nutrientWeight * nutrientCostMultiplier) * (improvedNutrientSurplus - currentNutrientSurplus)
 		+
-		conf.ai_terraforming_mineralWeight * (improvedMineralSurplus - currentMineralSurplus)
+		(conf.ai_terraforming_mineralWeight * mineralCostMultiplier) * (improvedMineralSurplus - currentMineralSurplus)
 		+
 		conf.ai_terraforming_energyWeight * (improvedEnergySurplus - currentEnergySurplus)
-		+
-		nutrientExtraScore
-		+
-		mineralExtraScore
 	;
 
 }

@@ -194,17 +194,35 @@ void analyzeBasePlacementSites()
 	{
 		MAP *tile = getMapTile(mapIndex);
 		int association = getAssociation(tile, aiFactionId);
+		ExpansionTileInfo *expansionTileInfo = getExpansionTileInfo(mapIndex);
 		
 		// calculate and store expansionRange
 		
 		int expansionRange = getExpansionRange(tile);
-		
-		getExpansionTileInfo(mapIndex)->expansionRange = expansionRange;
+		expansionTileInfo->expansionRange = expansionRange;
 		
 		// limit expansion range
 		
 		if (expansionRange > MAX_EXPANSION_RANGE + 2)
 			continue;
+		
+		// calculate and store nearest colony and base
+		
+		std::pair<int, double> baseTravelTime = getNearestBaseTravelTime(tile);
+		
+		if (baseTravelTime.first != -1)
+		{
+			expansionTileInfo->nearestBaseId = baseTravelTime.first;
+			expansionTileInfo->nearestBaseTravelTime = baseTravelTime.second;
+		}
+		
+		std::pair<int, double> colonyTravelTime = getNearestColonyTravelTime(tile);
+		
+		if (colonyTravelTime.first != -1)
+		{
+			expansionTileInfo->nearestColonyId = colonyTravelTime.first;
+			expansionTileInfo->nearestColonyTravelTime = colonyTravelTime.second;
+		}
 		
 		// accessible or potentially reachable
 		
@@ -279,34 +297,44 @@ void analyzeBasePlacementSites()
 			continue;
 		}
 		
-		// calculate and store the score
+		// calculate basic score
 		
 		double buildSiteYieldScore = getBuildSiteYieldScore(tile);
-		double buildSiteRangeScore = getBuildSiteRangeScore(tile);
-		double buildSitePlaceScore = getBuildSitePlaceScore(tile);
-		double buildSiteScore = buildSiteYieldScore + buildSiteRangeScore + buildSitePlaceScore;
-		double productionDemand = buildSiteYieldScore + buildSiteRangeScore;
 		
-		getExpansionTileInfo(mapIndex)->buildScore = buildSiteScore;
-		sortedBuildSiteScores.push_back({mapIndex, buildSiteScore});
+		// update build site score
 		
-		// update build priorities
-		
-		if (!is_ocean(tile))
+		if (expansionTileInfo->nearestColonyId >= 0)
 		{
-			aiData.production.landColonyDemand = std::max(aiData.production.landColonyDemand, productionDemand);
-		}
-		else
-		{
-			if (aiData.production.seaColonyDemands.count(association) == 0)
-			{
-				aiData.production.seaColonyDemands.insert({association, -INT_MAX});
-			}
-			aiData.production.seaColonyDemands.at(association) = std::max(aiData.production.seaColonyDemands.at(association), productionDemand);
+			double buildSitePlaceScore = getBuildSitePlaceScore(tile);
+			double buildSiteColonyTravelTimeScore = getBuildSiteTravelTimeScore(expansionTileInfo->nearestColonyTravelTime);
+			double buildSiteScore = buildSiteYieldScore + buildSitePlaceScore + buildSiteColonyTravelTimeScore;
+			expansionTileInfo->buildScore = buildSiteScore;
+			sortedBuildSiteScores.push_back({mapIndex, buildSiteScore});
 			
 		}
 		
-		debug("landColonyDemand=%f\n", aiData.production.landColonyDemand);
+		// update production demand
+		
+		if (expansionTileInfo->nearestBaseId >= 0)
+		{
+			double buildSiteBaseTravelTimeScore = getBuildSiteTravelTimeScore(expansionTileInfo->nearestBaseTravelTime);
+			double productionDemand = buildSiteYieldScore + buildSiteBaseTravelTimeScore;
+			
+			if (!is_ocean(tile))
+			{
+				aiData.production.landColonyDemand = std::max(aiData.production.landColonyDemand, productionDemand);
+			}
+			else
+			{
+				if (aiData.production.seaColonyDemands.count(association) == 0)
+				{
+					aiData.production.seaColonyDemands.insert({association, -INT_MAX});
+				}
+				aiData.production.seaColonyDemands.at(association) = std::max(aiData.production.seaColonyDemands.at(association), productionDemand);
+				
+			}
+			
+		}
 		
 	}
 	
@@ -346,6 +374,17 @@ void analyzeBasePlacementSites()
 		}
 	)
 	;
+	
+	if (DEBUG)
+	{
+		debug("sortedBuildSiteScores - %s\n", MFactions[aiFactionId].noun_faction);
+		
+		for (std::pair<int, double> buildSiteScore : sortedBuildSiteScores)
+		{
+			debug("(%3d,%3d) %f\n", getX(buildSiteScore.first), getY(buildSiteScore.first), buildSiteScore.second);
+		}
+		
+	}
 	
 	// collect existing colonies
 	
@@ -408,7 +447,7 @@ void analyzeBasePlacementSites()
 		// find nearest colony that can reach the site
 		
 		int nearestColonyVehicleId = -1;
-		int nearestColonyVehicleRange = INT_MAX;
+		double nearestColonyTravelTime = DBL_MAX;
 		
 		for (int vehicleId : colonyVehicleIds)
 		{
@@ -424,16 +463,16 @@ void analyzeBasePlacementSites()
 			if (!isDestinationReachable(vehicleId, x, y, false))
 				continue;
 			
-			// get range
+			// get travel time
 			
-			int range = map_range(vehicle->x, vehicle->y, x, y);
+			double travelTime = getTravelTime(vehicleId, x, y);
 			
 			// update best
 			
-			if (range < nearestColonyVehicleRange)
+			if (travelTime < nearestColonyTravelTime)
 			{
 				nearestColonyVehicleId = vehicleId;
-				nearestColonyVehicleRange = range;
+				nearestColonyTravelTime = travelTime;
 			}
 			
 		}
@@ -548,31 +587,10 @@ double getBuildSiteYieldScore(MAP *tile)
 /*
 Evaluates build location score based on distance to existing bases.
 */
-double getBuildSiteRangeScore(MAP *tile)
+double getBuildSiteTravelTimeScore(double travelTime)
 {
-	debug("getBuildSiteRangeScore (%3d,%3d)\n", getX(tile), getY(tile));
+	debug("getBuildSiteTravelTimeScore(%f)\n", travelTime);
 
-	// estimate number of turns to destination
-	
-	int range = getExpansionTileInfo(tile)->expansionRange;
-	double speed = (is_ocean(tile) ? 4.0 : 1.5);
-	double turns = (double)range / speed;
-	
-//	// penalize not accessible but immediatelly reachable site with pickup time
-//	// land only
-//	
-//	if (!ocean && !mapData->accessible && mapData->immediatelyReachable)
-//	{
-//		turns += 5.0;
-//	}
-//	
-//	// penalize not accessible and not immediatelly reachable site with transport build time
-//	
-//	if (!ocean && !mapData->accessible && !mapData->immediatelyReachable)
-//	{
-//		turns += 10.0;
-//	}
-//	
 	// turn penalty coefficient
 	
 	double turnPenaltyCoefficient = conf.ai_expansion_turn_penalty;
@@ -591,9 +609,9 @@ double getBuildSiteRangeScore(MAP *tile)
 	
 	// calculate rangeScore
 	
-    double score = - turnPenaltyCoefficient * turns;
+    double score = - turnPenaltyCoefficient * travelTime;
     
-    debug("\tscore=%+f, range=%d, speed=%4.1f, turns=%f, turnPenaltyCoefficient=%f\n", score, range, speed, turns, turnPenaltyCoefficient);
+    debug("\tscore=%+f, travelTime=%f, turnPenaltyCoefficient=%f\n", score, travelTime, turnPenaltyCoefficient);
     
     return score;
     
@@ -679,11 +697,11 @@ double getTileQualityScore(MAP *tile)
 				+
 				conf.ai_expansion_weight_energy_bonus * (double)energyBonus
 				+
-				conf.ai_expansion_weight_rainfall * 0.0
+				conf.ai_expansion_weight_rainfall * +0.0
 				+
-				conf.ai_expansion_weight_rockiness * 1.0
+				conf.ai_expansion_weight_rockiness * +1.0
 				+
-				conf.ai_expansion_weight_elevation * 1.0
+				conf.ai_expansion_weight_elevation * +1.0
 			;
 			
 		}
@@ -1199,6 +1217,11 @@ int getNearestColonyRange(MAP *tile)
 		if (ocean && vehicleAssociation != association)
 			continue;
 		
+		// reachable destination
+		
+		if (!isDestinationReachable(vehicleId, x, y, false))
+			continue;
+		
 		nearestColonyRange = std::min(nearestColonyRange, map_range(x, y, vehicle->x, vehicle->y));
 
 	}
@@ -1209,14 +1232,207 @@ int getNearestColonyRange(MAP *tile)
 
 int getExpansionRange(MAP *tile)
 {
-	int expansionRange = getNearestColonyRange(tile);
+	int expansionRange = getNearestBaseRange(tile);
 	
 	if (expansionRange == INT_MAX)
 	{
-		expansionRange = getNearestBaseRange(tile);
+		expansionRange = getNearestColonyRange(tile);
 	}
 	
 	return expansionRange;
+	
+}
+
+/*
+Searches for nearest AI faction base range capable to issue colony to build base at this tile.
+*/
+std::pair<int, double> getNearestBaseTravelTime(MAP *tile)
+{
+	int x = getX(tile);
+	int y = getY(tile);
+	bool ocean = is_ocean(tile);
+	int association = getAssociation(tile, aiFactionId);
+	bool gravshipChassisAvailable = has_tech(aiFactionId, Chassis[CHS_GRAVSHIP].preq_tech);
+	bool cruiserChassisAvailable = has_tech(aiFactionId, Chassis[CHS_CRUISER].preq_tech);
+	bool foilChassisAvailable = has_tech(aiFactionId, Chassis[CHS_FOIL].preq_tech);
+	bool hovertankChassisAvailable = has_tech(aiFactionId, Chassis[CHS_HOVERTANK].preq_tech);
+	bool speederChassisAvailable = has_tech(aiFactionId, Chassis[CHS_SPEEDER].preq_tech);
+	bool infantryChassisAvailable = has_tech(aiFactionId, Chassis[CHS_INFANTRY].preq_tech);
+	
+	int nearestBaseId = -1;
+	double nearestBaseTravelTime = DBL_MAX;
+
+	for (int baseId : aiData.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		int baseOceanAssociation = getBaseOceanAssociation(baseId);
+
+		// only corresponding association for ocean if gravship chassis is not available
+		
+		if (!gravshipChassisAvailable && ocean && baseOceanAssociation != association)
+			continue;
+		
+		// get range
+		
+		int range = map_range(base->x, base->y, x, y);
+		
+		// get assumed speed
+		
+		double speed;
+		
+		if (gravshipChassisAvailable)
+		{
+			speed = (double)Chassis[CHS_GRAVSHIP].speed;
+		}
+		else
+		{
+			if (ocean)
+			{
+				if (cruiserChassisAvailable)
+				{
+					speed = (double)Chassis[CHS_CRUISER].speed;
+				}
+				else if (foilChassisAvailable)
+				{
+					speed = (double)Chassis[CHS_FOIL].speed;
+				}
+				else
+				{
+					return {-1, DBL_MAX};
+				}
+				
+			}
+			else
+			{
+				if (hovertankChassisAvailable)
+				{
+					speed = (double)Chassis[CHS_HOVERTANK].speed;
+				}
+				else if (speederChassisAvailable)
+				{
+					speed = (double)Chassis[CHS_SPEEDER].speed;
+				}
+				else if (infantryChassisAvailable)
+				{
+					speed = (double)Chassis[CHS_INFANTRY].speed;
+				}
+				else
+				{
+					return {-1, DBL_MAX};
+				}
+				
+			}
+			
+		}
+		
+		// estimate 1.5 speed increase due to roads for land vehicles
+		
+		if (!gravshipChassisAvailable && !ocean)
+		{
+			speed *= 1.5;
+		}
+		
+		// zero speed ?
+		
+		if (speed <= 0.0)
+			return {-1, DBL_MAX};
+		
+		// calculate travel time
+		
+		double travelTime = (double)range / speed;
+		
+		// update best values
+		
+		if (travelTime < nearestBaseTravelTime)
+		{
+			nearestBaseId = baseId;
+			nearestBaseTravelTime = travelTime;
+		}
+		
+	}
+
+	return {nearestBaseId, nearestBaseTravelTime};
+	
+}
+
+/*
+Searches for nearest AI faction colony and turns to reach this destination.
+*/
+std::pair<int, double> getNearestColonyTravelTime(MAP *tile)
+{
+	int x = getX(tile);
+	int y = getY(tile);
+	bool ocean = is_ocean(tile);
+	int association = getAssociation(tile, aiFactionId);
+	
+	int nearestColonyVehicleId = -1;
+	double nearestColonyTravelTime = DBL_MAX;
+
+	for (int vehicleId : aiData.colonyVehicleIds)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		int vehicleAssociation = getVehicleAssociation(vehicleId);
+		
+		// proper triad only
+		
+		if (ocean && vehicle->triad() == TRIAD_LAND || !ocean && vehicle->triad() == TRIAD_SEA)
+			continue;
+		
+		// only corresponding association for ocean
+		
+		if (ocean && vehicleAssociation != association)
+			continue;
+		
+		// reachable destination
+		
+		if (!isDestinationReachable(vehicleId, x, y, false))
+			continue;
+		
+		// calculate travel time
+		
+		double travelTime = getTravelTime(vehicleId, x, y);
+		
+		// update best values
+		
+		if (travelTime < nearestColonyTravelTime)
+		{
+			nearestColonyVehicleId = vehicleId;
+			nearestColonyTravelTime = travelTime;
+		}
+		
+	}
+
+	return {nearestColonyVehicleId, nearestColonyTravelTime};
+
+}
+
+double getTravelTime(int vehicleId, int x, int y)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// get range
+	
+	int range = map_range(vehicle->x, vehicle->y, x, y);
+	
+	// get vehicle speed
+	
+	double speed = (double)veh_speed_without_roads(vehicleId);
+	
+	// estimate 1.5 speed increase due to roads for land vehicles
+	
+	if (vehicle->triad() == TRIAD_LAND)
+	{
+		speed *= 1.5;
+	}
+	
+	// zero speed ?
+	
+	if (speed <= 0.0)
+		return DBL_MAX;
+	
+	// calculate travel time
+	
+	return (double)range / speed;
 	
 }
 

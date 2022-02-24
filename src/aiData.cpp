@@ -49,7 +49,7 @@ void Data::cleanup()
 	baseAnticipatedNativeAttackStrengths.clear();
 	baseRemainingNativeProtectionDemands.clear();
 	regionDefenseDemand.clear();
-	regionMaxMineralSurpluses.clear();
+	oceanAssociationMaxMineralSurpluses.clear();
 	landCombatUnitIds.clear();
 	seaCombatUnitIds.clear();
 	airCombatUnitIds.clear();

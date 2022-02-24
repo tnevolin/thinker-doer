@@ -86,6 +86,7 @@ void evaluateGlobalBaseDemand();
 //HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
 void setProduction();
 int aiSuggestBaseProduction(int baseId, int choice);
+bool evaluateMandatoryDefenseDemand();
 void evaluateFacilitiesDemand();
 void evaluatePopulationLimitFacilitiesDemand();
 void evaluatePsychFacilitiesDemand();

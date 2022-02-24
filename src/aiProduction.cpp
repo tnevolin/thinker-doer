@@ -351,11 +351,16 @@ int aiSuggestBaseProduction(int baseId, int choice)
     productionDemand.baseId = baseId;
     productionDemand.base = base;
     productionDemand.item = choice;
-    productionDemand.priority = 0.0;
+    productionDemand.priority = 0.0; 
     
 	// ignore new bases
 	
 	if (aiData.baseStrategies.count(baseId) == 0)
+		return productionDemand.item;
+	
+	// mandatory defense
+	
+	if (evaluateMandatoryDefenseDemand())
 		return productionDemand.item;
 	
 	// evaluate other demands
@@ -382,6 +387,48 @@ int aiSuggestBaseProduction(int baseId, int choice)
 
 	return productionDemand.item;
 
+}
+
+/*
+Generates mandatory defense demand and return true if generated.
+*/
+bool evaluateMandatoryDefenseDemand()
+{
+	int baseId = productionDemand.baseId;
+	
+	debug("evaluateMandatoryDefenseDemand\n");
+	
+	// validate base is not protected
+	
+	if (aiData.baseStrategies[baseId].garrison.size() > 0)
+		return false;
+	
+	// find best anti-native defense unit
+	
+	int unitId = findNativeDefenderUnit();
+	
+	// no unit found
+	
+	if (unitId == -1)
+	{
+		debug("\tno anti-native defense unit found\n");
+		return false;
+	}
+	
+	debug("\t%s\n", Units[unitId].name);
+	
+	// set priority
+
+	double priority = 1.0;
+
+	debug("\t\tpriority=%f\n", priority);
+	
+	// add production demand
+
+	addProductionDemand(unitId, priority);
+	
+	return true;
+	
 }
 
 void evaluateFacilitiesDemand()
@@ -485,7 +532,7 @@ void evaluatePopulationLimitFacilitiesDemand()
 	
 	// add additional colony demand
 	
-	baseColonyDemandMultiplier += 1.0;
+	baseColonyDemandMultiplier += std::min(0.5, 0.5 * priority);
 	debug("> baseColonyDemandMultiplier=%f\n", baseColonyDemandMultiplier);
 	
 }
@@ -542,7 +589,7 @@ void evaluatePsychFacilitiesDemand()
 	
 	// add additional colony demand
 	
-	baseColonyDemandMultiplier += 1.0;
+	baseColonyDemandMultiplier += std::min(0.5, 0.5 * priority);
 	debug("> baseColonyDemandMultiplier=%f\n", baseColonyDemandMultiplier);
 	
 }
@@ -995,7 +1042,7 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_COMMAND_CENTER) && !has_facility(baseId, FAC_COMMAND_CENTER) && !ocean)
 	{
 		int facilityId = FAC_COMMAND_CENTER;
-		double priority = conf.ai_production_command_center_priority * regionMilitaryPriority * base->mineral_surplus_final / aiData.regionMaxMineralSurpluses[region];
+		double priority = conf.ai_production_command_center_priority * regionMilitaryPriority;
 		addProductionDemand(-facilityId, priority);
 		debug("\t\tfacility=%-25s, ai_production_command_center_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_command_center_priority, priority);
 	}
@@ -1005,7 +1052,7 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_NAVAL_YARD) && !has_facility(baseId, FAC_NAVAL_YARD) && (ocean || connectedOceanRegions.size() >= 1))
 	{
 		int facilityId = FAC_NAVAL_YARD;
-		double priority = conf.ai_production_naval_yard_priority * regionMilitaryPriority * base->mineral_surplus_final / aiData.regionMaxMineralSurpluses[region];
+		double priority = conf.ai_production_naval_yard_priority * regionMilitaryPriority;
 		addProductionDemand(-facilityId, priority);
 		debug("\t\tfacility=%-25s, ai_production_naval_yard_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_naval_yard_priority, priority);
 	}
@@ -1078,7 +1125,7 @@ void evaluatePoliceDemand()
 		
 		// add additional colony demand
 		
-		baseColonyDemandMultiplier += 1.0;
+		baseColonyDemandMultiplier += std::min(0.5, 0.5 * priority);
 		debug("> baseColonyDemandMultiplier=%f\n", baseColonyDemandMultiplier);
 		
 	}
@@ -1176,10 +1223,9 @@ void evaluateSeaFormerDemand()
 	// set priority
 	
 	int maxMineralSurplus = aiData.maxMineralSurplus;
-	
-	if (aiData.regionMaxMineralSurpluses.count(baseOceanAssociation) != 0)
+	if (aiData.oceanAssociationMaxMineralSurpluses.count(baseOceanAssociation) != 0)
 	{
-		maxMineralSurplus = aiData.regionMaxMineralSurpluses.at(baseOceanAssociation);
+		maxMineralSurplus = aiData.oceanAssociationMaxMineralSurpluses.at(baseOceanAssociation);
 	}
 
 	double priority = conf.ai_production_improvement_priority * seaFormerDemand * ((double)base->mineral_surplus / (double)maxMineralSurplus);

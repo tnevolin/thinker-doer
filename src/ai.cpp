@@ -918,15 +918,19 @@ void populateGlobalVariables()
 	{
 		BASE *base = &(Bases[baseId]);
 		MAP *baseTile = getBaseMapTile(baseId);
+		int baseOceanAssociation = getBaseOceanAssociation(baseId);
 		
 		aiData.maxMineralSurplus = std::max(aiData.maxMineralSurplus, base->mineral_surplus);
 		
-		if (aiData.regionMaxMineralSurpluses.count(baseTile->region) == 0)
+		if (baseOceanAssociation != -1)
 		{
-			aiData.regionMaxMineralSurpluses[baseTile->region] = 1;
+			if (aiData.oceanAssociationMaxMineralSurpluses.count(baseTile->region) == 0)
+			{
+				aiData.oceanAssociationMaxMineralSurpluses.insert({baseOceanAssociation, 0});
+			}
+			aiData.oceanAssociationMaxMineralSurpluses.at(baseOceanAssociation) = std::max(aiData.oceanAssociationMaxMineralSurpluses.at(baseOceanAssociation), base->mineral_surplus);
+			
 		}
-		
-		aiData.regionMaxMineralSurpluses[baseTile->region] = std::max(aiData.regionMaxMineralSurpluses[baseTile->region], base->mineral_surplus);
 		
 	}
 	
