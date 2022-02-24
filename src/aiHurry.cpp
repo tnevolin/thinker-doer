@@ -41,6 +41,8 @@ void considerHurryingProduction(int factionId)
 
 	// sort out bases
 
+	double unprotectedBasesWeightSum = 0.0;
+	std::vector<BASE_WEIGHT> unprotectedBases;
 	double importantFacilityBasesWeightSum = 0.0;
 	std::vector<BASE_WEIGHT> importantFacilityBases;
 	double facilityBasesWeightSum = 0.0;
@@ -56,6 +58,10 @@ void considerHurryingProduction(int factionId)
 
 		if (base->faction_id != factionId)
 			continue;
+		
+		// check if base is unprotected
+		
+		bool unprotected = (getBaseGarrison(baseId).size() == 0);
 
 		// get built item
 
@@ -65,9 +71,9 @@ void considerHurryingProduction(int factionId)
 
 		int mineralSurplus = base->mineral_surplus;
 		
-		// do not rush unit production in bases with low mineral surplus
+		// do not rush unit production in bases with low mineral surplus unless unprotected
 		
-		if (item >= 0 && mineralSurplus < conf.ai_production_unit_min_mineral_surplus)
+		if (!unprotected && item >= 0 && mineralSurplus < conf.ai_production_unit_min_mineral_surplus)
 			continue;
 
 		// calculate weight
@@ -76,17 +82,21 @@ void considerHurryingProduction(int factionId)
 
 		// sort bases
 
-		if (item >= 0)
+		if (unprotected && item >= 0 && isCombatUnit(item))
 		{
-			// hurry unit only with positive production
-
-			if (mineralSurplus >= 1)
+			unprotectedBases.push_back({baseId, weight});
+			unprotectedBasesWeightSum += weight;
+		}
+		else if (item >= 0)
+		{
+			// rush unit production in bases with enough mineral surplus
+			
+			if (mineralSurplus >= conf.ai_production_unit_min_mineral_surplus)
 			{
 				unitBases.push_back({baseId, weight});
 				unitBasesWeightSum += weight;
-				
 			}
-
+			
 		}
 		else if (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST)
 		{
@@ -112,7 +122,16 @@ void considerHurryingProduction(int factionId)
 
 	// hurry production by priority
 
-	if (importantFacilityBases.size() >= 1)
+	if (unprotectedBases.size() >= 1)
+	{
+		for (BASE_WEIGHT &baseWeight : unprotectedBases)
+		{
+			int allowance = (int)(floor((double)spendPool * baseWeight.weight / importantFacilityBasesWeightSum));
+			hurryProductionPartially(baseWeight.baseId, allowance);
+		}
+
+	}
+	else if (importantFacilityBases.size() >= 1)
 	{
 		for
 		(

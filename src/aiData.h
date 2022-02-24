@@ -236,7 +236,7 @@ struct Data
 	std::map<int, double> regionDefenseDemand;
 	int maxBaseSize;
 	int maxMineralSurplus;
-	std::map<int, int> regionMaxMineralSurpluses;
+	std::map<int, int> oceanAssociationMaxMineralSurpluses;
 	int bestLandUnitId;
 	int bestSeaUnitId;
 	int bestAirUnitId;
