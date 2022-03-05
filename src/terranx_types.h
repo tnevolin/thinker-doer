@@ -177,7 +177,13 @@ struct MFaction {
     When no enemies are present, the range is capped at 40.
     */
     float thinker_enemy_range;
-    char pad_1[116];
+    /*
+    WTP specific save game variables
+    */
+    // income for last 20 turns
+    float averageBaseIncome[20];
+    // unused block
+    char pad_1[36];
     /*
     End of block
     */

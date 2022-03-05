@@ -165,6 +165,10 @@ void populateAIData()
 	
 	populateWarzones();
 	
+	// bases and tiles
+	
+	populateBasesAndTiles();
+	
 }
 
 /*
@@ -838,46 +842,38 @@ void populateGlobalVariables()
 
 	// populate units
 
-    for (int i = 0; i < 128; i++)
+    for (int unitId : getFactionUnitIds(aiFactionId, true))
 	{
-        int id = (i < 64 ? i : (aiFactionId - 1) * 64 + i);
-
-        UNIT *unit = &Units[id];
-
-		// skip not enabled
-
-		if (id < 64 && !has_tech(aiFactionId, unit->preq_tech))
-			continue;
-
-        // skip empty
-
-        if (strlen(unit->name) == 0)
-			continue;
-
-        // skip obsolete
-
-        if ((unit->obsolete_factions & (0x1 << aiFactionId)) != 0)
-			continue;
-
+		UNIT *unit = &(Units[unitId]);
+		
 		// add unit
 
-		aiData.unitIds.push_back(id);
+		aiData.unitIds.push_back(unitId);
+		
+		if (isPrototypeUnit(unitId))
+		{
+			// not prototyped units
+			
+			aiData.prototypeUnitIds.push_back(unitId);
+			
+		}
 		
 		// add combat unit
 		// either psi or anti psi unit or conventional with best weapon/armor
 		
 		if
 		(
-			isCombatUnit(id)
+			// combat
+			isCombatUnit(unitId)
 			&&
 			(
 				Weapon[unit->weapon_type].offense_value < 0
 				||
 				Armor[unit->armor_type].defense_value < 0
 				||
-				unit_has_ability(id, ABL_TRANCE)
+				unit_has_ability(unitId, ABL_TRANCE)
 				||
-				unit_has_ability(id, ABL_EMPATH)
+				unit_has_ability(unitId, ABL_EMPATH)
 				||
 				Weapon[unit->weapon_type].offense_value >= aiData.bestWeaponOffenseValue
 				||
@@ -885,25 +881,31 @@ void populateGlobalVariables()
 			)
 		)
 		{
-			aiData.combatUnitIds.push_back(id);
-			
-			// populate specific triads
-			
-			switch (unit->triad())
+			if (!isPrototypeUnit(unitId))
 			{
-			case TRIAD_LAND:
-				aiData.landCombatUnitIds.push_back(id);
-				aiData.landAndAirCombatUnitIds.push_back(id);
-				break;
-			case TRIAD_SEA:
-				aiData.seaCombatUnitIds.push_back(id);
-				aiData.seaAndAirCombatUnitIds.push_back(id);
-				break;
-			case TRIAD_AIR:
-				aiData.airCombatUnitIds.push_back(id);
-				aiData.landAndAirCombatUnitIds.push_back(id);
-				aiData.seaAndAirCombatUnitIds.push_back(id);
-				break;
+				// prototyped combat units
+				
+				aiData.combatUnitIds.push_back(unitId);
+				
+				// populate specific triads
+				
+				switch (unit->triad())
+				{
+				case TRIAD_LAND:
+					aiData.landCombatUnitIds.push_back(unitId);
+					aiData.landAndAirCombatUnitIds.push_back(unitId);
+					break;
+				case TRIAD_SEA:
+					aiData.seaCombatUnitIds.push_back(unitId);
+					aiData.seaAndAirCombatUnitIds.push_back(unitId);
+					break;
+				case TRIAD_AIR:
+					aiData.airCombatUnitIds.push_back(unitId);
+					aiData.landAndAirCombatUnitIds.push_back(unitId);
+					aiData.seaAndAirCombatUnitIds.push_back(unitId);
+					break;
+				}
+				
 			}
 			
 		}
@@ -1806,7 +1808,7 @@ void populateWarzones()
 		}
 
 		// store warzone location
-
+		
 		if (at_war(aiFactionId, vehicle->faction_id))
 		{
 			// 2 steps from artillery 1 step from anyone else
@@ -1817,6 +1819,76 @@ void populateWarzones()
 			{
 				aiData.getTileInfo(warzoneTile)->warzone = true;
 			}
+			
+		}
+		
+	}
+	
+	if (DEBUG)
+	{
+		debug("warzones - %s\n", MFactions[aiFactionId].noun_faction);
+		for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+		{
+			if (aiData.getTileInfo(mapIndex)->warzone)
+			{
+				debug("\t(%3d,%3d)\n", getX(mapIndex), getY(mapIndex));
+			}
+		}
+	}
+	
+}
+
+void populateBasesAndTiles()
+{
+	debug("populateBasesAndTiles - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	// populate base worked tiles
+	// populate tile worked bases
+	
+	debug("\tworked\n");
+	
+	for (int baseId : aiData.baseIds)
+	{
+		debug("\t\t%s\n", Bases[baseId].name);
+		
+		for (MAP *workedTile : getBaseWorkedTiles(baseId))
+		{
+			// store worked base and worked tile
+			
+			aiData.getBaseInfo(baseId)->workedTiles.push_back(workedTile);
+			aiData.getTileInfo(workedTile)->workedBase = baseId;
+			
+			debug("\t\t\t(%3d,%3d)\n", getX(workedTile), getY(workedTile));
+			
+		}
+		
+	}
+	
+	// populate base unworked tiles
+	
+	debug("\tunworked\n");
+	
+	for (int baseId : aiData.baseIds)
+	{
+		debug("\t\t%s\n", Bases[baseId].name);
+		
+		for (MAP *workableTile : getBaseWorkableTiles(baseId, false))
+		{
+			// unclaimed territory
+			
+			if (!(workableTile->owner == -1 || workableTile->owner == aiFactionId))
+				continue;
+			
+			// unworked tile
+			
+			if (!(aiData.getTileInfo(workableTile)->workedBase == -1))
+				continue;
+			
+			// store unworked tile
+			
+			aiData.getBaseInfo(baseId)->unworkedTiles.push_back(workableTile);
+			
+			debug("\t\t\t(%3d,%3d)\n", getX(workableTile), getY(workableTile));
 			
 		}
 		
@@ -2125,7 +2197,7 @@ void obsoletePrototypes(int factionId, std::set<int> chassisIds, std::set<int> w
 	}
 	
 	debug("\t----------\n");
-	for (int unitId : getFactionPrototypes(factionId, true))
+	for (int unitId : getFactionUnitIds(factionId, true))
 	{
 		UNIT *unit = &(Units[unitId]);
 		debug("\t%s\n", unit->name);
@@ -2288,7 +2360,7 @@ int getFactionBestPrototypedWeaponOffenseValue(int factionId)
 {
 	int bestWeaponOffenseValue = 0;
 	
-	for (int unitId : getFactionPrototypes(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, false))
 	{
 		UNIT *unit = &(Units[unitId]);
 		
@@ -2315,7 +2387,7 @@ int getFactionBestPrototypedArmorDefenseValue(int factionId)
 {
 	int bestArmorDefenseValue = 0;
 	
-	for (int unitId : getFactionPrototypes(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, false))
 	{
 		UNIT *unit = &(Units[unitId]);
 		
@@ -3067,5 +3139,173 @@ std::set<int> getBaseOceanRegions(int baseId)
 
 	return baseOceanRegions;
 
+}
+
+int getPathDistance(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId)
+{
+	debug("getPathDistance (%3d,%3d) -> (%3d,%3d) %s - %s\n", sourceX, sourceY, destinationX, destinationY, Units[unitId].name, MFactions[factionId].noun_faction);
+	
+	if(!isOnMap(sourceX, sourceY) || !isOnMap(destinationX, destinationY))
+		return -1;
+	
+	MAP *sourceTile = getMapTile(sourceX, sourceY);
+	MAP *destinationTile = getMapTile(destinationX, destinationY);
+	
+	if (sourceTile == nullptr || destinationTile == nullptr)
+		return -1;
+	
+	// verify source and destination are corresponding realms
+	
+	switch (Units[unitId].triad())
+	{
+	case TRIAD_LAND:
+		if (is_ocean(sourceTile) || is_ocean(destinationTile))
+			return -1;
+		break;
+		
+	case TRIAD_SEA:
+		if (!is_ocean(sourceTile) || !is_ocean(destinationTile))
+			return -1;
+		break;
+		
+	}
+	
+	// verify valid and same associations
+	
+	int sourceAssociation = getAssociation(sourceTile, factionId);
+	int destinationAssociation = getAssociation(destinationTile, factionId);
+	
+	if (sourceAssociation == -1 || destinationAssociation == -1)
+		return -1;
+	
+	if (destinationAssociation != sourceAssociation)
+		return -1;
+	
+	// process path
+	
+	int pX = sourceX;
+	int pY = sourceY;
+	int angle = -1;
+	int flags = 0x00 | (!isCombatUnit(unitId) && !has_project(factionId, FAC_XENOEMPATHY_DOME) ? 0x10 : 0x00);
+	int distance = 0;
+	
+	while (distance < *map_axis_x + *map_axis_y)
+	{
+		if (pX == destinationX && pY == destinationY)
+		{
+			return distance;
+		}
+		
+		angle = PATH_find(PATH, pX, pY, destinationX, destinationY, unitId, factionId, flags, angle);
+		
+		// wrong angle
+		
+		if (angle < 0)
+			return -1;
+		
+		int nX = wrap(pX + BaseOffsetX[angle]);
+		int nY = pY + BaseOffsetY[angle];
+		
+		// update distance
+		
+		distance++;
+		
+		debug("\t(%3d,%3d)->(%3d,%3d) distance = %2d\n", pX, pY, nX, nY, distance);
+		
+		// step to next tile
+		
+		pX = nX;
+		pY = nY;
+		
+	}
+	
+	return -1;
+	
+}
+
+int getPathTravelTime(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId)
+{
+	debug("getPathTravelTime (%3d,%3d) -> (%3d,%3d) %s - %s\n", sourceX, sourceY, destinationX, destinationY, Units[unitId].name, MFactions[factionId].noun_faction);
+	
+	if(!isOnMap(sourceX, sourceY) || !isOnMap(destinationX, destinationY))
+		return -1;
+	
+	MAP *sourceTile = getMapTile(sourceX, sourceY);
+	MAP *destinationTile = getMapTile(destinationX, destinationY);
+	
+	if (sourceTile == nullptr || destinationTile == nullptr)
+		return -1;
+	
+	// verify source and destination are corresponding realms
+	
+	switch (Units[unitId].triad())
+	{
+	case TRIAD_LAND:
+		if (is_ocean(sourceTile) || is_ocean(destinationTile))
+			return -1;
+		break;
+		
+	case TRIAD_SEA:
+		if (!is_ocean(sourceTile) || !is_ocean(destinationTile))
+			return -1;
+		break;
+		
+	}
+	
+	// verify valid and same associations
+	
+	int sourceAssociation = getAssociation(sourceTile, factionId);
+	int destinationAssociation = getAssociation(destinationTile, factionId);
+	
+	if (sourceAssociation == -1 || destinationAssociation == -1)
+		return -1;
+	
+	if (destinationAssociation != sourceAssociation)
+		return -1;
+	
+	// process path
+	
+	int pX = sourceX;
+	int pY = sourceY;
+	int angle = -1;
+	int flags = 0xC0 | (!isCombatUnit(unitId) && !has_project(factionId, FAC_XENOEMPATHY_DOME) ? 0x10 : 0x00);
+	int travelCost = 0;
+	
+	while (travelCost < (*map_axis_x + *map_axis_y) * Rules->mov_rate_along_roads)
+	{
+		if (pX == destinationX && pY == destinationY)
+		{
+			return (travelCost + (Rules->mov_rate_along_roads - 1)) / Rules->mov_rate_along_roads;
+		}
+		
+		angle = PATH_find(PATH, pX, pY, destinationX, destinationY, unitId, factionId, flags, angle);
+		
+		// wrong angle
+		
+		if (angle < 0)
+			return -1;
+		
+		int nX = wrap(pX + BaseOffsetX[angle]);
+		int nY = pY + BaseOffsetY[angle];
+		
+		// calculate hex cost
+		
+		int hexCost = getHexCost(unitId, factionId, pX, pY, nX, nY);
+		
+		// update movement rate
+		
+		travelCost += hexCost;
+		
+		debug("\t(%3d,%3d)->(%3d,%3d) cost = %2d, travelCost = %2d\n", pX, pY, nX, nY, hexCost, travelCost);
+		
+		// step to next tile
+		
+		pX = nX;
+		pY = nY;
+		
+	}
+	
+	return -1;
+	
 }
 

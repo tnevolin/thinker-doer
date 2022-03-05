@@ -806,26 +806,29 @@ int getCarryingScoutVehicleId(int transportVehicleId)
 /*
 Finds the first ocean association that is needed to be crossed in order to get to destination.
 */
-int getCrossOceanAssociation(MAP *initialTile, MAP *terminalTile, int factionId)
+int getCrossOceanAssociation(int vehicleId, MAP *destination)
 {
-	// check locations
+	assert(vehicleId >= 0 && vehicleId < *total_num_vehicles);
+	assert(destination != nullptr);
 	
-	if (initialTile == nullptr || terminalTile == nullptr)
-		return -1;
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	int terminalX = getX(destination);
+	int terminalY = getY(destination);
 	
 	// get associations
 	
-	int initialAssociation = getAssociation(initialTile, factionId);
-	int terminalAssociation = getAssociation(terminalTile, factionId);
+	int initialAssociation = getAssociation(vehicleTile, vehicle->faction_id);
+	int terminalAssociation = getAssociation(destination, vehicle->faction_id);
 	
 	// if in ocean already this is the ocean to cross
 	
-	if (isOceanRegion(initialTile->region))
+	if (is_ocean(vehicleTile))
 		return initialAssociation;
 	
 	// get connections
 	
-	std::set<int> *initialConnections = getConnections(initialAssociation, factionId);
+	std::set<int> *initialConnections = getConnections(initialAssociation, vehicle->faction_id);
 	
 	if (initialConnections->size() == 0)
 		return -1;
@@ -835,52 +838,153 @@ int getCrossOceanAssociation(MAP *initialTile, MAP *terminalTile, int factionId)
 	if (initialConnections->count(terminalAssociation) != 0)
 		return terminalAssociation;
 	
-	// preset path variables
+	// process paths along beeline
 	
-	std::map<int, std::set<int>> paths;
-	for (int connection : *initialConnections)
+	int pX = vehicle->x;
+	int pY = vehicle->y;
+	bool ocean = false;
+	int currentRange = map_range(pX, pY, terminalX, terminalY);
+	int crossOceanAssociation = -1;
+	
+	while (currentRange > 0)
 	{
-		paths.insert({connection, {initialAssociation, connection}});
-	}
-	
-	// select best path
-	
-	bool updated;
-	{
-		updated = false;
-	
-		for (auto &path : paths)
+		MAP *closestLandAdjacentTile = nullptr;
+		int closestLandAdjacentTileRange = currentRange;
+		MAP *closestOceanAdjacentTile = nullptr;
+		int closestOceanAdjacentTileRange = currentRange;
+		
+		for (MAP *adjacentTile : getAdjacentTiles(pX, pY, false))
 		{
-			int crossOceanAssociation = path.first;
-			std::set<int> *pathAssociations = &(path.second);
+			// get range to terminal
 			
-			std::set<int> newPathAssociations;
-			for (int pathAssociation : *pathAssociations)
+			int range = map_range(getX(adjacentTile), getY(adjacentTile), terminalX, terminalY);
+			
+			if (is_ocean(adjacentTile))
 			{
-				std::set<int> *pathConnections = getConnections(pathAssociation, factionId);
-				for (int connection : *pathConnections)
+				// update closest
+				
+				if (range < closestOceanAdjacentTileRange)
 				{
-					if (connection == terminalAssociation)
-						return crossOceanAssociation;
-					
-					if (pathAssociations->count(connection) != 0)
-						continue;
-					
-					newPathAssociations.insert(connection);
-					updated = true;
-					
+					closestOceanAdjacentTile = adjacentTile;
+					closestOceanAdjacentTileRange = range;
+				}
+				
+			}
+			else
+			{
+				// skip not same association
+				
+				if (getAssociation(adjacentTile, vehicle->faction_id) != initialAssociation)
+					continue;
+				
+				// update closest
+				
+				if (range < closestLandAdjacentTileRange)
+				{
+					closestLandAdjacentTile = adjacentTile;
+					closestLandAdjacentTileRange = range;
 				}
 				
 			}
 			
-			// add new associations
+		}
+		
+		if (!ocean)
+		{
+			// we were on land
 			
-			pathAssociations->insert(newPathAssociations.begin(), newPathAssociations.end());
+			if (closestLandAdjacentTile != nullptr)
+			{
+				// step to next land tile and continue
+				
+				pX = getX(closestLandAdjacentTile);
+				pY = getY(closestLandAdjacentTile);
+				
+			}
+			else if (closestOceanAdjacentTile != nullptr)
+			{
+				// step to the next ocean tile
+				
+				pX = getX(closestOceanAdjacentTile);
+				pY = getY(closestOceanAdjacentTile);
+				
+				// update crossOceanAssociation
+				
+				crossOceanAssociation = getAssociation(closestOceanAdjacentTile, vehicle->faction_id);
+				
+			}
+			else
+			{
+				// weird thing - should not happen
+				
+				return -1;
+				
+			}
+				
+		}
+		else
+		{
+			// we were in ocean
+			
+			if (closestLandAdjacentTile != nullptr)
+			{
+				// step to next land tile
+				
+				pX = getX(closestLandAdjacentTile);
+				pY = getY(closestLandAdjacentTile);
+				
+				// get range to next tile from initial
+				
+				int range = map_range(vehicle->x, vehicle->y, pX, pY);
+				
+				// get path distance to next tile from initial
+				
+				int pathDistance = getPathDistance(vehicle->x, vehicle->y, pX, pY, vehicle->unit_id, vehicle->faction_id);
+				
+				// allow pathDistance to be 3 times more than range
+				
+				if (pathDistance != -1 && pathDistance <= 3 * range)
+				{
+					// continue
+				}
+				else
+				{
+					// return last ocean association
+					
+					return crossOceanAssociation;
+					
+				}
+				
+			}
+			else if (closestOceanAdjacentTile != nullptr)
+			{
+				// continue in the ocean
+				
+				pX = getX(closestOceanAdjacentTile);
+				pY = getY(closestOceanAdjacentTile);
+				
+			}
+			else
+			{
+				// weird thing - should not happen
+				
+				return -1;
+				
+			}
 			
 		}
 		
+		// update realm
+		
+		ocean = is_ocean(getMapTile(pX, pY));
+		
+		// update current range
+		
+		currentRange = map_range(pX, pY, terminalX, terminalY);
+		
 	}
-	while (updated);
+	
+	// we have reached terminal point - no ocean to cross
 	
 	return -1;
 	
@@ -925,25 +1029,6 @@ int getAvailableSeaTransport(int association, int vehicleId)
 		// get range
 		
 		int range = map_range(seaTransportVehicle->x, seaTransportVehicle->y, vehicle->x, vehicle->y);
-		
-		// compare to task range if any
-		
-		if (hasTask(seaTransportVehicleId))
-		{
-			Task *seaTransportTask = getTask(seaTransportVehicleId);
-			
-			MAP *destination = seaTransportTask->getDestination();
-			
-			if (destination != nullptr)
-			{
-				int destinationRange = map_range(seaTransportVehicle->x, seaTransportVehicle->y, getX(destination), getY(destination));
-				
-				if (destinationRange <= range)
-					continue;
-			
-			}
-			
-		}
 		
 		// update closest
 		

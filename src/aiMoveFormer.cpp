@@ -99,8 +99,6 @@ void moveFormerStrategy()
 	
 	applyProximityRules();
 	
-	setFormerProductionDemands();
-
 	assignFormerOrders();
 
 	finalizeFormerOrders();
@@ -855,43 +853,8 @@ void applyProximityRules()
 
 }
 
-void setFormerProductionDemands()
-{
-	debug("setFormerProductionDemands\n");
-	
-	aiData.production.landFormerDemand = 0.0;
-	
-	for (TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
-	{
-		if (!is_ocean(terraformingRequest.tile))
-		{
-			aiData.production.landFormerDemand = std::max(aiData.production.landFormerDemand, terraformingRequest.score);
-		}
-		else
-		{
-			int oceanAssociation = getOceanAssociation(terraformingRequest.tile, aiFactionId);
-			
-			if (oceanAssociation == -1)
-				continue;
-			
-			if (aiData.production.seaFormerDemands.count(oceanAssociation) == 0)
-			{
-				aiData.production.seaFormerDemands.insert({oceanAssociation, 0.0});
-			}
-			aiData.production.seaFormerDemands.at(oceanAssociation) = std::max(aiData.production.seaFormerDemands.at(oceanAssociation), terraformingRequest.score);
-			
-		}
-		
-	}
-	
-}
-
 void assignFormerOrders()
 {
-	// clear production demand
-	
-	aiData.production.landFormerDemand = 0.0;
-	
 	// distribute orders
 	
 	for (TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
@@ -949,62 +912,7 @@ void assignFormerOrders()
 			nearestFormerOrder->action = terraformingRequest.action;
 			
 		}
-		// former not found - update production demand
-		else
-		{
-			if (!is_ocean(terraformingRequest.tile))
-			{
-				aiData.production.landFormerDemand = std::max(aiData.production.landFormerDemand, terraformingRequest.score);
-			}
-			else
-			{
-				int oceanAssociation = getOceanAssociation(terraformingRequest.tile, aiFactionId);
-				
-				if (oceanAssociation == -1)
-					continue;
-				
-				if (aiData.production.seaFormerDemands.count(oceanAssociation) == 0)
-				{
-					aiData.production.seaFormerDemands.insert({oceanAssociation, 0.0});
-				}
-				aiData.production.seaFormerDemands.at(oceanAssociation) = std::max(aiData.production.seaFormerDemands.at(oceanAssociation), terraformingRequest.score);
-				
-			}
-			
-		}
 		
-	}
-	
-	// kill supported formers without orders
-	
-	for (FORMER_ORDER &formerOrder : formerOrders)
-	{
-		int vehicleId = formerOrder.id;
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		
-		// supported
-		
-		if (vehicle->home_base_id < 0)
-			continue;
-		
-		// disband former without order
-		
-		if (formerOrder.action == -1)
-		{
-			setTask(vehicleId, Task(KILL, vehicleId));
-		}
-		
-	}
-	
-	// normalize production demand
-	
-	double normalYieldScore = conf.ai_terraforming_nutrientWeight + conf.ai_terraforming_mineralWeight + conf.ai_terraforming_energyWeight;
-	
-	aiData.production.landFormerDemand /= normalYieldScore;
-	
-	for (auto &seaFormerDemandEntry : aiData.production.seaFormerDemands)
-	{
-		seaFormerDemandEntry.second /= normalYieldScore;
 	}
 	
 }
@@ -1015,7 +923,31 @@ void finalizeFormerOrders()
 
 	for (FORMER_ORDER &formerOrder : formerOrders)
 	{
-		transitVehicle(formerOrder.id, Task(TERRAFORMING, formerOrder.id, getMapTile(formerOrder.x, formerOrder.y), -1, -1, formerOrder.action));
+		if (formerOrder.action == -1)
+		{
+			// kill supported formers without orders
+			
+			int vehicleId = formerOrder.id;
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			// supported
+			
+			if (vehicle->home_base_id < 0)
+				continue;
+			
+			// disband former without order
+			
+			if (formerOrder.action == -1)
+			{
+				setTask(vehicleId, Task(KILL, vehicleId));
+			}
+			
+		}
+		else
+		{
+			transitVehicle(formerOrder.id, Task(TERRAFORMING, formerOrder.id, getMapTile(formerOrder.x, formerOrder.y), -1, -1, formerOrder.action));
+		}
+		
 	}
 
 }
@@ -1040,8 +972,7 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 
 	// store tile values
 
-	MAP_STATE currentMapState;
-	getMapState(tile, &currentMapState);
+	MAP_STATE currentMapState = getMapState(tile);
 
 	// find best terraforming option
 
@@ -1058,12 +989,12 @@ void calculateConventionalTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestT
 
 		// process only correct rockiness
 
-		if (option.rocky && (!ocean && !rocky))
+		if (option.rocky && !(!ocean && rocky))
 			continue;
 
 		// check if required action technology is available when required
 
-		if (option.requiredAction != -1 && !isTerraformingAvailable(tile, option.requiredAction))
+		if (!(option.requiredAction == -1 || isTerraformingAvailable(tile, option.requiredAction)))
 			continue;
 		
 		debug("\t%s\n", option.name);

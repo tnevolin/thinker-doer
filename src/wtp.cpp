@@ -1483,11 +1483,11 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 /*
 hex cost
 */
-HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7)
+HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int speed1)
 {
     // execute original code
 
-    int value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, a7);
+    int value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, speed1);
 
     // correct road/tube movement rate
 
@@ -1569,7 +1569,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 					
 					// recalculate value without road/tube
 					
-					value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, a7);
+					value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, speed1);
 					
 					// restore road/tube to the map
 					
@@ -2473,7 +2473,7 @@ HOOK_API int calculateNotPrototypedComponentsCostForProduction(int unitId)
 	bool weaponPrototyped = false;
 	bool armorPrototyped = false;
 
-	for (int factionPrototypedUnitId : getFactionPrototypes(factionId, false))
+	for (int factionPrototypedUnitId : getFactionUnitIds(factionId, false))
 	{
 		UNIT *factionPrototypedUnit = &(Units[factionPrototypedUnitId]);
 

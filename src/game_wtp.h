@@ -3,14 +3,14 @@
 #include "main.h"
 #include <vector>
 #include <set>
-#include <set>
+#include <map>
 #include "terranx_types.h"
 
 struct MAP_STATE
 {
     byte climate;
     byte rocks;
-    int items;
+    uint32_t items;
 };
 
 // =======================================================
@@ -122,7 +122,7 @@ std::vector<MAP *> getAdjacentTiles(MAP *tile, bool includeCenter);
 
 bool has_armor(int factionId, int armorId);
 bool has_reactor(int factionId, int reactorId);
-int getBaseMineralCost(int baseId, int itemId);
+int getBaseMineralCost(int baseId, int item);
 int veh_triad(int id);
 int map_rainfall(MAP *tile);
 int map_level(MAP *tile);
@@ -155,7 +155,7 @@ bool isBaseBuildingUnit(int baseId);
 bool isBaseBuildingFacility(int baseId);
 bool isBaseBuildingProject(int baseId);
 bool isBaseProductionWithinRetoolingExemption(int baseId);
-int getBaseBuildingItemCost(int baseId);
+int getBaseBuildingItemMineralCost(int baseId);
 double getUnitPsiOffenseStrength(int id, int baseId);
 double getUnitPsiDefenseStrength(int id, int baseId, bool defendAtBase);
 double getUnitConventionalOffenseStrength(int id, int baseId);
@@ -176,6 +176,7 @@ double calculateNativeDamageDefense(int id);
 void setVehicleOrder(int id, int order);
 MAP *getBaseMapTile(int baseId);
 MAP *getVehicleMapTile(int vehicleId);
+bool isImprovedTile(MAP *tile);
 bool isImprovedTile(int x, int y);
 bool isSupplyVehicle(VEH *vehicle);
 bool isColonyUnit(int id);
@@ -212,7 +213,7 @@ std::vector<MAP *> getBaseWorkedTiles(BASE *base);
 bool isBaseWorkedTile(int baseId, int x, int y);
 bool isBaseWorkedTile(int baseId, MAP *tile);
 int getBaseConventionalDefenseValue(int baseId);
-std::vector<int> getFactionPrototypes(int factionId, bool includeNotPrototyped);
+std::vector<int> getFactionUnitIds(int factionId, bool includeNotPrototyped);
 bool isVehicleNativeLand(int vehicleId);
 bool isBaseBuildingColony(int baseId);
 int projectBasePopulation(int baseId, int turns);
@@ -249,7 +250,7 @@ void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
 int getRemainingMinerals(int baseId);
 std::vector<int> getStackVehicles(int vehicleId);
 void setTerraformingAction(int vehicleId, int action);
-void getMapState(MAP *tile, MAP_STATE *mapState);
+MAP_STATE getMapState(MAP *tile);
 void setMapState(MAP *tile, MAP_STATE *mapState);
 void copyMapState(MAP_STATE *destinationMapState, MAP_STATE *sourceMapState);
 void generateTerraformingChange(MAP_STATE *mapState, int action);
@@ -314,7 +315,7 @@ int getUnitWeaponOffenseValue(int unitId);
 int getUnitArmorDefenseValue(int unitId);
 int getVehicleWeaponOffenseValue(int vehicleId);
 int getVehicleArmorDefenseValue(int vehicleId);
-bool factionHasSpecial(int factionId, int special);
+bool isFactionSpecial(int factionId, int special);
 bool factionHasBonus(int factionId, int bonusId);
 double getAlienMoraleModifier();
 MAP *getNearestLandTerritory(int x, int y, int factionId);
@@ -327,4 +328,6 @@ int getTransportUsedCapacity(int transportVehicleId);
 int getTransportRemainingCapacity(int transportVehicleId);
 int getVehiclePower(int vehicleId);
 int getBaseGrowthRate(int baseId);
+void accumulateMapIntValue(std::map<int, int> *m, int key, int value);
+int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY);
 

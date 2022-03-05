@@ -41,6 +41,7 @@ void Data::cleanup()
 	outsideCombatVehicleIds.clear();
 	unitIds.clear();
 	combatUnitIds.clear();
+	prototypeUnitIds.clear();
 	colonyVehicleIds.clear();
 	formerVehicleIds.clear();
 	threatLevel = 0.0;

@@ -533,27 +533,67 @@ Updates vehicle task if new task has closer destination.
 */
 void setTaskIfCloser(int vehicleId, Task task)
 {
+	debug("setTaskIfCloser\n");
+	
 	// task exists
 	if (hasTask(vehicleId))
 	{
 		// get current task
 		
 		Task *currentTask = getTask(vehicleId);
-		
 		if (currentTask == nullptr)
+		{
+			debug("\tERROR: Current task exists but it is nullptr.\n");
 			return;
+		}
 		
-		// get current task range
+		// get target vehicle ID for current and replacing tasks
+		
+		int currentTaskTargetVehicleId = currentTask->getTargetVehicleId();
+		if (currentTaskTargetVehicleId == -1)
+		{
+			debug("\tERROR: Current task targetVehicleId == -1. This should not happen for LOAD/UNLOAD task.\n");
+			return;
+		}
+		
+		int replacingTaskTargetVehicleId = task.getTargetVehicleId();
+		if (replacingTaskTargetVehicleId == -1)
+		{
+			debug("\tERROR: Replacing task targetVehicleId == -1. This should not happen for LOAD/UNLOAD task.\n");
+			return;
+		}
+		
+		// colony has priority 1
+		if (isColonyVehicle(currentTaskTargetVehicleId) && !isColonyVehicle(replacingTaskTargetVehicleId))
+		{
+			return;
+		}
+		if (!isColonyVehicle(currentTaskTargetVehicleId) && isColonyVehicle(replacingTaskTargetVehicleId))
+		{
+			setTask(vehicleId, task);
+			return;
+		}
+		// former has priority 2
+		if (isFormerVehicle(currentTaskTargetVehicleId) && !isFormerVehicle(replacingTaskTargetVehicleId))
+		{
+			return;
+		}
+		if (!isFormerVehicle(currentTaskTargetVehicleId) && isFormerVehicle(replacingTaskTargetVehicleId))
+		{
+			setTask(vehicleId, task);
+			return;
+		}
+		
+		// otherwise compare distance to destinations
+		
+		// get current and replacing task ranges
 		
 		int currentTaskDestinationRange = currentTask->getDestinationRange();
+		int replacingTaskDestinationRange = task.getDestinationRange();
 		
-		// get task range
+		// replace task only if given one has MUCH shorter range
 		
-		int taskDestinationRange = task.getDestinationRange();
-		
-		// update task only if given one has shorter range
-		
-		if (taskDestinationRange < currentTaskDestinationRange)
+		if (replacingTaskDestinationRange < currentTaskDestinationRange / 2)
 		{
 			setTask(vehicleId, task);
 		}

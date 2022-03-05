@@ -32,7 +32,7 @@ MAP *getSeaTransportUnloadLocation(int seaTransportVehicleId, MAP *destination, 
 //bool deliverVehicle(const int transportVehicleId, const Location destinationLocation, const int vehicleId);
 bool isInOceanRegion(int vehicleId, int region);
 int getCarryingScoutVehicleId(int transportVehicleId);
-int getCrossOceanAssociation(MAP *initialLocation, MAP *terminalLocation, int factionId);
+int getCrossOceanAssociation(int vehicleId, MAP *terminalTile);
 int getAvailableSeaTransport(int oceanRegion, int vehicleId);
 int getAvailableSeaTransportInStack(int vehicleId);
 MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicleId);

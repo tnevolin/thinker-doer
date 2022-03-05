@@ -122,16 +122,16 @@ void considerHurryingProduction(int factionId)
 
 	// hurry production by priority
 
-	if (unprotectedBases.size() >= 1)
+	if (unprotectedBases.size() >= 1 && unprotectedBasesWeightSum > 0.0)
 	{
 		for (BASE_WEIGHT &baseWeight : unprotectedBases)
 		{
-			int allowance = (int)(floor((double)spendPool * baseWeight.weight / importantFacilityBasesWeightSum));
+			int allowance = (int)(floor((double)spendPool * baseWeight.weight / unprotectedBasesWeightSum));
 			hurryProductionPartially(baseWeight.baseId, allowance);
 		}
 
 	}
-	else if (importantFacilityBases.size() >= 1)
+	else if (importantFacilityBases.size() >= 1 && importantFacilityBasesWeightSum > 0.0)
 	{
 		for
 		(
@@ -147,7 +147,7 @@ void considerHurryingProduction(int factionId)
 		}
 
 	}
-	else if (facilityBases.size() >= 1)
+	else if (facilityBases.size() >= 1 && facilityBasesWeightSum > 0.0)
 	{
 		for
 		(
@@ -163,7 +163,7 @@ void considerHurryingProduction(int factionId)
 		}
 
 	}
-	else if (unitBases.size() >= 1)
+	else if (unitBases.size() >= 1 && unitBasesWeightSum > 0.0)
 	{
 		for
 		(
@@ -188,11 +188,18 @@ Works only when flat hurry cost is enabled.
 */
 void hurryProductionPartially(int baseId, int allowance)
 {
+	assert(baseId >= 0 && baseId < *total_num_bases);
+	
 	BASE *base = &(Bases[baseId]);
 
 	// apply only when flat hurry cost is enabled
 
 	if (!conf.flat_hurry_cost)
+		return;
+	
+	// verify allowance is positive
+	
+	if (allowance <= 0)
 		return;
 
 	// get remaining minerals
