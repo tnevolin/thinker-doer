@@ -622,6 +622,18 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->eco_damage_alternative_industry_effect_reduction_formula = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "orbital_nutrient_population_limit"))
+    {
+        cf->orbital_nutrient_population_limit = std::max(0.0, atof(value));
+    }
+    else if (MATCH("wtp", "orbital_mineral_population_limit"))
+    {
+        cf->orbital_mineral_population_limit = std::max(0.0, atof(value));
+    }
+    else if (MATCH("wtp", "orbital_energy_population_limit"))
+    {
+        cf->orbital_energy_population_limit = std::max(0.0, atof(value));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

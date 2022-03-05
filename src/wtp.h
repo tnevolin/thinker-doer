@@ -200,4 +200,5 @@ int __cdecl modified_base_double_labs(int labs);
 int __cdecl modified_base_production();
 int __cdecl modified_base_ecology();
 int getStockpileEnergy(int baseId);
+void __cdecl modified_base_yield();
 

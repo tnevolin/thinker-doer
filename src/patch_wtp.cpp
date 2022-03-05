@@ -4603,6 +4603,23 @@ void patch_stockpile_energy_bug()
 	
 }
 
+void patch_limit_orbit_intake()
+{
+   	write_call(0x004E5227, (int)modified_base_yield);
+   	write_call(0x004EC3D1, (int)modified_base_yield);
+   	write_call(0x004EF4AA, (int)modified_base_yield);
+   	write_call(0x004EF69A, (int)modified_base_yield);
+   	write_call(0x004F0FF9, (int)modified_base_yield);
+   	write_call(0x004F3976, (int)modified_base_yield);
+   	write_call(0x004F5C10, (int)modified_base_yield);
+   	write_call(0x004F6222, (int)modified_base_yield);
+   	write_call(0x004F62D8, (int)modified_base_yield);
+   	write_call(0x004F7A1B, (int)modified_base_yield);
+   	write_call(0x004F7A8F, (int)modified_base_yield);
+   	write_call(0x004F7BA9, (int)modified_base_yield);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -5204,6 +5221,8 @@ void patch_setup_wtp(Config* cf)
 	patch_unfinished_needlejet_turn();
 	
 	patch_stockpile_energy_bug();
+	
+	patch_limit_orbit_intake();
 	
 }
 

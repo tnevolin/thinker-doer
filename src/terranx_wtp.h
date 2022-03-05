@@ -103,4 +103,6 @@ extern fp_5int *whose_territory;
 extern fp_1int* unit_speed;
 extern fp_1int* base_upkeep;
 extern fp_0int* base_ecology;
+extern fp_0void *base_minerals;
+extern fp_0void *base_yield;
 

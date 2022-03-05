@@ -224,3 +224,9 @@ fp_1int *base_upkeep = (fp_1int *)0x004F79C0;
 // base ecology
 fp_0int *base_ecology = (fp_0int *)0x004F67F0;
 
+// base minerals
+fp_0void *base_minerals = (fp_0void *)0x004E9CB0;
+
+// base yield
+fp_0void *base_yield = (fp_0void *)0x004E80B0;
+

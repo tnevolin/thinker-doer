@@ -4727,3 +4727,47 @@ int getStockpileEnergy(int baseId)
 	
 }
 
+void __cdecl modified_base_yield()
+{
+	BASE *base = *current_base_ptr;
+	Faction *faction = &(Factions[base->faction_id]);
+	
+	// execute original function
+	
+	base_yield();
+	
+	// nutrient
+	
+	int orbitalNutrient = std::min((int)base->pop_size, faction->satellites_nutrient);
+	int orbitalNutrientLimit = (int)floor(conf.orbital_nutrient_population_limit * base->pop_size);
+	if (orbitalNutrientLimit < orbitalNutrient)
+	{
+		int orbitalNutrientDifference = orbitalNutrientLimit - orbitalNutrient;
+		base->nutrient_intake += orbitalNutrientDifference;
+		base->nutrient_intake_2 += orbitalNutrientDifference;
+	}
+	
+	// mineral
+	
+	int orbitalMineral = std::min((int)base->pop_size, faction->satellites_mineral);
+	int orbitalMineralLimit = (int)floor(conf.orbital_mineral_population_limit * base->pop_size);
+	if (orbitalMineralLimit < orbitalMineral)
+	{
+		int orbitalMineralDifference = orbitalMineralLimit - orbitalMineral;
+		base->mineral_intake += orbitalMineralDifference;
+		base->mineral_intake_2 += orbitalMineralDifference;
+	}
+	
+	// energy
+	
+	int orbitalEnergy = std::min((int)base->pop_size, faction->satellites_energy);
+	int orbitalEnergyLimit = (int)floor(conf.orbital_energy_population_limit * base->pop_size);
+	if (orbitalEnergyLimit < orbitalEnergy)
+	{
+		int orbitalEnergyDifference = orbitalEnergyLimit - orbitalEnergy;
+		base->energy_intake += orbitalEnergyDifference;
+		base->energy_intake_2 += orbitalEnergyDifference;
+	}
+	
+}
+

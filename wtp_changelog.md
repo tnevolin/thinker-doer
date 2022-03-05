@@ -1,3 +1,8 @@
+# Version 288
+
+* Added variable orbital resource limit as population fraction (thinker.ini: orbital_*_population_limit).
+	* Currently set to 0.5 for each type. Seems to be adequate.
+
 # Version 287
 
 * FIX: Stockpile energy bug/exploit. Somehow it was not fixed in Thinker which includes scient patch which claimed this fixed.
