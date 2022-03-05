@@ -33,7 +33,7 @@ const std::vector<TERRAFORMING_OPTION> CONVENTIONAL_TERRAFORMING_OPTIONS =
 {
 	// land
 	{"rocky mine", false, true , false, true , FORMER_MINE        , true , {FORMER_ROAD, FORMER_MINE}},								// 00
-	{"mine"      , false, false, false, true , FORMER_MINE        , true , {FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}},	// 01
+	{"mine"      , false, false, false, true , FORMER_MINE        , true , {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}},	// 01
 	{"collector" , false, false, false, true , FORMER_SOLAR       , true , {FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},				// 02
 	{"condenser" , false, false, true , true , FORMER_CONDENSER   , false, {FORMER_CONDENSER, FORMER_FARM, FORMER_SOIL_ENR}},			// 03
 	{"mirror"    , false, false, true , true , FORMER_ECH_MIRROR  , false, {FORMER_ECH_MIRROR, FORMER_FARM, FORMER_SOIL_ENR}},		// 04
@@ -109,7 +109,7 @@ struct FORMER_ORDER
 
 struct TERRAFORMING_SCORE
 {
-	const TERRAFORMING_OPTION *option = NULL;
+	const TERRAFORMING_OPTION *option = nullptr;
 	int action = -1;
 	double score = 0.0;
 };
@@ -178,7 +178,6 @@ void generateTerraformingRequest(MAP *tile);
 bool compareTerraformingRequests(TERRAFORMING_REQUEST terraformingRequest1, TERRAFORMING_REQUEST terraformingRequest2);
 void sortTerraformingRequests();
 void applyProximityRules();
-void setFormerProductionDemands();
 void assignFormerOrders();
 void finalizeFormerOrders();
 double computeImprovementSurplusEffectScore(MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);

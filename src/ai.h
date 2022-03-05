@@ -18,6 +18,7 @@ void evaluateBaseExposures();
 void evaluateBaseNativeDefenseDemands();
 void evaluateDefenseDemand();
 void populateWarzones();
+void populateBasesAndTiles();
 void designUnits();
 void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::vector<int> weaponIds, std::vector<int> armorIds, std::vector<int> abilitiesSets, int reactorId, int plan, char *name);
 void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
@@ -64,4 +65,6 @@ bool isOceanAssociationCoast(MAP *tile, int oceanAssociation, int factionId);
 bool isOceanAssociationCoast(int x, int y, int oceanAssociation, int factionId);
 int getMaxBaseSize(int factionId);
 std::set<int> getBaseOceanRegions(int baseId);
+int getPathDistance(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId);
+int getPathTravelTime(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId);
 

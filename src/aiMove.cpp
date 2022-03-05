@@ -466,16 +466,37 @@ void transitVehicle(int vehicleId, Task task)
 	
 	// vehicle is on land same association
 	
-	if (isLandRegion(vehicleTile->region) && isLandRegion(destination->region) && isSameAssociation(vehicleTile, destination, vehicle->faction_id))
+	if (!is_ocean(vehicleTile) && !is_ocean(destination) && isSameAssociation(vehicleTile, destination, vehicle->faction_id))
 	{
 		debug("\tsame association\n");
-		setTask(vehicleId, task);
-		return;
+		
+		// get range
+		
+		int range = map_range(vehicle->x, vehicle->y, x, y);
+		
+		// get path distance
+		
+		int pathDistance = getPathDistance(vehicle->x, vehicle->y, x, y, vehicle->unit_id, vehicle->faction_id);
+		
+		debug("\trange=%d, pathDistance=%d\n", range, pathDistance);
+		
+		// allow pathDistance to be 3 times longer than range
+		
+		if (pathDistance != -1 && pathDistance <= 3 * range)
+		{
+			debug("\tallow self travel\n");
+			setTask(vehicleId, task);
+			return;
+		}
+		
+		// otherwise, continue with crossing ocean
+		debug("\tsearch for ferry\n");
+		
 	}
 	
 	// get cross ocean association
 	
-	int crossOceanAssociation = getCrossOceanAssociation(getMapTile(vehicle->x, vehicle->y), destination, vehicle->faction_id);
+	int crossOceanAssociation = getCrossOceanAssociation(vehicleId, destination);
 	
 	if (crossOceanAssociation == -1)
 	{
@@ -506,7 +527,10 @@ void transitVehicle(int vehicleId, Task task)
 		
 		// if found - board immediately
 		
-		board(vehicleId, seaTransportVehicleId);
+		if (seaTransportVehicleId != -1)
+		{
+			board(vehicleId, seaTransportVehicleId);
+		}
 		
 	}
 	
@@ -603,7 +627,7 @@ void transitVehicle(int vehicleId, Task task)
 	debug("\tadd boarding tasks: [%3d]\n", availableSeaTransportVehicleId);
 	
 	setTask(vehicleId, Task(BOARD, vehicleId, nullptr, availableSeaTransportVehicleId));
-	setTaskIfCloser(availableSeaTransportVehicleId, Task(LOAD, availableSeaTransportVehicleId, availableSeaTransportLoadLocation));
+	setTaskIfCloser(availableSeaTransportVehicleId, Task(LOAD, availableSeaTransportVehicleId, availableSeaTransportLoadLocation, vehicleId));
 	
 	// clear vehicle status
 	// sometimes it is stuck in sentry on transport

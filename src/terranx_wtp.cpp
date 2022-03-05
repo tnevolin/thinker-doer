@@ -5,7 +5,13 @@
 const int NO_SYNC = 1;
 const char* scriptTxtID = "SCRIPT";
 
+// Path
+
+CPath* PATH = (CPath*)0x945B00;
+FPath_find PATH_find = (FPath_find)0x59A530;
+
 // battle computation display variables
+
 int *tx_battle_compute_attacker_effect_count = (int *)0x915614;
 int *tx_battle_compute_defender_effect_count = (int *)0x915618;
 char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F554;
@@ -14,6 +20,7 @@ int (*tx_battle_compute_attacker_effect_values)[0x4] = (int (*)[0x4])0x9155F0;
 int (*tx_battle_compute_defender_effect_values)[0x4] = (int (*)[0x4])0x915600;
 
 // labels pointer
+
 char ***tx_labels = (char ***)0x009B90F8;
 
 char *g_strTEMP = (char *)0x009B86A0;

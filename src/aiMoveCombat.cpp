@@ -1599,7 +1599,7 @@ std::vector<int> getReachableEnemies(int vehicleId)
 				
 				// get movement cost
 				
-				int hexCost = mod_hex_cost(vehicle->unit_id, vehicle->faction_id, x, y, adjacentTileX, adjacentTileY, 0);
+				int hexCost = getHexCost(vehicle->unit_id, vehicle->faction_id, x, y, adjacentTileX, adjacentTileY);
 				int adjacentTileTravelCost = travelCost + hexCost;
 				
 				if (adjacentTileTravelCost > movementPoints)

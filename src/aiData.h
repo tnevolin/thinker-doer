@@ -169,12 +169,13 @@ struct TileInfo
 	bool blocked = false;
 	bool zoc = false;
 	bool warzone = false;
-	
+	int workedBase = -1;
 };
 	
 struct BaseInfo
 {
-	
+	std::vector<MAP *> workedTiles;
+	std::vector<MAP *> unworkedTiles;
 };
 
 struct Production
@@ -224,6 +225,7 @@ struct Data
 	std::vector<int> outsideCombatVehicleIds;
 	std::vector<int> unitIds;
 	std::vector<int> combatUnitIds;
+	std::vector<int> prototypeUnitIds;
 	std::vector<int> colonyVehicleIds;
 	std::vector<int> formerVehicleIds;
 	double threatLevel;

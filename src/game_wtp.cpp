@@ -222,8 +222,9 @@ std::vector<MAP *> getRangeTiles(int x, int y, int range, bool includeCenter)
 	
 	for (int ringRange = 1; ringRange <= range; ringRange++)
 	{
-		std::vector<MAP *> equalRangeTiles = getEqualRangeTiles(x, y, range);
+		std::vector<MAP *> equalRangeTiles = getEqualRangeTiles(x, y, ringRange);
 		tiles.insert(tiles.end(), equalRangeTiles.begin(), equalRangeTiles.end());
+		
 	}
 	
 	return tiles;
@@ -264,14 +265,14 @@ bool has_reactor(int factionId, int reactor)
 Calculates mineral cost for given item at base.
 Base cost modifying facilites (Skunkworks and Brood Pits) are taken into account.
 */
-int getBaseMineralCost(int baseId, int itemId)
+int getBaseMineralCost(int baseId, int item)
 {
 	if (baseId < 0)
 		return 0;
 	
 	BASE *base = &(Bases[baseId]);
 
-	int mineralCost = (itemId >= 0 ? tx_veh_cost(itemId, baseId, 0) : Facility[-itemId].cost) * cost_factor(base->faction_id, 1, -1);
+	int mineralCost = (item >= 0 ? tx_veh_cost(item, baseId, 0) : Facility[-item].cost) * cost_factor(base->faction_id, 1, -1);
 
 	return mineralCost;
 
@@ -577,7 +578,7 @@ int getEnergyBonus(MAP *tile)
 	(
 		map_has_landmark(tile, LM_JUNGLE)
 		||
-		map_has_landmark(tile, LM_FRESH)
+		map_has_landmark(tile, LM_GEOTHERMAL)
 	)
 	{
 		bonus += 1;
@@ -722,7 +723,7 @@ bool isBaseProductionWithinRetoolingExemption(int baseId)
 
 }
 
-int getBaseBuildingItemCost(int baseId)
+int getBaseBuildingItemMineralCost(int baseId)
 {
 	BASE *base = &(Bases[baseId]);
 
@@ -1232,12 +1233,16 @@ MAP *getVehicleMapTile(int vehicleId)
 
 }
 
+/*
+Verifies if tile has significant improvement.
+*/
+bool isImprovedTile(MAP *tile)
+{
+	return (tile->items & (TERRA_MINE | TERRA_SOLAR | TERRA_FOREST | TERRA_CONDENSER | TERRA_ECH_MIRROR | TERRA_THERMAL_BORE | TERRA_SENSOR | TERRA_MONOLITH)) != 0;
+}
 bool isImprovedTile(int x, int y)
 {
-	MAP *tile = getMapTile(x, y);
-
-	return (tile->items & (TERRA_ROAD | TERRA_MAGTUBE | TERRA_MINE | TERRA_SOLAR | TERRA_FARM | TERRA_SOIL_ENR | TERRA_FOREST | TERRA_CONDENSER | TERRA_ECH_MIRROR | TERRA_THERMAL_BORE | TERRA_SENSOR)) != 0;
-
+	return isImprovedTile(getMapTile(x, y));
 }
 
 bool isSupplyVehicle(VEH *vehicle)
@@ -1771,16 +1776,16 @@ int getBaseConventionalDefenseValue(int baseId)
 }
 
 /*
-Returns faction available prototypes.
+Returns faction available units.
 */
-std::vector<int> getFactionPrototypes(int factionId, bool includeNotPrototyped)
+std::vector<int> getFactionUnitIds(int factionId, bool includeNotPrototyped)
 {
-	std::vector<int> factionPrototypes;
+	std::vector<int> factionUnitIds;
 
 	// only real factions
 
 	if (!(factionId >= 1 && factionId <= 7))
-		return factionPrototypes;
+		return factionUnitIds;
 
 	// iterate faction prototypes space
 
@@ -1809,13 +1814,13 @@ std::vector<int> getFactionPrototypes(int factionId, bool includeNotPrototyped)
 		if (unitId >= 64 && !includeNotPrototyped && !(unit->unit_flags & UNIT_PROTOTYPED))
 			continue;
 
-		// add prototype
+		// add unit
 
-		factionPrototypes.push_back(unitId);
+		factionUnitIds.push_back(unitId);
 
 	}
 
-	return factionPrototypes;
+	return factionUnitIds;
 
 }
 
@@ -2741,12 +2746,9 @@ void setTerraformingAction(int id, int action)
 
 }
 
-void getMapState(MAP *tile, MAP_STATE *mapState)
+MAP_STATE getMapState(MAP *tile)
 {
-	mapState->climate = tile->climate;
-	mapState->rocks = tile->val3;
-	mapState->items = tile->items;
-
+	return {tile->climate, tile->val3, tile->items};
 }
 
 void setMapState(MAP *tile, MAP_STATE *mapState)
@@ -3972,7 +3974,7 @@ int getVehicleArmorDefenseValue(int vehicleId)
 	return getUnitArmorDefenseValue(Vehicles[vehicleId].unit_id);
 }
 
-bool factionHasSpecial(int factionId, int special)
+bool isFactionSpecial(int factionId, int special)
 {
     return MFactions[factionId].rule_flags & special;
 }
@@ -4262,5 +4264,23 @@ int getBaseGrowthRate(int baseId)
 	
 	return *current_base_growth_rate;
 	
+}
+
+void accumulateMapIntValue(std::map<int, int> *m, int key, int value)
+{
+	if (m->count(key) == 0)
+	{
+		m->insert({key, value});
+	}
+	else
+	{
+		m->at(key) += value;
+	}
+
+}
+
+int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY)
+{
+	return mod_hex_cost(unitId, factionId, fromX, fromY, toX, toY, (unit_speed(unitId) == Rules->mov_rate_along_roads ? 1 : 0));
 }
 

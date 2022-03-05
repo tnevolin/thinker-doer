@@ -1,6 +1,5 @@
+#include <math.h>
 #include <set>
-#include <set>
-#include <map>
 #include <map>
 #include "engine.h"
 #include "game.h"
@@ -49,6 +48,12 @@ double regionMilitaryPriority;
 // global parameters
 
 double hurryCost;
+double averageBaseMineralSurplus;
+double averageBaseIncomeGrowth;
+double averageBaseIncomeGrowthRate;
+double developmentRate;
+double normalGain;
+
 double globalBaseDemand;
 double baseColonyDemandMultiplier;
 
@@ -67,17 +72,129 @@ void productionStrategy()
 	// evaluate global demands
 
 	evaluateGlobalBaseDemand();
+	evaluateGlobalFormerDemand();
 	
 }
 
 void setupProductionVariables()
 {
+	debug("setupProductionVariables - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	MFaction *metaFaction = &(MFactions[aiFactionId]);
+	
 	// set energy to mineral conversion ratio
 	
 	int hurryCostUnit = (conf.flat_hurry_cost ? conf.flat_hurry_cost_multiplier_unit : 4);
 	int hurryCostFacility = (conf.flat_hurry_cost ? conf.flat_hurry_cost_multiplier_facility : 2);
 
 	hurryCost = ((double)hurryCostUnit + (double)hurryCostFacility) / 2.0;
+	
+	// calculate average base population time
+	// calculate average citizen intake score
+	
+	int sumBasePopulation = 0;
+	double sumBaseMineralSurplus = 0.0;
+	double sumBasePopulationGrowthRate = 0.0;
+	double sumBaseIncome = 0.0;
+	
+	for (int baseId : aiData.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		
+		sumBasePopulation += base->pop_size;
+		sumBaseMineralSurplus += (double)(base->mineral_surplus);
+		sumBasePopulationGrowthRate += getBasePopulationGrowthRate(baseId);
+		sumBaseIncome += getBaseIncome(baseId);
+		
+	}
+	
+	averageBaseMineralSurplus = (aiData.baseIds.size() == 0 ? 0.0 : sumBaseMineralSurplus / (double)aiData.baseIds.size());
+	double averageBasePopulationGrowthRate = (aiData.baseIds.size() == 0 ? 0.0 : sumBasePopulationGrowthRate / (double)aiData.baseIds.size());
+	double averageBaseIncome = (aiData.baseIds.size() == 0 ? 0.0 : sumBaseIncome / (double)aiData.baseIds.size());
+	double averageCitizenIncome = (sumBasePopulation == 0 ? 0.0 : sumBaseIncome / (double)sumBasePopulation);
+	
+	// store income
+	
+	for (int i = 19; i >= 1; i--)
+	{
+		metaFaction->averageBaseIncome[i] = metaFaction->averageBaseIncome[i - 1];
+	}
+	metaFaction->averageBaseIncome[0] = (float)averageBaseIncome;
+	
+	// calculate growth rate floating average
+	
+	double weight = 1.0;
+	double weightDecay = 0.9;
+	double sumWeights = 0.0;
+	double sumGrowth = 0.0;
+	
+	for (int i = 1; i < 20; i++)
+	{
+		if (metaFaction->averageBaseIncome[i] == 0)
+			break;
+		
+		debug("averageBaseIncome[%2d]=%+f\n", i, metaFaction->averageBaseIncome[i]);
+		
+		sumGrowth += weight * ((double)metaFaction->averageBaseIncome[i - 1] - (double)metaFaction->averageBaseIncome[i]);
+		sumWeights += weight;
+		
+		weight *= weightDecay;
+		
+	}
+	
+	averageBaseIncomeGrowth = std::max(0.10, (sumWeights <= 0.0 ? 0.0 : sumGrowth / sumWeights));
+	averageBaseIncomeGrowthRate = std::max(0.01, averageBaseIncomeGrowth / std::max(1.0, averageBaseIncome));
+	developmentRate = std::max(0.01, averageBaseIncomeGrowthRate);
+	
+	debug("\taverageBaseMineralSurplus = %f\n", averageBaseMineralSurplus);
+	debug("\taverageBasePopulationGrowthRate = %f\n", averageBasePopulationGrowthRate);
+	debug("\taverageBaseIncome = %f\n", averageBaseIncome);
+	debug("\taverageCitizenIncome = %f\n", averageCitizenIncome);
+	debug("\taverageBaseIncomeGrowth = %f\n", averageBaseIncomeGrowth);
+	debug("\taverageBaseIncomeGrowthRate = %f\n", averageBaseIncomeGrowthRate);
+	debug("\tdevelopmentRate = %f\n", developmentRate);
+	
+//	// set normal gain for other gains normalization
+//	// imaginary facility
+//	// cost = 8, maint = 0, income = 0.5 base income
+//	
+//	normalGain =
+//		// minerals lost to production
+//		-
+//		getIntakeGain(getResourceScore(cost_factor(aiFactionId, 1, -1) * 8, 0), 0)
+//		// income gain
+//		+
+//		getIncomeGain(0.5 * averageBaseIncome, 0)
+//		// growth gain
+//		+
+//		getGrowthGain(0.5 * averageBaseIncome, 0) * averageBaseIncomeGrowthRate
+//	;
+//	normalGain = std::max(1.0, normalGain);
+//	
+//	debug("\tnormalGain=%+f, cost=%+f, income=%+f, growth=%+f\n", normalGain, -getIntakeGain(getResourceScore(cost_factor(aiFactionId, 1, -1) * 8, 0), 0), +getIncomeGain(0.5 * averageBaseIncome, 0), getGrowthGain(0.5 * averageBaseIncome, 0) * averageBaseIncomeGrowthRate);
+//	
+	// calculate colony gain for debugging purposes
+	
+	double colonyGain =
+		// intake loss to production
+		-
+		getIntakeGain(getResourceScore(mineral_cost(aiFactionId, BSC_COLONY_POD), 0), 0)
+		// income loss due to depopulation
+		-
+		getIncomeGain(averageCitizenIncome, 0)
+		// income gain due to founding new base with delay
+		+
+		getIncomeGain(averageCitizenIncome, 5)
+		// growth gain due to founding new base with delay
+		+
+		getGrowthGain(averageBaseIncomeGrowth, 5)
+	;
+	
+	debug("\tcolonyGain=%+f, cost=%+f, depopulation=%+f, new population=%+f, new base=%+f\n", colonyGain, -getIntakeGain(getResourceScore(mineral_cost(aiFactionId, BSC_COLONY_POD), 0), 0), -getIncomeGain(averageCitizenIncome, 0), +getIncomeGain(averageCitizenIncome, 5), +getGrowthGain(averageBaseIncomeGrowth, 5));
+	
+	// set normal gain to colony gain
+	
+	normalGain = colonyGain;
 	
 }
 
@@ -188,44 +305,237 @@ void evaluateGlobalBaseDemand()
 	globalBaseDemand *= inefficiencyDemandMultiplier;
 	debug("\tglobalBaseDemand=%f\n", globalBaseDemand);
 	
-	// --------------------------------------------------
-	// existing colony production
-	// --------------------------------------------------
+//	// --------------------------------------------------
+//	// existing colony production
+//	// --------------------------------------------------
+//	
+//	// calculate existing colonies
+//	
+//	int existingColoniesCount = 0.0;
+//	
+//	for (int vehicleId : aiData.vehicleIds)
+//	{
+//		// colony
+//		
+//		if (!isColonyVehicle(vehicleId))
+//			continue;
+//		
+//		existingColoniesCount++;
+//		
+//	}
+//	
+//	debug("\texistingColoniesCount=%d\n", existingColoniesCount);
+//	
+//	// calculate support demand multiplier
+//	
+//	double supportDemandMultiplier;
+//	
+//	if (aiData.baseIds.size() == 0)
+//	{
+//		supportDemandMultiplier = 0.0;
+//	}
+//	else
+//	{
+//		supportDemandMultiplier = (double)std::max(0, (int)aiData.baseIds.size() - existingColoniesCount) / (double)aiData.baseIds.size();
+//	}
+//	
+//	// reduce demand based on existing colonies to reduce support burden
+//	
+//	globalBaseDemand *= supportDemandMultiplier;
+//	debug("\tglobalBaseDemand=%f\n", globalBaseDemand);
+//	
+}
+
+void evaluateGlobalFormerDemand()
+{
+	debug("evaluateGlobalFormerDemand - %s\n", MFactions[aiFactionId].noun_faction);
 	
-	// calculate existing colonies
+	aiData.production.landFormerDemand = 0.0;
 	
-	int existingColoniesCount = 0.0;
+	// count unimproved worked tile count
 	
-	for (int vehicleId : aiData.vehicleIds)
+	int landUnimprovedWorkedTileCount = 0;
+	std::map<int, int> seaUnimprovedWorkedTileCounts;
+	
+	for (int baseId : aiData.baseIds)
 	{
-		// colony
+		debug("\t%s\n", Bases[baseId].name);
 		
-		if (!isColonyVehicle(vehicleId))
-			continue;
+		// count unimproved worked tiles
 		
-		existingColoniesCount++;
+		debug("\t\tunimproved worked\n");
+		
+		for (MAP *tile : getBaseWorkedTiles(baseId))
+		{
+			// unimproved
+			
+			if (isImprovedTile(tile))
+				continue;
+			
+			// count
+			
+			if (is_ocean(tile))
+			{
+				int association = getAssociation(tile, aiFactionId);
+				accumulateMapIntValue(&seaUnimprovedWorkedTileCounts, association, 1);
+				debug("\t\t\t(%3d,%3d) %3d sea[%3d]\n", getX(tile), getY(tile), seaUnimprovedWorkedTileCounts.at(association), association);
+			}
+			else
+			{
+				landUnimprovedWorkedTileCount++;
+				debug("\t\t\t(%3d,%3d) %3d land\n", getX(tile), getY(tile), landUnimprovedWorkedTileCount);
+			}
+			
+		}
+		
+		// list land and ocean associations with improved unworked tiles
+		
+		debug("\t\timproved unworked\n");
+		
+		int landUnworkedTileCount = 0;
+		int landImprovedUnworkedTileCount = 0;
+		std::map<int, int> seaUnworkedTileCounts;
+		std::map<int, int> seaImprovedUnworkedTileCounts;
+		
+		for (MAP *tile : aiData.getBaseInfo(baseId)->unworkedTiles)
+		{
+			// mare sure all associations are accountded for
+			
+			if (is_ocean(tile))
+			{
+				int association = getAssociation(tile, aiFactionId);
+				accumulateMapIntValue(&seaUnworkedTileCounts, association, 1);
+				debug("\t\t\t(%3d,%3d) %3d sea[%3d] unworked\n", getX(tile), getY(tile), seaUnworkedTileCounts.at(association), association);
+			}
+			else
+			{
+				landUnworkedTileCount++;
+				debug("\t\t\t(%3d,%3d) %3d land unworked\n", getX(tile), getY(tile), landUnworkedTileCount);
+			}
+			
+			// improved
+			
+			if (!isImprovedTile(tile))
+				continue;
+			
+			// count improved
+			
+			if (is_ocean(tile))
+			{
+				int association = getAssociation(tile, aiFactionId);
+				accumulateMapIntValue(&seaImprovedUnworkedTileCounts, association, 1);
+				debug("\t\t\t(%3d,%3d) %3d sea[%3d] improved unworked\n", getX(tile), getY(tile), seaImprovedUnworkedTileCounts.at(association), association);
+			}
+			else
+			{
+				landImprovedUnworkedTileCount++;
+				debug("\t\t\t(%3d,%3d) %3d land improved unworked\n", getX(tile), getY(tile), landImprovedUnworkedTileCount);
+			}
+			
+		}
+		
+		// update total count with improved unworked tiles
+		
+		// land has unworked tiles and none of it is improved
+		
+		if (landUnworkedTileCount > 0 && landImprovedUnworkedTileCount == 0)
+		{
+			landUnimprovedWorkedTileCount++;
+			debug("\t\t%3d land extra count\n", landUnimprovedWorkedTileCount);
+		}
+		
+		for (const auto &seaUnworkedTileCountEntry : seaUnworkedTileCounts)
+		{
+			int association = seaUnworkedTileCountEntry.first;
+			int seaUnworkedTileCount = seaUnworkedTileCountEntry.second;
+			
+			// ocean association has unworked tiles and none of it is improved
+			
+			if (seaUnworkedTileCount > 0 && seaImprovedUnworkedTileCounts.count(association) == 0)
+			{
+				accumulateMapIntValue(&seaUnimprovedWorkedTileCounts, association, 1);
+				debug("\t\t%3d sea[%3d] extra count\n", seaUnimprovedWorkedTileCounts.at(association), association);
+			}
+			
+		}
 		
 	}
 	
-	debug("\texistingColoniesCount=%d\n", existingColoniesCount);
+	// count formers
 	
-	// calculate support demand multiplier
+	debug("\tcount formers\n");
 	
-	double supportDemandMultiplier;
+	int airFormerCount = 0;
+	int landFormerCount = 0;
+	std::map<int, int> seaFormerCounts;
 	
-	if (aiData.baseIds.size() == 0)
+	for (int vehicleId : aiData.formerVehicleIds)
 	{
-		supportDemandMultiplier = 0.0;
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		switch (vehicle->triad())
+		{
+		case TRIAD_AIR:
+			airFormerCount++;
+			break;
+			
+		case TRIAD_LAND:
+			landFormerCount++;
+			break;
+			
+		case TRIAD_SEA:
+			{
+				int vehicleAssociation = getVehicleAssociation(vehicleId);
+				
+				if (vehicleAssociation == -1)
+					break;
+				
+				if (seaFormerCounts.count(vehicleAssociation) == 0)
+				{
+					seaFormerCounts.insert({vehicleAssociation, 0});
+				}
+				seaFormerCounts.at(vehicleAssociation)++;
+				
+				break;
+				
+			}
+			
+		}
+		
 	}
-	else
+	
+	if (DEBUG)
 	{
-		supportDemandMultiplier = (double)std::max(0, (int)aiData.baseIds.size() - existingColoniesCount) / (double)aiData.baseIds.size();
+		debug("\t\t%3d air\n", airFormerCount);
+		debug("\t\t%3d land\n", landFormerCount);
+		for (const auto &seaFormerCountEntry : seaFormerCounts)
+		{
+			debug("\t\t%3d sea[%3d]\n", seaFormerCountEntry.second, seaFormerCountEntry.first);
+		}
 	}
 	
-	// reduce demand based on existing colonies to reduce support burden
+	// compute demands
 	
-	globalBaseDemand *= supportDemandMultiplier;
-	debug("\tglobalBaseDemand=%f\n", globalBaseDemand);
+	if (landUnimprovedWorkedTileCount > 0)
+	{
+		aiData.production.landFormerDemand = 1.0 - ((double)landFormerCount + (double)airFormerCount) / (conf.ai_production_improvement_coverage * (double)landUnimprovedWorkedTileCount);
+		debug("\tlandFormerDemand=%f, landFormerCount=%d, airFormerCount=%d, ai_production_improvement_coverage=%f, landUnimprovedWorkedTileCount=%d\n", aiData.production.landFormerDemand, landFormerCount, airFormerCount, conf.ai_production_improvement_coverage, landUnimprovedWorkedTileCount);
+	}
+	
+	for (const auto &seaUnimprovedWorkedTileCountEntry : seaUnimprovedWorkedTileCounts)
+	{
+		int oceanAssociation = seaUnimprovedWorkedTileCountEntry.first;
+		int seaUnimprovedWorkedTileCount = seaUnimprovedWorkedTileCountEntry.second;
+		int seaFormerCount = (seaFormerCounts.count(oceanAssociation) == 0 ? 0 : seaFormerCounts.at(oceanAssociation));
+		
+		if (seaUnimprovedWorkedTileCount > 0)
+		{
+			double seaFormerDemand = 1.0 - ((double)seaFormerCount + (double)airFormerCount) / (conf.ai_production_improvement_coverage * (double)seaUnimprovedWorkedTileCount);
+			aiData.production.seaFormerDemands.insert({oceanAssociation, seaFormerDemand});
+			debug("\tseaFormerDemand(%3d)=%f, seaFormerCount=%d, airFormerCount=%d, ai_production_improvement_coverage=%f, seaUnimprovedWorkedTileCount=%d\n", oceanAssociation, seaFormerDemand, seaFormerCount, airFormerCount, conf.ai_production_improvement_coverage, seaUnimprovedWorkedTileCount);
+		}
+		
+	}
 	
 }
 
@@ -644,30 +954,31 @@ void evaluateMultiplyingFacilitiesDemand()
 {
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
-	MAP *baseTile = getBaseMapTile(baseId);
-	Faction *faction = &(Factions[base->faction_id]);
 
 	debug("\tevaluateMultiplyingFacilitiesDemand\n");
 	
 	// calculate base values for multiplication
 
 	int mineralSurplus = base->mineral_surplus;
-	double mineralIntake = (double)base->mineral_intake;
-	double economyIntake = (double)base->energy_surplus * (double)(10 - faction->SE_alloc_psych - faction->SE_alloc_labs) / 10.0;
-	double psychIntake = (double)base->energy_surplus * (double)(faction->SE_alloc_psych) / 10.0;
-	double labsIntake = (double)base->energy_surplus * (double)(faction->SE_alloc_labs) / 10.0;
-
-	debug("\t\tmineralSurplus=%d, mineralIntake=%f, economyIntake=%f, psychIntake=%f, labsIntake=%f\n", mineralSurplus, mineralIntake, economyIntake, psychIntake, labsIntake);
-
-	// no production power - multiplying facilities are useless
-
+	int mineralIntake = base->mineral_intake;
+	int economyIntake = getBaseEconomyIntake(baseId);
+	int labsIntake = getBaseLabsIntake(baseId);
+	int psychIntake = getBasePsychIntake(baseId);
+	
+	debug("\t\tmineralSurplus=%d, mineralIntake=%d, economyIntake=%d, psychIntake=%d, labsIntake=%d\n", mineralSurplus, mineralIntake, economyIntake, psychIntake, labsIntake);
+	
+	// no production power
+	
 	if (mineralSurplus <= 0)
+	{
+		debug("mineralSurplus <= 0\n");
 		return;
-
+	}
+		
 	// multipliers
 	// bit flag: 1 = minerals, 2 = economy, 4 = psych, 8 = labs, 16 = fixed labs for biology lab (value >> 16 = fixed value)
 	// for simplicity sake, hospitals are assumed to add 50% psych instead of 25% psych and -1 drone
-
+	
 	const int MULTIPLYING_FACILITIES[][2] =
 	{
 		{FAC_RECYCLING_TANKS, 1},
@@ -691,7 +1002,9 @@ void evaluateMultiplyingFacilitiesDemand()
 		{FAC_THERMOCLINE_TRANSDUCER, 0},
 		{FAC_SUBSEA_TRUNKLINE, 0},
 	};
-
+	
+	// iterate facilities
+	
 	for (const int *multiplyingFacility : MULTIPLYING_FACILITIES)
 	{
 		int facilityId = multiplyingFacility[0];
@@ -699,64 +1012,85 @@ void evaluateMultiplyingFacilitiesDemand()
 		CFacility *facility = &(Facility[facilityId]);
 
 		// check if base can build facility
-
+		
 		if (!isBaseFacilityAvailable(baseId, facilityId))
 			continue;
-
+		
 		debug("\t\t%s\n", facility->name);
-
-		// get facility parameters
-
-		int cost = facility->cost;
-		int mineralCost = getBaseMineralCost(baseId, -facilityId);
-		int maintenance = facility->maint;
-		debug("\t\t\tcost=%d, mineralCost=%d, maintenance=%d\n", cost, mineralCost, maintenance);
-
-		// calculate bonus
-
-		double bonus = 0.0;
-
+		
+		// accumulate gain
+		
+		double gain = 0.0;
+		double gainDelta;
+		
 		// minerals multiplication
 		
 		if (mask & 1)
 		{
-			bonus += mineralIntake / 2.0;
+			double mineralBonus = (double)mineralIntake / 2.0;
 			
-			// extra weight for ocean bases
+			// increase in income
 			
-			if (isOceanRegion(baseTile->region))
+			gainDelta = +getIncomeGain(getResourceScore(mineralBonus, 0), 0);
+			gain += gainDelta;
+			debug("\t\t\t%+4.0f (mineral multiplication income)\n", gainDelta);
+			
+			// increase in growth
+			
+			gainDelta = +getGrowthGain(getResourceScore(mineralBonus, 0), 0) * averageBaseIncomeGrowthRate;
+			gain += gainDelta;
+			debug("\t\t\t%+4.0f (mineral multiplication growth)\n", gainDelta);
+			
+		}
+		
+		// energy multiplication
+		
+		if ((mask & 2) != 0 || (mask & 8) != 0 || (mask & 4) != 0)
+		{
+			double energyBonus = 0.0;
+			
+			if ((mask & 2) != 0)
 			{
-				bonus *= 2;
+				energyBonus += (double)economyIntake / 2.0;
 			}
 			
+			if ((mask & 8) != 0)
+			{
+				energyBonus += (double)labsIntake / 2.0;
+			}
+			
+			if ((mask & 4) != 0)
+			{
+				energyBonus += (double)psychIntake / 2.0;
+			}
+			
+			gainDelta =
+				// increase in income
+				+
+				getIncomeGain(getResourceScore(0, energyBonus), 0)
+				// increase in growth
+				+
+				getGrowthGain(getResourceScore(0, energyBonus), 0) * averageBaseIncomeGrowthRate
+			;
+			gain += gainDelta;
+			debug("\t\t\t%+4.0f (energy multiplication)\n", gainDelta);
+			
 		}
-
-		// economy multiplication
 		
-		if (mask & 2)
-		{
-			bonus += economyIntake / 2.0 / hurryCost;
-		}
-
-		// psych multiplication
-		
-		if (mask & 4)
-		{
-			bonus += psychIntake / 2.0 / hurryCost;
-		}
-
-		// labs multiplication
-		
-		if (mask & 8)
-		{
-			bonus += labsIntake / 2.0 / hurryCost;
-		}
-
 		// labs fixed
 		
 		if (mask & 16)
 		{
-			bonus += (double)(mask >> 16) / hurryCost;
+			double energyBonus = (double)(mask >> 16);
+			
+			gainDelta =
+				// increase in income
+				+
+				getIncomeGain(getResourceScore(0, energyBonus), 0)
+			;
+			gain += gainDelta;
+			debug("\t\t\t%+4.0f (energy fixed)\n", gainDelta);
+			
 		}
 		
 		// special case for forest facilities
@@ -790,21 +1124,42 @@ void evaluateMultiplyingFacilitiesDemand()
 			
 			double potentialImprovementCount = (double)workedImprovementCount + 0.5 * (double)(improvementCount - workedImprovementCount);
 			
-			// count bonus
+			// count bonuses
+			
+			double nutrientBonus = 0.0;
+			double mineralBonus = 0.0;
+			double energyBonus = 0.0;
 			
 			switch (facilityId)
 			{
 			case FAC_TREE_FARM:
 				// +1 nutrient
-				bonus += 1.0 * potentialImprovementCount;
+				nutrientBonus += potentialImprovementCount;
 				break;
 				
 			case FAC_HYBRID_FOREST:
 				// +1 nutrient +1 energy
-				bonus += (1.0 +  1.0 / hurryCost) * potentialImprovementCount;
+				nutrientBonus += potentialImprovementCount;
+				energyBonus += potentialImprovementCount;
 				break;
 				
 			}
+			
+			// calculate development rate
+			
+			gainDelta =
+				// increase in income
+				+
+				getIncomeGain(getResourceScore(mineralBonus, energyBonus), 0)
+				// increase in growth due to regular population growth
+				+
+				getGrowthGain(getResourceScore(mineralBonus, energyBonus), 0) * averageBaseIncomeGrowthRate
+				// increase in growth due to extra nutrients
+				+
+				getGrowthGain(averageBaseIncomeGrowth * (nutrientBonus / (double)std::max(1, base->nutrient_surplus)), 0)
+			;
+			gain += gainDelta;
+			debug("\t\t\t%+4.0f (forest facility)\n", gainDelta);
 			
 		}
 		
@@ -839,48 +1194,19 @@ void evaluateMultiplyingFacilitiesDemand()
 			
 			double potentialImprovementCount = (double)workedImprovementCount + 0.5 * (double)(improvementCount - workedImprovementCount);
 			
-			// count bonus
+			// count bonuses
 			
-			// +1 nutrient
-			bonus += 1.0 * potentialImprovementCount;
+			double nutrientBonus = potentialImprovementCount;
 			
-		}
-		
-		// special case for themrocline transducer
-		
-		if (facilityId == FAC_THERMOCLINE_TRANSDUCER)
-		{
-			// count improvements around base
+			// calculate development rate
 			
-			int improvementCount = 0;
-			int workedImprovementCount = 0;
-			
-			for (MAP *tile : getBaseWorkableTiles(baseId, false))
-			{
-				if (is_ocean(tile) && map_has_item(tile, TERRA_SOLAR))
-				{
-					improvementCount++;
-				}
-				
-			}
-			
-			for (MAP *tile : getBaseWorkedTiles(baseId))
-			{
-				if (is_ocean(tile) && map_has_item(tile, TERRA_SOLAR))
-				{
-					workedImprovementCount++;
-				}
-				
-			}
-			
-			// estimate potentially worked improvements after facility is built
-			
-			double potentialImprovementCount = (double)workedImprovementCount + 0.5 * (double)(improvementCount - workedImprovementCount);
-			
-			// count bonus
-			
-			// +1 energy
-			bonus += 1.0 / hurryCost * potentialImprovementCount;
+			gainDelta =
+				// increase in growth due to extra nutrients
+				+
+				getGrowthGain(averageBaseIncomeGrowth * (nutrientBonus / (double)std::max(1, base->nutrient_surplus)), 0)
+			;
+			gain += gainDelta;
+			debug("\t\t\t%+4.0f (aquafarm)\n", gainDelta);
 			
 		}
 		
@@ -915,48 +1241,110 @@ void evaluateMultiplyingFacilitiesDemand()
 			
 			double potentialImprovementCount = (double)workedImprovementCount + 0.5 * (double)(improvementCount - workedImprovementCount);
 			
-			// count bonus
+			// count bonuses
 			
-			// +1 mineral
-			bonus += 1.0 * potentialImprovementCount;
+			double mineralBonus = potentialImprovementCount;
+			
+			// calculate development rate
+			
+			gainDelta =
+				// increase in income
+				+
+				getIncomeGain(getResourceScore(mineralBonus, 0), 0)
+				// increase in growth due to regular population growth
+				+
+				getGrowthGain(getResourceScore(mineralBonus, 0), 0) * averageBaseIncomeGrowthRate
+			;
+			gain += gainDelta;
+			debug("\t\t\t%+4.0f (subsea trunkline)\n", gainDelta);
 			
 		}
 		
-		// calculate benefit
-
-		double benefit = bonus - ((double)maintenance / hurryCost);
-		debug("\t\t\tbonus=%f, benefit=%f\n", bonus, benefit);
-
-		// no benefit
-
-		if (benefit <= 0)
-			continue;
-
-		// calculate construction time
-
-		double constructionTime = (double)mineralCost / (double)(std::max(1, mineralSurplus));
-
-		// calculate payoff time
-
-		double payoffTime = (double)mineralCost / benefit;
-
+		// special case for themrocline transducer
+		
+		if (facilityId == FAC_THERMOCLINE_TRANSDUCER)
+		{
+			// count improvements around base
+			
+			int improvementCount = 0;
+			int workedImprovementCount = 0;
+			
+			for (MAP *tile : getBaseWorkableTiles(baseId, false))
+			{
+				if (is_ocean(tile) && map_has_item(tile, TERRA_SOLAR))
+				{
+					improvementCount++;
+				}
+				
+			}
+			
+			for (MAP *tile : getBaseWorkedTiles(baseId))
+			{
+				if (is_ocean(tile) && map_has_item(tile, TERRA_SOLAR))
+				{
+					workedImprovementCount++;
+				}
+				
+			}
+			
+			// estimate potentially worked improvements after facility is built
+			
+			double potentialImprovementCount = (double)workedImprovementCount + 0.5 * (double)(improvementCount - workedImprovementCount);
+			
+			// count bonuses
+			
+			double energyBonus = potentialImprovementCount;
+			
+			// calculate development rate
+			
+			gainDelta =
+				// increase in income
+				+
+				getIncomeGain(getResourceScore(0, energyBonus), 0)
+				// increase in growth due to regular population growth
+				+
+				getGrowthGain(getResourceScore(0, energyBonus), 0) * averageBaseIncomeGrowthRate
+			;
+			gain += gainDelta;
+			debug("\t\t\t%+4.0f (thermocline transducer)\n", gainDelta);
+			
+		}
+		
+		// factor mineral cost
+		
+		gainDelta = -getIntakeGain(getBaseMineralCost(baseId, -facilityId), 0);
+		gain += gainDelta;
+		debug("\t\t\t%+4.0f (mineral cost)\n", gainDelta);
+		
+		// factor maintenance
+		
+		gainDelta = -getIncomeGain(getResourceScore(0, facility->maint), 0);
+		gain += gainDelta;
+		debug("\t\t\t%+4.0f (maintenance)\n", gainDelta);
+		
+		// normalize rate
+		
+		double normalizedGain = getNormalizedGain(gain);
+		
 		// calculate priority
-
-		double priority = conf.ai_production_facility_priority_time / (constructionTime + payoffTime) - conf.ai_production_facility_priority_penalty;
-
-		debug("\t\t\tconstructionTime=%f, payoffTime=%f, ai_production_facility_priority_penalty=%f, priority=%f\n", constructionTime, payoffTime, conf.ai_production_facility_priority_penalty, priority);
-
+		
+		double priority = conf.ai_production_facility_priority * normalizedGain;
+		debug("\t\t\tpriority=%+f, gain=%+f, normalizedGain=%+f, ai_production_facility_priority=%+f\n", priority, gain, normalizedGain, conf.ai_production_facility_priority);
+		
 		// priority is too low
-
-		if (priority <= 0)
+		
+		if (priority <= 0.0)
+		{
+			debug("\t\t\tpriority <= 0.0\n");
 			continue;
-
+		}
+		
 		// add demand
-
+		
 		addProductionDemand(-facilityId, priority);
-
+		
 	}
-
+	
 }
 
 void evaluateDefensiveFacilitiesDemand()
@@ -1159,13 +1547,13 @@ void evaluateLandFormerDemand()
 		return;
 	}
 
-	debug("\t\tformerUnit=%-25s\n", Units[formerUnitId].name);
+	debug("\tformerUnit=%-25s\n", Units[formerUnitId].name);
 
 	// set priority
 
 	double priority = conf.ai_production_improvement_priority * aiData.production.landFormerDemand * ((double)base->mineral_surplus / (double)aiData.maxMineralSurplus);
 
-	debug("\t\tpriority=%f, ai_production_improvement_priority=%f, landFormerDemand=%f, mineral_surplus=%d, maxMineralSurplus=%d\n", priority, conf.ai_production_improvement_priority, aiData.production.landFormerDemand, base->mineral_surplus, aiData.maxMineralSurplus);
+	debug("\tpriority=%f, ai_production_improvement_priority=%f, landFormerDemand=%f, mineral_surplus=%d, maxMineralSurplus=%d\n", priority, conf.ai_production_improvement_priority, aiData.production.landFormerDemand, base->mineral_surplus, aiData.maxMineralSurplus);
 
 	addProductionDemand(formerUnitId, priority);
 	
@@ -1218,7 +1606,7 @@ void evaluateSeaFormerDemand()
 		return;
 	}
 	
-	debug("\t\tformerUnit=%-25s\n", Units[formerUnitId].name);
+	debug("\tformerUnit=%-25s\n", Units[formerUnitId].name);
 	
 	// set priority
 	
@@ -1230,7 +1618,7 @@ void evaluateSeaFormerDemand()
 
 	double priority = conf.ai_production_improvement_priority * seaFormerDemand * ((double)base->mineral_surplus / (double)maxMineralSurplus);
 
-	debug("\t\tpriority=%f, ai_production_improvement_priority=%f, seaFormerDemand=%f, mineral_surplus=%d, maxMineralSurplus=%d\n", priority, conf.ai_production_improvement_priority, seaFormerDemand, base->mineral_surplus, maxMineralSurplus);
+	debug("\tpriority=%f, ai_production_improvement_priority=%f, seaFormerDemand=%f, mineral_surplus=%d, maxMineralSurplus=%d\n", priority, conf.ai_production_improvement_priority, seaFormerDemand, base->mineral_surplus, maxMineralSurplus);
 
 	addProductionDemand(formerUnitId, priority);
 	
@@ -1898,6 +2286,7 @@ void evaluatePodPoppingDemand()
 
 void evaluateLandPodPoppingDemand()
 {
+//	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 
 	debug("evaluateLandPodPoppingDemand\n");
@@ -1917,7 +2306,40 @@ void evaluateLandPodPoppingDemand()
 		debug("\tlandPodPoppingDemand < 0.0\n");
 		return;
 	}
-
+	
+//	// verify there is still room for pop popper production
+//	
+//	int supportedScountVehicleCount = 0;
+//	int supportedOtherVehicleCount = 0;
+//	
+//	for (int vehicleId : aiData.vehicleIds)
+//	{
+//		VEH *vehicle = &(Vehicles[vehicleId]);
+//		
+//		// support from this base
+//		
+//		if (vehicle->home_base_id != baseId)
+//			continue;
+//		
+//		// count support
+//		
+//		if (isScoutVehicle(vehicleId))
+//		{
+//			supportedScountVehicleCount++;
+//		}
+//		else
+//		{
+//			supportedOtherVehicleCount++;
+//		}
+//		
+//	}
+//	
+//	if (supportedScountVehicleCount >= supportedOtherVehicleCount)
+//	{
+//		debug("\tsupportedScountVehicleCount >= supportedOtherVehicleCount\n");
+//		return;
+//	}
+//
 	// set priority
 
 	double priority =
@@ -1980,6 +2402,39 @@ void evaluateSeaPodPoppingDemand()
 		return;
 	}
 
+//	// verify there is still room for pop popper production
+//	
+//	int supportedScountVehicleCount = 0;
+//	int supportedOtherVehicleCount = 0;
+//	
+//	for (int vehicleId : aiData.vehicleIds)
+//	{
+//		VEH *vehicle = &(Vehicles[vehicleId]);
+//		
+//		// support from this base
+//		
+//		if (vehicle->home_base_id != baseId)
+//			continue;
+//		
+//		// count support
+//		
+//		if (isScoutVehicle(vehicleId))
+//		{
+//			supportedScountVehicleCount++;
+//		}
+//		else
+//		{
+//			supportedOtherVehicleCount++;
+//		}
+//		
+//	}
+//	
+//	if (supportedScountVehicleCount >= supportedOtherVehicleCount)
+//	{
+//		debug("\tsupportedScountVehicleCount >= supportedOtherVehicleCount\n");
+//		return;
+//	}
+//
 	// set priority
 
 	double priority =
@@ -2046,10 +2501,10 @@ void evaluatePrototypingDemand()
 	
 	// find cheapest unprototyped unit
 	
-	int unprototypedUnitId = -1;
-	int unprototypedUnitMineralCost = INT_MAX;
+	int prototypeUnitId = -1;
+	int prototypeUnitMineralCost = INT_MAX;
 	
-	for (int unitId : aiData.unitIds)
+	for (int unitId : aiData.prototypeUnitIds)
 	{
 		UNIT *unit = &(Units[unitId]);
 		
@@ -2058,33 +2513,27 @@ void evaluatePrototypingDemand()
 		if (unit->triad() == TRIAD_SEA && !inSharedOceanRegion)
 			continue;
 		
-		// find unprototyped
+		int mineralCost = getBaseMineralCost(baseId, unitId);
 		
-		if (isPrototypeUnit(unitId))
+		if (mineralCost < prototypeUnitMineralCost)
 		{
-			int mineralCost = getBaseMineralCost(baseId, unitId);
-			
-			if (mineralCost < unprototypedUnitMineralCost)
-			{
-				unprototypedUnitId = unitId;
-				unprototypedUnitMineralCost = mineralCost;
-			}
-			
+			prototypeUnitId = unitId;
+			prototypeUnitMineralCost = mineralCost;
 		}
 		
 	}
 	
-	if (unprototypedUnitId == -1)
+	if (prototypeUnitId == -1)
 	{
-		debug("\tno unprototyped\n");
+		debug("\tno prototype to build\n");
 		return;
 	}
 	
 	// get unit
 	
-	UNIT *unprototypedUnit = &(Units[unprototypedUnitId]);
+	UNIT *prototypeUnit = &(Units[prototypeUnitId]);
 	
-	debug("\tunprototypedUnit=%s\n", unprototypedUnit->name);
+	debug("\tprototypeUnit=%s\n", prototypeUnit->name);
 	
 	// calculate priority
 	
@@ -2098,7 +2547,7 @@ void evaluatePrototypingDemand()
 	
 	// add production demand
 	
-	addProductionDemand(unprototypedUnitId, adjustedPriority);
+	addProductionDemand(prototypeUnitId, adjustedPriority);
 
 }
 
@@ -2351,7 +2800,7 @@ int findRegularDefenderUnit(int factionId)
 	int bestUnitId = BSC_SCOUT_PATROL;
 	double bestUnitDefenseEffectiveness = evaluateUnitConventionalDefenseEffectiveness(bestUnitId);
 
-	for (int unitId : getFactionPrototypes(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, false))
 	{
 		// skip non combat units
 
@@ -2382,7 +2831,7 @@ int findFastAttackerUnit(int factionId)
 	int bestUnitId = BSC_SCOUT_PATROL;
 	double bestUnitOffenseEffectiveness = evaluateUnitConventionalOffenseEffectiveness(bestUnitId);
 
-	for (int unitId : getFactionPrototypes(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, false))
 	{
 		UNIT *unit = &(Units[unitId]);
 
@@ -2416,7 +2865,7 @@ int findScoutUnit(int factionId, int triad)
 	double bestProportionalUnitChassisSpeed = -1;
 	int bestUnitChassisSpeed = -1;
 
-	for (int unitId : getFactionPrototypes(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, false))
 	{
 		UNIT *unit = &(Units[unitId]);
 
@@ -2461,7 +2910,7 @@ int findColonyUnit(int factionId, int triad)
 {
 	int bestUnitId = -1;
 
-	for (int unitId : getFactionPrototypes(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, false))
 	{
 		// given triad only
 
@@ -2490,7 +2939,7 @@ int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus)
 	double bestTotalTurns = 0.0;
 	int travelTurns = 6;
 
-	for (int unitId : getFactionPrototypes(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, false))
 	{
 		UNIT *unit = &(Units[unitId]);
 		CChassis *chassis = &(Chassis[unit->chassis_type]);
@@ -2551,7 +3000,7 @@ int findFormerUnit(int factionId, int triad)
 	int bestUnitId = -1;
 	double bestUnitValue = -1;
 
-	for (int unitId : getFactionPrototypes(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, false))
 	{
 		UNIT *unit = &(Units[unitId]);
 
@@ -2718,7 +3167,7 @@ int findPoliceUnit(int factionId)
 	int policeUnitId = -1;
 	double policeUnitEffectiveness = 0.0;
 
-	for (int unitId : getFactionPrototypes(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, false))
 	{
 		UNIT *unit = &(Units[unitId]);
 
@@ -3684,6 +4133,97 @@ int getFirstUnbuiltFacilityFromList(int baseId, std::vector<int> facilityIds)
 	// everything is built
 	
 	return -1;
+	
+}
+
+/*
+Calculates aggreated minerals + energy resource score.
+*/
+double getResourceScore(double minerals, double energy)
+{
+	return minerals + energy / hurryCost;
+}
+
+/*
+Calculates gain/loss from one time resource intake.
+score is aggregated intake equivalent
+delay is time shift in turns from now when this event takes place
+*/
+double getIntakeGain(double score, double delay)
+{
+	return score * exp(-developmentRate * delay);
+}
+
+/*
+Calculates gain/loss from constant income.
+score is aggregated income equivalent
+delay is time shift in turns from now when this event takes place
+*/
+double getIncomeGain(double score, double delay)
+{
+	return score * (1.0 / developmentRate) * exp(-developmentRate * delay);
+}
+
+/*
+Calculates gain/loss from income growth (separately from income itself).
+score is aggregated growth equivalent
+delay is time shift in turns from now when this event takes place
+*/
+double getGrowthGain(double score, double delay)
+{
+	return score * (1.0 / (developmentRate * developmentRate)) * exp(-developmentRate * delay);
+}
+
+/*
+Calculates gain normalized by colony gain.
+*/
+double getNormalizedGain(double gain)
+{
+	return gain / normalGain;
+}
+
+double getBaseIncome(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	return getResourceScore(base->mineral_intake_2, base->economy_total + base->labs_total + base->psych_total);
+	
+}
+
+/*
+Calculates how much population growth base receives in one turn.
+*/
+double getBasePopulationGrowthRate(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	return (double)base->nutrient_surplus / (double)((base->pop_size + 1) * cost_factor(base->faction_id, 0, baseId));
+	
+}
+
+int getBasePsychIntake(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	Faction *faction = &(Factions[base->faction_id]);
+	
+	return (base->energy_surplus * (faction->SE_alloc_psych) + 4) / 10;
+	
+}
+
+int getBaseEconomyIntake(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	Faction *faction = &(Factions[base->faction_id]);
+	
+	return (base->energy_surplus * (10 - faction->SE_alloc_psych - faction->SE_alloc_labs) + 4) / 10;
+	
+}
+
+int getBaseLabsIntake(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	return base->energy_surplus - getBasePsychIntake(baseId) - getBaseEconomyIntake(baseId);
 	
 }
 

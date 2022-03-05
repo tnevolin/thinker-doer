@@ -1,11 +1,17 @@
 #pragma once
 
 #include "terranx.h"
+#include "path.h"
 
 // global constants
 
 extern const int NO_SYNC;
 extern const char* scriptTxtID;
+
+// Path
+
+extern CPath* PATH;
+extern FPath_find PATH_find;
 
 // battle computation display variables
 

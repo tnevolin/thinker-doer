@@ -3,6 +3,7 @@
 #include "main.h"
 #include "game.h"
 
+const int GAME_DURATION = 350;
 const double MAX_THREAT_TURNS = 10.0;
 const double ARTILLERY_OFFENSIVE_VALUE_KOEFFICIENT = 0.5;
 
@@ -83,6 +84,7 @@ const double COMBAT_UNIT_CLASS_WEIGHTS[] =
 void productionStrategy();
 void setupProductionVariables();
 void evaluateGlobalBaseDemand();
+void evaluateGlobalFormerDemand();
 //HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
 void setProduction();
 int aiSuggestBaseProduction(int baseId, int choice);
@@ -135,4 +137,14 @@ void evaluateTransportDemand();
 int findTransportUnit();
 int getUnitClass(int unitId);
 int getFirstUnbuiltFacilityFromList(int baseId, std::vector<int> facilityIds);
+double getResourceScore(double minerals, double energy);
+double getIntakeGain(double score, double delay);
+double getIncomeGain(double score, double delay);
+double getGrowthGain(double score, double delay);
+double getNormalizedGain(double developmentRate);
+double getBaseIncome(int baseId);
+double getBasePopulationGrowthRate(int baseId);
+int getBasePsychIntake(int baseId);
+int getBaseEconomyIntake(int baseId);
+int getBaseLabsIntake(int baseId);
 
