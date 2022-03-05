@@ -4664,6 +4664,7 @@ int __cdecl modified_base_double_labs(int labs)
 }
 
 /*
+<<<<<<< HEAD
 Highjack this function to fix stockpile energy bug.
 */
 int __cdecl modified_base_production()
@@ -4773,6 +4774,8 @@ void __cdecl modified_base_yield()
 }
 
 /*
+=======
+>>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 AI transport steals passenger at sea whenever they can.
 This modification makes sure they don't.
 */
@@ -4806,7 +4809,11 @@ int __cdecl modified_order_veh(int vehicleId, int angle, int a3)
 	// give up and return original angle
 	
 	return tx_order_veh(vehicleId, angle, a3);
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 }
 
 /*

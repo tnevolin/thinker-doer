@@ -622,6 +622,7 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->eco_damage_alternative_industry_effect_reduction_formula = (atoi(value) == 0 ? false : true);
     }
+<<<<<<< HEAD
     else if (MATCH("wtp", "orbital_nutrient_population_limit"))
     {
         cf->orbital_nutrient_population_limit = std::max(0.0, atof(value));
@@ -634,6 +635,8 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->orbital_energy_population_limit = std::max(0.0, atof(value));
     }
+=======
+>>>>>>> 9565780df051f67fed1694638268dd89d960d13e
     else if (MATCH("wtp", "pressure_dome_minerals"))
     {
         cf->pressure_dome_minerals = std::max(0, atoi(value));
@@ -831,6 +834,7 @@ int handler(void* user, const char* section, const char* name, const char* value
         cf->ai_expansion_time_penalty_base_threshold = atof(value);
     }
     else if (MATCH("wtp", "ai_expansion_time_penalty_early"))
+<<<<<<< HEAD
     {
         cf->ai_expansion_time_penalty_early = atof(value);
     }
@@ -844,6 +848,21 @@ int handler(void* user, const char* section, const char* name, const char* value
     }
     else if (MATCH("wtp", "ai_expansion_inland_base"))
     {
+=======
+    {
+        cf->ai_expansion_time_penalty_early = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_time_penalty"))
+    {
+        cf->ai_expansion_time_penalty = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_coastal_base"))
+    {
+        cf->ai_expansion_coastal_base = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_inland_base"))
+    {
+>>>>>>> 9565780df051f67fed1694638268dd89d960d13e
         cf->ai_expansion_inland_base = atof(value);
     }
     else if (MATCH("wtp", "ai_expansion_placement"))

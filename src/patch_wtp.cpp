@@ -4596,6 +4596,7 @@ void patch_unfinished_needlejet_turn()
     
 }
 
+<<<<<<< HEAD
 void patch_stockpile_energy_bug()
 {
    	write_call(0x004F7A2F, (int)modified_base_production);
@@ -4620,6 +4621,8 @@ void patch_limit_orbit_intake()
    	
 }
 	
+=======
+>>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 void patch_ai_transport_change()
 {
    	write_call(0x004CB3BA, (int)modified_order_veh);
@@ -5226,10 +5229,13 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_unfinished_needlejet_turn();
 	
+<<<<<<< HEAD
 	patch_stockpile_energy_bug();
 	
 	patch_limit_orbit_intake();
 	
+=======
+>>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 	patch_ai_transport_change();
 	
 }

@@ -197,10 +197,13 @@ int __cdecl modifiedReturnProbeBaseFind2(int x, int y, int vehicleId);
 int __cdecl modified_pact_withdraw(int factionId, int pactFactionId);
 int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
 int __cdecl modified_base_double_labs(int labs);
+<<<<<<< HEAD
 int __cdecl modified_base_production();
 int __cdecl modified_base_ecology();
 int getStockpileEnergy(int baseId);
 void __cdecl modified_base_yield();
+=======
+>>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 int __cdecl modified_stack_veh(int vehicleId, int a2);
 int __cdecl modified_order_veh(int vehicleId, int angle, int a3);
 bool isValidMovementAngle(int vehicleId, int angle);

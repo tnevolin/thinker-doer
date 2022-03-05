@@ -19,7 +19,11 @@
 #pragma once
 
 #ifdef BUILD_REL
+<<<<<<< HEAD
     #define MOD_VERSION "The Will to Power mod - version 288 (Thinker Mod v2.5)"
+=======
+    #define MOD_VERSION "The Will to Power mod - version ai (Thinker Mod v2.5)"
+>>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -312,9 +316,12 @@ struct Config {
 	int combat_bonus_attacking_along_road;
 	bool disengagement_from_stack;
 	bool eco_damage_alternative_industry_effect_reduction_formula;
+<<<<<<< HEAD
 	double orbital_nutrient_population_limit;
 	double orbital_mineral_population_limit;
 	double orbital_energy_population_limit;
+=======
+>>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 	int pressure_dome_minerals = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
