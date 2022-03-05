@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
+#include <map>
 #include "main.h"
 #include "terranx_wtp.h"
 #include "wtp.h"
@@ -2998,7 +2999,7 @@ HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, 
 
 		double bestDefenderEffectiveness = 0.0;
 
-		for (int stackedVehicleId : getStackedVehicleIds(defenderVehicleId))
+		for (int stackedVehicleId : getStackVehicles(defenderVehicleId))
 		{
 			VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
 			UNIT *stackedVehicleUnit = &(Units[stackedVehicle->unit_id]);
@@ -3119,7 +3120,7 @@ HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int
 		{
 			bool nonArtifactUnitExists = false;
 			
-			std::vector<int> stackedVehicleIds = getStackedVehicleIds(defenderVehicleId);
+			std::vector<int> stackedVehicleIds = getStackVehicles(defenderVehicleId);
 			
 			for (int vehicleId : stackedVehicleIds)
 			{
@@ -4768,6 +4769,131 @@ void __cdecl modified_base_yield()
 		base->energy_intake += orbitalEnergyDifference;
 		base->energy_intake_2 += orbitalEnergyDifference;
 	}
+	
+}
+
+/*
+AI transport steals passenger at sea whenever they can.
+This modification makes sure they don't.
+*/
+int __cdecl modified_order_veh(int vehicleId, int angle, int a3)
+{
+	// not transport vehicle is not affected
+	
+	if (!isTransportVehicle(vehicleId))
+		return tx_order_veh(vehicleId, angle, a3);
+	
+	// check if there is a transport at sea at given angle
+	
+	if (!isAdjacentTransportAtSea(vehicleId, angle))
+		return tx_order_veh(vehicleId, angle, a3);
+	
+	// try next angle
+	
+	int newAngle = (angle + 1) % 8;
+	
+	if (!isAdjacentTransportAtSea(vehicleId, newAngle))
+		return tx_order_veh(vehicleId, newAngle, a3);
+	
+	// try all other angles
+	
+	for (newAngle = 0; newAngle < 8; newAngle++)
+	{
+		if (!isAdjacentTransportAtSea(vehicleId, newAngle))
+			return tx_order_veh(vehicleId, newAngle, a3);
+	}
+	
+	// give up and return original angle
+	
+	return tx_order_veh(vehicleId, angle, a3);
+
+}
+
+/*
+Verifies that given vehicle can move to this angle.
+*/
+bool isValidMovementAngle(int vehicleId, int angle)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// find target tile
+	
+	int x = wrap(vehicle->x + BASE_TILE_OFFSETS[angle + 1][0]);
+	int y = vehicle->y + BASE_TILE_OFFSETS[angle + 1][1];
+	MAP *tile = getMapTile(x, y);
+	
+	// can move into friendly base regardless of realm
+	
+	if (map_has_item(tile, TERRA_BASE_IN_TILE) && (tile->owner == vehicle->faction_id || has_pact(tile->owner, vehicle->faction_id)))
+		return true;
+	
+	// cannot move to different realm
+	
+	if (vehicle->triad() == TRIAD_LAND && is_ocean(tile))
+		return false;
+	
+	if (vehicle->triad() == TRIAD_SEA && !is_ocean(tile))
+		return false;
+	
+	// cannot move to occupied tile
+	// just for simplistic purposes - don't want to iterate all vehicles in stack
+	
+	if (veh_at(x, y) != -1)
+		return false;
+	
+	// otherwise, return true
+	
+	return true;
+	
+}
+
+/*
+Verifies that there is same faction transport from given vehicle by given angle.
+*/
+bool isAdjacentTransportAtSea(int vehicleId, int angle)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// find target tile
+	
+	int x = wrap(vehicle->x + BASE_TILE_OFFSETS[angle + 1][0]);
+	int y = vehicle->y + BASE_TILE_OFFSETS[angle + 1][1];
+	MAP *tile = getMapTile(x, y);
+	
+	// verify there is no base
+	
+	if (map_has_item(tile, TERRA_BASE_IN_TILE))
+		return false;
+	
+	// get target tile stack
+	
+	int targetTileVehicleId = veh_at(x, y);
+	
+	// iterate target tile stack to find same faction transport
+	
+	for (int targetTileStackVehicleId : getStackVehicles(targetTileVehicleId))
+	{
+		VEH *targetTileStackVehicle = &(Vehicles[targetTileStackVehicleId]);
+		
+		// same faction
+		
+		if (targetTileStackVehicle->faction_id != vehicle->faction_id)
+			continue;
+		
+		// transport
+		
+		if (!isTransportVehicle(targetTileStackVehicleId))
+			continue;
+		
+		// found
+		
+		return true;
+		
+	}
+	
+	// not found
+	
+	return false;
 	
 }
 

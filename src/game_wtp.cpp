@@ -1240,7 +1240,7 @@ bool isImprovedTile(int x, int y)
 
 }
 
-bool isVehicleSupply(VEH *vehicle)
+bool isSupplyVehicle(VEH *vehicle)
 {
 	return (Units[vehicle->unit_id].weapon_type == WPN_SUPPLY_TRANSPORT);
 }
@@ -1260,7 +1260,7 @@ bool isColonyVehicle(int id)
 	return (Units[Vehicles[id].unit_id].weapon_type == WPN_COLONY_MODULE);
 }
 
-bool isUnitFormer(int unitId)
+bool isFormerUnit(int unitId)
 {
 	return (Units[unitId].weapon_type == WPN_TERRAFORMING_UNIT);
 }
@@ -1611,6 +1611,25 @@ int estimateBaseProductionTurnsToComplete(int id)
 }
 
 /*
+Estimates turns to complete given item assuming no switching loss.
+*/
+int estimateBaseProductionTurnsToCompleteItem(int baseId, int item)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	int mineralCost = getBaseMineralCost(baseId, item);
+	
+	if (mineralCost <= base->minerals_accumulated)
+		return 1;
+	
+	if (base->mineral_surplus <= 0)
+		return 9999;
+	
+	return ((getBaseMineralCost(baseId, item) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
+
+}
+
+/*
 Returns all valid base radius map tiles around base.
 if startFromCenter == true then also return central tile as first element
 */
@@ -1619,99 +1638,6 @@ std::vector<MAP *> getBaseWorkableTiles(int baseId, bool startWithCenter)
 	BASE *base = &(Bases[baseId]);
 	
 	return getBaseRadiusTiles(base->x, base->y, startWithCenter);
-
-}
-
-/*
-Returns all tiles within base radius belonging to friendly base radiuses.
-*/
-int getBaseRadiusTileOverlapCount(int x, int y)
-{
-	int friendlyIntersectedBaseRadiusTileCount = 0;
-
-	for (int offset = 0; offset < BASE_OFFSET_COUNT_RADIUS; offset++)
-	{
-		MAP *tile = getMapTile(wrap(x + BASE_TILE_OFFSETS[offset][0]), y + BASE_TILE_OFFSETS[offset][1]);
-
-		if (tile == nullptr)
-			continue;
-
-		// add overlapped base radius
-
-		if (map_has_item(tile, TERRA_BASE_RADIUS))
-		{
-			friendlyIntersectedBaseRadiusTileCount++;
-		}
-
-	}
-
-	return friendlyIntersectedBaseRadiusTileCount;
-
-}
-
-/*
-Returns all base radius adjacent land tiles overlapping friendly base radiuses.
-*/
-int getFriendlyLandBorderedBaseRadiusTileCount(int factionId, int x, int y)
-{
-	int friendlyLandBorderedBaseRadiusTileCount = 0;
-	
-	for (int offset = BASE_OFFSET_COUNT_ADJACENT; offset < BASE_OFFSET_COUNT_RADIUS; offset++)
-	{
-		int radiusTileX = wrap(x + BASE_TILE_OFFSETS[offset][0]);
-		int radiusTileY = y + BASE_TILE_OFFSETS[offset][1];
-		
-		if (!isOnMap(radiusTileX, radiusTileY))
-			continue;
-		
-		MAP *radiusTile = getMapTile(radiusTileX, radiusTileY);
-		
-		// land
-		
-		if (is_ocean(radiusTile))
-			continue;
-		
-		// our territory
-		
-		if (radiusTile->owner != factionId)
-			continue;
-		
-		// not map radius
-		
-		if (map_has_item(radiusTile, TERRA_BASE_RADIUS))
-			continue;
-		
-		// iterate edge touching tiles
-		
-		for (int touchingOffset = BASE_OFFSET_COUNT_CENTER; touchingOffset < BASE_OFFSET_COUNT_ADJACENT; touchingOffset++)
-		{
-			int touchingTileX = wrap(radiusTileX + BASE_TILE_OFFSETS[touchingOffset][0]);
-			int touchingTileY = radiusTileY + BASE_TILE_OFFSETS[touchingOffset][1];
-			
-			if (!isOnMap(touchingTileX, touchingTileY))
-				continue;
-			
-			MAP *touchingTile = getMapTile(touchingTileX, touchingTileY);
-			
-			// our territory
-			
-			if (touchingTile->owner != factionId)
-				continue;
-			
-			// map radius
-			
-			if (!map_has_item(touchingTile, TERRA_BASE_RADIUS))
-				continue;
-			
-			// add friendly bordered base radius
-			
-			friendlyLandBorderedBaseRadiusTileCount++;
-			
-		}
-		
-	}
-
-	return friendlyLandBorderedBaseRadiusTileCount;
 
 }
 
@@ -2775,7 +2701,7 @@ int getRemainingMinerals(int baseId)
 
 }
 
-std::vector<int> getStackedVehicleIds(int vehicleId)
+std::vector<int> getStackVehicles(int vehicleId)
 {
 	std::vector<int> stackedVehicleIds;
 
@@ -2935,11 +2861,32 @@ mineral yield calculation
 HOOK_API int mod_mineral_yield(int factionId, int baseId, int x, int y, int tf)
 {
 	// call original function
-
+	
     int value = mineral_yield(factionId, baseId, x, y, tf);
-
+    
+    // add minerals for Pressure dome if configured
+    
+    if (conf.pressure_dome_minerals > 0)
+	{
+		if (baseId >= 0 && baseId < *total_num_bases)
+		{
+			BASE *base = &(Bases[baseId]);
+			
+			if (x == base->x && y == base->y)
+			{
+				if (has_facility(baseId, FAC_PRESSURE_DOME))
+				{
+					value += conf.pressure_dome_minerals;
+				}
+				
+			}
+			
+		}
+		
+	}
+    
     return value;
-
+    
 }
 
 /*
@@ -2998,7 +2945,7 @@ std::vector<int> getLoadedVehicleIds(int vehicleId)
 
 	// select those in stack attached to this one
 
-	for (int stackedVehicleId : getStackedVehicleIds(vehicleId))
+	for (int stackedVehicleId : getStackVehicles(vehicleId))
 	{
 		VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
 
@@ -3084,50 +3031,30 @@ void hurryProduction(BASE* base, int minerals, int cost)
     
 }
 
-bool isLandVehicleOnSeaTransport(int vehicleId)
+bool isVehicleOnTransport(int vehicleId)
+{
+	return getVehicleTransportId(vehicleId) != -1;
+}
+
+int getVehicleTransportId(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
-	bool onTransport = false;
-	
 	if
 	(
-		// land vehicle
-		vehicle->triad() == TRIAD_LAND
-		&&
 		// sentry
 		vehicle->move_status == ORDER_SENTRY_BOARD
 		&&
 		// on sea transport
+		vehicle->waypoint_1_y == 0
+		&&
 		vehicle->waypoint_1_x >= 0
 	)
 	{
-		int transportVehicleId = vehicle->waypoint_1_x;
-		VEH *transportVehicle = &(Vehicles[transportVehicleId]);
-		
-		if (transportVehicle->x == vehicle->x && transportVehicle->y == vehicle->y)
-		{
-			onTransport = true;
-		}
-		
-	}
-	
-	return onTransport;
-		
-}
-
-int getLandVehicleSeaTransportVehicleId(int vehicleId)
-{
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	
-	if (isLandVehicleOnSeaTransport(vehicleId))
-	{
 		return vehicle->waypoint_1_x;
 	}
-	else
-	{
-		return -1;
-	}
+	
+	return -1;
 		
 }
 
@@ -3924,7 +3851,7 @@ bool isNextToRegion(int x, int y, int region)
 
 int getSeaTransportInStack(int vehicleId)
 {
-	for (int stackedVehicleId : getStackedVehicleIds(vehicleId))
+	for (int stackedVehicleId : getStackVehicles(vehicleId))
 	{
 		VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
 		
@@ -4212,5 +4139,128 @@ Kills vehicle properly with transport check.
 void killVehicle(int vehicleId)
 {
 	tx_kill(vehicleId);
+}
+
+void board(int vehicleId, int transportVehicleId)
+{
+	VEH* vehicle = &(Vehicles[vehicleId]);
+	VEH* transportVehicle = &(Vehicles[transportVehicleId]);
+	
+	// cannot board on itself
+	
+	if (vehicleId == transportVehicleId)
+		return;
+	
+	// board at same location
+	
+	if (!(vehicle->x == transportVehicle->x && vehicle->y == transportVehicle->y))
+		return;
+	
+	// do not board on transport with no remaining capacity
+	
+	if (getTransportRemainingCapacity(transportVehicleId) <= 0)
+		return;
+	
+	// board
+	
+	setVehicleOrder(vehicleId, ORDER_SENTRY_BOARD);
+	vehicle->waypoint_1_y = 0;
+	vehicle->waypoint_1_x = transportVehicleId;
+	vehicle->state |= VSTATE_IN_TRANSPORT;
+	
+}
+
+void unboard(int vehicleId)
+{
+	VEH* vehicle = &(Vehicles[vehicleId]);
+	
+	setVehicleOrder(vehicleId, ORDER_NONE);
+	vehicle->waypoint_1_y = 0;
+	vehicle->waypoint_1_x = -1;
+	vehicle->state &= ~VSTATE_IN_TRANSPORT;
+	
+}
+
+int getTransportUsedCapacity(int transportVehicleId)
+{
+	assert(transportVehicleId >= 0 && transportVehicleId < *total_num_vehicles);
+	
+	int transportUsedCapacity = 0;
+	
+	// get top of the stack vehicle
+	
+	int topStackVehicleId = transportVehicleId;
+	while (Vehicles[topStackVehicleId].prev_unit_id_stack != -1)
+	{
+		topStackVehicleId = Vehicles[topStackVehicleId].prev_unit_id_stack;
+	}
+	
+	// count vehicles loaded on this transport
+	
+	for (int vehicleId = topStackVehicleId; vehicleId != -1; vehicleId = Vehicles[vehicleId].next_unit_id_stack)
+	{
+		// skip transport itself
+		
+		if (vehicleId == transportVehicleId)
+			continue;
+		
+		// increment used capcity for vehicle on this transport
+		
+		if (getVehicleTransportId(vehicleId) == transportVehicleId)
+		{
+			transportUsedCapacity++;
+		}
+		
+	}
+
+	return transportUsedCapacity;
+
+}
+
+int getTransportRemainingCapacity(int transportVehicleId)
+{
+	assert(transportVehicleId >= 0 && transportVehicleId < *total_num_vehicles);
+	
+	return tx_veh_cargo(transportVehicleId) - getTransportUsedCapacity(transportVehicleId);
+	
+}
+
+int getVehiclePower(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	int reactor = vehicle->reactor_type();
+	
+	int vanillaPower = 10 * reactor - vehicle->damage_taken;
+	int power = (conf.ignore_reactor_power_in_combat ? vanillaPower : (vanillaPower + (reactor - 1)) / reactor);
+	
+	return power;
+	
+}
+
+/*
+Computes base GROWTH rate.
+*/
+int getBaseGrowthRate(int baseId)
+{
+	// store current base pointers
+	
+	int currentBaseId = *current_base_id;
+	
+	// set base pointers
+	
+	set_base(baseId);
+	
+	// compute base nutrients
+	
+	tx_base_nutrient();
+	
+	// restore current base pointers
+	
+	set_base(currentBaseId);
+	
+	// return computed GROWTH rate
+	
+	return *current_base_growth_rate;
+	
 }
 

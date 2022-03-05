@@ -634,6 +634,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->orbital_energy_population_limit = std::max(0.0, atof(value));
     }
+    else if (MATCH("wtp", "pressure_dome_minerals"))
+    {
+        cf->pressure_dome_minerals = std::max(0, atoi(value));
+    }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
@@ -814,49 +818,65 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_transport_priority = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_weight_nutrient_bonus"))
+    else if (MATCH("wtp", "ai_expansion_weight_nutrient_bonus"))
     {
-        cf->ai_production_build_weight_nutrient_bonus = atof(value);
+        cf->ai_expansion_weight_nutrient_bonus = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_weight_mineral_bonus"))
+    else if (MATCH("wtp", "ai_expansion_weight_mineral_bonus"))
     {
-        cf->ai_production_build_weight_mineral_bonus = atof(value);
+        cf->ai_expansion_weight_mineral_bonus = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_weight_energy_bonus"))
+    else if (MATCH("wtp", "ai_expansion_weight_energy_bonus"))
     {
-        cf->ai_production_build_weight_energy_bonus = atof(value);
+        cf->ai_expansion_weight_energy_bonus = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_weight_rainfall"))
+    else if (MATCH("wtp", "ai_expansion_weight_rainfall"))
     {
-        cf->ai_production_build_weight_rainfall = atof(value);
+        cf->ai_expansion_weight_rainfall = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_weight_rockiness"))
+    else if (MATCH("wtp", "ai_expansion_weight_rockiness"))
     {
-        cf->ai_production_build_weight_rockiness = atof(value);
+        cf->ai_expansion_weight_rockiness = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_weight_elevation"))
+    else if (MATCH("wtp", "ai_expansion_weight_elevation"))
     {
-        cf->ai_production_build_weight_elevation = atof(value);
+        cf->ai_expansion_weight_elevation = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_weight_deep"))
+    else if (MATCH("wtp", "ai_expansion_weight_deep"))
     {
-        cf->ai_production_build_weight_deep = atof(value);
+        cf->ai_expansion_weight_deep = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_turn_penalty_base_threshold"))
+    else if (MATCH("wtp", "ai_expansion_turn_penalty_base_threshold"))
     {
-        cf->ai_production_build_turn_penalty_base_threshold = atof(value);
+        cf->ai_expansion_turn_penalty_base_threshold = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_turn_penalty_early"))
+    else if (MATCH("wtp", "ai_expansion_turn_penalty_early"))
     {
-        cf->ai_production_build_turn_penalty_early = atof(value);
+        cf->ai_expansion_turn_penalty_early = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_build_turn_penalty"))
+    else if (MATCH("wtp", "ai_expansion_turn_penalty"))
     {
-        cf->ai_production_build_turn_penalty = atof(value);
+        cf->ai_expansion_turn_penalty = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_factions_enabled"))
+    else if (MATCH("wtp", "ai_expansion_coastal_base"))
     {
-        cf->ai_terraforming_factions_enabled = atoi(value);
+        cf->ai_expansion_coastal_base = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_inland_base"))
+    {
+        cf->ai_expansion_inland_base = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_radius_touch"))
+    {
+        cf->ai_expansion_radius_touch = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_radius_overlap"))
+    {
+        cf->ai_expansion_radius_overlap = atof(value);
+    }
+    else if (MATCH("wtp", "wtp_factions_enabled"))
+    {
+        cf->wtp_factions_enabled = atoi(value);
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {

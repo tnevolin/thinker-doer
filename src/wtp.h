@@ -201,4 +201,8 @@ int __cdecl modified_base_production();
 int __cdecl modified_base_ecology();
 int getStockpileEnergy(int baseId);
 void __cdecl modified_base_yield();
+int __cdecl modified_stack_veh(int vehicleId, int a2);
+int __cdecl modified_order_veh(int vehicleId, int angle, int a3);
+bool isValidMovementAngle(int vehicleId, int angle);
+bool isAdjacentTransportAtSea(int vehicleId, int angle);
 

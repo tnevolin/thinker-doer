@@ -8,7 +8,25 @@
 #include "terranx_enums.h"
 
 int aiFactionUpkeep(const int factionId);
-void aiFactionStrategy();
+void __cdecl modified_enemy_units_check(int factionId);
+void strategy();
+void populateAIData();
+void analyzeGeography();
+void populateGlobalVariables();
+void populateBaseExposures();
+void evaluateBaseExposures();
+void evaluateBaseNativeDefenseDemands();
+void evaluateDefenseDemand();
+void populateWarzones();
+void designUnits();
+void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::vector<int> weaponIds, std::vector<int> armorIds, std::vector<int> abilitiesSets, int reactorId, int plan, char *name);
+void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
+void obsoletePrototypes(int factionId, std::set<int> chassisIds, std::set<int> weaponIds, std::set<int> armorIds, std::set<int> abilityFlagsSet, std::set<int> reactors);
+
+// --------------------------------------------------
+// helper functions
+// --------------------------------------------------
+
 VEH *getVehicleByAIId(int aiId);
 MAP *getNearestPod(int vehicleId);
 int getNearestFactionBaseRange(int factionId, int x, int y);
@@ -46,8 +64,4 @@ bool isOceanAssociationCoast(MAP *tile, int oceanAssociation, int factionId);
 bool isOceanAssociationCoast(int x, int y, int oceanAssociation, int factionId);
 int getMaxBaseSize(int factionId);
 std::set<int> getBaseOceanRegions(int baseId);
-int getNearestBaseRange(int x, int y);
-int getNearestBaseRange(int mapIndex);
-int getNearestColonyRange(int x, int y);
-int getNearestColonyRange(int mapIndex);
 

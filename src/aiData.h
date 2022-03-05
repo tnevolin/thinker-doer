@@ -8,6 +8,7 @@
 #include "terranx_types.h"
 #include "terranx_enums.h"
 #include "aiTask.h"
+#include "aiMoveFormer.h"
 
 const int COMBAT_ABILITY_FLAGS = ABL_AMPHIBIOUS | ABL_AIR_SUPERIORITY | ABL_AAA | ABL_COMM_JAMMER | ABL_EMPATH | ABL_ARTILLERY | ABL_BLINK_DISPLACER | ABL_TRANCE | ABL_NERVE_GAS | ABL_SOPORIFIC_GAS | ABL_DISSOCIATIVE_WAVE;
 
@@ -163,25 +164,34 @@ struct Geography
 	
 };
 
-struct MapData
+struct TileInfo
 {
-	bool accessible = false;
-	bool immediatelyReachable = false;
-	int expansionRange = -1;
-	double qualityScore = 0.0;
-	double buildScore = 0.0;
+	bool blocked = false;
+	bool zoc = false;
+	bool warzone = false;
+	
 };
 	
+struct BaseInfo
+{
+	
+};
+
 struct Production
 {
 	double landColonyDemand;
 	std::map<int, double> seaColonyDemands;
+	
+	double landFormerDemand;
+	std::map<int, double> seaFormerDemands;
+	
 	double landPodPoppingDemand;
 	std::map<int, double> seaPodPoppingDemand;
 	
 	void clear()
 	{
 		seaColonyDemands.clear();
+		seaFormerDemands.clear();
 		seaPodPoppingDemand.clear();
 	}
 	
@@ -195,7 +205,12 @@ struct Data
 	
 	// geography
 	Geography geography;
-	MapData *mapData = nullptr;
+	
+	// map data
+	std::vector<TileInfo> tileInfos;
+	
+	// base data
+	std::vector<BaseInfo> baseInfos;
 	
 	std::vector<int> baseIds;
 	std::map<MAP *, int> baseTiles;
@@ -230,8 +245,8 @@ struct Data
 	std::vector<int> airCombatUnitIds;
 	std::vector<int> landAndAirCombatUnitIds;
 	std::vector<int> seaAndAirCombatUnitIds;
-	std::map<int, int> regionAlienHunterDemands;
-	std::map<int, int> seaTransportRequests;
+	double landAlienHunterDemand;
+	std::map<int, int> seaTransportRequestCounts;
 	std::map<int, Task> tasks;
 	int bestVehicleWeaponOffenseValue;
 	int bestVehicleArmorDefenseValue;
@@ -244,43 +259,14 @@ struct Data
 	void setup();
 	void cleanup();
 	
-	void clear()
-	{
-		production.clear();
-		baseIds.clear();
-		baseTiles.clear();
-		presenceRegions.clear();
-		regionBaseIds.clear();
-		regionBaseGroups.clear();
-		baseStrategies.clear();
-		vehicleIds.clear();
-		combatVehicleIds.clear();
-		scoutVehicleIds.clear();
-		outsideCombatVehicleIds.clear();
-		unitIds.clear();
-		combatUnitIds.clear();
-		colonyVehicleIds.clear();
-		formerVehicleIds.clear();
-		threatLevel = 0.0;
-		regionSurfaceCombatVehicleIds.clear();
-		regionSurfaceScoutVehicleIds.clear();
-		baseAnticipatedNativeAttackStrengths.clear();
-		baseRemainingNativeProtectionDemands.clear();
-		regionDefenseDemand.clear();
-		regionMaxMineralSurpluses.clear();
-		landCombatUnitIds.clear();
-		seaCombatUnitIds.clear();
-		airCombatUnitIds.clear();
-		landAndAirCombatUnitIds.clear();
-		seaAndAirCombatUnitIds.clear();
-		regionAlienHunterDemands.clear();
-		seaTransportRequests.clear();
-		tasks.clear();
-	}
+	// access global data arrays
+	TileInfo *getTileInfo(int mapIndex);
+	TileInfo *getTileInfo(int x, int y);
+	TileInfo *getTileInfo(MAP *tile);
+	BaseInfo *getBaseInfo(int baseId);
 	
 };
 
-extern int currentTurn;
 extern int aiFactionId;
 extern Data aiData;
 

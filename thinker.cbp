@@ -95,6 +95,8 @@
 		<Unit filename="src/aiHurry.h" />
 		<Unit filename="src/aiMove.cpp" />
 		<Unit filename="src/aiMove.h" />
+		<Unit filename="src/aiMoveArtifact.cpp" />
+		<Unit filename="src/aiMoveArtifact.h" />
 		<Unit filename="src/aiMoveColony.cpp" />
 		<Unit filename="src/aiMoveColony.h" />
 		<Unit filename="src/aiMoveCombat.cpp" />

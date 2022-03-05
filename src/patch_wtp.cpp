@@ -4617,7 +4617,13 @@ void patch_limit_orbit_intake()
    	write_call(0x004F7A1B, (int)modified_base_yield);
    	write_call(0x004F7A8F, (int)modified_base_yield);
    	write_call(0x004F7BA9, (int)modified_base_yield);
+   	
+}
 	
+void patch_ai_transport_change()
+{
+   	write_call(0x004CB3BA, (int)modified_order_veh);
+    
 }
 
 // =======================================================
@@ -5223,6 +5229,8 @@ void patch_setup_wtp(Config* cf)
 	patch_stockpile_energy_bug();
 	
 	patch_limit_orbit_intake();
+	
+	patch_ai_transport_change();
 	
 }
 

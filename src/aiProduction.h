@@ -80,7 +80,8 @@ const double COMBAT_UNIT_CLASS_WEIGHTS[] =
 	0.1,
 };
 
-void aiProductionStrategy();
+void productionStrategy();
+void setupProductionVariables();
 void evaluateGlobalBaseDemand();
 //HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
 void setProduction();
@@ -92,10 +93,11 @@ void evaluateEcoDamageFacilitiesDemand();
 void evaluateMultiplyingFacilitiesDemand();
 void evaluateDefensiveFacilitiesDemand();
 void evaluateMilitaryFacilitiesDemand();
-void evaluateFormerDemand();
+void evaluatePoliceDemand();
+void evaluateLandFormerDemand();
+void evaluateSeaFormerDemand();
 void evaluateLandColonyDemand();
 void evaluateSeaColonyDemand();
-void evaluatePoliceDemand();
 void evaluateAlienDefenseDemand();
 void evaluateLandAlienDefenseDemand();
 void evaluateSeaAlienDefenseDemand();
@@ -131,4 +133,5 @@ int selectCombatUnit(int baseId, int targetBaseId);
 void evaluateTransportDemand();
 int findTransportUnit();
 int getUnitClass(int unitId);
+int getFirstUnbuiltFacilityFromList(int baseId, std::vector<int> facilityIds);
 
