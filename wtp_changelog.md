@@ -1,3 +1,7 @@
+# Version 289
+
+* Artillery damage is not multiplied by attacker reactor when ignore_reactor_power_in_combat is set.
+
 # Version 288
 
 * Added variable orbital resource limit as population fraction (thinker.ini: orbital_*_population_limit).
