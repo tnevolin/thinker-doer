@@ -732,46 +732,40 @@ int getBaseBuildingItemMineralCost(int baseId)
 }
 
 /*
-Calculates psi offense strength for new vehicle built at base.
+Calculates unit psi offense strength.
 */
-double getUnitPsiOffenseStrength(int unitId, int baseId)
+double getUnitPsiOffenseStrength(int unitId, int factionId)
 {
 	UNIT *unit = &(Units[unitId]);
 	int triad = unit->triad();
+	Faction *faction = &(Factions[factionId]);
 	
-	BASE *base = &(Bases[baseId]);
-	Faction *faction = &(Factions[base->faction_id]);
-
 	double psiOffenseStrength;
 
 	switch (triad)
 	{
 	case TRIAD_LAND:
-		psiOffenseStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
+		psiOffenseStrength = sqrt((double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator);
 		break;
 	case TRIAD_SEA:
-		psiOffenseStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
+		psiOffenseStrength = sqrt((double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator);
 		break;
 	case TRIAD_AIR:
-		psiOffenseStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
+		psiOffenseStrength = sqrt((double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator);
 		break;
 	default:
 		return 1.0;
 	}
 
-	// morale modifier
-
-	psiOffenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
-
 	// faction PLANET rating modifier
 
-	psiOffenseStrength *= 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * faction->SE_planet_pending;
-
+	psiOffenseStrength *= getPercentageBonusMultiplier(Rules->combat_psi_bonus_per_PLANET * faction->SE_planet_pending);
+	
 	// abilities modifier
 	
 	if (unit_has_ability(unitId, ABL_EMPATH))
 	{
-		psiOffenseStrength *= 1.0 + (double)Rules->combat_bonus_empath_song_vs_psi / 100.0;
+		psiOffenseStrength *= getPercentageBonusMultiplier(Rules->combat_bonus_empath_song_vs_psi);
 	}
 	
 	// return strength
@@ -780,31 +774,43 @@ double getUnitPsiOffenseStrength(int unitId, int baseId)
 
 }
 
-double getUnitPsiDefenseStrength(int unitId, int baseId, bool defendAtBase)
+double getUnitPsiDefenseStrength(int unitId, int factionId)
 {
-	BASE *base = &(Bases[baseId]);
-	Faction *faction = &(Factions[base->faction_id]);
-
+	UNIT *unit = &(Units[unitId]);
+	int triad = unit->triad();
+	Faction *faction = &(Factions[factionId]);
+	
 	// psi defense strength
 
-	double psiDefenseStrength = 1.0;
+	double psiDefenseStrength;
 
-	// morale modifier
-
-	psiDefenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, defendAtBase));
+	switch (triad)
+	{
+	case TRIAD_LAND:
+		psiDefenseStrength = sqrt((double)Rules->psi_combat_land_denominator / (double)Rules->psi_combat_land_numerator);
+		break;
+	case TRIAD_SEA:
+		psiDefenseStrength = sqrt((double)Rules->psi_combat_sea_denominator / (double)Rules->psi_combat_sea_numerator);
+		break;
+	case TRIAD_AIR:
+		psiDefenseStrength = sqrt((double)Rules->psi_combat_air_denominator / (double)Rules->psi_combat_air_numerator);
+		break;
+	default:
+		return 1.0;
+	}
 
 	// faction PLANET rating modifier
 	
 	if (conf.planet_combat_bonus_on_defense)
 	{
-		psiDefenseStrength *= 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * faction->SE_planet_pending;
+		psiDefenseStrength *= getPercentageBonusMultiplier(Rules->combat_psi_bonus_per_PLANET * faction->SE_planet_pending);
 	}
 
 	// abilities modifier
 	
 	if (unit_has_ability(unitId, ABL_TRANCE))
 	{
-		psiDefenseStrength *= 1.0 + (double)Rules->combat_bonus_trance_vs_psi / 100.0;
+		psiDefenseStrength *= getPercentageBonusMultiplier(Rules->combat_bonus_trance_vs_psi);
 	}
 	
 	// return strength
@@ -813,40 +819,97 @@ double getUnitPsiDefenseStrength(int unitId, int baseId, bool defendAtBase)
 
 }
 
-double getUnitConventionalOffenseStrength(int unitId, int baseId)
+double getUnitConventionalOffenseStrength(int unitId)
 {
 	UNIT *unit = &(Units[unitId]);
-
-	// strength
-
-	double conventionalOffenseStrength = (double)Weapon[unit->weapon_type].offense_value;
 	
+	return (double)Weapon[unit->weapon_type].offense_value;
+	
+}
+
+double getUnitConventionalDefenseStrength(int unitId)
+{
+	UNIT *unit = &(Units[unitId]);
+	
+	// conventional defense strength
+	
+	return (double)Armor[unit->armor_type].defense_value;
+	
+}
+
+/*
+Calculates psi offense strength for new vehicle built at base.
+*/
+double getNewUnitPsiOffenseStrength(int unitId, int baseId)
+{
+	UNIT *unit = &(Units[unitId]);
+	int triad = unit->triad();
+	
+	BASE *base = &(Bases[baseId]);
+	Faction *faction = &(Factions[base->faction_id]);
+
+	double psiOffenseStrength = getUnitPsiOffenseStrength(unitId, base->faction_id);
+
 	// morale modifier
 
-	conventionalOffenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
+	psiOffenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
 
 	// return strength
 	
-	return conventionalOffenseStrength;
+	return psiOffenseStrength;
 
 }
 
-double getUnitConventionalDefenseStrength(int unitId, int baseId, bool defendAtBase)
+double getNewUnitPsiDefenseStrength(int unitId, int baseId)
 {
-	UNIT *unit = &(Units[unitId]);
+	BASE *base = &(Bases[baseId]);
 
-	// conventional defense strength
+	// psi defense strength
 
-	double conventionalDefenseStrength = (double)Armor[unit->armor_type].defense_value;
-
+	double psiDefenseStrength = getUnitPsiDefenseStrength(unitId, base->faction_id);
+	
 	// morale modifier
 
-	conventionalDefenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, defendAtBase));
+	psiDefenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
 
 	// return strength
 	
-	return conventionalDefenseStrength;
+	return psiDefenseStrength;
 
+}
+
+double getNewUnitConventionalOffenseStrength(int unitId, int baseId)
+{
+	// strength
+	
+	double conventionalOffenseStrength = getUnitConventionalOffenseStrength(unitId);
+	
+	// morale modifier
+	
+	conventionalOffenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
+	
+	// return strength
+	
+	return conventionalOffenseStrength;
+	
+}
+
+double getNewUnitConventionalDefenseStrength(int unitId, int baseId)
+{
+	UNIT *unit = &(Units[unitId]);
+	
+	// conventional defense strength
+	
+	double conventionalDefenseStrength = getUnitConventionalDefenseStrength(unitId);
+	
+	// morale modifier
+	
+	conventionalDefenseStrength *= getMoraleModifier(getNewVehicleMorale(unitId, baseId, false));
+	
+	// return strength
+	
+	return conventionalDefenseStrength;
+	
 }
 
 double getVehiclePsiOffenseStrength(int id)
@@ -862,13 +925,13 @@ double getVehiclePsiOffenseStrength(int id)
 	switch (triad)
 	{
 	case TRIAD_LAND:
-		psiOffenseStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
+		psiOffenseStrength = sqrt((double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator);
 		break;
 	case TRIAD_SEA:
-		psiOffenseStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
+		psiOffenseStrength = sqrt((double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator);
 		break;
 	case TRIAD_AIR:
-		psiOffenseStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
+		psiOffenseStrength = sqrt((double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator);
 		break;
 	default:
 		return 1.0;
@@ -880,7 +943,7 @@ double getVehiclePsiOffenseStrength(int id)
 
 	// faction PLANET rating modifier
 
-	psiOffenseStrength *= 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * faction->SE_planet_pending;
+	psiOffenseStrength *= getPercentageBonusMultiplier(Rules->combat_psi_bonus_per_PLANET * faction->SE_planet_pending);
 
 	// abilities modifier
 	
@@ -895,33 +958,19 @@ double getVehiclePsiOffenseStrength(int id)
 
 }
 
-double getVehiclePsiDefenseStrength(int id, bool defendAtBase)
+double getVehiclePsiDefenseStrength(int id)
 {
 	VEH *vehicle = &(Vehicles[id]);
 	Faction *faction = &(Factions[vehicle->faction_id]);
 
 	// psi defense strength
 
-	double psiDefenseStrength = 1.0;
+	double psiDefenseStrength = getUnitPsiDefenseStrength(vehicle->unit_id, vehicle->faction_id);
 
 	// morale modifier
 
-	psiDefenseStrength *= getVehicleMoraleModifier(id, defendAtBase);
+	psiDefenseStrength *= getVehicleMoraleModifier(id, false);
 
-	// faction PLANET rating modifier
-	
-	if (conf.planet_combat_bonus_on_defense)
-	{
-		psiDefenseStrength *= 1.0 + (double)Rules->combat_psi_bonus_per_PLANET / 100.0 * faction->SE_planet_pending;
-	}
-
-	// abilities modifier
-	
-	if (isVehicleHasAbility(id, ABL_TRANCE))
-	{
-		psiDefenseStrength *= 1.0 + (double)Rules->combat_bonus_trance_vs_psi / 100.0;
-	}
-	
 	// return strength
 	
 	return psiDefenseStrength;
@@ -932,10 +981,10 @@ double getVehicleConventionalOffenseStrength(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
-	// native unit do not have conventional strength
+	// unit with psi weapon does not initiate conventional offense
 	
-	if (isNativeVehicle(vehicleId))
-		return 0;
+	if (Weapon[vehicle->weapon_type()].offense_value < 0)
+		return 0.0;
 
 	// strength
 
@@ -951,14 +1000,14 @@ double getVehicleConventionalOffenseStrength(int vehicleId)
 
 }
 
-double getVehicleConventionalDefenseStrength(int vehicleId, bool defendAtBase)
+double getVehicleConventionalDefenseStrength(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
-	// native unit do not have conventional strength
+	// unit with psi armor does not initiate conventional defense
 	
-	if (isNativeVehicle(vehicleId))
-		return 0;
+	if (Armor[vehicle->armor_type()].defense_value < 0)
+		return 0.0;
 
 	// conventional defense strength
 
@@ -966,12 +1015,44 @@ double getVehicleConventionalDefenseStrength(int vehicleId, bool defendAtBase)
 
 	// morale modifier
 
-	conventionalDefenseStrength *= getVehicleMoraleModifier(vehicleId, defendAtBase);
+	conventionalDefenseStrength *= getVehicleMoraleModifier(vehicleId, false);
 
 	// return strength
 	
 	return conventionalDefenseStrength;
 
+}
+
+/*
+Computes total damage vehicle can deliver in psi offense.
+*/
+double getVehiclePsiOffense(int vehicleId)
+{
+	return getVehiclePsiOffenseStrength(vehicleId) * (double)getVehiclePower(vehicleId, true);
+}
+
+/*
+Computes total damage vehicle can deliver in psi defense.
+*/
+double getVehiclePsiDefense(int vehicleId)
+{
+	return getVehiclePsiDefenseStrength(vehicleId) * (double)getVehiclePower(vehicleId, true);
+}
+
+/*
+Computes total damage vehicle can deliver in conventional offense.
+*/
+double getVehicleConventionalOffense(int vehicleId)
+{
+	return getVehicleConventionalOffenseStrength(vehicleId) * (double)getVehiclePower(vehicleId, false);
+}
+
+/*
+Computes total damage vehicle can deliver in conventional defense.
+*/
+double getVehicleConventionalDefense(int vehicleId)
+{
+	return getVehicleConventionalDefenseStrength(vehicleId) * (double)getVehiclePower(vehicleId, false);
 }
 
 double getFactionSEPlanetAttackModifier(int factionId)
@@ -2666,8 +2747,12 @@ std::set<int> getConnectedOceanRegions(int factionId, int x, int y)
 
 bool isMapTileVisibleToFaction(MAP *tile, int factionId)
 {
-	return (tile->visibility & (0x1 << factionId));
+	return (tile->visibility & (0x1 << factionId) != 0);
+}
 
+void setMapTileVisibleToFaction(MAP *tile, int factionId)
+{
+	tile->visibility |= (0x1 << factionId);
 }
 
 /*
@@ -4227,13 +4312,13 @@ int getTransportRemainingCapacity(int transportVehicleId)
 	
 }
 
-int getVehiclePower(int vehicleId)
+int getVehiclePower(int vehicleId, bool psiCombat)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	int reactor = vehicle->reactor_type();
 	
 	int vanillaPower = 10 * reactor - vehicle->damage_taken;
-	int power = (conf.ignore_reactor_power_in_combat ? vanillaPower : (vanillaPower + (reactor - 1)) / reactor);
+	int power = (psiCombat || conf.ignore_reactor_power_in_combat ? vanillaPower : (vanillaPower + (reactor - 1)) / reactor);
 	
 	return power;
 	
@@ -4282,5 +4367,90 @@ void accumulateMapIntValue(std::map<int, int> *m, int key, int value)
 int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY)
 {
 	return mod_hex_cost(unitId, factionId, fromX, fromY, toX, toY, (unit_speed(unitId) == Rules->mov_rate_along_roads ? 1 : 0));
+}
+
+/*
+Returns true if two factions are at war.
+Also account for natives are always at war with other factions.
+*/
+bool isWar(int factionId1, int factionId2)
+{
+	return factionId1 == 0 || factionId2 == 0 || at_war(factionId1, factionId2);
+}
+
+/*
+Retruns true if two factions have pact.
+*/
+bool isPact(int factionId1, int factionId2)
+{
+	return has_pact(factionId1, factionId2);
+}
+
+/*
+Returns vehicle max hit points in psi combat.
+*/
+int getVehicleMaxPsiHP(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	int opponentFirePower = vehicle->reactor_type();
+	return (10 * vehicle->reactor_type()) / opponentFirePower;
+	
+}
+
+/*
+Returns vehicle current hit points in psi combat.
+*/
+int getVehicleCurrentPsiHP(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	int opponentFirePower = vehicle->reactor_type();
+	return (10 * vehicle->reactor_type() - vehicle->damage_taken / (opponentFirePower + 1)) / opponentFirePower;
+	
+}
+
+/*
+Returns vehicle max hit points in conventional combat.
+*/
+int getVehicleMaxConventionalHP(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	int opponentFirePower = (conf.ignore_reactor_power_in_combat ? vehicle->reactor_type() : 1);
+	return (10 * vehicle->reactor_type()) / opponentFirePower;
+	
+}
+
+/*
+Returns vehicle current hit points in conventional combat.
+*/
+int getVehicleCurrentConventionalHP(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	int opponentFirePower = (conf.ignore_reactor_power_in_combat ? vehicle->reactor_type() : 1);
+	return (10 * vehicle->reactor_type() - vehicle->damage_taken / (opponentFirePower + 1)) / opponentFirePower;
+	
+}
+
+/*
+Returns faction unit slot number.
+*/
+int getUnitSlotByUnitId(int unitId)
+{
+	assert(unitId >= 0 && unitId < MaxProtoNum);
+	return (unitId < MaxProtoFactionNum ? unitId : MaxProtoFactionNum + unitId / MaxProtoFactionNum);
+}
+
+/*
+Returns unitId by faction slot number.
+*/
+int getUnitIdByUnitSlot(int factionId, int unitSlot)
+{
+	assert(factionId >= 0 && factionId < MaxPlayerNum);
+	assert(unitSlot >= 0 && unitSlot < 2 * MaxProtoFactionNum);
+	assert(factionId != 0 || unitSlot < MaxProtoFactionNum);
+	return (unitSlot < MaxProtoFactionNum ? unitSlot : MaxProtoFactionNum * (factionId - 1) + unitSlot);
 }
 

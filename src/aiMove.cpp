@@ -294,6 +294,11 @@ void healStrategy()
 		if (isFormerVehicle(vehicleId))
 			continue;
 		
+		// exclude loaded transport
+		
+		if (isTransportVehicle(vehicleId) && getTransportUsedCapacity(vehicleId) > 0)
+			continue;
+		
 		// at base
 		
 		if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
@@ -383,11 +388,16 @@ int moveVehicle(const int vehicleId)
 	
 	debug("moveVehicle (%3d,%3d) %s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
 	
+	// default enemy_move function
+	
+	int (__attribute__((cdecl)) *defaultEnemyMove)(int) = enemy_move;
+//	int (__attribute__((cdecl)) *defaultEnemyMove)(int) = mod_enemy_move;
+	
 	// do not try multiple iterations
 	
 	if (vehicle->iter_count > 0)
 	{
-		return mod_enemy_move(vehicleId);
+		return defaultEnemyMove(vehicleId);
 	}
 	
 	// execute task
@@ -397,13 +407,13 @@ int moveVehicle(const int vehicleId)
 		return executeTask(vehicleId);
 	}
 	
-	// combat
-	
-	if (isCombatVehicle(vehicleId))
-	{
-		return moveCombat(vehicleId);
-	}
-	
+//	// combat
+//	
+//	if (isCombatVehicle(vehicleId))
+//	{
+//		return moveCombat(vehicleId);
+//	}
+//	
 	// colony
 	// all colony movement is scheduled in strategy phase
 	
@@ -415,9 +425,9 @@ int moveVehicle(const int vehicleId)
 		return enemy_move(vehicleId);
 	}
 
-	// unhandled cases default to Thinker
+	// unhandled cases handled by default
 	
-	return mod_enemy_move(vehicleId);
+	return defaultEnemyMove(vehicleId);
 	
 }
 

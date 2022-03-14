@@ -2,6 +2,7 @@
 
 #include "main.h"
 #include "game.h"
+#include "aiData.h"
 
 const int GAME_DURATION = 350;
 const double MAX_THREAT_TURNS = 10.0;
@@ -26,7 +27,15 @@ enum UNIT_TYPE
 	UT_DEFENSE = 0,
 };
 
-const int WTP_MANAGED_FACILITIES[] =
+const std::set<int> MANAGED_UNIT_TYPES
+{
+	WPN_COLONY_MODULE,
+	WPN_TERRAFORMING_UNIT,
+	WPN_TROOP_TRANSPORT,
+}
+;
+
+const std::set<int> MANAGED_FACILITIES
 {
 	FAC_HAB_COMPLEX,
 	FAC_HABITATION_DOME,
@@ -48,38 +57,13 @@ const int WTP_MANAGED_FACILITIES[] =
 	FAC_ROBOTIC_ASSEMBLY_PLANT,
 	FAC_QUANTUM_CONVERTER,
 	FAC_NANOREPLICATOR,
-};
-
-const int WTP_MANAGED_UNIT_PLANS[] =
-{
-    PLAN_RECONNAISANCE,
-    PLAN_COLONIZATION,
-    PLAN_TERRAFORMING,
-};
-
-enum COMBAT_UNIT_CLASS
-{
-	UC_NOT_COMBAT,
-	UC_INFANTRY_DEFENDER,
-	UC_INFANTRY_ATTACKER,
-	UC_LAND_FAST_ATTACKER,
-	UC_LAND_ARTILLERY,
-	UC_SHIP,
-	UC_BOMBER,
-	UC_INTERCEPTOR,
-};
-
-const double COMBAT_UNIT_CLASS_WEIGHTS[] =
-{
-	0.0,
-	1.0,
-	0.5,
-	0.5,
-	1.0,
-	1.0,
-	0.5,
-	0.1,
-};
+	FAC_PERIMETER_DEFENSE,
+	FAC_TACHYON_FIELD,
+	FAC_COMMAND_CENTER,
+	FAC_NAVAL_YARD,
+	FAC_AEROSPACE_COMPLEX,
+}
+;
 
 void productionStrategy();
 void setupProductionVariables();
@@ -129,22 +113,25 @@ int calculateUnitTypeCount(int baseId, int weaponType, int triad, int excludedBa
 bool isBaseNeedPsych(int baseId);
 int findPoliceUnit(int factionId);
 bool isMilitaryItem(int item);
-int thinker_base_prod_choice(int id, int v1, int v2, int v3);
-int findBestAntiNativeUnitId(int baseId, int targetBaseId, int opponentTriad);
-int findBestAntiRegularUnitId(int baseId, int targetBaseId, int opponentTriad);
+int findAttackerUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
+int findDefenderUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
+int findMixedUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
+int findArtilleryUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
 int selectCombatUnit(int baseId, int targetBaseId);
 void evaluateTransportDemand();
 int findTransportUnit();
-int getUnitClass(int unitId);
-int getFirstUnbuiltFacilityFromList(int baseId, std::vector<int> facilityIds);
+int getFirstUnbuiltAvailableFacilityFromList(int baseId, std::vector<int> facilityIds);
 double getResourceScore(double minerals, double energy);
 double getIntakeGain(double score, double delay);
 double getIncomeGain(double score, double delay);
 double getGrowthGain(double score, double delay);
 double getNormalizedGain(double developmentRate);
 double getBaseIncome(int baseId);
-double getBasePopulationGrowthRate(int baseId);
-int getBasePsychIntake(int baseId);
+double getBasePopulationGrowth(int baseId);
 int getBaseEconomyIntake(int baseId);
+int getBasePsychIntake(int baseId);
 int getBaseLabsIntake(int baseId);
+int getBaseTotalMineral(int baseId);
+int getBaseTotalEnergy(int baseId);
+std::vector<int> getProtectionCounterUnits(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
 

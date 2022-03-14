@@ -23,42 +23,6 @@ struct FactionInfo
 	std::vector<MAP *> airbases;
 };
 
-struct Threat
-{
-	double psi;
-	double infantry;
-	double psiDefense;
-	double psiOffense;
-	double conventionalDefense;
-	double conventionalOffense;
-	double artillery;
-	double psiDefenseDemand;
-	double psiOffenseDemand;
-	double conventionalDefenseDemand;
-	double conventionalOffenseDemand;
-	double artilleryDemand;
-};
-
-struct DefenseDemand
-{
-	double landPsiOffense;
-	double landPsiDefense;
-	double seaPsiOffense;
-	double seaPsiDefense;
-	double airPsiOffense;
-	double airPsiDefense;
-	double conventionalOffense;
-	double conventionalDefense;
-	double psiDefense;
-	double psiOffense;
-	double artillery;
-	double psiDefenseDemand;
-	double psiOffenseDemand;
-	double conventionalDefenseDemand;
-	double conventionalOffenseDemand;
-	double artilleryDemand;
-};
-
 struct UnitStrength
 {
 	double weight = 0.0;
@@ -67,61 +31,18 @@ struct UnitStrength
 	double conventionalOffense = 0.0;
 	double conventionalDefense = 0.0;
 	
-	void normalize(double totalWeight)
-	{
-		this->psiOffense /= this->weight;
-		this->psiDefense /= this->weight;
-		this->conventionalOffense /= this->weight;
-		this->conventionalDefense /= this->weight;
-		this->weight /= totalWeight;
-	}
+	void normalize(double totalWeight);
 	
 };
 
 struct MilitaryStrength
 {
 	double totalWeight = 0.0;
-	std::map<int, UnitStrength> unitStrengths;
+	UnitStrength unitStrengths[MaxProtoNum];
+	std::vector<int> populatedUnitIds;
 	
-	void normalize()
-	{
-		for
-		(
-			std::map<int, UnitStrength>::iterator unitStrengthsIterator = this->unitStrengths.begin();
-			unitStrengthsIterator != this->unitStrengths.end();
-			unitStrengthsIterator++
-		)
-		{
-			UnitStrength *unitStrength = &(unitStrengthsIterator->second);
-			unitStrength->normalize(this->totalWeight);
-			
-		}
-		
-	}
+	void normalize();
 	
-};
-
-struct BaseStrategy
-{
-	BASE *base;
-	std::vector<int> garrison;
-	double nativeProtection;
-	double nativeThreat;
-	double nativeDefenseDemand;
-	int unpopulatedTileCount;
-	int unpopulatedTileRangeSum;
-	double averageUnpopulatedTileRange;
-	double sensorOffenseMultiplier;
-	double sensorDefenseMultiplier;
-	double intrinsicDefenseMultiplier;
-	double conventionalDefenseMultipliers[3];
-	double exposure;
-	bool inSharedOceanRegion;
-	double defenseDemand;
-	int combatUnitId;
-	int targetBaseId;
-	MilitaryStrength defenderStrength;
-	MilitaryStrength opponentStrength;
 };
 
 struct ESTIMATED_VALUE
@@ -174,14 +95,39 @@ struct TileInfo
 	
 struct BaseInfo
 {
+	std::vector<int> garrison;
+	double nativeProtection;
+	double nativeThreat;
+	double nativeDefenseDemand;
+	int unpopulatedTileCount;
+	int unpopulatedTileRangeSum;
+	double averageUnpopulatedTileRange;
+	double sensorOffenseMultiplier;
+	double sensorDefenseMultiplier;
+	double intrinsicDefenseMultiplier;
+	double conventionalDefenseMultipliers[3];
+	int borderBaseDistance;
+	int enemyAirbaseDistance;
+	double defenseDemand;
+	int combatUnitId;
+	int targetBaseId;
+	MilitaryStrength ownStrength;
+	MilitaryStrength foeStrength;
+	
 	std::vector<MAP *> workedTiles;
 	std::vector<MAP *> unworkedTiles;
+	
 };
 
 struct Production
 {
+	double globalDefenseDemand;
+	
 	double landColonyDemand;
 	std::map<int, double> seaColonyDemands;
+	
+	bool landTerraformingRequest;
+	std::set<int> seaTerraformingRequests;
 	
 	double landFormerDemand;
 	std::map<int, double> seaFormerDemands;
@@ -192,6 +138,7 @@ struct Production
 	void clear()
 	{
 		seaColonyDemands.clear();
+		seaTerraformingRequests.clear();
 		seaFormerDemands.clear();
 		seaPodPoppingDemand.clear();
 	}
@@ -218,7 +165,6 @@ struct Data
 	std::set<int> presenceRegions;
 	std::map<int, std::set<int>> regionBaseIds;
 	std::map<int, std::vector<int>> regionBaseGroups;
-	std::map<int, BaseStrategy> baseStrategies;
 	std::vector<int> vehicleIds;
 	std::vector<int> combatVehicleIds;
 	std::vector<int> scoutVehicleIds;

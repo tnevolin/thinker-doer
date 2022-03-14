@@ -301,9 +301,17 @@ int Task::executeBuild(int vehicleId)
 		vehicleTile->val3 |= (byte)TILE_ROLLING;
 	}
 	
+	// make all tiles visible around base
+	
+	for (MAP *tile : getBaseRadiusTiles(vehicle->x, vehicle->y, true))
+	{
+		setMapTileVisibleToFaction(tile, vehicle->faction_id);
+	}
+	
 	// build base
 	
 	action_build(vehicleId, 0);
+	
 	return EM_DONE;
 	
 }

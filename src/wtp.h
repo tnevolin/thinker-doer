@@ -171,6 +171,7 @@ HOOK_API void captureAttackerOdds(const int position, const int value);
 HOOK_API void captureDefenderOdds(const int position, const int value);
 HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int a3, const char* pcx_file_name, int a5);
 double calculateWinningProbability(double p, int attackerHP, int defenderHP);
+double calculateExactBattleOdds(int attackerVehicleId, int defenderVehicleId, int attackerMovementAllowance);
 void simplifyOdds(int *attackerOdds, int *defenderOdds);
 HOOK_API int modifiedTechRate(int factionId);
 HOOK_API int modifiedTechPick(int factionId, int a2, int a3, int a4);
@@ -197,13 +198,10 @@ int __cdecl modifiedReturnProbeBaseFind2(int x, int y, int vehicleId);
 int __cdecl modified_pact_withdraw(int factionId, int pactFactionId);
 int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
 int __cdecl modified_base_double_labs(int labs);
-<<<<<<< HEAD
 int __cdecl modified_base_production();
 int __cdecl modified_base_ecology();
 int getStockpileEnergy(int baseId);
 void __cdecl modified_base_yield();
-=======
->>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 int __cdecl modified_stack_veh(int vehicleId, int a2);
 int __cdecl modified_order_veh(int vehicleId, int angle, int a3);
 bool isValidMovementAngle(int vehicleId, int angle);

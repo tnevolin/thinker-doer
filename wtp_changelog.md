@@ -1,6 +1,7 @@
 # Version ai
 
 * Pressure Dome adds minerals (thinker.ini: pressure_dome_minerals).
+* Biology Lab generates 8 labs (thinker.ini: biology_lab_research_bonus).
 
 # Version 288
 

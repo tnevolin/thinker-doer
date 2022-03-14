@@ -9,33 +9,34 @@
 #include "aiMoveCombat.h"
 #include "aiTransport.h"
 
-std::map<int, COMBAT_ORDER> combatOrders;
-
+//std::map<int, COMBAT_ORDER> combatOrders;
+//
 /*
 Prepares combat orders.
 */
 void moveCombatStrategy()
 {
-	populateCombatLists();
-	
-	baseProtection();
-	
+//	populateCombatLists();
+//	
 	fightStrategy();
+	
+	baseNativeProtection();
+	baseFactionProtection();
 	
 	nativeCombatStrategy();
 	
 	popPods();
 
-	factionCombatStrategy();
-	
+//	factionCombatStrategy();
+//	
 }
 
-void populateCombatLists()
-{
-	combatOrders.clear();
-
-}
-
+//void populateCombatLists()
+//{
+//	combatOrders.clear();
+//
+//}
+//
 /*
 Comparison function for base defenders.
 Sort by police then trance then range.
@@ -57,7 +58,7 @@ bool compareDefenderVehicleRanges(const int vehicleRange1, const int vehicleRang
 	
 }
 
-void baseProtection()
+void baseNativeProtection()
 {
 	debug("baseProtection - %s\n", MFactions[aiFactionId].noun_faction);
 	
@@ -66,8 +67,8 @@ void baseProtection()
 		BASE *base = &(Bases[baseId]);
 		int factionId = base->faction_id;
 		Faction *faction = &(Factions[factionId]);
-		BaseStrategy *baseStrategy = &(aiData.baseStrategies[baseId]);
-		std::vector<int> garrison = baseStrategy->garrison;
+		BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
+		std::vector<int> garrison = baseInfo->garrison;
 		
 		debug("\t%-25s\n", base->name);
 		
@@ -133,7 +134,7 @@ void baseProtection()
 			
 			// without task and order
 			
-			if (!isVehicleAvailable(vehicleId))
+			if (!isVehicleAvailable(vehicleId, true))
 				continue;
 			
 			// land
@@ -224,7 +225,7 @@ void baseProtection()
 			// update counters
 			
 			policeUnitCount++;
-			nativeProtection += getVehiclePsiDefenseStrength(vehicleId, true) * basePsiDefenseMultiplier;
+			nativeProtection += getVehiclePsiDefenseStrength(vehicleId) * basePsiDefenseMultiplier;
 			
 			debug("\t\t\t\tpoliceUnitCount=%d, nativeProtection=%f\n", policeUnitCount, nativeProtection);
 			
@@ -235,96 +236,93 @@ void baseProtection()
 			
 		}
 		
-		// handle defense demand
-		
-		if (baseStrategy->defenseDemand <= 0.0)
-		{
-			// release one defender without task
-			
-			debug("\t\trelease defender\n");
-			
-			for (int vehicleRange : defenders)
-			{
-				int vehicleId = vehicleRange % 10000;
-				VEH *vehicle = &(Vehicles[vehicleId]);
-				
-				// in base
-				
-				if (!(vehicle->x == base->x && vehicle->y == base->y))
-					continue;
-				
-				// on hold
-				
-				if (vehicle->move_status != ORDER_HOLD)
-					continue;
-				
-				// release
-				
-				vehicle->move_status = ORDER_NONE;
-				
-				debug("\t\t\t(%3d,%3d) %-32s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
-				
-				break;
-				
-			}
-			
-		}
-		else if (baseStrategy->defenseDemand <= conf.ai_combat_defense_demand_threshold)
-		{
-			// do nothing
-		}
-		else
-		{
-			// keep current defender
-			
-			debug("\t\tkeep defender\n");
-			
-			for (int vehicleRange : defenders)
-			{
-				int vehicleId = vehicleRange % 10000;
-				VEH *vehicle = &(Vehicles[vehicleId]);
-				
-				// in base
-				
-				if (!(vehicle->x == base->x && vehicle->y == base->y))
-					continue;
-				
-				// send to base
-				
-				transitVehicle(vehicleId, Task(HOLD, vehicleId, getMapTile(base->x, base->y)));
-				
-				debug("\t\t\t(%3d,%3d) %-32s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
-				
-			}
-			
-			// pull one more defender
-			
-			debug("\t\tpull defender\n");
-			
-			for (int vehicleRange : defenders)
-			{
-				int vehicleId = vehicleRange % 10000;
-				VEH *vehicle = &(Vehicles[vehicleId]);
-				
-				// not in base
-				
-				if ((vehicle->x == base->x && vehicle->y == base->y))
-					continue;
-				
-				// send to base
-				
-				transitVehicle(vehicleId, Task(HOLD, vehicleId, getMapTile(base->x, base->y)));
-				
-				debug("\t\t\t(%3d,%3d) %-32s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
-				
-				break;
-				
-			}
-			
-		}
-		
 	}
 	
+}
+		
+void baseFactionProtection()
+{
+	debug("baseFactionProtection - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	for (int vehicleId : aiData.combatVehicleIds)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		int vehicleAssociation = getVehicleAssociation(vehicleId);
+		
+		// exclude vehicles in warzones
+		
+		if (aiData.getTileInfo(vehicleTile)->warzone)
+			continue;
+		
+		// exclude vehicles with orders
+		
+		if (hasTask(vehicleId))
+			continue;
+		
+		debug("\t(%3d,%3d) %s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+		
+		// select best base needing defense
+		
+		int bestTargetBaseId = -1;
+		double bestTargetBaseWeight = 0.0;
+		
+		for (int baseId : aiData.baseIds)
+		{
+			BASE *base = &(Bases[baseId]);
+			MAP *baseTile = getBaseMapTile(baseId);
+			bool ocean = is_ocean(baseTile);
+			int baseOceanAssociation = getBaseOceanAssociation(baseId);
+			BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
+			
+			// exclude sea vehicle not capable to reach target base
+			
+			if (vehicle->triad() == TRIAD_SEA && ocean && vehicleAssociation != baseOceanAssociation)
+				continue;
+			
+			// get base defense demand
+			
+			double baseDefenseDemand = baseInfo->defenseDemand;
+			
+			// skip bases without demand
+			
+			if (baseDefenseDemand <= 0.0)
+				continue;
+			
+			// get range to base
+			
+			int range = map_range(vehicle->x, vehicle->y, base->x, base->y);
+			
+			// compose weight
+			
+			double weight = (double)baseDefenseDemand / (double)std::max(1, range);
+			
+			// update best base
+			
+			if (weight > bestTargetBaseWeight)
+			{
+				bestTargetBaseId = baseId;
+				bestTargetBaseWeight = weight;
+			}
+			
+		}
+		
+		// not found
+		
+		if (bestTargetBaseId == -1)
+		{
+			debug("\t\tno target base found\n");
+			continue;
+		}
+		
+		debug("\t\t-> (%3d,%3d) %s\n", Bases[bestTargetBaseId].x, Bases[bestTargetBaseId].y, Bases[bestTargetBaseId].name);
+		
+		// transit vehicle
+		
+		transitVehicle(vehicleId, Task(MOVE, vehicleId, getBaseMapTile(bestTargetBaseId)));
+		
+	}
+		
 }
 
 /*
@@ -332,11 +330,14 @@ Composes anti-native combat strategy.
 */
 void nativeCombatStrategy()
 {
-	debug("nativeCombatStrategy %s\n", MFactions[aiFactionId].noun_faction);
+	debug("nativeCombatStrategy - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	// list aliens on land territory
 	
 	std::vector<int> alienVehicleIds;
+	std::vector<int> sporeLauncherVehicleIds;
+	std::vector<int> mindWormVehicleIds;
+	std::vector<int> fungalTowerVehicleIds;
 
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
@@ -365,9 +366,28 @@ void nativeCombatStrategy()
 		
 		// add vehicle
 		
-		alienVehicleIds.push_back(vehicleId);
+		switch (vehicle->unit_id)
+		{
+		case BSC_SPORE_LAUNCHER:
+			sporeLauncherVehicleIds.push_back(vehicleId);
+			break;
+			
+		case BSC_MIND_WORMS:
+			mindWormVehicleIds.push_back(vehicleId);
+			break;
+			
+		case BSC_FUNGAL_TOWER:
+			fungalTowerVehicleIds.push_back(vehicleId);
+			break;
+			
+		}
+		
 
 	}
+	
+	alienVehicleIds.insert(alienVehicleIds.end(), sporeLauncherVehicleIds.begin(), sporeLauncherVehicleIds.end());
+	alienVehicleIds.insert(alienVehicleIds.end(), mindWormVehicleIds.begin(), mindWormVehicleIds.end());
+	alienVehicleIds.insert(alienVehicleIds.end(), fungalTowerVehicleIds.begin(), fungalTowerVehicleIds.end());
 	
 	// no aliens in territory
 	
@@ -381,28 +401,32 @@ void nativeCombatStrategy()
 	
 	std::set<int> scoutVehicleIds;
 	
+	debug("\tscoutVehicles\n");
+	
 	for (int scoutVehicleId : aiData.scoutVehicleIds)
 	{
 		VEH *scoutVehicle = &(Vehicles[scoutVehicleId]);
 		
-		// land vehicle
+		// land/air vehicle
 		
-		if (scoutVehicle->triad() != TRIAD_LAND)
+		if (!(scoutVehicle->triad() == TRIAD_LAND || scoutVehicle->triad() == TRIAD_AIR))
 			continue;
 		
-		// no task or order
+		// available
 
-		if (!isVehicleAvailable(scoutVehicleId))
+		if (!isVehicleAvailable(scoutVehicleId, false))
 			continue;
 
 		// is not damaged more than 50%
 		
-		if (scoutVehicle->damage_taken > 10 * scoutVehicle->reactor_type())
+		if (scoutVehicle->damage_taken > 5 * scoutVehicle->reactor_type())
 			continue;
 		
 		// add to list
 		
 		scoutVehicleIds.insert(scoutVehicleId);
+		
+		debug("\t\t[%3d] (%3d,%3d) %s\n", scoutVehicleId, scoutVehicle->x, scoutVehicle->y, Units[scoutVehicle->unit_id].name);
 		
 	}
 		
@@ -412,13 +436,15 @@ void nativeCombatStrategy()
 
 	// direct scouts
 	
+	debug("\tdirect scouts %d\n", scoutVehicleIds.size());
+	
 	for (int alienVehicleId : alienVehicleIds)
 	{
 		VEH *alienVehicle = &(Vehicles[alienVehicleId]);
 		MAP *alienVehicleTile = getVehicleMapTile(alienVehicleId);
-		debug("%d,%d\n", alienVehicle->x, alienVehicle->y);
+		debug("\t\t[%3d] (%d,%d)\n", alienVehicleId, alienVehicle->x, alienVehicle->y);
 		
-		double requiredDamage = 2.0 * getVehiclePsiDefenseStrength(alienVehicleId, false) * (double)getVehiclePower(alienVehicleId);
+		double requiredDamage = 2.0 * getVehiclePsiDefense(alienVehicleId);
 		
 		while (requiredDamage > 0.0)
 		{
@@ -430,6 +456,8 @@ void nativeCombatStrategy()
 			{
 				VEH *scoutVehicle = &(Vehicles[scoutVehicleId]);
 				MAP *scoutVehicleTile = getVehicleMapTile(scoutVehicleId);
+				
+				debug("\t\t\t[%3d] (%d,%d)\n", scoutVehicleId, scoutVehicle->x, scoutVehicle->y);
 				
 				// can reach
 				
@@ -453,9 +481,11 @@ void nativeCombatStrategy()
 				
 				// build weight on time and cost and damage
 				
-				double damage = getVehiclePsiOffenseStrength(scoutVehicleId) * getVehiclePower(bestScoutVehicleId);
+				double damage = getVehiclePsiOffense(scoutVehicleId);
 				
-				double weight = damage / (double)Units[scoutVehicle->unit_id].cost / time;
+				double weight = damage / getUnitMaintenanceCost(scoutVehicle->unit_id) / time;
+				
+				debug("\t\t\t[%3d] (%d,%d) weight=%f, range=%d, time=%f, damage=%f\n", scoutVehicleId, scoutVehicle->x, scoutVehicle->y, weight, range, time, damage);
 				
 				// update best weight
 				
@@ -491,66 +521,67 @@ void nativeCombatStrategy()
 	
 }
 
-void factionCombatStrategy()
-{
-	// clear orders for vehicles in war zone
-	
-	for (int vehicleId : aiData.combatVehicleIds)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		int vehicleTriad = vehicle->triad();
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		
-		for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
-		{
-			VEH *otherVehicle = &(Vehicles[otherVehicleId]);
-			int otherVehicleTriad = otherVehicle->triad();
-			MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
-			
-			// skip alien faction
-			
-			if (otherVehicle->faction_id == 0)
-				continue;
-			
-			// skip not hostile
-			
-			if (!at_war(aiFactionId, otherVehicle->faction_id))
-				continue;
-			
-			// skip different realm
-			
-			if
-			(
-				(vehicleTriad == TRIAD_LAND && otherVehicleTriad == TRIAD_SEA)
-				||
-				(vehicleTriad == TRIAD_SEA && otherVehicleTriad == TRIAD_LAND)
-			)
-			{
-				continue;
-			}
-			
-			// skip different regions
-			
-			if (vehicleTriad != TRIAD_AIR && vehicleTile->region != otherVehicleTile->region)
-				continue;
-			
-			// skip not within two turns reach
-			
-			int reachRange = 2 * Chassis[Units[vehicle->unit_id].chassis_type].speed;
-			int range = map_range(vehicle->x, vehicle->y, otherVehicle->x, otherVehicle->y);
-			
-			if (range > reachRange)
-				continue;
-			
-			// otherwise clear order
-			
-			combatOrders.erase(vehicleId);
-			
-		}
-		
-	}
-	
-}
+//void factionCombatStrategy()
+//{
+//	// clear orders for vehicles in war zone
+//	
+//	for (int vehicleId : aiData.combatVehicleIds)
+//	{
+//		VEH *vehicle = &(Vehicles[vehicleId]);
+//		int vehicleTriad = vehicle->triad();
+//		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+//		
+//		for (int otherVehicleId = 0; otherVehicleId < *total_num_vehicles; otherVehicleId++)
+//		{
+//			VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+//			int otherVehicleTriad = otherVehicle->triad();
+//			MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
+//			
+//			// skip alien faction
+//			
+//			if (otherVehicle->faction_id == 0)
+//				continue;
+//			
+//			// skip not hostile
+//			
+//			if (!isWar(aiFactionId, otherVehicle->faction_id))
+//				continue;
+//			
+//			// skip different realm
+//			
+//			if
+//			(
+//				(vehicleTriad == TRIAD_LAND && otherVehicleTriad == TRIAD_SEA)
+//				||
+//				(vehicleTriad == TRIAD_SEA && otherVehicleTriad == TRIAD_LAND)
+//			)
+//			{
+//				continue;
+//			}
+//			
+//			// skip different regions
+//			
+//			if (vehicleTriad != TRIAD_AIR && vehicleTile->region != otherVehicleTile->region)
+//				continue;
+//			
+//			// skip not within two turns reach
+//			
+//			int reachRange = 2 * Chassis[Units[vehicle->unit_id].chassis_type].speed;
+//			int range = map_range(vehicle->x, vehicle->y, otherVehicle->x, otherVehicle->y);
+//			
+//			if (range > reachRange)
+//				continue;
+//			
+//			// otherwise clear order
+//			
+//			combatOrders.erase(vehicleId);
+//			
+//		}
+//		
+//	}
+//	
+//}
+//
 
 void fightStrategy()
 {
@@ -558,50 +589,143 @@ void fightStrategy()
 	
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
-		// without task
-		
-		if (hasTask(vehicleId))
-			continue;
-		
-		// no task or order
-		
-		if (!isVehicleAvailable(vehicleId))
-			continue;
-		
 		VEH *vehicle = &(Vehicles[vehicleId]);
-		debug("\t(%3d,%3d) %s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+		int triad = vehicle->triad();
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		
+		// exclude not available vehicles
+		
+		if (!isVehicleAvailable(vehicleId, false))
+			continue;
+		
+		// road moves left
+		
+		int movementAllowance = mod_veh_speed(vehicleId) - vehicle->road_moves_spent;
+		
+		// max reach range
+		
+		int maxReachRange;
+		
+		switch (triad)
+		{
+		case TRIAD_LAND:
+			if (!is_ocean(vehicleTile))
+			{
+				maxReachRange = movementAllowance;
+			}
+			else
+			{
+				if (vehicle_has_ability(vehicleId, ABL_AMPHIBIOUS))
+				{
+					// amphibious vehicle can attack adjacent units at sea
+					maxReachRange = 1;
+				}
+				else
+				{
+					// non amphibious vehicle cannot attack at sea
+					continue;
+				}
+			}
+			break;
+			
+		default:
+			maxReachRange = (movementAllowance + (Rules->mov_rate_along_roads - 1)) / Rules->mov_rate_along_roads;
+			break;
+			
+		}
+		
+		debug("\t(%3d,%3d) %-25s movementAllowance=%d, maxReachRange=%d\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name, movementAllowance, maxReachRange);
 		
 		// attack for win
 		
-		int bestEnemyVehicleId = -1;
+		MAP *bestAttackTile = nullptr;
 		double bestBattleOdds = 0.0;
 		
-		for (int enemyVehicleId : getReachableEnemies(vehicleId))
+		for (MAP *rangeTile : getRangeTiles(vehicle->x, vehicle->y, maxReachRange, false))
 		{
-			double battleOdds = getBattleOdds(vehicleId, enemyVehicleId);
+			int x = getX(rangeTile);
+			int y = getY(rangeTile);
 			
-			// ignore not sure kill
+			int range = map_range(vehicle->x, vehicle->y, x, y);
 			
-			if (battleOdds < 1.5)
+			// exclude opposite realm
+			
+			switch (triad)
+			{
+			case TRIAD_LAND:
+				// land unit cannot attack at ocean unless amphibious unit at range 1
+				if (is_ocean(rangeTile) && !(vehicle_has_ability(vehicle, ABL_AMPHIBIOUS) && range == 1))
+					continue;
+				break;
+				
+			case TRIAD_SEA:
+				// sea unit cannot attack at land
+				if (!is_ocean(rangeTile))
+					continue;
+				break;
+				
+			}
+			
+			// get vehicle at location
+			
+			int otherVehicleId = veh_at(x, y);
+			
+			if (otherVehicleId == -1)
 				continue;
+			
+			if (!isWar(vehicle->faction_id, Vehicles[otherVehicleId].faction_id))
+				continue;
+			
+			int enemyVehicleId = modifiedBestDefender(otherVehicleId, vehicleId, 0);
+			
+			if (enemyVehicleId == -1)
+				continue;
+			
+			VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
+			
+			// exclude vehicle from faction we have no war with
+			
+			if (!isWar(vehicle->faction_id, enemyVehicle->faction_id))
+				continue;
+			
+			// get path movement cost before attack
+			
+			int pathMovementCost = getVehiclePathMovementCost(vehicleId, enemyVehicle->x, enemyVehicle->y, true);
+			
+			if (pathMovementCost == -1)
+				continue;
+			
+			// too far
+			
+			if (pathMovementCost >= movementAllowance)
+				continue;
+			
+			// movementAllowanceLeft
+			
+			int movementAllowanceLeft = movementAllowance - pathMovementCost;
+			
+			// calculate battle odds
+			
+			double battleOdds = getBattleOdds(vehicleId, enemyVehicleId) * (double)(std::min(Rules->mov_rate_along_roads, movementAllowanceLeft)) / (double)Rules->mov_rate_along_roads;
+			
+			debug("\t\t-> (%3d,%3d) %-25s battleOdds=%6.2f, pathMovementCost=%d\n", Vehicles[enemyVehicleId].x, Vehicles[enemyVehicleId].y, Units[Vehicles[enemyVehicleId].unit_id].name, battleOdds, pathMovementCost);
 			
 			// update best
 			
 			if (battleOdds > bestBattleOdds)
 			{
-				bestEnemyVehicleId = enemyVehicleId;
+				bestAttackTile = rangeTile;
 				bestBattleOdds = battleOdds;
 			}
 			
 		}
 		
-		if (bestEnemyVehicleId != -1)
+		// target enemy vehicle found and battle odds are good enough
+		
+		if (bestAttackTile != nullptr && bestBattleOdds >= 1.5)
 		{
-			transitVehicle(vehicleId, Task(MOVE, vehicleId, nullptr, bestEnemyVehicleId));
-			
-			VEH *bestEnemyVehicle = &(Vehicles[bestEnemyVehicleId]);
-			debug("\t\t->(%3d,%3d) %s\n", bestEnemyVehicle->x, bestEnemyVehicle->y, Units[bestEnemyVehicle->unit_id].name);
-			
+			transitVehicle(vehicleId, Task(MOVE, vehicleId, bestAttackTile));
+			debug("\t\t->(%3d,%3d)\n", getX(bestAttackTile), getY(bestAttackTile));
 		}
 		
 	}
@@ -672,9 +796,9 @@ void popLandPods()
 		if (vehicle->triad() != TRIAD_LAND)
 			continue;
 		
-		// no task or order
+		// available
 		
-		if (!isVehicleAvailable(vehicleId))
+		if (!isVehicleAvailable(vehicleId, true))
 			continue;
 		
 		// not damaged
@@ -845,7 +969,7 @@ void popSeaPods()
 			
 			// no task or order
 			
-			if (!isVehicleAvailable(vehicleId))
+			if (!isVehicleAvailable(vehicleId, true))
 				continue;
 			
 			// not damaged
@@ -919,164 +1043,165 @@ int compareVehicleValue(VEHICLE_VALUE o1, VEHICLE_VALUE o2)
 	return (o1.value > o2.value);
 }
 
-int moveCombat(int vehicleId)
-{
-	// get vehicle
-
-	VEH *vehicle = &(Vehicles[vehicleId]);
-
-	// restore ai vehicleId
-
-	int aiVehicleId = vehicle->pad_0;
-
-	debug("moveCombat: [%d->%d] (%3d,%3d)\n", aiVehicleId, vehicleId, vehicle->x, vehicle->y);
-
-	// process vehicle order if any assigned
-
-	if (combatOrders.count(aiVehicleId) != 0)
-	{
-		// get order
-
-		COMBAT_ORDER *combatOrder = &(combatOrders[aiVehicleId]);
-
-		// apply order
-
-		return applyCombatOrder(vehicleId, combatOrder);
-
-	}
-	
-	// default to Thinker for war algorithms
-	
-	if (isProbeVehicle(vehicleId))
-	{
-		return enemy_move(vehicleId);
-	}
-	else
-	{
-//		return mod_enemy_move(vehicleId);
-		return enemy_move(vehicleId);
-	}
-	
-}
-
-int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
-{
-	VEH *vehicle = &(Vehicles[id]);
-	
-	// kill
-	
-	if (combatOrder->kill)
-	{
-		veh_kill(id);
-	}
-	
-	// get coordinates
-	
-	int x;
-	int y;
-	
-	if (combatOrder->x != -1 && combatOrder->y != -1)
-	{
-		x = combatOrder->x;
-		y = combatOrder->y;
-	}
-	else if (combatOrder->enemyAIId != -1)
-	{
-		VEH *enemyVehicle = getVehicleByAIId(combatOrder->enemyAIId);
-
-		// enemy not found
-
-		if (enemyVehicle == NULL || enemyVehicle->x == -1 || enemyVehicle->y == -1)
-			return mod_enemy_move(id);
-		
-		x = enemyVehicle->x;
-		y = enemyVehicle->y;
-		
-	}
-	else
-	{
-		x = vehicle->x;
-		y = vehicle->y;
-		
-	}
-
-	// destination is unreachable
-
-	if (!isDestinationReachable(id, x, y, false))
-		return mod_enemy_move(id);
-	
-	// at destination
-
-	if (vehicle->x == x && vehicle->y == y)
-	{
-		// execute order if instructed
-		
-		if (combatOrder->order != -1)
-		{
-			setVehicleOrder(id, combatOrder->order);
-		}
-		else
-		{
-			mod_veh_skip(id);
-		}
-
-	}
-
-	// not at destination
-
-	else
-	{
-		setMoveTo(id, x, y);
-	}
-
-	return SYNC;
-
-}
-
-void setMoveOrder(int vehicleId, int x, int y, int order)
-{
-	VEH *vehicle = &(Vehicles[vehicleId]);
-
-	debug("setMoveOrder: [%3d](%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, x, y);
-
-	if (combatOrders.find(vehicleId) == combatOrders.end())
-	{
-		transitVehicle(vehicleId, Task(ORDER, vehicleId, getMapTile(x, y), -1, order, -1));
-	}
-
-}
-
-void setAttackOrder(int vehicleId, int enemyVehicleId)
-{
-	VEH *vehicle = &(Vehicles[vehicleId]);
-
-	debug("setAttackOrder: [%3d](%3d,%3d) -> [%3d]\n", vehicleId, vehicle->x, vehicle->y, enemyVehicleId);
-
-	if (combatOrders.find(vehicleId) == combatOrders.end())
-	{
-		transitVehicle(vehicleId, Task(MOVE, vehicleId, nullptr, enemyVehicleId));
-	}
-
-}
-
-void setKillOrder(int vehicleId)
-{
-	setTask(vehicleId, Task(KILL, vehicleId));
-	
-}
-
-/*
-Sets vehicle move to order AND moves it there exhausting moves along the way.
-This is used in enemy_move routines to avoid vanilla code overriding move_to order.
-*/
-int moveVehicle(int vehicleId, int x, int y)
-{
-	setMoveTo(vehicleId, x, y);
-	tx_action(vehicleId);
-	return SYNC;
-
-}
-
+//int moveCombat(int vehicleId)
+//{
+//	// get vehicle
+//
+//	VEH *vehicle = &(Vehicles[vehicleId]);
+//
+//	// restore ai vehicleId
+//
+//	int aiVehicleId = vehicle->pad_0;
+//
+//	debug("moveCombat: [%d->%d] (%3d,%3d)\n", aiVehicleId, vehicleId, vehicle->x, vehicle->y);
+//
+//	// process vehicle order if any assigned
+//
+//	if (combatOrders.count(aiVehicleId) != 0)
+//	{
+//		// get order
+//
+//		COMBAT_ORDER *combatOrder = &(combatOrders[aiVehicleId]);
+//		debug("\tcombatOrder: x=%d, y=%d, enemyAIId=%d, order=%d, kill=%d\n", combatOrder->x, combatOrder->y, combatOrder->enemyAIId, combatOrder->order, combatOrder->kill);
+//
+//		// apply order
+//
+//		return applyCombatOrder(vehicleId, combatOrder);
+//
+//	}
+//	
+//	// default to Thinker for war algorithms
+//	
+//	if (isProbeVehicle(vehicleId))
+//	{
+//		return enemy_move(vehicleId);
+//	}
+//	else
+//	{
+////		return mod_enemy_move(vehicleId);
+//		return enemy_move(vehicleId);
+//	}
+//	
+//}
+//
+//int applyCombatOrder(int id, COMBAT_ORDER *combatOrder)
+//{
+//	VEH *vehicle = &(Vehicles[id]);
+//	
+//	// kill
+//	
+//	if (combatOrder->kill)
+//	{
+//		veh_kill(id);
+//	}
+//	
+//	// get coordinates
+//	
+//	int x;
+//	int y;
+//	
+//	if (combatOrder->x != -1 && combatOrder->y != -1)
+//	{
+//		x = combatOrder->x;
+//		y = combatOrder->y;
+//	}
+//	else if (combatOrder->enemyAIId != -1)
+//	{
+//		VEH *enemyVehicle = getVehicleByAIId(combatOrder->enemyAIId);
+//
+//		// enemy not found
+//
+//		if (enemyVehicle == NULL || enemyVehicle->x == -1 || enemyVehicle->y == -1)
+//			return mod_enemy_move(id);
+//		
+//		x = enemyVehicle->x;
+//		y = enemyVehicle->y;
+//		
+//	}
+//	else
+//	{
+//		x = vehicle->x;
+//		y = vehicle->y;
+//		
+//	}
+//
+//	// destination is unreachable
+//
+//	if (!isDestinationReachable(id, x, y, false))
+//		return mod_enemy_move(id);
+//	
+//	// at destination
+//
+//	if (vehicle->x == x && vehicle->y == y)
+//	{
+//		// execute order if instructed
+//		
+//		if (combatOrder->order != -1)
+//		{
+//			setVehicleOrder(id, combatOrder->order);
+//		}
+//		else
+//		{
+//			mod_veh_skip(id);
+//		}
+//
+//	}
+//
+//	// not at destination
+//
+//	else
+//	{
+//		setMoveTo(id, x, y);
+//	}
+//
+//	return SYNC;
+//
+//}
+//
+//void setMoveOrder(int vehicleId, int x, int y, int order)
+//{
+//	VEH *vehicle = &(Vehicles[vehicleId]);
+//
+//	debug("setMoveOrder: [%3d](%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, x, y);
+//
+//	if (combatOrders.find(vehicleId) == combatOrders.end())
+//	{
+//		transitVehicle(vehicleId, Task(ORDER, vehicleId, getMapTile(x, y), -1, order, -1));
+//	}
+//
+//}
+//
+//void setAttackOrder(int vehicleId, int enemyVehicleId)
+//{
+//	VEH *vehicle = &(Vehicles[vehicleId]);
+//
+//	debug("setAttackOrder: [%3d](%3d,%3d) -> [%3d]\n", vehicleId, vehicle->x, vehicle->y, enemyVehicleId);
+//
+//	if (combatOrders.find(vehicleId) == combatOrders.end())
+//	{
+//		transitVehicle(vehicleId, Task(MOVE, vehicleId, nullptr, enemyVehicleId));
+//	}
+//
+//}
+//
+//void setKillOrder(int vehicleId)
+//{
+//	setTask(vehicleId, Task(KILL, vehicleId));
+//	
+//}
+//
+///*
+//Sets vehicle move to order AND moves it there exhausting moves along the way.
+//This is used in enemy_move routines to avoid vanilla code overriding move_to order.
+//*/
+//int moveVehicle(int vehicleId, int x, int y)
+//{
+//	setMoveTo(vehicleId, x, y);
+//	tx_action(vehicleId);
+//	return SYNC;
+//
+//}
+//
 MAP *getNearestUnexploredConnectedOceanRegionLocation(int factionId, int initialLocationX, int initialLocationY)
 {
 	debug("getNearestUnexploredConnectedOceanRegionTile: factionId=%d, initialLocationX=%d, initialLocationY=%d\n", factionId, initialLocationX, initialLocationY);
@@ -1334,7 +1459,7 @@ MAP *getNearestMonolith(int x, int y, int triad)
 		
 		// friendly territory only
 		
-		if (tile->owner != -1 && tile->owner != aiFactionId && at_war(tile->owner, aiFactionId))
+		if (tile->owner != -1 && tile->owner != aiFactionId && isWar(tile->owner, aiFactionId))
 			continue;
 		
 		// monolith
@@ -1429,7 +1554,7 @@ bool isInWarZone(int vehicleId)
 		if (otherBase->faction_id == vehicle->faction_id)
 			continue;
 		
-		if (at_war(vehicle->faction_id, otherBase->faction_id))
+		if (isWar(vehicle->faction_id, otherBase->faction_id))
 		{
 			if
 			(
@@ -1462,7 +1587,7 @@ bool isInWarZone(int vehicleId)
 		if (otherVehicle->faction_id == vehicle->faction_id)
 			continue;
 		
-		if (!at_war(vehicle->faction_id, otherVehicle->faction_id))
+		if (!isWar(vehicle->faction_id, otherVehicle->faction_id))
 			continue;
 		
 		if (!isCombatVehicle(otherVehicleId))
@@ -1507,7 +1632,7 @@ bool isInWarZone(int vehicleId)
 }
 
 /*
-Collects all enemies reachable in time.
+Collects all enemies reachable in this turn.
 Currently works for sea units only.
 */
 std::vector<int> getReachableEnemies(int vehicleId)
@@ -1573,7 +1698,7 @@ std::vector<int> getReachableEnemies(int vehicleId)
 				{
 					VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
 					
-					if (at_war(vehicle->faction_id, enemyVehicle->faction_id))
+					if (isWar(vehicle->faction_id, enemyVehicle->faction_id))
 					{
 						reachableEnemies.push_back(enemyVehicleId);
 					}
@@ -1648,10 +1773,10 @@ std::vector<int> getReachableEnemies(int vehicleId)
 }
 
 /*
-Checks if unit has not task/order.
+Checks if unit available for orders.
 */
-bool isVehicleAvailable(int vehicleId)
+bool isVehicleAvailable(int vehicleId, bool notInWarzone)
 {
-	return (!hasTask(vehicleId) && combatOrders.count(vehicleId) == 0);
+	return (!hasTask(vehicleId) && (!notInWarzone || !aiData.getTileInfo(getVehicleMapTile(vehicleId))->warzone));
 }
 

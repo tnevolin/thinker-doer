@@ -86,7 +86,7 @@ void moveColonyStrategy()
 
 void analyzeBasePlacementSites()
 {
-	std::vector<std::pair<int, double>> sortedBuildScores;
+	std::vector<std::pair<int, double>> sortedBuildSiteScores;
 	std::set<int> colonyVehicleIds;
 	std::set<int> accessibleAssociations;
 	
@@ -285,7 +285,7 @@ void analyzeBasePlacementSites()
 			double buildScore = yieldScore + placementScore + colonyTravelTimeScore + enemyRangeScore;
 			
 			expansionTileInfo->buildScore = buildScore;
-			sortedBuildScores.push_back({mapIndex, buildScore});
+			sortedBuildSiteScores.push_back({mapIndex, buildScore});
 			
 		}
 		
@@ -332,8 +332,8 @@ void analyzeBasePlacementSites()
 	
 	std::sort
 	(
-		sortedBuildScores.begin(),
-		sortedBuildScores.end(),
+		sortedBuildSiteScores.begin(),
+		sortedBuildSiteScores.end(),
 		[ ](const std::pair<int, double> &buildSiteScore1, const std::pair<int, double> &buildSiteScore2)
 		{
 			return buildSiteScore1.second > buildSiteScore2.second;
@@ -343,9 +343,9 @@ void analyzeBasePlacementSites()
 	
 	if (DEBUG)
 	{
-		debug("sortedBuildScores - %s\n", MFactions[aiFactionId].noun_faction);
+		debug("sortedBuildSiteScores - %s\n", MFactions[aiFactionId].noun_faction);
 		
-		for (std::pair<int, double> buildSiteScore : sortedBuildScores)
+		for (std::pair<int, double> buildSiteScore : sortedBuildSiteScores)
 		{
 			debug("(%3d,%3d) %f\n", getX(buildSiteScore.first), getY(buildSiteScore.first), buildSiteScore.second);
 		}
@@ -362,10 +362,10 @@ void analyzeBasePlacementSites()
 	
 	std::vector<int> matchedBuildSiteMapIndexes;
 	
-	for (const auto &sortedBuildScoresEntry : sortedBuildScores)
+	for (const auto &sortedBuildSiteScoresEntry : sortedBuildSiteScores)
 	{
-		int buildSiteMapIndex = sortedBuildScoresEntry.first;
-		double buildSiteScore = sortedBuildScoresEntry.second;
+		int buildSiteMapIndex = sortedBuildSiteScoresEntry.first;
+		double buildSiteScore = sortedBuildSiteScoresEntry.second;
 		
 		int x = getX(buildSiteMapIndex);
 		int y = getY(buildSiteMapIndex);
@@ -487,7 +487,6 @@ double getBuildSiteYieldScore(MAP *tile)
 {
 	int x = getX(tile);
 	int y = getY(tile);
-	bool ocean = is_ocean(tile);
 	
 	debug("getBuildSiteYieldScore (%3d,%3d)\n", x, y);
 
@@ -497,8 +496,6 @@ double getBuildSiteYieldScore(MAP *tile)
 
 	for (MAP *baseRadiusTile : getBaseRadiusTiles(tile, false))
 	{
-		bool baseRadiusTileOcean = is_ocean(baseRadiusTile);
-		
 		// valid work site
 		
 		if (!isValidWorkSite(baseRadiusTile, aiFactionId))
@@ -506,7 +503,7 @@ double getBuildSiteYieldScore(MAP *tile)
 		
 		// ignore not owned land tiles for ocean base
 
-		if (ocean && !baseRadiusTileOcean && baseRadiusTile->owner != aiFactionId)
+		if (is_ocean(tile) && !is_ocean(baseRadiusTile) && baseRadiusTile->owner != aiFactionId)
 			continue;
 
 		// collect yield score
@@ -522,7 +519,7 @@ double getBuildSiteYieldScore(MAP *tile)
 	// average weigthed score
 	
 	double weight = 1.0;
-	double weightMultiplier = 0.6;
+	double weightMultiplier = 0.9;
 	double sumWeights = 0.0;
 	double sumWeightedScore = 0.0;
 	
@@ -1085,15 +1082,7 @@ int getNearestColonyRange(MAP *tile)
 
 int getExpansionRange(MAP *tile)
 {
-	int expansionRange = getNearestBaseRange(tile);
-	
-	if (expansionRange == INT_MAX)
-	{
-		expansionRange = getNearestColonyRange(tile);
-	}
-	
-	return expansionRange;
-	
+	return std::min(getNearestBaseRange(tile), getNearestColonyRange(tile));
 }
 
 /*
@@ -1317,20 +1306,8 @@ double getWorkerConsumptionYieldScore()
 	
 	// calculate yield score
 	
-	double yieldScore =
-		conf.ai_terraforming_nutrientWeight * nutrients
-		+
-		conf.ai_terraforming_mineralWeight * minerals
-		+
-		conf.ai_terraforming_energyWeight * energy
-	;
-	
-	debug
-	(
-		"\tyieldScore=%f\n",
-		yieldScore
-	)
-	;
+	double yieldScore = getYieldScore(nutrients, minerals, energy);
+	debug("\tyieldScore=%f\n", yieldScore);
 	
 	return yieldScore;
 	
@@ -1441,6 +1418,17 @@ double getTileFutureYieldScore(MAP *tile)
 	bool rocky = (map_rockiness(tile) == 2);
 	
 	debug("getTileFutureYieldScore: (%3d,%3d)\n", x, y);
+	
+	// monolith does not require terraforming
+	
+	if (map_has_item(tile, TERRA_MONOLITH))
+	{
+		// calculate score directly and add some bonus score
+		
+		double monolithFutureYieldScore = getYieldScore(*TERRA_MONOLITH_NUTRIENT, *TERRA_MONOLITH_MINERALS, *TERRA_MONOLITH_ENERGY);
+		return monolithFutureYieldScore += 2.0;
+		
+	}
 	
 	// get map state
 	
@@ -1658,5 +1646,17 @@ int getNearestEnemyBaseRange(MAP *tile)
 
 	return minRange;
 	
+}
+
+double getYieldScore(double nutrient, double mineral, double energy)
+{
+	return
+		conf.ai_terraforming_nutrientWeight * nutrient
+		+
+		conf.ai_terraforming_mineralWeight * mineral
+		+
+		conf.ai_terraforming_energyWeight * energy
+	;
+
 }
 

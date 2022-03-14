@@ -119,16 +119,16 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
     if
 	(
 		// fix is enabled
-		conf.artillery_duel_uses_weapon_and_armor
+		conf.conventional_artillery_duel_uses_weapon_and_armor
 		&&
 		// artillery duel
 		(flags & 0x3) == 0x3
 		&&
-		// attacker uses conventional weapon
-		Weapon[attackerUnit->weapon_type].offense_value > 0
+		// attacker uses conventional weapon and armor
+		Weapon[attackerUnit->weapon_type].offense_value > 0 && Armor[attackerUnit->armor_type].defense_value > 0
 		&&
-		// defender uses conventional weapon
-		Weapon[defenderUnit->weapon_type].offense_value > 0
+		// defender uses conventional weapon and armor
+		Weapon[defenderUnit->weapon_type].offense_value > 0 && Armor[defenderUnit->armor_type].defense_value > 0
 	)
 	{
 		// artillery duelants use weapon + armor value
@@ -1384,7 +1384,7 @@ HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength,
 
     debug
     (
-        "artillery_damage=%d)\n",
+        "artillery_damage=%d\n",
         artillery_damage
     )
     ;
@@ -1536,7 +1536,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 					square_from->owner != -1 && square_from->owner != faction_id
 					&&
 					(
-						(conf.right_of_passage_agreement == 1 && at_war(faction_id, square_from->owner))
+						(conf.right_of_passage_agreement == 1 && isWar(faction_id, square_from->owner))
 						||
 						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_from->owner))
 					)
@@ -1546,7 +1546,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 					square_to->owner != -1 && square_to->owner != faction_id
 					&&
 					(
-						(conf.right_of_passage_agreement == 1 && at_war(faction_id, square_to->owner))
+						(conf.right_of_passage_agreement == 1 && isWar(faction_id, square_to->owner))
 						||
 						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_to->owner))
 					)
@@ -2494,8 +2494,8 @@ HOOK_API int calculateNotPrototypedComponentsCostForProduction(int unitId)
 
 	}
 
-	debug("chassisPrototyped=%d, weaponPrototyped=%d, armorPrototyped=%d\n", chassisPrototyped, weaponPrototyped, armorPrototyped);
-
+//	debug("chassisPrototyped=%d, weaponPrototyped=%d, armorPrototyped=%d\n", chassisPrototyped, weaponPrototyped, armorPrototyped);
+//
 	// calculate not prototyped components cost
 
 	return calculateNotPrototypedComponentsCost(unit->chassis_type, unit->weapon_type, unit->armor_type, chassisPrototyped, weaponPrototyped, armorPrototyped);
@@ -3665,6 +3665,64 @@ double calculateWinningProbability(double p, int attackerHP, int defenderHP)
 
 }
 
+/*
+Calculates battle winning probability.
+*/
+double calculateExactBattleOdds(int attackerVehicleId, int defenderVehicleId, int attackerMovementAllowance)
+{
+	// use default vanilla formula if reactor power is not ignored
+	
+	if (!conf.ignore_reactor_power_in_combat)
+		return getBattleOdds(attackerVehicleId, defenderVehicleId);
+	
+	// get attacker and defender vehicles
+	
+	VEH *attackerVehicle = &(Vehicles[currentAttackerVehicleId]);
+	VEH *defenderVehicle = &(Vehicles[currentDefenderVehicleId]);
+	
+	// get attacker and defender units
+	
+	UNIT *attackerUnit = &(Units[attackerVehicle->unit_id]);
+	UNIT *defenderUnit = &(Units[defenderVehicle->unit_id]);
+	
+	// calculate attacker and defender power
+	// artifact gets 1 HP regardless of reactor
+	
+	int attackerPower = (attackerUnit->unit_plan == PLAN_ALIEN_ARTIFACT ? 1 : attackerUnit->reactor_type * 10 - attackerVehicle->damage_taken);
+	int defenderPower = (defenderUnit->unit_plan == PLAN_ALIEN_ARTIFACT ? 1 : defenderUnit->reactor_type * 10 - defenderVehicle->damage_taken);
+	
+	// calculate FP
+
+	int attackerFP = defenderUnit->reactor_type;
+	int defenderFP = attackerUnit->reactor_type;
+
+	// calculate HP
+
+	int attackerHP = (attackerPower + (defenderFP - 1)) / defenderFP;
+	int defenderHP = (defenderPower + (attackerFP - 1)) / attackerFP;
+
+	// compute relative strength
+	
+	double relativeStrength = battleCompute(attackerVehicleId, defenderVehicleId);
+	
+	// adjust relative strength for haste
+	
+	relativeStrength *= (double)std::min(Rules->mov_rate_along_roads, attackerMovementAllowance) / (double)Rules->mov_rate_along_roads;
+
+	// calculate round probabilty
+	
+	double p = relativeStrength / (1 + relativeStrength);
+	
+	// calculate attacker winning probability
+	
+	double attackerWinningProbability = calculateWinningProbability(p, attackerHP, defenderHP);
+	
+	// return battle odds
+	
+	return (attackerWinningProbability == 1.0 ? 100.0 : std::min(100.0, attackerWinningProbability / (1 - attackerWinningProbability)));
+	
+}
+
 void simplifyOdds(int *attackerOdds, int *defenderOdds)
 {
 	for (int divisor = 2; divisor < *attackerOdds && divisor < *defenderOdds; divisor++)
@@ -4664,7 +4722,6 @@ int __cdecl modified_base_double_labs(int labs)
 }
 
 /*
-<<<<<<< HEAD
 Highjack this function to fix stockpile energy bug.
 */
 int __cdecl modified_base_production()
@@ -4774,8 +4831,6 @@ void __cdecl modified_base_yield()
 }
 
 /*
-=======
->>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 AI transport steals passenger at sea whenever they can.
 This modification makes sure they don't.
 */
@@ -4809,11 +4864,7 @@ int __cdecl modified_order_veh(int vehicleId, int angle, int a3)
 	// give up and return original angle
 	
 	return tx_order_veh(vehicleId, angle, a3);
-<<<<<<< HEAD
-
-=======
 	
->>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 }
 
 /*

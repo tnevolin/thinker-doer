@@ -13,10 +13,9 @@ void strategy();
 void populateAIData();
 void analyzeGeography();
 void populateGlobalVariables();
-void populateBaseExposures();
-void evaluateBaseExposures();
+void evaluateBaseBorderDistances();
 void evaluateBaseNativeDefenseDemands();
-void evaluateDefenseDemand();
+void evaluateDefenseLevel();
 void populateWarzones();
 void populateBasesAndTiles();
 void designUnits();
@@ -29,7 +28,7 @@ void obsoletePrototypes(int factionId, std::set<int> chassisIds, std::set<int> w
 // --------------------------------------------------
 
 VEH *getVehicleByAIId(int aiId);
-MAP *getNearestPod(int vehicleId);
+MAP *getClosestPod(int vehicleId);
 int getNearestFactionBaseRange(int factionId, int x, int y);
 int getNearestOtherFactionBaseRange(int factionId, int x, int y);
 int getNearestBaseId(int x, int y, std::set<int> baseIds);
@@ -66,5 +65,9 @@ bool isOceanAssociationCoast(int x, int y, int oceanAssociation, int factionId);
 int getMaxBaseSize(int factionId);
 std::set<int> getBaseOceanRegions(int baseId);
 int getPathDistance(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId);
+int getVehiclePathDistance(int vehicleId, int x, int y);
+int getPathMovementCost(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId, bool excludeDestination);
+int getVehiclePathMovementCost(int vehicleId, int x, int y, bool excludeDestination);
 int getPathTravelTime(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId);
+int getVehiclePathTravelTime(int vehicleId, int x, int y);
 

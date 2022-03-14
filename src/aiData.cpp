@@ -34,7 +34,6 @@ void Data::cleanup()
 	presenceRegions.clear();
 	regionBaseIds.clear();
 	regionBaseGroups.clear();
-	baseStrategies.clear();
 	vehicleIds.clear();
 	combatVehicleIds.clear();
 	scoutVehicleIds.clear();
@@ -83,3 +82,30 @@ TileInfo *Data::getTileInfo(MAP *tile)
 	return getTileInfo(getMapIndexByPointer(tile));
 }
 
+// other methods
+
+void UnitStrength::normalize(double totalWeight)
+{
+	this->psiOffense /= this->weight;
+	this->psiDefense /= this->weight;
+	this->conventionalOffense /= this->weight;
+	this->conventionalDefense /= this->weight;
+	this->weight /= totalWeight;
+}
+
+void MilitaryStrength::normalize()
+{
+	for (int unitId = 0; unitId < MaxProtoNum; unitId++)
+	{
+		UnitStrength *unitStrength = &(unitStrengths[unitId]);
+		
+		if (unitStrength->weight > 0.0)
+		{
+			populatedUnitIds.push_back(unitId);
+			unitStrength->normalize(totalWeight);
+		}
+		
+	}
+	
+}
+	

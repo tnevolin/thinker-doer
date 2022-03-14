@@ -19,11 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-<<<<<<< HEAD
     #define MOD_VERSION "The Will to Power mod - version 288 (Thinker Mod v2.5)"
-=======
-    #define MOD_VERSION "The Will to Power mod - version ai (Thinker Mod v2.5)"
->>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -307,7 +303,7 @@ struct Config {
 	int native_unit_cost_initial_isle_of_the_deep;
 	int native_unit_cost_initial_locusts_of_chiron;
 	bool disable_sensor_destroying;
-	bool artillery_duel_uses_weapon_and_armor;
+	bool conventional_artillery_duel_uses_weapon_and_armor;
 	bool disable_vanilla_base_hurry;
 	bool science_projects_alternative_labs_bonus;
 	int science_projects_supercollider_labs_bonus;
@@ -316,12 +312,9 @@ struct Config {
 	int combat_bonus_attacking_along_road;
 	bool disengagement_from_stack;
 	bool eco_damage_alternative_industry_effect_reduction_formula;
-<<<<<<< HEAD
 	double orbital_nutrient_population_limit;
 	double orbital_mineral_population_limit;
 	double orbital_energy_population_limit;
-=======
->>>>>>> 9565780df051f67fed1694638268dd89d960d13e
 	int pressure_dome_minerals = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
@@ -350,7 +343,8 @@ struct Config {
     double ai_production_expansion_priority;
     double ai_production_expansion_priority_per_population;
     int ai_production_combat_unit_turns_limit;
-    double ai_production_facility_priority;
+    double ai_production_multiplying_facility_priority;
+    double ai_production_faction_development_rate;
     int ai_production_unit_min_mineral_surplus;
     double ai_production_exploration_coverage;
     double ai_production_improvement_coverage;

@@ -575,7 +575,7 @@ bool pickupFormer(int transportVehicleId)
 
 void popPodStrategy(int transportVehicleId)
 {
-	MAP *nearestPodLocation = getNearestPod(transportVehicleId);
+	MAP *nearestPodLocation = getClosestPod(transportVehicleId);
 	
 	if (nearestPodLocation == nullptr)
 		return;

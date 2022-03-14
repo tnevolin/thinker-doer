@@ -161,4 +161,5 @@ double getSeaSquareFutureYieldScore();
 double getTileFutureYieldScore(MAP *tile);
 double getTerraformingOptionFutureYieldScore(MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
 int getNearestEnemyBaseRange(MAP *tile);
+double getYieldScore(double nutrient, double mineral, double energy);
 

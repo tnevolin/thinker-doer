@@ -855,6 +855,11 @@ void applyProximityRules()
 
 void assignFormerOrders()
 {
+	// reset production data
+	
+	aiData.production.landTerraformingRequest = false;
+	aiData.production.seaTerraformingRequests.clear();
+	
 	// distribute orders
 	
 	for (TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
@@ -862,6 +867,18 @@ void assignFormerOrders()
 		int x = getX(terraformingRequest.tile);
 		int y = getY(terraformingRequest.tile);
 		MAP *tile = getMapTile(x, y);
+		int oceanAssociation = getOceanAssociation(tile, aiFactionId);
+		
+		// update production terraforming requests
+		
+		if (!is_ocean(tile))
+		{
+			aiData.production.landTerraformingRequest = true;
+		}
+		else if (oceanAssociation != -1)
+		{
+			aiData.production.seaTerraformingRequests.insert(oceanAssociation);
+		}
 		
 		// find nearest available former
 		
@@ -3031,9 +3048,51 @@ double calculateFitnessScore(MAP *tile, int action, bool levelTerrain)
 	int y = getY(mapIndex);
 	
 	// no fitness score for ocean
+	// except sensor
 	
 	if (is_ocean(tile))
-		return 0.0;
+	{
+		if (action == FORMER_SENSOR)
+		{
+			// evaluate effect
+			
+			double nutrientEffect = 0.0;
+			double mineralEffect = 0.0;
+			double energyEffect = 0.0;
+			
+			if (map_has_item(tile, TERRA_MINE | TERRA_SOLAR))
+			{
+				// not compatible with these items
+				
+				nutrientEffect += -1;
+				mineralEffect += -1;
+				energyEffect += -1;
+				
+			}
+
+			// compute total fitness score
+
+			double fitnessScore =
+				conf.ai_terraforming_fitnessMultiplier
+				*
+				(
+					conf.ai_terraforming_nutrientWeight * nutrientEffect
+					+
+					conf.ai_terraforming_mineralWeight * mineralEffect
+					+
+					conf.ai_terraforming_energyWeight * energyEffect
+				)
+			;
+			
+			return fitnessScore;
+
+		}
+		else
+		{
+			return 0.0;
+		}
+		
+	}
 	
 	// average levels
 	
@@ -3116,6 +3175,12 @@ double calculateFitnessScore(MAP *tile, int action, bool levelTerrain)
 		
 	case FORMER_SENSOR:
 		
+		// not used energy
+		
+		energyEffect += -((double)elevation - averageElevation);
+		
+		// penalty for destroying facilities
+		
 		if (map_has_item(tile, TERRA_FOREST | TERRA_FUNGUS | TERRA_MONOLITH))
 		{
 			// compatible with these items
@@ -3127,13 +3192,6 @@ double calculateFitnessScore(MAP *tile, int action, bool levelTerrain)
 			nutrientEffect += -1;
 			mineralEffect += -1;
 			energyEffect += -1;
-			
-		}
-		else
-		{
-			// not used energy
-			
-			energyEffect += -((double)elevation - averageElevation);
 			
 		}
 		
