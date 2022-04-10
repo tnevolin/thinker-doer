@@ -14,7 +14,21 @@ int (*tx_battle_compute_attacker_effect_values)[0x4] = (int (*)[0x4])0x9155F0;
 int (*tx_battle_compute_defender_effect_values)[0x4] = (int (*)[0x4])0x915600;
 
 // labels pointer
+
 char ***tx_labels = (char ***)0x009B90F8;
+const int LABEL_OFFSET_PLANET = 0x271;
+const int LABEL_OFFSET_AIRTOAIR = 0x1C1;
+const int LABEL_OFFSET_SENSOR = 0x265;
+const int LABEL_OFFSET_TERRAIN = 0x14B;
+const int LABEL_OFFSET_ROCKY = 0x152;
+const int LABEL_OFFSET_FOREST = 0x123;
+const int LABEL_OFFSET_FUNGUS = 0x5B;
+const int LABEL_OFFSET_ROAD_ATTACK = 0x25E;
+const int LABEL_OFFSET_BASE = 0x14C;
+const int LABEL_OFFSET_PERIMETER = 0x162;
+const int LABEL_OFFSET_TACHYON = 0x165;
+const char *LABEL_NAVAL_YARD = "Naval Yard";
+const char *LABEL_AEROSPACE_COMPLEX = "AeroComplex";
 
 char *g_strTEMP = (char *)0x009B86A0;
 char *SPACE = (char *)0x00682820;

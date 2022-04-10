@@ -716,6 +716,20 @@ void designUnits()
 		NULL
 	);
 	
+	// anti-native artillery
+	
+	proposeMultiplePrototypes
+	(
+		aiFactionId,
+		{CHS_INFANTRY},
+		{WPN_HAND_WEAPONS},
+		{ARM_NO_ARMOR},
+		{ABL_ARTILLERY, ABL_ARTILLERY | ABL_EMPATH, },
+		bestReactor,
+		PLAN_DEFENSIVE,
+		NULL
+	);
+	
 }
 
 /*

@@ -590,6 +590,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->artillery_duel_uses_weapon_and_armor = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "artillery_duel_uses_bonuses"))
+    {
+        cf->artillery_duel_uses_bonuses = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("wtp", "disable_vanilla_base_hurry"))
     {
         cf->disable_vanilla_base_hurry = (atoi(value) == 0 ? false : true);

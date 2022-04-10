@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 289 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 290 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -304,6 +304,7 @@ struct Config {
 	int native_unit_cost_initial_locusts_of_chiron;
 	bool disable_sensor_destroying;
 	bool artillery_duel_uses_weapon_and_armor;
+	bool artillery_duel_uses_bonuses;
 	bool disable_vanilla_base_hurry;
 	bool science_projects_alternative_labs_bonus;
 	int science_projects_supercollider_labs_bonus;

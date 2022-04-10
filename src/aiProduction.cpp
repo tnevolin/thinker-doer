@@ -2878,8 +2878,8 @@ int selectCombatUnit(int baseId, int targetBaseId)
 	{
 		UNIT *unit = &(Units[unitId]);
 		int triad = unit->triad();
-		int unitWeaponOffenseValue = getUnitWeaponOffenseValue(unitId);
-		int unitArmorDefenseValue = getUnitArmorDefenseValue(unitId);
+		int unitWeaponOffenseValue = getUnitOffenseValue(unitId);
+		int unitArmorDefenseValue = getUnitDefenseValue(unitId);
 		
 		int defenderUnitId = unitId;
 		UNIT *defenderUnit = unit;
@@ -3424,7 +3424,7 @@ int findTransportUnit()
 int getUnitClass(int unitId)
 {
 	UNIT *unit = &(Units[unitId]);
-	int unitWeaponOffenseValue = getUnitWeaponOffenseValue(unitId);
+	int unitWeaponOffenseValue = getUnitOffenseValue(unitId);
 	
 	if (!isCombatUnit(unitId))
 	{

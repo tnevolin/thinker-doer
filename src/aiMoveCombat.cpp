@@ -130,8 +130,8 @@ void baseProtection()
 		{
 			VEH *vehicle = &(Vehicles[vehicleId]);
 			UNIT *unit = &(Units[vehicle->unit_id]);
-			int vehicleWeaponOffenseValue = getVehicleWeaponOffenseValue(vehicleId);
-			int vehicleArmorDefenseValue = getVehicleArmorDefenseValue(vehicleId);
+			int vehicleOffenseValue = getVehicleOffenseValue(vehicleId);
+			int vehicleDefenseValue = getVehicleDefenseValue(vehicleId);
 			
 			// without task and order
 			
@@ -150,7 +150,7 @@ void baseProtection()
 			
 			// scout or defensive
 			
-			if (vehicleWeaponOffenseValue > vehicleArmorDefenseValue)
+			if (vehicleOffenseValue > vehicleDefenseValue)
 				continue;
 			
 			// not in other base
