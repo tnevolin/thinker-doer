@@ -6,7 +6,7 @@
 #include "aiTask.h"
 
 void moveStrategy();
-void updateGlobalVariables();
+void populateVehicles();
 void fixUndesiredTransportDropoff();
 void fixUndesiredTransportPickup();
 void moveAllStrategy();

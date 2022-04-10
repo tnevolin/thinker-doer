@@ -3,14 +3,14 @@
 #include "game_wtp.h"
 #include "aiData.h"
 
-Task::Task(TaskType _type, int _vehicleId)
+Task::Task(int _vehicleId, TaskType _type)
 {
 	this->type = _type;
 	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
 	
 }
 
-Task::Task(TaskType _type, int _vehicleId, MAP *_targetLocation)
+Task::Task(int _vehicleId, TaskType _type, MAP *_targetLocation)
 {
 	this->type = _type;
 	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
@@ -18,7 +18,7 @@ Task::Task(TaskType _type, int _vehicleId, MAP *_targetLocation)
 	
 }
 
-Task::Task(TaskType _type, int _vehicleId, MAP *_targetLocation, int _targetVehicleId)
+Task::Task(int _vehicleId, TaskType _type, MAP *_targetLocation, int _targetVehicleId)
 {
 	this->type = _type;
 	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
@@ -27,7 +27,7 @@ Task::Task(TaskType _type, int _vehicleId, MAP *_targetLocation, int _targetVehi
 	
 }
 
-Task::Task(TaskType _type, int _vehicleId, MAP *_targetLocation, int _targetVehicleId, int _order, int _terraformingAction)
+Task::Task(int _vehicleId, TaskType _type, MAP *_targetLocation, int _targetVehicleId, int _order, int _terraformingAction)
 {
 	this->type = _type;
 	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
@@ -571,37 +571,53 @@ void setTaskIfCloser(int vehicleId, Task task)
 			return;
 		}
 		
-		// colony has priority 1
-		if (isColonyVehicle(currentTaskTargetVehicleId) && !isColonyVehicle(replacingTaskTargetVehicleId))
+		// set priorityRangeMultiplier for special unit types
+		
+		double currentPriorityRangeMultiplier;
+		double replacingPriorityRangeMultiplier;
+		
+		if (isArtifactVehicle(currentTaskTargetVehicleId))
 		{
-			return;
+			currentPriorityRangeMultiplier = 0.2;
 		}
-		if (!isColonyVehicle(currentTaskTargetVehicleId) && isColonyVehicle(replacingTaskTargetVehicleId))
+		else if (isColonyVehicle(currentTaskTargetVehicleId))
 		{
-			setTask(vehicleId, task);
-			return;
+			currentPriorityRangeMultiplier = 0.4;
 		}
-		// former has priority 2
-		if (isFormerVehicle(currentTaskTargetVehicleId) && !isFormerVehicle(replacingTaskTargetVehicleId))
+		else if (isFormerVehicle(currentTaskTargetVehicleId))
 		{
-			return;
+			currentPriorityRangeMultiplier = 0.6;
 		}
-		if (!isFormerVehicle(currentTaskTargetVehicleId) && isFormerVehicle(replacingTaskTargetVehicleId))
+		else
 		{
-			setTask(vehicleId, task);
-			return;
+			currentPriorityRangeMultiplier = 1.0;
 		}
 		
-		// otherwise compare distance to destinations
+		if (isArtifactVehicle(replacingTaskTargetVehicleId))
+		{
+			replacingPriorityRangeMultiplier = 0.2;
+		}
+		else if (isColonyVehicle(replacingTaskTargetVehicleId))
+		{
+			replacingPriorityRangeMultiplier = 0.4;
+		}
+		else if (isFormerVehicle(replacingTaskTargetVehicleId))
+		{
+			replacingPriorityRangeMultiplier = 0.6;
+		}
+		else
+		{
+			replacingPriorityRangeMultiplier = 1.0;
+		}
 		
 		// get current and replacing task ranges
 		
 		int currentTaskDestinationRange = currentTask->getDestinationRange();
 		int replacingTaskDestinationRange = task.getDestinationRange();
 		
-		// replace task only if given one has MUCH shorter range
+		// replace task only if given one has significantly shorter range
 		
-		if (replacingTaskDestinationRange < currentTaskDestinationRange / 2)
+		if (replacingPriorityRangeMultiplier * replacingTaskDestinationRange < 0.8 * currentPriorityRangeMultiplier * currentTaskDestinationRange)
 		{
 			setTask(vehicleId, task);
 		}

@@ -1614,7 +1614,7 @@ Calculates tech cost.
 cost grow accelerated from the beginning then linear.
 a1 = 20                                     // constant (first tech cost)
 b1 =-20										// linear coefficient
-c1 = 40										// quadratic coefficient
+c1 = 60										// quadratic coefficient
 b2 = 600 * <map size>						// linear slope
 x0 = (b2 - b1) / (2 * c1)                   // break point
 a2 = a1 + b1 * x0 + c1 * x0 ^ 2 - b2 * x0   // linear intercept
@@ -1622,7 +1622,7 @@ x  = (<level> - 1)
 
 correction = (number of tech discovered by anybody / total tech count) / (turn / 350)
 
-cost = [S + (x < x0 ? C * x ^ 3 : A + B * x)] * scale * correction
+cost = (x < x0 ? a1 + b1 * x + c1 * x^2 : a2 + b2 * x) * scale * correction
 
 */
 int wtp_tech_cost(int fac, int tech)
@@ -1638,7 +1638,7 @@ int wtp_tech_cost(int fac, int tech)
 
     double a1 = 20.0;
     double b1 =-20.0;
-    double c1 = 40.0;
+    double c1 = 60.0;
     double b2 = 600.0 * ((double)*map_area_tiles / 3200.0);
     double x0 = (b2 - b1) / (2 * c1);
     double a2 = a1 + b1 * x0 + c1 * x0 * x0 - b2 * x0;
@@ -4836,9 +4836,9 @@ This modification makes sure they don't.
 */
 int __cdecl modified_order_veh(int vehicleId, int angle, int a3)
 {
-	// not transport vehicle is not affected
+	// not sea transport vehicle is not affected
 	
-	if (!isTransportVehicle(vehicleId))
+	if (!isSeaTransportVehicle(vehicleId))
 		return tx_order_veh(vehicleId, angle, a3);
 	
 	// check if there is a transport at sea at given angle

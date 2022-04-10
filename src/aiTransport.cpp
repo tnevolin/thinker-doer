@@ -62,7 +62,7 @@ void moveEmptySeaTransportStrategy(int vehicleId)
 	
 	// no pods - destroy transport
 	
-	setTask(vehicleId, Task(KILL, vehicleId));
+	setTask(vehicleId, Task(vehicleId, KILL));
 
 }
 
@@ -79,7 +79,7 @@ void moveLoadedSeaTransportStrategy(int vehicleId, int passengerId)
 	
 	// set task
 	
-	transitVehicle(passengerId, Task(MOVE, passengerId, nearestLandTerritory));
+	transitVehicle(passengerId, Task(passengerId, MOVE, nearestLandTerritory));
 	
 }
 
@@ -190,7 +190,7 @@ bool deliverArtifact(int transportVehicleId, int artifactVehicleId)
 	
 	// deliver vehicle
 	
-	transitVehicle(artifactVehicleId, Task(HOLD, artifactVehicleId, baseLocation));
+	transitVehicle(artifactVehicleId, Task(artifactVehicleId, HOLD, baseLocation));
 	
 	return true;
 	
@@ -334,7 +334,7 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 
 	// transport vehicles
 	
-	transitVehicle(formerVehicleId, Task(HOLD, formerVehicleId, getMapTile(regionClosestBase->x, regionClosestBase->y)));
+	transitVehicle(formerVehicleId, Task(formerVehicleId, HOLD, getMapTile(regionClosestBase->x, regionClosestBase->y)));
 	
 	return true;
 	
@@ -383,7 +383,7 @@ bool deliverScout(int transportVehicleId, int scoutVehicleId)
 	
 	// deliver scout
 	
-	transitVehicle(scoutVehicleId, Task(MOVE, scoutVehicleId, nearestPodLocation));
+	transitVehicle(scoutVehicleId, Task(scoutVehicleId, MOVE, nearestPodLocation));
 	
 	return true;
 	
@@ -582,7 +582,7 @@ void popPodStrategy(int transportVehicleId)
 	
 	// go to destination
 	
-	setTask(transportVehicleId, Task(MOVE, transportVehicleId, nearestPodLocation));
+	setTask(transportVehicleId, Task(transportVehicleId, MOVE, nearestPodLocation));
 
 }
 
@@ -966,9 +966,9 @@ int getCrossOceanAssociation(int vehicleId, MAP *destination)
 			}
 			else
 			{
-				// weird thing - should not happen
+				// ocean was just one tile wide and we crossed it
 				
-				return -1;
+				return crossOceanAssociation;
 				
 			}
 			
@@ -1026,6 +1026,11 @@ int getAvailableSeaTransport(int association, int vehicleId)
 		if (getTransportRemainingCapacity(seaTransportVehicleId) <= 0)
 			continue;
 		
+		// no more than 20% damaged
+		
+		if (seaTransportVehicle->damage_taken > (2 * seaTransportVehicle->reactor_type()))
+			continue;
+		
 		// get range
 		
 		int range = map_range(seaTransportVehicle->x, seaTransportVehicle->y, vehicle->x, vehicle->y);
@@ -1065,6 +1070,11 @@ int getAvailableSeaTransportInStack(int vehicleId)
 		// available
 		
 		if (getTransportRemainingCapacity(stackVehicleId) == 0)
+			continue;
+		
+		// do not disturb damaged transport
+		
+		if (stackVehicle->damage_taken > (2 * stackVehicle->reactor_type()))
 			continue;
 		
 		// found

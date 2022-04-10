@@ -22,11 +22,6 @@ struct PRODUCTION_CHOICE
 	bool urgent;
 };
 
-enum UNIT_TYPE
-{
-	UT_DEFENSE = 0,
-};
-
 const std::set<int> MANAGED_UNIT_TYPES
 {
 	WPN_COLONY_MODULE,
@@ -85,6 +80,7 @@ void evaluateLandFormerDemand();
 void evaluateSeaFormerDemand();
 void evaluateLandColonyDemand();
 void evaluateSeaColonyDemand();
+void evaluateAirColonyDemand();
 void evaluateAlienDefenseDemand();
 void evaluateLandAlienDefenseDemand();
 void evaluateSeaAlienDefenseDemand();
@@ -134,4 +130,5 @@ int getBaseLabsIntake(int baseId);
 int getBaseTotalMineral(int baseId);
 int getBaseTotalEnergy(int baseId);
 std::vector<int> getProtectionCounterUnits(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
+double getUnitPriorityMultiplier(int baseId);
 

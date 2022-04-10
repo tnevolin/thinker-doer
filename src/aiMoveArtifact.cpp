@@ -50,7 +50,7 @@ void moveArtifactStrategy()
 		
 		// deliver vehicle
 		
-		transitVehicle(vehicleId, Task(ARTIFACT_CONTRIBUTE, vehicleId, baseLocation));
+		transitVehicle(vehicleId, Task(vehicleId, ARTIFACT_CONTRIBUTE, baseLocation));
 		
 	}
 	

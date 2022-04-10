@@ -77,62 +77,10 @@ void setupProductionVariables()
 	averagePerCitizenIncome = (aiData.baseIds.size() == 0 ? 0.0 : sumPerCitizenIncome / (double)aiData.baseIds.size());
 	averageBaseProjectedIncomeGrowth = (aiData.baseIds.size() == 0 ? 0.0 : sumBaseProjectedIncomeGrowth / (double)aiData.baseIds.size());
 	
-//	// store income
-//	
-//	for (int i = 19; i >= 1; i--)
-//	{
-//		metaFaction->averageBaseIncome[i] = metaFaction->averageBaseIncome[i - 1];
-//	}
-//	metaFaction->averageBaseIncome[0] = (float)averageBaseIncome;
-//	
-//	// calculate growth rate floating average
-//	
-//	double weight = 1.0;
-//	double weightDecay = 0.9;
-//	double sumWeights = 0.0;
-//	double sumGrowth = 0.0;
-//	
-//	for (int i = 1; i < 20; i++)
-//	{
-//		if (metaFaction->averageBaseIncome[i] == 0)
-//			break;
-//		
-//		debug("averageBaseIncome[%2d]=%+f\n", i, metaFaction->averageBaseIncome[i]);
-//		
-//		sumGrowth += weight * ((double)metaFaction->averageBaseIncome[i - 1] - (double)metaFaction->averageBaseIncome[i]);
-//		sumWeights += weight;
-//		
-//		weight *= weightDecay;
-//		
-//	}
-//	
-//	averageBaseIncomeGrowth = std::max(0.10, (sumWeights <= 0.0 ? 0.0 : sumGrowth / sumWeights));
-//	averageBaseIncomeGrowthRate = std::max(0.01, averageBaseIncomeGrowth / std::max(1.0, averageBaseIncome));
-//	developmentRate = std::max(0.01, averageBaseIncomeGrowthRate);
-//	
 	debug("\taverageBaseMineralSurplus = %f\n", averageBaseMineralSurplus);
 	debug("\taveragePerCitizenIncome = %f\n", averagePerCitizenIncome);
 	debug("\taverageBaseProjectedIncomeGrowth = %f\n", averageBaseProjectedIncomeGrowth);
 	
-//	// set normal gain for other gains normalization
-//	// imaginary facility
-//	// cost = 8, maint = 0, income = 0.5 base income
-//	
-//	normalGain =
-//		// minerals lost to production
-//		-
-//		getIntakeGain(getResourceScore(cost_factor(aiFactionId, 1, -1) * 8, 0), 0)
-//		// income gain
-//		+
-//		getIncomeGain(0.5 * averageBaseIncome, 0)
-//		// growth gain
-//		+
-//		getGrowthGain(0.5 * averageBaseIncome, 0) * averageBaseIncomeGrowthRate
-//	;
-//	normalGain = std::max(1.0, normalGain);
-//	
-//	debug("\tnormalGain=%+f, cost=%+f, income=%+f, growth=%+f\n", normalGain, -getIntakeGain(getResourceScore(cost_factor(aiFactionId, 1, -1) * 8, 0), 0), +getIncomeGain(0.5 * averageBaseIncome, 0), getGrowthGain(0.5 * averageBaseIncome, 0) * averageBaseIncomeGrowthRate);
-//	
 	// calculate colony gain for debugging purposes
 	
 	double productionTime = (double)(Units[BSC_COLONY_POD].cost * 10) / averageBaseMineralSurplus;
@@ -265,161 +213,16 @@ void evaluateGlobalBaseDemand()
 	globalBaseDemand *= inefficiencyDemandMultiplier;
 	debug("\tglobalBaseDemand=%f\n", globalBaseDemand);
 	
-//	// --------------------------------------------------
-//	// existing colony production
-//	// --------------------------------------------------
-//	
-//	// calculate existing colonies
-//	
-//	int existingColoniesCount = 0.0;
-//	
-//	for (int vehicleId : aiData.vehicleIds)
-//	{
-//		// colony
-//		
-//		if (!isColonyVehicle(vehicleId))
-//			continue;
-//		
-//		existingColoniesCount++;
-//		
-//	}
-//	
-//	debug("\texistingColoniesCount=%d\n", existingColoniesCount);
-//	
-//	// calculate support demand multiplier
-//	
-//	double supportDemandMultiplier;
-//	
-//	if (aiData.baseIds.size() == 0)
-//	{
-//		supportDemandMultiplier = 0.0;
-//	}
-//	else
-//	{
-//		supportDemandMultiplier = (double)std::max(0, (int)aiData.baseIds.size() - existingColoniesCount) / (double)aiData.baseIds.size();
-//	}
-//	
-//	// reduce demand based on existing colonies to reduce support burden
-//	
-//	globalBaseDemand *= supportDemandMultiplier;
-//	debug("\tglobalBaseDemand=%f\n", globalBaseDemand);
-//	
 }
 
 void evaluateGlobalFormerDemand()
 {
 	debug("evaluateGlobalFormerDemand - %s\n", MFactions[aiFactionId].noun_faction);
 	
+	// reset demand variables
+	
 	aiData.production.landFormerDemand = 0.0;
-	
-	// count unimproved worked tile count
-	
-	int landUnimprovedWorkedTileCount = 0;
-	std::map<int, int> seaUnimprovedWorkedTileCounts;
-	
-	for (int baseId : aiData.baseIds)
-	{
-		debug("\t%s\n", Bases[baseId].name);
-		
-		// count unimproved worked tiles
-		
-		debug("\t\tunimproved worked\n");
-		
-		for (MAP *tile : getBaseWorkedTiles(baseId))
-		{
-			// unimproved
-			
-			if (isImprovedTile(tile))
-				continue;
-			
-			// count
-			
-			if (is_ocean(tile))
-			{
-				int association = getAssociation(tile, aiFactionId);
-				accumulateMapIntValue(&seaUnimprovedWorkedTileCounts, association, 1);
-				debug("\t\t\t(%3d,%3d) %3d sea[%3d]\n", getX(tile), getY(tile), seaUnimprovedWorkedTileCounts.at(association), association);
-			}
-			else
-			{
-				landUnimprovedWorkedTileCount++;
-				debug("\t\t\t(%3d,%3d) %3d land\n", getX(tile), getY(tile), landUnimprovedWorkedTileCount);
-			}
-			
-		}
-		
-		// list land and ocean associations with improved unworked tiles
-		
-		debug("\t\timproved unworked\n");
-		
-		int landUnworkedTileCount = 0;
-		int landImprovedUnworkedTileCount = 0;
-		std::map<int, int> seaUnworkedTileCounts;
-		std::map<int, int> seaImprovedUnworkedTileCounts;
-		
-		for (MAP *tile : aiData.getBaseInfo(baseId)->unworkedTiles)
-		{
-			// mare sure all associations are accountded for
-			
-			if (is_ocean(tile))
-			{
-				int association = getAssociation(tile, aiFactionId);
-				accumulateMapIntValue(&seaUnworkedTileCounts, association, 1);
-				debug("\t\t\t(%3d,%3d) %3d sea[%3d] unworked\n", getX(tile), getY(tile), seaUnworkedTileCounts.at(association), association);
-			}
-			else
-			{
-				landUnworkedTileCount++;
-				debug("\t\t\t(%3d,%3d) %3d land unworked\n", getX(tile), getY(tile), landUnworkedTileCount);
-			}
-			
-			// improved
-			
-			if (!isImprovedTile(tile))
-				continue;
-			
-			// count improved
-			
-			if (is_ocean(tile))
-			{
-				int association = getAssociation(tile, aiFactionId);
-				accumulateMapIntValue(&seaImprovedUnworkedTileCounts, association, 1);
-				debug("\t\t\t(%3d,%3d) %3d sea[%3d] improved unworked\n", getX(tile), getY(tile), seaImprovedUnworkedTileCounts.at(association), association);
-			}
-			else
-			{
-				landImprovedUnworkedTileCount++;
-				debug("\t\t\t(%3d,%3d) %3d land improved unworked\n", getX(tile), getY(tile), landImprovedUnworkedTileCount);
-			}
-			
-		}
-		
-		// update total count with improved unworked tiles
-		
-		// land has unworked tiles and none of it is improved
-		
-		if (landUnworkedTileCount > 0 && landImprovedUnworkedTileCount == 0)
-		{
-			landUnimprovedWorkedTileCount++;
-			debug("\t\t%3d land extra count\n", landUnimprovedWorkedTileCount);
-		}
-		
-		for (const auto &seaUnworkedTileCountEntry : seaUnworkedTileCounts)
-		{
-			int association = seaUnworkedTileCountEntry.first;
-			int seaUnworkedTileCount = seaUnworkedTileCountEntry.second;
-			
-			// ocean association has unworked tiles and none of it is improved
-			
-			if (seaUnworkedTileCount > 0 && seaImprovedUnworkedTileCounts.count(association) == 0)
-			{
-				accumulateMapIntValue(&seaUnimprovedWorkedTileCounts, association, 1);
-				debug("\t\t%3d sea[%3d] extra count\n", seaUnimprovedWorkedTileCounts.at(association), association);
-			}
-			
-		}
-		
-	}
+	aiData.production.seaFormerDemands.clear();
 	
 	// count formers
 	
@@ -476,23 +279,23 @@ void evaluateGlobalFormerDemand()
 	
 	// compute demands
 	
-	if (landUnimprovedWorkedTileCount > 0)
+	if (aiData.production.landTerraformingRequestCount > 0)
 	{
-		aiData.production.landFormerDemand = 1.0 - ((double)landFormerCount + (double)airFormerCount) / (conf.ai_production_improvement_coverage * (double)landUnimprovedWorkedTileCount);
-		debug("\tlandFormerDemand=%f, landFormerCount=%d, airFormerCount=%d, ai_production_improvement_coverage=%f, landUnimprovedWorkedTileCount=%d\n", aiData.production.landFormerDemand, landFormerCount, airFormerCount, conf.ai_production_improvement_coverage, landUnimprovedWorkedTileCount);
+		aiData.production.landFormerDemand = 1.0 - (double)(landFormerCount + airFormerCount) / (conf.ai_production_improvement_coverage * (double)aiData.production.landTerraformingRequestCount);
+		debug("\tlandFormerDemand=%f, landFormerCount=%d, airFormerCount=%d, ai_production_improvement_coverage=%f, landTerraformingRequestCount=%d\n", aiData.production.landFormerDemand, landFormerCount, airFormerCount, conf.ai_production_improvement_coverage, aiData.production.landTerraformingRequestCount);
 	}
 	
-	for (const auto &seaUnimprovedWorkedTileCountEntry : seaUnimprovedWorkedTileCounts)
+	for (const auto &seaTerraformingRequestCountEntry : aiData.production.seaTerraformingRequestCounts)
 	{
-		int oceanAssociation = seaUnimprovedWorkedTileCountEntry.first;
-		int seaUnimprovedWorkedTileCount = seaUnimprovedWorkedTileCountEntry.second;
+		int oceanAssociation = seaTerraformingRequestCountEntry.first;
+		int seaTerraformingRequestCount = seaTerraformingRequestCountEntry.second;
 		int seaFormerCount = (seaFormerCounts.count(oceanAssociation) == 0 ? 0 : seaFormerCounts.at(oceanAssociation));
 		
-		if (seaUnimprovedWorkedTileCount > 0)
+		if (seaTerraformingRequestCount > 0)
 		{
-			double seaFormerDemand = 1.0 - ((double)seaFormerCount + (double)airFormerCount) / (conf.ai_production_improvement_coverage * (double)seaUnimprovedWorkedTileCount);
+			double seaFormerDemand = 1.0 - (double)(seaFormerCount + airFormerCount) / (conf.ai_production_improvement_coverage * (double)seaTerraformingRequestCount);
 			aiData.production.seaFormerDemands.insert({oceanAssociation, seaFormerDemand});
-			debug("\tseaFormerDemand(%3d)=%f, seaFormerCount=%d, airFormerCount=%d, ai_production_improvement_coverage=%f, seaUnimprovedWorkedTileCount=%d\n", oceanAssociation, seaFormerDemand, seaFormerCount, airFormerCount, conf.ai_production_improvement_coverage, seaUnimprovedWorkedTileCount);
+			debug("\tseaFormerDemand(%3d)=%f, seaFormerCount=%d, airFormerCount=%d, ai_production_improvement_coverage=%f, seaTerraformingRequestCount=%d\n", oceanAssociation, seaFormerDemand, seaFormerCount, airFormerCount, conf.ai_production_improvement_coverage, seaTerraformingRequestCount);
 		}
 		
 	}
@@ -524,7 +327,7 @@ void setProduction()
 
 		// compute military priority
 		
-		globalMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * aiData.mostVulnerableBaseDefenseDemand);
+		globalMilitaryPriority = std::max(conf.ai_production_military_priority_minimal, conf.ai_production_military_priority * aiData.production.globalDefenseDemand);
 		
 		debug("globalMilitaryPriority = %f\n", globalMilitaryPriority);
 		
@@ -539,7 +342,7 @@ void setProduction()
 			
 			if (MANAGED_UNIT_TYPES.count(choice) == 0)
 			{
-				vanillaPriority = conf.ai_production_vanilla_priority_unit;
+				vanillaPriority = conf.ai_production_vanilla_priority_unit * getUnitPriorityMultiplier(baseId);
 			}
 			
 		}
@@ -631,11 +434,6 @@ int aiSuggestBaseProduction(int baseId, int choice)
     productionDemand.item = choice;
     productionDemand.priority = 0.0; 
     
-//	// ignore new bases
-//	
-//	if (aiData.baseStrategies.count(baseId) == 0)
-//		return productionDemand.item;
-//	
 	// mandatory defense
 	
 	if (evaluateMandatoryDefenseDemand())
@@ -652,6 +450,7 @@ int aiSuggestBaseProduction(int baseId, int choice)
 
 	evaluateLandColonyDemand();
 	evaluateSeaColonyDemand();
+	evaluateAirColonyDemand();
 
 	evaluateAlienDefenseDemand();
 	evaluateAlienHuntingDemand();
@@ -673,13 +472,12 @@ Generates mandatory defense demand and return true if generated.
 bool evaluateMandatoryDefenseDemand()
 {
 	int baseId = productionDemand.baseId;
-	BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
 	
 	debug("evaluateMandatoryDefenseDemand\n");
 	
 	// validate base is not protected
 	
-	if (baseInfo->garrison.size() > 0)
+	if (getBaseGarrison(baseId).size() > 0)
 		return false;
 	
 	// find best anti-native defense unit
@@ -752,7 +550,7 @@ void evaluatePopulationLimitFacilitiesDemand()
 
 	// estimate projected population
 
-	int projectedPopulation = projectBasePopulation(baseId, buildTurns);
+	int projectedPopulation = getProjectedBasePopulation(baseId, buildTurns);
 	debug("\t\tcurrentPopulation=%d, projectedTurns=%d, projectedPopulation=%d\n", base->pop_size, buildTurns, projectedPopulation);
 	
 	// set priority
@@ -845,7 +643,7 @@ void evaluatePsychFacilitiesDemand()
 
 	// estimate projected population
 
-	int projectedPopulation = projectBasePopulation(baseId, buildTurns);
+	int projectedPopulation = getProjectedBasePopulation(baseId, buildTurns);
 	int projectedPopulationIncrease = projectedPopulation - base->pop_size;
 	debug("\t\tcurrentPopulation=%d, projectedTurns=%d, projectedPopulation=%d, projectedPopulationIncrease=%d\n", base->pop_size, buildTurns, projectedPopulation, projectedPopulationIncrease);
 	
@@ -1382,13 +1180,13 @@ void evaluateDefensiveFacilitiesDemand()
 	// calculate priority
 	// defensive facility is more desirable when closer to border
 	
-	double priority = conf.ai_production_military_priority * baseInfo->defenseDemand * exposure;
+	double priority = exposure * log(1.0 + std::max(0.0, std::min(baseInfo->unitTypeInfos[UT_MELEE].requiredProtection, baseInfo->unitTypeInfos[UT_MELEE].ownTotalCombatEffect)));
 	
 	// add demand
 
 	addProductionDemand(-facilityId, priority);
 
-	debug("\t\tfacility=%-25s, ai_production_military_priority=%f, regionDefenseDemand=%f, borderBaseDistance=%d, priority=%f\n", Facility[facilityId].name, conf.ai_production_military_priority, aiData.regionDefenseDemand[baseTile->region], baseInfo->borderBaseDistance, priority);
+	debug("\t\tfacility=%-25s priority=%f, ai_production_military_priority=%5.2f, borderBaseDistance=%d, exposure=%f, meleeProtection.required=%5.2f, ownTotalCombatEffect=%5.2f\n", Facility[facilityId].name, priority, conf.ai_production_military_priority, baseInfo->borderBaseDistance, exposure, baseInfo->unitTypeInfos[UT_MELEE].requiredProtection, baseInfo->unitTypeInfos[UT_MELEE].ownTotalCombatEffect);
 	
 }
 
@@ -1403,14 +1201,27 @@ void evaluateMilitaryFacilitiesDemand()
 	bool ocean = isOceanRegion(region);
 	std::set<int> connectedOceanRegions = getBaseConnectedOceanRegions(baseId);
 	
+	// military facility requires some minimal mineral intake
+	
+	if (base->mineral_intake_2 < 10)
+	{
+		debug("\t\tbase->mineral_intake_2 < 10\n");
+		return;
+	}
+	
+	// priority coefficient
+	
+	double mineraIntake2Coefficient = ((double)base->mineral_intake_2 / (double)aiData.maxMineralIntake2);
+	double priorityCoefficient = pow(mineraIntake2Coefficient, 2);
+	
 	// command center
 	
 	if (has_facility_tech(aiFactionId, FAC_COMMAND_CENTER) && !has_facility(baseId, FAC_COMMAND_CENTER) && !ocean)
 	{
 		int facilityId = FAC_COMMAND_CENTER;
-		double priority = conf.ai_production_command_center_priority * regionMilitaryPriority;
+		double priority = priorityCoefficient * conf.ai_production_command_center_priority;
 		addProductionDemand(-facilityId, priority);
-		debug("\t\tfacility=%-25s, ai_production_command_center_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_command_center_priority, priority);
+		debug("\t\tfacility=%-25s priority=%5.2f, mineraIntake2Coefficient=%5.2f, priorityCoefficient=%5.2f, ai_production_command_center_priority=%5.2f\n", Facility[facilityId].name, priority, mineraIntake2Coefficient, priorityCoefficient, conf.ai_production_command_center_priority);
 	}
 	
 	// naval yard
@@ -1418,9 +1229,9 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_NAVAL_YARD) && !has_facility(baseId, FAC_NAVAL_YARD) && (ocean || connectedOceanRegions.size() >= 1))
 	{
 		int facilityId = FAC_NAVAL_YARD;
-		double priority = conf.ai_production_naval_yard_priority * regionMilitaryPriority;
+		double priority = priorityCoefficient * conf.ai_production_naval_yard_priority;
 		addProductionDemand(-facilityId, priority);
-		debug("\t\tfacility=%-25s, ai_production_naval_yard_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_naval_yard_priority, priority);
+		debug("\t\tfacility=%-25s priority=%5.2f, mineraIntake2Coefficient=%5.2f, priorityCoefficient=%5.2f, ai_production_naval_yard_priority=%5.2f\n", Facility[facilityId].name, priority, mineraIntake2Coefficient, priorityCoefficient, conf.ai_production_naval_yard_priority);
 	}
 	
 	// aerospace complex
@@ -1428,9 +1239,9 @@ void evaluateMilitaryFacilitiesDemand()
 	if (has_facility_tech(aiFactionId, FAC_AEROSPACE_COMPLEX) && !has_facility(baseId, FAC_AEROSPACE_COMPLEX))
 	{
 		int facilityId = FAC_AEROSPACE_COMPLEX;
-		double priority = conf.ai_production_aerospace_complex_priority * globalMilitaryPriority * base->mineral_surplus_final / aiData.maxMineralSurplus;
+		double priority = priorityCoefficient * conf.ai_production_aerospace_complex_priority;
 		addProductionDemand(-facilityId, priority);
-		debug("\t\tfacility=%-25s, ai_production_aerospace_complex_priority=%f, priority=%f\n", Facility[facilityId].name, conf.ai_production_aerospace_complex_priority, priority);
+		debug("\t\tfacility=%-25s priority=%5.2f, mineraIntake2Coefficient=%5.2f, priorityCoefficient=%5.2f, ai_production_aerospace_complex_priority=%5.2f\n", Facility[facilityId].name, priority, mineraIntake2Coefficient, priorityCoefficient, conf.ai_production_aerospace_complex_priority);
 	}
 	
 }
@@ -1447,8 +1258,8 @@ void evaluatePoliceDemand()
 
 	// calculate police variables
 
-	int allowedPolice = getAllowedPolice(base->faction_id);
-	int basePoliceUnitCount = getBasePoliceUnitCount(baseId);
+	int allowedPolice = getBasePoliceAllowed(baseId);
+	int basePoliceUnitCount = getBaseGarrison(baseId).size();
 	bool morePoliceUnitsAllowed = basePoliceUnitCount < allowedPolice;
 	bool baseNeedPsych = isBaseNeedPsych(baseId);
 	int policeUnitId = -1;
@@ -1507,14 +1318,6 @@ void evaluateLandFormerDemand()
 
 	debug("evaluateLandFormerDemand\n");
 	
-	// there are no single land terraforming request
-	
-	if (!aiData.production.landTerraformingRequest)
-	{
-		debug("\tlandTerraformingRequest == false\n");
-		return;
-	}
-	
 	// check demand is positive
 	
 	if (aiData.production.landFormerDemand <= 0.0)
@@ -1537,7 +1340,7 @@ void evaluateLandFormerDemand()
 
 	// set priority
 
-	double priority = conf.ai_production_improvement_priority * aiData.production.landFormerDemand * ((double)base->mineral_surplus / (double)aiData.maxMineralSurplus);
+	double priority = conf.ai_production_improvement_priority * (double)aiData.production.landFormerDemand * ((double)base->mineral_surplus / (double)aiData.maxMineralSurplus);
 
 	debug("\tpriority=%f, ai_production_improvement_priority=%f, landFormerDemand=%f, mineral_surplus=%d, maxMineralSurplus=%d\n", priority, conf.ai_production_improvement_priority, aiData.production.landFormerDemand, base->mineral_surplus, aiData.maxMineralSurplus);
 
@@ -1564,19 +1367,11 @@ void evaluateSeaFormerDemand()
 		return;
 	}
 
-	// there are no single ocean association terraforming request
-	
-	if (aiData.production.seaTerraformingRequests.count(baseOceanAssociation) == 0)
-	{
-		debug("\tseaTerraformingRequest == false\n");
-		return;
-	}
-	
 	// check demand exists
 	
 	if (aiData.production.seaFormerDemands.count(baseOceanAssociation) == 0)
 	{
-		debug("\tno seaFormerDemand\n");
+		debug("\tseaFormerDemand does not exist\n");
 		return;
 	}
 	
@@ -1619,7 +1414,7 @@ void evaluateSeaFormerDemand()
 }
 
 /*
-Evaluates need for colonies.
+Evaluates need for land colony.
 */
 void evaluateLandColonyDemand()
 {
@@ -1636,9 +1431,89 @@ void evaluateLandColonyDemand()
 		return;
 	}
 	
-	// get colony demand
+	// no colony units
 	
-	double landColonyDemand = aiData.production.landColonyDemand;
+	if (aiData.landColonyUnitIds.size() == 0)
+	{
+		debug("\tno land colony units\n");
+		return;
+	}
+	
+	// populate colony unit production times
+	
+	std::vector<IdIntValue> colonyUnitProductionTimes;
+	
+	for (int unitId : aiData.landColonyUnitIds)
+	{
+		int productionTime = estimateBaseProductionTurnsToCompleteItem(baseId, unitId);
+		colonyUnitProductionTimes.push_back({unitId, productionTime});
+	}
+	
+	// find best build site score
+	
+	MAP *bestBuildSite = nullptr;
+	double bestBuildSiteScore = 0.0;
+	int optimalColonyUnitId = -1;
+	
+	for (MAP *tile : buildSites)
+	{
+		bool ocean = is_ocean(tile);
+		int x = getX(tile);
+		int y = getY(tile);
+		ExpansionTileInfo *expansionTileInfo = getExpansionTileInfo(tile);
+		
+		// exclude unmatching realm
+		
+		if (ocean)
+			continue;
+		
+		// iterate over available colony units
+		
+		for (IdIntValue colonyUnitProductionTimeEntry : colonyUnitProductionTimes)
+		{
+			int unitId = colonyUnitProductionTimeEntry.id;
+			int productionTime = colonyUnitProductionTimeEntry.value;
+			
+			// get travel time
+			
+			double travelTime = estimateTravelTime(base->x, base->y, x, y, unitId);
+			
+			// total time to destination
+			
+			double totalTime = (double)productionTime + travelTime;
+			
+			// get travel time score
+			
+			double travelTimeScore = getBuildSiteTravelTimeScore(totalTime);
+			
+			// get combined score
+			
+			double buildSiteScore = expansionTileInfo->buildScore + travelTimeScore;
+			
+			// update best
+			
+			if (buildSiteScore > bestBuildSiteScore)
+			{
+				bestBuildSite = tile;
+				bestBuildSiteScore = buildSiteScore;
+				optimalColonyUnitId = unitId;
+			}
+			
+		}
+		
+	}
+	
+	// not found
+	
+	if (bestBuildSite == nullptr)
+	{
+		debug("\tcannot find build site\n");
+		return;
+	}
+	
+	// set colony demand
+	
+	double landColonyDemand = bestBuildSiteScore;
 	
 	// too low demand
 
@@ -1673,13 +1548,9 @@ void evaluateLandColonyDemand()
 	)
 	;
 
-	// find optimal colony unit
-
-	int optimalColonyUnitId = findOptimalColonyUnit(base->faction_id, TRIAD_LAND, base->mineral_surplus);
-
 	if (optimalColonyUnitId == -1)
 	{
-		debug("\t\tno land/air colony unit found\n");
+		debug("\t\tno land colony unit found\n");
 		return;
 	}
 
@@ -1692,7 +1563,7 @@ void evaluateLandColonyDemand()
 }
 
 /*
-Evaluates need for colonies.
+Evaluates need for sea colony.
 */
 void evaluateSeaColonyDemand()
 {
@@ -1718,17 +1589,95 @@ void evaluateSeaColonyDemand()
 		return;
 	}
 	
-	// get sea association demand
+	// no colony units
 	
-	if (aiData.production.seaColonyDemands.count(baseOceanAssociation) == 0)
+	if (aiData.seaColonyUnitIds.size() == 0)
 	{
-		debug("\tERROR: no seaColonyDemand for this association.\n")
+		debug("\tno sea colony units\n");
 		return;
 	}
 	
-	// get colony demand
+	// populate colony unit production times
 	
-	double seaColonyDemand = aiData.production.seaColonyDemands.at(baseOceanAssociation);
+	std::vector<IdIntValue> colonyUnitProductionTimes;
+	
+	for (int unitId : aiData.seaColonyUnitIds)
+	{
+		int productionTime = estimateBaseProductionTurnsToCompleteItem(baseId, unitId);
+		colonyUnitProductionTimes.push_back({unitId, productionTime});
+	}
+	
+	// find best build site score
+	
+	MAP *bestBuildSite = nullptr;
+	double bestBuildSiteScore = 0.0;
+	int optimalColonyUnitId = -1;
+	
+	for (MAP *tile : buildSites)
+	{
+		bool ocean = is_ocean(tile);
+		int x = getX(tile);
+		int y = getY(tile);
+		int oceanAssociation = getOceanAssociation(tile, aiFactionId);
+		ExpansionTileInfo *expansionTileInfo = getExpansionTileInfo(tile);
+		
+		// exclude unmatching realm
+		
+		if (!ocean)
+			continue;
+		
+		// exclude different ocean association
+		
+		if (ocean && oceanAssociation != baseOceanAssociation)
+			continue;
+		
+		// iterate over available colony units
+		
+		for (IdIntValue colonyUnitProductionTimeEntry : colonyUnitProductionTimes)
+		{
+			int unitId = colonyUnitProductionTimeEntry.id;
+			int productionTime = colonyUnitProductionTimeEntry.value;
+			
+			// get travel time
+			
+			double travelTime = estimateTravelTime(base->x, base->y, x, y, unitId);
+			
+			// total time to destination
+			
+			double totalTime = (double)productionTime + travelTime;
+			
+			// get travel time score
+			
+			double travelTimeScore = getBuildSiteTravelTimeScore(totalTime);
+			
+			// get combined score
+			
+			double buildSiteScore = expansionTileInfo->buildScore + travelTimeScore;
+			
+			// update best
+			
+			if (buildSiteScore > bestBuildSiteScore)
+			{
+				bestBuildSite = tile;
+				bestBuildSiteScore = buildSiteScore;
+				optimalColonyUnitId = unitId;
+			}
+			
+		}
+		
+	}
+	
+	// not found
+	
+	if (bestBuildSite == nullptr)
+	{
+		debug("\tcannot find build site\n");
+		return;
+	}
+	
+	// set colony demand
+	
+	double seaColonyDemand = bestBuildSiteScore;
 	
 	// too low demand
 
@@ -1765,15 +1714,156 @@ void evaluateSeaColonyDemand()
 
 	// find optimal colony unit
 
-	int optimalColonyUnitId = findOptimalColonyUnit(base->faction_id, TRIAD_SEA, base->mineral_surplus);
-	
 	if (optimalColonyUnitId == -1)
 	{
-		debug("\t\tno sea/air colony unit found\n");
+		debug("\t\tno sea colony unit found\n");
 		return;
 	}
 
 	debug("\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, optimalColonyUnitId=%-25s\n", TRIAD_SEA, base->mineral_surplus, Units[optimalColonyUnitId].name);
+
+	// set base demand
+
+	addProductionDemand(optimalColonyUnitId, priority);
+
+}
+
+/*
+Evaluates need for air colony.
+*/
+void evaluateAirColonyDemand()
+{
+	int baseId = productionDemand.baseId;
+	BASE *base = productionDemand.base;
+
+	debug("evaluateAirColonyDemand\n");
+
+	// verify base can build a colony
+
+	if (!canBaseProduceColony(baseId))
+	{
+		debug("\tbase cannot build a colony\n");
+		return;
+	}
+	
+	// no colony units
+	
+	if (aiData.airColonyUnitIds.size() == 0)
+	{
+		debug("\tno air colony units\n");
+		return;
+	}
+	
+	// populate colony unit production times
+	
+	std::vector<IdIntValue> colonyUnitProductionTimes;
+	
+	for (int unitId : aiData.airColonyUnitIds)
+	{
+		int productionTime = estimateBaseProductionTurnsToCompleteItem(baseId, unitId);
+		colonyUnitProductionTimes.push_back({unitId, productionTime});
+	}
+	
+	// find best build site score
+	
+	MAP *bestBuildSite = nullptr;
+	double bestBuildSiteScore = 0.0;
+	int optimalColonyUnitId = -1;
+	
+	for (MAP *tile : buildSites)
+	{
+		int x = getX(tile);
+		int y = getY(tile);
+		ExpansionTileInfo *expansionTileInfo = getExpansionTileInfo(tile);
+		
+		// iterate over available colony units
+		
+		for (IdIntValue colonyUnitProductionTimeEntry : colonyUnitProductionTimes)
+		{
+			int unitId = colonyUnitProductionTimeEntry.id;
+			int productionTime = colonyUnitProductionTimeEntry.value;
+			
+			// get travel time
+			
+			double travelTime = estimateTravelTime(base->x, base->y, x, y, unitId);
+			
+			// total time to destination
+			
+			double totalTime = (double)productionTime + travelTime;
+			
+			// get travel time score
+			
+			double travelTimeScore = getBuildSiteTravelTimeScore(totalTime);
+			
+			// get combined score
+			
+			double buildSiteScore = expansionTileInfo->buildScore + travelTimeScore;
+			
+			// update best
+			
+			if (buildSiteScore > bestBuildSiteScore)
+			{
+				bestBuildSite = tile;
+				bestBuildSiteScore = buildSiteScore;
+				optimalColonyUnitId = unitId;
+			}
+			
+		}
+		
+	}
+	
+	// not found
+	
+	if (bestBuildSite == nullptr)
+	{
+		debug("\tcannot find build site\n");
+		return;
+	}
+	
+	// set colony demand
+	
+	double landColonyDemand = bestBuildSiteScore;
+	
+	// too low demand
+
+	if (landColonyDemand <= 0.0)
+	{
+		debug("\tlandColonyDemand <= 0.0\n");
+		return;
+	}
+
+	// calculate priority
+
+	double priority =
+		(
+			landColonyDemand
+			*
+			(conf.ai_production_expansion_priority + conf.ai_production_expansion_priority_per_population * (double)base->pop_size)
+		)
+		*
+		globalBaseDemand
+		*
+		baseColonyDemandMultiplier
+	;
+	
+	debug
+	(
+		"\t\tpriority=%f, landColonyDemand=%f, multiplier=%f, globalBaseDemand=%f, baseColonyDemandMultiplier=%f\n",
+		priority,
+		landColonyDemand,
+		conf.ai_production_expansion_priority + conf.ai_production_expansion_priority_per_population * (double)base->pop_size,
+		globalBaseDemand,
+		baseColonyDemandMultiplier
+	)
+	;
+
+	if (optimalColonyUnitId == -1)
+	{
+		debug("\t\tno air colony unit found\n");
+		return;
+	}
+
+	debug("\t\tfindOptimalColonyUnit: triad=%d, mineral_surplus=%d, optimalColonyUnitId=%-25s\n", TRIAD_LAND, base->mineral_surplus, Units[optimalColonyUnitId].name);
 
 	// set base demand
 
@@ -2301,39 +2391,6 @@ void evaluateLandPodPoppingDemand()
 		return;
 	}
 	
-//	// verify there is still room for pop popper production
-//	
-//	int supportedScountVehicleCount = 0;
-//	int supportedOtherVehicleCount = 0;
-//	
-//	for (int vehicleId : aiData.vehicleIds)
-//	{
-//		VEH *vehicle = &(Vehicles[vehicleId]);
-//		
-//		// support from this base
-//		
-//		if (vehicle->home_base_id != baseId)
-//			continue;
-//		
-//		// count support
-//		
-//		if (isScoutVehicle(vehicleId))
-//		{
-//			supportedScountVehicleCount++;
-//		}
-//		else
-//		{
-//			supportedOtherVehicleCount++;
-//		}
-//		
-//	}
-//	
-//	if (supportedScountVehicleCount >= supportedOtherVehicleCount)
-//	{
-//		debug("\tsupportedScountVehicleCount >= supportedOtherVehicleCount\n");
-//		return;
-//	}
-//
 	// set priority
 
 	double priority =
@@ -2396,39 +2453,6 @@ void evaluateSeaPodPoppingDemand()
 		return;
 	}
 
-//	// verify there is still room for pop popper production
-//	
-//	int supportedScountVehicleCount = 0;
-//	int supportedOtherVehicleCount = 0;
-//	
-//	for (int vehicleId : aiData.vehicleIds)
-//	{
-//		VEH *vehicle = &(Vehicles[vehicleId]);
-//		
-//		// support from this base
-//		
-//		if (vehicle->home_base_id != baseId)
-//			continue;
-//		
-//		// count support
-//		
-//		if (isScoutVehicle(vehicleId))
-//		{
-//			supportedScountVehicleCount++;
-//		}
-//		else
-//		{
-//			supportedOtherVehicleCount++;
-//		}
-//		
-//	}
-//	
-//	if (supportedScountVehicleCount >= supportedOtherVehicleCount)
-//	{
-//		debug("\tsupportedScountVehicleCount >= supportedOtherVehicleCount\n");
-//		return;
-//	}
-//
 	// set priority
 
 	double priority =
@@ -2530,7 +2554,26 @@ void evaluatePrototypingDemand()
 	
 	// calculate priority
 	
-	double priority = conf.ai_production_prototyping_priority * globalMilitaryPriority;
+	double priority = conf.ai_production_prototyping_priority;
+	
+	// increase priority if at war
+	
+	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
+	{
+		// skip self
+		
+		if (factionId == aiFactionId)
+			continue;
+		
+		// increase priority if at war
+		
+		if (isWar(aiFactionId, factionId))
+		{
+			priority *= 2;
+			break;
+		}
+		
+	}
 	
 	// calculate adjusted priority based on mineral surplus
 	
@@ -2548,7 +2591,6 @@ void evaluateCombatDemand()
 {
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
-	BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
 	
 	debug("evaluateCombatDemand\n");
 
@@ -2560,9 +2602,30 @@ void evaluateCombatDemand()
 		return;
 	}
 	
-	// get target base
+	// find closest base with defense demand
 	
-	int targetBaseId = baseInfo->targetBaseId;
+	int targetBaseId = -1;
+	int targetBaseRange = INT_MAX;
+	
+	for (int otherBaseId : aiData.baseIds)
+	{
+		BASE *otherBase = &(Bases[otherBaseId]);
+		BaseInfo *otherBaseInfo = aiData.getBaseInfo(otherBaseId);
+		
+		// exclude those without defense demand
+		
+		if (otherBaseInfo->unitTypeInfos[UT_MELEE].protectionDemand <= 0.0)
+			continue;
+		
+		int range = map_range(base->x, base->y, otherBase->x, otherBase->y);
+		
+		if (range < targetBaseRange)
+		{
+			targetBaseId = otherBaseId;
+			targetBaseRange = range;
+		}
+		
+	}
 	
 	// no target base
 	
@@ -2574,13 +2637,13 @@ void evaluateCombatDemand()
 	
 	debug("\t-> %s\n", Bases[targetBaseId].name);
 
-	// get target base strategy
+	// get target base info
 	
 	BaseInfo *targetBaseInfo = aiData.getBaseInfo(targetBaseId);
 	
 	// no defense demand
 	
-	if (targetBaseInfo->defenseDemand <= 0.0)
+	if (targetBaseInfo->unitTypeInfos[UT_MELEE].protectionDemand <= 0.0)
 	{
 		debug("\tno defense demand\n");
 		return;
@@ -2602,7 +2665,7 @@ void evaluateCombatDemand()
 	
 	// calculate priority
 	
-	double priority = conf.ai_production_military_priority * targetBaseInfo->defenseDemand;
+	double priority = conf.ai_production_military_priority * targetBaseInfo->unitTypeInfos[UT_MELEE].protectionDemand;
 	
 	// priority is reduced for low production bases except selftargetted base
 	
@@ -2615,60 +2678,24 @@ void evaluateCombatDemand()
 	
 	addProductionDemand(unitId, priority);
 	
-	debug("\t%s -> %s, %s, ai_production_military_priority=%f, defenseDemand=%f, priority=%f\n", base->name, Bases[targetBaseId].name, Units[unitId].name, conf.ai_production_military_priority, targetBaseInfo->defenseDemand, priority);
+	debug("\t%s -> %s, %s, ai_production_military_priority=%f, protectionDemand=%f, priority=%f\n", base->name, Bases[targetBaseId].name, Units[unitId].name, conf.ai_production_military_priority, targetBaseInfo->unitTypeInfos[UT_MELEE].protectionDemand, priority);
 	
 }
 
 void addProductionDemand(int item, double priority)
 {
-	BASE *base = productionDemand.base;
+	int baseId = productionDemand.baseId;
 
-	// prechecks
+	// reduce non combat unit priority based on current support
 
-	// do not exhaust support
-
-	if (item >= 0)
+	if (item >= 0 && !isCombatUnit(item))
 	{
-		if (isFormerUnit(item))
+		double unitPriorityMultiplier = getUnitPriorityMultiplier(baseId);
+		
+		if (unitPriorityMultiplier < 1.0)
 		{
-			// former mineral surplus requirement
-			
-			if (base->mineral_surplus < 1)
-			{
-				debug("...> cannot build former: mineral_surplus < %d\n", conf.ai_production_unit_min_mineral_surplus);
-				return;
-			}
-			
-		}
-		else if (isColonyUnit(item))
-		{
-			// colony mineral surplus requirement
-			
-			if (base->mineral_surplus < conf.ai_production_unit_min_mineral_surplus)
-			{
-				debug("...> cannot build colony: mineral_surplus < %d\n", conf.ai_production_unit_min_mineral_surplus);
-				return;
-			}
-			
-		}
-		else
-		{
-			// other unit requires at least conf.ai_production_unit_min_mineral_surplus mineral surplus
-			
-			if (base->mineral_surplus < conf.ai_production_unit_min_mineral_surplus)
-			{
-				debug("...> cannot build unit: mineral_surplus < %d\n", conf.ai_production_unit_min_mineral_surplus);
-				return;
-			}
-			
-			// and no more than 1/2 of mineral production spent on support
-			
-			if (base->mineral_surplus < base->mineral_consumption)
-			{
-				debug("...> cannot build unit: mineral_surplus < mineral_consumption\n");
-				return;
-			}
-			
+			priority *= unitPriorityMultiplier;
+			debug("...> unit priority reduced to %5.2f\n", priority);
 		}
 		
 	}
@@ -2940,7 +2967,7 @@ int findOptimalColonyUnit(int factionId, int triad, int mineralSurplus)
 
 		// given triad only or air with unlimited range
 
-		if (!(triad == TRIAD_AIR && chassis->range > 0 || unit_triad(unitId) == triad))
+		if (!(triad == TRIAD_AIR && chassis->range == 0 || unit_triad(unitId) == triad))
 			continue;
 		
 		// colony only
@@ -2972,20 +2999,37 @@ Checks if base has enough population to issue a colony by the time it is built.
 bool canBaseProduceColony(int baseId)
 {
 	BASE *base = &(Bases[baseId]);
+	
+	// size 2+ - always allowed
+	
+	if (base->pop_size >= 2)
+		return true;
+	
+	// mineral surplus not positive - allowed
+	
+	if (base->mineral_surplus <= 0)
+		return true;
+	
+	// get colony minimal mineral cost
+	
+	int colonyMineralCost = getBaseMineralCost(baseId, BSC_COLONY_POD);
+	
+	if (getBaseOceanAssociation(baseId) != -1)
+	{
+		colonyMineralCost = std::min(colonyMineralCost, getBaseMineralCost(baseId, BSC_SEA_ESCAPE_POD));
+	}
 
-	// do not produce colony if insufficient population
-
-	if (base->pop_size < 2)
-		return false;
-
-	// do not produce colony in low productive bases
-
-	if (base->mineral_surplus < 2)
-		return false;
-
-	// true otherwise
-
-	return true;
+	// get colony production time
+	
+	int colonyProductionTime = ((colonyMineralCost - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
+	
+	// get projected base population by the time colony is produced
+	
+	int projectedBasePopulation = getProjectedBasePopulation(baseId, colonyProductionTime);
+	
+	// return true if projected base population is >= 2
+	
+	return projectedBasePopulation >= 2;
 
 }
 
@@ -3150,7 +3194,7 @@ bool isBaseNeedPsych(int baseId)
 	BASE *base = &(Bases[baseId]);
 
 	int doctors = getDoctors(baseId);
-	int projectedPopulationIncrease = projectBasePopulation(baseId, conf.ai_production_population_projection_turns) - base->pop_size;
+	int projectedPopulationIncrease = getProjectedBasePopulation(baseId, conf.ai_production_population_projection_turns) - base->pop_size;
 
 	return (doctors > 0 || (base->drone_total > 0 && base->drone_total + projectedPopulationIncrease > base->talent_total));
 
@@ -3730,6 +3774,8 @@ Finds best combat unit built at source base to help target base against target b
 */
 int selectCombatUnit(int baseId, int targetBaseId)
 {
+	int baseOceanAssociation = getBaseOceanAssociation(baseId);
+	
 	debug("selectCombatUnit\n");
 	
 	// no target base
@@ -3741,82 +3787,69 @@ int selectCombatUnit(int baseId, int targetBaseId)
 	
 	// get target base strategy
 	
+	MAP *targetBaseTile = getBaseMapTile(targetBaseId);
+	bool targetBaseOcean = is_ocean(targetBaseTile);
+	int targetBaseOceanAssociation = getBaseOceanAssociation(targetBaseId);
 	BaseInfo *targetBaseInfo = aiData.getBaseInfo(targetBaseId);
-	MilitaryStrength *ownStrength = &(targetBaseInfo->ownStrength);
-	MilitaryStrength *foeStrength = &(targetBaseInfo->foeStrength);
 	
 	// no defense demand
 	
-	if (targetBaseInfo->defenseDemand <= 0.0)
+	if (targetBaseInfo->unitTypeInfos[UT_MELEE].protectionDemand <= 0.0)
 	{
 		debug("\tno defense demand\n");
 		return -1;
 	}
 	
-	// fint most numerous foe unit
+	// iterate best protectors at target base
 	
-	int prevailingFoeUnitId = -1;
-	double prevailingFoeUnitWeight = 0.0;
+	int bestUnitId = -1;
 	
-	for (int foeUnitId : foeStrength->populatedUnitIds)
+	for (IdDoubleValue protectorEntry : targetBaseInfo->unitTypeInfos[UT_MELEE].protectors)
 	{
-		double foeUnitWeight = foeStrength->unitStrengths[foeUnitId].weight;
+		int unitId = protectorEntry.id;
+		UNIT *unit = &(Units[unitId]);
+		int triad = unit_triad(unitId);
+		int weaponOffenseValue = Weapon[unit->weapon_type].offense_value;
 		
-		if (foeUnitWeight > prevailingFoeUnitWeight)
+		// skip those unfit for target base or cannot travel there
+		
+		if (!targetBaseOcean)
 		{
-			prevailingFoeUnitId = foeUnitId;
-			prevailingFoeUnitWeight = foeUnitWeight;
+			// don't send sea units to land base
+			
+			if (triad == TRIAD_SEA)
+				continue;
+		}
+		else
+		{
+			// don't send sea units to ocean base in different association
+			
+			if (triad == TRIAD_SEA && (baseOceanAssociation == -1 || targetBaseOceanAssociation == -1 || targetBaseOceanAssociation != baseOceanAssociation))
+				continue;
+			
+			// don't send land offensive units to ocean base unless amphibious
+			
+			if (triad == TRIAD_LAND && (weaponOffenseValue < 0 || weaponOffenseValue > 1) && !unit_has_ability(unitId, ABL_AMPHIBIOUS))
+				continue;
+			
 		}
 		
-	}
-	
-	// not found
-	
-	if (prevailingFoeUnitId == -1)
-	{
-		debug("\tcannot find prevailingFoeUnit\n");
-		return -1;
-	}
-	
-	debug("\tprevailingFoeUnit=%s\n", Units[prevailingFoeUnitId].name);
-	
-	// get counter units
-	
-	std::vector<int> counterUnitIds = getProtectionCounterUnits(baseId, targetBaseId, prevailingFoeUnitId, &(foeStrength->unitStrengths[prevailingFoeUnitId]));
-	
-	// process units
-	
-	int bestCounterUnitId = -1;
-	double bestCounterUnitWeight = DBL_MAX;
-	
-	for (int counterUnitId : counterUnitIds)
-	{
-		debug("\t\tcounterUnit=%s\n", Units[counterUnitId].name);
+		// select first best unit
 		
-		// demand
-		
-		double weight = ownStrength->unitStrengths[counterUnitId].weight;
-		
-		debug("\t\t\tweight=%6.3f\n", weight);
-		
-		if (weight < bestCounterUnitWeight)
-		{
-			bestCounterUnitId = counterUnitId;
-			bestCounterUnitWeight = weight;
-		}
+		bestUnitId = unitId;
+		break;
 		
 	}
 	
-	debug("\t\tbestCounterUnit=%s\n", Units[bestCounterUnitId].name);
+	// return
 	
-	return bestCounterUnitId;
+	return bestUnitId;
 	
 }
 
 void evaluateTransportDemand()
 {
 	int baseId = productionDemand.baseId;
-	BASE *base = &(Bases[baseId]);
 	
 	debug("evaluateTransportDemand\n");
 	
@@ -3870,7 +3903,10 @@ void evaluateTransportDemand()
 		// demand is satisfied
 		
 		if (transportCount >= (double)seaTransportDemand)
+		{
+			debug("\ttransportCount=%5.2f >= seaTransportDemand=%d\n", transportCount, seaTransportDemand)
 			continue;
+		}
 		
 		// calculate demand
 		
@@ -3880,9 +3916,9 @@ void evaluateTransportDemand()
 		
 		// set priority
 		
-		double priority = conf.ai_production_transport_priority * transportDemand * ((double)base->mineral_surplus / (double)aiData.maxMineralSurplus);
+		double priority = conf.ai_production_transport_priority * transportDemand;
 		
-		debug("\tpriority=%f\n", priority);
+		debug("\tpriority=%f, conf.ai_production_transport_priority=%f, transportDemand=%f\n", priority, conf.ai_production_transport_priority, transportDemand);
 		
 		// find transport unit
 		
@@ -4181,6 +4217,26 @@ std::vector<int> getProtectionCounterUnits(int baseId, int targetBaseId, int foe
 	}
 	
 	return counterUnitIds;
+	
+}
+
+/*
+Calculates unit priority reduction based on existing support.
+*/
+double getUnitPriorityMultiplier(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	double unitPriorityMultiplier = 1.0;
+	
+	int unitCriticalSurplus = std::max(conf.ai_production_unit_min_mineral_surplus, base->mineral_intake_2 * 3 / 4);
+	
+	if (base->mineral_surplus < unitCriticalSurplus)
+	{
+		unitPriorityMultiplier = (double)base->mineral_surplus / (double)unitCriticalSurplus;
+	}
+	
+	return unitPriorityMultiplier;
 	
 }
 

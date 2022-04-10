@@ -15,12 +15,6 @@ void moveStrategy()
 	
 	clock_t s1;
 	
-	// update variables
-	
-	s1 = clock();
-	updateGlobalVariables();
-	debug("(time) [WTP] -updateGlobalVariables: %6.3f\n", (double)(clock() - s1) / (double)CLOCKS_PER_SEC);
-	
 	// vanilla fix for transport dropoff
 	
 	fixUndesiredTransportDropoff();
@@ -67,7 +61,7 @@ void moveStrategy()
 
 }
 
-void updateGlobalVariables()
+void populateVehicles()
 {
 	// populate vehicles
 	
@@ -78,6 +72,7 @@ void updateGlobalVariables()
 	aiData.outsideCombatVehicleIds.clear();
 	aiData.colonyVehicleIds.clear();
 	aiData.formerVehicleIds.clear();
+	aiData.activeCombatUnitIds.clear();
 	
 	debug("populate vehicles - %s\n", MFactions[aiFactionId].noun_faction);
 	for (int id = 0; id < *total_num_vehicles; id++)
@@ -107,6 +102,13 @@ void updateGlobalVariables()
 			// add vehicle to global list
 
 			aiData.combatVehicleIds.push_back(id);
+			
+			// add vehicle unit to global list
+			
+			if (std::find(aiData.activeCombatUnitIds.begin(), aiData.activeCombatUnitIds.end(), vehicle->unit_id) == aiData.activeCombatUnitIds.end())
+			{
+				aiData.activeCombatUnitIds.push_back(vehicle->unit_id);
+			}
 			
 			// scout and native
 			
@@ -315,7 +317,7 @@ void healStrategy()
 			
 			// heal
 			
-			setTask(vehicleId, Task(HOLD, vehicleId));
+			setTask(vehicleId, Task(vehicleId, HOLD));
 			
 		}
 		
@@ -334,7 +336,7 @@ void healStrategy()
 			
 			if (nearestMonolith != nullptr && map_range(vehicle->x, vehicle->y, getX(nearestMonolith), getY(nearestMonolith)) <= (vehicle->triad() == TRIAD_SEA ? 10 : 5))
 			{
-				setTask(vehicleId, Task(MOVE, vehicleId, nearestMonolith));
+				setTask(vehicleId, Task(vehicleId, MOVE, nearestMonolith));
 				continue;
 			}
 			
@@ -344,14 +346,14 @@ void healStrategy()
 			
 			if (nearestBase != nullptr && map_range(vehicle->x, vehicle->y, getX(nearestBase), getY(nearestBase)) <= (vehicle->triad() == TRIAD_SEA ? 10 : 5))
 			{
-				setTask(vehicleId, Task(HOLD, vehicleId, nearestBase));
+				setTask(vehicleId, Task(vehicleId, HOLD, nearestBase));
 				continue;
 			}
 			
 			// heal in field
 			
 //			setMoveOrder(vehicleId, vehicle->x, vehicle->y, ORDER_SENTRY_BOARD);
-			setTask(vehicleId, Task(HOLD, vehicleId));
+			setTask(vehicleId, Task(vehicleId, HOLD));
 			
 		}
 		
@@ -400,6 +402,10 @@ int moveVehicle(const int vehicleId)
 		return defaultEnemyMove(vehicleId);
 	}
 	
+	// reassign task for sure kill if any
+	
+	findSureKill(vehicleId);
+	
 	// execute task
 	
 	if (hasTask(vehicleId))
@@ -407,13 +413,6 @@ int moveVehicle(const int vehicleId)
 		return executeTask(vehicleId);
 	}
 	
-//	// combat
-//	
-//	if (isCombatVehicle(vehicleId))
-//	{
-//		return moveCombat(vehicleId);
-//	}
-//	
 	// colony
 	// all colony movement is scheduled in strategy phase
 	
@@ -550,6 +549,13 @@ void transitVehicle(int vehicleId, Task task)
 	{
 		debug("\tis being transported\n");
 		
+		VEH *seaTransportVehicle = &(Vehicles[seaTransportVehicleId]);
+		
+		// do not disturb damaged transport
+		
+		if (seaTransportVehicle->damage_taken > (2 * seaTransportVehicle->reactor_type()))
+			return;
+		
 		// find unboard location
 		
 		MAP *unboardLocation = getSeaTransportUnboardLocation(seaTransportVehicleId, destination);
@@ -590,11 +596,11 @@ void transitVehicle(int vehicleId, Task task)
 			
 			// skip transport
 			
-			setTask(seaTransportVehicleId, Task(SKIP, seaTransportVehicleId));
+			setTask(seaTransportVehicleId, Task(seaTransportVehicleId, SKIP));
 			
 			// move to unboard location
 			
-			setTask(vehicleId, Task(MOVE, vehicleId, unboardLocation));
+			setTask(vehicleId, Task(vehicleId, MOVE, unboardLocation));
 			
 			return;
 			
@@ -602,8 +608,8 @@ void transitVehicle(int vehicleId, Task task)
 		
 		// add orders
 		
-		setTask(vehicleId, Task(UNBOARD, vehicleId, unboardLocation));
-		setTaskIfCloser(seaTransportVehicleId, Task(UNLOAD, seaTransportVehicleId, unloadLocation, vehicleId));
+		setTask(vehicleId, Task(vehicleId, UNBOARD, unboardLocation));
+		setTaskIfCloser(seaTransportVehicleId, Task(seaTransportVehicleId, UNLOAD, unloadLocation, vehicleId));
 		
 		return;
 		
@@ -636,8 +642,8 @@ void transitVehicle(int vehicleId, Task task)
 	
 	debug("\tadd boarding tasks: [%3d]\n", availableSeaTransportVehicleId);
 	
-	setTask(vehicleId, Task(BOARD, vehicleId, nullptr, availableSeaTransportVehicleId));
-	setTaskIfCloser(availableSeaTransportVehicleId, Task(LOAD, availableSeaTransportVehicleId, availableSeaTransportLoadLocation, vehicleId));
+	setTask(vehicleId, Task(vehicleId, BOARD, nullptr, availableSeaTransportVehicleId));
+	setTaskIfCloser(availableSeaTransportVehicleId, Task(availableSeaTransportVehicleId, LOAD, availableSeaTransportLoadLocation, vehicleId));
 	
 	// clear vehicle status
 	// sometimes it is stuck in sentry on transport

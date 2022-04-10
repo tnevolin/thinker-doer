@@ -7,10 +7,26 @@
 #include "terranx.h"
 #include "terranx_types.h"
 #include "terranx_enums.h"
+#include "ai.h"
 #include "aiTask.h"
 #include "aiMoveFormer.h"
 
+const double MIN_SIGNIFICANT_THREAT = 0.2;
 const int COMBAT_ABILITY_FLAGS = ABL_AMPHIBIOUS | ABL_AIR_SUPERIORITY | ABL_AAA | ABL_COMM_JAMMER | ABL_EMPATH | ABL_ARTILLERY | ABL_BLINK_DISPLACER | ABL_TRANCE | ABL_NERVE_GAS | ABL_SOPORIFIC_GAS | ABL_DISSOCIATIVE_WAVE;
+
+const unsigned int UNIT_TYPE_COUNT = 2;
+enum UnitType
+{
+	UT_MELEE,
+	UT_LAND_ARTILLERY,
+};
+
+struct CombatEffect
+{
+	double attack;
+	double defend;
+	double average;
+};
 
 struct FactionInfo
 {
@@ -21,40 +37,6 @@ struct FactionInfo
 	int bestWeaponOffenseValue;
 	int bestArmorDefenseValue;
 	std::vector<MAP *> airbases;
-};
-
-struct UnitStrength
-{
-	double weight = 0.0;
-	double psiOffense = 0.0;
-	double psiDefense = 0.0;
-	double conventionalOffense = 0.0;
-	double conventionalDefense = 0.0;
-	
-	void normalize(double totalWeight);
-	
-};
-
-struct MilitaryStrength
-{
-	double totalWeight = 0.0;
-	UnitStrength unitStrengths[MaxProtoNum];
-	std::vector<int> populatedUnitIds;
-	
-	void normalize();
-	
-};
-
-struct ESTIMATED_VALUE
-{
-	double demanding;
-	double remaining;
-};
-
-struct VehicleWeight
-{
-	int id;
-	double weight;
 };
 
 struct FactionGeography
@@ -92,30 +74,77 @@ struct TileInfo
 	bool warzone = false;
 	int workedBase = -1;
 };
+
+struct UnitStrength
+{
+	double psiOffense = 0.0;
+	double psiDefense = 0.0;
+	double conventionalOffense = 0.0;
+	double conventionalDefense = 0.0;
+};
+
+struct UnitTypeInfo
+{
+	const char *name = nullptr;
+	double foeTotalWeight = 0.0;
+	double ownTotalWeight = 0.0;
+	double ownTotalCombatEffect = 0.0;
+	double requiredProtection = 0.0;
+	double providedProtection = 0.0;
+	// relative protectionLevel on a scale -1.0 to +1.0
+	// -1.0 = unprotected
+	//  0.0 = adequate
+	// +1.0 = overprotected
+	double protectionLevel;
+	double protectionDemand;
+	// best counter units by combat effectiveness
+	std::vector<IdDoubleValue> protectors;
 	
+	void clear();
+	bool isProtectionSatisfied();
+	double getRemainingProtectionRequest();
+	void setComputedValues();
+	
+};
+
 struct BaseInfo
 {
-	std::vector<int> garrison;
-	double nativeProtection;
-	double nativeThreat;
-	double nativeDefenseDemand;
-	int unpopulatedTileCount;
-	int unpopulatedTileRangeSum;
-	double averageUnpopulatedTileRange;
 	double sensorOffenseMultiplier;
 	double sensorDefenseMultiplier;
 	double intrinsicDefenseMultiplier;
 	double conventionalDefenseMultipliers[3];
 	int borderBaseDistance;
 	int enemyAirbaseDistance;
-	double defenseDemand;
-	int combatUnitId;
-	int targetBaseId;
-	MilitaryStrength ownStrength;
-	MilitaryStrength foeStrength;
+	int policeEffect;
+	int policeAllowed;
+	int policeDrones;
+	// foe vehicles weight grouped by unit id
+	std::vector<double> foeUnitWeights = std::vector<double>(MaxProtoNum);
+	// own vehicles weight grouped by unit id
+	std::vector<double> ownUnitWeights = std::vector<double>(2 * MaxProtoFactionNum);
+	// own units combat effects by foe unit id
+	std::vector<CombatEffect> combatEffects = std::vector<CombatEffect>((2 * MaxProtoFactionNum) * MaxProtoNum);
+	// own units average combat effect
+	std::vector<double> averageCombatEffects = std::vector<double>(2 * MaxProtoFactionNum);
+	// unit type data
+	UnitTypeInfo unitTypeInfos[UNIT_TYPE_COUNT];
 	
-	std::vector<MAP *> workedTiles;
-	std::vector<MAP *> unworkedTiles;
+	BaseInfo();
+	void clear();
+	double getFoeUnitWeight(int unitId);
+	void setFoeUnitWeight(int unitId, double weight);
+	void increaseFoeUnitWeight(int unitId, double weight);
+	void decreaseFoeUnitWeight(int unitId, double weight);
+	double getOwnUnitWeight(int unitId);
+	void setOwnUnitWeight(int unitId, double weight);
+	void increaseOwnUnitWeight(int unitId, double weight);
+	void decreaseOwnUnitWeight(int unitId, double weight);
+	CombatEffect *getCombatEffect(int ownUnitId, int foeUnitId);
+	double getAverageCombatEffect(int unitId);
+	void setAverageCombatEffect(int unitId, double averageCombatEffect);
+	double getVehicleAverageCombatEffect(int vehicleId);
+	UnitTypeInfo *getUnitTypeInfo(int unitId);
+	void setUnitTypeComputedValues();
 	
 };
 
@@ -126,8 +155,8 @@ struct Production
 	double landColonyDemand;
 	std::map<int, double> seaColonyDemands;
 	
-	bool landTerraformingRequest;
-	std::set<int> seaTerraformingRequests;
+	int landTerraformingRequestCount;
+	std::map<int, int> seaTerraformingRequestCounts;
 	
 	double landFormerDemand;
 	std::map<int, double> seaFormerDemands;
@@ -135,10 +164,13 @@ struct Production
 	double landPodPoppingDemand;
 	std::map<int, double> seaPodPoppingDemand;
 	
+	double infantryPolice2xDemand;
+	double defenseDemand;
+	
 	void clear()
 	{
 		seaColonyDemands.clear();
-		seaTerraformingRequests.clear();
+		seaTerraformingRequestCounts.clear();
 		seaFormerDemands.clear();
 		seaPodPoppingDemand.clear();
 	}
@@ -148,17 +180,25 @@ struct Production
 struct Data
 {
 	FactionInfo factionInfos[8];
-	int bestWeaponOffenseValue;
-	int bestArmorDefenseValue;
+	int bestOffenseValue;
+	int bestDefenseValue;
 	
 	// geography
+	
 	Geography geography;
 	
 	// map data
+	
 	std::vector<TileInfo> tileInfos;
 	
 	// base data
-	std::vector<BaseInfo> baseInfos;
+	
+	std::vector<BaseInfo> baseInfos = std::vector<BaseInfo>(MaxBaseNum);
+	
+	// own units average combat effect weighet across all bases
+	std::vector<double> averageCombatEffects = std::vector<double>(2 * MaxProtoFactionNum);
+	// opponent active combat units
+	std::vector<int> foeActiveCombatUnitIds;
 	
 	std::vector<int> baseIds;
 	std::map<MAP *, int> baseTiles;
@@ -167,10 +207,14 @@ struct Data
 	std::map<int, std::vector<int>> regionBaseGroups;
 	std::vector<int> vehicleIds;
 	std::vector<int> combatVehicleIds;
+	std::vector<int> activeCombatUnitIds;
 	std::vector<int> scoutVehicleIds;
 	std::vector<int> outsideCombatVehicleIds;
 	std::vector<int> unitIds;
 	std::vector<int> combatUnitIds;
+	std::vector<int> landColonyUnitIds;
+	std::vector<int> seaColonyUnitIds;
+	std::vector<int> airColonyUnitIds;
 	std::vector<int> prototypeUnitIds;
 	std::vector<int> colonyVehicleIds;
 	std::vector<int> formerVehicleIds;
@@ -181,9 +225,11 @@ struct Data
 	std::map<int, double> baseRemainingNativeProtectionDemands;
 	int mostVulnerableBaseId;
 	double mostVulnerableBaseDefenseDemand;
+	double medianBaseDefenseDemand;
 	std::map<int, double> regionDefenseDemand;
 	int maxBaseSize;
 	int maxMineralSurplus;
+	int maxMineralIntake2;
 	std::map<int, int> oceanAssociationMaxMineralSurpluses;
 	int bestLandUnitId;
 	int bestSeaUnitId;
@@ -202,19 +248,29 @@ struct Data
 	double landColonyProductionPriority;
 	std::map<int, double> seaColonyProductionPriorities;
 	Production production;
-	std::set<MAP *> blockedLocations;
 	
 	void setup();
 	void cleanup();
 	
 	// access global data arrays
+	
 	TileInfo *getTileInfo(int mapIndex);
 	TileInfo *getTileInfo(int x, int y);
 	TileInfo *getTileInfo(MAP *tile);
 	BaseInfo *getBaseInfo(int baseId);
 	
+	// combat data
+	
+	double getAverageCombatEffect(int unitId);
+	void setAverageCombatEffect(int unitId, double averageCombatEffect);
+	double getVehicleAverageCombatEffect(int vehicleId);
+	
 };
 
 extern int aiFactionId;
 extern Data aiData;
+
+// helper functions
+
+int getUnitType(int unitId);
 

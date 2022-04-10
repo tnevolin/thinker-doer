@@ -5,8 +5,8 @@
 
 const int MAX_EXPANSION_RANGE = 10;
 
-const int PLACEMENT_MAX_RANGE = 9;
-const int PLACEMENT_QUALITY[PLACEMENT_MAX_RANGE][PLACEMENT_MAX_RANGE] =
+const int PLACEMENT_MAX_RANGE = 8;
+const int PLACEMENT_QUALITY[PLACEMENT_MAX_RANGE + 1][PLACEMENT_MAX_RANGE + 1] =
 	{
 		{
 			-9,	// 0, 0
@@ -120,30 +120,26 @@ struct ExpansionTileInfo
 	bool immediatelyReachable = false;
 	// expansion
 	int expansionRange = -1;
-	int nearestBaseId = -1;
-	double nearestBaseTravelTime = DBL_MAX;
-	int nearestColonyId = -1;
-	double nearestColonyTravelTime = DBL_MAX;
-	int enemyBaseRange = -1;
 	double yieldScore = 0.0;
 	double buildScore = 0.0;
 };
 
+// expansion data
+extern std::vector<MAP *> buildSites;
 // expansion data operations
 void setupExpansionData();
-void cleanupExpansionData();
 // access expansion data arrays
 ExpansionBaseInfo *getExpansionBaseInfo(int baseId);
 ExpansionTileInfo *getExpansionTileInfo(int mapIndex);
 ExpansionTileInfo *getExpansionTileInfo(int x, int y);
 ExpansionTileInfo *getExpansionTileInfo(MAP *tile);
+
 // strategy
 void moveColonyStrategy();
 void analyzeBasePlacementSites();
 double getBuildSiteYieldScore(MAP *tile);
 double getBuildSiteTravelTimeScore(double travelTime);
 double getBuildSitePlacementScore(MAP *tile);
-double getBuildSiteEnemyRangeScore(MAP *tile);
 bool isValidBuildSite(MAP *tile, int factionId);
 bool isValidWorkSite(MAP *tile, int factionId);
 bool isWithinExpansionRangeSameAssociation(int x, int y, int expansionRange);
@@ -153,13 +149,13 @@ int getBaseRadiusOverlapCount(int x, int y, int factionId);
 int getNearestBaseRange(MAP *tile);
 int getNearestColonyRange(MAP *tile);
 int getExpansionRange(MAP *tile);
-std::pair<int, double> getNearestBaseTravelTime(MAP *tile);
-std::pair<int, double> getNearestColonyTravelTime(MAP *tile);
-double getTravelTime(int vehicleId, int x, int y);
-double getWorkerConsumptionYieldScore();
+double estimateTravelTime(int srcX, int srcY, int dstX, int dstY, int unitId);
+double estimateVehicleTravelTime(int vehicleId, int x, int y);
+double getMinimalYieldScore();
 double getSeaSquareFutureYieldScore();
 double getTileFutureYieldScore(MAP *tile);
 double getTerraformingOptionFutureYieldScore(MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
 int getNearestEnemyBaseRange(MAP *tile);
 double getYieldScore(double nutrient, double mineral, double energy);
+std::vector<MAP *> getUnavailableBuildSites(MAP *buildSite);
 

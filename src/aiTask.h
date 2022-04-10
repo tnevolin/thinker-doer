@@ -29,17 +29,17 @@ enum TaskType
 
 struct Task
 {
-	TaskType type;
 	int vehiclePad0;
+	TaskType type;
 	MAP *targetLocation = nullptr;
 	int targetVehiclePad0 = -1;
 	int order = -1;
 	int terraformingAction = -1;
 	
-	Task(TaskType _type, int _vehicleId);
-	Task(TaskType _type, int _vehicleId, MAP *_targetLocation);
-	Task(TaskType _type, int _vehicleId, MAP *_targetLocation, int _targetVehicleId);
-	Task(TaskType _type, int _vehicleId, MAP *_targetLocation, int _targetVehicleId, int _order, int _terraformingAction);
+	Task(int _vehicleId, TaskType _type);
+	Task(int _vehicleId, TaskType _type, MAP *_targetLocation);
+	Task(int _vehicleId, TaskType _type, MAP *_targetLocation, int _targetVehicleId);
+	Task(int _vehicleId, TaskType _type, MAP *_targetLocation, int _targetVehicleId, int _order, int _terraformingAction);
 	int getVehicleId();
 	int getTargetVehicleId();
 	MAP *getDestination();

@@ -34,12 +34,12 @@ const std::vector<TERRAFORMING_OPTION> CONVENTIONAL_TERRAFORMING_OPTIONS =
 	// land
 	{"rocky mine", false, true , false, true , FORMER_MINE        , true , {FORMER_ROAD, FORMER_MINE}},								// 00
 	{"mine"      , false, false, false, true , FORMER_MINE        , true , {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}},	// 01
-	{"collector" , false, false, false, true , FORMER_SOLAR       , true , {FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},				// 02
-	{"condenser" , false, false, true , true , FORMER_CONDENSER   , false, {FORMER_CONDENSER, FORMER_FARM, FORMER_SOIL_ENR}},			// 03
-	{"mirror"    , false, false, true , true , FORMER_ECH_MIRROR  , false, {FORMER_ECH_MIRROR, FORMER_FARM, FORMER_SOIL_ENR}},		// 04
-	{"borehole"  , false, false, false, true , FORMER_THERMAL_BORE, true , {FORMER_THERMAL_BORE}},									// 05
-	{"forest"    , false, false, false, true , FORMER_FOREST      , true , {FORMER_FOREST}},											// 06
-	{"fungus"    , false, false, false, true , FORMER_PLANT_FUNGUS, true , {FORMER_PLANT_FUNGUS}},									// 07
+	{"collector" , false, false, false, true , FORMER_SOLAR       , true , {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}},				// 02
+	{"condenser" , false, false, true , true , FORMER_CONDENSER   , false, {FORMER_ROAD, FORMER_CONDENSER, FORMER_FARM, FORMER_SOIL_ENR}},			// 03
+	{"mirror"    , false, false, true , true , FORMER_ECH_MIRROR  , false, {FORMER_ROAD, FORMER_ECH_MIRROR, FORMER_FARM, FORMER_SOIL_ENR}},		// 04
+	{"borehole"  , false, false, false, true , FORMER_THERMAL_BORE, true , {FORMER_ROAD, FORMER_THERMAL_BORE}},									// 05
+	{"forest"    , false, false, false, true , FORMER_FOREST      , true , {FORMER_ROAD, FORMER_FOREST}},											// 06
+	{"fungus"    , false, false, false, true , FORMER_PLANT_FUNGUS, true , {FORMER_ROAD, FORMER_PLANT_FUNGUS}},									// 07
 	// sea
 	{"platform"  , true , false, false, true , FORMER_MINE        , true , {FORMER_FARM, FORMER_MINE}},								// 08
 	{"harness"   , true , false, false, true , FORMER_SOLAR       , true , {FORMER_FARM, FORMER_SOLAR}},								// 09
@@ -146,6 +146,7 @@ struct TerraformingTileInfo
 	std::vector<int> workableBaseIds;
 	std::vector<int> areaWorkableBaseIds;
 	bool rockyMineAllowed = false;
+	bool platformAllowed = false;
 	bool boreholeAllowed = false;
 	bool forestAllowed = false;
 	bool fungusAllowed = false;
@@ -166,6 +167,7 @@ void cancelRedundantOrders();
 void generateTerraformingRequests();
 void selectConventionalTerraformingLocations();
 void selectRockyMineLocation(int baseId);
+void selectPlatformLocation(int baseId);
 void selectBoreholeLocation(int baseId);
 void selectForestLocation(int baseId);
 void selectFungusLocation(int baseId);
@@ -215,7 +217,7 @@ double estimateCondenserExtraYieldScore(MAP *tile, const std::vector<int> *actio
 double estimateAquiferExtraYieldScore(MAP *tile);
 double estimateRaiseLandExtraYieldScore(MAP *tile, int cost);
 bool isRaiseLandSafe(MAP *tile);
-double calculateBaseResourceScore(int baseId, int currentNutrientSurplus, int currentMineralSurplus, int currentEnergySurplus, int improvedNutrientSurplus, int improvedMineralSurplus, int improvedEnergySurplus);
+double calculateBaseResourceScore(int baseId, int currentMineralIntake, int currentNutrientSurplus, int currentMineralSurplus, int currentEnergySurplus, int improvedMineralIntake, int improvedNutrientSurplus, int improvedMineralSurplus, int improvedEnergySurplus);
 double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
 bool isValidYieldSite(MAP *tile);
 bool isValidTerraformingSite(MAP *tile);

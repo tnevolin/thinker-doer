@@ -830,6 +830,30 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_expansion_weight_deep = atof(value);
     }
+    else if (MATCH("wtp", "ai_expansion_regular_weight_nutirent"))
+    {
+        cf->ai_expansion_regular_weight_nutirent = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_regular_weight_mineral"))
+    {
+        cf->ai_expansion_regular_weight_mineral = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_regular_weight_energy"))
+    {
+        cf->ai_expansion_regular_weight_energy = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_bonus_extra_weight_nutirent"))
+    {
+        cf->ai_expansion_bonus_extra_weight_nutirent = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_bonus_extra_weight_mineral"))
+    {
+        cf->ai_expansion_bonus_extra_weight_mineral = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_bonus_extra_weight_energy"))
+    {
+        cf->ai_expansion_bonus_extra_weight_energy = atof(value);
+    }
     else if (MATCH("wtp", "ai_expansion_time_penalty_base_threshold"))
     {
         cf->ai_expansion_time_penalty_base_threshold = atof(value);
@@ -865,10 +889,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_expansion_placement"))
     {
         cf->ai_expansion_placement = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_enemy_base_range"))
-    {
-        cf->ai_expansion_enemy_base_range = atof(value);
     }
     else if (MATCH("wtp", "wtp_factions_enabled"))
     {

@@ -61,9 +61,13 @@ Movement phase entry point.
 */
 void __cdecl modified_enemy_units_check(int factionId)
 {
+	clock_t s = 0;
+	
  	// setup AI Data
 	
+	s -= clock();
 	aiData.setup();
+	s += clock();
 	
 	// run WTP AI code for AI enabled factions
 	
@@ -103,7 +107,11 @@ void __cdecl modified_enemy_units_check(int factionId)
 	// cleanup AI Data
 	// it is important to do it after enemy_units_check as it calls enemy_move that utilizes AI Data.
 	
+	s -= clock();
 	aiData.cleanup();
+	s += clock();
+	
+	debug("(time) [WTP] aiData setup/cleanup: %6.3f\n", (double)(s) / (double)CLOCKS_PER_SEC);
 	
 }
 
@@ -113,11 +121,15 @@ void strategy()
 	
 	// populate data
 	
+	c = clock();
 	populateAIData();
+	debug("(time) [WTP] populateAIData: %6.3f\n", (double)(clock() - c) / (double)CLOCKS_PER_SEC);
 	
 	// design units
 	
+	c = clock();
 	designUnits();
+	debug("(time) [WTP] designUnits: %6.3f\n", (double)(clock() - c) / (double)CLOCKS_PER_SEC);
 	
 	// move strategy
 	
@@ -150,6 +162,7 @@ void populateAIData()
 	// other global variables
 	
 	populateGlobalVariables();
+	populateVehicles();
 	
 	// base exposures
 	
@@ -159,19 +172,19 @@ void populateAIData()
 	
 	evaluateBaseNativeDefenseDemands();
 	
-	// bases defense
+	// base police request
+	
+	evaluateBasePoliceRequests();
+	
+	// base threat
 	
 	s = clock();
-	evaluateDefenseLevel();
-	debug("(time) [WTP] evaluateDefenseLevel: %6.3f\n", (double)(clock() - s) / (double)CLOCKS_PER_SEC);
+	evaluateBaseDefense();
+	debug("(time) [WTP] evaluateBaseDefense: %6.3f\n", (double)(clock() - s) / (double)CLOCKS_PER_SEC);
 	
 	// warzones
 	
 	populateWarzones();
-	
-	// bases and tiles
-	
-	populateBasesAndTiles();
 	
 }
 
@@ -574,14 +587,71 @@ void analyzeGeography()
 
 void populateGlobalVariables()
 {
+	// populate bases
+
+	debug("aiData.baseStrategies\n");
+
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+
+		// exclude not own bases
+
+		if (base->faction_id != aiFactionId)
+			continue;
+
+		// add base to baseIds
+		
+		aiData.baseIds.push_back(baseId);
+		
+		// get and clear base info
+
+		BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
+		baseInfo->clear();
+		
+		// add base
+
+		MAP *baseTile = getMapTile(base->x, base->y);
+		aiData.baseTiles.insert({baseTile, baseId});
+		debug("baseTiles: (%d)=>%3d\n", (int)baseTile, baseId);
+
+		baseInfo->intrinsicDefenseMultiplier = getBaseDefenseMultiplier(baseId, -1);
+		baseInfo->conventionalDefenseMultipliers[TRIAD_LAND] = getBaseDefenseMultiplier(baseId, TRIAD_LAND);
+		baseInfo->conventionalDefenseMultipliers[TRIAD_SEA] = getBaseDefenseMultiplier(baseId, TRIAD_SEA);
+		baseInfo->conventionalDefenseMultipliers[TRIAD_AIR] = getBaseDefenseMultiplier(baseId, TRIAD_AIR);
+		baseInfo->sensorOffenseMultiplier = getSensorOffenseMultiplier(base->faction_id, base->x, base->y);
+		baseInfo->sensorDefenseMultiplier = getSensorDefenseMultiplier(base->faction_id, base->x, base->y);
+
+		// add base regions
+		
+		int baseRegion = getBaseMapTile(baseId)->region;
+		
+		aiData.presenceRegions.insert(getBaseMapTile(baseId)->region);
+		aiData.regionBaseIds[baseRegion].insert(baseId);
+
+		std::set<int> baseConnectedRegions = getBaseConnectedRegions(baseId);
+
+		for (int region : baseConnectedRegions)
+		{
+			if (aiData.regionBaseGroups.find(region) == aiData.regionBaseGroups.end())
+			{
+				aiData.regionBaseGroups[region] = std::vector<int>();
+			}
+
+			aiData.regionBaseGroups[region].push_back(baseId);
+
+		}
+
+	}
+
 	// maxBaseSize
 	
 	aiData.maxBaseSize = getMaxBaseSize(aiFactionId);
 	
 	// best weapon and armor
 	
-	aiData.bestWeaponOffenseValue = getFactionBestPrototypedWeaponOffenseValue(aiFactionId);
-	aiData.bestArmorDefenseValue = getFactionBestPrototypedArmorDefenseValue(aiFactionId);
+	aiData.bestOffenseValue = getFactionBestOffenseValue(aiFactionId);
+	aiData.bestDefenseValue = getFactionBestDefenseValue(aiFactionId);
 	
 	// populate factions combat modifiers
 
@@ -668,180 +738,12 @@ void populateGlobalVariables()
 	
 	for (int factionId = 1; factionId < 8; factionId++)
 	{
-		aiData.factionInfos[factionId].bestWeaponOffenseValue = getFactionBestPrototypedWeaponOffenseValue(factionId);
-		aiData.factionInfos[factionId].bestArmorDefenseValue = getFactionBestPrototypedArmorDefenseValue(factionId);
+		aiData.factionInfos[factionId].bestWeaponOffenseValue = getFactionBestOffenseValue(factionId);
+		aiData.factionInfos[factionId].bestArmorDefenseValue = getFactionBestDefenseValue(factionId);
 	}
-
-	debug("\n");
-
-	// populate bases
-
-	debug("aiData.baseStrategies\n");
-
-	for (int baseId = 0; baseId < *total_num_bases; baseId++)
-	{
-		BASE *base = &(Bases[baseId]);
-
-		// exclude not own bases
-
-		if (base->faction_id != aiFactionId)
-			continue;
-
-		// add base
-		
-		aiData.baseIds.push_back(baseId);
-		
-		// add base
-
-		MAP *baseTile = getMapTile(base->x, base->y);
-		aiData.baseTiles[baseTile] = baseId;
-
-		// add base info
-
-		BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
-		
-		baseInfo->intrinsicDefenseMultiplier = getBaseDefenseMultiplier(baseId, -1);
-		baseInfo->conventionalDefenseMultipliers[TRIAD_LAND] = getBaseDefenseMultiplier(baseId, TRIAD_LAND);
-		baseInfo->conventionalDefenseMultipliers[TRIAD_SEA] = getBaseDefenseMultiplier(baseId, TRIAD_SEA);
-		baseInfo->conventionalDefenseMultipliers[TRIAD_AIR] = getBaseDefenseMultiplier(baseId, TRIAD_AIR);
-		baseInfo->sensorOffenseMultiplier = getSensorOffenseMultiplier(base->faction_id, base->x, base->y);
-		baseInfo->sensorDefenseMultiplier = getSensorDefenseMultiplier(base->faction_id, base->x, base->y);
-
-		// add base regions
-		
-		int baseRegion = getBaseMapTile(baseId)->region;
-		
-		aiData.presenceRegions.insert(getBaseMapTile(baseId)->region);
-		aiData.regionBaseIds[baseRegion].insert(baseId);
-
-		std::set<int> baseConnectedRegions = getBaseConnectedRegions(baseId);
-
-		for (int region : baseConnectedRegions)
-		{
-			if (aiData.regionBaseGroups.find(region) == aiData.regionBaseGroups.end())
-			{
-				aiData.regionBaseGroups[region] = std::vector<int>();
-			}
-
-			aiData.regionBaseGroups[region].push_back(baseId);
-
-		}
-
-	}
-
-	debug("\n");
-
-	// populate vehicles
 	
-	debug("populate vehicles - %s\n", MFactions[aiFactionId].noun_faction);
-	for (int id = 0; id < *total_num_vehicles; id++)
-	{
-		VEH *vehicle = &(Vehicles[id]);
-		MAP *vehicleTile = getVehicleMapTile(id);
-
-		// store all vehicle current id in pad_0 field
-
-		vehicle->pad_0 = id;
-
-		// further process only own vehicles
-
-		if (vehicle->faction_id != aiFactionId)
-			continue;
-		
-		debug("\t[%3d] (%3d,%3d) region = %3d\n", id, vehicle->x, vehicle->y, vehicleTile->region);
-		
-		// add vehicle
-		
-		aiData.vehicleIds.push_back(id);
-
-		// combat vehicles
-
-		if (isCombatVehicle(id))
-		{
-			// add vehicle to global list
-
-			aiData.combatVehicleIds.push_back(id);
-			
-			// scout and native
-			
-			if (isScoutVehicle(id) || isNativeVehicle(id))
-			{
-				aiData.scoutVehicleIds.push_back(id);
-			}
-
-			// add surface vehicle to region list
-			// except land unit in ocean
-			
-			if (vehicle->triad() != TRIAD_AIR && !(vehicle->triad() == TRIAD_LAND && isOceanRegion(vehicleTile->region)))
-			{
-				if (aiData.regionSurfaceCombatVehicleIds.count(vehicleTile->region) == 0)
-				{
-					aiData.regionSurfaceCombatVehicleIds[vehicleTile->region] = std::vector<int>();
-				}
-				aiData.regionSurfaceCombatVehicleIds[vehicleTile->region].push_back(id);
-				
-				// add scout to region list
-				
-				if (isScoutVehicle(id))
-				{
-					if (aiData.regionSurfaceScoutVehicleIds.count(vehicleTile->region) == 0)
-					{
-						aiData.regionSurfaceScoutVehicleIds[vehicleTile->region] = std::vector<int>();
-					}
-					aiData.regionSurfaceScoutVehicleIds[vehicleTile->region].push_back(id);
-				}
-				
-			}
-
-			// find if vehicle is at base
-
-			std::map<MAP *, int>::iterator baseTilesIterator = aiData.baseTiles.find(vehicleTile);
-
-			if (baseTilesIterator == aiData.baseTiles.end())
-			{
-				// add outside vehicle
-
-				aiData.outsideCombatVehicleIds.push_back(id);
-
-			}
-			else
-			{
-				BaseInfo *baseInfo = aiData.getBaseInfo(baseTilesIterator->second);
-
-				// add combat vehicle to garrison
-				
-				if (isCombatVehicle(id))
-				{
-					baseInfo->garrison.push_back(id);
-				}
-
-				// add to native protection
-
-				double nativeProtection = calculateNativeDamageDefense(id) / 10.0;
-
-				if (vehicle_has_ability(vehicle, ABL_TRANCE))
-				{
-					nativeProtection *= (1 + (double)Rules->combat_bonus_trance_vs_psi / 100.0);
-				}
-
-				baseInfo->nativeProtection += nativeProtection;
-
-			}
-
-		}
-		else if (isColonyVehicle(id))
-		{
-			aiData.colonyVehicleIds.push_back(id);
-		}
-		else if (isFormerVehicle(id))
-		{
-			aiData.formerVehicleIds.push_back(id);
-		}
-
-	}
-
 	// populate units
-
+	
     for (int unitId : getFactionUnitIds(aiFactionId, true))
 	{
 		UNIT *unit = &(Units[unitId]);
@@ -850,11 +752,35 @@ void populateGlobalVariables()
 
 		aiData.unitIds.push_back(unitId);
 		
+		// add prototype units
+		
 		if (isPrototypeUnit(unitId))
 		{
 			// not prototyped units
 			
 			aiData.prototypeUnitIds.push_back(unitId);
+			
+		}
+		
+		// add colonu units
+		
+		if (isColonyUnit(unitId))
+		{
+			switch (unit->triad())
+			{
+			case TRIAD_LAND:
+				aiData.landColonyUnitIds.push_back(unitId);
+				break;
+				
+			case TRIAD_SEA:
+				aiData.seaColonyUnitIds.push_back(unitId);
+				break;
+				
+			case TRIAD_AIR:
+				aiData.airColonyUnitIds.push_back(unitId);
+				break;
+				
+			}
 			
 		}
 		
@@ -875,9 +801,9 @@ void populateGlobalVariables()
 				||
 				unit_has_ability(unitId, ABL_EMPATH)
 				||
-				Weapon[unit->weapon_type].offense_value >= aiData.bestWeaponOffenseValue
+				Weapon[unit->weapon_type].offense_value >= aiData.bestOffenseValue
 				||
-				Armor[unit->armor_type].defense_value >= aiData.bestArmorDefenseValue
+				Armor[unit->armor_type].defense_value >= aiData.bestDefenseValue
 			)
 		)
 		{
@@ -911,6 +837,7 @@ void populateGlobalVariables()
 	// max mineral surplus
 	
 	aiData.maxMineralSurplus = 1;
+	aiData.maxMineralIntake2 = 1;
 	
 	for (int baseId : aiData.baseIds)
 	{
@@ -919,6 +846,7 @@ void populateGlobalVariables()
 		int baseOceanAssociation = getBaseOceanAssociation(baseId);
 		
 		aiData.maxMineralSurplus = std::max(aiData.maxMineralSurplus, base->mineral_surplus);
+		aiData.maxMineralIntake2 = std::max(aiData.maxMineralIntake2, base->mineral_intake_2);
 		
 		if (baseOceanAssociation != -1)
 		{
@@ -1035,7 +963,7 @@ void evaluateBaseBorderDistances()
 			
 		}
 		
-		baseInfo->borderBaseDistance = lastTerritoryRingRange - 5;
+		baseInfo->borderBaseDistance = std::max(0, lastTerritoryRingRange - 3);
 		
 		// find nearest enemy airbase
 		
@@ -1149,13 +1077,145 @@ void evaluateBaseNativeDefenseDemands()
 	
 }
 
-void evaluateDefenseLevel()
+void evaluateBasePoliceRequests()
 {
-	debug("evaluateDefenseLevel - %s\n", MFactions[aiFactionId].noun_faction);
+	for (int baseId : aiData.baseIds)
+	{
+		BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
+		
+		baseInfo->policeAllowed = getBasePoliceAllowed(baseId);
+		baseInfo->policeEffect = getBasePoliceEffect(baseId);
+		baseInfo->policeDrones = getBasePoliceDrones(baseId);
+		
+	}
 	
-	// evaluate base defense level
+}
+
+void evaluateBaseDefense()
+{
+	debug("evaluateBaseDefense - %s\n", MFactions[aiFactionId].noun_faction);
 	
-	aiData.production.globalDefenseDemand = 0.0;
+	Faction *faction = &(Factions[aiFactionId]);
+	
+	std::set<int> ownCombatUnitIds;
+	std::set<int> foeActiveCombatUnitIds;
+	std::vector<std::vector<CombatEffect>> unitCombatEffects(2 * MaxProtoFactionNum, std::vector<CombatEffect>(MaxProtoNum));
+	
+	// collect own combat units
+	
+	ownCombatUnitIds.insert(aiData.activeCombatUnitIds.begin(), aiData.activeCombatUnitIds.end());
+	ownCombatUnitIds.insert(aiData.combatUnitIds.begin(), aiData.combatUnitIds.end());
+	
+	// collect active foe combat units
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// exclude own
+		
+		if (vehicle->faction_id == aiFactionId)
+			continue;
+		
+		// exclude non combat
+		
+		if (!isCombatVehicle(vehicleId))
+			continue;
+		
+		// exclude fungal tower
+		
+		if (vehicle->unit_id == BSC_FUNGAL_TOWER)
+			continue;
+		
+		// add unitId
+		
+		foeActiveCombatUnitIds.insert(vehicle->unit_id);
+		
+	}
+	
+	// add aliens - they are always there
+	
+	foeActiveCombatUnitIds.insert(BSC_MIND_WORMS);
+	foeActiveCombatUnitIds.insert(BSC_SPORE_LAUNCHER);
+	foeActiveCombatUnitIds.insert(BSC_SEALURK);
+	foeActiveCombatUnitIds.insert(BSC_ISLE_OF_THE_DEEP);
+	foeActiveCombatUnitIds.insert(BSC_LOCUSTS_OF_CHIRON);
+	
+	// store foeActiveCombatUnitIds
+	
+	aiData.foeActiveCombatUnitIds.clear();
+	aiData.foeActiveCombatUnitIds.insert(aiData.foeActiveCombatUnitIds.end(), foeActiveCombatUnitIds.begin(), foeActiveCombatUnitIds.end());
+	
+	// compute unitCombatEffects
+	
+	debug("\tunitCombatEffects\n");
+	
+	for (int ownUnitId : ownCombatUnitIds)
+	{
+		UNIT *ownUnit = &(Units[ownUnitId]);
+		
+		debug("\t\t%-s\n", ownUnit->name);
+		
+		for (int foeUnitId : aiData.foeActiveCombatUnitIds)
+		{
+			UNIT *foeUnit = &(Units[foeUnitId]);
+			CombatEffect *unitCombatEffect = &(unitCombatEffects.at(getUnitIndex(ownUnitId)).at(foeUnitId));
+			
+			// calculate how many foe units our unit can destroy
+			
+			double attackEffect;
+			double defendEffect;
+			
+			if (canUnitAttack(ownUnitId, foeUnitId))
+			{
+				double relativeUnitStrength = getRelativeUnitStrength(ownUnitId, foeUnitId);
+				
+				if (relativeUnitStrength > 0.0)
+				{
+					attackEffect = relativeUnitStrength;
+				}
+				else
+				{
+					attackEffect = 0.0;
+				}
+				
+			}
+			else
+			{
+				attackEffect = 0.0;
+			}
+			
+			if (canUnitAttack(foeUnitId, ownUnitId))
+			{
+				double relativeUnitStrength = getRelativeUnitStrength(foeUnitId, ownUnitId);
+				
+				if (relativeUnitStrength > 0.0)
+				{
+					defendEffect = 1.0 / relativeUnitStrength;
+				}
+				else
+				{
+					defendEffect = 0.0;
+				}
+				
+			}
+			else
+			{
+				defendEffect = 0.0;
+			}
+			
+			// store values
+			
+			unitCombatEffect->attack = attackEffect;
+			unitCombatEffect->defend = defendEffect;
+			
+			debug("\t\t\t%-32s a=%5.2f, d=%5.2f\n", foeUnit->name, attackEffect, defendEffect);
+			
+		}
+		
+	}
+
+	// evaluate base threat
 	
 	for (int baseId : aiData.baseIds)
 	{
@@ -1164,14 +1224,10 @@ void evaluateDefenseLevel()
 		bool ocean = is_ocean(baseTile);
 		BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
 		int baseAssociation = getAssociation(baseTile, base->faction_id);
-		MilitaryStrength *ownStrength = &(baseInfo->ownStrength);
-		MilitaryStrength *foeStrength = &(baseInfo->foeStrength);
 		
 		debug
 		(
-			"\t(%3d,%3d) %-25s, sensorOM=%f, sensorDM=%f, intrinsicDM=%f, conventionalDM[TRIAD_LAND]=%f, conventionalDMs[TRIAD_SEA]=%f, conventionalDMs[TRIAD_AIR]=%f\n",
-			base->x,
-			base->y,
+			"\t%-25s, sensorOM=%f, sensorDM=%f, intrinsicDM=%f, conventionalDM[TRIAD_LAND]=%f, conventionalDMs[TRIAD_SEA]=%f, conventionalDMs[TRIAD_AIR]=%f\n",
 			base->name,
 			baseInfo->sensorOffenseMultiplier,
 			baseInfo->sensorDefenseMultiplier,
@@ -1181,148 +1237,11 @@ void evaluateDefenseLevel()
 			baseInfo->conventionalDefenseMultipliers[TRIAD_AIR]
 		);
 		
-		// own MilitaryStrength
-		
-		debug("\t\town MilitaryStrength\n");
-		
-		for (int vehicleId : aiData.combatVehicleIds)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			UNIT *unit = &(Units[vehicle->unit_id]);
-			CChassis *chassis = &(Chassis[unit->chassis_type]);
-			int triad = chassis->triad;
-			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-			int vehicleAssociation = getVehicleAssociation(vehicleId);
-			int vehicleWeaponOffenseValue = Weapon[vehicle->weapon_type()].offense_value;
-			int vehicleArmorDefenseValue = Armor[vehicle->armor_type()].defense_value;
-			UnitStrength *unitStrength = &(ownStrength->unitStrengths[vehicle->unit_id]);
-			
-			// land base
-			if (!ocean)
-			{
-				// do not count sea vehicle for land base protection
-				
-				if (triad == TRIAD_SEA)
-					continue;
-				
-			}
-			// ocean base
-			else
-			{
-				// do not count sea vehicle in other association for ocean base protection
-				
-				if (triad == TRIAD_SEA && vehicleAssociation != baseAssociation)
-					continue;
-				
-			}
-			
-			// exclude defensive units in other base
-			
-			if (vehicleWeaponOffenseValue <= (vehicleArmorDefenseValue + 1)/ 2 && map_has_item(vehicleTile, TERRA_BASE_IN_TILE) && vehicleTile != baseTile)
-				continue;
-			
-			// hit points
-			
-			double health = (double)(10 * vehicle->reactor_type() - vehicle->damage_taken) / (double)(10 * vehicle->reactor_type());
-			
-			// strength
-			
-			double psiOffense = getVehiclePsiOffense(vehicleId);
-			double psiDefense = getVehiclePsiDefense(vehicleId);
-			
-			double conventionalOffense = getVehicleConventionalOffense(vehicleId);
-			double conventionalDefense = getVehicleConventionalDefense(vehicleId);
-			
-			// vehicle travel time to base
-			
-			double travelTime;
-			
-			if (triad == TRIAD_AIR)
-			{
-				travelTime = map_range(vehicle->x, vehicle->y, base->x, base->y) / unit->speed();
-			}
-			else
-			{
-				if (vehicleAssociation == baseAssociation)
-				{
-					int pathTravelTime = getVehiclePathTravelTime(vehicleId, base->x, base->y);
-					
-					// path not found
-					
-					if (pathTravelTime == -1)
-						continue;
-					
-					travelTime = (double)pathTravelTime;
-						
-				}
-				else
-				{
-					if (triad == TRIAD_LAND)
-					{
-						travelTime = (double)map_range(vehicle->x, vehicle->y, base->x, base->y) / (double)unit->speed();
-						
-						// increase effective time for land unit in different association
-						
-						travelTime *= 2.0;
-						
-					}
-					else
-					{
-						// sea unit cannot reach different association
-						
-						continue;
-						
-					}
-					
-				}
-				
-			}
-			
-			// reduce weight based on time to reach the base
-			// every 10 turns reduce weight in e
-			
-			double weight = health * exp(- travelTime / 10.0);
-			
-			// gather all together
-			
-			ownStrength->totalWeight += weight;
-			unitStrength->weight += weight;
-			unitStrength->psiOffense += psiOffense * weight;
-			unitStrength->psiDefense += psiDefense * weight;
-			unitStrength->conventionalOffense += conventionalOffense * weight;
-			unitStrength->conventionalDefense += conventionalDefense * weight;
-			
-			debug
-			(
-				"\t\t\t(%3d,%3d) %-32s psiO=%6.3f, psiD=%6.3f, conventionalO=%6.3f, conventionalD=%6.3f, health=%6.3f, travelTime=%6.2f, weight=%6.3f\n",
-				vehicle->x, vehicle->y, Units[vehicle->unit_id].name,
-				psiOffense, psiDefense, conventionalOffense, conventionalDefense,
-				health, travelTime, weight
-			);
-			
-		}
-		
-		// normalize weights
-		
-		ownStrength->normalize();
-		
-		debug("\t\ttotalWeight=%6.3f\n", ownStrength->totalWeight);
-		if (DEBUG)
-		{
-			for (int unitId : ownStrength->populatedUnitIds)
-			{
-				const UNIT *unit = &(Units[unitId]);
-				const UnitStrength *unitStrength = &(ownStrength->unitStrengths[unitId]);
-				
-				debug("\t\t\t[%3d] %-32s weight=%6.3f, psiOffense=%6.3f, psiDefense=%6.3f, conventionalOffense=%6.3f, conventionalDefense=%6.3f\n", unitId, unit->name, unitStrength->weight, unitStrength->psiOffense, unitStrength->psiDefense, unitStrength->conventionalOffense, unitStrength->conventionalDefense);
-				
-			}
-			
-		}
-		
 		// calculate foe strength
 		
 		debug("\t\tfoe MilitaryStrength\n");
+		
+		std::vector<UnitStrength> foeUnitStrengthMultipliers(MaxProtoNum);
 		
 		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 		{
@@ -1332,9 +1251,6 @@ void evaluateDefenseLevel()
 			int triad = chassis->triad;
 			MAP *vehicleTile = getVehicleMapTile(vehicleId);
 			int vehicleAssociation = getVehicleAssociation(vehicleId);
-			int vehicleWeaponOffenseValue = Weapon[vehicle->weapon_type()].offense_value;
-			int vehicleArmorDefenseValue = Armor[vehicle->armor_type()].defense_value;
-			UnitStrength *unitStrength = &(foeStrength->unitStrengths[vehicle->unit_id]);
 			
 			// exclude alien
 			
@@ -1346,7 +1262,12 @@ void evaluateDefenseLevel()
 			if (vehicle->faction_id == aiFactionId)
 				continue;
 			
-			// combat
+			// exclude not listed in active units
+			
+			if (foeActiveCombatUnitIds.count(vehicle->unit_id) == 0)
+				continue;
+			
+			// exclude non combat
 			
 			if (!isCombatVehicle(vehicleId))
 				continue;
@@ -1375,26 +1296,423 @@ void evaluateDefenseLevel()
 				
 			}
 			
-			// exclude defensive units in base
+			// exclude infantry defensive units in base
 			
-			if (vehicleWeaponOffenseValue <= (vehicleArmorDefenseValue + 1)/ 2 && map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
+			if (isInfantryDefensiveVehicle(vehicleId) && map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
 				continue;
 			
-			// hit points
+			// strength modifier
 			
-			double health = (double)(10 * vehicle->reactor_type() - vehicle->damage_taken) / (double)(10 * vehicle->reactor_type());
+			double psiOffenseModifier = getVehiclePsiOffenseModifier(vehicleId);
+			double psiDefenseModifier = getVehiclePsiDefenseModifier(vehicleId);
 			
-			// strength
+			double conventionalOffenseModifier = getVehicleConventionalOffenseModifier(vehicleId);
+			double conventionalDefenseModifier = getVehicleConventionalDefenseModifier(vehicleId);
 			
-			double basePsiDefenseMultiplier = baseInfo->intrinsicDefenseMultiplier;
+			// partial health
 			
-			double psiOffense = getVehiclePsiOffense(vehicleId) / baseInfo->sensorDefenseMultiplier / basePsiDefenseMultiplier;
-			double psiDefense = getVehiclePsiDefense(vehicleId) / baseInfo->sensorOffenseMultiplier;
+			double partialHealth = (double)getVehiclePower(vehicleId) / (double)getVehicleMaxPower(vehicleId);
 			
-			double baseConventionalDefenseMultiplier = (isVehicleHasAbility(vehicleId, ABL_BLINK_DISPLACER) ? baseInfo->intrinsicDefenseMultiplier : baseInfo->conventionalDefenseMultipliers[triad]);
+			// travel time coefficient
 			
-			double conventionalOffense = getVehicleConventionalOffense(vehicleId) / baseInfo->sensorDefenseMultiplier / baseConventionalDefenseMultiplier;
-			double conventionalDefense = getVehicleConventionalDefense(vehicleId) / baseInfo->sensorOffenseMultiplier;
+			double travelTimeCoefficient = getVehicleToBaseTravelTimeCoefficient(vehicleId, baseId);
+			
+			// threat coefficient
+			
+			double threatCoefficient = aiData.factionInfos[vehicle->faction_id].threatCoefficient;
+			
+			// depth coefficient
+			
+			double depthCoefficient = getVehicleToBaseDepthCoefficient(vehicleId, baseId);
+			
+			// calculate weight
+			
+			double weight = partialHealth * travelTimeCoefficient * threatCoefficient * depthCoefficient;
+			
+			// store values
+			
+			baseInfo->increaseFoeUnitWeight(vehicle->unit_id, weight);
+			foeUnitStrengthMultipliers.at(vehicle->unit_id).psiOffense += weight * psiOffenseModifier;
+			foeUnitStrengthMultipliers.at(vehicle->unit_id).psiDefense += weight * psiDefenseModifier;
+			foeUnitStrengthMultipliers.at(vehicle->unit_id).conventionalOffense += weight * conventionalOffenseModifier;
+			foeUnitStrengthMultipliers.at(vehicle->unit_id).conventionalDefense += weight * conventionalDefenseModifier;
+			
+			debug
+			(
+				"\t\t\t(%3d,%3d) %-32s weight=%5.2f, partialHealth=%5.2f, travelTimeCoefficient=%5.2f, threatCoefficient=%5.2f, depthCoefficient=%5.2f, pOM=%5.2f, pDM=%5.2f, cOM=%5.2f, cDM=%5.2f\n",
+				vehicle->x, vehicle->y, Units[vehicle->unit_id].name,
+				weight, partialHealth, travelTimeCoefficient, threatCoefficient, depthCoefficient,
+				psiOffenseModifier, psiDefenseModifier, conventionalOffenseModifier, conventionalDefenseModifier
+			);
+			
+		}
+		
+		// --------------------------------------------------
+		// calculate potential alien strength
+		// --------------------------------------------------
+		
+		debug("\t\tfoe MilitaryStrength, potential alien\n");
+		
+		{
+			int alienUnitId;
+			
+			if (!ocean)
+			{
+				alienUnitId = BSC_MIND_WORMS;
+			}
+			else
+			{
+				alienUnitId = BSC_ISLE_OF_THE_DEEP;
+			}
+			
+			UNIT *unit = &(Units[alienUnitId]);
+			
+			// strength modifier
+			
+			double psiOffenseModifier = getAlienMoraleModifier() * getAlienTurnStrengthModifier();
+			double psiDefenseModifier = getAlienMoraleModifier() * getAlienTurnStrengthModifier();
+			
+			double conventionalOffenseModifier = getAlienMoraleModifier() * getAlienTurnStrengthModifier();
+			double conventionalDefenseModifier = getAlienMoraleModifier() * getAlienTurnStrengthModifier();
+			
+			// depth coefficient
+			
+			double depthCoefficient = 1.0;
+			
+			switch (unit->chassis_type)
+			{
+			case CHS_INFANTRY:
+			case CHS_SPEEDER:
+			case CHS_HOVERTANK:
+				{
+					if (!ocean)
+					{
+						// enemy land unit will have hard time moving through our territory
+						depthCoefficient = exp(- (double)baseInfo->borderBaseDistance / 3.0);
+					}
+					
+				}
+				break;
+				
+			case CHS_FOIL:
+			case CHS_CRUISER:
+				{
+					if (ocean)
+					{
+						// enemy sea unit will have slightly hard time moving through our territory
+						depthCoefficient = exp(- (double)baseInfo->borderBaseDistance / 10.0);
+					}
+					
+				}
+				break;
+				
+			}
+			
+			// set basic numbers to occasional vehicle
+			
+			double numbers = 1.0;
+			
+			// add more numbers based on eco-damage and number of fungal pops
+			
+			if (!ocean)
+			{
+				numbers += (double)((faction->fungal_pop_count / 3) * (base->eco_damage / 20));
+			}
+			
+			// calculate weight
+			
+			double weight = depthCoefficient * numbers;
+			
+			// store values
+			
+			baseInfo->increaseFoeUnitWeight(alienUnitId, weight);
+			foeUnitStrengthMultipliers.at(alienUnitId).psiOffense += weight * psiOffenseModifier;
+			foeUnitStrengthMultipliers.at(alienUnitId).psiDefense += weight * psiDefenseModifier;
+			foeUnitStrengthMultipliers.at(alienUnitId).conventionalOffense += weight * conventionalOffenseModifier;
+			foeUnitStrengthMultipliers.at(alienUnitId).conventionalDefense += weight * conventionalDefenseModifier;
+			
+			debug
+			(
+				"\t\t\t%-32s weight=%5.2f, depthCoefficient=%5.2f, numbers=%5.2f, pOM=%5.2f, pDM=%5.2f, cOM=%5.2f, cDM=%5.2f\n",
+				Units[alienUnitId].name,
+				weight, depthCoefficient, numbers,
+				psiOffenseModifier, psiDefenseModifier, conventionalOffenseModifier, conventionalDefenseModifier
+			);
+			
+		}
+		
+		// --------------------------------------------------
+		// calculate potential alien strength - end
+		// --------------------------------------------------
+		
+		// normalize foe unit strengths
+		
+		for (int foeUnitId : foeActiveCombatUnitIds)
+		{
+			double weight = baseInfo->getFoeUnitWeight(foeUnitId);
+			
+			if (weight > 0.0)
+			{
+				foeUnitStrengthMultipliers.at(foeUnitId).psiOffense /= weight;
+				foeUnitStrengthMultipliers.at(foeUnitId).psiDefense /= weight;
+				foeUnitStrengthMultipliers.at(foeUnitId).conventionalOffense /= weight;
+				foeUnitStrengthMultipliers.at(foeUnitId).conventionalDefense /= weight;
+			}
+			
+		}
+		
+		// summarize foe unit weights to make total
+		
+		for (int foeUnitId : foeActiveCombatUnitIds)
+		{
+			baseInfo->getUnitTypeInfo(foeUnitId)->foeTotalWeight += baseInfo->getFoeUnitWeight(foeUnitId);
+		}
+		
+		if (DEBUG)
+		{
+			debug("\t\tfoe unit strength multipliers\n");
+			
+			for (int foeUnitId : foeActiveCombatUnitIds)
+			{
+				double weight = baseInfo->getFoeUnitWeight(foeUnitId);
+				
+				if (weight == 0.0)
+					continue;
+				
+				debug
+				(
+					"\t\t\t%-32s weight=%5.2f, pOM=%5.2f, pDM=%5.2f, cOM=%5.2f, cDM=%5.2f\n",
+					Units[foeUnitId].name,
+					weight,
+					foeUnitStrengthMultipliers.at(foeUnitId).psiOffense,
+					foeUnitStrengthMultipliers.at(foeUnitId).psiDefense,
+					foeUnitStrengthMultipliers.at(foeUnitId).conventionalOffense,
+					foeUnitStrengthMultipliers.at(foeUnitId).conventionalDefense
+				)
+				;
+				
+			}
+			
+		}
+		if (DEBUG)
+		{
+			debug("\t\tfoeTotalWeight by unitType\n");
+			for (unsigned int unitType = 0; unitType < UNIT_TYPE_COUNT; unitType++)
+			{
+				debug("\t\t\t%-10s foeTotalWeight=%5.2f\n", baseInfo->unitTypeInfos[unitType].name, baseInfo->unitTypeInfos[unitType].foeTotalWeight);
+			}
+		}
+		
+		// update base combat effects
+		
+		debug("\t\tcombat effects\n");
+		
+		for (int ownUnitId : ownCombatUnitIds)
+		{
+			int ownUnitOffenseValue = getUnitOffenseValue(ownUnitId);
+			int ownUnitDefenseValue = getUnitDefenseValue(ownUnitId);
+			
+			// safety check
+			
+			if (ownUnitOffenseValue == 0 || ownUnitDefenseValue == 0)
+				continue;
+			
+			debug("\t\t\t%-32s\n", Units[ownUnitId].name);
+			
+			// estimate probability to attack
+			// estimate probability to stay in base/bunker
+			
+			double attackProbability;
+			double stayInProbability;
+			
+			if (unit_triad(ownUnitId) == TRIAD_AIR)
+			{
+				attackProbability = 0.5;
+				stayInProbability = 0.5;
+			}
+			else if (isUnitHasAbility(ownUnitId, ABL_ARTILLERY))
+			{
+				attackProbability = 0.8;
+				stayInProbability = 1.0;
+			}
+			else if (isUnitHasAbility(ownUnitId, ABL_EMPATH | ABL_AIR_SUPERIORITY | ABL_DISSOCIATIVE_WAVE ))
+			{
+				attackProbability = 0.5;
+				stayInProbability = 0.5;
+			}
+			else if (ownUnitOffenseValue < 0 || ownUnitDefenseValue < 0)
+			{
+				attackProbability = 0.5;
+				stayInProbability = 0.5;
+			}
+			else
+			{
+				attackProbability = 0.5 * std::min(1.0, (double)ownUnitOffenseValue / (double)aiData.bestOffenseValue);
+				stayInProbability = 1.0 - attackProbability;
+			}
+			
+			double combatEffectWeight = 0.0;
+			double combatEffectWeightSum = 0.0;
+			
+			for (int foeUnitId : foeActiveCombatUnitIds)
+			{
+				// exclude unit without weight
+				
+				double weight = baseInfo->getFoeUnitWeight(foeUnitId);
+				
+				if (weight == 0.0)
+					continue;
+				
+				// exclude units those cannot attack each other
+				
+				if (!canUnitAttack(ownUnitId, foeUnitId) && !canUnitAttack(foeUnitId, ownUnitId))
+					continue;
+				
+				// get unit combat effect
+				
+				CombatEffect *unitCombatEffect = &(unitCombatEffects.at(getUnitIndex(ownUnitId)).at(foeUnitId));
+				
+				// exclude unit from different types or those not attacking each other
+				
+				if (unitCombatEffect->attack == 0.0 && unitCombatEffect->defend == 0.0)
+					continue;
+				
+				// calculate combat effect
+				
+				CombatEffect *combatEffect = baseInfo->getCombatEffect(ownUnitId, foeUnitId);
+				
+				double attackCombatEffect;
+				double defendCombatEffect;
+				
+				if (isPsiCombat(ownUnitId, foeUnitId))
+				{
+					
+					attackCombatEffect = unitCombatEffect->attack / foeUnitStrengthMultipliers.at(foeUnitId).psiDefense;
+					defendCombatEffect = unitCombatEffect->defend / foeUnitStrengthMultipliers.at(foeUnitId).psiOffense;
+					
+					// PLANET multiplier
+					
+					attackCombatEffect *= getFactionSEPlanetOffenseModifier(aiFactionId);
+					defendCombatEffect *= getFactionSEPlanetDefenseModifier(aiFactionId);
+					
+					// base psi defense multiplier
+					
+					double basePsiDefenseMultiplier = baseInfo->intrinsicDefenseMultiplier;
+					
+					defendCombatEffect *= ((1.0 - stayInProbability) + stayInProbability * basePsiDefenseMultiplier);
+					
+				}
+				else
+				{
+					attackCombatEffect = unitCombatEffect->attack / foeUnitStrengthMultipliers.at(foeUnitId).conventionalDefense;
+					defendCombatEffect = unitCombatEffect->defend / foeUnitStrengthMultipliers.at(foeUnitId).conventionalOffense;
+					
+					// base conventional defense multiplier
+					
+					double baseConventionalDefenseMultiplier = (isUnitHasAbility(foeUnitId, ABL_BLINK_DISPLACER) ? baseInfo->intrinsicDefenseMultiplier : baseInfo->conventionalDefenseMultipliers[unit_triad(foeUnitId)]);
+					
+					defendCombatEffect *= ((1.0 - stayInProbability) + stayInProbability * baseConventionalDefenseMultiplier);
+					
+				}
+				
+				// sensor effect multiplier
+				
+				attackCombatEffect *= baseInfo->sensorOffenseMultiplier;
+				defendCombatEffect *= baseInfo->sensorDefenseMultiplier;
+				
+				// store values
+				
+				combatEffect->attack = attackCombatEffect;
+				combatEffect->defend = defendCombatEffect;
+				
+				// set average estimate
+				
+				if (attackCombatEffect > 0.0 && defendCombatEffect <= 0.0)
+				{
+					combatEffect->average = attackCombatEffect;
+				}
+				else if (attackCombatEffect <= 0.0 && defendCombatEffect > 0.0)
+				{
+					combatEffect->average = defendCombatEffect;
+				}
+				else if (attackCombatEffect > 0.0 && defendCombatEffect > 0.0)
+				{
+					combatEffect->average = attackProbability * attackCombatEffect + (1.0 - attackProbability) * defendCombatEffect;
+				}
+				else
+				{
+					combatEffect->average = 0.0;
+				}
+				
+				// summarize for average
+				
+				if (combatEffect->average > 0.0)
+				{
+					combatEffectWeight += weight;
+					combatEffectWeightSum += weight * combatEffect->average;
+				}
+				
+				debug
+				(
+					"\t\t\t\t%-32s average=%5.2f, a=%5.2f, d=%5.2f, aP=%5.2f, sP=%5.2f\n",
+					Units[foeUnitId].name,
+					baseInfo->getCombatEffect(ownUnitId, foeUnitId)->average,
+					baseInfo->getCombatEffect(ownUnitId, foeUnitId)->attack,
+					baseInfo->getCombatEffect(ownUnitId, foeUnitId)->defend,
+					attackProbability, stayInProbability
+				)
+				;
+				
+			}
+			
+			// update average combat effect
+			
+			double averageCombatEffect = (combatEffectWeight <= 0.0 ? 0.0 : combatEffectWeightSum / combatEffectWeight);
+			baseInfo->setAverageCombatEffect(ownUnitId, averageCombatEffect);
+			debug("\t\t\t\t[%3d] averageCombatEffect=%5.2f\n", ownUnitId, averageCombatEffect);
+			
+		}
+		
+		// evaluate base own total combat effect
+		
+		debug("\t\town MilitaryStrength\n");
+		
+		for (int vehicleId : aiData.combatVehicleIds)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			MAP *vehicleTile = getVehicleMapTile(vehicleId);
+			UNIT *unit = &(Units[vehicle->unit_id]);
+			CChassis *chassis = &(Chassis[unit->chassis_type]);
+			int triad = chassis->triad;
+			int vehicleAssociation = getVehicleAssociation(vehicleId);
+			
+			// exclude infantry defensive units in other base
+			
+			if (isInfantryDefensiveVehicle(vehicleId) && map_has_item(vehicleTile, TERRA_BASE_IN_TILE) && vehicleTile != baseTile)
+				continue;
+			
+			// land base
+			if (!ocean)
+			{
+				// do not count sea vehicle for land base protection 
+				
+				if (triad == TRIAD_SEA)
+					continue;
+				
+			}
+			// ocean base
+			else
+			{
+				// do not count sea vehicle in other association for ocean base protection
+				
+				if (triad == TRIAD_SEA && vehicleAssociation != baseAssociation)
+					continue;
+				
+			}
+			
+			// partial health
+			
+			double partialHealth = (double)getVehiclePower(vehicleId) / (double)getVehicleMaxPower(vehicleId);
 			
 			// vehicle distance to base
 			
@@ -1426,324 +1744,83 @@ void evaluateDefenseLevel()
 				travelTime *= 2.0;
 			}
 			
+			// travel time coefficient
 			// reduce weight based on time to reach the base
 			// every 10 turns reduce weight in e
 			
-			double weight = exp(- travelTime / 10.0);
+			double travelTimeCoefficient = exp(- travelTime / 3.0);
 			
-			// modify weight based on diplomatic relations
+			// calculate weight
 			
-			weight *= aiData.factionInfos[vehicle->faction_id].threatCoefficient;
+			double weight = partialHealth * travelTimeCoefficient;
 			
-			// decrease weight even more for bases far from border
+			// accumulate weight
 			
-			switch (unit->chassis_type)
-			{
-			case CHS_NEEDLEJET:
-			case CHS_COPTER:
-			case CHS_MISSILE:
-				{
-					if (unit->speed() < baseInfo->enemyAirbaseDistance)
-					{
-						// enemy air unit cannot reach that deep into the territory
-						weight = 0.0;
-					}
-					
-				}
-				break;
-				
-			case CHS_INFANTRY:
-			case CHS_SPEEDER:
-			case CHS_HOVERTANK:
-				{
-					if (!ocean)
-					{
-						// enemy land unit will have hard time moving through our territory
-						weight *= exp(- (double)baseInfo->borderBaseDistance / 5.0);
-					}
-					
-				}
-				break;
-				
-			case CHS_FOIL:
-			case CHS_CRUISER:
-				{
-					if (ocean)
-					{
-						// enemy sea unit will have slightly hard time moving through our territory
-						weight *= exp(- (double)baseInfo->borderBaseDistance / 15.0);
-					}
-					
-				}
-				break;
-				
-			}
+			baseInfo->increaseOwnUnitWeight(vehicle->unit_id, weight);
+			baseInfo->getUnitTypeInfo(vehicle->unit_id)->ownTotalWeight += weight;
 			
-			// gather all together
+			// accumulate total combat effect
 			
-			foeStrength->totalWeight += weight;
-			unitStrength->weight += weight;
-			unitStrength->psiOffense += psiOffense * weight;
-			unitStrength->psiDefense += psiDefense * weight;
-			unitStrength->conventionalOffense += conventionalOffense * weight;
-			unitStrength->conventionalDefense += conventionalDefense * weight;
+			double vehicleAveragecombatEffect = baseInfo->getVehicleAverageCombatEffect(vehicleId);
+			baseInfo->getUnitTypeInfo(vehicle->unit_id)->ownTotalCombatEffect += weight * vehicleAveragecombatEffect;
 			
-			debug
-			(
-				"\t\t\t(%3d,%3d) %-32s psiO=%6.3f, psiD=%6.3f, conventionalO=%6.3f, conventionalD=%6.3f, health=%6.3f, distance=%3d, travelTime=%6.2f, weight=%6.3f\n",
-				vehicle->x, vehicle->y, Units[vehicle->unit_id].name,
-				psiOffense, psiDefense, conventionalOffense, conventionalDefense,
-				health, distance, travelTime, weight
-			);
+			debug("\t\t\t[%3d](%3d,%3d) %-25s weight=%5.2f, vehicleAveragecombatEffect=%5.2f\n", vehicleId, vehicle->x, vehicle->y, unit->name, weight, vehicleAveragecombatEffect);
 			
 		}
 		
-		// normalize weights
+		// populate protectors
 		
-		foeStrength->normalize();
+		std::map<int, double> protectors;
 		
-		debug("\t\ttotalWeight=%6.3f\n", foeStrength->totalWeight);
+		for (int ownUnitId : ownCombatUnitIds)
+		{
+			baseInfo->getUnitTypeInfo(ownUnitId)->protectors.push_back({ownUnitId, baseInfo->getAverageCombatEffect(ownUnitId)});
+		}
+		
+		// calculate computed values
+		
+		baseInfo->setUnitTypeComputedValues();
+		
 		if (DEBUG)
 		{
-			for (int unitId : foeStrength->populatedUnitIds)
+			debug("\t\tprotectors\n");
+			for (const UnitTypeInfo &unitTypeInfo : baseInfo->unitTypeInfos)
 			{
-				const UNIT *unit = &(Units[unitId]);
-				const UnitStrength *unitStrength = &(foeStrength->unitStrengths[unitId]);
+				debug("\t\t\t%-15s\n", unitTypeInfo.name);
 				
-				// skip not populated
-				
-				if (unitStrength->weight == 0.0)
-					continue;
-				
-				debug("\t\t\t[%3d] %-32s weight=%6.3f, psiOffense=%6.3f, psiDefense=%6.3f, conventionalOffense=%6.3f, conventionalDefense=%6.3f\n", unitId, unit->name, unitStrength->weight, unitStrength->psiOffense, unitStrength->psiDefense, unitStrength->conventionalOffense, unitStrength->conventionalDefense);
+				for (IdDoubleValue protector : unitTypeInfo.protectors)
+				{
+					debug("\t\t\t\t%-32s %5.2f\n", Units[protector.id].name, protector.value);
+				}
 				
 			}
 			
-		}
-		
-		// evaluate relative portion of foes destroyed
-		
-		double foeDestroyed = 0.0;
-		
-		for (int foeUnitId : foeStrength->populatedUnitIds)
-		{
-			UNIT *foeUnit = &(Units[foeUnitId]);
-			const UnitStrength *foeUnitStrength = &(foeStrength->unitStrengths[foeUnitId]);
-			
-			for (int ownUnitId : ownStrength->populatedUnitIds)
-			{
-				UNIT *ownUnit = &(Units[ownUnitId]);
-				const UnitStrength *ownUnitStrength = &(ownStrength->unitStrengths[ownUnitId]);
-				
-				// impossible combinations
-				
-				// two needlejets without air superiority
-				if
-				(
-					(foeUnit->chassis_type == CHS_NEEDLEJET && !unit_has_ability(ownUnitId, ABL_AIR_SUPERIORITY))
-					&&
-					(ownUnit->chassis_type == CHS_NEEDLEJET && !unit_has_ability(foeUnitId, ABL_AIR_SUPERIORITY))
-				)
-				{
-					continue;
-				}
-				
-				// calculate odds for own unit while attacking and defending
-				
-				double attackOdds;
-				double defendOdds;
-				
-				if (ownUnit->weapon_type == WPN_PSI_ATTACK || foeUnit->armor_type == ARM_PSI_DEFENSE)
-				{
-					attackOdds = ownUnitStrength->psiOffense / foeUnitStrength->psiDefense;
-				}
-				else
-				{
-					attackOdds = ownUnitStrength->conventionalOffense / foeUnitStrength->conventionalDefense * getConventionalCombatBonusMultiplier(ownUnitId, foeUnitId);
-				}
-				
-				if (ownUnit->armor_type == ARM_PSI_DEFENSE || foeUnit->weapon_type == WPN_PSI_ATTACK)
-				{
-					defendOdds = ownUnitStrength->psiDefense / foeUnitStrength->psiOffense;
-				}
-				else
-				{
-					defendOdds = ownUnitStrength->conventionalDefense / foeUnitStrength->conventionalOffense / getConventionalCombatBonusMultiplier(foeUnitId, ownUnitId);
-				}
-				
-				// calculate attack and defend probabilities
-				
-				double attackProbability;
-				double defendProbability;
-				
-				// own unit cannot attack
-				if
-				(
-					// unit without air superiority cannot attack neeglejet
-					(foeUnit->chassis_type == CHS_NEEDLEJET && !unit_has_ability(ownUnitId, ABL_AIR_SUPERIORITY))
-					||
-					// land unit cannot attack from sea base except artillery
-					(ocean && ownUnit->triad() == TRIAD_LAND && !unit_has_ability(ownUnitId, ABL_ARTILLERY))
-				)
-				{
-					attackProbability = 0.0;
-					defendProbability = 1.0;
-				}
-				// foe unit cannot attack
-				else if
-				(
-					// unit without air superiority cannot attack neeglejet
-					(ownUnit->chassis_type == CHS_NEEDLEJET && !unit_has_ability(foeUnitId, ABL_AIR_SUPERIORITY))
-				)
-				{
-					attackProbability = 1.0;
-					defendProbability = 0.0;
-				}
-				// own unit decides not to attack if it worse than defending
-				if (attackOdds < defendOdds)
-				{
-					attackProbability = 0.0;
-					defendProbability = 1.0;
-				}
-				else
-				{
-					attackProbability = 0.5;
-					defendProbability = 0.5;
-				}
-				
-				// calculate foe destroyed
-				
-				double foeDestroyedTypeVsType =
-					// occurence probability
-					(foeUnitStrength->weight * ownUnitStrength->weight)
-					*
-					(
-						attackProbability * attackOdds
-						+
-						defendProbability * defendOdds
-					)
-				;
-				
-				debug
-				(
-					"\t\town: weight=%6.3f %-32s\n\t\tfoe: weight=%6.3f %-32s\n\t\t\tattack: probability=%6.3f, odds=%6.3f\n\t\t\tdefend: probability=%6.3f, odds=%6.3f\n\t\t\tfoeDestroyedTypeVsType=%6.3f\n",
-					ownUnitStrength->weight,
-					ownUnit->name,
-					foeUnitStrength->weight,
-					foeUnit->name,
-					attackProbability,
-					attackOdds,
-					defendProbability,
-					defendOdds,
-					foeDestroyedTypeVsType
-				)
-				;
-				
-				// update summaries
-				
-				foeDestroyed += foeDestroyedTypeVsType;
-				
-			}
-			
-		}
-		
-		// calculate defense demand
-		
-		if (foeStrength->totalWeight <= 0.0)
-		{
-			baseInfo->defenseDemand = 0.0;
-		}
-		else
-		{
-			// foe destroyed total
-			
-			double foeDestroyedTotal =
-				foeDestroyed
-				// proportion of total weight
-				*
-				(ownStrength->totalWeight / foeStrength->totalWeight)
-			;
-			
-			baseInfo->defenseDemand = std::max(0.0, 1.0 - foeDestroyedTotal / conf.ai_production_defense_superiority_coefficient);
-			
-		}
-		
-		debug("\t\tdefenseDemand=%6.3f, foeDestroyed=%6.3f, ownStrength->totalWeight=%6.3f, foeStrength->totalWeight=%6.3f\n",
-			baseInfo->defenseDemand,
-			foeDestroyed,
-			ownStrength->totalWeight,
-			foeStrength->totalWeight
-		)
-		;
-		
-		// update global values
-		
-		if (baseInfo->defenseDemand > aiData.production.globalDefenseDemand)
-		{
-			aiData.mostVulnerableBaseId = baseId;
-			aiData.production.globalDefenseDemand = baseInfo->defenseDemand;
 		}
 		
 	}
 	
-	debug("mostVulnerableBase = %s, mostVulnerableBaseDefenseDemand = %6.3f\n", (aiData.mostVulnerableBaseId == -1 ? "none" : Bases[aiData.mostVulnerableBaseId].name), aiData.production.globalDefenseDemand);
+	// summarize our unit average effects across all bases
 	
-	// assign defense demand targets
-	
-	debug("targetBases\n");
-	
-	for (int baseId : aiData.baseIds)
+	for (int unitId : ownCombatUnitIds)
 	{
-		BASE *base = &(Bases[baseId]);
-		MAP *baseTile = getBaseMapTile(baseId);
-		BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
+		double averageCombatEffectWeight = 0.0;
+		double averageCombatEffectWeightSum = 0.0;
 		
-		int bestTargetBaseId = -1;
-		double bestTargetBasePreference = 0.0;
-		
-		for (int targetBaseId : aiData.baseIds)
+		for (int baseId : aiData.baseIds)
 		{
-			BASE *targetBase = &(Bases[targetBaseId]);
-			MAP *targetBaseTile = getBaseMapTile(targetBaseId);
-			BaseInfo *targetBaseInfo = aiData.getBaseInfo(targetBaseId);
+			BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
 			
-			// get range
+			double weight = baseInfo->getUnitTypeInfo(unitId)->foeTotalWeight;
 			
-			double range = (double)map_range(base->x, base->y, targetBase->x, targetBase->y);
-			
-			// adjust range for different regions
-			
-			if (baseTile->region != targetBaseTile->region)
-			{
-				range *= 2;
-			}
-			
-			// calculate range coefficient
-			// preference drops by e every 20 tiles
-			
-			double rangeCoefficient = exp(- range / 20.0);
-			
-			// calculate preference
-			
-			double targetBasePreference = rangeCoefficient * targetBaseInfo->defenseDemand;
-			
-			// update best
-			
-			if (targetBasePreference > bestTargetBasePreference)
-			{
-				bestTargetBaseId = targetBaseId;
-				bestTargetBasePreference = targetBasePreference;
-			}
+			averageCombatEffectWeight += weight;
+			averageCombatEffectWeightSum += weight * baseInfo->getAverageCombatEffect(unitId);
 			
 		}
 		
-		baseInfo->targetBaseId = bestTargetBaseId;
-		
-		debug("\t%-25s -> %-25s\n", Bases[baseId].name, (bestTargetBaseId == -1 ? "" : Bases[bestTargetBaseId].name));
+		double averageCombatEffect = (averageCombatEffectWeight <= 0.0 ? 0.0 : averageCombatEffectWeightSum / averageCombatEffectWeight);
+		aiData.setAverageCombatEffect(unitId, averageCombatEffect);
 		
 	}
-	
-	debug("\n");
 	
 }
 
@@ -1859,64 +1936,6 @@ void populateWarzones()
 				debug("\t(%3d,%3d)\n", getX(mapIndex), getY(mapIndex));
 			}
 		}
-	}
-	
-}
-
-void populateBasesAndTiles()
-{
-	debug("populateBasesAndTiles - %s\n", MFactions[aiFactionId].noun_faction);
-	
-	// populate base worked tiles
-	// populate tile worked bases
-	
-	debug("\tworked\n");
-	
-	for (int baseId : aiData.baseIds)
-	{
-		debug("\t\t%s\n", Bases[baseId].name);
-		
-		for (MAP *workedTile : getBaseWorkedTiles(baseId))
-		{
-			// store worked base and worked tile
-			
-			aiData.getBaseInfo(baseId)->workedTiles.push_back(workedTile);
-			aiData.getTileInfo(workedTile)->workedBase = baseId;
-			
-			debug("\t\t\t(%3d,%3d)\n", getX(workedTile), getY(workedTile));
-			
-		}
-		
-	}
-	
-	// populate base unworked tiles
-	
-	debug("\tunworked\n");
-	
-	for (int baseId : aiData.baseIds)
-	{
-		debug("\t\t%s\n", Bases[baseId].name);
-		
-		for (MAP *workableTile : getBaseWorkableTiles(baseId, false))
-		{
-			// unclaimed territory
-			
-			if (!(workableTile->owner == -1 || workableTile->owner == aiFactionId))
-				continue;
-			
-			// unworked tile
-			
-			if (!(aiData.getTileInfo(workableTile)->workedBase == -1))
-				continue;
-			
-			// store unworked tile
-			
-			aiData.getBaseInfo(baseId)->unworkedTiles.push_back(workableTile);
-			
-			debug("\t\t\t(%3d,%3d)\n", getX(workableTile), getY(workableTile));
-			
-		}
-		
 	}
 	
 }
@@ -2392,11 +2411,11 @@ int getNearestBaseId(int x, int y, std::set<int> baseIds)
 
 }
 
-int getFactionBestPrototypedWeaponOffenseValue(int factionId)
+int getFactionBestOffenseValue(int factionId)
 {
 	int bestWeaponOffenseValue = 0;
 	
-	for (int unitId : getFactionUnitIds(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, true))
 	{
 		UNIT *unit = &(Units[unitId]);
 		
@@ -2419,11 +2438,11 @@ int getFactionBestPrototypedWeaponOffenseValue(int factionId)
 
 }
 
-int getFactionBestPrototypedArmorDefenseValue(int factionId)
+int getFactionBestDefenseValue(int factionId)
 {
 	int bestArmorDefenseValue = 0;
 	
-	for (int unitId : getFactionUnitIds(factionId, false))
+	for (int unitId : getFactionUnitIds(factionId, true))
 	{
 		UNIT *unit = &(Units[unitId]);
 		
@@ -3173,62 +3192,72 @@ std::set<int> getBaseOceanRegions(int baseId)
 
 }
 
-int getPathDistance(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId)
+int getPathDistance(int srcX, int srcY, int dstX, int dstY, int unitId, int factionId)
 {
-//	debug("getPathDistance (%3d,%3d) -> (%3d,%3d) %s - %s\n", sourceX, sourceY, destinationX, destinationY, Units[unitId].name, MFactions[factionId].noun_faction);
+//	debug("getPathDistance (%3d,%3d) -> (%3d,%3d) %s - %s\n", srcX, srcY, dstX, dstY, Units[unitId].name, MFactions[factionId].noun_faction);
 //	
-	if(!isOnMap(sourceX, sourceY) || !isOnMap(destinationX, destinationY))
+	if(!isOnMap(srcX, srcY) || !isOnMap(dstX, dstY))
 		return -1;
 	
-	MAP *sourceTile = getMapTile(sourceX, sourceY);
-	MAP *destinationTile = getMapTile(destinationX, destinationY);
+	MAP *srcTile = getMapTile(srcX, srcY);
+	MAP *dstTile = getMapTile(dstX, dstY);
 	
-	if (sourceTile == nullptr || destinationTile == nullptr)
+	if (srcTile == nullptr || dstTile == nullptr)
 		return -1;
 	
-	// verify source and destination are corresponding realms
+	// verify src and dst are reachable by unit
 	
 	switch (Units[unitId].triad())
 	{
 	case TRIAD_LAND:
-		if (is_ocean(sourceTile) || is_ocean(destinationTile))
-			return -1;
+		{
+			// land unit cannot path on ocean
+			
+			if (is_ocean(srcTile) || is_ocean(dstTile))
+				return -1;
+			
+			int srcAssociation = getAssociation(srcTile, factionId);
+			int dstAssociation = getAssociation(dstTile, factionId);
+			
+			// land unit can path only within same association
+			
+			if (srcAssociation == -1 || dstAssociation == -1 || dstAssociation != srcAssociation)
+				return -1;
+			
+		}
 		break;
 		
 	case TRIAD_SEA:
-		if (!is_ocean(sourceTile) || !is_ocean(destinationTile))
-			return -1;
+		{
+			int srcOceanAssociation = getOceanAssociation(srcTile, factionId);
+			int dstOceanAssociation = getOceanAssociation(dstTile, factionId);
+			
+			// sea unit can move only within the same ocean association
+			
+			if (srcOceanAssociation == -1 || dstOceanAssociation == -1 || dstOceanAssociation != srcOceanAssociation)
+				return -1;
+			
+		}
 		break;
 		
 	}
 	
-	// verify valid and same associations
-	
-	int sourceAssociation = getAssociation(sourceTile, factionId);
-	int destinationAssociation = getAssociation(destinationTile, factionId);
-	
-	if (sourceAssociation == -1 || destinationAssociation == -1)
-		return -1;
-	
-	if (destinationAssociation != sourceAssociation)
-		return -1;
-	
 	// process path
 	
-	int pX = sourceX;
-	int pY = sourceY;
+	int pX = srcX;
+	int pY = srcY;
 	int angle = -1;
 	int flags = 0x00 | (!isCombatUnit(unitId) && !has_project(factionId, FAC_XENOEMPATHY_DOME) ? 0x10 : 0x00);
 	int distance = 0;
 	
 	while (distance < *map_axis_x + *map_axis_y)
 	{
-		if (pX == destinationX && pY == destinationY)
+		if (pX == dstX && pY == dstY)
 		{
 			return distance;
 		}
 		
-		angle = PATH_find(PATH, pX, pY, destinationX, destinationY, unitId, factionId, flags, angle);
+		angle = PATH_find(PATH, pX, pY, dstX, dstY, unitId, factionId, flags, angle);
 		
 		// wrong angle
 		
@@ -3262,50 +3291,60 @@ int getVehiclePathDistance(int vehicleId, int x, int y)
 	
 }
 
-int getPathMovementCost(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId, bool excludeDestination)
+int getPathMovementCost(int srcX, int srcY, int dstX, int dstY, int unitId, int factionId, bool excludeDestination)
 {
-//	debug("getPathTravelTime (%3d,%3d) -> (%3d,%3d) %s - %s\n", sourceX, sourceY, destinationX, destinationY, Units[unitId].name, MFactions[factionId].noun_faction);
+//	debug("getPathTravelTime (%3d,%3d) -> (%3d,%3d) %s - %s\n", srcX, srcY, dstX, dstY, Units[unitId].name, MFactions[factionId].noun_faction);
 //	
-	if(!isOnMap(sourceX, sourceY) || !isOnMap(destinationX, destinationY))
+	if(!isOnMap(srcX, srcY) || !isOnMap(dstX, dstY))
 		return -1;
 	
-	MAP *sourceTile = getMapTile(sourceX, sourceY);
-	MAP *destinationTile = getMapTile(destinationX, destinationY);
+	MAP *srcTile = getMapTile(srcX, srcY);
+	MAP *dstTile = getMapTile(dstX, dstY);
 	
-	if (sourceTile == nullptr || destinationTile == nullptr)
+	if (srcTile == nullptr || dstTile == nullptr)
 		return -1;
 	
-	// verify source and destination are corresponding realms
+	// verify src and dst are reachable by unit
 	
 	switch (Units[unitId].triad())
 	{
 	case TRIAD_LAND:
-		if (is_ocean(sourceTile) || is_ocean(destinationTile))
-			return -1;
+		{
+			// land unit cannot path on ocean
+			
+			if (is_ocean(srcTile) || is_ocean(dstTile))
+				return -1;
+			
+			int srcAssociation = getAssociation(srcTile, factionId);
+			int dstAssociation = getAssociation(dstTile, factionId);
+			
+			// land unit can path only within same association
+			
+			if (srcAssociation == -1 || dstAssociation == -1 || dstAssociation != srcAssociation)
+				return -1;
+			
+		}
 		break;
 		
 	case TRIAD_SEA:
-		if (!is_ocean(sourceTile) || !is_ocean(destinationTile))
-			return -1;
+		{
+			int srcOceanAssociation = getOceanAssociation(srcTile, factionId);
+			int dstOceanAssociation = getOceanAssociation(dstTile, factionId);
+			
+			// sea unit can move only within the same ocean association
+			
+			if (srcOceanAssociation == -1 || dstOceanAssociation == -1 || dstOceanAssociation != srcOceanAssociation)
+				return -1;
+			
+		}
 		break;
 		
 	}
 	
-	// verify valid and same associations
-	
-	int sourceAssociation = getAssociation(sourceTile, factionId);
-	int destinationAssociation = getAssociation(destinationTile, factionId);
-	
-	if (sourceAssociation == -1 || destinationAssociation == -1)
-		return -1;
-	
-	if (destinationAssociation != sourceAssociation)
-		return -1;
-	
 	// process path
 	
-	int pX = sourceX;
-	int pY = sourceY;
+	int pX = srcX;
+	int pY = srcY;
 	int angle = -1;
 	int flags = 0xC0 | (!isCombatUnit(unitId) && !has_project(factionId, FAC_XENOEMPATHY_DOME) ? 0x10 : 0x00);
 	int previousStepMovementCost = 0;
@@ -3313,12 +3352,12 @@ int getPathMovementCost(int sourceX, int sourceY, int destinationX, int destinat
 	
 	while (movementCost < (*map_axis_x + *map_axis_y) * Rules->mov_rate_along_roads)
 	{
-		if (pX == destinationX && pY == destinationY)
+		if (pX == dstX && pY == dstY)
 		{
 			return (excludeDestination ? previousStepMovementCost : movementCost);
 		}
 		
-		angle = PATH_find(PATH, pX, pY, destinationX, destinationY, unitId, factionId, flags, angle);
+		angle = PATH_find(PATH, pX, pY, dstX, dstY, unitId, factionId, flags, angle);
 		
 		// wrong angle
 		
@@ -3359,12 +3398,14 @@ int getVehiclePathMovementCost(int vehicleId, int x, int y, bool excludeDestinat
 
 int getPathTravelTime(int sourceX, int sourceY, int destinationX, int destinationY, int unitId, int factionId)
 {
+	int unitSpeed = unit_speed(unitId);
+	
 	int pathMovementCost = getPathMovementCost(sourceX, sourceY, destinationX, destinationY, unitId, factionId, false);
 	
 	if (pathMovementCost == -1)
 		return -1;
 	
-	return (pathMovementCost + (Rules->mov_rate_along_roads - 1)) / Rules->mov_rate_along_roads;
+	return (pathMovementCost + (unitSpeed - 1)) / unitSpeed;
 	
 }
 int getVehiclePathTravelTime(int vehicleId, int x, int y)
@@ -3372,6 +3413,666 @@ int getVehiclePathTravelTime(int vehicleId, int x, int y)
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
 	return getPathTravelTime(vehicle->x, vehicle->y, x, y, vehicle->unit_id, vehicle->faction_id);
+	
+}
+
+/*
+Sends vehicles to locations trying to minimize travel time.
+Crude algorithm to match closest pairs first.
+Takes triad into account.
+*/
+std::vector<VehicleLocation> matchVehiclesToUnrankedLocations(std::vector<int> vehicleIds, std::vector<MAP *> locations)
+{
+	debug("matchVehiclesToUnrankedLocations - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	std::vector<VehicleLocation> vehicleLocations;
+	
+	if (vehicleIds.size() == 0 || locations.size() == 0)
+	{
+		debug("\tno vehicles or locations\n");
+		return vehicleLocations;
+	}
+	
+	// populate travel times
+	
+	std::vector<VehicleLocationTravelTime> vehicleLocaionTravelTimes;
+	
+	for (int vehicleId : vehicleIds)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		int triad = vehicle->triad();
+		int speed = getVehicleSpeedWithoutRoads(vehicleId);
+		int vehicleAssociation = getVehicleAssociation(vehicleId);
+		
+		for (MAP *location : locations)
+		{
+			int x = getX(location);
+			int y = getY(location);
+			bool ocean = is_ocean(location);
+			int locationOceanAssociation = getOceanAssociation(location, aiFactionId);
+			
+			// verify location is reachable
+			
+			switch (triad)
+			{
+			case TRIAD_LAND:
+				{
+					// land unit cannot go to ocean
+					
+					if (ocean)
+						continue;
+					
+				}
+				break;
+				
+			case TRIAD_SEA:
+				{
+					// sea unit cannot go to land
+					
+					if (!ocean)
+						continue;
+					
+					// sea unit cannot go to different ocean association
+					
+					if (vehicleAssociation == -1 || locationOceanAssociation == -1 || vehicleAssociation != locationOceanAssociation)
+						continue;
+					
+				}
+				break;
+				
+			}
+			
+			int range = map_range(vehicle->x, vehicle->y, x, y);
+			int travelTime = (range + (speed - 1)) / speed;
+			
+			vehicleLocaionTravelTimes.push_back({vehicleId, location, travelTime});
+			
+		}
+		
+	}
+	
+	// sort travel times
+	
+	std::sort
+	(
+		begin(vehicleLocaionTravelTimes),
+		end(vehicleLocaionTravelTimes),
+		[](const VehicleLocationTravelTime &vehicleLocationTravelTime1, const VehicleLocationTravelTime &vehicleLocationTravelTime2) -> bool
+		{
+			return vehicleLocationTravelTime1.travelTime < vehicleLocationTravelTime2.travelTime;
+		}
+	)
+	;
+	
+	// match vehicles and locations
+	
+	std::set<int> matchedVehicleIds;
+	std::set<MAP *> matchedLocations;
+	
+	for (VehicleLocationTravelTime &vehicleLocationTravelTime : vehicleLocaionTravelTimes)
+	{
+		int vehicleId = vehicleLocationTravelTime.vehicleId;
+		MAP *location = vehicleLocationTravelTime.location;
+		
+		// skip matched
+		
+		if (matchedVehicleIds.count(vehicleId) != 0 || matchedLocations.count(location) != 0)
+			continue;
+		
+		// match
+		
+		vehicleLocations.push_back({vehicleId, location});
+		
+		matchedVehicleIds.insert(vehicleId);
+		matchedLocations.insert(location);
+		
+		debug("\t[%3d] (%3d,%3d) -> (%3d,%3d)\n", vehicleId, Vehicles[vehicleId].x, Vehicles[vehicleId].y, getX(location), getY(location));
+		
+	}
+	
+	return vehicleLocations;
+	
+}
+
+/*
+Sends vehicles to locations trying to minimize travel time.
+Crude algorithm to match closest pairs first.
+Takes triad into account.
+Locations are sorted by priority.
+*/
+std::vector<VehicleLocation> matchVehiclesToRankedLocations(std::vector<int> vehicleIds, std::vector<MAP *> locations)
+{
+	debug("matchVehiclesToRankedLocations - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	std::vector<VehicleLocation> vehicleLocations;
+	
+	if (vehicleIds.size() == 0 || locations.size() == 0)
+	{
+		debug("\tno vehicles or locations\n");
+		return vehicleLocations;
+	}
+	
+	// assign ranked locations to vehicles
+	
+	std::set<int> assignedVehicleIds;
+	
+	for (MAP *location : locations)
+	{
+		int x = getX(location);
+		int y = getY(location);
+		bool ocean = is_ocean(location);
+		int locationOceanAssociation = getOceanAssociation(location, aiFactionId);
+		
+		int closestVehicleId = -1;
+		int closestVehicleTravelTime = INT_MAX;
+		
+		for (int vehicleId : vehicleIds)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			int triad = vehicle->triad();
+			int speed = getVehicleSpeedWithoutRoads(vehicleId);
+			int vehicleAssociation = getVehicleAssociation(vehicleId);
+			
+			// skip already assigned
+			
+			if (assignedVehicleIds.count(vehicleId) != 0)
+				continue;
+			
+			// verify location is reachable
+			
+			switch (triad)
+			{
+			case TRIAD_LAND:
+				{
+					// land unit cannot go to ocean
+					
+					if (ocean)
+						continue;
+					
+				}
+				break;
+				
+			case TRIAD_SEA:
+				{
+					// sea unit cannot go to land
+					
+					if (!ocean)
+						continue;
+					
+					// sea unit cannot go to different ocean association
+					
+					if (vehicleAssociation == -1 || locationOceanAssociation == -1 || vehicleAssociation != locationOceanAssociation)
+						continue;
+					
+				}
+				break;
+				
+			}
+			
+			int range = map_range(vehicle->x, vehicle->y, x, y);
+			int travelTime = (range + (speed - 1)) / speed;
+			
+			if (travelTime < closestVehicleTravelTime)
+			{
+				closestVehicleId = vehicleId;
+				closestVehicleTravelTime = travelTime;
+			}
+			
+		}
+		
+		// not found
+		
+		if (closestVehicleId == -1)
+			continue;
+		
+		// assign vehicle
+		
+		vehicleLocations.push_back({closestVehicleId, location});
+		assignedVehicleIds.insert(closestVehicleId);
+		
+	}
+	
+	return vehicleLocations;
+	
+}
+
+bool compareIdDoubleValueAscending(const IdDoubleValue &a, const IdDoubleValue &b)
+{
+	return a.value < b.value;
+}
+
+bool compareIdDoubleValueDescending(const IdDoubleValue &a, const IdDoubleValue &b)
+{
+	return a.value > b.value;
+}
+
+/*
+Checks if one unit can attack another.
+*/
+bool canUnitAttack(int attackerUnitId, int defenderUnitId)
+{
+	// cannot attack needlejet without air superiority
+	
+	if (Units[defenderUnitId].chassis_type == CHS_NEEDLEJET && !unit_has_ability(attackerUnitId, ABL_AIR_SUPERIORITY))
+		return false;
+	
+	// otherwise can attack
+	
+	return true;
+	
+}
+
+/*
+Checks if one vehicle can attack another.
+*/
+bool canVehicleAttack(int attackerVehicleId, int defenderVehicleId)
+{
+	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
+	VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+	
+	UNIT *attackerUnit = &(Units[attackerVehicle->unit_id]);
+	UNIT *defenderUnit = &(Units[defenderVehicle->unit_id]);
+	
+	MAP *attackerVehicleTile = getVehicleMapTile(attackerVehicleId);
+	MAP *defenderVehicleTile = getVehicleMapTile(defenderVehicleId);
+	
+	// unit cannot attack
+	
+	if (!canUnitAttack(attackerVehicle->unit_id, defenderVehicle->unit_id))
+		return false;
+	
+	if (attackerUnit->triad() == TRIAD_LAND && is_ocean(attackerVehicleTile))
+	{
+		if (map_has_item(attackerVehicleTile, TERRA_BASE_IN_TILE))
+		{
+			// land unit cannot attack from sea base except artillery or amphibious
+			
+			if (!unit_has_ability(attackerVehicle->unit_id, ABL_AMPHIBIOUS) && !unit_has_ability(attackerVehicle->unit_id, ABL_ARTILLERY))
+				return false;
+			
+		}
+		else
+		{
+			// land unit cannot attack from sea NOT base except amphibious
+			
+			if (!unit_has_ability(attackerVehicle->unit_id, ABL_AMPHIBIOUS))
+				return false;
+			
+		}
+		
+	}
+	
+	if (defenderUnit->triad() == TRIAD_LAND && is_ocean(defenderVehicleTile))
+	{
+		// land unit cannot attack to sea except amphibious
+		
+		if (!unit_has_ability(attackerVehicle->unit_id, ABL_AMPHIBIOUS))
+			return false;
+		
+	}
+	
+	// otherwise, can attack
+	
+	return true;
+	
+}
+
+/*
+Calculates relative attacker odds for units (= relative strength * relative hit points).
+*/
+double getRelativeUnitStrength(int attackerUnitId, int defenderUnitId)
+{
+	UNIT *attackerUnit = &(Units[attackerUnitId]);
+	UNIT *defenderUnit = &(Units[defenderUnitId]);
+	int attackerStrength = Weapon[attackerUnit->weapon_type].offense_value;
+	int defenderStrength = Armor[defenderUnit->armor_type].defense_value;
+	
+	// illegal arguments - should not happen
+	
+	if (attackerStrength == 0 || defenderStrength == 0)
+		return 0.0;
+	
+	// calculate relative strength
+	
+	double relativeStrength;
+	
+	if (attackerStrength < 0 || defenderStrength < 0)
+	{
+		// psi combat
+		
+		if (unit_has_ability(attackerUnitId, ABL_ARTILLERY) && !unit_has_ability(defenderUnitId, ABL_ARTILLERY) || !unit_has_ability(attackerUnitId, ABL_ARTILLERY) && unit_has_ability(defenderUnitId, ABL_ARTILLERY))
+		{
+			// do not compute strength for artillery vs. not artillery
+			
+			return 0.0;
+			
+		}
+		
+		// get relative strength
+		
+		switch (attackerUnit->triad())
+		{
+		case TRIAD_LAND:
+			relativeStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
+			break;
+			
+		case TRIAD_SEA:
+			relativeStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
+			break;
+			
+		case TRIAD_AIR:
+			relativeStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
+			break;
+		
+		default:
+			relativeStrength = 1.0;
+			
+		}
+		
+		// reactor
+		// psi combat ignores reactor
+		
+		// abilities
+		
+		if (unit_has_ability(attackerUnitId, ABL_EMPATH))
+		{
+			relativeStrength *= getPercentageBonusMultiplier(Rules->combat_bonus_empath_song_vs_psi);
+		}
+		
+		if (unit_has_ability(defenderUnitId, ABL_TRANCE))
+		{
+			relativeStrength /= getPercentageBonusMultiplier(Rules->combat_bonus_trance_vs_psi);
+		}
+		
+	}
+	else
+	{
+		// conventional combat
+		
+		if (unit_has_ability(attackerUnitId, ABL_ARTILLERY) && unit_has_ability(defenderUnitId, ABL_ARTILLERY))
+		{
+			// conventional artillery duel
+			
+			if (conf.conventional_artillery_duel_uses_weapon_and_armor)
+			{
+				attackerStrength = Weapon[attackerUnit->weapon_type].offense_value + Armor[attackerUnit->armor_type].defense_value;
+				defenderStrength = Weapon[defenderUnit->weapon_type].offense_value + Armor[defenderUnit->armor_type].defense_value;
+			}
+			else
+			{
+				attackerStrength = Weapon[attackerUnit->weapon_type].offense_value;
+				defenderStrength = Weapon[defenderUnit->weapon_type].offense_value;
+			}
+			
+		}
+		else if (unit_has_ability(attackerUnitId, ABL_ARTILLERY) && !unit_has_ability(defenderUnitId, ABL_ARTILLERY) || !unit_has_ability(attackerUnitId, ABL_ARTILLERY) && unit_has_ability(defenderUnitId, ABL_ARTILLERY))
+		{
+			// do not compute strength for artillery vs. not artillery
+			
+			return 0.0;
+			
+		}
+		
+		// get relative strength
+		
+		relativeStrength = (double)attackerStrength / (double)defenderStrength;
+		
+		// reactor
+		
+		if (!isReactorIgnored())
+		{
+			relativeStrength *= (double)attackerUnit->reactor_type / (double)defenderUnit->reactor_type;
+		}
+		
+		// abilities
+		
+		if (attackerUnit->triad() == TRIAD_AIR && unit_has_ability(attackerUnitId, ABL_AIR_SUPERIORITY))
+		{
+			if (defenderUnit->triad() == TRIAD_AIR)
+			{
+				relativeStrength *= getPercentageBonusMultiplier(Rules->combat_bonus_air_supr_vs_air);
+			}
+			else
+			{
+				relativeStrength *= getPercentageBonusMultiplier(-Rules->combat_penalty_air_supr_vs_ground);
+			}
+		}
+		
+		if (unit_has_ability(attackerUnitId, ABL_NERVE_GAS))
+		{
+			relativeStrength *= 1.5;
+		}
+		
+	}
+	
+	// ability applied regardless of combat type
+	
+	if (attackerUnit->triad() == TRIAD_LAND && attackerUnit->speed() > 1 && unit_has_ability(defenderUnitId, ABL_COMM_JAMMER) && !unit_has_ability(attackerUnitId, ABL_DISSOCIATIVE_WAVE))
+	{
+		relativeStrength /= getPercentageBonusMultiplier(Rules->combat_comm_jammer_vs_mobile);
+	}
+	
+	if (attackerUnit->triad() == TRIAD_AIR && unit_has_ability(defenderUnitId, ABL_AAA) && !unit_has_ability(attackerUnitId, ABL_DISSOCIATIVE_WAVE))
+	{
+		relativeStrength /= getPercentageBonusMultiplier(Rules->combat_AAA_bonus_vs_air);
+	}
+	
+	if (unit_has_ability(attackerUnitId, ABL_SOPORIFIC_GAS) && !isNativeUnit(defenderUnitId))
+	{
+		relativeStrength *= 1.25;
+	}
+	
+	return relativeStrength;
+	
+}
+
+/*
+Returns vehicle specific psi offense modifier to unit strength.
+*/
+double getVehiclePsiOffenseModifier(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+
+	double psiOffenseModifier = 1.0;
+	
+	// morale modifier
+	
+	psiOffenseModifier *= getVehicleMoraleModifier(vehicleId, false);
+	
+	// faction offense
+	
+	psiOffenseModifier *= aiData.factionInfos[vehicle->faction_id].offenseMultiplier;
+	
+	// faction PLANET rating modifier
+	
+	psiOffenseModifier *= getFactionSEPlanetOffenseModifier(vehicle->faction_id);
+	
+	// return strength
+	
+	return psiOffenseModifier;
+	
+}
+
+/*
+Returns vehicle specific psi defense modifier to unit strength.
+*/
+double getVehiclePsiDefenseModifier(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+
+	double psiDefenseModifier = 1.0;
+	
+	// morale modifier
+	
+	psiDefenseModifier *= getVehicleMoraleModifier(vehicleId, false);
+	
+	// faction defense
+	
+	psiDefenseModifier *= aiData.factionInfos[vehicle->faction_id].defenseMultiplier;
+	
+	// faction PLANET rating modifier
+	
+	psiDefenseModifier *= getFactionSEPlanetDefenseModifier(vehicle->faction_id);
+	
+	// return strength
+	
+	return psiDefenseModifier;
+	
+}
+
+/*
+Returns vehicle specific conventional offense modifier to unit strength.
+*/
+double getVehicleConventionalOffenseModifier(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// modifier
+
+	double conventionalOffenseModifier = 1.0;
+	
+	// morale modifier
+
+	conventionalOffenseModifier *= getVehicleMoraleModifier(vehicleId, false);
+
+	// faction offense
+	
+	conventionalOffenseModifier *= aiData.factionInfos[vehicle->faction_id].offenseMultiplier;
+	
+	// fanatic bonus
+	
+	conventionalOffenseModifier *= aiData.factionInfos[vehicle->faction_id].fanaticBonusMultiplier;
+	
+	// return modifier
+	
+	return conventionalOffenseModifier;
+
+}
+
+/*
+Returns vehicle specific conventional defense modifier to unit strength.
+*/
+double getVehicleConventionalDefenseModifier(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// modifier
+
+	double conventionalDefenseModifier = 1.0;
+	
+	// morale modifier
+
+	conventionalDefenseModifier *= getVehicleMoraleModifier(vehicleId, false);
+
+	// faction defense
+	
+	conventionalDefenseModifier *= aiData.factionInfos[vehicle->faction_id].defenseMultiplier;
+	
+	// return modifier
+	
+	return conventionalDefenseModifier;
+
+}
+
+double getVehicleToBaseTravelTimeCoefficient(int vehicleId, int baseId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	int triad = vehicle->triad();
+	int vehicleAssociation = getVehicleAssociation(vehicleId);
+	BASE *base = &(Bases[baseId]);
+	int baseAssociation = getAssociation(getBaseMapTile(baseId), base->faction_id);
+	
+	// vehicle distance to base
+	
+	int distance = map_range(base->x, base->y, vehicle->x, vehicle->y);
+	
+	// vehicle speed
+	
+	double speed;
+	
+	if (triad == TRIAD_LAND)
+	{
+		double minSpeed = 1.5 * (double)veh_speed_without_roads(vehicleId);
+		double maxSpeed = (double)mod_veh_speed(vehicleId);
+		speed = minSpeed + (maxSpeed - minSpeed) * ((double)std::min(250, std::max(0, *current_turn - 50)) / 250.0);
+	}
+	else
+	{
+		speed = (double)veh_speed_without_roads(vehicleId);
+	}
+	
+	// time to reach the base
+	
+	double travelTime = (double)distance / speed;
+	
+	// increase effective time for land unit in different association
+	
+	if (triad == TRIAD_LAND && distance > 0 && vehicleAssociation != baseAssociation)
+	{
+		travelTime *= 2.0;
+	}
+	
+	// travel time coefficient
+	// reduce weight based on time to reach the base
+	
+	double travelTimeCoefficient = exp(- travelTime / 3.0);
+	
+	return travelTimeCoefficient;
+	
+}
+
+double getVehicleToBaseDepthCoefficient(int vehicleId, int baseId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	UNIT *unit = &(Units[vehicle->unit_id]);
+	BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
+	bool ocean = is_ocean(getBaseMapTile(baseId));
+	
+	double depthCoefficient = 1.0;
+	
+	switch (unit->chassis_type)
+	{
+	case CHS_NEEDLEJET:
+	case CHS_COPTER:
+	case CHS_MISSILE:
+		{
+			if (unit->speed() < baseInfo->enemyAirbaseDistance)
+			{
+				// enemy air unit cannot reach that deep into the territory
+				depthCoefficient = 0.0;
+			}
+			
+		}
+		break;
+		
+	case CHS_INFANTRY:
+	case CHS_SPEEDER:
+	case CHS_HOVERTANK:
+		{
+			if (!ocean)
+			{
+				// enemy land unit will have hard time moving through our territory
+				depthCoefficient = exp(- (double)baseInfo->borderBaseDistance / 3.0);
+			}
+			
+		}
+		break;
+		
+	case CHS_FOIL:
+	case CHS_CRUISER:
+		{
+			if (ocean)
+			{
+				// enemy sea unit will have slightly hard time moving through our territory
+				depthCoefficient = exp(- (double)baseInfo->borderBaseDistance / 10.0);
+			}
+			
+		}
+		break;
+		
+	}
+	
+	return depthCoefficient;
 	
 }
 
