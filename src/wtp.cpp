@@ -89,14 +89,14 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 
 	// get item values
 	
-	int attackerWeaponOffenseValue = Weapon[attackerUnit->weapon_type].offense_value;
-	int attackerArmorDefenseValue = Armor[attackerUnit->armor_type].defense_value;
-	int defenderWeaponOffenseValue = Weapon[defenderUnit->weapon_type].offense_value;
-	int defenderArmorDefenseValue = Armor[defenderUnit->armor_type].defense_value;
+	int attackerOffenseValue = getUnitOffenseValue(attackerVehicle->unit_id);
+	int defenderOffenseValue = getUnitOffenseValue(defenderVehicle->unit_id);
+	int attackerDefenseValue = getUnitDefenseValue(attackerVehicle->unit_id);
+	int defenderDefenseValue = getUnitDefenseValue(defenderVehicle->unit_id);
 	
 	// determine psi combat
 	
-	bool psiCombat = attackerWeaponOffenseValue < 0 || defenderArmorDefenseValue < 0;
+	bool psiCombat = attackerOffenseValue < 0 || defenderDefenseValue < 0;
 	
 	// get vehicle unit speeds
 	
@@ -113,28 +113,25 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 	battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
 	
     // ----------------------------------------------------------------------------------------------------
-    // artillery duel uses weapon + armor value
+    // conventional artillery duel uses weapon + armor value
     // ----------------------------------------------------------------------------------------------------
     
     if
 	(
-		// fix is enabled
-		conf.conventional_artillery_duel_uses_weapon_and_armor
-		&&
 		// artillery duel
-		(flags & 0x3) == 0x3
+		(flags & 0x2) != 0
 		&&
-		// attacker uses conventional weapon and armor
-		Weapon[attackerUnit->weapon_type].offense_value > 0 && Armor[attackerUnit->armor_type].defense_value > 0
+		// fix is enabled
+		conf.artillery_duel_uses_weapon_and_armor
 		&&
-		// defender uses conventional weapon and armor
-		Weapon[defenderUnit->weapon_type].offense_value > 0 && Armor[defenderUnit->armor_type].defense_value > 0
+		// conventional combat
+		!psiCombat
 	)
 	{
 		// artillery duelants use weapon + armor value
 		
-		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * (attackerWeaponOffenseValue + attackerArmorDefenseValue) / attackerWeaponOffenseValue;
-		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (defenderWeaponOffenseValue + defenderArmorDefenseValue) / defenderWeaponOffenseValue;
+		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * (attackerOffenseValue + attackerDefenseValue) / attackerOffenseValue;
+		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (defenderOffenseValue + defenderDefenseValue) / defenderOffenseValue;
 		
 	}
     
@@ -168,7 +165,7 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 	{
 		// attacker uses armor, not weapon
 		
-		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * attackerArmorDefenseValue / attackerWeaponOffenseValue;
+		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * attackerDefenseValue / attackerOffenseValue;
 		
 		// defender strength is increased due to air superiority
 		
@@ -371,6 +368,181 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 			
 			(*tx_battle_compute_attacker_effect_count)++;
 			
+		}
+		
+	}
+    
+    // ----------------------------------------------------------------------------------------------------
+    // artillery duel uses all combat bonuses
+    // ----------------------------------------------------------------------------------------------------
+    
+    if
+	(
+		// artillery duel
+		(flags & 0x2) != 0
+		&&
+		// fix is enabled
+		conf.artillery_duel_uses_bonuses
+	)
+	{
+		// add sensor bonus on land defense
+		
+		if
+		(
+			// land combat tile
+			!is_ocean(defenderMapTile)
+			&&
+			// defender is within own sensor range
+			isWithinFriendlySensorRange(defenderVehicle->faction_id, defenderVehicle->x, defenderVehicle->y)
+		)
+		{
+			// modify defender strength
+
+			*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)Rules->combat_defend_sensor / 100.0));
+
+			// add effect description
+
+			if (*tx_battle_compute_defender_effect_count < 4)
+			{
+				strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_SENSOR));
+				(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_defend_sensor;
+
+				(*tx_battle_compute_defender_effect_count)++;
+
+			}
+
+		}
+		
+		// add base defense bonuses
+		
+		if
+		(
+			// defender is in base
+			map_has_item(defenderMapTile, TERRA_BASE_IN_TILE)
+		)
+		{
+			if (psiCombat)
+			{
+				// psi combat
+				
+				// base intrinsic defense
+				
+				*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def));
+
+				// add effect description
+
+				if (*tx_battle_compute_defender_effect_count < 4)
+				{
+					strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_BASE));
+					(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_bonus_intrinsic_base_def;
+
+					(*tx_battle_compute_defender_effect_count)++;
+
+				}
+
+			}
+			else
+			{
+				// conventional combat
+				
+				// search base
+				
+				int defenderBaseId = -1;
+				
+				for (int baseId = 0; baseId < *total_num_bases; baseId++)
+				{
+					BASE *base = &(Bases[baseId]);
+					
+					if (base->x == defenderVehicle->x && base->y == defenderVehicle->y)
+					{
+						defenderBaseId = baseId;
+						break;
+					}
+					
+				}
+				
+				if (defenderBaseId != -1)
+				{
+					// assign label and multiplier
+					
+					const char *label = nullptr;
+					int multiplier = 2;
+					
+					switch (attackerUnit->triad())
+					{
+					case TRIAD_LAND:
+						if (has_facility(defenderBaseId, FAC_PERIMETER_DEFENSE))
+						{
+							label = *(*tx_labels + LABEL_OFFSET_PERIMETER);
+							multiplier = conf.perimeter_defense_multiplier;
+						}
+						break;
+						
+					case TRIAD_SEA:
+						if (has_facility(defenderBaseId, FAC_NAVAL_YARD))
+						{
+							label = LABEL_NAVAL_YARD;
+							multiplier = conf.perimeter_defense_multiplier;
+						}
+						break;
+						
+					case TRIAD_AIR:
+						if (has_facility(defenderBaseId, FAC_AEROSPACE_COMPLEX))
+						{
+							label = LABEL_AEROSPACE_COMPLEX;
+							multiplier = conf.perimeter_defense_multiplier;
+						}
+						break;
+						
+					}
+					
+					if (has_facility(defenderBaseId, FAC_TACHYON_FIELD))
+					{
+						label = *(*tx_labels + LABEL_OFFSET_TACHYON);
+						multiplier += conf.tachyon_field_bonus;
+					}
+					
+					if (label == nullptr)
+					{
+						// base intrinsic defense
+						
+						*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def));
+
+						// add effect description
+
+						if (*tx_battle_compute_defender_effect_count < 4)
+						{
+							strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_BASE));
+							(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_bonus_intrinsic_base_def;
+
+							(*tx_battle_compute_defender_effect_count)++;
+
+						}
+						
+					}
+					else
+					{
+						// base defensive facility
+						
+						*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (double)multiplier / 2.0);
+
+						// add effect description
+
+						if (*tx_battle_compute_defender_effect_count < 4)
+						{
+							strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label);
+							(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = (multiplier - 2) * 50;
+
+							(*tx_battle_compute_defender_effect_count)++;
+
+						}
+						
+					}
+					
+				}
+				
+			}
+
 		}
 		
 	}

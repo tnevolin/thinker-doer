@@ -3,6 +3,15 @@
 * Pressure Dome adds minerals (thinker.ini: pressure_dome_minerals).
 * Biology Lab generates 8 labs (thinker.ini: biology_lab_research_bonus).
 
+# Version 290
+
+* AI designs anti-native artillery.
+* Artillery duel uses sensor and base bonuses same way as melee combat.
+
+# Version 289
+
+* Artillery damage is not multiplied by attacker reactor when ignore_reactor_power_in_combat is set.
+
 # Version 288
 
 * Added variable orbital resource limit as population fraction (thinker.ini: orbital_*_population_limit).

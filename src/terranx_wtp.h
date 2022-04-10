@@ -25,14 +25,19 @@ extern int (*tx_battle_compute_defender_effect_values)[0x4];
 // labels pointer
 
 extern char ***tx_labels;
-const int LABEL_OFFSET_PLANET = 0x271;
-const int LABEL_OFFSET_AIRTOAIR = 0x1C1;
-const int LABEL_OFFSET_SENSOR = 0x265;
-const int LABEL_OFFSET_TERRAIN = 0x14B;
-const int LABEL_OFFSET_ROCKY = 0x152;
-const int LABEL_OFFSET_FOREST = 0x123;
-const int LABEL_OFFSET_FUNGUS = 0x5B;
-const int LABEL_OFFSET_ROAD_ATTACK = 0x25E;
+extern const int LABEL_OFFSET_PLANET;
+extern const int LABEL_OFFSET_AIRTOAIR;
+extern const int LABEL_OFFSET_SENSOR;
+extern const int LABEL_OFFSET_TERRAIN;
+extern const int LABEL_OFFSET_ROCKY;
+extern const int LABEL_OFFSET_FOREST;
+extern const int LABEL_OFFSET_FUNGUS;
+extern const int LABEL_OFFSET_ROAD_ATTACK;
+extern const int LABEL_OFFSET_BASE;
+extern const int LABEL_OFFSET_PERIMETER;
+extern const int LABEL_OFFSET_TACHYON;
+extern const char *LABEL_NAVAL_YARD;
+extern const char *LABEL_AEROSPACE_COMPLEX;
 
 extern char *g_strTEMP;
 extern int *current_base_growth_rate;

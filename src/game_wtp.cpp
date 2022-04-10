@@ -1656,26 +1656,6 @@ double getBaseDefenseMultiplier(int id, int triad)
 
 }
 
-int getUnitOffenseValue(int id)
-{
-	return Weapon[Units[id].weapon_type].offense_value;
-}
-
-int getUnitDefenseValue(int id)
-{
-	return Armor[Units[id].armor_type].defense_value;
-}
-
-int getVehicleOffenseValue(int id)
-{
-	return getUnitOffenseValue(Vehicles[id].unit_id);
-}
-
-int getVehicleDefenseValue(int id)
-{
-	return getUnitDefenseValue(Vehicles[id].unit_id);
-}
-
 /*
 Estimates turns to complete current base production assuming all parameters stays as is.
 */
@@ -3423,6 +3403,13 @@ double getBasePsiDefenseMultiplier()
 
 bool isWithinFriendlySensorRange(int factionId, int x, int y)
 {
+	MAP *centralTile = getMapTile(x, y);
+	
+	// should be in own or neutral territory
+	
+	if (!(centralTile->owner == -1 || centralTile->owner == factionId))
+		return false;
+	
 	// find real sensors
 	
 	for (int dx = -4; dx <= +4; dx++)
@@ -4079,24 +4066,24 @@ double getAttackerStackDamage(int attackerVehicleId, int defenderVehicleId)
 	
 }
 
-int getUnitWeaponOffenseValue(int unitId)
+int getUnitOffenseValue(int unitId)
 {
 	return Weapon[Units[unitId].weapon_type].offense_value;
 }
 
-int getUnitArmorDefenseValue(int unitId)
+int getUnitDefenseValue(int unitId)
 {
 	return Armor[Units[unitId].armor_type].defense_value;
 }
 
-int getVehicleWeaponOffenseValue(int vehicleId)
+int getVehicleOffenseValue(int vehicleId)
 {
-	return getUnitWeaponOffenseValue(Vehicles[vehicleId].unit_id);
+	return getUnitOffenseValue(Vehicles[vehicleId].unit_id);
 }
 
-int getVehicleArmorDefenseValue(int vehicleId)
+int getVehicleDefenseValue(int vehicleId)
 {
-	return getUnitArmorDefenseValue(Vehicles[vehicleId].unit_id);
+	return getUnitDefenseValue(Vehicles[vehicleId].unit_id);
 }
 
 bool isFactionSpecial(int factionId, int special)
