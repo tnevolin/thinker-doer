@@ -805,8 +805,11 @@ ai_terraforming_nutrientWeight=1.00
 ai_terraforming_mineralWeight=2.50
 ; energy weight
 ai_terraforming_energyWeight=1.00
+<<<<<<< HEAD
 ; extra score for completing all improvements in tile
 ai_terraforming_completion_bonus=2.0
+=======
+>>>>>>> master
 ; reduce terraforming score by this value for every ongoing terraforming around the same base
 ai_terraforming_rank_multiplier=0.50
 ; terraformers are allowed to level terrain when there are at least than many rocky tiles around every sharing base

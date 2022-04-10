@@ -121,11 +121,11 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 		// artillery duel
 		(flags & 0x2) != 0
 		&&
-		// fix is enabled
-		conf.artillery_duel_uses_weapon_and_armor
-		&&
 		// conventional combat
 		!psiCombat
+		&&
+		// fix is enabled
+		conf.conventional_artillery_duel_uses_weapon_and_armor
 	)
 	{
 		// artillery duelants use weapon + armor value

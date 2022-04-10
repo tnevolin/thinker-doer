@@ -1150,7 +1150,28 @@ void evaluateBaseDefense()
 	
 	debug("\tunitCombatEffects\n");
 	
-	for (int ownUnitId : ownCombatUnitIds)
+	// anti-native artillery
+	
+	proposeMultiplePrototypes
+	(
+		aiFactionId,
+		{CHS_INFANTRY},
+		{WPN_HAND_WEAPONS},
+		{ARM_NO_ARMOR},
+		{ABL_ARTILLERY, ABL_ARTILLERY | ABL_EMPATH, },
+		bestReactor,
+		PLAN_DEFENSIVE,
+		NULL
+	);
+	
+}
+
+/*
+Propose multiple prototype combinations.
+*/
+void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::vector<int> weaponIds, std::vector<int> armorIds, std::vector<int> abilitiesSets, int reactor, int plan, char *name)
+{
+	for (int chassisId : chassisIds)
 	{
 		UNIT *ownUnit = &(Units[ownUnitId]);
 		
@@ -2062,20 +2083,6 @@ void designUnits()
 		{},
 		{ABL_ARTILLERY},
 		{}
-	);
-	
-	// anti-native artillery
-	
-	proposeMultiplePrototypes
-	(
-		aiFactionId,
-		{CHS_INFANTRY},
-		{WPN_HAND_WEAPONS},
-		{ARM_NO_ARMOR},
-		{ABL_ARTILLERY, ABL_ARTILLERY | ABL_EMPATH, },
-		bestReactor,
-		PLAN_DEFENSIVE,
-		NULL
 	);
 	
 }
