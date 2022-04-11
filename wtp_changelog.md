@@ -3,6 +3,10 @@
 * Pressure Dome adds minerals (thinker.ini: pressure_dome_minerals).
 * Biology Lab generates 8 labs (thinker.ini: biology_lab_research_bonus).
 
+# Version 291
+
+* All units are assigned to this faction base. No more random free of support units.
+
 # Version 290
 
 * AI designs anti-native artillery.
