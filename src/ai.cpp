@@ -1926,6 +1926,55 @@ void populateWarzones()
 		
 	}
 	
+	// populate blocked/warzone and zoc locations around enemy bases
+
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		int baseAssociation = getAssociation(baseTile, base->faction_id);
+		
+		// exclude own bases
+		
+		if (base->faction_id == aiFactionId)
+			continue;
+		
+		// exclude bases with no war
+
+		if (!isWar(aiFactionId, base->faction_id))
+			continue;
+		
+		// store blocked location
+		
+		aiData.getTileInfo(base->x, base->y)->blocked = true;
+		
+		// store warzone location
+		
+		for (MAP *rangeTile : getRangeTiles(base->x, base->y, 2, true))
+		{
+			int rangeTileAssociation = getAssociation(rangeTile, base->faction_id);
+			
+			// skip other associations
+			
+			if (rangeTileAssociation != baseAssociation)
+				continue;
+			
+			aiData.getTileInfo(rangeTile)->warzone = true;
+			
+		}
+		
+	}
+	
+	// exclude our bases from warzone locations
+	
+	for (int baseId : aiData.baseIds)
+	{
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		aiData.getTileInfo(baseTile)->warzone = false;
+		
+	}
+	
 	if (DEBUG)
 	{
 		debug("warzones - %s\n", MFactions[aiFactionId].noun_faction);
@@ -2062,20 +2111,6 @@ void designUnits()
 		{},
 		{ABL_ARTILLERY},
 		{}
-	);
-	
-	// anti-native artillery
-	
-	proposeMultiplePrototypes
-	(
-		aiFactionId,
-		{CHS_INFANTRY},
-		{WPN_HAND_WEAPONS},
-		{ARM_NO_ARMOR},
-		{ABL_ARTILLERY, ABL_ARTILLERY | ABL_EMPATH, },
-		bestReactor,
-		PLAN_DEFENSIVE,
-		NULL
 	);
 	
 }
@@ -2924,7 +2959,67 @@ Checks if faction is enabled to use WTP algorithms.
 */
 bool isUseWtpAlgorithms(int factionId)
 {
-	return (factionId != 0 && !is_human(factionId) && ai_enabled(factionId) && conf.ai_useWTPAlgorithms && factionId <= conf.wtp_factions_enabled);
+	return (factionId != 0 && !is_human(factionId) && ai_enabled(factionId) && conf.ai_useWTPAlgorithms && (conf.wtp_factions_enabled >= 0 ? factionId <= conf.wtp_factions_enabled : factionId >= MaxPlayerNum + conf.wtp_factions_enabled))
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	;
 }
 
 int getCoastalBaseOceanAssociation(MAP *tile, int factionId)

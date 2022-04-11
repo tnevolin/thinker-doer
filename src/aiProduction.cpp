@@ -120,6 +120,33 @@ void evaluateGlobalBaseDemand()
 	globalBaseDemand = 1.0;
 	
 	// --------------------------------------------------
+	// occupancy coverage
+	// --------------------------------------------------
+	
+	int ownedTileCount = 0;
+	
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
+	{
+		MAP *tile = getMapTile(mapIndex);
+		
+		if (tile->owner != -1)
+		{
+			ownedTileCount++;
+		}
+		
+	}
+	
+	double occupancyCoverageThreshold = 0.25;
+	double occupancyCoverage = (double)ownedTileCount / (double)*map_area_tiles;
+	
+	// increase base demand with low map occupancy
+	
+	if (occupancyCoverage < occupancyCoverageThreshold)
+	{
+		globalBaseDemand *= 1.0 + 0.25 * (1.0 - occupancyCoverage / occupancyCoverageThreshold);
+	}
+	
+	// --------------------------------------------------
 	// inefficiency
 	// --------------------------------------------------
 	
@@ -1452,6 +1479,7 @@ void evaluateLandColonyDemand()
 	// find best build site score
 	
 	MAP *bestBuildSite = nullptr;
+	double bestCombinedBuildSiteScore = -DBL_MAX;
 	double bestBuildSiteScore = 0.0;
 	int optimalColonyUnitId = -1;
 	
@@ -1474,27 +1502,24 @@ void evaluateLandColonyDemand()
 			int unitId = colonyUnitProductionTimeEntry.id;
 			int productionTime = colonyUnitProductionTimeEntry.value;
 			
-			// get travel time
+			// get travel time and score
 			
 			double travelTime = estimateTravelTime(base->x, base->y, x, y, unitId);
-			
-			// total time to destination
-			
-			double totalTime = (double)productionTime + travelTime;
-			
-			// get travel time score
-			
-			double travelTimeScore = getBuildSiteTravelTimeScore(totalTime);
-			
-			// get combined score
-			
+			double travelTimeScore = getBuildSiteTravelTimeScore(travelTime);
 			double buildSiteScore = expansionTileInfo->buildScore + travelTimeScore;
+			
+			// get combined time and score
+			
+			double combinedTime = (double)productionTime + travelTime;
+			double combinedTimeScore = getBuildSiteTravelTimeScore(combinedTime);
+			double combinedBuildSiteScore = expansionTileInfo->buildScore + combinedTimeScore;
 			
 			// update best
 			
-			if (buildSiteScore > bestBuildSiteScore)
+			if (combinedBuildSiteScore > bestCombinedBuildSiteScore)
 			{
 				bestBuildSite = tile;
+				bestCombinedBuildSiteScore = combinedBuildSiteScore;
 				bestBuildSiteScore = buildSiteScore;
 				optimalColonyUnitId = unitId;
 			}
@@ -1610,6 +1635,7 @@ void evaluateSeaColonyDemand()
 	// find best build site score
 	
 	MAP *bestBuildSite = nullptr;
+	double bestCombinedBuildSiteScore = -DBL_MAX;
 	double bestBuildSiteScore = 0.0;
 	int optimalColonyUnitId = -1;
 	
@@ -1638,27 +1664,24 @@ void evaluateSeaColonyDemand()
 			int unitId = colonyUnitProductionTimeEntry.id;
 			int productionTime = colonyUnitProductionTimeEntry.value;
 			
-			// get travel time
+			// get travel time and score
 			
 			double travelTime = estimateTravelTime(base->x, base->y, x, y, unitId);
-			
-			// total time to destination
-			
-			double totalTime = (double)productionTime + travelTime;
-			
-			// get travel time score
-			
-			double travelTimeScore = getBuildSiteTravelTimeScore(totalTime);
-			
-			// get combined score
-			
+			double travelTimeScore = getBuildSiteTravelTimeScore(travelTime);
 			double buildSiteScore = expansionTileInfo->buildScore + travelTimeScore;
+			
+			// get combined time and score
+			
+			double combinedTime = (double)productionTime + travelTime;
+			double combinedTimeScore = getBuildSiteTravelTimeScore(combinedTime);
+			double combinedBuildSiteScore = expansionTileInfo->buildScore + combinedTimeScore;
 			
 			// update best
 			
-			if (buildSiteScore > bestBuildSiteScore)
+			if (combinedBuildSiteScore > bestCombinedBuildSiteScore)
 			{
 				bestBuildSite = tile;
+				bestCombinedBuildSiteScore = combinedBuildSiteScore;
 				bestBuildSiteScore = buildSiteScore;
 				optimalColonyUnitId = unitId;
 			}
@@ -1767,6 +1790,7 @@ void evaluateAirColonyDemand()
 	// find best build site score
 	
 	MAP *bestBuildSite = nullptr;
+	double bestCombinedBuildSiteScore = -DBL_MAX;
 	double bestBuildSiteScore = 0.0;
 	int optimalColonyUnitId = -1;
 	
@@ -1783,27 +1807,24 @@ void evaluateAirColonyDemand()
 			int unitId = colonyUnitProductionTimeEntry.id;
 			int productionTime = colonyUnitProductionTimeEntry.value;
 			
-			// get travel time
+			// get travel time and score
 			
 			double travelTime = estimateTravelTime(base->x, base->y, x, y, unitId);
-			
-			// total time to destination
-			
-			double totalTime = (double)productionTime + travelTime;
-			
-			// get travel time score
-			
-			double travelTimeScore = getBuildSiteTravelTimeScore(totalTime);
-			
-			// get combined score
-			
+			double travelTimeScore = getBuildSiteTravelTimeScore(travelTime);
 			double buildSiteScore = expansionTileInfo->buildScore + travelTimeScore;
+			
+			// get combined time and score
+			
+			double combinedTime = (double)productionTime + travelTime;
+			double combinedTimeScore = getBuildSiteTravelTimeScore(combinedTime);
+			double combinedBuildSiteScore = expansionTileInfo->buildScore + combinedTimeScore;
 			
 			// update best
 			
-			if (buildSiteScore > bestBuildSiteScore)
+			if (combinedBuildSiteScore > bestCombinedBuildSiteScore)
 			{
 				bestBuildSite = tile;
+				bestCombinedBuildSiteScore = combinedBuildSiteScore;
 				bestBuildSiteScore = buildSiteScore;
 				optimalColonyUnitId = unitId;
 			}
@@ -2554,36 +2575,13 @@ void evaluatePrototypingDemand()
 	
 	// calculate priority
 	
-	double priority = conf.ai_production_prototyping_priority;
+	double priority = conf.ai_production_military_priority * conf.ai_production_prototyping_priority * globalMilitaryPriority * ((double)base->mineral_surplus / (double)aiData.maxMineralSurplus);
 	
-	// increase priority if at war
-	
-	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
-	{
-		// skip self
-		
-		if (factionId == aiFactionId)
-			continue;
-		
-		// increase priority if at war
-		
-		if (isWar(aiFactionId, factionId))
-		{
-			priority *= 2;
-			break;
-		}
-		
-	}
-	
-	// calculate adjusted priority based on mineral surplus
-	
-	double adjustedPriority = priority * ((double)base->mineral_surplus / (double)aiData.maxMineralSurplus);
-	
-	debug("\tpriority=%f, mineral_surplus=%d, maxMineralSurplus=%d, adjustedPriority=%f\n", priority, base->mineral_surplus, aiData.maxMineralSurplus, adjustedPriority);
+	debug("\tpriority=%f, ai_production_military_priority=%5.2f, ai_production_prototyping_priority=%5.2f, globalMilitaryPriority=%5.2f, mineral_surplus=%d, maxMineralSurplus=%d\n", priority, conf.ai_production_military_priority, conf.ai_production_prototyping_priority, globalMilitaryPriority, base->mineral_surplus, aiData.maxMineralSurplus);
 	
 	// add production demand
 	
-	addProductionDemand(prototypeUnitId, adjustedPriority);
+	addProductionDemand(prototypeUnitId, priority);
 
 }
 

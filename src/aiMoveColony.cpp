@@ -562,6 +562,13 @@ double getBuildSitePlacementScore(MAP *tile)
 		score += -1.0;
 	}
 	
+	// explicitly discourage placing base on land fungus
+	
+	if (!is_ocean(tile) && map_has_item(tile, TERRA_FUNGUS))
+	{
+		score += -0.1;
+	}
+	
 	// return score
 	
 	return score;
@@ -583,6 +590,11 @@ bool isValidBuildSite(MAP *tile, int factionId)
 	if (map_has_item(tile, TERRA_BASE_IN_TILE | TERRA_MONOLITH))
 		return false;
 	
+	// no adjacent bases
+	
+	if (nearby_items(x, y, 1, TERRA_BASE_IN_TILE) > 0)
+		return false;
+	
 	// cannot build at volcano
 	
 	if (tile->landmarks & LM_VOLCANO && tile->art_ref_id == 0)
@@ -598,15 +610,33 @@ bool isValidBuildSite(MAP *tile, int factionId)
 	if (map_has_item(tile, TERRA_FUNGUS) && !conf.ai_base_allowed_fungus_rocky)
 		return false;
 	
-	// no bases closer than allowed spacing
+	// no own bases closer than allowed spacing
+	// no more than allowed own number of bases at minimal range
 	
-	if (nearby_items(x, y, conf.base_spacing - 1, TERRA_BASE_IN_TILE) > 0)
-		return false;
+	int ownBaseAtMinimalRangeCount = 0;
 	
-	// no more than allowed number of bases at minimal range
-	
-	if (conf.base_nearby_limit >= 0 && nearby_items(x, y, conf.base_spacing, TERRA_BASE_IN_TILE) > conf.base_nearby_limit)
-		return false;
+	for (int baseId : aiData.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		
+		int range = map_range(x, y, base->x, base->y);
+		
+		if (range < conf.base_spacing)
+		{
+			return false;
+		}
+		else if (range == conf.base_spacing)
+		{
+			ownBaseAtMinimalRangeCount++;
+			
+			if (ownBaseAtMinimalRangeCount > conf.base_nearby_limit)
+			{
+				return false;
+			}
+			
+		}
+		
+	}
 	
 	// not blocked
 	
@@ -645,11 +675,6 @@ bool isValidWorkSite(MAP *tile, int factionId)
 	}
 	
 	if (!available)
-		return false;
-	
-	// not in base radius
-	
-	if (map_has_item(tile, TERRA_BASE_RADIUS))
 		return false;
 	
 	return true;

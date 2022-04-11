@@ -589,31 +589,31 @@ void popPodStrategy(int transportVehicleId)
 /*
 Searches for unboard location.
 */
-MAP *getSeaTransportUnboardLocation(int seaTransportVehicleId, MAP *destination)
+MAP *getSeaTransportUnboardLocation(int seaTransportVehicleId, int passengerVehicleId, MAP *destination)
 {
-	VEH *seaTransportVehicle = &(Vehicles[seaTransportVehicleId]);
-	int seaTransportVehicleAssociation = getVehicleAssociation(seaTransportVehicleId);
-	
-	MAP *unboardLocation = nullptr;
-	
 	// destination should be valid
 	
 	if (destination == nullptr)
 		return nullptr;
 	
-	// get destination tile and coordinates
-	
+	VEH *seaTransportVehicle = &(Vehicles[seaTransportVehicleId]);
+	int seaTransportVehicleSpeed = getVehicleSpeedWithoutRoads(seaTransportVehicleId);
+	int seaTransportVehicleAssociation = getVehicleAssociation(seaTransportVehicleId);
+	int passengerVehicleSpeed = getVehicleSpeedWithoutRoads(passengerVehicleId);
 	int destinationX = getX(destination);
 	int destinationY = getY(destination);
+	int destinationOceanAssociation = getOceanAssociation(destination, seaTransportVehicle->faction_id);
+	
+	MAP *unboardLocation = nullptr;
 	
 	// destination is ocean with no base
 	
 	if (isOceanRegion(destination->region) && !map_has_item(destination, TERRA_BASE_IN_TILE))
 		return nullptr;
 	
-	// destination is ocean and is same association
+	// destination is same ocean association
 	
-	if (isOceanRegion(destination->region) && isSameAssociation(seaTransportVehicleAssociation, destination, seaTransportVehicle->faction_id))
+	if (destinationOceanAssociation != -1 && destinationOceanAssociation == seaTransportVehicleAssociation)
 	{
 		unboardLocation = destination;
 		return unboardLocation;
@@ -621,24 +621,37 @@ MAP *getSeaTransportUnboardLocation(int seaTransportVehicleId, MAP *destination)
 	
 	// search for closest reachable location
 	
-	int minRange = INT_MAX;
+	double minTravelTime = DBL_MAX;
 	
 	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
+		MAP *tile = getMapTile(mapIndex);
 		int mapX = getX(mapIndex);
 		int mapY = getY(mapIndex);
 		
 		if (!isOceanAssociationCoast(mapX, mapY, seaTransportVehicleAssociation, seaTransportVehicle->faction_id))
 			continue;
 		
-		// get range
+		// get seaTransport range and travel time
 		
-		int range = map_range(mapX, mapY, destinationX, destinationY);
+		int seaTransportRange = map_range(seaTransportVehicle->x, seaTransportVehicle->y, mapX, mapY);
+		double seaTransportTravelTime = (double)seaTransportRange / (double)seaTransportVehicleSpeed;
 		
-		if (range < minRange)
+		// get passenger range and travel time
+		
+		int passengerRange = map_range(mapX, mapY, destinationX, destinationY);
+		double passengerTravelTime = (double)passengerRange / (double)passengerVehicleSpeed;
+		
+		// get total travel time
+		
+		double totalTravelTime = seaTransportTravelTime + passengerTravelTime;
+		
+		// update best
+		
+		if (totalTravelTime < minTravelTime)
 		{
-			unboardLocation = getMapTile(mapIndex);
-			minRange = range;
+			unboardLocation = tile;
+			minTravelTime = totalTravelTime;
 		}
 		
 	}
@@ -654,6 +667,7 @@ MAP *getSeaTransportUnloadLocation(int seaTransportVehicleId, MAP *destination, 
 {
 	VEH *seaTransportVehicle = &(Vehicles[seaTransportVehicleId]);
 	int seaTransportVehicleAssociation = getVehicleAssociation(seaTransportVehicleId);
+	int destinationOceanAssociation = getOceanAssociation(destination, seaTransportVehicle->faction_id);
 	
 	MAP *unloadLocation = nullptr;
 	
@@ -667,9 +681,9 @@ MAP *getSeaTransportUnloadLocation(int seaTransportVehicleId, MAP *destination, 
 	if (isOceanRegion(destination->region) && !map_has_item(destination, TERRA_BASE_IN_TILE))
 		return nullptr;
 	
-	// destination is ocean and is same association
+	// destination is same ocean association
 	
-	if (isOceanRegion(destination->region) && isSameAssociation(seaTransportVehicleAssociation, destination, seaTransportVehicle->faction_id))
+	if (destinationOceanAssociation != -1 && destinationOceanAssociation == seaTransportVehicleAssociation)
 	{
 		unloadLocation = destination;
 		return unloadLocation;
@@ -1089,16 +1103,18 @@ int getAvailableSeaTransportInStack(int vehicleId)
 	
 }
 
-MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicleId)
+MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicleId, MAP *destination)
 {
-	MAP *loadLocation = nullptr;
-	
 	VEH *seaTransportVehicle = &(Vehicles[seaTransportVehicleId]);
+	int seaTransportVehicleSpeed = getVehicleSpeedWithoutRoads(seaTransportVehicleId);
 	VEH *passengerVehicle = &(Vehicles[passengerVehicleId]);
+	int passengerVehicleSpeed = getVehicleSpeedWithoutRoads(passengerVehicleId);
+	int destinationX = getX(destination);
+	int destinationY = getY(destination);
 	
 	// default load location is passenger location
 	
-	loadLocation = getMapTile(passengerVehicle->x, passengerVehicle->y);
+	MAP *loadLocation = getMapTile(passengerVehicle->x, passengerVehicle->y);
 	
 	// further location modification is for sea tranport picking land unit only
 	
@@ -1117,11 +1133,13 @@ MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicle
 	
 	// find best load location for transport
 	
-	int minRange = INT_MAX;
+	double minTravelTime = DBL_MAX;
 	
-	for (int tileLocation = 0; tileLocation < *map_area_tiles; tileLocation++)
+	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
-		MAP *tile = getMapTile(tileLocation);
+		MAP *tile = getMapTile(mapIndex);
+		int x = getX(tile);
+		int y = getY(tile);
 		
 		int tileOceanAssociation = getOceanAssociation(tile, seaTransportVehicle->faction_id);
 		
@@ -1132,13 +1150,16 @@ MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicle
 		
 		// compute range
 		
-		int seaTransportRange = map_range(seaTransportVehicle->x, seaTransportVehicle->y, getX(tileLocation), getY(tileLocation));
+		int rangeToDestination = map_range(x, y, destinationX, destinationY);
+		double travelTimeToDestination = (double)rangeToDestination / (double)seaTransportVehicleSpeed;
 		
 		// check adjacent tiles
 		// including center tile to account for land ports
 		
-		for (MAP *adjacentTile : getBaseAdjacentTiles(getX(tileLocation), getY(tileLocation), true))
+		for (MAP *adjacentTile : getBaseAdjacentTiles(tile, true))
 		{
+			int adjacentTileX = getX(adjacentTile);
+			int adjacentTileY = getY(adjacentTile);
 			int adjacentTileAssociation = getAssociation(adjacentTile, seaTransportVehicle->faction_id);
 			
 			// passenger association only
@@ -1146,20 +1167,21 @@ MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicle
 			if (adjacentTileAssociation != passengerAssociation)
 				continue;
 			
-			// compute range
+			// compute range and travel time
 			
-			int passengerRange = map_range(passengerVehicle->x, passengerVehicle->y, getX(adjacentTile), getY(adjacentTile));
+			int rangeToBoardLocation = map_range(passengerVehicle->x, passengerVehicle->y, adjacentTileX, adjacentTileY);
+			double travelTimeToBoardLocation = (double)rangeToBoardLocation / (double)passengerVehicleSpeed;
 			
-			// get greater range
+			// get total travel time
 			
-			int greaterRange = std::max(seaTransportRange, passengerRange);
+			double totalTravelTime = travelTimeToBoardLocation + travelTimeToDestination;
 			
 			// update location
 			
-			if (greaterRange < minRange)
+			if (totalTravelTime < minTravelTime)
 			{
 				loadLocation = tile;
-				minRange = greaterRange;
+				minTravelTime = totalTravelTime;
 			}
 			
 		}

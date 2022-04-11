@@ -3282,10 +3282,15 @@ Request for break treaty before combat actions.
 */
 HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2)
 {
-	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
+	debug("modifiedBattleFight2(attackerVehicleId=%d, angle=%d, tx=%d, ty=%d, do_arty=%d, flag1=%d, flag2=%d)\n", attackerVehicleId, angle, tx, ty, do_arty, flag1, flag2);
+	debug("\t*total_num_vehicles=%d\n", *total_num_vehicles);
 
+	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
+	debug("\tattackerVehicle=%d\n", (int)attackerVehicle);
+	
 	if (attackerVehicle->faction_id == *current_player_faction)
 	{
+		debug("\tattackerVehicle->faction_id == *current_player_faction\n");
 		int defenderVehicleId = veh_at(tx, ty);
 		
 		if (defenderVehicleId >= 0)
@@ -3321,6 +3326,8 @@ HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int
 		}
 
 	}
+	
+	fflush(debug_log);
 
 	// execute original code
 

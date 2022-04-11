@@ -558,7 +558,7 @@ void transitVehicle(int vehicleId, Task task)
 		
 		// find unboard location
 		
-		MAP *unboardLocation = getSeaTransportUnboardLocation(seaTransportVehicleId, destination);
+		MAP *unboardLocation = getSeaTransportUnboardLocation(seaTransportVehicleId, vehicleId, destination);
 		
 		if (unboardLocation == nullptr)
 		{
@@ -633,7 +633,7 @@ void transitVehicle(int vehicleId, Task task)
 	
 	// get load location
 	
-	MAP *availableSeaTransportLoadLocation = getSeaTransportLoadLocation(availableSeaTransportVehicleId, vehicleId);
+	MAP *availableSeaTransportLoadLocation = getSeaTransportLoadLocation(availableSeaTransportVehicleId, vehicleId, destination);
 	
 	if (availableSeaTransportLoadLocation == nullptr)
 		return;

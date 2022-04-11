@@ -63,7 +63,7 @@ void movePolice2x()
 		
 		// exclude not available
 		
-		if (!isVehicleAvailable(vehicleId, false))
+		if (!isVehicleAvailable(vehicleId, true))
 			continue;
 		
 		// store vehicle value
@@ -186,7 +186,7 @@ void moveInfantryDefender()
 	{
 		// exclude not available
 		
-		if (!isVehicleAvailable(vehicleId, false))
+		if (!isVehicleAvailable(vehicleId, true))
 			continue;
 		
 		// exclude not infantry defensive
@@ -398,7 +398,7 @@ void moveOtherProtectors()
 	{
 		// exclude not available
 		
-		if (!isVehicleAvailable(vehicleId, false))
+		if (!isVehicleAvailable(vehicleId, true))
 			continue;
 		
 		// exclude infantry defensive
@@ -824,12 +824,39 @@ void fightStrategy()
 				
 			}
 			
+			// get path movement cost before attack
+			
+			int pathMovementCost = getVehiclePathMovementCost(vehicleId, x, y, true);
+			
+			if (pathMovementCost == -1)
+				continue;
+			
+			// too far
+			
+			if (pathMovementCost >= movementAllowance)
+				continue;
+			
+			// movementAllowanceLeft
+			
+			int movementAllowanceLeft = movementAllowance - pathMovementCost;
+			
 			// get vehicle at location
 			
 			int otherVehicleId = veh_at(x, y);
 			
 			if (otherVehicleId == -1)
+			{
+				// check for empty enemy base
+				
+				if (map_has_item(rangeTile, TERRA_BASE_IN_TILE) && isWar(aiFactionId, rangeTile->owner))
+				{
+					bestAttackTile = rangeTile;
+					bestBattleOdds = 100.0;
+				}
+					
 				continue;
+				
+			}
 			
 			if (!isWar(vehicle->faction_id, Vehicles[otherVehicleId].faction_id))
 				continue;
@@ -845,22 +872,6 @@ void fightStrategy()
 			
 			if (!isWar(vehicle->faction_id, enemyVehicle->faction_id))
 				continue;
-			
-			// get path movement cost before attack
-			
-			int pathMovementCost = getVehiclePathMovementCost(vehicleId, enemyVehicle->x, enemyVehicle->y, true);
-			
-			if (pathMovementCost == -1)
-				continue;
-			
-			// too far
-			
-			if (pathMovementCost >= movementAllowance)
-				continue;
-			
-			// movementAllowanceLeft
-			
-			int movementAllowanceLeft = movementAllowance - pathMovementCost;
 			
 			// calculate battle odds
 			
@@ -2010,12 +2021,39 @@ void findSureKill(int vehicleId)
 			
 		}
 		
+		// get path movement cost before attack
+		
+		int pathMovementCost = getVehiclePathMovementCost(vehicleId, x, y, true);
+		
+		if (pathMovementCost == -1)
+			continue;
+		
+		// too far
+		
+		if (pathMovementCost >= movementAllowance)
+			continue;
+		
+		// movementAllowanceLeft
+		
+		int movementAllowanceLeft = movementAllowance - pathMovementCost;
+		
 		// get vehicle at location
 		
 		int otherVehicleId = veh_at(x, y);
 		
 		if (otherVehicleId == -1)
+		{
+			// check for empty enemy base
+			
+			if (map_has_item(rangeTile, TERRA_BASE_IN_TILE) && isWar(aiFactionId, rangeTile->owner))
+			{
+				bestAttackTile = rangeTile;
+				bestBattleOdds = DBL_MAX;
+			}
+			
 			continue;
+			
+		}
 		
 		if (!isWar(vehicle->faction_id, Vehicles[otherVehicleId].faction_id))
 			continue;
@@ -2031,22 +2069,6 @@ void findSureKill(int vehicleId)
 		
 		if (!isWar(vehicle->faction_id, enemyVehicle->faction_id))
 			continue;
-		
-		// get path movement cost before attack
-		
-		int pathMovementCost = getVehiclePathMovementCost(vehicleId, enemyVehicle->x, enemyVehicle->y, true);
-		
-		if (pathMovementCost == -1)
-			continue;
-		
-		// too far
-		
-		if (pathMovementCost >= movementAllowance)
-			continue;
-		
-		// movementAllowanceLeft
-		
-		int movementAllowanceLeft = movementAllowance - pathMovementCost;
 		
 		// calculate battle odds
 		

@@ -27,7 +27,7 @@ bool deliverScout(int transportVehicleId, int scoutVehicleId);
 bool pickupColony(int vehicleId);
 bool pickupFormer(int vehicleId);
 void popPodStrategy(int vehicleId);
-MAP *getSeaTransportUnboardLocation(int seaTransportVehicleId, MAP *destination);
+MAP *getSeaTransportUnboardLocation(int seaTransportVehicleId, int passengerVehicleId, MAP *destination);
 MAP *getSeaTransportUnloadLocation(int seaTransportVehicleId, MAP *destination, MAP *unboardLocation);
 //bool deliverVehicle(const int transportVehicleId, const Location destinationLocation, const int vehicleId);
 bool isInOceanRegion(int vehicleId, int region);
@@ -35,5 +35,5 @@ int getCarryingScoutVehicleId(int transportVehicleId);
 int getCrossOceanAssociation(int vehicleId, MAP *terminalTile);
 int getAvailableSeaTransport(int oceanRegion, int vehicleId);
 int getAvailableSeaTransportInStack(int vehicleId);
-MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicleId);
+MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicleId, MAP *destination);
 
