@@ -3622,16 +3622,33 @@ HOOK_API int modifiedFactionUpkeep(const int factionId)
 	
 	// choose AI logic
 	
-	// run WTP AI code for AI eanbled factions
+	int returnValue;
+	
 	if (isUseWtpAlgorithms(factionId))
 	{
-		return aiFactionUpkeep(factionId);
+		// run WTP AI code for AI eanbled factions
+		
+		returnValue = aiFactionUpkeep(factionId);
+		
 	}
-	// default
 	else
 	{
-		return faction_upkeep(factionId);
+		// default
+		
+		returnValue = faction_upkeep(factionId);
+		
 	}
+	
+    // fix vehicle home bases for normal factions
+    
+    if (factionId > 0)
+	{
+		fixVehicleHomeBases(factionId);
+	}
+	
+	// return original value
+	
+	return returnValue;
 	
 }
 
@@ -4939,6 +4956,70 @@ void __cdecl modified_base_yield()
 		int orbitalEnergyDifference = orbitalEnergyLimit - orbitalEnergy;
 		base->energy_intake += orbitalEnergyDifference;
 		base->energy_intake_2 += orbitalEnergyDifference;
+	}
+	
+}
+
+/*
+Assign vehicle home base to own base.
+*/
+void fixVehicleHomeBases(int factionId)
+{
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// exclude not own vehicles
+		
+		if (vehicle->faction_id != factionId)
+			continue;
+		
+		// get home base
+		
+		int homeBaseId = vehicle->home_base_id;
+		
+		// exclude vehicles with correctly assigned home base
+		
+		if (homeBaseId >= 0 && Bases[homeBaseId].faction_id == factionId)
+			continue;
+		
+		// search own base with highest mineral surplus
+		
+		int bestHomeBaseId = -1;
+		int bestHomeBaseMineralSurplus = INT_MIN;
+		
+		for (int baseId = 0; baseId < *total_num_bases; baseId++)
+		{
+			BASE *base = &(Bases[baseId]);
+			
+			// exclude not own base
+			
+			if (base->faction_id != factionId)
+				continue;
+			
+			// get mineral surplus
+			
+			int mineralSurplus = base->mineral_surplus;
+			
+			// update best
+			
+			if (mineralSurplus > bestHomeBaseMineralSurplus)
+			{
+				bestHomeBaseId = baseId;
+				bestHomeBaseMineralSurplus = mineralSurplus;
+			}
+			
+		}
+		
+		// not found
+		
+		if (bestHomeBaseId == -1)
+			continue;
+		
+		// set home base
+		
+		vehicle->home_base_id = bestHomeBaseId;
+		
 	}
 	
 }

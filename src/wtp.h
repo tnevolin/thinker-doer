@@ -201,4 +201,5 @@ int __cdecl modified_base_production();
 int __cdecl modified_base_ecology();
 int getStockpileEnergy(int baseId);
 void __cdecl modified_base_yield();
+void fixVehicleHomeBases(int factionId);
 

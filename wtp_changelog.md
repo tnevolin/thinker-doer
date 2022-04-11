@@ -1,3 +1,7 @@
+# Version 291
+
+* All units are assigned to this faction base. No more random free of support units.
+
 # Version 290
 
 * AI designs anti-native artillery.
