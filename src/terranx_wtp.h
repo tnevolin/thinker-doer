@@ -44,6 +44,11 @@ extern int *current_base_growth_rate;
 extern int *g_PROBE_FACT_TARGET;
 extern int *g_UNK_ATTACK_FLAGS;
 extern byte *g_SOCIALWIN;
+extern int *current_attacker;
+extern int *current_defender;
+
+// yield rules
+
 extern int *TERRA_OCEAN_SQ_NUTRIENT;
 extern int *TERRA_OCEAN_SQ_MINERALS;
 extern int *TERRA_OCEAN_SQ_ENERGY;
@@ -166,4 +171,5 @@ extern fp_1int* base_upkeep;
 extern fp_0int* base_ecology;
 extern fp_0void *base_minerals;
 extern fp_0void *base_yield;
+extern fp_3void *boom;
 

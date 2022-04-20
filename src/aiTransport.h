@@ -10,6 +10,12 @@ struct LOCATION_RANGE
 	int range;
 };
 
+struct DeliveryLocation
+{
+	MAP *unloadLocation = nullptr;
+	MAP *unboardLocation = nullptr;
+};
+
 void moveTranportStrategy();
 void moveSeaTransportStrategy(int vehicleId);
 void moveEmptySeaTransportStrategy(int vehicleId);
@@ -27,9 +33,7 @@ bool deliverScout(int transportVehicleId, int scoutVehicleId);
 bool pickupColony(int vehicleId);
 bool pickupFormer(int vehicleId);
 void popPodStrategy(int vehicleId);
-MAP *getSeaTransportUnboardLocation(int seaTransportVehicleId, int passengerVehicleId, MAP *destination);
-MAP *getSeaTransportUnloadLocation(int seaTransportVehicleId, MAP *destination, MAP *unboardLocation);
-//bool deliverVehicle(const int transportVehicleId, const Location destinationLocation, const int vehicleId);
+DeliveryLocation getSeaTransportDeliveryLocation(int seaTransportVehicleId, int passengerVehicleId, MAP *destination);
 bool isInOceanRegion(int vehicleId, int region);
 int getCarryingScoutVehicleId(int transportVehicleId);
 int getCrossOceanAssociation(int vehicleId, MAP *terminalTile);

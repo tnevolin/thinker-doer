@@ -15,6 +15,7 @@ const double MIN_SIGNIFICANT_THREAT = 0.2;
 const int COMBAT_ABILITY_FLAGS = ABL_AMPHIBIOUS | ABL_AIR_SUPERIORITY | ABL_AAA | ABL_COMM_JAMMER | ABL_EMPATH | ABL_ARTILLERY | ABL_BLINK_DISPLACER | ABL_TRANCE | ABL_NERVE_GAS | ABL_SOPORIFIC_GAS | ABL_DISSOCIATIVE_WAVE;
 
 const unsigned int UNIT_TYPE_COUNT = 2;
+extern const char *UNIT_TYPE_NAMES[];
 enum UnitType
 {
 	UT_MELEE,
@@ -85,7 +86,7 @@ struct UnitStrength
 
 struct UnitTypeInfo
 {
-	const char *name = nullptr;
+	const char *unitTypeName = nullptr;
 	double foeTotalWeight = 0.0;
 	double ownTotalWeight = 0.0;
 	double ownTotalCombatEffect = 0.0;
@@ -145,12 +146,13 @@ struct BaseInfo
 	double getVehicleAverageCombatEffect(int vehicleId);
 	UnitTypeInfo *getUnitTypeInfo(int unitId);
 	void setUnitTypeComputedValues();
+	double getTotalProtectionDemand();
 	
 };
 
 struct Production
 {
-	double globalDefenseDemand;
+	double globalProtectionDemand = 0.0;
 	
 	double landColonyDemand;
 	std::map<int, double> seaColonyDemands;
@@ -169,6 +171,7 @@ struct Production
 	
 	void clear()
 	{
+		globalProtectionDemand = 0.0;
 		seaColonyDemands.clear();
 		seaTerraformingRequestCounts.clear();
 		seaFormerDemands.clear();
@@ -273,4 +276,5 @@ extern Data aiData;
 // helper functions
 
 int getUnitType(int unitId);
+const char *getUnitTypeName(int unitType);
 

@@ -6,6 +6,10 @@
 Shared AI Data.
 */
 
+// global constants
+
+const char *UNIT_TYPE_NAMES[] = {"Melee", "Land Artillery"};
+
 // global variables
 
 int aiFactionId = -1;
@@ -15,8 +19,11 @@ Data aiData;
 
 BaseInfo::BaseInfo()
 {
-	unitTypeInfos[UT_MELEE].name = "Melee";
-	unitTypeInfos[UT_LAND_ARTILLERY].name = "Land Artillery";
+	for (unsigned int unitType = 0; unitType < UNIT_TYPE_COUNT; unitType++)
+	{
+		unitTypeInfos[unitType].unitTypeName = UNIT_TYPE_NAMES[unitType];
+	}
+	
 }
 
 void BaseInfo::clear()
@@ -102,6 +109,19 @@ void BaseInfo::setUnitTypeComputedValues()
 	{
 		unitTypeInfo.setComputedValues();
 	}
+	
+}
+
+double BaseInfo::getTotalProtectionDemand()
+{
+	double totalProtectionDemand = 0.0;
+	
+	for (UnitTypeInfo &unitTypeInfo : unitTypeInfos)
+	{
+		totalProtectionDemand += unitTypeInfo.protectionDemand;
+	}
+	
+	return totalProtectionDemand;
 	
 }
 
@@ -258,7 +278,7 @@ void UnitTypeInfo::setComputedValues()
 	
 	protectionDemand = (protectionLevel >= 0.0 ? 0.0 : - protectionLevel);
 	
-	debug("\t\t\t%-15s ownTotalCombatEffect=%5.2f, requiredProtection=%+5.2f, protectionLevel=%+5.2f, protectionDemand=%5.2f\n", name, ownTotalCombatEffect, requiredProtection, protectionLevel, protectionDemand);
+	debug("\t\t\t%-15s ownTotalCombatEffect=%5.2f, requiredProtection=%+5.2f, protectionLevel=%+5.2f, protectionDemand=%5.2f\n", unitTypeName, ownTotalCombatEffect, requiredProtection, protectionLevel, protectionDemand);
 	
 	// sort protectors by priority
 	
@@ -285,5 +305,10 @@ int getUnitType(int unitId)
 	
 	return unitType;
 	
+}
+
+const char *getUnitTypeName(int unitType)
+{
+	return UNIT_TYPE_NAMES[unitType];
 }
 

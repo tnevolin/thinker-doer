@@ -14,7 +14,7 @@ const int PLACEMENT_QUALITY[PLACEMENT_MAX_RANGE + 1][PLACEMENT_MAX_RANGE + 1] =
 			-9,	// 0, 2
 			-4,	// 0, 3
 			+0,	// 0, 4
-			+4,	// 0, 5
+			+2,	// 0, 5
 			-4,	// 0, 6
 			-3,	// 0, 7
 			+0,	// 0, 8
@@ -34,9 +34,9 @@ const int PLACEMENT_QUALITY[PLACEMENT_MAX_RANGE + 1][PLACEMENT_MAX_RANGE + 1] =
 			-9,	// 2, 0
 			-9,	// 2, 1
 			-4,	// 2, 2
-			-2,	// 2, 3
+			-3,	// 2, 3
 			+4,	// 2, 4
-			-1,	// 2, 5
+			+0,	// 2, 5
 			-3,	// 2, 6
 			-1,	// 2, 7
 			+0,	// 2, 8
@@ -46,9 +46,9 @@ const int PLACEMENT_QUALITY[PLACEMENT_MAX_RANGE + 1][PLACEMENT_MAX_RANGE + 1] =
 			-9,	// 3, 1
 			-9,	// 3, 2
 			+4,	// 3, 3
-			+4,	// 3, 4
+			+2,	// 3, 4
 			-2,	// 3, 5
-			-1,	// 3, 6
+			-2,	// 3, 6
 			+2,	// 3, 7
 			+0,	// 3, 8
 		},
@@ -149,8 +149,8 @@ int getBaseRadiusOverlapCount(int x, int y, int factionId);
 int getNearestBaseRange(MAP *tile);
 int getNearestColonyRange(MAP *tile);
 int getExpansionRange(MAP *tile);
-double estimateTravelTime(int srcX, int srcY, int dstX, int dstY, int unitId);
-double estimateVehicleTravelTime(int vehicleId, int x, int y);
+double estimateTravelTime(MAP *src, MAP *dst, int unitId);
+double estimateVehicleTravelTime(int vehicleId, MAP *destination);
 double getMinimalYieldScore();
 double getSeaSquareFutureYieldScore();
 double getTileFutureYieldScore(MAP *tile);

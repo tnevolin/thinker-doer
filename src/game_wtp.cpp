@@ -1376,6 +1376,11 @@ bool isVehicleIdle(int vehicleId)
 	return (Vehicles[vehicleId].move_status == ORDER_NONE);
 }
 
+bool isLandArtilleryVehicle(int vehicleId)
+{
+	return (veh_triad(vehicleId) == TRIAD_LAND && isVehicleHasAbility(vehicleId, ABL_ARTILLERY));
+}
+
 /*
 Computes base with optional worked tiles reset.
 Base compute may not pick optimal worker placement without worked tile reset.
@@ -2757,6 +2762,24 @@ std::vector<int> getStackVehicles(int vehicleId)
 
 	return stackedVehicleIds;
 
+}
+
+std::vector<int> getTileVehicles(MAP *tile)
+{
+	int x = getX(tile);
+	int y = getY(tile);
+	
+	int vehicleAt = veh_at(x, y);
+	
+	if (vehicleAt != -1)
+	{
+		return std::vector<int>();
+	}
+	else
+	{
+		return getStackVehicles(vehicleAt);
+	}
+	
 }
 
 void setTerraformingAction(int id, int action)

@@ -13,6 +13,8 @@ void moveAllStrategy();
 void healStrategy();
 int moveVehicle(const int vehicleId);
 void transitVehicle(int vehicleId, Task task);
+void deleteUnits();
+void balanceVehicleSupport();
 
 // ==================================================
 // enemy_move entry point

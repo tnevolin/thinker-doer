@@ -1646,8 +1646,6 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
     }
 
-    fflush(debug_log);
-
     return returnValue;
 
 }
@@ -3327,8 +3325,6 @@ HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int
 
 	}
 	
-	fflush(debug_log);
-
 	// execute original code
 
 	tx_battle_fight_2(attackerVehicleId, angle, tx, ty, do_arty, flag1, flag2);
@@ -5156,6 +5152,8 @@ Assign vehicle home base to own base.
 */
 void fixVehicleHomeBases(int factionId)
 {
+	std::set<int> homeBaseIds;
+	
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
@@ -5177,7 +5175,7 @@ void fixVehicleHomeBases(int factionId)
 		// search own base with highest mineral surplus
 		
 		int bestHomeBaseId = -1;
-		int bestHomeBaseMineralSurplus = INT_MIN;
+		int bestHomeBaseMineralSurplus = 2;
 		
 		for (int baseId = 0; baseId < *total_num_bases; baseId++)
 		{
@@ -5186,6 +5184,11 @@ void fixVehicleHomeBases(int factionId)
 			// exclude not own base
 			
 			if (base->faction_id != factionId)
+				continue;
+			
+			// exclude already assigned to
+			
+			if (homeBaseIds.count(baseId) != 0)
 				continue;
 			
 			// get mineral surplus
@@ -5207,11 +5210,46 @@ void fixVehicleHomeBases(int factionId)
 		if (bestHomeBaseId == -1)
 			continue;
 		
-		// set home base
+		// set home base and mark assigned base
 		
 		vehicle->home_base_id = bestHomeBaseId;
+		homeBaseIds.insert(bestHomeBaseId);
 		
 	}
+	
+}
+
+void __cdecl modified_vehicle_range_boom(int x, int y, int flags)
+{
+	// get current attacking vehicle
+	
+	int currentAttacker = *current_attacker;
+	int currentDefender = *current_defender;
+	
+	// get vehicle at location
+	
+	int vehicleId = veh_at(x, y);
+	
+	// set current attacker and defender if not set
+	
+	if (currentAttacker == -1)
+	{
+		*current_attacker = vehicleId;
+	}
+	
+	if (currentDefender == -1)
+	{
+		*current_defender = vehicleId;
+	}
+	
+	// execute original code
+	
+	boom(x, y, flags);
+	
+	// restore current attacker and defender vehicle id
+	
+	*current_attacker = currentAttacker;
+	*current_defender = currentDefender;
 	
 }
 

@@ -15,7 +15,7 @@ struct VehicleRange
 void moveCombatStrategy();
 void movePolice2x();
 void moveInfantryDefender();
-void moveOtherProtectors();
+void moveOtherProtector();
 void moveScoutStrategy();
 void moveLandScoutStrategy();
 void moveSeaScoutStrategy();

@@ -102,7 +102,7 @@ void __cdecl modified_enemy_units_check(int factionId)
 	
 	clock_t c = clock();
 	enemy_units_check(factionId);
-	debug("(time) [vanilla] enemy_units_check: %6.3f\n", (double)(clock() - c) / (double)CLOCKS_PER_SEC);
+	debug("(time) [vanilla] enemy_units_check - %-25s: %6.3f\n", MFactions[factionId].noun_faction, (double)(clock() - c) / (double)CLOCKS_PER_SEC);
 	
 	// cleanup AI Data
 	// it is important to do it after enemy_units_check as it calls enemy_move that utilizes AI Data.
@@ -130,6 +130,13 @@ void strategy()
 	c = clock();
 	designUnits();
 	debug("(time) [WTP] designUnits: %6.3f\n", (double)(clock() - c) / (double)CLOCKS_PER_SEC);
+	
+	// delete units
+	
+	c = clock();
+	balanceVehicleSupport();
+//	deleteUnits();
+	debug("(time) [WTP] balanceVehicleSupport + deleteUnits: %6.3f\n", (double)(clock() - c) / (double)CLOCKS_PER_SEC);
 	
 	// move strategy
 	
@@ -1365,8 +1372,6 @@ void evaluateBaseDefense()
 				alienUnitId = BSC_ISLE_OF_THE_DEEP;
 			}
 			
-			UNIT *unit = &(Units[alienUnitId]);
-			
 			// strength modifier
 			
 			double psiOffenseModifier = getAlienMoraleModifier() * getAlienTurnStrengthModifier();
@@ -1378,35 +1383,6 @@ void evaluateBaseDefense()
 			// depth coefficient
 			
 			double depthCoefficient = 1.0;
-			
-			switch (unit->chassis_type)
-			{
-			case CHS_INFANTRY:
-			case CHS_SPEEDER:
-			case CHS_HOVERTANK:
-				{
-					if (!ocean)
-					{
-						// enemy land unit will have hard time moving through our territory
-						depthCoefficient = exp(- (double)baseInfo->borderBaseDistance / 3.0);
-					}
-					
-				}
-				break;
-				
-			case CHS_FOIL:
-			case CHS_CRUISER:
-				{
-					if (ocean)
-					{
-						// enemy sea unit will have slightly hard time moving through our territory
-						depthCoefficient = exp(- (double)baseInfo->borderBaseDistance / 10.0);
-					}
-					
-				}
-				break;
-				
-			}
 			
 			// set basic numbers to occasional vehicle
 			
@@ -1499,7 +1475,7 @@ void evaluateBaseDefense()
 			debug("\t\tfoeTotalWeight by unitType\n");
 			for (unsigned int unitType = 0; unitType < UNIT_TYPE_COUNT; unitType++)
 			{
-				debug("\t\t\t%-10s foeTotalWeight=%5.2f\n", baseInfo->unitTypeInfos[unitType].name, baseInfo->unitTypeInfos[unitType].foeTotalWeight);
+				debug("\t\t\t%-15s foeTotalWeight=%5.2f\n", baseInfo->unitTypeInfos[unitType].unitTypeName, baseInfo->unitTypeInfos[unitType].foeTotalWeight);
 			}
 		}
 		
@@ -1786,7 +1762,7 @@ void evaluateBaseDefense()
 			debug("\t\tprotectors\n");
 			for (const UnitTypeInfo &unitTypeInfo : baseInfo->unitTypeInfos)
 			{
-				debug("\t\t\t%-15s\n", unitTypeInfo.name);
+				debug("\t\t\t%-15s\n", unitTypeInfo.unitTypeName);
 				
 				for (IdDoubleValue protector : unitTypeInfo.protectors)
 				{
@@ -1796,6 +1772,10 @@ void evaluateBaseDefense()
 			}
 			
 		}
+		
+		// update globalProtectionDemand
+		
+		aiData.production.globalProtectionDemand = std::max(aiData.production.globalProtectionDemand, baseInfo->unitTypeInfos[UT_MELEE].protectionDemand);
 		
 	}
 	
@@ -1886,6 +1866,10 @@ void populateWarzones()
 					range = 2;
 					break;
 					
+				default:
+					range = getVehicleSpeedWithoutRoads(vehicleId);
+					break;
+					
 				}
 				
 			}
@@ -1943,10 +1927,6 @@ void populateWarzones()
 
 		if (!isWar(aiFactionId, base->faction_id))
 			continue;
-		
-		// store blocked location
-		
-		aiData.getTileInfo(base->x, base->y)->blocked = true;
 		
 		// store warzone location
 		
@@ -3827,6 +3807,58 @@ bool canVehicleAttack(int attackerVehicleId, int defenderVehicleId)
 }
 
 /*
+Checks if one vehicle can attack another.
+*/
+bool canVehicleAttackTile(int vehicleId, MAP *tile)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	int triad = veh_triad(vehicleId);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	bool vehicleOcean = is_ocean(vehicleTile);
+	bool tileOcean = is_ocean(tile);
+	
+	// vehicle without air superiority cannot attack if non own/pact needleject is in stack
+	
+	for (int enemyVehicleId : getTileVehicles(tile))
+	{
+		VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
+		
+		// exclude own/pact
+		
+		if (enemyVehicle->faction_id == vehicle->faction_id || isPact(enemyVehicle->faction_id, vehicle->faction_id))
+			continue;
+		
+		// needlejet
+		
+		if (Units[enemyVehicle->unit_id].chassis_type == CHS_NEEDLEJET)
+		{
+			return false;
+		}
+		
+	}
+	
+	// land not amphibious unit cannot attack from/to ocean
+	
+	if (triad == TRIAD_LAND && !isVehicleHasAbility(vehicleId, ABL_AMPHIBIOUS) && (vehicleOcean || tileOcean))
+		return false;
+	
+	// land amphibious unit cannot attack to ocean unless to ocean base
+	
+	if (triad == TRIAD_LAND && isVehicleHasAbility(vehicleId, ABL_AMPHIBIOUS) && tileOcean && !map_has_item(tile, TERRA_BASE_IN_TILE))
+		return false;
+	
+	// sea unit cannot attack to land
+	
+	if (triad == TRIAD_SEA && !tileOcean)
+		return false;
+	
+	// otherwise, can
+	
+	return true;
+	
+}
+
+/*
 Calculates relative attacker odds for units (= relative strength * relative hit points).
 */
 double getRelativeUnitStrength(int attackerUnitId, int defenderUnitId)
@@ -4184,4 +4216,24 @@ double getVehicleToBaseDepthCoefficient(int vehicleId, int baseId)
 	return depthCoefficient;
 	
 }
+
+/*
+Returns remained allowed support this base can endure.
+*/
+int getBaseSupportAllowance(int baseId)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	const int minimalAllowedSupport = 1;
+	const int allowedSupportDivisor = 2;
+	
+	int mineralIntake2 = base->mineral_intake_2;
+	int allowedSupport = mineralIntake2 / allowedSupportDivisor;
+	int mineralSurplus = base->mineral_surplus;
+	int currentSupport = mineralIntake2 - mineralSurplus;
+	
+	return (currentSupport == 0 ? minimalAllowedSupport : allowedSupport - currentSupport);
+	
+}
+
 

@@ -3735,6 +3735,19 @@ double calculateBaseResourceScore(int baseId, int currentMineralIntake2, int cur
 {
 	BASE *base = &(Bases[baseId]);
 	
+	// improvedNutrientSurplus <= 0 is unacceptable
+	
+	if (improvedNutrientSurplus <= 0)
+		return 0.0;
+	
+	// currentNutrientSurplus <= 0 devalue all other input
+	
+	if (currentNutrientSurplus <= 0)
+	{
+		currentMineralSurplus = 0;
+		currentEnergySurplus = 0;
+	}
+	
 	// calculate number of workers
 	
 	int workerCount = 0;

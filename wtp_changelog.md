@@ -1,5 +1,9 @@
 # Version ai
 
+* FIX: Game sometimes crashed when last defender at base killed.
+* FIX: Game sometimes crashed when drawing a fireball over air unit at the end of turn.
+* Disabled AI units reassignment between bases.
+* Unit forced base assignment is relaxed to make sure it does not overburden base.
 * Pressure Dome adds minerals (thinker.ini: pressure_dome_minerals).
 * Biology Lab generates 8 labs (thinker.ini: biology_lab_research_bonus).
 

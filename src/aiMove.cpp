@@ -556,37 +556,19 @@ void transitVehicle(int vehicleId, Task task)
 		if (seaTransportVehicle->damage_taken > (2 * seaTransportVehicle->reactor_type()))
 			return;
 		
-		// find unboard location
+		// find delivery location
 		
-		MAP *unboardLocation = getSeaTransportUnboardLocation(seaTransportVehicleId, vehicleId, destination);
+		DeliveryLocation deliveryLocation = getSeaTransportDeliveryLocation(seaTransportVehicleId, vehicleId, destination);
 		
-		if (unboardLocation == nullptr)
+		if (deliveryLocation.unloadLocation == nullptr || deliveryLocation.unboardLocation == nullptr)
 		{
-			debug("\tcannot find unboard location\n");
+			debug("\tcannot find delivery location\n");
 			return;
 		}
 		
-		int unboardLocationX = getX(unboardLocation);
-		int unboardLocationY = getY(unboardLocation);
+		debug("\tdeliveryLocation=(%3d,%3d):(%3d,%3d)\n", getX(deliveryLocation.unloadLocation), getY(deliveryLocation.unloadLocation), getX(deliveryLocation.unboardLocation), getY(deliveryLocation.unboardLocation));
 		
-		debug("\tunboardLocation=(%3d,%3d)\n", unboardLocationX, unboardLocationY);
-		
-		// find unload location
-		
-		MAP *unloadLocation = getSeaTransportUnloadLocation(seaTransportVehicleId, destination, unboardLocation);
-		
-		if (unloadLocation == nullptr)
-		{
-			debug("\tcannot find unload location\n");
-			return;
-		}
-		
-		int unloadLocationX = getX(unloadLocation);
-		int unloadLocationY = getY(unloadLocation);
-		
-		debug("\tunloadLocation=(%3d,%3d)\n", unloadLocationX, unloadLocationY);
-		
-		if (vehicle->x == unloadLocationX && vehicle->y == unloadLocationY)
+		if (vehicleTile == deliveryLocation.unloadLocation)
 		{
 			debug("\tat unload location\n");
 			
@@ -600,7 +582,7 @@ void transitVehicle(int vehicleId, Task task)
 			
 			// move to unboard location
 			
-			setTask(vehicleId, Task(vehicleId, MOVE, unboardLocation));
+			setTask(vehicleId, Task(vehicleId, MOVE, deliveryLocation.unboardLocation));
 			
 			return;
 			
@@ -608,8 +590,8 @@ void transitVehicle(int vehicleId, Task task)
 		
 		// add orders
 		
-		setTask(vehicleId, Task(vehicleId, UNBOARD, unboardLocation));
-		setTaskIfCloser(seaTransportVehicleId, Task(seaTransportVehicleId, UNLOAD, unloadLocation, vehicleId));
+		setTask(vehicleId, Task(vehicleId, UNBOARD, deliveryLocation.unboardLocation));
+		setTaskIfCloser(seaTransportVehicleId, Task(seaTransportVehicleId, UNLOAD, deliveryLocation.unloadLocation, vehicleId));
 		
 		return;
 		
@@ -649,6 +631,148 @@ void transitVehicle(int vehicleId, Task task)
 	// sometimes it is stuck in sentry on transport
 	
 	setVehicleOrder(vehicleId, ORDER_NONE);
+	
+}
+
+/*
+Delete unit to reduce support burden.
+*/
+void deleteUnits()
+{
+	debug("deleteUnits - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	for (int baseId : aiData.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		
+		debug("\t%s\n", base->name);
+		
+		int baseSupportAllowance = getBaseSupportAllowance(baseId);
+		
+		// exclude base within support allowance
+		
+		if (baseSupportAllowance >= -2)
+		{
+			debug("\t\twithin allowance: baseSupportAllowance=%+2d\n", baseSupportAllowance);
+			continue;
+		}
+		
+		// find supported regular combat vehicle with lowest value
+		
+		int weakestVehicleId = -1;
+		int weakestVehicleValue = INT_MAX;
+		
+		for (int vehicleId: aiData.combatVehicleIds)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			
+			// exclude not supported from this base
+			
+			if (vehicle->home_base_id != baseId)
+				continue;
+			
+			// exclude native
+			
+			if (isNativeVehicle(vehicleId))
+				continue;
+			
+			// get value
+			
+			int value = std::max(getVehicleOffenseValue(vehicleId), getVehicleDefenseValue(vehicleId));
+			
+			// update weakest unit
+			
+			if (value < weakestVehicleValue)
+			{
+				weakestVehicleId = vehicleId;
+				weakestVehicleValue = value;
+			}
+			
+		}
+		
+		// not found
+		
+		if (weakestVehicleId == -1)
+			continue;
+		
+		// delete vehicle
+		
+		debug("\t\tweakest vehicle: (%3d,%3d) %-32s\n", Vehicles[weakestVehicleId].x, Vehicles[weakestVehicleId].y, Units[Vehicles[weakestVehicleId].unit_id].name);
+		setTask(weakestVehicleId, Task(weakestVehicleId, KILL));
+		
+	}
+	
+}
+
+/*
+Redistribute vehicle between bases to proportinally burden them with support.
+*/
+void balanceVehicleSupport()
+{
+	// find base with lowest/highest mineral surplus
+	
+	int lowestMineralSurplusBaseId = -1;
+	int lowestMineralSurplus = INT_MAX;
+	
+	int highestMineralSurplusBaseId = -1;
+	int highestMineralSurplus = 0;
+	
+	for (int baseId : aiData.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		
+		int mineralIntake2 = base->mineral_intake_2;
+		int mineralSurplus = base->mineral_surplus;
+		int support = mineralIntake2 - mineralSurplus;
+		
+		if (support > 0 && mineralSurplus < lowestMineralSurplus)
+		{
+			lowestMineralSurplusBaseId = baseId;
+			lowestMineralSurplus = mineralSurplus;
+		}
+		
+		if (mineralSurplus > highestMineralSurplus)
+		{
+			highestMineralSurplusBaseId = baseId;
+			highestMineralSurplus = mineralSurplus;
+		}
+		
+	}
+	
+	// not found
+	
+	if (lowestMineralSurplusBaseId == -1 || highestMineralSurplusBaseId == -1)
+		return;
+	
+	// not enough difference
+	
+	if (highestMineralSurplus - lowestMineralSurplus < 4)
+		return;
+	
+	// find vehicle to reassign
+	
+	int reassignVehicleId = -1;
+	
+	for (int vehicleId : aiData.vehicleIds)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		if (vehicle->home_base_id == lowestMineralSurplusBaseId)
+		{
+			reassignVehicleId = vehicleId;
+			break;
+		}
+		
+	}
+	
+	// not found
+	
+	if (reassignVehicleId == -1)
+		return;
+	
+	// reassign
+	
+	Vehicles[reassignVehicleId].home_base_id = highestMineralSurplusBaseId;
 	
 }
 

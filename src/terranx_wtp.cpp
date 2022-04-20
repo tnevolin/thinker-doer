@@ -44,6 +44,8 @@ int *current_base_growth_rate = (int *)0x0090E918;
 int *g_PROBE_FACT_TARGET = (int *)0x00945B34;
 int *g_UNK_ATTACK_FLAGS = (int *)0x0093E904;
 byte *g_SOCIALWIN = (byte *)0x008A6270;
+int *current_attacker = (int *)0x00689F28;
+int *current_defender = (int *)0x00689F2C;
 
 // yield rules
 
@@ -304,4 +306,7 @@ fp_0void *base_minerals = (fp_0void *)0x004E9CB0;
 
 // base yield
 fp_0void *base_yield = (fp_0void *)0x004E80B0;
+
+// draw a fireball
+fp_3void *boom = (fp_3void *)0x00504AA0;
 

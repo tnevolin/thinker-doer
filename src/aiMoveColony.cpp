@@ -204,8 +204,15 @@ void analyzeBasePlacementSites()
 		// don't let denominator value be less than 1.0
 		
 		double yieldScore = (getTileFutureYieldScore(tile) - minimalYieldScore) / std::max(1.0, seaSquareFutureYieldScore - minimalYieldScore);
+		
+		// reduce yield score for tiles withing base radius
+		
+		if (map_has_item(tile, TERRA_BASE_RADIUS))
+		{
+			yieldScore *= 0.75;
+		}
+		
 		debug("yieldScore(%3d,%3d)=%f\n", getX(tile), getY(tile), yieldScore);
-		if (DEBUG) fflush(debug_log);
 		
 		// store yieldScore
 		
@@ -279,6 +286,8 @@ void analyzeBasePlacementSites()
 	
     // distribute colonies to build sites
     
+	debug("distribute colonies to build sites - %s\n", MFactions[aiFactionId].noun_faction);
+	
 	std::set<MAP *> unavailableBuildSites;
 	
 	s = clock();
@@ -286,7 +295,10 @@ void analyzeBasePlacementSites()
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
 		int triad = vehicle->triad();
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		int vehicleAssociation = getVehicleAssociation(vehicleId);
+		
+		debug("\t(%3d,%3d) %-32s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
 		
 		// find best buildSite
 		
@@ -318,7 +330,7 @@ void analyzeBasePlacementSites()
 			
 			// get travel time
 			
-			double travelTime = estimateTravelTime(vehicle->x, vehicle->y, x, y, vehicle->unit_id);
+			double travelTime = estimateTravelTime(vehicleTile, tile, vehicle->unit_id);
 			
 			// get travel time score
 			
@@ -328,10 +340,13 @@ void analyzeBasePlacementSites()
 			
 			double buildSiteScore = expansionTileInfo->buildScore + travelTimeScore;
 			
+			debug("\t\t(%3d,%3d) buildSiteScore=%5.2f, expansionTileInfo->buildScore=%5.2f, travelTime=%5.2f, travelTimeScore=%5.2f\n", x, y, buildSiteScore, expansionTileInfo->buildScore, travelTime, travelTimeScore);
+			
 			// update best
 			
 			if (buildSiteScore > bestBuildSiteScore)
 			{
+				debug("\t\t\tbest\n");
 				bestBuildSite = tile;
 				bestBuildSiteScore = buildSiteScore;
 			}
@@ -566,7 +581,7 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	if (!is_ocean(tile) && map_has_item(tile, TERRA_FUNGUS))
 	{
-		score += -0.1;
+		score += -0.4;
 	}
 	
 	// return score
@@ -625,7 +640,7 @@ bool isValidBuildSite(MAP *tile, int factionId)
 		{
 			return false;
 		}
-		else if (range == conf.base_spacing)
+		else if (conf.base_nearby_limit >= 0 && range == conf.base_spacing)
 		{
 			ownBaseAtMinimalRangeCount++;
 			
@@ -1020,120 +1035,64 @@ int getExpansionRange(MAP *tile)
 /*
 Estimate travel time by straight line including transporting.
 */
-double estimateTravelTime(int srcX, int srcY, int dstX, int dstY, int unitId)
+double estimateTravelTime(MAP *src, MAP *dst, int unitId)
 {
+	assert(src != nullptr);
+	assert(dst != nullptr);
+	assert(unitId >= 0 && unitId < MaxProtoNum);
+	
+	int srcX = getX(src);
+	int srcY = getY(src);
+	int dstX = getX(dst);
+	int dstY = getY(dst);
+	int srcAssociation = getAssociation(src, aiFactionId);
+	int dstAssociation = getAssociation(dst, aiFactionId);
 	UNIT *unit = &(Units[unitId]);
 	int triad = unit->triad();
 	int chassisSpeed = unit->speed();
-	MAP *srcTile = getMapTile(srcX, srcY);
-	MAP *dstTile = getMapTile(dstX, dstY);
-	int srcAssociation = getAssociation(srcTile, aiFactionId);
-	int dstAssociation = getAssociation(dstTile, aiFactionId);
 	
-	// chassis speed should not be zero
-	
-	if (chassisSpeed <= 0)
-		return DBL_MAX;
+	double travelTime = DBL_MAX;
 	
 	if (triad == TRIAD_SEA || triad == TRIAD_AIR)
 	{
-		// sea and air unit do not use transport
-		
 		// get range
 		
 		int range = map_range(srcX, srcY, dstX, dstY);
 		
 		// estimate travel time
 		
-		return (double)range / (double)chassisSpeed;
+		travelTime = (double)range / (double)chassisSpeed;
 		
 	}
-	else if (triad == TRIAD_LAND && dstAssociation == srcAssociation)
+	else if (triad == TRIAD_LAND)
 	{
-		// land unit same association - travel by itself
-		
 		// get range
 		
 		int range = map_range(srcX, srcY, dstX, dstY);
 		
 		// estimate travel time
 		
-		return (double)range / (double)chassisSpeed;
+		travelTime = (double)range / (double)chassisSpeed;
 		
-	}
-	else if (triad == TRIAD_LAND && dstAssociation != srcAssociation)
-	{
-		// land different association - have to use transport
+		// penalize land vehicle for traveling to other association
 		
-		int seaTransportChassis;
-		
-		if (has_tech(aiFactionId, Chassis[CHS_CRUISER].preq_tech))
+		if (dstAssociation != srcAssociation)
 		{
-			seaTransportChassis = CHS_CRUISER;
+			travelTime *= 2;
 		}
-		else if (has_tech(aiFactionId, Chassis[CHS_FOIL].preq_tech))
-		{
-			seaTransportChassis = CHS_FOIL;
-		}
-		else
-		{
-			seaTransportChassis = -1;
-		}
-		
-		if (seaTransportChassis == -1)
-		{
-			return DBL_MAX;
-		}
-		
-		int seaTransportChassisSpeed = Chassis[seaTransportChassis].speed;
-		
-		// get movement directions
-		
-		int dx = (dstX == srcX ? 0 : (dstX > srcX ? +1 : -1));
-		int dy = (dstY == srcY ? 0 : (dstY > srcY ? +1 : -1));
-		
-		if (abs(dstX - srcX) > *map_half_x)
-		{
-			dx = -dx;
-		}
-		
-		// count number of land and sea tiles along the path
-		
-		int landTileCount = 0;
-		int seaTileCount = 0;
-		
-		int curX;
-		int curY;
-		for (curX = srcX, curY = srcY; curX != dstX && curY != dstY; curX += dx, curY += dy)
-		{
-			MAP *tile = getMapTile(curX, curY);
-			
-			if (is_ocean(tile))
-			{
-				seaTileCount++;
-			}
-			else
-			{
-				landTileCount++;
-			}
-			
-		}
-		
-		// estimate travel time
-		
-		return (double)landTileCount / (double)chassisSpeed + (double)seaTileCount / (double)seaTransportChassisSpeed;
 		
 	}
 	
-	return DBL_MAX;
+	return travelTime;
 	
 }
 
-double estimateVehicleTravelTime(int vehicleId, int x, int y)
+double estimateVehicleTravelTime(int vehicleId, MAP *destination)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
-	return estimateTravelTime(vehicle->x, vehicle->y, x, y, vehicle->unit_id);
+	return estimateTravelTime(vehicleTile, destination, vehicle->unit_id);
 	
 }
 

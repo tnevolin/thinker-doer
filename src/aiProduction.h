@@ -32,6 +32,7 @@ const std::set<int> MANAGED_UNIT_TYPES
 
 const std::set<int> MANAGED_FACILITIES
 {
+	FAC_STOCKPILE_ENERGY,
 	FAC_HAB_COMPLEX,
 	FAC_HABITATION_DOME,
 	FAC_RECREATION_COMMONS,
@@ -67,7 +68,7 @@ void evaluateGlobalFormerDemand();
 //HOOK_API int modifiedBaseProductionChoice(int baseId, int a2, int a3, int a4);
 void setProduction();
 int aiSuggestBaseProduction(int baseId, int choice);
-bool evaluateMandatoryDefenseDemand();
+void evaluateMandatoryDefenseDemand();
 void evaluateFacilitiesDemand();
 void evaluatePopulationLimitFacilitiesDemand();
 void evaluatePsychFacilitiesDemand();
@@ -130,5 +131,5 @@ int getBaseLabsIntake(int baseId);
 int getBaseTotalMineral(int baseId);
 int getBaseTotalEnergy(int baseId);
 std::vector<int> getProtectionCounterUnits(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
-double getUnitPriorityMultiplier(int baseId);
+double getUnitPriorityMultiplier(int baseId, int unitId);
 
