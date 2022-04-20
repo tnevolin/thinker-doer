@@ -1,11 +1,63 @@
-# Version ai
+# Version 292
+
+Super update mainly targetting AI but includes some other changes as well.
+
+## Regular changes
+
+* BUG: Game crashed under certain conditions when last defender at base destroyed. Fixed.
+* BUG: Game crashed under ceratin conditions when air unit damaged in the field at the end of turn. Fixed.
+* FIX: Vanilla transports steal passengers from each other. Now transports are forbidden to share same tile.
+* Added unit: Patrol Battery - anti native artillery.
+* Added unit: Empath Battery - anti native artillery.
+* Hurry cost is reduced to 2 for facilities and units and to 4 for projects.
+* Biology labs bonus increased to 8.
+* Pressure Dome adds 1 mineral in base square.
+* Computer player distributes unit support between bases to not overburden some of them too much.
+* All player units gets assigned to player bases. There are no more **free** units and computer player is no longer support other factions formers.
+* Artillery duelants gets **same exactly** bonuses as melee units: base defense, sensors, etc.
+
+## AI specifics
+
+* New configuration parameter: wtp_factions_enabled. Allows to apply either Thinker or WTP AI algorithms to computer players.
+* AI builds military and defensive facilities.
+* AI tries to evaluate base threats and beef them up accordingly.
+* AI tries to evaluate base exposure (internal/external) and more often builds defensive structures in exposed bases.
+* AI considers ocean more penetrable than land and may build sea defensive structure even deep inside ocean territory.
+* AI now properly understand continuous continent and ocean regions despite stupid vanilla polar cap regions.
+* AI now properly understand how coastal bases connect ocean regions and treat them as a continuous one.
+* AI handles base police demands and prefers police2x units.
+* AI more specifically determines dangerous locations and don't send colonies there. Still far from ideal algorithm.
+* AI generates more unit design choices.
+* AI explicitly obsoletes inferior unit designs.
+* AI uses reworked area connection algorithm allowing it precisely understand borders of continent/ocean bodies.
+* AI reuses Thinker Path finding algorithm imported from vanilla. Thanks to Induktio.
+* AI collects more details about base threat: each unit type, their proximity, their morale, their damage, etc.
+* AI distinguish melee and land artillery unit groups. It now builds artillery to counter artillery. Still not perfect, though.
+* AI more directly request production for certain units if it lacks them at the unit movement stage.
+* AI tries to emphasize prototype production to use less number of stronger units and reduce support burden.
+* AI evaluates **each and every** potential base placement spot and makes both transportation and production decisions based on that.
+* AI tries to not travel too far with early bases except for some exceptionally lucrative location nearby.
+* AI tries to place bases closer to each other to use as much land as possible without too much cramming.
+* AI tries to weight unit usefulness against specific base threat and distribute protectors accordingly. The algorithm is still pretty crude.
+* AI tries to produce most useful counter units agaisn specific base threat. Should produce more natives against heavy regulars, scouts against natives, etc.
+* AI tries to comlete tile terraforming. Previously it was leaving too many farms without mine/solar.
+
+## AI sea transportation
+
+* Serious rework in sea transportation. Land units are more straightforwardly moved to destination on another continents. Thanks to new geography system.
+* AI faction now easily jumps in and out of water and onto another continents. Thanks to the above.
+* Same way it distributes land combat units across all land/ocean bases regardless of their geographical placement.
+* AI still may experience navigation problems in super convoluted continent/ocean configurations.
 
 * FIX: Game sometimes crashed when last defender at base killed.
 * FIX: Game sometimes crashed when drawing a fireball over air unit at the end of turn.
 * Disabled AI units reassignment between bases.
 * Unit forced base assignment is relaxed to make sure it does not overburden base.
-* Pressure Dome adds minerals (thinker.ini: pressure_dome_minerals).
 * Biology Lab generates 8 labs (thinker.ini: biology_lab_research_bonus).
+
+## Internal
+
+* Introduced a patch that disables combat refresh thus speeds it up tremendously. It helps to advance AI vs. AI games by constantly pressing Enter. Now they can be run to turn 100 in 15 minutes or so. I can expose this setting in thinker.ini if anyone is interested.
 
 # Version 291
 
