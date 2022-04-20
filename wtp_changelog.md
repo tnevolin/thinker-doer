@@ -1,11 +1,11 @@
 # Version 292
 
-Super update mainly targetting AI but includes some other changes as well.
+Super update mainly targeting AI but includes some other changes as well.
 
 ## Regular changes
 
 * BUG: Game crashed under certain conditions when last defender at base destroyed. Fixed.
-* BUG: Game crashed under ceratin conditions when air unit damaged in the field at the end of turn. Fixed.
+* BUG: Game crashed under certain conditions when air unit damaged in the field at the end of turn. Fixed.
 * FIX: Vanilla transports steal passengers from each other. Now transports are forbidden to share same tile.
 * Added unit: Patrol Battery - anti native artillery.
 * Added unit: Empath Battery - anti native artillery.
@@ -14,7 +14,7 @@ Super update mainly targetting AI but includes some other changes as well.
 * Pressure Dome adds 1 mineral in base square.
 * Computer player distributes unit support between bases to not overburden some of them too much.
 * All player units gets assigned to player bases. There are no more **free** units and computer player is no longer support other factions formers.
-* Artillery duelants gets **same exactly** bonuses as melee units: base defense, sensors, etc.
+* Artillery duelists gets **same exactly** bonuses as melee units: base defense, sensors, etc.
 
 ## AI specifics
 
@@ -39,8 +39,8 @@ Super update mainly targetting AI but includes some other changes as well.
 * AI tries to not travel too far with early bases except for some exceptionally lucrative location nearby.
 * AI tries to place bases closer to each other to use as much land as possible without too much cramming.
 * AI tries to weight unit usefulness against specific base threat and distribute protectors accordingly. The algorithm is still pretty crude.
-* AI tries to produce most useful counter units agaisn specific base threat. Should produce more natives against heavy regulars, scouts against natives, etc.
-* AI tries to comlete tile terraforming. Previously it was leaving too many farms without mine/solar.
+* AI tries to produce most useful counter units against specific base threat. Should produce more natives against heavy regulars, scouts against natives, etc.
+* AI tries to complete tile terraforming. Previously it was leaving too many farms without mine/solar.
 
 ## AI sea transportation
 
