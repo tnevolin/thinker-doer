@@ -1,12 +1,11 @@
 #include <algorithm>
 #include <vector>
-#include <unordered_set>
+#include <set>
 #include "aiHurry.h"
 #include "wtp.h"
 #include "game_wtp.h"
-#include "ai.h"
 
-const std::unordered_set<int> IMPORTANT_FACILITIES =
+const std::set<int> IMPORTANT_FACILITIES =
 {
 	FAC_RECYCLING_TANKS,
 	FAC_RECREATION_COMMONS,
@@ -42,8 +41,8 @@ void considerHurryingProduction(int factionId)
 
 	// sort out bases
 
-	double defenseDemandBasesWeightSum = 0.0;
-	std::vector<BASE_WEIGHT> defenseDemandBases;
+	double unprotectedBasesWeightSum = 0.0;
+	std::vector<BASE_WEIGHT> unprotectedBases;
 	double importantFacilityBasesWeightSum = 0.0;
 	std::vector<BASE_WEIGHT> importantFacilityBases;
 	double facilityBasesWeightSum = 0.0;
@@ -59,6 +58,10 @@ void considerHurryingProduction(int factionId)
 
 		if (base->faction_id != factionId)
 			continue;
+		
+		// check if base is unprotected
+		
+		bool unprotected = (getBaseGarrison(baseId).size() == 0);
 
 		// get built item
 
@@ -68,9 +71,9 @@ void considerHurryingProduction(int factionId)
 
 		int mineralSurplus = base->mineral_surplus;
 		
-		// do not rush unit production in bases with low mineral surplus
+		// do not rush unit production in bases with low mineral surplus unless unprotected
 		
-		if (item >= 0 && mineralSurplus < conf.ai_production_unit_min_mineral_surplus)
+		if (!unprotected && item >= 0 && mineralSurplus < conf.ai_production_unit_min_mineral_surplus)
 			continue;
 
 		// calculate weight
@@ -79,26 +82,21 @@ void considerHurryingProduction(int factionId)
 
 		// sort bases
 
-		if (item >= 0)
+		if (unprotected && item >= 0 && isCombatUnit(item))
 		{
-			// hurry unit only with positive production
-
-			if (mineralSurplus >= 1)
+			unprotectedBases.push_back({baseId, weight});
+			unprotectedBasesWeightSum += weight;
+		}
+		else if (item >= 0)
+		{
+			// rush unit production in bases with enough mineral surplus
+			
+			if (mineralSurplus >= conf.ai_production_unit_min_mineral_surplus)
 			{
 				unitBases.push_back({baseId, weight});
 				unitBasesWeightSum += weight;
-				
-				// special case combat unit in defenseDemand base
-				
-				if (isCombatUnit(item) && activeFactionInfo.baseStrategies[baseId].defenseDemand > 0.0)
-				{
-					weight = activeFactionInfo.baseStrategies[baseId].defenseDemand;
-					defenseDemandBases.push_back({baseId, weight});
-					defenseDemandBasesWeightSum += weight;
-				}
-					
 			}
-
+			
 		}
 		else if (item >= -PROJECT_ID_LAST && item <= -PROJECT_ID_FIRST)
 		{
@@ -124,23 +122,16 @@ void considerHurryingProduction(int factionId)
 
 	// hurry production by priority
 
-	if (defenseDemandBases.size() >= 1)
+	if (unprotectedBases.size() >= 1 && unprotectedBasesWeightSum > 0.0)
 	{
-		for
-		(
-			std::vector<BASE_WEIGHT>::iterator defenseDemandBasesIterator = defenseDemandBases.begin();
-			defenseDemandBasesIterator != defenseDemandBases.end();
-			defenseDemandBasesIterator++
-		)
+		for (BASE_WEIGHT &baseWeight : unprotectedBases)
 		{
-			BASE_WEIGHT *baseWeight = &(*defenseDemandBasesIterator);
-
-			int allowance = (int)(floor((double)spendPool * baseWeight->weight / defenseDemandBasesWeightSum));
-			hurryProductionPartially(baseWeight->baseId, allowance);
+			int allowance = (int)(floor((double)spendPool * baseWeight.weight / unprotectedBasesWeightSum));
+			hurryProductionPartially(baseWeight.baseId, allowance);
 		}
 
 	}
-	else if (importantFacilityBases.size() >= 1)
+	else if (importantFacilityBases.size() >= 1 && importantFacilityBasesWeightSum > 0.0)
 	{
 		for
 		(
@@ -156,7 +147,7 @@ void considerHurryingProduction(int factionId)
 		}
 
 	}
-	else if (facilityBases.size() >= 1)
+	else if (facilityBases.size() >= 1 && facilityBasesWeightSum > 0.0)
 	{
 		for
 		(
@@ -172,7 +163,7 @@ void considerHurryingProduction(int factionId)
 		}
 
 	}
-	else if (unitBases.size() >= 1)
+	else if (unitBases.size() >= 1 && unitBasesWeightSum > 0.0)
 	{
 		for
 		(
@@ -197,11 +188,18 @@ Works only when flat hurry cost is enabled.
 */
 void hurryProductionPartially(int baseId, int allowance)
 {
+	assert(baseId >= 0 && baseId < *total_num_bases);
+	
 	BASE *base = &(Bases[baseId]);
 
 	// apply only when flat hurry cost is enabled
 
 	if (!conf.flat_hurry_cost)
+		return;
+	
+	// verify allowance is positive
+	
+	if (allowance <= 0)
 		return;
 
 	// get remaining minerals

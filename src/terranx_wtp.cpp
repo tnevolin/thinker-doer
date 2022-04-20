@@ -5,7 +5,13 @@
 const int NO_SYNC = 1;
 const char* scriptTxtID = "SCRIPT";
 
+// Path
+
+CPath* PATH = (CPath*)0x945B00;
+FPath_find PATH_find = (FPath_find)0x59A530;
+
 // battle computation display variables
+
 int *tx_battle_compute_attacker_effect_count = (int *)0x915614;
 int *tx_battle_compute_defender_effect_count = (int *)0x915618;
 char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F554;
@@ -38,6 +44,63 @@ int *current_base_growth_rate = (int *)0x0090E918;
 int *g_PROBE_FACT_TARGET = (int *)0x00945B34;
 int *g_UNK_ATTACK_FLAGS = (int *)0x0093E904;
 byte *g_SOCIALWIN = (byte *)0x008A6270;
+int *current_attacker = (int *)0x00689F28;
+int *current_defender = (int *)0x00689F2C;
+
+// yield rules
+
+int *TERRA_OCEAN_SQ_NUTRIENT = (int *)0x00945F50;
+int *TERRA_OCEAN_SQ_MINERALS = (int *)0x00945F54;
+int *TERRA_OCEAN_SQ_ENERGY = (int *)0x00945F58;
+int *TERRA_OCEAN_SQ_PSI = (int *)0x00945F5C;
+int *TERRA_BASE_SQ_NUTRIENT = (int *)0x00945F60;
+int *TERRA_BASE_SQ_MINERALS = (int *)0x00945F64;
+int *TERRA_BASE_SQ_ENERGY = (int *)0x00945F68;
+int *TERRA_BASE_SQ_PSI = (int *)0x00945F6C;
+int *TERRA_BONUS_SQ_NUTRIENT = (int *)0x00945F70;
+int *TERRA_BONUS_SQ_MINERALS = (int *)0x00945F74;
+int *TERRA_BONUS_SQ_ENERGY = (int *)0x00945F78;
+int *TERRA_BONUS_SQ_PSI = (int *)0x00945F7C;
+int *TERRA_FOREST_SQ_NUTRIENT = (int *)0x00945F80;
+int *TERRA_FOREST_SQ_MINERALS = (int *)0x00945F84;
+int *TERRA_FOREST_SQ_ENERGY = (int *)0x00945F88;
+int *TERRA_FOREST_SQ_PSI = (int *)0x00945F8C;
+int *TERRA_RECYCLING_TANKS_NUTRIENT = (int *)0x00945F90;
+int *TERRA_RECYCLING_TANKS_MINERALS = (int *)0x00945F94;
+int *TERRA_RECYCLING_TANKS_ENERGY = (int *)0x00945F98;
+int *TERRA_RECYCLING_TANKS_PSI = (int *)0x00945F9C;
+int *TERRA_IMPROVED_LAND_NUTRIENT = (int *)0x00945FA0;
+int *TERRA_IMPROVED_LAND_MINERALS = (int *)0x00945FA4;
+int *TERRA_IMPROVED_SEA_NUTRIENT = (int *)0x00945FB0;
+int *TERRA_IMPROVED_SEA_MINERALS = (int *)0x00945FB4;
+int *TERRA_IMPROVED_SEA_ENERGY = (int *)0x00945FB8;
+int *TERRA_IMPROVED_SEA_PSI = (int *)0x00945FBC;
+int *TERRA_MONOLITH_NUTRIENT = (int *)0x00945FC0;
+int *TERRA_MONOLITH_MINERALS = (int *)0x00945FC4;
+int *TERRA_MONOLITH_ENERGY = (int *)0x00945FC8;
+int *TERRA_MONOLITH_PSI = (int *)0x00945FCC;
+int *TERRA_BOREHOLE_SQ_NUTRIENT = (int *)0x00945FD0;
+int *TERRA_BOREHOLE_SQ_MINERALS = (int *)0x00945FD4;
+int *TERRA_BOREHOLE_SQ_ENERGY = (int *)0x00945FD8;
+int *TERRA_BOREHOLE_SQ_PSI = (int *)0x00945FDC;
+
+// current base psych breakdown
+
+int *CURRENT_BASE_DRONES_UNMODIFIED = (int *)0x0090E920;
+int *CURRENT_BASE_DRONES_PSYCH = (int *)0x0090E924;
+int *CURRENT_BASE_DRONES_FACILITIES = (int *)0x0090E928;
+int *CURRENT_BASE_DRONES_POLICE = (int *)0x0090E92C;
+int *CURRENT_BASE_DRONES_PROJECTS = (int *)0x0090E930;
+int *CURRENT_BASE_SDRONES_UNMODIFIED = (int *)0x0090E94C;
+int *CURRENT_BASE_SDRONES_PSYCH = (int *)0x0090E950;
+int *CURRENT_BASE_SDRONES_FACILITIES = (int *)0x0090E954;
+int *CURRENT_BASE_SDRONES_POLICE = (int *)0x0090E958;
+int *CURRENT_BASE_SDRONES_PROJECTS = (int *)0x0090E95C;
+int *CURRENT_BASE_TALENTS_UNMODIFIED = (int *)0x0090E984;
+int *CURRENT_BASE_TALENTS_PSYCH = (int *)0x0090E988;
+int *CURRENT_BASE_TALENTS_FACILITIES = (int *)0x0090E98C;
+int *CURRENT_BASE_TALENTS_POLICE = (int *)0x0090E990;
+int *CURRENT_BASE_TALENTS_PROJECTS = (int *)0x0090E994;
 
 fp_void_charp_int *say_orders = (fp_void_charp_int *)0x4B43E0;
 fp_1void *say_orders2 = (fp_1void *)0x004B4970;
@@ -243,4 +306,7 @@ fp_0void *base_minerals = (fp_0void *)0x004E9CB0;
 
 // base yield
 fp_0void *base_yield = (fp_0void *)0x004E80B0;
+
+// draw a fireball
+fp_3void *boom = (fp_3void *)0x00504AA0;
 

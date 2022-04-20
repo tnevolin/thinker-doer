@@ -89,10 +89,14 @@
 		</ExtraCommands>
 		<Unit filename="src/ai.cpp" />
 		<Unit filename="src/ai.h" />
+		<Unit filename="src/aiData.cpp" />
+		<Unit filename="src/aiData.h" />
 		<Unit filename="src/aiHurry.cpp" />
 		<Unit filename="src/aiHurry.h" />
 		<Unit filename="src/aiMove.cpp" />
 		<Unit filename="src/aiMove.h" />
+		<Unit filename="src/aiMoveArtifact.cpp" />
+		<Unit filename="src/aiMoveArtifact.h" />
 		<Unit filename="src/aiMoveColony.cpp" />
 		<Unit filename="src/aiMoveColony.h" />
 		<Unit filename="src/aiMoveCombat.cpp" />
@@ -101,6 +105,8 @@
 		<Unit filename="src/aiMoveFormer.h" />
 		<Unit filename="src/aiProduction.cpp" />
 		<Unit filename="src/aiProduction.h" />
+		<Unit filename="src/aiTask.cpp" />
+		<Unit filename="src/aiTask.h" />
 		<Unit filename="src/aiTransport.cpp" />
 		<Unit filename="src/aiTransport.h" />
 		<Unit filename="src/engine.cpp" />

@@ -586,9 +586,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->disable_sensor_destroying = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("wtp", "artillery_duel_uses_weapon_and_armor"))
+    else if (MATCH("wtp", "conventional_artillery_duel_uses_weapon_and_armor"))
     {
-        cf->artillery_duel_uses_weapon_and_armor = (atoi(value) == 0 ? false : true);
+        cf->conventional_artillery_duel_uses_weapon_and_armor = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "artillery_duel_uses_bonuses"))
     {
@@ -637,6 +637,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "orbital_energy_population_limit"))
     {
         cf->orbital_energy_population_limit = std::max(0.0, atof(value));
+    }
+    else if (MATCH("wtp", "pressure_dome_minerals"))
+    {
+        cf->pressure_dome_minerals = std::max(0, atoi(value));
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {
@@ -706,6 +710,14 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_native_protection_priority = atof(value);
     }
+    else if (MATCH("wtp", "ai_production_pod_per_scout"))
+    {
+        cf->ai_production_pod_per_scout = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_pod_popping_priority"))
+    {
+        cf->ai_production_pod_popping_priority = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_max_unpopulated_range"))
     {
         cf->ai_production_max_unpopulated_range = atoi(value);
@@ -730,9 +742,13 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_combat_unit_turns_limit = atoi(value);
     }
-    else if (MATCH("wtp", "ai_production_facility_priority_penalty"))
+    else if (MATCH("wtp", "ai_production_multiplying_facility_priority"))
     {
-        cf->ai_production_facility_priority_penalty = atof(value);
+        cf->ai_production_multiplying_facility_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_faction_development_rate"))
+    {
+        cf->ai_production_faction_development_rate = std::max(0.0, atof(value));
     }
     else if (MATCH("wtp", "ai_production_unit_min_mineral_surplus"))
     {
@@ -774,9 +790,13 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_aerospace_complex_priority = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_facility_priority_time"))
+    else if (MATCH("wtp", "ai_production_inflation"))
     {
-        cf->ai_production_facility_priority_time = atof(value);
+        cf->ai_production_inflation = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_income_interest_rate"))
+    {
+        cf->ai_production_income_interest_rate = atof(value);
     }
     else if (MATCH("wtp", "ai_production_alien_threat_per_tile"))
     {
@@ -806,9 +826,77 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_eco_damage_priority = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_factions_enabled"))
+    else if (MATCH("wtp", "ai_production_transport_priority"))
     {
-        cf->ai_terraforming_factions_enabled = atoi(value);
+        cf->ai_production_transport_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_weight_deep"))
+    {
+        cf->ai_expansion_weight_deep = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_regular_weight_nutirent"))
+    {
+        cf->ai_expansion_regular_weight_nutirent = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_regular_weight_mineral"))
+    {
+        cf->ai_expansion_regular_weight_mineral = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_regular_weight_energy"))
+    {
+        cf->ai_expansion_regular_weight_energy = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_bonus_extra_weight_nutirent"))
+    {
+        cf->ai_expansion_bonus_extra_weight_nutirent = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_bonus_extra_weight_mineral"))
+    {
+        cf->ai_expansion_bonus_extra_weight_mineral = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_bonus_extra_weight_energy"))
+    {
+        cf->ai_expansion_bonus_extra_weight_energy = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_time_penalty_base_threshold"))
+    {
+        cf->ai_expansion_time_penalty_base_threshold = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_time_penalty_early"))
+    {
+        cf->ai_expansion_time_penalty_early = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_time_penalty"))
+    {
+        cf->ai_expansion_time_penalty = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_coastal_base"))
+    {
+        cf->ai_expansion_coastal_base = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_inland_base"))
+    {
+        cf->ai_expansion_inland_base = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_time_penalty"))
+    {
+        cf->ai_expansion_time_penalty = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_coastal_base"))
+    {
+        cf->ai_expansion_coastal_base = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_inland_base"))
+    {
+        cf->ai_expansion_inland_base = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_placement"))
+    {
+        cf->ai_expansion_placement = atof(value);
+    }
+    else if (MATCH("wtp", "wtp_factions_enabled"))
+    {
+        cf->wtp_factions_enabled = atoi(value);
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
@@ -821,6 +909,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_terraforming_energyWeight"))
     {
         cf->ai_terraforming_energyWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_terraforming_completion_bonus"))
+    {
+        cf->ai_terraforming_completion_bonus = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_rank_multiplier"))
     {
@@ -866,9 +958,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_rankMultiplier = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_exclusivityMultiplier"))
+    else if (MATCH("wtp", "ai_terraforming_fitnessMultiplier"))
     {
-        cf->ai_terraforming_exclusivityMultiplier = atof(value);
+        cf->ai_terraforming_fitnessMultiplier = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_baseNutrientThresholdRatio"))
     {

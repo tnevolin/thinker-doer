@@ -593,7 +593,7 @@ Missile,    Missile-, Miss., M
 ; Reac    = Reactor level 1–4
 ;
 #UNITS
-35
+37
 Colony Pod,             Infantry, Colony Pod,   Scout,      8, 0, 0, None,    -1, 00000000000000000000000000
 Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
@@ -629,6 +629,8 @@ Empath Rover,           Speeder,  Gun,          Scout,      0, 0, 0, CentEmp, -1
 Empath Foil,            Foil,     Gun,          Scout,      0, 0, 0, CentEmp, -1, 00000000000000100000000000
 Trance Formers,         Infantry, Formers,      Scout,      9, 0, 0, Brain,   -1, 00000001000000000000000000
 Trance Sea Formers,     Foil,     Formers,      Scout,      9, 0, 0, Brain,   -1, 00000001000000000000000000
+Patrol Battery,         Infantry, Gun,          Scout,      3, 0, 0, Chemist, -1, 00000000001000000000000000
+Empath Battery,         Infantry, Gun,          Scout,      3, 0, 0, Neural,  -1, 00000000001000100000000000
 
 ;
 ; Base Facilities

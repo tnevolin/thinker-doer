@@ -1,11 +1,17 @@
 #pragma once
 
 #include "terranx.h"
+#include "path.h"
 
 // global constants
 
 extern const int NO_SYNC;
 extern const char* scriptTxtID;
+
+// Path
+
+extern CPath* PATH;
+extern FPath_find PATH_find;
 
 // battle computation display variables
 
@@ -38,6 +44,61 @@ extern int *current_base_growth_rate;
 extern int *g_PROBE_FACT_TARGET;
 extern int *g_UNK_ATTACK_FLAGS;
 extern byte *g_SOCIALWIN;
+extern int *current_attacker;
+extern int *current_defender;
+
+// yield rules
+
+extern int *TERRA_OCEAN_SQ_NUTRIENT;
+extern int *TERRA_OCEAN_SQ_MINERALS;
+extern int *TERRA_OCEAN_SQ_ENERGY;
+extern int *TERRA_OCEAN_SQ_PSI;
+extern int *TERRA_BASE_SQ_NUTRIENT;
+extern int *TERRA_BASE_SQ_MINERALS;
+extern int *TERRA_BASE_SQ_ENERGY;
+extern int *TERRA_BASE_SQ_PSI;
+extern int *TERRA_BONUS_SQ_NUTRIENT;
+extern int *TERRA_BONUS_SQ_MINERALS;
+extern int *TERRA_BONUS_SQ_ENERGY;
+extern int *TERRA_BONUS_SQ_PSI;
+extern int *TERRA_FOREST_SQ_NUTRIENT;
+extern int *TERRA_FOREST_SQ_MINERALS;
+extern int *TERRA_FOREST_SQ_ENERGY;
+extern int *TERRA_FOREST_SQ_PSI;
+extern int *TERRA_RECYCLING_TANKS_NUTRIENT;
+extern int *TERRA_RECYCLING_TANKS_MINERALS;
+extern int *TERRA_RECYCLING_TANKS_ENERGY;
+extern int *TERRA_RECYCLING_TANKS_PSI;
+extern int *TERRA_IMPROVED_LAND_NUTRIENT;
+extern int *TERRA_IMPROVED_LAND_MINERALS;
+extern int *TERRA_IMPROVED_SEA_NUTRIENT;
+extern int *TERRA_IMPROVED_SEA_MINERALS;
+extern int *TERRA_IMPROVED_SEA_ENERGY;
+extern int *TERRA_IMPROVED_SEA_PSI;
+extern int *TERRA_MONOLITH_NUTRIENT;
+extern int *TERRA_MONOLITH_MINERALS;
+extern int *TERRA_MONOLITH_ENERGY;
+extern int *TERRA_MONOLITH_PSI;
+extern int *TERRA_BOREHOLE_SQ_NUTRIENT;
+extern int *TERRA_BOREHOLE_SQ_MINERALS;
+extern int *TERRA_BOREHOLE_SQ_ENERGY;
+extern int *TERRA_BOREHOLE_SQ_PSI;
+
+extern int *CURRENT_BASE_DRONES_UNMODIFIED;
+extern int *CURRENT_BASE_DRONES_PSYCH;
+extern int *CURRENT_BASE_DRONES_FACILITIES;
+extern int *CURRENT_BASE_DRONES_POLICE;
+extern int *CURRENT_BASE_DRONES_PROJECTS;
+extern int *CURRENT_BASE_SDRONES_UNMODIFIED;
+extern int *CURRENT_BASE_SDRONES_PSYCH;
+extern int *CURRENT_BASE_SDRONES_FACILITIES;
+extern int *CURRENT_BASE_SDRONES_POLICE;
+extern int *CURRENT_BASE_SDRONES_PROJECTS;
+extern int *CURRENT_BASE_TALENTS_UNMODIFIED;
+extern int *CURRENT_BASE_TALENTS_PSYCH;
+extern int *CURRENT_BASE_TALENTS_FACILITIES;
+extern int *CURRENT_BASE_TALENTS_POLICE;
+extern int *CURRENT_BASE_TALENTS_PROJECTS;
 
 extern fp_void_charp_int *say_orders;
 extern fp_1void *say_orders2;
@@ -110,4 +171,5 @@ extern fp_1int* base_upkeep;
 extern fp_0int* base_ecology;
 extern fp_0void *base_minerals;
 extern fp_0void *base_yield;
+extern fp_3void *boom;
 

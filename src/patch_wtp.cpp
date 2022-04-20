@@ -4636,7 +4636,158 @@ void patch_limit_orbit_intake()
    	write_call(0x004F7A1B, (int)modified_base_yield);
    	write_call(0x004F7A8F, (int)modified_base_yield);
    	write_call(0x004F7BA9, (int)modified_base_yield);
+   	
+}
 	
+void patch_ai_transport_change()
+{
+   	write_call(0x004CB3BA, (int)modified_order_veh);
+    
+}
+
+/*
+Game sometimes crashes when last base defender is killed.
+*/
+void patch_base_attack()
+{
+    int base_attack_bytes_length = 0x26;
+    
+    /*
+	0:  8d 14 7f                lea    edx,[edi+edi*2]
+	3:  8d 04 97                lea    eax,[edi+edx*4]
+	6:  0f bf 04 85 32 28 95    movsx  eax,WORD PTR [eax*4+0x952832]
+	d:  00
+	e:  8d 0c 40                lea    ecx,[eax+eax*2]
+	11: 8d 14 88                lea    edx,[eax+ecx*4]
+	14: 33 c0                   xor    eax,eax
+	16: 8a 04 95 8d b8 9a 00    mov    al,BYTE PTR [edx*4+0x9ab88d]
+	1d: c1 e0 04                shl    eax,0x4
+	20: 8a 88 68 ae 94 00       mov    cl,BYTE PTR [eax+0x94ae68]
+	*/
+    byte base_attack_bytes_old[] =
+		{ 0x8D, 0x14, 0x7F, 0x8D, 0x04, 0x97, 0x0F, 0xBF, 0x04, 0x85, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x0C, 0x40, 0x8D, 0x14, 0x88, 0x33, 0xC0, 0x8A, 0x04, 0x95, 0x8D, 0xB8, 0x9A, 0x00, 0xC1, 0xE0, 0x04, 0x8A, 0x88, 0x68, 0xAE, 0x94, 0x00 }
+    ;
+    
+    /*
+    ...
+	24: b1 01                   mov    cl,0x1
+	*/
+    byte base_attack_bytes_new[] =
+        { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xB1, 0x01 }
+    ;
+
+    write_bytes
+    (
+        0x0050AD1A,
+        base_attack_bytes_old,
+        base_attack_bytes_new,
+        base_attack_bytes_length
+    )
+    ;
+    
+}
+
+/*
+Game sometimes crashes when drawing fireball over vehicle out of range.
+*/
+void patch_vehicle_boom()
+{
+   	write_call(0x005990C3, (int)modified_vehicle_range_boom);
+    
+}
+
+void patch_disable_vehicle_reassignment()
+{
+    int disable_vehicle_reassignment_bytes_length = 0x7;
+    
+    /*
+	0:  66 8b 9b 56 28 95 00    mov    bx,WORD PTR [ebx+0x952856]
+	*/
+    byte disable_vehicle_reassignment_bytes_old[] =
+		{ 0x66, 0x8B, 0x9B, 0x56, 0x28, 0x95, 0x00 }
+    ;
+    
+    /*
+	0:  66 bb ff ff             mov    bx,0xffff
+    ...
+	*/
+    byte disable_vehicle_reassignment_bytes_new[] =
+        { 0x66, 0xBB, 0xFF, 0xFF, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00561FA5,
+        disable_vehicle_reassignment_bytes_old,
+        disable_vehicle_reassignment_bytes_new,
+        disable_vehicle_reassignment_bytes_length
+    )
+    ;
+    
+}
+
+/*
+Disables boom time delay.
+*/
+void patch_disable_boom_delay()
+{
+    int disable_boom_delay_bytes_length = 0x2;
+    
+    /*
+	0:  3b d7                   cmp    edx,edi
+	*/
+    byte disable_boom_delay_bytes_old[] =
+		{ 0x3B, 0xD7 }
+    ;
+    
+    /*
+	0:  39 d2                   cmp    edx,edx
+	*/
+    byte disable_boom_delay_bytes_new[] =
+        { 0x39, 0xD2 }
+    ;
+
+    write_bytes
+    (
+        0x00505B1B,
+        disable_boom_delay_bytes_old,
+        disable_boom_delay_bytes_new,
+        disable_boom_delay_bytes_length
+    )
+    ;
+    
+}
+
+/*
+Disables boom time delay.
+*/
+void patch_disable_battle_refresh()
+{
+    int disable_battle_refresh_bytes_length = 0x7;
+    
+    /*
+	0:  c7 45 94 03 00 00 00    mov    DWORD PTR [ebp-0x6c],0x3
+	*/
+    byte disable_battle_refresh_bytes_old[] =
+		{ 0xC7, 0x45, 0x94, 0x03, 0x00, 0x00, 0x00 }
+    ;
+    
+    /*
+	0:  c7 45 94 00 00 00 00    mov    DWORD PTR [ebp-0x6c],0x0
+	*/
+    byte disable_battle_refresh_bytes_new[] =
+        { 0xC7, 0x45, 0x94, 0x00, 0x00, 0x00, 0x00 }
+    ;
+
+    write_bytes
+    (
+        0x00508FDC,
+        disable_battle_refresh_bytes_old,
+        disable_battle_refresh_bytes_new,
+        disable_battle_refresh_bytes_length
+    )
+    ;
+    
 }
 
 // =======================================================
@@ -5243,5 +5394,16 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_limit_orbit_intake();
 	
+	patch_ai_transport_change();
+	
+	patch_base_attack();
+	
+	patch_vehicle_boom();
+	
+	patch_disable_vehicle_reassignment();
+
+//	patch_disable_boom_delay();
+//	patch_disable_battle_refresh();
+
 }
 

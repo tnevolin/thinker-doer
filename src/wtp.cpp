@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
+#include <map>
 #include "main.h"
 #include "terranx_wtp.h"
 #include "wtp.h"
@@ -120,11 +121,11 @@ HOOK_API void mod_battle_compute(int attackerVehicleId, int defenderVehicleId, i
 		// artillery duel
 		(flags & 0x2) != 0
 		&&
-		// fix is enabled
-		conf.artillery_duel_uses_weapon_and_armor
-		&&
 		// conventional combat
 		!psiCombat
+		&&
+		// fix is enabled
+		conf.conventional_artillery_duel_uses_weapon_and_armor
 	)
 	{
 		// artillery duelants use weapon + armor value
@@ -1555,7 +1556,7 @@ HOOK_API int roll_artillery_damage(int attacker_strength, int defender_strength,
 
     debug
     (
-        "artillery_damage=%d)\n",
+        "artillery_damage=%d\n",
         artillery_damage
     )
     ;
@@ -1645,8 +1646,6 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 
     }
 
-    fflush(debug_log);
-
     return returnValue;
 
 }
@@ -1654,11 +1653,11 @@ HOOK_API int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, 
 /*
 hex cost
 */
-HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int a7)
+HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int speed1)
 {
     // execute original code
 
-    int value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, a7);
+    int value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, speed1);
 
     // correct road/tube movement rate
 
@@ -1707,7 +1706,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 					square_from->owner != -1 && square_from->owner != faction_id
 					&&
 					(
-						(conf.right_of_passage_agreement == 1 && at_war(faction_id, square_from->owner))
+						(conf.right_of_passage_agreement == 1 && isWar(faction_id, square_from->owner))
 						||
 						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_from->owner))
 					)
@@ -1717,7 +1716,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 					square_to->owner != -1 && square_to->owner != faction_id
 					&&
 					(
-						(conf.right_of_passage_agreement == 1 && at_war(faction_id, square_to->owner))
+						(conf.right_of_passage_agreement == 1 && isWar(faction_id, square_to->owner))
 						||
 						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_to->owner))
 					)
@@ -1740,7 +1739,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 					
 					// recalculate value without road/tube
 					
-					value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, a7);
+					value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, speed1);
 					
 					// restore road/tube to the map
 					
@@ -1785,7 +1784,7 @@ Calculates tech cost.
 cost grow accelerated from the beginning then linear.
 a1 = 20                                     // constant (first tech cost)
 b1 =-20										// linear coefficient
-c1 = 40										// quadratic coefficient
+c1 = 60										// quadratic coefficient
 b2 = 600 * <map size>						// linear slope
 x0 = (b2 - b1) / (2 * c1)                   // break point
 a2 = a1 + b1 * x0 + c1 * x0 ^ 2 - b2 * x0   // linear intercept
@@ -1793,7 +1792,7 @@ x  = (<level> - 1)
 
 correction = (number of tech discovered by anybody / total tech count) / (turn / 350)
 
-cost = [S + (x < x0 ? C * x ^ 3 : A + B * x)] * scale * correction
+cost = (x < x0 ? a1 + b1 * x + c1 * x^2 : a2 + b2 * x) * scale * correction
 
 */
 int wtp_tech_cost(int fac, int tech)
@@ -1809,7 +1808,7 @@ int wtp_tech_cost(int fac, int tech)
 
     double a1 = 20.0;
     double b1 =-20.0;
-    double c1 = 40.0;
+    double c1 = 60.0;
     double b2 = 600.0 * ((double)*map_area_tiles / 3200.0);
     double x0 = (b2 - b1) / (2 * c1);
     double a2 = a1 + b1 * x0 + c1 * x0 * x0 - b2 * x0;
@@ -2528,7 +2527,7 @@ HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y)
 				{
 					// transport disables ZoC rule
 
-					if (isVehicleTransport(vehicle))
+					if (isTransportVehicle(vehicle))
 					{
 						disableZOCRule = true;
 						break;
@@ -2644,7 +2643,7 @@ HOOK_API int calculateNotPrototypedComponentsCostForProduction(int unitId)
 	bool weaponPrototyped = false;
 	bool armorPrototyped = false;
 
-	for (int factionPrototypedUnitId : getFactionPrototypes(factionId, false))
+	for (int factionPrototypedUnitId : getFactionUnitIds(factionId, false))
 	{
 		UNIT *factionPrototypedUnit = &(Units[factionPrototypedUnitId]);
 
@@ -2665,8 +2664,8 @@ HOOK_API int calculateNotPrototypedComponentsCostForProduction(int unitId)
 
 	}
 
-	debug("chassisPrototyped=%d, weaponPrototyped=%d, armorPrototyped=%d\n", chassisPrototyped, weaponPrototyped, armorPrototyped);
-
+//	debug("chassisPrototyped=%d, weaponPrototyped=%d, armorPrototyped=%d\n", chassisPrototyped, weaponPrototyped, armorPrototyped);
+//
 	// calculate not prototyped components cost
 
 	return calculateNotPrototypedComponentsCost(unit->chassis_type, unit->weapon_type, unit->armor_type, chassisPrototyped, weaponPrototyped, armorPrototyped);
@@ -3170,7 +3169,7 @@ HOOK_API int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, 
 
 		double bestDefenderEffectiveness = 0.0;
 
-		for (int stackedVehicleId : getStackedVehicleIds(defenderVehicleId))
+		for (int stackedVehicleId : getStackVehicles(defenderVehicleId))
 		{
 			VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
 			UNIT *stackedVehicleUnit = &(Units[stackedVehicle->unit_id]);
@@ -3281,17 +3280,22 @@ Request for break treaty before combat actions.
 */
 HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2)
 {
-	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
+	debug("modifiedBattleFight2(attackerVehicleId=%d, angle=%d, tx=%d, ty=%d, do_arty=%d, flag1=%d, flag2=%d)\n", attackerVehicleId, angle, tx, ty, do_arty, flag1, flag2);
+	debug("\t*total_num_vehicles=%d\n", *total_num_vehicles);
 
+	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
+	debug("\tattackerVehicle=%d\n", (int)attackerVehicle);
+	
 	if (attackerVehicle->faction_id == *current_player_faction)
 	{
+		debug("\tattackerVehicle->faction_id == *current_player_faction\n");
 		int defenderVehicleId = veh_at(tx, ty);
 		
 		if (defenderVehicleId >= 0)
 		{
 			bool nonArtifactUnitExists = false;
 			
-			std::vector<int> stackedVehicleIds = getStackedVehicleIds(defenderVehicleId);
+			std::vector<int> stackedVehicleIds = getStackVehicles(defenderVehicleId);
 			
 			for (int vehicleId : stackedVehicleIds)
 			{
@@ -3320,7 +3324,7 @@ HOOK_API void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int
 		}
 
 	}
-
+	
 	// execute original code
 
 	tx_battle_fight_2(attackerVehicleId, angle, tx, ty, do_arty, flag1, flag2);
@@ -3593,7 +3597,7 @@ HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 	(
 		vehicle->triad() == TRIAD_AIR
 		&&
-		isVehicleTransport(vehicle)
+		isTransportVehicle(vehicle)
 		&&
 		!
 		(
@@ -3609,7 +3613,7 @@ HOOK_API int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 }
 
 /*
-Overrides faction_upkeep calls to amend vanilla and Thinker functionality.
+Overrides faction_upkeep calls to amend vanilla and Thinker AI functionality.
 */
 HOOK_API int modifiedFactionUpkeep(const int factionId)
 {
@@ -3851,6 +3855,64 @@ double calculateWinningProbability(double p, int attackerHP, int defenderHP)
 	
 	return attackerWinningProbability;
 
+}
+
+/*
+Calculates battle winning probability.
+*/
+double calculateExactBattleOdds(int attackerVehicleId, int defenderVehicleId, int attackerMovementAllowance)
+{
+	// use default vanilla formula if reactor power is not ignored
+	
+	if (!conf.ignore_reactor_power_in_combat)
+		return getBattleOdds(attackerVehicleId, defenderVehicleId);
+	
+	// get attacker and defender vehicles
+	
+	VEH *attackerVehicle = &(Vehicles[currentAttackerVehicleId]);
+	VEH *defenderVehicle = &(Vehicles[currentDefenderVehicleId]);
+	
+	// get attacker and defender units
+	
+	UNIT *attackerUnit = &(Units[attackerVehicle->unit_id]);
+	UNIT *defenderUnit = &(Units[defenderVehicle->unit_id]);
+	
+	// calculate attacker and defender power
+	// artifact gets 1 HP regardless of reactor
+	
+	int attackerPower = (attackerUnit->unit_plan == PLAN_ALIEN_ARTIFACT ? 1 : attackerUnit->reactor_type * 10 - attackerVehicle->damage_taken);
+	int defenderPower = (defenderUnit->unit_plan == PLAN_ALIEN_ARTIFACT ? 1 : defenderUnit->reactor_type * 10 - defenderVehicle->damage_taken);
+	
+	// calculate FP
+
+	int attackerFP = defenderUnit->reactor_type;
+	int defenderFP = attackerUnit->reactor_type;
+
+	// calculate HP
+
+	int attackerHP = (attackerPower + (defenderFP - 1)) / defenderFP;
+	int defenderHP = (defenderPower + (attackerFP - 1)) / attackerFP;
+
+	// compute relative strength
+	
+	double relativeStrength = battleCompute(attackerVehicleId, defenderVehicleId);
+	
+	// adjust relative strength for haste
+	
+	relativeStrength *= (double)std::min(Rules->mov_rate_along_roads, attackerMovementAllowance) / (double)Rules->mov_rate_along_roads;
+
+	// calculate round probabilty
+	
+	double p = relativeStrength / (1 + relativeStrength);
+	
+	// calculate attacker winning probability
+	
+	double attackerWinningProbability = calculateWinningProbability(p, attackerHP, defenderHP);
+	
+	// return battle odds
+	
+	return (attackerWinningProbability == 1.0 ? 100.0 : std::min(100.0, attackerWinningProbability / (1 - attackerWinningProbability)));
+	
 }
 
 void simplifyOdds(int *attackerOdds, int *defenderOdds)
@@ -4724,7 +4786,7 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 		
 		// find accessible ocean regions
 		
-		std::unordered_set<int> adjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
+		std::set<int> adjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
 		
 		// find proper port
 		
@@ -4961,10 +5023,137 @@ void __cdecl modified_base_yield()
 }
 
 /*
+AI transport steals passenger at sea whenever they can.
+This modification makes sure they don't.
+*/
+int __cdecl modified_order_veh(int vehicleId, int angle, int a3)
+{
+	// not sea transport vehicle is not affected
+	
+	if (!isSeaTransportVehicle(vehicleId))
+		return tx_order_veh(vehicleId, angle, a3);
+	
+	// check if there is a transport at sea at given angle
+	
+	if (!isAdjacentTransportAtSea(vehicleId, angle))
+		return tx_order_veh(vehicleId, angle, a3);
+	
+	// try next angle
+	
+	int newAngle = (angle + 1) % 8;
+	
+	if (!isAdjacentTransportAtSea(vehicleId, newAngle))
+		return tx_order_veh(vehicleId, newAngle, a3);
+	
+	// try all other angles
+	
+	for (newAngle = 0; newAngle < 8; newAngle++)
+	{
+		if (!isAdjacentTransportAtSea(vehicleId, newAngle))
+			return tx_order_veh(vehicleId, newAngle, a3);
+	}
+	
+	// give up and return original angle
+	
+	return tx_order_veh(vehicleId, angle, a3);
+	
+}
+
+/*
+Verifies that given vehicle can move to this angle.
+*/
+bool isValidMovementAngle(int vehicleId, int angle)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// find target tile
+	
+	int x = wrap(vehicle->x + BASE_TILE_OFFSETS[angle + 1][0]);
+	int y = vehicle->y + BASE_TILE_OFFSETS[angle + 1][1];
+	MAP *tile = getMapTile(x, y);
+	
+	// can move into friendly base regardless of realm
+	
+	if (map_has_item(tile, TERRA_BASE_IN_TILE) && (tile->owner == vehicle->faction_id || has_pact(tile->owner, vehicle->faction_id)))
+		return true;
+	
+	// cannot move to different realm
+	
+	if (vehicle->triad() == TRIAD_LAND && is_ocean(tile))
+		return false;
+	
+	if (vehicle->triad() == TRIAD_SEA && !is_ocean(tile))
+		return false;
+	
+	// cannot move to occupied tile
+	// just for simplistic purposes - don't want to iterate all vehicles in stack
+	
+	if (veh_at(x, y) != -1)
+		return false;
+	
+	// otherwise, return true
+	
+	return true;
+	
+}
+
+/*
+Verifies that there is same faction transport from given vehicle by given angle.
+*/
+bool isAdjacentTransportAtSea(int vehicleId, int angle)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	// find target tile
+	
+	int x = wrap(vehicle->x + BASE_TILE_OFFSETS[angle + 1][0]);
+	int y = vehicle->y + BASE_TILE_OFFSETS[angle + 1][1];
+	MAP *tile = getMapTile(x, y);
+	
+	// verify there is no base
+	
+	if (map_has_item(tile, TERRA_BASE_IN_TILE))
+		return false;
+	
+	// get target tile stack
+	
+	int targetTileVehicleId = veh_at(x, y);
+	
+	// iterate target tile stack to find same faction transport
+	
+	for (int targetTileStackVehicleId : getStackVehicles(targetTileVehicleId))
+	{
+		VEH *targetTileStackVehicle = &(Vehicles[targetTileStackVehicleId]);
+		
+		// same faction
+		
+		if (targetTileStackVehicle->faction_id != vehicle->faction_id)
+			continue;
+		
+		// transport
+		
+		if (!isTransportVehicle(targetTileStackVehicleId))
+			continue;
+		
+		// found
+		
+		return true;
+		
+	}
+	
+	// not found
+	
+	return false;
+	
+}
+
+/*
 Assign vehicle home base to own base.
 */
 void fixVehicleHomeBases(int factionId)
 {
+	std::set<int> homeBaseIds;
+	
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
@@ -4986,7 +5175,7 @@ void fixVehicleHomeBases(int factionId)
 		// search own base with highest mineral surplus
 		
 		int bestHomeBaseId = -1;
-		int bestHomeBaseMineralSurplus = INT_MIN;
+		int bestHomeBaseMineralSurplus = 2;
 		
 		for (int baseId = 0; baseId < *total_num_bases; baseId++)
 		{
@@ -4995,6 +5184,11 @@ void fixVehicleHomeBases(int factionId)
 			// exclude not own base
 			
 			if (base->faction_id != factionId)
+				continue;
+			
+			// exclude already assigned to
+			
+			if (homeBaseIds.count(baseId) != 0)
 				continue;
 			
 			// get mineral surplus
@@ -5016,11 +5210,46 @@ void fixVehicleHomeBases(int factionId)
 		if (bestHomeBaseId == -1)
 			continue;
 		
-		// set home base
+		// set home base and mark assigned base
 		
 		vehicle->home_base_id = bestHomeBaseId;
+		homeBaseIds.insert(bestHomeBaseId);
 		
 	}
+	
+}
+
+void __cdecl modified_vehicle_range_boom(int x, int y, int flags)
+{
+	// get current attacking vehicle
+	
+	int currentAttacker = *current_attacker;
+	int currentDefender = *current_defender;
+	
+	// get vehicle at location
+	
+	int vehicleId = veh_at(x, y);
+	
+	// set current attacker and defender if not set
+	
+	if (currentAttacker == -1)
+	{
+		*current_attacker = vehicleId;
+	}
+	
+	if (currentDefender == -1)
+	{
+		*current_defender = vehicleId;
+	}
+	
+	// execute original code
+	
+	boom(x, y, flags);
+	
+	// restore current attacker and defender vehicle id
+	
+	*current_attacker = currentAttacker;
+	*current_defender = currentDefender;
 	
 }
 

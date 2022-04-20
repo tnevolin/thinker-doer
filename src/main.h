@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 291 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 292 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -139,7 +139,7 @@ struct Config {
     int design_units = 1;
     int factions_enabled = 7;
     int social_ai = 1;
-    int social_ai_bias = 10;
+    int social_ai_bias = 1000;
     int tech_balance = 0;
     int hurry_items = 0;
     int base_spacing = 3;
@@ -303,7 +303,7 @@ struct Config {
 	int native_unit_cost_initial_isle_of_the_deep;
 	int native_unit_cost_initial_locusts_of_chiron;
 	bool disable_sensor_destroying;
-	bool artillery_duel_uses_weapon_and_armor;
+	bool conventional_artillery_duel_uses_weapon_and_armor;
 	bool artillery_duel_uses_bonuses;
 	bool disable_vanilla_base_hurry;
 	bool science_projects_alternative_labs_bonus;
@@ -316,8 +316,10 @@ struct Config {
 	double orbital_nutrient_population_limit;
 	double orbital_mineral_population_limit;
 	double orbital_energy_population_limit;
+	int pressure_dome_minerals = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
+    int wtp_factions_enabled;
     double ai_production_vanilla_priority_unit;
     double ai_production_vanilla_priority_project;
     double ai_production_vanilla_priority_facility;
@@ -334,13 +336,16 @@ struct Config {
     double ai_production_min_native_protection;
     double ai_production_max_native_protection;
     double ai_production_native_protection_priority;
+    double ai_production_pod_per_scout;
+    double ai_production_pod_popping_priority;
     int ai_production_max_unpopulated_range;
     double ai_production_expansion_coverage;
     double ai_production_ocean_expansion_coverage;
     double ai_production_expansion_priority;
     double ai_production_expansion_priority_per_population;
     int ai_production_combat_unit_turns_limit;
-    double ai_production_facility_priority_penalty;
+    double ai_production_multiplying_facility_priority;
+    double ai_production_faction_development_rate;
     int ai_production_unit_min_mineral_surplus;
     double ai_production_exploration_coverage;
     double ai_production_improvement_coverage;
@@ -351,7 +356,8 @@ struct Config {
     double ai_production_command_center_priority;
     double ai_production_naval_yard_priority;
     double ai_production_aerospace_complex_priority;
-    double ai_production_facility_priority_time;
+    double ai_production_inflation;
+    double ai_production_income_interest_rate;
     double ai_production_alien_threat_per_tile;
     double ai_production_alien_threat_per_base;
     double ai_production_alien_hunting_outnumbering;
@@ -359,10 +365,24 @@ struct Config {
     double ai_production_psych_priority;
     double ai_production_eco_damage_threshold;
     double ai_production_eco_damage_priority;
+    double ai_production_transport_priority;
+    double ai_expansion_weight_deep;
+    double ai_expansion_regular_weight_nutirent;
+    double ai_expansion_regular_weight_mineral;
+    double ai_expansion_regular_weight_energy;
+    double ai_expansion_bonus_extra_weight_nutirent;
+    double ai_expansion_bonus_extra_weight_mineral;
+    double ai_expansion_bonus_extra_weight_energy;
+    double ai_expansion_time_penalty_base_threshold;
+    double ai_expansion_time_penalty_early;
+    double ai_expansion_time_penalty;
+    double ai_expansion_coastal_base;
+    double ai_expansion_inland_base;
+    double ai_expansion_placement;
     double ai_terraforming_nutrientWeight;
-    int ai_terraforming_factions_enabled;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
+	double ai_terraforming_completion_bonus;
 	double ai_terraforming_rank_multiplier;
 	double ai_terraforming_land_rocky_tile_threshold;
 	double ai_terraforming_travel_time_multiplier;
@@ -374,7 +394,7 @@ struct Config {
 	double ai_terraforming_networkCoverageThreshold;
 	double ai_terraforming_nearbyForestKelpPenalty;
 	double ai_terraforming_rankMultiplier;
-	double ai_terraforming_exclusivityMultiplier;
+	double ai_terraforming_fitnessMultiplier;
 	double ai_terraforming_baseNutrientThresholdRatio;
 	double ai_terraforming_baseNutrientDemandMultiplier;
 	double ai_terraforming_baseMineralThresholdRatio;
