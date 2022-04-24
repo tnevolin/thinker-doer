@@ -554,10 +554,10 @@ void nativeCombatStrategy()
 	
 	// list aliens on land territory
 	
-	std::vector<int> alienVehicleIds;
-	std::vector<int> sporeLauncherVehicleIds;
-	std::vector<int> mindWormVehicleIds;
-	std::vector<int> fungalTowerVehicleIds;
+	std::vector<IdIntValue> alienVehicleIds;
+	std::vector<IdIntValue> sporeLauncherVehicleIds;
+	std::vector<IdIntValue> mindWormVehicleIds;
+	std::vector<IdIntValue> fungalTowerVehicleIds;
 
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
@@ -584,26 +584,37 @@ void nativeCombatStrategy()
 		if (vehicleTile->owner != aiFactionId)
 			continue;
 		
+		// find range to nearest own base
+		
+		int nearestBaseRange = getNearestAIFactionBaseRange(vehicle->x, vehicle->y);
+		
 		// add vehicle
 		
 		switch (vehicle->unit_id)
 		{
 		case BSC_SPORE_LAUNCHER:
-			sporeLauncherVehicleIds.push_back(vehicleId);
+			sporeLauncherVehicleIds.push_back({vehicleId, nearestBaseRange});
 			break;
 			
 		case BSC_MIND_WORMS:
-			mindWormVehicleIds.push_back(vehicleId);
+			mindWormVehicleIds.push_back({vehicleId, nearestBaseRange});
 			break;
 			
 		case BSC_FUNGAL_TOWER:
-			fungalTowerVehicleIds.push_back(vehicleId);
+			fungalTowerVehicleIds.push_back({vehicleId, nearestBaseRange});
 			break;
 			
 		}
 		
-
 	}
+	
+	// sort sublists
+	
+	std::sort(sporeLauncherVehicleIds.begin(), sporeLauncherVehicleIds.end(), compareIdIntValueAscending);
+	std::sort(mindWormVehicleIds.begin(), mindWormVehicleIds.end(), compareIdIntValueAscending);
+	std::sort(fungalTowerVehicleIds.begin(), fungalTowerVehicleIds.end(), compareIdIntValueAscending);
+	
+	// combine sublists
 	
 	alienVehicleIds.insert(alienVehicleIds.end(), sporeLauncherVehicleIds.begin(), sporeLauncherVehicleIds.end());
 	alienVehicleIds.insert(alienVehicleIds.end(), mindWormVehicleIds.begin(), mindWormVehicleIds.end());
@@ -658,11 +669,13 @@ void nativeCombatStrategy()
 	
 	debug("\tdirect scouts %d\n", scoutVehicleIds.size());
 	
-	for (int alienVehicleId : alienVehicleIds)
+	for (IdIntValue &alienVehicleEntry : alienVehicleIds)
 	{
+		int alienVehicleId = alienVehicleEntry.id;
+		int alienVehicleNearestBaseRange = alienVehicleEntry.value;
 		VEH *alienVehicle = &(Vehicles[alienVehicleId]);
 		MAP *alienVehicleTile = getVehicleMapTile(alienVehicleId);
-		debug("\t\t[%3d] (%d,%d)\n", alienVehicleId, alienVehicle->x, alienVehicle->y);
+		debug("\t\t[%3d] (%3d,%3d) alienVehicleNearestBaseRange=%d\n", alienVehicleId, alienVehicle->x, alienVehicle->y, alienVehicleNearestBaseRange);
 		
 		double requiredDamage = 2.0 * getVehiclePsiDefense(alienVehicleId);
 		
@@ -677,7 +690,7 @@ void nativeCombatStrategy()
 				VEH *scoutVehicle = &(Vehicles[scoutVehicleId]);
 				MAP *scoutVehicleTile = getVehicleMapTile(scoutVehicleId);
 				
-				debug("\t\t\t[%3d] (%d,%d)\n", scoutVehicleId, scoutVehicle->x, scoutVehicle->y);
+				debug("\t\t\t[%3d] (%3d,%3d)\n", scoutVehicleId, scoutVehicle->x, scoutVehicle->y);
 				
 				// can reach
 				
@@ -705,7 +718,7 @@ void nativeCombatStrategy()
 				
 				double weight = damage / getUnitMaintenanceCost(scoutVehicle->unit_id) / time;
 				
-				debug("\t\t\t[%3d] (%d,%d) weight=%f, range=%d, time=%f, damage=%f\n", scoutVehicleId, scoutVehicle->x, scoutVehicle->y, weight, range, time, damage);
+				debug("\t\t\t[%3d] (%3d,%3d) weight=%f, range=%d, time=%f, damage=%f\n", scoutVehicleId, scoutVehicle->x, scoutVehicle->y, weight, range, time, damage);
 				
 				// update best weight
 				
@@ -723,17 +736,23 @@ void nativeCombatStrategy()
 			if (bestScoutVehicleId == -1)
 				break;
 			
+			VEH *bestScoutVehicle = &(Vehicles[bestScoutVehicleId]);
+			
 			// set attack order
 			
 			setTask(bestScoutVehicleId, Task(bestScoutVehicleId, MOVE, nullptr, alienVehicleId));
+			debug("\t\t<- [%3d] (%3d,%3d)\n", bestScoutVehicleId, bestScoutVehicle->x, bestScoutVehicle->y);
 			
 			// remove from list
 			
 			scoutVehicleIds.erase(bestScoutVehicleId);
 			
-			// update required damage
+			// update required damage except if land artillery
 			
-			requiredDamage -= bestScoutVehicleDamage;
+			if (!isLandArtilleryVehicle(bestScoutVehicleId))
+			{
+				requiredDamage -= bestScoutVehicleDamage;
+			}
 			
 		}
 		
@@ -1241,7 +1260,7 @@ void synchronizeAttack()
 		if (range > 3)
 			continue;
 		
-		// check wehicle at destination
+		// check vehicle at destination
 		
 		int enemyVehicleId = veh_at(getX(destination), getY(destination));
 		
@@ -1278,7 +1297,7 @@ void synchronizeAttack()
 		
 		// get vehicle power
 		
-		int vehiclePower = getVehiclePower(enemyVehicleId);
+		int vehiclePower = getVehiclePower(vehicleId);
 		
 		debug("\t\tvehiclePower=%d, attackerStackDamage=%f\n", vehiclePower, attackerStackDamage);
 		

@@ -2969,86 +2969,47 @@ double calculateSensorScore(MAP *tile, int action)
 {
 	int x = getX(tile);
 	int y = getX(tile);
-
+	
 	// ignore anything but sensors
-
+	
 	if (!(action == FORMER_SENSOR))
 		return 0.0;
-
+	
 	// don't build if already built
-
+	
 	if (map_has_item(tile, TERRA_SENSOR))
 		return 0.0;
-
-	// compute distance from border
-
-	int borderRange = 9999;
-
-	for (int otherX = 0; otherX < *map_axis_x; otherX++)
+	
+	// find borderRange
+	
+	int borderRange = *map_half_x;
+	
+	for (int range = 1; range < *map_half_x; range++)
 	{
-		for (int otherY = 0; otherY < *map_axis_y; otherY++)
+		bool foundNotOwnTile = false;
+		
+		for (MAP *rangeTile : getEqualRangeTiles(x, y, range))
 		{
-			MAP *otherTile = getMapTile(otherX, otherY);
-
-			if (otherTile == NULL)
-				continue;
-
-			// only same region
-
-			if (otherTile->region != tile->region)
-				continue;
-
-			// not own
-
-			if (otherTile->owner == aiFactionId)
-				continue;
-
-			// calculate range
-
-			int range = map_range(x, y, otherX, otherY);
-
-			// update range
-
-			borderRange = std::min(borderRange, range);
-
-		}
-
-	}
-
-	// compute distance from shore for land region
-
-	int shoreRange = 9999;
-
-	if (!isOceanRegion(tile->region))
-	{
-		for (int otherX = 0; otherX < *map_axis_x; otherX++)
-		{
-			for (int otherY = 0; otherY < *map_axis_y; otherY++)
+			// detect not own tile
+			
+			if (rangeTile->owner != aiFactionId)
 			{
-				MAP *otherTile = getMapTile(otherX, otherY);
-
-				if (otherTile == NULL)
-					continue;
-
-				// ocean only
-
-				if (!isOceanRegion(otherTile->region))
-					continue;
-
-				// calculate range
-
-				int range = map_range(x, y, otherX, otherY);
-
-				// update range
-
-				shoreRange = std::min(shoreRange, range);
-
+				borderRange = range;
+				foundNotOwnTile = true;
+				break;
 			}
-
+			
 		}
-
+		
+		if (foundNotOwnTile)
+			break;
+		
 	}
-
+	
+	// do not compute shoreRange for now - too complicated
+	
+	int shoreRange = *map_half_x;
+	
 	// calculate values
 
 	double borderRangeValue = conf.ai_terraforming_sensorBorderRange / std::max(conf.ai_terraforming_sensorBorderRange, (double)borderRange);

@@ -319,7 +319,7 @@ struct Config {
 	int pressure_dome_minerals = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
-    int wtp_factions_enabled;
+    bool wtp_enabled_factions[MaxPlayerNum];
     double ai_production_vanilla_priority_unit;
     double ai_production_vanilla_priority_project;
     double ai_production_vanilla_priority_facility;

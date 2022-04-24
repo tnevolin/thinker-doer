@@ -4211,65 +4211,6 @@ MAP *getNearestLandTerritory(int x, int y, int factionId)
 	
 }
 
-int getRangeToNearestFactionBase(int x, int y, int factionId)
-{
-	int minRange = INT_MAX;
-	
-	for (int baseId = 0; baseId < *total_num_bases; baseId++)
-	{
-		BASE *base = &(Bases[baseId]);
-		
-		// faction base
-		
-		if (base->faction_id != factionId)
-			continue;
-		
-		// calculate range
-		
-		int range = map_range(x, y, base->x, base->y);
-		
-		// update min range
-		
-		minRange = std::min(minRange, range);
-		
-	}
-	
-	return minRange;
-	
-}
-
-int getRangeToNearestFactionColony(int x, int y, int factionId)
-{
-	int minRange = INT_MAX;
-	
-	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		
-		// faction vehicle
-		
-		if (vehicle->faction_id != factionId)
-			continue;
-		
-		// colony
-		
-		if (!isColonyVehicle(vehicleId))
-			continue;
-		
-		// calculate range
-		
-		int range = map_range(x, y, vehicle->x, vehicle->y);
-		
-		// update min range
-		
-		minRange = std::min(minRange, range);
-		
-	}
-	
-	return minRange;
-	
-}
-
 /*
 Kills vehicle properly with transport check.
 */

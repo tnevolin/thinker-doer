@@ -960,7 +960,7 @@ int getBaseRadiusOverlapCount(int x, int y, int factionId)
 /*
 Searches for nearest AI faction base range capable to issue colony to build base at this tile.
 */
-int getNearestBaseRange(MAP *tile)
+int getBuildSiteNearestBaseRange(MAP *tile)
 {
 	int x = getX(tile);
 	int y = getY(tile);
@@ -1029,7 +1029,7 @@ int getNearestColonyRange(MAP *tile)
 
 int getExpansionRange(MAP *tile)
 {
-	return std::min(getNearestBaseRange(tile), getNearestColonyRange(tile));
+	return std::min(getBuildSiteNearestBaseRange(tile), getNearestColonyRange(tile));
 }
 
 /*

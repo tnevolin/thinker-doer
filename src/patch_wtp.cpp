@@ -4692,7 +4692,89 @@ Game sometimes crashes when drawing fireball over vehicle out of range.
 */
 void patch_vehicle_boom()
 {
-   	write_call(0x005990C3, (int)modified_vehicle_range_boom);
+    int boom1_bytes_length = 0x20;
+    
+    /*
+	0:  8d 04 7f                lea    eax,[edi+edi*2]
+	3:  8d 04 87                lea    eax,[edi+eax*4]
+	6:  c1 e0 02                shl    eax,0x2
+	9:  0f bf 88 32 28 95 00    movsx  ecx,WORD PTR [eax+0x952832]
+	10: 8d 14 49                lea    edx,[ecx+ecx*2]
+	13: 8d 0c 91                lea    ecx,[ecx+edx*4]
+	16: c1 e1 02                shl    ecx,0x2
+	19: 80 b9 8c b8 9a 00 08    cmp    BYTE PTR [ecx+0x9ab88c],0x8
+	*/
+    byte boom1_bytes_old[] =
+		{ 0x8D, 0x04, 0x7F, 0x8D, 0x04, 0x87, 0xC1, 0xE0, 0x02, 0x0F, 0xBF, 0x88, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x14, 0x49, 0x8D, 0x0C, 0x91, 0xC1, 0xE1, 0x02, 0x80, 0xB9, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
+    ;
+    
+    /*
+    0:  83 ff 00                cmp    edi,0x0
+	3:  7c 47                   jl     4c <continue>
+	5:  90                      nop
+	6:  31 c0                   xor    eax,eax
+	8:  b0 34                   mov    al,0x34
+	a:  f7 e7                   mul    edi
+	c:  0f bf 88 32 28 95 00    movsx  ecx,WORD PTR [eax+0x952832]
+	13: 31 c0                   xor    eax,eax
+	15: b0 34                   mov    al,0x34
+	17: f7 e1                   mul    ecx
+	19: 80 b9 8c b8 9a 00 08    cmp    BYTE PTR [ecx+0x9ab88c],0x8
+	*/
+    byte boom1_bytes_new[] =
+        { 0x83, 0xFF, 0x00, 0x7C, 0x47, 0x90, 0x31, 0xC0, 0xB0, 0x34, 0xF7, 0xE7, 0x0F, 0xBF, 0x88, 0x32, 0x28, 0x95, 0x00, 0x31, 0xC0, 0xB0, 0x34, 0xF7, 0xE1, 0x80, 0xB9, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
+    ;
+
+    write_bytes
+    (
+        0x00504C76,
+        boom1_bytes_old,
+        boom1_bytes_new,
+        boom1_bytes_length
+    )
+    ;
+    
+    int boom2_bytes_length = 0x1f;
+    
+    /*
+	0:  8b 45 e4                mov    eax,DWORD PTR [ebp-0x1c]
+	3:  8d 0c 40                lea    ecx,[eax+eax*2]
+	6:  8d 14 88                lea    edx,[eax+ecx*4]
+	9:  0f bf 04 95 32 28 95    movsx  eax,WORD PTR [edx*4+0x952832]
+	10: 00
+	11: 8d 0c 40                lea    ecx,[eax+eax*2]
+	14: 8d 14 88                lea    edx,[eax+ecx*4]
+	17: 80 3c 95 8c b8 9a 00    cmp    BYTE PTR [edx*4+0x9ab88c],0x8
+	1e: 08
+	*/
+    byte boom2_bytes_old[] =
+		{ 0x8B, 0x45, 0xE4, 0x8D, 0x0C, 0x40, 0x8D, 0x14, 0x88, 0x0F, 0xBF, 0x04, 0x95, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x0C, 0x40, 0x8D, 0x14, 0x88, 0x80, 0x3C, 0x95, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
+    ;
+    
+    /*
+    0:  8b 4d e4                mov    ecx,DWORD PTR [ebp-0x1c]
+	3:  83 f9 00                cmp    ecx,0x0
+	6:  7c 1d                   jl     25 <continue>
+	8:  90                      nop
+	9:  90                      nop
+	a:  90                      nop
+	b:  6b c9 34                imul   ecx,ecx,0x34
+	e:  0f bf 89 32 28 95 00    movsx  ecx,WORD PTR [ecx+0x952832]
+	15: 6b c9 34                imul   ecx,ecx,0x34
+	18: 80 b9 8c b8 9a 00 08    cmp    BYTE PTR [ecx+0x9ab88c],0x8
+	*/
+    byte boom2_bytes_new[] =
+        { 0x8B, 0x4D, 0xE4, 0x83, 0xF9, 0x00, 0x7C, 0x1D, 0x90, 0x90, 0x90, 0x6B, 0xC9, 0x34, 0x0F, 0xBF, 0x89, 0x32, 0x28, 0x95, 0x00, 0x6B, 0xC9, 0x34, 0x80, 0xB9, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
+    ;
+    
+    write_bytes
+    (
+        0x00505327,
+        boom2_bytes_old,
+        boom2_bytes_new,
+        boom2_bytes_length
+    )
+    ;
     
 }
 
@@ -5402,8 +5484,8 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_disable_vehicle_reassignment();
 
-//	patch_disable_boom_delay();
-//	patch_disable_battle_refresh();
+	patch_disable_boom_delay();
+	patch_disable_battle_refresh();
 
 }
 

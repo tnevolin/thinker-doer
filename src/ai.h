@@ -55,8 +55,7 @@ void obsoletePrototypes(int factionId, std::set<int> chassisIds, std::set<int> w
 
 VEH *getVehicleByAIId(int aiId);
 MAP *getClosestPod(int vehicleId);
-int getNearestFactionBaseRange(int factionId, int x, int y);
-int getNearestOtherFactionBaseRange(int factionId, int x, int y);
+int getNearestAIFactionBaseRange(int x, int y);
 int getNearestBaseId(int x, int y, std::set<int> baseIds);
 int getFactionBestOffenseValue(int factionId);
 int getFactionBestDefenseValue(int factionId);
@@ -70,7 +69,7 @@ int getNearestEnemyBaseDistance(int baseId);
 double getConventionalCombatBonusMultiplier(int attackerUnitId, int defenderUnitId);
 std::string getAbilitiesString(int unitType);
 bool isWithinAlienArtilleryRange(int vehicleId);
-bool isUseWtpAlgorithms(int factionId);
+bool isWtpEnabledFaction(int factionId);
 int getCoastalBaseOceanAssociation(MAP *tile, int factionId);
 bool isOceanBaseTile(MAP *tile, int factionId);
 int getAssociation(MAP *tile, int factionId);
@@ -98,6 +97,8 @@ int getPathTravelTime(int sourceX, int sourceY, int destinationX, int destinatio
 int getVehiclePathTravelTime(int vehicleId, int x, int y);
 std::vector<VehicleLocation> matchVehiclesToUnrankedLocations(std::vector<int> vehicleIds, std::vector<MAP *> locations);
 std::vector<VehicleLocation> matchVehiclesToRankedLocations(std::vector<int> vehicleIds, std::vector<MAP *> locations);
+bool compareIdIntValueAscending(const IdIntValue &a, const IdIntValue &b);
+bool compareIdIntValueDescending(const IdIntValue &a, const IdIntValue &b);
 bool compareIdDoubleValueAscending(const IdDoubleValue &a, const IdDoubleValue &b);
 bool compareIdDoubleValueDescending(const IdDoubleValue &a, const IdDoubleValue &b);
 bool canUnitAttack(int attackerUnitId, int defenderUnitId);

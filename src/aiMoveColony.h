@@ -38,7 +38,7 @@ const int PLACEMENT_QUALITY[PLACEMENT_MAX_RANGE + 1][PLACEMENT_MAX_RANGE + 1] =
 			+4,	// 2, 4
 			+0,	// 2, 5
 			-3,	// 2, 6
-			-1,	// 2, 7
+			+0,	// 2, 7
 			+0,	// 2, 8
 		},
 		{
@@ -48,8 +48,8 @@ const int PLACEMENT_QUALITY[PLACEMENT_MAX_RANGE + 1][PLACEMENT_MAX_RANGE + 1] =
 			+4,	// 3, 3
 			+2,	// 3, 4
 			-2,	// 3, 5
-			-2,	// 3, 6
-			+2,	// 3, 7
+			+0,	// 3, 6
+			+0,	// 3, 7
 			+0,	// 3, 8
 		},
 		{
@@ -70,8 +70,8 @@ const int PLACEMENT_QUALITY[PLACEMENT_MAX_RANGE + 1][PLACEMENT_MAX_RANGE + 1] =
 			-9,	// 5, 3
 			-9,	// 5, 4
 			-4,	// 5, 5
-			-1,	// 5, 6
-			+1,	// 5, 7
+			+0,	// 5, 6
+			+0,	// 5, 7
 			+0,	// 5, 8
 		},
 		{
@@ -146,7 +146,7 @@ bool isWithinExpansionRangeSameAssociation(int x, int y, int expansionRange);
 bool isWithinExpansionRange(int x, int y, int expansionRange);
 int getBaseRadiusTouchCount(int x, int y, int factionId);
 int getBaseRadiusOverlapCount(int x, int y, int factionId);
-int getNearestBaseRange(MAP *tile);
+int getBuildSiteNearestBaseRange(MAP *tile);
 int getNearestColonyRange(MAP *tile);
 int getExpansionRange(MAP *tile);
 double estimateTravelTime(MAP *src, MAP *dst, int unitId);

@@ -71,7 +71,7 @@ void __cdecl modified_enemy_units_check(int factionId)
 	
 	// run WTP AI code for AI enabled factions
 	
-	if (isUseWtpAlgorithms(factionId))
+	if (isWtpEnabledFaction(factionId))
 	{
 		clock_t c = clock();
 		strategy();
@@ -90,7 +90,7 @@ void __cdecl modified_enemy_units_check(int factionId)
 				int vehicleId = task->getVehicleId();
 				VEH *vehicle = &(Vehicles[vehicleId]);
 				
-				debug("\t(%3d,%3d)->(%3d,%3d) taskType=%2d, %s\n", vehicle->x, vehicle->y, getX(task->getDestination()), getY(task->getDestination()), task->type, Units[vehicle->unit_id].name);
+				debug("\t[%3d] (%3d,%3d)->(%3d,%3d) taskType=%2d, %s\n", vehicleId, vehicle->x, vehicle->y, getX(task->getDestination()), getY(task->getDestination()), task->type, Units[vehicle->unit_id].name);
 				
 			}
 				
@@ -2375,46 +2375,20 @@ MAP *getClosestPod(int vehicleId)
 	
 }
 
-int getNearestFactionBaseRange(int factionId, int x, int y)
-{
-	int nearestFactionBaseRange = 9999;
-
-	for (int baseId = 0; baseId < *total_num_bases; baseId++)
-	{
-		BASE *base = &(Bases[baseId]);
-
-		// own bases
-
-		if (base->faction_id != factionId)
-			continue;
-
-		nearestFactionBaseRange = std::min(nearestFactionBaseRange, map_range(x, y, base->x, base->y));
-
-	}
-
-	return nearestFactionBaseRange;
-
-}
-
-int getNearestOtherFactionBaseRange(int factionId, int x, int y)
+int getNearestAIFactionBaseRange(int x, int y)
 {
 	int nearestFactionBaseRange = INT_MAX;
-
-	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	
+	for (int baseId : aiData.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
-
-		// other faction bases
-
-		if (base->faction_id == factionId)
-			continue;
-
+		
 		nearestFactionBaseRange = std::min(nearestFactionBaseRange, map_range(x, y, base->x, base->y));
-
+		
 	}
-
+	
 	return nearestFactionBaseRange;
-
+	
 }
 
 int getNearestBaseId(int x, int y, std::set<int> baseIds)
@@ -2937,69 +2911,9 @@ bool isWithinAlienArtilleryRange(int vehicleId)
 /*
 Checks if faction is enabled to use WTP algorithms.
 */
-bool isUseWtpAlgorithms(int factionId)
+bool isWtpEnabledFaction(int factionId)
 {
-	return (factionId != 0 && !is_human(factionId) && ai_enabled(factionId) && conf.ai_useWTPAlgorithms && (conf.wtp_factions_enabled >= 0 ? factionId <= conf.wtp_factions_enabled : factionId >= MaxPlayerNum + conf.wtp_factions_enabled))
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	;
+	return (factionId != 0 && !is_human(factionId) && ai_enabled(factionId) && conf.ai_useWTPAlgorithms && conf.wtp_enabled_factions[factionId]);
 }
 
 int getCoastalBaseOceanAssociation(MAP *tile, int factionId)
@@ -3723,6 +3637,16 @@ std::vector<VehicleLocation> matchVehiclesToRankedLocations(std::vector<int> veh
 	
 	return vehicleLocations;
 	
+}
+
+bool compareIdIntValueAscending(const IdIntValue &a, const IdIntValue &b)
+{
+	return a.value < b.value;
+}
+
+bool compareIdIntValueDescending(const IdIntValue &a, const IdIntValue &b)
+{
+	return a.value > b.value;
 }
 
 bool compareIdDoubleValueAscending(const IdDoubleValue &a, const IdDoubleValue &b)

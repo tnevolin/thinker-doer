@@ -329,8 +329,6 @@ bool isFactionSpecial(int factionId, int special);
 bool isFactionHasBonus(int factionId, int bonusId);
 double getAlienMoraleModifier();
 MAP *getNearestLandTerritory(int x, int y, int factionId);
-int getRangeToNearestFactionBase(int x, int y, int factionId);
-int getRangeToNearestFactionColony(int x, int y, int factionId);
 void killVehicle(int vehicleId);
 void board(int vehicleId, int transportVehicleId);
 void unboard(int vehicleId);

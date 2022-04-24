@@ -435,9 +435,22 @@ int Task::executeOrder(int vehicleId)
 
 int Task::executeHold(int vehicleId)
 {
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	
 	// set order
 	
 	setVehicleOrder(vehicleId, ORDER_HOLD);
+	
+	if (isLandArtilleryVehicle(vehicleId) && map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
+	{
+		// set land artillery on alert
+		
+		vehicle->waypoint_1_x = -1;
+		vehicle->waypoint_1_y = 10;
+		
+	}
+	
 	return EM_DONE;
 	
 }

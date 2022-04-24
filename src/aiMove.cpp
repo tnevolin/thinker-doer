@@ -387,6 +387,7 @@ When at or next unload location it stops and explicitly commands passenger to un
 int moveVehicle(const int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
+	int vehicleSpeed = getVehicleSpeedWithoutRoads(vehicleId);
 	
 	debug("moveVehicle (%3d,%3d) %s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
 	
@@ -395,9 +396,9 @@ int moveVehicle(const int vehicleId)
 	int (__attribute__((cdecl)) *defaultEnemyMove)(int) = enemy_move;
 //	int (__attribute__((cdecl)) *defaultEnemyMove)(int) = mod_enemy_move;
 	
-	// do not try multiple iterations
+	// do not try more iterations than vehicle has moves
 	
-	if (vehicle->iter_count > 0)
+	if (vehicle->iter_count > vehicleSpeed)
 	{
 		return defaultEnemyMove(vehicleId);
 	}
@@ -790,7 +791,7 @@ int __cdecl modified_enemy_move(const int vehicleId)
 	// choose AI logic
 	
 	// run WTP AI code for AI eanbled factions
-	if (isUseWtpAlgorithms(vehicle->faction_id))
+	if (isWtpEnabledFaction(vehicle->faction_id))
 	{
 		return moveVehicle(vehicleId);
 	}

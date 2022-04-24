@@ -1,3 +1,11 @@
+# Version 294
+
+* BUG: Game crashed under certain conditions when drawing boom. Fixed. Hopefully now for all conditions.
+
+# Version 293
+
+* BUG: Game crashed under certain conditions when drawing boom. Fixed.
+
 # Version 292
 
 Super update mainly targeting AI but includes some other changes as well.

@@ -894,9 +894,12 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_expansion_placement = atof(value);
     }
-    else if (MATCH("wtp", "wtp_factions_enabled"))
+    else if (MATCH("wtp", "wtp_enabled_factions"))
     {
-        cf->wtp_factions_enabled = atoi(value);
+    	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
+		{
+			cf->wtp_enabled_factions[factionId] = (value[factionId - 1] == '0' ? false : true);
+		}
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {

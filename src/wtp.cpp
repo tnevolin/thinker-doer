@@ -3628,7 +3628,7 @@ HOOK_API int modifiedFactionUpkeep(const int factionId)
 	
 	int returnValue;
 	
-	if (isUseWtpAlgorithms(factionId))
+	if (isWtpEnabledFaction(factionId))
 	{
 		// run WTP AI code for AI eanbled factions
 		
