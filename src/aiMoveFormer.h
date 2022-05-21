@@ -128,8 +128,23 @@ struct TerraformingBaseInfo
 	int rockyLandTileCount;
 };
 
-struct TerraformingTileInfo
+struct TileTerraformingInfo
 {
+	// base works this tile
+	bool worked = false;
+	// baseId that works this tile
+	int workedBaseId = -1;
+	// base can work this tile (except base tile)
+	bool workable = false;
+	// baseIds those can work this tile
+	std::vector<int> workableBaseIds;
+	// baseIds those are affected by area improvement at this tile (condenser, echelon mirror)
+	std::vector<int> areaWorkableBaseIds;
+	// workable tile where a conventional improvement can be placed to increase yield
+	bool availableConventionalTerraformingSite = false;
+	// generally terraformable tile
+	bool availableTerraformingSite = false;
+	
 	bool harvested = false;
 	bool terraformed = false;
 	bool terraformedConventional = false;
@@ -140,16 +155,12 @@ struct TerraformingTileInfo
 	bool terraformedAquifer = false;
 	bool terraformedRaise = false;
 	bool terraformedSensor = false;
-	bool availableTerraformingSite = false;
-	bool availableConventionalTerraformingSite = false;
-	int workedBaseId = -1;
-	std::vector<int> workableBaseIds;
-	std::vector<int> areaWorkableBaseIds;
 	bool rockyMineAllowed = false;
 	bool platformAllowed = false;
 	bool boreholeAllowed = false;
 	bool forestAllowed = false;
 	bool fungusAllowed = false;
+	
 };
 
 // terraforming data operations
@@ -157,9 +168,9 @@ void setupTerraformingData();
 void cleanupTerraformingData();
 // access terraforming data arrays
 TerraformingBaseInfo *getTerraformingBaseInfo(int baseId);
-TerraformingTileInfo *getTerraformingTileInfo(int mapIndex);
-TerraformingTileInfo *getTerraformingTileInfo(int x, int y);
-TerraformingTileInfo *getTerraformingTileInfo(MAP *tile);
+TileTerraformingInfo *getTileTerraformingInfo(int mapIndex);
+TileTerraformingInfo *getTileTerraformingInfo(int x, int y);
+TileTerraformingInfo *getTileTerraformingInfo(MAP *tile);
 // strategy
 void moveFormerStrategy();
 void populateTerraformingData();
@@ -219,7 +230,7 @@ double estimateRaiseLandExtraYieldScore(MAP *tile, int cost);
 bool isRaiseLandSafe(MAP *tile);
 double calculateBaseResourceScore(int baseId, int currentMineralIntake, int currentNutrientSurplus, int currentMineralSurplus, int currentEnergySurplus, int improvedMineralIntake, int improvedNutrientSurplus, int improvedMineralSurplus, int improvedEnergySurplus);
 double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP_STATE *currentMapState, MAP_STATE *improvedMapState);
-bool isValidYieldSite(MAP *tile);
-bool isValidTerraformingSite(MAP *tile);
+bool isWorkableTile(MAP *tile);
 bool isValidConventionalTerraformingSite(MAP *tile);
+bool isValidTerraformingSite(MAP *tile);
 

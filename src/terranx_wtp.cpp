@@ -46,6 +46,7 @@ int *g_UNK_ATTACK_FLAGS = (int *)0x0093E904;
 byte *g_SOCIALWIN = (byte *)0x008A6270;
 int *current_attacker = (int *)0x00689F28;
 int *current_defender = (int *)0x00689F2C;
+int *net_income = (int *)0x00749C0C;
 
 // yield rules
 
@@ -309,4 +310,7 @@ fp_0void *base_yield = (fp_0void *)0x004E80B0;
 
 // draw a fireball
 fp_3void *boom = (fp_3void *)0x00504AA0;
+
+// energy compute
+fp_2void *energy_compute = (fp_2void *)0x00445130;
 

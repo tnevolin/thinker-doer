@@ -22,7 +22,7 @@ It kicks in only when flat hurry cost is enabled.
 void considerHurryingProduction(int factionId)
 {
     Faction* faction = &Factions[factionId];
-    debug("considerHurryingProduction - %s\n", MFactions[factionId].noun_faction)
+    debug("considerHurryingProduction - %s\n", MFactions[factionId].noun_faction);
 
 	// apply only when flat hurry cost is enabled
 
@@ -33,7 +33,8 @@ void considerHurryingProduction(int factionId)
 
 	int reserve = 20 + std::min(900, std::max(0, faction->current_num_bases * std::min(30, (*current_turn - 20)/5)));
 	int spendPool = std::max(0, faction->energy_credits - reserve);
-
+    debug("\treserve=%d, spendPool=%d\n", reserve, spendPool);
+    
 	// apply only when there is something to spend
 
 	if (spendPool == 0)
@@ -124,10 +125,14 @@ void considerHurryingProduction(int factionId)
 
 	if (unprotectedBases.size() >= 1 && unprotectedBasesWeightSum > 0.0)
 	{
+		debug("\tunprotectedBases\n");
+		
 		for (BASE_WEIGHT &baseWeight : unprotectedBases)
 		{
 			int allowance = (int)(floor((double)spendPool * baseWeight.weight / unprotectedBasesWeightSum));
 			hurryProductionPartially(baseWeight.baseId, allowance);
+			debug("\t\t%-25s allowance=%d, spendPool=%d, relativeWeight=%5.2f\n", Bases[baseWeight.baseId].name, allowance, spendPool, baseWeight.weight / unprotectedBasesWeightSum);
+			
 		}
 
 	}

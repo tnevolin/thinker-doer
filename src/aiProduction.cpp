@@ -43,6 +43,11 @@ void productionStrategy()
 	
 	evaluateGlobalBaseDemand();
 	evaluateGlobalFormerDemand();
+	evaluabeGlobalProtectionDemand();
+	
+	// set production
+	
+	setProduction();
 	
 }
 
@@ -329,6 +334,36 @@ void evaluateGlobalFormerDemand()
 	
 }
 
+void evaluabeGlobalProtectionDemand()
+{
+	// find max defense demand
+	
+	double globalProtectionDemand = 0.0;
+	
+	for (int baseId : aiData.baseIds)
+	{
+		BaseInfo *baseInfo = aiData.getBaseInfo(baseId);
+		
+		for (unsigned int unitType = 0; unitType < UNIT_TYPE_COUNT; unitType++)
+		{
+			UnitTypeInfo *unitTypeInfo = &(baseInfo->unitTypeInfos[unitType]);
+			
+			if (unitTypeInfo->providedProtection < unitTypeInfo->requiredProtection)
+			{
+				double demand = 1.0 - unitTypeInfo->providedProtection / unitTypeInfo->requiredProtection;
+				
+				globalProtectionDemand = std::max(globalProtectionDemand, demand);
+				
+			}
+			
+		}
+		
+	}
+	
+	aiData.production.globalProtectionDemand = globalProtectionDemand;
+	
+}
+
 /*
 Sets faction all bases production.
 */
@@ -471,7 +506,8 @@ int aiSuggestBaseProduction(int baseId, int choice)
 	// evaluate other demands
 	
 	evaluateFacilitiesDemand();
-
+	evaluateProjectDemand();
+	
 	evaluatePoliceDemand();
 
 	evaluateLandFormerDemand();
@@ -488,6 +524,7 @@ int aiSuggestBaseProduction(int baseId, int choice)
 
 	evaluatePrototypingDemand();
 	evaluateCombatDemand();
+	evaluateAlienProtectorDemand();
 	
 	evaluateTransportDemand();
 
@@ -532,6 +569,56 @@ void evaluateMandatoryDefenseDemand()
 	// add production demand
 
 	addProductionDemand(unitId, priority);
+	
+}
+
+/*
+Crude project offer - by cost only.
+*/
+void evaluateProjectDemand()
+{
+	int baseId = productionDemand.baseId;
+
+	debug("evaluateProjectDemand\n");
+	
+	// find cheapest project
+	
+	int cheapestProjectFacilityId = -1;
+	int cheapestProjectProductionTurns = INT_MAX;
+	
+	for (int projectFacilityId = FAC_HUMAN_GENOME_PROJ; projectFacilityId <= FAC_PLANETARY_ENERGY_GRID; projectFacilityId++)
+	{
+		// exclude not available project
+		
+		if (!isProjectAvailable(aiFactionId, projectFacilityId))
+			continue;
+		
+		// get production turns
+		
+		int productionTurns = estimateBaseProductionTurnsToCompleteItem(baseId, -projectFacilityId);
+		
+		// update best
+		
+		if (productionTurns < cheapestProjectProductionTurns)
+		{
+			cheapestProjectFacilityId = projectFacilityId;
+			cheapestProjectProductionTurns = productionTurns;
+		}
+		
+	}
+	
+	// not found
+	
+	if (cheapestProjectFacilityId == -1)
+		return;
+	
+	// calculate priority
+	
+	double priority = 20.0 / (double)cheapestProjectProductionTurns;
+	
+	// add demand
+	
+	addProductionDemand(-cheapestProjectFacilityId, priority);
 	
 }
 
@@ -2694,6 +2781,45 @@ void evaluateCombatDemand()
 	
 }
 
+void evaluateAlienProtectorDemand()
+{
+	BASE *base = productionDemand.base;
+	
+	debug("evaluateAlienProtectorDemand - %-25s\n", base->name);
+
+	// check mineral surplus
+	
+	if (base->mineral_surplus < conf.ai_production_unit_min_mineral_surplus)
+	{
+		debug("\tweak production\n");
+		return;
+	}
+	
+	// find unit
+	
+	int unitId = selectAlienProtectorUnit();
+	
+	// no unit found
+	
+	if (unitId == -1)
+	{
+		debug("\tno unit found\n");
+		return;
+	}
+	
+	debug("\t%s\n", Units[unitId].name);
+	
+	// calculate priority
+	
+	double priority = (double)aiData.production.alienProtectorRequestCount;
+	debug("\t%s, priority=%5.2f, alienProtectorRequestCount=%d\n", Units[unitId].name, priority, aiData.production.alienProtectorRequestCount);
+	
+	// add demand
+	
+	addProductionDemand(unitId, priority);
+	
+}
+
 void addProductionDemand(int item, double priority)
 {
 	int baseId = productionDemand.baseId;
@@ -3851,6 +3977,49 @@ int selectCombatUnit(int baseId, int targetBaseId)
 		
 	}
 	// return
+	
+	return bestUnitId;
+	
+}
+
+int selectAlienProtectorUnit()
+{
+	int bestUnitId = -1;
+	int bestUnitTrance = 0;
+	int bestUnitCost = INT_MAX;
+	
+	for (int unitId : aiData.unitIds)
+	{
+		UNIT *unit = &(Units[unitId]);
+		
+		// exclude not infantry
+		
+		if (unit->chassis_type != CHS_INFANTRY)
+			continue;
+		
+		// get trance
+		
+		int trance = (isUnitHasAbility(unitId, ABL_TRANCE) ? 1 : 0);
+		
+		// get cost
+		
+		int cost = unit->cost;
+		
+		// update best
+		
+		if
+		(
+			trance > bestUnitTrance
+			||
+			trance == bestUnitTrance && cost < bestUnitCost
+		)
+		{
+			bestUnitId = unitId;
+			bestUnitTrance = trance;
+			bestUnitCost = cost;
+		}
+		
+	}
 	
 	return bestUnitId;
 	

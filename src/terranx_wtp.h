@@ -46,6 +46,7 @@ extern int *g_UNK_ATTACK_FLAGS;
 extern byte *g_SOCIALWIN;
 extern int *current_attacker;
 extern int *current_defender;
+extern int *net_income;
 
 // yield rules
 
@@ -172,4 +173,5 @@ extern fp_0int* base_ecology;
 extern fp_0void *base_minerals;
 extern fp_0void *base_yield;
 extern fp_3void *boom;
+extern fp_2void *energy_compute;
 

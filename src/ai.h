@@ -104,12 +104,13 @@ bool compareIdDoubleValueDescending(const IdDoubleValue &a, const IdDoubleValue 
 bool canUnitAttack(int attackerUnitId, int defenderUnitId);
 bool canVehicleAttack(int attackerVehicleId, int defenderVehicleId);
 bool canVehicleAttackTile(int vehicleId, MAP *tile);
-double getRelativeUnitStrength(int attackerUnitId, int defenderUnitId);
+double getRelativeUnitStrength(int attackerUnitId, int attackerFactionId, int defenderUnitId, int defenderFactionId);
 double getVehiclePsiOffenseModifier(int vehicleId);
 double getVehiclePsiDefenseModifier(int vehicleId);
 double getVehicleConventionalOffenseModifier(int vehicleId);
 double getVehicleConventionalDefenseModifier(int vehicleId);
 double getVehicleToBaseTravelTimeCoefficient(int vehicleId, int baseId);
-double getVehicleToBaseDepthCoefficient(int vehicleId, int baseId);
 int getBaseSupportAllowance(int baseId);
+int getUnitIndex(int unitId);
+int getFactionUnitIndex(int factionId, int unitId);
 

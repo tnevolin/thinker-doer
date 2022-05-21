@@ -324,7 +324,7 @@ struct Faction {
     int SE_industry_base;
     int SE_research_base;
     int unk_13;
-    int unk_14;
+    int maintenance;
     int tech_commerce_bonus; // Increases commerce income
     int turn_commerce_income;
     int unk_17;

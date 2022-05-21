@@ -2065,6 +2065,12 @@ int combat_move(const int id) {
         if (attack && at_war(faction, faction2)
         && (id2 = choose_defender(ts.rx, ts.ry, id, sq)) >= 0) {
             VEH* veh2 = &Vehicles[id2];
+            
+            // sometimes it finds own units to attack
+            
+            if (veh2->faction_id == veh->faction_id)
+				continue;
+            
             if (!ignore_zocs) { // Avoid zones of control
                 max_dist = ts.dist;
             }

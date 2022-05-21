@@ -13,7 +13,40 @@ const char *UNIT_TYPE_NAMES[] = {"Melee", "Land Artillery"};
 // global variables
 
 int aiFactionId = -1;
+MFaction *aiMetaFaction;
 Data aiData;
+
+// CombatEffectTable
+
+CombatEffectTable::CombatEffectTable()
+{
+	combatEffects = std::vector<std::vector<std::vector<CombatEffect>>>(2 * MaxProtoFactionNum, std::vector<std::vector<CombatEffect>>(MaxPlayerNum, std::vector<CombatEffect>(2 * MaxProtoFactionNum)));
+}
+
+CombatEffect *CombatEffectTable::getCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId)
+{
+	return &(combatEffects.at(getUnitIndex(ownUnitId)).at(foeFactionId).at(getUnitIndex(foeUnitId)));
+}
+
+// FoeUnitWeightTable
+
+FoeUnitWeightTable::FoeUnitWeightTable()
+{
+	foeUnitWeights = std::vector<std::vector<double>>(MaxPlayerNum, std::vector<double>(2 * MaxProtoFactionNum));
+}
+
+double FoeUnitWeightTable::getFoeUnitWeight(int factionId, int unitId)
+{
+	return foeUnitWeights.at(factionId).at(getUnitIndex(unitId));
+}
+void FoeUnitWeightTable::setFoeUnitWeight(int factionId, int unitId, double weight)
+{
+	foeUnitWeights.at(factionId).at(getUnitIndex(unitId)) = weight;
+}
+void FoeUnitWeightTable::addFoeUnitWeight(int factionId, int unitId, double weight)
+{
+	foeUnitWeights.at(factionId).at(getUnitIndex(unitId)) += weight;
+}
 
 // BaseInfo
 
@@ -28,53 +61,11 @@ BaseInfo::BaseInfo()
 
 void BaseInfo::clear()
 {
-	std::fill(foeUnitWeights.begin(), foeUnitWeights.end(), 0.0);
-	std::fill(ownUnitWeights.begin(), ownUnitWeights.end(), 0.0);
-	
 	for (unsigned int unitType = 0; unitType < UNIT_TYPE_COUNT; unitType++)
 	{
 		unitTypeInfos[unitType].clear();
 	}
 
-}
-
-double BaseInfo::getFoeUnitWeight(int unitId)
-{
-	return foeUnitWeights.at(unitId);
-}
-void BaseInfo::setFoeUnitWeight(int unitId, double weight)
-{
-	foeUnitWeights.at(unitId) = weight;
-}
-void BaseInfo::increaseFoeUnitWeight(int unitId, double weight)
-{
-	foeUnitWeights.at(unitId) += weight;
-}
-void BaseInfo::decreaseFoeUnitWeight(int unitId, double weight)
-{
-	foeUnitWeights.at(unitId) -= weight;
-}
-
-double BaseInfo::getOwnUnitWeight(int unitId)
-{
-	return ownUnitWeights.at(getUnitIndex(unitId));
-}
-void BaseInfo::setOwnUnitWeight(int unitId, double weight)
-{
-	ownUnitWeights.at(getUnitIndex(unitId)) = weight;
-}
-void BaseInfo::increaseOwnUnitWeight(int unitId, double weight)
-{
-	ownUnitWeights.at(getUnitIndex(unitId)) += weight;
-}
-void BaseInfo::decreaseOwnUnitWeight(int unitId, double weight)
-{
-	ownUnitWeights.at(getUnitIndex(unitId)) -= weight;
-}
-
-CombatEffect *BaseInfo::getCombatEffect(int ownUnitId, int foeUnitId)
-{
-	return &(combatEffects.at(getUnitIndex(ownUnitId) * MaxProtoNum + foeUnitId));
 }
 
 double BaseInfo::getAverageCombatEffect(int unitId)
@@ -125,6 +116,40 @@ double BaseInfo::getTotalProtectionDemand()
 	
 }
 
+bool BaseInfo::isProtectionRequestSatisfied()
+{
+	bool protectionRequestSatisfied = true;
+	
+	for (UnitTypeInfo &unitTypeInfo : unitTypeInfos)
+	{
+		if (!unitTypeInfo.isProtectionRequestSatisfied())
+		{
+			protectionRequestSatisfied = false;
+			break;
+		}
+		
+	}
+	
+	return protectionRequestSatisfied;
+	
+}
+
+double BaseInfo::getRemainingProtectionRequest()
+{
+	double remainingProtectionRequest = 0.0;
+	
+	for (unsigned int unitType = 0; unitType < UNIT_TYPE_COUNT; unitType++)
+	{
+		UnitTypeInfo *unitTypeInfo = &(unitTypeInfos[unitType]);
+		
+		remainingProtectionRequest += unitTypeInfo->getRemainingProtectionRequest();
+		
+	}
+	
+	return remainingProtectionRequest;
+	
+}
+
 void Data::setup()
 {
 	// setup data
@@ -145,7 +170,6 @@ void Data::cleanup()
 	tileInfos.clear();
 //	baseInfos.clear();
 	
-	foeActiveCombatUnitIds.clear();
 //	combatEffects.clear();
 //	delete[] combatEffects;
 	
@@ -243,9 +267,9 @@ void UnitTypeInfo::clear()
 	protectors.clear();
 }
 
-bool UnitTypeInfo::isProtectionSatisfied()
+bool UnitTypeInfo::isProtectionRequestSatisfied()
 {
-	return providedProtection >= requiredProtection;
+	return providedProtection >= requiredProtection - 0.1;
 }
 
 double UnitTypeInfo::getRemainingProtectionRequest()

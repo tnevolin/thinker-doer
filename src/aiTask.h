@@ -12,19 +12,19 @@ enum ENEMY_MOVE_RETURN_VALUE
 
 enum TaskType
 {
-	NONE,
-	KILL,
-	SKIP,
-	BUILD,
-	LOAD,
-	BOARD,
-	UNLOAD,
-	UNBOARD,
-	TERRAFORMING,
-	ORDER,
-	HOLD,
-	MOVE,
-	ARTIFACT_CONTRIBUTE,
+	TT_NONE,
+	TT_KILL,
+	TT_SKIP,
+	TT_BUILD,
+	TT_LOAD,
+	TT_BOARD,
+	TT_UNLOAD,
+	TT_UNBOARD,
+	TT_TERRAFORMING,
+	TT_ORDER,
+	TT_HOLD,
+	TT_MOVE,
+	TT_ARTIFACT_CONTRIBUTE,
 };
 
 struct Task
@@ -65,6 +65,8 @@ struct Task
 
 void setTask(int vehicleId, Task task);
 bool hasTask(int vehicleId);
+bool hasExecutableTask(int vehicleId);
+void deleteTask(int vehicleId);
 Task *getTask(int vehicleId);
 int executeTask(int vehicleId);
 void setTaskIfCloser(int vehicleId, Task task);

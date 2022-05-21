@@ -305,19 +305,19 @@ void healStrategy()
 		
 		if (map_has_item(vehicleTile, TERRA_BASE_IN_TILE))
 		{
-			// damaged
+			// exclude undamaged
 			
 			if (vehicle->damage_taken == 0)
 				continue;
 			
-			// not under alien artillery bombardment
+			// exclude under alien artillery bombardment
 			
 			if (isWithinAlienArtilleryRange(vehicleId))
 				continue;
 			
 			// heal
 			
-			setTask(vehicleId, Task(vehicleId, HOLD));
+			setTask(vehicleId, Task(vehicleId, TT_HOLD));
 			
 		}
 		
@@ -325,7 +325,7 @@ void healStrategy()
 		
 		else
 		{
-			// repairable
+			// exclude irrepairable
 			
 			if (vehicle->damage_taken <= (has_project(aiFactionId, FAC_NANO_FACTORY) ? 0 : 2 * vehicle->reactor_type()))
 				continue;
@@ -336,7 +336,7 @@ void healStrategy()
 			
 			if (nearestMonolith != nullptr && map_range(vehicle->x, vehicle->y, getX(nearestMonolith), getY(nearestMonolith)) <= (vehicle->triad() == TRIAD_SEA ? 10 : 5))
 			{
-				setTask(vehicleId, Task(vehicleId, MOVE, nearestMonolith));
+				setTask(vehicleId, Task(vehicleId, TT_MOVE, nearestMonolith));
 				continue;
 			}
 			
@@ -346,14 +346,45 @@ void healStrategy()
 			
 			if (nearestBase != nullptr && map_range(vehicle->x, vehicle->y, getX(nearestBase), getY(nearestBase)) <= (vehicle->triad() == TRIAD_SEA ? 10 : 5))
 			{
-				setTask(vehicleId, Task(vehicleId, HOLD, nearestBase));
+				setTask(vehicleId, Task(vehicleId, TT_HOLD, nearestBase));
 				continue;
 			}
 			
-			// heal in field
+			// find nearest not warzone tile
 			
-//			setMoveOrder(vehicleId, vehicle->x, vehicle->y, ORDER_SENTRY_BOARD);
-			setTask(vehicleId, Task(vehicleId, HOLD));
+			MAP *healingTile = nullptr;
+			
+			for (int range = 0; range < 10; range++)
+			{
+				for (MAP *tile : getEqualRangeTiles(vehicle->x, vehicle->y, range))
+				{
+					TileInfo *tileInfo = aiData.getTileInfo(tile);
+					
+					// exclude warzone
+					
+					if (tileInfo->warzone)
+						continue;
+					
+					// select healingTile
+					
+					healingTile = tile;
+					break;
+					
+				}
+				
+				if (healingTile != nullptr)
+					break;
+				
+			}
+			
+			if (healingTile == nullptr)
+			{
+				healingTile = vehicleTile;
+			}
+			
+			// heal
+			
+			transitVehicle(vehicleId, Task(vehicleId, TT_HOLD, healingTile));
 			
 		}
 		
@@ -409,7 +440,7 @@ int moveVehicle(const int vehicleId)
 	
 	// execute task
 	
-	if (hasTask(vehicleId))
+	if (hasExecutableTask(vehicleId))
 	{
 		return executeTask(vehicleId);
 	}
@@ -439,7 +470,7 @@ void transitVehicle(int vehicleId, Task task)
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
-	debug("transitVehicle (%3d,%3d) %-32s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
+//	debug("transitVehicle (%3d,%3d) %-32s\n", vehicle->x, vehicle->y, Units[vehicle->unit_id].name);
 	
 	// get destination
 	
@@ -447,20 +478,21 @@ void transitVehicle(int vehicleId, Task task)
 	
 	if (destination == nullptr)
 	{
-		debug("\tinvalid destination\n");
+//		debug("\tno destination\n");
+		setTask(vehicleId, task);
 		return;
 	}
 	
 	int x = getX(destination);
 	int y = getY(destination);
 	
-	debug("\t->(%3d,%3d)\n", x, y);
+//	debug("\t->(%3d,%3d)\n", x, y);
 	
 	// vehicle is at destination already
 	
 	if (vehicle->x == x && vehicle->y == y)
 	{
-		debug("\tat destination\n");
+//		debug("\tat destination\n");
 		setTask(vehicleId, task);
 		return;
 	}
@@ -469,7 +501,7 @@ void transitVehicle(int vehicleId, Task task)
 	
 	if (vehicle->triad() == TRIAD_SEA || vehicle->triad() == TRIAD_AIR)
 	{
-		debug("\tsea/air unit\n");
+//		debug("\tsea/air unit\n");
 		setTask(vehicleId, task);
 		return;
 	}
@@ -478,7 +510,7 @@ void transitVehicle(int vehicleId, Task task)
 	
 	if (!is_ocean(vehicleTile) && !is_ocean(destination) && isSameAssociation(vehicleTile, destination, vehicle->faction_id))
 	{
-		debug("\tsame association\n");
+//		debug("\tsame association\n");
 		
 		// get range
 		
@@ -488,19 +520,19 @@ void transitVehicle(int vehicleId, Task task)
 		
 		int pathDistance = getPathDistance(vehicle->x, vehicle->y, x, y, vehicle->unit_id, vehicle->faction_id);
 		
-		debug("\trange=%d, pathDistance=%d\n", range, pathDistance);
+//		debug("\trange=%d, pathDistance=%d\n", range, pathDistance);
 		
 		// allow pathDistance to be 3 times longer than range
 		
 		if (pathDistance != -1 && pathDistance <= 3 * range)
 		{
-			debug("\tallow self travel\n");
+//			debug("\tallow self travel\n");
 			setTask(vehicleId, task);
 			return;
 		}
 		
 		// otherwise, continue with crossing ocean
-		debug("\tsearch for ferry\n");
+//		debug("\tsearch for ferry\n");
 		
 	}
 	
@@ -510,11 +542,11 @@ void transitVehicle(int vehicleId, Task task)
 	
 	if (crossOceanAssociation == -1)
 	{
-		debug("\tcannot find cross ocean region\n");
+//		debug("\tcannot find cross ocean region\n");
 		return;
 	}
 	
-	debug("\tcrossOceanAssociation=%d\n", crossOceanAssociation);
+//	debug("\tcrossOceanAssociation=%d\n", crossOceanAssociation);
 	
 	// vehicle needs to be transported or is already transported
 	// either way it cannot get to destination itself so we increase transport request counter
@@ -548,7 +580,7 @@ void transitVehicle(int vehicleId, Task task)
 	
 	if (seaTransportVehicleId != -1)
 	{
-		debug("\tis being transported\n");
+//		debug("\tis being transported\n");
 		
 		VEH *seaTransportVehicle = &(Vehicles[seaTransportVehicleId]);
 		
@@ -563,15 +595,15 @@ void transitVehicle(int vehicleId, Task task)
 		
 		if (deliveryLocation.unloadLocation == nullptr || deliveryLocation.unboardLocation == nullptr)
 		{
-			debug("\tcannot find delivery location\n");
+//			debug("\tcannot find delivery location\n");
 			return;
 		}
 		
-		debug("\tdeliveryLocation=(%3d,%3d):(%3d,%3d)\n", getX(deliveryLocation.unloadLocation), getY(deliveryLocation.unloadLocation), getX(deliveryLocation.unboardLocation), getY(deliveryLocation.unboardLocation));
+//		debug("\tdeliveryLocation=(%3d,%3d):(%3d,%3d)\n", getX(deliveryLocation.unloadLocation), getY(deliveryLocation.unloadLocation), getX(deliveryLocation.unboardLocation), getY(deliveryLocation.unboardLocation));
 		
 		if (vehicleTile == deliveryLocation.unloadLocation)
 		{
-			debug("\tat unload location\n");
+//			debug("\tat unload location\n");
 			
 			// wake up vehicle
 			
@@ -579,11 +611,11 @@ void transitVehicle(int vehicleId, Task task)
 			
 			// skip transport
 			
-			setTask(seaTransportVehicleId, Task(seaTransportVehicleId, SKIP));
+			setTask(seaTransportVehicleId, Task(seaTransportVehicleId, TT_SKIP));
 			
 			// move to unboard location
 			
-			setTask(vehicleId, Task(vehicleId, MOVE, deliveryLocation.unboardLocation));
+			setTask(vehicleId, Task(vehicleId, TT_MOVE, deliveryLocation.unboardLocation));
 			
 			return;
 			
@@ -591,8 +623,8 @@ void transitVehicle(int vehicleId, Task task)
 		
 		// add orders
 		
-		setTask(vehicleId, Task(vehicleId, UNBOARD, deliveryLocation.unboardLocation));
-		setTaskIfCloser(seaTransportVehicleId, Task(seaTransportVehicleId, UNLOAD, deliveryLocation.unloadLocation, vehicleId));
+		setTask(vehicleId, Task(vehicleId, TT_UNBOARD, deliveryLocation.unboardLocation));
+		setTaskIfCloser(seaTransportVehicleId, Task(seaTransportVehicleId, TT_UNLOAD, deliveryLocation.unloadLocation, vehicleId));
 		
 		return;
 		
@@ -604,7 +636,7 @@ void transitVehicle(int vehicleId, Task task)
 	
 	if (availableSeaTransportVehicleId == -1)
 	{
-		debug("\tno available sea transports\n");
+//		debug("\tno available sea transports\n");
 		
 		// meanwhile continue with current task
 		
@@ -623,10 +655,10 @@ void transitVehicle(int vehicleId, Task task)
 	
 	// add boarding tasks
 	
-	debug("\tadd boarding tasks: [%3d]\n", availableSeaTransportVehicleId);
+//	debug("\tadd boarding tasks: [%3d]\n", availableSeaTransportVehicleId);
 	
-	setTask(vehicleId, Task(vehicleId, BOARD, nullptr, availableSeaTransportVehicleId));
-	setTaskIfCloser(availableSeaTransportVehicleId, Task(availableSeaTransportVehicleId, LOAD, availableSeaTransportLoadLocation, vehicleId));
+	setTask(vehicleId, Task(vehicleId, TT_BOARD, nullptr, availableSeaTransportVehicleId));
+	setTaskIfCloser(availableSeaTransportVehicleId, Task(availableSeaTransportVehicleId, TT_LOAD, availableSeaTransportLoadLocation, vehicleId));
 	
 	// clear vehicle status
 	// sometimes it is stuck in sentry on transport
@@ -638,70 +670,84 @@ void transitVehicle(int vehicleId, Task task)
 /*
 Delete unit to reduce support burden.
 */
-void deleteUnits()
+void deleteVehicles()
 {
-	debug("deleteUnits - %s\n", MFactions[aiFactionId].noun_faction);
+	debug("deleteVehicles - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	// count total support vs. total intake
+	
+	int totalMineralIntake2 = 0;
+	int totalSupport = 0;
 	
 	for (int baseId : aiData.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
 		
-		debug("\t%s\n", base->name);
-		
-		int baseSupportAllowance = getBaseSupportAllowance(baseId);
-		
-		// exclude base within support allowance
-		
-		if (baseSupportAllowance >= -2)
-		{
-			debug("\t\twithin allowance: baseSupportAllowance=%+2d\n", baseSupportAllowance);
-			continue;
-		}
-		
-		// find supported regular combat vehicle with lowest value
-		
-		int weakestVehicleId = -1;
-		int weakestVehicleValue = INT_MAX;
-		
-		for (int vehicleId: aiData.combatVehicleIds)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			
-			// exclude not supported from this base
-			
-			if (vehicle->home_base_id != baseId)
-				continue;
-			
-			// exclude native
-			
-			if (isNativeVehicle(vehicleId))
-				continue;
-			
-			// get value
-			
-			int value = std::max(getVehicleOffenseValue(vehicleId), getVehicleDefenseValue(vehicleId));
-			
-			// update weakest unit
-			
-			if (value < weakestVehicleValue)
-			{
-				weakestVehicleId = vehicleId;
-				weakestVehicleValue = value;
-			}
-			
-		}
-		
-		// not found
-		
-		if (weakestVehicleId == -1)
-			continue;
-		
-		// delete vehicle
-		
-		debug("\t\tweakest vehicle: (%3d,%3d) %-32s\n", Vehicles[weakestVehicleId].x, Vehicles[weakestVehicleId].y, Units[Vehicles[weakestVehicleId].unit_id].name);
-		setTask(weakestVehicleId, Task(weakestVehicleId, KILL));
+		totalMineralIntake2 += base->mineral_intake_2;
+		totalSupport += base->mineral_intake_2 - base->mineral_surplus;
 		
 	}
+	
+	// check if we are not overburdened
+	
+	int allowedTotalSupport = 2 + totalMineralIntake2 * 1 / 3;
+	
+	debug("\ttotalMineralIntake2=%d, allowedTotalSupport=%d, totalSupport=%d\n", totalMineralIntake2, allowedTotalSupport, totalSupport);
+	
+	if (totalSupport <= allowedTotalSupport)
+	{
+		debug("\tsupport is bearable\n");
+		return;
+	}
+	
+	// find weakest and cheapest combat vehicle
+	// assume cheapest is weakest
+	
+	int weakestCombatVehicleId = -1;
+	double weakestCombatVehicleValue = DBL_MAX;
+	
+	for (int vehicleId : aiData.combatVehicleIds)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// exclude natives
+		
+		if (isNativeVehicle(vehicleId))
+			continue;
+		
+		int cost = Units[vehicle->unit_id].cost;
+		double moraleModifier = getVehicleMoraleModifier(vehicleId, false);
+		
+		// increase cost for those without clean reactor
+		
+		if (!isVehicleHasAbility(vehicleId, ABL_CLEAN_REACTOR))
+		{
+			cost += 4;
+		}
+		
+		// build value
+		
+		double value = (double)cost * moraleModifier;
+		
+		// update best
+		
+		if (value < weakestCombatVehicleValue)
+		{
+			weakestCombatVehicleId = vehicleId;
+			weakestCombatVehicleValue = value;
+		}
+		
+	}
+	
+	// not found
+	
+	if (weakestCombatVehicleId == -1)
+		return;
+	
+	// delete vehicle
+	
+	debug("\tdelete weakest combat vehicle: (%3d,%3d) %-32s weakestCombatVehicleValue=%5.2f\n", Vehicles[weakestCombatVehicleId].x, Vehicles[weakestCombatVehicleId].y, Units[Vehicles[weakestCombatVehicleId].unit_id].name, weakestCombatVehicleValue);
+	setTask(weakestCombatVehicleId, Task(weakestCombatVehicleId, TT_KILL));
 	
 }
 

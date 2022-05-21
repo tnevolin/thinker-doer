@@ -62,7 +62,7 @@ void moveEmptySeaTransportStrategy(int vehicleId)
 	
 	// no pods - destroy transport
 	
-	setTask(vehicleId, Task(vehicleId, KILL));
+	setTask(vehicleId, Task(vehicleId, TT_KILL));
 
 }
 
@@ -79,7 +79,7 @@ void moveLoadedSeaTransportStrategy(int vehicleId, int passengerId)
 	
 	// set task
 	
-	transitVehicle(passengerId, Task(passengerId, MOVE, nearestLandTerritory));
+	transitVehicle(passengerId, Task(passengerId, TT_MOVE, nearestLandTerritory));
 	
 }
 
@@ -190,7 +190,7 @@ bool deliverArtifact(int transportVehicleId, int artifactVehicleId)
 	
 	// deliver vehicle
 	
-	transitVehicle(artifactVehicleId, Task(artifactVehicleId, HOLD, baseLocation));
+	transitVehicle(artifactVehicleId, Task(artifactVehicleId, TT_HOLD, baseLocation));
 	
 	return true;
 	
@@ -334,7 +334,7 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 
 	// transport vehicles
 	
-	transitVehicle(formerVehicleId, Task(formerVehicleId, HOLD, getMapTile(regionClosestBase->x, regionClosestBase->y)));
+	transitVehicle(formerVehicleId, Task(formerVehicleId, TT_HOLD, getMapTile(regionClosestBase->x, regionClosestBase->y)));
 	
 	return true;
 	
@@ -383,7 +383,7 @@ bool deliverScout(int transportVehicleId, int scoutVehicleId)
 	
 	// deliver scout
 	
-	transitVehicle(scoutVehicleId, Task(scoutVehicleId, MOVE, nearestPodLocation));
+	transitVehicle(scoutVehicleId, Task(scoutVehicleId, TT_MOVE, nearestPodLocation));
 	
 	return true;
 	
@@ -582,7 +582,7 @@ void popPodStrategy(int transportVehicleId)
 	
 	// go to destination
 	
-	setTask(transportVehicleId, Task(transportVehicleId, MOVE, nearestPodLocation));
+	setTask(transportVehicleId, Task(transportVehicleId, TT_MOVE, nearestPodLocation));
 
 }
 

@@ -360,7 +360,7 @@ void analyzeBasePlacementSites()
 		
 		// send colony
 		
-		transitVehicle(vehicleId, Task(vehicleId, BUILD, bestBuildSite));
+		transitVehicle(vehicleId, Task(vehicleId, TT_BUILD, bestBuildSite));
 		
 		// disable nearby build sites
 		

@@ -352,7 +352,14 @@ int getBasePoliceDrones(int baseId);
 bool isReactorIgnored();
 bool isInfantryPolice2xVehicle(int vehicleId);
 bool isInfantryDefensiveVehicle(int vehicleId);
-int getUnitIndex(int unitId);
 bool isPsiCombat(int attackerUnitId, int defenderUnitId);
 double getAlienTurnStrengthModifier();
+bool isProjectAvailable(int factionId, int projectFacilityId);
+int getFactionMaintenance(int factionId);
+int getFactionNetIncome(int factionId);
+int getFactionGrossIncome(int factionId);
+bool isVehicleOnSentry(int vehicleId);
+bool isVehicleOnAlert(int vehicleId);
+bool isVehicleOnHold(int vehicleId);
+bool isVehicleOnHold10Turns(int vehicleId);
 

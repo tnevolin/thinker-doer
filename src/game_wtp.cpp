@@ -4516,16 +4516,11 @@ bool isInfantryDefensiveVehicle(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	UNIT *unit = &(Units[vehicle->unit_id]);
-	int weaponOffenseValue = Weapon[unit->weapon_type].offense_value;
-	int armorDefenseValue = Armor[unit->armor_type].defense_value;
+	int offenseValue = getVehicleOffenseValue(vehicleId);
+	int defenseValue = getVehicleDefenseValue(vehicleId);
 	
-	return unit->chassis_type == CHS_INFANTRY && (weaponOffenseValue <= (armorDefenseValue + 1) / 2);
+	return unit->chassis_type == CHS_INFANTRY && (offenseValue <= (defenseValue + 1) / 2);
 	
-}
-
-int getUnitIndex(int unitId)
-{
-	return (unitId < MaxProtoFactionNum ? unitId : MaxProtoFactionNum + unitId % MaxProtoFactionNum);
 }
 
 /*
@@ -4539,5 +4534,81 @@ bool isPsiCombat(int attackerUnitId, int defenderUnitId)
 double getAlienTurnStrengthModifier()
 {
 	return (*current_turn <= conf.aliens_fight_half_strength_unit_turn ? 0.5 : 1.0);
+}
+
+bool isProjectAvailable(int factionId, int projectFacilityId)
+{
+	assert(projectFacilityId >= PROJECT_ID_FIRST && projectFacilityId <= PROJECT_ID_LAST);
+	
+	// get projectId
+	
+	int projectId = projectFacilityId - PROJECT_ID_FIRST;
+	
+	// check project is already built
+	
+	int projectBaseId = SecretProjects[projectId];
+	
+	// check project is built
+	
+	if (projectBaseId >= 0)
+		return false;
+	
+	// check faction did not unlocked project
+	
+	if (!has_tech(factionId, Facility[projectFacilityId].preq_tech))
+		return false;
+	
+	// all conditions met
+	
+	return true;
+	
+}
+
+int getFactionMaintenance(int factionId)
+{
+	return Factions[factionId].maintenance;
+}
+
+int getFactionNetIncome(int factionId)
+{
+	energy_compute(factionId, 0);
+	return *net_income;
+}
+
+int getFactionGrossIncome(int factionId)
+{
+	return getFactionNetIncome(factionId) + getFactionMaintenance(factionId);
+}
+
+bool isVehicleOnSentry(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	return vehicle->move_status == ORDER_SENTRY_BOARD && vehicle->waypoint_1_x == -1 && vehicle->waypoint_1_y == 0;
+	
+}
+
+bool isVehicleOnAlert(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	return vehicle->move_status == ORDER_HOLD && vehicle->waypoint_1_x == -1 && vehicle->waypoint_1_y == 0 && vehicle->waypoint_2_x == vehicle->x && vehicle->waypoint_2_y == vehicle->y;
+	
+}
+
+bool isVehicleOnHold(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	return vehicle->move_status == ORDER_HOLD && vehicle->waypoint_1_x == -1 && vehicle->waypoint_1_y == 0 && vehicle->waypoint_2_x == -1 && vehicle->waypoint_2_y == -1;
+	
+}
+
+bool isVehicleOnHold10Turns(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	return vehicle->move_status == ORDER_HOLD && vehicle->waypoint_1_x == -1 && vehicle->waypoint_1_y == 10 && vehicle->waypoint_2_x == -1 && vehicle->waypoint_2_y == -1;
+	
 }
 

@@ -14,8 +14,8 @@ struct VehicleRange
 
 void moveCombatStrategy();
 void movePolice2x();
-void moveInfantryDefender();
-void moveOtherProtector();
+void moveProtector();
+void moveAlienProtector();
 void moveScoutStrategy();
 void moveLandScoutStrategy();
 void moveSeaScoutStrategy();
@@ -35,6 +35,8 @@ MAP *getNearestMonolith(int x, int y, int triad);
 MAP *getNearestBase(int vehicleId);
 bool isInWarZone(int vehicleId);
 std::vector<int> getReachableEnemies(int vehicleId);
-bool isVehicleAvailable(int vehicleId, bool notInWarzone);
+bool isVehicleAvailable(int vehicleId, bool notAvailableInWarzone);
+bool isVehicleAvailable(int vehicleId);
 void findSureKill(int vehicleId);
+int getVehicleProtectionRange(int vehicleId);
 

@@ -186,55 +186,55 @@ int Task::executeAction(int vehicleId)
 	
 	switch (type)
 	{
-	case NONE:
+	case TT_NONE:
 		return executeNone(vehicleId);
 		break;
 		
-	case KILL:
+	case TT_KILL:
 		return executeKill(vehicleId);
 		break;
 		
-	case SKIP:
+	case TT_SKIP:
 		return executeSkip(vehicleId);
 		break;
 		
-	case BUILD:
+	case TT_BUILD:
 		return executeBuild(vehicleId);
 		break;
 		
-	case LOAD:
+	case TT_LOAD:
 		return executeLoad(vehicleId);
 		break;
 		
-	case BOARD:
+	case TT_BOARD:
 		return executeBoard(vehicleId);
 		break;
 		
-	case UNLOAD:
+	case TT_UNLOAD:
 		return executeUnload(vehicleId);
 		break;
 		
-	case UNBOARD:
+	case TT_UNBOARD:
 		return executeUnboard(vehicleId);
 		break;
 		
-	case TERRAFORMING:
+	case TT_TERRAFORMING:
 		return executeTerraformingAction(vehicleId);
 		break;
 		
-	case ORDER:
+	case TT_ORDER:
 		return executeOrder(vehicleId);
 		break;
 		
-	case HOLD:
+	case TT_HOLD:
 		return executeHold(vehicleId);
 		break;
 		
-	case MOVE:
+	case TT_MOVE:
 		return executeMove(vehicleId);
 		break;
 		
-	case ARTIFACT_CONTRIBUTE:
+	case TT_ARTIFACT_CONTRIBUTE:
 		return executeArtifactContribute(vehicleId);
 		break;
 		
@@ -520,6 +520,19 @@ bool hasTask(int vehicleId)
 	
 }
 
+bool hasExecutableTask(int vehicleId)
+{
+	return hasTask(vehicleId) && getTask(vehicleId)->type != TT_NONE;
+}
+
+void deleteTask(int vehicleId)
+{
+	VEH *vehicle = &(Vehicles[vehicleId]);
+	
+	aiData.tasks.erase(vehicle->pad_0);
+	
+}
+
 Task *getTask(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
@@ -554,7 +567,7 @@ Updates vehicle task if new task has closer destination.
 */
 void setTaskIfCloser(int vehicleId, Task task)
 {
-	debug("setTaskIfCloser\n");
+//	debug("setTaskIfCloser\n");
 	
 	// task exists
 	if (hasTask(vehicleId))
@@ -564,7 +577,7 @@ void setTaskIfCloser(int vehicleId, Task task)
 		Task *currentTask = getTask(vehicleId);
 		if (currentTask == nullptr)
 		{
-			debug("\tERROR: Current task exists but it is nullptr.\n");
+//			debug("\tERROR: Current task exists but it is nullptr.\n");
 			return;
 		}
 		
@@ -573,14 +586,14 @@ void setTaskIfCloser(int vehicleId, Task task)
 		int currentTaskTargetVehicleId = currentTask->getTargetVehicleId();
 		if (currentTaskTargetVehicleId == -1)
 		{
-			debug("\tERROR: Current task targetVehicleId == -1. This should not happen for LOAD/UNLOAD task.\n");
+//			debug("\tERROR: Current task targetVehicleId == -1. This should not happen for LOAD/UNLOAD task.\n");
 			return;
 		}
 		
 		int replacingTaskTargetVehicleId = task.getTargetVehicleId();
 		if (replacingTaskTargetVehicleId == -1)
 		{
-			debug("\tERROR: Replacing task targetVehicleId == -1. This should not happen for LOAD/UNLOAD task.\n");
+//			debug("\tERROR: Replacing task targetVehicleId == -1. This should not happen for LOAD/UNLOAD task.\n");
 			return;
 		}
 		

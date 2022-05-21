@@ -29,6 +29,41 @@ struct CombatEffect
 	double average;
 };
 
+/*
+Defines cross table of combatEffects
+1. own units: 2 * MaxProtoFactionNum
+2. factions: MaxPlayerNum
+3. faction units: 2 * MaxProtoFactionNum
+*/
+class CombatEffectTable
+{
+	private:
+		std::vector<std::vector<std::vector<CombatEffect>>> combatEffects;
+	
+	public:
+		CombatEffectTable();
+		CombatEffect *getCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId);
+	
+};
+
+/*
+Defines cross table of combatEffects
+1. factions: MaxPlayerNum
+2. faction units: 2 * MaxProtoFactionNum
+*/
+class FoeUnitWeightTable
+{
+	private:
+		std::vector<std::vector<double>> foeUnitWeights;
+	
+	public:
+		FoeUnitWeightTable();
+		double getFoeUnitWeight(int factionId, int unitId);
+		void setFoeUnitWeight(int factionId, int unitId, double weight);
+		void addFoeUnitWeight(int factionId, int unitId, double weight);
+	
+};
+
 struct FactionInfo
 {
 	double offenseMultiplier;
@@ -102,7 +137,7 @@ struct UnitTypeInfo
 	std::vector<IdDoubleValue> protectors;
 	
 	void clear();
-	bool isProtectionSatisfied();
+	bool isProtectionRequestSatisfied();
 	double getRemainingProtectionRequest();
 	void setComputedValues();
 	
@@ -119,12 +154,6 @@ struct BaseInfo
 	int policeEffect;
 	int policeAllowed;
 	int policeDrones;
-	// foe vehicles weight grouped by unit id
-	std::vector<double> foeUnitWeights = std::vector<double>(MaxProtoNum);
-	// own vehicles weight grouped by unit id
-	std::vector<double> ownUnitWeights = std::vector<double>(2 * MaxProtoFactionNum);
-	// own units combat effects by foe unit id
-	std::vector<CombatEffect> combatEffects = std::vector<CombatEffect>((2 * MaxProtoFactionNum) * MaxProtoNum);
 	// own units average combat effect
 	std::vector<double> averageCombatEffects = std::vector<double>(2 * MaxProtoFactionNum);
 	// unit type data
@@ -132,21 +161,14 @@ struct BaseInfo
 	
 	BaseInfo();
 	void clear();
-	double getFoeUnitWeight(int unitId);
-	void setFoeUnitWeight(int unitId, double weight);
-	void increaseFoeUnitWeight(int unitId, double weight);
-	void decreaseFoeUnitWeight(int unitId, double weight);
-	double getOwnUnitWeight(int unitId);
-	void setOwnUnitWeight(int unitId, double weight);
-	void increaseOwnUnitWeight(int unitId, double weight);
-	void decreaseOwnUnitWeight(int unitId, double weight);
-	CombatEffect *getCombatEffect(int ownUnitId, int foeUnitId);
 	double getAverageCombatEffect(int unitId);
 	void setAverageCombatEffect(int unitId, double averageCombatEffect);
 	double getVehicleAverageCombatEffect(int vehicleId);
 	UnitTypeInfo *getUnitTypeInfo(int unitId);
 	void setUnitTypeComputedValues();
 	double getTotalProtectionDemand();
+	bool isProtectionRequestSatisfied();
+	double getRemainingProtectionRequest();
 	
 };
 
@@ -168,6 +190,7 @@ struct Production
 	
 	double infantryPolice2xDemand;
 	double defenseDemand;
+	int alienProtectorRequestCount;
 	
 	void clear()
 	{
@@ -200,8 +223,6 @@ struct Data
 	
 	// own units average combat effect weighet across all bases
 	std::vector<double> averageCombatEffects = std::vector<double>(2 * MaxProtoFactionNum);
-	// opponent active combat units
-	std::vector<int> foeActiveCombatUnitIds;
 	
 	std::vector<int> baseIds;
 	std::map<MAP *, int> baseTiles;
@@ -251,6 +272,8 @@ struct Data
 	double landColonyProductionPriority;
 	std::map<int, double> seaColonyProductionPriorities;
 	Production production;
+	int netIncome;
+	int grossIncome;
 	
 	void setup();
 	void cleanup();
@@ -271,6 +294,7 @@ struct Data
 };
 
 extern int aiFactionId;
+extern MFaction *aiMetaFaction;
 extern Data aiData;
 
 // helper functions

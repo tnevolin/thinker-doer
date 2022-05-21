@@ -13,7 +13,7 @@ void moveAllStrategy();
 void healStrategy();
 int moveVehicle(const int vehicleId);
 void transitVehicle(int vehicleId, Task task);
-void deleteUnits();
+void deleteVehicles();
 void balanceVehicleSupport();
 
 // ==================================================
