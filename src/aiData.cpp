@@ -1,186 +1,226 @@
-#include "aiData.h"
-#include "game_wtp.h"
 #include <cstring>
+#include "game_wtp.h"
+#include "aiData.h"
+#include "ai.h"
 
 /**
 Shared AI Data.
 */
 
-// global constants
-
-const char *UNIT_TYPE_NAMES[] = {"Melee", "Land Artillery"};
-
 // global variables
 
 int aiFactionId = -1;
-MFaction *aiMetaFaction;
 Data aiData;
+
+// Force
+
+int getCombatValueNature(int combatValue)
+{
+	return (combatValue < 0 ? NAT_PSI : NAT_CON);
+}
 
 // CombatEffectTable
 
-CombatEffectTable::CombatEffectTable()
+void CombatEffectTable::setCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId, int attackingSide, COMBAT_TYPE combatType, double combatEffect)
 {
-	combatEffects = std::vector<std::vector<std::vector<CombatEffect>>>(2 * MaxProtoFactionNum, std::vector<std::vector<CombatEffect>>(MaxPlayerNum, std::vector<CombatEffect>(2 * MaxProtoFactionNum)));
+	int index =
+		+ getUnitSlotById(ownUnitId)	* (MaxPlayerNum)	* (2 * MaxProtoFactionNum)	* 2	* COMBAT_TYPE_COUNT
+		+ foeFactionId										* (2 * MaxProtoFactionNum)	* 2	* COMBAT_TYPE_COUNT
+		+ getUnitSlotById(foeUnitId)													* 2	* COMBAT_TYPE_COUNT
+		+ attackingSide																		* COMBAT_TYPE_COUNT
+		+ combatType
+	;
+	
+	combatEffects.at(index) = combatEffect;
+
+}
+double CombatEffectTable::getCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId, int attackingSide, COMBAT_TYPE combatType)
+{
+	int index =
+		+ getUnitSlotById(ownUnitId)	* (MaxPlayerNum)	* (2 * MaxProtoFactionNum)	* 2	* COMBAT_TYPE_COUNT
+		+ foeFactionId										* (2 * MaxProtoFactionNum)	* 2	* COMBAT_TYPE_COUNT
+		+ getUnitSlotById(foeUnitId)													* 2	* COMBAT_TYPE_COUNT
+		+ attackingSide																		* COMBAT_TYPE_COUNT
+		+ combatType
+	;
+	
+	return combatEffects.at(index);
+
 }
 
-CombatEffect *CombatEffectTable::getCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId)
+// BaseCombatData
+
+void BaseCombatData::clear()
 {
-	return &(combatEffects.at(getUnitIndex(ownUnitId)).at(foeFactionId).at(getUnitIndex(foeUnitId)));
+	requiredEffect = 0.0;
+	desiredEffect = 0.0;
+	providedEffect = 0.0;
+	currentProvidedEffect = 0.0;
+}
+void BaseCombatData::setUnitEffect(int unitId, double effect)
+{
+	unitEffects.at(getUnitSlotById(unitId)) = effect;
+}
+double BaseCombatData::getUnitEffect(int unitId)
+{
+	return unitEffects.at(getUnitSlotById(unitId));
+}
+double BaseCombatData::getVehicleEffect(int vehicleId)
+{
+	return getUnitEffect(getVehicle(vehicleId)->unit_id) * getVehicleStrenghtMultiplier(vehicleId);
+}
+void BaseCombatData::addProvidedEffect(int vehicleId, bool current)
+{
+	double vehicleEffect = getVehicleEffect(vehicleId);
+	
+	providedEffect += vehicleEffect;
+	if (current)
+	{
+		currentProvidedEffect += vehicleEffect;
+	}
+	
+}
+bool BaseCombatData::isSatisfied(bool current)
+{
+	return (current ? currentProvidedEffect : providedEffect) >= requiredEffect;
+}
+double BaseCombatData::getDemand(bool current)
+{
+	double required = requiredEffect;
+	double provided = (current ? currentProvidedEffect : providedEffect);
+	return ((required > 0.0 && provided < required) ? 1.0 - provided / required : 0.0);
+}
+
+// Force
+
+Force::Force(int _vehicleId, ATTACK_TYPE _attackType, double _hastyCoefficient)
+{
+	this->vehiclePad0 = getVehicle(_vehicleId)->pad_0;
+	this->attackType = _attackType;
+	this->hastyCoefficient = _hastyCoefficient;
+}
+
+int Force::getVehicleId()
+{
+	return getVehicleIdByAIId(vehiclePad0);
+}
+
+// TileMovementInfo
+
+bool TileMovementInfo::isBlocked(bool ignoreHostile)
+{
+	return (ignoreHostile ? blockedNeutral : blocked);
+}
+
+bool TileMovementInfo::isZoc(bool ignoreHostile)
+{
+	return (ignoreHostile ? zocNeutral : zoc);
+}
+
+// TileInfo
+
+bool TileInfo::isBlocked(int factionId, bool ignoreHostile)
+{
+	return (ignoreHostile ? movementInfos[factionId].blockedNeutral : movementInfos[factionId].blocked);
+}
+
+bool TileInfo::isZoc(int factionId, bool ignoreHostile)
+{
+	return (ignoreHostile ? movementInfos[factionId].zocNeutral : movementInfos[factionId].zoc);
 }
 
 // FoeUnitWeightTable
 
-FoeUnitWeightTable::FoeUnitWeightTable()
+void FoeUnitWeightTable::clear()
 {
-	foeUnitWeights = std::vector<std::vector<double>>(MaxPlayerNum, std::vector<double>(2 * MaxProtoFactionNum));
+	std::fill(weights.begin(), weights.end(), 0.0);
+}
+double FoeUnitWeightTable::get(int factionId, int unitId)
+{
+	return weights.at((2 * MaxProtoFactionNum) * factionId + getUnitSlotById(unitId));
+}
+void FoeUnitWeightTable::set(int factionId, int unitId, double weight)
+{
+	weights.at((2 * MaxProtoFactionNum) * factionId + getUnitSlotById(unitId)) = weight;
+}
+void FoeUnitWeightTable::add(int factionId, int unitId, double weight)
+{
+	weights.at((2 * MaxProtoFactionNum) * factionId + getUnitSlotById(unitId)) += weight;
 }
 
-double FoeUnitWeightTable::getFoeUnitWeight(int factionId, int unitId)
+// PoliceData
+
+void PoliceData::clear()
 {
-	return foeUnitWeights.at(factionId).at(getUnitIndex(unitId));
-}
-void FoeUnitWeightTable::setFoeUnitWeight(int factionId, int unitId, double weight)
-{
-	foeUnitWeights.at(factionId).at(getUnitIndex(unitId)) = weight;
-}
-void FoeUnitWeightTable::addFoeUnitWeight(int factionId, int unitId, double weight)
-{
-	foeUnitWeights.at(factionId).at(getUnitIndex(unitId)) += weight;
+	unitsAllowed = 0;
+	unitsProvided = 0;
+	dronesExisting = 0;
+	dronesQuelled = 0;
 }
 
-// BaseInfo
-
-BaseInfo::BaseInfo()
+void PoliceData::addVehicle(int vehicleId)
 {
-	for (unsigned int unitType = 0; unitType < UNIT_TYPE_COUNT; unitType++)
+	unitsProvided++;
+	dronesQuelled += (effect + (isVehicleHasAbility(vehicleId, ABL_POLICE_2X) ? 1 : 0));
+}
+
+bool PoliceData::isSatisfied()
+{
+	return (unitsProvided >= unitsAllowed || dronesQuelled >= dronesExisting);
+}
+
+// Production
+
+void Production::clear()
+{
+	unavailableBuildSites.clear();
+	seaColonyDemands.clear();
+	seaFormerDemands.clear();
+	seaPodPoppingDemands.clear();
+	landTerraformingRequestCounts.clear();
+	seaTerraformingRequestCounts.clear();
+}
+
+void Production::addTerraformingRequest(MAP *tile)
+{
+	bool tileOcean = is_ocean(tile);
+	int tileLandAssociation = getLandAssociation(tile, aiFactionId);
+	int tileOceanAssociation = getOceanAssociation(tile, aiFactionId);
+	
+	debug
+	(
+		"addTerraformingRequest tileOcean=%d [%3d] (%3d,%3d)"
+		"\n"
+		, tileOcean
+		, (tileOcean ? tileOceanAssociation : tileLandAssociation)
+		, getX(tile), getY(tile)
+	);
+	
+	if (!tileOcean)
 	{
-		unitTypeInfos[unitType].unitTypeName = UNIT_TYPE_NAMES[unitType];
+		landTerraformingRequestCounts[tileLandAssociation]++;
+	}
+	else
+	{
+		seaTerraformingRequestCounts[tileOceanAssociation]++;
 	}
 	
 }
 
-void BaseInfo::clear()
-{
-	for (unsigned int unitType = 0; unitType < UNIT_TYPE_COUNT; unitType++)
-	{
-		unitTypeInfos[unitType].clear();
-	}
+// Data
 
-}
-
-double BaseInfo::getAverageCombatEffect(int unitId)
+void Data::clear()
 {
-	return averageCombatEffects.at(getUnitIndex(unitId));
-}
+	// resize tileInfos to map size
 
-void BaseInfo::setAverageCombatEffect(int unitId, double averageCombatEffect)
-{
-	averageCombatEffects.at(getUnitIndex(unitId)) = averageCombatEffect;
-}
-
-double BaseInfo::getVehicleAverageCombatEffect(int vehicleId)
-{
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	
-	// adjust average combat effect to morale
-	
-	return getAverageCombatEffect(vehicle->unit_id) * getVehicleMoraleModifier(vehicleId, false);
-	
-}
-
-UnitTypeInfo *BaseInfo::getUnitTypeInfo(int unitId)
-{
-	return &(unitTypeInfos[getUnitType(unitId)]);
-}
-
-void BaseInfo::setUnitTypeComputedValues()
-{
-	debug("\t\tsetUnitTypeComputedValues\n");
-	for (UnitTypeInfo &unitTypeInfo : unitTypeInfos)
-	{
-		unitTypeInfo.setComputedValues();
-	}
-	
-}
-
-double BaseInfo::getTotalProtectionDemand()
-{
-	double totalProtectionDemand = 0.0;
-	
-	for (UnitTypeInfo &unitTypeInfo : unitTypeInfos)
-	{
-		totalProtectionDemand += unitTypeInfo.protectionDemand;
-	}
-	
-	return totalProtectionDemand;
-	
-}
-
-bool BaseInfo::isProtectionRequestSatisfied()
-{
-	bool protectionRequestSatisfied = true;
-	
-	for (UnitTypeInfo &unitTypeInfo : unitTypeInfos)
-	{
-		if (!unitTypeInfo.isProtectionRequestSatisfied())
-		{
-			protectionRequestSatisfied = false;
-			break;
-		}
-		
-	}
-	
-	return protectionRequestSatisfied;
-	
-}
-
-double BaseInfo::getRemainingProtectionRequest()
-{
-	double remainingProtectionRequest = 0.0;
-	
-	for (unsigned int unitType = 0; unitType < UNIT_TYPE_COUNT; unitType++)
-	{
-		UnitTypeInfo *unitTypeInfo = &(unitTypeInfos[unitType]);
-		
-		remainingProtectionRequest += unitTypeInfo->getRemainingProtectionRequest();
-		
-	}
-	
-	return remainingProtectionRequest;
-	
-}
-
-void Data::setup()
-{
-	// setup data
-	
-	tileInfos.resize(*map_area_tiles, {});
-//	baseInfos.resize(MaxBaseNum, {});
-	
-//	combatEffects.resize(MaxBaseNum * (2 * MaxProtoFactionNum) * MaxProtoNum);
-//	combatEffects = new CombatEffect[MaxBaseNum * (2 * MaxProtoFactionNum) * MaxProtoNum]();
-//	std::memset(combatEffects, 0, sizeof *combatEffects * (MaxBaseNum * (2 * MaxProtoFactionNum) * MaxProtoNum));
-	
-}
-
-void Data::cleanup()
-{
-	// cleanup data
-	
 	tileInfos.clear();
-//	baseInfos.clear();
-	
-//	combatEffects.clear();
-//	delete[] combatEffects;
-	
+	tileInfos.resize(*map_area_tiles, {});
+
 	// cleanup lists
-	
+
+	enemyStacks.clear();
 	production.clear();
 	baseIds.clear();
-	baseTiles.clear();
-	presenceRegions.clear();
-	regionBaseIds.clear();
-	regionBaseGroups.clear();
 	vehicleIds.clear();
 	activeCombatUnitIds.clear();
 	combatVehicleIds.clear();
@@ -194,11 +234,13 @@ void Data::cleanup()
 	prototypeUnitIds.clear();
 	colonyVehicleIds.clear();
 	formerVehicleIds.clear();
+	airFormerVehicleIds.clear();
+	landFormerVehicleIds.clear();
+	seaFormerVehicleIds.clear();
+	seaTransportVehicleIds.clear();
 	threatLevel = 0.0;
 	regionSurfaceCombatVehicleIds.clear();
 	regionSurfaceScoutVehicleIds.clear();
-	baseAnticipatedNativeAttackStrengths.clear();
-	baseRemainingNativeProtectionDemands.clear();
 	regionDefenseDemand.clear();
 	oceanAssociationMaxMineralSurpluses.clear();
 	landCombatUnitIds.clear();
@@ -207,132 +249,278 @@ void Data::cleanup()
 	landAndAirCombatUnitIds.clear();
 	seaAndAirCombatUnitIds.clear();
 	seaTransportRequestCounts.clear();
+	transportControl.clear();
 	tasks.clear();
-	
+
 }
 
 // access global data arrays
 
-BaseInfo *Data::getBaseInfo(int baseId)
+BaseInfo &Data::getBaseInfo(int baseId)
 {
 	assert(baseId >= 0 && baseId < *total_num_bases);
-	return &(aiData.baseInfos.at(baseId));
+	return aiData.baseInfos.at(baseId);
 }
 
-TileInfo *Data::getTileInfo(int mapIndex)
+TileInfo &Data::getTileInfo(int mapIndex)
 {
 	assert(mapIndex >= 0 && mapIndex < *map_area_tiles);
-	return &(aiData.tileInfos.at(mapIndex));
+	return aiData.tileInfos.at(mapIndex);
 }
-TileInfo *Data::getTileInfo(int x, int y)
+TileInfo &Data::getTileInfo(int x, int y)
 {
 	return getTileInfo(getMapIndexByCoordinates(x, y));
 }
-TileInfo *Data::getTileInfo(MAP *tile)
+TileInfo &Data::getTileInfo(MAP *tile)
 {
+	assert(tile != nullptr && tile >= *MapPtr && tile < *MapPtr + *map_area_tiles);
 	return getTileInfo(getMapIndexByPointer(tile));
 }
 
-// other methods
-
-double Data::getAverageCombatEffect(int unitId)
+TileMovementInfo &Data::getTileMovementInfo(MAP *tile, int factionId)
 {
-	return averageCombatEffects.at(getUnitIndex(unitId));
+	assert(tile != nullptr && tile >= *MapPtr && tile < *MapPtr + *map_area_tiles);
+	return getTileInfo(tile).movementInfos[factionId];
 }
 
-void Data::setAverageCombatEffect(int unitId, double averageCombatEffect)
-{
-	averageCombatEffects.at(getUnitIndex(unitId)) = averageCombatEffect;
-}
+// EnemyStackInfo
 
-double Data::getVehicleAverageCombatEffect(int vehicleId)
+void EnemyStackInfo::addVehicle(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	
-	// adjust average combat effect to morale
+	// add vehicle
 	
-	return getAverageCombatEffect(vehicle->unit_id) * getVehicleMoraleModifier(vehicleId, false);
+	vehicleIds.emplace_back(vehicleId);
 	
-}
-
-void UnitTypeInfo::clear()
-{
-	foeTotalWeight = 0.0;
-	ownTotalWeight = 0.0;
-	ownTotalCombatEffect = 0.0;
-	requiredProtection = 0.0;
-	providedProtection = 0.0;
-	protectionLevel = 0.0;
-	protectionDemand = 0.0;
-	protectors.clear();
-}
-
-bool UnitTypeInfo::isProtectionRequestSatisfied()
-{
-	return providedProtection >= requiredProtection - 0.1;
-}
-
-double UnitTypeInfo::getRemainingProtectionRequest()
-{
-	return std::max(0.0, requiredProtection - providedProtection);
-}
-
-void UnitTypeInfo::setComputedValues()
-{
-	// calculate required protection
-	
-	requiredProtection = foeTotalWeight * conf.ai_production_defense_superiority_coefficient;
-	
-	// calculate protection level
-	
-	if (ownTotalCombatEffect > requiredProtection && ownTotalCombatEffect > 0.0)
+	if (isArtilleryVehicle(vehicleId))
 	{
-		protectionLevel = +1.0 - (requiredProtection / ownTotalCombatEffect);
-	}
-	else if (ownTotalCombatEffect < requiredProtection && requiredProtection > 0.0)
-	{
-		protectionLevel = -1.0 + (ownTotalCombatEffect / requiredProtection);
-	}
-	else
-	{
-		protectionLevel = 0.0;
+		artilleryVehicleIds.emplace_back(vehicleId);
+		artillery = true;
+		targetable = true;
 	}
 	
-	// calculate defense demand
+	if (isBombardmentVehicle(vehicleId))
+	{
+		bombardmentVehicleIds.push_back(vehicleId);
+		bombardment = true;
+		targetable = true;
+	}
 	
-	protectionDemand = (protectionLevel >= 0.0 ? 0.0 : - protectionLevel);
+	// boolean flags
 	
-	debug("\t\t\t%-15s ownTotalCombatEffect=%5.2f, requiredProtection=%+5.2f, protectionLevel=%+5.2f, protectionDemand=%5.2f\n", unitTypeName, ownTotalCombatEffect, requiredProtection, protectionLevel, protectionDemand);
+	if (vehicle->faction_id == 0)
+	{
+		alien = true;
+		
+		switch (vehicle->unit_id)
+		{
+		case BSC_MIND_WORMS:
+			alienMelee = true;
+			alienMindWorms = true;
+			break;
+		case BSC_SPORE_LAUNCHER:
+			alienSporeLauncher = true;
+			break;
+		case BSC_FUNGAL_TOWER:
+			alienFungalTower = true;
+			break;
+		case BSC_ISLE_OF_THE_DEEP:
+		case BSC_SEALURK:
+		case BSC_LOCUSTS_OF_CHIRON:
+			alienMelee = true;
+			break;
+		}
+		
+	}
 	
-	// sort protectors by priority
+	if (isNeedlejetVehicle(vehicleId) && !isAtAirbase(vehicleId))
+	{
+		needlejetInFlight = true;
+	}
 	
-	std::sort(protectors.begin(), protectors.end(), compareIdDoubleValueDescending);
+	if (isArtifactVehicle(vehicleId))
+	{
+		artifact = true;
+	}
+	
+	// speed
+	
+	int speed = mod_veh_speed(vehicleId);
+	if (lowestSpeed == -1 || speed < lowestSpeed)
+	{
+		lowestSpeed = speed;
+	}
 	
 }
 
-// helper functions
-
-int getUnitType(int unitId)
+void EnemyStackInfo::setUnitEffect(int unitId, ATTACK_TYPE attackType, COMBAT_TYPE combatType, bool destructive, double effect)
 {
-	UNIT *unit = &(Units[unitId]);
+	CombatEffect &combatEffect = unitEffects.at(getUnitSlotById(unitId) * ATTACK_TYPE_COUNT + attackType);
+	combatEffect.combatType = combatType;
+	combatEffect.destructive = destructive;
+	combatEffect.effect = effect;
+}
+
+CombatEffect EnemyStackInfo::getUnitEffect(int unitId, ATTACK_TYPE attackType)
+{
+	return unitEffects.at(getUnitSlotById(unitId) * ATTACK_TYPE_COUNT + attackType);
+}
+
+CombatEffect EnemyStackInfo::getVehicleEffect(int vehicleId, ATTACK_TYPE attackType)
+{
+	CombatEffect combatEffect = getUnitEffect(getVehicle(vehicleId)->unit_id, attackType);
+	combatEffect.effect *=  getVehicleStrenghtMultiplier(vehicleId);
+	return combatEffect;
+}
+
+//void EnemyStackInfo::addProvidedEffect(int vehicleId, COMBAT_TYPE combatType)
+//{
+//	providedEffect += getVehicleEffect(vehicleId, combatType);
+//}
+//
+double EnemyStackInfo::getAverageUnitEffect(int unitId)
+{
+	int effectCount = 0;
+	double effectSum = 0.0;
 	
-	int unitType;
-	
-	if (unit->triad() == TRIAD_LAND && isUnitHasAbility(unitId, ABL_ARTILLERY))
+	if (isMeleeUnit(unitId))
 	{
-		unitType = UT_LAND_ARTILLERY;
-	}
-	else
-	{
-		unitType = UT_MELEE;
+		effectCount++;
+		effectSum += getUnitEffect(unitId, AT_MELEE).effect;
 	}
 	
-	return unitType;
+	if (isArtilleryUnit(unitId))
+	{
+		effectCount++;
+		effectSum += getUnitEffect(unitId, AT_ARTILLERY).effect;
+	}
+	
+	return (effectCount == 0 ? 0.0 : effectSum / (double)effectCount);
 	
 }
 
-const char *getUnitTypeName(int unitType)
+double EnemyStackInfo::getRequiredEffect(bool bombarded)
 {
-	return UNIT_TYPE_NAMES[unitType];
+	return (bombarded ? requiredEffectBombarded : requiredEffect);
+}
+
+// combat data
+
+double Data::getGlobalAverageUnitEffect(int unitId)
+{
+	return globalAverageUnitEffects.at(getUnitSlotById(unitId));
+}
+
+void Data::setGlobalAverageUnitEffect(int unitId, double effect)
+{
+	globalAverageUnitEffects.at(getUnitSlotById(unitId)) = effect;
+}
+
+// utility methods
+
+void Data::addSeaTransportRequest(int oceanAssociation)
+{
+	seaTransportRequestCounts[oceanAssociation]++;
+}
+
+std::vector<Transfer> &FactionGeography::getAssociationTransfers(int association1, int association2)
+{
+	return associationTransfers[association1][association2];
+}
+
+std::vector<Transfer> &FactionGeography::getOceanBaseTransfers(MAP *tile)
+{
+	return oceanBaseTransfers[tile];
+}
+
+// UnloadRequest
+
+UnloadRequest::UnloadRequest(int _vehicleId, MAP *_destination, MAP *_unboardLocation)
+{
+	this->vehiclePad0 = getVehicle(_vehicleId)->pad_0;
+	this->destination = _destination;
+	this->unboardLocation = _unboardLocation;
+}
+
+int UnloadRequest::getVehicleId()
+{
+	return getVehicleIdByAIId(this->vehiclePad0);
+}
+
+// TransitRequest
+
+TransitRequest::TransitRequest(int _vehicleId, MAP *_origin, MAP *_destination)
+{
+	this->vehiclePad0 = getVehicle(_vehicleId)->pad_0;
+	this->origin = _origin;
+	this->destination = _destination;
+}
+
+int TransitRequest::getVehicleId()
+{
+	return getVehicleIdByAIId(this->vehiclePad0);
+}
+
+void TransitRequest::setSeaTransportVehicleId(int seaTransportVehicleId)
+{
+	this->seaTransportVehiclePad0 = getVehicle(seaTransportVehicleId)->pad_0;
+}
+
+int TransitRequest::getSeaTransportVehicleId()
+{
+	return getVehicleIdByAIId(this->seaTransportVehiclePad0);
+}
+
+bool TransitRequest::isFulfilled()
+{
+	return this->seaTransportVehiclePad0 != -1;
+}
+
+// TransportControl
+
+void TransportControl::clear()
+{
+	unloadRequests.clear();
+	transitRequests.clear();
+}
+
+void TransportControl::addUnloadRequest(int seaTransportVehicleId, int vehicleId, MAP *destination, MAP *unboardLocation)
+{
+	VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
+	this->unloadRequests[seaTransportVehicle->pad_0].emplace_back(vehicleId, destination, unboardLocation);
+}
+
+std::vector<UnloadRequest> TransportControl::getSeaTransportUnloadRequests(int seaTransportVehicleId)
+{
+	VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
+	return this->unloadRequests[seaTransportVehicle->pad_0];
+}
+
+bool isWarzone(MAP *tile)
+{
+	return aiData.getTileInfo(tile).warzone;
+}
+
+// MovementAction
+
+MovementAction::MovementAction(MAP *_destination, int _movementAllowance)
+: destination{_destination}, movementAllowance{_movementAllowance}
+{
+}
+
+// CombatAction
+
+CombatAction::CombatAction(MAP *_destination, int _movementAllowance, ATTACK_TYPE _attackType, MAP *_attackTarget)
+: MovementAction(_destination, _movementAllowance), attackType{_attackType}, attackTarget{_attackTarget}
+{
+}
+
+// MutualLoss
+
+void MutualLoss::accumulate(MutualLoss &mutualLoss)
+{
+	own += mutualLoss.own;
+	foe += mutualLoss.foe;
 }
 

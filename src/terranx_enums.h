@@ -772,6 +772,7 @@ enum terrain_flags {
     TERRA_SUPPLY_POD = 0x10000000,
     TERRA_NUTRIENT_RES = 0x20000000,
     TERRA_SENSOR = 0x80000000,
+    TERRA_REACTOR_CORE = 0x2000000000,
 };
 
 enum terrain_landmarks {

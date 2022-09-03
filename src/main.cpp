@@ -18,6 +18,8 @@
 
 #include "main.h"
 #include "lib/ini.h"
+#include "ai.h"
+
 
 bool unknown_option = false;
 FILE* debug_log = NULL;
@@ -646,6 +648,65 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("wtp", "wtp_enabled_factions"))
+    {
+    	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
+		{
+			cf->wtp_enabled_factions[factionId] = (value[factionId - 1] == '0' ? false : true);
+		}
+    }
+    else if (MATCH("wtp", "ai_faction_income_a"))
+    {
+        cf->ai_faction_income_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_income_b"))
+    {
+        cf->ai_faction_income_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_income_c"))
+    {
+        cf->ai_faction_income_c = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_income_t1"))
+    {
+        cf->ai_faction_income_t1 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_income_a"))
+    {
+        cf->ai_base_income_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_income_b"))
+    {
+        cf->ai_base_income_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_worker_count_a"))
+    {
+        cf->ai_worker_count_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_worker_count_b"))
+    {
+        cf->ai_worker_count_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_worker_count_c"))
+    {
+        cf->ai_worker_count_c = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_size_a"))
+    {
+        cf->ai_base_size_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_size_b"))
+    {
+        cf->ai_base_size_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_size_c"))
+    {
+        cf->ai_base_size_c = atof(value);
+    }
+    else if (MATCH("wtp", "ai_citizen_income"))
+    {
+        cf->ai_citizen_income = atof(value);
+    }
     else if (MATCH("wtp", "ai_production_vanilla_priority_unit"))
     {
         cf->ai_production_vanilla_priority_unit = atof(value);
@@ -658,21 +719,9 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_vanilla_priority_facility = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_thinker_priority"))
+    else if (MATCH("wtp", "ai_production_project_mineral_surplus_fraction"))
     {
-        cf->ai_production_thinker_priority = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_military_priority"))
-    {
-        cf->ai_production_military_priority = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_military_priority_minimal"))
-    {
-        cf->ai_production_military_priority_minimal = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_project_build_time"))
-    {
-        cf->ai_production_project_build_time = atof(value);
+        cf->ai_production_project_mineral_surplus_fraction = atof(value);
     }
     else if (MATCH("wtp", "ai_production_threat_coefficient_human"))
     {
@@ -694,22 +743,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_threat_coefficient_other = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_defense_superiority_coefficient"))
-    {
-        cf->ai_production_defense_superiority_coefficient = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_min_native_protection"))
-    {
-        cf->ai_production_min_native_protection = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_max_native_protection"))
-    {
-        cf->ai_production_max_native_protection = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_native_protection_priority"))
-    {
-        cf->ai_production_native_protection_priority = atof(value);
-    }
     else if (MATCH("wtp", "ai_production_pod_per_scout"))
     {
         cf->ai_production_pod_per_scout = atof(value);
@@ -718,77 +751,41 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_pod_popping_priority = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_max_unpopulated_range"))
-    {
-        cf->ai_production_max_unpopulated_range = atoi(value);
-    }
-    else if (MATCH("wtp", "ai_production_expansion_coverage"))
-    {
-        cf->ai_production_expansion_coverage = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_ocean_expansion_coverage"))
-    {
-        cf->ai_production_ocean_expansion_coverage = atof(value);
-    }
     else if (MATCH("wtp", "ai_production_expansion_priority"))
     {
         cf->ai_production_expansion_priority = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_expansion_priority_per_population"))
+    else if (MATCH("wtp", "ai_production_expansion_same_continent_priority_multiplier"))
     {
-        cf->ai_production_expansion_priority_per_population = atof(value);
+        cf->ai_production_expansion_same_continent_priority_multiplier = atof(value);
     }
     else if (MATCH("wtp", "ai_production_combat_unit_turns_limit"))
     {
         cf->ai_production_combat_unit_turns_limit = atoi(value);
     }
-    else if (MATCH("wtp", "ai_production_multiplying_facility_priority"))
-    {
-        cf->ai_production_multiplying_facility_priority = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_faction_development_rate"))
-    {
-        cf->ai_production_faction_development_rate = std::max(0.0, atof(value));
-    }
     else if (MATCH("wtp", "ai_production_unit_min_mineral_surplus"))
     {
         cf->ai_production_unit_min_mineral_surplus = atoi(value);
     }
-    else if (MATCH("wtp", "ai_production_exploration_coverage"))
+    else if (MATCH("wtp", "ai_production_improvement_coverage_land"))
     {
-        cf->ai_production_exploration_coverage = atof(value);
+        cf->ai_production_improvement_coverage_land = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_improvement_coverage"))
+    else if (MATCH("wtp", "ai_production_improvement_coverage_ocean"))
     {
-        cf->ai_production_improvement_coverage = atof(value);
+        cf->ai_production_improvement_coverage_ocean = atof(value);
     }
     else if (MATCH("wtp", "ai_production_improvement_priority"))
     {
         cf->ai_production_improvement_priority = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_population_projection_turns"))
+    else if (MATCH("wtp", "ai_production_naval_yard_defense_priority"))
     {
-        cf->ai_production_population_projection_turns = atoi(value);
+        cf->ai_production_naval_yard_defense_priority = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_threat_level_threshold"))
+    else if (MATCH("wtp", "ai_production_aerospace_complex_defense_priority"))
     {
-        cf->ai_production_threat_level_threshold = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_prototyping_priority"))
-    {
-        cf->ai_production_prototyping_priority = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_command_center_priority"))
-    {
-        cf->ai_production_command_center_priority = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_naval_yard_priority"))
-    {
-        cf->ai_production_naval_yard_priority = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_aerospace_complex_priority"))
-    {
-        cf->ai_production_aerospace_complex_priority = atof(value);
+        cf->ai_production_aerospace_complex_defense_priority = atof(value);
     }
     else if (MATCH("wtp", "ai_production_inflation"))
     {
@@ -798,108 +795,103 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_production_income_interest_rate = atof(value);
     }
-    else if (MATCH("wtp", "ai_production_alien_threat_per_tile"))
-    {
-        cf->ai_production_alien_threat_per_tile = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_alien_threat_per_base"))
-    {
-        cf->ai_production_alien_threat_per_base = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_alien_hunting_outnumbering"))
-    {
-        cf->ai_production_alien_hunting_outnumbering = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_population_limit_priority"))
-    {
-        cf->ai_production_population_limit_priority = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_psych_priority"))
-    {
-        cf->ai_production_psych_priority = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_eco_damage_threshold"))
-    {
-        cf->ai_production_eco_damage_threshold = atoi(value);
-    }
-    else if (MATCH("wtp", "ai_production_eco_damage_priority"))
-    {
-        cf->ai_production_eco_damage_priority = atof(value);
-    }
     else if (MATCH("wtp", "ai_production_transport_priority"))
     {
         cf->ai_production_transport_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_support_ratio"))
+    {
+        cf->ai_production_support_ratio = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_base_protection_priority"))
+    {
+        cf->ai_production_base_protection_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_combat_priority"))
+    {
+        cf->ai_production_combat_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_alien_combat_priority"))
+    {
+        cf->ai_production_alien_combat_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_global_combat_superiority_land"))
+    {
+        cf->ai_production_global_combat_superiority_land = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_global_combat_superiority_sea"))
+    {
+        cf->ai_production_global_combat_superiority_sea = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_economical_combat_range_scale"))
+    {
+        cf->ai_production_economical_combat_range_scale = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_combat_unit_proportions"))
+    {
+		char *token;
+		const char *delimiter = ",";
+		token = strtok((char *)value, delimiter);
+		for(int i = 0; i < 3 && token != nullptr; i++, token = strtok(nullptr, delimiter))
+		{
+			cf->ai_production_combat_unit_proportions[i] = atof(token);
+		}
+    }
+    else if (MATCH("wtp", "ai_production_current_project_priority"))
+    {
+		cf->ai_production_current_project_priority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_defensive_facility_threat_threshold"))
+    {
+		cf->ai_production_defensive_facility_threat_threshold = atof(value);
+    }
+    else if (MATCH("wtp", "ai_production_psych_facility_priority"))
+    {
+		cf->ai_production_psych_facility_priority = atof(value);
     }
     else if (MATCH("wtp", "ai_expansion_weight_deep"))
     {
         cf->ai_expansion_weight_deep = atof(value);
     }
-    else if (MATCH("wtp", "ai_expansion_regular_weight_nutirent"))
+    else if (MATCH("wtp", "ai_expansion_travel_time_scale_base_threshold"))
     {
-        cf->ai_expansion_regular_weight_nutirent = atof(value);
+        cf->ai_expansion_travel_time_scale_base_threshold = atof(value);
     }
-    else if (MATCH("wtp", "ai_expansion_regular_weight_mineral"))
+    else if (MATCH("wtp", "ai_expansion_travel_time_scale_early"))
     {
-        cf->ai_expansion_regular_weight_mineral = atof(value);
+        cf->ai_expansion_travel_time_scale_early = atof(value);
     }
-    else if (MATCH("wtp", "ai_expansion_regular_weight_energy"))
+    else if (MATCH("wtp", "ai_expansion_travel_time_scale"))
     {
-        cf->ai_expansion_regular_weight_energy = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_bonus_extra_weight_nutirent"))
-    {
-        cf->ai_expansion_bonus_extra_weight_nutirent = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_bonus_extra_weight_mineral"))
-    {
-        cf->ai_expansion_bonus_extra_weight_mineral = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_bonus_extra_weight_energy"))
-    {
-        cf->ai_expansion_bonus_extra_weight_energy = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_time_penalty_base_threshold"))
-    {
-        cf->ai_expansion_time_penalty_base_threshold = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_time_penalty_early"))
-    {
-        cf->ai_expansion_time_penalty_early = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_time_penalty"))
-    {
-        cf->ai_expansion_time_penalty = atof(value);
+        cf->ai_expansion_travel_time_scale = atof(value);
     }
     else if (MATCH("wtp", "ai_expansion_coastal_base"))
     {
         cf->ai_expansion_coastal_base = atof(value);
     }
-    else if (MATCH("wtp", "ai_expansion_inland_base"))
+    else if (MATCH("wtp", "ai_expansion_ocean_connection_base"))
     {
-        cf->ai_expansion_inland_base = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_time_penalty"))
-    {
-        cf->ai_expansion_time_penalty = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_coastal_base"))
-    {
-        cf->ai_expansion_coastal_base = atof(value);
-    }
-    else if (MATCH("wtp", "ai_expansion_inland_base"))
-    {
-        cf->ai_expansion_inland_base = atof(value);
+        cf->ai_expansion_ocean_connection_base = atof(value);
     }
     else if (MATCH("wtp", "ai_expansion_placement"))
     {
         cf->ai_expansion_placement = atof(value);
     }
-    else if (MATCH("wtp", "wtp_enabled_factions"))
+    else if (MATCH("wtp", "ai_expansion_land_use_base_value"))
     {
-    	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
-		{
-			cf->wtp_enabled_factions[factionId] = (value[factionId - 1] == '0' ? false : true);
-		}
+        cf->ai_expansion_land_use_base_value = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_land_use_coefficient"))
+    {
+        cf->ai_expansion_land_use_coefficient = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_radius_overlap_base_value"))
+    {
+        cf->ai_expansion_radius_overlap_base_value = atof(value);
+    }
+    else if (MATCH("wtp", "ai_expansion_radius_overlap_coefficient"))
+    {
+        cf->ai_expansion_radius_overlap_coefficient = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_nutrientWeight"))
     {
@@ -917,21 +909,13 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_completion_bonus = atof(value);
     }
-    else if (MATCH("wtp", "ai_terraforming_rank_multiplier"))
-    {
-        cf->ai_terraforming_rank_multiplier = atof(value);
-    }
     else if (MATCH("wtp", "ai_terraforming_land_rocky_tile_threshold"))
     {
         cf->ai_terraforming_land_rocky_tile_threshold = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_travel_time_multiplier"))
     {
-        cf->ai_terraforming_travel_time_multiplier = atof(value);
-    }
-    else if (MATCH("wtp", "ai_terraforming_time_scale"))
-    {
-        cf->ai_terraforming_time_scale = atof(value);
+        cf->ai_terraforming_travel_time_multiplier = atoi(value);
     }
     else if (MATCH("wtp", "ai_terraforming_networkConnectionValue"))
     {
@@ -956,10 +940,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_terraforming_nearbyForestKelpPenalty"))
     {
         cf->ai_terraforming_nearbyForestKelpPenalty = atof(value);
-    }
-    else if (MATCH("wtp", "ai_terraforming_rankMultiplier"))
-    {
-        cf->ai_terraforming_rankMultiplier = atof(value);
     }
     else if (MATCH("wtp", "ai_terraforming_fitnessMultiplier"))
     {
@@ -997,17 +977,113 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_terraforming_sensorShoreRange = atof(value);
     }
-    else if (MATCH("wtp", "ai_combat_native_protection_minimal"))
+    else if (MATCH("wtp", "ai_terraforming_landBridgeValue"))
     {
-        cf->ai_combat_native_protection_minimal = atof(value);
+        cf->ai_terraforming_landBridgeValue = atof(value);
     }
-    else if (MATCH("wtp", "ai_combat_native_protection_per_pop"))
+    else if (MATCH("wtp", "ai_terraforming_landBridgeRangeScale"))
     {
-        cf->ai_combat_native_protection_per_pop = atof(value);
+        cf->ai_terraforming_landBridgeRangeScale = atof(value);
     }
-    else if (MATCH("wtp", "ai_combat_defense_demand_threshold"))
+    else if (MATCH("wtp", "ai_territory_threat_range_scale"))
     {
-        cf->ai_combat_defense_demand_threshold = atof(value);
+        cf->ai_territory_threat_range_scale = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_threat_travel_time_scale"))
+    {
+        cf->ai_base_threat_travel_time_scale = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_travel_time_scale"))
+    {
+        cf->ai_combat_travel_time_scale = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_travel_time_scale_base_protection"))
+    {
+        cf->ai_combat_travel_time_scale_base_protection = atof(value);
+    }
+    else if (MATCH("wtp", "ai_stack_attack_travel_time_scale"))
+    {
+        cf->ai_stack_attack_travel_time_scale = atof(value);
+    }
+    else if (MATCH("wtp", "ai_stack_bombardment_time_scale"))
+    {
+        cf->ai_stack_bombardment_time_scale = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_escape"))
+    {
+        cf->ai_combat_priority_escape = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_repair"))
+    {
+        cf->ai_combat_priority_repair = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_repair_partial"))
+    {
+        cf->ai_combat_priority_repair_partial = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_monolith_promotion"))
+    {
+        cf->ai_combat_priority_monolith_promotion = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_field_healing"))
+    {
+        cf->ai_combat_priority_field_healing = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_base_protection"))
+    {
+        cf->ai_combat_priority_base_protection = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_base_healing"))
+    {
+        cf->ai_combat_priority_base_healing = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_base_police2x"))
+    {
+        cf->ai_combat_priority_base_police2x = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_base_police"))
+    {
+        cf->ai_combat_priority_base_police = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_attack_priority_alien_mind_worms"))
+    {
+        cf->ai_combat_attack_priority_alien_mind_worms = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_attack_priority_alien_spore_launcher"))
+    {
+        cf->ai_combat_attack_priority_alien_spore_launcher = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_attack_priority_alien_fungal_tower"))
+    {
+        cf->ai_combat_attack_priority_alien_fungal_tower = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_attack_priority_base"))
+    {
+        cf->ai_combat_attack_priority_base = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_priority_pod"))
+    {
+        cf->ai_combat_priority_pod = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_base_protection_superiority"))
+    {
+        cf->ai_combat_base_protection_superiority = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_field_attack_superiority_required"))
+    {
+        cf->ai_combat_field_attack_superiority_required = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_field_attack_superiority_desired"))
+    {
+        cf->ai_combat_field_attack_superiority_desired = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_base_attack_superiority_required"))
+    {
+        cf->ai_combat_base_attack_superiority_required = atof(value);
+    }
+    else if (MATCH("wtp", "ai_combat_base_attack_superiority_desired"))
+    {
+        cf->ai_combat_base_attack_superiority_desired = atof(value);
     }
     // =WTP= configuratoin end
     else {
@@ -2105,7 +2181,15 @@ int robust, int immunity, int impunity, int penalty) {
         sc -= (vals[EFF] < -3 ? 20 : 14);
     }
     if (vals[SUP] < -3) {
-        sc -= 10;
+		if (isWtpEnabledFaction(faction) && conf.alternative_support)
+		{
+			// [WTP]
+			sc += 5 * vals[SUP];
+		}
+		else
+		{
+			sc -= 10;
+		}
     }
     if (vals[SUP] < 0) {
         sc -= (int)((1.0 - base_ratio) * 10.0);

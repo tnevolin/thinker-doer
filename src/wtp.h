@@ -1,7 +1,22 @@
 #pragma once
 
+#include <map>
 #include "main.h"
 #include "game.h"
+
+struct Profile
+{
+	std::string name;
+	int executionCount = 0;
+	clock_t startTime = 0;
+	clock_t totalTime = 0;
+	void start();
+	void stop();
+	int getCount();
+	double getTime();
+};
+extern std::map<std::string, Profile> executionProfiles;
+void profileFunction(const std::string &name, void (*f)());
 
 struct BASE_INFO
 {
@@ -130,10 +145,11 @@ HOOK_API int modifiedInefficiency(int energyIntake);
 HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3);
 HOOK_API void modifiedVehInitInBalance(int unitId, int factionId, int x, int y);
 void createFreeVehicles(int factionId);
-double getLandVehicleSpeedOnRoads(int id);
-double getLandVehicleSpeedOnTubes(int id);
+int getLandUnitSpeedOnRoads(int unitId);
+int getLandUnitSpeedOnTubes(int unitId);
+int getLandVehicleSpeedOnRoads(int id);
+int getLandVehicleSpeedOnTubes(int id);
 HOOK_API void modifiedWorldBuild();
-HOOK_API int modifiedZocMoveToFriendlyUnitTileCheck(int x, int y);
 int calculateNotPrototypedComponentsCost(int factionId, int chassisId, int weaponId, int armorId);
 HOOK_API int calculateNotPrototypedComponentsCostForProduction(int unitId);
 HOOK_API int calculateNotPrototypedComponentsCostForDesign(int chassisId, int weaponId, int armorId, int chassisPrototyped, int weaponPrototyped, int armorPrototyped);
@@ -171,7 +187,6 @@ HOOK_API void captureAttackerOdds(const int position, const int value);
 HOOK_API void captureDefenderOdds(const int position, const int value);
 HOOK_API void modifiedDisplayOdds(const char* file_name, const char* label, int a3, const char* pcx_file_name, int a5);
 double calculateWinningProbability(double p, int attackerHP, int defenderHP);
-double calculateExactBattleOdds(int attackerVehicleId, int defenderVehicleId, int attackerMovementAllowance);
 void simplifyOdds(int *attackerOdds, int *defenderOdds);
 HOOK_API int modifiedTechRate(int factionId);
 HOOK_API int modifiedTechPick(int factionId, int a2, int a3, int a4);
@@ -202,10 +217,15 @@ int __cdecl modified_base_production();
 int __cdecl modified_base_ecology();
 int getStockpileEnergy(int baseId);
 void __cdecl modified_base_yield();
-int __cdecl modified_stack_veh(int vehicleId, int a2);
 int __cdecl modified_order_veh(int vehicleId, int angle, int a3);
 bool isValidMovementAngle(int vehicleId, int angle);
 bool isAdjacentTransportAtSea(int vehicleId, int angle);
 void fixVehicleHomeBases(int factionId);
 void __cdecl modified_vehicle_range_boom(int x, int y, int flags);
+void __cdecl modified_stack_veh_disable_transport_pick_everybody(int vehicleId, int flag);
+void __cdecl modified_veh_skip_disable_non_transport_stop_in_base(int vehicleId);
+void __cdecl modified_alien_move(int vehicleId);
+int __cdecl modified_can_arty_in_alien_move(int unitId, bool allowSeaArty);
+void removeWrongVehiclesFromBases();
+void __cdecl modified_kill(int vehicleId);
 

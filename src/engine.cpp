@@ -1,5 +1,6 @@
 
 #include "engine.h"
+#include "ai.h"
 
 const char* ScriptTxtID = "SCRIPT";
 static int currentAttackerVehicleId = -1;
@@ -76,6 +77,11 @@ int __cdecl mod_faction_upkeep(int faction) {
     do_all_non_input();
     if (!(*game_state & STATE_GAME_DONE) || *game_state & STATE_FINAL_SCORE_DONE) {
         allocate_energy(faction);
+        // [WTP]
+        if (isWtpEnabledFaction(faction))
+		{
+			modifiedAllocatePsych(faction);
+		}
         do_all_non_input();
         enemy_diplomacy(faction);
         do_all_non_input();

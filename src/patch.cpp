@@ -34,10 +34,7 @@ bool FileExists(const char* path) {
 }
 
 int __cdecl mod_crop_yield(int faction, int base, int x, int y, int tf) {
-	// =WTP=
-	// use modified nutrient yield computation
-//    int value = crop_yield(faction, base, x, y, tf);
-    int value = mod_nutrient_yield(faction, base, x, y, tf);
+    int value = crop_yield(faction, base, x, y, tf);
     MAP* sq = mapsq(x, y);
     if (sq && sq->items & TERRA_THERMAL_BORE) {
         value++;
