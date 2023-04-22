@@ -407,8 +407,8 @@ struct Faction {
     int pop_total;
     int unk_70;
     int planet_busters;
-    int unk_71;
-    int unk_72;
+    int probe_teams;
+    int strategy_flags_1;
     /*
     AI planning variables that relate to faction units in specific disjoint land/water areas.
     All of these are indexed by the region value in MAP struct.

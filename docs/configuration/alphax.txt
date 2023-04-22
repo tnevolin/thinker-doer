@@ -498,7 +498,7 @@ Resonance 8 Armor,   8-Res,       8, 1,11, Disable,
 Super Former,           2, EcoEng2,  Super,     000000010111, Terraform rate doubled
 Deep Radar,             0, MilAlg,   ,          010000111111, Sees 2 spaces
 Cloaking Device,        2, Surface,  Cloaked,   000001111001, Invisible; Ignores ZOCs
-Amphibious Pods,        1, AdapDoc,  Amphibious,000000101001, Attacks from ship
+Amphibious Pods,        0, AdapDoc,  Amphibious,000000101001, Attacks from ship
 Drop Pods,              2, MindMac,  Drop,      000000111001, Makes air drops
 Air Superiority,        0, DocAir,   SAM,       010000001111, Attacks air units
 Deep Pressure Hull,     1, Disable,  Sub,       000000111010, Operates underwater

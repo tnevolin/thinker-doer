@@ -43,6 +43,178 @@ void patch_battle_compute()
 }
 
 /*
+Disables boom time delay.
+*/
+void patch_disable_boom_delay()
+{
+    int disable_boom_delay_bytes_length = 0x2;
+    
+    /*
+	0:  3b d7                   cmp    edx,edi
+	*/
+    byte disable_boom_delay_bytes_old[] =
+		{ 0x3B, 0xD7 }
+    ;
+    
+    /*
+	0:  39 d2                   cmp    edx,edx
+	*/
+    byte disable_boom_delay_bytes_new[] =
+        { 0x39, 0xD2 }
+    ;
+
+    write_bytes
+    (
+        0x00505B1B,
+        disable_boom_delay_bytes_old,
+        disable_boom_delay_bytes_new,
+        disable_boom_delay_bytes_length
+    )
+    ;
+    
+}
+
+/*
+Disables boom time delay.
+*/
+void patch_disable_battle_refresh()
+{
+    int disable_battle_refresh_bytes_length = 0x7;
+    
+    /*
+	0:  c7 45 94 03 00 00 00    mov    DWORD PTR [ebp-0x6c],0x3
+	*/
+    byte disable_battle_refresh_bytes_old[] =
+		{ 0xC7, 0x45, 0x94, 0x03, 0x00, 0x00, 0x00 }
+    ;
+    
+    /*
+	0:  c7 45 94 00 00 00 00    mov    DWORD PTR [ebp-0x6c],0x0
+	*/
+    byte disable_battle_refresh_bytes_new[] =
+        { 0xC7, 0x45, 0x94, 0x00, 0x00, 0x00, 0x00 }
+    ;
+
+    write_bytes
+    (
+        0x00508FDC,
+        disable_battle_refresh_bytes_old,
+        disable_battle_refresh_bytes_new,
+        disable_battle_refresh_bytes_length
+    )
+    ;
+    
+}
+
+/*
+Disables boom drawing.
+*/
+void patch_disable_boom()
+{
+    remove_call(0x005088D2);
+    remove_call(0x00509064);
+    remove_call(0x0050925D);
+    remove_call(0x005096A8);
+    remove_call(0x00509B24);
+    remove_call(0x00509D3A);
+    
+}
+
+/*
+Disables tile drawing.
+*/
+void patch_disable_battle_calls()
+{
+	// tile draw
+	
+    remove_call(0x0050884B);
+    remove_call(0x0050885A);
+    remove_call(0x00508967);
+    remove_call(0x00508BDB);
+    remove_call(0x00508BEA);
+    remove_call(0x00508C7D);
+    remove_call(0x00508C8C);
+    remove_call(0x005092CB);
+    remove_call(0x005092D4);
+    remove_call(0x00509713);
+    remove_call(0x00509722);
+    remove_call(0x00509877);
+    remove_call(0x0050B2CD);
+    remove_call(0x0050B316);
+    remove_call(0x0050B347);
+    
+    // set_iface_mode
+    
+    remove_call(0x00507D4D);
+    remove_call(0x00507E91);
+    remove_call(0x00508867);
+    remove_call(0x00508C08);
+    
+    // status draw
+    
+    remove_call(0x00507D74);
+    remove_call(0x00507EB8);
+    remove_call(0x0050888A);
+    remove_call(0x00508958);
+    remove_call(0x00508C2D);
+    remove_call(0x0050924E);
+    remove_call(0x00509699);
+    remove_call(0x00509A75);
+    
+    // flush_input
+    
+    remove_call(0x00508899);
+    remove_call(0x00508C3C);
+    
+    // sub_55A150
+    
+    remove_call(0x00508C63);
+    
+}
+
+void patch_disable_focus()
+{
+    int disable_focus1_bytes_length = 0xd;
+    
+    byte disable_focus1_bytes_old[] =
+		{ 0x51, 0x52, 0x50, 0xB9, 0xB0, 0x56, 0x91, 0x00, 0xE8, 0x63, 0x80, 0x00, 0x00 }
+    ;
+    
+    byte disable_focus1_bytes_new[] =
+        { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00508830,
+        disable_focus1_bytes_old,
+        disable_focus1_bytes_new,
+        disable_focus1_bytes_length
+    )
+    ;
+    
+    int disable_focus2_bytes_length = 0xc;
+    
+    byte disable_focus2_bytes_old[] =
+		{ 0x52, 0x50, 0xB9, 0xB0, 0x56, 0x91, 0x00, 0xE8, 0xD3, 0x7C, 0x00, 0x00 }
+    ;
+    
+    byte disable_focus2_bytes_new[] =
+        { 0x83, 0xC4, 0x04, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+    ;
+
+    write_bytes
+    (
+        0x00508BC1,
+        disable_focus2_bytes_old,
+        disable_focus2_bytes_new,
+        disable_focus2_bytes_length
+    )
+    ;
+    
+}
+
+/*
 Patch read basic rules.
 */
 void patch_read_basic_rules()
@@ -1593,9 +1765,8 @@ void patch_tile_yield()
 	write_call(0x004E7DE4, (int)mod_nutrient_yield);
 	write_call(0x004E7F04, (int)mod_nutrient_yield);
 	write_call(0x004E8034, (int)mod_nutrient_yield);
-	// this call is already patched by Thinker
-	// Thinker will delegate to it
-//	write_call(0x004E888C, (int)mod_nutrient_yield);
+	// this call overrides Thinker's
+	write_call_over(0x004E888C, (int)mod_nutrient_yield);
 	write_call(0x004E96F4, (int)mod_nutrient_yield);
 	write_call(0x004ED7F1, (int)mod_nutrient_yield);
 	write_call(0x00565878, (int)mod_nutrient_yield);
@@ -1833,15 +2004,15 @@ void patch_se_growth_rating_max(int se_growth_rating_max)
 
 	// patch population boom condition in base_doctors
 
-	int popboom_condition_base_doctors_bytes_length = 7;
-	byte popboom_condition_base_doctors_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
-	byte popboom_condition_base_doctors_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_max + 1) };
+	int popboom_condition_base_doctorss_bytes_length = 7;
+	byte popboom_condition_base_doctorss_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
+	byte popboom_condition_base_doctorss_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_max + 1) };
 	write_bytes
 	(
 		0x004F6070,
-		popboom_condition_base_doctors_bytes_old,
-		popboom_condition_base_doctors_bytes_new,
-		popboom_condition_base_doctors_bytes_length
+		popboom_condition_base_doctorss_bytes_old,
+		popboom_condition_base_doctorss_bytes_new,
+		popboom_condition_base_doctorss_bytes_length
 	);
 
 	// patch cost_factor nutrient max
@@ -2241,15 +2412,52 @@ void patch_world_build()
 
 }
 
-/*
-Overrides check for frendly unit in target tile.
-*/
-void patch_zoc_move_to_friendly_unit_tile_check()
-{
-	write_call(0x005948E5, (int)modifiedZocMoveToFriendlyUnitTileCheck);
-
-}
-
+///*
+//Overrides check for frendly unit in target tile.
+//*/
+//void patch_zoc_regular_army_sneaking_disabled()
+//{
+////	// disable same dst vehicle owner check
+////	
+////	int zoc_regular_army_sneaking_disabled_same_bytes_length = 0x3;
+////	byte zoc_regular_army_sneaking_disabled_same_bytes_old[] = { 0x8B, 0x4D, 0xE4 };
+////	byte zoc_regular_army_sneaking_disabled_same_bytes_new[] = { 0xB1, 0x08, 0x90 };
+////	write_bytes
+////	(
+////		0x00595156,
+////		zoc_regular_army_sneaking_disabled_same_bytes_old,
+////		zoc_regular_army_sneaking_disabled_same_bytes_new,
+////		zoc_regular_army_sneaking_disabled_same_bytes_length
+////	);
+////	
+////	// disable pact dst vehicle owner check
+////	
+////	int zoc_regular_army_sneaking_disabled_pact_bytes_length = 0x8;
+////	byte zoc_regular_army_sneaking_disabled_pact_bytes_old[] = { 0xF6, 0x04, 0x8D, 0xF8, 0xC9, 0x96, 0x00, 0x01 };
+////	byte zoc_regular_army_sneaking_disabled_pact_bytes_new[] = { 0x39, 0xE4, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+////	write_bytes
+////	(
+////		0x0059517B,
+////		zoc_regular_army_sneaking_disabled_pact_bytes_old,
+////		zoc_regular_army_sneaking_disabled_pact_bytes_new,
+////		zoc_regular_army_sneaking_disabled_pact_bytes_length
+////	);
+////	
+//	// disable dst vehicle check
+//	
+//	int zoc_regular_army_sneaking_disabled_dst_veh_bytes_length = 0x5;
+//	byte zoc_regular_army_sneaking_disabled_dst_veh_bytes_old[] = { 0x8B, 0x45, 0xE0, 0x85, 0xC0 };
+//	byte zoc_regular_army_sneaking_disabled_dst_veh_bytes_new[] = { 0x31, 0xC0, 0x83, 0xF8, 0x08 };
+//	write_bytes
+//	(
+//		0x00595385,
+//		zoc_regular_army_sneaking_disabled_dst_veh_bytes_old,
+//		zoc_regular_army_sneaking_disabled_dst_veh_bytes_new,
+//		zoc_regular_army_sneaking_disabled_dst_veh_bytes_length
+//	);
+//	
+//}
+//
 /*
 Modifies biology lab research bonus.
 */
@@ -2265,7 +2473,7 @@ void patch_biology_lab_research_bonus(int biology_lab_research_bonus)
 		biology_lab_research_bonus_bytes_new,
 		biology_lab_research_bonus_bytes_length
 	);
-
+	
 }
 
 /*
@@ -4642,7 +4850,8 @@ void patch_limit_orbit_intake()
 void patch_ai_transport_change()
 {
    	write_call(0x004CB3BA, (int)modified_order_veh);
-    
+   	
+   	write_call(0x0053179F, (int)modified_order_veh);
 }
 
 /*
@@ -4808,65 +5017,173 @@ void patch_disable_vehicle_reassignment()
     
 }
 
-/*
-Disables boom time delay.
-*/
-void patch_disable_boom_delay()
+void patch_always_support_natives()
 {
-    int disable_boom_delay_bytes_length = 0x2;
+    int always_support_natives_bytes_length = 0x4;
     
     /*
-	0:  3b d7                   cmp    edx,edi
+	0:  f6 40 08 20             test   BYTE PTR [eax+0x8],0x20
 	*/
-    byte disable_boom_delay_bytes_old[] =
-		{ 0x3B, 0xD7 }
+    byte always_support_natives_bytes_old[] =
+		{ 0xF6, 0x40, 0x08, 0x20 }
     ;
     
     /*
-	0:  39 d2                   cmp    edx,edx
+	0:  f6 40 08 00             test   BYTE PTR [eax+0x8],0x0
 	*/
-    byte disable_boom_delay_bytes_new[] =
-        { 0x39, 0xD2 }
+    byte always_support_natives_bytes_new[] =
+        { 0xF6, 0x40, 0x08, 0x00 }
     ;
 
     write_bytes
     (
-        0x00505B1B,
-        disable_boom_delay_bytes_old,
-        disable_boom_delay_bytes_new,
-        disable_boom_delay_bytes_length
+        0x004E987E,
+        always_support_natives_bytes_old,
+        always_support_natives_bytes_new,
+        always_support_natives_bytes_length
     )
     ;
     
 }
 
 /*
-Disables boom time delay.
+Disables transport to pick not boarded vehicles.
 */
-void patch_disable_battle_refresh()
+void patch_transport_pick_everybody()
 {
-    int disable_battle_refresh_bytes_length = 0x7;
+   	write_call(0x005980AE, (int)modified_stack_veh_disable_transport_pick_everybody);
+	
+}
+
+/*
+Disables non transport vehicles to stop turn in base.
+*/
+void patch_non_transport_stop_in_base()
+{
+   	write_call(0x004CB53C, (int)modified_veh_skip_disable_non_transport_stop_in_base);
+	
+}
+
+void patch_disable_alien_ranged_from_transport()
+{
+   	write_call(0x0056B65E, (int)modified_alien_move);
+   	write_call(0x00566ED9, (int)modified_can_arty_in_alien_move);
+	
+}
+
+void patch_disable_kill_ai()
+{
+   	write_call(0x00561C32, (int)modified_kill);
+   	write_call(0x00561D3A, (int)modified_kill);
+	
+}
+
+void patch_no_stagnation()
+{
+    int no_stagnation_length = 0x31;
     
     /*
-	0:  c7 45 94 03 00 00 00    mov    DWORD PTR [ebp-0x6c],0x3
+	0:  8b 3d 38 e9 90 00       mov    edi,DWORD PTR ds:0x90e938
+	6:  8b 35 30 ea 90 00       mov    esi,DWORD PTR ds:0x90ea30
+	c:  8b c7                   mov    eax,edi
+	e:  c7 45 b4 00 00 00 00    mov    DWORD PTR [ebp-0x4c],0x0
+	15: 99                      cdq
+	16: f7 3d 3c 97 94 00       idiv   DWORD PTR ds:0x94973c
+	1c: 0f be 5e 06             movsx  ebx,BYTE PTR [esi+0x6]
+	20: 0f af 1d 3c 97 94 00    imul   ebx,DWORD PTR ds:0x94973c
+	27: 8b 8e c0 00 00 00       mov    ecx,DWORD PTR [esi+0xc0]
+	2d: 03 c1                   add    eax,ecx
+	2f: 3b c3                   cmp    eax,ebx
 	*/
-    byte disable_battle_refresh_bytes_old[] =
-		{ 0xC7, 0x45, 0x94, 0x03, 0x00, 0x00, 0x00 }
+    byte no_stagnation_old[] =
+		{ 0x8B, 0x3D, 0x38, 0xE9, 0x90, 0x00, 0x8B, 0x35, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0xC7, 0xC7, 0x45, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x99, 0xF7, 0x3D, 0x3C, 0x97, 0x94, 0x00, 0x0F, 0xBE, 0x5E, 0x06, 0x0F, 0xAF, 0x1D, 0x3C, 0x97, 0x94, 0x00, 0x8B, 0x8E, 0xC0, 0x00, 0x00, 0x00, 0x03, 0xC1, 0x3B, 0xC3 }
     ;
+	
+    /*
+	0:  c7 45 b4 00 00 00 00    mov    DWORD PTR [ebp-0x4c],0x0
+	7:  8b 3d 38 e9 90 00       mov    edi,DWORD PTR ds:0x90e938
+	d:  8b 35 30 ea 90 00       mov    esi,DWORD PTR ds:0x90ea30
+	13: 0f be 5e 06             movsx  ebx,BYTE PTR [esi+0x6]
+	17: 0f af 1d 3c 97 94 00    imul   ebx,DWORD PTR ds:0x94973c
+	1e: 0f be 46 06             movsx  eax,BYTE PTR [esi+0x6]
+	22: 83 c0 02                add    eax,0x2
+	25: d1 e8                   shr    eax,1
+	27: 01 d8                   add    eax,ebx
+	29: 8b 8e c0 00 00 00       mov    ecx,DWORD PTR [esi+0xc0]
+	2f: 39 c1                   cmp    ecx,eax
+	*/
+    byte no_stagnation_new[] =
+        { 0xC7, 0x45, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x8B, 0x3D, 0x38, 0xE9, 0x90, 0x00, 0x8B, 0x35, 0x30, 0xEA, 0x90, 0x00, 0x0F, 0xBE, 0x5E, 0x06, 0x0F, 0xAF, 0x1D, 0x3C, 0x97, 0x94, 0x00, 0x0F, 0xBE, 0x46, 0x06, 0x83, 0xC0, 0x02, 0xD1, 0xE8, 0x01, 0xD8, 0x8B, 0x8E, 0xC0, 0x00, 0x00, 0x00, 0x39, 0xC1 }
+    ;
+	
+    write_bytes
+    (
+        0x004E88E1,
+        no_stagnation_old,
+        no_stagnation_new,
+        no_stagnation_length
+    )
+    ;
+	
+}
+
+/**
+Fixes vanilla bug when faction bonus is applied to other base.
+*/
+void patch_capture_base()
+{
+    int capture_base_length = 0x6;
     
     /*
-	0:  c7 45 94 00 00 00 00    mov    DWORD PTR [ebp-0x6c],0x0
+	0:  8b 15 70 93 68 00       mov    edx,DWORD PTR ds:0x689370
 	*/
-    byte disable_battle_refresh_bytes_new[] =
-        { 0xC7, 0x45, 0x94, 0x00, 0x00, 0x00, 0x00 }
+    byte capture_base_old[] =
+		{ 0x8B, 0x15, 0x70, 0x93, 0x68, 0x00 }
+    ;
+	
+    /*
+    0:  8b 55 08                mov    edx,DWORD PTR [ebp+0x8]
+	...
+	*/
+    byte capture_base_new[] =
+        { 0x8B, 0x55, 0x08, 0x90, 0x90, 0x90 }
+    ;
+	
+    write_bytes
+    (
+        0x0050D34A,
+        capture_base_old,
+        capture_base_new,
+        capture_base_length
+    )
+    ;
+	
+}
+
+void patch_accelerate_order_veh()
+{
+    int disable_order_veh_draw_length = 0x5;
+
+    /*
+	0:  3b c8                   cmp    ecx,eax
+	*/
+    byte disable_order_veh_draw_old[] =
+		{ 0xE8, 0xD6, 0x1F, 0xFC, 0xFF }
+    ;
+
+    /*
+	0:  39 c9                   cmp    ecx,ecx
+    */
+    byte disable_order_veh_draw_new[] =
+        { 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
 
     write_bytes
     (
-        0x00508FDC,
-        disable_battle_refresh_bytes_old,
-        disable_battle_refresh_bytes_new,
-        disable_battle_refresh_bytes_length
+        0x00598175,
+        disable_order_veh_draw_old,
+        disable_order_veh_draw_new,
+        disable_order_veh_draw_length
     )
     ;
     
@@ -4878,6 +5195,18 @@ void patch_disable_battle_refresh()
 
 void patch_setup_wtp(Config* cf)
 {
+	// debug mode game speedup
+	
+	if (DEBUG)
+	{
+//		patch_disable_boom_delay();
+//		patch_disable_battle_refresh();
+//		patch_accelerate_order_veh();
+//		patch_disable_boom();
+//		patch_disable_battle_calls();
+//		patch_disable_focus();
+	}
+
 	// integrated into Thinker
 //	// patch AI vehicle home base reassignment bug
 //	// originally it reassigned to bases with mineral_surplus < 2
@@ -5240,11 +5569,11 @@ void patch_setup_wtp(Config* cf)
 
 	patch_world_build();
 
-	if (cf->zoc_regular_army_sneaking_disabled)
-	{
-		patch_zoc_move_to_friendly_unit_tile_check();
-	}
-
+//	if (cf->zoc_regular_army_sneaking_disabled)
+//	{
+//		patch_zoc_regular_army_sneaking_disabled();
+//	}
+//
 	if (cf->biology_lab_research_bonus != 2)
 	{
 		patch_biology_lab_research_bonus(cf->biology_lab_research_bonus);
@@ -5483,9 +5812,20 @@ void patch_setup_wtp(Config* cf)
 	patch_vehicle_boom();
 	
 	patch_disable_vehicle_reassignment();
-
-	patch_disable_boom_delay();
-	patch_disable_battle_refresh();
-
+	
+	patch_always_support_natives();
+	
+	patch_transport_pick_everybody();
+	
+	patch_non_transport_stop_in_base();
+	
+	patch_disable_alien_ranged_from_transport();
+	
+	patch_disable_kill_ai();
+	
+	patch_no_stagnation();
+	
+	patch_capture_base();
+	
 }
 

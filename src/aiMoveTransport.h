@@ -18,7 +18,7 @@ struct DeliveryLocation
 
 void moveTranportStrategy();
 void moveSeaTransportStrategy(int vehicleId);
-void moveEmptySeaTransportStrategy(int vehicleId);
+void moveAvailableSeaTransportStrategy(int vehicleId);
 void moveLoadedSeaTransportStrategy(int vehicleId, int passengerId);
 int getCarryingArtifactVehicleId(int transportVehicleId);
 bool isCarryingArtifact(int vehicleId);
@@ -36,7 +36,8 @@ void popPodStrategy(int vehicleId);
 DeliveryLocation getSeaTransportDeliveryLocation(int seaTransportVehicleId, int passengerVehicleId, MAP *destination);
 bool isInOceanRegion(int vehicleId, int region);
 int getCarryingScoutVehicleId(int transportVehicleId);
-int getCrossOceanAssociation(int vehicleId, MAP *terminalTile);
+int getCrossOceanAssociation(MAP *origin, int destinationAssociation, int factionId);
+int getFirstLandAssociation(int oceanAssociation, int destinationAssociation, int factionId);
 int getAvailableSeaTransport(int oceanRegion, int vehicleId);
 int getAvailableSeaTransportInStack(int vehicleId);
 MAP *getSeaTransportLoadLocation(int seaTransportVehicleId, int passengerVehicleId, MAP *destination);

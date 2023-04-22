@@ -37,7 +37,7 @@ void considerHurryingProduction(int factionId)
     
 	// apply only when there is something to spend
 
-	if (spendPool == 0)
+	if (spendPool <= 0)
 		return;
 
 	// sort out bases
@@ -62,27 +62,27 @@ void considerHurryingProduction(int factionId)
 		
 		// check if base is unprotected
 		
-		bool unprotected = (getBaseGarrison(baseId).size() == 0);
-
+		bool unprotected = (getBaseInfantryDefenderGarrison(baseId).size() == 0);
+		
 		// get built item
-
+		
 		int item = base->queue_items[0];
-
+		
 		// get base mineral surplus
-
+		
 		int mineralSurplus = base->mineral_surplus;
 		
 		// do not rush unit production in bases with low mineral surplus unless unprotected
 		
 		if (!unprotected && item >= 0 && mineralSurplus < conf.ai_production_unit_min_mineral_surplus)
 			continue;
-
+		
 		// calculate weight
-
+		
 		double weight = 1.0 / (double)(std::max(1, mineralSurplus));
-
+		
 		// sort bases
-
+		
 		if (unprotected && item >= 0 && isCombatUnit(item))
 		{
 			unprotectedBases.push_back({baseId, weight});
@@ -116,20 +116,22 @@ void considerHurryingProduction(int factionId)
 				facilityBases.push_back({baseId, weight});
 				facilityBasesWeightSum += weight;
 			}
-
+			
 		}
-
+		
 	}
-
+	
 	// hurry production by priority
-
+	
 	if (unprotectedBases.size() >= 1 && unprotectedBasesWeightSum > 0.0)
 	{
 		debug("\tunprotectedBases\n");
 		
+		double spendPortion = 1.0;
+		
 		for (BASE_WEIGHT &baseWeight : unprotectedBases)
 		{
-			int allowance = (int)(floor((double)spendPool * baseWeight.weight / unprotectedBasesWeightSum));
+			int allowance = (int)(floor(spendPortion * (double)spendPool * baseWeight.weight / unprotectedBasesWeightSum));
 			hurryProductionPartially(baseWeight.baseId, allowance);
 			debug("\t\t%-25s allowance=%d, spendPool=%d, relativeWeight=%5.2f\n", Bases[baseWeight.baseId].name, allowance, spendPool, baseWeight.weight / unprotectedBasesWeightSum);
 			
@@ -138,6 +140,8 @@ void considerHurryingProduction(int factionId)
 	}
 	else if (importantFacilityBases.size() >= 1 && importantFacilityBasesWeightSum > 0.0)
 	{
+		double spendPortion = 0.5;
+		
 		for
 		(
 			std::vector<BASE_WEIGHT>::iterator importantFacilityBasesIterator = importantFacilityBases.begin();
@@ -147,13 +151,15 @@ void considerHurryingProduction(int factionId)
 		{
 			BASE_WEIGHT *baseWeight = &(*importantFacilityBasesIterator);
 
-			int allowance = (int)(floor((double)spendPool * baseWeight->weight / importantFacilityBasesWeightSum));
+			int allowance = (int)(floor(spendPortion * (double)spendPool * baseWeight->weight / importantFacilityBasesWeightSum));
 			hurryProductionPartially(baseWeight->baseId, allowance);
 		}
 
 	}
 	else if (facilityBases.size() >= 1 && facilityBasesWeightSum > 0.0)
 	{
+		double spendPortion = 0.2;
+		
 		for
 		(
 			std::vector<BASE_WEIGHT>::iterator facilityBasesIterator = facilityBases.begin();
@@ -163,13 +169,15 @@ void considerHurryingProduction(int factionId)
 		{
 			BASE_WEIGHT *baseWeight = &(*facilityBasesIterator);
 
-			int allowance = (int)(floor((double)spendPool * baseWeight->weight / facilityBasesWeightSum));
+			int allowance = (int)(floor(spendPortion * (double)spendPool * baseWeight->weight / facilityBasesWeightSum));
 			hurryProductionPartially(baseWeight->baseId, allowance);
 		}
 
 	}
 	else if (unitBases.size() >= 1 && unitBasesWeightSum > 0.0)
 	{
+		double spendPortion = 0.2;
+		
 		for
 		(
 			std::vector<BASE_WEIGHT>::iterator unitBasesIterator = unitBases.begin();
@@ -179,7 +187,7 @@ void considerHurryingProduction(int factionId)
 		{
 			BASE_WEIGHT *baseWeight = &(*unitBasesIterator);
 
-			int allowance = (int)(floor((double)spendPool * baseWeight->weight / unitBasesWeightSum));
+			int allowance = (int)(floor(spendPortion * (double)spendPool * baseWeight->weight / unitBasesWeightSum));
 			hurryProductionPartially(baseWeight->baseId, allowance);
 		}
 

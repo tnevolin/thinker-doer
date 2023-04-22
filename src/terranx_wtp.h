@@ -8,10 +8,24 @@
 extern const int NO_SYNC;
 extern const char* scriptTxtID;
 
+// offsets
+
+extern const unsigned int TABLE_next_cell_count;
+extern const int *TABLE_next_cell_x;
+extern const int *TABLE_next_cell_y;
+
+extern const unsigned int TABLE_square_block_radius_count;
+extern const unsigned int *TABLE_square_block_radius;
+extern const unsigned int TABLE_square_block_radius_base_internal;
+extern const unsigned int TABLE_square_block_radius_base_external;
+extern const int *TABLE_square_offset_x;
+extern const int *TABLE_square_offset_y;
+
 // Path
 
 extern CPath* PATH;
 extern FPath_find PATH_find;
+extern int *PATH_flags;
 
 // battle computation display variables
 
@@ -174,4 +188,16 @@ extern fp_0void *base_minerals;
 extern fp_0void *base_yield;
 extern fp_3void *boom;
 extern fp_2void *energy_compute;
+extern fp_2int *breed_mod;
+extern fp_0void *base_psych;
+extern fp_0void *base_drones;
+extern fp_0void *base_doctors;
+extern fp_0void *base_energy;
+extern fp_2void *prune_protos;
+extern fp_2int *tx_can_arty;
+extern fp_1void *alien_move;
+extern fp_5void *clip;
+extern fp_2void *enemies_war;
+extern fp_2int *base_at;
+extern fp_3int* zoc_move;
 

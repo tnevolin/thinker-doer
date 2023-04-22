@@ -33,6 +33,7 @@
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
+					<Add option="-std=c++14" />
 					<Add option="-O3 -fno-strict-aliasing -fno-delete-null-pointer-checks" />
 					<Add option="-DBUILD_DLL" />
 				</Compiler>
@@ -51,6 +52,7 @@
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
+					<Add option="-std=c++14" />
 					<Add option="-O3 -fno-strict-aliasing -fno-delete-null-pointer-checks" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-DBUILD_REL" />
@@ -103,12 +105,14 @@
 		<Unit filename="src/aiMoveCombat.h" />
 		<Unit filename="src/aiMoveFormer.cpp" />
 		<Unit filename="src/aiMoveFormer.h" />
+		<Unit filename="src/aiMoveTransport.cpp" />
+		<Unit filename="src/aiMoveTransport.h" />
 		<Unit filename="src/aiProduction.cpp" />
 		<Unit filename="src/aiProduction.h" />
+		<Unit filename="src/aiRoute.cpp" />
+		<Unit filename="src/aiRoute.h" />
 		<Unit filename="src/aiTask.cpp" />
 		<Unit filename="src/aiTask.h" />
-		<Unit filename="src/aiTransport.cpp" />
-		<Unit filename="src/aiTransport.h" />
 		<Unit filename="src/engine.cpp" />
 		<Unit filename="src/engine.h" />
 		<Unit filename="src/game.cpp" />

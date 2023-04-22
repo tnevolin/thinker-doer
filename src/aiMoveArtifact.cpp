@@ -1,56 +1,180 @@
 #include "aiMoveArtifact.h"
 #include "game_wtp.h"
 #include "aiData.h"
+#include "ai.h"
+#include "aiRoute.h"
 #include "aiMove.h"
 
 void moveArtifactStrategy()
 {
+	debug("moveArtifactStrategy - %s\n", getMFaction(aiFactionId)->noun_faction);
+	
 	// iterate artifacts
 	
 	for (int vehicleId : aiData.vehicleIds)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		MAP *vehicleLocation = getVehicleMapTile(vehicleId);
 		
 		// artifact
 		
 		if (!isArtifactVehicle(vehicleId))
 			continue;
 		
-		// find base to deliver artifact to (building project or closest)
+		debug("\t(%3d,%3d)\n", getX(vehicleLocation), getY(vehicleLocation));
 		
-		MAP *baseLocation = nullptr;
-		int minRange = INT_MAX;
+		// escape warzone
+		
+		if (aiData.getTileInfo(vehicleLocation).warzone)
+		{
+			debug("\tescape warzone\n");
+			
+			// find safe location
+			
+			MAP *safeLocation = getSafeLocation(vehicleId);
+			
+			if (safeLocation == nullptr)
+			{
+				debug("\t\t\tsafe location is not found\n");
+				continue;
+			}
+			
+			debug("\t\t-> (%3d,%3d)\n", getX(safeLocation), getY(safeLocation));
+			
+			// add task
+			
+			transitVehicle(Task(vehicleId, TT_MOVE, safeLocation));
+			
+			continue;
+			
+		}
+		
+		debug("\tgo to base\n");
+		
+		// find base to deliver artifact to base building project
+		
+		MAP *closestProjectBaseLocation = nullptr;
+		int closestProjectBaseTravelTime = INT_MAX;
 		
 		for (int baseId : aiData.baseIds)
 		{
-			BASE *base = &(Bases[baseId]);
+			MAP *baseTile = getBaseMapTile(baseId);
 			
-			// check base building project
+			// building project
 			
-			if(isBaseBuildingProject(baseId))
+			if(!isBaseSetProductionProject(baseId))
+				continue;
+			
+			// exclude base with blocked land location nearby
+			
+			bool blocked = false;
+			
+			for (MAP *baseRadiusTile : getBaseRadiusTiles(baseTile, false))
 			{
-				baseLocation = getBaseMapTile(baseId);
-				break;
+				bool baseRadiusTileOcean = is_ocean(baseRadiusTile);
+				TileInfo &baseRadiusTileInfo = aiData.getTileInfo(baseRadiusTile);
+				
+				// land
+				
+				if (baseRadiusTileOcean)
+					continue;
+				
+				// blocked
+				
+				if (baseRadiusTileInfo.movementInfos[aiFactionId].blocked)
+				{
+					blocked = true;
+					break;
+				}
+				
 			}
 			
-			int range = map_range(vehicle->x, vehicle->y, base->x, base->y);
+			if (blocked)
+				continue;
 			
-			if (range < minRange)
+			// travelTime
+			
+			int travelTime = getVehicleATravelTime(vehicleId, baseTile);
+			
+			if (travelTime < closestProjectBaseTravelTime)
 			{
-				baseLocation = getBaseMapTile(baseId);
-				minRange = range;
+				closestProjectBaseLocation = getBaseMapTile(baseId);
+				closestProjectBaseTravelTime = travelTime;
 			}
 			
 		}
 		
-		// not found
+		// found
 		
-		if (baseLocation == nullptr)
+		if (closestProjectBaseLocation != nullptr)
+		{
+			debug("\tmove to project base (%3d,%3d)\n", getX(closestProjectBaseLocation), getY(closestProjectBaseLocation));
+			transitVehicle(Task(vehicleId, TT_ARTIFACT_CONTRIBUTE, closestProjectBaseLocation));
 			continue;
+		}
 		
-		// deliver vehicle
+		// find closest base to store artifact
 		
-		transitVehicle(vehicleId, Task(vehicleId, TT_ARTIFACT_CONTRIBUTE, baseLocation));
+		if (isBaseAt(vehicleLocation))
+		{
+			debug("\tstay at this base (%3d,%3d)\n", getX(vehicleLocation), getY(vehicleLocation));
+			setTask(Task(vehicleId, TT_HOLD));
+			continue;
+		}
+		
+		MAP *closestBaseLocation = nullptr;
+		int closestBaseTravelTime = INT_MAX;
+		
+		for (int baseId : aiData.baseIds)
+		{
+			MAP *baseTile = getBaseMapTile(baseId);
+			
+			// exclude base with blocked land location nearby
+			
+			bool blocked = false;
+			
+			for (MAP *baseRadiusTile : getBaseRadiusTiles(baseTile, false))
+			{
+				bool baseRadiusTileOcean = is_ocean(baseRadiusTile);
+				TileInfo &baseRadiusTileInfo = aiData.getTileInfo(baseRadiusTile);
+				
+				// land
+				
+				if (baseRadiusTileOcean)
+					continue;
+				
+				// blocked
+				
+				if (baseRadiusTileInfo.movementInfos[aiFactionId].blocked)
+				{
+					blocked = true;
+					break;
+				}
+				
+			}
+			
+			if (blocked)
+				continue;
+			
+			// travelTime
+			
+			int travelTime = getVehicleATravelTime(vehicleId, baseTile);
+			
+			if (travelTime < closestBaseTravelTime)
+			{
+				closestBaseLocation = baseTile;
+				closestBaseTravelTime = travelTime;
+			}
+			
+		}
+		
+		// found
+		
+		if (closestBaseLocation != nullptr)
+		{
+			debug("\tmove to closest base (%3d,%3d)\n", getX(closestBaseLocation), getY(closestBaseLocation));
+			transitVehicle(Task(vehicleId, TT_HOLD, closestBaseLocation));
+			continue;
+		}
 		
 	}
 	

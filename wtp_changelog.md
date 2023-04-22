@@ -1,3 +1,7 @@
+# Version 295
+
+* Native unit requires support even when in fungus.
+
 # Version 294
 
 * BUG: Game crashed under certain conditions when drawing boom. Fixed. Hopefully now for all conditions.

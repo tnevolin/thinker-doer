@@ -1,7 +1,9 @@
-#include "aiTask.h"
+#include "terranx_wtp.h"
 #include "main.h"
 #include "game_wtp.h"
 #include "aiData.h"
+#include "ai.h"
+#include "aiTask.h"
 
 Task::Task(int _vehicleId, TaskType _type)
 {
@@ -10,29 +12,28 @@ Task::Task(int _vehicleId, TaskType _type)
 	
 }
 
-Task::Task(int _vehicleId, TaskType _type, MAP *_targetLocation)
+Task::Task(int _vehicleId, TaskType _type, MAP *_destination)
 {
 	this->type = _type;
 	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
-	this->targetLocation = _targetLocation;
+	this->destination = _destination;
 	
 }
 
-Task::Task(int _vehicleId, TaskType _type, MAP *_targetLocation, int _targetVehicleId)
+Task::Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget)
 {
 	this->type = _type;
 	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
-	this->targetLocation = _targetLocation;
-	this->targetVehiclePad0 = Vehicles[_targetVehicleId].pad_0;
-	
+	this->destination = _destination;
+	this->attackTarget = _attackTarget;
 }
 
-Task::Task(int _vehicleId, TaskType _type, MAP *_targetLocation, int _targetVehicleId, int _order, int _terraformingAction)
+Task::Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget, int _order, int _terraformingAction)
 {
 	this->type = _type;
 	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
-	this->targetLocation = _targetLocation;
-	this->targetVehiclePad0 = Vehicles[_targetVehicleId].pad_0;
+	this->destination = _destination;
+	this->attackTarget = _attackTarget;
 	this->order = _order;
 	this->terraformingAction = _terraformingAction;
 	
@@ -55,44 +56,54 @@ int Task::getVehicleId()
 	
 }
 
-int Task::getTargetVehicleId()
+void Task::clearDestination()
 {
-	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	destination = nullptr;
+	attackTarget = nullptr;
+}
+
+/*
+Returns vehicle destination if specified.
+Otherwise, current vehicle location.
+*/
+MAP *Task::getDestination()
+{
+	int vehicleId = getVehicleId();
+	
+	// unknown vehicle
+	
+	if (vehicleId == -1)
+		return nullptr;
+	
+	// return destination if set
+	
+	if (destination != nullptr)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		
-		if (vehicle->pad_0 == targetVehiclePad0)
-		{
-			return vehicleId;
-		}
-		
+		return destination;
 	}
 	
-	return -1;
+	// otherwise, return vehicle location
+	
+	return getVehicleMapTile(vehicleId);
 	
 }
 
-MAP *Task::getDestination()
+MAP *Task::getAttackTarget()
 {
-	if (targetLocation != nullptr)
+	int vehicleId = getVehicleId();
+	
+	if (vehicleId == -1)
+		return nullptr;
+	
+	VEH *vehicle = getVehicle(vehicleId);
+	
+	if (attackTarget != nullptr)
 	{
-		return targetLocation;
+		return attackTarget;
 	}
-	else if (targetVehiclePad0 != -1)
+	else if (destination != nullptr && (isHostileVehicleAt(destination, vehicle->faction_id) || isBaseAt(destination)))
 	{
-		int targetVehicleId = getTargetVehicleId();
-		
-		if (targetVehicleId == -1)
-		{
-			debug("Task::getDestination()\n");
-			debug("\tERROR: cannot find target vehicle id by pad_0.\n");
-			return nullptr;
-		}
-		
-		VEH *targetVehicle = &(Vehicles[targetVehicleId]);
-		
-		return getMapTile(targetVehicle->x, targetVehicle->y);
-		
+		return destination;
 	}
 	else
 	{
@@ -101,10 +112,39 @@ MAP *Task::getDestination()
 		
 }
 
+/*
+Returns attackTarget or destination or current tile if vehicle is not moving.
+*/
+MAP *Task::getGoal()
+{
+	int vehicleId = getVehicleId();
+	
+	if (vehicleId == -1)
+		return nullptr;
+	
+	MAP *goal = nullptr;
+	
+	MAP *_attackTarget;
+	MAP *_destination;
+	if ((_attackTarget = getAttackTarget()) != nullptr)
+	{
+		goal = _attackTarget;
+	}
+	else if ((_destination = getDestination()) != nullptr)
+	{
+		goal = _destination;
+	}
+	else
+	{
+		goal = getVehicleMapTile(vehicleId);
+	}
+	
+	return goal;
+	
+}
+
 int Task::getDestinationRange()
 {
-	MAP *destination = getDestination();
-	
 	// no range for no destination
 	
 	if (destination == nullptr)
@@ -148,33 +188,36 @@ int Task::execute(int vehicleId)
 {
 	debug("Task::execute(%d)\n", vehicleId);
 	
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
-	// get destination
+	// move
 	
-	MAP *destination = getDestination();
-	
-	// valid destination and not at destination
-	
-	if (destination != nullptr)
+	if (destination != nullptr && vehicleTile != destination)
 	{
-		int x = getX(destination);
-		int y = getY(destination);
+		// proceed to destination
 		
-		if (map_range(vehicle->x, vehicle->y, x, y) > 0)
+		debug("[%4d] (%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, getX(destination), getY(destination));
+		setMoveTo(vehicleId, destination);
+		
+		// make sure to declare vendetta if moving into neutral base
+		
+		if (getRange(vehicleTile, destination) == 1 && getVehicleRemainingMovement(vehicleId) >= Rules->mov_rate_along_roads && isBaseAt(destination))
 		{
-			// move to site
+			int destinationOwner = destination->owner;
 			
-			debug("[%3d] (%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, x, y);
-			
-			setMoveTo(vehicleId, x, y);
-			return EM_SYNC;
+			if (destinationOwner != -1 && isNeutral(vehicle->faction_id, destinationOwner))
+			{
+				enemies_war(vehicle->faction_id, destinationOwner);
+			}
 			
 		}
 		
+		return EM_SYNC;
+		
 	}
 	
-	// otherwise execute action
+	// execute action
 	
 	return executeAction(vehicleId);
 	
@@ -218,7 +261,7 @@ int Task::executeAction(int vehicleId)
 		return executeUnboard(vehicleId);
 		break;
 		
-	case TT_TERRAFORMING:
+	case TT_TERRAFORM:
 		return executeTerraformingAction(vehicleId);
 		break;
 		
@@ -230,12 +273,24 @@ int Task::executeAction(int vehicleId)
 		return executeHold(vehicleId);
 		break;
 		
+	case TT_ALERT:
+		return executeAlert(vehicleId);
+		break;
+		
 	case TT_MOVE:
 		return executeMove(vehicleId);
 		break;
 		
 	case TT_ARTIFACT_CONTRIBUTE:
 		return executeArtifactContribute(vehicleId);
+		break;
+		
+	case TT_MELEE_ATTACK:
+		return executeAttack(vehicleId);
+		break;
+		
+	case TT_LONG_RANGE_FIRE:
+		return executeLongRangeFire(vehicleId);
 		break;
 		
 	default:
@@ -247,7 +302,7 @@ int Task::executeAction(int vehicleId)
 
 int Task::executeNone(int)
 {
-	debug("SYNC\n");
+	debug("Task::executeNone\n");
 	
 	return EM_SYNC;
 	
@@ -255,16 +310,16 @@ int Task::executeNone(int)
 
 int Task::executeKill(int vehicleId)
 {
-	debug("KILL\n");
+	debug("Task::executeKill\n");
 	
-	veh_kill(vehicleId);
+	mod_veh_kill(vehicleId);
 	return EM_DONE;
 	
 }
 
 int Task::executeSkip(int vehicleId)
 {
-	debug("SKIP\n");
+	debug("Task::executeSkip\n");
 	
 	mod_veh_skip(vehicleId);
 	return EM_DONE;
@@ -273,7 +328,7 @@ int Task::executeSkip(int vehicleId)
 
 int Task::executeBuild(int vehicleId)
 {
-	debug("BUILD\n");
+	debug("Task::executeBuild\n");
 	
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
@@ -318,6 +373,8 @@ int Task::executeBuild(int vehicleId)
 
 int Task::executeLoad(int vehicleId)
 {
+	debug("Task::executeLoad\n");
+	
 	// wait
 	
 	mod_veh_skip(vehicleId);
@@ -327,38 +384,93 @@ int Task::executeLoad(int vehicleId)
 
 int Task::executeBoard(int vehicleId)
 {
-	int targetVehicleId = getTargetVehicleId();
+	debug("Task::executeBoard\n");
 	
-	if (targetVehicleId == -1)
+	VEH *vehicle = getVehicle(vehicleId);
+	
+	// retrieve transit request
+	
+	TransitRequest *vehicleTransitRequest = nullptr;
+	
+	for (TransitRequest &transitRequest : aiData.transportControl.transitRequests)
 	{
-		mod_veh_skip(vehicleId);
+		if (transitRequest.vehiclePad0 == vehicle->pad_0)
+		{
+			vehicleTransitRequest = &transitRequest;
+			break;
+		}
+		
+	}
+	
+	if (vehicleTransitRequest == nullptr)
+	{
+		debug("\ttransit request is not found\n");
 		return EM_DONE;
 	}
 	
-	// board
+	// search for designated transport
 	
-	board(vehicleId, targetVehicleId);
-	return EM_DONE;
+	int seaTransportVehicleId = vehicleTransitRequest->getSeaTransportVehicleId();
+	
+	if (seaTransportVehicleId == -1)
+	{
+		debug("\tsea transport is not found\n");
+		return EM_DONE;
+	}
+	
+	VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
+	MAP *seaTransportVehicleTile = getVehicleMapTile(seaTransportVehicleId);
+	
+	// move to transport if close
+	
+	int range = map_range(vehicle->x, vehicle->y, seaTransportVehicle->x, seaTransportVehicle->y);
+	
+	if (range > 1)
+	{
+		debug("\tsea transport range=%2d\n", range);
+		return EM_DONE;
+	}
+	
+	debug("\tmoving to transport: (%3d,%3d)\n", seaTransportVehicle->x, seaTransportVehicle->y);
+	setMoveTo(vehicleId, seaTransportVehicleTile);
+	return EM_SYNC;
 	
 }
 
 int Task::executeUnload(int vehicleId)
 {
-	// wake up passenger
+	debug("Task::executeUnload\n");
 	
-	if (targetVehiclePad0 != -1)
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	
+	// wake up passengers and direct to unboard location
+	
+	for (UnloadRequest &unloadRequest : aiData.transportControl.getSeaTransportUnloadRequests(vehicleId))
 	{
-		int targetVehicleId = getTargetVehicleId();
+		// correct location
 		
-		if (targetVehicleId != -1)
-		{
-			setVehicleOrder(targetVehicleId, ORDER_NONE);
-		}
+		if (unloadRequest.destination != vehicleTile)
+			continue;
+		
+		// passenger
+		
+		int passengerVehicleId = unloadRequest.getVehicleId();
+		
+		if (passengerVehicleId == -1)
+			continue;
+		
+		// verify passenger is indeed a passenger of this transport
+		
+		int vehicleTransportId = getVehicleTransportId(passengerVehicleId);
+		
+		if (vehicleTransportId != vehicleId)
+			continue;
+		
+		// move to unboarding location
+		
+		executeUnboard(passengerVehicleId);
 		
 	}
-	
-	mod_veh_skip(vehicleId);
-	return EM_DONE;
 	
 	// wait
 	
@@ -369,63 +481,26 @@ int Task::executeUnload(int vehicleId)
 
 int Task::executeUnboard(int vehicleId)
 {
-	assert(vehicleId >= 0 && vehicleId < *total_num_vehicles);
-	
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	
-	// unboard
-	
-	unboard(vehicleId);
-	
-	// get destination
-	
-	MAP *destination = getDestination();
-	
-	// no destination
-	
-	if (destination == nullptr)
-	{
-		mod_veh_skip(vehicleId);
-		return EM_DONE;
-	}
-	
-	// get coordinates
-		
-	int x = getX(destination);
-	int y = getY(destination);
-	
-	// next action
-	
-	if (vehicle->x == x && vehicle->y == y)
-	{
-		// at location - do nothing
-		
-		mod_veh_skip(vehicleId);
-		return EM_DONE;
-		
-	}
-	else
-	{
-		// not at location - move to unboard location
-		
-		setMoveTo(vehicleId, x, y);
-		return EM_DONE;
-		
-	}
+	setMoveTo(vehicleId, destination);
+	return EM_DONE;
 	
 }
 
 int Task::executeTerraformingAction(int vehicleId)
 {
+	debug("Task::executeTerraformingAction\n");
+	
 	// execute terraforming action
 	
 	setTerraformingAction(vehicleId, this->terraformingAction);
-	return EM_DONE;
+	return EM_SYNC;
 	
 }
 
 int Task::executeOrder(int vehicleId)
 {
+	debug("Task::executeOrder\n");
+	
 	// set order
 	
 	setVehicleOrder(vehicleId, order);
@@ -435,7 +510,8 @@ int Task::executeOrder(int vehicleId)
 
 int Task::executeHold(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	debug("Task::executeHold\n");
+	
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
 	// set order
@@ -446,10 +522,25 @@ int Task::executeHold(int vehicleId)
 	{
 		// set land artillery on alert
 		
-		vehicle->waypoint_1_x = -1;
-		vehicle->waypoint_1_y = 10;
+		setVehicleOnAlert(vehicleId);
 		
 	}
+	
+	// complete move
+	
+	return EM_DONE;
+	
+}
+
+int Task::executeAlert(int vehicleId)
+{
+	debug("Task::executeAlert\n");
+	
+	// set order
+	
+	setVehicleOnAlert(vehicleId);
+	
+	// complete move
 	
 	return EM_DONE;
 	
@@ -457,6 +548,8 @@ int Task::executeHold(int vehicleId)
 
 int Task::executeMove(int vehicleId)
 {
+	debug("Task::executeMove\n");
+	
 	// set order
 	
 	mod_veh_skip(vehicleId);
@@ -466,25 +559,31 @@ int Task::executeMove(int vehicleId)
 
 int Task::executeArtifactContribute(int vehicleId)
 {
+	debug("Task::executeArtifactContribute\n");
+	
 	MAP *vechileTile = getVehicleMapTile(vehicleId);
 	
 	// in own base
 	
-	if (aiData.baseTiles.count(vechileTile) != 0)
+	int baseId = getBaseAt(vechileTile);
+	if (baseId != -1)
 	{
-		int baseId = aiData.baseTiles.at(vechileTile);
-		BASE *base = &(Bases[baseId]);
+		BASE *base = getBase(baseId);
 		
-		// base is building project
-		
-		if (isBaseBuildingProject(baseId))
+		if (base->faction_id == aiFactionId)
 		{
-			// destroy vehicle and contribute to project
+			// base is building project
 			
-			killVehicle(vehicleId);
-			base->minerals_accumulated += 50;
-			
-			return EM_DONE;
+			if (isBaseBuildingProject(baseId))
+			{
+				// destroy vehicle and contribute to project
+				
+				killVehicle(vehicleId);
+				base->minerals_accumulated += 50;
+				
+				return EM_DONE;
+				
+			}
 			
 		}
 		
@@ -497,8 +596,138 @@ int Task::executeArtifactContribute(int vehicleId)
 	
 }
 
-void setTask(int vehicleId, Task task)
+int Task::executeAttack(int vehicleId)
 {
+	debug("Task::executeAttack\n");
+	
+	VEH *vehicle = getVehicle(vehicleId);
+	
+	// check attackLocation
+	
+	if (attackTarget == nullptr)
+		return EM_DONE;
+	
+	// get base and vehicle at attackLocation
+	
+	bool baseAtAttackLocation = map_has_item(attackTarget, TERRA_BASE_IN_TILE);
+	bool vehicleAtAttackLocation = map_has_item(attackTarget, TERRA_UNIT_IN_TILE);
+	
+	// empty base - move in
+	
+	if (baseAtAttackLocation && !vehicleAtAttackLocation)
+	{
+		setMoveTo(vehicleId, attackTarget);
+		return EM_SYNC;
+	}
+	
+	// nobody is there
+	
+	if (!vehicleAtAttackLocation)
+		return EM_DONE;
+	
+	// get defender
+	
+	int defenderVehicleId = veh_at(getX(attackTarget), getY(attackTarget));
+	
+	if (defenderVehicleId == -1)
+		return EM_DONE;
+	
+	// compute battle odds accounting for hasty attack
+	
+	int roadMovesLeft = mod_veh_speed(vehicleId) - vehicle->road_moves_spent;
+	double hastyCoefficient = std::min(1.0, (double)roadMovesLeft / (double)Rules->mov_rate_along_roads);
+	double battleOdds = getBattleOdds(vehicleId, defenderVehicleId, false);
+	double adjustedBattleOdds = battleOdds * hastyCoefficient;
+	
+	// attack if good odds
+	
+	if (adjustedBattleOdds >= 1.25)
+	{
+		setMoveTo(vehicleId, attackTarget);
+		return EM_SYNC;
+	}
+	
+	// otherwise attack only if not hasty
+	
+	if (hastyCoefficient == 1.0)
+	{
+		setMoveTo(vehicleId, attackTarget);
+		return EM_SYNC;
+	}
+	
+	// otherwise skip
+	
+	mod_veh_skip(vehicleId);
+	return EM_DONE;
+	
+}
+
+int Task::executeLongRangeFire(int vehicleId)
+{
+	debug("Task::executeLongRangeFire\n");
+	
+	// check attackLocation
+	
+	if (attackTarget == nullptr)
+		return EM_DONE;
+	
+	debug("\t^ (%3d,%3d)\n", getX(attackTarget), getY(attackTarget));
+	
+	// get base and vehicle at attackLocation
+	
+	bool baseAtAttackLocation = map_has_item(attackTarget, TERRA_BASE_IN_TILE);
+	bool vehicleAtAttackLocation = map_has_item(attackTarget, TERRA_UNIT_IN_TILE);
+	
+	// empty base - move in
+	
+	if (baseAtAttackLocation && !vehicleAtAttackLocation)
+	{
+		setMoveTo(vehicleId, attackTarget);
+		return EM_SYNC;
+	}
+	
+	// nobody is there
+	
+	if (!vehicleAtAttackLocation)
+		return EM_DONE;
+	
+	// long range fire
+	
+	longRangeFire(vehicleId, attackTarget);
+	return EM_DONE;
+	
+}
+
+// TaskList
+
+void TaskList::setTasks(const std::vector<Task> _tasks)
+{
+	this->tasks.clear();
+	this->tasks.insert(this->tasks.end(), _tasks.begin(), _tasks.end());
+}
+std::vector<Task> &TaskList::getTasks()
+{
+	return this->tasks;
+}
+void TaskList::setTask(Task _task)
+{
+	this->tasks.clear();
+	this->tasks.push_back(_task);
+}
+Task *TaskList::getTask()
+{
+	return (this->tasks.size() >= 1 ? &(this->tasks.front()) : nullptr);
+}
+void TaskList::addTask(Task _task)
+{
+	this->tasks.push_back(_task);
+}
+
+// static functions
+
+void setTask(Task task)
+{
+	int vehicleId = task.getVehicleId();
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
 	if (aiData.tasks.count(vehicle->pad_0) == 0)
@@ -559,101 +788,6 @@ int executeTask(int vehicleId)
 	Task *task = getTask(vehicleId);
 	
 	return task->execute(vehicleId);
-	
-}
-
-/*
-Updates vehicle task if new task has closer destination.
-*/
-void setTaskIfCloser(int vehicleId, Task task)
-{
-//	debug("setTaskIfCloser\n");
-	
-	// task exists
-	if (hasTask(vehicleId))
-	{
-		// get current task
-		
-		Task *currentTask = getTask(vehicleId);
-		if (currentTask == nullptr)
-		{
-//			debug("\tERROR: Current task exists but it is nullptr.\n");
-			return;
-		}
-		
-		// get target vehicle ID for current and replacing tasks
-		
-		int currentTaskTargetVehicleId = currentTask->getTargetVehicleId();
-		if (currentTaskTargetVehicleId == -1)
-		{
-//			debug("\tERROR: Current task targetVehicleId == -1. This should not happen for LOAD/UNLOAD task.\n");
-			return;
-		}
-		
-		int replacingTaskTargetVehicleId = task.getTargetVehicleId();
-		if (replacingTaskTargetVehicleId == -1)
-		{
-//			debug("\tERROR: Replacing task targetVehicleId == -1. This should not happen for LOAD/UNLOAD task.\n");
-			return;
-		}
-		
-		// set priorityRangeMultiplier for special unit types
-		
-		double currentPriorityRangeMultiplier;
-		double replacingPriorityRangeMultiplier;
-		
-		if (isArtifactVehicle(currentTaskTargetVehicleId))
-		{
-			currentPriorityRangeMultiplier = 0.2;
-		}
-		else if (isColonyVehicle(currentTaskTargetVehicleId))
-		{
-			currentPriorityRangeMultiplier = 0.4;
-		}
-		else if (isFormerVehicle(currentTaskTargetVehicleId))
-		{
-			currentPriorityRangeMultiplier = 0.6;
-		}
-		else
-		{
-			currentPriorityRangeMultiplier = 1.0;
-		}
-		
-		if (isArtifactVehicle(replacingTaskTargetVehicleId))
-		{
-			replacingPriorityRangeMultiplier = 0.2;
-		}
-		else if (isColonyVehicle(replacingTaskTargetVehicleId))
-		{
-			replacingPriorityRangeMultiplier = 0.4;
-		}
-		else if (isFormerVehicle(replacingTaskTargetVehicleId))
-		{
-			replacingPriorityRangeMultiplier = 0.6;
-		}
-		else
-		{
-			replacingPriorityRangeMultiplier = 1.0;
-		}
-		
-		// get current and replacing task ranges
-		
-		int currentTaskDestinationRange = currentTask->getDestinationRange();
-		int replacingTaskDestinationRange = task.getDestinationRange();
-		
-		// replace task only if given one has significantly shorter range
-		
-		if (replacingPriorityRangeMultiplier * replacingTaskDestinationRange < 0.8 * currentPriorityRangeMultiplier * currentTaskDestinationRange)
-		{
-			setTask(vehicleId, task);
-		}
-		
-	}
-	// current task do not exist
-	else
-	{
-		setTask(vehicleId, task);
-	}
 	
 }
 

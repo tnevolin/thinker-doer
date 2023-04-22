@@ -5,10 +5,24 @@
 const int NO_SYNC = 1;
 const char* scriptTxtID = "SCRIPT";
 
+// offsets
+
+const unsigned int TABLE_next_cell_count = 8;
+const int *TABLE_next_cell_x = (int *)0x0066EF50;
+const int *TABLE_next_cell_y = (int *)0x0066EF74;
+
+const unsigned int TABLE_square_block_radius_count = 9U;
+const unsigned int *TABLE_square_block_radius = (unsigned int *)0x0066F8C4;
+const unsigned int TABLE_square_block_radius_base_internal = 9U;
+const unsigned int TABLE_square_block_radius_base_external = 21U;
+const int *TABLE_square_offset_x = (int *)0x0066EFBC;
+const int *TABLE_square_offset_y = (int *)0x0066F440;
+
 // Path
 
 CPath* PATH = (CPath*)0x945B00;
 FPath_find PATH_find = (FPath_find)0x59A530;
+int *PATH_flags = (int *)0x00945B20;
 
 // battle computation display variables
 
@@ -313,4 +327,40 @@ fp_3void *boom = (fp_3void *)0x00504AA0;
 
 // energy compute
 fp_2void *energy_compute = (fp_2void *)0x00445130;
+
+// lifecycle modifier at base
+fp_2int *breed_mod = (fp_2int *)0x004E65C0;
+
+// base psych computation
+fp_0void *base_psych = (fp_0void *)0x004EA540;
+
+// base drones computation
+fp_0void *base_drones = (fp_0void *)0x004F5CE0;
+
+// base doctors computation
+fp_0void *base_doctors = (fp_0void *)0x004F5F30;
+
+// base energy computation
+fp_0void *base_energy = (fp_0void *)0x004EB560;
+
+// obsoletes prototypes
+fp_2void *prune_protos = (fp_2void *)0x0057F4B0;
+
+// check if unit can use long range fire
+fp_2int *tx_can_arty = (fp_2int *)0x005C0DB0;
+
+// alien move
+fp_1void *alien_move = (fp_1void *)0x00566810;
+
+// vehicle moving clip
+fp_5void *clip = (fp_5void *)0x0055A150;
+
+// enemies_war
+fp_2void *enemies_war = (fp_2void *)0x0055C840;
+
+// base_at
+fp_2int *base_at = (fp_2int *)0x004E3A50;
+
+// location zoc for given faction
+fp_3int* zoc_move = (fp_3int*)0x005C8D40;
 
