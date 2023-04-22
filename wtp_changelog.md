@@ -1,3 +1,31 @@
+# Version 296
+
+## AI
+
+* Major AI improvement. See details in Readme.
+
+## Other changes
+
+* Amphibious cost = 0.
+* Added Patrol Battery predesigned unit to aid AI in building first conventional artillery.
+* Added Empath Battery predesigned unit to aid AI in building first anti-native artillery.
+* Alternative combat mechanics (alternative_combat_mechanics) is disabled. That was there to aid stupid AI. Not needed anymore.
+* Flat hurry costs changed. Unit and facility: 2 credits / mineral. Project: 4 credits / mineral.
+* Biology lab research bonus (biology_lab_research_bonus) changed to 6.
+* Sensor cannot be destroyed by bombardment or pillage. The only way to destroy it is to terraform some incompatible item on top of it.
+* Pressure dome grants +1 mineral.
+* More fine grained AI switches.
+  * ai_useWTPAlgorithms: turns WTP AI on or off completely.
+  * wtp_enabled_factions: turns WTP AI on or off for specific normal faction
+* Artillery combat uses combat bonuses. For example, unit in base uses base defensive bonuses.
+* Some modification to vanilla transport/passengers handling to make sure they are not jumping from one to another by themselves.
+* Disabled my previous modification to not allow units to sneak one by one after the probe. The code turned out to be very complicated. This fix broke more than fixed.
+* [BUG fix] Game sometimes crashes when last base defender is killed.
+* [BUG fix] Game sometimes crashes when fireball is drawn out of viewport.
+* [BUG fix] Disabled alien spore launcher shooting from transport.
+* Patched vanilla worker distribution algorithm to assure acceptable nutrient surplus. Sometimes it allows base to stagnate.
+* [BUG fix] Captured base should receive both factions bonuses. Sometimes it is other base who receives them.
+
 # Version 295
 
 * Native unit requires support even when in fungus.

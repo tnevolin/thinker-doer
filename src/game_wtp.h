@@ -461,7 +461,7 @@ Location getDiagonalCoordinates(Location rectangular);
 std::vector<MAP *> getAdjacentTiles(MAP *tile);
 std::vector<MAP *> getSideTiles(MAP *tile);
 MAP * getSquareBlockRadiusTile(MAP *center, int index);
-std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, int beginIndex, int endIndex);
+std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, unsigned int beginIndex, unsigned int endIndex);
 
 std::vector<MAP *> getSquareBlockTiles(MAP *center, unsigned int minRadius, unsigned int maxRadius);
 std::vector<MAP *> getEqualRangeTiles(MAP *tile, unsigned int range);

@@ -640,24 +640,6 @@ Shortened some labels in F4 screen to fit longer base names and avoid line wrapp
 
 Added a suffix to bases in need of population growth limit facility.
 
-# AI Terraforming
-
-New AI terraforming algorithm replacing Thinker's. These are few notable changes among many.
-
-* Works best tiles first.
-* Properly selects best basic improvement option between rocky mine, farm-mine, farm-collector, forest.
-* Quickly connects new bases to road network.
-* Tries to prevent population loss by emphasizing nutrient development around poorly fed bases.
-* Tends not to build forest/kelp and not to remove fungus next to existing forest/kelp due to its potential spreading.
-* Properly places aquifer 2 squares from existing rivers to maximize river coverage.
-* Properly places condenser to match existing rainfall pattern to maximize rainfall coverage.
-* Properly evaluates additional benefits of condensers/mirrors to be used by nearby bases.
-* Prefers better improvement with equal completion time (construction + travel).
-* Prefers quicker improvement with equal benefit (shorter construction time + less travel).
-* Redistributes former orders to minimize construction + travel time. Takes former abilities (fungicide, super) and speed into account.
-* Checks existing improvements and doesn't build more of them if an equal of better one is still unused around base.
-* Raises land to improve collector energy output.
-
 # Alternative subversion and mind control formulas and mechanics
 
 ## Subverting unit from stack
@@ -804,4 +786,60 @@ Infiltration action is now always available even if currently active. The number
 | human_infiltration_device_lifetime_probe_effect | More turns on average to discover a device per each PROBE rating for human player. |
 | computer_infiltration_device_lifetime_base | Average number of turns to discover a device for computer player. |
 | computer_infiltration_device_lifetime_probe_effect | More turns to discover a device per each PROBE rating for computer player. |
+
+# AI
+
+This section describes AI improvements. The description is pretty generic. I don't give specific numerical parameters because a) Ugh, and b) they get constantly changed by AI tuning.
+
+## Hurrying
+
+AI spends excess credits by hurrying most needed production first.
+
+## Transportation
+
+Hugely reworked transportation system. It is still not absolutely optimized but at least it is capable to carry land units across ocean to their desired destinations in consistent way.
+Land units now can act on all continent with transportation help.
+
+## Moving artifacts
+
+Artifact moves to the closest project base for contribution. Otherwise, to the closest base to hold there.
+
+## Moving colonies
+
+Improved colony movement sophistication. They are now take build site quality and travel time into account. Added a lot of additional parameters for base placement fine tuning.
+AI prefers to build coastal land bases to access both land and ocean. Even more it prefers to connect oceans with base!
+
+Greatly improved base placement structure. AI now tends to cover land consistently avoiding gaps with moderate base radiuses overlap.
+This does not apply to deep ocean bases. Sea colonies tend to target ocean resources even if they are far from motherland.
+
+Colony production is tuned as well to take available spaces, game stage, existing planet base coverate and other factors into account.
+
+## Terraforming
+
+New AI terraforming algorithm replacing Thinker's. These are few notable changes among many.
+
+* Works best tiles first.
+* Properly selects best basic improvement option between rocky mine, farm-mine, farm-collector, forest.
+* Quickly connects new bases to road network.
+* Tries to prevent population loss by emphasizing nutrient development around poorly fed bases.
+* Tends not to build forest/kelp and not to remove fungus next to existing forest/kelp due to its potential spreading.
+* Properly places aquifer 2 squares from existing rivers to maximize river coverage.
+* Properly places condenser to match existing rainfall pattern to maximize rainfall coverage.
+* Properly evaluates additional benefits of condensers/mirrors to be used by nearby bases.
+* Prefers better improvement with equal completion time (construction + travel).
+* Prefers quicker improvement with equal benefit (shorter construction time + less travel).
+* Redistributes former orders to minimize construction + travel time. Takes former abilities (fungicide, super) and speed into account.
+* Checks existing improvements and doesn't build more of them if an equal of better one is still unused around base.
+* Raises land to improve collector energy output.
+* Occasionally build land bridges to connect continents.
+
+## Moving combat units
+
+This was the most difficult task ever. It is still not perfect but, at least, AI handles them now better than vanilla for sure.
+
+* AI evaluates potential threat to bases and build up matching garrison.
+* AI builds attacking combat units to fend off enemy in the vicinity of own bases.
+* AI builds assault units to capture enemy bases when it has economical advantage.
+* AI tries to coordinate attach by adjusting assembled units approach time.
+* AI tries to repair units based on their damage.
 

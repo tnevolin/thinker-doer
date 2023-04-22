@@ -360,7 +360,7 @@ MAP * getSquareBlockRadiusTile(MAP *center, int index)
 /**
 Returns square block radius tiles from beginIndex (inclusive) to endIndex (exclusive).
 */
-std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, int beginIndex, int endIndex)
+std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, unsigned int beginIndex, unsigned int endIndex)
 {
 	int x = getX(center);
 	int y = getY(center);
