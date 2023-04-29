@@ -117,6 +117,12 @@ int *CURRENT_BASE_TALENTS_FACILITIES = (int *)0x0090E98C;
 int *CURRENT_BASE_TALENTS_POLICE = (int *)0x0090E990;
 int *CURRENT_BASE_TALENTS_PROJECTS = (int *)0x0090E994;
 
+// probe steal tech toggle
+
+int *alphax_tgl_probe_steal_tech = (int *)0x00949834;
+
+// say functions
+
 fp_void_charp_int *say_orders = (fp_void_charp_int *)0x4B43E0;
 fp_1void *say_orders2 = (fp_1void *)0x004B4970;
 

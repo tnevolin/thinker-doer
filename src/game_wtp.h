@@ -729,12 +729,12 @@ int getHexCost(int unitId, int factionId, MAP *fromTile, MAP *toTile, int speed1
 int getVehicleHexCost(int vehicleId, int fromX, int fromY, int toX, int toY);
 int getSeaHexCost(MAP *tile);
 bool isCommlink(int factionId1, int factionId2);
-bool isWar(int factionId1, int factionId2);
+bool isVendetta(int factionId1, int factionId2);
 bool isPact(int factionId1, int factionId2);
 bool isFriendly(int factionId1, int factionId2);
 bool isHostile(int factionId1, int factionId2);
 bool isNeutral(int factionId1, int factionId2);
-bool isWarWithAny(int factionId);
+bool isVendettaWithAny(int factionId);
 int getVehicleMaxPsiHP(int vehicleId);
 int getVehicleCurrentPsiHP(int vehicleId);
 int getVehicleMaxConventionalHP(int vehicleId);

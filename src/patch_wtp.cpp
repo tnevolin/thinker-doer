@@ -5189,6 +5189,42 @@ void patch_accelerate_order_veh()
     
 }
 
+void patch_tech_trade_likeability()
+{
+    int tech_trade_likeability_length = 0x7;
+
+    /*
+	0:  3b c8                   cmp    ecx,eax
+	*/
+    byte tech_trade_likeability_old[] =
+		{ 0x83, 0x3D, 0x74, 0xFA, 0x93, 0x00, 0x12 }
+    ;
+
+    /*
+	0:  39 c9                   cmp    ecx,ecx
+    */
+    byte tech_trade_likeability_new[] =
+        { 0x83, 0x3D, 0x74, 0xFA, 0x93, 0x00, (byte)conf.tech_trade_likeability }
+    ;
+
+    write_bytes
+    (
+        0x005411DA,
+        tech_trade_likeability_old,
+        tech_trade_likeability_new,
+        tech_trade_likeability_length
+    )
+    ;
+    
+}
+
+void patch_tech_steal()
+{
+   	write_call(0x0059F925, (int)modified_text_get_for_tech_steal_1);
+   	write_call(0x0059F947, (int)modified_text_get_for_tech_steal_2);
+   	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -5826,6 +5862,16 @@ void patch_setup_wtp(Config* cf)
 	patch_no_stagnation();
 	
 	patch_capture_base();
+	
+	if (conf.tech_trade_likeability != 0x12)
+	{
+		patch_tech_trade_likeability();
+	}
+	
+	if (conf.disable_tech_steal_vendetta || conf.disable_tech_steal_pact || conf.disable_tech_steal_other)
+	{
+		patch_tech_steal();
+	}
 	
 }
 

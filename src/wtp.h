@@ -228,4 +228,7 @@ void __cdecl modified_alien_move(int vehicleId);
 int __cdecl modified_can_arty_in_alien_move(int unitId, bool allowSeaArty);
 void removeWrongVehiclesFromBases();
 void __cdecl modified_kill(int vehicleId);
+HOOK_API void modified_text_get_for_tech_steal_1();
+HOOK_API void modified_text_get_for_tech_steal_2();
+
 

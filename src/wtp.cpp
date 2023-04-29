@@ -13,6 +13,8 @@
 #include "ai.h"
 #include "tech.h"
 
+int alphax_tgl_probe_steal_tech_value;
+
 void Profile::start()
 {
 	if (DEBUG)
@@ -1796,7 +1798,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 					square_from->owner != -1 && square_from->owner != faction_id
 					&&
 					(
-						(conf.right_of_passage_agreement == 1 && isWar(faction_id, square_from->owner))
+						(conf.right_of_passage_agreement == 1 && isVendetta(faction_id, square_from->owner))
 						||
 						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_from->owner))
 					)
@@ -1806,7 +1808,7 @@ HOOK_API int mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, i
 					square_to->owner != -1 && square_to->owner != faction_id
 					&&
 					(
-						(conf.right_of_passage_agreement == 1 && isWar(faction_id, square_to->owner))
+						(conf.right_of_passage_agreement == 1 && isVendetta(faction_id, square_to->owner))
 						||
 						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_to->owner))
 					)
@@ -3028,7 +3030,7 @@ HOOK_API void modifiedProbeActionRisk(int action, int riskPointer)
 	{
 		// genetic plague
 	case 7:
-		*risk = 2;
+		*risk = conf.probe_action_risk_genetic_plague;
 		break;
 	}
 
@@ -5653,3 +5655,58 @@ void __cdecl modified_kill(int vehicleId)
 	tx_kill(vehicleId);
 	
 }
+
+/*
+Intercepts text_get 1 to disable tech_steal.
+*/
+HOOK_API void modified_text_get_for_tech_steal_1()
+{
+	// execute original function
+	
+	tx_text_get();
+	
+	// save current probe steal tech toggle value
+	
+	alphax_tgl_probe_steal_tech_value = *alphax_tgl_probe_steal_tech;
+	
+	// check relations and decide whether to disable tech steal
+	
+	bool disableTechSteal = false;
+	
+	if (isVendetta(*active_faction, *g_PROBE_FACT_TARGET) && conf.disable_tech_steal_vendetta)
+	{
+		disableTechSteal = true;
+	}
+	else if (isPact(*active_faction, *g_PROBE_FACT_TARGET) && conf.disable_tech_steal_pact)
+	{
+		disableTechSteal = true;
+	}
+	else if (conf.disable_tech_steal_other)
+	{
+		disableTechSteal = true;
+	}
+	
+	// disable tech steal if set
+	
+	if (disableTechSteal)
+	{
+		*alphax_tgl_probe_steal_tech = 0;
+	}
+	
+}
+
+/*
+Intercepts text_get 2 to restore tech_steal.
+*/
+HOOK_API void modified_text_get_for_tech_steal_2()
+{
+	// execute original function
+	
+	tx_text_get();
+	
+	// restore probe tech steal toggle value
+	
+	*alphax_tgl_probe_steal_tech = alphax_tgl_probe_steal_tech_value;
+	
+}
+

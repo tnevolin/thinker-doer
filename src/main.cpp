@@ -408,6 +408,10 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->probe_action_risk_genetic_plague = std::max(0, atoi(value));
     }
+    else if (MATCH("wtp", "probe_action_risk_steal_tech"))
+    {
+        cf->probe_action_risk_steal_tech = std::max(0, atoi(value));
+    }
     else if (MATCH("wtp", "combat_bonus_sensor_ocean"))
     {
         cf->combat_bonus_sensor_ocean = (atoi(value) == 0 ? false : true);
@@ -643,6 +647,22 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "pressure_dome_minerals"))
     {
         cf->pressure_dome_minerals = std::max(0, atoi(value));
+    }
+    else if (MATCH("wtp", "tech_trade_likeability"))
+    {
+        cf->tech_trade_likeability = std::min(0x7F, std::max(0, atoi(value)));
+    }
+    else if (MATCH("wtp", "disable_tech_steal_vendetta"))
+    {
+        cf->disable_tech_steal_vendetta = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "disable_tech_steal_pact"))
+    {
+        cf->disable_tech_steal_pact = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("wtp", "disable_tech_steal_other"))
+    {
+        cf->disable_tech_steal_other = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("wtp", "ai_useWTPAlgorithms"))
     {

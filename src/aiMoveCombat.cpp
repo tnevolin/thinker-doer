@@ -1937,7 +1937,7 @@ void populateLandPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
 		
 		// not hostile territory
 		
-		if (isWar(aiFactionId, tile->owner))
+		if (isVendetta(aiFactionId, tile->owner))
 			continue;
 		
 		// not blocked location
@@ -2052,7 +2052,7 @@ void populateSeaPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
 		
 		// not hostile land territory
 		
-		if (!is_ocean(tile) && isWar(aiFactionId, tile->owner))
+		if (!is_ocean(tile) && isVendetta(aiFactionId, tile->owner))
 			continue;
 		
 		// not blocked location

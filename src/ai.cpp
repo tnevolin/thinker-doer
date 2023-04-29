@@ -652,7 +652,7 @@ void populateFactionInfos()
 			if (otherFactionId == factionId)
 				continue;
 
-			if (isWar(factionId, otherFactionId))
+			if (isVendetta(factionId, otherFactionId))
 			{
 				aiData.factionInfos[factionId].enemyCount++;
 			}
@@ -1451,7 +1451,7 @@ void populateWarzones()
 		
 		// hostile
 		
-		if (!isWar(aiFactionId, vehicle->faction_id))
+		if (!isVendetta(aiFactionId, vehicle->faction_id))
 			continue;
 		
 		// combat
@@ -1835,7 +1835,7 @@ void populateEnemyStacks()
 		
 		// unprotectedArtifact or at war
 		
-		if (!(unprotectedArtifact || isWar(aiFactionId, vehicle->faction_id)))
+		if (!(unprotectedArtifact || isVendetta(aiFactionId, vehicle->faction_id)))
 			continue;
 		
 		// exclude land vehicle on transport
@@ -2674,7 +2674,7 @@ void evaluateBaseDefense()
 		
 		// hostile faction
 		
-		if (isWar(aiFactionId, factionId))
+		if (isVendetta(aiFactionId, factionId))
 		{
 			hostileFoeFactionIds.push_back(factionId);
 		}
@@ -4400,7 +4400,7 @@ bool isVehicleThreatenedByEnemyInField(int vehicleId)
 
 		// exclude non alien units not in war
 
-		if (otherVehicle->faction_id != 0 && !isWar(otherVehicle->faction_id, vehicle->faction_id))
+		if (otherVehicle->faction_id != 0 && !isVendetta(otherVehicle->faction_id, vehicle->faction_id))
 			continue;
 
 		// exclude non combat units

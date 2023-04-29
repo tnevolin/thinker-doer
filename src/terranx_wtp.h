@@ -115,6 +115,8 @@ extern int *CURRENT_BASE_TALENTS_FACILITIES;
 extern int *CURRENT_BASE_TALENTS_POLICE;
 extern int *CURRENT_BASE_TALENTS_PROJECTS;
 
+extern int *alphax_tgl_probe_steal_tech;
+
 extern fp_void_charp_int *say_orders;
 extern fp_1void *say_orders2;
 

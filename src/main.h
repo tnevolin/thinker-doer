@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "The Will to Power mod - version 296 (Thinker Mod v2.5)"
+    #define MOD_VERSION "The Will to Power mod - version 297 (Thinker Mod v2.5)"
 #else
     #define MOD_VERSION "The Will to Power mod - development"
 #endif
@@ -258,6 +258,7 @@ struct Config {
     double computer_infiltration_device_lifetime_probe_effect = 0.0;
     bool modified_probe_action_risks = false;
     int probe_action_risk_genetic_plague = 0;
+    int probe_action_risk_steal_tech = 0;
     bool combat_bonus_sensor_ocean = false;
     bool combat_bonus_sensor_offense = false;
     bool break_treaty_before_fight = false;
@@ -317,6 +318,10 @@ struct Config {
 	double orbital_mineral_population_limit;
 	double orbital_energy_population_limit;
 	int pressure_dome_minerals = 0;
+	int tech_trade_likeability = 0x12;
+	bool disable_tech_steal_vendetta = false;
+	bool disable_tech_steal_pact = false;
+	bool disable_tech_steal_other = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

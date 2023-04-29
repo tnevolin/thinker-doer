@@ -935,7 +935,7 @@ MAP *getNearestMonolith(int x, int y, int triad)
 		
 		// friendly territory only
 		
-		if (tile->owner != -1 && tile->owner != aiFactionId && isWar(tile->owner, aiFactionId))
+		if (tile->owner != -1 && tile->owner != aiFactionId && isVendetta(tile->owner, aiFactionId))
 			continue;
 		
 		// monolith

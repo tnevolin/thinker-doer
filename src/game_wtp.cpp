@@ -3675,7 +3675,7 @@ Checks if territory belongs to neutral faction.
 */
 bool isNeutralTerritory(int factionId, MAP* tile)
 {
-	return tile->owner != -1 && tile->owner != factionId && !isPact(tile->owner, factionId) && !isWar(tile->owner, factionId);
+	return tile->owner != -1 && tile->owner != factionId && !isPact(tile->owner, factionId) && !isVendetta(tile->owner, factionId);
 }
 
 /*
@@ -3683,7 +3683,7 @@ Checks if territory belongs to hostile faction.
 */
 bool isHostileTerritory(int factionId, MAP* tile)
 {
-	return tile->owner != -1 && tile->owner != factionId && isWar(tile->owner, factionId);
+	return tile->owner != -1 && tile->owner != factionId && isVendetta(tile->owner, factionId);
 }
 
 bool isUnitHasAbility(int unitId, int ability)
@@ -5251,7 +5251,7 @@ bool isCommlink(int factionId1, int factionId2)
 Returns true if two factions are at war.
 Also account for natives are always at war with other factions.
 */
-bool isWar(int factionId1, int factionId2)
+bool isVendetta(int factionId1, int factionId2)
 {
 	return factionId1 == 0 || factionId2 == 0 || at_war(factionId1, factionId2);
 }
@@ -5277,7 +5277,7 @@ Retruns true if war.
 */
 bool isHostile(int factionId1, int factionId2)
 {
-	return isWar(factionId1, factionId2);
+	return isVendetta(factionId1, factionId2);
 }
 
 /*
@@ -5291,14 +5291,14 @@ bool isNeutral(int factionId1, int factionId2)
 /*
 Checks if faction at war with any other normal faction.
 */
-bool isWarWithAny(int factionId)
+bool isVendettaWithAny(int factionId)
 {
 	for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
 	{
 		if (otherFactionId == factionId)
 			continue;
 
-		if (isWar(factionId, otherFactionId))
+		if (isVendetta(factionId, otherFactionId))
 			return true;
 
 	}
@@ -6208,7 +6208,7 @@ territory: unclaimed, own, unknown, hostile
 */
 bool isAllowedBaseLocation(int factionId, MAP *tile)
 {
-	return tile->owner == -1 || tile->owner == factionId || !isCommlink(tile->owner, factionId) || isWar(tile->owner, factionId);
+	return tile->owner == -1 || tile->owner == factionId || !isCommlink(tile->owner, factionId) || isVendetta(tile->owner, factionId);
 }
 
 /*
@@ -6427,7 +6427,7 @@ int getClosestHostileBaseRange(int factionId, MAP *tile)
 		
 		// hostile to this faction
 		
-		if (!isWar(base->faction_id, factionId))
+		if (!isVendetta(base->faction_id, factionId))
 			continue;
 		
 		// range

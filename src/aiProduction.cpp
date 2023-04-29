@@ -490,7 +490,7 @@ void evaluateGlobalLandCombatDemand()
 		
 		// enemy
 		
-		if (!isWar(aiFactionId, factionId))
+		if (!isVendetta(aiFactionId, factionId))
 			continue;
 		
 		// number of wars
@@ -506,7 +506,7 @@ void evaluateGlobalLandCombatDemand()
 			
 			// at war
 			
-			if (!isWar(factionId, otherFactionId))
+			if (!isVendetta(factionId, otherFactionId))
 				continue;
 			
 			// accumulate
@@ -674,7 +674,7 @@ void evaluateGlobalLandCombatDemand()
 		
 		// at war
 		
-		if (!isWar(aiFactionId, otherFactionId))
+		if (!isVendetta(aiFactionId, otherFactionId))
 			continue;
 		
 		// accumulate
@@ -758,7 +758,7 @@ void evaluateGlobalTerritoryLandCombatDemand()
 		if (vehicle->faction_id == 0)
 			continue;
 		
-		if (!isWar(aiFactionId, vehicle->faction_id))
+		if (!isVendetta(aiFactionId, vehicle->faction_id))
 			continue;
 		
 		if (vehicleTile->owner == aiFactionId)
@@ -789,7 +789,7 @@ void evaluateGlobalTerritoryLandCombatDemand()
 		bool atWar = false;
 		for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 		{
-			if (isWar(aiFactionId, factionId))
+			if (isVendetta(aiFactionId, factionId))
 			{
 				atWar = true;
 				break;
@@ -828,7 +828,7 @@ void evaluateGlobalSeaCombatDemand()
 		
 		// enemy
 		
-		if (!isWar(aiFactionId, factionId))
+		if (!isVendetta(aiFactionId, factionId))
 			continue;
 		
 		// number of wars
@@ -844,7 +844,7 @@ void evaluateGlobalSeaCombatDemand()
 			
 			// at war
 			
-			if (!isWar(factionId, otherFactionId))
+			if (!isVendetta(factionId, otherFactionId))
 				continue;
 			
 			// accumulate
@@ -1006,7 +1006,7 @@ void evaluateGlobalSeaCombatDemand()
 		
 		// at war
 		
-		if (!isWar(aiFactionId, otherFactionId))
+		if (!isVendetta(aiFactionId, otherFactionId))
 			continue;
 		
 		// accumulate
@@ -2993,7 +2993,7 @@ void evaluateLandPodPoppingDemand()
 		
 		// not at war
 		
-		if (isWar(aiFactionId, tile->owner))
+		if (isVendetta(aiFactionId, tile->owner))
 			continue;
 		
 		// accumulate
