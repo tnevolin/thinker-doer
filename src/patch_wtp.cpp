@@ -2168,7 +2168,7 @@ void patch_growth_turns_population_boom()
 /*
 Wraps has_fac call in base_minerals to sneak in RT mineral increase.
 */
-void patch_base_minerals()
+void patch_recycling_tank_minerals()
 {
 	write_call(0x004E9E68, (int)modifiedBaseMinerals);
 
@@ -5547,9 +5547,14 @@ void patch_setup_wtp(Config* cf)
 	patch_display_base_nutrient_cost_factor();
 
 	patch_growth_turns_population_boom();
-	
-	patch_base_minerals();
-	
+
+	// patch RT -> 50% minerals
+
+	if (cf->recycling_tanks_mineral_multiplier)
+	{
+		patch_recycling_tank_minerals();
+	}
+
 	// integrated into Thinker
 //	// patch free minerals
 //
