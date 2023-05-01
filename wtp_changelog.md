@@ -1,3 +1,7 @@
+# Version 299
+
+* Fixed my bug in bombardment check that sometimese crashed the game.
+
 # Version 298
 
 * Reverted disabled probe tech stealing from faction with vendetta.

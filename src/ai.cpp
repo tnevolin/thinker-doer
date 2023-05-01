@@ -7580,7 +7580,7 @@ double getUnitBombardmentAttackEffect(int ownFactionId, int ownUnitId, int foeVe
 	
 	// bombardment
 	
-	if (!isUnitCanInitiateBombardment(ownUnitId, foeVehicleId))
+	if (!isUnitCanInitiateBombardment(ownUnitId, foeUnitId))
 		return 0.0;
 	
 	// own attack
@@ -7597,7 +7597,7 @@ double getUnitBombardmentAttackEffect(int ownFactionId, int ownUnitId, int foeVe
 	
 	double foeMeleeAttackEffect = 0.0;
 	
-	if (isUnitCanMeleeAttackFromTile(foeVehicleId, ownUnitId, tile))
+	if (isUnitCanMeleeAttackFromTile(foeUnitId, ownUnitId, tile))
 	{
 		foeMeleeAttackEffect =
 			aiData.combatEffectTable.getCombatEffect(ownUnitId, foeFactionId, foeUnitId, 1, CT_MELEE)
