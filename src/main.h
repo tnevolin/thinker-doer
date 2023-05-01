@@ -258,7 +258,6 @@ struct Config {
     double computer_infiltration_device_lifetime_probe_effect = 0.0;
     bool modified_probe_action_risks = false;
     int probe_action_risk_genetic_plague = 0;
-    int probe_action_risk_steal_tech = 0;
     bool combat_bonus_sensor_ocean = false;
     bool combat_bonus_sensor_offense = false;
     bool break_treaty_before_fight = false;

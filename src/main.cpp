@@ -408,10 +408,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->probe_action_risk_genetic_plague = std::max(0, atoi(value));
     }
-    else if (MATCH("wtp", "probe_action_risk_steal_tech"))
-    {
-        cf->probe_action_risk_steal_tech = std::max(0, atoi(value));
-    }
     else if (MATCH("wtp", "combat_bonus_sensor_ocean"))
     {
         cf->combat_bonus_sensor_ocean = (atoi(value) == 0 ? false : true);

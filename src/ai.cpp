@@ -7306,28 +7306,23 @@ void populateHexCosts()
 
 }
 
-/*
-Sets base foundation year to current turn (if not set).
-*/
-void setBaseFoundationYear(int baseId)
+int getBaseFoundingTurn(int baseId)
 {
 	BASE *base = getBase(baseId);
-
-	if (base->pad_1 == 0)
-	{
-		base->pad_1 = *current_turn;
-	}
-
+	
+	return base->pad_1;
+	
 }
+
 /*
 Gets base age.
 */
 int getBaseAge(int baseId)
 {
 	BASE *base = getBase(baseId);
-
-	return (*current_turn) - base->pad_1 + 1;
-
+	
+	return (*current_turn) - base->pad_1;
+	
 }
 
 /*

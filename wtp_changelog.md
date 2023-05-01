@@ -1,8 +1,12 @@
+# Version 298
+
+* Reverted disabled probe tech stealing from faction with vendetta.
+
 # Version 297
 
 * Updated The Cloning Vats description.
 * Reduced likelyhood of tech trade.
-* Disabled tech stealing from faction with vendetta.
+* Disabled probe tech stealing from faction with vendetta.
 
 # Version 296
 

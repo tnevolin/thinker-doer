@@ -216,7 +216,7 @@ int getBaseOptimalDoctors(int baseId);
 double getResourceScore(double minerals, double energy);
 void populatePathInfoParameters();
 void populateHexCosts();
-void setBaseFoundationYear(int baseId);
+int getBaseFoundingTurn(int baseId);
 int getBaseAge(int baseId);
 double getBaseSizeGrowth(int baseId);
 double getBonusDelayEffectCoefficient(double delay);

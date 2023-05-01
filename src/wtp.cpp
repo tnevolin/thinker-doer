@@ -1871,20 +1871,20 @@ int wtp_tech_level(int id)
 }
 
 /*
-
 Calculates tech cost.
 cost grow accelerated from the beginning then linear.
-a1 = 20                                     // constant (first tech cost)
-b1 =-20										// linear coefficient
-c1 = 60										// quadratic coefficient
-b2 = 600 * <map size>						// linear slope
-x0 = (b2 - b1) / (2 * c1)                   // break point
-a2 = a1 + b1 * x0 + c1 * x0 ^ 2 - b2 * x0   // linear intercept
+a1														// constant (first tech cost)
+b1														// linear coefficient
+c1														// quadratic coefficient
+d1														// qubic coefficient
+b2 = ? * <map size>										// linear slope
+x0 = (-c1 + sqrt(c1^2 - 3 * d1 * (b1 - b2))) / (3 * d1)	// break point
+a2 = a1 + b1 * x0 + c1 * x0^2 + d1 * x0^3 - b2 * x0		// linear intercept
 x  = (<level> - 1)
 
 correction = (number of tech discovered by anybody / total tech count) / (turn / 350)
 
-cost = (x < x0 ? a1 + b1 * x + c1 * x^2 : a2 + b2 * x) * scale * correction
+cost = (x < x0 ? a1 + b1 * x + c1 * x^2 + d1 * x^3 : a2 + b2 * x) * scale * correction
 
 */
 int wtp_tech_cost(int fac, int tech)
@@ -1898,15 +1898,16 @@ int wtp_tech_cost(int fac, int tech)
         level = wtp_tech_level(tech);
     }
 
-    double a1 = 20.0;
-    double b1 =-20.0;
-    double c1 = 60.0;
-    double b2 = 600.0 * ((double)*map_area_tiles / 3200.0);
-    double x0 = (b2 - b1) / (2 * c1);
-    double a2 = a1 + b1 * x0 + c1 * x0 * x0 - b2 * x0;
+    double a1 =  10.0;
+    double b1 =   0.0;
+    double c1 =   0.0;
+    double d1 =   5.145;
+    double b2 = 840.0 * ((double)*map_area_tiles / 3200.0);
+    double x0 = (-c1 + sqrt(c1 * c1 - 3 * d1 * (b1 - b2))) / (3 * d1);
+    double a2 = a1 + b1 * x0 + c1 * x0 * x0 + d1 * x0 * x0 * x0 - b2 * x0;
     double x = (double)(level - 1);
 
-    double base = (x < x0 ? a1 + b1 * x + c1 * x * x : a2 + b2 * x);
+    double base = (x < x0 ? a1 + b1 * x + c1 * x * x + d1 * x * x * x : a2 + b2 * x);
 
     double cost =
         base
@@ -2068,63 +2069,67 @@ Modifies base init computation.
 HOOK_API int baseInit(int factionId, int x, int y)
 {
 	// execute original code
-
-	int id = tx_base_init(factionId, x, y);
-
+	
+	int baseId = tx_base_init(factionId, x, y);
+	
 	// return immediatelly if base wasn't created
-
-	if (id < 0)
-		return id;
-
+	
+	if (baseId < 0)
+		return baseId;
+	
 	// get base
-
-	BASE *base = &(Bases[id]);
-
+	
+	BASE *base = getBase(baseId);
+	
+	// set base founding turn
+	
+	base->pad_1 = *current_turn;
+	
 	// The Planetary Transit System fix
 	// new base size is limited by average faction base size
-
+	
 	if (isProjectBuilt(factionId, FAC_PLANETARY_TRANS_SYS) && base->pop_size == 3)
 	{
 		// calculate average faction base size
-
+		
 		int totalFactionBaseCount = 0;
 		int totalFactionPopulation = 0;
-
+		
 		for (int otherBaseId = 0; otherBaseId < *total_num_bases; otherBaseId++)
 		{
 			BASE *otherBase = &(Bases[otherBaseId]);
-
+			
 			// skip this base
-
-			if (otherBaseId == id)
+			
+			if (otherBaseId == baseId)
 				continue;
-
+			
 			// only own bases
-
+			
 			if (otherBase->faction_id != base->faction_id)
 				continue;
-
+			
 			totalFactionBaseCount++;
 			totalFactionPopulation += otherBase->pop_size;
-
+			
 		}
-
+		
 		double averageFactionBaseSize = (double)totalFactionPopulation / (double)totalFactionBaseCount;
-
+		
 		// calculate new base size
-
+		
 		int newBaseSize = std::max(1, std::min(3, (int)floor(averageFactionBaseSize) - conf.pts_new_base_size_less_average));
-
+		
 		// set base size
-
+		
 		base->pop_size = newBaseSize;
-
+		
 	}
-
+	
 	// return base id
-
-	return id;
-
+	
+	return baseId;
+	
 }
 
 /*
@@ -2267,46 +2272,50 @@ HOOK_API void correctGrowthTurnsIndicator(int destinationStringPointer, int sour
 
 }
 
-HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queueSlotId)
+/*
+Modifies base mineral computation.
+*/
+HOOK_API int modifiedBaseMinerals(int facilityId, int baseId, int queueSlotId)
 {
-	// get current base
-
-	int id = *current_base_id;
-	BASE *base = *current_base_ptr;
-
-	// Recycling Tanks increases minerals by 50%.
-	// Pressure Dome now do not automatically implies Recycling Tanks so it does not deliver any RT benefits.
-
-	if (has_facility(id, FAC_RECYCLING_TANKS) && base->mineral_intake >= 1)
+	BASE *base = getBase(baseId);
+	
+	if (conf.recycling_tanks_mineral_multiplier)
 	{
-		// find mineral multiplier
-
-		int multiplier = (2 * base->mineral_intake_2 + (base->mineral_intake - 1)) / base->mineral_intake;
-
-		// increment multiplier
-
-		multiplier++;
-
-		// calculate updated value and addition
-
-		int updatedMineralIntakeMultiplied = (multiplier * base->mineral_intake) / 2;
-		int additionalMinerals = updatedMineralIntakeMultiplied - base->mineral_intake_2;
-
-		// update values
-
-		base->mineral_intake_2 += additionalMinerals;
-		base->mineral_surplus += additionalMinerals;
-
+		// Recycling Tanks increases minerals by 50%.
+		// Pressure Dome now do not automatically implies Recycling Tanks so it does not deliver any RT benefits.
+		
+		if (has_facility(baseId, FAC_RECYCLING_TANKS) && base->mineral_intake >= 1)
+		{
+			// find mineral multiplier
+			
+			int multiplier = divideIntegerRoundUp(2 * base->mineral_intake_2, base->mineral_intake);
+			
+			// increment multiplier
+			
+			multiplier++;
+			
+			// calculate updated value and addition
+			
+			int updatedMineralIntake2 = (base->mineral_intake * multiplier) / 2;
+			int additionalMinerals = updatedMineralIntake2 - base->mineral_intake_2;
+			
+			// update values
+			
+			base->mineral_intake_2 += additionalMinerals;
+			base->mineral_surplus += additionalMinerals;
+			
+		}
+		
 	}
-
+	
 	// execute original function
-
+	
 	int value = tx_has_fac(facilityId, baseId, queueSlotId);
-
+	
 	// return original value
-
+	
 	return value;
-
+	
 }
 
 /*
@@ -4574,190 +4583,176 @@ void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_st
 
 int __cdecl modifiedTurnUpkeep()
 {
-	// statistics
+	// execute original function
 	
-	if (*current_turn > 0)
+	int returnValue = mod_turn_upkeep();
+	
+	// collect statistics
+	
+	std::vector<int> computerFactions;
+	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
-		// set base foundation year
+		if (factionId == 0 || is_human(factionId))
+			continue;
 		
-		for (int baseId = 0; baseId < *total_num_bases; baseId++)
+		computerFactions.push_back(factionId);
+		
+	}
+	int factionCount = computerFactions.size();
+	
+	int totalBaseCount = 0;
+	int totalCitizenCount = 0;
+	int totalWorkerCount = 0;
+	double totalMinerals = 0.0;
+	double totalBudget = 0.0;
+	int totalOldBaseCount = 0;
+	int totalMineralIntakeGrowth = 0;
+	int totalBudgetIntakeGrowth = 0;
+	
+	FILE* statistics_base_log = fopen("statistics_base.txt", "a");
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = getBase(baseId);
+		
+		// computer
+		
+		if (base->faction_id == 0 || is_human(base->faction_id))
+			continue;
+		
+		int baseFoundingTurn = getBaseFoundingTurn(baseId);
+		int baseAge = getBaseAge(baseId);
+		int baseSize = base->pop_size;
+		int baseWorkerCount = base->pop_size - base->specialist_total;
+		
+		int baseMineralIntake = base->mineral_intake;
+		int baseMineralIntake2 = base->mineral_intake_2;
+		double baseMineralMultiplier = (baseMineralIntake <= 0 ? 1.0 : (double)baseMineralIntake2 / (double)baseMineralIntake);
+		
+		int baseBudgetIntake = base->energy_surplus;
+		int baseBudgetIntake2 = base->economy_total + base->psych_total + base->labs_total;
+		double baseBudgetMultiplier = (baseBudgetIntake <= 0 ? 1.0 : (double)baseBudgetIntake2 / (double)baseBudgetIntake);
+		
+		if (baseAge > 1)
 		{
-			setBaseFoundationYear(baseId);
+			totalOldBaseCount++;
+			
+			int previousTurnMineralIntake = base->pad_2;
+			int currentTurnMineralIntake = baseMineralIntake;
+			int mineralIntakeGrowth = currentTurnMineralIntake - previousTurnMineralIntake;
+			totalMineralIntakeGrowth += mineralIntakeGrowth;
+			
+			int previousTurnBudgetIntake = base->pad_3;
+			int currentTurnBudgetIntake = baseBudgetIntake;
+			int budgetIntakeGrowth = currentTurnBudgetIntake - previousTurnBudgetIntake;
+			totalBudgetIntakeGrowth += budgetIntakeGrowth;
+			
 		}
 		
-		// collect statistics
+		base->pad_2 = baseMineralIntake;
+		base->pad_3 = baseBudgetIntake;
 		
-		std::vector<int> computerFactions;
-		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-		{
-			if (factionId == 0)
-				continue;
-			
-			if (is_human(factionId))
-				continue;
-			
-			computerFactions.push_back(factionId);
-			
-		}
-		int totalFactionCount = computerFactions.size();
+		// totals
 		
-		int totalBaseCount = 0;
-		int totalPopulation = 0;
-		int totalWorkerCount = 0;
-		double totalResourceScore = 0.0;
-		double totalWorkersNutrientSurplus = 0.0;
-		double totalWorkersResourceScore = 0.0;
-		double totalLabs = 0.0;
-		int totalBaseCountOld = 0;
-		int totalPopulationOld = 0;
-		double totalPopulationGrowthOld = 0.0;
+		totalBaseCount++;
+		totalCitizenCount += baseSize;
+		totalWorkerCount += baseWorkerCount;
+		totalMinerals += baseMineralIntake2;
+		totalBudget += baseBudgetIntake2;
 		
-		FILE* statistics_base_log = fopen("statistics_base.txt", "a");
-		for (int baseId = 0; baseId < *total_num_bases; baseId++)
-		{
-			BASE *base = getBase(baseId);
-			
-			// computer
-			
-			if (base->faction_id == 0)
-				continue;
-			
-			if (is_human(base->faction_id))
-				continue;
-			
-			int baseAge = getBaseAge(baseId);
-			int baseSize = base->pop_size;
-			int baseWorkerCount = base->pop_size - base->specialist_total;
-			double baseNutrientSurplus = (double)base->nutrient_surplus;
-			double baseMineralIntake = (double)base->mineral_intake;
-			double baseMineralIntake2 = (double)base->mineral_intake_2;
-			double baseMineralMultiplier = baseMineralIntake2 / baseMineralIntake;
-			double baseEnergySurplus = (double)base->energy_surplus;
-			double baseEnergyTotal = (double)(base->economy_total + base->psych_total + base->labs_total);
-			double baseEnergyMultiplier = baseEnergyTotal / baseEnergySurplus;
-			double baseResourceScore = getResourceScore(baseMineralIntake2, base->economy_total + base->labs_total);
-			double basePopulationGrowth = getBasePopulationGrowth(baseId);
-			
-			double workersNutrientSurplus = (double)(base->nutrient_surplus - *TERRA_BASE_SQ_NUTRIENT);
-			
-			double workersMineralIntake2;
-			if (base->mineral_intake <= 0)
-			{
-				workersMineralIntake2 = 0.0;
-			}
-			else
-			{
-				double workersMineralProportion = (double)(base->mineral_intake - *TERRA_BASE_SQ_MINERALS) / (double)base->mineral_intake;
-				workersMineralIntake2 = workersMineralProportion * baseMineralIntake2;
-			}
-			
-			double workersEnergyScore;
-			if (base->energy_intake <= 0)
-			{
-				workersEnergyScore = 0.0;
-			}
-			else
-			{
-				double workersEnergyProportion = (double)(base->energy_intake - *TERRA_BASE_SQ_ENERGY) / (double)base->energy_intake;
-				workersEnergyScore = workersEnergyProportion * (base->economy_total + base->labs_total);
-			}
-			
-			double workersResourceScore = getResourceScore(workersMineralIntake2, workersEnergyScore);
-			
-			// totals
-			
-			totalBaseCount++;
-			totalPopulation += baseSize;
-			totalWorkerCount += baseWorkerCount;
-			totalResourceScore += baseResourceScore;
-			totalWorkersNutrientSurplus += workersNutrientSurplus;
-			totalWorkersResourceScore += workersResourceScore;
-			totalLabs += base->labs_total;
-			
-			if (baseAge > 1)
-			{
-				totalBaseCountOld++;
-				totalPopulationOld += baseSize;
-				totalPopulationGrowthOld += basePopulationGrowth;
-			}
-			
-			fprintf
-			(
-				statistics_base_log,
-				"%4X"
-				"\t%3d"
-				"\t%3d"
-				"\t%3d"
-				"\t%2d"
-				"\t%2d"
-				"\t%7.2f"
-				"\t%7.2f"
-				"\t%7.2f"
-				"\t%7.2f"
-				"\t%7.2f"
-				"\t%7.2f"
-				"\t%7.2f"
-				"\t%7.2f"
-				"\t%7.2f"
-				"\n"
-				, *map_random_seed
-				, *current_turn
-				, baseId
-				, baseAge
-				, baseSize
-				, baseWorkerCount
-				, baseResourceScore
-				, baseNutrientSurplus
-				, basePopulationGrowth
-				, baseMineralIntake
-				, baseMineralIntake2
-				, baseMineralMultiplier
-				, baseEnergySurplus
-				, baseEnergyTotal
-				, baseEnergyMultiplier
-			);
-
-		}
-		fclose(statistics_base_log);
-		
-		double averageBasePopulationOld = (totalBaseCountOld == 0 ? 1.0 : (double)totalPopulationOld / (double)totalBaseCountOld);
-		double averageBasePopulationGrowth = (totalBaseCountOld == 0 ? 0.0 : totalPopulationGrowthOld / (double)totalBaseCountOld);
-		
-		FILE* statistics_total_log = fopen("statistics_total.txt", "a");
 		fprintf
 		(
-			statistics_total_log,
+			statistics_base_log,
 			"%4X"
 			"\t%3d"
-			"\t%1d"
 			"\t%3d"
-			"\t%5d"
-			"\t%7.4f"
-			"\t%7.4f"
-			"\t%5d"
+			"\t%3d"
+			"\t%3d"
+			"\t%2d"
+			"\t%2d"
+			"\t%4d"
+			"\t%4d"
 			"\t%7.2f"
-			"\t%7.2f"
-			"\t%7.2f"
-			"\t%7.2f"
+			"\t%4d"
+			"\t%4d"
 			"\t%7.2f"
 			"\n"
 			, *map_random_seed
 			, *current_turn
-			, totalFactionCount
-			, totalBaseCount
-			, totalPopulation
-			, averageBasePopulationOld
-			, averageBasePopulationGrowth
-			, totalWorkerCount
-			, totalResourceScore
-			, totalResourceScore / (double)totalFactionCount
-			, totalWorkersResourceScore / (double)totalWorkerCount
-			, totalWorkersNutrientSurplus / (double)totalWorkerCount
-			, totalLabs / (double)totalFactionCount
+			, baseId
+			, baseFoundingTurn
+			, baseAge
+			, baseSize
+			, baseWorkerCount
+			, baseMineralIntake
+			, baseMineralIntake2
+			, baseMineralMultiplier
+			, baseBudgetIntake
+			, baseBudgetIntake2
+			, baseBudgetMultiplier
 		);
-		fclose(statistics_total_log);
+
+	}
+	fclose(statistics_base_log);
+	
+	// faction
+	
+	double averageFactionBaseCount = (factionCount == 0 ? 0.0 : (double)totalBaseCount / (double)factionCount);
+	double averageFactionCitizenCount = (factionCount == 0 ? 0.0 : (double)totalCitizenCount / (double)factionCount);
+	double averageFactionWorkerCount = (factionCount == 0 ? 0.0 : (double)totalWorkerCount / (double)factionCount);
+	double averageFactionMinerals = (factionCount == 0 ? 0.0 : (double)totalMinerals / (double)factionCount);
+	double averageFactionBudget = (factionCount == 0 ? 0.0 : (double)totalBudget / (double)factionCount);
+	double averageBaseMineralIntakeGrowth = (totalOldBaseCount == 0 ? 0.0 : (double)totalMineralIntakeGrowth / (double)totalOldBaseCount);
+	double averageBaseBudgetIntakeGrowth = (totalOldBaseCount == 0 ? 0.0 : (double)totalBudgetIntakeGrowth / (double)totalOldBaseCount);
+	
+	int totalTechCount = 0;
+	
+	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
+	{
+		// computer
+		
+		if (factionId == 0 || is_human(factionId))
+			continue;
+		
+		for (int techId = 0; techId <= TECH_BFG9000; techId++)
+		{
+			if (isTechDiscovered(factionId, techId))
+			{
+				totalTechCount++;
+			}
+			
+		}
 		
 	}
+	
+	double averageFactionTechCount = (factionCount == 0 ? 0.0 : (double)totalTechCount / (double)factionCount);
+	
+	FILE* statistics_faction_log = fopen("statistics_faction.txt", "a");
+	fprintf
+	(
+		statistics_faction_log,
+		"%4X"
+		"\t%3d"
+		"\t%7.2f"
+		"\t%7.2f"
+		"\t%7.2f"
+		"\t%7.2f"
+		"\t%7.2f"
+		"\t%7.2f"
+		"\t%7.4f"
+		"\t%7.4f"
+		"\n"
+		, *map_random_seed
+		, *current_turn
+		, averageFactionBaseCount
+		, averageFactionCitizenCount
+		, averageFactionWorkerCount
+		, averageFactionMinerals
+		, averageFactionBudget
+		, averageFactionTechCount
+		, averageBaseMineralIntakeGrowth
+		, averageBaseBudgetIntakeGrowth
+	);
+	fclose(statistics_faction_log);
 	
 	// modify native units cost
 	
@@ -4772,8 +4767,6 @@ int __cdecl modifiedTurnUpkeep()
 		Units[BSC_LOCUSTS_OF_CHIRON].cost = (int)floor((double)conf.native_unit_cost_initial_locusts_of_chiron * multiplier);
 		
 	}
-	
-	int returnValue = mod_turn_upkeep();
 	
 	// executionProfiles
 	

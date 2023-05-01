@@ -2168,9 +2168,9 @@ void patch_growth_turns_population_boom()
 /*
 Wraps has_fac call in base_minerals to sneak in RT mineral increase.
 */
-void patch_recycling_tank_minerals()
+void patch_base_minerals()
 {
-	write_call(0x004E9E68, (int)modifiedRecyclingTanksMinerals);
+	write_call(0x004E9E68, (int)modifiedBaseMinerals);
 
 }
 
@@ -5235,12 +5235,12 @@ void patch_setup_wtp(Config* cf)
 	
 	if (DEBUG)
 	{
-//		patch_disable_boom_delay();
-//		patch_disable_battle_refresh();
-//		patch_accelerate_order_veh();
-//		patch_disable_boom();
-//		patch_disable_battle_calls();
-//		patch_disable_focus();
+		patch_disable_boom_delay();
+		patch_disable_battle_refresh();
+		patch_accelerate_order_veh();
+		patch_disable_boom();
+		patch_disable_battle_calls();
+		patch_disable_focus();
 	}
 
 	// integrated into Thinker
@@ -5547,14 +5547,9 @@ void patch_setup_wtp(Config* cf)
 	patch_display_base_nutrient_cost_factor();
 
 	patch_growth_turns_population_boom();
-
-	// patch RT -> 50% minerals
-
-	if (cf->recycling_tanks_mineral_multiplier)
-	{
-		patch_recycling_tank_minerals();
-	}
-
+	
+	patch_base_minerals();
+	
 	// integrated into Thinker
 //	// patch free minerals
 //

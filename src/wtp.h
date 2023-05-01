@@ -140,7 +140,7 @@ HOOK_API char *getAbilityCostText(int number, char *destination, int radix);
 HOOK_API int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly);
 HOOK_API void displayBaseNutrientCostFactor(int destinationStringPointer, int sourceStringPointer);
 HOOK_API void correctGrowthTurnsIndicator(int destinationStringPointer, int sourceStringPointer);
-HOOK_API int modifiedRecyclingTanksMinerals(int facilityId, int baseId, int queueSlotId);
+HOOK_API int modifiedBaseMinerals(int facilityId, int baseId, int queueSlotId);
 HOOK_API int modifiedInefficiency(int energyIntake);
 HOOK_API void modifiedSetupPlayer(int factionId, int a2, int a3);
 HOOK_API void modifiedVehInitInBalance(int unitId, int factionId, int x, int y);
