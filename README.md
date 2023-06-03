@@ -532,7 +532,7 @@ As you can see, the growth is about same for average early base with less spread
 
 ## Final word
 
-Let me reiterate it that bigger land fertility base growth effect allows very interesting "fight for better base placement" mini game. However, the limited amount of land and random initial location turns it into pure game of chance taking all intellectual competition out of it. If anyone can propose a better fix I would be very glad to consider it!
+Let me reiterate it that bigger spread in land fertility base growth effect allows very interesting "fight for better base placement" mini game. However, the limited amount of land and random initial location turns it into pure game of chance taking all intellectual competition out of it. If anyone can propose a better fix I would be very glad to consider it!
 
 # Secret Project logic
 
