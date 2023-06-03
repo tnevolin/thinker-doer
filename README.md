@@ -502,17 +502,17 @@ It is not a completely bad idea restricting early expansion to most habitable la
 
 With that in mind, WPT intoduces few changes.
 
-## Yield restrictions disabled
+## Yield restrictions are disabled
 
 All yield restrictions are disabled. It would make *some* sense to reduce *all* yield by certain amount until unlocking certain technology. However, limiting rainy farm nutrient yield with 2 while still allowing jungle farm to produce 4 nutrients makes *none*.
 
-## Farm increases yield by 2
+## Farm yield is increased to 2
 
 This turns (arid, moist, rainy, jungle) farm nutrient surplus from {-1, 0, +1, +2} to {0, +1, +2, +3} achieving following:
 1. Jungle is only 1.5 times better than most fertile non-jungle land now, not twice as in vanilla.
 2. More land is habitable in the early game allowing better placement even for most geographically deprived factions.
 
-## Nutrient box width is increase to 20
+## Nutrient box width is increased to 20
 
 That is to compensate farm increased yield and revert average base growth to that of vanilla. Otherwise, they will just skyrocket.
 
