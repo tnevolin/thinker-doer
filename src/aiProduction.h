@@ -22,7 +22,7 @@ struct ProductionDemand
 	BASE *base;
 	double colonyCoefficient;
 	
-	std::map<int, double> priorities;
+	robin_hood::unordered_flat_map<int, double> priorities;
 	
 	void initialize(int baseId);
 	void add(int item, double priority, bool upkeep);
@@ -37,7 +37,7 @@ struct PRODUCTION_CHOICE
 	bool urgent;
 };
 
-const std::set<int> MANAGED_UNIT_TYPES
+const robin_hood::unordered_flat_set<int> MANAGED_UNIT_TYPES
 {
 	WPN_COLONY_MODULE,
 	WPN_TERRAFORMING_UNIT,
@@ -45,7 +45,7 @@ const std::set<int> MANAGED_UNIT_TYPES
 }
 ;
 
-const std::set<int> MANAGED_FACILITIES
+const robin_hood::unordered_flat_set<int> MANAGED_FACILITIES
 {
     FAC_HEADQUARTERS,
     FAC_CHILDREN_CRECHE,
@@ -169,7 +169,7 @@ double getBaseWorkerRelativeIncome(int baseId);
 double getBaseWorkerIncome(int baseId);
 double getBaseWorkerNutrientIntake(int baseId);
 double getCitizenIncome();
-double getBaseRelativeIncomeGrowth(int baseId);
+//double getBaseRelativeIncomeGrowth(int baseId);
 double getBaseIncomeGrowth(int baseId);
 double getCitizenIncomeGrowth(int baseId);
 std::vector<int> getProtectionCounterUnits(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
@@ -223,4 +223,10 @@ BaseMetric getBaseMetric(int baseId);
 BaseMetric getFacilityImprovement(int baseId, int facilityId);
 int getFacilityWorkerCountEffect(int baseId, int facilityId);
 double getDemand(double required, double provided);
+
+//=======================================================
+// statistical estimates
+//=======================================================
+
+double getBaseExtraPopulationGain(int baseId, int poulationLimit);
 

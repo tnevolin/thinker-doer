@@ -7,14 +7,14 @@ const char* scriptTxtID = "SCRIPT";
 
 // offsets
 
-const unsigned int TABLE_next_cell_count = 8;
+const int TABLE_next_cell_count = 8;
 const int *TABLE_next_cell_x = (int *)0x0066EF50;
 const int *TABLE_next_cell_y = (int *)0x0066EF74;
 
-const unsigned int TABLE_square_block_radius_count = 9U;
-const unsigned int *TABLE_square_block_radius = (unsigned int *)0x0066F8C4;
-const unsigned int TABLE_square_block_radius_base_internal = 9U;
-const unsigned int TABLE_square_block_radius_base_external = 21U;
+const int TABLE_square_block_radius_count = 9U;
+const int *TABLE_square_block_radius = (int *)0x0066F8C4;
+const int TABLE_square_block_radius_base_internal = 9U;
+const int TABLE_square_block_radius_base_external = 21U;
 const int *TABLE_square_offset_x = (int *)0x0066EFBC;
 const int *TABLE_square_offset_y = (int *)0x0066F440;
 
@@ -61,6 +61,7 @@ byte *g_SOCIALWIN = (byte *)0x008A6270;
 int *current_attacker = (int *)0x00689F28;
 int *current_defender = (int *)0x00689F2C;
 int *net_income = (int *)0x00749C0C;
+int *tech_per_turn = (int *)0x00749AE0;
 
 // yield rules
 

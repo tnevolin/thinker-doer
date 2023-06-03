@@ -28,68 +28,22 @@ struct TERRAFORMING_OPTION
 	std::vector<int> actions;
 };
 
-// conventional terraforming options
-
-const TERRAFORMING_OPTION TO_ROCKY_MINE = {"rocky mine", false, true, false, true, FORMER_MINE, true, {FORMER_ROAD, FORMER_MINE}};
-const TERRAFORMING_OPTION TO_MINE = {"mine", false, false, false, true, FORMER_MINE, true, {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}};
-const TERRAFORMING_OPTION TO_SOLAR_COLLECTOR = {"solar collector", false, false, false, true, FORMER_SOLAR, true, {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}};
-const TERRAFORMING_OPTION TO_CONDENSER = {"condenser", false, false, true, true, FORMER_CONDENSER, false, {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_CONDENSER}};
-const TERRAFORMING_OPTION TO_ECHELON_MIRROR = {"echelon mirror", false, false, true, true, FORMER_ECH_MIRROR, false, {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_ECH_MIRROR}};
-const TERRAFORMING_OPTION TO_THERMAL_BOREHOLE = {"thermal borehole", false, false, false, true, FORMER_THERMAL_BORE, true, {FORMER_ROAD, FORMER_THERMAL_BORE}};
-const TERRAFORMING_OPTION TO_FOREST = {"forest", false, false, false, true, FORMER_FOREST, true, {FORMER_ROAD, FORMER_FOREST}};
-const TERRAFORMING_OPTION TO_LAND_FUNGUS = {"land fungus", false, false, false, true, FORMER_PLANT_FUNGUS, true, {FORMER_ROAD, FORMER_PLANT_FUNGUS}};
-const TERRAFORMING_OPTION TO_MINING_PLATFORM = {"mining platform", true, false, false, true, FORMER_MINE, true, {FORMER_FARM, FORMER_MINE}};
-const TERRAFORMING_OPTION TO_TIDAL_HARNESS = {"tidal harness", true, false, false, true, FORMER_SOLAR, true, {FORMER_FARM, FORMER_SOLAR}};
-const TERRAFORMING_OPTION TO_SEA_FUNGUS = {"sea fungus", true, false, false, true, FORMER_PLANT_FUNGUS, true, {FORMER_PLANT_FUNGUS}};
-
-const std::vector<const TERRAFORMING_OPTION *> CONVENTIONAL_TERRAFORMING_OPTIONS =
-{
-	// land
-	&TO_ROCKY_MINE,
-	&TO_MINE,
-	&TO_SOLAR_COLLECTOR,
-	&TO_CONDENSER,
-	&TO_ECHELON_MIRROR,
-	&TO_THERMAL_BOREHOLE,
-	&TO_FOREST,
-	&TO_LAND_FUNGUS,
-	&TO_MINING_PLATFORM,
-	&TO_TIDAL_HARNESS,
-	&TO_SEA_FUNGUS,
-};
-
-const std::vector<const TERRAFORMING_OPTION *> GENERIC_TERRAFORMING_OPTIONS =
-{
-	&TO_MINE,
-	&TO_SOLAR_COLLECTOR,
-	&TO_CONDENSER,
-	&TO_ECHELON_MIRROR,
-};
-
-// aquifer
-const TERRAFORMING_OPTION AQUIFER_TERRAFORMING_OPTION =
-	// land
-	{"aquifer"   , false, false, true , true , FORMER_AQUIFER     , false, {FORMER_AQUIFER}}
-;
-// raise land
-const TERRAFORMING_OPTION RAISE_LAND_TERRAFORMING_OPTION =
-	// land
-	{"raise"     , false, false, true , true , FORMER_RAISE_LAND  , false, {FORMER_RAISE_LAND}}
-;
-// network
-const TERRAFORMING_OPTION NETWORK_TERRAFORMING_OPTION =
-	// land
-	{"road/tube" , false, false, false, false, FORMER_ROAD        , false, {FORMER_ROAD, FORMER_MAGTUBE}}
-;
-// sensor
-const TERRAFORMING_OPTION LAND_SENSOR_TERRAFORMING_OPTION =
-	// land
-	{"sensor"    , false, false, false, false, FORMER_SENSOR      , false, {FORMER_SENSOR}}
-;
-const TERRAFORMING_OPTION OCEAN_SENSOR_TERRAFORMING_OPTION =
-	// ocean
-	{"sensor"    , true , false, false, false, FORMER_SENSOR      , false, {FORMER_SENSOR}}
-;
+extern TERRAFORMING_OPTION TO_ROCKY_MINE;
+extern TERRAFORMING_OPTION TO_MINE;
+extern TERRAFORMING_OPTION TO_SOLAR_COLLECTOR;
+extern TERRAFORMING_OPTION TO_CONDENSER;
+extern TERRAFORMING_OPTION TO_ECHELON_MIRROR;
+extern TERRAFORMING_OPTION TO_THERMAL_BOREHOLE;
+extern TERRAFORMING_OPTION TO_FOREST;
+extern TERRAFORMING_OPTION TO_LAND_FUNGUS;
+extern TERRAFORMING_OPTION TO_MINING_PLATFORM;
+extern TERRAFORMING_OPTION TO_TIDAL_HARNESS;
+extern TERRAFORMING_OPTION TO_SEA_FUNGUS;
+extern TERRAFORMING_OPTION AQUIFER_TERRAFORMING_OPTION;
+extern TERRAFORMING_OPTION RAISE_LAND_TERRAFORMING_OPTION;
+extern TERRAFORMING_OPTION NETWORK_TERRAFORMING_OPTION;
+extern TERRAFORMING_OPTION LAND_SENSOR_TERRAFORMING_OPTION;
+extern TERRAFORMING_OPTION OCEAN_SENSOR_TERRAFORMING_OPTION;
 
 /*
 Prohibits building improvements too close to each other or existing improvements.
@@ -101,7 +55,7 @@ struct PROXIMITY_RULE
 	// cannot build within this range of same building improvement
 	int buildingDistance;
 };
-const std::map<int, PROXIMITY_RULE> PROXIMITY_RULES =
+const robin_hood::unordered_flat_map<int, PROXIMITY_RULE> PROXIMITY_RULES =
 {
 	{FORMER_FOREST, {0, 2}},
 	{FORMER_CONDENSER, {0, 2}},
@@ -115,9 +69,11 @@ const std::map<int, PROXIMITY_RULE> PROXIMITY_RULES =
 struct FORMER_ORDER
 {
 	int vehicleId;
-	std::set<MAP *> oneTurnTerraformingLocations{};
+	robin_hood::unordered_flat_set<MAP *> oneTurnTerraformingLocations{};
 	MAP *tile = nullptr;
 	int action = -1;
+	
+	FORMER_ORDER(int _vehicleId);
 	
 };
 
@@ -130,7 +86,7 @@ struct TerraformingRequestAssignment
 struct TerraformingImprovement
 {
 	const MAP *tile;
-	const TERRAFORMING_OPTION *option;
+	TERRAFORMING_OPTION *option;
 	int action = -1;
 	int nutrient;
 	int mineral;
@@ -140,7 +96,7 @@ struct TerraformingImprovement
 
 struct TERRAFORMING_SCORE
 {
-	const TERRAFORMING_OPTION *option = nullptr;
+	TERRAFORMING_OPTION *option = nullptr;
 	int action = -1;
 	double score = 0.0;
 };
@@ -148,9 +104,13 @@ struct TERRAFORMING_SCORE
 struct TERRAFORMING_REQUEST
 {
 	MAP *tile = nullptr;
-	const TERRAFORMING_OPTION *option;
+	TERRAFORMING_OPTION *option;
 	int action = -1;
 	double score = 0.0;
+	
+	TERRAFORMING_REQUEST(MAP *_tile, TERRAFORMING_OPTION *_option, int _action, double _score);
+	TERRAFORMING_REQUEST();
+	
 };
 
 struct ConventionalTerraformingRequest : TERRAFORMING_REQUEST
@@ -158,6 +118,9 @@ struct ConventionalTerraformingRequest : TERRAFORMING_REQUEST
 	MAP currentMapState;
 	MAP improvedMapState;
 	double yieldScore;
+	
+	ConventionalTerraformingRequest();
+	
 };
 
 struct BaseTerraformingInfo
@@ -236,7 +199,7 @@ void assignFormerOrders();
 void finalizeFormerOrders();
 double computeImprovementSurplusEffectScore(MAP *tile, MAP *currentMapState, MAP *improvedMapState);
 double computeImprovementYieldScore(int baseId, MAP *tile, MAP *currentMapState, MAP *improvedMapState);
-ConventionalTerraformingRequest calculateConventionalTerraformingScore(int baseId, MAP *tile, const TERRAFORMING_OPTION *option, bool fitness);
+ConventionalTerraformingRequest calculateConventionalTerraformingScore(int baseId, MAP *tile, TERRAFORMING_OPTION *option, bool fitness);
 void calculateAquiferTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerraformingScore);
 void calculateRaiseLandTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerraformingScore);
 void calculateNetworkTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerraformingScore);

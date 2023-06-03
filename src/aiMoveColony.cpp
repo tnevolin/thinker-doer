@@ -16,9 +16,9 @@ std::vector<MAP *> availableBuildSites;
 
 double averageFutureYieldScore;
 
-std::set<MAP *> landColonyLocations;
-std::set<MAP *> seaColonyLocations;
-std::set<MAP *> airColonyLocations;
+robin_hood::unordered_flat_set<MAP *> landColonyLocations;
+robin_hood::unordered_flat_set<MAP *> seaColonyLocations;
+robin_hood::unordered_flat_set<MAP *> airColonyLocations;
 
 clock_t s;
 
@@ -71,9 +71,8 @@ void moveColonyStrategy()
 
 void analyzeBasePlacementSites()
 {
-//	std::vector<std::pair<int, double>> sortedBuildSiteScores;
-	std::set<int> colonyVehicleIds;
-	std::set<int> colonyAssociations;
+	robin_hood::unordered_flat_set<int> colonyVehicleIds;
+	robin_hood::unordered_flat_set<int> colonyAssociations;
 	
 	debug("analyzeBasePlacementSites - %s\n", MFactions[aiFactionId].noun_faction);
 	
@@ -339,7 +338,7 @@ void analyzeBasePlacementSites()
 	
 	debug("distribute colonies to build sites - %s\n", MFactions[aiFactionId].noun_faction);
 	
-	std::set<MAP *> &unavailableBuildSites = aiData.production.unavailableBuildSites;
+	robin_hood::unordered_flat_set<MAP *> &unavailableBuildSites = aiData.production.unavailableBuildSites;
 	unavailableBuildSites.clear();
 	
 	std::vector<int> vehicleIds;
@@ -586,14 +585,24 @@ double getBuildSiteYieldScore(MAP *tile)
 {
 	debug("getBuildSiteYieldScore (%3d,%3d)\n", getX(tile), getY(tile));
 	
+	int tileIndex = tile - *MapPtr;
+	TileInfo &tileInfo = aiData.tileInfos[tileIndex];
+	
+	executionProfiles["1.3.2.2.4.2.1. summarize tile yield scores"].start();
+	
 	// summarize tile yield scores
 
 	std::vector<double> yieldScores;
 
-	for (MAP *baseRadiusTile : getBaseRadiusTiles(tile, true))
+	for (int baseRadiusTileIndex : tileInfo.baseRadiusTileIndexes)
 	{
+		if (baseRadiusTileIndex == -1)
+			continue;
+		
+		MAP *baseRadiusTile = *MapPtr + baseRadiusTileIndex;
 		int baseRadiusTileX = getX(baseRadiusTile);
 		int baseRadiusTileY = getY(baseRadiusTile);
+		TileInfo &baseRadiusTileInfo = aiData.tileInfos[baseRadiusTileIndex];
 		
 		// verify tile will be ours
 		
@@ -651,7 +660,7 @@ double getBuildSiteYieldScore(MAP *tile)
 		
 		// ignore not owned land tiles for ocean base
 
-		if (is_ocean(tile) && !is_ocean(baseRadiusTile) && baseRadiusTile->owner != aiFactionId)
+		if (tileInfo.ocean && !baseRadiusTileInfo.ocean && baseRadiusTile->owner != aiFactionId)
 			continue;
 		
 		// reduce score for already covered tiles
@@ -669,13 +678,25 @@ double getBuildSiteYieldScore(MAP *tile)
 		
 	}
 	
+	executionProfiles["1.3.2.2.4.2.1. summarize tile yield scores"].stop();
+	
+	executionProfiles["1.3.2.2.4.2.2. pad yieldScores to full base radius"].start();
+	
 	// pad yieldScores to full base radius
 	
 	yieldScores.resize(21, 0.0);
 	
+	executionProfiles["1.3.2.2.4.2.2. pad yieldScores to full base radius"].stop();
+	
+	executionProfiles["1.3.2.2.4.2.3. sort scores"].start();
+	
 	// sort scores
 	
 	std::sort(yieldScores.begin(), yieldScores.end(), std::greater<double>());
+	
+	executionProfiles["1.3.2.2.4.2.3. sort scores"].stop();
+	
+	executionProfiles["1.3.2.2.4.2.4. average weigthed score"].start();
 	
 	// average weigthed score
 	
@@ -706,6 +727,8 @@ double getBuildSiteYieldScore(MAP *tile)
 	
 	debug("\tscore=%+f\n", score);
 	
+	executionProfiles["1.3.2.2.4.2.4. average weigthed score"].stop();
+	
 	return score;
 	
 }
@@ -715,14 +738,19 @@ Computes build location placement score.
 */
 double getBuildSitePlacementScore(MAP *tile)
 {
+	bool TRACE = DEBUG && false;
+	
+	debug("getBuildSitePlacementScore (%3d,%3d) TRACE=%d\n", getX(tile), getY(tile), TRACE);
+	
 	bool ocean = is_ocean(tile);
 	
-	debug("getBuildSitePlacementScore (%3d,%3d)\n", getX(tile), getY(tile));
+	executionProfiles["1.3.2.2.4.1.1. land use"].start();
 	
 	// land use
 	
 	double landUse = getBasePlacementLandUse(tile);
 	double landUseScore = conf.ai_expansion_land_use_coefficient * (landUse - conf.ai_expansion_land_use_base_value);
+	
 	debug
 	(
 		"\t%-20s%+5.2f"
@@ -736,11 +764,16 @@ double getBuildSitePlacementScore(MAP *tile)
 		, landUse
 	);
 	
+	executionProfiles["1.3.2.2.4.1.1. land use"].stop();
+	
+	executionProfiles["1.3.2.2.4.1.2. radius overlap"].start();
+	
 	// radius overlap
 	
 	double radiusOverlap = getBasePlacementRadiusOverlap(tile);
 	double radiusOverlapScore =
 		conf.ai_expansion_radius_overlap_coefficient * std::max(0.0, radiusOverlap - conf.ai_expansion_radius_overlap_base_value);
+	
 	debug
 	(
 		"\t%-20s%+5.2f"
@@ -754,18 +787,22 @@ double getBuildSitePlacementScore(MAP *tile)
 		, radiusOverlap
 	);
 	
+	executionProfiles["1.3.2.2.4.1.2. radius overlap"].stop();
+	
+	executionProfiles["1.3.2.2.4.1.3. coastScore"].start();
+	
 	// prefer coast over inland
 	
 	double coastScore = 0.0;
 	
 	if (!ocean)
 	{
-		std::set<int> oceanAssociations = getOceanAssociations(tile);
+		robin_hood::unordered_flat_set<int> oceanAssociations = getOceanAssociations(tile);
 		
 		if (oceanAssociations.size() == 1)
 		{
 			int oceanAssociation = *(oceanAssociations.begin());
-			int connectedOceanArea = aiData.geography.factions[aiFactionId].associationAreas[oceanAssociation];
+			int connectedOceanArea = aiData.factionGeographys[aiFactionId].associationAreas[oceanAssociation];
 			coastScore += conf.ai_expansion_coastal_base * std::min(1.0, 0.1 * (double)connectedOceanArea);
 		}
 		else if (oceanAssociations.size() > 1)
@@ -775,7 +812,7 @@ double getBuildSitePlacementScore(MAP *tile)
 			
 			for (int oceanAssociation : oceanAssociations)
 			{
-				int connectedOceanArea = aiData.geography.factions[aiFactionId].associationAreas[oceanAssociation];
+				int connectedOceanArea = aiData.factionGeographys[aiFactionId].associationAreas[oceanAssociation];
 				
 				if (connectedOceanArea > connectedOceanArea1)
 				{
@@ -795,7 +832,11 @@ double getBuildSitePlacementScore(MAP *tile)
 	}
 	
 	debug("\t%-20s%+5.2f\n", "coastScore", coastScore);
-
+	
+	executionProfiles["1.3.2.2.4.1.3. coastScore"].stop();
+	
+	executionProfiles["1.3.2.2.4.1.4. landmarkScore"].start();
+	
 	// explicitly discourage placing base on some landmarks
 	
 	double landmarkScore;
@@ -814,6 +855,8 @@ double getBuildSitePlacementScore(MAP *tile)
 	}
 	debug("\t%-20s%+5.2f\n", "landmarkScore", landmarkScore);
 	
+	executionProfiles["1.3.2.2.4.1.4. landmarkScore"].stop();
+	
 	// return score
 	
 	return landUseScore + radiusOverlapScore + coastScore + landmarkScore;
@@ -825,7 +868,7 @@ bool isValidBuildSite(MAP *tile, int factionId)
 	int x = getX(tile);
 	int y = getY(tile);
 	TileInfo &tileInfo = aiData.getTileInfo(tile);
-	TileMovementInfo &tileMovementInfo = tileInfo.movementInfos[factionId];
+	TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
 	
 	// allowed base build location
 	
@@ -887,7 +930,7 @@ bool isValidBuildSite(MAP *tile, int factionId)
 	
 	// not blocked
 	
-	if (tileMovementInfo.blocked)
+	if (tileFactionInfo.blocked)
 		return false;
 	
 	// not warzone
@@ -939,7 +982,7 @@ bool isWithinExpansionRangeSameAssociation(int x, int y, int expansionRange)
 	MAP *tile = getMapTile(x, y);
 	bool ocean = is_ocean(tile);
 	int association = getAssociation(tile, aiFactionId);
-	std::set<MAP *> *colonyLocations = (ocean ? &seaColonyLocations : &landColonyLocations);
+	robin_hood::unordered_flat_set<MAP *> *colonyLocations = (ocean ? &seaColonyLocations : &landColonyLocations);
 	
 	debug("association = %4d\n", association);
 	
@@ -961,9 +1004,9 @@ bool isWithinExpansionRangeSameAssociation(int x, int y, int expansionRange)
 	
 	// create processing arrays
 
-	std::set<MAP *> visitedTiles;
-	std::set<MAP *> currentTiles;
-	std::set<MAP *> furtherTiles;
+	robin_hood::unordered_flat_set<MAP *> visitedTiles;
+	robin_hood::unordered_flat_set<MAP *> currentTiles;
+	robin_hood::unordered_flat_set<MAP *> furtherTiles;
 	
 	// initialize search
 	
@@ -1273,48 +1316,24 @@ double getTileFutureYieldScore(MAP *tile)
 	
 	double bestTerraformingOptionYieldScore = 0.0;
 
-	for (const TERRAFORMING_OPTION *option : CONVENTIONAL_TERRAFORMING_OPTIONS)
+	for (const TERRAFORMING_OPTION &option : {TO_MINE, TO_SOLAR_COLLECTOR, TO_FOREST, TO_LAND_FUNGUS, TO_MINING_PLATFORM, TO_TIDAL_HARNESS, TO_SEA_FUNGUS})
 	{
-		// count only basic terraforming options
-		
-		if
-		(
-			!(
-				option->requiredAction == FORMER_MINE
-				||
-				option->requiredAction == FORMER_SOLAR
-				||
-				option->requiredAction == FORMER_FOREST
-				||
-				option->requiredAction == FORMER_PLANT_FUNGUS
-			)
-		)
-		{
-			continue;
-		}
-		
-		// exclude area effect improvements from future yield estimate
-		// they will be factored in for each tile yield computation
-		
-		if (option->requiredAction == FORMER_CONDENSER || option->requiredAction == FORMER_ECH_MIRROR)
-			continue;
-		
 		// process only correct realm
 
-		if (option->ocean != ocean)
+		if (option.ocean != ocean)
 			continue;
 
 		// rocky option is for land rocky tile only
 
-		if (option->rocky && !(!ocean && rocky))
+		if (option.rocky && !(!ocean && rocky))
 			continue;
 
 		// check if required action is discovered
 
-		if (!(option->requiredAction == -1 || has_terra(aiFactionId, option->requiredAction, ocean)))
+		if (!(option.requiredAction == -1 || has_terra(aiFactionId, option.requiredAction, ocean)))
 			continue;
 		
-		debug("\t%s\n", option->name);
+		debug("\t%s\n", option.name);
 		
 		// initialize variables
 
@@ -1322,7 +1341,7 @@ double getTileFutureYieldScore(MAP *tile)
 		
 		// process actions
 		
-		for(int action : option->actions)
+		for(int action : option.actions)
 		{
 			// exclude all improvement from deep ocean tile unless AQUATIC faction with proper tech
 			
@@ -1529,13 +1548,30 @@ If potentialBuildSite is set it is counted as another base.
 */
 double getBasePlacementLandUse(MAP *buildSite)
 {
+	int buildSiteTileIndex = buildSite - *MapPtr;
+	TileInfo &buildSiteTileInfo = aiData.tileInfos[buildSiteTileIndex];
+	
+	// do not compute anything if too far from own bases
+	
+	int nearestOwnBaseRange = getNearestBaseRange(buildSite, aiData.baseIds, false);
+	
+	if (nearestOwnBaseRange > 8)
+		return 0.0;
+	
+	// compute land use
+	
 	double landUse = 0.0;
 	
 	// positive score
 	
-	for (MAP *baseRadiusTile : getBaseRadiusTiles(buildSite, true))
+	for (int baseRadiusTileIndex : buildSiteTileInfo.baseRadiusTileIndexes)
 	{
-		bool baseRadiusTileOcean = is_ocean(baseRadiusTile);
+		if (baseRadiusTileIndex == -1)
+			continue;
+		
+		MAP *baseRadiusTile = *MapPtr + baseRadiusTileIndex;
+		TileInfo &baseRadiusTileInfo = aiData.tileInfos[baseRadiusTileIndex];
+		bool baseRadiusTileOcean = baseRadiusTileInfo.ocean;
 		
 		// land
 		
@@ -1549,9 +1585,16 @@ double getBasePlacementLandUse(MAP *buildSite)
 		
 		// count side base radius on own or neutral territory
 		
-		for (MAP *sideTile : getSideTiles(baseRadiusTile))
+		for (int angle = 0; angle < ANGLE_COUNT; angle++)
 		{
-			bool sideTileOcean = is_ocean(sideTile);
+			int sideTileIndex = baseRadiusTileInfo.adjacentTileIndexes[angle];
+			
+			if (sideTileIndex == -1)
+				continue;
+			
+			MAP *sideTile = *MapPtr + sideTileIndex;
+			TileInfo &sideTileInfo = aiData.tileInfos[sideTileIndex];
+			bool sideTileOcean = sideTileInfo.ocean;
 			
 			// land
 			
@@ -1571,9 +1614,14 @@ double getBasePlacementLandUse(MAP *buildSite)
 	
 	// negative score
 	
-	for (unsigned int index = TABLE_square_block_radius_base_internal; index < TABLE_square_block_radius_base_external; index++)
+	for (int offsetIndex = TABLE_square_block_radius_base_internal; offsetIndex < TABLE_square_block_radius_base_external; offsetIndex++)
 	{
-		MAP *tile = getSquareBlockRadiusTile(buildSite, index);
+		int tileIndex = buildSiteTileInfo.baseRadiusTileIndexes[offsetIndex];
+		
+		if (tileIndex == -1)
+			continue;
+		
+		MAP *tile = *MapPtr + tileIndex;
 		
 		if (tile == nullptr)
 			continue;
@@ -1582,7 +1630,7 @@ double getBasePlacementLandUse(MAP *buildSite)
 		
 		std::vector<int> extensionAngles;
 		
-		switch (index - TABLE_square_block_radius_base_internal)
+		switch (offsetIndex - TABLE_square_block_radius_base_internal)
 		{
 		case 0:
 			extensionAngles.push_back(0);
@@ -1667,7 +1715,6 @@ double getBasePlacementLandUse(MAP *buildSite)
 			// count land loss
 			
 			double landLoss = 1.0 * ((double)(4 - extensionLength) / 3.0);
-debug(">(%3d,%3d) extensionAngle=%d extensionLength=%d\n", getX(tile), getY(tile), extensionAngle, extensionLength);
 			
 			landUse -= landLoss;
 			
@@ -1703,9 +1750,9 @@ int getBasePlacementRadiusOverlap(MAP *tile)
 /*
 Counts connected ocean associations.
 */
-std::set<int> getOceanAssociations(MAP *tile)
+robin_hood::unordered_flat_set<int> getOceanAssociations(MAP *tile)
 {
-	std::set<int> oceanAssociations;
+	robin_hood::unordered_flat_set<int> oceanAssociations;
 	
 	if (is_ocean(tile))
 		return oceanAssociations;

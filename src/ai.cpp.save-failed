@@ -70,8 +70,6 @@ Movement phase entry point.
 */
 void __cdecl modified_enemy_units_check(int factionId)
 {
-	debug("modified_enemy_units_check - %s\n", getMFaction(factionId)->noun_faction);fflush(debug_log);
-	
 	// set AI faction id for global reference
 	
 	aiFactionId = factionId;
@@ -92,30 +90,9 @@ void __cdecl modified_enemy_units_check(int factionId)
 	
 	// execute original code
 	
-	debug("enemy_units_check - %s - end\n", getMFaction(factionId)->noun_faction);fflush(debug_log);
-	
 	executionProfiles["~ enemy_units_check"].start();
 	enemy_units_check(factionId);
 	executionProfiles["~ enemy_units_check"].stop();
-	
-	debug("modified_enemy_units_check - %s - end\n", getMFaction(factionId)->noun_faction);fflush(debug_log);
-	
-	// skip all units
-	
-	if (isWtpEnabledFaction(factionId))
-	{
-		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-		{
-			VEH *vehicle = getVehicle(vehicleId);
-			
-			if (vehicle->faction_id != factionId)
-				continue;
-			
-			mod_veh_skip(vehicleId);
-			
-		}
-		
-	}
 	
 }
 
@@ -191,59 +168,71 @@ void populateAIData()
 {
 	// clear aiData
 	
-	executionProfiles["1.1.0. aiData.clear()"].start();
 	aiData.clear();
-	executionProfiles["1.1.0. aiData.clear()"].stop();
 	
-	profileFunction("1.1.1. populateGlobalVariables", populateGlobalVariables);
-	profileFunction("1.1.2. populateTileInfos", populateTileInfos);
-	profileFunction("1.1.3. populateAssociations", populateAssociations);
-	profileFunction("1.1.4. populateHexCosts", populateHexCosts);
-	profileFunction("1.1.5. populateBaseBorderDistances", populateBaseBorderDistances);
-	profileFunction("1.1.6. populateFactionAirbases", populateFactionAirbases);
-	profileFunction("1.1.7. populateNetworkCoverage", populateNetworkCoverage);
-	profileFunction("1.1.8. populateAIFactionTransfers", populateAIFactionTransfers);
-	profileFunction("1.1.A. populateEnemyOffenseThreat", populateEnemyOffenseThreat);
-	profileFunction("1.1.B. populateEmptyEnemyBaseTiles", populateEmptyEnemyBaseTiles);
-	profileFunction("1.1.C. populateShipyardsAndSeaTransports", populateShipyardsAndSeaTransports);
-	profileFunction("1.1.D. populateReachableAssociations", populateReachableAssociations);
-	profileFunction("1.1.E. populateWarzones", populateWarzones);
-	profileFunction("1.1.F. populateFactionData", populateFactionData);
-	profileFunction("1.1.G. evaluateBasePoliceRequests", evaluateBasePoliceRequests);
-	profileFunction("1.1.H. populateEnemyStacks", populateEnemyStacks);
-	profileFunction("1.1.I. evaluateBaseDefense", evaluateBaseDefense);
+	// global variables
+	
+	profileFunction("1.1.0. populateGlobalVariables", populateGlobalVariables);
+	
+	// tile infos
+	
+	profileFunction("1.1.1. populateTileInfos", populateTileInfos);
+	
+	// geography data
+	
+	profileFunction("1.1.2. populateGeographyData", populateGeographyData);
+	
+	// faction data
+	
+	profileFunction("1.1.3. populateFactionData", populateFactionData);
+	
+	// movement data
+	
+	profileFunction("1.1.4. populateMovementData", populateMovementData);
+	
+	// base police request
+	
+	profileFunction("1.1.5. evaluateBasePoliceRequests", evaluateBasePoliceRequests);
+	
+	// base police request
+	
+	profileFunction("1.1.A. populateEnemyStacks", populateEnemyStacks);
+	
+	// base threat
+	
+	profileFunction("1.1.6. evaluateBaseDefense", evaluateBaseDefense);
 	
 }
 
 /*
 Analyzes and sets geographical parameters.
 */
-void populateAssociations()
+void analyzeGeography()
 {
-	const bool TRACE = DEBUG && true;
+	const bool TRACE = DEBUG && false;
 	
 	if (TRACE)
 	{
-		debug("populateAssociations - %s\n", MFactions[aiFactionId].noun_faction);
+		debug("analyzeGeography - %s\n", MFactions[aiFactionId].noun_faction);
 	}
 	
 	// initialize extended region associations
 	
-	executionProfiles["1.1.3.1. populate default extended region associations"].start();
+	executionProfiles["1.1.2.1.1. populate default extended region associations"].start();
 	
 	robin_hood::unordered_flat_map<int, int> defaultExtendedRegionAssociations;
 	
 	for (MAP *tile = *MapPtr; tile < *MapPtr + *map_area_tiles; tile++)
 	{
 		int extededRegion = getExtendedRegion(tile);
-		defaultExtendedRegionAssociations.emplace(extededRegion, extededRegion);
+		defaultExtendedRegionAssociations.insert({extededRegion, extededRegion});
 	}
 	
-	executionProfiles["1.1.3.1. populate default extended region associations"].stop();
+	executionProfiles["1.1.2.1.1. populate default extended region associations"].stop();
 	
 	// join associations
 		
-	executionProfiles["1.1.3.2. join default associations"].start();
+	executionProfiles["1.1.2.1.2. join default associations"].start();
 	
 	for (int tileIndex = 0; tileIndex < *map_area_tiles; tileIndex++)
 	{
@@ -276,30 +265,23 @@ void populateAssociations()
 			int oldAssociation = std::max(tileAssociation, adjacentTileAssociation);
 			int newAssociation = std::min(tileAssociation, adjacentTileAssociation);
 			
-			for (robin_hood::pair<int, int> &extendedRegionAssociationEntry : defaultExtendedRegionAssociations)
+			for (robin_hood::pair<int, int> extendedRegionAssociationEntry : defaultExtendedRegionAssociations)
 			{
-				int extendedRegion = extendedRegionAssociationEntry.first;
+				int extendedRegion = extendedRegionAssociationEntry.second;
 				int association = extendedRegionAssociationEntry.second;
 				
 				if (association == oldAssociation)
 				{
-					defaultExtendedRegionAssociations.at(extendedRegion) = newAssociation;
+					defaultExtendedRegionAssociations[extendedRegion] = newAssociation;
 				}
 				
 			}
 			
 		}
 		
-		// skip non polar regions
-		
-		if (tileIndex == *map_half_x)
-		{
-			tileIndex += *map_half_x * (*map_axis_y - 2);
-		}
-		
 	}
 	
-	executionProfiles["1.1.3.2. join default associations"].stop();
+	executionProfiles["1.1.2.1.2. join default associations"].stop();
 	
 	if (TRACE)
 	{
@@ -317,11 +299,11 @@ void populateAssociations()
 	
 	// populate faction specific data
 	
-	executionProfiles["1.1.3.4. populate faction specific data"].start();
+	executionProfiles["1.1.2.1.4. populate faction specific data"].start();
 	
 	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
 	{
-		Geography &factionGeography = aiData.factionGeographys[factionId];
+		FactionGeography &factionGeography = aiData.geography.factions[factionId];
 		
 		if (TRACE)
 		{
@@ -330,7 +312,7 @@ void populateAssociations()
 		
 		// associations
 		
-		executionProfiles["1.1.3.4.1. associations"].start();
+		executionProfiles["1.1.2.1.4.1. associations"].start();
 		
 		robin_hood::unordered_flat_map<int, int> &extendedRegionAssociations = factionGeography.extendedRegionAssociations;
 		robin_hood::unordered_flat_map<MAP *, int> &coastalBaseOceanAssociations = factionGeography.coastalBaseOceanAssociations;
@@ -338,11 +320,11 @@ void populateAssociations()
 		extendedRegionAssociations = defaultExtendedRegionAssociations;
 		coastalBaseOceanAssociations.clear();
 		
-		executionProfiles["1.1.3.4.1. associations"].stop();
+		executionProfiles["1.1.2.1.4.1. associations"].stop();
 		
 		// join ocean associations
 		
-		executionProfiles["1.1.3.4.2. join ocean associations"].start();
+		executionProfiles["1.1.2.1.4.2. join ocean associations"].start();
 		
 		for (int baseId = 0; baseId < *total_num_bases; baseId++)
 		{
@@ -397,7 +379,7 @@ void populateAssociations()
 			
 			// reassign connected associations
 			
-			for (robin_hood::pair<int, int> &extendedRegionAssociationEntry : extendedRegionAssociations)
+			for (robin_hood::pair<int, int> extendedRegionAssociationEntry : extendedRegionAssociations)
 			{
 				int extendedRegion = extendedRegionAssociationEntry.first;
 				int association = extendedRegionAssociationEntry.second;
@@ -412,26 +394,9 @@ void populateAssociations()
 				
 			}
 			
-			// reassign coastal base ocean associations
-			
-			for (robin_hood::pair<MAP *, int> &coastalBaseOceanAssociationEntry : coastalBaseOceanAssociations)
-			{
-				MAP *tile = coastalBaseOceanAssociationEntry.first;
-				int association = coastalBaseOceanAssociationEntry.second;
-				
-				if (adjacentOceanAssociations.count(association) == 0)
-					continue;
-				
-				if (association == minAdjacentOceanAssociation)
-					continue;
-				
-				coastalBaseOceanAssociations[tile] = minAdjacentOceanAssociation;
-				
-			}
-			
 		}
 		
-		executionProfiles["1.1.3.4.2. join ocean associations"].stop();
+		executionProfiles["1.1.2.1.4.2. join ocean associations"].stop();
 		
 		if (TRACE)
 		{
@@ -461,108 +426,71 @@ void populateAssociations()
 			
 		}
 		
-		executionProfiles["1.1.3.4.3. populate tile associations"].start();
+		executionProfiles["1.1.2.1.4.3. populate tile associations and areas"].start();
+		
+		factionGeography.associations[0].clear();
+		factionGeography.associations[1].clear();
+		factionGeography.associationAreas.clear();
 		
 		for (int tileIndex = 0; tileIndex < *map_area_tiles; tileIndex++)
 		{
 			MAP *tile = *MapPtr + tileIndex;
 			TileInfo &tileInfo = aiData.tileInfos[tileIndex];
 			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
-			int surfaceIndex = tileInfo.ocean;
 			
-			int extendedRegion;
+			int landAssociation;
+			int oceanAssociation;
 			
-			if (tile->region == 0x3f || tile->region == 0x7f)
+			if (tileInfo.ocean)
 			{
-				int polarRegionIndex = (tileIndex < *map_area_tiles / 2 ? tileIndex : *map_half_x + tileIndex - (*map_area_tiles - *map_half_x));
-				extendedRegion = 0x80 + polarRegionIndex;
+				landAssociation = -1;
+				oceanAssociation = extendedRegionAssociations.at(getExtendedRegion(tile));
 			}
 			else
 			{
-				extendedRegion = tile->region;
-			}
-			
-			tileFactionInfo.association = extendedRegionAssociations.at(extendedRegion);
-			tileFactionInfo.surfaceAssociations[surfaceIndex] = tileFactionInfo.association;
-			
-		}
-		
-		for (robin_hood::pair<MAP *, int> &coastalBaseOceanAssociationEntry : coastalBaseOceanAssociations)
-		{
-			MAP *tile = coastalBaseOceanAssociationEntry.first;
-			int coastalBaseOceanAssociation = coastalBaseOceanAssociationEntry.second;
-			int tileIndex = tile - *MapPtr;
-			TileFactionInfo &tileFactionInfo = aiData.tileInfos[tileIndex].factionInfos[factionId];
-			
-			tileFactionInfo.surfaceAssociations[1] = coastalBaseOceanAssociation;
-			
-		}
-		
-		executionProfiles["1.1.3.4.3. populate tile associations"].stop();
-		
-		executionProfiles["1.1.3.4.4. populate faction associations"].start();
-		
-		factionGeography.associations[0].clear();
-		factionGeography.associations[1].clear();
-		
-		for (robin_hood::pair<int, int> &extendedRegionAssociationEntry : extendedRegionAssociations)
-		{
-			int association = extendedRegionAssociationEntry.second;
-			
-			int surfaceIndex;
-			
-			if (association < 0x40)
-			{
-				surfaceIndex = 0;
-			}
-			else if (association < 0x80)
-			{
-				surfaceIndex = 1;
-			}
-			else
-			{
-				int polarRegionIndex = association - 0x80;
-				int tileIndex = (polarRegionIndex < *map_half_x ? polarRegionIndex : polarRegionIndex - *map_half_x + (*map_area_tiles - *map_half_x));
-				MAP *tile = *MapPtr + tileIndex;
-				surfaceIndex = is_ocean(tile);
-			}
-			
-			factionGeography.associations[surfaceIndex].insert(association);
-			
-		}
-		
-		executionProfiles["1.1.3.4.4. populate faction associations"].stop();
-		
-		executionProfiles["1.1.3.4.5. populate association areas"].start();
-		
-		factionGeography.associationAreas.clear();
-		
-		for (int tileIndex = 0; tileIndex < *map_area_tiles; tileIndex++)
-		{
-			TileInfo &tileInfo = aiData.tileInfos[tileIndex];
-			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
-			
-			for (int surfaceIndex = 0; surfaceIndex < 2; surfaceIndex++)
-			{
-				int surfaceAssociation = tileFactionInfo.surfaceAssociations[surfaceIndex];
+				landAssociation = extendedRegionAssociations.at(getExtendedRegion(tile));
 				
-				if (surfaceAssociation != -1)
+				if (coastalBaseOceanAssociations.count(tile) == 0)
 				{
-					factionGeography.associationAreas[surfaceAssociation]++;
+					oceanAssociation = -1;
+				}
+				else
+				{
+					oceanAssociation = coastalBaseOceanAssociations.at(tile);
 				}
 				
 			}
 			
+			// set tile associations
+			
+			tileFactionInfo.associations[0] = landAssociation;
+			tileFactionInfo.associations[1] = oceanAssociation;
+			
+			// add faction associations
+			// accumulate association area
+			
+			if (landAssociation != -1)
+			{
+				factionGeography.associations[0].insert(landAssociation);
+				factionGeography.associationAreas[landAssociation]++;
+			}
+			
+			if (oceanAssociation != -1)
+			{
+				factionGeography.associations[1].insert(oceanAssociation);
+				factionGeography.associationAreas[oceanAssociation]++;
+			}
+			
 		}
 		
-		executionProfiles["1.1.3.4.5. populate association areas"].stop();
+		executionProfiles["1.1.2.1.4.3. populate tile associations and areas"].stop();
 		
 		// populate connections
 		
-		executionProfiles["1.1.3.4.6. populate connections"].start();
+		executionProfiles["1.1.2.1.4.4. populate connections"].start();
 		
 		robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> &associationConnections =
-			aiData.factionGeographys[factionId].associationConnections;
+			aiData.geography.factions[factionId].associationConnections;
 		
 		associationConnections.clear();
 		
@@ -571,7 +499,7 @@ void populateAssociations()
 			TileInfo &tileInfo = aiData.tileInfos[tileIndex];
 			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
 			bool tileOcean = tileInfo.ocean;
-			int tileAssociation = tileFactionInfo.association;
+			int tileAssociation = tileFactionInfo.associations[tileOcean];
 			
 			for (int validIndex = 0; validIndex < tileInfo.validAdjacentTileCount; validIndex++)
 			{
@@ -579,7 +507,7 @@ void populateAssociations()
 				TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
 				TileFactionInfo &adjacentTileFactionInfo = adjacentTileInfo.factionInfos[factionId];
 				bool adjacentTileOcean = adjacentTileInfo.ocean;
-				int adjacentTileAssociation = adjacentTileFactionInfo.association;
+				int adjacentTileAssociation = adjacentTileFactionInfo.associations[adjacentTileOcean];
 				
 				// exclude same realm
 				
@@ -594,7 +522,7 @@ void populateAssociations()
 			
 		}
 		
-		executionProfiles["1.1.3.4.6. populate connections"].stop();
+		executionProfiles["1.1.2.1.4.4. populate connections"].stop();
 		
 		if (TRACE || true)
 		{
@@ -621,7 +549,7 @@ void populateAssociations()
 		
 	}
 	
-	executionProfiles["1.1.3.4. populate faction specific data"].stop();
+	executionProfiles["1.1.2.1.4. populate faction specific data"].stop();
 	
 	// associations and association areas
 	
@@ -654,7 +582,7 @@ void populateTileInfos()
 		
 		tileInfo.validAdjacentTileCount = 0;
 		
-		for (int angle = 0; angle < ANGLE_COUNT; angle++)
+		for (unsigned int angle = 0U; angle < ANGLE_COUNT; angle++)
 		{
 			int adjacentTileIndex = getAdjacentTileIndex(tileIndex, angle);
 			aiData.tileInfos[tileIndex].adjacentTileIndexes[angle] = adjacentTileIndex;
@@ -668,21 +596,26 @@ void populateTileInfos()
 			
 		}
 		
-		// set base radius tile infos
-		
-		for (int offsetIndex = 0; offsetIndex < OFFSET_COUNT_RADIUS; offsetIndex++)
-		{
-			int tileX = getX(tileIndex);
-			int tileY = getY(tileIndex);
-			
-			int baseRadiusTileX = tileX + BASE_TILE_OFFSETS[offsetIndex][0];
-			int baseRadiusTileY = tileY + BASE_TILE_OFFSETS[offsetIndex][1];
-			
-			tileInfo.baseRadiusTileIndexes[offsetIndex] = getMapIndexByCoordinates(baseRadiusTileX, baseRadiusTileY);
-			
-		}
-		
 	}
+	
+}
+
+void populateGeographyData()
+{
+	profileFunction("1.1.2.1. analyzeGeography", analyzeGeography);
+	profileFunction("1.1.2.2. populatePathInfoParameters", populatePathInfoParameters);
+	profileFunction("1.1.2.3. populateBaseBorderDistances", populateBaseBorderDistances);
+	profileFunction("1.1.2.4. populateFactionAirbases", populateFactionAirbases);
+	profileFunction("1.1.2.5. populateNetworkCoverage", populateNetworkCoverage);
+//	profileFunction("1.1.2.6. populateEnemyMovementInfos", populateEnemyMovementInfos);
+	profileFunction("1.1.2.8. populateTransfers", populateTransfers);
+	profileFunction("1.1.2.9. populateLandClusters", populateLandClusters);
+	profileFunction("1.1.2.B. populateEnemyOffenseThreat", populateEnemyOffenseThreat);
+	profileFunction("1.1.2.C. populateEmptyEnemyBaseTiles", populateEmptyEnemyBaseTiles);
+	profileFunction("1.1.2.D. populateEnemyBaseOceanAssociations", populateEnemyBaseOceanAssociations);
+	profileFunction("1.1.2.E. populateShipyardsAndSeaTransports", populateShipyardsAndSeaTransports);
+	profileFunction("1.1.2.F. populateReachableAssociations", populateReachableAssociations);
+	profileFunction("1.1.2.G. populateWarzones", populateWarzones);
 	
 }
 
@@ -694,13 +627,22 @@ void populateFactionData()
 	aiData.netIncome = getFactionNetIncome(aiFactionId);
 	aiData.grossIncome = getFactionGrossIncome(aiFactionId);
 	
-	profileFunction("1.1.F.1. populateFactionInfos", populateFactionInfos);
-	profileFunction("1.1.F.2. populateBases", populateBases);
-	profileFunction("1.1.F.3. populateOurBases", populateOurBases);
-	profileFunction("1.1.F.4. populateMaxMineralSurplus", populateMaxMineralSurplus);
-	profileFunction("1.1.F.5. populateFactionCombatModifiers", populateFactionCombatModifiers);
-	profileFunction("1.1.F.6. populateUnits", populateUnits);
-	profileFunction("1.1.F.7. populateVehicles", populateVehicles);
+	profileFunction("1.1.3.1. populateFactionInfos", populateFactionInfos);
+	profileFunction("1.1.3.2. populateBases", populateBases);
+	profileFunction("1.1.3.3. populateOurBases", populateOurBases);
+	profileFunction("1.1.3.4. populateMaxMineralSurplus", populateMaxMineralSurplus);
+	profileFunction("1.1.3.5. populateFactionCombatModifiers", populateFactionCombatModifiers);
+	profileFunction("1.1.3.6. populateUnits", populateUnits);
+	profileFunction("1.1.3.7. populateVehicles", populateVehicles);
+	
+}
+
+/*
+Populates movement data dependent on both geography and faction data.
+*/
+void populateMovementData()
+{
+//	profileFunction("1.1.4.1. populateBaseEnemyMovementCosts", populateBaseEnemyMovementCosts);
 	
 }
 
@@ -1315,7 +1257,7 @@ void populateShipyardsAndSeaTransports()
 		// shipyards
 		
 		robin_hood::unordered_flat_map<int, std::vector<int>> &oceanAssociationShipyards =
-			aiData.factionGeographys[factionId].oceanAssociationShipyards;
+			aiData.geography.factions[factionId].oceanAssociationShipyards;
 		
 		oceanAssociationShipyards.clear();
 		
@@ -1348,8 +1290,7 @@ void populateShipyardsAndSeaTransports()
 		
 		// sea transports
 		
-		robin_hood::unordered_flat_map<int, std::vector<int>> &oceanAssociationSeaTransports =
-			aiData.factionGeographys[factionId].oceanAssociationSeaTransports;
+		robin_hood::unordered_flat_map<int, std::vector<int>> &oceanAssociationSeaTransports = aiData.geography.factions[factionId].oceanAssociationSeaTransports;
 		oceanAssociationSeaTransports.clear();
 		
 		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
@@ -1365,11 +1306,6 @@ void populateShipyardsAndSeaTransports()
 			// sea transport
 			
 			if (!isSeaTransportVehicle(vehicleId))
-				continue;
-			
-			// sea transport should be in sea association
-			
-			if (vehicleAssociation == -1)
 				continue;
 			
 			// add sea transport
@@ -1420,13 +1356,13 @@ void populateReachableAssociations()
 		debug("\t%s\n", getMFaction(factionId)->noun_faction);
 		
 		robin_hood::unordered_flat_map<int, std::vector<int>> &oceanAssociationSeaTransports =
-			aiData.factionGeographys[factionId].oceanAssociationSeaTransports;
+			aiData.geography.factions[factionId].oceanAssociationSeaTransports;
 		robin_hood::unordered_flat_map<int, std::vector<int>> &oceanAssociationShipyards =
-			aiData.factionGeographys[factionId].oceanAssociationShipyards;
+			aiData.geography.factions[factionId].oceanAssociationShipyards;
 		
 		// immediatelly reachable
 		
-		robin_hood::unordered_flat_set<int> &immediatelyReachableAssociations = aiData.factionGeographys[factionId].immediatelyReachableAssociations;
+		robin_hood::unordered_flat_set<int> &immediatelyReachableAssociations = aiData.geography.factions[factionId].immediatelyReachableAssociations;
 		immediatelyReachableAssociations.clear();
 		
 		for (robin_hood::pair<int, std::vector<int>> &oceanAssociationSeaTransportEntry : oceanAssociationSeaTransports)
@@ -1448,7 +1384,7 @@ void populateReachableAssociations()
 		
 		// potentialy reachable
 		
-		robin_hood::unordered_flat_set<int> &potentiallyReachableAssociations = aiData.factionGeographys[factionId].potentiallyReachableAssociations;
+		robin_hood::unordered_flat_set<int> &potentiallyReachableAssociations = aiData.geography.factions[factionId].potentiallyReachableAssociations;
 		potentiallyReachableAssociations.clear();
 		
 		potentiallyReachableAssociations.insert(immediatelyReachableAssociations.begin(), immediatelyReachableAssociations.end());
@@ -1457,6 +1393,7 @@ void populateReachableAssociations()
 		{
 			int association = oceanAssociationShipyardEntry.first;
 			int shipyardCount = oceanAssociationShipyardEntry.second.size();
+debug(">association=%3d\n", association); fflush(debug_log);
 			
 			if (shipyardCount == 0)
 				continue;
@@ -1658,8 +1595,8 @@ void populateBaseEnemyMovementCosts()
 		
 		// prevalent movement type
 		
-		MovementType prevalentSeaMovementType = (factionId == 0 || has_project(factionId, FAC_XENOEMPATHY_DOME) ? MT_SEA_NATIVE : MT_SEA_REGULAR);
-		MovementType prevalentLandMovementType = (factionId == 0 || has_project(factionId, FAC_XENOEMPATHY_DOME) ? MT_LAND_NATIVE : MT_LAND_REGULAR);
+		MOVEMENT_TYPE prevalentSeaMovementType = (factionId == 0 || has_project(factionId, FAC_XENOEMPATHY_DOME) ? MT_SEA_NATIVE : MT_SEA_REGULAR);
+		MOVEMENT_TYPE prevalentLandMovementType = (factionId == 0 || has_project(factionId, FAC_XENOEMPATHY_DOME) ? MT_LAND_NATIVE : MT_LAND_REGULAR);
 		
 		// iterate bases
 		
@@ -1727,7 +1664,7 @@ void populateBaseEnemyMovementCosts()
 							{
 								// hexCost
 								
-								int hexCost = adjacentTileInfo.hexCosts1[prevalentLandMovementType][(angle + 4) % ANGLE_COUNT];
+								int hexCost = adjacentTileInfo.hexCosts[(angle + 4) % ANGLE_COUNT][prevalentLandMovementType];
 								double travelTime = (double)hexCost / (double)landCombatSpeed + travelImpediment;
 								double adjacentTileTravelTime = tileTravelTime + travelTime;
 								
@@ -1749,7 +1686,7 @@ void populateBaseEnemyMovementCosts()
 								
 								// hexCost
 								
-								int hexCost = adjacentTileInfo.hexCosts1[prevalentSeaMovementType][(angle + 4) % ANGLE_COUNT];
+								int hexCost = adjacentTileInfo.hexCosts[(angle + 4) % ANGLE_COUNT][prevalentSeaMovementType];
 								double travelTime = (double)hexCost / (double)seaTransportSpeed;
 								double adjacentTileTravelTime = tileTravelTime + travelTime;
 								
@@ -1814,7 +1751,7 @@ void populateBaseEnemyMovementCosts()
 							{
 								// hexCost
 								
-								int hexCost = adjacentTileInfo.hexCosts1[prevalentSeaMovementType][(angle + 4) % ANGLE_COUNT];
+								int hexCost = adjacentTileInfo.hexCosts[(angle + 4) % ANGLE_COUNT][prevalentSeaMovementType];
 								double travelTime = (double)hexCost / (double)seaCombatSpeed;
 								double adjacentTileTravelTime = tileTravelTime + travelTime;
 								
@@ -1843,7 +1780,7 @@ void populateBaseEnemyMovementCosts()
 			
 			if (TRACE)
 			{
-				for (robin_hood::pair<MAP *, double> &estimatedTravelTimeEntry : estimatedTravelTimes)
+				for (robin_hood::pair<MAP *, double> estimatedTravelTimeEntry : estimatedTravelTimes)
 				{
 					MAP *tile = estimatedTravelTimeEntry.first;
 					double estimatedTravelTime = estimatedTravelTimeEntry.second;
@@ -2099,6 +2036,35 @@ void populateEmptyEnemyBaseTiles()
 	
 }
 
+void populateEnemyBaseOceanAssociations()
+{
+	aiData.enemyBaseOceanAssociations.clear();
+
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = getBase(baseId);
+		MAP *baseTile = getBaseMapTile(baseId);
+		bool baseTileOcean = is_ocean(baseTile);
+		int baseOceanAssociation = getBaseOceanAssociation(baseId);
+
+		// skip ours
+
+		if (base->faction_id == aiFactionId)
+			continue;
+
+		// skip not ocean
+
+		if (!baseTileOcean)
+			continue;
+
+		// add enemy base ocean association
+
+		aiData.enemyBaseOceanAssociations.insert(baseOceanAssociation);
+
+	}
+
+}
+
 /*
 Sets tile combat movement realated info for each faction: blocked, zoc.
 */
@@ -2183,91 +2149,144 @@ void populateEnemyMovementInfos()
 	
 }
 
-/*
-Populates transfers between land and ocean for AI faction.
-*/
-void populateAIFactionTransfers()
+void populateTransfers()
 {
 	bool TRACE = DEBUG & false;
 	
-	debug("populateAIFactionTransfers TRACE=%d\n", TRACE);
+	if (TRACE) { debug("populateTransfers\n"); }
 	
-	int factionId = aiFactionId;
-	
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, std::vector<Transfer>>> &associationTransfers =
-		aiData.factionGeographys[factionId].associationTransfers;
-	
-	associationTransfers.clear();
-	
-	for (int tileIndex = 0; tileIndex < *map_area_tiles; tileIndex++)
+	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
-		MAP *tile = *MapPtr + tileIndex;
-		TileInfo &tileInfo = aiData.tileInfos[tileIndex];
-		TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
-		bool tileOcean = tileInfo.ocean;
-		int tileAssociation = tileFactionInfo.association;
+		robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, std::vector<Transfer>>> &associationTransfers = aiData.geography.factions[factionId].associationTransfers;
+		associationTransfers.clear();
 		
-		// land
-		
-		if (tileOcean)
-			continue;
-		
-		// not blocked
-		
-		if (tileFactionInfo.blocked)
-			continue;
-		
-		// adjacent tiles
-		
-		for (int validIndex = 0; validIndex < tileInfo.validAdjacentTileCount; validIndex++)
+		for (MAP *tile = *MapPtr; tile < *MapPtr + *map_area_tiles; tile++)
 		{
-			int adjacentTileIndex = tileInfo.validAdjacentTileIndexes[validIndex];
-			MAP *adjacentTile = *MapPtr + adjacentTileIndex;
-			TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
-			TileFactionInfo &adjacentTileFactionInfo = adjacentTileInfo.factionInfos[factionId];
-			bool adjacentTileOcean = adjacentTileInfo.ocean;
-			int adjacentTileAssociation = adjacentTileFactionInfo.association;
+			bool tileOcean = is_ocean(tile);
+			int tileAssociation = getAssociation(tile, factionId);
+			TileInfo &tileInfo = aiData.getTileInfo(tile);
 			
-			// ocean
+			// land
 			
-			if (!adjacentTileOcean)
+			if (tileOcean)
 				continue;
 			
 			// not blocked
 			
-			if (adjacentTileFactionInfo.blocked)
+			if (tileInfo.isBlocked(factionId, false))
 				continue;
 			
-			// not base
+			// adjacent tiles
 			
-			if (isBaseAt(adjacentTile))
-				continue;
-			
-			// add transfer
-			
-			associationTransfers[tileAssociation][adjacentTileAssociation].emplace_back(tile, adjacentTile);
-			associationTransfers[adjacentTileAssociation][tileAssociation].emplace_back(tile, adjacentTile);
+			for (MAP *adjacentTile : getAdjacentTiles(tile))
+			{
+				bool adjacentTileOcean = is_ocean(adjacentTile);
+				int adjacentTileAssociation = getAssociation(adjacentTile, factionId);
+				TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
+				
+				// ocean
+				
+				if (!adjacentTileOcean)
+					continue;
+				
+				// not blocked
+				
+				if (adjacentTileInfo.isBlocked(factionId, false))
+					continue;
+				
+				// not base
+				
+				if (isBaseAt(adjacentTile))
+					continue;
+				
+				// add transfer
+				
+				associationTransfers[tileAssociation][adjacentTileAssociation].push_back({tile, adjacentTile});
+				associationTransfers[adjacentTileAssociation][tileAssociation].push_back({tile, adjacentTile});
+				
+			}
 			
 		}
 		
-	}
-	
-	if (TRACE)
-	{
-		debug("\t\ttransfers\n");
-		for (robin_hood::pair<int, robin_hood::unordered_flat_map<int, std::vector<Transfer>>> &associationTransferEntry : associationTransfers)
+		if (TRACE)
 		{
-			int association1 = associationTransferEntry.first;
-			robin_hood::unordered_flat_map<int, std::vector<Transfer>> &association1Transfers = associationTransferEntry.second;
-			
-			for (robin_hood::pair<int, std::vector<Transfer>> &association1TransferEntry : association1Transfers)
+			debug("\t\ttransfers\n");
+			for (robin_hood::pair<int, robin_hood::unordered_flat_map<int, std::vector<Transfer>>> &associationTransferEntry : associationTransfers)
 			{
-				int association2 = association1TransferEntry.first;
-				std::vector<Transfer> association1association2Transfers = association1TransferEntry.second;
+				int association1 = associationTransferEntry.first;
+				robin_hood::unordered_flat_map<int, std::vector<Transfer>> &association1Transfers = associationTransferEntry.second;
 				
-				debug("\t\t\t%3d - %3d\n", association1, association2);
+				for (robin_hood::pair<int, std::vector<Transfer>> &association1TransferEntry : association1Transfers)
+				{
+					int association2 = association1TransferEntry.first;
+					std::vector<Transfer> association1association2Transfers = association1TransferEntry.second;
+					
+					debug("\t\t\t%3d - %3d\n", association1, association2);
+					
+					for (Transfer transfer : association1association2Transfers)
+					{
+						debug
+						(
+							"\t\t\t\t(%3d,%3d)-(%3d,%3d)\n"
+							, getX(transfer.passengerStop), getY(transfer.passengerStop), getX(transfer.transportStop), getY(transfer.transportStop)
+						);
+					}
+					
+				}
+						
+			}
+			
+		}
+		
+		// sea base transfers
+		
+		robin_hood::unordered_flat_map<MAP *, std::vector<Transfer>> &oceanBaseTransfers = aiData.geography.factions[factionId].oceanBaseTransfers;
+		oceanBaseTransfers.clear();
+		
+		for (int baseId = 0; baseId < *total_num_bases; baseId++)
+		{
+			BASE *base = getBase(baseId);
+			MAP *baseTile = getBaseMapTile(baseId);
+			bool baseTileOcean = is_ocean(baseTile);
+			
+			// faction base
+			
+			if (base->faction_id != factionId)
+				continue;
+			
+			// ocean base
+			
+			if (!baseTileOcean)
+				continue;
+			
+			for (MAP *adjacentTile : getAdjacentTiles(baseTile))
+			{
+				bool adjacentTileOcean = is_ocean(adjacentTile);
 				
-				for (Transfer transfer : association1association2Transfers)
+				// ocean
+				
+				if (!adjacentTileOcean)
+					continue;
+				
+				// add transfer
+				
+				oceanBaseTransfers[baseTile].push_back({baseTile, adjacentTile});
+				
+			}
+			
+		}
+		
+		if (TRACE)
+		{
+			debug("\t\tocean base transfers\n");
+			for (robin_hood::pair<MAP *, std::vector<Transfer>> &oceanBaseTransferEntry : oceanBaseTransfers)
+			{
+				MAP *baseTile = oceanBaseTransferEntry.first;
+				std::vector<Transfer> &transfers = oceanBaseTransferEntry.second;
+				
+				debug("\t\t\t(%3d,%3d)\n", getX(baseTile), getY(baseTile));
+				
+				for (Transfer transfer : transfers)
 				{
 					debug
 					(
@@ -2277,73 +2296,138 @@ void populateAIFactionTransfers()
 				}
 				
 			}
-					
+			
 		}
 		
 	}
 	
-	// ocean base transfers
+}
+
+void populateLandClusters()
+{
+	debug("populateLandClusters\n");
 	
-	robin_hood::unordered_flat_map<MAP *, std::vector<Transfer>> &oceanBaseTransfers =
-		aiData.factionGeographys[factionId].oceanBaseTransfers;
-	
-	oceanBaseTransfers.clear();
-	
-	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
-		BASE *base = getBase(baseId);
-		MAP *baseTile = getBaseMapTile(baseId);
-		int baseTileIndex = baseTile - *MapPtr;
-		TileInfo &baseTileInfo = aiData.tileInfos[baseTileIndex];
-		bool baseTileOcean = baseTileInfo.ocean;
+		debug("\t%s\n", getMFaction(factionId)->noun_faction);
 		
-		// faction base
+		FactionGeography &factionGeography = aiData.geography.factions[factionId];
 		
-		if (base->faction_id != factionId)
-			continue;
+		factionGeography.raiseableCoasts.clear();
 		
-		// ocean base
+		int landClusterIndex = 1;
+		robin_hood::unordered_flat_set<MAP *> raiseableCoasts;
 		
-		if (!baseTileOcean)
-			continue;
-		
-		for (int validIndex = 0; validIndex < baseTileInfo.validAdjacentTileCount; validIndex++)
+		for (int baseId = 0; baseId < *total_num_bases; baseId++)
 		{
-			int adjacentTileIndex = baseTileInfo.validAdjacentTileIndexes[validIndex];
-			MAP *adjacentTile = *MapPtr + adjacentTileIndex;
-			TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
-			bool adjacentTileOcean = adjacentTileInfo.ocean;
+			BASE *base = getBase(baseId);
+			MAP *baseTile = getBaseMapTile(baseId);
+			bool baseTileOcean = is_ocean(baseTile);
+			TileInfo &baseTileInfo = aiData.getTileInfo(baseTile);
 			
-			// ocean
+			// our
 			
-			if (!adjacentTileOcean)
+			if (base->faction_id != factionId)
 				continue;
 			
-			// add transfer
+			// land
 			
-			oceanBaseTransfers[baseTile].emplace_back(baseTile, adjacentTile);
+			if (baseTileOcean)
+				continue;
+			
+			// skip already processed
+			
+			if (baseTileInfo.landCluster[factionId] > 0)
+				continue;
+			
+			// process
+			
+			
+			robin_hood::unordered_flat_set<MAP *> openTiles;
+			
+			baseTileInfo.landCluster[factionId] = landClusterIndex;
+			openTiles.insert(baseTile);
+			
+			while (openTiles.size() > 0)
+			{
+				robin_hood::unordered_flat_set<MAP *> newOpenTiles;
+				
+				for (MAP *openTile : openTiles)
+				{
+					for (MAP *adjacentTile : getAdjacentTiles(openTile))
+					{
+						bool adjacentTileOcean = is_ocean(adjacentTile);
+						TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
+						
+						// land
+						
+						if (adjacentTileOcean)
+						{
+							raiseableCoasts.insert(openTile);
+							continue;
+						}
+						
+						// skip already processed
+						
+						if (adjacentTileInfo.landCluster[factionId] > 0)
+							continue;
+						
+						// skip unfriendly
+						
+						if (!isFriendlyTerritory(factionId, adjacentTile))
+							continue;
+						
+						// add to open nodes
+						
+						adjacentTileInfo.landCluster[factionId] = landClusterIndex;
+						newOpenTiles.insert(adjacentTile);
+						
+					}
+					
+				}
+				
+				// update open tiles
+				
+				openTiles.clear();
+				openTiles.swap(newOpenTiles);
+				
+			}
+			
+			// increment landClusterIndex
+			
+			landClusterIndex++;
 			
 		}
 		
-	}
-	
-	if (TRACE)
-	{
-		debug("\t\tocean base transfers\n");
-		for (robin_hood::pair<MAP *, std::vector<Transfer>> &oceanBaseTransferEntry : oceanBaseTransfers)
+		// keep raiseable coasts
+		
+		for (MAP *tile : raiseableCoasts)
 		{
-			MAP *baseTile = oceanBaseTransferEntry.first;
-			std::vector<Transfer> &transfers = oceanBaseTransferEntry.second;
+			int elevation = map_elevation(tile);
 			
-			debug("\t\t\t(%3d,%3d)\n", getX(baseTile), getY(baseTile));
+			// exclude max elevation
 			
-			for (Transfer transfer : transfers)
+			if (elevation == ALT_THREE_ABOVE_SEA - ALT_SHORE_LINE)
+				continue;
+			
+			// exclude unsafe
+			
+			if (!isRaiseLandSafe(tile))
+				continue;
+			
+			// keep the tile
+			
+			factionGeography.raiseableCoasts.push_back(tile);
+			
+		}
+		
+		if (DEBUG)
+		{
+			debug("\t\traiseableCoasts\n");
+			
+			for (MAP *tile : factionGeography.raiseableCoasts)
 			{
-				debug
-				(
-					"\t\t\t\t(%3d,%3d)-(%3d,%3d)\n"
-					, getX(transfer.passengerStop), getY(transfer.passengerStop), getX(transfer.transportStop), getY(transfer.transportStop)
-				);
+				debug("\t\t\t(%3d,%3d)\n", getX(tile), getY(tile));
 			}
 			
 		}
@@ -2384,7 +2468,7 @@ void evaluateBaseDefense()
 	
 	CombatEffectTable &combatEffectTable = aiData.combatEffectTable;
 	
-	executionProfiles["1.1.I.1. collect data"].start();
+	executionProfiles["1.1.6.1. collect data"].start();
 	
 	// collect own combat units
 	
@@ -2463,11 +2547,11 @@ void evaluateBaseDefense()
 	foeCombatUnitIds.at(0).insert(BSC_LOCUSTS_OF_CHIRON);
 	// fungal tower is not a combat unit as it does not attack
 	
-	executionProfiles["1.1.I.1. collect data"].stop();
+	executionProfiles["1.1.6.1. collect data"].stop();
 	
 	// compute combatEffects
 	
-	executionProfiles["1.1.I.2. compute combatEffects"].start();
+	executionProfiles["1.1.6.2. compute combatEffects"].start();
 	
 	debug("\tcombatEffects\n");
 	
@@ -2569,7 +2653,7 @@ void evaluateBaseDefense()
 		
 	}
 	
-	executionProfiles["1.1.I.2. compute combatEffects"].stop();
+	executionProfiles["1.1.6.2. compute combatEffects"].stop();
 	
 	if (DEBUG)
 	{
@@ -2611,7 +2695,7 @@ void evaluateBaseDefense()
 	// evaluates our unit average combat effect based on average losses
 	// ****************************************************************************************************
 	
-	executionProfiles["1.1.I.3. stack combat computation"].start();
+	executionProfiles["1.1.6.3. stack combat computation"].start();
 	
 	debug("\tStacks\n");
 	
@@ -2825,11 +2909,11 @@ void evaluateBaseDefense()
 		
 	}
 	
-	executionProfiles["1.1.I.3. stack combat computation"].stop();
+	executionProfiles["1.1.6.3. stack combat computation"].stop();
 	
 	// evaluate base threat
 	
-	executionProfiles["1.1.I.4. evaluate base threat"].start();
+	executionProfiles["1.1.6.4. evaluate base threat"].start();
 	
 	aiData.mostVulnerableBaseId = -1;
 	aiData.mostVulnerableBaseThreat = 0.0;
@@ -2856,7 +2940,7 @@ void evaluateBaseDefense()
 		
 		// calculate foe strength
 		
-		executionProfiles["1.1.I.4.1. calculate foe strength"].start();
+		executionProfiles["1.1.6.4.1. calculate foe strength"].start();
 		
 		debug("\t\tbase foeMilitaryStrength\n");
 		
@@ -2909,12 +2993,9 @@ void evaluateBaseDefense()
 			
 			// travel time coefficient
 			
-			executionProfiles["1.1.I.4.1.1. getVehicleAttackATravelTime"].start();
+			executionProfiles["1.1.6.4.1.1. getVehicleAttackATravelTime"].start();
 			int travelTime = getVehicleAttackATravelTime(vehicleId, baseTile, true);
-			executionProfiles["1.1.I.4.1.1. getVehicleAttackATravelTime"].stop();
-//			executionProfiles["1.1.I.4.1.1. getVehicleAttackLTravelTime"].start();
-//			int travelTime = getVehicleAttackLTravelTime(vehicleId, baseTile);
-//			executionProfiles["1.1.I.4.1.1. getVehicleAttackLTravelTime"].stop();
+			executionProfiles["1.1.6.4.1.1. getVehicleAttackATravelTime"].stop();
 			
 			if (travelTime == -1 || travelTime >= MOVEMENT_INFINITY)
 				continue;
@@ -2922,9 +3003,9 @@ void evaluateBaseDefense()
 			// multiply travel time by approach chance
 			// the more targets vehicle has in vicinity the less likely it approaches us
 			
-			executionProfiles["1.1.I.4.1.2. getVehicleApproachChance"].start();
+			executionProfiles["1.1.6.4.1.2. getVehicleApproachChance"].start();
 			double approachChance = getVehicleApproachChance(baseId, vehicleId);
-			executionProfiles["1.1.I.4.1.2. getVehicleApproachChance"].stop();
+			executionProfiles["1.1.6.4.1.2. getVehicleApproachChance"].stop();
 			
 			if (approachChance <= 0.0)
 				continue;
@@ -2982,7 +3063,7 @@ void evaluateBaseDefense()
 			
 		}
 		
-		executionProfiles["1.1.I.4.1. calculate foe strength"].stop();
+		executionProfiles["1.1.6.4.1. calculate foe strength"].stop();
 		
 		if (DEBUG)
 		{
@@ -3012,7 +3093,7 @@ void evaluateBaseDefense()
 		
 		// summarize foe unit weights by faction
 		
-		executionProfiles["1.1.I.4.2. summarize foe unit weights by faction"].start();
+		executionProfiles["1.1.6.4.2. summarize foe unit weights by faction"].start();
 		
 		double foeTriadWeights[3]{0.0};
 		double foeFactionWeights[MaxPlayerNum];
@@ -3138,11 +3219,11 @@ void evaluateBaseDefense()
 			totalThreat += foeFactionWeights[foeFactionId];
 		}
 		
-		executionProfiles["1.1.I.4.2. summarize foe unit weights by faction"].stop();
+		executionProfiles["1.1.6.4.2. summarize foe unit weights by faction"].stop();
 		
 		// compute required protection
 		
-		executionProfiles["1.1.I.4.3. compute required protection"].start();
+		executionProfiles["1.1.6.4.3. compute required protection"].start();
 		
 		double requiredEffect = conf.ai_combat_base_protection_superiority * totalThreat;
 		baseInfo.combatData.requiredEffect = requiredEffect;
@@ -3158,7 +3239,7 @@ void evaluateBaseDefense()
 			, totalThreat
 		);
 		
-		executionProfiles["1.1.I.4.3. compute required protection"].stop();
+		executionProfiles["1.1.6.4.3. compute required protection"].stop();
 		
 		// update most vulnerable base
 		
@@ -3170,7 +3251,7 @@ void evaluateBaseDefense()
 		
 		// calculate unit effects
 		
-		executionProfiles["1.1.I.4.4. calculate unit effects"].start();
+		executionProfiles["1.1.6.4.4. calculate unit effects"].start();
 		
 		debug("\t\tcalculate base unit effects\n");
 		
@@ -3229,15 +3310,15 @@ void evaluateBaseDefense()
 			
 		}
 		
-		executionProfiles["1.1.I.4.4. calculate unit effects"].stop();
+		executionProfiles["1.1.6.4.4. calculate unit effects"].stop();
 		
 	}
 	
-	executionProfiles["1.1.I.4. evaluate base threat"].stop();
+	executionProfiles["1.1.6.4. evaluate base threat"].stop();
 	
 	// calculate faction average base required protection
 	
-	executionProfiles["1.1.I.5. calculate faction average base required protection"].start();
+	executionProfiles["1.1.6.5. calculate faction average base required protection"].start();
 	
 	int factionAverageBaseRequiredProtectionCount = 0;
 	double factionAverageBaseRequiredProtectionSum = 0.0;
@@ -3256,11 +3337,11 @@ void evaluateBaseDefense()
 			factionAverageBaseRequiredProtectionSum / (double)factionAverageBaseRequiredProtectionCount
 	;
 	
-	executionProfiles["1.1.I.5. calculate faction average base required protection"].stop();
+	executionProfiles["1.1.6.5. calculate faction average base required protection"].stop();
 	
 	// calculate globalAverageUnitEffects
 	
-	executionProfiles["1.1.I.6. calculate globalAverageUnitEffects"].start();
+	executionProfiles["1.1.6.6. calculate globalAverageUnitEffects"].start();
 	
 	for (int unitId : ownCombatUnitIds)
 	{
@@ -3296,7 +3377,7 @@ void evaluateBaseDefense()
 		
 	}
 	
-	executionProfiles["1.1.I.6. calculate globalAverageUnitEffects"].stop();
+	executionProfiles["1.1.6.6. calculate globalAverageUnitEffects"].stop();
 	
 }
 
@@ -4555,9 +4636,9 @@ int getCoastalBaseOceanAssociation(MAP *tile, int factionId)
 {
 	int coastalBaseOceanAssociation = -1;
 
-	if (aiData.factionGeographys[factionId].coastalBaseOceanAssociations.count(tile) != 0)
+	if (aiData.geography.factions[factionId].coastalBaseOceanAssociations.count(tile) != 0)
 	{
-		coastalBaseOceanAssociation = aiData.factionGeographys[factionId].coastalBaseOceanAssociations.at(tile);
+		coastalBaseOceanAssociation = aiData.geography.factions[factionId].coastalBaseOceanAssociations.at(tile);
 	}
 
 	return coastalBaseOceanAssociation;
@@ -4566,7 +4647,7 @@ int getCoastalBaseOceanAssociation(MAP *tile, int factionId)
 
 int getExtendedRegionAssociation(int extendedRegion, int factionId)
 {
-	return aiData.factionGeographys[factionId].extendedRegionAssociations.at(extendedRegion);
+	return aiData.geography.factions[factionId].extendedRegionAssociations.at(extendedRegion);
 }
 int getAssociation(MAP *tile, int factionId)
 {
@@ -4575,8 +4656,7 @@ int getAssociation(MAP *tile, int factionId)
 
 robin_hood::unordered_flat_set<int> &getAssociationConnections(int association, int factionId)
 {
-debug(">factionId=%d association=%3d %d\n", factionId, association, aiData.factionGeographys[factionId].associationConnections.count(association));fflush(debug_log);
-	return aiData.factionGeographys[factionId].associationConnections.at(association);
+	return aiData.geography.factions[factionId].associationConnections.at(association);
 }
 robin_hood::unordered_flat_set<int> &getTileAssociationConnections(MAP *tile, int factionId)
 {
@@ -4625,7 +4705,7 @@ bool isSameOceanAssociation(MAP *tile1, MAP *tile2, int factionId)
 
 bool isImmediatelyReachableAssociation(int association, int factionId)
 {
-	return aiData.factionGeographys[factionId].immediatelyReachableAssociations.count(association) != 0;
+	return aiData.geography.factions[factionId].immediatelyReachableAssociations.count(association) != 0;
 }
 bool isImmediatelyReachable(MAP *tile, int factionId)
 {
@@ -4634,7 +4714,7 @@ bool isImmediatelyReachable(MAP *tile, int factionId)
 
 bool isPotentiallyReachableAssociation(int association, int factionId)
 {
-	return aiData.factionGeographys[factionId].potentiallyReachableAssociations.count(association) != 0;
+	return aiData.geography.factions[factionId].potentiallyReachableAssociations.count(association) != 0;
 }
 bool isPotentiallyReachable(MAP *tile, int factionId)
 {
@@ -4651,8 +4731,8 @@ int getExtendedRegion(MAP *tile)
 	
 	if (tile->region == 0x3f || tile->region == 0x7f)
 	{
-		int tileIndex = tile - *MapPtr;
-		int polarRegionIndex = (tileIndex < *map_area_tiles / 2 ? tileIndex : *map_half_x + tileIndex - (*map_area_tiles - *map_half_x));
+		int mapIndex = getMapIndexByPointer(tile);
+		int polarRegionIndex = (mapIndex < *map_area_tiles / 2 ? mapIndex : *map_half_x + mapIndex - (*map_area_tiles - *map_half_x));
 		return 0x80 + polarRegionIndex;
 	}
 	else
@@ -5106,12 +5186,12 @@ int getUnitTravelTime(MAP *origin, MAP *destination, int factionId, int unitId, 
 	switch (unit->chassis_type)
 	{
 	case CHS_GRAVSHIP:
-		travelTime = getGravshipUnitTravelTime(origin, destination, speed, action);
+		travelTime = getGravshipUnitTravelTime(origin, destination, factionId, unitId, ignoreHostile, action, speed);
 		break;
 	case CHS_NEEDLEJET:
 	case CHS_COPTER:
 	case CHS_MISSILE:
-		travelTime = getAirRangedUnitTravelTime(origin, destination, speed, action);
+		travelTime = getAirRangedUnitTravelTime(origin, destination, factionId, unitId, ignoreHostile, action, speed);
 		break;
 	case CHS_FOIL:
 	case CHS_CRUISER:
@@ -5128,23 +5208,46 @@ int getUnitTravelTime(MAP *origin, MAP *destination, int factionId, int unitId, 
 	
 }
 
-int getGravshipUnitTravelTime(MAP *origin, MAP *destination, int speed, int action)
+int getGravshipUnitTravelTime(MAP *origin, MAP *destination, int /*factionId*/, int /*unitId*/, bool /*ignoreHostile*/, bool action, int speed)
 {
+	int movementSpeed = speed / Rules->mov_rate_along_roads;
+	int actionMove = (action ? 1 : 0);
+	
 	int range = getRange(origin, destination);
-	return divideIntegerRoundUp(range * Rules->mov_rate_along_roads + action, speed);
+	
+	return divideIntegerRoundUp(range + actionMove, movementSpeed);
+
 }
 
 /*
 Estimates air ranged vehicle combat travel time.
 Air ranged vehicle hops between airbases.
 */
-int getAirRangedUnitTravelTime(MAP *origin, MAP *destination, int speed, int action)
+int getAirRangedUnitTravelTime(MAP *origin, MAP *destination, int /*factionId*/, int unitId, bool /*ignoreHostile*/, bool action, int speed)
 {
 	assert(origin >= *MapPtr && origin < *MapPtr + *map_area_tiles);
 	assert(destination >= *MapPtr && destination < *MapPtr + *map_area_tiles);
 	
 	int movementSpeed = speed / Rules->mov_rate_along_roads;
 	int transferSpeed = divideIntegerRoundUp(movementSpeed * 3, 4);
+	int actionMove = (action == 1 ? 1 : 0);
+	
+	int movementTurns = 0;
+	
+	switch (getUnit(unitId)->chassis_type)
+	{
+	case CHS_NEEDLEJET:
+		movementTurns = 1;
+		break;
+	case CHS_COPTER:
+		movementTurns = 2;
+		break;
+	case CHS_MISSILE:
+		movementTurns = 1;
+		break;
+	}
+	
+	int movementRange = movementTurns * movementSpeed;
 	
 	// find optimal airbase to launch strike from
 	
@@ -5159,7 +5262,7 @@ int getAirRangedUnitTravelTime(MAP *origin, MAP *destination, int speed, int act
 		
 		// reachable
 		
-		if (airbaseToTargetRange + action > movementSpeed)
+		if (airbaseToTargetRange + actionMove > movementRange)
 			continue;
 		
 		int vehicleToAirbaseRange = getRange(origin, airbase);
@@ -6918,6 +7021,11 @@ double getResourceScore(double minerals, double energy)
 	return getYieldScore(0.0, minerals, energy);
 }
 
+void populatePathInfoParameters()
+{
+	populateHexCosts();
+}
+
 /*
 Populates hex cost for all triads.
 */
@@ -6947,7 +7055,7 @@ void populateHexCosts()
 			
 			// air movement type
 			
-			tileInfo.hexCosts1[MT_AIR][angle] = Rules->mov_rate_along_roads;
+			tileInfo.hexCosts[angle][MT_AIR] = Rules->mov_rate_along_roads;
 			
 			// sea vehicle moves on ocean or from/to base
 			
@@ -6956,15 +7064,14 @@ void populateHexCosts()
 				int nativeHexCost = getHexCost(BSC_ISLE_OF_THE_DEEP, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
 				int regularHexCost = getHexCost(BSC_UNITY_GUNSHIP, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
 				
-				tileInfo.hexCosts1[MT_SEA_NATIVE][angle] = nativeHexCost;
-				tileInfo.hexCosts1[MT_SEA_REGULAR][angle] = regularHexCost;
+				tileInfo.hexCosts[angle][MT_SEA_NATIVE] = nativeHexCost;
+				tileInfo.hexCosts[angle][MT_SEA_REGULAR] = regularHexCost;
 				
 			}
 			else
 			{
-				tileInfo.hexCosts1[MT_SEA_NATIVE][angle] = -1;
-				tileInfo.hexCosts1[MT_SEA_REGULAR][angle] = -1;
-				
+				tileInfo.hexCosts[angle][MT_SEA_NATIVE] = -1;
+				tileInfo.hexCosts[angle][MT_SEA_REGULAR] = -1;
 			}
 			
 			// land vehicle moves on land
@@ -6972,34 +7079,31 @@ void populateHexCosts()
 			if (!tileOcean && !adjacentTileOcean)
 			{
 				int nativeHexCost = getHexCost(BSC_MIND_WORMS, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
-				int easyHexCost = getHexCost(BSC_FORMERS, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
 				int regularHexCost = getHexCost(BSC_SCOUT_PATROL, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
 				
-				// regularHexCost reduced for rough terrain not fungus
+				// easy movement reduces fungus entry
 				
-				if (!map_has_item(tile, TERRA_FUNGUS) && regularHexCost >= 2 * Rules->mov_rate_along_roads)
-				{
-					regularHexCost = divideIntegerRoundUp(Rules->mov_rate_along_roads * 5, 4);
-				}
+				int easyHexCost =
+					regularHexCost >= 3 * Rules->mov_rate_along_roads && map_has_item(adjacentTile, TERRA_FUNGUS) ?
+						Rules->mov_rate_along_roads * 4 / 3
+						:
+						regularHexCost
+				;
 				
-				// easyHexCost reduced for fungus
-				
-				if (map_has_item(tile, TERRA_FUNGUS))
-				{
-					easyHexCost = divideIntegerRoundUp(Rules->mov_rate_along_roads * 5, 4);
-				}
-				
-				tileInfo.hexCosts1[MT_LAND_NATIVE][angle] = nativeHexCost;
-				tileInfo.hexCosts1[MT_LAND_EASY][angle] = easyHexCost;
-				tileInfo.hexCosts1[MT_LAND_REGULAR][angle] = regularHexCost;
+				tileInfo.hexCosts[angle][MT_LAND_NATIVE_HOVER] = std::min(Rules->mov_rate_along_roads, nativeHexCost);
+				tileInfo.hexCosts[angle][MT_LAND_NATIVE] = nativeHexCost;
+				tileInfo.hexCosts[angle][MT_LAND_HOVER] = std::min(Rules->mov_rate_along_roads, regularHexCost);
+				tileInfo.hexCosts[angle][MT_LAND_EASY] = easyHexCost;
+				tileInfo.hexCosts[angle][MT_LAND_REGULAR] = regularHexCost;
 				
 			}
 			else
 			{
-				tileInfo.hexCosts1[MT_LAND_NATIVE][angle] = -1;
-				tileInfo.hexCosts1[MT_LAND_EASY][angle] = -1;
-				tileInfo.hexCosts1[MT_LAND_REGULAR][angle] = -1;
-				
+				tileInfo.hexCosts[angle][MT_LAND_NATIVE_HOVER] = -1;
+				tileInfo.hexCosts[angle][MT_LAND_NATIVE] = -1;
+				tileInfo.hexCosts[angle][MT_LAND_HOVER] = -1;
+				tileInfo.hexCosts[angle][MT_LAND_EASY] = -1;
+				tileInfo.hexCosts[angle][MT_LAND_REGULAR] = -1;
 			}
 			
 		}
@@ -7722,7 +7826,7 @@ std::vector<MovementAction> getVehicleReachableLocations(int vehicleId)
 	int initialMovementAllowance = getVehicleSpeed(vehicleId) - (vehicle->faction_id == aiFactionId ? vehicle->road_moves_spent : 0);
 	UNIT *unit = getUnit(vehicle->unit_id);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	MovementType movementType = getUnitMovementType(factionId, unitId);
+	MOVEMENT_TYPE movementType = getUnitMovementType(factionId, unitId);
 	
 	std::vector<MovementAction> movementActions;
 	
@@ -7768,7 +7872,7 @@ std::vector<MovementAction> getVehicleReachableLocations(int vehicleId)
 				
 				// compute hex cost
 				
-				int hexCost = processingTileInfo.hexCosts1[movementType][angle];
+				int hexCost = processingTileInfo.hexCosts[angle][movementType];
 				
 				// allowed step
 				
@@ -7825,7 +7929,7 @@ std::vector<MovementAction> getVehicleReachableLocations(int vehicleId)
 		
 	}
 	
-	for (robin_hood::pair<MAP *, int> &movementCostEntry : movementCosts)
+	for (robin_hood::pair<MAP *, int> movementCostEntry : movementCosts)
 	{
 		MAP *tile = movementCostEntry.first;
 		int movementCost = movementCostEntry.second;
@@ -7892,7 +7996,7 @@ std::vector<MovementAction> getVehicleMeleeAttackLocations(int vehicleId)
 	
 	// build return value
 	
-	for (robin_hood::pair<MAP *, int> &attackLocationMovementAllowanceEntry : attackLocationMovementAllowances)
+	for (robin_hood::pair<MAP *, int> attackLocationMovementAllowanceEntry : attackLocationMovementAllowances)
 	{
 		MAP *tile = attackLocationMovementAllowanceEntry.first;
 		int movementAllowance = attackLocationMovementAllowanceEntry.second;
@@ -7947,7 +8051,7 @@ std::vector<MovementAction> getVehicleArtilleryAttackPositions(int vehicleId)
 	
 	// build return value
 	
-	for (robin_hood::pair<MAP *, int> &attackLocationMovementAllowanceEntry : attackLocationMovementAllowances)
+	for (robin_hood::pair<MAP *, int> attackLocationMovementAllowanceEntry : attackLocationMovementAllowances)
 	{
 		MAP *tile = attackLocationMovementAllowanceEntry.first;
 		int movementAllowance = attackLocationMovementAllowanceEntry.second;
@@ -8140,7 +8244,7 @@ std::vector<MAP *> getVehicleThreatenedTiles(int vehicleId)
 	int factionId = vehicle->faction_id;
 	int unitId = vehicle->unit_id;
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	MovementType movementType = getUnitMovementType(factionId, unitId);
+	MOVEMENT_TYPE movementType = getUnitMovementType(factionId, unitId);
 	
 	// set initial move allowance
 	
@@ -8180,7 +8284,7 @@ std::vector<MAP *> getVehicleThreatenedTiles(int vehicleId)
 				
 				// retrieve hex cost
 				
-				int hexCost = processingTileInfo.hexCosts1[movementType][angle];
+				int hexCost = processingTileInfo.hexCosts[angle][movementType];
 				
 				// allowed move (geography)
 				
@@ -8210,7 +8314,7 @@ std::vector<MAP *> getVehicleThreatenedTiles(int vehicleId)
 	
 	std::vector<MAP *> threatenedTiles;
 	
-	for (robin_hood::pair<MAP *, int> &movementAllowanceEntry : movementAllowances)
+	for (robin_hood::pair<MAP *, int> movementAllowanceEntry : movementAllowances)
 	{
 		MAP *tile = movementAllowanceEntry.first;
 		
@@ -8224,12 +8328,12 @@ std::vector<MAP *> getVehicleThreatenedTiles(int vehicleId)
 
 std::vector<int> &getAssociationSeaTransports(int association, int factionId)
 {
-	return aiData.factionGeographys[factionId].oceanAssociationSeaTransports[association];
+	return aiData.geography.factions[factionId].oceanAssociationSeaTransports[association];
 }
 
 std::vector<int> &getAssociationShipyards(int association, int factionId)
 {
-	return aiData.factionGeographys[factionId].oceanAssociationShipyards[association];
+	return aiData.geography.factions[factionId].oceanAssociationShipyards[association];
 }
 
 /*

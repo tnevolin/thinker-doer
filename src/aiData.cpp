@@ -105,14 +105,14 @@ int Force::getVehicleId()
 	return getVehicleIdByAIId(vehiclePad0);
 }
 
-// TileMovementInfo
+// TileFactionInfo
 
-bool TileMovementInfo::isBlocked(bool ignoreHostile)
+bool TileFactionInfo::isBlocked(bool ignoreHostile)
 {
 	return (ignoreHostile ? blockedNeutral : blocked);
 }
 
-bool TileMovementInfo::isZoc(bool ignoreHostile)
+bool TileFactionInfo::isZoc(bool ignoreHostile)
 {
 	return (ignoreHostile ? zocNeutral : zoc);
 }
@@ -121,12 +121,12 @@ bool TileMovementInfo::isZoc(bool ignoreHostile)
 
 bool TileInfo::isBlocked(int factionId, bool ignoreHostile)
 {
-	return (ignoreHostile ? movementInfos[factionId].blockedNeutral : movementInfos[factionId].blocked);
+	return (ignoreHostile ? factionInfos[factionId].blockedNeutral : factionInfos[factionId].blocked);
 }
 
 bool TileInfo::isZoc(int factionId, bool ignoreHostile)
 {
-	return (ignoreHostile ? movementInfos[factionId].zocNeutral : movementInfos[factionId].zoc);
+	return (ignoreHostile ? factionInfos[factionId].zocNeutral : factionInfos[factionId].zoc);
 }
 
 // FoeUnitWeightTable
@@ -146,6 +146,19 @@ void FoeUnitWeightTable::set(int factionId, int unitId, double weight)
 void FoeUnitWeightTable::add(int factionId, int unitId, double weight)
 {
 	weights.at((2 * MaxProtoFactionNum) * factionId + getUnitSlotById(unitId)) += weight;
+}
+
+// Transfer
+
+Transfer::Transfer(MAP *_passengerStop, MAP *_transportStop)
+: passengerStop{_passengerStop}, transportStop{_transportStop}
+{
+	
+}
+
+bool Transfer::isValid()
+{
+	return passengerStop != nullptr && transportStop != nullptr;
 }
 
 // PoliceData
@@ -215,9 +228,9 @@ void Data::clear()
 
 	tileInfos.clear();
 	tileInfos.resize(*map_area_tiles, {});
-
+	
 	// cleanup lists
-
+	
 	enemyStacks.clear();
 	production.clear();
 	baseIds.clear();
@@ -277,10 +290,10 @@ TileInfo &Data::getTileInfo(MAP *tile)
 	return getTileInfo(getMapIndexByPointer(tile));
 }
 
-TileMovementInfo &Data::getTileMovementInfo(MAP *tile, int factionId)
+TileFactionInfo &Data::getTileFactionInfo(MAP *tile, int factionId)
 {
 	assert(tile != nullptr && tile >= *MapPtr && tile < *MapPtr + *map_area_tiles);
-	return getTileInfo(tile).movementInfos[factionId];
+	return getTileInfo(tile).factionInfos[factionId];
 }
 
 // EnemyStackInfo
@@ -424,12 +437,12 @@ void Data::addSeaTransportRequest(int oceanAssociation)
 	seaTransportRequestCounts[oceanAssociation]++;
 }
 
-std::vector<Transfer> &FactionGeography::getAssociationTransfers(int association1, int association2)
+std::vector<Transfer> &Geography::getAssociationTransfers(int association1, int association2)
 {
 	return associationTransfers[association1][association2];
 }
 
-std::vector<Transfer> &FactionGeography::getOceanBaseTransfers(MAP *tile)
+std::vector<Transfer> &Geography::getOceanBaseTransfers(MAP *tile)
 {
 	return oceanBaseTransfers[tile];
 }

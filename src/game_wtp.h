@@ -4,19 +4,16 @@
 #include <vector>
 #include <set>
 #include <map>
+#include "robin_hood.h"
 #include "terranx_types.h"
 
-//struct MAP_STATE
-//{
-//    byte climate;
-//    byte rocks;
-//    uint32_t items;
-//};
-//
 struct MapValue
 {
 	MAP *tile = nullptr;
 	int value = -1;
+	
+	MapValue(MAP *_tile, int _value);
+	
 };
 
 struct Location
@@ -416,19 +413,6 @@ struct VehicleFilter
 	int weaponType = -1;
 };
 
-const int MOVEMENT_TYPE_COUNT = 8;
-enum MOVEMENT_TYPE
-{
-	MT_AIR,
-	MT_SEA_NATIVE,
-	MT_SEA_REGULAR,
-	MT_LAND_NATIVE_HOVER,
-	MT_LAND_NATIVE,
-	MT_LAND_HOVER,
-	MT_LAND_EASY,
-	MT_LAND_REGULAR,
-};
-
 // =======================================================
 // MAP conversions
 // =======================================================
@@ -461,11 +445,11 @@ Location getDiagonalCoordinates(Location rectangular);
 std::vector<MAP *> getAdjacentTiles(MAP *tile);
 std::vector<MAP *> getSideTiles(MAP *tile);
 MAP * getSquareBlockRadiusTile(MAP *center, int index);
-std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, unsigned int beginIndex, unsigned int endIndex);
+std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, int beginIndex, int endIndex);
 
-std::vector<MAP *> getSquareBlockTiles(MAP *center, unsigned int minRadius, unsigned int maxRadius);
-std::vector<MAP *> getEqualRangeTiles(MAP *tile, unsigned int range);
-std::vector<MAP *> getRangeTiles(MAP *tile, unsigned int range, bool includeCenter);
+std::vector<MAP *> getSquareBlockTiles(MAP *center, int minRadius, int maxRadius);
+std::vector<MAP *> getEqualRangeTiles(MAP *tile, int range);
+std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter);
 
 std::vector<MAP *> getBaseOffsetTiles(int x, int y, int offsetBegin, int offsetEnd);
 std::vector<MAP *> getBaseOffsetTiles(MAP *tile, int offsetBegin, int offsetEnd);
@@ -494,7 +478,7 @@ int map_level(MAP *tile);
 int map_elevation(MAP *tile);
 int map_rockiness(MAP *tile);
 bool map_base(MAP *tile);
-bool map_has_item(MAP *tile, unsigned int item);
+bool map_has_item(MAP *tile, uint32_t item);
 bool map_has_landmark(MAP *tile, int landmark);
 int getNutrientBonus(MAP *tile);
 int getMineralBonus(MAP *tile);
@@ -578,8 +562,8 @@ bool isLandArtilleryUnit(int unitId);
 bool isLandArtilleryVehicle(int vehicleId);
 void computeBase(int baseId, bool resetWorkedTiles);
 void computeBaseDoctors(int baseId);
-std::set<int> getBaseConnectedRegions(int id);
-std::set<int> getBaseConnectedOceanRegions(int baseId);
+robin_hood::unordered_flat_set<int> getBaseConnectedRegions(int id);
+robin_hood::unordered_flat_set<int> getBaseConnectedOceanRegions(int baseId);
 bool isLandRegion(int region);
 bool isOceanRegion(int region);
 double evaluateUnitConventionalDefenseEffectiveness(int id);
@@ -625,8 +609,8 @@ bool isBaseCanBuildShips(int baseId);
 bool isExploredEdge(int factionId, int x, int y);
 bool isVehicleExploring(int vehicleId);
 bool isVehicleCanHealAtThisLocation(int vehicleId);
-std::set<int> getAdjacentOceanRegions(int x, int y);
-std::set<int> getConnectedOceanRegions(int factionId, int x, int y);
+robin_hood::unordered_flat_set<int> getAdjacentOceanRegions(int x, int y);
+robin_hood::unordered_flat_set<int> getConnectedOceanRegions(int factionId, int x, int y);
 bool isMapTileVisibleToFaction(MAP *tile, int factionId);
 void setMapTileVisibleToFaction(MAP *tile, int factionId);
 bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus);
@@ -723,7 +707,7 @@ double getVehicleRelativeDamage(int vehicleId);
 double getVehicleRelativePower(int vehicleId);
 int getVehicleHitPoints(int vehicleId, bool psiCombat);
 int getBaseGrowthRate(int baseId);
-void accumulateMapIntValue(std::map<int, int> *m, int key, int value);
+void accumulateMapIntValue(robin_hood::unordered_flat_map<int, int> *m, int key, int value);
 int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY, int speed1);
 int getHexCost(int unitId, int factionId, MAP *fromTile, MAP *toTile, int speed1);
 int getVehicleHexCost(int vehicleId, int fromX, int fromY, int toX, int toY);
@@ -758,6 +742,7 @@ bool isProjectAvailable(int factionId, int projectFacilityId);
 int getFactionMaintenance(int factionId);
 int getFactionNetIncome(int factionId);
 int getFactionGrossIncome(int factionId);
+double getFactionTechPerTurn(int factionId);
 bool isVehicleOnSentry(int vehicleId);
 bool isVehicleOnAlert(int vehicleId);
 bool isVehicleOnHold(int vehicleId);
@@ -863,10 +848,12 @@ double getBaseLabsMultiplier(int baseId);
 double getBasePsychMultiplier(int baseId);
 bool isLandVechileMoveAllowed(int vehicleId, MAP *from, MAP *to);
 int getRange(MAP *origin, MAP *destination);
+int getRange(int tile1Index, int tile2Index);
 double getVectorDistanceSquared(MAP *origin, MAP *destination);
 double getVectorDistance(MAP *origin, MAP *destination);
 double getVectorAngleCos(MAP *vertex, MAP *point1, MAP *point2);
-MAP *getTileByAngle(MAP *tile, unsigned int angle);
+int getAdjacentTileIndex(int tileIndex, int angle);
+MAP *getTileByAngle(MAP *tile, int angle);
 int getAngleByTile(MAP *tile, MAP *anotherTile);
 bool isPodAt(MAP *tile);
 std::vector<int> getTransportPassengers(int transportVehicleId);
@@ -876,7 +863,6 @@ int getBasePopulationLimit(int baseId);
 int getBaseRadiusLayer(MAP *baseTile, MAP *tile);
 bool isWithinBaseRadius(MAP *baseTile, MAP *tile);
 std::vector<MAP *> getFartherBaseRadiusTiles(MAP *baseTile, MAP *tile);
-MOVEMENT_TYPE getUnitMovementType(int factionId, int unitId);
 bool isFactionHasProject(int factionId, int facilityId);
 Budget getBaseBudgetIntake(int baseId);
 double getBasePopulationGrowth(int baseId);

@@ -1011,12 +1011,12 @@ SeaTransit getVehicleOptimalCrossOceanTransit(int vehicleId, int crossOceanAssoc
 		if (!map_has_item(origin, TERRA_BASE_IN_TILE))
 			return seaTransit;
 		
-		boardTransfers = &aiData.geography.factions[factionId].getOceanBaseTransfers(origin);
+		boardTransfers = &aiData.factionGeographys[factionId].getOceanBaseTransfers(origin);
 		
 	}
 	else if (isConnected(originAssociation, crossOceanAssociation, factionId)) // connected to cross ocean
 	{
-		boardTransfers = &aiData.geography.factions[factionId].getAssociationTransfers(originAssociation, crossOceanAssociation);
+		boardTransfers = &aiData.factionGeographys[factionId].getAssociationTransfers(originAssociation, crossOceanAssociation);
 	}
 	else // unsupported
 	{
@@ -1030,13 +1030,13 @@ SeaTransit getVehicleOptimalCrossOceanTransit(int vehicleId, int crossOceanAssoc
 		if (!map_has_item(destination, TERRA_BASE_IN_TILE))
 			return seaTransit;
 		
-		unboardTransfers = &aiData.geography.factions[factionId].getOceanBaseTransfers(destination);
+		unboardTransfers = &aiData.factionGeographys[factionId].getOceanBaseTransfers(destination);
 		measureTimeToDestination = false;
 		
 	}
 	else if (isConnected(crossOceanAssociation, destinationAssociation, factionId)) // connected to cross ocean
 	{
-		unboardTransfers = &aiData.geography.factions[factionId].getAssociationTransfers(destinationAssociation, crossOceanAssociation);
+		unboardTransfers = &aiData.factionGeographys[factionId].getAssociationTransfers(destinationAssociation, crossOceanAssociation);
 		measureTimeToDestination = true;
 	}
 	else // not connected
@@ -1048,7 +1048,7 @@ SeaTransit getVehicleOptimalCrossOceanTransit(int vehicleId, int crossOceanAssoc
 		if (firstLandAssociation == -1)
 			return seaTransit;
 		
-		unboardTransfers = &aiData.geography.factions[factionId].getAssociationTransfers(crossOceanAssociation, firstLandAssociation);
+		unboardTransfers = &aiData.factionGeographys[factionId].getAssociationTransfers(crossOceanAssociation, firstLandAssociation);
 		measureTimeToDestination = false;
 		
 	}
@@ -1178,7 +1178,7 @@ Finds optimal vehicle drop-off transfer.
 */
 Transfer *getVehicleOptimalDropOffTransfer(int vehicleId, int seaTransportVehicleId, MAP *destination)
 {
-	const bool TRACE = DEBUG && true;
+	const bool TRACE = DEBUG && false;
 	if (TRACE)
 	{
 		debug
@@ -1220,13 +1220,13 @@ Transfer *getVehicleOptimalDropOffTransfer(int vehicleId, int seaTransportVehicl
 		if (!map_has_item(destination, TERRA_BASE_IN_TILE))
 			return nullptr;
 		
-		unboardTransfers = &aiData.geography.factions[factionId].getOceanBaseTransfers(destination);
+		unboardTransfers = &aiData.factionGeographys[factionId].getOceanBaseTransfers(destination);
 		measureTimeToDestination = false;
 		
 	}
 	else if (isConnected(originOceanAssociation, destinationAssociation, factionId)) // connected to current ocean
 	{
-		unboardTransfers = &aiData.geography.factions[factionId].getAssociationTransfers(originOceanAssociation, destinationAssociation);
+		unboardTransfers = &aiData.factionGeographys[factionId].getAssociationTransfers(originOceanAssociation, destinationAssociation);
 		measureTimeToDestination = true;
 	}
 	else // not connected
@@ -1238,7 +1238,7 @@ Transfer *getVehicleOptimalDropOffTransfer(int vehicleId, int seaTransportVehicl
 		if (firstLandAssociation == -1)
 			return nullptr;
 		
-		unboardTransfers = &aiData.geography.factions[factionId].getAssociationTransfers(originOceanAssociation, firstLandAssociation);
+		unboardTransfers = &aiData.factionGeographys[factionId].getAssociationTransfers(originOceanAssociation, firstLandAssociation);
 		measureTimeToDestination = false;
 		
 	}
@@ -1255,11 +1255,11 @@ Transfer *getVehicleOptimalDropOffTransfer(int vehicleId, int seaTransportVehicl
 	{
 		bool passengerStopOcean = is_ocean(unboardTransfer.passengerStop);
 		TileInfo &passengerStopTileInfo = aiData.getTileInfo(unboardTransfer.passengerStop);
-		TileMovementInfo &passengerStopTileMovementInfo = passengerStopTileInfo.movementInfos[vehicle->faction_id];
+		TileFactionInfo &passengerStopTileFactionInfo = passengerStopTileInfo.factionInfos[vehicle->faction_id];
 		
 		// exclude land zoc for artifact
 		
-		if (isArtifactVehicle(vehicleId) && !passengerStopOcean && (passengerStopTileMovementInfo.blocked || passengerStopTileMovementInfo.zoc))
+		if (isArtifactVehicle(vehicleId) && !passengerStopOcean && (passengerStopTileFactionInfo.blocked || passengerStopTileFactionInfo.zoc))
 			continue;
 		
 		// travelTime

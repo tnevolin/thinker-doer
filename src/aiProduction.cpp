@@ -18,7 +18,7 @@ double normalRawProductionPriority;
 
 double globalBaseDemand;
 double baseColonyDemandMultiplier;
-std::map<int, double> weakestEnemyBaseProtection;
+robin_hood::unordered_flat_map<int, double> weakestEnemyBaseProtection;
 
 int selectedProject = -1;
 
@@ -108,7 +108,7 @@ ItemPriority ProductionDemand::get()
 {
 	ItemPriority bestItemPriority;
 	
-	for (std::pair<int const, double> &priorityEntry : priorities)
+	for (robin_hood::pair<int, double> &priorityEntry : priorities)
 	{
 		int item = priorityEntry.first;
 		double priority = priorityEntry.second;
@@ -323,7 +323,7 @@ void evaluateGlobalFormerDemand()
 	
 	aiData.production.landFormerDemands.clear();
 	
-	for (std::pair<int const, int> &landTerraformingRequestCountEntry : aiData.production.landTerraformingRequestCounts)
+	for (robin_hood::pair<int, int> &landTerraformingRequestCountEntry : aiData.production.landTerraformingRequestCounts)
 	{
 		int landAssociation = landTerraformingRequestCountEntry.first;
 		int landTerraformingRequestCount = landTerraformingRequestCountEntry.second;
@@ -354,7 +354,7 @@ void evaluateGlobalFormerDemand()
 	
 	aiData.production.seaFormerDemands.clear();
 	
-	for (std::pair<int const, int> &seaTerraformingRequestCountEntry : aiData.production.seaTerraformingRequestCounts)
+	for (robin_hood::pair<int, int> &seaTerraformingRequestCountEntry : aiData.production.seaTerraformingRequestCounts)
 	{
 		int oceanAssociation = seaTerraformingRequestCountEntry.first;
 		int seaTerraformingRequestCount = seaTerraformingRequestCountEntry.second;
@@ -531,7 +531,7 @@ void evaluateGlobalLandCombatDemand()
 		
 		// bases in land associations
 		
-		std::set<int> presenseAssociations;
+		robin_hood::unordered_flat_set<int> presenseAssociations;
 		
 		debug("\t\tbases\n");
 		for (int baseId = 0; baseId < *total_num_bases; baseId++)
@@ -571,7 +571,7 @@ void evaluateGlobalLandCombatDemand()
 		debug("\t\tforces\n");
 		
 		double totalAirForceStrength = 0.0;
-		std::map<int, double> associationSurfaceForceStrengths;
+		robin_hood::unordered_flat_map<int, double> associationSurfaceForceStrengths;
 		
 		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 		{
@@ -746,7 +746,7 @@ void evaluateGlobalTerritoryLandCombatDemand()
 	// enemy units in our land territory
 	
 	bool enemyLand = false;
-	std::set<int> enemyOceanAssociations;
+	robin_hood::unordered_flat_set<int> enemyOceanAssociations;
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
@@ -817,7 +817,7 @@ void evaluateGlobalSeaCombatDemand()
 	
 	// enemy strengths
 	
-	std::map<int, double> seaAssociationEnemyStrengths;
+	robin_hood::unordered_flat_map<int, double> seaAssociationEnemyStrengths;
 	
 	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
@@ -869,7 +869,7 @@ void evaluateGlobalSeaCombatDemand()
 		
 		// bases in ocean associations
 		
-		std::set<int> presenseAssociations;
+		robin_hood::unordered_flat_set<int> presenseAssociations;
 		
 		debug("\t\tbases\n");
 		for (int baseId = 0; baseId < *total_num_bases; baseId++)
@@ -902,7 +902,7 @@ void evaluateGlobalSeaCombatDemand()
 		debug("\t\tforces\n");
 		
 		double totalAirForceStrength = 0.0;
-		std::map<int, double> associationSurfaceForceStrengths;
+		robin_hood::unordered_flat_map<int, double> associationSurfaceForceStrengths;
 		
 		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 		{
@@ -1031,7 +1031,7 @@ void evaluateGlobalSeaCombatDemand()
 	
 	// iterate enemy presence associations
 	
-	for (std::pair<int, double> seaAssociationEnemyStrengthEntry : seaAssociationEnemyStrengths)
+	for (robin_hood::pair<int, double> &seaAssociationEnemyStrengthEntry : seaAssociationEnemyStrengths)
 	{
 		int association = seaAssociationEnemyStrengthEntry.first;
 		double enemyStrength = seaAssociationEnemyStrengthEntry.second;
@@ -2552,7 +2552,7 @@ void evaluateLandFormerDemand()
 	
 	// find range to demand associations
 	
-	std::map<int, int> associationRanges;
+	robin_hood::unordered_flat_map<int, int> associationRanges;
 	
 	for (MAP *tile = *MapPtr; tile < *MapPtr + *map_area_tiles; tile++)
 	{
@@ -2578,7 +2578,7 @@ void evaluateLandFormerDemand()
 	
 	double landFormerDemand = 0.0;
 	
-	for (std::pair<int const, double> landFormerDemandEntry : aiData.production.landFormerDemands)
+	for (robin_hood::pair<int, double> &landFormerDemandEntry : aiData.production.landFormerDemands)
 	{
 		int landAssociation = landFormerDemandEntry.first;
 		double demand = landFormerDemandEntry.second;
@@ -2968,7 +2968,7 @@ void evaluateLandPodPoppingDemand()
 	// count pods within 10 cells from base
 	
 	int podCount = 0;
-	std::set<int> podAssociations;
+	robin_hood::unordered_flat_set<int> podAssociations;
 	
 	for (MAP *tile : getRangeTiles(baseTile, 10, false))
 	{
@@ -4434,7 +4434,7 @@ Finds best combat unit built at source base to help target base against target b
 */
 int selectProtectionUnit(int baseId, int targetBaseId)
 {
-	bool TRACE = DEBUG && true;
+	bool TRACE = DEBUG && false;
 	
 	if (TRACE) { debug("selectProtectionUnit\n"); }
 	
@@ -4640,7 +4640,7 @@ int selectCombatUnit(int baseId, bool ocean)
 		
 		// stacks
 		
-		for (std::pair<MAP * const, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
+		for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
 		{
 			MAP *enemyStackTile = enemyStackEntry.first;
 			EnemyStackInfo &enemyStackInfo = enemyStackEntry.second;
@@ -5057,16 +5057,16 @@ double getCitizenIncome()
 	return conf.ai_citizen_income;
 }
 
-/*
-Estimates income growth proportion based on statistical data.
-It uses base founded year stored in base information to know base age.
-*/
-double getBaseRelativeIncomeGrowth(int baseId)
-{
-	int age = getBaseAge(baseId);
-	return conf.ai_base_income_a / (conf.ai_base_income_a * (double)age + conf.ai_base_income_b);
-}
-
+///*
+//Estimates income growth proportion based on statistical data.
+//It uses base founded year stored in base information to know base age.
+//*/
+//double getBaseRelativeIncomeGrowth(int baseId)
+//{
+//	int age = getBaseAge(baseId);
+//	return conf.ai_base_income_a / (conf.ai_base_income_a * (double)age + conf.ai_base_income_b);
+//}
+//
 /*
 Estimates income growth based on citizen income and income growth proportion.
 It uses base founded year stored in base information to know base age.
@@ -5689,7 +5689,7 @@ If adjustPopulation is set it tries to evaluate base size by the time item is bu
 */
 double getEmulatedFacilityProductionPriority(int baseId, int facilityId)
 {
-	bool TRACE = DEBUG && true;
+	bool TRACE = DEBUG && false;
 	
 	if (TRACE) { debug("getEmulatedFacilityProductionPriority\n"); }
 	
@@ -5885,7 +5885,7 @@ double getComputedProductionPriority
 	int newEcoDamage
 )
 {
-	bool TRACE = DEBUG && true;
+	bool TRACE = DEBUG && false;
 	
 	if (TRACE) { debug("getComputedProductionPriority"); }
 	
@@ -6493,6 +6493,66 @@ double getDemand(double required, double provided)
 	}
 	
 	return demand;
+	
+}
+
+//=======================================================
+// statistical estimates
+//=======================================================
+
+/*
+Returns base statistical mineral intake.
+*/
+double getBaseStatisticalMineralIntake(int age)
+{
+	
+}
+
+/*
+Returns base statistical mineral intake2.
+*/
+double getBaseStatisticalMineralIntake2(int age)
+{
+	
+}
+
+/*
+Returns base statistical mineral multiplier.
+*/
+double getBaseStatisticalMineralMultiplier(int age)
+{
+	
+}
+
+/*
+Returns base statistical budget intake.
+*/
+double getBaseStatisticalBudgetIntake(int age)
+{
+	
+}
+
+/*
+Returns base statistical budget intake2.
+*/
+double getBaseStatisticalBudgetIntake2(int age)
+{
+	
+}
+
+/*
+Returns base statistical budget multiplier.
+*/
+double getBaseStatisticalBudgetMultiplier(int age)
+{
+	
+}
+
+/*
+Estimates gain of base population growing beyond the limit.
+*/
+double getBaseExtraPopulationGain(int baseId, int poulationLimit)
+{
 	
 }
 

@@ -3,6 +3,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include "robin_hood.h"
 #include "main.h"
 #include "terranx.h"
 #include "terranx_types.h"
@@ -46,6 +47,17 @@ enum COMBAT_TYPE
 	CT_MELEE,
 	CT_ARTILLERY_DUEL,
 	CT_BOMBARDMENT,
+};
+
+const int MOVEMENT_TYPE_COUNT = 6;
+enum MovementType
+{
+	MT_AIR,
+	MT_SEA_NATIVE,
+	MT_SEA_REGULAR,
+	MT_LAND_NATIVE,
+	MT_LAND_EASY,
+	MT_LAND_REGULAR,
 };
 
 /*
@@ -128,48 +140,49 @@ struct Transfer
 {
 	MAP *passengerStop = nullptr;
 	MAP *transportStop = nullptr;
-	bool isValid()
-	{
-		return passengerStop != nullptr && transportStop != nullptr;
-	}
+	
+	Transfer(MAP *_passengerStop, MAP *_transportStop);
+	bool isValid();
+	
 };
 
-struct FactionGeography
+/*
+Faction related geography.
+*/
+struct ClusterMovementInfo
 {
-	std::set<int> landAssociations;
-	std::set<int> oceanAssociations;
-	std::map<int, int> extendedRegionAssociations;
-	std::map<MAP *, int> coastalBaseOceanAssociations;
-	std::map<int, std::set<int>> associationConnections;
-	std::set<int> immediatelyReachableAssociations;
-	std::set<int> potentiallyReachableAssociations;
-	std::map<int, std::vector<int>> oceanAssociationShipyards;
-	std::map<int, std::vector<int>> oceanAssociationSeaTransports;
-	std::map<int, std::map<int, std::vector<Transfer>>> associationTransfers;
-	std::map<MAP *, std::vector<Transfer>> oceanBaseTransfers;
-	std::map<int, int> associationAreas;
+	double averageHexCost;
+	// landmark movementCosts
+	// [landmarkId, tileIndex]
+	std::vector<std::vector<int>> landmarkNetwork;
+};
+struct Cluster
+{
+	int area;
+	// landmark networks by movement type
+	robin_hood::unordered_flat_map<MovementType, ClusterMovementInfo> movementInfos;
+};
+struct Geography
+{
+	robin_hood::unordered_flat_set<int> associations[2];
+	robin_hood::unordered_flat_map<int, int> associationAreas;
+	robin_hood::unordered_flat_map<int, int> extendedRegionAssociations;
+	robin_hood::unordered_flat_map<MAP *, int> coastalBaseOceanAssociations;
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> associationConnections;
+	robin_hood::unordered_flat_set<int> immediatelyReachableAssociations;
+	robin_hood::unordered_flat_set<int> potentiallyReachableAssociations;
+	robin_hood::unordered_flat_map<int, std::vector<int>> oceanAssociationShipyards;
+	robin_hood::unordered_flat_map<int, std::vector<int>> oceanAssociationSeaTransports;
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, std::vector<Transfer>>> associationTransfers;
+	robin_hood::unordered_flat_map<MAP *, std::vector<Transfer>> oceanBaseTransfers;
 	std::vector<MAP *> raiseableCoasts;
 	
 	std::vector<Transfer> &getAssociationTransfers(int association1, int association2);
 	std::vector<Transfer> &getOceanBaseTransfers(MAP *tile);
-
-};
-
-struct Geography
-{
-	std::map<int, std::vector<MAP *>> internalOceanConcavePoints;
 	
-	FactionGeography factions[MaxPlayerNum];
-
-	Geography()
-	{
-		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-		{
-			factions[factionId] = FactionGeography();
-		}
-
-	}
-
+	// clusters
+	std::vector<Cluster> clusters;
+	
 };
 
 struct Force
@@ -183,16 +196,31 @@ struct Force
 		int getVehicleId();
 };
 
-struct TileMovementInfo
+struct TileFactionInfo
 {
-	double travelImpediment = 0.0;
-	std::map<MAP *, double> estimatedTravelTimes;
+	// movement restrictions
 	
 	bool blockedNeutral = false;
 	bool zocNeutral = false;
 	bool blocked = false;
 	bool zoc = false;
 	bool friendly = false;
+	
+	// associations
+	// [continent/ocean]
+	
+	int association = -1;
+	int surfaceAssociations[2] = {-1, -1};
+	
+	// non-combat and combat clusters
+	// [non-combat/combat][continent/ocean]
+	
+	int clusterIds[2][2] = {{-1, -1}, {-1, -1}};
+	
+	// trav
+	
+	double travelImpediment = 0.0;
+	robin_hood::unordered_flat_map<MAP *, double> estimatedTravelTimes;
 	
 	bool isBlocked(bool ignoreHostile);
 	bool isZoc(bool ignoreHostile);
@@ -201,22 +229,35 @@ struct TileMovementInfo
 
 struct TileInfo
 {
+	bool ocean;
+	
+	// adjacent tiles
+	int adjacentTileIndexes[ANGLE_COUNT];
+	int validAdjacentTileCount;
+	int validAdjacentTileAngles[ANGLE_COUNT];
+	int validAdjacentTileIndexes[ANGLE_COUNT];
+	
+	// base radius tiles
+	int baseRadiusTileIndexes[OFFSET_COUNT_RADIUS];
+	
+	// warzone
 	bool warzone = false;
 	bool warzoneBaseCapture = false;
 	bool warzonePsi = false;
 	int warzoneConventionalOffenseValue = 0;
 	
-	// [angle][movementType]
-	int hexCosts[ANGLE_COUNT][MOVEMENT_TYPE_COUNT];
+	// hex costs
+	// [movementType][angle]
+	int hexCosts1[MOVEMENT_TYPE_COUNT][ANGLE_COUNT];
 	
-	TileMovementInfo movementInfos[MaxPlayerNum];
+	// faction infos
+	TileFactionInfo factionInfos[MaxPlayerNum];
+	
 	// enemyOffensiveForces by vehicle.pad_0
 	std::vector<Force> enemyOffensiveForces;
 	
 	bool isBlocked(int factionId, bool ignoreHostile);
 	bool isZoc(int factionId, bool ignoreHostile);
-	
-	int landCluster[MaxPlayerNum];
 	
 };
 
@@ -324,22 +365,22 @@ struct TargetBase
 
 struct Production
 {
-	std::set<MAP *> unavailableBuildSites;
+	robin_hood::unordered_flat_set<MAP *> unavailableBuildSites;
 	double landColonyDemand;
-	std::map<int, double> seaColonyDemands;
+	robin_hood::unordered_flat_map<int, double> seaColonyDemands;
 	
-	std::map<int, int> landTerraformingRequestCounts;
-	std::map<int, int> seaTerraformingRequestCounts;
-	std::map<int, double> landFormerDemands;
-	std::map<int, double> seaFormerDemands;
+	robin_hood::unordered_flat_map<int, int> landTerraformingRequestCounts;
+	robin_hood::unordered_flat_map<int, int> seaTerraformingRequestCounts;
+	robin_hood::unordered_flat_map<int, double> landFormerDemands;
+	robin_hood::unordered_flat_map<int, double> seaFormerDemands;
 	
 	double landPodPoppingDemand;
-	std::map<int, double> seaPodPoppingDemands;
+	robin_hood::unordered_flat_map<int, double> seaPodPoppingDemands;
 	
 	double policeDemand;
 	double protectionDemand;
 	double landCombatDemand;
-	std::map<int, double> seaCombatDemands;
+	robin_hood::unordered_flat_map<int, double> seaCombatDemands;
 	double landAlienCombatDemand;
 	// [infantry defenders, attackers, artillery]
 	double unitTypeFractions[3];
@@ -376,7 +417,7 @@ struct TransitRequest
 };
 struct TransportControl
 {
-	std::map<int, std::vector<UnloadRequest>> unloadRequests;
+	robin_hood::unordered_flat_map<int, std::vector<UnloadRequest>> unloadRequests;
 	std::vector<TransitRequest> transitRequests;
 	
 	void clear();
@@ -400,31 +441,29 @@ struct Data
 
 	// geography
 
-	Geography geography;
+	Geography factionGeographys[MaxPlayerNum];
 	double roadCoverage;
 	double tubeCoverage;
 
 	// map data
 
 	std::vector<TileInfo> tileInfos;
-
+	
 	// combat data
 
-	// ocean associations with enemy bases
-	std::set<int> enemyBaseOceanAssociations;
 	// combat effects
 	CombatEffectTable combatEffectTable;
 
 	// enemy stacks
 	// also includes unprotected artifacts
-	std::map<MAP *, EnemyStackInfo> enemyStacks;
+	robin_hood::unordered_flat_map<MAP *, EnemyStackInfo> enemyStacks;
 	// unprotected enemy bases
 	std::vector<MAP *> emptyEnemyBaseTiles;
 	// best units
-	std::map<int, double> unitWeightedEffects;
+	robin_hood::unordered_flat_map<int, double> unitWeightedEffects;
 
 	// base info
-	std::map<int, int> baseBuildingItems;
+	robin_hood::unordered_flat_map<int, int> baseBuildingItems;
 	std::vector<BaseInfo> baseInfos = std::vector<BaseInfo>(MaxBaseNum);
 	// average required protection across bases (for normalization)
 	double factionBaseAverageRequiredProtection;
@@ -435,7 +474,7 @@ struct Data
 
 	// other global variables
 	
-	std::map<MAP *, int> locationBaseIds;
+	robin_hood::unordered_flat_map<MAP *, int> locationBaseIds;
 	std::vector<int> baseIds;
 	std::vector<int> vehicleIds;
 	std::vector<int> combatVehicleIds;
@@ -452,19 +491,19 @@ struct Data
 	std::vector<int> colonyVehicleIds;
 	std::vector<int> formerVehicleIds;
 	std::vector<int> airFormerVehicleIds;
-	std::map<int, std::vector<int>> landFormerVehicleIds;
-	std::map<int, std::vector<int>> seaFormerVehicleIds;
+	robin_hood::unordered_flat_map<int, std::vector<int>> landFormerVehicleIds;
+	robin_hood::unordered_flat_map<int, std::vector<int>> seaFormerVehicleIds;
 	std::vector<int> seaTransportVehicleIds;
 	double threatLevel;
-	std::map<int, std::vector<int>> regionSurfaceCombatVehicleIds;
-	std::map<int, std::vector<int>> regionSurfaceScoutVehicleIds;
+	robin_hood::unordered_flat_map<int, std::vector<int>> regionSurfaceCombatVehicleIds;
+	robin_hood::unordered_flat_map<int, std::vector<int>> regionSurfaceScoutVehicleIds;
 	int mostVulnerableBaseId;
 	double mostVulnerableBaseThreat;
 	double medianBaseDefenseDemand;
-	std::map<int, double> regionDefenseDemand;
+	robin_hood::unordered_flat_map<int, double> regionDefenseDemand;
 	int maxBaseSize;
 	int maxMineralSurplus;
-	std::map<int, int> oceanAssociationMaxMineralSurpluses;
+	robin_hood::unordered_flat_map<int, int> oceanAssociationMaxMineralSurpluses;
 	int bestLandUnitId;
 	int bestSeaUnitId;
 	int bestAirUnitId;
@@ -474,13 +513,13 @@ struct Data
 	std::vector<int> landAndAirCombatUnitIds;
 	std::vector<int> seaAndAirCombatUnitIds;
 	double landAlienHunterDemand;
-	std::map<int, int> seaTransportRequestCounts;
+	robin_hood::unordered_flat_map<int, int> seaTransportRequestCounts;
 	TransportControl transportControl;
-	std::map<int, Task> tasks;
-	std::map<int, TaskList> potentialTasks;
+	robin_hood::unordered_flat_map<int, Task> tasks;
+	robin_hood::unordered_flat_map<int, TaskList> potentialTasks;
 	double airColonyProductionPriority;
 	double landColonyProductionPriority;
-	std::map<int, double> seaColonyProductionPriorities;
+	robin_hood::unordered_flat_map<int, double> seaColonyProductionPriorities;
 	Production production;
 	int netIncome;
 	int grossIncome;
@@ -494,7 +533,7 @@ struct Data
 	TileInfo &getTileInfo(int mapIndex);
 	TileInfo &getTileInfo(int x, int y);
 	TileInfo &getTileInfo(MAP *tile);
-	TileMovementInfo &getTileMovementInfo(MAP *tile, int factionId);
+	TileFactionInfo &getTileFactionInfo(MAP *tile, int factionId);
 	BaseInfo &getBaseInfo(int baseId);
 
 	// combat data

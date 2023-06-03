@@ -2,6 +2,14 @@
 #include "terranx_wtp.h"
 #include "wtp.h"
 
+// MapValue
+
+MapValue::MapValue(MAP *_tile, int _value)
+: tile{_tile}, value{_value}
+{
+	
+}
+	
 // Location
 
 bool operator==(const Location &o1, const Location &o2)
@@ -165,9 +173,9 @@ int getX(int mapIndex)
 {
 	if (!(mapIndex >= 0 && mapIndex < *map_area_tiles))
 		return -1;
-
+	
 	return (mapIndex % (*map_half_x)) * 2 + (mapIndex / (*map_half_x) % 2);
-
+	
 }
 
 int getY(int mapIndex)
@@ -289,7 +297,7 @@ std::vector<MAP *> getAdjacentTiles(MAP *tile)
 	
 	std::vector<MAP *> tiles;
 	
-	for (unsigned int angle = 0; angle < TABLE_next_cell_count; angle++)
+	for (int angle = 0; angle < TABLE_next_cell_count; angle++)
 	{
 		int offsetX = TABLE_next_cell_x[angle];
 		int offsetY = TABLE_next_cell_y[angle];
@@ -318,7 +326,7 @@ std::vector<MAP *> getSideTiles(MAP *tile)
 	
 	std::vector<MAP *> tiles;
 	
-	for (unsigned int angle = 0; angle < TABLE_next_cell_count; angle += 2)
+	for (int angle = 0; angle < TABLE_next_cell_count; angle += 2)
 	{
 		int offsetX = TABLE_next_cell_x[angle];
 		int offsetY = TABLE_next_cell_y[angle];
@@ -360,14 +368,14 @@ MAP * getSquareBlockRadiusTile(MAP *center, int index)
 /**
 Returns square block radius tiles from beginIndex (inclusive) to endIndex (exclusive).
 */
-std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, unsigned int beginIndex, unsigned int endIndex)
+std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, int beginIndex, int endIndex)
 {
 	int x = getX(center);
 	int y = getY(center);
 	
 	std::vector<MAP *> tiles;
 	
-	for (unsigned int index = beginIndex; index < endIndex; index++)
+	for (int index = beginIndex; index < endIndex; index++)
 	{
 		int offsetX = TABLE_square_offset_x[index];
 		int offsetY = TABLE_square_offset_y[index];
@@ -392,10 +400,10 @@ Uses vanilla TABLE_square_offset.
 minRadius = 0-8, inclusive
 maxRadius = 0-8, inclusive
 */
-std::vector<MAP *> getSquareBlockTiles(MAP *center, unsigned int minRadius, unsigned int maxRadius)
+std::vector<MAP *> getSquareBlockTiles(MAP *center, int minRadius, int maxRadius)
 {
-	assert(/*minRadius >= 0U && */minRadius < TABLE_square_block_radius_count);
-	assert(/*maxRadius >= 0U && */maxRadius < TABLE_square_block_radius_count);
+	assert(minRadius >= 0 && minRadius < TABLE_square_block_radius_count);
+	assert(maxRadius >= 0 && maxRadius < TABLE_square_block_radius_count);
 	
 	int x = getX(center);
 	int y = getY(center);
@@ -427,8 +435,10 @@ std::vector<MAP *> getSquareBlockTiles(MAP *center, unsigned int minRadius, unsi
 /*
 Returns tile equally ranged from given center.
 */
-std::vector<MAP *> getEqualRangeTiles(MAP *tile, unsigned int range)
+std::vector<MAP *> getEqualRangeTiles(MAP *tile, int range)
 {
+	assert(range >= 0);
+	
 	// use vanilla table for range < TABLE_square_block_radius_count
 	
 	if (range < TABLE_square_block_radius_count)
@@ -486,8 +496,10 @@ std::vector<MAP *> getEqualRangeTiles(MAP *tile, unsigned int range)
 /*
 Returns tiles withing given range from given center.
 */
-std::vector<MAP *> getRangeTiles(MAP *tile, unsigned int range, bool includeCenter)
+std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter)
 {
+	assert(range >= 0);
+	
 	// use vanilla table for range < TABLE_square_block_radius_count
 	
 	if (range < TABLE_square_block_radius_count)
@@ -504,7 +516,7 @@ std::vector<MAP *> getRangeTiles(MAP *tile, unsigned int range, bool includeCent
 		tiles.push_back(tile);
 	}
 	
-	for (unsigned int ringRange = 1U; ringRange <= range; ringRange++)
+	for (int ringRange = 1; ringRange <= range; ringRange++)
 	{
 		std::vector<MAP *> equalRangeTiles = getEqualRangeTiles(tile, ringRange);
 		tiles.insert(tiles.end(), equalRangeTiles.begin(), equalRangeTiles.end());
@@ -763,7 +775,7 @@ bool map_base(MAP *tile) {
 Safe check for tile having item.
 NULL pointer returns false.
 */
-bool map_has_item(MAP *tile, unsigned int item) {
+bool map_has_item(MAP *tile, uint32_t item) {
 	return (tile && (tile->items & item));
 }
 
@@ -1877,9 +1889,9 @@ void computeBaseDoctors(int baseId)
 /*
 Returns base tile region plus all ocean regions this base is connected to for coastal bases.
 */
-std::set<int> getBaseConnectedRegions(int id)
+robin_hood::unordered_flat_set<int> getBaseConnectedRegions(int id)
 {
-	std::set<int> baseConnectedRegions;
+	robin_hood::unordered_flat_set<int> baseConnectedRegions;
 
 	BASE *base = &(Bases[id]);
 
@@ -1917,12 +1929,12 @@ std::set<int> getBaseConnectedRegions(int id)
 /*
 Returns base tile ocean regions it can issue ships to.
 */
-std::set<int> getBaseConnectedOceanRegions(int baseId)
+robin_hood::unordered_flat_set<int> getBaseConnectedOceanRegions(int baseId)
 {
 	BASE *base = &(Bases[baseId]);
 	MAP *baseLocations = getBaseMapTile(baseId);
 
-	std::set<int> baseConnectedOceanRegions;
+	robin_hood::unordered_flat_set<int> baseConnectedOceanRegions;
 
 	if (is_ocean(baseLocations))
 	{
@@ -3051,11 +3063,11 @@ bool isVehicleCanHealAtThisLocation(int vehicleId)
 /*
 Returns all ocean regions this location is adjacent to.
 */
-std::set<int> getAdjacentOceanRegions(int x, int y)
+robin_hood::unordered_flat_set<int> getAdjacentOceanRegions(int x, int y)
 {
 	debug("getAdjacentOceanRegions: x=%d, y=%d\n", x, y);
 
-	std::set<int> adjacentOceanRegions;
+	robin_hood::unordered_flat_set<int> adjacentOceanRegions;
 
 	MAP *tile = getMapTile(x, y);
 
@@ -3104,11 +3116,11 @@ std::set<int> getAdjacentOceanRegions(int x, int y)
 /*
 Returns all ocean regions this location is connected to.
 */
-std::set<int> getConnectedOceanRegions(int factionId, int x, int y)
+robin_hood::unordered_flat_set<int> getConnectedOceanRegions(int factionId, int x, int y)
 {
 	debug("getConnectedOceanRegions: factionId=%d, x=%d, y=%d\n", factionId, x, y);
 
-	std::set<int> connectedOceanRegions;
+	robin_hood::unordered_flat_set<int> connectedOceanRegions;
 
 	MAP *tile = getMapTile(x, y);
 
@@ -3117,7 +3129,7 @@ std::set<int> getConnectedOceanRegions(int factionId, int x, int y)
 
 	// add adjacent tiles regions first
 
-	std::set<int> adjacentOceanRegions = getAdjacentOceanRegions(x, y);
+	robin_hood::unordered_flat_set<int> adjacentOceanRegions = getAdjacentOceanRegions(x, y);
 	connectedOceanRegions.insert(adjacentOceanRegions.begin(), adjacentOceanRegions.end());
 
 	// iterate own bases
@@ -3146,7 +3158,7 @@ std::set<int> getConnectedOceanRegions(int factionId, int x, int y)
 
 			// get this base adjacent ocean regions
 
-			std::set<int> baseAdjacentOceanRegions = getAdjacentOceanRegions(base->x, base->y);
+			robin_hood::unordered_flat_set<int> baseAdjacentOceanRegions = getAdjacentOceanRegions(base->x, base->y);
 
 			// check for adjacent regions intersection
 
@@ -5206,7 +5218,7 @@ int getBaseGrowthRate(int baseId)
 
 }
 
-void accumulateMapIntValue(std::map<int, int> *m, int key, int value)
+void accumulateMapIntValue(robin_hood::unordered_flat_map<int, int> *m, int key, int value)
 {
 	if (m->count(key) == 0)
 	{
@@ -5561,6 +5573,12 @@ int getFactionNetIncome(int factionId)
 int getFactionGrossIncome(int factionId)
 {
 	return getFactionNetIncome(factionId) + getFactionMaintenance(factionId);
+}
+
+double getFactionTechPerTurn(int factionId)
+{
+	energy_compute(factionId, 0);
+	return (double)*tech_per_turn / 100.0;
 }
 
 bool isVehicleOnSentry(int vehicleId)
@@ -7293,6 +7311,28 @@ bool isLandVechileMoveAllowed(int vehicleId, MAP *from, MAP *to)
 	
 }
 
+int getRange(int tile1Index, int tile2Index)
+{
+	assert(tile1Index >= 0 && tile1Index < *map_area_tiles);
+	assert(tile2Index >= 0 && tile2Index < *map_area_tiles);
+	
+	int y1 = tile1Index / (*map_half_x);
+	int x1 = (tile1Index % (*map_half_x)) * 2 + (y1 % 2);
+	int y2 = tile2Index / (*map_half_x);
+	int x2 = (tile2Index % (*map_half_x)) * 2 + (y2 % 2);
+	
+    int dx = abs(x1 - x2);
+    int dy = abs(y1 - y2);
+    
+	if (*map_toggle_flat && dx > *map_half_x)
+	{
+		dx = *map_axis_x - dx;
+	}
+	
+	return (dx + dy) / 2;
+	
+}
+
 int getRange(MAP *origin, MAP *destination)
 {
 	assert(origin >= *MapPtr && origin < *MapPtr + *map_area_tiles);
@@ -7338,10 +7378,28 @@ double getVectorAngleCos(MAP *vertex, MAP *point1, MAP *point2)
 	
 }
 
-MAP *getTileByAngle(MAP *tile, unsigned int angle)
+int getAdjacentTileIndex(int tileIndex, int angle)
+{
+	assert(tileIndex >= 0 && tileIndex < *map_area_tiles);
+	assert(angle >= 0 && angle < TABLE_next_cell_count);
+	
+	int x = getX(tileIndex);
+	int y = getY(tileIndex);
+	
+	int nx = wrap(x + TABLE_next_cell_x[angle]);
+	int ny = y + TABLE_next_cell_y[angle];
+	
+	if (!isOnMap(nx, ny))
+		return -1;
+	
+	return getMapIndexByCoordinates(nx, ny);
+	
+}
+
+MAP *getTileByAngle(MAP *tile, int angle)
 {
 	assert(tile >= *MapPtr && tile < *MapPtr + *map_area_tiles);
-	assert(/*angle >= 0U && */angle < TABLE_next_cell_count);
+	assert(angle >= 0 && angle < TABLE_next_cell_count);
 	
 	int x = getX(tile);
 	int y = getY(tile);
@@ -7563,70 +7621,6 @@ std::vector<MAP *> getFartherBaseRadiusTiles(MAP *baseTile, MAP *tile)
 	}
 	
 	return fartherBaseRadiusTiles;
-	
-}
-
-/*
-Returns vehicle movement type.
-*/
-MOVEMENT_TYPE getUnitMovementType(int factionId, int unitId)
-{
-	UNIT *unit = getUnit(unitId);
-	int triad = unit->triad();
-	
-	MOVEMENT_TYPE movementType;
-	
-	switch (triad)
-	{
-	case TRIAD_AIR:
-		{
-			movementType = MT_AIR;
-		}
-		break;
-		
-	case TRIAD_SEA:
-		{
-			bool native = isNativeUnit(unitId);
-			movementType = native ? MT_SEA_NATIVE : MT_SEA_REGULAR;
-		}
-		break;
-		
-	case TRIAD_LAND:
-		{
-			bool native = isNativeUnit(unitId);
-			bool hover = isHoveringLandUnit(unitId);
-			bool easy = isFactionHasProject(factionId, FAC_XENOEMPATHY_DOME) || isEasyFungusEnteringLandUnit(unitId);
-			
-			if (native && hover)
-			{
-				movementType = MT_LAND_NATIVE_HOVER;
-			}
-			else if (native)
-			{
-				movementType = MT_LAND_NATIVE;
-			}
-			else if (hover)
-			{
-				movementType = MT_LAND_HOVER;
-			}
-			else if (easy)
-			{
-				movementType = MT_LAND_EASY;
-			}
-			else
-			{
-				movementType = MT_LAND_REGULAR;
-			}
-		}
-		break;
-		
-	// safeguarding case
-	default:
-		movementType = MT_AIR;
-		
-	}
-	
-	return movementType;
 	
 }
 

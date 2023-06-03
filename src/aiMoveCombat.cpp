@@ -501,7 +501,7 @@ void moveBaseProtectors()
 
 void moveCombat()
 {
-	const bool TRACE = DEBUG && true;
+	const bool TRACE = DEBUG && false;
 	
 	debug("moveCombat - %s\n", MFactions[aiFactionId].noun_faction);
 	
@@ -559,8 +559,8 @@ void moveCombat()
 	
 	debug("\tselecting tasks\n");
 	
-	std::set<MAP *> excludedEnemyStacks;
-	std::map<int, TaskPriority *> vehicleAssignments;
+	robin_hood::unordered_flat_set<MAP *> excludedEnemyStacks;
+	robin_hood::unordered_flat_map<int, TaskPriority *> vehicleAssignments;
 	
 	while (true)
 	{
@@ -570,9 +570,9 @@ void moveCombat()
 		
 		// iterate task priorities
 		
-		std::set<MAP *> targetedPods;
-		std::set<MAP *> targetedEmptyBases;
-		std::map<MAP *, ProvidedEffect> providedEffects;
+		robin_hood::unordered_flat_set<MAP *> targetedPods;
+		robin_hood::unordered_flat_set<MAP *> targetedEmptyBases;
+		robin_hood::unordered_flat_map<MAP *, ProvidedEffect> providedEffects;
 		
 		for (TaskPriority &taskPriority : taskPriorities)
 		{
@@ -754,7 +754,7 @@ void moveCombat()
 		
 		// redirect non destructive vehicles if too long to wait
 		
-		for (std::pair<MAP * const, ProvidedEffect> &providedEffectEntry : providedEffects)
+		for (robin_hood::pair<MAP *, ProvidedEffect> &providedEffectEntry : providedEffects)
 		{
 			ProvidedEffect &providedEffect = providedEffectEntry.second;
 			
@@ -806,7 +806,7 @@ void moveCombat()
 		MAP *mostUndertargetedEnemyStack = nullptr;
 		double mostUndertargetedEnemyStackEffectRatio = 1.0;
 		
-		for (std::pair<MAP * const, ProvidedEffect> &providedEffectEntry : providedEffects)
+		for (robin_hood::pair<MAP *, ProvidedEffect> &providedEffectEntry : providedEffects)
 		{
 			MAP *stackTile = providedEffectEntry.first;
 			ProvidedEffect &providedEffect = providedEffectEntry.second;
@@ -880,7 +880,7 @@ void moveCombat()
 	
 	debug("\tselectedTasks\n");
 	
-	for (std::pair<int const, TaskPriority *> &vehicleAssignmentEntry : vehicleAssignments)
+	for (robin_hood::pair<int, TaskPriority *> &vehicleAssignmentEntry : vehicleAssignments)
 	{
 		int vehicleId = vehicleAssignmentEntry.first;
 		TaskPriority &taskPriority = *(vehicleAssignmentEntry.second);
@@ -1042,7 +1042,7 @@ void populateRepairTasks(std::vector<TaskPriority> &taskPriorities)
 			int y = getY(tile);
 			bool ocean = is_ocean(tile);
 			TileInfo &tileInfo = aiData.getTileInfo(tile);
-			TileMovementInfo &tileMovementInfo = tileInfo.movementInfos[aiFactionId];
+			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[aiFactionId];
 			
 			// vehicle can repair there
 			
@@ -1075,7 +1075,7 @@ void populateRepairTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// exclude blocked
 			
-			if (tileMovementInfo.blocked)
+			if (tileFactionInfo.blocked)
 				continue;
 			
 			// exclude unreachable locations
@@ -1417,7 +1417,7 @@ void populateBaseProtectionTasks(std::vector<TaskPriority> &taskPriorities)
 
 void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 {
-	const bool TRACE = DEBUG && true;
+	const bool TRACE = DEBUG && false;
 	
 	debug("\tpopulateEnemyStackAttackTasks\n");
 	
@@ -1438,7 +1438,7 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 			debug("\t\t[%4d] (%3d,%3d)\n", vehicleId, getVehicle(vehicleId)->x, getVehicle(vehicleId)->y);
 		}
 		
-		for (std::pair<MAP * const, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
+		for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
 		{
 			MAP *enemyStackTile = enemyStackEntry.first;
 			EnemyStackInfo &enemyStackInfo = enemyStackEntry.second;
@@ -1803,7 +1803,7 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 
 void populateEmptyBaseCaptureTasks(std::vector<TaskPriority> &taskPriorities)
 {
-	bool TRACE = DEBUG && true;
+	bool TRACE = DEBUG && false;
 	
 	debug("\tpopulateEmptyBaseCaptureTasks TRACE=%d\n", TRACE);
 	
@@ -1918,7 +1918,7 @@ void populateLandPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
 		MAP *tile = getMapTile(mapIndex);
 		int association = getAssociation(tile, aiFactionId);
 		TileInfo &tileInfo = aiData.getTileInfo(tile);
-		TileMovementInfo &tileMovementInfo = tileInfo.movementInfos[aiFactionId];
+		TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[aiFactionId];
 		
 		// land
 		
@@ -1942,7 +1942,7 @@ void populateLandPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
 		
 		// not blocked location
 		
-		if (tileMovementInfo.blocked)
+		if (tileFactionInfo.blocked)
 			continue;
 		
 		// store pod location
@@ -2033,7 +2033,7 @@ void populateSeaPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
 	{
 		int tileAssociation = getOceanAssociation(tile, aiFactionId);
 		TileInfo &tileInfo = aiData.getTileInfo(tile);
-		TileMovementInfo &tileMovementInfo = tileInfo.movementInfos[aiFactionId];
+		TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[aiFactionId];
 		
 		// ocean
 		
@@ -2057,7 +2057,7 @@ void populateSeaPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
 		
 		// not blocked location
 		
-		if (tileMovementInfo.blocked)
+		if (tileFactionInfo.blocked)
 			continue;
 		
 		// store pod location
@@ -2135,9 +2135,9 @@ void selectAssemblyLocation()
 	
 	// group tasks by attack target
 	
-	std::map<MAP *, std::vector<Task *>> attackTargetTasks;
+	robin_hood::unordered_flat_map<MAP *, std::vector<Task *>> attackTargetTasks;
 	
-	for (std::pair<const int, Task> &taskEntry : aiData.tasks)
+	for (robin_hood::pair<int, Task> &taskEntry : aiData.tasks)
 	{
 		int vehicleId = taskEntry.first;
 		Task &task = taskEntry.second;
@@ -2165,7 +2165,7 @@ void selectAssemblyLocation()
 	
 	// process attackTargetTasks
 	
-	for (std::pair<MAP * const, std::vector<Task *>> &attackTargetTaskEntry : attackTargetTasks)
+	for (robin_hood::pair<MAP *, std::vector<Task *>> &attackTargetTaskEntry : attackTargetTasks)
 	{
 		MAP *attackTarget = attackTargetTaskEntry.first;
 		std::vector<Task *> &tasks = attackTargetTaskEntry.second;
@@ -2305,9 +2305,9 @@ void coordinateAttack()
 	
 	// group tasks by attack target
 	
-	std::map<MAP *, std::vector<Task *>> enemyStackTasks;
+	robin_hood::unordered_flat_map<MAP *, std::vector<Task *>> enemyStackTasks;
 	
-	for (std::pair<const int, Task> &taskEntry : aiData.tasks)
+	for (robin_hood::pair<int, Task> &taskEntry : aiData.tasks)
 	{
 		Task &task = taskEntry.second;
 		MAP *destination = task.getDestination();
@@ -2339,7 +2339,7 @@ void coordinateAttack()
 	
 	// process destinationTasks
 	
-	for (std::pair<MAP * const, std::vector<Task *>> &enemyStackTaskEntry : enemyStackTasks)
+	for (robin_hood::pair<MAP *, std::vector<Task *>> &enemyStackTaskEntry : enemyStackTasks)
 	{
 		MAP *attackTarget = enemyStackTaskEntry.first;
 		std::vector<Task *> &tasks = enemyStackTaskEntry.second;
@@ -2352,8 +2352,8 @@ void coordinateAttack()
 		
 		// group vehicles by travel time
 		
-		std::map<int, std::vector<int>> travelTimeVehicleGroups;
-		std::map<int, double> vehiclePrimaryEffects;
+		robin_hood::unordered_flat_map<int, std::vector<int>> travelTimeVehicleGroups;
+		robin_hood::unordered_flat_map<int, double> vehiclePrimaryEffects;
 		
 		for (Task *task : tasks)
 		{
@@ -2389,10 +2389,10 @@ void coordinateAttack()
 		int minTravelTime = -1;
 		double providedEffect = 0.0;
 		
-		for (const std::pair<int, std::vector<int>> &travelTimeVehicleGroupEntry : travelTimeVehicleGroups)
+		for (robin_hood::pair<int, std::vector<int>> &travelTimeVehicleGroupEntry : travelTimeVehicleGroups)
 		{
 			int travelTime = travelTimeVehicleGroupEntry.first;
-			const std::vector<int> &vehicleGroup = travelTimeVehicleGroupEntry.second;
+			std::vector<int> &vehicleGroup = travelTimeVehicleGroupEntry.second;
 			
 			for (int vehicleId : vehicleGroup)
 			{
@@ -2430,10 +2430,10 @@ void coordinateAttack()
 		
 		// release vehicle too close to destination if they cannot effectivelly survive
 			
-		for (const std::pair<int, std::vector<int>> &travelTimeVehicleGroupEntry : travelTimeVehicleGroups)
+		for (robin_hood::pair<int, std::vector<int>> &travelTimeVehicleGroupEntry : travelTimeVehicleGroups)
 		{
 			int travelTime = travelTimeVehicleGroupEntry.first;
-			const std::vector<int> &vehicleGroup = travelTimeVehicleGroupEntry.second;
+			std::vector<int> &vehicleGroup = travelTimeVehicleGroupEntry.second;
 			
 			if (travelTime < minTravelTime)
 			{
@@ -2611,7 +2611,7 @@ MAP *findTarget(int vehicleId, MAP *destination)
 			MAP *target = nullptr;
 			int targetRange = INT_MAX;
 			
-			for (std::pair<MAP *, EnemyStackInfo> enemyStackEntry : aiData.enemyStacks)
+			for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
 			{
 				MAP *enemyStackLocation = enemyStackEntry.first;
 				int enemyStackLocationX = getX(enemyStackLocation);

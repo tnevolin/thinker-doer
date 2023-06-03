@@ -671,29 +671,81 @@ int handler(void* user, const char* section, const char* name, const char* value
 			cf->wtp_enabled_factions[factionId] = (value[factionId - 1] == '0' ? false : true);
 		}
     }
-    else if (MATCH("wtp", "ai_faction_income_a"))
+    else if (MATCH("wtp", "ai_faction_minerals_t1"))
     {
-        cf->ai_faction_income_a = atof(value);
+        cf->ai_faction_minerals_t1 = atof(value);
     }
-    else if (MATCH("wtp", "ai_faction_income_b"))
+    else if (MATCH("wtp", "ai_faction_minerals_a1"))
     {
-        cf->ai_faction_income_b = atof(value);
+        cf->ai_faction_minerals_a1 = atof(value);
     }
-    else if (MATCH("wtp", "ai_faction_income_c"))
+    else if (MATCH("wtp", "ai_faction_minerals_b1"))
     {
-        cf->ai_faction_income_c = atof(value);
+        cf->ai_faction_minerals_b1 = atof(value);
     }
-    else if (MATCH("wtp", "ai_faction_income_t1"))
+    else if (MATCH("wtp", "ai_faction_minerals_c1"))
     {
-        cf->ai_faction_income_t1 = atof(value);
+        cf->ai_faction_minerals_c1 = atof(value);
     }
-    else if (MATCH("wtp", "ai_base_income_a"))
+    else if (MATCH("wtp", "ai_faction_minerals_d1"))
     {
-        cf->ai_base_income_a = atof(value);
+        cf->ai_faction_minerals_d1 = atof(value);
     }
-    else if (MATCH("wtp", "ai_base_income_b"))
+    else if (MATCH("wtp", "ai_faction_minerals_a2"))
     {
-        cf->ai_base_income_b = atof(value);
+        cf->ai_faction_minerals_a2 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_minerals_b2"))
+    {
+        cf->ai_faction_minerals_b2 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_budget_t1"))
+    {
+        cf->ai_faction_budget_t1 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_budget_a1"))
+    {
+        cf->ai_faction_budget_a1 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_budget_b1"))
+    {
+        cf->ai_faction_budget_b1 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_budget_c1"))
+    {
+        cf->ai_faction_budget_c1 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_budget_d1"))
+    {
+        cf->ai_faction_budget_d1 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_budget_a2"))
+    {
+        cf->ai_faction_budget_a2 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_faction_budget_b2"))
+    {
+        cf->ai_faction_budget_b2 = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_mineral_intake_a"))
+    {
+        cf->ai_base_mineral_intake_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_mineral_intake_b"))
+    {
+        cf->ai_base_mineral_intake_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_mineral_intake_c"))
+    {
+        cf->ai_base_mineral_intake_c = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_budget_intake_a"))
+    {
+        cf->ai_base_budget_intake_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_budget_intake_b"))
+    {
+        cf->ai_base_budget_intake_b = atof(value);
     }
     else if (MATCH("wtp", "ai_worker_count_a"))
     {

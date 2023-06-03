@@ -10,14 +10,14 @@ extern const char* scriptTxtID;
 
 // offsets
 
-extern const unsigned int TABLE_next_cell_count;
+extern const int TABLE_next_cell_count;
 extern const int *TABLE_next_cell_x;
 extern const int *TABLE_next_cell_y;
 
-extern const unsigned int TABLE_square_block_radius_count;
-extern const unsigned int *TABLE_square_block_radius;
-extern const unsigned int TABLE_square_block_radius_base_internal;
-extern const unsigned int TABLE_square_block_radius_base_external;
+extern const int TABLE_square_block_radius_count;
+extern const int *TABLE_square_block_radius;
+extern const int TABLE_square_block_radius_base_internal;
+extern const int TABLE_square_block_radius_base_external;
 extern const int *TABLE_square_offset_x;
 extern const int *TABLE_square_offset_y;
 
@@ -61,6 +61,7 @@ extern byte *g_SOCIALWIN;
 extern int *current_attacker;
 extern int *current_defender;
 extern int *net_income;
+extern int *tech_per_turn;
 
 // yield rules
 

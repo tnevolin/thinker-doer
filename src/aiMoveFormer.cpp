@@ -14,11 +14,93 @@
 #include "aiProduction.h"
 #include "aiRoute.h"
 
+// terraforming options
+
+TERRAFORMING_OPTION TO_ROCKY_MINE =
+	{"rocky mine", false, true, false, true, FORMER_MINE, true, {FORMER_ROAD, FORMER_MINE}};
+TERRAFORMING_OPTION TO_MINE =
+	{"mine", false, false, false, true, FORMER_MINE, true, {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_MINE}};
+TERRAFORMING_OPTION TO_SOLAR_COLLECTOR =
+	{"solar collector", false, false, false, true, FORMER_SOLAR, true, {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_SOLAR}};
+TERRAFORMING_OPTION TO_CONDENSER =
+	{"condenser", false, false, true, true, FORMER_CONDENSER, false, {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_CONDENSER}};
+TERRAFORMING_OPTION TO_ECHELON_MIRROR =
+	{"echelon mirror", false, false, true, true, FORMER_ECH_MIRROR, false, {FORMER_ROAD, FORMER_FARM, FORMER_SOIL_ENR, FORMER_ECH_MIRROR}};
+TERRAFORMING_OPTION TO_THERMAL_BOREHOLE =
+	{"thermal borehole", false, false, false, true, FORMER_THERMAL_BORE, true, {FORMER_ROAD, FORMER_THERMAL_BORE}};
+TERRAFORMING_OPTION TO_FOREST =
+	{"forest", false, false, false, true, FORMER_FOREST, true, {FORMER_ROAD, FORMER_FOREST}};
+TERRAFORMING_OPTION TO_LAND_FUNGUS =
+	{"land fungus", false, false, false, true, FORMER_PLANT_FUNGUS, true, {FORMER_ROAD, FORMER_PLANT_FUNGUS}};
+TERRAFORMING_OPTION TO_MINING_PLATFORM =
+	{"mining platform", true, false, false, true, FORMER_MINE, true, {FORMER_FARM, FORMER_MINE}};
+TERRAFORMING_OPTION TO_TIDAL_HARNESS =
+	{"tidal harness", true, false, false, true, FORMER_SOLAR, true, {FORMER_FARM, FORMER_SOLAR}};
+TERRAFORMING_OPTION TO_SEA_FUNGUS =
+	{"sea fungus", true, false, false, true, FORMER_PLANT_FUNGUS, true, {FORMER_PLANT_FUNGUS}};
+// aquifer
+TERRAFORMING_OPTION AQUIFER_TERRAFORMING_OPTION =
+	{"aquifer"   , false, false, true , true , FORMER_AQUIFER     , false, {FORMER_AQUIFER}};
+// raise land
+TERRAFORMING_OPTION RAISE_LAND_TERRAFORMING_OPTION =
+	{"raise"     , false, false, true , true , FORMER_RAISE_LAND  , false, {FORMER_RAISE_LAND}};
+// network
+TERRAFORMING_OPTION NETWORK_TERRAFORMING_OPTION =
+	{"road/tube" , false, false, false, false, FORMER_ROAD        , false, {FORMER_ROAD, FORMER_MAGTUBE}};
+// sensor
+TERRAFORMING_OPTION LAND_SENSOR_TERRAFORMING_OPTION =
+	{"sensor"    , false, false, false, false, FORMER_SENSOR      , false, {FORMER_SENSOR}};
+TERRAFORMING_OPTION OCEAN_SENSOR_TERRAFORMING_OPTION =
+	{"sensor"    , true , false, false, false, FORMER_SENSOR      , false, {FORMER_SENSOR}};
+
+const std::vector<TERRAFORMING_OPTION *> CONVENTIONAL_TERRAFORMING_OPTIONS =
+{
+	// land
+	&TO_ROCKY_MINE,
+	&TO_MINE,
+	&TO_SOLAR_COLLECTOR,
+	&TO_CONDENSER,
+	&TO_ECHELON_MIRROR,
+	&TO_THERMAL_BOREHOLE,
+	&TO_FOREST,
+	&TO_LAND_FUNGUS,
+	&TO_MINING_PLATFORM,
+	&TO_TIDAL_HARNESS,
+	&TO_SEA_FUNGUS,
+};
+
+// FORMER_ORDER
+
+FORMER_ORDER::FORMER_ORDER(int _vehicleId)
+: vehicleId{_vehicleId}
+{
+	
+}
+
 // TERRAFORMING_REQUEST comparison
+
+TERRAFORMING_REQUEST::TERRAFORMING_REQUEST(MAP *_tile, TERRAFORMING_OPTION *_option, int _action, double _score)
+: tile{_tile}, option{_option}, action{_action}, score{_score}
+{
+	
+}
+
+TERRAFORMING_REQUEST::TERRAFORMING_REQUEST()
+: TERRAFORMING_REQUEST(nullptr, nullptr, -1, 0.0)
+{
+	
+}
 
 bool compareTerraformingRequestDescending(const TERRAFORMING_REQUEST &a, const TERRAFORMING_REQUEST &b)
 {
 	return a.score > b.score;
+}
+
+// ConventionalTerraformingRequest
+
+ConventionalTerraformingRequest::ConventionalTerraformingRequest()
+{
+	
 }
 
 bool compareConventionalTerraformingRequestDescending(const ConventionalTerraformingRequest &a, const ConventionalTerraformingRequest &b)
@@ -40,7 +122,7 @@ std::vector<MAP *> conventionalTerraformingSites;
 
 double networkDemand = 0.0;
 std::vector<FORMER_ORDER> formerOrders;
-std::map<int, FORMER_ORDER *> vehicleFormerOrders;
+robin_hood::unordered_flat_map<int, FORMER_ORDER *> vehicleFormerOrders;
 std::vector<TERRAFORMING_REQUEST> terraformingRequests;
 
 // terraforming data operations
@@ -140,7 +222,7 @@ void populateTerraformingData()
 	
 	// populate available terraforming associations
 	
-	std::set<int> availableTerraformingAssociations;
+	robin_hood::unordered_flat_set<int> availableTerraformingAssociations;
 	
 	bool hasGravship = has_tech(aiFactionId, getChassis(CHS_GRAVSHIP)->preq_tech);
 	bool hasLandFormer = has_tech(aiFactionId, getUnit(BSC_FORMERS)->preq_tech);
@@ -150,12 +232,12 @@ void populateTerraformingData()
 	{
 		// everything is accessible with gravship
 		
-		for (int association : aiData.geography.factions[aiFactionId].landAssociations)
+		for (int association : aiData.factionGeographys[aiFactionId].associations[0])
 		{
 			availableTerraformingAssociations.insert(association);
 		}
 		
-		for (int association : aiData.geography.factions[aiFactionId].oceanAssociations)
+		for (int association : aiData.factionGeographys[aiFactionId].associations[1])
 		{
 			availableTerraformingAssociations.insert(association);
 		}
@@ -189,7 +271,7 @@ void populateTerraformingData()
 		
 		if (hasLandFormer || landFormerExists)
 		{
-			for (int association : aiData.geography.factions[aiFactionId].landAssociations)
+			for (int association : aiData.factionGeographys[aiFactionId].associations[0])
 			{
 				// potentially reachable
 				
@@ -697,7 +779,7 @@ void generateTerraformingRequests()
 	
 	// remove duplicate terraforming requests
 	
-	std::set<MAP *> terraformingRequestLocations;
+	robin_hood::unordered_flat_set<MAP *> terraformingRequestLocations;
 	
 	for
 	(
@@ -786,9 +868,9 @@ void generateLandBridgeTerraformingRequests()
 {
 	debug("generateLandBridgeTerraformingRequests\n");
 	
-	FactionGeography &factionGeography = aiData.geography.factions[aiFactionId];
+	Geography &factionGeography = aiData.factionGeographys[aiFactionId];
 	
-	std::map<int, MapValue> bridgeRequests;
+	robin_hood::unordered_flat_map<int, MapValue> bridgeRequests;
 	
 	for (MAP *tile : factionGeography.raiseableCoasts)
 	{
@@ -800,6 +882,7 @@ void generateLandBridgeTerraformingRequests()
 			bool rangeTileOcean = is_ocean(rangeTile);
 			int rangeTileLandAssociation = getLandAssociation(rangeTile, aiFactionId);
 			TileInfo &tileInfo = aiData.getTileInfo(rangeTile);
+			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[aiFactionId];
 			
 			// land
 			
@@ -811,9 +894,9 @@ void generateLandBridgeTerraformingRequests()
 			if (isSameLandAssociation(tile, rangeTile, aiFactionId))
 				continue;
 			
-			// not the populated cluster
+			// not the populated non-combat cluster
 			
-			if (tileInfo.landCluster[aiFactionId] > 0)
+			if (tileFactionInfo.clusterIds[0][0] >= 0)
 				continue;
 			
 			// lock the minRange
@@ -829,7 +912,8 @@ void generateLandBridgeTerraformingRequests()
 		
 		if (bridgeRequests.count(bridgeAssociation) == 0)
 		{
-			bridgeRequests.insert({bridgeAssociation, {nullptr, INT_MAX}});
+			MapValue mapValue(nullptr, INT_MAX);
+			bridgeRequests.insert({bridgeAssociation, mapValue});
 		}
 		
 		if (bridgeRange < bridgeRequests.at(bridgeAssociation).value)
@@ -840,7 +924,7 @@ void generateLandBridgeTerraformingRequests()
 		
 	}
 	
-	for (std::pair<int const, MapValue> bridgeRequestEntry : bridgeRequests)
+	for (robin_hood::pair<int, MapValue> &bridgeRequestEntry : bridgeRequests)
 	{
 		MapValue bridgeRequest = bridgeRequestEntry.second;
 		
@@ -866,7 +950,7 @@ void generateLandBridgeTerraformingRequests()
 			, bridgeRequest.value
 		);
 		
-		terraformingRequests.push_back({bridgeRequest.tile, &RAISE_LAND_TERRAFORMING_OPTION, FORMER_RAISE_LAND, score});
+		terraformingRequests.emplace_back(bridgeRequest.tile, &RAISE_LAND_TERRAFORMING_OPTION, FORMER_RAISE_LAND, score);
 		
 	}
 	
@@ -1145,7 +1229,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		
 		ConventionalTerraformingRequest bestRequest;
 		
-		for (const TERRAFORMING_OPTION *option : CONVENTIONAL_TERRAFORMING_OPTIONS)
+		for (TERRAFORMING_OPTION *option : CONVENTIONAL_TERRAFORMING_OPTIONS)
 		{
 			if (option->ocean != ocean)
 				continue;
@@ -1194,7 +1278,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	
 	// evaluate base terraforming requirement
 	
-	std::set<MAP *> selectedTiles;
+	robin_hood::unordered_flat_set<MAP *> selectedTiles;
 	std::vector<ConventionalTerraformingRequest> modifiedMapStates;
 	
 	for (ConventionalTerraformingRequest &request : conventionalTerraformingRequests)
@@ -1258,7 +1342,7 @@ void generateAquiferTerraformingRequest(MAP *tile)
 
 	if (terraformingScore->action != -1 && terraformingScore->score > 0.0)
 	{
-		terraformingRequests.push_back({tile, terraformingScore->option, terraformingScore->action, terraformingScore->score});
+		terraformingRequests.emplace_back(tile, terraformingScore->option, terraformingScore->action, terraformingScore->score);
 	}
 
 }
@@ -1274,7 +1358,7 @@ void generateRaiseLandTerraformingRequest(MAP *tile)
 
 	if (terraformingScore->action != -1 && terraformingScore->score > 0.0)
 	{
-		terraformingRequests.push_back({tile, terraformingScore->option, terraformingScore->action, terraformingScore->score});
+		terraformingRequests.emplace_back(tile, terraformingScore->option, terraformingScore->action, terraformingScore->score);
 	}
 
 }
@@ -1290,7 +1374,7 @@ void generateNetworkTerraformingRequest(MAP *tile)
 
 	if (terraformingScore->action != -1 && terraformingScore->score > 0.0)
 	{
-		terraformingRequests.push_back({tile, terraformingScore->option, terraformingScore->action, terraformingScore->score});
+		terraformingRequests.emplace_back(tile, terraformingScore->option, terraformingScore->action, terraformingScore->score);
 	}
 
 }
@@ -1306,7 +1390,7 @@ void generateSensorTerraformingRequest(MAP *tile)
 
 	if (terraformingScore->action != -1 && terraformingScore->score > 0.0)
 	{
-		terraformingRequests.push_back({tile, terraformingScore->option, terraformingScore->action, terraformingScore->score});
+		terraformingRequests.emplace_back(tile, terraformingScore->option, terraformingScore->action, terraformingScore->score);
 	}
 
 }
@@ -1370,7 +1454,7 @@ void applyProximityRules()
 
 		bool tooClose = false;
 
-		std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(terraformingRequest->action);
+		robin_hood::unordered_flat_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(terraformingRequest->action);
 		if (proximityRulesIterator != PROXIMITY_RULES.end())
 		{
 			const PROXIMITY_RULE *proximityRule = &(proximityRulesIterator->second);
@@ -1443,8 +1527,8 @@ void assignFormerOrders()
 	
 	// distribute orders
 	
-	std::set<FORMER_ORDER *> assignedOrders;
-	std::map<TERRAFORMING_REQUEST *, TerraformingRequestAssignment> assignments;
+	robin_hood::unordered_flat_set<FORMER_ORDER *> assignedOrders;
+	robin_hood::unordered_flat_map<TERRAFORMING_REQUEST *, TerraformingRequestAssignment> assignments;
 	
 	bool changed;
 	
@@ -1609,7 +1693,7 @@ void assignFormerOrders()
 	
 	// set tasks
 	
-	for (std::pair<TERRAFORMING_REQUEST * const, TerraformingRequestAssignment> assignmentEntry : assignments)
+	for (robin_hood::pair<TERRAFORMING_REQUEST *, TerraformingRequestAssignment> &assignmentEntry : assignments)
 	{
 		TERRAFORMING_REQUEST *terraformingRequest = assignmentEntry.first;
 		TerraformingRequestAssignment &assignment = assignmentEntry.second;
@@ -1669,7 +1753,7 @@ void finalizeFormerOrders()
 /*
 Selects best terraforming option around given base and calculates its terraforming score.
 */
-ConventionalTerraformingRequest calculateConventionalTerraformingScore(int baseId, MAP *tile, const TERRAFORMING_OPTION *option, bool fitness)
+ConventionalTerraformingRequest calculateConventionalTerraformingScore(int baseId, MAP *tile, TERRAFORMING_OPTION *option, bool fitness)
 {
 	bool ocean = is_ocean(tile);
 	bool rocky = (map_rockiness(tile) == 2);
@@ -1984,7 +2068,7 @@ void calculateAquiferTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerraf
 //
 	// get option
 
-	const TERRAFORMING_OPTION *option = &(AQUIFER_TERRAFORMING_OPTION);
+	TERRAFORMING_OPTION *option = &(AQUIFER_TERRAFORMING_OPTION);
 
 	// initialize variables
 
@@ -2086,7 +2170,7 @@ void calculateRaiseLandTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerr
 //
 	// get option
 
-	const TERRAFORMING_OPTION *option = &(RAISE_LAND_TERRAFORMING_OPTION);
+	TERRAFORMING_OPTION *option = &(RAISE_LAND_TERRAFORMING_OPTION);
 
 	// initialize variables
 
@@ -2182,7 +2266,7 @@ void calculateNetworkTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerraf
 //
 	// get option
 
-	const TERRAFORMING_OPTION *option = &(NETWORK_TERRAFORMING_OPTION);
+	TERRAFORMING_OPTION *option = &(NETWORK_TERRAFORMING_OPTION);
 
 	// initialize variables
 
@@ -2310,7 +2394,7 @@ void calculateSensorTerraformingScore(MAP *tile, TERRAFORMING_SCORE *bestTerrafo
 //
 	// get option
 
-	const TERRAFORMING_OPTION *option = (ocean ? &(OCEAN_SENSOR_TERRAFORMING_OPTION) : &(LAND_SENSOR_TERRAFORMING_OPTION));
+	TERRAFORMING_OPTION *option = (ocean ? &(OCEAN_SENSOR_TERRAFORMING_OPTION) : &(LAND_SENSOR_TERRAFORMING_OPTION));
 
 	// initialize variables
 
@@ -2671,7 +2755,7 @@ bool isVehicleTerraforming(VEH *vehicle)
 
 bool isNearbyForestUnderConstruction(int x, int y)
 {
-	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_FOREST);
+	robin_hood::unordered_flat_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_FOREST);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2710,7 +2794,7 @@ bool isNearbyForestUnderConstruction(int x, int y)
 
 bool isNearbyCondeserUnderConstruction(int x, int y)
 {
-	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_CONDENSER);
+	robin_hood::unordered_flat_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_CONDENSER);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2749,7 +2833,7 @@ bool isNearbyCondeserUnderConstruction(int x, int y)
 
 bool isNearbyMirrorUnderConstruction(int x, int y)
 {
-	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_ECH_MIRROR);
+	robin_hood::unordered_flat_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_ECH_MIRROR);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2794,7 +2878,7 @@ bool isNearbyMirrorUnderConstruction(int x, int y)
 
 bool isNearbyBoreholePresentOrUnderConstruction(int x, int y)
 {
-	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_THERMAL_BORE);
+	robin_hood::unordered_flat_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_THERMAL_BORE);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2839,7 +2923,7 @@ bool isNearbyBoreholePresentOrUnderConstruction(int x, int y)
 
 bool isNearbyRiverPresentOrUnderConstruction(int x, int y)
 {
-	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_AQUIFER);
+	robin_hood::unordered_flat_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_AQUIFER);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2884,7 +2968,7 @@ bool isNearbyRiverPresentOrUnderConstruction(int x, int y)
 
 bool isNearbyRaiseUnderConstruction(int x, int y)
 {
-	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_RAISE_LAND);
+	robin_hood::unordered_flat_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_RAISE_LAND);
 
 	// do not do anything if proximity rule is not defined
 
@@ -2924,7 +3008,7 @@ bool isNearbyRaiseUnderConstruction(int x, int y)
 
 bool isNearbySensorPresentOrUnderConstruction(int x, int y)
 {
-	std::map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_SENSOR);
+	robin_hood::unordered_flat_map<int, PROXIMITY_RULE>::const_iterator proximityRulesIterator = PROXIMITY_RULES.find(FORMER_SENSOR);
 
 	// do not do anything if proximity rule is not defined
 
@@ -4549,7 +4633,7 @@ bool isValidTerraformingSite(MAP *tile)
 	
 	// exclude blocked locations
 	
-	if (tileInfo.movementInfos[aiFactionId].blocked)
+	if (tileInfo.factionInfos[aiFactionId].blocked)
 		return false;
 	
 	// all conditions met

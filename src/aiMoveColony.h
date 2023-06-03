@@ -160,7 +160,7 @@ int getNearestEnemyBaseRange(MAP *tile);
 std::vector<MAP *> getUnavailableBuildSites(MAP *buildSite);
 double getBasePlacementLandUse(MAP *tile);
 int getBasePlacementRadiusOverlap(MAP *tile);
-std::set<int> getOceanAssociations(MAP *tile);
+robin_hood::unordered_flat_set<int> getOceanAssociations(MAP *tile);
 double getEffectiveYieldScore(double nutrient, double mineral, double energy);
 double getColonyTravelTimeCoefficient(int travelTime);
 

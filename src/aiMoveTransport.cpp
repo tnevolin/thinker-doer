@@ -54,7 +54,7 @@ void moveTranportStrategy()
 	{
 		debug("\t=== Transportation requests ===\n");
 		debug("\t\tunloadRequests\n");
-		for (std::pair<int const, std::vector<UnloadRequest>> &unloadRequestEntry : aiData.transportControl.unloadRequests)
+		for (robin_hood::pair<int, std::vector<UnloadRequest>> &unloadRequestEntry : aiData.transportControl.unloadRequests)
 		{
 			int seaTransportVehiclePad0 = unloadRequestEntry.first;
 			std::vector<UnloadRequest> &transportUnloadRequests = unloadRequestEntry.second;
@@ -113,7 +113,7 @@ void moveTranportStrategy()
 
 void moveSeaTransportStrategy(int vehicleId)
 {
-	bool TRACE = DEBUG && true;
+	bool TRACE = DEBUG && false;
 	
 	debug("moveSeaTransportStrategy [%4d] (%3d,%3d)\n", vehicleId, getVehicle(vehicleId)->x, getVehicle(vehicleId)->y);
 	
@@ -429,7 +429,7 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 
 	// search for reachable regions
 
-	std::set<int> reachableRegions;
+	robin_hood::unordered_flat_set<int> reachableRegions;
 
 	for (int mapIndex = 0; mapIndex < *map_area_tiles; mapIndex++)
 	{
@@ -450,10 +450,10 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 	
 	// populate region former ratios
 
-	std::map<int, int> regionBaseCounts;
-	std::map<int, int> regionFormerCounts;
-	std::map<int, BASE *> regionClosestBases;
-	std::map<int, int> regionClosestBaseRanges;
+	robin_hood::unordered_flat_map<int, int> regionBaseCounts;
+	robin_hood::unordered_flat_map<int, int> regionFormerCounts;
+	robin_hood::unordered_flat_map<int, BASE *> regionClosestBases;
+	robin_hood::unordered_flat_map<int, int> regionClosestBaseRanges;
 
 	for (int baseId = 0; baseId < *total_num_bases; baseId++)
 	{
@@ -985,8 +985,8 @@ int getCrossOceanAssociation(MAP *origin, int destinationAssociation, int factio
 	if (isConnected(originAssociation, destinationAssociation, factionId))
 		return destinationAssociation;
 	
-	std::map<int, int> processedAssociations;
-	std::set<int> processingAssociations;
+	robin_hood::unordered_flat_map<int, int> processedAssociations;
+	robin_hood::unordered_flat_set<int> processingAssociations;
 	
 	for (int connection : getAssociationConnections(originAssociation, factionId))
 	{
@@ -996,7 +996,7 @@ int getCrossOceanAssociation(MAP *origin, int destinationAssociation, int factio
 	
 	while (processingAssociations.size() > 0)
 	{
-		std::set<int> newProcessingAssociations;
+		robin_hood::unordered_flat_set<int> newProcessingAssociations;
 		
 		for (int processingAssociation : processingAssociations)
 		{
@@ -1050,8 +1050,8 @@ int getFirstLandAssociation(int oceanAssociation, int destinationAssociation, in
 	if (isConnected(oceanAssociation, destinationAssociation, factionId))
 		return destinationAssociation;
 	
-	std::map<int, int> processedAssociations;
-	std::set<int> processingAssociations;
+	robin_hood::unordered_flat_map<int, int> processedAssociations;
+	robin_hood::unordered_flat_set<int> processingAssociations;
 	
 	for (int connection : getAssociationConnections(oceanAssociation, factionId))
 	{
@@ -1061,7 +1061,7 @@ int getFirstLandAssociation(int oceanAssociation, int destinationAssociation, in
 	
 	while (processingAssociations.size() > 0)
 	{
-		std::set<int> newProcessingAssociations;
+		robin_hood::unordered_flat_set<int> newProcessingAssociations;
 		
 		for (int processingAssociation : processingAssociations)
 		{

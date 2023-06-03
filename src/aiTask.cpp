@@ -605,7 +605,10 @@ int Task::executeAttack(int vehicleId)
 	// check attackLocation
 	
 	if (attackTarget == nullptr)
+	{
+		mod_veh_skip(vehicleId);
 		return EM_DONE;
+	}
 	
 	// get base and vehicle at attackLocation
 	
@@ -623,7 +626,10 @@ int Task::executeAttack(int vehicleId)
 	// nobody is there
 	
 	if (!vehicleAtAttackLocation)
+	{
+		mod_veh_skip(vehicleId);
 		return EM_DONE;
+	}
 	
 	// get defender
 	
@@ -669,7 +675,10 @@ int Task::executeLongRangeFire(int vehicleId)
 	// check attackLocation
 	
 	if (attackTarget == nullptr)
+	{
+		mod_veh_skip(vehicleId);
 		return EM_DONE;
+	}
 	
 	debug("\t^ (%3d,%3d)\n", getX(attackTarget), getY(attackTarget));
 	
@@ -689,12 +698,15 @@ int Task::executeLongRangeFire(int vehicleId)
 	// nobody is there
 	
 	if (!vehicleAtAttackLocation)
+	{
+		mod_veh_skip(vehicleId);
 		return EM_DONE;
+	}
 	
 	// long range fire
 	
 	longRangeFire(vehicleId, attackTarget);
-	return EM_DONE;
+	return EM_SYNC;
 	
 }
 

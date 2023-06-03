@@ -1900,8 +1900,8 @@ int wtp_tech_cost(int fac, int tech)
 
     double a1 =  10.0;
     double b1 =   0.0;
-    double c1 =   0.0;
-    double d1 =   5.145;
+    double c1 =  14.7;
+    double d1 =  10.3;
     double b2 = 840.0 * ((double)*map_area_tiles / 3200.0);
     double x0 = (-c1 + sqrt(c1 * c1 - 3 * d1 * (b1 - b2))) / (3 * d1);
     double a2 = a1 + b1 * x0 + c1 * x0 * x0 + d1 * x0 * x0 * x0 - b2 * x0;
@@ -3662,6 +3662,8 @@ Overrides faction_upkeep calls to amend vanilla and Thinker AI functionality.
 */
 HOOK_API int modifiedFactionUpkeep(const int factionId)
 {
+	debug("modifiedFactionUpkeep - %s\n", getMFaction(factionId)->noun_faction);fflush(debug_log);
+	
 	executionProfiles["0. modifiedFactionUpkeep"].start();
 	
     // remove wrong units from bases
@@ -3707,6 +3709,34 @@ HOOK_API int modifiedFactionUpkeep(const int factionId)
 	}
 	
 	executionProfiles["0. modifiedFactionUpkeep"].stop();
+	
+	// check vehicles with available moves
+	
+	debug(">check moves - %s\n", getMFaction(factionId)->noun_faction);fflush(debug_log);
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = getVehicle(vehicleId);
+		
+		if (vehicle->faction_id != factionId)
+			continue;
+		
+		if (vehicle->road_moves_spent >= getVehicleSpeed(vehicleId))
+			continue;
+		
+		debug
+		(
+			">moves left:"
+			" [%4d] (%3d,%3d)"
+			" speed=%2d"
+			" road_moves_spent=%2d"
+			"\n"
+			, vehicleId, vehicle->x, vehicle->y
+			, getVehicleSpeed(vehicleId)
+			, vehicle->road_moves_spent
+		);
+		fflush(debug_log);
+			
+	}
 	
 	// return original value
 	
@@ -4583,10 +4613,6 @@ void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_st
 
 int __cdecl modifiedTurnUpkeep()
 {
-	// execute original function
-	
-	int returnValue = mod_turn_upkeep();
-	
 	// collect statistics
 	
 	std::vector<int> computerFactions;
@@ -4605,9 +4631,8 @@ int __cdecl modifiedTurnUpkeep()
 	int totalWorkerCount = 0;
 	double totalMinerals = 0.0;
 	double totalBudget = 0.0;
-	int totalOldBaseCount = 0;
-	int totalMineralIntakeGrowth = 0;
-	int totalBudgetIntakeGrowth = 0;
+	double totalResearch = 0.0;
+	int totalTechCount = 0;
 	
 	FILE* statistics_base_log = fopen("statistics_base.txt", "a");
 	for (int baseId = 0; baseId < *total_num_bases; baseId++)
@@ -4619,45 +4644,35 @@ int __cdecl modifiedTurnUpkeep()
 		if (base->faction_id == 0 || is_human(base->faction_id))
 			continue;
 		
-		int baseFoundingTurn = getBaseFoundingTurn(baseId);
-		int baseAge = getBaseAge(baseId);
-		int baseSize = base->pop_size;
-		int baseWorkerCount = base->pop_size - base->specialist_total;
+		int foundingTurn = getBaseFoundingTurn(baseId);
+		int age = getBaseAge(baseId);
+		int popSize = base->pop_size;
+		int workerCount = base->pop_size - base->specialist_total;
 		
-		int baseMineralIntake = base->mineral_intake;
-		int baseMineralIntake2 = base->mineral_intake_2;
-		double baseMineralMultiplier = (baseMineralIntake <= 0 ? 1.0 : (double)baseMineralIntake2 / (double)baseMineralIntake);
+		double mineralIntake2 = (double)base->mineral_intake_2;
+		double mineralMultiplier = getBaseMineralMultiplier(baseId);
+		double mineralIntake = mineralIntake2 / mineralMultiplier;
 		
-		int baseBudgetIntake = base->energy_surplus;
-		int baseBudgetIntake2 = base->economy_total + base->psych_total + base->labs_total;
-		double baseBudgetMultiplier = (baseBudgetIntake <= 0 ? 1.0 : (double)baseBudgetIntake2 / (double)baseBudgetIntake);
-		
-		if (baseAge > 1)
-		{
-			totalOldBaseCount++;
-			
-			int previousTurnMineralIntake = base->pad_2;
-			int currentTurnMineralIntake = baseMineralIntake;
-			int mineralIntakeGrowth = currentTurnMineralIntake - previousTurnMineralIntake;
-			totalMineralIntakeGrowth += mineralIntakeGrowth;
-			
-			int previousTurnBudgetIntake = base->pad_3;
-			int currentTurnBudgetIntake = baseBudgetIntake;
-			int budgetIntakeGrowth = currentTurnBudgetIntake - previousTurnBudgetIntake;
-			totalBudgetIntakeGrowth += budgetIntakeGrowth;
-			
-		}
-		
-		base->pad_2 = baseMineralIntake;
-		base->pad_3 = baseBudgetIntake;
+		double economyIntake2 = (double)base->economy_total;
+		double economyMultiplier = getBaseEconomyMultiplier(baseId);
+		double economyIntake = economyIntake2 / economyMultiplier;
+		double psychIntake2 = (double)base->psych_total;
+		double psychMultiplier = getBasePsychMultiplier(baseId);
+		double psychIntake = psychIntake2 / psychMultiplier;
+		double labsIntake2 = (double)base->labs_total;
+		double labsMultiplier = getBaseLabsMultiplier(baseId);
+		double labsIntake = labsIntake2 / labsMultiplier;
+		double budgetIntake2 = economyIntake2 + psychIntake2 + labsIntake2;
+		double budgetIntake = economyIntake + psychIntake + labsIntake;
+		double budgetMultiplier = (budgetIntake <= 0.0 ? 1.0 : budgetIntake2 / budgetIntake);
 		
 		// totals
 		
 		totalBaseCount++;
-		totalCitizenCount += baseSize;
-		totalWorkerCount += baseWorkerCount;
-		totalMinerals += baseMineralIntake2;
-		totalBudget += baseBudgetIntake2;
+		totalCitizenCount += popSize;
+		totalWorkerCount += workerCount;
+		totalMinerals += mineralIntake2;
+		totalBudget += budgetIntake2;
 		
 		fprintf
 		(
@@ -4669,28 +4684,28 @@ int __cdecl modifiedTurnUpkeep()
 			"\t%3d"
 			"\t%2d"
 			"\t%2d"
-			"\t%4d"
-			"\t%4d"
 			"\t%7.2f"
-			"\t%4d"
-			"\t%4d"
 			"\t%7.2f"
+			"\t%5.4f"
+			"\t%7.2f"
+			"\t%7.2f"
+			"\t%5.4f"
 			"\n"
 			, *map_random_seed
 			, *current_turn
 			, baseId
-			, baseFoundingTurn
-			, baseAge
-			, baseSize
-			, baseWorkerCount
-			, baseMineralIntake
-			, baseMineralIntake2
-			, baseMineralMultiplier
-			, baseBudgetIntake
-			, baseBudgetIntake2
-			, baseBudgetMultiplier
+			, foundingTurn
+			, age
+			, popSize
+			, workerCount
+			, mineralIntake
+			, mineralIntake2
+			, mineralMultiplier
+			, budgetIntake
+			, budgetIntake2
+			, budgetMultiplier
 		);
-
+		
 	}
 	fclose(statistics_base_log);
 	
@@ -4701,10 +4716,6 @@ int __cdecl modifiedTurnUpkeep()
 	double averageFactionWorkerCount = (factionCount == 0 ? 0.0 : (double)totalWorkerCount / (double)factionCount);
 	double averageFactionMinerals = (factionCount == 0 ? 0.0 : (double)totalMinerals / (double)factionCount);
 	double averageFactionBudget = (factionCount == 0 ? 0.0 : (double)totalBudget / (double)factionCount);
-	double averageBaseMineralIntakeGrowth = (totalOldBaseCount == 0 ? 0.0 : (double)totalMineralIntakeGrowth / (double)totalOldBaseCount);
-	double averageBaseBudgetIntakeGrowth = (totalOldBaseCount == 0 ? 0.0 : (double)totalBudgetIntakeGrowth / (double)totalOldBaseCount);
-	
-	int totalTechCount = 0;
 	
 	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
@@ -4722,9 +4733,12 @@ int __cdecl modifiedTurnUpkeep()
 			
 		}
 		
+		totalResearch += getFactionTechPerTurn(factionId);
+		
 	}
 	
 	double averageFactionTechCount = (factionCount == 0 ? 0.0 : (double)totalTechCount / (double)factionCount);
+	double averageFactionResearch = (factionCount == 0 ? 0.0 : (double)totalResearch / (double)factionCount);
 	
 	FILE* statistics_faction_log = fopen("statistics_faction.txt", "a");
 	fprintf
@@ -4738,8 +4752,7 @@ int __cdecl modifiedTurnUpkeep()
 		"\t%7.2f"
 		"\t%7.2f"
 		"\t%7.2f"
-		"\t%7.4f"
-		"\t%7.4f"
+		"\t%7.2f"
 		"\n"
 		, *map_random_seed
 		, *current_turn
@@ -4748,9 +4761,8 @@ int __cdecl modifiedTurnUpkeep()
 		, averageFactionWorkerCount
 		, averageFactionMinerals
 		, averageFactionBudget
+		, averageFactionResearch
 		, averageFactionTechCount
-		, averageBaseMineralIntakeGrowth
-		, averageBaseBudgetIntakeGrowth
 	);
 	fclose(statistics_faction_log);
 	
@@ -4801,7 +4813,9 @@ int __cdecl modifiedTurnUpkeep()
 	
 	executionProfiles.clear();
 	
-	return returnValue;
+	// execute original function
+	
+	return mod_turn_upkeep();
 	
 }
 
@@ -4992,7 +5006,7 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 		
 		// find accessible ocean regions
 		
-		std::set<int> adjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
+		robin_hood::unordered_flat_set<int> adjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
 		
 		// find proper port
 		
@@ -5363,7 +5377,7 @@ Assign vehicle home base to own base.
 */
 void fixVehicleHomeBases(int factionId)
 {
-	std::set<int> homeBaseIds;
+	robin_hood::unordered_flat_set<int> homeBaseIds;
 	
 	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 	{

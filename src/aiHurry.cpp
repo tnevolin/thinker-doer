@@ -5,7 +5,7 @@
 #include "wtp.h"
 #include "game_wtp.h"
 
-const std::set<int> IMPORTANT_FACILITIES =
+const robin_hood::unordered_flat_set<int> IMPORTANT_FACILITIES =
 {
 	FAC_RECYCLING_TANKS,
 	FAC_RECREATION_COMMONS,
