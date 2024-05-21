@@ -148,7 +148,10 @@ void analyzeBasePlacementSites()
 		// valid build site
 		
 		if (!isValidBuildSite(tile, aiFactionId))
+		{
+			debug("\tnot valid build site (%3d,%3d)\n", getX(tile), getY(tile));
 			continue;
+		}
 		
 		// don't build on edge
 		
@@ -930,7 +933,7 @@ bool isValidBuildSite(MAP *tile, int factionId)
 	
 	// not blocked
 	
-	if (tileFactionInfo.blocked)
+	if (tileFactionInfo.blocked[0])
 		return false;
 	
 	// not warzone
@@ -1578,14 +1581,14 @@ double getBasePlacementLandUse(MAP *buildSite)
 		if (baseRadiusTileOcean)
 			continue;
 		
-		// not base radius
+		// outside of base radius
 		
 		if (map_has_item(baseRadiusTile, TERRA_BASE_RADIUS))
 			continue;
 		
 		// count side base radius on own or neutral territory
 		
-		for (int angle = 0; angle < ANGLE_COUNT; angle++)
+		for (int angle = 0; angle < ANGLE_COUNT; angle += 2)
 		{
 			int sideTileIndex = baseRadiusTileInfo.adjacentTileIndexes[angle];
 			
@@ -1714,7 +1717,7 @@ double getBasePlacementLandUse(MAP *buildSite)
 			
 			// count land loss
 			
-			double landLoss = 1.0 * ((double)(4 - extensionLength) / 3.0);
+			double landLoss = 2.0 / (double)extensionLength;
 			
 			landUse -= landLoss;
 			

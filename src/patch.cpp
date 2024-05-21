@@ -174,7 +174,12 @@ int __cdecl mod_setup_player(int faction, int v1, int v2) {
 			balanceFactionId = -1;
 
 		}
-
+		
+		// reset territory
+		// vanilla does not do it on player setup
+		
+		modifiedResetTerritory();
+		
     }
     return 0;
 }

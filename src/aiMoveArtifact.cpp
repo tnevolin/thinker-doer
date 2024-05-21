@@ -80,7 +80,7 @@ void moveArtifactStrategy()
 				
 				// blocked
 				
-				if (baseRadiusTileInfo.factionInfos[aiFactionId].blocked)
+				if (baseRadiusTileInfo.factionInfos[aiFactionId].blocked[0])
 				{
 					blocked = true;
 					break;
@@ -144,7 +144,7 @@ void moveArtifactStrategy()
 				
 				// blocked
 				
-				if (baseRadiusTileInfo.factionInfos[aiFactionId].blocked)
+				if (baseRadiusTileInfo.factionInfos[aiFactionId].blocked[0])
 				{
 					blocked = true;
 					break;

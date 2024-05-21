@@ -105,6 +105,13 @@ struct BaseMetric
 	int labs = 0;
 };
 
+struct Interval
+{
+	int min = 0;
+	int max = 0;
+	Interval(int _min, int _max): min{_min}, max{_max} {}
+};
+
 void productionStrategy();
 void evaluateGlobalBaseDemand();
 void evaluateGlobalFormerDemand();
@@ -123,8 +130,16 @@ void evaluatePopulationLimitFacilities();
 void evaluatePunishmentSphere();
 void evaluatePunishmentSphereRemoval();
 void evaluatePsychFacilities();
+void evaluateHospitalFacilities();
 void evaluatePsychFacilitiesRemoval();
-void evaluateSimpleFacilities();
+void evaluateMineralMultiplyingFacilities();
+void evaluateBudgetMultiplyingFacilities();
+void evaluateChildrenCreche();
+void evaluateTreeFacilities();
+void evaluatePlanetFacilities();
+void evaluateAquafarm();
+void evaluateThermoclineTransducer();
+void evaluateSubseaTrunkline();
 void evaluateBiologyLab();
 void evaluateBroodPit();
 void evaluateDefensiveFacilities();
@@ -170,8 +185,8 @@ double getBaseWorkerIncome(int baseId);
 double getBaseWorkerNutrientIntake(int baseId);
 double getCitizenIncome();
 //double getBaseRelativeIncomeGrowth(int baseId);
-double getBaseIncomeGrowth(int baseId);
-double getCitizenIncomeGrowth(int baseId);
+//double getBaseIncomeGrowth(int baseId);
+//double getCitizenIncomeGrowth(int baseId);
 std::vector<int> getProtectionCounterUnits(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
 double getUnitPriorityCoefficient(int baseId);
 int findInfantryPoliceUnit(bool first);
@@ -179,10 +194,9 @@ void evaluateGlobalPoliceDemand();
 void selectProject();
 void assignProject();
 void hurryProtectiveUnit();
+double getItemProductionPriority(int baseId, int item, double gain);
 double getItemProductionPriority(int baseId, int item, int delay, double bonus, double income, double incomeGrowth);
 double getItemProductionPriority(int baseId, int item, int delay, double income, double incomeGrowth);
-double getEmulatedFacilityProductionPriority(int baseId, int facilityId);
-double getEmulatedPoliceProductionPriority(int baseId, int unitId, int policeCount);
 double getComputedProductionPriority
 (
 	int baseId,
@@ -203,22 +217,20 @@ double getComputedProductionPriority
 	int newEcoDamage
 );
 double getBaseFacilityIncome(int baseId, int facilityId);
-double getDevelopmentScore(double t);
-double getDevelopmentScoreTangent(double t);
+double getDevelopmentScore(int turn);
+double getDevelopmentScoreTangent(int turn);
 double getDevelopmentScale();
-double getBaseSize(double age);
 double getNewBaseGain(int delay);
 double getColonyRawProductionPriority();
 double getGain(int delay, double bonus, double income, double incomeGrowth);
 double getIncomeGain(int delay, double income, double incomeGrowth);
 double getRawProductionPriority(double gain, double cost);
 double getProductionPriority(double gain, double cost);
-double getBaseGrowthScale(int baseId);
 double getProductionConstantIncomeGain(double score, double buildTime, double bonusDelay);
 double getProductionLinearIncomeGain(double score, double buildTime, double bonusDelay);
 double getProductionProportionalIncomeGain(double score, int buildTime, int bonusDelay);
 double getPsychIncomeGrowth(int baseId, double psychGrowth);
-double getBaseMoraleBonusScore(int baseId, std::vector<int> levels);
+double getMoraleProportionalMineralBonus(std::vector<int> levels);
 BaseMetric getBaseMetric(int baseId);
 BaseMetric getFacilityImprovement(int baseId, int facilityId);
 int getFacilityWorkerCountEffect(int baseId, int facilityId);
@@ -228,5 +240,33 @@ double getDemand(double required, double provided);
 // statistical estimates
 //=======================================================
 
-double getBaseExtraPopulationGain(int baseId, int poulationLimit);
+double getFactionStatisticalMineralIntake2(double turn);
+double getFactionStatisticalBudgetIntake2(double turn);
+double getBaseStatisticalSize(double age);
+double getBaseStatisticalMineralIntake(double age);
+double getBaseStatisticalMineralIntake2(double age);
+double getBaseStatisticalMineralMultiplier(double age);
+double getBaseStatisticalBudgetIntake(double age);
+double getBaseStatisticalBudgetIntake2(double age);
+double getBaseStatisticalBudgetMultiplier(double age);
+double getFlatMineralIntakeGain(int delay, double value);
+double getFlatBudgetIntakeGain(int delay, double value);
+double getBasePopulationGain(int baseId, const Interval &baseSizeInterval);
+double getBasePopulationGrowthGain(int baseId, int delay, double proportionalGrowthIncrease);
+double getBaseProportionalMineralIntakeGain(int baseId, int delay, double proportion);
+double getBaseProportionalBudgetIntakeGain(int baseId, int delay, double proportion);
+double getBaseProportionalMineralIntake2Gain(int baseId, int delay, double proportion);
+double getBaseProportionalBudgetIntake2Gain(int baseId, int delay, double proportion);
+
+//=======================================================
+// production item helper functions
+//=======================================================
+
+Interval getPoliceBaseSizeInterval(int baseId, int unitId);
+Interval getPsychFacilityBaseSizeInterval(int baseId, int facilityId);
+int getFacilityEcoDamageReduction(int baseId, int facilityId);
+double getFacilityRelativeGrowthIncrease(int baseId, int facilityId);
+double getFacilityRelativeMineralIncrease(int baseId, int facilityId);
+double getFacilityRelativeBudgetIncrease(int baseId, int facilityId);
+int getBasePoliceExtraCapacity(int baseId);
 

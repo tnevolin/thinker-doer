@@ -159,22 +159,27 @@ int __cdecl mod_setup_player(int faction, int v1, int v2) {
 
 		// rerun balance for late starting faction
 
-//		if (v1 == -282)
-//		{
-//			// set balanceFactionId
-//
-//			balanceFactionId = faction;
-//
-//			// run balance
-//
-//			tx_balance();
-//
-//			// clear balanceFactionId
-//
-//			balanceFactionId = -1;
-//
-//		}
-//
+		if (v1 == -282)
+		{
+			// set balanceFactionId
+
+			balanceFactionId = faction;
+
+			// run balance
+
+			tx_balance();
+
+			// clear balanceFactionId
+
+			balanceFactionId = -1;
+
+		}
+		
+		// reset territory
+		// vanilla does not do it on player setup
+		
+		modifiedResetTerritory();
+		
     }
     return 0;
 }
@@ -419,7 +424,7 @@ https://en.wikipedia.org/wiki/Microsoft-specific_exception_handling_mechanisms
 */
 int __cdecl mod_except_handler3(EXCEPTION_RECORD *rec, PVOID *frame, CONTEXT *ctx)
 {
-    if (!debug_log && !(debug_log = fopen("debug.txt", "w"))) {
+    if (!debug_log && !(debug_log = fopen("debug.txt", "a"))) {
         return _except_handler3(rec, frame, ctx);
     }
     time_t rawtime = time(&rawtime);
@@ -919,9 +924,9 @@ bool patch_setup(Config* cf) {
         write_bytes(0x526540, old_bytes, new_bytes, sizeof(new_bytes));
     }
 
-//    // =WTP=
-//    patch_setup_wtp(cf);
-//
+    // =WTP=
+    patch_setup_wtp(cf);
+
     if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READ, &attrs)) {
         return false;
     }

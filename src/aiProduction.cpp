@@ -201,7 +201,7 @@ void evaluateGlobalBaseDemand()
 	
 	if (occupancyCoverage < occupancyCoverageThreshold)
 	{
-		globalBaseDemand *= 1.0 + 1.50 * (1.0 - occupancyCoverage / occupancyCoverageThreshold);
+		globalBaseDemand *= 1.0 + 0.50 * (1.0 - occupancyCoverage / occupancyCoverageThreshold);
 		debug("\toccupancyCoverage globalBaseDemand=%f\n", globalBaseDemand);
 	}
 	
@@ -292,7 +292,7 @@ void evaluateGlobalBaseDemand()
 	double totalRelativeLossGain = std::min(1.0, 0.5 * relativeInefficiencyEnergyLoss + relativeBDroneGain);
 	
 	double inefficiencyDemandMultiplier = 1.0 - totalRelativeLossGain;
-	
+		
 	debug("\tbaseLimit                      %6d\n", baseLimit);
 	debug("\tmoreBDrones                    %6d\n", moreBDrones);
 	debug("\ttotalEnergyIntake              %6d\n", totalEnergyIntake);
@@ -402,7 +402,7 @@ void evaluateGlobalProtectionDemand()
 		
 		// set global protection demand if base protection is not satisfied
 		
-		if (!baseCombatData.isSatisfied(true))
+		if (!baseCombatData.isSatisfied(false))
 		{
 			aiData.production.protectionDemand = 1.0;
 			break;
@@ -479,7 +479,15 @@ void evaluateGlobalLandCombatDemand()
 	
 	aiData.production.landCombatDemand = 0.0;
 	
-	double landAssociationEnemyStrength = DBL_MAX;
+	// no enemies
+	
+	if (aiData.factionInfos[aiFactionId].enemyCount == 0)
+		return;
+	
+	// find weakest base
+	
+	int targetBaseId = -1;
+	double targetBaseProductionRatio = 0.0;
 	
 	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
@@ -493,163 +501,163 @@ void evaluateGlobalLandCombatDemand()
 		if (!isVendetta(aiFactionId, factionId))
 			continue;
 		
-		// number of wars
-		
-		int warCount = 0;
-		
-		for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
-		{
-			// skip self
-			
-			if (otherFactionId == factionId)
-				continue;
-			
-			// at war
-			
-			if (!isVendetta(factionId, otherFactionId))
-				continue;
-			
-			// accumulate
-			
-			warCount++;
-			
-		}
-		
 		// no wars
 		
-		if (warCount == 0)
+		if (aiData.factionInfos[factionId].enemyCount == 0)
 			continue;
 		
 		debug
 		(
 			"\t%-25s"
-			" warCount=%d"
+			" enemyCount=%d"
 			"\n"
 			, getMFaction(factionId)->noun_faction
-			, warCount
+			, aiData.factionInfos[factionId].enemyCount
 		);
 		
-		// bases in land associations
+		// compute production weight ratio
 		
-		robin_hood::unordered_flat_set<int> presenseAssociations;
-		
-		debug("\t\tbases\n");
-		for (int baseId = 0; baseId < *total_num_bases; baseId++)
+		for (int potentialTargetBaseId = 0; potentialTargetBaseId < *total_num_bases; potentialTargetBaseId++)
 		{
-			BASE *base = getBase(baseId);
-			MAP *baseTile = getBaseMapTile(baseId);
-			bool baseOcean = is_ocean(baseTile);
-			int baseAssociation = getAssociation(baseTile, base->faction_id);
+			BASE *potentialTargetBase = getBase(potentialTargetBaseId);
+			MAP *potentialTargetBaseTile = getBaseMapTile(potentialTargetBaseId);
 			
 			// faction
 			
-			if (base->faction_id != factionId)
-				continue;
-			
-			// land
-			
-			if (baseOcean)
+			if (potentialTargetBase->faction_id != factionId)
 				continue;
 			
 			// close enough to ours
 			
-			int nearestBaseRange = getNearestBaseRange(baseTile, aiData.baseIds, false);
+			int nearestBaseRange = getNearestBaseRange(potentialTargetBaseTile, aiData.baseIds, false);
 			
 			if (nearestBaseRange > 10)
 				continue;
 			
-			debug("\t\t\t%-25s\n", base->name);
+			debug("\t\t%-25s\n", potentialTargetBase->name);
 			
-			// add presense
+			// our production weight
 			
-			presenseAssociations.insert(baseAssociation);
+			double ourProductionWeight = 0.0;
 			
-		}
-		
-		// forces in associations
-		
-		debug("\t\tforces\n");
-		
-		double totalAirForceStrength = 0.0;
-		robin_hood::unordered_flat_map<int, double> associationSurfaceForceStrengths;
-		
-		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-		{
-			VEH *vehicle = getVehicle(vehicleId);
-			int triad = vehicle->triad();
-			int vehicleAssociation = getVehicleAssociation(vehicleId);
-			
-			// faction
-			
-			if (vehicle->faction_id != factionId)
-				continue;
-			
-			// combat
-			
-			if (!isCombatVehicle(vehicleId))
-				continue;
-			
-			// not sea
-			
-			if (triad == TRIAD_SEA)
-				continue;
-			
-			// vehicle strength
-			
-			double strength;
-			
-			if (isNativeVehicle(vehicleId))
+			debug("\t\t\tour\n");
+			for (int ourBaseId : aiData.baseIds)
 			{
-				strength = 1.0;
-			}
-			else
-			{
-				int offenseValue = getVehicleOffenseValue(vehicleId);
-				int defenseValue = getVehicleDefenseValue(vehicleId);
-				double value = 0.5 * ((double)std::max(offenseValue, defenseValue) + (0.5 * (double)(offenseValue + defenseValue)));
-				double relativeValue = value / (0.5 * (double)(aiData.bestOffenseValue + aiData.bestDefenseValue));
-				strength = relativeValue;
-			}
-			
-			// accumulate
+				BASE *ourBase = getBase(ourBaseId);
+				MAP *ourBaseTile = getBaseMapTile(ourBaseId);
 				
-			switch (triad)
-			{
-			case TRIAD_AIR:
-				totalAirForceStrength += strength;
-				break;
-			default:
-				associationSurfaceForceStrengths[vehicleAssociation]++;
+				// travel time
+				
+				int travelTime = getUnitAttackLTravelTime(ourBaseTile, potentialTargetBaseTile, aiFactionId, BSC_SCOUT_PATROL);
+				
+				if (travelTime == -1)
+					continue;
+				
+				// other parameters
+				
+				int mineralIntake2 = std::max(1, ourBase->mineral_intake_2);
+				double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
+				double weight = (double)mineralIntake2 * travelTimeCoefficient;
+				
+				// production weight
+				
+				ourProductionWeight += weight;
+				
+				debug
+				(
+					"\t\t\t\t%-25s"
+					" mineralIntake2=%3d"
+					" travelTime=%3d"
+					" travelTimeCoefficient=%5.2f"
+					" weight=%7.2f"
+					" productionWeight=%7.2f"
+					"\n"
+					, ourBase->name
+					, mineralIntake2
+					, travelTime
+					, travelTimeCoefficient
+					, weight
+					, ourProductionWeight
+				);
+				
 			}
 			
-		}
-		
-		// proportionalAirForceStrength
-		// air forces are thinned out with multiple wars
-		
-		double proportionalAirForceStrength = totalAirForceStrength / (double)warCount;
-		
-		// compare combinedForceStrengths
-		
-		for (int association : presenseAssociations)
-		{
-			double surfaceForceStrength = associationSurfaceForceStrengths[association];
-			double combinedForceStrength = proportionalAirForceStrength + surfaceForceStrength;
+			// enemy production weight
+			
+			double enemyProductionWeight = 0.0;
+			
+			debug("\t\t\tenemy\n");
+			for (int enemyBaseId = 0; enemyBaseId < *total_num_bases; enemyBaseId++)
+			{
+				BASE *enemyBase = getBase(enemyBaseId);
+				MAP *enemyBaseTile = getBaseMapTile(enemyBaseId);
+				
+				// correct faction
+				
+				if (enemyBase->faction_id != factionId)
+					continue;
+				
+				// travel time
+				
+				int travelTime = getUnitLTravelTime(enemyBaseTile, potentialTargetBaseTile, factionId, BSC_SCOUT_PATROL, Rules->mov_rate_along_roads, 0);
+				
+				if (travelTime == -1)
+					continue;
+				
+				int mineralIntake2 = std::max(1, enemyBase->mineral_intake_2);
+				double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
+				double weight = (double)mineralIntake2 * travelTimeCoefficient;
+				
+				enemyProductionWeight += weight;
+				
+				debug
+				(
+					"\t\t\t\t%-25s"
+					" mineralIntake2=%3d"
+					" travelTime=%3d"
+					" travelTimeCoefficient=%5.2f"
+					" weight=%7.2f"
+					" productionWeight=%7.2f"
+					"\n"
+					, enemyBase->name
+					, mineralIntake2
+					, travelTime
+					, travelTimeCoefficient
+					, weight
+					, enemyProductionWeight
+				);
+				
+			}
+			
+			// compute ratio
+			
+			double productionRatio =
+				(ourProductionWeight / (double)aiData.factionInfos[aiFactionId].enemyCount)
+				/
+				(enemyProductionWeight / (double)aiData.factionInfos[factionId].enemyCount)
+			;
 			
 			debug
 			(
-				"\t\t\t%3d"
-				" combinedForceStrength=%7.2f"
+				"\t\t\tproductionRatio=%5.2f"
+				" ourProductionWeight=%7.2f"
+				" our enemyCount=%1d"
+				" enemyProductionWeight=%7.2f"
+				" enemy enemyCount=%1d"
 				"\n"
-				, association
-				, combinedForceStrength
+				, productionRatio
+				, ourProductionWeight
+				, aiData.factionInfos[aiFactionId].enemyCount
+				, enemyProductionWeight
+				, aiData.factionInfos[factionId].enemyCount
 			);
 			
-			// update weakest
+			// update best
 			
-			if (combinedForceStrength < landAssociationEnemyStrength)
+			if (productionRatio > targetBaseProductionRatio)
 			{
-				landAssociationEnemyStrength = combinedForceStrength;
+				targetBaseId = potentialTargetBaseId;
+				targetBaseProductionRatio = productionRatio;
 			}
 			
 		}
@@ -658,76 +666,21 @@ void evaluateGlobalLandCombatDemand()
 	
 	// not found
 	
-	if (landAssociationEnemyStrength == DBL_MAX)
+	if (targetBaseId == -1)
 		return;
-	
-	// our wars
-	
-	int ourWarCount = 0;
-	
-	for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
-	{
-		// skip self
-		
-		if (otherFactionId == aiFactionId)
-			continue;
-		
-		// at war
-		
-		if (!isVendetta(aiFactionId, otherFactionId))
-			continue;
-		
-		// accumulate
-		
-		ourWarCount++;
-		
-	}
-	
-	// no wars
-	
-	if (ourWarCount == 0)
-		return;
-	
-	// our production
-	
-	int totalProductionSurplus = 0;
-	
-	for (int baseId : aiData.baseIds)
-	{
-		BASE *base = getBase(baseId);
-		
-		// accumulate surplus
-		
-		totalProductionSurplus += base->mineral_surplus;
-		
-	}
-	
-	// divide by number of wars to evaluate production we can dedicate to war
-	
-	double availableProductionSurplus = (double)totalProductionSurplus / (double)ourWarCount;
-	
-	// productionRatio
-	
-	double productionRatio = availableProductionSurplus / std::max(1.0, landAssociationEnemyStrength);
 	
 	debug
 	(
-		"\tproductionRatio=%5.2f"
-		" totalProductionSurplus=%4d"
-		" ourWarCount=%d"
-		" availableProductionSurplus=%7.2f"
-		" landAssociationEnemyStrength=%7.2f"
+		"\ttargetBase=%-25s"
+		" targetBaseProductionRatio=%5.2f"
 		"\n"
-		, productionRatio
-		, totalProductionSurplus
-		, ourWarCount
-		, availableProductionSurplus
-		, landAssociationEnemyStrength
+		, getBase(targetBaseId)->name
+		, targetBaseProductionRatio
 	);
 	
 	// sufficient production ratio
 	
-	if (productionRatio >= conf.ai_production_global_combat_superiority_land)
+	if (targetBaseProductionRatio >= conf.ai_production_global_combat_superiority_land)
 	{
 		aiData.production.landCombatDemand = 1.0;
 	}
@@ -778,7 +731,7 @@ void evaluateGlobalTerritoryLandCombatDemand()
 	
 	if (enemyLand)
 	{
-		aiData.production.landCombatDemand = 0.75;
+		aiData.production.landCombatDemand = 0.50;
 	}
 	else if (enemyOceanAssociations.size() > 0)
 	{
@@ -1455,8 +1408,15 @@ void evaluateFacilities()
 	evaluatePunishmentSphere();
 	evaluatePunishmentSphereRemoval();
 	evaluatePsychFacilities();
+	evaluateHospitalFacilities();
 	evaluatePunishmentSphereRemoval();
-	evaluateSimpleFacilities();
+	evaluateMineralMultiplyingFacilities();
+	evaluateBudgetMultiplyingFacilities();
+	evaluateChildrenCreche();
+	evaluateTreeFacilities();
+	evaluatePlanetFacilities();
+	evaluateAquafarm();
+	evaluateThermoclineTransducer();
 	evaluateBiologyLab();
 	evaluateBroodPit();
 	evaluateDefensiveFacilities();
@@ -1584,59 +1544,37 @@ void evaluatePopulationLimitFacilities()
 		return;
 	}
 	
-	CFacility *facility = getFacility(facilityId);
-	
-	debug("\t%-30s\n", facility->name);
-	
 	// parameters
 	
 	int populationLimit = getFacilityPopulationLimit(base->faction_id, facilityId);
 	
 	if (populationLimit == -1)
+	{
+		debug("\tcannot get population limit\n");
 		return;
+	}
 	
 	if (conf.habitation_facility_disable_explicit_population_limit)
 	{
 		populationLimit += (3 - conf.habitation_facility_absent_growth_penalty) + getFaction(aiFactionId)->SE_growth_pending;
 	}
 	
-	int populationOverLimit = populationLimit + 1;
-	int populationOverLimitProjectedTime = getBaseGrowthTime(baseId, populationOverLimit);
-	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
-	int delay = std::max(0, populationOverLimitProjectedTime - buildTime);
-	double currentIncome = getBaseIncome(baseId);
-	double relativeIncomeGrowth = getBaseRelativeIncomeGrowth(baseId);
-	double currentIncomeGrowth = relativeIncomeGrowth * currentIncome;
-	double facilityIncomeGrowth = 0.5 * currentIncomeGrowth;
-	
 	// gain and priority
-	// population limit facility gain is allowing more workers at base
 	
-	double priority = getItemProductionPriority(baseId, -facilityId, delay, 0.0, 0.0, facilityIncomeGrowth);
+	double gain = getBasePopulationGain(baseId, {populationLimit, 100});
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
 	
 	debug
 	(
-		"\tpriority=%5.2f"
+		"\t%-32s"
+		" priority=%5.2f"
 		" populationLimit=%2d"
-		" populationOverLimit=%2d"
-		" populationOverLimitProjectedTime=%2d"
-		" buildTime=%2d"
-		" delay=%2d"
-		" currentIncome=%5.2f"
-		" relativeIncomeGrowth=%5.2f"
-		" currentIncomeGrowth=%5.2f"
-		" facilityIncomeGrowth=%5.2f"
+		" gain=%5.2f"
 		"\n"
+		, getFacility(facilityId)->name
 		, priority
 		, populationLimit
-		, populationOverLimit
-		, populationOverLimitProjectedTime
-		, buildTime
-		, delay
-		, currentIncome
-		, relativeIncomeGrowth
-		, currentIncomeGrowth
-		, facilityIncomeGrowth
+		, gain
 	)
 	;
 	
@@ -1846,9 +1784,6 @@ void evaluatePunishmentSphereRemoval()
 
 /*
 Evaluates psych facilities.
-- add facility, run doctors
-- remove facility, do not run doctors - that is the growth component
-- run doctors - that is constant component
 */
 void evaluatePsychFacilities()
 {
@@ -1858,156 +1793,554 @@ void evaluatePsychFacilities()
 	
 	// facilityId
 	
-	int facilityIds[] =
-	{
-		getFirstAvailableFacility(baseId, {FAC_RECREATION_COMMONS, FAC_HOLOGRAM_THEATRE, FAC_PARADISE_GARDEN}),
-		getFirstAvailableFacility(baseId, {FAC_RESEARCH_HOSPITAL, FAC_NANOHOSPITAL}),
-	};
+	int facilityId = getFirstAvailableFacility(baseId, {FAC_RECREATION_COMMONS, FAC_HOLOGRAM_THEATRE, FAC_PARADISE_GARDEN});
 	
-	double maxPriority = 0.0;
+	// not found
 	
-	for (int facilityId : facilityIds)
+	if (facilityId == -1)
 	{
-		// cannot build
-		
-		if (facilityId == -1)
-			continue;
-		
-		// priority
-		
-		double priority = conf.ai_production_psych_facility_priority * getEmulatedFacilityProductionPriority(baseId, facilityId);
-		
-		debug
-		(
-			"\t%-32s"
-			" priority=%5.2f"
-			" conf.ai_production_psych_facility_priority=%5.2f"
-			"\n"
-			, getFacility(facilityId)->name
-			, priority
-			, conf.ai_production_psych_facility_priority
-		);
-		
-		// add demand
-		
-		productionDemand.add(-facilityId, priority, true);
-		
-		// update maxPriority
-		
-		maxPriority = std::max(maxPriority, priority);
-		
+		debug("\tcanot build\n");
+		return;
 	}
 	
-	// update colonyCoefficient
+	// find min and max affected base sizes
 	
-	productionDemand.colonyCoefficient += 0.05 * maxPriority;
-	debug("colonyCoefficient=%5.2f\n", productionDemand.colonyCoefficient);
+	Interval baseSizeInterval = getPsychFacilityBaseSizeInterval(baseId, facilityId);
+	
+	// gain
+	
+	double gain = getBasePopulationGain(baseId, baseSizeInterval);
+	
+	// additional gain for HOLOGRAM_THEATRE
+	
+	if (facilityId == FAC_HOLOGRAM_THEATRE)
+	{
+		int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+		double psychAllocation = 0.1 * (double)(getFaction(aiFactionId)->SE_alloc_psych);
+		gain += getBaseProportionalBudgetIntakeGain(baseId, buildTime, psychAllocation * 0.50);
+	}
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" baseSizeInterval.min=%2d"
+		" baseSizeInterval.max=%2d"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, baseSizeInterval.min
+		, baseSizeInterval.max
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
 	
 }
 
 /*
-Evaluates psych facilities removal.
-Remove them if punishment sphere is there.
+Evaluates hospital facilities.
 */
-// TODO
-void evaluatePsychFacilitiesRemoval()
+void evaluateHospitalFacilities()
 {
-	debug("- evaluatePsychFacilitiesRemoval\n");
+	debug("- evaluateHospitalFacilities\n");
 	
 	int baseId = productionDemand.baseId;
 	
 	// facilityId
 	
-	int facilityIds[] = {FAC_RECREATION_COMMONS, FAC_HOLOGRAM_THEATRE, FAC_PARADISE_GARDEN};
+	int facilityId = getFirstAvailableFacility(baseId, {FAC_RESEARCH_HOSPITAL, FAC_NANOHOSPITAL});
 	
-	for (int facilityId : facilityIds)
+	// not found
+	
+	if (facilityId == -1)
 	{
-		// not there
-		
-		if (!has_facility(baseId, facilityId))
-			continue;
-		
-		// remove facility
-		
-		setBaseFacility(baseId, facilityId, false);
-		debug("\t%-32s - removed\n", getFacility(facilityId)->name);
-			
+		debug("\tcanot build\n");
+		return;
 	}
+	
+	// find min and max affected base sizes
+	
+	Interval baseSizeInterval = getPsychFacilityBaseSizeInterval(baseId, facilityId);
+	
+	// gain
+	
+	double gain = getBasePopulationGain(baseId, baseSizeInterval);
+	
+	// additional psych and labs gain
+	
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	gain += getBaseProportionalBudgetIntakeGain(baseId, buildTime, 0.4 * 0.25 + 0.5 * 0.50);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
 	
 }
 
-/*
-Evaluates simple facilities by trying to build them and assess the effect.
-*/
-void evaluateSimpleFacilities()
+void evaluateMineralMultiplyingFacilities()
 {
-	debug("- evaluateSimpleFacilities\n");
+	debug("- evaluateMineralMultiplyingFacilities\n");
 	
 	int baseId = productionDemand.baseId;
 	
-	// [facilityId, population projection required]	
+	// get facility
 	
-	int facilityIds[] =
-	{
-		getFirstAvailableFacility(baseId, {FAC_CHILDREN_CRECHE}),
-		getFirstAvailableFacility(baseId, {FAC_ENERGY_BANK}),
-		getFirstAvailableFacility(baseId, {FAC_NETWORK_NODE}),
-		getFirstAvailableFacility(baseId, {FAC_FUSION_LAB, FAC_QUANTUM_LAB}),
+	int facilityId =
 		getFirstAvailableFacility
 		(
 			baseId,
-			{FAC_RECYCLING_TANKS, FAC_GENEJACK_FACTORY, FAC_ROBOTIC_ASSEMBLY_PLANT, FAC_QUANTUM_CONVERTER, FAC_NANOREPLICATOR}
-		),
-		getFirstAvailableFacility(baseId, {FAC_TREE_FARM, FAC_HYBRID_FOREST}),
-		getFirstAvailableFacility(baseId, {FAC_CENTAURI_PRESERVE, FAC_TEMPLE_OF_PLANET}),
-		getFirstAvailableFacility(baseId, {FAC_AQUAFARM}),
-		getFirstAvailableFacility(baseId, {FAC_THERMOCLINE_TRANSDUCER}),
-		getFirstAvailableFacility(baseId, {FAC_SUBSEA_TRUNKLINE}),
-		// TODO covert ops center
-		// TODO satellites
-		// TODO subspace generators
-	};
-	
-	for (int facilityId : facilityIds)
-	{
-		// cannot build
-		
-		if (facilityId == -1)
-			continue;
-		
-		// lifecycle gain
-		
-		double moraleBonusScore = 0.0;
-		
-		if (facilityId == FAC_CENTAURI_PRESERVE || facilityId == FAC_TEMPLE_OF_PLANET)
-		{
-			moraleBonusScore = getBaseMoraleBonusScore(baseId, {0, 0, 0, 1});
-		}
-		
-		// priority
-		
-		double priority = getEmulatedFacilityProductionPriority(baseId, facilityId);
-		double moralePriority = getItemProductionPriority(baseId, -facilityId, 0, 0.0, moraleBonusScore, 0.0);
-		
-		debug
-		(
-			"\t%-32s"
-			" priority=%5.2f"
-			" moraleBonusScore=%5.2f"
-			" moralePriority=%5.2f"
-			"\n"
-			, getFacility(facilityId)->name
-			, priority
-			, moraleBonusScore
-			, moralePriority
+			{
+				FAC_RECYCLING_TANKS,
+				FAC_GENEJACK_FACTORY,
+				FAC_ROBOTIC_ASSEMBLY_PLANT,
+				FAC_QUANTUM_CONVERTER,
+				FAC_NANOREPLICATOR
+			}
 		);
-		
-		// add demand
-		
-		productionDemand.add(-facilityId, priority, true);
-		productionDemand.add(-facilityId, moralePriority, true);
-		
+	
+	if (facilityId == -1)
+	{
+		debug("\tcanot build\n");
+		return;
 	}
+	
+	// gain
+	
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	double gain = getBaseProportionalMineralIntakeGain(baseId, buildTime, 1.0 * 0.50);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
+	
+}
+
+void evaluateBudgetMultiplyingFacilities()
+{
+	debug("- evaluateBudgetMultiplyingFacilities\n");
+	
+	int baseId = productionDemand.baseId;
+	
+	// get facility
+	
+	int facilityId =
+		getFirstAvailableFacility
+		(
+			baseId,
+			{
+				FAC_NETWORK_NODE,
+				FAC_ENERGY_BANK,
+				FAC_FUSION_LAB,
+				FAC_QUANTUM_LAB,
+			}
+		);
+	
+	if (facilityId == -1)
+	{
+		debug("\tcanot build\n");
+		return;
+	}
+	
+	// multipliers
+	
+	double economyMultiplier;
+	double labsMultiplier;
+	
+	switch (facilityId)
+	{
+	case FAC_NETWORK_NODE:
+		economyMultiplier = 0.00;
+		labsMultiplier = 0.50;
+		break;
+	case FAC_ENERGY_BANK:
+		economyMultiplier = 0.50;
+		labsMultiplier = 0.00;
+		break;
+	case FAC_FUSION_LAB:
+	case FAC_QUANTUM_LAB:
+		economyMultiplier = 0.50;
+		labsMultiplier = 0.50;
+		break;
+	default:
+		debug("\tunknown facility");
+		return;
+	}
+	
+	// gain
+	
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	double gain = getBaseProportionalMineralIntakeGain(baseId, buildTime, 0.4 * economyMultiplier + 0.5 * labsMultiplier);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
+	
+}
+
+void evaluateChildrenCreche()
+{
+	debug("- evaluateChildrenCreche\n");
+	
+	int baseId = productionDemand.baseId;
+	
+	// get facility
+	
+	int facilityId =
+		getFirstAvailableFacility
+		(
+			baseId,
+			{
+				FAC_CHILDREN_CRECHE,
+			}
+		);
+	
+	if (facilityId == -1)
+	{
+		debug("\tcanot build\n");
+		return;
+	}
+	
+	// gain
+	
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	double gain = getBasePopulationGrowthGain(baseId, buildTime, 0.2);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
+	
+}
+
+void evaluateTreeFacilities()
+{
+	debug("- evaluateTreeFacilities\n");
+	
+	int baseId = productionDemand.baseId;
+	
+	// get facility
+	
+	int facilityId =
+		getFirstAvailableFacility
+		(
+			baseId,
+			{
+				FAC_TREE_FARM,
+				FAC_HYBRID_FOREST,
+			}
+		);
+	
+	if (facilityId == -1)
+	{
+		debug("\tcanot build\n");
+		return;
+	}
+	
+	// budget gain
+	
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	double gain = getBaseProportionalBudgetIntakeGain(baseId, buildTime, 0.5 * 0.50 + 0.4 * 0.50);
+	
+	// extra gain for EcoDamage reduction
+	
+	int ecoDamageReduction = getFacilityEcoDamageReduction(baseId, facilityId);
+	double ecoDamageReductionProportionalProductivityImpact = std::min(1.0, (double)ecoDamageReduction / 40.0);
+	gain += getBaseProportionalMineralIntake2Gain(baseId, buildTime, 1.0 * ecoDamageReductionProportionalProductivityImpact);
+	gain += getBaseProportionalBudgetIntakeGain(baseId, buildTime, 1.0 * ecoDamageReductionProportionalProductivityImpact);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
+	
+}
+
+void evaluatePlanetFacilities()
+{
+	debug("- evaluatePlanetFacilities\n");
+	
+	int baseId = productionDemand.baseId;
+	
+	// get facility
+	
+	int facilityId =
+		getFirstAvailableFacility
+		(
+			baseId,
+			{
+				FAC_CENTAURI_PRESERVE,
+				FAC_TEMPLE_OF_PLANET,
+			}
+		);
+	
+	if (facilityId == -1)
+	{
+		debug("\tcanot build\n");
+		return;
+	}
+	
+	// lifecycle gain
+	
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	double moraleProportionalMineralBonus = getMoraleProportionalMineralBonus({0, 0, 0, 1});
+	double gain = getBaseProportionalMineralIntake2Gain(baseId, buildTime, moraleProportionalMineralBonus);
+	
+	// extra gain for EcoDamage reduction
+	
+	int ecoDamageReduction = getFacilityEcoDamageReduction(baseId, facilityId);
+	double ecoDamageReductionProportionalProductivityImpact = std::min(1.0, (double)ecoDamageReduction / 40.0);
+	gain += getBaseProportionalMineralIntake2Gain(baseId, buildTime, 1.0 * ecoDamageReductionProportionalProductivityImpact);
+	gain += getBaseProportionalBudgetIntakeGain(baseId, buildTime, 1.0 * ecoDamageReductionProportionalProductivityImpact);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
+	
+}
+
+void evaluateAquafarm()
+{
+	debug("- evaluateAquafarm\n");
+	
+	int baseId = productionDemand.baseId;
+	
+	// get facility
+	
+	int facilityId =
+		getFirstAvailableFacility
+		(
+			baseId,
+			{
+				FAC_AQUAFARM,
+			}
+		);
+	
+	if (facilityId == -1)
+	{
+		debug("\tcanot build\n");
+		return;
+	}
+	
+	// gain
+	
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	double relativeGrowthIncrease = getFacilityRelativeGrowthIncrease(baseId, facilityId);
+	double gain = getBasePopulationGrowthGain(baseId, buildTime, relativeGrowthIncrease);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
+	
+}
+
+void evaluateThermoclineTransducer()
+{
+	debug("- evaluateThermoclineTransducer\n");
+	
+	int baseId = productionDemand.baseId;
+	
+	// get facility
+	
+	int facilityId =
+		getFirstAvailableFacility
+		(
+			baseId,
+			{
+				FAC_THERMOCLINE_TRANSDUCER,
+			}
+		);
+	
+	if (facilityId == -1)
+	{
+		debug("\tcanot build\n");
+		return;
+	}
+	
+	// gain
+	
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	double relativeBudgetIncrease = getFacilityRelativeBudgetIncrease(baseId, facilityId);
+	double gain = getBaseProportionalBudgetIntake2Gain(baseId, buildTime, relativeBudgetIncrease);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
+	
+}
+
+void evaluateSubseaTrunkline()
+{
+	debug("- evaluateSubseaTrunkline\n");
+	
+	int baseId = productionDemand.baseId;
+	
+	// get facility
+	
+	int facilityId =
+		getFirstAvailableFacility
+		(
+			baseId,
+			{
+				FAC_THERMOCLINE_TRANSDUCER,
+			}
+		);
+	
+	if (facilityId == -1)
+	{
+		debug("\tcanot build\n");
+		return;
+	}
+	
+	// gain
+	
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	double relativeMineralIncrease = getFacilityRelativeMineralIncrease(baseId, facilityId);
+	double gain = getBaseProportionalMineralIntake2Gain(baseId, buildTime, relativeMineralIncrease);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+		, gain
+	);
+	
+	// add demand
+	
+	productionDemand.add(-facilityId, priority, true);
 	
 }
 
@@ -2021,35 +2354,31 @@ void evaluateBiologyLab()
 	
 	int facilityId = getFirstAvailableFacility(baseId, {FAC_BIOLOGY_LAB});
 	
-	// cannot build
-	
 	if (facilityId == -1)
+	{
+		debug("\tcanot build\n");
 		return;
+	}
 	
-	// facility generated income
+	// gain
 	
-	double resourceIncome = getResourceScore(0, conf.biology_lab_research_bonus);
-	
-	// lifecycle gain
-	
-	double moraleBonusScore = getBaseMoraleBonusScore(baseId, {0, 0, 0, 1});
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	double labsIncome = (double)conf.biology_lab_research_bonus * getBaseLabsMultiplier(baseId);
+	double gain = getFlatBudgetIntakeGain(buildTime, labsIncome);
 	
 	// priority
 	
-	double income = resourceIncome + moraleBonusScore;
-	double priority = getItemProductionPriority(baseId, -facilityId, 0, income, 0);
-
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
+	
 	debug
 	(
 		"\t%-32s"
 		" priority=%5.2f"
-		" resourceIncome=%5.2f"
-		" moraleBonusScore=%5.2f"
+		" gain=%5.2f"
 		"\n"
 		, getFacility(facilityId)->name
 		, priority
-		, resourceIncome
-		, moraleBonusScore
+		, gain
 	);
 	
 	// add demand
@@ -2069,93 +2398,37 @@ void evaluateBroodPit()
 	debug("- evaluateBroodPit\n");
 	
 	int baseId = productionDemand.baseId;
-	BASE *base = getBase(baseId);
 	
 	// facilityId
 	
 	int facilityId = getFirstAvailableFacility(baseId, {FAC_BROOD_PIT});
 	
-	// cannot build
-	
 	if (facilityId == -1)
-		return;
-	
-	// check police effect if not maximal yet
-	
-	double policeIncome = 0.0;
-	int policeRating = getBasePoliceRating(baseId);
-	
-	if (policeRating < 3)
 	{
-		// current base state
-		
-		int currentPopSize = base->pop_size;
-		
-		// projected population
-		
-		int buildTime = getBaseItemBuildTime(baseId, -facilityId);
-		int projectedPopSize = getBaseProjectedSize(baseId, buildTime);
-		
-		// set pop size
-		
-		base->pop_size = projectedPopSize;
-		
-		// without facility and doctors
-		
-		computeBaseDoctors(baseId);
-		
-		int currentPoliceQuelledDrones = *CURRENT_BASE_DRONES_FACILITIES - *CURRENT_BASE_DRONES_POLICE;
-		
-		// with facility and doctors
-		
-		setBaseFacility(baseId, facilityId, true);
-		computeBaseDoctors(baseId);
-		
-		int policeAllowed = getBasePoliceAllowed(baseId);
-		int policeEffect = getBasePoliceEffect(baseId);
-		if (has_tech(base->faction_id, getAbility(ABL_ID_POLICE_2X)->preq_tech))
-		{
-			policeEffect++;
-		}
-		int facilityPoliceQuelledDrones = policeAllowed * policeEffect;
-		int facilityDoctors = getBaseDoctors(baseId);
-		
-		// restore base
-		
-		base->pop_size = currentPopSize;
-		setBaseFacility(baseId, facilityId, false);
-		computeBaseDoctors(baseId);
-		
-		// more drones could be quelled
-		
-		int facilityQuelledDrones = std::min(facilityDoctors, facilityPoliceQuelledDrones - currentPoliceQuelledDrones);
-		
-		// police income
-		
-		policeIncome = getCitizenIncome() * facilityQuelledDrones;
-		
+		debug("\tcanot build\n");
+		return;
 	}
 	
-	// cost and lifecycle
-	// 1 lifecycle from improvement + 2 from 25% cost reduction
+	// gain
 	
-	double moraleBonusScore = getBaseMoraleBonusScore(baseId, {0, 0, 0, 3});
+	int buildTime = getBaseItemBuildTime(baseId, -facilityId);
+	
+	double proportionalMineralBonus = getMoraleProportionalMineralBonus({0, 0, 0, 3});
+	double gain = getBaseProportionalMineralIntake2Gain(baseId, buildTime, proportionalMineralBonus);
 	
 	// priority
 	
-	double priority = getItemProductionPriority(baseId, -facilityId, 0, policeIncome + moraleBonusScore, 0);
+	double priority = getItemProductionPriority(baseId, -facilityId, gain);
 	
 	debug
 	(
 		"\t%-32s"
 		" priority=%5.2f"
-		" policeIncome=%5.2f"
-		" moraleBonusScore=%5.2f"
+		" gain=%5.2f"
 		"\n"
 		, getFacility(facilityId)->name
 		, priority
-		, policeIncome
-		, moraleBonusScore
+		, gain
 	);
 	
 	// add demand
@@ -2392,6 +2665,13 @@ void evaluatePolice()
 	int baseId = productionDemand.baseId;
 	BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
 	
+	// check police extra capacity
+	
+	int policeExtraCapacity = getBasePoliceExtraCapacity(baseId);
+	
+	if (policeExtraCapacity == 0)
+		return;
+	
 	// police unit
 	
 	int unitId = findInfantryPoliceUnit(baseInfo.garrison.size() == 0);
@@ -2402,106 +2682,39 @@ void evaluatePolice()
 		return;
 	}
 	
-	// select best priority among number of police units added
+	// find min and max affected base sizes
 	
-	double priority = 0.0;
-	for (int i = 1; i <= 3; i++)
-	{
-		double totalPriority = getEmulatedPoliceProductionPriority(baseId, unitId, i);
-		double averagePriority = totalPriority / (double)i;
-		
-		if (averagePriority > priority)
-		{
-			priority = averagePriority;
-		}
-		
-	}
+	Interval baseSizeInterval = getPoliceBaseSizeInterval(baseId, unitId);
 	
-	// extra priority for empty base
+	// gain
 	
-	if (baseInfo.garrison.size() == 0)
-	{
-		priority += conf.ai_production_base_protection_priority;
-	}
-
+	double gain = getBasePopulationGain(baseId, baseSizeInterval);
+	
+	// priority
+	
+	double priority = getItemProductionPriority(baseId, unitId, gain);
+	
 	debug
 	(
 		"\t%-32s"
 		" priority=%5.2f"
-		" conf.ai_production_base_protection_priority=%5.2f"
+		" baseSizeInterval.min=%2d"
+		" baseSizeInterval.max=%2d"
+		" gain=%5.2f"
 		"\n"
 		, getUnit(unitId)->name
 		, priority
-		, conf.ai_production_base_protection_priority
+		, baseSizeInterval.min
+		, baseSizeInterval.max
+		, gain
 	);
 	
 	// add demand
 	
 	productionDemand.add(unitId, priority, true);
 	
-	// update colonyCoefficient
-	
-	productionDemand.colonyCoefficient += 0.05 * std::max(0.0, priority);
-	debug("colonyCoefficient=%5.2f\n", productionDemand.colonyCoefficient);
-	
 }
 
-///*
-//Evaluates demand for land improvement.
-//*/
-//void evaluateLandFormerDemand()
-//{
-//	int baseId = productionDemand.baseId;
-//
-//	debug("evaluateLandFormerDemand\n");
-//	
-//	// find former unit
-//
-//	int unitId = findFormerUnit(TRIAD_LAND);
-//
-//	if (unitId == -1)
-//	{
-//		debug("\tno former unit\n");
-//		return;
-//	}
-//
-//	debug("\t%-25s\n", getUnit(unitId)->name);
-//
-//	// no demand
-//	
-//	if (aiData.production.landFormerDemand <= 0.0)
-//	{
-//		debug("\tno demand: aiData.production.landFormerDemand=%5.2f\n", aiData.production.landFormerDemand);
-//		return;
-//	}
-//
-//	// set priority
-//	
-//	double unitPriorityCoefficient = getUnitPriorityCoefficient(baseId);
-//	double priority =
-//		conf.ai_production_improvement_priority
-//		*
-//		aiData.production.landFormerDemand
-//		*
-//		unitPriorityCoefficient
-//	;
-//
-//	debug
-//	(
-//		"\tpriority=%5.2f"
-//		", conf.ai_production_improvement_priority=%5.2f"
-//		", aiData.production.landFormerDemand=%5.2f"
-//		", unitPriorityCoefficient=%5.2f\n"
-//		, priority
-//		, conf.ai_production_improvement_priority
-//		, aiData.production.landFormerDemand
-//		, unitPriorityCoefficient
-//	);
-//
-//	productionDemand.add(unitId, priority, false);
-//	
-//}
-//
 /*
 Evaluates demand for land improvement.
 */
@@ -2777,6 +2990,32 @@ void evaluateColony()
 	
 	if (baseLandAssociation != -1 && baseOceanAssociation != -1)
 	{
+		// get ocean unpopulated portion
+		
+		int totalOceanTiles = 0;
+		int unpopulatedOceanTiles = 0;
+		
+		for (MAP *tile = *MapPtr; tile < *MapPtr + *map_area_tiles; tile++)
+		{
+			int tileOceanAssociation = getOceanAssociation(tile, aiFactionId);
+			
+			if (tileOceanAssociation != baseOceanAssociation)
+				continue;
+			
+			totalOceanTiles++;
+			
+			if (map_has_item(tile, TERRA_BASE_RADIUS))
+				continue;
+			
+			if (tile->owner == -1 || tile->owner == aiFactionId || isVendetta(aiFactionId, tile->owner))
+			{
+				unpopulatedOceanTiles++;
+			}
+			
+		}
+		
+		double unpopulatedOceanTerritoryPortion = (totalOceanTiles == 0 ? 1.0 : (double)unpopulatedOceanTiles / (double)totalOceanTiles);
+		
 		for (int otherBaseId : aiData.baseIds)
 		{
 			int otherBaseLandAssociation = getBaseLandAssociation(otherBaseId);
@@ -2798,7 +3037,10 @@ void evaluateColony()
 			
 		}
 		
-		landColonyPriorityCoefficient *= (double)portContinentBaseCount / (double)totalContinentBaseCount;
+		landColonyPriorityCoefficient *=
+			+ (1.0 - unpopulatedOceanTerritoryPortion) * 1.0
+			+ unpopulatedOceanTerritoryPortion * ((double)portContinentBaseCount / (double)totalContinentBaseCount)
+		;
 		
 	}
 	
@@ -3236,6 +3478,14 @@ void evaluateProtectionDemand()
 	
 	BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
 	BaseCombatData &baseCombatData = baseInfo.combatData;
+	
+	// no demand
+	
+	if (aiData.production.protectionDemand <= 0.0)
+	{
+		debug("\taiData.production.protectionDemand <= 0.0\n");
+		return;
+	}
 	
 	// find nearest base with melee protection demand
 	
@@ -5067,43 +5317,43 @@ double getCitizenIncome()
 //	return conf.ai_base_income_a / (conf.ai_base_income_a * (double)age + conf.ai_base_income_b);
 //}
 //
-/*
-Estimates income growth based on citizen income and income growth proportion.
-It uses base founded year stored in base information to know base age.
-*/
-double getBaseIncomeGrowth(int baseId)
-{
-	int age = getBaseAge(baseId);
-	
-	// average income
-	
-	double averageIncome = conf.ai_base_income_a * (double)age + conf.ai_base_income_b;
-	
-	// base income
-	
-	double baseIncome = getBaseIncome(baseId);
-	
-	// average income growth
-	
-	double averageIncomeGrowth = conf.ai_base_income_a;
-	
-	// base adjusted income growth
-	
-	return averageIncomeGrowth * (baseIncome / averageIncome);
-	
-}
-
+///*
+//Estimates income growth based on citizen income and income growth proportion.
+//It uses base founded year stored in base information to know base age.
+//*/
+//double getBaseIncomeGrowth(int baseId)
+//{
+//	int age = getBaseAge(baseId);
+//	
+//	// average income
+//	
+//	double averageIncome = conf.ai_base_income_a * (double)age + conf.ai_base_income_b;
+//	
+//	// base income
+//	
+//	double baseIncome = getBaseIncome(baseId);
+//	
+//	// average income growth
+//	
+//	double averageIncomeGrowth = conf.ai_base_income_a;
+//	
+//	// base adjusted income growth
+//	
+//	return averageIncomeGrowth * (baseIncome / averageIncome);
+//	
+//}
+//
 /*
 Estimates citizen contribution to base income growth.
 */
-double getCitizenIncomeGrowth(int baseId)
-{
-	BASE *base = getBase(baseId);
-	
-	return getBaseIncomeGrowth(baseId) / (double)base->pop_size;
-	
-}
-
+//double getCitizenIncomeGrowth(int baseId)
+//{
+//	BASE *base = getBase(baseId);
+//	
+//	return getBaseIncomeGrowth(baseId) / (double)base->pop_size;
+//	
+//}
+//
 std::vector<int> getProtectionCounterUnits(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength)
 {
 	debug("getProtectionCounterUnits\n");
@@ -5655,6 +5905,18 @@ void hurryProtectiveUnit()
 }
 
 /*
+Evaluates production item gain in base giving gain.
+*/
+double getItemProductionPriority(int baseId, int item, double gain)
+{
+	// cost and priority
+	
+	int cost = getBaseItemCost(baseId, item);
+	return getProductionPriority(gain, cost);
+	
+}
+
+/*
 Evaluates facility gain in base giving generated income and incomeGrowth.
 Delay is time when bonus kicks in after facility is built.
 */
@@ -5681,185 +5943,6 @@ double getItemProductionPriority(int baseId, int item, int delay, double bonus, 
 double getItemProductionPriority(int baseId, int item, int delay, double income, double incomeGrowth)
 {
 	return getItemProductionPriority(baseId, item, delay, 0, income, incomeGrowth);
-}
-
-/*
-Evaluates facility gain by building this facility and checking base constant and growth improvement.
-If adjustPopulation is set it tries to evaluate base size by the time item is built.
-*/
-double getEmulatedFacilityProductionPriority(int baseId, int facilityId)
-{
-	bool TRACE = DEBUG && false;
-	
-	if (TRACE) { debug("getEmulatedFacilityProductionPriority\n"); }
-	
-	BASE *base = getBase(baseId);
-	
-	// cannot build
-	
-	if (!isBaseFacilityAvailable(baseId, facilityId))
-		return 0.0;
-	
-	// current parameters
-	
-	int currentSize = base->pop_size;
-	int currentWorkerCount = base->pop_size - base->specialist_total;
-	double currentIncome = getBaseIncome(baseId);
-	double currentIncomeGrowth = getBaseIncomeGrowth(baseId);
-	double currentRelativeIncomeGrowth = getBaseRelativeIncomeGrowth(baseId);
-	double currentNutrientIntake = base->nutrient_intake;
-	double workerRelativeIncome = getBaseWorkerRelativeIncome(baseId);
-	double workerNutrientIntake = getBaseWorkerNutrientIntake(baseId);
-	
-	// build parameters
-	
-	int buildTime = getBaseItemBuildTime(baseId, -facilityId, true);
-	int projectedSize = getBaseProjectedSize(baseId, buildTime);
-	
-	// emulate facility updated income
-	
-	setBaseFacility(baseId, facilityId, true);
-	computeBase(baseId, false);
-	
-	double facilityIncome = getBaseIncome(baseId);
-	
-	setBaseFacility(baseId, facilityId, false);
-	computeBase(baseId, false);
-	
-	// emulate facility workers at projected time
-	
-	base->pop_size = projectedSize;
-	computeBaseDoctors(baseId);
-	
-	int oldWorkerCount = base->pop_size - base->specialist_total;
-	int oldEcoDamage = base->eco_damage;
-	
-	setBaseFacility(baseId, facilityId, true);
-	computeBaseDoctors(baseId);
-	
-	int newWorkerCount = base->pop_size - base->specialist_total;
-	int newEcoDamage = base->eco_damage;
-	
-	base->pop_size = currentSize;
-	setBaseFacility(baseId, facilityId, false);
-	computeBaseDoctors(baseId);
-	
-	// compute priority
-	
-	return
-		getComputedProductionPriority
-		(
-			baseId,
-			-facilityId,
-			0,
-			currentWorkerCount,
-			currentIncome,
-			currentIncomeGrowth,
-			currentRelativeIncomeGrowth,
-			currentNutrientIntake,
-			workerRelativeIncome,
-			workerNutrientIntake,
-			facilityIncome,
-			projectedSize,
-			oldWorkerCount,
-			oldEcoDamage,
-			newWorkerCount,
-			newEcoDamage
-		)
-	;
-	
-}
-
-/*
-Evaluates facility gain by building this facility and checking base constant and growth improvement.
-If adjustPopulation is set it tries to evaluate base size by the time item is built.
-*/
-double getEmulatedPoliceProductionPriority(int baseId, int unitId, int policeCount)
-{
-	bool TRACE = DEBUG && false;
-	
-	if (TRACE) { debug("getEmulatedPoliceProductionPriority\n"); }
-	
-	BASE *base = getBase(baseId);
-	
-	// current parameters
-	
-	int currentSize = base->pop_size;
-	int currentWorkerCount = base->pop_size - base->specialist_total;
-	double currentIncome = getBaseIncome(baseId);
-	double currentIncomeGrowth = getBaseIncomeGrowth(baseId);
-	double currentRelativeIncomeGrowth = getBaseRelativeIncomeGrowth(baseId);
-	double currentNutrientIntake = base->nutrient_intake;
-	double workerRelativeIncome = getBaseWorkerRelativeIncome(baseId);
-	double workerNutrientIntake = getBaseWorkerNutrientIntake(baseId);
-	
-	// build parameters
-	
-	int buildTime = getBaseItemBuildTime(baseId, unitId, true);
-	int projectedSize = getBaseProjectedSize(baseId, buildTime);
-	
-	// item income
-	// police does not generate income by itself
-	
-	double itemIncome = currentIncome;
-	
-	// projected base without police
-	
-	base->pop_size = projectedSize;
-	computeBaseDoctors(baseId);
-	
-	int oldWorkerCount = base->pop_size - base->specialist_total;
-	int oldEcoDamage = 0;
-	
-	// with police
-	
-	std::vector<int> policeVehicleIds;
-	for (int i = 0; i < policeCount; i++)
-	{
-		int policeVehcileId = veh_init(unitId, aiFactionId, base->x, base->y);
-		if (policeVehcileId == -1) break;
-		policeVehicleIds.push_back(policeVehcileId);
-	}
-	computeBaseDoctors(baseId);
-	
-	int newWorkerCount = base->pop_size - base->specialist_total;
-	int newEcoDamage = 0;
-	
-	// restore base
-	
-	while (policeVehicleIds.size() > 0)
-	{
-		int policeVehicleId = policeVehicleIds.back();
-		veh_kill(policeVehicleId);
-		policeVehicleIds.pop_back();
-	}
-	base->pop_size = currentSize;
-	computeBaseDoctors(baseId);
-	
-	// compute priority
-	
-	return
-		getComputedProductionPriority
-		(
-			baseId,
-			unitId,
-			0,
-			currentWorkerCount,
-			currentIncome,
-			currentIncomeGrowth,
-			currentRelativeIncomeGrowth,
-			currentNutrientIntake,
-			workerRelativeIncome,
-			workerNutrientIntake,
-			itemIncome,
-			projectedSize,
-			oldWorkerCount,
-			oldEcoDamage,
-			newWorkerCount,
-			newEcoDamage
-		)
-	;
-	
 }
 
 /*
@@ -6056,91 +6139,20 @@ double getBaseFacilityIncome(int baseId, int facilityId)
 /*
 Computes average faction development score at given point in time.
 */
-double getDevelopmentScore(double t)
+double getDevelopmentScore(int turn)
 {
-	double t1 = conf.ai_faction_income_t1;
-	
-	double developmentScore;
-	
-	if (t <= t1)
-	{
-		developmentScore =
-			(
-				+ 1.0 * conf.ai_faction_income_a * t * t
-				+ 1.0 * conf.ai_faction_income_b * t
-				+ 1.0 * conf.ai_faction_income_c
-			)
-		;
-		
-	}
-	else
-	{
-		double b =
-			(
-				+ 1.0 * conf.ai_faction_income_a * t1 * t1
-				+ 1.0 * conf.ai_faction_income_b * t1
-				+ 1.0 * conf.ai_faction_income_c
-			)
-		;
-		double a =
-			(
-				+ 2.0 * conf.ai_faction_income_a * t1
-				+ 1.0 * conf.ai_faction_income_b
-			)
-		;
-		
-		developmentScore =
-			(
-				+ 1.0 * a * t
-				+ 1.0 * b
-			)
-		;
-		
-	}
-	
-	return developmentScore;
-	
+	double mineralIntake2 = getFactionStatisticalMineralIntake2(turn);
+	double budgetIntake2 = getFactionStatisticalBudgetIntake2(turn);
+	return getResourceScore(mineralIntake2, budgetIntake2);
 }
 
 /*
 Computes average faction development score tangent.
 The development score speed of changes at this point in time.
 */
-double getDevelopmentScoreTangent(double t)
+double getDevelopmentScoreTangent(int turn)
 {
-	double t1 = conf.ai_faction_income_t1;
-	
-	double developmentScoreTangent;
-	
-	if (t <= t1)
-	{
-		developmentScoreTangent =
-			(
-				+ 2.0 * conf.ai_faction_income_a * t
-				+ 1.0 * conf.ai_faction_income_b
-			)
-		;
-		
-	}
-	else
-	{
-		double a =
-			(
-				+ 2.0 * conf.ai_faction_income_a * t1
-				+ 1.0 * conf.ai_faction_income_b
-			)
-		;
-		
-		developmentScoreTangent =
-			(
-				+ 1.0 * a
-			)
-		;
-		
-	}
-	
-	return developmentScoreTangent;
-	
+	return getDevelopmentScore(turn + 1) - getDevelopmentScore(turn);
 }
 
 /*
@@ -6154,26 +6166,41 @@ double getDevelopmentScale()
 }
 
 /*
-Computes average base size with age.
-*/
-double getBaseSize(double age)
-{
-	return conf.ai_base_size_a * sqrt(age - conf.ai_base_size_b) + conf.ai_base_size_c;
-}
-
-/*
 Evaluates new base gain.
 */
 double getNewBaseGain(int delay)
 {
-	// parameters
+	assert(delay >= 1);
 	
-	double income = conf.ai_base_income_b;
-	double incomeGrowth = conf.ai_base_income_a;
+	int initialTurn = *current_turn + delay;
+	double currentFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(*current_turn);
+	double currentFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(*current_turn);
 	
-	// calculate gain
+	// summarize gain
 	
-	return getIncomeGain(delay, income, incomeGrowth);
+	double gain = 0.0;
+	
+	for (int futureTurn = initialTurn; futureTurn <= LAST_TURN; futureTurn++)
+	{
+		double futureFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(futureTurn);
+		double futureMineralDecayCoefficient = currentFactionStatisticalMineralIntake2 / futureFactionStatisticalMineralIntake2;
+		
+		double futureFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(futureTurn);
+		double futureBudgetDecayCoefficient = currentFactionStatisticalBudgetIntake2 / futureFactionStatisticalBudgetIntake2;
+		
+		int futureBaseAge = futureTurn - initialTurn;
+		
+		double futureBaseStatisticalMineralIntake2 = getBaseStatisticalMineralIntake2(futureBaseAge);
+		double futureBaseMineralWeight = futureBaseStatisticalMineralIntake2 * futureMineralDecayCoefficient;
+		
+		double futureBaseStatisticalBudgetIntake2 = getBaseStatisticalBudgetIntake2(futureBaseAge);
+		double futureBaseBudgetWeight = futureBaseStatisticalBudgetIntake2 * futureBudgetDecayCoefficient;
+		
+		gain += getResourceScore(futureBaseMineralWeight, futureBaseBudgetWeight);
+		
+	}
+	
+	return gain;
 	
 }
 
@@ -6241,16 +6268,6 @@ double getProductionPriority(double gain, double cost)
 }
 
 /*
-Computes base growth scale.
-Approximate time when base income growth 2 times.
-*/
-double getBaseGrowthScale(int baseId)
-{
-	int age = getBaseAge(baseId);
-	return (conf.ai_base_income_a * age + conf.ai_base_income_b) / (conf.ai_base_income_a);
-}
-
-/*
 Computes base production constant income gain.
 */
 double getProductionConstantIncomeGain(double score, double buildTime, double bonusDelay)
@@ -6302,80 +6319,42 @@ double getPsychIncomeGrowth(int baseId, double psychGrowth)
 }
 
 /*
-Estimates morale/lifecycle bonus income.
+Estimates morale/lifecycle effect.
+Returns proportional mineral bonus for average faction base.
 */
-double getBaseMoraleBonusScore(int baseId, std::vector<int> levels)
+double getMoraleProportionalMineralBonus(std::vector<int> levels)
 {
-	BASE *base = getBase(baseId);
-	int mineralSurplus = base->mineral_surplus;
-	int support = base->mineral_intake_2 - base->mineral_surplus;
-	
 	// summarize costs and supports
 	
-	int totalUnitCost = 0;
-	std::vector<int> totalTypeUnitCosts(4, 0);
-	int totalCount = 0;
-	std::vector<int> totalTypeCounts(4, 0);
+	int totalUnitWeightedCount = 0;
+	int totalUnitWeightedCost = 0;
 	
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 		int triad = vehicle->triad();
 		int unitCost = getVehicleUnitCost(vehicleId);
+		bool native = isNativeVehicle(vehicleId);
 		
-		// combat vehicle
+		// type
 		
-		if (!isCombatVehicle(vehicleId))
-			continue;
+		int type = (native ? 3 : triad);
 		
-		// total cost and count
+		// accumulate weighted values
 		
-		totalUnitCost += unitCost;
-		totalCount++;
+		totalUnitWeightedCount += 1 * levels[type];
+		totalUnitWeightedCost += unitCost * levels[type];
 		
-		// native
-		
-		if (isNativeVehicle(vehicleId))
-		{
-			totalTypeUnitCosts[3] += unitCost;
-			totalTypeCounts[3]++;
-		}
-		else
-		{
-			totalTypeUnitCosts[triad] += unitCost;
-			totalTypeCounts[triad]++;
-		}
-		
-	}
-	
-	if (totalCount == 0)
-		return 0.0;
-	
-	// proportions
-	
-	std::vector<double> unitCostProportions(4, 0.0);
-	std::vector<double> countProportions(4, 0.0);
-	
-	for (int i = 0; i < 4; i++)
-	{
-		unitCostProportions[i] = (double)totalTypeUnitCosts[i] / (double)totalUnitCost;
-		countProportions[i] = (double)totalTypeCounts[i] / (double)totalCount;
 	}
 	
 	// reduction in build cost and support
+	// assuming every 20-th combat unit is dying every turn
 	
-	double unitCostReduction = 0.0;
-	double supportReduction = 0.0;
+	double mineralReduction = 0.125 * (totalUnitWeightedCount + 0.05 * totalUnitWeightedCost);
 	
-	for (int i = 0; i < 4; i++)
-	{
-		unitCostReduction +=  (0.125 * (double)levels[i]) * unitCostProportions[i] * (0.25 * (double)mineralSurplus);
-		supportReduction += (0.125 * (double)levels[i]) * unitCostProportions[i] * ((double)support);
-	}
+	// proportional bonus on average base production
 	
-	double costReductionScore = getResourceScore(unitCostReduction + supportReduction, 0);
-	
-	return costReductionScore;
+	return (aiData.totalMineralIntake2 <= 0 ? 0.0 : std::min(1.0, mineralReduction / (double)aiData.totalMineralIntake2));
 	
 }
 
@@ -6501,58 +6480,940 @@ double getDemand(double required, double provided)
 //=======================================================
 
 /*
+Returns faction statistical mineral intake2.
+*/
+double getFactionStatisticalMineralIntake2(double turn)
+{
+	double value;
+	
+	if (turn < conf.ai_faction_minerals_t1)
+	{
+		value =
+			+ conf.ai_faction_minerals_a1 * turn * turn * turn
+			+ conf.ai_faction_minerals_b1 * turn * turn
+			+ conf.ai_faction_minerals_c1 * turn
+			+ conf.ai_faction_minerals_d1
+		;
+	}
+	else
+	{
+		value =
+			+ conf.ai_faction_minerals_a2 * turn
+			+ conf.ai_faction_minerals_b2
+		;
+	}
+	
+	return std::max(1.0, value);
+	
+}
+
+/*
+Returns faction statistical budget intake2.
+*/
+double getFactionStatisticalBudgetIntake2(double turn)
+{
+	double value;
+	
+	if (turn < conf.ai_faction_budget_t1)
+	{
+		value =
+			+ conf.ai_faction_budget_a1 * turn * turn * turn
+			+ conf.ai_faction_budget_b1 * turn * turn
+			+ conf.ai_faction_budget_c1 * turn
+			+ conf.ai_faction_budget_d1
+		;
+	}
+	else
+	{
+		value =
+			+ conf.ai_faction_budget_a2 * turn
+			+ conf.ai_faction_budget_b2
+		;
+	}
+	
+	return std::max(1.0, value);
+	
+}
+
+/*
+Returns base statistical size with age.
+*/
+double getBaseStatisticalSize(double age)
+{
+	double value =
+		+ conf.ai_base_size_a * log(age - conf.ai_base_size_b)
+		+ conf.ai_base_size_c
+	;
+	
+	return std::max(1.0, value);
+	
+}
+
+/*
 Returns base statistical mineral intake.
 */
-double getBaseStatisticalMineralIntake(int age)
+double getBaseStatisticalMineralIntake(double age)
 {
+	double value =
+		+ conf.ai_base_mineral_intake_a * log(age - conf.ai_base_mineral_intake_b)
+		+ conf.ai_base_mineral_intake_c
+	;
+	
+	return std::max(1.0, value);
 	
 }
 
 /*
 Returns base statistical mineral intake2.
 */
-double getBaseStatisticalMineralIntake2(int age)
+double getBaseStatisticalMineralIntake2(double age)
 {
+	double value =
+		+ conf.ai_base_mineral_intake2_a * age
+		+ conf.ai_base_mineral_intake2_b
+	;
+	
+	return std::max(1.0, value);
 	
 }
 
 /*
 Returns base statistical mineral multiplier.
 */
-double getBaseStatisticalMineralMultiplier(int age)
+double getBaseStatisticalMineralMultiplier(double age)
 {
+	double value =
+		+ conf.ai_base_mineral_multiplier_a * age * age
+		+ conf.ai_base_mineral_multiplier_b * age
+		+ conf.ai_base_mineral_multiplier_c
+	;
+	
+	return std::max(1.0, value);
 	
 }
 
 /*
-Returns base statistical budget intake.
+Reages base statistical budget intake.
 */
-double getBaseStatisticalBudgetIntake(int age)
+double getBaseStatisticalBudgetIntake(double age)
 {
+	double value =
+		+ conf.ai_base_budget_intake_a * age
+		+ conf.ai_base_budget_intake_b
+	;
+	
+	return std::max(1.0, value);
 	
 }
 
 /*
-Returns base statistical budget intake2.
+Reages base statistical budget intake2.
 */
-double getBaseStatisticalBudgetIntake2(int age)
+double getBaseStatisticalBudgetIntake2(double age)
 {
+	double value =
+		+ conf.ai_base_budget_intake2_a * age * age
+		+ conf.ai_base_budget_intake2_b * age
+		+ conf.ai_base_budget_intake2_c
+	;
+	
+	return std::max(1.0, value);
 	
 }
 
 /*
-Returns base statistical budget multiplier.
+Reages base statistical budget multiplier.
 */
-double getBaseStatisticalBudgetMultiplier(int age)
+double getBaseStatisticalBudgetMultiplier(double age)
 {
+	double value =
+		+ conf.ai_base_budget_multiplier_a * age * age
+		+ conf.ai_base_budget_multiplier_b * age
+		+ conf.ai_base_budget_multiplier_c
+	;
+	
+	return std::max(1.0, value);
 	
 }
 
 /*
-Estimates gain of base population growing beyond the limit.
+Estimates flat mineral intake gain.
 */
-double getBaseExtraPopulationGain(int baseId, int poulationLimit)
+double getFlatMineralIntakeGain(int delay, double value)
 {
+	assert(delay >= 1);
+	
+	int initialTurn = *current_turn + delay;
+	double currentFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(*current_turn);
+	
+	// summarize gain
+	
+	double gain = 0.0;
+	
+	for (int futureTurn = initialTurn; futureTurn <= LAST_TURN; futureTurn++)
+	{
+		double futureFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(futureTurn);
+		double futureMineralDecayCoefficient = currentFactionStatisticalMineralIntake2 / futureFactionStatisticalMineralIntake2;
+		
+		double futureMineralWeight = value * futureMineralDecayCoefficient;
+		
+		gain += getResourceScore(futureMineralWeight, 0);
+		
+	}
+	
+	return gain;
+	
+}
+
+/*
+Estimates flat budget intake gain.
+*/
+double getFlatBudgetIntakeGain(int delay, double value)
+{
+	assert(delay >= 1);
+	
+	int initialTurn = *current_turn + delay;
+	double currentFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(*current_turn);
+	
+	// summarize gain
+	
+	double gain = 0.0;
+	
+	for (int futureTurn = initialTurn; futureTurn <= LAST_TURN; futureTurn++)
+	{
+		double futureFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(futureTurn);
+		double futureBudgetDecayCoefficient = currentFactionStatisticalBudgetIntake2 / futureFactionStatisticalBudgetIntake2;
+		
+		double futureBudgetWeight = value * futureBudgetDecayCoefficient;
+		
+		gain += getResourceScore(futureBudgetWeight, 0);
+		
+	}
+	
+	return gain;
+	
+}
+
+/*
+Estimates base extra population gain.
+Contributing population: (minSize, maxSize].
+*/
+double getBasePopulationGain(int baseId, const Interval &baseSizeInterval)
+{
+	bool TRACE = DEBUG & false;
+	
+	if (TRACE) { debug("getBasePopulationGain\n"); }
+	
+	BASE *base = getBase(baseId);
+	
+	int initialTurn = *current_turn + 1;
+	int baseAge = getBaseAge(baseId);
+	double currentFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(*current_turn);
+	double currentFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(*current_turn);
+	
+	// base proportional coefficients
+	
+	int baseSize = base->pop_size;
+	double baseStatisticalSize = getBaseStatisticalSize(baseAge);
+	double baseSizeProportionalCoefficient = (double)baseSize / baseStatisticalSize;
+	
+	int baseMineralIntake2 = base->mineral_intake_2;
+	double baseStatisticalMineralIntake2 = getBaseStatisticalMineralIntake2(baseAge);
+	double baseMineralProportionalCoefficient = (double)baseMineralIntake2 / baseStatisticalMineralIntake2;
+	
+	int baseBudgetIntake2 = base->economy_total + base->psych_total + base->labs_total;
+	double baseStatisticalBudgetIntake2 = getBaseStatisticalBudgetIntake2(baseAge);
+	double baseBudgetProportionalCoefficient = (double)baseBudgetIntake2 / baseStatisticalBudgetIntake2;
+	
+	if (TRACE)
+	{
+		debug
+		(
+			"\tbaseId=%3d"
+			" baseSizeInterval.min=%2d"
+			" baseSizeInterval.max=%2d"
+			" *current_turn=%3d"
+			" initialTurn=%3d"
+			" baseAge=%3d"
+			" currentFactionStatisticalMineralIntake2=%7.2f"
+			" currentFactionStatisticalBudgetIntake2=%7.2f"
+			" baseSize=%2d"
+			" baseStatisticalSize=%5.2f"
+			" baseSizeProportionalCoefficient=%5.2f"
+			" baseMineralIntake2=%2d"
+			" baseStatisticalMineralIntake2=%5.2f"
+			" baseMineralProportionalCoefficient=%5.2f"
+			" baseBudgetIntake2=%2d"
+			" baseStatisticalBudgetIntake2=%5.2f"
+			" baseBudgetProportionalCoefficient=%5.2f"
+			"\n"
+			, baseId
+			, baseSizeInterval.min
+			, baseSizeInterval.max
+			, *current_turn
+			, initialTurn
+			, baseAge
+			, currentFactionStatisticalMineralIntake2
+			, currentFactionStatisticalBudgetIntake2
+			, baseSize
+			, baseStatisticalSize
+			, baseSizeProportionalCoefficient
+			, baseMineralIntake2
+			, baseStatisticalMineralIntake2
+			, baseMineralProportionalCoefficient
+			, baseBudgetIntake2
+			, baseStatisticalBudgetIntake2
+			, baseBudgetProportionalCoefficient
+		);
+	}
+	
+	// summarize gain
+	
+	double gain = 0.0;
+	
+	for (int futureTurn = initialTurn; futureTurn <= LAST_TURN; futureTurn++)
+	{
+		int futureBaseAge = baseAge + (futureTurn - initialTurn);
+		
+		double futureFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(futureTurn);
+		double futureFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(futureTurn);
+		
+		double futureMineralDecayCoefficient = currentFactionStatisticalMineralIntake2 / futureFactionStatisticalMineralIntake2;
+		double futureBudgetDecayCoefficient = currentFactionStatisticalBudgetIntake2 / futureFactionStatisticalBudgetIntake2;
+		
+		double futureBaseSize = getBaseStatisticalSize(futureBaseAge) * baseSizeProportionalCoefficient;
+		
+		if (futureBaseSize <= baseSizeInterval.min)
+			continue;
+		
+		double populationProportion = (std::min(futureBaseSize, (double)baseSizeInterval.max) - (double)baseSizeInterval.min) / futureBaseSize;
+		
+		double futureBaseMineralIntake2 = getBaseStatisticalMineralIntake2(futureBaseAge) * baseMineralProportionalCoefficient;
+		double futureBaseBudgetIntake2 = getBaseStatisticalBudgetIntake2(futureBaseAge) * baseBudgetProportionalCoefficient;
+		
+		double futureBaseMineralIntake2ExtraPopulation = futureBaseMineralIntake2 * populationProportion;
+		double futureBaseBudgetIntake2ExtraPopulation = futureBaseBudgetIntake2 * populationProportion;
+		
+		double futureBaseMineralWeight = futureBaseMineralIntake2ExtraPopulation * futureMineralDecayCoefficient;
+		double futureBaseBudgetWeight = futureBaseBudgetIntake2ExtraPopulation * futureBudgetDecayCoefficient;
+		
+		double turnGain = getResourceScore(futureBaseMineralWeight, futureBaseBudgetWeight);
+		gain += turnGain;
+		
+		if (TRACE)
+		{
+			debug
+			(
+				"\t\tfutureTurn=%3d"
+				" futureBaseAge=%3d"
+				" futureFactionStatisticalMineralIntake2=%7.2f"
+				" futureFactionStatisticalBudgetIntake2=%7.2f"
+				" futureMineralDecayCoefficient=%5.2f"
+				" futureBudgetDecayCoefficient=%5.2f"
+				" futureBaseSize=%5.2f"
+				" populationProportion=%5.2f"
+				" futureBaseMineralIntake2=%7.2f"
+				" futureBaseBudgetIntake2=%7.2f"
+				" futureBaseMineralIntake2ExtraPopulation=%7.2f"
+				" futureBaseBudgetIntake2ExtraPopulation=%7.2f"
+				" futureBaseMineralWeight=%7.2f"
+				" futureBaseBudgetWeight=%7.2f"
+				" turnGain=%7.2f"
+				" gain=%7.2f"
+				"\n"
+				, futureTurn
+				, futureBaseAge
+				, futureFactionStatisticalMineralIntake2
+				, futureFactionStatisticalBudgetIntake2
+				, futureMineralDecayCoefficient
+				, futureBudgetDecayCoefficient
+				, futureBaseSize
+				, populationProportion
+				, futureBaseMineralIntake2
+				, futureBaseBudgetIntake2
+				, futureBaseMineralIntake2ExtraPopulation
+				, futureBaseBudgetIntake2ExtraPopulation
+				, futureBaseMineralWeight
+				, futureBaseBudgetWeight
+				, turnGain
+				, gain
+			);
+		}
+		
+	}
+	
+	if (TRACE)
+	{
+		debug
+		(
+			"\tgain=%7.2f"
+			"\n"
+			, gain
+		);
+	}
+	
+	return gain;
+	
+}
+
+/*
+Estimates base extra population gain.
+Contributing population: (minSize, maxSize].
+*/
+double getBasePopulationGrowthGain(int baseId, int delay, double proportionalGrowthIncrease)
+{
+	assert(baseId >= 0 && baseId < *total_num_bases);
+	assert(delay >= 1);
+	
+	BASE *base = getBase(baseId);
+	int baseAge = getBaseAge(baseId);
+	double currentFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(*current_turn);
+	double currentFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(*current_turn);
+	int initialTurn = *current_turn + delay;
+	
+	// base proportional coefficients
+	
+	int baseMineralIntake2 = base->mineral_intake_2;
+	double baseStatisticalMineralIntake2 = getBaseStatisticalMineralIntake2(baseId);
+	double baseMineralProportionalCoefficient = (double)baseMineralIntake2 / baseStatisticalMineralIntake2;
+	
+	int baseBudgetIntake2 = base->economy_total + base->psych_total + base->labs_total;
+	double baseStatisticalBudgetIntake2 = getBaseStatisticalBudgetIntake2(baseId);
+	double baseBudgetProportionalCoefficient = (double)baseBudgetIntake2 / baseStatisticalBudgetIntake2;
+	
+	// summarize gain
+	
+	double gain = 0.0;
+	
+	for (int futureTurn = initialTurn; futureTurn <= LAST_TURN; futureTurn++)
+	{
+		double futureBaseAge1 = (double)(baseAge + delay) + (double)(futureTurn - initialTurn);
+		double futureBaseAge2 = (double)(baseAge + delay) + (double)(futureTurn - initialTurn) * proportionalGrowthIncrease;
+		
+		double futureFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(futureTurn);
+		double futureFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(futureTurn);
+		
+		double futureMineralDecayCoefficient = currentFactionStatisticalMineralIntake2 / futureFactionStatisticalMineralIntake2;
+		double futureBudgetDecayCoefficient = currentFactionStatisticalBudgetIntake2 / futureFactionStatisticalBudgetIntake2;
+		
+		double futureBaseMineralIntake2Difference =
+			+ getBaseStatisticalMineralIntake2(futureBaseAge2) * baseMineralProportionalCoefficient
+			- getBaseStatisticalMineralIntake2(futureBaseAge1) * baseMineralProportionalCoefficient
+		;
+		double futureBaseBudgetIntake2Difference =
+			+ getBaseStatisticalBudgetIntake2(futureBaseAge2) * baseBudgetProportionalCoefficient
+			- getBaseStatisticalBudgetIntake2(futureBaseAge1) * baseBudgetProportionalCoefficient
+		;
+		
+		double futureBaseMineralIntake2ExtraPopulation = futureBaseMineralIntake2Difference;
+		double futureBaseBudgetIntake2ExtraPopulation = futureBaseBudgetIntake2Difference;
+		
+		double futureBaseMineralWeight = futureBaseMineralIntake2ExtraPopulation * futureMineralDecayCoefficient;
+		double futureBaseBudgetWeight = futureBaseBudgetIntake2ExtraPopulation * futureBudgetDecayCoefficient;
+		
+		gain += getResourceScore(futureBaseMineralWeight, futureBaseBudgetWeight);
+		
+	}
+	
+	return gain;
+	
+}
+
+/*
+Estimates proportional mineral intake gain.
+*/
+double getBaseProportionalMineralIntakeGain(int baseId, int delay, double proportion)
+{
+	assert(baseId >= 0 && baseId < *total_num_bases);
+	assert(delay >= 1);
+	
+	BASE *base = getBase(baseId);
+	
+	int initialTurn = *current_turn + delay;
+	int baseAge = getBaseAge(baseId);
+	double currentFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(*current_turn);
+	
+	// base proportional coefficients
+	
+	int baseMineralIntake = base->mineral_intake;
+	double baseStatisticalMineralIntake = getBaseStatisticalMineralIntake(baseId);
+	double baseMineralProportionalCoefficient = (double)baseMineralIntake / baseStatisticalMineralIntake;
+	
+	// summarize gain
+	
+	double gain = 0.0;
+	
+	for (int futureTurn = initialTurn; futureTurn <= LAST_TURN; futureTurn++)
+	{
+		int futureBaseAge = baseAge + (futureTurn - initialTurn);
+		
+		double futureFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(futureTurn);
+		double futureMineralDecayCoefficient = currentFactionStatisticalMineralIntake2 / futureFactionStatisticalMineralIntake2;
+		
+		double futureBaseMineralIntake = getBaseStatisticalMineralIntake(futureBaseAge) * baseMineralProportionalCoefficient;
+		double futureBaseMineralIntakeProportion = futureBaseMineralIntake * proportion;
+		double futureBaseMineralWeight = futureBaseMineralIntakeProportion * futureMineralDecayCoefficient;
+		
+		gain += getResourceScore(futureBaseMineralWeight, 0);
+		
+	}
+	
+	return gain;
+	
+}
+
+/*
+Estimates proportional budget intake gain.
+*/
+double getBaseProportionalBudgetIntakeGain(int baseId, int delay, double proportion)
+{
+	assert(baseId >= 0 && baseId < *total_num_bases);
+	assert(delay >= 1);
+	
+	int initialTurn = *current_turn + delay;
+	int baseAge = getBaseAge(baseId);
+	double currentFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(*current_turn);
+	
+	// base proportional coefficients
+	
+	Budget baseBudgetIntakeByType = getBaseBudgetIntake(baseId);
+	int baseBudgetIntake = baseBudgetIntakeByType.economy + baseBudgetIntakeByType.psych + baseBudgetIntakeByType.labs;
+	double baseStatisticalBudgetIntake = getBaseStatisticalBudgetIntake(baseId);
+	double baseBudgetProportionalCoefficient = (double)baseBudgetIntake / baseStatisticalBudgetIntake;
+	
+	// summarize gain
+	
+	double gain = 0.0;
+	
+	for (int futureTurn = initialTurn; futureTurn <= LAST_TURN; futureTurn++)
+	{
+		int futureBaseAge = baseAge + (futureTurn - initialTurn);
+		
+		double futureFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(futureTurn);
+		double futureBudgetDecayCoefficient = currentFactionStatisticalBudgetIntake2 / futureFactionStatisticalBudgetIntake2;
+		
+		double futureBaseBudgetIntake = getBaseStatisticalBudgetIntake(futureBaseAge) * baseBudgetProportionalCoefficient;
+		double futureBaseBudgetIntakeProportion = futureBaseBudgetIntake * proportion;
+		double futureBaseBudgetWeight = futureBaseBudgetIntakeProportion * futureBudgetDecayCoefficient;
+		
+		gain += getResourceScore(0, futureBaseBudgetWeight);
+		
+	}
+	
+	return gain;
+	
+}
+
+/*
+Estimates proportional mineral intake gain.
+*/
+double getBaseProportionalMineralIntake2Gain(int baseId, int delay, double proportion)
+{
+	assert(baseId >= 0 && baseId < *total_num_bases);
+	assert(delay >= 1);
+	
+	BASE *base = getBase(baseId);
+	
+	int initialTurn = *current_turn + delay;
+	int baseAge = getBaseAge(baseId);
+	double currentFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(*current_turn);
+	
+	// base proportional coefficients
+	
+	int baseMineralIntake2 = base->mineral_intake_2;
+	double baseStatisticalMineralIntake2 = getBaseStatisticalMineralIntake2(baseId);
+	double baseMineralProportionalCoefficient = (double)baseMineralIntake2 / baseStatisticalMineralIntake2;
+	
+	// summarize gain
+	
+	double gain = 0.0;
+	
+	for (int futureTurn = initialTurn; futureTurn <= LAST_TURN; futureTurn++)
+	{
+		int futureBaseAge = baseAge + (futureTurn - initialTurn);
+		
+		double futureFactionStatisticalMineralIntake2 = getFactionStatisticalMineralIntake2(futureTurn);
+		double futureMineralDecayCoefficient = currentFactionStatisticalMineralIntake2 / futureFactionStatisticalMineralIntake2;
+		
+		double futureBaseMineralIntake2 = getBaseStatisticalMineralIntake2(futureBaseAge) * baseMineralProportionalCoefficient;
+		double futureBaseMineralIntake2Proportion = futureBaseMineralIntake2 * proportion;
+		double futureBaseMineralWeight = futureBaseMineralIntake2Proportion * futureMineralDecayCoefficient;
+		
+		gain += getResourceScore(futureBaseMineralWeight, 0);
+		
+	}
+	
+	return gain;
+	
+}
+
+/*
+Estimates proportional budget intake gain.
+*/
+double getBaseProportionalBudgetIntake2Gain(int baseId, int delay, double proportion)
+{
+	assert(baseId >= 0 && baseId < *total_num_bases);
+	assert(delay >= 1);
+	
+	BASE *base = getBase(baseId);
+	
+	int initialTurn = *current_turn + delay;
+	int baseAge = getBaseAge(baseId);
+	double currentFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(*current_turn);
+	
+	// base proportional coefficients
+	
+	int baseBudgetIntake2 = base->economy_total + base->psych_total + base->labs_total;
+	double baseStatisticalBudgetIntake2 = getBaseStatisticalBudgetIntake2(baseId);
+	double baseBudgetProportionalCoefficient = (double)baseBudgetIntake2 / baseStatisticalBudgetIntake2;
+	
+	// summarize gain
+	
+	double gain = 0.0;
+	
+	for (int futureTurn = initialTurn; futureTurn <= LAST_TURN; futureTurn++)
+	{
+		int futureBaseAge = baseAge + (futureTurn - initialTurn);
+		
+		double futureFactionStatisticalBudgetIntake2 = getFactionStatisticalBudgetIntake2(futureTurn);
+		double futureBudgetDecayCoefficient = currentFactionStatisticalBudgetIntake2 / futureFactionStatisticalBudgetIntake2;
+		
+		double futureBaseBudgetIntake2 = getBaseStatisticalBudgetIntake2(futureBaseAge) * baseBudgetProportionalCoefficient;
+		double futureBaseBudgetIntake2Proportion = futureBaseBudgetIntake2 * proportion;
+		double futureBaseBudgetWeight = futureBaseBudgetIntake2Proportion * futureBudgetDecayCoefficient;
+		
+		gain += getResourceScore(0, futureBaseBudgetWeight);
+		
+	}
+	
+	return gain;
+	
+}
+
+//=======================================================
+// production item helper functions
+//=======================================================
+
+/*
+Determines affected base size interfals for given psych facility.
+*/
+Interval getPoliceBaseSizeInterval(int baseId, int unitId)
+{
+	assert(baseId >= 0 && baseId < *total_num_bases);
+	
+	BASE *base = getBase(baseId);
+	int currentPopSize = base->pop_size;
+	
+	Interval baseSizeInterval(0, 0);
+	
+	bool minSizeSet = false;
+	bool maxSizeSet = false;
+	for (int popSize = currentPopSize; popSize < 30; popSize++)
+	{
+		// set size
+		
+		base->pop_size = popSize;
+		
+		// workers without police
+		
+		computeBaseDoctors(baseId);
+		
+		int oldWorkerCount = base->pop_size - base->specialist_total;
+		
+		// workers with police
+		
+		int policeVehicleId = veh_init(unitId, base->faction_id, base->x, base->y);
+		
+		if (policeVehicleId == -1)
+			break;
+		
+		computeBaseDoctors(baseId);
+		
+		int newWorkerCount = base->pop_size - base->specialist_total;
+		
+		// restore base
+		
+		veh_kill(policeVehicleId);
+		base->pop_size = currentPopSize;
+		computeBaseDoctors(baseId);
+		
+		// set minSize
+		
+		if (!minSizeSet)
+		{
+			if (newWorkerCount <= oldWorkerCount)
+			{
+				baseSizeInterval.min = popSize;
+			}
+			else
+			{
+				minSizeSet = true;
+			}
+			
+		}
+		
+		// set maxSize
+		
+		if (!maxSizeSet)
+		{
+			if ((newWorkerCount - oldWorkerCount) >= (popSize - baseSizeInterval.min))
+			{
+				baseSizeInterval.max = popSize;
+			}
+			else
+			{
+				maxSizeSet = true;
+				break;
+			}
+			
+		}
+		
+	}
+	
+	// restore base
+	
+	base->pop_size = currentPopSize;
+	computeBaseDoctors(baseId);
+	
+	return baseSizeInterval;
+	
+}
+
+/*
+Determines affected base size interfals for given psych facility.
+*/
+Interval getPsychFacilityBaseSizeInterval(int baseId, int facilityId)
+{
+	assert(baseId >= 0 && baseId < *total_num_bases);
+	
+	BASE *base = getBase(baseId);
+	int currentPopSize = base->pop_size;
+	
+	Interval baseSizeInterval(0, 0);
+	
+	// facility should not be present
+	
+	if (has_facility(baseId, facilityId))
+		return baseSizeInterval;
+	
+	bool minSizeSet = false;
+	bool maxSizeSet = false;
+	for (int popSize = currentPopSize; popSize < 30; popSize++)
+	{
+		// set size
+		
+		base->pop_size = popSize;
+		
+		// workers without facility
+		
+		computeBaseDoctors(baseId);
+		int oldWorkerCount = base->pop_size - base->specialist_total;
+		
+		// workers with facility
+		
+		setBaseFacility(baseId, facilityId, true);
+		computeBaseDoctors(baseId);
+		int newWorkerCount = base->pop_size - base->specialist_total;
+		
+		// remove facility
+		
+		setBaseFacility(baseId, facilityId, false);
+		
+		// set minSize
+		
+		if (!minSizeSet)
+		{
+			if (newWorkerCount <= oldWorkerCount)
+			{
+				baseSizeInterval.min = popSize;
+			}
+			else
+			{
+				minSizeSet = true;
+			}
+			
+		}
+		
+		// set maxSize
+		
+		if (!maxSizeSet)
+		{
+			if ((newWorkerCount - oldWorkerCount) >= (popSize - baseSizeInterval.min))
+			{
+				baseSizeInterval.max = popSize;
+			}
+			else
+			{
+				maxSizeSet = true;
+				break;
+			}
+			
+		}
+		
+	}
+	
+	// restore base
+	
+	base->pop_size = currentPopSize;
+	computeBaseDoctors(baseId);
+	
+	return baseSizeInterval;
+	
+}
+
+int getFacilityEcoDamageReduction(int baseId, int facilityId)
+{
+	BASE *base = getBase(baseId);
+	
+	// should not be built
+	
+	if (has_facility(baseId, facilityId))
+		return 0;
+	
+	// without facility
+	
+	int oldEcoDamage = base->eco_damage;
+	
+	// with facility
+	
+	setBaseFacility(baseId, facilityId, true);
+	computeBaseDoctors(baseId);
+	
+	int newEcoDamage = base->eco_damage;
+	
+	// restore
+	
+	setBaseFacility(baseId, facilityId, false);
+	computeBaseDoctors(baseId);
+	
+	// EcoDamage reduction
+	
+	return oldEcoDamage - newEcoDamage;
+	
+}
+
+double getFacilityRelativeGrowthIncrease(int baseId, int facilityId)
+{
+	BASE *base = getBase(baseId);
+	
+	// should not be built
+	
+	if (has_facility(baseId, facilityId))
+		return 0.0;
+	
+	// old nutrient surplus
+	
+	int oldNutrientSurplus = base->nutrient_surplus;
+	
+	// new nutrient surplus
+	
+	setBaseFacility(baseId, facilityId, true);
+	computeBaseDoctors(baseId);
+	int newNutrientSurplus = base->nutrient_surplus;
+	
+	// restore
+	
+	setBaseFacility(baseId, facilityId, false);
+	computeBaseDoctors(baseId);
+	
+	// return relative growth increase
+	
+	return (double)(newNutrientSurplus - oldNutrientSurplus) / (double)std::max(1, std::max(oldNutrientSurplus, newNutrientSurplus));
+	
+}
+
+double getFacilityRelativeMineralIncrease(int baseId, int facilityId)
+{
+	BASE *base = getBase(baseId);
+	
+	// should not be built
+	
+	if (has_facility(baseId, facilityId))
+		return 0.0;
+	
+	// old mineral
+	
+	int oldMineral = base->economy_total + base->psych_total + base->labs_total;
+	
+	// new mineral
+	
+	setBaseFacility(baseId, facilityId, true);
+	computeBaseDoctors(baseId);
+	int newMineral = base->economy_total + base->psych_total + base->labs_total;
+	
+	// restore
+	
+	setBaseFacility(baseId, facilityId, false);
+	computeBaseDoctors(baseId);
+	
+	// return relative mineral increase
+	
+	return (double)(newMineral - oldMineral) / (double)std::max(1, std::max(oldMineral, newMineral));
+	
+}
+
+double getFacilityRelativeBudgetIncrease(int baseId, int facilityId)
+{
+	BASE *base = getBase(baseId);
+	
+	// should not be built
+	
+	if (has_facility(baseId, facilityId))
+		return 0.0;
+	
+	// old budget
+	
+	int oldBudget = base->economy_total + base->psych_total + base->labs_total;
+	
+	// new budget
+	
+	setBaseFacility(baseId, facilityId, true);
+	computeBaseDoctors(baseId);
+	int newBudget = base->economy_total + base->psych_total + base->labs_total;
+	
+	// restore
+	
+	setBaseFacility(baseId, facilityId, false);
+	computeBaseDoctors(baseId);
+	
+	// return relative budget increase
+	
+	return (double)(newBudget - oldBudget) / (double)std::max(1, std::max(oldBudget, newBudget));
+	
+}
+
+/*
+Calculates number of extra police units can be added to the base.
+*/
+int getBasePoliceExtraCapacity(int baseId)
+{
+	// get base police allowed
+	
+	int policeAllowed = getBasePoliceAllowed(baseId);
+	
+	// no police allowed
+	
+	if (policeAllowed == 0)
+		return 0;
+	
+	// count number of police units in base
+	
+	int policePresent = 0;
+	
+	for (int vehicleId : aiData.baseInfos[baseId].garrison)
+	{
+		// count only police2x if available
+		
+		if (aiData.police2xUnitAvailable && !isInfantryDefensivePolice2xVehicle(vehicleId))
+			continue;
+		
+		// count police
+		
+		policePresent++;
+		
+	}
+	
+	return std::max(0, policeAllowed - policePresent);
 	
 }
 

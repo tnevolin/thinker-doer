@@ -1,8 +1,13 @@
 const unsigned int MAX_CLUSTER_SIZE = 10;
 const int MOVEMENT_INFINITY = INT_MAX / 2;
 
+const int IMPEDIMENT_RANGE = 3;
+const double NEUTRAL_IMPEDIMENT = 1.0 / (double)(IMPEDIMENT_RANGE * 2 + 1);
+const double ATTACKING_IMPEDIMENT_COMBAT = 1.0 * NEUTRAL_IMPEDIMENT;
+const double ATTACKING_IMPEDIMENT_NON_COMBAT = 5.0 * NEUTRAL_IMPEDIMENT;
+
 /*
-Route node for D path search algorithm.
+Route node for path search algorithm.
 */
 struct Node
 {
@@ -70,7 +75,6 @@ void setCachedMovementCost(long long index, int movementCost);
 
 void precomputeAIRouteData();
 void populateTileMovementRestrictions();
-void populateBaseEnemyMovementImpediments();
 
 // current and potential colony movement
 void populateBuildSiteDMovementCosts(MAP *origin, MovementType movementType, int factionId, bool ignoreHostile);
@@ -104,19 +108,21 @@ int getVehicleATravelTimeByTaskType(int vehicleId, MAP *destination, TaskType ta
 // Landmark estimated movementCost algorithm
 // ==================================================
 
-void populateAIFactionMovementInfo();
-void populateAIFactionNonCombatMovementInfo();
-void generateNonCombatCluster(int initialTileIndex, int surfaceIndex, int factionId);
-int initializeNonCombatCluster(int initialTileIndex, int surfaceIndex, int factionId, int clusterId, robin_hood::unordered_flat_set<MovementType> &movementTypes);
-int generateNonCombatClusterLandmark(int initialTileIndex, int surfaceIndex, int factionId, int clusterId, MovementType movementType, int landmarkId);
+void populateMovementInfos();
+void populateFactionMovementInfo(int factionId, int clusterType);
+void generateCluster(int factionId, int clusterType, int surfaceIndex, int initialTileIndex);
+int initializeCluster(int factionId, int clusterId, int surfaceIndex, std::vector<MovementType> &movementTypes, int initialTileIndex);
+int generateLandmark(int factionId, int clusterId, int surfaceIndex, MovementType movementType, int landmarkId, int initialTileIndex);
 
 long long getCachedLMovementCostKey(MAP *origin, MAP *destination, int factionId, int clusterType, int surfaceType, MovementType movementType);
-int getCachedLMovementCost(long long index);
-void setCachedLMovementCost(long long index, int movementCost);
+int getCachedLMovementCost(long long key);
+void setCachedLMovementCost(long long key, int movementCost);
 
 int getLMovementCost(MAP *origin, MAP *destination, int factionId, int clusterType, int surfaceType, MovementType movementType);
 
 int getUnitLTravelTime(MAP *origin, MAP *destination, int factionId, int unitId, int speed, int action);
+int getUnitActionLTravelTime(MAP *origin, MAP *destination, int factionId, int unitId);
+int getUnitAttackLTravelTime(MAP *origin, MAP *destination, int factionId, int unitId);
 int getGravshipUnitLTravelTime(MAP *origin, MAP *destination, int speed, int action);
 int getAirRangedUnitLTravelTime(MAP *origin, MAP *destination, int speed, int action);
 int getSeaUnitLTravelTime(MAP *origin, MAP *destination, int factionId, int unitId, int speed, bool action);
@@ -136,5 +142,4 @@ int getVehicleLTravelTimeByTaskType(int vehicleId, MAP *destination, TaskType ta
 
 int getRouteVectorDistance(MAP *tile1, MAP *tile2);
 MovementType getUnitMovementType(int factionId, int unitId);
-MovementType getUnitApproximateMovementType(int factionId, int unitId);
 

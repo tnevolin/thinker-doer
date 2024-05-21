@@ -1178,7 +1178,7 @@ Finds optimal vehicle drop-off transfer.
 */
 Transfer *getVehicleOptimalDropOffTransfer(int vehicleId, int seaTransportVehicleId, MAP *destination)
 {
-	const bool TRACE = DEBUG && false;
+	const bool TRACE = DEBUG && true;
 	if (TRACE)
 	{
 		debug
@@ -1259,17 +1259,25 @@ Transfer *getVehicleOptimalDropOffTransfer(int vehicleId, int seaTransportVehicl
 		
 		// exclude land zoc for artifact
 		
-		if (isArtifactVehicle(vehicleId) && !passengerStopOcean && (passengerStopTileFactionInfo.blocked || passengerStopTileFactionInfo.zoc))
+		if (isArtifactVehicle(vehicleId) && !passengerStopOcean && (passengerStopTileFactionInfo.blocked[0] || passengerStopTileFactionInfo.zoc[0]))
 			continue;
 		
 		// travelTime
 		
-		executionProfiles["| getVehicleATravelTime <- getVehicleOptimalDropOffTransfer"].start();
-		int transportTravelTime = getVehicleATravelTime(seaTransportVehicleId, origin, unboardTransfer.transportStop);
-		int vehicleTravelTime2 = measureTimeToDestination ? getVehicleATravelTime(vehicleId, unboardTransfer.passengerStop, destination) : 0;
-		executionProfiles["| getVehicleATravelTime <- getVehicleOptimalDropOffTransfer"].stop();
+//		executionProfiles["| getVehicleATravelTime <- getVehicleOptimalDropOffTransfer"].start();
+//		int transportTravelTime = getVehicleATravelTime(seaTransportVehicleId, origin, unboardTransfer.transportStop);
+//		executionProfiles["| getVehicleATravelTime <- getVehicleOptimalDropOffTransfer"].stop();
+		executionProfiles["| getVehicleLTravelTime <- getVehicleOptimalDropOffTransfer"].start();
+		int transportTravelTime = getVehicleLTravelTime(seaTransportVehicleId, origin, unboardTransfer.transportStop);
+		executionProfiles["| getVehicleLTravelTime <- getVehicleOptimalDropOffTransfer"].stop();
 		
-		if (transportTravelTime == -1 || vehicleTravelTime2 == -1)
+		if (transportTravelTime == -1 || transportTravelTime >= MOVEMENT_INFINITY)
+			continue;
+		
+//		int vehicleTravelTime2 = measureTimeToDestination ? getVehicleATravelTime(vehicleId, unboardTransfer.passengerStop, destination) : 0;
+		int vehicleTravelTime2 = measureTimeToDestination ? getVehicleLTravelTime(vehicleId, unboardTransfer.passengerStop, destination) : 0;
+		
+		if (vehicleTravelTime2 == -1 || vehicleTravelTime2 >= MOVEMENT_INFINITY)
 			continue;
 		
 		// transport travelTime is more valuable as it is needed for other transportations
@@ -1310,6 +1318,67 @@ Transfer *getVehicleOptimalDropOffTransfer(int vehicleId, int seaTransportVehicl
 	// return optimal transfer
 	
 	return optimalUnboardTransfer;
+	
+}
+
+/*
+Sends vehicle along safest travel waypoints.
+*/
+void setSafeMoveTo(int vehicleId, MAP *destination)
+{
+	debug("setSafeMoveTo [%4d] -> (%3d,%3d)\n", vehicleId, getX(destination), getY(destination));
+	
+	MAP *bestTile = destination;
+	double bestTileWeight = DBL_MAX;
+	
+	bool dangerous = false;
+	
+	for (MovementAction &reachableLocation : getVehicleReachableLocations(vehicleId))
+	{
+		MAP *tile = reachableLocation.destination;
+		double danger = getVehicleTileDanger(vehicleId, tile);
+		
+		double distance = getVectorDistance(tile, destination);
+		double weight = danger + 0.2 * distance;
+		
+		if (danger > 0.0)
+		{
+			dangerous = true;
+		}
+		
+		if (weight < bestTileWeight)
+		{
+			bestTile = tile;
+			bestTileWeight = weight;
+		}
+		
+		debug
+		(
+			"(%3d,%3d)"
+			" danger=%5.2f"
+			" distance=%5.2f"
+			" weight=%5.2f"
+			" dangerous=%d"
+			" best=%d"
+			"\n"
+			, getX(tile), getY(tile)
+			, danger
+			, distance
+			, weight
+			, dangerous
+			, weight < bestTileWeight
+		);
+		
+	}
+	
+	if (!dangerous || bestTile == destination)
+	{
+		setMoveTo(vehicleId, destination);
+	}
+	else
+	{
+		setMoveTo(vehicleId, {bestTile, destination});
+	}
 	
 }
 

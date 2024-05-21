@@ -91,7 +91,6 @@ FValue FValueHeap::top()
 // ==================================================
 
 // [origin, destination, movementType, factionId, ignoreHostile]
-//robin_hood::unordered_flat_map<std::tuple<MAP *, MAP *, MovementType, int, bool>, int> cachedAMovementCosts;
 robin_hood::unordered_flat_map<long long, int> cachedAMovementCosts;
 
 long long getCachedAMovementCostKey(MAP *origin, MAP *destination, MovementType movementType, int factionId, bool ignoreHostile)
@@ -132,8 +131,7 @@ void precomputeAIRouteData()
 	executionProfiles["1.2.0. cachedAMovementCosts.clear()"].stop();
 	
 	profileFunction("1.2.3. populateTileMovementRestrictions", populateTileMovementRestrictions);
-	profileFunction("1.2.4. populateBaseEnemyMovementImpediments", populateBaseEnemyMovementImpediments);
-	profileFunction("1.2.5. populateAIFactionMovementInfo", populateAIFactionMovementInfo);
+	profileFunction("1.2.5. populateMovementInfos", populateMovementInfos);
 	
 }
 
@@ -144,79 +142,133 @@ void populateTileMovementRestrictions()
 {
 	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
 	{
-		// blockNeutral, zocNeutral
+		// stationary vehicle effects: blocked and zoc
 		
 		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 		{
 			VEH *vehicle = &(Vehicles[vehicleId]);
 			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-			TileInfo &tileInfo = aiData.getTileInfo(vehicleTile);
-			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
+			TileInfo &vehicleTileInfo = aiData.getTileInfo(vehicleTile);
+			TileFactionInfo &vehicleTileFactionInfo = vehicleTileInfo.factionInfos[factionId];
 			
-			// neutral or AI for other faction
-			
-			if (!isNeutral(factionId, vehicle->faction_id))
-				continue;
-			if (factionId != aiFactionId && vehicle->faction_id == aiFactionId)
-				continue;
-			
-			// blockedNeutral
-			
-			tileFactionInfo.blockedNeutral = true;
-			
-			// zocNeutral
-			
-			if (!is_ocean(vehicleTile))
-			{
-				for (MAP *adjacentTile : getAdjacentTiles(vehicleTile))
-				{
-					TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
-					TileFactionInfo &adjacentTileFactionInfo = adjacentTileInfo.factionInfos[factionId];
-					
-					if (is_ocean(adjacentTile))
-						continue;
-					
-					adjacentTileFactionInfo.zocNeutral = true;
-					
-				}
-				
-			}
-			
-		}
-		
-		// blocked, zoc
-		
-		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-			TileInfo &tileInfo = aiData.getTileInfo(vehicleTile);
-			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
-			
-			// unfriendly
+			// exclude friendly
 			
 			if (isFriendly(factionId, vehicle->faction_id))
 				continue;
 			
-			// blocked
+			// exclude not stationary
 			
-			tileFactionInfo.blocked = true;
+			if (!(vehicle->unit_id == BSC_FUNGAL_TOWER || vehicleTileInfo.base || vehicleTileInfo.bunker))
+				continue;
 			
-			// zoc
+			// blocked for non-combat
 			
-			if (!is_ocean(vehicleTile))
+			vehicleTileFactionInfo.blocked[0] = true;
+			
+			// blocked for combat only if neutral
+			
+			if (isNeutral(factionId, vehicle->faction_id))
 			{
-				for (MAP *adjacentTile : getAdjacentTiles(vehicleTile))
+				vehicleTileFactionInfo.blocked[1] = true;
+			}
+			
+			// zoc is exerted only by vehicle on land
+			
+			if (vehicleTileInfo.ocean)
+				continue;
+			
+			// explore adjacent tiles for zoc
+			
+			for (int i = 0; i < vehicleTileInfo.validAdjacentTileCount; i++)
+			{
+				int adjacentTileIndex = vehicleTileInfo.validAdjacentTileIndexes[i];
+				TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTileIndex);
+				TileFactionInfo &adjacentTileFactionInfo = adjacentTileInfo.factionInfos[factionId];
+				
+				// zoc is exerted only to land
+				
+				if (adjacentTileInfo.ocean)
+					continue;
+				
+				// zoc is not exerted to base
+				
+				if (adjacentTileInfo.base)
+					continue;
+				
+				// set zoc for non-combat vehicle
+				
+				adjacentTileFactionInfo.zoc[0] = true;
+				
+				// set zoc for combat vehicle only for neutral
+				
+				if (isNeutral(factionId, vehicle->faction_id))
 				{
-					TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
-					TileFactionInfo &adjacentTileFactionInfo = adjacentTileInfo.factionInfos[factionId];
-					
-					if (is_ocean(adjacentTile))
-						continue;
-					
-					adjacentTileFactionInfo.zoc = true;
-					
+					adjacentTileFactionInfo.zoc[1] = true;
 				}
+				
+			}
+				
+		}
+		
+		// moving vehicles effects: impediment
+				
+		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			int triad = vehicle->triad();
+			MAP *vehicleTile = getVehicleMapTile(vehicleId);
+			
+			// exclude friendly
+			
+			if (isFriendly(factionId, vehicle->faction_id))
+				continue;
+			
+			// exclude not moving
+			
+			if (vehicle->unit_id == BSC_FUNGAL_TOWER)
+				continue;
+			
+			// impediment coefficient
+			
+			double impedimentCoefficients[2] = {};
+			
+			// not attacking
+			// neutral or hostile non-combat
+			if (isNeutral(factionId, vehicle->faction_id) || (isHostile(factionId, vehicle->faction_id) && !isCombatVehicle(vehicleId)))
+			{
+				impedimentCoefficients[0] = 1.0;
+				impedimentCoefficients[1] = 1.0;
+			}
+			// attacking
+			// hostile combat
+			else if (isHostile(factionId, vehicle->faction_id) && isCombatVehicle(vehicleId))
+			{
+				impedimentCoefficients[0] = 5.0;
+				impedimentCoefficients[1] = 1.0;
+			}
+			
+			// impediment is created by land or air units
+			
+			if (triad == TRIAD_SEA)
+				continue;
+			
+			// explore range tiles for impediment
+			
+			for (MAP *rangeTile : getRangeTiles(vehicleTile, IMPEDIMENT_RANGE, true))
+			{
+				int rangeTileIndex = rangeTile - *MapPtr;
+				TileInfo &rangeTileInfo = aiData.tileInfos[rangeTileIndex];
+				TileFactionInfo &rangeTileFactionInfo = rangeTileInfo.factionInfos[factionId];
+				
+				// impediment is exerted to land
+				
+				if (rangeTileInfo.ocean)
+					continue;
+				
+				// set impediment
+				
+				rangeTileFactionInfo.impediment[0] = impedimentCoefficients[0] * NEUTRAL_IMPEDIMENT * (double)Rules->mov_rate_along_roads;
+				rangeTileFactionInfo.impediment[1] = impedimentCoefficients[0] * NEUTRAL_IMPEDIMENT * (double)Rules->mov_rate_along_roads;
 				
 			}
 			
@@ -232,13 +284,12 @@ void populateTileMovementRestrictions()
 			
 			// disable zoc
 			
-			tileFactionInfo.zocNeutral = false;
-			tileFactionInfo.zoc = false;
+			tileFactionInfo.zoc[0] = false;
+			tileFactionInfo.zoc[1] = false;
 			
 		}
 		
-		// friendly vehicle (except probe)
-		// disables zoc
+		// friendly vehicle disables zoc
 		
 		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 		{
@@ -252,92 +303,20 @@ void populateTileMovementRestrictions()
 			if (!isFriendly(factionId, vehicle->faction_id))
 				continue;
 			
-			// not probe
+			// except probe (if probe excluded)
 			
-			if (isProbeVehicle(vehicleId))
+			if
+			(
+				conf.zoc_regular_army_sneaking_disabled
+				&&
+				(isProbeVehicle(vehicleId) || isArtifactVehicle(vehicleId) || isVehicleHasAbility(vehicleId, ABL_CLOAKED))
+			)
 				continue;
 			
-			// set friendly
+			// disable zoc
 			
-			tileFactionInfo.friendly = true;
-			tileFactionInfo.zocNeutral = false;
-			tileFactionInfo.zoc = false;
-			
-		}
-		
-		// populate targets
-		
-		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
-		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-			bool vehicleTileOcean = is_ocean(vehicleTile);
-			
-			// hostile
-			
-			if (!isHostile(aiFactionId, vehicle->faction_id))
-				continue;
-			
-			// process adjacent tiles
-			
-			for (MAP *adjacentTile : getAdjacentTiles(vehicleTile))
-			{
-				bool adjacentTileOcean = is_ocean(adjacentTile);
-				
-				// exclude different realm
-				
-				if (!vehicleTileOcean)
-				{
-					if (adjacentTileOcean)
-						continue;
-				}
-				else
-				{
-					if (!adjacentTileOcean)
-						continue;
-				}
-				
-			}
-			
-		}
-		
-	}
-	
-}
-
-/*
-Sets tile combat movement impediment caused by nearby bases.
-*/
-void populateBaseEnemyMovementImpediments()
-{
-	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-	{
-		// populate base enemy movement impediments
-		
-		for (int baseId = 0; baseId < *total_num_bases; baseId++)
-		{
-			BASE *base = getBase(baseId);
-			MAP *baseTile = getBaseMapTile(baseId);
-			bool baseTileOcean = is_ocean(baseTile);
-			
-			// skip friendly base
-			
-			if (isFriendly(factionId, base->faction_id))
-				continue;
-			
-			// populate impediments
-			
-			for (int range = 0; range <= BASE_MOVEMENT_IMPEDIMENT_MAX_RANGE; range++)
-			{
-				for (MAP *tile : getEqualRangeTiles(baseTile, range))
-				{
-					TileFactionInfo &tileFactionInfo = aiData.getTileFactionInfo(tile, factionId);
-					
-					tileFactionInfo.travelImpediment += getBaseTravelImpediment(range, baseTileOcean);
-					
-				}
-				
-			}
+			tileFactionInfo.zoc[0] = false;
+			tileFactionInfo.zoc[1] = false;
 			
 		}
 		
@@ -371,7 +350,7 @@ void populateBuildSiteDMovementCosts(MAP *origin, MovementType movementType, int
 			MAP *tile = *MapPtr + tileIndex;
 			TileInfo &tileInfo = aiData.tileInfos[tileIndex];
 			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
-			bool tileZoc = (ignoreHostile ? tileFactionInfo.zocNeutral : tileFactionInfo.zoc);
+			bool tileZoc = tileFactionInfo.zoc[ignoreHostile];
 			
 			// cached value
 			
@@ -390,12 +369,12 @@ void populateBuildSiteDMovementCosts(MAP *origin, MovementType movementType, int
 				TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
 				TileFactionInfo &adjacentTileFactionInfo = adjacentTileInfo.factionInfos[factionId];
 				ExpansionTileInfo &adjacentTileExpansionInfo = getExpansionTileInfo(adjacentTile);
-				bool adjacentTileBlocked = (ignoreHostile ? adjacentTileFactionInfo.blockedNeutral : adjacentTileFactionInfo.blocked);
-				bool adjacentTileZoc = (ignoreHostile ? adjacentTileFactionInfo.zocNeutral : adjacentTileFactionInfo.zoc);
+				bool adjacentTileBlocked = adjacentTileFactionInfo.blocked[ignoreHostile];
+				bool adjacentTileZoc = adjacentTileFactionInfo.zoc[ignoreHostile];
 				
 				// hex cost
 				
-				int hexCost = tileInfo.hexCosts1[movementType][angle];
+				int hexCost = tileInfo.hexCosts[movementType][angle];
 				
 				// not allowed move
 				
@@ -521,7 +500,7 @@ robin_hood::unordered_flat_set<MAP *> getOneTurnActionLocations(int vehicleId)
 			MAP *tile = *MapPtr + tileIndex;
 			TileInfo &tileInfo = aiData.getTileInfo(tile);
 			TileFactionInfo &tileFactionInfo = aiData.getTileFactionInfo(tile, factionId);
-			bool tileZoc = tileFactionInfo.zoc;
+			bool tileZoc = tileFactionInfo.zoc[0];
 			int tileMovementCost = movementCosts.at(tile);
 			
 			for (int angle = 0; angle < ANGLE_COUNT; angle++)
@@ -534,9 +513,9 @@ robin_hood::unordered_flat_set<MAP *> getOneTurnActionLocations(int vehicleId)
 				MAP *adjacentTile = *MapPtr + adjacentTileIndex;
 				
 				TileFactionInfo &adjacentTileFactionInfo = aiData.getTileFactionInfo(adjacentTile, factionId);
-				bool adjacentTileBlocked = adjacentTileFactionInfo.blocked;
-				bool adjacentTileZoc = adjacentTileFactionInfo.zoc;
-				int hexCost = tileInfo.hexCosts1[movementType][angle];
+				bool adjacentTileBlocked = adjacentTileFactionInfo.blocked[0];
+				bool adjacentTileZoc = adjacentTileFactionInfo.zoc[0];
+				int hexCost = tileInfo.hexCosts[movementType][angle];
 				
 				// exclude inaccessible location
 				
@@ -676,7 +655,7 @@ int getAMovementCost(MAP *origin, MAP *destination, MovementType movementType, i
 		MAP *currentTile = currentOpenNode.tile;
 		TileInfo &currentTileInfo = aiData.getTileInfo(currentTile);
 		TileFactionInfo &currentTileFactionInfo = currentTileInfo.factionInfos[factionId];
-		bool currentTileZoc = (ignoreHostile ? currentTileFactionInfo.zocNeutral : currentTileFactionInfo.zoc);
+		bool currentTileZoc = currentTileFactionInfo.zoc[ignoreHostile];
 		
 		long long originToCurrentTileMovementCostKey = getCachedAMovementCostKey(origin, currentTile, movementType, factionId, ignoreHostile);
 		int currentTileMovementCost = getCachedAMovementCost(originToCurrentTileMovementCostKey);
@@ -692,7 +671,7 @@ int getAMovementCost(MAP *origin, MAP *destination, MovementType movementType, i
 			
 			// hex cost
 			
-			int adjacentTileHexCost = currentTileInfo.hexCosts1[movementType][angle];
+			int adjacentTileHexCost = currentTileInfo.hexCosts[movementType][angle];
 			
 			// allowed step
 			
@@ -703,8 +682,8 @@ int getAMovementCost(MAP *origin, MAP *destination, MovementType movementType, i
 			
 			TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
 			TileFactionInfo &adjacentTileFactionInfo = adjacentTileInfo.factionInfos[factionId];
-			bool adjacentTileBlocked = (ignoreHostile ? adjacentTileFactionInfo.blockedNeutral : adjacentTileFactionInfo.blocked);
-			bool adjacentTileZoc = (ignoreHostile ? adjacentTileFactionInfo.zocNeutral : adjacentTileFactionInfo.zoc);
+			bool adjacentTileBlocked = adjacentTileFactionInfo.blocked[ignoreHostile];
+			bool adjacentTileZoc = adjacentTileFactionInfo.zoc[ignoreHostile];
 			
 			long long originToAdjacentTileMovementCostKey = getCachedAMovementCostKey(origin, adjacentTile, movementType, factionId, ignoreHostile);
 			int adjacentTileMovementCost = getCachedAMovementCost(originToAdjacentTileMovementCostKey);
@@ -1148,52 +1127,75 @@ int getVehicleATravelTimeByTaskType(int vehicleId, MAP *destination, TaskType ta
 // Landmark estimated distance and travel time
 // ============================================================
 
-void populateAIFactionMovementInfo()
+const bool MOVEMENT_INFO_TRACE = DEBUG && false;
+void populateMovementInfos()
 {
-	debug("populateAIFactionMovementInfo\n");
+	if (MOVEMENT_INFO_TRACE) { debug("populateMovementInfos - %s\n", getMFaction(aiFactionId)->noun_faction); }
 	
-	const int factionId = aiFactionId;
+	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+	{
+		aiData.factionGeographys[factionId].clusters.clear();
+	}
 	
-	Geography &factionGeography = aiData.factionGeographys[factionId];
-	factionGeography.clusters.clear();
+	// populate AI faction non-combat movement info
 	
-	populateAIFactionNonCombatMovementInfo();
+	populateFactionMovementInfo(aiFactionId, 0);
+	
+	// populate all factions combat movement infos
+	
+	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+	{
+		populateFactionMovementInfo(factionId, 1);
+	}
 	
 }
 
 /*
-For each base and non-combat unit:
+For each base and non-combat or combat unit:
 1. Assign cluster ID.
 2. Generate landmarks based on cluster size.
 3. Computes non-blocked distances from landmarks.
 */
-void populateAIFactionNonCombatMovementInfo()
+void populateFactionMovementInfo(int factionId, int clusterType)
 {
-	debug("populateAIFactionNonCombatMovementInfo\n");
+	if (MOVEMENT_INFO_TRACE) { debug("populateFactionMovementInfo(factionId=%d, clusterType=%d)\n", factionId, clusterType); }
 	
-	const int clusterType = 0;
-	const int factionId = aiFactionId;
+	Geography factionGeography = aiData.factionGeographys[factionId];
 	
-	Geography &factionGeography = aiData.factionGeographys[factionId];
-	factionGeography.clusters.clear();
+	// process tiles
 	
-	// process base tiles
-	
-	for (int baseId : aiData.baseIds)
+	for (int tileIndex = 0; tileIndex < *map_area_tiles; tileIndex++)
 	{
-		MAP *baseTile = getBaseMapTile(baseId);
-		int baseTileIndex = baseTile - *MapPtr;
-		TileInfo &baseTileInfo = aiData.tileInfos[baseTileIndex];
-		TileFactionInfo &baseTileFactionInfo = baseTileInfo.factionInfos[factionId];
+		TileInfo &tileInfo = aiData.tileInfos[tileIndex];
+		TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
+		
+		// exclude blocked
+		
+		if (tileFactionInfo.blocked[clusterType])
+			continue;
 		
 		for (int surfaceIndex = 0; surfaceIndex < 2; surfaceIndex++)
 		{
-			int surfaceAssociation = baseTileFactionInfo.surfaceAssociations[surfaceIndex];
+			int surfaceAssociation = tileFactionInfo.surfaceAssociations[surfaceIndex];
 			
-			if (surfaceAssociation != -1 && baseTileFactionInfo.clusterIds[clusterType][surfaceIndex] == -1)
-			{
-				generateNonCombatCluster(baseTileIndex, surfaceIndex, factionId);
-			}
+			// correct surfaceAssociation only
+			
+			if (surfaceAssociation == -1)
+				continue;
+			
+			// exclude unreacheable ocean associations
+			
+			if (surfaceIndex == 1 && factionGeography.potentiallyReachableAssociations.count(surfaceAssociation) == 0)
+				continue;
+			
+			// skip tiles already assigned to cluster
+			
+			if (tileFactionInfo.clusterIds[clusterType][surfaceIndex] != -1)
+				continue;
+			
+			// generate cluster
+			
+			generateCluster(factionId, clusterType, surfaceIndex, tileIndex);
 			
 		}
 		
@@ -1201,52 +1203,69 @@ void populateAIFactionNonCombatMovementInfo()
 	
 }
 
-void generateNonCombatCluster(int initialTileIndex, int surfaceIndex, int factionId)
+void generateCluster(int factionId, int clusterType, int surfaceIndex, int initialTileIndex)
 {
-	debug
-	(
-		"generateNonCombatCluster"
-		" (%3d,%3d) surfaceIndex=%d"
-		" factionId=%d"
-		"\n"
-		, getX(initialTileIndex), getY(initialTileIndex), surfaceIndex
-		, factionId
-	);
+	if (MOVEMENT_INFO_TRACE)
+	{
+		debug
+		(
+			"generateCluster(factionId=%d, clusterType=%d, surfaceIndex=%d, tile=(%3d,%3d)"
+			"\n"
+			, factionId
+			, clusterType
+			, surfaceIndex
+			, getX(initialTileIndex), getY(initialTileIndex)
+		);
+	}
 	
 	Geography &factionGeography = aiData.factionGeographys[factionId];
 	int clusterId = factionGeography.clusters.size();
 	factionGeography.clusters.emplace_back();
 	Cluster &cluster = factionGeography.clusters.at(clusterId);
+	cluster.type = clusterType;
 	
 	executionProfiles["1.2.5.0. initializeCluster"].start();
 	
-	// there is no non-combat aliens
+	// populate movementTypeSet
+	
+	robin_hood::unordered_flat_set<MovementType> movementTypeSet;
 	
 	if (factionId == 0)
-		return;
-	
-	// populate movementTypes
-	
-	robin_hood::unordered_flat_set<MovementType> movementTypes;
-	
-	switch (surfaceIndex)
 	{
-	case 1:
-		movementTypes.insert(getUnitApproximateMovementType(factionId, BSC_SEA_ESCAPE_POD));
-		break;
-	case 0:
-		movementTypes.insert(getUnitApproximateMovementType(factionId, BSC_COLONY_POD));
-		break;
+		if (clusterType == 0)
+		{
+			// there are no non-combat aliens
+			return;
+		}
+		else
+		{
+			movementTypeSet.insert(getUnitMovementType(factionId, (surfaceIndex == 0 ? BSC_MIND_WORMS : BSC_SEALURK)));
+		}
+		
 	}
+	else
+	{
+		if (clusterType == 0)
+		{
+			movementTypeSet.insert(getUnitMovementType(factionId, (surfaceIndex == 0 ? BSC_COLONY_POD : BSC_SEA_ESCAPE_POD)));
+			movementTypeSet.insert(getUnitMovementType(factionId, (surfaceIndex == 0 ? BSC_FORMERS : BSC_SEA_FORMERS)));
+		}
+		else
+		{
+			movementTypeSet.insert(getUnitMovementType(factionId, (surfaceIndex == 0 ? BSC_MIND_WORMS : BSC_SEALURK)));
+			movementTypeSet.insert(getUnitMovementType(factionId, (surfaceIndex == 0 ? BSC_SCOUT_PATROL : BSC_UNITY_GUNSHIP)));
+		}
+		
+	}
+	
+	std::vector<MovementType> movementTypes(movementTypeSet.begin(), movementTypeSet.end());
 	
 	// scan area initially computing cluster area and next landmark
 	
-	int initialLandmarkTileIndex = initializeNonCombatCluster(initialTileIndex, surfaceIndex, factionId, clusterId, movementTypes);
+	int initialLandmarkTileIndex = initializeCluster(factionId, clusterId, surfaceIndex, movementTypes, initialTileIndex);
 	debug("\tarea=%4d\n", cluster.area);
 	
 	executionProfiles["1.2.5.0. initializeCluster"].stop();
-	
-	executionProfiles["1.2.5.1. generate landmarks"].start();
 	
 	for (MovementType &movementType : movementTypes)
 	{
@@ -1261,31 +1280,29 @@ void generateNonCombatCluster(int initialTileIndex, int surfaceIndex, int factio
 		
 		for (int landmarkId = 0; landmarkId < landmarkCount; landmarkId++)
 		{
-			debug("\t\t(%3d,%3d)\n", getX(landmarkTileIndex), getY(landmarkTileIndex));
-			landmarkTileIndex = generateNonCombatClusterLandmark(landmarkTileIndex, surfaceIndex, factionId, clusterId, movementType, landmarkId);
+			executionProfiles["1.2.5.1. generate landmark"].start();
+			landmarkTileIndex = generateLandmark(factionId, clusterId, surfaceIndex, movementType, landmarkId, landmarkTileIndex);
+			executionProfiles["1.2.5.1. generate landmark"].stop();
 		}
 		
 	}
 	
-	executionProfiles["1.2.5.1. generate landmarks"].stop();
-	
 }
 
-int initializeNonCombatCluster(int initialTileIndex, int surfaceIndex, int factionId, int clusterId, robin_hood::unordered_flat_set<MovementType> &movementTypes)
+int initializeCluster(int factionId, int clusterId, int surfaceIndex, std::vector<MovementType> &movementTypes, int initialTileIndex)
 {
-	debug
-	(
-		"initializeCluster"
-		" (%3d,%3d) surfaceIndex=%d"
-		" factionId=%1d"
-		" clusterId=%3d"
-		"\n"
-		, getX(initialTileIndex), getY(initialTileIndex), surfaceIndex
-		, factionId
-		, clusterId
-	);
-	
-	int clusterType = 0;
+	if (MOVEMENT_INFO_TRACE)
+	{
+		debug
+		(
+			"initializeCluster(factionId=%1d, clusterId=%3d, surfaceIndex=%1d, initialTile=(%3d,%3d))"
+			"\n"
+			, factionId
+			, clusterId
+			, surfaceIndex
+			, getX(initialTileIndex), getY(initialTileIndex)
+		);
+	}
 	
 	Geography &factionGeography = aiData.factionGeographys[factionId];
 	Cluster &cluster = factionGeography.clusters.at(clusterId);
@@ -1325,12 +1342,12 @@ int initializeNonCombatCluster(int initialTileIndex, int surfaceIndex, int facti
 		{
 			TileInfo &tileInfo = aiData.tileInfos[tileIndex];
 			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
-			bool tileZoc = tileFactionInfo.zoc;
+			bool tileZoc = tileFactionInfo.zoc[cluster.type];
 			int tileDistance = distances.at(tileIndex);
 			
 			// assign clusterId
 			
-			tileFactionInfo.clusterIds[clusterType][surfaceIndex] = clusterId;
+			tileFactionInfo.clusterIds[cluster.type][surfaceIndex] = clusterId;
 			
 			// process adjacent tiles
 			
@@ -1346,9 +1363,8 @@ int initializeNonCombatCluster(int initialTileIndex, int surfaceIndex, int facti
 				TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
 				TileFactionInfo &adjacentTileFactionInfo = adjacentTileInfo.factionInfos[factionId];
 				int adjacentTileSurfaceAssociation = adjacentTileFactionInfo.surfaceAssociations[surfaceIndex];
-				bool adjacentTileBlocked = adjacentTileFactionInfo.blocked;
-				bool adjacentTileZoc = adjacentTileFactionInfo.zoc;
-				bool adjacentTileWarzone = adjacentTileInfo.warzone;
+				bool adjacentTileBlocked = adjacentTileFactionInfo.blocked[cluster.type];
+				bool adjacentTileZoc = adjacentTileFactionInfo.zoc[cluster.type];
 				
 				// corresponding realm
 				
@@ -1357,7 +1373,7 @@ int initializeNonCombatCluster(int initialTileIndex, int surfaceIndex, int facti
 				
 				// available
 				
-				if (adjacentTileBlocked || (tileZoc && adjacentTileZoc) || adjacentTileWarzone)
+				if (adjacentTileBlocked || (tileZoc && adjacentTileZoc))
 					continue;
 				
 				// update distance
@@ -1378,7 +1394,7 @@ int initializeNonCombatCluster(int initialTileIndex, int surfaceIndex, int facti
 					
 					for (MovementType &movementType : movementTypes)
 					{
-						hexCostTotal[movementType] += tileInfo.hexCosts1[movementType][angle];
+						hexCostTotal[movementType] += tileInfo.hexCosts[movementType][angle];
 					}
 					
 				}
@@ -1445,31 +1461,28 @@ int initializeNonCombatCluster(int initialTileIndex, int surfaceIndex, int facti
 	
 }
 
-int generateNonCombatClusterLandmark(int initialTileIndex, int surfaceIndex, int factionId, int clusterId, MovementType movementType, int landmarkId)
+int generateLandmark(int factionId, int clusterId, int surfaceIndex, MovementType movementType, int landmarkId, int initialTileIndex)
 {
-	bool TRACE = DEBUG & false;
-	
-	debug
-	(
-		"generateNonCombatClusterLandmark"
-		" (%3d,%3d) surfaceIndex=%d"
-		" factionId=%1d"
-		" clusterId=%3d"
-		" movementType=%d"
-		" landmarkId=%2d"
-		"\n"
-		, getX(initialTileIndex), getY(initialTileIndex), surfaceIndex
-		, factionId
-		, clusterId
-		, movementType
-		, landmarkId
-	);
+	if (MOVEMENT_INFO_TRACE)
+	{
+		debug
+		(
+			"generateLandmark(factionId=%1d, clusterId=%3d, surfaceIndex=%1d, movementType=%1d, landmarkId=%2d, initialTile=(%3d,%3d))"
+			"\n"
+			, factionId
+			, clusterId
+			, surfaceIndex
+			, movementType
+			, landmarkId
+			, getX(initialTileIndex), getY(initialTileIndex)
+		);
+	}
 	
 	Geography &factionGeography = aiData.factionGeographys[factionId];
 	Cluster &cluster = factionGeography.clusters.at(clusterId);
 	ClusterMovementInfo &clusterMovementInfo = cluster.movementInfos.at(movementType);
-	std::vector<std::vector<int>> &landmarkNetwork = clusterMovementInfo.landmarkNetwork;
-	std::vector<int> &movementCosts = landmarkNetwork.at(landmarkId);
+	std::vector<std::vector<double>> &landmarkNetwork = clusterMovementInfo.landmarkNetwork;
+	std::vector<double> &movementCosts = landmarkNetwork.at(landmarkId);
 	
 	// set all movementCosts to infinity
 	
@@ -1494,7 +1507,7 @@ int generateNonCombatClusterLandmark(int initialTileIndex, int surfaceIndex, int
 	// process open nodes
 	
 	int nextLandmarkTileIndex = initialTileIndex;
-	int nextLandmarkTileSummaryMovementCost = 0;
+	double nextLandmarkTileSummaryMovementCost = 0.0;
 	
 	while (!openNodes.empty())
 	{
@@ -1502,27 +1515,31 @@ int generateNonCombatClusterLandmark(int initialTileIndex, int surfaceIndex, int
 		{
 			TileInfo &tileInfo = aiData.tileInfos[tileIndex];
 			TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
-			bool tileZoc = tileFactionInfo.zoc;
-			int tileMovementCost = movementCosts.at(tileIndex);
+			bool tileZoc = tileFactionInfo.zoc[cluster.type];
+			double tileMovementCost = movementCosts.at(tileIndex);
 			
 			// process adjacent tiles
 			
 			bool extended = false;
+			bool edge = false;
 			
-			for (int angle = 0; angle < ANGLE_COUNT; angle++)
+			for (int i = 0; i < tileInfo.validAdjacentTileCount; i++)
 			{
-				int adjacentTileIndex = tileInfo.adjacentTileIndexes[angle];
-				int hexCost = tileInfo.hexCosts1[movementType][angle];
+				int angle = tileInfo.validAdjacentTileAngles[i];
+				int adjacentTileIndex = tileInfo.validAdjacentTileIndexes[i];
+				int hexCost = tileInfo.hexCosts[movementType][angle];
 				
-				if (adjacentTileIndex == -1 || hexCost == -1)
+				if (hexCost == -1)
+				{
+					edge = true;
 					continue;
+				}
 				
 				TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
 				TileFactionInfo &adjacentTileFactionInfo = adjacentTileInfo.factionInfos[factionId];
 				int adjacentTileSurfaceAssociation = adjacentTileFactionInfo.surfaceAssociations[surfaceIndex];
-				bool adjacentTileBlocked = adjacentTileFactionInfo.blocked;
-				bool adjacentTileZoc = adjacentTileFactionInfo.zoc;
-				bool adjacentTileWarzone = adjacentTileInfo.warzone;
+				bool adjacentTileBlocked = adjacentTileFactionInfo.blocked[cluster.type];
+				bool adjacentTileZoc = adjacentTileFactionInfo.zoc[cluster.type];
 				
 				// corresponding realm
 				
@@ -1531,15 +1548,19 @@ int generateNonCombatClusterLandmark(int initialTileIndex, int surfaceIndex, int
 				
 				// available
 				
-				if (adjacentTileBlocked || (tileZoc && adjacentTileZoc) || adjacentTileWarzone)
+				if (adjacentTileBlocked || (tileZoc && adjacentTileZoc))
 					continue;
+				
+				// adjust hexCost with movementImpediment
+				
+				double impededHexCost = hexCost + adjacentTileFactionInfo.impediment[cluster.type];
 				
 				// update movementCost
 				
-				int oldAdjacentTileMovementCost = movementCosts.at(adjacentTileIndex);
-				int newAdjacentTileMovementCost = tileMovementCost + hexCost;
+				double oldAdjacentTileMovementCost = movementCosts.at(adjacentTileIndex);
+				double newAdjacentTileMovementCost = tileMovementCost + impededHexCost;
 				
-				if (newAdjacentTileMovementCost < oldAdjacentTileMovementCost)
+				if (newAdjacentTileMovementCost < oldAdjacentTileMovementCost - 0.1)
 				{
 					movementCosts.at(adjacentTileIndex) = newAdjacentTileMovementCost;
 					newOpenNodes.push_back(adjacentTileIndex);
@@ -1550,19 +1571,18 @@ int generateNonCombatClusterLandmark(int initialTileIndex, int surfaceIndex, int
 				
 			}
 			
-			// open node was extended - not a good candidate for next landmark
+			// not edge or extended - not a good candidate for next landmark
 			
-			if (extended)
+			if (!edge || extended)
 				continue;
 			
 			// update nextLandmarkTileIndex
 			
-			int summaryMovementCost = tileMovementCost;
+			double summaryMovementCost = tileMovementCost;
 			
 			for (int otherLandmarkId = 0; otherLandmarkId < landmarkId; otherLandmarkId++)
 			{
-				std::vector<int> &otherLandmarkMovementCosts = landmarkNetwork.at(otherLandmarkId);
-				int otherLandmarkMovementCost = otherLandmarkMovementCosts.at(tileIndex);
+				double otherLandmarkMovementCost = landmarkNetwork.at(otherLandmarkId).at(tileIndex);
 				summaryMovementCost += otherLandmarkMovementCost;
 			}
 			
@@ -1582,23 +1602,6 @@ int generateNonCombatClusterLandmark(int initialTileIndex, int surfaceIndex, int
 	}
 	
 	executionProfiles["1.2.5.1.1. compute movementCosts"].stop();
-	
-	if (TRACE)
-	{
-		debug("\tlandmark movementCosts\n");
-		
-		for (int tileIndex = 0; tileIndex < *map_area_tiles; tileIndex++)
-		{
-			int movementCost = movementCosts.at(tileIndex);
-			
-			if (movementCost == MOVEMENT_INFINITY)
-				continue;
-			
-			debug("\t\t(%3d,%3d) %3d\n", getX(tileIndex), getY(tileIndex), movementCost);
-			
-		}
-		
-	}
 	
 	return nextLandmarkTileIndex;
 	
@@ -1632,7 +1635,7 @@ int getCachedLMovementCost(long long key)
 
 void setCachedLMovementCost(long long key, int movementCost)
 {
-	cachedAMovementCosts[key] = movementCost;
+	cachedLMovementCosts[key] = movementCost;
 }
 
 int getLMovementCost(MAP *origin, MAP *destination, int factionId, int clusterType, int surfaceType, MovementType movementType)
@@ -1683,14 +1686,14 @@ int getLMovementCost(MAP *origin, MAP *destination, int factionId, int clusterTy
 	executionProfiles["| getLMovementCost 1. check cached value"].start();
 	
 	long long originToDestinationMovementCostKey = getCachedLMovementCostKey(origin, destination, factionId, clusterType, surfaceType, movementType);
-	int cachedMovementCost = getCachedLMovementCost(originToDestinationMovementCostKey);
+	int cachedLMovementCost = getCachedLMovementCost(originToDestinationMovementCostKey);
 	
 	executionProfiles["| getLMovementCost 1. check cached value"].stop();
 	
-	if (cachedMovementCost != -1)
+	if (cachedLMovementCost != -1)
 	{
 		executionProfiles["| getLMovementCost"].stop();
-		return cachedMovementCost;
+		return cachedLMovementCost;
 	}
 	
 	executionProfiles["| getLMovementCost 2. estimate movementCost"].start();
@@ -1703,13 +1706,13 @@ int getLMovementCost(MAP *origin, MAP *destination, int factionId, int clusterTy
 	// estimate direct movementCost
 	
 	int range = getRange(origin, destination);
-	int movementCost = (int)ceil((double)range / clusterMovementInfo.averageHexCost);
+	double movementCost = (double)range * clusterMovementInfo.averageHexCost;
 	
 	// estimate landmark movementCost
 	
-	for (std::vector<int> &landmarkMovementCosts : clusterMovementInfo.landmarkNetwork)
+	for (std::vector<double> &landmarkMovementCosts : clusterMovementInfo.landmarkNetwork)
 	{
-		int landmarkMovementCost = abs(landmarkMovementCosts.at(originTileIndex) - landmarkMovementCosts.at(destinationTileIndex));
+		double landmarkMovementCost = abs(landmarkMovementCosts.at(originTileIndex) - landmarkMovementCosts.at(destinationTileIndex));
 		movementCost = std::max(movementCost, landmarkMovementCost);
 	}
 	
@@ -1719,7 +1722,7 @@ int getLMovementCost(MAP *origin, MAP *destination, int factionId, int clusterTy
 	
 	executionProfiles["| getAMovementCost 3. set cached value"].start();
 	
-	setCachedLMovementCost(originToDestinationMovementCostKey, movementCost);
+	setCachedLMovementCost(originToDestinationMovementCostKey, (int)movementCost);
 	
 	executionProfiles["| getAMovementCost 3. set cached value"].stop();
 	
@@ -1727,7 +1730,7 @@ int getLMovementCost(MAP *origin, MAP *destination, int factionId, int clusterTy
 	
 	// return value
 	
-	return movementCost;
+	return (int)movementCost;
 	
 }
 
@@ -1768,6 +1771,40 @@ int getUnitLTravelTime(MAP *origin, MAP *destination, int factionId, int unitId,
 	}
 	
 	return travelTime;
+	
+}
+int getUnitActionLTravelTime(MAP *origin, MAP *destination, int factionId, int unitId)
+{
+	int speed = getUnitSpeed(unitId);
+	return getUnitLTravelTime(origin, destination, factionId, unitId, speed, 1);
+}
+int getUnitAttackLTravelTime(MAP *origin, MAP *destination, int factionId, int unitId)
+{
+	UNIT *unit = getUnit(unitId);
+	int triad = unit->triad();
+	
+	int ocean;
+	
+	switch (triad)
+	{
+	case TRIAD_LAND:
+		ocean = false;
+		break;
+	case TRIAD_SEA:
+		ocean = true;
+		break;
+	default:
+		// not applicable
+		return -1;
+	}
+	
+	int speed = getUnitSpeed(unitId);
+	MAP *attackPosition = getMeleeAttackPosition(factionId, ocean, origin, destination, true);
+	
+	if (attackPosition == nullptr)
+		return -1;
+	
+	return getUnitLTravelTime(origin, attackPosition, factionId, unitId, speed, Rules->mov_rate_along_roads);
 	
 }
 
@@ -1886,9 +1923,9 @@ int getLandUnitLTravelTime(MAP *origin, MAP *destination, int factionId, int uni
 	
 	if (isSameLandAssociation(origin, destination, factionId)) // same continent
 	{
-		// combatType
+		// clusterType
 		
-		int combatType = (isCombatUnit(unitId) ? 1 : 0);
+		int clusterType = (isCombatUnit(unitId) ? 1 : 0);
 		
 		// movementType
 		
@@ -1896,7 +1933,7 @@ int getLandUnitLTravelTime(MAP *origin, MAP *destination, int factionId, int uni
 		
 		// movementCost
 		
-		int movementCost = getLMovementCost(origin, destination, factionId, combatType, 0, movementType);
+		int movementCost = getLMovementCost(origin, destination, factionId, clusterType, 0, movementType);
 		
 		// unreachable
 		
@@ -2126,7 +2163,8 @@ int getVehicleActionLTravelTime(int vehicleId, MAP *destination)
 int getVehicleAttackLTravelTime(int vehicleId, MAP *destination)
 {
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	return getVehicleLTravelTime(vehicleId, vehicleTile, destination, Rules->mov_rate_along_roads);
+	MAP *attackPosition = getVehicleMeleeAttackPosition(vehicleId, destination, true);
+	return getVehicleLTravelTime(vehicleId, vehicleTile, attackPosition, Rules->mov_rate_along_roads);
 }
 
 int getVehicleLTravelTimeByTaskType(int vehicleId, MAP *destination, TaskType taskType)
@@ -2186,69 +2224,9 @@ int getRouteVectorDistance(MAP *tile1, MAP *tile2)
 
 /*
 Returns vehicle movement type.
-*/
-MovementType getUnitMovementType(int factionId, int unitId)
-{
-	UNIT *unit = getUnit(unitId);
-	int triad = unit->triad();
-	
-	MovementType movementType;
-	
-	switch (triad)
-	{
-	case TRIAD_AIR:
-		{
-			movementType = MT_AIR;
-		}
-		break;
-		
-	case TRIAD_SEA:
-		{
-			bool native = isNativeUnit(unitId);
-			movementType = native ? MT_SEA_NATIVE : MT_SEA_REGULAR;
-		}
-		break;
-		
-	case TRIAD_LAND:
-		{
-			bool native = isFactionHasProject(factionId, FAC_XENOEMPATHY_DOME) || isNativeUnit(unitId);
-			bool hover = isHoveringLandUnit(unitId);
-			bool easy = getFaction(factionId)->SE_planet >= 1 || isEasyFungusEnteringLandUnit(unitId);
-			
-			if (native)
-			{
-				movementType = MT_LAND_NATIVE;
-			}
-			else if (hover)
-			{
-				movementType = MT_LAND_EASY;
-			}
-			else if (easy)
-			{
-				movementType = MT_LAND_EASY;
-			}
-			else
-			{
-				movementType = MT_LAND_REGULAR;
-			}
-		}
-		break;
-		
-	// safeguarding case
-	default:
-		movementType = MT_AIR;
-		
-	}
-	
-	return movementType;
-	
-}
-
-/*
-Returns vehicle movement type.
 Ignoring hovering unit ability.
 */
-MovementType getUnitApproximateMovementType(int factionId, int unitId)
+MovementType getUnitMovementType(int factionId, int unitId)
 {
 	UNIT *unit = getUnit(unitId);
 	int triad = unit->triad();

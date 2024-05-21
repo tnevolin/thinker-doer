@@ -70,7 +70,7 @@ enum BASE_DEFENSE_TYPE
 	BD_NATIVE,
 };
 
-int aiFactionUpkeep(const int factionId);
+void aiFactionUpkeep(const int factionId);
 void __cdecl modified_enemy_units_check(int factionId);
 void strategy();
 
@@ -91,9 +91,9 @@ void populateFactionAirbases();
 void populateVehicles();
 void populateNetworkCoverage();
 void populateShipyardsAndSeaTransports();
+void populateOceanAssociationTargets();
 void populateReachableAssociations();
 void populateWarzones();
-void populateBaseEnemyMovementCosts();
 void populateEnemyStacks();
 void populateEmptyEnemyBaseTiles();
 
@@ -104,7 +104,9 @@ void evaluateBasePoliceRequests();
 void evaluateBaseDefense();
 
 void populateEnemyOffenseThreat();
+
 void designUnits();
+void setUnitVariables();
 void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::vector<int> weaponIds, std::vector<int> armorIds, std::vector<std::vector<int>> abilitiesSets, int reactor, int plan, char *name);
 void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int armorId, std::vector<int> abilityIds, int reactor, int plan, char *name);
 void obsoletePrototypes(int factionId, robin_hood::unordered_flat_set<int> chassisIds, robin_hood::unordered_flat_set<int> weaponIds, robin_hood::unordered_flat_set<int> armorIds, robin_hood::unordered_flat_set<int> abilityFlagsSet, robin_hood::unordered_flat_set<int> reactors);
@@ -208,7 +210,7 @@ double getBaseStatisticalProportionalWorkerCountIncrease(double currentAge, doub
 int getBaseProjectedSize(int baseId, int turns);
 int getBaseGrowthTime(int baseId, int targetSize);
 int getBaseOptimalDoctors(int baseId);
-double getResourceScore(double minerals, double energy);
+double getResourceScore(double mineral, double energy);
 void populateHexCosts();
 int getBaseFoundingTurn(int baseId);
 int getBaseAge(int baseId);
@@ -225,13 +227,14 @@ double getTileDefenseMultiplier(MAP *tile, int factionId);
 double getHarmonicMean(std::vector<std::vector<double>> parameters);
 bool compareMovementActions(MovementAction &o1, MovementAction &o2);
 std::vector<MovementAction> getVehicleReachableLocations(int vehicleId);
-std::vector<MovementAction> getVehicleMeleeAttackLocations(int vehicleId);
+std::vector<MovementAction> getVehicleMeleeAttackTargetLocations(int vehicleId);
 std::vector<MovementAction> getVehicleArtilleryAttackPositions(int vehicleId);
 double getVehicleTileDanger(int vehicleId, MAP *tile);
 bool isVehicleAllowedMove(int vehicleId, MAP *from, MAP *to, bool ignoreEnemy);
 std::vector<MAP *> getVehicleThreatenedTiles(int vehicleId);
 std::vector<int> &getAssociationSeaTransports(int association, int factionId);
 std::vector<int> &getAssociationShipyards(int association, int factionId);
+bool isOceanAssociationShared(int oceanAssociation, int factionId);
 void assignVehiclesToTransports();
 void joinAssociations(robin_hood::unordered_flat_map<int, int> &associations, robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> &connections);
 int getBestSeaCombatSpeed(int factionId);
@@ -240,7 +243,9 @@ int getSeaTransportChassisSpeed(int oceanAssociation, int factionId, bool existi
 int getBestSeaTransportSpeed(int factionId);
 MAP *getClosestTargetLocation(int factionId, MAP *origin, MAP *target, int proximity, int triad, bool ignoreHostile);
 void disbandOrversupportedVehicles(int factionId);
+void disbandUnneededVehicles();
 void storeBaseSetProductionItems();
+MAP *getMeleeAttackPosition(int factionId, bool ocean, MAP *origin, MAP *target, bool ignoreHostile);
 MAP *getVehicleMeleeAttackPosition(int vehicleId, MAP *target, bool ignoreHostile);
 MAP *getVehicleArtilleryAttackPosition(int vehicleId, MAP *target, bool ignoreHostile);
 bool isUnitCanCaptureBase(int factionId, int unitId, MAP *origin, MAP *baseTile);

@@ -12,7 +12,7 @@
 				<Option object_output="build/obj/debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option host_application="terranx_mod.exe" />
+				<Option host_application="patch/terranx_mod.exe" />
 				<Option run_host_application_in_terminal="0" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
@@ -33,7 +33,6 @@
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
-					<Add option="-std=c++14" />
 					<Add option="-O3 -fno-strict-aliasing -fno-delete-null-pointer-checks" />
 					<Add option="-DBUILD_DLL" />
 				</Compiler>
@@ -47,12 +46,11 @@
 				<Option object_output="build/obj/release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option host_application="terranx_mod.exe" />
+				<Option host_application="patch/terranx_mod.exe" />
 				<Option run_host_application_in_terminal="0" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
-					<Add option="-std=c++14" />
 					<Add option="-O3 -fno-strict-aliasing -fno-delete-null-pointer-checks" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-DBUILD_REL" />
@@ -86,7 +84,7 @@
 			<Add library="psapi" />
 		</Linker>
 		<ExtraCommands>
-			<Add after='cmd /c copy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; patch\' />
+			<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; patch\ /Y' />
 			<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; patch\ /Y' />
 		</ExtraCommands>
 		<Unit filename="src/ai.cpp" />
@@ -150,9 +148,6 @@
 		<Unit filename="src/wtp.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<envvars />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

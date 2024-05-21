@@ -4850,8 +4850,8 @@ void patch_limit_orbit_intake()
 void patch_ai_transport_change()
 {
    	write_call(0x004CB3BA, (int)modified_order_veh);
-   	
    	write_call(0x0053179F, (int)modified_order_veh);
+   	
 }
 
 /*
@@ -5231,18 +5231,18 @@ void patch_tech_steal()
 
 void patch_setup_wtp(Config* cf)
 {
-	// debug mode game speedup
-	
-	if (DEBUG)
-	{
-		patch_disable_boom_delay();
-		patch_disable_battle_refresh();
-		patch_accelerate_order_veh();
-		patch_disable_boom();
-		patch_disable_battle_calls();
-		patch_disable_focus();
-	}
-
+//	// debug mode game speedup
+//	
+//	if (DEBUG)
+//	{
+//		patch_disable_boom_delay();
+//		patch_disable_battle_refresh();
+//		patch_accelerate_order_veh();
+//		patch_disable_boom();
+//		patch_disable_battle_calls();
+//		patch_disable_focus();
+//	}
+//	
 	// integrated into Thinker
 //	// patch AI vehicle home base reassignment bug
 //	// originally it reassigned to bases with mineral_surplus < 2

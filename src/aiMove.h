@@ -39,4 +39,5 @@ MAP *getNearestFriendlyBase(int vehicleId);
 MAP *getNearestMonolith(int x, int y, int triad);
 SeaTransit getVehicleOptimalCrossOceanTransit(int vehicleId, int crossOceanAssociation, MAP *destination);
 Transfer *getVehicleOptimalDropOffTransfer(int vehicleId, int seaTransportVehicleId, MAP *destination);
+void setSafeMoveTo(int vehicleId, MAP *destination);
 

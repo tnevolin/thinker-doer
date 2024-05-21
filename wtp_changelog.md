@@ -1,3 +1,11 @@
+# Version 301
+
+* Fixed vanilla bug when it did not initialize tile owners at game setup.
+
+# Version 300
+
+* Major AI revamping. Alpha tested. Seems stable but requires some more thorough check.
+
 # Version 299
 
 * Fixed my bug in bombardment check that sometimese crashed the game.

@@ -3689,17 +3689,14 @@ HOOK_API int modifiedFactionUpkeep(const int factionId)
 		// run WTP AI code for AI eanbled factions
 		
 		executionProfiles["0.1. aiFactionUpkeep"].start();
-		returnValue = aiFactionUpkeep(factionId);
+		aiFactionUpkeep(factionId);
 		executionProfiles["0.1. aiFactionUpkeep"].stop();
 		
 	}
-	else
-	{
-		// default
-		
-		returnValue = faction_upkeep(factionId);
-		
-	}
+	
+	// execute original function
+	
+	returnValue = faction_upkeep(factionId);
 	
     // fix vehicle home bases for normal factions
     
@@ -4780,39 +4777,6 @@ int __cdecl modifiedTurnUpkeep()
 		
 	}
 	
-	// executionProfiles
-	
-	if (DEBUG)
-	{
-		const int NAME_LENGTH = 120;
-		debug("executionProfiles\n");
-		for (std::pair<std::string const, Profile> &executionProfileEntry : executionProfiles)
-		{
-			const std::string &name = executionProfileEntry.first;
-			Profile &profile = executionProfileEntry.second;
-			
-			std::string displayName = name + " " + std::string(std::max(0, NAME_LENGTH - 1 - (int)name.length()), '.');
-			int executionCount = profile.getCount();
-			double totalExecutionTime = profile.getTime();
-			double averageExectutionTime = (executionCount == 0 ? 0.0 : totalExecutionTime / (double)executionCount);
-			
-			debug
-			(
-				"\t%-*s"
-				" count=%8d"
-				" totalTime=%7.3f"
-				" averageTime=%10.6f"
-				"\n"
-				, NAME_LENGTH, displayName.c_str()
-				, executionCount
-				, totalExecutionTime
-				, averageExectutionTime
-			);
-		}
-	}
-	
-	executionProfiles.clear();
-	
 	// execute original function
 	
 	return mod_turn_upkeep();
@@ -5248,14 +5212,12 @@ This modification makes sure they don't.
 */
 int __cdecl modified_order_veh(int vehicleId, int angle, int a3)
 {
+	// invalid angle is not affected by this function
 	// not sea transport vehicle is not affected
 	
-	if (!isSeaTransportVehicle(vehicleId))
+	if (!(angle >= 0 && angle < ANGLE_COUNT) || !isSeaTransportVehicle(vehicleId))
 	{
-		int returnValue = tx_order_veh(vehicleId, angle, a3);
-		
-		return returnValue;
-		
+		return tx_order_veh(vehicleId, angle, a3);
 	}
 	
 	// check if there is a transport at sea at given angle
@@ -5714,6 +5676,46 @@ HOOK_API void modified_text_get_for_tech_steal_2()
 	// restore probe tech steal toggle value
 	
 	*alphax_tgl_probe_steal_tech = alphax_tgl_probe_steal_tech_value;
+	
+}
+
+/*
+Executes after autosave.
+*/
+void endOfTurn()
+{
+	// executionProfiles
+	
+	if (DEBUG)
+	{
+		const int NAME_LENGTH = 120;
+		debug("executionProfiles\n");
+		for (std::pair<std::string const, Profile> &executionProfileEntry : executionProfiles)
+		{
+			const std::string &name = executionProfileEntry.first;
+			Profile &profile = executionProfileEntry.second;
+			
+			std::string displayName = name + " " + std::string(std::max(0, NAME_LENGTH - 1 - (int)name.length()), '.');
+			int executionCount = profile.getCount();
+			double totalExecutionTime = profile.getTime();
+			double averageExectutionTime = (executionCount == 0 ? 0.0 : totalExecutionTime / (double)executionCount);
+			
+			debug
+			(
+				"\t%-*s"
+				" count=%8d"
+				" totalTime=%7.3f"
+				" averageTime=%10.6f"
+				"\n"
+				, NAME_LENGTH, displayName.c_str()
+				, executionCount
+				, totalExecutionTime
+				, averageExectutionTime
+			);
+		}
+	}
+	
+	executionProfiles.clear();
 	
 }
 

@@ -151,6 +151,7 @@ int __cdecl mod_faction_upkeep(int faction) {
     }
     if (!*multiplayer_active && *game_preferences & PREF_UNK_2 && faction == *current_player_faction) {
         auto_save();
+        endOfTurn();
     }
     fflush(debug_log);
     return 0;

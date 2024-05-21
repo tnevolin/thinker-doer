@@ -154,10 +154,11 @@ struct ClusterMovementInfo
 	double averageHexCost;
 	// landmark movementCosts
 	// [landmarkId, tileIndex]
-	std::vector<std::vector<int>> landmarkNetwork;
+	std::vector<std::vector<double>> landmarkNetwork;
 };
 struct Cluster
 {
+	int type;
 	int area;
 	// landmark networks by movement type
 	robin_hood::unordered_flat_map<MovementType, ClusterMovementInfo> movementInfos;
@@ -173,6 +174,7 @@ struct Geography
 	robin_hood::unordered_flat_set<int> potentiallyReachableAssociations;
 	robin_hood::unordered_flat_map<int, std::vector<int>> oceanAssociationShipyards;
 	robin_hood::unordered_flat_map<int, std::vector<int>> oceanAssociationSeaTransports;
+	robin_hood::unordered_flat_set<int> oceanAssociationTargets;
 	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, std::vector<Transfer>>> associationTransfers;
 	robin_hood::unordered_flat_map<MAP *, std::vector<Transfer>> oceanBaseTransfers;
 	std::vector<MAP *> raiseableCoasts;
@@ -198,32 +200,19 @@ struct Force
 
 struct TileFactionInfo
 {
-	// movement restrictions
-	
-	bool blockedNeutral = false;
-	bool zocNeutral = false;
-	bool blocked = false;
-	bool zoc = false;
-	bool friendly = false;
-	
-	// associations
-	// [continent/ocean]
-	
+	// association
 	int association = -1;
+	// surfaceAssociations [continent/ocean]
 	int surfaceAssociations[2] = {-1, -1};
+	
+	// movement restrictions
+	bool blocked[2] = {false, false, };
+	bool zoc[2] = {false, false, };
+	double impediment[2] = {0.0, 0.0, };
 	
 	// non-combat and combat clusters
 	// [non-combat/combat][continent/ocean]
-	
 	int clusterIds[2][2] = {{-1, -1}, {-1, -1}};
-	
-	// trav
-	
-	double travelImpediment = 0.0;
-	robin_hood::unordered_flat_map<MAP *, double> estimatedTravelTimes;
-	
-	bool isBlocked(bool ignoreHostile);
-	bool isZoc(bool ignoreHostile);
 	
 };
 
@@ -248,7 +237,7 @@ struct TileInfo
 	
 	// hex costs
 	// [movementType][angle]
-	int hexCosts1[MOVEMENT_TYPE_COUNT][ANGLE_COUNT];
+	int hexCosts[MOVEMENT_TYPE_COUNT][ANGLE_COUNT];
 	
 	// faction infos
 	TileFactionInfo factionInfos[MaxPlayerNum];
@@ -256,8 +245,10 @@ struct TileInfo
 	// enemyOffensiveForces by vehicle.pad_0
 	std::vector<Force> enemyOffensiveForces;
 	
-	bool isBlocked(int factionId, bool ignoreHostile);
-	bool isZoc(int factionId, bool ignoreHostile);
+	// items
+	int baseId = -1;
+	bool base = false;
+	bool bunker = false;
 	
 };
 
@@ -429,31 +420,31 @@ struct TransportControl
 struct Data
 {
 	// development parameters
-
+	
 	double developmentScale;
 	double baseGrowthScale;
-
+	
 	// faction info
-
+	
 	FactionInfo factionInfos[8];
 	int bestOffenseValue;
 	int bestDefenseValue;
-
+	
 	// geography
-
+	
 	Geography factionGeographys[MaxPlayerNum];
 	double roadCoverage;
 	double tubeCoverage;
-
+	
 	// map data
-
+	
 	std::vector<TileInfo> tileInfos;
 	
 	// combat data
-
+	
 	// combat effects
 	CombatEffectTable combatEffectTable;
-
+	
 	// enemy stacks
 	// also includes unprotected artifacts
 	robin_hood::unordered_flat_map<MAP *, EnemyStackInfo> enemyStacks;
@@ -461,17 +452,15 @@ struct Data
 	std::vector<MAP *> emptyEnemyBaseTiles;
 	// best units
 	robin_hood::unordered_flat_map<int, double> unitWeightedEffects;
-
+	
 	// base info
 	robin_hood::unordered_flat_map<int, int> baseBuildingItems;
 	std::vector<BaseInfo> baseInfos = std::vector<BaseInfo>(MaxBaseNum);
 	// average required protection across bases (for normalization)
 	double factionBaseAverageRequiredProtection;
-
-//	CombatData ownTerritoryCombatData;
-//	CombatData foeTerritoryCombatData;
+	
 	std::vector<double> globalAverageUnitEffects = std::vector<double>(2 * MaxProtoFactionNum);
-
+	
 	// other global variables
 	
 	robin_hood::unordered_flat_map<MAP *, int> locationBaseIds;
@@ -502,6 +491,7 @@ struct Data
 	double medianBaseDefenseDemand;
 	robin_hood::unordered_flat_map<int, double> regionDefenseDemand;
 	int maxBaseSize;
+	int totalMineralIntake2;
 	int maxMineralSurplus;
 	robin_hood::unordered_flat_map<int, int> oceanAssociationMaxMineralSurpluses;
 	int bestLandUnitId;
@@ -523,21 +513,25 @@ struct Data
 	Production production;
 	int netIncome;
 	int grossIncome;
-
+	
+	// police 2x unit available
+	
+	bool police2xUnitAvailable;
+	
 	// reset all variables
-
+	
 	void clear();
-
+	
 	// access global data arrays
-
+	
 	TileInfo &getTileInfo(int mapIndex);
 	TileInfo &getTileInfo(int x, int y);
 	TileInfo &getTileInfo(MAP *tile);
 	TileFactionInfo &getTileFactionInfo(MAP *tile, int factionId);
 	BaseInfo &getBaseInfo(int baseId);
-
+	
 	// combat data
-
+	
 	double getGlobalAverageUnitEffect(int unitId);
 	void setGlobalAverageUnitEffect(int unitId, double effect);
 	

@@ -671,6 +671,14 @@ int handler(void* user, const char* section, const char* name, const char* value
 			cf->wtp_enabled_factions[factionId] = (value[factionId - 1] == '0' ? false : true);
 		}
     }
+    else if (MATCH("wtp", "ai_resource_score_mineralWeight"))
+    {
+        cf->ai_resource_score_mineralWeight = atof(value);
+    }
+    else if (MATCH("wtp", "ai_resource_score_energyWeight"))
+    {
+        cf->ai_resource_score_energyWeight = atof(value);
+    }
     else if (MATCH("wtp", "ai_faction_minerals_t1"))
     {
         cf->ai_faction_minerals_t1 = atof(value);
@@ -739,6 +747,26 @@ int handler(void* user, const char* section, const char* name, const char* value
     {
         cf->ai_base_mineral_intake_c = atof(value);
     }
+    else if (MATCH("wtp", "ai_base_mineral_intake2_a"))
+    {
+        cf->ai_base_mineral_intake2_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_mineral_intake2_b"))
+    {
+        cf->ai_base_mineral_intake2_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_mineral_multiplier_a"))
+    {
+        cf->ai_base_mineral_multiplier_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_mineral_multiplier_b"))
+    {
+        cf->ai_base_mineral_multiplier_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_mineral_multiplier_c"))
+    {
+        cf->ai_base_mineral_multiplier_c = atof(value);
+    }
     else if (MATCH("wtp", "ai_base_budget_intake_a"))
     {
         cf->ai_base_budget_intake_a = atof(value);
@@ -746,6 +774,30 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_base_budget_intake_b"))
     {
         cf->ai_base_budget_intake_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_budget_intake2_a"))
+    {
+        cf->ai_base_budget_intake2_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_budget_intake2_b"))
+    {
+        cf->ai_base_budget_intake2_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_budget_intake2_c"))
+    {
+        cf->ai_base_budget_intake2_c = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_budget_multiplier_a"))
+    {
+        cf->ai_base_budget_multiplier_a = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_budget_multiplier_b"))
+    {
+        cf->ai_base_budget_multiplier_b = atof(value);
+    }
+    else if (MATCH("wtp", "ai_base_budget_multiplier_c"))
+    {
+        cf->ai_base_budget_multiplier_c = atof(value);
     }
     else if (MATCH("wtp", "ai_worker_count_a"))
     {
@@ -912,10 +964,6 @@ int handler(void* user, const char* section, const char* name, const char* value
     else if (MATCH("wtp", "ai_production_defensive_facility_threat_threshold"))
     {
 		cf->ai_production_defensive_facility_threat_threshold = atof(value);
-    }
-    else if (MATCH("wtp", "ai_production_psych_facility_priority"))
-    {
-		cf->ai_production_psych_facility_priority = atof(value);
     }
     else if (MATCH("wtp", "ai_expansion_weight_deep"))
     {

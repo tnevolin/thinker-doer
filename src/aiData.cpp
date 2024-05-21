@@ -82,7 +82,7 @@ void BaseCombatData::addProvidedEffect(int vehicleId, bool current)
 }
 bool BaseCombatData::isSatisfied(bool current)
 {
-	return (current ? currentProvidedEffect : providedEffect) >= requiredEffect;
+	return getDemand(current) <= 0.0;
 }
 double BaseCombatData::getDemand(bool current)
 {
@@ -103,30 +103,6 @@ Force::Force(int _vehicleId, ATTACK_TYPE _attackType, double _hastyCoefficient)
 int Force::getVehicleId()
 {
 	return getVehicleIdByAIId(vehiclePad0);
-}
-
-// TileFactionInfo
-
-bool TileFactionInfo::isBlocked(bool ignoreHostile)
-{
-	return (ignoreHostile ? blockedNeutral : blocked);
-}
-
-bool TileFactionInfo::isZoc(bool ignoreHostile)
-{
-	return (ignoreHostile ? zocNeutral : zoc);
-}
-
-// TileInfo
-
-bool TileInfo::isBlocked(int factionId, bool ignoreHostile)
-{
-	return (ignoreHostile ? factionInfos[factionId].blockedNeutral : factionInfos[factionId].blocked);
-}
-
-bool TileInfo::isZoc(int factionId, bool ignoreHostile)
-{
-	return (ignoreHostile ? factionInfos[factionId].zocNeutral : factionInfos[factionId].zoc);
 }
 
 // FoeUnitWeightTable

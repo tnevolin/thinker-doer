@@ -35,34 +35,27 @@ enemy_units_check -> modified_enemy_units_check [WTP] (substitute)
 */
 
 /*
-Faction upkeep entry point.
+AI Faction upkeep entry point.
 This is called for WTP AI enabled factions only.
+This is an additional code and DOES NOT invoke original function!
 */
-int aiFactionUpkeep(const int factionId)
+void aiFactionUpkeep(const int factionId)
 {
 	debug("aiFactionUpkeep - %s\n", MFactions[factionId].noun_faction);
-
-	// set AI faction id for global reference
-
-	aiFactionId = factionId;
-
-	// consider hurrying production in all bases
-
-	considerHurryingProduction(factionId);
-
-	// disband oversupported vehicles
 	
-	disbandOrversupportedVehicles(factionId);
+	// set AI faction id for global reference
+	
+	aiFactionId = factionId;
+	
+	// consider hurrying production in all bases
+	
+	considerHurryingProduction(factionId);
 	
 	// store base current production
 	// it is overriden by vanilla code
 	
 	storeBaseSetProductionItems();
 	
-	// execute original code
-
-	return faction_upkeep(factionId);
-
 }
 
 /*
@@ -100,20 +93,34 @@ void __cdecl modified_enemy_units_check(int factionId)
 	
 	debug("modified_enemy_units_check - %s - end\n", getMFaction(factionId)->noun_faction);fflush(debug_log);
 	
-	// skip all units
+	// run WTP AI code for AI enabled factions
 	
 	if (isWtpEnabledFaction(factionId))
 	{
+		// exhaust all units movement points
+		
 		for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
 		{
 			VEH *vehicle = getVehicle(vehicleId);
+			int speed = mod_veh_speed(vehicleId);
 			
 			if (vehicle->faction_id != factionId)
 				continue;
 			
-			mod_veh_skip(vehicleId);
+			if (vehicle->road_moves_spent >= speed)
+				continue;
+			
+			vehicle->road_moves_spent = speed;
 			
 		}
+		
+		// disband oversupported vehicles
+		
+		disbandOrversupportedVehicles(factionId);
+		
+		// disband unneeded vehicles
+		
+		disbandUnneededVehicles();
 		
 	}
 	
@@ -124,6 +131,7 @@ void strategy()
 	// design units
 	
 	designUnits();
+	setUnitVariables();
 	
 	// populate data
 	
@@ -206,6 +214,7 @@ void populateAIData()
 	profileFunction("1.1.A. populateEnemyOffenseThreat", populateEnemyOffenseThreat);
 	profileFunction("1.1.B. populateEmptyEnemyBaseTiles", populateEmptyEnemyBaseTiles);
 	profileFunction("1.1.C. populateShipyardsAndSeaTransports", populateShipyardsAndSeaTransports);
+	profileFunction("1.1.C'. populateOceanAssociationTargets", populateOceanAssociationTargets);
 	profileFunction("1.1.D. populateReachableAssociations", populateReachableAssociations);
 	profileFunction("1.1.E. populateWarzones", populateWarzones);
 	profileFunction("1.1.F. populateFactionData", populateFactionData);
@@ -675,12 +684,36 @@ void populateTileInfos()
 			int tileX = getX(tileIndex);
 			int tileY = getY(tileIndex);
 			
-			int baseRadiusTileX = tileX + BASE_TILE_OFFSETS[offsetIndex][0];
+			int baseRadiusTileX = wrap(tileX + BASE_TILE_OFFSETS[offsetIndex][0]);
 			int baseRadiusTileY = tileY + BASE_TILE_OFFSETS[offsetIndex][1];
 			
 			tileInfo.baseRadiusTileIndexes[offsetIndex] = getMapIndexByCoordinates(baseRadiusTileX, baseRadiusTileY);
 			
 		}
+		
+	}
+	
+	// populate base
+	
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		MAP *baseTile = getBaseMapTile(baseId);
+		int baseTileIndex = baseTile - *MapPtr;
+		TileInfo &baseTileInfo = aiData.tileInfos[baseTileIndex];
+		
+		baseTileInfo.base = true;
+		baseTileInfo.baseId = baseId;
+		
+	}
+	
+	// populate bunker
+	
+	for (int tileIndex = 0; tileIndex < *map_area_tiles; tileIndex++)
+	{
+		MAP *tile = *MapPtr + tileIndex;
+		TileInfo &tileInfo = aiData.tileInfos[tileIndex];
+		
+		tileInfo.bunker = map_has_item(tile, TERRA_BUNKER);
 		
 	}
 	
@@ -1090,6 +1123,7 @@ void populateUnits()
 
 void populateMaxMineralSurplus()
 {
+	aiData.totalMineralIntake2 = 0;
 	aiData.maxMineralSurplus = 1;
 	aiData.oceanAssociationMaxMineralSurpluses.clear();
 
@@ -1097,6 +1131,8 @@ void populateMaxMineralSurplus()
 	{
 		BASE *base = &(Bases[baseId]);
 		int baseOceanAssociation = getBaseOceanAssociation(baseId);
+		
+		aiData.totalMineralIntake2 += base->mineral_intake_2;
 
 		aiData.maxMineralSurplus = std::max(aiData.maxMineralSurplus, base->mineral_surplus);
 
@@ -1409,6 +1445,35 @@ void populateShipyardsAndSeaTransports()
 
 }
 
+void populateOceanAssociationTargets()
+{
+	debug("populateOceanAssociationTargets\n");
+	
+	for (int baseId = 0; baseId < *total_num_bases; baseId++)
+	{
+		BASE *base = getBase(baseId);
+		MAP *baseTile = getBaseMapTile(baseId);
+		bool baseTileOcean = is_ocean(baseTile);
+		int baseTileOceanAssociation = getOceanAssociation(baseTile, aiFactionId);
+		
+		// other faction base
+		
+		if (base->faction_id == aiFactionId)
+			continue;
+		
+		// ocean base
+		
+		if (!baseTileOcean)
+			continue;
+		
+		// add target
+		
+		aiData.factionGeographys[aiFactionId].oceanAssociationTargets.insert(baseTileOceanAssociation);
+		
+	}
+	
+}
+
 void populateReachableAssociations()
 {
 	debug("populateReachableAssociations\n");
@@ -1619,242 +1684,6 @@ void populateWarzones()
 		// clear warzone
 		
 		aiData.getTileInfo(baseTile).warzone = false;
-		
-	}
-	
-}
-
-/*
-Populates locations where empty base can be captured.
-*/
-void populateBaseEnemyMovementCosts()
-{
-	bool TRACE = DEBUG && false;
-	
-	debug("populateBaseEnemyMovementCosts - %s\n", getMFaction(aiFactionId)->noun_faction);
-	
-	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-	{
-		// not our
-		
-		if (factionId == aiFactionId)
-			continue;
-		
-		// not friendly
-		
-		if (isFriendly(aiFactionId, factionId))
-			continue;
-		
-		if (TRACE)
-		{
-			debug("\t%s\n", getMFaction(factionId)->noun_faction);
-		}
-		
-		// assumed vehicle speeds
-		
-		int landCombatSpeed = getChassis(CHS_INFANTRY)->speed * Rules->mov_rate_along_roads;
-		int seaCombatSpeed = (factionId == 0 ? getChassis(CHS_INFANTRY)->speed * Rules->mov_rate_along_roads : getBestSeaCombatSpeed(factionId));
-		int seaTransportSpeed = (factionId == 0 ? 0 : getBestSeaTransportSpeed(factionId));
-		
-		// prevalent movement type
-		
-		MovementType prevalentSeaMovementType = (factionId == 0 || has_project(factionId, FAC_XENOEMPATHY_DOME) ? MT_SEA_NATIVE : MT_SEA_REGULAR);
-		MovementType prevalentLandMovementType = (factionId == 0 || has_project(factionId, FAC_XENOEMPATHY_DOME) ? MT_LAND_NATIVE : MT_LAND_REGULAR);
-		
-		// iterate bases
-		
-		for (int baseId : aiData.baseIds)
-		{
-			MAP *baseTile = getBaseMapTile(baseId);
-			bool baseTileOcean = is_ocean(baseTile);
-			int baseOceanAssociation = getBaseOceanAssociation(baseId);
-			TileFactionInfo &baseTileFactionInfo = aiData.getTileFactionInfo(baseTile, factionId);
-			
-			// cannot reach ocean base without sea unit
-			
-			if (baseTileOcean && seaCombatSpeed == 0)
-				continue;
-			
-			if (TRACE)
-			{
-				debug("\t\t%-25s\n", getBase(baseId)->name);
-			}
-			
-			robin_hood::unordered_flat_map<MAP *, double> &estimatedTravelTimes = baseTileFactionInfo.estimatedTravelTimes;
-			std::vector<MAP *> openNodes;
-			
-			estimatedTravelTimes.insert({baseTile, 0.0});
-			openNodes.push_back(baseTile);
-			
-			while (openNodes.size() > 0)
-			{
-				std::vector<MAP *> newOpenNodes;
-				
-				for (MAP *tile : openNodes)
-				{
-					bool tileOcean = is_ocean(tile);
-					TileFactionInfo &tileFactionInfo = aiData.getTileFactionInfo(tile, factionId);
-					double tileTravelTime = estimatedTravelTimes.at(tile);
-					
-					// exit condition
-					
-					if (tileTravelTime > BASE_TRAVEL_TIME_PRECOMPUTATION_LIMIT)
-						continue;
-					
-					// get tile impediment
-					
-					int baseRange = getRange(baseTile, tile);
-					double baseTravelImpediment = (isFriendly(aiFactionId, factionId) ? 0.0 : getBaseTravelImpediment(baseRange, baseTileOcean));
-					double travelImpediment = tileFactionInfo.travelImpediment - baseTravelImpediment;
-					
-					// iterate adjacent tiles
-					
-					for (int angle = 0; angle < ANGLE_COUNT; angle++)
-					{
-						MAP *adjacentTile = getTileByAngle(tile, angle);
-						
-						if (adjacentTile == nullptr)
-							continue;
-						
-						bool adjacentTileOcean = is_ocean(adjacentTile);
-						TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
-						
-						// different movement types
-						
-						if (!baseTileOcean) // land base
-						{
-							if (!adjacentTileOcean && !tileOcean) // land unit
-							{
-								// hexCost
-								
-								int hexCost = adjacentTileInfo.hexCosts1[prevalentLandMovementType][(angle + 4) % ANGLE_COUNT];
-								double travelTime = (double)hexCost / (double)landCombatSpeed + travelImpediment;
-								double adjacentTileTravelTime = tileTravelTime + travelTime;
-								
-								// update travelTime
-								
-								if (estimatedTravelTimes.count(adjacentTile) == 0 || adjacentTileTravelTime < estimatedTravelTimes.at(adjacentTile))
-								{
-									estimatedTravelTimes[adjacentTile] = adjacentTileTravelTime;
-									newOpenNodes.push_back(adjacentTile);
-								}
-								
-							}
-							else if (adjacentTileOcean && tileOcean) // land unit transported
-							{
-								// no sea transport
-								
-								if (seaTransportSpeed == 0)
-									continue;
-								
-								// hexCost
-								
-								int hexCost = adjacentTileInfo.hexCosts1[prevalentSeaMovementType][(angle + 4) % ANGLE_COUNT];
-								double travelTime = (double)hexCost / (double)seaTransportSpeed;
-								double adjacentTileTravelTime = tileTravelTime + travelTime;
-								
-								// update travelTime
-								
-								if (estimatedTravelTimes.count(adjacentTile) == 0 || adjacentTileTravelTime < estimatedTravelTimes.at(adjacentTile))
-								{
-									estimatedTravelTimes[adjacentTile] = adjacentTileTravelTime;
-									newOpenNodes.push_back(adjacentTile);
-								}
-								
-							}
-							else if (!adjacentTileOcean && tileOcean) // land unit boarding
-							{
-								// no sea transport
-								
-								if (seaTransportSpeed == 0)
-									continue;
-								
-								// boarding wait
-								
-								double travelTime = 10.0;
-								double adjacentTileTravelTime = tileTravelTime + travelTime;
-								
-								// update travelTime
-								
-								if (estimatedTravelTimes.count(adjacentTile) == 0 || adjacentTileTravelTime < estimatedTravelTimes.at(adjacentTile))
-								{
-									estimatedTravelTimes[adjacentTile] = adjacentTileTravelTime;
-									newOpenNodes.push_back(adjacentTile);
-								}
-								
-							}
-							else if (adjacentTileOcean && !tileOcean) // land unit unboarding
-							{
-								// no sea transport
-								
-								if (seaTransportSpeed == 0)
-									continue;
-								
-								// unboarding
-								
-								double travelTime = 1.0;
-								double adjacentTileTravelTime = tileTravelTime + travelTime;
-								
-								// update travelTime
-								
-								if (estimatedTravelTimes.count(adjacentTile) == 0 || adjacentTileTravelTime < estimatedTravelTimes.at(adjacentTile))
-								{
-									estimatedTravelTimes[adjacentTile] = adjacentTileTravelTime;
-									newOpenNodes.push_back(adjacentTile);
-								}
-								
-							}
-							
-						}
-						else // ocean base
-						{
-							int adjacentTileOceanAssociation = getOceanAssociation(adjacentTile, factionId);
-							
-							if (baseOceanAssociation == adjacentTileOceanAssociation) // same ocean
-							{
-								// hexCost
-								
-								int hexCost = adjacentTileInfo.hexCosts1[prevalentSeaMovementType][(angle + 4) % ANGLE_COUNT];
-								double travelTime = (double)hexCost / (double)seaCombatSpeed;
-								double adjacentTileTravelTime = tileTravelTime + travelTime;
-								
-								// update travelTime
-								
-								if (estimatedTravelTimes.count(adjacentTile) == 0 || adjacentTileTravelTime < estimatedTravelTimes.at(adjacentTile))
-								{
-									estimatedTravelTimes[adjacentTile] = adjacentTileTravelTime;
-									newOpenNodes.push_back(adjacentTile);
-								}
-								
-							}
-							
-						}
-						
-					}
-					
-				}
-				
-				// swap open nodes
-				
-				openNodes.clear();
-				openNodes.swap(newOpenNodes);
-				
-			}
-			
-			if (TRACE)
-			{
-				for (robin_hood::pair<MAP *, double> &estimatedTravelTimeEntry : estimatedTravelTimes)
-				{
-					MAP *tile = estimatedTravelTimeEntry.first;
-					double estimatedTravelTime = estimatedTravelTimeEntry.second;
-					
-					debug("\t\t\t(%3d,%3d) %5.2f\n", getX(tile), getY(tile), estimatedTravelTime);
-					
-				}
-				
-			}
-			
-		}
 		
 	}
 	
@@ -2100,90 +1929,6 @@ void populateEmptyEnemyBaseTiles()
 }
 
 /*
-Sets tile combat movement realated info for each faction: blocked, zoc.
-*/
-void populateEnemyMovementInfos()
-{
-	bool TRACE = DEBUG && false;
-	
-	debug("populateEnemyMovementInfos\n");
-	
-	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-	{
-		// exclude our
-		
-		if (factionId == aiFactionId)
-			continue;
-		
-		// populate base enemy movement impediments
-		
-		for (int baseId = 0; baseId < *total_num_bases; baseId++)
-		{
-			BASE *base = getBase(baseId);
-			MAP *baseTile = getBaseMapTile(baseId);
-			bool baseTileOcean = is_ocean(baseTile);
-			
-			// skip friendly base
-			
-			if (isFriendly(factionId, base->faction_id))
-				continue;
-			
-			// populate impediments
-			
-			for (int range = 0; range <= BASE_MOVEMENT_IMPEDIMENT_MAX_RANGE; range++)
-			{
-				for (MAP *tile : getEqualRangeTiles(baseTile, range))
-				{
-					bool tileOcean = is_ocean(tile);
-					TileFactionInfo &tileFactionInfo = aiData.getTileFactionInfo(tile, factionId);
-					
-					// land
-					
-					if (tileOcean)
-						continue;
-					
-					// accumulate impediment
-					
-					tileFactionInfo.travelImpediment += getBaseTravelImpediment(range, baseTileOcean);
-					
-				}
-				
-			}
-			
-		}
-		
-	}
-	
-	if (TRACE)
-	{
-		debug("travelImpediments\n");
-		
-		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-		{
-			// exclude our
-			
-			if (factionId == aiFactionId)
-				continue;
-			
-			debug("\t%s\n", getMFaction(factionId)->noun_faction);
-			
-			// populate base enemy movement impediments
-			
-			for (MAP *tile = *MapPtr; tile < *MapPtr + *map_area_tiles; tile++)
-			{
-				TileFactionInfo &tileFactionInfo = aiData.getTileFactionInfo(tile, factionId);
-				
-				debug("\t\t(%3d,%3d) %5.2f\n", getX(tile), getY(tile), tileFactionInfo.travelImpediment);
-				
-			}
-			
-		}
-		
-	}
-	
-}
-
-/*
 Populates transfers between land and ocean for AI faction.
 */
 void populateAIFactionTransfers()
@@ -2214,7 +1959,7 @@ void populateAIFactionTransfers()
 		
 		// not blocked
 		
-		if (tileFactionInfo.blocked)
+		if (tileFactionInfo.blocked[0])
 			continue;
 		
 		// adjacent tiles
@@ -2235,7 +1980,7 @@ void populateAIFactionTransfers()
 			
 			// not blocked
 			
-			if (adjacentTileFactionInfo.blocked)
+			if (adjacentTileFactionInfo.blocked[0])
 				continue;
 			
 			// not base
@@ -3340,18 +3085,12 @@ void populateEnemyOffenseThreat()
 		
 		if (isMeleeVehicle(vehicleId))
 		{
-			for (MovementAction &vehicleMovementAction : getVehicleMeleeAttackLocations(vehicleId))
+			for (MovementAction &attackTargetLocation : getVehicleMeleeAttackTargetLocations(vehicleId))
 			{
-				MAP *tile = vehicleMovementAction.destination;
-				int movementAllowance = vehicleMovementAction.movementAllowance;
+				MAP *tile = attackTargetLocation.destination;
+				int movementAllowance = attackTargetLocation.movementAllowance;
 				double hastyCoefficient = std::min(1.0, (double)movementAllowance / (double)Rules->mov_rate_along_roads);
 				TileInfo &tileInfo = aiData.getTileInfo(tile);
-				
-				// stop condition
-				// zero movement allowance - cannot attack this place
-				
-				if (movementAllowance <= 0)
-					continue;
 				
 				tileInfo.enemyOffensiveForces.emplace_back(vehicleId, AT_MELEE, hastyCoefficient);
 				
@@ -3687,6 +3426,23 @@ void designUnits()
 		// reinstate Trance Scout Patrol
 		
 		reinstateUnit(tranceScoutPatrolUnitId, aiFactionId);
+		
+	}
+	
+}
+
+void setUnitVariables()
+{
+	aiData.police2xUnitAvailable = false;
+	
+	for (int unitId : aiData.unitIds)
+	{
+		// police2xUnit
+		
+		if (isInfantryDefensivePolice2xUnit(unitId, aiFactionId))
+		{
+			aiData.police2xUnitAvailable = true;
+		}
 		
 	}
 	
@@ -4575,7 +4331,6 @@ int getAssociation(MAP *tile, int factionId)
 
 robin_hood::unordered_flat_set<int> &getAssociationConnections(int association, int factionId)
 {
-debug(">factionId=%d association=%3d %d\n", factionId, association, aiData.factionGeographys[factionId].associationConnections.count(association));fflush(debug_log);
 	return aiData.factionGeographys[factionId].associationConnections.at(association);
 }
 robin_hood::unordered_flat_set<int> &getTileAssociationConnections(MAP *tile, int factionId)
@@ -5008,8 +4763,8 @@ int getPathMovementCost(MAP *origin, MAP *destination, int factionId, int unitId
 		int nY = pY + BaseOffsetY[angle];
 		
 		TileFactionInfo &nTileFactionInfo = aiData.getTileInfo(nX, nY).factionInfos[factionId];
-		bool blocked = (ignoreHostile ? nTileFactionInfo.blockedNeutral : nTileFactionInfo.blocked);
-		bool zoc = (ignoreHostile ? nTileFactionInfo.zocNeutral : nTileFactionInfo.zoc);
+		bool blocked = nTileFactionInfo.blocked[ignoreHostile];
+		bool zoc = nTileFactionInfo.zoc[ignoreHostile];
 		
 		// check blocked tile
 		
@@ -6264,7 +6019,7 @@ MAP *getSafeLocation(int vehicleId, int baseRange)
 
 		}
 
-		if ((triad == TRIAD_LAND || triad == TRIAD_SEA) && map_has_item(tile, TERRA_BUNKER) && !tileFactionInfo.blocked)
+		if ((triad == TRIAD_LAND || triad == TRIAD_SEA) && map_has_item(tile, TERRA_BUNKER) && !tileFactionInfo.blocked[0])
 		{
 			// not blocked bunker is a safe location for surface vehicle
 
@@ -6303,7 +6058,7 @@ MAP *getSafeLocation(int vehicleId, int baseRange)
 		{
 			// base is a best safe location
 		}
-		else if ((triad == TRIAD_LAND || triad == TRIAD_SEA) && map_has_item(tile, TERRA_BUNKER) && !tileFactionInfo.blocked)
+		else if ((triad == TRIAD_LAND || triad == TRIAD_SEA) && map_has_item(tile, TERRA_BUNKER) && !tileFactionInfo.blocked[0])
 		{
 			// not blocked bunker is a safe location for surface vehicle
 		}
@@ -6311,12 +6066,12 @@ MAP *getSafeLocation(int vehicleId, int baseRange)
 		{
 			// not blocked
 
-			if (tileFactionInfo.blocked)
+			if (tileFactionInfo.blocked[0])
 				continue;
 
 			// not zoc
 
-			if (tileFactionInfo.zoc)
+			if (tileFactionInfo.zoc[0])
 				continue;
 
 			// not warzone
@@ -6404,7 +6159,7 @@ MapValue findClosestItemLocation(int vehicleId, terrain_flags item, int maxSearc
 		
 		// exclude blocked location
 		
-		if (tileFactionInfo.blocked)
+		if (tileFactionInfo.blocked[1])
 			continue;
 		
 		// exclude warzone if requested
@@ -6913,9 +6668,12 @@ int getBaseOptimalDoctors(int baseId)
 /*
 Calculates aggreated minerals, economy, labs resource score.
 */
-double getResourceScore(double minerals, double energy)
+double getResourceScore(double mineral, double energy)
 {
-	return getYieldScore(0.0, minerals, energy);
+	return
+		+ conf.ai_resource_score_mineralWeight * mineral
+		+ conf.ai_resource_score_energyWeight * energy
+	;
 }
 
 /*
@@ -6947,7 +6705,7 @@ void populateHexCosts()
 			
 			// air movement type
 			
-			tileInfo.hexCosts1[MT_AIR][angle] = Rules->mov_rate_along_roads;
+			tileInfo.hexCosts[MT_AIR][angle] = Rules->mov_rate_along_roads;
 			
 			// sea vehicle moves on ocean or from/to base
 			
@@ -6956,14 +6714,14 @@ void populateHexCosts()
 				int nativeHexCost = getHexCost(BSC_ISLE_OF_THE_DEEP, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
 				int regularHexCost = getHexCost(BSC_UNITY_GUNSHIP, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
 				
-				tileInfo.hexCosts1[MT_SEA_NATIVE][angle] = nativeHexCost;
-				tileInfo.hexCosts1[MT_SEA_REGULAR][angle] = regularHexCost;
+				tileInfo.hexCosts[MT_SEA_NATIVE][angle] = nativeHexCost;
+				tileInfo.hexCosts[MT_SEA_REGULAR][angle] = regularHexCost;
 				
 			}
 			else
 			{
-				tileInfo.hexCosts1[MT_SEA_NATIVE][angle] = -1;
-				tileInfo.hexCosts1[MT_SEA_REGULAR][angle] = -1;
+				tileInfo.hexCosts[MT_SEA_NATIVE][angle] = -1;
+				tileInfo.hexCosts[MT_SEA_REGULAR][angle] = -1;
 				
 			}
 			
@@ -6989,16 +6747,16 @@ void populateHexCosts()
 					easyHexCost = divideIntegerRoundUp(Rules->mov_rate_along_roads * 5, 4);
 				}
 				
-				tileInfo.hexCosts1[MT_LAND_NATIVE][angle] = nativeHexCost;
-				tileInfo.hexCosts1[MT_LAND_EASY][angle] = easyHexCost;
-				tileInfo.hexCosts1[MT_LAND_REGULAR][angle] = regularHexCost;
+				tileInfo.hexCosts[MT_LAND_NATIVE][angle] = nativeHexCost;
+				tileInfo.hexCosts[MT_LAND_EASY][angle] = easyHexCost;
+				tileInfo.hexCosts[MT_LAND_REGULAR][angle] = regularHexCost;
 				
 			}
 			else
 			{
-				tileInfo.hexCosts1[MT_LAND_NATIVE][angle] = -1;
-				tileInfo.hexCosts1[MT_LAND_EASY][angle] = -1;
-				tileInfo.hexCosts1[MT_LAND_REGULAR][angle] = -1;
+				tileInfo.hexCosts[MT_LAND_NATIVE][angle] = -1;
+				tileInfo.hexCosts[MT_LAND_EASY][angle] = -1;
+				tileInfo.hexCosts[MT_LAND_REGULAR][angle] = -1;
 				
 			}
 			
@@ -7768,7 +7526,7 @@ std::vector<MovementAction> getVehicleReachableLocations(int vehicleId)
 				
 				// compute hex cost
 				
-				int hexCost = processingTileInfo.hexCosts1[movementType][angle];
+				int hexCost = processingTileInfo.hexCosts[movementType][angle];
 				
 				// allowed step
 				
@@ -7778,7 +7536,6 @@ std::vector<MovementAction> getVehicleReachableLocations(int vehicleId)
 				// parameters
 				
 				TileInfo adjacentTileInfo = aiData.getTileInfo(adjacentTile);
-				TileFactionInfo adjacentTileFactionInfo = adjacentTileInfo.factionInfos[vehicle->faction_id];
 				
 				// allowed move
 				
@@ -7845,21 +7602,21 @@ std::vector<MovementAction> getVehicleReachableLocations(int vehicleId)
 /*
 Select locations vehicle can melee attack with corresponding movement allocation left.
 */
-std::vector<MovementAction> getVehicleMeleeAttackLocations(int vehicleId)
+std::vector<MovementAction> getVehicleMeleeAttackTargetLocations(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	int triad = vehicle->triad();
 	
-	std::vector<MovementAction> attackLocations;
+	std::vector<MovementAction> attackTargetLocations;
 	
 	// melee vehicle
 	
 	if (!isMeleeVehicle(vehicleId))
-		return attackLocations;
+		return attackTargetLocations;
 	
 	// explore reachable locations
 	
-	robin_hood::unordered_flat_map<MAP *, int> attackLocationMovementAllowances;
+	robin_hood::unordered_flat_map<MAP *, int> attackTargetLocationMovementAllowances;
 	
 	for (MovementAction &movementAction : getVehicleReachableLocations(vehicleId))
 	{
@@ -7877,14 +7634,14 @@ std::vector<MovementAction> getVehicleMeleeAttackLocations(int vehicleId)
 		{
 			int adjacentTileOcean = is_ocean(adjacentTile);
 			
-			// same realm
+			// same realm for surface vehicle
 			
 			if (triad == TRIAD_LAND && adjacentTileOcean || triad == TRIAD_SEA && !adjacentTileOcean)
 				continue;
 			
 			// update best movementAllowance
 			
-			attackLocationMovementAllowances[adjacentTile] = std::max(attackLocationMovementAllowances[adjacentTile], movementAllowance);
+			attackTargetLocationMovementAllowances[adjacentTile] = std::max(attackTargetLocationMovementAllowances[adjacentTile], movementAllowance);
 			
 		}
 		
@@ -7892,18 +7649,16 @@ std::vector<MovementAction> getVehicleMeleeAttackLocations(int vehicleId)
 	
 	// build return value
 	
-	for (robin_hood::pair<MAP *, int> &attackLocationMovementAllowanceEntry : attackLocationMovementAllowances)
+	for (robin_hood::pair<MAP *, int> &attackLocationMovementAllowanceEntry : attackTargetLocationMovementAllowances)
 	{
 		MAP *tile = attackLocationMovementAllowanceEntry.first;
 		int movementAllowance = attackLocationMovementAllowanceEntry.second;
 		
-		attackLocations.push_back({tile, movementAllowance});
+		attackTargetLocations.push_back({tile, movementAllowance});
 		
 	}
 	
-	std::sort(attackLocations.begin(), attackLocations.end(), compareMovementActions);
-	
-	return attackLocations;
+	return attackTargetLocations;
 	
 }
 
@@ -8117,9 +7872,9 @@ bool isVehicleAllowedMove(int vehicleId, MAP *from, MAP *to, bool ignoreEnemy)
 	TileInfo &toTileInfo = aiData.getTileInfo(to);
 	TileFactionInfo &fromTileFactionInfo = fromTileInfo.factionInfos[vehicle->faction_id];
 	TileFactionInfo &toTileFactionInfo = toTileInfo.factionInfos[vehicle->faction_id];
-	bool toTileBlocked = (ignoreEnemy ? toTileFactionInfo.blockedNeutral : toTileFactionInfo.blocked);
-	bool fromTileZoc = (ignoreEnemy ? fromTileFactionInfo.zocNeutral : fromTileFactionInfo.zoc);
-	bool toTileZoc = (ignoreEnemy ? toTileFactionInfo.zocNeutral : toTileFactionInfo.zoc);
+	bool toTileBlocked = toTileFactionInfo.blocked[ignoreEnemy];
+	bool fromTileZoc = fromTileFactionInfo.zoc[ignoreEnemy];
+	bool toTileZoc = toTileFactionInfo.zoc[ignoreEnemy];
 	
 	if (toTileBlocked)
 		return false;
@@ -8180,7 +7935,7 @@ std::vector<MAP *> getVehicleThreatenedTiles(int vehicleId)
 				
 				// retrieve hex cost
 				
-				int hexCost = processingTileInfo.hexCosts1[movementType][angle];
+				int hexCost = processingTileInfo.hexCosts[movementType][angle];
 				
 				// allowed move (geography)
 				
@@ -8230,6 +7985,14 @@ std::vector<int> &getAssociationSeaTransports(int association, int factionId)
 std::vector<int> &getAssociationShipyards(int association, int factionId)
 {
 	return aiData.factionGeographys[factionId].oceanAssociationShipyards[association];
+}
+
+/*
+This is set for current AI faction only.
+*/
+bool isOceanAssociationShared(int oceanAssociation, int factionId)
+{
+	return aiData.factionGeographys[factionId].oceanAssociationTargets.count(oceanAssociation) != 0;
 }
 
 /*
@@ -8521,7 +8284,7 @@ MAP *getClosestTargetLocation(int factionId, MAP *origin, MAP *target, int proxi
 	{
 		bool ocean = is_ocean(tile);
 		TileFactionInfo &tileFactionInfo = aiData.getTileInfo(tile).factionInfos[factionId];
-		bool blocked = (ignoreHostile ? tileFactionInfo.blockedNeutral : tileFactionInfo.blocked);
+		bool blocked = tileFactionInfo.blocked[ignoreHostile];
 			
 		// not blocked except target
 		
@@ -8577,7 +8340,7 @@ MAP *getClosestTargetLocation(int factionId, MAP *origin, MAP *target, int proxi
 }
 
 /*
-Delete unit to reduce support burden.
+Disband unit to reduce support burden.
 */
 void disbandOrversupportedVehicles(int factionId)
 {
@@ -8651,6 +8414,54 @@ void disbandOrversupportedVehicles(int factionId)
 	
 }
 
+/*
+Disband unneeded vehicles.
+*/
+void disbandUnneededVehicles()
+{
+	debug("disbandUnneededVehicles - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	// ship without task in internal sea
+	
+	for (int vehicleId = 0; vehicleId < *total_num_vehicles; vehicleId++)
+	{
+		VEH *vehicle = getVehicle(vehicleId);
+		int triad = vehicle->triad();
+		int vehicleAssociation = getVehicleAssociation(vehicleId);
+		
+		// ours
+		
+		if (vehicle->faction_id != aiFactionId)
+			continue;
+		
+		// combat
+		
+		if (!isCombatVehicle(vehicleId))
+			continue;
+		
+		// ship
+		
+		if (triad != TRIAD_SEA)
+			continue;
+		
+		// does not have task
+		
+		if (hasTask(vehicleId))
+			continue;
+		
+		// internal sea
+		
+		if (isOceanAssociationShared(vehicleAssociation, aiFactionId))
+			continue;
+		
+		// disband
+		
+		veh_kill(vehicleId);
+		
+	}
+	
+}
+
 void storeBaseSetProductionItems()
 {
 	aiData.baseBuildingItems.clear();
@@ -8659,6 +8470,53 @@ void storeBaseSetProductionItems()
 	{
 		aiData.baseBuildingItems[baseId] = getBase(baseId)->queue_items[0];
 	}
+	
+}
+
+MAP *getMeleeAttackPosition(int factionId, bool ocean, MAP *origin, MAP *target, bool ignoreHostile)
+{
+	int originTileIndex = origin - *MapPtr;
+	TileInfo &originTileInfo = aiData.tileInfos[originTileIndex];
+	TileFactionInfo &originTileFactionInfo = originTileInfo.factionInfos[factionId];
+	int originClusterId = originTileFactionInfo.clusterIds[1][ocean];
+	
+	// find closest attack position
+	
+	MAP *closestAttackPosition = nullptr;
+	int closestAttackPositionRange = INT_MAX;
+	
+	for (MAP *tile : getMeleeAttackPositions(target))
+	{
+		TileInfo &tileInfo = aiData.getTileInfo(tile);
+		TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
+		bool blocked = tileFactionInfo.blocked[ignoreHostile];
+		int tileClusterId = tileFactionInfo.clusterIds[1][ocean];
+		
+		// not blocked
+		
+		if (blocked)
+			continue;
+		
+		// same cluster
+		
+		if (originClusterId != tileClusterId)
+			continue;
+		
+		// range
+		
+		int range = getRange(origin, tile);
+		
+		// update
+		
+		if (range < closestAttackPositionRange)
+		{
+			closestAttackPosition = tile;
+			closestAttackPositionRange = range;
+		}
+		
+	}
+	
+	return closestAttackPosition;
 	
 }
 
@@ -8685,7 +8543,7 @@ MAP *getVehicleMeleeAttackPosition(int vehicleId, MAP *target, bool ignoreHostil
 	{
 		TileInfo &tileInfo = aiData.getTileInfo(tile);
 		TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
-		bool blocked = (ignoreHostile ? tileFactionInfo.blockedNeutral : tileFactionInfo.blocked);
+		bool blocked = tileFactionInfo.blocked[ignoreHostile];
 		
 		// not blocked
 		
@@ -8789,7 +8647,7 @@ MAP *getVehicleArtilleryAttackPosition(int vehicleId, MAP *target, bool ignoreHo
 	{
 		TileInfo &tileInfo = aiData.getTileInfo(tile);
 		TileFactionInfo &tileFactionInfo = tileInfo.factionInfos[factionId];
-		bool blocked = (ignoreHostile ? tileFactionInfo.blockedNeutral : tileFactionInfo.blocked);
+		bool blocked = tileFactionInfo.blocked[ignoreHostile];
 		
 		// destination is reachable
 		

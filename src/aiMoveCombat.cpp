@@ -1075,7 +1075,7 @@ void populateRepairTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// exclude blocked
 			
-			if (tileFactionInfo.blocked)
+			if (tileFactionInfo.blocked[0])
 				continue;
 			
 			// exclude unreachable locations
@@ -1942,7 +1942,7 @@ void populateLandPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
 		
 		// not blocked location
 		
-		if (tileFactionInfo.blocked)
+		if (tileFactionInfo.blocked[0])
 			continue;
 		
 		// store pod location
@@ -2057,7 +2057,7 @@ void populateSeaPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
 		
 		// not blocked location
 		
-		if (tileFactionInfo.blocked)
+		if (tileFactionInfo.blocked[0])
 			continue;
 		
 		// store pod location

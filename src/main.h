@@ -324,6 +324,8 @@ struct Config {
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
+    double ai_resource_score_mineralWeight;
+    double ai_resource_score_energyWeight;
     double ai_faction_minerals_t1;
     double ai_faction_minerals_a1;
     double ai_faction_minerals_b1;
@@ -341,8 +343,19 @@ struct Config {
     double ai_base_mineral_intake_a;
     double ai_base_mineral_intake_b;
     double ai_base_mineral_intake_c;
+    double ai_base_mineral_intake2_a;
+    double ai_base_mineral_intake2_b;
+    double ai_base_mineral_multiplier_a;
+    double ai_base_mineral_multiplier_b;
+    double ai_base_mineral_multiplier_c;
     double ai_base_budget_intake_a;
     double ai_base_budget_intake_b;
+    double ai_base_budget_intake2_a;
+    double ai_base_budget_intake2_b;
+    double ai_base_budget_intake2_c;
+    double ai_base_budget_multiplier_a;
+    double ai_base_budget_multiplier_b;
+    double ai_base_budget_multiplier_c;
     double ai_worker_count_a;
     double ai_worker_count_b;
     double ai_worker_count_c;
@@ -442,7 +455,6 @@ struct Config {
     double ai_production_combat_unit_proportions[3];
     double ai_production_current_project_priority;
     double ai_production_defensive_facility_threat_threshold;
-    double ai_production_psych_facility_priority;
 
 };
 

@@ -3659,7 +3659,7 @@ int setMoveTo(int vehicleId, MAP *destination)
 	
 }
 
-int setMoveTo(int vehicleId, std::vector<Location> &waypoints)
+int setMoveTo(int vehicleId, const std::vector<MAP *> &waypoints)
 {
     VEH* vehicle = &(Vehicles[vehicleId]);
 	
@@ -7089,29 +7089,29 @@ bool isBombardmentVehicle(int vehicleId)
 	return isSurfaceVehicle(vehicleId) && !isArtilleryVehicle(vehicleId);
 }
 
-void setVehicleWaypoints(int vehicleId, std::vector<Location> &waypoints)
+void setVehicleWaypoints(int vehicleId, const std::vector<MAP *> &waypoints)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	
 	if (waypoints.size() >= 1)
 	{
-		vehicle->waypoint_1_x = waypoints.at(0).x;
-		vehicle->waypoint_1_y = waypoints.at(0).y;
+		vehicle->waypoint_1_x = getX(waypoints.at(0));
+		vehicle->waypoint_1_y = getY(waypoints.at(0));
 	}
 	if (waypoints.size() >= 2)
 	{
-		vehicle->waypoint_2_x = waypoints.at(1).x;
-		vehicle->waypoint_2_y = waypoints.at(1).y;
+		vehicle->waypoint_2_x = getX(waypoints.at(1));
+		vehicle->waypoint_2_y = getY(waypoints.at(1));
 	}
 	if (waypoints.size() >= 3)
 	{
-		vehicle->waypoint_3_x = waypoints.at(2).x;
-		vehicle->waypoint_3_y = waypoints.at(2).y;
+		vehicle->waypoint_3_x = getX(waypoints.at(2));
+		vehicle->waypoint_3_y = getY(waypoints.at(2));
 	}
 	if (waypoints.size() >= 4)
 	{
-		vehicle->waypoint_4_x = waypoints.at(3).x;
-		vehicle->waypoint_4_y = waypoints.at(3).y;
+		vehicle->waypoint_4_x = getX(waypoints.at(3));
+		vehicle->waypoint_4_y = getY(waypoints.at(3));
 	}
 	
 }
@@ -7718,5 +7718,11 @@ bool isInfantryDefensivePolice2xVehicle(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	return isInfantryDefensivePolice2xUnit(vehicle->unit_id, vehicle->faction_id);
+}
+
+bool isUnitRequireSupport(int unitId)
+{
+	UNIT *unit = getUnit(unitId);
+	return unit->unit_plan <= (conf.supply_convoy_and_info_warfare_require_support ? 11 : 9) && !isUnitHasAbility(unitId, ABL_CLEAN_REACTOR);
 }
 

@@ -4426,9 +4426,16 @@ double calculateBaseResourceScore(int baseId, int currentMineralIntake2, int cur
 		
 		// calculate energy cost multiplier
 		
-		double maxNetIncome = 0.5 * (double)aiData.grossIncome;
-		double minNetIncome = 0.1 * maxNetIncome;
-		energyCostMultiplier = maxNetIncome / std::min(maxNetIncome, std::max(minNetIncome, (double)aiData.netIncome));
+		if (aiData.grossIncome <= 0 || aiData.netIncome <= 0)
+		{
+			energyCostMultiplier = 1.0;
+		}
+		else
+		{
+			double maxNetIncome = 0.5 * (double)aiData.grossIncome;
+			double minNetIncome = 0.1 * maxNetIncome;
+			energyCostMultiplier = maxNetIncome / std::min(maxNetIncome, std::max(minNetIncome, (double)aiData.netIncome));
+		}
 		
 	}
 	
@@ -4633,7 +4640,7 @@ bool isValidTerraformingSite(MAP *tile)
 	
 	// exclude blocked locations
 	
-	if (tileInfo.factionInfos[aiFactionId].blocked)
+	if (tileInfo.factionInfos[aiFactionId].blocked[0])
 		return false;
 	
 	// all conditions met

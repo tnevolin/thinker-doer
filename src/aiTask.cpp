@@ -4,6 +4,7 @@
 #include "aiData.h"
 #include "ai.h"
 #include "aiTask.h"
+#include "aiMove.h"
 
 Task::Task(int _vehicleId, TaskType _type)
 {
@@ -198,7 +199,15 @@ int Task::execute(int vehicleId)
 		// proceed to destination
 		
 		debug("[%4d] (%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, getX(destination), getY(destination));
-		setMoveTo(vehicleId, destination);
+		
+		if (isCombatVehicle(vehicleId))
+		{
+			setMoveTo(vehicleId, destination);
+		}
+		else
+		{
+			setSafeMoveTo(vehicleId, destination);
+		}
 		
 		// make sure to declare vendetta if moving into neutral base
 		
