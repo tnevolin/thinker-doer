@@ -106,7 +106,7 @@ On top of that this mod sets land psi combat base odds to 1:1. This way PLANET r
 
 ## Base intrinsic defense and defensive structures
 
-Base intrinsic defence raised to 50%. This is configurable in alphax.txt. Unit in base protected weaker than on rough terrain does not make sense as it forces defender to step outside of the base to get better defense.
+Base intrinsic defence raised to 50% to match rough terrain protection.
 
 Base defensive structures (Perimeter Defense, Naval Yard, Aerospace Complex, and Tachyon Field) defense bonuses are exposed in thinker.ini. First level structures defense bonus is left 100% as in vanilla. That effectivelly adds 50% on top of intrinsic defense. Second level structure (Tachyon Field) defense bonus is +50% to match first level bonus increase and to avoid late game overdefence that is many modders major concern.
 
