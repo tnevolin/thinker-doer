@@ -585,10 +585,6 @@ This mod fixes the type of combat when bomber attacks an interceptor. Besides at
 
 Now interceptors become a very useful anti-bombers units. They protect surface units and destroy bombers effectively.
 
-## Right of passage agreement
-
-Right of passage allows units to use road/tube on ally territory. That makes sense as not ally units are not even allowed on faction territory let alone use their artificial improvements like road/tube.
-
 ## Scorched earth
 
 When faction looses a base (captured or killed) all terrain improvement on lost territory are destroyed.
