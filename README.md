@@ -185,7 +185,7 @@ Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 mode
 
 Reactor power does not multiply unit max hit points anymore. All units (conventional and native) have 10 max hit points regardless of reactor.
 
-Instead each subsequent reactor decreases weapon/armor cost by approximately 20%. Modules are not discounted. Player gets refund when upgrading unit to cheaper one with more powerful reactor.
+Instead each subsequent reactor decreases weapon/armor cost by approximately 20%. Modules are not discounted. Player **does not** get refund when upgrading unit to cheaper one with more powerful reactor.
 
 ## Unit pricing principles
 * Primary item (most expensive module/weapon/armor item) defines base cost.
