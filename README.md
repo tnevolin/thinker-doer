@@ -236,18 +236,6 @@ This formula changes the actual unit cost. The literal text in base screen item 
 
 Vanilla uses *Extra percentage cost of prototype LAND unit* percentage for designing brand new unit in design workshop regardless of selected chassis. Therefore *extra percentage costs* for all triads should be kept equal. For the same reason alternative formula above uses LAND percentage only.
 
-# Unit hurry cost
-
-Unit hurry cost formula always puzzled me. Why make cost grow quadratically to become exorbitant for higher end units?
-
-In this mod unit hurry cost is four times its mineral cost.
-
-## Hurry cost penalty thresholds
-
-This mod removes all hurry cost penalty thresholds. I never could grasp their strategical meaning since they do not affect course of the game but only add annoyance and require use of calculator. Let me know if anyone thinks they need to be kept.
-
-Now all hurry costs are flat x2 for facilities and x4 for units and projects.
-
 # Mineral contribution exploit fix
 
 INDUSTRY rating is supposed to modify base production speed. Instead it modifies production item mineral cost, due to strange design approach. This allows few exploits as well as tangling between INDUSTRY rating and hurry cost. Following changes were introduced to avoid all these problems.
