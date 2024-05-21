@@ -1,6 +1,6 @@
-# SMACX The Will to Power mod
+# SMACX - The Will to Power - mod
 
-The Will to Power is a playing experience enhancement mod for Alpha Centauri: Alien Crossfire.
+The Will to Power is a playing experience enhancement mod for SMAX (Sid Meier's Alien Crossfire).
 It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker_Details.md, Thinker_Changelog.md).
 
 ##### Links
@@ -8,13 +8,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * [This readme](https://github.com/tnevolin/thinker-doer/blob/master/README.md)
 * [Changelog](https://github.com/tnevolin/thinker-doer/blob/master/wtp_changelog.md)
 * [Strategy tips](https://github.com/tnevolin/thinker-doer/blob/master/wtp_strategy.md)
-
-## Note to users
-
-I think it includes everything I have planned for it. So I am no longer actively working on it. However, I still see some traffic on this repository. With that in mind please feel free to:
-
-* Let me know that you are using or used it so I can get sense of user base coverage. Unfortunately, github is not tracking downloads. 😥
-* File bug report (or feature requst) by creating issue in this project or post it to the forum https://alphacentauri2.info/index.php?topic=21359.0.
+* [Issue submission](https://github.com/tnevolin/thinker-doer/issues)
 
 ## Special thanks and acknowledgements
 
@@ -26,31 +20,13 @@ I think it includes everything I have planned for it. So I am no longer actively
 * Mercantile Interest: Alternative nutrient model idea.
 * EmpathCrawler: Play testing. Discovered Brood Pit morale bug.
 
-## Difficulty warning
-
-I put this at the very top to avoid first impression frustration for those used to easily win every vanilla game on highest difficulty level.
-
-This mod is **much-Much-MUCH** more difficult than vanilla in many ways. I strongly suggest to try it out first on **three(!)** difficulty levels below your usual vanilla comfortable level. I also recommend lowering activity of native life from medium to lowest at first. It also plays a little differently. Your proven strategies and exploits most likely won't work and you'll need to find new ones. Yet it is still playable in same intuitive way with great visual aid to help you make decisions at every step. Later on when you accommodate to play style and AI strength feel free to crank up the difficulty for a bigger challenge! :)
-
-## Main highlights
-
-* AI is **shockingly** smart, thanks to Induktio's work. Last game I was about to heal my damaged mindworm at a monolith so that I can later attack a nearby enemy base. AI sent a unity copter 6 tiles away just to take my damaged mindworm out before it reached the monolith!
-* Major revamping of unit/cost/combat system. Primary purpose is to significantly improve defense effectiveness. Attacker investments are much larger than defender ones. Building a prepared defense and deflecting enemy attacks on a front line with minimal losses is a completely viable and economically profitable strategy.
-* Major revamping in combat probability also results in more battle outcome randomness than in vanilla. It is still not that random as in Civ 1 but somewhere in between. That makes native life a real **threat**. Beware! There is no point in hunting natives for planetpearls anymore. Player should minimize native life spawning and seriously prepare to deflect worm attacks or suffer consequences. Native life acts like an opponent as it should.
-* Many formulas and rules are simplified to achieve better clarity. Things are more intuitive and understandable now.
-* A lot of micro exploits are eliminated. Game is more streamlined toward general competition without logically irrelevant grinding.
-
 ## Why this mod?
 
 There are tons of interesting features in the game. Many of them are revolutionary for 4X games world. I don't think there is another so feature reach game. I **DO** want to try them all!
 
-With great power comes great responsibility, though. The more features you have the more difficult to make them work together. A slightest change in parameters or implementation may renders any of them completely broken, unusable, strategically inviable, or shadowed by other features. It is time consuming art and craft of game testing and perfecting. There is no doubt SMACX is the greatest games of all time. It is also clear it was hastily pushed to the market to earn quick money in its unfinished form. It definitely contains quite playable core - thanks to previous Civ 1/2 play testing. However, most of new features do not compose an integral game experience. Instead they look like unframed gems scattered here and there. Their description sounds exciting but current implementation renders them unusable which is to a great sadness to all true strategical game lovers.
+With great power comes great responsibility, though. The more features game has the more difficult is to make them work together. A slightest change in parameters or implementation may renders many of them completely broken, unusable, strategically inviable, or shadowed by other features. It is time consuming art and craft of game testing and perfecting. There is no doubt SMACX is the greatest games of all time. However, a lot of features do not integrate into the game well.
 
-I have started this mod initially to myself to give such underused features and strategies a chance to shine and to increase overall game challenge and replayability. In such option reach games like SMAX variations are endless. Due to such variations some strategical choice may sometimes shine depending on current conditions. Changing strategy in response to changing game situation is the nature of the play and that's why we have many to chose from. However, there should not be options those are never (or quite rarely) viable. Such unused option would just clutter game interface and player memory. Well thought game should not have any unusable elements. In this mod I try to make all options/features/strategies viable in one way or another.
-
-### This mod motto
-
-Any option/feature/strategy should be undoubtedly advantageous in some play style of game situation. Proportion of games where it provides such advantage should be noticeable too.
+Any option/feature/strategy should have its use in some play style of game situation. There should not be any over/under powered feature.
 
 # Design concepts
 
@@ -59,9 +35,9 @@ Whenever I see some feature worth improving/highlighting these are guidelines I 
 * Feature should do what it claims to. If it is impossible to make it work, such feature should be excluded. Example: Deep pressure hull.
 * Feature should not outright contradict or break game concepts. Example of game concept: build-your-own-unit design workshop. Example of the feature directly contradicting this concept: hybrid components (resonance armor and such).
 * Game flow and features generally should be understandable to people and have clear visual effect on the game and player choices. This doesn't mean they should resemble real life. They should be only what is expected of them by average game player. There should be no hidden elements or algorithms those are difficult to grasp and apply. Example: unit cost formula. In vanilla infantry attacker 10-1-1 unit costs 5. With that in mind average player with previous Civ1/2 experience naturally would expect same strength infantry defender 1-10-1 to cost the same. They would be shocked to discover that it is 20 in SMACX actually. This doesn't match player expectations.
-* Game should not create an extremely overpowered or underpowered strategy. Each strategy should be viable at least at some circumstances according to this mod principles. This mod does not intent to "balance" anything but only to adjust some obvious favorite or underdog strategies. Overpowered strategy example: indestructible army.
+* There should not be any extremely overpowered or underpowered strategy. Each strategy should be viable at least at some circumstances. This mod does not intent to "balance" anything but only to adjust some obvious favorite or underdog strategies. Overpowered strategy example: indestructible army.
 * Being usable also means to come at the right time in research tree. Coming too early clutters game interface and takes space from other more needed features. Coming too late causes unnecessary slowdown and frustration. This mod adjusts item appearence times to match faction development level.
-* Some items naturally come in sequence when each follower effectively obsoletes its predecessor. Good example is weapons and armors. This mod tries to spread them evenly on a research scale so player can enjoy each for about same time. It also tries to link their corresponding technologies to assure they appear in right order. 
+* Some items naturally come in sequence when successor effectively obsoletes its predecessor. Good example is weapons and armors. This mod tries to spread them evenly on a research scale so player can enjoy each for about same time. It also tries to link their corresponding technologies to assure they appear in right order. 
 * Mutually exclusive items/features are adjusted in price and effect so that they can compete with each other and none is completely inferior. Good example is social models.
 
 # Technology tree
