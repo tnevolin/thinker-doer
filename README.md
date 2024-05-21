@@ -417,9 +417,9 @@ Fungus production is not some crucial part of the game. However, it is still som
 | Centauri Psi | 11 | +1 nutrient | 3-1-3 |
 | Secrets of Alpha Centauri | 13 | +1 energy | 3-1-4 |
 
-## Sea Sensors
+## Sensors
 
-Introduced *Sensor Buoy* on sea similar to *Sensor Array* on land. Copied from SMAniaC mod. They do not confer defense bonus but they increase visibility which is very important to track fast moving ships in your territory and around.
+Sensors are available on land and sea and confer both attack and defense bonus.
 
 # Base growth tuning
 
