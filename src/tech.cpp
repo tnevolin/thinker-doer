@@ -1,13 +1,10 @@
 
 #include "tech.h"
-#include "wtp.h"
-
-int TechCostRatios[MaxDiffNum] = {124,116,108,100,84,76};
 
 
-HOOK_API int mod_tech_value(int tech, int faction, int flag) {
+int __cdecl mod_tech_value(int tech, int faction, int flag) {
     int value = tech_val(tech, faction, flag);
-    if (conf.tech_balance && ai_enabled(faction)) {
+    if (conf.tech_balance && thinker_enabled(faction)) {
         if (tech == Weapon[WPN_TERRAFORMING_UNIT].preq_tech
         || tech == Weapon[WPN_SUPPLY_TRANSPORT].preq_tech
         || tech == Weapon[WPN_PROBE_TEAM].preq_tech
@@ -16,61 +13,71 @@ HOOK_API int mod_tech_value(int tech, int faction, int flag) {
         || tech == Rules->tech_preq_allow_3_energy_sq
         || tech == Rules->tech_preq_allow_3_minerals_sq
         || tech == Rules->tech_preq_allow_3_nutrients_sq) {
-            value += 40;
+            value += 50;
         }
     }
     debug("tech_value %d %d value: %3d tech: %2d %s\n",
-        *current_turn, faction, value, tech, Tech[tech].name);
+        *CurrentTurn, faction, value, tech, Tech[tech].name);
     return value;
 }
 
-int tech_level(int id, int lvl) {
-    if (id < 0 || id > TECH_TranT || lvl > TECH_TranT) {
+int tech_level(int tech, int lvl) {
+    if (tech < 0 || tech > TECH_TranT || lvl > TECH_TranT) {
         return lvl;
     } else {
-        int v1 = tech_level(Tech[id].preq_tech1, lvl + 1);
-        int v2 = tech_level(Tech[id].preq_tech2, lvl + 1);
-        return std::max(v1, v2);
+        int v1 = tech_level(Tech[tech].preq_tech1, lvl + 1);
+        int v2 = tech_level(Tech[tech].preq_tech2, lvl + 1);
+        return max(v1, v2);
     }
 }
 
 int tech_cost(int faction, int tech) {
     assert(valid_player(faction));
-    Faction* f = &Factions[faction];
     MFaction* m = &MFactions[faction];
     int level = 1;
-    int owned = 0;
-    int links = 0;
+    int owners = 0;
+    int our_techs = 0;
 
     if (tech >= 0) {
         level = tech_level(tech, 0);
         for (int i=1; i < MaxPlayerNum; i++) {
-            if (i != faction && f->diplo_status[i] & DIPLO_COMMLINK) {
-                links |= 1 << i;
+            if (i != faction && has_tech(tech, i)
+            && has_treaty(faction, i, DIPLO_COMMLINK)) {
+                owners += (has_treaty(faction, i, DIPLO_PACT|DIPLO_HAVE_INFILTRATOR) ? 2 : 1);
             }
         }
-        owned = __builtin_popcount(TechOwners[tech] & links);
     }
-    double diff_factor = 1.0;
-    if (!is_human(faction)) {
-        diff_factor = TechCostRatios[*diff_level] / 100.0;
+    for (int i=Tech_ID_First; i <= Tech_ID_Last; i++) {
+        if (Tech[i].preq_tech1 != TECH_Disable && has_tech(i, faction)) {
+            our_techs++;
+        }
     }
-    double cost = (6 * pow(level, 3) + 74 * level - 20)
+    double diff_factor = (is_human(faction) ? 1.0 : conf.tech_cost_factor[*DiffLevel] / 100.0);
+    double cost_base;
+
+    if (conf.cheap_early_tech) {
+        cost_base = (5 * pow(level, 3) + 25 * level + 15 * our_techs)
+            * clamp(our_techs + 6, 6, 16) / 16.0;
+    } else {
+        cost_base = (5 * pow(level, 3) + 75 * level);
+    }
+    double cost = cost_base
         * diff_factor
-        * *map_area_sq_root / 56
-        * m->rule_techcost / 100
-        * (*game_rules & RULES_TECH_STAGNATION ? 1.5 : 1.0)
-        * 100 / std::max(1, Rules->rules_tech_discovery_rate)
-        * (owned > 0 ? (owned > 1 ? 0.75 : 0.85) : 1.0);
+        * *MapAreaSqRoot / 56.0
+        * m->rule_techcost / 100.0
+        * (*GameRules & RULES_TECH_STAGNATION ? conf.tech_stagnate_rate / 100.0 : 1.0)
+        * 100.0 / max(1, Rules->rules_tech_discovery_rate)
+        * (1.0 - 0.05*min(6, owners));
 
-    debug("tech_cost %d %d diff: %.4f cost: %8.4f level: %d owned: %d tech: %d %s\n",
-        *current_turn, faction, diff_factor, cost, level, owned, tech,
-        (tech >= 0 ? Tech[tech].name : NULL));
+    debug("tech_cost %d %d base: %8.4f diff: %8.4f cost: %8.4f "
+    "level: %d our_techs: %d owners: %d tech: %2d %s\n",
+    *CurrentTurn, faction, cost_base, diff_factor, cost,
+    level, our_techs, owners, tech, (tech >= 0 ? Tech[tech].name : NULL));
 
-    return std::max(2, (int)cost);
+    return max(2, (int)cost);
 }
 
-HOOK_API int mod_tech_rate(int faction) {
+int __cdecl mod_tech_rate(int faction) {
     /*
     Normally the game engine would recalculate research cost before the next tech
     is selected, but we need to wait until the tech is decided in tech_selection
@@ -83,23 +90,13 @@ HOOK_API int mod_tech_rate(int faction) {
         init_save_game(faction);
     }
     if (f->tech_research_id != m->thinker_tech_id) {
-
-		// =WTP=
-		// alternative tech cost computation
-		m->thinker_tech_cost = tech_cost(faction, f->tech_research_id);
-//		m->thinker_tech_cost = wtp_tech_cost(faction, f->tech_research_id);
-
+        m->thinker_tech_cost = tech_cost(faction, f->tech_research_id);
         m->thinker_tech_id = f->tech_research_id;
     }
-
-	// =WTP=
-    // safety setting to make sure we don't return zero
-    m->thinker_tech_cost = std::max(2, m->thinker_tech_cost);
-
     return m->thinker_tech_cost;
 }
 
-HOOK_API int mod_tech_selection(int faction) {
+int __cdecl mod_tech_selection(int faction) {
     MFaction* m = &MFactions[faction];
     int tech = tech_selection(faction);
     m->thinker_tech_cost = tech_cost(faction, tech);
