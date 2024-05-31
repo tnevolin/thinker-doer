@@ -1,373 +1,977 @@
 
 #include "engine.h"
-#include "ai.h"
 
-const char* ScriptTxtID = "SCRIPT";
-static int currentAttackerVehicleId = -1;
-static int currentDefenderVehicleId = -1;
+const char** EngineVersion = (const char**)0x691870;
+const char** EngineDate = (const char**)0x691874;
+char*** TextLabels = (char***)0x9B90F8;
+char* LastSavePath = (char*)0x9A66C9;
+char* ScriptFile = (char*)0x9B8AA8;
+char* MapFilePath = (char*)0x94A2BC;
+char* StrBuffer = (char*)0x9B86A0;
+BASE** CurrentBase = (BASE**)0x90EA30;
+int* CurrentBaseID = (int*)0x689370;
+int* ComputeBaseID = (int*)0x689374; // changed whenever base_support values are refreshed
+int* BaseFindDist = (int*)0x90EA04;
+int* BaseUpkeepStage = (int*)0x90EA34;
+int* BaseCurrentConvoyFrom = (int*)0x90E904; // [4]
+int* BaseCurrentConvoyTo = (int*)0x90E93C; // [4]
+int *BaseCurrentGrowthRate = (int*)0x90E918;
+int* BaseCurrentVehPacifismCount = (int*)0x90E980;
+int* BaseCurrentForcesSupported = (int*)0x90E8FC;
+int* BaseCurrentForcesMaintCost = (int*)0x90E91C;
+int* ScnVictFacilityObj = (int*)0x9A6814;
+int* BaseCount = (int*)0x9A64CC;
+int* VehCount = (int*)0x9A64C8;
+int* GamePreferences = (int*)0x9A6490;
+int* GameMorePreferences = (int*)0x9A6494;
+int* GameWarnings = (int*)0x9A6498;
+int* GameState = (int*)0x9A64C0;
+int* GameRules = (int*)0x9A649C;
+int* GameMoreRules = (int*)0x9A681C;
+int* DiffLevel = (int*)0x9A64C4;
+int* ExpansionEnabled = (int*)0x9A6488;
+int* MultiplayerActive = (int*)0x93F660; // DirectPlay, Internet (TCP/IP)
+int* PbemActive = (int*)0x93A95C; // HotSeat / PBEM
+int* CurrentTurn = (int*)0x9A64D4;
+int* CurrentFaction = (int*)0x9A6820; // active faction for turn processing
+int* CurrentPlayerFaction = (int*)0x939284; // MapWin->cOwner
+int* MapRandomSeed = (int*)0x949878;
+int* MapToggleFlat = (int*)0x94988C;
+int* MapAreaTiles = (int*)0x949884;
+int* MapAreaSqRoot = (int*)0x949888;
+int* MapAreaX = (int*)0x949870;
+int* MapAreaY = (int*)0x949874;
+int* MapHalfX = (int*)0x68FAF0;
+int* MapSizePlanet = (int*)0x94A2A0;
+int* MapOceanCoverage = (int*)0x94A2A4;
+int* MapLandCoverage = (int*)0x94A2A8; // 2 - MapOceanCoverage
+int* MapErosiveForces = (int*)0x94A2AC;
+int* MapPlanetaryOrbit = (int*)0x94A2B0; // affects temperature
+int* MapCloudCover = (int*)0x94A2B4; // affects rainfall, rivers
+int* MapNativeLifeForms = (int*)0x94A2B8;
+int* MapLandmarkCount = (int*)0x949890;
+int* MapSeaLevel = (int*)0x94987C;
+int* MapSeaLevelCouncil = (int*)0x949880;
+int* MapAbstractLongBounds = (int*)0x94A294;
+int* MapAbstractLatBounds = (int*)0x94A298;
+int* MapAbstractArea = (int*)0x94A29C;
+int* MapBaseSubmergedCount = (int*)0x9B2290; // [8]; reset each time global alt changes
+int* MapBaseIdClosestSubmergedVeh = (int*)0x9B22BC; // [8]; reset each time global alt changes
+int* BrushVal1 = (int*)0x9B22B0;
+int* BrushVal2 = (int*)0x9B22B8;
+int* WorldBuildVal1 = (int*)0x9B22B4;
+int* AltNaturalDefault = (int*)0x68FAF4;
+int* AltNatural = (int*)0x68FB4C;
+int* ObjectiveReqVictory = (int*)0x94B4C0;
+int* ObjectivesSuddenDeathVictory = (int*)0x94B4C4;
+int* ObjectiveAchievePts = (int*)0x94B4C8;
+int* VictoryAchieveBonusPts = (int*)0x94B4CC;
+int* CurrentMissionYear = (int*)0x9A64D8;
+int* StartingMissionYear = (int*)0x94B4D0; // Normal starting year
+int* EndingMissionYear = (int*)0x94B4D4; // Normal ending year for the difficulty level
+int* TectonicDetonationCount = (int*)0x946138; // [8]; value for each faction
+int* ClimateFutureChange = (int*)0x9A67D8;
+int* SunspotDuration = (int*)0x9A6800;
+int* MountPlanetX = (int* )0x9A6804;
+int* MountPlanetY = (int* )0x9A6808;
+int* DustCloudDuration = (int*)0x9A680C;
+int* GovernorFaction = (int*)0x9A6614;
+int* UNCharterRepeals = (int*)0x9A6638;
+int* UNCharterReinstates = (int*)0x9A663C;
+int* gender_default = (int*)0x9BBFEC;
+int* plurality_default = (int*)0x9BBFF0;
+int* diplo_second_faction = (int*)0x93F7CC;
+int* diplo_third_faction = (int*)0x93F7D4;
+int* diplo_tech_faction = (int*)0x93FA38;
+int* reportwin_opponent_faction = (int*)0x8A4164;
+int* diplo_value_93FA98 = (int*)0x93FA98;
+int* diplo_value_93FA24 = (int*)0x93FA24;
+int* diplo_entry_id = (int*)0x93FAA8;
+int* diplo_counter_proposal_id = (int*)0x93FAB0;
+int* diplo_current_proposal_id = (int*)0x93FA34;
+int* diplo_ask_base_swap_id = (int*)0x93FA7C;
+int* diplo_bid_base_swap_id = (int*)0x93FA30;
+int* diplo_tech_id1 = (int*)0x93F800;
+int* veh_attack_flags = (int*)0x93E904;
+int* ScreenWidth = (int*)0x9B7B1C;
+int* ScreenHeight = (int*)0x9B7B20;
+char256* ParseStrBuffer = (char256*)0x9BB5E8;
+int* ParseNumTable = (int*)0x9BB598;
+int* ParseStrPlurality = (int*)0x9BB570;
+int* ParseStrGender = (int*)0x9BB5C0;
+int* DialogChoices = (int*)0x9BC06C;
+int* GameHalted = (int*)0x68F21C;
+int* ControlTurnA = (int*)0x9B2068;
+int* ControlTurnB = (int*)0x93A948;
+int* ControlTurnC = (int*)0x93A938;
+int* ControlRedraw = (int*)0x915620;
+int* ControlUpkeepA = (int*)0x93A934;
+int* ControlWaitLoop = (int*)0x703DE0;
+int* SkipTechScreenA = (int*)0x945F40; // non-zero skips popups, used in tech_achieved and tech_advance
+int* SkipTechScreenB = (int*)0x945F44; // non-zero skips popups, used in base_change and tech_advance
+int* WorldAddTemperature = (int*)0x9B22E8;
+int* WorldSkipTerritory = (int*)0x9B22EC;
+int* GameDrawState = (int*)0x90D91C;
+int* WinModalState = (int*)0x9B7AE4;
+int* DiploWinState = (int*)0x93FAB4; // Non-zero when diplomacy communication active
+int* PopupDialogState = (int*)0x6A721C; // Non-zero when most popups or scrollable lists are visible
+RECT* RenderTileBounds = (RECT*)0x7D3C28;
+
+int* VehDropLiftVehID = (int*)0x9B2280;
+int* VehLiftX = (int*)0x9B2278;
+int* VehLiftY = (int*)0x9B2284;
+int* VehBitError = (int*)0x9B228C;
+int* VehBasicBattleMorale = (int*)0x912420; // [2] ; [0] offense, [1] defense
+// Battle related globals
+int* VehBattleModCount = (int*)0x915614; // [2] ; [0] offense, [1] defense
+int* VehBattleUnkTgl = (int*)0x91561C; // [2] ; planet_busting() + boom() + timers
+int (*VehBattleModifier)[4] = (int (*)[4])0x9155F0; // [2][4]
+char (*VehBattleDisplay)[4][80] = (char (*)[4][80])0x90F554; // [2][4][80]
+char* VehBattleDisplayTerrain;
+int* ProbeHasAlgoEnhancement = (int*)0x945B30;
+int* ProbeTargetFactionID = (int*)0x945B34;
+int* ProbeTargetHasHSA = (int*)0x945B38;
+
+uint8_t* TechOwners = (uint8_t*)0x9A6670;
+int* SecretProjects = (int*)0x9A6514;
+int* CostRatios = (int*)0x689378;
+// [2] Bitfields for player controlled/active faction status
+uint8_t* FactionStatus = (uint8_t*)0x9A64E8;
+// [1000][8] ? Per turn might ratings for each faction
+int16_t (*FactionTurnMight)[8] = (int16_t (*)[8])(0x9A68AC);
+// [8] Current relative faction ranking
+int* FactionRankings = (int*)0x9A64EC;
+int* RankingFactionIDUnk1 = (int*)0x9A650C;
+int* RankingFactionIDUnk2 = (int*)0x9A6510;
+int* FactionRankingsUnk = (int*)0x945DD8; // [8]
+int* DiploFriction = (int*)0x93FA74; // not always bounded, should it be 0-20?
+int* DiploFrictionFactionIDWith = (int*)0x93FABC;
+int* DiploFrictionFactionID = (int*)0x93FAC0;
+
+ThinkerData* ThinkerVars      = (ThinkerData*)&MFactions[0].pad_2[0];
+MFaction*    MFactions        = (MFaction*)0x946A50;
+Faction*     Factions         = (Faction*)0x96C9E0;
+BASE*        Bases            = (BASE*)0x97D040;
+UNIT*        Units            = (UNIT*)0x9AB868;
+VEH*         Vehicles         = (VEH*)0x952828;
+VEH*         Vehs             = Vehicles;
+MAP**        MapTiles         = (MAP**)0x94A30C;
+uint8_t**    MapAbstract      = (uint8_t**)0x94A310;
+Continent*   Continents       = (Continent*)0x9AA730; // [128]
+Landmark*    Landmarks        = (Landmark*)0x949894; // [64]
+Console*     MapWin           = (Console*)0x9156B0; // len: 0x247A4 end: 0x939E54
+Win*         BaseWin          = (Win*)0x6A7628;
+Win*         BattleWin        = (Win*)0x6EEED8;
+Win*         CouncilWin       = (Win*)0x6FEC80;
+Win*         DatalinkWin      = (Win*)0x703EA0;
+Win*         DesignWin        = (Win*)0x71F2B0;
+Win*         DiploWin         = (Win*)0x73ACD8;
+Win*         FameWin          = (Win*)0x74DAF8;
+Win*         InfoWin          = (Win*)0x7AD2A0;
+Win*         MainWin          = (Win*)0x7AE820;
+Win*         StringBox        = (Win*)0x7CD2EC;
+Win*         DetailWin        = (Win*)0x7D3C40; // Lower right view on world map
+Win*         BaseMapWin       = (Win*)0x7D4060; // Additional base terrain view
+Win*         MessageWin       = (Win*)0x7F67F8;
+Win*         MonuWin          = (Win*)0x7F9F58;
+Win*         MultiWin         = (Win*)0x7FD648;
+Win*         NetWin           = (Win*)0x80A6F8;
+Win*         NetTechWin       = (Win*)0x811E40;
+Win*         PickWin          = (Win*)0x822718;
+Win*         PlanWin          = (Win*)0x834D70;
+Win*         PrefWin          = (Win*)0x8578D8;
+Win*         ReportWin        = (Win*)0x876478;
+Win*         SocialWin        = (Win*)0x8A6270;
+Win*         StatusWin        = (Win*)0x8C5568;
+Win*         TutWin           = (Win*)0x8C6E68;
+Win*         WorldWin         = (Win*)0x8E9F60; // Lower right view on world map
+Font**       MapLabelFont     = (Font**)0x93FC24;
+Sprite**     FactionPortraits = (Sprite**)0x6846D8;
+void*        NetMsg           = (void*)0x805338;
+
+// Rules parsed from alphax.txt
+CRules*         Rules         = (CRules*)0x949738;
+CTech*          Tech          = (CTech*)0x94F358;
+CFacility*      Facility      = (CFacility*)0x9A4B68;
+CAbility*       Ability       = (CAbility*)0x9AB538;
+CChassis*       Chassis       = (CChassis*)0x94A330;
+CCitizen*       Citizen       = (CCitizen*)0x946020;
+CArmor*         Armor         = (CArmor*)0x94F278;
+CReactor*       Reactor       = (CReactor*)0x9527F8;
+CResourceInfo*  ResInfo       = (CResourceInfo*)0x945F50;
+CResourceName*  ResName       = (CResourceName*)0x946158;
+CEnergy*        Energy        = (CEnergy*)0x94A318;
+CTerraform*     Terraform     = (CTerraform*)0x691878;
+CWeapon*        Weapon        = (CWeapon*)0x94AE60;
+CNatural*       Natural       = (CNatural*)0x94ADE0;
+CProposal*      Proposal      = (CProposal*)0x9A6828;
+CWorldbuilder*  WorldBuilder  = (CWorldbuilder*)0x9502A8;
+CMorale*        Morale        = (CMorale*)0x952328; // [7]
+CCombatMode*    DefenseMode   = (CCombatMode*)0x946A00; // [3]
+CCombatMode*    OffenseMode   = (CCombatMode*)0x946178; // [3]
+COrder*         Order         = (COrder*)0x96C878; // [9]
+CTimeControl*   TimeControl   = (CTimeControl*)0x94F1B8;
+CSocialField*   Social        = (CSocialField*)0x94B000;
+CSocialEffect*  SocialEffect  = (CSocialEffect*)0x946580;
+CMight*         Might         = (CMight*)0x94C558;
+CBonusName*     BonusName     = (CBonusName*)0x9461A8;
+char**          Mood          = (char**)0x94C9E4;
+char**          Repute        = (char**)0x946A30;
 
 
-void init_save_game(int faction) {
-    Faction* f = &Factions[faction];
-    MFaction* m = &MFactions[faction];
-    if (m->thinker_header != THINKER_HEADER) {
-        m->thinker_header = THINKER_HEADER;
-        m->thinker_flags = 0;
-        /* Convert old save game to the new format. */
-        if (f->old_thinker_header == THINKER_HEADER) {
-            m->thinker_tech_id = f->old_thinker_tech_id;
-            m->thinker_tech_cost = f->old_thinker_tech_cost;
-            m->thinker_enemy_range = f->old_thinker_enemy_range;
-            memset(&f->old_thinker_header, 0, 12);
-        } else {
-            m->thinker_tech_id = f->tech_research_id;
-            m->thinker_tech_cost = f->tech_cost;
-            m->thinker_enemy_range = 20;
-        }
-    } else {
-        assert(f->old_thinker_header != THINKER_HEADER);
-    }
-    if (m->thinker_enemy_range < 2 || m->thinker_enemy_range > 40) {
-        m->thinker_enemy_range = 20;
-    }
-}
+FGenString amovie_project                  = (FGenString           )0x403BE0;
+FPopup_start Popup_start                   = (FPopup_start         )0x406380;
+FGenWin BaseWin_nerve_staple               = (FGenWin              )0x41B4F0;
+FGenWin BaseWin_on_redraw                  = (FGenWin              )0x41E790;
+FGenVoid SubInterface_release_iface_mode   = (FGenVoid             )0x45D380;
+fp_void draw_cursor                        = (fp_void              )0x46AE00;
+fp_3int draw_tile                          = (fp_3int              )0x46AF40;
+fp_1int draw_map                           = (fp_1int              )0x46B190;
+FNetMsg_pop NetMsg_pop                     = (FNetMsg_pop          )0x47A890;
+FPlanWin_blink PlanWin_blink               = (FPlanWin_blink       )0x48BC20;
+Fpopp popp                                 = (Fpopp                )0x48C0A0;
+FGenVoid StatusWin_on_redraw               = (FGenVoid             )0x4B8890;
+FGenVoid StatusWin_redraw                  = (FGenVoid             )0x4B9EA0;
+FTutWin_draw_arrow TutWin_draw_arrow       = (FTutWin_draw_arrow   )0x4BDEA0;
+FConsole_go_to Console_go_to               = (FConsole_go_to       )0x4D61A0;
+FGenVoid Console_editor_scen_rules         = (FGenVoid             )0x4DC520;
+fp_void turn_timer                         = (fp_void              )0x50EF10;
+FConsole_zoom Console_zoom                 = (FConsole_zoom        )0x5150D0;
+Fhex_cost hex_cost                         = (Fhex_cost            )0x593510;
+Fhas_abil has_abil                         = (Fhas_abil            )0x5BF1F0;
+FX_pop X_pop                               = (FX_pop               )0x5BF480;
+FX_pops X_pops                             = (FX_pops              )0x5BF930;
+FWin_flip Win_flip                         = (FWin_flip            )0x5EFD20;
+FWinProc WinProc                           = (FWinProc             )0x5F0650;
+fp_void Win_get_key_window                 = (fp_void              )0x5F6A50;
+FWin_update_screen Win_update_screen       = (FWin_update_screen   )0x5F7320;
+FWin_is_visible Win_is_visible             = (FWin_is_visible      )0x5F7E90;
+tc_2int Font_width                         = (tc_2int              )0x619280;
+Fpop_ask_number pop_ask_number             = (Fpop_ask_number      )0x627C30;
+FStringBox_clip_ids StringBox_clip_ids     = (FStringBox_clip_ids  )0x629A70;
+fp_void my_rand                            = (fp_void              )0x64601D;
 
-bool victory_done() {
-    // TODO: Check for scenario victory conditions
-    return *game_state & (STATE_VICTORY_CONQUER | STATE_VICTORY_DIPLOMATIC | STATE_VICTORY_ECONOMIC)
-        || has_project(-1, FAC_ASCENT_TO_TRANSCENDENCE);
-}
+FMapWin_clear MapWin_clear = (FMapWin_clear)0x462870;
+FMapWin MapWin_calculate_dimensions = (FMapWin)0x462980;
+FMapWin_pixel_to_tile MapWin_pixel_to_tile = (FMapWin_pixel_to_tile)0x463040;
+FMapWin_tile_to_pixel MapWin_tile_to_pixel = (FMapWin_tile_to_pixel)0x462F00;
+FMapWin_gen_terrain_poly MapWin_gen_terrain_poly = (FMapWin_gen_terrain_poly)0x4632D0;
+FMapWin_compute_clip MapWin_compute_clip = (FMapWin_compute_clip)0x468CD0;
+FMapWin_gen_radius MapWin_gen_radius = (FMapWin_gen_radius)0x469190;
+FMapWin_gen_map MapWin_gen_map = (FMapWin_gen_map)0x469CA0;
+FMapWin_draw_radius MapWin_draw_radius = (FMapWin_draw_radius)0x46A2A0;
+FMapWin_draw_tile MapWin_draw_tile = (FMapWin_draw_tile)0x46A4A0;
+FMapWin_draw_map MapWin_draw_map = (FMapWin_draw_map)0x46A550;
+FMapWin_draw_cursor MapWin_draw_cursor = (FMapWin_draw_cursor)0x46AD60;
+FMapWin_set_center MapWin_set_center = (FMapWin_set_center)0x46B1F0;
+FMapWin_focus MapWin_focus = (FMapWin_focus)0x46B310;
+fp_void MapWin_main_caption = (fp_void)0x46FB10;
+FMapWin_clear_alt MapWin_clear_alt = (FMapWin_clear_alt)0x46FB90;
+FMapWin_clear_terrain MapWin_clear_terrain = (FMapWin_clear_terrain)0x46FD90;
+FMapWin_get_relative_alt MapWin_get_relative_alt = (FMapWin_get_relative_alt)0x46FE00;
+FMapWin_get_alt MapWin_get_alt = (FMapWin_get_alt)0x46FE70;
+fp_void MapWin_compute_lighting_table = (fp_void)0x470420;
+FMapWin_get_brighting MapWin_get_brighting = (FMapWin_get_brighting)0x470550;
+FMapWin_get_point_light MapWin_get_point_light = (FMapWin_get_point_light)0x470790;
+FMapWin_init2 MapWin_init2 = (FMapWin_init2)0x470920;
+FMapWin_init MapWin_init = (FMapWin_init)0x470A90;
+FMapWin MapWin_init_dummy = (FMapWin)0x470ED0;
+FMapWin MapWin_close = (FMapWin)0x470F70;
 
-bool has_colony_pods(int faction) {
-    for (int i=0; i<*total_num_vehicles; i++) {
-        VEH* veh = &Vehicles[i];
-        if (veh->faction_id == faction && Units[veh->unit_id].weapon_type == WPN_COLONY_MODULE) {
-            return true;
-        }
-    }
-    return false;
-}
+FGraphicWin_fill GraphicWin_fill = (FGraphicWin_fill)0x5D5250;
+FGraphicWin_fill2 GraphicWin_fill2 = (FGraphicWin_fill2)0x5D5350;
+FGraphicWin_fill3 GraphicWin_fill3 = (FGraphicWin_fill3)0x5D5440;
+FGraphicWin_load_pcx GraphicWin_load_pcx = (FGraphicWin_load_pcx)0x5D5500;
+FGraphicWin_resize GraphicWin_resize = (FGraphicWin_resize)0x5D5540;
+FGraphicWin_update3 GraphicWin_update3 = (FGraphicWin_update3)0x5D55D0;
+FGraphicWin_update2 GraphicWin_update2 = (FGraphicWin_update2)0x5D5630;
+FGraphicWin_update GraphicWin_update = (FGraphicWin_update)0x5D56B0;
+FGraphicWin_soft_update3 GraphicWin_soft_update3 = (FGraphicWin_soft_update3)0x5D5720;
+FGraphicWin_soft_update2 GraphicWin_soft_update2 = (FGraphicWin_soft_update2)0x5D5890;
+FGraphicWin_soft_update GraphicWin_soft_update = (FGraphicWin_soft_update)0x5D5930;
+FGraphicWin_redraw GraphicWin_redraw = (FGraphicWin_redraw)0x5D5A70;
 
-/*
-Original Offset: 005C89A0
-*/
-int __cdecl game_year(int n) {
-    return Rules->normal_start_year + n;
-}
+FBuffer_resize Buffer_resize = (FBuffer_resize)0x5D79C0;
+FBuffer_load_pcx Buffer_load_pcx = (FBuffer_load_pcx)0x5D7DE0;
+FBuffer_set_clip Buffer_set_clip = (FBuffer_set_clip)0x5D8000;
+FBuffer_set_clip_ Buffer_set_clip_ = (FBuffer_set_clip_)0x5D8200;
+FBuffer_fill Buffer_fill = (FBuffer_fill)0x5D8240;
+FBuffer_draw2 Buffer_draw2 = (FBuffer_draw2)0x5D8370;
+FBuffer_draw Buffer_draw = (FBuffer_draw)0x5D84C0;
+FBuffer_draw_mono Buffer_draw_mono = (FBuffer_draw_mono)0x5D8930;
+FBuffer_draw_0 Buffer_draw_0 = (FBuffer_draw_0)0x5D8EE0;
+FBuffer_draw_multi_table_dest Buffer_draw_multi_table_dest = (FBuffer_draw_multi_table_dest)0x5D94B0;
+FBuffer_copy4 Buffer_copy4 = (FBuffer_copy4)0x5D95B0;
+FBuffer_copy3 Buffer_copy3 = (FBuffer_copy3)0x5D95E0;
+FBuffer_copy2 Buffer_copy2 = (FBuffer_copy2)0x5D9610;
+FBuffer_set_font Buffer_set_font = (FBuffer_set_font)0x5DAC70;
+FBuffer_set_text_color Buffer_set_text_color = (FBuffer_set_text_color)0x5DACB0;
+FBuffer_set_text_color2 Buffer_set_text_color2 = (FBuffer_set_text_color2)0x5DACE0;
+FBuffer_set_text_color3 Buffer_set_text_color3 = (FBuffer_set_text_color3)0x5DAD10;
+FBuffer_set_text_color_hyper Buffer_set_text_color_hyper = (FBuffer_set_text_color_hyper)0x5DAD40;
+FBuffer_write_strings_height Buffer_write_strings_height = (FBuffer_write_strings_height)0x5DAD70;
+FBuffer_write_strings Buffer_write_strings = (FBuffer_write_strings)0x5DB040;
+FBuffer_write_l Buffer_write_l = (FBuffer_write_l)0x5DCEA0;
+FBuffer_write_l2 Buffer_write_l2 = (FBuffer_write_l2)0x5DCF40;
+FBuffer_write_cent_l Buffer_write_cent_l = (FBuffer_write_cent_l)0x5DD020;
+FBuffer_write_cent_l2 Buffer_write_cent_l2 = (FBuffer_write_cent_l2)0x5DD0E0;
+FBuffer_write_cent_l3 Buffer_write_cent_l3 = (FBuffer_write_cent_l3)0x5DD130;
+FBuffer_write_cent_l4 Buffer_write_cent_l4 = (FBuffer_write_cent_l4)0x5DD250;
+FBuffer_write_right_l Buffer_write_right_l = (FBuffer_write_right_l)0x5DD300;
+FBuffer_write_right_l2 Buffer_write_right_l2 = (FBuffer_write_right_l2)0x5DD3B0;
+FBuffer_write_right_l3 Buffer_write_right_l3 = (FBuffer_write_right_l3)0x5DD450;
+FBuffer_wrap Buffer_wrap = (FBuffer_wrap)0x5DD530;
+FBuffer_wrap2 Buffer_wrap2 = (FBuffer_wrap2)0x5DD730;
+FBuffer_wrap_cent Buffer_wrap_cent = (FBuffer_wrap_cent)0x5DD920;
+FBuffer_wrap_cent3 Buffer_wrap_cent3 = (FBuffer_wrap_cent3)0x5DDAB0;
+FBuffer_change_color Buffer_change_color = (FBuffer_change_color)0x5DE580;
+FBuffer_sync_to_palette Buffer_sync_to_palette = (FBuffer_sync_to_palette)0x5DE8F0;
+FBuffer_clear_links Buffer_clear_links = (FBuffer_clear_links)0x5DEF90;
+FBuffer_write_pcx Buffer_write_pcx = (FBuffer_write_pcx)0x5DF590;
+FBuffer_fill2 Buffer_fill2 = (FBuffer_fill2)0x5DFB50;
+FBuffer_fill3 Buffer_fill3 = (FBuffer_fill3)0x5DFCD0;
+FBuffer_copy Buffer_copy = (FBuffer_copy)0x5DFF00;
+FBuffer_line Buffer_line = (FBuffer_line)0x5E09D0;
+FBuffer_line_0 Buffer_line_0 = (FBuffer_line_0)0x5E15F0;
+FBuffer_hline Buffer_hline = (FBuffer_hline)0x5E1A80;
+FBuffer_vline Buffer_vline = (FBuffer_vline)0x5E1BF0;
+FBuffer_dotted_vline Buffer_dotted_vline = (FBuffer_dotted_vline)0x5E1EF0;
+FBuffer_get_pixel Buffer_get_pixel = (FBuffer_get_pixel)0x5E2210;
+FBuffer_get_pcx_dimensions Buffer_get_pcx_dimensions = (FBuffer_get_pcx_dimensions)0x5E2480;
+FBuffer_load_pcx2 Buffer_load_pcx2 = (FBuffer_load_pcx2)0x5E2690;
+FBuffer_copy_mask Buffer_copy_mask = (FBuffer_copy_mask)0x5E2B00;
+FBuffer_box_sprite Buffer_box_sprite = (FBuffer_box_sprite)0x5E2DD3;
+FBuffer_box Buffer_box = (FBuffer_box)0x5E3203;
 
-/*
-Original Offset: 00527290
-*/
-int __cdecl mod_faction_upkeep(int faction) {
-    Faction* f = &Factions[faction];
-    MFaction* m = &MFactions[faction];
 
-    debug("faction_upkeep %d %d\n", *current_turn, faction);
-    if (faction > 0) {
-        init_save_game(faction);
-        plans_upkeep(faction);
-    }
+fp_3int terraform_cost           = (fp_3int)0x4C9420;
+fp_2int action_build             = (fp_2int)0x4C96E0;
+fp_2int contribution             = (fp_2int)0x4C9A50;
+fp_3int action_terraform         = (fp_3int)0x4C9B00;
+fp_1int action_staple            = (fp_1int)0x4CA7F0;
+Fact_destroy action_destroy = (Fact_destroy)0x4CAA50;
+fp_1int action_go_to             = (fp_1int)0x4CB310;
+fp_1int action_road_to           = (fp_1int)0x4CB580;
+fp_2int action_home              = (fp_2int)0x4CBAA0;
+Fact_airdrop action_airdrop = (Fact_airdrop)0x4CC360;
+fp_3int action_move              = (fp_3int)0x4CD090;
+fp_1int action_destruct          = (fp_1int)0x4CD2F0;
+fp_2int action_oblit             = (fp_2int)0x4CD4E0;
+fp_3int sub_4CD6A0               = (fp_3int)0x4CD6A0;
+fp_3int action_patrol            = (fp_3int)0x4CDA30;
+fp_5int shoot_it                 = (fp_5int)0x4CDAF0;
+fp_3int action_tectonic          = (fp_3int)0x4CE210;
+fp_3int action_fungal            = (fp_3int)0x4CE790;
+fp_2int action_give              = (fp_2int)0x4CEDE0;
+Fact_gate action_gate          = (Fact_gate)0x4CF380;
+fp_4int action_sat_attack        = (fp_4int)0x4CF480;
+fp_1int action                   = (fp_1int)0x4CF740;
 
-    *dword_93A934 = 1;
-    social_upkeep(faction);
-    do_all_non_input();
-    repair_phase(faction);
-    do_all_non_input();
-    production_phase(faction);
-    do_all_non_input();
-    if (!(*game_state & STATE_GAME_DONE) || *game_state & STATE_FINAL_SCORE_DONE) {
-        allocate_energy(faction);
-        // [WTP]
-        if (isWtpEnabledFaction(faction))
-		{
-			modifiedAllocatePsych(faction);
-		}
-        do_all_non_input();
-        enemy_diplomacy(faction);
-        do_all_non_input();
-        enemy_strategy(faction);
-        do_all_non_input();
-        /*
-        Thinker-specific AI planning routines.
-        If the new social_ai is disabled from the config old version gets called instead.
-        Player factions always skip the new social_ai function.
-        Note that move_upkeep is updated after all the production is done,
-        so that the movement code can utilize up-to-date priority maps.
-        This means we mostly cannot use move_upkeep variables in production phase.
-        */
-        mod_social_ai(faction, -1, -1, -1, -1, 0);
-        move_upkeep(faction, false);
-        do_all_non_input();
+fp_1int set_base                 = (fp_1int)0x4E39D0;
+fp_2int say_base                 = (fp_2int)0x4E3A00;
+Fbase_at base_at                = (Fbase_at)0x4E3A50;
+fp_2int base_find                = (fp_2int)0x4E3B80;
+fp_3int base_find2               = (fp_3int)0x4E3C60;
+fp_6int base_find3               = (fp_6int)0x4E3D50;
+fp_5int whose_territory          = (fp_5int)0x4E3EF0;
+fp_3int base_territory           = (fp_3int)0x4E3FA0;
+fp_void best_specialist          = (fp_void)0x4E4020;
+Fname_base name_base          = (Fname_base)0x4E4090;
+fp_1int base_mark                = (fp_1int)0x4E4350;
+fp_3int cost_factor              = (fp_3int)0x4E4430;
+fp_2int base_making              = (fp_2int)0x4E4700;
+fp_1int base_lose_minerals       = (fp_1int)0x4E4810;
+fp_3int set_fac                  = (fp_3int)0x4E48B0;
+fp_3int is_coast                 = (fp_3int)0x4E49D0;
+fp_1int base_first               = (fp_1int)0x4E4AA0;
+fp_3int base_init                = (fp_3int)0x4E4B80;
+fp_1int base_kill                = (fp_1int)0x4E5250;
+fp_2int base_change              = (fp_2int)0x4E5A60;
+fp_2int base_reset               = (fp_2int)0x4E5FE0;
+fp_3int bases_reset              = (fp_3int)0x4E6300;
+fp_3int morale_mod               = (fp_3int)0x4E6400;
+fp_2int breed_mod                = (fp_2int)0x4E65C0;
+fp_2int worm_mod                 = (fp_2int)0x4E6740;
+fp_void farm_compute             = (fp_void)0x4E68B0;
+fp_5int crop_yield               = (fp_5int)0x4E6E50;
+fp_5int mine_yield               = (fp_5int)0x4E7310;
+fp_5int energy_yield             = (fp_5int)0x4E7750;
+fp_5int resource_yield           = (fp_5int)0x4E7DC0;
+fp_void base_yield               = (fp_void)0x4E80B0;
+fp_void base_support             = (fp_void)0x4E9550;
+fp_void base_nutrient            = (fp_void)0x4E9B70;
+fp_void base_minerals            = (fp_void)0x4E9CB0;
+fp_1int black_market             = (fp_1int)0x4EA1F0;
+fp_3int psych_check              = (fp_3int)0x4EA4A0;
+fp_void base_psych               = (fp_void)0x4EA540;
+fp_2int base_rank                = (fp_2int)0x4EB490;
+fp_void base_energy              = (fp_void)0x4EB560;
+fp_1int base_compute             = (fp_1int)0x4EC3B0;
+fp_1int base_connect             = (fp_1int)0x4EC3F0;
+fp_1int base_terraform           = (fp_1int)0x4ECBF0;
+fp_1int pop_goal                 = (fp_1int)0x4EF090;
+fp_void base_growth              = (fp_void)0x4EF1C0;
+fp_3int do_upgrade               = (fp_3int)0x4EFB50;
+fp_3int upgrade_cost             = (fp_3int)0x4EFD50;
+fp_4int upgrade_prototype        = (fp_4int)0x4EFE80;
+fp_2int upgrade_prototypes       = (fp_2int)0x4F0460;
+fp_1int upgrade_any_prototypes   = (fp_1int)0x4F0650;
+fp_1int base_queue               = (fp_1int)0x4F06E0;
+fp_void base_production          = (fp_void)0x4F07E0;
+fp_void base_hurry               = (fp_void)0x4F3FE0;
+fp_void base_check_support       = (fp_void)0x4F4830;
+fp_void base_energy_costs        = (fp_void)0x4F4DC0;
+fp_void base_research            = (fp_void)0x4F4E80;
+fp_void drone_riot               = (fp_void)0x4F4FB0;
+fp_void base_drones              = (fp_void)0x4F5CE0;
+fp_void base_doctors             = (fp_void)0x4F5F30;
+fp_2int fac_maint                = (fp_2int)0x4F6510;
+fp_void base_maint               = (fp_void)0x4F65F0;
+fp_void base_ecology             = (fp_void)0x4F67F0;
+fp_1int base_upkeep              = (fp_1int)0x4F79C0;
+fp_1int make_base_unique         = (fp_1int)0x4F7FE0;
+fp_2int x_dist                   = (fp_2int)0x4F8090;
+fp_2int has_project              = (fp_2int)0x4F80D0;
+fp_6int base_claimed             = (fp_6int)0x4F8110;
+fp_4int base_build               = (fp_4int)0x4F81A0;
 
-        if (!is_human(faction)) {
-            int cost = corner_market(faction);
-            if (!victory_done() && f->energy_credits > cost && f->corner_market_active < 1
-            && has_tech(faction, Rules->tech_preq_economic_victory)
-            && *game_rules & RULES_VICTORY_ECONOMIC) {
-                f->corner_market_turn = *current_turn + Rules->turns_corner_global_energy_market;
-                f->corner_market_active = cost;
-                f->energy_credits -= cost;
+fp_1int drop_range               = (fp_1int)0x500320;
+fp_1int planet_buster2           = (fp_1int)0x5004F0;
+fp_1int planet_buster            = (fp_1int)0x500520;
+fp_4int shoot                    = (fp_4int)0x500560;
+fp_3int planet_busting           = (fp_3int)0x500B60;
+fp_5int defense_value            = (fp_5int)0x5010C0;
+fp_2int morale_alien             = (fp_2int)0x501350;
+fp_4int psi_factor               = (fp_4int)0x501500;
+fp_5int get_basic_offense        = (fp_5int)0x5015B0;
+fp_4int get_basic_defense        = (fp_4int)0x501940;
+Fbattle_compute battle_compute = (Fbattle_compute)0x501DA0;
+fp_3int best_defender            = (fp_3int)0x5044D0;
+fp_3int boom                     = (fp_3int)0x504AA0;
+fp_void sub_505D40               = (fp_void)0x505D40;
+fp_void sub_505D60               = (fp_void)0x505D60;
+fp_6int battle_kill              = (fp_6int)0x505D80;
+fp_6int battle_kill_stack        = (fp_6int)0x506130;
+fp_1int promote                  = (fp_1int)0x5062B0;
+fp_1int invasions                = (fp_1int)0x506490;
+fp_4int interceptor              = (fp_4int)0x506650;
+Fbattle_fight_1 battle_fight_1 = (Fbattle_fight_1)0x506A60;
+fp_7int battle_fight_2           = (fp_7int)0x506AF0;
+fp_1int say_num                  = (fp_1int)0x50B8A0;
+fp_4int POP3_                    = (fp_4int)0x50B8D0;
+fp_1int sub_50B8F0               = (fp_1int)0x50B8F0;
+fp_1int sub_50B910               = (fp_1int)0x50B910;
+fp_1int parse_set                = (fp_1int)0x50B930;
+fp_3int sub_50B970               = (fp_3int)0x50B970;
+fp_1int sub_50B9A0               = (fp_1int)0x50B9A0;
+fp_2int sub_50B9C0               = (fp_2int)0x50B9C0;
+FNetMsg_pop2 NetMsg_pop2    = (FNetMsg_pop2)0x50B9E0;
+fp_3int bitmask                  = (fp_3int)0x50BA00;
+fp_1int bit_count                = (fp_1int)0x50BA30;
+fp_2int intervention             = (fp_2int)0x50BA50;
+fp_3int double_cross             = (fp_3int)0x50BCC0;
+fp_2int act_of_aggression        = (fp_2int)0x50C2E0;
+fp_3int steal_tech               = (fp_3int)0x50C340;
+fp_1int steal_energy             = (fp_1int)0x50C4B0;
+fp_3int capture_base             = (fp_3int)0x50C510;
 
-                gender_default = &m->noun_gender;
-                plurality_default = 0;
-                parse_says(0, m->title_leader, -1, -1);
-                parse_says(1, m->name_leader, -1, -1);
-                plurality_default = &m->is_noun_plural;
-                parse_says(2, m->noun_faction, -1, -1);
-                parse_says(3, m->adj_name_faction, -1, -1);
-                parse_num(0, game_year(f->corner_market_turn));
-                popp(ScriptTxtID, "CORNERWARNING", 0, "econwin_sm.pcx", 0);
-            }
-        }
-    }
-    for (int i=0; i<*total_num_bases; i++) {
-        BASE* base = &Bases[i];
-        if (base->faction_id == faction) {
-            base->status_flags &= ~(BASE_UNK_1 | BASE_HURRY_PRODUCTION);
-        }
-    }
-    f->energy_credits -= f->energy_cost;
-    f->energy_cost = 0;
-    if (f->energy_credits < 0) {
-        f->energy_credits = 0;
-    }
-    if (!f->current_num_bases && !has_colony_pods(faction)) {
-        eliminate_player(faction, 0);
-    }
-    *dword_93A934 = 0;
-    *dword_945B18 = -1;
-    *dword_945B1C = -1;
+fp_1int random_events            = (fp_1int)0x51F2E0;
+fp_void sub_5204E9               = (fp_void)0x5204E9;
+fp_void alien_fauna              = (fp_void)0x522180;
+fp_void do_fungal_towers         = (fp_void)0x522F00;
+fp_4int interlude                = (fp_4int)0x5230E0;
+fp_void set_time_controls        = (fp_void)0x523C60;
+fp_void reset_territory          = (fp_void)0x523DD0;
+fp_1int sub_524340               = (fp_1int)0x524340;
+fp_2int generators               = (fp_2int)0x5247B0;
+fp_1int end_of_game              = (fp_1int)0x524870;
+fp_void turn_upkeep              = (fp_void)0x5258C0;
+fp_1int repair_phase             = (fp_1int)0x526030;
+fp_1int allocate_energy          = (fp_1int)0x5267B0;
+fp_1int production_phase         = (fp_1int)0x526E70;
+fp_1int faction_upkeep           = (fp_1int)0x527290;
+fp_void control_turn             = (fp_void)0x5275B0;
+fp_1int net_upkeep_phase         = (fp_1int)0x528EA0;
+fp_void net_upkeep               = (fp_void)0x5290A0;
+fp_void mash_planes              = (fp_void)0x529C00;
+fp_void net_end_of_turn          = (fp_void)0x529F30;
+fp_void net_control_turn         = (fp_void)0x52A2E0;
+fp_void control_game             = (fp_void)0x52AA30;
+fp_1int council_votes            = (fp_1int)0x52AD30;
+fp_1int eligible                 = (fp_1int)0x52AE20;
+fp_3int wants_prop               = (fp_3int)0x52AEB0;
+fp_3int council_get_vote         = (fp_3int)0x52BE60;
+fp_2int council_action           = (fp_2int)0x52BF60;
+fp_2int can_call_council         = (fp_2int)0x52C670;
+fp_1int call_council             = (fp_1int)0x52C880;
+fp_void rebuild_vehicle_bits     = (fp_void)0x532A90;
+fp_void rebuild_base_bits        = (fp_void)0x532B70;
 
-    if (!(*game_state & STATE_GAME_DONE) || *game_state & STATE_FINAL_SCORE_DONE) {
-        if (faction == *current_player_faction
-        && !(*game_state & (STATE_COUNCIL_HAS_CONVENED | STATE_DISPLAYED_COUNCIL_AVAIL_MSG))
-        && can_call_council(faction, 0) && !(*game_state & STATE_GAME_DONE)) {
-            *game_state |= STATE_DISPLAYED_COUNCIL_AVAIL_MSG;
-            popp(ScriptTxtID, "COUNCILOPEN", 0, "council_sm.pcx", 0);
-        }
-        if (!is_human(faction)) {
-            call_council(faction);
-        }
-    }
-    if (!*multiplayer_active && *game_preferences & PREF_UNK_2 && faction == *current_player_faction) {
-        auto_save();
-        endOfTurn();
-    }
-    fflush(debug_log);
-    return 0;
-}
+fp_5int danger                   = (fp_5int)0x538F30;
+fp_1int my_srand                 = (fp_1int)0x538FB0;
+fp_1int checksum_file            = (fp_1int)0x538FE0;
+fp_3int checksum                 = (fp_3int)0x539090;
+fp_1int checksum_password        = (fp_1int)0x5390C0;
+fp_void auto_contact             = (fp_void)0x539160;
+fp_4int net_treaty_on            = (fp_4int)0x5391C0;
+fp_4int net_treaty_off           = (fp_4int)0x539230;
+fp_5int net_set_treaty           = (fp_5int)0x5392A0;
+fp_4int net_agenda_off           = (fp_4int)0x539380;
+fp_5int net_set_agenda           = (fp_5int)0x5393F0;
+Fnet_energy net_energy       = (Fnet_energy)0x539460;
+Fnet_loan net_loan             = (Fnet_loan)0x539510;
+fp_3int net_maps                 = (fp_3int)0x539580;
+fp_4int net_tech                 = (fp_4int)0x5395F0;
+fp_3int net_pact_ends            = (fp_3int)0x539660;
+fp_3int net_cede_base            = (fp_3int)0x539740;
+fp_4int net_double_cross         = (fp_4int)0x5397B0;
+fp_1int diplo_lock               = (fp_1int)0x539820;
+fp_void diplo_unlock             = (fp_void)0x5398C0;
+fp_void sub_5398E0               = (fp_void)0x5398E0;
+fp_void sub_539920               = (fp_void)0x539920;
+fp_2int diplomacy_caption        = (fp_2int)0x5399A0;
+fp_2int great_beelzebub          = (fp_2int)0x539B70;
+fp_2int great_satan              = (fp_2int)0x539C00;
+fp_2int aah_ooga                 = (fp_2int)0x539D40;
+fp_void climactic_battle         = (fp_void)0x539E40;
+fp_1int at_climax                = (fp_1int)0x539EF0;
+fp_3int cause_friction           = (fp_3int)0x53A030;
+fp_1int get_mood                 = (fp_1int)0x53A090;
+fp_2int reputation               = (fp_2int)0x53A100;
+fp_2int get_patience             = (fp_2int)0x53A150;
+fp_1int energy_value             = (fp_1int)0x53A1C0;
+fp_2int mention_prototypes       = (fp_2int)0x53A230;
+fp_2int scan_prototypes          = (fp_2int)0x53A4A0;
+fp_4int contiguous               = (fp_4int)0x53A780;
+fp_3int diplomacy_check          = (fp_3int)0x53A980;
+fp_2int pact_withdraw            = (fp_2int)0x53C370;
+fp_2int pact_ends                = (fp_2int)0x53C650;
+fp_2int pact_of_brotherhood      = (fp_2int)0x53CAF0;
+fp_2int make_treaty              = (fp_2int)0x53CE10;
+fp_3int pledge_truce             = (fp_3int)0x53D160;
+fp_2int introduce                = (fp_2int)0x53D360;
+fp_2int wants_to_speak           = (fp_2int)0x53DCE0;
+fp_2int diplomacy_ends           = (fp_2int)0x53E470;
+fp_2int demands_withdrawal       = (fp_2int)0x53E4C0;
+fp_2int renounce_pact            = (fp_2int)0x53E5C0;
+fp_2int tech_analysis            = (fp_2int)0x53E800;
+fp_4int buy_council_vote         = (fp_4int)0x53EB50;
+fp_5int buy_tech                 = (fp_5int)0x5401A0;
+fp_2int energy_trade             = (fp_2int)0x540630;
+fp_5int tech_trade               = (fp_5int)0x541100;
+fp_2int trade_maps               = (fp_2int)0x543A20;
+fp_2int propose_pact             = (fp_2int)0x543BC0;
+fp_2int propose_treaty           = (fp_2int)0x544E40;
+fp_2int propose_attack           = (fp_2int)0x545E80;
+fp_2int make_gift                = (fp_2int)0x547C10;
+fp_2int dont_withdrawal          = (fp_2int)0x548DD0;
+fp_2int do_withdrawal            = (fp_2int)0x548F80;
+fp_2int demand_withdrawal        = (fp_2int)0x549270;
+fp_2int threaten                 = (fp_2int)0x549930;
+fp_2int suggest_plan             = (fp_2int)0x54ACC0;
+fp_2int attack_from              = (fp_2int)0x54AFA0;
+fp_1int sub_54B140               = (fp_1int)0x54B140;
+fp_2int battle_plans             = (fp_2int)0x54B1C0;
+fp_2int call_off_vendetta        = (fp_2int)0x54BEC0;
+fp_2int diplomacy_menu           = (fp_2int)0x54C560;
+fp_5int value_of_base            = (fp_5int)0x54CB50;
+fp_2int give_a_base              = (fp_2int)0x54CF40;
+fp_2int base_swap                = (fp_2int)0x54D410;
+fp_2int proposal_menu            = (fp_2int)0x54DCF0;
+fp_3int make_a_proposal          = (fp_3int)0x54F420;
+fp_3int communicate              = (fp_3int)0x54FFD0;
+fp_2int commlink_attempter       = (fp_2int)0x5589E0;
+fp_1int commlink_attempt         = (fp_1int)0x558C60;
 
-/*
-Original Offset: 004E3D50
-*/
-int __cdecl mod_base_find3(int x, int y, int faction1, int region, int faction2, int faction3) {
-    int dist = 9999;
-    int result = -1;
-    bool border_fix = conf.territory_border_fix && region >= MaxRegionNum/2;
+fp_1int pick_top_veh             = (fp_1int)0x5593E0;
+fp_7int veh_draw                 = (fp_7int)0x5594F0;
+fp_5int sub_55A150               = (fp_5int)0x55A150;
+Fbase_draw base_draw          = (Fbase_draw)0x55AF20;
+fp_3int treaty_off               = (fp_3int)0x55B760;
+fp_3int agenda_off               = (fp_3int)0x55B820;
+fp_3int treaty_on                = (fp_3int)0x55B870;
+fp_3int agenda_on                = (fp_3int)0x55BA80;
+fp_4int set_treaty               = (fp_4int)0x55BB30;
+fp_4int set_agenda               = (fp_4int)0x55BBA0;
+fp_1int spying                   = (fp_1int)0x55BC00;
+fp_3int wants_to_attack          = (fp_3int)0x55BC80;
+fp_2int comm_check               = (fp_2int)0x55C430;
+fp_2int enemies_war              = (fp_2int)0x55C840;
+fp_2int pact_unpact              = (fp_2int)0x55CCA0;
+fp_2int enemies_unpact           = (fp_2int)0x55CE20;
+fp_3int enemies_team_up          = (fp_3int)0x55D2A0;
+fp_2int enemies_trade_tech       = (fp_2int)0x55D430;
+fp_3int enemies_treaty           = (fp_3int)0x55D760;
+fp_6int encounter                = (fp_6int)0x55E370;
+fp_5int territory                = (fp_5int)0x55EB80;
+fp_4int atrocity                 = (fp_4int)0x55EEE0;
+fp_2int major_atrocity           = (fp_2int)0x55F450;
+fp_3int break_treaty             = (fp_3int)0x55F770;
+fp_1int enemy_diplomacy          = (fp_1int)0x55F930;
+fp_4int go_to                    = (fp_4int)0x560AD0;
+fp_1int garrison_check           = (fp_1int)0x560B30;
+fp_1int defensive_check          = (fp_1int)0x560D30;
+fp_2int guard_check              = (fp_2int)0x560D50;
+fp_1int enemy_capabilities       = (fp_1int)0x560DD0;
+fp_1int enemy_strategy           = (fp_1int)0x561080;
+fp_4int set_course               = (fp_4int)0x564890;
+fp_3int assemble_passengers      = (fp_3int)0x564B90;
+fp_2int can_convoy               = (fp_2int)0x564D90;
+fp_3int good_sensor              = (fp_3int)0x564EB0;
+fp_5int can_terraform            = (fp_5int)0x565320;
+fp_5int compute_odds             = (fp_5int)0x565F20;
+fp_3int alien_base               = (fp_3int)0x5665D0;
+fp_1int alien_move               = (fp_1int)0x566810;
+fp_5int air_power                = (fp_5int)0x5678C0;
+fp_1int enemy_planet_buster      = (fp_1int)0x56A8A0;
+fp_3int get_there                = (fp_3int)0x56B320;
+fp_5int coast_or_border          = (fp_5int)0x56B480;
+fp_1int enemy_move               = (fp_1int)0x56B5B0;
+fp_1int enemy_veh                = (fp_1int)0x579240;
+fp_1int enemy_turn               = (fp_1int)0x579510;
+fp_1int rnd                      = (fp_1int)0x579770;
+fp_2int cursor_dist              = (fp_2int)0x579790;
+fp_3int site_at                  = (fp_3int)0x5797D0;
+fp_3int is_known                 = (fp_3int)0x579840;
+fp_2int base_who                 = (fp_2int)0x5798A0;
+fp_2int anything_at              = (fp_2int)0x5798E0;
+fp_1int veh_top                  = (fp_1int)0x579920;
+fp_1int veh_moves                = (fp_1int)0x579960;
+fp_1int proto_power              = (fp_1int)0x5799A0;
+fp_2int is_port                  = (fp_2int)0x579A00;
+fp_6int add_goal                 = (fp_6int)0x579A30;
+fp_5int add_site                 = (fp_5int)0x579B70;
+fp_4int at_goal                  = (fp_4int)0x579CC0;
+fp_4int at_site                  = (fp_4int)0x579D20;
+fp_1int wipe_goals               = (fp_1int)0x579D80;
+fp_1int clear_goals              = (fp_1int)0x579E00;
+fp_5int del_site                 = (fp_5int)0x579E70;
+fp_1int want_monolith            = (fp_1int)0x579F80;
+fp_1int monolith                 = (fp_1int)0x57A050;
+fp_1int goody_box                = (fp_1int)0x57A660;
+fp_2int valid_tech_leap          = (fp_2int)0x57CE50;
+fp_1int study_artifact           = (fp_1int)0x57CFA0;
+fp_2int header_check             = (fp_2int)0x57D1F0;
+fp_2int header_write             = (fp_2int)0x57D240;
+fp_2int arm_strat                = (fp_2int)0x57D270;
+fp_2int weap_strat               = (fp_2int)0x57D2E0;
+fp_2int weap_val                 = (fp_2int)0x57D360;
+fp_2int arm_val                  = (fp_2int)0x57D3F0;
+fp_2int armor_val                = (fp_2int)0x57D480;
+fp_3int transport_val            = (fp_3int)0x57D510;
+fp_2int say_offense              = (fp_2int)0x57D560;
+fp_2int say_defense              = (fp_2int)0x57D6D0;
+fp_2int say_stats_3              = (fp_2int)0x57D7D0;
+fp_2int say_stats_2              = (fp_2int)0x57D8E0;
+fp_3int say_stats                = (fp_3int)0x57DAA0;
+fp_1int clear_bunglist           = (fp_1int)0x57DF00;
+fp_2int sub_57DF30               = (fp_2int)0x57DF30;
+fp_6int is_bunged                = (fp_6int)0x57DFC0;
+Fname_proto name_proto       = (Fname_proto)0x57E040;
+fp_1int best_reactor             = (fp_1int)0x57EFA0;
+fp_3int pick_chassis             = (fp_3int)0x57EFF0;
+fp_3int weapon_budget            = (fp_3int)0x57F0B0;
+fp_2int retire_proto             = (fp_2int)0x57F1D0;
+fp_3int prune_protos             = (fp_3int)0x57F4B0;
+Fpropose_proto propose_proto = (Fpropose_proto)0x580860;
+fp_1int abil_index               = (fp_1int)0x581170;
+fp_3int add_abil                 = (fp_3int)0x581190;
+fp_1int consider_designs         = (fp_1int)0x581260;
+fp_2int design_new_veh           = (fp_2int)0x583CB0;
+fp_6int sub_583CD0               = (fp_6int)0x583CD0;
+fp_2int design_workshop          = (fp_2int)0x583E30;
+fp_4int abil_cond                = (fp_4int)0x584B50;
 
-    for (int i=0; i<*total_num_bases; ++i) {
-        BASE* base = &Bases[i];
-        MAP* bsq = mapsq(base->x, base->y);
+fp_1int tech_name                = (fp_1int)0x584D60;
+fp_1int chas_name                = (fp_1int)0x584E40;
+fp_1int weap_name                = (fp_1int)0x584F40;
+fp_1int arm_name                 = (fp_1int)0x585030;
+fp_void read_basic_rules         = (fp_void)0x585170;
+fp_void read_tech                = (fp_void)0x585E30;
+fp_1int read_faction2            = (fp_1int)0x586050;
+fp_2int read_faction             = (fp_2int)0x586090;
+fp_void read_factions            = (fp_void)0x586F30;
+fp_void read_units               = (fp_void)0x587240;
+fp_1int read_rules               = (fp_1int)0x5873C0;
+fp_void sub_5882D0               = (fp_void)0x5882D0;
+fp_2int find_font                = (fp_2int)0x5882F0;
+fp_void scroll_normal            = (fp_void)0x588340;
+fp_void scroll_small             = (fp_void)0x5883D0;
+fp_void popups_normal            = (fp_void)0x588460;
+fp_void popups_tutorial          = (fp_void)0x5888E0;
+fp_void popups_medium            = (fp_void)0x5889C0;
+fp_void config_popups            = (fp_void)0x588AA0;
+fp_void alien_start              = (fp_void)0x588F90;
+fp_1int planetfall               = (fp_1int)0x589180;
+fp_1int time_controls_dialog     = (fp_1int)0x589330;
+fp_1int thumb_routine            = (fp_1int)0x5898A0;
+fp_1int change_opening           = (fp_1int)0x589A30;
+fp_void close_opening            = (fp_void)0x589B20;
+fp_1int config_game              = (fp_1int)0x589D30;
+fp_2int custom_planet            = (fp_2int)0x58C2A0;
+fp_1int size_of_planet           = (fp_1int)0x58CED0;
+fp_1int map_menu                 = (fp_1int)0x58D6B0;
+fp_1int multiplayer_init         = (fp_1int)0x58DB30;
+fp_1int top_menu                 = (fp_1int)0x58E360;
+fp_1int desktop_init             = (fp_1int)0x58EE60;
+fp_void desktop_close            = (fp_void)0x58EFF0;
+fp_void system_init              = (fp_void)0x58F040;
+fp_void system_close             = (fp_void)0x58F250;
+fp_2int game_init                = (fp_2int)0x58F2F0;
+fp_void game_close               = (fp_void)0x58F430;
+fp_2int game_reload              = (fp_2int)0x58F450;
+fp_3int say_special              = (fp_3int)0x58F610;
+fp_3int say_fac_special          = (fp_3int)0x58F700;
+fp_2int get_phrase               = (fp_2int)0x58F810;
+fp_2int get_noun_phrase          = (fp_2int)0x58F8B0;
+fp_1int get_pact                 = (fp_1int)0x58F9D0;
+fp_1int get_pacts                = (fp_1int)0x58FA20;
+fp_2int get_pacts2               = (fp_2int)0x58FA70;
+fp_2int get_pact_hood            = (fp_2int)0x58FB00;
+fp_2int get_his_her              = (fp_2int)0x58FBC0;
+fp_2int get_him_her              = (fp_2int)0x58FC50;
+fp_2int get_he_she               = (fp_2int)0x58FCE0;
 
-        if (bsq && (region < 0 || bsq->region == region || border_fix)) {
-            if ((faction1 < 0 && (faction2 < 0 || faction2 != base->faction_id))
-            || (faction1 == base->faction_id)
-            || (faction2 == -2 && Factions[faction1].diplo_status[base->faction_id] & DIPLO_PACT)
-            || (faction2 >= 0 && faction2 == base->faction_id)) {
-                if (faction3 < 0 || base->faction_id == faction3 || base->factions_spotted_flags & (1 << faction3)) {
-                    int val = vector_dist(x, y, base->x, base->y);
-                    if (conf.territory_border_fix ? val < dist : val <= dist) {
-                        dist = val;
-                        result = i;
-                    }
-                }
-            }
-        }
-    }
-    if (DEBUG && !conf.territory_border_fix) {
-        int res = base_find3(x, y, faction1, region, faction2, faction3);
-        debug("base_find3 x: %2d y: %2d r: %2d %2d %2d %2d %2d %4d\n",
-              x, y, region, faction1, faction2, faction3, result, dist);
-        assert(res == result);
-        assert(*base_find_dist == dist);
-    }
-    *base_find_dist = 9999;
-    if (result >= 0) {
-        *base_find_dist = dist;
-    }
-    return result;
-}
+fp_void map_wipe                 = (fp_void)0x591040;
+fp_3int alt_put_detail           = (fp_3int)0x591260;
+fp_3int alt_set                  = (fp_3int)0x591290;
+fp_2int alt_natural              = (fp_2int)0x5918A0;
+fp_3int alt_set_both             = (fp_3int)0x5918F0;
+fp_2int elev_at                  = (fp_2int)0x5919C0;
+fp_3int climate_set              = (fp_3int)0x591A80;
+fp_3int temp_set                 = (fp_3int)0x591AD0;
+fp_3int owner_set                = (fp_3int)0x591B10;
+fp_3int site_set                 = (fp_3int)0x591B50;
+fp_3int region_set               = (fp_3int)0x591B90;
+fp_3int rocky_set                = (fp_3int)0x591BC0;
+fp_3int using_set                = (fp_3int)0x591C10;
+fp_3int lock_map                 = (fp_3int)0x591C90;
+fp_3int unlock_map               = (fp_3int)0x591CF0;
+fp_3int bit_put                  = (fp_3int)0x591D30;
+fp_4int bit_set                  = (fp_4int)0x591D60;
+fp_4int bit2_set                 = (fp_4int)0x591DB0;
+fp_3int code_set                 = (fp_3int)0x591E00;
+fp_3int synch_bit                = (fp_3int)0x591E50;
+fp_2int minerals_at              = (fp_2int)0x591F00;
+fp_2int bonus_at                 = (fp_2int)0x592030;
+fp_2int goody_at                 = (fp_2int)0x592140;
+fp_6int say_loc                  = (fp_6int)0x592250;
+fp_2int site_radius              = (fp_2int)0x592400;
+fp_3int find_landmark            = (fp_3int)0x592550;
+fp_3int new_landmark             = (fp_3int)0x592600;
+fp_3int valid_landmark           = (fp_3int)0x592650;
+fp_2int kill_landmark            = (fp_2int)0x5926F0;
+fp_2int delete_landmark          = (fp_2int)0x5927D0;
+fp_void fixup_landmarks          = (fp_void)0x592940;
+fp_void set_dirty                = (fp_void)0x592A80;
 
-std::vector<std::string> read_txt_block(const char* filename, const char* section, unsigned max_len) {
-    std::vector<std::string> lines;
-    FILE* file;
-    const int buf_size = 256;
-    char filename_txt[buf_size];
-    char line[buf_size];
-    bool start = false;
-    snprintf(filename_txt, buf_size, "%s.txt", filename);
-    file = fopen(filename_txt, "r");
-    if (!file) {
-        return lines;
-    }
-    while (fgets(line, buf_size, file) != NULL) {
-        line[strlen(line) - 1] = '\0';
-        if (!start && stricmp(line, section) == 0) {
-            start = true;
-        } else if (start && stricmp(line, "#END") == 0) {
-            break;
-        } else if (start) {
-            char* p = strstrip(line);
-            if (strlen(p) > 0 && strlen(p) < max_len) {
-                lines.push_back(p);
-            }
-        }
-    }
-    fclose(file);
-    return lines;
-}
+fp_3int vulnerable               = (fp_3int)0x59E980;
+fp_3int mind_control             = (fp_3int)0x59EA80;
+fp_1int corner_market            = (fp_1int)0x59EE50;
+fp_4int success_rates            = (fp_4int)0x59EEE0;
+fp_4int probe                    = (fp_4int)0x59F120;
+fp_2int sub_5A58E0               = (fp_2int)0x5A58E0;
+fp_void sub_5A5900               = (fp_void)0x5A5900;
+fp_4int sub_5A5910               = (fp_4int)0x5A5910;
+fp_1int sub_5A5990               = (fp_1int)0x5A5990;
+fp_3int veh_put                  = (fp_3int)0x5A59B0;
+fp_1int veh_health               = (fp_1int)0x5A59E0;
+fp_5int proto_cost               = (fp_5int)0x5A5A60;
+fp_1int base_cost                = (fp_1int)0x5A5D00;
+fp_6int make_proto               = (fp_6int)0x5A5D40;
+fp_1int proto_sort               = (fp_1int)0x5A6270;
+fp_1int proto_sort_2             = (fp_1int)0x5A63D0;
+fp_3int radius_move              = (fp_3int)0x5A65A0;
+fp_5int radius_move2             = (fp_5int)0x5A65D0;
+fp_4int compass_move             = (fp_4int)0x5A6630;
+fp_4int encrypt_write            = (fp_4int)0x5A66E0;
+fp_4int encrypt_read             = (fp_4int)0x5A67B0;
+fp_2int game_io                  = (fp_2int)0x5A6890;
+fp_2int game_data                = (fp_2int)0x5A6AC0;
+fp_3int map_data                 = (fp_3int)0x5A9280;
+FGenString save_daemon        = (FGenString)0x5A94F0;
+fp_void see_map_check            = (fp_void)0x5A96D0;
+fp_2int load_daemon              = (fp_2int)0x5A9760;
+fp_1int save_map_daemon          = (fp_1int)0x5A9B20;
+fp_1int load_map_daemon          = (fp_1int)0x5A9C10;
+fp_1int yearmotize               = (fp_1int)0x5A9DB0;
+fp_1int save_game                = (fp_1int)0x5A9EB0;
+fp_2int load_game                = (fp_2int)0x5AAAB0;
+fp_void load_map                 = (fp_void)0x5AB600;
+fp_void save_map                 = (fp_void)0x5ABB90;
+fp_void kill_auto_save           = (fp_void)0x5ABD10;
+fp_void auto_save                = (fp_void)0x5ABD20;
+fp_1int load_undo                = (fp_1int)0x5ABE40;
+fp_void wipe_undo                = (fp_void)0x5ABEC0;
+fp_void auto_undo                = (fp_void)0x5ABF20;
+fp_2int sub_5ABFF0               = (fp_2int)0x5ABFF0;
+fp_1int is_objective             = (fp_1int)0x5AC060;
+fp_2int num_objectives           = (fp_2int)0x5AC110;
+fp_2int most_objectives          = (fp_2int)0x5AC5A0;
+fp_void ascending                = (fp_void)0x5AC680;
+fp_1int rankings                 = (fp_1int)0x5AC690;
+fp_4int compute_score            = (fp_4int)0x5ACBE0;
 
-/*
-Generate a base name. If all base names from faction definition are used, the name
-generated will be unique across all bases on the map, e.g. Alpha Beta Sector.
-Original Offset: 004E4090
-*/
-void __cdecl mod_name_base(int faction, char* name, bool save_offset, bool water) {
-    const int MaxWordsNum = 24;
-    const char* words[MaxWordsNum] = {
-        "Alpha",
-        "Beta",
-        "Gamma",
-        "Delta",
-        "Epsilon",
-        "Zeta",
-        "Eta",
-        "Theta",
-        "Iota",
-        "Kappa",
-        "Lambda",
-        "Mu",
-        "Nu",
-        "Xi",
-        "Omicron",
-        "Pi",
-        "Rho",
-        "Sigma",
-        "Tau",
-        "Upsilon",
-        "Phi",
-        "Chi",
-        "Psi",
-        "Omega"
-    };
-    Faction& f = Factions[faction];
+fp_1int crash_landing            = (fp_1int)0x5AE120;
+fp_void time_warp                = (fp_void)0x5AEDE0;
+fp_void balance                  = (fp_void)0x5B0420;
+fp_void scenario_setup           = (fp_void)0x5B0A30;
+fp_1int sub_5B0D70               = (fp_1int)0x5B0D70;
+fp_3int setup_player             = (fp_3int)0x5B0E00;
+fp_2int eliminate_player         = (fp_2int)0x5B3380;
+fp_void clear_scenario           = (fp_void)0x5B38D0;
+fp_1int setup_game               = (fp_1int)0x5B3920;
+fp_5int social_calc              = (fp_5int)0x5B4210;
+fp_1int social_upkeep            = (fp_1int)0x5B44D0;
+fp_2int sub_5B4550               = (fp_2int)0x5B4550;
+fp_1int social_set               = (fp_1int)0x5B4600;
+fp_3int society_avail            = (fp_3int)0x5B4730;
+fp_6int social_ai                = (fp_6int)0x5B4790;
+fp_1int social_select            = (fp_1int)0x5B5620;
+fp_3int sort                     = (fp_3int)0x5B5690;
+fp_3int sub_5B5700               = (fp_3int)0x5B5700;
+fp_2int spot_base                = (fp_2int)0x5B57D0;
+fp_2int spot_stack               = (fp_2int)0x5B58E0;
+fp_1int unspot_stack             = (fp_1int)0x5B5A70;
+fp_3int spot_loc                 = (fp_3int)0x5B5AD0;
+fp_3int want_to_wake             = (fp_3int)0x5B5EA0;
+fp_1int wake_stack               = (fp_1int)0x5B6060;
+fp_2int spot_all                 = (fp_2int)0x5B6260;
+fp_3int stack_put                = (fp_3int)0x5B8AF0;
+fp_1int stack_sort               = (fp_1int)0x5B8B60;
+fp_1int stack_sort2              = (fp_1int)0x5B8C90;
+fp_1int stack_fix                = (fp_1int)0x5B8E10;
+fp_2int stack_veh                = (fp_2int)0x5B8EE0;
+fp_1int stack_kill               = (fp_1int)0x5B9510;
+fp_5int stack_check              = (fp_5int)0x5B9580;
+fp_void g_WAVE_ctor              = (fp_void)0x5B9C10;
+fp_void g_WAVE_dtor              = (fp_void)0x5B9C30;
+fp_3int say_tech                 = (fp_3int)0x5B9C40;
+fp_2int tech_name2               = (fp_2int)0x5B9EF0;
+fp_2int has_tech                 = (fp_2int)0x5B9F20;
+fp_2int tech_recurse             = (fp_2int)0x5B9F90;
+fp_1int tech_category            = (fp_1int)0x5B9FE0;
+fp_2int redundant                = (fp_2int)0x5BA030;
+fp_4int facility_avail           = (fp_4int)0x5BA0E0;
+fp_3int veh_avail                = (fp_3int)0x5BA910;
+fp_3int terrain_avail            = (fp_3int)0x5BAB40;
+fp_2int tech_avail               = (fp_2int)0x5BAC20;
+fp_1int tech_effects             = (fp_1int)0x5BAE60;
+fp_4int tech_achieved            = (fp_4int)0x5BB000;
+fp_3int tech_is_preq             = (fp_3int)0x5BCB60;
+fp_3int tech_val                 = (fp_3int)0x5BCBE0;
+fp_1int tech_ai                  = (fp_1int)0x5BDC10;
+fp_1int tech_mil                 = (fp_1int)0x5BDD70;
+fp_1int tech_tech                = (fp_1int)0x5BDD90;
+fp_1int tech_infra               = (fp_1int)0x5BDDC0;
+fp_1int tech_colonize            = (fp_1int)0x5BDDF0;
+fp_2int wants_prototype          = (fp_2int)0x5BE100;
+fp_1int tech_selection           = (fp_1int)0x5BE380;
+fp_1int tech_advance             = (fp_1int)0x5BE530;
+fp_1int tech_rate                = (fp_1int)0x5BE6B0;
+fp_2int tech_research            = (fp_2int)0x5BE940;
+fp_4int tech_pick                = (fp_4int)0x5BEB70;
 
-    std::vector<std::string> faction_names = read_txt_block(
-        MFactions[faction].filename, (water ? "#WATERBASES" : "#BASES"), MaxBaseNameLen);
-    std::set<std::string> all_names;
-    uint32_t offset = (water ? f.base_sea_name_offset : f.base_name_offset);
-    uint32_t total = faction_names.size();
+fp_2int veh_at                   = (fp_2int)0x5BFE90;
+fp_1int veh_lift                 = (fp_1int)0x5BFFA0;
+fp_3int veh_drop                 = (fp_3int)0x5C0080;
+fp_1int sleep                    = (fp_1int)0x5C01A0;
+fp_1int veh_demote               = (fp_1int)0x5C01D0;
+fp_1int veh_promote              = (fp_1int)0x5C0260;
+fp_3int veh_clear                = (fp_3int)0x5C02D0;
+fp_4int veh_init                 = (fp_4int)0x5C03D0;
+fp_1int veh_kill                 = (fp_1int)0x5C08C0;
+fp_1int kill                     = (fp_1int)0x5C0B00;
+fp_4int veh_find                 = (fp_4int)0x5C0CB0;
+fp_2int can_arty                 = (fp_2int)0x5C0DB0;
+fp_3int morale_veh               = (fp_3int)0x5C0E40;
+fp_3int offense_proto            = (fp_3int)0x5C1150;
+fp_3int armor_proto              = (fp_3int)0x5C1290;
+fp_1int speed_proto              = (fp_1int)0x5C13B0;
+fp_2int speed                    = (fp_2int)0x5C1540;
+fp_1int veh_cargo                = (fp_1int)0x5C1760;
+fp_1int prototype_factor         = (fp_1int)0x5C17D0;
+Fveh_cost veh_cost             = (Fveh_cost)0x5C1850;
+fp_1int veh_selectable           = (fp_1int)0x5C1A20;
+fp_1int veh_unmoved              = (fp_1int)0x5C1AB0;
+fp_1int veh_ready                = (fp_1int)0x5C1B70;
+fp_1int veh_jail                 = (fp_1int)0x5C1C40;
+fp_1int veh_skip                 = (fp_1int)0x5C1D20;
+fp_2int veh_fake                 = (fp_2int)0x5C1D50;
+fp_1int veh_wake                 = (fp_1int)0x5C1D70;
 
-    if (offset > 0 && offset < total) {
-        uint32_t seed = ((*map_random_seed + faction) & 0xFE) | 1;
-        uint32_t loop = 0;
-        do {
-            if (seed & 1) {
-                seed ^= 0x170;
-            }
-            seed >>= 1;
-        } while (seed >= total || ++loop != offset);
-        offset = seed;
-    }
-    if (offset < total) {
-        std::vector<std::string>::const_iterator it(faction_names.begin());
-        std::advance(it, offset);
-        strncpy(name, it->c_str(), MaxBaseNameLen);
-        name[MaxBaseNameLen - 1] = '\0';
+fp_4int world_alt_set            = (fp_4int)0x5C2020;
+fp_2int world_raise_alt          = (fp_2int)0x5C2380;
+fp_2int world_lower_alt          = (fp_2int)0x5C23E0;
+fp_3int brush                    = (fp_3int)0x5C2440;
+fp_4int paint_land               = (fp_4int)0x5C27F0;
+fp_1int build_continent          = (fp_1int)0x5C28F0;
+fp_1int build_hills              = (fp_1int)0x5C2B40;
+fp_void world_erosion            = (fp_void)0x5C2CB0;
+fp_void world_rocky              = (fp_void)0x5C32A0;
+fp_void world_fungus             = (fp_void)0x5C3440;
+fp_void world_riverbeds          = (fp_void)0x5C3680;
+fp_void world_rivers             = (fp_void)0x5C38B0;
+fp_void world_shorelines         = (fp_void)0x5C3F70;
+fp_void world_validate           = (fp_void)0x5C40F0;
+fp_void world_temperature        = (fp_void)0x5C4170;
+fp_void world_rainfall           = (fp_void)0x5C4470;
+fp_3int world_site               = (fp_3int)0x5C4FD0;
+fp_void world_analysis           = (fp_void)0x5C55C0;
+fp_void world_polar_caps         = (fp_void)0x5C58E0;
+fp_void world_climate            = (fp_void)0x5C5A30;
+fp_void world_linearize_contours = (fp_void)0x5C5AE0;
+fp_2int near_landmark            = (fp_2int)0x5C5BD0;
+fp_2int world_crater             = (fp_2int)0x5C5C70;
+fp_2int world_monsoon            = (fp_2int)0x5C5EF0;
+fp_2int world_sargasso           = (fp_2int)0x5C6200;
+fp_2int world_ruin               = (fp_2int)0x5C64A0;
+fp_2int world_dune               = (fp_2int)0x5C6740;
+fp_2int world_diamond            = (fp_2int)0x5C69E0;
+fp_2int world_fresh              = (fp_2int)0x5C6C40;
+fp_3int world_volcano            = (fp_3int)0x5C6DB0;
+fp_2int world_borehole           = (fp_2int)0x5C7020;
+fp_2int world_temple             = (fp_2int)0x5C7540;
+fp_2int world_unity              = (fp_2int)0x5C7750;
+fp_2int world_fossil             = (fp_2int)0x5C7A80;
+fp_2int world_canyon_nessus      = (fp_2int)0x5C7CB0;
+fp_2int world_mesa               = (fp_2int)0x5C7F40;
+fp_2int world_ridge              = (fp_2int)0x5C8150;
+fp_2int world_geothermal         = (fp_2int)0x5C83B0;
+fp_void world_build              = (fp_void)0x5C86E0;
+fp_1int game_year                = (fp_1int)0x5C89A0;
+fp_1int say_year                 = (fp_1int)0x5C89B0;
+fp_3int zoc_any                  = (fp_3int)0x5C89F0;
+fp_3int zoc_veh                  = (fp_3int)0x5C8AC0;
+fp_3int zoc_sea                  = (fp_3int)0x5C8BA0;
+fp_3int zoc_move                 = (fp_3int)0x5C8D40;
 
-    } else {
-        for (int i=0; i < *total_num_bases; i++) {
-            all_names.insert(Bases[i].name);
-        }
-        int i = 0;
-        uint32_t x = 0;
-        uint32_t a = 0;
-        uint32_t b = 0;
+FGenString Win_init_class     = (FGenString)0x5F01F0;
+fp_void wait_task                = (fp_void)0x5FC700;
+fp_void do_task                  = (fp_void)0x5FC7F0;
+fp_void do_all_tasks             = (fp_void)0x5FC8F0;
+fp_1int do_all_tasks2            = (fp_1int)0x5FC9F0;
+fp_void do_non_input             = (fp_void)0x5FCA30;
+fp_void do_all_non_input         = (fp_void)0x5FCB20;
+fp_void do_draw                  = (fp_void)0x5FCB60;
+fp_void do_all_draws             = (fp_void)0x5FCBB0;
+fp_void sub_5FCFE0               = (fp_void)0x5FCFE0;
+fp_void flush_input              = (fp_void)0x5FD120;
+fp_void do_sound                 = (fp_void)0x5FD2B0;
+fp_void flush_timer              = (fp_void)0x5FD370;
+fp_void text_shutdown            = (fp_void)0x5FD460;
+fp_void text_dtor                = (fp_void)0x5FD510;
+fp_void text_close               = (fp_void)0x5FD530;
+fp_2int text_open                = (fp_2int)0x5FD550;
+fp_void text_get                 = (fp_void)0x5FD570;
+fp_void text_string              = (fp_void)0x5FD5E0;
+fp_void text_item                = (fp_void)0x5FD670;
+fp_void text_item_string         = (fp_void)0x5FD6D0;
+fp_void text_item_number         = (fp_void)0x5FD740;
+fp_void text_item_binary         = (fp_void)0x5FD7A0;
+fp_2int parse_string             = (fp_2int)0x625880;
+fp_2int parse_num                = (fp_2int)0x625E30;
+fp_4int parse_say                = (fp_4int)0x625E50;
+Fparse_says parse_says       = (Fparse_says)0x625EC0;
 
-        while (i < 1024) {
-            x = map_hash(faction + 8*offset, ++i);
-            a = x % MaxWordsNum;
-            b = (x / 256) % MaxWordsNum;
-            name[0] = '\0';
-            snprintf(name, MaxBaseNameLen, "%s %s Sector", words[a], words[b]);
-            if (a != b && strlen(name) >= 14 && !all_names.count(name)) {
-                break;
-            }
-        }
-    }
-    if (save_offset) {
-        if (water) {
-            f.base_sea_name_offset++;
-        } else {
-            f.base_name_offset++;
-        }
-    }
-}
-
-int __cdecl mod_best_defender(int defenderVehicleId, int attackerVehicleId, int bombardment)
-{
-    // store variables for modified odds dialog unless bombardment
-    int best_id = best_defender(defenderVehicleId, attackerVehicleId, bombardment);
-    if (bombardment) {
-        currentAttackerVehicleId = -1;
-        currentDefenderVehicleId = -1;
-    } else {
-        currentAttackerVehicleId = attackerVehicleId;
-        currentDefenderVehicleId = best_id;
-    }
-    return best_id;
-}
-
-int __cdecl battle_fight_parse_num(int index, int value)
-{
-    if (index > 9) {
-        return 3;
-    }
-    ParseNumTable[index] = value;
-
-    if (conf.ignore_reactor_power && index == 1
-    && currentAttackerVehicleId >= 0 && currentDefenderVehicleId >= 0) {
-        VEH* veh1 = &Vehicles[currentAttackerVehicleId];
-        VEH* veh2 = &Vehicles[currentDefenderVehicleId];
-        UNIT* u1 = &Units[veh1->unit_id];
-        UNIT* u2 = &Units[veh2->unit_id];
-        // calculate attacker and defender power
-        // artifact gets 1 HP regardless of reactor
-        int attackerPower = (u1->weapon_type == WPN_ALIEN_ARTIFACT ? 1 :
-                             u1->reactor_type * 10 - veh1->damage_taken);
-        int defenderPower = (u2->weapon_type == WPN_ALIEN_ARTIFACT ? 1 :
-                             u2->reactor_type * 10 - veh2->damage_taken);
-        // calculate firepower
-        int attackerFP = u2->reactor_type;
-        int defenderFP = u1->reactor_type;
-        // calculate hitpoints
-        int attackerHP = (attackerPower + (defenderFP - 1)) / defenderFP;
-        int defenderHP = (defenderPower + (attackerFP - 1)) / attackerFP;
-        // calculate correct odds
-        if (Weapon[u1->weapon_type].offense_value >= 0
-        && Armor[u2->armor_type].defense_value >= 0) {
-            // psi combat odds are already correct
-            // reverse engineer conventional combat odds in case of ignored reactor
-            int attackerOdds = ParseNumTable[0] * attackerHP * defenderPower;
-            int defenderOdds = ParseNumTable[1] * defenderHP * attackerPower;
-            int gcd = std::__gcd(attackerOdds, defenderOdds);
-            attackerOdds /= gcd;
-            defenderOdds /= gcd;
-            // reparse their odds into dialog
-            ParseNumTable[0] = attackerOdds;
-            ParseNumTable[1] = defenderOdds;
-        }
-    }
-    return 0;
-}
 

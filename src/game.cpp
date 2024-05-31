@@ -1,216 +1,18 @@
 
 #include "game.h"
 
+static uint32_t custom_game_rules = 0;
+static uint32_t custom_more_rules = 0;
 
-char* prod_name(int item_id) {
-    if (item_id >= 0) {
-        return Units[item_id].name;
-    } else {
-        return Facility[-item_id].name;
-    }
-}
-
-int mineral_cost(int faction, int item_id) {
-    if (item_id >= 0) {
-        return Units[item_id].cost * cost_factor(faction, 1, -1);
-    } else {
-        return Facility[-item_id].cost * cost_factor(faction, 1, -1);
-    }
-}
-
-bool has_tech(int faction, int tech) {
-    assert(valid_player(faction));
-    if (tech == TECH_None) {
-        return true;
-    }
-    return tech >= 0 && TechOwners[tech] & (1 << faction);
-}
-
-bool has_ability(int faction, int abl) {
-    assert(abl >= 0 && abl <= ABL_ID_ALGO_ENHANCEMENT);
-    return has_tech(faction, Ability[abl].preq_tech);
-}
-
-bool has_chassis(int faction, int chs) {
-    return has_tech(faction, Chassis[chs].preq_tech);
-}
-
-bool has_weapon(int faction, int wpn) {
-    return has_tech(faction, Weapon[wpn].preq_tech);
-}
-
-bool has_terra(int faction, int act, bool ocean) {
-    int preq_tech = (ocean ? Terraform[act].preq_tech_sea : Terraform[act].preq_tech);
-    if ((act == FORMER_RAISE_LAND || act == FORMER_LOWER_LAND)
-    && *game_rules & RULES_SCN_NO_TERRAFORMING) {
-        return false;
-    }
-    if (act >= FORMER_CONDENSER && act <= FORMER_LOWER_LAND
-    && has_project(faction, FAC_WEATHER_PARADIGM)) {
-        return preq_tech != TECH_Disable;
-    }
-    return has_tech(faction, preq_tech);
-}
-
-bool has_project(int faction, int id) {
-    /* If faction_id is negative, check if anyone has built the project. */
-    assert(faction != 0 && id >= PROJECT_ID_FIRST);
-    int i = SecretProjects[id-PROJECT_ID_FIRST];
-    return i >= 0 && (faction < 0 || Bases[i].faction_id == faction);
-}
-
-bool has_facility(int base_id, int id) {
-    assert(base_id >= 0 && id > 0 && id <= FAC_EMPTY_SP_64);
-    if (id >= PROJECT_ID_FIRST) {
-        return SecretProjects[id-PROJECT_ID_FIRST] == base_id;
-    }
-    int faction = Bases[base_id].faction_id;
-    const int freebies[][2] = {
-        {FAC_COMMAND_CENTER, FAC_COMMAND_NEXUS},
-        {FAC_NAVAL_YARD, FAC_MARITIME_CONTROL_CENTER},
-        {FAC_ENERGY_BANK, FAC_PLANETARY_ENERGY_GRID},
-        {FAC_PERIMETER_DEFENSE, FAC_CITIZENS_DEFENSE_FORCE},
-        {FAC_AEROSPACE_COMPLEX, FAC_CLOUDBASE_ACADEMY},
-        {FAC_BIOENHANCEMENT_CENTER, FAC_CYBORG_FACTORY},
-        {FAC_QUANTUM_CONVERTER, FAC_SINGULARITY_INDUCTOR},
-    };
-    for (const int* p : freebies) {
-        if (p[0] == id && has_project(faction, p[1])) {
-            return true;
-        }
-    }
-    return Bases[base_id].facilities_built[id/8] & (1 << (id % 8));
-}
-
-bool can_build(int base_id, int id) {
-    assert(base_id >= 0 && id > 0 && id <= FAC_EMPTY_SP_64);
-    BASE* base = &Bases[base_id];
-    int faction = base->faction_id;
-    Faction* f = &Factions[faction];
-    if (!has_tech(faction, Facility[id].preq_tech) || has_facility(base_id, id)) {
-        return false;
-    }
-    if (id == FAC_HEADQUARTERS && find_hq(faction) >= 0) {
-        return false;
-    }
-    if (id == FAC_RECYCLING_TANKS && has_facility(base_id, FAC_PRESSURE_DOME)) {
-        return false;
-    }
-    if (id == FAC_HOLOGRAM_THEATRE && (has_project(faction, FAC_VIRTUAL_WORLD)
-    || !has_facility(base_id, FAC_RECREATION_COMMONS))) {
-        return false;
-    }
-    if ((id == FAC_RECREATION_COMMONS || id == FAC_HOLOGRAM_THEATRE)
-    && has_project(faction, FAC_TELEPATHIC_MATRIX)) {
-        return false;
-    }
-    if ((id == FAC_HAB_COMPLEX || id == FAC_HABITATION_DOME) && base->nutrient_surplus < 2) {
-        return false;
-    }
-    if (id >= PROJECT_ID_FIRST && id <= PROJECT_ID_LAST) {
-        if (SecretProjects[id-PROJECT_ID_FIRST] != PROJECT_UNBUILT
-        || *game_rules & RULES_SCN_NO_BUILDING_SP) {
-            return false;
-        }
-    }
-    if (id == FAC_VOICE_OF_PLANET && ~*game_rules & RULES_VICTORY_TRANSCENDENCE) {
-        return false;
-    }
-    if (id == FAC_ASCENT_TO_TRANSCENDENCE) {
-        return has_project(-1, FAC_VOICE_OF_PLANET)
-            && !has_project(-1, FAC_ASCENT_TO_TRANSCENDENCE)
-            && *game_rules & RULES_VICTORY_TRANSCENDENCE;
-    }
-    if (id == FAC_SUBSPACE_GENERATOR) {
-        if (base->pop_size < Rules->base_size_subspace_gen) {
-            return false;
-        }
-        int n = 0;
-        for (int i=0; i<*total_num_bases; i++) {
-            BASE* b = &Bases[i];
-            if (b->faction_id == faction && has_facility(i, FAC_SUBSPACE_GENERATOR)
-            && b->pop_size >= Rules->base_size_subspace_gen
-            && ++n >= Rules->subspace_gen_req) {
-                return false;
-            }
-        }
-    }
-    if (id >= FAC_SKY_HYDRO_LAB && id <= FAC_ORBITAL_DEFENSE_POD) {
-        if (!has_facility(base_id, FAC_AEROSPACE_COMPLEX)) {
-            return false;
-        }
-        int n = prod_count(faction, -id, base_id);
-        int goal = plans[faction].satellites_goal;
-        if (id == FAC_ORBITAL_DEFENSE_POD) {
-            goal = std::min(conf.max_satellites,
-                goal/3 + (plans[faction].diplo_flags & DIPLO_VENDETTA ? 4 : 0));
-        }
-        if ((id == FAC_SKY_HYDRO_LAB && f->satellites_nutrient + n >= goal)
-        || (id == FAC_ORBITAL_POWER_TRANS && f->satellites_energy + n >= goal)
-        || (id == FAC_NESSUS_MINING_STATION && f->satellites_mineral + n >= goal)
-        || (id == FAC_ORBITAL_DEFENSE_POD && f->satellites_ODP + n >= goal)) {
-            return false;
-        }
-    }
-    if (id == FAC_FLECHETTE_DEFENSE_SYS && f->satellites_ODP > 0) {
-        return false;
-    }
-    if (id == FAC_GEOSYNC_SURVEY_POD || id == FAC_FLECHETTE_DEFENSE_SYS) {
-        for (int i=0; i < *total_num_bases; i++) {
-            BASE* b = &Bases[i];
-            if (b->faction_id == faction && i != base_id
-            && map_range(base->x, base->y, b->x, b->y) <= 3
-            && (has_facility(i, FAC_GEOSYNC_SURVEY_POD)
-            || has_facility(i, FAC_FLECHETTE_DEFENSE_SYS)
-            || b->queue_items[0] == -FAC_GEOSYNC_SURVEY_POD
-            || b->queue_items[0] == -FAC_FLECHETTE_DEFENSE_SYS)) {
-                return false;
-            }
-        }
-    }
-    /* Rare special case if the game engine reaches the global unit limit. */
-    if (id == FAC_STOCKPILE_ENERGY) {
-        return (*current_turn + base_id) % 4 > 0 || !can_build_unit(faction, -1);
-    }
-    return true;
-}
-
-bool can_build_unit(int faction, int id) {
-    assert(valid_player(faction) && id >= -1);
-    UNIT* u = &Units[id];
-    if (id >= 0 && id < MaxProtoFactionNum && u->preq_tech != TECH_None
-    && !has_tech(faction, u->preq_tech)) {
-        return false;
-    }
-    return *total_num_vehicles < MaxVehNum * 15 / 16;
-}
-
-bool is_human(int faction) {
-    return *human_players & (1 << faction);
-}
-
-bool is_alien(int faction) {
-    return MFactions[faction].rule_flags & FACT_ALIEN;
-}
-
-bool ai_enabled(int faction) {
-    /* Exclude native life since Thinker AI routines don't apply to them. */
-    return faction > 0 && !(*human_players & (1 << faction))
-        && faction <= conf.factions_enabled;
-}
-
-bool at_war(int faction1, int faction2) {
-    return faction1 != faction2 && faction1 >= 0 && faction2 >= 0
-        && Factions[faction1].diplo_status[faction2] & DIPLO_VENDETTA;
-}
-
-bool has_pact(int faction1, int faction2) {
-    return faction1 > 0 && faction2 > 0
-        && Factions[faction1].diplo_status[faction2] & DIPLO_PACT;
-}
 
 bool un_charter() {
-    return *un_charter_repeals <= *un_charter_reinstates;
+    return *UNCharterRepeals <= *UNCharterReinstates;
+}
+
+bool victory_done() {
+    // TODO: Check for scenario victory conditions
+    return *GameState & (STATE_VICTORY_CONQUER | STATE_VICTORY_DIPLOMATIC | STATE_VICTORY_ECONOMIC)
+        || has_project(FAC_ASCENT_TO_TRANSCENDENCE, -1);
 }
 
 bool valid_player(int faction) {
@@ -221,811 +23,489 @@ bool valid_triad(int triad) {
     return (triad == TRIAD_LAND || triad == TRIAD_SEA || triad == TRIAD_AIR);
 }
 
-int prod_count(int faction, int id, int skip) {
-    assert(valid_player(faction));
-    int n = 0;
-    for (int i=0; i<*total_num_bases; i++) {
-        BASE* base = &Bases[i];
-        if (base->faction_id == faction && base->queue_items[0] == id && i != skip) {
-            n++;
-        }
-    }
-    return n;
+int __cdecl game_start_turn() {
+    // TODO: If config is changed, may return incorrect start turn
+    return min(*CurrentTurn, (*GameRules & RULES_TIME_WARP ? conf.time_warp_start_turn : 0));
 }
 
-int facility_count(int faction, int facility) {
-    assert(valid_player(faction) && facility >= 0);
-    int n = 0;
-    for (int i=0; i<*total_num_bases; i++) {
-        BASE* base = &Bases[i];
-        if (base->faction_id == faction && has_facility(i, facility)) {
-            n++;
-        }
-    }
-    return n;
+int __cdecl game_year(int n) {
+    return Rules->normal_start_year + n;
 }
 
-int find_hq(int faction) {
-    for(int i=0; i<*total_num_bases; i++) {
-        BASE* base = &Bases[i];
-        if (base->faction_id == faction && has_facility(i, FAC_HEADQUARTERS)) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-int manifold_nexus_owner() {
-    for (int y=0; y < *map_axis_y; y++) {
-        for (int x=y&1; x < *map_axis_x; x += 2) {
-            MAP* sq = mapsq(x, y);
-            /* First Manifold Nexus tile must also be visible to the owner. */
-            if (sq && sq->landmarks & LM_NEXUS && sq->art_ref_id == 0) {
-                return (sq->owner >= 0 && sq->is_visible(sq->owner) ? sq->owner : -1);
-            }
-        }
-    }
-    return -1;
-}
-
-int mod_veh_speed(int veh_id) {
-    return veh_speed(veh_id, 0);
-}
-
-int best_armor(int faction, bool cheap) {
-    int ci = ARM_NO_ARMOR;
-    int cv = 4;
-    for (int i=ARM_SYNTHMETAL_ARMOR; i<=ARM_RESONANCE_8_ARMOR; i++) {
-        if (has_tech(faction, Armor[i].preq_tech)) {
-            int val = Armor[i].defense_value;
-            int cost = Armor[i].cost;
-            if (cheap && (cost > 6 || cost > val))
-                continue;
-            int iv = val * (i >= ARM_PULSE_3_ARMOR ? 5 : 4);
-            if (iv > cv) {
-                cv = iv;
-                ci = i;
-            }
-        }
-    }
-    return ci;
-}
-
-int best_weapon(int faction) {
-    int ci = WPN_HAND_WEAPONS;
-    int cv = 4;
-    for (int i=WPN_LASER; i<=WPN_STRING_DISRUPTOR; i++) {
-        if (has_tech(faction, Weapon[i].preq_tech)) {
-            int iv = Weapon[i].offense_value *
-                (i == WPN_RESONANCE_LASER || i == WPN_RESONANCE_BOLT ? 5 : 4);
-            if (iv > cv) {
-                cv = iv;
-                ci = i;
-            }
-        }
-    }
-    return ci;
-}
-
-int best_reactor(int faction) {
-    for (const int r : {REC_SINGULARITY, REC_QUANTUM, REC_FUSION}) {
-        if (has_tech(faction, Reactor[r - 1].preq_tech)) {
-            return r;
-        }
-    }
-    return REC_FISSION;
-}
-
-int offense_value(UNIT* u) {
-    int w = (conf.ignore_reactor_power ? (int)REC_FISSION : u->reactor_type);
-    if (u->weapon_type == WPN_CONVENTIONAL_PAYLOAD) {
-        return Factions[*active_faction].best_weapon_value * w * 4/5;
-    }
-    return Weapon[u->weapon_type].offense_value * w;
-}
-
-int defense_value(UNIT* u) {
-    int w = (conf.ignore_reactor_power ? (int)REC_FISSION : u->reactor_type);
-    return Armor[u->armor_type].defense_value * w;
-}
-
-int faction_might(int faction) {
-    Faction* f = &Factions[faction];
-    return std::max(1, f->mil_strength_1 + f->mil_strength_2 + f->pop_total);
-}
-
-bool allow_expand(int faction) {
-    int bases = 0;
-    if (*game_rules & RULES_SCN_NO_COLONY_PODS || *total_num_bases >= MaxBaseNum * 19 / 20) {
-        return false;
-    }
-    for (int i=1; i < MaxPlayerNum && conf.expansion_autoscale > 0; i++) {
-        if (is_human(i)) {
-            bases = Factions[i].current_num_bases;
-            break;
-        }
-    }
-    if (conf.expansion_limit > 0) {
-        return Factions[faction].current_num_bases < std::max(bases, conf.expansion_limit);
-    }
-    return true;
-}
-
-uint32_t map_hash(uint32_t a, uint32_t b) {
-    uint32_t h = (*map_random_seed ^ (a << 8) ^ (b << 16) ^ b) * 2654435761;
-    return (h ^ (h>>16)) & 0x7fffffff;
-}
-
-int random(int n) {
-    return (n > 0 ? rand() % n : 0);
-}
-
-int wrap(int a) {
-    if (!*map_toggle_flat) {
-        return (a < 0 ? a + *map_axis_x : a % *map_axis_x);
-    } else {
-        return a;
-    }
-}
-
-int map_range(int x1, int y1, int x2, int y2) {
-    int dx = abs(x1 - x2);
-    int dy = abs(y1 - y2);
-    if (!*map_toggle_flat & 1 && dx > *map_half_x) {
-        dx = *map_axis_x - dx;
-    }
-    return (dx + dy)/2;
-}
-
-int vector_dist(int x1, int y1, int x2, int y2) {
-    int dx = abs(x1 - x2);
-    int dy = abs(y1 - y2);
-    if (!*map_toggle_flat & 1 && dx > *map_half_x) {
-        dx = *map_axis_x - dx;
-    }
-    return std::max(dx, dy) - ((((dx + dy) / 2) - std::min(dx, dy) + 1) / 2);
-}
-
-int min_range(const Points& S, int x, int y) {
-    int z = MaxMapW;
-    for (auto& p : S) {
-        z = std::min(z, map_range(x, y, p.x, p.y));
-    }
-    return z;
-}
-
-double avg_range(const Points& S, int x, int y) {
-    int n = 0;
-    int sum = 0;
-    for (auto& p : S) {
-        sum += map_range(x, y, p.x, p.y);
-        n++;
-    }
-    return (n > 0 ? (double)sum/n : 0);
-}
-
-MAP* mapsq(int x, int y) {
-    assert(!((x + y)&1));
-    if (x >= 0 && y >= 0 && x < *map_axis_x && y < *map_axis_y && !((x + y)&1)) {
-        return &((*MapPtr)[ x/2 + (*map_half_x) * y ]);
-    } else {
-        return NULL;
-    }
-}
-
-int unit_in_tile(MAP* sq) {
-    if (!sq || (sq->val2 & 0xf) == 0xf) {
-        return -1;
-    }
-    return sq->val2 & 0xf;
-}
-
-int set_move_to(int veh_id, int x, int y) {
-    VEH* veh = &Vehicles[veh_id];
-    debug("set_move_to %2d %2d -> %2d %2d %s\n", veh->x, veh->y, x, y, veh->name());
-    veh->waypoint_1_x = x;
-    veh->waypoint_1_y = y;
-    veh->move_status = ORDER_MOVE_TO;
-    veh->status_icon = 'G';
-    veh->terraforming_turns = 0;
-    mapnodes.erase({x, y, NODE_PATROL});
-    if (veh->x == x && veh->y == y) {
-        return mod_veh_skip(veh_id);
-    }
-    return SYNC;
-}
-
-int set_move_next(int veh_id, int offset) {
-    VEH* veh = &Vehicles[veh_id];
-    int x = wrap(veh->x + BaseOffsetX[offset]);
-    int y = veh->y + BaseOffsetY[offset];
-    return set_move_to(veh_id, x, y);
-}
-
-int set_road_to(int veh_id, int x, int y) {
-    VEH* veh = &Vehicles[veh_id];
-    veh->waypoint_1_x = x;
-    veh->waypoint_1_y = y;
-    veh->move_status = ORDER_ROAD_TO;
-    veh->status_icon = 'R';
-    return SYNC;
-}
-
-int set_action(int veh_id, int act, char icon) {
-    VEH* veh = &Vehicles[veh_id];
-    if (act == ORDER_THERMAL_BOREHOLE) {
-        mapnodes.insert({veh->x, veh->y, NODE_BOREHOLE});
-    } else if (act == ORDER_TERRAFORM_UP) {
-        mapnodes.insert({veh->x, veh->y, NODE_RAISE_LAND});
-    }
-    veh->move_status = act;
-    veh->status_icon = icon;
-    veh->state &= ~VSTATE_UNK_10000;
-    return SYNC;
-}
-
-int set_convoy(int veh_id, int res) {
-    VEH* veh = &Vehicles[veh_id];
-    mapnodes.insert({veh->x, veh->y, NODE_CONVOY});
-    veh->type_crawling = res-1;
-    veh->move_status = ORDER_CONVOY;
-    veh->status_icon = 'C';
-    return veh_skip(veh_id);
-}
-
-int set_board_to(int veh_id, int trans_veh_id) {
-    VEH* veh = &Vehicles[veh_id];
-    VEH* v2 = &Vehicles[trans_veh_id];
-    assert(veh_id != trans_veh_id);
-    assert(veh->x == v2->x && veh->y == v2->y);
-    assert(cargo_capacity(trans_veh_id) > 0);
-    veh->move_status = ORDER_SENTRY_BOARD;
-    veh->waypoint_1_x = trans_veh_id;
-    veh->waypoint_1_y = 0;
-    veh->status_icon = 'L';
-    debug("set_board_to %2d %2d %s -> %s\n", veh->x, veh->y, veh->name(), v2->name());
-    return SYNC;
-}
-
-int cargo_loaded(int veh_id) {
-    int n=0;
-    for (int i=0; i<*total_num_vehicles; i++) {
-        VEH* veh = &Vehicles[i];
-        if (veh->move_status == ORDER_SENTRY_BOARD && veh->waypoint_1_x == veh_id) {
-            n++;
-        }
-    }
-    return n;
+bool __cdecl in_box(int x, int y, RECT* rc) {
+    return x >= rc->left && x < rc->right
+        && y >= rc->top && y < rc->bottom;
 }
 
 /*
-Original Offset: 005C1760
+Calculate the offset and bitmask for the specified input.
 */
-int cargo_capacity(int veh_id) {
-    VEH* v = &Vehicles[veh_id];
-    UNIT* u = &Units[v->unit_id];
-    if (u->carry_capacity > 0 && veh_id < MaxProtoFactionNum 
-    && Weapon[u->weapon_type].offense_value < 0) {
-        return v->morale + 1;
+void __cdecl bitmask(uint32_t input, uint32_t* offset, uint32_t* mask) {
+    *offset = input / 8;
+    *mask = 1 << (input & 7);
+}
+
+/*
+Calculate nutrient/mineral cost factors for base production.
+In vanilla game mechanics, if the player faction is ranked first, then the AIs
+will get additional growth/industry bonuses. This modified version removes them.
+Original Offset: 004E4430
+*/
+int __cdecl mod_cost_factor(int faction_id, int is_mineral, int base_id) {
+    int value;
+    int multiplier = (is_mineral ? Rules->mineral_cost_multi : Rules->nutrient_cost_multi);
+
+    if (is_human(faction_id)) {
+        value = multiplier;
+    } else {
+        value = multiplier * CostRatios[*DiffLevel] / 10;
     }
-    return u->carry_capacity;
-}
 
-int mod_veh_skip(int veh_id) {
-    VEH* veh = &Vehicles[veh_id];
-    veh->waypoint_1_x = veh->x;
-    veh->waypoint_1_y = veh->y;
-    veh->status_icon = '-';
-    if (veh->damage_taken) {
-        MAP* sq = mapsq(veh->x, veh->y);
-        if (sq && sq->items & TERRA_MONOLITH) {
-            monolith(veh_id);
-        }
+    if (*MapSizePlanet == 0) {
+        value = 8 * value / 10;
+    } else if (*MapSizePlanet == 1) {
+        value = 9 * value / 10;
     }
-    return veh_skip(veh_id);
-}
-
-int mod_veh_kill(int veh_id) {
-    VEH* veh = &Vehicles[veh_id];
-    debug("disband %d %d %s\n", veh->x, veh->y, veh->name());
-    return veh_kill(veh_id);
-}
-
-bool at_target(VEH* veh) {
-    return veh->move_status == ORDER_NONE || (veh->waypoint_1_x < 0 && veh->waypoint_1_y < 0)
-        || (veh->x == veh->waypoint_1_x && veh->y == veh->waypoint_1_y);
-}
-
-bool is_ocean(MAP* sq) {
-    return (!sq || (sq->climate >> 5) < ALT_SHORE_LINE);
-}
-
-bool is_ocean(BASE* base) {
-    return is_ocean(mapsq(base->x, base->y));
-}
-
-bool is_ocean_shelf(MAP* sq) {
-    return (sq && (sq->climate >> 5) == ALT_OCEAN_SHELF);
-}
-
-bool is_shore_level(MAP* sq) {
-    return (sq && (sq->climate >> 5) == ALT_SHORE_LINE);
-}
-
-bool has_defenders(int x, int y, int faction) {
-    assert(valid_player(faction));
-    for (int i=0; i<*total_num_vehicles; i++) {
-        VEH* veh = &Vehicles[i];
-        UNIT* u = &Units[veh->unit_id];
-        if (veh->faction_id == faction && veh->x == x && veh->y == y
-        && u->weapon_type <= WPN_PSI_ATTACK && veh->triad() == TRIAD_LAND) {
-            return true;
-        }
-    }
-    return false;
-}
-
-int nearby_items(int x, int y, int range, uint32_t item) {
-    MAP* sq;
-    int n = 0;
-    for (int i=-range*2; i<=range*2; i++) {
-        for (int j=-range*2 + abs(i); j<=range*2 - abs(i); j+=2) {
-            sq = mapsq(wrap(x + i), y + j);
-            if (sq && sq->items & item) {
-                n++;
+    if (is_mineral) {
+        if (is_mineral == 1) {
+            switch (Factions[faction_id].SE_industry_pending) {
+                case -7:
+                case -6:
+                case -5:
+                case -4:
+                case -3:
+                    return (13 * value + 9) / 10;
+                case -2:
+                    return (6 * value + 4) / 5;
+                case -1:
+                    return (11 * value + 9) / 10;
+                case 0:
+                    break;
+                case 1:
+                    return (9 * value + 9) / 10;
+                case 2:
+                    return (4 * value + 4) / 5;
+                case 3:
+                    return (7 * value + 9) / 10;
+                case 4:
+                    return (3 * value + 4) / 5;
+                default:
+                    return (value + 1) / 2;
             }
         }
+        return value;
+    } else {
+        int growth = Factions[faction_id].SE_growth_pending;
+        if (base_id >= 0) {
+            if (has_facility(FAC_CHILDREN_CRECHE, base_id)) {
+                growth += 2;
+            }
+            if (Bases[base_id].state_flags & BSTATE_GOLDEN_AGE_ACTIVE) {
+                growth += 2;
+            }
+        }
+        return (value * (10 - clamp(growth, -2, 5)) + 9) / 10;
     }
-    return n;
 }
 
-int nearby_tiles(int x, int y, int type, int limit) {
-    MAP* sq;
-    int n = 0;
-    TileSearch ts;
-    ts.init(x, y, type, 2);
-    while (n < limit && (sq = ts.get_next()) != NULL) {
-        n++;
+void init_world_config() {
+    ThinkerVars->game_time_spent = 0;
+    /*
+    Adjust Special Scenario Rules if any are selected from the mod menu.
+    This also overrides settings for any scenarions unless all custom options are left empty.
+    */
+    if ((custom_game_rules || custom_more_rules) && !*MultiplayerActive) {
+        *GameRules = (*GameRules & GAME_RULES_MASK) | custom_game_rules;
+        *GameMoreRules = (*GameMoreRules & GAME_MRULES_MASK) | custom_more_rules;
     }
-    return n;
 }
 
-int coast_tiles(int x, int y) {
-    MAP* sq;
-    int n = 0;
-    for (const int* t : NearbyTiles) {
-        sq = mapsq(wrap(x + t[0]), y + t[1]);
-        if (sq && is_ocean(sq)) {
-            n++;
+void show_rules_menu() {
+    *GameRules = (*GameRules & GAME_RULES_MASK) | custom_game_rules;
+    *GameMoreRules = (*GameMoreRules & GAME_MRULES_MASK) | custom_more_rules;
+    Console_editor_scen_rules(MapWin);
+    custom_game_rules = *GameRules & ~GAME_RULES_MASK;
+    custom_more_rules = *GameMoreRules & ~GAME_MRULES_MASK;
+}
+
+void init_save_game(int faction) {
+    Faction* f = &Factions[faction];
+    MFaction* m = &MFactions[faction];
+    if (!faction) {
+        return;
+    }
+    if (m->thinker_header != THINKER_HEADER) {
+        m->thinker_header = THINKER_HEADER;
+        m->thinker_flags = 0;
+        m->thinker_tech_id = f->tech_research_id;
+        m->thinker_tech_cost = f->tech_cost;
+        m->thinker_probe_lost = 0;
+        m->thinker_last_mc_turn = 0;
+    }
+    m->thinker_unused = 0;
+    /*
+    Remove invalid prototypes from the savegame.
+    This also attempts to repair invalid vehicle stacks to prevent game crashes.
+    Stack iterators should never contain infinite loops or vehicles from multiple tiles.
+    */
+    for (int i = 0; i < MaxProtoFactionNum; i++) {
+        int unit_id = faction*MaxProtoFactionNum + i;
+        UNIT* u = &Units[unit_id];
+        if (strlen(u->name) >= MaxProtoNameLen
+        || u->chassis_id < CHS_INFANTRY
+        || u->chassis_id > CHS_MISSILE) {
+            for (int j = *VehCount-1; j >= 0; j--) {
+                if (Vehicles[j].unit_id == unit_id) {
+                    veh_kill(j);
+                }
+            }
+            for (int j = 0; j < *BaseCount; j++) {
+                if (Bases[j].queue_items[0] == unit_id) {
+                    Bases[j].queue_items[0] = -FAC_STOCKPILE_ENERGY;
+                }
+            }
+            memset(u, 0, sizeof(UNIT));
         }
     }
-    return n;
+    for (int i = 0; i < *VehCount; i++) {
+        VEH* veh = &Vehs[i];
+        int prev_id = veh->prev_veh_id_stack;
+        int next_id = veh->next_veh_id_stack;
+        bool adjust = false;
+
+        if (prev_id == i || (prev_id >= 0 && (Vehs[prev_id].x != veh->x || Vehs[prev_id].y != veh->y))) {
+            print_veh_stack(veh->x, veh->y);
+            veh->prev_veh_id_stack = -1;
+            adjust = true;
+        }
+        if (next_id == i || (next_id >= 0 && (Vehs[next_id].x != veh->x || Vehs[next_id].y != veh->y))) {
+            print_veh_stack(veh->x, veh->y);
+            veh->next_veh_id_stack = -1;
+            adjust = true;
+        }
+        if (adjust) {
+            stack_fix(i);
+        }
+    }
 }
 
-int set_base_facility(int base_id, int facility_id, bool add) {
-    assert(base_id >= 0 && facility_id > 0 && facility_id <= FAC_EMPTY_FACILITY_64);
-    if (add) {
-        Bases[base_id].facilities_built[facility_id/8] |= (1 << (facility_id % 8));
-    } else {
-        Bases[base_id].facilities_built[facility_id/8] &= ~(1 << (facility_id % 8));
+int __cdecl mod_turn_upkeep() {
+    // Turn number is incremented in turn_upkeep
+    if (*CurrentTurn == 0) {
+        init_world_config();
     }
+    turn_upkeep();
+    debug("turn_upkeep %d bases: %d vehicles: %d\n",
+        *CurrentTurn, *BaseCount, *VehCount);
+
+    if (DEBUG) {
+        if (conf.debug_mode) {
+            *GameState |= STATE_DEBUG_MODE;
+            *GamePreferences |= PREF_ADV_FAST_BATTLE_RESOLUTION;
+        } else {
+            *GameState &= ~STATE_DEBUG_MODE;
+        }
+    }
+    snprintf(ThinkerVars->build_date, 12, MOD_DATE);
     return 0;
 }
 
-int spawn_veh(int unit_id, int faction, int x, int y, int base_id) {
-    int id = veh_init(unit_id, faction, x, y);
-    if (id >= 0) {
-        Vehicles[id].home_base_id = base_id;
-        // Set these flags to disable any non-Thinker unit automation.
-        Vehicles[id].state |= VSTATE_UNK_40000;
-        Vehicles[id].state &= ~VSTATE_UNK_2000;
-    }
-    return id;
-}
-
-char* parse_str(char* buf, int len, const char* s1, const char* s2, const char* s3, const char* s4) {
-    buf[0] = '\0';
-    strncat(buf, s1, len);
-    if (s2) {
-        strncat(buf, " ", 2);
-        strncat(buf, s2, len);
-    }
-    if (s3) {
-        strncat(buf, " ", 2);
-        strncat(buf, s3, len);
-    }
-    if (s4) {
-        strncat(buf, " ", 2);
-        strncat(buf, s4, len);
-    }
-    // strlen count does not include the first null character.
-    if (strlen(buf) > 0 && strlen(buf) < (size_t)len) {
-        return buf;
-    }
-    return NULL;
-}
-
-char* strstrip(char* s) {
-    size_t size;
-    char* end;
-    size = strlen(s);
-    if (!size) {
-        return s;
-    }
-    end = s + size - 1;
-    while (end >= s && isspace(*end)) {
-        end--;
-    }
-    *(end + 1) = '\0';
-    while (*s && isspace(*s)) {
-        s++;
-    }
-    return s;
-}
-
 /*
-For debugging purposes only, check if the address range is unused.
+Original Offset: 005ABD20
 */
-void check_zeros(int* ptr, int len) {
-    char buf[100];
-    if (DEBUG && !(*(byte*)ptr == 0 && memcmp((byte*)ptr, (byte*)ptr + 1, len - 1) == 0)) {
-        snprintf(buf, sizeof(buf), "Non-zero values detected at: 0x%06x", (int)ptr);
-        MessageBoxA(0, buf, "Debug notice", MB_OK | MB_ICONINFORMATION);
-        int* p = ptr;
-        for (int i=0; i*sizeof(int) < (unsigned)len; i++, p++) {
-            debug("LOC %08x %d: %08x\n", (int)p, i, *p);
+void __cdecl mod_auto_save() {
+    if ((!*PbemActive || *MultiplayerActive)
+    && (!(*GameRules & RULES_IRONMAN) || *GameState & STATE_SCENARIO_EDITOR)) {
+        if (conf.autosave_interval > 0 && !(*CurrentTurn % conf.autosave_interval)) {
+            char buf[256];
+            snprintf(buf, sizeof(buf), "saves/auto/Autosave_%d.sav", game_year(*CurrentTurn));
+            save_daemon(buf);
         }
     }
 }
 
-void print_map(int x, int y) {
-    MAP* m = mapsq(x, y);
-    debug("MAP %2d %2d owner: %2d bonus: %d clim: %02x cont: %02x val3: %02x "\
-          "val2: %02x reg: %02x vis: %02x unk1: %02x unk2: %02x art: %02x items: %08x lm: %08x\n",
-        x, y, m->owner, bonus_at(x, y), m->climate, m->contour, m->val3,
-        m->val2, m->region, m->visibility, m->unk_1, m->unk_2, m->art_ref_id,
-        m->items, m->landmarks);
-}
-
-void print_veh(int id) {
-    VEH* v = &Vehicles[id];
-    int speed = veh_speed(id, 0);
-    debug("VEH %24s %3d %3d %d order: %2d %c %3d %3d -> %3d %3d moves: %2d speed: %2d damage: %d "
-          "state: %08x flags: %04x vis: %02x mor: %d iter: %d angle: %d\n",
-        Units[v->unit_id].name, v->unit_id, id, v->faction_id,
-        v->move_status, (v->status_icon ? v->status_icon : ' '),
-        v->x, v->y, v->waypoint_1_x, v->waypoint_1_y, speed - v->road_moves_spent, speed,
-        v->damage_taken, v->state, v->flags, v->visibility, v->morale,
-        v->iter_count, v->rotate_angle);
-}
-
-void print_base(int id) {
-    BASE* base = &Bases[id];
-    int prod = base->queue_items[0];
-    debug("[ turn: %d faction: %d base: %2d x: %2d y: %2d "\
-        "pop: %d tal: %d dro: %d min: %2d acc: %2d | %08x | %3d %s | %s ]\n",
-        *current_turn, base->faction_id, id, base->x, base->y,
-        base->pop_size, base->talent_total, base->drone_total,
-        base->mineral_surplus, base->minerals_accumulated,
-        base->status_flags, prod, prod_name(prod), (char*)&(base->name));
-}
-
 /*
-Purpose: Determine if the tile has a resource bonus.
-Original Offset: 00592030
-Return Value: 0 (no bonus), 1 (nutrient), 2 (mineral), 3 (energy)
+Original Offset: 00527290
 */
-int __cdecl mod_bonus_at(int x, int y) {
-    MAP* sq = mapsq(x, y);
-    uint32_t bit = sq->items;
-    uint32_t alt = sq->climate >> 5;
-    bool has_rsc_bonus = bit & TERRA_BONUS_RES;
-    if (!has_rsc_bonus && (!*map_random_seed || (alt >= ALT_SHORE_LINE
-    && !conf.rare_supply_pods && !(*game_rules & RULES_NO_UNITY_SCATTERING)))) {
-        return 0;
-    }
-    int avg = (x + y) >> 1;
-    x -= avg;
-    int chk = (avg & 3) + 4 * (x & 3);
-    if (!has_rsc_bonus && chk != ((*map_random_seed + (-5 * (avg >> 2)) - 3 * (x >> 2)) & 0xF)) {
-        return 0;
-    }
-    if (alt < ALT_OCEAN_SHELF) {
-        return 0;
-    }
-    int ret = (alt < ALT_SHORE_LINE && !conf.rare_supply_pods) ? chk % 3 + 1 : (chk % 5) & 3;
-    if (!ret || bit & TERRA_NUTRIENT_RES) {
-        if (bit & TERRA_ENERGY_RES) {
-            return 3; // energy
-        }
-        return ((bit & TERRA_MINERAL_RES) != 0) + 1; // nutrient or mineral
-    }
-    return ret;
-}
+int __cdecl mod_faction_upkeep(int faction) {
+    Faction* f = &Factions[faction];
+    MFaction* m = &MFactions[faction];
+    debug("faction_upkeep %d %d\n", *CurrentTurn, faction);
 
-/*
-Purpose: Determine if the tile has a supply pod and if so what type.
-Original Offset: 00592140
-Return Value: 0 (no supply pod), 1 (standard supply pod), 2 (unity pod?)
-*/
-int __cdecl mod_goody_at(int x, int y) {
-    MAP* sq = mapsq(x, y);
-    uint32_t bit = sq->items;
-    if (bit & (TERRA_SUPPLY_REMOVE | TERRA_MONOLITH)) {
-        return 0; // nothing, supply pod already opened or monolith
+    if (conf.factions_enabled > 0 && (*MapAreaX > MaxMapAreaX || *MapAreaY > MaxMapAreaY)) {
+        parse_says(0, MOD_VERSION, -1, -1);
+        parse_says(1, "This map exceeds Thinker's maximum supported map size.", -1, -1);
+        popp("modmenu", "GENERIC", 0, 0, 0);
+        *ControlTurnA = 1; // Return to main menu
+        *ControlTurnB = 1;
     }
-    if (*game_rules & RULES_NO_UNITY_SCATTERING) {
-        return (bit & (TERRA_UNK_4000000 | TERRA_UNK_8000000)) ? 2 : 0; // ?
-    }
-    if (bit & TERRA_SUPPLY_POD) {
-        return 1; // supply pod
-    }
-    if (!*map_random_seed) {
-        return 0; // nothing
-    }
-    int avg = (x + y) >> 1;
-    int x_diff = x - avg;
-    int cmp = (avg & 3) + 4 * (x_diff & 3);
-    if (!conf.rare_supply_pods && !is_ocean(sq)) {
-        if (cmp == ((-5 * (avg >> 2) - 3 * (x_diff >> 2) + *map_random_seed) & 0xF)) {
-            return 2;
-        }
-    }
-    return cmp == ((11 * (avg / 4) + 61 * (x_diff / 4) + *map_random_seed + 8) & 0x1F); // 0 or 1
-}
+    init_save_game(faction);
+    plans_upkeep(faction);
+    reset_netmsg_status();
+    *ControlUpkeepA = 1;
+    social_upkeep(faction);
+    do_all_non_input();
 
-/*
-Original Offset: 005C0DB0
-*/
-bool __cdecl can_arty(int unit_id, bool allow_sea_arty) {
-    UNIT& u = Units[unit_id];
-    if ((Weapon[u.weapon_type].offense_value <= 0 // PSI + non-combat
-    || Armor[u.armor_type].defense_value < 0) // PSI
-    && unit_id != BSC_SPORE_LAUNCHER) { // Spore Launcher exception
-        return false;
-    }
-    if (u.triad() == TRIAD_SEA) {
-        return allow_sea_arty;
-    }
-    if (u.triad() == TRIAD_AIR) {
-        return false;
-    }
-    return has_abil(unit_id, ABL_ARTILLERY); // TRIAD_LAND
-}
-
-bool ignore_goal(int type) {
-    return type == AI_GOAL_COLONIZE || type == AI_GOAL_TERRAFORM_LAND
-        || type == AI_GOAL_TERRAFORM_WATER || type == AI_GOAL_CONDENSER
-        || type == AI_GOAL_THERMAL_BOREHOLE || type == AI_GOAL_ECHELON_MIRROR
-        || type == AI_GOAL_SENSOR_ARRAY || type == AI_GOAL_DEFEND;
-}
-
-/*
-Original Offset: 0x579A30
-*/
-void __cdecl add_goal(int faction, int type, int priority, int x, int y, int base_id) {
-    if (!mapsq(x, y)) {
-        return;
-    }
-    if (ai_enabled(faction) && type < 200) { // Discard all non-Thinker goals
-        return;
-    }
-    debug("add_goal %d type: %3d pr: %2d x: %3d y: %3d base: %d\n",
-        faction, type, priority, x, y, base_id);
-
-    for (int i = 0; i < MaxGoalsNum; i++) {
-        Goal& goal = Factions[faction].goals[i];
-        if (goal.x == x && goal.y == y && goal.type == type) {
-            if (goal.priority <= priority) {
-                goal.priority = (int16_t)priority;
+    if (conf.activate_skipped_units) {
+        for (int i = 0; i < *VehCount; i++) {
+            if (Vehs[i].faction_id == faction) {
+                Vehs[i].flags &= ~VFLAG_FULL_MOVE_SKIPPED;
             }
+        }
+    }
+    repair_phase(faction);
+    do_all_non_input();
+    production_phase(faction);
+    do_all_non_input();
+    if (!(*GameState & STATE_GAME_DONE) || *GameState & STATE_FINAL_SCORE_DONE) {
+        allocate_energy(faction);
+        do_all_non_input();
+        enemy_diplomacy(faction);
+        do_all_non_input();
+        enemy_strategy(faction);
+        do_all_non_input();
+        /*
+        Thinker-specific AI planning routines.
+        Note that move_upkeep is only updated after all the production is done,
+        so that the movement code can utilize up-to-date priority maps.
+        This means we cannot use move_upkeep maps or variables in production phase.
+        */
+        mod_social_ai(faction, -1, -1, -1, -1, 0);
+        probe_upkeep(faction);
+        move_upkeep(faction, UM_Full);
+        do_all_non_input();
+
+        if (!is_human(faction)) {
+            int cost = corner_market(faction);
+            if (!victory_done() && f->energy_credits > cost && f->corner_market_active < 1
+            && has_tech(Rules->tech_preq_economic_victory, faction)
+            && *GameRules & RULES_VICTORY_ECONOMIC) {
+                f->corner_market_turn = *CurrentTurn + Rules->turns_corner_global_energy_market;
+                f->corner_market_active = cost;
+                f->energy_credits -= cost;
+
+                *gender_default = m->noun_gender;
+                *plurality_default = 0;
+                parse_says(0, m->title_leader, -1, -1);
+                parse_says(1, m->name_leader, -1, -1);
+                *plurality_default = m->is_noun_plural;
+                parse_says(2, m->noun_faction, -1, -1);
+                parse_says(3, m->adj_name_faction, -1, -1);
+                ParseNumTable[0] = game_year(f->corner_market_turn);
+                popp("SCRIPT", "CORNERWARNING", 0, "econwin_sm.pcx", 0);
+            }
+        }
+    }
+    for (int i = 0; i<*BaseCount; i++) {
+        BASE* base = &Bases[i];
+        if (base->faction_id == faction) {
+            base->state_flags &= ~(BSTATE_UNK_1 | BSTATE_HURRY_PRODUCTION);
+        }
+    }
+    f->energy_credits -= f->energy_cost;
+    f->energy_cost = 0;
+    if (f->energy_credits < 0) {
+        f->energy_credits = 0;
+    }
+    if (!f->base_count && !has_colony_pods(faction)) {
+        eliminate_player(faction, 0);
+    }
+    *ControlUpkeepA = 0;
+    Path->xDst = -1;
+    Path->yDst = -1;
+
+    if (!(*GameState & STATE_GAME_DONE) || *GameState & STATE_FINAL_SCORE_DONE) {
+        if (faction == MapWin->cOwner
+        && !(*GameState & (STATE_COUNCIL_HAS_CONVENED | STATE_DISPLAYED_COUNCIL_AVAIL_MSG))
+        && can_call_council(faction, 0) && !(*GameState & STATE_GAME_DONE)) {
+            *GameState |= STATE_DISPLAYED_COUNCIL_AVAIL_MSG;
+            popp("SCRIPT", "COUNCILOPEN", 0, "council_sm.pcx", 0);
+        }
+        if (!is_human(faction)) {
+            call_council(faction);
+        }
+    }
+    if (!*MultiplayerActive && *GamePreferences & PREF_BSC_AUTOSAVE_EACH_TURN
+    && faction == MapWin->cOwner) {
+        auto_save();
+    }
+    flushlog();
+    return 0;
+}
+
+uint32_t offset_next(int32_t faction, uint32_t position, uint32_t amount) {
+    if (!position) {
+        return 0;
+    }
+    uint32_t loop = 0;
+    uint32_t offset = ((*MapRandomSeed + faction) & 0xFE) | 1;
+    do {
+        if (offset & 1) {
+            offset ^= 0x170;
+        }
+        offset >>= 1;
+    } while (offset >= amount || ++loop != position);
+    return offset;
+}
+
+/*
+Generate a base name. Uses additional base names from basenames folder.
+When faction base names are used, creates additional variations from basenames/generic.txt.
+First land/sea base always uses the first available name from land/sea names list.
+Vanilla name_base chooses sea base names in a sequential non-random order (this version is random).
+Original Offset: 004E4090
+*/
+void __cdecl mod_name_base(int faction, char* name, bool save_offset, bool sea_base) {
+    Faction& f = Factions[faction];
+    uint32_t offset = f.base_name_offset;
+    uint32_t offset_sea = f.base_sea_name_offset;
+    const int buf_size = 1024;
+    char file_name_1[buf_size];
+    char file_name_2[buf_size];
+    set_str_t all_names;
+    vec_str_t sea_names;
+    vec_str_t land_names;
+    snprintf(file_name_1, buf_size, "%s.txt", MFactions[faction].filename);
+    snprintf(file_name_2, buf_size, "basenames\\%s.txt", MFactions[faction].filename);
+    strlwr(file_name_1);
+    strlwr(file_name_2);
+
+    for (int i = 0; i < *BaseCount; i++) {
+        if (Bases[i].faction_id == faction) {
+            all_names.insert(Bases[i].name);
+        }
+    }
+    if (sea_base) {
+        reader_path(sea_names, file_name_1, "#WATERBASES", MaxBaseNameLen);
+        reader_path(sea_names, file_name_2, "#WATERBASES", MaxBaseNameLen);
+
+        if (sea_names.size() > 0 && offset_sea < sea_names.size()) {
+            for (uint32_t i = 0; i < sea_names.size(); i++) {
+                uint32_t seed = offset_next(faction, offset_sea + i, sea_names.size());
+                if (seed < sea_names.size()) {
+                    vec_str_t::const_iterator it(sea_names.begin());
+                    std::advance(it, seed);
+                    if (!has_item(all_names, it->c_str())) {
+                        strncpy(name, it->c_str(), MaxBaseNameLen);
+                        name[MaxBaseNameLen - 1] = '\0';
+                        if (save_offset) {
+                            f.base_sea_name_offset++;
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    land_names.clear();
+    reader_path(land_names, file_name_1, "#BASES", MaxBaseNameLen);
+    reader_path(land_names, file_name_2, "#BASES", MaxBaseNameLen);
+
+    if (save_offset) {
+        f.base_name_offset++;
+    }
+    if (land_names.size() > 0 && offset < land_names.size()) {
+        for (uint32_t i = 0; i < land_names.size(); i++) {
+            uint32_t seed = offset_next(faction, offset + i, land_names.size());
+            if (seed < land_names.size()) {
+                vec_str_t::const_iterator it(land_names.begin());
+                std::advance(it, seed);
+                if (!has_item(all_names, it->c_str())) {
+                    strncpy(name, it->c_str(), MaxBaseNameLen);
+                    name[MaxBaseNameLen - 1] = '\0';
+                    return;
+                }
+            }
+        }
+    }
+    for (int i = 0; i < *BaseCount; i++) {
+        all_names.insert(Bases[i].name);
+    }
+    uint32_t x = 0;
+    uint32_t a = 0;
+    uint32_t b = 0;
+
+    land_names.clear();
+    sea_names.clear();
+    reader_path(land_names, "basenames\\generic.txt", "#BASESA", MaxBaseNameLen);
+    if (land_names.size() > 0) {
+        reader_path(sea_names, "basenames\\generic.txt", "#BASESB", MaxBaseNameLen);
+    } else {
+        reader_path(land_names, "basename.txt", "#GENERIC", MaxBaseNameLen);
+    }
+
+    for (int i = 0; i < 2*MaxBaseNum && land_names.size() > 0; i++) {
+        x = pair_hash(faction + MaxPlayerNum*f.base_name_offset, *MapRandomSeed + i);
+        a = ((x & 0xffff) * land_names.size()) >> 16;
+        name[0] = '\0';
+
+        if (sea_names.size() > 0) {
+            b = ((x >> 16) * sea_names.size()) >> 16;
+            snprintf(name, MaxBaseNameLen, "%s %s", land_names[a].c_str(), sea_names[b].c_str());
+        } else {
+            snprintf(name, MaxBaseNameLen, "%s", land_names[a].c_str());
+        }
+        if (strlen(name) >= 2 && !all_names.count(name)) {
             return;
         }
     }
-    int goal_score = 0, goal_id = -1;
-    for (int i = 0; i < MaxGoalsNum; i++) {
-        Goal& goal = Factions[faction].goals[i];
-
-        if (goal.type < 0 || goal.priority < priority) {
-            int cmp = goal.type >= 0 ? 0 : 1000;
-            if (!cmp) {
-                cmp = goal.priority > 0 ? 20 - goal.priority : goal.priority + 100;
-            }
-            if (cmp > goal_score) {
-                goal_score = cmp;
-                goal_id = i;
-            }
+    int i = *BaseCount;
+    while (i < 2*MaxBaseNum) {
+        i++;
+        name[0] = '\0';
+        snprintf(name, MaxBaseNameLen, "Sector %d", i);
+        if (!all_names.count(name)) {
+            return;
         }
-    }
-    if (goal_id >= 0) {
-        Goal& goal = Factions[faction].goals[goal_id];
-        goal.type = (int16_t)type;
-        goal.priority = (int16_t)priority;
-        goal.x = x;
-        goal.y = y;
-        goal.base_id = base_id;
     }
 }
 
 /*
-Original Offset: 0x579D80
+Game engine uses these defaults for ambient music tracks.
+This patches load_music comparison function such that it maps
+the user config to any available music tracks.
+If none of the config values match current faction, aset1.amb is used.
+
+DEFAULT, aset1.amb
+GAIANS, gset1.amb
+HIVE, mset1.amb
+UNIV, uset2.amb
+MORGAN, mset1.amb
+SPARTANS, sset1.amb
+BELIEVE, bset1.amb
+PEACE, gset1.amb
 */
-void __cdecl wipe_goals(int faction) {
-    for (int i = 0; i < MaxGoalsNum; i++) {
-        Goal& goal = Factions[faction].goals[i];
-        // Mod: instead of always deleting decrement priority each turn
-        if (goal.priority > 0) {
-            goal.priority--;
-        }
-        if (goal.priority <= 0) {
-            goal.type = AI_GOAL_UNUSED;
-        }
-    }
-    for (int i = 0; i < MaxSitesNum; i++) {
-        Goal& site = Factions[faction].sites[i];
-        int16_t type = site.type;
-        if (type >= 0) {
-            add_goal(faction, type, site.priority, site.x, site.y, -1);
-        }
-    }
-}
 
-int has_goal(int faction, int type, int x, int y) {
-    assert(valid_player(faction) && mapsq(x, y));
-    for (int i = 0; i < MaxGoalsNum; i++) {
-        Goal& goal = Factions[faction].goals[i];
-        if (goal.priority > 0 && goal.x == x && goal.y == y && goal.type == type) {
-            return goal.priority;
-        }
-    }
-    return 0;
-}
+int __cdecl load_music_strcmpi(const char* active, const char* label)
+{
+    bool fallback = true;
+    char lookup[StrBufLen] = {};
 
-std::vector<MapTile> iterate_tiles(int x, int y, int start_index, int end_index) {
-    std::vector<MapTile> tiles;
-    assert(start_index < end_index && (unsigned)end_index <= sizeof(TableOffsetX)/sizeof(int));
-
-    for (int i = start_index; i < end_index; i++) {
-        int x2 = wrap(x + TableOffsetX[i]);
-        int y2 = y + TableOffsetY[i];
-        MAP* sq = mapsq(x2, y2);
-        if (sq) {
-            tiles.push_back({x2, y2, sq});
-        }
-    }
-    return tiles;
-}
-
-void TileSearch::reset() {
-    type = 0;
-    head = 0;
-    tail = 0;
-    roads = 0;
-    y_skip = 0;
-    faction = -1;
-    oldtiles.clear();
-}
-
-void TileSearch::add_start(int x, int y) {
-    if (tail < QueueSize/2 && (sq = mapsq(x, y)) && !oldtiles.count({x, y})) {
-        paths[tail] = {x, y, 0, -1};
-        oldtiles.insert({x, y});
-        if (!is_ocean(sq)) {
-            if (sq->items & (TERRA_ROAD | TERRA_BASE_IN_TILE)) {
-                roads |= TERRA_ROAD | TERRA_BASE_IN_TILE;
+    for (const auto& pair : musiclabels) {
+        if (!strcmpi(pair.first.c_str(), active)) {
+            if (!strcmpi(pair.second.c_str(), "gset1.amb")) {
+                strncpy(lookup, "gaians", StrBufLen);
+            } else if (!strcmpi(pair.second.c_str(), "mset1.amb")) {
+                strncpy(lookup, "hive", StrBufLen);
+            } else if (!strcmpi(pair.second.c_str(), "uset2.amb")) {
+                strncpy(lookup, "univ", StrBufLen);
+            } else if (!strcmpi(pair.second.c_str(), "sset1.amb")) {
+                strncpy(lookup, "spartans", StrBufLen);
+            } else if (!strcmpi(pair.second.c_str(), "bset1.amb")) {
+                strncpy(lookup, "believe", StrBufLen);
+            } else {
+                break; // aset1.amb or incorrect filename is used
             }
-            if (sq->items & (TERRA_RIVER | TERRA_BASE_IN_TILE)) {
-                roads |= TERRA_RIVER | TERRA_BASE_IN_TILE;
-            }
-        }
-        tail++;
-    }
-}
-
-void TileSearch::init(int x, int y, int tp) {
-    assert(tp >= TS_TRIAD_LAND && tp <= MaxTileSearchType);
-    reset();
-    type = tp;
-    add_start(x, y);
-}
-
-void TileSearch::init(int x, int y, int tp, int skip) {
-    init(x, y, tp);
-    y_skip = skip;
-}
-
-void TileSearch::init(const PointList& points, int tp, int skip) {
-    reset();
-    type = tp;
-    y_skip = skip;
-    for (auto& p : points) {
-        add_start(p.x, p.y);
-    }
-}
-
-void TileSearch::get_route(PointList& pp) {
-    pp.clear();
-    int i = 0;
-    int j = cur;
-    while (j >= 0 && ++i < PathLimit) {
-        auto& p = paths[j];
-        j = p.prev;
-        pp.push_front({p.x, p.y});
-    }
-}
-
-/*
-Traverse current search path and check for zones of control.
-*/
-bool TileSearch::has_zoc(int faction_id) {
-    int zoc = 0;
-    int i = 0;
-    int j = cur;
-    while (j >= 0 && ++i < PathLimit) {
-        auto& p = paths[j];
-        if (zoc_any(p.x, p.y, faction_id) && ++zoc > 1) {
-            return true;
-        }
-        j = p.prev;
-    }
-    return false;
-}
-
-/*
-Implement a breadth-first search of adjacent map tiles to iterate possible movement paths.
-Pathnodes are also used to keep track of the route to reach the current destination.
-*/
-MAP* TileSearch::get_next() {
-    while (head < tail) {
-        bool first = paths[head].dist == 0;
-        rx = paths[head].x;
-        ry = paths[head].y;
-        dist = paths[head].dist;
-        cur = head;
-        head++;
-        if (!(sq = mapsq(rx, ry))) {
-            continue;
-        }
-        if (first) {
-            faction = unit_in_tile(sq);
-            if (faction < 0) {
-                faction = sq->owner;
-            }
-        }
-        bool our_base = sq->is_base() && (faction == sq->owner || has_pact(faction, sq->owner));
-        bool skip = (sq->is_base() && !our_base) ||
-                    (type == TS_TRIAD_LAND && is_ocean(sq)) ||
-                    (type == TS_TRIAD_SEA && !is_ocean(sq) && !our_base) ||
-                    (type == TS_SEA_AND_SHORE && !is_ocean(sq) && !our_base) ||
-                    (type == TS_NEAR_ROADS && (is_ocean(sq) || !(sq->items & roads))) ||
-                    (type == TS_TERRITORY_LAND && (is_ocean(sq) || sq->owner != faction)) ||
-                    (type == TS_TERRITORY_BORDERS && (is_ocean(sq) || sq->owner != faction));
-        if (!first && skip) {
-            if (!((type == TS_NEAR_ROADS && is_ocean(sq))
-            || (type == TS_TERRITORY_LAND && is_ocean(sq))
-            || (type == TS_TRIAD_LAND && is_ocean(sq))
-            || (type == TS_TRIAD_SEA && !is_ocean(sq)))) {
-                return sq;
-            }
-            continue;
-        }
-        for (const int* t : NearbyTiles) {
-            int x2 = wrap(rx + t[0]);
-            int y2 = ry + t[1];
-            if (y2 >= y_skip && y2 < *map_axis_y - y_skip
-            && tail < QueueSize && dist < PathLimit
-            && !oldtiles.count({x2, y2})) {
-                paths[tail] = {x2, y2, dist+1, cur};
-                tail++;
-                oldtiles.insert({x2, y2});
-            }
-        }
-        if (!first) {
-            return sq;
+            fallback = false;
+            break;
         }
     }
-    return NULL;
+    debug("load_music %d %s %s %s\n", fallback, active, label, lookup);
+    flushlog();
+    if (fallback) {
+        return 1; // Skip all other choices and select original fallback default
+    }
+    return strcmpi(label, lookup);
 }
-
 
 

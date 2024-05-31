@@ -12,7 +12,7 @@
 				<Option object_output="build/obj/debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option host_application="patch/terranx_mod.exe" />
+				<Option host_application="terranx_mod.exe" />
 				<Option run_host_application_in_terminal="0" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
@@ -33,7 +33,7 @@
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
-					<Add option="-O3 -fno-strict-aliasing -fno-delete-null-pointer-checks" />
+					<Add option="-O2 -fno-common -fno-strict-overflow -fno-strict-aliasing -fno-delete-null-pointer-checks -fno-optimize-sibling-calls" />
 					<Add option="-DBUILD_DLL" />
 				</Compiler>
 				<Linker>
@@ -46,36 +46,22 @@
 				<Option object_output="build/obj/release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option host_application="patch/terranx_mod.exe" />
+				<Option host_application="terranx_mod.exe" />
 				<Option run_host_application_in_terminal="0" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
-					<Add option="-O3 -fno-strict-aliasing -fno-delete-null-pointer-checks" />
+					<Add option="-O2 -fno-common -fno-strict-overflow -fno-strict-aliasing -fno-delete-null-pointer-checks -fno-optimize-sibling-calls" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-DBUILD_REL" />
 				</Compiler>
 				<Linker>
 					<Add option="-s -static" />
 				</Linker>
-				<ExtraCommands>
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_Changelog.md&quot; &quot;releases\TheWillToPower\&quot;  /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_Details.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_License.txt&quot; &quot;releases\TheWillToPower\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Readme.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_changelog.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_installation.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_strategy.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\exe\terranx_mod.exe&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
-					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\factions&quot; &quot;releases\TheWillToPower\factions\&quot; /iy' />
-					<Mode after="always" />
-				</ExtraCommands>
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-std=c++11 -pedantic -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-align -Wfloat-conversion" />
+			<Add option="-std=c++11 -march=i686 -mtune=generic -pedantic -Wall -Wextra -Wshadow -Wundef -Wuseless-cast -Wpointer-arith -Wfloat-conversion -Wno-shadow" />
 		</Compiler>
 		<Linker>
 			<Add library="user32" />
@@ -84,70 +70,98 @@
 			<Add library="psapi" />
 		</Linker>
 		<ExtraCommands>
-			<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; patch\ /Y' />
-			<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; patch\ /Y' />
+			<Add after='cmd /c copy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; patch\' />
 		</ExtraCommands>
-		<Unit filename="src/ai.cpp" />
-		<Unit filename="src/ai.h" />
-		<Unit filename="src/aiData.cpp" />
-		<Unit filename="src/aiData.h" />
-		<Unit filename="src/aiHurry.cpp" />
-		<Unit filename="src/aiHurry.h" />
-		<Unit filename="src/aiMove.cpp" />
-		<Unit filename="src/aiMove.h" />
-		<Unit filename="src/aiMoveArtifact.cpp" />
-		<Unit filename="src/aiMoveArtifact.h" />
-		<Unit filename="src/aiMoveColony.cpp" />
-		<Unit filename="src/aiMoveColony.h" />
-		<Unit filename="src/aiMoveCombat.cpp" />
-		<Unit filename="src/aiMoveCombat.h" />
-		<Unit filename="src/aiMoveFormer.cpp" />
-		<Unit filename="src/aiMoveFormer.h" />
-		<Unit filename="src/aiMoveTransport.cpp" />
-		<Unit filename="src/aiMoveTransport.h" />
-		<Unit filename="src/aiProduction.cpp" />
-		<Unit filename="src/aiProduction.h" />
-		<Unit filename="src/aiRoute.cpp" />
-		<Unit filename="src/aiRoute.h" />
-		<Unit filename="src/aiTask.cpp" />
-		<Unit filename="src/aiTask.h" />
+		<Unit filename="src/base.cpp" />
+		<Unit filename="src/base.h" />
+		<Unit filename="src/debug.cpp" />
+		<Unit filename="src/debug.h" />
 		<Unit filename="src/engine.cpp" />
 		<Unit filename="src/engine.h" />
+		<Unit filename="src/engine_enums.h" />
+		<Unit filename="src/engine_types.h" />
+		<Unit filename="src/engine_veh.h" />
+		<Unit filename="src/engine_win.h" />
+		<Unit filename="src/faction.cpp" />
+		<Unit filename="src/faction.h" />
 		<Unit filename="src/game.cpp" />
 		<Unit filename="src/game.h" />
-		<Unit filename="src/game_wtp.cpp" />
-		<Unit filename="src/game_wtp.h" />
+		<Unit filename="src/goal.cpp" />
+		<Unit filename="src/goal.h" />
 		<Unit filename="src/gui.cpp" />
 		<Unit filename="src/gui.h" />
+		<Unit filename="src/gui_dialog.cpp" />
+		<Unit filename="src/gui_dialog.h" />
+		<Unit filename="src/lib/FastNoiseLite.h" />
 		<Unit filename="src/lib/ini.c">
-			<Option compilerVar="CC" />
+			<Option compilerVar="CPP" />
 		</Unit>
 		<Unit filename="src/lib/ini.h" />
 		<Unit filename="src/main.cpp" />
 		<Unit filename="src/main.h" />
+		<Unit filename="src/map.cpp" />
+		<Unit filename="src/map.h" />
 		<Unit filename="src/move.cpp" />
 		<Unit filename="src/move.h" />
 		<Unit filename="src/patch.cpp" />
 		<Unit filename="src/patch.h" />
-		<Unit filename="src/patch_wtp.cpp" />
-		<Unit filename="src/patch_wtp.h" />
+		<Unit filename="src/patchdata.h" />
 		<Unit filename="src/path.cpp" />
 		<Unit filename="src/path.h" />
-		<Unit filename="src/robin_hood.h" />
+		<Unit filename="src/plan.cpp" />
+		<Unit filename="src/plan.h" />
+		<Unit filename="src/probe.cpp" />
+		<Unit filename="src/probe.h" />
+		<Unit filename="src/random.cpp" />
+		<Unit filename="src/random.h" />
+		<Unit filename="src/strings.cpp" />
+		<Unit filename="src/strings.h" />
 		<Unit filename="src/tech.cpp" />
 		<Unit filename="src/tech.h" />
-		<Unit filename="src/terranx.cpp" />
-		<Unit filename="src/terranx.h" />
-		<Unit filename="src/terranx_enums.h" />
-		<Unit filename="src/terranx_types.h" />
-		<Unit filename="src/terranx_wtp.cpp" />
-		<Unit filename="src/terranx_wtp.h" />
 		<Unit filename="src/test.cpp" />
 		<Unit filename="src/test.h" />
-		<Unit filename="src/wtp.cpp" />
-		<Unit filename="src/wtp.h" />
+		<Unit filename="src/veh.cpp" />
+		<Unit filename="src/veh.h" />
+		<Unit filename="src/veh_combat.cpp" />
+		<Unit filename="src/veh_combat.h" />
+		<Unit filename="src/wtp_ai.cpp" />
+		<Unit filename="src/wtp_ai.h" />
+		<Unit filename="src/wtp_aiData.cpp" />
+		<Unit filename="src/wtp_aiData.h" />
+		<Unit filename="src/wtp_aiHurry.cpp" />
+		<Unit filename="src/wtp_aiHurry.h" />
+		<Unit filename="src/wtp_aiMove.cpp" />
+		<Unit filename="src/wtp_aiMove.h" />
+		<Unit filename="src/wtp_aiMoveArtifact.cpp" />
+		<Unit filename="src/wtp_aiMoveArtifact.h" />
+		<Unit filename="src/wtp_aiMoveColony.cpp" />
+		<Unit filename="src/wtp_aiMoveColony.h" />
+		<Unit filename="src/wtp_aiMoveCombat.cpp" />
+		<Unit filename="src/wtp_aiMoveCombat.h" />
+		<Unit filename="src/wtp_aiMoveFormer.cpp" />
+		<Unit filename="src/wtp_aiMoveFormer.h" />
+		<Unit filename="src/wtp_aiMoveTransport.cpp" />
+		<Unit filename="src/wtp_aiMoveTransport.h" />
+		<Unit filename="src/wtp_aiProduction.cpp" />
+		<Unit filename="src/wtp_aiProduction.h" />
+		<Unit filename="src/wtp_aiRoute.cpp" />
+		<Unit filename="src/wtp_aiRoute.h" />
+		<Unit filename="src/wtp_aiTask.cpp" />
+		<Unit filename="src/wtp_aiTask.h" />
+		<Unit filename="src/wtp_game.cpp" />
+		<Unit filename="src/wtp_game.h" />
+		<Unit filename="src/wtp_mod.cpp" />
+		<Unit filename="src/wtp_mod.h" />
+		<Unit filename="src/wtp_patch.cpp" />
+		<Unit filename="src/wtp_patch.h" />
+		<Unit filename="src/wtp_terranx.cpp" />
+		<Unit filename="src/wtp_terranx.h" />
+		<Unit filename="src/wtp_terranx_enum.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
+			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
