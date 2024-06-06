@@ -1,22 +1,29 @@
 # The Will to Power: Strategy guide
 
-This mod enhances *Alpha Centauri: Alien Crossfire* experience by improving AI and rebalancing other features. Therefore, it is more diffcult to beat and play style differs from vanilla. It is irrelevant to those never exposed to unmodded game but for those who mastered vanilla already it **is**.  
-:wink:
+This mod enhances *Alpha Centauri: Alien Crossfire* experience by improving AI and rebalancing other features. It is more diffcult to beat and play style may differ from vanilla if you mastered it before.
 
 # Think & Adapt
 
-Really! This mod is so much more intense that you have to review your general strategy every 5-10 turns or so. Whether to attack or build a defense or expand to land or expand to sea or to strengthen infrastructure or to rush for new technologies. You won't be able to succeed in all diarections. Choose the one that suits your current situation best. Standard "Fusion Power + Needlejets = global conquest" strategy doesn't work anymore. You need to mix and match it with other macro and micro strategies.  
+This mod tries making all original strategies viable. As such it may require reviewing general strategy every 5-10 turns or so. Whether to attack or build a defense or expand on land or expand on sea or to strengthen infrastructure or to rush for new technologies. It is not possible succeeding in all directions at once but savvy player evaluates most important direction/strategy at the moment.
+
+Standard "Fusion Power + Needlejets = global conquest" strategy is not the ultimate answer anymore. It is still **a** strategy among others, though. You need to mix and match it with other macro and micro strategies.  
 :stuck_out_tongue_winking_eye:
 
 Besides of general direction you'll be making decisions on lower level about many movements, attack, defenses, maneuvering, etc. Hopefully, the new battle winning probability display helps you in that.
 
+DO NOT get frustrated if you cannot beat the game from the get go. It may take some learning of new balance. Once you do, you never go back, as vanilla would feel too strategically shallow.
+
 # Natives
 
-They are more abundant and they are a threat. Normally it is about 50% chance of survival agains worms. Higher morale and PLANET rating tough you up against natives. Nevertheless their attack frequency is enough to slow your expansion down quite significantly. Player needs to decide wether they want to send defender with every colony for extra safety or go for good old colony spamming in all direction. Both strategies are viable just be prepared to lose some number of colonies and bases in latter case and don't get frustrated. Extra protection costs you in extra units. While no protection costs you some lost colonies. The choice is yours.
+* No plantpearls = Aliens are the pure threat and no benefits.
+* All triad psi attack-defense ratio is 1:1 = No first strike bonus.
+=> With above in mind, avoid hunting them unless they threaten your infrastructure.
+
+They are more abundant and they are a threat. Normally it is about 50% chance of survival agains worms. Higher morale and PLANET rating help. Nevertheless their attack frequency is enough to slow your expansion down quite significantly. Player needs to decide wether they want to send defender with every colony for extra safety or go for good old colony spamming in all direction. Both strategies are viable just be prepared to lose some number of unprotected colonies and bases and don't get frustrated. Extra protection costs extra units. No protection costs some lost colonies. The choice is yours.
 
 It is also important to keep more than one defender at bases. With more frequent worm attacks player often loses a defender to worm. Second one assures base security and give player some time to replace lost defender.
 
-In midgame with a lot of ecodamage popworm can destroy even two defenders easily. Then it makes sense to keep empath attackers in most ecodamaging bases as well to deal with popworms swiftly. Actually empath attackers are needed even in early game to quickly kill spore launchers. Otherwise, they destroy a lot of improvements around them.
+In midgame, with a lot of ecodamage, popworm can destroy even two defenders easily. Then it makes sense to keep empath attackers in most ecodamaging bases as well to deal with popworms swiftly. Actually empath attackers are needed even in early game to quickly kill spore launchers. Otherwise, they destroy a lot of improvements around.
 
 Stack bases with at least two defenders. It is still beneficial to build bare Scout Patrol for retaliation even after aquiring Hypnotic Trance.
 
@@ -26,7 +33,7 @@ PLANET positive factions can build up native army but not for free. You will be 
 
 # Terraforming
 
-Forest is expensive and weaker. Makes sense to plant sparingly to increase further spreading coverage. Use in arid/flat areas mostly. Normally prefer combination of rainy farms + rocky mines.
+Forest is twice as long to erect. Makes sense to plant sparingly to increase further spreading coverage. Use in arid/flat areas mostly. Normally prefer combination of rainy farms + rocky mines.
 
 Coastal bases with both land and sea formers are best self supported production centers. They have plenty food from sea and excess of minerals from land rocky mines.
 
@@ -34,7 +41,7 @@ Coastal bases with both land and sea formers are best self supported production 
 
 Land and sea equally. Land bases are quickstartes and give you immediate benefits. Sea bases grow fast but develop slowly due to lack of minerals. Yet they have huge nutrient and energy potential. Fast growth fuels further ocean expansion and enormous energy intake results in both faster research and hurrying production. Unless player claim extremely fertile land (like jungle) from start they won't be able to overtake AI economically without heavy sea presence. AI faction that breaks into sea first usually ends up being pretty might one by the mid game. Aquatic factions are slightly different. They have immediate ocean expansion potential but their initial development speed is quite slow. So they rank kinda average depending on resourse quality they able to secure from the start.
 
-Don't worry about claiming territory to occupy it later. Unlike vanilla here expansion is a work in itself requiring huge investments. Put your investments at work as quickly as possible. Build new bases more or less nearby and don't drag colonies across the map just to deny territory to opponent. AI develop so quickly that you won't possible be able to secure whole perimeter of your desired territory. Use what you have on hands and use it wisely.
+Don't worry about claiming territory to occupy it later. Unlike vanilla here expansion is a work in itself requiring huge investments. Put your investments at work as quickly as possible. Build new bases more or less nearby and don't drag colonies across the map just to deny territory to opponent. AI develop so quickly that you won't be able to secure whole perimeter of your desired territory. Use what you have on hands and use it wisely.
 
 # Combat
 
@@ -92,7 +99,7 @@ Armored formers allow player to improve tiles a not far from front line within e
 
 Negative EFFICIENCY ratings are no longer that dreadful especially for compact empires. HQ coverage is extended to 1/4 of map width. It is now quite viable to pick Police State + Planned in early game even not for Hive.
 
-GROWTH bonuses stack up pretty good up to +9. Meaning ten times faster growth! One more step up the GROWTH scale triggers population boom. It is not beneficial to pick GROWTH bonus at any level. The more the merrier.
+GROWTH bonuses stack up pretty good up to +9. Meaning ten times faster growth! One more step up the GROWTH scale triggers population boom. It is now beneficial to pick GROWTH bonus at any level. The more the merrier.
 
 # Multiplying facilities
 
