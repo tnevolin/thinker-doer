@@ -575,9 +575,9 @@ Base with habitation facility receives GROWTH bonus for each citizen below the l
 
 ## Scrambling interceptor fix
 
-Air units without air superiority (bombers) cannot attack needlejets in flight. That leads to a conclusion that bomber's weapon fit to bomb ground targets and cannot possibly attack or damage air units.
+Air units without air superiority (bombers) cannot attack needlejets in flight. That suggests that bomber's weapon is designed to bomb ground targets and cannot attack or damage air units.
 
-From the other hand air units with air superiority (interceptors) have their weapon fit to attack air targets in flight weapon to **armor** and receive air superiority bonus on top of that. That makes perfect sense since, as we established above, bombers cannot attack air units with their weapon so they use their armor to defend instead. Their defense in this case can be considered as a combination of anti-interceptor measures those include an actual body armor plus maybe some light weapon turret for counter fire.
+From the other hand air units with air superiority (interceptors) have their weapon is designed to attack air targets in flight and receive air superiority bonus on top of that. That makes perfect sense since, as we established above, bombers cannot attack air units with their weapon so they use their armor (i.e. protective fight ability) to defend against incoming attack. Their defense in this case can be considered as a combination of anti-interceptor measures those include an actual body armor plus maybe some light weapon turret for counter fire.
 
 All the above works well until interceptor decides to scramble. Scrambling interceptor is supposed to intercept a bomber in flight and counter attack it preventing bombing run. Unfortunately, game mechanics cannot handle this case properly due to code limitations. It computes battle as if a bomber attacks an interceptor resulting bomber using its weapon and interceptor not receiving its air superiority bonus. It looks like a bomber actually bombs an interceptor with its main weapon which makes no sense. Gameplay wise this reduce scrambling interceptor effectiveness by about 20 times comparing to when it attacks bomber on its own turn making this otherwise wonderful air protection idea completely useless.
 
