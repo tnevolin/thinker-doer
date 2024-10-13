@@ -123,7 +123,7 @@ int __cdecl mod_morale_veh(int veh_id, bool check_drone_riot, int faction_id_vs_
     if (!faction_id) {
         return mod_morale_alien(veh_id, faction_id_vs_native);
     }
-    if (Units[unit_id].plan == PLAN_INFO_WARFARE) {
+    if (Units[unit_id].plan == PLAN_PROBE) {
         int probe_morale = clamp(Factions[faction_id].SE_probe, 0, 3);
         probe_morale += has_project(FAC_TELEPATHIC_MATRIX, faction_id) ? 2 : 0;
         for (int i = 0; i < MaxTechnologyNum; i++) {
@@ -286,12 +286,12 @@ int __cdecl mod_get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat
     VehBasicBattleMorale[1] = morale;
     morale += 6;
     int plan_def = Units[unit_id_def].plan;
-    if (plan_def == PLAN_ALIEN_ARTIFACT) {
+    if (plan_def == PLAN_ARTIFACT) {
         return 1;
     }
     // Fix: added veh_id_atk bounds check to prevent potential read outside array
-    if (plan_def == PLAN_INFO_WARFARE && Units[unit_id_def].defense_value() == 1
-    && (veh_id_atk < 0 || Units[Vehs[veh_id_atk].unit_id].plan != PLAN_INFO_WARFARE)) {
+    if (plan_def == PLAN_PROBE && Units[unit_id_def].defense_value() == 1
+    && (veh_id_atk < 0 || Units[Vehs[veh_id_atk].unit_id].plan != PLAN_PROBE)) {
         return 1;
     }
     int defense = armor_proto(unit_id_def, veh_id_atk, is_bombard);
@@ -412,10 +412,22 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
     VEH* v1 = &Vehs[veh_id_atk];
     VEH* v2 = &Vehs[veh_id_def];
 
+    if (conf.intercept_defense_bonus
+    && v1->triad() == TRIAD_AIR && v2->triad() == TRIAD_AIR
+    && v1->offense_value() > 0 && v2->offense_value() > 0 && v2->defense_value() > 0
+    && !v1->is_missile() && !v2->is_missile()
+    && !has_abil(v1->unit_id, ABL_AIR_SUPERIORITY)
+    && has_abil(v2->unit_id, ABL_AIR_SUPERIORITY)) {
+        int combat_bonus = clamp(Rules->combat_bonus_air_supr_vs_air / 2, -50, 100);
+        if (combat_bonus != 0) {
+            *defense_out = *defense_out * (100 + combat_bonus) / 100;
+            add_bat(1, combat_bonus, (*TextLabels)[449]); // Air-to-Air
+        }
+    }
     if (conf.planet_defense_bonus && v2->faction_id > 0
     && (v1->offense_value() < 0 || v2->defense_value() < 0)) {
         int planet_value = Factions[v2->faction_id].SE_planet;
-        int combat_bonus = clamp(planet_value * Rules->combat_psi_bonus_per_planet / 2, -50, 50);
+        int combat_bonus = clamp(planet_value * Rules->combat_psi_bonus_per_planet / 2, -50, 100);
         if (combat_bonus != 0) {
             *defense_out = *defense_out * (100 + combat_bonus) / 100;
             add_bat(1, combat_bonus, (*TextLabels)[625]); // Planet

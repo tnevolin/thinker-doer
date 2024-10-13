@@ -7,22 +7,72 @@
 #include "robin_hood.h"
 #include "engine.h"
 
-struct MapValue
+/// alien units
+const std::vector<int> ALIEN_UNITS
 {
-	MAP *tile = nullptr;
-	int value = -1;
-
-	MapValue(MAP *_tile, int _value);
-
+    BSC_MIND_WORMS,
+    BSC_ISLE_OF_THE_DEEP,
+    BSC_LOCUSTS_OF_CHIRON,
+    BSC_SEALURK,
+    BSC_SPORE_LAUNCHER,
+    BSC_FUNGAL_TOWER,
 };
 
+/// surface type (land or sea)
+enum SurfaceType
+{
+	ST_LAND,
+	ST_SEA,
+};
+const int SurfaceTypeCount = ST_SEA + 1;
+
+enum ENGAGEMENT_MODE
+{
+	EM_MELEE,
+	EM_ARTILLERY,
+};
+int const ENGAGEMENT_MODE_COUNT = EM_ARTILLERY + 1;
+
+enum COMBAT_MODE
+{
+	CM_MELEE,
+	CM_ARTILLERY_DUEL,
+	CM_BOMBARDMENT,
+};
+const int COMBAT_MODE_COUNT = CM_BOMBARDMENT + 1;
+
+enum COMBAT_TYPE
+{
+	CT_CON = 0,
+	CT_PSI = 1,
+};
+const int COMBAT_TYPE_COUNT = CT_PSI + 1;
+
+/// combination of angle and tile
+struct MapAngle
+{
+	MAP *tile;
+	int angle;
+};
+
+/**
+coordinate location
+*/
 struct Location
 {
 	int x;
 	int y;
+	
+	int min();
+	int max();
+	int absDiff();
+	
 };
 bool operator==(const Location &o1, const Location &o2);
 bool operator!=(const Location &o1, const Location &o2);
+
+std::string getLocationString(Location location);
+std::string getLocationString(MAP *tile);
 
 struct RepairInfo
 {
@@ -36,6 +86,85 @@ struct Budget
 	int economy;
 	int psych;
 	int labs;
+};
+
+struct Resource
+{
+	double nutrient;
+	double mineral;
+	double energy;
+	
+	Resource()
+	: nutrient(0.0)
+	, mineral(0.0)
+	, energy(0.0)
+	{}
+	
+	Resource(double _nutrient, double _mineral, double _energy)
+	: nutrient(_nutrient)
+	, mineral(_mineral)
+	, energy(_energy)
+	{}
+	
+	void accumulate(Resource const &other)
+	{
+		this->nutrient += other.nutrient;
+		this->mineral += other.mineral;
+		this->energy += other.energy;
+	}
+	
+	void multiply(double multiplier)
+	{
+		this->nutrient *= multiplier;
+		this->mineral *= multiplier;
+		this->energy *= multiplier;
+	}
+	
+	static Resource combine(Resource const &o1, Resource const &o2)
+	{
+		return {o1.nutrient + o2.nutrient, o1.mineral + o2.mineral, o1.energy + o2.energy};
+	}
+	
+	static Resource difference(Resource const &o1, Resource const &o2)
+	{
+		return {o2.nutrient - o1.nutrient, o2.mineral - o1.mineral, o2.energy - o1.energy};
+	}
+	
+	/**
+	Compares two resources.
+	Returns -1, 0, +1 if first resource is inferior, uncomparable, superior to the second, correspondingly.
+	*/
+	static compare(Resource resource1, Resource resource2)
+	{
+		int nutrientComparison = resource1.nutrient == resource2.nutrient ? 0 : resource1.nutrient < resource2.nutrient ? -1 : +1;
+		int mineralComparison = resource1.mineral == resource2.mineral ? 0 : resource1.mineral < resource2.mineral ? -1 : +1;
+		int energyComparison = resource1.energy == resource2.energy ? 0 : resource1.energy < resource2.energy ? -1 : +1;
+		
+		if ((nutrientComparison <= 0 && mineralComparison <= 0 && energyComparison <= 0) && (nutrientComparison < 0 || mineralComparison < 0 || energyComparison < 0))
+		{
+			return -1;
+		}
+		else if ((nutrientComparison >= 0 && mineralComparison >= 0 && energyComparison >= 0) && (nutrientComparison > 0 || mineralComparison > 0 || energyComparison > 0))
+		{
+			return +1;
+		}
+		else
+		{
+			return 0;
+		}
+		
+	}
+	
+};
+
+struct Income
+{
+	double income;
+	double incomeGrowth;
+	
+	Income() : income(0.0), incomeGrowth(0.0) {}
+	Income(double _income, double _incomeGrowth) : income(_income), incomeGrowth(_incomeGrowth) {}
+	
 };
 
 // =======================================================
@@ -417,16 +546,12 @@ struct VehicleFilter
 // MAP conversions
 // =======================================================
 
+bool isOnMap(MAP *tile);
 bool isOnMap(int x, int y);
-bool isValidTile(MAP *tile);
-int getMapIndexByCoordinates(int x, int y);
-int getMapIndexByPointer(MAP *tile);
-int getX(int mapIndex);
-int getY(int mapIndex);
+Location getLocation(MAP *tile);
 int getX(MAP *tile);
 int getY(MAP *tile);
-Location getLocation(MAP *tile);
-MAP *getMapTile(int mapIndex);
+int getMapTileIndex(int x, int y);
 MAP *getMapTile(int x, int y);
 Location getDelta(MAP *tile1, MAP *tile2);
 Location getRectangularCoordinates(Location diagonal, bool shift);
@@ -442,7 +567,8 @@ Location getDiagonalCoordinates(Location rectangular);
 // iterating surrounding locations
 // =======================================================
 
-std::vector<MAP *> getAdjacentTiles(MAP *tile);
+const std::vector<MapAngle> getAdjacentMapAngles(MAP *tile);
+const std::vector<MAP *> getAdjacentTiles(MAP *tile);
 std::vector<MAP *> getSideTiles(MAP *tile);
 MAP * getSquareBlockRadiusTile(MAP *center, int index);
 std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, int beginIndex, int endIndex);
@@ -461,9 +587,6 @@ std::vector<MAP *> getBaseExternalRadiusTiles(MAP *tile);
 std::vector<MAP *> getBaseRadiusSideTiles(MAP *tile);
 std::vector<MAP *> getBaseRadiusAdjacentTiles(MAP *tile);
 
-std::vector<MAP *> getMeleeAttackPositions(MAP *target);
-std::vector<MAP *> getArtilleryAttackPositions(MAP *target);
-
 // =======================================================
 // iterating surrounding locations - end
 // =======================================================
@@ -480,6 +603,7 @@ int map_rockiness(MAP *tile);
 bool map_base(MAP *tile);
 bool map_has_item(MAP *tile, uint32_t item);
 bool map_has_landmark(MAP *tile, int landmark);
+int isBonusAt(MAP *tile);
 int getNutrientBonus(MAP *tile);
 int getMineralBonus(MAP *tile);
 int getEnergyBonus(MAP *tile);
@@ -488,7 +612,7 @@ int unit_chassis_speed(int id);
 int veh_chassis_speed(int id);
 int unit_triad(int id);
 double random_double(double scale);
-bool is_sea_base(int id);
+bool isSeaBase(int baseId);
 BASE *vehicle_home_base(VEH *vehicle);
 MAP *base_square(BASE *base);
 bool unit_has_ability(int id, int ability);
@@ -506,23 +630,22 @@ bool isBaseBuildingFacility(int baseId);
 bool isBaseBuildingProject(int baseId);
 bool isBaseProductionWithinRetoolingExemption(int baseId);
 int getBaseBuildingItemMineralCost(int baseId);
-double getUnitPsiOffenseStrength(int unitId);
-double getUnitPsiDefenseStrength(int unitId);
-double getUnitConventionalOffenseStrength(int unitId);
-double getUnitConventionalDefenseStrength(int unitId);
+double getUnitPsiOffenseStrength(int factionId, int unitId);
+double getUnitPsiDefenseStrength(int factionId, int unitId);
+double getUnitConOffenseStrength(int unitId);
+double getUnitConDefenseStrength(int unitId);
+double getUnitConArtilleryDuelStrength(int unitId);
 double getNewUnitPsiOffenseStrength(int id, int baseId);
 double getNewUnitPsiDefenseStrength(int id, int baseId);
-double getNewUnitConventionalOffenseStrength(int id, int baseId);
-double getNewUnitConventionalDefenseStrength(int id, int baseId);
-double getVehiclePsiOffenseStrength(int id);
-double getVehiclePsiDefenseStrength(int id);
-double getVehicleConventionalOffenseStrength(int vehicleId);
-double getVehicleConventionalDefenseStrength(int vehicleId);
-double getVehicleConventionalArtilleryDuelStrength(int vehicleId);
-double getVehiclePsiOffensePower(int vehicleId);
-double getVehiclePsiDefensePower(int vehicleId);
-double getVehicleConventionalOffensePower(int vehicleId);
-double getVehicleConventionalDefensePower(int vehicleId);
+double getNewUnitConOffenseStrength(int id, int baseId);
+double getNewUnitConDefenseStrength(int id, int baseId);
+double getVehiclePsiOffenseStrength(int vehicleId, bool ignoreDamage = false);
+double getVehiclePsiDefenseStrength(int vehicleId, bool ignoreDamage = false);
+double getVehicleConOffenseStrength(int vehicleId, bool ignoreDamage = false);
+double getVehicleConDefenseStrength(int vehicleId, bool ignoreDamage = false);
+double getVehicleConArtilleryDuelStrength(int vehicleId);
+double getVehicleConOffensePower(int vehicleId);
+double getVehicleConDefensePower(int vehicleId);
 double getFactionSEPlanetOffenseModifier(int factionId);
 double getFactionSEPlanetDefenseModifier(int factionId);
 double getPsiCombatBaseOdds(int triad);
@@ -534,8 +657,11 @@ double calculatePsiDamageAttack(int id, int enemyId);
 double calculatePsiDamageDefense(int id, int enemyId);
 double calculateNativeDamageAttack(int id);
 double calculateNativeDamageDefense(int id);
-void setVehicleOrder(int id, int order);
+VehOrder getVehicleOrder(int vehicleId);
+void setVehicleOrder(int vehicleId, int order);
+int getBaseMapTileIndex(int baseId);
 MAP *getBaseMapTile(int baseId);
+int getVehicleMapTileIndex(int vehicleId);
 MAP *getVehicleMapTile(int vehicleId);
 bool isImprovedTile(MAP *tile);
 bool isImprovedTile(int x, int y);
@@ -558,27 +684,28 @@ bool isMeleeUnit(int unitId);
 bool isMeleeVehicle(int vehicleId);
 bool isArtilleryUnit(int unitId);
 bool isArtilleryVehicle(int vehicleId);
+bool isActiveArtilleryVehicle(int vehicleId);
 bool isLandArtilleryUnit(int unitId);
 bool isLandArtilleryVehicle(int vehicleId);
 void computeBase(int baseId, bool resetWorkedTiles);
+void computeBaseComplete(int baseId);
 void computeBaseDoctors(int baseId);
 robin_hood::unordered_flat_set<int> getBaseConnectedRegions(int id);
 robin_hood::unordered_flat_set<int> getBaseConnectedOceanRegions(int baseId);
-bool isLandRegion(int region);
-bool isOceanRegion(int region);
-double evaluateUnitConventionalDefenseEffectiveness(int id);
-double evaluateUnitConventionalOffenseEffectiveness(int id);
+double evaluateUnitConDefenseEffectiveness(int id);
+double evaluateUnitConOffenseEffectiveness(int id);
 double evaluateUnitPsiDefenseEffectiveness(int id);
 double evaluateUnitPsiOffenseEffectiveness(int id);
-double getBaseDefenseMultiplier(int id, int attackerUnitId, int defenderUnitId);
+double getBaseDefenseMultiplier(int baseId, int extendedTriad);
+double getBaseDefenseMultiplier(int baseId, int attackerUnitId, int defenderUnitId);
 int estimateBaseItemProductionTime(int baseId, int item);
 int estimateBaseProductionTurnsToComplete(int id);
 std::vector<MAP *> getBaseWorkableTiles(int baseId, bool startWithCenter);
 std::vector<MAP *> getBaseWorkedTiles(int baseId);
+int getBaseWorkerCount(int baseId);
 bool isBaseWorkedTile(int baseId, int x, int y);
 bool isBaseWorkedTile(int baseId, MAP *tile);
-int getBaseConventionalDefenseValue(int baseId);
-std::vector<int> getFactionUnitIds(int factionId, bool includeObsolete, bool includePrototype);
+std::vector<int> getFactionUnitIds(int factionId, bool includeObsolete, bool includeNotPrototyped);
 int getFactionFastestFormerUnitId(int factionId);
 bool isVehicleNativeLand(int vehicleId);
 bool isBaseBuildingColony(int baseId);
@@ -587,7 +714,6 @@ bool isBaseFacilityAvailable(int baseId, int facilityId);
 bool isBaseConnectedToRegion(int baseId, int region);
 bool isTileConnectedToRegion(int x, int y, int region);
 std::vector<int> getRegionBases(int factionId, int region);
-std::vector<int> getRegionSurfaceVehicles(int factionId, int region, bool includeStationed);
 std::vector<int> getBaseGarrison(int baseId);
 std::vector<int> getBaseInfantryDefenderGarrison(int baseId);
 std::vector<int> getFactionBases(int factionId);
@@ -599,13 +725,12 @@ double getFactionFanaticBonusMultiplier(int factionId);
 double getVehicleBaseNativeProtectionPotential(int vehicleId);
 double getVehicleBaseNativeProtectionEfficiency(int vehicleId);
 int getBasePoliceRating(int baseId);
-int getBasePoliceEffect(int baseId);
+int getBasePolicePower(int baseId, bool police2x);
 int getBasePoliceAllowed(int baseId);
+int getBasePoliceCount(int baseId, bool police2x);
 char *getVehicleUnitName(int vehicleId);
 int getVehicleUnitPlan(int vehicleId);
 double getBaseNativeProtection(int baseId);
-bool isBaseHasAccessToWater(int baseId);
-bool isBaseCanBuildShips(int baseId);
 bool isExploredEdge(int factionId, int x, int y);
 bool isVehicleExploring(int vehicleId);
 bool isVehicleCanHealAtThisLocation(int vehicleId);
@@ -618,9 +743,9 @@ int getRemainingMinerals(int baseId);
 std::vector<int> getStackVehicles(int vehicleId);
 std::vector<int> getTileVehicleIds(MAP *tile);
 void setTerraformingAction(int vehicleId, int action);
-__cdecl int mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
-__cdecl int mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
-__cdecl int mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
+__cdecl int wtp_mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
+__cdecl int wtp_mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
+__cdecl int wtp_mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
 bool isCoast(MAP *tile);
 bool isOceanRegionCoast(int x, int y, int oceanRegion);
 std::vector<int> getLoadedVehicleIds(int vehicleId);
@@ -636,12 +761,15 @@ int getVehicleTransportId(int vehicleId);
 int setMoveTo(int vehicleId, MAP *destination);
 int setMoveTo(int vehicleId, const std::vector<MAP *> &waypoints);
 bool isFriendlyTerritory(int factionId, MAP* tile);
+bool isUnfriendlyTerritory(int factionId, MAP* tile);
 bool isNeutralTerritory(int factionId, MAP* tile);
 bool isHostileTerritory(int factionId, MAP* tile);
 bool isUnitHasAbility(int unitId, int ability);
 bool isVehicleHasAbility(int vehicleId, int ability);
 bool isScoutUnit(int unitId);
 bool isScoutVehicle(int vehicleId);
+bool isPodPoppingUnit(int unitId);
+bool isPodPoppingVehicle(int vehicleId);
 bool isTargettedLocation(MAP *tile);
 bool isFactionTargettedLocation(MAP *tile, int factionId);
 double getNativePsiAttackStrength(int triad);
@@ -650,8 +778,9 @@ int getFactionSEMoraleBonus(int factionId);
 int getVehicleMorale(int vehicleId);
 int getNewVehicleMorale(int unitId, int baseId);
 double getVehicleMoraleMultiplier(int vehicleId);
-double getBasePsiDefenseMultiplier();
-bool isWithinFriendlySensorRange(int factionId, int x, int y);
+double getBaseIntrinsicPsiDefenseMultiplier();
+double getBaseStructureConDefenseMultiplier(bool firstLevelDefense, bool secondLevelDefense);
+bool isWithinFriendlySensorRange(int factionId, MAP *tile);
 int getRegionPodCount(int x, int y, int range, int region);
 MAP *getNearbyItemLocation(int x, int y, int range, int item);
 bool isVehicleHealing(int vehicleId);
@@ -664,14 +793,13 @@ int getFactionBestWeapon(int factionId);
 int getFactionBestWeapon(int factionId, int limit);
 int getFactionBestArmor(int factionId);
 int getFactionBestArmor(int factionId, int limit);
-bool isSensorBonusApplied(int factionId, int x, int y, bool attacker);
 int getBaseIdAt(int x, int y);
-double getSensorOffenseMultiplier(int factionId, int x, int y);
-double getSensorDefenseMultiplier(int factionId, int x, int y);
+double getSensorOffenseMultiplier(int factionId, MAP *tile);
+double getSensorDefenseMultiplier(int factionId, MAP *tile);
 bool isNativeUnit(int unitId);
 bool isNativeVehicle(int vehicleId);
 double getPercentageBonusMultiplier(int percentageBonus);
-bool isMineBonus(int x, int y);
+bool isMineBonus(MAP *tile);
 std::vector<int> selectVehicles(const VehicleFilter filter);
 bool isNextToRegion(int x, int y, int region);
 int getSeaTransportInStack(int vehicleId);
@@ -680,7 +808,7 @@ bool isSeaTransportAt(MAP *tile, int factionId);
 bool isAvailableSeaTransportAt(MAP *tile, int factionId);
 int countPodsInBaseRadius(int x, int y);
 bool isBlocked(int factionId, MAP *tile);
-bool isZoc(int factionId, MAP *tile);
+bool isZoc(int factionId, MAP *fromTile, MAP *toTile);
 double getBattleOdds(int attackerVehicleId, int defenderVehicleId, int longRangeFire);
 double getBattleOddsAt(int attackerVehicleId, int defenderVehicleId, bool longRangeCombat, MAP *battleTile);
 double getBattleStackOdds(int attackerVehicleId, int defenderVehicleId, int longRangeCombat);
@@ -695,17 +823,20 @@ bool isFactionHasBonus(int factionId, int bonusId);
 double getAlienMoraleMultiplier();
 MAP *getNearestLandTerritory(int x, int y, int factionId);
 void killVehicle(int vehicleId);
+bool isVehicleOnTransport(int vehicleId, int transportVehicleId);
+void board(int vehicleId, int transportVehicleId);
 void board(int vehicleId);
 void unboard(int vehicleId);
+int getTransportCapacity(int transportVehicleId);
 int getTransportUsedCapacity(int transportVehicleId);
 int getTransportRemainingCapacity(int transportVehicleId);
+bool isTransportHasCapacity(int transportVehicleId);
 int getVehicleMaxPower(int vehicleId);
 int getVehiclePower(int vehicleId);
 double getVehicleRelativeDamage(int vehicleId);
 double getVehicleRelativePower(int vehicleId);
 int getVehicleHitPoints(int vehicleId, bool psiCombat);
 int getBaseGrowthRate(int baseId);
-void accumulateMapIntValue(robin_hood::unordered_flat_map<int, int> *m, int key, int value);
 int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY, int speed1);
 int getHexCost(int unitId, int factionId, MAP *fromTile, MAP *toTile, int speed1);
 int getVehicleHexCost(int vehicleId, int fromX, int fromY, int toX, int toY);
@@ -713,29 +844,32 @@ int getSeaHexCost(MAP *tile);
 bool isCommlink(int factionId1, int factionId2);
 bool isVendetta(int factionId1, int factionId2);
 bool isPact(int factionId1, int factionId2);
+bool isTreaty(int factionId1, int factionId2);
 bool isFriendly(int factionId1, int factionId2);
+bool isUnfriendly(int factionId1, int factionId2);
 bool isHostile(int factionId1, int factionId2);
 bool isNeutral(int factionId1, int factionId2);
-bool isVendettaWithAny(int factionId);
 int getVehicleMaxPsiHP(int vehicleId);
 int getVehicleCurrentPsiHP(int vehicleId);
-int getVehicleMaxConventionalHP(int vehicleId);
-int getVehicleCurrentConventionalHP(int vehicleId);
+int getVehicleMaxConHP(int vehicleId);
+int getVehicleCurrentConHP(int vehicleId);
 int getUnitSlotById(int unitId);
 int getUnitIdBySlot(int factionId, int slot);
-int getUnitIndexByUnitId(int factionId, int unitId);
+int getUnitIndex(int factionId, int unitId);
 int getFactionIdByUnitIndex(int unitIndex);
 int getUnitIdByUnitIndex(int unitIndex);
-int getBasePoliceDrones(int baseId);
+int getBasePoliceRequiredPower(int baseId);
+int getBasePoliceSuppressedDrones(int baseId);
 bool isReactorIgnoredInConventionalCombat();
 bool isReactorIgnoredInCombat(bool psiCombat);
 bool isInfantryUnit(int unitId);
 bool isInfantryVehicle(int vehicleId);
+bool isPolice2xUnit(int unitId, int factionId);
+bool isPolice2xVehicle(int vehicleId);
 bool isInfantryPolice2xUnit(int unitId, int factionId);
 bool isInfantryPolice2xVehicle(int vehicleId);
 bool isPsiCombat(int attackerUnitId, int defenderUnitId);
 double getAlienTurnStrengthModifier();
-bool isProjectBuilt(int factionId, int projectFacilityId);
 bool isProjectAvailable(int factionId, int projectFacilityId);
 int getFactionMaintenance(int factionId);
 int getFactionNetIncome(int factionId);
@@ -765,13 +899,11 @@ CChassis *getUnitChassis(int unitId);
 CChassis *getVehicleChassis(int vehicleId);
 bool isNeedlejetUnit(int unitId);
 bool isNeedlejetVehicle(int vehicleId);
-bool isNeedlejetUnitInFlight(int unitId, MAP *tile);
-bool isNeedlejetVehicleInFlight(int vehicleId);
 void longRangeFire(int vehicleId, int offsetIndex);
 void longRangeFire(int vehicleId, MAP *attackLocation);
 RepairInfo getVehicleRepairInfo(int vehicleId, MAP *tile);
 bool isObsoleteUnit(int unitId, int factionId);
-bool isPrototypeUnit(int unitId);
+bool isPrototypedUnit(int unitId);
 bool isActiveUnit(int unitId);
 bool isAvailableUnit(int unitId, int factionId, bool includeObsolete);
 CAbility *getAbility(int abilityId);
@@ -779,7 +911,6 @@ void obsoleteUnit(int unitId, int factionId);
 void reinstateUnit(int unitId, int factionId);
 int divideIntegerRoundUp(int divident, int divisor);
 CFacility *getFacility(int facilityId);
-double getBaseSupportRatio(int baseId);
 bool isAtArtilleryDamageLimit(int vehicleId);
 CCitizen *getCitizen(int specialistType);
 void setBaseSpecialist(int baseId, int specialistIndex, int specialistType);
@@ -790,22 +921,21 @@ int getVehicleMaxRebaseTurns(int vehicleId);
 CTerraform *getTerraform(int terraformType);
 int getBaseBDrones(int baseId);
 bool isAllowedBaseLocation(int factionId, MAP *tile);
-bool isRoughTerrain(MAP *tile);
-bool isOpenTerrain(MAP *tile);
 bool isMobileUnit(int unitId);
-double getUnitMeleeAttackStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
-double getUnitArtilleryAttackStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
+double getUnitMeleeOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
+double getUnitArtilleryOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
+double getUnitBombardmentStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
 bool isAtAirbase(int vehicleId);
 int getClosestHostileBaseRange(int factionId, MAP *tile);
-int getUnitSpeed(int unitId);
-int getVehicleSpeed(int vehicleId);
 double getEuclidianDistance(int x1, int y1, int x2, int y2);
 int getVehicleUnitCost(int vehicleId);
 int getVehicleRemainingMovement(int vehicleId);
 bool isAllowedMove(int vehicleId, MAP *srcTile, MAP *dstTile);
 int getVehicleHexCost(int vehicleId, int hexCost);
-bool isUnitIgnoreZOC(int unitId);
-bool isVehicleIgnoreZOC(int vehicleId);
+bool isZocAffectedUnit(int unitId);
+bool isZocAffectedVehicle(int vehicleId);
+bool isZocIgnoringUnit(int unitId);
+bool isZocIgnoringVehicle(int vehicleId);
 int getBaseAt(MAP *tile);
 bool isBaseAt(MAP *tile);
 bool isFactionBaseAt(MAP *tile, int factionId);
@@ -820,14 +950,8 @@ bool isVehicleAt(MAP *tile);
 bool isHostileVehicleAt(MAP *tile, int factionId);
 bool isUnfriendlyVehicleAt(MAP *tile, int factionId);
 bool isHostileSurfaceVehicleAt(MAP *tile, int factionId);
-bool isUnitCanMeleeAttackAtTile(int attackerUnitId, int defenderUnitId, MAP *tile);
-bool isUnitCanMeleeAttackFromTile(int attackerUnitId, int defenderUnitId, MAP *tile);
 bool isUnitCanInitiateArtilleryDuel(int attackerUnitId, int defenderUnitId);
 bool isUnitCanInitiateBombardment(int attackerUnitId, int defenderUnitId);
-bool isVehicleCanMeleeAttackTile(int vehicleId, MAP *target);
-bool isVehicleCanMeleeAttackFromTile(int vehicleId, MAP *from);
-bool isVehicleCanArtilleryAttackTile(int vehicleId, MAP *target);
-bool isVehicleCanArtilleryAttackFromTile(int vehicleId, MAP *from);
 bool isAirbaseAt(MAP *tile);
 bool isArtilleryAt(MAP *tile);
 std::vector<int> getTileSurfaceVehicleIds(MAP *tile);
@@ -841,6 +965,8 @@ bool isHoveringLandVehicle(int vehicleId);
 bool isEasyFungusEnteringLandUnit(int unitId);
 bool isEasyFungusEnteringVehicle(int vehicleId);
 double getBaseMineralMultiplier(int baseId);
+double getBaseEnergyEfficiencyCoefficient(int baseId);
+double getBaseEnergyMultiplier(int baseId);
 double getBaseEconomyMultiplier(int baseId);
 double getBaseLabsMultiplier(int baseId);
 double getBasePsychMultiplier(int baseId);
@@ -849,27 +975,65 @@ int getRange(MAP *origin, MAP *destination);
 int getRange(int tile1Index, int tile2Index);
 double getVectorDistanceSquared(MAP *origin, MAP *destination);
 double getVectorDistance(MAP *origin, MAP *destination);
+double getDiagonalDistance(MAP *tile1, MAP *tile2);
 double getVectorAngleCos(MAP *vertex, MAP *point1, MAP *point2);
-int getAdjacentTileIndex(int tileIndex, int angle);
 MAP *getTileByAngle(MAP *tile, int angle);
 int getAngleByTile(MAP *tile, MAP *anotherTile);
 bool isPodAt(MAP *tile);
 std::vector<int> getTransportPassengers(int transportVehicleId);
-double getVehicleMaxRelativeBombardmentDamage(int vehicleId);
-double getVehicleRemainingRelativeBombardmentDamage(int vehicleId);
+double getLocationBombardmentMaxRelativeDamage(MAP *tile);
+double getLocationBombardmentMinRelativePower(MAP *tile);
+double getVehicleBombardmentMaxRelativeDamage(int vehicleId);
+double getVehicleBombardmentRemainingRelativeDamage(int vehicleId);
 int getBasePopulationLimit(int baseId);
 int getBaseRadiusLayer(MAP *baseTile, MAP *tile);
 bool isWithinBaseRadius(MAP *baseTile, MAP *tile);
 std::vector<MAP *> getFartherBaseRadiusTiles(MAP *baseTile, MAP *tile);
 bool isFactionHasProject(int factionId, int facilityId);
 Budget getBaseBudgetIntake(int baseId);
+Budget getBaseBudgetIntake2(int baseId);
 double getBasePopulationGrowth(int baseId);
+double getBasePopulationGrowthIncrease(int baseId, double nutrientSurplusIncrease);
+double getBasePopulationGrowthRate(int baseId);
+double getBaseTimeToPopulation(int baseId, int population);
 int getMovementRateAlongTube();
 int getMovementRateAlongRoad();
 bool isInfantryDefensiveUnit(int unitId);
 bool isInfantryDefensiveVehicle(int vehicleId);
 bool isInfantryDefensivePolice2xUnit(int unitId, int factionId);
 bool isInfantryDefensivePolice2xVehicle(int vehicleId);
-bool isUnitRequireSupport(int unitId);
+bool isBaseDefenderVehicle(int vehicleId);
+int getUnitSupport(int unitId);
+bool getVehicleSupport(int vehicleId);
+bool isUnitRequiresSupport(int unitId);
+bool isVehicleRequiresSupport(int vehicleId);
 bool isFactionHasAbility(int faction, VehAbl abl);
+bool isFactionHasTech(int factionId, int tech);
+int getFactionTechCount(int factionId);
+bool isUnprotectedArtifact(int vehicleId);
+double average(std::vector<double> v);
+bool isBattleOgreUnit(int unitId);
+bool isBattleOgreVehicle(int unitId);
+int getUnitMoveRate(int factionId, int unitId);
+int getUnitSpeed(int factionId, int unitId);
+int getVehicleMoveRate(int vehicleId);
+int getVehicleSpeed(int vehicleId);
+bool isBaseAccessesWater(int baseId);
+bool isBaseCanBuildShip(int baseId);
+bool isUnitZocRestricted(int unitId);
+bool isVehicleZocRestricted(int vehicleId);
+std::vector<int> getBaseFacilities(int baseId);
+std::vector<int> getBaseProjects(int baseId);
+Resource getBaseWorkerResourceIntake(int baseId, MAP *tile);
+Resource getBaseResourceIntake2(int baseId);
+bool isLandRegion(MAP *tile, bool includePolar = false);
+bool isSeaRegion(MAP *tile, bool includePolar = false);
+bool isPolarRegion(MAP *tile);
+int getBaseNextUnitSupport(int baseId);
+int getBaseMoraleModifier(int baseId, int extendedTriad);
+bool isFactionCanBuildAirOffense(int factionId);
+bool isFactionCanBuildAirDefense(int factionId);
+bool isFactionCanBuildMelee(int factionId, int type, int triad);
+bool isRoughTerrain(MAP *tile);
+bool isOpenTerrain(MAP *tile);
 

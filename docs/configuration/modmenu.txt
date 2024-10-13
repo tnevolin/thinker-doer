@@ -1,0 +1,194 @@
+;
+; *****************************************
+; *  SMACX Thinker Mod by Induktio        *
+; *  https://github.com/induktio/thinker  *
+; *****************************************
+;
+#MAINMENU
+#xs 400
+#caption Thinker Mod
+^^Mod Version: {$MSG0}
+^^Mod Build Date: {$MSG1}
+
+Close Dialog
+Change Mod Options
+Change Scenario Rules
+Open Project Homepage
+
+#GAMEMENU
+#xs 400
+#caption Thinker Mod
+^^Mod Version: {$MSG0}
+^^Mod Build Date: {$MSG1}
+^^Game Time Spent: {$NUM0} hours, {$NUM1} minutes, {$NUM2} seconds.
+
+Close Dialog
+Show Statistics
+Change Mod Options
+Open Project Homepage
+
+#STATS
+#xs 400
+#caption Thinker Mod Statistics
+^^Total bases: $NUM0
+^^Total units: $NUM1
+^^Total population: $NUM2
+^^Total mineral production: $NUM3
+^^Total energy production: $NUM4
+^^Faction bases: $NUM5
+^^Faction units: $NUM6
+^^Faction population: $NUM7
+^^Faction mineral production: $NUM8
+^^Faction energy production: $NUM9
+
+#OPTIONS
+#xs 480
+#caption Thinker Mod Options
+#itemlist
+Use new random map generator.
+__Set map generator emphasis on larger continents.
+__Add modified landmarks on random maps.
+__Add polar caps on random maps.
+__Mirror maps along X axis.
+__Mirror maps along Y axis.
+Thinker manages player base governors.
+Thinker manages player colony pods/crawlers/formers.
+Warn when manually replacing tile improvements.
+Show additional base details on world map.
+Show foreign treaty changes on popup window.
+Always minimise game window when not activated.
+
+#HURRY
+#xs 400
+#caption Operations Director
+^$BASENAME0 can hurry $ITEM1 completely with {$NUM0} credits.
+^Minimum cost to hurry for next turn completion is {$NUM1} credits.
+^We have {$NUM2} energy credits in reserve.
+
+#REJECTIDEA
+#xs 440
+#caption $CAPTION7
+"$TITLE0 $NAME1, I can hardly even imagine agreeing to such a request."
+
+#REJECTLOAN
+#xs 440
+#caption $CAPTION7
+"I'm sorry, I cannot grant additional loans at this time."
+
+#ASKNUMBER
+#xs 400
+#caption Thinker Mod Options
+Enter a new value for {$MSG0}.
+
+Value:
+
+#MAPGEN
+#xs 400
+#caption Thinker Mod
+Enter a new value for random map generator.
+
+Value:
+
+#GENERIC
+#xs 400
+#caption $MSG0
+$MSG1
+
+#PROBE
+#xs 440
+#caption Operations Director
+^Our probe team has linked to the $<M1:$FACTIONADJ1> network and is awaiting instructions.
+^We estimate the current infiltration will expire after {$NUM0} turns.
+
+#SPYRENEW
+#xs 440
+#caption Operations Director
+Our probe team estimates the infiltration will expire after {$NUM0} turns.
+
+#SPYLOST
+#xs 440
+#caption Operations Director
+Our infiltration on {$MSG0} has been discovered! The spies have been lost.
+
+#SPYFOUND
+#xs 440
+#caption Operations Director
+We have discovered and removed {$MSG0} infiltration on our networks!
+
+#GOVHURRY
+#xs 600
+#caption Operations Director
+Governor of $MSG0 hurries $MSG1!
+
+#NERVESTAPLE2
+#xs 440
+#caption Operations Director
+^Nerve staple citizens of $BASENAME0?
+^This will carry serious consequences since the base was captured.
+
+No! That is a serious atrocity!
+Yes! Teach those drones a lesson!
+
+#EDITVEH2A
+#xs 400
+#caption Edit Vehicle Data
+#itemlist
+Damage Incurred:
+Moves Expended (times three):
+Year to End Lurking
+Turns Spent Away From Base:
+
+#NEEDCOLONISTS
+#xs 320
+#wave 6
+#caption Operations Director
+Only Colony Pods can perform that function.
+
+#RETOOLPENALTY3
+#xs 400
+#caption Operations Director
+Switching production now
+carries a $NUM0% retooling penalty.
+$NUM2 minerals would be lost.
+
+Keep making $ITEM0.
+Retool for $ITEM1.
+
+#RETOOLPENALTY3A
+#xs 400
+#caption Operations Director
+Switching production in mid-course
+carries a $NUM0% retooling penalty
+for all but the first $NUM1 minerals.
+$NUM2 minerals would be lost.
+
+Keep making $ITEM0.
+Retool for $ITEM1.
+
+#TERRTREATY2
+#xs 440
+#caption Operations Director
+$TITLE0, our treaty with $TITLE5 $NAME6 of the $FACTION2 precludes us from
+building bases in $<M1:$FACTIONADJ3> territorial waters.
+
+Never mind.
+Break treaty!
+
+#TERRTRUCE2
+#xs 440
+#caption Operations Director
+$TITLE5 $NAME6 claims these as territorial waters. We have no obligation to
+respect the claim, but if we build a base here the $FACTION2
+may decide to attack.
+
+Cancel base.
+Build base anyway.
+
+#NEEDADVECOENG
+#xs 320
+#wave 4
+#caption Planetary Ecologist
+Sea enhancements can only be built here after you have researched
+Advanced Ecological Engineering.
+
+# ; This line must remain at end of file

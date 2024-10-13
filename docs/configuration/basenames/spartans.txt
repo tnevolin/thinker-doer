@@ -1,0 +1,75 @@
+#BASES
+Apex Citadel
+Apex Outpost
+Armory Base
+Barracks of Valor
+Bastion Keep
+Bastion of Resolve
+Battlefront Base
+Command Post
+Courageous Outpost
+Defender's Den
+Defenders' Den
+Eclipse Fortress
+Elite Stronghold
+Fighter's Folly
+Fortress Triumph
+Freedom Hold
+Frontier Fortress
+Guardian Garrison
+Guardian's Redoubt
+Ironclad Garrison
+Legacy Bastion
+Legacy Fortress
+Liberty Barracks
+Martial Keep
+Military Compound
+Phantom Tower
+Phoenix Citadel
+Phoenix Outpost
+Pinnacle Garrison
+Ranger Barracks
+Rebellion Bunker
+Rifleman Ridge
+Sentinel Camp
+Sentinel Rock
+Sentinel's Hold
+Shield Barracks
+Shielded Citadel
+Siege Command Post
+Soldier's Sanctuary
+Squadron Station
+Strategy Citadel
+Tactical Bunker
+Triumph Bastion
+Valor Citadel
+Valor Fortress
+Vanguard Station
+Vanguard Stronghold
+Victory Outpost
+Vigilant Keep
+Warrior's Watch
+#END
+
+#WATERBASES
+Admiralty Fortress
+Armory Alpha
+Coastal Fortress
+Fleet Harbor
+Fleet Station
+Fortress Freedom
+Maritime Fortress
+Nautical Refuge
+Naval Depot
+Oceanic Outpost
+Port Citadel
+Resilience Point
+Saltwater Station
+Sea Garrison
+Sea Sovereignty
+Seabound Sentry
+Sentry Outpost
+Submarine Base
+Tidal Bastion
+Waterfront Depot
+#END

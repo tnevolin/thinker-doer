@@ -1,0 +1,74 @@
+#BASES
+Algorithm Alley
+Augmented Avenue
+Binary Bastion
+Binary Bunker
+Bitropolis
+Byte Bunker
+Byte Haven
+Cipher Citadel
+Circuit City
+Circuit Depot
+Code Compound
+Code Nexus
+Crypto Station
+Cyber Haven
+Cyber Junction
+Cypheropolis
+Data Depot
+Data District
+Digital Bastion
+Digital District
+Encryption Enclave
+Firewall Fortress
+Futuristic Niche
+Hacker's Hideaway
+Hacktopia
+Heuristic Search
+Hidden Process
+Keyframe Station
+Keypad Base
+Mainframe Nexus
+Matrix Mansion
+Net Niche
+Node Nexus
+Phreaker's Bastion
+Pixel Peak
+Pixel Precinct
+Programmer's Precinct
+Protocol Plaza
+Raster Realm
+Refuge Metropolis
+Rogue Repository
+Shadow Shelter
+Shadow Station
+System Stronghold
+Techno Commons
+Techno Zone
+Transistor Terrace
+Virtual Vault
+Virtual Vertex
+#END
+
+#WATERBASES
+Aquatic Arcanum
+Atlantis Anchorage
+Blue Horizon Bay
+Code Citadel
+Crystal Cove
+Cyberhaven
+Data Dimension
+Ghost Outpost
+Marine Mansion
+Nautilus Niche
+Neural Nexus
+Oceanus Outpost
+Processor Place
+Reef Retreat
+Sea Serenade
+Seabird Bay
+Seaweed Settlement
+Synthetic Shores
+Triton's Tower
+Wave Network
+#END

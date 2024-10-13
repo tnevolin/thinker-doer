@@ -20,6 +20,10 @@ typedef int		(__cdecl *fp_int_char_int		)(char *, int);
 typedef void	(__cdecl *fp_void_charp_int		)(char *, int);
 typedef char *	(__cdecl *fp_charp_int_charp_int)(int, char *, int);
 
+// turn control factions moved
+
+extern int *TurnFactionsMoved;
+
 // global constants
 
 extern const int NO_SYNC;
@@ -40,7 +44,6 @@ extern const int *TABLE_square_offset_y;
 
 // Path
 
-extern CPath* PATH;
 extern FPath_find PATH_find;
 extern int *PATH_flags;
 
@@ -69,10 +72,12 @@ extern const int LABEL_OFFSET_PERIMETER;
 extern const int LABEL_OFFSET_TACHYON;
 extern const char *LABEL_NAVAL_YARD;
 extern const char *LABEL_AEROSPACE_COMPLEX;
+extern const char *LABEL_WEAPON;
+extern const char *LABEL_ARMOR;
 
 extern char *g_strTEMP;
 extern int *current_base_growth_rate;
-extern int *g_PROBE_RFLAG_TARGET;
+extern int *g_PROBE_FACT_TARGET;
 extern int *g_UNK_ATTACK_FLAGS;
 extern byte *g_SOCIALWIN;
 extern int *current_attacker;
@@ -135,12 +140,11 @@ extern int *CURRENT_BASE_TALENTS_PROJECTS;
 
 extern int *alphax_tgl_probe_steal_tech;
 
-extern fp_1void say_orders2;
-
 extern fp_0int tx_read_basic_rules;
 extern fp_5int tx_proto_cost;
 extern fp_6int tx_create_prototype;
 extern fp_3int tx_upgrade_cost;
+extern fp_1int tx_strlen;
 extern fp_2int_void tx_strcat;
 extern fp_6int tx_base_find3;
 extern fp_5int tx_tile_yield;

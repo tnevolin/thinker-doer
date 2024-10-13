@@ -21,8 +21,8 @@
 
 FILE* debug_log = NULL;
 Config conf;
-NodeSet mapnodes;
 AIPlans plans[MaxPlayerNum];
+set_str_t movedlabels;
 map_str_t musiclabels;
 
 
@@ -94,7 +94,7 @@ int option_handler(void* user, const char* section, const char* name, const char
     } else if (MATCH("social_ai")) {
         cf->social_ai = atoi(value);
     } else if (MATCH("social_ai_bias")) {
-        cf->social_ai = clamp(atoi(value), 0, 1000);
+        cf->social_ai_bias = clamp(atoi(value), 0, 1000);
     } else if (MATCH("tech_balance")) {
         cf->tech_balance = atoi(value);
     } else if (MATCH("base_hurry")) {
@@ -107,8 +107,8 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->expansion_limit = atoi(value);
     } else if (MATCH("expansion_autoscale")) {
         cf->expansion_autoscale = atoi(value);
-    } else if (MATCH("conquer_priority")) {
-        cf->conquer_priority = clamp(atoi(value), 1, 10000);
+    } else if (MATCH("limit_project_start")) {
+        cf->limit_project_start = atoi(value);
     } else if (MATCH("max_satellites")) {
         cf->max_satellites = max(0, atoi(value));
     } else if (MATCH("new_world_builder")) {
@@ -149,8 +149,6 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->simple_cost_factor = atoi(value);
     } else if (MATCH("revised_tech_cost")) {
         cf->revised_tech_cost = atoi(value);
-    } else if (MATCH("cheap_early_tech")) {
-        cf->cheap_early_tech = atoi(value);
     } else if (MATCH("tech_stagnate_rate")) {
         cf->tech_stagnate_rate = max(1, atoi(value));
     } else if (MATCH("fast_fungus_movement")) {
@@ -159,6 +157,8 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->magtube_movement_rate = atoi(value);
     } else if (MATCH("chopper_attack_rate")) {
         cf->chopper_attack_rate = atoi(value);
+    } else if (MATCH("base_psych")) {
+        cf->base_psych = atoi(value);
     } else if (MATCH("nerve_staple")) {
         cf->nerve_staple = atoi(value);
     } else if (MATCH("nerve_staple_mod")) {
@@ -173,8 +173,12 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->counter_espionage = atoi(value);
     } else if (MATCH("ignore_reactor_power")) {
         cf->ignore_reactor_power = atoi(value);
+    } else if (MATCH("long_range_artillery")) {
+        cf->long_range_artillery = atoi(value);
     } else if (MATCH("modify_upgrade_cost")) {
         cf->modify_upgrade_cost = atoi(value);
+    } else if (MATCH("modify_unit_support")) {
+        cf->modify_unit_support = atoi(value);
     } else if (MATCH("modify_unit_morale")) {
         cf->modify_unit_morale = atoi(value);
     } else if (MATCH("skip_default_balance")) {
@@ -233,6 +237,8 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->fungal_tower_bonus = clamp(atoi(value), 0, 1000);
     } else if (MATCH("planet_defense_bonus")) {
         cf->planet_defense_bonus = atoi(value);
+    } else if (MATCH("intercept_defense_bonus")) {
+        cf->intercept_defense_bonus = atoi(value);
     } else if (MATCH("perimeter_defense_bonus")) {
         cf->perimeter_defense_bonus = clamp(atoi(value), 0, 100);
     } else if (MATCH("tachyon_field_bonus")) {
@@ -254,11 +260,11 @@ int option_handler(void* user, const char* section, const char* name, const char
     } else if (MATCH("repair_fungus")) {
         cf->repair_fungus = clamp(atoi(value), 0, 10);
     } else if (MATCH("repair_friendly")) {
-        cf->repair_friendly = atoi(value);
+        cf->repair_friendly = clamp(atoi(value), 0, 10);
     } else if (MATCH("repair_airbase")) {
-        cf->repair_airbase = atoi(value);
+        cf->repair_airbase = clamp(atoi(value), 0, 10);
     } else if (MATCH("repair_bunker")) {
-        cf->repair_bunker = atoi(value);
+        cf->repair_bunker = clamp(atoi(value), 0, 10);
     } else if (MATCH("repair_base")) {
         cf->repair_base = clamp(atoi(value), 0, 10);
     } else if (MATCH("repair_base_native")) {
@@ -267,6 +273,8 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->repair_base_facility = clamp(atoi(value), 0, 10);
     } else if (MATCH("repair_nano_factory")) {
         cf->repair_nano_factory = clamp(atoi(value), 0, 10);
+    } else if (MATCH("repair_battle_ogre")) {
+        cf->repair_battle_ogre = clamp(atoi(value), 0, 10);
     } else if (MATCH("minimal_popups")) {
         if (DEBUG) {
             cf->minimal_popups = atoi(value);
@@ -324,6 +332,27 @@ int option_handler(void* user, const char* section, const char* name, const char
         parse_format_args(label_sat_mineral, value, 1, StrBufLen);
     } else if (MATCH("label_sat_energy")) {
         parse_format_args(label_sat_energy, value, 1, StrBufLen);
+    } else if (MATCH("label_eco_damage")) {
+        parse_format_args(label_eco_damage, value, 2, StrBufLen);
+    } else if (MATCH("label_base_surplus")) {
+        parse_format_args(label_base_surplus, value, 3, StrBufLen);
+    } else if (MATCH("label_unit_reactor")) {
+        int len = strlen(buf);
+        int j = 0;
+        int k = 0;
+        for (int i = 0; i < len && i < StrBufLen && k < 4; i++) {
+            bool last = i == len - 1;
+            if (buf[i] == ',' || last) {
+                strncpy(label_unit_reactor[k], buf+j, i-j+last);
+                label_unit_reactor[k][i-j+last] = '\0';
+                j = i + 1;
+                k++;
+            }
+        }
+    } else if (MATCH("script_label")) {
+        char* p = strupr(strstrip(buf));
+        debug("script_label %s\n", p);
+        movedlabels.insert(p);
     } else if (MATCH("music_label")) {
         char *p, *s, *k, *v;
         if ((p = strtok_r(buf, ",", &s)) != NULL) {
@@ -341,7 +370,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("alternative_weapon_icon_selection_algorithm")) {
         cf->alternative_weapon_icon_selection_algorithm = (atoi(value) == 0 ? false : true);
     }
-    // implemented in Thinker?
 	else if (MATCH("ignore_reactor_power_in_combat")) {
 		cf->ignore_reactor_power_in_combat = (atoi(value) == 0 ? false : true);
 	}
@@ -360,6 +388,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("reactor_cost_factor_3")) {
         cf->reactor_cost_factors[3] = atoi(value);
     }
+    else if (MATCH("hurry_minimal_minerals")) {
+        cf->hurry_minimal_minerals = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("flat_hurry_cost")) {
         cf->flat_hurry_cost = (atoi(value) == 0 ? false : true);
     }
@@ -372,9 +403,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("flat_hurry_cost_multiplier_project")) {
         cf->flat_hurry_cost_multiplier_project = std::max(1, atoi(value));
     }
-    else if (MATCH("alternative_upgrade_cost_formula")) {
-        cf->alternative_upgrade_cost_formula = (atoi(value) == 0 ? false : true);
-    }
 	else if (MATCH("collateral_damage_defender_reactor")) {
 		cf->collateral_damage_defender_reactor = (atoi(value) == 0 ? false : true);
 	}
@@ -384,6 +412,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("alternative_combat_mechanics_loss_divisor")) {
         cf->alternative_combat_mechanics_loss_divisor = std::max(1.0, atof(value));
     }
+//    else if (MATCH("planet_combat_bonus_on_defense")) {
+//        cf->planet_combat_bonus_on_defense = (atoi(value) == 0 ? false : true);
+//    }
     else if (MATCH("sea_territory_distance_same_as_land")) {
         cf->sea_territory_distance_same_as_land = (atoi(value) == 0 ? false : true);
     }
@@ -403,10 +434,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("default_morale_very_green")) {
         cf->default_morale_very_green = (atoi(value) == 0 ? false : true);
     }
-    // Thinker
-//	else if (MATCH("magtube_movement_rate")) {
-//		cf->magtube_movement_rate = atoi(value);
-//	}
     else if (MATCH("project_contribution_threshold"))
     {
         cf->project_contribution_threshold = atoi(value);
@@ -492,10 +519,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->flat_extra_prototype_cost = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("fix_mineral_contribution"))
-    {
-        cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
-    }
+//    else if (MATCH("fix_mineral_contribution"))
+//    {
+//        cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
+//    }
     else if (MATCH("fix_former_wake"))
     {
         cf->fix_former_wake = (atoi(value) == 0 ? false : true);
@@ -552,21 +579,14 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->se_research_bonus_percentage = std::max(0, std::min(100, atoi(value)));
     }
-    else if (MATCH("remove_fungal_tower_defense_bonus"))
+    // implemented in Thinker
+//    else if (MATCH("remove_fungal_tower_defense_bonus"))
+//    {
+//        cf->remove_fungal_tower_defense_bonus = (atoi(value) == 0 ? false : true);
+//    }
+    else if (MATCH("habitation_facility_growth_bonus"))
     {
-        cf->remove_fungal_tower_defense_bonus = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("habitation_facility_disable_explicit_population_limit"))
-    {
-        cf->habitation_facility_disable_explicit_population_limit = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("habitation_facility_absent_growth_penalty"))
-    {
-        cf->habitation_facility_absent_growth_penalty = std::max(0, atoi(value));
-    }
-    else if (MATCH("habitation_facility_present_growth_bonus_max"))
-    {
-        cf->habitation_facility_present_growth_bonus_max = std::max(0, atoi(value));
+        cf->habitation_facility_growth_bonus = atoi(value);
     }
     else if (MATCH("unit_upgrade_ignores_movement"))
     {
@@ -584,10 +604,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->interceptor_scramble_fix = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("right_of_passage_agreement"))
-    {
-        cf->right_of_passage_agreement = std::max(0, std::min(2, atoi(value)));
-    }
     else if (MATCH("scorched_earth"))
     {
         cf->scorched_earth = (atoi(value) == 0 ? false : true);
@@ -603,10 +619,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("design_cost_in_rows"))
     {
         cf->design_cost_in_rows = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("energy_market_crash_numerator"))
-    {
-        cf->energy_market_crash_numerator = std::max(0, atoi(value));
     }
     else if (MATCH("carry_over_minerals"))
     {
@@ -659,10 +671,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("disable_guaranteed_facilities_destruction"))
     {
         cf->disable_guaranteed_facilities_destruction = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("total_thought_control_no_diplomatic_consequences"))
-    {
-        cf->total_thought_control_no_diplomatic_consequences = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("supply_convoy_and_info_warfare_require_support"))
     {
@@ -780,6 +788,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->disable_tech_steal_other = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("conventional_power_psi_percentage"))
+    {
+        cf->conventional_power_psi_percentage = atoi(value);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
@@ -791,69 +803,57 @@ int option_handler(void* user, const char* section, const char* name, const char
 			cf->wtp_enabled_factions[factionId] = (value[factionId - 1] == '0' ? false : true);
 		}
     }
-    else if (MATCH("ai_resource_score_mineralWeight"))
+    else if (MATCH("ai_resource_score_nutrient"))
     {
-        cf->ai_resource_score_mineralWeight = atof(value);
+        cf->ai_resource_score_nutrient = atof(value);
     }
-    else if (MATCH("ai_resource_score_energyWeight"))
+    else if (MATCH("ai_resource_score_mineral"))
     {
-        cf->ai_resource_score_energyWeight = atof(value);
+        cf->ai_resource_score_mineral = atof(value);
     }
-    else if (MATCH("ai_faction_minerals_t1"))
+    else if (MATCH("ai_resource_score_energy"))
     {
-        cf->ai_faction_minerals_t1 = atof(value);
+        cf->ai_resource_score_energy = atof(value);
     }
-    else if (MATCH("ai_faction_minerals_a1"))
+    else if (MATCH("ai_faction_mineral_a0"))
     {
-        cf->ai_faction_minerals_a1 = atof(value);
+        cf->ai_faction_mineral_a0 = atof(value);
     }
-    else if (MATCH("ai_faction_minerals_b1"))
+    else if (MATCH("ai_faction_mineral_a1"))
     {
-        cf->ai_faction_minerals_b1 = atof(value);
+        cf->ai_faction_mineral_a1 = atof(value);
     }
-    else if (MATCH("ai_faction_minerals_c1"))
+    else if (MATCH("ai_faction_mineral_a2"))
     {
-        cf->ai_faction_minerals_c1 = atof(value);
+        cf->ai_faction_mineral_a2 = atof(value);
     }
-    else if (MATCH("ai_faction_minerals_d1"))
+    else if (MATCH("ai_faction_budget_a0"))
     {
-        cf->ai_faction_minerals_d1 = atof(value);
-    }
-    else if (MATCH("ai_faction_minerals_a2"))
-    {
-        cf->ai_faction_minerals_a2 = atof(value);
-    }
-    else if (MATCH("ai_faction_minerals_b2"))
-    {
-        cf->ai_faction_minerals_b2 = atof(value);
-    }
-    else if (MATCH("ai_faction_budget_t1"))
-    {
-        cf->ai_faction_budget_t1 = atof(value);
+        cf->ai_faction_budget_a0 = atof(value);
     }
     else if (MATCH("ai_faction_budget_a1"))
     {
         cf->ai_faction_budget_a1 = atof(value);
     }
-    else if (MATCH("ai_faction_budget_b1"))
-    {
-        cf->ai_faction_budget_b1 = atof(value);
-    }
-    else if (MATCH("ai_faction_budget_c1"))
-    {
-        cf->ai_faction_budget_c1 = atof(value);
-    }
-    else if (MATCH("ai_faction_budget_d1"))
-    {
-        cf->ai_faction_budget_d1 = atof(value);
-    }
     else if (MATCH("ai_faction_budget_a2"))
     {
         cf->ai_faction_budget_a2 = atof(value);
     }
-    else if (MATCH("ai_faction_budget_b2"))
+    else if (MATCH("ai_faction_budget_a3"))
     {
-        cf->ai_faction_budget_b2 = atof(value);
+        cf->ai_faction_budget_a3 = atof(value);
+    }
+    else if (MATCH("ai_statistics_base_mineral_intake_sqrt_a"))
+    {
+        cf->ai_statistics_base_mineral_intake_sqrt_a = atof(value);
+    }
+    else if (MATCH("ai_statistics_base_mineral_intake_sqrt_b"))
+    {
+        cf->ai_statistics_base_mineral_intake_sqrt_b = atof(value);
+    }
+    else if (MATCH("ai_statistics_base_mineral_intake_sqrt_c"))
+    {
+        cf->ai_statistics_base_mineral_intake_sqrt_c = atof(value);
     }
     else if (MATCH("ai_base_mineral_intake_a"))
     {
@@ -943,9 +943,33 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_base_size_c = atof(value);
     }
+    else if (MATCH("ai_statistics_base_growth_a"))
+    {
+        cf->ai_statistics_base_growth_a = atof(value);
+    }
+    else if (MATCH("ai_statistics_base_growth_b"))
+    {
+        cf->ai_statistics_base_growth_b = atof(value);
+    }
     else if (MATCH("ai_citizen_income"))
     {
         cf->ai_citizen_income = atof(value);
+    }
+    else if (MATCH("ai_production_priority_coefficient"))
+    {
+        cf->ai_production_priority_coefficient = atof(value);
+    }
+    else if (MATCH("ai_development_scale_min"))
+    {
+        cf->ai_development_scale_min = atof(value);
+    }
+    else if (MATCH("ai_development_scale_max"))
+    {
+        cf->ai_development_scale_max = atof(value);
+    }
+    else if (MATCH("ai_development_scale_max_turn"))
+    {
+        cf->ai_development_scale_max_turn = atof(value);
     }
     else if (MATCH("ai_production_vanilla_priority_unit"))
     {
@@ -983,9 +1007,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_production_threat_coefficient_other = atof(value);
     }
-    else if (MATCH("ai_production_pod_per_scout"))
+    else if (MATCH("ai_production_pod_bonus"))
     {
-        cf->ai_production_pod_per_scout = atof(value);
+        cf->ai_production_pod_bonus = atof(value);
     }
     else if (MATCH("ai_production_pod_popping_priority"))
     {
@@ -1039,6 +1063,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_production_transport_priority = atof(value);
     }
+    else if (MATCH("ai_production_transport_seats_per_sea_base"))
+    {
+        cf->ai_production_transport_seats_per_sea_base = atof(value);
+    }
     else if (MATCH("ai_production_support_ratio"))
     {
         cf->ai_production_support_ratio = atof(value);
@@ -1063,10 +1091,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_production_global_combat_superiority_sea = atof(value);
     }
-    else if (MATCH("ai_production_economical_combat_range_scale"))
-    {
-        cf->ai_production_economical_combat_range_scale = atof(value);
-    }
     else if (MATCH("ai_production_combat_unit_proportions"))
     {
 		char *token;
@@ -1085,21 +1109,53 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
 		cf->ai_production_defensive_facility_threat_threshold = atof(value);
     }
+    else if (MATCH("ai_production_priority_police"))
+    {
+        cf->ai_production_priority_police = atof(value);
+    }
+    else if (MATCH("ai_production_survival_effect_a"))
+    {
+        cf->ai_production_survival_effect_a = atof(value);
+    }
+    else if (MATCH("ai_production_survival_effect_b"))
+    {
+        cf->ai_production_survival_effect_b = atof(value);
+    }
+    else if (MATCH("ai_production_survival_effect_c"))
+    {
+        cf->ai_production_survival_effect_c = atof(value);
+    }
+    else if (MATCH("ai_production_survival_effect_d"))
+    {
+        cf->ai_production_survival_effect_d = atof(value);
+    }
     else if (MATCH("ai_expansion_weight_deep"))
     {
         cf->ai_expansion_weight_deep = atof(value);
     }
-    else if (MATCH("ai_expansion_travel_time_scale_base_threshold"))
+    else if (MATCH("ai_mapstat_ocean"))
     {
-        cf->ai_expansion_travel_time_scale_base_threshold = atof(value);
+        cf->ai_mapstat_ocean = atof(value);
     }
-    else if (MATCH("ai_expansion_travel_time_scale_early"))
+    else if (MATCH("ai_mapstat_rocky"))
     {
-        cf->ai_expansion_travel_time_scale_early = atof(value);
+        cf->ai_mapstat_rocky = atof(value);
     }
-    else if (MATCH("ai_expansion_travel_time_scale"))
+    else if (MATCH("ai_mapstat_rainfall"))
     {
-        cf->ai_expansion_travel_time_scale = atof(value);
+        cf->ai_mapstat_rainfall = atof(value);
+    }
+    else if (MATCH("ai_mapstat_rockiness"))
+    {
+        cf->ai_mapstat_rockiness = atof(value);
+    }
+    else if (MATCH("ai_mapstat_elevation"))
+    {
+        cf->ai_mapstat_elevation = atof(value);
+    }
+    else if (MATCH("ai_expansion_travel_time_multiplier"))
+    {
+        cf->ai_expansion_travel_time_multiplier = atof(value);
     }
     else if (MATCH("ai_expansion_coastal_base"))
     {
@@ -1108,10 +1164,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("ai_expansion_ocean_connection_base"))
     {
         cf->ai_expansion_ocean_connection_base = atof(value);
-    }
-    else if (MATCH("ai_expansion_placement"))
-    {
-        cf->ai_expansion_placement = atof(value);
     }
     else if (MATCH("ai_expansion_land_use_base_value"))
     {
@@ -1128,6 +1180,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("ai_expansion_radius_overlap_coefficient"))
     {
         cf->ai_expansion_radius_overlap_coefficient = atof(value);
+    }
+    else if (MATCH("ai_expansion_placement_coefficient"))
+    {
+        cf->ai_expansion_placement_coefficient = atof(value);
     }
     else if (MATCH("ai_terraforming_nutrientWeight"))
     {
@@ -1169,9 +1225,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_terraforming_networkWildExtensionValue = atof(value);
     }
-    else if (MATCH("ai_terraforming_networkCoverageThreshold"))
+    else if (MATCH("ai_terraforming_networkDensityThreshold"))
     {
-        cf->ai_terraforming_networkCoverageThreshold = atof(value);
+        cf->ai_terraforming_networkDensityThreshold = atof(value);
     }
     else if (MATCH("ai_terraforming_nearbyForestKelpPenalty"))
     {
@@ -1185,17 +1241,17 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_terraforming_baseNutrientThresholdRatio = atof(value);
     }
-    else if (MATCH("ai_terraforming_baseNutrientDemandMultiplier"))
+    else if (MATCH("ai_terraforming_baseNutrientCostMultiplier"))
     {
-        cf->ai_terraforming_baseNutrientDemandMultiplier = atof(value);
+        cf->ai_terraforming_baseNutrientCostMultiplier = atof(value);
     }
     else if (MATCH("ai_terraforming_baseMineralThresholdRatio"))
     {
         cf->ai_terraforming_baseMineralThresholdRatio = atof(value);
     }
-    else if (MATCH("ai_terraforming_baseMineralDemandMultiplier"))
+    else if (MATCH("ai_terraforming_baseMineralCostMultiplier"))
     {
-        cf->ai_terraforming_baseMineralDemandMultiplier = atof(value);
+        cf->ai_terraforming_baseMineralCostMultiplier = atof(value);
     }
     else if (MATCH("ai_terraforming_raiseLandPayoffTime"))
     {
@@ -1221,9 +1277,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_terraforming_landBridgeRangeScale = atof(value);
     }
-    else if (MATCH("ai_territory_threat_range_scale"))
+    else if (MATCH("ai_combat_base_threat_coefficient"))
     {
-        cf->ai_territory_threat_range_scale = atof(value);
+        cf->ai_combat_base_threat_coefficient = atof(value);
+    }
+    else if (MATCH("ai_combat_base_threat_range"))
+    {
+        cf->ai_combat_base_threat_range = atof(value);
     }
     else if (MATCH("ai_base_threat_travel_time_scale"))
     {
@@ -1236,14 +1296,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("ai_combat_travel_time_scale_base_protection"))
     {
         cf->ai_combat_travel_time_scale_base_protection = atof(value);
-    }
-    else if (MATCH("ai_stack_attack_travel_time_scale"))
-    {
-        cf->ai_stack_attack_travel_time_scale = atof(value);
-    }
-    else if (MATCH("ai_stack_bombardment_time_scale"))
-    {
-        cf->ai_stack_bombardment_time_scale = atof(value);
     }
     else if (MATCH("ai_combat_priority_escape"))
     {
@@ -1273,14 +1325,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_combat_priority_base_healing = atof(value);
     }
-    else if (MATCH("ai_combat_priority_base_police2x"))
-    {
-        cf->ai_combat_priority_base_police2x = atof(value);
-    }
-    else if (MATCH("ai_combat_priority_base_police"))
-    {
-        cf->ai_combat_priority_base_police = atof(value);
-    }
     else if (MATCH("ai_combat_attack_priority_alien_mind_worms"))
     {
         cf->ai_combat_attack_priority_alien_mind_worms = atof(value);
@@ -1304,6 +1348,22 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("ai_combat_base_protection_superiority"))
     {
         cf->ai_combat_base_protection_superiority = atof(value);
+    }
+    else if (MATCH("ai_combat_base_protection_eary_adjustment"))
+    {
+        cf->ai_combat_base_protection_eary_adjustment = atof(value);
+    }
+    else if (MATCH("ai_combat_base_protection_eary_adjustment_end_turn"))
+    {
+        cf->ai_combat_base_protection_eary_adjustment_end_turn = atof(value);
+    }
+    else if (MATCH("ai_combat_field_attack_priority_base_range"))
+    {
+        cf->ai_combat_field_attack_priority_base_range = atoi(value);
+    }
+    else if (MATCH("ai_combat_field_attack_priority_base_extra"))
+    {
+        cf->ai_combat_field_attack_priority_base_extra = atof(value);
     }
     else if (MATCH("ai_combat_field_attack_superiority_required"))
     {
@@ -1348,7 +1408,7 @@ int opt_list_parse(int* ptr, char* buf, int len, int min_val) {
     const char *d=",";
     char *s, *p;
     p = strtok_r(buf, d, &s);
-    for (int i=0; i<len && p != NULL; i++, p = strtok_r(NULL, d, &s)) {
+    for (int i = 0; i < len && p != NULL; i++, p = strtok_r(NULL, d, &s)) {
         ptr[i] = max(min_val, atoi(p));
     }
     return 1;

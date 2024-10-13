@@ -1,0 +1,75 @@
+#BASES
+Academy Archives
+Academy Campus
+Aurora Academy
+Aurora Base
+Baikal Institute
+Climactic Outpost
+Cosmic Campus
+Cosmodrome Commons
+Cybernetics Research
+Discovery Academy
+Future Foundation
+Gagarin Institute
+Horizon Center
+Khrunichev Complex
+Korolev Foundation
+Korolev Park
+Lunakhod Outpost
+Lunik Landing
+Mendelev Laboratory
+Meteorite Park
+Mir City
+Molniya Base
+New Progress
+Nobel Institute
+Novaya Zvezda
+Perestroika Base
+Pioneer College
+Pioneer Park
+Planetarium Base
+Planetary Campus
+Polaris Observatory
+Progression Center
+Proton Archives
+Quantum Institute
+Research Backbone
+Research Institute
+Saturn Center
+Science Center
+Solar Research
+Soyuz Settlement
+Sputnik Research
+Stellar Archives
+Strelka Station
+Terra Library
+Volga Viewpoint
+Vostok Observatory
+Vostok Valley
+Zarya Station
+Zarya Zenith
+Zvezdochka Hub
+#END
+
+#WATERBASES
+Aquatic Research Lab
+Atlantis Research Lab
+Coastal Ecology Center
+Coastal Research
+Coral Reef Research
+Deep Blue Research Lab
+Exploration Hub
+Hydro Dynamics Lab
+Hydro Facility
+Marine Geology Lab
+Marine Resources Lab
+Meteorology Center
+Neptune Foundation
+Ocean Control Center
+Oceanic Institute
+Particle Physics Lab
+Prichal Research Lab
+Seabed Mapping Facility
+Seafloor Observatory
+Tidal Study Center
+#END

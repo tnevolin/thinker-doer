@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.3"
+    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v303"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -30,6 +30,7 @@
     #define debug(...) fprintf(debug_log, __VA_ARGS__);
     #define debugw(...) { fprintf(debug_log, __VA_ARGS__); \
         fflush(debug_log); }
+    #define debug_ver(...) if (conf.debug_verbose) { fprintf(debug_log, __VA_ARGS__); }
     #define flushlog() fflush(debug_log);
 #else
     #define MOD_DATE __DATE__
@@ -37,6 +38,7 @@
     #define NDEBUG /* Disable assertions */
     #define debug(...) /* Nothing */
     #define debugw(...) /* Nothing */
+    #define debug_ver(...) /* Nothing */
     #define flushlog()
     #ifdef __GNUC__
     #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -62,13 +64,14 @@
 #include <psapi.h>
 #include <set>
 #include <list>
+#include <queue>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <unordered_map>
 
 #define DLL_EXPORT extern "C" __declspec(dllexport)
-#define THINKER_HEADER (int16_t)0xACAC
 #define ModAppName "thinker"
 #define GameAppName "Alpha Centauri"
 #define ModIniFile ".\\thinker.ini"
@@ -86,11 +89,8 @@
 
 const bool DEF = true;
 const bool ATT = false;
-const bool SEA = true;
-const bool LAND = false;
 
-const int MaxMapAreaX = 512;
-const int MaxMapAreaY = 256;
+const int MaxMapDist = 1024;
 const int MaxNaturalNum = 16;
 const int MaxLandmarkNum = 64;
 const int MaxRegionNum = 128;
@@ -116,11 +116,13 @@ const int MaxArmorNum = 14;
 const int MaxReactorNum = 4;
 const int MaxAbilityNum = 29;
 
-const int MaxFacilityNum = 134; // 0 slot unused
+const int MaxFacilityNum = 64; // 0 slot unused
 const int MaxSecretProjectNum = 64;
 const int MaxSocialCatNum = 4;
 const int MaxSocialModelNum = 4;
 const int MaxSocialEffectNum = 11;
+const int MaxSpecialistNum = 7;
+const int MaxCitizenNum = 10;
 const int MaxMoodNum = 9;
 const int MaxReputeNum = 8;
 const int MaxMightNum = 7;
@@ -200,9 +202,7 @@ struct Config {
     int base_nearby_limit = -1;
     int expansion_limit = 100;
     int expansion_autoscale = 0;
-    // Adjust how often the AIs should build new military units instead of infrastructure.
-    // Unlisted option for AI tuning. Allowed values 1-10000.
-    int conquer_priority = 100;
+    int limit_project_start = 0;
     int max_satellites = 20;
     int new_world_builder = 1;
     int world_sea_levels[3] = {46,58,70};
@@ -224,12 +224,12 @@ struct Config {
     int simple_cost_factor = 0;
     int revised_tech_cost = 1;
     int tech_cost_factor[MaxDiffNum] = {116,108,100,92,84,76};
-    int cheap_early_tech = 1;
     int tech_stagnate_rate = 200;
     int fast_fungus_movement = 0;
     int magtube_movement_rate = 0;
     int road_movement_rate = 1; // internal variable
     int chopper_attack_rate = 1;
+    int base_psych = 1;
     int nerve_staple = 2;
     int nerve_staple_mod = -10;
     int delay_drone_riots = 0;
@@ -237,7 +237,9 @@ struct Config {
     int activate_skipped_units = 1; // unlisted option
     int counter_espionage = 0;
     int ignore_reactor_power = 0;
+    int long_range_artillery = 0;
     int modify_upgrade_cost = 0;
+    int modify_unit_support = 0;
     int modify_unit_morale = 1; // unlisted option
     int skip_default_balance = 1; // unlisted option
     int early_research_start = 1; // unlisted option
@@ -266,7 +268,8 @@ struct Config {
     int neural_amplifier_bonus = 50;
     int dream_twister_bonus = 50;
     int fungal_tower_bonus = 50;
-    int planet_defense_bonus = 1;
+    int planet_defense_bonus = 0;
+    int intercept_defense_bonus = 0;
     int perimeter_defense_bonus = 2;
     int tachyon_field_bonus = 2;
     int biology_lab_bonus = 2;
@@ -282,6 +285,7 @@ struct Config {
     int repair_base_native = 10;
     int repair_base_facility = 10;
     int repair_nano_factory = 10;
+    int repair_battle_ogre = 0;
     LMConfig landmarks;
     int minimal_popups = 0; // unlisted option
     int skip_random_factions = 0; // internal variable
@@ -297,16 +301,17 @@ struct Config {
 	bool ignore_reactor_power_in_combat = false;
     bool alternative_prototype_cost_formula = false;
     int reactor_cost_factors[4];
+    bool hurry_minimal_minerals = false;
     bool flat_hurry_cost = false;
     int flat_hurry_cost_multiplier_unit = 1;
     int flat_hurry_cost_multiplier_facility = 1;
     int flat_hurry_cost_multiplier_project = 1;
-    bool alternative_upgrade_cost_formula = false;
     bool collateral_damage_defender_reactor = false;
     bool alternative_combat_mechanics = false;
     double alternative_combat_mechanics_loss_divisor = 1.0;
     bool uniform_promotions = true; // internal configuration
     bool very_green_no_defense_bonus = true; // internal configuration
+//    bool planet_combat_bonus_on_defense = false;
     bool sea_territory_distance_same_as_land = false;
     // integrated into Thinker
 //	bool coastal_territory_distance_same_as_sea = false;
@@ -314,8 +319,6 @@ struct Config {
     bool disable_home_base_cc_morale_bonus = false;
     bool disable_current_base_cc_morale_bonus = false;
     bool default_morale_very_green = false;
-    // Thinker
-//    int magtube_movement_rate = 0;
     int road_movement_cost = 0;
     int project_contribution_threshold = 0;
     double project_contribution_proportion = 0.0;
@@ -339,7 +342,7 @@ struct Config {
     bool alternative_tech_cost = false;
     double tech_cost_scale = 1.0;
     bool flat_extra_prototype_cost = false;
-    bool fix_mineral_contribution = false;
+    bool fix_mineral_contribution = true; // internal setting
     bool fix_former_wake = false;
     bool infiltration_expire = false;
     int infiltration_devices = 1;
@@ -354,20 +357,17 @@ struct Config {
     bool break_treaty_before_fight = false;
     bool compact_effect_icons = false;
     int se_research_bonus_percentage = 10;
-    bool remove_fungal_tower_defense_bonus = false;
-    bool habitation_facility_disable_explicit_population_limit = false;
-    int habitation_facility_absent_growth_penalty = 0;
-    int habitation_facility_present_growth_bonus_max = 0;
+    // implemented in Thinker
+//    bool remove_fungal_tower_defense_bonus = false;
+    int habitation_facility_growth_bonus = 0;
     bool unit_upgrade_ignores_movement = false;
     bool group_terraforming = false;
     bool ai_base_allowed_fungus_rocky = false;
     bool interceptor_scramble_fix = false;
-    int right_of_passage_agreement = 0;
     bool scorched_earth = false;
     double orbital_yield_limit = 1.0;
     bool silent_vendetta_warning = false;
     bool design_cost_in_rows = false;
-    int energy_market_crash_numerator = 4;
     bool carry_over_minerals = false;
     bool subversion_allow_stacked_units = false;
     bool mind_control_destroys_unsubverted = false;
@@ -381,7 +381,6 @@ struct Config {
 	double alternative_mind_control_project_cost_multiplier;
 	double alternative_mind_control_happiness_power_base;
 	double disable_guaranteed_facilities_destruction;
-	double total_thought_control_no_diplomatic_consequences;
 	double supply_convoy_and_info_warfare_require_support;
 	bool alternative_support = false;
 	int alternative_support_free_units;
@@ -411,25 +410,23 @@ struct Config {
 	bool disable_tech_steal_vendetta = false;
 	bool disable_tech_steal_pact = false;
 	bool disable_tech_steal_other = false;
+	int conventional_power_psi_percentage = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
-    double ai_resource_score_mineralWeight;
-    double ai_resource_score_energyWeight;
-    double ai_faction_minerals_t1;
-    double ai_faction_minerals_a1;
-    double ai_faction_minerals_b1;
-    double ai_faction_minerals_c1;
-    double ai_faction_minerals_d1;
-    double ai_faction_minerals_a2;
-    double ai_faction_minerals_b2;
-    double ai_faction_budget_t1;
+    double ai_resource_score_nutrient;
+    double ai_resource_score_mineral;
+    double ai_resource_score_energy;
+    double ai_faction_mineral_a0;
+    double ai_faction_mineral_a1;
+    double ai_faction_mineral_a2;
+    double ai_faction_budget_a0;
     double ai_faction_budget_a1;
-    double ai_faction_budget_b1;
-    double ai_faction_budget_c1;
-    double ai_faction_budget_d1;
     double ai_faction_budget_a2;
-    double ai_faction_budget_b2;
+    double ai_faction_budget_a3;
+    double ai_statistics_base_mineral_intake_sqrt_a;
+    double ai_statistics_base_mineral_intake_sqrt_b;
+    double ai_statistics_base_mineral_intake_sqrt_c;
     double ai_base_mineral_intake_a;
     double ai_base_mineral_intake_b;
     double ai_base_mineral_intake_c;
@@ -452,7 +449,13 @@ struct Config {
     double ai_base_size_a;
     double ai_base_size_b;
     double ai_base_size_c;
+    double ai_statistics_base_growth_a;
+    double ai_statistics_base_growth_b;
     double ai_citizen_income;
+    double ai_production_priority_coefficient;
+    double ai_development_scale_min;
+    double ai_development_scale_max;
+    double ai_development_scale_max_turn;
     double ai_production_vanilla_priority_unit;
     double ai_production_vanilla_priority_project;
     double ai_production_vanilla_priority_facility;
@@ -462,7 +465,7 @@ struct Config {
     double ai_production_threat_coefficient_pact;
     double ai_production_threat_coefficient_treaty;
     double ai_production_threat_coefficient_other;
-    double ai_production_pod_per_scout;
+    double ai_production_pod_bonus;
     double ai_production_pod_popping_priority;
     double ai_production_expansion_priority;
     double ai_production_expansion_same_continent_priority_multiplier;
@@ -476,21 +479,30 @@ struct Config {
     double ai_production_inflation;
     double ai_production_income_interest_rate;
     double ai_production_transport_priority;
+    double ai_production_transport_seats_per_sea_base;
     double ai_production_support_ratio;
     double ai_production_base_protection_priority;
     double ai_production_combat_priority;
     double ai_production_alien_combat_priority;
+    double ai_production_priority_police;
+    double ai_production_survival_effect_a;
+    double ai_production_survival_effect_b;
+    double ai_production_survival_effect_c;
+    double ai_production_survival_effect_d;
     double ai_expansion_weight_deep;
-    double ai_expansion_travel_time_scale_base_threshold;
-    double ai_expansion_travel_time_scale_early;
-    double ai_expansion_travel_time_scale;
+    double ai_mapstat_ocean;
+    double ai_mapstat_rocky;
+    double ai_mapstat_rainfall;
+    double ai_mapstat_rockiness;
+    double ai_mapstat_elevation;
+    double ai_expansion_travel_time_multiplier;
     double ai_expansion_coastal_base;
     double ai_expansion_ocean_connection_base;
-    double ai_expansion_placement;
     double ai_expansion_land_use_base_value;
     double ai_expansion_land_use_coefficient;
     double ai_expansion_radius_overlap_base_value;
     double ai_expansion_radius_overlap_coefficient;
+    double ai_expansion_placement_coefficient;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;
 	double ai_terraforming_energyWeight;
@@ -501,25 +513,24 @@ struct Config {
 	double ai_terraforming_networkImprovementValue;
 	double ai_terraforming_networkBaseExtensionValue;
 	double ai_terraforming_networkWildExtensionValue;
-	double ai_terraforming_networkCoverageThreshold;
+	double ai_terraforming_networkDensityThreshold;
 	double ai_terraforming_nearbyForestKelpPenalty;
 	double ai_terraforming_fitnessMultiplier;
 	double ai_terraforming_baseNutrientThresholdRatio;
-	double ai_terraforming_baseNutrientDemandMultiplier;
+	double ai_terraforming_baseNutrientCostMultiplier;
 	double ai_terraforming_baseMineralThresholdRatio;
-	double ai_terraforming_baseMineralDemandMultiplier;
+	double ai_terraforming_baseMineralCostMultiplier;
     double ai_terraforming_raiseLandPayoffTime;
     double ai_terraforming_sensorValue;
     double ai_terraforming_sensorBorderRange;
     double ai_terraforming_sensorShoreRange;
     double ai_terraforming_landBridgeValue;
     double ai_terraforming_landBridgeRangeScale;
-    double ai_territory_threat_range_scale;
+    double ai_combat_base_threat_coefficient;
+    double ai_combat_base_threat_range;
     double ai_base_threat_travel_time_scale;
     double ai_combat_travel_time_scale;
     double ai_combat_travel_time_scale_base_protection;
-    double ai_stack_attack_travel_time_scale;
-    double ai_stack_bombardment_time_scale;
     double ai_combat_priority_escape;
     double ai_combat_priority_repair;
     double ai_combat_priority_repair_partial;
@@ -527,21 +538,22 @@ struct Config {
     double ai_combat_priority_field_healing;
     double ai_combat_priority_base_protection;
     double ai_combat_priority_base_healing;
-    double ai_combat_priority_base_police2x;
-    double ai_combat_priority_base_police;
     double ai_combat_attack_priority_alien_mind_worms;
     double ai_combat_attack_priority_alien_spore_launcher;
     double ai_combat_attack_priority_alien_fungal_tower;
     double ai_combat_attack_priority_base;
     double ai_combat_priority_pod;
     double ai_combat_base_protection_superiority;
+    double ai_combat_base_protection_eary_adjustment;
+    double ai_combat_base_protection_eary_adjustment_end_turn;
+    int ai_combat_field_attack_priority_base_range;
+    double ai_combat_field_attack_priority_base_extra;
     double ai_combat_field_attack_superiority_required;
     double ai_combat_field_attack_superiority_desired;
     double ai_combat_base_attack_superiority_required;
     double ai_combat_base_attack_superiority_desired;
     double ai_production_global_combat_superiority_land;
     double ai_production_global_combat_superiority_sea;
-    double ai_production_economical_combat_range_scale;
     double ai_production_combat_unit_proportions[3];
     double ai_production_current_project_priority;
     double ai_production_defensive_facility_threat_threshold;
@@ -597,30 +609,11 @@ struct AIPlans {
     int satellite_goal = 0;
     int enemy_odp = 0;
     int enemy_sat = 0;
-    int enemy_nukes = 0;
     int mil_strength = 0;
     float enemy_base_range = 0;
     float enemy_mil_factor = 0;
-    /*
-    Number of our bases captured by another faction we're currently at war with.
-    Important heuristic in threat calculation.
-    */
     int enemy_bases = 0;
-};
-
-enum NodesetType {
-    NODE_CONVOY, // Resource being crawled
-    NODE_BOREHOLE, // Borehole being built
-    NODE_RAISE_LAND, // Land raise action initiated
-    NODE_SENSOR_ARRAY, // Sensor being built
-    NODE_NEED_FERRY,
-    NODE_BASE_SITE,
-    NODE_GOAL_RAISE_LAND, // Former priority only
-    NODE_GOAL_NAVAL_START,
-    NODE_GOAL_NAVAL_BEACH,
-    NODE_GOAL_NAVAL_END,
-    NODE_PATROL, // Includes probes/transports
-    NODE_COMBAT_PATROL, // Only attack-capable units
+    int captured_bases = 0;
 };
 
 #include "engine.h"
@@ -637,6 +630,7 @@ enum NodesetType {
 #include "veh_combat.h"
 #include "map.h"
 #include "base.h"
+#include "build.h"
 #include "game.h"
 #include "goal.h"
 #include "move.h"
@@ -646,8 +640,8 @@ enum NodesetType {
 
 extern FILE* debug_log;
 extern Config conf;
-extern NodeSet mapnodes;
 extern AIPlans plans[MaxPlayerNum];
+extern set_str_t movedlabels;
 extern map_str_t musiclabels;
 
 DLL_EXPORT DWORD ThinkerModule();

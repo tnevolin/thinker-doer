@@ -1,0 +1,45 @@
+#BASES
+Ancestral Dominion
+Battleground Ascent
+Chaos Cascade
+Conquest : Crusade
+Crimson Peak
+Destiny : Call
+Divinity : Domain
+Echoes of War
+Eclipse of Fate
+Final Restitution
+Might : Embrace
+Nemesis Nexus
+Rage's Revelation
+Rebellion's Rising
+Shattered Symphony
+Skyreach Outpost
+Sovereign : Domain
+Sundering Heights
+Titan's Triumph
+Valiant Vanguard
+#END
+
+#WATERBASES
+Abyssal Stronghold
+Barracuda Bay
+Crest of Destiny
+Deepwater Watch
+Enduring Legacy
+Eternal Reach
+Fury's Wake
+Horizon : Edge
+Infinite Stronghold
+Leviathan's Lair
+Marine : Resonance
+Maritime Citadel
+Nautical Nexus
+Shadow Dominion
+Sky's Reflection
+Stormcaller Cove
+Thundering Seas
+Tidal Fortress
+Vortex Citadel
+Wavecrest Harbor
+#END

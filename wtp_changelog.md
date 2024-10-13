@@ -1,3 +1,22 @@
+# Version 303
+
+Few base hurry dialog improvements.
+
+* Hurry cost is flat. (flat_hurry_cost, flat_hurry_cost_multiplier_unit, flat_hurry_cost_multiplier_facility, flat_hurry_cost_multiplier_project)
+  * No penalty when less than retool excemption minerals accumulated.
+  * No penalty for project when less than 4 mineral rows.
+  * Units cost is flat and cotrolled by multiplier.
+* Hurry dialog offers to hurry up to minimal number of minerals when production will be completed on next turn. (hurry_minimal_minerals)
+  * Keep in mind that next turn production is an **estimate** that may change! Switch this option off if you prefer guaranteed next turn production.
+* Ctrl-H automatically hurries production with enough credits.
+
+# Version 302
+
+Merged with Thinker 4.5.
+
+* Conventional power contributes to psi combat (conventional_power_psi_percentage).
+* Population limit facilities now grant +2 GROWTH when beyond limit.
+
 # Version 301
 
 * Fixed vanilla bug when it did not initialize tile owners at game setup.

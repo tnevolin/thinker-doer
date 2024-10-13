@@ -13,6 +13,7 @@ struct VEH;
 extern VEH* Vehicles;
 extern int* GameState;
 extern int* GameRules;
+extern const int MaxPlayerNum;
 
 bool is_human(int faction);
 
@@ -28,8 +29,8 @@ struct BASE {
     uint8_t visibility;
     int8_t factions_pop_size_intel[8];
     char name[25];
-    int16_t unk_x; // terraforming related
-    int16_t unk_y; // terraforming related
+    int16_t unk_x; // base_terraform
+    int16_t unk_y; // base_terraform
     int32_t state_flags;
     int32_t event_flags;
     int32_t governor_flags;
@@ -41,11 +42,7 @@ struct BASE {
     int32_t queue_items[10];
     int32_t worked_tiles;
     int32_t specialist_total;
-    int32_t specialist_unk_1;
-    /*
-    Specialist types (CCitizen, 4 bits per id) for the first 16 specialists in the base.
-    These are assigned in base_yield and base_energy and chosen by best_specialist.
-    */
+    int32_t specialist_adjust;
     int32_t specialist_types[2];
     uint8_t facilities_built[12];
     int32_t mineral_surplus_final;
@@ -77,11 +74,12 @@ struct BASE {
     int32_t economy_total;
     int32_t psych_total;
     int32_t labs_total;
-    int32_t unk_5;
+    int32_t unk_total;
     int16_t autoforward_land_base_id;
     int16_t autoforward_sea_base_id;
     int16_t autoforward_air_base_id;
-    int16_t defend_goal; // Thinker variable
+    int8_t defend_goal; // Thinker variable
+    int8_t defend_range; // Thinker variable
     int32_t talent_total;
     int32_t drone_total;
     int32_t superdrone_total;
@@ -99,11 +97,21 @@ struct BASE {
     bool item_is_unit() {
         return queue_items[0] >= 0;
     }
+    bool drone_riots_active() {
+        return state_flags & BSTATE_DRONE_RIOTS_ACTIVE;
+    }
+    bool golden_age_active() {
+        return state_flags & BSTATE_GOLDEN_AGE_ACTIVE;
+    }
     bool golden_age() {
         return !drone_total && pop_size > 2 && talent_total >= (pop_size + 1) / 2;
     }
     bool plr_owner() {
         return is_human(faction_id);
+    }
+    // AI bases are not limited by any governor settings
+    uint32_t gov_config() {
+        return is_human(faction_id) ? governor_flags : ~0u;
     }
     /*
     This implementation is simplified to skip additional checks for these rules:
@@ -111,6 +119,23 @@ struct BASE {
     */
     bool is_objective() {
         return (*GameRules & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ ) || (event_flags & BEVENT_OBJECTIVE);
+    }
+    /*
+    Specialist types (CCitizen, 4 bits per id) for the first 16 specialists in the base.
+    These are assigned in base_yield and base_energy and chosen by best_specialist.
+    */
+    int specialist_type(int index) {
+        if (index < 0 || index > 15) {
+            return 0;
+        }
+        return (specialist_types[index/8] >> 4 * (index & 7)) & 0xF;
+    }
+    void specialist_modify(int index, int citizen_id) {
+        if (index < 0 || index > 15) {
+            return;
+        }
+        specialist_types[index/8] &= ~(0xF << (4 * (index & 7)));
+        specialist_types[index/8] |= ((citizen_id & 0xF) << (4 * (index & 7)));
     }
 };
 
@@ -149,7 +174,7 @@ struct MAP {
         return visibility & (1 << faction);
     }
     bool is_owned() {
-        return owner > 0;
+        return owner >= 0;
     }
     bool is_land_region() {
         return region < 63; // Skip pole tiles
@@ -159,6 +184,9 @@ struct MAP {
     }
     bool is_base() {
         return items & BIT_BASE_IN_TILE;
+    }
+    bool is_bunker() {
+        return items & BIT_BUNKER;
     }
     bool is_airbase() {
         return items & (BIT_BASE_IN_TILE | BIT_AIRBASE);
@@ -181,6 +209,9 @@ struct MAP {
     bool is_rolling() {
         return val3 & TILE_ROLLING;
     }
+    bool is_arid() {
+        return !(climate & (TILE_MOIST | TILE_RAINY));
+    }
     bool is_rainy() {
         return climate & TILE_RAINY;
     }
@@ -197,10 +228,22 @@ struct MAP {
         return items & BIT_VEH_IN_TILE;
     }
     int veh_owner() {
-        if ((val2 & 0xf) == 0xf) {
+        if ((val2 & 0xF) >= MaxPlayerNum) {
             return -1; // No vehicles in this tile
         }
-        return val2 & 0xf;
+        return val2 & 0xF;
+    }
+    int veh_who() {
+        if (items & BIT_VEH_IN_TILE) {
+            return veh_owner();
+        }
+        return -1;
+    }
+    int anything_at() {
+        if (items & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE)) {
+            return veh_owner();
+        }
+        return -1;
     }
 };
 
@@ -213,10 +256,24 @@ struct Landmark {
 struct Continent {
     int32_t tile_count; // count of tiles in region
     int32_t open_terrain; // count of non-rocky, non-fungus tiles (only 1 movement point to travel)
-    int32_t unk_3; // highest world_site value (0-15)
+    int32_t world_site; // highest world_site value (0-15)
     int32_t pods; // current count of supply and unity pods in region
     int32_t unk_5; // padding?
     uint8_t sea_coasts[8]; // sea specific regions, connections to land regions? bitmask
+};
+
+struct Path {
+    int* mapTable;
+    int16_t* xTable;
+    int16_t* yTable;
+    int index1; // specific territory count
+    int index2; // overall territory count
+    int faction_id1;
+    int xDst;
+    int yDst;
+    int field_20;
+    int faction_id2;
+    int unit_id;
 };
 
 struct MFaction {
@@ -232,11 +289,7 @@ struct MFaction {
     /*
     Thinker-specific save game variables.
     */
-    int16_t thinker_header;
-    int8_t thinker_flags;
-    int8_t thinker_tech_id;
-    int32_t thinker_tech_cost;
-    int32_t thinker_unused;
+    int32_t thinker_unused[3];
     int16_t thinker_probe_lost;
     int16_t thinker_last_mc_turn;
     int16_t thinker_probe_end_turn[8];
@@ -396,7 +449,7 @@ struct Faction {
     int32_t tech_fungus_nutrient;
     int32_t tech_fungus_mineral;
     int32_t tech_fungus_energy;
-    int32_t unk_22;
+    int32_t tech_fungus_unused;
     int32_t SE_alloc_psych;
     int32_t SE_alloc_labs;
     int32_t unk_25;
@@ -404,7 +457,7 @@ struct Faction {
     int32_t tech_ranking; // Twice the number of techs discovered
     int32_t unk_27;
     int32_t ODP_deployed;
-    int32_t theory_of_everything;
+    int32_t tech_count_transcendent; // Transcendent Thoughts achieved
     int8_t tech_trade_source[92];
     int32_t tech_accumulated;
     int32_t tech_research_id;
@@ -431,11 +484,10 @@ struct Faction {
     char saved_queue_name[8][24];
     int32_t saved_queue_size[8];
     int32_t saved_queue_items[8][10];
-    int32_t unk_40[8];
-    int32_t unk_41[40];
-    int32_t unk_42[32];
-    int32_t unk_43[8];
-    int32_t unk_44;
+    int32_t unk_40[8]; // From possible SE support -4 to 3 minerals spent on unit support
+    int32_t unk_41[40]; // base_psych
+    int32_t unk_42[32]; // base_psych
+    int32_t unk_43[9]; // From possible SE effic 4 to -4 all energy lost to inefficieny
     int32_t unk_45;
     int32_t unk_46;
     int32_t unk_47;
@@ -685,9 +737,9 @@ struct CCitizen {
     char* plural_name;
     int32_t preq_tech;
     int32_t obsol_tech;
-    int32_t ops_bonus;
+    int32_t econ_bonus;
     int32_t psych_bonus;
-    int32_t research_bonus;
+    int32_t labs_bonus;
 };
 
 struct CAbility {
@@ -699,6 +751,16 @@ struct CAbility {
     int32_t flags;
     int16_t preq_tech;
     int16_t pad;
+
+    bool cost_increase_with_weapon() {
+        return cost == -2 || cost == -5 || cost == -6;
+    }
+    bool cost_increase_with_armor() {
+        return cost == -3 || cost == -5 || cost == -7;
+    }
+    bool cost_increase_with_speed() {
+        return cost == -4 || cost == -6 || cost == -7;
+    }
 };
 
 struct CChassis {

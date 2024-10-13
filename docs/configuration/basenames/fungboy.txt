@@ -1,0 +1,55 @@
+#BASES
+Arcadia Dome
+Blade of Cosmos
+Childhood's Redemption
+Chiron's Call
+Consecrated Abyss
+Dawn's Domain
+Daybreak on Planet
+Eclipse Sanctuary
+Eve of Chiron
+Fungal Sanctuary
+Fungus Fane
+Horror Heights
+Moth Maze
+Oracle's Eye
+Pristine World
+Prophets of Chiron
+Pure Planet
+Reservoir of Souls
+Salve of Mercy
+Sanctified Hollow
+Serpent's Song
+Soul Haven
+Soul's Well
+Spore Spot
+Swarm Refuge
+Swarm Shelter
+The Haven
+The Recluse Retreat
+Trance of Harmony
+Twilight of Planet
+#END
+
+#WATERBASES
+Abyssal Atoll
+Chiron's Cove
+Dawn's Wake
+Edict Archipelago
+Fear's Fathom
+Horror's Abyss
+Isle Depths
+Marine Mirage
+Ocean's Overture
+Oceanic Reef
+Planet's Vanguard
+Point Peril
+Sanctuary Atoll
+Sealurk Harbor
+Seaweed Spire
+Seers of the Abyss
+Spear Point
+Submerged Sanctuary
+Terror's Abyss
+Underwater Eden
+#END

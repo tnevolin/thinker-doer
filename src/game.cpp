@@ -6,13 +6,24 @@ static uint32_t custom_more_rules = 0;
 
 
 bool un_charter() {
-    return *UNCharterRepeals <= *UNCharterReinstates;
+    return ProposalPassCount[PROP_REPEAL_UN_CHARTER]
+        <= ProposalPassCount[PROP_REINSTATE_UN_CHARTER];
+}
+
+bool global_trade_pact() {
+    return ProposalPassCount[PROP_REPEAL_GLOBAL_TRADE_PACT]
+        < ProposalPassCount[PROP_GLOBAL_TRADE_PACT];
 }
 
 bool victory_done() {
     // TODO: Check for scenario victory conditions
     return *GameState & (STATE_VICTORY_CONQUER | STATE_VICTORY_DIPLOMATIC | STATE_VICTORY_ECONOMIC)
-        || has_project(FAC_ASCENT_TO_TRANSCENDENCE, -1);
+        || has_project(FAC_ASCENT_TO_TRANSCENDENCE);
+}
+
+bool voice_of_planet() {
+    // Even destroyed Voice of Planet allows building Ascent to Transcendence
+    return project_base(FAC_VOICE_OF_PLANET) != SP_Unbuilt;
 }
 
 bool valid_player(int faction) {
@@ -32,7 +43,7 @@ int __cdecl game_year(int n) {
     return Rules->normal_start_year + n;
 }
 
-bool __cdecl in_box(int x, int y, RECT* rc) {
+int __cdecl in_box(int x, int y, RECT* rc) {
     return x >= rc->left && x < rc->right
         && y >= rc->top && y < rc->bottom;
 }
@@ -47,65 +58,117 @@ void __cdecl bitmask(uint32_t input, uint32_t* offset, uint32_t* mask) {
 
 /*
 Calculate nutrient/mineral cost factors for base production.
-In vanilla game mechanics, if the player faction is ranked first, then the AIs
-will get additional growth/industry bonuses. This modified version removes them.
-Original Offset: 004E4430
+If the player faction is ranked first in the original game, the AI factions will get
+additional growth/industry bonuses. This can be optionally skipped with simple_cost_factor option.
 */
-int __cdecl mod_cost_factor(int faction_id, int is_mineral, int base_id) {
+int __cdecl mod_cost_factor(int faction_id, BaseResType type, int base_id) {
     int value;
-    int multiplier = (is_mineral ? Rules->mineral_cost_multi : Rules->nutrient_cost_multi);
+    int multiplier = (type == RSC_NUTRIENT ?
+        Rules->nutrient_cost_multi : Rules->mineral_cost_multi);
 
     if (is_human(faction_id)) {
         value = multiplier;
     } else {
-        value = multiplier * CostRatios[*DiffLevel] / 10;
+        value = CostRatios[*DiffLevel];
+        if (!conf.simple_cost_factor) {
+            value -= (great_satan(FactionRankings[7], 0) != 0);
+            value -= (!*MultiplayerActive && is_human(FactionRankings[7]));
+        }
+        value = multiplier * value / 10;
     }
-
     if (*MapSizePlanet == 0) {
         value = 8 * value / 10;
     } else if (*MapSizePlanet == 1) {
         value = 9 * value / 10;
     }
-    if (is_mineral) {
-        if (is_mineral == 1) {
-            switch (Factions[faction_id].SE_industry_pending) {
-                case -7:
-                case -6:
-                case -5:
-                case -4:
-                case -3:
-                    return (13 * value + 9) / 10;
-                case -2:
-                    return (6 * value + 4) / 5;
-                case -1:
-                    return (11 * value + 9) / 10;
-                case 0:
-                    break;
-                case 1:
-                    return (9 * value + 9) / 10;
-                case 2:
-                    return (4 * value + 4) / 5;
-                case 3:
-                    return (7 * value + 9) / 10;
-                case 4:
-                    return (3 * value + 4) / 5;
-                default:
-                    return (value + 1) / 2;
-            }
+    if (type == RSC_MINERAL) {
+        switch (Factions[faction_id].SE_industry_pending) {
+            case -7:
+            case -6:
+            case -5:
+            case -4:
+            case -3:
+                value = (13 * value + 9) / 10;
+                break;
+            case -2:
+                value = (6 * value + 4) / 5;
+                break;
+            case -1:
+                value = (11 * value + 9) / 10;
+                break;
+            case 0:
+                break;
+            case 1:
+                value = (9 * value + 9) / 10;
+                break;
+            case 2:
+                value = (4 * value + 4) / 5;
+                break;
+            case 3:
+                value = (7 * value + 9) / 10;
+                break;
+            case 4:
+                value = (3 * value + 4) / 5;
+                break;
+            default: // +5 Industry or better
+                value = (value + 1) / 2;
         }
-        return value;
-    } else {
+    } else if (type == RSC_NUTRIENT) {
         int growth = Factions[faction_id].SE_growth_pending;
         if (base_id >= 0) {
-            if (has_facility(FAC_CHILDREN_CRECHE, base_id)) {
+            if (has_fac_built(FAC_CHILDREN_CRECHE, base_id)) {
                 growth += 2;
             }
-            if (Bases[base_id].state_flags & BSTATE_GOLDEN_AGE_ACTIVE) {
+            if (Bases[base_id].golden_age_active()) {
                 growth += 2;
             }
         }
-        return (value * (10 - clamp(growth, -2, 5)) + 9) / 10;
+        value = (value * (10 - clamp(growth, -2, 5)) + 9) / 10;
     }
+    return value;
+}
+
+/*
+Calculate the energy loss/inefficiency for the given energy intake in the base.
+This function modifies the parameters to avoid writing on the global game state.
+*/
+int __cdecl mod_black_market(int base_id, int energy, int* effic_energy_lost) {
+    BASE* base = &Bases[base_id];
+    if (energy <= 0) {
+        return 0;
+    }
+    int dist_hq;
+    int head_id = find_hq(base->faction_id);
+    if (head_id >= 0) {
+        dist_hq = vector_dist(Bases[head_id].x, Bases[head_id].y, base->x, base->y);
+    } else {
+        dist_hq = 16;
+    }
+    if (dist_hq == 0) {
+        return 0;
+    }
+    bool has_creche = has_fac_built(FAC_CHILDREN_CRECHE, base_id);
+    if (effic_energy_lost != NULL) {
+        for (int i = 0; i < 9; i++) {
+            int factor;
+            if (has_creche) {
+                factor = 10 - i; // +2 on efficiency scale
+            } else {
+                factor = 8 - i;
+            }
+            if (factor <= 0) {
+                effic_energy_lost[i] += energy;
+            } else {
+                effic_energy_lost[i] += energy * dist_hq / (8 * factor);
+            }
+        }
+    }
+    int factor = 4 + Factions[base->faction_id].SE_effic_pending
+        + (has_creche ? 2 : 0); // +2 on efficiency scale
+    if (factor <= 0) {
+        return energy;
+    }
+    return clamp(energy * dist_hq / (8 * factor), 0, energy);
 }
 
 void init_world_config() {
@@ -129,20 +192,16 @@ void show_rules_menu() {
 }
 
 void init_save_game(int faction) {
-    Faction* f = &Factions[faction];
     MFaction* m = &MFactions[faction];
     if (!faction) {
         return;
     }
-    if (m->thinker_header != THINKER_HEADER) {
-        m->thinker_header = THINKER_HEADER;
-        m->thinker_flags = 0;
-        m->thinker_tech_id = f->tech_research_id;
-        m->thinker_tech_cost = f->tech_cost;
-        m->thinker_probe_lost = 0;
-        m->thinker_last_mc_turn = 0;
+    if (!*CurrentTurn) {
+        memset(&m->thinker_probe_lost, 0, 20);
     }
-    m->thinker_unused = 0;
+    m->thinker_unused[0] = 0;
+    m->thinker_unused[1] = 0;
+    m->thinker_unused[2] = 0;
     /*
     Remove invalid prototypes from the savegame.
     This also attempts to repair invalid vehicle stacks to prevent game crashes.
@@ -165,6 +224,21 @@ void init_save_game(int faction) {
                 }
             }
             memset(u, 0, sizeof(UNIT));
+        }
+        if (u->is_active()) {
+            if (u->weapon_mode() == WMODE_SUPPLY && u->plan != PLAN_SUPPLY) {
+                print_unit(unit_id);
+                u->plan = PLAN_SUPPLY;
+            } else if (u->weapon_mode() == WMODE_COLONY && u->plan != PLAN_COLONY) {
+                print_unit(unit_id);
+                u->plan = PLAN_COLONY;
+            } else if (u->weapon_mode() == WMODE_TERRAFORM && u->plan != PLAN_TERRAFORM) {
+                print_unit(unit_id);
+                u->plan = PLAN_TERRAFORM;
+            } else if (u->weapon_mode() == WMODE_PROBE && u->plan != PLAN_PROBE) {
+                print_unit(unit_id);
+                u->plan = PLAN_PROBE;
+            }
         }
     }
     for (int i = 0; i < *VehCount; i++) {
@@ -210,9 +284,18 @@ int __cdecl mod_turn_upkeep() {
     return 0;
 }
 
-/*
-Original Offset: 005ABD20
-*/
+void __cdecl mod_load_map_daemon(int a1) {
+    // Another map selected from various dialogs
+    reset_state();
+    load_map_daemon(a1);
+}
+
+void __cdecl mod_load_daemon(int a1, int a2) {
+    // Another savegame opened from selection dialog
+    reset_state();
+    load_daemon(a1, a2);
+}
+
 void __cdecl mod_auto_save() {
     if ((!*PbemActive || *MultiplayerActive)
     && (!(*GameRules & RULES_IRONMAN) || *GameState & STATE_SCENARIO_EDITOR)) {
@@ -224,21 +307,11 @@ void __cdecl mod_auto_save() {
     }
 }
 
-/*
-Original Offset: 00527290
-*/
 int __cdecl mod_faction_upkeep(int faction) {
     Faction* f = &Factions[faction];
     MFaction* m = &MFactions[faction];
     debug("faction_upkeep %d %d\n", *CurrentTurn, faction);
 
-    if (conf.factions_enabled > 0 && (*MapAreaX > MaxMapAreaX || *MapAreaY > MaxMapAreaY)) {
-        parse_says(0, MOD_VERSION, -1, -1);
-        parse_says(1, "This map exceeds Thinker's maximum supported map size.", -1, -1);
-        popp("modmenu", "GENERIC", 0, 0, 0);
-        *ControlTurnA = 1; // Return to main menu
-        *ControlTurnB = 1;
-    }
     init_save_game(faction);
     plans_upkeep(faction);
     reset_netmsg_status();
@@ -253,9 +326,9 @@ int __cdecl mod_faction_upkeep(int faction) {
             }
         }
     }
-    repair_phase(faction);
+    mod_repair_phase(faction);
     do_all_non_input();
-    production_phase(faction);
+    mod_production_phase(faction);
     do_all_non_input();
     if (!(*GameState & STATE_GAME_DONE) || *GameState & STATE_FINAL_SCORE_DONE) {
         allocate_energy(faction);
@@ -307,12 +380,16 @@ int __cdecl mod_faction_upkeep(int faction) {
     if (f->energy_credits < 0) {
         f->energy_credits = 0;
     }
-    if (!f->base_count && !has_colony_pods(faction)) {
+    if (!f->base_count && !has_active_veh(faction, PLAN_COLONY)) {
         eliminate_player(faction, 0);
     }
+    if (f->base_count && f->tech_research_id < 0 && *NetUpkeepState != 1
+    && !(*GameRules & RULES_SCN_NO_TECH_ADVANCES)) {
+        tech_selection(faction);
+    }
     *ControlUpkeepA = 0;
-    Path->xDst = -1;
-    Path->yDst = -1;
+    Paths->xDst = -1;
+    Paths->yDst = -1;
 
     if (!(*GameState & STATE_GAME_DONE) || *GameState & STATE_FINAL_SCORE_DONE) {
         if (faction == MapWin->cOwner
@@ -331,6 +408,263 @@ int __cdecl mod_faction_upkeep(int faction) {
     }
     flushlog();
     return 0;
+}
+
+void __cdecl mod_repair_phase(int faction_id) {
+    Faction* f = &Factions[faction_id];
+    f->ODP_deployed = 0;
+    Points tiles;
+
+    for (int veh_id = 0; veh_id < *VehCount; veh_id++) {
+        VEH* veh = &Vehs[veh_id];
+        if (veh->faction_id != faction_id) {
+            continue;
+        }
+        MAP* sq = mapsq(veh->x, veh->y);
+        const bool at_base = sq && sq->is_base() && sq->veh_owner() >= 0;
+        const int triad = veh->triad();
+        veh->iter_count = 0;
+        veh->moves_spent = 0;
+        veh->flags &= ~VFLAG_UNK_1000;
+        veh->state &= ~(VSTATE_CRAWLING|VSTATE_UNK_2000|VSTATE_UNK_2);
+
+        if (sq && !at_base) {
+            if (veh->faction_id == MapWin->cOwner || veh->is_visible(MapWin->cOwner)) {
+                tiles.insert({veh->x, veh->y});
+            }
+        }
+        if ( !((*CurrentTurn + veh_id) & 3) ) {
+            veh->state &= ~VSTATE_UNK_800;
+            if (veh->flags & VFLAG_UNK_2) {
+                veh->flags &= ~VFLAG_UNK_2;
+            } else {
+                veh->flags &= ~VFLAG_UNK_1;
+            }
+        }
+        if (veh->order == ORDER_SENTRY_BOARD || veh->order == ORDER_HOLD) {
+            if (veh->waypoint_1_y) {
+                veh->waypoint_1_y--;
+                if (!veh->waypoint_1_y) {
+                    veh->order = ORDER_NONE;
+                }
+            }
+        }
+        if (veh->state & VSTATE_UNK_8) {
+            if (at_base
+            || (triad == TRIAD_LAND && sq->is_bunker())
+            || (triad == TRIAD_AIR && sq->is_airbase())) {
+                veh->state &= ~VSTATE_UNK_8;
+            }
+        }
+        if (veh->unit_id == BSC_FUNGAL_TOWER) {
+            veh->faction_id = 0;
+        }
+        if (!sq || !veh->damage_taken
+        || (veh->is_battle_ogre() && conf.repair_battle_ogre <= 0)
+        || !(veh->unit_id == BSC_FUNGAL_TOWER || !(veh->state & VSTATE_HAS_MOVED))) {
+            continue;
+        }
+        int value = conf.repair_minimal;
+        int base_id = base_at(veh->x, veh->y);
+
+        if (veh->unit_id != BSC_FUNGAL_TOWER) {
+            if (veh->is_native_unit() && sq->is_fungus() && sq->alt_level() >= ALT_OCEAN_SHELF) {
+                value = conf.repair_fungus;
+            }
+            if (conf.repair_friendly > 0
+            && mod_whose_territory(faction_id, veh->x, veh->y, 0, 0) == faction_id) {
+                value += conf.repair_friendly;
+            }
+            if (triad == TRIAD_AIR && sq->items & BIT_AIRBASE) {
+                value += conf.repair_airbase;
+            }
+            if (triad == TRIAD_LAND && sq->items & BIT_BUNKER) {
+                value += conf.repair_bunker;
+            }
+        }
+        if (base_id >= 0 && !Bases[base_id].drone_riots_active()) {
+            value += conf.repair_base;
+            if (!veh->is_native_unit()) {
+                if ((triad == TRIAD_LAND && (has_fac_built(FAC_COMMAND_CENTER, base_id)
+                || has_project(FAC_MARITIME_CONTROL_CENTER, faction_id)))
+                || (triad == TRIAD_SEA && (has_fac_built(FAC_NAVAL_YARD, base_id)
+                || has_project(FAC_MARITIME_CONTROL_CENTER, faction_id)))
+                || (triad == TRIAD_AIR && (has_fac_built(FAC_AEROSPACE_COMPLEX, base_id)
+                || has_project(FAC_CLOUDBASE_ACADEMY, faction_id)))) {
+                    value += conf.repair_base_facility;
+                }
+            } else if (breed_mod(base_id, faction_id)) {
+                value += conf.repair_base_native;
+            }
+        }
+        bool repair_abl = false;
+        if (triad == TRIAD_LAND) {
+            if ((!veh_cargo(veh_id) && veh->order == ORDER_SENTRY_BOARD) || is_ocean(sq)) {
+                int iter_id = veh_top(veh_id);
+                while (iter_id >= 0) {
+                    if (iter_id != veh_id && has_abil(Vehs[iter_id].unit_id, ABL_REPAIR)) {
+                        repair_abl = true;
+                    }
+                    iter_id = Vehs[iter_id].next_veh_id_stack;
+                }
+                if (repair_abl) {
+                    value *= 2;
+                }
+            }
+        }
+        if (has_project(FAC_NANO_FACTORY, faction_id)) {
+            value += conf.repair_nano_factory;
+        }
+        if (veh->is_battle_ogre()) {
+             value = min(value, conf.repair_battle_ogre);
+        }
+        int repair_limit = 0;
+        int repair_value = value * veh->reactor_type();
+
+        if (faction_id && !repair_abl && base_id < 0 && !has_project(FAC_NANO_FACTORY, faction_id)) {
+            repair_limit = 2 * veh->reactor_type();
+            if (sq->is_fungus() && sq->alt_level() >= ALT_OCEAN_SHELF) {
+                if (veh->is_native_unit()) {
+                    repair_limit = 0;
+                }
+                if (has_project(FAC_XENOEMPATHY_DOME, faction_id)) {
+                    repair_limit = 0;
+                    repair_value += veh->reactor_type();
+                }
+            }
+        }
+        int damage = clamp(veh->damage_taken - repair_value, repair_limit, 255);
+        if (damage < veh->damage_taken) {
+            veh->damage_taken = damage;
+            if (damage <= repair_limit && is_human(faction_id)
+            && veh->order == ORDER_SENTRY_BOARD
+            && (triad != TRIAD_LAND || !is_ocean(sq))) {
+                veh->order = ORDER_NONE;
+            }
+        }
+    }
+    for (auto& p : tiles) {
+        draw_tile(p.x, p.y, -1);
+    }
+    do_all_draws();
+}
+
+void __cdecl mod_production_phase(int faction_id) {
+    Faction* f = &Factions[faction_id];
+    MFaction* m = &MFactions[faction_id];
+    debug("production_phase %d %d\n", *CurrentTurn, faction_id);
+    f->best_mineral_output = 0;
+    f->energy_surplus_total = 0;
+    f->facility_maint_total = 0;
+    f->turn_commerce_income = 0;
+    mod_tech_effects(faction_id);
+
+    for (int i = 1; i < MaxPlayerNum; i++) {
+        if (faction_id != i && is_alive(faction_id) && is_alive(i)) {
+            assert(f->loan_balance[i] >= 0);
+            if (f->loan_balance[i] && !Factions[i].sanction_turns) {
+                assert(f->loan_payment[i] > 0);
+                if (at_war(faction_id, i)) {
+                    f->loan_balance[i] += f->loan_payment[i];
+                } else {
+                    int payment = clamp(f->energy_credits, 0, f->loan_payment[i]);
+                    Factions[i].energy_credits += payment;
+                    f->energy_credits -= payment;
+                    f->loan_balance[i] -= payment;
+                    if (payment < f->loan_payment[i]) {
+                        f->loan_balance[i] += f->loan_payment[i] - payment;
+                    }
+                }
+            }
+        }
+    }
+
+    f->player_flags &= ~PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
+    *dword_93A958 = f->energy_credits;
+    /*
+    Reset all fields listed below.
+    int32_t unk_40[8];
+    int32_t unk_41[40];
+    int32_t unk_42[32];
+    int32_t unk_43[9];
+    int32_t unk_45;
+    int32_t unk_46;
+    int32_t unk_47;
+    */
+    assert((int)&f->unk_40 + 0x170 == (int)&f->nutrient_surplus_total);
+    memset(&f->unk_40, 0, 0x170);
+
+    f->nutrient_surplus_total = 0;
+    f->labs_total = 0;
+
+    if (*BaseCount > 0) {
+        for (int base_id = 0; base_id < *BaseCount; base_id++) {
+            if (Bases[base_id].faction_id == faction_id) {
+                if (mod_base_upkeep(base_id)) {
+                    base_id--; // Base was removed for some reason
+                }
+                do_all_non_input();
+            }
+        }
+    }
+    /*
+    Apply the original AI facility maintenance discounts
+    These modifiers are not displayed in budget screens, they are just applied here
+    */
+    if (!is_human(faction_id) && *DiffLevel >= DIFF_THINKER) {
+        if (f->facility_maint_total) {
+            int value;
+            if (*DiffLevel == DIFF_THINKER) {
+                value = f->facility_maint_total / 3;
+                f->energy_credits += value;
+            } else {
+                value = f->facility_maint_total * 2 / 3;
+                f->energy_credits += value;
+            }
+            f->facility_maint_total -= value;
+        }
+    }
+    /*
+    INTEREST = Energy reserves interest.
+    Non-zero = constant percentage per turn (including negative)
+    Zero     = +1/base each turn
+    */
+    if (m->rule_flags & RFLAG_INTEREST) {
+        int rule_interest = m->rule_interest;
+        if (rule_interest) {
+            f->energy_credits += f->energy_credits * rule_interest / 100;
+        } else {
+            for (int base_id = 0; base_id < *BaseCount; base_id++) {
+                if (Bases[base_id].faction_id == faction_id) {
+                    f->energy_credits++;
+                    f->energy_surplus_total++;
+                }
+            }
+        }
+    }
+    f->unk_18 = f->energy_surplus_total;
+    f->unk_17 = f->energy_surplus_total + f->turn_commerce_income - f->facility_maint_total;
+
+    if (*CurrentTurn == 1) {
+        int techs = m->rule_tech_selected;
+        *SkipTechScreenA = 1;
+        while (--techs >= 0) {
+            tech_advance(faction_id);
+        }
+        *SkipTechScreenA = 0;
+    }
+    if (!(*GameState & STATE_GAME_DONE) || *GameState & STATE_FINAL_SCORE_DONE) {
+        if (f->sanction_turns) {
+            f->sanction_turns--;
+            if (!f->sanction_turns && faction_id == MapWin->cOwner) {
+                if (!is_alien(faction_id)) {
+                    popp(ScriptFile, "SANCTIONSEND", 0, "council_sm.pcx", 0);
+                } else {
+                    popp(ScriptFile, "SANCTIONSENDALIEN", 0, "Alopdir.pcx", 0);
+                }
+            }
+        }
+    }
 }
 
 uint32_t offset_next(int32_t faction, uint32_t position, uint32_t amount) {

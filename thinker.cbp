@@ -21,6 +21,10 @@
 					<Add option="-DBUILD_DLL" />
 					<Add option="-DBUILD_DEBUG" />
 				</Compiler>
+				<ExtraCommands>
+					<Add after='cmd /c copy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; patch\' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; patch\ /Y' />
+				</ExtraCommands>
 			</Target>
 			<Target title="Develop">
 				<Option output="build/bin/develop/thinker" prefix_auto="1" extension_auto="1" />
@@ -58,6 +62,21 @@
 				<Linker>
 					<Add option="-s -static" />
 				</Linker>
+				<ExtraCommands>
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_Changelog.md&quot; &quot;releases\TheWillToPower\&quot;  /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_Details.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Thinker_License.txt&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)Readme.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_changelog.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_installation.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)wtp_strategy.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\exe\terranx_mod.exe&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\basenames\*.*&quot; &quot;releases\TheWillToPower\core\basenames\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\factions&quot; &quot;releases\TheWillToPower\factions\&quot; /iy' />
+				</ExtraCommands>
 			</Target>
 		</Build>
 		<Compiler>
@@ -74,6 +93,8 @@
 		</ExtraCommands>
 		<Unit filename="src/base.cpp" />
 		<Unit filename="src/base.h" />
+		<Unit filename="src/build.cpp" />
+		<Unit filename="src/build.h" />
 		<Unit filename="src/debug.cpp" />
 		<Unit filename="src/debug.h" />
 		<Unit filename="src/engine.cpp" />

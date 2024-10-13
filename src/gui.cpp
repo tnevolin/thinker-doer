@@ -1,5 +1,6 @@
 
 #include "gui.h"
+#include "wtp_mod.h"
 
 const int32_t MainWinHandle = (int32_t)(&MapWin->oMainWin.oWinBase.field_4); // 0x939444
 
@@ -11,6 +12,9 @@ char label_stockpile_energy[StrBufLen] = "Stockpile: %d per turn";
 char label_sat_nutrient[StrBufLen] = "N +%d";
 char label_sat_mineral[StrBufLen] = "M +%d";
 char label_sat_energy[StrBufLen] = "E +%d";
+char label_eco_damage[StrBufLen] = "";
+char label_base_surplus[StrBufLen] = "";
+char label_unit_reactor[4][StrBufLen] = {};
 
 static int minimal_cost = 0;
 static int base_zoom_factor = -14;
@@ -135,7 +139,7 @@ CMAP_GETCORNERYOFFSET_F        pfncMapGetCornerYOffset =        (CMAP_GETCORNERY
 // End of PRACX definitions
 
 
-bool __thiscall Win_is_visible(Win* This) {
+int __thiscall Win_is_visible(Win* This) {
     bool value = (This->iSomeFlag & WIN_VISIBLE)
         && (!This->poParent || Win_is_visible(This->poParent));
     return value;
@@ -424,8 +428,6 @@ void check_scroll() {
 int __thiscall mod_gen_map(Console* This, int iOwner, int fUnitsOnly) {
 
     if (This == MapWin) {
-        debug("mod_gen_map %d %.4f %.4f\n", CState.Scrolling, CState.ScrollOffsetX, CState.ScrollOffsetY);
-
         // Save these values to restore them later
         int iMapPixelLeft = This->iMapPixelLeft;
         int iMapPixelTop = This->iMapPixelTop;
@@ -488,11 +490,10 @@ int __thiscall mod_calc_dim(Console* This) {
     int iOldZoom;
     int dx, dy;
     bool fx, fy;
-//    int w = ((CWinBuffed*)((int)This + (int)This->vtbl->iOffsetofoClass2))->oCanvas.stBitMapInfo.bmiHeader.biWidth;
-//    int h = -((CWinBuffed*)((int)This + (int)This->vtbl->iOffsetofoClass2))->oCanvas.stBitMapInfo.bmiHeader.biHeight;
+//    int w = ((GraphicWin*)((int)This + This->vtbl[1]))->oCanvas.stBitMapInfo.bmiHeader.biWidth;
+//    int h = -((GraphicWin*)((int)This + This->vtbl[1]))->oCanvas.stBitMapInfo.bmiHeader.biHeight;
 
     if (This == MapWin) {
-        debug("mod_calc_dim %d %.4f %.4f\n",  CState.Scrolling, CState.ScrollOffsetX, CState.ScrollOffsetY);
         iOldZoom = This->iLastZoomFactor;
         ptNewTile.x = This->iTileX;
         ptNewTile.y = This->iTileY;
@@ -564,8 +565,8 @@ int __cdecl mod_blink_timer() {
 
 LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    static int iDeltaAccum = 0;
-    bool debug_active = DEBUG && !*GameHalted;
+    const bool debug_cmd = DEBUG && !*GameHalted && msg == WM_CHAR;
+    static int delta_accum = 0;
     POINT p;
     MAP* sq;
 
@@ -606,33 +607,33 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOMOVE | SWP_FRAMECHANGED);
 
     } else if (msg == WM_MOUSEWHEEL && win_has_focus()) {
-        int iDelta = GET_WHEEL_DELTA_WPARAM(wParam) + iDeltaAccum;
-        iDeltaAccum = iDelta % WHEEL_DELTA;
-        iDelta /= WHEEL_DELTA;
-        bool zoom_in = (iDelta >= 0);
-        iDelta = labs(iDelta);
+        int wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam) + delta_accum;
+        delta_accum = wheel_delta % WHEEL_DELTA;
+        wheel_delta /= WHEEL_DELTA;
+        bool zoom_in = (wheel_delta >= 0);
+        wheel_delta = abs(wheel_delta);
         GameWinState state = current_window();
 
         if (state == GW_World) {
-            int iZoomType = (zoom_in ? 515 : 516);
-            for (int i = 0; i < iDelta; i++) {
+            int zoom_type = (zoom_in ? 515 : 516);
+            for (int i = 0; i < wheel_delta; i++) {
                 if (MapWin->iZoomFactor > -8 || zoom_in) {
-                    Console_zoom(iZoomType, 0);
+                    Console_zoom(MapWin, zoom_type, 0);
                 }
             }
         } else if (state == GW_Base && conf.render_high_detail) {
             base_resource_zoom(zoom_in);
         } else {
-            int iKey;
+            int key;
             if (state == GW_Design) {
-                iKey = (zoom_in ? VK_LEFT : VK_RIGHT);
+                key = (zoom_in ? VK_LEFT : VK_RIGHT);
             } else {
-                iKey = (zoom_in ? VK_UP : VK_DOWN);
+                key = (zoom_in ? VK_UP : VK_DOWN);
             }
-            iDelta *= CState.ListScrollDelta;
-            for (int i = 0; i < iDelta; i++) {
-                PostMessage(hwnd, WM_KEYDOWN, iKey, 0);
-                PostMessage(hwnd, WM_KEYUP, iKey, 0);
+            wheel_delta *= CState.ListScrollDelta;
+            for (int i = 0; i < wheel_delta; i++) {
+                PostMessage(hwnd, WM_KEYDOWN, key, 0);
+                PostMessage(hwnd, WM_KEYUP, key, 0);
             }
             return 0;
         }
@@ -695,20 +696,6 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             console_world_generate(ParseNumTable[0]);
         }
 
-    } else if (debug_active && msg == WM_CHAR && wParam == 'c' && alt_key_down()
-    && *GameState & STATE_SCENARIO_EDITOR && *GameState & STATE_OMNISCIENT_VIEW
-    && (sq = mapsq(MapWin->iTileX, MapWin->iTileY)) && sq->landmarks) {
-        uint32_t prev_state = MapWin->iWhatToDrawFlags;
-        MapWin->iWhatToDrawFlags |= MAPWIN_DRAW_GOALS;
-        refresh_overlay(code_at);
-        int value = pop_ask_number("modmenu", "MAPGEN", sq->art_ref_id, 0);
-        if (!value) { // OK button pressed
-            sq->art_ref_id = ParseNumTable[0];
-        }
-        memset(pm_overlay, 0, sizeof(pm_overlay));
-        MapWin->iWhatToDrawFlags = prev_state;
-        draw_map(1);
-
     } else if (DEBUG && msg == WM_CHAR && wParam == 'd' && alt_key_down()) {
         conf.debug_mode = !conf.debug_mode;
         if (conf.debug_mode) {
@@ -740,7 +727,26 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             "Verbose mode enabled." : "Verbose mode disabled."), -1, -1);
         popp("modmenu", "GENERIC", 0, 0, 0);
 
-    } else if (debug_active && msg == WM_CHAR && wParam == 'y' && alt_key_down()) {
+    } else if (debug_cmd && wParam == 'b' && alt_key_down() && Win_is_visible(BaseWin)) {
+        conf.base_psych = !conf.base_psych;
+        base_compute(1);
+        BaseWin_on_redraw(BaseWin);
+
+    } else if (debug_cmd && wParam == 'c' && alt_key_down()
+    && *GameState & STATE_SCENARIO_EDITOR && *GameState & STATE_OMNISCIENT_VIEW
+    && (sq = mapsq(MapWin->iTileX, MapWin->iTileY)) && sq->landmarks) {
+        uint32_t prev_state = MapWin->iWhatToDrawFlags;
+        MapWin->iWhatToDrawFlags |= MAPWIN_DRAW_GOALS;
+        refresh_overlay(code_at);
+        int value = pop_ask_number("modmenu", "MAPGEN", sq->art_ref_id, 0);
+        if (!value) { // OK button pressed
+            sq->art_ref_id = ParseNumTable[0];
+        }
+        refresh_overlay(clear_overlay);
+        MapWin->iWhatToDrawFlags = prev_state;
+        draw_map(1);
+
+    } else if (debug_cmd && wParam == 'y' && alt_key_down()) {
         static int draw_diplo = 0;
         draw_diplo = !draw_diplo;
         if (draw_diplo) {
@@ -752,32 +758,31 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         MapWin_draw_map(MapWin, 0);
         InvalidateRect(hwnd, NULL, false);
 
-    } else if (debug_active && msg == WM_CHAR && wParam == 'v' && alt_key_down()) {
+    } else if (debug_cmd && wParam == 'v' && alt_key_down()) {
         MapWin->iWhatToDrawFlags |= MAPWIN_DRAW_GOALS;
-        memset(pm_overlay, 0, sizeof(pm_overlay));
+        refresh_overlay(clear_overlay);
         static int ts_type = 0;
         int i = 0;
         TileSearch ts;
         ts_type = (ts_type+1) % (MaxTileSearchType+1);
         ts.init(MapWin->iTileX, MapWin->iTileY, ts_type, 0);
         while (ts.get_next() != NULL) {
-            pm_overlay[ts.rx][ts.ry] = ++i;
+            mapdata[{ts.rx, ts.ry}].overlay = ++i;
         }
-        pm_overlay[MapWin->iTileX][MapWin->iTileY] = ts_type;
+        mapdata[{MapWin->iTileX, MapWin->iTileY}].overlay = -ts_type;
         MapWin_draw_map(MapWin, 0);
         InvalidateRect(hwnd, NULL, false);
 
-    } else if (debug_active && msg == WM_CHAR && wParam == 'f' && alt_key_down()
+    } else if (debug_cmd && wParam == 'f' && alt_key_down()
     && (sq = mapsq(MapWin->iTileX, MapWin->iTileY))) {
         MapWin->iWhatToDrawFlags |= MAPWIN_DRAW_GOALS;
-        memset(pm_overlay, 0, sizeof(pm_overlay));
         if (sq && sq->is_owned()) {
             move_upkeep(sq->owner, UM_Visual);
             MapWin_draw_map(MapWin, 0);
             InvalidateRect(hwnd, NULL, false);
         }
 
-    } else if (debug_active && msg == WM_CHAR && wParam == 'x' && alt_key_down()) {
+    } else if (debug_cmd && wParam == 'x' && alt_key_down()) {
         MapWin->iWhatToDrawFlags |= MAPWIN_DRAW_GOALS;
         static int px = 0, py = 0;
         int x = MapWin->iTileX, y = MapWin->iTileY;
@@ -788,7 +793,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         MapWin_draw_map(MapWin, 0);
         InvalidateRect(hwnd, NULL, false);
 
-    } else if (debug_active && msg == WM_CHAR && wParam == 'z' && alt_key_down()) {
+    } else if (debug_cmd && wParam == 'z' && alt_key_down()) {
         int x = MapWin->iTileX, y = MapWin->iTileY;
         int base_id;
         if ((base_id = base_at(x, y)) >= 0) {
@@ -804,6 +809,35 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
         }
         flushlog();
+
+    }
+    
+    // [WTP]
+    // Ctrl-H automatic hurry
+    
+    else if (Win_is_visible(BaseWin) && msg == WM_KEYDOWN && wParam == 'H' && ctrl_key_down())
+	{
+		int baseId = *CurrentBaseID;
+		BASE *base = *CurrentBase;
+		int itemId = base->queue_items[0];
+		int mineralCost = mineral_cost(baseId, itemId);
+		int hurryMineralCost = getHurryMineralCost(mineralCost);
+		int hurryMinerals = std::max(0, hurryMineralCost - base->minerals_accumulated);
+		
+		if (hurryMinerals > 0)
+		{
+			Faction *faction = &Factions[base->faction_id];
+			int hurryCost = hurry_cost(baseId, itemId, hurryMinerals);
+			int factionAvaialbleCredits = faction->energy_credits - faction->energy_cost;
+			
+			if (hurryCost <= factionAvaialbleCredits)
+			{
+				base->minerals_accumulated = hurryMineralCost;
+				faction->energy_credits -= hurryCost;
+				BaseWin_on_redraw(BaseWin);
+			}
+			
+		}
 
     } else {
         return WinProc(hwnd, msg, wParam, lParam);
@@ -890,9 +924,9 @@ Render custom debug overlays with original and additional goals.
 */
 void __thiscall MapWin_gen_overlays(Console* This, int x, int y)
 {
-    Buffer* Canvas = (Buffer*)0x939888;
+    Buffer* Canvas = (Buffer*)&This->oMainWin.oCanvas.poOwner;
     RECT rt;
-    if (*GameState & STATE_OMNISCIENT_VIEW && MapWin->iWhatToDrawFlags & MAPWIN_DRAW_GOALS)
+    if (*GameState & STATE_OMNISCIENT_VIEW && This->iWhatToDrawFlags & MAPWIN_DRAW_GOALS)
     {
         MapWin_tile_to_pixel(This, x, y, &rt.left, &rt.top);
         rt.right = rt.left + This->iPixelsPerTileX;
@@ -901,7 +935,7 @@ void __thiscall MapWin_gen_overlays(Console* This, int x, int y)
         char buf[20] = {};
         bool found = false;
         int color = 255;
-        int value = pm_overlay[x][y];
+        int value = mapdata[{x, y}].overlay;
 
         for (int faction = 1; faction < MaxPlayerNum && !found; faction++) {
             Faction& f = Factions[faction];
@@ -961,19 +995,8 @@ void __thiscall MapWin_gen_overlays(Console* This, int x, int y)
         if (found || value) {
             Buffer_set_text_color(Canvas, color, 0, 1, 1);
             Buffer_set_font(Canvas, &This->oFont2, 0, 0, 0);
-            Buffer_write_cent_l3(Canvas, buf, &rt, 10);
+            Buffer_write_cent_l3(Canvas, buf, &rt, 20);
         }
-    }
-}
-
-void refresh_overlay(std::function<int32_t(int32_t, int32_t)> tile_value) {
-    if (*GameState & STATE_OMNISCIENT_VIEW && MapWin->iWhatToDrawFlags & MAPWIN_DRAW_GOALS) {
-        for (int y = 0; y < *MapAreaY; y++) {
-            for (int x = y&1; x < *MapAreaX; x+=2) {
-                pm_overlay[x][y] = tile_value(x, y);
-            }
-        }
-        draw_map(1);
     }
 }
 
@@ -1136,6 +1159,9 @@ int show_mod_config()
         (conf.auto_minimise ? "1" : "0"), ModIniFile);
 
     draw_map(1);
+    if (Win_is_visible(BaseWin)) {
+        BaseWin_on_redraw(BaseWin);
+    }
     return 0;
 }
 
@@ -1180,27 +1206,35 @@ int show_mod_menu()
 
 int __thiscall SetupWin_buffer_draw(Buffer* src, Buffer* dst, int a3, int a4, int a5, int a6, int a7)
 {
-    const int moon_positions[][4] = {
-        {8, 287, 132, 132},
-        {221, 0, 80, 51},
-        {348, 94, 55, 57},
-    };
-    for (auto& p : moon_positions) {
-        int x = conf.window_width  * p[0] / 1024;
-        int y = conf.window_height * p[1] / 768;
-        int w = conf.window_width  * p[2] / 1024;
-        int h = conf.window_height * p[3] / 768;
-        Buffer_copy2(src, dst, p[0], p[1], p[2], p[3], x, y, w, h);
+    if (conf.window_width >= 1024) {
+        const int moon_positions[][4] = {
+            {8, 287, 132, 132},
+            {221, 0, 80, 51},
+            {348, 94, 55, 57},
+        };
+        for (auto& p : moon_positions) {
+            int x = conf.window_width  * p[0] / 1024;
+            int y = conf.window_height * p[1] / 768;
+            int w = conf.window_width  * p[2] / 1024;
+            int h = conf.window_height * p[3] / 768;
+            Buffer_copy2(src, dst, p[0], p[1], p[2], p[3], x, y, w, h);
+        }
+        return 0;
+    } else {
+        return Buffer_draw(src, dst, a3, a4, a5, a6, a7);
     }
-    return 0;
 }
 
 int __thiscall SetupWin_buffer_copy(Buffer* src, Buffer* dst,
 int xSrc, int ySrc, int xDst, int yDst, int wSrc, int hSrc)
 {
-    int wDst = conf.window_width * wSrc / 1024;
-    return Buffer_copy2(src, dst, xSrc, ySrc, wSrc, hSrc,
-        conf.window_width - wDst, yDst, wDst, conf.window_height);
+    if (conf.window_width >= 1024) {
+        int wDst = conf.window_width * wSrc / 1024;
+        return Buffer_copy2(src, dst, xSrc, ySrc, wSrc, hSrc,
+            conf.window_width - wDst, yDst, wDst, conf.window_height);
+    } else {
+        return Buffer_copy(src, dst, xSrc, ySrc, xDst, yDst, wSrc, hSrc);
+    }
 }
 
 int __thiscall SetupWin_soft_update3(Win* This, int a2, int a3, int a4, int a5)
@@ -1209,22 +1243,87 @@ int __thiscall SetupWin_soft_update3(Win* This, int a2, int a3, int a4, int a5)
     return GraphicWin_soft_update2(This);
 }
 
-int __thiscall BaseWin_popup_start(Win* This,
-const char* filename, const char* label, int a4, int a5, int a6, int a7)
+int __thiscall window_scale_load_pcx(Buffer* This, char* filename, int a3, int a4, int a5)
+{
+    int value;
+    if (conf.window_width >= 1024) {
+        Buffer image;
+        Buffer_Buffer(&image);
+        value = Buffer_load_pcx(&image, filename, a3, a4, a5);
+        Buffer_resize(This, conf.window_width, conf.window_height);
+        Buffer_copy2(&image, This, 0, 0, image.stRect->right, image.stRect->bottom,
+            0, 0, conf.window_width, conf.window_height);
+        Buffer_dtor(&image);
+    } else {
+        value = Buffer_load_pcx(This, filename, a3, a4, a5);
+    }
+    if (*GameHalted) {
+        char buf[StrBufLen];
+        snprintf(buf, StrBufLen, "%s%s%s%s",
+            MOD_VERSION, " / ", MOD_DATE, (conf.smac_only ? " / SMAC" : ""));
+        Buffer_set_text_color(This, ColorProdName, 0, 1, 1);
+        Buffer_set_font(This, &MapWin->oFont1, 0, 0, 0);
+        Buffer_write_l(This, buf, 20, conf.window_height-32, 100);
+    }
+    return value;
+}
+
+int __thiscall Credits_GraphicWin_init(
+Win* This, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10)
+{
+    if (conf.window_width >= 1024) {
+        return GraphicWin_init(This,
+            a2 * conf.window_width / 1024,
+            a3 * conf.window_height / 768,
+            a4 * conf.window_width / 1024,
+            a5 * conf.window_height / 768,
+            a6, a7, a8, a9, a10);
+    } else {
+        return GraphicWin_init(This, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+    }
+}
+
+int __thiscall BaseWin_popup_start(
+Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
 {
     BASE* base = *CurrentBase;
     Faction* f = &Factions[base->faction_id];
-    int mins = mineral_cost(*CurrentBaseID, base->queue_items[0])
-        - base->minerals_accumulated - base->mineral_surplus;
+    int item_cost = mineral_cost(*CurrentBaseID, base->queue_items[0]);
+    int minerals = item_cost - base->minerals_accumulated - max(0, base->mineral_surplus);
     int credits = max(0, f->energy_credits - f->energy_cost);
-    int cost = hurry_cost(*CurrentBaseID, base->queue_items[0], mins);
+    int cost = hurry_cost(*CurrentBaseID, base->queue_items[0], minerals);
     minimal_cost = min(credits, cost);
+    if (item_cost <= base->minerals_accumulated) {
+        ParseNumTable[0] = 0;
+    }
     ParseNumTable[1] = cost;
     ParseNumTable[2] = credits;
     return Popup_start(This, "modmenu", "HURRY", a4, a5, a6, a7);
 }
 
 #pragma GCC diagnostic pop
+
+void __thiscall BaseWin_draw_misc_eco_damage(Buffer* This, char* buf, int x, int y, int len)
+{
+    BASE* base = *CurrentBase;
+    Faction* f = &Factions[base->faction_id];
+    if (!conf.render_base_info || !strlen(label_eco_damage)) {
+        Buffer_write_l(This, buf, x, y, len);
+    } else {
+        int clean_mins = conf.clean_minerals + f->clean_minerals_modifier
+            + clamp(f->satellites_mineral, 0, (int)base->pop_size);
+        int damage = terraform_eco_damage(*CurrentBaseID);
+        int mins = base->mineral_intake_2 + damage/8;
+        int pct;
+        if (base->eco_damage > 0) {
+            pct = 100 + base->eco_damage;
+        } else {
+            pct = (clean_mins > 0 ? 100 * clamp(mins, 0, clean_mins) / clean_mins : 0);
+        }
+        snprintf(buf, StrBufLen, label_eco_damage, pct);
+        Buffer_write_l(This, buf, x, y, strlen(buf));
+    }
+}
 
 void __thiscall BaseWin_draw_support(BaseWindow* This)
 {
@@ -1253,7 +1352,7 @@ int __cdecl BaseWin_ask_number(const char* label, int value, int a3)
     return pop_ask_number(ScriptFile, label, minimal_cost, a3);
 }
 
-void __thiscall Basewin_draw_farm_set_font(Buffer* This, Font* font, int a3, int a4, int a5)
+void __thiscall BaseWin_draw_farm_set_font(Buffer* This, Font* font, int a3, int a4, int a5)
 {
     char buf[StrBufLen] = {};
     // Base resource window coordinates including button row
@@ -1294,15 +1393,26 @@ void __thiscall Basewin_draw_farm_set_font(Buffer* This, Font* font, int a3, int
 
 void __cdecl BaseWin_draw_psych_strcat(char* buffer, char* source)
 {
-    if (conf.render_base_info && *CurrentBaseID >= 0
-    && !strcmp(source, (*TextLabels)[970])) { // Captured Base
-        int turns = Bases[*CurrentBaseID].assimilation_turns_left;
-        if (turns > 0) {
+    BASE* base = &Bases[*CurrentBaseID];
+    if (conf.render_base_info && *CurrentBaseID >= 0) {
+        if (base->nerve_staple_turns_left > 0
+        || has_fac_built(FAC_PUNISHMENT_SPHERE, *CurrentBaseID)) {
+            if (!strcmp(source, (*TextLabels)[971])) { // Stapled Base
+                strncat(buffer, (*TextLabels)[322], StrBufLen); // Unmodified
+                return;
+            }
+            if (!strcmp(source, (*TextLabels)[327])) { // Secret Projects
+                strncat(buffer, (*TextLabels)[971], StrBufLen); // Stapled Base
+                return;
+            }
+        }
+        int turns = base->assimilation_turns_left;
+        if (turns > 0 && !strcmp(source, (*TextLabels)[970])) { // Captured Base
             snprintf(buffer, StrBufLen, label_captured_base, turns);
             return;
         }
     }
-    snprintf(buffer, StrBufLen, "%s", source);
+    strncat(buffer, source, StrBufLen);
 }
 
 void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3, int a4, int a5)
@@ -1323,6 +1433,9 @@ void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3,
         Buffer_set_text_color(This, color, a3, a4, a5);
         snprintf(buf, StrBufLen, label_pop_size,
             base->talent_total, workers, base->drone_total, base->specialist_total);
+        if (DEBUG) {
+            strncat(buf, conf.base_psych ? " / B" : " / A", 32);
+        }
         Buffer_write_right_l2(This, buf, 690, 423 - 42, LineBufLen);
 
         if (base_pop_boom(*CurrentBaseID) && base_unused_space(*CurrentBaseID) > 0) {
@@ -1366,7 +1479,7 @@ void __cdecl mod_base_draw(Buffer* buffer, int base_id, int x, int y, int zoom, 
             return;
         }
         // Game engine uses this way to determine the population label width
-        int w = Font_width(*MapLabelFont, (int)(base->pop_size >= 10 ? "88" : "8")) + 5;
+        int w = Font_width(*MapLabelFont, (base->pop_size >= 10 ? "88" : "8")) + 5;
         int h = (*MapLabelFont)->iHeight + 4;
 
         for (int i = 1; i <= width; i++) {
@@ -1374,6 +1487,17 @@ void __cdecl mod_base_draw(Buffer* buffer, int base_id, int x, int y, int zoom, 
             Buffer_box(buffer, &rr, color, color);
         }
     }
+}
+
+int __cdecl BaseWin_staple_popp(
+const char* filename, const char* label, int a3, const char* imagefile, int a5)
+{
+    BASE* base = *CurrentBase;
+    if (base && base->assimilation_turns_left
+    && base->faction_id_former != MapWin->cOwner && is_alive(base->faction_id_former)) {
+        return popp("modmenu", "NERVESTAPLE2", a3, imagefile, a5);
+    }
+    return popp(filename, label, a3, imagefile, a5);
 }
 
 /*
@@ -1407,6 +1531,44 @@ int __thiscall BaseWin_click_staple(Win* This)
         return BaseWin_nerve_staple(This);
     }
     return 0;
+}
+
+void __cdecl ReportWin_draw_ops_strcat(char* dst, char* UNUSED(src))
+{
+    BASE* base = *CurrentBase;
+    uint32_t gov = base->governor_flags;
+    char buf[StrBufLen] = {};
+    dst[0] = '\0';
+
+    if (base->faction_id == MapWin->cOwner) {
+        if (gov & GOV_ACTIVE) {
+            if (gov & GOV_PRIORITY_EXPLORE) {
+                strncat(dst, (*TextLabels)[521], 32);
+            } else if (gov & GOV_PRIORITY_DISCOVER) {
+                strncat(dst, (*TextLabels)[522], 32);
+            } else if (gov & GOV_PRIORITY_BUILD) {
+                strncat(dst, (*TextLabels)[523], 32);
+            } else if (gov & GOV_PRIORITY_CONQUER) {
+                strncat(dst, (*TextLabels)[524], 32);
+            } else {
+                strncat(dst, (*TextLabels)[457], 32); // Governor
+            }
+            strncat(dst, " ", 32);
+        }
+    }
+    if (strlen(label_base_surplus)) {
+        snprintf(buf, StrBufLen, label_base_surplus,
+            base->nutrient_surplus, base->mineral_surplus, base->energy_surplus);
+        strncat(dst, buf, StrBufLen);
+    }
+}
+
+void __thiscall ReportWin_draw_ops_color(Buffer* This, int UNUSED(a2), int a3, int a4, int a5)
+{
+    BASE* base = *CurrentBase;
+    int color = (base->mineral_surplus < 0 || base->nutrient_surplus < 0
+        ? ColorRed : ColorMediumBlue);
+    Buffer_set_text_color(This, color, a3, a4, a5);
 }
 
 int __thiscall mod_MapWin_focus(Console* This, int x, int y)
@@ -1536,7 +1698,7 @@ void __cdecl reset_netmsg_status()
     netmsg_item1[0] = '\0';
 }
 
-int __thiscall mod_NetMsg_pop(void* This, char* label, int delay, int a4, void* a5)
+int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5)
 {
     if (!conf.foreign_treaty_popup) {
         return NetMsg_pop(This, label, delay, a4, a5);
@@ -1558,6 +1720,60 @@ int __thiscall mod_NetMsg_pop(void* This, char* label, int delay, int a4, void* 
     netmsg_item1[StrBufLen-1] = '\0';
     return NetMsg_pop(This, label, -1, a4, a5);
 }
+
+int __thiscall mod_BasePop_start(
+void* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
+{
+    if (movedlabels.count(label)) {
+        return BasePop_start(This, "modmenu", label, a4, a5, a6, a7);
+    }
+    return BasePop_start(This, filename, label, a4, a5, a6, a7);
+}
+
+int __cdecl mod_action_move(int veh_id, int x, int y)
+{
+    VEH* veh = &Vehs[veh_id];
+    if (*MultiplayerActive) {
+        return action_move(veh_id, x, y);
+    }
+    if (veh->faction_id == *CurrentPlayerFaction) {
+        if (!veh_ready(veh_id)) {
+            return NetMsg_pop(NetMsg, "UNITMOVED", 5000, 0, 0);
+        }
+    }
+    int veh_range = arty_range(veh->unit_id);
+    if (map_range(veh->x, veh->y, x, y) <= veh_range) {
+        int veh_id_tgt = stack_fix(veh_at(x, y));
+        if (veh_id_tgt >= 0) {
+            if (veh->faction_id != Vehs[veh_id_tgt].faction_id
+            && !has_pact(veh->faction_id, Vehs[veh_id_tgt].faction_id)) {
+                int offset = radius_move2(veh->x, veh->y, x, y, TableRange[veh_range]);
+                if (offset >= 0) {
+                    *veh_attack_flags = 3;
+                    return battle_fight_1(veh_id, offset, 1, 1, 0);
+                }
+            }
+        } else {
+            return action_destroy(veh_id, 0, x, y);
+        }
+    } else {
+        return NetMsg_pop(NetMsg, "OUTOFRANGE", 5000, 0, 0);
+    }
+    return 0;
+}
+
+int __cdecl MapWin_right_menu_arty(int veh_id, int x, int y)
+{
+    VEH* veh = &Vehs[veh_id];
+    return map_range(veh->x, veh->y, x, y) <= arty_range(veh->unit_id);
+}
+
+void __thiscall Console_arty_cursor_on(Console* This, int cursor_type, int veh_id)
+{
+    int veh_range = arty_range(Vehs[veh_id].unit_id);
+    Console_cursor_on(This, cursor_type, veh_range);
+}
+
 
 
 
