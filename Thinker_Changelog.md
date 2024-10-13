@@ -1,6 +1,43 @@
 
 # Thinker mod release changelog
 
+## Version 4.5 (2024-08-31)
+* Major adjustments on base governor to make additional priorites selectable for each base. Modify governor worker allocation to better take into account any psych-related issues and convert workers into specialists as needed.
+* Governor is able to choose from multiple specialist types based on social engineering choices and various factors. The default specialist type chosen by the game has less emphasis on psych compared to the original version.
+* When governor has to reallocate many drones into specialists, the game will indicate this with PSYCHREQUEST message based on various conditions.
+* Base eco damage display has been updated to show used clean minerals as percentage of total when it is below the threshold for ecological disruption. This will not change how eco damage is calculated internally in the game.
+* Base operations screen will show production surpluses for each base. Whenever nutrient or mineral surplus is negative, the value is displayed in red.
+* Add options base_psych, modify_unit_support and repair_battle_ogre.
+* Restore limit_project_start option but it is skipped on all difficulties by default.
+* Minor adjustments on revised_tech_cost to increase the late game research costs. Separate cheap_early_tech option is removed and it is now the default.
+* Nutrient bonus option is modified to set how many nutrient bonus resources are placed at each start (can be more than two).
+* Remove all map size restrictions on Thinker. It will run on any map size as long as the original game does not have issues.
+* AI uses naval transports in more varied scouting missions. AI tries better to link artifacts on nearby Network Nodes.
+* Attempting to nerve staple captured bases will display a notification about diplomatic consequences in the warning dialog.
+* Game displays tech selection screen on the first turn if Look First is disabled.
+* Fix issue where terrain detail display on the world map showed incorrect mineral output for aquatic factions.
+* Fix base tile sometimes producing too much energy (up to 2 extra resources) when SE Economy value is between 3 and 4.
+* Fix monolith energy to not be limited by tile yield restrictions in the early game. This limitation did not apply on monolith nutrients/minerals.
+
+
+## Version 4.4 (2024-07-26)
+* Add option long_range_artillery to enable increased range for ship-based artillery when the special ability is used. Land-based artillery remains the same as before.
+* Cost factor for Artillery ability is changed to "increases with speed value" instead of "armor+speed value".
+* Minor changes on AI ship designs and prototype naming rules to be more consistent. Longer range artillery ships use only Battleship names.
+* Add new predefined unit Drop Colony Pod. AI is also able to use such units when available.
+* Add option intercept_defense_bonus for "Air superiority unit vs. air unit" in alphax.txt to also affect scrambled interceptors.
+* Add option label_unit_reactor to customize how reactors are displayed in the prototype names.
+* Thinker governors are able to build secret projects and hurry production also in player bases. Hurry actions will display a notification in the message log.
+* Thinker is also able to automate player-owned crawlers. Most often they will attempt to convoy nutrients and minerals.
+* Interlude and credits screen planet backgrounds are scaled to fit all resolutions.
+* Fossil Field Ridge is placed on ocean shelf tiles when modified_landmarks is enabled.
+* Clinical Immortality provides one extra talent per base instead of two as mentioned in the manual.
+* Base production picker will not show Paradise Garden as buildable if the base already has Punishment Sphere.
+* Minor clarifications on smac-in-smacx mod documentation to remove mentions of resolved issues.
+* Fix multiple issues with the user interface by modifying script entries (see script_label option and Details.md).
+* Fix issue where the game might crash when first opening an old savegame and clicking some crawler unit on the world map.
+
+
 ## Version 4.3 (2024-05-26)
 * Random map generator allows placing multiple similar landmarks when the related option value is greater than one.
 * Modify Mind Control probe action to only subvert units inside the base and not on adjacent tiles to balance for the relatively cheap cost for this action.

@@ -202,42 +202,37 @@ Works only when flat hurry cost is enabled.
 void hurryProductionPartially(int baseId, int allowance)
 {
 	assert(baseId >= 0 && baseId < *BaseCount);
-
+	
 	BASE *base = &(Bases[baseId]);
-
-	// apply only when flat hurry cost is enabled
-
-	if (!conf.flat_hurry_cost)
-		return;
-
+	
 	// verify allowance is positive
-
+	
 	if (allowance <= 0)
 		return;
-
+	
 	// get remaining minerals
-
+	
 	int remainingMinerals = getRemainingMinerals(baseId);
-
+	
 	// already completed
-
+	
 	if (remainingMinerals <= 0)
 		return;
-
-	// get flat hurry cost
-
-	int hurryCost = getFlatHurryCost(baseId);
-
+	
+	// get hurry cost
+	
+	int hurryCost = hurry_cost(baseId, base->queue_items[0], remainingMinerals);
+	
 	// nothing to hurry
-
+	
 	if (hurryCost <= 0)
 		return;
-
+	
 	// calculate minerals and hurry price
-
+	
 	int partialHurryMinerals;
 	int partialHurryCost;
-
+	
 	if (allowance >= hurryCost)
 	{
 		partialHurryMinerals = remainingMinerals;
@@ -248,10 +243,10 @@ void hurryProductionPartially(int baseId, int allowance)
 		partialHurryMinerals = remainingMinerals * allowance / hurryCost;
 		partialHurryCost = partialHurryMinerals * hurryCost / remainingMinerals;
 	}
-
+	
 	// hurry production
-
+	
 	hurryProduction(base, partialHurryMinerals, partialHurryCost);
-
+	
 }
 

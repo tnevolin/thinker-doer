@@ -3,7 +3,7 @@
 const int SP_Unbuilt = -1;
 const int SP_Destroyed = -2;
 const int SP_ID_First = 70;
-const int SP_ID_Last = 106;
+const int SP_ID_Last = 133;
 const int Fac_ID_First = 1;
 const int Fac_ID_Last = 64;
 const int Tech_ID_First = 0;
@@ -518,7 +518,10 @@ enum DiploAgenda {
 
 enum PlayerFlags {
     PFLAG_MULTI_TECH_ACHIEVED = 0x2, // tech_achieved during network multiplayer
+    PFLAG_UNK_4 = 0x4, // study_artifact
+    PFLAG_UNK_10 = 0x10, // study_artifact
     PFLAG_SELF_AWARE_COLONY_LOST_MAINT = 0x20, // used to even out lossy integer division
+    PFLAG_FIRST_SECRETS = 0x40, // set in tech_achieved for first faction gaining TFLAG_SECRETS
     PFLAG_MAP_REVEALED = 0x200,
     PFLAG_GENETIC_PLAGUE_INTRO = 0x400, // +1 to defense against after 1st time faction experiences
     PFLAG_BEEN_ELECTED_GOVERNOR = 0x8000, // used to determine whether #GOVERNOR has been displayed
@@ -555,7 +558,7 @@ enum BaseState {
     BSTATE_UNK_10 = 0x10,
     BSTATE_UNK_20 = 0x20, // enemy_strategy, former units
     BSTATE_RESEARCH_DATA_STOLEN = 0x40,
-    BSTATE_UNK_80 = 0x80, // prevents capture_base from adding flag BSTATE_UNK_10000
+    BSTATE_SKIP_RENAME = 0x80, // prevents capture_base from adding flag BSTATE_RENAME_BASE
     BSTATE_UNK_100 = 0x100,
     BSTATE_FACILITY_SCRAPPED = 0x200, // Only one facility can be scrapped/recycled per turn
     BSTATE_ARTIFACT_LINKED = 0x400, // Alien Artifact linked to Network Node
@@ -564,14 +567,14 @@ enum BaseState {
     BSTATE_UNK_2000 = 0x2000,
     BSTATE_UNK_4000 = 0x4000,
     BSTATE_UNK_8000 = 0x8000,
-    BSTATE_UNK_10000 = 0x10000, // set in capture_base, this base can be renamed in base_upkeep
+    BSTATE_RENAME_BASE = 0x10000, // set in capture_base, this base can be renamed in base_upkeep
     BSTATE_GENETIC_PLAGUE_INTRO = 0x20000,
     BSTATE_ASSISTANT_KILLER_HOME = 0x40000, // Veh home base (or closest) of Assistant worm killer
     BSTATE_UNK_80000 = 0x80000, // enemy_strategy, former units
     BSTATE_UNK_100000 = 0x100000,
     BSTATE_UNK_200000 = 0x200000,
     BSTATE_ENERGY_RESERVES_DRAINED = 0x400000,
-    BSTATE_PRODUCTION_DONE = 0x800000,
+    BSTATE_PRODUCTION_DONE = 0x800000, // cleared in base_upkeep > base_production
     BSTATE_UNK_1000000 = 0x1000000,
     BSTATE_UNK_2000000 = 0x2000000,
     BSTATE_UNK_4000000 = 0x4000000, // enemy_strategy
@@ -624,8 +627,17 @@ enum BaseGovernor {
     GOV_PRIORITY_CONQUER = 0x8000000,
     // 0x10000000
     // 0x20000000
-    GOV_UNK_40000000 = 0x40000000,
+    GOV_UNK_40000000 = 0x40000000, // used on lowest difficulty
     GOV_ACTIVE = 0x80000000,
+};
+
+enum BaseRadius {
+    BR_NOT_AVAILABLE = 1,
+    BR_NOT_VISIBLE = 2,
+    BR_BASE_IN_TILE = 4,
+    BR_VEH_IN_TILE = 8, // convoy active or non-pact/non-treaty vehicle
+    BR_WORKER_ACTIVE = 16,
+    BR_FOREIGN_TILE = 32,
 };
 
 enum MapItem {
@@ -739,7 +751,14 @@ enum TerrainType {
     LEVEL_ROCKY = 2,
 };
 
-enum ResType {
+enum BaseResType { // base production, convoy types, cost factor
+    RSC_NUTRIENT = 0,
+    RSC_MINERAL = 1,
+    RSC_ENERGY = 2,
+    RSC_UNUSED = 3,
+};
+
+enum ResType { // bonus_at
     RES_NONE = 0,
     RES_NUTRIENT = 1,
     RES_MINERAL = 2,
@@ -769,6 +788,7 @@ enum AIGoal {
     AI_GOAL_NAVAL_END = 202,
     AI_GOAL_NAVAL_BEACH = 203,
     AI_GOAL_NAVAL_SCOUT = 204,
+    AI_GOAL_NAVAL_PICK = 205,
     Thinker_Goal_ID_First = AI_GOAL_RAISE_LAND,
 };
 

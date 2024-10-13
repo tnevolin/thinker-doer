@@ -42,6 +42,8 @@ Base window will also show additional details that were previously not directly 
 
 The game will show population counts for talents, workers, drones and specialists. Bases that are about to drone riot, enter the golden age or pop boom on the next turn are highlighted with colored labels. When a base has been nerve stapled, the remaining turns for the staple effect are shown on the bottom right corner.
 
+Ecological damage display on the base window has been updated to be more useful. Whenever the mineral production level is sustainable on planet's ecology, the Eco-Damage percentage is displayed in green indicating how much of the clean minerals capacity is in use. Whenever this number is exceeded and the base begins to cause ecological disruption, the percentage is displayed in red and the number over 100% shows the current Eco-Damage being experienced at the base. This will not change how [ecological damage](https://web.archive.org/web/20220310074913/https://alphacentauri2.info/wiki/Ecology_(Revised)) is calculated by the game unless minor details are modified by `eco_damage_fix` option.
+
 Whenever the player instructs a former to build an improvement that replaces any other item in the tile, the game will display a warning dialog. This dialog can be skipped by toggling the warning option (warn_on_former_replace).
 
 When building or capturing a new base, the mod will automatically copy the saved build queue from **Template 1** to the new base. At maximum 8 items can be saved to the template, and the first item from the template will be automatically moved to current production choice when a new base is built or captured. Only the template saved to the first slot is checked, any other saved templates are ignored.
@@ -85,14 +87,17 @@ Base swapping dialogue has been adjusted to reject any base swaps where the AI w
 
 Player automation features
 ==========================
-It is possible to instruct Thinker to automate player-owned colony pods and formers from `ALT+T` menu options. There's also a separate option to set Thinker manage governors in player-owned bases.  Normally player base governors and unit automation would be handled by the vanilla AI.
+It is possible to instruct Thinker to automate player-owned colony pods, crawlers and formers from `ALT+T` menu options. There's also a separate option to set Thinker manage governors in player-owned bases. Normally player base governors and unit automation would be handled by the original AI. However worker tile selection and specialist allocation is always managed by Thinker.
 
-When enabled, use `Shift+A` shortcut to automate any specific unit and it will follow the same colonization or terraforming strategy as the AI factions. Colony pods will attempt to travel to a suitable location autonomously and deploy a base there. If this is not required, the units can be moved manually as well. Automated formers should follow the same settings listed in the Automation Preferences dialog.
+When enabled, use `Shift+A` shortcut to automate any specific unit and it will follow the same colonization or terraforming strategy as the AI factions. Colony pods will attempt to travel to a suitable location autonomously and deploy a base there. If this is not required, the units can be moved manually as well. Automated formers should follow the same settings listed in the Automation Preferences dialog. Crawlers will usually try to convoy nutrient or mineral resources depending on the base status.
 
 Beware formers automated in this way **can replace any existing improvements** on the territory if Thinker calculates the replacement would increase tile production. A notable difference compared to the AI factions is that player-automated formers will never raise/lower terrain. To prevent the formers from ever replacing some specific improvements, such as bunkers, they need to be placed outside the workable base radius from any friendly base.
 
-Bases managed by Thinker governors will mostly follow the same options as provided in the base governor settings, with a few exceptions. Normal explore/build/discover/conquer priorities will have no effect on production choices and they are automatically deselected in the interface. Enabling either terraformers or colony pods in the governor settings will also allow governors to build crawlers since they don't have a separate option in the menu.
-Thinker governors will also never attempt to start secret projects, hurry production with energy reservers, or nerve staple drones in the base. These choices are left for the player to manage.
+Bases managed by Thinker governors will mostly follow the same options as provided in the base governor settings. Adjusting explore/discover/build/conquer governor priorities from the base window has the same effect compared to AIs using these choices as faction priorities. Enabling terraformer production in the governor settings will also allow governors to build crawlers since they don't have a separate option in the menu.
+
+By default Thinker governors will not attempt to start secret projects or hurry production with energy reserves, but this can be enabled from the governor settings. If production is hurried by the base governor, this will be displayed as a separate line in the message log. Normally the governor tries to keep some energy credits in reserve before attempting to hurry production.
+
+Governor is also able to choose between multiple specialist types based on social engineering choices and various conditions. If the base has Build/Conquer priorities selected, this will guide the governor to maximize mineral output even if some specialists could be useful for the base. If the governor has to reallocate many drones into specialists, this will be indicated with PSYCHREQUEST message if increasing psych spending could be potentially useful.
 
 
 Map generator options
@@ -105,7 +110,7 @@ This feature supports all the world settings chosen from the game menus such as 
 
 From the menu options it is also possible to choose the random map style from larger or smaller continents. Note that this has only significant impact if the ocean coverage is at least average, since at low levels all generated maps will tend towards pangaea layouts.
 
-All landmarks that are placed on random maps can also be configured from `thinker.ini`. Nessus Canyon is available but disabled by default. When new map generator is enabled, `modified_landmarks` option replaces the default Monsoon Jungle landmark with multiple smaller jungles dispersed across the equator area, and Borehole Cluster is also expanded to four tiles. Planet rainfall level will determine how many jungle tiles are placed.
+All landmarks that are placed on random maps can also be configured from `thinker.ini`. Nessus Canyon is available but disabled by default. When new map generator is enabled, `modified_landmarks` option replaces the default Monsoon Jungle landmark with multiple smaller jungles dispersed across the equator area. Planet rainfall level will determine how many jungle tiles are placed. Borehole Cluster is also expanded to four tiles and Fossil Field Ridge is placed on ocean shelf tiles.
 
 It is also possible to place multiple similar landmarks if the corresponding landmark option is set to some value greater than one. When playing on smaller maps, it might make more sense to disable some additional landmarks, as otherwise the map generator may skip placing some landmarks due to not having enough space.
 
@@ -113,7 +118,7 @@ The new map generator is entirely different from the vanilla version, so it does
 
 Thinker's `faction_placement` algorithm tries to balance faction starting locations more evenly across the whole map area while avoiding unusable spawns on tiny islands. The selection also takes into account land quality near the spawn. The effect is most noticeable on Huge map sizes.
 
-When `nutrient_bonus` setting is enabled, the placement algorithm tries to ensure each spawn location has at least two nutrient bonus resources. The placement also strongly favors spawns on river tiles for easier movement in the early game.
+When `nutrient_bonus` option is higher than zero, the placement algorithm adds this many additional nutrient bonus resources at each start. The placement also strongly favors spawns on river tiles for easier movement in the early game.
 
 Another optional setting `rare_supply_pods` is not dependent on faction placement, instead it affects the whole map by reducing the frequency of random supply pods significantly. Thematically it never made much sense that the supply pods would be excessively abundant across the whole planet surface, while the Unity spaceship would supposedly only have limited space for extra supplies.
 
@@ -175,7 +180,7 @@ Also computer players will not gang up until the player's overall "dominance bar
 
 No Mind Control. At Citizen, Specialist and Talent levels, computer players will not use Mind Control against player bases.
 
-Secret Projects. At Talent and below, the other factions can't start work on a Secret Project until the player has its prerequisite tech, even if they already have the tech in question (this restriction is removed in the mod).
+Secret Projects. At Talent and below, the other factions can't start work on a Secret Project until the player has its prerequisite tech, even if they already have the tech in question. This can be adjusted with `limit_project_start` option.
 
 Colony Pod. At Citizen and Specialist levels, building a colony pod at a size 1 base does not eliminate the base.
 
@@ -220,50 +225,45 @@ Revised tech costs
 ==================
 In the original game, research costs were mainly decided by how many techs a faction had already researched. That meant the current research target was irrelevant as far as the costs were concerned. This is somewhat counter-intuitive since lower level techs would be worth the same than higher level techs. For speed runs, it made sense to avoid researching any techs that were not strictly necessary to keep the cost of discovering new techs as low as possible.
 
-The config option `revised_tech_cost` attempts to remake this mechanic so that the research cost for any particular tech is fixed and depends mainly on the level of the tech. This follows the game design choices that were also made in later Civilization games. Enabling this feature should delay the tech race in mid to late game.
+The config option `revised_tech_cost` attempts to remake this mechanic so that the research cost for any particular tech is mostly fixed and depends on the level of the tech. This follows the game design choices that were also made in later Civilization games. Enabling this feature should delay the tech race in mid to late game. This formula still uses some adjustments for cheaper early game research and adds a minor modifier for the number of known techs by the faction.
 
-Optionally it is possible to choose `cheap_early_tech` so the tech cost is somewhat between the old and new version. In this case, each tech known to the faction, including starting techs, will increase all tech costs slightly. Also the costs for first 10 techs are discounted, with every starting tech counting against the limit.
+For example, in the default tech tree, Social Psych is level 1 and Transcendent Thought is level 16. See also a helpful chart of [the standard tech tree](https://www.dropbox.com/sh/qsps5bhz8v020o9/AAAkyzALX76aWAOc363a7mgpa/resources?dl=0&lst=). The base cost for any particular tech is determined by this formula.
 
-For example, in the default tech tree, Social Psych is level 1 and Transcendent Thought is level 16. See also [a helpful chart](https://www.dropbox.com/sh/qsps5bhz8v020o9/AAAkyzALX76aWAOc363a7mgpa/resources?dl=0&lst=) of the standard tech tree. The base cost for any particular tech is determined by this formula.
+    5 * Level^3 + 25 * Level^2 + 20 * KnownTechs
 
-    5 * Level^3 + 75 * Level
-
-When `cheap_early_tech` is enabled, the formula changes to the following.
-
-    5 * Level^3 + 25 * Level + 15 * KnownTechs
-
-Here are the base costs without early tech adjustment for standard maps.
+Here are the base costs without tech count adjustment for standard maps.
 
 | Level | Labs  |
 |-------|-------|
-|     1 |    80 |
-|     2 |   190 |
+|     1 |    30 |
+|     2 |   140 |
 |     3 |   360 |
-|     4 |   620 |
-|     5 |  1000 |
-|     6 |  1530 |
-|     7 |  2240 |
-|     8 |  3160 |
-|     9 |  4320 |
-|    10 |  5750 |
-|    11 |  7480 |
-|    12 |  9540 |
-|    13 | 11960 |
-|    14 | 14770 |
-|    15 | 18000 |
-|    16 | 21680 |
+|     4 |   720 |
+|     5 |  1250 |
+|     6 |  1980 |
+|     7 |  2940 |
+|     8 |  4160 |
+|     9 |  5670 |
+|    10 |  7500 |
+|    11 |  9680 |
+|    12 | 12240 |
+|    13 | 15210 |
+|    14 | 18620 |
+|    15 | 22500 |
+|    16 | 26880 |
 
 The idea here is that level 1-3 costs stay relatively modest and the big cost increases should begin from level 4 onwards.
 This feature is also designed to work with `counter_espionage` option. Keeping the infiltration active can provide notable discounts for researching new techs if they can't be acquired by using probe teams.
 
 After calculating the base cost, it is multiplied by all of the following factors.
 
+* The first 10 techs discovered by the faction are discounted with the modifier decreasing for every new tech gained. Every faction starting tech counts against this limit.
 * For AI factions, `tech_cost_factor` scales the cost for each difficulty level, e.g. setting value 84 equals 84% of human cost.
 * Multiply by the square root of the map size divided by the square root of a standard map size (56).
 * Multiply by faction specific TECHCOST modifier (higher values means slower progress).
 * Divide by Technology Discovery Rate set in alphax.txt (higher values means faster progress).
 * If Tech Stagnation is enabled, the cost is doubled unless a different rate is set in the options.
-* Count every other faction with commlink to the current faction who has the tech, while allied or infiltrated factions count twice. Discount 5% for every point in this value. Maximum allowed discount from this step is 30%. Only infiltration gained using probe teams counts for the purposes of extra discount, the Empath Guild or Planetary Governor status is ignored in this step.
+* Count every other faction with commlink to the current faction who has the tech, while allied or infiltrated factions count twice. Discount 5% for every point in this value. Maximum allowed discount from this step is 30%. Only infiltration gained by probe or pact counts for the purposes of extra discount, the Empath Guild or Planetary Governor status is ignored in this step.
 
 The final cost calculated by this formula is visible in the F2 status screen after the label "TECH COST". Note that the social engineering RESEARCH rating does not affect this number. Instead it changes "TECH PER TURN" value displayed on the same screen.
 
@@ -295,7 +295,7 @@ These edits will introduce fairly minimal differences to the vanilla game mechan
 4. WorldBuilder is modified to produce bigger continents, less tiny islands, more rivers and ocean shelf on random maps.
 5. Large map size is increased to 50x100. Previous value was nearly the same as a standard map.
 6. Descriptions of various configuration values have been updated to reflect their actual meaning.
-7. Add new predefined units Trance Scout Patrol and Police Garrison.
+7. Add new predefined units Trance Infantry, Police Garrison and Drop Colony Pod.
 8. Plasma Shard weapon strength is raised to 14.
 9. Secret project priorities are adjusted for the AI to start important projects first.
 10. Chopper range is reduced to 8 (fission reactor).
@@ -303,6 +303,7 @@ These edits will introduce fairly minimal differences to the vanilla game mechan
 12. Crawler, Needlejet, Chopper and Gravship chassis costs are slightly increased overall. This results in about 10 mineral increase for most prototypes. For example the default Supply Crawler prototype costs 40 minerals.
 13. When using SMAC in SMACX mod, the documentation displayed in the game will contain additional information about game engine limitations, and many bugs are marked with KNOWN BUG tag.
 14. The amount of techs that grant automatic morale boosts for probe teams is reduced from five to two. These techs are now Pre-Sentient Algorithms and Digital Sentience. This makes it much harder to build elite-level probe teams.
+15. Cost factor for Artillery special ability is changed to "increases with speed value" instead of "armor+speed value". It is also possible to add Artillery on ships to increase their range when `long_range_artillery` is enabled.
 
 
 SMAC in SMACX mod
@@ -320,9 +321,11 @@ Thinker also adds support for custom factions that are not aliens while using th
 
 Installing custom factions
 ==========================
-First any downloaded faction txt and pcx files have to be extracted to the main game folder. There should not be any need to overwrite files unless replacing factions in the base game. Note that even when using smac_only mode, the definitions have to be extracted to the main game folder since the same files are used in both game modes. The faction files must not be placed in any subfolder under the main game folder.
+First any downloaded faction txt and pcx files have to be extracted to the main game folder. There should not be any need to overwrite files unless replacing factions in the base game.
+Note that even when using smac_only mode, the factions have to be extracted to the main game folder since the same files are used in both game modes. The faction files must not be placed in any subfolder under the main game folder.
 
-To install the factions on the game startup menu, they need to added in `alphax.txt` in the default expansion or `smac_mod/alphax.txt` when using smac_only mode. Take note of the required faction definition .txt files and add them into the `#CUSTOMFACTIONS` section without .txt suffix. For example to enable the two hidden factions in the base game, edit the section like below.
+To install the factions on the game startup menu, they need to be added in `alphax.txt` in the default expansion or `smac_mod/alphax.txt` when using smac_only mode.
+Take note of the required faction definition .txt files and add them into the `#CUSTOMFACTIONS` section without .txt suffix. For example, to enable the two hidden factions in the base game, edit the section like below.
 
     #CUSTOMFACTIONS
     BRIAN, BRIAN
@@ -357,9 +360,8 @@ Currently the features listed here may not be fully supported or may have issues
 3. Faction selection dialog in the game setup is limited to showing only the first 24 factions even if installed factions in alphax.txt exceed this number.
 4. Most custom settings in "Special Scenario Rules" should be supported even when starting new random maps. However these rules may cause inconsistent behaviour when used from the main menu: `No native life--fungus, mind worms, Planet, etc`, `Force current difficulty level`, and `Force player to play current faction`.
 5. While `collateral_damage_value` is set to 0, the game might still display messages about collateral damage being inflicted on units on the stack, but none of them will actually take any damage.
-6. Maximum supported map size by Thinker is 256x256. This is a compile time constant, but it is also the largest map that the game interface will allow selecting.
-7. DirectDraw mode is not supported while using thinker.exe launcher. In this case the game may fail to start properly unless `DirectDraw=0` config option is used.
-8. In rare cases needlejets that are set to automated air defense may disappear after ending their turn outside the base. This should not happen if the units are moved manually.
+6. DirectDraw mode is not supported while using thinker.exe launcher. In this case the game may fail to start properly unless `DirectDraw=0` config option is used.
+7. In rare cases needlejets that are set to automated air defense may disappear after ending their turn outside the base. This should not happen if the units are moved manually.
 
 
 Other patches included
@@ -367,8 +369,8 @@ Other patches included
 This list covers the game engine patches used by Thinker that are not included in Scient's Patch. These patches are all enabled by default.
 If the line mentions a config variable name in parentheses, the patch can be optionally disabled by adding `config_variable=0` in thinker.ini.
 
-1. Base governors of all factions will now prefer to work borehole tiles instead of always emphasizing food production. The patch makes governors assume borehole tiles produce 1 food but this will not affect the actual nutrient intake or anything else beyond tile selection.
-2. Make sure the game engine can read movie settings from "movlistx.txt" while using smac_only mode.
+1. Modify governor worker allocation to better take into account any psych-related issues and convert workers into specialists as needed. Worker tile selection is improved to emphasize high-yielding tiles such as boreholes.
+2. Governor is able to choose from multiple specialist types based on social engineering choices and various factors. The default specialist type chosen by the game has less emphasis on psych compared to the original version.
 3. Fix issue where attacking other satellites doesn't work in Orbital Attack View when smac_only is activated.
 4. Fix engine rendering issue where ocean fungus tiles displayed inconsistent graphics compared to the adjacent land fungus tiles.
 5. Fix game showing redundant "rainfall patterns have been altered" messages when these events are caused by other factions.
@@ -383,7 +385,7 @@ If the line mentions a config variable name in parentheses, the patch can be opt
 14. Fix visual bug where population icons in base window would randomly switch their type when clicking on them.
 15. Patch AIs to initiate much less diplomacy dialogs when the player captures their bases. Previously this happened at least once for every turn the AI loses any bases and would repeat the same dialog every time if the player didn't agree to the peace terms. The patch makes the initiation of dialog more dependent on random chance unless the AI would finally accept surrender terms.
 16. Patch genetic warfare probe team action to cause much less damage for any units defending the base. In vanilla game mechanics even one attack instantly inflicted almost 80% damage. In the patched version population loss mechanic is unaffected, but even multiple attacks should do substantially less damage for defender units.
-17. Patch terrain drawing engine to render more detailed tiles when zooming out from the default level instead of the blocky, less detailed versions on almost every zoom out level. Main menu setup screen will update the planet preview on all resolutions. Base window support tab will also render a zoomable terrain view that can be adjusted with the mousewheel (render_high_detail).
+17. Patch terrain drawing engine to render more detailed tiles when zooming out from the default level instead of the blocky, less detailed versions. Main menu setup screen will update the planet preview on all resolutions. Interlude and credits backgrounds are scaled on all resolutions. Base window support tab will also render a zoomable terrain view that can be adjusted with the mousewheel (render_high_detail).
 18. Modify multiplayer setup screen to use average values for each of the random map generator settings, instead of the highest possible like previously.
 19. Fix potential crash when a game is loaded after using Edit Map > Generate/Remove Fungus > No Fungus.
 20. Fix foreign base names being visible in unexplored tiles when issuing move to or patrol orders to the tiles.
@@ -415,14 +417,28 @@ If the line mentions a config variable name in parentheses, the patch can be opt
 46. Fix Mind Control issue when capturing bases that have non-allied units owned by a third faction inside them. In this case the units can't remain on the base tile and they are removed.
 47. Modify Mind Control probe action to only subvert units inside the base and not on adjacent tiles to balance for the relatively cheap cost for this action.
 48. Modify Total Thought Control probe action to not set silently "want revenge" or "shall betray" flags which usually made the AI sneak attack. This action can be still used to subvert bases without declaring war but it applies a notable diplomatic penalty between the factions.
+49. Base production picker will not show Paradise Garden as buildable if the base already has Punishment Sphere.
+50. Clinical Immortality provides one extra talent per base instead of two as mentioned in the manual.
+51. Fix issue where terrain detail display on the world map showed incorrect mineral output for aquatic factions.
+52. Fix base tile sometimes producing too much energy (up to 2 extra resources) when SE Economy value is between 3 and 4.
+53. Fix monolith energy to not be limited by tile yield restrictions in the early game. This limitation did not apply on monolith nutrients/minerals.
 
 
 Scient's patch
 ==============
 Thinker includes the binary patches from both [Scient's patch v2.0 and v2.1](https://github.com/DrazharLn/scient-unofficial-smacx-patch).
 The differences between these versions include only changes to the txt files to prevent the game from crashing when opening certain datalinks entries.
-Installing the modded txt files in the patch is purely optional, and Thinker does not include those files by default.
-The following fixes from Scient's patch are automatically applied at game startup.
+
+Thinker also includes the following non-engine fixes from Scient's patch for specific user interface issues. These labels listed below are redirected from other script files to modmenu.txt based on `script_label` config options.
+Installing the other modified files provided by Scient's patch (such as wav files) is purely optional, and Thinker does not include those files by default since it would require overwriting files in the base game.
+
+1. [BUG] Needlejet "DATA" edit window via scenario editor wouldn't render properly making it so you couldn't edit the stats. (EDITVEH2A)
+2. [BUG] When attempting to build a sea base inside another faction's territorial waters, you were supposed to receive warning messages that were mislabeled. (TERRTREATY2, TERRTRUCE2)
+3. [BUG] Added a new entry that was missing when you attempted to use "B" or "b" shortcuts with a non-combat unit that didn't have a "Colony Pod". (NEEDCOLONISTS)
+4. [BUG] Added new entries that were missing in conjunction with an engine fix for when "retool strictness" in alpha/x.txt is set to "never free". (RETOOLPENALTY3, RETOOLPENALTY3A)
+5. [BUG][SMAX] When attempting to terraform an ocean square other than shelf, aquatic factions (Nautilus Pirates) were supposed to receive a warning message that was mislabeled. (NEEDADVECOENG)
+
+The following binary fixes from Scient's patch are automatically applied at game startup.
 
 1.  [BUG] If a faction's cumulative PROBE value is greater than 3 (SE morale, covert ops center) it is possible to "mind control" their bases when they should be immune. If the University uses SE Knowledge putting PROBE value down to -4, it would act as if it were 0 erroneously increasing "mind control" costs. After patch, PROBE values greater than 3 will always be immune to regular probes and values less than -2 will be treated as if they were -2.
 2.  [CRASH] It is possible usually on larger maps that scrambling air interceptors would cause the game to crash. Even when the game didn't crash incorrect altitude values were being used in checks. Both of these have been fixed.

@@ -4,6 +4,7 @@
 #include <time.h>
 #include <vector>
 #include <map>
+#include <regex>
 #include "main.h"
 #include "wtp_terranx.h"
 #include "wtp_mod.h"
@@ -23,12 +24,26 @@ void Profile::start()
 		this->startTime = clock();
 	}
 }
+void Profile::pause()
+{
+	if (DEBUG)
+	{
+		this->totalTime += clock() - this->startTime;
+	}
+}
+void Profile::resume()
+{
+	if (DEBUG)
+	{
+		this->startTime = clock();
+	}
+}
 void Profile::stop()
 {
 	if (DEBUG)
 	{
-		this->executionCount++;
 		this->totalTime += clock() - this->startTime;
+		this->executionCount++;
 	}
 }
 int Profile::getCount()
@@ -40,25 +55,6 @@ double Profile::getTime()
 	return (double)this->totalTime / (double)CLOCKS_PER_SEC;
 }
 std::map<std::string, Profile> executionProfiles;
-
-void profileFunction(const std::string &name, void (*f)())
-{
-	if (DEBUG)
-	{
-		executionProfiles[name].start();
-		f();
-		executionProfiles[name].stop();
-	}
-	else
-	{
-		f();
-	}
-
-}
-
-// player setup helper variable
-
-int balanceFactionId = -1;
 
 // storage variables for modified odds dialog
 
@@ -75,89 +71,61 @@ int bomberAttacksInterceptorDefenderVehicleId = -1;
 int bomberAttacksInterceptorPass = 0;
 
 /*
-Modified code to read basic rules.
-*/
-__cdecl int wtp_mod_read_basic_rules()
-{
-    // run Thinker mod code
-
-    int value = mod_read_basic_rules();
-
-    // update rules
-
-    if (value == 0)
-    {
-        if (conf.magtube_movement_rate > 0)
-        {
-            // set road movement cost
-            conf.road_movement_cost = conf.magtube_movement_rate;
-            // set tube movement rate
-            Rules->move_rate_roads *= conf.magtube_movement_rate;
-
-        }
-
-    }
-
-    return value;
-
-}
-
-/*
 Combat calculation placeholder.
 All custom combat calculation goes here.
 */
-__cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId, int attackerOffenseValuePointer, int defenderStrengthPointer, int flags)
+__cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId, int attackerStrengthPointer, int defenderStrengthPointer, int flags)
 {
 //    debug
 //    (
-//        "mod_battle_compute(attackerVehicleId=%d, defenderVehicleId=%d, attackerOffenseValuePointer=%d, defenderStrengthPointer=%d, flags=%d)\n",
+//        "mod_battle_compute(attackerVehicleId=%d, defenderVehicleId=%d, attackerStrengthPointer=%d, defenderStrengthPointer=%d, flags=%d)\n",
 //        attackerVehicleId,
 //        defenderVehicleId,
-//        attackerOffenseValuePointer,
+//        attackerStrengthPointer,
 //        defenderStrengthPointer,
 //        flags
 //    )
 //    ;
 //
 	// get attacker/defender vehicle
-
+	
 	VEH *attackerVehicle = &Vehicles[attackerVehicleId];
 	VEH *defenderVehicle = &Vehicles[defenderVehicleId];
-
+	
 	// get attacker/defender unit
-
+	
 	UNIT *attackerUnit = &Units[attackerVehicle->unit_id];
 	UNIT *defenderUnit = &Units[defenderVehicle->unit_id];
-
+	
 	// get item values
-
+	
 	int attackerOffenseValue = getUnitOffenseValue(attackerVehicle->unit_id);
 	int defenderOffenseValue = getUnitOffenseValue(defenderVehicle->unit_id);
 	int attackerDefenseValue = getUnitDefenseValue(attackerVehicle->unit_id);
 	int defenderDefenseValue = getUnitDefenseValue(defenderVehicle->unit_id);
-
+	
 	// determine psi combat
-
+	
 	bool psiCombat = attackerOffenseValue < 0 || defenderDefenseValue < 0;
-
+	
 	// get vehicle unit speeds
-
-	int attackerUnitSpeed = unit_speed(attackerVehicle->unit_id);
-	int defenderUnitSpeed = unit_speed(defenderVehicle->unit_id);
-
+	
+	int attackerUnitSpeed = getUnitSpeed(attackerVehicle->faction_id, attackerVehicle->unit_id);
+	int defenderUnitSpeed = getUnitSpeed(defenderVehicle->faction_id, defenderVehicle->unit_id);
+	
 	// get combat map tile
-
+	
 	MAP *attackerMapTile = getVehicleMapTile(attackerVehicleId);
 	MAP *defenderMapTile = getVehicleMapTile(defenderVehicleId);
-
+	
 	// run original function
-
-	battle_compute(attackerVehicleId, defenderVehicleId, (int *)attackerOffenseValuePointer, (int *)defenderStrengthPointer, flags);
-
+	
+	battle_compute(attackerVehicleId, defenderVehicleId, (int *)attackerStrengthPointer, (int *)defenderStrengthPointer, flags);
+	
     // ----------------------------------------------------------------------------------------------------
     // conventional artillery duel uses weapon + armor value
     // ----------------------------------------------------------------------------------------------------
-
+	
     if
 	(
 		// artillery duel
@@ -171,16 +139,16 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	)
 	{
 		// artillery duelants use weapon + armor value
-
-		*(int *)attackerOffenseValuePointer = *(int *)attackerOffenseValuePointer * (attackerOffenseValue + attackerDefenseValue) / attackerOffenseValue;
+		
+		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * (attackerOffenseValue + attackerDefenseValue) / attackerOffenseValue;
 		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (defenderOffenseValue + defenderDefenseValue) / defenderOffenseValue;
-
+		
 	}
-
+	
     // ----------------------------------------------------------------------------------------------------
     // psi artillery duel uses base intrinsic bonus for attacker
     // ----------------------------------------------------------------------------------------------------
-
+	
     if
 	(
 		// artillery duel
@@ -191,33 +159,13 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		&& map_has_item(attackerMapTile, BIT_BASE_IN_TILE)
 	)
 	{
-		// modify attacker strength
-
-		*(int *)attackerOffenseValuePointer +=
-			(*(int *)attackerOffenseValuePointer) * Rules->combat_bonus_intrinsic_base_def / 100;
-
-		// add effect description
-
-		if (*tx_battle_compute_attacker_effect_count < 4)
-		{
-			strcpy
-			(
-				(*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count],
-				*(*tx_labels + LABEL_OFFSET_BASE)
-			);
-			(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] =
-				Rules->combat_bonus_intrinsic_base_def;
-
-			(*tx_battle_compute_attacker_effect_count)++;
-
-		}
-
+		addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
 	}
-
+	
     // ----------------------------------------------------------------------------------------------------
     // interceptor scramble fix
     // ----------------------------------------------------------------------------------------------------
-
+	
     if
 	(
 		// fix is enabled
@@ -243,179 +191,122 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	)
 	{
 		// attacker uses armor, not weapon
-
-		*(int *)attackerOffenseValuePointer = *(int *)attackerOffenseValuePointer * attackerDefenseValue / attackerOffenseValue;
-
+		
+		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * attackerDefenseValue / attackerOffenseValue;
+		
 		// defender strength is increased due to air superiority
-
+		
 		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (100 + Rules->combat_bonus_air_supr_vs_air) / 100;
-
+		
 		// add defender effect description
-
+		
 		if (*tx_battle_compute_defender_effect_count < 4)
 		{
 			strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_AIRTOAIR));
 			(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_bonus_air_supr_vs_air;
-
+			
 			(*tx_battle_compute_defender_effect_count)++;
-
+			
 		}
-
+		
 		// set interceptor global variables
-
+		
 		bomberAttacksInterceptor = true;
 		bomberAttacksInterceptorAttackerVehicleId = attackerVehicleId;
 		bomberAttacksInterceptorDefenderVehicleId = defenderVehicleId;
 		bomberAttacksInterceptorPass = 0;
-
+		
 	}
 	else
 	{
 		// clear interceptor global variables
-
+		
 		bomberAttacksInterceptor = false;
 		bomberAttacksInterceptorAttackerVehicleId = -1;
 		bomberAttacksInterceptorDefenderVehicleId = -1;
-
+		
 	}
-
+	
     // ----------------------------------------------------------------------------------------------------
     // PLANET combat bonus on defense
     // ----------------------------------------------------------------------------------------------------
-
+	
     if (conf.planet_defense_bonus)
     {
         // PLANET bonus applies to psi combat only
         // psi combat is triggered by either attacker negative weapon value or defender negative armor value
-
+		
         if (Weapon[Units[attackerVehicle->unit_id].weapon_id].offense_value < 0 || Armor[Units[defenderVehicle->unit_id].armor_id].defense_value < 0)
         {
             // get defender faction id
-
+			
             int defenderFactionId = Vehicles[defenderVehicleId].faction_id;
-
+			
 			// PLANET bonus applies to normal factions only
-
+			
             if (defenderFactionId > 0)
             {
                 // get defender planet rating at the beginning of the turn (not pending)
-
+				
                 int defenderPlanetRating = Factions[defenderFactionId].SE_planet;
-
+				
                 if (defenderPlanetRating != 0)
                 {
-                    // calculate defender psi combat bonus
-
-                    int defenderPsiCombatBonus = Rules->combat_psi_bonus_per_planet * defenderPlanetRating;
-
-                    // modify defender strength
-
-                    *(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)defenderPsiCombatBonus / 100.0));
-
-                    // add effect description
-
-                    if (*tx_battle_compute_defender_effect_count < 4)
-                    {
-                        strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_PLANET));
-                        (*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = defenderPsiCombatBonus;
-
-                        (*tx_battle_compute_defender_effect_count)++;
-
-                    }
-
+					addDefenderBonus(defenderStrengthPointer, Rules->combat_psi_bonus_per_planet * defenderPlanetRating, *(*tx_labels + LABEL_OFFSET_PLANET));
                 }
-
+				
             }
-
+			
         }
-
+		
     }
-
+	
     // ----------------------------------------------------------------------------------------------------
     // sensor
     // ----------------------------------------------------------------------------------------------------
-
+	
     // sensor bonus on attack
-
+	
     if (conf.combat_bonus_sensor_offense)
 	{
-		if
-		(
-			// either combat is on land or sensor bonus is applicable on ocean
-			(!is_ocean(defenderMapTile))
-			||
-			(is_ocean(defenderMapTile) && conf.combat_bonus_sensor_ocean)
-		)
+		// land or ocean with sensor allowed
+		
+		if (!is_ocean(defenderMapTile) || conf.combat_bonus_sensor_ocean)
 		{
-			// attacker is in range of friendly sensor and combat is happening on attacker territory
-
-			if
-			(
-				isWithinFriendlySensorRange(attackerVehicle->faction_id, defenderVehicle->x, defenderVehicle->y)
-				&&
-				defenderMapTile->owner == attackerVehicle->faction_id
-			)
+			// attacker is in range of friendly sensor and combat is happening on neutral/attacker territory
+			
+			if (isWithinFriendlySensorRange(attackerVehicle->faction_id, defenderMapTile))
 			{
-				// modify attacker strength
-
-				*(int *)attackerOffenseValuePointer = (int)round((double)(*(int *)attackerOffenseValuePointer) * (1.0 + (double)Rules->combat_defend_sensor / 100.0));
-
-				// add effect description
-
-				if (*tx_battle_compute_attacker_effect_count < 4)
-				{
-					strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], *(*tx_labels + LABEL_OFFSET_SENSOR));
-					(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = Rules->combat_defend_sensor;
-
-					(*tx_battle_compute_attacker_effect_count)++;
-
-				}
-
+				addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 			}
-
+			
 		}
-
+		
 	}
-
+	
     // sensor bonus on defense
-
+	
 	{
-		if
-		(
-			// ocean combat only
-			// land defence is already covered by vanilla
-			(is_ocean(defenderMapTile) && conf.combat_bonus_sensor_ocean)
-		)
+		// ocean combat only
+		// land defence is already covered by vanilla
+		
+		if (is_ocean(defenderMapTile) && conf.combat_bonus_sensor_ocean)
 		{
 			// defender is in range of friendly sensor
-
-			if (isWithinFriendlySensorRange(defenderVehicle->faction_id, defenderVehicle->x, defenderVehicle->y))
+			
+			if (isWithinFriendlySensorRange(defenderVehicle->faction_id, defenderMapTile))
 			{
-				// modify defender strength
-
-				*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)Rules->combat_defend_sensor / 100.0));
-
-				// add effect description
-
-				if (*tx_battle_compute_defender_effect_count < 4)
-				{
-					strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_SENSOR));
-					(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_defend_sensor;
-
-					(*tx_battle_compute_defender_effect_count)++;
-
-				}
-
+				addDefenderBonus(defenderStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 			}
-
+			
 		}
-
+		
 	}
-
+	
     // ----------------------------------------------------------------------------------------------------
     // attacking along the road
     // ----------------------------------------------------------------------------------------------------
-
+	
     if
 	(
 		// not psi combat
@@ -434,27 +325,13 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		attackerUnitSpeed > defenderUnitSpeed
 	)
 	{
-		// modify attacker strength
-
-		*(int *)attackerOffenseValuePointer += (*(int *)attackerOffenseValuePointer * conf.combat_bonus_attacking_along_road) / 100;
-
-		// add effect description
-
-		if (*tx_battle_compute_attacker_effect_count < 4)
-		{
-			strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], *(*tx_labels + LABEL_OFFSET_ROAD_ATTACK));
-			(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = conf.combat_bonus_attacking_along_road;
-
-			(*tx_battle_compute_attacker_effect_count)++;
-
-		}
-
+		addAttackerBonus(attackerStrengthPointer, conf.combat_bonus_attacking_along_road, *(*tx_labels + LABEL_OFFSET_ROAD_ATTACK));
 	}
-
+	
     // ----------------------------------------------------------------------------------------------------
     // artillery duel uses all combat bonuses
     // ----------------------------------------------------------------------------------------------------
-
+	
     if
 	(
 		// artillery duel
@@ -464,168 +341,102 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		conf.artillery_duel_uses_bonuses
 	)
 	{
-		// add sensor bonus on land defense
-
-		if
-		(
-			// land combat tile
-			!is_ocean(defenderMapTile)
-			&&
-			// defender is within own sensor range
-			isWithinFriendlySensorRange(defenderVehicle->faction_id, defenderVehicle->x, defenderVehicle->y)
-		)
+		// sensor offense bonus
+		
+		if (conf.combat_bonus_sensor_offense && (!is_ocean(defenderMapTile) || conf.combat_bonus_sensor_ocean) && isWithinFriendlySensorRange(attackerVehicle->faction_id, defenderMapTile))
 		{
-			// modify defender strength
-
-			*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (1.0 + (double)Rules->combat_defend_sensor / 100.0));
-
-			// add effect description
-
-			if (*tx_battle_compute_defender_effect_count < 4)
-			{
-				strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_SENSOR));
-				(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_defend_sensor;
-
-				(*tx_battle_compute_defender_effect_count)++;
-
-			}
-
+			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
-
+		
+		// sensor defense bonus
+		
+		if ((!is_ocean(attackerMapTile) || conf.combat_bonus_sensor_ocean) && isWithinFriendlySensorRange(attackerVehicle->faction_id, attackerMapTile))
+		{
+			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
+		}
+		
 		// add base defense bonuses
-
-		if
-		(
-			// defender is in base
-			map_has_item(defenderMapTile, BIT_BASE_IN_TILE)
-		)
+		
+		int defenderBaseId = base_at(defenderVehicle->x, defenderVehicle->y);
+		
+		if (defenderBaseId != -1)
 		{
 			if (psiCombat)
 			{
-				// psi combat
-
-				// base intrinsic defense
-
-				*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def));
-
-				// add effect description
-
-				if (*tx_battle_compute_defender_effect_count < 4)
-				{
-					strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_BASE));
-					(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_bonus_intrinsic_base_def;
-
-					(*tx_battle_compute_defender_effect_count)++;
-
-				}
-
+				addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
 			}
 			else
 			{
-				// conventional combat
-
-				// search base
-
-				int defenderBaseId = -1;
-
-				for (int baseId = 0; baseId < *BaseCount; baseId++)
+				// assign label and multiplier
+				
+				const char *label = nullptr;
+				int multiplier = 2;
+				
+				switch (attackerUnit->triad())
 				{
-					BASE *base = &(Bases[baseId]);
-
-					if (base->x == defenderVehicle->x && base->y == defenderVehicle->y)
+				case TRIAD_LAND:
+					if (isBaseHasFacility(defenderBaseId, FAC_PERIMETER_DEFENSE))
 					{
-						defenderBaseId = baseId;
-						break;
+						label = *(*tx_labels + LABEL_OFFSET_PERIMETER);
+						multiplier += conf.perimeter_defense_bonus;
 					}
-
+					break;
+					
+				case TRIAD_SEA:
+					if (isBaseHasFacility(defenderBaseId, FAC_NAVAL_YARD))
+					{
+						label = LABEL_NAVAL_YARD;
+						multiplier += conf.perimeter_defense_bonus;
+					}
+					break;
+					
+				case TRIAD_AIR:
+					if (isBaseHasFacility(defenderBaseId, FAC_AEROSPACE_COMPLEX))
+					{
+						label = LABEL_AEROSPACE_COMPLEX;
+						multiplier += conf.perimeter_defense_bonus;
+					}
+					break;
+					
 				}
-
-				if (defenderBaseId != -1)
+				
+				if (isBaseHasFacility(defenderBaseId, FAC_TACHYON_FIELD))
 				{
-					// assign label and multiplier
-
-					const char *label = nullptr;
-					int multiplier = 2;
-
-					switch (attackerUnit->triad())
-					{
-					case TRIAD_LAND:
-						if (isBaseHasFacility(defenderBaseId, FAC_PERIMETER_DEFENSE))
-						{
-							label = *(*tx_labels + LABEL_OFFSET_PERIMETER);
-							multiplier += conf.perimeter_defense_bonus;
-						}
-						break;
-
-					case TRIAD_SEA:
-						if (isBaseHasFacility(defenderBaseId, FAC_NAVAL_YARD))
-						{
-							label = LABEL_NAVAL_YARD;
-							multiplier += conf.perimeter_defense_bonus;
-						}
-						break;
-
-					case TRIAD_AIR:
-						if (isBaseHasFacility(defenderBaseId, FAC_AEROSPACE_COMPLEX))
-						{
-							label = LABEL_AEROSPACE_COMPLEX;
-							multiplier += conf.perimeter_defense_bonus;
-						}
-						break;
-
-					}
-
-					if (isBaseHasFacility(defenderBaseId, FAC_TACHYON_FIELD))
-					{
-						label = *(*tx_labels + LABEL_OFFSET_TACHYON);
-						multiplier += conf.tachyon_field_bonus;
-					}
-
-					if (label == nullptr)
-					{
-						// base intrinsic defense
-
-						*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def));
-
-						// add effect description
-
-						if (*tx_battle_compute_defender_effect_count < 4)
-						{
-							strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_BASE));
-							(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_bonus_intrinsic_base_def;
-
-							(*tx_battle_compute_defender_effect_count)++;
-
-						}
-
-					}
-					else
-					{
-						// base defensive facility
-
-						*(int *)defenderStrengthPointer = (int)round((double)(*(int *)defenderStrengthPointer) * (double)multiplier / 2.0);
-
-						// add effect description
-
-						if (*tx_battle_compute_defender_effect_count < 4)
-						{
-							strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label);
-							(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = (multiplier - 2) * 50;
-
-							(*tx_battle_compute_defender_effect_count)++;
-
-						}
-
-					}
-
+					label = *(*tx_labels + LABEL_OFFSET_TACHYON);
+					multiplier += conf.tachyon_field_bonus;
 				}
-
+				
+				if (label == nullptr)
+				{
+					// base intrinsic defense
+					addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
+				}
+				else
+				{
+					// base defensive facility
+					addDefenderBonus(defenderStrengthPointer, (multiplier - 2) * 50, label);
+				}
+				
 			}
-
+			
 		}
-
+		
 	}
-
+	
+    // ----------------------------------------------------------------------------------------------------
+    // conventional power contributes to psi combat
+    // ----------------------------------------------------------------------------------------------------
+	
+    if (psiCombat && conf.conventional_power_psi_percentage > 0 && attackerUnit->offense_value() > 0)
+	{
+		addAttackerBonus(attackerStrengthPointer, conf.conventional_power_psi_percentage * attackerUnit->offense_value(), LABEL_WEAPON);
+	}
+	
+    if (psiCombat && conf.conventional_power_psi_percentage > 0 && defenderUnit->defense_value() > 0)
+	{
+		addDefenderBonus(defenderStrengthPointer, conf.conventional_power_psi_percentage * defenderUnit->defense_value(), LABEL_ARMOR);
+	}
+	
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
 //
@@ -907,59 +718,6 @@ __cdecl int wtp_mod_proto_cost(int chassis_id, int weapon_id, int armor_id, int 
     ;
 
     return cost;
-
-}
-
-__cdecl int wtp_mod_upgrade_cost(int faction_id, int new_unit_id, int old_unit_id)
-{
-    // get old unit cost
-
-    int old_unit_cost = Units[old_unit_id].cost;
-
-    // get new unit cost
-
-    int new_unit_cost = Units[new_unit_id].cost;
-
-    // double new unit cost if not prototyped
-
-    if ((Units[new_unit_id].unit_flags & 0x4) == 0)
-    {
-        new_unit_cost *= 2;
-    }
-
-    // calculate cost difference
-
-    int cost_difference = new_unit_cost - old_unit_cost;
-
-    // calculate base upgrade cost
-    // x4 if positive
-    // x2 if negative
-
-    int upgrade_cost = cost_difference * (cost_difference >= 0 ? 4 : 2);
-
-    // halve upgrade cost if positive and faction possesses The Nano Factory
-
-    if (upgrade_cost > 0)
-    {
-        // get The Nano Factory base id
-
-        int nano_factory_base_id = SecretProjects[0x16];
-
-        // get The Nano Factory faction id
-
-        if (nano_factory_base_id >= 0)
-        {
-            if (Bases[nano_factory_base_id].faction_id == faction_id)
-            {
-                upgrade_cost /= 2;
-
-            }
-
-        }
-
-    }
-
-    return upgrade_cost;
 
 }
 
@@ -1594,14 +1352,11 @@ bool isWithinBaseRadius(int x1, int y1, int x2, int y2)
 
 }
 
-/*
-Rolls artillery damage.
-*/
-__cdecl int roll_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower)
+__cdecl int modified_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower)
 {
     debug
     (
-        "roll_artillery_damage(attacker_strength=%d, defender_strength=%d, attacker_firepower=%d)\n",
+        "modified_artillery_damage(attacker_strength=%d, defender_strength=%d, attacker_firepower=%d)\n",
         attacker_strength,
         defender_strength,
         attacker_firepower
@@ -1649,84 +1404,74 @@ SE accumulated resource adjustment
 */
 __cdecl int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5)
 {
-    // get faction
-
-    Faction* faction = &Factions[faction_id];
-
-    // get old ratings
-
-    int SE_growth_pending_old = faction->SE_growth_pending;
-    int SE_industry_pending_old = faction->SE_industry_pending;
-
-    // execute original code
-
-    // use modified function instead of original code
+	// get old cost factors
+	
+	int nutrient_cost_factor_old = mod_cost_factor(faction_id, RSC_NUTRIENT, -1);
+	int mineral_cost_factor_old = mod_cost_factor(faction_id, RSC_MINERAL, -1);
+	
+	// execute original code
+	
+	// use modified function instead of original code
 //	int returnValue = tx_set_se_on_dialog_close(a1, a2, faction_id, a4, a5);
-    int returnValue = modifiedSocialCalc(a1, a2, faction_id, a4, a5);
-
-    // get new ratings
-
-    int SE_growth_pending_new = faction->SE_growth_pending;
-    int SE_industry_pending_new = faction->SE_industry_pending;
-
-    debug
-    (
-        "se_accumulated_resource_adjustment: faction_id=%d, SE_growth_pending: %+d -> %+d, SE_industry_pending: %+d -> %+d\n",
-        faction_id,
-        SE_growth_pending_old,
-        SE_growth_pending_new,
-        SE_industry_pending_old,
-        SE_industry_pending_new
-    )
-    ;
-
-    // adjust nutrients
-
-    if (SE_growth_pending_new != SE_growth_pending_old)
-    {
-        int row_size_old = 10 - SE_growth_pending_old;
-        int row_size_new = 10 - SE_growth_pending_new;
-
-        double conversion_ratio = (double)row_size_new / (double)row_size_old;
-
-        for (int i = 0; i < *BaseCount; i++)
-        {
-            BASE* base = &Bases[i];
-
-            if (base->faction_id == faction_id)
-            {
-                base->nutrients_accumulated = (int)round((double)base->nutrients_accumulated * conversion_ratio);
-            }
-
-        }
-
-    }
-
-    // adjust minerals
-
-    if (SE_industry_pending_new != SE_industry_pending_old)
-    {
-        int row_size_old = Rules->nutrient_cost_multi - SE_industry_pending_old;
-        int row_size_new = Rules->nutrient_cost_multi - SE_industry_pending_new;
-
-        double conversion_ratio = (double)row_size_new / (double)row_size_old;
-
-        for (int i = 0; i < *BaseCount; i++)
-        {
-            BASE* base = &Bases[i];
-
-            if (base->faction_id == faction_id)
-            {
-                base->minerals_accumulated = (int)round((double)base->minerals_accumulated * conversion_ratio);
-                base->minerals_accumulated_2 = (int)round((double)base->minerals_accumulated_2 * conversion_ratio);
-            }
-
-        }
-
-    }
-
-    return returnValue;
-
+	int returnValue = modifiedSocialCalc(a1, a2, faction_id, a4, a5);
+	
+	// get new cost factors
+	
+	int nutrient_cost_factor_new = mod_cost_factor(faction_id, RSC_NUTRIENT, -1);
+	int mineral_cost_factor_new = mod_cost_factor(faction_id, RSC_MINERAL, -1);
+	
+	debug
+	(
+		"se_accumulated_resource_adjustment: faction_id=%d, nutrient_cost_factor: %+d -> %+d, mineral_cost_factor_new: %+d -> %+d\n"
+		, faction_id
+		, nutrient_cost_factor_old
+		, nutrient_cost_factor_new
+		, mineral_cost_factor_old
+		, mineral_cost_factor_new
+	)
+	;
+	
+	// human faction
+	
+	if (!is_human(faction_id))
+		return returnValue;
+	
+	// adjust nutrients
+	
+	if (nutrient_cost_factor_new != nutrient_cost_factor_old)
+	{
+		for (int baseId = 0; baseId < *BaseCount; baseId++)
+		{
+			BASE* base = &Bases[baseId];
+			
+			if (base->faction_id != faction_id)
+				continue;
+			
+			base->nutrients_accumulated = (base->nutrients_accumulated * nutrient_cost_factor_new + ((nutrient_cost_factor_old - 1) / 2)) / nutrient_cost_factor_old;
+			
+		}
+		
+	}
+	
+	// adjust minerals
+	
+	if (mineral_cost_factor_new != mineral_cost_factor_old)
+	{
+		for (int baseId = 0; baseId < *BaseCount; baseId++)
+		{
+			BASE* base = &Bases[baseId];
+			
+			if (base->faction_id != faction_id)
+				continue;
+			
+			base->minerals_accumulated = (base->minerals_accumulated * mineral_cost_factor_new + ((mineral_cost_factor_old - 1) / 2)) / mineral_cost_factor_old;
+			
+		}
+		
+	}
+	
+	return returnValue;
+	
 }
 
 /*
@@ -1735,119 +1480,55 @@ hex cost
 __cdecl int wtp_mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int speed1)
 {
     // execute original/Thinker code
-
+	
     int value = mod_hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, speed1);
-
+	
     // [vanilla bug] coordinates sometimes computed incorrectly
     // this is an attempt to make program at least not fall
-
+	
     if (((from_x ^ from_y) & 1) == 1)
 	{
 		from_x ^= 1;
 	}
-
+	
     if (((to_x ^ to_y) & 1) == 1)
 	{
 		to_x ^= 1;
 	}
-
-    // correct road/tube movement rate
-
-    if (conf.magtube_movement_rate > 0)
-    {
-        MAP* square_from = mapsq(from_x, from_y);
-        MAP* square_to = mapsq(to_x, to_y);
-
-        if (square_from && square_to)
-        {
-            // set movement cost along tube to 1
-            // base implies tube in its tile
-            if
-            (
-                (square_from->items & (BIT_BASE_IN_TILE | BIT_MAGTUBE))
-                &&
-                (square_to->items & (BIT_BASE_IN_TILE | BIT_MAGTUBE))
-            )
-            {
-                value = 1;
-            }
-            // set road movement cost
-            else if (value == 1)
-            {
-                value = conf.road_movement_cost;
-            }
-
-        }
-
-    }
-
-    // right of passage agreement
-
-    if (conf.right_of_passage_agreement > 0)
-    {
-        MAP* square_from = mapsq(from_x, from_y);
-        MAP* square_to = mapsq(to_x, to_y);
-
-        if (square_from && square_to)
-        {
-        	// check if we don't have right of passage
-
-        	if
-			(
-				(
-					square_from->owner != -1 && square_from->owner != faction_id
-					&&
-					(
-						(conf.right_of_passage_agreement == 1 && isVendetta(faction_id, square_from->owner))
-						||
-						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_from->owner))
-					)
-				)
-				||
-				(
-					square_to->owner != -1 && square_to->owner != faction_id
-					&&
-					(
-						(conf.right_of_passage_agreement == 1 && isVendetta(faction_id, square_to->owner))
-						||
-						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, square_to->owner))
-					)
-				)
-			)
-			{
-				// get road/tube improvements
-
-				int squareFromRoadTube = square_from->items & (BIT_ROAD | BIT_MAGTUBE);
-				int squareToRoadTube = square_to->items & (BIT_ROAD | BIT_MAGTUBE);
-
-				// at least one tile has road/tube
-
-				if (squareFromRoadTube != 0 || squareToRoadTube != 0)
-				{
-					// remove road/tube from the map
-
-					square_from->items &= ~(BIT_ROAD | BIT_MAGTUBE);
-					square_to->items &= ~(BIT_ROAD | BIT_MAGTUBE);
-
-					// recalculate value without road/tube
-
-					value = hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, speed1);
-
-					// restore road/tube to the map
-
-					square_from->items |= squareFromRoadTube;
-					square_to->items |= squareToRoadTube;
-
-				}
-
-			}
-
-        }
-
-    }
-
+	
+	// implemented in Thinker
+//    // correct road/tube movement rate
+//	
+//    if (conf.magtube_movement_rate > 0)
+//    {
+//        MAP* square_from = mapsq(from_x, from_y);
+//        MAP* square_to = mapsq(to_x, to_y);
+//		
+//        if (square_from && square_to)
+//        {
+//            // set movement cost along tube to 1
+//            // base implies tube in its tile
+//            if
+//            (
+//                (square_from->items & (BIT_BASE_IN_TILE | BIT_MAGTUBE))
+//                &&
+//                (square_to->items & (BIT_BASE_IN_TILE | BIT_MAGTUBE))
+//            )
+//            {
+//                value = 1;
+//            }
+//            // set road movement cost
+//            else if (value == 1)
+//            {
+//                value = conf.road_movement_cost;
+//            }
+//			
+//        }
+//		
+//    }
+	
     return value;
-
+	
 }
 
 /*
@@ -1980,19 +1661,19 @@ int wtp_tech_cost(int fac, int tech)
 
 }
 
-__cdecl int sayBase(char *buffer, int id)
+__cdecl int sayBase(char *buffer, int baseId)
 {
 	// execute original code
 
-	int returnValue = tx_say_base(buffer, id);
+	int returnValue = tx_say_base(buffer, baseId);
 
 	// get base
 
-	BASE *base = &(Bases[id]);
+	BASE *base = &(Bases[baseId]);
 
 	// get base population limit
 
-	int populationLimit = getBasePopulationLimit(base);
+	int populationLimit = getBasePopulationLimit(baseId);
 
 	// generate symbol
 
@@ -2006,60 +1687,6 @@ __cdecl int sayBase(char *buffer, int id)
 	// return original value
 
 	return returnValue;
-
-}
-
-bool isBaseFacilityBuilt(int baseId, int facilityId)
-{
-	return (Bases[baseId].facilities_built[facilityId / 8]) & (1 << (facilityId % 8));
-}
-
-bool isBaseFacilityBuilt(BASE *base, int facilityId)
-{
-	return (base->facilities_built[facilityId / 8]) & (1 << (facilityId % 8));
-}
-
-int getBasePopulationLimit(BASE *base)
-{
-    int pop_rule = MFactions[base->faction_id].rule_population;
-    int hab_complex_limit = Rules->pop_limit_wo_hab_complex - pop_rule;
-    int hab_dome_limit = Rules->pop_limit_wo_hab_dome - pop_rule;
-
-    bool habitationComplexBuilt = isBaseFacilityBuilt(base, FAC_HAB_COMPLEX);
-    bool habitationDomeBuilt = isBaseFacilityBuilt(base, FAC_HABITATION_DOME);
-
-    if (habitationDomeBuilt)
-	{
-		return -1;
-	}
-	else if (habitationComplexBuilt)
-	{
-		return hab_dome_limit;
-	}
-	else
-	{
-		return hab_complex_limit;
-	}
-
-}
-
-/*
-Return next unbuilt growth facility or -1 if there is no next available facility.
-*/
-int getnextAvailableGrowthFacility(BASE *base)
-{
-	if (!isBaseFacilityBuilt(base, FAC_HAB_COMPLEX))
-	{
-		return (has_tech(base->faction_id, Facility[FAC_HAB_COMPLEX].preq_tech) ? FAC_HAB_COMPLEX : -1);
-	}
-	else if (!isBaseFacilityBuilt(base, FAC_HABITATION_DOME))
-	{
-		return (has_tech(base->faction_id, Facility[FAC_HABITATION_DOME].preq_tech) ? FAC_HABITATION_DOME : -1);
-	}
-	else
-	{
-		return -1;
-	}
 
 }
 
@@ -2088,7 +1715,7 @@ __cdecl int baseInit(int factionId, int x, int y)
 	// The Planetary Transit System fix
 	// new base size is limited by average faction base size
 
-	if (isProjectBuilt(factionId, FAC_PLANETARY_TRANSIT_SYSTEM) && base->pop_size == 3)
+	if (isFactionHasProject(factionId, FAC_PLANETARY_TRANSIT_SYSTEM) && base->pop_size == 3)
 	{
 		// calculate average faction base size
 
@@ -2200,7 +1827,7 @@ __cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, in
 
 	if (conf.cloning_vats_se_growth != 0)
 	{
-		if (isProjectBuilt(factionId, FAC_CLONING_VATS))
+		if (isFactionHasProject(factionId, FAC_CLONING_VATS))
 		{
 			// calculate GROWTH rating output offset and create pointer to it
 
@@ -2403,59 +2030,6 @@ __cdecl int modifiedInefficiency(int energyIntake)
 
 }
 
-int __cdecl wtp_mod_setup_player(int factionId, int a2, int a3)
-{
-
-    // original/Thinker
-
-    mod_setup_player(factionId, a2, a3);
-
-    // rerun balance for late starting faction
-
-    if (a2 == -282)
-    {
-        // set balanceFactionId
-
-        balanceFactionId = factionId;
-
-        // run balance
-
-        tx_balance();
-
-        // clear balanceFactionId
-
-        balanceFactionId = -1;
-
-    }
-
-    // reset territory
-    // vanilla does not do it on player setup
-
-    if (factionId > 0 || !is_human(factionId))
-    {
-		modifiedResetTerritory();
-    }
-
-    return 0;
-
-}
-
-/*
-Wraps veh_init in balance to correctly generate number of colonies at start.
-*/
-__cdecl void modifiedVehInitInBalance(int unitId, int factionId, int x, int y)
-{
-	// do nothing for not target factions
-
-	if (balanceFactionId != -1 && factionId != balanceFactionId)
-		return;
-
-	// execute original code
-
-	veh_init(unitId, factionId, x, y);
-
-}
-
 void createFreeVehicles(int factionId)
 {
 	// find first faction vehicle location
@@ -2542,40 +2116,6 @@ int getLandUnitSpeedOnTubes(int unitId)
 
 }
 
-int getLandVehicleSpeedOnRoads(int id)
-{
-	int landVehicleSpeedOnRoads;
-
-	if (conf.magtube_movement_rate > 0)
-	{
-		landVehicleSpeedOnRoads = getVehicleSpeed(id) / conf.road_movement_cost;
-	}
-	else
-	{
-		landVehicleSpeedOnRoads = getVehicleSpeed(id);
-	}
-
-	return landVehicleSpeedOnRoads;
-
-}
-
-int getLandVehicleSpeedOnTubes(int id)
-{
-	int landVehicleSpeedOnTubes;
-
-	if (conf.magtube_movement_rate > 0)
-	{
-		landVehicleSpeedOnTubes = getVehicleSpeed(id);
-	}
-	else
-	{
-		landVehicleSpeedOnTubes = 1000;
-	}
-
-	return landVehicleSpeedOnTubes;
-
-}
-
 /*
 Overrides world_build.
 */
@@ -2636,32 +2176,81 @@ __cdecl void modifiedWorldBuild()
 
 }
 
-/*
+/**
 Calculates summary cost of all not prototyped components.
 */
 int calculateNotPrototypedComponentsCost(int chassisId, int weaponId, int armorId, int chassisPrototyped, int weaponPrototyped, int armorPrototyped)
 {
 	// summarize all non prototyped component costs
-
+	
 	int notPrototypedComponentsCost = 0;
-
+	
 	if (!chassisPrototyped)
 	{
 		notPrototypedComponentsCost += Chassis[chassisId].cost;
 	}
-
+	
 	if (!weaponPrototyped)
 	{
 		notPrototypedComponentsCost += Weapon[weaponId].cost;
 	}
-
+	
 	if (!armorPrototyped)
 	{
 		notPrototypedComponentsCost += Armor[armorId].cost;
 	}
-
+	
 	return notPrototypedComponentsCost;
+	
+}
 
+/**
+Calculates summary cost of all not prototyped components.
+Scans all faction units to see if components are already prototyped.
+*/
+int calculateNotPrototypedComponentsCost(int factionId, int chassisId, int weaponId, int armorId)
+{
+	int chassisPrototyped = 0;
+	int weaponPrototyped = 0;
+	int armorPrototyped = 0;
+	
+	for (int unitId : getFactionUnitIds(factionId, true, false))
+	{
+		UNIT *unit = getUnit(unitId);
+		
+		if (unit->chassis_id == chassisId)
+		{
+			chassisPrototyped = 1;
+		}
+		
+		if (unit->weapon_id == weaponId)
+		{
+			weaponPrototyped = 1;
+		}
+		
+		if (unit->armor_id == armorId)
+		{
+			armorPrototyped = 1;
+		}
+		
+	}
+	
+	return calculateNotPrototypedComponentsCost(chassisId, weaponId, armorId, chassisPrototyped, weaponPrototyped, armorPrototyped);
+	
+}
+
+int calculateNotPrototypedComponentsCost(int unitId)
+{
+	// all predesigned units are always prototyped
+	
+	if (unitId < MaxProtoFactionNum)
+		return 0;
+	
+	int factionId = unitId / MaxProtoFactionNum;
+	UNIT *unit = getUnit(unitId);
+	
+	return calculateNotPrototypedComponentsCost(factionId, unit->chassis_id, unit->weapon_id, unit->armor_id);
+	
 }
 
 /*
@@ -2780,22 +2369,6 @@ __cdecl int getCurrentBaseProductionMineralCost()
 
 }
 
-__cdecl void displayHurryCostScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer)
-{
-	// execute original function
-
-	tx_parse_string(input_string_pointer, output_string_pointer);
-
-	// get output string pointer
-
-	char *output = (char *)output_string_pointer;
-
-	// append information to string
-
-	sprintf(output + strlen(output), " (hurry cost is scaled to basic mineral cost multiplier: %d)", Rules->mineral_cost_multi);
-
-}
-
 /*
 Scales value to basic mineral cost multiplier.
 */
@@ -2816,48 +2389,6 @@ int scaleValueToBasicMinieralCostMultiplier(int factionId, int value)
 	// return value
 
 	return scaledValue;
-
-}
-
-__cdecl void displayPartialHurryCostToCompleteNextTurnInformation(int input_string_pointer, int output_string_pointer)
-{
-	// execute original function
-
-	tx_parse_string(input_string_pointer, output_string_pointer);
-
-	// apply additional information message only when flat hurry cost is enabled
-
-	if (!conf.flat_hurry_cost)
-		return;
-
-	// get output string pointer
-
-	char *output = (char *)output_string_pointer;
-
-	// append information to string
-
-	sprintf(output + strlen(output), " (minimal hurry cost to complete production next turn = %d)", getPartialHurryCostToCompleteNextTurn());
-
-}
-
-/*
-Calculates partial hurry cost to complete next turn.
-Applied to the current base.
-*/
-int getPartialHurryCostToCompleteNextTurn()
-{
-	// get current base
-
-	int baseId = *CurrentBaseID;
-	BASE *base = *CurrentBase;
-
-	// get minerals needed to hurry for next turn completion
-
-	int mineralsToHurry = getBaseMineralCost(baseId, base->queue_items[0]) - base->minerals_accumulated - base->mineral_surplus;
-
-	// calculate partial hurry cost
-
-	return getPartialFlatHurryCost(baseId, mineralsToHurry);
 
 }
 
@@ -3065,7 +2596,7 @@ __cdecl int modifiedInfiltrateDatalinksOptionTextGet()
 	{
 		// get number of devices
 
-		int infiltrationDeviceCount = getInfiltrationDeviceCount(*CurrentPlayerFaction, *g_PROBE_RFLAG_TARGET);
+		int infiltrationDeviceCount = getInfiltrationDeviceCount(*CurrentPlayerFaction, *g_PROBE_FACT_TARGET);
 
 		// convert pointer to char *
 
@@ -3093,107 +2624,6 @@ __cdecl void modifiedSetTreatyForInfiltrationExpiration(int initiatingFactionId,
 	// plant devices
 
 	setInfiltrationDeviceCount(initiatingFactionId, targetFactionId, conf.infiltration_devices);
-
-}
-
-/*
-Substitutes vanilla hurry cost with flat hurry cost.
-*/
-__cdecl int modifiedHurryCost()
-{
-	// get current base
-
-	int baseId = *CurrentBaseID;
-
-	// calculate flat hurry cost
-
-	return getFlatHurryCost(baseId);
-
-}
-
-/*
-Calculates flat hurry cost.
-Applies only when flat hurry cost is enabled.
-*/
-int getFlatHurryCost(int baseId)
-{
-	BASE *base = &(Bases[baseId]);
-
-	// apply only when flat hurry cost is enabled
-
-	if (!conf.flat_hurry_cost)
-		return 0;
-
-	// get hurry cost multiplier
-
-	int hurryCostMultiplier;
-
-	if (isBaseBuildingUnit(baseId))
-	{
-		hurryCostMultiplier = conf.flat_hurry_cost_multiplier_unit;
-	}
-	else if (isBaseBuildingFacility(baseId))
-	{
-		hurryCostMultiplier = conf.flat_hurry_cost_multiplier_facility;
-	}
-	else if (isBaseBuildingProject(baseId))
-	{
-		hurryCostMultiplier = conf.flat_hurry_cost_multiplier_project;
-	}
-	else
-	{
-		// should not happen
-		hurryCostMultiplier = 1;
-	}
-
-	// get production remaining minerals
-
-	int remainingMinerals = getRemainingMinerals(baseId);
-
-	// calculate hurry cost
-
-	int hurryCost = hurryCostMultiplier * remainingMinerals;
-
-	// scale value to mineral cost multiplier if configured
-
-	if (is_human(base->faction_id) && conf.fix_mineral_contribution)
-	{
-		hurryCost = scaleValueToBasicMinieralCostMultiplier(base->faction_id, hurryCost);
-	}
-
-	return hurryCost;
-
-}
-
-/*
-Calculates partial flat hurry cost.
-Applies only when flat hurry cost is enabled.
-*/
-int getPartialFlatHurryCost(int baseId, int minerals)
-{
-	// apply only when flat hurry cost is enabled
-
-	if (!conf.flat_hurry_cost)
-		return 0;
-
-	// get remaining minerals
-
-	int remainingMinerals = getRemainingMinerals(baseId);
-
-	// nothing to hurry
-
-	if (remainingMinerals == 0)
-		return 0;
-
-	// get hurry cost
-
-	int hurryCost = getFlatHurryCost(baseId);
-
-	// calculate partial flat hurry cost
-
-	int partialHurryCost = (hurryCost * minerals + remainingMinerals - 1) / remainingMinerals;
-
-	return partialHurryCost;
 
 }
 
@@ -3508,49 +2938,34 @@ __cdecl int modifiedNutrientCostFactorSEGrowth(int factionId, int baseId)
 
 }
 
-/*
+/**
 Computes habitation facilties base GROWTH modifier.
-
-for each present facility
-	bonus at limit = 0
-	less population => more bonus
-	restricted by range [0, habitation_facility_present_growth_bonus_max]
-
-for each missing facility
-	penalty at limit = habitation_facility_absent_growth_penalty
-	more population => more penalty
-	restricted by range [-infinity, 0]
 */
 int getHabitationFacilitiesBaseGrowthModifier(int baseId)
 {
-	// get base
-
-	BASE *base = &(Bases[baseId]);
-
+	BASE *base = getBase(baseId);
+	
+	// return zero if not set
+	
+	if (conf.habitation_facility_growth_bonus == 0)
+		return 0;
+	
 	// calculate habitation facilities base GROWTH modifier
-
+	
 	int baseGrowthModifier = 0;
-
-	for (int i = 0; i < HABITATION_FACILITIES_COUNT; i++)
+	
+	if (isBaseHasFacility(baseId, FAC_HAB_COMPLEX) && base->pop_size <= Rules->pop_limit_wo_hab_complex)
 	{
-		int habitationFacility = HABITATION_FACILITIES[i];
-
-		bool habitationFacilityPresent = isBaseHasFacility(baseId, habitationFacility);
-		int populationLimit = getFacilityPopulationLimit(base->faction_id, habitationFacility);
-
-		if (habitationFacilityPresent)
-		{
-			baseGrowthModifier += std::min(conf.habitation_facility_present_growth_bonus_max, std::max(0, (populationLimit - base->pop_size)));
-		}
-		else
-		{
-			baseGrowthModifier += std::min(0, (populationLimit - base->pop_size) - conf.habitation_facility_absent_growth_penalty);
-		}
-
+		baseGrowthModifier += conf.habitation_facility_growth_bonus;
 	}
-
+	
+	if (isBaseHasFacility(baseId, FAC_HABITATION_DOME) && base->pop_size <= Rules->pop_limit_wo_hab_dome)
+	{
+		baseGrowthModifier += conf.habitation_facility_growth_bonus;
+	}
+	
 	return baseGrowthModifier;
-
+	
 }
 
 /*
@@ -3667,83 +3082,65 @@ Overrides faction_upkeep calls to amend vanilla and Thinker AI functionality.
 */
 __cdecl int modifiedFactionUpkeep(const int factionId)
 {
-	debug("modifiedFactionUpkeep - %s\n", getMFaction(factionId)->noun_faction);fflush(debug_log);
-
+	debug("modifiedFactionUpkeep - %s\n", getMFaction(factionId)->noun_faction);
+	
 	executionProfiles["0. modifiedFactionUpkeep"].start();
-
+	
     // remove wrong units from bases
-
+	
     if (factionId > 0)
 	{
+		executionProfiles["0.1. removeWrongVehiclesFromBases"].start();
 		removeWrongVehiclesFromBases();
+		executionProfiles["0.1. removeWrongVehiclesFromBases"].stop();
 	}
-
+	
     // expire infiltrations for normal factions
-
+	
     if (factionId > 0)
 	{
+		executionProfiles["0.2. expireInfiltrations"].start();
 		expireInfiltrations(factionId);
+		executionProfiles["0.2. expireInfiltrations"].stop();
 	}
-
+	
 	// choose AI logic
-
+	
 	int returnValue;
-
+	
 	if (isWtpEnabledFaction(factionId))
 	{
 		// run WTP AI code for AI eanbled factions
-
-		executionProfiles["0.1. aiFactionUpkeep"].start();
+		
+		executionProfiles["0.3. aiFactionUpkeep"].start();
 		aiFactionUpkeep(factionId);
-		executionProfiles["0.1. aiFactionUpkeep"].stop();
-
+		executionProfiles["0.3. aiFactionUpkeep"].stop();
+		
 	}
-
+	
+	executionProfiles["0. modifiedFactionUpkeep"].pause();
+	
 	// execute original function
-
-	returnValue = faction_upkeep(factionId);
-
+	
+	returnValue = mod_faction_upkeep(factionId);
+	
+	executionProfiles["0. modifiedFactionUpkeep"].resume();
+	
     // fix vehicle home bases for normal factions
-
+	
     if (factionId > 0)
 	{
+		executionProfiles["0.4. fixVehicleHomeBases"].start();
 		fixVehicleHomeBases(factionId);
+		executionProfiles["0.4. fixVehicleHomeBases"].stop();
 	}
-
+	
 	executionProfiles["0. modifiedFactionUpkeep"].stop();
-
-	// check vehicles with available moves
-
-	debug(">check moves - %s\n", getMFaction(factionId)->noun_faction);fflush(debug_log);
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-
-		if (vehicle->faction_id != factionId)
-			continue;
-
-		if (vehicle->moves_spent >= getVehicleSpeed(vehicleId))
-			continue;
-
-		debug
-		(
-			">moves left:"
-			" [%4d] (%3d,%3d)"
-			" speed=%2d"
-			" road_moves_spent=%2d"
-			"\n"
-			, vehicleId, vehicle->x, vehicle->y
-			, getVehicleSpeed(vehicleId)
-			, vehicle->moves_spent
-		);
-		fflush(debug_log);
-
-	}
-
+	
 	// return original value
-
+	
 	return returnValue;
-
+	
 }
 
 __cdecl void captureAttackerOdds(const int position, const int value)
@@ -3797,8 +3194,8 @@ __cdecl void modifiedDisplayOdds(const char* file_name, const char* label, int a
 			// calculate attacker and defender power
 			// artifact gets 1 HP regardless of reactor
 
-			int attackerPower = (attackerUnit->plan == PLAN_ALIEN_ARTIFACT ? 1 : attackerUnit->reactor_id * 10 - attackerVehicle->damage_taken);
-			int defenderPower = (defenderUnit->plan == PLAN_ALIEN_ARTIFACT ? 1 : defenderUnit->reactor_id * 10 - defenderVehicle->damage_taken);
+			int attackerPower = (attackerUnit->plan == PLAN_ARTIFACT ? 1 : attackerUnit->reactor_id * 10 - attackerVehicle->damage_taken);
+			int defenderPower = (defenderUnit->plan == PLAN_ARTIFACT ? 1 : defenderUnit->reactor_id * 10 - defenderVehicle->damage_taken);
 
 			// calculate FP
 
@@ -3972,7 +3369,7 @@ __cdecl int wtp_mod_tech_rate(int factionId)
 	// [WTP]
 	
 	Faction *faction = &(Factions[factionId]);
-	MFaction *mfaction = &(MFactions[factionId]);
+//	MFaction *mfaction = &(MFactions[factionId]);
     
 	// find technology to compute the rate for
     
@@ -3997,11 +3394,11 @@ __cdecl int wtp_mod_tech_rate(int factionId)
 	
 	techCost = std::max(2, wtp_tech_cost(factionId, techId));
 	
-	// set Thinker variables
-	
-	mfaction->thinker_tech_id = techId;
-	mfaction->thinker_tech_cost = techCost;
-	
+//	// set Thinker variables
+//	
+//	mfaction->thinker_tech_id = techId;
+//	mfaction->thinker_tech_cost = techCost;
+//	
 	// return techCost
 	
 	return techCost;
@@ -4272,7 +3669,7 @@ int __cdecl modifiedMindControlCost(int baseId, int probeFactionId, int cornerMa
 
 	// if HQ and not corner market - return negative value
 
-	if (isBaseFacilityBuilt(baseId, FAC_HEADQUARTERS) && cornerMarket == 0)
+	if (isBaseHasFacility(baseId, FAC_HEADQUARTERS) && cornerMarket == 0)
 		return -1;
 
 	// calculate MC cost
@@ -4291,7 +3688,7 @@ int __cdecl modifiedMindControlCost(int baseId, int probeFactionId, int cornerMa
 
 	for (int facilityId = FAC_HEADQUARTERS; facilityId <= FAC_GEOSYNC_SURVEY_POD; facilityId++)
 	{
-		if (isBaseFacilityBuilt(baseId, facilityId))
+		if (isBaseHasFacility(baseId, facilityId))
 		{
 			mindControlCost += conf.alternative_mind_control_facility_cost_multiplier * (double)Facility[facilityId].cost;
 		}
@@ -4504,7 +3901,7 @@ int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistanc
 
 	// unit plan factor
 
-	if (vehicleUnit->plan == PLAN_COLONIZATION || vehicleUnit->plan == PLAN_TERRAFORMING)
+	if (vehicleUnit->plan == PLAN_COLONY || vehicleUnit->plan == PLAN_TERRAFORM)
 	{
 		subversionCost *= 2.0;
 	}
@@ -4632,132 +4029,144 @@ void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_st
 int __cdecl modifiedTurnUpkeep()
 {
 	// collect statistics
-
+	
 	std::vector<int> computerFactions;
 	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
 		if (factionId == 0 || is_human(factionId))
 			continue;
-
+		
 		computerFactions.push_back(factionId);
-
+		
 	}
 	int factionCount = computerFactions.size();
-
+	
 	int totalBaseCount = 0;
 	int totalCitizenCount = 0;
 	int totalWorkerCount = 0;
 	double totalMinerals = 0.0;
-	double totalBudget = 0.0;
+	double totalEcoLab = 0.0;
 	double totalResearch = 0.0;
 	int totalTechCount = 0;
-
+	
 	FILE* statistics_base_log = fopen("statistics_base.txt", "a");
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
 		BASE *base = getBase(baseId);
-
+		
 		// computer
-
+		
 		if (base->faction_id == 0 || is_human(base->faction_id))
 			continue;
-
+		
 		int foundingTurn = getBaseFoundingTurn(baseId);
 		int age = getBaseAge(baseId);
 		int popSize = base->pop_size;
 		int workerCount = base->pop_size - base->specialist_total;
-
-		double mineralIntake2 = (double)base->mineral_intake_2;
+		
+		int nutrientCostFactor = cost_factor(base->faction_id, 0, baseId);
+		int nutrientSurplus = base->nutrient_surplus;
+		
+		int mineralIntake = base->mineral_intake;
+		int mineralIntake2 = base->mineral_intake_2;
 		double mineralMultiplier = getBaseMineralMultiplier(baseId);
-		double mineralIntake = mineralIntake2 / mineralMultiplier;
-
-		double economyIntake2 = (double)base->economy_total;
-		double economyMultiplier = getBaseEconomyMultiplier(baseId);
-		double economyIntake = economyIntake2 / economyMultiplier;
-		double psychIntake2 = (double)base->psych_total;
-		double psychMultiplier = getBasePsychMultiplier(baseId);
-		double psychIntake = psychIntake2 / psychMultiplier;
-		double labsIntake2 = (double)base->labs_total;
-		double labsMultiplier = getBaseLabsMultiplier(baseId);
-		double labsIntake = labsIntake2 / labsMultiplier;
-		double budgetIntake2 = economyIntake2 + psychIntake2 + labsIntake2;
-		double budgetIntake = economyIntake + psychIntake + labsIntake;
-		double budgetMultiplier = (budgetIntake <= 0.0 ? 1.0 : budgetIntake2 / budgetIntake);
-
+		
+		Budget budgetIntake = getBaseBudgetIntake(baseId);
+		Budget budgetIntake2 = getBaseBudgetIntake2(baseId);
+		
+//		int economyIntake = budgetIntake.economy;
+//		int economyIntake2 = budgetIntake2.economy;
+//		double economyMultiplier = getBaseEconomyMultiplier(baseId);
+//		int psychIntake = budgetIntake.psych;
+//		int psychIntake2 = budgetIntake2.psych;
+//		double psychMultiplier = getBasePsychMultiplier(baseId);
+//		int labsIntake = budgetIntake.labs;
+//		int labsIntake2 = budgetIntake2.labs;
+//		double labsMultiplier = getBaseLabsMultiplier(baseId);
+		int ecolabIntake = budgetIntake.economy + budgetIntake.labs;
+		int ecolabIntake2 = budgetIntake2.economy + budgetIntake2.labs;
+		double ecolabMultiplier = ecolabIntake <= 0 ? 1.0 : (double)ecolabIntake2 / (double)ecolabIntake;
+		
 		// totals
-
+		
 		totalBaseCount++;
 		totalCitizenCount += popSize;
 		totalWorkerCount += workerCount;
 		totalMinerals += mineralIntake2;
-		totalBudget += budgetIntake2;
-
+		totalEcoLab += ecolabIntake2;
+		
 		fprintf
 		(
 			statistics_base_log,
 			"%4X"
-			"\t%3d"
-			"\t%3d"
-			"\t%3d"
-			"\t%3d"
-			"\t%2d"
-			"\t%2d"
-			"\t%7.2f"
-			"\t%7.2f"
+			"\t%d"
+			"\t%d"
+			"\t%-25s"
+			"\t%d"
+			"\t%d"
+			"\t%d"
+			"\t%d"
+			"\t%d"
+			"\t%d"
+			"\t%d"
+			"\t%d"
 			"\t%5.4f"
-			"\t%7.2f"
-			"\t%7.2f"
+			"\t%d"
+			"\t%d"
 			"\t%5.4f"
 			"\n"
 			, *MapRandomSeed
 			, *CurrentTurn
 			, baseId
+			, base->name
 			, foundingTurn
 			, age
 			, popSize
 			, workerCount
+			, nutrientCostFactor
+			, nutrientSurplus
 			, mineralIntake
 			, mineralIntake2
 			, mineralMultiplier
-			, budgetIntake
-			, budgetIntake2
-			, budgetMultiplier
+			, ecolabIntake
+			, ecolabIntake2
+			, ecolabMultiplier
 		);
-
+		
 	}
 	fclose(statistics_base_log);
-
+	
 	// faction
-
+	
 	double averageFactionBaseCount = (factionCount == 0 ? 0.0 : (double)totalBaseCount / (double)factionCount);
 	double averageFactionCitizenCount = (factionCount == 0 ? 0.0 : (double)totalCitizenCount / (double)factionCount);
 	double averageFactionWorkerCount = (factionCount == 0 ? 0.0 : (double)totalWorkerCount / (double)factionCount);
 	double averageFactionMinerals = (factionCount == 0 ? 0.0 : totalMinerals / (double)factionCount);
-	double averageFactionBudget = (factionCount == 0 ? 0.0 : totalBudget / (double)factionCount);
-
+	double averageFactionEcoLab = (factionCount == 0 ? 0.0 : totalEcoLab / (double)factionCount);
+	
 	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
 		// computer
-
+		
 		if (factionId == 0 || is_human(factionId))
 			continue;
-
+		
 		for (int techId = 0; techId <= TECH_BFG9000; techId++)
 		{
 			if (isTechDiscovered(factionId, techId))
 			{
 				totalTechCount++;
 			}
-
+			
 		}
-
+		
 		totalResearch += getFactionTechPerTurn(factionId);
-
+		
 	}
-
+	
 	double averageFactionTechCount = (factionCount == 0 ? 0.0 : (double)totalTechCount / (double)factionCount);
 	double averageFactionResearch = (factionCount == 0 ? 0.0 : totalResearch / (double)factionCount);
-
+	
 	FILE* statistics_faction_log = fopen("statistics_faction.txt", "a");
 	fprintf
 	(
@@ -4778,30 +4187,30 @@ int __cdecl modifiedTurnUpkeep()
 		, averageFactionCitizenCount
 		, averageFactionWorkerCount
 		, averageFactionMinerals
-		, averageFactionBudget
+		, averageFactionEcoLab
 		, averageFactionResearch
 		, averageFactionTechCount
 	);
 	fclose(statistics_faction_log);
-
+	
 	// modify native units cost
-
+	
 	if (conf.native_unit_cost_time_multiplier > 1.0)
 	{
 		double multiplier = pow(conf.native_unit_cost_time_multiplier, *CurrentTurn);
-
+		
 		Units[BSC_MIND_WORMS].cost = (int)floor((double)conf.native_unit_cost_initial_mind_worm * multiplier);
 		Units[BSC_SPORE_LAUNCHER].cost = (int)floor((double)conf.native_unit_cost_initial_spore_launcher * multiplier);
 		Units[BSC_SEALURK].cost = (int)floor((double)conf.native_unit_cost_initial_sealurk * multiplier);
 		Units[BSC_ISLE_OF_THE_DEEP].cost = (int)floor((double)conf.native_unit_cost_initial_isle_of_the_deep * multiplier);
 		Units[BSC_LOCUSTS_OF_CHIRON].cost = (int)floor((double)conf.native_unit_cost_initial_locusts_of_chiron * multiplier);
-
+		
 	}
-
+	
 	// execute original function
-
+	
 	return mod_turn_upkeep();
-
+	
 }
 
 /*
@@ -4893,7 +4302,7 @@ int getFactionHighestResearchedTechLevel(int factionId)
 
 	for (int techId = TECH_Biogen; techId <= TECH_TranT; techId++)
 	{
-		if (has_tech(factionId, techId))
+		if (isFactionHasTech(factionId, techId))
 		{
 			highestResearchedTechLevel = std::max(highestResearchedTechLevel, wtp_tech_level(techId));
 		}
@@ -4926,7 +4335,7 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 
 		BASE *closestBase = &(Bases[closestBaseId]);
 
-		int territoryOwner = whose_territory(factionId, vehicle->x, vehicle->y, 0, 0);
+		int territoryOwner = mod_whose_territory(factionId, vehicle->x, vehicle->y, 0, 0);
 
 		if (!(closestBase->faction_id == pactFactionId || territoryOwner == pactFactionId))
 			continue;
@@ -5031,17 +4440,17 @@ int __cdecl modified_base_double_labs(int labs)
 
 	int bonus = 0;
 
-	if (isProjectBuilt(base->faction_id, FAC_SUPERCOLLIDER))
+	if (isFactionHasProject(base->faction_id, FAC_SUPERCOLLIDER))
 	{
 		bonus += conf.science_projects_supercollider_labs_bonus;
 	}
 
-	if (isProjectBuilt(base->faction_id, FAC_THEORY_OF_EVERYTHING))
+	if (isFactionHasProject(base->faction_id, FAC_THEORY_OF_EVERYTHING))
 	{
 		bonus += conf.science_projects_theoryofeverything_labs_bonus;
 	}
 
-	if (isProjectBuilt(base->faction_id, FAC_UNIVERSAL_TRANSLATOR))
+	if (isFactionHasProject(base->faction_id, FAC_UNIVERSAL_TRANSLATOR))
 	{
 		bonus += conf.science_projects_universaltranslator_labs_bonus;
 	}
@@ -5061,50 +4470,6 @@ int __cdecl modified_base_double_labs(int labs)
 }
 
 /*
-Highjack this function to fix stockpile energy bug.
-*/
-int __cdecl modified_base_production()
-{
-	int baseId = *CurrentBaseID;
-	BASE *base = &(Bases[baseId]);
-	Faction *faction = &(Factions[base->faction_id]);
-
-	// add stockpile energy to faction credits
-
-	if (base->queue_items[0] == -FAC_STOCKPILE_ENERGY && base->production_id_last == -FAC_STOCKPILE_ENERGY)
-	{
-		faction->energy_credits += getStockpileEnergy(baseId);
-	}
-
-	// execute original function
-
-	return tx_base_production();
-
-}
-
-/*
-Highjack this function to fix stockpile energy bug.
-*/
-int __cdecl modified_base_ecology()
-{
-	int baseId = *CurrentBaseID;
-	BASE *base = &(Bases[baseId]);
-	Faction *faction = &(Factions[base->faction_id]);
-
-	// subtract stockpile energy from faction credits
-
-	if (base->queue_items[0] == -FAC_STOCKPILE_ENERGY && base->production_id_last == -FAC_STOCKPILE_ENERGY)
-	{
-		faction->energy_credits -= getStockpileEnergy(baseId);
-	}
-
-	// execute original function
-
-	return base_ecology();
-
-}
-
-/*
 Calculates stockpile energy as vanilla does it.
 */
 int getStockpileEnergy(int baseId)
@@ -5116,7 +4481,7 @@ int getStockpileEnergy(int baseId)
 
 	int credits = (base->mineral_surplus + 1) / 2;
 
-	if (isProjectBuilt(base->faction_id, FAC_PLANETARY_ENERGY_GRID))
+	if (isFactionHasProject(base->faction_id, FAC_PLANETARY_ENERGY_GRID))
 	{
 		credits = (credits * 5 + 3) / 4;
 	}
@@ -5170,43 +4535,82 @@ void __cdecl modified_base_yield()
 }
 
 /*
-AI transport steals passenger at sea whenever they can.
-This modification makes sure they don't.
+Patches:
+1. AI transport steals passenger from other transports when their paths cross. This modification makes sure they don't.
+2. Path::move sometimes cannot move land unit through ZOC. This modification offers alternative path.
 */
-int __cdecl modified_order_veh(int vehicleId, int angle, int a3)
+int __cdecl wtp_mod_order_veh(int vehicleId, int angle, int a3)
 {
-	// invalid angle is not affected by this function
-	// not sea transport vehicle is not affected
-
-	if (!(angle >= 0 && angle < ANGLE_COUNT) || !isSeaTransportVehicle(vehicleId))
-	{
+	// call default for invalid angle or vehicle
+	
+	if (!((angle >= 0 && angle < ANGLE_COUNT) && (vehicleId >= 0 && vehicleId < *VehCount)))
 		return tx_order_veh(vehicleId, angle, a3);
-	}
-
-	// check if there is a transport at sea at given angle
-
-	if (!isAdjacentTransportAtSea(vehicleId, angle))
+	
+	// parameters
+		
+	VEH *vehicle = getVehicle(vehicleId);
+	int factionId = vehicle->faction_id;
+	int triad = vehicle->triad();
+	bool zocAffectedVehicle = isZocAffectedVehicle(vehicleId);
+	MAP *src = getVehicleMapTile(vehicleId);
+	MAP *dst = getTileByAngle(src, angle);
+	
+	// do not alter human player vehicle movement
+	
+	if (is_human(factionId))
 		return tx_order_veh(vehicleId, angle, a3);
-
-	// try next angle
-
-	int newAngle = (angle + 1) % 8;
-
-	if (!isAdjacentTransportAtSea(vehicleId, newAngle))
-		return tx_order_veh(vehicleId, newAngle, a3);
-
-	// try all other angles
-
-	for (newAngle = 0; newAngle < 8; newAngle++)
+	
+	// correct sea transport path
+	
+	if (isSeaTransportVehicle(vehicleId))
 	{
-		if (!isAdjacentTransportAtSea(vehicleId, newAngle))
-			return tx_order_veh(vehicleId, newAngle, a3);
+		// check if there is a sea transport at a given angle
+		
+		if (!isAdjacentTransportAtSea(vehicleId, angle))
+			return tx_order_veh(vehicleId, angle, a3);
+		
+		// try other angles
+		
+		for (int newAngle = angle + 1; newAngle < angle + ANGLE_COUNT; newAngle++)
+		{
+			if (!isAdjacentTransportAtSea(vehicleId, newAngle % ANGLE_COUNT))
+				return tx_order_veh(vehicleId, newAngle, a3);
+		}
+		
 	}
-
-	// give up and return original angle
-
+	
+	// correct land unit ZOC movement
+	
+	else if (triad == TRIAD_LAND && zocAffectedVehicle && !is_ocean(src) && !is_ocean(dst) && isZoc(factionId, src, dst))
+	{
+		for (int newAngleIndex = 1; newAngleIndex < ANGLE_COUNT; newAngleIndex++)
+		{
+			int newAngle;
+			if (newAngleIndex % 2 == 1)
+			{
+				newAngle = (angle + ((newAngleIndex / 2) + 1)) % ANGLE_COUNT;
+			}
+			else
+			{
+				newAngle = (angle + ANGLE_COUNT - (newAngleIndex / 2)) % ANGLE_COUNT;
+			}
+			
+			MAP *newDst = getTileByAngle(src, newAngle);
+			
+			if (newDst == nullptr)
+				continue;
+			
+			if (!is_ocean(newDst) && !isBlocked(factionId, newDst) && !isZoc(factionId, src, newDst))
+				return tx_order_veh(vehicleId, newAngle, a3);
+				
+		}
+		
+	}
+	
+	// return original angle if nothing else applied or worked
+	
 	return tx_order_veh(vehicleId, angle, a3);
-
+	
 }
 
 /*
@@ -5303,82 +4707,75 @@ Assign vehicle home base to own base.
 void fixVehicleHomeBases(int factionId)
 {
 	robin_hood::unordered_flat_set<int> homeBaseIds;
-
+	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
-
+		
 		// exclude not own vehicles
-
+		
 		if (vehicle->faction_id != factionId)
 			continue;
-
+		
 		// exclude vehicles without home base
-
+		
 		if (vehicle->home_base_id == -1)
 			continue;
-
+		
 		// get home base
-
+		
 		int homeBaseId = vehicle->home_base_id;
-
+		
 		// exclude vehicles with correctly assigned home base
-
+		
 		if (homeBaseId >= 0 && Bases[homeBaseId].faction_id == factionId)
 			continue;
-
+		
 		// search own base with highest mineral surplus
-
+		
 		int bestHomeBaseId = -1;
 		int bestHomeBaseMineralSurplus = 2;
-
+		
 		for (int baseId = 0; baseId < *BaseCount; baseId++)
 		{
 			BASE *base = &(Bases[baseId]);
-
+			
 			// exclude not own base
-
+			
 			if (base->faction_id != factionId)
 				continue;
-
+			
 			// exclude already assigned to
-
+			
 			if (homeBaseIds.count(baseId) != 0)
 				continue;
-
-			// exclude base with exceeding supportRatio
-
-			double supportRatio = getBaseSupportRatio(baseId);
-
-			if (supportRatio >= conf.ai_production_support_ratio)
-				continue;
-
+			
 			// get mineral surplus
-
+			
 			int mineralSurplus = base->mineral_surplus;
-
+			
 			// update best
-
+			
 			if (mineralSurplus > bestHomeBaseMineralSurplus)
 			{
 				bestHomeBaseId = baseId;
 				bestHomeBaseMineralSurplus = mineralSurplus;
 			}
-
+			
 		}
-
+		
 		// not found
-
+		
 		if (bestHomeBaseId == -1)
 			continue;
-
+		
 		// set home base and mark assigned base
-
+		
 		vehicle->home_base_id = bestHomeBaseId;
 		homeBaseIds.insert(bestHomeBaseId);
-
+		
 	}
-
+	
 }
 
 void __cdecl modified_vehicle_range_boom(int x, int y, int flags)
@@ -5518,11 +4915,11 @@ void removeWrongVehiclesFromBases()
 		debug
 		(
 			"[VANILLA BUG] non pact vehicle in base:"
-			" [%4d] (%3d,%3d) %-32s"
+			" [%4d] %s %-32s"
 			" territoryOwner=%d"
 			" vehicleOwner=%d"
 			"\n"
-			, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId)
+			, vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getVehicleUnitName(vehicleId)
 			, vehicleTile->owner
 			, vehicle->faction_id
 		);
@@ -5560,9 +4957,9 @@ void removeWrongVehiclesFromBases()
 		debug
 		(
 			"[VANILLA BUG] sea vehicle in land base:"
-			" [%4d] (%3d,%3d) %-32s"
+			" [%4d] %s %-32s"
 			"\n"
-			, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId)
+			, vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getVehicleUnitName(vehicleId)
 		);
 		killVehicle(vehicleId);
 
@@ -5605,11 +5002,11 @@ __cdecl void modified_text_get_for_tech_steal_1()
 
 	bool disableTechSteal = false;
 
-	if (isVendetta(*CurrentFaction, *g_PROBE_RFLAG_TARGET) && conf.disable_tech_steal_vendetta)
+	if (isVendetta(*CurrentFaction, *g_PROBE_FACT_TARGET) && conf.disable_tech_steal_vendetta)
 	{
 		disableTechSteal = true;
 	}
-	else if (isPact(*CurrentFaction, *g_PROBE_RFLAG_TARGET) && conf.disable_tech_steal_pact)
+	else if (isPact(*CurrentFaction, *g_PROBE_FACT_TARGET) && conf.disable_tech_steal_pact)
 	{
 		disableTechSteal = true;
 	}
@@ -5666,9 +5063,9 @@ void endOfTurn()
 			debug
 			(
 				"\t%-*s"
-				" count=%8d"
-				" totalTime=%7.3f"
-				" averageTime=%10.6f"
+				"   count=%8d"
+				"   totalTime=%7.3f"
+				"   averageTime=%10.6f"
 				"\n"
 				, NAME_LENGTH, displayName.c_str()
 				, executionCount
@@ -5680,5 +5077,359 @@ void endOfTurn()
 
 	executionProfiles.clear();
 
+}
+
+/*
+Disable base_hurry call.
+*/
+void __cdecl wtp_mod_base_hurry()
+{
+}
+
+/**
+Adds bonus to battle odds dialog.
+*/
+void addAttackerBonus(int strengthPointer, int bonus, const char *label)
+{
+	// modify strength
+	
+	*(int *)strengthPointer = (int)round((double)(*(int *)strengthPointer) * (double)(100 + bonus) / 100.0);
+	
+	// add effect description
+	
+	if (*tx_battle_compute_attacker_effect_count < 4)
+	{
+		strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], label);
+		(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = bonus;
+		(*tx_battle_compute_attacker_effect_count)++;
+	}
+	
+}
+void addDefenderBonus(int strengthPointer, int bonus, const char *label)
+{
+	// modify strength
+	
+	*(int *)strengthPointer = (int)round((double)(*(int *)strengthPointer) * (double)(100 + bonus) / 100.0);
+	
+	// add effect description
+	
+	if (*tx_battle_compute_defender_effect_count < 4)
+	{
+		strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label);
+		(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = bonus;
+		(*tx_battle_compute_defender_effect_count)++;
+	}
+	
+}
+
+/**
+Disables displaying resource bonus text in map status windows.
+*/
+__cdecl int modStatusWinBonus_bonus_at(int /*x*/, int /*y*/)
+{
+	// do not display bonus
+	
+    return 0;
+    
+}
+
+/**
+Sets moved factions = 8 if there is no human player.
+*/
+__cdecl int modified_load_game(int a0, int a1)
+{
+	// original function
+	
+	int returnValue = load_game(a0, a1);
+	
+	// set moved factions = 8 (beyond all factions) if there is no human player
+	
+	if ((*FactionStatus && 0xFF) == 0)
+	{
+		*TurnFactionsMoved = 8;
+	}
+	
+	// return original value
+	
+	return returnValue;
+	
+}
+
+/**
+Sets moved factions = 8 if there is no human player.
+*/
+__cdecl int modified_zoc_veh(int a0, int a1, int a2)
+{
+	// original function
+	
+	int returnValue = zoc_veh(a0, a1, a2);
+	
+	// do not allow returning 1 - this scares formers
+	
+	if (returnValue == 1)
+	{
+		returnValue = 0;
+	}
+	
+	// return value
+	
+	return returnValue;
+	
+}
+
+/**
+Deletes supported units in more sane order.
+*/
+__cdecl void modified_base_check_support()
+{
+	// kill vehicles in bases with low mineral surplus
+	
+	int baseId = *CurrentBaseID;
+	BASE *base = *CurrentBase;
+	
+	MAP *baseTile = getBaseMapTile(baseId);
+	
+	// delete vehicles until surplus becomes non negative
+	
+	while (base->mineral_surplus < 0)
+	{
+		int cheapestVehicleId = -1;
+		int cheapestVehicleCost = INT_MAX;
+		
+		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+		{
+			VEH *vehicle = getVehicle(vehicleId);
+			MAP *vehicleTile = getVehicleMapTile(vehicleId);
+			
+			// this base
+			
+			if (vehicle->home_base_id != baseId)
+				continue;
+			
+			// requires support
+			
+			if (!isVehicleRequiresSupport(vehicleId))
+				continue;
+			
+			int cost = vehicle->cost();
+			
+			if (cost < cheapestVehicleCost || (cost == cheapestVehicleCost && vehicleTile == baseTile))
+			{
+				cheapestVehicleId = vehicleId;
+				cheapestVehicleCost = cost;
+			}
+			
+		}
+		
+		if (cheapestVehicleId == -1)
+			break;
+		
+		killVehicle(cheapestVehicleId);
+		computeBase(baseId, false);
+		
+		debug("\t%-25s %-32s killed because of oversupport\n", base->name, getVehicle(cheapestVehicleId)->name());
+		
+	}
+	
+	// original function
+	
+	base_check_support();
+	
+}
+
+void __cdecl wtp_mod_base_support()
+{
+    BASE* base = *CurrentBase;
+    int base_id = *CurrentBaseID;
+    Faction* f = &Factions[base->faction_id];
+
+    const int SupportCosts[8][2]  = {
+        {2, 0}, // -4, Each unit costs 2 to support; no free minerals for new base.
+        {1, 0}, // -3, Each unit costs 1 to support; no free minerals for new base.
+        {1, 1}, // -2, Support 1 unit free per base; no free minerals for new base.
+        {1, 1}, // -1, Support 1 unit free per base
+        {1, 2}, //  0, Support 2 units free per base
+        {1, 3}, //  1, Support 3 units free per base
+        {1, 4}, //  2, Support 4 units free per base!
+        {1, max((int)base->pop_size, 4)}, // 3, Support 4 units OR up to base size for free!!
+    };
+    const int support_val = clamp(f->SE_support_pending + 4, 0, 7);
+    const int support_type = (conf.modify_unit_support == 1 ? PLAN_SUPPLY :
+        (conf.modify_unit_support == 2 ? PLAN_PROBE : PLAN_TERRAFORM));
+    const int SE_police = base_police(base_id, true);
+
+    BaseResourceConvoyTo[0] = 0;
+    BaseResourceConvoyTo[1] = 0;
+    BaseResourceConvoyTo[2] = 0;
+    BaseResourceConvoyTo[3] = 0;
+    BaseResourceConvoyFrom[0] = 0;
+    BaseResourceConvoyFrom[1] = 0;
+    BaseResourceConvoyFrom[2] = 0;
+    BaseResourceConvoyFrom[3] = 0;
+    *BaseVehPacifismCount = 0;
+    *BaseForcesSupported = 0;
+    *BaseForcesMaintCost = 0;
+    *BaseForcesMaintCount = 0;
+
+    for (int i = 0; i < *VehCount; i++) {
+        VEH* veh = &Vehs[i];
+        if (veh->faction_id != base->faction_id) {
+            continue;
+        }
+        MAP* sq = mapsq(veh->x, veh->y);
+        if (veh->is_supply() && veh->order == ORDER_CONVOY) {
+            BaseResType type = (BaseResType)veh->order_auto_type;
+            assert(type <= RSC_UNUSED);
+            if (veh->home_base_id == base_id && type <= RSC_UNUSED) {
+                if (!sq->is_base() || sq->veh_owner() < 0) { // other condition redundant?
+                    int value = resource_yield(type, veh->faction_id, base_id, veh->x, veh->y);
+                    BaseResourceConvoyTo[type] += value;
+                }
+                if (sq->is_base() && sq->veh_owner() >= 0) {
+                    BaseResourceConvoyFrom[type]++;
+                }
+            } else if (veh->x == base->x && veh->y == base->y
+            && veh->home_base_id >= 0 && type <= RSC_UNUSED) {
+                BaseResourceConvoyTo[type]++;
+            }
+        }
+        if (veh->home_base_id == base_id) {
+            veh->state &= ~(VSTATE_PACIFISM_FREE_SKIP|VSTATE_PACIFISM_DRONE|VSTATE_REQUIRES_SUPPORT);
+
+            if (veh->offense_value() && (veh->offense_value() > 0 || veh->unit_id >= MaxProtoFactionNum)
+            && veh->plan() != PLAN_RECONNAISSANCE && veh->plan() != PLAN_PLANET_BUSTER) {
+                f->unk_46 += 1 + (veh->plan() == PLAN_OFFENSIVE || veh->plan() == PLAN_COMBAT);
+            }
+            // Exclude probe, supply, artifact, fungal and tectonic missiles
+            // Native units do not require support on fungus
+            // However fungus is not rendered on tiles deeper than ocean shelf
+            if (veh->plan() <= support_type) {
+                if (!has_abil(veh->unit_id, ABL_CLEAN_REACTOR)) {
+                    if (veh->unit_id >= MaxProtoFactionNum
+                    || (veh->offense_value() >= 0 || !sq->is_fungus())
+                    || sq->alt_level() < ALT_OCEAN_SHELF) {
+                        (*BaseForcesSupported)++;
+                        if (*BaseForcesSupported > SupportCosts[support_val][1]) {
+                            veh->state |= VSTATE_REQUIRES_SUPPORT;
+                            (*BaseForcesMaintCount)++;
+                            (*BaseForcesMaintCost) += SupportCosts[support_val][0];
+                        }
+                    }
+                    if (*BaseUpkeepState == 1) {
+                        for (int j = 0; j < 8; j++) {
+                            if (*BaseForcesSupported > SupportCosts[j][1]) {
+                                f->unk_40[j] += SupportCosts[j][0];
+                            }
+                        }
+                    }
+                }
+                if (veh->offense_value() != 0 && veh->plan() != PLAN_AIR_SUPERIORITY
+                && (!sq->is_base() || sq->veh_owner() < 0) && (veh->triad() == TRIAD_AIR
+                || mod_whose_territory(base->faction_id, veh->x, veh->y, 0, 0) != base->faction_id)) {
+                    (*BaseVehPacifismCount)++;
+                    if (SE_police == -3 && *BaseVehPacifismCount == 1) {
+                        veh->state |= VSTATE_PACIFISM_FREE_SKIP;
+                    } else if (SE_police <= -3) {
+                        veh->state |= VSTATE_PACIFISM_DRONE;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void __cdecl displayHurryCostScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer)
+{
+	// execute original function
+	
+	tx_parse_string(input_string_pointer, output_string_pointer);
+	
+	// get output string pointer
+	
+	char *output = (char *)output_string_pointer;
+	
+	// append information to string
+	
+	sprintf(output + strlen(output), " (hurry cost is scaled to basic mineral cost multiplier: %d)", Rules->mineral_cost_multi);
+	
+}
+
+void __cdecl displayPartialHurryCostToCompleteNextTurnInformation(int input_string_pointer, int output_string_pointer)
+{
+	// execute original function
+	
+	tx_parse_string(input_string_pointer, output_string_pointer);
+	
+//	// apply additional information message only when flat hurry cost is enabled
+//	
+//	if (!conf.flat_hurry_cost)
+//		return;
+//	
+//	// get output string pointer
+//	
+//	char *output = (char *)output_string_pointer;
+//	
+//	// append information to string
+//	
+//	sprintf(output + strlen(output), " (minimal hurry cost to complete production next turn = %d)", getPartialHurryCostToCompleteNextTurn());
+//	
+}
+
+/**
+Returns current base item hurry minimal mineral cost to complete production on next turn.
+*/
+int __cdecl getHurryMinimalMineralCost(int itemCost, int /*a1*/, int /*a2*/)
+{
+	BASE *base = *CurrentBase;
+	
+	int mineralCostFactor = cost_factor(base->faction_id, 1, -1);
+	int hurryMineralCost = mineralCostFactor * itemCost;
+	
+	if (conf.hurry_minimal_minerals)
+	{
+		// reduce hurry mineral cost by mineral surplus to complete production next turn
+		
+		hurryMineralCost -= std::max(0, base->mineral_surplus);
+		
+	}
+	
+	return hurryMineralCost;
+	
+}
+
+/**
+Returns current base item hurry mineral cost.
+Could be either complete cost or minimal depending on the settings.
+*/
+int getHurryMineralCost(int mineralCost)
+{
+	int hurryMineralCost = mineralCost;
+	
+	if (conf.hurry_minimal_minerals)
+	{
+		// reduce hurry mineral cost by mineral surplus to complete production next turn
+		
+		hurryMineralCost = std::max((*CurrentBase)->minerals_accumulated, mineralCost - std::max(0, (*CurrentBase)->mineral_surplus));
+		
+	}
+	
+	return hurryMineralCost;
+	
+}
+
+/*
+Reverts Thinker modification.
+*/
+int __thiscall wtp_BaseWin_popup_start(Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
+{
+	return Popup_start(This, filename, label, a4, a5, a6, a7);
+}
+
+/*
+Reverts Thinker modification.
+*/
+int __cdecl wtp_BaseWin_ask_number(const char* label, int value, int a3)
+{
+    return pop_ask_number(ScriptFile, label, value, a3);
 }
 

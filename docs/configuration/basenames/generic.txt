@@ -1,0 +1,69 @@
+; *****************************************
+; *  SMACX Thinker Mod by Induktio        *
+; *  https://github.com/induktio/thinker  *
+; *****************************************
+;
+; Generic names are created by adding together variations from BASESA and BASESB lists.
+; If BASESB is not defined, the game uses only names from BASESA list.
+
+#BASESA
+Barrier
+Bastion
+Block
+Bunker
+Camp
+Central
+Citadel
+Cluster
+Complex
+Depot
+Gateway
+Grid
+Habitat
+Hideout
+Horizon
+Junction
+Nexus
+Outpost
+Perimeter
+Plateau
+Platform
+Precinct
+Station
+Terminus
+#END
+
+#BASESB
+Alpha
+Beta
+Gamma
+Delta
+Epsilon
+Zeta
+Eta
+Theta
+Iota
+Kappa
+Lambda
+Omicron
+Rho
+Sigma
+Tau
+Upsilon
+Phi
+Chi
+Psi
+Omega
+Commons
+Fields
+Flats
+Grounds
+Heights
+Hills
+Line
+Park
+Pass
+Point
+Ridge
+Zero
+#END

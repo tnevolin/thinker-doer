@@ -9,22 +9,24 @@ void moveArtifactStrategy()
 {
 	debug("moveArtifactStrategy - %s\n", getMFaction(aiFactionId)->noun_faction);
 
+	executionProfiles["1.5.3. moveArtifactStrategy"].start();
+	
 	// iterate artifacts
 
 	for (int vehicleId : aiData.vehicleIds)
 	{
-		MAP *vehicleLocation = getVehicleMapTile(vehicleId);
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 
 		// artifact
 
 		if (!isArtifactVehicle(vehicleId))
 			continue;
 
-		debug("\t(%3d,%3d)\n", getX(vehicleLocation), getY(vehicleLocation));
+		debug("\t%s\n", getLocationString(vehicleTile).c_str());
 
 		// escape warzone
 
-		if (aiData.getTileInfo(vehicleLocation).warzone)
+		if (aiData.getTileInfo(vehicleTile).warzone)
 		{
 			debug("\tescape warzone\n");
 
@@ -38,7 +40,7 @@ void moveArtifactStrategy()
 				continue;
 			}
 
-			debug("\t\t-> (%3d,%3d)\n", getX(safeLocation), getY(safeLocation));
+			debug("\t\t-> %s\n", getLocationString(safeLocation).c_str());
 
 			// add task
 
@@ -53,7 +55,7 @@ void moveArtifactStrategy()
 		// find base to deliver artifact to base building project
 
 		MAP *closestProjectBaseLocation = nullptr;
-		int closestProjectBaseTravelTime = INT_MAX;
+		double closestProjectBaseTravelTime = DBL_MAX;
 
 		for (int baseId : aiData.baseIds)
 		{
@@ -61,7 +63,7 @@ void moveArtifactStrategy()
 
 			// building project
 
-			if(!isBaseSetProductionProject(baseId))
+			if(!isBaseBuildingProject(baseId))
 				continue;
 
 			// exclude base with blocked land location nearby
@@ -71,7 +73,6 @@ void moveArtifactStrategy()
 			for (MAP *baseRadiusTile : getBaseRadiusTiles(baseTile, false))
 			{
 				bool baseRadiusTileOcean = is_ocean(baseRadiusTile);
-				TileInfo &baseRadiusTileInfo = aiData.getTileInfo(baseRadiusTile);
 
 				// land
 
@@ -80,7 +81,7 @@ void moveArtifactStrategy()
 
 				// blocked
 
-				if (baseRadiusTileInfo.factionInfos[aiFactionId].blocked[0])
+				if (isBlocked(baseRadiusTile))
 				{
 					blocked = true;
 					break;
@@ -93,7 +94,7 @@ void moveArtifactStrategy()
 
 			// travelTime
 
-			int travelTime = getVehicleATravelTime(vehicleId, baseTile);
+			double travelTime = getVehicleATravelTime(vehicleId, baseTile);
 
 			if (travelTime < closestProjectBaseTravelTime)
 			{
@@ -107,22 +108,22 @@ void moveArtifactStrategy()
 
 		if (closestProjectBaseLocation != nullptr)
 		{
-			debug("\tmove to project base (%3d,%3d)\n", getX(closestProjectBaseLocation), getY(closestProjectBaseLocation));
-			transitVehicle(Task(vehicleId, TT_ARTIRFLAG_CONTRIBUTE, closestProjectBaseLocation));
+			debug("\tmove to project base %s\n", getLocationString(closestProjectBaseLocation).c_str());
+			transitVehicle(Task(vehicleId, TT_ARTIFACT_CONTRIBUTE, closestProjectBaseLocation));
 			continue;
 		}
 
 		// find closest base to store artifact
 
-		if (isBaseAt(vehicleLocation))
+		if (isBaseAt(vehicleTile))
 		{
-			debug("\tstay at this base (%3d,%3d)\n", getX(vehicleLocation), getY(vehicleLocation));
+			debug("\tstay at this base %s\n", getLocationString(vehicleTile).c_str());
 			setTask(Task(vehicleId, TT_HOLD));
 			continue;
 		}
 
 		MAP *closestBaseLocation = nullptr;
-		int closestBaseTravelTime = INT_MAX;
+		double closestBaseTravelTime = DBL_MAX;
 
 		for (int baseId : aiData.baseIds)
 		{
@@ -135,7 +136,6 @@ void moveArtifactStrategy()
 			for (MAP *baseRadiusTile : getBaseRadiusTiles(baseTile, false))
 			{
 				bool baseRadiusTileOcean = is_ocean(baseRadiusTile);
-				TileInfo &baseRadiusTileInfo = aiData.getTileInfo(baseRadiusTile);
 
 				// land
 
@@ -144,7 +144,7 @@ void moveArtifactStrategy()
 
 				// blocked
 
-				if (baseRadiusTileInfo.factionInfos[aiFactionId].blocked[0])
+				if (isBlocked(baseRadiusTile))
 				{
 					blocked = true;
 					break;
@@ -157,7 +157,7 @@ void moveArtifactStrategy()
 
 			// travelTime
 
-			int travelTime = getVehicleATravelTime(vehicleId, baseTile);
+			double travelTime = getVehicleATravelTime(vehicleId, baseTile);
 
 			if (travelTime < closestBaseTravelTime)
 			{
@@ -171,12 +171,14 @@ void moveArtifactStrategy()
 
 		if (closestBaseLocation != nullptr)
 		{
-			debug("\tmove to closest base (%3d,%3d)\n", getX(closestBaseLocation), getY(closestBaseLocation));
+			debug("\tmove to closest base %s\n", getLocationString(closestBaseLocation).c_str());
 			transitVehicle(Task(vehicleId, TT_HOLD, closestBaseLocation));
 			continue;
 		}
 
 	}
 
+	executionProfiles["1.5.3. moveArtifactStrategy"].stop();
+	
 }
 

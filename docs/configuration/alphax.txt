@@ -1,4 +1,14 @@
 ;
+; **************************************************************
+; *  SMACX The Will to Power mod                               *
+; *  https://github.com/tnevolin/thinker-doer                  *
+; **************************************************************
+;
+; **************************************************************
+; *  SMACX Thinker Mod / Default tech tree for the expansion   *
+; *  https://github.com/induktio/thinker                       *
+; **************************************************************
+;
 ; Sid Meier's ALPHA CENTAURI
 ;
 ; Alpha Centauri User-Configurable Rules
@@ -51,7 +61,7 @@
 0,       ; Combat % -> Defend vs. mobile in rough
 0,       ; Combat % -> Infantry vs. Base
 50,      ; Combat penalty % -> attack after airdrop
-25,      ; Combat % -> Fanatic attack bonus
+50,      ; Combat % -> Fanatic attack bonus
 50,      ; Combat % -> Land based guns vs. ship artillery bonus
 0,       ; Combat % -> Artillery bonus per level of altitude
 50,      ; Combat % -> Trance bonus defending vs. psi
@@ -136,14 +146,14 @@ Monolith,         Disable, Monolith,         Disable,  8,  Place Monolith,  ?, ?
 ; RESOURCE INFORMATION
 ;
 ; Resource production (nutrient, minerals, energy, <unused>) for
-; special squares. In normal squares, these values are determined
+; special squares. In land squares, these values are determined
 ; by the temperature, rainfall, rockiness, etc. of the square.
 ;
 ; "Bonus Square" value for particular category is added to other
 ; production in a square.
 ;
 ; "Improved Land" means farm, mine, solar
-; "Improved Sea"  means desal, platform, harness
+; "Improved Sea"  means kelp farm, mining platfrom, tidal harness
 ;
 #RESOURCEINFO
 Ocean Square,     1, 0, 0, 0,
@@ -172,7 +182,7 @@ Borehole Square,  0, 2, 6, 0,
 8,   ; Plateau base     (Basic plateau size)
 12,  ; Plateau modifier (Plateau modifier based on LAND selection: x0, x1, x2)
 16,  ; Rivers base      (Basic # of rivers)
-16,  ; Rivers rain mod. (Additional rivers based on RAIN selection)
+20,  ; Rivers rain mod. (Additional rivers based on RAIN selection)
 14,  ; Solar Energy     (Latitude DIVISOR for temperature based on HEAT) Smaller # increases effect of HEAT selection
 14,  ; Thermal band     (Latitude DIVISOR for thermal banding)  Smaller # widens hot bands
 8,   ; Thermal deviance (Latitude DIVISOR for thermal deviance) Smaller # increases randomness
@@ -181,7 +191,7 @@ Borehole Square,  0, 2, 6, 0,
 5,   ; Cloudmass peaks  (Size of cloud mass trapped by peaks)
 3,   ; Cloudmass hills  (Size of cloud mass trapped by hills)
 1,   ; Rainfall coeff.  (Multiplier for rainfall belts)
-8,   ; Deep water       (Encourages fractal to grow deep water)
+4,   ; Deep water       (Encourages fractal to grow deep water)
 10,  ; Shelf            (Encourages fractal to grow shelf)
 15,  ; Plains           (Encourages highland plains)
 40,  ; Beach            (Encourages wider beaches)
@@ -192,12 +202,13 @@ Borehole Square,  0, 2, 6, 0,
 4    ; Islands          (Higher # increases island count)
 
 #WORLDSIZE
-5
-Tiny planet|(early conflict), 24, 48
-Small planet,                 32, 64
-Standard planet,              40, 80
-Large planet,                 50, 100
-Huge planet|(late conflict),  64, 128
+6
+Tiny Planet|(24x48),          24, 48
+Small Planet|(32x64),         32, 64
+Standard Planet|(40x80),      40, 80
+Large Planet|(50x100),        50, 100
+Huge Planet|(64x128),         64, 128
+Very Huge Planet|(80x160),    80, 160
 
 ;
 ; TIME CONTROLS (Multiplayer)
@@ -1094,7 +1105,8 @@ Peacekeeper
 ;                 (e.g. 125 means each discovery costs
 ;                 125% the usual number of research
 ;                 points).
-;   SHARETECH   = Gain any technology known to # other players
+;   SHARETECH   = Gain any technology known to # other players. 
+;                 This ability is only applied when a tech is discovered by another faction.
 ;   TERRAFORM   = Halves terraform raise/lower cost
 ;   SOCIAL      = Gives a modifier in the named social effect category
 ;                 ("SOCIAL, +EFFIC" raises the EFFIC rating by 1;
@@ -1129,8 +1141,9 @@ Peacekeeper
 ;   PROBECOST   = Percentage of normal cost for probe-team actions (default is 100)
 ;   DEFENSE     = Percent modifier for defensive combat (default is 100)
 ;   OFFENSE     = Percent modifier for offensive combat (default is 100)
-;   TECHSHARE   = When used with SHARETECH, requires one to be spying on the other
-;                 factions (by probe, Empath Guild, Governor, or Pact). Parameter is ignored.
+;   TECHSHARE   = Gain any technology known to # other players that we are
+;                 currently spying on (by probe, Empath Guild, Governor, or Pact).
+;                 This ability is only applied when a tech is discovered by another faction.
 ;   TECHSTEAL   = Faction steal a tech when it captures a base. Parameter is ignored.
 ;
 ; SOCIAL PRIORITY:

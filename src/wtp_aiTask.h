@@ -24,27 +24,58 @@ enum TaskType
 	TT_HOLD,					// 10
 	TT_ALERT,					// 11
 	TT_MOVE,					// 12
-	TT_ARTIRFLAG_CONTRIBUTE,		// 13
+	TT_ARTIFACT_CONTRIBUTE,		// 13
 	TT_MELEE_ATTACK,			// 14
 	TT_LONG_RANGE_FIRE,			// 15
 };
 
+std::string const taskTypeNames[]
+{
+	"NONE ",				//  0
+	"KILL ",				//  1
+	"SKIP ",				//  2
+	"BUILD",				// 	3
+	"LOAD ",				//  4
+	"BOARD",				//  5
+	"UNLOA",				//  6
+	"UNBOA",				//  7
+	"TERRA",				//  8
+	"ORDER",				//  9
+	"HOLD ",				// 10
+	"ALERT",				// 11
+	"MOVE ",				// 12
+	"ART_C",				// 13
+	"MELEE",				// 14
+	"ARTYL",				// 15
+};
+
 struct Task
 {
-	int vehiclePad0 = -1;
 	TaskType type;
+	int vehiclePad0 = -1;
 	MAP *destination = nullptr;
+	MAP *attackPosition = nullptr;
 	MAP *attackTarget = nullptr;
 	int order = -1;
 	int terraformingAction = -1;
 
-	Task(int _vehicleId, TaskType _type);
-	Task(int _vehicleId, TaskType _type, MAP *_destination);
-	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget);
-	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget, int _order, int _terraformingAction);
-
+	Task(int _vehicleId, TaskType _type)
+	: type(_type), vehiclePad0(Vehicles[_vehicleId].pad_0)
+	{}
+	Task(int _vehicleId, TaskType _type, MAP *_destination)
+	: type(_type), vehiclePad0(Vehicles[_vehicleId].pad_0), destination(_destination)
+	{}
+	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackPosition, MAP *_attackTarget)
+	: type(_type), vehiclePad0(Vehicles[_vehicleId].pad_0), destination(_destination), attackPosition(_attackPosition), attackTarget(_attackTarget)
+	{}
+	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackPosition, MAP *_attackTarget, int _order, int _terraformingAction)
+	: type(_type), vehiclePad0(Vehicles[_vehicleId].pad_0), destination(_destination), attackPosition(_attackPosition), attackTarget(_attackTarget), order(_order), terraformingAction(_terraformingAction)
+	{}
+	
+	static std::string typeName(TaskType &taskType);
 	int getVehicleId();
 	void clearDestination();
+	void setDestination(MAP *_destination);
 	MAP *getDestination();
 	MAP *getAttackTarget();
 	MAP *getGoal();

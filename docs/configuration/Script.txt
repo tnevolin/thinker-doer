@@ -1776,9 +1776,10 @@ The Golden Age of $BASENAME0 has come to an end.
 #HURRY
 #xs 400
 #caption Operations Director
-$BASENAME0 can complete $ITEM1 rapidly
-at an energy cost of $NUM0. We
-have $NUM1 energy credits in reserve.
+$BASENAME0 can complete $ITEM1 rapidly at an energy cost of {$NUM0}.
+^We have {$NUM1} energy credits in reserve.
+^
+^Hurry cost is not affected by INDUSTRY rating.
 
 #HURRYOPTIONS
 Never mind.
@@ -9973,10 +9974,10 @@ are sold.
 #DEMO7
 #xs 440
 #caption Sid Meier's Alien Crossfire DEMO
-^^Continue Mankind’s Struggle To Colonize An Alien World
+^^Continue MankindÂ’s Struggle To Colonize An Alien World
 ^
-Welcome to this demo of Sid Meier’s Alien Crossfire, the official Expansion
-Pack for Sid Meier’s Alpha Centauri. As a new era dawns on Planet, the human
+Welcome to this demo of Sid MeierÂ’s Alien Crossfire, the official Expansion
+Pack for Sid MeierÂ’s Alpha Centauri. As a new era dawns on Planet, the human
 colonists must deal with both the emergence of five new factions,
 and the arrival of a new alien threat. In this demo you can experience both of 
 these new events, by playing a 100 turn game as either the new Nautilus Pirates
@@ -9993,7 +9994,7 @@ For more details see the splash screen when you exit the game.
 To begin the game please select either "Quick Start" or "Start Game"
 from the menu which follows.
 ^
-© 1999 Electronic Arts.  All Rights reserved. Alien Crossfire is a trademark of Electronic Arts 
+Â© 1999 Electronic Arts.  All Rights reserved. Alien Crossfire is a trademark of Electronic Arts 
 in the U.S. and/or other countries. Alpha Centauri is a trademark of Firaxis Games, Inc.
 
 #CUSTOMMAP
@@ -10902,14 +10903,14 @@ Our infiltration device connected to the {$FACTION0} networks was discovered and
 #GOODIDEA_IGNORE_REACTOR
 #caption Security Chief
 #xs 440
-Our forces are ready to begin the assault, $TITLE0 $NAME1.
-^Winning odds are {$NUM0 to $NUM1} (vanilla odds are $NUM2 to $NUM3).
-^Winning chances are {$NUM4} %.
+Our forces are ready to begin the assault, $TITLE0 $NAME1. Shall I order them to proceed?
 ^
-^Shall I order them to proceed?
+^Their combat parameters are:
+^winning odds: {$NUM0 to $NUM1}
+^relative strength: $NUM2 to $NUM3
+^winning chances are {$NUM4} %
 ^
-^* Reactor power is set to be [ignored] in combat. Both units have {10} max HP.
+^* Reactor power is [ignored] in combat. Both units have {10} max HP.
 
 No. Call off the attack.
 Yes. Proceed as ordered.
-

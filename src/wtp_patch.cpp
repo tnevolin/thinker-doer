@@ -215,15 +215,6 @@ void patch_disable_focus()
 }
 
 /*
-Patch read basic rules.
-*/
-void patch_read_basic_rules()
-{
-    write_call_over(0x00587424, (int)wtp_mod_read_basic_rules);
-
-}
-
-/*
 Ignores reactor power multiplier in combat processing.
 */
 void patch_ignore_reactor_power_in_combat_processing()
@@ -552,91 +543,138 @@ void patch_alternative_prototype_cost_formula()
 
 }
 
+void patch_hurry_popup()
+{
+    write_call(0x41916B, (int)wtp_BaseWin_popup_start);
+    write_call(0x4195A6, (int)wtp_BaseWin_ask_number);
+
+}
+
+/*
+Hurries minimal mineral amount to complete production on next turn.
+*/
+void patch_hurry_minimal_minerals()
+{
+	// BaseWin__hurry
+	
+	// push item cost instead of first parameter
+	
+	int hurry_minimal_minerals1_bytes_length = 0x1;
+	
+/*
+0:  51                      push   ecx
+*/
+	byte hurry_minimal_minerals1_bytes_old[] =
+		{ 0x51 }
+	;
+	
+/*
+0:  56                      push   esi
+*/
+	byte hurry_minimal_minerals1_bytes_new[] =
+		{ 0x56 }
+	;
+	
+	write_bytes
+	(
+		0x00418F9C,
+		hurry_minimal_minerals1_bytes_old,
+		hurry_minimal_minerals1_bytes_new,
+		hurry_minimal_minerals1_bytes_length
+	)
+	;
+	
+	// intercept call
+	
+	write_call(0x00418F9D, (int)getHurryMinimalMineralCost);
+	
+	// do not mulitpy by item cost - it is already done in the call above
+	
+	int hurry_minimal_minerals2_bytes_length = 0x3;
+	
+/*
+0:  0f af ce                imul   ecx,esi
+*/
+	byte hurry_minimal_minerals2_bytes_old[] =
+		{ 0x0F, 0xAF, 0xCE }
+	;
+	
+/*
+...
+*/
+	byte hurry_minimal_minerals2_bytes_new[] =
+		{ 0x90, 0x90, 0x90 }
+	;
+	
+	write_bytes
+	(
+		0x00418FA9,
+		hurry_minimal_minerals2_bytes_old,
+		hurry_minimal_minerals2_bytes_new,
+		hurry_minimal_minerals2_bytes_length
+	)
+	;
+	
+}
+
 /*
 Applies flat hurry cost mechanics.
 */
 void patch_flat_hurry_cost()
 {
 	// BaseWin__hurry
-
-    int flat_hurry_cost_bytes_length = 0x59;
-
+	
+    int flat_hurry_cost_bytes_length = 0x2f;
+	
 /*
-0:  2b ce                   sub    ecx,esi
-2:  3b d7                   cmp    edx,edi
-4:  7c 1b                   jl     0x21
-6:  8b d1                   mov    edx,ecx
-8:  b8 67 66 66 66          mov    eax,0x66666667
-d:  0f af d1                imul   edx,ecx
-10: f7 ea                   imul   edx
-12: c1 fa 03                sar    edx,0x3
-15: 8b c2                   mov    eax,edx
-17: c1 e8 1f                shr    eax,0x1f
-1a: 03 d0                   add    edx,eax
-1c: 8d 3c 4a                lea    edi,[edx+ecx*2]
-1f: eb 03                   jmp    0x24
-21: 8d 3c 09                lea    edi,[ecx+ecx*1]
-24: 83 7d e4 46             cmp    DWORD PTR [ebp-0x1c],0x46
-28: 7c 25                   jl     0x4f
-2a: a1 30 ea 90 00          mov    eax,ds:0x90ea30
-2f: 33 c9                   xor    ecx,ecx
-31: 6a ff                   push   0xffffffff
-33: 6a 01                   push   0x1
-35: 8a 48 04                mov    cl,BYTE PTR [eax+0x4]
-38: 8b 70 40                mov    esi,DWORD PTR [eax+0x40]
-3b: 51                      push   ecx
-3c: 03 ff                   add    edi,edi
-3e: e8 35 b4 0c 00          call   0xcb478
-43: c1 e0 02                shl    eax,0x2
-46: 83 c4 0c                add    esp,0xc
-49: 3b f0                   cmp    esi,eax
-4b: 7d 02                   jge    0x4f
-4d: 03 ff                   add    edi,edi
-4f: 3b 35 30 98 94 00       cmp    esi,DWORD PTR ds:0x949830
-55: 7d 02                   jge    0x59
-57: 03 ff                   add    edi,edi
+0:  8d 04 9b                lea    eax,[ebx+ebx*4]
+3:  8d 14 c0                lea    edx,[eax+eax*8]
+6:  c1 e2 03                shl    edx,0x3
+9:  2b d3                   sub    edx,ebx
+b:  8b 04 95 44 6f 94 00    mov    eax,DWORD PTR [edx*4+0x946f44]
+12: 83 f8 64                cmp    eax,0x64
+15: 74 18                   je     0x2f
+17: 0f af c7                imul   eax,edi
+1a: 8b c8                   mov    ecx,eax
+1c: b8 1f 85 eb 51          mov    eax,0x51eb851f
+21: f7 e9                   imul   ecx
+23: c1 fa 05                sar    edx,0x5
+26: 8b c2                   mov    eax,edx
+28: c1 e8 1f                shr    eax,0x1f
+2b: 03 d0                   add    edx,eax
+2d: 8b fa                   mov    edi,edx
 */
     byte flat_hurry_cost_bytes_old[] =
-        { 0x2B, 0xCE, 0x3B, 0xD7, 0x7C, 0x1B, 0x8B, 0xD1, 0xB8, 0x67, 0x66, 0x66, 0x66, 0x0F, 0xAF, 0xD1, 0xF7, 0xEA, 0xC1, 0xFA, 0x03, 0x8B, 0xC2, 0xC1, 0xE8, 0x1F, 0x03, 0xD0, 0x8D, 0x3C, 0x4A, 0xEB, 0x03, 0x8D, 0x3C, 0x09, 0x83, 0x7D, 0xE4, 0x46, 0x7C, 0x25, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x33, 0xC9, 0x6A, 0xFF, 0x6A, 0x01, 0x8A, 0x48, 0x04, 0x8B, 0x70, 0x40, 0x51, 0x03, 0xFF, 0xE8, 0x35, 0xB4, 0x0C, 0x00, 0xC1, 0xE0, 0x02, 0x83, 0xC4, 0x0C, 0x3B, 0xF0, 0x7D, 0x02, 0x03, 0xFF, 0x3B, 0x35, 0x30, 0x98, 0x94, 0x00, 0x7D, 0x02, 0x03, 0xFF }
+        { 0x8D, 0x04, 0x9B, 0x8D, 0x14, 0xC0, 0xC1, 0xE2, 0x03, 0x2B, 0xD3, 0x8B, 0x04, 0x95, 0x44, 0x6F, 0x94, 0x00, 0x83, 0xF8, 0x64, 0x74, 0x18, 0x0F, 0xAF, 0xC7, 0x8B, 0xC8, 0xB8, 0x1F, 0x85, 0xEB, 0x51, 0xF7, 0xE9, 0xC1, 0xFA, 0x05, 0x8B, 0xC2, 0xC1, 0xE8, 0x1F, 0x03, 0xD0, 0x8B, 0xFA }
     ;
-
+	
 /*
-0:  e8 fd ff ff ff          call   2 <_main+0x2>
-5:  89 c7                   mov    edi,eax
+0:  a1 30 ea 90 00          mov    eax,ds:0x90ea30
+5:  8b 55 dc                mov    edx,DWORD PTR [ebp-0x24]
+8:  2b 50 40                sub    edx,DWORD PTR [eax+0x40]
+b:  52                      push   edx
+c:  ff 70 50                push   DWORD PTR [eax+0x50]
+f:  ff 35 70 93 68 00       push   DWORD PTR ds:0x689370
+15: e8 fd ff ff ff          call   17 <_main+0x17>
+1a: 83 c4 0c                add    esp,0xc
+1d: 89 c7                   mov    edi,eax
 ...
 */
     byte flat_hurry_cost_bytes_new[] =
-        { 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x89, 0xC7, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+        { 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0x55, 0xDC, 0x2B, 0x50, 0x40, 0x52, 0xFF, 0x70, 0x50, 0xFF, 0x35, 0x70, 0x93, 0x68, 0x00, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x0C, 0x89, 0xC7, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
-        0x00418FB8,
+        0x0041901C,
         flat_hurry_cost_bytes_old,
         flat_hurry_cost_bytes_new,
         flat_hurry_cost_bytes_length
     )
     ;
-
-    write_call(0x00418FB8, (int)modifiedHurryCost);
-
-	// display additional hurry information
-
-	write_call(0x004192A5, (int)displayHurryCostScaledToBasicMineralCostMultiplierInformation);
-	write_call(0x004192FF, (int)displayPartialHurryCostToCompleteNextTurnInformation);
-
-}
-
-/*
-Enables alternative upgrade cost formula.
-*/
-void patch_alternative_upgrade_cost_formula()
-{
-    write_call_over(0x004D0ECF, (int)wtp_mod_upgrade_cost);
-    write_call_over(0x004D16D9, (int)wtp_mod_upgrade_cost);
-    write_call_over(0x004EFB76, (int)wtp_mod_upgrade_cost);
-    write_call_over(0x004EFEB9, (int)wtp_mod_upgrade_cost);
-
+	
+    write_call(0x0041901C + 0x15, (int)hurry_cost);
+	
 }
 
 /*
@@ -1059,7 +1097,7 @@ void patch_alternative_artillery_damage()
 
     // custom artillery damage generator
 
-    write_call(0x00508616 + 0x5, (int)roll_artillery_damage);
+    write_call(0x00508616 + 0x5, (int)modified_artillery_damage);
 
 }
 
@@ -1301,38 +1339,38 @@ Patch tile yield calculation.
 void patch_tile_yield()
 {
 	// nutrient yield
-	write_call(0x00465DD6, (int)mod_nutrient_yield);
-	write_call(0x004B6C44, (int)mod_nutrient_yield);
-	write_call(0x004BCEEB, (int)mod_nutrient_yield);
-	write_call(0x004E7DE4, (int)mod_nutrient_yield);
-	write_call(0x004E7F04, (int)mod_nutrient_yield);
-	write_call(0x004E8034, (int)mod_nutrient_yield);
+	write_call(0x00465DD6, (int)wtp_mod_nutrient_yield);
+	write_call(0x004B6C44, (int)wtp_mod_nutrient_yield);
+	write_call(0x004BCEEB, (int)wtp_mod_nutrient_yield);
+	write_call(0x004E7DE4, (int)wtp_mod_nutrient_yield);
+	write_call(0x004E7F04, (int)wtp_mod_nutrient_yield);
+	write_call(0x004E8034, (int)wtp_mod_nutrient_yield);
 	// this call overrides Thinker's
-	write_call_over(0x004E888C, (int)mod_nutrient_yield);
-	write_call(0x004E96F4, (int)mod_nutrient_yield);
-	write_call(0x004ED7F1, (int)mod_nutrient_yield);
-	write_call(0x00565878, (int)mod_nutrient_yield);
+	write_call_over(0x004E888C, (int)wtp_mod_nutrient_yield);
+	write_call(0x004E96F4, (int)wtp_mod_nutrient_yield);
+	write_call(0x004ED7F1, (int)wtp_mod_nutrient_yield);
+	write_call(0x00565878, (int)wtp_mod_nutrient_yield);
 
 	// mineral yield
-	write_call(0x004B6E4F, (int)mod_mineral_yield);
-	write_call(0x004B6EF9, (int)mod_mineral_yield);
-	write_call(0x004B6F84, (int)mod_mineral_yield);
-	write_call(0x004E7E00, (int)mod_mineral_yield);
-	write_call(0x004E7F14, (int)mod_mineral_yield);
-	write_call(0x004E8044, (int)mod_mineral_yield);
-	write_call(0x004E88AC, (int)mod_mineral_yield);
-	write_call(0x004E970A, (int)mod_mineral_yield);
+	write_call(0x004B6E4F, (int)wtp_mod_mineral_yield);
+	write_call(0x004B6EF9, (int)wtp_mod_mineral_yield);
+	write_call(0x004B6F84, (int)wtp_mod_mineral_yield);
+	write_call(0x004E7E00, (int)wtp_mod_mineral_yield);
+	write_call(0x004E7F14, (int)wtp_mod_mineral_yield);
+	write_call(0x004E8044, (int)wtp_mod_mineral_yield);
+	write_call(0x004E88AC, (int)wtp_mod_mineral_yield);
+	write_call(0x004E970A, (int)wtp_mod_mineral_yield);
 
 	// energy yield
-	write_call(0x004B7028, (int)mod_energy_yield);
-	write_call(0x004B7136, (int)mod_energy_yield);
-	write_call(0x004D3E5C, (int)mod_energy_yield);
-	write_call(0x004E7E1C, (int)mod_energy_yield);
-	write_call(0x004E7F24, (int)mod_energy_yield);
-	write_call(0x004E8054, (int)mod_energy_yield);
-	write_call(0x004E88CA, (int)mod_energy_yield);
-	write_call(0x004E971F, (int)mod_energy_yield);
-	write_call(0x0056C856, (int)mod_energy_yield);
+	write_call(0x004B7028, (int)wtp_mod_energy_yield);
+	write_call(0x004B7136, (int)wtp_mod_energy_yield);
+	write_call(0x004D3E5C, (int)wtp_mod_energy_yield);
+	write_call(0x004E7E1C, (int)wtp_mod_energy_yield);
+	write_call(0x004E7F24, (int)wtp_mod_energy_yield);
+	write_call(0x004E8054, (int)wtp_mod_energy_yield);
+	write_call(0x004E88CA, (int)wtp_mod_energy_yield);
+	write_call(0x004E971F, (int)wtp_mod_energy_yield);
+	write_call(0x0056C856, (int)wtp_mod_energy_yield);
 
 }
 
@@ -1903,28 +1941,6 @@ void patch_alternative_inefficiency()
 }
 
 /*
-Wraps setup_player adding custom functionality.
-*/
-void patch_setup_player()
-{
-	write_call(0x00525CC7, (int)wtp_mod_setup_player);
-	write_call(0x005A3C9B, (int)wtp_mod_setup_player);
-	write_call(0x005B341C, (int)wtp_mod_setup_player);
-	write_call(0x005B3C03, (int)wtp_mod_setup_player);
-	write_call(0x005B3C4C, (int)wtp_mod_setup_player);
-
-}
-
-/*
-Wraps veh_init to correctly generate number of colonies at start.
-*/
-void patch_veh_init_in_balance()
-{
-	write_call(0x005B08B1, (int)modifiedVehInitInBalance);
-
-}
-
-/*
 Enables building Recycling Tanks even if Pressure Dome presents.
 */
 void patch_recycling_tanks_not_disabled_by_pressure_dome()
@@ -2042,9 +2058,9 @@ Flattens extra prototype cost.
 void patch_flat_extra_prototype_cost()
 {
 	// in DesignWin::draw_unit_preview
-
+	
 	// prepare parameters for non prototyped components cost calculation
-
+	
 	int draw_unit_preview_flat_prototype_cost_bytes_length = 0x1e;
 /*
 0:  8b 86 0c 42 01 00       mov    eax,DWORD PTR [esi+0x1420c]
@@ -2075,13 +2091,13 @@ f:  ff b6 00 42 01 00       push   DWORD PTR [esi+0x14200]
 		draw_unit_preview_flat_prototype_cost_bytes_new,
 		draw_unit_preview_flat_prototype_cost_bytes_length
 	);
-
+	
 	// call non prototyped components cost calculation
-
+	
 	write_call(0x0043704C, (int)calculateNotPrototypedComponentsCostForDesign);
-
+	
 	// correct stack pointer after the call as we passed 6 parameters instead of 5
-
+	
 	int calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_length = 0x3;
 /*
 0:  83 c4 20                add    esp,0x20
@@ -2098,13 +2114,14 @@ f:  ff b6 00 42 01 00       push   DWORD PTR [esi+0x14200]
 		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_new,
 		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_length
 	);
-
-	// in veh_cost
-
-	// change call for base_cost to calculate non prototyped components cost
-
-	write_call(0x005C198D, (int)calculateNotPrototypedComponentsCostForProduction);
-
+	
+	// updated Thinker veh_cost instead of patching
+//	// in veh_cost
+//	
+//	// change call for base_cost to calculate non prototyped components cost
+//	
+//	write_call(0x005C198D, (int)calculateNotPrototypedComponentsCostForProduction);
+	
 }
 
 /*
@@ -2637,95 +2654,51 @@ void patch_research_bonus_multiplier()
 
 }
 
-/*
-Removes fungal tower defense bonus.
-*/
-void patch_remove_fungal_tower_defense_bonus()
-{
-	// fungal tower defense bonus
-
-	int disable_fungal_tower_defense_bonus_bytes_length = 0x2;
-/*
-0:  75 09                   jne    0xb
-*/
-	byte disable_fungal_tower_defense_bonus_bytes_old[] = { 0x75, 0x09 };
-/*
-0:  eb 09                   jmp    0xb
-*/
-	byte disable_fungal_tower_defense_bonus_bytes_new[] = { 0xEB, 0x09 };
-	write_bytes
-	(
-		0x00501D0F,
-		disable_fungal_tower_defense_bonus_bytes_old,
-		disable_fungal_tower_defense_bonus_bytes_new,
-		disable_fungal_tower_defense_bonus_bytes_length
-	);
-
-	// fungal tower defense bonus display
-
-	int disable_fungal_tower_defense_bonus_display_bytes_length = 0x2;
-/*
-0:  75 39                   jne    0x3b
-*/
-	byte disable_fungal_tower_defense_bonus_display_bytes_old[] = { 0x75, 0x39 };
-/*
-0:  eb 39                   jmp    0x3b
-*/
-	byte disable_fungal_tower_defense_bonus_display_bytes_new[] = { 0xEB, 0x39 };
-	write_bytes
-	(
-		0x005020C7,
-		disable_fungal_tower_defense_bonus_display_bytes_old,
-		disable_fungal_tower_defense_bonus_display_bytes_new,
-		disable_fungal_tower_defense_bonus_display_bytes_length
-	);
-
-}
-
-/*
-habitation facilities do not stop growth
-*/
-void patch_habitation_facility_disable_explicit_population_limit()
-{
-	Rules->pop_limit_wo_hab_complex = 1000;
-	Rules->pop_limit_wo_hab_dome = 1000;
-	int habitation_complex_does_not_stop_growth_bytes_length = 0x5;
-	/*
-	0:  a1 6c 97 94 00          mov    eax,ds:0x94976c
-	*/
-	byte habitation_complex_does_not_stop_growth_bytes_old[] = { 0xA1, 0x6C, 0x97, 0x94, 0x00 };
-	/*
-	0:  b8 00 10 00 00          mov    eax,0x1000
-	*/
-	byte habitation_complex_does_not_stop_growth_bytes_new[] = { 0xB8, 0x00, 0x10, 0x00, 0x00 };
-	write_bytes
-	(
-		0x004EF577,
-		habitation_complex_does_not_stop_growth_bytes_old,
-		habitation_complex_does_not_stop_growth_bytes_new,
-		habitation_complex_does_not_stop_growth_bytes_length
-	);
-
-	int habitation_dome_does_not_stop_growth_bytes_length = 0x6;
-	/*
-	0:  8b 0d 70 97 94 00       mov    ecx,DWORD PTR ds:0x949770
-	*/
-	byte habitation_dome_does_not_stop_growth_bytes_old[] = { 0x8B, 0x0D, 0x70, 0x97, 0x94, 0x00 };
-	/*
-	0:  b9 00 10 00 00          mov    ecx,0x1000
-	...
-	*/
-	byte habitation_dome_does_not_stop_growth_bytes_new[] = { 0xB9, 0x00, 0x10, 0x00, 0x00, 0x90 };
-	write_bytes
-	(
-		0x004EF5AC,
-		habitation_dome_does_not_stop_growth_bytes_old,
-		habitation_dome_does_not_stop_growth_bytes_new,
-		habitation_dome_does_not_stop_growth_bytes_length
-	);
-
-}
-
+///*
+//Removes fungal tower defense bonus.
+//*/
+//void patch_remove_fungal_tower_defense_bonus()
+//{
+//	// fungal tower defense bonus
+//
+//	int disable_fungal_tower_defense_bonus_bytes_length = 0x2;
+///*
+//0:  75 09                   jne    0xb
+//*/
+//	byte disable_fungal_tower_defense_bonus_bytes_old[] = { 0x75, 0x09 };
+///*
+//0:  eb 09                   jmp    0xb
+//*/
+//	byte disable_fungal_tower_defense_bonus_bytes_new[] = { 0xEB, 0x09 };
+//	write_bytes
+//	(
+//		0x00501D0F,
+//		disable_fungal_tower_defense_bonus_bytes_old,
+//		disable_fungal_tower_defense_bonus_bytes_new,
+//		disable_fungal_tower_defense_bonus_bytes_length
+//	);
+//
+//	// fungal tower defense bonus display
+//
+//	int disable_fungal_tower_defense_bonus_display_bytes_length = 0x2;
+///*
+//0:  75 39                   jne    0x3b
+//*/
+//	byte disable_fungal_tower_defense_bonus_display_bytes_old[] = { 0x75, 0x39 };
+///*
+//0:  eb 39                   jmp    0x3b
+//*/
+//	byte disable_fungal_tower_defense_bonus_display_bytes_new[] = { 0xEB, 0x39 };
+//	write_bytes
+//	(
+//		0x005020C7,
+//		disable_fungal_tower_defense_bonus_display_bytes_old,
+//		disable_fungal_tower_defense_bonus_display_bytes_new,
+//		disable_fungal_tower_defense_bonus_display_bytes_length
+//	);
+//
+//}
+//
 /*
 modified base GROWTH
 */
@@ -2918,11 +2891,6 @@ void patch_disable_air_transport_unload_everywhere()
     write_call(0x004D0509, (int)modifiedVehicleCargoForAirTransportUnload);
 }
 
-//void patch_base_production()
-//{
-//    write_call_over(0x004E61D0, (int)modifiedBaseProductionChoice);
-//}
-//
 void patch_enemy_move()
 {
     write_call_over(0x00579362, (int)modified_enemy_move);
@@ -3128,35 +3096,6 @@ void patch_design_cost_in_rows()
 		design_cost_color_prototyping_bytes_old,
 		design_cost_color_prototyping_bytes_new,
 		design_cost_color_prototyping_bytes_length
-	);
-
-}
-
-void patch_energy_market_crash(int numerator)
-{
-	int energy_market_crash_bytes_length = 0x9;
-
-	/*
-	0:  99                      cdq
-	1:  83 e2 03                and    edx,0x3
-	4:  03 c2                   add    eax,edx
-	6:  c1 f8 02                sar    eax,0x2
-	*/
-	byte energy_market_crash_bytes_old[] = { 0x99, 0x83, 0xE2, 0x03, 0x03, 0xC2, 0xC1, 0xF8, 0x02 };
-
-	/*
-	0:  c1 f8 04                sar    eax,0x4
-	3:  6b c0 0c                imul   eax,eax,<numerator>
-	...
-	*/
-	byte energy_market_crash_bytes_new[] = { 0xC1, 0xF8, 0x04, 0x6B, 0xC0, (byte)numerator, 0x90, 0x90, 0x90 };
-
-	write_bytes
-	(
-		0x00520725,
-		energy_market_crash_bytes_old,
-		energy_market_crash_bytes_new,
-		energy_market_crash_bytes_length
 	);
 
 }
@@ -3501,32 +3440,6 @@ void patch_disable_guaranteed_facilities_destruction()
 
 }
 
-void patch_total_thought_control_no_diplomatic_consequences()
-{
-	// alternative subversion cost
-
-	int total_thought_control_no_diplomatic_consequences_bytes_length = 0x5;
-
-	/*
-	0:  e8 9f 6f fb ff          call   0xfffb6fa4
-	*/
-	byte total_thought_control_no_diplomatic_consequences_bytes_old[] = { 0xE8, 0x9F, 0x6F, 0xFB, 0xFF };
-
-	/*
-	...
-	*/
-	byte total_thought_control_no_diplomatic_consequences_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
-
-	write_bytes
-	(
-		0x005A4B8C,
-		total_thought_control_no_diplomatic_consequences_bytes_old,
-		total_thought_control_no_diplomatic_consequences_bytes_new,
-		total_thought_control_no_diplomatic_consequences_bytes_length
-	);
-
-}
-
 void patch_supply_convoy_and_info_warfare_require_support()
 {
 	// Supply Convoy and Info Warfare require support
@@ -3555,77 +3468,79 @@ void patch_supply_convoy_and_info_warfare_require_support()
 
 void patch_alternative_support()
 {
-	// support free units
-
-	int support_free_units_bytes_length = 0x4;
-
-	/*
-	0:  3b 54 85 c4             cmp    edx,DWORD PTR [ebp+eax*4-0x3c]
-	*/
-	byte support_free_units_bytes_old[] = { 0x3B, 0x54, 0x85, 0xC4 };
-
-	/*
-	0:  83 fa 02                cmp    edx,<free units>
-	...
-	*/
-	byte support_free_units_bytes_new[] = { 0x83, 0xFA, (byte)conf.alternative_support_free_units, 0x90 };
-
-	write_bytes
-	(
-		0x004E98D3,
-		support_free_units_bytes_old,
-		support_free_units_bytes_new,
-		support_free_units_bytes_length
-	);
-
-	// support minerals
-
-	int support_minerals_bytes_length = 0x2b;
-
-	/*
-	0:  8b 56 de                mov    edx,DWORD PTR [esi-0x22]
-	3:  8b 0d 1c e9 90 00       mov    ecx,DWORD PTR ds:0x90e91c
-	9:  83 fb fc                cmp    ebx,0xfffffffc
-	c:  8b 1d 08 ea 90 00       mov    ebx,DWORD PTR ds:0x90ea08
-	12: 0f 9e c0                setle  al
-	15: 40                      inc    eax
-	16: 43                      inc    ebx
-	17: 83 ca 10                or     edx,0x10
-	1a: 03 c8                   add    ecx,eax
-	1c: 89 1d 08 ea 90 00       mov    DWORD PTR ds:0x90ea08,ebx
-	22: 89 56 de                mov    DWORD PTR [esi-0x22],edx
-	25: 89 0d 1c e9 90 00       mov    DWORD PTR ds:0x90e91c,ecx
-	*/
-	byte support_minerals_bytes_old[] = { 0x8B, 0x56, 0xDE, 0x8B, 0x0D, 0x1C, 0xE9, 0x90, 0x00, 0x83, 0xFB, 0xFC, 0x8B, 0x1D, 0x08, 0xEA, 0x90, 0x00, 0x0F, 0x9E, 0xC0, 0x40, 0x43, 0x83, 0xCA, 0x10, 0x03, 0xC8, 0x89, 0x1D, 0x08, 0xEA, 0x90, 0x00, 0x89, 0x56, 0xDE, 0x89, 0x0D, 0x1C, 0xE9, 0x90, 0x00 };
-
-	/*
-	0:  83 4e de 10             or     DWORD PTR [esi-0x22],0x10
-	4:  ff 05 08 ea 90 00       inc    DWORD PTR ds:0x90ea08
-	a:  b8 04 00 00 00          mov    eax,0x4
-	f:  29 d8                   sub    eax,ebx
-	11: f7 25 08 ea 90 00       mul    DWORD PTR ds:0x90ea08
-	17: c1 f8 02                sar    eax,0x2
-	1a: a3 1c e9 90 00          mov    ds:0x90e91c,eax
-	...
-	*/
-	byte support_minerals_bytes_new[] = { 0x83, 0x4E, 0xDE, 0x10, 0xFF, 0x05, 0x08, 0xEA, 0x90, 0x00, 0xB8, 0x04, 0x00, 0x00, 0x00, 0x29, 0xD8, 0xF7, 0x25, 0x08, 0xEA, 0x90, 0x00, 0xC1, 0xF8, 0x02, 0xA3, 0x1C, 0xE9, 0x90, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-
-	write_bytes
-	(
-		0x004E98EE,
-		support_minerals_bytes_old,
-		support_minerals_bytes_new,
-		support_minerals_bytes_length
-	);
-
-	// intercept method in BaseWin::draw_support to set units support
-
+	// this patch moves to the base_support Thinker function
+	
+//	// support free units (in base_support)
+//	
+//	int support_free_units_bytes_length = 0x4;
+//	
+//	/*
+//	0:  3b 54 85 c4             cmp    edx,DWORD PTR [ebp+eax*4-0x3c]
+//	*/
+//	byte support_free_units_bytes_old[] = { 0x3B, 0x54, 0x85, 0xC4 };
+//	
+//	/*
+//	0:  83 fa 02                cmp    edx,<free units>
+//	...
+//	*/
+//	byte support_free_units_bytes_new[] = { 0x83, 0xFA, (byte)conf.alternative_support_free_units, 0x90 };
+//	
+//	write_bytes
+//	(
+//		0x004E98D3,
+//		support_free_units_bytes_old,
+//		support_free_units_bytes_new,
+//		support_free_units_bytes_length
+//	);
+//	
+//	// support minerals (in base_support)
+//	
+//	int support_minerals_bytes_length = 0x2b;
+//	
+//	/*
+//	0:  8b 56 de                mov    edx,DWORD PTR [esi-0x22]
+//	3:  8b 0d 1c e9 90 00       mov    ecx,DWORD PTR ds:0x90e91c
+//	9:  83 fb fc                cmp    ebx,0xfffffffc
+//	c:  8b 1d 08 ea 90 00       mov    ebx,DWORD PTR ds:0x90ea08
+//	12: 0f 9e c0                setle  al
+//	15: 40                      inc    eax
+//	16: 43                      inc    ebx
+//	17: 83 ca 10                or     edx,0x10
+//	1a: 03 c8                   add    ecx,eax
+//	1c: 89 1d 08 ea 90 00       mov    DWORD PTR ds:0x90ea08,ebx
+//	22: 89 56 de                mov    DWORD PTR [esi-0x22],edx
+//	25: 89 0d 1c e9 90 00       mov    DWORD PTR ds:0x90e91c,ecx
+//	*/
+//	byte support_minerals_bytes_old[] = { 0x8B, 0x56, 0xDE, 0x8B, 0x0D, 0x1C, 0xE9, 0x90, 0x00, 0x83, 0xFB, 0xFC, 0x8B, 0x1D, 0x08, 0xEA, 0x90, 0x00, 0x0F, 0x9E, 0xC0, 0x40, 0x43, 0x83, 0xCA, 0x10, 0x03, 0xC8, 0x89, 0x1D, 0x08, 0xEA, 0x90, 0x00, 0x89, 0x56, 0xDE, 0x89, 0x0D, 0x1C, 0xE9, 0x90, 0x00 };
+//	
+//	/*
+//	0:  83 4e de 10             or     DWORD PTR [esi-0x22],0x10
+//	4:  ff 05 08 ea 90 00       inc    DWORD PTR ds:0x90ea08
+//	a:  b8 04 00 00 00          mov    eax,0x4
+//	f:  29 d8                   sub    eax,ebx
+//	11: f7 25 08 ea 90 00       mul    DWORD PTR ds:0x90ea08
+//	17: c1 f8 02                sar    eax,0x2
+//	1a: a3 1c e9 90 00          mov    ds:0x90e91c,eax
+//	...
+//	*/
+//	byte support_minerals_bytes_new[] = { 0x83, 0x4E, 0xDE, 0x10, 0xFF, 0x05, 0x08, 0xEA, 0x90, 0x00, 0xB8, 0x04, 0x00, 0x00, 0x00, 0x29, 0xD8, 0xF7, 0x25, 0x08, 0xEA, 0x90, 0x00, 0xC1, 0xF8, 0x02, 0xA3, 0x1C, 0xE9, 0x90, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+//	
+//	write_bytes
+//	(
+//		0x004E98EE,
+//		support_minerals_bytes_old,
+//		support_minerals_bytes_new,
+//		support_minerals_bytes_length
+//	);
+//	
+	// intercept method in BaseWin::draw_support to display unit support
+	
     write_call(0x0040C9D3, (int)interceptBaseWinDrawSupport);
-
+	
 	// display unit support
-
+	
 	int display_unit_support_bytes_length = 0xc;
-
+	
 	/*
 	0:  8b 55 e8                mov    edx,DWORD PTR [ebp-0x18]
 	3:  33 c0                   xor    eax,eax
@@ -3634,14 +3549,14 @@ void patch_alternative_support()
 	b:  40                      inc    eax
 	*/
 	byte display_unit_support_bytes_old[] = { 0x8B, 0x55, 0xE8, 0x33, 0xC0, 0x83, 0xFA, 0xFC, 0x0F, 0x9E, 0xC0, 0x40 };
-
+	
 	/*
 	0:  8b 4d f0                mov    ecx,DWORD PTR [ebp-0x10]
 	3:  0f bf 41 08             movsx  eax,WORD PTR [ecx+0x8]
 	...
 	*/
 	byte display_unit_support_bytes_new[] = { 0x8B, 0x4D, 0xF0, 0x0F, 0xBF, 0x41, 0x08, 0x90, 0x90, 0x90, 0x90, 0x90 };
-
+	
 	write_bytes
 	(
 		0x0040CDF8,
@@ -3649,7 +3564,7 @@ void patch_alternative_support()
 		display_unit_support_bytes_new,
 		display_unit_support_bytes_length
 	);
-
+	
 }
 
 void patch_exact_odds()
@@ -3923,26 +3838,7 @@ void patch_tech_value()
 
 void patch_disable_vanilla_base_hurry()
 {
-	int disable_vanilla_base_hurry_bytes_length = 0x5;
-
-	/*
-	0:  e8 a3 c5 ff ff          call   0xffffc5a8
-	*/
-	byte disable_vanilla_base_hurry_bytes_old[] = { 0xE8, 0xA3, 0xC5, 0xFF, 0xFF };
-
-	/*
-	...
-	*/
-	byte disable_vanilla_base_hurry_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
-
-	write_bytes
-	(
-		0x004F7A38,
-		disable_vanilla_base_hurry_bytes_old,
-		disable_vanilla_base_hurry_bytes_new,
-		disable_vanilla_base_hurry_bytes_length
-	);
-
+	write_call(0x4F7A38, (int)wtp_mod_base_hurry);
 }
 
 /*
@@ -4268,13 +4164,6 @@ void patch_eco_damage_alternative_industry_effect_reduction_formula()
 
 }
 
-void patch_stockpile_energy_bug()
-{
-   	write_call(0x004F7A2F, (int)modified_base_production);
-   	write_call(0x004F7BBD, (int)modified_base_ecology);
-
-}
-
 void patch_limit_orbit_intake()
 {
    	write_call(0x004E5227, (int)modified_base_yield);
@@ -4292,10 +4181,13 @@ void patch_limit_orbit_intake()
 
 }
 
-void patch_ai_transport_change()
+void patch_order_veh()
 {
-   	write_call(0x004CB3BA, (int)modified_order_veh);
-   	write_call(0x0053179F, (int)modified_order_veh);
+   	write_call(0x004CB3BA, (int)wtp_mod_order_veh);
+   	write_call(0x004CBA24, (int)wtp_mod_order_veh);
+   	write_call(0x0053179F, (int)wtp_mod_order_veh);
+   	write_call(0x00531AC5, (int)wtp_mod_order_veh);
+   	write_call(0x005367EC, (int)wtp_mod_order_veh);
 
 }
 
@@ -4670,14 +4562,56 @@ void patch_tech_steal()
 
 }
 
+/**
+Shortens status labels to make them fit the status window.
+*/
+void patch_status_win_info()
+{
+//	write_call(0x004B78D5, (int)modStatusWinLandmark_strlen);
+//	write_call(0x004B7A0C, (int)modStatusWinRiverVegetation_strlen);
+	write_call(0x004B7C2E, (int)modStatusWinBonus_bonus_at);
+//	write_call(0x004B7CA8, (int)modStatusWinBonus_strlen);
+	
+}
+
+/**
+Sets moved factions = 8 if there is no human player.
+*/
+void patch_load_game()
+{
+	write_call(0x0047D5CE, (int)modified_load_game);
+	write_call(0x0051BBE3, (int)modified_load_game);
+	write_call(0x0058E7A1, (int)modified_load_game);
+	write_call(0x0058E879, (int)modified_load_game);
+	
+}
+
+/**
+Disables formers running away from aliens.
+*/
+void patch_scary_former()
+{
+	write_call(0x0056B8C5, (int)modified_zoc_veh);
+	
+}
+
+/**
+Deletes supported units in more sane order.
+*/
+void patch_base_check_support()
+{
+	write_call(0x004F7A75, (int)modified_base_check_support);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
 
 void patch_setup_wtp(Config* cf)
 {
-//	// debug mode game speedup
-//
+	// debug mode game speedup
+	
 //	if (DEBUG)
 //	{
 //		patch_disable_boom_delay();
@@ -4687,106 +4621,89 @@ void patch_setup_wtp(Config* cf)
 //		patch_disable_battle_calls();
 //		patch_disable_focus();
 //	}
-//
-	// integrated into Thinker
-//	// patch AI vehicle home base reassignment bug
-//	// originally it reassigned to bases with mineral_surplus < 2
-//	// this patch reverses the condition
-//	{
-//		const byte old_bytes[] = {0x0F, 0x8D};
-//		const byte new_bytes[] = {0x0F, 0x8C};
-//		write_bytes(0x00562094, old_bytes, new_bytes, sizeof(old_bytes));
-//	}
-
-	// read basic rules
-
-	patch_read_basic_rules();
-
+	
 	// patch battle_compute
-
+	
 	patch_battle_compute();
-
+	
 	// integrated into Thinker
 	// but it is not 1:1 match
 	// so I disabled Thinker's setting and keep using mine instead
 	// patch ignore_reactor_power_in_combat_processing
-
+	
 	if (cf->ignore_reactor_power_in_combat)
 	{
 		patch_ignore_reactor_power_in_combat_processing();
 	}
-
+	
 	// patch combat roll
-
+	
 	patch_combat_roll();
-
+	
 	// patch odds display
-
+	
 	patch_display_odds();
-
+	
 	// patch weapon icon selection algorithm
-
+	
 	if (cf->alternative_weapon_icon_selection_algorithm)
 	{
 		patch_weapon_icon_selection_algorithm();
-
 	}
-
+	
 	// patch prototype cost formula
-
+	
 	if (cf->alternative_prototype_cost_formula)
 	{
 		patch_alternative_prototype_cost_formula();
-
 	}
-
+	
+	// hurry popup
+	
+	patch_hurry_popup();
+	
+	// hurry minimal minerals
+	
+	if (cf->hurry_minimal_minerals)
+	{
+		patch_hurry_minimal_minerals();
+	}
+	
 	// patch flat hurry cost
-
+	
 	if (cf->flat_hurry_cost)
 	{
 		patch_flat_hurry_cost();
-
 	}
-
-	// patch upgrade cost formula
-
-	if (cf->alternative_upgrade_cost_formula)
-	{
-		patch_alternative_upgrade_cost_formula();
-
-	}
-
+	
 	// patch collateral damage defender reactor
-
+	
 	if (cf->collateral_damage_defender_reactor)
 	{
 		patch_collateral_damage_defender_reactor();
-
 	}
-
+	
 	// patch uniform_promotions
-
+	
 	if (cf->uniform_promotions)
 	{
 		patch_uniform_promotions();
 	}
-
+	
 	// patch very_green_no_defense_bonus
-
+	
 	if (cf->very_green_no_defense_bonus)
 	{
 		patch_very_green_no_defense_bonus();
-
 	}
-
+	
 	// patch sea_territory_distance_same_as_land
-
+	
 	if (cf->sea_territory_distance_same_as_land)
 	{
 		patch_sea_territory_distance_same_as_land();
-
 	}
-
+	
 	// integrated into Thinker
 //	// patch coastal_territory_distance_same_as_sea
 //
@@ -4795,118 +4712,114 @@ void patch_setup_wtp(Config* cf)
 //		patch_coastal_territory_distance_same_as_sea();
 //
 //	}
-
+	
 	// patch alternative_artillery_damage
-
+	
 	if (cf->alternative_artillery_damage)
 	{
 		patch_alternative_artillery_damage();
-
 	}
-
+	
 	// patch disable_home_base_cc_morale_bonus
-
+	
 	if (cf->disable_home_base_cc_morale_bonus)
 	{
 		patch_disable_home_base_cc_morale_bonus();
-
 	}
-
+	
 	// patch disable_current_base_cc_morale_bonus
-
+	
 	if (cf->disable_current_base_cc_morale_bonus)
 	{
 		patch_disable_current_base_cc_morale_bonus();
-
 	}
-
+	
 	// patch default_morale_very_green
-
+	
 	if (cf->default_morale_very_green)
 	{
 		patch_default_morale_very_green();
-
 	}
-
+	
 	// patch tile_yield
-
+	
 	patch_tile_yield();
-
+	
 	// se_accumulated_resource_adjustment
-
+	
 	patch_se_accumulated_resource_adjustment();
-
+	
 	// hex cost
-
+	
 	patch_hex_cost();
-
+	
 	// base population info
-
+	
 	patch_display_base_population_info();
-
+	
 	// base init
-
+	
 	patch_base_init();
-
+	
 	// HSA does not kill probe
-
+	
 	if (cf->hsa_does_not_kill_probe)
 	{
 		patch_hsa_does_not_kill_probe();
 	}
-
+	
 	// probe does not destroy defense
-
+	
 	patch_probe_not_destroy_defense();
-
+	
 	// help ability
-
+	
 	patch_help_ability_cost_text();
-
+	
 	// cloning vats impunities
-
+	
 	if (cf->cloning_vats_disable_impunities)
 	{
 		patch_cloning_vats_impunities();
 	}
-
+	
 	// social_calc
 	// This is initially for cloning vats GROWTH effect but can be used for other modifications
-
+	
 	patch_social_calc();
-
+	
 	// cloning vats effect
-
+	
 	if (cf->cloning_vats_se_growth != 0)
 	{
 		patch_cloning_vats_mechanics();
 	}
-
+	
 	// patch GROWTH rating max
-
+	
 	if (cf->se_growth_rating_max != 5)
 	{
 		patch_se_growth_rating_max(cf->se_growth_rating_max);
 	}
-
+	
 	// patch GROWTH rating min
-
+	
 	if (cf->se_growth_rating_min != -2)
 	{
 		patch_se_growth_rating_min(cf->se_growth_rating_min);
 	}
-
+	
 	patch_display_base_nutrient_cost_factor();
-
+	
 	patch_growth_turns_population_boom();
-
+	
 	// patch RT -> 50% minerals
-
+	
 	if (cf->recycling_tanks_mineral_multiplier)
 	{
 		patch_recycling_tank_minerals();
 	}
-
+	
 	// integrated into Thinker
 //	// patch free minerals
 //
@@ -4914,302 +4827,291 @@ void patch_setup_wtp(Config* cf)
 //	{
 //		patch_free_minerals(cf->free_minerals);
 //	}
-
+	
 	// patch population incorrect superdrones in base screen population
-
+	
 	patch_base_scren_population_superdrones();
-
+	
 	// integrated into Thinker
 //	// patch conflicting territory claim
 //
 //	patch_conflicting_territory();
-
+	
 	// patch native life
-
+	
 	if (cf->native_life_generator_constant != 2 || cf->native_life_generator_multiplier != 2)
 	{
 		patch_native_life_frequency(cf->native_life_generator_constant, cf->native_life_generator_multiplier);
 	}
-
+	
 	if (cf->native_life_generator_more_sea_creatures)
 	{
 		patch_native_life_sea_creatures();
 	}
-
+	
 	if (cf->native_disable_sudden_death)
 	{
 		patch_native_disable_sudden_death();
 	}
-
+	
 	if (cf->alternative_inefficiency)
 	{
 		patch_alternative_inefficiency();
 	}
-
-	patch_setup_player();
-	patch_veh_init_in_balance();
-
+	
 	if (cf->recycling_tanks_mineral_multiplier)
 	{
 		patch_recycling_tanks_not_disabled_by_pressure_dome();
 	}
-
+	
 	patch_world_build();
-
+	
 //	if (cf->zoc_regular_army_sneaking_disabled)
 //	{
 //		patch_zoc_regular_army_sneaking_disabled();
 //	}
 //
 	patch_weapon_help_always_show_cost();
-
+	
 	if (cf->fix_former_wake)
 	{
 		patch_veh_wake();
 	}
-
+	
 	if (cf->flat_extra_prototype_cost)
 	{
 		patch_flat_extra_prototype_cost();
 	}
-
+	
 	if (cf->fix_mineral_contribution)
 	{
 		patch_mineral_contribution();
 	}
-
+	
 	patch_pact_base_map_production_display();
-
+	
 	if (cf->modified_probe_action_risks)
 	{
 		patch_modified_probe_action_risks();
 	}
-
+	
 	if (cf->infiltration_expire)
 	{
 		patch_infiltrate_datalinks();
 	}
-
+	
 	patch_min_knowledge_price();
-
+	
 	patch_best_defender();
-
+	
 	// integrated into Thinker
 //	patch_action_destroy();
-
+	
 	if (cf->break_treaty_before_fight)
 	{
 		patch_break_treaty_before_fight();
 	}
-
+	
 	patch_talent_display();
-
+	
 	if (cf->compact_effect_icons)
 	{
 		patch_compact_effect_icons();
 	}
-
+	
 	if (cf->se_research_bonus_percentage != 10)
 	{
 		patch_research_bonus_multiplier();
 	}
 
-	if (cf->remove_fungal_tower_defense_bonus)
-	{
-		patch_remove_fungal_tower_defense_bonus();
-	}
-
-	if (cf->habitation_facility_disable_explicit_population_limit)
-	{
-		patch_habitation_facility_disable_explicit_population_limit();
-	}
-
-	if (cf->habitation_facility_present_growth_bonus_max != 0.0 || cf->habitation_facility_absent_growth_penalty != 0.0)
+	// implemented in Thinker	
+//	if (cf->remove_fungal_tower_defense_bonus)
+//	{
+//		patch_remove_fungal_tower_defense_bonus();
+//	}
+	
+	if (cf->habitation_facility_growth_bonus != 0)
 	{
 		patch_modified_base_growth();
 	}
-
+	
 	if (cf->unit_upgrade_ignores_movement)
 	{
 		patch_unit_upgrade_ignores_movement();
 	}
-
+	
 	if (cf->group_terraforming)
 	{
 		patch_group_terraforming();
 	}
-
+	
 	patch_disable_land_artillery_bombard_from_sea();
-
+	
 	patch_disable_air_transport_unload_everywhere();
-
+	
 //	patch_base_production();
 //
 	patch_enemy_move();
-
+	
 	patch_faction_upkeep();
-
+	
 	patch_disable_move_territory_restrictions();
-
+	
 	if (cf->alternative_tech_cost)
 	{
 		patch_tech_cost();
 	}
-
+	
 	if (cf->interceptor_scramble_fix)
 	{
 		patch_interceptor_scramble_fix_display();
 	}
-
+	
 	if (cf->scorched_earth)
 	{
 		patch_scorched_earth();
 	}
-
+	
 	if (cf->orbital_yield_limit != 1.0)
 	{
 		patch_orbital_yield_limit();
 	}
-
+	
 	if (cf->silent_vendetta_warning)
 	{
 		patch_silent_vendetta_warning();
 	}
-
+	
 	if (cf->design_cost_in_rows)
 	{
 		patch_design_cost_in_rows();
 	}
-
-	if (cf->energy_market_crash_numerator != 4)
-	{
-		patch_energy_market_crash(cf->energy_market_crash_numerator);
-	}
-
+	
 	if (cf->carry_over_minerals)
 	{
 		patch_carry_over_minerals();
 	}
-
+	
 	if (cf->subversion_allow_stacked_units)
 	{
 		patch_subversion_allow_stacked_units();
 	}
-
+	
 	if (cf->mind_control_destroys_unsubverted)
 	{
 		patch_mind_control_destroys_unsubverted();
 	}
-
+	
 	if (cf->alternative_subversion_and_mind_control)
 	{
 		patch_alternative_subversion_and_mind_control();
 	}
-
+	
 	if (cf->disable_guaranteed_facilities_destruction)
 	{
 		patch_disable_guaranteed_facilities_destruction();
 	}
-
-	if (cf->total_thought_control_no_diplomatic_consequences)
-	{
-		patch_total_thought_control_no_diplomatic_consequences();
-	}
-
+	
 	if (cf->supply_convoy_and_info_warfare_require_support)
 	{
 		patch_supply_convoy_and_info_warfare_require_support();
 	}
-
+	
 	if (cf->alternative_support)
 	{
 		patch_alternative_support();
 	}
-
+	
 	patch_exact_odds();
-
+	
 	patch_obsoletion();
-
+	
 	if (cf->instant_completion_fixed_minerals > 0)
 	{
 		patch_instant_completion_fixed_minerals(cf->instant_completion_fixed_minerals);
 	}
-
+	
 	patch_turn_upkeep();
-
+	
 	if (cf->disable_sensor_destroying)
 	{
 		patch_disable_sensor_destroying();
 	}
-
+	
 	patch_tech_value();
-
+	
 	if (cf->disable_vanilla_base_hurry)
 	{
 		patch_disable_vanilla_base_hurry();
 	}
-
+	
 	patch_enemy_units_check();
-
+	
 	// in Thinker
 //	patch_enemies_treaty_popup();
-
+	
 	patch_tech_ai_randomization();
-
+	
 	patch_pact_withdraw();
-
+	
 	patch_propose_proto();
-
+	
 	if (cf->science_projects_alternative_labs_bonus)
 	{
 		patch_science_projects_alternative_labs_bonus();
 	}
-
+	
 	if (cf->disengagement_from_stack)
 	{
 		patch_disengagement_from_stack();
 	}
-
+	
 	if (cf->eco_damage_alternative_industry_effect_reduction_formula)
 	{
 		patch_eco_damage_alternative_industry_effect_reduction_formula();
 	}
-
-	patch_stockpile_energy_bug();
-
+	
 	patch_limit_orbit_intake();
-
-	patch_ai_transport_change();
-
+	
+	patch_order_veh();
+	
 	patch_base_attack();
-
+	
 	patch_vehicle_boom();
-
+	
 	patch_disable_vehicle_reassignment();
-
+	
 	patch_always_support_natives();
-
+	
 	patch_transport_pick_everybody();
-
+	
 	patch_non_transport_stop_in_base();
-
+	
 	patch_disable_alien_ranged_from_transport();
-
+	
 	patch_disable_kill_ai();
-
+	
 	patch_no_stagnation();
-
+	
 	patch_capture_base();
-
+	
 	if (conf.tech_trade_likeability != 0x12)
 	{
 		patch_tech_trade_likeability();
 	}
-
+	
 	if (conf.disable_tech_steal_vendetta || conf.disable_tech_steal_pact || conf.disable_tech_steal_other)
 	{
 		patch_tech_steal();
 	}
-
+	
+	patch_status_win_info();
+	
+	patch_load_game();
+	
+	patch_scary_former();
+	
+	patch_base_check_support();
+	
 }
 

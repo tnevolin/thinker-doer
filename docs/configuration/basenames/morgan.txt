@@ -1,0 +1,75 @@
+#BASES
+Morgan Applications
+Morgan Astrotech
+Morgan Atmospherics
+Morgan Automation
+Morgan Aviation
+Morgan Bioengineering
+Morgan Biotech
+Morgan Commodities
+Morgan Communications
+Morgan Components
+Morgan Consulting
+Morgan Cybernetics
+Morgan Defense
+Morgan Development
+Morgan Dynamics
+Morgan Energetics
+Morgan Exchange
+Morgan Finance
+Morgan Foundries
+Morgan Fusionworks
+Morgan Galactic
+Morgan Genetech
+Morgan Geothermal
+Morgan Holdings
+Morgan Innovations
+Morgan Laboratories
+Morgan Logistics
+Morgan Machinery
+Morgan Manufacturing
+Morgan Materials
+Morgan Minerals
+Morgan Nanosystems
+Morgan Neurotech
+Morgan Orbital
+Morgan Organics
+Morgan Photonics
+Morgan Polymers
+Morgan Prospecting
+Morgan Quantum
+Morgan Research
+Morgan Resources
+Morgan Security
+Morgan Services
+Morgan Software
+Morgan Solutions
+Morgan Spaceworks
+Morgan Synthetics
+Morgan Terraforming
+Morgan Trading
+Morgan Ventures
+#END
+
+#WATERBASES
+Morgan Aquatech
+Morgan Aquatic Exchange
+Morgan Coral Gateway
+Morgan Current Station
+Morgan Deepwater
+Morgan Exploration
+Morgan Infrastructure
+Morgan Nautical
+Morgan Ocean Frontiers
+Morgan Ocean Salvage
+Morgan Poseidon
+Morgan Refinery
+Morgan Sea Depot
+Morgan Sea Station
+Morgan Seabed Exchange
+Morgan Seafaring
+Morgan Shipping
+Morgan Tidal Nexus
+Morgan Tidal Outpost
+Morgan Waterfront
+#END

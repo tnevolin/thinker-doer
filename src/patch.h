@@ -19,8 +19,7 @@ void short_jump(int32_t addr);
 void write_call(int32_t addr, int32_t func);
 void write_offset(int32_t addr, const void* offset);
 void write_bytes(int32_t addr, const byte* old_bytes, const byte* new_bytes, int32_t len);
+void write_byte(int32_t addr, byte old_byte, byte new_byte);
 void remove_call(int32_t addr);
 bool patch_setup(Config* cf);
-
-int __cdecl mod_read_basic_rules();
 

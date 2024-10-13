@@ -3,6 +3,7 @@
 
 extern const int MaxProtoFactionNum;
 
+bool can_repair(int unit_id);
 bool is_human(int faction);
 
 enum Triad {
@@ -119,10 +120,10 @@ enum VehWeaponMode {
     WMODE_ENERGY = 1,
     WMODE_MISSILE = 2,
     WMODE_TRANSPORT = 7,
-    WMODE_COLONIST = 8,
-    WMODE_TERRAFORMER = 9,
-    WMODE_CONVOY = 10,
-    WMODE_INFOWAR = 11,
+    WMODE_COLONY = 8,
+    WMODE_TERRAFORM = 9,
+    WMODE_SUPPLY = 10,
+    WMODE_PROBE = 11,
     WMODE_ARTIFACT = 12,
 };
 
@@ -130,16 +131,16 @@ enum VehPlan {
     PLAN_OFFENSIVE = 0,
     PLAN_COMBAT = 1,
     PLAN_DEFENSIVE = 2,
-    PLAN_RECONNAISANCE = 3,
+    PLAN_RECONNAISSANCE = 3,
     PLAN_AIR_SUPERIORITY = 4,
     PLAN_PLANET_BUSTER = 5,
     PLAN_NAVAL_SUPERIORITY = 6,
     PLAN_NAVAL_TRANSPORT = 7,
-    PLAN_COLONIZATION = 8,
-    PLAN_TERRAFORMING = 9,
-    PLAN_SUPPLY_CONVOY = 10,
-    PLAN_INFO_WARFARE = 11,
-    PLAN_ALIEN_ARTIFACT = 12,
+    PLAN_COLONY = 8,
+    PLAN_TERRAFORM = 9,
+    PLAN_SUPPLY = 10,
+    PLAN_PROBE = 11,
+    PLAN_ARTIFACT = 12,
     PLAN_TECTONIC_MISSILE = 13,
     PLAN_FUNGAL_MISSILE = 14,
     PLAN_AUTO_CALCULATE = -1,
@@ -316,6 +317,8 @@ enum UnitFlags {
     UNIT_ACTIVE = 0x1, // if this bit is zero, prototype has been retired
     UNIT_CUSTOM_NAME_SET = 0x2,
     UNIT_PROTOTYPED = 0x4,
+    UNIT_UNK_80 = 0x80,
+    UNIT_UNK_100 = 0x100, // checked in upgrade_any_prototypes
 };
 
 enum VehFlags {
@@ -382,7 +385,7 @@ struct UNIT {
     int8_t carry_capacity;
     uint8_t cost;
     int8_t plan;
-    int8_t unk_1; // some kind of internal prototype category?
+    int8_t group_id; // some kind of internal prototype category
     uint8_t obsolete_factions;// faction bitfield of those who marked this prototype obsolete
     uint8_t combat_factions; // faction bitfield for those that have seen this unit in combat (atk/def)
     int8_t icon_offset;
@@ -439,22 +442,22 @@ struct UNIT {
             || (chassis_id == CHS_INFANTRY && Armor[armor_id].defense_value > 1));
     }
     bool is_colony() {
-        return plan == PLAN_COLONIZATION;
+        return plan == PLAN_COLONY;
     }
     bool is_former() {
-        return plan == PLAN_TERRAFORMING;
+        return plan == PLAN_TERRAFORM;
     }
     bool is_probe() {
-        return plan == PLAN_INFO_WARFARE;
+        return plan == PLAN_PROBE;
     }
     bool is_supply() {
-        return plan == PLAN_SUPPLY_CONVOY;
+        return plan == PLAN_SUPPLY;
     }
     bool is_transport() {
         return plan == PLAN_NAVAL_TRANSPORT;
     }
     bool is_artifact() {
-        return plan == PLAN_ALIEN_ARTIFACT;
+        return plan == PLAN_ARTIFACT;
     }
     bool is_missile() {
         return Chassis[chassis_id].missile;
@@ -511,8 +514,14 @@ struct VEH {
     uint8_t speed() {
         return Chassis[Units[unit_id].chassis_id].speed;
     }
+    uint8_t range() {
+        return Chassis[Units[unit_id].chassis_id].range;
+    }
     uint8_t cost() {
         return Units[unit_id].cost;
+    }
+    int plan() {
+        return Units[unit_id].plan;
     }
     int chassis_type() {
         return Units[unit_id].chassis_id;
@@ -546,6 +555,10 @@ struct VEH {
     }
     bool is_native_unit() {
         return unit_id < MaxProtoFactionNum && Units[unit_id].is_psi_unit();
+    }
+    bool is_battle_ogre() {
+        return unit_id == BSC_BATTLE_OGRE_MK1 || unit_id == BSC_BATTLE_OGRE_MK2
+            || unit_id == BSC_BATTLE_OGRE_MK3;
     }
     bool is_colony() {
         return Units[unit_id].is_colony();
@@ -581,6 +594,9 @@ struct VEH {
         return order == ORDER_NONE || (waypoint_1_x < 0 && waypoint_1_y < 0)
             || (x == waypoint_1_x && y == waypoint_1_y);
     }
+    bool in_transit() {
+        return order == ORDER_SENTRY_BOARD && waypoint_1_x >= 0 && waypoint_1_y == 0;
+    }
     bool mid_damage() {
         return damage_taken > 2*Units[unit_id].reactor_id;
     }
@@ -588,12 +604,11 @@ struct VEH {
         return damage_taken > 4*Units[unit_id].reactor_id;
     }
     bool need_heals() {
-        return mid_damage() && unit_id != BSC_BATTLE_OGRE_MK1
-            && unit_id != BSC_BATTLE_OGRE_MK2 && unit_id != BSC_BATTLE_OGRE_MK3;
+        return mid_damage() && can_repair(unit_id);
     }
     bool need_monolith() {
-        return need_heals() || (morale < MORALE_ELITE
-            && ~state & VSTATE_MONOLITH_UPGRADED && offense_value() != 0);
+        return !is_battle_ogre() && (need_heals() || (morale < MORALE_ELITE
+            && !(state & VSTATE_MONOLITH_UPGRADED) && offense_value() != 0));
     }
 };
 

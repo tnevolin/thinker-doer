@@ -3,38 +3,9 @@
 #include "wtp_game.h"
 #include "wtp_aiMove.h"
 
-Task::Task(int _vehicleId, TaskType _type)
+std::string Task::typeName(TaskType &taskType)
 {
-	this->type = _type;
-	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
-
-}
-
-Task::Task(int _vehicleId, TaskType _type, MAP *_destination)
-{
-	this->type = _type;
-	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
-	this->destination = _destination;
-
-}
-
-Task::Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget)
-{
-	this->type = _type;
-	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
-	this->destination = _destination;
-	this->attackTarget = _attackTarget;
-}
-
-Task::Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget, int _order, int _terraformingAction)
-{
-	this->type = _type;
-	this->vehiclePad0 = Vehicles[_vehicleId].pad_0;
-	this->destination = _destination;
-	this->attackTarget = _attackTarget;
-	this->order = _order;
-	this->terraformingAction = _terraformingAction;
-
+	return taskTypeNames[taskType];
 }
 
 int Task::getVehicleId()
@@ -60,30 +31,36 @@ void Task::clearDestination()
 	attackTarget = nullptr;
 }
 
-/*
+void Task::setDestination(MAP *_destination)
+{
+	assert(_destination >= *MapTiles && _destination < *MapTiles + *MapAreaTiles);
+	this->destination = _destination;
+}
+
+/**
 Returns vehicle destination if specified.
 Otherwise, current vehicle location.
 */
 MAP *Task::getDestination()
 {
 	int vehicleId = getVehicleId();
-
+	
 	// unknown vehicle
-
+	
 	if (vehicleId == -1)
 		return nullptr;
-
+	
 	// return destination if set
-
+	
 	if (destination != nullptr)
 	{
 		return destination;
 	}
-
+	
 	// otherwise, return vehicle location
-
+	
 	return getVehicleMapTile(vehicleId);
-
+	
 }
 
 MAP *Task::getAttackTarget()
@@ -148,6 +125,8 @@ int Task::getDestinationRange()
 	if (destination == nullptr)
 		return 0;
 
+	assert(isOnMap(destination));
+	
 	int x = getX(destination);
 	int y = getY(destination);
 
@@ -195,7 +174,7 @@ int Task::execute(int vehicleId)
 	{
 		// proceed to destination
 
-		debug("[%4d] (%3d,%3d) -> (%3d,%3d)\n", vehicleId, vehicle->x, vehicle->y, getX(destination), getY(destination));
+		debug("[%4d] %s -> %s\n", vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getLocationString(destination).c_str());
 
 		if (isCombatVehicle(vehicleId))
 		{
@@ -287,7 +266,7 @@ int Task::executeAction(int vehicleId)
 		return executeMove(vehicleId);
 		break;
 
-	case TT_ARTIRFLAG_CONTRIBUTE:
+	case TT_ARTIFACT_CONTRIBUTE:
 		return executeArtifactContribute(vehicleId);
 		break;
 
@@ -377,14 +356,57 @@ int Task::executeBuild(int vehicleId)
 
 }
 
-int Task::executeLoad(int vehicleId)
+int Task::executeLoad(int seaTransportVehicleId)
 {
 	debug("Task::executeLoad\n");
+	
+	VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
+	
+	// retrieve transit request
+	
+	std::vector<TransitRequest *> transitRequests;
 
-	// wait
-
-	mod_veh_skip(vehicleId);
-	return EM_DONE;
+	for (TransitRequest &transitRequest : aiData.transportControl.transitRequests)
+	{
+		if (transitRequest.getSeaTransportVehicleId() == seaTransportVehicleId)
+		{
+			transitRequests.push_back(&transitRequest);
+		}
+		
+	}
+	
+	for (TransitRequest *transitRequest : transitRequests)
+	{
+		int passengerVehicleId = transitRequest->getVehicleId();
+		
+		if (passengerVehicleId == -1)
+		{
+			debug("\tpassenger is not found\n");
+			return EM_DONE;
+		}
+		
+		VEH *passengerVehicle = getVehicle(passengerVehicleId);
+		
+		// passenger should be adjacent to the transport
+		
+		int range = map_range(passengerVehicle->x, passengerVehicle->y, seaTransportVehicle->x, seaTransportVehicle->y);
+		
+		if (range > 1)
+		{
+			debug("\tpassenger range=%2d\n", range);
+			return EM_DONE;
+		}
+		
+		// board passenger
+		
+		debug("\tboard passenger: [%3d] %s->%s\n", passengerVehicleId, getLocationString({passengerVehicle->x, passengerVehicle->y}).c_str(), getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str());
+		veh_put(passengerVehicleId, seaTransportVehicle->x, seaTransportVehicle->y);
+		board(passengerVehicleId, seaTransportVehicleId);
+		
+	}
+	
+	mod_veh_skip(seaTransportVehicleId);
+	return EM_SYNC;
 
 }
 
@@ -392,53 +414,8 @@ int Task::executeBoard(int vehicleId)
 {
 	debug("Task::executeBoard\n");
 
-	VEH *vehicle = getVehicle(vehicleId);
-
-	// retrieve transit request
-
-	TransitRequest *vehicleTransitRequest = nullptr;
-
-	for (TransitRequest &transitRequest : aiData.transportControl.transitRequests)
-	{
-		if (transitRequest.vehiclePad0 == vehicle->pad_0)
-		{
-			vehicleTransitRequest = &transitRequest;
-			break;
-		}
-
-	}
-
-	if (vehicleTransitRequest == nullptr)
-	{
-		debug("\ttransit request is not found\n");
-		return EM_DONE;
-	}
-
-	// search for designated transport
-
-	int seaTransportVehicleId = vehicleTransitRequest->getSeaTransportVehicleId();
-
-	if (seaTransportVehicleId == -1)
-	{
-		debug("\tsea transport is not found\n");
-		return EM_DONE;
-	}
-
-	VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
-	MAP *seaTransportVehicleTile = getVehicleMapTile(seaTransportVehicleId);
-
-	// move to transport if close
-
-	int range = map_range(vehicle->x, vehicle->y, seaTransportVehicle->x, seaTransportVehicle->y);
-
-	if (range > 1)
-	{
-		debug("\tsea transport range=%2d\n", range);
-		return EM_DONE;
-	}
-
-	debug("\tmoving to transport: (%3d,%3d)\n", seaTransportVehicle->x, seaTransportVehicle->y);
-	setMoveTo(vehicleId, seaTransportVehicleTile);
+	mod_veh_skip(vehicleId);
+	
 	return EM_SYNC;
 
 }
@@ -605,73 +582,73 @@ int Task::executeArtifactContribute(int vehicleId)
 int Task::executeAttack(int vehicleId)
 {
 	debug("Task::executeAttack\n");
-
-	VEH *vehicle = getVehicle(vehicleId);
-
+	
 	// check attackLocation
-
+	
 	if (attackTarget == nullptr)
 	{
 		mod_veh_skip(vehicleId);
 		return EM_DONE;
 	}
-
+	
+	assert(isOnMap(attackTarget));
+	
 	// get base and vehicle at attackLocation
-
+	
 	bool baseAtAttackLocation = map_has_item(attackTarget, BIT_BASE_IN_TILE);
 	bool vehicleAtAttackLocation = map_has_item(attackTarget, BIT_VEH_IN_TILE);
-
+	
 	// empty base - move in
-
+	
 	if (baseAtAttackLocation && !vehicleAtAttackLocation)
 	{
 		setMoveTo(vehicleId, attackTarget);
 		return EM_SYNC;
 	}
-
+	
 	// nobody is there
-
+	
 	if (!vehicleAtAttackLocation)
 	{
 		mod_veh_skip(vehicleId);
 		return EM_DONE;
 	}
-
+	
 	// get defender
-
+	
 	int defenderVehicleId = veh_at(getX(attackTarget), getY(attackTarget));
-
+	
 	if (defenderVehicleId == -1)
 		return EM_DONE;
-
+	
 	// compute battle odds accounting for hasty attack
-
-	int roadMovesLeft = getVehicleSpeed(vehicleId) - vehicle->moves_spent;
-	double hastyCoefficient = std::min(1.0, (double)roadMovesLeft / (double)Rules->move_rate_roads);
+	
+	int remainingMovement = getVehicleRemainingMovement(vehicleId);
+	double hastyCoefficient = std::min(1.0, (double)remainingMovement / (double)Rules->move_rate_roads);
 	double battleOdds = getBattleOdds(vehicleId, defenderVehicleId, false);
 	double adjustedBattleOdds = battleOdds * hastyCoefficient;
-
+	
 	// attack if good odds
-
+	
 	if (adjustedBattleOdds >= 1.25)
 	{
 		setMoveTo(vehicleId, attackTarget);
 		return EM_SYNC;
 	}
-
+	
 	// otherwise attack only if not hasty
-
+	
 	if (hastyCoefficient == 1.0)
 	{
 		setMoveTo(vehicleId, attackTarget);
 		return EM_SYNC;
 	}
-
+	
 	// otherwise skip
-
+	
 	mod_veh_skip(vehicleId);
 	return EM_DONE;
-
+	
 }
 
 int Task::executeLongRangeFire(int vehicleId)
@@ -686,7 +663,7 @@ int Task::executeLongRangeFire(int vehicleId)
 		return EM_DONE;
 	}
 
-	debug("\t^ (%3d,%3d)\n", getX(attackTarget), getY(attackTarget));
+	debug("\t^ %s\n", getLocationString(attackTarget).c_str());
 
 	// get base and vehicle at attackLocation
 
@@ -783,20 +760,11 @@ void deleteTask(int vehicleId)
 Task *getTask(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
-
-	Task *task;
-
-	if (aiData.tasks.count(vehicle->pad_0) == 0)
-	{
-		task = nullptr;
-	}
-	else
-	{
-		task = &(aiData.tasks.at(vehicle->pad_0));
-	}
-
-	return task;
-
+	
+	robin_hood::unordered_flat_map<int, Task>::iterator taskIterator = aiData.tasks.find(vehicle->pad_0);
+	
+	return taskIterator == aiData.tasks.end() ? nullptr : &(taskIterator->second);
+	
 }
 
 int executeTask(int vehicleId)

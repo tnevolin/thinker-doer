@@ -1,5 +1,9 @@
 #include "wtp_terranx.h"
 
+// turn control factions moved
+
+int *TurnFactionsMoved = (int *)0x009B2070;
+
 // global constants
 
 const int NO_SYNC = 1;
@@ -20,7 +24,6 @@ const int *TABLE_square_offset_y = (int *)0x0066F440;
 
 // Path
 
-CPath* PATH = (CPath*)0x945B00;
 FPath_find PATH_find = (FPath_find)0x59A530;
 int *PATH_flags = (int *)0x00945B20;
 
@@ -49,13 +52,15 @@ const int LABEL_OFFSET_PERIMETER = 0x162;
 const int LABEL_OFFSET_TACHYON = 0x165;
 const char *LABEL_NAVAL_YARD = "Naval Yard";
 const char *LABEL_AEROSPACE_COMPLEX = "AeroComplex";
+const char *LABEL_WEAPON = "Weapon";
+const char *LABEL_ARMOR = "Armor";
 
 char *g_strTEMP = (char *)0x009B86A0;
 char *SPACE = (char *)0x00682820;
 char *PARENTHESES_LEFT = (char *)0x00682E9C;
 char *PARENTHESES_RIGHT = (char *)0x00682E98;
 int *current_base_growth_rate = (int *)0x0090E918;
-int *g_PROBE_RFLAG_TARGET = (int *)0x00945B34;
+int *g_PROBE_FACT_TARGET = (int *)0x00945B34;
 int *g_UNK_ATTACK_FLAGS = (int *)0x0093E904;
 byte *g_SOCIALWIN = (byte *)0x008A6270;
 int *current_attacker = (int *)0x00689F28;
@@ -65,40 +70,40 @@ int *tech_per_turn = (int *)0x00749AE0;
 
 // yield rules
 
-int *BIT_OCEAN_SQ_NUTRIENT = (int *)0x00945F50;
-int *BIT_OCEAN_SQ_MINERALS = (int *)0x00945F54;
-int *BIT_OCEAN_SQ_ENERGY = (int *)0x00945F58;
-int *BIT_OCEAN_SQ_PSI = (int *)0x00945F5C;
-int *BIT_BASE_SQ_NUTRIENT = (int *)0x00945F60;
-int *BIT_BASE_SQ_MINERALS = (int *)0x00945F64;
-int *BIT_BASE_SQ_ENERGY = (int *)0x00945F68;
-int *BIT_BASE_SQ_PSI = (int *)0x00945F6C;
-int *BIT_BONUS_SQ_NUTRIENT = (int *)0x00945F70;
-int *BIT_BONUS_SQ_MINERALS = (int *)0x00945F74;
-int *BIT_BONUS_SQ_ENERGY = (int *)0x00945F78;
-int *BIT_BONUS_SQ_PSI = (int *)0x00945F7C;
-int *BIT_FOREST_SQ_NUTRIENT = (int *)0x00945F80;
-int *BIT_FOREST_SQ_MINERALS = (int *)0x00945F84;
-int *BIT_FOREST_SQ_ENERGY = (int *)0x00945F88;
-int *BIT_FOREST_SQ_PSI = (int *)0x00945F8C;
-int *BIT_RECYCLING_TANKS_NUTRIENT = (int *)0x00945F90;
-int *BIT_RECYCLING_TANKS_MINERALS = (int *)0x00945F94;
-int *BIT_RECYCLING_TANKS_ENERGY = (int *)0x00945F98;
-int *BIT_RECYCLING_TANKS_PSI = (int *)0x00945F9C;
-int *BIT_IMPROVED_LAND_NUTRIENT = (int *)0x00945FA0;
-int *BIT_IMPROVED_LAND_MINERALS = (int *)0x00945FA4;
-int *BIT_IMPROVED_SEA_NUTRIENT = (int *)0x00945FB0;
-int *BIT_IMPROVED_SEA_MINERALS = (int *)0x00945FB4;
-int *BIT_IMPROVED_SEA_ENERGY = (int *)0x00945FB8;
-int *BIT_IMPROVED_SEA_PSI = (int *)0x00945FBC;
-int *BIT_MONOLITH_NUTRIENT = (int *)0x00945FC0;
-int *BIT_MONOLITH_MINERALS = (int *)0x00945FC4;
-int *BIT_MONOLITH_ENERGY = (int *)0x00945FC8;
-int *BIT_MONOLITH_PSI = (int *)0x00945FCC;
-int *BIT_BOREHOLE_SQ_NUTRIENT = (int *)0x00945FD0;
-int *BIT_BOREHOLE_SQ_MINERALS = (int *)0x00945FD4;
-int *BIT_BOREHOLE_SQ_ENERGY = (int *)0x00945FD8;
-int *BIT_BOREHOLE_SQ_PSI = (int *)0x00945FDC;
+int *TERRA_OCEAN_SQ_NUTRIENT = (int *)0x00945F50;
+int *TERRA_OCEAN_SQ_MINERALS = (int *)0x00945F54;
+int *TERRA_OCEAN_SQ_ENERGY = (int *)0x00945F58;
+int *TERRA_OCEAN_SQ_PSI = (int *)0x00945F5C;
+int *TERRA_BASE_SQ_NUTRIENT = (int *)0x00945F60;
+int *TERRA_BASE_SQ_MINERALS = (int *)0x00945F64;
+int *TERRA_BASE_SQ_ENERGY = (int *)0x00945F68;
+int *TERRA_BASE_SQ_PSI = (int *)0x00945F6C;
+int *TERRA_BONUS_SQ_NUTRIENT = (int *)0x00945F70;
+int *TERRA_BONUS_SQ_MINERALS = (int *)0x00945F74;
+int *TERRA_BONUS_SQ_ENERGY = (int *)0x00945F78;
+int *TERRA_BONUS_SQ_PSI = (int *)0x00945F7C;
+int *TERRA_FOREST_SQ_NUTRIENT = (int *)0x00945F80;
+int *TERRA_FOREST_SQ_MINERALS = (int *)0x00945F84;
+int *TERRA_FOREST_SQ_ENERGY = (int *)0x00945F88;
+int *TERRA_FOREST_SQ_PSI = (int *)0x00945F8C;
+int *TERRA_RECYCLING_TANKS_NUTRIENT = (int *)0x00945F90;
+int *TERRA_RECYCLING_TANKS_MINERALS = (int *)0x00945F94;
+int *TERRA_RECYCLING_TANKS_ENERGY = (int *)0x00945F98;
+int *TERRA_RECYCLING_TANKS_PSI = (int *)0x00945F9C;
+int *TERRA_IMPROVED_LAND_NUTRIENT = (int *)0x00945FA0;
+int *TERRA_IMPROVED_LAND_MINERALS = (int *)0x00945FA4;
+int *TERRA_IMPROVED_SEA_NUTRIENT = (int *)0x00945FB0;
+int *TERRA_IMPROVED_SEA_MINERALS = (int *)0x00945FB4;
+int *TERRA_IMPROVED_SEA_ENERGY = (int *)0x00945FB8;
+int *TERRA_IMPROVED_SEA_PSI = (int *)0x00945FBC;
+int *TERRA_MONOLITH_NUTRIENT = (int *)0x00945FC0;
+int *TERRA_MONOLITH_MINERAL = (int *)0x00945FC4;
+int *TERRA_MONOLITH_ENERGY = (int *)0x00945FC8;
+int *TERRA_MONOLITH_PSI = (int *)0x00945FCC;
+int *TERRA_BOREHOLE_SQ_NUTRIENT = (int *)0x00945FD0;
+int *TERRA_BOREHOLE_SQ_MINERALS = (int *)0x00945FD4;
+int *TERRA_BOREHOLE_SQ_ENERGY = (int *)0x00945FD8;
+int *TERRA_BOREHOLE_SQ_PSI = (int *)0x00945FDC;
 
 // current base psych breakdown
 
@@ -122,36 +127,35 @@ int *CURRENT_BASE_TALENTS_PROJECTS = (int *)0x0090E994;
 
 int *alphax_tgl_probe_steal_tech = (int *)0x00949834;
 
-// say functions
-
-fp_1void say_orders2 = (fp_1void)0x004B4970;
-
 // read basic rules
-fp_0int tx_read_basic_rules = (fp_0int )0x00585170;
+fp_0int tx_read_basic_rules = (fp_0int)0x00585170;
 
 // calculates prototype cost
-fp_5int tx_proto_cost = (fp_5int )0x005A5A60;
+fp_5int tx_proto_cost = (fp_5int)0x005A5A60;
 
 // creates prototype
-fp_6int tx_create_prototype = (fp_6int )0x005A5D40;
+fp_6int tx_create_prototype = (fp_6int)0x005A5D40;
 
 // calculates upgrade cost
-fp_3int tx_upgrade_cost = (fp_3int )0x004EFD50;
+fp_3int tx_upgrade_cost = (fp_3int)0x004EFD50;
+
+// computes string length
+fp_1int tx_strlen = (fp_1int)0x006453E0;
 
 // concatenates strings
-fp_2int_void tx_strcat = (fp_2int_void )0x00645470;
+fp_2int_void tx_strcat = (fp_2int_void)0x00645470;
 
 // base_find3
-fp_6int tx_base_find3 = (fp_6int )0x004E3D50;
+fp_6int tx_base_find3 = (fp_6int)0x004E3D50;
 
 // calculate tile yield
-fp_5int tx_tile_yield = (fp_5int )0x004E7DC0;
+fp_5int tx_tile_yield = (fp_5int)0x004E7DC0;
 
 // base production
-fp_0int tx_base_production = (fp_0int )0x004F07E0;
+fp_0int tx_base_production = (fp_0int)0x004F07E0;
 
 // set SE on dialog close
-fp_5int tx_set_se_on_dialog_close = (fp_5int )0x005B4210;
+fp_5int tx_set_se_on_dialog_close = (fp_5int)0x005B4210;
 
 // checks if terraforming action is available
 // terraforming action, sea flag, returns 0 unless action is advanced terraforming and The Weather Paradigm is owned
@@ -226,7 +230,7 @@ fp_2void tx_parse_string = (fp_2void)0x00625880;
 // kills vehicle
 fp_1void tx_kill = (fp_1void)0x005C0B00;
 
-// determing if g_CURRENT_PC_RFLAG_ID has infiltration to given faction
+// determing if g_CURRENT_PC_FACT_ID has infiltration to given faction
 fp_1int tx_spying = (fp_1int)0x0055BC00;
 
 // reads the line of text from file
@@ -276,9 +280,6 @@ fp_1void enemy_units_check = (fp_1void)0x00579510;
 
 // vehicle owner occupying tile
 fp_2int veh_who = (fp_2int)0x00500250;
-
-// unit speed
-fp_1int unit_speed = (fp_1int)0x005C13B0;
 
 // energy compute
 fp_2void energy_compute = (fp_2void)0x00445130;
