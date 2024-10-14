@@ -565,13 +565,7 @@ Overall, many players perceive this as an exploit similar to destroying sensor b
 
 ## Habitation facilities redesign
 
-There were few exploits related to habitation facilities preventing base growth beyond the limit. It is this single increasing population turn that matters. Yet they require maintenance. Therefore people considered to selling them while not needed. This mod widens their influence to affect bases with population below and above the limit as well.
-
-Explicit population growth limit is removed. Bases can grow beyond the limit when not in stagnation.
-
-Base without habitation facility receives -3 GROWTH penalty when at limit. Penalty gets higher with higher population and lower with lower population. Therefore, with zero faction GROWTH rating and without CC at the base population growth naturally halts at limit which simulates vanilla behavior. However, this functionality affects base sizes below the limit too. For example, base with size two below the limit receives -1 GROWTH and base with size one below the limit receives -2 GROWTH. The situation is also affected by other GROWTH sources besides the habitation facilities (including CC). Higher rating raises population limit while lower rating correspondingly lowers it.
-
-Base with habitation facility receives GROWTH bonus for each citizen below the limit but no more than +3. That allows to speed up base growth when such facilities are built earlier. They require maintenance, though.
+Habitation facilities now add +2 GROWTH when below limit giving the incentive to build them earlier.
 
 ## Scrambling interceptor fix
 
