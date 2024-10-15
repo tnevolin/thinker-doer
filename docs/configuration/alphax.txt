@@ -1128,7 +1128,7 @@ Peacekeeper
 ;   COMMFREQ    = Gets an extra comm frequency (another faction to
 ;                 talk to) at beginning of game. (Parameter is ignored)
 ;   MINDCONTROL = Vehicles and bases immune to mind control
-;   FANATIC     = +25% bonus on attack
+;   FANATIC     = +50% bonus on attack
 ;   VOTES       = Multiplier for governor votes
 ;   FREEPROTO   = Prototype cost reduced to zero for this faction
 ;   AQUATIC     = This is a sea-based faction

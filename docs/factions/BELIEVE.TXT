@@ -103,7 +103,7 @@ that were evil.
 ^
 
 #DATALINKS2
-^+25% Bonus when attacking enemies, from strength of convictions.
+^+50% Bonus when attacking enemies, from strength of convictions.
 ^+1 PROBE:  {Devout believers difficult to brainwash}
 ^+2 SUPPORT: {Citizens eager to defend faith}
 ^-2 RESEARCH:  {Suspicious of secular science}
