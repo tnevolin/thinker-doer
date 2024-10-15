@@ -1,3 +1,7 @@
+# Version 304
+
+* Fixed some help entries to not spill out of the window.
+
 # Version 303
 
 Few base hurry dialog improvements.
