@@ -982,7 +982,7 @@ effects are eliminated by control of $LINK<The Cloning Vats=110024>).
 #HELPEFFECT2
 {Support} affects the $LINK<Minerals=42> support costs of units:
 ^Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
-^Out of the others first [4] units are also free.
+^Out of the others first [2] units are also free.
 ^
 ^Each non free unit support goes in 1/4 increments rounded down as below.
 ^
