@@ -1,3 +1,7 @@
+# Version 305
+
+* Biology lab generates 4 labs.
+
 # Version 304
 
 * Fixed some help entries to not spill out of the window.
