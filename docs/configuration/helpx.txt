@@ -591,12 +591,8 @@ reduces number of $LINK<Drones=11> by two and increases $LINK<Psych=39> output o
 #HELPPROJ7
 Any new bases you found could begin at population level higher than 1.
 ^new base size = average faction base size (rounded down) - 2
-^(thinker.ini: pts_new_base_size_less_average)
 ^
 ^One less $LINK<drone=36> at all bases of population level 3 and under.
-^
-^Upon completion, all bases that are less than size three and have sufficient $LINK<nutrient=31> income available will
-immediately grow to size three. Size one bases will grow to size two whether or not nutrients are available. Not sure how it works with WtP change above.
 
 #; The Xenoempathy Dome
 #HELPPROJ8
@@ -685,21 +681,7 @@ Decreases minerals required to support military units: +2 $LINK<Support=130002> 
 
 #; The Cloning Vats
 #HELPPROJ24
-All of a faction's bases enter a permanent state of [Population Boom] and will grow every turn whilst the
-$LINK<Nutrient=31> supply is sufficient and up to the maximum population¹.
-^
-^The negative effects of the $LINK<Power=120012> and $LINK<Thought Control=120019> social engineering choices are
-eliminated.
-^
-^___
-^¹The maximum population for an individual base can be increased through the construction of a $LINK<Hab Complex=100024>,
-$LINK<The Ascetic Virtues=110013>, and then even further by constructing a $LINK<Habitation Dome=100025>.
-^
-^=WtP=
-^Does not trigger [Population Boom]. Instead adds +2 GROWTH.
-^(thinker.ini: cloning_vats_se_growth)
-^Does not grant impunity to negative effects of any SE choice.
-^(thinker.ini: cloning_vats_disable_impunities)
+Grants +2 GROWTH rating to all of your bases.
 
 #; The Self-Aware Colony
 #HELPPROJ25
@@ -1049,9 +1031,8 @@ from home):
 #HELPEFFECT6
 {Growth} affects the number of columns in base accumulated nutrients box.
 The higher the rating, the fewer $LINK<Nutrients=31> bases need in order to grow.
-Numbers below represent an actual percentage change, not number of columns.
+Numbers below represent a percentage change from default, not number of columns.
 ^Example, AI starts with 7 nutrient columns at Transcend difficulty. +5 GROWTH then will reduce this to 7 * 0.5 = 3.5 = 4 columns, not 2.
-^WtP extends upper limit to +10.
 ^
 ^    -3  = [population does not grow]
 ^    -2  = +20% nutrient required =   83% growth rate
@@ -1125,19 +1106,13 @@ Numbers below represent an actual percentage change, not number of columns.
 
 #;Farm
 #HELPTERRALAND0
-A {farm} increases the $LINK<Nutrient=31> production of a square by 1.
+A {farm} increases the $LINK<Nutrient=31> production of a square by 2.
 ^
 ^Farms cannot be built in $LINK<rocky=43> squares.
-^
-^=WtP=
-^Farm increases tile nutrient production by 2.
 
 #;Soil Enricher
 #HELPTERRALAND1
 A {Soil Enricher} increases the $LINK<Nutrient production=31> of a square by one.
-^
-^=WtP=
-^This is fixed to match the description. In vanilla it actually added 50% to nutrient production.			  
 ^
 ^Soil Enrichers can be built only in squares which already contain a
 $LINK<Farm=90000>.
@@ -1161,7 +1136,7 @@ A {solar collector} produces $LINK<Energy=14>. The amount of energy produced dep
 on the $LINK<altitude=10000> of the square and can be increased by the adjacent
 construction of an $LINK<Echelon Mirror=90013>.
 ^
-^Solar collectors require eight turns to construct in rocky squares.
+^Solar collectors require four turns to construct in flat, six in rolling, eight in rocky.
 
 #;Forest
 #HELPTERRALAND4
@@ -1182,12 +1157,11 @@ $LINK<Fungus=18>.
 ^    +2 Rocky
 ^    +1 $LINK<River=90015>
 ^    +2 $LINK<Fungus=18>¹, $LINK<Forest=90004>
-^¹Requires $LINK<Centauri Empathy=140058> to be constructed on $LINK<Fungus=18>.
+^¹Requires $LINK<Centauri Empathy=140058> to be constructed in $LINK<Fungus=18>.
 
 #;Mag Tube
 #HELPTERRALAND6
-{Mag Tubes} greatly speed land unit movement. Land units moving between Mag Tube squares do not expend [any] movement
-points.
+{Mag Tubes} greatly speed land unit movement. Land units moving along a mag tube can move six times faster than normal.
 ^
 ^Terraform variation on construction time (modifiers are additive):
 ^    +1 $LINK<Rolling=43>
@@ -1195,10 +1169,6 @@ points.
 ^    +1 $LINK<River=90015>
 ^    +2 $LINK<Fungus=18>¹, $LINK<Forest=90004>
 ^¹Requires $LINK<Centauri Psi=140063> to be constructed on $LINK<Fungus=18>.
-^
-^=WtP=
-^Unit moving on tubes can travel {2} times farther than on roads.
-^(thinker.ini: tube_movement_rate_multiplier)
 
 #;Bunker
 #HELPTERRALAND7
@@ -1216,17 +1186,14 @@ A $LINK<terraforming unit=60018> can construct an {Airbase} which allows air uni
 
 #;Sensor Array
 #HELPTERRALAND9
-{Sensor Arrays} can see any enemy unit within two squares. Data from Sensor Arrays also increases defense readiness: any
-unit in a land square within two squares of a friendly sensor array gains +25% to its defense.
+{Sensor Arrays} can see any enemy unit within two squares. Data from Sensor Arrays also increases combat readiness: any
+unit within two squares of a friendly sensor array gains +25% to its offense/defense.
 ^
 ^The ownership of a sensor array is determined by a faction’s $LINK<borders=46>. If borders move it may come under control
-of a new faction. If a Sensor Array is not within any faction’s territory, the sensor confers a defensive bonus to any
+of a new faction. If a Sensor Array is not within any faction’s territory, the sensor confers a bonus to any
 faction’s unit within two squares.
 ^
 ^Requires $LINK<Centauri Psi=140063> to be constructed on $LINK<Fungus=18>.
-^
-^=WtP=
-^Sensor works everywhere and confers both attack and defense bonuses.
 
 #;Remove Fungus
 #HELPTERRALAND10
@@ -1247,16 +1214,12 @@ increase production.
 #;Condensor
 #HELPTERRALAND12
 $LINK<Terraforming units=60018> can construct {Condensers} which increases the $LINK<Rainfall=40> in its own and [all]
-surrounding squares. It also provides an additional {+50%} increase (rounded down) in $LINK<Nutrient=31> output in its own
-square, cumulative with $LINK<Farm=90000> bonuses.
+surrounding squares.
 ^
 ^A Condenser will also lift nutrient production limits in its own square before the discovery of $LINK<Gene
 Splicing=140049>.
 ^
 ^Condensers have a significant negative $LINK<Ecological impact=10004>.
-^
-^=WtP=
-^Condenser does not increase own tile nutrient output.
 
 #;Echelon Mirror
 #HELPTERRALAND13
@@ -1268,16 +1231,13 @@ whilst also increasing the solar $LINK<Energy=14> collected by {solar collectors
 #;Thermal Borehole
 #HELPTERRALAND14
 A {Thermal Borehole} penetrates to Planet’s mantle and provides significant minerals and energy. Borehole squares provide
-+6 $LINK<Minerals=42> and +6 $LINK<Energy=14>, but no $LINK<Nutrients=31>. They are unaffected by $LINK<Fungus=18>.
++2 $LINK<Minerals=42> and +6 $LINK<Energy=14>, but no $LINK<Nutrients=31>. They are unaffected by $LINK<Fungus=18>.
 ^
 ^Boreholes cannot be built adjacent to other boreholes, nor on $LINK<sloping=10000> squares.
 ^
 ^Rivers passing through the same square will flow into the borehole and back underground.
 ^
 ^Boreholes have a significant negative $LINK<Ecological impact=10004>.
-^
-^=WtP=
-^Borehole provides 2 minerals and 4 energy. This is to make them not compete with rocky mine directly.
 
 #;Aquifer
 #HELPTERRALAND15
@@ -1301,15 +1261,12 @@ turn rocky squares into rolling squares and rolling squares into flat squares.
 #;Kelp Farm
 #HELPTERRASEA0
 A {Kelp Farm} can be planted by a $LINK<terraforming unit=60018> or $LINK<unity pod=49> and increases the $LINK<Nutrient
-production=31> of an ocean square by +2.
+production=31> of an ocean square by +3.
 ^
 ^Kelp farms can be planted on ocean shelf squares (depth less than 1000 m). Aquatic factions such as the [Nautilus Pirates]
 can, with the discovery of $LINK<Adv. Ecological Engineering=140062>, plant Kelp Farms on ocean and ocean trench squares.
 ^
 ^A Kelp farm will sometimes expand into adjacent squares, even driving out native $LINK<Sea Fungus=18> in the process.
-^
-^=WtP=
-^Kelp Farm increases nutrient production of an ocean tile by +3.
 
 #HELPTERRASEA2
 A {Mining Platform} can be constructed by a $LINK<terraforming unit=60018> and increases the $LINK<Minerals=42> output of
@@ -2226,13 +2183,7 @@ such as $LINK<Native life forms=30>.
 
 #;Fission Plant
 #REACTORDESC1
-A unit’s {reactor} determines its {power}, the amount of $LINK<damage=7> the unit can absorb in combat before it is
-eliminated. More advanced reactor technology also tends to make complex units cheaper to build.
-^
-^=WtP=
-^Reactor does not change unit max power.
-^Each more advanced reactor reduces unit cost by 20%.
-^(thinker.ini: reactor_cost_factor)
+Each more advanced {reactor} reduces unit's {cost} by 20%.
 ^
 ^    Rating: 32655 kW
 ^    Throughput: 29377 kW
@@ -2242,13 +2193,7 @@ eliminated. More advanced reactor technology also tends to make complex units ch
 
 #;Fusion Reactor
 #REACTORDESC2
-A unit’s {reactor} determines its {power}, the amount of $LINK<damage=7> the unit can absorb in combat before it is
-eliminated. More advanced reactor technology also tends to make complex units cheaper to build.
-^
-^=WtP=
-^Reactor does not change unit max power.
-^Each more advanced reactor reduces unit cost by 20%.
-^(thinker.ini: reactor_cost_factor)
+Each more advanced {reactor} reduces unit's {cost} by 20%.
 ^
 ^    Rating: 68003 kW
 ^    Throughput: 62821 kW
@@ -2258,13 +2203,7 @@ eliminated. More advanced reactor technology also tends to make complex units ch
 
 #;Quantum Chamber
 #REACTORDESC3
-A unit’s {reactor} determines its {power}, the amount of $LINK<damage=7> the unit can absorb in combat before it is
-eliminated. More advanced reactor technology also tends to make complex units cheaper to build.
-^
-^=WtP=
-^Reactor does not change unit max power.
-^Each more advanced reactor reduces unit cost by 20%.
-^(thinker.ini: reactor_cost_factor)
+Each more advanced {reactor} reduces unit's {cost} by 20%.
 ^
 ^    Rating: 147893 kW
 ^    Throughput: 141977 kW
@@ -2274,13 +2213,7 @@ eliminated. More advanced reactor technology also tends to make complex units ch
 
 #;Singularity Engine
 #REACTORDESC4
-A unit’s {reactor} determines its {power}, the amount of $LINK<damage=7> the unit can absorb in combat before it is
-eliminated. More advanced reactor technology also tends to make complex units cheaper to build.
-^
-^=WtP=
-^Reactor does not change unit max power.
-^Each more advanced reactor reduces unit cost by 20%.
-^(thinker.ini: reactor_cost_factor)
+Each more advanced {reactor} reduces unit's {cost} by 20%.
 ^
 ^    Rating: >4000000 kW
 ^    Throughput: Var
