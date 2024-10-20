@@ -1256,7 +1256,7 @@ void populatePlayerGlobalVariables()
 			
 			for(MAP *tile : getBaseWorkedTiles(baseId))
 			{
-				int nutrientYield = wtp_mod_nutrient_yield(aiFactionId, baseId, getX(tile), getY(tile), 0);
+				int nutrientYield = mod_crop_yield(aiFactionId, baseId, getX(tile), getY(tile), 0);
 				double nutrientIntake2 = (double)(nutrientYield - Rules->nutrient_intake_req_citizen);
 				
 				workerCount++;

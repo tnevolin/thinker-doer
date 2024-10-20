@@ -743,7 +743,6 @@ int getRemainingMinerals(int baseId);
 std::vector<int> getStackVehicles(int vehicleId);
 std::vector<int> getTileVehicleIds(MAP *tile);
 void setTerraformingAction(int vehicleId, int action);
-__cdecl int wtp_mod_nutrient_yield(int faction_id, int a2, int x, int y, int a5);
 __cdecl int wtp_mod_mineral_yield(int faction_id, int a2, int x, int y, int a5);
 __cdecl int wtp_mod_energy_yield(int faction_id, int a2, int x, int y, int a5);
 bool isCoast(MAP *tile);

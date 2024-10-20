@@ -600,6 +600,8 @@ bool patch_setup(Config* cf) {
     write_call(0x4B6C44, (int)mod_crop_yield); // StatusWin::draw_status
     write_call(0x4BCEEB, (int)mod_crop_yield); // TutWin::tour
     write_call(0x4E7DE4, (int)mod_crop_yield); // resource_yield
+	write_call(0x4E7F04, (int)mod_crop_yield); // farm_yield
+	write_call(0x4E8034, (int)mod_crop_yield); // farm_unyield
     write_call(0x4E888C, (int)mod_crop_yield); // base_yield
     write_call(0x4E96F4, (int)mod_crop_yield); // base_support
     write_call(0x4ED7F1, (int)mod_crop_yield); // base_terraform

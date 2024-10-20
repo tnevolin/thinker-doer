@@ -57,9 +57,21 @@ int probe_roll_value(int faction)
         + clamp(Factions[faction].SE_police, -3, 3);
 }
 
+// [WTP]
+
+// Generates infiltration time based on infitrated faction PROBE rating.
+int probe_roll_value(int /*faction1*/, int faction2)
+{
+	return 5 * (4 - clamp(Factions[faction2].SE_probe_base, -2, 3));
+}
+
 int probe_active_turns(int faction1, int faction2)
 {
-    int value = clamp(15 + probe_roll_value(faction1) - probe_roll_value(faction2), 5, 50);
+	// [WTP]
+	
+//    int value = clamp(15 + probe_roll_value(faction1) - probe_roll_value(faction2), 5, 50);
+    int value = probe_roll_value(faction1, faction2);
+    
     value = value * (4 + (*MapAreaTiles >= 4000) + (*MapAreaTiles >= 8000)) / 4;
     value = value * (4 + (*DiffLevel < DIFF_TRANSCEND) + (*DiffLevel < DIFF_THINKER)) / 4;
     return clamp(value, 5, 50);

@@ -200,7 +200,7 @@ void setupTerraformingData()
 		int x = getX(tile);
 		int y = getY(tile);
 		
-		int fungusNutrient = wtp_mod_nutrient_yield(aiFactionId, -1, x, y, 0);
+		int fungusNutrient = mod_crop_yield(aiFactionId, -1, x, y, 0);
 		int fungusMineral = wtp_mod_mineral_yield(aiFactionId, -1, x, y, 0);
 		int fungusEnergy = wtp_mod_energy_yield(aiFactionId, -1, x, y, 0);
 		fungusScore = getTerraformingResourceScore(fungusNutrient, fungusMineral, fungusEnergy);
@@ -646,7 +646,7 @@ void populateTerraformingData()
 			
 			for (MAP *tile : getBaseWorkedTiles(baseId))
 			{
-				baseTerraformingInfo.minimalNutrientYield = std::min(baseTerraformingInfo.minimalNutrientYield, wtp_mod_nutrient_yield(aiFactionId, baseId, getX(tile), getY(tile), 0));
+				baseTerraformingInfo.minimalNutrientYield = std::min(baseTerraformingInfo.minimalNutrientYield, mod_crop_yield(aiFactionId, baseId, getX(tile), getY(tile), 0));
 				baseTerraformingInfo.minimalMineralYield = std::min(baseTerraformingInfo.minimalMineralYield, wtp_mod_mineral_yield(aiFactionId, baseId, getX(tile), getY(tile), 0));
 				baseTerraformingInfo.minimalEnergyYield = std::min(baseTerraformingInfo.minimalEnergyYield, wtp_mod_energy_yield(aiFactionId, baseId, getX(tile), getY(tile), 0));
 			}
@@ -1633,7 +1633,7 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 	
 	terraformingRequest.yield =
 		{
-			(double)wtp_mod_nutrient_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
+			(double)mod_crop_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
 			(double)wtp_mod_mineral_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
 			(double)wtp_mod_energy_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
 		}
@@ -3925,7 +3925,7 @@ double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP *curr
 	
 	// improved yield
 	
-	int nutrientYield = wtp_mod_nutrient_yield(aiFactionId, baseId, x, y, 0);
+	int nutrientYield = mod_crop_yield(aiFactionId, baseId, x, y, 0);
 	int mineralYield = wtp_mod_mineral_yield(aiFactionId, baseId, x, y, 0);
 	int energyYield = wtp_mod_energy_yield(aiFactionId, baseId, x, y, 0);
 	
@@ -3989,7 +3989,7 @@ double computeBaseImprovementYieldScore(int baseId, MAP *tile, MAP *currentMapSt
 
 	// record yield
 
-	int nutrient = wtp_mod_nutrient_yield(base->faction_id, baseId, x, y, 0);
+	int nutrient = mod_crop_yield(base->faction_id, baseId, x, y, 0);
 	int mineral = wtp_mod_mineral_yield(base->faction_id, baseId, x, y, 0);
 	int energy = wtp_mod_energy_yield(base->faction_id, baseId, x, y, 0);
 
@@ -4263,7 +4263,7 @@ Resource getTerraformingYield(int baseId, MAP *tile, std::vector<int> actions)
 	
 	applyMapState(improvedMapState, tile);
 	
-	int nutrient = wtp_mod_nutrient_yield(aiFactionId, baseId, x, y, 0);
+	int nutrient = mod_crop_yield(aiFactionId, baseId, x, y, 0);
 	int mineral = wtp_mod_mineral_yield(aiFactionId, baseId, x, y, 0);
 	int energy = wtp_mod_energy_yield(aiFactionId, baseId, x, y, 0);
 	

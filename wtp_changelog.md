@@ -1,3 +1,7 @@
+# Version 307
+
+* Replaced counter espionage code with Thinker version.
+
 # Version 306
 
 * Removed alternative inefficiency computation. Vanilla one is good enough.

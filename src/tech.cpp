@@ -1,5 +1,6 @@
 
 #include "tech.h"
+#include "wtp_mod.h"
 
 
 /*
@@ -201,43 +202,59 @@ int tech_level(int tech_id, int lvl) {
 }
 
 int tech_cost(int faction_id, int tech_id) {
-    MFaction* m = &MFactions[faction_id];
-    int level = 1;
-    int owners = 0;
-    int our_techs = 0;
+	
+	// [WTP]
+	
+	int tech_cost;
+	
+	if (conf.alternative_tech_cost)
+	{
+		tech_cost = wtp_tech_cost(faction_id, tech_id);
+	}
+	else
+	{
+		MFaction* m = &MFactions[faction_id];
+		int level = 1;
+		int owners = 0;
+		int our_techs = 0;
 
-    if (tech_id >= 0) {
-        level = tech_level(tech_id, 0);
-        for (int i = 1; i < MaxPlayerNum; i++) {
-            if (i != faction_id && is_alive(i) && has_tech(tech_id, i)
-            && has_treaty(faction_id, i, DIPLO_COMMLINK)) {
-                owners += (has_treaty(faction_id, i, DIPLO_PACT|DIPLO_HAVE_INFILTRATOR) ? 2 : 1);
-            }
-        }
-    }
-    for (int i = Tech_ID_First; i <= Tech_ID_Last; i++) {
-        if (Tech[i].preq_tech1 != TECH_Disable && has_tech(i, faction_id)) {
-            our_techs++;
-        }
-    }
-    double cost_base = (5*level*level*level + 25*level*level + 20*our_techs);
-    double cost_diff = (is_human(faction_id) ? 1.0 : conf.tech_cost_factor[*DiffLevel] / 100.0)
-        * clamp(our_techs + 6, 6, 16) / 16.0;
+		if (tech_id >= 0) {
+			level = tech_level(tech_id, 0);
+			for (int i = 1; i < MaxPlayerNum; i++) {
+				if (i != faction_id && is_alive(i) && has_tech(tech_id, i)
+				&& has_treaty(faction_id, i, DIPLO_COMMLINK)) {
+					owners += (has_treaty(faction_id, i, DIPLO_PACT|DIPLO_HAVE_INFILTRATOR) ? 2 : 1);
+				}
+			}
+		}
+		for (int i = Tech_ID_First; i <= Tech_ID_Last; i++) {
+			if (Tech[i].preq_tech1 != TECH_Disable && has_tech(i, faction_id)) {
+				our_techs++;
+			}
+		}
+		double cost_base = (5*level*level*level + 25*level*level + 20*our_techs);
+		double cost_diff = (is_human(faction_id) ? 1.0 : conf.tech_cost_factor[*DiffLevel] / 100.0)
+			* clamp(our_techs + 6, 6, 16) / 16.0;
 
-    double cost = cost_base
-        * cost_diff
-        * *MapAreaSqRoot / 56.0
-        * max(1, m->rule_techcost) / 100.0
-        * (*GameRules & RULES_TECH_STAGNATION ? conf.tech_stagnate_rate / 100.0 : 1.0)
-        * 100.0 / max(1, Rules->rules_tech_discovery_rate)
-        * (1.0 - 0.05*min(6, owners));
+		double cost = cost_base
+			* cost_diff
+			* *MapAreaSqRoot / 56.0
+			* max(1, m->rule_techcost) / 100.0
+			* (*GameRules & RULES_TECH_STAGNATION ? conf.tech_stagnate_rate / 100.0 : 1.0)
+			* 100.0 / max(1, Rules->rules_tech_discovery_rate)
+			* (1.0 - 0.05*min(6, owners));
 
-    debug("tech_cost %d %d base: %7.2f diff: %.2f cost: %7.2f "
-    "level: %d our_techs: %d owners: %d tech: %2d %s\n",
-    *CurrentTurn, faction_id, cost_base, cost_diff, cost,
-    level, our_techs, owners, tech_id, (tech_id >= 0 ? Tech[tech_id].name : NULL));
-
-    return clamp((int)cost, 1, 99999999);
+		debug("tech_cost %d %d base: %7.2f diff: %.2f cost: %7.2f "
+		"level: %d our_techs: %d owners: %d tech: %2d %s\n",
+		*CurrentTurn, faction_id, cost_base, cost_diff, cost,
+		level, our_techs, owners, tech_id, (tech_id >= 0 ? Tech[tech_id].name : NULL));
+		
+		tech_cost = (int)cost;
+		
+	}
+	
+    return clamp(tech_cost, 1, 99999999);
+    
 }
 
 

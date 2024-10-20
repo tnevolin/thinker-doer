@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v306"
+    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v307"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -326,16 +326,8 @@ struct Config {
     bool hsa_does_not_kill_probe = false;
     bool condenser_and_enricher_do_not_multiply_nutrients = false;
     bool alternative_tech_cost = false;
-    double tech_cost_scale = 1.0;
     bool flat_extra_prototype_cost = false;
     bool fix_mineral_contribution = true; // internal setting
-    bool fix_former_wake = false;
-    bool infiltration_expire = false;
-    int infiltration_devices = 1;
-    double human_infiltration_device_lifetime_base = 1.0;
-    double human_infiltration_device_lifetime_probe_effect = 0.0;
-    double computer_infiltration_device_lifetime_base = 1.0;
-    double computer_infiltration_device_lifetime_probe_effect = 0.0;
     bool modified_probe_action_risks = false;
     int probe_action_risk_genetic_plague = 0;
     bool combat_bonus_sensor_ocean = false;

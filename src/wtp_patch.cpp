@@ -1211,19 +1211,6 @@ Patch tile yield calculation.
 */
 void patch_tile_yield()
 {
-	// nutrient yield
-	write_call(0x00465DD6, (int)wtp_mod_nutrient_yield);
-	write_call(0x004B6C44, (int)wtp_mod_nutrient_yield);
-	write_call(0x004BCEEB, (int)wtp_mod_nutrient_yield);
-	write_call(0x004E7DE4, (int)wtp_mod_nutrient_yield);
-	write_call(0x004E7F04, (int)wtp_mod_nutrient_yield);
-	write_call(0x004E8034, (int)wtp_mod_nutrient_yield);
-	// this call overrides Thinker's
-	write_call_over(0x004E888C, (int)wtp_mod_nutrient_yield);
-	write_call(0x004E96F4, (int)wtp_mod_nutrient_yield);
-	write_call(0x004ED7F1, (int)wtp_mod_nutrient_yield);
-	write_call(0x00565878, (int)wtp_mod_nutrient_yield);
-
 	// mineral yield
 	write_call(0x004B6E4F, (int)wtp_mod_mineral_yield);
 	write_call(0x004B6EF9, (int)wtp_mod_mineral_yield);
@@ -1233,7 +1220,7 @@ void patch_tile_yield()
 	write_call(0x004E8044, (int)wtp_mod_mineral_yield);
 	write_call(0x004E88AC, (int)wtp_mod_mineral_yield);
 	write_call(0x004E970A, (int)wtp_mod_mineral_yield);
-
+	
 	// energy yield
 	write_call(0x004B7028, (int)wtp_mod_energy_yield);
 	write_call(0x004B7136, (int)wtp_mod_energy_yield);
@@ -1244,7 +1231,7 @@ void patch_tile_yield()
 	write_call(0x004E88CA, (int)wtp_mod_energy_yield);
 	write_call(0x004E971F, (int)wtp_mod_energy_yield);
 	write_call(0x0056C856, (int)wtp_mod_energy_yield);
-
+	
 }
 
 /*
@@ -1544,83 +1531,52 @@ void patch_base_scren_population_superdrones()
 
 }
 
-// integrated into Thinker
-///*
-//Equally distant territory is given to base with smaller ID (presumably older one).
-//*/
-//void patch_conflicting_territory()
-//{
-//	int conflicting_territory_bytes_length = 2;
-//	byte conflicting_territory_bytes_old[] = { 0x7F, 0x09 };
-//	byte conflicting_territory_bytes_new[] = { 0x7D, 0x09 };
-//	write_bytes
-//	(
-//		0x004E3EAE,
-//		conflicting_territory_bytes_old,
-//		conflicting_territory_bytes_new,
-//		conflicting_territory_bytes_length
-//	);
-//
-//}
-
 /*
-Overrides world_build.
+Overrides check for frendly unit in target tile.
 */
-void patch_world_build()
+void patch_zoc_regular_army_sneaking_disabled()
 {
-	write_call(0x004E1061, (int)modifiedWorldBuild);
-	write_call(0x004E113B, (int)modifiedWorldBuild);
-	write_call(0x0058B9BF, (int)modifiedWorldBuild);
-	write_call(0x0058DDD8, (int)modifiedWorldBuild);
-
+	// disable same dst vehicle owner check
+	
+	int zoc_regular_army_sneaking_disabled_same_bytes_length = 0x3;
+	byte zoc_regular_army_sneaking_disabled_same_bytes_old[] = { 0x8B, 0x4D, 0xE4 };
+	byte zoc_regular_army_sneaking_disabled_same_bytes_new[] = { 0xB1, 0x08, 0x90 };
+	write_bytes
+	(
+		0x00595156,
+		zoc_regular_army_sneaking_disabled_same_bytes_old,
+		zoc_regular_army_sneaking_disabled_same_bytes_new,
+		zoc_regular_army_sneaking_disabled_same_bytes_length
+	);
+	
+	// disable pact dst vehicle owner check
+	
+	int zoc_regular_army_sneaking_disabled_pact_bytes_length = 0x8;
+	byte zoc_regular_army_sneaking_disabled_pact_bytes_old[] = { 0xF6, 0x04, 0x8D, 0xF8, 0xC9, 0x96, 0x00, 0x01 };
+	byte zoc_regular_army_sneaking_disabled_pact_bytes_new[] = { 0x39, 0xE4, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+	write_bytes
+	(
+		0x0059517B,
+		zoc_regular_army_sneaking_disabled_pact_bytes_old,
+		zoc_regular_army_sneaking_disabled_pact_bytes_new,
+		zoc_regular_army_sneaking_disabled_pact_bytes_length
+	);
+	
+	// disable dst vehicle check
+	
+	int zoc_regular_army_sneaking_disabled_dst_veh_bytes_length = 0x5;
+	byte zoc_regular_army_sneaking_disabled_dst_veh_bytes_old[] = { 0x8B, 0x45, 0xE0, 0x85, 0xC0 };
+	byte zoc_regular_army_sneaking_disabled_dst_veh_bytes_new[] = { 0x31, 0xC0, 0x83, 0xF8, 0x08 };
+	write_bytes
+	(
+		0x00595385,
+		zoc_regular_army_sneaking_disabled_dst_veh_bytes_old,
+		zoc_regular_army_sneaking_disabled_dst_veh_bytes_new,
+		zoc_regular_army_sneaking_disabled_dst_veh_bytes_length
+	);
+	
 }
 
-///*
-//Overrides check for frendly unit in target tile.
-//*/
-//void patch_zoc_regular_army_sneaking_disabled()
-//{
-////	// disable same dst vehicle owner check
-////
-////	int zoc_regular_army_sneaking_disabled_same_bytes_length = 0x3;
-////	byte zoc_regular_army_sneaking_disabled_same_bytes_old[] = { 0x8B, 0x4D, 0xE4 };
-////	byte zoc_regular_army_sneaking_disabled_same_bytes_new[] = { 0xB1, 0x08, 0x90 };
-////	write_bytes
-////	(
-////		0x00595156,
-////		zoc_regular_army_sneaking_disabled_same_bytes_old,
-////		zoc_regular_army_sneaking_disabled_same_bytes_new,
-////		zoc_regular_army_sneaking_disabled_same_bytes_length
-////	);
-////
-////	// disable pact dst vehicle owner check
-////
-////	int zoc_regular_army_sneaking_disabled_pact_bytes_length = 0x8;
-////	byte zoc_regular_army_sneaking_disabled_pact_bytes_old[] = { 0xF6, 0x04, 0x8D, 0xF8, 0xC9, 0x96, 0x00, 0x01 };
-////	byte zoc_regular_army_sneaking_disabled_pact_bytes_new[] = { 0x39, 0xE4, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-////	write_bytes
-////	(
-////		0x0059517B,
-////		zoc_regular_army_sneaking_disabled_pact_bytes_old,
-////		zoc_regular_army_sneaking_disabled_pact_bytes_new,
-////		zoc_regular_army_sneaking_disabled_pact_bytes_length
-////	);
-////
-//	// disable dst vehicle check
-//
-//	int zoc_regular_army_sneaking_disabled_dst_veh_bytes_length = 0x5;
-//	byte zoc_regular_army_sneaking_disabled_dst_veh_bytes_old[] = { 0x8B, 0x45, 0xE0, 0x85, 0xC0 };
-//	byte zoc_regular_army_sneaking_disabled_dst_veh_bytes_new[] = { 0x31, 0xC0, 0x83, 0xF8, 0x08 };
-//	write_bytes
-//	(
-//		0x00595385,
-//		zoc_regular_army_sneaking_disabled_dst_veh_bytes_old,
-//		zoc_regular_army_sneaking_disabled_dst_veh_bytes_new,
-//		zoc_regular_army_sneaking_disabled_dst_veh_bytes_length
-//	);
-//
-//}
-//
 /*
 Weapon help always shows cost even if it equals to firepower.
 */
@@ -1635,24 +1591,6 @@ void patch_weapon_help_always_show_cost()
 		weapon_help_show_cost_always_bytes_old,
 		weapon_help_show_cost_always_bytes_new,
 		weapon_help_show_cost_always_bytes_length
-	);
-
-}
-
-/*
-Disables restoring movement points to terraforming vehicle.
-*/
-void patch_veh_wake()
-{
-	int veh_wake_does_not_restore_movement_points_bytes_length = 2;
-	byte veh_wake_does_not_restore_movement_points_bytes_old[] = { 0x75, 0x45 };
-	byte veh_wake_does_not_restore_movement_points_bytes_new[] = { 0xEB, 0x45 };
-	write_bytes
-	(
-		0x005C1D9A,
-		veh_wake_does_not_restore_movement_points_bytes_old,
-		veh_wake_does_not_restore_movement_points_bytes_new,
-		veh_wake_does_not_restore_movement_points_bytes_length
 	);
 
 }
@@ -1719,13 +1657,6 @@ f:  ff b6 00 42 01 00       push   DWORD PTR [esi+0x14200]
 		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_new,
 		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_length
 	);
-	
-	// updated Thinker veh_cost instead of patching
-//	// in veh_cost
-//	
-//	// change call for base_cost to calculate non prototyped components cost
-//	
-//	write_call(0x005C198D, (int)calculateNotPrototypedComponentsCostForProduction);
 	
 }
 
@@ -1831,59 +1762,6 @@ f:  83 c4 08                add    esp,0x8
 	);
 
 	write_call(0x005A314B, (int)modifiedProbeActionRisk);
-
-}
-
-/*
-Patches Infiltrate Datalinks option for infiltration expiration.
-*/
-void patch_infiltrate_datalinks()
-{
-	// always display Infiltrate Datalinks option
-
-	int infiltrate_datalinks_option_always_on_bytes_length = 0x2;
-/*
-0:  75 14                   jne    0x16
-*/
-	byte infiltrate_datalinks_option_always_on_bytes_old[] = { 0x75, 0x14 };
-/*
-...
-*/
-	byte infiltrate_datalinks_option_always_on_bytes_new[] = { 0x90, 0x90 };
-	write_bytes
-	(
-		0x0059F90F,
-		infiltrate_datalinks_option_always_on_bytes_old,
-		infiltrate_datalinks_option_always_on_bytes_new,
-		infiltrate_datalinks_option_always_on_bytes_length
-	);
-
-	// adds number of planted devices information to Infiltrate Datalinks option text
-
-	write_call(0x0059F8ED, (int)modifiedInfiltrateDatalinksOptionTextGet);
-
-	// always set infiltrator flag even if it is already set
-
-	int always_set_infiltrator_flag_bytes_length = 0x2;
-/*
-0:  75 23                   jne    0x25
-*/
-	byte always_set_infiltrator_flag_bytes_old[] = { 0x75, 0x23 };
-/*
-...
-*/
-	byte always_set_infiltrator_flag_bytes_new[] = { 0x90, 0x90 };
-	write_bytes
-	(
-		0x0059FB9C,
-		always_set_infiltrator_flag_bytes_old,
-		always_set_infiltrator_flag_bytes_new,
-		always_set_infiltrator_flag_bytes_length
-	);
-
-	// wrap set_treaty call for infiltration flag to also set number of devices
-
-	write_call(0x0059FBA7, (int)modifiedSetTreatyForInfiltrationExpiration);
 
 }
 
@@ -2532,26 +2410,6 @@ void patch_disable_move_territory_restrictions()
 		disable_move_territory_restriction_bytes_new,
 		disable_move_territory_restriction_bytes_length
 	);
-
-}
-
-void patch_tech_cost()
-{
-	// intercept tech_rate to substitute alternative tech cost
-
-	write_call(0x4452D5, (int)wtp_mod_tech_rate);
-	write_call(0x498D26, (int)wtp_mod_tech_rate);
-	write_call(0x4A77DA, (int)wtp_mod_tech_rate);
-	write_call(0x521872, (int)wtp_mod_tech_rate);
-	write_call(0x5218BE, (int)wtp_mod_tech_rate);
-	write_call(0x5581E9, (int)wtp_mod_tech_rate);
-	write_call(0x5BEA4D, (int)wtp_mod_tech_rate);
-	write_call(0x5BEAC7, (int)wtp_mod_tech_rate);
-
-	// intercept tech_pick to recompute tech cost based on tech ID
-
-    write_call(0x00515080, (int)modifiedTechPick);
-    write_call(0x005BE4AC, (int)modifiedTechPick);
 
 }
 
@@ -4390,24 +4248,12 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_base_scren_population_superdrones();
 	
-	// integrated into Thinker
-//	// patch conflicting territory claim
-//
-//	patch_conflicting_territory();
-	
-	patch_world_build();
-	
-//	if (cf->zoc_regular_army_sneaking_disabled)
-//	{
-//		patch_zoc_regular_army_sneaking_disabled();
-//	}
-//
-	patch_weapon_help_always_show_cost();
-	
-	if (cf->fix_former_wake)
+	if (cf->zoc_regular_army_sneaking_disabled)
 	{
-		patch_veh_wake();
+		patch_zoc_regular_army_sneaking_disabled();
 	}
+	
+	patch_weapon_help_always_show_cost();
 	
 	if (cf->flat_extra_prototype_cost)
 	{
@@ -4424,11 +4270,6 @@ void patch_setup_wtp(Config* cf)
 	if (cf->modified_probe_action_risks)
 	{
 		patch_modified_probe_action_risks();
-	}
-	
-	if (cf->infiltration_expire)
-	{
-		patch_infiltrate_datalinks();
 	}
 	
 	patch_min_knowledge_price();
@@ -4487,11 +4328,6 @@ void patch_setup_wtp(Config* cf)
 	patch_faction_upkeep();
 	
 	patch_disable_move_territory_restrictions();
-	
-	if (cf->alternative_tech_cost)
-	{
-		patch_tech_cost();
-	}
 	
 	if (cf->interceptor_scramble_fix)
 	{

@@ -389,10 +389,35 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
             }
         }
         if (sq->items & BIT_SOIL_ENRICHER) {
-            value += value / 2;
+			
+			// [WTP]
+			
+			if (conf.condenser_and_enricher_do_not_multiply_nutrients)
+			{
+				// enricher does not multiply nutrients and instead adds 1
+				value += 1;
+			}
+			else
+			{
+				// vanilla default: 50% increase
+				value += value / 2;
+			}
+			
         }
         if (sq->items & BIT_CONDENSER) {
-            value += value / 2;
+			
+			// [WTP]
+			
+			if (conf.condenser_and_enricher_do_not_multiply_nutrients)
+			{
+				// condenser does not multiply nutrients
+			}
+			else
+			{
+				// vanilla default: 50% increase
+				value += value / 2;
+			}
+			
         }
         if (value > 2 && !bonus_nutrient && !(sq->items & BIT_CONDENSER)
         && (faction_id < 0 || !has_tech(Rules->tech_preq_allow_3_nutrients_sq, faction_id))) {
@@ -1518,6 +1543,57 @@ void __cdecl mod_world_build() {
     if (!conf.new_world_builder) {
         ThinkerVars->map_random_value = 0;
         world_build();
+        
+        // [WTP]
+		// modify ocean depth
+		
+		if (conf.ocean_depth_multiplier != 1.0)
+		{
+			debug("modify ocean depth %d\n", *MapAreaTiles);
+			
+			for (int i = 0; i < *MapAreaTiles; i++)
+			{
+				MAP *tile = &((*MapTiles)[i]);
+				
+				// ocean
+				
+				if (!is_ocean(tile))
+					continue;
+				
+				// old level and altitude
+				
+				int oldLevel = tile->climate & 0xE0;
+				int oldLevelIndex = oldLevel >> 5;
+				int oldAltitude = tile->contour;
+				int oldAltitudeM = 50 * (tile->contour - 60);
+				int oldAltitudeLevelIndex = oldAltitude / 20;
+				
+				if (oldAltitudeLevelIndex != oldLevelIndex)
+				{
+					debug("\toldAltitudeLevelIndex and oldLevelIndex do not match.\n");
+				}
+				
+				// new level and altitude
+				
+				int newAltitudeM = (int)floor(conf.ocean_depth_multiplier * (double)oldAltitudeM);
+				int newAltitude = newAltitudeM / 50 + 60;
+				int newAltitudeLevelIndex = newAltitude / 20;
+				int newLevelIndex = newAltitudeLevelIndex;
+				int newLevel = newLevelIndex << 5;
+				
+				// update map
+				
+				tile->climate = (tile->climate & ~0xE0) | newLevel;
+				tile->contour = newAltitude;
+				
+				debug("[%4d] %d, %3d, %5d -> %d, %3d, %5d\n", i, oldLevelIndex, oldAltitude, oldAltitudeM, newLevelIndex, newAltitude, newAltitudeM);
+				
+			}
+			
+			debug("\n");
+			
+		}
+		
         return;
     }
     seed += pair_hash(seed, GetTickCount());

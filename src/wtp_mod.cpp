@@ -1071,12 +1071,12 @@ int wtp_tech_cost(int fac, int tech)
     assert(fac >= 0 && fac < 8);
     MFaction* m = &MFactions[fac];
     int level = 1;
-
+	
     if (tech >= 0)
 	{
         level = wtp_tech_level(tech);
     }
-
+	
     double a1 =  10.0;
     double b1 =   0.0;
     double c1 =  14.7;
@@ -1085,18 +1085,18 @@ int wtp_tech_cost(int fac, int tech)
     double x0 = (-c1 + sqrt(c1 * c1 - 3 * d1 * (b1 - b2))) / (3 * d1);
     double a2 = a1 + b1 * x0 + c1 * x0 * x0 + d1 * x0 * x0 * x0 - b2 * x0;
     double x = (double)(level - 1);
-
+	
     double base = (x < x0 ? a1 + b1 * x + c1 * x * x + d1 * x * x * x : a2 + b2 * x);
-
+	
     double cost =
         base
         * (double)m->rule_techcost / 100.0
         * (*GameRules & RULES_TECH_STAGNATION ? 1.5 : 1.0)
         * (double)Rules->rules_tech_discovery_rate / 100.0
     ;
-
+	
     double dw;
-
+	
     if (is_human(fac))
 	{
         dw = 1.0 + 0.1 * (10.0 - CostRatios[*DiffLevel]);
@@ -1105,9 +1105,9 @@ int wtp_tech_cost(int fac, int tech)
     {
         dw = 1.0;
     }
-
+	
     cost *= dw;
-
+	
     debug
     (
 		"tech_cost %d %d | %8.4f %8.4f %8.4f %d %d %s\n",
@@ -1120,43 +1120,39 @@ int wtp_tech_cost(int fac, int tech)
         tech,
         (tech >= 0 ? Tech[tech].name : NULL)
 	);
-
-	// scale
-
-	cost *= conf.tech_cost_scale;
-
+	
 	// correction
-
+	
 	if (level >= 3 && *CurrentTurn >= 25)
 	{
 		int totalTechCount = 0;
 		int discoveredTechCount = 0;
-
+		
 		for (int otherTechId = TECH_Biogen; otherTechId <= TECH_BFG9000; otherTechId++)
 		{
 			CTech *otherTech = &(Tech[otherTechId]);
-
+			
 			if (otherTech->preq_tech1 == TECH_Disable)
 				continue;
-
+			
 			totalTechCount++;
-
+			
 			if (TechOwners[otherTechId] != 0)
 			{
 				discoveredTechCount++;
 			}
-
+			
 		}
-
+		
 		double correction = ((double)discoveredTechCount / (double)totalTechCount) / ((double)*CurrentTurn / 350.0);
 		debug("tech_cost correction: discoveredTechCount = %d, totalTechCount = %d, current_turn = %d, end_turn = %d, correction = %f\n", discoveredTechCount, totalTechCount, *CurrentTurn, 350, correction);
-
+		
 		cost *= correction;
-
+		
 	}
-
+	
     return std::max(2, (int)cost);
-
+	
 }
 
 __cdecl int sayBase(char *buffer, int baseId)
@@ -1483,66 +1479,6 @@ int getLandUnitSpeedOnTubes(int unitId)
 
 }
 
-/*
-Overrides world_build.
-*/
-__cdecl void modifiedWorldBuild()
-{
-	// execute originial function
-
-	tx_world_build();
-
-	// modify ocean depth
-
-	if (conf.ocean_depth_multiplier != 1.0)
-	{
-		debug("modify ocean depth %d\n", *MapAreaTiles);
-
-		for (int i = 0; i < *MapAreaTiles; i++)
-		{
-			MAP *tile = &((*MapTiles)[i]);
-
-			// process only ocean
-
-			if (!is_ocean(tile))
-				continue;
-
-			// calculate level and altitude
-
-			int oldLevel = tile->climate & 0xE0;
-			int oldLevelIndex = oldLevel >> 5;
-			int oldAltitude = tile->contour;
-			int oldAltitudeM = 50 * (tile->contour - 60);
-			int oldAltitudeLevelIndex = oldAltitude / 20;
-
-			// modify altitude and level
-
-			int newAltitudeM = (int)floor(conf.ocean_depth_multiplier * (double)oldAltitudeM);
-			int newAltitude = newAltitudeM / 50 + 60;
-			int newAltitudeLevelIndex = newAltitude / 20;
-			int newLevelIndex = newAltitudeLevelIndex;
-			int newLevel = newLevelIndex << 5;
-
-			// update map
-
-			tile->climate = (tile->climate & ~0xE0) | newLevel;
-			tile->contour = newAltitude;
-
-			debug("[%4d] %d, %3d, %5d -> %d, %3d, %5d\n", i, oldLevelIndex, oldAltitude, oldAltitudeM, newLevelIndex, newAltitude, newAltitudeM);
-
-			if (oldAltitudeLevelIndex != oldLevelIndex)
-			{
-				debug("\toldAltitudeLevelIndex and oldLevelIndex do not match.\n");
-			}
-
-		}
-
-		debug("\n");
-
-	}
-
-}
-
 /**
 Calculates summary cost of all not prototyped components.
 */
@@ -1618,67 +1554,6 @@ int calculateNotPrototypedComponentsCost(int unitId)
 	
 	return calculateNotPrototypedComponentsCost(factionId, unit->chassis_id, unit->weapon_id, unit->armor_id);
 	
-}
-
-/*
-Calculates not prototyped components cost.
-*/
-__cdecl int calculateNotPrototypedComponentsCostForProduction(int unitId)
-{
-	UNIT *unit = &(Units[unitId]);
-
-	// predefined units are all prototyped
-
-	if (unitId < 64)
-		return 0;
-
-	// unit without name does not exist yet - impossible to get specs
-
-	if (strlen(unit->name) == 0)
-		return 0;
-
-	// prototyped units do not have extra prototype cost
-
-	if (unit->unit_flags & UNIT_PROTOTYPED)
-		return 0;
-
-	// get faction ID
-
-	int factionId = unitId / 64;
-
-	// check all prototyped components
-
-	bool chassisPrototyped = false;
-	bool weaponPrototyped = false;
-	bool armorPrototyped = false;
-
-	for (int factionPrototypedUnitId : getFactionUnitIds(factionId, false, false))
-	{
-		UNIT *factionPrototypedUnit = &(Units[factionPrototypedUnitId]);
-
-		if (unit->chassis_id == factionPrototypedUnit->chassis_id || Chassis[unit->chassis_id].speed == Chassis[factionPrototypedUnit->chassis_id].speed)
-		{
-			chassisPrototyped = true;
-		}
-
-		if (unit->weapon_id == factionPrototypedUnit->weapon_id || Weapon[unit->weapon_id].offense_value == Weapon[factionPrototypedUnit->weapon_id].offense_value)
-		{
-			weaponPrototyped = true;
-		}
-
-		if (unit->armor_id == factionPrototypedUnit->armor_id || Armor[unit->armor_id].defense_value == Armor[factionPrototypedUnit->armor_id].defense_value)
-		{
-			armorPrototyped = true;
-		}
-
-	}
-
-//	debug("chassisPrototyped=%d, weaponPrototyped=%d, armorPrototyped=%d\n", chassisPrototyped, weaponPrototyped, armorPrototyped);
-//
-	// calculate not prototyped components cost
-
-	return calculateNotPrototypedComponentsCost(unit->chassis_id, unit->weapon_id, unit->armor_id, chassisPrototyped, weaponPrototyped, armorPrototyped);
-
 }
 
 /*
@@ -1778,157 +1653,6 @@ __cdecl int modifiedSpyingForPactBaseProductionDisplay(int factionId)
 
 }
 
-void expireInfiltrations(int factionId)
-{
-	// check if feature is on
-
-	if (!conf.infiltration_expire)
-		return;
-
-	debug("expireInfiltrations: %s\n", MFactions[factionId].noun_faction);
-
-	// try to discover other faction infiltration devices
-
-	for (int infiltratingFactionId = 1; infiltratingFactionId <= 7; infiltratingFactionId++)
-	{
-		// skip self
-
-		if (infiltratingFactionId == factionId)
-			continue;
-
-		// skip computer factions
-
-		if (!is_human(infiltratingFactionId))
-			continue;
-
-		// skip faction not spying on us
-
-		if (!isDiploStatus(infiltratingFactionId, factionId, DIPLO_HAVE_INFILTRATOR))
-			continue;
-
-		debug("\t%s\n", MFactions[infiltratingFactionId].noun_faction);
-
-		// get infiltration device count
-
-		int infiltrationDeviceCount = getInfiltrationDeviceCount(infiltratingFactionId, factionId);
-
-		debug("\t\tinfiltrationDeviceCount=%d\n", infiltrationDeviceCount);
-
-		// retrieve lifetime formula parameters
-
-		double lifetimeBase;
-		double lifetimeProbeEffect;
-
-		if (is_human(factionId))
-		{
-			lifetimeBase = conf.human_infiltration_device_lifetime_base;
-			lifetimeProbeEffect = conf.human_infiltration_device_lifetime_probe_effect;
-		}
-		else
-		{
-			lifetimeBase = conf.computer_infiltration_device_lifetime_base;
-			lifetimeProbeEffect = conf.computer_infiltration_device_lifetime_probe_effect;
-		}
-
-		// get our PROBE rating
-
-		int probeRating = Factions[factionId].SE_probe_pending;
-		debug("\t\tprobeRating=%d\n", probeRating);
-
-		// calculate lifetime
-
-		double lifetime = std::max(1.0, lifetimeBase + lifetimeProbeEffect * probeRating);
-		debug("\t\tlifetime=%f\n", lifetime);
-
-		// calculate probability
-
-		double probability = std::min(1.0, 1.0 / lifetime);
-		debug("\t\tprobability=%f\n", probability);
-
-		// roll dice
-
-		double probabilityRoll = random_double(1.0);
-		debug("\t\tprobabilityRoll=%f\n", probabilityRoll);
-		debug("\t\tdisabled=%d\n", (probabilityRoll < probability ? 1 : 0));
-
-		if (probabilityRoll < probability)
-		{
-			// deactivate infiltration device
-
-			infiltrationDeviceCount--;
-			setInfiltrationDeviceCount(infiltratingFactionId, factionId, infiltrationDeviceCount);
-
-			if (infiltrationDeviceCount == 0)
-			{
-				// deactivate infiltration if number of devices reaches zero
-
-				setDiploStatus(infiltratingFactionId, factionId, DIPLO_HAVE_INFILTRATOR, false);
-
-				// display info to humans
-
-				if (is_human(factionId))
-				{
-					parse_says(0, MFactions[infiltratingFactionId].noun_faction, -1, -1);
-					popp(scriptTxtID, "INFILTRATIONDEACTIVATEDENEMY", 0, "capture_sm.pcx", 0);
-				}
-
-				if (is_human(infiltratingFactionId))
-				{
-					parse_says(0, MFactions[factionId].noun_faction, -1, -1);
-					popp(scriptTxtID, "INFILTRATIONDEACTIVATEDOURS", 0, "capture_sm.pcx", 0);
-				}
-
-			}
-			else
-			{
-				// display info to humans
-
-				if (is_human(factionId))
-				{
-					parse_says(0, MFactions[infiltratingFactionId].noun_faction, -1, -1);
-					parse_num(1, infiltrationDeviceCount);
-					popp(scriptTxtID, "INFILTRATIONDEVICEDISABLEDENEMY", 0, "capture_sm.pcx", 0);
-				}
-
-				if (is_human(infiltratingFactionId))
-				{
-					parse_says(0, MFactions[factionId].noun_faction, -1, -1);
-					parse_num(1, infiltrationDeviceCount);
-					popp(scriptTxtID, "INFILTRATIONDEVICEDISABLEDOURS", 0, "capture_sm.pcx", 0);
-				}
-
-			}
-
-		}
-
-	}
-
-	debug("\n");
-
-}
-
-void setInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId, int deviceCount)
-{
-	// device count is in range 0-0x7FFF
-
-	deviceCount = std::min(0x7FFF, std::max(0x0, deviceCount));
-
-	// clear infiltration devices count
-
-	Factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] &= 0x0000FFFF;
-
-	// set infiltration devices count
-
-	Factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] |= (deviceCount << 16);
-
-}
-
-int getInfiltrationDeviceCount(int infiltratingFactionId, int infiltratedFactionId)
-{
-	return Factions[infiltratingFactionId].diplo_agenda[infiltratedFactionId] >> 16;
-
-}
-
 /*
 Returns modified probe action risk.
 */
@@ -1945,52 +1669,6 @@ __cdecl void modifiedProbeActionRisk(int action, int riskPointer)
 		*risk = conf.probe_action_risk_genetic_plague;
 		break;
 	}
-
-}
-
-/*
-Overrides Infiltrate Datalinks option text.
-*/
-__cdecl int modifiedInfiltrateDatalinksOptionTextGet()
-{
-	// execute original code
-
-	int textPointer = tx_text_get();
-
-	// apply only when infiltration expiration is enabled
-
-	if (conf.infiltration_expire)
-	{
-		// get number of devices
-
-		int infiltrationDeviceCount = getInfiltrationDeviceCount(*CurrentPlayerFaction, *g_PROBE_FACT_TARGET);
-
-		// convert pointer to char *
-
-		char *text = (char *)textPointer;
-
-		// modify text
-
-		sprintf(text + strlen(text), " (%d/%d devices planted)", infiltrationDeviceCount, conf.infiltration_devices);
-
-	}
-
-	return textPointer;
-
-}
-
-/*
-Wraps set_treaty call for infiltration flag to also set number of devices.
-*/
-__cdecl void modifiedSetTreatyForInfiltrationExpiration(int initiatingFactionId, int targetFactionId, int diploState, int set_clear)
-{
-	// execute original code
-
-	tx_set_treaty(initiatingFactionId, targetFactionId, diploState, set_clear);
-
-	// plant devices
-
-	setInfiltrationDeviceCount(initiatingFactionId, targetFactionId, conf.infiltration_devices);
 
 }
 
@@ -2462,15 +2140,6 @@ __cdecl int modifiedFactionUpkeep(const int factionId)
 		executionProfiles["0.1. removeWrongVehiclesFromBases"].stop();
 	}
 	
-    // expire infiltrations for normal factions
-	
-    if (factionId > 0)
-	{
-		executionProfiles["0.2. expireInfiltrations"].start();
-		expireInfiltrations(factionId);
-		executionProfiles["0.2. expireInfiltrations"].stop();
-	}
-	
 	// choose AI logic
 	
 	int returnValue;
@@ -2710,105 +2379,6 @@ void simplifyOdds(int *attackerOdds, int *defenderOdds)
 		}
 
 	}
-
-}
-
-__cdecl int wtp_mod_tech_rate(int factionId)
-{
-	// original/Thinker
-	
-	int techCost = mod_tech_rate(factionId);
-	
-	// [WTP]
-	
-	Faction *faction = &(Factions[factionId]);
-//	MFaction *mfaction = &(MFactions[factionId]);
-    
-	// find technology to compute the rate for
-    
-	int techId = 0;
-	
-	if (faction->tech_research_id >= 0)
-	{
-		// use selected tech ID
-		
-		techId = faction->tech_research_id;
-		
-	}
-	else
-	{
-		// search for lowest available tech instead
-		
-		techId = getLowestLevelAvilableTech(factionId);
-		
-	}
-	
-	// compute alternative tech cost
-	
-	techCost = std::max(2, wtp_tech_cost(factionId, techId));
-	
-//	// set Thinker variables
-//	
-//	mfaction->thinker_tech_id = techId;
-//	mfaction->thinker_tech_cost = techCost;
-//	
-	// return techCost
-	
-	return techCost;
-	
-}
-
-__cdecl int modifiedTechPick(int factionId, int a2, int a3, int a4)
-{
-	Faction *faction = &(Factions[factionId]);
-
-	// call original function
-
-	int techId = tech_pick(factionId, a2, a3, a4);
-
-	// check if techId is about to change
-
-	if (techId != faction->tech_research_id)
-	{
-		// recalculate tech cost
-
-		faction->tech_cost = wtp_tech_cost(factionId, techId);
-
-	}
-
-	// return techId
-
-	return techId;
-
-}
-
-int getLowestLevelAvilableTech(int factionId)
-{
-	int lowestLevelTechId = -1;
-	int minLevel = INT_MAX;
-
-	for (int techId = 0; techId < MaxTechnologyNum; techId++)
-	{
-		// only faction available techs
-
-		if (!isTechAvailable(factionId, techId))
-			continue;
-
-		// get level
-
-		int level = wtp_tech_level(techId);
-
-		// update min level
-
-		if (level < minLevel)
-		{
-			lowestLevelTechId = techId;
-			minLevel = level;
-		}
-
-	}
-
-	return lowestLevelTechId;
 
 }
 

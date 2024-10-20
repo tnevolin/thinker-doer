@@ -3233,55 +3233,6 @@ void setTerraformingAction(int id, int action)
 }
 
 /*
-nutrient yield calculation
-*/
-__cdecl int wtp_mod_nutrient_yield(int factionId, int baseId, int x, int y, int tf)
-{
-	// call original function
-
-    int value = crop_yield(factionId, baseId, x, y, tf);
-
-    // get map tile
-
-    MAP* tile = getMapTile(x, y);
-
-    // bad tile - should not happen, though
-
-    if (!tile)
-		return value;
-
-	// apply condenser and enricher fix if configured
-
-	if (conf.condenser_and_enricher_do_not_multiply_nutrients)
-	{
-		// condenser does not multiply nutrients
-
-		if (tile->items & BIT_CONDENSER)
-		{
-			value = (value * 2 + 2) / 3;
-		}
-
-		// enricher does not multiply nutrients
-
-		if (tile->items & BIT_SOIL_ENRICHER)
-		{
-			value = (value * 2 + 2) / 3;
-		}
-
-		// enricher adds 1 nutrient
-
-		if (tile->items & BIT_SOIL_ENRICHER)
-		{
-			value++;
-		}
-
-	}
-
-    return value;
-
-}
-
-/*
 mineral yield calculation
 */
 __cdecl int wtp_mod_mineral_yield(int factionId, int baseId, int x, int y, int tf)
@@ -7925,7 +7876,7 @@ Resource getBaseWorkerResourceIntake(int baseId, MAP *tile)
 	
 	return
 		{
-			(double)wtp_mod_nutrient_yield(factionId, baseId, x, y, 0) - (double)Rules->nutrient_intake_req_citizen,
+			(double)mod_crop_yield(factionId, baseId, x, y, 0) - (double)Rules->nutrient_intake_req_citizen,
 			(double)wtp_mod_mineral_yield(factionId, baseId, x, y, 0),
 			(double)wtp_mod_energy_yield(factionId, baseId, x, y, 0),
 		}

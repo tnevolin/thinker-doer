@@ -465,10 +465,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->alternative_tech_cost = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("tech_cost_scale"))
-    {
-        cf->tech_cost_scale = atof(value);
-    }
     else if (MATCH("flat_extra_prototype_cost"))
     {
         cf->flat_extra_prototype_cost = (atoi(value) == 0 ? false : true);
@@ -477,34 +473,6 @@ int option_handler(void* user, const char* section, const char* name, const char
 //    {
 //        cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
 //    }
-    else if (MATCH("fix_former_wake"))
-    {
-        cf->fix_former_wake = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("infiltration_expire"))
-    {
-        cf->infiltration_expire = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("infiltration_devices"))
-    {
-        cf->infiltration_devices = std::max(1, atoi(value));
-    }
-    else if (MATCH("human_infiltration_device_lifetime_base"))
-    {
-        cf->human_infiltration_device_lifetime_base = std::max(1.0, atof(value));
-    }
-    else if (MATCH("human_infiltration_device_lifetime_probe_effect"))
-    {
-        cf->human_infiltration_device_lifetime_probe_effect = atof(value);
-    }
-    else if (MATCH("computer_infiltration_device_lifetime_base"))
-    {
-        cf->computer_infiltration_device_lifetime_base = std::max(1.0, atof(value));
-    }
-    else if (MATCH("computer_infiltration_device_lifetime_probe_effect"))
-    {
-        cf->computer_infiltration_device_lifetime_probe_effect = atof(value);
-    }
     else if (MATCH("modified_probe_action_risks"))
     {
         cf->modified_probe_action_risks = (atoi(value) == 0 ? false : true);
