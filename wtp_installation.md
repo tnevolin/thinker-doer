@@ -12,13 +12,7 @@ This is fan made mod that goes without warranty of any kind! Use it on your own 
 
 Take latest release package from here (TheWillToPower-###.zip) and unpack it to local directory.
 
-## New versions
-
 https://github.com/tnevolin/thinker-doer/releases
-
-## Old versions
-
-https://github.com/tnevolin/thinker-doer/tree/master/releases
 
 ## Core files
 
