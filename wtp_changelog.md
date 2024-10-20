@@ -1,3 +1,7 @@
+# Version 306
+
+* Removed alternative inefficiency computation. Vanilla one is good enough.
+
 # Version 305
 
 * Biology lab generates 4 labs.

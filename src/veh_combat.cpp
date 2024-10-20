@@ -163,11 +163,25 @@ int __cdecl mod_morale_veh(int veh_id, bool check_drone_riot, int faction_id_vs_
     if (morale_flag && morale_modifier < 0) {
         morale_modifier = 0;
     }
-    if (check_drone_riot && home_base_id >= 0
-    && Bases[home_base_id].state_flags & BSTATE_DRONE_RIOTS_ACTIVE && !morale_flag) {
-        // Fix: removed premature range bounding negating negative morale effects
-        morale_modifier--;
-    }
+    
+    // [WTP]
+    
+    if (conf.disable_home_base_morale_effect)
+	{
+		// disable home base morale effect (home base Children Creche and Brood Pit checks are already removed by Thiner above)
+	}
+	else
+	{
+		// default home base morale effect (home base Children Creche and Brood Pit checks are already removed by Thiner above)
+		
+		if (check_drone_riot && home_base_id >= 0
+		&& Bases[home_base_id].state_flags & BSTATE_DRONE_RIOTS_ACTIVE && !morale_flag) {
+			// Fix: removed premature range bounding negating negative morale effects
+			morale_modifier--;
+		}
+		
+	}
+	
     value = clamp(Vehs[veh_id].morale + morale_modifier, 0, 6);
     return value;
 }
@@ -190,18 +204,32 @@ int __cdecl mod_get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat
         // Morale effects with CC/BP are modified. SE Morale has no longer effect on native units.
         bool native_unit = unit_id_atk < MaxProtoFactionNum
             && (Units[unit_id_atk].offense_value() < 0 || unit_id_atk == BSC_SPORE_LAUNCHER);
-        if (has_fac_built(FAC_CHILDREN_CRECHE, base_id_atk)) {
-            morale++;
-            int morale_active = clamp(Factions[faction_id_atk].SE_morale, -4, 0);
-            if (morale_active <= -2) {
-                morale_active++;
-            }
-            if (!native_unit) {
-                morale -= morale_active;
-            }
-        } else if (native_unit && has_fac_built(FAC_BROOD_PIT, base_id_atk)) {
-            morale++;
-        }
+		
+		// [WTP]
+		
+		if (conf.disable_current_base_morale_effect)
+		{
+			// disable Children Creche and Brood Pit morale effect
+		}
+		else
+		{
+			// default Children Creche and Brood Pit morale effect
+			
+			if (has_fac_built(FAC_CHILDREN_CRECHE, base_id_atk)) {
+				morale++;
+				int morale_active = clamp(Factions[faction_id_atk].SE_morale, -4, 0);
+				if (morale_active <= -2) {
+					morale_active++;
+				}
+				if (!native_unit) {
+					morale -= morale_active;
+				}
+			} else if (native_unit && has_fac_built(FAC_BROOD_PIT, base_id_atk)) {
+				morale++;
+			}
+			
+		}
+		
         if (unk_tgl) {
             int morale_pending = Factions[faction_id_atk].SE_morale_pending;
             if (!native_unit && morale_pending >= 2 && morale_pending <= 3) {
@@ -252,18 +280,32 @@ int __cdecl mod_get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat
         // Morale effects with CC/BP are modified. SE Morale has no longer effect on native units.
         bool native_unit = unit_id_def < MaxProtoFactionNum
             && (Units[unit_id_def].offense_value() < 0 || unit_id_def == BSC_SPORE_LAUNCHER);
-        if (has_fac_built(FAC_CHILDREN_CRECHE, base_id_def)) {
-            morale++;
-            int morale_active = clamp(Factions[faction_id_def].SE_morale, -4, 0);
-            if (morale_active <= -2) {
-                morale_active++;
-            }
-            if (!native_unit) {
-                morale -= morale_active;
-            }
-        } else if (native_unit && has_fac_built(FAC_BROOD_PIT, base_id_def)) {
-            morale++;
-        }
+		
+		// [WTP]
+		
+		if (conf.disable_current_base_morale_effect)
+		{
+			// disable Children Creche and Brood Pit morale effect
+		}
+		else
+		{
+			// default Children Creche and Brood Pit morale effect
+			
+			if (has_fac_built(FAC_CHILDREN_CRECHE, base_id_def)) {
+				morale++;
+				int morale_active = clamp(Factions[faction_id_def].SE_morale, -4, 0);
+				if (morale_active <= -2) {
+					morale_active++;
+				}
+				if (!native_unit) {
+					morale -= morale_active;
+				}
+			} else if (native_unit && has_fac_built(FAC_BROOD_PIT, base_id_def)) {
+				morale++;
+			}
+			
+		}
+		
         // Fix: manual has "Units in a headquarters base automatically gain +1 Morale when defending."
         if (has_fac_built(FAC_HEADQUARTERS, base_id_def)) {
             morale++;

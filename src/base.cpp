@@ -1109,7 +1109,12 @@ int __cdecl mod_base_growth() {
     bool allow_growth = base->pop_size < pop_limit || has_dome;
 
     if (base->nutrients_accumulated >= 0) {
-        if ((*BaseGrowthRate >= 6 || has_project(FAC_CLONING_VATS, faction_id))
+		
+		// [WTP]
+		// population boom
+		// GROWTH rate is above max or Cloning Vats is not disabled by WTP
+		if ((*BaseGrowthRate > conf.se_growth_rating_max || (conf.cloning_vats_se_growth == 0 && has_project(FAC_CLONING_VATS, faction_id)))
+//		if ((*BaseGrowthRate >= 6 || has_project(FAC_CLONING_VATS, faction_id))
         && Rules->nutrient_intake_req_citizen
         && base->nutrient_surplus >= Rules->nutrient_intake_req_citizen) {
             if (allow_growth) {
@@ -1124,11 +1129,16 @@ int __cdecl mod_base_growth() {
                 return 0;
             } // Display population limit notifications later
         }
+        
         if (base->nutrients_accumulated >= nutrient_cost) {
-            if (*BaseGrowthRate <= -3) {
+			
+			// [WTP]
+			// stagnation
+            if (*BaseGrowthRate < conf.se_growth_rating_min) {
                 base->nutrients_accumulated = nutrient_cost;
                 return 0;
             }
+			
             if (allow_growth) {
                 if (base->pop_size < MaxBasePopSize) {
                     base->pop_size++;
@@ -1860,6 +1870,14 @@ int terraform_eco_damage(int base_id) {
 
 int mineral_output_modifier(int base_id) {
     int value = 0;
+    
+    // [WTP]
+    // Recycling Tanks could be a mineral multiplying facility
+    
+    if (conf.recycling_tanks_mineral_multiplier && has_facility(FAC_RECYCLING_TANKS, base_id)) {
+        value++;
+    }
+    
     if (has_facility(FAC_QUANTUM_CONVERTER, base_id)) {
         value++; // The Singularity Inductor also possible
     }
@@ -1992,7 +2010,12 @@ int __cdecl mod_facility_avail(FacilityId item_id, int faction_id, int base_id, 
     }
     switch (item_id) {
     case FAC_RECYCLING_TANKS:
-        return !has_fac(FAC_PRESSURE_DOME, base_id, queue_count); // count as Recycling Tank, skip
+    	
+    	// [WTP]
+    	// allow building Recycle Tanks if it is counted as mineral multiplying facility
+    	
+        return conf.recycling_tanks_mineral_multiplier || !has_fac(FAC_PRESSURE_DOME, base_id, queue_count); // count as Recycling Tank, skip
+        
     case FAC_TACHYON_FIELD:
         return has_fac(FAC_PERIMETER_DEFENSE, base_id, queue_count)
             || has_project(FAC_CITIZENS_DEFENSE_FORCE, faction_id); // Cumulative

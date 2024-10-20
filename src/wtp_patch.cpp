@@ -521,8 +521,7 @@ Enables alternative prototype cost formula.
 void patch_alternative_prototype_cost_formula()
 {
     write_call_over(0x00436ADD, (int)wtp_mod_proto_cost);
-    // this call specially purposed to calculate prototype cost, not unit cost
-//	write_call_over(0x0043704C, (int)wtp_mod_proto_cost);
+	write_call_over(0x0043704C, (int)wtp_mod_proto_cost);
 	write_call_over(0x005817C9, (int)wtp_mod_proto_cost);
     write_call_over(0x00581833, (int)wtp_mod_proto_cost);
     write_call_over(0x00581BB3, (int)wtp_mod_proto_cost);
@@ -1006,18 +1005,6 @@ void patch_sea_territory_distance_same_as_land()
 
 }
 
-// integrated into Thinker
-///*
-//Makes coastal base territory distance same as sea one.
-//*/
-//void patch_coastal_territory_distance_same_as_sea()
-//{
-//    // wrap base_find3
-//
-//    write_call(0x00523ED7, (int)base_find3);
-//
-//}
-
 /*
 Alternative artillery damage.
 */
@@ -1102,66 +1089,36 @@ void patch_alternative_artillery_damage()
 }
 
 /*
-Disables home base Children's Creche morale bonus.
-Disables home base Brood Pit morale bonus.
-*/
-void patch_disable_home_base_cc_morale_bonus()
-{
-    int disable_home_base_cc_morale_bonus_bytes_length = 0x2;
-    byte disable_home_base_cc_morale_bonus_bytes_old[] = { 0xF7, 0xDA };
-    byte disable_home_base_cc_morale_bonus_bytes_new[] = { 0x31, 0xD2 };
-
-    write_bytes
-    (
-        0x005C1037,
-        disable_home_base_cc_morale_bonus_bytes_old,
-        disable_home_base_cc_morale_bonus_bytes_new,
-        disable_home_base_cc_morale_bonus_bytes_length
-    )
-    ;
-
-    int disable_home_base_bp_morale_bonus_bytes_length = 0x2;
-    byte disable_home_base_bp_morale_bonus_bytes_old[] = { 0xF7, 0xD9 };
-    byte disable_home_base_bp_morale_bonus_bytes_new[] = { 0x31, 0xC9 };
-
-    write_bytes
-    (
-        0x005C1073,
-        disable_home_base_bp_morale_bonus_bytes_old,
-        disable_home_base_bp_morale_bonus_bytes_new,
-        disable_home_base_bp_morale_bonus_bytes_length
-    )
-    ;
-
-}
-
-/*
 Disables current base Children's Creche morale bonus.
 Disables current base Brood Pit morale bonus.
 */
-void patch_disable_current_base_cc_morale_bonus()
+void patch_disable_current_base_morale_effect()
 {
-    // disable_current_base_cc_morale_bonus display
-
-    int disable_current_base_cc_morale_bonus_display_bytes_length = 0x2;
-    byte disable_current_base_cc_morale_bonus_display_bytes_old[] = { 0xF7, 0xDA };
-    byte disable_current_base_cc_morale_bonus_display_bytes_new[] = { 0x31, 0xD2 };
-
+	// in say_morale2
+	
+    // disable_current_base_morale_effect display
+    // Children Creche
+	
+    int disable_current_base_morale_effect_display_bytes_length = 0x2;
+    byte disable_current_base_morale_effect_display_bytes_old[] = { 0xF7, 0xDA };
+    byte disable_current_base_morale_effect_display_bytes_new[] = { 0x31, 0xD2 };
+	
     write_bytes
     (
         0x004B4144,
-        disable_current_base_cc_morale_bonus_display_bytes_old,
-        disable_current_base_cc_morale_bonus_display_bytes_new,
-        disable_current_base_cc_morale_bonus_display_bytes_length
+        disable_current_base_morale_effect_display_bytes_old,
+        disable_current_base_morale_effect_display_bytes_new,
+        disable_current_base_morale_effect_display_bytes_length
     )
     ;
-
+	
     // disable_current_base_bp_morale_bonus display
-
+    // Brood Pit
+	
     int disable_current_base_bp_morale_bonus_display1_bytes_length = 0x2;
     byte disable_current_base_bp_morale_bonus_display1_bytes_old[] = { 0xF7, 0xDA };
     byte disable_current_base_bp_morale_bonus_display1_bytes_new[] = { 0x31, 0xD2 };
-
+	
     write_bytes
     (
         0x004B41CA,
@@ -1170,11 +1127,11 @@ void patch_disable_current_base_cc_morale_bonus()
         disable_current_base_bp_morale_bonus_display1_bytes_length
     )
     ;
-
+	
     int disable_current_base_bp_morale_bonus_display2_bytes_length = 0x2;
     byte disable_current_base_bp_morale_bonus_display2_bytes_old[] = { 0xF7, 0xD8 };
     byte disable_current_base_bp_morale_bonus_display2_bytes_new[] = { 0x31, 0xC0 };
-
+	
     write_bytes
     (
         0x004B425D,
@@ -1183,93 +1140,7 @@ void patch_disable_current_base_cc_morale_bonus()
         disable_current_base_bp_morale_bonus_display2_bytes_length
     )
     ;
-
-    // disable_current_base_cc_morale_bonus attack
-
-    int disable_current_base_cc_morale_bonus_attack_bytes_length = 0x2;
-    byte disable_current_base_cc_morale_bonus_attack_bytes_old[] = { 0xF7, 0xD9 };
-    byte disable_current_base_cc_morale_bonus_attack_bytes_new[] = { 0x31, 0xC9 };
-
-    write_bytes
-    (
-        0x00501669,
-        disable_current_base_cc_morale_bonus_attack_bytes_old,
-        disable_current_base_cc_morale_bonus_attack_bytes_new,
-        disable_current_base_cc_morale_bonus_attack_bytes_length
-    )
-    ;
-
-    // disable_current_base_bp_morale_bonus attack
-
-    int disable_current_base_bp_morale_bonus_attack1_bytes_length = 0x2;
-    byte disable_current_base_bp_morale_bonus_attack1_bytes_old[] = { 0xF7, 0xD8 };
-    byte disable_current_base_bp_morale_bonus_attack1_bytes_new[] = { 0x31, 0xC0 };
-
-    write_bytes
-    (
-        0x005016D4,
-        disable_current_base_bp_morale_bonus_attack1_bytes_old,
-        disable_current_base_bp_morale_bonus_attack1_bytes_new,
-        disable_current_base_bp_morale_bonus_attack1_bytes_length
-    )
-    ;
-
-    int disable_current_base_bp_morale_bonus_attack2_bytes_length = 0x2;
-    byte disable_current_base_bp_morale_bonus_attack2_bytes_old[] = { 0xF7, 0xD8 };
-    byte disable_current_base_bp_morale_bonus_attack2_bytes_new[] = { 0x31, 0xC0 };
-
-    write_bytes
-    (
-        0x00501747,
-        disable_current_base_bp_morale_bonus_attack2_bytes_old,
-        disable_current_base_bp_morale_bonus_attack2_bytes_new,
-        disable_current_base_bp_morale_bonus_attack2_bytes_length
-    )
-    ;
-
-    // disable_current_base_cc_morale_bonus defense
-
-    int disable_current_base_cc_morale_bonus_defense_bytes_length = 0x2;
-    byte disable_current_base_cc_morale_bonus_defense_bytes_old[] = { 0xF7, 0xD9 };
-    byte disable_current_base_cc_morale_bonus_defense_bytes_new[] = { 0x31, 0xC9 };
-
-    write_bytes
-    (
-        0x005019F1,
-        disable_current_base_cc_morale_bonus_defense_bytes_old,
-        disable_current_base_cc_morale_bonus_defense_bytes_new,
-        disable_current_base_cc_morale_bonus_defense_bytes_length
-    )
-    ;
-
-    // disable_current_base_bp_morale_bonus defense
-
-    int disable_current_base_bp_morale_bonus_defense1_bytes_length = 0x2;
-    byte disable_current_base_bp_morale_bonus_defense1_bytes_old[] = { 0xF7, 0xD8 };
-    byte disable_current_base_bp_morale_bonus_defense1_bytes_new[] = { 0x31, 0xC0 };
-
-    write_bytes
-    (
-        0x00501A55,
-        disable_current_base_bp_morale_bonus_defense1_bytes_old,
-        disable_current_base_bp_morale_bonus_defense1_bytes_new,
-        disable_current_base_bp_morale_bonus_defense1_bytes_length
-    )
-    ;
-
-    int disable_current_base_bp_morale_bonus_defense2_bytes_length = 0x2;
-    byte disable_current_base_bp_morale_bonus_defense2_bytes_old[] = { 0xF7, 0xD8 };
-    byte disable_current_base_bp_morale_bonus_defense2_bytes_new[] = { 0x31, 0xC0 };
-
-    write_bytes
-    (
-        0x00501AC8,
-        disable_current_base_bp_morale_bonus_defense2_bytes_old,
-        disable_current_base_bp_morale_bonus_defense2_bytes_new,
-        disable_current_base_bp_morale_bonus_defense2_bytes_length
-    )
-    ;
-
+	
 }
 
 /*
@@ -1277,24 +1148,26 @@ Sets default unit morale to Very Green.
 */
 void patch_default_morale_very_green()
 {
+	// in base_production
+	
     // default_morale_very_green place 1
-
+	
     int default_morale_very_green_1_bytes_length = 0x1;
-
+	
     /*
     0:  46                      inc    esi
     */
     byte default_morale_very_green_1_bytes_old[] =
         { 0x46 }
     ;
-
+	
     /*
     ...
     */
     byte default_morale_very_green_1_bytes_new[] =
         { 0x90 }
     ;
-
+	
     write_bytes
     (
         0x004F13A6,
@@ -1303,7 +1176,7 @@ void patch_default_morale_very_green()
         default_morale_very_green_1_bytes_length
     )
     ;
-
+	
     // default_morale_very_green place 2
 
     int default_morale_very_green_2_bytes_length = 0x2;
@@ -1499,21 +1372,21 @@ Disabes Cloning Vats impunities.
 void patch_cloning_vats_impunities()
 {
 	// disable cloning vats impunities display
-
+	
 	int disable_cv_display_bytes_length = 5;
 	byte disable_cv_display_bytes_old[] = { 0xA1, 0x74, 0x65, 0x9A, 0x00 };
 	byte disable_cv_display_bytes_new[] = { 0xB8, 0xFF, 0xFF, 0xFF, 0xFF };
 	write_bytes(0x004AF514, disable_cv_display_bytes_old, disable_cv_display_bytes_new, disable_cv_display_bytes_length);
 	write_bytes(0x004AF686, disable_cv_display_bytes_old, disable_cv_display_bytes_new, disable_cv_display_bytes_length);
-
+	
 	// disable cloning vats impunities computation
-
+	
 	int disable_cv_compute_bytes_length = 6;
 	byte disable_cv_compute_bytes_old[] = { 0x8B, 0x0D, 0x74, 0x65, 0x9A, 0x00 };
 	byte disable_cv_compute_bytes_new[] = { 0xB9, 0xFF, 0xFF, 0xFF, 0xFF, 0x90 };
 	write_bytes(0x005B4225, disable_cv_compute_bytes_old, disable_cv_compute_bytes_new, disable_cv_compute_bytes_length);
 	write_bytes(0x005B434D, disable_cv_compute_bytes_old, disable_cv_compute_bytes_new, disable_cv_compute_bytes_length);
-
+	
 }
 
 /*
@@ -1543,47 +1416,12 @@ void patch_social_calc()
 }
 
 /*
-Patches cloning vats mechanics.
-*/
-void patch_cloning_vats_mechanics()
-{
-	// disable triggering population boom
-
-	int disable_cv_population_boom_bytes_length = 1;
-	byte disable_cv_population_boom_bytes_old[] = {0x7C};
-	byte disable_cv_population_boom_bytes_new[] = {0xEB};
-	write_bytes
-	(
-		0x004EF389,
-		disable_cv_population_boom_bytes_old,
-		disable_cv_population_boom_bytes_new,
-		disable_cv_population_boom_bytes_length
-	);
-
-	// CV GROWTH effect is set in modifiedSocialCalc
-
-}
-
-/*
 Modifies SE GROWTH rating max.
 */
 void patch_se_growth_rating_max(int se_growth_rating_max)
 {
-	// patch population boom condition in base_growth
-
-	int popboom_condition_base_growth_bytes_length = 7;
-	byte popboom_condition_base_growth_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
-	byte popboom_condition_base_growth_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_max + 1) };
-	write_bytes
-	(
-		0x004EF3A8,
-		popboom_condition_base_growth_bytes_old,
-		popboom_condition_base_growth_bytes_new,
-		popboom_condition_base_growth_bytes_length
-	);
-
 	// patch population boom condition in base_doctors
-
+	
 	int popboom_condition_base_doctorss_bytes_length = 7;
 	byte popboom_condition_base_doctorss_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
 	byte popboom_condition_base_doctorss_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_max + 1) };
@@ -1594,75 +1432,7 @@ void patch_se_growth_rating_max(int se_growth_rating_max)
 		popboom_condition_base_doctorss_bytes_new,
 		popboom_condition_base_doctorss_bytes_length
 	);
-
-	// patch cost_factor nutrient max
-
-	int cost_factor_nutrient_max_check_bytes_length = 3;
-	byte cost_factor_nutrient_max_check_bytes_old[] = { 0x83, 0xFB, 0x05 };
-	byte cost_factor_nutrient_max_check_bytes_new[] = { 0x83, 0xFB, (byte)se_growth_rating_max };
-	write_bytes
-	(
-		0x004E4577,
-		cost_factor_nutrient_max_check_bytes_old,
-		cost_factor_nutrient_max_check_bytes_new,
-		cost_factor_nutrient_max_check_bytes_length
-	);
-
-	int cost_factor_nutrient_max_set_bytes_length = 5;
-	byte cost_factor_nutrient_max_set_bytes_old[] = { 0xB8, 0x05, 0x00, 0x00, 0x00 };
-	byte cost_factor_nutrient_max_set_bytes_new[] = { 0xB8, (byte)se_growth_rating_max, 0x00, 0x00, 0x00 };
-	write_bytes
-	(
-		0x004E457C,
-		cost_factor_nutrient_max_set_bytes_old,
-		cost_factor_nutrient_max_set_bytes_new,
-		cost_factor_nutrient_max_set_bytes_length
-	);
-
-}
-
-/*
-Modifies SE GROWTH rating min.
-*/
-void patch_se_growth_rating_min(int se_growth_rating_min)
-{
-	// patch population boom condition in base_growth
-
-	int popboom_condition_base_growth_bytes_length = 7;
-	byte popboom_condition_base_growth_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0xFD };
-	byte popboom_condition_base_growth_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_min - 1) };
-	write_bytes
-	(
-		0x004EF4F9,
-		popboom_condition_base_growth_bytes_old,
-		popboom_condition_base_growth_bytes_new,
-		popboom_condition_base_growth_bytes_length
-	);
-
-	// patch cost_factor nutrient min
-
-	int cost_factor_nutrient_min_check_bytes_length = 3;
-	byte cost_factor_nutrient_min_check_bytes_old[] = { 0x83, 0xFB, 0xFE };
-	byte cost_factor_nutrient_min_check_bytes_new[] = { 0x83, 0xFB, (byte)se_growth_rating_min };
-	write_bytes
-	(
-		0x004E4572,
-		cost_factor_nutrient_min_check_bytes_old,
-		cost_factor_nutrient_min_check_bytes_new,
-		cost_factor_nutrient_min_check_bytes_length
-	);
-
-	int cost_factor_nutrient_min_set_bytes_length = 5;
-	byte cost_factor_nutrient_min_set_bytes_old[] = { 0xB8, 0xFE, 0xFF, 0xFF, 0xFF };
-	byte cost_factor_nutrient_min_set_bytes_new[] = { 0xB8, (byte)se_growth_rating_min, 0x00, 0x00, 0x00 };
-	write_bytes
-	(
-		0x004E4587,
-		cost_factor_nutrient_min_set_bytes_old,
-		cost_factor_nutrient_min_set_bytes_new,
-		cost_factor_nutrient_min_set_bytes_length
-	);
-
+	
 }
 
 /*
@@ -1701,7 +1471,7 @@ Wraps _strcat call in base nutrient display to display correct indicator for pop
 void patch_growth_turns_population_boom()
 {
 	// change font
-
+	
 	int base_nutrient_turns_font_bytes_length = 0x6;
 	/*
 	0:  8d 85 48 ff ff ff       lea    eax,[ebp-0xb8]
@@ -1719,9 +1489,9 @@ void patch_growth_turns_population_boom()
 		base_nutrient_turns_font_bytes_new,
 		base_nutrient_turns_font_bytes_length
 	);
-
+	
 	// change color
-
+	
 	int base_nutrient_turns_color_bytes_length = 0x6;
 	/*
 	0:  8b 15 fc 6c 8c 00       mov    edx,DWORD PTR ds:0x8c6cfc
@@ -1738,40 +1508,12 @@ void patch_growth_turns_population_boom()
 		base_nutrient_turns_color_bytes_new,
 		base_nutrient_turns_color_bytes_length
 	);
-
+	
 	// overwrite text
-
+	
 	write_call(0x004118BE, (int)correctGrowthTurnsIndicator);
-
+	
 }
-
-/*
-Wraps has_fac call in base_minerals to sneak in RT mineral increase.
-*/
-void patch_recycling_tank_minerals()
-{
-	write_call(0x004E9E68, (int)modifiedBaseMinerals);
-
-}
-
-// integrated into Thinker
-///*
-//Modifies free minerals.
-//*/
-//void patch_free_minerals(int freeMinerals)
-//{
-//	int free_minerals_bytes_length = 3;
-//	byte free_minerals_bytes_old[] = { 0x83, 0xC6, 0x10 };
-//	byte free_minerals_bytes_new[] = { 0x83, 0xC6, (byte)freeMinerals };
-//	write_bytes
-//	(
-//		0x004E9E41,
-//		free_minerals_bytes_old,
-//		free_minerals_bytes_new,
-//		free_minerals_bytes_length
-//	);
-//
-//}
 
 /*
 Fixes population box incorrectly drawn superdrones.
@@ -1820,143 +1562,6 @@ void patch_base_scren_population_superdrones()
 //	);
 //
 //}
-
-/*
-Modifies abundance of native life.
-*/
-void patch_native_life_frequency(int constant, int multiplier)
-{
-	// check allowed values
-
-	if (constant < 0 || constant > 255 || !(multiplier == 2 || multiplier == 3 || multiplier == 5))
-		return;
-
-	// calculate multiplier code
-
-	int multiplierCode;
-	switch (multiplier)
-	{
-	case 2:
-		multiplierCode = 0x00;
-		break;
-	case 3:
-		multiplierCode = 0x40;
-		break;
-	case 5:
-		multiplierCode = 0x80;
-		break;
-	default:
-		return;
-	}
-
-	// modify number tries for natives appearance
-
-	int native_life_multiplier1_bytes_length = 4;
-	byte native_life_multiplier1_bytes_old[] = { 0x8D, 0x54, 0x09, 0x02 };
-	byte native_life_multiplier1_bytes_new[] = { 0x8D, 0x54, (byte)(multiplierCode + 0x09), (byte)constant };
-	write_bytes
-	(
-		0x00522C02,
-		native_life_multiplier1_bytes_old,
-		native_life_multiplier1_bytes_new,
-		native_life_multiplier1_bytes_length
-	);
-	int native_life_multiplier2_bytes_length = 4;
-	byte native_life_multiplier2_bytes_old[] = { 0x8D, 0x4C, 0x00, 0x02 };
-	byte native_life_multiplier2_bytes_new[] = { 0x8D, 0x4C, (byte)(multiplierCode + 0x00), (byte)constant };
-	write_bytes
-	(
-		0x00522C13,
-		native_life_multiplier2_bytes_old,
-		native_life_multiplier2_bytes_new,
-		native_life_multiplier2_bytes_length
-	);
-
-}
-
-/*
-Makes sea native appear every turn.
-*/
-void patch_native_life_sea_creatures()
-{
-	int native_life_sea_ratio1_bytes_length = 5;
-	byte native_life_sea_ratio1_bytes_old[] = { 0xBE, 0x05, 0x00, 0x00, 0x00 };
-	byte native_life_sea_ratio1_bytes_new[] = { 0xBE, 0x01, 0x00, 0x00, 0x00 };
-	write_bytes
-	(
-		0x0052261A,
-		native_life_sea_ratio1_bytes_old,
-		native_life_sea_ratio1_bytes_new,
-		native_life_sea_ratio1_bytes_length
-	);
-	int native_life_sea_ratio2_bytes_length = 2;
-	byte native_life_sea_ratio2_bytes_old[] = { 0x2B, 0xF2 };
-	byte native_life_sea_ratio2_bytes_new[] = { 0x90, 0x90 };
-	write_bytes
-	(
-		0x00522621,
-		native_life_sea_ratio2_bytes_old,
-		native_life_sea_ratio2_bytes_new,
-		native_life_sea_ratio2_bytes_length
-	);
-	int native_life_sea_ratio3_bytes_length = 2;
-	byte native_life_sea_ratio3_bytes_old[] = { 0xD1, 0xE6 };
-	byte native_life_sea_ratio3_bytes_new[] = { 0x90, 0x90 };
-	write_bytes
-	(
-		0x00522624,
-		native_life_sea_ratio3_bytes_old,
-		native_life_sea_ratio3_bytes_new,
-		native_life_sea_ratio3_bytes_length
-	);
-
-}
-
-/*
-Disable native sudden death.
-*/
-void patch_native_disable_sudden_death()
-{
-	int native_life_die_ratio_bytes_length = 3;
-	byte native_life_die_ratio_bytes_old[] = { 0xF6, 0xC2, 0x07 };
-	byte native_life_die_ratio_bytes_new[] = { 0xF6, 0xC2, 0xFF };
-	write_bytes
-	(
-		0x00566E2E,
-		native_life_die_ratio_bytes_old,
-		native_life_die_ratio_bytes_new,
-		native_life_die_ratio_bytes_length
-	);
-
-}
-
-/*
-Modified inefficiency computation.
-*/
-void patch_alternative_inefficiency()
-{
-	write_call(0x004EB5AE, (int)modifiedInefficiency);
-	write_call(0x004EB93C, (int)modifiedInefficiency);
-
-}
-
-/*
-Enables building Recycling Tanks even if Pressure Dome presents.
-*/
-void patch_recycling_tanks_not_disabled_by_pressure_dome()
-{
-	int recycling_tanks_disabled_by_pressure_dome_bytes_length = 3;
-	byte recycling_tanks_disabled_by_pressure_dome_bytes_old[] = { 0x83, 0xFB, 0x03 };
-	byte recycling_tanks_disabled_by_pressure_dome_bytes_new[] = { 0x83, 0xFB, 0xFF };
-	write_bytes
-	(
-		0x005BA436,
-		recycling_tanks_disabled_by_pressure_dome_bytes_old,
-		recycling_tanks_disabled_by_pressure_dome_bytes_new,
-		recycling_tanks_disabled_by_pressure_dome_bytes_length
-	);
-
-}
 
 /*
 Overrides world_build.
@@ -4704,15 +4309,6 @@ void patch_setup_wtp(Config* cf)
 		patch_sea_territory_distance_same_as_land();
 	}
 	
-	// integrated into Thinker
-//	// patch coastal_territory_distance_same_as_sea
-//
-//	if (cf->coastal_territory_distance_same_as_sea)
-//	{
-//		patch_coastal_territory_distance_same_as_sea();
-//
-//	}
-	
 	// patch alternative_artillery_damage
 	
 	if (cf->alternative_artillery_damage)
@@ -4720,18 +4316,9 @@ void patch_setup_wtp(Config* cf)
 		patch_alternative_artillery_damage();
 	}
 	
-	// patch disable_home_base_cc_morale_bonus
-	
-	if (cf->disable_home_base_cc_morale_bonus)
+	if (cf->disable_current_base_morale_effect)
 	{
-		patch_disable_home_base_cc_morale_bonus();
-	}
-	
-	// patch disable_current_base_cc_morale_bonus
-	
-	if (cf->disable_current_base_cc_morale_bonus)
-	{
-		patch_disable_current_base_cc_morale_bonus();
+		patch_disable_current_base_morale_effect();
 	}
 	
 	// patch default_morale_very_green
@@ -4788,13 +4375,6 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_social_calc();
 	
-	// cloning vats effect
-	
-	if (cf->cloning_vats_se_growth != 0)
-	{
-		patch_cloning_vats_mechanics();
-	}
-	
 	// patch GROWTH rating max
 	
 	if (cf->se_growth_rating_max != 5)
@@ -4802,31 +4382,9 @@ void patch_setup_wtp(Config* cf)
 		patch_se_growth_rating_max(cf->se_growth_rating_max);
 	}
 	
-	// patch GROWTH rating min
-	
-	if (cf->se_growth_rating_min != -2)
-	{
-		patch_se_growth_rating_min(cf->se_growth_rating_min);
-	}
-	
 	patch_display_base_nutrient_cost_factor();
 	
 	patch_growth_turns_population_boom();
-	
-	// patch RT -> 50% minerals
-	
-	if (cf->recycling_tanks_mineral_multiplier)
-	{
-		patch_recycling_tank_minerals();
-	}
-	
-	// integrated into Thinker
-//	// patch free minerals
-//
-//	if (cf->free_minerals != 16)
-//	{
-//		patch_free_minerals(cf->free_minerals);
-//	}
 	
 	// patch population incorrect superdrones in base screen population
 	
@@ -4836,33 +4394,6 @@ void patch_setup_wtp(Config* cf)
 //	// patch conflicting territory claim
 //
 //	patch_conflicting_territory();
-	
-	// patch native life
-	
-	if (cf->native_life_generator_constant != 2 || cf->native_life_generator_multiplier != 2)
-	{
-		patch_native_life_frequency(cf->native_life_generator_constant, cf->native_life_generator_multiplier);
-	}
-	
-	if (cf->native_life_generator_more_sea_creatures)
-	{
-		patch_native_life_sea_creatures();
-	}
-	
-	if (cf->native_disable_sudden_death)
-	{
-		patch_native_disable_sudden_death();
-	}
-	
-	if (cf->alternative_inefficiency)
-	{
-		patch_alternative_inefficiency();
-	}
-	
-	if (cf->recycling_tanks_mineral_multiplier)
-	{
-		patch_recycling_tanks_not_disabled_by_pressure_dome();
-	}
 	
 	patch_world_build();
 	

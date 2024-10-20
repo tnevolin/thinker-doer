@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v305"
+    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v306"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -307,33 +307,19 @@ struct Config {
     int flat_hurry_cost_multiplier_facility = 1;
     int flat_hurry_cost_multiplier_project = 1;
     bool collateral_damage_defender_reactor = false;
-    bool alternative_combat_mechanics = false;
-    double alternative_combat_mechanics_loss_divisor = 1.0;
     bool uniform_promotions = true; // internal configuration
     bool very_green_no_defense_bonus = true; // internal configuration
-//    bool planet_combat_bonus_on_defense = false;
     bool sea_territory_distance_same_as_land = false;
-    // integrated into Thinker
-//	bool coastal_territory_distance_same_as_sea = false;
     bool alternative_artillery_damage = false;
-    bool disable_home_base_cc_morale_bonus = false;
-    bool disable_current_base_cc_morale_bonus = false;
+    bool disable_home_base_morale_effect = false;
+    bool disable_current_base_morale_effect = false;
     bool default_morale_very_green = false;
     int road_movement_cost = 0;
-    int project_contribution_threshold = 0;
-    double project_contribution_proportion = 0.0;
     bool cloning_vats_disable_impunities = false;
     int cloning_vats_se_growth = 0;
     int se_growth_rating_min = -2;
     int se_growth_rating_max = 5;
     bool recycling_tanks_mineral_multiplier = false;
-    // integrated into Thinker
-//	int free_minerals = 16;
-    int native_life_generator_constant = 2;
-    int native_life_generator_multiplier = 2;
-    bool native_life_generator_more_sea_creatures = false;
-    bool native_disable_sudden_death = false;
-    bool alternative_inefficiency = false;
     double ocean_depth_multiplier = 1.0;
     bool zoc_regular_army_sneaking_disabled = false;
     int pts_new_base_size_less_average = 2;

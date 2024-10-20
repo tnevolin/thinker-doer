@@ -406,41 +406,20 @@ int option_handler(void* user, const char* section, const char* name, const char
 	else if (MATCH("collateral_damage_defender_reactor")) {
 		cf->collateral_damage_defender_reactor = (atoi(value) == 0 ? false : true);
 	}
-    else if (MATCH("alternative_combat_mechanics")) {
-        cf->alternative_combat_mechanics = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("alternative_combat_mechanics_loss_divisor")) {
-        cf->alternative_combat_mechanics_loss_divisor = std::max(1.0, atof(value));
-    }
-//    else if (MATCH("planet_combat_bonus_on_defense")) {
-//        cf->planet_combat_bonus_on_defense = (atoi(value) == 0 ? false : true);
-//    }
     else if (MATCH("sea_territory_distance_same_as_land")) {
         cf->sea_territory_distance_same_as_land = (atoi(value) == 0 ? false : true);
     }
-    // integrated into Thinker
-//	else if (MATCH("coastal_territory_distance_same_as_sea")) {
-//		cf->coastal_territory_distance_same_as_sea = (atoi(value) == 0 ? false : true);
-//	}
     else if (MATCH("alternative_artillery_damage")) {
         cf->alternative_artillery_damage = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("disable_home_base_cc_morale_bonus")) {
-        cf->disable_home_base_cc_morale_bonus = (atoi(value) == 0 ? false : true);
+    else if (MATCH("disable_home_base_morale_effect")) {
+        cf->disable_home_base_morale_effect = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("disable_current_base_cc_morale_bonus")) {
-        cf->disable_current_base_cc_morale_bonus = (atoi(value) == 0 ? false : true);
+    else if (MATCH("disable_current_base_morale_effect")) {
+        cf->disable_current_base_morale_effect = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("default_morale_very_green")) {
         cf->default_morale_very_green = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("project_contribution_threshold"))
-    {
-        cf->project_contribution_threshold = atoi(value);
-    }
-    else if (MATCH("project_contribution_proportion"))
-    {
-        cf->project_contribution_proportion = atof(value);
     }
     else if (MATCH("cloning_vats_disable_impunities"))
     {
@@ -461,31 +440,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("recycling_tanks_mineral_multiplier"))
     {
         cf->recycling_tanks_mineral_multiplier = (atoi(value) == 0 ? false : true);
-    }
-    // integrated into Thinker
-//	else if (MATCH("free_minerals"))
-//	{
-//		cf->free_minerals = std::max(0, atoi(value));
-//	}
-    else if (MATCH("native_life_generator_constant"))
-    {
-        cf->native_life_generator_constant = std::max(0, std::min(255, atoi(value)));
-    }
-    else if (MATCH("native_life_generator_multiplier"))
-    {
-        cf->native_life_generator_multiplier = atoi(value);
-    }
-    else if (MATCH("native_life_generator_more_sea_creatures"))
-    {
-        cf->native_life_generator_more_sea_creatures = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("native_disable_sudden_death"))
-    {
-        cf->native_disable_sudden_death = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("alternative_inefficiency"))
-    {
-        cf->alternative_inefficiency = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("ocean_depth_multiplier"))
     {

@@ -123,7 +123,11 @@ int __cdecl mod_cost_factor(int faction_id, BaseResType type, int base_id) {
                 growth += 2;
             }
         }
-        value = (value * (10 - clamp(growth, -2, 5)) + 9) / 10;
+        
+        // [WTP]
+        // GROWTH modifed min-max
+        value = (value * (10 - clamp(growth, conf.se_growth_rating_min, conf.se_growth_rating_max)) + 9) / 10;
+        
     }
     return value;
 }

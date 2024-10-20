@@ -5270,7 +5270,7 @@ int getBaseGrowthRate(int baseId)
 
 	// return computed GROWTH rate
 
-	return *current_base_growth_rate;
+	return *BaseGrowthRate;
 
 }
 

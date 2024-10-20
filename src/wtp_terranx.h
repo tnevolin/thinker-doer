@@ -76,7 +76,6 @@ extern const char *LABEL_WEAPON;
 extern const char *LABEL_ARMOR;
 
 extern char *g_strTEMP;
-extern int *current_base_growth_rate;
 extern int *g_PROBE_FACT_TARGET;
 extern int *g_UNK_ATTACK_FLAGS;
 extern byte *g_SOCIALWIN;
@@ -146,7 +145,6 @@ extern fp_6int tx_create_prototype;
 extern fp_3int tx_upgrade_cost;
 extern fp_1int tx_strlen;
 extern fp_2int_void tx_strcat;
-extern fp_6int tx_base_find3;
 extern fp_5int tx_tile_yield;
 extern fp_0int tx_base_mechanics_production;
 extern fp_5int tx_set_se_on_dialog_close;

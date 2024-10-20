@@ -508,14 +508,14 @@ __cdecl void wtp_mod_battle_compute_compose_value_percentage(int output_string_p
 Prototype cost calculation.
 
 0.
-All non combat sea unit (colony, former, transport) have their chassis cost reduced to match land analogues.
+colony, former, transport have their chassis cost reduced to match land analogues.
 foil = infantry
 cruiser = speeder
 
 1. Calculate module and weapon/armor reactor modified costs.
 module reactor modified cost = item cost * (Fission reactor value / 100)
 weapon/armor reactor modified cost = item cost * (reactor value / 100)
-1a. Planet Buster is treated as module.
+1a. Planet Buster, Tectonic Payload, Fungal Payload are treated as modules.
 
 2. Select primary and secondary item.
 primary item = the one with higher reactor modified cost
@@ -541,32 +541,32 @@ ability bytes 4-7 is flat cost
 */
 __cdecl int wtp_mod_proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level)
 {
-    // calculate reactor cost factors
-
-    double fission_reactor_cost_factor = (double)conf.reactor_cost_factors[0] / 100.0;
-    double reactor_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1] / 100.0;
-
-    // calculate minimal item costs
-
-    int minimal_weapon_cost = Weapon[WPN_HAND_WEAPONS].cost;
-    int minimal_armor_cost = Armor[ARM_NO_ARMOR].cost;
-
-    // get component values
-
-    int weapon_offence_value = Weapon[weapon_id].offense_value;
-    int armor_defense_value = Armor[armor_id].defense_value;
-    int chassis_speed = Chassis[chassis_id].speed;
-
-    // determine whether we have module or weapon
-
-    bool module = ((weapon_id >= WPN_PLANET_BUSTER && weapon_id <= WPN_ALIEN_ARTIFACT) || weapon_id == WPN_TECTONIC_PAYLOAD || weapon_id == WPN_FUNGAL_PAYLOAD);
-
-    // get component costs
-
     int weapon_cost = Weapon[weapon_id].cost;
     int armor_cost = Armor[armor_id].cost;
     int chassis_cost = Chassis[chassis_id].cost;
-
+	
+    // reactor cost factors
+	
+    double fission_reactor_cost_factor = (double)conf.reactor_cost_factors[0] / 100.0;
+    double reactor_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1] / 100.0;
+	
+    // minimal item costs
+	
+    int minimal_weapon_cost = Weapon[WPN_HAND_WEAPONS].cost;
+    int minimal_armor_cost = Armor[ARM_NO_ARMOR].cost;
+	
+    // component values
+	
+    int weapon_offence_value = Weapon[weapon_id].offense_value;
+    int armor_defense_value = Armor[armor_id].defense_value;
+    int chassis_speed = Chassis[chassis_id].speed;
+	
+    // module or weapon
+	
+    bool module = ((weapon_id >= WPN_PLANET_BUSTER && weapon_id <= WPN_ALIEN_ARTIFACT) || weapon_id == WPN_TECTONIC_PAYLOAD || weapon_id == WPN_FUNGAL_PAYLOAD);
+	
+    // get component costs
+	
     // modify chassis cost for sea based non combat related modules
 
     if (weapon_id == WPN_COLONY_MODULE || weapon_id == WPN_TERRAFORMING_UNIT || weapon_id == WPN_TROOP_TRANSPORT)
@@ -581,17 +581,17 @@ __cdecl int wtp_mod_proto_cost(int chassis_id, int weapon_id, int armor_id, int 
 			break;
 		}
 	}
-
-    // calculate items reactor modified costs
-
+	
+    // items reactor modified costs
+	
     double weapon_reactor_modified_cost = (double)weapon_cost * (module ? fission_reactor_cost_factor : reactor_cost_factor);
     double armor_reactor_modified_cost = (double)armor_cost * reactor_cost_factor;
-
-    // select primary item and secondary item shifted costs
-
+	
+    // primary item and secondary item shifted costs
+	
     double primary_item_cost;
     double secondary_item_shifted_cost;
-
+	
     if (weapon_reactor_modified_cost >= armor_reactor_modified_cost)
 	{
 		primary_item_cost = weapon_reactor_modified_cost;
@@ -602,101 +602,99 @@ __cdecl int wtp_mod_proto_cost(int chassis_id, int weapon_id, int armor_id, int 
 		primary_item_cost = armor_reactor_modified_cost;
 		secondary_item_shifted_cost = ((double)weapon_cost - minimal_weapon_cost) * (module ? fission_reactor_cost_factor : reactor_cost_factor);
 	}
-
+	
     // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
-
+	
     int minimal_cost = reactor_level;
-
+	
     // calculate base unit cost without abilities
-
+	
     double base_cost = (primary_item_cost + secondary_item_shifted_cost / 2) * chassis_cost / Chassis[CHS_INFANTRY].cost;
-
+	
     // get abilities cost modifications
-
+	
     int abilities_cost_factor = 0;
     int abilities_cost_addition = 0;
-
+	
     for (int ability_id = 0; ability_id < 32; ability_id++)
     {
         if (((abilities >> ability_id) & 0x1) == 0x1)
         {
             int ability_cost = Ability[ability_id].cost;
-
+			
             switch (ability_cost)
             {
             	// increased with weapon/armor ratio
 			case -1:
 				abilities_cost_factor += std::min(2, std::max(0, weapon_offence_value / armor_defense_value));
 				break;
-
+				
             	// increased with weapon
 			case -2:
 				abilities_cost_factor += weapon_offence_value;
 				break;
-
+				
             	// increased with armor
 			case -3:
 				abilities_cost_factor += armor_defense_value;
 				break;
-
+				
             	// increased with speed
 			case -4:
 				abilities_cost_factor += chassis_speed;
 				break;
-
+				
             	// increased with weapon + armor
 			case -5:
 				abilities_cost_factor += weapon_offence_value + armor_defense_value;
 				break;
-
+				
             	// increased with weapon + speed
 			case -6:
 				abilities_cost_factor += weapon_offence_value + chassis_speed;
 				break;
-
+				
             	// increased with armor + speed
 			case -7:
 				abilities_cost_factor += armor_defense_value + chassis_speed;
 				break;
-
+				
 				// positive values
 			default:
-
+				
 				// take ability cost factor bits: 0-3
-
+				
 				int ability_proportional_value = (ability_cost & 0xF);
-
+				
 				if (ability_proportional_value > 0)
 				{
 					abilities_cost_factor += ability_proportional_value;
-
 				}
-
+				
 				// take ability cost addition bits: 4-7
-
+				
 				int ability_flat_value = ((ability_cost >> 4) & 0xF);
-
+				
 				if (ability_flat_value > 0)
 				{
 					abilities_cost_addition += ability_flat_value;
-
 				}
-
+				
             }
-
+			
             // special case: cost increased for land units
-
+			
             if ((Ability[ability_id].flags & AFLAG_COST_INC_LAND_UNIT) && Chassis[chassis_id].triad == TRIAD_LAND)
 			{
 				abilities_cost_factor += 1;
 			}
-
+			
         }
-
+		
     }
-
+	
     // calculate final cost
-
+	
     int cost =
         std::max
         (
@@ -716,25 +714,16 @@ __cdecl int wtp_mod_proto_cost(int chassis_id, int weapon_id, int armor_id, int 
             abilities_cost_addition
         )
     ;
-
+	
     return cost;
-
+	
 }
 
 /*
 Multipurpose combat roll function.
 Determines which side wins this round. Returns 1 for attacker, 0 for defender.
 */
-__cdecl int combat_roll
-(
-    int attacker_strength,
-    int defender_strength,
-    int attacker_vehicle_offset,
-    int defender_vehicle_offset,
-    int attacker_initial_power,
-    int defender_initial_power,
-    int *attacker_won_last_round
-)
+__cdecl int combat_roll(int attacker_strength, int defender_strength, int attacker_vehicle_offset, int defender_vehicle_offset, int attacker_initial_power, int defender_initial_power, int *attacker_won_last_round)
 {
     debug("combat_roll(attacker_strength=%d, defender_strength=%d, attacker_vehicle_offset=%d, defender_vehicle_offset=%d, attacker_initial_power=%d, defender_initial_power=%d, *attacker_won_last_round=%d)\n",
         attacker_strength,
@@ -746,176 +735,38 @@ __cdecl int combat_roll
         *attacker_won_last_round
     )
     ;
-
+	
     // normalize strength values
-
+	
     if (attacker_strength < 1) attacker_strength = 1;
     if (defender_strength < 1) defender_strength = 1;
-
+	
     // calculate outcome
-
-    int attacker_wins;
-
-    if (!conf.alternative_combat_mechanics)
-    {
-        attacker_wins =
-            standard_combat_mechanics_combat_roll
-            (
-                attacker_strength,
-                defender_strength
-            )
-        ;
-
-    }
-    else
-    {
-        attacker_wins =
-            alternative_combat_mechanics_combat_roll
-            (
-                attacker_strength,
-                defender_strength,
-                attacker_vehicle_offset,
-                defender_vehicle_offset,
-                attacker_initial_power,
-                defender_initial_power,
-                attacker_won_last_round
-            )
-        ;
-
-    }
-
-    // return outcome
-
-    return attacker_wins;
-
+	
+    return standard_combat_mechanics_combat_roll(attacker_strength, defender_strength);
+	
 }
 
 /*
 Standard combat mechanics.
 Determines which side wins this round. Returns 1 for attacker, 0 for defender.
 */
-int standard_combat_mechanics_combat_roll
-(
-    int attacker_strength,
-    int defender_strength
-)
+int standard_combat_mechanics_combat_roll(int attacker_strength, int defender_strength)
 {
-    debug("standard_combat_mechanics_combat_roll(attacker_strength=%d, defender_strength=%d)\n",
-        attacker_strength,
-        defender_strength
-    )
-    ;
-
+    debug("standard_combat_mechanics_combat_roll(attacker_strength=%d, defender_strength=%d)\n", attacker_strength, defender_strength);
+	
     // generate random roll
-
+	
     int random_roll = random(attacker_strength + defender_strength);
     debug("\trandom_roll=%d\n", random_roll);
-
+	
     // calculate outcome
-
+	
     int attacker_wins = (random_roll < attacker_strength ? 1 : 0);
     debug("\tattacker_wins=%d\n", attacker_wins);
-
+	
     return attacker_wins;
-
-}
-
-/*
-Alternative combat mechanics.
-Determines which side wins this round. Returns 1 for attacker, 0 for defender.
-*/
-int alternative_combat_mechanics_combat_roll
-(
-    int attacker_strength,
-    int defender_strength,
-    int attacker_vehicle_offset,
-    int defender_vehicle_offset,
-    int attacker_initial_power,
-    int defender_initial_power,
-    int *attacker_won_last_round
-)
-{
-    debug("alternative_combat_mechanics_combat_roll(attacker_strength=%d, defender_strength=%d, attacker_initial_power=%d, defender_initial_power=%d, *attacker_won_last_round=%d)\n",
-        attacker_strength,
-        defender_strength,
-        attacker_initial_power,
-        defender_initial_power,
-        *attacker_won_last_round
-    )
-    ;
-
-    // calculate probabilities
-
-    double p, q, pA, qA, pD, qD;
-
-    alternative_combat_mechanics_probabilities
-    (
-        attacker_strength,
-        defender_strength,
-        &p, &q, &pA, &qA, &pD, &qD
-    )
-    ;
-
-    // determine whether we are on first round
-
-    VEH attacker_vehicle = Vehicles[attacker_vehicle_offset / 0x34];
-    VEH defender_vehicle = Vehicles[defender_vehicle_offset / 0x34];
-
-    UNIT attacker_unit = Units[attacker_vehicle.unit_id];
-    UNIT defender_unit = Units[defender_vehicle.unit_id];
-
-    int attacker_power = attacker_unit.reactor_id * 0xA - attacker_vehicle.damage_taken;
-    int defender_power = defender_unit.reactor_id * 0xA - defender_vehicle.damage_taken;
-
-    bool first_round = (attacker_power == attacker_initial_power) && (defender_power == defender_initial_power);
-    debug("\tfirst_round=%d\n", (first_round ? 1 : 0));
-
-    // determine effective p
-
-    double effective_p = (first_round ? p : (*attacker_won_last_round == 1 ? pA : pD));
-    debug("\teffective_p=%f\n", effective_p);
-
-    // generate random roll
-
-    double random_roll = (double)rand() / (double)RAND_MAX;
-    debug("\trandom_roll=%f\n", random_roll);
-
-    // calculate outcome
-
-    int attacker_wins = (random_roll < effective_p ? 1 : 0);
-    debug("\tattacker_wins=%d\n", attacker_wins);
-
-    // set round winner
-
-    *attacker_won_last_round = attacker_wins;
-
-    return attacker_wins;
-
-}
-
-/*
-Alternative combat mechanics.
-Calculates probabilities.
-*/
-void alternative_combat_mechanics_probabilities
-(
-    int attacker_strength,
-    int defender_strength,
-    double *p, double *q, double *pA, double *qA, double *pD, double *qD
-)
-{
-    // determine first round probability
-
-    *p = (double)attacker_strength / ((double)attacker_strength + (double)defender_strength);
-    *q = 1 - *p;
-
-    // determine following rounds probabilities
-
-    *qA = *q / conf.alternative_combat_mechanics_loss_divisor;
-    *pA = 1 - *qA;
-    *pD = *p / conf.alternative_combat_mechanics_loss_divisor;
-    *qD = 1 - *pD;
-
+	
 }
 
 /*
@@ -976,359 +827,6 @@ double binomial_koefficient(int n, int k)
 
 }
 
-/*
-Alternative combat mechanics.
-Calculates attacker winning probability.
-*/
-double alternative_combat_mechanics_calculate_attacker_winning_probability
-(
-    double p,
-    int attacker_hp,
-    int defender_hp
-)
-{
-    debug("alternative_combat_mechanics_calculate_attacker_winning_probability(p=%f, attacker_hp=%d, defender_hp=%d)\n",
-		p,
-        attacker_hp,
-        defender_hp
-    )
-    ;
-
-    double attacker_winning_probability;
-
-    // cannot calculate too long tree for HP > 10
-    // return 0.5 instead
-    if (attacker_hp > 10 || defender_hp > 10)
-    {
-        attacker_winning_probability = 0.5;
-
-    }
-    else if (attacker_hp <= 0 && defender_hp <= 0)
-    {
-        attacker_winning_probability = 0.5;
-
-    }
-    else if (defender_hp <= 0)
-    {
-        attacker_winning_probability = 1.0;
-
-    }
-    else if (attacker_hp <= 0)
-    {
-        attacker_winning_probability = 0.0;
-
-    }
-    else
-    {
-        // determine first round probability
-
-//        double p = (double)attacker_strength / ((double)attacker_strength + (double)defender_strength);
-        double q = 1 - p;
-
-        // determine following rounds probabilities
-
-        double qA = q / conf.alternative_combat_mechanics_loss_divisor;
-        double pA = 1 - qA;
-        double pD = p / conf.alternative_combat_mechanics_loss_divisor;
-        double qD = 1 - pD;
-
-        debug("p=%f, q=%f, pA=%f, qA=%f, pD=%f, qD=%f\n", p, q, pA, qA, pD, qD);
-
-        // calculate attacker winning probability
-
-        attacker_winning_probability =
-            // attacker wins first round
-            p
-            *
-            alternative_combat_mechanics_calculate_attacker_winning_probability_following_rounds
-            (
-                true,
-                pA, qA, pD, qD,
-                attacker_hp,
-                defender_hp - 1
-            )
-            +
-            // defender wins first round
-            q
-            *
-            alternative_combat_mechanics_calculate_attacker_winning_probability_following_rounds
-            (
-                false,
-                pA, qA, pD, qD,
-                attacker_hp - 1,
-                defender_hp
-            )
-        ;
-
-    }
-
-    debug("attacker_winning_probability=%f\n", attacker_winning_probability);
-
-    return attacker_winning_probability;
-
-}
-
-double alternative_combat_mechanics_calculate_attacker_winning_probability_following_rounds
-(
-    bool attacker_won,
-    double pA, double qA, double pD, double qD,
-    int attacker_hp,
-    int defender_hp
-)
-{
-    double attacker_winning_probability;
-
-    if (attacker_hp <= 0 && defender_hp <= 0)
-    {
-        attacker_winning_probability = 0.5;
-
-    }
-    else if (defender_hp <= 0)
-    {
-        attacker_winning_probability = 1.0;
-
-    }
-    else if (attacker_hp <= 0)
-    {
-        attacker_winning_probability = 0.0;
-
-    }
-    else
-    {
-        attacker_winning_probability =
-            // attacker wins round
-            (attacker_won ? pA : pD)
-            *
-            alternative_combat_mechanics_calculate_attacker_winning_probability_following_rounds
-            (
-                true,
-                pA, qA, pD, qD,
-                attacker_hp,
-                defender_hp - 1
-            )
-            +
-            // defender wins round
-            (attacker_won ? qA : qD)
-            *
-            alternative_combat_mechanics_calculate_attacker_winning_probability_following_rounds
-            (
-                false,
-                pA, qA, pD, qD,
-                attacker_hp - 1,
-                defender_hp
-            )
-        ;
-
-    }
-
-    return attacker_winning_probability;
-
-}
-
-///*
-//For sea squares pretend they are on the same continent as closest reachable coastal base
-//if such base is also closer than any other sea base in the same sea.
-//*/
-//__cdecl int base_find3(int x, int y, int unknown_1, int region, int unknown_2, int unknown_3)
-//{
-//    debug
-//    (
-//        "base_find3(x=%d, y=%d, region=%d)\n",
-//        x,
-//        y,
-//        region
-//    )
-//    ;
-//
-//    bool closest_reachable_base_found = false;
-//    bool closest_reachable_base_is_coastal = false;
-//    int closest_reachable_base_distance = 9999;
-//    BASE *closest_reachable_base = NULL;
-//    MAP *closest_reachable_base_square = NULL;
-//
-//    int saved_coastal_base_region = -1;
-//
-//    // check if given square is at sea
-//
-//    if (region >= 0x41)
-//    {
-//        // loop through bases
-//
-//        for (int base_id = 0; base_id < *BaseCount; base_id++)
-//        {
-//            // get base
-//
-//            BASE *base = &Bases[base_id];
-//
-//            // get base map square
-//
-//            MAP *base_map_square = mapsq(base->x, base->y);
-//
-//            // get base map square body id
-//
-//            int base_map_square_region = base_map_square->region;
-//
-//            // check if it is the same body
-//            if (base_map_square_region == region)
-//            {
-//                // calculate base distance
-//
-//                int base_distance = map_distance(x, y, base->x, base->y);
-//
-//                // improve distance if smaller
-//
-//                if (!closest_reachable_base_found || base_distance < closest_reachable_base_distance)
-//                {
-//                    closest_reachable_base_found = true;
-//                    closest_reachable_base_is_coastal = false;
-//                    closest_reachable_base_distance = base_distance;
-//                    closest_reachable_base = base;
-//                    closest_reachable_base_square = base_map_square;
-//
-//                }
-//
-//            }
-//            // otherwise, check it it is a land base
-//            else if (base_map_square_region < 0x41)
-//            {
-//                // iterate over nearby base squares
-//
-//                for (int dx = -2; dx <= 2; dx++)
-//                {
-//                    for (int dy = -(2 - abs(dx)); dy <= (2 - abs(dx)); dy += 2)
-//                    {
-//                        int near_x = base->x + dx;
-//                        int near_y = base->y + dy;
-//
-//                        // exclude squares beyond the map
-//
-//                        if (near_y < 0 || near_y >= *MapAreaY)
-//                            continue;
-//
-//                        if (*MapToggleFlat && (near_x < 0 || near_x >= *MapAreaX))
-//                            continue;
-//
-//                        // wrap x on cylinder map
-//
-//                        if (!*MapToggleFlat && near_x < 0)
-//                        {
-//                            near_x += *MapAreaX;
-//
-//                        }
-//
-//                        if (!*MapToggleFlat && near_x >= *MapAreaX)
-//                        {
-//                            near_x -= *MapAreaX;
-//
-//                        }
-//
-//                        // get near map square
-//
-//                        MAP *near_map_square = mapsq(near_x, near_y);
-//
-//                        // get near map square body id
-//
-//                        int near_map_square_region = near_map_square->region;
-//
-//                        // check if it is a matching body id
-//
-//                        if (near_map_square_region == region)
-//                        {
-//                            // calculate base distance
-//
-//                            int base_distance = map_distance(x, y, base->x, base->y);
-//
-//                            // improve distance if smaller
-//
-//                            if (!closest_reachable_base_found || base_distance < closest_reachable_base_distance)
-//                            {
-//                                closest_reachable_base_found = true;
-//                                closest_reachable_base_is_coastal = true;
-//                                closest_reachable_base_distance = base_distance;
-//                                closest_reachable_base = base;
-//                                closest_reachable_base_square = base_map_square;
-//
-//                            }
-//
-//                        }
-//
-//                    }
-//
-//                }
-//
-//            }
-//
-//        }
-//
-//        debug
-//        (
-//            "closest_reachable_base_found=%d, closest_reachable_base_is_coastal=%d, closest_reachable_base_distance=%d\n",
-//            closest_reachable_base_found,
-//            closest_reachable_base_is_coastal,
-//            closest_reachable_base_distance
-//        )
-//        ;
-//
-//        // if closest coastal base is found - pretend it is placed on same body
-//
-//        if (closest_reachable_base_found && closest_reachable_base_is_coastal)
-//        {
-//            saved_coastal_base_region = closest_reachable_base_square->region;
-//
-//            debug
-//            (
-//                "Before emulation: closest_reachable_base->x=%d, closest_reachable_base->y=%d, closest_reachable_base_square->region=%d\n",
-//                closest_reachable_base->x,
-//                closest_reachable_base->y,
-//                closest_reachable_base_square->region
-//            )
-//            ;
-//
-//            closest_reachable_base_square->region = region;
-//
-//            debug
-//            (
-//                "After emulation: closest_reachable_base_square->region=%d\n",
-//                closest_reachable_base_square->region
-//            )
-//            ;
-//
-//        }
-//
-//    }
-//
-//    // run original function
-//
-//    int nearest_base_id = tx_base_find3(x, y, unknown_1, region, unknown_2, unknown_3);
-//
-//    // revert coastal base map square body to original
-//
-//    if (closest_reachable_base_found && closest_reachable_base_is_coastal)
-//    {
-//        debug
-//        (
-//            "Before restoration: closest_reachable_base_square->region=%d\n",
-//            closest_reachable_base_square->region
-//        )
-//        ;
-//
-//        closest_reachable_base_square->region = saved_coastal_base_region;
-//
-//        debug
-//        (
-//            "After restoration: closest_reachable_base_square->region=%d\n",
-//            closest_reachable_base_square->region
-//        )
-//        ;
-//
-//    }
-//
-//    // return nearest base faction id
-//
-//    return nearest_base_id;
-//
-//}
-//
 /*
 Calculates map distance as in vanilla.
 */
@@ -1815,36 +1313,36 @@ This is initially for CV GROWTH effect.
 __cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly)
 {
 	// execute original code
-
+	
 	int value = tx_social_calc(seSelectionsPointer, seRatingsPointer, factionId, ignored4, seChoiceEffectOnly);
-
+	
 	// ignore native faction
-
+	
 	if (factionId == 0)
 		return value;
-
+	
 	// CV changes GROWTH rate if applicable
-
+	
 	if (conf.cloning_vats_se_growth != 0)
 	{
 		if (isFactionHasProject(factionId, FAC_CLONING_VATS))
 		{
 			// calculate GROWTH rating output offset and create pointer to it
-
+			
 			int *seGrowthRating = (int *)seRatingsPointer + (SE_GROWTH - SE_ECONOMY);
-
+			
 			// modify GROWTH rating
-
+			
 			*seGrowthRating += conf.cloning_vats_se_growth;
-
+			
 		}
-
+		
 	}
-
+	
 	// return original value
-
+	
 	return value;
-
+	
 }
 
 /*
@@ -1869,7 +1367,7 @@ __cdecl void displayBaseNutrientCostFactor(int destinationStringPointer, int sou
     // modify output
 
     char *destinationString = (char *)destinationStringPointer;
-	sprintf(destinationString + strlen("NUT"), " (%+1d) %+1d => %02d", faction->SE_growth_pending, *current_base_growth_rate, nutrientCostFactor);
+	sprintf(destinationString + strlen("NUT"), " (%+1d) %+1d => %02d", faction->SE_growth_pending, *BaseGrowthRate, nutrientCostFactor);
 
 }
 
@@ -1882,151 +1380,20 @@ __cdecl void correctGrowthTurnsIndicator(int destinationStringPointer, int sourc
 
     tx_strcat(destinationStringPointer, sourceStringPointer);
 
-    if (*current_base_growth_rate > conf.se_growth_rating_max)
+    if (*BaseGrowthRate > conf.se_growth_rating_max)
 	{
 		// update indicator for population boom
 
 		strcpy((char *)destinationStringPointer, "-- POP BOOM --");
 
 	}
-    else if (*current_base_growth_rate < conf.se_growth_rating_min)
+    else if (*BaseGrowthRate < conf.se_growth_rating_min)
 	{
 		// update indicator for stagnation
 
 		strcpy((char *)destinationStringPointer, "-- STAGNATION --");
 
 	}
-
-}
-
-/*
-Modifies base mineral computation.
-*/
-__cdecl int modifiedBaseMinerals(int facilityId, int baseId, int queueSlotId)
-{
-	BASE *base = getBase(baseId);
-
-	if (conf.recycling_tanks_mineral_multiplier)
-	{
-		// Recycling Tanks increases minerals by 50%.
-		// Pressure Dome now do not automatically implies Recycling Tanks so it does not deliver any RT benefits.
-
-		if (isBaseHasFacility(baseId, FAC_RECYCLING_TANKS) && base->mineral_intake >= 1)
-		{
-			// find mineral multiplier
-
-			int multiplier = divideIntegerRoundUp(2 * base->mineral_intake_2, base->mineral_intake);
-
-			// increment multiplier
-
-			multiplier++;
-
-			// calculate updated value and addition
-
-			int updatedMineralIntake2 = (base->mineral_intake * multiplier) / 2;
-			int additionalMinerals = updatedMineralIntake2 - base->mineral_intake_2;
-
-			// update values
-
-			base->mineral_intake_2 += additionalMinerals;
-			base->mineral_surplus += additionalMinerals;
-
-		}
-
-	}
-
-	// execute original function
-
-	int value = tx_has_fac(facilityId, baseId, queueSlotId);
-
-	// return original value
-
-	return value;
-
-}
-
-/*
-Computes modified inefficiency based on given energy intake.
-
-inefficiency = energy intake - efficiency; a complementary metric to inefficiency
-
-efficiency = SE EFFICIENCY effect + HQ effect; capped at energy intake
-
-SE EFFICIENCY effect = 1/8 * SE EFFICIENCY rating
-
-HQ effect = (1 - <distance to HQ> / <1.5 * 1/4 of map width>) * energy intake; non negative
-no effect if there is no HQ
-
-*/
-__cdecl int modifiedInefficiency(int energyIntake)
-{
-	// execute original code
-
-	int inefficiency = tx_black_market(energyIntake);
-
-	// modify formula
-
-	if (conf.alternative_inefficiency)
-	{
-		// accumulate efficiency from all effects
-
-		double efficiencyRate = 0.0;
-
-		// get current base
-
-		int id = *CurrentBaseID;
-		BASE *base = *CurrentBase;
-
-		// get current base faction
-
-		int factionId = base->faction_id;
-		Faction *faction = &(Factions[factionId]);
-
-		// get SE EFFICIENCY rating (with Children Creche effect)
-
-		int seEfficiencyRating = std::max(-4, std::min(+4, faction->SE_effic_pending + (isBaseHasFacility(id, FAC_CHILDREN_CRECHE) ? 1 : 0)));
-
-		// add SE EFFICIENCY effect
-
-		efficiencyRate += (double)(4 + seEfficiencyRating) / 8.0;
-
-		// get HQ base
-
-		int hqBaseId = find_hq(factionId);
-
-		if (hqBaseId != -1)
-		{
-			BASE *hqBase = &(Bases[hqBaseId]);
-
-			// calculate distance to HQ
-
-			int hqDistance = map_distance(base->x, base->y, hqBase->x, hqBase->y);
-
-			// calculate HQ effect radius
-
-			double hqEffectRadius = 1.5 * (double)*MapHalfX / 4.0;
-
-			// calculate HQ effect
-
-			if (hqDistance < hqEffectRadius)
-			{
-				efficiencyRate += 1.0 - (double)hqDistance / hqEffectRadius;
-
-			}
-
-		}
-
-		// calculate efficiency
-
-		int efficiency = std::max(0, std::min(energyIntake, (int)ceil(efficiencyRate * (double)energyIntake)));
-
-		// update inefficiency
-
-		inefficiency = energyIntake - efficiency;
-
-	}
-
-	return inefficiency;
 
 }
 
@@ -2907,7 +2274,7 @@ __cdecl void modifiedBaseGrowth(int a1, int a2, int a3)
 
 	// modify base GROWTH by habitation facilities
 
-	*current_base_growth_rate += getHabitationFacilitiesBaseGrowthModifier(baseId);
+	*BaseGrowthRate += getHabitationFacilitiesBaseGrowthModifier(baseId);
 
 }
 
@@ -3315,28 +2682,14 @@ double calculateWinningProbability(double p, int attackerHP, int defenderHP)
     }
     else
     {
-        if (conf.alternative_combat_mechanics)
-        {
-            attackerWinningProbability =
-                alternative_combat_mechanics_calculate_attacker_winning_probability
-                (
-                    p,
-                    attackerHP,
-                    defenderHP
-                )
-            ;
-        }
-        else
-        {
-            attackerWinningProbability =
-                standard_combat_mechanics_calculate_attacker_winning_probability
-                (
-                    p,
-                    attackerHP,
-                    defenderHP
-                )
-            ;
-        }
+		attackerWinningProbability =
+			standard_combat_mechanics_calculate_attacker_winning_probability
+			(
+				p,
+				attackerHP,
+				defenderHP
+			)
+		;
 
     }
 

@@ -59,7 +59,6 @@ char *g_strTEMP = (char *)0x009B86A0;
 char *SPACE = (char *)0x00682820;
 char *PARENTHESES_LEFT = (char *)0x00682E9C;
 char *PARENTHESES_RIGHT = (char *)0x00682E98;
-int *current_base_growth_rate = (int *)0x0090E918;
 int *g_PROBE_FACT_TARGET = (int *)0x00945B34;
 int *g_UNK_ATTACK_FLAGS = (int *)0x0093E904;
 byte *g_SOCIALWIN = (byte *)0x008A6270;
@@ -144,9 +143,6 @@ fp_1int tx_strlen = (fp_1int)0x006453E0;
 
 // concatenates strings
 fp_2int_void tx_strcat = (fp_2int_void)0x00645470;
-
-// base_find3
-fp_6int tx_base_find3 = (fp_6int)0x004E3D50;
 
 // calculate tile yield
 fp_5int tx_tile_yield = (fp_5int)0x004E7DC0;

@@ -52,73 +52,11 @@ __cdecl void wtp_mod_battle_compute(int attacker_vehicle_id, int defender_vehicl
 __cdecl void wtp_mod_battle_compute_compose_value_percentage(int output_string_pointer, int input_string_pointer);
 __cdecl int wtp_mod_proto_cost(int chassisTypeId, int weaponTypeId, int armorTypeId, int abilities, int reactorTypeId);
 
-__cdecl int combat_roll
-(
-    int attacker_strength,
-    int defender_strength,
-    int attacker_vehicle_offset,
-    int defender_vehicle_offset,
-    int attacker_initial_power,
-    int defender_initial_power,
-    int *attacker_won_last_round
-)
-;
-
-int standard_combat_mechanics_combat_roll
-(
-    int attacker_strength,
-    int defender_strength
-)
-;
-
-int alternative_combat_mechanics_combat_roll
-(
-    int attacker_strength,
-    int defender_strength,
-    int attacker_vehicle_offset,
-    int defender_vehicle_offset,
-    int attacker_initial_power,
-    int defender_initial_power,
-    int *attacker_won_last_round
-)
-;
-
-void alternative_combat_mechanics_probabilities
-(
-    int attacker_strength,
-    int defender_strength,
-    double *p, double *q, double *pA, double *qA, double *pD, double *qD
-)
-;
-
-double standard_combat_mechanics_calculate_attacker_winning_probability
-(
-    double p,
-    int attacker_hp,
-    int defender_hp
-)
-;
-
+__cdecl int combat_roll(int attacker_strength, int defender_strength, int attacker_vehicle_offset, int defender_vehicle_offset, int attacker_initial_power, int defender_initial_power, int *attacker_won_last_round);
+int standard_combat_mechanics_combat_roll(int attacker_strength, int defender_strength);
+double standard_combat_mechanics_calculate_attacker_winning_probability(double p, int attacker_hp, int defender_hp);
 double binomial_koefficient(int n, int k);
 
-double alternative_combat_mechanics_calculate_attacker_winning_probability
-(
-    double p,
-    int attacker_hp,
-    int defender_hp
-)
-;
-
-double alternative_combat_mechanics_calculate_attacker_winning_probability_following_rounds
-(
-    bool attacker_won,
-    double pA, double qA, double pD, double qD,
-    int attacker_hp,
-    int defender_hp
-)
-;
-
-//__cdecl int base_find3(int x, int y, int unknown_1, int body_id, int unknown_2, int unknown_3);
 int map_distance(int x1, int y1, int x2, int y2);
 bool isWithinBaseRadius(int x1, int y1, int x2, int y2);
 __cdecl int modified_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower);
@@ -132,8 +70,6 @@ __cdecl char *getAbilityCostText(int number, char *destination, int radix);
 __cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly);
 __cdecl void displayBaseNutrientCostFactor(int destinationStringPointer, int sourceStringPointer);
 __cdecl void correctGrowthTurnsIndicator(int destinationStringPointer, int sourceStringPointer);
-__cdecl int modifiedBaseMinerals(int facilityId, int baseId, int queueSlotId);
-__cdecl int modifiedInefficiency(int energyIntake);
 void createFreeVehicles(int factionId);
 int getLandUnitSpeedOnRoads(int unitId);
 int getLandUnitSpeedOnTubes(int unitId);
