@@ -1,3 +1,7 @@
+# Version 308
+
+* Disabled zoc_regular_army_sneaking_disabled setting temporarily until fixed.
+
 # Version 307
 
 * Replaced counter espionage code with Thinker version.
