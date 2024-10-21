@@ -445,10 +445,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ocean_depth_multiplier = atof(value);
     }
-    else if (MATCH("zoc_regular_army_sneaking_disabled"))
-    {
-        cf->zoc_regular_army_sneaking_disabled = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("pts_new_base_size_less_average"))
     {
         cf->pts_new_base_size_less_average = std::max(0, atoi(value));

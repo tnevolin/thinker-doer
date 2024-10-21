@@ -321,7 +321,6 @@ struct Config {
     int se_growth_rating_max = 5;
     bool recycling_tanks_mineral_multiplier = false;
     double ocean_depth_multiplier = 1.0;
-    bool zoc_regular_army_sneaking_disabled = false;
     int pts_new_base_size_less_average = 2;
     bool hsa_does_not_kill_probe = false;
     bool condenser_and_enricher_do_not_multiply_nutrients = false;

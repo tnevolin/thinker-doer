@@ -1532,52 +1532,6 @@ void patch_base_scren_population_superdrones()
 }
 
 /*
-Overrides check for frendly unit in target tile.
-*/
-void patch_zoc_regular_army_sneaking_disabled()
-{
-	// disable same dst vehicle owner check
-	
-	int zoc_regular_army_sneaking_disabled_same_bytes_length = 0x3;
-	byte zoc_regular_army_sneaking_disabled_same_bytes_old[] = { 0x8B, 0x4D, 0xE4 };
-	byte zoc_regular_army_sneaking_disabled_same_bytes_new[] = { 0xB1, 0x08, 0x90 };
-	write_bytes
-	(
-		0x00595156,
-		zoc_regular_army_sneaking_disabled_same_bytes_old,
-		zoc_regular_army_sneaking_disabled_same_bytes_new,
-		zoc_regular_army_sneaking_disabled_same_bytes_length
-	);
-	
-	// disable pact dst vehicle owner check
-	
-	int zoc_regular_army_sneaking_disabled_pact_bytes_length = 0x8;
-	byte zoc_regular_army_sneaking_disabled_pact_bytes_old[] = { 0xF6, 0x04, 0x8D, 0xF8, 0xC9, 0x96, 0x00, 0x01 };
-	byte zoc_regular_army_sneaking_disabled_pact_bytes_new[] = { 0x39, 0xE4, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-	write_bytes
-	(
-		0x0059517B,
-		zoc_regular_army_sneaking_disabled_pact_bytes_old,
-		zoc_regular_army_sneaking_disabled_pact_bytes_new,
-		zoc_regular_army_sneaking_disabled_pact_bytes_length
-	);
-	
-	// disable dst vehicle check
-	
-	int zoc_regular_army_sneaking_disabled_dst_veh_bytes_length = 0x5;
-	byte zoc_regular_army_sneaking_disabled_dst_veh_bytes_old[] = { 0x8B, 0x45, 0xE0, 0x85, 0xC0 };
-	byte zoc_regular_army_sneaking_disabled_dst_veh_bytes_new[] = { 0x31, 0xC0, 0x83, 0xF8, 0x08 };
-	write_bytes
-	(
-		0x00595385,
-		zoc_regular_army_sneaking_disabled_dst_veh_bytes_old,
-		zoc_regular_army_sneaking_disabled_dst_veh_bytes_new,
-		zoc_regular_army_sneaking_disabled_dst_veh_bytes_length
-	);
-	
-}
-
-/*
 Weapon help always shows cost even if it equals to firepower.
 */
 void patch_weapon_help_always_show_cost()
@@ -4247,11 +4201,6 @@ void patch_setup_wtp(Config* cf)
 	// patch population incorrect superdrones in base screen population
 	
 	patch_base_scren_population_superdrones();
-	
-	if (cf->zoc_regular_army_sneaking_disabled)
-	{
-		patch_zoc_regular_army_sneaking_disabled();
-	}
 	
 	patch_weapon_help_always_show_cost();
 	

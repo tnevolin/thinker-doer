@@ -4594,22 +4594,9 @@ bool isZoc(int factionId, MAP *fromTile, MAP *toTile)
 	
 	// friendly unit allows entry
 	
-	if (conf.zoc_regular_army_sneaking_disabled == 0)
-	{
-		int toTileOwner = veh_who(getX(toTile), getY(toTile));
-		if (toTileOwner != -1 && isFriendly(factionId, toTileOwner))
-			return false;
-		
-	}
-	else
-	{
-		for (int vehicleId : getTileVehicleIds(toTile))
-		{
-			if (isZocAffectedVehicle(vehicleId))
-				return false;
-		}
-		
-	}
+	int toTileOwner = veh_who(getX(toTile), getY(toTile));
+	if (toTileOwner != -1 && isFriendly(factionId, toTileOwner))
+		return false;
 	
 	// no ZOC on base
 	

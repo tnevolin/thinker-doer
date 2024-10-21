@@ -556,11 +556,6 @@ void populateTileInfos()
 		if (!isFriendly(aiFactionId, vehicle->faction_id))
 			continue;
 		
-		// except probe (if probe excluded)
-		
-		if (conf.zoc_regular_army_sneaking_disabled && (isProbeVehicle(vehicleId) || isArtifactVehicle(vehicleId) || isVehicleHasAbility(vehicleId, ABL_CLOAKED)))
-			continue;
-		
 		// disable zoc
 		
 		aiData.tileInfos[vehicleTileIndex].zoc = false;
