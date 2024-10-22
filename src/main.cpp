@@ -710,6 +710,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->conventional_power_psi_percentage = atoi(value);
     }
+    else if (MATCH("zoc_enabled"))
+    {
+        cf->zoc_enabled = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

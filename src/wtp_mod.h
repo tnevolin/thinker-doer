@@ -155,3 +155,10 @@ int getHurryMineralCost(int mineralCost);
 int __thiscall wtp_BaseWin_popup_start(Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7);
 int __cdecl wtp_BaseWin_ask_number(const char* label, int value, int a3);
 
+int __cdecl wtp_mod_quick_zoc(int a0, int a1, int a2, int a3, int a4, int a5, int a6);
+int __cdecl wtp_mod_zoc_any(int a0, int a1, int a2);
+int __cdecl wtp_mod_zoc_veh(int a0, int a1, int a2);
+int __cdecl wtp_mod_zoc_sea(int a0, int a1, int a2);
+int __cdecl wtp_mod_zoc_move(int a0, int a1, int a2);
+int __thiscall wtp_mod_zoc_path(Path *This, int a0, int a1, int a2);
+

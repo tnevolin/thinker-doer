@@ -4021,6 +4021,62 @@ void patch_base_check_support()
 	
 }
 
+void patch_zoc_disabled()
+{
+	write_call(0x005969B7, (int)wtp_mod_quick_zoc);
+	write_call(0x005969D2, (int)wtp_mod_quick_zoc);
+	write_call(0x00522A70, (int)wtp_mod_zoc_any);
+	write_call(0x005668E2, (int)wtp_mod_zoc_any);
+	write_call(0x00566DE0, (int)wtp_mod_zoc_any);
+	write_call(0x00579351, (int)wtp_mod_zoc_any);
+	write_call(0x0057B638, (int)wtp_mod_zoc_any);
+	write_call(0x005998FA, (int)wtp_mod_zoc_any);
+	write_call(0x0056702F, (int)wtp_mod_zoc_veh);
+	write_call(0x0056B8C5, (int)wtp_mod_zoc_veh);
+	write_call(0x0056BB82, (int)wtp_mod_zoc_veh);
+	write_call(0x005716B0, (int)wtp_mod_zoc_veh);
+	write_call(0x005758FA, (int)wtp_mod_zoc_veh);
+	write_call(0x00577393, (int)wtp_mod_zoc_veh);
+	write_call(0x00577963, (int)wtp_mod_zoc_veh);
+	write_call(0x00577B27, (int)wtp_mod_zoc_veh);
+	write_call(0x00577E4E, (int)wtp_mod_zoc_veh);
+	write_call(0x00577E80, (int)wtp_mod_zoc_veh);
+	write_call(0x00598F8E, (int)wtp_mod_zoc_veh);
+	write_call(0x0059A089, (int)wtp_mod_zoc_veh);
+	write_call(0x0059CDF9, (int)wtp_mod_zoc_veh);
+	write_call(0x004EC828, (int)wtp_mod_zoc_sea);
+	write_call(0x00560C91, (int)wtp_mod_zoc_sea);
+	write_call(0x00561A7F, (int)wtp_mod_zoc_sea);
+	write_call(0x00561D21, (int)wtp_mod_zoc_sea);
+	write_call(0x0056C5A3, (int)wtp_mod_zoc_sea);
+	write_call(0x00571820, (int)wtp_mod_zoc_sea);
+	write_call(0x005724F2, (int)wtp_mod_zoc_sea);
+	write_call(0x00577281, (int)wtp_mod_zoc_sea);
+	write_call(0x0057745B, (int)wtp_mod_zoc_sea);
+	write_call(0x00577681, (int)wtp_mod_zoc_sea);
+	write_call(0x00577FA2, (int)wtp_mod_zoc_sea);
+	write_call(0x005C8D8C, (int)wtp_mod_zoc_sea);
+	write_call(0x004CC5E3, (int)wtp_mod_zoc_move);
+	write_call(0x004ED6EE, (int)wtp_mod_zoc_move);
+	write_call(0x00509478, (int)wtp_mod_zoc_move);
+	write_call(0x0056B8B1, (int)wtp_mod_zoc_move);
+	write_call(0x0056BBA1, (int)wtp_mod_zoc_move);
+	write_call(0x0056C1FF, (int)wtp_mod_zoc_move);
+	write_call(0x005723FE, (int)wtp_mod_zoc_move);
+	write_call(0x005725EE, (int)wtp_mod_zoc_move);
+	write_call(0x00573D7D, (int)wtp_mod_zoc_move);
+	write_call(0x00577614, (int)wtp_mod_zoc_move);
+	write_call(0x00595395, (int)wtp_mod_zoc_move);
+	write_call(0x005953AA, (int)wtp_mod_zoc_move);
+	write_call(0x0059BEB2, (int)wtp_mod_zoc_move);
+	write_call(0x0059C0B7, (int)wtp_mod_zoc_move);
+	write_call(0x0059A937, (int)wtp_mod_zoc_path);
+	write_call(0x0059AF1A, (int)wtp_mod_zoc_path);
+	write_call(0x0059B45F, (int)wtp_mod_zoc_path);
+	write_call(0x0059B7B1, (int)wtp_mod_zoc_path);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4428,6 +4484,11 @@ void patch_setup_wtp(Config* cf)
 	patch_scary_former();
 	
 	patch_base_check_support();
+	
+	if (!conf.zoc_enabled)
+	{
+		patch_zoc_disabled();
+	}
 	
 }
 

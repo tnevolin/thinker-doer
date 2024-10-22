@@ -1,3 +1,8 @@
+# Version 309
+
+* Removed zoc_regular_army_sneaking_disabled setting.
+* Added zoc_enabled setting. On by default. Experimental.
+
 # Version 308
 
 * Disabled zoc_regular_army_sneaking_disabled setting temporarily until fixed.
