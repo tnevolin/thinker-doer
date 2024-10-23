@@ -982,18 +982,15 @@ effects are eliminated by control of $LINK<The Cloning Vats=110024>).
 #HELPEFFECT2
 {Support} affects the $LINK<Minerals=42> support costs of units:
 ^Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
-^Out of the others first [2] units are also free.
 ^
-^Below table shows average minerals fractional support per unit. Actual support number is the sum of all fractional supports for all units rounded down.
-^
-^-4 = Unit costs 8/4 to support; no free $LINK<minerals=42> for new base
-^-3 = Unit costs 7/4 to support; no free minerals for new base
-^-2 = Unit costs 6/4 to support; no free minerals for new base
-^-1 = Unit costs 5/4 to support
-^ 0 = Unit costs 4/4 to support
-^ +1 = Unit costs 3/4 to support
-^ +2 = Unit costs 2/4 to support!
-^ +3 = Unit costs 1/4 to support!!
+^-4 = Each unit costs 1 to support
+^-3 = Support 1 unit free per base
+^-2 = Support 2 units free per base
+^-1 = Support 3 units free per base
+^ 0 = Support 4 units free per base
+^ 1 = Support 5 units free per base
+^ 2 = Support 6 units free per base!
+^ 3 = Support 8 units OR up to base size for free!!
 
 #;Morale
 #HELPEFFECT4

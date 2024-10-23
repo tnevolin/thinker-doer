@@ -118,16 +118,6 @@ void __cdecl mod_base_support() {
     // [WTP] alternative support
     // change free unit limit
     
-//    const int SupportCosts[8][2]  = {
-//        {2, 0}, // -4, Each unit costs 2 to support; no free minerals for new base.
-//        {1, 0}, // -3, Each unit costs 1 to support; no free minerals for new base.
-//        {1, 1}, // -2, Support 1 unit free per base; no free minerals for new base.
-//        {1, 1}, // -1, Support 1 unit free per base
-//        {1, 2}, //  0, Support 2 units free per base
-//        {1, 3}, //  1, Support 3 units free per base
-//        {1, 4}, //  2, Support 4 units free per base!
-//        {1, max((int)base->pop_size, 4)}, // 3, Support 4 units OR up to base size for free!!
-//    };
     int SupportCosts[8][2]  = {
         {2, 0}, // -4, Each unit costs 2 to support; no free minerals for new base.
         {1, 0}, // -3, Each unit costs 1 to support; no free minerals for new base.
@@ -138,11 +128,25 @@ void __cdecl mod_base_support() {
         {1, 4}, //  2, Support 4 units free per base!
         {1, max((int)base->pop_size, 4)}, // 3, Support 4 units OR up to base size for free!!
     };
+    int const AlternativeSupportCosts[8][2]  = {
+        {1, 0}, // -4, Each unit costs 1 to support
+        {1, 1}, // -3, Support 1 unit free per base
+        {1, 2}, // -2, Support 2 unit free per base
+        {1, 3}, // -1, Support 3 unit free per base
+        {1, 4}, //  0, Support 4 units free per base
+        {1, 5}, //  1, Support 5 units free per base
+        {1, 6}, //  2, Support 6 units free per base!
+        {1, max((int)base->pop_size, 8)}, // 3, Support 8 units OR up to base size for free!!
+    };
+    
     if (conf.alternative_support)
 	{
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < 8; i ++)
 		{
-			SupportCosts[i][1] = conf.alternative_support_free_units;
+			for (int j = 0; j < 2; j++)
+			{
+				SupportCosts[i][j] = AlternativeSupportCosts[i][j];
+			}
 		}
 	}
 	
@@ -233,12 +237,6 @@ void __cdecl mod_base_support() {
             }
         }
     }
-    
-    // [WTP] alternative support
-    // modify support cost
-    
-	(*BaseForcesMaintCost) = (8 - support_val) * (*BaseForcesMaintCount) / 4;
-	
 }
 
 static int32_t base_radius(int base_id, std::vector<TileValue>& tiles) {

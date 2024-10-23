@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v310"
+    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v311"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -360,7 +360,6 @@ struct Config {
 	double disable_guaranteed_facilities_destruction;
 	double supply_convoy_and_info_warfare_require_support;
 	bool alternative_support = false;
-	int alternative_support_free_units;
 	int instant_completion_fixed_minerals;
 	double native_unit_cost_time_multiplier;
 	int native_unit_cost_initial_mind_worm;

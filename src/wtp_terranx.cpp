@@ -173,9 +173,6 @@ fp_4void tx_go_to = (fp_4void)0x00560AD0;
 // copies base name to string buffer
 fp_int_char_int tx_say_base = (fp_int_char_int)0x004E3A00;
 
-// initializes base
-fp_3int tx_base_init = (fp_3int)0x004E4B80;
-
 // probe action
 fp_4int tx_probe = (fp_4int)0x0059F120;
 

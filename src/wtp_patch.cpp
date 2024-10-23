@@ -1277,9 +1277,9 @@ This is for The Planetary Transit System patch.
 */
 void patch_base_init()
 {
-    write_call(0x004C9870, (int)baseInit);
-    write_call(0x005AF926, (int)baseInit);
-    write_call(0x005B2BB8, (int)baseInit);
+    write_call(0x004C9870, (int)wtp_mod_base_init);
+    write_call(0x005AF926, (int)wtp_mod_base_init);
+    write_call(0x005B2BB8, (int)wtp_mod_base_init);
 
 }
 
@@ -2883,107 +2883,6 @@ void patch_supply_convoy_and_info_warfare_require_support()
 
 }
 
-void patch_alternative_support()
-{
-	// this patch moves to the base_support Thinker function
-	
-//	// support free units (in base_support)
-//	
-//	int support_free_units_bytes_length = 0x4;
-//	
-//	/*
-//	0:  3b 54 85 c4             cmp    edx,DWORD PTR [ebp+eax*4-0x3c]
-//	*/
-//	byte support_free_units_bytes_old[] = { 0x3B, 0x54, 0x85, 0xC4 };
-//	
-//	/*
-//	0:  83 fa 02                cmp    edx,<free units>
-//	...
-//	*/
-//	byte support_free_units_bytes_new[] = { 0x83, 0xFA, (byte)conf.alternative_support_free_units, 0x90 };
-//	
-//	write_bytes
-//	(
-//		0x004E98D3,
-//		support_free_units_bytes_old,
-//		support_free_units_bytes_new,
-//		support_free_units_bytes_length
-//	);
-//	
-//	// support minerals (in base_support)
-//	
-//	int support_minerals_bytes_length = 0x2b;
-//	
-//	/*
-//	0:  8b 56 de                mov    edx,DWORD PTR [esi-0x22]
-//	3:  8b 0d 1c e9 90 00       mov    ecx,DWORD PTR ds:0x90e91c
-//	9:  83 fb fc                cmp    ebx,0xfffffffc
-//	c:  8b 1d 08 ea 90 00       mov    ebx,DWORD PTR ds:0x90ea08
-//	12: 0f 9e c0                setle  al
-//	15: 40                      inc    eax
-//	16: 43                      inc    ebx
-//	17: 83 ca 10                or     edx,0x10
-//	1a: 03 c8                   add    ecx,eax
-//	1c: 89 1d 08 ea 90 00       mov    DWORD PTR ds:0x90ea08,ebx
-//	22: 89 56 de                mov    DWORD PTR [esi-0x22],edx
-//	25: 89 0d 1c e9 90 00       mov    DWORD PTR ds:0x90e91c,ecx
-//	*/
-//	byte support_minerals_bytes_old[] = { 0x8B, 0x56, 0xDE, 0x8B, 0x0D, 0x1C, 0xE9, 0x90, 0x00, 0x83, 0xFB, 0xFC, 0x8B, 0x1D, 0x08, 0xEA, 0x90, 0x00, 0x0F, 0x9E, 0xC0, 0x40, 0x43, 0x83, 0xCA, 0x10, 0x03, 0xC8, 0x89, 0x1D, 0x08, 0xEA, 0x90, 0x00, 0x89, 0x56, 0xDE, 0x89, 0x0D, 0x1C, 0xE9, 0x90, 0x00 };
-//	
-//	/*
-//	0:  83 4e de 10             or     DWORD PTR [esi-0x22],0x10
-//	4:  ff 05 08 ea 90 00       inc    DWORD PTR ds:0x90ea08
-//	a:  b8 04 00 00 00          mov    eax,0x4
-//	f:  29 d8                   sub    eax,ebx
-//	11: f7 25 08 ea 90 00       mul    DWORD PTR ds:0x90ea08
-//	17: c1 f8 02                sar    eax,0x2
-//	1a: a3 1c e9 90 00          mov    ds:0x90e91c,eax
-//	...
-//	*/
-//	byte support_minerals_bytes_new[] = { 0x83, 0x4E, 0xDE, 0x10, 0xFF, 0x05, 0x08, 0xEA, 0x90, 0x00, 0xB8, 0x04, 0x00, 0x00, 0x00, 0x29, 0xD8, 0xF7, 0x25, 0x08, 0xEA, 0x90, 0x00, 0xC1, 0xF8, 0x02, 0xA3, 0x1C, 0xE9, 0x90, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-//	
-//	write_bytes
-//	(
-//		0x004E98EE,
-//		support_minerals_bytes_old,
-//		support_minerals_bytes_new,
-//		support_minerals_bytes_length
-//	);
-//	
-	// intercept method in BaseWin::draw_support to display unit support
-	
-    write_call(0x0040C9D3, (int)interceptBaseWinDrawSupport);
-	
-	// display unit support
-	
-	int display_unit_support_bytes_length = 0xc;
-	
-	/*
-	0:  8b 55 e8                mov    edx,DWORD PTR [ebp-0x18]
-	3:  33 c0                   xor    eax,eax
-	5:  83 fa fc                cmp    edx,0xfffffffc
-	8:  0f 9e c0                setle  al
-	b:  40                      inc    eax
-	*/
-	byte display_unit_support_bytes_old[] = { 0x8B, 0x55, 0xE8, 0x33, 0xC0, 0x83, 0xFA, 0xFC, 0x0F, 0x9E, 0xC0, 0x40 };
-	
-	/*
-	0:  8b 4d f0                mov    ecx,DWORD PTR [ebp-0x10]
-	3:  0f bf 41 08             movsx  eax,WORD PTR [ecx+0x8]
-	...
-	*/
-	byte display_unit_support_bytes_new[] = { 0x8B, 0x4D, 0xF0, 0x0F, 0xBF, 0x41, 0x08, 0x90, 0x90, 0x90, 0x90, 0x90 };
-	
-	write_bytes
-	(
-		0x0040CDF8,
-		display_unit_support_bytes_old,
-		display_unit_support_bytes_new,
-		display_unit_support_bytes_length
-	);
-	
-}
-
 void patch_exact_odds()
 {
 	int exact_odds_1_bytes_length = 0x3;
@@ -4387,11 +4286,6 @@ void patch_setup_wtp(Config* cf)
 	if (cf->supply_convoy_and_info_warfare_require_support)
 	{
 		patch_supply_convoy_and_info_warfare_require_support();
-	}
-	
-	if (cf->alternative_support)
-	{
-		patch_alternative_support();
 	}
 	
 	patch_exact_odds();

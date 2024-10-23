@@ -598,10 +598,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->alternative_support = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("alternative_support_free_units"))
-    {
-        cf->alternative_support_free_units = std::min(255, std::max(0, atoi(value)));
-    }
     else if (MATCH("instant_completion_fixed_minerals"))
     {
         cf->instant_completion_fixed_minerals = std::min(50, std::max(0, atoi(value)));

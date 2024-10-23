@@ -65,7 +65,7 @@ __cdecl int wtp_mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y
 int wtp_tech_level(int id);
 int wtp_tech_cost(int fac, int tech);
 __cdecl int sayBase(char *buffer, int baseId);
-__cdecl int baseInit(int factionId, int x, int y);
+__cdecl int wtp_mod_base_init(int factionId, int x, int y);
 __cdecl char *getAbilityCostText(int number, char *destination, int radix);
 __cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly);
 __cdecl void displayBaseNutrientCostFactor(int destinationStringPointer, int sourceStringPointer);

@@ -1,3 +1,7 @@
+# Version 311
+
+* SUPPORT changed to use vanilla mechanics with variable free units but scale is adjusted to avoid 2 support at -4 level.
+
 # Version 310
 
 * Added aaa_range setting. AAA ability can be extended to same faction units within given range. Off by default.

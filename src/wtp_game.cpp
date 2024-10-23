@@ -7918,20 +7918,34 @@ int getBaseNextUnitSupport(int baseId)
 	
 	if (conf.alternative_support)
 	{
-		if (supportRequiredVehicleCount < conf.alternative_support_free_units)
+		switch (faction->SE_support_pending)
 		{
+		case -4:
+			nextUnitSupport = 1;
+			break;
+		case -3:
+			nextUnitSupport = (supportRequiredVehicleCount + 1) <= 1 ? 0 : 1;
+			break;
+		case -2:
+			nextUnitSupport = (supportRequiredVehicleCount + 1) <= 2 ? 0 : 1;
+			break;
+		case -1:
+			nextUnitSupport = (supportRequiredVehicleCount + 1) <= 3 ? 0 : 1;
+			break;
+		case +0:
+			nextUnitSupport = (supportRequiredVehicleCount + 1) <= 4 ? 0 : 1;
+			break;
+		case +1:
+			nextUnitSupport = (supportRequiredVehicleCount + 1) <= 5 ? 0 : 1;
+			break;
+		case +2:
+			nextUnitSupport = (supportRequiredVehicleCount + 1) <= 6 ? 0 : 1;
+			break;
+		case +3:
+			nextUnitSupport = ((supportRequiredVehicleCount + 1) <= std::max(8, (int)base->pop_size)) ? 0 : 1;
+			break;
+		default:
 			nextUnitSupport = 0;
-		}
-		else
-		{
-			int supportedVehicleCount = supportRequiredVehicleCount - conf.alternative_support_free_units;
-			
-			int supportNumerator = 4 - faction->SE_support_pending;
-			int oldSupport = supportedVehicleCount * supportNumerator / 4;
-			int newSupport = (supportedVehicleCount + 1) * supportNumerator / 4;
-			
-			nextUnitSupport = newSupport - oldSupport;
-			
 		}
 		
 	}

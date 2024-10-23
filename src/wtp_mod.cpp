@@ -1216,70 +1216,75 @@ __cdecl int sayBase(char *buffer, int baseId)
 /*
 Modifies base init computation.
 */
-__cdecl int baseInit(int factionId, int x, int y)
+__cdecl int wtp_mod_base_init(int factionId, int x, int y)
 {
 	// execute original code
-
-	int baseId = tx_base_init(factionId, x, y);
-
+	
+	int baseId = base_init(factionId, x, y);
+	
 	// return immediatelly if base wasn't created
-
+	
 	if (baseId < 0)
 		return baseId;
-
-	// get base
-
+	
 	BASE *base = getBase(baseId);
-
+	
 	// set base founding turn
-
+	
 	base->pad_1 = *CurrentTurn;
-
+	
+	// alternative support - disable no free minerals for new base penalty
+	
+	if (conf.alternative_support)
+	{
+		base->minerals_accumulated = std::max(Rules->retool_exemption, base->minerals_accumulated);
+	}
+	
 	// The Planetary Transit System fix
 	// new base size is limited by average faction base size
-
+	
 	if (isFactionHasProject(factionId, FAC_PLANETARY_TRANSIT_SYSTEM) && base->pop_size == 3)
 	{
 		// calculate average faction base size
-
+		
 		int totalFactionBaseCount = 0;
 		int totalFactionPopulation = 0;
-
+		
 		for (int otherBaseId = 0; otherBaseId < *BaseCount; otherBaseId++)
 		{
 			BASE *otherBase = &(Bases[otherBaseId]);
-
+			
 			// skip this base
-
+			
 			if (otherBaseId == baseId)
 				continue;
-
+			
 			// only own bases
-
+			
 			if (otherBase->faction_id != base->faction_id)
 				continue;
-
+			
 			totalFactionBaseCount++;
 			totalFactionPopulation += otherBase->pop_size;
-
+			
 		}
-
+		
 		double averageFactionBaseSize = (double)totalFactionPopulation / (double)totalFactionBaseCount;
-
+		
 		// calculate new base size
-
+		
 		int newBaseSize = std::max(1, std::min(3, (int)floor(averageFactionBaseSize) - conf.pts_new_base_size_less_average));
-
+		
 		// set base size
-
+		
 		base->pop_size = newBaseSize;
-
+		
 	}
-
+	
 	// return base id
-
+	
 	return baseId;
-
+	
 }
 
 /*
