@@ -92,11 +92,9 @@ success probability = (effectiveness - RISK) / (effectiveness + 1)
 
 | morale | RISK0 | RISK1 | RISK2 | RISK3 |
 | ---- | ----: | ----: | ----: | ----: |
-| Disciplined | 100% | 50% | 0% | 0% |
-| Hardened<br>Veteran    | 100% | 50% | 0% | 0% |
-| Veteran     | 100% | 67% | 33% | 0% |
-| Commando    | 100% | 67% | 33% | 0% |
-| Elite       | 100% | 75% | 50% | 25% |
+| Disciplined<br>Hardened | 100% | 50% |  0% |  0% |
+| Veteran<br>Commando     | 100% | 67% | 33% |  0% |
+| Elite                   | 100% | 75% | 50% | 25% |
 
 #### escape
 
