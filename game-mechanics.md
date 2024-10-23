@@ -36,6 +36,8 @@ Probe success probability depends on following factors:
 
 Attempting to frame other faction increases risk by 1. If such attempt fails, diplomatic consequences may follow with framed faction.
 
+RISK 3 is only possible when framing other faction for RISK 2 action.
+
 ## Probe morale
 
 Probe current morale is combined from vehicle base morale plus variable bonuses.
@@ -81,4 +83,29 @@ success probability = (effectiveness - RISK) / (effectiveness + 1)
 | + |  | probing is impossible |
 |  | + | chance of failure is halved |
 | + | + | chance of success is halved |
+
+## Example probability computation
+
+### Normal probe
+
+#### action
+
+| morale | RISK0 | RISK1 | RISK2 | RISK3 |
+| ---- | ----: | ----: | ----: | ----: |
+| Disciplined | 100% | 50% | 0% | 0% |
+| Hardened    | 100% | 50% | 0% | 0% |
+| Veteran     | 100% | 67% | 33% | 0% |
+| Commando    | 100% | 67% | 33% | 0% |
+| Elite       | 100% | 75% | 50% | 25% |
+
+#### escape
+
+| morale | RISK0 | RISK1 | RISK2 | RISK3 |
+| ---- | ----: | ----: | ----: | ----: |
+| Disciplined | 67% | 33% | 0% | 0% |
+| Hardened    | 75% | 50% | 25% | 0% |
+| Veteran     | 80% | 60% | 40% | 20% |
+| Commando    | 83% | 67% | 50% | 33% |
+| Elite       | 86% | 71% | 57% | 43% |
+
 
