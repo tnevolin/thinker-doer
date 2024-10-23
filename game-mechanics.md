@@ -6,8 +6,8 @@
    * If unsuccessful, action is not performed and probe is eliminated.
    * If successful, action is performed and next step follows.
 2. Probe attempts to escape after successfully completed mission.
-   a. If unsuccessful, probe is eliminated.
-   b. If successful, probe is returned to the nearest friendly base and promoted.
+   * If unsuccessful, probe is eliminated.
+   * If successful, probe is returned to the nearest friendly base and promoted.
 
 ## Success factors
 
