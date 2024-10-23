@@ -426,9 +426,9 @@ Units can [teleport] between bases containing Psi Gates.
 #HELPFAC34
 These training centers for spies emphasize data retrieval and cryptology, though assassination techniques are rumored to be
 taught.
-
-$LINK<Probe=30006> units built here receive two $LINK<morale=11> upgrades. Base also receives a +2 $LINK<Probe=130008>
-rating.
+^
+^$LINK<Probe=30006> units built here receive two $LINK<morale=11> upgrades.
+^Base also receives a +2 $LINK<Probe=130008> rating.
 
 #; Brood Pit
 #HELPFAC35

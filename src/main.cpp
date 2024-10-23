@@ -714,6 +714,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->zoc_enabled = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("aaa_range"))
+    {
+        cf->aaa_range = atoi(value);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

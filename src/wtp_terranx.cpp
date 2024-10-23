@@ -50,6 +50,7 @@ const int LABEL_OFFSET_ROAD_ATTACK = 0x25E;
 const int LABEL_OFFSET_BASE = 0x14C;
 const int LABEL_OFFSET_PERIMETER = 0x162;
 const int LABEL_OFFSET_TACHYON = 0x165;
+const int LABEL_OFFSET_TRACKING = 0x151;
 const char *LABEL_NAVAL_YARD = "Naval Yard";
 const char *LABEL_AEROSPACE_COMPLEX = "AeroComplex";
 const char *LABEL_WEAPON = "Weapon";

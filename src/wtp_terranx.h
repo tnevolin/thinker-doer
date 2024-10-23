@@ -70,6 +70,7 @@ extern const int LABEL_OFFSET_ROAD_ATTACK;
 extern const int LABEL_OFFSET_BASE;
 extern const int LABEL_OFFSET_PERIMETER;
 extern const int LABEL_OFFSET_TACHYON;
+extern const int LABEL_OFFSET_TRACKING;
 extern const char *LABEL_NAVAL_YARD;
 extern const char *LABEL_AEROSPACE_COMPLEX;
 extern const char *LABEL_WEAPON;

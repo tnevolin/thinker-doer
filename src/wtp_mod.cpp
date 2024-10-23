@@ -437,6 +437,35 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		addDefenderBonus(defenderStrengthPointer, conf.conventional_power_psi_percentage * defenderUnit->defense_value(), LABEL_ARMOR);
 	}
 	
+    // ----------------------------------------------------------------------------------------------------
+    // AAA range effect
+    // ----------------------------------------------------------------------------------------------------
+	
+    if (attackerUnit->triad() == TRIAD_AIR && defenderUnit->triad() != TRIAD_AIR && !isUnitHasAbility(defenderVehicle->unit_id, ABL_AAA) && conf.aaa_range >= 0)
+	{
+		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+		{
+			VEH *vehicle = &Vehs[vehicleId];
+			
+			if (vehicle->faction_id != defenderVehicle->faction_id)
+				continue;
+			
+			if (!isVehicleHasAbility(vehicleId, ABL_AAA))
+				continue;
+			
+			int range = map_range(defenderVehicle->x, defenderVehicle->y, vehicle->x, vehicle->y);
+			
+			if (range > conf.aaa_range)
+				continue;
+			
+			addDefenderBonus(defenderStrengthPointer, Rules->combat_aaa_bonus_vs_air, *(*tx_labels + LABEL_OFFSET_TRACKING));
+			
+			break;
+			
+		}
+		
+	}
+	
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
 //

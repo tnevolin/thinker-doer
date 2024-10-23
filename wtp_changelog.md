@@ -1,3 +1,7 @@
+# Version 310
+
+* Added aaa_range setting. AAA ability can be extended to same faction units within given range. Off by default.
+
 # Version 309
 
 * Removed zoc_regular_army_sneaking_disabled setting.

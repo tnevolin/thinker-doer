@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v309"
+    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v310"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -389,6 +389,7 @@ struct Config {
 	bool disable_tech_steal_other = false;
 	int conventional_power_psi_percentage = 0;
 	bool zoc_enabled = 1;
+	int aaa_range = -1;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
