@@ -20,7 +20,19 @@ Probe success probability depends on following factors:
 
 ## Risks
 
-// TODO list of risks
+| action | RISK |
+| ---- | ----: |
+| Infiltrate Datalinks | 0 |
+| Procure Research Data - first time from a base | 0 |
+| Procure Research Data - after first time from a base | 1 |
+| Activate Sabotage Virus - random | 0 |
+| Activate Sabotage Virus - specific | 1 |
+| Activate Sabotage Virus - defensive facility | 2 |
+| Activate Sabotage Virus - any facility in HQ | 2 |
+| Drain Energy Reserves | 0 |
+| Insite Drone Riots | 0 |
+| Assassinate Prominent Researchers | 1 |
+| Introduce Genetic Plague | 0 |
 
 Attempting to frame other faction increases risk by 1. If such attempt fails, diplomatic consequences may follow with framed faction.
 
