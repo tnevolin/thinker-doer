@@ -1,3 +1,7 @@
+# Version 313
+
+* Player can scroll through other faction base screens with mouse and keyboard.
+
 # Version 312
 
 * Probe team tech stealing is now RISK 1 making it not 100% success.

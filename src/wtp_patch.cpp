@@ -4003,6 +4003,66 @@ void patch_zoc_disabled()
 	
 }
 
+void patch_scroll_other_faction_bases()
+{
+	// in BaseWin::prev
+	// disable check for base PC faction
+	
+    int scroll_other_faction_bases_prev_length = 0x2;
+	
+/*
+0:  3b c8                   cmp    ecx,eax
+*/
+    byte scroll_other_faction_bases_prev_old[] =
+		{ 0x3B, 0xC8 }
+    ;
+	
+/*
+0:  39 c9                   cmp    ecx,ecx
+*/
+    byte scroll_other_faction_bases_prev_new[] =
+        { 0x39, 0xC9 }
+    ;
+	
+    write_bytes
+    (
+        0x0041A03B,
+        scroll_other_faction_bases_prev_old,
+        scroll_other_faction_bases_prev_new,
+        scroll_other_faction_bases_prev_length
+    )
+    ;
+	
+	// in BaseWin::next
+	// disable check for base PC faction
+	
+    int scroll_other_faction_bases_next_length = 0x2;
+	
+/*
+0:  3b c8                   cmp    ecx,eax
+*/
+    byte scroll_other_faction_bases_next_old[] =
+		{ 0x3B, 0xC8 }
+    ;
+	
+/*
+0:  39 c9                   cmp    ecx,ecx
+*/
+    byte scroll_other_faction_bases_next_new[] =
+        { 0x39, 0xC9 }
+    ;
+	
+    write_bytes
+    (
+        0x0041A18B,
+        scroll_other_faction_bases_next_old,
+        scroll_other_faction_bases_next_new,
+        scroll_other_faction_bases_next_length
+    )
+    ;
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -4414,6 +4474,11 @@ void patch_setup_wtp(Config* cf)
 	if (!conf.zoc_enabled)
 	{
 		patch_zoc_disabled();
+	}
+	
+	if (conf.scroll_other_faction_bases)
+	{
+		patch_scroll_other_faction_bases();
 	}
 	
 }
