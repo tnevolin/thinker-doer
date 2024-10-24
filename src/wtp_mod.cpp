@@ -1421,7 +1421,7 @@ __cdecl void correctGrowthTurnsIndicator(int destinationStringPointer, int sourc
 	{
 		// update indicator for stagnation
 
-		strcpy((char *)destinationStringPointer, "-- STAGNATION --");
+		strcpy((char *)destinationStringPointer, "-- STAGNANT --");
 
 	}
 

@@ -2517,6 +2517,33 @@ void patch_design_cost_in_rows()
 
 }
 
+void patch_carry_over_nutrients()
+{
+	// in BaseWin::draw_nutrients
+	// disable increment in grow turn computation
+	
+	int carry_over_nutrients_grow_turns_bytes_length = 0x1;
+	
+	/*
+	0:  46                      inc    esi
+	*/
+	byte carry_over_nutrients_grow_turns_bytes_old[] = { 0x46 };
+	
+	/*
+	...
+	*/
+	byte carry_over_nutrients_grow_turns_bytes_new[] = { 0x90 };
+	
+	write_bytes
+	(
+		0x0041176B,
+		carry_over_nutrients_grow_turns_bytes_old,
+		carry_over_nutrients_grow_turns_bytes_new,
+		carry_over_nutrients_grow_turns_bytes_length
+	);
+	
+}
+
 void patch_carry_over_minerals()
 {
 	// disable cutting carry over minerals
@@ -4256,6 +4283,11 @@ void patch_setup_wtp(Config* cf)
 	if (cf->design_cost_in_rows)
 	{
 		patch_design_cost_in_rows();
+	}
+	
+	if (cf->carry_over_nutrients)
+	{
+		patch_carry_over_nutrients();
 	}
 	
 	if (cf->carry_over_minerals)
