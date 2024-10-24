@@ -1,3 +1,8 @@
+# Version 312
+
+* Probe team tech stealing is now RISK 1 making it not 100% success.
+* Base grows on same turn and carries over excess nutrients.
+
 # Version 311
 
 * SUPPORT changed to use vanilla mechanics with variable free units but scale is adjusted to avoid 2 support at -4 level.

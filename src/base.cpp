@@ -1128,6 +1128,17 @@ int __cdecl mod_base_growth() {
             } // Display population limit notifications later
         }
         
+        // [WTP]
+        // accumulate nutrients before base growth
+        
+        int nutrients_carryover = 0;
+        if (conf.carry_over_nutrients)
+		{
+			int nutrients_accumulated_total = base->nutrients_accumulated + base->nutrient_surplus;
+			base->nutrients_accumulated = std::min(nutrient_cost, nutrients_accumulated_total);
+			nutrients_carryover = std::min(nutrient_cost, nutrients_accumulated_total - base->nutrients_accumulated);
+		}
+        
         if (base->nutrients_accumulated >= nutrient_cost) {
 			
 			// [WTP]
@@ -1141,7 +1152,19 @@ int __cdecl mod_base_growth() {
                 if (base->pop_size < MaxBasePopSize) {
                     base->pop_size++;
                 }
-                base->nutrients_accumulated = 0;
+                
+                // [WTP]
+                // carryover nutrients
+                
+                if (conf.carry_over_nutrients)
+				{
+					base->nutrients_accumulated = nutrients_carryover;
+				}
+				else
+				{
+					base->nutrients_accumulated = 0;
+				}
+                
                 base_compute(1);
                 draw_tile(base->x, base->y, 2);
             } else if (base->pop_size >= pop_limit) {
@@ -1160,7 +1183,15 @@ int __cdecl mod_base_growth() {
                 base->nutrients_accumulated = nutrient_cost / 2;
             }
         }
-        base->nutrients_accumulated += base->nutrient_surplus;
+        
+        // [WTP]
+        // do not accumulate nutrients after base growth
+        
+        if (!conf.carry_over_nutrients)
+		{
+			base->nutrients_accumulated += base->nutrient_surplus;
+		}
+        
         if (base->nutrient_surplus >= 0
         || base->nutrients_accumulated < base->nutrient_surplus
         || base->nutrients_accumulated + 4 * base->nutrient_surplus + base->nutrient_surplus >= 0

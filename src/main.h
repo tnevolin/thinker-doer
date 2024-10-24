@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v311"
+    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v312"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -328,7 +328,8 @@ struct Config {
     bool flat_extra_prototype_cost = false;
     bool fix_mineral_contribution = true; // internal setting
     bool modified_probe_action_risks = false;
-    int probe_action_risk_genetic_plague = 0;
+    int probe_action_risk_procure_research_data = 0;
+    int probe_action_risk_introduce_genetic_plague = 0;
     bool combat_bonus_sensor_ocean = false;
     bool combat_bonus_sensor_offense = false;
     bool break_treaty_before_fight = false;
@@ -345,6 +346,7 @@ struct Config {
     double orbital_yield_limit = 1.0;
     bool silent_vendetta_warning = false;
     bool design_cost_in_rows = false;
+    bool carry_over_nutrients = false;
     bool carry_over_minerals = false;
     bool subversion_allow_stacked_units = false;
     bool mind_control_destroys_unsubverted = false;

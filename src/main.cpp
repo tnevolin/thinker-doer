@@ -473,9 +473,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->modified_probe_action_risks = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("probe_action_risk_genetic_plague"))
+    else if (MATCH("probe_action_risk_procure_research_data"))
     {
-        cf->probe_action_risk_genetic_plague = std::max(0, atoi(value));
+        cf->probe_action_risk_procure_research_data = std::max(0, atoi(value));
+    }
+    else if (MATCH("probe_action_risk_introduce_genetic_plague"))
+    {
+        cf->probe_action_risk_introduce_genetic_plague = std::max(0, atoi(value));
     }
     else if (MATCH("combat_bonus_sensor_ocean"))
     {
@@ -537,6 +541,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("design_cost_in_rows"))
     {
         cf->design_cost_in_rows = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("carry_over_nutrients"))
+    {
+        cf->carry_over_nutrients = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("carry_over_minerals"))
     {

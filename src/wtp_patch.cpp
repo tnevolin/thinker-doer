@@ -1714,9 +1714,9 @@ f:  83 c4 08                add    esp,0x8
 		modified_probe_action_risk_hook_bytes_new,
 		modified_probe_action_risk_hook_bytes_length
 	);
-
+	
 	write_call(0x005A314B, (int)modifiedProbeActionRisk);
-
+	
 }
 
 /*

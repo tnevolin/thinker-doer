@@ -1699,8 +1699,12 @@ __cdecl void modifiedProbeActionRisk(int action, int riskPointer)
 	switch (action)
 	{
 		// genetic plague
+	case 1:
+		*risk += conf.probe_action_risk_procure_research_data;
+		break;
+		// genetic plague
 	case 7:
-		*risk = conf.probe_action_risk_genetic_plague;
+		*risk += conf.probe_action_risk_introduce_genetic_plague;
 		break;
 	}
 
