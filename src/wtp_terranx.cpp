@@ -130,9 +130,6 @@ int *alphax_tgl_probe_steal_tech = (int *)0x00949834;
 // read basic rules
 fp_0int tx_read_basic_rules = (fp_0int)0x00585170;
 
-// calculates prototype cost
-fp_5int tx_proto_cost = (fp_5int)0x005A5A60;
-
 // creates prototype
 fp_6int tx_create_prototype = (fp_6int)0x005A5D40;
 

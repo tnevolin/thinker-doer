@@ -141,7 +141,6 @@ extern int *CURRENT_BASE_TALENTS_PROJECTS;
 extern int *alphax_tgl_probe_steal_tech;
 
 extern fp_0int tx_read_basic_rules;
-extern fp_5int tx_proto_cost;
 extern fp_6int tx_create_prototype;
 extern fp_3int tx_upgrade_cost;
 extern fp_1int tx_strlen;

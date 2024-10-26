@@ -461,21 +461,17 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->alternative_tech_cost = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("flat_extra_prototype_cost"))
-    {
-        cf->flat_extra_prototype_cost = (atoi(value) == 0 ? false : true);
-    }
 //    else if (MATCH("fix_mineral_contribution"))
 //    {
 //        cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
 //    }
+    else if (MATCH("flat_extra_prototype_cost"))
+    {
+        cf->flat_extra_prototype_cost = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("modified_probe_action_risks"))
     {
         cf->modified_probe_action_risks = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("probe_action_risk_procure_research_data"))
-    {
-        cf->probe_action_risk_procure_research_data = std::max(0, atoi(value));
     }
     else if (MATCH("probe_action_risk_introduce_genetic_plague"))
     {

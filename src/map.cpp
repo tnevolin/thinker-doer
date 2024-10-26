@@ -433,7 +433,11 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
             value--;
         }
     }
-    assert(value == crop_yield(faction_id, base_id, x, y, flag));
+    
+    // [WTP]
+    // not like vanilla anymore
+//    assert(value == crop_yield(faction_id, base_id, x, y, flag));
+
     return value;
 }
 

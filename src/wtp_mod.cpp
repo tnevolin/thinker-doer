@@ -1381,24 +1381,25 @@ Displays base nutrient cost factor in nutrient header.
 __cdecl void displayBaseNutrientCostFactor(int destinationStringPointer, int sourceStringPointer)
 {
     // call original function
-
+	
     tx_strcat(destinationStringPointer, sourceStringPointer);
-
+	
 	// get current variables
-
+	
 	int baseid = *CurrentBaseID;
 	BASE *base = *CurrentBase;
 	Faction *faction = &(Factions[base->faction_id]);
-
+	
 	// get current base nutrient cost factor
-
+	
 	int nutrientCostFactor = cost_factor(base->faction_id, 0, baseid);
-
+	
     // modify output
-
+	
     char *destinationString = (char *)destinationStringPointer;
-	sprintf(destinationString + strlen("NUT"), " (%+1d) %+1d => %02d", faction->SE_growth_pending, *BaseGrowthRate, nutrientCostFactor);
-
+//	sprintf(destinationString + strlen("NUT"), " (%+1d) %+1d => %02d", faction->SE_growth_pending, *BaseGrowthRate, nutrientCostFactor);
+	sprintf(destinationString, "GRW %+1d %+1d = %02d", faction->SE_growth_pending, *BaseGrowthRate - faction->SE_growth_pending, nutrientCostFactor);
+	
 }
 
 /*
@@ -1699,12 +1700,8 @@ __cdecl void modifiedProbeActionRisk(int action, int riskPointer)
 	switch (action)
 	{
 		// genetic plague
-	case 1:
-		*risk += conf.probe_action_risk_procure_research_data;
-		break;
-		// genetic plague
 	case 7:
-		*risk += conf.probe_action_risk_introduce_genetic_plague;
+		*risk = conf.probe_action_risk_introduce_genetic_plague;
 		break;
 	}
 

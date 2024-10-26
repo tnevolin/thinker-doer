@@ -429,22 +429,9 @@ int __cdecl mod_veh_cost(int unit_id, int base_id, int32_t* has_proto_cost) {
     }
     int proto_cost_first = 0;
     if (unit_id >= MaxProtoFactionNum && !Units[unit_id].is_prototyped()) {
-		
-		// [WTP] flat prototype cost
-		
-		if (conf.flat_extra_prototype_cost)
-		{
-			int prototypeFactor = prototype_factor(unit_id);
-			int notPrototypedComponentsCost = calculateNotPrototypedComponentsCost(unit_id);
-			proto_cost_first = ((prototypeFactor * notPrototypedComponentsCost) + 50) / 100;
-		}
-		else
-		{
-			proto_cost_first = (base_id >= 0 && has_fac_built(FAC_SKUNKWORKS, base_id))
-				? 0 : (prototype_factor(unit_id) * mod_base_cost(unit_id) + 50) / 100; // moved checks up
-			cost += proto_cost_first;
-		}
-		
+		proto_cost_first = (base_id >= 0 && has_fac_built(FAC_SKUNKWORKS, base_id))
+			? 0 : (prototype_factor(unit_id) * mod_base_cost(unit_id) + 50) / 100; // moved checks up
+		cost += proto_cost_first;
     }
     if (has_proto_cost) {
         *has_proto_cost = proto_cost_first != 0;

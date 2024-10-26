@@ -1428,7 +1428,7 @@ Wraps _strcat call in base nutrient display to display nutrient cost factor.
 void patch_display_base_nutrient_cost_factor()
 {
 	// change color
-
+	
 	int base_nutrient_header_color_bytes_length = 0x5;
 	/*
 	0:  a1 a4 6c 8c 00          mov    eax,ds:0x8c6ca4
@@ -1445,11 +1445,11 @@ void patch_display_base_nutrient_cost_factor()
 		base_nutrient_header_color_bytes_new,
 		base_nutrient_header_color_bytes_length
 	);
-
+	
 	// overwrite text
-
+	
 	write_call(0x004113B0, (int)displayBaseNutrientCostFactor);
-
+	
 }
 
 /*
@@ -1547,71 +1547,6 @@ void patch_weapon_help_always_show_cost()
 		weapon_help_show_cost_always_bytes_length
 	);
 
-}
-
-/*
-Flattens extra prototype cost.
-*/
-void patch_flat_extra_prototype_cost()
-{
-	// in DesignWin::draw_unit_preview
-	
-	// prepare parameters for non prototyped components cost calculation
-	
-	int draw_unit_preview_flat_prototype_cost_bytes_length = 0x1e;
-/*
-0:  8b 86 0c 42 01 00       mov    eax,DWORD PTR [esi+0x1420c]
-6:  8b 8e 04 42 01 00       mov    ecx,DWORD PTR [esi+0x14204]
-c:  8b 96 00 42 01 00       mov    edx,DWORD PTR [esi+0x14200]
-12: 50                      push   eax
-13: 8b 86 fc 41 01 00       mov    eax,DWORD PTR [esi+0x141fc]
-19: 6a 00                   push   0x0
-1b: 51                      push   ecx
-1c: 52                      push   edx
-1d: 50                      push   eax
-*/
-	byte draw_unit_preview_flat_prototype_cost_bytes_old[] = { 0x8B, 0x86, 0x0C, 0x42, 0x01, 0x00, 0x8B, 0x8E, 0x04, 0x42, 0x01, 0x00, 0x8B, 0x96, 0x00, 0x42, 0x01, 0x00, 0x50, 0x8B, 0x86, 0xFC, 0x41, 0x01, 0x00, 0x6A, 0x00, 0x51, 0x52, 0x50 };
-/*
-0:  ff 75 cc                push   DWORD PTR [ebp-0x34]
-3:  ff 75 d0                push   DWORD PTR [ebp-0x30]
-6:  ff 75 d4                push   DWORD PTR [ebp-0x2c]
-9:  ff b6 04 42 01 00       push   DWORD PTR [esi+0x14204]
-f:  ff b6 00 42 01 00       push   DWORD PTR [esi+0x14200]
-15: ff b6 fc 41 01 00       push   DWORD PTR [esi+0x141fc]
-...
-*/
-	byte draw_unit_preview_flat_prototype_cost_bytes_new[] = { 0xFF, 0x75, 0xCC, 0xFF, 0x75, 0xD0, 0xFF, 0x75, 0xD4, 0xFF, 0xB6, 0x04, 0x42, 0x01, 0x00, 0xFF, 0xB6, 0x00, 0x42, 0x01, 0x00, 0xFF, 0xB6, 0xFC, 0x41, 0x01, 0x00, 0x90, 0x90, 0x90 };
-	write_bytes
-	(
-		0x0043702E,
-		draw_unit_preview_flat_prototype_cost_bytes_old,
-		draw_unit_preview_flat_prototype_cost_bytes_new,
-		draw_unit_preview_flat_prototype_cost_bytes_length
-	);
-	
-	// call non prototyped components cost calculation
-	
-	write_call(0x0043704C, (int)calculateNotPrototypedComponentsCostForDesign);
-	
-	// correct stack pointer after the call as we passed 6 parameters instead of 5
-	
-	int calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_length = 0x3;
-/*
-0:  83 c4 20                add    esp,0x20
-*/
-	byte calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_old[] = { 0x83, 0xC4, 0x20 };
-/*
-0:  83 c4 24                add    esp,0x24
-*/
-	byte calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_new[] = { 0x83, 0xC4, 0x24 };
-	write_bytes
-	(
-		0x0043709E,
-		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_old,
-		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_new,
-		calculateNotPrototypedComponentsCostForDesign_stack_pointer_bytes_length
-	);
-	
 }
 
 /*
@@ -2136,61 +2071,6 @@ void patch_research_bonus_multiplier()
 //
 //}
 //
-/*
-modified base GROWTH
-*/
-void patch_modified_base_growth()
-{
-	// patch current_base_GROWTH
-
-	write_call(0x004E9BB1, (int)modifiedBaseGrowth);
-
-	// patch nutrient cost_factor
-
-	int nutrient_cost_factor_bytes_length = 0x1c;
-	/*
-	0:  8b cf                   mov    ecx,edi
-	2:  c1 e1 06                shl    ecx,0x6
-	5:  03 cf                   add    ecx,edi
-	7:  8d 14 4f                lea    edx,[edi+ecx*2]
-	a:  8d 04 d7                lea    eax,[edi+edx*8]
-	d:  8d 0c 47                lea    ecx,[edi+eax*2]
-	10: 8b 7d 10                mov    edi,DWORD PTR [ebp+0x10]
-	13: 85 ff                   test   edi,edi
-	15: 8b 1c 8d 44 cc 96 00    mov    ebx,DWORD PTR [ecx*4+0x96cc44]
-	*/
-	byte nutrient_cost_factor_bytes_old[] = { 0x8B, 0xCF, 0xC1, 0xE1, 0x06, 0x03, 0xCF, 0x8D, 0x14, 0x4F, 0x8D, 0x04, 0xD7, 0x8D, 0x0C, 0x47, 0x8B, 0x7D, 0x10, 0x85, 0xFF, 0x8B, 0x1C, 0x8D, 0x44, 0xCC, 0x96, 0x00 };
-	/*
-	0:  8b 4d 10                mov    ecx,DWORD PTR [ebp+0x10]
-	3:  51                      push   ecx
-	4:  57                      push   edi
-	5:  e8 fd ff ff ff          call   7 <_main+0x7>
-	a:  83 c4 08                add    esp,0x8
-	d:  89 c3                   mov    ebx,eax
-	f:  90                      nop
-	10: 90                      nop
-	11: 90                      nop
-	12: 90                      nop
-	13: 90                      nop
-	14: 90                      nop
-	15: 90                      nop
-	16: 90                      nop
-	17: 8b 7d 10                mov    edi,DWORD PTR [ebp+0x10]
-	1a: 85 ff                   test   edi,edi
-	*/
-	byte nutrient_cost_factor_bytes_new[] = { 0x8B, 0x4D, 0x10, 0x51, 0x57, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x08, 0x89, 0xC3, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x8B, 0x7D, 0x10, 0x85, 0xFF };
-	write_bytes
-	(
-		0x004E450D,
-		nutrient_cost_factor_bytes_old,
-		nutrient_cost_factor_bytes_new,
-		nutrient_cost_factor_bytes_length
-	);
-
-	write_call(0x004E450D + 0x5, (int)modifiedNutrientCostFactorSEGrowth);
-
-}
-
 /*
 unit upgrade does not require whole turn
 */
@@ -4246,11 +4126,6 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_weapon_help_always_show_cost();
 	
-	if (cf->flat_extra_prototype_cost)
-	{
-		patch_flat_extra_prototype_cost();
-	}
-	
 	if (cf->fix_mineral_contribution)
 	{
 		patch_mineral_contribution();
@@ -4292,11 +4167,6 @@ void patch_setup_wtp(Config* cf)
 //	{
 //		patch_remove_fungal_tower_defense_bonus();
 //	}
-	
-	if (cf->habitation_facility_growth_bonus != 0)
-	{
-		patch_modified_base_growth();
-	}
 	
 	if (cf->unit_upgrade_ignores_movement)
 	{

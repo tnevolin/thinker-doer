@@ -1,3 +1,8 @@
+# Version 314
+
+* Removed flat extra prototype cost.
+* Removed RISK 1 for stealing tech.
+
 # Version 313
 
 * Player can scroll through other faction base screens with mouse and keyboard.

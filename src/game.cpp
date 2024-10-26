@@ -122,6 +122,28 @@ int __cdecl mod_cost_factor(int faction_id, BaseResType type, int base_id) {
             if (Bases[base_id].golden_age_active()) {
                 growth += 2;
             }
+            
+			// [WTP]
+			// habitation facility gives +2 GROWTH below limit
+			
+			if (conf.habitation_facility_growth_bonus != 0)
+			{
+				int pop_modifier =
+					(has_project(FAC_ASCETIC_VIRTUES, faction_id) ? 2 : 0)
+					- MFactions[faction_id].rule_population // Positive rule_population decreases the limit
+				;
+				
+				if (has_fac_built(FAC_HAB_COMPLEX, base_id) && Bases[base_id].pop_size < Rules->pop_limit_wo_hab_complex + pop_modifier)
+				{
+					growth += 2;
+				}
+				if (has_fac_built(FAC_HABITATION_DOME, base_id) && Bases[base_id].pop_size < Rules->pop_limit_wo_hab_dome + pop_modifier)
+				{
+					growth += 2;
+				}
+				
+			}
+			
         }
         
         // [WTP]

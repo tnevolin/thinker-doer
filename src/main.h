@@ -325,10 +325,9 @@ struct Config {
     bool hsa_does_not_kill_probe = false;
     bool condenser_and_enricher_do_not_multiply_nutrients = false;
     bool alternative_tech_cost = false;
-    bool flat_extra_prototype_cost = false;
     bool fix_mineral_contribution = true; // internal setting
+    bool flat_extra_prototype_cost = false;
     bool modified_probe_action_risks = false;
-    int probe_action_risk_procure_research_data = 0;
     int probe_action_risk_introduce_genetic_plague = 0;
     bool combat_bonus_sensor_ocean = false;
     bool combat_bonus_sensor_offense = false;

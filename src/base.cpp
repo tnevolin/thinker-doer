@@ -526,6 +526,28 @@ void __cdecl mod_base_nutrient() {
     if (base->state_flags & BSTATE_GOLDEN_AGE_ACTIVE) {
         *BaseGrowthRate += 2;
     }
+    
+    // [WTP]
+    // habitation facility gives +2 GROWTH below limit
+    
+    if (conf.habitation_facility_growth_bonus != 0)
+	{
+		int pop_modifier =
+			(has_project(FAC_ASCETIC_VIRTUES, faction_id) ? 2 : 0)
+			- MFactions[faction_id].rule_population // Positive rule_population decreases the limit
+		;
+		
+		if (has_fac_built(FAC_HAB_COMPLEX, *CurrentBaseID) && base->pop_size < Rules->pop_limit_wo_hab_complex + pop_modifier)
+		{
+			*BaseGrowthRate += 2;
+		}
+		if (has_fac_built(FAC_HABITATION_DOME, *CurrentBaseID) && base->pop_size < Rules->pop_limit_wo_hab_dome + pop_modifier)
+		{
+			*BaseGrowthRate += 2;
+		}
+		
+	}
+    
     base->nutrient_intake_2 += BaseResourceConvoyTo[RSC_NUTRIENT];
     base->nutrient_consumption = BaseResourceConvoyFrom[RSC_NUTRIENT]
         + base->pop_size * Rules->nutrient_intake_req_citizen;
