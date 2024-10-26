@@ -1398,7 +1398,7 @@ __cdecl void displayBaseNutrientCostFactor(int destinationStringPointer, int sou
 	
     char *destinationString = (char *)destinationStringPointer;
 //	sprintf(destinationString + strlen("NUT"), " (%+1d) %+1d => %02d", faction->SE_growth_pending, *BaseGrowthRate, nutrientCostFactor);
-	sprintf(destinationString, "GRW %+1d %+1d = %02d", faction->SE_growth_pending, *BaseGrowthRate - faction->SE_growth_pending, nutrientCostFactor);
+	sprintf(destinationString, "GR: %+1d %+1d    || %02d", faction->SE_growth_pending, *BaseGrowthRate - faction->SE_growth_pending, nutrientCostFactor);
 	
 }
 
