@@ -599,7 +599,7 @@ Added a suffix to bases in need of population growth limit facility.
 
 ## Base nutrient box information
 
-[Nutrient box](nutrient_box.png)
+![Nutrient box](nutrient_box.png)
 
 The header shows the global GROWTH rating, the local base GROWTH modifications, and the resulting number of columns in nutrient box.
 
