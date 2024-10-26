@@ -2,6 +2,9 @@
 
 * Removed flat extra prototype cost.
 * Removed RISK 1 for stealing tech.
+* Fixed population limit facilities GROWTH bonus.
+* Simplified base nutrient box title and added explanation in readme: https://github.com/tnevolin/thinker-doer/blob/master/README.md#base-nutrient-box-information.
+
 
 # Version 313
 
