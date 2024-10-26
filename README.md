@@ -597,6 +597,16 @@ Shortened some labels in F4 screen to fit longer base names and avoid line wrapp
 
 Added a suffix to bases in need of population growth limit facility.
 
+## Base nutrient box information
+
+[Nutrient box](nutrient_box.png)
+
+The header shows the global GROWTH rating, the local base GROWTH modifications, and the resulting number of columns in nutrient box.
+
+The footer shows the number of turns to base growth as well as stagnation and population boom indicators.
+
+Recent changes also allow base to grow same turn when nutrient box is filled up and carry over any exccess nutrients.
+
 # Alternative subversion and mind control formulas and mechanics
 
 ## Subverting unit from stack
