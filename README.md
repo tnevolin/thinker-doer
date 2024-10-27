@@ -607,7 +607,7 @@ The footer shows the number of turns to base growth as well as stagnation and po
 
 Recent changes also allow base to grow same turn when nutrient box is filled up and carry over any exccess nutrients.
 
-# Alternative subversion and mind control formulas and mechanics
+# Alternative subversion and mind control
 
 ## Subverting unit from stack
 
