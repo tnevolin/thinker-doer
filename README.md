@@ -283,7 +283,7 @@ secret project | cost | explanation
 The Merchant Exchange | 20 | Local improvement - no change.
 The Human Genome | 40 | 2 minerals worth quelled drone x 200
 The Command Nexus | 60 | 80 cost x 10 + 2 maintenance x 100. Reduced as it is not needed in every base.
-The Universal Translator | 20 | Pretty limited usage of two technologies advancement. There are no unlimited artifacts in a game. Reduced in cost as it is now quite early project. It is definitely not better than The Human Genome, for example.
+The Universal Translator | 100 | Labs +30% and two free techs.
 The Weather Paradigm | 40 | Tough to evaluate. Great boost to the faction via advanced terraforming but advantage doesn't last whole game.
 The Empath Guild | 60 | Way to Governorship and energy income multiplier. Should be quite expensive.
 The Living Refinery | 40 | About 2 minerals per base per turn x 200.
@@ -295,9 +295,9 @@ The Manifold Harmonics | 60 | Powerful fungus production. However, advantageous 
 The Planetary Energy Grid | 60 | 60 cost x 10 + 1 maintenance x 100.
 The Citizens' Defense Force | 60 | 50 cost x 10. It worth more than the cost of the facility as it gets built immediatelly in conquered base.
 The Xenoempathy Dome | 40 | Tactical advantage, aid to fungus terraforming, +1 lifecycle = slight increase.
-The Supercollider | 30 | Local effect = no change.
+The Supercollider | 30 | Labs +10%.
 The Ascetic Virtues | 60 | +POLICE + growth = slight increase.
-The Theory of Everything | 40 | Local effect = no change.
+The Theory of Everything | 60 | Labs +20%.
 The Hunter-Seeker Algorithm | 60 | No clue how to deal with this. People tend to value it quite high. Doubled the price.
 The Nano Factory | 40 | Slight tactical and unit upgrade advantage. Nothing seriosly game changing. No change.
 The Longevity Vaccine | 60 | Drone quellying. Slightly higher valued than The Human Genome due to more advanced era.
