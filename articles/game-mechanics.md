@@ -106,4 +106,22 @@ success probability = (effectiveness - RISK) / (effectiveness + 1)
 | Commando    | 83% | 67% | 50% | 33% |
 | Elite       | 86% | 71% | 57% | 43% |
 
+# Base submersion
+
+When sea level rises some shore tiles may go under water. If such tile has a base on it and the base **does not** have Pressure Dome, it will sustain severe population loss.
+
+1. Minimal population loss is the random number in 2-4 range (inclusive).
+2. Maximal population loss is 10.
+3. Resulting population loss is half of the current population rounded down but between minimum and maximum above.
+
+If base loses all of its population it is lost. If base have some population left, it survives and acquires Pressure Dome.
+
+#### chance of base surviving by population
+
+| population | chance |
+| ----: | ----: |
+| <= 2 | 0% |
+| 3 | 33% |
+| 4 | 67% |
+| >= 5 | 100% |
 
