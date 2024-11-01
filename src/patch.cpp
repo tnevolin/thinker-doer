@@ -610,6 +610,8 @@ bool patch_setup(Config* cf) {
     write_call(0x4B6EF9, (int)mod_mine_yield); // StatusWin::draw_status
     write_call(0x4B6F84, (int)mod_mine_yield); // StatusWin::draw_status
     write_call(0x4E7E00, (int)mod_mine_yield); // resource_yield
+	write_call(0x4E7F14, (int)mod_mine_yield); // farm_yield
+	write_call(0x4E8044, (int)mod_mine_yield); // farm_unyield
     write_call(0x4E88AC, (int)mod_mine_yield); // base_yield
     write_call(0x4E970A, (int)mod_mine_yield); // base_support
     write_call(0x4B7028, (int)mod_energy_yield); // StatusWin::draw_status

@@ -370,9 +370,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("alternative_weapon_icon_selection_algorithm")) {
         cf->alternative_weapon_icon_selection_algorithm = (atoi(value) == 0 ? false : true);
     }
-	else if (MATCH("ignore_reactor_power_in_combat")) {
-		cf->ignore_reactor_power_in_combat = (atoi(value) == 0 ? false : true);
-	}
     else if (MATCH("alternative_prototype_cost_formula")) {
         cf->alternative_prototype_cost_formula = (atoi(value) == 0 ? false : true);
     }
@@ -465,10 +462,6 @@ int option_handler(void* user, const char* section, const char* name, const char
 //    {
 //        cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
 //    }
-    else if (MATCH("flat_extra_prototype_cost"))
-    {
-        cf->flat_extra_prototype_cost = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("modified_probe_action_risks"))
     {
         cf->modified_probe_action_risks = (atoi(value) == 0 ? false : true);
@@ -489,19 +482,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->break_treaty_before_fight = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("compact_effect_icons"))
-    {
-        cf->compact_effect_icons = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("se_research_bonus_percentage"))
-    {
-        cf->se_research_bonus_percentage = std::max(0, std::min(100, atoi(value)));
-    }
-    // implemented in Thinker
-//    else if (MATCH("remove_fungal_tower_defense_bonus"))
-//    {
-//        cf->remove_fungal_tower_defense_bonus = (atoi(value) == 0 ? false : true);
-//    }
     else if (MATCH("habitation_facility_growth_bonus"))
     {
         cf->habitation_facility_growth_bonus = atoi(value);
@@ -510,25 +490,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->unit_upgrade_ignores_movement = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("group_terraforming"))
-    {
-        cf->group_terraforming = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("ai_base_allowed_fungus_rocky"))
     {
         cf->ai_base_allowed_fungus_rocky = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("interceptor_scramble_fix"))
-    {
-        cf->interceptor_scramble_fix = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("scorched_earth"))
-    {
-        cf->scorched_earth = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("orbital_yield_limit"))
     {
-        cf->orbital_yield_limit = (atof(value));
+        cf->orbital_yield_limit = atoi(value);
     }
     else if (MATCH("silent_vendetta_warning"))
     {
@@ -549,10 +517,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("subversion_allow_stacked_units"))
     {
         cf->subversion_allow_stacked_units = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("mind_control_destroys_unsubverted"))
-    {
-        cf->mind_control_destroys_unsubverted = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("alternative_subversion_and_mind_control"))
     {
@@ -594,10 +558,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->disable_guaranteed_facilities_destruction = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("supply_convoy_and_info_warfare_require_support"))
-    {
-        cf->supply_convoy_and_info_warfare_require_support = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("alternative_support"))
     {
         cf->alternative_support = (atoi(value) == 0 ? false : true);
@@ -606,37 +566,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->instant_completion_fixed_minerals = std::min(50, std::max(0, atoi(value)));
     }
-    else if (MATCH("native_unit_cost_time_multiplier"))
+    else if (MATCH("sensor_indestructible"))
     {
-        cf->native_unit_cost_time_multiplier = std::min(2.0, std::max(1.0, atof(value)));
-    }
-    else if (MATCH("native_unit_cost_initial_mind_worm"))
-    {
-        cf->native_unit_cost_initial_mind_worm = std::min(20, std::max(1, atoi(value)));
-    }
-    else if (MATCH("native_unit_cost_initial_spore_launcher"))
-    {
-        cf->native_unit_cost_initial_spore_launcher = std::min(20, std::max(1, atoi(value)));
-    }
-    else if (MATCH("native_unit_cost_initial_sealurk"))
-    {
-        cf->native_unit_cost_initial_sealurk = std::min(20, std::max(1, atoi(value)));
-    }
-    else if (MATCH("native_unit_cost_initial_isle_of_the_deep"))
-    {
-        cf->native_unit_cost_initial_isle_of_the_deep = std::min(20, std::max(1, atoi(value)));
-    }
-    else if (MATCH("native_unit_cost_initial_locusts_of_chiron"))
-    {
-        cf->native_unit_cost_initial_locusts_of_chiron = std::min(20, std::max(1, atoi(value)));
-    }
-    else if (MATCH("disable_sensor_destroying"))
-    {
-        cf->disable_sensor_destroying = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("conventional_artillery_duel_uses_weapon_and_armor"))
-    {
-        cf->conventional_artillery_duel_uses_weapon_and_armor = (atoi(value) == 0 ? false : true);
+        cf->sensor_indestructible = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("artillery_duel_uses_bonuses"))
     {
@@ -693,18 +625,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("tech_trade_likeability"))
     {
         cf->tech_trade_likeability = std::min(0x7F, std::max(0, atoi(value)));
-    }
-    else if (MATCH("disable_tech_steal_vendetta"))
-    {
-        cf->disable_tech_steal_vendetta = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("disable_tech_steal_pact"))
-    {
-        cf->disable_tech_steal_pact = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("disable_tech_steal_other"))
-    {
-        cf->disable_tech_steal_other = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("conventional_power_psi_percentage"))
     {

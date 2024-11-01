@@ -63,13 +63,6 @@ int currentDefenderVehicleId = -1;
 int currentAttackerOdds = -1;
 int currentDefenderOdds = -1;
 
-// storage variables for attacking interceptor
-
-bool bomberAttacksInterceptor = false;
-int bomberAttacksInterceptorAttackerVehicleId = -1;
-int bomberAttacksInterceptorDefenderVehicleId = -1;
-int bomberAttacksInterceptorPass = 0;
-
 /*
 Combat calculation placeholder.
 All custom combat calculation goes here.
@@ -120,30 +113,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	
 	// run original function
 	
-	battle_compute(attackerVehicleId, defenderVehicleId, (int *)attackerStrengthPointer, (int *)defenderStrengthPointer, flags);
-	
-    // ----------------------------------------------------------------------------------------------------
-    // conventional artillery duel uses weapon + armor value
-    // ----------------------------------------------------------------------------------------------------
-	
-    if
-	(
-		// artillery duel
-		(flags & 0x2) != 0
-		&&
-		// conventional combat
-		!psiCombat
-		&&
-		// fix is enabled
-		conf.conventional_artillery_duel_uses_weapon_and_armor
-	)
-	{
-		// artillery duelants use weapon + armor value
-		
-		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * (attackerOffenseValue + attackerDefenseValue) / attackerOffenseValue;
-		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (defenderOffenseValue + defenderDefenseValue) / defenderOffenseValue;
-		
-	}
+	mod_battle_compute(attackerVehicleId, defenderVehicleId, (int *)attackerStrengthPointer, (int *)defenderStrengthPointer, flags);
 	
     // ----------------------------------------------------------------------------------------------------
     // psi artillery duel uses base intrinsic bonus for attacker
@@ -161,105 +131,6 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	{
 		addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
 	}
-	
-    // ----------------------------------------------------------------------------------------------------
-    // interceptor scramble fix
-    // ----------------------------------------------------------------------------------------------------
-	
-    if
-	(
-		// fix is enabled
-		conf.interceptor_scramble_fix
-		&&
-		// attacker uses conventional weapon
-		Weapon[attackerUnit->weapon_id].offense_value > 0
-		&&
-		// attacker is an air unit
-		attackerUnit->triad() == TRIAD_AIR
-		&&
-		// attacker has no air superiority
-		!unit_has_ability(attackerVehicle->unit_id, ABL_AIR_SUPERIORITY)
-		&&
-		// defender uses conventional armor
-		Armor[defenderUnit->armor_id].defense_value > 0
-		&&
-		// defender is an air unit
-		defenderUnit->triad() == TRIAD_AIR
-		&&
-		// defender has air superiority
-		unit_has_ability(defenderVehicle->unit_id, ABL_AIR_SUPERIORITY)
-	)
-	{
-		// attacker uses armor, not weapon
-		
-		*(int *)attackerStrengthPointer = *(int *)attackerStrengthPointer * attackerDefenseValue / attackerOffenseValue;
-		
-		// defender strength is increased due to air superiority
-		
-		*(int *)defenderStrengthPointer = *(int *)defenderStrengthPointer * (100 + Rules->combat_bonus_air_supr_vs_air) / 100;
-		
-		// add defender effect description
-		
-		if (*tx_battle_compute_defender_effect_count < 4)
-		{
-			strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], *(*tx_labels + LABEL_OFFSET_AIRTOAIR));
-			(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = Rules->combat_bonus_air_supr_vs_air;
-			
-			(*tx_battle_compute_defender_effect_count)++;
-			
-		}
-		
-		// set interceptor global variables
-		
-		bomberAttacksInterceptor = true;
-		bomberAttacksInterceptorAttackerVehicleId = attackerVehicleId;
-		bomberAttacksInterceptorDefenderVehicleId = defenderVehicleId;
-		bomberAttacksInterceptorPass = 0;
-		
-	}
-	else
-	{
-		// clear interceptor global variables
-		
-		bomberAttacksInterceptor = false;
-		bomberAttacksInterceptorAttackerVehicleId = -1;
-		bomberAttacksInterceptorDefenderVehicleId = -1;
-		
-	}
-	
-    // ----------------------------------------------------------------------------------------------------
-    // PLANET combat bonus on defense
-    // ----------------------------------------------------------------------------------------------------
-	
-    if (conf.planet_defense_bonus)
-    {
-        // PLANET bonus applies to psi combat only
-        // psi combat is triggered by either attacker negative weapon value or defender negative armor value
-		
-        if (Weapon[Units[attackerVehicle->unit_id].weapon_id].offense_value < 0 || Armor[Units[defenderVehicle->unit_id].armor_id].defense_value < 0)
-        {
-            // get defender faction id
-			
-            int defenderFactionId = Vehicles[defenderVehicleId].faction_id;
-			
-			// PLANET bonus applies to normal factions only
-			
-            if (defenderFactionId > 0)
-            {
-                // get defender planet rating at the beginning of the turn (not pending)
-				
-                int defenderPlanetRating = Factions[defenderFactionId].SE_planet;
-				
-                if (defenderPlanetRating != 0)
-                {
-					addDefenderBonus(defenderStrengthPointer, Rules->combat_psi_bonus_per_planet * defenderPlanetRating, *(*tx_labels + LABEL_OFFSET_PLANET));
-                }
-				
-            }
-			
-        }
-		
-    }
 	
     // ----------------------------------------------------------------------------------------------------
     // sensor
@@ -343,14 +214,14 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	{
 		// sensor offense bonus
 		
-		if (conf.combat_bonus_sensor_offense && (!is_ocean(defenderMapTile) || conf.combat_bonus_sensor_ocean) && isWithinFriendlySensorRange(attackerVehicle->faction_id, defenderMapTile))
+		if (isWithinFriendlySensorRange(attackerVehicle->faction_id, defenderMapTile) && (!is_ocean(defenderMapTile) || conf.combat_bonus_sensor_ocean) && conf.combat_bonus_sensor_offense)
 		{
 			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
 		
 		// sensor defense bonus
 		
-		if ((!is_ocean(attackerMapTile) || conf.combat_bonus_sensor_ocean) && isWithinFriendlySensorRange(attackerVehicle->faction_id, attackerMapTile))
+		if (isWithinFriendlySensorRange(attackerVehicle->faction_id, attackerMapTile) && (!is_ocean(attackerMapTile) || conf.combat_bonus_sensor_ocean))
 		{
 			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
@@ -487,50 +358,6 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 //
 //    }
 //
-}
-
-/*
-Composes combat effect value percentage.
-Overwrites zero with empty string.
-*/
-__cdecl void wtp_mod_battle_compute_compose_value_percentage(int output_string_pointer, int input_string_pointer)
-{
-    debug
-    (
-        "wtp_mod_battle_compute_compose_value_percentage:input(output_string=%s, input_string=%s)\n",
-        (char *)output_string_pointer,
-        (char *)input_string_pointer
-    )
-    ;
-
-    // call original function
-
-    tx_strcat(output_string_pointer, input_string_pointer);
-
-    debug
-    (
-        "wtp_mod_battle_compute_compose_value_percentage:output(output_string=%s, input_string=%s)\n",
-        (char *)output_string_pointer,
-        (char *)input_string_pointer
-    )
-    ;
-
-    // replace zero with empty string
-
-    if (strcmp((char *)output_string_pointer, " +0%") == 0)
-    {
-        ((char *)output_string_pointer)[0] = '\x0';
-
-    }
-
-    debug
-    (
-        "wtp_mod_battle_compute_compose_value_percentage:corrected(output_string=%s, input_string=%s)\n",
-        (char *)output_string_pointer,
-        (char *)input_string_pointer
-    )
-    ;
-
 }
 
 /*
@@ -1408,24 +1235,24 @@ Replaces growth turn indicator with correct information for pop boom and stagnat
 __cdecl void correctGrowthTurnsIndicator(int destinationStringPointer, int sourceStringPointer)
 {
     // call original function
-
+	
     tx_strcat(destinationStringPointer, sourceStringPointer);
-
+	
     if (*BaseGrowthRate > conf.se_growth_rating_max)
 	{
 		// update indicator for population boom
-
+		
 		strcpy((char *)destinationStringPointer, "-- POP BOOM --");
-
+		
 	}
     else if (*BaseGrowthRate < conf.se_growth_rating_min)
 	{
 		// update indicator for stagnation
-
+		
 		strcpy((char *)destinationStringPointer, "-- STAGNANT --");
-
+		
 	}
-
+	
 }
 
 void createFreeVehicles(int factionId)
@@ -1754,7 +1581,7 @@ __cdecl int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, i
 	}
 	else
 	{
-		bestDefenderVehicleId = best_defender(defenderVehicleId, attackerVehicleId, bombardment);
+		bestDefenderVehicleId = mod_best_defender(defenderVehicleId, attackerVehicleId, bombardment);
 	}
 
 	// store variables for modified odds dialog unless bombardment
@@ -1843,20 +1670,20 @@ Request for break treaty before combat actions.
 __cdecl void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2)
 {
 	debug("modifiedBattleFight2(attackerVehicleId=%d, angle=%d, tx=%d, ty=%d, do_arty=%d, flag1=%d, flag2=%d)\n", attackerVehicleId, angle, tx, ty, do_arty, flag1, flag2);
-
+	
 	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
-
+	
 	if (attackerVehicle->faction_id == *CurrentPlayerFaction)
 	{
 		debug("\tattackerVehicle->faction_id == *CurrentPlayerFaction\n");
 		int defenderVehicleId = veh_at(tx, ty);
-
+		
 		if (defenderVehicleId >= 0)
 		{
 			bool nonArtifactUnitExists = false;
-
+			
 			std::vector<int> stackedVehicleIds = getStackVehicles(defenderVehicleId);
-
+			
 			for (int vehicleId : stackedVehicleIds)
 			{
 				if (Units[Vehicles[vehicleId].unit_id].weapon_id != WPN_ALIEN_ARTIFACT)
@@ -1865,30 +1692,30 @@ __cdecl void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int 
 					break;
 				}
 			}
-
+			
 			if (nonArtifactUnitExists)
 			{
 				VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
-
+				
 				int treatyNotBroken = tx_break_treaty(attackerVehicle->faction_id, defenderVehicle->faction_id, 0xB);
-
+				
 				if (treatyNotBroken)
 					return;
-
+				
 				// break treaty really
-
+				
 				tx_act_of_aggression(attackerVehicle->faction_id, defenderVehicle->faction_id);
-
+				
 			}
-
+			
 		}
-
+		
 	}
-
-	// execute original code
-
-	tx_battle_fight_2(attackerVehicleId, angle, tx, ty, do_arty, flag1, flag2);
-
+	
+	// execute Thinker mod version
+	
+	mod_battle_fight_2(attackerVehicleId, angle, tx, ty, do_arty, flag1, flag2);
+	
 }
 
 /*
@@ -1947,27 +1774,6 @@ __cdecl int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteBaseIndex
 	// convert and return value
 
 	return (int)sprite;
-
-}
-
-__cdecl void modified_tech_research(int factionId, int labs)
-{
-	Faction *faction = &(Factions[factionId]);
-
-	// modify labs contribution from base
-
-	if (conf.se_research_bonus_percentage != 10 && faction->SE_research_pending != 0)
-	{
-		int currentMultiplierPercentage = 100 + 10 * faction->SE_research_pending;
-		int modifiedMultiplierPercentage = 100 + conf.se_research_bonus_percentage * faction->SE_research_pending;
-
-		labs = (labs * modifiedMultiplierPercentage + currentMultiplierPercentage / 2) / currentMultiplierPercentage;
-
-	}
-
-	// pass labs to original function
-
-	tx_tech_research(factionId, labs);
 
 }
 
@@ -2046,67 +1852,6 @@ int getHabitationFacilitiesBaseGrowthModifier(int baseId)
 	
 	return baseGrowthModifier;
 	
-}
-
-/*
-; When one former starts terraforming action all idle formers in same tile do too.
-; May have unwanted consequenses of intercepting idle formers.
-*/
-__cdecl int modifiedActionTerraform(int vehicleId, int action, int execute)
-{
-	// execute action
-
-	int returnValue = action_terraform(vehicleId, action, execute);
-
-	// execute action for other idle formers in tile
-
-	if (execute == 1)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		int vehicleFactionId = vehicle->faction_id;
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-
-		for (int otherVehicleId = 0; otherVehicleId < *VehCount; otherVehicleId++)
-		{
-			VEH *otherVehicle = &(Vehicles[otherVehicleId]);
-			int otherVehicleFactionId = otherVehicle->faction_id;
-			MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
-
-			// only ours
-
-			if (otherVehicleFactionId != vehicleFactionId)
-				continue;
-
-			// only formers
-
-			if (!isFormerVehicle(otherVehicleId))
-				continue;
-
-			// only same locaton
-
-			if (otherVehicleTile != vehicleTile)
-				continue;
-
-			// only idle
-
-			if (!isVehicleIdle(otherVehicleId))
-				continue;
-
-			// only idle
-
-			if (!isVehicleIdle(otherVehicleId))
-				continue;
-
-			// set other vehicle terraforming action
-
-			setTerraformingAction(otherVehicleId, action);
-
-		}
-
-	}
-
-	return returnValue;
-
 }
 
 /*
@@ -2241,69 +1986,69 @@ __cdecl void captureDefenderOdds(const int position, const int value)
 __cdecl void modifiedDisplayOdds(const char* file_name, const char* label, int a3, const char* pcx_file_name, int a5)
 {
 	// fall into default vanilla code if global parameters are not set
-
+	
 	if (currentAttackerVehicleId == -1 || currentDefenderVehicleId == -1 || currentAttackerOdds == -1 || currentDefenderOdds == -1)
 	{
 		// execute original code
-
+		
 		popp(file_name, label, a3, pcx_file_name, a5);
 	}
 	else
 	{
-		if (conf.ignore_reactor_power_in_combat)
+		if (conf.ignore_reactor_power)
 		{
 			// get attacker and defender vehicles
-
+			
 			VEH *attackerVehicle = &(Vehicles[currentAttackerVehicleId]);
 			VEH *defenderVehicle = &(Vehicles[currentDefenderVehicleId]);
-
+			
 			// get attacker and defender units
-
+			
 			UNIT *attackerUnit = &(Units[attackerVehicle->unit_id]);
 			UNIT *defenderUnit = &(Units[defenderVehicle->unit_id]);
-
+			
 			// calculate attacker and defender power
 			// artifact gets 1 HP regardless of reactor
-
+			
 			int attackerPower = (attackerUnit->plan == PLAN_ARTIFACT ? 1 : attackerUnit->reactor_id * 10 - attackerVehicle->damage_taken);
 			int defenderPower = (defenderUnit->plan == PLAN_ARTIFACT ? 1 : defenderUnit->reactor_id * 10 - defenderVehicle->damage_taken);
-
+			
 			// calculate FP
-
+			
 			int attackerFP = defenderUnit->reactor_id;
 			int defenderFP = attackerUnit->reactor_id;
-
+			
 			// calculate HP
-
+			
 			int attackerHP = (attackerPower + (defenderFP - 1)) / defenderFP;
 			int defenderHP = (defenderPower + (attackerFP - 1)) / attackerFP;
-
+			
 			// compute vanilla odds
-
+			
 			int attackerOdds = currentAttackerOdds * attackerHP * defenderPower;
 			int defenderOdds = currentDefenderOdds * defenderHP * attackerPower;
 			simplifyOdds(&attackerOdds, &defenderOdds);
-
+			
 			// reparse vanilla odds into dialog
-
+			
 			parse_num(2, attackerOdds);
 			parse_num(3, defenderOdds);
-
+			
 			// calculate round probabilty
-
+			
 			double attackerStrength = (double)attackerOdds / (double)attackerHP;
 			double defenderStrength = (double)defenderOdds / (double)defenderHP;
 			double p = attackerStrength / (attackerStrength + defenderStrength);
-
+			
 			// calculate attacker winning probability
-
+			
 			double attackerWinningProbability = calculateWinningProbability(p, attackerHP, defenderHP);
-
+			
 			// compute exact odds
-
+			
 			int attackerExactOdds;
 			int defenderExactOdds;
-
+			
 			if (attackerWinningProbability >= 0.99)
 			{
 				attackerExactOdds = 100;
@@ -2324,40 +2069,40 @@ __cdecl void modifiedDisplayOdds(const char* file_name, const char* label, int a
 				attackerExactOdds = attackerOdds;
 				defenderExactOdds = (int)round((1.0 - attackerWinningProbability) / attackerWinningProbability * (double)attackerOdds);
 			}
-
+			
 			parse_num(0, attackerExactOdds);
 			parse_num(1, defenderExactOdds);
-
+			
 			// convert to percentage
-
+			
 			int attackerWinningPercentage = (int)round(attackerWinningProbability * 100);
-
+			
 			// add value to parse
-
+			
 			parse_num(4, attackerWinningPercentage);
-
+			
 			// display modified odds dialog
-
+			
 			popp(file_name, "GOODIDEA_IGNORE_REACTOR", a3, pcx_file_name, a5);
-
+			
 		}
 		else
 		{
 			// execute original code
-
+			
 			popp(file_name, label, a3, pcx_file_name, a5);
-
+			
 		}
-
+		
 	}
-
+	
 	// clear global variables
-
+	
 	currentAttackerVehicleId = -1;
 	currentDefenderVehicleId = -1;
 	currentAttackerOdds = -1;
 	currentDefenderOdds = -1;
-
+	
 }
 
 /*
@@ -2450,135 +2195,19 @@ bool isTechAvailable(int factionId, int techId)
 
 }
 
-__cdecl void modifiedBattleReportItemNameDisplay(int destinationPointer, int sourcePointer)
-{
-	if (bomberAttacksInterceptor)
-	{
-		if (bomberAttacksInterceptorPass % 2 == 0)
-		{
-			// use armor for attacker
-
-			sourcePointer = (int)Armor[Units[Vehicles[bomberAttacksInterceptorAttackerVehicleId].unit_id].armor_id].name;
-
-		}
-
-	}
-
-	// execute original function
-
-	tx_strcat(destinationPointer, sourcePointer);
-
-}
-
-__cdecl void modifiedBattleReportItemValueDisplay(int destinationPointer, int sourcePointer)
-{
-	if (bomberAttacksInterceptor)
-	{
-		if (bomberAttacksInterceptorPass % 2 == 0)
-		{
-			// use armor for attacker
-
-			itoa(Armor[Units[Vehicles[bomberAttacksInterceptorAttackerVehicleId].unit_id].armor_id].defense_value, (char *)sourcePointer, 10);
-
-		}
-
-		// increment pass number
-
-		bomberAttacksInterceptorPass++;
-
-	}
-
-	// execute original function
-
-	tx_strcat(destinationPointer, sourcePointer);
-
-}
-
-/*
-Destroys all improvement on lost territory.
-*/
-__cdecl void modifiedResetTerritory()
-{
-	// build all destroyable terrain improvements
-
-	uint32_t destroyableImprovments =
-		Terraform[FORMER_FARM].bit |
-		Terraform[FORMER_SOIL_ENR].bit |
-		Terraform[FORMER_MINE].bit |
-		Terraform[FORMER_SOLAR].bit |
-		Terraform[FORMER_FOREST].bit |
-		Terraform[FORMER_ROAD].bit |
-		Terraform[FORMER_MAGTUBE].bit |
-		Terraform[FORMER_BUNKER].bit |
-		Terraform[FORMER_AIRBASE].bit |
-		Terraform[FORMER_SENSOR].bit |
-		Terraform[FORMER_CONDENSER].bit |
-		Terraform[FORMER_ECH_MIRROR].bit |
-		Terraform[FORMER_THERMAL_BORE].bit
-	;
-
-	// record exising map owners
-
-	int *oldMapOwners = new int[*MapAreaTiles];
-
-	for (int mapIndex = 0; mapIndex < *MapAreaTiles; mapIndex++)
-	{
-		MAP *tile = &((*MapTiles)[mapIndex]);
-
-		oldMapOwners[mapIndex] = tile->owner;
-
-	}
-
-	// execute original function
-
-	reset_territory();
-
-	// destroy improvements on lost territory
-
-	for (int mapIndex = 0; mapIndex < *MapAreaTiles; mapIndex++)
-	{
-		MAP *tile = &((*MapTiles)[mapIndex]);
-
-		int oldMapOwner = oldMapOwners[mapIndex];
-		int newMapOwner = tile->owner;
-
-		if (oldMapOwner > 0 && newMapOwner != oldMapOwner)
-		{
-			tile->items &= ~destroyableImprovments;
-		}
-
-	}
-
-	// delete allocated array
-
-	delete[] oldMapOwners;
-
-}
-
-/*
-Returns modified limited orbital yield based on configured limit.
-*/
-__cdecl int modifiedOrbitalYieldLimit()
-{
-	int limit = (int)floor(conf.orbital_yield_limit * (double)(*CurrentBase)->pop_size);
-
-	return limit;
-
-}
-
 /*
 Modifies bitmask to invoke vendetta dialog if there commlink.
 */
 __cdecl int modifiedBreakTreaty(int actingFactionId, int targetFactionId, int bitmask)
 {
 	// include commlink mask
-
+	
 	bitmask |= DIPLO_COMMLINK;
-
+	
 	// call original function
-
+	
 	return break_treaty(actingFactionId, targetFactionId, bitmask);
-
+	
 }
 
 /*
@@ -2588,32 +2217,32 @@ int __cdecl modifiedBaseMaking(int item, int baseId)
 {
 	BASE *base = &(Bases[baseId]);
 	int currentItem = base->queue_items[0];
-
+	
 	// do not penalize retooling on first turn
-
+	
 	if (base->state_flags & BSTATE_PRODUCTION_DONE)
 	{
 		return 0;
 	}
-
+	
 	// do not penalize retooling from already built facility
-
+	
 	if (currentItem < 0 && -currentItem < SP_ID_First && isBaseHasFacility(baseId, -currentItem))
 	{
 		return 0;
 	}
-
+	
 	// do not penalize retooling from already built project
-
+	
 	if (currentItem < 0 && -currentItem >= SP_ID_First && SecretProjects[-currentItem - SP_ID_First] >= 0)
 	{
 		return 0;
 	}
-
+	
 	// run original code in all other cases
-
+	
 	return base_making(item, baseId);
-
+	
 }
 
 /*
@@ -2875,45 +2504,6 @@ int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistanc
 }
 
 /*
-Destroys unsubverted units in MC-d base.
-*/
-int __cdecl modifiedMindControlCaptureBase(int baseId, int faction, int probe)
-{
-	BASE *base = &(Bases[baseId]);
-
-	// call orinal code
-	// this actually skips mod_capture_base HQ relocation code but we should believe MD-d base wasn't HQ
-
-	int value = capture_base(baseId, faction, probe);
-
-	// destroy not base faction units in base
-
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-
-		// ignore base faction
-
-		if (vehicle->faction_id == base->faction_id)
-			continue;
-
-		// check vehicle is at base
-
-		if (vehicle->x == base->x && vehicle->y == base->y)
-		{
-			// kill vehicle
-
-			killVehicle(vehicleId);
-
-		}
-
-	}
-
-	return value;
-
-}
-
-/*
 Moves subverted vehicle on probe tile and stops probe.
 */
 void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVehicleId, int radius)
@@ -3151,20 +2741,6 @@ int __cdecl modifiedTurnUpkeep()
 	);
 	fclose(statistics_faction_log);
 	
-	// modify native units cost
-	
-	if (conf.native_unit_cost_time_multiplier > 1.0)
-	{
-		double multiplier = pow(conf.native_unit_cost_time_multiplier, *CurrentTurn);
-		
-		Units[BSC_MIND_WORMS].cost = (int)floor((double)conf.native_unit_cost_initial_mind_worm * multiplier);
-		Units[BSC_SPORE_LAUNCHER].cost = (int)floor((double)conf.native_unit_cost_initial_spore_launcher * multiplier);
-		Units[BSC_SEALURK].cost = (int)floor((double)conf.native_unit_cost_initial_sealurk * multiplier);
-		Units[BSC_ISLE_OF_THE_DEEP].cost = (int)floor((double)conf.native_unit_cost_initial_isle_of_the_deep * multiplier);
-		Units[BSC_LOCUSTS_OF_CHIRON].cost = (int)floor((double)conf.native_unit_cost_initial_locusts_of_chiron * multiplier);
-		
-	}
-	
 	// execute original function
 	
 	return mod_turn_upkeep();
@@ -3172,34 +2748,75 @@ int __cdecl modifiedTurnUpkeep()
 }
 
 /*
-Returns 1 if terraform improvement is destroyable, 0 otherwise.
+Exclude sensor from destruction menu.
 */
-int __cdecl isDestroyableImprovement(int terraformIndex, int items)
+int __thiscall wtp_mod_Console_destroy(Console *This, int vehicleId)
 {
-	// exclude road if there is magtube
+	MAP *tile = getVehicleMapTile(vehicleId);
+	bool sensor = map_has_item(tile, BIT_SENSOR);
+	
+	if (conf.sensor_indestructible)
+	{
+		// temporarily remove sensor if exists
+		
+		if (sensor)
+		{
+			tile->items &= ~BIT_SENSOR;
+		}
+		
+	}
+	
+	int returnValue = Console_destroy(This, vehicleId);
+	
+	if (conf.sensor_indestructible)
+	{
+		// restore sensor
+		
+		if (sensor)
+		{
+			tile->items |= BIT_SENSOR;
+		}
+		
+	}
+	
+	return returnValue;
+	
+}
 
-	if (terraformIndex == FORMER_ROAD && (items & BIT_MAGTUBE))
-		return 0;
-
-	// exclude farm if there is soil enricher
-
-	if (terraformIndex == FORMER_FARM && (items & BIT_SOIL_ENRICHER))
-		return 0;
-
-	// exclude plant fungus
-
-	if (terraformIndex == FORMER_PLANT_FUNGUS)
-		return 0;
-
-	// exclude sensor
-
-	if (terraformIndex == FORMER_SENSOR)
-		return 0;
-
-	// return 1 by default
-
-	return 1;
-
+/*
+Exclude sensor from destruction action.
+*/
+int __cdecl wtp_mod_action_destroy(int vehicleId, int terrainBit, int x, int y)
+{
+	MAP *tile = isOnMap(x, y) ? getMapTile(x, y) : getVehicleMapTile(vehicleId);
+	bool sensor = map_has_item(tile, BIT_SENSOR);
+	
+	if (conf.sensor_indestructible)
+	{
+		// temporarily remove sensor if exists
+		
+		if (sensor)
+		{
+			tile->items &= ~BIT_SENSOR;
+		}
+		
+	}
+	
+	int returnValue = action_destroy(vehicleId, terrainBit, x, y);
+	
+	if (conf.sensor_indestructible)
+	{
+		// restore sensor
+		
+		if (sensor)
+		{
+			tile->items |= BIT_SENSOR;
+		}
+		
+	}
+	
+	return returnValue;
+	
 }
 
 int __cdecl modified_tech_value(int techId, int factionId, int flag)
@@ -3940,60 +3557,6 @@ void __cdecl modified_kill(int vehicleId)
 	// execute original code
 
 	tx_kill(vehicleId);
-
-}
-
-/*
-Intercepts text_get 1 to disable tech_steal.
-*/
-__cdecl void modified_text_get_for_tech_steal_1()
-{
-	// execute original function
-
-	tx_text_get();
-
-	// save current probe steal tech toggle value
-
-	alphax_tgl_probe_steal_tech_value = *alphax_tgl_probe_steal_tech;
-
-	// check relations and decide whether to disable tech steal
-
-	bool disableTechSteal = false;
-
-	if (isVendetta(*CurrentFaction, *g_PROBE_FACT_TARGET) && conf.disable_tech_steal_vendetta)
-	{
-		disableTechSteal = true;
-	}
-	else if (isPact(*CurrentFaction, *g_PROBE_FACT_TARGET) && conf.disable_tech_steal_pact)
-	{
-		disableTechSteal = true;
-	}
-	else if (conf.disable_tech_steal_other)
-	{
-		disableTechSteal = true;
-	}
-
-	// disable tech steal if set
-
-	if (disableTechSteal)
-	{
-		*alphax_tgl_probe_steal_tech = 0;
-	}
-
-}
-
-/*
-Intercepts text_get 2 to restore tech_steal.
-*/
-__cdecl void modified_text_get_for_tech_steal_2()
-{
-	// execute original function
-
-	tx_text_get();
-
-	// restore probe tech steal toggle value
-
-	*alphax_tgl_probe_steal_tech = alphax_tgl_probe_steal_tech_value;
 
 }
 

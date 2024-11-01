@@ -550,6 +550,15 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
     // Original function can return inconsistent sea mineral output when base_id is not set
     assert((base_id < 0 && alt == ALT_OCEAN_SHELF && MFactions[faction_id].is_aquatic())
         || (value == mine_yield(faction_id, base_id, x, y, flag)));
+	
+	// [WTP]
+	// Pressure Dome minerals
+	
+    if (is_base && has_fac_built(FAC_PRESSURE_DOME, base_id))
+	{
+		value += conf.pressure_dome_minerals;
+	}
+	
     return value;
 }
 

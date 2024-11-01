@@ -31,15 +31,11 @@ Patch battle compute wrapper.
 void patch_battle_compute()
 {
     // wrap battle computation into custom function
-
+	
     write_call_over(0x0050474C, (int)wtp_mod_battle_compute);
     write_call_over(0x00506EA6, (int)wtp_mod_battle_compute);
     write_call_over(0x005085E0, (int)wtp_mod_battle_compute);
-
-    // wrap string concatenation into custom function for battle computation output only
-
-    write_call_over(0x00422915, (int)wtp_mod_battle_compute_compose_value_percentage);
-
+	
 }
 
 /*
@@ -215,48 +211,14 @@ void patch_disable_focus()
 }
 
 /*
-Ignores reactor power multiplier in combat processing.
-*/
-void patch_ignore_reactor_power_in_combat_processing()
-{
-    // Ignore reactor power in combat processing
-    // set up both units firepower as if it were psi combat
-
-    // ignore defender reactor power
-
-    int ignore_defender_reactor_power_combat_bytes_length = 1;
-
-    /* jl */
-    byte old_ignore_defender_reactor_power_combat_bytes[] = { 0x7C };
-
-    /* jmp */
-    byte new_ignore_defender_reactor_power_combat_bytes[] = { 0xEB };
-
-    write_bytes(0x00506F90, old_ignore_defender_reactor_power_combat_bytes, new_ignore_defender_reactor_power_combat_bytes, ignore_defender_reactor_power_combat_bytes_length);
-
-    // ignore attacker reactor power
-
-    int ignore_attacker_reactor_power_combat_bytes_length = 1;
-
-    /* jl */
-    byte old_ignore_attacker_reactor_power_combat_bytes[] = { 0x7C };
-
-    /* jmp */
-    byte new_ignore_attacker_reactor_power_combat_bytes[] = { 0xEB };
-
-    write_bytes(0x00506FF6, old_ignore_attacker_reactor_power_combat_bytes, new_ignore_attacker_reactor_power_combat_bytes, ignore_attacker_reactor_power_combat_bytes_length);
-
-}
-
-/*
 Fixes combat roll formula to match odds.
 */
 void patch_combat_roll()
 {
     // replace code
-
+	
     int combat_roll_bytes_length = 0x30;
-
+	
     /*
     0:  8b 75 ec                mov    esi,DWORD PTR [ebp-0x14]
     3:  8d 46 ff                lea    eax,[esi-0x1]
@@ -282,7 +244,7 @@ void patch_combat_roll()
     byte combat_roll_old_bytes[] =
         { 0x8B, 0x75, 0xEC, 0x8D, 0x46, 0xFF, 0x85, 0xC0, 0x7F, 0x04, 0x33, 0xFF, 0xEB, 0x0A, 0xE8, 0x65, 0xCE, 0x13, 0x00, 0x99, 0xF7, 0xFE, 0x8B, 0xFA, 0x8B, 0x75, 0xE4, 0x8D, 0x4E, 0xFF, 0x85, 0xC9, 0x7F, 0x04, 0x33, 0xD2, 0xEB, 0x08, 0xE8, 0x4D, 0xCE, 0x13, 0x00, 0x99, 0xF7, 0xFE, 0x3B, 0xFA, 0x0F, 0x8E, 0x4E, 0x04, 0x00, 0x00 }
     ;
-
+	
     /*
     0:  8d bd 10 ff ff ff       lea    edi,[ebp-0xf0]
     6:  57                      push   edi
@@ -306,7 +268,7 @@ void patch_combat_roll()
     byte combat_roll_new_bytes[] =
         { 0x8D, 0xBD, 0x10, 0xFF, 0xFF, 0xFF, 0x57, 0x8B, 0x7D, 0xA4, 0x57, 0x8B, 0x7D, 0xA0, 0x57, 0x8B, 0x7D, 0xF8, 0x57, 0x8B, 0x7D, 0xFC, 0x57, 0x8B, 0x7D, 0xE4, 0x57, 0x8B, 0x7D, 0xEC, 0x57, 0xE8, 0xFC, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x1C, 0x85, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x005091A5,
@@ -315,11 +277,11 @@ void patch_combat_roll()
         combat_roll_bytes_length
     )
     ;
-
+	
     // set call pointer to custom combat_roll function
-
+	
     write_call(0x005091A5 + 0x1f, (int)combat_roll);
-
+	
 }
 
 /*
@@ -328,17 +290,17 @@ Display more information and more correct one in odds display dialog.
 void patch_display_odds()
 {
 	// intercept parse_num call to capture attacker odds
-
+	
 	write_call(0x005082AF, (int)captureAttackerOdds);
-
+	
 	// intercept parse_num call to capture defender odds
-
+	
 	write_call(0x005082B7, (int)captureDefenderOdds);
-
+	
 	// intercept popp call to modify the display
-
+	
 	write_call(0x005082F0, (int)modifiedDisplayOdds);
-
+	
 }
 
 /*
@@ -347,9 +309,9 @@ Assigns alternative base values for weapon icon selection algorithm.
 void patch_weapon_icon_selection_algorithm()
 {
     // load weapon ID instead of weapon value for icon selection
-
+	
     int load_weapon_value_bytes_length = 0xC;
-
+	
     /*
     shl    eax,0x4
     cmp    esi,ebx
@@ -358,7 +320,7 @@ void patch_weapon_icon_selection_algorithm()
     byte old_load_weapon_value_bytes[] =
         { 0xC1, 0xE0, 0x04, 0x3B, 0xF3, 0x0F, 0xBE, 0x88, 0x68, 0xAE, 0x94, 0x00 }
     ;
-
+	
     /*
     mov    ecx,eax
     cmp    esi,ebx
@@ -372,7 +334,7 @@ void patch_weapon_icon_selection_algorithm()
     byte new_load_weapon_value_bytes[] =
         { 0x89, 0xC1, 0x39, 0xDE, 0xC1, 0xE0, 0x04, 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x004C2E15,
@@ -380,12 +342,12 @@ void patch_weapon_icon_selection_algorithm()
         new_load_weapon_value_bytes,
         load_weapon_value_bytes_length
     )
-    ;
-
+	;
+	
     // rearrange switch table to match weapon ID instead of weapon value
-
+	
     int weapon_icon_selection_table_bytes_length = 0x8D;
-
+	
     /*
     or      eax, 0xFFFFFFFF
     push    ebx
@@ -430,7 +392,7 @@ void patch_weapon_icon_selection_algorithm()
     byte old_weapon_icon_selection_table_bytes[] =
         { 0x83, 0xC8, 0xFF, 0x53, 0x89, 0x45, 0x98, 0x89, 0x45, 0x9C, 0xB8, 0x02, 0x00, 0x00, 0x00, 0x56, 0x89, 0x45, 0xB0, 0x89, 0x45, 0xB4, 0xB8, 0x04, 0x00, 0x00, 0x00, 0x57, 0x89, 0x45, 0xB8, 0x89, 0x45, 0xBC, 0xB8, 0x09, 0x00, 0x00, 0x00, 0xB9, 0x08, 0x00, 0x00, 0x00, 0x89, 0x45, 0xE8, 0x89, 0x45, 0xEC, 0x89, 0x45, 0xF0, 0x89, 0x45, 0xF4, 0x8B, 0x45, 0x0C, 0x33, 0xDB, 0xBA, 0x05, 0x00, 0x00, 0x00, 0xBF, 0x07, 0x00, 0x00, 0x00, 0x3B, 0xC1, 0x89, 0x5D, 0xA0, 0x89, 0x5D, 0xA4, 0xC7, 0x45, 0xA8, 0x01, 0x00, 0x00, 0x00, 0xC7, 0x45, 0xAC, 0x03, 0x00, 0x00, 0x00, 0x89, 0x55, 0xC0, 0x89, 0x55, 0xC4, 0xC7, 0x45, 0xC8, 0x06, 0x00, 0x00, 0x00, 0x89, 0x7D, 0xCC, 0x89, 0x7D, 0xD0, 0x89, 0x7D, 0xD4, 0x89, 0x4D, 0xD8, 0x89, 0x4D, 0xDC, 0x89, 0x4D, 0xE0, 0x89, 0x4D, 0xE4, 0xC7, 0x45, 0xF8, 0x0A, 0x00, 0x00, 0x00, 0xC7, 0x45, 0xFC, 0x0D, 0x00, 0x00, 0x00 }
     ;
-
+	
     /*
     or     eax,0xffffffff
     mov    DWORD PTR [ebp-0x38],eax
@@ -503,7 +465,7 @@ void patch_weapon_icon_selection_algorithm()
     byte new_weapon_icon_selection_table_bytes[] =
         { 0x83, 0xC8, 0xFF, 0x89, 0x45, 0xC8, 0x89, 0x45, 0xCC, 0x89, 0x45, 0xD4, 0x89, 0x45, 0xD8, 0x89, 0x45, 0xDC, 0x89, 0x45, 0xE0, 0x89, 0x45, 0xE4, 0x89, 0x45, 0xE8, 0x89, 0x45, 0xEC, 0x89, 0x45, 0xF0, 0x89, 0x45, 0xF4, 0x89, 0x45, 0xF8, 0x89, 0x45, 0xFC, 0x89, 0x45, 0x98, 0x40, 0x89, 0x45, 0x9C, 0x40, 0x89, 0x45, 0xA0, 0x40, 0x89, 0x45, 0xA8, 0x40, 0x89, 0x45, 0xA4, 0x40, 0x89, 0x45, 0xAC, 0x40, 0x89, 0x45, 0xB0, 0x40, 0x89, 0x45, 0xB4, 0x40, 0x89, 0x45, 0xB8, 0x40, 0x89, 0x45, 0xBC, 0x40, 0x89, 0x45, 0xC0, 0x40, 0x89, 0x45, 0xC4, 0xC7, 0x45, 0xD0, 0x0D, 0x00, 0x00, 0x00, 0x53, 0x56, 0x57, 0x31, 0xDB, 0xBA, 0x05, 0x00, 0x00, 0x00, 0xBF, 0x07, 0x00, 0x00, 0x00, 0x8B, 0x45, 0x0C, 0xB9, 0x08, 0x00, 0x00, 0x00, 0x39, 0xC8, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x004C2CF6,
@@ -512,7 +474,7 @@ void patch_weapon_icon_selection_algorithm()
         weapon_icon_selection_table_bytes_length
     )
     ;
-
+	
 }
 
 /*
@@ -539,14 +501,14 @@ void patch_alternative_prototype_cost_formula()
     write_call_over(0x00582FEC, (int)wtp_mod_proto_cost);
     write_call_over(0x005A5D35, (int)wtp_mod_proto_cost);
     write_call_over(0x005A5F15, (int)wtp_mod_proto_cost);
-
+	
 }
 
 void patch_hurry_popup()
 {
     write_call(0x41916B, (int)wtp_BaseWin_popup_start);
     write_call(0x4195A6, (int)wtp_BaseWin_ask_number);
-
+	
 }
 
 /*
@@ -682,14 +644,14 @@ Uses defender reactor power for collateral damage computation.
 void patch_collateral_damage_defender_reactor()
 {
     int collateral_damage_defender_reactor_bytes_length = 0x2;
-
+	
     /*
     jge     short loc_50AA9F
     */
     byte old_collateral_damage_defender_reactor_bytes[] =
         { 0x7D, 0x16 }
     ;
-
+	
     /*
     nop
     nop
@@ -697,7 +659,7 @@ void patch_collateral_damage_defender_reactor()
     byte new_collateral_damage_defender_reactor_bytes[] =
         { 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x0050AA87,
@@ -706,7 +668,7 @@ void patch_collateral_damage_defender_reactor()
         collateral_damage_defender_reactor_bytes_length
     )
     ;
-
+	
 }
 
 /*
@@ -716,23 +678,23 @@ Makes promotions probabilities uniform for all levels.
 void patch_uniform_promotions()
 {
     // enable factor of 1/2 for Very Green, Green, Regular
-
+	
     int halve_promotion_chances_for_all_levels_bytes_length = 0x2;
-
+	
     /*
     0:  7e 17                   jle    0x19
     */
     byte halve_promotion_chances_for_all_levels_bytes_old[] =
         { 0x7E, 0x17 }
     ;
-
+	
     /*
     ...
     */
     byte halve_promotion_chances_for_all_levels_bytes_new[] =
         { 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x00506342,
@@ -741,25 +703,25 @@ void patch_uniform_promotions()
         halve_promotion_chances_for_all_levels_bytes_length
     )
     ;
-
+	
     // disable attacker immediate promotion for Very Green, Green
-
+	
     int disable_attacker_immediate_promotion_bytes_length = 0x2;
-
+	
     /*
     0:  7e 21                   jle    0x23
     */
     byte disable_attacker_immediate_promotion_bytes_old[] =
         { 0x7E, 0x21 }
     ;
-
+	
     /*
     ...
     */
     byte disable_attacker_immediate_promotion_bytes_new[] =
         { 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x0050A2B1,
@@ -768,25 +730,25 @@ void patch_uniform_promotions()
         disable_attacker_immediate_promotion_bytes_length
     )
     ;
-
+	
     // disable defender immediate promotion for Very Green, Green
-
+	
     int disable_defender_immediate_promotion_bytes_length = 0x2;
-
+	
     /*
     0:  7e 3a                   jle    0x3c
     */
     byte disable_defender_immediate_promotion_bytes_old[] =
         { 0x7E, 0x3A }
     ;
-
+	
     /*
     ...
     */
     byte disable_defender_immediate_promotion_bytes_new[] =
         { 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x0050A3ED,
@@ -795,18 +757,18 @@ void patch_uniform_promotions()
         disable_defender_immediate_promotion_bytes_length
     )
     ;
-
+	
     // unify attacker_1 reactor power multiplier
-
+	
     int unify_attacker_1_reactor_power_multiplier_bytes_length = 0x6;
-
+	
     /*
     0:  8a 81 8f b8 9a 00       mov    al,BYTE PTR [ecx+0x9ab88f]
     */
     byte unify_attacker_1_reactor_power_multiplier_bytes_old[] =
         { 0x8A, 0x81, 0x8F, 0xB8, 0x9A, 0x00 }
     ;
-
+	
     /*
     0:  b0 01                   mov    al,0x1
     ...
@@ -814,7 +776,7 @@ void patch_uniform_promotions()
     byte unify_attacker_1_reactor_power_multiplier_bytes_new[] =
         { 0xB0, 0x01, 0x90, 0x90, 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x0050A223,
@@ -823,18 +785,18 @@ void patch_uniform_promotions()
         unify_attacker_1_reactor_power_multiplier_bytes_length
     )
     ;
-
+	
     // unify attacker_2 reactor power multiplier
-
+	
     int unify_attacker_2_reactor_power_multiplier_bytes_length = 0x6;
-
+	
     /*
     0:  8a 90 8f b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab88f]
     */
     byte unify_attacker_2_reactor_power_multiplier_bytes_old[] =
         { 0x8A, 0x90, 0x8F, 0xB8, 0x9A, 0x00 }
     ;
-
+	
     /*
     0:  b2 01                   mov    dl,0x1
     ...
@@ -842,7 +804,7 @@ void patch_uniform_promotions()
     byte unify_attacker_2_reactor_power_multiplier_bytes_new[] =
         { 0xB2, 0x01, 0x90, 0x90, 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x0050A283,
@@ -851,18 +813,18 @@ void patch_uniform_promotions()
         unify_attacker_2_reactor_power_multiplier_bytes_length
     )
     ;
-
+	
     // unify defender_1 reactor power multiplier
-
+	
     int unify_defender_1_reactor_power_multiplier_bytes_length = 0x6;
-
+	
     /*
     0:  8a 90 8f b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab88f]
     */
     byte unify_defender_1_reactor_power_multiplier_bytes_old[] =
         { 0x8A, 0x90, 0x8F, 0xB8, 0x9A, 0x00 }
     ;
-
+	
     /*
     0:  b2 01                   mov    dl,0x1
     ...
@@ -870,7 +832,7 @@ void patch_uniform_promotions()
     byte unify_defender_1_reactor_power_multiplier_bytes_new[] =
         { 0xB2, 0x01, 0x90, 0x90, 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x0050A341,
@@ -879,18 +841,18 @@ void patch_uniform_promotions()
         unify_defender_1_reactor_power_multiplier_bytes_length
     )
     ;
-
+	
     // unify defender_2 reactor power multiplier
-
+	
     int unify_defender_2_reactor_power_multiplier_bytes_length = 0x6;
-
+	
     /*
     0:  8a 90 8f b8 9a 00       mov    dl,BYTE PTR [eax+0x9ab88f]
     */
     byte unify_defender_2_reactor_power_multiplier_bytes_old[] =
         { 0x8A, 0x90, 0x8F, 0xB8, 0x9A, 0x00 }
     ;
-
+	
     /*
     0:  b2 01                   mov    dl,0x1
     ...
@@ -898,7 +860,7 @@ void patch_uniform_promotions()
     byte unify_defender_2_reactor_power_multiplier_bytes_new[] =
         { 0xB2, 0x01, 0x90, 0x90, 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x0050A3BF,
@@ -907,7 +869,7 @@ void patch_uniform_promotions()
         unify_defender_2_reactor_power_multiplier_bytes_length
     )
     ;
-
+	
 }
 
 /*
@@ -915,51 +877,24 @@ Removes Very Green on defense morale bonus.
 */
 void patch_very_green_no_defense_bonus()
 {
-    // very_green_no_defense_bonus
-
-    int very_green_no_defense_bonus_bytes_length = 0x2;
-
-    /*
-    0:  7c 0c                   jl     0xe
-    */
-    byte very_green_no_defense_bonus_bytes_old[] =
-        { 0x7C, 0x0C }
-    ;
-
-    /*
-    ...
-    */
-    byte very_green_no_defense_bonus_bytes_new[] =
-        { 0x90, 0x90 }
-    ;
-
-    write_bytes
-    (
-        0x00501C06,
-        very_green_no_defense_bonus_bytes_old,
-        very_green_no_defense_bonus_bytes_new,
-        very_green_no_defense_bonus_bytes_length
-    )
-    ;
-
     // very_green_no_defense_bonus_display
-
+	
     int very_green_no_defense_bonus_display_bytes_length = 0x2;
-
+	
     /*
     0:  75 10                   jne    0x12
     */
     byte very_green_no_defense_bonus_display_bytes_old[] =
         { 0x75, 0x10 }
     ;
-
+	
     /*
     0:  75 10                   jmp    0x12
     */
     byte very_green_no_defense_bonus_display_bytes_new[] =
         { 0xEB, 0x10 }
     ;
-
+	
     write_bytes
     (
         0x004B4327,
@@ -968,7 +903,7 @@ void patch_very_green_no_defense_bonus()
         very_green_no_defense_bonus_display_bytes_length
     )
     ;
-
+	
 }
 
 /*
@@ -1011,9 +946,9 @@ Alternative artillery damage.
 void patch_alternative_artillery_damage()
 {
     // alternative_artillery_damage
-
+	
     int alternative_artillery_damage_bytes_length = 0x35;
-
+	
     /*
     0:  99                      cdq
     1:  f7 f9                   idiv   ecx
@@ -1040,26 +975,26 @@ void patch_alternative_artillery_damage()
     byte alternative_artillery_damage_bytes_old[] =
         { 0x99, 0xF7, 0xF9, 0x40, 0x83, 0xF8, 0x01, 0x7C, 0x12, 0x3D, 0xE7, 0x03, 0x00, 0x00, 0x7E, 0x07, 0xBE, 0xE7, 0x03, 0x00, 0x00, 0xEB, 0x09, 0x8B, 0xF0, 0xEB, 0x05, 0xBE, 0x01, 0x00, 0x00, 0x00, 0x8D, 0x4E, 0xFF, 0x85, 0xC9, 0x7F, 0x04, 0x33, 0xFF, 0xEB, 0x0A, 0xE8, 0xD7, 0xD9, 0x13, 0x00, 0x99, 0xF7, 0xFE, 0x8B, 0xFA }
     ;
-
+	
     // correctly set attacker firepower depending on whether reactor is ignored in combat
-
+	
     int attackerFirepowerByte;
-
-    if (conf.ignore_reactor_power != 0 || conf.ignore_reactor_power_in_combat)
+	
+    if (conf.ignore_reactor_power != 0 || conf.ignore_reactor_power)
 	{
 		// attacker firepower = defender reactor (same as with H2H combat with ignored reactor)
-
+		
 		attackerFirepowerByte = 0x98;
-
+		
 	}
 	else
 	{
 		// attacker firepower = attacker reactor (vanilla)
-
+		
 		attackerFirepowerByte = 0x90;
-
+		
 	}
-
+	
     /*
     0:  ff 75 90                push   DWORD PTR [ebp-0x70]
     3:  51                      push   ecx
@@ -1072,7 +1007,7 @@ void patch_alternative_artillery_damage()
     byte alternative_artillery_damage_bytes_new[] =
         { 0xFF, 0x75, (byte)attackerFirepowerByte, 0x51, 0x50, 0xE8, 0xFC, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x0C, 0x89, 0xC7, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x00508616,
@@ -1081,11 +1016,11 @@ void patch_alternative_artillery_damage()
         alternative_artillery_damage_bytes_length
     )
     ;
-
+	
     // custom artillery damage generator
-
+	
     write_call(0x00508616 + 0x5, (int)modified_artillery_damage);
-
+	
 }
 
 /*
@@ -1204,34 +1139,6 @@ void patch_default_morale_very_green()
     )
     ;
 
-}
-
-/*
-Patch tile yield calculation.
-*/
-void patch_tile_yield()
-{
-	// mineral yield
-	write_call(0x004B6E4F, (int)wtp_mod_mineral_yield);
-	write_call(0x004B6EF9, (int)wtp_mod_mineral_yield);
-	write_call(0x004B6F84, (int)wtp_mod_mineral_yield);
-	write_call(0x004E7E00, (int)wtp_mod_mineral_yield);
-	write_call(0x004E7F14, (int)wtp_mod_mineral_yield);
-	write_call(0x004E8044, (int)wtp_mod_mineral_yield);
-	write_call(0x004E88AC, (int)wtp_mod_mineral_yield);
-	write_call(0x004E970A, (int)wtp_mod_mineral_yield);
-	
-	// energy yield
-	write_call(0x004B7028, (int)wtp_mod_energy_yield);
-	write_call(0x004B7136, (int)wtp_mod_energy_yield);
-	write_call(0x004D3E5C, (int)wtp_mod_energy_yield);
-	write_call(0x004E7E1C, (int)wtp_mod_energy_yield);
-	write_call(0x004E7F24, (int)wtp_mod_energy_yield);
-	write_call(0x004E8054, (int)wtp_mod_energy_yield);
-	write_call(0x004E88CA, (int)wtp_mod_energy_yield);
-	write_call(0x004E971F, (int)wtp_mod_energy_yield);
-	write_call(0x0056C856, (int)wtp_mod_energy_yield);
-	
 }
 
 /*
@@ -1868,210 +1775,6 @@ b:  e8 fd ff ff ff          call   d <_main+0xd>
 }
 
 /*
-Jams effect icons closer together for 5 icons to fit model box.
-*/
-void patch_compact_effect_icons()
-{
-	// === in SE dialog under model name ===
-
-	// sprite display position shifts before and after
-
-	int shiftBefore = -2;
-	int shiftAfter = -4;
-//	int shiftInitial = 0;
-	int shiftCombined = shiftBefore + shiftAfter;
-
-	// modify effect sprite width for the purpose total diplayed width
-
-	int effect_sprite_width_bytes_length = 0x3;
-	/*
-	0:  8d 51 01                lea    edx,[ecx+0x1]
-	*/
-	byte effect_sprite_width_bytes_old[] = { 0x8D, 0x51, 0x01 };
-	/*
-	0:  8d 51 f7                lea    edx,[ecx+<1 + shiftCombined>]
-	...
-	*/
-	byte effect_sprite_width_bytes_new[] = { 0x8D, 0x51, (byte)((1 + shiftCombined) & 0xFF) };
-	write_bytes
-	(
-		0x004AF628,
-		effect_sprite_width_bytes_old,
-		effect_sprite_width_bytes_new,
-		effect_sprite_width_bytes_length
-	);
-
-//	// modify starting horizontal position
-//
-//	int starting_horizontal_position_bytes_length = 0x9;
-//	/*
-//	0:  8b d8                   mov    ebx,eax
-//	2:  8b 45 d4                mov    eax,DWORD PTR [ebp-0x2c]
-//	5:  d1 fb                   sar    ebx,1
-//	7:  03 d8                   add    ebx,eax
-//	*/
-//	byte starting_horizontal_position_bytes_old[] = { 0x8B, 0xD8, 0x8B, 0x45, 0xD4, 0xD1, 0xFB, 0x03, 0xD8 };
-//	/*
-//	0:  8b 5d d4                mov    ebx,DWORD PTR [ebp-0x2c]
-//	3:  83 c3 1a                add    ebx,<shiftInitial>
-//	...
-//	*/
-//	byte starting_horizontal_position_bytes_new[] = { 0x8B, 0x5D, 0xD4, 0x83, 0xC3, (byte)shiftInitial, 0x90, 0x90, 0x90 };
-//	write_bytes
-//	(
-//		0x004AF64E,
-//		starting_horizontal_position_bytes_old,
-//		starting_horizontal_position_bytes_new,
-//		starting_horizontal_position_bytes_length
-//	);
-//
-	// modify current horizontal position before effect sprite
-
-	int horizontal_position_before_effect_bytes_length = 0x7;
-	/*
-	...
-	*/
-	byte horizontal_position_before_effect_bytes_old[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-	/*
-	0:  8d 5b 01                lea    ebx,[ebx+<shiftBefore>]
-	...
-	*/
-	byte horizontal_position_before_effect_bytes_new[] = { 0x8D, 0x5B, (byte)((shiftBefore) & 0xFF), 0x90, 0x90, 0x90, 0x90 };
-	write_bytes
-	(
-		0x004AF7F3,
-		horizontal_position_before_effect_bytes_old,
-		horizontal_position_before_effect_bytes_new,
-		horizontal_position_before_effect_bytes_length
-	);
-
-	// modify current horizontal position after effect sprite
-
-	int horizontal_position_after_effect_bytes_length = 0x4;
-	/*
-	0:  8d 5c 0b 01             lea    ebx,[ebx+ecx*1+0x1]
-	*/
-	byte horizontal_position_after_effect_bytes_old[] = { 0x8D, 0x5C, 0x0B, 0x01 };
-	/*
-	0:  8d 5c 0b f7             lea    ebx,[ebx+ecx*1+<1 + shiftAfter>]
-	*/
-	byte horizontal_position_after_effect_bytes_new[] = { 0x8D, 0x5C, 0x0B, (byte)((1 + shiftAfter) & 0xFF) };
-	write_bytes
-	(
-		0x004AF858,
-		horizontal_position_after_effect_bytes_old,
-		horizontal_position_after_effect_bytes_new,
-		horizontal_position_after_effect_bytes_length
-	);
-
-	// === in description window when hovering mouse over SE choice ===
-
-	// vertical positions and steps
-
-	int descriptionVerticalStepOriginal = 26;
-	int descriptionVerticalStep = 20;
-	int topMarginExtra = -2;
-	int topMargin = (descriptionVerticalStep - descriptionVerticalStepOriginal) / 2 + topMarginExtra;
-
-	// set top margin to half of the vertical step difference
-
-	int description_top_margin_bytes_length = 0x8;
-	/*
-	0:  99                      cdq
-	1:  2b c2                   sub    eax,edx
-	3:  8b 55 d4                mov    edx,DWORD PTR [ebp-0x2c]
-	6:  d1 f8                   sar    eax,1
-	*/
-	byte description_top_margin_bytes_old[] = { 0x99, 0x2B, 0xC2, 0x8B, 0x55, 0xD4, 0xD1, 0xF8 };
-	/*
-	0:  b8 01 00 00 00          mov    eax,<top margin>
-	5:  8b 55 d4                mov    edx,DWORD PTR [ebp-0x2c]
-	*/
-	byte description_top_margin_bytes_new[] = { 0xB8, (byte)((topMargin >> 0) & 0xFF), (byte)((topMargin >> 8) & 0xFF), (byte)((topMargin >> 16) & 0xFF), (byte)((topMargin >> 24) & 0xFF), 0x8B, 0x55, 0xD4 };
-	write_bytes
-	(
-		0x004B1458,
-		description_top_margin_bytes_old,
-		description_top_margin_bytes_new,
-		description_top_margin_bytes_length
-	);
-
-	// change vertical step in description
-
-	int description_vertical_step_bytes_length = 0x7;
-	/*
-	0:  8b 97 34 2e 00 00       mov    edx,DWORD PTR [edi+0x2e34]
-	*/
-	byte description_vertical_step_bytes_old[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-	/*
-	0:  c7 45 d4 01 00 00 00    mov    DWORD PTR [ebp-0x2c],<vertical step>
-	*/
-	byte description_vertical_step_bytes_new[] = { 0xC7, 0x45, 0xD4, (byte)(descriptionVerticalStep & 0xFF), 0x00, 0x00, 0x00 };
-	write_bytes
-	(
-		0x004B149B,
-		description_vertical_step_bytes_old,
-		description_vertical_step_bytes_new,
-		description_vertical_step_bytes_length
-	);
-
-}
-
-/*
-Wraps tech_research to modify SE RESEARCH bonus.
-*/
-void patch_research_bonus_multiplier()
-{
-	write_call(0x004F4F9C, (int)modified_tech_research);
-
-}
-
-///*
-//Removes fungal tower defense bonus.
-//*/
-//void patch_remove_fungal_tower_defense_bonus()
-//{
-//	// fungal tower defense bonus
-//
-//	int disable_fungal_tower_defense_bonus_bytes_length = 0x2;
-///*
-//0:  75 09                   jne    0xb
-//*/
-//	byte disable_fungal_tower_defense_bonus_bytes_old[] = { 0x75, 0x09 };
-///*
-//0:  eb 09                   jmp    0xb
-//*/
-//	byte disable_fungal_tower_defense_bonus_bytes_new[] = { 0xEB, 0x09 };
-//	write_bytes
-//	(
-//		0x00501D0F,
-//		disable_fungal_tower_defense_bonus_bytes_old,
-//		disable_fungal_tower_defense_bonus_bytes_new,
-//		disable_fungal_tower_defense_bonus_bytes_length
-//	);
-//
-//	// fungal tower defense bonus display
-//
-//	int disable_fungal_tower_defense_bonus_display_bytes_length = 0x2;
-///*
-//0:  75 39                   jne    0x3b
-//*/
-//	byte disable_fungal_tower_defense_bonus_display_bytes_old[] = { 0x75, 0x39 };
-///*
-//0:  eb 39                   jmp    0x3b
-//*/
-//	byte disable_fungal_tower_defense_bonus_display_bytes_new[] = { 0xEB, 0x39 };
-//	write_bytes
-//	(
-//		0x005020C7,
-//		disable_fungal_tower_defense_bonus_display_bytes_old,
-//		disable_fungal_tower_defense_bonus_display_bytes_new,
-//		disable_fungal_tower_defense_bonus_display_bytes_length
-//	);
-//
-//}
-//
-/*
 unit upgrade does not require whole turn
 */
 void patch_unit_upgrade_ignores_movement()
@@ -2183,16 +1886,6 @@ void patch_unit_upgrade_ignores_movement()
 }
 
 /*
-; When one former starts terraforming action all idle formers in same tile do too.
-; May have unwanted consequenses of intercepting idle formers.
-*/
-void patch_group_terraforming()
-{
-    write_call(0x004CF766, (int)modifiedActionTerraform);
-
-}
-
-/*
 Disables land artillery bombard from sea.
 */
 void patch_disable_land_artillery_bombard_from_sea()
@@ -2247,59 +1940,6 @@ void patch_disable_move_territory_restrictions()
 
 }
 
-void patch_interceptor_scramble_fix_display()
-{
-	// modify the weapon/armor display
-
-    write_call(0x00422600, (int)modifiedBattleReportItemNameDisplay);
-    write_call(0x0042277A, (int)modifiedBattleReportItemValueDisplay);
-
-}
-
-void patch_scorched_earth()
-{
-	// wrap reset_territory when base is captured or killed
-
-    write_call(0x0050D16A, (int)modifiedResetTerritory);
-    write_call(0x004E5A40, (int)modifiedResetTerritory);
-
-}
-
-void patch_orbital_yield_limit()
-{
-	int orbital_yield_limit_bytes_length = 0x13;
-
-	/*
-	0:  8b 15 30 ea 90 00       mov    edx,DWORD PTR ds:0x90ea30
-	6:  0f be 42 06             movsx  eax,BYTE PTR [edx+0x6]
-	a:  8b 0c 17                mov    ecx,DWORD PTR [edi+edx*1]
-	d:  3b c1                   cmp    eax,ecx
-	f:  7c 02                   jl     0x13
-	11: 8b c1                   mov    eax,ecx
-	*/
-	byte orbital_yield_limit_bytes_old[] = { 0x8B, 0x15, 0x30, 0xEA, 0x90, 0x00, 0x0F, 0xBE, 0x42, 0x06, 0x8B, 0x0C, 0x17, 0x3B, 0xC1, 0x7C, 0x02, 0x8B, 0xC1 };
-
-	/*
-	0:  e8 fd ff ff ff          call   2 <_main+0x2>
-	5:  8b 15 30 ea 90 00       mov    edx,DWORD PTR ds:0x90ea30
-	b:  8b 0c 17                mov    ecx,DWORD PTR [edi+edx*1]
-	e:  39 c8                   cmp    eax,ecx
-	10: 0f 4f c1                cmovg  eax,ecx
-	*/
-	byte orbital_yield_limit_bytes_new[] = { 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x8B, 0x15, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0x0C, 0x17, 0x39, 0xC8, 0x0F, 0x4F, 0xC1 };
-
-	write_bytes
-	(
-		0x004E8210,
-		orbital_yield_limit_bytes_old,
-		orbital_yield_limit_bytes_new,
-		orbital_yield_limit_bytes_length
-	);
-
-    write_call(0x004E8210 + 0x0, (int)modifiedOrbitalYieldLimit);
-
-}
-
 void patch_silent_vendetta_warning()
 {
     write_call(0x004A050D, (int)modifiedBreakTreaty);
@@ -2315,18 +1955,18 @@ void patch_silent_vendetta_warning()
 void patch_design_cost_in_rows()
 {
 	int design_cost_in_rows_bytes_length = 0x3;
-
+	
 	/*
 	0:  0f af c7                imul   eax,edi
 	*/
 	byte design_cost_in_rows_bytes_old[] = { 0x0F, 0xAF, 0xC7 };
-
+	
 	/*
 	0:  89 f8                   mov    eax,edi
 	...
 	*/
 	byte design_cost_in_rows_bytes_new[] = { 0x89, 0xF8, 0x90 };
-
+	
 	write_bytes
 	(
 		0x00436BEF,
@@ -2334,19 +1974,19 @@ void patch_design_cost_in_rows()
 		design_cost_in_rows_bytes_new,
 		design_cost_in_rows_bytes_length
 	);
-
+	
 	int design_cost_in_rows_prototyping_bytes_length = 0x7;
-
+	
 	/*
 	0:  0f af 96 14 42 01 00    imul   edx,DWORD PTR [esi+0x14214]
 	*/
 	byte design_cost_in_rows_prototyping_bytes_old[] = { 0x0F, 0xAF, 0x96, 0x14, 0x42, 0x01, 0x00 };
-
+	
 	/*
 	...
 	*/
 	byte design_cost_in_rows_prototyping_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-
+	
 	write_bytes
 	(
 		0x0043707E,
@@ -2354,19 +1994,19 @@ void patch_design_cost_in_rows()
 		design_cost_in_rows_prototyping_bytes_new,
 		design_cost_in_rows_prototyping_bytes_length
 	);
-
+	
 	int design_cost_color_bytes_length = 0x5;
-
+	
 	/*
 	0:  a1 9c 6d 8c 00          mov    eax,ds:0x8c6d9c
 	*/
 	byte design_cost_color_bytes_old[] = { 0xA1, 0x9C, 0x6D, 0x8C, 0x00 };
-
+	
 	/*
 	0:  b8 ff 00 00 00          mov    eax,0xff
 	*/
 	byte design_cost_color_bytes_new[] = { 0xB8, 0xFF, 0x00, 0x00, 0x00 };
-
+	
 	write_bytes
 	(
 		0x00436A67,
@@ -2374,19 +2014,19 @@ void patch_design_cost_in_rows()
 		design_cost_color_bytes_new,
 		design_cost_color_bytes_length
 	);
-
+	
 	int design_cost_color_prototyping_bytes_length = 0x5;
-
+	
 	/*
 	0:  a1 ac 6d 8c 00          mov    eax,ds:0x8c6dac
 	*/
 	byte design_cost_color_prototyping_bytes_old[] = { 0xA1, 0xAC, 0x6D, 0x8C, 0x00 };
-
+	
 	/*
 	0:  b8 ff 00 00 00          mov    eax,0xff
 	*/
 	byte design_cost_color_prototyping_bytes_new[] = { 0xB8, 0xFF, 0x00, 0x00, 0x00 };
-
+	
 	write_bytes
 	(
 		0x00436FF2,
@@ -2394,13 +2034,13 @@ void patch_design_cost_in_rows()
 		design_cost_color_prototyping_bytes_new,
 		design_cost_color_prototyping_bytes_length
 	);
-
+	
 }
 
 void patch_carry_over_nutrients()
 {
 	// in BaseWin::draw_nutrients
-	// disable increment in grow turn computation
+	// do not add 1 in grow turn computation due to same turn base growth
 	
 	int carry_over_nutrients_grow_turns_bytes_length = 0x1;
 	
@@ -2427,20 +2067,20 @@ void patch_carry_over_nutrients()
 void patch_carry_over_minerals()
 {
 	// disable cutting carry over minerals
-
+	
 	int carry_over_minerals_unit_bytes_length = 0x3;
-
+	
 	/*
 	0:  39 56 40                cmp    DWORD PTR [esi+0x40],edx
 	*/
 	byte carry_over_minerals_unit_bytes_old[] = { 0x39, 0x56, 0x40 };
-
+	
 	/*
 	0:  39 d2                   cmp    edx,edx
 	...
 	*/
 	byte carry_over_minerals_unit_bytes_new[] = { 0x39, 0xD2, 0x90 };
-
+	
 	write_bytes
 	(
 		0x004F103E,
@@ -2448,20 +2088,20 @@ void patch_carry_over_minerals()
 		carry_over_minerals_unit_bytes_new,
 		carry_over_minerals_unit_bytes_length
 	);
-
+	
 	int carry_over_minerals_facility_bytes_length = 0x3;
-
+	
 	/*
 	0:  39 56 40                cmp    DWORD PTR [esi+0x40],edx
 	*/
 	byte carry_over_minerals_facility_bytes_old[] = { 0x39, 0x56, 0x40 };
-
+	
 	/*
 	0:  39 d2                   cmp    edx,edx
 	...
 	*/
 	byte carry_over_minerals_facility_bytes_new[] = { 0x39, 0xD2, 0x90 };
-
+	
 	write_bytes
 	(
 		0x004F1FC7,
@@ -2469,23 +2109,23 @@ void patch_carry_over_minerals()
 		carry_over_minerals_facility_bytes_new,
 		carry_over_minerals_facility_bytes_length
 	);
-
+	
 	// do not clear production flag at production popup
-
+	
 	int retain_production_flag_bytes_length = 0xb;
-
+	
 	/*
 	0:  8b 41 30                mov    eax,DWORD PTR [ecx+0x30]
 	3:  25 ff ff 7f ff          and    eax,0xff7fffff
 	8:  89 41 30                mov    DWORD PTR [ecx+0x30],eax
 	*/
 	byte retain_production_flag_bytes_old[] = { 0x8B, 0x41, 0x30, 0x25, 0xFF, 0xFF, 0x7F, 0xFF, 0x89, 0x41, 0x30 };
-
+	
 	/*
 	...
 	*/
 	byte retain_production_flag_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-
+	
 	write_bytes
 	(
 		0x004173AB,
@@ -2493,9 +2133,9 @@ void patch_carry_over_minerals()
 		retain_production_flag_bytes_new,
 		retain_production_flag_bytes_length
 	);
-
+	
 	// disable penalty after base production
-
+	
     write_call(0x004179A8, (int)modifiedBaseMaking);
     write_call(0x004179BC, (int)modifiedBaseMaking);
     write_call(0x00417A2E, (int)modifiedBaseMaking);
@@ -2508,7 +2148,7 @@ void patch_carry_over_minerals()
     write_call(0x004E485F, (int)modifiedBaseMaking);
     write_call(0x004E5B06, (int)modifiedBaseMaking);
     write_call(0x004E5B1B, (int)modifiedBaseMaking);
-
+	
 }
 
 void patch_subversion_allow_stacked_units()
@@ -2606,12 +2246,6 @@ void patch_subversion_allow_stacked_units()
 	);
 
     write_call(0x005A4250, (int)modifiedSubveredVehicleDrawTile);
-
-}
-
-void patch_mind_control_destroys_unsubverted()
-{
-    write_call_over(0x005A4AB0, (int)modifiedMindControlCaptureBase);
 
 }
 
@@ -2740,20 +2374,21 @@ void patch_alternative_subversion_and_mind_control()
 
 void patch_disable_guaranteed_facilities_destruction()
 {
-	// alternative subversion cost
-
+	// in capture_base
+	// disable guaranteed facilities destruction
+	
 	int disable_guaranteed_facilities_destruction_bytes_length = 0x3;
-
+	
 	/*
 	0:  8b 45 c8                mov    eax,DWORD PTR [ebp-0x38]
 	*/
 	byte disable_guaranteed_facilities_destruction_bytes_old[] = { 0x8B, 0x45, 0xC8 };
-
+	
 	/*
 	0:  83 c8 ff                or     eax,0xffffffff
 	*/
 	byte disable_guaranteed_facilities_destruction_bytes_new[] = { 0x83, 0xC8, 0xFF };
-
+	
 	write_bytes
 	(
 		0x0050D05B,
@@ -2761,33 +2396,7 @@ void patch_disable_guaranteed_facilities_destruction()
 		disable_guaranteed_facilities_destruction_bytes_new,
 		disable_guaranteed_facilities_destruction_bytes_length
 	);
-
-}
-
-void patch_supply_convoy_and_info_warfare_require_support()
-{
-	// Supply Convoy and Info Warfare require support
-
-	int supply_convoy_and_info_warfare_requires_support_bytes_length = 0x3;
-
-	/*
-	0:  80 fa 09                cmp    dl,0x9
-	*/
-	byte supply_convoy_and_info_warfare_requires_support_bytes_old[] = { 0x80, 0xFA, 0x09 };
-
-	/*
-	0:  80 fa 0b                cmp    dl,0xb
-	*/
-	byte supply_convoy_and_info_warfare_requires_support_bytes_new[] = { 0x80, 0xFA, 0x0B };
-
-	write_bytes
-	(
-		0x004E980E,
-		supply_convoy_and_info_warfare_requires_support_bytes_old,
-		supply_convoy_and_info_warfare_requires_support_bytes_new,
-		supply_convoy_and_info_warfare_requires_support_bytes_length
-	);
-
+	
 }
 
 void patch_exact_odds()
@@ -2955,7 +2564,7 @@ void patch_obsoletion()
 void patch_instant_completion_fixed_minerals(int minerals)
 {
 	int instant_completion_fixed_minerals_bytes_length = 0xf;
-
+	
 	/*
 	0:  8d 04 f6                lea    eax,[esi+esi*8]
 	3:  8d 14 46                lea    edx,[esi+eax*2]
@@ -2964,7 +2573,7 @@ void patch_instant_completion_fixed_minerals(int minerals)
 	c:  c1 e6 02                shl    esi,0x2
 	*/
 	byte instant_completion_fixed_minerals_bytes_old[] = { 0x8D, 0x04, 0xF6, 0x8D, 0x14, 0x46, 0x8B, 0x45, 0xEC, 0x8D, 0x34, 0x96, 0xC1, 0xE6, 0x02 };
-
+	
 	/*
 	0:  89 d6                   mov    esi,edx
 	2:  8b 8e 80 d0 97 00       mov    ecx,DWORD PTR [esi+0x97d080]
@@ -2973,7 +2582,7 @@ void patch_instant_completion_fixed_minerals(int minerals)
 	...
 	*/
 	byte instant_completion_fixed_minerals_bytes_new[] = { 0x89, 0xD6, 0x8B, 0x8E, 0x80, 0xD0, 0x97, 0x00, 0x83, 0xC1, (byte)minerals, 0x8B, 0x45, 0xEC, 0x90 };
-
+	
 	write_bytes
 	(
 		0x0057B824,
@@ -2981,7 +2590,7 @@ void patch_instant_completion_fixed_minerals(int minerals)
 		instant_completion_fixed_minerals_bytes_new,
 		instant_completion_fixed_minerals_bytes_length
 	);
-
+	
 }
 
 void patch_turn_upkeep()
@@ -2990,68 +2599,29 @@ void patch_turn_upkeep()
     write_call_over(0x52A4AD, (int)modifiedTurnUpkeep);
 }
 
-void patch_disable_sensor_destroying()
+void patch_sensor_indestructible()
 {
-	int disable_sensor_destroying_select_bytes_length = 0x1f;
-
-	/*
-	0:  83 fe 05                cmp    esi,0x5
-	3:  75 08                   jne    0xd
-	5:  f6 45 ec 08             test   BYTE PTR [ebp-0x14],0x8
-	9:  75 5a                   jne    0x65
-	b:  eb 14                   jmp    0x21
-	d:  85 f6                   test   esi,esi
-	f:  75 0b                   jne    0x1c
-	11: f7 45 ec 00 00 08 00    test   DWORD PTR [ebp-0x14],0x80000
-	18: 75 4b                   jne    0x65
-	1a: eb 05                   jmp    0x21
-	1c: 83 fe 0b                cmp    esi,0xb
-	*/
-	byte disable_sensor_destroying_select_bytes_old[] = { 0x83, 0xFE, 0x05, 0x75, 0x08, 0xF6, 0x45, 0xEC, 0x08, 0x75, 0x5A, 0xEB, 0x14, 0x85, 0xF6, 0x75, 0x0B, 0xF7, 0x45, 0xEC, 0x00, 0x00, 0x08, 0x00, 0x75, 0x4B, 0xEB, 0x05, 0x83, 0xFE, 0x0B };
-
-	/*
-	0:  ff 75 ec                push   DWORD PTR [ebp-0x14]
-	3:  56                      push   esi
-	4:  e8 fd ff ff ff          call   6 <_main+0x6>
-	9:  83 c4 08                add    esp,0x8
-	c:  85 c0                   test   eax,eax
-	...
-	*/
-	byte disable_sensor_destroying_select_bytes_new[] = { 0xFF, 0x75, 0xEC, 0x56, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x08, 0x85, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-
-	write_bytes
-	(
-		0x004D57FD,
-		disable_sensor_destroying_select_bytes_old,
-		disable_sensor_destroying_select_bytes_new,
-		disable_sensor_destroying_select_bytes_length
-	);
-
-    write_call(0x004D57FD + 0x4, (int)isDestroyableImprovement);
-
-	int disable_sensor_destroying_exclude_bytes_length = 0x8;
-
-	/*
-	0:  8b 45 14                mov    eax,DWORD PTR [ebp+0x14]
-	3:  24 df                   and    al,0xdf
-	5:  89 45 14                mov    DWORD PTR [ebp+0x14],eax
-	*/
-	byte disable_sensor_destroying_exclude_bytes_old[] = { 0x8B, 0x45, 0x14, 0x24, 0xDF, 0x89, 0x45, 0x14 };
-
-	/*
-	0:  81 65 14 df ff ff 7f    and    DWORD PTR [ebp+0x14],0x7fffffdf
-	...
-	*/
-	byte disable_sensor_destroying_exclude_bytes_new[] = { 0x81, 0x65, 0x14, 0xDF, 0xFF, 0xFF, 0x7F, 0x90 };
-
-	write_bytes
-	(
-		0x004CAE0A,
-		disable_sensor_destroying_exclude_bytes_old,
-		disable_sensor_destroying_exclude_bytes_new,
-		disable_sensor_destroying_exclude_bytes_length
-	);
-
+	// Console::destroy
+	// disable sensor destruction
+	
+    write_call(0x0046D4D6, (int)wtp_mod_Console_destroy);
+    write_call(0x00517589, (int)wtp_mod_Console_destroy);
+    write_call(0x0051C8EF, (int)wtp_mod_Console_destroy);
+	
+	// action_destroy
+	// disable sensor destruction
+	
+    write_call(0x004CD181, (int)wtp_mod_action_destroy);
+    write_call(0x004D5B71, (int)wtp_mod_action_destroy);
+    write_call(0x00536A7C, (int)wtp_mod_action_destroy);
+    write_call(0x00536AB6, (int)wtp_mod_action_destroy);
+    write_call(0x005671B4, (int)wtp_mod_action_destroy);
+    write_call(0x0056778F, (int)wtp_mod_action_destroy);
+    write_call(0x00570DDF, (int)wtp_mod_action_destroy);
+    write_call(0x00570EF0, (int)wtp_mod_action_destroy);
+    write_call(0x0057108E, (int)wtp_mod_action_destroy);
+    write_call(0x00578D94, (int)wtp_mod_action_destroy);
+	
 }
 
 void patch_tech_value()
@@ -3325,14 +2895,14 @@ void patch_science_projects_alternative_labs_bonus()
 void patch_disengagement_from_stack()
 {
     int disengagement_from_stack_bytes_length = 0x3;
-
+	
     /*
     0:  83 f8 01                cmp    eax,0x1
     */
     byte disengagement_from_stack_bytes_old[] =
 		{ 0x83, 0xF8, 0x01 }
     ;
-
+	
     /*
     0:  39 c0                   cmp    eax,eax
 	...
@@ -3340,7 +2910,7 @@ void patch_disengagement_from_stack()
     byte disengagement_from_stack_bytes_new[] =
         { 0x39, 0xC0, 0x90 }
     ;
-
+	
     write_bytes
     (
         0x00508DCA,
@@ -3348,43 +2918,8 @@ void patch_disengagement_from_stack()
         disengagement_from_stack_bytes_new,
         disengagement_from_stack_bytes_length
     )
-    ;
-
-}
-
-void patch_eco_damage_alternative_industry_effect_reduction_formula()
-{
-    int eco_damage_alternative_industry_effect_reduction_formula_bytes_length = 0x9;
-
-    /*
-	0:  2b c6                   sub    eax,esi
-	2:  8b 71 48                mov    esi,DWORD PTR [ecx+0x48]
-	5:  99                      cdq
-	6:  f7 7d fc                idiv   DWORD PTR [ebp-0x4]
-    */
-    byte eco_damage_alternative_industry_effect_reduction_formula_bytes_old[] =
-		{ 0x2B, 0xC6, 0x8B, 0x71, 0x48, 0x99, 0xF7, 0x7D, 0xFC }
-    ;
-
-    /*
-	0:  99                      cdq
-	1:  f7 7d fc                idiv   DWORD PTR [ebp-0x4]
-	4:  29 f0                   sub    eax,esi
-	6:  8b 71 48                mov    esi,DWORD PTR [ecx+0x48]
-    */
-    byte eco_damage_alternative_industry_effect_reduction_formula_bytes_new[] =
-        { 0x99, 0xF7, 0x7D, 0xFC, 0x29, 0xF0, 0x8B, 0x71, 0x48 }
-    ;
-
-    write_bytes
-    (
-        0x004E9F7E,
-        eco_damage_alternative_industry_effect_reduction_formula_bytes_old,
-        eco_damage_alternative_industry_effect_reduction_formula_bytes_new,
-        eco_damage_alternative_industry_effect_reduction_formula_bytes_length
-    )
-    ;
-
+	;
+	
 }
 
 void patch_limit_orbit_intake()
@@ -3752,21 +3287,19 @@ void patch_accelerate_order_veh()
 void patch_tech_trade_likeability()
 {
     int tech_trade_likeability_length = 0x7;
-
+	
     /*
-	0:  3b c8                   cmp    ecx,eax
 	*/
     byte tech_trade_likeability_old[] =
 		{ 0x83, 0x3D, 0x74, 0xFA, 0x93, 0x00, 0x12 }
     ;
-
+	
     /*
-	0:  39 c9                   cmp    ecx,ecx
     */
     byte tech_trade_likeability_new[] =
         { 0x83, 0x3D, 0x74, 0xFA, 0x93, 0x00, (byte)conf.tech_trade_likeability }
     ;
-
+	
     write_bytes
     (
         0x005411DA,
@@ -3775,14 +3308,7 @@ void patch_tech_trade_likeability()
         tech_trade_likeability_length
     )
     ;
-
-}
-
-void patch_tech_steal()
-{
-   	write_call(0x0059F925, (int)modified_text_get_for_tech_steal_1);
-   	write_call(0x0059F947, (int)modified_text_get_for_tech_steal_2);
-
+	
 }
 
 /**
@@ -3965,16 +3491,6 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_battle_compute();
 	
-	// integrated into Thinker
-	// but it is not 1:1 match
-	// so I disabled Thinker's setting and keep using mine instead
-	// patch ignore_reactor_power_in_combat_processing
-	
-	if (cf->ignore_reactor_power_in_combat)
-	{
-		patch_ignore_reactor_power_in_combat_processing();
-	}
-	
 	// patch combat roll
 	
 	patch_combat_roll();
@@ -4062,14 +3578,10 @@ void patch_setup_wtp(Config* cf)
 		patch_default_morale_very_green();
 	}
 	
-	// patch tile_yield
-	
-	patch_tile_yield();
-	
 	// se_accumulated_resource_adjustment
 	
 	patch_se_accumulated_resource_adjustment();
-	
+	//+++
 	// hex cost
 	
 	patch_hex_cost();
@@ -4152,30 +3664,9 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_talent_display();
 	
-	if (cf->compact_effect_icons)
-	{
-		patch_compact_effect_icons();
-	}
-	
-	if (cf->se_research_bonus_percentage != 10)
-	{
-		patch_research_bonus_multiplier();
-	}
-
-	// implemented in Thinker	
-//	if (cf->remove_fungal_tower_defense_bonus)
-//	{
-//		patch_remove_fungal_tower_defense_bonus();
-//	}
-	
 	if (cf->unit_upgrade_ignores_movement)
 	{
 		patch_unit_upgrade_ignores_movement();
-	}
-	
-	if (cf->group_terraforming)
-	{
-		patch_group_terraforming();
 	}
 	
 	patch_disable_land_artillery_bombard_from_sea();
@@ -4189,21 +3680,6 @@ void patch_setup_wtp(Config* cf)
 	patch_faction_upkeep();
 	
 	patch_disable_move_territory_restrictions();
-	
-	if (cf->interceptor_scramble_fix)
-	{
-		patch_interceptor_scramble_fix_display();
-	}
-	
-	if (cf->scorched_earth)
-	{
-		patch_scorched_earth();
-	}
-	
-	if (cf->orbital_yield_limit != 1.0)
-	{
-		patch_orbital_yield_limit();
-	}
 	
 	if (cf->silent_vendetta_warning)
 	{
@@ -4230,11 +3706,6 @@ void patch_setup_wtp(Config* cf)
 		patch_subversion_allow_stacked_units();
 	}
 	
-	if (cf->mind_control_destroys_unsubverted)
-	{
-		patch_mind_control_destroys_unsubverted();
-	}
-	
 	if (cf->alternative_subversion_and_mind_control)
 	{
 		patch_alternative_subversion_and_mind_control();
@@ -4243,11 +3714,6 @@ void patch_setup_wtp(Config* cf)
 	if (cf->disable_guaranteed_facilities_destruction)
 	{
 		patch_disable_guaranteed_facilities_destruction();
-	}
-	
-	if (cf->supply_convoy_and_info_warfare_require_support)
-	{
-		patch_supply_convoy_and_info_warfare_require_support();
 	}
 	
 	patch_exact_odds();
@@ -4261,9 +3727,9 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_turn_upkeep();
 	
-	if (cf->disable_sensor_destroying)
+	if (cf->sensor_indestructible)
 	{
-		patch_disable_sensor_destroying();
+		patch_sensor_indestructible();
 	}
 	
 	patch_tech_value();
@@ -4294,11 +3760,6 @@ void patch_setup_wtp(Config* cf)
 		patch_disengagement_from_stack();
 	}
 	
-	if (cf->eco_damage_alternative_industry_effect_reduction_formula)
-	{
-		patch_eco_damage_alternative_industry_effect_reduction_formula();
-	}
-	
 	patch_limit_orbit_intake();
 	
 	patch_order_veh();
@@ -4326,11 +3787,6 @@ void patch_setup_wtp(Config* cf)
 	if (conf.tech_trade_likeability != 0x12)
 	{
 		patch_tech_trade_likeability();
-	}
-	
-	if (conf.disable_tech_steal_vendetta || conf.disable_tech_steal_pact || conf.disable_tech_steal_other)
-	{
-		patch_tech_steal();
 	}
 	
 	patch_status_win_info();

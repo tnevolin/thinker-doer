@@ -1245,15 +1245,7 @@ double getUnitConDefenseStrength(int unitId)
 
 double getUnitConArtilleryDuelStrength(int unitId)
 {
-	UNIT *unit = &(Units[unitId]);
-	
-	return
-		conf.conventional_artillery_duel_uses_weapon_and_armor ?
-			(double)(Weapon[unit->weapon_id].offense_value + Armor[unit->armor_id].defense_value)
-			:
-			(double)(Weapon[unit->weapon_id].offense_value)
-	;
-	
+	return (double)(Weapon[Units[unitId].weapon_id].offense_value);
 }
 
 /*
@@ -3233,53 +3225,6 @@ void setTerraformingAction(int id, int action)
 }
 
 /*
-mineral yield calculation
-*/
-__cdecl int wtp_mod_mineral_yield(int factionId, int baseId, int x, int y, int tf)
-{
-	// call original function
-
-    int value = mineral_yield(factionId, baseId, x, y, tf);
-
-    // add minerals for Pressure dome if configured
-
-    if (conf.pressure_dome_minerals > 0)
-	{
-		if (baseId >= 0 && baseId < *BaseCount)
-		{
-			BASE *base = &(Bases[baseId]);
-
-			if (x == base->x && y == base->y)
-			{
-				if (isBaseHasFacility(baseId, FAC_PRESSURE_DOME))
-				{
-					value += conf.pressure_dome_minerals;
-				}
-
-			}
-
-		}
-
-	}
-
-    return value;
-
-}
-
-/*
-energy yield calculation
-*/
-__cdecl int wtp_mod_energy_yield(int factionId, int baseId, int x, int y, int tf)
-{
-	// call original function
-
-    int value = energy_yield(factionId, baseId, x, y, tf);
-
-    return value;
-
-}
-
-/*
 Checks if tile is a land coast.
 */
 bool isCoast(MAP *tile)
@@ -3932,16 +3877,13 @@ double getBaseStructureConDefenseMultiplier(bool firstLevelDefense, bool secondL
 
 bool isWithinFriendlySensorRange(int factionId, MAP *tile)
 {
-	// should be in own or neutral territory
-	
-	if (!(tile->owner == -1 || tile->owner == factionId))
-		return false;
-	
-	// find real sensors
+	// real sensors
 	
 	for (MAP *rangeTile : getRangeTiles(tile, 2, true))
 	{
-		if (rangeTile->owner != factionId)
+		// own or neutral territory
+		
+		if (!(rangeTile->owner == -1 || rangeTile->owner == factionId))
 			continue;
 		
 		if (map_has_item(rangeTile, BIT_SENSOR))
@@ -4663,7 +4605,7 @@ double getBattleOdds(int attackerVehicleId, int defenderVehicleId, int longRange
 	bool ignoreReactor =
 		Weapon[attackerVehicle->weapon_type()].offense_value < 0 || Armor[defenderVehicle->armor_type()].defense_value < 0
 		||
-		conf.ignore_reactor_power_in_combat
+		conf.ignore_reactor_power
 	;
 
 	// calculate attacker and defender power
@@ -5353,7 +5295,7 @@ int getVehicleMaxConHP(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
-	int opponentFirePower = (conf.ignore_reactor_power_in_combat ? vehicle->reactor_type() : 1);
+	int opponentFirePower = (conf.ignore_reactor_power ? vehicle->reactor_type() : 1);
 	return (10 * vehicle->reactor_type()) / opponentFirePower;
 
 }
@@ -5365,7 +5307,7 @@ int getVehicleCurrentConHP(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
-	int opponentFirePower = (conf.ignore_reactor_power_in_combat ? vehicle->reactor_type() : 1);
+	int opponentFirePower = (conf.ignore_reactor_power ? vehicle->reactor_type() : 1);
 	return (10 * vehicle->reactor_type() - vehicle->damage_taken / (opponentFirePower + 1)) / opponentFirePower;
 
 }
@@ -5482,7 +5424,7 @@ Returns true if reactor is ignored in conventional combat.
 */
 bool isReactorIgnoredInConventionalCombat()
 {
-	return (conf.ignore_reactor_power || conf.ignore_reactor_power_in_combat);
+	return (conf.ignore_reactor_power || conf.ignore_reactor_power);
 }
 
 /*
@@ -7570,8 +7512,8 @@ bool isBaseDefenderVehicle(int vehicleId)
 
 bool isUnitRequiresSupport(int unitId)
 {
-	UNIT *unit = getUnit(unitId);
-	return unit->plan <= (conf.supply_convoy_and_info_warfare_require_support ? 11 : 9) && !isUnitHasAbility(unitId, ABL_CLEAN_REACTOR);
+	const int support_type = (conf.modify_unit_support == 1 ? PLAN_SUPPLY : (conf.modify_unit_support == 2 ? PLAN_PROBE : PLAN_TERRAFORM));
+	return Units[unitId].plan <= support_type && !isUnitHasAbility(unitId, ABL_CLEAN_REACTOR);
 }
 
 bool isVehicleRequiresSupport(int vehicleId)
@@ -7864,8 +7806,8 @@ Resource getBaseWorkerResourceIntake(int baseId, MAP *tile)
 	return
 		{
 			(double)mod_crop_yield(factionId, baseId, x, y, 0) - (double)Rules->nutrient_intake_req_citizen,
-			(double)wtp_mod_mineral_yield(factionId, baseId, x, y, 0),
-			(double)wtp_mod_energy_yield(factionId, baseId, x, y, 0),
+			(double)mod_mine_yield(factionId, baseId, x, y, 0),
+			(double)mod_energy_yield(factionId, baseId, x, y, 0),
 		}
 	;
 	

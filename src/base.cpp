@@ -600,9 +600,25 @@ void __cdecl mod_base_minerals() {
     if (has_project(FAC_PHOLUS_MUTAGEN, faction_id)) {
         eco_dmg_reduction++;
     }
-    base->eco_damage += (base->mineral_intake_2 - clean_minerals_total
-        - clamp(Factions[faction_id].satellites_mineral, 0, (int)base->pop_size))
-        / eco_dmg_reduction;
+    
+    // [WTP]
+    // modified eco-damage industry effect formula
+    
+    if (conf.eco_damage_alternative_industry_effect_reduction_formula)
+	{
+		base->eco_damage +=
+			base->mineral_intake_2 / eco_dmg_reduction
+			- clamp(Factions[faction_id].satellites_mineral, 0, (int)base->pop_size)
+			- clean_minerals_total
+		;
+	}
+	else
+	{
+		base->eco_damage += (base->mineral_intake_2 - clean_minerals_total
+			- clamp(Factions[faction_id].satellites_mineral, 0, (int)base->pop_size))
+			/ eco_dmg_reduction;
+	}
+	
     if (is_human(faction_id)) {
         base->eco_damage += ((Factions[faction_id].major_atrocities
             + TectonicDetonationCount[faction_id]) * 5) / (clamp(*MapSeaLevel, 0, 100)
@@ -2420,10 +2436,16 @@ bool satellite_bonus(int base_id, int* nutrient, int* mineral, int* energy) {
     if (f.satellites_nutrient > 0 || f.satellites_mineral > 0 || f.satellites_mineral > 0) {
         bool full_value = has_facility(FAC_AEROSPACE_COMPLEX, base_id)
             || has_project(FAC_SPACE_ELEVATOR, base.faction_id);
-
-        *nutrient += satellite_output(f.satellites_nutrient, base.pop_size, full_value);
-        *mineral += satellite_output(f.satellites_mineral, base.pop_size, full_value);
-        *energy += satellite_output(f.satellites_energy, base.pop_size, full_value);
+		
+		// [WTP]
+		// orbital yield limit
+		
+		int limit = (conf.orbital_yield_limit * base.pop_size) / 100;
+		
+        *nutrient += satellite_output(f.satellites_nutrient, limit, full_value);
+        *mineral += satellite_output(f.satellites_mineral, limit, full_value);
+        *energy += satellite_output(f.satellites_energy, limit, full_value);
+        
         return true;
     }
     return f.satellites_ODP > 0;

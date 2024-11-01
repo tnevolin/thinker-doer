@@ -587,6 +587,11 @@ void __cdecl mod_production_phase(int faction_id) {
 
     for (int i = 1; i < MaxPlayerNum; i++) {
         if (faction_id != i && is_alive(faction_id) && is_alive(i)) {
+			
+			// make loan balance non negative
+			
+			f->loan_balance[i] = std::max(0, f->loan_balance[i]);
+			
             assert(f->loan_balance[i] >= 0);
             if (f->loan_balance[i] && !Factions[i].sanction_turns) {
                 assert(f->loan_payment[i] > 0);

@@ -1,3 +1,11 @@
+# Version 315
+
+* Removed RISK explanation from probe menu. They look ugly. Interested players can learn corresponding risks from here: https://github.com/tnevolin/thinker-doer/blob/master/game-mechanics.md#probe-actions-success-probability.
+* Reverted air-to-air combat to Thinker computation. Interceptor gets AS bonus.
+* Reverted conventional artillery duel to using weapon only.
+* Base screen nutrient box displays "stagnant" and "pop boom" label instead of number of grow turns for corresponding events.
+* Removed Thinker's "Population Boom" marker from the bottom right corner of the base screen as duplicate.
+
 # Version 314
 
 * Removed flat extra prototype cost.

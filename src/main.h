@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v314"
+    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v315"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -298,7 +298,6 @@ struct Config {
 	
     bool alternative_weapon_icon_selection_algorithm = false;
     // implemented in Thinker?
-	bool ignore_reactor_power_in_combat = false;
     bool alternative_prototype_cost_formula = false;
     int reactor_cost_factors[4];
     bool hurry_minimal_minerals = false;
@@ -326,29 +325,20 @@ struct Config {
     bool condenser_and_enricher_do_not_multiply_nutrients = false;
     bool alternative_tech_cost = false;
     bool fix_mineral_contribution = true; // internal setting
-    bool flat_extra_prototype_cost = false;
     bool modified_probe_action_risks = false;
     int probe_action_risk_introduce_genetic_plague = 0;
     bool combat_bonus_sensor_ocean = false;
     bool combat_bonus_sensor_offense = false;
     bool break_treaty_before_fight = false;
-    bool compact_effect_icons = false;
-    int se_research_bonus_percentage = 10;
-    // implemented in Thinker
-//    bool remove_fungal_tower_defense_bonus = false;
     int habitation_facility_growth_bonus = 0;
     bool unit_upgrade_ignores_movement = false;
-    bool group_terraforming = false;
     bool ai_base_allowed_fungus_rocky = false;
-    bool interceptor_scramble_fix = false;
-    bool scorched_earth = false;
-    double orbital_yield_limit = 1.0;
+    int orbital_yield_limit = 100;
     bool silent_vendetta_warning = false;
     bool design_cost_in_rows = false;
     bool carry_over_nutrients = false;
     bool carry_over_minerals = false;
     bool subversion_allow_stacked_units = false;
-    bool mind_control_destroys_unsubverted = false;
     bool alternative_subversion_and_mind_control = false;
     double alternative_subversion_and_mind_control_scale;
     double alternative_subversion_unit_cost_multiplier;
@@ -359,17 +349,9 @@ struct Config {
 	double alternative_mind_control_project_cost_multiplier;
 	double alternative_mind_control_happiness_power_base;
 	double disable_guaranteed_facilities_destruction;
-	double supply_convoy_and_info_warfare_require_support;
 	bool alternative_support = false;
 	int instant_completion_fixed_minerals;
-	double native_unit_cost_time_multiplier;
-	int native_unit_cost_initial_mind_worm;
-	int native_unit_cost_initial_spore_launcher;
-	int native_unit_cost_initial_sealurk;
-	int native_unit_cost_initial_isle_of_the_deep;
-	int native_unit_cost_initial_locusts_of_chiron;
-	bool disable_sensor_destroying;
-	bool conventional_artillery_duel_uses_weapon_and_armor;
+	bool sensor_indestructible;
 	bool artillery_duel_uses_bonuses;
 	bool disable_vanilla_base_hurry;
 	bool science_projects_alternative_labs_bonus;
@@ -384,9 +366,6 @@ struct Config {
 	double orbital_energy_population_limit;
 	int pressure_dome_minerals = 0;
 	int tech_trade_likeability = 0x12;
-	bool disable_tech_steal_vendetta = false;
-	bool disable_tech_steal_pact = false;
-	bool disable_tech_steal_other = false;
 	int conventional_power_psi_percentage = 0;
 	bool zoc_enabled = 1;
 	int aaa_range = -1;

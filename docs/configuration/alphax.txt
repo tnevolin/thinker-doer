@@ -613,14 +613,14 @@ Sea Formers,            Foil,     Formers,      Scout,      9, 0, 0, Ecology, -1
 Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, Disable, -1, 00000000000000000000000000
 Speeder Probe Team,     Speeder,  Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
 Alien Artifact,         Infantry, Artifact,     Scout,     12,10, 0, Disable,  2, 00000000000000000000000000
-Mind Worms,             Infantry, Psi,          Psi,        1, 4, 0, CentEmp,  3, 00000000000000000000000000
-Isle of the Deep,       Foil,     Psi,          Psi,        7, 7, 4, CentMed, -1, 00000000000000000000000000
-Locusts of Chiron,      Gravship, Psi,          Psi,        4, 8, 0, CentPsi, -1, 00000000000000000000100000
+Mind Worms,             Infantry, Psi,          Psi,        1, 5, 0, CentEmp,  3, 00000000000000000000000000
+Isle of the Deep,       Foil,     Psi,          Psi,        7, 8, 4, CentMed, -1, 00000000000000000000000000
+Locusts of Chiron,      Gravship, Psi,          Psi,        4,10, 0, CentPsi, -1, 00000000000000000000100000
 Unity Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Disable, -1, 00000000000000000000000000
 Unity Scout Chopper,    Copter,   Gun,          Scout,      4, 0, 0, Disable, -1, 00000000000000000000100000
 Unity Foil,             Foil,     Transport,    Scout,      7, 0, 0, Disable, -1, 00100000000000000000000000
 Sealurk,                Foil,     Psi,          Psi,        6, 6, 0, Bioadap,  4, 00000000000000000001000000
-Spore Launcher,         Infantry, Psi,          Psi,        0, 4, 0, Bioadap,  5, 00000000001000000000000000
+Spore Launcher,         Infantry, Psi,          Psi,        0, 5, 0, Bioadap,  5, 00000000001000000000000000
 Battle Ogre MK1,        Infantry, R-Laser,      3-Res,      0,10, 0, Disable,  6, 00010000000000000000000000
 Battle Ogre MK2,        Infantry, R-Bolt,       8-Res,      0,15, 0, Disable,  6, 10010000000000000000000000
 Battle Ogre MK3,        Speeder,  String,       Stasis,     0,20, 0, Disable,  6, 10010000000000000000000000

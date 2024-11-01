@@ -2783,7 +2783,7 @@ int findAttackerUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength *
 		else
 		{
 			relativeStrength =
-				((conf.ignore_reactor_power_in_combat ? 10.0 : unit->reactor_id) * getNewUnitConOffenseStrength(unitId, baseId))
+				((conf.ignore_reactor_power ? 10.0 : unit->reactor_id) * getNewUnitConOffenseStrength(unitId, baseId))
 				/ foeUnitStrength->conventionalDefense
 				* getConventionalCombatBonusMultiplier(unitId, foeUnitId)
 			;
@@ -2901,7 +2901,7 @@ int findDefenderUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength *
 		else
 		{
 			relativeStrength =
-				((conf.ignore_reactor_power_in_combat ? 10.0 : unit->reactor_id) * getNewUnitConDefenseStrength(unitId, baseId))
+				((conf.ignore_reactor_power ? 10.0 : unit->reactor_id) * getNewUnitConDefenseStrength(unitId, baseId))
 				/ foeUnitStrength->conventionalOffense
 				/ getConventionalCombatBonusMultiplier(unitId, foeUnitId)
 			;
@@ -3019,7 +3019,7 @@ int findMixedUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foe
 		else
 		{
 			relativeStrength =
-				((conf.ignore_reactor_power_in_combat ? 10.0 : unit->reactor_id) * getNewUnitConOffenseStrength(unitId, baseId))
+				((conf.ignore_reactor_power ? 10.0 : unit->reactor_id) * getNewUnitConOffenseStrength(unitId, baseId))
 				/ foeUnitStrength->conventionalDefense
 				* getConventionalCombatBonusMultiplier(unitId, foeUnitId)
 			;
@@ -3037,7 +3037,7 @@ int findMixedUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foe
 		else
 		{
 			relativeStrength =
-				((conf.ignore_reactor_power_in_combat ? 10.0 : unit->reactor_id) * getNewUnitConDefenseStrength(unitId, baseId))
+				((conf.ignore_reactor_power ? 10.0 : unit->reactor_id) * getNewUnitConDefenseStrength(unitId, baseId))
 				/ foeUnitStrength->conventionalOffense
 				/ getConventionalCombatBonusMultiplier(unitId, foeUnitId)
 			;
@@ -3133,27 +3133,10 @@ int findArtilleryUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength 
 			}
 			else
 			{
-				if (conf.conventional_artillery_duel_uses_weapon_and_armor)
-				{
-					relativeStrength =
-						(
-							(conf.ignore_reactor_power_in_combat ? 10.0 : unit->reactor_id)
-							*
-							(getNewUnitConOffenseStrength(unitId, baseId) + getNewUnitConDefenseStrength(unitId, baseId))
-						)
-						/
-						(foeUnitStrength->conventionalOffense + foeUnitStrength->conventionalDefense)
-					;
-
-				}
-				else
-				{
-					relativeStrength =
-						((conf.ignore_reactor_power_in_combat ? 10.0 : unit->reactor_id) * getNewUnitConOffenseStrength(unitId, baseId))
-						/ foeUnitStrength->conventionalOffense
-					;
-
-				}
+				relativeStrength =
+					((conf.ignore_reactor_power ? 10.0 : unit->reactor_id) * getNewUnitConOffenseStrength(unitId, baseId))
+					/ foeUnitStrength->conventionalOffense
+				;
 
 			}
 
@@ -3171,7 +3154,7 @@ int findArtilleryUnit(int baseId, int targetBaseId, int foeUnitId, UnitStrength 
 			else
 			{
 				relativeStrength =
-					((conf.ignore_reactor_power_in_combat ? 10.0 : unit->reactor_id) * getNewUnitConOffenseStrength(unitId, baseId))
+					((conf.ignore_reactor_power ? 10.0 : unit->reactor_id) * getNewUnitConOffenseStrength(unitId, baseId))
 					/ foeUnitStrength->conventionalDefense
 				;
 

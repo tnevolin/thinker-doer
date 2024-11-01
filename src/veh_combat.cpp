@@ -324,7 +324,19 @@ int __cdecl mod_get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat
     && has_abil(Vehs[veh_id_atk].unit_id, ABL_SOPORIFIC_GAS)) {
         morale -= 2;
     }
-    morale = clamp(morale, 1, 6);
+    
+    // [WTP]
+    // very green morale does not have defense bonus
+    
+    if (conf.very_green_no_defense_bonus)
+	{
+		// no bonus
+	}
+	else
+	{
+		morale = clamp(morale, 1, 6);
+	}
+    
     VehBasicBattleMorale[1] = morale;
     morale += 6;
     int plan_def = Units[unit_id_def].plan;

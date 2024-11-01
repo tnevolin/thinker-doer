@@ -1286,8 +1286,8 @@ void populatePlayerGlobalVariables()
 			
 			for(MAP *tile : getBaseWorkedTiles(baseId))
 			{
-				int mineralYield = wtp_mod_mineral_yield(aiFactionId, baseId, getX(tile), getY(tile), 0);
-				int energyYield = wtp_mod_energy_yield(aiFactionId, baseId, getX(tile), getY(tile), 0);
+				int mineralYield = mod_mine_yield(aiFactionId, baseId, getX(tile), getY(tile), 0);
+				int energyYield = mod_energy_yield(aiFactionId, baseId, getX(tile), getY(tile), 0);
 				
 				double mineralIntake2 = mineralCoefficient * (double)mineralYield;
 				double energyIntake2 = energyCoefficient * (double)energyYield;
@@ -4933,18 +4933,8 @@ double getArtilleryDuelRelativeUnitStrength(int attackerUnitId, int attackerFact
 	}
 	else
 	{
-		// [WTP] uses both weapon and armor for conventional artillery duel
-		
-		if (conf.conventional_artillery_duel_uses_weapon_and_armor)
-		{
-			attackerOffenseValue = Weapon[attackerUnit->weapon_id].offense_value + Armor[attackerUnit->armor_id].defense_value;
-			defenderDefenseValue = Weapon[defenderUnit->weapon_id].offense_value + Armor[defenderUnit->armor_id].defense_value;
-		}
-		else
-		{
-			attackerOffenseValue = Weapon[attackerUnit->weapon_id].offense_value;
-			defenderDefenseValue = Weapon[defenderUnit->weapon_id].offense_value;
-		}
+		attackerOffenseValue = Weapon[attackerUnit->weapon_id].offense_value;
+		defenderDefenseValue = Weapon[defenderUnit->weapon_id].offense_value;
 		
 		// get relative strength
 		
