@@ -116,7 +116,7 @@ When sea level rises some shore tiles may go under water. If such tile has a bas
 
 If base loses all of its population it is lost. If base have some population left, it survives and acquires Pressure Dome.
 
-#### chance of base surviving by population
+#### Base surviving submerging chances by population
 
 | population | chance |
 | ----: | ----: |
