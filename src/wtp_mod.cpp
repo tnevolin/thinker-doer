@@ -93,8 +93,6 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	// get item values
 	
 	int attackerOffenseValue = getUnitOffenseValue(attackerVehicle->unit_id);
-	int defenderOffenseValue = getUnitOffenseValue(defenderVehicle->unit_id);
-	int attackerDefenseValue = getUnitDefenseValue(attackerVehicle->unit_id);
 	int defenderDefenseValue = getUnitDefenseValue(defenderVehicle->unit_id);
 	
 	// determine psi combat
@@ -829,63 +827,6 @@ __cdecl int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, i
 }
 
 /*
-hex cost
-*/
-__cdecl int wtp_mod_hex_cost(int unit_id, int faction_id, int from_x, int from_y, int to_x, int to_y, int speed1)
-{
-    // execute original/Thinker code
-	
-    int value = mod_hex_cost(unit_id, faction_id, from_x, from_y, to_x, to_y, speed1);
-	
-    // [vanilla bug] coordinates sometimes computed incorrectly
-    // this is an attempt to make program at least not fall
-	
-    if (((from_x ^ from_y) & 1) == 1)
-	{
-		from_x ^= 1;
-	}
-	
-    if (((to_x ^ to_y) & 1) == 1)
-	{
-		to_x ^= 1;
-	}
-	
-	// implemented in Thinker
-//    // correct road/tube movement rate
-//	
-//    if (conf.magtube_movement_rate > 0)
-//    {
-//        MAP* square_from = mapsq(from_x, from_y);
-//        MAP* square_to = mapsq(to_x, to_y);
-//		
-//        if (square_from && square_to)
-//        {
-//            // set movement cost along tube to 1
-//            // base implies tube in its tile
-//            if
-//            (
-//                (square_from->items & (BIT_BASE_IN_TILE | BIT_MAGTUBE))
-//                &&
-//                (square_to->items & (BIT_BASE_IN_TILE | BIT_MAGTUBE))
-//            )
-//            {
-//                value = 1;
-//            }
-//            // set road movement cost
-//            else if (value == 1)
-//            {
-//                value = conf.road_movement_cost;
-//            }
-//			
-//        }
-//		
-//    }
-	
-    return value;
-	
-}
-
-/*
 Calculates tech level recursively.
 */
 int wtp_tech_level(int id)
@@ -1011,33 +952,33 @@ int wtp_tech_cost(int fac, int tech)
 	
 }
 
-__cdecl int sayBase(char *buffer, int baseId)
+__cdecl int sayBase(int buffer, int baseId)
 {
 	// execute original code
-
-	int returnValue = tx_say_base(buffer, baseId);
-
+	
+	int returnValue = say_base(buffer, baseId);
+	
 	// get base
-
+	
 	BASE *base = &(Bases[baseId]);
-
+	
 	// get base population limit
-
+	
 	int populationLimit = getBasePopulationLimit(baseId);
-
+	
 	// generate symbol
-
+	
 	char symbol[10] = "   <P>";
-
+	
 	if (populationLimit != -1 && base->pop_size >= populationLimit)
 	{
-		strcat(buffer, symbol);
+		strcat((char *)buffer, symbol);
 	}
-
+	
 	// return original value
-
+	
 	return returnValue;
-
+	
 }
 
 /*
@@ -1121,15 +1062,15 @@ This expands single number packed ability value (proportional + flat) into human
 __cdecl char *getAbilityCostText(int cost, char *destination, int radix)
 {
 	// execute original code
-
+	
 	char *output = tx_itoa(cost, destination, radix);
-
+	
 	// clear default output
-
+	
 	output[0] = '\x0';
-
+	
 	// append help text
-
+	
 	if (cost == 0)
 	{
 		strcat(output, "Free");
@@ -1137,30 +1078,28 @@ __cdecl char *getAbilityCostText(int cost, char *destination, int radix)
 	else
 	{
 		// cost factor
-
+		
 		int costFactor = (cost & 0xF);
 		int costFactorPercentage = 25 * costFactor;
-
+		
 		if (costFactor > 0)
 		{
 			sprintf(output + strlen(output), "Increases unit cost by %d %%. ", costFactorPercentage);
 		}
-
+		
 		// flat cost
-
+		
 		int flatCost = (cost >> 4);
-
+		
 		if (flatCost > 0)
 		{
 			sprintf(output + strlen(output), "Increases unit cost by %d mineral rows. ", flatCost);
 		}
-
+		
 	}
-
-	// return original value
-
+	
 	return output;
-
+	
 }
 
 /*
@@ -1438,21 +1377,21 @@ __cdecl int getActiveFactionMineralCostFactor()
 __cdecl void displayArtifactMineralContributionInformation(int input_string_pointer, int output_string_pointer)
 {
 	// execute original function
-
+	
 	tx_parse_string(input_string_pointer, output_string_pointer);
-
+	
 	// calculate artifact mineral contribution
-
+	
 	int artifactMineralContribution = Units[BSC_ALIEN_ARTIFACT].cost * cost_factor(*CurrentFaction, 1, -1) / 2;
-
+	
 	// get output string pointer
-
+	
 	char *output = (char *)output_string_pointer;
-
+	
 	// append information to string
-
+	
 	sprintf(output + strlen(output), "  %d minerals will be added to production", artifactMineralContribution);
-
+	
 }
 
 /*
@@ -1502,17 +1441,17 @@ Adds pact condition to the spying check giving pact faction all benfits of the s
 __cdecl int modifiedSpyingForPactBaseProductionDisplay(int factionId)
 {
 	// execute vanilla code
-
+	
 	int spying = tx_spying(factionId);
-
+	
 	// check if there is a pact with faction
-
+	
 	bool pact = isDiploStatus(*CurrentPlayerFaction, factionId, DIPLO_PACT);
-
+	
 	// return value based on combined condition
-
+	
 	return ((spying != 0 || pact) ? 1 : 0);
-
+	
 }
 
 /*
@@ -1541,13 +1480,13 @@ __cdecl int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, i
 {
 	int defenderTriad = veh_triad(defenderVehicleId);
 	int attackerTriad = veh_triad(attackerVehicleId);
-
+	
 	// best defender
-
+	
 	int bestDefenderVehicleId = defenderVehicleId;
-
+	
 	// sea unit directly attacking sea unit except probe
-
+	
 	if
 	(
 		Units[Vehicles[attackerVehicleId].unit_id].weapon_id != WPN_PROBE_TEAM
@@ -1556,36 +1495,36 @@ __cdecl int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, i
 	)
 	{
 		// iterate the stack
-
+		
 		double bestDefenderEffectiveness = 0.0;
-
+		
 		for (int stackedVehicleId : getStackVehicles(defenderVehicleId))
 		{
 			VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
 			UNIT *stackedVehicleUnit = &(Units[stackedVehicle->unit_id]);
-
+			
 			int attackerOffenseValue;
 			int defenderStrength;
 			wtp_mod_battle_compute(attackerVehicleId, stackedVehicleId, (int)&attackerOffenseValue, (int)&defenderStrength, 0);
-
+			
 			double defenderEffectiveness = ((double)defenderStrength / (double)attackerOffenseValue) * ((double)(stackedVehicleUnit->reactor_id * 10 - stackedVehicle->damage_taken) / (double)(stackedVehicleUnit->reactor_id * 10));
-
+			
 			if (bestDefenderVehicleId == -1 || defenderEffectiveness > bestDefenderEffectiveness)
 			{
 				bestDefenderVehicleId = stackedVehicleId;
 				bestDefenderEffectiveness = defenderEffectiveness;
 			}
-
+			
 		}
-
+		
 	}
 	else
 	{
 		bestDefenderVehicleId = mod_best_defender(defenderVehicleId, attackerVehicleId, bombardment);
 	}
-
+	
 	// store variables for modified odds dialog unless bombardment
-
+	
 	if (bombardment)
 	{
 		currentAttackerVehicleId = -1;
@@ -1596,33 +1535,17 @@ __cdecl int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, i
 		currentAttackerVehicleId = attackerVehicleId;
 		currentDefenderVehicleId = bestDefenderVehicleId;
 	}
-
-
+	
 	// return best defender
-
+	
 	return bestDefenderVehicleId;
-
-}
-
-/*
-Fixes empty square bombardment and prevents subsequent artillery duel.
-*/
-__cdecl void modifiedVehSkipForActionDestroy(int vehicleId)
-{
-	// execute original code
-
-	veh_skip(vehicleId);
-
-	// clear global combat variable
-
-	*g_UNK_ATTACK_FLAGS = 0x0;
-
+	
 }
 
 __cdecl void appendAbilityCostTextInWorkshop(int output_string_pointer, int input_string_pointer)
 {
 	const char *COST_PREFIX = "Cost: ";
-
+	
     debug
     (
         "appendAbilityCostTextInWorkshop:input(output_string=%s, input_string=%s)\n",
@@ -1630,38 +1553,38 @@ __cdecl void appendAbilityCostTextInWorkshop(int output_string_pointer, int inpu
         (char *)input_string_pointer
     )
     ;
-
+	
     // call original function
-
+	
     tx_strcat(output_string_pointer, input_string_pointer);
-
+	
     // get output string
-
+	
     char *outputString = (char *)output_string_pointer;
-
+	
     // find cost entry
-
+	
     char *costEntry = strstr(outputString, COST_PREFIX);
-
+	
     // not found
-
+	
     if (costEntry == NULL)
 		return;
-
+	
 	// extract number
-
+	
 	int cost = atoi(costEntry + strlen(COST_PREFIX));
-
+	
 	// generate explanaroty text
-
+	
 	int proportionalCost = (cost & 0xF);
 	int flatCost = (cost >> 4);
-
+	
     // add explanatory text
-
+	
     sprintf(outputString + strlen(outputString), " | +%02d%%, +%2d rows", proportionalCost * 25, flatCost);
     debug("appendAbilityCostTextInWorkshop: %s\n", outputString);
-
+	
 }
 
 /*
@@ -1855,24 +1778,6 @@ int getHabitationFacilitiesBaseGrowthModifier(int baseId)
 }
 
 /*
-Disables land artillery bombard from sea.
-*/
-__cdecl void modifiedActionMoveForArtillery(int vehicleId, int x, int y)
-{
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-
-	// disable bombardment if vehicle is land unit at sea and not in a base
-
-	if (is_ocean(vehicleTile) && veh_triad(vehicleId) == TRIAD_LAND && !map_base(vehicleTile))
-		return;
-
-	// execute action
-
-	tx_action_move(vehicleId, x, y);
-
-}
-
-/*
 Disables air transport unload everywhere.
 Pretends that air transport has zero cargo capacity when in not appropriate unload location.
 */
@@ -1880,9 +1785,9 @@ __cdecl int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-
+	
 	// disable air transport unload not in base
-
+	
 	if
 	(
 		vehicle->triad() == TRIAD_AIR
@@ -1895,11 +1800,11 @@ __cdecl int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 		)
 	)
 		return 0;
-
+	
 	// return default value
-
+	
 	return tx_veh_cargo(vehicleId);
-
+	
 }
 
 /*
@@ -2576,6 +2481,8 @@ void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_st
 
 int __cdecl modifiedTurnUpkeep()
 {
+	popp(ScriptFile, "WILLRISE", 0, "al_col_sm.pcx", 0);
+	
 	// collect statistics
 	
 	std::vector<int> computerFactions;
@@ -2896,51 +2803,51 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
-
+		
 		if (vehicle->faction_id != factionId)
 			continue;
-
+		
 		if (vehicle->triad() != TRIAD_SEA)
 			continue;
-
+		
 		int closestBaseId = base_find(vehicle->x, vehicle->y);
-
+		
 		if (closestBaseId < 0)
 			continue;
-
+		
 		BASE *closestBase = &(Bases[closestBaseId]);
-
+		
 		int territoryOwner = mod_whose_territory(factionId, vehicle->x, vehicle->y, 0, 0);
-
+		
 		if (!(closestBase->faction_id == pactFactionId || territoryOwner == pactFactionId))
 			continue;
-
+		
 		// find accessible ocean regions
-
+		
 		robin_hood::unordered_flat_set<int> adjacentOceanRegions = getAdjacentOceanRegions(vehicle->x, vehicle->y);
-
+		
 		// find proper port
-
+		
 		int portBaseId = -1;
-
+		
 		for (int baseId = 0; baseId < *BaseCount; baseId++)
 		{
 			BASE *base = &(Bases[baseId]);
-
+			
 			if (base->faction_id != factionId)
 				continue;
-
+			
 			// default base
-
+			
 			if (portBaseId == -1)
 			{
 				portBaseId = baseId;
 			}
-
+			
 			// find port base
-
+			
 			bool portBaseFound = false;
-
+			
 			for (int oceanRegion : adjacentOceanRegions)
 			{
 				if (base_on_sea(baseId, oceanRegion))
@@ -2949,28 +2856,28 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 					portBaseFound = true;
 					break;
 				}
-
+				
 			}
-
+			
 			if (portBaseFound)
 				break;
-
+			
 		}
-
+		
 		if (portBaseId != -1)
 		{
 			BASE *portBase = &(Bases[portBaseId]);
-
+			
 			veh_put(vehicleId, portBase->x, portBase->y);
-
+			
 		}
-
+		
 	}
-
+	
 	// execute original code
-
+	
 	return pact_withdraw(factionId, pactFactionId);
-
+	
 }
 
 /*
@@ -2980,9 +2887,9 @@ int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, i
 {
 	int offenseValue = Weapon[weaponId].offense_value;
 	int defenseValue = Armor[armorId].defense_value;
-
+	
 	// do not build defender ships
-
+	
 	if
 	(
 		(chassisId == CHS_FOIL || chassisId == CHS_CRUISER)
@@ -2992,56 +2899,15 @@ int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, i
 	{
 		debug("modified_propose_proto: rejected defender ship\n");
 		debug("\treactorId=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactorId, chassisId, weaponId, armorId, getAbilitiesString(abilities).c_str());
-
+		
 		return -1;
-
+		
 	}
-
+	
 	// otherwise execute original code
-
+	
 	return propose_proto(factionId, (VehChassis)chassisId, (VehWeapon)weaponId, (VehArmor)armorId, abilities, (VehReactor)reactorId, (VehPlan)plan, name);
-
-}
-
-/*
-Modified base lab doubling function to account for Universal Translator and alternative labs bonuses.
-*/
-int __cdecl modified_base_double_labs(int labs)
-{
-	int baseId = *CurrentBaseID;
-	BASE *base = &(Bases[baseId]);
-
-	// summarize bonus
-
-	int bonus = 0;
-
-	if (isFactionHasProject(base->faction_id, FAC_SUPERCOLLIDER))
-	{
-		bonus += conf.science_projects_supercollider_labs_bonus;
-	}
-
-	if (isFactionHasProject(base->faction_id, FAC_THEORY_OF_EVERYTHING))
-	{
-		bonus += conf.science_projects_theoryofeverything_labs_bonus;
-	}
-
-	if (isFactionHasProject(base->faction_id, FAC_UNIVERSAL_TRANSLATOR))
-	{
-		bonus += conf.science_projects_universaltranslator_labs_bonus;
-	}
-
-	// apply bonus
-	// round up
-
-	if (bonus > 0)
-	{
-		labs = (labs * (100 + bonus) + (100 - 1)) / 100;
-	}
-
-	// return labs
-
-	return labs;
-
+	
 }
 
 /*
@@ -3396,31 +3262,31 @@ void __cdecl modified_stack_veh_disable_transport_pick_everybody(int vehicleId, 
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	int region = vehicleTile->region;
 	Faction *faction = getFaction(vehicle->faction_id);
-
+	
 	// get faction strategy flag 2 for this region
-
+	
 	byte region_base_plan = faction->region_base_plan[region];
-
+	
 	if (isWtpEnabledFaction(vehicle->faction_id) && isBaseAt(vehicleTile))
 	{
 		// temporary set strategy flag to not pick up combat units
-
+		
 		faction->region_base_plan[region] = 2;
-
+		
 	}
-
+	
 	// execute original code
-
+	
 	stack_veh(vehicleId, flag);
-
+	
 	if (isWtpEnabledFaction(vehicle->faction_id))
 	{
 		// restore strategy flag
-
+		
 		faction->region_base_plan[region] = region_base_plan;
-
+		
 	}
-
+	
 }
 
 /*
@@ -3429,12 +3295,12 @@ Intercept veh_skip call to disable AI non transport to skip turn at destination 
 void __cdecl modified_veh_skip_disable_non_transport_stop_in_base(int vehicleId)
 {
 	// execute original code for transport only
-
+	
 	if (isTransportVehicle(vehicleId))
 	{
 		veh_skip(vehicleId);
 	}
-
+	
 }
 
 /*
@@ -3444,13 +3310,13 @@ bool alienVehicleIsOnTransport = false;
 void __cdecl modified_alien_move(int vehicleId)
 {
 	// set if vehicle is on trasport
-
+	
 	alienVehicleIsOnTransport = isVehicleOnTransport(vehicleId);
-
+	
 	// execute original code
-
+	
 	alien_move(vehicleId);
-
+	
 }
 /*
 Intercepts can_arty in alien_move to assure artillery cannot shoot from transport.
@@ -3458,14 +3324,14 @@ Intercepts can_arty in alien_move to assure artillery cannot shoot from transpor
 int __cdecl modified_can_arty_in_alien_move(int unitId, bool allowSeaArty)
 {
 	// check if vehicle is on trasport and disable artillery if yes
-
+	
 	if (alienVehicleIsOnTransport)
 		return 0;
-
+	
 	// otherwise execute original routine
-
+	
 	return tx_can_arty(unitId, allowSeaArty);
-
+	
 }
 
 /*
@@ -3545,19 +3411,19 @@ void removeWrongVehiclesFromBases()
 /*
 Intercepts kill.
 */
-void __cdecl modified_kill(int vehicleId)
+int __cdecl modified_kill(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
-
+	
 	// do not allow computer kill AI vehicle
-
+	
 	if (isWtpEnabledFaction(vehicle->faction_id))
-		return;
-
+		return 0;
+	
 	// execute original code
-
-	tx_kill(vehicleId);
-
+	
+	return kill(vehicleId);
+	
 }
 
 /*
@@ -3676,9 +3542,6 @@ __cdecl int modified_load_game(int a0, int a1)
 	
 }
 
-/**
-Sets moved factions = 8 if there is no human player.
-*/
 __cdecl int modified_zoc_veh(int a0, int a1, int a2)
 {
 	// original function

@@ -1,3 +1,7 @@
+# Version 316
+
+* Reworded sea levels rising popup to warn player about potential base damaging tidal waves event.
+
 # Version 315
 
 * Removed RISK explanation from probe menu. They look ugly. Interested players can learn corresponding risks from here: https://github.com/tnevolin/thinker-doer/blob/master/game-mechanics.md#probe-actions-success-probability.

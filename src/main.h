@@ -333,7 +333,6 @@ struct Config {
     int habitation_facility_growth_bonus = 0;
     bool unit_upgrade_ignores_movement = false;
     bool ai_base_allowed_fungus_rocky = false;
-    int orbital_yield_limit = 100;
     bool silent_vendetta_warning = false;
     bool design_cost_in_rows = false;
     bool carry_over_nutrients = false;

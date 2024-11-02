@@ -167,9 +167,6 @@ fp_0void tx_world_rainfall = (fp_0void)0x005C4470;
 // send vehicle to destination
 fp_4void tx_go_to = (fp_4void)0x00560AD0;
 
-// copies base name to string buffer
-fp_int_char_int tx_say_base = (fp_int_char_int)0x004E3A00;
-
 // probe action
 fp_4int tx_probe = (fp_4int)0x0059F120;
 
@@ -214,9 +211,6 @@ fp_1int tx_action = (fp_1int)0x004CF740;
 
 // string formatting
 fp_2void tx_parse_string = (fp_2void)0x00625880;
-
-// kills vehicle
-fp_1void tx_kill = (fp_1void)0x005C0B00;
 
 // determing if g_CURRENT_PC_FACT_ID has infiltration to given faction
 fp_1int tx_spying = (fp_1int)0x0055BC00;

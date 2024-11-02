@@ -1736,6 +1736,13 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
 int __cdecl mod_action_move(int veh_id, int x, int y)
 {
     VEH* veh = &Vehs[veh_id];
+    
+	// [WTP]
+	// disable bombardment if vehicle is land unit at sea and not in a base
+	
+	if (veh->triad() == TRIAD_LAND && is_ocean(mapsq(veh->x, veh->y)) && !mapsq(veh->x, veh->y)->is_base())
+		return 0;
+	
     if (*MultiplayerActive) {
         return action_move(veh_id, x, y);
     }

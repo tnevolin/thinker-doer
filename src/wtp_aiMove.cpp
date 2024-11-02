@@ -653,11 +653,11 @@ Modified vehicle movement.
 int __cdecl modified_enemy_move(const int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
-
+	
 	int returnValue;
-
+	
 	// choose AI logic
-
+	
 	// run WTP AI code for AI eanbled factions
 	if (isWtpEnabledFaction(vehicle->faction_id))
 	{
@@ -672,11 +672,11 @@ int __cdecl modified_enemy_move(const int vehicleId)
 		returnValue = mod_enemy_move(vehicleId);
 		executionProfiles["~ mod_enemy_move"].stop();
 	}
-
+	
 	// return
-
+	
 	return returnValue;
-
+	
 }
 
 /*

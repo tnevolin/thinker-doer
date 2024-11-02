@@ -1152,24 +1152,6 @@ void patch_se_accumulated_resource_adjustment()
 }
 
 /*
-Patch mod_hex_cost.
-*/
-void patch_hex_cost()
-{
-    write_call_over(0x00467711, (int)wtp_mod_hex_cost);
-    write_call_over(0x00572518, (int)wtp_mod_hex_cost);
-    write_call_over(0x005772D7, (int)wtp_mod_hex_cost);
-    write_call_over(0x005776F4, (int)wtp_mod_hex_cost);
-    write_call_over(0x00577E2C, (int)wtp_mod_hex_cost);
-    write_call_over(0x00577F0E, (int)wtp_mod_hex_cost);
-    write_call_over(0x00597695, (int)wtp_mod_hex_cost);
-    write_call_over(0x0059ACA4, (int)wtp_mod_hex_cost);
-    write_call_over(0x0059B61A, (int)wtp_mod_hex_cost);
-    write_call_over(0x0059C105, (int)wtp_mod_hex_cost);
-
-}
-
-/*
 Displays additional base population info in F4 screen.
 */
 void patch_display_base_population_info()
@@ -1206,11 +1188,8 @@ Exclude defensive faciliites from probe target lists.
 */
 void patch_probe_not_destroy_defense()
 {
-	// reusing logic for FAC_PRESSURE_DOME to determine whether base is at sea
-	// now when this logic is gone there is no choice but to exclude it too
-
 	// exclude defensive facilities and FAC_PRESSURE_DOME from probe random list
-
+	
 	int exclude_defensive_facilities_random_bytes_length = 51;
 	byte exclude_defensive_facilities_random_bytes_old[] = { 0x83, 0xFF, 0x1A, 0x75, 0x2E, 0x0F, 0xBF, 0x8E, 0x42, 0xD0, 0x97, 0x00, 0x0F, 0xAF, 0x0D, 0xF0, 0xFA, 0x68, 0x00, 0x0F, 0xBF, 0x96, 0x40, 0xD0, 0x97, 0x00, 0xD1, 0xFA, 0x03, 0xCA, 0x8B, 0x15, 0x0C, 0xA3, 0x94, 0x00, 0x6B, 0xC9, 0x2C, 0x33, 0xC0, 0x8A, 0x04, 0x11, 0x24, 0xE0, 0x83, 0xF8, 0x60, 0x7C, 0x34 };
 	byte exclude_defensive_facilities_random_bytes_new[] = { 0x83, 0xFF, 0x1A, 0x74, 0x62, 0x83, 0xFF, 0x04, 0x74, 0x5D, 0x83, 0xFF, 0x05, 0x74, 0x58, 0x83, 0xFF, 0x1C, 0x74, 0x53, 0x83, 0xFF, 0x1D, 0x74, 0x4E, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
@@ -1221,9 +1200,9 @@ void patch_probe_not_destroy_defense()
 		exclude_defensive_facilities_random_bytes_new,
 		exclude_defensive_facilities_random_bytes_length
 	);
-
+	
 	// exclude defensive facilities and FAC_PRESSURE_DOME from probe selected list
-
+	
 	int exclude_defensive_facilities_selected_bytes_length = 54;
 	byte exclude_defensive_facilities_selected_bytes_old[] = { 0x83, 0xFF, 0x1A, 0x75, 0x31, 0x0F, 0xBF, 0x86, 0x42, 0xD0, 0x97, 0x00, 0x0F, 0xAF, 0x05, 0xF0, 0xFA, 0x68, 0x00, 0x0F, 0xBF, 0x8E, 0x40, 0xD0, 0x97, 0x00, 0xD1, 0xF9, 0x03, 0xC1, 0x8B, 0x0D, 0x0C, 0xA3, 0x94, 0x00, 0x6B, 0xC0, 0x2C, 0x33, 0xD2, 0x8A, 0x14, 0x08, 0x83, 0xE2, 0xE0, 0x83, 0xFA, 0x60, 0x7C, 0x56, 0xEB, 0x05 };
 	byte exclude_defensive_facilities_selected_bytes_new[] = { 0x83, 0xFF, 0x1A, 0x0F, 0x84, 0x81, 0x00, 0x00, 0x00, 0x83, 0xFF, 0x04, 0x0F, 0x84, 0x78, 0x00, 0x00, 0x00, 0x83, 0xFF, 0x05, 0x0F, 0x84, 0x6F, 0x00, 0x00, 0x00, 0x83, 0xFF, 0x1C, 0x0F, 0x84, 0x66, 0x00, 0x00, 0x00, 0x83, 0xFF, 0x1D, 0x0F, 0x84, 0x5D, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
@@ -1234,7 +1213,7 @@ void patch_probe_not_destroy_defense()
 		exclude_defensive_facilities_selected_bytes_new,
 		exclude_defensive_facilities_selected_bytes_length
 	);
-
+	
 }
 
 /*
@@ -1244,11 +1223,11 @@ This is to expand single number packed ability cost into human readable text.
 void patch_help_ability_cost_text()
 {
 	// in Datalinks
-
+	
     write_call(0x0042EF7A, (int)getAbilityCostText);
-
+	
     // in workshop
-
+	
     write_call(0x0043B202, (int)appendAbilityCostTextInWorkshop);
     write_call(0x0043B29D, (int)appendAbilityCostTextInWorkshop);
     write_call(0x0043B334, (int)appendAbilityCostTextInWorkshop);
@@ -1257,7 +1236,7 @@ void patch_help_ability_cost_text()
     write_call(0x0043B4FC, (int)appendAbilityCostTextInWorkshop);
     write_call(0x0043B5E1, (int)appendAbilityCostTextInWorkshop);
     write_call(0x0043B6A7, (int)appendAbilityCostTextInWorkshop);
-
+	
 }
 
 /*
@@ -1306,7 +1285,7 @@ void patch_social_calc()
     write_call(0x005B4539, (int)modifiedSocialCalc); // sets SE_2 values
     write_call(0x005B464B, (int)modifiedSocialCalc);
     write_call(0x005B4AE1, (int)modifiedSocialCalc);
-
+	
 }
 
 /*
@@ -1424,7 +1403,7 @@ void patch_base_scren_population_superdrones()
 		base_screen_population_superdrones_human_bytes_new,
 		base_screen_population_superdrones_human_bytes_length
 	);
-
+	
 	int base_screen_population_superdrones_alien_bytes_length = 6;
 	byte base_screen_population_superdrones_alien_bytes_old[] = { 0x2B, 0x8A, 0x20, 0x01, 0x00, 0x00 };
 	byte base_screen_population_superdrones_alien_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
@@ -1435,7 +1414,7 @@ void patch_base_scren_population_superdrones()
 		base_screen_population_superdrones_alien_bytes_new,
 		base_screen_population_superdrones_alien_bytes_length
 	);
-
+	
 }
 
 /*
@@ -1453,7 +1432,7 @@ void patch_weapon_help_always_show_cost()
 		weapon_help_show_cost_always_bytes_new,
 		weapon_help_show_cost_always_bytes_length
 	);
-
+	
 }
 
 /*
@@ -1462,7 +1441,7 @@ Adjusts mineral contribution based on INDUSTRY rating.
 void patch_mineral_contribution()
 {
 	// adjust artifact mineral contribution
-
+	
 	int artifact_mineral_contribution_bytes_length = 0x1f;
 /*
 0:  8d 14 f6                lea    edx,[esi+esi*8]
@@ -1501,17 +1480,17 @@ f:  5a                      pop    edx
 		artifact_mineral_contribution_bytes_new,
 		artifact_mineral_contribution_bytes_length
 	);
-
+	
 	write_call(0x005996D3, (int)getActiveFactionMineralCostFactor);
-
+	
 	// display artifact mineral contribution for project
-
+	
 	write_call(0x00594D14, (int)displayArtifactMineralContributionInformation);
-
+	
 	// display artifact mineral contribution for prototype
-
+	
 	write_call(0x00594D8C, (int)displayArtifactMineralContributionInformation);
-
+	
 }
 
 /*
@@ -1520,7 +1499,7 @@ Displays base production for pact faction bases same way as for infiltration.
 void patch_pact_base_map_production_display()
 {
 	write_call(0x0046836E, (int)modifiedSpyingForPactBaseProductionDisplay);
-
+	
 }
 
 /*
@@ -1582,7 +1561,7 @@ void patch_min_knowledge_price()
 		disable_min_knowledge_price_bytes_new,
 		disable_min_knowledge_price_bytes_length
 	);
-
+	
 }
 
 /*
@@ -1591,15 +1570,7 @@ Wraps best_defender call.
 void patch_best_defender()
 {
 	write_call(0x00506D07, (int)modifiedBestDefender);
-
-}
-
-/*
-Fixes global variable when action_destroy is called.
-*/
-void patch_action_destroy()
-{
-	write_call(0x004CAA7C, (int)modifiedVehSkipForActionDestroy);
+	
 }
 
 /*
@@ -1611,7 +1582,7 @@ void patch_break_treaty_before_fight()
 	write_call(0x00568B1C, (int)modifiedBattleFight2);
 	write_call(0x005697AC, (int)modifiedBattleFight2);
 	write_call(0x0056A2E2, (int)modifiedBattleFight2);
-
+	
 }
 
 /*
@@ -1620,9 +1591,9 @@ Displays TALENT icon in SE dialog.
 void patch_talent_display()
 {
 	// in SocialWin__draw_social
-
+	
 	// do not skip TALENT when counting icon display width
-
+	
 	int talent_count_width_bytes_length = 0xb;
 /*
 0:  3d d8 b2 94 00          cmp    eax,0x94b2d8
@@ -1640,9 +1611,9 @@ void patch_talent_display()
 		talent_count_width_bytes_new,
 		talent_count_width_bytes_length
 	);
-
+	
 	// do not skip TALENT when displaying icons
-
+	
 	int talent_display_icon_bytes_length = 0xb;
 /*
 0:  3d d8 b2 94 00          cmp    eax,0x94b2d8
@@ -1660,9 +1631,9 @@ void patch_talent_display()
 		talent_display_icon_bytes_new,
 		talent_display_icon_bytes_length
 	);
-
+	
 	// do not shift icon index by -1 for all effects starting from TALENT and above
-
+	
 	int talent_index_shift_bytes_length = 0x7;
 /*
 0:  3d d8 b2 94 00          cmp    eax,0x94b2d8
@@ -1680,9 +1651,9 @@ void patch_talent_display()
 		talent_index_shift_bytes_new,
 		talent_index_shift_bytes_length
 	);
-
+	
 	// calculate sprite offset
-
+	
 	int calculate_sprite_offset_bytes_length = 0x28;
 /*
 0:  33 c9                   xor    ecx,ecx
@@ -1729,11 +1700,11 @@ b:  e8 fd ff ff ff          call   d <_main+0xd>
 		calculate_sprite_offset_bytes_new,
 		calculate_sprite_offset_bytes_length
 	);
-
+	
 	write_call(0x004AF825 + 0xb, (int)modifiedSocialWinDrawSocialCalculateSpriteOffset);
-
+	
 	// do not skip TALENT when counting icons in description
-
+	
 	int talent_count_icon_description_bytes_length = 0xc;
 /*
 0:  81 fa d8 b2 94 00       cmp    edx,0x94b2d8
@@ -1751,9 +1722,9 @@ b:  e8 fd ff ff ff          call   d <_main+0xd>
 		talent_count_icon_description_bytes_new,
 		talent_count_icon_description_bytes_length
 	);
-
+	
 	// do not skip TALENT when displaying icons in description
-
+	
 	int talent_display_icon_description_bytes_length = 0xc;
 /*
 0:  81 fa d8 b2 94 00       cmp    edx,0x94b2d8
@@ -1771,7 +1742,7 @@ b:  e8 fd ff ff ff          call   d <_main+0xd>
 		talent_display_icon_description_bytes_new,
 		talent_display_icon_description_bytes_length
 	);
-
+	
 }
 
 /*
@@ -1780,19 +1751,19 @@ unit upgrade does not require whole turn
 void patch_unit_upgrade_ignores_movement()
 {
 	// disable no movement requirement
-
+	
 	int unit_upgrade_disable_no_movement_requirement_1_bytes_length = 0x2;
-
+	
 	/*
 	0:  84 c9                   test   cl,cl
 	*/
 	byte unit_upgrade_disable_no_movement_requirement_1_bytes_old[] = { 0x84, 0xC9 };
-
+	
 	/*
 	0:  30 c9                   xor    cl,cl
 	*/
 	byte unit_upgrade_disable_no_movement_requirement_1_bytes_new[] = { 0x30, 0xC9 };
-
+	
 	write_bytes
 	(
 		0x004D078A,
@@ -1800,19 +1771,19 @@ void patch_unit_upgrade_ignores_movement()
 		unit_upgrade_disable_no_movement_requirement_1_bytes_new,
 		unit_upgrade_disable_no_movement_requirement_1_bytes_length
 	);
-
+	
 	int unit_upgrade_disable_no_movement_requirement_2_bytes_length = 0x2;
-
+	
 	/*
 	0:  84 c9                   test   cl,cl
 	*/
 	byte unit_upgrade_disable_no_movement_requirement_2_bytes_old[] = { 0x84, 0xC9 };
-
+	
 	/*
 	0:  30 c9                   xor    cl,cl
 	*/
 	byte unit_upgrade_disable_no_movement_requirement_2_bytes_new[] = { 0x30, 0xC9 };
-
+	
 	write_bytes
 	(
 		0x004D0928,
@@ -1820,21 +1791,21 @@ void patch_unit_upgrade_ignores_movement()
 		unit_upgrade_disable_no_movement_requirement_2_bytes_new,
 		unit_upgrade_disable_no_movement_requirement_2_bytes_length
 	);
-
+	
 	// do not skip vehicle after upgrade
-
+	
 	int unit_upgrade_disable_skip_1_bytes_length = 0x5;
-
+	
 	/*
 	0:  e8 d8 0a 0f 00          call   0xf0add
 	*/
 	byte unit_upgrade_disable_skip_1_bytes_old[] = { 0xE8, 0xD8, 0x0A, 0x0F, 0x00 };
-
+	
 	/*
 	...
 	*/
 	byte unit_upgrade_disable_skip_1_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
-
+	
 	write_bytes
 	(
 		0x004D1243,
@@ -1842,19 +1813,19 @@ void patch_unit_upgrade_ignores_movement()
 		unit_upgrade_disable_skip_1_bytes_new,
 		unit_upgrade_disable_skip_1_bytes_length
 	);
-
+	
 	int unit_upgrade_disable_skip_2_bytes_length = 0x5;
-
+	
 	/*
 	0:  e8 6e 04 0f 00          call   0xf0473
 	*/
 	byte unit_upgrade_disable_skip_2_bytes_old[] = { 0xE8, 0x6E, 0x04, 0x0F, 0x00 };
-
+	
 	/*
 	...
 	*/
 	byte unit_upgrade_disable_skip_2_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
-
+	
 	write_bytes
 	(
 		0x004D18AD,
@@ -1862,19 +1833,19 @@ void patch_unit_upgrade_ignores_movement()
 		unit_upgrade_disable_skip_2_bytes_new,
 		unit_upgrade_disable_skip_2_bytes_length
 	);
-
+	
 	int unit_upgrade_disable_skip_3_bytes_length = 0x5;
-
+	
 	/*
 	0:  e8 a2 02 0f 00          call   0xf02a7
 	*/
 	byte unit_upgrade_disable_skip_3_bytes_old[] = { 0xE8, 0xA2, 0x02, 0x0F, 0x00 };
-
+	
 	/*
 	...
 	*/
 	byte unit_upgrade_disable_skip_3_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
-
+	
 	write_bytes
 	(
 		0x004D1A79,
@@ -1882,15 +1853,7 @@ void patch_unit_upgrade_ignores_movement()
 		unit_upgrade_disable_skip_3_bytes_new,
 		unit_upgrade_disable_skip_3_bytes_length
 	);
-
-}
-
-/*
-Disables land artillery bombard from sea.
-*/
-void patch_disable_land_artillery_bombard_from_sea()
-{
-    write_call(0x0046D42F, (int)modifiedActionMoveForArtillery);
+	
 }
 
 /*
@@ -1919,17 +1882,17 @@ Disabling this restriction to allow easier AI navigation.
 void patch_disable_move_territory_restrictions()
 {
 	int disable_move_territory_restriction_bytes_length = 0x7;
-
+	
 	/*
 	0:  80 be 39 28 95 00 18    cmp    BYTE PTR [esi+0x952839],0x18
 	*/
 	byte disable_move_territory_restriction_bytes_old[] = { 0x80, 0xBE, 0x39, 0x28, 0x95, 0x00, 0x18 };
-
+	
 	/*
 	0:  80 be 39 28 95 00 ff    cmp    BYTE PTR [esi+0x952839],0xff
 	*/
 	byte disable_move_territory_restriction_bytes_new[] = { 0x80, 0xBE, 0x39, 0x28, 0x95, 0x00, 0xFF };
-
+	
 	write_bytes
 	(
 		0x00594A0B,
@@ -1937,7 +1900,7 @@ void patch_disable_move_territory_restrictions()
 		disable_move_territory_restriction_bytes_new,
 		disable_move_territory_restriction_bytes_length
 	);
-
+	
 }
 
 void patch_silent_vendetta_warning()
@@ -2539,18 +2502,18 @@ ABL_DISSOCIATIVE_WAVE
 void patch_obsoletion()
 {
 	int obsolete_ability_exceptions_bytes_length = 0x5;
-
+	
 	/*
 	0:  a9 18 84 40 00          test   eax,0x408418
 	*/
 	byte obsolete_ability_exceptions_bytes_old[] = { 0xA9, 0x18, 0x84, 0x40, 0x00 };
-
+	
 	/*
 	0:  a9 fc 9f 56 02          test   eax,0x2569ffc
 	...
 	*/
 	byte obsolete_ability_exceptions_bytes_new[] = { 0xA9, 0xFC, 0x9F, 0x56, 0x02 };
-
+	
 	write_bytes
 	(
 		0x0057FC8C,
@@ -2558,7 +2521,7 @@ void patch_obsoletion()
 		obsolete_ability_exceptions_bytes_new,
 		obsolete_ability_exceptions_bytes_length
 	);
-
+	
 }
 
 void patch_instant_completion_fixed_minerals(int minerals)
@@ -2645,150 +2608,26 @@ void patch_enemy_units_check()
 }
 
 /*
-Shows enemies treaty message as popup.
-*/
-void patch_enemies_treaty_popup()
-{
-    int popup_bytes_length = 0x5;
-
-    /*
-    0:  68 88 13 00 00          push   0x1388
-    */
-    byte popup_bytes_old[] =
-        { 0x68, 0x88, 0x13, 0x00, 0x00 }
-    ;
-
-    /*
-    0:  6a ff                   push   0xffffffff
-    ...
-    */
-    byte popup_bytes_new[] =
-        { 0x6A, 0xFF, 0x90, 0x90, 0x90 }
-    ;
-
-	// ENEMIESTEAMUP
-    write_bytes
-    (
-        0x0055E355,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-	// TEAM
-    write_bytes
-    (
-        0x0055D389,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    // PACTTRUCE
-    write_bytes
-    (
-        0x0055DACC,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    // PACTTREATY
-    write_bytes
-    (
-        0x0055DDD0,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    // PACTATTACKS
-    write_bytes
-    (
-        0x0055C9FF,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    // PACTUNPACT
-    write_bytes
-    (
-        0x0055CE01,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    // ENEMYTREATY
-    write_bytes
-    (
-        0x0055DEF5,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    // ENEMYPACTENDS
-    write_bytes
-    (
-        0x0055CFEC,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    // ENEMYTRUCE
-    write_bytes
-    (
-        0x0055DBF1,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-    // ENEMYWAR
-    write_bytes
-    (
-        0x0055CB24,
-        popup_bytes_old,
-        popup_bytes_new,
-        popup_bytes_length
-    )
-    ;
-
-}
-
-/*
 Replaces short random with int random because short is too small for tech value.
 */
 void patch_tech_ai_randomization()
 {
     int tech_ai_randomization_bytes_length = 0x3;
-
+	
     /*
     0:  c1 e0 08                shl    eax,0x8
     */
     byte tech_ai_randomization_bytes_old[] =
         { 0xC1, 0xE0, 0x08 }
     ;
-
+	
     /*
     0:  c1 e0 02                shl    eax,0x2
     */
     byte tech_ai_randomization_bytes_new[] =
         { 0xC1, 0xE0, 0x02 }
     ;
-
+	
     write_bytes
     (
         0x005BDCE7,
@@ -2797,14 +2636,14 @@ void patch_tech_ai_randomization()
         tech_ai_randomization_bytes_length
     )
     ;
-
+	
 }
 
 void patch_pact_withdraw()
 {
 	write_call(0x0053C69E, (int)modified_pact_withdraw);
 	write_call(0x0053C6A8, (int)modified_pact_withdraw);
-
+	
 }
 
 void patch_propose_proto()
@@ -2842,56 +2681,6 @@ void patch_propose_proto()
 
 }
 
-void patch_science_projects_alternative_labs_bonus()
-{
-    int science_projects_alternative_labs_bonus_bytes_length = 0x43;
-
-    /*
-    0:  8b 15 44 65 9a 00       mov    edx,DWORD PTR ds:0x9a6544
-	6:  3b 15 70 93 68 00       cmp    edx,DWORD PTR ds:0x689370
-	c:  75 13                   jne    0x21
-	e:  a1 30 ea 90 00          mov    eax,ds:0x90ea30
-	13: 8b 88 08 01 00 00       mov    ecx,DWORD PTR [eax+0x108]
-	19: d1 e1                   shl    ecx,1
-	1b: 89 88 08 01 00 00       mov    DWORD PTR [eax+0x108],ecx
-	21: 8b 15 70 93 68 00       mov    edx,DWORD PTR ds:0x689370
-	27: a1 5c 65 9a 00          mov    eax,ds:0x9a655c
-	2c: 3b c2                   cmp    eax,edx
-	2e: 75 13                   jne    0x43
-	30: a1 30 ea 90 00          mov    eax,ds:0x90ea30
-	35: 8b 88 08 01 00 00       mov    ecx,DWORD PTR [eax+0x108]
-	3b: d1 e1                   shl    ecx,1
-	3d: 89 88 08 01 00 00       mov    DWORD PTR [eax+0x108],ecx
-    */
-    byte science_projects_alternative_labs_bonus_bytes_old[] =
-		{ 0x8B, 0x15, 0x44, 0x65, 0x9A, 0x00, 0x3B, 0x15, 0x70, 0x93, 0x68, 0x00, 0x75, 0x13, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0x88, 0x08, 0x01, 0x00, 0x00, 0xD1, 0xE1, 0x89, 0x88, 0x08, 0x01, 0x00, 0x00, 0x8B, 0x15, 0x70, 0x93, 0x68, 0x00, 0xA1, 0x5C, 0x65, 0x9A, 0x00, 0x3B, 0xC2, 0x75, 0x13, 0xA1, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0x88, 0x08, 0x01, 0x00, 0x00, 0xD1, 0xE1, 0x89, 0x88, 0x08, 0x01, 0x00, 0x00 }
-    ;
-
-    /*
-    0:  ff b1 08 01 00 00       push   DWORD PTR [ecx+0x108]
-	6:  e8 fd ff ff ff          call   8 <_main+0x8>
-	b:  83 c4 04                add    esp,0x4
-	e:  8b 0d 30 ea 90 00       mov    ecx,DWORD PTR ds:0x90ea30
-	14: 89 81 08 01 00 00       mov    DWORD PTR [ecx+0x108],eax
-	...
-    */
-    byte science_projects_alternative_labs_bonus_bytes_new[] =
-        { 0xFF, 0xB1, 0x08, 0x01, 0x00, 0x00, 0xE8, 0xFD, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x04, 0x8B, 0x0D, 0x30, 0xEA, 0x90, 0x00, 0x89, 0x81, 0x08, 0x01, 0x00, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
-    ;
-
-    write_bytes
-    (
-        0x004EBFC0,
-        science_projects_alternative_labs_bonus_bytes_old,
-        science_projects_alternative_labs_bonus_bytes_new,
-        science_projects_alternative_labs_bonus_bytes_length
-    )
-    ;
-
-   	write_call(0x004EBFC0 + 0x6, (int)modified_base_double_labs);
-
-}
-
 void patch_disengagement_from_stack()
 {
     int disengagement_from_stack_bytes_length = 0x3;
@@ -2922,23 +2711,6 @@ void patch_disengagement_from_stack()
 	
 }
 
-void patch_limit_orbit_intake()
-{
-   	write_call(0x004E5227, (int)modified_base_yield);
-   	write_call(0x004EC3D1, (int)modified_base_yield);
-   	write_call(0x004EF4AA, (int)modified_base_yield);
-   	write_call(0x004EF69A, (int)modified_base_yield);
-   	write_call(0x004F0FF9, (int)modified_base_yield);
-   	write_call(0x004F3976, (int)modified_base_yield);
-   	write_call(0x004F5C10, (int)modified_base_yield);
-   	write_call(0x004F6222, (int)modified_base_yield);
-   	write_call(0x004F62D8, (int)modified_base_yield);
-   	write_call(0x004F7A1B, (int)modified_base_yield);
-   	write_call(0x004F7A8F, (int)modified_base_yield);
-   	write_call(0x004F7BA9, (int)modified_base_yield);
-
-}
-
 void patch_order_veh()
 {
    	write_call(0x004CB3BA, (int)wtp_mod_order_veh);
@@ -2946,7 +2718,7 @@ void patch_order_veh()
    	write_call(0x0053179F, (int)wtp_mod_order_veh);
    	write_call(0x00531AC5, (int)wtp_mod_order_veh);
    	write_call(0x005367EC, (int)wtp_mod_order_veh);
-
+	
 }
 
 /*
@@ -2955,7 +2727,7 @@ Game sometimes crashes when last base defender is killed.
 void patch_base_attack()
 {
     int base_attack_bytes_length = 0x26;
-
+	
     /*
 	0:  8d 14 7f                lea    edx,[edi+edi*2]
 	3:  8d 04 97                lea    eax,[edi+edx*4]
@@ -2971,7 +2743,7 @@ void patch_base_attack()
     byte base_attack_bytes_old[] =
 		{ 0x8D, 0x14, 0x7F, 0x8D, 0x04, 0x97, 0x0F, 0xBF, 0x04, 0x85, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x0C, 0x40, 0x8D, 0x14, 0x88, 0x33, 0xC0, 0x8A, 0x04, 0x95, 0x8D, 0xB8, 0x9A, 0x00, 0xC1, 0xE0, 0x04, 0x8A, 0x88, 0x68, 0xAE, 0x94, 0x00 }
     ;
-
+	
     /*
     ...
 	24: b1 01                   mov    cl,0x1
@@ -2979,7 +2751,7 @@ void patch_base_attack()
     byte base_attack_bytes_new[] =
         { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xB1, 0x01 }
     ;
-
+	
     write_bytes
     (
         0x0050AD1A,
@@ -2988,7 +2760,7 @@ void patch_base_attack()
         base_attack_bytes_length
     )
     ;
-
+	
 }
 
 /*
@@ -2997,7 +2769,7 @@ Game sometimes crashes when drawing fireball over vehicle out of range.
 void patch_vehicle_boom()
 {
     int boom1_bytes_length = 0x20;
-
+	
     /*
 	0:  8d 04 7f                lea    eax,[edi+edi*2]
 	3:  8d 04 87                lea    eax,[edi+eax*4]
@@ -3011,7 +2783,7 @@ void patch_vehicle_boom()
     byte boom1_bytes_old[] =
 		{ 0x8D, 0x04, 0x7F, 0x8D, 0x04, 0x87, 0xC1, 0xE0, 0x02, 0x0F, 0xBF, 0x88, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x14, 0x49, 0x8D, 0x0C, 0x91, 0xC1, 0xE1, 0x02, 0x80, 0xB9, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
     ;
-
+	
     /*
     0:  83 ff 00                cmp    edi,0x0
 	3:  7c 47                   jl     4c <continue>
@@ -3028,7 +2800,7 @@ void patch_vehicle_boom()
     byte boom1_bytes_new[] =
         { 0x83, 0xFF, 0x00, 0x7C, 0x47, 0x90, 0x31, 0xC0, 0xB0, 0x34, 0xF7, 0xE7, 0x0F, 0xBF, 0x88, 0x32, 0x28, 0x95, 0x00, 0x31, 0xC0, 0xB0, 0x34, 0xF7, 0xE1, 0x80, 0xB9, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
     ;
-
+	
     write_bytes
     (
         0x00504C76,
@@ -3037,9 +2809,9 @@ void patch_vehicle_boom()
         boom1_bytes_length
     )
     ;
-
+	
     int boom2_bytes_length = 0x1f;
-
+	
     /*
 	0:  8b 45 e4                mov    eax,DWORD PTR [ebp-0x1c]
 	3:  8d 0c 40                lea    ecx,[eax+eax*2]
@@ -3054,7 +2826,7 @@ void patch_vehicle_boom()
     byte boom2_bytes_old[] =
 		{ 0x8B, 0x45, 0xE4, 0x8D, 0x0C, 0x40, 0x8D, 0x14, 0x88, 0x0F, 0xBF, 0x04, 0x95, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x0C, 0x40, 0x8D, 0x14, 0x88, 0x80, 0x3C, 0x95, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
     ;
-
+	
     /*
     0:  8b 4d e4                mov    ecx,DWORD PTR [ebp-0x1c]
 	3:  83 f9 00                cmp    ecx,0x0
@@ -3070,7 +2842,7 @@ void patch_vehicle_boom()
     byte boom2_bytes_new[] =
         { 0x8B, 0x4D, 0xE4, 0x83, 0xF9, 0x00, 0x7C, 0x1D, 0x90, 0x90, 0x90, 0x6B, 0xC9, 0x34, 0x0F, 0xBF, 0x89, 0x32, 0x28, 0x95, 0x00, 0x6B, 0xC9, 0x34, 0x80, 0xB9, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
     ;
-
+	
     write_bytes
     (
         0x00505327,
@@ -3079,66 +2851,7 @@ void patch_vehicle_boom()
         boom2_bytes_length
     )
     ;
-
-}
-
-void patch_disable_vehicle_reassignment()
-{
-    int disable_vehicle_reassignment_bytes_length = 0x7;
-
-    /*
-	0:  66 8b 9b 56 28 95 00    mov    bx,WORD PTR [ebx+0x952856]
-	*/
-    byte disable_vehicle_reassignment_bytes_old[] =
-		{ 0x66, 0x8B, 0x9B, 0x56, 0x28, 0x95, 0x00 }
-    ;
-
-    /*
-	0:  66 bb ff ff             mov    bx,0xffff
-    ...
-	*/
-    byte disable_vehicle_reassignment_bytes_new[] =
-        { 0x66, 0xBB, 0xFF, 0xFF, 0x90, 0x90, 0x90 }
-    ;
-
-    write_bytes
-    (
-        0x00561FA5,
-        disable_vehicle_reassignment_bytes_old,
-        disable_vehicle_reassignment_bytes_new,
-        disable_vehicle_reassignment_bytes_length
-    )
-    ;
-
-}
-
-void patch_always_support_natives()
-{
-    int always_support_natives_bytes_length = 0x4;
-
-    /*
-	0:  f6 40 08 20             test   BYTE PTR [eax+0x8],0x20
-	*/
-    byte always_support_natives_bytes_old[] =
-		{ 0xF6, 0x40, 0x08, 0x20 }
-    ;
-
-    /*
-	0:  f6 40 08 00             test   BYTE PTR [eax+0x8],0x0
-	*/
-    byte always_support_natives_bytes_new[] =
-        { 0xF6, 0x40, 0x08, 0x00 }
-    ;
-
-    write_bytes
-    (
-        0x004E987E,
-        always_support_natives_bytes_old,
-        always_support_natives_bytes_new,
-        always_support_natives_bytes_length
-    )
-    ;
-
+	
 }
 
 /*
@@ -3147,7 +2860,7 @@ Disables transport to pick not boarded vehicles.
 void patch_transport_pick_everybody()
 {
    	write_call(0x005980AE, (int)modified_stack_veh_disable_transport_pick_everybody);
-
+	
 }
 
 /*
@@ -3156,103 +2869,21 @@ Disables non transport vehicles to stop turn in base.
 void patch_non_transport_stop_in_base()
 {
    	write_call(0x004CB53C, (int)modified_veh_skip_disable_non_transport_stop_in_base);
-
+	
 }
 
 void patch_disable_alien_ranged_from_transport()
 {
    	write_call(0x0056B65E, (int)modified_alien_move);
    	write_call(0x00566ED9, (int)modified_can_arty_in_alien_move);
-
+	
 }
 
 void patch_disable_kill_ai()
 {
    	write_call(0x00561C32, (int)modified_kill);
    	write_call(0x00561D3A, (int)modified_kill);
-
-}
-
-void patch_no_stagnation()
-{
-    int no_stagnation_length = 0x31;
-
-    /*
-	0:  8b 3d 38 e9 90 00       mov    edi,DWORD PTR ds:0x90e938
-	6:  8b 35 30 ea 90 00       mov    esi,DWORD PTR ds:0x90ea30
-	c:  8b c7                   mov    eax,edi
-	e:  c7 45 b4 00 00 00 00    mov    DWORD PTR [ebp-0x4c],0x0
-	15: 99                      cdq
-	16: f7 3d 3c 97 94 00       idiv   DWORD PTR ds:0x94973c
-	1c: 0f be 5e 06             movsx  ebx,BYTE PTR [esi+0x6]
-	20: 0f af 1d 3c 97 94 00    imul   ebx,DWORD PTR ds:0x94973c
-	27: 8b 8e c0 00 00 00       mov    ecx,DWORD PTR [esi+0xc0]
-	2d: 03 c1                   add    eax,ecx
-	2f: 3b c3                   cmp    eax,ebx
-	*/
-    byte no_stagnation_old[] =
-		{ 0x8B, 0x3D, 0x38, 0xE9, 0x90, 0x00, 0x8B, 0x35, 0x30, 0xEA, 0x90, 0x00, 0x8B, 0xC7, 0xC7, 0x45, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x99, 0xF7, 0x3D, 0x3C, 0x97, 0x94, 0x00, 0x0F, 0xBE, 0x5E, 0x06, 0x0F, 0xAF, 0x1D, 0x3C, 0x97, 0x94, 0x00, 0x8B, 0x8E, 0xC0, 0x00, 0x00, 0x00, 0x03, 0xC1, 0x3B, 0xC3 }
-    ;
-
-    /*
-	0:  c7 45 b4 00 00 00 00    mov    DWORD PTR [ebp-0x4c],0x0
-	7:  8b 3d 38 e9 90 00       mov    edi,DWORD PTR ds:0x90e938
-	d:  8b 35 30 ea 90 00       mov    esi,DWORD PTR ds:0x90ea30
-	13: 0f be 5e 06             movsx  ebx,BYTE PTR [esi+0x6]
-	17: 0f af 1d 3c 97 94 00    imul   ebx,DWORD PTR ds:0x94973c
-	1e: 0f be 46 06             movsx  eax,BYTE PTR [esi+0x6]
-	22: 83 c0 02                add    eax,0x2
-	25: d1 e8                   shr    eax,1
-	27: 01 d8                   add    eax,ebx
-	29: 8b 8e c0 00 00 00       mov    ecx,DWORD PTR [esi+0xc0]
-	2f: 39 c1                   cmp    ecx,eax
-	*/
-    byte no_stagnation_new[] =
-        { 0xC7, 0x45, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x8B, 0x3D, 0x38, 0xE9, 0x90, 0x00, 0x8B, 0x35, 0x30, 0xEA, 0x90, 0x00, 0x0F, 0xBE, 0x5E, 0x06, 0x0F, 0xAF, 0x1D, 0x3C, 0x97, 0x94, 0x00, 0x0F, 0xBE, 0x46, 0x06, 0x83, 0xC0, 0x02, 0xD1, 0xE8, 0x01, 0xD8, 0x8B, 0x8E, 0xC0, 0x00, 0x00, 0x00, 0x39, 0xC1 }
-    ;
-
-    write_bytes
-    (
-        0x004E88E1,
-        no_stagnation_old,
-        no_stagnation_new,
-        no_stagnation_length
-    )
-    ;
-
-}
-
-/**
-Fixes vanilla bug when faction bonus is applied to other base.
-*/
-void patch_capture_base()
-{
-    int capture_base_length = 0x6;
-
-    /*
-	0:  8b 15 70 93 68 00       mov    edx,DWORD PTR ds:0x689370
-	*/
-    byte capture_base_old[] =
-		{ 0x8B, 0x15, 0x70, 0x93, 0x68, 0x00 }
-    ;
-
-    /*
-    0:  8b 55 08                mov    edx,DWORD PTR [ebp+0x8]
-	...
-	*/
-    byte capture_base_new[] =
-        { 0x8B, 0x55, 0x08, 0x90, 0x90, 0x90 }
-    ;
-
-    write_bytes
-    (
-        0x0050D34A,
-        capture_base_old,
-        capture_base_new,
-        capture_base_length
-    )
-    ;
-
+	
 }
 
 void patch_accelerate_order_veh()
@@ -3581,10 +3212,6 @@ void patch_setup_wtp(Config* cf)
 	// se_accumulated_resource_adjustment
 	
 	patch_se_accumulated_resource_adjustment();
-	//+++
-	// hex cost
-	
-	patch_hex_cost();
 	
 	// base population info
 	
@@ -3654,9 +3281,6 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_best_defender();
 	
-	// integrated into Thinker
-//	patch_action_destroy();
-	
 	if (cf->break_treaty_before_fight)
 	{
 		patch_break_treaty_before_fight();
@@ -3669,12 +3293,8 @@ void patch_setup_wtp(Config* cf)
 		patch_unit_upgrade_ignores_movement();
 	}
 	
-	patch_disable_land_artillery_bombard_from_sea();
-	
 	patch_disable_air_transport_unload_everywhere();
 	
-//	patch_base_production();
-//
 	patch_enemy_move();
 	
 	patch_faction_upkeep();
@@ -3741,36 +3361,22 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_enemy_units_check();
 	
-	// in Thinker
-//	patch_enemies_treaty_popup();
-	
 	patch_tech_ai_randomization();
 	
 	patch_pact_withdraw();
 	
 	patch_propose_proto();
 	
-	if (cf->science_projects_alternative_labs_bonus)
-	{
-		patch_science_projects_alternative_labs_bonus();
-	}
-	
 	if (cf->disengagement_from_stack)
 	{
 		patch_disengagement_from_stack();
 	}
-	
-	patch_limit_orbit_intake();
 	
 	patch_order_veh();
 	
 	patch_base_attack();
 	
 	patch_vehicle_boom();
-	
-	patch_disable_vehicle_reassignment();
-	
-	patch_always_support_natives();
 	
 	patch_transport_pick_everybody();
 	
@@ -3779,10 +3385,6 @@ void patch_setup_wtp(Config* cf)
 	patch_disable_alien_ranged_from_transport();
 	
 	patch_disable_kill_ai();
-	
-	patch_no_stagnation();
-	
-	patch_capture_base();
 	
 	if (conf.tech_trade_likeability != 0x12)
 	{

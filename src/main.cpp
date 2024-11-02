@@ -494,10 +494,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_base_allowed_fungus_rocky = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("orbital_yield_limit"))
-    {
-        cf->orbital_yield_limit = atoi(value);
-    }
     else if (MATCH("silent_vendetta_warning"))
     {
         cf->silent_vendetta_warning = (atoi(value) == 0 ? false : true);

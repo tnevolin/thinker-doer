@@ -4923,7 +4923,7 @@ Kills vehicle properly with transport check.
 */
 void killVehicle(int vehicleId)
 {
-	tx_kill(vehicleId);
+	kill(vehicleId);
 }
 
 /**
@@ -5156,19 +5156,19 @@ int getBaseGrowthRate(int baseId)
 
 int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY, int speed1)
 {
-	return wtp_mod_hex_cost(unitId, factionId, fromX, fromY, toX, toY, speed1);
+	return mod_hex_cost(unitId, factionId, fromX, fromY, toX, toY, speed1);
 }
 int getHexCost(int unitId, int factionId, MAP *fromTile, MAP *toTile, int speed1)
 {
 	assert(isOnMap(fromTile));
 	assert(isOnMap(toTile));
-	return wtp_mod_hex_cost(unitId, factionId, getX(fromTile), getY(fromTile), getX(toTile), getY(toTile), speed1);
+	return mod_hex_cost(unitId, factionId, getX(fromTile), getY(fromTile), getX(toTile), getY(toTile), speed1);
 }
 
 int getVehicleHexCost(int vehicleId, int fromX, int fromY, int toX, int toY)
 {
 	VEH *vehicle = getVehicle(vehicleId);
-	return wtp_mod_hex_cost(vehicle->unit_id, vehicle->faction_id, fromX, fromY, toX, toY, (getVehicleSpeed(vehicleId) == 1 ? 1 : 0));
+	return mod_hex_cost(vehicle->unit_id, vehicle->faction_id, fromX, fromY, toX, toY, (getVehicleSpeed(vehicleId) == 1 ? 1 : 0));
 }
 
 int getSeaHexCost(MAP *tile)

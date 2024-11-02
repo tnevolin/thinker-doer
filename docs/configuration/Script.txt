@@ -7904,21 +7904,29 @@ $TITLE0 $NAME1 of the $FACTION2."
 #WILLRISE
 #xs 440
 #caption Chief Planetologist
-According to our calculations, sea levels will rise approximately
-$NUM1 meters over the next $NUM0 years.
+According to our calculations, sea levels rise rate is approximately
+$NUM1 meters per $NUM0 years.
+^
+^[Base danger!]
+^Extreme tidal waves can {suddenly} flood shores submerging lowland bases.
+^Protect them with {Pressure Dome} to avoid casualties and base loss.
 
 #WILLFALL
 #xs 440
 #caption Chief Planetologist
-According to our calculations, sea levels will fall approximately
-$NUM1 meters over the next $NUM0 years.
+According to our calculations, sea levels fall rate is approximately
+$NUM1 meters per $NUM0 years.
 
 #TRIGGERWARMING
 #xs 440
 #caption Chief Planetologist
-Ecological damage has begun to trigger global warming! According to
-our calculations, sea levels will rise approximately $NUM1 meters
-over the next $NUM0 years!
+Ecological damage has begun to trigger global warming!
+^According to our calculations, sea levels rise rate is approximately
+$NUM1 meters per $NUM0 years!
+^
+^[Base danger!]
+^Extreme tidal waves can {suddenly} flood shores submerging lowland bases.
+^Protect them with {Pressure Dome} to avoid casualties and base loss.
 
 #SEARISING
 #xs 440
@@ -7940,7 +7948,7 @@ $<#1:has been:have been> submerged!
 #xs 440
 #caption Chief Planetologist
 Tidal waves near $BASENAME0! $BASENAME0 has been submerged!
-Massive casualties were sustained before an emergency Pressure Dome
+^Massive casualties were sustained before an emergency Pressure Dome
 could be erected.
 
 #BASESUBMERGED1
@@ -7957,7 +7965,7 @@ Tidal waves have submerged $BASENAME0 ($FACTIONADJ1)!
 #xs 440
 #caption Chief Planetologist
 Tidal waves have submerged $BASENAME0 ($FACTIONADJ1)!
-The base is presumed destroyed, as we have detected no further
+^The base is presumed destroyed, as we have detected no further
 transmissions.
 
 #LANDMARKNONE
@@ -10600,15 +10608,15 @@ automatically have $ABIL1!
 #xs 440
 #caption Chief Planetologist
 Those stupid humans are at it again!  Manifold Six is in danger!
-According to our calculations, sea levels will rise approximately
-$NUM1 meters over the next $NUM0 years.
+^According to our calculations, sea levels rise rate is approximately
+$NUM1 meters per $NUM0 years.
 
 #WILLFALLALIEN
 #xs 440
 #caption Chief Planetologist
 Those stupid humans are at it again!  Manifold Six is in danger!
-According to our calculations, sea levels will fall approximately
-$NUM1 meters over the next $NUM0 years.
+^According to our calculations, sea levels fall rate is approximately
+$NUM1 meters per $NUM0 years.
 
 #WENEEDHUMANPSYCH
 #xs 440

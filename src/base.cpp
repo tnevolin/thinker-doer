@@ -801,13 +801,35 @@ void __cdecl mod_base_energy() {
     base->economy_total = (coeff_econ * base->economy_total + 3) / 4;
     base->psych_total = (coeff_psych * base->psych_total + 3) / 4;
     base->unk_total = (coeff_econ * base->unk_total + 3) / 4;
-
-    if (project_base(FAC_SUPERCOLLIDER) == base_id) {
-        base->labs_total *= 2;
-    }
-    if (project_base(FAC_THEORY_OF_EVERYTHING) == base_id) {
-        base->labs_total *= 2;
-    }
+    
+    // [WTP]
+    // science project alternative labs bonus
+    
+    if (conf.science_projects_alternative_labs_bonus)
+	{
+		if (has_project(FAC_SUPERCOLLIDER, base->faction_id))
+		{
+			base->labs_total = base->labs_total * (100 + conf.science_projects_supercollider_labs_bonus) / 100;
+		}
+		if (has_project(FAC_THEORY_OF_EVERYTHING, base->faction_id))
+		{
+			base->labs_total = base->labs_total * (100 + conf.science_projects_theoryofeverything_labs_bonus) / 100;
+		}
+		if (has_project(FAC_UNIVERSAL_TRANSLATOR, base->faction_id))
+		{
+			base->labs_total = base->labs_total * (100 + conf.science_projects_universaltranslator_labs_bonus) / 100;
+		}
+	}
+	else
+	{
+		if (project_base(FAC_SUPERCOLLIDER) == base_id) {
+			base->labs_total *= 2;
+		}
+		if (project_base(FAC_THEORY_OF_EVERYTHING) == base_id) {
+			base->labs_total *= 2;
+		}
+	}
+    
     if (project_base(FAC_SPACE_ELEVATOR) == base_id) {
         base->economy_total *= 2;
     }
@@ -2436,16 +2458,9 @@ bool satellite_bonus(int base_id, int* nutrient, int* mineral, int* energy) {
     if (f.satellites_nutrient > 0 || f.satellites_mineral > 0 || f.satellites_mineral > 0) {
         bool full_value = has_facility(FAC_AEROSPACE_COMPLEX, base_id)
             || has_project(FAC_SPACE_ELEVATOR, base.faction_id);
-		
-		// [WTP]
-		// orbital yield limit
-		
-		int limit = (conf.orbital_yield_limit * base.pop_size) / 100;
-		
-        *nutrient += satellite_output(f.satellites_nutrient, limit, full_value);
-        *mineral += satellite_output(f.satellites_mineral, limit, full_value);
-        *energy += satellite_output(f.satellites_energy, limit, full_value);
-        
+        *nutrient += satellite_output(f.satellites_nutrient, base.pop_size, full_value);
+        *mineral += satellite_output(f.satellites_mineral, base.pop_size, full_value);
+        *energy += satellite_output(f.satellites_energy, base.pop_size, full_value);
         return true;
     }
     return f.satellites_ODP > 0;

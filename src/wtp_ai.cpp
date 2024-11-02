@@ -6096,7 +6096,7 @@ std::vector<MoveAction> getVehicleReachableLocations(int vehicleId)
 				
 				// compute hex cost
 				
-				int hexCost = wtp_mod_hex_cost(unitId, factionId, tileX, tileY, adjacentTileX, adjacentTileY, speed1);
+				int hexCost = mod_hex_cost(unitId, factionId, tileX, tileY, adjacentTileX, adjacentTileY, speed1);
 				
 				// allowed step
 				
