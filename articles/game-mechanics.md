@@ -1,5 +1,7 @@
 # Probe actions success probability
 
+Old thread on AC2: https://web.archive.org/web/20230912072952/https://alphacentauri2.info/index.php?topic=2761.0
+
 ## Sequence of steps
 
 1. Probe attempts to carry out the mission.
