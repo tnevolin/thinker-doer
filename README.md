@@ -743,30 +743,36 @@ Now base can produce that many minerals without pollution: TF + HF = 16, TF + HF
 
 This mod uses Thinker expiration mechanics with slight modification. The infiltration duration is set by PROBE rating of infiltrated faction only.
 
-# Alternative Psych computation
+# Alternative Psych
 
-The goal of this modification to simplify the mechanics as much as possible for player to comprehend easily.
+The goal of this modification is to simplify the mechanics as much as possible for player to comprehend easily.
 
 ## Principles
 
-* Superdrone counts as two drones for the purpose of any computation including golden age.
-* Psych effects are applied to leftmost applicable citizen.
-* Psych effects has to turn superdrone -> drone -> content -> talent, not skipping any step.
-* The sequence of psych effects: police, facilities, projects, psych.
+* Superdrone counts as two drones for the purpose of all computations: facilities, police, projects, psych, riot, golden age.
+* All positive effects are applied to leftmost applicable citizen.
+* All effects has to turn superdrone -> drone -> content -> talent, not skipping any step.
+* Psych allocation is applied after all other effects.
 
 ## Psych effects
 
-### police and facilities
+### content generating effects (facilities, police, and some projects)
 
-Same effect, except they cannot turn superdrone directly to content. They should turn it to drone first. This way it takes two regular police or one double police or one Recreation Common to turn superdrone to content.
+Improve leftmost not content up to content one step at a time: superdrone -> drone -> content -> talent, then next one, etc.
 
-### secret projects and psych
+Facilities and police cannot turn turn superdrone directly to content anymore. They should do it one step at a time.
 
-Work same way. Turn leftmost not talent citizen one step at a time: superdrone -> drone -> content -> talent, then next one, etc. Created talents do not cancel remaining superdrones.
+### talent generating effects (psych and some projects)
+
+Improve leftmost not talent citizen up to talent one step at a time: superdrone -> drone -> content -> talent, then next one, etc.
 
 ## Golden age
 
-Happens when total happiness (talents - drones - superdrones) is greater or equal half of the population.
+Happens when total happiness (talents - drones - superdrones) is greater or equal half of the population. Same as in vanilla, except drones are allowed in which case talents should offset drones and still come up with half of the population positive value.
+
+## Nerve stappling and punishment sphere
+
+Since these effects override all others, there is no use to display extra rows in base psych screen. Only one row with "Stapled Base" label is shown.
 
 # AI
 
