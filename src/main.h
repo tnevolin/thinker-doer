@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.5 - The Will to Power mod v315"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v316"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -108,6 +108,7 @@ const int MaxProtoFactionNum = 64;
 const int MaxBaseNameLen = 25;
 const int MaxProtoNameLen = 32;
 const int MaxBasePopSize = 127;
+const int MaxBaseSpecNum = 16;
 
 const int MaxTechnologyNum = 89;
 const int MaxChassisNum = 9;
@@ -240,7 +241,6 @@ struct Config {
     int long_range_artillery = 0;
     int modify_upgrade_cost = 0;
     int modify_unit_support = 0;
-    int modify_unit_morale = 1; // unlisted option
     int skip_default_balance = 1; // unlisted option
     int early_research_start = 1; // unlisted option
     int facility_capture_fix = 1; // unlisted option
@@ -249,6 +249,7 @@ struct Config {
     int simple_hurry_cost = 1;
     int eco_damage_fix = 1;
     int clean_minerals = 16;
+    int biology_lab_bonus = 2;
     int spawn_fungal_towers = 1;
     int spawn_spore_launchers = 1;
     int spawn_sealurks = 1;
@@ -265,14 +266,12 @@ struct Config {
     int native_elite_moves = 0;
     int native_weak_until_turn = -1;
     int native_lifecycle_levels[6] = {40,80,120,160,200,240};
+    int facility_defense_bonus[4] = {100,100,100,100};
     int neural_amplifier_bonus = 50;
     int dream_twister_bonus = 50;
     int fungal_tower_bonus = 50;
     int planet_defense_bonus = 0;
-    int intercept_defense_bonus = 0;
-    int perimeter_defense_bonus = 2;
-    int tachyon_field_bonus = 2;
-    int biology_lab_bonus = 2;
+    int sensor_defense_ocean = 0;
     int collateral_damage_value = 3;
     int content_pop_player[MaxDiffNum] = {6,5,4,3,2,1};
     int content_pop_computer[MaxDiffNum] = {3,3,3,3,3,3};
@@ -327,8 +326,8 @@ struct Config {
     bool fix_mineral_contribution = true; // internal setting
     bool modified_probe_action_risks = false;
     int probe_action_risk_introduce_genetic_plague = 0;
-    bool combat_bonus_sensor_ocean = false;
-    bool combat_bonus_sensor_offense = false;
+    bool sensor_offense = false;
+    bool sensor_offense_ocean = false;
     bool break_treaty_before_fight = false;
     int habitation_facility_growth_bonus = 0;
     bool unit_upgrade_ignores_movement = false;
@@ -360,9 +359,6 @@ struct Config {
 	int combat_bonus_attacking_along_road;
 	bool disengagement_from_stack;
 	bool eco_damage_alternative_industry_effect_reduction_formula;
-	double orbital_nutrient_population_limit;
-	double orbital_mineral_population_limit;
-	double orbital_energy_population_limit;
 	int pressure_dome_minerals = 0;
 	int tech_trade_likeability = 0x12;
 	int conventional_power_psi_percentage = 0;
@@ -496,20 +492,20 @@ struct Config {
     double ai_combat_priority_field_healing;
     double ai_combat_priority_base_protection;
     double ai_combat_priority_base_healing;
+    double ai_combat_attack_priority_base;
     double ai_combat_attack_priority_alien_mind_worms;
     double ai_combat_attack_priority_alien_spore_launcher;
     double ai_combat_attack_priority_alien_fungal_tower;
-    double ai_combat_attack_priority_base;
     double ai_combat_priority_pod;
     double ai_combat_base_protection_superiority;
-    double ai_combat_base_protection_eary_adjustment;
-    double ai_combat_base_protection_eary_adjustment_end_turn;
     int ai_combat_field_attack_priority_base_range;
-    double ai_combat_field_attack_priority_base_extra;
     double ai_combat_field_attack_superiority_required;
     double ai_combat_field_attack_superiority_desired;
     double ai_combat_base_attack_superiority_required;
     double ai_combat_base_attack_superiority_desired;
+    double ai_combat_strength_increase_value;
+    double ai_combat_winning_probability_a;
+    double ai_combat_winning_probability_b;
     double ai_production_global_combat_superiority_land;
     double ai_production_global_combat_superiority_sea;
     double ai_production_combat_unit_proportions[3];

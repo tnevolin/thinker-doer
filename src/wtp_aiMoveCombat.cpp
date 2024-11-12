@@ -24,52 +24,6 @@ double ProvidedEffect::getCombined()
 	return destructive == 0.0 ? 0.0 : destructive + bombardment;
 }
 
-// 	TaskPriority
-
-TaskPriority::TaskPriority(int _vehicleId, double _priority, TaskType _taskType, MAP *_destination)
-: vehicleId{_vehicleId}, priority{_priority}, taskType{_taskType}, destination{_destination}
-{
-
-}
-
-TaskPriority::TaskPriority(int _vehicleId, double _priority, TaskType _taskType, MAP *_destination, double _travelTime)
-: vehicleId{_vehicleId}, priority{_priority}, taskType{_taskType}, destination{_destination}, travelTime{_travelTime}
-{
-
-}
-
-TaskPriority::TaskPriority(int _vehicleId, double _priority, TaskType _taskType, MAP *_destination, double _travelTime, int _baseId)
-: vehicleId{_vehicleId}, priority{_priority}, taskType{_taskType}, destination{_destination}, travelTime{_travelTime}, baseId{_baseId}
-{
-
-}
-
-TaskPriority::TaskPriority
-(
-	int _vehicleId,
-	double _priority,
-	TaskType _taskType,
-	MAP *_destination,
-	double _travelTime,
-	COMBAT_MODE _combatMode,
-	MAP *_attackTarget,
-	bool _destructive,
-	double _effect
-)
-:
-	vehicleId{_vehicleId},
-	priority{_priority},
-	taskType{_taskType},
-	destination{_destination},
-	travelTime{_travelTime},
-	combatMode{_combatMode},
-	attackTarget{_attackTarget},
-	destructive{_destructive},
-	effect{_effect}
-{
-
-}
-
 /*
 Prepares combat orders.
 */
@@ -381,7 +335,7 @@ void immediateAttack()
 		if (hasTask(vehicleId))
 			continue;
 		
-//		debug("\t[%4d] %s %-32s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), vehicle->name());
+		debug("\t[%4d] %s %-32s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), vehicle->name());
 		
 		// select best attack priority for each vehicle
 		
@@ -400,12 +354,19 @@ void immediateAttack()
 			
 			EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
 			
+			// do not attack non hostile stack outside of base radius
+			
+			if (!enemyStackInfo.hostile && !(enemyStackInfo.tile->owner == aiFactionId && map_has_item(enemyStackInfo.tile, BIT_BASE_RADIUS)))
+				continue;
+			
+			// melee attack
+			
 			if (!enemyStackInfo.isUnitCanMeleeAttackStack(vehicle->unit_id, attackAction.position))
 				continue;
 			
 			COMBAT_MODE combatMode = CM_MELEE;
 			double effect = attackAction.hastyCoefficient * enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode);
-			double priority = enemyStackInfo.priority * effect;
+			double priority = enemyStackInfo.averageUnitGain * effect;
 			
 			if (priority > selectedPriority)
 			{
@@ -438,6 +399,18 @@ void immediateAttack()
 			
 			EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
 			
+			// do not attack non hostile stack outside of base radius
+			
+			if (!enemyStackInfo.hostile && !(enemyStackInfo.tile->owner == aiFactionId && map_has_item(enemyStackInfo.tile, BIT_BASE_RADIUS)))
+				continue;
+			
+			// do not attack fungal tower
+			
+			if (enemyStackInfo.alienFungalTower)
+				continue;
+			
+			// artillery attack
+			
 			if (!enemyStackInfo.isUnitCanArtilleryAttackStack(vehicle->unit_id, attackAction.position))
 				continue;
 			
@@ -448,14 +421,14 @@ void immediateAttack()
 			{
 				COMBAT_MODE combatMode = CM_ARTILLERY_DUEL;
 				effect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode);
-				priority = enemyStackInfo.priority * effect;
+				priority = enemyStackInfo.averageUnitGain * effect;
 				
 			}
 			else if (enemyStackInfo.bombardment)
 			{
 				COMBAT_MODE combatMode = CM_BOMBARDMENT;
 				effect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode) + 1.0;
-				priority = enemyStackInfo.priority * effect;
+				priority = enemyStackInfo.averageUnitGain * effect;
 				
 			}
 			else
@@ -522,10 +495,9 @@ void moveCombat()
 	
 	std::vector<TaskPriority> taskPriorities;
 	
-	populateMonolithPromotionTasks(taskPriorities);
 	populateRepairTasks(taskPriorities);
-	populateLandPodPoppingTasks(taskPriorities);
-	populateSeaPodPoppingTasks(taskPriorities);
+	populateMonolithTasks(taskPriorities);
+	populatePodPoppingTasks(taskPriorities);
 	populateEmptyBaseCaptureTasks(taskPriorities);
 	populateEnemyStackAttackTasks(taskPriorities);
 	
@@ -564,11 +536,17 @@ void moveCombat()
 	robin_hood::unordered_flat_set<EnemyStackInfo *> excludedEnemyStacks;
 	robin_hood::unordered_flat_map<int, TaskPriority *> vehicleAssignments;
 	
+	robin_hood::unordered_flat_set<MAP *> targetedLocations;
+	robin_hood::unordered_flat_set<EnemyStackInfo *> targetedEnemyStacks;
+	
 	while (true)
 	{
 		// clear assignments
 		
 		vehicleAssignments.clear();
+		
+		targetedLocations.clear();
+		targetedEnemyStacks.clear();
 		
 		for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackInfoEntry : aiData.enemyStacks)
 		{
@@ -578,24 +556,72 @@ void moveCombat()
 		
 		// iterate task priorities
 		
-		robin_hood::unordered_flat_set<MAP *> targetedPods;
-		robin_hood::unordered_flat_set<MAP *> targetedEmptyBases;
-		robin_hood::unordered_flat_set<EnemyStackInfo *> targetedEnemyStacks;
-		
 		for (TaskPriority &taskPriority : taskPriorities)
 		{
-			int vehicleId = taskPriority.vehicleId;
-			double travelTime = taskPriority.travelTime;
-			MAP *destination = taskPriority.destination;
-			MAP *attackTarget = taskPriority.attackTarget;
-			COMBAT_MODE combatMode = taskPriority.combatMode;
-			bool destructive = taskPriority.destructive;
-			double effect = taskPriority.effect;
-			
 			// skip already assigned vehicles
 			
-			if (vehicleAssignments.count(vehicleId) != 0)
+			if (vehicleAssignments.find(taskPriority.vehicleId) != vehicleAssignments.end())
 				continue;
+			
+			switch (taskPriority.taskPriorityRestriction)
+			{
+			case TPR_NONE:
+				{
+					// set vehicle task
+					
+					vehicleAssignments.emplace(taskPriority.vehicleId, &taskPriority);
+					
+				}
+				break;
+				
+			case TPR_ONE:
+				{
+					// skip already targeted location
+					
+					if (targetedLocations.find(taskPriority.destination) != targetedLocations.end())
+						continue;
+					
+					// set vehicle task
+					
+					vehicleAssignments.emplace(taskPriority.vehicleId, &taskPriority);
+					
+					// add targeted location
+					
+					targetedLocations.insert(taskPriority.destination);
+					
+				}
+				break;
+				
+			case TPR_STACK:
+				{
+					EnemyStackInfo *enemyStack = &(aiData.enemyStacks.at(taskPriority.attackTarget));
+					
+					// skip excluded stack
+					
+					if (excludedEnemyStacks.find(enemyStack) != excludedEnemyStacks.end())
+						continue;
+					
+					// try to add vehicle to stack attackers
+					
+					if (!enemyStack->addAttacker({taskPriority.vehicleId, taskPriority.travelTime}))
+						continue;
+					
+					// set vehicle task
+					
+					vehicleAssignments.emplace(taskPriority.vehicleId, &taskPriority);
+					
+					// add targeted enemy stack
+					
+					targetedEnemyStacks.insert(enemyStack);
+					
+				}
+				break;
+				
+			default:
+				// no action
+				break;
+				
+			}
 			
 			if (DEBUG)
 			{
@@ -610,83 +636,15 @@ void moveCombat()
 					" destructive=%d"
 					" effect=%5.2f"
 					"\n"
-					, vehicleId
-					, getLocationString(getVehicleMapTile(vehicleId)).c_str()
+					, taskPriority.vehicleId
+					, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
 					, Task::typeName(taskPriority.taskType).c_str()
-					, getLocationString(destination).c_str()
-					, getLocationString(attackTarget).c_str()
-					, combatMode
-					, destructive
-					, effect
+					, getLocationString(taskPriority.destination).c_str()
+					, getLocationString(taskPriority.attackTarget).c_str()
+					, taskPriority.combatMode
+					, taskPriority.destructive
+					, taskPriority.effect
 				);
-			}
-			
-			if (isPodAt(destination)) // pod
-			{
-				// skip already targeted pod
-				
-				if (targetedPods.count(destination) != 0)
-					continue;
-				
-				// set vehicle task
-				
-				vehicleAssignments.insert({vehicleId, &taskPriority});
-				
-				// add targeted pod
-				
-				targetedPods.insert(destination);
-				
-			}
-			else if (isEmptyHostileBaseAt(destination, aiFactionId) || isEmptyNeutralBaseAt(destination, aiFactionId)) // empty base
-			{
-				debug("\t\t\tempty base\n");
-				
-				// skip already targeted empty base
-				
-				if (targetedEmptyBases.count(destination) != 0)
-				{
-					debug("\t\t\t\ttargeted\n");
-					continue;
-				}
-				
-				// set vehicle taskPrority
-				
-				vehicleAssignments.insert({vehicleId, &taskPriority});
-				
-				// add targeted empty base
-				
-				targetedEmptyBases.insert(destination);
-				
-			}
-			else if (attackTarget != nullptr && aiData.enemyStacks.count(attackTarget) != 0) // enemy stack
-			{
-				EnemyStackInfo *enemyStack = &(aiData.enemyStacks.at(attackTarget));
-				
-				// skip excluded stack
-				
-				if (excludedEnemyStacks.find(enemyStack) != excludedEnemyStacks.end())
-					continue;
-				
-				// try to add vehicle to stack attackers
-				
-				if (!enemyStack->addAttacker({vehicleId, travelTime}))
-					continue;
-				
-				// set vehicle taskPriority
-				
-				vehicleAssignments.insert({vehicleId, &taskPriority});
-				
-				// add targeted enemy stack
-				
-				targetedEnemyStacks.insert(enemyStack);
-				
-			}
-			else
-			{
-				// set vehicle task
-				
-				vehicleAssignments.insert({vehicleId, &taskPriority});
-				
 			}
 			
 		}
@@ -857,10 +815,6 @@ void moveCombat()
 			
 			if (changed)
 				break;
-if (i == 900)
-{
-	debug("ERROR: too many optimization iteration."); exit(1);
-}
 			
 		}
 		
@@ -913,6 +867,19 @@ if (i == 900)
 		
 	}
 	
+	// store untargeted stacks for production demand
+	
+	for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
+	{
+		EnemyStackInfo *enemyStackInfo = &(enemyStackEntry.second);
+		
+		if (targetedEnemyStacks.find(enemyStackInfo) != targetedEnemyStacks.end())
+			continue;
+		
+		aiData.production.untargetedEnemyStackInfos.push_back(enemyStackInfo);
+		
+	}
+	
 	if (DEBUG)
 	{
 		debug("targetedEnemyStacks - %s\n", playerMFaction->noun_faction);
@@ -954,7 +921,7 @@ if (i == 900)
 				(
 					"\t\t[%4d] %s"
 					" task=%d"
-					" travelTime=%5.2f"
+					" travelTime=%7.2f"
 					"\n"
 					, vehicleId, getLocationString(vehicleTile).c_str()
 					, (int)task
@@ -974,7 +941,7 @@ if (i == 900)
 				(
 					"\t\t[%4d] %s"
 					" task=%d"
-					" travelTime=%5.2f"
+					" travelTime=%7.2f"
 					"\n"
 					, vehicleId, getLocationString(vehicleTile).c_str()
 					, (int)task
@@ -989,9 +956,185 @@ if (i == 900)
 	
 }
 
-void populateMonolithPromotionTasks(std::vector<TaskPriority> &taskPriorities)
+void populateRepairTasks(std::vector<TaskPriority> &taskPriorities)
 {
-	debug("\tpopulateMonolithPromotionTasks\n");
+	debug("\tpopulateRepairTasks\n");
+	
+	for (int vehicleId : aiData.combatVehicleIds)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		int triad = vehicle->triad();
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		
+		// vehicle should be damaged
+		
+		if (vehicle->damage_taken <= 0)
+			continue;
+		
+		// exclude unavailable
+		
+		if (hasTask(vehicleId))
+			continue;
+		
+		// exclude battle ogres
+		
+		if (isOgreVehicle(vehicleId))
+			continue;
+		
+		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
+		
+		// vehicle mineral cost
+		
+		int unitMineralCost = Rules->mineral_cost_multi * vehicle->cost();
+		
+		// repair bonus
+		
+		double fullRepairBonus = conf.ai_combat_strength_increase_value * std::max(0.0, getVehicleRelativeDamage(vehicleId) - 0.0) * (double)unitMineralCost;
+		double partRepairBonus = conf.ai_combat_strength_increase_value * std::max(0.0, getVehicleRelativeDamage(vehicleId) - 0.2) * (double)unitMineralCost;
+		
+		// best priority
+		
+		MAP *bestRepairLocation = nullptr;
+		double bestRepairLocationPriority = 0.0;
+		
+		for (MAP *tile : getRangeTiles(vehicleTile, MAX_REPAIR_DISTANCE, true))
+		{
+			int x = getX(tile), y = getY(tile);
+			TileInfo &tileInfo = aiData.getTileInfo(tile);
+			
+			// exclude monolith, they are handled by monolith function
+			
+			if (map_has_item(tile, BIT_MONOLITH))
+				continue;
+			
+			// exclude blocked
+			
+			if (isBlocked(tile))
+				continue;
+			
+			// exclude too far field location
+			
+			if (!(map_has_item(tile, BIT_BASE_IN_TILE | BIT_BUNKER | BIT_MONOLITH)) && map_range(vehicle->x, vehicle->y, x, y) > 0)
+				continue;
+			
+			// exclude unreachable locations
+			
+			if (!isVehicleDestinationReachable(vehicleId, tile))
+				continue;
+			
+			// vehicle can repair there
+			
+			switch (triad)
+			{
+			case TRIAD_AIR:
+				// airbase
+				if (!isAirbaseAt(tile))
+					continue;
+				break;
+				
+			case TRIAD_SEA:
+				// same ocean cluster
+				if (!isSameSeaCluster(vehicleTile, tile))
+					continue;
+				break;
+				
+			case TRIAD_LAND:
+				// same land transported cluster
+				if (!isSameLandTransportedCluster(vehicleTile, tile))
+					continue;
+				break;
+				
+			}
+			
+			// get repair parameters
+			
+			RepairInfo repairInfo = getVehicleRepairInfo(vehicleId, tile);
+			
+			// no repair happening
+			
+			if (repairInfo.damage <= 0)
+				continue;
+			
+			// repair priority coefficient
+			
+			double repairPriorityCoefficient = (repairInfo.full ? conf.ai_combat_priority_repair : conf.ai_combat_priority_repair_partial);
+			
+			// warzone coefficient
+			
+			double warzoneCoefficient = (tileInfo.warzone ? 0.7 : 1.0);
+			
+			// travel time and total time
+			
+			double travelTime = getVehicleATravelTime(vehicleId, tile);
+			
+			if (travelTime == -1 || travelTime >= INF)
+				continue;
+			
+			double totalTime = std::max(1.0, travelTime + (double)repairInfo.time);
+			
+			// repairGain
+			
+			double repairBonus = repairInfo.full ? fullRepairBonus : partRepairBonus;
+			double repairGain = getGainRepetion(getGainBonus(repairBonus), 1.0, totalTime);
+			
+			double repairPriority =
+				repairPriorityCoefficient
+				* warzoneCoefficient
+				* repairGain
+				;
+			
+			debug
+			(
+				"\t\t\t-> %s"
+				" repairPriority=%5.2f"
+				" repairPriorityCoefficient=%5.2f"
+				" warzoneCoefficient=%5.2f"
+				" unitMineralCost=%2d"
+				" repairBonus=%5.2f"
+				" travelTime=%7.2f"
+				" totalTime=%5.2f"
+				" repairGain=%5.2f"
+				"\n"
+				, getLocationString({x, y}).c_str()
+				, repairPriority
+				, repairPriorityCoefficient
+				, warzoneCoefficient
+				, unitMineralCost
+				, repairBonus
+				, travelTime
+				, totalTime
+				, repairGain
+			);
+			
+			// update best
+			
+			if (repairPriority > bestRepairLocationPriority)
+			{
+				bestRepairLocation = tile;
+				bestRepairLocationPriority = repairPriority;
+			}
+			
+		}
+		
+		// not found
+		
+		if (bestRepairLocation == nullptr)
+		{
+			debug("\t\t\trepair location is not found\n");
+			continue;
+		}
+		
+		// add task
+		
+		taskPriorities.emplace_back(vehicleId, bestRepairLocationPriority, TPR_NONE, TT_SKIP, bestRepairLocation);
+		
+	}
+	
+}
+
+void populateMonolithTasks(std::vector<TaskPriority> &taskPriorities)
+{
+	debug("\tpopulateMonolithTasks\n");
 	
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
@@ -999,8 +1142,15 @@ void populateMonolithPromotionTasks(std::vector<TaskPriority> &taskPriorities)
 		int triad = vehicle->triad();
 		
 		// not air
+		// air cannot be either repaired or promoted by monolith
 		
 		if (triad == TRIAD_AIR)
+			continue;
+		
+		// should be either damaged or not promoted
+		// otherwise, monolith has no effect
+		
+		if (!(vehicle->damage_taken > 0 || (vehicle->morale < 6 && (vehicle->state & VSTATE_MONOLITH_UPGRADED) == 0)))
 			continue;
 		
 		// exclude unavailable
@@ -1017,11 +1167,6 @@ void populateMonolithPromotionTasks(std::vector<TaskPriority> &taskPriorities)
 		case BSC_BATTLE_OGRE_MK3:
 			continue;
 		}
-		
-		// exclude already promoted
-		
-		if ((vehicle->state & VSTATE_MONOLITH_UPGRADED) != 0)
-			continue;
 		
 		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
 		
@@ -1037,230 +1182,237 @@ void populateMonolithPromotionTasks(std::vector<TaskPriority> &taskPriorities)
 			continue;
 		}
 		
-		// time and timeCoefficient
+		// travel time
 		
 		double travelTime = std::max(1.0, closestMonolithLocaionTravelTime.value);
-		double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 		
-		// priority
+		// repair
 		
-		double priority =
-			conf.ai_combat_priority_monolith_promotion
-			* travelTimeCoefficient
-		;
+		double repairPriority = 0.0;
 		
-		debug
-		(
-			"\t\t\t-> %s"
-			" priority=%5.2f"
-			" ai_combat_priority_monolith_promotion=%5.2f"
-			" travelTime=%5.2f"
-			" travelTimeCoefficient=%5.2f"
-			, getLocationString(closestMonolithLocaionTravelTime.tile).c_str()
-			, priority
-			, conf.ai_combat_priority_monolith_promotion
-			, travelTime
-			, travelTimeCoefficient
-		);
-
-		// add task
-
-		taskPriorities.emplace_back(vehicleId, priority, TT_MOVE, closestMonolithLocaionTravelTime.tile, travelTime);
-
-	}
-
-}
-
-void populateRepairTasks(std::vector<TaskPriority> &taskPriorities)
-{
-	debug("\tpopulateRepairTasks\n");
-
-	for (int vehicleId : aiData.combatVehicleIds)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		int triad = vehicle->triad();
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-
-		// exclude unavailable
-
-		if (hasTask(vehicleId))
-			continue;
-
-		// exclude battle ogres
-
-		switch (vehicle->unit_id)
+		if (vehicle->damage_taken > 0)
 		{
-		case BSC_BATTLE_OGRE_MK1:
-		case BSC_BATTLE_OGRE_MK2:
-		case BSC_BATTLE_OGRE_MK3:
-			continue;
-		}
-
-		// vehicle should be damaged
-
-		if (vehicle->damage_taken == 0)
-			continue;
-
-		debug("\t\t%s\n", getLocationString(getVehicleMapTile(vehicleId)).c_str());
-
-		// scan nearby location for best repair rate
-
-		MAP *bestRepairLocaion = nullptr;
-		double bestRepairPriority = 0.0;
-
-		for (MAP *tile : getRangeTiles(vehicleTile, MAX_REPAIR_DISTANCE, true))
-		{
-			int x = getX(tile), y = getY(tile);
-			bool ocean = is_ocean(tile);
-			TileInfo &tileInfo = aiData.getTileInfo(tile);
-
-			// vehicle can repair there
-
-			switch (triad)
-			{
-			case TRIAD_AIR:
-				// airbase
-				if (!isAirbaseAt(tile))
-					continue;
-				break;
-
-			case TRIAD_SEA:
-				// same ocean cluster
-				if (!isSameSeaCluster(vehicleTile, tile))
-					continue;
-				break;
-
-			case TRIAD_LAND:
-				// land
-				if (ocean)
-					continue;
-				break;
-
-			}
-
-			// exclude too far field location
-
-			if (!(map_has_item(tile, BIT_BASE_IN_TILE | BIT_BUNKER | BIT_MONOLITH)) && map_range(vehicle->x, vehicle->y, x, y) > 2)
-				continue;
-
-			// exclude blocked
-
-			if (isBlocked(tile))
-				continue;
-
-			// exclude unreachable locations
-
-			if (!isVehicleDestinationReachable(vehicleId, tile))
-				continue;
-
-			// get repair parameters
-
-			RepairInfo repairInfo = getVehicleRepairInfo(vehicleId, tile);
-
-			// no repair happening
-
-			if (repairInfo.damage <= 0)
-				continue;
-
 			// repair priority coefficient
-
-			double repairPriorityCoefficient = (repairInfo.full ? conf.ai_combat_priority_repair : conf.ai_combat_priority_repair_partial);
-
-			// calculate travel time and total time
-
-			double travelTime = getVehicleATravelTime(vehicleId, tile);
-
-			if (travelTime == -1 || travelTime >= INT_INFINITY)
-				continue;
-
-			double totalTime = std::max(1.0, travelTime + (double)repairInfo.time);
-
-			// calculate repair rate
-
-			double repairRate = (double)repairInfo.damage / totalTime;
-
-			// warzone coefficient
-
-			double warzoneCoefficient = (tileInfo.warzone ? 0.7 : 1.0);
-
-			// get repairPriority
-
-			double repairPriority = repairPriorityCoefficient * repairRate * warzoneCoefficient;
-
+			
+			double repairPriorityCoefficient = conf.ai_combat_priority_repair;
+			
+			// repair gain
+			
+			int unitMineralCost = Rules->mineral_cost_multi * vehicle->cost();
+			double fullRepairBonus = conf.ai_combat_strength_increase_value * getVehicleRelativeDamage(vehicleId) * (double)unitMineralCost;
+			double repairBonus = fullRepairBonus;
+			double repairGain = getGainRepetion(getGainBonus(repairBonus), 1.0, travelTime);
+			
+			repairPriority =
+				repairPriorityCoefficient
+				* repairGain
+			;
+			
 			debug
 			(
 				"\t\t\t-> %s"
 				" repairPriority=%5.2f"
 				" repairPriorityCoefficient=%5.2f"
-				" travelTime=%5.2f"
-				" totalTime=%5.2f"
-				" repairRate=%5.2f"
-				" warzoneCoefficient=%5.2f"
+				" unitMineralCost=%2d"
+				" repairBonus=%5.2f"
+				" travelTime=%7.2f"
+				" repairGain=%5.2f"
 				"\n"
-				, getLocationString({x, y}).c_str()
+				, getLocationString(closestMonolithLocaionTravelTime.tile).c_str()
 				, repairPriority
 				, repairPriorityCoefficient
+				, unitMineralCost
+				, repairBonus
 				, travelTime
-				, totalTime
-				, repairRate
-				, warzoneCoefficient
+				, repairGain
 			);
-
-			// update best
-
-			if (repairPriority > bestRepairPriority)
-			{
-				bestRepairLocaion = tile;
-				bestRepairPriority = repairPriority;
-			}
-
+			
 		}
-
-		// not found
-
-		if (bestRepairLocaion == nullptr)
-		{
-			debug("\t\trepair location is not found\n");
-			continue;
-		}
-
-		// calculate repair priority
-
-		double repairPriority = bestRepairPriority;
-
-		// calculate promotion priority
-
+		
+		// promotion
+		
 		double promotionPriority = 0.0;
-
-		if (map_has_item(bestRepairLocaion, BIT_MONOLITH) && ((vehicle->state & VSTATE_MONOLITH_UPGRADED) == 0))
+		
+		if (vehicle->morale < 6 && (vehicle->state & VSTATE_MONOLITH_UPGRADED) == 0)
 		{
-			promotionPriority = conf.ai_combat_priority_monolith_promotion;
+			// promotion priority coefficient
+			
+			double promotionPriorityCoefficient = conf.ai_combat_priority_monolith_promotion;
+			
+			// promotion gain
+			
+			int unitMineralCost = Rules->mineral_cost_multi * vehicle->cost();
+			double strengthIncrease = getMoraleMultiplier(vehicle->morale + 1) / getMoraleMultiplier(vehicle->morale) - 1.0;
+			double promotionBonus = conf.ai_combat_strength_increase_value * strengthIncrease * (double)unitMineralCost;
+			double promotionGain = getGainRepetion(getGainBonus(promotionBonus), 1.0, travelTime);
+			
+			promotionPriority =
+				promotionPriorityCoefficient
+				* promotionGain
+			;
+			
+			debug
+			(
+				"\t\t\t-> %s"
+				" promotionPriority=%5.2f"
+				" promotionPriorityCoefficient=%5.2f"
+				" unitMineralCost=%2d"
+				" promotionBonus=%5.2f"
+				" travelTime=%7.2f"
+				" promotionGain=%5.2f"
+				"\n"
+				, getLocationString(closestMonolithLocaionTravelTime.tile).c_str()
+				, promotionPriority
+				, promotionPriorityCoefficient
+				, unitMineralCost
+				, promotionBonus
+				, travelTime
+				, promotionGain
+			);
+			
 		}
-
-		// summarize priority
-
+		
+		// combined priority
+		
 		double priority = repairPriority + promotionPriority;
-
-		debug
-		(
-			"\t\t-> %s"
-			" priority=%5.2f"
-			", conf.ai_combat_priority_repair=%5.2f"
-			", repairPriority=%5.2f"
-			", promotionPriority=%5.2f\n"
-			, getLocationString(bestRepairLocaion).c_str()
-			, priority
-			, conf.ai_combat_priority_repair
-			, repairPriority
-			, promotionPriority
-		);
-
+		
 		// add task
-
-		taskPriorities.push_back({vehicleId, priority, TT_SKIP, bestRepairLocaion});
-
+		
+		taskPriorities.emplace_back(vehicleId, priority, TPR_NONE, TT_MOVE, closestMonolithLocaionTravelTime.tile);
+		
 	}
+	
+}
 
+void populatePodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
+{
+	debug("\tpopulatePodPoppingTasks\n");
+	
+	// collect pod locations
+	
+	std::vector<std::pair<MAP *, int>> seaPodLocations;
+	std::vector<std::pair<MAP *, int>> landPodLocations;
+	
+	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+	{
+		// pod
+		
+		if (isPodAt(tile) == 0)
+			continue;
+		
+		// exclude neutral territory base radius
+		
+		if (isNeutralTerritory(aiFactionId, tile) && map_has_item(tile, BIT_BASE_RADIUS))
+			continue;
+		
+		// not blocked
+		
+		if (isBlocked(tile))
+			continue;
+		
+		if (is_ocean(tile))
+		{
+			int seaCluster = getSeaCluster(tile);
+			seaPodLocations.emplace_back(tile, seaCluster);
+		}
+		else
+		{
+			int landTransportedCluster = getLandTransportedCluster(tile);
+			landPodLocations.emplace_back(tile, landTransportedCluster);
+		}
+		
+	}
+	
+	// iterate available scouts
+	
+	for (int vehicleId : aiData.combatVehicleIds)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		int triad = vehicle->triad();
+		
+		// exclude unavailable
+		
+		if (hasTask(vehicleId))
+			continue;
+		
+		// surface vehicle
+		
+		if (!(triad == TRIAD_LAND || triad == TRIAD_SEA))
+			continue;
+		
+		// not damaged
+		
+		if (isVehicleCanHealAtThisLocation(vehicleId))
+			continue;
+		
+		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(vehicleTile).c_str());
+		
+		// cluster and pod locations
+		
+		int vehicleCluster = triad == TRIAD_SEA ? getSeaCluster(vehicleTile) : getLandTransportedCluster(vehicleTile);
+		std::vector<std::pair<MAP *, int>> &podLocations = triad == TRIAD_SEA ? seaPodLocations : landPodLocations;
+		
+		// iterate pods
+		
+		for (std::pair<MAP *, int> &podLocation : podLocations)
+		{
+			MAP *podTile = podLocation.first;
+			int podCluster = podLocation.second;
+			
+			// same cluster
+			
+			if (podCluster != vehicleCluster)
+				continue;
+			
+			// limit search range
+			
+			if (getRange(vehicleTile, podTile) > MAX_PODPOP_DISTANCE)
+				continue;
+			
+			// get travel time and coresponding coefficient
+			
+			double travelTime = getVehicleATravelTime(vehicleId, podTile);
+			
+			if (travelTime == INF)
+				continue;
+			
+			// priority
+			
+			double podpopPriorityCoefficient = conf.ai_combat_priority_pod;
+			double podpopBonus = conf.ai_production_pod_bonus;
+			double podpopGain = getGainRepetion(getGainBonus(podpopBonus), 0.9, travelTime);
+			
+			double podpopPriority =
+				podpopPriorityCoefficient
+				* podpopGain
+			;
+			
+			debug
+			(
+				"\t\t\t-> %s"
+				" podpopPriority=%5.2f"
+				" podpopPriorityCoefficient=%5.2f"
+				" podpopBonus=%5.2f"
+				" travelTime=%7.2f"
+				" podpopGain=%5.2f"
+				"\n"
+				, getLocationString(podTile).c_str()
+				, podpopPriority
+				, podpopPriorityCoefficient
+				, podpopBonus
+				, travelTime
+				, podpopGain
+			);
+			
+			// add task
+			
+			taskPriorities.emplace_back(vehicleId, podpopPriority, TPR_ONE, TT_MOVE, podTile, travelTime);
+			
+		}
+		
+	}
+	
 }
 
 /**
@@ -1284,9 +1436,9 @@ void populatePolice2xTasks(std::vector<TaskPriority> &taskPriorities)
 		if (hasTask(vehicleId))
 			continue;
 		
-		// police2x
+		// police2x but not ogres
 		
-		if (!isPolice2xVehicle(vehicleId))
+		if (!isPolice2xVehicle(vehicleId) || isOgreVehicle(vehicleId))
 			continue;
 		
 		// process bases
@@ -1317,7 +1469,7 @@ void populatePolice2xTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// add task
 			
-			TaskPriority taskPriority(vehicleId, priority, TT_HOLD, baseTile);
+			TaskPriority taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
 			taskPriority.baseId = baseId;
 			taskPriorities.push_back(taskPriority);
 			
@@ -1326,7 +1478,7 @@ void populatePolice2xTasks(std::vector<TaskPriority> &taskPriorities)
 				"\t\t[%4d] (%3d,%3d) %-32s -> %-25s"
 				" priority=%5.2f"
 				" requiredPower=%5.2f"
-				" travelTime=%5.2f"
+				" travelTime=%7.2f"
 				" travelTimeCoefficient=%5.2f"
 				"\n"
 				, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId), base->name
@@ -1390,7 +1542,7 @@ void populatePoliceTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// add task
 			
-			TaskPriority taskPriority(vehicleId, priority, TT_HOLD, baseTile);
+			TaskPriority taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
 			taskPriority.baseId = baseId;
 			taskPriorities.push_back(taskPriority);
 			
@@ -1398,7 +1550,7 @@ void populatePoliceTasks(std::vector<TaskPriority> &taskPriorities)
 			(
 				"\t\t[%4d] (%3d,%3d) %-32s -> %-25s"
 				" priority=%5.2f"
-				" travelTime=%5.2f"
+				" travelTime=%7.2f"
 				" travelTimeCoefficient=%5.2f"
 				"\n"
 				, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId), base->name
@@ -1429,6 +1581,11 @@ void populateProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
+		
+		// not ogres
+		
+		if (isOgreVehicle(vehicleId))
+			continue;
 		
 		// exclude unavailable
 		
@@ -1461,28 +1618,27 @@ void populateProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			double vehicleEffect = baseInfo.combatData.getVehicleEffect(vehicleId);
 			
-			// damageCoefficient
-			// more damaged units have priority
+			// time saved due to repair in the base
 			
-			double damageCoefficient = 1.0 + getVehicleRelativeDamage(vehicleId);
+			double repairTimeSave = 5.0 * getVehicleRelativeDamage(vehicleId);
 			
 			// get travel time and coresponding coefficient
 			
 			double travelTime = getVehicleATravelTime(vehicleId, baseTile);
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
+			double effectiveTime = travelTime - repairTimeSave;
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, effectiveTime);
 			
 			// priority
 			
 			double priority =
 				requiredEffect
 				* vehicleEffect
-				* damageCoefficient
 				* travelTimeCoefficient
 			;
 			
 			// add task
 			
-			TaskPriority taskPriority(vehicleId, priority, TT_HOLD, baseTile);
+			TaskPriority taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
 			taskPriority.baseId = baseId;
 			taskPriorities.push_back(taskPriority);
 			
@@ -1492,18 +1648,98 @@ void populateProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 				" priority=%5.2f"
 				" requiredEffect=%5.2f"
 				" vehicleEffect=%5.2f"
-				" damageCoefficient=%5.2f"
-				" travelTime=%5.2f"
+				" travelTime=%7.2f"
+				" effectiveTime=%5.2f"
 				" travelTimeCoefficient=%5.2f"
 				"\n"
 				, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId), base->name
 				, priority
 				, requiredEffect
 				, vehicleEffect
-				, damageCoefficient
 				, travelTime
+				, effectiveTime
 				, travelTimeCoefficient
 			);
+			
+		}
+		
+	}
+	
+}
+
+void populateEmptyBaseCaptureTasks(std::vector<TaskPriority> &taskPriorities)
+{
+	bool TRACE = DEBUG && false;
+	
+	debug("\tpopulateEmptyBaseCaptureTasks TRACE=%d\n", TRACE);
+	
+	// iterate vehicles and bases
+	
+	for (int vehicleId : aiData.combatVehicleIds)
+	{
+		// exclude unavailable
+		
+		if (hasTask(vehicleId))
+			continue;
+		
+		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
+		
+		for (int enemyBaseId : aiData.emptyEnemyBaseIds)
+		{
+			MAP *enemyBaseTile = getBaseMapTile(enemyBaseId);
+			BaseInfo &enemyBaseInfo = aiData.getBaseInfo(enemyBaseId);
+			
+			// can capture this base
+			
+			if (!isVehicleCanCaptureBase(vehicleId, enemyBaseTile))
+				continue;
+			
+			// travel time
+			
+			double travelTime = getVehicleATravelTime(vehicleId, enemyBaseTile);
+			
+			if (travelTime == INF)
+				continue;
+			
+			// do not capture base farther than 10 turn travel time
+			
+			if (travelTime > 10.0)
+				continue;
+			
+			debug("\t\t\t-> %s\n", getLocationString(enemyBaseTile).c_str());
+			
+			// priority
+			
+			double enemyBaseGain = enemyBaseInfo.gain;
+			double enemyBaseCaptureGain = getGainRepetion(enemyBaseGain, 1.0, travelTime);
+			double priority =
+				conf.ai_combat_attack_priority_base
+				* enemyBaseCaptureGain
+			;
+			
+			// add task
+			
+			taskPriorities.emplace_back(vehicleId, priority, TPR_ONE, TT_MOVE, enemyBaseTile, travelTime);
+			
+			if (TRACE)
+			{
+				debug
+				(
+					"\t\t\t->%s"
+					" priority=%5.2f"
+					" ai_combat_attack_priority_base=%5.2f"
+					" travelTime=%7.2f"
+					" enemyBaseGain=%5.2f"
+					" enemyBaseCaptureGain=%5.2f"
+					"\n"
+					, getLocationString(enemyBaseTile).c_str()
+					, priority
+					, conf.ai_combat_attack_priority_base
+					, travelTime
+					, enemyBaseGain
+					, enemyBaseCaptureGain
+				);
+			}
 			
 		}
 		
@@ -1538,7 +1774,15 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 			MAP *enemyStackTile = enemyStackEntry.first;
 			EnemyStackInfo &enemyStackInfo = enemyStackEntry.second;
 			
-			debug("\t\t\t-> %s\n", getLocationString(enemyStackTile).c_str());
+			// do not attack alien sea vehicles far from bases
+			
+			if (enemyStackInfo.alien && is_ocean(enemyStackInfo.tile) && enemyStackInfo.baseRange > 3)
+				continue;
+			
+			// do not attack neutral vehicles outside of base radius
+			
+			if (!enemyStackInfo.hostile && !(enemyStackInfo.tile->owner == aiFactionId && map_has_item(enemyStackInfo.tile, BIT_BASE_RADIUS)))
+				continue;
 			
 			// land artillery do not attack fungal tower
 			
@@ -1549,6 +1793,8 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			if (vehicle->triad() == TRIAD_SEA && enemyStackInfo.alienFungalTower)
 				continue;
+			
+			debug("\t\t\t-> %s\n", getLocationString(enemyStackTile).c_str());
 			
 			// attack position and travel time
 			
@@ -1619,43 +1865,30 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 				MAP *destination = meleeAttackPosition;
 				double travelTime = getVehicleATravelTime(vehicleId, destination);
 				
-				double travelTimeCoefficient = travelTime == INF ? 0.0 : getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
-				
 				// priority
 				
-				double priority = enemyStackInfo.priority * combatEffect * travelTimeCoefficient;
+				double attackGain = enemyStackInfo.averageUnitGain;
+				double survivalChance = getSurvivalChance(combatEffect);
+				double priority = getGainRepetion(attackGain, survivalChance, travelTime);
 				
 				debug
 				(
 					"\t\t\t\t%-15s"
 					" priority=%5.2f"
-					" enemyStackInfo.priority=%5.2f"
+					" averageUnitGain=%5.2f"
 					" combatEffect=%5.2f"
-					" travelTime=%5.2f"
-					" travelTimeCoefficient=%5.2f"
+					" survivalChance=%5.2f"
+					" travelTime=%7.2f"
 					"\n"
 					, "direct"
 					, priority
-					, enemyStackInfo.priority
+					, enemyStackInfo.averageUnitGain
 					, combatEffect
+					, survivalChance
 					, travelTime
-					, travelTimeCoefficient
 				);
 				
-				taskPriorities.push_back
-				(
-						{
-							vehicleId,
-							priority,
-							TT_MELEE_ATTACK,
-							destination,
-							travelTime,
-							combatMode,
-							enemyStackTile,
-							destructive,
-							combatEffect,
-						}
-				);
+				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_MELEE_ATTACK, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);
 				
 			}
 			
@@ -1670,43 +1903,30 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 				MAP *destination = artilleryAttackPosition;
 				double travelTime = getVehicleATravelTime(vehicleId, destination);
 				
-				double travelTimeCoefficient = travelTime == INF ? 0.0 : getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
-				
 				// priority
 				
-				double priority = enemyStackInfo.priority * combatEffect * travelTimeCoefficient;
+				double attackGain = enemyStackInfo.averageUnitGain;
+				double survivalChance = getSurvivalChance(combatEffect);
+				double priority = getGainRepetion(attackGain, survivalChance, travelTime);
 				
 				debug
 				(
 					"\t\t\t\t%-15s"
 					" priority=%5.2f"
-					" enemyStackInfo.priority=%5.2f"
+					" averageUnitGain=%5.2f"
 					" combatEffect=%5.2f"
-					" travelTime=%5.2f"
-					" travelTimeCoefficient=%5.2f"
+					" survivalChance=%5.2f"
+					" travelTime=%7.2f"
 					"\n"
 					, "artillery duel"
 					, priority
-					, enemyStackInfo.priority
+					, enemyStackInfo.averageUnitGain
 					, combatEffect
+					, survivalChance
 					, travelTime
-					, travelTimeCoefficient
 				);
 				
-				taskPriorities.push_back
-				(
-						{
-							vehicleId,
-							priority,
-							TT_LONG_RANGE_FIRE,
-							destination,
-							travelTime,
-							combatMode,
-							enemyStackTile,
-							destructive,
-							combatEffect,
-						}
-				);
+				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_LONG_RANGE_FIRE, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);
 				
 			}
 			
@@ -1725,426 +1945,32 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 				MAP *destination = artilleryAttackPosition;
 				double travelTime = getVehicleATravelTime(vehicleId, destination);
 				
-				double travelTimeCoefficient = travelTime == INF ? 0.0 : getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
-				
 				// priority
 				
-				double priority = enemyStackInfo.priority * combatEffect * travelTimeCoefficient;
+				double attackGain = enemyStackInfo.averageUnitGain;
+				double survivalChance = getSurvivalChance(combatEffect);
+				double priority = getGainRepetion(attackGain, survivalChance, travelTime);
 				
 				debug
 				(
 					"\t\t\t\t%-15s"
 					" priority=%5.2f"
-					" enemyStackInfo.priority=%5.2f"
+					" averageUnitGain=%5.2f"
 					" combatEffect=%5.2f"
-					" travelTime=%5.2f"
-					" travelTimeCoefficient=%5.2f"
+					" survivalChance=%5.2f"
+					" travelTime=%7.2f"
 					"\n"
 					, "bombardment"
 					, priority
-					, enemyStackInfo.priority
+					, enemyStackInfo.averageUnitGain
 					, combatEffect
+					, survivalChance
 					, travelTime
-					, travelTimeCoefficient
 				);
 				
-				taskPriorities.push_back
-				(
-						{
-							vehicleId,
-							priority,
-							TT_LONG_RANGE_FIRE,
-							destination,
-							travelTime,
-							combatMode,
-							enemyStackTile,
-							destructive,
-							combatEffect,
-						}
-				);
+				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_LONG_RANGE_FIRE, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);
 				
 			}
-			
-		}
-		
-	}
-	
-}
-
-void populateEmptyBaseCaptureTasks(std::vector<TaskPriority> &taskPriorities)
-{
-	bool TRACE = DEBUG && false;
-
-	debug("\tpopulateEmptyBaseCaptureTasks TRACE=%d\n", TRACE);
-
-	// attack priority coefficient
-
-	double attackPriority = 2.0 * conf.ai_combat_attack_priority_base;
-
-	// iterate vehicles and bases
-
-	for (int vehicleId : aiData.combatVehicleIds)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-
-		// exclude unavailable
-
-		if (hasTask(vehicleId))
-			continue;
-
-		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
-
-		for (MAP *enemyBaseTile : aiData.emptyEnemyBaseTiles)
-		{
-			debug("\t\t\t-> %s\n", getLocationString(enemyBaseTile).c_str());
-
-			// can capture this base
-
-			if (!isVehicleCanCaptureBase(vehicleId, enemyBaseTile))
-				continue;
-
-			// travel time
-
-			double travelTime = getVehicleATravelTime(vehicleId, enemyBaseTile);
-
-			if (travelTime == INF)
-				continue;
-
-			// do not capture base farther than 10 turn travel time
-
-			if (travelTime > 10)
-				continue;
-
-			// do not capture base if movement is severely impacted
-
-			int vehicleSpeed = getVehicleSpeed(vehicleId);
-			int vehicleUnitSpeed = getUnitSpeed(vehicle->faction_id, vehicle->unit_id);
-
-			double vehicleUnitTravelTime = travelTime * (double)vehicleSpeed / (double)vehicleUnitSpeed;
-
-			debug
-			(
-				"\t\t\tvehicleSpeed=%2d"
-				" vehicleUnitSpeed=%2d"
-				" vehicleUnitTravelTime=%5.2f"
-				" travelTime=%5.2f"
-				, vehicleSpeed
-				, vehicleUnitSpeed
-				, vehicleUnitTravelTime
-				, travelTime
-			);
-
-			if (travelTime - vehicleUnitTravelTime > 5.0)
-				continue;
-
-			// travelTime coefficient
-
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
-
-			// priority
-
-			double priority = attackPriority * travelTimeCoefficient;
-
-			// add task
-
-			taskPriorities.push_back({vehicleId, priority, TT_MOVE, enemyBaseTile, travelTime});
-
-			if (TRACE)
-			{
-				debug
-				(
-					"\t\t\t->%s"
-					" priority=%5.2f"
-					" attackPriority=%5.2f"
-					" travelTime=%5.2f travelTimeCoefficient=%5.2f\n"
-					, getLocationString(enemyBaseTile).c_str()
-					, priority
-					, attackPriority
-					, travelTime, travelTimeCoefficient
-				);
-			}
-
-		}
-
-	}
-
-}
-
-void populateLandPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
-{
-	debug("\tpopulateLandPodPoppingTasks\n");
-	
-	// collect reachable land transported clusters
-	
-	robin_hood::unordered_flat_set<int> reachableLandTransfportedClusters;
-	
-	for (int vehicleId : aiData.combatVehicleIds)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		int triad = vehicle->triad();
-		
-		// land
-		
-		if (triad != TRIAD_LAND)
-			continue;
-		
-		// pod popping vehicle
-		
-		if (!isPodPoppingVehicle(vehicleId))
-			continue;
-		
-		// get land transfported cluster
-		
-		int landTransportedCluster = getLandTransportedCluster(vehicleTile);
-		
-		reachableLandTransfportedClusters.insert(landTransportedCluster);
-		
-	}
-	
-	std::vector<MAP *> podLocations;
-
-	// collect land pods
-	
-	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-	{
-		int landTransportedCluster = getLandTransportedCluster(tile);
-		
-		// land
-		
-		if (is_ocean(tile))
-			continue;
-		
-		// pod
-		
-		if (isPodAt(tile) == 0)
-			continue;
-		
-		// friendly territory
-		
-		if (isUnfriendlyTerritory(aiFactionId, tile))
-			continue;
-		
-		// reachable
-		
-		if (reachableLandTransfportedClusters.find(landTransportedCluster) == reachableLandTransfportedClusters.end())
-			continue;
-		
-		// not blocked location
-		
-		if (isBlocked(tile))
-			continue;
-		
-		// store pod location
-		
-		podLocations.push_back(tile);
-		
-	}
-	
-	// iterate available scouts
-	
-	for (int vehicleId : aiData.combatVehicleIds)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		
-		// exclude unavailable
-		
-		if (hasTask(vehicleId))
-			continue;
-		
-		// land triad
-		
-		if (vehicle->triad() != TRIAD_LAND)
-			continue;
-		
-		// not damaged
-		
-		if (isVehicleCanHealAtThisLocation(vehicleId))
-			continue;
-		
-		// compute base priority
-		
-		double basePriority = conf.ai_combat_priority_pod;
-		
-		// iterate pods
-		
-		for (MAP * podLocation : podLocations)
-		{
-			// limit search range
-			
-			if (getRange(vehicleTile, podLocation) > MAX_PODPOP_DISTANCE)
-				continue;
-			
-			// get travel time and coresponding coefficient
-			
-			double travelTime = getVehicleATravelTime(vehicleId, podLocation);
-			
-			if (travelTime == INF)
-				continue;
-			
-			// do not consider pods farther than so many turns
-			
-			if (travelTime > 10.0)
-				continue;
-			
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
-			
-			// adjust priority by travelTimeCoefficient
-			
-			double priority = basePriority * travelTimeCoefficient;
-			
-			debug
-			(
-				"\t\t%s -> %s"
-				" priority=%5.2f"
-				" basePriority=%5.2f"
-				" travelTime=%5.2f travelTimeCoefficient=%5.2f\n"
-				, getLocationString({vehicle->x, vehicle->y}).c_str(), getLocationString(podLocation).c_str()
-				, priority
-				, basePriority
-				, travelTime, travelTimeCoefficient
-			);
-			
-			// add task
-			
-			taskPriorities.push_back({vehicleId, priority, TT_MOVE, podLocation, travelTime});
-			
-		}
-		
-	}
-	
-}
-
-void populateSeaPodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
-{
-	debug("\tpopulateSeaPodPoppingTasks\n");
-
-	// collect reachable sea clusters
-	
-	robin_hood::unordered_flat_set<int> reachableSeaClusters;
-	
-	for (int vehicleId : aiData.combatVehicleIds)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		int triad = vehicle->triad();
-		
-		// sea
-		
-		if (triad != TRIAD_SEA)
-			continue;
-		
-		// pod popping vehicle
-		
-		if (!isPodPoppingVehicle(vehicleId))
-			continue;
-		
-		// get land transfported cluster
-		
-		int seaCluster = getSeaCluster(vehicleTile);
-		
-		reachableSeaClusters.insert(seaCluster);
-		
-	}
-	
-	// get pod locations
-	
-	std::vector<MAP *> podLocations;
-	
-	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-	{
-		int seaCluster = getSeaCluster(tile);
-		
-		// ocean
-		
-		if (!is_ocean(tile))
-			continue;
-		
-		// pod
-		
-		if (isPodAt(tile) == 0)
-			continue;
-		
-		// friendly territory
-		
-		if (isUnfriendlyTerritory(aiFactionId, tile))
-			continue;
-		
-		// reachable
-
-		if (reachableSeaClusters.find(seaCluster) == reachableSeaClusters.end())
-			continue;
-		
-		// not blocked location
-		
-		if (isBlocked(tile))
-			continue;
-		
-		// store pod location
-		
-		podLocations.push_back(tile);
-		
-	}
-	
-	// iterate available scouts
-	
-	for (int vehicleId : aiData.combatVehicleIds)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		
-		// exclude unavailable
-		
-		if (hasTask(vehicleId))
-			continue;
-		
-		// sea triad
-		
-		if (vehicle->triad() != TRIAD_SEA)
-			continue;
-		
-		// not damaged
-		
-		if (isVehicleCanHealAtThisLocation(vehicleId))
-			continue;
-		
-		// iterate pods
-		
-		for (MAP * podLocation : podLocations)
-		{
-			// get travel time and coresponding coefficient
-			
-			double travelTime = getVehicleATravelTime(vehicleId, podLocation);
-			
-			if (travelTime == INF)
-				continue;
-			
-			// do not consider pods farther than so many turns
-			
-			if (travelTime > 10.0)
-				continue;
-			
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
-			
-			// adjust priority by travelTimeCoefficient
-			
-			double priority = conf.ai_combat_priority_pod * travelTimeCoefficient;
-			
-			debug
-			(
-				"\t\t%s -> %s"
-				" priority=%5.2f"
-				" conf.ai_combat_priority_pod=%5.2f"
-				" travelTime=%5.2f travelTimeCoefficient=%5.2f\n"
-				, getLocationString({vehicle->x, vehicle->y}).c_str(), getLocationString(podLocation).c_str()
-				, priority
-				, conf.ai_combat_priority_pod
-				, travelTime, travelTimeCoefficient
-			);
-			
-			// add task
-			
-			taskPriorities.push_back({vehicleId, priority, TT_MOVE, podLocation, travelTime});
 			
 		}
 		
@@ -2189,7 +2015,7 @@ void coordinateAttack()
 				
 				task->type = TT_HOLD;
 				task->clearDestination();
-				debug("\t\t[%4d] %s travelTime=%5.2f - bombardment wait for breaking treaty\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+				debug("\t\t[%4d] %s travelTime=%7.2f - bombardment wait for breaking treaty\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
 				
 			}
 			
@@ -2206,7 +2032,7 @@ void coordinateAttack()
 			
 			if (isLandVehicleOnTransport(vehicleId))
 			{
-				debug("\t\t[%4d] %s travelTime=%5.2f\t\t(on transport)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+				debug("\t\t[%4d] %s travelTime=%7.2f\t\t(on transport)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
 				continue;
 			}
 			
@@ -2214,7 +2040,7 @@ void coordinateAttack()
 			
 			if (travelTime >= enemyStack.coordinatorTravelTime - 2.0)
 			{
-				debug("\t\t[%4d] %s travelTime=%5.2f\t\t(behind)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+				debug("\t\t[%4d] %s travelTime=%7.2f\t\t(behind)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
 				continue;
 			}
 			
@@ -2223,7 +2049,7 @@ void coordinateAttack()
 			Task *task = getTask(vehicleId);
 			task->type = TT_HOLD;
 			task->clearDestination();
-			debug("\t\t[%4d] %s travelTime=%5.2f - melee wait for coordinator\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+			debug("\t\t[%4d] %s travelTime=%7.2f - melee wait for coordinator\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
 			
 		}
 		
@@ -2240,7 +2066,7 @@ void coordinateAttack()
 				
 				if (travelTime > 2.0)
 				{
-					debug("\t\t[%4d] %s travelTime=%5.2f\t\t(too far)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+					debug("\t\t[%4d] %s travelTime=%7.2f\t\t(too far)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
 					continue;
 				}
 				
@@ -2249,7 +2075,7 @@ void coordinateAttack()
 				Task *task = getTask(vehicleId);
 				task->type = TT_HOLD;
 				task->clearDestination();
-				debug("\t\t[%4d] %s travelTime=%5.2f - melee wait for bombardment\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+				debug("\t\t[%4d] %s travelTime=%7.2f - melee wait for bombardment\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
 				
 			}
 			

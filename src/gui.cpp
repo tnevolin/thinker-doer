@@ -193,7 +193,7 @@ void mouse_over_tile(POINT* p) {
 
         pInfoWin->iTileX = ptTile.x;
         pInfoWin->iTileY = ptTile.y;
-        StatusWin_on_redraw(pInfoWin);
+        StatusWin_on_redraw((Win*)pInfoWin);
         memcpy(&ptLastTile, &ptTile, sizeof(POINT));
     }
 }
@@ -527,7 +527,7 @@ int __thiscall mod_calc_dim(Console* This) {
 }
 
 int __cdecl mod_blink_timer() {
-    if (!*GameHalted && !*ControlRedraw) {
+    if (!*GameHalted && !VehBattleState[1]) {
         if (Win_is_visible(BaseWin)) {
             return TutWin_draw_arrow(TutWin);
         }
@@ -1397,17 +1397,17 @@ void __cdecl BaseWin_draw_psych_strcat(char* buffer, char* source)
     if (conf.render_base_info && *CurrentBaseID >= 0) {
         if (base->nerve_staple_turns_left > 0
         || has_fac_built(FAC_PUNISHMENT_SPHERE, *CurrentBaseID)) {
-            if (!strcmp(source, (*TextLabels)[971])) { // Stapled Base
-                strncat(buffer, (*TextLabels)[322], StrBufLen); // Unmodified
+            if (!strcmp(source, label_get(971))) { // Stapled Base
+                strncat(buffer, label_get(322), StrBufLen); // Unmodified
                 return;
             }
-            if (!strcmp(source, (*TextLabels)[327])) { // Secret Projects
-                strncat(buffer, (*TextLabels)[971], StrBufLen); // Stapled Base
+            if (!strcmp(source, label_get(327))) { // Secret Projects
+                strncat(buffer, label_get(971), StrBufLen); // Stapled Base
                 return;
             }
         }
         int turns = base->assimilation_turns_left;
-        if (turns > 0 && !strcmp(source, (*TextLabels)[970])) { // Captured Base
+        if (turns > 0 && !strcmp(source, label_get(970))) { // Captured Base
             snprintf(buffer, StrBufLen, label_captured_base, turns);
             return;
         }
@@ -1422,7 +1422,7 @@ void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3,
     if (conf.render_base_info && *CurrentBaseID >= 0) {
         int workers = base->pop_size - base->talent_total - base->drone_total - base->specialist_total;
         int color;
-		
+
         if (base_maybe_riot(*CurrentBaseID)) {
             color = ColorRed;
         } else if (base->golden_age()) {
@@ -1546,15 +1546,15 @@ void __cdecl ReportWin_draw_ops_strcat(char* dst, char* UNUSED(src))
     if (base->faction_id == MapWin->cOwner) {
         if (gov & GOV_ACTIVE) {
             if (gov & GOV_PRIORITY_EXPLORE) {
-                strncat(dst, (*TextLabels)[521], 32);
+                strncat(dst, label_get(521), 32);
             } else if (gov & GOV_PRIORITY_DISCOVER) {
-                strncat(dst, (*TextLabels)[522], 32);
+                strncat(dst, label_get(522), 32);
             } else if (gov & GOV_PRIORITY_BUILD) {
-                strncat(dst, (*TextLabels)[523], 32);
+                strncat(dst, label_get(523), 32);
             } else if (gov & GOV_PRIORITY_CONQUER) {
-                strncat(dst, (*TextLabels)[524], 32);
+                strncat(dst, label_get(524), 32);
             } else {
-                strncat(dst, (*TextLabels)[457], 32); // Governor
+                strncat(dst, label_get(457), 32); // Governor
             }
             strncat(dst, " ", 32);
         }
@@ -1653,13 +1653,13 @@ void __cdecl mod_say_loc(char* dest, int x, int y, int a4, int a5, int a6)
         a6 = 0;
         base_id = base_find3(x, y, -1, -1, -1, MapWin->cOwner);
         if (base_id >= 0) {
-            strncat(dest, (*TextLabels)[62], 32); // near
+            strncat(dest, label_get(62), 32); // near
             strncat(dest, " ", 2);
         }
     }
     if (base_id >= 0) {
         if (a6) {
-            strncat(dest, (*TextLabels)[8], 32); // at
+            strncat(dest, label_get(8), 32); // at
             strncat(dest, " ", 2);
         }
         strncat(dest, Bases[base_id].name, MaxBaseNameLen);
@@ -1759,7 +1759,7 @@ int __cdecl mod_action_move(int veh_id, int x, int y)
             && !has_pact(veh->faction_id, Vehs[veh_id_tgt].faction_id)) {
                 int offset = radius_move2(veh->x, veh->y, x, y, TableRange[veh_range]);
                 if (offset >= 0) {
-                    *veh_attack_flags = 3;
+                    *VehAttackFlags = 3;
                     return battle_fight_1(veh_id, offset, 1, 1, 0);
                 }
             }

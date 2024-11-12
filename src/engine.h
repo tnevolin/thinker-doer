@@ -20,8 +20,31 @@ typedef uint8_t byte;
 typedef uint32_t Dib;
 typedef struct { char str[256]; } char256;
 
+struct CChassis;
+extern CChassis* Chassis;
+struct CWeapon;
+extern CWeapon* Weapon;
+struct CArmor;
+extern CArmor* Armor;
+struct UNIT;
+extern UNIT* Units;
+struct VEH;
+extern VEH* Vehicles;
+struct Faction;
+extern Faction* Factions;
+struct MFaction;
+extern MFaction* MFactions;
+extern int* GameState;
+extern int* GameRules;
+extern const int MaxPlayerNum;
+extern const int MaxBaseSpecNum;
+extern const int MaxProtoFactionNum;
+bool is_human(int faction);
+bool can_repair(int unit_id);
+
 #include "engine_enums.h"
 #include "engine_types.h"
+#include "engine_base.h"
 #include "engine_veh.h"
 #include "engine_win.h"
 
@@ -46,15 +69,11 @@ struct Point {
     int x;
     int y;
 
-    bool operator==(const Point& other) const {
-        return (x == other.x && y == other.y);
+    bool operator==(const Point& obj) const {
+        return (x == obj.x && y == obj.y);
     }
-};
-
-struct PointComp {
-    bool operator()(const Point& p1, const Point& p2) const
-    {
-        return p1.x < p2.x || (p1.x == p2.x && p1.y < p2.y);
+    bool operator<(const Point& obj) const {
+        return x < obj.x || (x == obj.x && y < obj.y);
     }
 };
 
@@ -69,13 +88,10 @@ struct MapNode {
     int x;
     int y;
     int type;
-};
 
-struct MapNodeComp {
-    bool operator()(const MapNode& p1, const MapNode& p2) const
-    {
-        return p1.x < p2.x || (p1.x == p2.x && (
-            p1.y < p2.y || (p1.y == p2.y && (p1.type < p2.type))
+    bool operator<(const MapNode& obj) const {
+        return x < obj.x || (x == obj.x && (
+            y < obj.y || (y == obj.y && (type < obj.type))
         ));
     }
 };
@@ -98,11 +114,6 @@ const T& max (const T& a, const T& b) {
 template <class T>
 const T& clamp (const T& value, const T& low, const T& high) {
     return (value < low ? low : (value > high ? high : value));
-}
-
-template <class A, class B>
-int map_range(const A* a, const B* b) {
-    return map_range(a->x, a->y, b->x, b->y);
 }
 
 inline VehAblFlag operator| (VehAblFlag a, VehAblFlag b) { return (VehAblFlag)((int)a | (int)b); }
@@ -139,8 +150,8 @@ struct PInfo {
 };
 
 typedef std::unordered_map<Point, PInfo> PMTable;
-typedef std::set<MapNode,MapNodeComp> NodeSet;
-typedef std::set<Point,PointComp> Points;
+typedef std::set<MapNode> NodeSet;
+typedef std::set<Point> Points;
 typedef std::list<Point> PointList;
 typedef std::set<std::string> set_str_t;
 typedef std::vector<std::string> vec_str_t;
@@ -177,10 +188,31 @@ struct ThinkerData {
     int8_t padding[144];
 };
 
+static_assert(sizeof(struct CTerraform) == 32, "");
+static_assert(sizeof(struct CResourceInfo) == 144, "");
+static_assert(sizeof(struct CCitizen) == 28, "");
+static_assert(sizeof(struct CResourceName) == 8, "");
+static_assert(sizeof(struct CCombatMode) == 16, "");
+static_assert(sizeof(struct CBonusName) == 24, "");
+static_assert(sizeof(struct CSocialEffect) == 104, "");
+static_assert(sizeof(struct CCombatMode) == 16, "");
 static_assert(sizeof(struct CRules) == 308, "");
+static_assert(sizeof(struct CEnergy) == 8, "");
+static_assert(sizeof(struct CChassis) == 144, "");
+static_assert(sizeof(struct CNatural) == 8, "");
+static_assert(sizeof(struct CWeapon) == 16, "");
 static_assert(sizeof(struct CSocialField) == 212, "");
-static_assert(sizeof(struct CFacility) == 48, "");
+static_assert(sizeof(struct CMight) == 8, "");
+static_assert(sizeof(struct CTimeControl) == 32, "");
+static_assert(sizeof(struct CArmor) == 16, "");
 static_assert(sizeof(struct CTech) == 44, "");
+static_assert(sizeof(struct CWorldbuilder) == 124, "");
+static_assert(sizeof(struct CMorale) == 8, "");
+static_assert(sizeof(struct CReactor) == 12, "");
+static_assert(sizeof(struct COrder) == 12, "");
+static_assert(sizeof(struct CFacility) == 48, "");
+static_assert(sizeof(struct CProposal) == 12, "");
+static_assert(sizeof(struct CAbility) == 28, "");
 static_assert(sizeof(struct MFaction) == 1436, "");
 static_assert(sizeof(struct Faction) == 8396, "");
 static_assert(sizeof(struct BASE) == 308, "");
@@ -301,7 +333,15 @@ extern int* diplo_current_proposal_id;
 extern int* diplo_ask_base_swap_id;
 extern int* diplo_bid_base_swap_id;
 extern int* diplo_tech_id1;
-extern int* veh_attack_flags;
+extern int* VehAttackFlags;
+extern int* VehDrawAttackID;
+extern int* VehDrawDefendID;
+extern int* dword_6E8150;
+extern int* dword_8C6B3C;
+extern int* dword_93A96C;
+extern int* dword_93A98C;
+extern int* CurrentVehID;
+extern int* DialogToggle;
 extern int* ScreenWidth;
 extern int* ScreenHeight;
 extern char256* ParseStrBuffer;
@@ -313,7 +353,6 @@ extern int* GameHalted;
 extern int* ControlTurnA;
 extern int* ControlTurnB;
 extern int* ControlTurnC;
-extern int* ControlRedraw;
 extern int* ControlUpkeepA;
 extern int* ControlWaitLoop;
 extern int* SkipTechScreenA;
@@ -333,10 +372,10 @@ extern int* VehLiftY;
 extern int* VehBitError;
 extern int* VehBasicBattleMorale;
 extern int* VehBattleModCount;
-extern int* VehBattleUnkTgl;
+extern int* VehBattleState;
 extern int (*VehBattleModifier)[4];
 extern char (*VehBattleDisplay)[4][80];
-extern char* VehBattleDisplayTerrain;
+extern char** VehBattleDisplayTerrain;
 extern int* ProbeHasAlgoEnhancement;
 extern int* ProbeTargetFactionID;
 extern int* ProbeTargetHasHSA;
@@ -398,47 +437,49 @@ extern void* NetState;
 extern Path* Paths;
 
 // Rules parsed from alphax.txt
-extern CRules* Rules;
-extern CTech* Tech;
-extern CFacility* Facility;
-extern CAbility* Ability;
-extern CChassis* Chassis;
-extern CCitizen* Citizen;
-extern CArmor* Armor;
-extern CReactor* Reactor;
-extern CResourceInfo* ResInfo;
-extern CResourceName* ResName;
-extern CEnergy* Energy;
 extern CTerraform* Terraform;
-extern CWeapon* Weapon;
-extern CNatural* Natural;
-extern CProposal* Proposal;
-extern CWorldbuilder *WorldBuilder;
-extern CMorale* Morale;
-extern CCombatMode* DefenseMode;
+extern CResourceInfo* ResInfo;
+extern CCitizen* Citizen;
+extern CResourceName* ResName;
 extern CCombatMode* OffenseMode;
-extern COrder* Order;
-extern CTimeControl* TimeControl;
-extern CSocialField* Social;
-extern CSocialEffect* SocialEffect;
-extern CMight* Might;
 extern CBonusName* BonusName;
+extern CSocialEffect* SocialEffect;
+extern CCombatMode* DefenseMode;
+extern CRules* Rules;
+extern CEnergy* Energy;
+extern CChassis* Chassis;
+extern CNatural* Natural;
+extern CWeapon* Weapon;
+extern CSocialField* Social;
+extern CMight* Might;
+extern CTimeControl* TimeControl;
+extern CArmor* Armor;
+extern CTech* Tech;
+extern CWorldbuilder* WorldBuilder;
+extern CMorale* Morale;
+extern CReactor* Reactor;
+extern COrder* Order;
+extern CFacility* Facility;
+extern CProposal* Proposal;
+extern CAbility* Ability;
 extern char** Mood;
 extern char** Repute;
 
 
-typedef int(__cdecl *Fbattle_fight_1)(int veh_id, int offset, bool use_table_offset, int v1, int v2);
+typedef int(__cdecl *Fbattle_fight_1)(int veh_id, int offset, int table_offset, int option, int* def_id);
+typedef int(__cdecl *Fbattle_fight_2)(int veh_id, int offset, int tx, int ty, int table_offset, int option, int* def_id);
 typedef int(__cdecl *Fpropose_proto)(int faction_id, VehChassis chassis, VehWeapon weapon, VehArmor armor,
     int abilities, VehReactor reactor, VehPlan ai_plan, const char* name);
-typedef int(__cdecl *Fact_airdrop)(int veh_id, int x, int y, int veh_attack_flags);
+typedef int(__cdecl *Fact_airdrop)(int veh_id, int x, int y, int flags);
 typedef int(__cdecl *Fact_destroy)(int veh_id, int flags, int x, int y);
 typedef int(__cdecl *Fact_gate)(int veh_id, int base_id);
 typedef int(__cdecl *Fhas_abil)(int unit_id, int ability_flag);
-typedef int(__cdecl *Fparse_says)(int index, const char* text, int v1, int v2);
 typedef int(__cdecl *Fhex_cost)(int unit_id, int faction_id, int x1, int y1, int x2, int y2, int a7);
 typedef void(__cdecl *Fname_base)(int faction_id, char* name, bool save_offset, bool sea_base);
 typedef int(__cdecl *Fveh_cost)(int item_id, int base_id, int* ptr);
 typedef int(__cdecl *Fbase_at)(int x, int y);
+typedef int(__cdecl *FPOP2)(const char* label, const char* pcx_filename, int a3);
+typedef int(__cdecl *FPOP3)(const char* label, int a2, int a3, int a4, int a5);
 typedef int(__cdecl *Fpopp)(
     const char* filename, const char* label, int a3, const char* pcx_filename, int a5);
 typedef int(__cdecl *Fpopb)(
@@ -451,10 +492,14 @@ typedef int(__cdecl *Fname_proto)(char* name, int unit_id, int faction_id,
 VehChassis chassis, VehWeapon weapon, VehArmor armor, VehAblFlag abls, VehReactor reactor);
 typedef void(__cdecl *Fbattle_compute)(
     int veh_id_atk, int veh_id_def, int* offense_out, int* defense_out, int combat_type);
+typedef void(__cdecl *Fbattle_kill)(
+    int veh_id_def, int* a2, int* a3, int* credits_income, int veh_id_atk, int faction_id_atk);
+
 typedef int(__cdecl *Fbase_draw)(Buffer* buffer, int base_id, int x, int y, int zoom, int opts);
 typedef int(__cdecl *Fnet_energy)(
     int faction_id1, int faction_sum1, int faction_id2, int faction_sum2, int await_diplo);
 typedef int(__cdecl *Fnet_loan)(int faction_id1, int faction_id2, int balance, int payment);
+typedef int(__cdecl *Fsay_stats2)(char* dst, int unit_id);
 
 typedef int(__cdecl *FGenString)(const char* name);
 typedef int(__thiscall *FGenVoid)(void* This);
@@ -477,25 +522,28 @@ typedef int(__thiscall *FNetMsg_pop)(
 typedef int(__cdecl *FNetMsg_pop2)(const char* label, const char* filename);
 
 extern FGenString amovie_project;
+extern FPOP2 POP2;
+extern FPOP3 POP3;
 extern FPopup_start Popup_start;
+extern FGenWin BaseWin_focus;
 extern FBaseWin_zoom BaseWin_zoom;
 extern FGenWin BaseWin_nerve_staple;
 extern FGenWin BaseWin_on_redraw;
 extern FGenWin GraphicWin_redraw;
+extern FGenVoid SubInterface_delete_iface_mode;
+extern FGenVoid SubInterface_set_iface_mode;
 extern FGenVoid SubInterface_release_iface_mode;
 extern fp_none draw_cursor;
 extern fp_3int draw_tile;
+extern fp_4int draw_tile_fixup;
+extern fp_6int draw_tile_fixup2;
 extern fp_3int draw_tiles;
 extern fp_1int draw_map;
 extern FNetMsg_pop NetMsg_pop;
 extern FPlanWin_blink PlanWin_blink;
 extern Fpopp popp;
 extern Fpopb popb;
-extern FGenVoid StatusWin_on_redraw;
-extern FGenVoid StatusWin_redraw;
-extern FTutWin_draw_arrow TutWin_draw_arrow;
 extern fp_none turn_timer;
-extern Fhex_cost hex_cost;
 //extern Fhas_abil has_abil;
 extern FX_pop X_pop;
 extern FX_pops X_pops;
@@ -775,6 +823,65 @@ extern FGraphicWin_soft_update GraphicWin_soft_update;
 extern FGraphicWin_redraw GraphicWin_redraw;
 extern FGraphicWin_delete GraphicWin_delete;
 
+typedef int(__thiscall *FBattleWin_battle_report)(Win* This, int a2, int a3, int a4, int a5, int a6);
+
+extern FGenWin BattleWin_init;
+extern FGenWin BattleWin_pulse_timer;
+extern FGenWin BattleWin_stop_timer;
+extern FBattleWin_battle_report BattleWin_battle_report;
+extern FGenWin BattleWin_clear;
+extern FGenWin BattleWin_BattleWin;
+
+typedef int(__thiscall *FStatusWin_set_title)(Win* This, int a2);
+typedef int(__thiscall *FStatusWin_draw_active)(Win* This, int a2, int a3, int a4);
+typedef int(__thiscall *FStatusWin_draw_status)(Win* This, int a2, int a3, int a4, int a5, int a6);
+typedef int(__thiscall *FStatusWin_draw)(Win* This, int a2, int a3, int a4, int a5, int a6);
+typedef int(__thiscall *FStatusWin_on_left_double_click)(Win* This, int a2, int a3);
+typedef int(__thiscall *FStatusWin_on_left_click)(Win* This, int a2, int a3);
+typedef int(__thiscall *FStatusWin_on_right_click)(Win* This, int a2, int a3, int a4);
+typedef int(__thiscall *FStatusWin_set_loc)(Win* This, int a2, int a3);
+
+extern FStatusWin_set_title StatusWin_set_title;
+extern FStatusWin_draw_active StatusWin_draw_active;
+extern FGenWin StatusWin_reset_active;
+extern FStatusWin_draw_status StatusWin_draw_status;
+extern FStatusWin_draw StatusWin_draw;
+extern FGenWin StatusWin_on_redraw;
+extern FGenWin StatusWin_reset;
+extern FStatusWin_on_left_double_click StatusWin_on_left_double_click;
+extern FGenWin StatusWin_arrow_left;
+extern FGenWin StatusWin_arrow_right;
+extern FStatusWin_on_left_click StatusWin_on_left_click;
+extern FStatusWin_on_right_click StatusWin_on_right_click;
+extern FGenWin StatusWin_redraw;
+extern FStatusWin_set_loc StatusWin_set_loc;
+extern FGenWin StatusWin_init;
+
+typedef int(__thiscall *FTutWin_do_base)(Win* This, int a2, int a3);
+typedef int(__thiscall *FTutWin_iface_rect)(Win* This, int a2, int a3);
+typedef int(__thiscall *FTutWin_base_rect)(Win* This, int a2, int a3);
+typedef int(__thiscall *FTutWin_soc_rect)(Win* This, int a2, int a3);
+typedef int(__thiscall *FTutWin_des_rect)(Win* This, int a2, int a3);
+typedef int(__thiscall *FTutWin_tut_win)(Win* This, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9);
+typedef int(__thiscall *FTutWin_tut_map)(Win* This, const char* label, int a3, int a4, int a5, int a6, int a7, int a8, int a9);
+typedef int(__thiscall *FTutWin_delete)(Win* This, char a2);
+
+extern fp_1int tut_check;
+extern fp_1int tut_check2;
+extern FGenWin TutWin_TutWin;
+extern FGenWin TutWin_clear;
+extern FTutWin_do_base TutWin_do_base;
+extern FTutWin_iface_rect TutWin_iface_rect;
+extern FTutWin_base_rect TutWin_base_rect;
+extern FTutWin_soc_rect TutWin_soc_rect;
+extern FTutWin_des_rect TutWin_des_rect;
+extern FGenWin TutWin_tour;
+extern FGenWin TutWin_reset;
+extern FGenWin TutWin_draw_arrow;
+extern FTutWin_tut_win TutWin_tut_win;
+extern FTutWin_tut_map TutWin_tut_map;
+extern FTutWin_delete TutWin_delete;
+
 typedef int(__thiscall *FBuffer_Buffer)(Buffer* This);
 typedef int(__thiscall *FBuffer_resize)(Buffer* This, int a2, int a3);
 typedef int(__thiscall *FBuffer_load_pcx)(Buffer* This, char* filename, int a3, int a4, int a5);
@@ -931,6 +1038,59 @@ extern FPath_continent Path_continent;
 extern FPath_continents Path_continents;
 extern FPath_sensors Path_sensors;
 
+typedef int(__thiscall *FNetDaemon_init)(void* This, int a2);
+typedef int(__thiscall *FNetDaemon_game_checksum)(void* This, int a2);
+typedef int(__thiscall *FNetDaemon_wait)(void* This, int a2, void* a3, int a4, int a5);
+typedef int(__thiscall *FNetDaemon_open_channel)(void* This, int a2, int a3);
+typedef int(__thiscall *FNetDaemon_lock)(void* This, int a2, int a3, int a4, int a5, int a6, int a7);
+typedef int(__thiscall *FNetDaemon_add_lock)(void* This, int a2, int a3, int a4);
+typedef int(__thiscall *FNetDaemon_lock_base)(void* This, int a2, int a3, int a4, int a5);
+typedef int(__thiscall *FNetDaemon_unlock_base)(void* This, int a2);
+typedef int(__thiscall *FNetDaemon_lock_veh)(void* This, void* a2, int a3, int a4, int a5, int a6);
+typedef int(__thiscall *FNetDaemon_automated_lock)(void* This, void* a2, int a3);
+typedef int(__thiscall *FNetDaemon_await_exec)(void* This, int a2);
+typedef int(__thiscall *FNetDaemon_await_diplo)(void* This, int a2);
+typedef int(__thiscall *FNetDaemon_maybe_lock)(void* This, int a2, int a3, int a4, int a5, int a6, int a7);
+typedef int(__thiscall *FNetDaemon_order_veh)(void* This, int a2, int a3, int a4);
+typedef int(__thiscall *FNetDaemon_veh_drop)(void* This, int a2, int a3, int a4);
+typedef int(__thiscall *FNetDaemon_action)(void* This, int a2, int a3);
+typedef int(__thiscall *FNetDaemon_send_message)(void* This, void* a2, int a3, int a4);
+typedef int(__thiscall *FNetDaemon_synch)(void* This, int a2, int a3, int a4, int a5, int a6, int a7, int a8);
+typedef int(__thiscall *FNetDaemon_fixup_message)(void* This, void* a2);
+typedef int(__fastcall *FNetDaemon_process_message)(void* This, int a2, int a3, int a4, int a5);
+
+extern FNetDaemon_init NetDaemon_init;
+extern FGenVoid NetDaemon_hang_up;
+extern FGenVoid NetDaemon_send_game;
+extern FGenVoid NetDaemon_send_files;
+extern FGenVoid NetDaemon_send_rules;
+extern FNetDaemon_game_checksum NetDaemon_game_checksum;
+extern FGenVoid NetDaemon_receive;
+extern FGenVoid NetDaemon_net_tasks;
+extern FNetDaemon_wait NetDaemon_wait;
+extern FNetDaemon_open_channel NetDaemon_open_channel;
+extern FGenVoid NetDaemon_close_channel;
+extern FNetDaemon_lock NetDaemon_lock;
+extern FNetDaemon_add_lock NetDaemon_add_lock;
+extern FGenVoid NetDaemon_add_global;
+extern FGenVoid NetDaemon_unlock;
+extern FNetDaemon_lock_base NetDaemon_lock_base;
+extern FNetDaemon_unlock_base NetDaemon_unlock_base;
+extern FNetDaemon_lock_veh NetDaemon_lock_veh;
+extern FGenVoid NetDaemon_unlock_veh;
+extern FNetDaemon_automated_lock NetDaemon_automated_lock;
+extern FNetDaemon_await_exec NetDaemon_await_exec;
+extern FGenVoid NetDaemon_await_synch;
+extern FNetDaemon_await_diplo NetDaemon_await_diplo;
+extern FNetDaemon_maybe_lock NetDaemon_maybe_lock;
+extern FNetDaemon_order_veh NetDaemon_order_veh;
+extern FNetDaemon_veh_drop NetDaemon_veh_drop;
+extern FNetDaemon_action NetDaemon_action;
+extern FNetDaemon_send_message NetDaemon_send_message;
+extern FNetDaemon_synch NetDaemon_synch;
+extern FNetDaemon_fixup_message NetDaemon_fixup_message;
+extern FNetDaemon_process_message NetDaemon_process_message;
+
 #pragma GCC diagnostic pop
 
 extern fp_1int monument;
@@ -1052,7 +1212,7 @@ extern fp_1int planet_buster2;
 extern fp_1int planet_buster;
 extern fp_4int shoot;
 extern fp_3int planet_busting;
-//extern fp_5int defense_value;
+extern fp_5int defense_value;
 extern fp_2int morale_alien;
 //extern fp_4int psi_factor;
 extern fp_5int get_basic_offense;
@@ -1062,18 +1222,18 @@ extern fp_3int best_defender;
 extern fp_3int boom;
 extern fp_none sub_505D40;
 extern fp_none sub_505D60;
-extern fp_6int battle_kill;
-extern fp_6int battle_kill_stack;
-extern fp_1int promote;
+extern Fbattle_kill battle_kill;
+extern Fbattle_kill battle_kill_stack;
+//extern fp_1int promote;
 extern fp_1int invasions;
 extern fp_4int interceptor;
 extern Fbattle_fight_1 battle_fight_1; // renamed
-extern fp_7int battle_fight_2; // renamed
+extern Fbattle_fight_2 battle_fight_2; // renamed
 extern fp_1int say_num;
 extern fp_4int POP3_;
 extern fp_1int sub_50B8F0;
 extern fp_1int sub_50B910;
-extern fp_1int parse_set;
+//extern fp_1int parse_set;
 extern fp_3int sub_50B970;
 extern fp_1int sub_50B9A0;
 extern fp_2int sub_50B9C0;
@@ -1086,6 +1246,17 @@ extern fp_2int act_of_aggression;
 extern fp_3int steal_tech;
 extern fp_1int steal_energy;
 extern fp_3int capture_base;
+extern fp_1int clock_wait;
+extern fp_2int sea_coast;
+extern fp_1int sea_coasts;
+extern fp_2int base_on_sea;
+extern fp_1int base_coast;
+extern fp_2int port_to_coast;
+extern fp_2int port_to_port;
+extern fp_1int transport_base;
+extern fp_1int naval_base;
+extern fp_2int convoy;
+extern fp_1int mandate_color;
 
 extern fp_1int random_events;
 extern fp_none sub_5204E9;
@@ -1272,8 +1443,8 @@ extern fp_2int armor_val;
 extern fp_3int transport_val;
 extern fp_2int say_offense;
 extern fp_2int say_defense;
-extern fp_2int say_stats_3;
-extern fp_2int say_stats_2;
+extern Fsay_stats2 say_stats_3;
+extern Fsay_stats2 say_stats_2;
 extern fp_3int say_stats;
 extern fp_1int clear_bunglist;
 extern fp_2int sub_57DF30;
@@ -1325,6 +1496,32 @@ extern fp_2int kill_landmark;
 extern fp_2int delete_landmark;
 extern fp_none fixup_landmarks;
 extern fp_none set_dirty;
+extern fp_none sub_592AF0;
+extern fp_4int message_veh;
+extern fp_4int message_base;
+extern fp_6int message_data;
+extern fp_4int message_big_data;
+extern fp_8int message_lock;
+extern fp_7int message_landmark;
+extern fp_3int message_chat;
+extern fp_1int synch_veh;
+extern fp_1int synch_base;
+extern fp_1int synch_energy;
+extern fp_1int synch_researching;
+extern fp_1int synch_leader;
+extern fp_1int synch_ai;
+extern fp_1int synch_research;
+extern fp_1int sub_593390;
+extern fp_1int synch_soc;
+extern fp_1int synch_proto;
+extern fp_1int synch_obs;
+extern fp_2int synch_diplo;
+extern fp_1int sub_5934B0;
+extern fp_1int synch_radius;
+extern Fhex_cost hex_cost;
+extern fp_7int quick_zoc;
+extern fp_2int supply_options;
+extern fp_3int order_veh;
 
 extern fp_1int tech_name;
 extern fp_1int chas_name;
@@ -1376,6 +1573,18 @@ extern fp_2int get_his_her;
 extern fp_2int get_him_her;
 extern fp_2int get_he_she;
 
+extern fp_3int prefs_get2;
+extern fp_none default_prefs;
+extern fp_none default_prefs2;
+extern fp_none default_warn;
+extern fp_none default_rules;
+extern fp_3int prefs_get;
+extern fp_none prefs_fac_load;
+extern fp_1int prefs_load;
+extern fp_2int prefs_put2;
+extern fp_3int prefs_put;
+extern fp_1int prefs_save;
+extern fp_none prefs_use;
 extern fp_3int vulnerable;
 extern fp_3int mind_control;
 extern fp_1int corner_market;
@@ -1449,9 +1658,9 @@ extern fp_3int want_to_wake;
 extern fp_1int wake_stack;
 extern fp_2int spot_all;
 extern fp_3int stack_put;
-extern fp_1int stack_sort;
+//extern fp_1int stack_sort;
 extern fp_1int stack_sort2;
-extern fp_1int stack_fix;
+//extern fp_1int stack_fix;
 extern fp_2int stack_veh;
 extern fp_1int stack_kill;
 extern fp_5int stack_check;
@@ -1483,12 +1692,12 @@ extern fp_1int tech_rate;
 extern fp_2int tech_research;
 extern fp_4int tech_pick;
 
-extern fp_2int veh_at;
+//extern fp_2int veh_at;
 extern fp_1int veh_lift;
 extern fp_3int veh_drop;
 extern fp_1int sleep;
 extern fp_1int veh_demote;
-extern fp_1int veh_promote;
+//extern fp_1int veh_promote;
 extern fp_3int veh_clear;
 extern fp_4int veh_init;
 extern fp_1int veh_kill;
@@ -1581,8 +1790,8 @@ extern fp_none text_item_string;
 extern fp_none text_item_number;
 extern fp_none text_item_binary;
 extern fp_2int parse_string;
-extern fp_2int parse_num;
-extern Fparse_says parse_say;
-extern Fparse_says parse_says;
+//extern fp_2int parse_num;
+extern fp_4int parse_say;
+//extern fp_4int parse_says;
 
 

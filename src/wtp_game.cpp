@@ -698,7 +698,7 @@ int getBaseMineralCost(int baseId, int item)
 
 	BASE *base = &(Bases[baseId]);
 
-	int mineralCost = (item >= 0 ? tx_veh_cost(item, baseId, 0) : Facility[-item].cost) * cost_factor(base->faction_id, 1, -1);
+	int mineralCost = (item >= 0 ? tx_veh_cost(item, baseId, 0) : Facility[-item].cost) * mod_cost_factor(base->faction_id, RSC_MINERAL, -1);
 
 	return mineralCost;
 
@@ -722,7 +722,7 @@ int getBaseItemCost(int baseId, int item)
 	}
 	else if (item >= 0)
 	{
-		itemCost = tx_veh_cost(item, baseId, 0) / cost_factor(base->faction_id, 1, -1);
+		itemCost = tx_veh_cost(item, baseId, 0) / mod_cost_factor(base->faction_id, RSC_MINERAL, -1);
 	}
 	else
 	{
@@ -1156,7 +1156,7 @@ int getBaseBuildingItemMineralCost(int baseId)
 	BASE *base = &(Bases[baseId]);
 
 	int item = getBaseBuildingItem(baseId);
-	return (item >= 0 ? tx_veh_cost(item, baseId, 0) : Facility[-item].cost) * cost_factor(base->faction_id, 1, -1);
+	return (item >= 0 ? tx_veh_cost(item, baseId, 0) : Facility[-item].cost) * mod_cost_factor(base->faction_id, RSC_MINERAL, -1);
 }
 
 double getUnitPsiOffenseStrength(int factionId, int unitId)
@@ -1490,11 +1490,9 @@ bool isUtilityVehicle(int vehicleId)
 	return isColonyVehicle(vehicleId) || isFormerVehicle(vehicleId);
 }
 
-bool isOgreVehicle(int vehicleId)
+bool isOgreUnit(int unitId)
 {
-	assert(vehicleId >= 0 && vehicleId < *VehCount);
-	VEH *vehicle = getVehicle(vehicleId);
-	switch (vehicle->unit_id)
+	switch (unitId)
 	{
 	case BSC_BATTLE_OGRE_MK1:
 	case BSC_BATTLE_OGRE_MK2:
@@ -1503,6 +1501,12 @@ bool isOgreVehicle(int vehicleId)
 	default:
 		return false;
 	}
+}
+
+bool isOgreVehicle(int vehicleId)
+{
+	assert(vehicleId >= 0 && vehicleId < *VehCount);
+	return isOgreUnit(Vehicles[vehicleId].unit_id);
 }
 
 /*
@@ -3426,7 +3430,7 @@ int setMoveTo(int vehicleId, MAP *destination)
     vehicle->waypoint_1_y = y;
     vehicle->order = ORDER_MOVE_TO;
     vehicle->status_icon = 'G';
-    vehicle->terraforming_turns = 0;
+    vehicle->terraform_turns = 0;
 
     // vanilla bug fix for adjacent tile move
 
@@ -3520,7 +3524,7 @@ int setMoveTo(int vehicleId, const std::vector<MAP *> &waypoints)
 	setVehicleWaypoints(vehicleId, waypoints);
     vehicle->order = ORDER_MOVE_TO;
     vehicle->status_icon = 'G';
-    vehicle->terraforming_turns = 0;
+    vehicle->terraform_turns = 0;
 
     return EM_SYNC;
 
@@ -3587,12 +3591,12 @@ bool isScoutVehicle(int vehicleId)
 
 bool isPodPoppingUnit(int unitId)
 {
-	return isScoutUnit(unitId) || isNativeUnit(unitId);
+	return isScoutUnit(unitId) || isNativeUnit(unitId) || isOgreUnit(unitId);
 }
 
 bool isPodPoppingVehicle(int vehicleId)
 {
-	return isPodPoppingUnit(Vehicles[vehicleId].unit_id) || isOgreVehicle(vehicleId);
+	return isPodPoppingUnit(Vehicles[vehicleId].unit_id);
 }
 
 /*
@@ -3863,12 +3867,12 @@ double getBaseStructureConDefenseMultiplier(bool firstLevelDefense, bool secondL
 	
 	if (firstLevelDefense)
 	{
-		defenseMultiplier += conf.perimeter_defense_bonus;
+		defenseMultiplier += conf.facility_defense_bonus[0];
 	}
 	
 	if (secondLevelDefense)
 	{
-		defenseMultiplier += conf.tachyon_field_bonus;
+		defenseMultiplier += conf.facility_defense_bonus[3];
 	}
 	
 	return (double)defenseMultiplier / 2.0;
@@ -3973,6 +3977,18 @@ MAP *getNearbyItemLocation(int x, int y, int range, int item)
 
 	return nearbyItemLocation;
 
+}
+
+bool isMapRangeHasItem(int x, int y, int range, uint32_t item)
+{
+	for (MAP *tile : getRangeTiles(getMapTile(x, y), range, true))
+	{
+		if (map_has_item(tile, item))
+			return true;
+	}
+	
+	return false;
+	
 }
 
 /*
@@ -4098,7 +4114,7 @@ double battleCompute(int attackerVehicleId, int defenderVehicleId, bool longRang
 	int attackerOffenseValue;
 	int defenderStrength;
 
-	wtp_mod_battle_compute(attackerVehicleId, defenderVehicleId, (int)&attackerOffenseValue, (int)&defenderStrength, flags);
+	wtp_mod_battle_compute(attackerVehicleId, defenderVehicleId, &attackerOffenseValue, &defenderStrength, flags);
 
 	// calculate relative strength
 
@@ -4270,17 +4286,10 @@ int getBaseIdAt(int x, int y)
 double getSensorOffenseMultiplier(int factionId, MAP *tile)
 {
 	return
-		(
-			isWithinFriendlySensorRange(factionId, tile)
-			&&
-			conf.combat_bonus_sensor_offense
-			&&
-			(!is_ocean(tile) || conf.combat_bonus_sensor_ocean)
-		)
-		?
-		getPercentageBonusMultiplier(Rules->combat_defend_sensor)
-		:
-		1.0
+		conf.sensor_offense && (!is_ocean(tile) || conf.sensor_offense_ocean) && isWithinFriendlySensorRange(factionId, tile) ?
+			getPercentageBonusMultiplier(Rules->combat_defend_sensor)
+			:
+			1.0
 	;
 	
 }
@@ -4288,15 +4297,10 @@ double getSensorOffenseMultiplier(int factionId, MAP *tile)
 double getSensorDefenseMultiplier(int factionId, MAP *tile)
 {
 	return
-		(
-			isWithinFriendlySensorRange(factionId, tile)
-			&&
-			(!is_ocean(tile) || conf.combat_bonus_sensor_ocean)
-		)
-		?
-		getPercentageBonusMultiplier(Rules->combat_defend_sensor)
-		:
-		1.0
+		(!is_ocean(tile) || conf.sensor_defense_ocean) && isWithinFriendlySensorRange(factionId, tile) ?
+			getPercentageBonusMultiplier(Rules->combat_defend_sensor)
+			:
+			1.0
 	;
 	
 }
@@ -7405,7 +7409,7 @@ Calculates how much population growths a turn.
 double getBasePopulationGrowth(int baseId)
 {
 	BASE *base = getBase(baseId);
-	int requiredNutrients = (base->pop_size + 1) * cost_factor(base->faction_id, 0, baseId);
+	int requiredNutrients = (base->pop_size + 1) * mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
 	return 1.0 / ((double)requiredNutrients / (double)base->nutrient_surplus + 1);
 }
 
@@ -7415,7 +7419,7 @@ Calculates how much more population growths a turn with given nutrient increase.
 double getBasePopulationGrowthIncrease(int baseId, double nutrientSurplusIncrease)
 {
 	BASE *base = getBase(baseId);
-	int requiredNutrients = (base->pop_size + 1) * cost_factor(base->faction_id, 0, baseId);
+	int requiredNutrients = (base->pop_size + 1) * mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
 	return 1.0 / ((double)requiredNutrients / nutrientSurplusIncrease + 1);
 }
 
@@ -7435,7 +7439,7 @@ double getBaseTimeToPopulation(int baseId, int population)
 	if (base->pop_size >= population)
 		return 0.0;
 	
-	int requiredNutrients = (base->pop_size + 1) * cost_factor(base->faction_id, 0, baseId);
+	int requiredNutrients = (base->pop_size + 1) * mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
 	return (double)(requiredNutrients * (population - base->pop_size)) / (double)(base->nutrient_surplus);
 	
 }
@@ -7836,10 +7840,15 @@ bool isPolarRegion(MAP *tile)
 	return tile->region == 63 || tile->region == 127;
 }
 
-int getBaseNextUnitSupport(int baseId)
+int getBaseNextUnitSupport(int baseId, int unitId)
 {
 	BASE *base = &(Bases[baseId]);
 	Faction *faction = getFaction(base->faction_id);
+	
+	// check if unit requires no support
+	
+	if (!isUnitRequiresSupport(unitId))
+		return 0;
 	
 	// base supported vehicles
 	
@@ -8077,5 +8086,39 @@ bool isRoughTerrain(MAP *tile)
 bool isOpenTerrain(MAP *tile)
 {
 	return !map_has_item(tile, BIT_BASE_IN_TILE) && !is_ocean(tile) && !(map_has_item(tile, BIT_FUNGUS | BIT_FOREST) || map_rockiness(tile) == 2);
+}
+
+/*
+Returns non polar sea regions base accesses.
+*/
+std::set<int> getBaseSeaRegions(int baseId)
+{
+	MAP *baseTile = getBaseMapTile(baseId);
+	
+	std::set<int> baseSeaRegions;
+	
+	if (is_ocean(baseTile))
+	{
+		if (!baseTile->is_pole_tile())
+		{
+			baseSeaRegions.insert(baseTile->region);
+		}
+		
+	}
+	else
+	{
+		for (MAP *adjacentTile : getAdjacentTiles(baseTile))
+		{
+			if (is_ocean(adjacentTile) && !adjacentTile->is_pole_tile())
+			{
+				baseSeaRegions.insert(adjacentTile->region);
+			}
+			
+		}
+		
+	}
+	
+	return baseSeaRegions;
+	
 }
 

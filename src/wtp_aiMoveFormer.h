@@ -8,6 +8,57 @@
 #include "wtp_game.h"
 #include "wtp_mod.h"
 
+struct TileYield
+{
+	int nutrient;
+	int mineral;
+	int energy;
+	
+	TileYield(int _nutrient, int _mineral, int _energy)
+	: nutrient(_nutrient), mineral(_mineral), energy(_energy)
+	{}
+	
+	TileYield()
+	: TileYield(0, 0, 0)
+	{}
+	
+	/*
+	Verifies equal or superior yields.
+	*/
+	static bool isEqualOrSuperior(TileYield o1, TileYield o2)
+	{
+		return
+			(o1.nutrient >= o2.nutrient && o1.mineral >= o2.mineral && o1.energy >= o2.energy)
+		;
+		
+	}
+	
+	/*
+	Verifies equal yields.
+	*/
+	static bool isEqual(TileYield o1, TileYield o2)
+	{
+		return
+			(o1.nutrient == o2.nutrient && o1.mineral == o2.mineral && o1.energy == o2.energy)
+		;
+		
+	}
+	
+	/*
+	Verifies first is superior to second.
+	*/
+	static bool isSuperior(TileYield o1, TileYield o2)
+	{
+		return
+			(o1.nutrient >= o2.nutrient && o1.mineral >= o2.mineral && o1.energy >= o2.energy)
+			&&
+			(o1.nutrient > o2.nutrient || o1.mineral > o2.mineral || o1.energy > o2.energy)
+		;
+		
+	}
+	
+};
+
 struct MapState
 {
 	int rockiness;
@@ -140,8 +191,7 @@ struct PROXIMITY_RULE
 };
 const robin_hood::unordered_flat_map<int, PROXIMITY_RULE> PROXIMITY_RULES =
 {
-	{FORMER_FOREST, {0, 2}},
-	{FORMER_CONDENSER, {0, 2}},
+	{FORMER_CONDENSER, {0, 1}},
 	{FORMER_ECH_MIRROR, {0, 1}},
 	{FORMER_THERMAL_BORE, {1, 1}},
 	{FORMER_AQUIFER, {1, 3}},
@@ -214,7 +264,7 @@ struct TERRAFORMING_REQUEST
 	// improvement generated gain (with terraformingTime delay)
 	double gain = 0.0;
 	
-	Resource yield;
+	TileYield yield;
 	
 	TERRAFORMING_REQUEST(MAP *_tile, TERRAFORMING_OPTION const *_option)
 	: tile{_tile}, option{_option}
@@ -288,7 +338,7 @@ bool isWorkableTile(MAP *tile);
 bool isValidConventionalTerraformingSite(MAP *tile);
 bool isValidTerraformingSite(MAP *tile);
 double getTerraformingResourceScore(double nutrient, double mineral, double energy);
-double getTerraformingResourceScore(Resource resource);
+double getTerraformingResourceScore(TileYield yield);
 void generateTerraformingChange(MapState &mapState, int action);
 double getTerraformingGain(double income, double terraformingTime);
 bool compareTerraformingRequests(TERRAFORMING_REQUEST const &terraformingRequest1, TERRAFORMING_REQUEST const &terraformingRequest2);
@@ -296,6 +346,7 @@ bool compareConventionalTerraformingRequests(TERRAFORMING_REQUEST const &terrafo
 void setMapState(MapState &mapState, MAP *tile);
 void applyMapState(MapState &mapState, MAP *tile);
 void restoreTileMapState(MAP *tile);
-Resource getTerraformingYield(int baseId, MAP *tile, std::vector<int> actions);
+TileYield getTerraformingYield(int baseId, MAP *tile, std::vector<int> actions);
 double getBaseImprovementIncome(int baseId, Resource oldIntake, Resource newIntake);
+void addConventionalTerraformingRequest(std::vector<TERRAFORMING_REQUEST> &availableTerraformingRequests, TERRAFORMING_REQUEST &terraformingRequest);
 

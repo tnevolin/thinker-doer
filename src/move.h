@@ -4,7 +4,8 @@
 
 enum UpdateMode {UM_Full, UM_Visual, UM_Player};
 enum StackType {ST_NeutralOnly, ST_NonPactOnly, ST_EnemyOnly, ST_EnemyOneUnit};
-enum FormerMode {FM_Auto_Full, FM_Auto_Roads, FM_Auto_Tubes, FM_Auto_Sensors, FM_Remove_Fungus};
+enum FormerMode {FM_Auto_Full, FM_Auto_Roads, FM_Auto_Tubes, FM_Auto_Sensors,
+    FM_Remove_Fungus, FM_Farm_Road, FM_Mine_Road};
 
 enum EnemyVehMove { // Return codes for enemy_veh processing
     VEH_SYNC = 0,
@@ -29,7 +30,6 @@ bool non_ally_in_tile(int x, int y, int faction);
 bool allow_move(int x, int y, int faction, int triad);
 bool allow_civ_move(int x, int y, int faction, int triad);
 bool can_build_base(int x, int y, int faction, int triad);
-bool has_base_sites(int x, int y, int faction, int triad);
 bool allow_scout(int faction, MAP* sq);
 bool allow_probe(int faction1, int faction2, bool is_enhanced);
 bool allow_attack(int faction1, int faction2, bool is_probe, bool is_enhanced);

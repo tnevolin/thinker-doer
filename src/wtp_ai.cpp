@@ -1080,6 +1080,8 @@ void populateFactionInfos()
 
 void populateBaseInfos()
 {
+	debug("populateBaseInfos\n");
+	
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
 		BASE *base = getBase(baseId);
@@ -1112,6 +1114,8 @@ void populateBaseInfos()
 		
 		baseInfo.gain = getBaseGain(baseId);
 		
+		debug("\t%-25s gain=%5.2f\n", base->name, baseInfo.gain);
+		
 	}
 	
 	// populate faction average base gain
@@ -1121,6 +1125,8 @@ void populateBaseInfos()
 	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
 		FactionInfo &factionInfo = aiData.factionInfos.at(factionId);
+		
+		debug("averageBaseGain - %s\n", MFactions[factionId].noun_faction);
 		
 		for (int baseId = 0; baseId < *BaseCount; baseId++)
 		{
@@ -1132,6 +1138,8 @@ void populateBaseInfos()
 			if (base->faction_id != factionId)
 				continue;
 			
+			debug("\t%-25s gain=%5.2f\n", base->name, baseInfo.gain);
+			
 			// accumulate
 			
 			baseGainAverageAccumulator.add(baseInfo.gain);
@@ -1139,6 +1147,8 @@ void populateBaseInfos()
 		}
 		
 		factionInfo.averageBaseGain = baseGainAverageAccumulator.get();
+		
+		debug("\t%-25s gain=%5.2f\n", "--- average ---", factionInfo.averageBaseGain);
 		
 	}
 	
@@ -1994,40 +2004,40 @@ void populateEnemyStacks()
 	{
 		EnemyStackInfo &enemyStackInfo = enemyStackEntry.second;
 		
-		double priority;
+		double averageUnitGain;
 		
 		if (enemyStackInfo.base)
 		{
-			// base capture priority is higher
+			// base capture gain
 			
-			priority = conf.ai_combat_attack_priority_base;
+			averageUnitGain = conf.ai_combat_attack_priority_base * aiData.getBaseInfo(enemyStackInfo.baseId).gain;
 			
 		}
 		else
 		{
 			// compute average priority based on each stack vehicle priority
 			
-			double totalPriority = 0.0;
+			AverageAccumulator averageUnitGainAccumulator;
 			
 			for (int vehicleId : enemyStackInfo.vehicleIds)
 			{
-				double priority = getEnemyVehicleDestructionPriority(vehicleId, enemyStackInfo.baseRange);
-				totalPriority += priority;
+				double attackGain = getEnemyVehicleAttackGain(vehicleId, enemyStackInfo.baseRange);
+				averageUnitGainAccumulator.add(attackGain);
 			}
 			
-			priority = totalPriority / (double)enemyStackInfo.vehicleIds.size();
+			averageUnitGain = averageUnitGainAccumulator.get();
 			
 		}
 		
-		enemyStackInfo.priority = priority;
+		enemyStackInfo.averageUnitGain = averageUnitGain;
 		
 		debug
 		(
 			"\t\t%s"
-			" priority=%5.2f"
+			" averageUnitGain=%5.2f"
 			"\n"
 			, getLocationString(enemyStackEntry.first).c_str()
-			, enemyStackInfo.priority
+			, enemyStackInfo.averageUnitGain
 		);
 		
 	}
@@ -2041,35 +2051,35 @@ They are not part of enemy stacks. So need to be handled separately.
 void populateEmptyEnemyBaseTiles()
 {
 	debug("populateEmptyEnemyBaseTiles - %s\n", MFactions[aiFactionId].noun_faction);
-
-	aiData.emptyEnemyBaseTiles.clear();
-
+	
+	aiData.emptyEnemyBaseIds.clear();
+	
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
 		BASE *base = getBase(baseId);
 		MAP *baseTile = getBaseMapTile(baseId);
-
+		
 		// not ours
-
+		
 		if (base->faction_id == aiFactionId)
 			continue;
-
+		
 		// unfriendly
-
+		
 		if (isFriendly(aiFactionId, base->faction_id))
 			continue;
-
+		
 		// empty
-
+		
 		if (isVehicleAt(baseTile))
 			continue;
-
+		
 		// store unprotected enemy base
-
-		aiData.emptyEnemyBaseTiles.push_back(baseTile);
-
+		
+		aiData.emptyEnemyBaseIds.push_back(baseId);
+		
 	}
-
+	
 }
 
 void evaluateFactionMilitaryPowers()
@@ -2703,6 +2713,12 @@ void evaluateEnemyStacks()
 		{
 			enemyStackInfo.requiredSuperiority = conf.ai_combat_base_attack_superiority_required;
 			enemyStackInfo.desiredSuperiority = conf.ai_combat_base_attack_superiority_desired;
+		}
+		// attacking aliens (except tower) does not require minimal superiority
+		else if (enemyStackInfo.alien && !enemyStackInfo.alienFungalTower)
+		{
+			enemyStackInfo.requiredSuperiority = 0.0;
+			enemyStackInfo.desiredSuperiority = conf.ai_combat_field_attack_superiority_desired;
 		}
 		else
 		{
@@ -3409,10 +3425,6 @@ void evaluateBaseDefense()
 		executionProfiles["1.1.I.4.3. compute required protection"].start();
 		
 		double requiredEffect = conf.ai_combat_base_protection_superiority * estimatedThreat;
-		if (!baseTileOcean && *CurrentTurn < conf.ai_combat_base_protection_eary_adjustment_end_turn)
-		{
-			requiredEffect += conf.ai_combat_base_protection_eary_adjustment * (1.0 - *CurrentTurn / conf.ai_combat_base_protection_eary_adjustment_end_turn);
-		}
 		baseInfo.combatData.requiredEffect = requiredEffect;
 		
 		debug
@@ -4697,10 +4709,6 @@ double getMeleeRelativeUnitStrength(int attackerUnitId, int attackerFactionId, i
 	{
 		switch ((Triad)attackerUnit->triad())
 		{
-		case TRIAD_NONE:
-			relativeStrength = 1.0;
-			break;
-			
 		case TRIAD_LAND:
 			relativeStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
 			break;
@@ -4712,6 +4720,9 @@ double getMeleeRelativeUnitStrength(int attackerUnitId, int attackerFactionId, i
 		case TRIAD_AIR:
 			relativeStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
 			break;
+			
+		default:
+			relativeStrength = 1.0;
 		
 		}
 		
@@ -4888,10 +4899,6 @@ double getArtilleryDuelRelativeUnitStrength(int attackerUnitId, int attackerFact
 	{
 		switch ((Triad)attackerUnit->triad())
 		{
-		case TRIAD_NONE:
-			relativeStrength = 1.0;
-			break;
-			
 		case TRIAD_LAND:
 			relativeStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
 			break;
@@ -4904,6 +4911,9 @@ double getArtilleryDuelRelativeUnitStrength(int attackerUnitId, int attackerFact
 			relativeStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
 			break;
 		
+		default:
+			relativeStrength = 1.0;
+			
 		}
 		
 		// reactor
@@ -5011,10 +5021,6 @@ double getUnitBombardmentDamage(int attackerUnitId, int attackerFactionId, int d
 	{
 		switch ((Triad)attackerUnit->triad())
 		{
-		case TRIAD_NONE:
-			relativeStrength = 1.0;
-			break;
-			
 		case TRIAD_LAND:
 			relativeStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
 			break;
@@ -5027,6 +5033,9 @@ double getUnitBombardmentDamage(int attackerUnitId, int attackerFactionId, int d
 			relativeStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
 			break;
 		
+		default:
+			relativeStrength = 1.0;
+			
 		}
 		
 		// reactor
@@ -5230,46 +5239,6 @@ double getVehicleConventionalDefenseModifier(int vehicleId)
 
 }
 
-double getAverageSensorMultiplier(MAP *tile)
-{
-	bool ocean = is_ocean(tile);
-
-	double averageSensorMultiplier;
-
-	if (ocean)
-	{
-		if (conf.combat_bonus_sensor_ocean)
-		{
-			if (conf.combat_bonus_sensor_offense)
-			{
-				averageSensorMultiplier = getPercentageBonusMultiplier(Rules->combat_defend_sensor);
-			}
-			else
-			{
-				averageSensorMultiplier = (1.0 + getPercentageBonusMultiplier(Rules->combat_defend_sensor)) / 2.0;
-			}
-		}
-		else
-		{
-			averageSensorMultiplier = 1.0;
-		}
-	}
-	else
-	{
-		if (conf.combat_bonus_sensor_offense)
-		{
-			averageSensorMultiplier = getPercentageBonusMultiplier(Rules->combat_defend_sensor);
-		}
-		else
-		{
-			averageSensorMultiplier = (1.0 + getPercentageBonusMultiplier(Rules->combat_defend_sensor)) / 2.0;
-		}
-	}
-
-	return averageSensorMultiplier;
-
-}
-
 bool isOffensiveUnit(int unitId)
 {
 	UNIT *unit = getUnit(unitId);
@@ -5363,7 +5332,7 @@ int getBaseProjectedSize(int baseId, int turns)
 {
 	BASE *base = &(Bases[baseId]);
 
-	int nutrientCostFactor = cost_factor(base->faction_id, 0, baseId);
+	int nutrientCostFactor = mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
 	int nutrientsAccumulated = base->nutrients_accumulated + base->nutrient_surplus * turns;
 	int currentPopulation = base->pop_size;
 	int projectedPopulation = currentPopulation;
@@ -5401,7 +5370,7 @@ int getBaseGrowthTime(int baseId, int targetSize)
 
 	// calculate total number of nutrients
 
-	int totalNutrients = totalNutrientRows * cost_factor(base->faction_id, 0, baseId);
+	int totalNutrients = totalNutrientRows * mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
 
 	// calculate time to accumulate these nutrients
 
@@ -6896,64 +6865,90 @@ bool isVehicleCanCaptureBase(int vehicleId, MAP *baseTile)
 }
 
 /**
-Additional benefit of destroying an enemy vehicle.
+Benefit of destroying an enemy vehicle.
+Measured in average base gain.
 */
-double getEnemyVehicleDestructionPriority(int vehicleId, int baseRange)
+double getEnemyVehicleAttackGain(int vehicleId, int baseRange)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	int factionId = vehicle->faction_id;
 	int unitId = vehicle->unit_id;
 	
-	double destructionPriority;
+	double attackGain = 0.0;
+	double attackPriority = 0.0;
 	
-	if (isArtifactVehicle(vehicleId))
+	if (factionId == 0)
 	{
-		destructionPriority = 2.0;
-	}
-	else if (isProbeVehicle(vehicleId))
-	{
-		destructionPriority = 2.0;
-	}
-	else if (isColonyVehicle(vehicleId))
-	{
-		destructionPriority = 2.0;
-	}
-	else if (isTransportVehicle(vehicleId))
-	{
-		destructionPriority = 2.0;
-	}
-	else if (factionId == 0 && unitId == BSC_SPORE_LAUNCHER)
-	{
-		destructionPriority = conf.ai_combat_attack_priority_alien_spore_launcher;
-	}
-	else if (factionId == 0 && unitId == BSC_FUNGAL_TOWER)
-	{
-		destructionPriority = conf.ai_combat_attack_priority_alien_fungal_tower;
-	}
-	else if (factionId == 0 && unitId == BSC_MIND_WORMS)
-	{
-		destructionPriority = conf.ai_combat_attack_priority_alien_mind_worms;
-	}
-	else if (isCombatVehicle(vehicleId))
-	{
-		// destruction priority increases with proximity to AI bases
-		
-		if (baseRange >= conf.ai_combat_field_attack_priority_base_range)
+		switch (unitId)
 		{
-			destructionPriority = 1.0;
+		case BSC_MIND_WORMS:
+			attackPriority = conf.ai_combat_attack_priority_alien_mind_worms;
+			break;
+		case BSC_SPORE_LAUNCHER:
+			attackPriority = conf.ai_combat_attack_priority_alien_spore_launcher;
+			break;
+		case BSC_FUNGAL_TOWER:
+			attackPriority = conf.ai_combat_attack_priority_alien_fungal_tower;
+			break;
+		default:
+			attackPriority = 0.0;
+		}
+		
+	}
+	else if (isArtifactVehicle(vehicleId))
+	{
+		attackGain = getGainBonus(2 * Rules->mineral_cost_multi * Units[BSC_ALIEN_ARTIFACT].cost / 2);
+	}
+	else if (isHostile(aiFactionId, factionId))
+	{
+		if (isCombatVehicle(vehicleId))
+		{
+			// attack priority decreases with distance from AI bases
+			
+			attackPriority =
+				aiData.factionInfos[factionId].threatCoefficient
+				* getExponentialCoefficient((double)(conf.ai_combat_field_attack_priority_base_range - 1), (double)(baseRange - 1))
+			;
+			
+		}
+		else if (isProbeVehicle(vehicleId))
+		{
+			attackPriority = 0.5;
+		}
+		else if (isTransportVehicle(vehicleId))
+		{
+			attackPriority = 0.5;
+		}
+		if (isColonyVehicle(vehicleId))
+		{
+			attackPriority = 1.0;
 		}
 		else
 		{
-			destructionPriority = 1.0 + conf.ai_combat_field_attack_priority_base_extra * (1.0 - (double)(baseRange - 1) / (double)(conf.ai_combat_field_attack_priority_base_range - 1));
+			attackPriority = 0.1;
 		}
 		
 	}
-	else
+	else if (isNeutral(aiFactionId, factionId))
 	{
-		destructionPriority = 1.0;
+		if (isCombatVehicle(vehicleId))
+		{
+			// attack priority decreases with distance from AI bases
+			
+			attackPriority =
+				aiData.factionInfos[factionId].threatCoefficient
+				* getExponentialCoefficient((double)(conf.ai_combat_field_attack_priority_base_range - 1), (double)(baseRange - 1))
+			;
+			
+		}
+		else
+		{
+			attackPriority = 0.0;
+		}
+		
 	}
 	
-	return destructionPriority;
+	return attackGain > 0.0 ? attackGain : attackPriority * aiFactionInfo->averageBaseGain;
 	
 }
 
@@ -7007,6 +7002,18 @@ double getGainTimeInterval(double gain, double beginTime, double endTime)
 {
 	double scale = aiData.developmentScale;
 	return (exp(- beginTime / scale) - exp(- endTime / scale)) * gain;
+}
+
+/**
+Computes repetitive gain.
+probability - the probability gain will be repeated next time
+period - repetition period
+*/
+double getGainRepetion(double gain, double probability, double period)
+{
+	period = std::max(1.0, period);
+	double scale = aiData.developmentScale;
+	return exp(- period / scale) / (1.0 - probability * exp(- period / scale)) * gain;
 }
 
 /**
@@ -7204,7 +7211,7 @@ double getBaseGain(int popSize, int nutrientCostFactor, Resource baseIntake2)
 double getBaseGain(int baseId, Resource baseIntake2)
 {
 	BASE *base = getBase(baseId);
-	int nutrientCostFactor = cost_factor(aiFactionId, 0, baseId);
+	int nutrientCostFactor = mod_cost_factor(aiFactionId, RSC_NUTRIENT, baseId);
 	
 	return getBaseGain(base->pop_size, nutrientCostFactor, baseIntake2);
 	
@@ -7216,7 +7223,7 @@ Computes expected base gain adjusting for current base income.
 double getBaseGain(int baseId)
 {
 	BASE *base = getBase(baseId);
-	int nutrientCostFactor = cost_factor(aiFactionId, 0, baseId);
+	int nutrientCostFactor = mod_cost_factor(aiFactionId, RSC_NUTRIENT, baseId);
 	Resource baseIntake2 = getBaseResourceIntake2(baseId);
 	
 	return getBaseGain(base->pop_size, nutrientCostFactor, baseIntake2);
@@ -7944,8 +7951,7 @@ double getAssaultEffect(int assailantFactionId, int assailantUnitId, int protect
 	
 	// attack effect
 	
-	double assailantCombinedEffect = assailantAttackEffect + assailantBombardmentEffect;
-	double attackEffect = assailantCombinedEffect;
+	double attackEffect = std::max(assailantAttackEffect, assailantBombardmentEffect);
 	
 	// protector melee attack
 	
@@ -8215,19 +8221,6 @@ bool isUnitCanMeleeAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MA
 	
 }
 
-/**
-Computes survival effect based on combat effect and 0.5 probability that unit will be able to heal after battle.
-*/
-double getSurvivalEffect(double combatEffect)
-{
-	return
-		+ conf.ai_production_survival_effect_a
-		+ conf.ai_production_survival_effect_b * combatEffect
-		+ conf.ai_production_survival_effect_c * combatEffect * combatEffect
-		+ conf.ai_production_survival_effect_d * combatEffect * combatEffect * combatEffect
-	;
-}
-
 MAP *getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 {
 	// find closest attack position
@@ -8320,5 +8313,33 @@ MAP *getArtilleryAttackPosition(int vehicleId, MAP *target)
 	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	return getArtilleryAttackPosition(vehicle->unit_id, vehicleTile, target);
+}
+
+/*
+Roughly estimates survival chance by combat effect.
+*/
+double getSurvivalChance(double effect)
+{
+	double survivalChance;
+	
+	if (effect < 0.5)
+	{
+		survivalChance = 0.0;
+	}
+	else if (effect >= 0.5 && effect < 1.0)
+	{
+		survivalChance = -0.5 + 1.0 * effect;
+	}
+	else if (effect >= 1.0 && effect < 2.0)
+	{
+		survivalChance = 1.0 - (-0.5 + 1.0 * (1.0 / effect));
+	}
+	else
+	{
+		survivalChance = 1.0;
+	}
+	
+	return survivalChance;
+	
 }
 

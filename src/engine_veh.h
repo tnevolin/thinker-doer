@@ -1,13 +1,7 @@
 #pragma once
 #pragma pack(push, 1)
 
-extern const int MaxProtoFactionNum;
-
-bool can_repair(int unit_id);
-bool is_human(int faction);
-
 enum Triad {
-    TRIAD_NONE = -1, // Thinker variable
     TRIAD_LAND = 0,
     TRIAD_SEA = 1,
     TRIAD_AIR = 2,
@@ -317,6 +311,7 @@ enum UnitFlags {
     UNIT_ACTIVE = 0x1, // if this bit is zero, prototype has been retired
     UNIT_CUSTOM_NAME_SET = 0x2,
     UNIT_PROTOTYPED = 0x4,
+    UNIT_UNK_10 = 0x10,
     UNIT_UNK_80 = 0x80,
     UNIT_UNK_100 = 0x100, // checked in upgrade_any_prototypes
 };
@@ -367,7 +362,7 @@ enum VehState {
     VSTATE_ASSISTANT_WORM = 0x800000, // Int: Brood Trainer; Human player's 1st spawned Mind Worm
     VSTATE_UNK_1000000 = 0x1000000, // cleared in veh_wake
     VSTATE_UNK_2000000 = 0x2000000, // cleared in veh_wake
-    VSTATE_CRAWLING = 0x4000000, // cleared in repair_phase, flag also related to terraforming
+    VSTATE_WORKING = 0x4000000, // cleared in repair_phase, terraform action or convoy resources
     VSTATE_UNK_8000000 = 0x8000000, // cleared in veh_wake
     VSTATE_UNK_10000000 = 0x10000000,
     VSTATE_UNK_20000000 = 0x20000000,
@@ -425,6 +420,15 @@ struct UNIT {
     }
     bool is_prototyped() {
         return unit_flags & UNIT_PROTOTYPED;
+    }
+    bool is_pulse_armor() {
+        return armor_id == ARM_PULSE_3_ARMOR || armor_id == ARM_PULSE_8_ARMOR;
+    }
+    bool is_resonance_armor() {
+        return armor_id == ARM_RESONANCE_3_ARMOR || armor_id == ARM_RESONANCE_8_ARMOR;
+    }
+    bool is_resonance_weapon() {
+        return weapon_id == WPN_RESONANCE_LASER || weapon_id == WPN_RESONANCE_BOLT;
     }
     bool is_armored() { // include PSI armor
         return Armor[armor_id].defense_value != 1;
@@ -489,7 +493,7 @@ struct VEH {
     int16_t waypoint_3_y;
     int16_t waypoint_4_y;
     uint8_t morale;
-    uint8_t terraforming_turns;
+    uint8_t terraform_turns;
     uint8_t order_auto_type;
     uint8_t visibility; // faction bitfield of who can currently see Veh excluding owner
     uint8_t moves_spent; // stored as road moves spent unless magtube_movement_rate > 0
@@ -527,7 +531,21 @@ struct VEH {
         return Units[unit_id].chassis_id;
     }
     int reactor_type() {
-        return std::max(1, (int)Units[unit_id].reactor_id);
+        // For more consistency always limit reactors to supported values
+        // Current reactor array has only space for 4 variations
+        return std::min(4, std::max(1, (int)Units[unit_id].reactor_id));
+    }
+    int max_hitpoints() {
+        if (is_artifact()) {
+            return 1;
+        }
+        return 10*reactor_type();
+    }
+    int cur_hitpoints() {
+        if (is_artifact()) {
+            return !damage_taken;
+        }
+        return std::max(0, 10*reactor_type() - damage_taken);
     }
     int armor_type() {
         return Units[unit_id].armor_id;
@@ -543,6 +561,15 @@ struct VEH {
     }
     int defense_value() {
         return Units[unit_id].defense_value();
+    }
+    bool is_pulse_armor() {
+        return Units[unit_id].is_pulse_armor();
+    }
+    bool is_resonance_armor() {
+        return Units[unit_id].is_resonance_armor();
+    }
+    bool is_resonance_weapon() {
+        return Units[unit_id].is_resonance_weapon();
     }
     bool is_armored() {
         return Units[unit_id].is_armored();
@@ -587,6 +614,9 @@ struct VEH {
     bool is_visible(int faction) {
         return visibility & (1 << faction);
     }
+    bool is_invisible_lurker() {
+        return (flags & (VFLAG_INVISIBLE|VFLAG_LURKER)) == (VFLAG_INVISIBLE|VFLAG_LURKER);
+    }
     bool plr_owner() {
         return is_human(faction_id);
     }
@@ -595,7 +625,7 @@ struct VEH {
             || (x == waypoint_1_x && y == waypoint_1_y);
     }
     bool in_transit() {
-        return order == ORDER_SENTRY_BOARD && waypoint_1_x >= 0 && waypoint_1_y == 0;
+        return order == ORDER_SENTRY_BOARD && waypoint_1_x >= 0;
     }
     bool mid_damage() {
         return damage_taken > 2*Units[unit_id].reactor_id;
@@ -609,6 +639,10 @@ struct VEH {
     bool need_monolith() {
         return !is_battle_ogre() && (need_heals() || (morale < MORALE_ELITE
             && !(state & VSTATE_MONOLITH_UPGRADED) && offense_value() != 0));
+    }
+    void reset_order() {
+        order = ORDER_NONE;
+        state &= ~(VSTATE_UNK_2000000|VSTATE_UNK_1000000|VSTATE_EXPLORE|VSTATE_ON_ALERT);
     }
 };
 

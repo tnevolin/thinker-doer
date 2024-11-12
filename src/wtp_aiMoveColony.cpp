@@ -176,9 +176,9 @@ void analyzeBasePlacementSites()
 		if (!tileExpansionInfo.validWorkTile)
 			continue;
 		
-		// get yield
+		// get average yield
 		
-		tileExpansionInfo.yield = getTileYield(tile);
+		tileExpansionInfo.averageYield = getAverageTileYield(tile);
 		
 	}
 	
@@ -353,7 +353,7 @@ void analyzeBasePlacementSites()
 				"\t\t%s"
 				" buildSiteScore=%5.2f"
 				" tileExpansionInfo.buildSiteScore=%5.2f"
-				" travelTime=%5.2f"
+				" travelTime=%7.2f"
 				"\n"
 				, getLocationString(tile).c_str()
 				, buildSiteScore
@@ -535,10 +535,10 @@ double getBuildSiteBaseGain(MAP *buildSite)
 		
 		// compute yieldInfo
 		
-		Resource const &yield = tileExpansionInfo.yield;
-		double nutrientSurplus = yield.nutrient - (double)Rules->nutrient_intake_req_citizen;
-		double mineralIntake = yield.mineral;
-		double energyIntake = yield.energy;
+		Resource const &averageYield = tileExpansionInfo.averageYield;
+		double nutrientSurplus = averageYield.nutrient - (double)Rules->nutrient_intake_req_citizen;
+		double mineralIntake = averageYield.mineral;
+		double energyIntake = averageYield.energy;
 		
 		// reduce value for tiles in existing base radius
 		
@@ -591,7 +591,7 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	
 	int popSize = 0;
 	double baseNutrientSurplus = ResInfo->base_sq_nutrient;
-	double const nutrientCostFactor = (double)cost_factor(aiFactionId, 0, -1);
+	double const nutrientCostFactor = (double)mod_cost_factor(aiFactionId, RSC_NUTRIENT, -1);
 	
 	double weight = 1.0;
 	
@@ -767,10 +767,6 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	executionProfiles["1.3.2.2.4.1.3. coastScore"].stop();
 	
-	// discourage fungus (just because it spawns worms)
-	
-	double fungusScore = (map_has_item(tile, BIT_FUNGUS) ? -0.2 : 0.0);
-	
 	executionProfiles["1.3.2.2.4.1.4. landmarkScore"].start();
 	
 	// explicitly discourage placing base on some landmarks
@@ -793,9 +789,14 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	executionProfiles["1.3.2.2.4.1.4. landmarkScore"].stop();
 	
+	// discourage land fungus for faction having difficulties to enter it (just because it spawns worms)
+	
+	double fungusScore = (!is_ocean(tile) && map_has_item(tile, BIT_FUNGUS) && aiFaction->SE_planet < 1 ? -0.1 : 0.0);
+	debug("\t%-20s%+5.2f\n", "fungusScore", fungusScore);
+	
 	// return score
 	
-	return landUseScore + radiusOverlapScore + coastScore + fungusScore + landmarkScore;
+	return landUseScore + radiusOverlapScore + coastScore + landmarkScore + fungusScore;
 	
 }
 
@@ -819,7 +820,7 @@ bool isValidBuildSite(MAP *tile, int factionId)
 
 	// no adjacent bases
 
-	if (nearby_items(x, y, 1, BIT_BASE_IN_TILE) > 0)
+	if (nearby_items(x, y, 1, 9, BIT_BASE_IN_TILE) > 0)
 		return false;
 
 	// cannot build at volcano
@@ -1035,7 +1036,7 @@ int getExpansionRange(MAP *tile)
 	return std::min(getBuildSiteNearestBaseRange(tile), getNearestColonyRange(tile));
 }
 
-Resource getTileYield(MAP *tile)
+Resource getAverageTileYield(MAP *tile)
 {
 	bool monolith = map_has_item(tile, BIT_MONOLITH);
 	bool ocean = is_ocean(tile);
@@ -1043,22 +1044,26 @@ Resource getTileYield(MAP *tile)
 	
 	debug("getTileYield: %s\n", getLocationString(tile).c_str());
 	
-	Resource yield;
+	Resource averageYield;
 	
 	if (monolith)
 	{
-		yield = getTerraformingYield(-1, tile, {});
+		TileYield yield = getTerraformingYield(-1, tile, {});
+		averageYield = {(double)yield.nutrient, (double)yield.mineral, (double)yield.energy};
 	}
 	else if (ocean)
 	{
 		// average of mining platform and tidal harness
 		
-		Resource miningPlatformYield = getTerraformingYield(-1, tile, {FORMER_FARM, FORMER_MINE});
-		Resource tidalHarnessYield = getTerraformingYield(-1, tile, {FORMER_FARM, FORMER_SOLAR});
+		TileYield miningPlatformYield = getTerraformingYield(-1, tile, {FORMER_FARM, FORMER_MINE});
+		TileYield tidalHarnessYield = getTerraformingYield(-1, tile, {FORMER_FARM, FORMER_SOLAR});
 		
-		yield.nutrient = (miningPlatformYield.nutrient + tidalHarnessYield.nutrient) / 2.0;
-		yield.mineral = (miningPlatformYield.mineral + tidalHarnessYield.mineral) / 2.0;
-		yield.energy = (miningPlatformYield.energy + tidalHarnessYield.energy) / 2.0;
+		averageYield =
+		{
+			(miningPlatformYield.nutrient + tidalHarnessYield.nutrient) / 2.0,
+			(miningPlatformYield.mineral + tidalHarnessYield.mineral) / 2.0,
+			(miningPlatformYield.energy + tidalHarnessYield.energy) / 2.0,
+		};
 		
 	}
 	else
@@ -1083,12 +1088,12 @@ Resource getTileYield(MAP *tile)
 			
 		}
 		
-		Resource bestYield;
+		TileYield bestYield;
 		double bestYieldScore = 0.0;
 		
 		for (std::vector<int> const &terraformingOption : terraformingOptions)
 		{
-			Resource yield = getTerraformingYield(-1, tile, terraformingOption);
+			TileYield yield = getTerraformingYield(-1, tile, terraformingOption);
 			double yieldScore = getTerraformingResourceScore(yield);
 			
 			if (yieldScore > bestYieldScore)
@@ -1099,11 +1104,12 @@ Resource getTileYield(MAP *tile)
 			
 		}
 		
-		yield = bestYield;
+		TileYield yield = bestYield;
+		averageYield = {(double)yield.nutrient, (double)yield.mineral, (double)yield.energy};
 		
 	}
 	
-	return yield;
+	return averageYield;
 	
 }
 

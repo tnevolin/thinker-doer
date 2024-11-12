@@ -48,11 +48,9 @@ const int DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_A
 const int HABITATION_FACILITIES_COUNT = 2;
 const int HABITATION_FACILITIES[] = {FAC_HAB_COMPLEX, FAC_HABITATION_DOME, };
 
-__cdecl void wtp_mod_battle_compute(int attacker_vehicle_id, int defender_vehicle_id, int attacker_strength_pointer, int defender_strength_pointer, int flags);
+__cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId, int *attackerStrengthPointer, int *defenderStrengthPointer, int flags);
 __cdecl int wtp_mod_proto_cost(int chassisTypeId, int weaponTypeId, int armorTypeId, int abilities, int reactorTypeId);
 
-__cdecl int combat_roll(int attacker_strength, int defender_strength, int attacker_vehicle_offset, int defender_vehicle_offset, int attacker_initial_power, int defender_initial_power, int *attacker_won_last_round);
-int standard_combat_mechanics_combat_roll(int attacker_strength, int defender_strength);
 double standard_combat_mechanics_calculate_attacker_winning_probability(double p, int attacker_hp, int defender_hp);
 double binomial_koefficient(int n, int k);
 
@@ -83,11 +81,8 @@ __cdecl int modifiedSpyingForPactBaseProductionDisplay(int factionId);
 __cdecl void modifiedProbeActionRisk(int action, int riskPointer);
 __cdecl int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, int bombardment);
 __cdecl void appendAbilityCostTextInWorkshop(int output_string_pointer, int input_string_pointer);
-__cdecl void modifiedBattleFight2(int attackerVehicleId, int angle, int tx, int ty, int do_arty, int flag1, int flag2);
+int __cdecl wtp_mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int table_offset, int option, int* def_id);
 __cdecl int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteIndex, int effectValue);
-__cdecl void modifiedBaseGrowth(int a1, int a2, int a3);
-__cdecl int modifiedNutrientCostFactorSEGrowth(int factionId, int baseId);
-int getHabitationFacilitiesBaseGrowthModifier(int baseId);
 __cdecl int modifiedVehicleCargoForAirTransportUnload(int vehicleId);
 __cdecl int modifiedFactionUpkeep(const int factionId);
 __cdecl void captureAttackerOdds(const int position, const int value);
@@ -114,7 +109,6 @@ int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, i
 int __cdecl modified_base_production();
 int __cdecl modified_base_ecology();
 int getStockpileEnergy(int baseId);
-void __cdecl modified_base_yield();
 int __cdecl wtp_mod_order_veh(int vehicleId, int angle, int a3);
 bool isValidMovementAngle(int vehicleId, int angle);
 bool isAdjacentTransportAtSea(int vehicleId, int angle);
@@ -128,13 +122,12 @@ void removeWrongVehiclesFromBases();
 int __cdecl modified_kill(int vehicleId);
 void endOfTurn();
 void __cdecl wtp_mod_base_hurry();
-void addAttackerBonus(int strengthPointer, int bonus, const char *label);
-void addDefenderBonus(int strengthPointer, int bonus, const char *label);
+void addAttackerBonus(int *strengthPointer, int bonus, const char *label);
+void addDefenderBonus(int *strengthPointer, int bonus, const char *label);
 __cdecl int modStatusWinBonus_bonus_at(int x, int y);
 __cdecl int modified_load_game(int a0, int a1);
 __cdecl int modified_zoc_veh(int a0, int a1, int a2);
 __cdecl void modified_base_check_support();
-void __cdecl wtp_mod_base_support();
 void __cdecl displayHurryCostScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer);
 void __cdecl displayPartialHurryCostToCompleteNextTurnInformation(int input_string_pointer, int output_string_pointer);
 int __cdecl getHurryMinimalMineralCost(int itemCost, int a1, int a2);

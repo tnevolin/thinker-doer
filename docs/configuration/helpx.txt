@@ -358,14 +358,14 @@ control=60021> but reduces $LINK<Labs=22> output by half.
 #; Hab Complex
 #HELPFAC24
 Helps base grow faster by improving living conditions.
-^Allows population of base to grow beyond size {7}.
-^Adds +2 GROWTH if below limit.
+^Allows base population growing beyond size {7}.
+^Adds +1 GROWTH.
 
 #; Habitation Dome
 #HELPFAC25
 Helps base grow faster by improving living conditions.
-^Allows population of base to grow beyond size {14}.
-^Adds +2 GROWTH if below limit.
+^Allows base population growing beyond size {14}.
+^Adds +1 GROWTH.
 
 #; Pressure Dome
 #HELPFAC26

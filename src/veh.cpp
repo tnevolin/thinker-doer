@@ -4,7 +4,11 @@
 
 
 int __cdecl can_arty(int unit_id, bool allow_sea_arty) {
+    assert(unit_id >= 0 && unit_id < MaxProtoNum);
     UNIT* u = &Units[unit_id];
+    if (unit_id < 0 || unit_id >= MaxProtoNum) {
+        return false;
+    }
     if ((u->offense_value() <= 0 // PSI + non-combat
     || u->defense_value() < 0) // PSI
     && unit_id != BSC_SPORE_LAUNCHER) { // Spore Launcher exception
@@ -20,10 +24,10 @@ int __cdecl can_arty(int unit_id, bool allow_sea_arty) {
 }
 
 int __cdecl has_abil(int unit_id, VehAblFlag ability) {
-    assert((!conf.manage_player_bases || unit_id >= 0) && unit_id < MaxProtoNum);
     int faction_id = unit_id / MaxProtoFactionNum;
-    // workaround fix for legacy base_build that may incorrectly use negative unit_id
-    if (unit_id < 0) {
+    // workaround fix for legacy base_build that may use incorrect unit_id
+    assert(!thinker_enabled(faction_id) || (unit_id >= 0 && unit_id < MaxProtoNum));
+    if (unit_id < 0 || unit_id >= MaxProtoNum) {
         return false;
     }
     if (Units[unit_id].ability_flags & ability) {
@@ -120,6 +124,38 @@ bool can_repair(int unit_id) {
         && unit_id != BSC_BATTLE_OGRE_MK2 && unit_id != BSC_BATTLE_OGRE_MK3);
 }
 
+int __cdecl veh_who(int x, int y) {
+    MAP* sq = mapsq(x, y);
+    return (sq ? sq->veh_who() : -1);
+}
+
+int __cdecl veh_at(int x, int y) {
+    MAP* sq = mapsq(x, y);
+    if (sq && !sq->veh_in_tile()) {
+        return -1;
+    }
+    for (int veh_id = 0; veh_id < *VehCount; veh_id++) {
+        if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
+            return veh_top(veh_id);
+        }
+    }
+    if (!sq) {
+        debug("VehLocError x: %d y: %d\n", x, y);
+        return -1;
+    }
+    if (!*VehBitError) {
+        debug("VehBitError x: %d y: %d\n", x, y);
+    }
+    if (*GameState & STATE_SCENARIO_EDITOR || *GameState & STATE_DEBUG_MODE || *MultiplayerActive) {
+        if (*VehBitError) {
+            return -1;
+        }
+        *VehBitError = 1;
+    }
+    rebuild_vehicle_bits();
+    return -1;
+}
+
 int __cdecl veh_top(int veh_id) {
     if (veh_id < 0) {
         return -1;
@@ -131,20 +167,44 @@ int __cdecl veh_top(int veh_id) {
     return top_veh_id;
 }
 
-/*
-Renamed from veh_at. This version never calls rebuild_vehicle_bits on failed searches.
-*/
-int __cdecl veh_stack(int x, int y) {
-    MAP* sq = mapsq(x, y);
-    if (!sq || !sq->veh_in_tile()) {
-        return -1; // invalid or empty map tile
+int __cdecl stack_fix(int veh_id) {
+    if (veh_id < 0 || !*MultiplayerActive
+    || (Vehs[veh_id].next_veh_id_stack < 0 && Vehs[veh_id].prev_veh_id_stack < 0)) {
+        return veh_id;
     }
-    for (int veh_id = 0; veh_id < *VehCount; veh_id++) {
-        if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
-            return veh_top(veh_id);
+    for (int i = 0; i < *VehCount; i++) {
+        if (Vehs[veh_id].x == Vehs[i].x && Vehs[veh_id].y == Vehs[i].y) {
+            veh_promote(i);
+            stack_sort(veh_id);
         }
     }
-    return -1;
+    return veh_top(veh_id);
+}
+
+void __cdecl stack_sort(int veh_id) {
+    int16_t x = Vehs[veh_id].x;
+    int16_t y = Vehs[veh_id].y;
+    int next_veh_id = veh_top(veh_id);
+    int veh_id_put = -1;
+    int veh_id_loop;
+    if (veh_id >= 0 && next_veh_id >= 0) {
+        do {
+            veh_id_loop = Vehs[next_veh_id].next_veh_id_stack; // removed redundant < 0 check
+            if (veh_cargo(next_veh_id) || has_abil(Vehs[next_veh_id].unit_id, ABL_CARRIER)) {
+                veh_id_put = next_veh_id;
+                veh_put(next_veh_id, -3, -3);
+            }
+            next_veh_id = veh_id_loop;
+        } while (veh_id_loop >= 0);
+        stack_put(veh_id_put, x, y);
+    }
+}
+
+void __cdecl veh_promote(int veh_id) {
+    int veh_id_top = veh_top(veh_id);
+    if (veh_id_top >= 0 && veh_id_top != veh_id) {
+        veh_put(veh_id, Vehs[veh_id_top].x, Vehs[veh_id_top].y);
+    }
 }
 
 /*
@@ -252,8 +312,51 @@ Determine whether the specified unit is eligible for a monolith morale upgrade.
 int __cdecl want_monolith(int veh_id) {
     return veh_id >= 0 && !(Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED)
         && Vehs[veh_id].offense_value() != 0
+        && Vehs[veh_id].triad() != TRIAD_AIR
         && Vehs[veh_id].morale < MORALE_ELITE
         && mod_morale_veh(veh_id, true, 0) < MORALE_ELITE;
+}
+
+int __cdecl breed_level(int base_id, int faction_id) {
+    int value = 0;
+    if (has_project(FAC_XENOEMPATHY_DOME, faction_id)) {
+        value++;
+    }
+    if (has_project(FAC_PHOLUS_MUTAGEN, faction_id)) {
+        value++;
+    }
+    if (has_project(FAC_VOICE_OF_PLANET, faction_id)) {
+        value++;
+    }
+    if (has_fac_built(FAC_CENTAURI_PRESERVE, base_id)) {
+        value++;
+    }
+    if (has_fac_built(FAC_TEMPLE_OF_PLANET, base_id)) {
+        value++;
+    }
+    if (has_fac_built(FAC_BIOLOGY_LAB, base_id)) {
+        value++;
+    }
+    if (has_facility(FAC_BIOENHANCEMENT_CENTER, base_id)) {
+        value++; // The Cyborg Factory also possible
+    }
+    assert(value == breed_mod(base_id, faction_id));
+    return value;
+}
+
+int __cdecl worm_level(int base_id, int faction_id) {
+    int value = breed_level(base_id, faction_id);
+    if (MFactions[faction_id].rule_psi) {
+        value++;
+    }
+    if (has_project(FAC_DREAM_TWISTER, faction_id)) {
+        value++;
+    }
+    if (has_project(FAC_NEURAL_AMPLIFIER, faction_id)) {
+        value++;
+    }
+    assert(value == worm_mod(base_id, faction_id));
+    return value;
 }
 
 /*
@@ -429,9 +532,9 @@ int __cdecl mod_veh_cost(int unit_id, int base_id, int32_t* has_proto_cost) {
     }
     int proto_cost_first = 0;
     if (unit_id >= MaxProtoFactionNum && !Units[unit_id].is_prototyped()) {
-		proto_cost_first = (base_id >= 0 && has_fac_built(FAC_SKUNKWORKS, base_id))
-			? 0 : (prototype_factor(unit_id) * mod_base_cost(unit_id) + 50) / 100; // moved checks up
-		cost += proto_cost_first;
+        proto_cost_first = (base_id >= 0 && has_fac_built(FAC_SKUNKWORKS, base_id))
+            ? 0 : (prototype_factor(unit_id) * mod_base_cost(unit_id) + 50) / 100; // moved checks up
+        cost += proto_cost_first;
     }
     if (has_proto_cost) {
         *has_proto_cost = proto_cost_first != 0;
@@ -441,7 +544,6 @@ int __cdecl mod_veh_cost(int unit_id, int base_id, int32_t* has_proto_cost) {
 //    assert(cost == veh_cost(unit_id, base_id, 0));
     
     return cost;
-    
 }
 
 /*
@@ -681,11 +783,14 @@ int __cdecl mod_veh_kill(int veh_id) {
 Skip vehicle turn by adjusting spent moves to maximum available moves.
 */
 int __cdecl mod_veh_skip(int veh_id) {
-    VEH* veh = &Vehicles[veh_id];
+    VEH* veh = &Vehs[veh_id];
     int moves = veh_speed(veh_id, 0);
 
     if (is_human(veh->faction_id)) {
         if (conf.activate_skipped_units) {
+            if (veh->is_former() && veh->order >= ORDER_FARM && veh->order < ORDER_MOVE_TO) {
+                veh->state |= VSTATE_WORKING;
+            }
             if (!veh->moves_spent && veh->order < ORDER_FARM
             && !(veh->state & (VSTATE_HAS_MOVED|VSTATE_MADE_AIRDROP))) {
                 veh->flags |= VFLAG_FULL_MOVE_SKIPPED;
@@ -698,33 +803,49 @@ int __cdecl mod_veh_skip(int veh_id) {
         veh->waypoint_1_x = veh->x;
         veh->waypoint_1_y = veh->y;
         veh->status_icon = '-';
-        if (want_monolith(veh_id)) {
-            if (bit_at(veh->x, veh->y) & BIT_MONOLITH) {
-                monolith(veh_id);
-            }
-        }
+        
+		// [WTP]
+		// apply monolith to damaged vehicles as well
+
+//        if (want_monolith(veh_id)) {
+//            if (bit_at(veh->x, veh->y) & BIT_MONOLITH) {
+//                monolith(veh_id);
+//            }
+//        }
+		if
+		(
+			bit_at(veh->x, veh->y) & BIT_MONOLITH
+			&&
+			veh->triad() != TRIAD_AIR
+			&&
+			(veh->damage_taken > 0 || (veh->state & VSTATE_MONOLITH_UPGRADED) == 0)
+		)
+		{
+			monolith(veh_id);
+		}
+		
     }
     veh->moves_spent = moves;
     return moves;
 }
 
 int __cdecl mod_veh_wake(int veh_id) {
-    VEH* veh = &Vehicles[veh_id];
-    if (veh->order >= ORDER_FARM && veh->order < ORDER_MOVE_TO && !(veh->state & VSTATE_CRAWLING)) {
+    VEH* veh = &Vehs[veh_id];
+    if (veh->order >= ORDER_FARM && veh->order < ORDER_MOVE_TO && !(veh->state & VSTATE_WORKING)) {
         veh->moves_spent = veh_speed(veh_id, 0) - Rules->move_rate_roads;
-        if (veh->terraforming_turns) {
-            int turns = veh->terraforming_turns - contribution(veh_id, veh->order - 4);
-            veh->terraforming_turns = max(0, turns);
+        if (veh->terraform_turns) {
+            veh->terraform_turns = max(0, veh->terraform_turns - contribution(veh_id, veh->order - 4));
         }
     }
-    if (veh->state & VSTATE_ON_ALERT && !(veh->state & VSTATE_HAS_MOVED) && veh->order_auto_type == ORDERA_ON_ALERT) {
+    if (veh->state & VSTATE_ON_ALERT && !(veh->state & VSTATE_HAS_MOVED)
+    && veh->order_auto_type == ORDERA_ON_ALERT) {
         veh->moves_spent = 0;
     }
     /*
-    Formers are a special case since they might not move but can build items immediately.
-    When formers build something, VSTATE_HAS_MOVED should be set to prevent them from moving twice per turn.
+    Formers are a special case since they can build items without moving on the same turn.
+    In this case VSTATE_HAS_MOVED or VSTATE_WORKING should be set to prevent them from moving twice per turn.
     */
-    if (conf.activate_skipped_units) {
+    if (conf.activate_skipped_units && is_human(veh->faction_id)) {
         if (veh->flags & VFLAG_FULL_MOVE_SKIPPED
         && !(veh->state & (VSTATE_HAS_MOVED|VSTATE_MADE_AIRDROP))) {
             veh->moves_spent = 0;
@@ -923,10 +1044,10 @@ VehChassis chs, VehWeapon wpn, VehArmor arm, VehAblFlag abls, VehReactor rec) {
         if (combat) {
             if (!garrison) {
                 if (triad == TRIAD_LAND && wpn_v == 1) {
-                    strncat(buf, (*TextLabels)[146], 16); // Scout
+                    strncat(buf, label_get(146), MaxProtoNameLen); // Scout
                     strncat(buf, " ", 2);
                 } else if (triad == TRIAD_LAND && wpn_v == 2 && !psi_wpn && spd_v > 1) {
-                    strncat(buf, (*TextLabels)[182], 16); // Recon
+                    strncat(buf, label_get(182), MaxProtoNameLen); // Recon
                     strncat(buf, " ", 2);
                 } else if (triad == TRIAD_LAND || wpn_v != 1 || arm_v == 1) {
                     parse_wpn_name(buf, wpn, i > 0);
@@ -962,17 +1083,17 @@ VehChassis chs, VehWeapon wpn, VehArmor arm, VehAblFlag abls, VehReactor rec) {
             }
             if (arty) {
                 if ((wpn_v + arm_v) & 4) {
-                    strncat(buf, (*TextLabels)[543], 16); // Artillery
+                    strncat(buf, label_get(543), MaxProtoNameLen); // Artillery
                 } else {
-                    strncat(buf, (*TextLabels)[544], 16); // Battery
+                    strncat(buf, label_get(544), MaxProtoNameLen); // Battery
                 }
                 strncat(buf, " ", 2);
             }
             if (marine) {
                 if ((wpn_v + arm_v) & 4) {
-                    strncat(buf, (*TextLabels)[614], 16); // Marines
+                    strncat(buf, label_get(614), MaxProtoNameLen); // Marines
                 } else {
-                    strncat(buf, (*TextLabels)[615], 16); // Invaders
+                    strncat(buf, label_get(615), MaxProtoNameLen); // Invaders
                 }
                 strncat(buf, " ", 2);
             }
@@ -1015,12 +1136,13 @@ VehArmor best_armor(int faction, int max_cost) {
     int cv = 0;
     for (int i = ARM_NO_ARMOR; i <= ARM_RESONANCE_8_ARMOR; i++) {
         if (has_tech(Armor[i].preq_tech, faction)) {
-            int val = Armor[i].defense_value;
+            int iv = Armor[i].defense_value;
             int cost = Armor[i].cost;
-            if (max_cost >= 0 && (cost > max_cost || cost > val + 3)) {
+            if (max_cost >= 0 && (cost > max_cost || cost > iv + 3)) {
                 continue;
             }
-            int iv = val * (i >= ARM_PULSE_3_ARMOR ? 5 : 4);
+            iv = iv * ((i == ARM_PULSE_3_ARMOR || i == ARM_PULSE_8_ARMOR
+                || i == ARM_RESONANCE_3_ARMOR || i == ARM_RESONANCE_8_ARMOR) ? 5 : 4);
             if (iv > cv) {
                 cv = iv;
                 ci = i;
@@ -1035,8 +1157,8 @@ VehWeapon best_weapon(int faction) {
     int cv = 0;
     for (int i = WPN_HAND_WEAPONS; i <= WPN_STRING_DISRUPTOR; i++) {
         if (has_tech(Weapon[i].preq_tech, faction)) {
-            int iv = Weapon[i].offense_value *
-                (i == WPN_RESONANCE_LASER || i == WPN_RESONANCE_BOLT ? 5 : 4);
+            int iv = Weapon[i].offense_value
+                * ((i == WPN_RESONANCE_LASER || i == WPN_RESONANCE_BOLT) ? 5 : 4);
             if (iv > cv) {
                 cv = iv;
                 ci = i;
@@ -1055,7 +1177,7 @@ VehReactor best_reactor(int faction) {
     return REC_FISSION;
 }
 
-int offense_value(int unit_id) {
+int proto_offense(int unit_id) {
     assert(unit_id >= 0 && unit_id < MaxProtoNum);
     UNIT* u = &Units[unit_id];
     int w = (conf.ignore_reactor_power ? (int)REC_FISSION : u->reactor_id);
@@ -1068,7 +1190,7 @@ int offense_value(int unit_id) {
     return Weapon[u->weapon_id].offense_value * w;
 }
 
-int defense_value(int unit_id) {
+int proto_defense(int unit_id) {
     assert(unit_id >= 0 && unit_id < MaxProtoNum);
     UNIT* u = &Units[unit_id];
     int w = (conf.ignore_reactor_power ? (int)REC_FISSION : u->reactor_id);
@@ -1083,7 +1205,7 @@ int set_move_to(int veh_id, int x, int y) {
     veh->order = ORDER_MOVE_TO;
     veh->status_icon = 'G';
     if (veh->is_former()) {
-        veh->terraforming_turns = 0;
+        veh->terraform_turns = 0;
     }
     mapnodes.erase({x, y, NODE_PATROL});
     mapnodes.erase({x, y, NODE_COMBAT_PATROL});

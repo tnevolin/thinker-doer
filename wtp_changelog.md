@@ -1,6 +1,9 @@
 # Version 316
 
+* Merged with Thinker 4.6.
 * Reworded sea levels rising popup to warn player about potential base damaging tidal waves event.
+* Habitation facilities add +1 GROWTH bonus unconditionally.
+* Fixed Thinker bug when vehicle skipped on monolith does not get repaired.
 
 # Version 315
 

@@ -211,80 +211,6 @@ void patch_disable_focus()
 }
 
 /*
-Fixes combat roll formula to match odds.
-*/
-void patch_combat_roll()
-{
-    // replace code
-	
-    int combat_roll_bytes_length = 0x30;
-	
-    /*
-    0:  8b 75 ec                mov    esi,DWORD PTR [ebp-0x14]
-    3:  8d 46 ff                lea    eax,[esi-0x1]
-    6:  85 c0                   test   eax,eax
-    8:  7f 04                   jg     0xe
-    a:  33 ff                   xor    edi,edi
-    c:  eb 0a                   jmp    0x18
-    e:  E8 65 CE 13 00          call   <randomizer>
-    13: 99                      cdq
-    14: f7 fe                   idiv   esi
-    16: 8b fa                   mov    edi,edx
-    18: 8b 75 e4                mov    esi,DWORD PTR [ebp-0x1c]
-    1b: 8d 4e ff                lea    ecx,[esi-0x1]
-    1e: 85 c9                   test   ecx,ecx
-    20: 7f 04                   jg     0x26
-    22: 33 d2                   xor    edx,edx
-    24: eb 08                   jmp    0x2e
-    26: E8 4D CE 13 00          call   <randomizer>
-    2b: 99                      cdq
-    2c: f7 fe                   idiv   esi
-    2e: 3b fa                   cmp    edi,edx
-    */
-    byte combat_roll_old_bytes[] =
-        { 0x8B, 0x75, 0xEC, 0x8D, 0x46, 0xFF, 0x85, 0xC0, 0x7F, 0x04, 0x33, 0xFF, 0xEB, 0x0A, 0xE8, 0x65, 0xCE, 0x13, 0x00, 0x99, 0xF7, 0xFE, 0x8B, 0xFA, 0x8B, 0x75, 0xE4, 0x8D, 0x4E, 0xFF, 0x85, 0xC9, 0x7F, 0x04, 0x33, 0xD2, 0xEB, 0x08, 0xE8, 0x4D, 0xCE, 0x13, 0x00, 0x99, 0xF7, 0xFE, 0x3B, 0xFA, 0x0F, 0x8E, 0x4E, 0x04, 0x00, 0x00 }
-    ;
-	
-    /*
-    0:  8d bd 10 ff ff ff       lea    edi,[ebp-0xf0]
-    6:  57                      push   edi
-    7:  8b 7d a4                mov    edi,DWORD PTR [ebp-0x5c]
-    a:  57                      push   edi
-    b:  8b 7d a0                mov    edi,DWORD PTR [ebp-0x60]
-    e:  57                      push   edi
-    f:  8b 7d f8                mov    edi,DWORD PTR [ebp-0x8]
-    12: 57                      push   edi
-    13: 8b 7d fc                mov    edi,DWORD PTR [ebp-0x4]
-    16: 57                      push   edi
-    17: 8b 7d e4                mov    edi,DWORD PTR [ebp-0x1c]
-    1a: 57                      push   edi
-    1b: 8b 7d ec                mov    edi,DWORD PTR [ebp-0x14]
-    1e: 57                      push   edi
-    1f: e8 fc ff ff ff          call   20 <_main+0x20>
-    24: 83 c4 1c                add    esp,0x1c
-    27: 85 c0                   test   eax,eax
-    ...
-    */
-    byte combat_roll_new_bytes[] =
-        { 0x8D, 0xBD, 0x10, 0xFF, 0xFF, 0xFF, 0x57, 0x8B, 0x7D, 0xA4, 0x57, 0x8B, 0x7D, 0xA0, 0x57, 0x8B, 0x7D, 0xF8, 0x57, 0x8B, 0x7D, 0xFC, 0x57, 0x8B, 0x7D, 0xE4, 0x57, 0x8B, 0x7D, 0xEC, 0x57, 0xE8, 0xFC, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x1C, 0x85, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
-    ;
-	
-    write_bytes
-    (
-        0x005091A5,
-        combat_roll_old_bytes,
-        combat_roll_new_bytes,
-        combat_roll_bytes_length
-    )
-    ;
-	
-    // set call pointer to custom combat_roll function
-	
-    write_call(0x005091A5 + 0x1f, (int)combat_roll);
-	
-}
-
-/*
 Display more information and more correct one in odds display dialog.
 */
 void patch_display_odds()
@@ -1578,10 +1504,10 @@ Requests for break treaty before fight.
 */
 void patch_break_treaty_before_fight()
 {
-	write_call(0x00506ADE, (int)modifiedBattleFight2);
-	write_call(0x00568B1C, (int)modifiedBattleFight2);
-	write_call(0x005697AC, (int)modifiedBattleFight2);
-	write_call(0x0056A2E2, (int)modifiedBattleFight2);
+	write_call(0x00506ADE, (int)wtp_mod_battle_fight_2);
+	write_call(0x00568B1C, (int)wtp_mod_battle_fight_2);
+	write_call(0x005697AC, (int)wtp_mod_battle_fight_2);
+	write_call(0x0056A2E2, (int)wtp_mod_battle_fight_2);
 	
 }
 
@@ -3121,10 +3047,6 @@ void patch_setup_wtp(Config* cf)
 	// patch battle_compute
 	
 	patch_battle_compute();
-	
-	// patch combat roll
-	
-	patch_combat_roll();
 	
 	// patch odds display
 	

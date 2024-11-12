@@ -293,7 +293,7 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
     int alt = sq->alt_level();
     bool bonus_landmark = false;
     bool bonus_nutrient = bonus_at(x, y) == RES_NUTRIENT;
-    bool is_base = sq->is_base() && (sq->val2 & 0xf) < 8;
+    bool is_base = sq->is_base();
     int planet = Factions[faction_id].SE_planet_pending;
 
     if ((alt >= ALT_SHORE_LINE && sq->landmarks & LM_JUNGLE && !(sq->art_ref_id & 0x80))
@@ -449,7 +449,7 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
     bool has_limit = true;
     bool bonus_landmark = false;
     bool bonus_mineral = bonus_at(x, y) == RES_MINERAL;
-    bool is_base = sq->is_base() && (sq->val2 & 0xf) < 8;
+    bool is_base = sq->is_base();
     int alt = sq->alt_level();
     int planet = Factions[faction_id].SE_planet_pending;
 
@@ -547,9 +547,12 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
             value--;
         }
     }
-    // Original function can return inconsistent sea mineral output when base_id is not set
-    assert((base_id < 0 && alt == ALT_OCEAN_SHELF && MFactions[faction_id].is_aquatic())
-        || (value == mine_yield(faction_id, base_id, x, y, flag)));
+    
+    // [WTP]
+    // assertion is incorrect for aquatic faction base
+//    // Original function can return inconsistent sea mineral output when base_id is not set
+//    assert((base_id < 0 && alt == ALT_OCEAN_SHELF && MFactions[faction_id].is_aquatic())
+//        || (value == mine_yield(faction_id, base_id, x, y, flag)));
 	
 	// [WTP]
 	// Pressure Dome minerals
@@ -570,7 +573,7 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
     bool is_fungus = false;
     bool has_limit = true;
     bool bonus_energy = bonus_at(x, y) == RES_ENERGY;
-    bool is_base = sq->is_base() && (sq->val2 & 0xf) < 8;
+    bool is_base = sq->is_base();
     int economy = Factions[faction_id].SE_economy_pending
         + (base_id >= 0 && Bases[base_id].golden_age_active() ? 1 : 0);
     int planet = Factions[faction_id].SE_planet_pending;

@@ -480,6 +480,7 @@ public:
 	bool airbase;
 	int baseId;
 	
+	bool hostile = false;
 	bool breakTreaty = false;
 	bool alien = false;
 	bool alienMelee = false;
@@ -488,7 +489,7 @@ public:
 	bool alienFungalTower = false;
 	bool needlejetInFlight = false;
 	bool artifact = false;
-	double priority = 0.0;
+	double averageUnitGain = 0.0;
 	int lowestSpeed = -1;
 	bool artillery = false;
 	bool bombardment = false;
@@ -596,9 +597,17 @@ struct Production
 	robin_hood::unordered_flat_map<int, double> basePoliceGains;
 	robin_hood::unordered_flat_map<int, double> baseProtectionGains;
 	robin_hood::unordered_flat_map<int, double> enemyBaseCaptureGains;
-	robin_hood::unordered_flat_map<MAP *, double> enemyStackDestructionGains;
+	std::vector<EnemyStackInfo *> untargetedEnemyStackInfos;
 	
-	void clear();
+	void clear()
+	{
+		unavailableBuildSites.clear();
+		seaPodPoppingDemands.clear();
+		basePoliceGains.clear();
+		baseProtectionGains.clear();
+		enemyBaseCaptureGains.clear();
+		untargetedEnemyStackInfos.clear();
+	}
 	
 };
 
@@ -708,7 +717,7 @@ struct Data
 	}
 	
 	// unprotected enemy bases
-	std::vector<MAP *> emptyEnemyBaseTiles;
+	std::vector<int> emptyEnemyBaseIds;
 	// best units
 	robin_hood::unordered_flat_map<int, double> unitWeightedEffects;
 	

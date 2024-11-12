@@ -125,14 +125,6 @@ void FoeUnitWeightTable::add(int factionId, int unitId, double weight)
 	weights.at(getUnitIndex(factionId, unitId)) += weight;
 }
 
-// Production
-
-void Production::clear()
-{
-	unavailableBuildSites.clear();
-	seaPodPoppingDemands.clear();
-}
-
 // Data
 
 void Data::clear()
@@ -338,6 +330,8 @@ void EnemyStackInfo::addVehicle(int vehicleId)
 	}
 	
 	// boolean flags
+	
+	hostile = isHostile(aiFactionId, vehicle->faction_id);
 	
 	if (isPact(aiFactionId, vehicle->faction_id) || isTreaty(aiFactionId, vehicle->faction_id))
 	{
@@ -715,7 +709,7 @@ void EnemyStackInfo::computeAttackParameters()
 		debug
 		(
 			"\t[%4d] %s"
-			" travelTime=%5.2f"
+			" travelTime=%7.2f"
 			" requiredEffect=%5.2f"
 			" effect=%5.2f"
 			" accumulatedEffect=%5.2f"

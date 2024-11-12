@@ -30,13 +30,6 @@ FORMER_ORDER::FORMER_ORDER(int _vehicleId)
 
 }
 
-// TERRAFORMING_REQUEST comparison by gain descending
-
-bool compareTerraformingRequestDescending(TERRAFORMING_REQUEST const &a, TERRAFORMING_REQUEST const &b)
-{
-	return Resource::compare(a.yield, b.yield) > 0 || a.gain > b.gain;
-}
-
 // terraforming data
 
 std::vector<TileTerraformingInfo> tileTerraformingInfos;
@@ -782,7 +775,6 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 {
 	debug("generateBaseConventionalTerraformingRequests - %s\n", Bases[baseId].name);
 	
-	BASE *base = getBase(baseId);
 	BaseTerraformingInfo &baseTerraformingInfo = baseTerraformingInfos[baseId];
 	
 	// generate all possible requests
@@ -843,99 +835,64 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		
 	}
 	
-	debug("\tsignificantBaseTerraformingRequests\n");
-	
-	// sort request
+	// sort by score
 	
 	std::sort(availableBaseTerraformingRequests.begin(), availableBaseTerraformingRequests.end(), compareConventionalTerraformingRequests);
 	
-	robin_hood::unordered_flat_set<MAP *> selectedTiles;
-	std::vector<TERRAFORMING_REQUEST> significantBaseTerraformingRequests;
+	// select requests
 	
-	// increment base population
+	debug("\tselectedBaseTerraformingRequests\n");
 	
-	int currentPopSize = base->pop_size;
-	base->pop_size = baseTerraformingInfo.projectedPopSize;
+	std::vector<TERRAFORMING_REQUEST> selectedBaseTerraformingRequests;
 	
-	// iterate avilable terraformings
-	
-	for (TERRAFORMING_REQUEST terraformingRequest : availableBaseTerraformingRequests)
+	for (TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
 	{
-		// skip already selected tile
+		int x = getX(terraformingRequest.tile);
+		int y = getY(terraformingRequest.tile);
+		int bonus = bonus_at(x, y);
 		
-		if (selectedTiles.find(terraformingRequest.tile) != selectedTiles.end())
-			continue;
+		bool selected = true;
 		
-		// apply map state
-		
-		applyMapState(terraformingRequest.improvedMapState, terraformingRequest.tile);
-		computeBase(baseId, true);
-		
-		// this and all already selected tiles should be worked
-		
-		if (!isBaseWorkedTile(baseId, terraformingRequest.tile))
+		if (bonus == 0)
 		{
-			restoreTileMapState(terraformingRequest.tile);
-			continue;
-		}
-		
-		bool allSelectedTilesWorked = true;
-		
-		for (MAP *selectedTile : selectedTiles)
-		{
-			if (!isBaseWorkedTile(baseId, selectedTile))
+			for (TERRAFORMING_REQUEST &selectedTerraformingRequest : selectedBaseTerraformingRequests)
 			{
-				allSelectedTilesWorked = false;
-				break;
+				if (TileYield::isEqualOrSuperior(selectedTerraformingRequest.yield, terraformingRequest.yield))
+				{
+					selected = false;
+					break;
+				}
 			}
-			
 		}
 		
-		if (!allSelectedTilesWorked)
+		if (selected)
 		{
-			restoreTileMapState(terraformingRequest.tile);
-			continue;
+			selectedBaseTerraformingRequests.push_back(terraformingRequest);
 		}
-		
-		// collect significant request
-		
-		selectedTiles.insert(terraformingRequest.tile);
-		significantBaseTerraformingRequests.push_back(terraformingRequest);
 		
 		debug
 		(
-			"\t\t%s %-15s"
-			" fitnessScore=%5.2f"
-			" terraformingTime=%5.2f"
-			" gain=%5.2f"
+			"\t\t%5.2f %s %-16s %d %d-%d-%d"
+			" selected=%d"
 			"\n"
-			, getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name
-			, terraformingRequest.fitnessScore
-			, terraformingRequest.terraformingTime
-			, terraformingRequest.gain
+			, terraformingRequest.gain, getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name
+			, bonus
+			, terraformingRequest.yield.nutrient, terraformingRequest.yield.mineral, terraformingRequest.yield.energy
+			, selected
 		);
 		
 	}
 	
-	// restore map state
+	// record existing significant request locations
 	
-	for (MAP *tile : selectedTiles)
+	for (TERRAFORMING_REQUEST &terraformingRequest : selectedBaseTerraformingRequests)
 	{
-		restoreTileMapState(tile);
+		significantTerraformingRequestLocations.insert(terraformingRequest.tile);
 	}
-	
-	// restore base
-	
-	base->pop_size = currentPopSize;
-	computeBase(baseId, true);
 	
 	// store significant requests
 	
-	terraformingRequests.insert(terraformingRequests.end(), significantBaseTerraformingRequests.begin(), significantBaseTerraformingRequests.end());
-	
-	// record existing significant request locations
-	
-	significantTerraformingRequestLocations.insert(selectedTiles.begin(), selectedTiles.end());
+	terraformingRequests.insert(terraformingRequests.end(), selectedBaseTerraformingRequests.begin(), selectedBaseTerraformingRequests.end());
 	
 }
 
@@ -1253,7 +1210,7 @@ void assignFormerOrders()
 			
 			TERRAFORMING_REQUEST *bestTerraformingRequest = nullptr;
 			double bestTerraformingRequestTravelTime = 0.0;
-			double bestTerraformingRequestIncomeGrowthGain = 0.0;
+			double bestTerraformingRequestGain = 0.0;
 			
 			for (TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
 			{
@@ -1265,9 +1222,9 @@ void assignFormerOrders()
 				if ((tileOcean && triad == TRIAD_LAND) || (!tileOcean && triad == TRIAD_SEA))
 					continue;
 				
-				// same cluster for sea fomer
+				// same cluster
 				
-				if (triad == TRIAD_SEA && !isSameSeaCluster(vehicleTile, tile))
+				if ((triad == TRIAD_SEA && !isSameSeaCluster(vehicleTile, tile)) || (triad == TRIAD_LAND && !isSameLandTransportedCluster(vehicleTile, tile)))
 					continue;
 				
 				// reachable
@@ -1275,7 +1232,7 @@ void assignFormerOrders()
 				if (!isVehicleDestinationReachable(vehicleId, tile))
 					continue;
 				
-				// estimate travelTime
+				// travelTime
 				
 				double travelTime = conf.ai_terraforming_travel_time_multiplier * getVehicleATravelTime(vehicleId, vehicleTile, tile);
 				
@@ -1303,41 +1260,34 @@ void assignFormerOrders()
 					
 				}
 				
-				// estimate former incomeGrowthGain for this improvement
+				// estimate former incomeGain for this improvement
 				
-				double totalTime = travelTime + terraformingRequest.terraformingTime;
-				double incomeGrowth = totalTime <= 0.0 ? 0.0 : terraformingRequest.income / totalTime;
-				double incomeGrowthGain = getGainIncomeGrowth(incomeGrowth);
-				
-				// special bonus for terraforming on same square
-				
-				if (tile == vehicleTile && (terraformingRequest.conventional || terraformingRequest.option == &TO_NETWORK))
-				{
-					incomeGrowthGain *= 2.0;
-				}
+				double effectiveTravelTime = conf.ai_terraforming_travel_time_multiplier * travelTime;
+				double effectiveTotalTime = effectiveTravelTime + terraformingRequest.terraformingTime;
+				double gain = getGainDelay(getGainIncome(terraformingRequest.income), effectiveTotalTime);
 				
 				// update best
 				
-				if (incomeGrowthGain > bestTerraformingRequestIncomeGrowthGain)
+				if (gain > bestTerraformingRequestGain)
 				{
 					bestTerraformingRequest = &terraformingRequest;
 					bestTerraformingRequestTravelTime = travelTime;
-					bestTerraformingRequestIncomeGrowthGain = incomeGrowthGain;
+					bestTerraformingRequestGain = gain;
 				}
 				
 				debug
 				(
 					"\t\t->%s %-16s"
 					" income=%5.2f"
-					" travelTime=%5.2f"
+					" travelTime=%7.2f"
 					" terraformingTime=%5.2f"
-					" incomeGrowthGain=%5.2f"
+					" gain=%5.2f"
 					"\n"
 					, getLocationString(tile).c_str(), terraformingRequest.option->name
 					, terraformingRequest.income
 					, travelTime
 					, terraformingRequest.terraformingTime
-					, incomeGrowthGain
+					, gain
 				);
 				
 			}
@@ -1559,7 +1509,7 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 			
 			if (!rocky)
 			{
-				int nearbyForestKelpCount = nearby_items(getX(tile), getY(tile), 1, (ocean ? BIT_FARM : BIT_FOREST));
+				int nearbyForestKelpCount = nearby_items(getX(tile), getY(tile), 1, 9, (ocean ? BIT_FARM : BIT_FOREST));
 				penaltyScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestKelpCount;
 			}
 			
@@ -1610,12 +1560,12 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 		
 		if (ocean && action == FORMER_FARM)
 		{
-			int nearbyKelpCount = nearby_items(getX(tile), getY(tile), 1, BIT_FARM);
+			int nearbyKelpCount = nearby_items(getX(tile), getY(tile), 1, 9, BIT_FARM);
 			penaltyScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyKelpCount;
 		}
 		else if (!ocean && action == FORMER_FOREST)
 		{
-			int nearbyForestCount = nearby_items(getX(tile), getY(tile), 1, BIT_FOREST);
+			int nearbyForestCount = nearby_items(getX(tile), getY(tile), 1, 9, BIT_FOREST);
 			penaltyScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestCount;
 		}
 		
@@ -1633,9 +1583,9 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 	
 	terraformingRequest.yield =
 		{
-			(double)mod_crop_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
-			(double)mod_mine_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
-			(double)mod_energy_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
+			mod_crop_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
+			mod_mine_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
+			mod_energy_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
 		}
 	;
 	
@@ -1957,7 +1907,7 @@ TERRAFORMING_REQUEST calculateNetworkTerraformingScore(MAP *tile)
 		
 		// add penalty for nearby forest/kelp
 		
-		int nearbyForestKelpCount = nearby_items(x, y, 1, (ocean ? BIT_FARM : BIT_FOREST));
+		int nearbyForestKelpCount = nearby_items(x, y, 1, 9, (ocean ? BIT_FARM : BIT_FOREST));
 		fitnessScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestKelpCount;
 		
 		// generate terraforming changes
@@ -2090,7 +2040,7 @@ TERRAFORMING_REQUEST calculateSensorTerraformingScore(MAP *tile)
 		
 		// add penalty for nearby forest/kelp
 		
-		int nearbyForestKelpCount = nearby_items(x, y, 1, (ocean ? BIT_FARM : BIT_FOREST));
+		int nearbyForestKelpCount = nearby_items(x, y, 1, 9, (ocean ? BIT_FARM : BIT_FOREST));
 		improvementScore -= conf.ai_terraforming_nearbyForestKelpPenalty * nearbyForestKelpCount;
 		
 	}
@@ -2278,7 +2228,7 @@ bool isTerraformingAvailable(MAP *tile, int action)
 
 	// action is available only when enabled and researched
 
-	if (!has_terra(aiFactionId, (FormerItem)action, ocean))
+	if (!has_terra((FormerItem)action, ocean, aiFactionId))
 		return false;
 
 	// terraforming is not available in base square
@@ -2548,7 +2498,7 @@ bool isNearbyBoreholePresentOrUnderConstruction(int x, int y)
 
 	// check existing items
 
-	if (nearby_items(x, y, proximityRule->existingDistance, BIT_THERMAL_BORE) >= 1)
+	if (isMapRangeHasItem(x, y, proximityRule->existingDistance, BIT_THERMAL_BORE))
 		return true;
 
 	// check building items
@@ -2593,7 +2543,7 @@ bool isNearbyRiverPresentOrUnderConstruction(int x, int y)
 
 	// check existing items
 
-	if (nearby_items(x, y, proximityRule->existingDistance, BIT_RIVER) >= 1)
+	if (isMapRangeHasItem(x, y, proximityRule->existingDistance, BIT_RIVER))
 		return true;
 
 	// check building items
@@ -2678,7 +2628,7 @@ bool isNearbySensorPresentOrUnderConstruction(int x, int y)
 
 	// check existing items
 
-	if (nearby_items(x, y, proximityRule->existingDistance, BIT_SENSOR) >= 1)
+	if (isMapRangeHasItem(x, y, proximityRule->existingDistance, BIT_SENSOR))
 		return true;
 
 	// check building items
@@ -4103,9 +4053,9 @@ double getTerraformingResourceScore(double nutrient, double mineral, double ener
 	;
 }
 
-double getTerraformingResourceScore(Resource resource)
+double getTerraformingResourceScore(TileYield yield)
 {
-	return getTerraformingResourceScore(resource.nutrient, resource.mineral, resource.energy);
+	return getTerraformingResourceScore((double)yield.nutrient, (double)yield.mineral, (double)yield.energy);
 }
 
 void generateTerraformingChange(MapState &mapState, int action)
@@ -4230,7 +4180,7 @@ void restoreTileMapState(MAP *tile)
 Computes improved tile yield.
 Ignores actions not available for player faction.
 */
-Resource getTerraformingYield(int baseId, MAP *tile, std::vector<int> actions)
+TileYield getTerraformingYield(int baseId, MAP *tile, std::vector<int> actions)
 {
 	assert(isOnMap(tile));
 	assert(baseId == -1 || (baseId >= 0 && baseId < *BaseCount));
@@ -4334,7 +4284,7 @@ Resource getTerraformingYield(int baseId, MAP *tile, std::vector<int> actions)
 	
 	// return yield
 	
-	return {(double)nutrient, (double)mineral, (double)energy};
+	return {nutrient, mineral, energy};
 	
 }
 
@@ -4405,6 +4355,60 @@ double getImprovementIncome(int popSize, Resource oldIntake, Resource newIntake)
 	// return difference
 	
 	return newScore - oldScore;
+	
+}
+
+void addConventionalTerraformingRequest(std::vector<TERRAFORMING_REQUEST> &availableTerraformingRequests, TERRAFORMING_REQUEST &terraformingRequest)
+{
+	TERRAFORMING_REQUEST *equalTerraformingRequest = nullptr;
+	size_t equalTerraformingRequestIndex;
+	
+	for (size_t i = 0; i < availableTerraformingRequests.size(); i++)
+	{
+		TERRAFORMING_REQUEST &availableTerraformingRequest = availableTerraformingRequests.at(i);
+		
+		// compare same realm
+		
+		if (is_ocean(availableTerraformingRequest.tile) != is_ocean(terraformingRequest.tile))
+			continue;
+		
+		// superior terraforming exists - ignore this one
+		
+		if (TileYield::isSuperior(availableTerraformingRequest.yield, terraformingRequest.yield))
+			return;
+		
+		// equal terraforming exists - save it for later analysis
+		
+		if (TileYield::isEqual(availableTerraformingRequest.yield, terraformingRequest.yield) && availableTerraformingRequest.option == terraformingRequest.option)
+		{
+			equalTerraformingRequest = &availableTerraformingRequest;
+			equalTerraformingRequestIndex = i;
+		}
+		
+	}
+	
+	if (equalTerraformingRequest == nullptr)
+	{
+		availableTerraformingRequests.push_back(terraformingRequest);
+	}
+	else
+	{
+		if (terraformingRequest.option == &TO_ROCKY_MINE || terraformingRequest.option == &TO_THERMAL_BOREHOLE || terraformingRequest.option == &TO_FOREST || terraformingRequest.option == &TO_LAND_FUNGUS)
+		{
+			// replace old request if new one has better fitness score
+			
+			if (terraformingRequest.fitnessScore > equalTerraformingRequest->fitnessScore)
+			{
+				availableTerraformingRequests[equalTerraformingRequestIndex] = terraformingRequest;
+			}
+			
+		}
+		else
+		{
+			// ignore duplicate standard option
+		}
+		
+	}
 	
 }
 

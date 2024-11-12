@@ -94,65 +94,17 @@ struct Resource
 	double mineral;
 	double energy;
 	
-	Resource()
-	: nutrient(0.0)
-	, mineral(0.0)
-	, energy(0.0)
-	{}
-	
 	Resource(double _nutrient, double _mineral, double _energy)
-	: nutrient(_nutrient)
-	, mineral(_mineral)
-	, energy(_energy)
+	: nutrient(_nutrient), mineral(_mineral), energy(_energy)
 	{}
 	
-	void accumulate(Resource const &other)
-	{
-		this->nutrient += other.nutrient;
-		this->mineral += other.mineral;
-		this->energy += other.energy;
-	}
-	
-	void multiply(double multiplier)
-	{
-		this->nutrient *= multiplier;
-		this->mineral *= multiplier;
-		this->energy *= multiplier;
-	}
+	Resource()
+	: Resource(0.0, 0.0, 0.0)
+	{}
 	
 	static Resource combine(Resource const &o1, Resource const &o2)
 	{
-		return {o1.nutrient + o2.nutrient, o1.mineral + o2.mineral, o1.energy + o2.energy};
-	}
-	
-	static Resource difference(Resource const &o1, Resource const &o2)
-	{
-		return {o2.nutrient - o1.nutrient, o2.mineral - o1.mineral, o2.energy - o1.energy};
-	}
-	
-	/**
-	Compares two resources.
-	Returns -1, 0, +1 if first resource is inferior, uncomparable, superior to the second, correspondingly.
-	*/
-	static compare(Resource resource1, Resource resource2)
-	{
-		int nutrientComparison = resource1.nutrient == resource2.nutrient ? 0 : resource1.nutrient < resource2.nutrient ? -1 : +1;
-		int mineralComparison = resource1.mineral == resource2.mineral ? 0 : resource1.mineral < resource2.mineral ? -1 : +1;
-		int energyComparison = resource1.energy == resource2.energy ? 0 : resource1.energy < resource2.energy ? -1 : +1;
-		
-		if ((nutrientComparison <= 0 && mineralComparison <= 0 && energyComparison <= 0) && (nutrientComparison < 0 || mineralComparison < 0 || energyComparison < 0))
-		{
-			return -1;
-		}
-		else if ((nutrientComparison >= 0 && mineralComparison >= 0 && energyComparison >= 0) && (nutrientComparison > 0 || mineralComparison > 0 || energyComparison > 0))
-		{
-			return +1;
-		}
-		else
-		{
-			return 0;
-		}
-		
+		return Resource(o1.nutrient + o2.nutrient, o1.mineral + o2.mineral, o1.energy + o2.energy);
 	}
 	
 };
@@ -652,6 +604,7 @@ double getPsiCombatBaseOdds(int triad);
 bool isCombatUnit(int unitId);
 bool isCombatVehicle(int vehicleId);
 bool isUtilityVehicle(int vehicleId);
+bool isOgreUnit(int unitId);
 bool isOgreVehicle(int vehicleId);
 double calculatePsiDamageAttack(int id, int enemyId);
 double calculatePsiDamageDefense(int id, int enemyId);
@@ -780,6 +733,7 @@ double getBaseStructureConDefenseMultiplier(bool firstLevelDefense, bool secondL
 bool isWithinFriendlySensorRange(int factionId, MAP *tile);
 int getRegionPodCount(int x, int y, int range, int region);
 MAP *getNearbyItemLocation(int x, int y, int range, int item);
+bool isMapRangeHasItem(int x, int y, int range, uint32_t item);
 bool isVehicleHealing(int vehicleId);
 bool isVehicleInRegion(int vehicleId, int region);
 bool isProbeVehicle(int vehicleId);
@@ -1026,11 +980,12 @@ Resource getBaseResourceIntake2(int baseId);
 bool isLandRegion(MAP *tile, bool includePolar = false);
 bool isSeaRegion(MAP *tile, bool includePolar = false);
 bool isPolarRegion(MAP *tile);
-int getBaseNextUnitSupport(int baseId);
+int getBaseNextUnitSupport(int baseId, int unitId);
 int getBaseMoraleModifier(int baseId, int extendedTriad);
 bool isFactionCanBuildAirOffense(int factionId);
 bool isFactionCanBuildAirDefense(int factionId);
 bool isFactionCanBuildMelee(int factionId, int type, int triad);
 bool isRoughTerrain(MAP *tile);
 bool isOpenTerrain(MAP *tile);
+std::set<int> getBaseSeaRegions(int baseId);
 

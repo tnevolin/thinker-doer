@@ -132,7 +132,7 @@ struct TileExpansionInfo
 	bool validBuildSite = false;
 	bool validWorkTile = false;
 	bool worked = false;
-	Resource yield;
+	Resource averageYield;
 //	double relativeYieldScore = 0.0;
 	double buildSiteBaseGain = 0.0;
 	double buildSitePlacementScore = 0.0;
@@ -158,7 +158,7 @@ bool isValidWorkTile(MAP *baseTile, MAP *workTile);
 int getBuildSiteNearestBaseRange(MAP *tile);
 int getNearestColonyRange(MAP *tile);
 int getExpansionRange(MAP *tile);
-Resource getTileYield(MAP *tile);
+Resource getAverageTileYield(MAP *tile);
 int getNearestEnemyBaseRange(MAP *tile);
 std::vector<MAP *> getUnavailableBuildSites(MAP *buildSite);
 double getBasePlacementLandUse(MAP *tile);
