@@ -678,21 +678,23 @@ Actual base MC also includes subversion cost of all target faction units in or a
 
 # Alternative support
 
-Support per unit is modified to produce smoother scale without sudden increase between -3 and -4 ratings.
+Support mechanics is similar to vanilla with some adjustments.
+* New base always gets free minerals.
+* Support cost is always 1.
+* A little bit more free units.
+* Crawlers and Probes require support.
+* Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
 
-<pre>
-
-base support = (number of supported units * (4 - SUPPORT)) / 4
-round down
-
-number of supported units = number of all units - free units
-
-Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
-Out of the others first N units are also free.
-
-Number of free units is constant and set with alternative_support_free_units parameter in thinker.ini.
-
-</pre>
+| rating | support cost | free units | comment |
+| ----: | ----: | ----: | ---- |
+| -4 | 1 | 0 | |
+| -3 | 1 | 1 | |
+| -2 | 1 | 2 | |
+| -1 | 1 | 3 | |
+|  0 | 1 | 4 | |
+|  1 | 1 | 5 | |
+|  2 | 1 | 6 | |
+|  3 | 1 | 8 | or to base size |
 
 # Alternative eco damage industry effect reduction formula
 
@@ -739,20 +741,32 @@ Now base can produce that many minerals without pollution: TF + HF = 16, TF + HF
 
 # Infiltration expiration
 
-Some players complained about infiltration to be permanent and, thus, not presenting any challenge especially in multiplayer games. This modification introduce infiltration expiration. To smoothen expiration process and also to give player early expirtation notice single infiltration act is conssidered as planting up to N number of devices attached to opponent network. Infiltrated faction then search for such devices and disable them one by one. The speed of discovery depends on infiltrated faction PROBE rating. Every time another device is disabled the notification popup is shown to human device owner listing remaining devices count and whether they still have infiltration active. That helps player planning further infiltration renewal attemps.
+This mod uses Thinker expiration mechanics with slight modification. The infiltration duration is set by PROBE rating of infiltrated faction only.
 
-Infiltration action is now always available even if currently active. The number of planted devices is also displayed on infiltration dialog to help player decide whether they want to attempt infiltration at the time.
+# Alternative Psych computation
 
-## Settings in thinker.ini
+The goal of this modification to simplify the mechanics as much as possible for player to comprehend easily.
 
-| setting | description |
-|----|----|
-| infiltration_expire | Enables the feature. |
-| infiltration_devices | Max number of infiltration devices. |
-| human_infiltration_device_lifetime_base | Average number of turns to discover a device for human player. |
-| human_infiltration_device_lifetime_probe_effect | More turns on average to discover a device per each PROBE rating for human player. |
-| computer_infiltration_device_lifetime_base | Average number of turns to discover a device for computer player. |
-| computer_infiltration_device_lifetime_probe_effect | More turns to discover a device per each PROBE rating for computer player. |
+## Principles
+
+* Superdrone counts as two drones for the purpose of any computation including golden age.
+* Psych effects are applied to leftmost applicable citizen.
+* Psych effects has to turn superdrone -> drone -> content -> talent, not skipping any step.
+* The sequence of psych effects: police, facilities, projects, psych.
+
+## Psych effects
+
+### police and facilities
+
+Same effect, except they cannot turn superdrone directly to content. They should turn it to drone first. This way it takes two regular police or one double police or one Recreation Common to turn superdrone to content.
+
+### secret projects and psych
+
+Work same way. Turn leftmost not talent citizen one step at a time: superdrone -> drone -> content -> talent, then next one, etc. Created talents do not cancel remaining superdrones.
+
+## Golden age
+
+Happens when total happiness (talents - drones - superdrones) is greater or equal half of the population.
 
 # AI
 
