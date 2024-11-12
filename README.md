@@ -743,7 +743,9 @@ Now base can produce that many minerals without pollution: TF + HF = 16, TF + HF
 
 This mod uses Thinker expiration mechanics with slight modification. The infiltration duration is set by PROBE rating of infiltrated faction only.
 
-# Alternative Psych
+# Base Psych simplified
+
+[Example](images/base_psych_simplified.png)
 
 The goal of this modification is to simplify the mechanics as much as possible for player to comprehend easily.
 
