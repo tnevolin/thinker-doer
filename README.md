@@ -745,7 +745,7 @@ This mod uses Thinker expiration mechanics with slight modification. The infiltr
 
 # Base Psych simplified
 
-[Example](images/base_psych_simplified.png)
+![Example](images/base_psych_simplified.png)
 
 The goal of this modification is to simplify the mechanics as much as possible for player to comprehend easily.
 
