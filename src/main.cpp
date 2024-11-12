@@ -618,9 +618,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->aaa_range = atoi(value);
     }
-    else if (MATCH("scroll_other_faction_bases"))
+    else if (MATCH("base_psych_simplified"))
     {
-        cf->scroll_other_faction_bases = (atoi(value) == 0 ? false : true);
+        cf->base_psych_simplified = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("ai_useWTPAlgorithms"))
     {

@@ -1394,6 +1394,66 @@ void __thiscall BaseWin_draw_farm_set_font(Buffer* This, Font* font, int a3, int
 void __cdecl BaseWin_draw_psych_strcat(char* buffer, char* source)
 {
     BASE* base = &Bases[*CurrentBaseID];
+	
+	// [WTP]
+	// base psych simplified rearranged labels
+	
+	if (conf.base_psych_simplified)
+	{
+		if (!strcmp(source, label_get(323))) // Psych
+		{
+			// replace label #1 with [Facilities]
+			
+			strncat(buffer, label_get(324), StrBufLen); // Facilities
+			
+		}
+		else
+		if (!strcmp(source, label_get(324))) // Facilities
+		{
+			// replace label #2 with [Police / Pacifism]
+			
+			int labelIndex = 325 + (base->SE_police(true) <= -2 ? 1 : 0);
+			strncat(buffer, label_get(labelIndex), StrBufLen); // Police / Pacifism
+			
+		}
+		else
+		if (!strcmp(source, label_get(325)) || !strcmp(source, label_get(326))) // Police / Pacifism
+		{
+			// replace label #3 with [Secret Projects]
+			
+			strncat(buffer, label_get(327), StrBufLen); // Secret Projects
+			
+		}
+		else
+		if (!strcmp(source, label_get(327))) // Secret Projects
+		{
+			// replace label #4 with [Psych]
+			
+			strncat(buffer, label_get(323), StrBufLen); // Psych
+			
+		}
+		else
+		{
+			if (base->nerve_staple_turns_left > 0 || has_fac_built(FAC_PUNISHMENT_SPHERE, *CurrentBaseID))
+			{
+				// replace label #1 with [Stapled Base] if stapled or Punishment Sphere
+				
+				strncat(buffer, label_get(971), StrBufLen); // Stapled Base
+				
+			}
+			else
+			{
+				// default value
+				
+				strncat(buffer, source, StrBufLen);
+				
+			}
+			
+		}
+		
+	}
+	else
+	{
     if (conf.render_base_info && *CurrentBaseID >= 0) {
         if (base->nerve_staple_turns_left > 0
         || has_fac_built(FAC_PUNISHMENT_SPHERE, *CurrentBaseID)) {
@@ -1413,6 +1473,27 @@ void __cdecl BaseWin_draw_psych_strcat(char* buffer, char* source)
         }
     }
     strncat(buffer, source, StrBufLen);
+	}
+	
+}
+
+void __cdecl BaseWin_draw_psych_strcat_police(char* buffer, char* source)
+{
+	// [WTP]
+	// base psych simplified rearranged labels
+	
+	if (conf.base_psych_simplified)
+	{
+		// replace label #3 with [Secret Projects]
+		
+		strncat(buffer, label_get(327), StrBufLen); // Secret Projects
+		
+	}
+	else
+	{
+		strncat(buffer, source, StrBufLen);
+	}
+	
 }
 
 void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3, int a4, int a5)

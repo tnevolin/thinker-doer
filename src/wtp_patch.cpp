@@ -3326,10 +3326,7 @@ void patch_setup_wtp(Config* cf)
 		patch_zoc_disabled();
 	}
 	
-	if (conf.scroll_other_faction_bases)
-	{
-		patch_scroll_other_faction_bases();
-	}
+	patch_scroll_other_faction_bases();
 	
 }
 

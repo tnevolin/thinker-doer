@@ -503,6 +503,7 @@ bool patch_setup(Config* cf) {
     write_call(0x5C0984, (int)veh_kill_lift); // veh_kill
     write_call(0x498720, (int)ReportWin_close_handler);
     write_call(0x408DBD, (int)BaseWin_draw_psych_strcat);
+    write_call(0x408D94, (int)BaseWin_draw_psych_strcat_police);
     write_call(0x40F8F8, (int)BaseWin_draw_farm_set_font);
     write_call(0x4129E5, (int)BaseWin_draw_energy_set_text_color);
     write_call(0x415AD8, (int)BaseWin_draw_misc_eco_damage);

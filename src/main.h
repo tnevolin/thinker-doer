@@ -364,7 +364,7 @@ struct Config {
 	int conventional_power_psi_percentage = 0;
 	bool zoc_enabled = 1;
 	int aaa_range = -1;
-	bool scroll_other_faction_bases = false;
+	bool base_psych_simplified = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
