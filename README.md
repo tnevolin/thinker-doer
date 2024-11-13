@@ -747,34 +747,18 @@ This mod uses Thinker expiration mechanics with slight modification. The infiltr
 
 ![Example](images/base_psych_simplified.png)
 
-The goal of this modification is to simplify the mechanics as much as possible for player to comprehend easily.
+## Goals
 
-## Principles
+* Simplify mechanics when possible.
+* Remove the condition when psych is wasted.
+* Ensure Talent generating effects are generating talents.
 
-* Superdrone counts as two drones for the purpose of all computations: facilities, police, projects, psych, riot, golden age.
-* All positive effects are applied to leftmost applicable citizen.
-* All effects has to turn superdrone -> drone -> content -> talent, not skipping any step.
-* Psych allocation is applied after all other effects.
+## Modifications
 
-## Psych effects
-
-### content generating effects (facilities, police, and some projects)
-
-Improve leftmost not content up to content one step at a time: superdrone -> drone -> content, then next one, etc.
-
-Facilities and police cannot turn turn superdrone directly to content anymore. They should do it one step at a time.
-
-### talent generating effects (psych and some projects)
-
-Improve leftmost not talent citizen up to talent one step at a time: superdrone -> drone -> content -> talent, then next one, etc.
-
-## Golden age
-
-Happens when total happiness (talents - drones - superdrones) is greater or equal half of the population. Same as in vanilla, except drones are allowed in which case talents should offset drones and still come up with half of the population positive value.
-
-## Nerve stappling and punishment sphere
-
-Since these effects override all others, there is no use to display extra rows in base psych screen. Only one row with "Stapled Base" label is shown.
+* Talent generating projects create talents out of content citizens when there are any.
+* Psych effect is applied after other effects.
+* Psych generally improves happiness all over the base helping the most unhappy citizens first (superdrones, drones, content).
+* Nerve stappled base and punishment sphere ignore all other effects and are displayed with a single row on a base psych screen.
 
 # AI
 
