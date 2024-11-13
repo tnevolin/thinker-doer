@@ -760,7 +760,7 @@ The goal of this modification is to simplify the mechanics as much as possible f
 
 ### content generating effects (facilities, police, and some projects)
 
-Improve leftmost not content up to content one step at a time: superdrone -> drone -> content -> talent, then next one, etc.
+Improve leftmost not content up to content one step at a time: superdrone -> drone -> content, then next one, etc.
 
 Facilities and police cannot turn turn superdrone directly to content anymore. They should do it one step at a time.
 
