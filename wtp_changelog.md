@@ -1,3 +1,7 @@
+# Version 317
+
+* Base psych simplified: https://github.com/tnevolin/thinker-doer/blob/master/README.md#base-psych-simplified.
+
 # Version 316
 
 * Merged with Thinker 4.6.

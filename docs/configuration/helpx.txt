@@ -242,7 +242,8 @@ Secondary defensive structure.
 
 #; Recreation Commons
 #HELPFAC6
-Reduces number of $LINK<Drones=11> in base by two.
+Reduces number of $LINK<Drones=36> in base by two.
+^(Superdrone is counted as two drones)
 
 #; Energy Bank
 #HELPFAC7
@@ -274,7 +275,8 @@ production switching within category (unit, facility, secret project).
 
 #; Hologram Theatre
 #HELPFAC11
-Reduces number of $LINK<Drones=11> by two, and increases $LINK<Psych=39> output of base by 50%.
+Reduces number of $LINK<Drones=36> by two, and increases $LINK<Psych=39> output of base by 50%.
+^(Superdrone is counted as two drones)
 ^
 ^Can only be constructed in a base which already has a $LINK<Recreation Commons=100006>.
 
@@ -315,13 +317,15 @@ Increases base output: $LINK<energy=16> by {50%} and $LINK<Labs=22> by {50%}.
 
 #; Research Hospital
 #HELPFAC17
-Increases base output: $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}. Reduces the number of $LINK<Drones=11> by one.
+Increases base output: $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}. Reduces the number of $LINK<Drones=36> by one.
+^(Superdrone is counted as two drones)
 ^
 ^Reduces population loss caused by $LINK<genetic warfare=60021> and prevents other, natural, $LINK<disease outbreaks=41>.
 
 #; Nanohospital
 #HELPFAC18
-Increases base output: $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}. Reduces the number of $LINK<Drones=11> by one.
+Increases base output: $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}. Reduces the number of $LINK<Drones=36> by one.
+^(Superdrone is counted as two drones)
 ^
 ^Reduces population loss caused by $LINK<genetic warfare=60021> and prevents other, natural, $LINK<disease outbreaks=41>.
 ^
@@ -347,12 +351,12 @@ Increases $LINK<Minerals=42> output at base by 50%.
 
 #; Genejack Factory
 #HELPFAC22
-Increases $LINK<Minerals=42> output at base by 50% but increases the number of $LINK<Drone=11> at base by one and increases
+Increases $LINK<Minerals=42> output at base by 50% but increases the number of $LINK<Drones=36> at base by one and increases
 vulnerability to enemy $LINK<mind control=60021>.
 
 #; Punishment Sphere
 #HELPFAC23
-Eliminates both $LINK<Drone=11> and $LINK<Talents=45> at this base, and decreases vulnerability to enemy $LINK<mind
+Eliminates both $LINK<Drones=36> and $LINK<Talents=45> at this base, and decreases vulnerability to enemy $LINK<mind
 control=60021> but reduces $LINK<Labs=22> output by half.
 
 #; Hab Complex
@@ -585,14 +589,16 @@ Counts as a $LINK<Perimeter Defense=100004> at every base.
 #; The Virtual World
 #HELPPROJ6
 In addition to their normal effect, $LINK<Network Nodes=100008> count as $LINK<Hologram Theatres=100011> at every base:
-reduces number of $LINK<Drones=11> by two and increases $LINK<Psych=39> output of base by 50%.
+reduces number of $LINK<Drones=36> by two and increases $LINK<Psych=39> output of base by 50%.
+^(Superdrone is counted as two drones)
 
 #; The Planetary Transit System
 #HELPPROJ7
 Any new bases you found could begin at population level higher than 1.
 ^new base size = average faction base size (rounded down) - 2
 ^
-^One less $LINK<drone=36> at all bases of population level 3 and under.
+^One less $LINK<Drone=36> at all bases of population level 3 and under.
+^(Superdrone is counted as two drones)
 
 #; The Xenoempathy Dome
 #HELPPROJ8
@@ -627,9 +633,10 @@ units (+1 $LINK<Police=130005>).
 
 #; The Longevity Vaccine
 #HELPPROJ14
-Two less $LINK<Drone=11> at every base if a $LINK<society’s economics=120005> are $LINK<Planned=120008>. One less Drone at
+Two less $LINK<Drones=36> at every base if a $LINK<society’s economics=120005> are $LINK<Planned=120008>. One less Drone at
 every base if economics are $LINK<Simple=120006> or $LINK<Green=120009>. $LINK<Economy=130000> increased by 50% at this
 base for $LINK<Free market=120007> economies.
+^(Superdrone is counted as two drones)
 ^
 ^Protects all bases against the $LINK<Prometheus Virus=41>.
 
@@ -719,7 +726,7 @@ extra minerals).
 
 #; The Telepathic Matrix
 #HELPPROJ30
-$LINK<Drone=11> [never riot] at all bases.
+$LINK<Drone=36> [never riot] at all bases.
 ^
 ^All $LINK<probes=60021> receive a +2 $LINK<Morale=29> modifier.
 
@@ -1010,7 +1017,9 @@ score here translates directly into $LINK<morale=29> upgrades for newly built un
 #HELPEFFECT5
 {Police} represents a society’s tolerance for police control and
 restrictions on personal freedom. A high score allows combat units to be
-used as police to pacify unhappy $LINK<Drone=11>. A low score will cause
+used as police to pacify unhappy $LINK<Drone=36>.
+^(Superdrone is counted as two drones)
+^A low score will cause
 increasing unhappiness when combat units are away from home (non-$LINK<Air Superiority=80005>
 air combat units have the same effect as units away
 from home):

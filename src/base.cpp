@@ -463,7 +463,7 @@ void __cdecl mod_base_yield() {
             base_update(base, choices);
             mod_base_minerals();
             mod_base_energy();
-            valid = !base->drone_riots();
+            valid = !base_drone_riots(base);
             if (!valid && manage_workers && best_spc_id != psych_spc_id
             && base->drone_total - base->talent_total > (base->pop_size + 3)/4) {
                 best_spc_id = psych_spc_id;
@@ -473,7 +473,7 @@ void __cdecl mod_base_yield() {
                 }
                 mod_base_minerals();
                 mod_base_energy();
-                valid = !base->drone_riots();
+                valid = !base_drone_riots(base);
             }
             if (base->mineral_surplus - choices.back().mineral < 0) {
                 // Priority for mineral support costs
@@ -1547,7 +1547,7 @@ int __cdecl mod_base_growth() {
 void __cdecl mod_base_drones() {
     BASE* base = *CurrentBase;
 
-    if (base->golden_age()) {
+    if (base_golden_age(base)) {
         if (!(base->state_flags & BSTATE_GOLDEN_AGE_ACTIVE)) {
             base->state_flags |= BSTATE_GOLDEN_AGE_ACTIVE;
             if (!is_alien(base->faction_id)) {
@@ -2521,7 +2521,7 @@ bool can_staple(int base_id) {
 
 bool base_maybe_riot(int base_id) {
     BASE* b = &Bases[base_id];
-    return b->drone_riots() && base_can_riot(base_id, true);
+    return base_drone_riots(b) && base_can_riot(base_id, true);
 }
 
 bool base_can_riot(int base_id, bool allow_staple) {
@@ -2540,7 +2540,7 @@ bool base_pop_boom(int base_id) {
     return has_project(FAC_CLONING_VATS, b->faction_id)
         || f->SE_growth_pending
         + (has_fac_built(FAC_CHILDREN_CRECHE, base_id) ? 2 : 0)
-        + (b->golden_age() ? 2 : 0) > 5;
+        + (base_golden_age(b) ? 2 : 0) > 5;
 }
 
 bool can_use_teleport(int base_id) {
@@ -2669,5 +2669,27 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
     return facility.maint;
 }
 
+bool base_drone_riots(BASE *base)
+{
+	if (conf.base_psych_simplified)
+	{
+		return (base->drone_total + base->superdrone_total) > base->talent_total;
+	}
+	else
+	{
+		return base->drone_riots();
+	}
+}
 
+bool base_golden_age(BASE *base)
+{
+	if (conf.base_psych_simplified)
+	{
+		return base->pop_size > 2 && base->talent_total - (base->drone_total + base->superdrone_total) > (base->pop_size + 1) / 2;
+	}
+	else
+	{
+		return base->golden_age();
+	}
+}
 

@@ -1506,7 +1506,7 @@ void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3,
 
         if (base_maybe_riot(*CurrentBaseID)) {
             color = ColorRed;
-        } else if (base->golden_age()) {
+        } else if (base_golden_age(base)) {
             color = ColorEnergy;
         } else {
             color = ColorIntakeSurplus;
@@ -1553,7 +1553,7 @@ void __cdecl mod_base_draw(Buffer* buffer, int base_id, int x, int y, int zoom, 
         || has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, base_id)) {
             color = ColorCyan;
         }
-        if (base->faction_id == MapWin->cOwner && base->golden_age()) {
+        if (base->faction_id == MapWin->cOwner && base_golden_age(base)) {
             color = ColorEnergy;
         }
         if (base->faction_id == MapWin->cOwner && base_maybe_riot(base_id)) {
