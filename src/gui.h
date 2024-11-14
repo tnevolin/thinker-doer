@@ -17,6 +17,7 @@ const uint32_t AC_WS_FULLSCREEN = (WS_POPUP | WS_CLIPCHILDREN);
 extern char label_pop_size[StrBufLen];
 extern char label_pop_boom[StrBufLen];
 extern char label_nerve_staple[StrBufLen];
+extern char label_psych_effect[StrBufLen];
 extern char label_captured_base[StrBufLen];
 extern char label_stockpile_energy[StrBufLen];
 extern char label_sat_nutrient[StrBufLen];

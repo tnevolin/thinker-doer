@@ -718,6 +718,12 @@ struct Data
 	
 	// unprotected enemy bases
 	std::vector<int> emptyEnemyBaseIds;
+	robin_hood::unordered_flat_set<MAP *> emptyEnemyBaseTiles;
+	bool isEmptyEnemyBaseAt(MAP *tile)
+	{
+		return emptyEnemyBaseTiles.find(tile) != emptyEnemyBaseTiles.end();
+	}
+	
 	// best units
 	robin_hood::unordered_flat_map<int, double> unitWeightedEffects;
 	

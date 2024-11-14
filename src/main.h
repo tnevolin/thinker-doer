@@ -365,7 +365,8 @@ struct Config {
 	bool zoc_enabled = 1;
 	int aaa_range = -1;
 	bool base_psych_improved = false;
-	bool base_psych_divisor = 2;
+	int base_psych_divisor = 2;
+	bool base_psych_remove_drone_superdrone = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

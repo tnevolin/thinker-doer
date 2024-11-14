@@ -2053,6 +2053,7 @@ void populateEmptyEnemyBaseTiles()
 	debug("populateEmptyEnemyBaseTiles - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	aiData.emptyEnemyBaseIds.clear();
+	aiData.emptyEnemyBaseTiles.clear();
 	
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
@@ -2077,6 +2078,7 @@ void populateEmptyEnemyBaseTiles()
 		// store unprotected enemy base
 		
 		aiData.emptyEnemyBaseIds.push_back(baseId);
+		aiData.emptyEnemyBaseTiles.insert(baseTile);
 		
 	}
 	

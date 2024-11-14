@@ -349,7 +349,9 @@ void immediateAttack()
 		{
 			TaskType taskType = TT_MELEE_ATTACK;
 			
-			if (!aiData.isEnemyStackAt(attackAction.target))
+			// empty enemy base or enemy stack
+			
+			if (!(aiData.isEmptyEnemyBaseAt(attackAction.target) || aiData.isEnemyStackAt(attackAction.target)))
 				continue;
 			
 			EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);

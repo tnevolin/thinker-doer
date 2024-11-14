@@ -318,6 +318,8 @@ int option_handler(void* user, const char* section, const char* name, const char
         parse_format_args(label_pop_boom, value, 0, StrBufLen);
     } else if (MATCH("label_nerve_staple")) {
         parse_format_args(label_nerve_staple, value, 1, StrBufLen);
+    } else if (MATCH("label_psych_effect")) {
+        parse_format_args(label_psych_effect, value, 2, StrBufLen);
     } else if (MATCH("label_captured_base")) {
         parse_format_args(label_captured_base, value, 1, StrBufLen);
     } else if (MATCH("label_stockpile_energy")) {
@@ -625,6 +627,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("base_psych_divisor"))
     {
         cf->base_psych_divisor = atoi(value);
+    }
+    else if (MATCH("base_psych_remove_drone_superdrone"))
+    {
+        cf->base_psych_remove_drone_superdrone = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("ai_useWTPAlgorithms"))
     {

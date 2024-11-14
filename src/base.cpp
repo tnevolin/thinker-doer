@@ -1083,8 +1083,45 @@ static void adjust_drone(BASE* base, int drone_val) {
 			}
 			else if (drone_val < 0)
 			{
-				base->drone_total = std::max(0, base->drone_total + drone_val);
-				base->superdrone_total = std::min(base->drone_total, base->superdrone_total);
+				if (conf.base_psych_remove_drone_superdrone)
+				{
+					// remove drones
+					
+					int drone_count = std::max(0, base->drone_total - base->superdrone_total);
+					int drone_removed = std::min(drone_count, -drone_val);
+					base->drone_total -= drone_removed;
+					drone_val += drone_removed;
+					
+					// remove superdrones
+					
+					if (drone_val < 0)
+					{
+						int superdrone_count = std::max(0, base->superdrone_total);
+						int superdrone_removed = std::min(superdrone_count, (-drone_val) / 2);
+						base->drone_total -= superdrone_removed;
+						base->superdrone_total -= superdrone_removed;
+						drone_val += 2 * superdrone_removed;
+						
+					}
+					
+					// convert superdrone to drone
+					
+					if (drone_val < 0)
+					{
+						int superdrone_count = std::max(0, base->superdrone_total);
+						int superdrone_removed = std::min(superdrone_count, -drone_val);
+						base->superdrone_total -= superdrone_removed;
+						drone_val += superdrone_removed;
+						
+					}
+					
+				}
+				else
+				{
+					base->drone_total = std::max(0, base->drone_total + drone_val);
+					base->superdrone_total = std::min(base->drone_total, base->superdrone_total);
+				}
+				
 			}
 			
 		}
