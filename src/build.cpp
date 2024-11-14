@@ -680,7 +680,7 @@ int select_build(int base_id) {
     bool allow_ships = has_ships(faction)
         && adjacent_region(base->x, base->y, -1, *MapAreaSqRoot + 16, TRIAD_SEA);
     bool allow_pods = allow_expand(faction) && (base->pop_size > 1 || base->nutrient_surplus > 1);
-    bool drone_riots = base_drone_riots(base) || base->drone_riots_active();
+    bool drone_riots = base->drone_riots() || base->drone_riots_active();
     int drones = base->drone_total + base->specialist_adjust;
     int all_crawlers = 0;
     int near_formers = 0;

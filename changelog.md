@@ -1,3 +1,16 @@
+# Version 318
+
+* Base psych improved fine tuning. https://github.com/tnevolin/thinker-doer/blob/master/README.md#base-psych-improved
+  * Psych is applied after other effects.
+  * Psych generally improves happiness all over the base removing drones/superdrones first and then generating talents when no more drones left.
+  * Psych effect is **NOT** limited. This is different from vanilla 2 x population limit.
+  * It takes **6** psych to improve mood of the citizen instead of **2** in vanilla. This is to compensate above benefits and make psych effect more smooth.
+  * Drone reduction effects (facilities, police, projects) work as in vanilla: make unhappy citizen content being them drone or superdrone.
+  * Talent generating facilities/projects focus on turning leftmost citizen to talent instead of pacifying unhappy ones.
+  * Drone riot definition is as in vanilla: more drones than talents.
+  * Golden age definition is as in vanilla: no drones and at least half of talents.
+* New more authentic superdrone design! Credits to Regina Jane.
+
 # Version 317
 
 * Base psych simplified: https://github.com/tnevolin/thinker-doer/blob/master/README.md#base-psych-simplified.

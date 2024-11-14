@@ -618,9 +618,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->aaa_range = atoi(value);
     }
-    else if (MATCH("base_psych_simplified"))
+    else if (MATCH("base_psych_improved"))
     {
-        cf->base_psych_simplified = (atoi(value) == 0 ? false : true);
+        cf->base_psych_improved = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("base_psych_divisor"))
+    {
+        cf->base_psych_divisor = atoi(value);
     }
     else if (MATCH("ai_useWTPAlgorithms"))
     {

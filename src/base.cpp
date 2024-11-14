@@ -463,7 +463,7 @@ void __cdecl mod_base_yield() {
             base_update(base, choices);
             mod_base_minerals();
             mod_base_energy();
-            valid = !base_drone_riots(base);
+            valid = !base->drone_riots();
             if (!valid && manage_workers && best_spc_id != psych_spc_id
             && base->drone_total - base->talent_total > (base->pop_size + 3)/4) {
                 best_spc_id = psych_spc_id;
@@ -473,7 +473,7 @@ void __cdecl mod_base_yield() {
                 }
                 mod_base_minerals();
                 mod_base_energy();
-                valid = !base_drone_riots(base);
+                valid = !base->drone_riots();
             }
             if (base->mineral_surplus - choices.back().mineral < 0) {
                 // Priority for mineral support costs
@@ -867,54 +867,55 @@ static void add_psych_row(BASE* base, int num) {
 /*
 [WTP]
 Ensures normal distribution of talents, drones, superdrones.
-1. Each should not be more than base->pop_size - base->specialist_total.
-2. Number of talents and number of drones/superdrones should not intersect in the middle.
+- Each should not exceed base->pop_size.
+- Superdrones should not exceed drones.
+- Talents and drones/superdrones should not intersect in the middle.
 */
 static void normalize_happiness(BASE *base)
 {
-	int const pop_size = base->pop_size - base->specialist_total;
+	int const worker_count = base->pop_size - base->specialist_total;
 	
 	// ensure each number is limited by pop size
 	
-	base->talent_total = std::min(pop_size, base->talent_total);
-	base->drone_total = std::min(pop_size, base->drone_total);
+	base->talent_total = std::min((int32_t)base->pop_size, base->talent_total);
+	base->drone_total = std::min((int32_t)base->pop_size, base->drone_total);
 	base->superdrone_total = std::min(base->drone_total, base->superdrone_total);
 	
 	// ensure talents and drone/superdrones do not intersect
 	
-	while (true)
+	while (base->talent_total + base->drone_total > worker_count)
 	{
-		if (base->superdrone_total >= base->drone_total)
+		if (base->talent_total > 0 && base->drone_total > 0)
 		{
-			if (base->talent_total > 0 && base->superdrone_total > 0 && base->talent_total + base->superdrone_total > pop_size)
+			if (base->superdrone_total == base->drone_total)
 			{
 				// compensate superdrone with talent
-				
 				base->talent_total--;
 				base->superdrone_total--;
-				
 			}
 			else
 			{
-				break;
+				// compensate drone with talent
+				base->talent_total--;
+				base->drone_total--;
 			}
 			
 		}
+		else if (base->talent_total > 0 && base->drone_total == 0)
+		{
+			// reduce talents to worker count
+			base->talent_total = std::min(worker_count, base->talent_total);
+		}
+		else if (base->talent_total == 0 && base->drone_total > 0)
+		{
+			// reduce drones to worker count
+			base->drone_total = std::min(worker_count, base->drone_total);
+			base->superdrone_total = std::min(base->drone_total, base->superdrone_total);
+		}
 		else
 		{
-			if (base->talent_total > 0 && base->drone_total > 0 && base->talent_total + base->drone_total > pop_size)
-			{
-				// compensate drone with talent
-				
-				base->talent_total--;
-				base->drone_total--;
-				
-			}
-			else
-			{
-				break;
-			}
-			
+			// no other options
+			break;
 		}
 		
 	}
@@ -928,7 +929,7 @@ static void adjust_psych(BASE* base, int talent_val, bool force) {
 	// simplified computation
 	// applying changes side by side
 	
-	if (conf.base_psych_simplified)
+	if (conf.base_psych_improved)
 	{
 		normalize_happiness(base);
 		
@@ -936,29 +937,63 @@ static void adjust_psych(BASE* base, int talent_val, bool force) {
 		{
 			if (talent_val > 0)
 			{
-				for (int i = 0; i < talent_val; i++)
+				if (force)
 				{
-					if (base->talent_total + base->superdrone_total == pop_size && base->superdrone_total > 0)
+					for (int i = 0; i < talent_val; i++)
 					{
-						// superdrone -> drone
-						base->superdrone_total--;
+						if ( base->superdrone_total > 0 && base->talent_total + base->superdrone_total == pop_size)
+						{
+							// superdrone -> drone
+							base->superdrone_total--;
+						}
+						else if (base->drone_total > 0 && base->talent_total + base->drone_total == pop_size)
+						{
+							// drone -> content
+							base->drone_total--;
+						}
+						else if (base->talent_total < pop_size)
+						{
+							// content -> talent
+							base->talent_total++;
+						}
+						else
+						{
+							// no available options
+							break;
+						}
+						
 					}
-					else if (base->talent_total + base->drone_total == pop_size && base->drone_total > 0)
-					{
-						// drone -> content
-						base->drone_total--;
-					}
-					else if (base->talent_total < pop_size)
-					{
-						// content -> talent
-						base->talent_total++;
-					}
-					else
-					{
-						// no available options
-						break;
-					}
+					
 				}
+				else
+				{
+					for (int i = 0; i < talent_val; i++)
+					{
+						if (base->superdrone_total > 0 && base->superdrone_total == base->drone_total)
+						{
+							// reduce superdrone
+							base->superdrone_total--;
+						}
+						else if (base->drone_total > 0)
+						{
+							// reduce drone
+							base->drone_total--;
+						}
+						else if (base->talent_total < pop_size)
+						{
+							// add talent
+							base->talent_total++;
+						}
+						else
+						{
+							// no available options
+							break;
+						}
+						
+					}
+					
+				}
+				
 			}
 			
 			// negative values for talent should not happen
@@ -1012,56 +1047,46 @@ static void adjust_drone(BASE* base, int drone_val) {
 	// simplified computation
 	// applying changes side by side
 	
-	if (conf.base_psych_simplified)
+	if (conf.base_psych_improved)
 	{
 		normalize_happiness(base);
 		
-		if (drone_val > 0)
+		if (pop_size > 0)
 		{
-			for (int i = 0; i < drone_val; i++)
+			if (drone_val > 0)
 			{
-				if (base->talent_total + base->drone_total < pop_size)
+				for (int i = 0; i < drone_val; i++)
 				{
-					// content -> drone
-					base->drone_total++;
+					if (base->talent_total + base->drone_total < pop_size)
+					{
+						// add drone
+						base->drone_total++;
+					}
+					else if (base->talent_total > 0)
+					{
+						// remove talent
+						base->talent_total--;
+					}
+					else if (base->superdrone_total < base->drone_total)
+					{
+						// add superdrone
+						base->superdrone_total++;
+					}
+					else
+					{
+						// no other options
+						break;
+					}
+					
 				}
-				else if (base->talent_total + base->drone_total == pop_size && base->talent_total > 0)
-				{
-					// talent -> content
-					base->talent_total--;
-				}
-				else if (base->superdrone_total < base->drone_total)
-				{
-					// drone -> superdrone
-					base->superdrone_total++;
-				}
-				else
-				{
-					// no more talents or contents
-					break;
-				}
+				
 			}
-		}
-		else if (drone_val <0)
-		{
-			for (int i = 0; i < -drone_val; i++)
+			else if (drone_val < 0)
 			{
-				if (base->superdrone_total == base->drone_total && base->superdrone_total > 0)
-				{
-					// superdrone -> drone
-					base->superdrone_total--;
-				}
-				else if (base->drone_total > 0)
-				{
-					// drone -> content
-					base->drone_total--;
-				}
-				else
-				{
-					// no more drones
-					break;
-				}
+				base->drone_total = std::max(0, base->drone_total + drone_val);
+				base->superdrone_total = std::min(base->drone_total, base->superdrone_total);
 			}
+			
 		}
 		
 	}
@@ -1157,13 +1182,18 @@ void __cdecl mod_base_psych(int base_id) {
     if (m->rule_talent) {
         // Extra talent at base (per "param" citizens, rounded up)
         rule_talent = (m->rule_talent + base->pop_size - 1) / m->rule_talent;
-        adjust_psych(base, rule_talent, 0);
+        adjust_psych(base, rule_talent, 1);
     }
     for (int i = 0; i < m->faction_bonus_count; i++) {
         // Number of drones per base made content
         if (m->faction_bonus_id[i] == FCB_NODRONE) {
             adjust_drone(base, -m->faction_bonus_val1[i]);
         }
+    }
+    if (f->SE_talent_pending > 0) {
+        adjust_psych(base, f->SE_talent_pending, 0);
+    } else if (f->SE_talent_pending < 0) {
+        adjust_drone(base, -f->SE_talent_pending);
     }
     if (drone_limit >= 0) {
         base->superdrone_total = min(base->superdrone_total,
@@ -1183,7 +1213,7 @@ void __cdecl mod_base_psych(int base_id) {
 	// [WTP]
 	// psych effect is the last one
 	
-	if (!conf.base_psych_simplified)
+	if (!conf.base_psych_improved)
 	{
     adjust_psych(base, psych_val, 0);
     add_psych_row(base, 1); // Psych
@@ -1213,16 +1243,11 @@ void __cdecl mod_base_psych(int base_id) {
     if (has_fac_built(FAC_PARADISE_GARDEN, base_id)) {
         adjust_psych(base, 2, 1);
     }
-    if (f->SE_talent_pending > 0) {
-        adjust_psych(base, f->SE_talent_pending, 0);
-    } else if (f->SE_talent_pending < 0) {
-        adjust_drone(base, -f->SE_talent_pending);
-    }
     
 	// [WTP]
 	// other effects are shifted up
 	
-	if (conf.base_psych_simplified)
+	if (conf.base_psych_improved)
 	{
 		add_psych_row(base, 1); // Facilities
 	}
@@ -1267,7 +1292,7 @@ void __cdecl mod_base_psych(int base_id) {
 	// [WTP]
 	// other effect are shifted up
 	
-	if (conf.base_psych_simplified)
+	if (conf.base_psych_improved)
 	{
 		add_psych_row(base, 2); // Police / Pacifism
 	}
@@ -1276,19 +1301,22 @@ void __cdecl mod_base_psych(int base_id) {
     add_psych_row(base, 3); // Police / Pacifism
 	}
 	
-
+	
+	// [WTP]
+	// put drone reducing project first as more powerful
+	
+    // Planned reduces drones by two, while Simple and Green reduces by one
+    if (has_project(FAC_LONGEVITY_VACCINE, faction_id)) {
+        int value = (f->SE_Economics_pending == SOCIAL_M_PLANNED)
+            + (f->SE_Economics_pending != SOCIAL_M_FREE_MARKET);
+        adjust_drone(base, -value);
+    }
     // Always increase the talent count when any non-specialists are available
     if (has_project(FAC_HUMAN_GENOME_PROJECT, faction_id)) {
         adjust_psych(base, 1, 1);
     }
     if (has_project(FAC_CLINICAL_IMMORTALITY, faction_id)) {
         adjust_psych(base, 1, 1);
-    }
-    // Planned reduces drones by two, while Simple and Green reduces by one
-    if (has_project(FAC_LONGEVITY_VACCINE, faction_id)) {
-        int value = (f->SE_Economics_pending == SOCIAL_M_PLANNED)
-            + (f->SE_Economics_pending != SOCIAL_M_FREE_MARKET);
-        adjust_drone(base, -value);
     }
     if (base->nerve_staple_turns_left > 0 || has_fac_built(FAC_PUNISHMENT_SPHERE, base_id)) {
         base->talent_total = 0;
@@ -1299,7 +1327,7 @@ void __cdecl mod_base_psych(int base_id) {
 	// [WTP]
 	// other effect are shifted up
 	
-	if (conf.base_psych_simplified)
+	if (conf.base_psych_improved)
 	{
 		add_psych_row(base, 3); // Secret Projects
 	}
@@ -1312,9 +1340,10 @@ void __cdecl mod_base_psych(int base_id) {
 	// [WTP]
 	// psych effect is the last one
 	
-	if (conf.base_psych_simplified)
+	if (conf.base_psych_improved)
 	{
-		int psych_val = max(0, base->psych_total / 2);
+		// no limit by base population
+		int psych_val = max(0, base->psych_total / conf.base_psych_divisor);
 		adjust_psych(base, psych_val, 0);
 		add_psych_row(base, 4); // Psych
 	}
@@ -1547,7 +1576,7 @@ int __cdecl mod_base_growth() {
 void __cdecl mod_base_drones() {
     BASE* base = *CurrentBase;
 
-    if (base_golden_age(base)) {
+    if (base->golden_age()) {
         if (!(base->state_flags & BSTATE_GOLDEN_AGE_ACTIVE)) {
             base->state_flags |= BSTATE_GOLDEN_AGE_ACTIVE;
             if (!is_alien(base->faction_id)) {
@@ -2521,7 +2550,7 @@ bool can_staple(int base_id) {
 
 bool base_maybe_riot(int base_id) {
     BASE* b = &Bases[base_id];
-    return base_drone_riots(b) && base_can_riot(base_id, true);
+    return b->drone_riots() && base_can_riot(base_id, true);
 }
 
 bool base_can_riot(int base_id, bool allow_staple) {
@@ -2540,7 +2569,7 @@ bool base_pop_boom(int base_id) {
     return has_project(FAC_CLONING_VATS, b->faction_id)
         || f->SE_growth_pending
         + (has_fac_built(FAC_CHILDREN_CRECHE, base_id) ? 2 : 0)
-        + (base_golden_age(b) ? 2 : 0) > 5;
+        + (b->golden_age() ? 2 : 0) > 5;
 }
 
 bool can_use_teleport(int base_id) {
@@ -2667,29 +2696,5 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
         }
     }
     return facility.maint;
-}
-
-bool base_drone_riots(BASE *base)
-{
-	if (conf.base_psych_simplified)
-	{
-		return (base->drone_total + base->superdrone_total) > base->talent_total;
-	}
-	else
-	{
-		return base->drone_riots();
-	}
-}
-
-bool base_golden_age(BASE *base)
-{
-	if (conf.base_psych_simplified)
-	{
-		return base->pop_size > 2 && base->talent_total - (base->drone_total + base->superdrone_total) > (base->pop_size + 1) / 2;
-	}
-	else
-	{
-		return base->golden_age();
-	}
 }
 
