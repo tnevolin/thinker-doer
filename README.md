@@ -753,8 +753,8 @@ Vanilla spends two psych to improve mood of a citizen on the scale: superdrone -
 
 This does not happen in vanilla because of multiple wastes and restrictions.
 
-* Psych acts first and removes superdrones those later could be removed by facilities and police for free. Clear waste.
-* Psych acts first and after removing superdrones start turning drones to talents by spending 4 psych on transition instead of being applied on top of contents for twice as cheap cost.
+* Psych removes superdrones those later could be removed by facilities and police for free. Clear waste.
+* Psych turns drones to contents doing facilities/police job spending extra psych and reducing available drones for facilities/police to work on.
 * There is a hard limit (2 x population) of psych can be spent on happiness regardless of how much is allocated.
 
 As the result of these, psych allocation in average game has no effect below 10-20% and above 20-40%, leaving only tiny range of 20-30% for manipulations.
