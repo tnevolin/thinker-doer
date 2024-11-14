@@ -743,21 +743,37 @@ Now base can produce that many minerals without pollution: TF + HF = 16, TF + HF
 
 This mod uses Thinker expiration mechanics with slight modification. The infiltration duration is set by PROBE rating of infiltrated faction only.
 
-# Base Psych simplified
+# Base Psych improved
 
 ![Example](images/base_psych_simplified.png)
 
-## Goals
+## Vanilla problem
 
-* Simplify mechanics when possible.
-* Remove the condition when psych is wasted.
-* Ensure Talent generating effects are generating talents.
+Vanilla spends two psych to improve mood of a citizen on the scale: superdrone -> drone -> content -> talent. With average mid-game per citizent energy yield of 4 and some basic psych multipier facilities (Hologram Theater, Tree Farm) this is plenty to turn base into paradise. Assuming all citizens are already content by the meant of facilities and police, it takes only 2 psych to make them content. With x2 psych multiplier it is only 25% psych allocation. And even if base does not have any pacifying facilities and police and all citizens are superdrones, it still takes only 75% psych allocation to make them all talents anyway. Think about ever growing worker energy yield, positive ECONOMY effects, energy from satellites, more psych multiplying facilites (up to x3) - player would need just a tiny psych allocation to keep even largest bases in golden age permanently.
 
-## Modifications
+This does not happen in vanilla because of multiple wastes and restrictions.
 
-* Talent generating projects create talents out of content citizens when there are any.
-* Psych effect is applied after other effects.
-* Psych generally improves happiness all over the base helping the most unhappy citizens first (superdrones, drones, content).
+* Psych acts first and removes superdrones those later could be removed by facilities and police for free. Clear waste.
+* Psych acts first and after removing superdrones start turning drones to talents by spending 4 psych on transition instead of being applied on top of contents for twice as cheap cost.
+* There is a hard limit (2 x population) of psych can be spent on happiness regardless of how much is allocated.
+
+As the result of these, psych allocation in average game has no effect below 10-20% and above 20-40%, leaving only tiny range of 20-30% for manipulations.
+
+## Goal
+
+* Remove all psych wastes and restrictions to allow player using a full range of psych slider and observe expected proportional results.
+* Balance psych effect to be not OP after all wastes and restrictions are removed.
+
+## Solution
+
+* Psych acts after all other effects allowing them to pacify drones as much as possible then applying psych on top of mostly content citizens. There is no waste this way. Each psych counts.
+* Psych generally improves happiness all over the base removing drones/superdrones first and then generating talents when no more drones left.
+* Due to increased power it is now required 6 psych to improve citizen mood instead of 2 as in vanilla. This still should be perceived as slightly better effect comparing to vanilla.
+* Psych generating specialists (doctors) generate 6 psych to continue affecting one citizen at a time.
+
+## Other happiness mechanics modifications
+
+* Talent generating facilities and projects try to create talents on the left instead of removing superdrones/drones.
 * Nerve stappled base and punishment sphere ignore all other effects and are displayed with a single row on a base psych screen.
 
 # AI
