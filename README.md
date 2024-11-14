@@ -776,6 +776,12 @@ As the result of these, psych allocation in average game has no effect below 10-
 * Talent generating facilities and projects try to create talents on the left instead of removing superdrones/drones.
 * Nerve stappled base and punishment sphere ignore all other effects and are displayed with a single row on a base psych screen.
 
+## QoL addition
+
+Psych effect indicator showing how many citizens will be affected by that psych amount.
+
+![psych effect](images/psych_effect_display.png)
+
 # AI
 
 This section describes AI improvements. The description is pretty generic. I don't give specific numerical parameters because a) Ugh, and b) they get constantly changed by AI tuning.
