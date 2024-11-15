@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v318"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v319"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -365,8 +365,9 @@ struct Config {
 	bool zoc_enabled = 1;
 	int aaa_range = -1;
 	bool base_psych_improved = false;
-	int base_psych_divisor = 2;
+	int base_psych_cost = 2;
 	bool base_psych_remove_drone_superdrone = false;
+	bool base_psych_specialist_content = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

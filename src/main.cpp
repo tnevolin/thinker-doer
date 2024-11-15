@@ -624,13 +624,17 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->base_psych_improved = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("base_psych_divisor"))
+    else if (MATCH("base_psych_cost"))
     {
-        cf->base_psych_divisor = atoi(value);
+        cf->base_psych_cost = atoi(value);
     }
     else if (MATCH("base_psych_remove_drone_superdrone"))
     {
         cf->base_psych_remove_drone_superdrone = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("base_psych_specialist_content"))
+    {
+        cf->base_psych_specialist_content = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("ai_useWTPAlgorithms"))
     {

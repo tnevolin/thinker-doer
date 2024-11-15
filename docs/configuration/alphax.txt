@@ -869,12 +869,12 @@ Labs,  Laboratories,
 
 #CITIZENS
 Technician,       Technicians,         None,    Quantum, 4, 0, 0, 0000000
-Doctor,           Doctors,             None,    CentMed, 0, 6, 0, 0000000
+Doctor,           Doctors,             None,    CentMed, 0, 4, 0, 0000000
 Librarian,        Librarians,          PlaNets, Subat,   0, 0, 4, 0000000
-Engineer,         Engineers,           Quantum, Disable, 5, 0, 1, 0000000
-Empath,           Empathi,             CentMed, AlphCen, 2, 6, 0, 0000000
+Engineer,         Engineers,           Quantum, Disable, 4, 0, 2, 0000000
+Empath,           Empathi,             CentMed, AlphCen, 2, 4, 0, 0000000
 Thinker,          Thinkers,            Create,  Disable, 0, 0, 6, 0000000
-Transcend,        Transcendi,          AlphCen, Disable, 2, 6, 2, 0000000
+Transcend,        Transcendi,          AlphCen, Disable, 2, 4, 2, 0000000
 Drone,            Drones,
 Worker,           Workers,
 Talent,           Talents,

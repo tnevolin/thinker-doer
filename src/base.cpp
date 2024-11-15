@@ -908,9 +908,17 @@ static void normalize_happiness(BASE *base)
 		}
 		else if (base->talent_total == 0 && base->drone_total > 0)
 		{
+			if (conf.base_psych_specialist_content)
+			{
+				// store drones pushed by specialists
+				base->pad_7 += std::max(0, base->drone_total - worker_count);
+				base->pad_7 += std::max(0, base->superdrone_total - worker_count);
+			}
+			
 			// reduce drones to worker count
 			base->drone_total = std::min(worker_count, base->drone_total);
 			base->superdrone_total = std::min(base->drone_total, base->superdrone_total);
+			
 		}
 		else
 		{
@@ -933,7 +941,7 @@ static void adjust_psych(BASE* base, int talent_val, bool force) {
 	{
 		normalize_happiness(base);
 		
-		if (pop_size > 0)
+		if (pop_size >= 0)
 		{
 			if (talent_val > 0)
 			{
@@ -995,8 +1003,66 @@ static void adjust_psych(BASE* base, int talent_val, bool force) {
 				}
 				
 			}
-			
-			// negative values for talent should not happen
+			else if (talent_val < 0)
+			{
+				if (force)
+				{
+					for (int i = 0; i < -talent_val; i++)
+					{
+						if (base->superdrone_total < base->drone_total)
+						{
+							// add superdrone
+							base->superdrone_total++;
+						}
+						else if (base->drone_total < pop_size - base->talent_total)
+						{
+							// add drone
+							base->drone_total++;
+						}
+						else if (base->talent_total > 0)
+						{
+							// remove talent
+							base->talent_total--;
+						}
+						else
+						{
+							// no available options
+							break;
+						}
+						
+					}
+					
+				}
+				else
+				{
+					for (int i = 0; i < -talent_val; i++)
+					{
+						if (base->drone_total < pop_size - base->talent_total)
+						{
+							// add drone
+							base->drone_total++;
+						}
+						else if (base->talent_total > 0)
+						{
+							// remove talent
+							base->talent_total--;
+						}
+						else if (base->superdrone_total < base->drone_total)
+						{
+							// add superdrone
+							base->superdrone_total++;
+						}
+						else
+						{
+							// no available options
+							break;
+						}
+						
+					}
+					
+				}
+				
+			}
 			
 		}
 		
@@ -1051,7 +1117,7 @@ static void adjust_drone(BASE* base, int drone_val) {
 	{
 		normalize_happiness(base);
 		
-		if (pop_size > 0)
+		if (pop_size >= 0)
 		{
 			if (drone_val > 0)
 			{
@@ -1074,8 +1140,21 @@ static void adjust_drone(BASE* base, int drone_val) {
 					}
 					else
 					{
+						if (conf.base_psych_specialist_content)
+						{
+							// store drones pushed by specialists
+							int drone_val_left = drone_val - i;
+							int drone_left = (drone_val_left + 1) / 2;
+							int superdrone_left = drone_val_left / 2;
+							int drone_pushed = std::min(base->specialist_total, drone_left);
+							int superdrone_pushed = std::min(base->specialist_total, superdrone_left);
+							base->pad_7 += std::max(0, drone_pushed);
+							base->pad_7 += std::max(0, superdrone_pushed);
+						}
+						
 						// no other options
 						break;
+						
 					}
 					
 				}
@@ -1157,8 +1236,9 @@ void __cdecl mod_base_psych(int base_id) {
     base->talent_total = 0;
     base->drone_total = 0;
     base->superdrone_total = 0;
+	base->pad_7 = 0;
 
-    if (base->specialist_total >= base->pop_size) {
+    if (base->specialist_total >= base->pop_size && !conf.base_psych_specialist_content) {
         for (int i = 0; i < 5; i++) add_psych_row(base, i);
         return;
     }
@@ -1194,7 +1274,18 @@ void __cdecl mod_base_psych(int base_id) {
     int content_pop, base_limit;
     mod_psych_check(faction_id, &content_pop, &base_limit);
     base->drone_total = clamp(base->pop_size - content_pop, 0, base->pop_size - base->specialist_total);
-
+	
+	// [WTP]
+	// store drones pushed by specialists
+	
+	if (conf.base_psych_specialist_content)
+	{
+		int drone_total = base->pop_size - content_pop;
+		int worker_count = base->pop_size - base->specialist_total;
+		int drone_pushed = std::max(0, drone_total - worker_count);
+		base->pad_7 = drone_pushed;
+	}
+	
     if (base_limit) {
         drone_limit = (base_id % base_limit + f->base_count - base_limit) / base_limit;
         if (drone_limit > 0 && base->pop_size > 0) {
@@ -1379,10 +1470,23 @@ void __cdecl mod_base_psych(int base_id) {
 	
 	if (conf.base_psych_improved)
 	{
-		// no limit by base population
-		int psych_val = max(0, base->psych_total / conf.base_psych_divisor);
-		adjust_psych(base, psych_val, 0);
+		int psych_effect_initial = max(0, base->psych_total / conf.base_psych_cost);
+		int drone_pushed = conf.base_psych_specialist_content ? base->pad_7 : 0;
+		int psych_effect = psych_effect_initial - drone_pushed;
+		
+		if (psych_effect > 0)
+		{
+			adjust_psych(base, psych_effect, 0);
+		}
+		else if (psych_effect < 0)
+		{
+			int drone_capacity = 3 * base->talent_total + 2 * (base->pop_size - base->specialist_total - base->talent_total - base->drone_total) + 1 * (base->drone_total - base->superdrone_total);
+			int drone_effect = std::min(drone_capacity, -psych_effect);
+			adjust_psych(base, -drone_effect, true);
+		}
+		
 		add_psych_row(base, 4); // Psych
+		
 	}
 	
 
@@ -2328,11 +2432,17 @@ int __cdecl mod_base_rank(int faction_id, int position) {
 }
 
 int __cdecl best_specialist(BASE* base, int econ_val, int labs_val, int psych_val) {
+	
+	// [WTP]
+	// disallow specialist in all drone base
+	
+	bool specialist_allowed = conf.base_psych_specialist_content ? base->drone_total < base->pop_size - base->specialist_total : true;
+	
     int best_score = INT_MIN;
     int citizen_id = 0;
     for (int i = 0; i < MaxSpecialistNum; i++) {
         if (has_tech(Citizen[i].preq_tech, base->faction_id)
-        && (base->pop_size >= Rules->min_base_size_specialists || Citizen[i].psych_bonus)) {
+        && ((base->pop_size >= Rules->min_base_size_specialists && specialist_allowed) || Citizen[i].psych_bonus)) {
             int score = econ_val * Citizen[i].econ_bonus
                 + labs_val * Citizen[i].labs_bonus
                 + psych_val * Citizen[i].psych_bonus;

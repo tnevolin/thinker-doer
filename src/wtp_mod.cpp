@@ -3558,3 +3558,41 @@ int __thiscall wtp_mod_zoc_path(Path */*This*/, int /*a0*/, int /*a1*/, int /*a2
 	return 0;
 }
 
+/*
+BaseWin pop click.
+Disable specialist selection if no content citizens.
+*/
+int basewin_pop_click_specialist_index = 0;
+char * __cdecl wtp_mod_basewin_pop_click_specialist_cycle_strcat(char *dst, char const *src)
+{
+	basewin_pop_click_specialist_index = 0;
+	return strcat(dst, src);
+}
+int __cdecl wtp_mod_basewin_pop_click_specialist_has_tech(int tech_id, int faction_id)
+{
+	BASE *base = *CurrentBase;
+	CCitizen *citizen = &Citizen[basewin_pop_click_specialist_index];
+	basewin_pop_click_specialist_index++;
+	
+	if (citizen->psych_bonus == 0 && base->pop_size >= Rules->min_base_size_specialists && base->drone_total >= base->pop_size - base->specialist_total)
+	{
+		return 0;
+	}
+	
+	return has_tech(tech_id, faction_id) ? 1 : 0;
+	
+}
+int __thiscall wtp_mod_basewin_pop_click_specialist_popup_start(Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
+{
+	BASE *base = *CurrentBase;
+	
+	if (base->pop_size >= Rules->min_base_size_specialists && base->drone_total >= base->pop_size - base->specialist_total)
+	{
+		return Popup_start(This, filename, "CITIZEN3", a4, a5, a6, a7);
+	}
+	
+	return Popup_start(This, filename, label, a4, a5, a6, a7);
+	
+}
+
+

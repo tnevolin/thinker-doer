@@ -904,8 +904,8 @@ bool patch_setup(Config* cf) {
         write_call(0x414B81, (int)BaseWin_random_seed); // BaseWin_draw_pop
         write_call(0x408786, (int)BaseWin_random_seed); // BaseWin_psych_row
         write_call(0x49D57B, (int)BaseWin_random_seed); // ReportWin_draw_ops
-        memset((void*)0x414D52, 0x90, 5); // Superdrone icons, aliens
-        memset((void*)0x414EE2, 0x90, 7); // Superdrone icons, humans
+//        memset((void*)0x414D52, 0x90, 5); // Superdrone icons, aliens
+//        memset((void*)0x414EE2, 0x90, 7); // Superdrone icons, humans
     }
 
     /*

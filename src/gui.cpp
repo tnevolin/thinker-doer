@@ -8,6 +8,7 @@ char label_pop_size[StrBufLen] = "Pop: %d / %d / %d / %d";
 char label_pop_boom[StrBufLen] = "Population Boom";
 char label_nerve_staple[StrBufLen] = "Nerve Staple: %d turns";
 char label_psych_effect[StrBufLen] = "Psych effect: %2d";
+//char label_psych_effect[StrBufLen] = "Psych effect: %2d - %2d = %2d";
 char label_captured_base[StrBufLen] = "Captured Base: %d turns";
 char label_stockpile_energy[StrBufLen] = "Stockpile: %d per turn";
 char label_sat_nutrient[StrBufLen] = "N +%d";
@@ -1539,8 +1540,11 @@ void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3,
 		// display number of psych affected citizens
 		else if (conf.base_psych && conf.base_psych_improved)
 		{
-			int psych_effect = base->psych_total / conf.base_psych_divisor;
-			snprintf(buf, StrBufLen, label_psych_effect, psych_effect);
+			int psych_effect_initial = max(0, base->psych_total / conf.base_psych_cost);
+			int drone_pushed = conf.base_psych_specialist_content ? base->pad_7 : 0;
+			int psych_effect = psych_effect_initial - drone_pushed;
+			snprintf(buf, StrBufLen, label_psych_effect, psych_effect_initial);
+//			snprintf(buf, StrBufLen, label_psych_effect, psych_effect_initial, drone_pushed, psych_effect);
 			Buffer_set_text_color(This, ColorEnergy, a3, a4, a5);
 			Buffer_write_right_l2(This, buf, 690, 423, LineBufLen);
 		}

@@ -1,3 +1,8 @@
+# Version 319
+
+* QoL: Added psych effect indicator next to total base psych amount. https://github.com/tnevolin/thinker-doer/blob/master/README.md#qol-addition
+* Reduced base psych cost to 4 to better match average vanilla experience.
+
 # Version 318
 
 * Base psych improved fine tuning. https://github.com/tnevolin/thinker-doer/blob/master/README.md#base-psych-improved

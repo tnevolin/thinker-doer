@@ -3026,6 +3026,14 @@ void patch_scroll_other_faction_bases()
 	
 }
 
+void patch_basewin_pop_click()
+{
+	write_call(0x0040AA14, (int)wtp_mod_basewin_pop_click_specialist_cycle_strcat);
+	write_call(0x0040AA48, (int)wtp_mod_basewin_pop_click_specialist_has_tech);
+	write_call(0x0040A9EB, (int)wtp_mod_basewin_pop_click_specialist_popup_start);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3183,7 +3191,7 @@ void patch_setup_wtp(Config* cf)
 	
 	// patch population incorrect superdrones in base screen population
 	
-	patch_base_scren_population_superdrones();
+//	patch_base_scren_population_superdrones();
 	
 	patch_weapon_help_always_show_cost();
 	
@@ -3327,6 +3335,11 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_scroll_other_faction_bases();
+	
+	if (conf.base_psych && conf.base_psych_improved && conf.base_psych_specialist_content)
+	{
+		patch_basewin_pop_click();
+	}
 	
 }
 

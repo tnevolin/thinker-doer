@@ -2363,6 +2363,12 @@ $MINDWORMS2 attack $BASENAME0! $FACILITY1 destroyed.
 Note: Bases smaller than size $NUM0 can only
 support Workers, Doctors, Empathi, and Transcendi.
 
+#CITIZEN3
+#xs 400
+#caption Select A Job For This Citizen
+Note: Bases with all drones can only
+support Workers, Doctors, Empathi, and Transcendi.
+
 #PLANECRASH
 #xs 440
 #caption Operations Director
