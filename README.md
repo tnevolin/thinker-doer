@@ -752,7 +752,7 @@ A simplification and improvement to vanilla base psych mechanics.
 
 Base population is divided into two large groups: land workers and specialists.
 
-###### land workers
+*land workers*
 
 ![land workers](images/workers.png)
 
