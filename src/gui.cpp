@@ -7,8 +7,9 @@ const int32_t MainWinHandle = (int32_t)(&MapWin->oMainWin.oWinBase.field_4); // 
 char label_pop_size[StrBufLen] = "Pop: %d / %d / %d / %d";
 char label_pop_boom[StrBufLen] = "Population Boom";
 char label_nerve_staple[StrBufLen] = "Nerve Staple: %d turns";
-char label_psych_effect[StrBufLen] = "Psych effect: %2d";
-//char label_psych_effect[StrBufLen] = "Psych effect: %2d - %2d = %2d";
+char label_psych_effect[StrBufLen] = "effect: %2d citizens";
+char label_psych_effect_allocated[StrBufLen] = "( econ: %+2d )    effect: %2d";
+char label_psych_energy_allocation[StrBufLen] = "to psych: %+2d";
 char label_captured_base[StrBufLen] = "Captured Base: %d turns";
 char label_stockpile_energy[StrBufLen] = "Stockpile: %d per turn";
 char label_sat_nutrient[StrBufLen] = "N +%d";
@@ -1503,23 +1504,31 @@ void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3,
     BASE* base = &Bases[*CurrentBaseID];
     char buf[StrBufLen] = {};
     if (conf.render_base_info && *CurrentBaseID >= 0) {
-        int workers = base->pop_size - base->talent_total - base->drone_total - base->specialist_total;
-        int color;
-
-        if (base_maybe_riot(*CurrentBaseID)) {
-            color = ColorRed;
-        } else if (base->golden_age()) {
-            color = ColorEnergy;
-        } else {
-            color = ColorIntakeSurplus;
+        // [WTP]
+        // energy to psych allocation indication instead
+		
+//        int workers = base->pop_size - base->talent_total - base->drone_total - base->specialist_total;
+//        int color;
+//        if (base_maybe_riot(*CurrentBaseID)) {
+//            color = ColorRed;
+//        } else if (base->golden_age()) {
+//            color = ColorEnergy;
+//        } else {
+//            color = ColorIntakeSurplus;
+//        }
+//        Buffer_set_text_color(This, color, a3, a4, a5);
+//        snprintf(buf, StrBufLen, label_pop_size,
+//            base->talent_total, workers, base->drone_total, base->specialist_total);
+//        if (DEBUG) {
+//            strncat(buf, conf.base_psych ? " / B" : " / A", 32);
+//        }
+//        Buffer_write_right_l2(This, buf, 690, 423 - 42, LineBufLen);
+        if (base->pad_7 != 0)
+		{
+			Buffer_set_text_color(This, ColorEnergyLight, a3, a4, a5);
+			snprintf(buf, StrBufLen, label_psych_energy_allocation, base->pad_7);
+			Buffer_write_right_l2(This, buf, 690, 423 - 42, LineBufLen);
         }
-        Buffer_set_text_color(This, color, a3, a4, a5);
-        snprintf(buf, StrBufLen, label_pop_size,
-            base->talent_total, workers, base->drone_total, base->specialist_total);
-        if (DEBUG) {
-            strncat(buf, conf.base_psych ? " / B" : " / A", 32);
-        }
-        Buffer_write_right_l2(This, buf, 690, 423 - 42, LineBufLen);
 		
 		// [WTP]
 		// population boom marker is already displayed in the nutrient box
@@ -1537,16 +1546,25 @@ void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3,
         }
 		
 		// [WTP]
-		// display number of psych affected citizens
+		// display psych effect
+		
 		else if (conf.base_psych && conf.base_psych_improved)
 		{
-			int psych_effect_initial = max(0, base->psych_total / conf.base_psych_cost);
-			int drone_pushed = conf.base_psych_specialist_content ? base->pad_7 : 0;
-			int psych_effect = psych_effect_initial - drone_pushed;
-			snprintf(buf, StrBufLen, label_psych_effect, psych_effect_initial);
-//			snprintf(buf, StrBufLen, label_psych_effect, psych_effect_initial, drone_pushed, psych_effect);
-			Buffer_set_text_color(This, ColorEnergy, a3, a4, a5);
+			int psych_effect = max(0, base->psych_total / conf.base_psych_cost);
+			
+			if (base->pad_8 != 0 && false)
+			{
+				int psych_effect_allocated = max(0, base->pad_8 / conf.base_psych_cost);
+				snprintf(buf, StrBufLen, label_psych_effect_allocated, psych_effect_allocated, psych_effect);
+			}
+			else
+			{
+				snprintf(buf, StrBufLen, label_psych_effect, psych_effect);
+			}
+			
+			Buffer_set_text_color(This, ColorPsychAlloc, a3, a4, a5);
 			Buffer_write_right_l2(This, buf, 690, 423, LineBufLen);
+			
 		}
 		
     }

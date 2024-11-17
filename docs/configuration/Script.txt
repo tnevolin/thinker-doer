@@ -2366,8 +2366,8 @@ support Workers, Doctors, Empathi, and Transcendi.
 #CITIZEN3
 #xs 400
 #caption Select A Job For This Citizen
-Note: Bases with all drones can only
-support Workers, Doctors, Empathi, and Transcendi.
+Base can train sufficiently educated citizens (talents and workers) into specialists.
+^Should there be not enough qualified workforce to meet the demand, base economy reserves are allocated to psych at 4:1 conversion ratio to set up emergency training facilities.
 
 #PLANECRASH
 #xs 440

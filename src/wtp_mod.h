@@ -141,7 +141,9 @@ int __cdecl wtp_mod_zoc_veh(int a0, int a1, int a2);
 int __cdecl wtp_mod_zoc_sea(int a0, int a1, int a2);
 int __cdecl wtp_mod_zoc_move(int a0, int a1, int a2);
 int __thiscall wtp_mod_zoc_path(Path *This, int a0, int a1, int a2);
-char * __cdecl wtp_mod_basewin_pop_click_specialist_cycle_strcat(char *dst, char const *src);
-int __cdecl wtp_mod_basewin_pop_click_specialist_has_tech(int tech_id, int faction_id);
-int __thiscall wtp_mod_basewin_pop_click_specialist_popup_start(Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7);
+int __thiscall wtp_mod_BaseWin_psych_row(Win* This, int horizontal_pos, int vertical_pos, int a4, int a5, int talents, int drones, int sdrones);
+//int __thiscall wtp_mod_BaseWin_pop_click(Win* This, int clicked_specialist_index, int a2, int a3, int a4);
+int __thiscall wtp_mod_BaseWin_pop_click_popup_start(Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7);
+//char * __cdecl wtp_mod_BaseWin_pop_click_specialist_cycle_strcat(char *dst, char const *src);
+//int __cdecl wtp_mod_BaseWin_pop_click_specialist_has_tech(int tech_id, int faction_id);
 

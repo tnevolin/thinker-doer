@@ -520,11 +520,15 @@ typedef int(__thiscall *FBasePop_start)(
 typedef int(__thiscall *FNetMsg_pop)(
     void* This, const char* label, int delay, int a4, const char* filename);
 typedef int(__cdecl *FNetMsg_pop2)(const char* label, const char* filename);
+typedef int(__thiscall *FBaseWin_psych_row)(Win* This, int horizontal_pos, int vertical_pos, int a4, int a5, int talents, int drones, int sdrones);
+typedef int(__thiscall *FBaseWin_pop_click)(Win* This, int clicked_specialist_index, int a2, int a3, int a4);
 
 extern FGenString amovie_project;
 extern FPOP2 POP2;
 extern FPOP3 POP3;
 extern FPopup_start Popup_start;
+extern FBaseWin_psych_row BaseWin_psych_row;
+extern FBaseWin_pop_click BaseWin_pop_click;
 extern FGenWin BaseWin_focus;
 extern FBaseWin_zoom BaseWin_zoom;
 extern FGenWin BaseWin_nerve_staple;

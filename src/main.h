@@ -366,8 +366,9 @@ struct Config {
 	int aaa_range = -1;
 	bool base_psych_improved = false;
 	int base_psych_cost = 2;
-	bool base_psych_remove_drone_superdrone = false;
+	bool base_psych_remove_drone_soft = false;
 	bool base_psych_specialist_content = false;
+	int base_psych_economy_conversion_ratio = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

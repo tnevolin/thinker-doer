@@ -3559,34 +3559,108 @@ int __thiscall wtp_mod_zoc_path(Path */*This*/, int /*a0*/, int /*a1*/, int /*a2
 }
 
 /*
-BaseWin pop click.
-Disable specialist selection if no content citizens.
+BaseWin psych row.
+Does no draw specialists.
 */
-int basewin_pop_click_specialist_index = 0;
-char * __cdecl wtp_mod_basewin_pop_click_specialist_cycle_strcat(char *dst, char const *src)
-{
-	basewin_pop_click_specialist_index = 0;
-	return strcat(dst, src);
-}
-int __cdecl wtp_mod_basewin_pop_click_specialist_has_tech(int tech_id, int faction_id)
+int __thiscall wtp_mod_BaseWin_psych_row(Win* This, int horizontal_pos, int vertical_pos, int a4, int a5, int talents, int drones, int sdrones)
 {
 	BASE *base = *CurrentBase;
-	CCitizen *citizen = &Citizen[basewin_pop_click_specialist_index];
-	basewin_pop_click_specialist_index++;
 	
-	if (citizen->psych_bonus == 0 && base->pop_size >= Rules->min_base_size_specialists && base->drone_total >= base->pop_size - base->specialist_total)
+	// save current specialist count
+	
+	int specialist_total = base->specialist_total;
+	
+	if (conf.base_psych_specialist_content)
 	{
-		return 0;
+		// pretend there are no specialists
+		base->specialist_total = 0;
 	}
 	
-	return has_tech(tech_id, faction_id) ? 1 : 0;
+	// execute function
+	
+	int returnValue = BaseWin_psych_row(This, horizontal_pos, vertical_pos, a4, a5, talents, drones, sdrones);
+	
+	if (conf.base_psych_specialist_content)
+	{
+		// restore specialist count
+		
+		base->specialist_total = specialist_total;
+		
+	}
+	
+	return returnValue;
 	
 }
-int __thiscall wtp_mod_basewin_pop_click_specialist_popup_start(Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
+
+
+///*
+//BaseWin pop click.
+//Removes excess specialists after selection.
+//*/
+//int __thiscall wtp_mod_BaseWin_pop_click(Win* This, int clicked_specialist_index, int a2, int a3, int a4)
+//{
+//	BASE *base = (*CurrentBase);
+//	
+//	int returnValue = BaseWin_pop_click(This, clicked_specialist_index, a2, a3, a4);
+//	
+//	if (conf.base_psych_specialist_content)
+//	{
+//		// verify specialists do not replace drones
+//		
+//		bool changed = false;
+//		while (base->specialist_total > 0 && base->specialist_total > base->pop_size - base->drone_total)
+//		{
+//			int best_specialist_id = best_specialist(base, 1, 1, 10);
+//			
+//			// iterate specialists
+//			
+//			bool modified = false;
+//			for (int i = base->specialist_total - 1; i >= 0; i--)
+//			{
+//				CCitizen *citizen = &Citizen[base->specialist_type(i)];
+//				
+//				// skip doctors
+//				
+//				if (citizen->psych_bonus >= 2)
+//					continue;
+//				
+//				// replace specialist with the doctor and restart the loop
+//				
+//				base->specialist_modify(i, best_specialist_id);
+//				base_compute(true);
+//				modified = true;
+//				changed = true;
+//				break;
+//				
+//			}
+//			
+//			// no non-doctor specialist found
+//			
+//			if (!modified)
+//				break;
+//			
+//		}
+//		
+//		if (changed)
+//		{
+//			GraphicWin_redraw(This);
+//		}
+//		
+//	}
+//	
+//	return returnValue;
+//	
+//}
+
+/*
+BaseWin pop click.
+Displays popup for base size >= min_base_size_specialists.
+*/
+int __thiscall wtp_mod_BaseWin_pop_click_popup_start(Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
 {
 	BASE *base = *CurrentBase;
 	
-	if (base->pop_size >= Rules->min_base_size_specialists && base->drone_total >= base->pop_size - base->specialist_total)
+	if (base->pop_size >= Rules->min_base_size_specialists)
 	{
 		return Popup_start(This, filename, "CITIZEN3", a4, a5, a6, a7);
 	}
@@ -3595,4 +3669,28 @@ int __thiscall wtp_mod_basewin_pop_click_specialist_popup_start(Win* This, const
 	
 }
 
+///*
+//BaseWin pop click.
+//Disable specialist selection if no content citizens.
+//*/
+//int basewin_pop_click_citizen_id = 0;
+//char * __cdecl wtp_mod_BaseWin_pop_click_specialist_cycle_strcat(char *dst, char const *src)
+//{
+//	basewin_pop_click_citizen_id = 0;
+//	return strcat(dst, src);
+//}
+//int __cdecl wtp_mod_BaseWin_pop_click_specialist_has_tech(int tech_id, int faction_id)
+//{
+//	BASE *base = *CurrentBase;
+//	CCitizen *citizen = &Citizen[basewin_pop_click_citizen_id];
+//	basewin_pop_click_citizen_id++;
+//	
+//	if (base->pop_size >= Rules->min_base_size_specialists && base->drone_total >= base->pop_size - base->specialist_total && citizen->psych_bonus < 2)
+//	{
+//		return 0;
+//	}
+//	
+//	return has_tech(tech_id, faction_id) ? 1 : 0;
+//	
+//}
 
