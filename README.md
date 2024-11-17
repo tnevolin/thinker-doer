@@ -744,7 +744,21 @@ Now base can produce that many minerals without pollution: TF + HF = 16, TF + HF
 
 This mod uses Thinker expiration mechanics with slight modification. The infiltration duration is set by PROBE rating of infiltrated faction only.
 
-# Base Psych improved
+# Base Psych
+
+A simplification and improvement to vanilla base psych mechanics.
+
+## Basics
+
+Base population is divided into two large groups: land workers and specialists.
+
+###### land workers
+
+![land workers](images/workers.png)
+
+###### specialists
+
+![specialists](images/specialists.png)
 
 ![Example](images/base_psych_simplified.png)
 
