@@ -610,7 +610,7 @@ Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
 Transport Foil,         Foil,     Transport,    Scout,      7, 0, 0, DocFlex, -1, 00000000000000000000000000
 Sea Formers,            Foil,     Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
-Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, Disable, -1, 00000000000000000000000000
+Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, None   , -1, 00000000000000000000000000
 Speeder Probe Team,     Speeder,  Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
 Alien Artifact,         Infantry, Artifact,     Scout,     12,10, 0, Disable,  2, 00000000000000000000000000
 Mind Worms,             Infantry, Psi,          Psi,        1, 5, 0, CentEmp,  3, 00000000000000000000000000

@@ -1781,9 +1781,9 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 			if (enemyStackInfo.alien && is_ocean(enemyStackInfo.tile) && enemyStackInfo.baseRange > 3)
 				continue;
 			
-			// do not attack neutral vehicles outside of base radius
+			// do not attack neutral vehicles on sea or on land outside base radius
 			
-			if (!enemyStackInfo.hostile && !(enemyStackInfo.tile->owner == aiFactionId && map_has_item(enemyStackInfo.tile, BIT_BASE_RADIUS)))
+			if (!enemyStackInfo.hostile && (is_ocean(enemyStackInfo.tile) || enemyStackInfo.tile->owner != aiFactionId || !map_has_item(enemyStackInfo.tile, BIT_BASE_RADIUS)))
 				continue;
 			
 			// land artillery do not attack fungal tower

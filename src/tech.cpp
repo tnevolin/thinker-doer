@@ -146,17 +146,33 @@ int __cdecl mod_tech_rate(int faction_id) {
 int __cdecl mod_tech_val(int tech_id, int faction_id, int flag) {
     int value = tech_val(tech_id, faction_id, flag);
     if (conf.tech_balance && thinker_enabled(faction_id)) {
-        if (tech_id == Weapon[WPN_TERRAFORMING_UNIT].preq_tech
-        || tech_id == Weapon[WPN_SUPPLY_TRANSPORT].preq_tech
-        || tech_id == Weapon[WPN_PROBE_TEAM].preq_tech
-        || tech_id == Facility[FAC_RECYCLING_TANKS].preq_tech
-        || tech_id == Facility[FAC_CHILDREN_CRECHE].preq_tech
-        || tech_id == Rules->tech_preq_allow_3_energy_sq
-        || tech_id == Rules->tech_preq_allow_3_minerals_sq
-        || tech_id == Rules->tech_preq_allow_3_nutrients_sq) {
-            value += 50;
+    	
+		// [WTP]
+		// increase preference bonus
+		
+//        if (tech_id == Weapon[WPN_TERRAFORMING_UNIT].preq_tech
+//        || tech_id == Weapon[WPN_SUPPLY_TRANSPORT].preq_tech
+//        || tech_id == Weapon[WPN_PROBE_TEAM].preq_tech
+//        || tech_id == Facility[FAC_RECYCLING_TANKS].preq_tech
+//        || tech_id == Facility[FAC_CHILDREN_CRECHE].preq_tech
+//        || tech_id == Rules->tech_preq_allow_3_energy_sq
+//        || tech_id == Rules->tech_preq_allow_3_minerals_sq
+//        || tech_id == Rules->tech_preq_allow_3_nutrients_sq) {
+//            value += 50;
+//        }
+		
+        if (tech_id == Weapon[WPN_TERRAFORMING_UNIT].preq_tech || tech_id == Rules->tech_preq_allow_3_energy_sq || tech_id == Rules->tech_preq_allow_3_minerals_sq || tech_id == Rules->tech_preq_allow_3_nutrients_sq)
+		{
+            value += 4000;
         }
+        
+        if (tech_id == Weapon[WPN_SUPPLY_TRANSPORT].preq_tech || tech_id == Weapon[WPN_PROBE_TEAM].preq_tech || tech_id == Facility[FAC_RECYCLING_TANKS].preq_tech || tech_id == Facility[FAC_CHILDREN_CRECHE].preq_tech)
+		{
+            value += 500;
+        }
+        
     }
+    
     if (conf.debug_verbose) {
         debug("tech_value %d %d value: %3d tech: %2d %s\n",
         *CurrentTurn, faction_id, value, tech_id, Tech[tech_id].name);
