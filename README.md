@@ -799,9 +799,9 @@ If player fails to keep sufficient number of well educated personell to meet spe
 
 ## [Mod] Psych effect improved
 
-Vanilla has few problem with psych mechanincs. It removes superdrones first, those later can be removed for free by facilites/police. Then it tries to convert drones to talents spending twice as much as it would do when working after facilities/police doing their job. Last but not least, there is a hard limit on psych effect: it can improve no more than population times. Combined that with above wasteful behavior, it has pretty limited use in original game.
+Vanilla has few problem with psych mechanincs. It removes superdrones first, those later can be removed for free by facilites/police. Then it tries to convert drones to talents spending twice as much as it would do when working after facilities/police doing their job. Last but not least, psych effect is limited by population size. That, combined that with above wasteful behavior, leaves pretty limited use for psych in original game.
 
-This mod changes psych application mechanics as follow.
+This mod removes all psych wastes and limits and allows it to be effective at the whole range of psych slider from 0% to 100%. Here is how it is done.
 
 * Psych is applied after all other pacifying effects on top of mostly content citizens turning them to talents with a single unit effect spent.
 * Psych removes drones/superdrones first and then generates talents when no more drones left. Thus ensuring golden age "no drones" requirement.
