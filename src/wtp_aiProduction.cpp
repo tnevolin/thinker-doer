@@ -477,6 +477,7 @@ void suggestBaseProduction(int baseId)
 	evaluateFacilities();
 	evaluateExpansionUnits();
 	evaluateTerraformingUnits();
+	evaluateCrawlingUnits();
 	
 	// evaluate combat units
 	
@@ -1582,6 +1583,71 @@ void evaluateTerraformingUnits()
 			, gain
 			, conf.ai_production_improvement_priority
 			, unitPriorityCoefficient
+		);
+		
+	}
+	
+}
+
+void evaluateCrawlingUnits()
+{
+	int baseId = productionDemand.baseId;
+//	MAP *baseTile = getBaseMapTile(baseId);
+	
+	// base clusters
+	
+//	int baseSeaCluster = getSeaCluster(baseTile);
+//	int baseLandTransportedCluster = getLandTransportedCluster(baseTile);
+//	
+	debug("evaluateCrawlingUnits\n");
+	
+	// process available supply units
+	
+	for (int unitId : aiData.unitIds)
+	{
+		UNIT *unit = getUnit(unitId);
+		int triad = unit->triad();
+		
+		// crawler
+		
+		if (unit->weapon_id != WPN_SUPPLY_TRANSPORT)
+			continue;
+		
+		// for sea former base should have access to water
+		
+		if (triad == TRIAD_SEA && !isBaseAccessesWater(baseId))
+			continue;
+		
+		// unit priority
+		
+		double unitPriorityCoefficient = getUnitPriorityCoefficient(baseId, unitId);
+		
+		if (unitPriorityCoefficient <= 0.0)
+			continue;
+		
+		// fixed priority for now will work it out later
+		
+		double priority = 0.5 * unitPriorityCoefficient;
+		
+		productionDemand.addItemPriority(unitId, priority);
+		
+		debug
+		(
+			"\t%-32s"
+			" priority=%5.2f   |"
+			" unitPriorityCoefficient=%5.2f"
+//			" bestTerraformingGain=%5.2f"
+//			" upkeepGain=%5.2f"
+//			" gain=%5.2f"
+//			" conf.ai_production_improvement_priority=%5.2f"
+			"\n"
+			, unit->name
+			, priority
+			, unitPriorityCoefficient
+//			, bestTerraformingGain
+//			, upkeepGain
+//			, gain
+//			, conf.ai_production_improvement_priority
 		);
 		
 	}

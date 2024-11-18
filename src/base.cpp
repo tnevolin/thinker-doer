@@ -1317,18 +1317,19 @@ void __cdecl mod_base_psych(int base_id) {
 		
 		int happiness_after_specialists = base->talent_total - (base->drone_total + base->superdrone_total);
 		
-		// more psych/economy required
+		// more psych required to make sure specialists do not increase happiness
 		
-		int psych_val_mod = std::max(0, happiness_after_specialists - happiness_before_specialists);
-		int psych_mod = conf.base_psych_cost * psych_val_mod;
-		int economy_mod = - conf.base_psych_economy_conversion_ratio * psych_mod;
-		
-		if (psych_val_mod > 0)
+		if (happiness_after_specialists > happiness_before_specialists)
 		{
-			base->psych_total += psych_mod;
-			base->economy_total += economy_mod;
-			base->pad_7 = economy_mod;
-			base->pad_8 = psych_mod;
+			int psych_val_increase = std::max(0, happiness_after_specialists - happiness_before_specialists);
+			int psych_increase = conf.base_psych_cost * psych_val_increase;
+			int economy_decrease = conf.base_psych_economy_conversion_ratio * psych_increase;
+			
+			base->psych_total += psych_increase;
+			base->economy_total -= economy_decrease;
+			base->pad_7 = economy_decrease;
+			base->pad_8 = psych_increase;
+			
 		}
 		else
 		{

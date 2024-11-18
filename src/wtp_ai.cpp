@@ -1658,7 +1658,7 @@ void populateWarzones()
 		
 		// able to reach around and act
 		
-		if (triad == TRIAD_LAND && vehicleTileOcean)
+		if ((triad == TRIAD_LAND && vehicleTileOcean) || vehicle->unit_id == BSC_FUNGAL_TOWER)
 			continue;
 		
 		// populate attack tiles danger
@@ -1741,11 +1741,6 @@ void populateWarzones()
 				// friendly
 				
 				if (!isFriendly(aiFactionId, vehicle->faction_id))
-					continue;
-				
-				// holded
-				
-				if (vehicle->order != ORDER_HOLD)
 					continue;
 				
 				// defendEffect

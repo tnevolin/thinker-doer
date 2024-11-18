@@ -144,6 +144,7 @@ void evaluatePrototypingFacilities();
 
 void evaluateExpansionUnits();
 void evaluateTerraformingUnits();
+void evaluateCrawlingUnits();
 void evaluatePodPoppingUnits();
 void evaluateBaseDefenseUnits();
 void evaluateTerritoryProtectionUnits();

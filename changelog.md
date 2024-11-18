@@ -8,6 +8,7 @@
   * Specialists does not reduce number of talents/drones at psych computation stages and they are not shown at stage computation results.
   * Specialists are added to population after psych computation taking place of talents and workers.
 * Additionally, all drone removal effects are now exact and do not ignore superdrones. Superdrones are twice as tough to pacify. This is to streamline all computations. Otherwise, they can be messed up at times.
+* Combined all psych related changes: https://github.com/tnevolin/thinker-doer/blob/master/README.md#base-psych
 
 # Version 319
 
