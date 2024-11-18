@@ -793,7 +793,7 @@ Vanilla allows exploit turning drones into specialists removing drones for free 
 
 Base can train sufficiently educated personell (talent/normal) into specialists. When specialists are introduced after psych computation, they are replacing talents/normals and not drones.
 
-If player fails to keep sufficient number of well educated personell to meet specialists demand, base economy reserves are allocated to psych for emergency training program to keep population educated enough. The cost is hefty but it a good tool to fine tune crude global psych allocation at base level.
+If player fails to keep sufficient number of well educated personell to meet specialists demand, base economy reserves are allocated to psych for emergency training program to keep population educated enough. The cost is hefty but it is a good tool to fine tune crude global psych allocation at base level.
 
 ![economy psych allocation](images/economy_psych_allocation.png)
 
