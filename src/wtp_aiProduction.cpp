@@ -1662,36 +1662,42 @@ void evaluatePodPoppingUnits()
 	
 	debug("evaluatePodPoppingUnits\n");
 	
-	// count pods around the base
-	
 	std::array<int, 2> const podRanges {10, 20};
 	std::array<int, 2> podCounts {0, 0};
+	std::array<double, 2> averagePodDistances;
+	std::array<SurfacePodData, 2> surfacePodDatas;
 	
 	for (int surface = 0; surface < 2; surface++)
 	{
-		int range = podRanges[surface];
+		SurfacePodData &surfacePodData = surfacePodDatas.at(surface);
+		surfacePodData.range = podRanges[surface];
 		
 		// base has access to water to collect sea pods
 		
 		if (surface == 1 && !isBaseAccessesWater(baseId))
 			continue;
 		
-		// scan map
+		// count pods around the base
 		
 		for (MAP *tile : getRangeTiles(baseTile, range, false))
 		{
 			int x = getX(tile);
 			int y = getY(tile);
-			int cluster = (surface == 0 ? getLandCluster(tile) : getSeaCluster(tile));
+			int cluster = (surface == 0 ? getLandTransportedCluster(tile) : getSeaCluster(tile));
 			
-			// exclude not right surface
+			// matching surface
 			
-			if (cluster == -1)
+			if (is_ocean(tile) != surface)
 				continue;
 			
-			// ocean cluster should match the base
+			// within range
 			
-			if (surface == 1 && !isSameSeaCluster(baseTile, tile))
+			if (getRange(baseTile, tile) > range)
+				continue;
+			
+			// same cluster
+			
+			if ((surface == 0 && !isSameLandTransportedCluster(baseTile, tile)) || (surface == 1 && !isSameSeaCluster(baseTile, tile)))
 				continue;
 			
 			// pod
@@ -1699,27 +1705,25 @@ void evaluatePodPoppingUnits()
 			if (!mod_goody_at(x, y))
 				continue;
 			
-			// not at war
+			// not hostile territory
 			
 			if (isHostileTerritory(aiFactionId, tile))
 				continue;
 			
 			// accumulate
 			
-			podCounts[surface]++;
+			surfacePodData.podCount++;
 			
 		}
 		
-	}
-	
-	// sum scout total speed around the base
-	// count all scounts from all factions
-	
-	std::array<int, 2> totalScoutSpeeds {0, 0};
-	
-	for (int surface = 0; surface < 2; surface++)
-	{
-		int range = podRanges[surface];
+		if (surfacePodData.podCount == 0)
+			continue;
+		
+		// average pod distance
+		
+		surfacePodData.averagePodDistance = sqrt((2 * surfacePodData.podRange + 1) * (2 * surfacePodData.podRange + 1) / surfacePodData.podCount.at(surface));
+		
+		// consumption rate
 		
 		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 		{
@@ -1747,21 +1751,40 @@ void evaluatePodPoppingUnits()
 			if (getRange(baseTile, vehicleTile) > range)
 				continue;
 			
-			// sea vehicle region should match the base
+			// same cluster
 			
-			if (surface == 1 && baseSeaRegions.find(vehicleTile->region) == baseSeaRegions.end())
+			if ((surface == 0 && !isSameLandTransportedCluster(baseTile, vehicleTile)) || (surface == 1 && !isSameSeaCluster(baseTile, vehicleTile)))
 				continue;
 			
 			// not holding in base
 			
 			if (isBaseAt(vehicleTile) && triad == TRIAD_LAND && vehicle->order == ORDER_HOLD)
 				continue;
-				
+			
+			// consumption rate
+			
+			int vehicleSpeed = getVehicleSpeed(vehicleId);
+			
+			if (vehicleSpeed <= 0)
+				continue;
+			
+			double travelTime = 0.5 * surfacePodData.averagePodDistance / (double)vehicleSpeed;
+			double consumptionInterval = travelTime + 2.0; // for averate repair time
+			double consumptionRate = 1.0 / consumptionInterval;
+			
 			// accumulate
 			
-			totalScoutSpeeds[surface] += vehicle->speed();
+			surfacePodData.totalConsumptionRate += consumptionRate;
+			
+			if (vehicle->faction_id == aiFactionId)
+			{
+				surfacePodData.factionConsumptionRate += consumptionRate;
+			}
 			
 		}
+		
+		double consumptionTime = surfacePodData.podCount / surfacePodData.totalConsumptionRate;
+		surfacePodData.totalConsumptionRate += consumptionRate;
 		
 	}
 	
