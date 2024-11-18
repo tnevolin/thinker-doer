@@ -768,7 +768,7 @@ Specialists are not subdivided by mood/happiness/education and are not affected 
 
 Each mean of improving population mood has certain effect or power, which shows how many times they can improve population happiness/education from worse to better one step at a time. Negative effect changes population mood in opposite direction.
 
-Base can have talents and drones/superdrones at the same time. However, they cannot overlap. If there is not enough room for all talents and drones/superdrone they cancel each other to make room. One talent and one drone cancel each other. Whereas when one talent and one superdrone .
+Base can have talents and drones/superdrones at the same time. However, they cannot overlap. If there is not enough room for all talents and drones/superdrone they cancel each other to make room. One talent and one drone cancel each other. Whereas when one talent and one superdrone collide, the talent disappearas and superdrone becomes drone, thus preserving total happiness sum.
 
 ## [QoL] Psych effect indicator
 
