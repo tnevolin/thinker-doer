@@ -3591,7 +3591,7 @@ bool isScoutVehicle(int vehicleId)
 
 bool isPodPoppingUnit(int unitId)
 {
-	return isScoutUnit(unitId) || isNativeUnit(unitId) || isOgreUnit(unitId);
+	return Units[unitId].triad() != TRIAD_AIR && (isScoutUnit(unitId) || isNativeUnit(unitId) || isOgreUnit(unitId));
 }
 
 bool isPodPoppingVehicle(int vehicleId)

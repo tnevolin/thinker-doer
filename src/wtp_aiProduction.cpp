@@ -1660,14 +1660,12 @@ void evaluatePodPoppingUnits()
 	debug("evaluatePodPoppingUnits\n");
 	
 	std::array<int, 2> const podRanges {10, 20};
-	std::array<int, 2> podCounts {0, 0};
-	std::array<double, 2> averagePodDistances;
 	std::array<SurfacePodData, 2> surfacePodDatas;
 	
 	for (int surface = 0; surface < 2; surface++)
 	{
 		SurfacePodData &surfacePodData = surfacePodDatas.at(surface);
-		surfacePodData.range = podRanges[surface];
+		surfacePodData.scanRange = podRanges[surface];
 		
 		// base has access to water to collect sea pods
 		
@@ -1676,20 +1674,14 @@ void evaluatePodPoppingUnits()
 		
 		// count pods around the base
 		
-		for (MAP *tile : getRangeTiles(baseTile, range, false))
+		for (MAP *tile : getRangeTiles(baseTile, surfacePodData.scanRange, false))
 		{
 			int x = getX(tile);
 			int y = getY(tile);
-			int cluster = (surface == 0 ? getLandTransportedCluster(tile) : getSeaCluster(tile));
 			
 			// matching surface
 			
 			if (is_ocean(tile) != surface)
-				continue;
-			
-			// within range
-			
-			if (getRange(baseTile, tile) > range)
 				continue;
 			
 			// same cluster
@@ -1718,7 +1710,7 @@ void evaluatePodPoppingUnits()
 		
 		// average pod distance
 		
-		surfacePodData.averagePodDistance = sqrt((2 * surfacePodData.podRange + 1) * (2 * surfacePodData.podRange + 1) / surfacePodData.podCount.at(surface));
+		surfacePodData.averagePodDistance = sqrt(0.5 * (2 * surfacePodData.scanRange + 1) * (2 * surfacePodData.scanRange + 1) / surfacePodData.podCount);
 		
 		// consumption rate
 		
@@ -1745,13 +1737,21 @@ void evaluatePodPoppingUnits()
 			
 			// within range
 			
-			if (getRange(baseTile, vehicleTile) > range)
+			if (getRange(baseTile, vehicleTile) > surfacePodData.scanRange)
 				continue;
 			
 			// same cluster
 			
-			if ((surface == 0 && !isSameLandTransportedCluster(baseTile, vehicleTile)) || (surface == 1 && !isSameSeaCluster(baseTile, vehicleTile)))
-				continue;
+			if (vehicle->faction_id == aiFactionId)
+			{
+				if ((surface == 0 && !isSameLandTransportedCluster(baseTile, vehicleTile)) || (surface == 1 && !isSameSeaCluster(baseTile, vehicleTile)))
+					continue;
+			}
+			else
+			{
+				if ((surface == 0 && !isSameEnemyLandCombatCluster(vehicle->faction_id, baseTile, vehicleTile)) || (surface == 1 && !isSameEnemySeaCombatCluster(vehicle->faction_id, baseTile, vehicleTile)))
+					continue;
+			}
 			
 			// not holding in base
 			
@@ -1781,7 +1781,9 @@ void evaluatePodPoppingUnits()
 		}
 		
 		double consumptionTime = surfacePodData.podCount / surfacePodData.totalConsumptionRate;
-		surfacePodData.totalConsumptionRate += consumptionRate;
+		double factionIncome = conf.ai_production_pod_bonus * surfacePodData.factionConsumptionRate;
+		double factionGain = getGainTimeInterval(getGainIncome(factionIncome), 0.0, consumptionTime);
+		surfacePodData.factionConsumptionGain = factionGain;
 		
 	}
 	
@@ -1792,6 +1794,23 @@ void evaluatePodPoppingUnits()
 		UNIT *unit = getUnit(unitId);
 		int triad = unit->triad();
 		int surface = triad;
+		
+		// surface triad
+		
+		if (triad == TRIAD_AIR)
+			continue;
+		
+		SurfacePodData &surfacePodData = surfacePodDatas.at(triad);
+		
+		// no pods
+		
+		if (surfacePodData.podCount == 0)
+			continue;
+		
+		// pop popping vehicle
+		
+		if (!isPodPoppingUnit(unitId))
+			continue;
 		
 		// exclude unproducible
 		
@@ -1805,64 +1824,51 @@ void evaluatePodPoppingUnits()
 		if (unitPriorityCoefficient <= 0.0)
 			return;
 		
-		// pod popping
+		// consumption rate
 		
-		double podPoppingGain = 0.0;
+		int unitSpeed = getUnitSpeed(aiFactionId, unitId);
 		
-		if (isPodPoppingUnit(unitId) && (triad == TRIAD_LAND || triad == TRIAD_SEA) && podCounts[surface] > 0)
-		{
-			// portion of pods collected by this unit
-			
-			double unitPodCount = podCounts[surface] * ((double)unit->speed() / (double)(totalScoutSpeeds[surface] + unit->speed()));
-			
-			// average distance between pods
-			
-			double unitPodDistance = (unitPodCount <= 0.0 ? DBL_MAX : sqrt((2 * podRanges[surface] + 1) * (2 * podRanges[surface] + 1) / unitPodCount));
-			
-			// average interval between pods for this unit
-			
-			double unitPodInterval = unitPodDistance / (double)unit->speed();
-			
-			// unit podPopping income
-			
-			double popPoppingIncome = conf.ai_production_pod_bonus / unitPodInterval;
-			
-			// incomeGain
-			
-			double podPoppingIncomeGain = getGainIncome(popPoppingIncome);
-			podPoppingGain =
-				conf.ai_production_pod_popping_priority
-				* podPoppingIncomeGain
-			;
-			
-			debug
-			(
-				"\t\t%-32s"
-				" surface=%2d"
-				" podCount=%2d"
-				" totalScoutSpeed=%2d"
-				" unitPodCount=%5.2f"
-				" unitPodDistance=%5.2f"
-				" unitPodInterval=%5.2f"
-				" popPoppingIncome=%5.2f"
-				" podPoppingIncomeGain=%5.2f"
-				" conf.ai_production_pod_popping_priority=%5.2f"
-				" podPoppingGain=%5.2f"
-				"\n"
-				, unit->name
-				, surface
-				, podCounts[surface]
-				, totalScoutSpeeds[surface]
-				, unitPodCount
-				, unitPodDistance
-				, unitPodInterval
-				, popPoppingIncome
-				, podPoppingIncomeGain
-				, conf.ai_production_pod_popping_priority
-				, podPoppingGain
-			);
-			
-		}
+		if (unitSpeed <= 0)
+			continue;
+		
+		double unitTravelTime = 0.5 * surfacePodData.averagePodDistance / (double)unitSpeed;
+		double unitConsumptionInterval = unitTravelTime + 2.0; // for averate repair time
+		double unitConsumptionRate = 1.0 / unitConsumptionInterval;
+		
+		double unitTotalConsumptionRate = surfacePodData.totalConsumptionRate + unitConsumptionRate;
+		double unitFactionConsumptionRate = surfacePodData.factionConsumptionRate + unitConsumptionRate;
+		
+		double unitConsumptionTime = surfacePodData.podCount / unitTotalConsumptionRate;
+		double unitFactionConsumptionIncome = conf.ai_production_pod_bonus * unitFactionConsumptionRate;
+		double unitFactionConsumptionGain = getGainTimeInterval(getGainIncome(unitFactionConsumptionIncome), 0.0, unitConsumptionTime);
+		
+		double factionConsumptionGainIcrease = unitFactionConsumptionGain - surfacePodData.factionConsumptionGain;
+		double podPoppingGain = factionConsumptionGainIcrease;
+		
+		debug
+		(
+			"\t\t%-32s"
+			" surface=%2d"
+			" podCount=%2d"
+			" totalConsumptionRate=%5.2f"
+			" factionConsumptionRate=%5.2f"
+			" unitConsumptionRate=%5.2f"
+			" factionConsumptionGain=%5.2f"
+			" unitFactionConsumptionGain=%5.2f"
+			" factionConsumptionGainIcrease=%5.2f"
+			" podPoppingGain=%5.2f"
+			"\n"
+			, unit->name
+			, surface
+			, surfacePodData.podCount
+			, surfacePodData.totalConsumptionRate
+			, surfacePodData.factionConsumptionRate
+			, unitConsumptionRate
+			, surfacePodData.factionConsumptionGain
+			, unitFactionConsumptionGain
+			, factionConsumptionGainIcrease
+			, podPoppingGain
+		);
 		
 		// upkeep
 		
@@ -1878,7 +1884,8 @@ void evaluatePodPoppingUnits()
 		// priority
 		
 		double priority =
-			unitPriorityCoefficient
+			conf.ai_production_pod_popping_priority
+			* unitPriorityCoefficient
 			* getItemPriority(unitId, gain)
 		;
 		
@@ -1890,11 +1897,13 @@ void evaluatePodPoppingUnits()
 		(
 			"\t%-32s"
 			" priority=%5.2f   |"
+			" conf.ai_production_pod_popping_priority=%5.2f"
 			" unitPriorityCoefficient=%5.2f"
 			" gain=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
+			, conf.ai_production_pod_popping_priority
 			, unitPriorityCoefficient
 			, gain
 		);

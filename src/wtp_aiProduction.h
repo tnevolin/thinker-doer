@@ -121,12 +121,12 @@ struct Interval
 
 struct SurfacePodData
 {
-	int scanRange;
-	int podCount;
-	double averagePodDistance;
-	double totalConsumptionRate;
-	double factionConsumptionRate;
-	double factionConsumptionGain;
+	int scanRange = 0;
+	int podCount = 0;
+	double averagePodDistance = 0.0;
+	double totalConsumptionRate = 0.0;
+	double factionConsumptionRate = 0.0;
+	double factionConsumptionGain = 0.0;
 	
 };
 
