@@ -870,16 +870,30 @@ static void normalize_happiness(BASE *base, bool subtractSpecialists)
 	
 	// limit numbers by base size
 	
-	base->talent_total = std::min((int32_t)base->pop_size, base->talent_total);
-	int drone_excess = std::max(0, base->drone_total - (int32_t)base->pop_size);
-	base->drone_total -= drone_excess;
-	base->superdrone_total += drone_excess;
-	base->superdrone_total = std::min((int32_t)base->pop_size, base->superdrone_total);
-	if (base->superdrone_total > base->drone_total)
+	base->talent_total = clamp(base->talent_total, 0, (int32_t)base->pop_size);
+	
+	if (base->drone_total + base->superdrone_total <= 0)
+	{
+		base->drone_total = 0;
+		base->superdrone_total = 0;
+	}
+	else if (base->drone_total + base->superdrone_total >= 2 * (int32_t)base->pop_size)
+	{
+		base->drone_total = (int32_t)base->pop_size;
+		base->superdrone_total = (int32_t)base->pop_size;
+	}
+	else if (base->drone_total < base->superdrone_total)
 	{
 		int shift = (base->superdrone_total - base->drone_total + 1) / 2;
 		base->drone_total += shift;
 		base->superdrone_total -= shift;
+	}
+	else if (base->drone_total > (int32_t)base->pop_size)
+	{
+		int drone_excess = std::max(0, base->drone_total - (int32_t)base->pop_size);
+		base->drone_total -= drone_excess;
+		base->superdrone_total += drone_excess;
+		base->superdrone_total = std::min((int32_t)base->pop_size, base->superdrone_total);
 	}
 	
 	// ensure talents and drone/superdrones do not intersect

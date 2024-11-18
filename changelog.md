@@ -1,6 +1,7 @@
 # Version 321
 
-* [Bug] Fixed my internal bug in former computation introduced in 316.
+* [Bug] Fixed my bug in former computation introduced in 316.
+* [Bug] Fixed my bug in psych computation introduced in 320 when drone count may become negative.
 
 # Version 320
 
