@@ -815,7 +815,7 @@ Vanilla "remove drone" mechanics does not distinguish between drone and superdro
 
 This mod requires to spend one effect unit to improve a citizen mood one step at a time: superdrone -> drone -> normal -> talent. This is to ensure math adds up and there are no quirky effect sometimes observed in original game.
 
-That does slightly reduce the facility/police power but the effect is not exteme. The effect is **intended** as the expression of bureaucracy pressure on large empire. At the same time, it is not that devastating. It appears only when human on highest difficulty has exceptionally large empire with low efficiency rating. For example, human player on transcend with 30 bases and 0 EFFICIENCY would suffer about 10-20% decline in facility/police drone removal effectiveness. Taking into account that police power can change from 0 to 9 with SE choices, 20% change is not that big of an issue.
+That slightly reduces the facility/police power under bureaucracy pressure. This is intended. Otherwise, large empire is easy to deal with. Can increase their base power if they generally feel weaker with this change.
 
 ## [Qol] Talent - drone separation
 
