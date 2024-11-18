@@ -803,11 +803,11 @@ Vanilla has few problem with psych mechanincs. It removes superdrones first, tho
 
 This mod removes all psych wastes and limits and allows it to be effective at the whole range of psych slider from 0% to 100%.
 
-* Psych is applied after all other pacifying effects on top of mostly content citizens turning them to talents with a single unit effect spent.
-* Psych removes drones/superdrones first and then generates talents when no more drones left. Thus ensuring golden age "no drones" requirement.
-* No spending limit. Player can turn slider to 100% and see bases florished with talents.
-* Due to increased power it is now cost 4 psych to improve citizen mood instead of 2 as in vanilla. This still better effect comparing to vanilla with all benefit combined.
-* Psych specialists generate 4 psych to continue affecting one citizen at a time.
+* Psych is applied after all other pacifying effects on top of mostly content citizens turning them into talents in one step.
+* Psych removes remaining drones/superdrones first before adding talents. Thus securing golden age "no drones" requirement.
+* Psych has no spending limit. Player can turn slider from 90% to 100% and still get happiness improvement.
+* All above improvements make psych a very powrerful tool. Therefore, the cost to improve citizen mood is increased from 2 to 4 to match vanilla experience.
+* For the same reason, specialists psych output also increased from 2 to 4 to keep their normal one citizen effect.
 
 ## [Mod] Strict drone removal
 
