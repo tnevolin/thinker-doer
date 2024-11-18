@@ -825,7 +825,7 @@ This mod introduces a strict logic. All talent generating effects affect leftmos
 
 ## [Qol] Nerve stappled base and punishment sphere
 
-* Nerve stappled base and punishment sphere ignore all other effects and are displayed with a single row on a base psych screen.
+Nerve stappled base and punishment sphere ignore all other effects and are displayed with a single row on a base psych screen.
 
 # AI
 
