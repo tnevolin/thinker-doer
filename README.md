@@ -797,37 +797,34 @@ If player fails to keep sufficient number of well educated personell to meet spe
 
 ![economy psych allocation](images/economy_psych_allocation.png)
 
-Each land worker can be in any of the four moods listed above. The goal of the player is to keep base population relatively happy to avoid drone riots, which halts base production. For that different means are used: entertaining facilities, police, secret projects, and psych distribution.
+## [Mod] Psych effect improved
 
-![Example](images/base_psych_simplified.png)
+Vanilla has few problem with psych mechanincs. It removes superdrones first, those later can be removed for free by facilites/police. Then it tries to convert drones to talents spending twice as much as it would do when working after facilities/police doing their job. Last but not least, there is a hard limit on psych effect: it can improve no more than population times. Combined that with above wasteful behavior, it has pretty limited use in original game.
 
-## Vanilla problem
+This mod changes psych application mechanics as follow.
 
-Vanilla spends two psych to improve mood of a citizen on the scale: superdrone -> drone -> content -> talent. With average mid-game per citizent energy yield of 4 and some basic psych multipier facilities (Hologram Theater, Tree Farm) this is plenty to turn base into paradise. Assuming all citizens are already content by the meant of facilities and police, it takes only 2 psych to make them content. With x2 psych multiplier it is only 25% psych allocation. And even if base does not have any pacifying facilities and police and all citizens are superdrones, it still takes only 75% psych allocation to make them all talents anyway. Think about ever growing worker energy yield, positive ECONOMY effects, energy from satellites, more psych multiplying facilites (up to x3) - player would need just a tiny psych allocation to keep even largest bases in golden age permanently.
+* Psych is applied after all other pacifying effects on top of mostly content citizens turning them to talents with a single unit effect spent.
+* Psych removes drones/superdrones first and then generates talents when no more drones left. Thus ensuring golden age "no drones" requirement.
+* No spending limit. Player can turn slider to 100% and see bases florished with talents.
+* Due to increased power it is now cost 4 psych to improve citizen mood instead of 2 as in vanilla. This still better effect comparing to vanilla with all benefit combined.
+* Psych specialists generate 4 psych to continue affecting one citizen at a time.
 
-This does not happen in vanilla because of multiple wastes and restrictions.
+## [Mod] Strict drone removal
 
-* Psych removes superdrones those later could be removed by facilities and police for free. Clear waste.
-* Psych turns drones to contents doing facilities/police job spending extra psych and wasting facilities/police capacity.
-* There is a hard limit (2 x population) of psych can be spent on happiness regardless of how much is allocated.
+Vanilla "remove drone" mechanics does not distinguish between drone and superdrone removing them in one step.
 
-As the result of these, psych allocation in average game has no effect below 10-20% and above 20-40%, leaving only tiny range of 20-30% for manipulations.
+This mod requires to spend one effect unit to improve a citizen mood one step at a time: superdrone -> drone -> normal -> talent. This is to ensure math adds up and ther are no quirky effect sometimes observed in original game.
 
-## Goal
+That does slightly reduce the facility/police power but the effect is not exteme. The effect is **intended** as the expression of bureaucracy pressure on large empire. At the same time, it is not that devastating. It appears only when human on highest difficulty has exceptionally large empire with low efficiency rating. For example, human player on transcend with 30 bases and 0 EFFICIENCY would suffer about 10-20% decline in facility/police drone removal effectiveness. Taking into account that police power can change from 0 to 9 with SE choices, 20% change is not that big of an issue.
 
-* Remove all psych wastes and restrictions to allow player using a full range of psych slider and observe expected proportional results.
-* Balance psych effect to be not OP after all wastes and restrictions are removed.
+## [Qol] Talent - drone separation
 
-## Solution
+Vanilla uses extremely unintuitive algorithm when it keeps talents and when it decides to merge them with drones and cancel both.
 
-* Psych acts after all other effects allowing them to pacify drones as much as possible then applying psych on top of mostly content citizens. There is no waste this way. Each psych counts.
-* Psych generally improves happiness all over the base removing drones/superdrones first and then generating talents when no more drones left.
-* Due to increased power it is now required 6 psych to improve citizen mood instead of 2 as in vanilla. This still should be perceived as slightly better effect comparing to vanilla.
-* Psych generating specialists (doctors) generate 6 psych to continue affecting one citizen at a time.
+This mod introduces a strict logic. All talent generating effects affect leftmost citizen and turn them one mood level up at a time. If this citizen was content, they are guaranteed to become talent.
 
-## Other happiness mechanics modifications
+## [Qol] Nerve stappled base and punishment sphere
 
-* Talent generating facilities and projects try to create talents on the left instead of removing superdrones/drones.
 * Nerve stappled base and punishment sphere ignore all other effects and are displayed with a single row on a base psych screen.
 
 # AI
