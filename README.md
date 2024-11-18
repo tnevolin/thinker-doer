@@ -756,9 +756,48 @@ Base population is divided into two large groups: land workers and specialists.
 
 ![land workers](images/workers.png)
 
-###### specialists
+*specialists*
 
 ![specialists](images/specialists.png)
+
+Land workers work the land around base and harvest the yield. Specialists do not work the land and instead generate fixed amount of economy/psych/labs to be added to base intake.
+
+Land workers can be at any of the following mood/happiness/education from (least educated/happy) superdrone -> drone -> worker/content/normal -> talent (most educated/happy). There is a confusion in terms when all field workers are collectively called workers and also the default citizen happiness is also called worker. I will be calling them *normal* for disambiguation. There is also a standard Civ term "happiness", which is replaced by "education" in SMACX. They will be used interchangeably.
+
+Specialists are not subdivided by mood/happiness/education and are not affected by happiness improvement means.
+
+Each mean of improving population mood has certain effect or power, which shows how many times they can improve population happiness/education from worse to better one step at a time. Negative effect changes population mood in opposite direction.
+
+Base can have talents and drones/superdrones at the same time. However, they cannot overlap. If there is not enough room for all talents and drones/superdrone they cancel each other to make room. One talent and one drone cancel each other. Whereas when one talent and one superdrone .
+
+## [QoL] Psych effect indicator
+
+Psych effect indicator showing how many citizens will be affected by that psych amount.
+
+![psych effect](images/psych_effect_display.png)
+
+## [Mod] Specialists do not affect happiness computation
+
+Vanilla specialists are not affected by happiness process, and, theoretically, should not interfere with it too. Unfortunally, due to the visualization requirement, they are occupying population slots on psych computation screen. Therefore, they are inherently limit number of talents/drones/superdrones base can have at any stage more than population size causing mishaps and exploits.
+
+This mod implements the idea of happiness process independence from specialists influence.
+
+* Specialists do not take part in happiness computation and are not shown on the psych computation breakdown tab.
+* They are added after all happiness is computed and normally shown on the main base population row.
+
+![psych no specialists](images/psych_no_specialists.png)
+
+## [Mod] Specialists are trained from educated personell
+
+Vanilla allows exploit turning drones into specialists removing drones for free and getting specialist bonus at the same time. Not anymore in this mod.
+
+Base can train sufficiently educated personell (talent/normal) into specialists. When specialists are introduced after psych computation, they are replacing talents/normals and not drones.
+
+If player fails to keep sufficient number of well educated personell to meet specialists demand, base economy reserves are allocated to psych for emergency training program to keep population educated enough. The cost is hefty but it a good tool to fine tune crude global psych allocation at base level.
+
+![economy psych allocation](images/economy_psych_allocation.png)
+
+Each land worker can be in any of the four moods listed above. The goal of the player is to keep base population relatively happy to avoid drone riots, which halts base production. For that different means are used: entertaining facilities, police, secret projects, and psych distribution.
 
 ![Example](images/base_psych_simplified.png)
 
@@ -790,12 +829,6 @@ As the result of these, psych allocation in average game has no effect below 10-
 
 * Talent generating facilities and projects try to create talents on the left instead of removing superdrones/drones.
 * Nerve stappled base and punishment sphere ignore all other effects and are displayed with a single row on a base psych screen.
-
-## QoL addition
-
-Psych effect indicator showing how many citizens will be affected by that psych amount.
-
-![psych effect](images/psych_effect_display.png)
 
 # AI
 
