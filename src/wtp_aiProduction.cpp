@@ -171,13 +171,11 @@ void populateFactionProductionData()
 			
 			if (seaCluster != -1 && availableSeaFormerCounts.find(seaCluster) != availableSeaFormerCounts.end() && availableSeaFormerCounts.at(seaCluster) >= 1)
 			{
-				formerRequestIterator = aiData.production.formerRequests.erase(formerRequestIterator);
 				availableSeaFormerCounts.at(seaCluster)--;
 				removed = true;
 			}
 			else if (availableAirFormerCount >= 1)
 			{
-				formerRequestIterator = aiData.production.formerRequests.erase(formerRequestIterator);
 				availableAirFormerCount--;
 				removed = true;
 			}
@@ -189,7 +187,6 @@ void populateFactionProductionData()
 			
 			if (landTransportedCluster != -1 && availableLandFormerCounts.find(landTransportedCluster) != availableLandFormerCounts.end() && availableLandFormerCounts.at(landTransportedCluster) >= 1)
 			{
-				formerRequestIterator = aiData.production.formerRequests.erase(formerRequestIterator);
 				availableLandFormerCounts.at(landTransportedCluster)--;
 				removed = true;
 			}

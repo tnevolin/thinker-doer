@@ -1,3 +1,7 @@
+# Version 321
+
+* [Bug] Fixed my internal bug in former computation introduced in 316.
+
 # Version 320
 
 * Worked out the specialists removing drones exploint into feature.
