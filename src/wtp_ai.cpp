@@ -879,50 +879,7 @@ void populateFactionInfos()
 			
 		}
 		
-		// totalBaseIncome
-		
-		factionInfo.totalBaseIncome = 0.0;
-		
-		for (int baseId = 0; baseId < *BaseCount; baseId++)
-		{
-			BASE *base = getBase(baseId);
-			
-			// faction base
-			
-			if (base->faction_id != factionId)
-				continue;
-			
-			double income = getBaseIncome(baseId);
-			
-			factionInfo.totalBaseIncome += income;
-			
-		}
-		
-		// totalCombatVehicleCost
-		
-		factionInfo.totalCombatVehicleCost = 0;
-		
-		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-		{
-			VEH *vehicle = getVehicle(vehicleId);
-			
-			// faction vehicle
-			
-			if (vehicle->faction_id != factionId)
-				continue;
-			
-			// combat vehicle
-			
-			if (!isCombatVehicle(vehicleId))
-				continue;
-			
-			int cost = vehicle->cost();
-			
-			factionInfo.totalCombatVehicleCost += cost;
-			
-		}
-		
-		// totalCombatVehicleCost
+		// totalVendettaCount
 		
 		factionInfo.totalVendettaCount = 0;
 		
@@ -947,36 +904,24 @@ void populateFactionInfos()
 			
 		}
 		
-		// averageCombatVehicleSpeed
+		// productionPower
 		
+		factionInfo.productionPower = 1.0;
+		
+		for (int baseId = 0; baseId < *BaseCount; baseId++)
 		{
-			int count = 0;
-			int sumCombatVehicleSpeed = 0;
+			BASE *base = getBase(baseId);
 			
-			for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-			{
-				VEH *vehicle = getVehicle(vehicleId);
-				
-				// this faction
-				
-				if (vehicle->faction_id != factionId)
-					continue;
-				
-				// combat or sea transport
-				
-				if (!isCombatVehicle(vehicleId) && !isSeaTransportVehicle(vehicleId))
-					continue;
-				
-				// speed
-				
-				int speed = getVehicleSpeed(vehicleId);
-				
-				count++;
-				sumCombatVehicleSpeed += speed;
-				
-			}
+			// faction base
 			
-			factionInfo.averageCombatVehicleSpeed = (count == 0 ? 1.0 : (double)sumCombatVehicleSpeed / (double)count);
+			if (base->faction_id != factionId)
+				continue;
+			
+			// base production power
+			
+			int baseProductionPower = getResourceScore(base->mineral_surplus, base->economy_total);
+			
+			factionInfo.productionPower += baseProductionPower;
 			
 		}
 		
@@ -1115,6 +1060,12 @@ void populateBaseInfos()
 		baseInfo.gain = getBaseGain(baseId);
 		
 		debug("\t%-25s gain=%5.2f\n", base->name, baseInfo.gain);
+		
+		// productionSupport
+		
+		baseInfo.productionSupport = getBaseProductionSupport(baseId);
+		
+		debug("\t%-25s productionSupport=%5.2f\n", base->name, baseInfo.productionSupport);
 		
 	}
 	
@@ -8313,30 +8264,30 @@ MAP *getArtilleryAttackPosition(int vehicleId, MAP *target)
 }
 
 /*
-Roughly estimates survival chance by combat effect.
+Roughly estimates win probability by combat effect.
 */
-double getSurvivalChance(double effect)
+double getEstimatedWinProbability(double effect)
 {
-	double survivalChance;
+	double winProbability;
 	
 	if (effect < 0.5)
 	{
-		survivalChance = 0.0;
+		winProbability = 0.0;
 	}
 	else if (effect >= 0.5 && effect < 1.0)
 	{
-		survivalChance = -0.5 + 1.0 * effect;
+		winProbability = -0.5 + 1.0 * effect;
 	}
 	else if (effect >= 1.0 && effect < 2.0)
 	{
-		survivalChance = 1.0 - (-0.5 + 1.0 * (1.0 / effect));
+		winProbability = 1.0 - (-0.5 + 1.0 * (1.0 / effect));
 	}
 	else
 	{
-		survivalChance = 1.0;
+		winProbability = 1.0;
 	}
 	
-	return survivalChance;
+	return winProbability;
 	
 }
 

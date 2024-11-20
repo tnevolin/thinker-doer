@@ -128,7 +128,7 @@ bool compareFormerRequests(FormerRequest const &formerRequest1, FormerRequest co
 
 void populateFactionProductionData()
 {
-	const int AVAILABLE_FORMER_COUNT_DIVISOR = 4;
+	const int AVAILABLE_FORMER_COUNT_DIVISOR = 3;
 	
 	// available former counts
 	
@@ -1766,7 +1766,7 @@ void evaluatePodPoppingUnits()
 				continue;
 			
 			double travelTime = 0.5 * surfacePodData.averagePodDistance / (double)vehicleSpeed;
-			double consumptionInterval = travelTime + 2.0; // for averate repair time
+			double consumptionInterval = travelTime + (vehicleSpeed == 1 ? 4.0 : 1.0); // for average repair time
 			double consumptionRate = 1.0 / consumptionInterval;
 			
 			// accumulate
@@ -1807,7 +1807,7 @@ void evaluatePodPoppingUnits()
 		if (surfacePodData.podCount == 0)
 			continue;
 		
-		// pop popping vehicle
+		// pop popping unit
 		
 		if (!isPodPoppingUnit(unitId))
 			continue;
@@ -1832,7 +1832,7 @@ void evaluatePodPoppingUnits()
 			continue;
 		
 		double unitTravelTime = 0.5 * surfacePodData.averagePodDistance / (double)unitSpeed;
-		double unitConsumptionInterval = unitTravelTime + 2.0; // for averate repair time
+		double unitConsumptionInterval = unitTravelTime + (unitSpeed == 1 ? 4.0 : 1.0); // for averate repair time
 		double unitConsumptionRate = 1.0 / unitConsumptionInterval;
 		
 		double unitTotalConsumptionRate = surfacePodData.totalConsumptionRate + unitConsumptionRate;
@@ -1968,7 +1968,7 @@ void evaluateBaseDefenseUnits()
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			int unitMineralCost = Rules->mineral_cost_multi * unit->cost;
-			double survivalChance = getSurvivalChance(combatEffect);
+			double survivalChance = getEstimatedWinProbability(combatEffect);
 			double survivalMineralCost = (double)unitMineralCost * survivalChance;
 			double survivalGain = getGainDelay(getGainBonus(survivalMineralCost), travelTime);
 			
@@ -2113,20 +2113,15 @@ void evaluateTerritoryProtectionUnits()
 			// gain
 			
 			double combatEffect = enemyStackInfo->getUnitEffect(unitId);
-			double attackGain = enemyStackInfo->averageUnitGain * combatEffect;
+			double winProbability = getEstimatedWinProbability(combatEffect);
+			double attackGain = enemyStackInfo->averageUnitGain * winProbability;
 			double protectionGain = attackGain * travelTimeCoefficient;
 			
-			int unitMineralCost = Rules->mineral_cost_multi * unit->cost;
-			double survivalChance = getSurvivalChance(combatEffect);
-			double survivalMineralCost = (double)unitMineralCost * survivalChance;
-			double survivalGain = getGainDelay(getGainBonus(survivalMineralCost), travelTime);
-			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
-			double upkeepGain = getGainIncome(upkeep);
+			double upkeepGain = getGainTimeInterval(getGainIncome(upkeep), 0.0, travelTime);
 			
 			double gain =
 				+ protectionGain
-				+ survivalGain
 				+ upkeepGain
 			;
 			
@@ -2140,11 +2135,10 @@ void evaluateTerritoryProtectionUnits()
 				" travelTimeCoefficient=%5.2f"
 				" ai_production_base_protection_priority=%5.2f"
 				" combatEffect=%5.2f"
-				" averageBaseGain=%5.2f"
+				" winProbability=%5.2f"
 				" averageUnitGain=%5.2f"
 				" attackGain=%5.2f"
 				" protectionGain=%5.2f"
-				" survivalChance=%5.2f"
 				" upkeepGain=%5.2f"
 				" gain=%7.2f"
 				"\n"
@@ -2154,11 +2148,10 @@ void evaluateTerritoryProtectionUnits()
 				, travelTimeCoefficient
 				, conf.ai_production_base_protection_priority
 				, combatEffect
-				, aiFactionInfo->averageBaseGain
+				, winProbability
 				, enemyStackInfo->averageUnitGain
 				, attackGain
 				, protectionGain
-				, survivalChance
 				, upkeepGain
 				, gain
 			);

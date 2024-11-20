@@ -318,6 +318,7 @@ struct BaseInfo
 	
 	// economical data
 	double gain;
+	double productionSupport;
 	
 	// police data	
 	BasePoliceData policeData;
@@ -406,10 +407,8 @@ struct FactionInfo
 	// averate range between player and faction bases
 	double averageBasesRange;
 	double averagePlayerBasesRange;
-	double totalBaseIncome;
-	int totalCombatVehicleCost;
-	double averageCombatVehicleSpeed;
 	int totalVendettaCount; // excluding aliens and player
+	double productionPower;
 	
 };
 

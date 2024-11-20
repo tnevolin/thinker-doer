@@ -581,7 +581,7 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	
 	// weight drop from better to worse square
 	
-	double weightDrop = 0.8;
+	double weightDrop = 0.9;
 	
 	// average weighted yield score
 	
@@ -789,6 +789,31 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	executionProfiles["1.3.2.2.4.1.4. landmarkScore"].stop();
 	
+	executionProfiles["1.3.2.2.4.1.4. bonusScore"].start();
+	
+	// explicitly encourage placing base on bonuses
+	
+	double landmarkBonusScore = 0.0;
+	for (MAP *baseRadiusTile : getBaseRadiusTiles(tile, true))
+	{
+		// exclude not owned land for sea base
+		
+		if (tileInfo.ocean && baseRadiusTile->owner != aiFactionId)
+			continue;
+		
+		// landmarkBonus tile
+		
+		if (isLandmarkBonus(baseRadiusTile))
+		{
+			landmarkBonusScore += 0.1;
+		}
+		
+	}
+	landmarkBonusScore = std::min(0.5, landmarkBonusScore);
+	debug("\t%-20s%+5.2f\n", "landmarkBonusScore", landmarkBonusScore);
+	
+	executionProfiles["1.3.2.2.4.1.4. landmarkBonusScore"].stop();
+	
 	// discourage land fungus for faction having difficulties to enter it (just because it spawns worms)
 	
 	double fungusScore = (!is_ocean(tile) && map_has_item(tile, BIT_FUNGUS) && aiFaction->SE_planet < 1 ? -0.1 : 0.0);
@@ -796,7 +821,7 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	// return score
 	
-	return landUseScore + radiusOverlapScore + coastScore + landmarkScore + fungusScore;
+	return landUseScore + radiusOverlapScore + coastScore + landmarkScore + landmarkBonusScore + fungusScore;
 	
 }
 

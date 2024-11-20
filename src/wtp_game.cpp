@@ -1000,12 +1000,38 @@ int getEnergyBonus(MAP *tile)
 		map_has_landmark(tile, LM_VOLCANO)
 		||
 		map_has_landmark(tile, LM_GEOTHERMAL)
+		||
+		map_has_landmark(tile, LM_URANIUM)
 	)
 	{
 		bonus += 1;
 	}
 	
 	return bonus;
+	
+}
+
+bool isLandmarkBonus(MAP *tile)
+{
+	assert(isOnMap(tile));
+	
+	return
+		map_has_landmark(tile, LM_JUNGLE)
+		||
+		map_has_landmark(tile, LM_FRESH)
+		||
+		map_has_landmark(tile, LM_CRATER)
+		||
+		map_has_landmark(tile, LM_VOLCANO)
+		||
+		map_has_landmark(tile, LM_CANYON)
+		||
+		map_has_landmark(tile, LM_FOSSIL)
+		||
+		map_has_landmark(tile, LM_GEOTHERMAL)
+		||
+		map_has_landmark(tile, LM_URANIUM)
+	;
 	
 }
 

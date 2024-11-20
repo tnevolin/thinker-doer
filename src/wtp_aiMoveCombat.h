@@ -98,10 +98,10 @@ struct EnemyStackAttackInfo
 };
 
 void moveCombatStrategy();
+void immediateAttack();
 void movePolice2x();
 void movePolice();
 void moveProtectors();
-void immediateAttack();
 void moveCombat();
 void populateRepairTasks(std::vector<TaskPriority> &taskPriorities);
 void populateMonolithTasks(std::vector<TaskPriority> &taskPriorities);

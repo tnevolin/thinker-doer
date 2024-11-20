@@ -559,6 +559,7 @@ int isBonusAt(MAP *tile);
 int getNutrientBonus(MAP *tile);
 int getMineralBonus(MAP *tile);
 int getEnergyBonus(MAP *tile);
+bool isLandmarkBonus(MAP *tile);
 int veh_speed_without_roads(int id);
 int unit_chassis_speed(int id);
 int veh_chassis_speed(int id);

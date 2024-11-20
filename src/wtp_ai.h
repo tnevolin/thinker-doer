@@ -88,8 +88,8 @@ struct AttackAction
 class AverageAccumulator
 {
 private:
-	double sumWeight;
-	double sumWeightedValue;
+	double sumWeight = 0.0;
+	double sumWeightedValue = 0.0;
 public:
 	void clear()
 	{
@@ -276,5 +276,5 @@ MAP *getMeleeAttackPosition(int unitId, MAP *origin, MAP *target);
 MAP *getMeleeAttackPosition(int vehicleId, MAP *target);
 MAP *getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target);
 MAP *getArtilleryAttackPosition(int vehicleId, MAP *target);
-double getSurvivalChance(double effect);
+double getEstimatedWinProbability(double effect);
 
