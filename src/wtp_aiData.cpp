@@ -9,7 +9,7 @@
 
 Data aiData;
 int aiFactionId = -1;
-MFaction *playerMFaction;
+MFaction *aiMFaction;
 Faction *aiFaction;
 FactionInfo *aiFactionInfo;
 

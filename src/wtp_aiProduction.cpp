@@ -209,6 +209,25 @@ void populateFactionProductionData()
 		
 	}
 	
+	if (DEBUG)
+	{
+		debug("formerRequests - %s\n", aiMFaction->noun_faction);
+		
+		for (FormerRequest &formerRequest : aiData.production.formerRequests)
+		{
+			debug
+			(
+				"\t%5.2f %s %s"
+				"\n"
+				, formerRequest.income
+				, getLocationString(formerRequest.tile).c_str()
+				, formerRequest.option->name
+			);
+			
+		}
+		
+	}
+	
 }
 
 /**
@@ -236,7 +255,8 @@ void evaluateGlobalColonyDemand()
 	
 	// how many b-drones new base generates
 	
-	int baseLimit = (int)floor((double)((std::max(0, faction->SE_effic_pending) + 4) * 5) * sqrt(*MapAreaTiles / 3200)) / 2;
+	int contentPop, baseLimit;
+	mod_psych_check(aiFactionId, &contentPop, &baseLimit);
 	int newBaseBDrones = faction->base_count / baseLimit;
 	
 	// averages
@@ -717,14 +737,16 @@ void evaluatePsychFacilities()
 		// new workers
 		
 		setBaseFacility(baseId, facilityId, true);
-		computeBaseComplete(baseId);
+//		computeBaseComplete(baseId);
+		computeBase(baseId, true);
 		
 		int newWorkerCount = base->pop_size - base->specialist_total;
 		
 		// restore base
 		
 		setBaseFacility(baseId, facilityId, false);
-		computeBaseComplete(baseId);
+//		computeBaseComplete(baseId);
+		computeBase(baseId, true);
 		
 		// gain
 		
@@ -4113,7 +4135,8 @@ double getFacilityGain(int baseId, int facilityId, bool build, bool includeMaint
 	// compute new income
 	
 	setBaseFacility(baseId, facilityId, build);
-	computeBaseComplete(baseId);
+//	computeBaseComplete(baseId);
+	computeBase(baseId, true);
 	
 	double newPopulationGrowth = getBasePopulationGrowth(baseId);
 	double newIncome = getBaseIncome(baseId);
@@ -4122,7 +4145,8 @@ double getFacilityGain(int baseId, int facilityId, bool build, bool includeMaint
 	// restore base
 	
 	setBaseFacility(baseId, facilityId, !build);
-	computeBaseComplete(baseId);
+//	computeBaseComplete(baseId);
+	computeBase(baseId, true);
 	
 	// estimate eco damage effect
 	// assume eco damage is the chance of number of workers to lose half or their productivity

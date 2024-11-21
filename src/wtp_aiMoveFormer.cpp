@@ -1448,6 +1448,8 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 	if (option->requiredAction != -1 && !isTerraformingAvailable(tile, option->requiredAction))
 		return terraformingRequest;
 	
+	debug("\t\t\t%s\n", option->name);
+	
 	// initialize variables
 	
 	int firstAction = -1;
@@ -2135,7 +2137,8 @@ double computeBaseTileImprovementGain(int baseId, MAP *tile, MapState &improvedM
 		
 		int currentPopSize = affectedBase->pop_size;
 		affectedBase->pop_size = baseTerraformingInfo.projectedPopSize;
-		computeBaseComplete(affectedBaseId);
+//		computeBaseComplete(affectedBaseId);
+		computeBase(affectedBaseId, true);
 		
 		// old intake
 		
@@ -2144,7 +2147,8 @@ double computeBaseTileImprovementGain(int baseId, MAP *tile, MapState &improvedM
 		// apply improvement
 		
 		applyMapState(improvedMapState, tile);
-		computeBaseComplete(affectedBaseId);
+//		computeBaseComplete(affectedBaseId);
+		computeBase(affectedBaseId, true);
 		
 		// verify square is worked by this base for nonArea effect
 		
@@ -2161,7 +2165,8 @@ double computeBaseTileImprovementGain(int baseId, MAP *tile, MapState &improvedM
 		
 		restoreTileMapState(tile);
 		affectedBase->pop_size = currentPopSize;
-		computeBaseComplete(affectedBaseId);
+//		computeBaseComplete(affectedBaseId);
+		computeBase(affectedBaseId, true);
 		
 		// accumulate improvementGain
 		

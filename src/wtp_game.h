@@ -642,7 +642,7 @@ bool isActiveArtilleryVehicle(int vehicleId);
 bool isLandArtilleryUnit(int unitId);
 bool isLandArtilleryVehicle(int vehicleId);
 void computeBase(int baseId, bool resetWorkedTiles);
-void computeBaseComplete(int baseId);
+//void computeBaseComplete(int baseId);
 void computeBaseDoctors(int baseId);
 robin_hood::unordered_flat_set<int> getBaseConnectedRegions(int id);
 robin_hood::unordered_flat_set<int> getBaseConnectedOceanRegions(int baseId);

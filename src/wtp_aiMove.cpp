@@ -547,7 +547,7 @@ Redistributes vehicle between bases to proportinally burden them with support.
 */
 void balanceVehicleSupport()
 {
-	debug("balanceVehicleSupport - %s\n", playerMFaction->noun_faction);
+	debug("balanceVehicleSupport - %s\n", aiMFaction->noun_faction);
 	
 	executionProfiles["1.3. balanceVehicleSupport"].start();
 	

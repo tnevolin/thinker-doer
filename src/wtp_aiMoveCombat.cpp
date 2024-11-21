@@ -50,7 +50,7 @@ Analyze exact one turn movement/attack conditions.
 */
 void immediateAttack()
 {
-	debug("immediateAttack - %s\n", playerMFaction->noun_faction);
+	debug("immediateAttack - %s\n", aiMFaction->noun_faction);
 	
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
@@ -732,7 +732,7 @@ void moveCombat()
 	
 	// optimize pod popping traveling
 	
-	debug("optimize pod popping traveling - %s\n", playerMFaction->noun_faction);
+	debug("optimize pod popping traveling - %s\n", aiMFaction->noun_faction);
 	
 	std::vector<robin_hood::pair<int, TaskPriority *> *> podPoppingAssignments;
 	
@@ -897,7 +897,7 @@ void moveCombat()
 	
 	if (DEBUG)
 	{
-		debug("targetedEnemyStacks - %s\n", playerMFaction->noun_faction);
+		debug("targetedEnemyStacks - %s\n", aiMFaction->noun_faction);
 		
 		for (robin_hood::pair<MAP *, EnemyStackInfo> const &enemyStackEntry : aiData.enemyStacks)
 		{

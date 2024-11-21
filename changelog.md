@@ -1,6 +1,10 @@
+# Version 324
+
+* [Bug] Fixed base limit computation bug.
+
 # Version 323
 
-* [Bug] Fixed one production computation bugs.
+* [Bug] Fixed production computation bug.
 
 # Version 322
 

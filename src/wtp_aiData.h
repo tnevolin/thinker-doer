@@ -817,7 +817,7 @@ struct Data
 
 extern Data aiData;
 extern int aiFactionId;
-extern MFaction *playerMFaction;
+extern MFaction *aiMFaction;
 extern Faction *aiFaction;
 extern FactionInfo *aiFactionInfo;
 

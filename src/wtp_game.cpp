@@ -1901,28 +1901,28 @@ void computeBase(int baseId, bool resetWorkedTiles)
 
 }
 
-/**
-Computes complete base reset as in base_upkeep.
-1. Resets workers.
-2. Computes base.
-3. Computes drones.
-4. Computes doctors.
-*/
-void computeBaseComplete(int baseId)
-{
-	Bases[baseId].worked_tiles = 0;
-	
-	*ControlUpkeepA = 1;
-	
-	set_base(baseId);
-	base_compute(1);
-	base_drones();
-	base_doctors();
-	
-	*ControlUpkeepA = 0;
-	
-}
-
+///**
+//Computes complete base reset as in base_upkeep.
+//1. Resets workers.
+//2. Computes base.
+//3. Computes drones.
+//4. Computes doctors.
+//*/
+//void computeBaseComplete(int baseId)
+//{
+//	Bases[baseId].worked_tiles = 0;
+//	
+//	*ControlUpkeepA = 1;
+//	
+//	set_base(baseId);
+//	base_compute(1);
+//	base_drones();
+//	base_doctors();
+//	
+//	*ControlUpkeepA = 0;
+//	
+//}
+//
 /**
 Computes base and tries to adjust number of doctors to avoid drones.
 */

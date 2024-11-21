@@ -47,7 +47,7 @@ enemy_units_check -> modified_enemy_units_check [WTP] (substitute)
 void setPlayerFactionReferences(int factionId)
 {
 	aiFactionId = factionId;
-	playerMFaction = getMFaction(aiFactionId);
+	aiMFaction = getMFaction(aiFactionId);
 	aiFaction = getFaction(aiFactionId);
 	aiFactionInfo = &(aiData.factionInfos.at(aiFactionId));
 }
@@ -272,7 +272,7 @@ void populateAIData()
 
 void populateTileInfos()
 {
-	debug("populateTileInfos - %s\n", playerMFaction->noun_faction);
+	debug("populateTileInfos - %s\n", aiMFaction->noun_faction);
 	
 	// ocean / surface type
 	// coast
@@ -592,7 +592,7 @@ void populateTileInfos()
 
 void populateSeaRegionAreas()
 {
-	debug("populateSeaRegionAreas - %s\n", playerMFaction->noun_faction);
+	debug("populateSeaRegionAreas - %s\n", aiMFaction->noun_faction);
 	
 	aiData.seaRegionAreas.clear();
 	
@@ -1392,7 +1392,7 @@ void populateUnits()
 
 void populateBasePoliceData()
 {
-	debug("populateBasePoliceData - %s\n", playerMFaction->noun_faction);
+	debug("populateBasePoliceData - %s\n", aiMFaction->noun_faction);
 	
 	for (int baseId : aiData.baseIds)
 	{
@@ -7363,7 +7363,7 @@ This function ensures land units at sea are assigned to transport.
 */
 void assignVehiclesToTransports()
 {
-	debug("assignVehiclesToTransports - %s\n", playerMFaction->noun_faction);
+	debug("assignVehiclesToTransports - %s\n", aiMFaction->noun_faction);
 	
 	std::vector<int> orphanPassengerIds;
 	
