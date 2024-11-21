@@ -17,7 +17,7 @@ const double AVERAGE_LAND_COLONY_TRAVEL_TIME = 10.0;
 
 // project value multiplier comparing to mineral cost
 const double BASE_CAPTURE_GAIN_COEFFICIENT = 0.75;
-const double PROJECT_VALUE_MULTIPLIER = 10.0;
+const double PROJECT_VALUE_MULTIPLIER = 1.0;
 
 // base defense weight for remote vehicles
 const double BASE_DEFENSE_RANGE_AIR		= 10.0;

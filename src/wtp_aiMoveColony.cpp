@@ -554,6 +554,14 @@ double getBuildSiteBaseGain(MAP *buildSite)
 		double score = getResourceScore(nutrientSurplus, mineralIntake, energyIntake);
 		double resourceScore = getResourceScore(mineralIntake, energyIntake);
 		
+		// bonus score for bonus resources
+		
+		score +=
+			+ getNutrientBonus(tile)
+			+ getMineralBonus(tile)
+			+ getEnergyBonus(tile)
+		;
+		
 		// add bonus for monolith as it does not need to be terraformed
 		
 		if (map_has_item(tile, BIT_MONOLITH))
@@ -579,9 +587,10 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	
 	executionProfiles["1.3.2.2.4.2.3. sort scores"].stop();
 	
+	/*
 	// weight drop from better to worse square
 	
-	double weightDrop = 0.5;
+	double weightDrop = 0.7;
 	
 	// average weighted yield score
 	
@@ -590,7 +599,8 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	double sumWeightResourceScore = 0.0;
 	
 	int popSize = 0;
-	double baseNutrientSurplus = ResInfo->base_sq_nutrient;
+	double baseNutrientSurplus = (double)ResInfo->base_sq_nutrient;
+	double baseResourceScore = getResourceScore(ResInfo->base_sq_mineral, ResInfo->base_sq_energy);
 	int const nutrientCostFactor = mod_cost_factor(aiFactionId, RSC_NUTRIENT, -1);
 	
 	double weight = 1.0;
@@ -598,13 +608,16 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	for (YieldInfo const &yieldInfo : yieldInfos)
 	{
 		popSize++;
-		baseNutrientSurplus += yieldInfo.nutrientSurplus;
+		double yieldNutrientSurplus = 0.5 * yieldInfo.score / getResourceScore(1.0, 0.0, 0.0);
+		baseNutrientSurplus += yieldNutrientSurplus;
+		double yieldResourceScore = 0.5 * yieldInfo.score;
+		baseResourceScore += yieldResourceScore;
 		
 		int nutrientBoxSize = nutrientCostFactor * (1 + popSize);
-		double popGrowth = 1.0 / ((double)nutrientBoxSize / baseNutrientSurplus + 1.0);
+		double popGrowth = 1.0 / ((double)nutrientBoxSize / baseNutrientSurplus);
 		
 		double weightPopGrowth = weight * popGrowth;
-		double weightResourceScore = weight * yieldInfo.resourceScore;
+		double weightResourceScore = weight * baseResourceScore;
 		
 		sumWeight += weight;
 		sumWeightPopGrowth += weightPopGrowth;
@@ -619,14 +632,46 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	
 	// gain
 	
-	double baseSquareIncome = getResourceScore(ResInfo->base_sq_mineral, ResInfo->base_sq_energy);
-	double income = baseSquareIncome + averageResourceScore;
+	double income = averageResourceScore;
 	double incomeGain = getGainIncome(income);
 	
 	double incomeGrowth = averagePopGrowth * averageResourceScore;
 	double incomeGrowthGain = getGainIncomeGrowth(incomeGrowth);
 	
 	double gain = incomeGain + incomeGrowthGain;
+	*/
+	
+	int const nutrientCostFactor = mod_cost_factor(aiFactionId, RSC_NUTRIENT, -1);
+	
+	int popSize = 1;
+	int nutrientBoxSize = nutrientCostFactor * (1 + popSize);
+	double nutrientSurplus = (double)ResInfo->base_sq_nutrient + yieldInfos.at(popSize - 1).nutrientSurplus;
+	double resourceScore = getResourceScore(ResInfo->base_sq_mineral, ResInfo->base_sq_energy) + yieldInfos.at(popSize - 1).resourceScore;
+	double nutrientAccumulated = 0.0;
+	double totalBonus = 0.0;
+	int evaluationTurns = 50;
+	for (int turn = 0; turn < evaluationTurns; turn++)
+	{
+		nutrientAccumulated += nutrientSurplus;
+		totalBonus += resourceScore;
+		
+		if (nutrientAccumulated >= (double)nutrientBoxSize)
+		{
+			popSize++;
+			nutrientBoxSize = nutrientCostFactor * (1 + popSize);
+			nutrientAccumulated = 0.0;
+			
+			double yieldNutrientSurplus = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score / getResourceScore(1.0, 0.0, 0.0) : 0.0;
+			double yieldResourceScore = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score : 0.0;
+			
+			nutrientSurplus += yieldNutrientSurplus;
+			resourceScore += yieldResourceScore;
+			
+		}
+		
+	}
+	
+	double gain = (totalBonus / (double)evaluationTurns) * (1.0 + getExponentialCoefficient(aiData.developmentScale, evaluationTurns));
 	
 	if (DEBUG)
 	{
@@ -648,13 +693,13 @@ double getBuildSiteBaseGain(MAP *buildSite)
 			);
 			
 		}
-	
+		
+		/*
 		debug
 		(
 			"\tmeanBaseGain=%5.2f"
 			" averagePopGrowth=%5.2f"
 			" averageResourceScore=%5.2f"
-			" baseSquareIncome=%5.2f"
 			" income=%5.2f"
 			" incomeGrowth=%5.2f"
 			" incomeGain=%5.2f"
@@ -664,11 +709,19 @@ double getBuildSiteBaseGain(MAP *buildSite)
 			, getMeanBaseGain(0)
 			, averagePopGrowth
 			, averageResourceScore
-			, baseSquareIncome
 			, income
 			, incomeGrowth
 			, incomeGain
 			, incomeGrowthGain
+			, gain
+		);
+		*/
+		debug
+		(
+			"\tmeanBaseGain=%5.2f"
+			" gain=%5.2f"
+			"\n"
+			, getMeanBaseGain(0)
 			, gain
 		);
 		

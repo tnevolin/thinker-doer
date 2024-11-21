@@ -1353,9 +1353,9 @@ void __cdecl mod_base_psych(int base_id) {
 		
 	}
 	
-    debug_ver("base_psych %3d %3d pop: %2d tal: %2d dro: %2d spc: %2d eff: %d cap: %d pol: %d psy: %d\n",
-    *CurrentTurn, base_id, base->pop_size, base->talent_total, base->drone_total, base->specialist_total,
-    effic_drones, capture_drones, police_total, psych_val);
+//    debug_ver("base_psych %3d %3d pop: %2d tal: %2d dro: %2d spc: %2d eff: %d cap: %d pol: %d psy: %d\n",
+//    *CurrentTurn, base_id, base->pop_size, base->talent_total, base->drone_total, base->specialist_total,
+//    effic_drones, capture_drones, police_total, psych_val);
 }
 
 /*

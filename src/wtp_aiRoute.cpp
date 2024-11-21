@@ -154,7 +154,6 @@ void populateAirClusters(int factionId)
 		UNIT *unit = getUnit(unitId);
 		int chassisId = unit->chassis_id;
 		int triad = unit->triad();
-		int range = unit->range();
 		int speed = getUnitSpeed(factionId, unitId);
 		
 		// air unit
@@ -175,7 +174,6 @@ void populateAirClusters(int factionId)
 		UNIT *unit = getUnit(unitId);
 		int chassisId = unit->chassis_id;
 		int triad = unit->triad();
-		int range = unit->range();
 		int speed = getUnitSpeed(factionId, unitId);
 		
 		// this faction
@@ -183,9 +181,9 @@ void populateAirClusters(int factionId)
 		if (vehicle->faction_id != factionId)
 			continue;
 		
-		// ranged air unit
+		// air unit
 		
-		if (triad != TRIAD_AIR || range == 0)
+		if (triad != TRIAD_AIR)
 			continue;
 		
 		// add speed

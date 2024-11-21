@@ -2582,7 +2582,8 @@ void populateEnemyBaseAssaultEffects()
 				int enemyVehicleFactionId = enemyVehicle->faction_id;
 				int enemyVehicleUnitId = enemyVehicle->unit_id;
 				
-				double assaultEffect = getAssaultEffect(enemyVehicleFactionId, enemyVehicleUnitId, aiFactionId, aiUnitId, baseTile);
+				// our unit assaulting enemy base
+				double assaultEffect = getAssaultEffect(aiFactionId, aiUnitId, enemyVehicleFactionId, enemyVehicleUnitId, baseTile);
 				assaultEffectAverageAccumulator.add(enemyVehicleWeight, assaultEffect);
 			
 			}

@@ -1,3 +1,7 @@
+# Version 323
+
+* [Bug] Fixed one production computation bugs.
+
 # Version 322
 
 * [Bug] Fixed few combat computation bugs.
