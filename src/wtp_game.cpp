@@ -1894,6 +1894,7 @@ void computeBase(int baseId, bool resetWorkedTiles)
 	if (resetWorkedTiles)
 	{
 		Bases[baseId].worked_tiles = 0;
+		Bases[baseId].specialist_total = 0;
 	}
 
 	set_base(baseId);

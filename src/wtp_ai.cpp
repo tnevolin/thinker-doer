@@ -7121,34 +7121,34 @@ double getBaseGain(int popSize, int nutrientCostFactor, Resource baseIntake2)
 		+ incomeGrowthGain
 	;
 	
-	if (DEBUG)
-	{
-		debug
-		(
-			"getBaseGain(popSize=%2d, nutrientCostFactor=%2d, baseIntake2=%f,%f,%f)\n"
-			, popSize, nutrientCostFactor, baseIntake2.nutrient, baseIntake2.mineral, baseIntake2.energy
-		);
-		
-		debug
-		(
-			"\tincome=%5.2f"
-			" incomeGain=%5.2f"
-			" averageCitizenResourceIncome=%5.2f"
-			" popualtionGrowth=%5.2f"
-			" incomeGrowth=%5.2f"
-			" incomeGrowthGain=%5.2f"
-			" gain=%5.2f"
-			"\n"
-			, income
-			, incomeGain
-			, aiData.averageCitizenResourceIncome
-			, popualtionGrowth
-			, incomeGrowth
-			, incomeGrowthGain
-			, gain
-		);
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug
+//		(
+//			"getBaseGain(popSize=%2d, nutrientCostFactor=%2d, baseIntake2=%f,%f,%f)\n"
+//			, popSize, nutrientCostFactor, baseIntake2.nutrient, baseIntake2.mineral, baseIntake2.energy
+//		);
+//		
+//		debug
+//		(
+//			"\tincome=%5.2f"
+//			" incomeGain=%5.2f"
+//			" averageCitizenResourceIncome=%5.2f"
+//			" popualtionGrowth=%5.2f"
+//			" incomeGrowth=%5.2f"
+//			" incomeGrowthGain=%5.2f"
+//			" gain=%5.2f"
+//			"\n"
+//			, income
+//			, incomeGain
+//			, aiData.averageCitizenResourceIncome
+//			, popualtionGrowth
+//			, incomeGrowth
+//			, incomeGrowthGain
+//			, gain
+//		);
+//		
+//	}
 	
 	return gain;
 	

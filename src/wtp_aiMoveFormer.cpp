@@ -816,7 +816,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 			
 			debug
 			(
-				"\t\t\t%-16s"
+				"\t\t\t%-20s %d-%d-%d"
 				" terraformingTime=%5.2f"
 				" improvementIncome=%5.2f"
 				" fitnessScore=%5.2f"
@@ -824,6 +824,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 				" gain=%5.2f"
 				"\n"
 				, option->name
+				, terraformingRequest.yield.nutrient, terraformingRequest.yield.mineral, terraformingRequest.yield.energy
 				, terraformingRequest.terraformingTime
 				, terraformingRequest.improvementIncome
 				, terraformingRequest.fitnessScore
@@ -1448,8 +1449,6 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 	if (option->requiredAction != -1 && !isTerraformingAvailable(tile, option->requiredAction))
 		return terraformingRequest;
 	
-	debug("\t\t\t%s\n", option->name);
-	
 	// initialize variables
 	
 	int firstAction = -1;
@@ -1581,8 +1580,6 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 	// generate and store yield
 	
 	applyMapState(improvedMapState, tile);
-	computeBase(baseId, true);
-	
 	terraformingRequest.yield =
 		{
 			mod_crop_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
@@ -1590,9 +1587,7 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 			mod_energy_yield(aiFactionId, baseId, getX(tile), getY(tile), 0),
 		}
 	;
-	
 	restoreTileMapState(tile);
-	computeBase(baseId, true);
 	
 	// calculate yield income
 	
@@ -1622,26 +1617,23 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 	// gain
 	
 	double gain = getTerraformingGain(income, terraformingTime);
-	
+
 //	debug
 //	(
-//		"\t\t\t%-20s"
-//		" gain=%5.2f"
+//		"\t\t\t%-20s %d-%d-%d"
 //		" terraformingTime=%5.2f"
 //		" improvementIncome=%5.2f"
 //		" fitnessScore=%5.2f"
-//		" penaltyScore=%5.2f"
-//		" condenserExtraYieldScore=%5.2f"
 //		" income=%5.2f"
+//		" gain=%5.2f"
 //		"\n"
 //		, option->name
-//		, gain
+//		, terraformingRequest.yield.nutrient, terraformingRequest.yield.mineral, terraformingRequest.yield.energy
 //		, terraformingTime
 //		, improvementIncome
 //		, fitnessScore
-//		, penaltyScore
-//		, condenserExtraYieldScore
 //		, income
+//		, gain
 //	)
 //	;
 	
@@ -3556,7 +3548,7 @@ double estimateCondenserExtraYieldScore(MAP *tile, const std::vector<int> *actio
 	
 	double extraScore = sign * getTerraformingResourceScore(totalRainfallImprovement - 2.0, 0.0, 0.0);
 	
-	debug("\t\tsign=%+1d, totalRainfallImprovement=%6.3f, extraScore=%+6.3f\n", sign, totalRainfallImprovement, extraScore);
+//	debug("\t\tsign=%+1d, totalRainfallImprovement=%6.3f, extraScore=%+6.3f\n", sign, totalRainfallImprovement, extraScore);
 	
 	// return score
 	

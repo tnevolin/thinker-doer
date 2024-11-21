@@ -1,3 +1,7 @@
+# Version 325
+
+* [Bug] Fixed drone rule psych computation.
+
 # Version 324
 
 * [Bug] Fixed base limit computation bug.

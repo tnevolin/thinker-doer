@@ -1123,7 +1123,19 @@ void __cdecl mod_base_psych(int base_id) {
     }
     if (m->rule_drone) {
         // Extra drone at base (per "param" citizens, rounded down)
+        
+        // [WTP]
+        // specialists do not change drones
+        
+        if (conf.base_psych_specialist_content)
+		{
+			rule_drone = base->pop_size / m->rule_drone;
+		}
+		else
+		{
         rule_drone = (base->pop_size - base->specialist_total) / m->rule_drone;
+		}
+        
         adjust_drone(base, rule_drone);
     }
     if (m->rule_talent) {
@@ -1630,7 +1642,7 @@ void __cdecl mod_base_drones() {
     } else if (!delay_base_riot) {
         // Normally drone riots would always happen here if there are sufficient drones
         // but delay_drone_riots option can postpone it for one turn.
-        drone_riot();
+//        drone_riot();
     }
 }
 
