@@ -157,9 +157,9 @@ void populateAirClusters(int factionId)
 		int range = unit->range();
 		int speed = getUnitSpeed(factionId, unitId);
 		
-		// ranged air unit
+		// air unit
 		
-		if (triad != TRIAD_AIR || range == 0)
+		if (triad != TRIAD_AIR)
 			continue;
 		
 		// add speed
@@ -219,6 +219,17 @@ void populateAirClusters(int factionId)
 			
 			airClusters.at(chassisId).emplace(speed, std::vector<int>(*MapAreaTiles));
 			std::fill(airClusters.at(chassisId).at(speed).begin(), airClusters.at(chassisId).at(speed).end(), -1);
+			
+			// gravship reaches everywhere
+			
+			if (chassisId == CHS_GRAVSHIP)
+			{
+				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+				{
+					airClusters.at(chassisId).at(speed).at(tileIndex) = 0;
+				}
+				
+			}
 			
 			// set available nodes
 			
@@ -292,32 +303,32 @@ void populateAirClusters(int factionId)
 	
 	executionProfiles["1.1.4.2. populateAirClusters"].stop();
 	
-//	if (DEBUG)
-//	{
-//		for (robin_hood::pair<int, robin_hood::unordered_flat_map<int, std::vector<int>>> const &airClusterEntry : airClusters)
-//		{
-//			int chassisId = airClusterEntry.first;
-//			robin_hood::unordered_flat_map<int, std::vector<int>> const &chassisAirClusters = airClusterEntry.second;
-//			
-//			debug("\tchassisId=%2d\n", chassisId);
-//			
-//			for (robin_hood::pair<int, std::vector<int>> const &chassisAirClusterEntry : chassisAirClusters)
-//			{
-//				int speed = chassisAirClusterEntry.first;
-//				std::vector<int> const &chassisAirSpeedAirClusters = chassisAirClusterEntry.second;
-//				
-//				debug("\t\tspeed=%2d\n", speed);
-//				
-//				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-//				{
-//					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), chassisAirSpeedAirClusters.at(tileIndex));
-//				}
-//				
-//			}
-//				
-//		}
-//		
-//	}
+	if (DEBUG)
+	{
+		for (robin_hood::pair<int, robin_hood::unordered_flat_map<int, std::vector<int>>> const &airClusterEntry : airClusters)
+		{
+			int chassisId = airClusterEntry.first;
+			robin_hood::unordered_flat_map<int, std::vector<int>> const &chassisAirClusters = airClusterEntry.second;
+			
+			debug("\tchassisId=%2d\n", chassisId);
+			
+			for (robin_hood::pair<int, std::vector<int>> const &chassisAirClusterEntry : chassisAirClusters)
+			{
+				int speed = chassisAirClusterEntry.first;
+				std::vector<int> const &chassisAirSpeedAirClusters = chassisAirClusterEntry.second;
+				
+				debug("\t\tspeed=%2d\n", speed);
+				
+				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+				{
+					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), chassisAirSpeedAirClusters.at(tileIndex));
+				}
+				
+			}
+				
+		}
+		
+	}
 	
 }
 

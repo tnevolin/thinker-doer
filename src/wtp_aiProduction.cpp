@@ -2222,8 +2222,9 @@ void evaluateEnemyBaseAssaultUnits()
 		{
 			BASE *enemyBase = getBase(enemyBaseId);
 			BaseInfo &enemyBaseInfo = aiData.getBaseInfo(enemyBaseId);
+			FactionInfo &factionInfo = aiData.factionInfos[enemyBase->faction_id];
 			
-			// exclude player faction base
+			// exclude player base
 			
 			if (enemyBase->faction_id == aiFactionId)
 				continue;
@@ -2237,10 +2238,17 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			// proportional base capture value
 			
-			double enemyBaseCapturePortion = enemyBaseInfo.assaultEffects.at(unitId);
+			double assaultEffect = enemyBaseInfo.assaultEffects.at(unitId);
+			double productionRatio = aiFactionInfo->productionPower / factionInfo.productionPower;
+			double adjustedEffect = assaultEffect * productionRatio;
+			double adjustedSuperiority = adjustedEffect - 1.0;
+			
+			if (adjustedSuperiority <= 0.0)
+				continue;
+			
 			double enemyBaseCaptureGain = enemyBaseInfo.captureGain;
-			double enemyBaseCaptureGainPortion = enemyBaseCapturePortion * enemyBaseCaptureGain;
-			double incomeGain = getGainDelay(enemyBaseCaptureGainPortion, travelTime);
+			double adjustedEnemyBaseCaptureGain  = enemyBaseCaptureGain * adjustedSuperiority;
+			double incomeGain = getGainDelay(adjustedEnemyBaseCaptureGain, travelTime);
 			
 			// range coefficient
 			
@@ -2250,7 +2258,7 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			// upkeep gain
 			
-			double upkeepGain = getGainTimeInterval(getGainIncome(getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0)), 0.0, travelTime);
+			double upkeepGain = getGainTimeInterval(getGainIncome(getResourceScore(-getUnitSupport(unitId), 0)), 0.0, travelTime);
 			
 			// combined gain
 			
@@ -2265,9 +2273,12 @@ void evaluateEnemyBaseAssaultUnits()
 			(
 				"\t\t%-25s"
 				" travelTime=%7.2f"
-				" enemyBaseCapturePortion=%5.2f"
+				" assaultEffect=%5.2f"
+				" productionRatio=%5.2f"
+				" adjustedEffect=%5.2f"
+				" adjustedSuperiority=%5.2f"
 				" enemyBaseCaptureGain=%5.2f"
-				" enemyBaseCaptureGainPortion=%5.2f"
+				" adjustedEnemyBaseCaptureGain=%5.2f"
 				" incomeGain=%5.2f"
 				" extensionRange=%5.2f"
 				" enemyBaseInfo.averagePlayerBasesRange=%5.2f"
@@ -2278,9 +2289,12 @@ void evaluateEnemyBaseAssaultUnits()
 				"\n"
 				, enemyBase->name
 				, travelTime
-				, enemyBaseCapturePortion
+				, assaultEffect
+				, productionRatio
+				, adjustedEffect
+				, adjustedSuperiority
 				, enemyBaseCaptureGain
-				, enemyBaseCaptureGainPortion
+				, adjustedEnemyBaseCaptureGain
 				, incomeGain
 				, extensionRange
 				, enemyBaseInfo.averagePlayerBasesRange

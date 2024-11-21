@@ -1,3 +1,7 @@
+# Version 322
+
+* [Bug] Fixed few combat computation bugs.
+
 # Version 321
 
 * [Bug] Fixed my bug in former computation introduced in 316.

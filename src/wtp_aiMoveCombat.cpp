@@ -75,9 +75,23 @@ void immediateAttack()
 		{
 			TaskType taskType = TT_MELEE_ATTACK;
 			
-			// empty enemy base or enemy stack
+			// empty enemy base
 			
-			if (!(aiData.isEmptyEnemyBaseAt(attackAction.target) || aiData.isEnemyStackAt(attackAction.target)))
+			if (aiData.isEmptyEnemyBaseAt(attackAction.target))
+			{
+				selected = true;
+				selectedTaskType = TT_MOVE;
+				selectedPosition = attackAction.target;
+				selectedTarget = nullptr;
+				selectedPriority = 100.0;
+				
+				break;
+				
+			}
+			
+			// enemy stack
+			
+			if (!aiData.isEnemyStackAt(attackAction.target))
 				continue;
 			
 			EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);

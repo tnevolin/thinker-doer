@@ -318,7 +318,6 @@ struct BaseInfo
 	
 	// economical data
 	double gain;
-	double productionSupport;
 	
 	// police data	
 	BasePoliceData policeData;

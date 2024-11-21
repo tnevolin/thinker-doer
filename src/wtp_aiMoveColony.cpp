@@ -581,7 +581,7 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	
 	// weight drop from better to worse square
 	
-	double weightDrop = 0.9;
+	double weightDrop = 0.5;
 	
 	// average weighted yield score
 	
@@ -591,7 +591,7 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	
 	int popSize = 0;
 	double baseNutrientSurplus = ResInfo->base_sq_nutrient;
-	double const nutrientCostFactor = (double)mod_cost_factor(aiFactionId, RSC_NUTRIENT, -1);
+	int const nutrientCostFactor = mod_cost_factor(aiFactionId, RSC_NUTRIENT, -1);
 	
 	double weight = 1.0;
 	
@@ -600,8 +600,8 @@ double getBuildSiteBaseGain(MAP *buildSite)
 		popSize++;
 		baseNutrientSurplus += yieldInfo.nutrientSurplus;
 		
-		double nutrientBoxSize = nutrientCostFactor * (double)(1 + popSize);
-		double popGrowth = 1.0 / (nutrientBoxSize / baseNutrientSurplus + 1.0);
+		int nutrientBoxSize = nutrientCostFactor * (1 + popSize);
+		double popGrowth = 1.0 / ((double)nutrientBoxSize / baseNutrientSurplus + 1.0);
 		
 		double weightPopGrowth = weight * popGrowth;
 		double weightResourceScore = weight * yieldInfo.resourceScore;
@@ -789,7 +789,7 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	executionProfiles["1.3.2.2.4.1.4. landmarkScore"].stop();
 	
-	executionProfiles["1.3.2.2.4.1.4. bonusScore"].start();
+	executionProfiles["1.3.2.2.4.1.4. landmarkBonusScore"].start();
 	
 	// explicitly encourage placing base on bonuses
 	
@@ -809,7 +809,7 @@ double getBuildSitePlacementScore(MAP *tile)
 		}
 		
 	}
-	landmarkBonusScore = std::min(0.5, landmarkBonusScore);
+	landmarkBonusScore = std::min(0.3, landmarkBonusScore);
 	debug("\t%-20s%+5.2f\n", "landmarkBonusScore", landmarkBonusScore);
 	
 	executionProfiles["1.3.2.2.4.1.4. landmarkBonusScore"].stop();

@@ -919,7 +919,7 @@ void populateFactionInfos()
 			
 			// base production power
 			
-			int baseProductionPower = getResourceScore(base->mineral_surplus, base->economy_total);
+			double baseProductionPower = getResourceScore(base->mineral_surplus, base->economy_total);
 			
 			factionInfo.productionPower += baseProductionPower;
 			
@@ -1060,12 +1060,6 @@ void populateBaseInfos()
 		baseInfo.gain = getBaseGain(baseId);
 		
 		debug("\t%-25s gain=%5.2f\n", base->name, baseInfo.gain);
-		
-		// productionSupport
-		
-		baseInfo.productionSupport = getBaseProductionSupport(baseId);
-		
-		debug("\t%-25s productionSupport=%5.2f\n", base->name, baseInfo.productionSupport);
 		
 	}
 	
@@ -2574,7 +2568,10 @@ void populateEnemyBaseAssaultEffects()
 			// can capture base
 			
 			if (!isUnitCanCaptureBase(aiUnitId, baseTile))
+			{
+				baseInfo.assaultEffects.insert({aiUnitId, 0.0});
 				continue;
+			}
 			
 			for (IdDoubleValue protectorWeight : baseInfo.protectorWeights)
 			{
@@ -8264,7 +8261,7 @@ MAP *getArtilleryAttackPosition(int vehicleId, MAP *target)
 }
 
 /*
-Roughly estimates win probability by combat effect.
+Roughly estimates win probability based on combat effect.
 */
 double getEstimatedWinProbability(double effect)
 {
