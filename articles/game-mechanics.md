@@ -127,3 +127,28 @@ If base loses all of its population it is lost. If base have some population lef
 | 4 | 67% |
 | >= 5 | 100% |
 
+# Riot intesifying
+
+When base is rioting for more than one turn the "riot intensifying" popup is shown for the base.
+
+#### Exclusions
+
+* Nothing ever happens to headquarter base.
+* Nothing ever hanppes to captured base for the first **five** turns.
+
+#### Events and conditions
+
+Conditions are checked in following order.
+
+1. If POLICE >= -5, there is a `(POLICE + 6) / (POLICE + 7)` random chance that nothing happens. Otherwise, go to next step.
+2. If populatioin < 4, there is a `1/3` random chance that nothing happes. Otherwise, go to next step.
+3. Game makes `population + 20 - difficulty - ranking` attempts to destroy a building with random ID.
+   * Headquarter cannot be destroyed.
+   * Faction bonus facilities cannot be destroyed.
+   * If given random ID buiding does not exist in this base - go to next loop.
+4. If game can successfully find a building to destroy, it destroys it and nothing else happens. Otherwise, it goes to next step.
+5. If POLICE >= -1 (at least one police unit allowed), nothing happens. Otherwise, it goes to next step.
+6. If faction is alien, nothing happens. Otherwise, it goes to next step.
+7. If faction is AI (not human), nothing happens. Otherwise, it goes to next step. Damn! AI bases **never** defect.
+8. The rest of the code is broken. If one of your bases is ever tries to defect, the game will likely crash. Supposedly, there is an equal chance to defect to any faction with bonus to drones.
+
