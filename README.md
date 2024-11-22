@@ -748,6 +748,16 @@ This mod uses Thinker expiration mechanics with slight modification. The infiltr
 
 A simplification and improvement to vanilla base psych mechanics.
 
+Game now works much more intuitive. Player does not need to learn below algorithms unless out of curiousity. All quirks and exploits are eliminated so there is actuially *no need* to learn special mechanics to understand the game anymore.
+
+* More bases generate *proportionally* more bureaucracy drones those need to be dealt with by different psych means.
+* Superdrones are just two drones or double drone.
+* Each psych mean has certain anti-drone power.
+* Psych allocation works reliably and *proportionally* to allocation slider as player would expect.
+* Specialists do not limit talent/drone/superdrone count but psych specialists contribute to psych pool that helps base happiness.
+  * Psych specialists are best when player wants quelling outstanding drones or creating more talents.
+  * Advanced specialists are better to replace content field workers on extremely unproductive land or when no more working spots available. Very intuitive.
+
 ## Basics
 
 Base population is divided into two large groups: land workers and specialists.
