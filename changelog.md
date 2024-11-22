@@ -2,7 +2,7 @@
 
 * Base uses psych specialist as default when taking field worker off the field.
 * Echelon Mirror gives 1.5 energy bonus to each adjacent Solar Collector.
-
+* Echelon Mirror generates 4 eco-damage instead or 6.
 * Tree facilities are slightly nerfed in all regards.
   * Their economical bonus is distributed to similar mineral eco-damage facilities to make it more symmetrical.
   * They no longer cumulatively reduce terraforming eco-damage completely but only by 75%.
