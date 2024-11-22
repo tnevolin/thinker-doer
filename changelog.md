@@ -1,5 +1,6 @@
 # Version 326
 
+* Hurry cost for facilities/units is 3, for projects is 6.
 * Base uses psych specialist as default when taking field worker off the field.
 * Echelon Mirror gives 1.5 energy bonus to each adjacent Solar Collector.
 * Echelon Mirror generates 4 eco-damage instead or 6.
