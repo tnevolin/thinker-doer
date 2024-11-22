@@ -7,10 +7,12 @@
   * Their economical bonus is distributed to similar mineral eco-damage facilities to make it more symmetrical.
   * They no longer cumulatively reduce terraforming eco-damage completely but only by 75%.
   * They no longer give +1 energy to forest.
-* `Tree Farm				160/3, +25% economy +25% psych, halves terraforming eco-damage, forest +1 nutrient`
-* `Hybrid Forest			240/4, +25% economy +25% psych, halves terraforming eco-damage, forest +1 nutrient`
-* `Centauri Preserve		120/3, +25% economy +25% psych`
-* `Temple of Planet			180/4, +25% economy +25% psych`
+```
+Tree Farm		160/3, +25% economy +25% psych, halves terraforming eco-damage, forest +1 nutrient
+Hybrid Forest		240/4, +25% economy +25% psych, halves terraforming eco-damage, forest +1 nutrient
+Centauri Preserve	120/3, +25% economy +25% psych
+Temple of Planet	180/4, +25% economy +25% psych
+```
 
 # Version 325
 
