@@ -488,6 +488,13 @@ void __cdecl mod_base_yield() {
             }
             base->worked_tiles = worked_tiles;
             base->specialist_total = specialist_total;
+            
+            // [WTP]
+            // default specialist is the psych type
+            
+            base->specialist_modify(base->specialist_total - 1, psych_spc_id);
+            initial.specialist_modify(base->specialist_total - 1, psych_spc_id);
+            
         };
         base->specialist_adjust = specialist_adjust;
 
@@ -758,14 +765,39 @@ void __cdecl mod_base_energy() {
         coeff_labs += 2;
         coeff_psych += 1;
     }
+    
+    // [WTP]
+    // custom values
+    
+//    if (has_fac_built(FAC_TREE_FARM, base_id)) {
+//        coeff_econ += 2;
+//        coeff_psych += 2;
+//    }
+//    if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+//        coeff_econ += 2;
+//        coeff_psych += 2;
+//    }
     if (has_fac_built(FAC_TREE_FARM, base_id)) {
-        coeff_econ += 2;
-        coeff_psych += 2;
+        coeff_econ += conf.facility_energy_multipliers_tree_farm[0];
+        coeff_psych += conf.facility_energy_multipliers_tree_farm[1];
+        coeff_labs += conf.facility_energy_multipliers_tree_farm[2];
     }
     if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-        coeff_econ += 2;
-        coeff_psych += 2;
+        coeff_econ += conf.facility_energy_multipliers_hybrid_forest[0];
+        coeff_psych += conf.facility_energy_multipliers_hybrid_forest[1];
+        coeff_labs += conf.facility_energy_multipliers_hybrid_forest[2];
     }
+    if (has_fac_built(FAC_CENTAURI_PRESERVE, base_id)) {
+        coeff_econ += conf.facility_energy_multipliers_centauri_preserve[0];
+        coeff_psych += conf.facility_energy_multipliers_centauri_preserve[1];
+        coeff_labs += conf.facility_energy_multipliers_centauri_preserve[2];
+    }
+    if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+        coeff_econ += conf.facility_energy_multipliers_temple_of_planet[0];
+        coeff_psych += conf.facility_energy_multipliers_temple_of_planet[1];
+        coeff_labs += conf.facility_energy_multipliers_temple_of_planet[2];
+    }
+    
     if (has_fac_built(FAC_FUSION_LAB, base_id)) {
         coeff_labs += 2;
         coeff_econ += 2;
@@ -2181,6 +2213,50 @@ int stockpile_energy_active(int base_id) {
 
 int terraform_eco_damage(int base_id) {
     BASE* base = &Bases[base_id];
+    
+    // [WTP]
+    // alternative terraforming eco-damage reduction formula
+    
+    if (conf.facility_terraforming_ecodamage_halved)
+	{
+		int value = 0;
+		
+		for (auto const &m : iterate_tiles(base->x, base->y, 0, 21)) {
+			int num = __builtin_popcount(m.sq->items & (BIT_THERMAL_BORE|BIT_ECH_MIRROR|
+				BIT_CONDENSER|BIT_SOIL_ENRICHER|BIT_FARM|BIT_SOLAR|BIT_MINE|BIT_MAGTUBE|BIT_ROAD));
+			if ((1 << m.i) & base->worked_tiles) {
+				num *= 2;
+			}
+			if (m.sq->items & BIT_THERMAL_BORE) {
+				num += 8;
+			}
+			if (m.sq->items & BIT_ECH_MIRROR) {
+				num += conf.echelon_mirror_ecodamage;
+			}
+			if (m.sq->items & BIT_CONDENSER) {
+				num += 4;
+			}
+			if (m.sq->items & BIT_FOREST) {
+				num -= 1;
+			}
+		}
+		
+		// each facility halves terraforming eco-damage
+		
+		if (has_fac_built(FAC_TREE_FARM, base_id) != 0)
+		{
+			value /= 2;
+		}
+		if (has_fac_built(FAC_HYBRID_FOREST, base_id) != 0)
+		{
+			value /= 2;
+		}
+		
+		return value;
+		
+	}
+	else
+	{
     int modifier = (has_fac_built(FAC_TREE_FARM, base_id) != 0)
         + (has_fac_built(FAC_HYBRID_FOREST, base_id) != 0);
     int value = 0;
@@ -2205,6 +2281,8 @@ int terraform_eco_damage(int base_id) {
         value += num * (2 - modifier) / 2;
     }
     return value;
+	}
+	
 }
 
 int mineral_output_modifier(int base_id) {

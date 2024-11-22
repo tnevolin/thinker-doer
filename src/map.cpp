@@ -356,12 +356,23 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
             if (sq->items & BIT_FOREST) {
                 value = ResInfo->forest_sq_nutrient
                     + (bonus_nutrient ? ResInfo->bonus_sq_nutrient : 0);
+                
+				// [WTP]
+				// facilities custom bonus
+				
+//                if (has_fac_built(FAC_TREE_FARM, base_id)) {
+//                    value++;
+//                }
+//                if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+//                    value++;
+//                }
                 if (has_fac_built(FAC_TREE_FARM, base_id)) {
-                    value++;
+                    value += conf.facility_yield_bonuses_tree_farm[0];
                 }
                 if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-                    value++;
+                    value += conf.facility_yield_bonuses_hybrid_forest[0];
                 }
+                
                 if (bonus_landmark) {
                     value++;
                 }
@@ -497,6 +508,17 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
             int modifier = sq->val3 >> 6;
             if (sq->items & BIT_FOREST) {
                 value += ResInfo->forest_sq_mineral;
+                
+				// [WTP]
+				// facilities custom bonus
+				
+                if (has_fac_built(FAC_TREE_FARM, base_id)) {
+                    value += conf.facility_yield_bonuses_tree_farm[1];
+                }
+                if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+                    value += conf.facility_yield_bonuses_hybrid_forest[1];
+                }
+                
             } else if (!(sq->items & BIT_MINE) && !flag) {
                 value += (modifier > 0);
             } else {
@@ -642,9 +664,20 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
     }
     else if (sq->items & BIT_FOREST) {
         value = ResInfo->forest_sq_energy;
-        if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-            value++;
-        }
+                
+		// [WTP]
+		// facilities custom bonus
+		
+//        if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+//            value++;
+//        }
+		if (has_fac_built(FAC_TREE_FARM, base_id)) {
+			value += conf.facility_yield_bonuses_tree_farm[2];
+		}
+		if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+			value += conf.facility_yield_bonuses_hybrid_forest[2];
+		}
+		
     }
     else {
         if (sq->items & (BIT_ECH_MIRROR|BIT_SOLAR) || flag) {
@@ -652,12 +685,26 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
         }
         // Fix crash issue by adding null pointer check for CurrentBase
         if (sq->items & BIT_SOLAR && *CurrentBase) {
+			
+			// [WTP]
+			// custom Echelon Mirror bonus
+			
+//            for (auto& m : iterate_tiles(x, y, 1, 9)) {
+//                if (m.sq->items & BIT_ECH_MIRROR
+//                && m.sq->owner == (*CurrentBase)->faction_id) {
+//                    value++;
+//                }
+//            }
+			int echelonMirrorBonus = 0;
             for (auto& m : iterate_tiles(x, y, 1, 9)) {
                 if (m.sq->items & BIT_ECH_MIRROR
                 && m.sq->owner == (*CurrentBase)->faction_id) {
-                    value++;
+                    echelonMirrorBonus++;
                 }
             }
+            echelonMirrorBonus = echelonMirrorBonus * conf.echelon_mirror_bonus[0] / conf.echelon_mirror_bonus[1];
+            value += echelonMirrorBonus;
+			
         }
     }
     if (!is_fungus) {
@@ -706,10 +753,13 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
     }
     value = (solar_flares ? 3 * value : value);
 
-    // Original function can return inconsistent base output when economy is between 3 and 4
-    assert((is_base && economy >= 3 && economy <= 4)
-        || (!is_base && sq->items & BIT_MONOLITH && !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id))
-        || (value == energy_yield(faction_id, base_id, x, y, flag)));
+    // [WTP]
+    // assertion is not correct anymore
+//    // Original function can return inconsistent base output when economy is between 3 and 4
+//    assert((is_base && economy >= 3 && economy <= 4)
+//        || (!is_base && sq->items & BIT_MONOLITH && !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id))
+//        || (value == energy_yield(faction_id, base_id, x, y, flag)));
+	
     return value;
 }
 

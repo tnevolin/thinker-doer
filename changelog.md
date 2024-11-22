@@ -1,3 +1,17 @@
+# Version 326
+
+* Base uses psych specialist as default when taking field worker off the field.
+* Echelon Mirror gives 1.5 energy bonus to each adjacent Solar Collector.
+
+* Tree facilities are slightly nerfed in all regards.
+  * Their economical bonus is distributed to similar mineral eco-damage facilities to make it more symmetrical.
+  * They no longer cumulatively reduce terraforming eco-damage completely but only by 75%.
+  * They no longer give +1 energy to forest.
+* `Tree Farm				160/3, +25% economy +25% psych, halves terraforming eco-damage, forest +1 nutrient`
+* `Hybrid Forest			240/4, +25% economy +25% psych, halves terraforming eco-damage, forest +1 nutrient`
+* `Centauri Preserve		120/3, +25% economy +25% psych`
+* `Temple of Planet			180/4, +25% economy +25% psych`
+
 # Version 325
 
 * [Bug] Fixed drone rule psych computation.

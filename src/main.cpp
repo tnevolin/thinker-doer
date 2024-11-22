@@ -640,6 +640,42 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->base_psych_economy_conversion_ratio = atoi(value);
     }
+    else if (MATCH("facility_terraforming_ecodamage_halved"))
+    {
+        cf->facility_terraforming_ecodamage_halved = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("facility_yield_bonuses_tree_farm"))
+    {
+        opt_list_parse(cf->facility_yield_bonuses_tree_farm, buf, 3, 0);
+    }
+    else if (MATCH("facility_yield_bonuses_hybrid_forest"))
+    {
+        opt_list_parse(cf->facility_yield_bonuses_hybrid_forest, buf, 3, 0);
+    }
+    else if (MATCH("facility_energy_multipliers_tree_farm"))
+    {
+        opt_list_parse(cf->facility_energy_multipliers_tree_farm, buf, 3, 0);
+    }
+    else if (MATCH("facility_energy_multipliers_hybrid_forest"))
+    {
+        opt_list_parse(cf->facility_energy_multipliers_hybrid_forest, buf, 3, 0);
+    }
+    else if (MATCH("facility_energy_multipliers_centauri_preserve"))
+    {
+        opt_list_parse(cf->facility_energy_multipliers_centauri_preserve, buf, 3, 0);
+    }
+    else if (MATCH("facility_energy_multipliers_temple_of_planet"))
+    {
+        opt_list_parse(cf->facility_energy_multipliers_temple_of_planet, buf, 3, 0);
+    }
+    else if (MATCH("echelon_mirror_bonus"))
+    {
+        opt_list_parse(cf->echelon_mirror_bonus, buf, 2, 0);
+    }
+    else if (MATCH("echelon_mirror_ecodamage"))
+    {
+        cf->echelon_mirror_ecodamage = atoi(value);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

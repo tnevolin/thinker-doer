@@ -673,12 +673,12 @@ Biology Lab,                   4, 0, PrPsych, Disable,  Research and PSI
 Skunkworks,                    6, 1, Subat,   Disable,  Prototypes Free
 Hologram Theatre,              6, 2, Chaos,   Disable,  Psych and Fewer Drones
 Paradise Garden,              18, 4, SentEco, Disable,  +2 Talents
-Tree Farm,                    16, 4, EnvEcon, Disable,  Econ/Psych/Forest
-Hybrid Forest,                24, 6, PlaEcon, Disable,  Econ/Psych/Forest
+Tree Farm,                    16, 3, EnvEcon, Disable,  Econ/Psych/Forest
+Hybrid Forest,                24, 4, PlaEcon, Disable,  Econ/Psych/Forest
 Fusion Lab,                   16, 4, SupLube, Disable,  Econ and Labs Bonus
 Quantum Lab,                  32, 8, QuanMac, Disable,  Econ and Labs Bonus
 Research Hospital,            12, 3, OptComp, Disable,  Labs and Psych Bonus
-Nanohospital,                 24, 6, Metal,   Disable,  Labs and Psych Bonus
+Nanohospital,                 18, 4, Metal,   Disable,  Labs and Psych Bonus
 Robotic Assembly Plant,       18, 6, IndRob,  Disable,  Minerals Bonus
 Nanoreplicator,               40,10, TempMec, Disable,  Minerals Bonus
 Quantum Converter,            27, 8, QuanMac, Disable,  Minerals Bonus
@@ -691,8 +691,8 @@ Command Center,                8, 1, Mobile,  Disable,  +2 Morale:Land
 Naval Yard,                    8, 1, DocInit, Disable,  +2 Morale:Sea, Sea Def +100%
 Aerospace Complex,            12, 3, DocAir,  Disable,  +2 Morale:Air, Air Def +100%
 Bioenhancement Center,        20, 5, Viral,   Disable,  +2 Morale:ALL
-Centauri Preserve,            10, 2, CentMed, Disable,  Ecology Bonus
-Temple of Planet,             20, 4, CentGen, Disable,  Ecology Bonus
+Centauri Preserve,            12, 2, CentMed, Disable,  Ecology Bonus
+Temple of Planet,             18, 4, CentGen, Disable,  Ecology Bonus
 Psi Gate,                     10, 2, Matter,  Disable,  Teleport
 Covert Ops Center,            10, 2, Algor,   Disable,  Stronger Probe Teams
 Brood Pit,                    18, 4, CentPsi, Disable,  Police/Morale

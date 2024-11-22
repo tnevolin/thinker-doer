@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v325"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v326"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -369,6 +369,15 @@ struct Config {
 	bool base_psych_remove_drone_soft = false;
 	bool base_psych_specialist_content = false;
 	int base_psych_economy_conversion_ratio = 0;
+    bool facility_terraforming_ecodamage_halved = false;
+    int facility_yield_bonuses_tree_farm[3] = {0,0,0};
+    int facility_yield_bonuses_hybrid_forest[3] = {0,0,0};
+    int facility_energy_multipliers_tree_farm[3] = {0,0,0};
+    int facility_energy_multipliers_hybrid_forest[3] = {0,0,0};
+    int facility_energy_multipliers_centauri_preserve[3] = {0,0,0};
+    int facility_energy_multipliers_temple_of_planet[3] = {0,0,0};
+    int echelon_mirror_bonus[2] = {1,1};
+    int echelon_mirror_ecodamage = 6;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
