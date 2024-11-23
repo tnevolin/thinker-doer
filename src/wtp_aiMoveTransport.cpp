@@ -87,7 +87,7 @@ void moveTranportStrategy()
 		}
 		
 		debug("\t\ttransitRequests\n");
-		for (TransitRequest transitRequest : aiData.transportControl.transitRequests)
+		for (TransitRequest &transitRequest : aiData.transportControl.transitRequests)
 		{
 			int vehicleId = transitRequest.getVehicleId();
 			
@@ -123,25 +123,27 @@ void moveTranportStrategy()
 
 void moveSeaTransportStrategy(int vehicleId)
 {
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	
 	bool TRACE = DEBUG && false;
-
+	
 	debug("moveSeaTransportStrategy [%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
-
+	
 	// assign unload task
-
+	
 	MAP *closestUnloadLocation = nullptr;
 	int closestUnloadLocationPreference = -1;
 	double closestUnloadLocationTravelTime = DBL_MAX;
-
+	
 	for (UnloadRequest &unloadRequest : aiData.transportControl.getSeaTransportUnloadRequests(vehicleId))
 	{
 		int passengerVehicleId = unloadRequest.getVehicleId();
 		double travelTime = getVehicleATravelTime(vehicleId, unloadRequest.destination);
-
+		
 		// preference
-
+		
 		int preference;
-
+		
 		if (isColonyVehicle(passengerVehicleId))
 		{
 			preference = 10;
@@ -154,9 +156,9 @@ void moveSeaTransportStrategy(int vehicleId)
 		{
 			preference = 0;
 		}
-
+		
 		// update best
-
+		
 		if
 		(
 			preference > closestUnloadLocationPreference
@@ -168,120 +170,123 @@ void moveSeaTransportStrategy(int vehicleId)
 			closestUnloadLocationPreference = preference;
 			closestUnloadLocationTravelTime = travelTime;
 		}
-
+		
 	}
-
+	
 	if (closestUnloadLocation != nullptr)
 	{
 		setTask(Task(vehicleId, TT_UNLOAD, closestUnloadLocation));
 		if (TRACE) { debug("\tunload task: %s\n", getLocationString(closestUnloadLocation).c_str()); }
 	}
-
+	
 	// assign load tasks
-
+	
 	// not full
-
+	
 	if (getTransportRemainingCapacity(vehicleId) == 0)
 	{
 		if (TRACE) { debug("\ttransport is full\n"); }
 		return;
 	}
-
-	// not carrying artifact
-
-	for (int passengerVehicleId : getTransportPassengers(vehicleId))
+	
+	// not carrying artifact at sea
+	
+	if (!isBaseAt(vehicleTile))
 	{
-		if (isArtifactVehicle(passengerVehicleId))
+		for (int passengerVehicleId : getTransportPassengers(vehicleId))
 		{
-			return;
+			if (isArtifactVehicle(passengerVehicleId))
+			{
+				return;
+			}
 		}
 	}
-
+	
 	if (!hasTask(vehicleId)) // no task
 	{
 		TransitRequest *closestTransitRequest = nullptr;
 		double closestLoadLocationTravelTime = INT_MAX;
-
+		
 		for (TransitRequest &transitRequest : aiData.transportControl.transitRequests)
 		{
 			// not yet fulfilled
-
+			
 			if (transitRequest.isFulfilled())
 				continue;
-
+			
 			double travelTime = getVehicleATravelTime(vehicleId, transitRequest.origin);
-
+			
 			if (travelTime < closestLoadLocationTravelTime)
 			{
 				closestTransitRequest = &transitRequest;
 				closestLoadLocationTravelTime = travelTime;
 			}
-
+			
 		}
-
+		
 		if (closestTransitRequest != nullptr)
 		{
 			setTask(Task(vehicleId, TT_LOAD, closestTransitRequest->origin));
 			closestTransitRequest->setSeaTransportVehicleId(vehicleId);
 			if (TRACE) { debug("\tload task: %s\n", getLocationString(closestTransitRequest->origin).c_str()); }
 		}
-
+		
 	}
 	else // has task
 	{
 		Task *task = getTask(vehicleId);
-
+		
 		if (task == nullptr)
 			return;
-
+		
 		// for now don't bother mixing load tasks
-
+		
 		if (task->type == TT_LOAD)
 			return;
-
+		
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		MAP *destination = task->getDestination();
 		double currentTravelTime = getVehicleATravelTime(vehicleId, destination);
-
+		
 		TransitRequest *closestTransitRequest = nullptr;
 		double closestLoadLocationTravelTime = currentTravelTime * 150 / 100;
-
+		
 		for (TransitRequest &transitRequest : aiData.transportControl.transitRequests)
 		{
 			// not yet fulfilled
-
+			
 			if (transitRequest.isFulfilled())
 				continue;
-
+			
 			// reachable
-
+			
 			if (isVehicleDestinationReachable(vehicleId, transitRequest.destination))
 				continue;
-
+			
 			// combined travel time
-
+			
 			double travelTime =
 				+ getVehicleATravelTime(vehicleId, vehicleTile, transitRequest.origin)
 				+ getVehicleATravelTime(vehicleId, transitRequest.origin, destination)
 			;
-
+			
 			if (travelTime < closestLoadLocationTravelTime)
 			{
 				closestTransitRequest = &transitRequest;
 				closestLoadLocationTravelTime = travelTime;
 			}
-
+			
 		}
-
+		
 		if (closestTransitRequest != nullptr)
 		{
 			setTask(Task(vehicleId, TT_LOAD, closestTransitRequest->origin));
 			closestTransitRequest->setSeaTransportVehicleId(vehicleId);
 			if (TRACE) { debug("\tload task: %s\n", getLocationString(closestTransitRequest->origin).c_str()); }
 		}
-
+		
 	}
-
+	
 }
 
 void moveAvailableSeaTransportStrategy(int vehicleId)

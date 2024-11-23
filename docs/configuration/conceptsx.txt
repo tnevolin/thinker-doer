@@ -435,7 +435,7 @@ The more $LINK<mines=90002>, $LINK<solar collectors=90003>, $LINK<roads=90005>,
 and $LINK<farms=90000> (but not $LINK<forests=90004>,
 which actually help the ecology) you build, the more the potential
 damage. $LINK<Boreholes,=90014> $LINK<Mirrors,=90013> and $LINK<Condensers=90012> cause even greater damage. You can
-reduce or eliminate this type of damage by building $LINK<Tree Farm=100013>
+reduce this type of damage by building $LINK<Tree Farm=100013>
 and $LINK<Hybrid Forest=100014> facilities.
 ^
 As your industrial output (minerals) increases, ecological damage
@@ -717,8 +717,7 @@ and $LINK<Boreholes=90014>. Items
 in squares which are actually being worked count double.
 ^(2) Add an extra +8 for each Borehole, +6 for each Mirror, and +4 for each Condenser.
 ^(3) Subract 1 for each $LINK<Forest=90004>.
-^(4) Halve if base has $LINK<Tree Farm=100013>, and Eliminate if also has
-$LINK<Hybrid Forest=100014>.
+^(4) Halve if base has either $LINK<Tree Farm=100013> or $LINK<Hybrid Forest=100014>. Divide by four if both.
 ^(5) Divide this value by 8, and reduce by up to 16 plus # of previous
 damages. Set this number aside.
 ^(6) Take the number of minerals produced this turn (but not from Orbit)

@@ -13,6 +13,7 @@ const int BASE_FUTURE_SPAN = 100;
 const double PSYCH_MULTIPLIER_RESOURCE_GROWTH_INCREASE = 0.25;
 double const MIN_COMBAT_DEMAND_SUPERIORITY = 2.0;
 double const MAX_COMBAT_DEMAND_SUPERIORITY = 3.0;
+int const TARGET_ENEMY_BASE_RANGE = 5;
 
 struct BaseProductionInfo
 {

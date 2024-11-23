@@ -1674,7 +1674,7 @@ void __cdecl mod_base_drones() {
     } else if (!delay_base_riot) {
         // Normally drone riots would always happen here if there are sufficient drones
         // but delay_drone_riots option can postpone it for one turn.
-//        drone_riot();
+        mod_drone_riot();
     }
 }
 
@@ -2798,3 +2798,17 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
     return facility.maint;
 }
 
+/*
+Initializes drone_riot stack with zeros.
+*/
+int __cdecl mod_drone_riot()
+{
+	clear_stack(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	return drone_riot();
+	
+}
+
+void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int)
+{
+	
+}

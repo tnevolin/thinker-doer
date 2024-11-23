@@ -3694,3 +3694,8 @@ int __thiscall wtp_mod_BaseWin_pop_click_popup_start(Win* This, const char* file
 //	
 //}
 
+int __cdecl wtp_mod_base_police_pending()
+{
+	return Factions[(*CurrentBase)->faction_id].SE_police_pending + (has_facility(FAC_BROOD_PIT, *CurrentBaseID) ? 2 : 0);
+}
+

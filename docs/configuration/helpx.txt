@@ -284,20 +284,17 @@ Two extra $LINK<Talents=45> at this base.
 
 #; Tree Farm
 #HELPFAC13
-Increases $LINK<Psych=38> output at base by 50% and
-$LINK<energy=16> at base by 50%.
-Increases $LINK<nutrient=41> output in $LINK<forest=90004> squares by 1.
-Eliminates at least half the $LINK<ecological damage=26> caused by terraforming ($LINK<farms=90000>, $LINK<mines=90002>,
-$LINK<roads=90005>, etc.)
+Increases base $LINK<Psych=38> output by 25% and $LINK<energy=16> output by 25%.
+^Increases $LINK<nutrient=41> output in $LINK<forest=90004> squares by 1.
+^Halves the $LINK<ecological damage=26> caused by terraforming ($LINK<farms=90000>, $LINK<mines=90002>, $LINK<roads=90005>, etc.)
 ^
 ^Increases the amount of $LINK<minerals=42> that can be produced by any of that faction’s bases before causing ecological damage by one.
 
 #; Hybrid Forest
 #HELPFAC14
-Increases $LINK<Psych=39> output at base by 50% and produces the same amount of $LINK<energy=16> as 50% of the energy at
-base less that lost to inefficiency. Increases $LINK<nutrient=31> and energy output in $LINK<Forest=90004> squares by one.
-Eliminates at least half the $LINK<ecological damage=10004> caused by terraforming ($LINK<Farms=90000>, $LINK<Mines=90002>,
-$LINK<Roads=90005>, etc.).
+Increases base $LINK<Psych=39> output by 25% and $LINK<energy=16> output by 25%
+^Increases $LINK<nutrient=31> output in $LINK<Forest=90004> squares by 1.
+^Halves the $LINK<ecological damage=26> caused by terraforming ($LINK<Farms=90000>, $LINK<Mines=90002>, $LINK<Roads=90005>, etc.).
 ^
 ^Increases the amount of $LINK<minerals=42> that can be produced by any of that faction’s bases before causing ecological damage by one.
 ^
@@ -403,15 +400,17 @@ a +1 lifecycle bonus.
 
 #; Centauri Preserve
 #HELPFAC31
-Reduces effect of industry on Planet’s $LINK<ecological=12>. Any $LINK<Native life forms=30>
-bred at this base gain a +1 lifecycle bonus.
+Increases base $LINK<Psych=38> output by 25% and $LINK<energy=16> output by 25%.
+^Reduces effect of industry on Planet’s $LINK<ecological=12>.
+^Any $LINK<Native life forms=30> bred at this base gain a +1 lifecycle bonus.
 ^
 ^Increases the amount of $LINK<minerals=42> that can be produced by any of that faction’s bases before causing ecological damage by one.
 
 #; Temple of Planet
 #HELPFAC32
-Reduces effect of industry on Planet’s $LINK<ecological=12>. Any $LINK<Native life forms=30> bred at this base gain a +1
-lifecycle bonus.
+Increases base $LINK<Psych=38> output by 25% and $LINK<energy=16> output by 25%.
+^Reduces effect of industry on Planet’s $LINK<ecological=12>.
+^Any $LINK<Native life forms=30> bred at this base gain a +1 lifecycle bonus.
 ^
 ^Increases the amount of $LINK<minerals=42> that can be produced by any of that faction’s bases before causing ecological damage by one.
 ^
@@ -1220,7 +1219,7 @@ Splicing=140049>.
 #;Echelon Mirror
 #HELPTERRALAND13
 An {Echelon Mirror} can be constructed by a $LINK<terraforming unit=60018> and acts as a $LINK<Solar collector=90003>
-whilst also increasing the solar $LINK<Energy=14> collected by {solar collectors} in [all] surrounding squares by +1.
+whilst also increasing the solar $LINK<Energy=14> collected by each adjacent {solar collector} by +1.5.
 ^
 ^Echelon Mirrors have a significant negative $LINK<ecological impact=10004>.
 

@@ -858,11 +858,11 @@ double getBuildSitePlacementScore(MAP *tile)
 		
 		if (isLandmarkBonus(baseRadiusTile))
 		{
-			landmarkBonusScore += 0.1;
+			landmarkBonusScore += 0.05;
 		}
 		
 	}
-	landmarkBonusScore = std::min(0.3, landmarkBonusScore);
+	landmarkBonusScore = std::min(0.10, landmarkBonusScore);
 	debug("\t%-20s%+5.2f\n", "landmarkBonusScore", landmarkBonusScore);
 	
 	executionProfiles["1.3.2.2.4.1.4. landmarkBonusScore"].stop();

@@ -861,7 +861,8 @@ void moveCombat()
 		
 		if (!transitVehicle(Task(vehicleId, taskPriority.taskType, taskPriority.destination, taskPriority.destination, taskPriority.attackTarget)))
 		{
-			debug("ERROR: transitVehicle failed."); exit(1);
+			// TODO amphibious vehicles cannot find their path to empty enemy bases
+			debug("ERROR: transitVehicle failed.");
 		}
 		
 		
@@ -1870,37 +1871,48 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 			{
 				debug("\n");
 				
+				// effect
+				
 				COMBAT_MODE combatMode = CM_MELEE;
 				bool destructive = true;
 				double combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, CM_MELEE);
-				combatEffect = std::min(2.0, combatEffect);
+				double survivalEffect = getSurvivalEffect(combatEffect);
+				
+				// attackGain
+				
+				double attackGain = enemyStackInfo.averageUnitGain;
 				
 				// travel time coefficient
 				
 				MAP *destination = meleeAttackPosition;
 				double travelTime = getVehicleATravelTime(vehicleId, destination);
+				double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 				
 				// priority
 				
-				double attackGain = enemyStackInfo.averageUnitGain;
-				double survivalChance = getEstimatedWinProbability(combatEffect);
-				double priority = getGainRepetion(attackGain, survivalChance, travelTime);
+				double priority =
+					survivalEffect
+					* attackGain
+					* travelTimeCoefficient
+				;
 				
 				debug
 				(
 					"\t\t\t\t%-15s"
 					" priority=%5.2f"
-					" averageUnitGain=%5.2f"
 					" combatEffect=%5.2f"
-					" survivalChance=%5.2f"
+					" survivalEffect=%5.2f"
+					" attackGain=%5.2f"
 					" travelTime=%7.2f"
+					" travelTimeCoefficient=%5.2f"
 					"\n"
 					, "direct"
 					, priority
-					, enemyStackInfo.averageUnitGain
 					, combatEffect
-					, survivalChance
+					, survivalEffect
+					, attackGain
 					, travelTime
+					, travelTimeCoefficient
 				);
 				
 				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_MELEE_ATTACK, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);
@@ -1909,36 +1921,48 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			if (artilleryAttackPosition != nullptr && enemyStackInfo.artillery)
 			{
+				// effect
+				
 				COMBAT_MODE combatMode = CM_ARTILLERY_DUEL;
 				bool destructive = true;
 				double combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, CM_ARTILLERY_DUEL);
+				double survivalEffect = getSurvivalEffect(combatEffect);
+				
+				// attackGain
+				
+				double attackGain = enemyStackInfo.averageUnitGain;
 				
 				// travel time coefficient
 				
 				MAP *destination = artilleryAttackPosition;
 				double travelTime = getVehicleATravelTime(vehicleId, destination);
+				double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 				
 				// priority
 				
-				double attackGain = enemyStackInfo.averageUnitGain;
-				double survivalChance = getEstimatedWinProbability(combatEffect);
-				double priority = getGainRepetion(attackGain, survivalChance, travelTime);
+				double priority =
+					survivalEffect
+					* attackGain
+					* travelTimeCoefficient
+				;
 				
 				debug
 				(
 					"\t\t\t\t%-15s"
 					" priority=%5.2f"
-					" averageUnitGain=%5.2f"
 					" combatEffect=%5.2f"
-					" survivalChance=%5.2f"
+					" survivalEffect=%5.2f"
+					" attackGain=%5.2f"
 					" travelTime=%7.2f"
+					" travelTimeCoefficient=%5.2f"
 					"\n"
-					, "artillery duel"
+					, "direct"
 					, priority
-					, enemyStackInfo.averageUnitGain
 					, combatEffect
-					, survivalChance
+					, survivalEffect
+					, attackGain
 					, travelTime
+					, travelTimeCoefficient
 				);
 				
 				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_LONG_RANGE_FIRE, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);
@@ -1947,6 +1971,8 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			if (artilleryAttackPosition != nullptr && !enemyStackInfo.artillery && enemyStackInfo.bombardment)
 			{
+				// effect
+				
 				COMBAT_MODE combatMode = CM_BOMBARDMENT;
 				bool destructive = enemyStackInfo.bombardmentDestructive;
 				double combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, CM_BOMBARDMENT);
@@ -1954,33 +1980,43 @@ void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
 				// bombardment combatEffect adjustment for the purpose of prioritization
 				
 				combatEffect = 1.0 + 4.0 * combatEffect;
+				double survivalEffect = getSurvivalEffect(combatEffect);
+				
+				// attackGain
+				
+				double attackGain = enemyStackInfo.averageUnitGain;
 				
 				// travel time coefficient
 				
 				MAP *destination = artilleryAttackPosition;
 				double travelTime = getVehicleATravelTime(vehicleId, destination);
+				double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 				
 				// priority
 				
-				double attackGain = enemyStackInfo.averageUnitGain;
-				double survivalChance = getEstimatedWinProbability(combatEffect);
-				double priority = getGainRepetion(attackGain, survivalChance, travelTime);
+				double priority =
+					survivalEffect
+					* attackGain
+					* travelTimeCoefficient
+				;
 				
 				debug
 				(
 					"\t\t\t\t%-15s"
 					" priority=%5.2f"
-					" averageUnitGain=%5.2f"
 					" combatEffect=%5.2f"
-					" survivalChance=%5.2f"
+					" survivalEffect=%5.2f"
+					" attackGain=%5.2f"
 					" travelTime=%7.2f"
+					" travelTimeCoefficient=%5.2f"
 					"\n"
-					, "bombardment"
+					, "direct"
 					, priority
-					, enemyStackInfo.averageUnitGain
 					, combatEffect
-					, survivalChance
+					, survivalEffect
+					, attackGain
 					, travelTime
+					, travelTimeCoefficient
 				);
 				
 				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_LONG_RANGE_FIRE, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);

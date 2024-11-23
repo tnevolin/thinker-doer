@@ -276,5 +276,6 @@ MAP *getMeleeAttackPosition(int unitId, MAP *origin, MAP *target);
 MAP *getMeleeAttackPosition(int vehicleId, MAP *target);
 MAP *getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target);
 MAP *getArtilleryAttackPosition(int vehicleId, MAP *target);
-double getEstimatedWinProbability(double effect);
+double getWinningProbability(double combatEffect);
+double getSurvivalEffect(double combatEffect);
 

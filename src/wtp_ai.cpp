@@ -787,95 +787,36 @@ void populateFactionInfos()
 			
 		}
 		
-		// averageBasesRange
+		// closestPlayerBaseRange
 		
+		for (int baseId = 0; baseId < *BaseCount; baseId++)
 		{
-			int baseRangeCount = 0;
-			int baseRangeSum = 0;
+			BASE *base = getBase(baseId);
+			MAP *baseTile = getBaseMapTile(baseId);
+			BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
 			
-			for (int baseId = 0; baseId < *BaseCount; baseId++)
+			// faction base
+			
+			if (base->faction_id != factionId)
+				continue;
+			
+			baseInfo.closestPlayerBaseRange = INT_MAX;
+			
+			for (int playerBaseId = 0; playerBaseId < *BaseCount; playerBaseId++)
 			{
-				BASE *base = getBase(baseId);
-				MAP *baseTile = getBaseMapTile(baseId);
+				BASE *playerBase = getBase(playerBaseId);
+				MAP *playerBaseTile = getBaseMapTile(playerBaseId);
 				
-				// faction base
+				// player base
 				
-				if (base->faction_id != factionId)
+				if (playerBase->faction_id != aiFactionId)
 					continue;
 				
-				for (int otherBaseId = 0; otherBaseId < *BaseCount; otherBaseId++)
-				{
-					BASE *otherBase = getBase(otherBaseId);
-					MAP *otherBaseTile = getBaseMapTile(otherBaseId);
-					
-					// faction base
-					
-					if (otherBase->faction_id != factionId)
-						continue;
-					
-					// not the same base
-					
-					if (otherBaseId == baseId)
-						continue;
-					
-					int range = getRange(otherBaseTile, baseTile);
-					
-					baseRangeCount++;
-					baseRangeSum += range;
-					
-				}
+				int range = getRange(playerBaseTile, baseTile);
+				
+				baseInfo.closestPlayerBaseRange = std::min(baseInfo.closestPlayerBaseRange, range);
 				
 			}
-			
-			factionInfo.averageBasesRange = baseRangeCount == 0 ? 0.0 : (double)baseRangeSum / (double)baseRangeCount;
-			
-		}
-		
-		// averagePlayerBasesRange
-		
-		{
-			int allEnemyBaseRangeCount = 0;
-			int allEnemyBaseRangeSum = 0;
-			
-			for (int baseId = 0; baseId < *BaseCount; baseId++)
-			{
-				BASE *base = getBase(baseId);
-				MAP *baseTile = getBaseMapTile(baseId);
-				BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
-				
-				// faction base
-				
-				if (base->faction_id != factionId)
-					continue;
-				
-				int thisEnemyBaseRangeCount = 0;
-				int thisEnemyBaseRangeSum = 0;
-				
-				for (int playerBaseId = 0; playerBaseId < *BaseCount; playerBaseId++)
-				{
-					BASE *playerBase = getBase(playerBaseId);
-					MAP *playerBaseTile = getBaseMapTile(playerBaseId);
-					
-					// player base
-					
-					if (playerBase->faction_id != aiFactionId)
-						continue;
-					
-					int range = getRange(playerBaseTile, baseTile);
-					
-					thisEnemyBaseRangeCount++;
-					thisEnemyBaseRangeSum += range;
-					
-					allEnemyBaseRangeCount++;
-					allEnemyBaseRangeSum += range;
-					
-				}
-				
-				baseInfo.averagePlayerBasesRange = thisEnemyBaseRangeCount == 0 ? INF : (double)thisEnemyBaseRangeSum / (double)thisEnemyBaseRangeCount;
-				
-			}
-			
-			factionInfo.averagePlayerBasesRange = allEnemyBaseRangeCount == 0 ? INF : (double)allEnemyBaseRangeSum / (double)allEnemyBaseRangeCount;
 			
 		}
 		
@@ -1879,9 +1820,7 @@ void populateEnemyStacks()
 		aiData.enemyStacks.erase(stackTile);
 	}
 	
-	// populate enemy stacks secondary values
-	
-	debug("\tpopulate enemy stacks secondary values\n");
+	// select enemy stacks by base range
 	
 	for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
 	{
@@ -1936,13 +1875,37 @@ void populateEnemyStacks()
 		
 	}
 	
-	// set priority
+	// populate enemy stacks secondary values
 	
-	debug("\tpriority\n");
+	debug("\tpopulate enemy stacks secondary values\n");
 	
 	for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
 	{
 		EnemyStackInfo &enemyStackInfo = enemyStackEntry.second;
+		
+		debug("\t\t%s\n", getLocationString(enemyStackInfo.tile).c_str());
+		
+		// averageUnitCost
+		
+		AverageAccumulator averageUnitCostAccumulator;
+		
+		for (int vehicleId : enemyStackInfo.vehicleIds)
+		{
+			int unitCost = Vehicles[vehicleId].cost();
+			averageUnitCostAccumulator.add(unitCost);
+		}
+		
+		enemyStackInfo.averageUnitCost = averageUnitCostAccumulator.get();
+		
+		debug
+		(
+			"\t\t\t"
+			" averageUnitCost=%5.2f"
+			"\n"
+			, enemyStackInfo.averageUnitCost
+		);
+		
+		// averageUnitGain
 		
 		double averageUnitGain;
 		
@@ -1973,10 +1936,9 @@ void populateEnemyStacks()
 		
 		debug
 		(
-			"\t\t%s"
+			"\t\t\t"
 			" averageUnitGain=%5.2f"
 			"\n"
-			, getLocationString(enemyStackEntry.first).c_str()
 			, enemyStackInfo.averageUnitGain
 		);
 		
@@ -8262,30 +8224,55 @@ MAP *getArtilleryAttackPosition(int vehicleId, MAP *target)
 }
 
 /*
-Roughly estimates win probability based on combat effect.
+Winning probability by combat effect.
 */
-double getEstimatedWinProbability(double effect)
+double getWinningProbability(double combatEffect)
 {
-	double winProbability;
+	// div/0 is eliminated by condition
+	return combatEffect <= 1.0 ? std::max(0.0, -0.4 + 0.9 * combatEffect) : std::min(1.0, 1.0 - (-0.4 + 0.9 * (1.0 / combatEffect)));
+}
+
+/*
+Survival effect assuming 50% change of healing after winning the battle.
+*/
+double getSurvivalEffect(double combatEffect)
+{
+	double p = getWinningProbability(combatEffect);
+	double q = 1.0 - p;
 	
-	if (effect < 0.5)
+	double survivalEffect;
+	
+	// div/0 is eliminated by condition
+	if (combatEffect <= 0.0)
 	{
-		winProbability = 0.0;
+		survivalEffect = 0.0;
 	}
-	else if (effect >= 0.5 && effect < 1.0)
+	else if (combatEffect > 0.0 && combatEffect <= 1.0 && p <= 0.0)
 	{
-		winProbability = -0.5 + 1.0 * effect;
+		survivalEffect = (combatEffect) / (2.0);
 	}
-	else if (effect >= 1.0 && effect < 2.0)
+	else if (combatEffect > 0.0 && combatEffect <= 1.0 && p > 0.0 && p <= 0.5)
 	{
-		winProbability = 1.0 - (-0.5 + 1.0 * (1.0 / effect));
+		survivalEffect = (combatEffect + p) / (1.0 + q);
+	}
+	else if (combatEffect >= 1.0 && combatEffect < DBL_MAX && p >= 0.5 && p < 1.0)
+	{
+		survivalEffect = (1.0 + p) / (1.0 / combatEffect + q);
+	}
+	else if (combatEffect >= 1.0 && combatEffect < DBL_MAX && p >= 1.0)
+	{
+		survivalEffect = (2.0) * (combatEffect);
+	}
+	else if (combatEffect >= DBL_MAX )
+	{
+		survivalEffect = DBL_MAX;
 	}
 	else
 	{
-		winProbability = 1.0;
+		survivalEffect = 1.0;
 	}
 	
-	return winProbability;
+	return survivalEffect;
 	
 }
 

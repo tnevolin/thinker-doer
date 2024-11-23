@@ -362,8 +362,8 @@ struct BaseInfo
 	
 	// combat data
 	
-	// averate range between player's bases and this base
-	double averagePlayerBasesRange;
+	// range to closest player base
+	int closestPlayerBaseRange;
 	// player unit base assault effects
 	// how big part of base protectors can this unit destroy
 	robin_hood::unordered_flat_map<int, double> assaultEffects;
@@ -403,9 +403,6 @@ struct FactionInfo
 	
 	// combat data
 	
-	// averate range between player and faction bases
-	double averageBasesRange;
-	double averagePlayerBasesRange;
 	int totalVendettaCount; // excluding aliens and player
 	double productionPower;
 	
@@ -493,6 +490,7 @@ public:
 	bool bombardment = false;
 	bool targetable = false;
 	bool bombardmentDestructive = false;
+	double averageUnitCost = 0.0;
 	
 	// combat data
 	

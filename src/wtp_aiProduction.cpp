@@ -1555,7 +1555,8 @@ void evaluateTerraformingUnits()
 			
 			double effectiveTravelTime = conf.ai_terraforming_travel_time_multiplier * travelTime;
 			double totalEffectiveTime = effectiveTravelTime + formerRequest.terraformingTime;
-			double terraformingGain = getGainDelay(getGainIncome(formerRequest.income), totalEffectiveTime);
+			double terraformingIncome = formerRequest.income / totalEffectiveTime;
+			double terraformingGain = getGainIncomeGrowth(terraformingIncome);
 			
 			// update best
 			
@@ -1577,10 +1578,11 @@ void evaluateTerraformingUnits()
 		
 		// priority
 		
+		double rawPriority = getItemPriority(unitId, gain);
 		double priority =
 			conf.ai_production_improvement_priority
 			* unitPriorityCoefficient
-			* gain
+			* rawPriority
 		;
 		
 		productionDemand.addItemPriority(unitId, priority);
@@ -1592,6 +1594,7 @@ void evaluateTerraformingUnits()
 			" bestTerraformingGain=%5.2f"
 			" upkeepGain=%5.2f"
 			" gain=%5.2f"
+			" rawPriority=%5.2f"
 			" conf.ai_production_improvement_priority=%5.2f"
 			" unitPriorityCoefficient=%5.2f"
 			"\n"
@@ -1600,6 +1603,7 @@ void evaluateTerraformingUnits()
 			, bestTerraformingGain
 			, upkeepGain
 			, gain
+			, rawPriority
 			, conf.ai_production_improvement_priority
 			, unitPriorityCoefficient
 		);
@@ -1905,10 +1909,11 @@ void evaluatePodPoppingUnits()
 		
 		// priority
 		
+		double rawPriority = getItemPriority(unitId, gain);
 		double priority =
 			conf.ai_production_pod_popping_priority
 			* unitPriorityCoefficient
-			* getItemPriority(unitId, gain)
+			* rawPriority
 		;
 		
 		// add production
@@ -1922,12 +1927,14 @@ void evaluatePodPoppingUnits()
 			" conf.ai_production_pod_popping_priority=%5.2f"
 			" unitPriorityCoefficient=%5.2f"
 			" gain=%5.2f"
+			" rawPriority=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
 			, conf.ai_production_pod_popping_priority
 			, unitPriorityCoefficient
 			, gain
+			, rawPriority
 		);
 		
 	}
@@ -1986,13 +1993,9 @@ void evaluateBaseDefenseUnits()
 			// protection
 			
 			double combatEffect = targetBaseCombatData.getUnitEffect(unitId);
-			double unitProtectionGain = targetBaseCombatData.isSatisfied(false) ? 0.0 : aiFactionInfo->averageBaseGain * combatEffect;
+			double survivalEffect = getSurvivalEffect(combatEffect);
+			double unitProtectionGain = targetBaseCombatData.isSatisfied(false) ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
-			
-			int unitMineralCost = Rules->mineral_cost_multi * unit->cost;
-			double survivalChance = getEstimatedWinProbability(combatEffect);
-			double survivalMineralCost = (double)unitMineralCost * survivalChance;
-			double survivalGain = getGainDelay(getGainBonus(survivalMineralCost), travelTime);
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
 			double upkeepGain = getGainIncome(upkeep);
@@ -2002,7 +2005,6 @@ void evaluateBaseDefenseUnits()
 			double gain =
 				+ policeGain
 				+ protectionGain
-				+ survivalGain
 				+ upkeepGain
 			;
 			
@@ -2019,9 +2021,9 @@ void evaluateBaseDefenseUnits()
 				" policeGain=%5.2f"
 				" ai_production_base_protection_priority=%5.2f"
 				" combatEffect=%5.2f"
+				" survivalEffect=%5.2f"
 				" unitProtectionGain=%5.2f"
 				" protectionGain=%5.2f"
-				" survivalGain=%5.2f"
 				" upkeepGain=%5.2f"
 				" gain=%7.2f"
 				"\n"
@@ -2034,9 +2036,9 @@ void evaluateBaseDefenseUnits()
 				, policeGain
 				, conf.ai_production_base_protection_priority
 				, combatEffect
+				, survivalEffect
 				, unitProtectionGain
 				, protectionGain
-				, survivalGain
 				, upkeepGain
 				, gain
 			);
@@ -2045,10 +2047,11 @@ void evaluateBaseDefenseUnits()
 		
 		// priority
 		
+		double rawPriority = getItemPriority(unitId, bestGain);
 		double priority =
 			conf.ai_production_base_protection_priority
 			* unitPriorityCoefficient
-			* getItemPriority(unitId, bestGain)
+			* rawPriority
 		;
 		
 		// add production
@@ -2062,12 +2065,14 @@ void evaluateBaseDefenseUnits()
 			" ai_production_base_protection_priority=%5.2f"
 			" unitPriorityCoefficient=%5.2f"
 			" bestGain=%5.2f"
+			" rawPriority=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
 			, conf.ai_production_base_protection_priority
 			, unitPriorityCoefficient
 			, bestGain
+			, rawPriority
 		);
 		
 	}
@@ -2105,9 +2110,21 @@ void evaluateTerritoryProtectionUnits()
 		
 		for (EnemyStackInfo *enemyStackInfo : aiData.production.untargetedEnemyStackInfos)
 		{
-			// within territory
+			// enemy within territory or neutral on land within base radius
 			
-			if (enemyStackInfo->tile->owner != aiFactionId)
+			if
+			(
+				!(
+					(enemyStackInfo->hostile && enemyStackInfo->tile->owner == aiFactionId)
+					||
+					(!is_ocean(enemyStackInfo->tile) && enemyStackInfo->tile->owner == aiFactionId && map_has_item(enemyStackInfo->tile, BIT_BASE_RADIUS))
+				)
+			)
+				continue;
+			
+			// ship and artillery do not attack tower
+			
+			if (isArtilleryUnit(unitId) && enemyStackInfo->alienFungalTower)
 				continue;
 			
 			// get attack position
@@ -2135,9 +2152,13 @@ void evaluateTerritoryProtectionUnits()
 			// gain
 			
 			double combatEffect = enemyStackInfo->getUnitEffect(unitId);
-			double winProbability = getEstimatedWinProbability(combatEffect);
-			double attackGain = enemyStackInfo->averageUnitGain * winProbability;
-			double protectionGain = attackGain * travelTimeCoefficient;
+			double survivalEffect = getSurvivalEffect(combatEffect);
+			double attackGain = enemyStackInfo->averageUnitGain;
+			double protectionGain =
+				attackGain
+				* survivalEffect
+				* travelTimeCoefficient
+			;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
 			double upkeepGain = getGainTimeInterval(getGainIncome(upkeep), 0.0, travelTime);
@@ -2157,8 +2178,7 @@ void evaluateTerritoryProtectionUnits()
 				" travelTimeCoefficient=%5.2f"
 				" ai_production_base_protection_priority=%5.2f"
 				" combatEffect=%5.2f"
-				" winProbability=%5.2f"
-				" averageUnitGain=%5.2f"
+				" survivalEffect=%5.2f"
 				" attackGain=%5.2f"
 				" protectionGain=%5.2f"
 				" upkeepGain=%5.2f"
@@ -2170,8 +2190,7 @@ void evaluateTerritoryProtectionUnits()
 				, travelTimeCoefficient
 				, conf.ai_production_base_protection_priority
 				, combatEffect
-				, winProbability
-				, enemyStackInfo->averageUnitGain
+				, survivalEffect
 				, attackGain
 				, protectionGain
 				, upkeepGain
@@ -2182,10 +2201,11 @@ void evaluateTerritoryProtectionUnits()
 		
 		// priority
 		
+		double rawPriority = getItemPriority(unitId, bestGain);
 		double priority =
 			conf.ai_production_base_protection_priority
 			* unitPriorityCoefficient
-			* getItemPriority(unitId, bestGain)
+			* rawPriority
 		;
 		
 		// add production
@@ -2198,11 +2218,13 @@ void evaluateTerritoryProtectionUnits()
 			" priority=%5.2f   |"
 			" unitPriorityCoefficient=%5.2f"
 			" bestGain=%5.2f"
+			" rawPriority=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
 			, unitPriorityCoefficient
 			, bestGain
+			, rawPriority
 		);
 		
 	}
@@ -2243,8 +2265,16 @@ void evaluateEnemyBaseAssaultUnits()
 		for (int enemyBaseId = 0; enemyBaseId < *BaseCount; enemyBaseId++)
 		{
 			BASE *enemyBase = getBase(enemyBaseId);
+			MAP *enemyBaseTile = getBaseMapTile(enemyBaseId);
 			BaseInfo &enemyBaseInfo = aiData.getBaseInfo(enemyBaseId);
 			FactionInfo &factionInfo = aiData.factionInfos[enemyBase->faction_id];
+			
+			// enemy base stack
+			
+			if (!aiData.isEnemyStackAt(enemyBaseTile))
+				continue;
+			
+			EnemyStackInfo &enemyStackInfo = aiData.getEnemyStackInfo(enemyBaseTile);
 			
 			// exclude player base
 			
@@ -2262,8 +2292,9 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			double assaultEffect = enemyBaseInfo.assaultEffects.at(unitId);
 			double productionRatio = aiFactionInfo->productionPower / factionInfo.productionPower;
-			double adjustedEffect = assaultEffect * productionRatio;
-			double adjustedSuperiority = adjustedEffect - 1.0;
+			double costRatio = enemyStackInfo.averageUnitCost / (double)unit->cost;
+			double adjustedEffect = assaultEffect * productionRatio * costRatio;
+			double adjustedSuperiority = adjustedEffect - 2.0;
 			
 			if (adjustedSuperiority <= 0.0)
 				continue;
@@ -2274,8 +2305,7 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			// range coefficient
 			
-			double extensionRange = 2.0 * aiFactionInfo->averageBasesRange;
-			double rangeCoefficient = enemyBaseInfo.averagePlayerBasesRange <= extensionRange ? 1.0 : extensionRange / enemyBaseInfo.averagePlayerBasesRange;
+			double rangeCoefficient = enemyBaseInfo.closestPlayerBaseRange <= TARGET_ENEMY_BASE_RANGE ? 1.0 : (double)TARGET_ENEMY_BASE_RANGE / (double)enemyBaseInfo.closestPlayerBaseRange;
 			double captureGain = rangeCoefficient * incomeGain;
 			
 			// upkeep gain
@@ -2297,13 +2327,13 @@ void evaluateEnemyBaseAssaultUnits()
 				" travelTime=%7.2f"
 				" assaultEffect=%5.2f"
 				" productionRatio=%5.2f"
+				" costRatio=%5.2f"
 				" adjustedEffect=%5.2f"
 				" adjustedSuperiority=%5.2f"
 				" enemyBaseCaptureGain=%5.2f"
 				" adjustedEnemyBaseCaptureGain=%5.2f"
 				" incomeGain=%5.2f"
-				" extensionRange=%5.2f"
-				" enemyBaseInfo.averagePlayerBasesRange=%5.2f"
+				" closestPlayerBaseRange=%2d"
 				" rangeCoefficient=%5.2f"
 				" captureGain=%5.2f"
 				" upkeepGain=%5.2f"
@@ -2313,13 +2343,13 @@ void evaluateEnemyBaseAssaultUnits()
 				, travelTime
 				, assaultEffect
 				, productionRatio
+				, costRatio
 				, adjustedEffect
 				, adjustedSuperiority
 				, enemyBaseCaptureGain
 				, adjustedEnemyBaseCaptureGain
 				, incomeGain
-				, extensionRange
-				, enemyBaseInfo.averagePlayerBasesRange
+				, enemyBaseInfo.closestPlayerBaseRange
 				, rangeCoefficient
 				, captureGain
 				, upkeepGain
@@ -2330,9 +2360,10 @@ void evaluateEnemyBaseAssaultUnits()
 		
 		// priority
 		
+		double rawPriority = getItemPriority(unitId, bestGain);
 		double priority =
 			unitPriorityCoefficient
-			* getItemPriority(unitId, bestGain)
+			* rawPriority
 		;
 		
 		// add production
@@ -2345,11 +2376,13 @@ void evaluateEnemyBaseAssaultUnits()
 			" priority=%5.2f   |"
 			" unitPriorityCoefficient=%5.2f"
 			" bestGain=%5.2f"
+			" rawPriority=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
 			, unitPriorityCoefficient
 			, bestGain
+			, rawPriority
 		);
 		
 	}
@@ -3710,9 +3743,13 @@ double getUnitPriorityCoefficient(int baseId, int unitId)
 	if (base->mineral_surplus <= reservedMineralSurplus)
 		return 0.0;
 	
-	// reduce priority proportional to remained surplus below reserved
+	// reduce priority quadratic proportional to remained surplus below reserved
 	
-	return (double)(base->mineral_surplus - reservedMineralSurplus) / (double)(base->mineral_intake_2 - reservedMineralSurplus);
+	int maxSurplus = base->mineral_intake_2 - reservedMineralSurplus;
+	int newSurplus = base->mineral_surplus - reservedMineralSurplus - nextUnitSupport;
+	double suprlusRatio = (double)newSurplus / (double)maxSurplus;
+	
+	return suprlusRatio * suprlusRatio;
 	
 }
 

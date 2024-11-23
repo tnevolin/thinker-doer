@@ -60,4 +60,6 @@ int __cdecl has_fac(FacilityId item_id, int base_id, int queue_count);
 int __cdecl has_fac_built(FacilityId item_id, int base_id);
 void __cdecl set_fac(FacilityId item_id, int base_id, bool add);
 int __cdecl fac_maint(int facility_id, int faction_id);
+int __cdecl mod_drone_riot();
+void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
 

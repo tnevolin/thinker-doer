@@ -1,3 +1,7 @@
+# Version 327
+
+* Updated help entries for below changes.
+
 # Version 326
 
 * Hurry cost for facilities/units is 3, for projects is 6.

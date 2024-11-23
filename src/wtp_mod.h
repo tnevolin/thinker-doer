@@ -146,4 +146,5 @@ int __thiscall wtp_mod_BaseWin_psych_row(Win* This, int horizontal_pos, int vert
 int __thiscall wtp_mod_BaseWin_pop_click_popup_start(Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7);
 //char * __cdecl wtp_mod_BaseWin_pop_click_specialist_cycle_strcat(char *dst, char const *src);
 //int __cdecl wtp_mod_BaseWin_pop_click_specialist_has_tech(int tech_id, int faction_id);
+int __cdecl wtp_mod_base_police_pending();
 
