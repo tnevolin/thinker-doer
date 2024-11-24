@@ -217,7 +217,7 @@ double getUnitArtilleryDuelAttackEffect(int ownFactionId, int ownUnitId, int foe
 double getUnitBombardmentAttackEffect(int ownFactionId, int ownUnitId, int foeVehicleId, MAP *tile);
 double getHarmonicMean(std::vector<std::vector<double>> parameters);
 bool compareMoveActions(MoveAction &o1, MoveAction &o2);
-std::vector<MoveAction> getVehicleReachableLocations(int vehicleId);
+std::vector<MoveAction> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles = false);
 std::vector<AttackAction> getMeleeAttackActions(int vehicleId);
 std::vector<AttackAction> getMeleeAttackTargets(int vehicleId);
 std::vector<AttackAction> getArtilleryAttackActions(int vehicleId);

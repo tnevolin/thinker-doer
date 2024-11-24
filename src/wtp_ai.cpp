@@ -1683,6 +1683,66 @@ void populateWarzones()
 		
 	}
 	
+	// baseCapture
+	
+	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	{
+		VEH *vehicle = &(Vehicles[vehicleId]);
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		bool vehicleTileOcean = is_ocean(vehicleTile);
+		int triad = vehicle->triad();
+		
+		// not friendly
+		
+		if (isFriendly(aiFactionId, vehicle->faction_id))
+			continue;
+		
+		// combat
+		
+		if (!isCombatVehicle(vehicleId))
+			continue;
+		
+		// not ranged air
+		
+		if (vehicle->range() > 0)
+			continue;
+		
+		// not land on transport
+		
+		if (isLandVehicleOnTransport(vehicleId))
+			continue;
+		
+		// able to reach around and act
+		
+		if ((triad == TRIAD_LAND && vehicleTileOcean) || vehicle->unit_id == BSC_FUNGAL_TOWER)
+			continue;
+		
+		// populate reachable locations
+		
+		for (MoveAction const &moveAction : getVehicleReachableLocations(vehicleId, true))
+		{
+			MAP *tile = moveAction.tile;
+			TileInfo &tileInfo = aiData.getTileInfo(tile);
+			
+			tileInfo.baseCapture = true;
+			
+		}
+			
+	}
+	
+	if (DEBUG)
+	{
+		debug("baseCapture\n");
+		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+		{
+			TileInfo &tileInfo = aiData.getTileInfo(tile);
+			if (tileInfo.baseCapture)
+			{
+				debug("\t%s\n", getLocationString(tile).c_str());
+			}
+		}
+	}
+	
 }
 
 void populateTileCombatData()
@@ -1784,6 +1844,17 @@ void populateEnemyStacks()
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		
+		// ignore sea aliens
+		// ignore land aliens not in territory
+		
+		if
+		(
+			vehicle->faction_id == 0
+			&&
+			(is_ocean(vehicleTile) || vehicleTile->owner != aiFactionId)
+		)
+			continue;
 		
 		// hostile or unfriendly in player territory
 		
@@ -5893,7 +5964,7 @@ bool compareMoveActions(MoveAction &o1, MoveAction &o2)
 {
     return (o1.movementAllowance > o2.movementAllowance);
 }
-std::vector<MoveAction> getVehicleReachableLocations(int vehicleId)
+std::vector<MoveAction> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles)
 {
 	executionProfiles["| getVehicleReachableLocations"].start();
 	
@@ -5963,12 +6034,12 @@ std::vector<MoveAction> getVehicleReachableLocations(int vehicleId)
 				
 				// not blocked
 				
-				if (isBlocked(factionId, adjacentTile))
+				if (!ignoreVehicles && isBlocked(factionId, adjacentTile))
 					continue;
 				
 				// not zoc
 				
-				if (isZocAffectedVehicle(vehicleId) && isZoc(factionId, tile, adjacentTile))
+				if (!ignoreVehicles && isZocAffectedVehicle(vehicleId) && isZoc(factionId, tile, adjacentTile))
 					continue;
 				
 				// compute hex cost

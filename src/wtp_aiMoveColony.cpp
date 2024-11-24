@@ -959,6 +959,11 @@ bool isValidBuildSite(MAP *tile, int factionId)
 	if (y == 0 || y == *MapAreaY - 1 || (*MapToggleFlat == 1 && (x == 0 || x == *MapAreaX - 1)))
 		return false;
 	
+	// not baseCapture location
+	
+	if (tileInfo.baseCapture)
+		return false;
+	
 	// all conditions met
 
 	return true;

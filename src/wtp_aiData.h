@@ -140,6 +140,8 @@ struct TileInfo
 	double danger;
 	// warzone (>= 0.25 chance of destruction)
 	bool warzone = false;
+	// empty base capture
+	bool baseCapture = false;
 	
 };
 

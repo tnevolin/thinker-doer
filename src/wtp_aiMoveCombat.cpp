@@ -96,9 +96,9 @@ void immediateAttack()
 			
 			EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
 			
-			// do not attack non hostile stack outside of base radius
+			// hostile
 			
-			if (!enemyStackInfo.hostile && !(enemyStackInfo.tile->owner == aiFactionId && map_has_item(enemyStackInfo.tile, BIT_BASE_RADIUS)))
+			if (!enemyStackInfo.hostile)
 				continue;
 			
 			// melee attack
@@ -497,6 +497,39 @@ void moveProtectors()
 		
 		if (!transitVehicle(Task(taskPriority->vehicleId, TT_HOLD, taskPriority->destination)))
 			continue;
+		
+	}
+	
+	// hold base current protectors until future protectors arrive
+	
+	for (int baseId : aiData.baseIds)
+	{
+		MAP *baseTile = getBaseMapTile(baseId);
+		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+		
+		if (!baseInfo.combatData.isSatisfied(true))
+		{
+			for (int vehicleId : baseInfo.garrison)
+			{
+				// infantry defensive
+				
+				if (!isInfantryDefensiveVehicle(vehicleId))
+					continue;
+				
+				// not yet assigned to this base
+				
+				robin_hood::unordered_flat_map<int, TaskPriority *>::iterator vehicleAssignmentIterator = vehicleAssignments.find(vehicleId);
+				if (vehicleAssignmentIterator != vehicleAssignments.end() && vehicleAssignmentIterator->second->destination == baseTile)
+					continue;
+				
+				// assign to base
+				
+				if (!transitVehicle(Task(vehicleId, TT_HOLD, baseTile)))
+					continue;
+				
+			}
+			
+		}
 		
 	}
 	

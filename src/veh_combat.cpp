@@ -911,12 +911,7 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
                     def_multi = 150;
                     display_def = label_get(525); // Open Ground
                 }
-                
-                // [WTP]
-                // divisor should be 100
-//                defense = defense * def_multi / 50;
-                defense = defense * def_multi / 100;
-                
+                defense = defense * def_multi / 50;
                 if (def_multi > 100) {
                     add_bat(1, def_multi - 100, display_def);
                 }

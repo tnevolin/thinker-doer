@@ -8282,6 +8282,17 @@ Taking damage into account, their odds are
 No. Call off the attack.
 Yes. Proceed as ordered.
 
+#GOODIDEA_IGNORE_REACTOR
+#caption Security Chief
+#xs 440
+Our forces are ready to begin the assault, $TITLE0 $NAME1.
+^Their odds are {$NUM0 to $NUM1}. Shall I order them to proceed?
+^
+^* Reactor power is [ignored] in combat. Both units have {10} max HP.
+
+No. Call off the attack.
+Yes. Proceed as ordered.
+
 
 #CONQCOOP
 #xs 440
@@ -10914,17 +10925,3 @@ Our infiltration device connected to the {$FACTION0} networks was discovered and
 
 # ; This line must remain at end of file
 
-#GOODIDEA_IGNORE_REACTOR
-#caption Security Chief
-#xs 440
-Our forces are ready to begin the assault, $TITLE0 $NAME1. Shall I order them to proceed?
-^
-^Their combat parameters are:
-^winning odds: {$NUM0 to $NUM1}
-^relative strength: $NUM2 to $NUM3
-^winning chances are {$NUM4} %
-^
-^* Reactor power is [ignored] in combat. Both units have {10} max HP.
-
-No. Call off the attack.
-Yes. Proceed as ordered.

@@ -2110,16 +2110,9 @@ void evaluateTerritoryProtectionUnits()
 		
 		for (EnemyStackInfo *enemyStackInfo : aiData.production.untargetedEnemyStackInfos)
 		{
-			// enemy within territory or neutral on land within base radius
+			// enemy
 			
-			if
-			(
-				!(
-					(enemyStackInfo->hostile && enemyStackInfo->tile->owner == aiFactionId)
-					||
-					(!is_ocean(enemyStackInfo->tile) && enemyStackInfo->tile->owner == aiFactionId && map_has_item(enemyStackInfo->tile, BIT_BASE_RADIUS))
-				)
-			)
+			if (!enemyStackInfo->hostile)
 				continue;
 			
 			// ship and artillery do not attack tower
