@@ -739,9 +739,7 @@ void setTask(Task task)
 bool hasTask(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
-
 	return (aiData.tasks.count(vehicle->pad_0) != 0);
-
 }
 
 bool hasExecutableTask(int vehicleId)
@@ -773,6 +771,9 @@ int executeTask(int vehicleId)
 
 	Task *task = getTask(vehicleId);
 
+	if (task == nullptr)
+		return EM_DONE;
+	
 	return task->execute(vehicleId);
 
 }

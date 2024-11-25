@@ -966,6 +966,9 @@ void moveCombat()
 				MAP *vehicleTile = getVehicleMapTile(vehicleId);
 				Task *task = getTask(vehicleId);
 				
+				if (task == nullptr)
+					continue;
+				
 				debug
 				(
 					"\t\t[%4d] %s"
@@ -985,6 +988,9 @@ void moveCombat()
 				double travelTime = vehicleIdTravelTile.value;
 				MAP *vehicleTile = getVehicleMapTile(vehicleId);
 				Task *task = getTask(vehicleId);
+				
+				if (task == nullptr)
+					continue;
 				
 				debug
 				(
@@ -2164,6 +2170,10 @@ void coordinateAttack()
 				// hold too close vehicles
 				
 				Task *task = getTask(vehicleId);
+				
+				if (task == nullptr)
+					continue;
+				
 				task->type = TT_HOLD;
 				task->clearDestination();
 				debug("\t\t[%4d] %s travelTime=%7.2f - melee wait for bombardment\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
