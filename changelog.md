@@ -1,3 +1,7 @@
+# Version 329
+
+* [Bug] Fixed my combat computation bug.
+
 # Version 328
 
 * [Bug] Fixed my combat computation bug.

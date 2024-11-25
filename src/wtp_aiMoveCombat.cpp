@@ -2080,14 +2080,14 @@ void coordinateAttack()
 		if (enemyStack.directVechileTravelTimes.empty())
 			continue;
 		
-		// do not coordinate attach agains mobile aliens
+		// do not coordinate attack against mobile aliens
 		
 		if (enemyStack.alien && !enemyStack.alienFungalTower)
 			continue;
 		
 		debug("\t%s <-\n", getLocationString(enemyStack.tile).c_str());
 		
-		// hold bombarders if bombarding would breack a treaty
+		// hold bombarders if bombarding would break a treaty
 		
 		if (enemyStack.breakTreaty)
 		{
@@ -2096,6 +2096,9 @@ void coordinateAttack()
 				int vehicleId = vehicleTravelTime.id;
 				double travelTime = vehicleTravelTime.value;
 				Task *task = getTask(vehicleId);
+				
+				if (task == nullptr)
+					continue;
 				
 				task->type = TT_HOLD;
 				task->clearDestination();
@@ -2131,6 +2134,10 @@ void coordinateAttack()
 			// hold
 			
 			Task *task = getTask(vehicleId);
+			
+			if (task == nullptr)
+				continue;
+			
 			task->type = TT_HOLD;
 			task->clearDestination();
 			debug("\t\t[%4d] %s travelTime=%7.2f - melee wait for coordinator\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
