@@ -247,6 +247,7 @@ void populateAIData()
 	
 	populatePlayerGlobalVariables();
 	populatePlayerBaseIds();
+	populatePlayerBaseRanges();
 	populateUnits();
 	populateVehicles();
 	populateEmptyEnemyBaseTiles();
@@ -688,6 +689,37 @@ void populatePlayerBaseIds()
 		
 	}
 	
+}
+
+void populatePlayerBaseRanges()
+{
+//	// airBaseRange
+//	
+//	{
+//		int baseRange = 0;
+//		std::vector<MAP *> openNodes;
+//		
+//		for (int baseId : aiData.baseIds)
+//		{
+//			BASE *base = getBase(baseId);
+//			MAP *baseTile = getBaseMapTile(baseId);
+//			TileInfo &baseTileInfo = aiData.getTileInfo(baseTile);
+//			
+//			baseTileInfo.airBaseRange = 0;
+//			openNodes.push_back(baseTile);
+//			
+//		}
+//		
+//		
+//		std::vector<MAP *> newOpenNodes;
+//		while (openNodes.size() > 0)
+//		{
+//			for (MAP *tile :)
+//			
+//		}
+//		
+//	}
+//	
 }
 
 void populateFactionInfos()

@@ -122,6 +122,7 @@ void populateAIData();
 void populateTileInfos();
 void populateSeaRegionAreas();
 void populatePlayerBaseIds();
+void populatePlayerBaseRanges();
 void populateFactionInfos();
 void populateBaseInfos();
 

@@ -109,6 +109,9 @@ struct TileInfo
 	bool bunker = false;
 	bool airbase = false;
 	bool port = false;
+	// player base range
+	int airBaseRange = INT_MAX;
+	int surfaceBaseRange = INT_MAX;
 	
 	// land vehicle is allowed here without transport
 	bool landAllowed = false;
