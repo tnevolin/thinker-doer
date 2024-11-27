@@ -693,33 +693,49 @@ void populatePlayerBaseIds()
 
 void populatePlayerBaseRanges()
 {
-//	// airBaseRange
-//	
-//	{
-//		int baseRange = 0;
-//		std::vector<MAP *> openNodes;
-//		
-//		for (int baseId : aiData.baseIds)
-//		{
-//			BASE *base = getBase(baseId);
-//			MAP *baseTile = getBaseMapTile(baseId);
-//			TileInfo &baseTileInfo = aiData.getTileInfo(baseTile);
-//			
-//			baseTileInfo.airBaseRange = 0;
-//			openNodes.push_back(baseTile);
-//			
-//		}
-//		
-//		
-//		std::vector<MAP *> newOpenNodes;
-//		while (openNodes.size() > 0)
-//		{
-//			for (MAP *tile :)
-//			
-//		}
-//		
-//	}
-//	
+	debug("populatePlayerBaseRanges - %s\n", aiMFaction->noun_faction);
+	
+	// baseRange
+	
+	int baseRange = 0;
+	std::vector<MAP *> openNodes;
+	
+	for (int baseId : aiData.baseIds)
+	{
+		MAP *baseTile = getBaseMapTile(baseId);
+		TileInfo &baseTileInfo = aiData.getTileInfo(baseTile);
+		
+		baseTileInfo.baseRange = 0;
+		openNodes.push_back(baseTile);
+		
+	}
+	
+	std::vector<MAP *> newOpenNodes;
+	while (openNodes.size() > 0)
+	{
+		baseRange++;
+		
+		for (MAP *tile : openNodes)
+		{
+			for (MAP *adjacentTile : getAdjacentTiles(tile))
+			{
+				TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
+				
+				if (baseRange < adjacentTileInfo.baseRange)
+				{
+					adjacentTileInfo.baseRange = baseRange;
+					newOpenNodes.push_back(adjacentTile);
+				}
+				
+			}
+			
+		}
+		
+		openNodes.clear();
+		openNodes.swap(newOpenNodes);
+		
+	}
+	
 }
 
 void populateFactionInfos()
@@ -6882,6 +6898,8 @@ Measured in average base gain.
 double getEnemyVehicleAttackGain(int vehicleId, int baseRange)
 {
 	VEH *vehicle = getVehicle(vehicleId);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	TileInfo &vehicleTileInfo = aiData.getTileInfo(vehicleTile);
 	int factionId = vehicle->faction_id;
 	int unitId = vehicle->unit_id;
 	
@@ -6899,8 +6917,19 @@ double getEnemyVehicleAttackGain(int vehicleId, int baseRange)
 			attackPriority = conf.ai_combat_attack_priority_alien_spore_launcher;
 			break;
 		case BSC_FUNGAL_TOWER:
-			attackPriority = conf.ai_combat_attack_priority_alien_fungal_tower;
+			{
+				// gain is falling wiht baseRange
+				
+				double expansionRangeCoefficient = vehicleTileInfo.baseRange <= 2 ? 1.0 : 2.0 / (double)vehicleTileInfo.baseRange;
+				
+				return
+					conf.ai_combat_attack_priority_alien_fungal_tower
+					* expansionRangeCoefficient
+				;
+				
+			}
 			break;
+			
 		default:
 			attackPriority = 0.0;
 		}

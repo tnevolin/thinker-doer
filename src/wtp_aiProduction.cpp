@@ -2140,24 +2140,18 @@ void evaluateTerritoryProtectionUnits()
 			// travel time
 			
 			double travelTime = getUnitATravelTime(unitId, baseTile, position);
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// gain
 			
 			double combatEffect = enemyStackInfo->getUnitEffect(unitId);
-			double survivalEffect = getSurvivalEffect(combatEffect);
-			double attackGain = enemyStackInfo->averageUnitGain;
-			double protectionGain =
-				attackGain
-				* survivalEffect
-				* travelTimeCoefficient
-			;
+			double winningProbability = getWinningProbability(combatEffect);
+			double attackGain = getGainDelay(2.0 * winningProbability * enemyStackInfo->averageUnitGain, travelTime);
 			
-			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
+			double upkeep = getResourceScore(-getUnitSupport(unitId), 0);
 			double upkeepGain = getGainTimeInterval(getGainIncome(upkeep), 0.0, travelTime);
 			
 			double gain =
-				+ protectionGain
+				+ attackGain
 				+ upkeepGain
 			;
 			
@@ -2168,24 +2162,18 @@ void evaluateTerritoryProtectionUnits()
 				"\t\t%-32s"
 				" -> %s"
 				" travelTime=%7.2f"
-				" travelTimeCoefficient=%5.2f"
-				" ai_production_base_protection_priority=%5.2f"
 				" combatEffect=%5.2f"
-				" survivalEffect=%5.2f"
+				" winningProbability=%5.2f"
 				" attackGain=%5.2f"
-				" protectionGain=%5.2f"
 				" upkeepGain=%5.2f"
 				" gain=%7.2f"
 				"\n"
 				, unit->name
 				, getLocationString(enemyStackInfo->tile).c_str()
 				, travelTime
-				, travelTimeCoefficient
-				, conf.ai_production_base_protection_priority
 				, combatEffect
-				, survivalEffect
+				, winningProbability
 				, attackGain
-				, protectionGain
 				, upkeepGain
 				, gain
 			);

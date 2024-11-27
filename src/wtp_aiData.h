@@ -110,8 +110,7 @@ struct TileInfo
 	bool airbase = false;
 	bool port = false;
 	// player base range
-	int airBaseRange = INT_MAX;
-	int surfaceBaseRange = INT_MAX;
+	int baseRange = INT_MAX;
 	
 	// land vehicle is allowed here without transport
 	bool landAllowed = false;
@@ -590,9 +589,6 @@ struct Production
 	// formers
 	std::vector<FormerRequest> formerRequests;
 	
-	double landPodPoppingDemand;
-	robin_hood::unordered_flat_map<int, double> seaPodPoppingDemands;
-	
 	// combat unit demands
 	
 	robin_hood::unordered_flat_map<int, double> basePoliceGains;
@@ -603,7 +599,6 @@ struct Production
 	void clear()
 	{
 		unavailableBuildSites.clear();
-		seaPodPoppingDemands.clear();
 		basePoliceGains.clear();
 		baseProtectionGains.clear();
 		enemyBaseCaptureGains.clear();
