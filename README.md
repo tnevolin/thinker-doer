@@ -502,23 +502,27 @@ The Hunter-Seeker Algorithm prevents regular probe action but does not destroy i
 
 # Inefficiency
 
-Inefficiency formula modified to avoid complete energy loss at -4 and make overall radius increase smoother.
+Inefficiency formula modified to avoid complete energy loss at -4 and make energy loss smoother.
 
 Vanilla base energy goes down linearly from 100% at HQ to 0% at the edge of energy radius. The radius linearly shortens/widens with EFFICIENCY rating.
 
 This modification changes radius geometrically instead to avoid hitting zero at -4 and to maintain reasonable growth at potitive values.
 
+```
+R = 1.5 * map width / 4 * 1.3 ^ EFFICIENCY
+```
+
 | EFFICIENCY | R (vanilla) | R (mod) |
 | ----: | ----: | ----: |
-| -4 |  0 |   6 |
-| -3 |  8 |   9 |
-| -2 | 16 |  14 |
-| -1 | 24 |  21 |
-|  0 | 32 |  32 |
-|  1 | 40 |  48 |
-|  2 | 48 |  72 |
-|  3 | 56 | 108 |
-|  4 | 64 | 162 |
+| -4 |  0 |  10 |
+| -3 |  8 |  14 |
+| -2 | 16 |  18 |
+| -1 | 24 |  24 |
+|  0 | 32 |  30 |
+|  1 | 40 |  39 |
+|  2 | 48 |  51 |
+|  3 | 56 |  66 |
+|  4 | 64 |  86 |
 
 Example energy collection percentage for different faction base count.
 
