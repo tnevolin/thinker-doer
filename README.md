@@ -502,15 +502,37 @@ The Hunter-Seeker Algorithm prevents regular probe action but does not destroy i
 
 # Inefficiency
 
-Inefficiency formula reworked. It uses "efficiency" as a complenetary measure for inefficiency.
+Inefficiency formula modified to avoid complete energy loss at -4 and make overall radius increase smoother.
 
-<pre>
-seEfficiencyRate = (4 + EFFICIENCY) / 8                          ;limited to [0; 1] interval
-hqEfficiencyRate = 1 - distance to HQ / (1.5 \* map width / 4)   ;limited to [0; 1] interval
-efficiencyRate = seEfficiencyRate + hqEfficiencyRate             ;limited to [0; 1] interval
-efficiency = efficiencyRate \* energy intake                     ;rounded up
-inefficiency = energy intake - efficiency
-</pre>
+Vanilla base energy goes down linearly from 100% at HQ to 0% at the edge of energy radius. The radius linearly shortens/widens with EFFICIENCY rating.
+
+This modification changes radius geometrically instead to avoid hitting zero at -4 and to maintain reasonable growth at potitive values.
+
+| EFFICIENCY | R (vanilla) | R (mod) |
+| ----: | ----: | ----: |
+| -4 |  0 |   6 |
+| -3 |  8 |   9 |
+| -2 | 16 |  14 |
+| -1 | 24 |  21 |
+|  0 | 32 |  32 |
+|  1 | 40 |  48 |
+|  2 | 48 |  72 |
+|  3 | 56 | 108 |
+|  4 | 64 | 162 |
+
+Example energy collection percentage for different faction base count.
+
+It is clear that modified formula does not allow whole energy to be lost to inefficiency. At the same time it lets EFFICIENCY to be more impactful at higher ratings.
+
+![inefficiency](images/inefficiency.png)
+
+## Estimates
+
+Assuming a perfectly round base distribution with older and more productive central bases.
+
+### Small faction
+
+
 
 # Miscellaneous
 
