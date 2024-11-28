@@ -10,16 +10,17 @@ Simple comparison of available rating values and how often are they given in van
 
 Model use is a sum of absolute values used in SE choices.
 
-| effect | range values | model use (vanulla) |
-| ---- | ----: | ----: |
-|	ECONOMY | 6 | 5 |
-|	EFFIC | 9 | 11 |
-|	SUPPORT | 8 | 7 |
-|	MORALE | 9 | 9 |
-|	POLICE | 9 | 12 |
-|	GROWTH | 9 | 8 |
-+++
-|	PLANET | 6 | 5 |
-|	PROBE | 6 | 5 |
-|	INDUSTRY | 6 | 5 |
-|	RESEARCH | 6 | 5 |
+#### Vanilla
+
+| effect | values | use | use, % |
+| ---- | ----: | ----: | ----: |
+|	ECONOMY | 6 | 5 | 80 |
+|	EFFIC | 9 | 11 | 120 |
+|	SUPPORT | 8 | 7 | 88 |
+|	MORALE | 9 | 9 | 100 |
+|	POLICE | 9 | 12 | 130 |
+|	GROWTH | 9 | 8 | 90 |
+|	PLANET | 7 | 7 | 100 |
+|	PROBE | 6 | 6 | 100 |
+|	INDUSTRY | 11 | 6 | 55 |
+|	RESEARCH | 11 | 6 | 55 |
