@@ -1,3 +1,11 @@
+# Version 331
+
+* Alternative inefficiency formula: https://github.com/tnevolin/thinker-doer/blob/master/README.md#inefficiency
+* Reduced base economy to psych conversion ratio to 2:1 for the purpose of maintaining specialists in superdrone bases.
+* AI/governor does not allow base starvation even at the cost of drone riot.
+* Drone riot does not destroy facilities.
+* Capturing base does not destroy facilities.
+
 # Version 330
 
 * [Bug] Fixed my combat computation bug.

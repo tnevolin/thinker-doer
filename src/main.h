@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v330"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v331"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -346,7 +346,7 @@ struct Config {
 	double alternative_mind_control_facility_cost_multiplier;
 	double alternative_mind_control_project_cost_multiplier;
 	double alternative_mind_control_happiness_power_base;
-	double disable_guaranteed_facilities_destruction;
+	bool capture_base_destroys_facilities;
 	bool alternative_support = false;
 	int instant_completion_fixed_minerals;
 	bool sensor_indestructible;
@@ -378,6 +378,8 @@ struct Config {
     int facility_energy_multipliers_temple_of_planet[3] = {0,0,0};
     int echelon_mirror_bonus[2] = {1,1};
     int echelon_mirror_ecodamage = 6;
+    bool base_inefficiency_alternative = false;
+    bool drone_riot_intensifies = true;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

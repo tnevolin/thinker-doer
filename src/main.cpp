@@ -548,9 +548,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->alternative_mind_control_happiness_power_base = atof(value);
     }
-    else if (MATCH("disable_guaranteed_facilities_destruction"))
+    else if (MATCH("capture_base_destroys_facilities"))
     {
-        cf->disable_guaranteed_facilities_destruction = (atoi(value) == 0 ? false : true);
+        cf->capture_base_destroys_facilities = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("alternative_support"))
     {
@@ -675,6 +675,14 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("echelon_mirror_ecodamage"))
     {
         cf->echelon_mirror_ecodamage = atoi(value);
+    }
+    else if (MATCH("base_inefficiency_alternative"))
+    {
+        cf->base_inefficiency_alternative = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("drone_riot_intensifies"))
+    {
+        cf->drone_riot_intensifies = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("ai_useWTPAlgorithms"))
     {

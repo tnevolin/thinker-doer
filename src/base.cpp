@@ -461,6 +461,7 @@ void __cdecl mod_base_yield() {
         bool valid = !can_riot;
         while (!valid && choices.size() > 1) {
             base_update(base, choices);
+            mod_base_nutrient();
             mod_base_minerals();
             mod_base_energy();
             valid = !base->drone_riots();
@@ -479,6 +480,14 @@ void __cdecl mod_base_yield() {
                 // Priority for mineral support costs
                 valid = true;
             }
+            
+            // [WTP]
+            // priority for base self feeding
+            
+            if (base->nutrient_surplus - choices.back().nutrient < 0) {
+                valid = true;
+            }
+            
             memcpy(base, &initial, sizeof(BASE));
             if (!valid) {
                 worked_tiles &= ~(1 << choices.back().i);
@@ -700,7 +709,9 @@ void __cdecl mod_base_energy() {
     if (*BaseUpkeepState == 1) {
         f->energy_surplus_total += clamp(base->energy_surplus, 0, 99999);
     } else {
-        assert(base->energy_inefficiency == black_market(base->energy_intake_2 - base->energy_consumption));
+    	// [WTP]
+    	// black_market is modified
+//        assert(base->energy_inefficiency == black_market(base->energy_intake_2 - base->energy_consumption));
     }
     // Non-multiplied energy intake is always limited to this range
     int total_energy = clamp(base->energy_surplus, 0, 9999);

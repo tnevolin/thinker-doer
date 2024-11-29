@@ -2261,30 +2261,23 @@ void patch_alternative_subversion_and_mind_control()
 
 }
 
-void patch_disable_guaranteed_facilities_destruction()
+void patch_capture_base_does_not_destroy_facilities()
 {
+	// in capture_base
+	// disable other facilities destruction
+	
+	int capture_base_does_not_destroy_facilities1_bytes_length = 0x2;
+	byte capture_base_does_not_destroy_facilities1_bytes_old[] = { 0x85, 0xC0 }; // 0:  85 c0                   test   eax,eax
+	byte capture_base_does_not_destroy_facilities1_bytes_new[] = { 0x85, 0xFF }; // 0:  85 ff                   test   edi,edi
+	write_bytes(0x0050D01B, capture_base_does_not_destroy_facilities1_bytes_old, capture_base_does_not_destroy_facilities1_bytes_new, capture_base_does_not_destroy_facilities1_bytes_length);
+	
 	// in capture_base
 	// disable guaranteed facilities destruction
 	
-	int disable_guaranteed_facilities_destruction_bytes_length = 0x3;
-	
-	/*
-	0:  8b 45 c8                mov    eax,DWORD PTR [ebp-0x38]
-	*/
-	byte disable_guaranteed_facilities_destruction_bytes_old[] = { 0x8B, 0x45, 0xC8 };
-	
-	/*
-	0:  83 c8 ff                or     eax,0xffffffff
-	*/
-	byte disable_guaranteed_facilities_destruction_bytes_new[] = { 0x83, 0xC8, 0xFF };
-	
-	write_bytes
-	(
-		0x0050D05B,
-		disable_guaranteed_facilities_destruction_bytes_old,
-		disable_guaranteed_facilities_destruction_bytes_new,
-		disable_guaranteed_facilities_destruction_bytes_length
-	);
+	int capture_base_does_not_destroy_facilities2_bytes_length = 0x2;
+	byte capture_base_does_not_destroy_facilities2_bytes_old[] = { 0x85, 0xC0 }; // 0:  85 c0                   test   eax,eax
+	byte capture_base_does_not_destroy_facilities2_bytes_new[] = { 0x85, 0xFF }; // 0:  85 ff                   test   edi,edi
+	write_bytes(0x0050D061, capture_base_does_not_destroy_facilities2_bytes_old, capture_base_does_not_destroy_facilities2_bytes_new, capture_base_does_not_destroy_facilities2_bytes_length);
 	
 }
 
@@ -3122,6 +3115,18 @@ e:  c7 45 b0 00 00 00 00    mov    DWORD PTR [ebp-0x50],0x0
 	
 }
 
+void patch_drone_riot_does_not_intensify()
+{
+	// in drone_riot
+	// pretend there were no drone riot on previous turn
+	
+    int drone_riot_does_not_intensify_length = 0x2;
+    byte drone_riot_does_not_intensify_old[] = { 0x85, 0xF6 }; // 0:  85 f6                   test   esi,esi
+    byte drone_riot_does_not_intensify_new[] = { 0x85, 0xC0 }; // 0:  85 c0                   test   eax,eax
+    write_bytes(0x004F50E7, drone_riot_does_not_intensify_old, drone_riot_does_not_intensify_new, drone_riot_does_not_intensify_length);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3349,9 +3354,9 @@ void patch_setup_wtp(Config* cf)
 		patch_alternative_subversion_and_mind_control();
 	}
 	
-	if (cf->disable_guaranteed_facilities_destruction)
+	if (!cf->capture_base_destroys_facilities)
 	{
-		patch_disable_guaranteed_facilities_destruction();
+		patch_capture_base_does_not_destroy_facilities();
 	}
 	
 	patch_exact_odds();
@@ -3430,6 +3435,11 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_revolt();
+	
+	if (!conf.drone_riot_intensifies)
+	{
+		patch_drone_riot_does_not_intensify();
+	}
 	
 }
 

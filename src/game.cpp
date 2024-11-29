@@ -178,12 +178,41 @@ int __cdecl mod_black_market(int base_id, int energy, int* effic_energy_lost) {
     if (head_id >= 0) {
         dist_hq = vector_dist(Bases[head_id].x, Bases[head_id].y, base->x, base->y);
     } else {
-        dist_hq = 16;
+    	// [WTP]
+    	// no HQ distance is half of equatorial circumference
+//        dist_hq = 16;
+        dist_hq = *MapAreaX * 3 / 4;
     }
     if (dist_hq == 0) {
         return 0;
     }
     bool has_creche = has_fac_built(FAC_CHILDREN_CRECHE, base_id);
+    
+    // [WTP]
+    // alternative inefficiency
+    
+    double const energy_radius_a = (double)*MapAreaX * 3.0 / 4.0;
+    double const energy_radius_b = 1.3;
+    
+    if (conf.base_inefficiency_alternative)
+	{
+		if (effic_energy_lost != NULL) {
+			for (int i = 0; i < 9; i++) {
+				int se_efficiency = 4 - i
+					+ (has_creche ? 2 : 0) // +2 on efficiency scale
+				;
+				double energy_radius = energy_radius_a * pow(energy_radius_b, (double)se_efficiency);
+				effic_energy_lost[i] += clamp((int)round((double)energy * (double)dist_hq / energy_radius), 0, energy);
+			}
+		}
+		int se_efficiency = Factions[base->faction_id].SE_effic_pending
+			+ (has_creche ? 2 : 0) // +2 on efficiency scale
+		;
+		double energy_radius = ((double)*MapAreaX * 3.0 / 4.0) * pow(1.3, (double)se_efficiency);
+		return clamp((int)round((double)energy * (double)dist_hq / energy_radius), 0, energy);
+	}
+	else
+	{
     if (effic_energy_lost != NULL) {
         for (int i = 0; i < 9; i++) {
             int factor;
@@ -205,6 +234,8 @@ int __cdecl mod_black_market(int base_id, int energy, int* effic_energy_lost) {
         return energy;
     }
     return clamp(energy * dist_hq / (8 * factor), 0, energy);
+	}
+	
 }
 
 void init_world_config() {
