@@ -1,6 +1,8 @@
 # Preface
 
-Many people are asking why WTP disables crawlers and request to return them "maybe just a tiny bit". There were months of discussions on AC2 forum regarding them and how to make them fit into the game but this forum is not unrecoverable. Reposting here the summary of thoughts and reasons to not repat myself.
+Many people are asking why WTP disables crawlers and request to return them "maybe just a tiny bit". There were months of discussions on AC2 forum regarding them and how to make them fit into the game but this forum is not unrecoverable. Reposting here the summary of thoughts and reasons.
+
+Keep in mind this is just my view on the subject. Others may they their own.
 
 # Civ model
 
