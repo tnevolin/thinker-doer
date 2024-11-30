@@ -128,11 +128,13 @@ bool compareFormerRequests(FormerRequest const &formerRequest1, FormerRequest co
 
 void populateFactionProductionData()
 {
-	const int AVAILABLE_FORMER_COUNT_DIVISOR = 3;
+	const int AVAILABLE_AIR_FORMER_COUNT_DIVISOR = 2;
+	const int AVAILABLE_SEA_FORMER_COUNT_DIVISOR = 1;
+	const int AVAILABLE_LAND_FORMER_COUNT_DIVISOR = 3;
 	
 	// available former counts
 	
-	int availableAirFormerCount = aiFactionInfo->airFormerCount / AVAILABLE_FORMER_COUNT_DIVISOR;
+	int availableAirFormerCount = aiFactionInfo->airFormerCount / AVAILABLE_AIR_FORMER_COUNT_DIVISOR;
 	
 	robin_hood::unordered_flat_map<int, int> availableSeaFormerCounts;
 	
@@ -140,7 +142,7 @@ void populateFactionProductionData()
 	{
 		int cluster = seaClusterFormerCountEntry.first;
 		int count = seaClusterFormerCountEntry.second;
-		availableSeaFormerCounts.emplace(cluster, count / AVAILABLE_FORMER_COUNT_DIVISOR);
+		availableSeaFormerCounts.emplace(cluster, count / AVAILABLE_SEA_FORMER_COUNT_DIVISOR);
 	}
 	
 	robin_hood::unordered_flat_map<int, int> availableLandFormerCounts;
@@ -149,7 +151,7 @@ void populateFactionProductionData()
 	{
 		int cluster = landTransportedClusterFormerCountEntry.first;
 		int count = landTransportedClusterFormerCountEntry.second;
-		availableLandFormerCounts.emplace(cluster, count / AVAILABLE_FORMER_COUNT_DIVISOR);
+		availableLandFormerCounts.emplace(cluster, count / AVAILABLE_LAND_FORMER_COUNT_DIVISOR);
 	}
 	
 	// sort former requests

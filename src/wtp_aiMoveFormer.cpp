@@ -584,7 +584,9 @@ void populateTerraformingData()
 	{
 		BaseTerraformingInfo &baseTerraformingInfo = getBaseTerraformingInfo(baseId);
 		
-		baseTerraformingInfo.projectedPopSize = getBaseProjectedSize(baseId, 10);
+		// do not project population
+//		baseTerraformingInfo.projectedPopSize = getBaseProjectedSize(baseId, 10);
+		baseTerraformingInfo.projectedPopSize = Bases[baseId].pop_size;
 		
 	}
 	
@@ -775,6 +777,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 {
 	debug("generateBaseConventionalTerraformingRequests - %s\n", Bases[baseId].name);
 	
+	BASE *base = getBase(baseId);
 	BaseTerraformingInfo &baseTerraformingInfo = baseTerraformingInfos[baseId];
 	
 	// generate all possible requests
@@ -842,47 +845,88 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	
 	// select requests
 	
-	debug("\tselectedBaseTerraformingRequests\n");
+	debug("\tselectedTerraformingRequests\n");
 	
 	std::vector<TERRAFORMING_REQUEST> selectedBaseTerraformingRequests;
 	
-	for (TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
+	// set projected population
+	
+	int currentPopSize = base->pop_size;
+	base->pop_size = baseTerraformingInfo.projectedPopSize;
+	
+	for (int surface = 0; surface < 2; surface++)
 	{
-		int x = getX(terraformingRequest.tile);
-		int y = getY(terraformingRequest.tile);
-		int bonus = bonus_at(x, y);
+		debug("\t\tsurface=%d\n", surface);
 		
-		bool selected = true;
+		robin_hood::unordered_flat_set<MAP *> appliedLocations;
+		robin_hood::unordered_flat_set<MAP *> selectedLocations;
 		
-		if (bonus == 0)
+		for (TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
 		{
-			for (TERRAFORMING_REQUEST &selectedTerraformingRequest : selectedBaseTerraformingRequests)
+			// same surface
+			
+			if (is_ocean(terraformingRequest.tile) != surface)
+				continue;
+			
+			// skip allready selected locations
+			
+			if (selectedLocations.find(terraformingRequest.tile) != selectedLocations.end())
+				continue;
+			
+			// apply changes
+			
+			applyMapState(terraformingRequest.improvedMapState, terraformingRequest.tile);
+			appliedLocations.insert(terraformingRequest.tile);
+			
+			// compute base
+			
+			computeBase(baseId, true);
+			
+			// verify all already selected tiles are still worked
+			// stop processing if not
+			
+			bool allWorked = true;
+			
+			for (MAP *selectedTile : selectedLocations)
 			{
-				if (TileYield::isEqualOrSuperior(selectedTerraformingRequest.yield, terraformingRequest.yield))
+				if (!isBaseWorkedTile(baseId, selectedTile))
 				{
-					selected = false;
+					allWorked = false;
 					break;
 				}
 			}
-		}
-		
-		if (selected)
-		{
+			
+			if (!allWorked)
+				break;
+			
+			// verify tile is worked
+			// stop processing if not
+			
+			if (!isBaseWorkedTile(baseId, terraformingRequest.tile))
+				break;
+			
+			// select request
+			
 			selectedBaseTerraformingRequests.push_back(terraformingRequest);
+			selectedLocations.insert(terraformingRequest.tile);
+			
+			debug("\t\t\t%s %s\n", getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name);
+			
 		}
 		
-		debug
-		(
-			"\t\t%5.2f %s %-16s %d %d-%d-%d"
-			" selected=%d"
-			"\n"
-			, terraformingRequest.gain, getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name
-			, bonus
-			, terraformingRequest.yield.nutrient, terraformingRequest.yield.mineral, terraformingRequest.yield.energy
-			, selected
-		);
+		// restore all applied changes
+		
+		for (MAP *tile : appliedLocations)
+		{
+			restoreTileMapState(tile);
+		}
 		
 	}
+	
+	// restore population
+	
+	base->pop_size = currentPopSize;
+	computeBase(baseId, true);
 	
 	// record existing significant request locations
 	
