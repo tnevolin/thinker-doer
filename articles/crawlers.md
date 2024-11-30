@@ -1,154 +1,61 @@
-# Probe actions success probability
+# Preface
 
-Old thread on AC2: https://web.archive.org/web/20230912072952/https://alphacentauri2.info/index.php?topic=2761.0
+Many people are asking why WTP disables crawlers and request to return them "maybe just a tiny bit". There were months of discussions on AC2 forum regarding them and how to make them fit into the game but this forum is not unrecoverable. Reposting here the summary of thoughts and reasons to not repat myself.
 
-## Sequence of steps
+# Civ model
 
-1. Probe attempts to carry out the mission.
-   * If unsuccessful, action is not performed and probe is eliminated.
-   * If successful, action is performed and next step follows.
-2. Probe attempts to escape after successfully completed mission.
-   * If unsuccessful, probe is eliminated.
-   * If successful, probe is returned to the nearest friendly base and promoted.
+Civ games introduced their unique and recognizable playing model with following key elements.
 
-## Success factors
+* There is a terrain with tiles those can be worked out of nearby base.
+* Base has it reach radius where it can send workers.
+* Tile yield can be better or worse initially and can improved.
+* Base sends workers out to harvest three resource types: nutrients, minerals, energy.
+* Nutrients are to grow the base population and increase number of workers, and, subsequently, base total yield/income.
+* Minerals are for producing buildings and units.
+* Energy are for paying for building maintenance, conducting research, make base population happier, etc.
+* Growing base is not easy, more population leads to more unhappiness, which needs to be handled by constructing psych building, police, and spending money on psych.
+* Another option for generating more psych is turning workers into doctors. However, even when doctor helps quellying drones, they do not work land themselves.
+* Growing number of bases also increases number of drones in faction bases overall and requires more efforts to mainain the order.
 
-Probe success probability depends on following factors:
+As you can see, there are a lot of moving parts in this system requiring careful decision making from the player to achieve optimal development performance. All numeric parameters are fine tuned all across the game. Any big change anywhere in the game may collapse whole model. For example, doubling energy yield from each tile, would effectivelly make building maintenance twice as cheap and insignificant. From the other hand, halving energy yield, effectivelly doubles building maintenance making it completely unbearable.
 
-* Action risk level
-* Probe current morale
-* Target faction negative PROBE rating
-* Target base Covert Ops Center facility existence
+Based on above model, here are some tactical/strategical mini games player used to manage in Civ type games.
 
-## Risks
+* Find a good coverage spot for a base and found it.
+* Sufficiently protect base from attacks.
+* Build formers and improve land.
+* Fiddle with worker placement varying yield.
+* Grow base.
+* Build psych facilities.
+* Build and station police units.
+* Modify slider to allocate some energy to psych.
+* And, of course, direct research to discover all the above.
+* Meanwhile, build military units to protect or expand territory.
 
-| action | RISK |
-| ---- | ----: |
-| Infiltrate Datalinks | 0 |
-| Procure Research Data - first time from a base | 0 |
-| Procure Research Data - after first time from a base | 1 |
-| Activate Sabotage Virus - random | 0 |
-| Activate Sabotage Virus - specific | 1 |
-| Activate Sabotage Virus - defensive facility | 2 |
-| Activate Sabotage Virus - any facility in HQ | 2 |
-| Drain Energy Reserves | 0 |
-| Insite Drone Riots | 0 |
-| Assassinate Prominent Researchers | 1 |
-| Introduce Genetic Plague | 0 |
+The important point of above mini games is that they all support and intensify each other: better growth -> more workers -> more resources -> more growth, more energy allocated to psych -> less drones -> more workers -> higher income, faster research -> more advanced ways of deal with drones + better improvements + better yield, etc.
 
-Attempting to frame other faction increases risk by 1. If such attempt fails, diplomatic consequences may follow with framed faction.
+# Crawler model
 
-RISK 3 is only possible when framing other faction for RISK 2 action.
+And here is what player needs to be successful in crawler play.
 
-## Probe morale
+* Build formers and crawlers.
+* Improve tiles and harvest resources (all types) with crawlers.
 
-Probe current morale is combined from vehicle base morale plus variable bonuses.
-Any probe morale computation below is limited to range: Disciplined - Elite.
+And that is freaking it! Mineral production exponentially drives mineral production.
 
-```
-morale = base morale + [positive PROBE] + [2 if faction possesses The Telepathic Matrix]
-```
+* No need to grow bases. Base size 1 does absoltely well.
+* No need for careful base placement. Base location and harvest location can be anywhere on the planet.
+* No drones! No need for pacifying means: no psych facilities, no police, no projects.
+* Half of economical research is not needed, only military one.
 
-## Probability formula
+True that, at first, player sill needs to follow Civ model to build up startup capital. However, later on, when high productive bases can mass produce crawlers, they can just send bunch of them to each new base make it home base and then to prepared improved tile locations to jump start new base. In fact, not many bases are even needed. Small number of super productive bases is sufficient just to be able to build more than one unit a turn (one per base).
 
-Probability is computed comparing probe effectiveness to risk level.
+# Conclusion
 
-### Action
+Crawler model crosses out everything what was so carefully designed in Civ series so far (1 -> 2 -> SMAXC). It is simpler, has almost no dependendies, and is more effective. Naturally, player tends to abandon Civ model and replace it with crawler one instead. I am not against the crawler game per se. However, this is not the Civ type of game and I do not see a use of mixing them together.
 
-```
-probe effectiveness = morale / 2
-+1 if target faction PROBE is -1 and target base DOES NOT have COC
-+2 if target faction PROBE is -2 and target base DOES NOT have COC
-```
+There is no way of fixing this OP strategy either. Limiting its usage will not make it not OP. Allowing say just one crawler per base leads to ... exactly one crawler per base, because player has to be stupid not to use this freebie.
 
-```
-success probability = (effectiveness + 1 - RISK) / (effectiveness + 1)
-```
+# Post words
 
-### Escape
-
-```
-probe effectiveness = morale
-+1 if target faction PROBE is -1 and target base DOES NOT have COC
-+2 if target faction PROBE is -2 and target base DOES NOT have COC
-```
-
-```
-success probability = (effectiveness - RISK) / (effectiveness + 1)
-```
-
-## The Hunter-Seeker Algorithm and Algorithmically Enhanced probe effects
-
-| HSA | AE | effect |
-| :----: | :----: | ---- |
-|  |  |  |
-| + |  | probing is impossible |
-|  | + | chance of failure is halved |
-| + | + | chance of success is halved |
-
-## Example probability computation
-
-### Normal probe
-
-#### action
-
-| morale | RISK0 | RISK1 | RISK2 | RISK3 |
-| ---- | ----: | ----: | ----: | ----: |
-| Disciplined<br>Hardened | 100% | 50% |  0% |  0% |
-| Veteran<br>Commando     | 100% | 67% | 33% |  0% |
-| Elite                   | 100% | 75% | 50% | 25% |
-
-#### escape
-
-| morale | RISK0 | RISK1 | RISK2 | RISK3 |
-| ---- | ----: | ----: | ----: | ----: |
-| Disciplined | 67% | 33% | 0% | 0% |
-| Hardened    | 75% | 50% | 25% | 0% |
-| Veteran     | 80% | 60% | 40% | 20% |
-| Commando    | 83% | 67% | 50% | 33% |
-| Elite       | 86% | 71% | 57% | 43% |
-
-# Base submersion
-
-When sea level rises some shore tiles may go under water. If such tile has a base on it and the base **does not** have Pressure Dome, it will sustain severe population loss.
-
-1. Minimal population loss is the random number in 2-4 range (inclusive).
-2. Maximal population loss is 10.
-3. Resulting population loss is half of the current population rounded down but between minimum and maximum above.
-
-If base loses all of its population it is lost. If base have some population left, it survives and acquires Pressure Dome.
-
-#### Base surviving submerging chances by population
-
-| population | chance |
-| ----: | ----: |
-| <= 2 | 0% |
-| 3 | 33% |
-| 4 | 67% |
-| >= 5 | 100% |
-
-# Riot intesifying
-
-When base is rioting for more than one turn the "riot intensifying" popup is shown for the base.
-
-#### Exclusions
-
-* Nothing ever happens to headquarter base.
-* Nothing ever hanppes to captured base for the first **five** turns.
-
-#### Events and conditions
-
-Conditions are checked in following order.
-
-1. If POLICE >= -5, there is a `(POLICE + 6) / (POLICE + 7)` random chance that nothing happens. Otherwise, go to next step.
-2. If populatioin < 4, there is a `1/3` random chance that nothing happes. Otherwise, go to next step.
-3. Game makes `population + 20 - difficulty - ranking` attempts to destroy a building with random ID.
-   * Headquarter cannot be destroyed.
-   * Faction bonus facilities cannot be destroyed.
-   * If given random ID buiding does not exist in this base - go to next loop.
-4. If game can successfully find a building to destroy, it destroys it and nothing else happens. Otherwise, it goes to next step.
-5. If POLICE >= -1 (at least one police unit allowed), nothing happens. Otherwise, it goes to next step.
-6. If faction is alien, nothing happens. Otherwise, it goes to next step.
-7. If faction is AI (not human), nothing happens. Otherwise, it goes to next step. Damn! AI bases **never** defect.
-8. The rest of the code is broken. If one of your bases is ever tries to defect, the game will likely crash. Supposedly, there is an equal chance to defect to any faction with bonus to drones.
-
+Truth to be told, there are many things in SMACX breaking Civ paradigm. Satellites are one example. They are so powerful that player will definitely max them out to reach the limit output (base population) quite soon after the discovery. Same exactly reasoning applies to them. The only excuse to keep them in the game is the above mentioned limit and the fact that they appear quite late when the game is usually won/lost already. So no balance harm.
