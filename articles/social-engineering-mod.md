@@ -35,7 +35,6 @@ Weights are for early, mid, and late game.
 | ---- | ----: | ----: | ----: | ---- |
 |	INDUSTRY | 1.00 | 1.00 | 1.00 | Baseline effect for others to compare against. |
 |	RESEARCH | 0.50 | 0.50 | 0.50 | Subjective estimate. |
-|	_ENERGY_ | 0.50 | 0.75 | 1.00 | Fake effect of +10% energy intake. Helps to map other energy based effects to it. |
 |	ECONOMY | 1.50 | 1.25 | 1.00 | Globally averaged value by all rating transitions. |
 |	EFFICIENCY | 0.50 | 1.00 | 1.50 | Value grows with empire size. |
 |	SUPPORT | 1.50 | 1.00 | 0.50 |  |
