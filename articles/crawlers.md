@@ -10,7 +10,7 @@ Civ games introduced their unique and recognizable playing model with following 
 
 * There is a terrain with tiles those can be worked out of nearby base.
 * Base has it reach radius where it can send workers.
-* Tile yield can be better or worse initially and can improved.
+* Tile yield can be better or worse initially and can be improved.
 * Base sends workers out to harvest three resource types: nutrients, minerals, energy.
 * Nutrients are to grow the base population and increase number of workers, and, subsequently, base total yield/income.
 * Minerals are for producing buildings and units.
