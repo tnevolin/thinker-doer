@@ -520,6 +520,7 @@ void evaluateFacilities()
 {
 	debug("evaluateFacilities\n");
 	
+	evaluatePressureDome();
 	evaluateStockpileEnergy();
 	evaluateHeadquarters();
 	evaluatePsychFacilitiesRemoval();
@@ -532,9 +533,34 @@ void evaluateFacilities()
 
 }
 
-/*
-Evaluates base stockpile energy.
-*/
+void evaluatePressureDome()
+{
+	debug("- evaluatePressureDome\n");
+	
+	BASE *base = productionDemand.base;
+	
+	int facilityId = FAC_PRESSURE_DOME;
+	
+	if (*ClimateFutureChange <= 0 || !is_shore_level(mapsq(base->x, base->y)))
+		return;
+	
+	// fixed extremely high priority
+	double priority = 1000.0;
+	
+	productionDemand.addItemPriority(-facilityId, priority);
+	
+	debug
+	(
+		"\t%-32s"
+		" priority=%5.2f   |"
+		"\n"
+		, getFacility(facilityId)->name
+		, priority
+	)
+	;
+	
+}
+
 void evaluateStockpileEnergy()
 {
 	debug("- evaluateStockpileEnergy\n");
@@ -3833,11 +3859,11 @@ void selectProject()
 	int cheapestProjectFacilityId = -1;
 	int cheapestProjectFacilityCost = INT_MAX;
 
-	for (int projectFacilityId = FAC_HUMAN_GENOME_PROJECT; projectFacilityId <= FAC_PLANETARY_ENERGY_GRID; projectFacilityId++)
+	for (int projectFacilityId = SP_ID_First; projectFacilityId <= SP_ID_Last; projectFacilityId++)
 	{
 		// exclude not available project
-
-		if (!isProjectAvailable(aiFactionId, projectFacilityId))
+		
+		if (!mod_facility_avail((FacilityId)projectFacilityId, aiFactionId, -1, 0))
 			continue;
 
 		// get project cost

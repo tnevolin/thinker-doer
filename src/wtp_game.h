@@ -822,7 +822,6 @@ bool isInfantryPolice2xUnit(int unitId, int factionId);
 bool isInfantryPolice2xVehicle(int vehicleId);
 bool isPsiCombat(int attackerUnitId, int defenderUnitId);
 double getAlienTurnStrengthModifier();
-bool isProjectAvailable(int factionId, int projectFacilityId);
 int getFactionMaintenance(int factionId);
 int getFactionNetIncome(int factionId);
 int getFactionGrossIncome(int factionId);

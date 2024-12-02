@@ -1,3 +1,8 @@
+# Version 332
+
+* [Bug] Fixed AI project selection to make sure they do not pick up destroyed projects.
+* AI shore level bases build Pressure Dome.
+
 # Version 331
 
 * Alternative inefficiency formula: https://github.com/tnevolin/thinker-doer/blob/master/README.md#inefficiency

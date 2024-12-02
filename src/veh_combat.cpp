@@ -1474,7 +1474,9 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
     } else if (*GamePreferences & PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH) {
         render_battle |= render_tile;
     }
-    assert(veh_atk->faction_id != veh_def->faction_id);
+    // [WTP]
+    // alien spore launcher can attack each other
+//    assert(veh_atk->faction_id != veh_def->faction_id);
     assert(veh_atk->x != veh_def->x || veh_atk->y != veh_def->y);
     assert(veh_atk->is_probe() || veh_def->is_artifact() || at_war(faction_id_atk, faction_id_def)
         || (!faction_id_atk && veh_atk->unit_id == BSC_SPORE_LAUNCHER));

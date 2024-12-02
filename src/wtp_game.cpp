@@ -5512,34 +5512,6 @@ double getAlienTurnStrengthModifier()
 	return (*CurrentTurn <= conf.native_weak_until_turn ? 0.5 : 1.0);
 }
 
-bool isProjectAvailable(int factionId, int projectFacilityId)
-{
-	assert(projectFacilityId >= SP_ID_First && projectFacilityId <= SP_ID_Last);
-
-	// get projectId
-
-	int projectId = projectFacilityId - SP_ID_First;
-
-	// check project is already built
-
-	int projectBaseId = SecretProjects[projectId];
-
-	// check project is built
-
-	if (projectBaseId >= 0)
-		return false;
-
-	// check faction did not unlocked project
-
-	if (!isFactionHasTech(factionId, Facility[projectFacilityId].preq_tech))
-		return false;
-
-	// all conditions met
-
-	return true;
-
-}
-
 int getFactionMaintenance(int factionId)
 {
 	return Factions[factionId].facility_maint_total;
