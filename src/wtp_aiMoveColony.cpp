@@ -46,7 +46,6 @@ void populateExpansionData()
 	
 	buildSites.clear();
 	availableBuildSites.clear();
-	buildSiteWorkTiles.clear();
 	
 	// worked tiles
 	
@@ -92,6 +91,7 @@ void populateExpansionData()
 		// set valid build site
 		
 		tileExpansionInfo.validBuildSite = true;
+		buildSiteWorkTiles.emplace(tile, std::vector<MAP *>());
 		
 		// iterate work tiles
 		
@@ -107,7 +107,7 @@ void populateExpansionData()
 			// set valid work tile
 			
 			workTileExpansionInfo.validWorkTile = true;
-			buildSiteWorkTiles[tile].push_back(workTile);
+			buildSiteWorkTiles.at(tile).push_back(workTile);
 			
 		}
 		
@@ -129,6 +129,7 @@ void populateExpansionData()
 		}
 		
 	}
+debug("buildSiteWorkTiles[(42,28)]=%d\n", buildSiteWorkTiles.find(getMapTile(42,28)) != buildSiteWorkTiles.end())
 	
 	if (DEBUG)
 	{

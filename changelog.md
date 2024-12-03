@@ -1,3 +1,7 @@
+# Version 333
+
+* [Bug] Fixed AI base placement computation bug.
+
 # Version 332
 
 * [Bug] Fixed AI project selection to make sure they do not pick up destroyed projects.

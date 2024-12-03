@@ -6153,12 +6153,12 @@ int getBaseBDrones(int baseId)
 
 /**
 Checks whether it is allowed to build base here without breaking treaty.
-territory: unclaimed, own, hostile
-Even though game allows to build on unknown player territory (no commlink), this is excluded for simplicity.
+territory: unclaimed, own
+Even though game allows building on "no commlink" or "vendetta" territory, this is excluded for simplicity.
 */
 bool isAllowedBaseLocation(int factionId, MAP *tile)
 {
-	return tile->owner == -1 || tile->owner == factionId || isVendetta(tile->owner, factionId);
+	return tile->owner == -1 || tile->owner == factionId;
 }
 
 bool isMobileUnit(int unitId)
