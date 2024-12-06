@@ -1,3 +1,7 @@
+# Version 334
+
+* Base hurries full minerals when rioting and minimal minerals when not.
+
 # Version 333
 
 * [Bug] Fixed AI base placement computation bug.

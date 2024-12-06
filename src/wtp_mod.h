@@ -130,8 +130,6 @@ __cdecl int modified_zoc_veh(int a0, int a1, int a2);
 __cdecl void modified_base_check_support();
 void __cdecl displayHurryCostScaledToBasicMineralCostMultiplierInformation(int input_string_pointer, int output_string_pointer);
 void __cdecl displayPartialHurryCostToCompleteNextTurnInformation(int input_string_pointer, int output_string_pointer);
-int __cdecl getHurryMinimalMineralCost(int itemCost, int a1, int a2);
-int getHurryMineralCost(int mineralCost);
 int __thiscall wtp_BaseWin_popup_start(Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7);
 int __cdecl wtp_BaseWin_ask_number(const char* label, int value, int a3);
 
@@ -147,4 +145,6 @@ int __thiscall wtp_mod_BaseWin_pop_click_popup_start(Win* This, const char* file
 //char * __cdecl wtp_mod_BaseWin_pop_click_specialist_cycle_strcat(char *dst, char const *src);
 //int __cdecl wtp_mod_BaseWin_pop_click_specialist_has_tech(int tech_id, int faction_id);
 int __cdecl wtp_mod_base_police_pending();
+int getHurryMineralCost(int mineralCost);
+int __cdecl wpt_mod_Base_hurry_cost_factor_mineral_cost(int itemCost, int a1, int a2);
 

@@ -3470,48 +3470,6 @@ void __cdecl displayPartialHurryCostToCompleteNextTurnInformation(int input_stri
 //	
 }
 
-/**
-Returns current base item hurry minimal mineral cost to complete production on next turn.
-*/
-int __cdecl getHurryMinimalMineralCost(int itemCost, int /*a1*/, int /*a2*/)
-{
-	BASE *base = *CurrentBase;
-	
-	int mineralCostFactor = mod_cost_factor(base->faction_id, RSC_MINERAL, -1);
-	int hurryMineralCost = mineralCostFactor * itemCost;
-	
-	if (conf.hurry_minimal_minerals)
-	{
-		// reduce hurry mineral cost by mineral surplus to complete production next turn
-		
-		hurryMineralCost -= std::max(0, base->mineral_surplus);
-		
-	}
-	
-	return hurryMineralCost;
-	
-}
-
-/**
-Returns current base item hurry mineral cost.
-Could be either complete cost or minimal depending on the settings.
-*/
-int getHurryMineralCost(int mineralCost)
-{
-	int hurryMineralCost = mineralCost;
-	
-	if (conf.hurry_minimal_minerals)
-	{
-		// reduce hurry mineral cost by mineral surplus to complete production next turn
-		
-		hurryMineralCost = std::max((*CurrentBase)->minerals_accumulated, mineralCost - std::max(0, (*CurrentBase)->mineral_surplus));
-		
-	}
-	
-	return hurryMineralCost;
-	
-}
-
 /*
 Reverts Thinker modification.
 */
@@ -3697,5 +3655,35 @@ int __thiscall wtp_mod_BaseWin_pop_click_popup_start(Win* This, const char* file
 int __cdecl wtp_mod_base_police_pending()
 {
 	return Factions[(*CurrentBase)->faction_id].SE_police_pending + (has_facility(FAC_BROOD_PIT, *CurrentBaseID) ? 2 : 0);
+}
+
+/**
+Returns current base item hurry mineral cost.
+Could be either complete cost or minimal depending on the settings.
+*/
+int getHurryMineralCost(int mineralCost)
+{
+	int hurryMineralCost = mineralCost;
+	
+	// allow minimal hurry if configured and is base is not rioting
+	
+	if (conf.hurry_minimal_minerals && !(*CurrentBase)->drone_riots_active())
+	{
+		// reduce hurry mineral cost by mineral surplus to complete production next turn
+		
+		hurryMineralCost = std::max((*CurrentBase)->minerals_accumulated, mineralCost - std::max(0, (*CurrentBase)->mineral_surplus));
+		
+	}
+	
+	return hurryMineralCost;
+	
+}
+
+/**
+Returns current base item hurry minimal mineral cost to complete production on next turn.
+*/
+int __cdecl wpt_mod_Base_hurry_cost_factor_mineral_cost(int itemCost, int /*a1*/, int /*a2*/)
+{
+	return getHurryMineralCost(mod_cost_factor((*CurrentBase)->faction_id, RSC_MINERAL, -1) * itemCost);
 }
 

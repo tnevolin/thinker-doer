@@ -473,7 +473,7 @@ void patch_hurry_minimal_minerals()
 	
 	// intercept call
 	
-	write_call(0x00418F9D, (int)getHurryMinimalMineralCost);
+	write_call(0x00418F9D, (int)wpt_mod_Base_hurry_cost_factor_mineral_cost);
 	
 	// do not mulitpy by item cost - it is already done in the call above
 	
