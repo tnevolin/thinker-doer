@@ -77,11 +77,18 @@ struct FactionTerraformingInfo
 
 };
 
+/*
+Tile potentially can be terraformed.
+*/
 struct TileTerraformingInfo
 {
 	// original map state
 	MapState mapState;
 	
+	// terraformable tile
+	bool availableTerraformingSite = false;
+	// terraformable tile for base yield
+	bool availableBaseTerraformingSite = false;
 	// base works this tile
 	bool worked = false;
 	// baseId that works this tile
@@ -92,10 +99,6 @@ struct TileTerraformingInfo
 	std::vector<int> workableBaseIds;
 	// baseIds those are affected by area improvement at this tile (condenser, echelon mirror)
 	std::vector<int> areaWorkableBaseIds;
-	// workable tile where a conventional improvement can be placed to increase yield
-	bool availableConventionalTerraformingSite = false;
-	// generally terraformable tile
-	bool availableTerraformingSite = false;
 	
 	bool harvested = false;
 	bool terraformed = false;
@@ -114,7 +117,7 @@ struct TileTerraformingInfo
 struct BaseTerraformingInfo
 {
 	int projectedPopSize;
-	std::vector<MAP *> conventionalTerraformingSites;
+	std::vector<MAP *> terraformingSites;
 	int unworkedLandRockyTileCount;
 	int minimalNutrientYield;
 	int minimalMineralYield;
@@ -160,7 +163,7 @@ TERRAFORMING_OPTION const TO_SEA_SENSOR			{"sensor (sea)"		, true , false, false
 
 // conventional terraforming options
 
-const std::array<const std::vector<TERRAFORMING_OPTION *>, 2> CONVENTIONAL_TERRAFORMING_OPTIONS
+const std::array<const std::vector<TERRAFORMING_OPTION *>, 2> BASE_TERRAFORMING_OPTIONS
 {{
 	// land
 	{

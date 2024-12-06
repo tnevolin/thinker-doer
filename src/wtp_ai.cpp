@@ -5358,25 +5358,38 @@ Projects base population in given number of turns.
 int getBaseProjectedSize(int baseId, int turns)
 {
 	BASE *base = &(Bases[baseId]);
-
+	
 	int nutrientCostFactor = mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
 	int nutrientsAccumulated = base->nutrients_accumulated + base->nutrient_surplus * turns;
-	int currentPopulation = base->pop_size;
-	int projectedPopulation = currentPopulation;
-
+	int projectedPopulation = base->pop_size;
+	
 	while (nutrientsAccumulated >= nutrientCostFactor * (projectedPopulation + 1))
 	{
 		nutrientsAccumulated -= nutrientCostFactor * (projectedPopulation + 1);
 		projectedPopulation++;
 	}
-
+	
 	// do not go over population limit
-
+	
 	int populationLimit = getBasePopulationLimit(baseId);
-	projectedPopulation = std::min(projectedPopulation, std::max(currentPopulation, populationLimit));
-
+	projectedPopulation = std::min(projectedPopulation, std::max((int)base->pop_size, populationLimit));
+	
+	// reduce population by one if base is currently building colony
+	
+	int item = base->queue_items[0];
+	if (item >= 0 && isColonyUnit(item))
+	{
+		int mineralCostFactor = mod_cost_factor(base->faction_id, RSC_MINERAL, -1);
+		int mineralsAccumulated = base->minerals_accumulated + base->mineral_surplus * turns;
+		
+		if (mineralsAccumulated >= mineralCostFactor * Units[item].cost)
+		{
+			projectedPopulation--;
+		}
+	}
+	
 	return projectedPopulation;
-
+	
 }
 
 /*

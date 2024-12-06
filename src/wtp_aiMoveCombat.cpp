@@ -235,18 +235,18 @@ void movePolice2x()
 	
 	// populate tasks
 	
-	std::vector<TaskPriority> taskPriorities;
+	std::vector<CombatAction> taskPriorities;
 	populatePolice2xTasks(taskPriorities);
 	
 	// sort vehicle available tasks
 	
-	std::sort(taskPriorities.begin(), taskPriorities.end(), compareTaskPriorityDescending);
+	std::sort(taskPriorities.begin(), taskPriorities.end(), compareCombatActionDescending);
 	
 	if (DEBUG)
 	{
 		debug("\tsortedTasks\n");
 		
-		for (TaskPriority const &taskPriority : taskPriorities)
+		for (CombatAction const &taskPriority : taskPriorities)
 		{
 			debug
 			(
@@ -267,9 +267,9 @@ void movePolice2x()
 	
 	debug("\tselected tasks\n");
 	
-	robin_hood::unordered_flat_map<int, TaskPriority *> vehicleAssignments;
+	robin_hood::unordered_flat_map<int, CombatAction *> vehicleAssignments;
 	
-	for (TaskPriority &taskPriority : taskPriorities)
+	for (CombatAction &taskPriority : taskPriorities)
 	{
 		// skip already assigned vehicles
 		
@@ -307,9 +307,9 @@ void movePolice2x()
 	
 	// set tasks
 	
-	for (robin_hood::pair<int, TaskPriority *> vehicleAssignmentEntry : vehicleAssignments)
+	for (robin_hood::pair<int, CombatAction *> vehicleAssignmentEntry : vehicleAssignments)
 	{
-		TaskPriority *taskPriority = vehicleAssignmentEntry.second;
+		CombatAction *taskPriority = vehicleAssignmentEntry.second;
 		
 		// set task
 		
@@ -326,18 +326,18 @@ void movePolice()
 	
 	// populate tasks
 	
-	std::vector<TaskPriority> taskPriorities;
+	std::vector<CombatAction> taskPriorities;
 	populatePoliceTasks(taskPriorities);
 	
 	// sort vehicle available tasks
 	
-	std::sort(taskPriorities.begin(), taskPriorities.end(), compareTaskPriorityDescending);
+	std::sort(taskPriorities.begin(), taskPriorities.end(), compareCombatActionDescending);
 	
 	if (DEBUG)
 	{
 		debug("\tsortedTasks\n");
 		
-		for (TaskPriority const &taskPriority : taskPriorities)
+		for (CombatAction const &taskPriority : taskPriorities)
 		{
 			debug
 			(
@@ -358,9 +358,9 @@ void movePolice()
 	
 	debug("\tselected tasks\n");
 	
-	robin_hood::unordered_flat_map<int, TaskPriority *> vehicleAssignments;
+	robin_hood::unordered_flat_map<int, CombatAction *> vehicleAssignments;
 	
-	for (TaskPriority &taskPriority : taskPriorities)
+	for (CombatAction &taskPriority : taskPriorities)
 	{
 		// skip already assigned vehicles
 		
@@ -398,9 +398,9 @@ void movePolice()
 	
 	// set tasks
 	
-	for (robin_hood::pair<int, TaskPriority *> vehicleAssignmentEntry : vehicleAssignments)
+	for (robin_hood::pair<int, CombatAction *> vehicleAssignmentEntry : vehicleAssignments)
 	{
-		TaskPriority *taskPriority = vehicleAssignmentEntry.second;
+		CombatAction *taskPriority = vehicleAssignmentEntry.second;
 		
 		// set task
 		
@@ -417,18 +417,18 @@ void moveProtectors()
 	
 	// populate tasks
 	
-	std::vector<TaskPriority> taskPriorities;
+	std::vector<CombatAction> taskPriorities;
 	populateProtectorTasks(taskPriorities);
 	
 	// sort vehicle available tasks
 	
-	std::sort(taskPriorities.begin(), taskPriorities.end(), compareTaskPriorityDescending);
+	std::sort(taskPriorities.begin(), taskPriorities.end(), compareCombatActionDescending);
 	
 	if (DEBUG)
 	{
 		debug("\tsortedTasks\n");
 		
-		for (TaskPriority const &taskPriority : taskPriorities)
+		for (CombatAction const &taskPriority : taskPriorities)
 		{
 			debug
 			(
@@ -449,9 +449,9 @@ void moveProtectors()
 	
 	debug("\tselected tasks\n");
 	
-	robin_hood::unordered_flat_map<int, TaskPriority *> vehicleAssignments;
+	robin_hood::unordered_flat_map<int, CombatAction *> vehicleAssignments;
 	
-	for (TaskPriority &taskPriority : taskPriorities)
+	for (CombatAction &taskPriority : taskPriorities)
 	{
 		// skip already assigned vehicles
 		
@@ -489,9 +489,9 @@ void moveProtectors()
 			
 	// set tasks
 	
-	for (robin_hood::pair<int, TaskPriority *> vehicleAssignmentEntry : vehicleAssignments)
+	for (robin_hood::pair<int, CombatAction *> vehicleAssignmentEntry : vehicleAssignments)
 	{
-		TaskPriority *taskPriority = vehicleAssignmentEntry.second;
+		CombatAction *taskPriority = vehicleAssignmentEntry.second;
 		
 		// set task
 		
@@ -518,7 +518,7 @@ void moveProtectors()
 				
 				// not yet assigned to this base
 				
-				robin_hood::unordered_flat_map<int, TaskPriority *>::iterator vehicleAssignmentIterator = vehicleAssignments.find(vehicleId);
+				robin_hood::unordered_flat_map<int, CombatAction *>::iterator vehicleAssignmentIterator = vehicleAssignments.find(vehicleId);
 				if (vehicleAssignmentIterator != vehicleAssignments.end() && vehicleAssignmentIterator->second->destination == baseTile)
 					continue;
 				
@@ -541,7 +541,7 @@ void moveCombat()
 	
 	// populate tasks
 	
-	std::vector<TaskPriority> taskPriorities;
+	std::vector<CombatAction> taskPriorities;
 	
 	populateRepairTasks(taskPriorities);
 	populateMonolithTasks(taskPriorities);
@@ -551,13 +551,13 @@ void moveCombat()
 	
 	// sort available tasks
 	
-	std::sort(taskPriorities.begin(), taskPriorities.end(), compareTaskPriorityDescending);
+	std::sort(taskPriorities.begin(), taskPriorities.end(), compareCombatActionDescending);
 	
 	if (DEBUG)
 	{
 		debug("\tsortedTasks\n");
 		
-		for (TaskPriority &taskPriority : taskPriorities)
+		for (CombatAction &taskPriority : taskPriorities)
 		{
 			debug
 			(
@@ -582,7 +582,7 @@ void moveCombat()
 	debug("\tselected tasks\n");
 	
 	robin_hood::unordered_flat_set<EnemyStackInfo *> excludedEnemyStacks;
-	robin_hood::unordered_flat_map<int, TaskPriority *> vehicleAssignments;
+	robin_hood::unordered_flat_map<int, CombatAction *> vehicleAssignments;
 	
 	robin_hood::unordered_flat_set<MAP *> targetedLocations;
 	robin_hood::unordered_flat_set<EnemyStackInfo *> targetedEnemyStacks;
@@ -604,7 +604,7 @@ void moveCombat()
 		
 		// iterate task priorities
 		
-		for (TaskPriority &taskPriority : taskPriorities)
+		for (CombatAction &taskPriority : taskPriorities)
 		{
 			// skip already assigned vehicles
 			
@@ -767,11 +767,11 @@ void moveCombat()
 	
 	debug("optimize pod popping traveling - %s\n", aiMFaction->noun_faction);
 	
-	std::vector<robin_hood::pair<int, TaskPriority *> *> podPoppingAssignments;
+	std::vector<robin_hood::pair<int, CombatAction *> *> podPoppingAssignments;
 	
-	for (robin_hood::unordered_flat_map<int, TaskPriority *>::iterator assignmentIterator = vehicleAssignments.begin(); assignmentIterator != vehicleAssignments.end(); assignmentIterator++)
+	for (robin_hood::unordered_flat_map<int, CombatAction *>::iterator assignmentIterator = vehicleAssignments.begin(); assignmentIterator != vehicleAssignments.end(); assignmentIterator++)
 	{
-		TaskPriority *taskPriority = assignmentIterator->second;
+		CombatAction *taskPriority = assignmentIterator->second;
 		
 		if (taskPriority->taskType == TT_MOVE && taskPriority->attackTarget == nullptr && isPodAt(taskPriority->destination))
 		{
@@ -786,9 +786,9 @@ void moveCombat()
 	{
 		changed = false;
 		
-		for (robin_hood::pair<int, TaskPriority *> *podPoppingAssignment1 : podPoppingAssignments)
+		for (robin_hood::pair<int, CombatAction *> *podPoppingAssignment1 : podPoppingAssignments)
 		{
-			for (robin_hood::pair<int, TaskPriority *> *podPoppingAssignment2 : podPoppingAssignments)
+			for (robin_hood::pair<int, CombatAction *> *podPoppingAssignment2 : podPoppingAssignments)
 			{
 				// skip the same assignment
 				
@@ -799,8 +799,8 @@ void moveCombat()
 				
 				int vehicleId1 = podPoppingAssignment1->first;
 				int vehicleId2 = podPoppingAssignment2->first;
-				TaskPriority *taskPriority1 = podPoppingAssignment1->second;
-				TaskPriority *taskPriority2 = podPoppingAssignment2->second;
+				CombatAction *taskPriority1 = podPoppingAssignment1->second;
+				CombatAction *taskPriority2 = podPoppingAssignment2->second;
 				
 				int triad1 = Vehicles[vehicleId1].triad();
 				int triad2 = Vehicles[vehicleId2].triad();
@@ -872,10 +872,10 @@ void moveCombat()
 	
 	debug("\tselectedTasks\n");
 	
-	for (robin_hood::pair<int, TaskPriority *> &vehicleAssignmentEntry : vehicleAssignments)
+	for (robin_hood::pair<int, CombatAction *> &vehicleAssignmentEntry : vehicleAssignments)
 	{
 		int vehicleId = vehicleAssignmentEntry.first;
-		TaskPriority &taskPriority = *(vehicleAssignmentEntry.second);
+		CombatAction &taskPriority = *(vehicleAssignmentEntry.second);
 
 		if (DEBUG)
 		{
@@ -1011,7 +1011,7 @@ void moveCombat()
 	
 }
 
-void populateRepairTasks(std::vector<TaskPriority> &taskPriorities)
+void populateRepairTasks(std::vector<CombatAction> &taskPriorities)
 {
 	debug("\tpopulateRepairTasks\n");
 	
@@ -1187,7 +1187,7 @@ void populateRepairTasks(std::vector<TaskPriority> &taskPriorities)
 	
 }
 
-void populateMonolithTasks(std::vector<TaskPriority> &taskPriorities)
+void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 {
 	debug("\tpopulateMonolithTasks\n");
 	
@@ -1339,7 +1339,7 @@ void populateMonolithTasks(std::vector<TaskPriority> &taskPriorities)
 	
 }
 
-void populatePodPoppingTasks(std::vector<TaskPriority> &taskPriorities)
+void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities)
 {
 	debug("\tpopulatePodPoppingTasks\n");
 	
@@ -1475,7 +1475,7 @@ base police2x priority
 - required police power
 - travel time
 */
-void populatePolice2xTasks(std::vector<TaskPriority> &taskPriorities)
+void populatePolice2xTasks(std::vector<CombatAction> &taskPriorities)
 {
 	debug("\tpopulatePolice2xTasks\n");
 	
@@ -1524,7 +1524,7 @@ void populatePolice2xTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// add task
 			
-			TaskPriority taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
+			CombatAction taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
 			taskPriority.baseId = baseId;
 			taskPriorities.push_back(taskPriority);
 			
@@ -1553,7 +1553,7 @@ void populatePolice2xTasks(std::vector<TaskPriority> &taskPriorities)
 base police priority
 - travel time
 */
-void populatePoliceTasks(std::vector<TaskPriority> &taskPriorities)
+void populatePoliceTasks(std::vector<CombatAction> &taskPriorities)
 {
 	debug("\tpopulatePoliceTasks\n");
 	
@@ -1597,7 +1597,7 @@ void populatePoliceTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// add task
 			
-			TaskPriority taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
+			CombatAction taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
 			taskPriority.baseId = baseId;
 			taskPriorities.push_back(taskPriority);
 			
@@ -1626,7 +1626,7 @@ protection priority:
 - effect
 - travel time
 */
-void populateProtectorTasks(std::vector<TaskPriority> &taskPriorities)
+void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 {
 	debug("\tpopulateProtectorTasks\n");
 	
@@ -1693,7 +1693,7 @@ void populateProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// add task
 			
-			TaskPriority taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
+			CombatAction taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
 			taskPriority.baseId = baseId;
 			taskPriorities.push_back(taskPriority);
 			
@@ -1722,7 +1722,7 @@ void populateProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 	
 }
 
-void populateEmptyBaseCaptureTasks(std::vector<TaskPriority> &taskPriorities)
+void populateEmptyBaseCaptureTasks(std::vector<CombatAction> &taskPriorities)
 {
 	bool TRACE = DEBUG && false;
 	
@@ -1802,7 +1802,7 @@ void populateEmptyBaseCaptureTasks(std::vector<TaskPriority> &taskPriorities)
 	
 }
 
-void populateEnemyStackAttackTasks(std::vector<TaskPriority> &taskPriorities)
+void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 {
 	debug("\tpopulateEnemyStackAttackTasks\n");
 	
@@ -2227,7 +2227,7 @@ int getVehicleProtectionRange(int vehicleId)
 
 }
 
-bool compareTaskPriorityDescending(const TaskPriority &a, const TaskPriority &b)
+bool compareCombatActionDescending(const CombatAction &a, const CombatAction &b)
 {
 	return a.priority > b.priority;
 }

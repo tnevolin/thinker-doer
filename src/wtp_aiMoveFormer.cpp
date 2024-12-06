@@ -36,7 +36,6 @@ std::vector<TileTerraformingInfo> tileTerraformingInfos;
 std::vector<BaseTerraformingInfo> baseTerraformingInfos;
 
 std::vector<MAP *> terraformingSites;
-std::vector<MAP *> conventionalTerraformingSites;
 
 double networkDemand = 0.0;
 std::vector<FORMER_ORDER> formerOrders;
@@ -101,7 +100,6 @@ void setupTerraformingData()
 	baseTerraformingInfos.resize(MaxBaseNum, {});
 	
 	terraformingSites.clear();
-	conventionalTerraformingSites.clear();
 	
 	terraformingRequests.clear();
 	formerOrders.clear();
@@ -285,7 +283,7 @@ void populateTerraformingData()
 			
 			if (isValidConventionalTerraformingSite(tile))
 			{
-				tileTerraformingInfo.availableConventionalTerraformingSite = true;
+				tileTerraformingInfo.availableBaseTerraformingSite = true;
 			}
 			
 			// update base rocky land tile count
@@ -551,11 +549,6 @@ void populateTerraformingData()
 			terraformingSites.push_back(tile);
 		}
 		
-		if (tileTerraformingInfo.availableConventionalTerraformingSite)
-		{
-			conventionalTerraformingSites.push_back(tile);
-		}
-		
 	}
 	
 	if (DEBUG)
@@ -568,25 +561,13 @@ void populateTerraformingData()
 		
 	}
 	
-	if (DEBUG)
-	{
-		debug("\tconventionalTerraformingSites\n");
-		for (MAP *tile : conventionalTerraformingSites)
-		{
-			debug("\t\t%s ocean=%d\n", getLocationString(tile).c_str(), is_ocean(tile));
-		}
-		
-	}
-	
 	// populate base projected sizes
 	
 	for (int baseId : aiData.baseIds)
 	{
 		BaseTerraformingInfo &baseTerraformingInfo = getBaseTerraformingInfo(baseId);
 		
-		// do not project population
-//		baseTerraformingInfo.projectedPopSize = getBaseProjectedSize(baseId, 10);
-		baseTerraformingInfo.projectedPopSize = Bases[baseId].pop_size;
+		baseTerraformingInfo.projectedPopSize = getBaseProjectedSize(baseId, 10);
 		
 	}
 	
@@ -603,7 +584,7 @@ void populateTerraformingData()
 			
 			// conventional terraforming site
 			
-			if (!baseRadiusTileTerraformingInfo.availableConventionalTerraformingSite)
+			if (!baseRadiusTileTerraformingInfo.availableBaseTerraformingSite)
 				continue;
 			
 			// not worked by other base
@@ -613,7 +594,7 @@ void populateTerraformingData()
 			
 			// add to base tiles
 			
-			baseTerraformingInfo.conventionalTerraformingSites.push_back(baseRadiusTile);
+			baseTerraformingInfo.terraformingSites.push_back(baseRadiusTile);
 			
 		}
 		
@@ -786,7 +767,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	
 	std::vector<TERRAFORMING_REQUEST> availableBaseTerraformingRequests;
 	
-	for (MAP *tile : baseTerraformingInfo.conventionalTerraformingSites)
+	for (MAP *tile : baseTerraformingInfo.terraformingSites)
 	{
 		debug("\t\t%s\n", getLocationString(tile).c_str());
 		
@@ -797,7 +778,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		
 		TileInfo &tileInfo = aiData.getTileInfo(tile);
 		
-		for (TERRAFORMING_OPTION *option : CONVENTIONAL_TERRAFORMING_OPTIONS[tileInfo.ocean])
+		for (TERRAFORMING_OPTION *option : BASE_TERRAFORMING_OPTIONS[tileInfo.ocean])
 		{
 			// do not build mining platrofm for bases in possession of undeveloped land rocky spots
 			
@@ -3530,7 +3511,7 @@ double estimateCondenserExtraYieldScore(MAP *tile, const std::vector<int> *actio
 		
 		// exclude non conventional terraformable site
 		
-		if (!boxTileTerraformingInfo.availableConventionalTerraformingSite)
+		if (!boxTileTerraformingInfo.availableBaseTerraformingSite)
 			continue;
 		
 		// exclude ocean - not affected by condenser
