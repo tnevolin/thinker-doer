@@ -1,45 +1,127 @@
-# Archived AC2 copy
+# Original vanilla analysis article
+
+https://alphacentauri.miraheze.org/wiki/Social_Engineering_Mod
 
 https://web.archive.org/web/20180810045412/http://alphacentauri2.info/wiki/Social_Engineering_Mod
 
-The SE model proposed in article above is for vanilla. WTP uses a different one since it uses different rules and, therefore, SE effects are somewhat differrently weighted comparing to each other.. However, ideas about balancing and different effect comparison methods are still generally valid.
+The SE model proposed in article above is for vanilla. WTP uses a different one since it uses different rules and, therefore, SE effects are somewhat differrently weighted comparing to each other. However, ideas about balancing and different effect comparison methods are still generally valid.
 
-# Usage analysis
+# WTP v305 differences from vanilla
 
-Simple comparison of available rating values and how often are they given in vanilla SE models.
+* Pop boom is more difficult to trigger.
+* -4 EFFICIENCY looses about 50% to inefficiency, not 100%.
+* SUPPORT gives 0-8 free units across the whole scale.
+* Bases in large empire are more succeptible to bureaucracy pressure.
 
-Model use is a sum of absolute values used in SE choices.
+# SE models analysis and proposed changes
 
-_Vanilla_
+![se-v336.png](images/se-v336.png)
 
-| effect | values | use | use, % |
-| ---- | ----: | ----: | ----: |
-|	ECONOMY | 6 | 5 | 80 |
-|	EFFIC | 9 | 11 | 120 |
-|	SUPPORT | 8 | 7 | 88 |
-|	MORALE | 9 | 9 | 100 |
-|	POLICE | 9 | 12 | 130 |
-|	GROWTH | 9 | 8 | 90 |
-|	PLANET | 7 | 7 | 100 |
-|	PROBE | 6 | 6 | 100 |
-|	INDUSTRY | 11 | 6 | 55 |
-|	RESEARCH | 11 | 6 | 55 |
+_Overall intent_
 
-# Effect comparison
+* Reduce EFFICIENCY usage, especially positive values. It is a powerful effect. Strangely, vanilla grants it left and right in large quantities.
+* Increase POLICE/SUPPORT negative usage. It is very easy to bump them up to the top.
 
-A subjective attempt to compare effects to each other. The comparison is on a very average level: accross multiple games and multiple game scenarios. Effect value and SE model value still vary greatly depending on circumstances. Such effect weights are only a baseline for SE table balance but other factors are at play as well.
+## Police State
 
-Weights are for early, mid, and late game.
+Very powerful early, weak later due to bad EFFICIENCY. However, there are other means to bump up EFFICIENCY including CC. Overall, seems strong in vanilla and even stronger in this mod due to less harsh -4 EFFICIENCY penalty, which allows everybody using it.
 
-| effect | early | middle | late | comment |
-| ---- | ----: | ----: | ----: | ---- |
-|	INDUSTRY | 1.00 | 1.00 | 1.00 | Baseline effect for others to compare against. |
-|	RESEARCH | 0.50 | 0.50 | 0.50 | Subjective estimate. |
-|	ECONOMY | 1.50 | 1.25 | 1.00 | Globally averaged value by all rating transitions. |
-|	EFFICIENCY | 0.50 | 1.00 | 1.50 | Value grows with empire size. |
-|	SUPPORT | 1.50 | 1.00 | 0.50 |  |
-|	MORALE | 0.50 | 0.25 | 0.00 |  |
-|	POLICE | 1.00 | 0.75 | 0.50 |  |
-|	GROWTH | 1.50 | 1.75 | 2.00 |  |
-|	PLANET | 0.50 | 0.25 | 0.00 |  |
-|	PROBE | 0.00 | 0.00 | 0.00 |  |
+_Proposed change_
+
+* +1 SUPPORT. Not lore required and makes it slightly less powerful early game.
+* -1 GROWTH. Optional, for the same reason above.
+
+Both of the above changes make it slightly less powerful early game but practially do not affect it late game, which is the intent.
+
+## Democratic
+
+Weak early, strong late. Opposite of PS. Overall, good enough.
+
+_Proposed change_
+
+* +1 EFFICIENCY. Reducing efficiency bonuses across the board.
+* +3 GROWTH. Make it more usable earlier.
+* -1 POLICE.
+
+## Fundamentalist
+
+Complete crap. Need serious boost.
+
+_Proposed change_
+
+* +2 MORALE.
+* +1 TALENT (happiness) or +1 INDUSTRY (consecration).
+
+## Free Market
+
+Percieved as a very strong boost even at a cost of serious police impact. Maybe may benefit from some minor penalty.
+
+_Proposed change_
+
+* -1 PROBE. Open to industrial espionage.
+
+## Planned
+
+Valuable early but bad at future. May need some future boost. Maybe make higher productive but economy and efficiency impactful?
+
+_Proposed change_
+
+* +2 INDUSTRY.
+* -1 ECONOMY.
+
+## Green
+
+Generally weakish until late due to EFFICIENCY boost.
+
+_Proposed change_
+
+* +1 EFFICIENCY. Efficiency bonuses should be reduced all over the board. They are too valuable to give away.
+* +1/2 TALENT. May make it valuable early.
+
+## Power
+
+Kind of not doing what it is supposed to. Trash choice.
+
+_Proposed change_
+
+* +1 SUPPORT.
+* +3 MORALE.
+* +1 POLICE. Makes more workers to offset industry penalty.
+
+## Knowledge
+
+Adequate.
+
+_Proposed change_
+
+* +4 RESEARCH. Lore.
+* -1 GROWTH or -1 POLICE?
+
+## Wealth
+
+Adequate.
+
+_Proposed change_
+
+* -4 MORALE. Lore. Even more disadvantage to not wage a war with this choice.
+* -1 GROWTH. Same.
+
+## Cybernetic
+
+Adequate.
+
+Why Cybernetic has PLANET is beyond my lore understanding, though.
+
+## Eudaimonic
+
+Overpowered.
+
+_Proposed change_
+
+* -1 EFFICIENCY instead of +2 INDUSTRY. Otherwise, it is too OP.
+* -3 MORALE.
+
+## Thought Control
+
+Barely adequate. However, it lacks hard economical benefits.
+
