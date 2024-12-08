@@ -508,12 +508,13 @@ struct Config {
     double ai_combat_priority_base_protection;
     double ai_combat_priority_base_healing;
     double ai_combat_attack_priority_base;
-    double ai_combat_attack_priority_alien_mind_worms;
-    double ai_combat_attack_priority_alien_spore_launcher;
-    double ai_combat_attack_priority_alien_fungal_tower;
+    double ai_combat_attack_bonus_alien_mind_worms;
+    double ai_combat_attack_bonus_alien_spore_launcher;
+    double ai_combat_attack_bonus_alien_fungal_tower;
+    double ai_combat_attack_bonus_hostile;
     double ai_combat_priority_pod;
     double ai_combat_base_protection_superiority;
-    int ai_combat_field_attack_priority_base_range;
+    int ai_combat_field_attack_base_proximity_scale;
     double ai_combat_field_attack_superiority_required;
     double ai_combat_field_attack_superiority_desired;
     double ai_combat_base_attack_superiority_required;

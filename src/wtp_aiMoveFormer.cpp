@@ -926,7 +926,7 @@ void generateLandBridgeTerraformingRequests()
 {
 	debug("generateLandBridgeTerraformingRequests\n");
 	
-	robin_hood::unordered_flat_map<int, MapValue> bridgeRequests;
+	robin_hood::unordered_flat_map<int, MapIntValue> bridgeRequests;
 	
 	for (MAP *tile : raiseableCoasts)
 	{
@@ -961,7 +961,7 @@ void generateLandBridgeTerraformingRequests()
 		
 		if (bridgeRequests.count(bridgeLandCluster) == 0)
 		{
-			MapValue mapValue(nullptr, INT_MAX);
+			MapIntValue mapValue(nullptr, INT_MAX);
 			bridgeRequests.insert({bridgeLandCluster, mapValue});
 		}
 		
@@ -973,9 +973,9 @@ void generateLandBridgeTerraformingRequests()
 		
 	}
 	
-	for (robin_hood::pair<int, MapValue> &bridgeRequestEntry : bridgeRequests)
+	for (robin_hood::pair<int, MapIntValue> &bridgeRequestEntry : bridgeRequests)
 	{
-		MapValue bridgeRequest = bridgeRequestEntry.second;
+		MapIntValue bridgeRequest = bridgeRequestEntry.second;
 		
 		// improvementIncome
 		

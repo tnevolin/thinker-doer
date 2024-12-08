@@ -2173,7 +2173,7 @@ void evaluateTerritoryProtectionUnits()
 			
 			double combatEffect = enemyStackInfo->getUnitEffect(unitId);
 			double winningProbability = getWinningProbability(combatEffect);
-			double attackGain = getGainDelay(2.0 * winningProbability * enemyStackInfo->averageUnitGain, travelTime);
+			double attackGain = getGainDelay(2.0 * winningProbability * enemyStackInfo->averageAttackGain, travelTime);
 			
 			double upkeep = getResourceScore(-getUnitSupport(unitId), 0);
 			double upkeepGain = getGainTimeInterval(getGainIncome(upkeep), 0.0, travelTime);

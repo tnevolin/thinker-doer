@@ -33,13 +33,26 @@ const double ATTACK_PROPORTION_CON_SURFACE	= 0.5;
 
 // forward declarations
 
-struct MapValue
+struct MapIntValue
+{
+	MAP *tile = nullptr;
+	int value = INT_MAX;
+	
+	MapIntValue(MAP *_tile, int _value)
+	: tile(_tile), value(_value)
+	{}
+	
+};
+
+struct MapDoubleValue
 {
 	MAP *tile = nullptr;
 	double value = INF;
-
-	MapValue(MAP *_tile, double _value);
-
+	
+	MapDoubleValue(MAP *_tile, double _value)
+	: tile(_tile), value(_value)
+	{}
+	
 };
 
 struct VehicleLocation
@@ -120,6 +133,7 @@ void executeTasks();
 
 void populateAIData();
 void populateTileInfos();
+void populateTileInfoBaseRanges();
 void populateSeaRegionAreas();
 void populatePlayerBaseIds();
 void populatePlayerBaseRanges();
@@ -193,7 +207,7 @@ double getVehicleConventionalOffenseModifier(int vehicleId);
 double getVehicleConventionalDefenseModifier(int vehicleId);
 bool isOffensiveUnit(int unitId);
 bool isOffensiveVehicle(int vehicleId);
-double getExponentialCoefficient(double scale, double time);
+double getExponentialCoefficient(double scale, double value);
 int getBaseItemBuildTime(int baseId, int item, bool accumulatedMinerals);
 int getBaseItemBuildTime(int baseId, int item);
 double getStatisticalBaseSize(double age);
@@ -234,7 +248,7 @@ MAP *getVehicleArtilleryAttackPosition(int vehicleId, MAP *target);
 bool isUnitCanCaptureBase(int unitId, MAP *baseTile);
 bool isUnitCanCaptureBase(int unitId, MAP *origin, MAP *baseTile);
 bool isVehicleCanCaptureBase(int vehicleId, MAP *baseTile);
-double getEnemyVehicleAttackGain(int vehicleId, int baseRange);
+double getEnemyVehicleAttackGain(int vehicleId);
 int getCombatUnitTrueCost(int unitId);
 int getCombatVehicleTrueCost(int vehicleId);
 double getGain(double bonus, double income, double incomeGrowth, double incomeGrowth2);
@@ -279,4 +293,5 @@ MAP *getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target);
 MAP *getArtilleryAttackPosition(int vehicleId, MAP *target);
 double getWinningProbability(double combatEffect);
 double getSurvivalEffect(double combatEffect);
+double getAttackGainCombatEffectCoefficient(double combatEffect);
 

@@ -12,14 +12,6 @@
 #include "wtp_aiProduction.h"
 #include "wtp_aiRoute.h"
 
-// MapValue
-
-MapValue::MapValue(MAP *_tile, double _value)
-: tile{_tile}, value{_value}
-{
-
-}
-
 /**
 Top level AI strategy class. Contains AI methods entry points and global AI variable precomputations.
 Faction uses WTP AI algorithms if configured. Otherwise, it falls back to Thinker.
@@ -230,6 +222,7 @@ void populateAIData()
 	// map of tile infos
 	
 	populateTileInfos();
+	populateTileInfoBaseRanges();
 	populateSeaRegionAreas();
 	
 	// basic info
@@ -584,6 +577,206 @@ void populateTileInfos()
 			{
 				debug("\t\t\t%s\n", getLocationString(tile).c_str());
 			}
+			
+		}
+		
+	}
+	
+}
+
+void populateTileInfoBaseRanges()
+{
+	debug("populateTileInfoBaseRanges - %s\n", aiMFaction->noun_faction);
+	
+	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+	{
+		TileInfo &tileInfo = aiData.getTileInfo(tileIndex);
+		
+		for (int i = 0; i < 3; i++)
+		{
+			tileInfo.nearestBaseRanges.at(i).id = -1;
+			tileInfo.nearestBaseRanges.at(i).value = INT_MAX;
+		}
+		
+	}
+	
+	std::vector<MapIntValue> openNodes;
+	std::vector<MapIntValue> newOpenNodes;
+	int range;
+	
+	// Air
+	
+	openNodes.clear();
+	range = 0;
+	
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
+	{
+		if (Bases[baseId].faction_id != aiFactionId)
+			continue;
+		
+		MAP *baseTile = getBaseMapTile(baseId);
+		TileInfo &tileInfo = aiData.getTileInfo(baseTile);
+		
+		openNodes.emplace_back(baseTile, baseId);
+		tileInfo.nearestBaseRanges.at(TRIAD_AIR).id = baseId;
+		tileInfo.nearestBaseRanges.at(TRIAD_AIR).value = range;
+		
+	}
+	
+	while (!openNodes.empty())
+	{
+		range++;
+		
+		for (MapIntValue &openNode : openNodes)
+		{
+			MAP *tile = openNode.tile;
+			int baseId = openNode.value;
+			
+			for (MAP *adjacentTile : getAdjacentTiles(tile))
+			{
+				TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
+				
+				if (range < adjacentTileInfo.nearestBaseRanges.at(TRIAD_AIR).value)
+				{
+					adjacentTileInfo.nearestBaseRanges.at(TRIAD_AIR).id = baseId;
+					adjacentTileInfo.nearestBaseRanges.at(TRIAD_AIR).value = range;
+					newOpenNodes.emplace_back(adjacentTile, baseId);
+				}
+				
+			}
+			
+		}
+		
+		openNodes.clear();
+		openNodes.swap(newOpenNodes);
+		
+	}
+	
+	// Sea
+	
+	openNodes.clear();
+	range = 0;
+	
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
+	{
+		if (Bases[baseId].faction_id != aiFactionId)
+			continue;
+		
+		MAP *baseTile = getBaseMapTile(baseId);
+		TileInfo &tileInfo = aiData.getTileInfo(baseTile);
+		
+		// sea base
+		
+		if (!is_ocean(baseTile))
+			continue;
+		
+		openNodes.emplace_back(baseTile, baseId);
+		tileInfo.nearestBaseRanges.at(TRIAD_SEA).id = baseId;
+		tileInfo.nearestBaseRanges.at(TRIAD_SEA).value = range;
+		
+	}
+	
+	while (!openNodes.empty())
+	{
+		range++;
+		
+		for (MapIntValue &openNode : openNodes)
+		{
+			MAP *tile = openNode.tile;
+			int baseId = openNode.value;
+			
+			for (MAP *adjacentTile : getAdjacentTiles(tile))
+			{
+				TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
+				
+				// sea
+				
+				if (!is_ocean(adjacentTile))
+					continue;
+				
+				if (range < adjacentTileInfo.nearestBaseRanges.at(TRIAD_SEA).value)
+				{
+					adjacentTileInfo.nearestBaseRanges.at(TRIAD_SEA).id = baseId;
+					adjacentTileInfo.nearestBaseRanges.at(TRIAD_SEA).value = range;
+					newOpenNodes.emplace_back(adjacentTile, baseId);
+				}
+				
+			}
+			
+		}
+		
+		openNodes.clear();
+		openNodes.swap(newOpenNodes);
+		
+	}
+	
+	// Land
+	
+	openNodes.clear();
+	range = 0;
+	
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
+	{
+		if (Bases[baseId].faction_id != aiFactionId)
+			continue;
+		
+		MAP *baseTile = getBaseMapTile(baseId);
+		TileInfo &tileInfo = aiData.getTileInfo(baseTile);
+		
+		// land base
+		
+		if (is_ocean(baseTile))
+			continue;
+		
+		openNodes.emplace_back(baseTile, baseId);
+		tileInfo.nearestBaseRanges.at(TRIAD_LAND).id = baseId;
+		tileInfo.nearestBaseRanges.at(TRIAD_LAND).value = range;
+		
+	}
+	
+	while (!openNodes.empty())
+	{
+		range++;
+		
+		for (MapIntValue &openNode : openNodes)
+		{
+			MAP *tile = openNode.tile;
+			int baseId = openNode.value;
+			
+			for (MAP *adjacentTile : getAdjacentTiles(tile))
+			{
+				TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
+				
+				// land or sea (transported)
+				
+				if (range < adjacentTileInfo.nearestBaseRanges.at(TRIAD_LAND).value)
+				{
+					adjacentTileInfo.nearestBaseRanges.at(TRIAD_LAND).id = baseId;
+					adjacentTileInfo.nearestBaseRanges.at(TRIAD_LAND).value = range;
+					newOpenNodes.emplace_back(adjacentTile, baseId);
+				}
+				
+			}
+			
+		}
+		
+		openNodes.clear();
+		openNodes.swap(newOpenNodes);
+		
+	}
+	
+	if (DEBUG)
+	{
+		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+		{
+			TileInfo &tileInfo = aiData.getTileInfo(tile);
+			
+			debug("\t%s", getLocationString(tile).c_str());
+			for (int i = 0; i < 3; i ++)
+			{
+				debug(" [%3d] %4d", tileInfo.nearestBaseRanges.at(i).id, tileInfo.nearestBaseRanges.at(i).id == -1 ? -1 : tileInfo.nearestBaseRanges.at(i).value);
+			}
+			debug("\n");
 			
 		}
 		
@@ -1952,7 +2145,7 @@ void populateEnemyStacks()
 		
 		// populate baseRange
 		
-		enemyStackInfo.baseRange = getNearestBaseRange(enemyStackTile, aiData.baseIds, false);
+		enemyStackInfo.baseRange = aiData.getTileInfo(enemyStackTile).nearestBaseRanges.at(TRIAD_AIR).value;
 		
 		// populate base/bunker/airbase
 		
@@ -2024,41 +2217,41 @@ void populateEnemyStacks()
 			, enemyStackInfo.averageUnitCost
 		);
 		
-		// averageUnitGain
+		// averageAttackGain
 		
-		double averageUnitGain;
+		double averageAttackGain;
 		
 		if (enemyStackInfo.base)
 		{
 			// base capture gain
 			
-			averageUnitGain = conf.ai_combat_attack_priority_base * aiData.getBaseInfo(enemyStackInfo.baseId).gain;
+			averageAttackGain = conf.ai_combat_attack_priority_base * aiData.getBaseInfo(enemyStackInfo.baseId).gain;
 			
 		}
 		else
 		{
 			// compute average priority based on each stack vehicle priority
 			
-			AverageAccumulator averageUnitGainAccumulator;
+			AverageAccumulator averageAttackGainAccumulator;
 			
 			for (int vehicleId : enemyStackInfo.vehicleIds)
 			{
-				double attackGain = getEnemyVehicleAttackGain(vehicleId, enemyStackInfo.baseRange);
-				averageUnitGainAccumulator.add(attackGain);
+				double attackGain = getEnemyVehicleAttackGain(vehicleId);
+				averageAttackGainAccumulator.add(attackGain);
 			}
 			
-			averageUnitGain = averageUnitGainAccumulator.get();
+			averageAttackGain = averageAttackGainAccumulator.get();
 			
 		}
 		
-		enemyStackInfo.averageUnitGain = averageUnitGain;
+		enemyStackInfo.averageAttackGain = averageAttackGain;
 		
 		debug
 		(
 			"\t\t\t"
-			" averageUnitGain=%5.2f"
+			" averageAttackGain=%5.2f"
 			"\n"
-			, enemyStackInfo.averageUnitGain
+			, enemyStackInfo.averageAttackGain
 		);
 		
 	}
@@ -5298,9 +5491,9 @@ bool isOffensiveVehicle(int vehicleId)
 	return isOffensiveUnit(getVehicle(vehicleId)->unit_id);
 }
 
-double getExponentialCoefficient(double scale, double time)
+double getExponentialCoefficient(double scale, double value)
 {
-	return exp(- time / scale);
+	return exp(-value / scale);
 }
 
 /*
@@ -6908,7 +7101,7 @@ bool isVehicleCanCaptureBase(int vehicleId, MAP *baseTile)
 Benefit of destroying an enemy vehicle.
 Measured in average base gain.
 */
-double getEnemyVehicleAttackGain(int vehicleId, int baseRange)
+double getEnemyVehicleAttackGain(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
@@ -6917,38 +7110,8 @@ double getEnemyVehicleAttackGain(int vehicleId, int baseRange)
 	int unitId = vehicle->unit_id;
 	
 	double attackGain = 0.0;
-	double attackPriority = 0.0;
 	
-	if (factionId == 0)
-	{
-		switch (unitId)
-		{
-		case BSC_MIND_WORMS:
-			attackPriority = conf.ai_combat_attack_priority_alien_mind_worms;
-			break;
-		case BSC_SPORE_LAUNCHER:
-			attackPriority = conf.ai_combat_attack_priority_alien_spore_launcher;
-			break;
-		case BSC_FUNGAL_TOWER:
-			{
-				// gain is falling wiht baseRange
-				
-				double expansionRangeCoefficient = vehicleTileInfo.baseRange <= 2 ? 1.0 : 2.0 / (double)vehicleTileInfo.baseRange;
-				
-				return
-					conf.ai_combat_attack_priority_alien_fungal_tower
-					* expansionRangeCoefficient
-				;
-				
-			}
-			break;
-			
-		default:
-			attackPriority = 0.0;
-		}
-		
-	}
-	else if (isArtifactVehicle(vehicleId))
+	if (isArtifactVehicle(vehicleId))
 	{
 		attackGain = getGainBonus(2 * Rules->mineral_cost_multi * Units[BSC_ALIEN_ARTIFACT].cost / 2);
 	}
@@ -6956,52 +7119,76 @@ double getEnemyVehicleAttackGain(int vehicleId, int baseRange)
 	{
 		if (isCombatVehicle(vehicleId))
 		{
-			// attack priority decreases with distance from AI bases
+			IdIntValue nearestBaseRange = vehicleTileInfo.nearestBaseRanges.at(vehicle->triad());
 			
-			attackPriority =
-				aiData.factionInfos[factionId].threatCoefficient
-				* getExponentialCoefficient((double)(conf.ai_combat_field_attack_priority_base_range - 1), (double)(baseRange - 1))
-			;
+			if (nearestBaseRange.id >= 0 && nearestBaseRange.value < INT_MAX)
+			{
+				if (factionId == 0)
+				{
+					switch (unitId)
+					{
+					case BSC_MIND_WORMS:
+						attackGain = getGainBonus(conf.ai_combat_attack_bonus_alien_mind_worms);
+						break;
+						
+					case BSC_SPORE_LAUNCHER:
+						attackGain = getGainBonus(conf.ai_combat_attack_bonus_alien_spore_launcher);
+						break;
+						
+					case BSC_FUNGAL_TOWER:
+						attackGain = getGainBonus(conf.ai_combat_attack_bonus_alien_fungal_tower);
+						break;
+					
+					default:
+						attackGain = 0.0;
+						
+					}
+					
+				}
+				else
+				{
+					BaseInfo &baseInfo = aiData.getBaseInfo(nearestBaseRange.id);
+					
+					double baseGain = baseInfo.gain;
+					double combatEffect = baseInfo.combatData.getVehicleEffect(vehicleId);
+					double baseGainProportion = combatEffect / baseInfo.combatData.requiredEffect;
+					double attackGainCombatEffectCoefficient = getAttackGainCombatEffectCoefficient(combatEffect);
+					double baseAttackGain = baseGain * baseGainProportion * attackGainCombatEffectCoefficient;
+					
+					double yieldAttackGain = getGainBonus(conf.ai_combat_attack_bonus_hostile);
+					
+					attackGain = std::max(yieldAttackGain, baseAttackGain);
+					
+				}
+				
+				// baseProximityCoefficient
+				
+				double baseProximityCoefficient = getExponentialCoefficient(conf.ai_combat_field_attack_base_proximity_scale, nearestBaseRange.value - 1);
+				attackGain *= baseProximityCoefficient;
+				
+			}
 			
 		}
 		else if (isProbeVehicle(vehicleId))
 		{
-			attackPriority = 0.5;
+			attackGain = 2.0 * getGainBonus(conf.ai_combat_attack_bonus_hostile);
 		}
 		else if (isTransportVehicle(vehicleId))
 		{
-			attackPriority = 0.5;
+			attackGain = 2.0 * getGainBonus(conf.ai_combat_attack_bonus_hostile);
 		}
 		if (isColonyVehicle(vehicleId))
 		{
-			attackPriority = 1.0;
+			attackGain = aiFactionInfo->averageBaseGain;
 		}
 		else
 		{
-			attackPriority = 0.1;
-		}
-		
-	}
-	else if (isNeutral(aiFactionId, factionId))
-	{
-		if (isCombatVehicle(vehicleId))
-		{
-			// attack priority decreases with distance from AI bases
-			
-			attackPriority =
-				aiData.factionInfos[factionId].threatCoefficient
-				* getExponentialCoefficient((double)(conf.ai_combat_field_attack_priority_base_range - 1), (double)(baseRange - 1))
-			;
-			
-		}
-		else
-		{
-			attackPriority = 0.0;
+			attackGain = 0.5 * getGainBonus(conf.ai_combat_attack_bonus_hostile);
 		}
 		
 	}
 	
-	return attackGain > 0.0 ? attackGain : attackPriority * aiFactionInfo->averageBaseGain;
+	return attackGain;
 	
 }
 
@@ -8419,5 +8606,13 @@ double getSurvivalEffect(double combatEffect)
 	
 	return survivalEffect;
 	
+}
+
+/*
+Attack gain combat effect coefficient.
+*/
+double getAttackGainCombatEffectCoefficient(double combatEffect)
+{
+	return 2.0 * getWinningProbability(combatEffect);
 }
 

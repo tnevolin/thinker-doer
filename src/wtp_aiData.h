@@ -145,6 +145,9 @@ struct TileInfo
 	// empty base capture
 	bool baseCapture = false;
 	
+	// nearest bases
+	std::array<IdIntValue, 3> nearestBaseRanges;
+	
 };
 
 // combat data
@@ -488,7 +491,7 @@ public:
 	bool alienFungalTower = false;
 	bool needlejetInFlight = false;
 	bool artifact = false;
-	double averageUnitGain = 0.0;
+	double averageAttackGain = 0.0;
 	int lowestSpeed = -1;
 	bool artillery = false;
 	bool bombardment = false;

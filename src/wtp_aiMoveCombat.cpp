@@ -108,7 +108,7 @@ void immediateAttack()
 			
 			COMBAT_MODE combatMode = CM_MELEE;
 			double effect = attackAction.hastyCoefficient * enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode);
-			double priority = enemyStackInfo.averageUnitGain * effect;
+			double priority = enemyStackInfo.averageAttackGain * effect;
 			
 			if (priority > selectedPriority)
 			{
@@ -163,14 +163,14 @@ void immediateAttack()
 			{
 				COMBAT_MODE combatMode = CM_ARTILLERY_DUEL;
 				effect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode);
-				priority = enemyStackInfo.averageUnitGain * effect;
+				priority = enemyStackInfo.averageAttackGain * effect;
 				
 			}
 			else if (enemyStackInfo.bombardment)
 			{
 				COMBAT_MODE combatMode = CM_BOMBARDMENT;
 				effect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode) + 1.0;
-				priority = enemyStackInfo.averageUnitGain * effect;
+				priority = enemyStackInfo.averageAttackGain * effect;
 				
 			}
 			else
@@ -1227,7 +1227,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 		
 		// find closest monolith
 		
-		MapValue closestMonolithLocaionTravelTime = findClosestItemLocation(vehicleId, BIT_MONOLITH, MAX_REPAIR_DISTANCE, true);
+		MapDoubleValue closestMonolithLocaionTravelTime = findClosestItemLocation(vehicleId, BIT_MONOLITH, MAX_REPAIR_DISTANCE, true);
 		
 		// not found
 		
@@ -1919,7 +1919,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				
 				// attackGain
 				
-				double attackGain = enemyStackInfo.averageUnitGain;
+				double attackGain = enemyStackInfo.averageAttackGain;
 				
 				// travel time coefficient
 				
@@ -1969,7 +1969,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				
 				// attackGain
 				
-				double attackGain = enemyStackInfo.averageUnitGain;
+				double attackGain = enemyStackInfo.averageAttackGain;
 				
 				// travel time coefficient
 				
@@ -2023,7 +2023,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				
 				// attackGain
 				
-				double attackGain = enemyStackInfo.averageUnitGain;
+				double attackGain = enemyStackInfo.averageAttackGain;
 				
 				// travel time coefficient
 				

@@ -983,7 +983,7 @@ realm: 0 = land, 1 = ocean, 2 = both
 Ignore blocked locations and warzones if requested.
 factionId = aiFactionId
 */
-MapValue findClosestItemLocation(int vehicleId, MapItem item, int maxSearchRange, bool avoidWarzone)
+MapDoubleValue findClosestItemLocation(int vehicleId, MapItem item, int maxSearchRange, bool avoidWarzone)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	int triad = vehicle->triad();

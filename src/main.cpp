@@ -1221,17 +1221,21 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_combat_attack_priority_base = atof(value);
     }
-    else if (MATCH("ai_combat_attack_priority_alien_mind_worms"))
+    else if (MATCH("ai_combat_attack_bonus_alien_mind_worms"))
     {
-        cf->ai_combat_attack_priority_alien_mind_worms = atof(value);
+        cf->ai_combat_attack_bonus_alien_mind_worms = atof(value);
     }
-    else if (MATCH("ai_combat_attack_priority_alien_spore_launcher"))
+    else if (MATCH("ai_combat_attack_bonus_alien_spore_launcher"))
     {
-        cf->ai_combat_attack_priority_alien_spore_launcher = atof(value);
+        cf->ai_combat_attack_bonus_alien_spore_launcher = atof(value);
     }
-    else if (MATCH("ai_combat_attack_priority_alien_fungal_tower"))
+    else if (MATCH("ai_combat_attack_bonus_alien_fungal_tower"))
     {
-        cf->ai_combat_attack_priority_alien_fungal_tower = atof(value);
+        cf->ai_combat_attack_bonus_alien_fungal_tower = atof(value);
+    }
+    else if (MATCH("ai_combat_attack_bonus_hostile"))
+    {
+        cf->ai_combat_attack_bonus_hostile = atof(value);
     }
     else if (MATCH("ai_combat_priority_pod"))
     {
@@ -1241,9 +1245,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_combat_base_protection_superiority = atof(value);
     }
-    else if (MATCH("ai_combat_field_attack_priority_base_range"))
+    else if (MATCH("ai_combat_field_attack_base_proximity_scale"))
     {
-        cf->ai_combat_field_attack_priority_base_range = atoi(value);
+        cf->ai_combat_field_attack_base_proximity_scale = atoi(value);
     }
     else if (MATCH("ai_combat_field_attack_superiority_required"))
     {
