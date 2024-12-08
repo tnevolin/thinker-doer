@@ -293,5 +293,5 @@ MAP *getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target);
 MAP *getArtilleryAttackPosition(int vehicleId, MAP *target);
 double getWinningProbability(double combatEffect);
 double getSurvivalEffect(double combatEffect);
-double getAttackGainCombatEffectCoefficient(double combatEffect);
+double getCombatEffectCoefficient(double combatEffect);
 

@@ -2168,12 +2168,13 @@ void evaluateTerritoryProtectionUnits()
 			// travel time
 			
 			double travelTime = getUnitATravelTime(unitId, baseTile, position);
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 			
 			// gain
 			
 			double combatEffect = enemyStackInfo->getUnitEffect(unitId);
-			double winningProbability = getWinningProbability(combatEffect);
-			double attackGain = getGainDelay(2.0 * winningProbability * enemyStackInfo->averageAttackGain, travelTime);
+			double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
+			double attackGain = enemyStackInfo->averageAttackGain * combatEffectCoefficient * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getUnitSupport(unitId), 0);
 			double upkeepGain = getGainTimeInterval(getGainIncome(upkeep), 0.0, travelTime);
@@ -2191,7 +2192,7 @@ void evaluateTerritoryProtectionUnits()
 				" -> %s"
 				" travelTime=%7.2f"
 				" combatEffect=%5.2f"
-				" winningProbability=%5.2f"
+				" combatEffectCoefficient=%5.2f"
 				" attackGain=%5.2f"
 				" upkeepGain=%5.2f"
 				" gain=%7.2f"
@@ -2200,7 +2201,7 @@ void evaluateTerritoryProtectionUnits()
 				, getLocationString(enemyStackInfo->tile).c_str()
 				, travelTime
 				, combatEffect
-				, winningProbability
+				, combatEffectCoefficient
 				, attackGain
 				, upkeepGain
 				, gain

@@ -7152,8 +7152,8 @@ double getEnemyVehicleAttackGain(int vehicleId)
 					double baseGain = baseInfo.gain;
 					double combatEffect = baseInfo.combatData.getVehicleEffect(vehicleId);
 					double baseGainProportion = combatEffect / baseInfo.combatData.requiredEffect;
-					double attackGainCombatEffectCoefficient = getAttackGainCombatEffectCoefficient(combatEffect);
-					double baseAttackGain = baseGain * baseGainProportion * attackGainCombatEffectCoefficient;
+					double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
+					double baseAttackGain = baseGain * baseGainProportion * combatEffectCoefficient;
 					
 					double yieldAttackGain = getGainBonus(conf.ai_combat_attack_bonus_hostile);
 					
@@ -8611,7 +8611,7 @@ double getSurvivalEffect(double combatEffect)
 /*
 Attack gain combat effect coefficient.
 */
-double getAttackGainCombatEffectCoefficient(double combatEffect)
+double getCombatEffectCoefficient(double combatEffect)
 {
 	return 2.0 * getWinningProbability(combatEffect);
 }
