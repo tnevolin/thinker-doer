@@ -1,3 +1,8 @@
+# Version 336
+
+* SE models modifications: 
+* Datalinks for facilities are updated for previous changes.
+
 # Version 335
 
 * Psych facilities affect one extra citizen but they has to remove superdrone first before they can remove a drone.

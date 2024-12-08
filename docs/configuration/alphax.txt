@@ -884,21 +884,21 @@ ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
 Frontier,        None,
-Police State,    DocLoy,   --EFFIC,     ++SUPPORT,   ++POLICE,     -GROWTH
-Democratic,      EthCalc,  ++EFFIC,     --SUPPORT,   ++GROWTH,     -PLANET
-Fundamentalist,  Brain,    ++MORALE,    ++PROBE,      +INDUSTRY,  --RESEARCH
+Police State,    DocLoy,    ++POLICE,      +SUPPORT,    --EFFIC,       -GROWTH
+Democratic,      EthCalc,    +EFFIC,     +++GROWTH,     --SUPPORT,     -POLICE
+Fundamentalist,  Brain,     ++MORALE,     ++PROBE,       +INDUSTRY,   --RESEARCH
 Simple,          None,
-Free Market,     IndEcon,  ++ECONOMY, ----POLICE,    --PLANET,     -PROBE
-Planned,         InfNet,   --EFFIC,      -SUPPORT,   ++GROWTH,     +INDUSTRY
-Green,           CentEmp,   +EFFIC,     --GROWTH,    ++PLANET,     +TALENT
+Free Market,     IndEcon,   ++ECONOMY,    --PLANET,  -----POLICE,      -PROBE
+Planned,         InfNet,    ++GROWTH,     ++INDUSTRY,   --EFFIC,       -ECONOMY
+Green,           CentEmp,   ++PLANET,      +EFFIC,      --GROWTH,     ++TALENT
 Survival,        None,
-Power,           MilAlg,   ++SUPPORT,   ++MORALE,     +GROWTH,    --INDUSTRY
-Knowledge,       Cyber,     +EFFIC,      -GROWTH,     --PROBE,   +++RESEARCH
-Wealth,          IndAuto,   +ECONOMY,  ---MORALE,     -PLANET,     +INDUSTRY
+Power,           MilAlg,   +++MORALE,      +SUPPORT,    --INDUSTRY,    +POLICE
+Knowledge,       Cyber,   ++++RESEARCH,    +EFFIC,      --PROBE,       -POLICE
+Wealth,          IndAuto,    +INDUSTRY,    +ECONOMY,  ----MORALE,      -GROWTH
 None,            None,
-Cybernetic,      Algor,    ++EFFIC,    ---POLICE,    ++PLANET,    ++RESEARCH
-Eudaimonic,      Eudaim,   ++ECONOMY,    -EFFIC,    ---MORALE,    ++GROWTH
-Thought Control, WillPow,  --SUPPORT,   ++MORALE,    ++POLICE,    ++PROBE
+Cybernetic,      Algor,     ++EFFIC,      ++PLANET,     ++RESEARCH,  ---POLICE
+Eudaimonic,      Eudaim,    ++GROWTH,     ++ECONOMY,     -EFFIC,     ---MORALE
+Thought Control, WillPow,   ++POLICE,     ++MORALE,     ++PROBE,     ---SUPPORT
 
 
 #SOCECONOMY
