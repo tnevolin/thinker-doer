@@ -1002,7 +1002,7 @@ void generateLandBridgeTerraformingRequests()
 			" terraformingTime=%5.2f"
 			" conf.ai_terraforming_landBridgeValue=%5.2f"
 			" conf.ai_terraforming_landBridgeRangeScale=%5.2f"
-			" bridgeRequest.value=%5.2f"
+			" bridgeRequest.value=%d"
 			" income=%5.2f"
 			"\n"
 			, getLocationString(bridgeRequest.tile).c_str()

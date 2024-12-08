@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v334"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v335"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -369,6 +369,8 @@ struct Config {
 	bool base_psych_remove_drone_soft = false;
 	bool base_psych_specialist_content = false;
 	int base_psych_economy_conversion_ratio = 0;
+	int base_psych_facility_extra_power = 0;
+	int base_psych_police_extra_power = 0;
     bool facility_terraforming_ecodamage_halved = false;
     int facility_yield_bonuses_tree_farm[3] = {0,0,0};
     int facility_yield_bonuses_hybrid_forest[3] = {0,0,0};

@@ -640,6 +640,14 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->base_psych_economy_conversion_ratio = atoi(value);
     }
+    else if (MATCH("base_psych_facility_extra_power"))
+    {
+        cf->base_psych_facility_extra_power = atoi(value);
+    }
+    else if (MATCH("base_psych_police_extra_power"))
+    {
+        cf->base_psych_police_extra_power = atoi(value);
+    }
     else if (MATCH("facility_terraforming_ecodamage_halved"))
     {
         cf->facility_terraforming_ecodamage_halved = (atoi(value) == 0 ? false : true);

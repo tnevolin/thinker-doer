@@ -1,3 +1,16 @@
+# Version 335
+
+* Psych facilities affect one extra citizen but they has to remove superdrone first before they can remove a drone.
+  * Recreation Commons:			removes 3 drones/superdrones
+  * Hologram Theatre:			removes 3 drones/superdrones
+  * Research Hospital:			removes 2 drones/superdrones
+  * Nanohospital:				removes 2 drones/superdrones
+  * Paradise Garden:			adds 3 talents
+* Police units affect one extra citizen but they has to remove superdrone first before they can remove a drone.
+  * Regular police:				removes 2 drones/superdrones
+  * 2x police or +3 POLICE:		removes 3 drones/superdrones
+  * 2x police AND +3 POLICE:	removes 4 drones/superdrones
+
 # Version 334
 
 * Base hurries full minerals when rioting and minimal minerals when not.

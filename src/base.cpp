@@ -911,9 +911,18 @@ static void normalize_happiness(BASE *base, bool subtractSpecialists)
 {
 	int const worker_count = base->pop_size - (subtractSpecialists ? base->specialist_total : 0);
 	
-	// limit numbers by base size
+	// limit talents by base size
 	
 	base->talent_total = clamp(base->talent_total, 0, (int32_t)base->pop_size);
+	
+	// hard superdrone removal
+	
+	if (!conf.base_psych_remove_drone_soft)
+	{
+		base->superdrone_total = std::min(base->drone_total, base->superdrone_total);
+	}
+	
+	// limit drones/superdrones by base size and redistribute them
 	
 	if (base->drone_total + base->superdrone_total <= 0)
 	{
@@ -1233,24 +1242,24 @@ void __cdecl mod_base_psych(int base_id) {
         adjust_drone(base, Rules->drones_induced_genejack_factory);
     }
     if (has_fac_built(FAC_RECREATION_COMMONS, base_id)) {
-        adjust_drone(base, -2);
+        adjust_drone(base, -(2 + conf.base_psych_facility_extra_power));
     }
     if (has_fac_built(FAC_HOLOGRAM_THEATRE, base_id)
     || (has_project(FAC_VIRTUAL_WORLD, faction_id)
     && has_fac_built(FAC_NETWORK_NODE, base_id))) {
-        adjust_drone(base, -2);
+        adjust_drone(base, -(2 + conf.base_psych_facility_extra_power));
     }
     if (has_project(FAC_PLANETARY_TRANSIT_SYSTEM, faction_id) && base->pop_size <= 3) {
         adjust_drone(base, -1);
     }
     if (has_fac_built(FAC_RESEARCH_HOSPITAL, base_id)) {
-        adjust_drone(base, -1);
+        adjust_drone(base, -(1 + conf.base_psych_facility_extra_power));
     }
     if (has_fac_built(FAC_NANOHOSPITAL, base_id)) {
-        adjust_drone(base, -1);
+        adjust_drone(base, -(1 + conf.base_psych_facility_extra_power));
     }
     if (has_fac_built(FAC_PARADISE_GARDEN, base_id)) {
-        adjust_psych(base, 2, 1);
+        adjust_psych(base, (2 + conf.base_psych_facility_extra_power), 1);
     }
     
 	// [WTP]
@@ -1284,7 +1293,7 @@ void __cdecl mod_base_psych(int base_id) {
             }
         }
         for (int i = 0; i < num_police && units.size() > 0; i++) {
-            police_total += units.top();
+            police_total += (units.top() + conf.base_psych_police_extra_power);
             units.pop();
         }
         adjust_drone(base, -police_total);
