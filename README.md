@@ -66,7 +66,7 @@ http://alphacentauri2.info/wiki/Social_Engineering_Mod
 
 SE as of v330
 
-![SE v330](images/se-v330.png)
+![SE v330](images/se-v335.png)
 
 # Combat
 
