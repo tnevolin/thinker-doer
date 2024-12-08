@@ -242,7 +242,7 @@ Secondary defensive structure.
 
 #; Recreation Commons
 #HELPFAC6
-Reduces $LINK<Drones=36> in base by two.
+Reduces number of $LINK<Drones=36>/Superdrones in base by {three}.
 
 #; Energy Bank
 #HELPFAC7
@@ -274,13 +274,14 @@ production switching within category (unit, facility, secret project).
 
 #; Hologram Theatre
 #HELPFAC11
-Reduces number of $LINK<Drones=36> by two, and increases $LINK<Psych=39> output of base by 50%.
+Reduces number of $LINK<Drones=36>/Superdrones in base by {three}.
+^Increases base $LINK<Psych=39> by 50%.
 ^
 ^Can only be constructed in a base which already has a $LINK<Recreation Commons=100006>.
 
 #; Paradise Garden
 #HELPFAC12
-Two extra $LINK<Talents=45> at this base.
+{Three} extra $LINK<Talents=45> at this base.
 
 #; Tree Farm
 #HELPFAC13
@@ -312,13 +313,14 @@ Increases base output: $LINK<energy=16> by {50%} and $LINK<Labs=22> by {50%}.
 
 #; Research Hospital
 #HELPFAC17
-Increases base output: $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}. Reduces the number of $LINK<Drones=36> by one.
-^
+Reduces the number of $LINK<Drones=36>/Superdrones in base by {two}.
+^Increases base $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}.
 ^Reduces population loss caused by $LINK<genetic warfare=60021> and prevents other, natural, $LINK<disease outbreaks=41>.
 
 #; Nanohospital
 #HELPFAC18
-Increases base output: $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}. Reduces the number of $LINK<Drones=36> by one.
+Reduces the number of $LINK<Drones=36>/Superdrones in base by {two}.
+^Increases base $LINK<Psych=39> by {25%} and $LINK<Labs=22> by {50%}.
 ^Reduces population loss caused by $LINK<genetic warfare=60021> and prevents other, natural, $LINK<disease outbreaks=41>.
 ^
 ^Can only be constructed in a base which already has a $LINK<Research Hospital=100017>.
@@ -1008,6 +1010,7 @@ score here translates directly into $LINK<morale=29> upgrades for newly built un
 {Police} represents a society’s tolerance for police control and
 restrictions on personal freedom. A high score allows combat units to be
 used as police to pacify unhappy $LINK<Drone=36>.
+^Combat unit pacifies 2 drones/superdrones. Police unit does one more.
 ^A low score will cause
 increasing unhappiness when combat units are away from home (non-$LINK<Air Superiority=80005>
 air combat units have the same effect as units away
@@ -1020,7 +1023,7 @@ from home):
 ^    0 = Can use one military unit as police
 ^    +1 = Can use up to two military units as police
 ^    +2 = Can use up to three military units as police!
-^    +3 = Three units as police. [Police effect doubled!!]
+^    +3 = Three units as police. [+1 police effect!!]
 
 #;Growth
 #HELPEFFECT6
@@ -1445,8 +1448,8 @@ Ogres may be found, each with advanced equipment and powers. Unfortunately, the 
 it impossible for them to be repaired even by Progenitor technicians; any damage taken is permanent.
 ^
 ^The {Battle Ogre MK1} possesses a $LINK<Resonance Laser=60012>, $LINK<Resonance 3 Armor=70011>, and a $LINK<Fission
-Plant=50001>. Its awesome size and fearsome appearance also help quell drone activity, effectively doubling the
-$LINK<Police=130005> powers of the Ogre.
+Plant=50001>. Its awesome size and fearsome appearance also help quell drone activity, effectively adding extra
+$LINK<Police=130005> power of the Ogre.
 
 #;Battle Ogre MK2
 #UNITDESC17
@@ -1455,8 +1458,8 @@ Ogres may be found, each with advanced equipment and powers. Unfortunately, the 
 it impossible for them to be repaired even by Progenitor technicians; any damage taken is permanent.
 ^
 ^The {Battle Ogre MK2} possesses a $LINK<Resonance Bolt=60013>, $LINK<Resonance 8 Armor=70013>, and a $LINK<Fusion
-reactor=50002>. Its awesome size and fearsome appearance also help quell drone activity, effectively doubling the
-$LINK<Police=130005> powers of the Ogre. The Progenitors also built the Mk2 Ogre with the $LINK<Dissociative Wave=80025>
+reactor=50002>. Its awesome size and fearsome appearance also help quell drone activity, effectively adding extra
+$LINK<Police=130005> power of the Ogre. The Progenitors also built the Mk2 Ogre with the $LINK<Dissociative Wave=80025>
 special ability.
 
 #;Battle Ogre MK3
@@ -1466,8 +1469,8 @@ Ogres may be found, each with advanced equipment and powers. Unfortunately, the 
 it impossible for them to be repaired even by Progenitor technicians; any damage taken is permanent.
 ^
 ^The {Battle Ogre MK3} possesses a $LINK<String Disruptor=60014>, $LINK<Stasis Generator=70008> armor, and a $LINK<Quantum
-Chamber=50003>. Its awesome size and fearsome appearance also help quell drone activity, effectively doubling the
-$LINK<Police=130005> powers of the Ogre. The Progenitors also built the Ogre with the $LINK<Dissociative Wave=80025>
+Chamber=50003>. Its awesome size and fearsome appearance also help quell drone activity, effectively adding extra
+$LINK<Police=130005> power of the Ogre. The Progenitors also built the Ogre with the $LINK<Dissociative Wave=80025>
 special ability.
 
 #;Fungal Tower

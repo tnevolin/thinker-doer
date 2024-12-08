@@ -1,6 +1,6 @@
 # Version 336
 
-* SE models modifications: 
+* SE models modifications: https://github.com/tnevolin/thinker-doer/blob/master/articles/social-engineering-mod.md#se-models-analysis-and-proposed-changes
 * Datalinks for facilities are updated for previous changes.
 
 # Version 335
