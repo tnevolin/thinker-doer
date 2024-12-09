@@ -331,6 +331,119 @@ void populateTerraformingData()
 		
 	}
 	
+	// remove unavailable terraforming clusters
+	
+	if (!has_tech(Chassis[CHS_GRAVSHIP].preq_tech, aiFactionId))
+	{
+		// collect available terraforming clusters
+		
+		robin_hood::unordered_flat_set<int> availableTerraformingSeaClusters;
+		robin_hood::unordered_flat_set<int> availableTerraformingLandTransportedClusters;
+		
+		// for formers
+		
+		for (int vehicleId : aiData.formerVehicleIds)
+		{
+			VEH *vehicle = getVehicle(vehicleId);
+			MAP *vehicleTile = getVehicleMapTile(vehicleId);
+			
+			switch (vehicle->triad())
+			{
+			case TRIAD_SEA:
+				{
+					int seaCluster = getSeaCluster(vehicleTile);
+					
+					if (seaCluster != -1)
+					{
+						availableTerraformingSeaClusters.insert(seaCluster);
+					}
+					
+				}
+				break;
+				
+			case TRIAD_LAND:
+				{
+					int landTransportedCluster = getLandTransportedCluster(vehicleTile);
+					
+					if (landTransportedCluster != -1)
+					{
+						availableTerraformingLandTransportedClusters.insert(landTransportedCluster);
+					}
+					
+				}
+				break;
+				
+			}
+			
+		}
+		
+		// for bases
+		
+		if (has_tech(Units[BSC_SEA_FORMERS].preq_tech, aiFactionId))
+		{
+			for (int baseId : aiData.baseIds)
+			{
+				MAP *baseTile = getBaseMapTile(baseId);
+				
+				int seaCluster = getSeaCluster(baseTile);
+				
+				if (seaCluster != -1)
+				{
+					availableTerraformingSeaClusters.insert(seaCluster);
+				}
+				
+			}
+			
+		}
+		
+		if (has_tech(Units[BSC_FORMERS].preq_tech, aiFactionId))
+		{
+			for (int baseId : aiData.baseIds)
+			{
+				MAP *baseTile = getBaseMapTile(baseId);
+				
+				int landTransportedCluster = getLandTransportedCluster(baseTile);
+				
+				if (landTransportedCluster != -1)
+				{
+					availableTerraformingLandTransportedClusters.insert(landTransportedCluster);
+				}
+				
+			}
+			
+		}
+		
+		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+		{
+			TileTerraformingInfo &tileTerraformingInfo = getTileTerraformingInfo(tile);
+			
+			if (is_ocean(tile))
+			{
+				int seaCluster = getSeaCluster(tile);
+				
+				if (seaCluster == -1 || availableTerraformingSeaClusters.find(seaCluster) == availableTerraformingSeaClusters.end())
+				{
+					tileTerraformingInfo.availableTerraformingSite = false;
+					continue;
+				}
+				
+			}
+			else
+			{
+				int landTransportedCluster = getLandTransportedCluster(tile);
+				
+				if (landTransportedCluster == -1 || availableTerraformingLandTransportedClusters.find(landTransportedCluster) == availableTerraformingLandTransportedClusters.end())
+				{
+					tileTerraformingInfo.availableTerraformingSite = false;
+					continue;
+				}
+				
+			}
+			
+		}
+		
+	}
+	
 	if (DEBUG)
 	{
 		debug("\tavailableTerraformingSites\n");
@@ -780,6 +893,11 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		
 		for (TERRAFORMING_OPTION *option : BASE_TERRAFORMING_OPTIONS[tileInfo.ocean])
 		{
+			// rocky option requires rocky tile
+			
+			if (option->rocky && !tile->is_rocky())
+				continue;
+			
 			// do not build mining platrofm for bases in possession of undeveloped land rocky spots
 			
 			if (option == &TO_MINING_PLATFORM && baseTerraformingInfo.unworkedLandRockyTileCount > 0)
@@ -835,73 +953,62 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	int currentPopSize = base->pop_size;
 	base->pop_size = baseTerraformingInfo.projectedPopSize;
 	
-	for (int surface = 0; surface < 2; surface++)
+	robin_hood::unordered_flat_set<MAP *> appliedLocations;
+	robin_hood::unordered_flat_set<MAP *> selectedLocations;
+	
+	for (TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
 	{
-		debug("\t\tsurface=%d\n", surface);
+		// skip allready selected locations
 		
-		robin_hood::unordered_flat_set<MAP *> appliedLocations;
-		robin_hood::unordered_flat_set<MAP *> selectedLocations;
+		if (selectedLocations.find(terraformingRequest.tile) != selectedLocations.end())
+			continue;
 		
-		for (TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
+		// apply changes
+		
+		applyMapState(terraformingRequest.improvedMapState, terraformingRequest.tile);
+		appliedLocations.insert(terraformingRequest.tile);
+		
+		// compute base
+		
+		computeBase(baseId, true);
+		
+		// verify all already selected tiles are still worked
+		// stop processing if not
+		
+		bool allWorked = true;
+
+		for (MAP *selectedTile : selectedLocations)
 		{
-			// same surface
-			
-			if (is_ocean(terraformingRequest.tile) != surface)
-				continue;
-			
-			// skip allready selected locations
-			
-			if (selectedLocations.find(terraformingRequest.tile) != selectedLocations.end())
-				continue;
-			
-			// apply changes
-			
-			applyMapState(terraformingRequest.improvedMapState, terraformingRequest.tile);
-			appliedLocations.insert(terraformingRequest.tile);
-			
-			// compute base
-			
-			computeBase(baseId, true);
-			
-			// verify all already selected tiles are still worked
-			// stop processing if not
-			
-			bool allWorked = true;
-			
-			for (MAP *selectedTile : selectedLocations)
+			if (!isBaseWorkedTile(baseId, selectedTile))
 			{
-				if (!isBaseWorkedTile(baseId, selectedTile))
-				{
-					allWorked = false;
-					break;
-				}
+				allWorked = false;
+				break;
 			}
-			
-			if (!allWorked)
-				break;
-			
-			// verify tile is worked
-			// stop processing if not
-			
-			if (!isBaseWorkedTile(baseId, terraformingRequest.tile))
-				break;
-			
-			// select request
-			
-			selectedBaseTerraformingRequests.push_back(terraformingRequest);
-			selectedLocations.insert(terraformingRequest.tile);
-			
-			debug("\t\t\t%s %s\n", getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name);
-			
 		}
 		
-		// restore all applied changes
+		if (!allWorked)
+			break;
 		
-		for (MAP *tile : appliedLocations)
-		{
-			restoreTileMapState(tile);
-		}
+		// verify tile is worked
+		// stop processing if not
 		
+		if (!isBaseWorkedTile(baseId, terraformingRequest.tile))
+			break;
+		
+		// select request
+		
+		selectedBaseTerraformingRequests.push_back(terraformingRequest);
+		selectedLocations.insert(terraformingRequest.tile);
+		
+		debug("\t\t\t%s %s\n", getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name);
+		
+	}
+	
+	// restore all applied changes
+	
+	for (MAP *tile : appliedLocations)
+	{
+		restoreTileMapState(tile);
 	}
 	
 	// restore population

@@ -5567,20 +5567,6 @@ int getBaseProjectedSize(int baseId, int turns)
 	int populationLimit = getBasePopulationLimit(baseId);
 	projectedPopulation = std::min(projectedPopulation, std::max((int)base->pop_size, populationLimit));
 	
-	// reduce population by one if base is currently building colony
-	
-	int item = base->queue_items[0];
-	if (item >= 0 && isColonyUnit(item))
-	{
-		int mineralCostFactor = mod_cost_factor(base->faction_id, RSC_MINERAL, -1);
-		int mineralsAccumulated = base->minerals_accumulated + base->mineral_surplus * turns;
-		
-		if (mineralsAccumulated >= mineralCostFactor * Units[item].cost)
-		{
-			projectedPopulation--;
-		}
-	}
-	
 	return projectedPopulation;
 	
 }
