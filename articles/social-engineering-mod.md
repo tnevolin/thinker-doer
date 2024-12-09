@@ -123,3 +123,25 @@ _Proposed change_
 
 Barely adequate. However, it lacks hard economical benefits.
 
+# Usage analysis
+
+Attempt to weight out how often and how wide certain effects are used in models to give each one fair representation.
+
+| effect | # use | sum + | sum - | maximize | comment |
+| ---- | ----: | ----: | ----: | ---- | ---- |
+| ECONOMY | 4 | 5 | 1 | medium |  |
+| EFFIC | (+)6 | 5 | 5 | easy | Still used too often. Why vanilla is so fixated on shoving it in every model? |
+| SUPPORT | 4 | 2 | 5 | hard |  |
+| MORALE | 5 | 5 | 7 | medium |  |
+| POLICE | (+)7 | 6 | 11 | v.easy | Used too often. Easy to maximize. |
+| GROWTH | 5 | 7 | 4 | medium |  |
+| PLANET | (-)3 | 4 | 2 | easy | Rare use. Maybe add one entry somewhere. |
+| PROBE | 4 | 4 | 3 | easy |  |
+| INDUSTRY | 4 | 4 | 2 | hard | Do we need more negatives? |
+| RESEARCH | (-)3 | 6 | 2 | easy | Rare use. More negatives? |
+
+## Recomendations
+
+* Carefully replace EFFICIENCY/POLICE WITH PLANET/RESEARCH where it does not make big impact.
+* Maybe use more negative RESEARCH/PLANET as penalty. They are not that strong effects.
+
