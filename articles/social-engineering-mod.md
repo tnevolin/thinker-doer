@@ -41,7 +41,7 @@ _Proposed change_
 
 * +1 EFFICIENCY. Reducing efficiency bonuses across the board.
 * +3 GROWTH. Make it more usable earlier.
-* -1 POLICE.
+* -2 POLICE.
 
 ## Fundamentalist
 
@@ -49,8 +49,8 @@ Complete crap. Need serious boost.
 
 _Proposed change_
 
-* +2 MORALE.
-* +1 TALENT (happiness) or +1 INDUSTRY (consecration).
+* +1 MORALE.
+* +1 INDUSTRY.
 
 ## Free Market
 
@@ -85,8 +85,8 @@ Kind of not doing what it is supposed to. Trash choice.
 _Proposed change_
 
 * +1 SUPPORT.
-* +3 MORALE.
-* +1 POLICE. Makes more workers to offset industry penalty.
+* +2 MORALE.
+* +2 POLICE. Makes more workers to offset industry penalty.
 
 ## Knowledge
 
@@ -95,7 +95,7 @@ Adequate.
 _Proposed change_
 
 * +4 RESEARCH. Lore.
-* -1 GROWTH or -1 POLICE?
+* -1 POLICE.
 
 ## Wealth
 
@@ -109,8 +109,6 @@ _Proposed change_
 ## Cybernetic
 
 Adequate.
-
-Why Cybernetic has PLANET is beyond my lore understanding, though.
 
 ## Eudaimonic
 
