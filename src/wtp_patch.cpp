@@ -3127,6 +3127,41 @@ void patch_drone_riot_does_not_intensify()
 	
 }
 
+void patch_disable_popb()
+{
+	write_call(0x004EF2D9, (int)mod_popb);
+	write_call(0x004EF64C, (int)mod_popb);
+	write_call(0x004EF667, (int)mod_popb);
+	write_call(0x004EF9A0, (int)mod_popb);
+	write_call(0x004EF9BF, (int)mod_popb);
+	write_call(0x004EF9FB, (int)mod_popb);
+	write_call(0x004EFA25, (int)mod_popb);
+	write_call(0x004EFA44, (int)mod_popb);
+	write_call(0x004EFA99, (int)mod_popb);
+	write_call(0x004EFAB8, (int)mod_popb);
+	write_call(0x004EFAF4, (int)mod_popb);
+	write_call(0x004EFB1E, (int)mod_popb);
+	write_call(0x004EFB3D, (int)mod_popb);
+	write_call(0x004F1825, (int)mod_popb);
+	write_call(0x004F1A12, (int)mod_popb);
+	write_call(0x004F1B95, (int)mod_popb);
+	write_call(0x004F1C8D, (int)mod_popb);
+	write_call(0x004F1CA8, (int)mod_popb);
+	write_call(0x004F261C, (int)mod_popb);
+	write_call(0x004F2747, (int)mod_popb);
+	write_call(0x004F4A43, (int)mod_popb);
+	write_call(0x004F50D0, (int)mod_popb);
+	write_call(0x004F5400, (int)mod_popb);
+	write_call(0x004F541D, (int)mod_popb);
+	write_call(0x004F5D4A, (int)mod_popb);
+	write_call(0x004F5DBE, (int)mod_popb);
+	write_call(0x004F5EDD, (int)mod_popb);
+	write_call(0x004F642B, (int)mod_popb);
+	write_call(0x004F6448, (int)mod_popb);
+	write_call(0x004F67B2, (int)mod_popb);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3440,6 +3475,8 @@ void patch_setup_wtp(Config* cf)
 	{
 		patch_drone_riot_does_not_intensify();
 	}
+	
+//	patch_disable_popb();
 	
 }
 

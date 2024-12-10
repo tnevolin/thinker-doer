@@ -884,20 +884,20 @@ ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
 Frontier,        None,
-Police State,    DocLoy,    ++POLICE,      +SUPPORT,    --EFFIC,       -GROWTH
+Police State,    DocLoy,    ++POLICE,     ++SUPPORT,    --EFFIC,       -GROWTH
 Democratic,      EthCalc,    +EFFIC,     +++GROWTH,     --SUPPORT,    --POLICE
-Fundamentalist,  Brain,      +MORALE,     ++PROBE,       +INDUSTRY,   --RESEARCH
+Fundamentalist,  Brain,      +MORALE,     ++PROBE,     ---RESEARCH,    +TALENT
 Simple,          None,
-Free Market,     IndEcon,   ++ECONOMY,    --PLANET,  -----POLICE,      -PROBE
+Free Market,     IndEcon,   ++ECONOMY,   ---PLANET,  -----POLICE,      -PROBE
 Planned,         InfNet,    ++GROWTH,     ++INDUSTRY,   --EFFIC,       -ECONOMY
-Green,           CentEmp,   ++PLANET,      +EFFIC,      --GROWTH,     ++TALENT
+Green,           CentEmp,   ++PLANET,      +EFFIC,      --GROWTH,     ++RESEARCH
 Survival,        None,
-Power,           MilAlg,    ++MORALE,      +SUPPORT,    --INDUSTRY,   ++POLICE
-Knowledge,       Cyber,   ++++RESEARCH,    +EFFIC,      --PROBE,       -POLICE
-Wealth,          IndAuto,    +INDUSTRY,    +ECONOMY,  ----MORALE,      -GROWTH
+Power,           MilAlg,    ++MORALE,     ++SUPPORT,    --INDUSTRY,    +POLICE
+Knowledge,       Cyber,    +++RESEARCH,    -ECONOMY,    --PROBE,       +TALENT
+Wealth,          IndAuto,   ++INDUSTRY,    +ECONOMY,    --MORALE,     --PLANET
 None,            None,
-Cybernetic,      Algor,     ++EFFIC,      ++PLANET,     ++RESEARCH,  ---POLICE
-Eudaimonic,      Eudaim,    ++GROWTH,     ++ECONOMY,     -EFFIC,     ---MORALE
+Cybernetic,      Algor,     ++EFFIC,       +INDUSTRY,   ++RESEARCH,  ---POLICE
+Eudaimonic,      Eudaim,     +GROWTH,      +ECONOMY,    ++TALENT,   ----MORALE
 Thought Control, WillPow,   ++POLICE,     ++MORALE,     ++PROBE,     ---SUPPORT
 
 

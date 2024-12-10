@@ -162,7 +162,7 @@ int hurry_item(int base_id, int mins, int cost) {
     if (b->faction_id == MapWin->cOwner) {
         parse_says(0, b->name, -1, -1);
         parse_says(1, prod_name(b->item()), -1, -1);
-        popb("GOVHURRY", 0, -1, "facblt_sm.pcx", 0);
+        mod_popb("GOVHURRY", 0, -1, "facblt_sm.pcx", 0);
     }
     return 1;
 }

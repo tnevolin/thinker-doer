@@ -1,3 +1,7 @@
+# Version 337
+
+* SE models modifications: https://github.com/tnevolin/thinker-doer/blob/master/articles/social-engineering-mod.md#se-models-analysis-and-proposed-changes
+
 # Version 336
 
 * SE models modifications: https://github.com/tnevolin/thinker-doer/blob/master/articles/social-engineering-mod.md#se-models-analysis-and-proposed-changes

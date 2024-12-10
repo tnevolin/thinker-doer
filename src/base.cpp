@@ -529,9 +529,9 @@ void __cdecl mod_base_yield() {
     && f->SE_alloc_psych < 2 && effic_val >= 4 && 2*base->energy_surplus >= 3*base->pop_size
     && base->specialist_adjust > 2 && 2*base->specialist_adjust >= base->pop_size) {
         if (!is_alien(faction_id)) {
-            popb("PSYCHREQUEST", 0, -1, "talent_sm.pcx", 0);
+            mod_popb("PSYCHREQUEST", 0, -1, "talent_sm.pcx", 0);
         } else {
-            popb("PSYCHREQUEST", 0, -1, "Alopdir.pcx", 0);
+            mod_popb("PSYCHREQUEST", 0, -1, "Alopdir.pcx", 0);
         }
     }
 }
@@ -1544,9 +1544,9 @@ int __cdecl mod_base_growth() {
                 }
                 if (!has_complex || !has_dome) {
                     if (!is_alien(faction_id)) {
-                        popb("POPULATIONLIMIT", 2048, 16, "pop_sm.pcx", 0);
+                        mod_popb("POPULATIONLIMIT", 2048, 16, "pop_sm.pcx", 0);
                     } else {
-                        popb("POPULATIONLIMIT", 2048, 16, "al_pop_sm.pcx", 0);
+                        mod_popb("POPULATIONLIMIT", 2048, 16, "al_pop_sm.pcx", 0);
                     }
                 }
                 base->nutrients_accumulated = nutrient_cost / 2;
@@ -1590,19 +1590,19 @@ int __cdecl mod_base_growth() {
         if ((farms < clamp(base->pop_size/2, 2, 6) || !worked_farms)
         && has_wmode(faction_id, WMODE_TERRAFORM)) {
             if (has_active_veh(faction_id, PLAN_TERRAFORM)) {
-                popb("LOWNUTRIENTFARMS", 0, -1, imagefile, 0);
+                mod_popb("LOWNUTRIENTFARMS", 0, -1, imagefile, 0);
             } else {
-                popb("LOWNUTRIENTFORMERS", 0, -1, imagefile, 0);
+                mod_popb("LOWNUTRIENTFORMERS", 0, -1, imagefile, 0);
             }
         } else {
             if (base->specialist_total > (base->pop_size+1)/4) {
                 if (base->drone_total) {
-                    popb("LOWNUTRIENTSPEC1", 0, -1, imagefile, 0);
+                    mod_popb("LOWNUTRIENTSPEC1", 0, -1, imagefile, 0);
                 } else {
-                    popb("LOWNUTRIENTSPEC2", 0, -1, imagefile, 0);
+                    mod_popb("LOWNUTRIENTSPEC2", 0, -1, imagefile, 0);
                 }
             } else {
-                popb("LOWNUTRIENT", 128, 16, imagefile, 0);
+                mod_popb("LOWNUTRIENT", 128, 16, imagefile, 0);
             }
         }
         return 0; // Always return here
@@ -1622,9 +1622,9 @@ int __cdecl mod_base_growth() {
             }
         }
         if (!is_alien(faction_id)) {
-            popb("STARVE", 0x4000, 14, "starv_sm.pcx", 0);
+            mod_popb("STARVE", 0x4000, 14, "starv_sm.pcx", 0);
         } else {
-            popb("STARVE", 0x4000, 14, "al_starv_sm.pcx", 0);
+            mod_popb("STARVE", 0x4000, 14, "al_starv_sm.pcx", 0);
         }
         if (base->pop_size > 1 || !is_objective(base_id)) {
             base->pop_size--;
@@ -1648,9 +1648,9 @@ void __cdecl mod_base_drones() {
         if (!(base->state_flags & BSTATE_GOLDEN_AGE_ACTIVE)) {
             base->state_flags |= BSTATE_GOLDEN_AGE_ACTIVE;
             if (!is_alien(base->faction_id)) {
-                popb("GOLDENAGE", 32, -1, "talent_sm.pcx", 0);
+                mod_popb("GOLDENAGE", 32, -1, "talent_sm.pcx", 0);
             } else {
-                popb("GOLDENAGE", 32, -1, "Alopdir.pcx", 0);
+                mod_popb("GOLDENAGE", 32, -1, "Alopdir.pcx", 0);
             }
         }
     } else if (base->state_flags & BSTATE_GOLDEN_AGE_ACTIVE) {
@@ -1658,9 +1658,9 @@ void __cdecl mod_base_drones() {
         if (base->drone_total <= base->talent_total) {
             // Notify end of golden age without drone riots
             if (!is_alien(base->faction_id)) {
-                popb("GOLDENAGEOVER", 64, -1, "talent_sm.pcx", 0);
+                mod_popb("GOLDENAGEOVER", 64, -1, "talent_sm.pcx", 0);
             } else {
-                popb("GOLDENAGEOVER", 64, -1, "Alopdir.pcx", 0);
+                mod_popb("GOLDENAGEOVER", 64, -1, "Alopdir.pcx", 0);
             }
         }
     }
@@ -1676,14 +1676,14 @@ void __cdecl mod_base_drones() {
 
                 if (!is_alien(base->faction_id)) {
                     if (manage) {
-                        popb("DRONERIOTSOVER2", 0, 51, "talent_sm.pcx", 0);
+                        mod_popb("DRONERIOTSOVER2", 0, 51, "talent_sm.pcx", 0);
                     } else {
-                        popb("DRONERIOTSOVER", 16, 51, "talent_sm.pcx", 0);
+                        mod_popb("DRONERIOTSOVER", 16, 51, "talent_sm.pcx", 0);
                     }
                 } else if (manage) {
-                    popb("DRONERIOTSOVER2", 0, 51, "Alopdir.pcx", 0);
+                    mod_popb("DRONERIOTSOVER2", 0, 51, "Alopdir.pcx", 0);
                 } else {
-                    popb("DRONERIOTSOVER", 16, 51, "Alopdir.pcx", 0);
+                    mod_popb("DRONERIOTSOVER", 16, 51, "Alopdir.pcx", 0);
                 }
             }
             if (!is_human(base->faction_id)) {
@@ -1730,7 +1730,7 @@ void __cdecl mod_base_maint() {
                     f->energy_credits = Facility[fac].cost
                         * cost_factor(faction_id, RSC_MINERAL, -1);
                     parse_says(1, Facility[fac].name, -1, -1);
-                    popb("POWERSHORT", 0x10000, 14, "genwarning_sm.pcx", 0);
+                    mod_popb("POWERSHORT", 0x10000, 14, "genwarning_sm.pcx", 0);
                 }
             }
         }
@@ -2832,3 +2832,20 @@ void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int
 {
 	
 }
+
+/*
+Does not initialize disabled popup.
+*/
+int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx_filename, int a5)
+{
+	if ((*GameWarnings & flags) == 0)
+	{
+		return 0;
+	}
+	else
+	{
+		return popb(label, flags, sound_id, pcx_filename, a5);
+	}
+	
+}
+
