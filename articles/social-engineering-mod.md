@@ -15,7 +15,9 @@ The SE model proposed in article above is for vanilla. WTP uses a different one 
 
 # SE models analysis and proposed changes
 
-![SE v336](/images/se-v336.png)
+_v337_
+
+![SE v337](/images/se-v337.png)
 
 _Overall intent_
 
