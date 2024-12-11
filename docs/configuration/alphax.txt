@@ -884,12 +884,12 @@ ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
 Frontier,        None,
-Police State,    DocLoy,    ++POLICE,     ++SUPPORT,    --EFFIC,       -GROWTH
-Democratic,      EthCalc,    +EFFIC,     +++GROWTH,     --SUPPORT,    --POLICE
-Fundamentalist,  Brain,      +MORALE,     ++PROBE,     ---RESEARCH,    +TALENT
+Police State,    DocLoy,    ++POLICE,     ++SUPPORT,    --EFFIC,      --GROWTH
+Democratic,      EthCalc,    +EFFIC,     +++GROWTH,     --SUPPORT,     -POLICE
+Fundamentalist,  Brain,      +MORALE,     ++PROBE,      --RESEARCH,    +TALENT
 Simple,          None,
 Free Market,     IndEcon,   ++ECONOMY,   ---PLANET,  -----POLICE,      -PROBE
-Planned,         InfNet,    ++GROWTH,     ++INDUSTRY,   --EFFIC,       -ECONOMY
+Planned,         InfNet,    ++GROWTH,      +INDUSTRY,   --EFFIC,       -ECONOMY
 Green,           CentEmp,   ++PLANET,      +EFFIC,      --GROWTH,     ++RESEARCH
 Survival,        None,
 Power,           MilAlg,    ++MORALE,     ++SUPPORT,    --INDUSTRY,    +POLICE

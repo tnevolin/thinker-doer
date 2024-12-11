@@ -1,6 +1,7 @@
 # Version 337
 
 * SE models modifications: https://github.com/tnevolin/thinker-doer/blob/master/articles/social-engineering-mod.md#se-models-analysis-and-proposed-changes
+* Disabled base popup do not play sound. Resolves confusion when popup is associated with wrong sound.
 
 # Version 336
 

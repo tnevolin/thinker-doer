@@ -3476,7 +3476,7 @@ void patch_setup_wtp(Config* cf)
 		patch_drone_riot_does_not_intensify();
 	}
 	
-//	patch_disable_popb();
+	patch_disable_popb();
 	
 }
 
