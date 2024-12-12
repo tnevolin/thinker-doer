@@ -432,7 +432,7 @@ Planet Buster,        Planet Buster, 99, 0,32, -1, AGrav,
 Colony Module,        Colony Pod,     0, 8, 8, -1, None,     ; Noncombat packages
 Terraforming Unit,    Formers,        0, 9, 2, -1, Ecology,
 Troop Transport,      Transport,      0, 7, 4, -1, DocFlex,
-Supply Transport,     Supply,         0,10, 6, -1, Disable,
+Supply Transport,     Supply,         0,10,12, -1, Viral,
 Probe Team,           Probe Team,     0,11, 4, -1, Poly,
 Alien Artifact,       Artifact,       0,12,36, -1, Disable,
 Conventional Payload, Conventional,  10, 0,12, -1, Orbital,
@@ -610,7 +610,7 @@ Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
 Transport Foil,         Foil,     Transport,    Scout,      7, 0, 0, DocFlex, -1, 00000000000000000000000000
 Sea Formers,            Foil,     Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
-Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, Disable, -1, 00000000000000000000000000
+Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, Viral,   -1, 00000000000000000000000000
 Speeder Probe Team,     Speeder,  Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
 Alien Artifact,         Infantry, Artifact,     Scout,     12,10, 0, Disable,  2, 00000000000000000000000000
 Mind Worms,             Infantry, Psi,          Psi,        1, 5, 0, CentEmp,  3, 00000000000000000000000000
@@ -629,7 +629,7 @@ Unity Mining Laser,     Infantry, Laser,        Scout,      0, 0, 0, Disable, -1
 Sea Escape Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, Disable, -1, 00000000000000000000000000
 Unity Gunship,          Foil,     Gun,          Scout,     -1, 0, 0, Disable, -1, 00000000000000000000000000
 Foil Probe Team,        Foil,     Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
-Supply Trawler,         Foil,     Supply,       Scout,     10, 0, 0, Disable, -1, 00000000000000000000000000
+Supply Trawler,         Foil,     Supply,       Scout,     10, 0, 0, Viral,   -1, 00000000000000000000000000
 Rover Colony Pod,       Speeder,  Colony Pod,   Scout,      8, 0, 0, Mobile,  -1, 00000000000000000000000000
 Sea Colony Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, DocFlex, -1, 00000000000000000000000000
 Trance Scout Patrol,    Infantry, Gun,          Scout,      2, 0, 0, Brain,   -1, 00000001000000000000000000
@@ -889,11 +889,11 @@ Democratic,      EthCalc,    +EFFIC,     +++GROWTH,     --SUPPORT,     -POLICE
 Fundamentalist,  Brain,      +MORALE,     ++PROBE,      --RESEARCH,    +TALENT
 Simple,          None,
 Free Market,     IndEcon,   ++ECONOMY,   ---PLANET,  -----POLICE,      -PROBE
-Planned,         InfNet,    ++GROWTH,      +INDUSTRY,   --EFFIC,       -ECONOMY
+Planned,         InfNet,    ++GROWTH,     ++INDUSTRY,   --EFFIC,      --ECONOMY
 Green,           CentEmp,   ++PLANET,      +EFFIC,      --GROWTH,     ++RESEARCH
 Survival,        None,
 Power,           MilAlg,    ++MORALE,     ++SUPPORT,    --INDUSTRY,    +POLICE
-Knowledge,       Cyber,    +++RESEARCH,    -ECONOMY,    --PROBE,       +TALENT
+Knowledge,       Cyber,   ++++RESEARCH,    -ECONOMY,    --PROBE,       +TALENT
 Wealth,          IndAuto,   ++INDUSTRY,    +ECONOMY,    --MORALE,     --PLANET
 None,            None,
 Cybernetic,      Algor,     ++EFFIC,       +INDUSTRY,   ++RESEARCH,  ---POLICE

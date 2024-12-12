@@ -1156,7 +1156,6 @@ void __cdecl mod_base_psych(int base_id) {
 	{
     base->drone_total = clamp(base->pop_size - content_pop, 0, base->pop_size - base->specialist_total);
 	}
-    
     if (base_limit) {
         drone_limit = (base_id % base_limit + f->base_count - base_limit) / base_limit;
         if (drone_limit > 0 && base->pop_size > 0) {

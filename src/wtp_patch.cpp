@@ -1068,16 +1068,6 @@ void patch_default_morale_very_green()
 }
 
 /*
-SE GROWTH/INDUSTRY change accumulated nutrients/minerals proportionally.
-*/
-void patch_se_accumulated_resource_adjustment()
-{
-    // SE set upon SE dialog close
-    write_call(0x004AF0F6, (int)se_accumulated_resource_adjustment);
-
-}
-
-/*
 Displays additional base population info in F4 screen.
 */
 void patch_display_base_population_info()
@@ -1194,23 +1184,21 @@ This is initially to enable CV GROWTH effect.
 */
 void patch_social_calc()
 {
-    write_call(0x004AEC6E, (int)modifiedSocialCalc); // sets SE_pending values
-    write_call(0x004AEC45, (int)modifiedSocialCalc);
-    write_call(0x004AECC4, (int)modifiedSocialCalc); // sets SE_pending values
-    write_call(0x004AEE4B, (int)modifiedSocialCalc);
-    write_call(0x004AEE74, (int)modifiedSocialCalc);
-    write_call(0x004AEECD, (int)modifiedSocialCalc); // resets SE_pending values
-    // this particular call is already used by se_accumulated_resource_adjustment function
-    // se_accumulated_resource_adjustment will call modifiedSocialCalc instead of tx_social_calc
-//    write_call(0x004AF0F6, (int)modifiedSocialCalc);
-    write_call(0x004B25B6, (int)modifiedSocialCalc);
-    write_call(0x004B25DF, (int)modifiedSocialCalc);
-    write_call(0x004B2635, (int)modifiedSocialCalc);
-    write_call(0x005B4515, (int)modifiedSocialCalc);
-    write_call(0x005B4527, (int)modifiedSocialCalc); // sets SE values
-    write_call(0x005B4539, (int)modifiedSocialCalc); // sets SE_2 values
-    write_call(0x005B464B, (int)modifiedSocialCalc);
-    write_call(0x005B4AE1, (int)modifiedSocialCalc);
+	write_call(0x004AEC6E, (int)modifiedSocialCalc); // sets SE_pending values
+	write_call(0x004AEC45, (int)modifiedSocialCalc);
+	write_call(0x004AECC4, (int)modifiedSocialCalc); // sets SE_pending values
+	write_call(0x004AEE4B, (int)modifiedSocialCalc);
+	write_call(0x004AEE74, (int)modifiedSocialCalc);
+	write_call(0x004AEECD, (int)modifiedSocialCalc); // resets SE_pending values
+	write_call(0x004AF0F6, (int)modifiedSocialCalc);
+	write_call(0x004B25B6, (int)modifiedSocialCalc);
+	write_call(0x004B25DF, (int)modifiedSocialCalc);
+	write_call(0x004B2635, (int)modifiedSocialCalc);
+	write_call(0x005B4515, (int)modifiedSocialCalc);
+	write_call(0x005B4527, (int)modifiedSocialCalc); // sets SE values
+	write_call(0x005B4539, (int)modifiedSocialCalc); // sets SE_2 values
+	write_call(0x005B464B, (int)modifiedSocialCalc);
+	write_call(0x005B4AE1, (int)modifiedSocialCalc);
 	
 }
 
@@ -3266,10 +3254,6 @@ void patch_setup_wtp(Config* cf)
 	{
 		patch_default_morale_very_green();
 	}
-	
-	// se_accumulated_resource_adjustment
-	
-	patch_se_accumulated_resource_adjustment();
 	
 	// base population info
 	

@@ -631,9 +631,14 @@ int __cdecl mod_social_ai(int faction_id, int a2, int a3, int a4, int a5, int a6
         impunity |= (1 << (4*SOCIAL_C_FUTURE + SOCIAL_M_CYBERNETIC));
     }
     if (has_project(FAC_CLONING_VATS, faction_id)) {
+		// [WTP]
+		// disable CV impunities
+		if (!conf.cloning_vats_disable_impunities)
+		{
         /* Power & Thought Control */
         impunity |= (1 << (4*SOCIAL_C_VALUES + SOCIAL_M_POWER))
             | (1 << (4*SOCIAL_C_FUTURE + SOCIAL_M_THOUGHT_CONTROL));
+		}
 
     } else if (has_tech(Facility[FAC_CHILDREN_CRECHE].preq_tech, faction_id)) {
         for (int i = 0; i < *BaseCount; i++) {

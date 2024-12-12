@@ -995,6 +995,7 @@ effects are eliminated by control of $LINK<The Cloning Vats=110024>).
 #HELPEFFECT4
 {Morale} affects the training and determination of combat units, a higher
 score here translates directly into $LINK<morale=29> upgrades for newly built units:
+^    ... Each level below grants extra 25% combat penalty.
 ^    -4 = -3 Morale; + modifiers halved
 ^    -3 = -2 Morale; + modifiers halved
 ^    -2 = -1 Morale; + modifiers halved
@@ -1004,6 +1005,7 @@ score here translates directly into $LINK<morale=29> upgrades for newly built un
 ^    +2 = +1 Morale (+2 on defense when in base)
 ^    +3 = +2 Morale! (+3 on defense when in base)
 ^    +4 = +3 Morale!!
+^    ... Each level above grants extra 25% combat bonus.
 
 #;Police
 #HELPEFFECT5
@@ -1015,6 +1017,7 @@ used as police to pacify unhappy $LINK<Drone=36>.
 increasing unhappiness when combat units are away from home (non-$LINK<Air Superiority=80005>
 air combat units have the same effect as units away
 from home):
+^    ... Each level below causes extra drone in every bases.
 ^    -5 = Two extra drones for each military unit away from territory
 ^    -4 = Extra drone for each military unit away from territory
 ^    -3 = Extra drone for each military unit away from territory after first

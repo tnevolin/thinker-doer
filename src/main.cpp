@@ -692,6 +692,14 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->drone_riot_intensifies = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("se_morale_excess_combat_bonus"))
+    {
+        cf->se_morale_excess_combat_bonus = atoi(value);
+    }
+    else if (MATCH("se_police_excess_industry_bonus"))
+    {
+        cf->se_police_excess_industry_bonus = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

@@ -319,6 +319,32 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		
 	}
 	
+    // ----------------------------------------------------------------------------------------------------
+    // Excess SE MORALE combat bonus
+    // ----------------------------------------------------------------------------------------------------
+    
+    if (conf.se_morale_excess_combat_bonus != 0)
+	{
+		int attackerSEMorale = Factions[attackerVehicle->faction_id].SE_morale;
+		int attackerExcessSEMorale = (attackerSEMorale > +4 ? attackerSEMorale - 4 : (attackerSEMorale < -4 ? attackerSEMorale + 4 : 0));
+		int attackerBonus = conf.se_morale_excess_combat_bonus * attackerExcessSEMorale;
+		
+		if (attackerExcessSEMorale != 0)
+		{
+			addAttackerBonus(attackerStrengthPointer, attackerBonus, "MORALE");
+		}
+		
+		int defenderSEMorale = Factions[defenderVehicle->faction_id].SE_morale;
+		int defenderExcessSEMorale = (defenderSEMorale > +4 ? defenderSEMorale - 4 : (defenderSEMorale < -4 ? defenderSEMorale + 4 : 0));
+		int defenderBonus = conf.se_morale_excess_combat_bonus * defenderExcessSEMorale;
+		
+		if (defenderExcessSEMorale != 0)
+		{
+			addDefenderBonus(defenderStrengthPointer, defenderBonus, "MORALE");
+		}
+		
+	}
+	
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
 //
@@ -686,81 +712,6 @@ __cdecl int modified_artillery_damage(int attacker_strength, int defender_streng
 }
 
 /*
-SE accumulated resource adjustment
-*/
-__cdecl int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5)
-{
-	// get old cost factors
-	
-	int nutrient_cost_factor_old = mod_cost_factor(faction_id, RSC_NUTRIENT, -1);
-	int mineral_cost_factor_old = mod_cost_factor(faction_id, RSC_MINERAL, -1);
-	
-	// execute original code
-	
-	// use modified function instead of original code
-//	int returnValue = tx_set_se_on_dialog_close(a1, a2, faction_id, a4, a5);
-	int returnValue = modifiedSocialCalc(a1, a2, faction_id, a4, a5);
-	
-	// get new cost factors
-	
-	int nutrient_cost_factor_new = mod_cost_factor(faction_id, RSC_NUTRIENT, -1);
-	int mineral_cost_factor_new = mod_cost_factor(faction_id, RSC_MINERAL, -1);
-	
-	debug
-	(
-		"se_accumulated_resource_adjustment: faction_id=%d, nutrient_cost_factor: %+d -> %+d, mineral_cost_factor_new: %+d -> %+d\n"
-		, faction_id
-		, nutrient_cost_factor_old
-		, nutrient_cost_factor_new
-		, mineral_cost_factor_old
-		, mineral_cost_factor_new
-	)
-	;
-	
-	// human faction
-	
-	if (!is_human(faction_id))
-		return returnValue;
-	
-	// adjust nutrients
-	
-	if (nutrient_cost_factor_new != nutrient_cost_factor_old)
-	{
-		for (int baseId = 0; baseId < *BaseCount; baseId++)
-		{
-			BASE* base = &Bases[baseId];
-			
-			if (base->faction_id != faction_id)
-				continue;
-			
-			base->nutrients_accumulated = (base->nutrients_accumulated * nutrient_cost_factor_new + ((nutrient_cost_factor_old - 1) / 2)) / nutrient_cost_factor_old;
-			
-		}
-		
-	}
-	
-	// adjust minerals
-	
-	if (mineral_cost_factor_new != mineral_cost_factor_old)
-	{
-		for (int baseId = 0; baseId < *BaseCount; baseId++)
-		{
-			BASE* base = &Bases[baseId];
-			
-			if (base->faction_id != faction_id)
-				continue;
-			
-			base->minerals_accumulated = (base->minerals_accumulated * mineral_cost_factor_new + ((mineral_cost_factor_old - 1) / 2)) / mineral_cost_factor_old;
-			
-		}
-		
-	}
-	
-	return returnValue;
-	
-}
-
-/*
 Calculates tech level recursively.
 */
 int wtp_tech_level(int id)
@@ -1042,14 +993,14 @@ This is initially for CV GROWTH effect.
 */
 __cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly)
 {
+	// old cost factors (for accumulated resources adjustment below)
+	
+	int nutrient_cost_factor_old = mod_cost_factor(factionId, RSC_NUTRIENT, -1);
+	int mineral_cost_factor_old = mod_cost_factor(factionId, RSC_MINERAL, -1);
+	
 	// execute original code
 	
-	int value = tx_social_calc(seSelectionsPointer, seRatingsPointer, factionId, ignored4, seChoiceEffectOnly);
-	
-	// ignore native faction
-	
-	if (factionId == 0)
-		return value;
+	int value = social_calc(seSelectionsPointer, seRatingsPointer, factionId, ignored4, seChoiceEffectOnly);
 	
 	// CV changes GROWTH rate if applicable
 	
@@ -1064,6 +1015,76 @@ __cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, in
 			// modify GROWTH rating
 			
 			*seGrowthRating += conf.cloning_vats_se_growth;
+			
+		}
+		
+	}
+	
+	// excess police industry bonus
+	
+	if (conf.se_police_excess_industry_bonus != 0)
+	{
+		int *sePoliceRating = (int *)seRatingsPointer + (SE_POLICE - SE_ECONOMY);
+		int *seIndustryRating = (int *)seRatingsPointer + (SE_INDUSTRY - SE_ECONOMY);
+		
+		int sePoliceExcessRating = (*sePoliceRating > +3 ? *sePoliceRating - 3 : (*sePoliceRating < -5 ? *sePoliceRating + 5 : 0));
+		int seIndustryBonus = conf.se_police_excess_industry_bonus * sePoliceExcessRating;
+		
+		*seIndustryRating += seIndustryBonus;
+		
+	}
+	
+	// new cost factors (for accumulated resources adjustment below)
+	
+	int nutrient_cost_factor_new = mod_cost_factor(factionId, RSC_NUTRIENT, -1);
+	int mineral_cost_factor_new = mod_cost_factor(factionId, RSC_MINERAL, -1);
+	
+	debug
+	(
+		"modifiedSocialCalc: factionId=%d, nutrient_cost_factor: %+d -> %+d, mineral_cost_factor_new: %+d -> %+d\n"
+		, factionId
+		, nutrient_cost_factor_old
+		, nutrient_cost_factor_new
+		, mineral_cost_factor_old
+		, mineral_cost_factor_new
+	)
+	;
+	
+	// adjust accumulated resources for human faction
+	
+	if (is_human(factionId))
+	{
+		// adjust nutrients
+		
+		if (nutrient_cost_factor_new != nutrient_cost_factor_old)
+		{
+			for (int baseId = 0; baseId < *BaseCount; baseId++)
+			{
+				BASE* base = &Bases[baseId];
+				
+				if (base->faction_id != factionId)
+					continue;
+				
+				base->nutrients_accumulated = (base->nutrients_accumulated * nutrient_cost_factor_new + ((nutrient_cost_factor_old - 1) / 2)) / nutrient_cost_factor_old;
+				
+			}
+			
+		}
+		
+		// adjust minerals
+		
+		if (mineral_cost_factor_new != mineral_cost_factor_old)
+		{
+			for (int baseId = 0; baseId < *BaseCount; baseId++)
+			{
+				BASE* base = &Bases[baseId];
+				
+				if (base->faction_id != factionId)
+					continue;
+				
+				base->minerals_accumulated = (base->minerals_accumulated * mineral_cost_factor_new + ((mineral_cost_factor_old - 1) / 2)) / mineral_cost_factor_old;
+				
+			}
 			
 		}
 		

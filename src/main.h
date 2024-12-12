@@ -382,6 +382,8 @@ struct Config {
     int echelon_mirror_ecodamage = 6;
     bool base_inefficiency_alternative = false;
     bool drone_riot_intensifies = true;
+    int se_morale_excess_combat_bonus = 0;
+    int se_police_excess_industry_bonus = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

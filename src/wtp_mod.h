@@ -57,7 +57,6 @@ double binomial_koefficient(int n, int k);
 int map_distance(int x1, int y1, int x2, int y2);
 bool isWithinBaseRadius(int x1, int y1, int x2, int y2);
 __cdecl int modified_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower);
-__cdecl int se_accumulated_resource_adjustment(int a1, int a2, int faction_id, int a4, int a5);
 int wtp_tech_level(int id);
 int wtp_tech_cost(int fac, int tech);
 __cdecl int sayBase(int buffer, int baseId);

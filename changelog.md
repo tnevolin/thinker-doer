@@ -2,6 +2,10 @@
 
 * SE models modifications: https://github.com/tnevolin/thinker-doer/blob/master/articles/social-engineering-mod.md#se-models-analysis-and-proposed-changes
 * Disabled base popup do not play sound. Resolves confusion when popup is associated with wrong sound.
+* Replaced Talend SE icon to star.
+* Supply Transport is unlocked by Retroviral Engineering, costs 12, requires support.
+* Pushing SE MORALE beyond cap grants 15% bonus/penalty per excessive level.
+* Pushing SE POLICIE beyond cap grants extra INDUSTRY bonus/penalty per excessive level.
 
 # Version 336
 

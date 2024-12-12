@@ -179,9 +179,6 @@ fp_charp_int_charp_int tx_itoa = (fp_charp_int_charp_int)0x0064FC88;
 // base_nutrient
 fp_0void tx_base_nutrient = (fp_0void)0x004E9B70;
 
-// set SE on dialog close
-fp_5int tx_social_calc = (fp_5int)0x005B4210;
-
 // computes base minerals
 fp_3int tx_has_fac = (fp_3int)0x00421670;
 
