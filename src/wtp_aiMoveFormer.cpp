@@ -3492,7 +3492,14 @@ double getFitnessScore(MAP *tile, int action, bool levelTerrain)
 		
 		if (landValue <= 0.0 && rockiness == 2 && levelTerrain)
 		{
-			penaltyScore += -1.0;
+			mineralEffect += -1.0;
+		}
+		
+		// penalty for borehole on river
+		
+		if (action == FORMER_THERMAL_BORE && map_has_item(tile, BIT_RIVER))
+		{
+			energyEffect += -2.0;
 		}
 		
 	}

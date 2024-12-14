@@ -1021,19 +1021,19 @@ void populateRepairTasks(std::vector<CombatAction> &taskPriorities)
 		int triad = vehicle->triad();
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		
-		// vehicle should be damaged
+		// exclude battle ogres
 		
-		if (vehicle->damage_taken <= 0)
+		if (isOgreVehicle(vehicleId))
+			continue;
+		
+		// more than barely damaged
+		
+		if (vehicle->damage_taken < 2)
 			continue;
 		
 		// exclude unavailable
 		
 		if (hasTask(vehicleId))
-			continue;
-		
-		// exclude battle ogres
-		
-		if (isOgreVehicle(vehicleId))
 			continue;
 		
 		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
@@ -1196,32 +1196,26 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 		VEH *vehicle = &(Vehicles[vehicleId]);
 		int triad = vehicle->triad();
 		
+		// exclude battle ogres
+		
+		if (isOgreVehicle(vehicleId))
+			continue;
+		
 		// not air
 		// air cannot be either repaired or promoted by monolith
 		
 		if (triad == TRIAD_AIR)
 			continue;
 		
-		// should be either damaged or not promoted
-		// otherwise, monolith has no effect
+		// either barely damaged or not promoted for monolith promotion/repair to make sense
 		
-		if (!(vehicle->damage_taken > 0 || (vehicle->morale < 6 && (vehicle->state & VSTATE_MONOLITH_UPGRADED) == 0)))
+		if (!(vehicle->damage_taken >= 2 || (vehicle->morale < 6 && (vehicle->state & VSTATE_MONOLITH_UPGRADED) == 0)))
 			continue;
 		
 		// exclude unavailable
 		
 		if (hasTask(vehicleId))
 			continue;
-		
-		// exclude battle ogres
-		
-		switch (vehicle->unit_id)
-		{
-		case BSC_BATTLE_OGRE_MK1:
-		case BSC_BATTLE_OGRE_MK2:
-		case BSC_BATTLE_OGRE_MK3:
-			continue;
-		}
 		
 		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
 		
