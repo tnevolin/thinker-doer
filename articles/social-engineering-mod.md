@@ -28,13 +28,13 @@ I have created a program that emulates different factions and SE combinations an
 
 | effect | average | period 1 | period 2 | period 3 | period 4 | when valued |
 | ---- | ----: | ----: | ----: | ----: | ----: | ---- |
-| ECONOMY | 1.53 | 2.36 | 1.63 | 1.25 | 0.86 |  |
-| EFFICIENCY | 0.61 | 0.40 | 0.59 | 0.70 | 0.76 | larger empire |
+| ECONOMY | 1.52 | 1.78 | 1.47 | 1.47 | 1.35 |  |
+| EFFICIENCY | 0.64 | 0.22 | 0.48 | 0.76 | 1.08 | larger empire |
 | SUPPORT | 0.63 | 0.67 | 0.60 | 0.67 | 0.58 | more units |
 | MORALE | 0.63 | 0.51 | 0.65 | 0.65 | 0.70 | war |
-| POLICE | 0.30 | 0.05 | 0.00 | 0.40 | 0.77 | bigger bases, large empire |
-| GROWTH | 0.94 | 1.29 | 1.25 | 0.82 | 0.41 | early game |
-| PLANET | 0.54 | 0.62 | 0.54 | 0.49 | 0.52 | psi combat, late game |
+| POLICE | 0.34 | 0.00 | 0.01 | 0.43 | 0.92 | bigger bases, large empire |
+| GROWTH | 1.07 | 1.49 | 1.34 | 0.94 | 0.49 | early game |
+| PLANET | 0.64 | 0.75 | 0.59 | 0.57 | 0.64 | psi combat, late game |
 | PROBE | 0.37 | 0.58 | 0.40 | 0.28 | 0.22 | info warfare |
 | INDUSTRY | 0.85 | 0.79 | 0.88 | 0.88 | 0.84 |  |
 | RESEARCH | 0.37 | 0.25 | 0.43 | 0.39 | 0.40 |  |
