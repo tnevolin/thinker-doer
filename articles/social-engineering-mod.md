@@ -27,7 +27,7 @@ I have created a program that emulates different factions and SE combinations an
 ## Effects
 
 | effect | value range | when valued most |
-| ---- | ---- | ---- |
+| ---- | :----: | ---- |
 | ECONOMY | 0.5 - 1.5 | low worker yield |
 | EFFICIENCY | 0.0 - 2.0 | large empire |
 | SUPPORT | 0.5 - 1.5 | many units per base |
