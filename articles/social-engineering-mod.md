@@ -34,7 +34,7 @@ I have created a program that emulates different factions and SE combinations an
 | MORALE | 0.5 - 1.0 | conventional combat |
 | POLICE | 0.0 - 2.0 | many drones |
 | GROWTH | 1.5 - 2.0 | early-mid game |
-| PLANET | 0.5 - 1.0  psi combat, eco damage |
+| PLANET | 0.5 - 1.0 | psi combat, eco damage |
 | PROBE | 0.5 - 1.0 | info warfare |
 | INDUSTRY | 1.0 - 1.0 |  |
 | RESEARCH | 0.5 - 0.5 |  |
