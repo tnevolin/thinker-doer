@@ -26,19 +26,19 @@ I have created a program that emulates different factions and SE combinations an
 
 ## Effects
 
-| effect | average | period 1 | period 2 | period 3 | period 4 | when valued |
-| ---- | ----: | ----: | ----: | ----: | ----: | ---- |
-| ECONOMY | 1.52 | 1.78 | 1.47 | 1.47 | 1.35 |  |
-| EFFICIENCY | 0.64 | 0.22 | 0.48 | 0.76 | 1.08 | larger empire |
-| SUPPORT | 0.63 | 0.67 | 0.60 | 0.67 | 0.58 | more units |
-| MORALE | 0.63 | 0.51 | 0.65 | 0.65 | 0.70 | war |
-| POLICE | 0.34 | 0.00 | 0.01 | 0.43 | 0.92 | bigger bases, large empire |
-| GROWTH | 1.07 | 1.49 | 1.34 | 0.94 | 0.49 | early game |
-| PLANET | 0.64 | 0.75 | 0.59 | 0.57 | 0.64 | psi combat, late game |
-| PROBE | 0.37 | 0.58 | 0.40 | 0.28 | 0.22 | info warfare |
-| INDUSTRY | 0.85 | 0.79 | 0.88 | 0.88 | 0.84 |  |
-| RESEARCH | 0.37 | 0.25 | 0.43 | 0.39 | 0.40 |  |
-| TALENT | 0.39 | 0.01 | 0.25 | 0.62 | 0.67 |  |
+| effect | average range | when valued most |
+| ---- | ---- | ---- |
+| ECONOMY | 0.5 - 1.5 | low worker yield |
+| EFFICIENCY | 0.0 - 2.0 | large empire |
+| SUPPORT | 0.5 - 1.5 | many units per base |
+| MORALE | 0.5 - 1.0 | conventional combat |
+| POLICE | 0.0 - 2.0 | many drones |
+| GROWTH | 1.5 - 2.0 | early-mid game |
+| PLANET | 0.5 - 1.0  psi combat, eco damage |
+| PROBE | 0.5 - 1.0 | info warfare |
+| INDUSTRY | 1.0 - 1.0 |  |
+| RESEARCH | 0.5 - 0.5 |  |
+| TALENT | 0.0 - 1.0 | many drones |
 
 ## Vanilla
 
