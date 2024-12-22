@@ -946,7 +946,7 @@ Budget getBaseBudgetIntake2(int baseId);
 double getBasePopulationGrowth(int baseId);
 double getBasePopulationGrowthIncrease(int baseId, double nutrientSurplusIncrease);
 double getBasePopulationGrowthRate(int baseId);
-double getBaseTimeToPopulation(int baseId, int population);
+int getBaseTurnsToPopulation(int baseId, int population);
 int getMovementRateAlongTube();
 int getMovementRateAlongRoad();
 bool isInfantryDefensiveUnit(int unitId);

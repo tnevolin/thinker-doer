@@ -208,7 +208,7 @@ int __cdecl mod_black_market(int base_id, int energy, int* effic_energy_lost) {
 		int se_efficiency = Factions[base->faction_id].SE_effic_pending
 			+ (has_creche ? 2 : 0) // +2 on efficiency scale
 		;
-		double energy_radius = ((double)*MapAreaX * 3.0 / 4.0) * pow(1.3, (double)se_efficiency);
+		double energy_radius = ((double)*MapAreaX * 3.0 / 8.0) * pow(1.3, (double)se_efficiency);
 		return clamp((int)round((double)energy * (double)dist_hq / energy_radius), 0, energy);
 	}
 	else

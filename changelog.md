@@ -1,6 +1,8 @@
 # Version 338
 
 * Formers are discouraged to build borehole on river.
+* Base center tile contributes 3 nutrients. That is to compensate lack of RT bonus and make small bases grow somewhat faster.
+* Habitation facilities **DO NOT** add +1 GROWTH bonus unconditionally anymore. Too much growth bonuses.
 
 # Version 337
 

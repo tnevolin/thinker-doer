@@ -2367,7 +2367,7 @@ support Workers, Doctors, Empathi, and Transcendi.
 #xs 400
 #caption Select A Job For This Citizen
 Base can train sufficiently educated citizens (talents and workers) into specialists.
-^Should there be not enough qualified workforce to meet the demand, base economy reserves are allocated to psych at 4:1 conversion ratio to set up emergency training facilities.
+^Should there be not enough qualified workforce to meet the demand, base economy reserves are allocated to psych at 2:1 conversion ratio to set up emergency training facilities.
 
 #PLANECRASH
 #xs 440

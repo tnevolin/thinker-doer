@@ -157,7 +157,7 @@ Monolith,         Disable, Monolith,         Disable,  8,  Place Monolith,  ?, ?
 ;
 #RESOURCEINFO
 Ocean Square,     1, 0, 0, 0,
-Base Square,      2, 1, 1, 0,
+Base Square,      3, 1, 1, 0,
 Bonus Square,     2, 2, 2, 0, * Mineral +1 if mine present
 Forest Square,    1, 2, 1, 0,
 Recycling Tanks,  0, 0, 0, 0,
@@ -665,7 +665,7 @@ Headquarters,                  5, 0, None,    Disable,  Efficiency
 Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic
 Recycling Tanks,               8, 2, Biogen,  Create,   Bonus Resources
 Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +100%
-Tachyon Field,                12, 2, Create,  Disable,  All Defense +100%
+Tachyon Field,                12, 2, Create,  Disable,  All Defense +50%
 Recreation Commons,            4, 1, Psych,   PlaEcon,  Fewer Drones
 Energy Bank,                   6, 1, IndEcon, MatComp,  Economy Bonus
 Network Node,                  6, 1, InfNet,  DigSent,  Labs Bonus
@@ -868,13 +868,13 @@ Labs,  Laboratories,
 ;
 
 #CITIZENS
-Technician,       Technicians,         None,    Quantum, 4, 0, 0, 0000000
+Technician,       Technicians,         None,    Quantum, 8, 0, 0, 0000000
 Doctor,           Doctors,             None,    CentMed, 0, 4, 0, 0000000
-Librarian,        Librarians,          PlaNets, Subat,   0, 0, 4, 0000000
-Engineer,         Engineers,           Quantum, Disable, 4, 0, 2, 0000000
-Empath,           Empathi,             CentMed, AlphCen, 2, 4, 0, 0000000
-Thinker,          Thinkers,            Create,  Disable, 0, 0, 6, 0000000
-Transcend,        Transcendi,          AlphCen, Disable, 2, 4, 2, 0000000
+Librarian,        Librarians,          PlaNets, Subat,   0, 0, 8, 0000000
+Engineer,         Engineers,           Quantum, Disable,12, 0, 0, 0000000
+Empath,           Empathi,             CentMed, AlphCen, 4, 4, 0, 0000000
+Thinker,          Thinkers,            Create,  Disable, 0, 0,12, 0000000
+Transcend,        Transcendi,          AlphCen, Disable, 4, 4, 4, 0000000
 Drone,            Drones,
 Worker,           Workers,
 Talent,           Talents,
@@ -884,20 +884,20 @@ ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
 Frontier,        None,
-Police State,    DocLoy,    ++POLICE,     ++SUPPORT,    --EFFIC,      --GROWTH
-Democratic,      EthCalc,    +EFFIC,     +++GROWTH,     --SUPPORT,     -POLICE
-Fundamentalist,  Brain,      +MORALE,     ++PROBE,      --RESEARCH,    +TALENT
+Police State,    DocLoy,    ++POLICE,     ++SUPPORT,    --EFFIC
+Democratic,      EthCalc,    +EFFIC,      ++GROWTH,    ---SUPPORT,     -PLANET
+Fundamentalist,  Brain,      +MORALE,     ++PROBE,      --RESEARCH,    +INDUSTRY
 Simple,          None,
-Free Market,     IndEcon,   ++ECONOMY,   ---PLANET,  -----POLICE,      -PROBE
-Planned,         InfNet,    ++GROWTH,     ++INDUSTRY,   --EFFIC,      --ECONOMY
-Green,           CentEmp,   ++PLANET,      +EFFIC,      --GROWTH,     ++RESEARCH
+Free Market,     IndEcon,   ++ECONOMY,   ---PLANET,  -----POLICE
+Planned,         InfNet,     +GROWTH,      +INDUSTRY,   --EFFIC,       -ECONOMY
+Green,           CentEmp,   ++PLANET,     ++EFFIC,       -GROWTH,      +RESEARCH
 Survival,        None,
-Power,           MilAlg,    ++MORALE,     ++SUPPORT,    --INDUSTRY,    +POLICE
-Knowledge,       Cyber,   ++++RESEARCH,    -ECONOMY,    --PROBE,       +TALENT
+Power,           MilAlg,    ++MORALE,     ++SUPPORT,    --INDUSTRY
+Knowledge,       Cyber,      +EFFIC,      ++RESEARCH,   --PROBE
 Wealth,          IndAuto,   ++INDUSTRY,    +ECONOMY,    --MORALE,     --PLANET
 None,            None,
-Cybernetic,      Algor,     ++EFFIC,       +INDUSTRY,   ++RESEARCH,  ---POLICE
-Eudaimonic,      Eudaim,     +GROWTH,      +ECONOMY,    ++TALENT,   ----MORALE
+Cybernetic,      Algor,     ++EFFIC,      ++RESEARCH,  ---POLICE
+Eudaimonic,      Eudaim,     +GROWTH,      +ECONOMY,     +TALENT,   ----MORALE
 Thought Control, WillPow,   ++POLICE,     ++MORALE,     ++PROBE,     ---SUPPORT
 
 

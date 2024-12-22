@@ -392,6 +392,7 @@ struct FactionInfo
 	double fanaticBonusMultiplier;
 	int maxConOffenseValue;
 	int maxConDefenseValue;
+	std::array<int, 3> fastestTriadChassisIds;
 	double threatCoefficient;
 	int enemyCount;
 	int bestSeaTransportUnitId;

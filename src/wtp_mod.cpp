@@ -2760,8 +2760,9 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 /*
 Prototype proposal entry point.
 */
-int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name)
+int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities_int, int reactorId, int plan, char *name)
 {
+	uint32_t abilities = (uint32_t) abilities_int;
 	int offenseValue = Weapon[weaponId].offense_value;
 	int defenseValue = Armor[armorId].defense_value;
 	

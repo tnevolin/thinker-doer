@@ -7431,15 +7431,17 @@ double getBasePopulationGrowthRate(int baseId)
 	return getBasePopulationGrowth(baseId) / (double)base->pop_size;
 }
 
-double getBaseTimeToPopulation(int baseId, int population)
+int getBaseTurnsToPopulation(int baseId, int population)
 {
 	BASE *base = getBase(baseId);
 	
 	if (base->pop_size >= population)
 		return 0.0;
 	
-	int requiredNutrients = (base->pop_size + 1) * mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
-	return (double)(requiredNutrients * (population - base->pop_size)) / (double)(base->nutrient_surplus);
+	int nutrientCostFactor = mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
+	int requiredNutrients = nutrientCostFactor * (population - base->pop_size) * (population + base->pop_size + 1) / 2;
+	int remainingNutrients = requiredNutrients - base->nutrients_accumulated;
+	return remainingNutrients / base->nutrient_surplus;
 	
 }
 

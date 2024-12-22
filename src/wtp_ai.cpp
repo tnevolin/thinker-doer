@@ -972,6 +972,7 @@ void populateFactionInfos()
 		
 		factionInfo.maxConOffenseValue = getFactionMaxConOffenseValue(factionId);
 		factionInfo.maxConDefenseValue = getFactionMaxConDefenseValue(factionId);
+		factionInfo.fastestTriadChassisIds = getFactionFastestTriadChassisIds(factionId);
 		
 		aiData.maxConOffenseValue = std::max(aiData.maxConOffenseValue, factionInfo.maxConOffenseValue);
 		aiData.maxConDefenseValue = std::max(aiData.maxConDefenseValue, factionInfo.maxConDefenseValue);
@@ -2089,12 +2090,7 @@ void populateEnemyStacks()
 		// ignore sea aliens
 		// ignore land aliens not in territory
 		
-		if
-		(
-			vehicle->faction_id == 0
-			&&
-			(is_ocean(vehicleTile) || vehicleTile->owner != aiFactionId)
-		)
+		if (vehicle->faction_id == 0 && (is_ocean(vehicleTile) || vehicleTile->owner != aiFactionId))
 			continue;
 		
 		// hostile or unfriendly in player territory
@@ -2221,7 +2217,7 @@ void populateEnemyStacks()
 		
 		double averageAttackGain;
 		
-		if (enemyStackInfo.base)
+		if (enemyStackInfo.base && false)
 		{
 			// base capture gain
 			
@@ -2293,6 +2289,19 @@ void populateEmptyEnemyBaseTiles()
 		
 		aiData.emptyEnemyBaseIds.push_back(baseId);
 		aiData.emptyEnemyBaseTiles.insert(baseTile);
+		
+	}
+	
+	if (DEBUG)
+	{
+		for (int emptyEnemyBaseId : aiData.emptyEnemyBaseIds)
+		{
+			BASE *emptyEnemyBase = getBase(emptyEnemyBaseId);
+			MAP *emptyEnemyBaseTile = getBaseMapTile(emptyEnemyBaseId);
+			
+			debug("\t%s %-25s\n", getLocationString(emptyEnemyBaseTile).c_str(), emptyEnemyBase->name);
+			
+		}
 		
 	}
 	
@@ -3343,6 +3352,11 @@ void evaluateBaseDefense()
 			if (!isCombatVehicle(vehicleId))
 				continue;
 			
+			// ignore infantry defensive vehicle in base
+			
+			if (isInfantryDefensiveVehicle(vehicleId) && map_base(vehicleTile))
+				continue;
+			
 			// ocean base
 			if (baseTileOcean)
 			{
@@ -4032,22 +4046,6 @@ void designUnits()
 	);
 
 	// --------------------------------------------------
-	// obsolete units
-	// --------------------------------------------------
-
-//	// land fast artillery
-//
-//	obsoletePrototypes
-//	(
-//		aiFactionId,
-//		{CHS_SPEEDER, CHS_HOVERTANK},
-//		{},
-//		{},
-//		{ABL_ID_ARTILLERY},
-//		{}
-//	);
-//
-	// --------------------------------------------------
 	// reinstate units
 	// --------------------------------------------------
 
@@ -4159,7 +4157,7 @@ void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int ar
 
 	int allowedAbilityCount = (isFactionHasTech(factionId, Rules->tech_preq_allow_2_spec_abil) ? 2 : 1);
 	int abilityCount = 0;
-	int abilities = 0;
+	uint32_t abilities = 0;
 
 	for (int abilityId : abilityIds)
 	{
@@ -4226,7 +4224,7 @@ void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int ar
 
 		// all condition passed - add ability
 
-		abilities |= (0x1 << abilityId);
+		abilities |= ((uint32_t) 0x1 << abilityId);
 		abilityCount++;
 
 		if (abilityCount == allowedAbilityCount)
@@ -4445,7 +4443,7 @@ int getFactionMaxConOffenseValue(int factionId)
 {
 	int bestWeaponOffenseValue = 0;
 
-	for (int unitId : getFactionUnitIds(factionId, false, false))
+	for (int unitId : getFactionUnitIds(factionId, false, true))
 	{
 		UNIT *unit = &(Units[unitId]);
 
@@ -4472,7 +4470,7 @@ int getFactionMaxConDefenseValue(int factionId)
 {
 	int bestArmorDefenseValue = 0;
 
-	for (int unitId : getFactionUnitIds(factionId, false, false))
+	for (int unitId : getFactionUnitIds(factionId, false, true))
 	{
 		UNIT *unit = &(Units[unitId]);
 
@@ -4493,6 +4491,39 @@ int getFactionMaxConDefenseValue(int factionId)
 
 	return bestArmorDefenseValue;
 
+}
+
+std::array<int, 3> getFactionFastestTriadChassisIds(int factionId)
+{
+	std::array<int, 3> fastestTriadChassisIds;
+	std::fill(fastestTriadChassisIds.begin(), fastestTriadChassisIds.end(), -1);
+	
+    for (VehChassis chassisId : {CHS_NEEDLEJET, CHS_COPTER, CHS_GRAVSHIP, })
+	{
+		if (has_tech(Chassis[chassisId].preq_tech, factionId))
+		{
+			fastestTriadChassisIds.at(TRIAD_AIR) = chassisId;
+		}
+	}
+    
+    for (VehChassis chassisId : {CHS_FOIL, CHS_CRUISER, })
+	{
+		if (has_tech(Chassis[chassisId].preq_tech, factionId))
+		{
+			fastestTriadChassisIds.at(TRIAD_SEA) = chassisId;
+		}
+	}
+    
+    for (VehChassis chassisId : {CHS_INFANTRY, CHS_SPEEDER, CHS_HOVERTANK, })
+	{
+		if (has_tech(Chassis[chassisId].preq_tech, factionId))
+		{
+			fastestTriadChassisIds.at(TRIAD_AIR) = chassisId;
+		}
+	}
+	
+	return fastestTriadChassisIds;
+	
 }
 
 /*
@@ -6830,7 +6861,7 @@ void disbandUnneededVehicles()
 
 		// internal sea
 
-		if (isSharedSeaCluster(vehicleTile))
+		if (isSharedSea(vehicleTile))
 			continue;
 
 		// disband
@@ -7049,7 +7080,7 @@ bool isUnitCanCaptureBase(int unitId, MAP *origin, MAP *baseTile)
 		
 		// sea unit can move within same sea cluster
 		
-		if (!isSameSeaCluster(origin, baseTile))
+		if (!isMeleeAttackableFromSeaCluster(origin, baseTile))
 			return false;
 		
 		break;
@@ -8447,12 +8478,11 @@ bool isUnitCanMeleeAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MA
 	
 }
 
-MAP *getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
+MapDoubleValue getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 {
 	// find closest attack position
 	
-	MAP *closestAttackPosition = nullptr;
-	double closestAttackPositionTravelTime = INF;
+	MapDoubleValue closestAttackPosition(nullptr, INF);
 	
 	for (MAP *tile : getAdjacentTiles(target))
 	{
@@ -8475,10 +8505,10 @@ MAP *getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 		
 		// update best
 		
-		if (travelTime < closestAttackPositionTravelTime)
+		if (travelTime < closestAttackPosition.value)
 		{
-			closestAttackPosition = tile;
-			closestAttackPositionTravelTime = travelTime;
+			closestAttackPosition.tile = tile;
+			closestAttackPosition.value = travelTime;
 		}
 		
 	}
@@ -8487,19 +8517,16 @@ MAP *getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 	
 }
 
-MAP *getMeleeAttackPosition(int vehicleId, MAP *target)
+MapDoubleValue getMeleeAttackPosition(int vehicleId, MAP *target)
 {
-	VEH *vehicle = getVehicle(vehicleId);
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	return getMeleeAttackPosition(vehicle->unit_id, vehicleTile, target);
+	return getMeleeAttackPosition(getVehicle(vehicleId)->unit_id, getVehicleMapTile(vehicleId), target);
 }
 
-MAP *getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target)
+MapDoubleValue getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target)
 {
 	// find closest attack position
 	
-	MAP *closestAttackPosition = nullptr;
-	double closestAttackPositionTravelTime = INF;
+	MapDoubleValue closestAttackPosition(nullptr, INF);
 	
 	for (MAP *tile : getRangeTiles(target, Rules->artillery_max_rng, false))
 	{
@@ -8522,10 +8549,10 @@ MAP *getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target)
 		
 		// update best
 		
-		if (travelTime < closestAttackPositionTravelTime)
+		if (travelTime < closestAttackPosition.value)
 		{
-			closestAttackPosition = tile;
-			closestAttackPositionTravelTime = travelTime;
+			closestAttackPosition.tile = tile;
+			closestAttackPosition.value = travelTime;
 		}
 		
 	}
@@ -8534,11 +8561,9 @@ MAP *getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target)
 	
 }
 
-MAP *getArtilleryAttackPosition(int vehicleId, MAP *target)
+MapDoubleValue getArtilleryAttackPosition(int vehicleId, MAP *target)
 {
-	VEH *vehicle = getVehicle(vehicleId);
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	return getArtilleryAttackPosition(vehicle->unit_id, vehicleTile, target);
+	return getArtilleryAttackPosition(getVehicle(vehicleId)->unit_id, getVehicleMapTile(vehicleId), target);
 }
 
 /*

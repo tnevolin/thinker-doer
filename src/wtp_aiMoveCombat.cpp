@@ -55,6 +55,7 @@ void immediateAttack()
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		
 		// exclude unavailable
 		
@@ -62,6 +63,125 @@ void immediateAttack()
 			continue;
 		
 		debug("\t[%4d] %s %-32s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), vehicle->name());
+		
+		// collect attack actions
+		
+		robin_hood::unordered_flat_map<MAP *, AttackAction> meleeAttackActions;
+		robin_hood::unordered_flat_map<MAP *, AttackAction> artilleryAttackActions;
+		
+		for (AttackAction const &attackAction : getMeleeAttackActions(vehicleId))
+		{
+			// valid target
+			
+			bool validTarget = false;
+			
+			// empty enemy base
+			
+			if (aiData.isEmptyEnemyBaseAt(attackAction.target))
+			{
+				// can capture base
+				
+				if (isVehicleCanCaptureBase(vehicleId, attackAction.target))
+				{
+					validTarget = true;
+				}
+				
+			}
+			
+			// hostile enemy stack
+			
+			if (aiData.isEnemyStackAt(attackAction.target))
+			{
+				EnemyStackInfo &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
+				
+				if (enemyStackInfo.hostile)
+				{
+					// melee attack
+					
+					if (enemyStackInfo.isUnitCanMeleeAttackStack(vehicle->unit_id, attackAction.position))
+					{
+						validTarget = true;
+					}
+					
+				}
+				
+			}
+			
+			if (!validTarget)
+				continue;
+			
+			robin_hood::unordered_flat_map<MAP *, AttackAction>::iterator meleeAttackActionFindIterator = meleeAttackActions.find(attackAction.target);
+			
+			if (meleeAttackActionFindIterator == meleeAttackActions.end())
+			{
+				meleeAttackActions.emplace(attackAction.target, attackAction);
+			}
+			else
+			{
+				AttackAction const &existingAttackAction = meleeAttackActionFindIterator->second;
+				
+				if (attackAction.hastyCoefficient > existingAttackAction.hastyCoefficient || (attackAction.hastyCoefficient == existingAttackAction.hastyCoefficient && getRange(vehicleTile, attackAction.position) < getRange(vehicleTile, existingAttackAction.position)))
+				{
+					meleeAttackActions.at(attackAction.target) = attackAction;
+				}
+				
+			}
+			
+		}
+		
+		for (AttackAction const &attackAction : getArtilleryAttackActions(vehicleId))
+		{
+			// valid target
+			
+			bool validTarget = false;
+			
+			// hostile enemy stack
+			
+			if (aiData.isEnemyStackAt(attackAction.target))
+			{
+				EnemyStackInfo &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
+				
+				if (enemyStackInfo.hostile)
+				{
+					// artillery attack
+					
+					if (enemyStackInfo.isUnitCanArtilleryAttackStack(vehicle->unit_id, attackAction.position))
+					{
+						validTarget = true;
+					}
+					
+					// do not attack fungal tower
+					
+					if (enemyStackInfo.alienFungalTower)
+					{
+						validTarget = false;
+					}
+					
+				}
+				
+			}
+			
+			if (!validTarget)
+				continue;
+			
+			robin_hood::unordered_flat_map<MAP *, AttackAction>::iterator artilleryAttackActionFindIterator = artilleryAttackActions.find(attackAction.target);
+			
+			if (artilleryAttackActionFindIterator == artilleryAttackActions.end())
+			{
+				artilleryAttackActions.emplace(attackAction.target, attackAction);
+			}
+			else
+			{
+				AttackAction const &existingAttackAction = artilleryAttackActionFindIterator->second;
+				
+				if (attackAction.hastyCoefficient > existingAttackAction.hastyCoefficient || (attackAction.hastyCoefficient == existingAttackAction.hastyCoefficient && getRange(vehicleTile, attackAction.position) < getRange(vehicleTile, existingAttackAction.position)))
+				{
+					artilleryAttackActions.at(attackAction.target) = attackAction;
+				}
+				
+			}
+			
+		}
 		
 		// select best attack priority for each vehicle
 		
@@ -71,8 +191,10 @@ void immediateAttack()
 		MAP *selectedTarget;
 		double selectedPriority = 0.0;
 		
-		for (AttackAction const &attackAction : getMeleeAttackActions(vehicleId))
+		for (robin_hood::pair<MAP *, AttackAction> const &attackActionEntry : meleeAttackActions)
 		{
+			AttackAction const &attackAction = attackActionEntry.second;
+			
 			TaskType taskType = TT_MELEE_ATTACK;
 			
 			// empty enemy base
@@ -84,39 +206,28 @@ void immediateAttack()
 				selectedPosition = attackAction.target;
 				selectedTarget = nullptr;
 				selectedPriority = 100.0;
-				
-				break;
-				
 			}
 			
 			// enemy stack
 			
-			if (!aiData.isEnemyStackAt(attackAction.target))
-				continue;
-			
-			EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
-			
-			// hostile
-			
-			if (!enemyStackInfo.hostile)
-				continue;
-			
-			// melee attack
-			
-			if (!enemyStackInfo.isUnitCanMeleeAttackStack(vehicle->unit_id, attackAction.position))
-				continue;
-			
-			COMBAT_MODE combatMode = CM_MELEE;
-			double effect = attackAction.hastyCoefficient * enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode);
-			double priority = enemyStackInfo.averageAttackGain * effect;
-			
-			if (priority > selectedPriority)
+			else if (aiData.isEnemyStackAt(attackAction.target))
 			{
-				selected = true;
-				selectedTaskType = taskType;
-				selectedPosition = attackAction.position;
-				selectedTarget = attackAction.target;
-				selectedPriority = priority;
+				EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
+				
+				COMBAT_MODE combatMode = CM_MELEE;
+				double combatEffect = attackAction.hastyCoefficient * enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode);
+				double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
+				double priority = enemyStackInfo.averageAttackGain * combatEffectCoefficient;
+				
+				if (priority > selectedPriority)
+				{
+					selected = true;
+					selectedTaskType = taskType;
+					selectedPosition = attackAction.position;
+					selectedTarget = attackAction.target;
+					selectedPriority = priority;
+				}
+				
 			}
 			
 //			debug
@@ -132,72 +243,65 @@ void immediateAttack()
 			
 		}
 		
-		for (AttackAction const &attackAction : getArtilleryAttackActions(vehicleId))
+		for (robin_hood::pair<MAP *, AttackAction> const &attackActionEntry : artilleryAttackActions)
 		{
+			AttackAction const &attackAction = attackActionEntry.second;
+			
 			TaskType taskType = TT_LONG_RANGE_FIRE;
 			
-			if (!aiData.isEnemyStackAt(attackAction.target))
-				continue;
+			// enemy stack
 			
-			EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
-			
-			// do not attack non hostile stack outside of base radius
-			
-			if (!enemyStackInfo.hostile && !(enemyStackInfo.tile->owner == aiFactionId && map_has_item(enemyStackInfo.tile, BIT_BASE_RADIUS)))
-				continue;
-			
-			// do not attack fungal tower
-			
-			if (enemyStackInfo.alienFungalTower)
-				continue;
-			
-			// artillery attack
-			
-			if (!enemyStackInfo.isUnitCanArtilleryAttackStack(vehicle->unit_id, attackAction.position))
-				continue;
-			
-			double effect;
-			double priority;
-			
-			if (enemyStackInfo.artillery)
+			if (aiData.isEnemyStackAt(attackAction.target))
 			{
-				COMBAT_MODE combatMode = CM_ARTILLERY_DUEL;
-				effect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode);
-				priority = enemyStackInfo.averageAttackGain * effect;
+				EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
+				
+				double combatEffect;
+				double combatEffectCoefficient;
+				double priority;
+				
+				if (enemyStackInfo.artillery)
+				{
+					COMBAT_MODE combatMode = CM_ARTILLERY_DUEL;
+					combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode);
+					combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
+					priority = enemyStackInfo.averageAttackGain * combatEffectCoefficient;
+				}
+				else if (enemyStackInfo.bombardment)
+				{
+					COMBAT_MODE combatMode = CM_BOMBARDMENT;
+					combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode) + 1.0;
+					combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
+					priority = enemyStackInfo.averageAttackGain * combatEffectCoefficient;
+				}
+				else
+				{
+					continue;
+				}
+				
+				if (priority > selectedPriority)
+				{
+					selected = true;
+					selectedTaskType = taskType;
+					selectedPosition = attackAction.position;
+					selectedTarget = attackAction.target;
+					selectedPriority = priority;
+				}
+				
+				debug
+				(
+					"\t\tartyl -> %s => %s"
+					" combatEffect=%5.2f"
+					" combatEffectCoefficient=%5.2f"
+					" priority=%5.2f"
+					"\n"
+					, getLocationString(attackAction.position).c_str(), getLocationString(attackAction.target).c_str()
+					, combatEffect
+					, combatEffectCoefficient
+					, priority
+				);
 				
 			}
-			else if (enemyStackInfo.bombardment)
-			{
-				COMBAT_MODE combatMode = CM_BOMBARDMENT;
-				effect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode) + 1.0;
-				priority = enemyStackInfo.averageAttackGain * effect;
 				
-			}
-			else
-			{
-				continue;
-			}
-			
-			if (priority > selectedPriority)
-			{
-				selected = true;
-				selectedTaskType = taskType;
-				selectedPosition = attackAction.position;
-				selectedTarget = attackAction.target;
-				selectedPriority = priority;
-			}
-			
-			debug
-			(
-				"\t\tartyl -> %s => %s"
-				" effect=%5.2f"
-				" priority=%5.2f"
-				"\n"
-				, getLocationString(attackAction.position).c_str(), getLocationString(attackAction.target).c_str()
-				, effect
-				, priority
-			);
-			
 		}
 		
 		if (!selected)
@@ -1718,9 +1822,7 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 
 void populateEmptyBaseCaptureTasks(std::vector<CombatAction> &taskPriorities)
 {
-	bool TRACE = DEBUG && false;
-	
-	debug("\tpopulateEmptyBaseCaptureTasks TRACE=%d\n", TRACE);
+	debug("\tpopulateEmptyBaseCaptureTasks\n");
 	
 	// iterate vehicles and bases
 	
@@ -1745,17 +1847,17 @@ void populateEmptyBaseCaptureTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// travel time
 			
-			double travelTime = getVehicleATravelTime(vehicleId, enemyBaseTile);
+			MapDoubleValue meleeAttackPosition = getMeleeAttackPosition(vehicleId, enemyBaseTile);
 			
-			if (travelTime == INF)
+			if (meleeAttackPosition.tile == nullptr || meleeAttackPosition.value == INF)
 				continue;
+			
+			double travelTime = meleeAttackPosition.value;
 			
 			// do not capture base farther than 10 turn travel time
 			
 			if (travelTime > 10.0)
 				continue;
-			
-			debug("\t\t\t-> %s\n", getLocationString(enemyBaseTile).c_str());
 			
 			// priority
 			
@@ -1768,13 +1870,13 @@ void populateEmptyBaseCaptureTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// add task
 			
-			taskPriorities.emplace_back(vehicleId, priority, TPR_ONE, TT_MOVE, enemyBaseTile, travelTime);
+			taskPriorities.emplace_back(vehicleId, priority, TPR_ONE, TT_MELEE_ATTACK, meleeAttackPosition.tile, travelTime, CM_MELEE, enemyBaseTile, false, 0.0);
 			
-			if (TRACE)
+			if (DEBUG)
 			{
 				debug
 				(
-					"\t\t\t->%s"
+					"\t\t\t-> %s"
 					" priority=%5.2f"
 					" ai_combat_attack_priority_base=%5.2f"
 					" travelTime=%7.2f"
@@ -1847,32 +1949,18 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// attack position and travel time
 			
-			MAP *meleeAttackPosition = nullptr;
-			double meleeAttackTravelTime = INF;
+			MapDoubleValue meleeAttackPosition(nullptr, INF);
 			
 			if (enemyStackInfo.isUnitCanMeleeAttackStack(vehicle->unit_id))
 			{
 				meleeAttackPosition = getMeleeAttackPosition(vehicleId, enemyStackTile);
-				
-				if (meleeAttackPosition != nullptr)
-				{
-					meleeAttackTravelTime = getVehicleATravelTime(vehicleId, meleeAttackPosition);
-				}
-				
 			}
 			
-			MAP *artilleryAttackPosition = nullptr;
-			double artilleryAttackTravelTime = INF;
+			MapDoubleValue artilleryAttackPosition(nullptr, INF);
 			
 			if (enemyStackInfo.isUnitCanArtilleryAttackStack(vehicle->unit_id))
 			{
-				artilleryAttackPosition = getVehicleArtilleryAttackPosition(vehicleId, enemyStackTile);
-				
-				if (artilleryAttackPosition != nullptr)
-				{
-					artilleryAttackTravelTime = getVehicleATravelTime(vehicleId, artilleryAttackPosition);
-				}
-				
+				artilleryAttackPosition = getArtilleryAttackPosition(vehicleId, enemyStackTile);
 			}
 			
 			// worth chasing
@@ -1883,9 +1971,9 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				||
 				enemyStackTile->owner == aiFactionId
 				||
-				(meleeAttackTravelTime <= 1.0)
+				(meleeAttackPosition.value <= 1.0)
 				||
-				(artilleryAttackTravelTime <= 1.0)
+				(artilleryAttackPosition.value <= 1.0)
 				||
 				speed > enemyStackInfo.lowestSpeed
 			)
@@ -1900,7 +1988,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// process attack modes
 			
-			if (meleeAttackPosition != nullptr)
+			if (meleeAttackPosition.tile != nullptr)
 			{
 				debug("\n");
 				
@@ -1917,8 +2005,8 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				
 				// travel time coefficient
 				
-				MAP *destination = meleeAttackPosition;
-				double travelTime = getVehicleATravelTime(vehicleId, destination);
+				MAP *destination = meleeAttackPosition.tile;
+				double travelTime = meleeAttackPosition.value;
 				double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 				
 				// priority
@@ -1952,7 +2040,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				
 			}
 			
-			if (artilleryAttackPosition != nullptr && enemyStackInfo.artillery)
+			if (artilleryAttackPosition.tile != nullptr && enemyStackInfo.artillery)
 			{
 				// effect
 				
@@ -1967,8 +2055,8 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				
 				// travel time coefficient
 				
-				MAP *destination = artilleryAttackPosition;
-				double travelTime = getVehicleATravelTime(vehicleId, destination);
+				MAP *destination = artilleryAttackPosition.tile;
+				double travelTime = artilleryAttackPosition.value;
 				double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 				
 				// priority
@@ -2002,7 +2090,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				
 			}
 			
-			if (artilleryAttackPosition != nullptr && !enemyStackInfo.artillery && enemyStackInfo.bombardment)
+			if (artilleryAttackPosition.tile != nullptr && !enemyStackInfo.artillery && enemyStackInfo.bombardment)
 			{
 				// effect
 				
@@ -2021,8 +2109,8 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				
 				// travel time coefficient
 				
-				MAP *destination = artilleryAttackPosition;
-				double travelTime = getVehicleATravelTime(vehicleId, destination);
+				MAP *destination = artilleryAttackPosition.tile;
+				double travelTime = artilleryAttackPosition.value;
 				double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 				
 				// priority

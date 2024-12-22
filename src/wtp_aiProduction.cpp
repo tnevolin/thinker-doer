@@ -1042,7 +1042,34 @@ void evaluatePopulationLimitFacilities()
 			continue;
 		}
 		
-		double timeToPopulationLimit = getBaseTimeToPopulation(baseId, populationLimit + 1);
+		int growthToLimitTime = getBaseTurnsToPopulation(baseId, populationLimit + 1);
+		int facilityBuildTime = getBaseItemBuildTime(baseId, -facilityId, false);
+		
+		if (growthToLimitTime <= facilityBuildTime)
+		{
+			// mandatory limit facility order
+			
+			double priority = INF;
+			productionDemand.addItemPriority(-facilityId, priority);
+			
+			debug
+			(
+				"\t%-32s"
+				" priority=%5.2f   |"
+				" populationLimit=%2d"
+				" growthToLimitTime=%2d"
+				" facilityBuildTime=%2d"
+				" - mandatory order"
+				"\n"
+				, getFacility(facilityId)->name
+				, priority
+				, populationLimit
+				, growthToLimitTime
+				, facilityBuildTime
+			);
+			
+			return;
+		}
 		
 		// gain from building a facility
 		
@@ -1052,7 +1079,7 @@ void evaluatePopulationLimitFacilities()
 		
 		double populationLimitIncome = getResourceScore(base->nutrient_surplus, 0, 0);
 		double populationLimitUpkeep = getResourceScore(0.0, -Facility[facilityId].maint);
-		double populationLimitGain = getGainDelay(getGainIncome(populationLimitIncome + populationLimitUpkeep), timeToPopulationLimit);
+		double populationLimitGain = getGainDelay(getGainIncome(populationLimitIncome + populationLimitUpkeep), growthToLimitTime);
 		
 		// total
 		
@@ -1071,7 +1098,7 @@ void evaluatePopulationLimitFacilities()
 			"\t%-32s"
 			" priority=%5.2f   |"
 			" populationLimit=%2d"
-			" timeToPopulationLimit=%5.2f"
+			" growthToLimitTime=%2d"
 			" facilityGain=%5.2f"
 			" populationLimitIncome=%5.2f"
 			" populationLimitUpkeep=%5.2f"
@@ -1081,7 +1108,7 @@ void evaluatePopulationLimitFacilities()
 			, getFacility(facilityId)->name
 			, priority
 			, populationLimit
-			, timeToPopulationLimit
+			, growthToLimitTime
 			, facilityGain
 			, populationLimitIncome
 			, populationLimitUpkeep
@@ -1349,6 +1376,7 @@ void evaluateExpansionUnits()
 	debug("evaluateExpansionUnits\n");
 	
 	int baseId = productionDemand.baseId;
+	BASE *base = productionDemand.base;
 	MAP *baseTile = getBaseMapTile(baseId);
 	
 	// verify base can build a colony
@@ -1357,6 +1385,20 @@ void evaluateExpansionUnits()
 	{
 		debug("\tbase cannot build a colony\n");
 		return;
+	}
+	
+	// population limit coefficient
+	
+	int populationLimit = getBasePopulationLimit(baseId);
+	double populationLimitCoefficient = 1.00;
+	
+	if (base->pop_size >= populationLimit)
+	{
+		populationLimitCoefficient = 1.50;
+	}
+	else if (base->pop_size >= populationLimit - 1)
+	{
+		populationLimitCoefficient = 1.25;
 	}
 	
 	// citizen loss gain
@@ -1471,6 +1513,7 @@ void evaluateExpansionUnits()
 		double priority =
 			conf.ai_production_expansion_priority
 			* globalColonyDemand
+			* populationLimitCoefficient
 			* rawPriority
 		;
 		
@@ -1488,6 +1531,7 @@ void evaluateExpansionUnits()
 			" gain=%5.2f"
 			" conf.ai_production_expansion_priority=%5.2f"
 			" globalColonyDemand=%5.2f"
+			" populationLimitCoefficient=%5.2f"
 			" rawPriority=%5.2f"
 			"\n"
 			, unit->name
@@ -1498,6 +1542,7 @@ void evaluateExpansionUnits()
 			, gain
 			, conf.ai_production_expansion_priority
 			, globalColonyDemand
+			, populationLimitCoefficient
 			, rawPriority
 		);
 		
@@ -1886,7 +1931,7 @@ void evaluatePodPoppingUnits()
 			continue;
 		
 		double unitTravelTime = 0.5 * surfacePodData.averagePodDistance / (double)unitSpeed;
-		double unitConsumptionInterval = unitTravelTime + (unitSpeed == 1 ? 4.0 : 1.0); // for averate repair time
+		double unitConsumptionInterval = unitTravelTime + (unitSpeed == 1 ? 2.0 : 1.0); // for average repair time
 		double unitConsumptionRate = 1.0 / unitConsumptionInterval;
 		
 		double unitTotalConsumptionRate = surfacePodData.totalConsumptionRate + unitConsumptionRate;
@@ -1899,34 +1944,9 @@ void evaluatePodPoppingUnits()
 		double factionConsumptionGainIcrease = unitFactionConsumptionGain - surfacePodData.factionConsumptionGain;
 		double podPoppingGain = factionConsumptionGainIcrease;
 		
-		debug
-		(
-			"\t\t%-32s"
-			" surface=%2d"
-			" podCount=%2d"
-			" totalConsumptionRate=%5.2f"
-			" factionConsumptionRate=%5.2f"
-			" unitConsumptionRate=%5.2f"
-			" factionConsumptionGain=%5.2f"
-			" unitFactionConsumptionGain=%5.2f"
-			" factionConsumptionGainIcrease=%5.2f"
-			" podPoppingGain=%5.2f"
-			"\n"
-			, unit->name
-			, surface
-			, surfacePodData.podCount
-			, surfacePodData.totalConsumptionRate
-			, surfacePodData.factionConsumptionRate
-			, unitConsumptionRate
-			, surfacePodData.factionConsumptionGain
-			, unitFactionConsumptionGain
-			, factionConsumptionGainIcrease
-			, podPoppingGain
-		);
-		
 		// upkeep
 		
-		double upkeepGain = getGainIncome(getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0.0));
+		double upkeepGain = getGainIncome(getResourceScore(-getUnitSupport(unitId), 0.0));
 		
 		// combined
 		
@@ -1954,6 +1974,16 @@ void evaluatePodPoppingUnits()
 			" priority=%5.2f   |"
 			" conf.ai_production_pod_popping_priority=%5.2f"
 			" unitPriorityCoefficient=%5.2f"
+			" surface=%2d"
+			" podCount=%2d"
+			" totalConsumptionRate=%5.2f"
+			" factionConsumptionRate=%5.2f"
+			" unitConsumptionRate=%5.2f"
+			" factionConsumptionGain=%5.2f"
+			" unitFactionConsumptionGain=%5.2f"
+			" factionConsumptionGainIcrease=%5.2f"
+			" podPoppingGain=%5.2f"
+			" upkeepGain=%5.2f"
 			" gain=%5.2f"
 			" rawPriority=%5.2f"
 			"\n"
@@ -1961,6 +1991,16 @@ void evaluatePodPoppingUnits()
 			, priority
 			, conf.ai_production_pod_popping_priority
 			, unitPriorityCoefficient
+			, surface
+			, surfacePodData.podCount
+			, surfacePodData.totalConsumptionRate
+			, surfacePodData.factionConsumptionRate
+			, unitConsumptionRate
+			, surfacePodData.factionConsumptionGain
+			, unitFactionConsumptionGain
+			, factionConsumptionGainIcrease
+			, podPoppingGain
+			, upkeepGain
 			, gain
 			, rawPriority
 		);
@@ -1973,6 +2013,7 @@ void evaluateBaseDefenseUnits()
 {
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
+	BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
 	
 	debug("evaluateBaseDefenseUnits\n");
 	
@@ -1981,22 +2022,21 @@ void evaluateBaseDefenseUnits()
 	for (int unitId : aiData.combatUnitIds)
 	{
 		UNIT *unit = getUnit(unitId);
+		int defenseValue = unit->defense_value();
 		
 		// defensive
 		
 		if (!isInfantryDefensiveUnit(unitId))
 			continue;
 		
+		// best armor or psi
+		
+		if (!(defenseValue < 0 || unit->defense_value() >= aiFactionInfo->maxConDefenseValue))
+			continue;
+		
 		// exclude those base cannot produce
 		
 		if (!isBaseCanBuildUnit(baseId, unitId))
-			continue;
-		
-		// unit priority
-		
-		double unitPriorityCoefficient = getUnitPriorityCoefficient(baseId, unitId);
-		
-		if (unitPriorityCoefficient <= 0.0)
 			continue;
 		
 		// seek for best target base gain
@@ -2022,7 +2062,7 @@ void evaluateBaseDefenseUnits()
 			
 			double combatEffect = targetBaseCombatData.getUnitEffect(unitId);
 			double survivalEffect = getSurvivalEffect(combatEffect);
-			double unitProtectionGain = targetBaseCombatData.isSatisfied(false) ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
+			double unitProtectionGain = targetBaseCombatData.isSatisfied(targetBaseId == baseId && baseInfo.garrison.empty()) ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2078,7 +2118,6 @@ void evaluateBaseDefenseUnits()
 		double rawPriority = getItemPriority(unitId, bestGain);
 		double priority =
 			conf.ai_production_base_protection_priority
-			* unitPriorityCoefficient
 			* rawPriority
 		;
 		
@@ -2091,14 +2130,12 @@ void evaluateBaseDefenseUnits()
 			"\t%-32s"
 			" priority=%5.2f   |"
 			" ai_production_base_protection_priority=%5.2f"
-			" unitPriorityCoefficient=%5.2f"
 			" bestGain=%5.2f"
 			" rawPriority=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
 			, conf.ai_production_base_protection_priority
-			, unitPriorityCoefficient
 			, bestGain
 			, rawPriority
 		);
@@ -2119,7 +2156,19 @@ void evaluateTerritoryProtectionUnits()
 	for (int unitId : aiData.combatUnitIds)
 	{
 		UNIT *unit = getUnit(unitId);
+//		int offenseValue = unit->offense_value();
+//		int defenseValue = unit->defense_value();
 		
+//		// best weapon and armor or psi
+//		
+//		if (!((offenseValue < 0 || offenseValue >= aiFactionInfo->maxConOffenseValue) && (defenseValue < 0 || defenseValue >= aiFactionInfo->maxConDefenseValue)))
+//			continue;
+//		
+//		// fastest conventional chassis
+//		
+//		if (offenseValue > 0 && unit->chassis_id != aiFactionInfo->fastestTriadChassisIds.at(unit->triad()))
+//			continue;
+//		
 		// exclude those base cannot produce
 		
 		if (!isBaseCanBuildUnit(baseId, unitId))
@@ -2143,6 +2192,11 @@ void evaluateTerritoryProtectionUnits()
 			if (!enemyStackInfo->hostile)
 				continue;
 			
+			// not sufficiently targeted
+			
+			if (!enemyStackInfo->isSufficient(false))
+				continue;
+			
 			// ship and artillery do not attack tower
 			
 			if (isArtilleryUnit(unitId) && enemyStackInfo->alienFungalTower)
@@ -2150,34 +2204,34 @@ void evaluateTerritoryProtectionUnits()
 			
 			// get attack position
 			
-			MAP *position = nullptr;
+			MapDoubleValue position(nullptr, INF);
 			
-			if (position == nullptr && enemyStackInfo->isUnitCanMeleeAttackStack(unitId))
+			if (position.tile == nullptr && enemyStackInfo->isUnitCanMeleeAttackStack(unitId))
 			{
 				position = getMeleeAttackPosition(unitId, baseTile, enemyStackInfo->tile);
 			}
 			
-			if (position == nullptr && enemyStackInfo->isUnitCanArtilleryAttackStack(unitId))
+			if (position.tile == nullptr && enemyStackInfo->isUnitCanArtilleryAttackStack(unitId))
 			{
 				position = getArtilleryAttackPosition(unitId, baseTile, enemyStackInfo->tile);
 			}
 			
-			if (position == nullptr)
+			if (position.tile == nullptr)
 				continue;
 			
 			// travel time
 			
-			double travelTime = getUnitATravelTime(unitId, baseTile, position);
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
+			double travelTime = position.value;
+//			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 			
 			// gain
 			
 			double combatEffect = enemyStackInfo->getUnitEffect(unitId);
-			double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
-			double attackGain = enemyStackInfo->averageAttackGain * combatEffectCoefficient * travelTimeCoefficient;
+			double survivalProbability = getWinningProbability(combatEffect);
+			double attackGain = getGainRepetion(enemyStackInfo->averageAttackGain * combatEffect, survivalProbability, travelTime);
 			
 			double upkeep = getResourceScore(-getUnitSupport(unitId), 0);
-			double upkeepGain = getGainTimeInterval(getGainIncome(upkeep), 0.0, travelTime);
+			double upkeepGain = getGainIncome(upkeep);
 			
 			double gain =
 				+ attackGain
@@ -2192,7 +2246,7 @@ void evaluateTerritoryProtectionUnits()
 				" -> %s"
 				" travelTime=%7.2f"
 				" combatEffect=%5.2f"
-				" combatEffectCoefficient=%5.2f"
+				" survivalProbability=%5.2f"
 				" attackGain=%5.2f"
 				" upkeepGain=%5.2f"
 				" gain=%7.2f"
@@ -2201,7 +2255,7 @@ void evaluateTerritoryProtectionUnits()
 				, getLocationString(enemyStackInfo->tile).c_str()
 				, travelTime
 				, combatEffect
-				, combatEffectCoefficient
+				, survivalProbability
 				, attackGain
 				, upkeepGain
 				, gain
@@ -2253,6 +2307,13 @@ void evaluateEnemyBaseAssaultUnits()
 	for (int unitId : aiData.combatUnitIds)
 	{
 		UNIT *unit = getUnit(unitId);
+		int offenseValue = unit->offense_value();
+		int defenseValue = unit->defense_value();
+		
+		// best weapon and armor or psi
+		
+		if (!((offenseValue < 0 || offenseValue >= aiFactionInfo->maxConOffenseValue) && (defenseValue < 0 || defenseValue >= aiFactionInfo->maxConDefenseValue)))
+			continue;
 		
 		// unit priority
 		
