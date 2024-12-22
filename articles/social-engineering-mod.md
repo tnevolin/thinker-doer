@@ -62,9 +62,9 @@ Future Society
     Thought Control       0.97                0.56  1.38       0.06                0.03  0.09
 ```
 
-Expected trends for most vanilla models.
+## Vanilla slightly more balanced
 
-## WTP v337
+![se-v338.png](images/se-v338.png)
 
 ```
                          value    ---1  ---2  ---3  ---4     chance    ---1  ---2  ---3  ---4
