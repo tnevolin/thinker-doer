@@ -20,6 +20,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * Mercantile Interest: Alternative nutrient model idea.
 * EmpathCrawler: Play testing. Discovered Brood Pit morale bug.
 * Regina Jane: Superdrone icon design.
+* LowPoly: Talent star design idea.
 
 ## Why this mod?
 
