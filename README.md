@@ -19,6 +19,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * Tayta Malikai: text designer, crash reports, debugging, and test cases investigations!
 * Mercantile Interest: Alternative nutrient model idea.
 * EmpathCrawler: Play testing. Discovered Brood Pit morale bug.
+* loladarulz: Lots of ideas, extensive playtesting and playthroughs.
 * Regina Jane: Superdrone icon design.
 * LowPoly: Talent star design idea.
 
