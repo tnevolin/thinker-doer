@@ -3,6 +3,7 @@
 * Formers are discouraged to build borehole on river.
 * Base center tile contributes 3 nutrients. That is to compensate lack of RT bonus and make small bases grow somewhat faster.
 * Habitation facilities **DO NOT** add +1 GROWTH bonus unconditionally anymore. Too much growth bonuses.
+* Specialists generate twice as more economy/labs. This is to make them viable replacement for land workers as they are not replacing drones anymore.
 
 # Version 337
 
