@@ -1,3 +1,7 @@
+# Version 339
+
+* Crawler is unlocked by Adv. Ecological Engineering.
+
 # Version 338
 
 * Formers are discouraged to build borehole on river.

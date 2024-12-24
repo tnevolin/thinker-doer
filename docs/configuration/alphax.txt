@@ -432,7 +432,7 @@ Planet Buster,        Planet Buster, 99, 0,32, -1, AGrav,
 Colony Module,        Colony Pod,     0, 8, 8, -1, None,     ; Noncombat packages
 Terraforming Unit,    Formers,        0, 9, 2, -1, Ecology,
 Troop Transport,      Transport,      0, 7, 4, -1, DocFlex,
-Supply Transport,     Supply,         0,10,12, -1, Viral,
+Supply Transport,     Supply,         0,10,12, -1, EcoEng2,
 Probe Team,           Probe Team,     0,11, 4, -1, Poly,
 Alien Artifact,       Artifact,       0,12,36, -1, Disable,
 Conventional Payload, Conventional,  10, 0,12, -1, Orbital,
@@ -610,7 +610,7 @@ Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
 Transport Foil,         Foil,     Transport,    Scout,      7, 0, 0, DocFlex, -1, 00000000000000000000000000
 Sea Formers,            Foil,     Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
-Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, Viral,   -1, 00000000000000000000000000
+Supply Crawler,         Infantry, Supply,       Scout,     10, 0, 0, EcoEng2, -1, 00000000000000000000000000
 Speeder Probe Team,     Speeder,  Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
 Alien Artifact,         Infantry, Artifact,     Scout,     12,10, 0, Disable,  2, 00000000000000000000000000
 Mind Worms,             Infantry, Psi,          Psi,        1, 5, 0, CentEmp,  3, 00000000000000000000000000
@@ -629,7 +629,7 @@ Unity Mining Laser,     Infantry, Laser,        Scout,      0, 0, 0, Disable, -1
 Sea Escape Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, Disable, -1, 00000000000000000000000000
 Unity Gunship,          Foil,     Gun,          Scout,     -1, 0, 0, Disable, -1, 00000000000000000000000000
 Foil Probe Team,        Foil,     Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
-Supply Trawler,         Foil,     Supply,       Scout,     10, 0, 0, Viral,   -1, 00000000000000000000000000
+Supply Trawler,         Foil,     Supply,       Scout,     10, 0, 0, EcoEng2, -1, 00000000000000000000000000
 Rover Colony Pod,       Speeder,  Colony Pod,   Scout,      8, 0, 0, Mobile,  -1, 00000000000000000000000000
 Sea Colony Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, DocFlex, -1, 00000000000000000000000000
 Trance Scout Patrol,    Infantry, Gun,          Scout,      2, 0, 0, Brain,   -1, 00000001000000000000000000
@@ -664,7 +664,7 @@ Empath Battery,         Infantry, Gun,          Scout,      3, 0, 0, Neural,  -1
 Headquarters,                  5, 0, None,    Disable,  Efficiency
 Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic
 Recycling Tanks,               8, 2, Biogen,  Create,   Bonus Resources
-Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +100%
+Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +50%
 Tachyon Field,                12, 2, Create,  Disable,  All Defense +50%
 Recreation Commons,            4, 1, Psych,   PlaEcon,  Fewer Drones
 Energy Bank,                   6, 1, IndEcon, MatComp,  Economy Bonus
@@ -688,8 +688,8 @@ Hab Complex,                   8, 1, FldMod,  Disable,  Increase Population Limi
 Habitation Dome,              16, 2, Alloys,  Disable,  Increase Population Limit
 Pressure Dome,                 8, 0, DocFlex, Disable,  Submersion/Resources
 Command Center,                8, 1, Mobile,  Disable,  +2 Morale:Land
-Naval Yard,                    8, 1, DocInit, Disable,  +2 Morale:Sea, Sea Def +100%
-Aerospace Complex,            12, 3, DocAir,  Disable,  +2 Morale:Air, Air Def +100%
+Naval Yard,                    8, 1, DocInit, Disable,  +2 Morale:Sea, Sea Def +50%
+Aerospace Complex,            12, 3, DocAir,  Disable,  +2 Morale:Air, Air Def +50%
 Bioenhancement Center,        20, 5, Viral,   Disable,  +2 Morale:ALL
 Centauri Preserve,            12, 2, CentMed, Disable,  Ecology Bonus
 Temple of Planet,             18, 4, CentGen, Disable,  Ecology Bonus
@@ -884,19 +884,19 @@ ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY
 ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH
 Politics, Economics, Values, Future Society
 Frontier,        None,
-Police State,    DocLoy,    ++POLICE,     ++SUPPORT,    --EFFIC,      --GROWTH
-Democratic,      EthCalc,    +EFFIC,     +++GROWTH,     --SUPPORT,     -POLICE
-Fundamentalist,  Brain,      +MORALE,     ++PROBE,      --RESEARCH,    +TALENT
+Police State,    DocLoy,    ++POLICE,     ++SUPPORT,    --EFFIC
+Democratic,      EthCalc,    +EFFIC,      ++GROWTH,    ---SUPPORT
+Fundamentalist,  Brain,      +MORALE,     ++PROBE,     ---RESEARCH,    +INDUSTRY
 Simple,          None,
-Free Market,     IndEcon,   ++ECONOMY,   ---PLANET,  -----POLICE,      -PROBE
-Planned,         InfNet,    ++GROWTH,     ++INDUSTRY,   --EFFIC,      --ECONOMY
-Green,           CentEmp,   ++PLANET,      +EFFIC,      --GROWTH,     ++RESEARCH
+Free Market,     IndEcon,   ++ECONOMY,   ---PLANET,  -----POLICE
+Planned,         InfNet,     +GROWTH,      +INDUSTRY,   --EFFIC,       -ECONOMY
+Green,           CentEmp,   ++PLANET,     ++EFFIC,       -GROWTH,      +RESEARCH
 Survival,        None,
-Power,           MilAlg,    ++MORALE,     ++SUPPORT,    --INDUSTRY,    +POLICE
-Knowledge,       Cyber,   ++++RESEARCH,    -ECONOMY,    --PROBE,       +TALENT
+Power,           MilAlg,    ++MORALE,     ++SUPPORT,    --INDUSTRY
+Knowledge,       Cyber,   ++++RESEARCH,    +EFFIC,      --PROBE,       -INDUSTRY
 Wealth,          IndAuto,   ++INDUSTRY,    +ECONOMY,    --MORALE,     --PLANET
 None,            None,
-Cybernetic,      Algor,     ++EFFIC,       +INDUSTRY,   ++RESEARCH,  ---POLICE
+Cybernetic,      Algor,     ++EFFIC,      ++RESEARCH,    +PLANET,    ---POLICE
 Eudaimonic,      Eudaim,     +GROWTH,      +ECONOMY,    ++TALENT,   ----MORALE
 Thought Control, WillPow,   ++POLICE,     ++MORALE,     ++PROBE,     ---SUPPORT
 

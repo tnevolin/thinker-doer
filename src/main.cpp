@@ -432,6 +432,18 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->se_growth_rating_max = std::max(0, std::min(9, atoi(value)));
     }
+    else if (MATCH("pop_boom_requires_children_creche"))
+    {
+        cf->pop_boom_requires_children_creche = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("pop_boom_requires_golden_age"))
+    {
+        cf->pop_boom_requires_golden_age = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("pop_boom_required_growth"))
+    {
+        cf->pop_boom_required_growth = atoi(value);
+    }
     else if (MATCH("recycling_tanks_mineral_multiplier"))
     {
         cf->recycling_tanks_mineral_multiplier = (atoi(value) == 0 ? false : true);

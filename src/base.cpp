@@ -1477,11 +1477,8 @@ int __cdecl mod_base_growth() {
 		
 		// [WTP]
 		// population boom
-		// GROWTH rate is above max or Cloning Vats is not disabled by WTP
-		if ((*BaseGrowthRate > conf.se_growth_rating_max || (conf.cloning_vats_se_growth == 0 && has_project(FAC_CLONING_VATS, faction_id)))
-//		if ((*BaseGrowthRate >= 6 || has_project(FAC_CLONING_VATS, faction_id))
-        && Rules->nutrient_intake_req_citizen
-        && base->nutrient_surplus >= Rules->nutrient_intake_req_citizen) {
+		if (base_pop_boom(base_id) && (Rules->nutrient_intake_req_citizen && base->nutrient_surplus >= Rules->nutrient_intake_req_citizen))
+		{
             if (allow_growth) {
                 if (base->pop_size < MaxBasePopSize) {
                     base->pop_size++;
@@ -2681,14 +2678,23 @@ bool base_can_riot(int base_id, bool allow_staple) {
 
 bool base_pop_boom(int base_id) {
     BASE* b = &Bases[base_id];
-    Faction* f = &Factions[b->faction_id];
-    if (b->nutrient_surplus < Rules->nutrient_intake_req_citizen) {
-        return false;
-    }
-    return has_project(FAC_CLONING_VATS, b->faction_id)
-        || f->SE_growth_pending
-        + (has_fac_built(FAC_CHILDREN_CRECHE, base_id) ? 2 : 0)
-        + (b->golden_age() ? 2 : 0) > 5;
+    
+    return
+		// Cloning Vats population boom ability is enabled and faction has it
+		(conf.cloning_vats_se_growth == 0 && has_project(FAC_CLONING_VATS, b->faction_id))
+		||
+		(
+			// has Children Creche if required
+			(!conf.pop_boom_requires_children_creche || has_facility(FAC_CHILDREN_CRECHE, base_id))
+			&&
+			// has Golden Age if required
+			(!conf.pop_boom_requires_golden_age || b->golden_age())
+			&&
+			// has required GROWTH
+			b->SE_growth(true) >= conf.pop_boom_required_growth
+		)
+	;
+	
 }
 
 bool can_use_teleport(int base_id) {

@@ -210,7 +210,7 @@ Produces +1 $LINK<Energy=14> output on base square.
 
 #; Children's Creche
 #HELPFAC2
-Base receives +2 to $LINK<Growth=130006> rating and +1 to $LINK<Efficiency=130001> rating.
+Base receives +2 to $LINK<Growth=130006> rating and +2 to $LINK<Efficiency=130001> rating.
 ^Reduces a base’s vulnerability to enemy $LINK<mind control=60021>.
 ^[Does not] grant [ANY] morale bonuses!
 ^

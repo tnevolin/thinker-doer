@@ -1002,7 +1002,7 @@ __cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, in
 	
 	int value = social_calc(seSelectionsPointer, seRatingsPointer, factionId, ignored4, seChoiceEffectOnly);
 	
-	// CV changes GROWTH rate if applicable
+	// CV changes GROWTH rate if configured
 	
 	if (conf.cloning_vats_se_growth != 0)
 	{
@@ -1132,7 +1132,7 @@ __cdecl void correctGrowthTurnsIndicator(int destinationStringPointer, int sourc
 	
     tx_strcat(destinationStringPointer, sourceStringPointer);
 	
-    if (*BaseGrowthRate > conf.se_growth_rating_max)
+    if (base_pop_boom(*CurrentBaseID))
 	{
 		// update indicator for population boom
 		

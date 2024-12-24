@@ -317,6 +317,9 @@ struct Config {
     int cloning_vats_se_growth = 0;
     int se_growth_rating_min = -2;
     int se_growth_rating_max = 5;
+    bool pop_boom_requires_children_creche = false;
+    bool pop_boom_requires_golden_age = false;
+    int pop_boom_required_growth = 6;
     bool recycling_tanks_mineral_multiplier = false;
     double ocean_depth_multiplier = 1.0;
     int pts_new_base_size_less_average = 2;

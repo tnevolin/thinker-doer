@@ -1209,15 +1209,15 @@ void patch_se_growth_rating_max(int se_growth_rating_max)
 {
 	// patch population boom condition in base_doctors
 	
-	int popboom_condition_base_doctorss_bytes_length = 7;
-	byte popboom_condition_base_doctorss_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
-	byte popboom_condition_base_doctorss_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_max + 1) };
+	int popboom_condition_base_doctors_bytes_length = 7;
+	byte popboom_condition_base_doctors_bytes_old[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, 0x06 };
+	byte popboom_condition_base_doctors_bytes_new[] = { 0x83, 0x3D, 0x18, 0xE9, 0x90, 0x00, (byte)(se_growth_rating_max + 1) };
 	write_bytes
 	(
 		0x004F6070,
-		popboom_condition_base_doctorss_bytes_old,
-		popboom_condition_base_doctorss_bytes_new,
-		popboom_condition_base_doctorss_bytes_length
+		popboom_condition_base_doctors_bytes_old,
+		popboom_condition_base_doctors_bytes_new,
+		popboom_condition_base_doctors_bytes_length
 	);
 	
 }
