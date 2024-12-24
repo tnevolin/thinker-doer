@@ -1,6 +1,12 @@
 # Version 339
 
 * Crawler is unlocked by Adv. Ecological Engineering.
+* Population Boom requirements changed.
+  * Children's Creche
+  * Golden Age
+  * GROWTH rating >= 5
+* GROWTH cap reduced to +6.
+* 
 
 # Version 338
 

@@ -885,7 +885,7 @@ ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE, INDUSTRY
 Politics, Economics, Values, Future Society
 Frontier,        None,
 Police State,    DocLoy,    ++POLICE,     ++SUPPORT,    --EFFIC
-Democratic,      EthCalc,    +EFFIC,      ++GROWTH,    ---SUPPORT
+Democratic,      EthCalc,    +EFFIC,      ++GROWTH,    ---SUPPORT,     -PLANET
 Fundamentalist,  Brain,      +MORALE,     ++PROBE,     ---RESEARCH,    +INDUSTRY
 Simple,          None,
 Free Market,     IndEcon,   ++ECONOMY,   ---PLANET,  -----POLICE
@@ -893,11 +893,11 @@ Planned,         InfNet,     +GROWTH,      +INDUSTRY,   --EFFIC,       -ECONOMY
 Green,           CentEmp,   ++PLANET,     ++EFFIC,       -GROWTH,      +RESEARCH
 Survival,        None,
 Power,           MilAlg,    ++MORALE,     ++SUPPORT,    --INDUSTRY
-Knowledge,       Cyber,   ++++RESEARCH,    +EFFIC,      --PROBE,       -INDUSTRY
+Knowledge,       Cyber,    +++RESEARCH,    +EFFIC,      --PROBE,       -INDUSTRY
 Wealth,          IndAuto,   ++INDUSTRY,    +ECONOMY,    --MORALE,     --PLANET
 None,            None,
-Cybernetic,      Algor,     ++EFFIC,      ++RESEARCH,    +PLANET,    ---POLICE
-Eudaimonic,      Eudaim,     +GROWTH,      +ECONOMY,    ++TALENT,   ----MORALE
+Cybernetic,      Algor,     ++EFFIC,      ++RESEARCH,  ---POLICE
+Eudaimonic,      Eudaim,     +GROWTH,      +ECONOMY,     +TALENT,   ----MORALE
 Thought Control, WillPow,   ++POLICE,     ++MORALE,     ++PROBE,     ---SUPPORT
 
 
