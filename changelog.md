@@ -1,12 +1,13 @@
 # Version 339
 
 * Crawler is unlocked by Adv. Ecological Engineering.
+* GROWTH cap changed to +6.
 * Population Boom requirements changed.
-  * Children's Creche
   * Golden Age
-  * GROWTH rating >= 5
-* GROWTH cap reduced to +6.
-* 
+  * GROWTH rating >= 6
+* Children's Creche cost increased: 16/3.
+* Psi offense to defense ratio is changed to 6:5 for all triads.
+* Isle of Depth receives 50% offense penalty and 50% defense bonus.
 
 # Version 338
 

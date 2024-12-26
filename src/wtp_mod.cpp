@@ -345,6 +345,34 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		
 	}
 	
+    // ----------------------------------------------------------------------------------------------------
+    // isle of deep combat modifiers
+    // ----------------------------------------------------------------------------------------------------
+	
+    if
+	(
+		// attacker is isle of deep
+		attackerVehicle->unit_id == BSC_ISLE_OF_THE_DEEP
+		&&
+		// isle of deep offense malus is enabled
+		conf.isle_of_deep_offense_bonus != 0
+	)
+	{
+		addAttackerBonus(attackerStrengthPointer, conf.isle_of_deep_offense_bonus, "Non combat");
+	}
+	
+    if
+	(
+		// defender is isle of deep
+		defenderVehicle->unit_id == BSC_ISLE_OF_THE_DEEP
+		&&
+		// isle of deep defense malus is enabled
+		conf.isle_of_deep_defense_bonus != 0
+	)
+	{
+		addDefenderBonus(defenderStrengthPointer, conf.isle_of_deep_defense_bonus, "Protective");
+	}
+	
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
 //
@@ -2829,6 +2857,8 @@ int __cdecl wtp_mod_order_veh(int vehicleId, int angle, int a3)
 	bool zocAffectedVehicle = isZocAffectedVehicle(vehicleId);
 	MAP *src = getVehicleMapTile(vehicleId);
 	MAP *dst = getTileByAngle(src, angle);
+	int x = getX(dst);
+	int y = getY(dst);
 	
 	// do not alter human player vehicle movement
 	
@@ -2856,7 +2886,10 @@ int __cdecl wtp_mod_order_veh(int vehicleId, int angle, int a3)
 	
 	// correct land unit ZOC movement
 	
-	else if (triad == TRIAD_LAND && zocAffectedVehicle && !is_ocean(src) && !is_ocean(dst) && isZoc(factionId, src, dst))
+    int destinationVehicleFactionId = veh_who(x, y);
+    bool destinationBlocked = destinationVehicleFactionId == -1 ? false : !isFriendly(factionId, destinationVehicleFactionId);
+	
+	if (!destinationBlocked && triad == TRIAD_LAND && zocAffectedVehicle && !is_ocean(src) && !is_ocean(dst) && isZoc(factionId, src, dst))
 	{
 		for (int newAngleIndex = 1; newAngleIndex < ANGLE_COUNT; newAngleIndex++)
 		{
@@ -3312,6 +3345,8 @@ Adds bonus to battle odds dialog.
 */
 void addAttackerBonus(int *strengthPointer, int bonus, const char *label)
 {
+	bonus = std::max(-100, bonus);
+	
 	// modify strength
 	
 	*strengthPointer = (int)round((double)(*strengthPointer) * (double)(100 + bonus) / 100.0);
@@ -3328,6 +3363,8 @@ void addAttackerBonus(int *strengthPointer, int bonus, const char *label)
 }
 void addDefenderBonus(int *strengthPointer, int bonus, const char *label)
 {
+	bonus = std::max(-100, bonus);
+	
 	// modify strength
 	
 	*strengthPointer = (int)round((double)(*strengthPointer) * (double)(100 + bonus) / 100.0);

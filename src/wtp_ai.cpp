@@ -538,12 +538,17 @@ void populateTileInfos()
 		
 	}
 	
-	// friendly vehicle disables zoc
+	// other faction friendly vehicle disables zoc
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 		int vehicleTileIndex = getVehicleMapTileIndex(vehicleId);
+		
+		// not this faction
+		
+		if (vehicle->faction_id == aiFactionId)
+			continue;
 		
 		// friendly
 		
@@ -1817,38 +1822,7 @@ void populateWarzones()
 				}
 				
 				TileInfo &tileInfo = aiData.getTileInfo(tile);
-				tileInfo.danger = attackEffect;
-				
-			}
-			
-		}
-		
-		if (isArtilleryVehicle(vehicleId))
-		{
-			for (AttackAction const &attackAction : getArtilleryAttackTargets(vehicleId))
-			{
-				MAP *tile = attackAction.target;
-				
-				double attackEffect = 0.0;
-				
-				switch (attacketWeaponType)
-				{
-				case CT_PSI:
-					
-					attackEffect = psiOffenseStrength;
-					
-					break;
-					
-				case CT_CON:
-					
-					attackEffect = (psiOffenseStrength + conOffenseStrength / (double)aiData.maxConDefenseValue) / 2.0;
-					
-					break;
-					
-				}
-				
-				TileInfo &tileInfo = aiData.getTileInfo(tile);
-				tileInfo.danger = attackEffect;
+				tileInfo.danger += attackEffect;
 				
 			}
 			
@@ -1901,6 +1875,21 @@ void populateWarzones()
 			
 		}
 		
+		// artillery zones
+		
+		if (isArtilleryVehicle(vehicleId))
+		{
+			for (AttackAction const &attackAction : getArtilleryAttackTargets(vehicleId))
+			{
+				MAP *tile = attackAction.target;
+				
+				TileInfo &tileInfo = aiData.getTileInfo(tile);
+				tileInfo.artilleryZone = true;
+				
+			}
+			
+		}
+		
 	}
 	
 	if (DEBUG)
@@ -1914,10 +1903,12 @@ void populateWarzones()
 				"\t%s"
 				" %5.2f"
 				" %1d"
+				" %1d"
 				"\n"
 				, getLocationString(tile).c_str()
 				, tileInfo.danger
 				, tileInfo.warzone
+				, tileInfo.artilleryZone
 			)
 			;
 			
@@ -2088,14 +2079,13 @@ void populateEnemyStacks()
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		
 		// ignore sea aliens
-		// ignore land aliens not in territory
 		
-		if (vehicle->faction_id == 0 && (is_ocean(vehicleTile) || vehicleTile->owner != aiFactionId))
+		if (vehicle->faction_id == 0 && is_ocean(vehicleTile))
 			continue;
 		
-		// hostile or unfriendly in player territory
+		// hostile
 		
-		if (!(isHostile(aiFactionId, vehicle->faction_id) || (isUnfriendly(aiFactionId, vehicle->faction_id) && vehicleTile->owner == aiFactionId)))
+		if (!isHostile(aiFactionId, vehicle->faction_id))
 			continue;
 		
 		// exclude land vehicle on transport
@@ -6513,7 +6503,7 @@ std::vector<AttackAction> getArtilleryAttackActions(int vehicleId)
 }
 
 /**
-Searches for locations vehicle can melee attack at.
+Searches for locations vehicle can artillery attack at.
 */
 std::vector<AttackAction> getArtilleryAttackTargets(int vehicleId)
 {
@@ -6524,19 +6514,29 @@ std::vector<AttackAction> getArtilleryAttackTargets(int vehicleId)
 	if (!isArtilleryVehicle(vehicleId))
 		return attackActions;
 	
-	robin_hood::unordered_flat_set<MAP *> targets;
+	robin_hood::unordered_flat_map<MAP *, AttackAction *> attackActionMap;
 	
 	// explore attack actions
 	
-	for (AttackAction attackAction : getMeleeAttackActions(vehicleId))
+	for (AttackAction attackAction : getArtilleryAttackActions(vehicleId))
 	{
+		MAP *position = attackAction.position;
 		MAP *target = attackAction.target;
 		double hastyCoefficient = attackAction.hastyCoefficient;
 		
-		if (targets.find(target) == targets.end())
+		if (attackActionMap.find(target) == attackActionMap.end())
 		{
-			attackActions.push_back({nullptr, target, hastyCoefficient});
-			targets.insert(target);
+			attackActions.push_back({position, target, hastyCoefficient});
+			attackActionMap.insert({target, &(attackActions.back())});
+		}
+		else
+		{
+			if (hastyCoefficient < attackActionMap.at(target)->hastyCoefficient)
+			{
+				attackActionMap.at(target)->position = position;
+				attackActionMap.at(target)->hastyCoefficient = hastyCoefficient;
+			}
+			
 		}
 		
 	}
@@ -7134,7 +7134,7 @@ double getEnemyVehicleAttackGain(int vehicleId)
 	}
 	else if (isHostile(aiFactionId, factionId))
 	{
-		if (isCombatVehicle(vehicleId))
+		if (isCombatVehicle(vehicleId) || vehicle->unit_id == BSC_FUNGAL_TOWER)
 		{
 			IdIntValue nearestBaseRange = vehicleTileInfo.nearestBaseRanges.at(vehicle->triad());
 			
@@ -7154,6 +7154,8 @@ double getEnemyVehicleAttackGain(int vehicleId)
 						
 					case BSC_FUNGAL_TOWER:
 						attackGain = getGainBonus(conf.ai_combat_attack_bonus_alien_fungal_tower);
+						// extra gain for damaged tower
+						attackGain *= (1.0 + 10.0 * getVehicleRelativeDamage(vehicleId));
 						break;
 					
 					default:
@@ -7194,7 +7196,7 @@ double getEnemyVehicleAttackGain(int vehicleId)
 		{
 			attackGain = 2.0 * getGainBonus(conf.ai_combat_attack_bonus_hostile);
 		}
-		if (isColonyVehicle(vehicleId))
+		else if (isColonyVehicle(vehicleId))
 		{
 			attackGain = aiFactionInfo->averageBaseGain;
 		}

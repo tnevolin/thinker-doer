@@ -140,8 +140,10 @@ struct TileInfo
 	
 	// destruction proportion of regular non combat not armored vehicle
 	double danger;
-	// warzone (>= 0.25 chance of destruction)
+	// warzone (>= 0.75 chance of destruction)
 	bool warzone = false;
+	// artillery zone
+	bool artilleryZone = false;
 	// empty base capture
 	bool baseCapture = false;
 	

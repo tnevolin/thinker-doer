@@ -11,18 +11,6 @@
 
 // Location
 
-int Location::min()
-{
-	return std::min(x, y);
-}
-int Location::max()
-{
-	return std::max(x, y);
-}
-int Location::absDiff()
-{
-	return abs(x - y);
-}
 bool operator==(const Location &o1, const Location &o2)
 {
 	return o1.x == o2.x && o1.y == o2.y;
@@ -3444,43 +3432,46 @@ int setMoveTo(int vehicleId, MAP *destination)
 	assert(isOnMap(destination));
 	
     VEH *vehicle = getVehicle(vehicleId);
+	int factionId = vehicle->faction_id;
     MAP *vehicleTile = getVehicleMapTile(vehicleId);
     int vehicleSpeed1 = (getVehicleSpeed(vehicleId) == 1 ? 1 : 0);
 	int x = getX(destination);
 	int y = getY(destination);
 	bool vehicleTileOcean = is_ocean(vehicleTile);
 	bool destinationOcean = is_ocean(destination);
-
+	
     debug("setMoveTo %s -> %s\n", getLocationString({vehicle->x, vehicle->y}).c_str(), getLocationString(destination).c_str());
-
+	
     vehicle->waypoint_1_x = x;
     vehicle->waypoint_1_y = y;
     vehicle->order = ORDER_MOVE_TO;
     vehicle->status_icon = 'G';
     vehicle->terraform_turns = 0;
-
+	
     // vanilla bug fix for adjacent tile move
-
+	
     int vehicleTileRangeToDestination = getRange(vehicleTile, destination);
-
-    if (vehicle->triad() == TRIAD_LAND && !vehicleTileOcean && !destinationOcean && vehicleTileRangeToDestination == 1)
+    
+    int destinationVehicleFactionId = veh_who(x, y);
+    bool destinationBlocked = destinationVehicleFactionId == -1 ? false : !isFriendly(factionId, destinationVehicleFactionId);
+	
+    if (vehicle->triad() == TRIAD_LAND && !vehicleTileOcean && !destinationOcean && vehicleTileRangeToDestination == 1 && !destinationBlocked)
 	{
-		int factionId = vehicle->faction_id;
 		int directMoveHexCost = getHexCost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, x, y, vehicleSpeed1);
 		bool destinationZoc = isZoc(factionId, vehicleTile, destination);
-
+		
 		// set direct move to infinite cost if zoc
-
+		
 		if (destinationZoc)
 		{
 			directMoveHexCost = INT_MAX;
 		}
-
+		
 		// search optimal waypoint
-
+		
 		MAP *waypoint = nullptr;
 		int waypointMoveHexCost = directMoveHexCost;
-
+		
 		for (MAP *adjacentTile : getAdjacentTiles(vehicleTile))
 		{
 			bool adjacentTileOcean = is_ocean(adjacentTile);
@@ -3489,57 +3480,58 @@ int setMoveTo(int vehicleId, MAP *destination)
 			int adjacentTileY = getY(adjacentTile);
 			bool adjacentTileBlocked = isBlocked(factionId, adjacentTile);
 			bool adjacentTileZoc = isZoc(factionId, vehicleTile, adjacentTile);
-
+			
 			// land
-
+			
 			if (adjacentTileOcean)
 				continue;
-
+			
 			// adjacent tile should be also adjacent to destination
-
+			
 			if (adjacentTileRangeToDestination != 1)
 				continue;
-
+			
 			// not blocked
-
+			
 			if (adjacentTileBlocked)
 				continue;
-
+			
 			// not zoc
-
+			
 			if (adjacentTileZoc)
 				continue;
-
+			
 			// compute cost
-
+			
 			int hexCost1 = getHexCost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, adjacentTileX, adjacentTileY, vehicleSpeed1);
 			int hexCost2 = getHexCost(vehicle->unit_id, vehicle->faction_id, adjacentTileX, adjacentTileY, x, y, vehicleSpeed1);
 			int hexCost = hexCost1 + hexCost2;
-
+			
 			if (hexCost >= directMoveHexCost)
 				continue;
-
+			
 			if (hexCost < waypointMoveHexCost)
 			{
 				waypoint = adjacentTile;
 				waypointMoveHexCost = hexCost;
 			}
-
+			
 		}
-
+		
 		if (waypoint != nullptr)
 		{
 			vehicle->waypoint_1_x = getX(waypoint);
 			vehicle->waypoint_1_y = getY(waypoint);
 			vehicle->waypoint_2_x = x;
 			vehicle->waypoint_2_y = y;
+			vehicle->waypoint_count = 1;
 			debug("setWaypoint %s\n", getLocationString(waypoint).c_str());
 		}
-
+		
 	}
-
+	
     return EM_SYNC;
-
+	
 }
 
 int setMoveTo(int vehicleId, const std::vector<MAP *> &waypoints)
@@ -7033,33 +7025,36 @@ bool isLandVechileMoveAllowed(int vehicleId, MAP *from, MAP *to)
 
 }
 
+int getRange(int x1, int y1, int x2, int y2)
+{
+	assert(isOnMap(x1, y1));
+	assert(isOnMap(x2, y2));
+	
+	return map_range(x1, y1, x2, y2);
+	
+}
+
 int getRange(int tile1Index, int tile2Index)
 {
 	assert(tile1Index >= 0 && tile1Index < *MapAreaTiles);
 	assert(tile2Index >= 0 && tile2Index < *MapAreaTiles);
-
+	
 	int y1 = tile1Index / (*MapHalfX);
 	int x1 = (tile1Index % (*MapHalfX)) * 2 + (y1 % 2);
 	int y2 = tile2Index / (*MapHalfX);
 	int x2 = (tile2Index % (*MapHalfX)) * 2 + (y2 % 2);
-
-    int dx = abs(x1 - x2);
-    int dy = abs(y1 - y2);
-
-	if (*MapToggleFlat && dx > *MapHalfX)
-	{
-		dx = *MapAreaX - dx;
-	}
-
-	return (dx + dy) / 2;
-
+	
+	return getRange(x1, y1, x2, y2);
+	
 }
 
-int getRange(MAP *origin, MAP *destination)
+int getRange(MAP *tile1, MAP *tile2)
 {
-	assert(isOnMap(origin));
-	assert(isOnMap(destination));
-	return map_range(getX(origin), getY(origin), getX(destination), getY(destination));
+	assert(isOnMap(tile1));
+	assert(isOnMap(tile2));
+	
+	return getRange(getX(tile1), getY(tile1), getX(tile2), getY(tile2));
+	
 }
 
 /*
@@ -7094,7 +7089,7 @@ double getDiagonalDistance(MAP *tile1, MAP *tile2)
 	assert(isOnMap(tile1));
 	assert(isOnMap(tile2));
 	Location delta = getAbsoluteDelta(tile1, tile2);
-	return delta.min() + 1.5 * (double)delta.absDiff() / 2.0;
+	return delta.minAbs() + 1.5 * (double)delta.absDiff() / 2.0;
 }
 
 /*

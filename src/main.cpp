@@ -432,17 +432,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->se_growth_rating_max = std::max(0, std::min(9, atoi(value)));
     }
-    else if (MATCH("pop_boom_requires_children_creche"))
-    {
-        cf->pop_boom_requires_children_creche = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("pop_boom_requires_golden_age"))
     {
         cf->pop_boom_requires_golden_age = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("pop_boom_required_growth"))
+    else if (MATCH("pop_boom_requires_growth_rating"))
     {
-        cf->pop_boom_required_growth = atoi(value);
+        cf->pop_boom_requires_growth_rating = atoi(value);
     }
     else if (MATCH("recycling_tanks_mineral_multiplier"))
     {
@@ -711,6 +707,14 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("se_police_excess_industry_bonus"))
     {
         cf->se_police_excess_industry_bonus = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("isle_of_deep_offense_bonus"))
+    {
+        cf->isle_of_deep_offense_bonus = atoi(value);
+    }
+    else if (MATCH("isle_of_deep_defense_bonus"))
+    {
+        cf->isle_of_deep_defense_bonus = atoi(value);
     }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
@@ -1084,10 +1088,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("ai_expansion_ocean_connection_base"))
     {
         cf->ai_expansion_ocean_connection_base = atof(value);
-    }
-    else if (MATCH("ai_expansion_land_use_base_value"))
-    {
-        cf->ai_expansion_land_use_base_value = atof(value);
     }
     else if (MATCH("ai_expansion_land_use_coefficient"))
     {

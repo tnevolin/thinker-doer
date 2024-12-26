@@ -220,7 +220,6 @@ facilities), if there is no crèche there will be a [Citizens Protest] (extra dro
 #; Recycling Tanks
 #HELPFAC3
 Increases mineral intake at base by 50%. Cumulative with other mineral multiplying facilities.
-^(thinker.ini: recycling_tanks_mineral_multiplier)
 
 #; Perimeter Defense
 #HELPFAC4

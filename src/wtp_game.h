@@ -63,9 +63,9 @@ struct Location
 	int x;
 	int y;
 	
-	int min();
-	int max();
-	int absDiff();
+	int minAbs() { return std::min(std::abs(x), std::abs(y)); }
+	int maxAbs() { return std::max(std::abs(x), std::abs(y)); }
+	int absDiff() { return abs(abs(x) - abs(y)); }
 	
 };
 bool operator==(const Location &o1, const Location &o2);
@@ -922,6 +922,7 @@ double getBaseEconomyMultiplier(int baseId);
 double getBaseLabsMultiplier(int baseId);
 double getBasePsychMultiplier(int baseId);
 bool isLandVechileMoveAllowed(int vehicleId, MAP *from, MAP *to);
+int getRange(int x1, int y1, int x2, int y2);
 int getRange(MAP *origin, MAP *destination);
 int getRange(int tile1Index, int tile2Index);
 double getVectorDistanceSquared(MAP *origin, MAP *destination);

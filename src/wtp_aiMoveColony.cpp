@@ -7,6 +7,9 @@
 #include "wtp_aiMove.h"
 #include "wtp_aiRoute.h"
 
+std::vector<std::array<int, 2>> a1 = {{1, 2}};
+
+
 // YieldScore comparator
 
 bool compareYieldInfoByScoreAndResourceScore(const YieldInfo &a, const YieldInfo &b)
@@ -743,20 +746,18 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	executionProfiles["1.3.2.2.4.1.1. land use"].start();
 	
-	// land use
+	// land waste
 	
 	double landUse = getBasePlacementLandUse(tile);
-	double landUseScore = conf.ai_expansion_land_use_coefficient * (landUse - conf.ai_expansion_land_use_base_value);
+	double landUseScore = conf.ai_expansion_land_use_coefficient * landUse;
 	
 	debug
 	(
 		"\t%-20s%+5.2f"
-		" ai_expansion_land_use_base_value=%5.2f"
 		" ai_expansion_land_use_coefficient=%+5.2f"
 		" landUse=%5.2f"
 		"\n"
 		, "landUseScore", landUseScore
-		, conf.ai_expansion_land_use_base_value
 		, conf.ai_expansion_land_use_coefficient
 		, landUse
 	);
@@ -768,8 +769,7 @@ double getBuildSitePlacementScore(MAP *tile)
 	// radius overlap
 	
 	double radiusOverlap = getBasePlacementRadiusOverlap(tile);
-	double radiusOverlapScore =
-		conf.ai_expansion_radius_overlap_coefficient * std::max(0.0, radiusOverlap - conf.ai_expansion_radius_overlap_base_value);
+	double radiusOverlapScore = conf.ai_expansion_radius_overlap_coefficient * std::max(0.0, radiusOverlap - conf.ai_expansion_radius_overlap_base_value);
 	
 	debug
 	(
@@ -1271,128 +1271,155 @@ If potentialBuildSite is set it is counted as another base.
 */
 double getBasePlacementLandUse(MAP *buildSite)
 {
+	debug("getBasePlacementLandUse%s\n", getLocationString(buildSite).c_str());
+	
 	assert(isOnMap(buildSite));
 	
 	int buildSiteX = getX(buildSite);
 	int buildSiteY = getY(buildSite);
 	
-	// do not compute anything if too far from own bases
+	// collect gaps
 	
-	int nearestOwnBaseRange = getNearestBaseRange(buildSite, aiData.baseIds, false);
+	robin_hood::unordered_flat_map<MAP *, double> gapMultipliers;
 	
-	if (nearestOwnBaseRange > 8)
-		return 0.0;
+	for (int baseId : aiData.baseIds)
+	{
+		BASE *base = getBase(baseId);
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		int range = getRange(buildSiteX, buildSiteY, base->x, base->y);
+		
+		if (range <= 1)
+			continue;
+		
+		if (range > PLACEMENT_CONFIGURATION_MAX_RANGE)
+			continue;
+		
+		// coordinate difference
+		
+		Location delta = getDelta(buildSite, baseTile);
+		Location rectangularDelta = getRectangularCoordinates(delta, false);
+		int rectangularI = rectangularDelta.maxAbs();
+		int rectangularJ = rectangularDelta.minAbs();
+		PlacementConfiguration const &placementConfiguration = PLACEMENT_CONFIGURATIONS[rectangularI][rectangularJ];
+		
+		// main directions
+		
+		int directions[2][2];
+		
+		if (std::abs(rectangularDelta.x) >= std::abs(rectangularDelta.y))
+		{
+			if (rectangularDelta.x >= 0)
+			{
+				directions[0][0] = +1;
+				directions[0][1] = -1;
+			}
+			else
+			{
+				directions[0][0] = -1;
+				directions[0][1] = +1;
+			}
+			
+			if (rectangularDelta.y >= 0)
+			{
+				directions[1][0] = +1;
+				directions[1][1] = +1;
+			}
+			else
+			{
+				directions[1][0] = -1;
+				directions[1][1] = -1;
+			}
+			
+		}
+		else
+		{
+			if (rectangularDelta.y >= 0)
+			{
+				directions[0][0] = +1;
+				directions[0][1] = +1;
+			}
+			else
+			{
+				directions[0][0] = -1;
+				directions[0][1] = -1;
+			}
+			
+			if (rectangularDelta.x >= 0)
+			{
+				directions[1][0] = +1;
+				directions[1][1] = -1;
+			}
+			else
+			{
+				directions[1][0] = -1;
+				directions[1][1] = +1;
+			}
+			
+		}
+		
+		// iterate potential gaps
+		
+		for (std::array<int, 2> gap : placementConfiguration.gaps)
+		{
+			int dx = gap.at(0) * directions[0][0] + gap.at(1) * directions[1][0];
+			int dy = gap.at(0) * directions[0][1] + gap.at(1) * directions[1][1];
+			
+			int x = wrap(buildSiteX + dx);
+			int y = buildSiteY + dy;
+			
+			if (!isOnMap(x, y))
+			{
+				debug("ERROR: not on map: (%3d,%3d)\n", x, y);
+				continue;
+			}
+			
+			MAP *tile = getMapTile(x, y);
+			
+			if (gapMultipliers.find(tile) == gapMultipliers.end())
+			{
+				gapMultipliers.emplace(tile, placementConfiguration.multiplier);
+			}
+			else if (placementConfiguration.multiplier > gapMultipliers.at(tile))
+			{
+				gapMultipliers.at(tile) = placementConfiguration.multiplier;
+			}
+			
+		}
+		
+	}
 	
 	// compute land use
 	
 	double landUse = 0.0;
 	
-	// negative score
-	
-	for (int offsetIndex = TABLE_square_block_radius_base_internal; offsetIndex < TABLE_square_block_radius_base_external; offsetIndex++)
+	for (robin_hood::pair<MAP *, double> const &gapMultiplierEntry : gapMultipliers)
 	{
-		int x = buildSiteX + TABLE_square_offset_x[offsetIndex];
-		int y = buildSiteY + TABLE_square_offset_y[offsetIndex];
+		MAP *tile = gapMultiplierEntry.first;
+		double multiplier = gapMultiplierEntry.second;
 		
-		if (!isOnMap(x, y))
+		debug("\t%s %5.2f\n", getLocationString(tile).c_str(), multiplier);
+		
+		// ignore already base radius covered territory
+		
+		if (map_has_item(tile, BIT_BASE_RADIUS))
+		{
+			debug("\t\tbase radius\n");
 			continue;
-		
-		MAP *tile = getMapTile(x, y);
-		
-		// extensionAngles
-		
-		std::vector<int> extensionAngles;
-		
-		switch (offsetIndex - TABLE_square_block_radius_base_internal)
-		{
-		case 0:
-			extensionAngles.push_back(0);
-			break;
-		case 1:
-			extensionAngles.push_back(2);
-			break;
-		case 2:
-			extensionAngles.push_back(4);
-			break;
-		case 3:
-			extensionAngles.push_back(6);
-			break;
-		case 11:
-		case 4:
-			extensionAngles.push_back(6);
-			extensionAngles.push_back(0);
-			break;
-		case 5:
-		case 6:
-			extensionAngles.push_back(0);
-			extensionAngles.push_back(2);
-			break;
-		case 7:
-		case 8:
-			extensionAngles.push_back(2);
-			extensionAngles.push_back(4);
-			break;
-		case 9:
-		case 10:
-			extensionAngles.push_back(4);
-			extensionAngles.push_back(6);
-			break;
 		}
 		
-		for (int extensionAngle : extensionAngles)
+		// ignore sea without bonus
+		
+		if (is_ocean(tile) && !isBonusAt(tile))
 		{
-			MAP *currentTile = tile;
-			int extensionLength = 0;
-			int landCount = 0;
-			
-			for (; extensionLength < 4; extensionLength++)
-			{
-				currentTile = getTileByAngle(currentTile, extensionAngle);
-				
-				// stop when get out of map
-				
-				if (currentTile == nullptr)
-				{
-					extensionLength = 4;
-					break;
-				}
-				
-				// stop at own base radius
-				
-				if ((currentTile->owner == -1 || currentTile->owner == aiFactionId) && map_has_item(currentTile, BIT_BASE_RADIUS))
-					break;
-				
-				// populate variables
-				
-				bool currentTileOcean = is_ocean(currentTile);
-				
-				if (!currentTileOcean)
-				{
-					landCount++;
-				}
-				
-			}
-			
-			if (extensionLength == 0)
-			{
-				landUse += 1.0;
-				continue;
-			}
-			
-			// no land
-			
-			if (landCount == 0)
-				continue;
-			
-			
-			// far enough
-			
-			if (extensionLength >= 4)
-				continue;
-			
-			landUse -= 2.0 / (double)extensionLength;
-			
+			debug("\t\tsea without bonus\n");
+			continue;
 		}
+		
+		// summarize score
+		
+		landUse += -multiplier;
+		debug("\tlandUse = %7.2f\n", landUse);
 		
 	}
 	

@@ -49,9 +49,9 @@
 100,     ; Extra percentage cost of prototype LAND unit
 100,     ; Extra percentage cost of prototype SEA unit
 100,     ; Extra percentage cost of prototype AIR unit
-1,1,     ; Psi combat offense-to-defense ratio (LAND unit defending)
-1,1,     ; Psi combat offense-to-defense ratio (SEA unit defending)
-1,1,     ; Psi combat offense-to-defense ratio (AIR unit defending)
+6,5,     ; Psi combat offense-to-defense ratio (LAND unit defending)
+6,5,     ; Psi combat offense-to-defense ratio (SEA unit defending)
+6,5,     ; Psi combat offense-to-defense ratio (AIR unit defending)
 10,      ; Players' starting energy reserves
 50,      ; Combat % -> intrinsic base defense
 0,       ; Combat % -> attacking along road
@@ -662,7 +662,7 @@ Empath Battery,         Infantry, Gun,          Scout,      3, 0, 0, Neural,  -1
 ;
 #FACILITIES
 Headquarters,                  5, 0, None,    Disable,  Efficiency
-Children's Creche,             5, 1, EthCalc, Disable,  Growth/Effic
+Children's Creche,            16, 3, EthCalc, Disable,  Growth/Effic
 Recycling Tanks,               8, 2, Biogen,  Create,   Bonus Resources
 Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +50%
 Tachyon Field,                12, 2, Create,  Disable,  All Defense +50%

@@ -2276,6 +2276,7 @@ void populateLandTransportedClusters()
 		// insert initial tile
 		
 		landTransportedClusters.at(tileIndex) = clusterIndex;
+debug(">%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), clusterIndex);
 		
 		borderTiles.push_back(tileIndex);
 		
@@ -2302,6 +2303,7 @@ void populateLandTransportedClusters()
 					// insert adjacent tile
 					
 					landTransportedClusters.at(adjacentTileIndex) = clusterIndex;
+debug(">%s -> %s %2d\n", getLocationString(*MapTiles + currentTileIndex).c_str(), getLocationString(*MapTiles + adjacentTileIndex).c_str(), clusterIndex);
 					
 					newBorderTiles.push_back(adjacentTileIndex);
 					
@@ -2324,15 +2326,15 @@ void populateLandTransportedClusters()
 	
 	executionProfiles["1.1.4.6. populateLandTransportedClusters"].stop();
 	
-//	if (DEBUG)
-//	{
-//		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-//		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landCombatClusters.at(tileIndex));
-//			
-//		}
-//		
-//	}
+	if (DEBUG)
+	{
+		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+		{
+			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landTransportedClusters.at(tileIndex));
+			
+		}
+		
+	}
 	
 }
 

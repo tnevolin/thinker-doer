@@ -2684,14 +2684,11 @@ bool base_pop_boom(int base_id) {
 		(conf.cloning_vats_se_growth == 0 && has_project(FAC_CLONING_VATS, b->faction_id))
 		||
 		(
-			// has Children Creche if required
-			(!conf.pop_boom_requires_children_creche || has_facility(FAC_CHILDREN_CRECHE, base_id))
-			&&
 			// has Golden Age if required
 			(!conf.pop_boom_requires_golden_age || b->golden_age())
 			&&
 			// has required GROWTH
-			b->SE_growth(true) >= conf.pop_boom_required_growth
+			b->SE_growth(true) >= conf.pop_boom_requires_growth_rating
 		)
 	;
 	

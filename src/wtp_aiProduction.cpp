@@ -1899,6 +1899,11 @@ void evaluatePodPoppingUnits()
 		if (triad == TRIAD_AIR)
 			continue;
 		
+		// fastest triad chassis
+		
+		if (unit->speed() < aiFactionInfo->fastestTriadChassisIds.at(triad))
+			continue;
+		
 		SurfacePodData &surfacePodData = surfacePodDatas.at(triad);
 		
 		// no pods

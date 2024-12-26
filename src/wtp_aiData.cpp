@@ -701,11 +701,6 @@ void EnemyStackInfo::computeAttackParameters()
 		double effect = getVehicleDirectEffect(vehicleId);
 		accumulatedEffect += effect;
 		
-		if (accumulatedEffect >= requiredEffect)
-		{
-			coordinatorTravelTime = travelTime;
-		}
-		
 		debug
 		(
 			"\t[%4d] %s"
@@ -720,6 +715,12 @@ void EnemyStackInfo::computeAttackParameters()
 			, effect
 			, accumulatedEffect
 		);
+		
+		if (accumulatedEffect >= requiredEffect)
+		{
+			coordinatorTravelTime = travelTime;
+			break;
+		}
 		
 	}
 		

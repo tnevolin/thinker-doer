@@ -1171,6 +1171,11 @@ void populateRepairTasks(std::vector<CombatAction> &taskPriorities)
 			if (isBlocked(tile))
 				continue;
 			
+			// exclude warzone and artilleryZone
+			
+			if (tileInfo.warzone || tileInfo.artilleryZone)
+				continue;
+			
 			// exclude too far field location
 			
 			if (!(map_has_item(tile, BIT_BASE_IN_TILE | BIT_BUNKER | BIT_MONOLITH)) && map_range(vehicle->x, vehicle->y, x, y) > 0)
@@ -1530,14 +1535,15 @@ void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities)
 			if (travelTime == INF)
 				continue;
 			
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
+			
 			// priority
 			
-			double podpopPriorityCoefficient = conf.ai_combat_priority_pod;
 			double podpopBonus = conf.ai_production_pod_bonus;
-			double podpopGain = getGainRepetion(getGainBonus(podpopBonus), 0.9, travelTime);
+			double podpopGain = getGainBonus(podpopBonus) * travelTimeCoefficient;
 			
 			double podpopPriority =
-				podpopPriorityCoefficient
+				conf.ai_combat_priority_pod
 				* podpopGain
 			;
 			
@@ -1545,16 +1551,18 @@ void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities)
 			(
 				"\t\t\t-> %s"
 				" podpopPriority=%5.2f"
-				" podpopPriorityCoefficient=%5.2f"
+				" ai_combat_priority_pod=%5.2f"
 				" podpopBonus=%5.2f"
 				" travelTime=%7.2f"
+				" travelTimeCoefficient=%5.2f"
 				" podpopGain=%5.2f"
 				"\n"
 				, getLocationString(podTile).c_str()
 				, podpopPriority
-				, podpopPriorityCoefficient
+				, conf.ai_combat_priority_pod
 				, podpopBonus
 				, travelTime
+				, travelTimeCoefficient
 				, podpopGain
 			);
 			
@@ -1771,9 +1779,10 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 			
 			double vehicleEffect = baseInfo.combatData.getVehicleEffect(vehicleId);
 			
-			// time saved due to repair in the base
+			// time saved due to repair in the base (unless nearby monolith)
 			
-			double repairTimeSave = 5.0 * getVehicleRelativeDamage(vehicleId);
+			MapDoubleValue closestMonolithLocaionTravelTime = findClosestItemLocation(vehicleId, BIT_MONOLITH, MAX_REPAIR_DISTANCE, true);
+			double repairTimeSave = closestMonolithLocaionTravelTime.value <= 2.0 ? 0.0 : 5.0 * getVehicleRelativeDamage(vehicleId);
 			
 			// get travel time and coresponding coefficient
 			
@@ -1990,14 +1999,12 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 			
 			if (meleeAttackPosition.tile != nullptr)
 			{
-				debug("\n");
-				
 				// effect
 				
 				COMBAT_MODE combatMode = CM_MELEE;
 				bool destructive = true;
 				double combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, CM_MELEE);
-				double survivalEffect = getSurvivalEffect(combatEffect);
+				double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
 				
 				// attackGain
 				
@@ -2012,8 +2019,9 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 				// priority
 				
 				double priority =
-					survivalEffect
+					1.0
 					* attackGain
+					* combatEffectCoefficient
 					* travelTimeCoefficient
 				;
 				
@@ -2022,7 +2030,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 					"\t\t\t\t%-15s"
 					" priority=%5.2f"
 					" combatEffect=%5.2f"
-					" survivalEffect=%5.2f"
+					" combatEffectCoefficient=%5.2f"
 					" attackGain=%5.2f"
 					" travelTime=%7.2f"
 					" travelTimeCoefficient=%5.2f"
@@ -2030,7 +2038,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 					, "direct"
 					, priority
 					, combatEffect
-					, survivalEffect
+					, combatEffectCoefficient
 					, attackGain
 					, travelTime
 					, travelTimeCoefficient

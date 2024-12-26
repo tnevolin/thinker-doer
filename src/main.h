@@ -317,9 +317,8 @@ struct Config {
     int cloning_vats_se_growth = 0;
     int se_growth_rating_min = -2;
     int se_growth_rating_max = 5;
-    bool pop_boom_requires_children_creche = false;
     bool pop_boom_requires_golden_age = false;
-    int pop_boom_required_growth = 6;
+    int pop_boom_requires_growth_rating = 6;
     bool recycling_tanks_mineral_multiplier = false;
     double ocean_depth_multiplier = 1.0;
     int pts_new_base_size_less_average = 2;
@@ -387,6 +386,8 @@ struct Config {
     bool drone_riot_intensifies = true;
     int se_morale_excess_combat_bonus = 0;
     int se_police_excess_industry_bonus = 0;
+    int isle_of_deep_offense_bonus = 0;
+    int isle_of_deep_defense_bonus = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
@@ -474,7 +475,6 @@ struct Config {
     double ai_expansion_travel_time_multiplier;
     double ai_expansion_coastal_base;
     double ai_expansion_ocean_connection_base;
-    double ai_expansion_land_use_base_value;
     double ai_expansion_land_use_coefficient;
     double ai_expansion_radius_overlap_base_value;
     double ai_expansion_radius_overlap_coefficient;
