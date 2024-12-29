@@ -2,6 +2,8 @@
 
 This mod enhances *Alpha Centauri: Alien Crossfire* experience by improving AI and rebalancing other features. It is more diffcult to beat and play style may differ from vanilla if you mastered it before.
 
+The mod keeps developping and may become slightly obsolete in parts. For more contemporary informtion and visual tutorial, please, watch an incredible useful Loladarulz's video channel: https://www.youtube.com/playlist?list=PLDGozj3_2wdEv_cEhBgwzmgZ-pGfxLMPB.
+
 # Think & Adapt
 
 This mod tries making all original strategies viable. As such it may require reviewing general strategy every 5-10 turns or so. Whether to attack or build a defense or expand on land or expand on sea or to strengthen infrastructure or to rush for new technologies. It is not possible succeeding in all directions at once but savvy player evaluates most important direction/strategy at the moment.
