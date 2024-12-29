@@ -6,8 +6,8 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 ##### Links
 
 * [This readme](https://github.com/tnevolin/thinker-doer/blob/master/README.md)
-* [Changelog](https://github.com/tnevolin/thinker-doer/blob/master/wtp_changelog.md)
-* [Strategy tips](https://github.com/tnevolin/thinker-doer/blob/master/wtp_strategy.md)
+* [Changelog](https://github.com/tnevolin/thinker-doer/blob/master/changelog.md)
+* [Strategy tips](https://github.com/tnevolin/thinker-doer/blob/master/strategy.md)
 * [Issue submission](https://github.com/tnevolin/thinker-doer/issues)
 
 ## Special thanks and acknowledgements
