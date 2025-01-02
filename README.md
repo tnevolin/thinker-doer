@@ -70,6 +70,54 @@ _v337_
 
 ![SE v337](images/se-v337.png)
 
+## Social effects
+
+Following effect modifications are as of current version, which may change.
+
+### EFFICIENCY
+
+Inefficiency formula is changed to use proportional (geometrical) progression, rather than linear (arithmetic) as in vanilla makes inefficiency effect more smooth. Faction still looses 50% of energy at -4 rating making it a severe penalty but not 100% as in vanilla rendering it completely unplayable.
+
+Example energy collection percentage for different faction base count.
+
+![inefficiency](images/inefficiency.png)
+
+### SUPPORT
+
+* New base always gets free minerals.
+* Support cost is always 1.
+* Free unit count range is extended from 0-4 (vanilla) to 0-8.
+* Crawlers and Probes require support.
+* Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
+
+| rating | support cost | free units |
+| ----: | ----: | ----: |
+| -4 | 1 | 0 |
+| -3 | 1 | 1 |
+| -2 | 1 | 2 |
+| -1 | 1 | 3 |
+|  0 | 1 | 4 |
+|  1 | 1 | 5 |
+|  2 | 1 | 6 |
+|  3 | 1 | 8 or to base size |
+
+### POLICE
+
+The effect itself is unchanged but it is worth refering new base psych computation which grants one extra power to police unit but requires it to suppress superdrones as well. That makes police units stronger early game and slightly weaker in presense of many superdrones.
+
+### GROWTH
+
+* Upper cap is raised to +6.
+* The Cloning Vats gives +2 GROWTH instead of unconditional population boom.
+* Population boom requirements are:
+  * Base is in Golden Age
+  * Base has +6 GROWTH or above
+
+### PLANET
+
+* PLANET combat bonus is applied on both offense and defense.
+* PLANET combat bonus is increased to 15%.
+
 # Combat
 
 ## Attack/defense ratio adjustment
@@ -104,12 +152,6 @@ Vanilla random roll method resulted in incorrect combat round odds. This is fixe
 ### Odds confirmation dialog fix
 
 Odds confirmation dialog now displays correct winning probability percentage. Vanilla odds numbers look cool but are highly unusable without calculator not even mentioning they are incorrect to begin with.
-
-## PLANET rating effect on combat
-
-Native warfare seems to be everybody's weapon in vanilla. It doesn't seem fair to PLANET oriented factions. In base game PLANET rating is very weak comparing to say INDUSTRY/RESEARCH. It should be at least comparable to justify Cult of Planet's -1 INDUSTRY penalty. In my mind even ±1 PLANET rating should be *very* noticeable. Therefore, this mod increases its combat bonus to 15%. It also applies it on both attack and defense so PLANET haters suffer significant penalty. Now running Free Market really forces player to build up anti native base defense - mere avoiding combat is not a good strategy anymore.
-
-On top of that this mod sets land psi combat base odds to 1:1. This way PLANET rating controls advantage/disadvantage in psi combat, correspondingly. It also brings psi attack odds against Trance unit in base (1:2.25) in range with conventional attack odds against base with PD/TF (1:2 - 1:3). This last change, though, could be undesired for many players as I found out already. Luckily, it is configured in alphax.txt. So anyone can roll it back or set to any other preferred value.
 
 ## Base intrinsic defense and defensive structures
 
@@ -502,36 +544,6 @@ The Cloning Vats also does not grant impunities anymore.
 
 The Hunter-Seeker Algorithm prevents regular probe action but does not destroy it. This is to aid the AI that stupidly keeps sending probes against the HSA owner. This is also to reduce human player frustration when they need to remember which enemy faction has HSA to not kill own probes for nothing.
 
-# Inefficiency
-
-Inefficiency formula modified to avoid complete energy loss at -4 and make energy loss smoother.
-
-Vanilla base energy goes down linearly from 100% at HQ to 0% at the edge of energy radius. The radius linearly shortens/widens with EFFICIENCY rating.
-
-This modification changes radius geometrically instead to avoid hitting zero at -4 and to maintain reasonable growth at potitive values.
-
-```
-R = 1.5 * map width / 4 * 1.3 ^ EFFICIENCY
-```
-
-| EFFICIENCY | R (vanilla) | R (mod) |
-| ----: | ----: | ----: |
-| -4 |  0 |  10 |
-| -3 |  8 |  14 |
-| -2 | 16 |  18 |
-| -1 | 24 |  24 |
-|  0 | 32 |  30 |
-|  1 | 40 |  39 |
-|  2 | 48 |  51 |
-|  3 | 56 |  66 |
-|  4 | 64 |  86 |
-
-Example energy collection percentage for different faction base count.
-
-It is clear that modified formula does not allow whole energy to be lost to inefficiency. At the same time it lets EFFICIENCY to be more impactful at higher ratings.
-
-![inefficiency](images/inefficiency.png)
-
 ## Estimates
 
 Assuming a perfectly round base distribution with older and more productive central bases.
@@ -582,12 +594,6 @@ This mod equalizes border extension distances between land, sea, and coastal bas
 
 These abilities do not improve unit properties directly. Instead they essentially create completely distinct unit type with its own ins and outs. These unit type strengths are controlled by its own settings in alphax.txt. Damage Numerator & Denominator for Heavy Artillery and Combat bonus/penalty for Air Superiority. Their non-zero cost is confusing as if these abilities are worth something by themselves. I think it is much clearer to keep them zero and allow player to convert the unit type without any additional penalty.
 
-## Population boom fix
-
-Population boom is a powerful feature leading to OP strategy: expand - pop boom - repeat. The population boom is a nice feature. However, its cost is obviously negligible comparing to its benefits.
-
-This mod changes the GROWTH upper cap and thus GROWTH rating requirements for population boom, making it more difficult to achieve.
-
 ## Disallowing destroying defensive facilities with probes
 
 Human probes cannot sabotage defensive facilities either by targeting them or by random sabotage.
@@ -595,10 +601,6 @@ Human probes cannot sabotage defensive facilities either by targeting them or by
 A disciplined enhanced probe has 50% chance to sabotage targeted PD or TF. A disciplined regular probe has also 100% chance to sabotage a random facility which may be a defensive one. Sabotaging PD reduces base defense by 30%. This is too much of a reduction for the cost of a few probe teams especially against the AI that doesn't protect their bases with counter probes well.
 
 Overall, many players perceive this as an exploit similar to destroying sensor before waging full scale base assault.
-
-## Habitation facilities redesign
-
-Habitation facilities now add +2 GROWTH when below limit giving the incentive to build them earlier.
 
 ## Scrambling interceptor fix
 
@@ -708,26 +710,6 @@ Completely revamped the formula based on multiple complaints and requests.
 The above formula for MC cost is used for corner market computation.
 
 Actual base MC also includes subversion cost of all target faction units in or adjacent to base. All non target faction units in base after MC are destroyed after MC.
-
-# Alternative support
-
-Support mechanics is similar to vanilla with some adjustments.
-* New base always gets free minerals.
-* Support cost is always 1.
-* A little bit more free units.
-* Crawlers and Probes require support.
-* Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
-
-| rating | support cost | free units | comment |
-| ----: | ----: | ----: | ---- |
-| -4 | 1 | 0 | |
-| -3 | 1 | 1 | |
-| -2 | 1 | 2 | |
-| -1 | 1 | 3 | |
-|  0 | 1 | 4 | |
-|  1 | 1 | 5 | |
-|  2 | 1 | 6 | |
-|  3 | 1 | 8 | or to base size |
 
 # Alternative eco damage industry effect reduction formula
 
