@@ -564,7 +564,7 @@ Same story with psi weapon and armor. By the time you get them you have full spe
 
 ## Removed abilities
 
-Cloaking device and Deep pressure hull abilities are broken by game shared map implementation. Other people said enough about it. Disabled them.
+Deep pressure hull ability is supposed to hide unit from opponents but is broken by game shared map implementation. AI still able to see them. Disabled. The Cloaking ability hiding thing is equally broken but it also has ZOC ignoring effect. That is why this ability is returned to the game.
 
 Repair Bay ability is useless in my mind as well. I cannot even imagine where one would massively transport wounded units.
 
