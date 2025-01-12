@@ -222,6 +222,8 @@ equals the number of regular Workers and Specialists.
 A Golden Age significantly increases a base's {growth} rate and {energy} production--
 equivalent of +1 $LINK<ECONOMY=130000> and +2 $LINK<GROWTH=130006> on the social
 engineering table.
+^
+^A Golden Age with maximal GROWTH rating also triggers population boom at the base!
 
 #CONCEPT11
 {Morale} reflects the training and experience of your military units. Morale levels

@@ -23,6 +23,8 @@ std::vector<TileExpansionInfo> tileExpansionInfos;
 std::vector<MAP *> buildSites;
 std::vector<MAP *> availableBuildSites;
 robin_hood::unordered_flat_map<MAP *, std::vector<MAP *>> buildSiteWorkTiles;
+robin_hood::unordered_flat_map<MAP *, double> internalConcaveNodes;
+robin_hood::unordered_flat_map<MAP *, double> externalConcaveNodes;
 
 void moveColonyStrategy()
 {
@@ -49,6 +51,14 @@ void populateExpansionData()
 	
 	buildSites.clear();
 	availableBuildSites.clear();
+	
+	// concave tiles
+	
+	executionProfiles["1.3.2.2.1. populateConcaveTiles"].start();
+	
+	populateConcaveTiles();
+	
+	executionProfiles["1.3.2.2.1. populateConcaveTiles"].stop();
 	
 	// worked tiles
 	
@@ -132,7 +142,6 @@ void populateExpansionData()
 		}
 		
 	}
-debug("buildSiteWorkTiles[(42,28)]=%d\n", buildSiteWorkTiles.find(getMapTile(42,28)) != buildSiteWorkTiles.end())
 	
 	if (DEBUG)
 	{
@@ -495,8 +504,9 @@ void analyzeBasePlacementSites()
 		int vehicleId = vehicleIds.at(vehicleIndex);
 		int destinationIndex = vehicleDestinations.at(vehicleIndex);
 		MAP *destination = destinations.at(destinationIndex);
-		
-		transitVehicle(Task(vehicleId, TT_BUILD, destination));
+
+		TaskType const taskType = aiData.getTileInfo(destination).baseCapture ? TT_SKIP : TT_BUILD;
+		transitVehicle(Task(vehicleId, taskType, destination));
 		
 	}
 	
@@ -649,11 +659,15 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	
 	int popSize = 1;
 	int nutrientBoxSize = nutrientCostFactor * (1 + popSize);
-	double nutrientSurplus = (double)ResInfo->base_sq_nutrient + yieldInfos.at(popSize - 1).nutrientSurplus;
-	double resourceScore = getResourceScore(ResInfo->base_sq_mineral, ResInfo->base_sq_energy) + yieldInfos.at(popSize - 1).resourceScore;
 	double nutrientAccumulated = 0.0;
 	double totalBonus = 0.0;
 	int evaluationTurns = 50;
+	
+	double yieldNutrientSurplus = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score / getResourceScore(1.0, 0.0, 0.0) : 0.0;
+	double yieldResourceScore = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score : 0.0;
+	double nutrientSurplus = (double)ResInfo->base_sq_nutrient + yieldNutrientSurplus;
+	double resourceScore = getResourceScore(ResInfo->base_sq_mineral, ResInfo->base_sq_energy) + yieldResourceScore;
+	
 	for (int turn = 0; turn < evaluationTurns; turn++)
 	{
 		nutrientAccumulated += nutrientSurplus;
@@ -665,9 +679,8 @@ double getBuildSiteBaseGain(MAP *buildSite)
 			nutrientBoxSize = nutrientCostFactor * (1 + popSize);
 			nutrientAccumulated = 0.0;
 			
-			double yieldNutrientSurplus = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score / getResourceScore(1.0, 0.0, 0.0) : 0.0;
-			double yieldResourceScore = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score : 0.0;
-			
+			yieldNutrientSurplus = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score / getResourceScore(1.0, 0.0, 0.0) : 0.0;
+			yieldResourceScore = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score : 0.0;
 			nutrientSurplus += yieldNutrientSurplus;
 			resourceScore += yieldResourceScore;
 			
@@ -742,49 +755,34 @@ double getBuildSitePlacementScore(MAP *tile)
 {
 	debug("getBuildSitePlacementScore %s\n", getLocationString(tile).c_str());
 	
+	int x = getX(tile);
+	int y = getY(tile);
 	TileInfo &tileInfo = aiData.getTileInfo(tile);
-	
-	executionProfiles["1.3.2.2.4.1.1. land use"].start();
-	
-	// land waste
-	
-	double landUse = getBasePlacementLandUse(tile);
-	double landUseScore = conf.ai_expansion_land_use_coefficient * landUse;
-	
-	debug
-	(
-		"\t%-20s%+5.2f"
-		" ai_expansion_land_use_coefficient=%+5.2f"
-		" landUse=%5.2f"
-		"\n"
-		, "landUseScore", landUseScore
-		, conf.ai_expansion_land_use_coefficient
-		, landUse
-	);
-	
-	executionProfiles["1.3.2.2.4.1.1. land use"].stop();
-	
-	executionProfiles["1.3.2.2.4.1.2. radius overlap"].start();
 	
 	// radius overlap
 	
-	double radiusOverlap = getBasePlacementRadiusOverlap(tile);
-	double radiusOverlapScore = conf.ai_expansion_radius_overlap_coefficient * std::max(0.0, radiusOverlap - conf.ai_expansion_radius_overlap_base_value);
+	executionProfiles["1.3.2.2.4.1.2. radius overlap"].start();
 	
-	debug
-	(
-		"\t%-20s%+5.2f"
-		" ai_expansion_radius_overlap_base_value=%5.2f"
-		" ai_expansion_radius_overlap_coefficient=%+5.2f"
-		" radiusOverlap=%+5.2f"
-		"\n"
-		, "radiusOverlapScore", radiusOverlapScore
-		, conf.ai_expansion_radius_overlap_base_value
-		, conf.ai_expansion_radius_overlap_coefficient
-		, radiusOverlap
-	);
+	double overlapScore = getBuildSiteOverlapScore(tile);
+	debug("\t%-20s%+5.2f\n", "overlapScore", overlapScore);
 	
 	executionProfiles["1.3.2.2.4.1.2. radius overlap"].stop();
+	
+	executionProfiles["1.3.2.2.4.1.1. land use"].start();
+	
+	// border connection
+	
+	double connectionScore = getBuildSiteConnectionScore(tile);
+	debug("\t%-20s%+5.2f\n", "connectionScore", connectionScore);
+	
+	executionProfiles["1.3.2.2.4.1.1. land use"].start();
+	
+	// land use
+	
+	double landUseScore = getBuildSiteLandUseScore(tile);
+	debug("\t%-20s%+5.2f\n", "landUseScore", landUseScore);
+	
+	executionProfiles["1.3.2.2.4.1.1. land use"].stop();
 	
 	executionProfiles["1.3.2.2.4.1.3. coastScore"].start();
 	
@@ -825,20 +823,7 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	// explicitly discourage placing base on some landmarks
 	
-	double landmarkScore;
-	if
-	(
-		map_has_landmark(tile, LM_CRATER)
-		||
-		map_has_landmark(tile, LM_VOLCANO)
-	)
-	{
-		landmarkScore = -1.0;
-	}
-	else
-	{
-		landmarkScore = 0.0;
-	}
+	double landmarkScore = (map_has_landmark(tile, LM_CRATER) || map_has_landmark(tile, LM_VOLCANO)) ? -0.20 : 0.0;
 	debug("\t%-20s%+5.2f\n", "landmarkScore", landmarkScore);
 	
 	executionProfiles["1.3.2.2.4.1.4. landmarkScore"].stop();
@@ -873,9 +858,19 @@ double getBuildSitePlacementScore(MAP *tile)
 	double fungusScore = (!is_ocean(tile) && map_has_item(tile, BIT_FUNGUS) && aiFaction->SE_planet < 1 ? -0.1 : 0.0);
 	debug("\t%-20s%+5.2f\n", "fungusScore", fungusScore);
 	
+	// discourage near edge placement
+	
+	int edgeMargin = std::min(y, *MapAreaY - 1 - y);
+	if (!*MapToggleFlat)
+	{
+		edgeMargin = std::min(edgeMargin, std::min(x, *MapAreaX - 1 - x));
+	}
+	double edgeScore = edgeMargin >= 3 ? 0.0 : -0.2 * (3.0 - (double)edgeMargin);
+	debug("\t%-20s%+5.2f\n", "edgeScore", edgeScore);
+	
 	// return score
 	
-	return landUseScore + radiusOverlapScore + coastScore + landmarkScore + landmarkBonusScore + fungusScore;
+	return overlapScore + connectionScore + landUseScore + coastScore + landmarkScore + landmarkBonusScore + fungusScore + edgeScore;
 	
 }
 
@@ -886,48 +881,48 @@ bool isValidBuildSite(MAP *tile, int factionId)
 	int x = getX(tile);
 	int y = getY(tile);
 	TileInfo &tileInfo = aiData.getTileInfo(tile);
-
-	// allowed base build location
-
-	if (!isAllowedBaseLocation(factionId, tile))
-		return false;
-
-	// cannot build in base tile and on monolith
-
-	if (map_has_item(tile, BIT_BASE_IN_TILE | BIT_MONOLITH))
-		return false;
-
-	// no adjacent bases
-
-	if (nearby_items(x, y, 1, 9, BIT_BASE_IN_TILE) > 0)
-		return false;
-
+	
 	// cannot build at volcano
-
+	
 	if (tile->landmarks & LM_VOLCANO && tile->art_ref_id == 0)
 		return false;
-
+	
+	// cannot build in base tile and on monolith
+	
+	if (map_has_item(tile, BIT_BASE_IN_TILE | BIT_MONOLITH))
+		return false;
+	
+	// allowed base build location
+	
+	if (!isAllowedBaseLocation(factionId, tile))
+		return false;
+	
+	// no adjacent bases
+	
+	if (nearby_items(x, y, 1, 9, BIT_BASE_IN_TILE) > 0)
+		return false;
+	
 	// no rocky tile unless allowed by configuration
-
+	
 	if (!is_ocean(tile) && tile->is_rocky() && !conf.ai_base_allowed_fungus_rocky)
 		return false;
-
+	
 	// no fungus tile unless allowed by configuration
-
+	
 	if (map_has_item(tile, BIT_FUNGUS) && !conf.ai_base_allowed_fungus_rocky)
 		return false;
-
+	
 	// no own bases closer than allowed spacing
 	// no more than allowed own number of bases at minimal range
-
+	
 	int ownBaseAtMinimalRangeCount = 0;
-
+	
 	for (int baseId : aiData.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
-
+		
 		int range = map_range(x, y, base->x, base->y);
-
+		
 		if (range < conf.base_spacing)
 		{
 			return false;
@@ -935,40 +930,40 @@ bool isValidBuildSite(MAP *tile, int factionId)
 		else if (conf.base_nearby_limit >= 0 && range == conf.base_spacing)
 		{
 			ownBaseAtMinimalRangeCount++;
-
+			
 			if (ownBaseAtMinimalRangeCount > conf.base_nearby_limit)
 			{
 				return false;
 			}
-
+			
 		}
-
+		
 	}
-
+	
 	// not blocked
-
+	
 	if (isBlocked(tile))
 		return false;
-
+	
 	// not warzone
-
+	
 	if (tileInfo.warzone)
 		return false;
-
+	
+	// not hostileBaseCapture location
+	
+	if (tileInfo.hostileBaseCapture)
+		return false;
+	
 	// don't build on edge
 	
 	if (y == 0 || y == *MapAreaY - 1 || (*MapToggleFlat == 1 && (x == 0 || x == *MapAreaX - 1)))
 		return false;
 	
-	// not baseCapture location
-	
-	if (tileInfo.baseCapture)
-		return false;
-	
 	// all conditions met
-
+	
 	return true;
-
+	
 }
 
 bool isValidWorkTile(MAP *baseTile, MAP *workTile)
@@ -983,6 +978,11 @@ bool isValidWorkTile(MAP *baseTile, MAP *workTile)
 	TileInfo const &baseTileInfo = aiData.getTileInfo(baseTile);
 	TileInfo const &workTileInfo = aiData.getTileInfo(workTile);
 	TileExpansionInfo const &workTileExpansionInfo = getTileExpansionInfo(workTile);
+	
+	// cannot terraform volcano
+	
+	if (workTile->landmarks & LM_VOLCANO && workTile->art_ref_id == 0)
+		return false;
 	
 	// exclude not owned land tiles for ocean base
 	
@@ -1126,8 +1126,6 @@ Resource getAverageTileYield(MAP *tile)
 	bool ocean = is_ocean(tile);
 	bool rocky = !ocean && (map_rockiness(tile) == 2);
 	
-	debug("getTileYield: %s\n", getLocationString(tile).c_str());
-	
 	Resource averageYield;
 	
 	if (monolith)
@@ -1192,6 +1190,8 @@ Resource getAverageTileYield(MAP *tile)
 		averageYield = {(double)yield.nutrient, (double)yield.mineral, (double)yield.energy};
 		
 	}
+	
+	debug("getTileYield%s = (%5.2f,%5.2f,%5.2f)\n", getLocationString(tile).c_str(), averageYield.nutrient, averageYield.mineral, averageYield.energy);
 	
 	return averageYield;
 	
@@ -1265,187 +1265,198 @@ std::vector<MAP *> getUnavailableBuildSites(MAP *buildSite)
 
 }
 
+/*
+1.0 = exceptionally bad overlap
+*/
+double getBuildSiteOverlapScore(MAP *buildSite)
+{
+	// overlap count
+	
+	int overlapCount = getTileBaseOverlapCount(buildSite);
+	
+	// find the least adjacent overlap count
+	
+	MAP *minOverlapTile = buildSite;
+	int minOverlapCount = overlapCount;
+	
+	bool changed;
+	do
+	{
+		changed = false;
+		MAP *currentTile = minOverlapTile;
+		
+		for (MAP *adjacentTile : getAdjacentTiles(currentTile))
+		{
+			int adjacentTileRadiusOverlapCount = getTileBaseOverlapCount(adjacentTile);
+			
+			if (minOverlapCount > conf.ai_expansion_radius_overlap_ignored && adjacentTileRadiusOverlapCount < minOverlapCount)
+			{
+				minOverlapTile = adjacentTile;
+				minOverlapCount = adjacentTileRadiusOverlapCount;
+				changed = true;
+			}
+			
+		}
+		
+	}
+	while (changed);
+	
+	// adjust buildSite overlap by best adjacent overlap
+	
+	int overlapCountAdjusted = overlapCount - std::max(0, minOverlapCount - conf.ai_expansion_radius_overlap_ignored);
+	
+	// normalize overlap by scale
+	
+	double overlapScore =
+		overlapCountAdjusted <= conf.ai_expansion_radius_overlap_ignored ? 0.0 :
+			conf.ai_expansion_radius_overlap_coefficient * (double)std::max(0, overlapCountAdjusted - conf.ai_expansion_radius_overlap_ignored)
+	;
+	
+	debug
+	(
+		"getoverlapScore%s"
+		" overlapCount=%d"
+		" minOverlapTile=%s"
+		" minOverlapCount=%d"
+		" overlapCountAdjusted=%d"
+		" ai_expansion_radius_overlap_coefficient=%5.2f"
+		" overlapScore=%5.2f"
+		"\n"
+		, getLocationString(buildSite).c_str()
+		, overlapCount
+		, getLocationString(minOverlapTile).c_str()
+		, minOverlapCount
+		, overlapCountAdjusted
+		, conf.ai_expansion_radius_overlap_coefficient
+		, overlapScore
+	);
+	
+	return overlapScore;
+	
+}
+
+int getTileBaseOverlapCount(MAP *tile)
+{
+	int overlapCount = 0;
+	
+	for (MAP *baseRadiusTile : getBaseRadiusTiles(tile, true))
+	{
+		if (map_has_item(baseRadiusTile, BIT_BASE_RADIUS))
+		{
+			overlapCount++;
+			
+			// inner tile overlap is double
+			
+			for (MAP *adjacentTile : getAdjacentTiles(baseRadiusTile))
+			{
+				if (map_has_item(adjacentTile, BIT_BASE_IN_TILE))
+				{
+					overlapCount++;
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	return overlapCount;
+	
+}
+
+double getBuildSiteConnectionScore(MAP *buildSite)
+{
+	assert(isOnMap(buildSite));
+	
+	double internalConnectionCongestion = 0.0;
+	
+	for (MAP *radiusTile : getBaseRadiusTiles(buildSite, true))
+	{
+		if (internalConcaveNodes.find(radiusTile) != internalConcaveNodes.end())
+		{
+			internalConnectionCongestion += internalConcaveNodes.at(radiusTile);
+		}
+	}
+	
+	double externalConnectionCongestion = 0.0;
+	
+	for (MAP *radiusTile : getBaseRadiusTiles(buildSite, true))
+	{
+		if (externalConcaveNodes.find(radiusTile) != externalConcaveNodes.end())
+		{
+			externalConnectionCongestion += externalConcaveNodes.at(radiusTile);
+		}
+	}
+	
+	double connectionScore =
+		+ conf.ai_expansion_internal_border_connection_coefficient * internalConnectionCongestion
+		+ conf.ai_expansion_external_border_connection_coefficient * externalConnectionCongestion
+	;
+	
+	debug
+	(
+		"getconnectionScore%s"
+		" ai_expansion_internal_border_connection_coefficient=%5.2f"
+		" internalConnectionCongestion=%5.2f"
+		" ai_expansion_external_border_connection_coefficient=%5.2f"
+		" externalConnectionCongestion=%5.2f"
+		" connectionScore=%5.2f"
+		"\n"
+		, getLocationString(buildSite).c_str()
+		, conf.ai_expansion_internal_border_connection_coefficient
+		, internalConnectionCongestion
+		, conf.ai_expansion_external_border_connection_coefficient
+		, externalConnectionCongestion
+		, connectionScore
+	);
+	
+	return connectionScore;
+	
+}
+
 /**
 Evaluates build site placement score.
 If potentialBuildSite is set it is counted as another base.
 */
-double getBasePlacementLandUse(MAP *buildSite)
+double getBuildSiteLandUseScore(MAP *buildSite)
 {
-	debug("getBasePlacementLandUse%s\n", getLocationString(buildSite).c_str());
-	
 	assert(isOnMap(buildSite));
 	
 	int buildSiteX = getX(buildSite);
 	int buildSiteY = getY(buildSite);
 	
-	// collect gaps
-	
-	robin_hood::unordered_flat_map<MAP *, double> gapMultipliers;
+	double landCongestion = 0.0;
 	
 	for (int baseId : aiData.baseIds)
 	{
 		BASE *base = getBase(baseId);
-		MAP *baseTile = getBaseMapTile(baseId);
 		
-		int range = getRange(buildSiteX, buildSiteY, base->x, base->y);
+		int proximity = getProximity(buildSiteX, buildSiteY, base->x, base->y);
 		
-		if (range <= 1)
+		if (proximity > PLACEMENT_CONGESTION_PROXIMITY_MAX)
 			continue;
 		
-		if (range > PLACEMENT_CONFIGURATION_MAX_RANGE)
-			continue;
-		
-		// coordinate difference
-		
-		Location delta = getDelta(buildSite, baseTile);
-		Location rectangularDelta = getRectangularCoordinates(delta, false);
-		int rectangularI = rectangularDelta.maxAbs();
-		int rectangularJ = rectangularDelta.minAbs();
-		PlacementConfiguration const &placementConfiguration = PLACEMENT_CONFIGURATIONS[rectangularI][rectangularJ];
-		
-		// main directions
-		
-		int directions[2][2];
-		
-		if (std::abs(rectangularDelta.x) >= std::abs(rectangularDelta.y))
-		{
-			if (rectangularDelta.x >= 0)
-			{
-				directions[0][0] = +1;
-				directions[0][1] = -1;
-			}
-			else
-			{
-				directions[0][0] = -1;
-				directions[0][1] = +1;
-			}
-			
-			if (rectangularDelta.y >= 0)
-			{
-				directions[1][0] = +1;
-				directions[1][1] = +1;
-			}
-			else
-			{
-				directions[1][0] = -1;
-				directions[1][1] = -1;
-			}
-			
-		}
-		else
-		{
-			if (rectangularDelta.y >= 0)
-			{
-				directions[0][0] = +1;
-				directions[0][1] = +1;
-			}
-			else
-			{
-				directions[0][0] = -1;
-				directions[0][1] = -1;
-			}
-			
-			if (rectangularDelta.x >= 0)
-			{
-				directions[1][0] = +1;
-				directions[1][1] = -1;
-			}
-			else
-			{
-				directions[1][0] = -1;
-				directions[1][1] = +1;
-			}
-			
-		}
-		
-		// iterate potential gaps
-		
-		for (std::array<int, 2> gap : placementConfiguration.gaps)
-		{
-			int dx = gap.at(0) * directions[0][0] + gap.at(1) * directions[1][0];
-			int dy = gap.at(0) * directions[0][1] + gap.at(1) * directions[1][1];
-			
-			int x = wrap(buildSiteX + dx);
-			int y = buildSiteY + dy;
-			
-			if (!isOnMap(x, y))
-			{
-				debug("ERROR: not on map: (%3d,%3d)\n", x, y);
-				continue;
-			}
-			
-			MAP *tile = getMapTile(x, y);
-			
-			if (gapMultipliers.find(tile) == gapMultipliers.end())
-			{
-				gapMultipliers.emplace(tile, placementConfiguration.multiplier);
-			}
-			else if (placementConfiguration.multiplier > gapMultipliers.at(tile))
-			{
-				gapMultipliers.at(tile) = placementConfiguration.multiplier;
-			}
-			
-		}
+		landCongestion += PLACEMENT_CONGESTION[proximity];
 		
 	}
 	
-	// compute land use
+	double landUseScore = conf.ai_expansion_land_use_coefficient * landCongestion;
 	
-	double landUse = 0.0;
+	debug
+	(
+		"getBuildSiteLandUseScore%s"
+		" landCongestion=%5.2f"
+		" ai_expansion_land_use_coefficient=%5.2f"
+		" landUseScore=%5.2f"
+		"\n"
+		, getLocationString(buildSite).c_str()
+		, landCongestion
+		, conf.ai_expansion_land_use_coefficient
+		, landUseScore
+	);
 	
-	for (robin_hood::pair<MAP *, double> const &gapMultiplierEntry : gapMultipliers)
-	{
-		MAP *tile = gapMultiplierEntry.first;
-		double multiplier = gapMultiplierEntry.second;
-		
-		debug("\t%s %5.2f\n", getLocationString(tile).c_str(), multiplier);
-		
-		// ignore already base radius covered territory
-		
-		if (map_has_item(tile, BIT_BASE_RADIUS))
-		{
-			debug("\t\tbase radius\n");
-			continue;
-		}
-		
-		// ignore sea without bonus
-		
-		if (is_ocean(tile) && !isBonusAt(tile))
-		{
-			debug("\t\tsea without bonus\n");
-			continue;
-		}
-		
-		// summarize score
-		
-		landUse += -multiplier;
-		debug("\tlandUse = %7.2f\n", landUse);
-		
-	}
+	return landUseScore;
 	
-	return landUse;
-	
-}
-
-int getBasePlacementRadiusOverlap(MAP *tile)
-{
-	// collect score
-
-	int totalOverlap = 0;
-
-	for (MAP *baseRadiusTile : getBaseRadiusTiles(tile, true))
-	{
-		// our or neutral territory
-
-		if ((baseRadiusTile->owner == -1 || baseRadiusTile->owner == aiFactionId) && map_has_item(baseRadiusTile, BIT_BASE_RADIUS))
-		{
-			totalOverlap++;
-		}
-
-	}
-
-	return totalOverlap;
-
 }
 
 /*
@@ -1473,5 +1484,354 @@ double getColonyTravelTimeCoefficient(double travelTime)
 
 	return getExponentialCoefficient(aiData.developmentScale, travelTimeMultiplier * travelTime);
 
+}
+
+void populateConcaveTiles()
+{
+	debug("populateConcaveTiles - %s\n", aiMFaction->noun_faction);
+	
+	internalConcaveNodes.clear();
+	externalConcaveNodes.clear();
+	
+	robin_hood::unordered_flat_set<MAP *> processedNodes;
+	
+	std::vector<MAP *> openNodes;
+	std::vector<MAP *> newOpenNodes;
+	
+	// ----------
+	// internal
+	// ----------
+	
+	// collect internal base radius tiles
+	
+	robin_hood::unordered_flat_set<MAP *> internalBaseRadiusTiles;
+	
+	for (int baseId : aiData.baseIds)
+	{
+		for (MAP *tile : getBaseRadiusTiles(getBaseMapTile(baseId), true))
+		{
+			// neutral or our territory
+			
+			if (!(tile->owner == -1 || tile->owner == aiFactionId))
+				continue;
+			
+			// add tile
+			
+			internalBaseRadiusTiles.insert(tile);
+			
+		}
+		
+	}
+	
+	// initialize open nodes
+	
+	processedNodes.clear();
+	openNodes.clear();
+	for (MAP *tile : internalBaseRadiusTiles)
+	{
+		processedNodes.insert(tile);
+		openNodes.push_back(tile);
+	}
+	
+	// extend convex coverage
+	
+	while (!openNodes.empty())
+	{
+		for (MAP *currentTile : openNodes)
+		{
+			for (int angle = 0; angle < ANGLE_COUNT; angle++)
+			{
+				MAP *stepTile = currentTile;
+				std::vector<MAP *> connectedTiles;
+				
+				int stepCount = angle % 2 == 0 ? 6 : 5;
+				
+				for (int step = 0; step < stepCount; step++)
+				{
+					stepTile = getTileByAngle(stepTile, angle);
+					
+					// on map
+					
+					if (stepTile == nullptr)
+						break;
+					
+					// neutral/our territory
+					
+					if (!(stepTile->owner == -1 || stepTile->owner == aiFactionId))
+						break;
+					
+					// check processed
+					
+					if (processedNodes.find(stepTile) != processedNodes.end())
+					{
+						// stop processing and collect connectedTiles
+						
+						for (MAP *connectedTile : connectedTiles)
+						{
+							internalConcaveNodes.emplace(connectedTile, INT_MAX);
+							processedNodes.insert(connectedTile);
+							newOpenNodes.push_back(connectedTile);
+						}
+						
+						break;
+						
+					}
+					else
+					{
+						connectedTiles.push_back(stepTile);
+					}
+					
+				}
+				
+			}
+			
+			openNodes.clear();
+			openNodes.swap(newOpenNodes);
+			
+		}
+		
+	}
+	
+	// update congestion value
+	
+	for (robin_hood::pair<MAP *, double> internalConcaveNodeEntry : internalConcaveNodes)
+	{
+		MAP *tile = internalConcaveNodeEntry.first;
+		
+		double minTotalCongestion = DBL_MAX;
+		
+		for (int i = 0; i < 4; i++)
+		{
+			double totalCongestion = 0.0;
+			
+			for (MAP *radiusTile : getBaseRadiusTiles(tile, false))
+			{
+				// base radius or not concave tile
+				
+				double coefficient;
+				
+				if (radiusTile->is_base_radius())
+				{
+					coefficient = +1.00;
+				}
+				else if (internalConcaveNodes.find(radiusTile) == internalConcaveNodes.end())
+				{
+					coefficient = -0.25;
+				}
+				else
+				{
+					continue;
+				}
+				
+				// exclude one side
+				
+				Location delta = getDelta(tile, radiusTile);
+				Location rectangularDelta = getRectangularCoordinates(delta);
+				
+				if
+				(
+					(i == 0 && rectangularDelta.x >= +1)
+					||
+					(i == 1 && rectangularDelta.y >= +1)
+					||
+					(i == 2 && rectangularDelta.x <= -1)
+					||
+					(i == 3 && rectangularDelta.y <= -1)
+				)
+					continue;
+				
+				// congestion
+				
+				double distance = getEuclidianDistance(getX(tile), getY(tile), getX(radiusTile), getY(radiusTile));
+				double congestion = coefficient * (1.0 / distance) / 1.5; // normalized by 1.5 because this is the lowest practical value
+				totalCongestion += congestion;
+				
+			}
+			
+			minTotalCongestion = std::min(minTotalCongestion, std::max(0.0, totalCongestion));
+			
+		}
+		
+		internalConcaveNodes.at(tile) = minTotalCongestion;
+		
+	}
+	
+	// ----------
+	// external
+	// ----------
+	
+	// collect external base radius tiles
+	
+	robin_hood::unordered_flat_set<MAP *> externalBaseRadiusTiles;
+	
+	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+	{
+		// base radius
+		
+		if (!tile->is_base_radius())
+			continue;
+		
+		// not internal
+		
+		if (internalBaseRadiusTiles.find(tile) != internalBaseRadiusTiles.end())
+			continue;
+		
+		// add tile
+		
+		externalBaseRadiusTiles.insert(tile);
+		
+	}
+	
+	// initialize open nodes
+	
+	openNodes.clear();
+	for (MAP *tile : processedNodes)
+	{
+		openNodes.push_back(tile);
+	}
+	for (MAP *tile : externalBaseRadiusTiles)
+	{
+		processedNodes.insert(tile);
+	}
+	
+	// extend convex coverage
+	
+	while (!openNodes.empty())
+	{
+		for (MAP *currentTile : openNodes)
+		{
+			for (int angle = 0; angle < ANGLE_COUNT; angle++)
+			{
+				MAP *stepTile = currentTile;
+				std::vector<MAP *> connectedTiles;
+				
+				int stepCount = angle % 2 == 0 ? 6 : 5;
+				
+				for (int step = 0; step < stepCount; step++)
+				{
+					stepTile = getTileByAngle(stepTile, angle);
+					
+					// on map
+					
+					if (stepTile == nullptr)
+						break;
+					
+					// check processed
+					
+					if (processedNodes.find(stepTile) != processedNodes.end())
+					{
+						// stop processing and collect connectedTiles
+						
+						for (MAP *connectedTile : connectedTiles)
+						{
+							externalConcaveNodes.emplace(connectedTile, INT_MAX);
+							processedNodes.insert(connectedTile);
+							newOpenNodes.push_back(connectedTile);
+						}
+						
+						break;
+						
+					}
+					else
+					{
+						connectedTiles.push_back(stepTile);
+					}
+					
+				}
+				
+			}
+			
+			openNodes.clear();
+			openNodes.swap(newOpenNodes);
+			
+		}
+		
+	}
+	
+	// update congestion value
+	
+	for (robin_hood::pair<MAP *, double> externalConcaveNodeEntry : externalConcaveNodes)
+	{
+		MAP *tile = externalConcaveNodeEntry.first;
+		
+		double minTotalCongestion = DBL_MAX;
+		
+		for (int i = 0; i < 4; i++)
+		{
+			double totalCongestion = 0.0;
+			
+			for (MAP *radiusTile : getBaseRadiusTiles(tile, false))
+			{
+				// base radius or concave tile
+				
+				double coefficient;
+				
+				if (radiusTile->is_base_radius())
+				{
+					coefficient = +1.00;
+				}
+				else if (externalConcaveNodes.find(radiusTile) == externalConcaveNodes.end())
+				{
+					coefficient = -0.25
+					;
+				}
+				else
+				{
+					continue;
+				}
+				
+				// exclude one side
+				
+				Location delta = getDelta(tile, radiusTile);
+				Location rectangularDelta = getRectangularCoordinates(delta);
+				
+				if
+				(
+					(i == 0 && rectangularDelta.x >= +1)
+					||
+					(i == 1 && rectangularDelta.y >= +1)
+					||
+					(i == 2 && rectangularDelta.x <= -1)
+					||
+					(i == 3 && rectangularDelta.y <= -1)
+				)
+					continue;
+				
+				// congestion
+				
+				double distance = getEuclidianDistance(getX(tile), getY(tile), getX(radiusTile), getY(radiusTile));
+				double congestion = coefficient * (1.0 / distance) / 1.5; // normalized by 1.5 because this is the lowest practical value
+				totalCongestion += congestion;
+				
+			}
+			
+			minTotalCongestion = std::min(minTotalCongestion, std::max(0.0, totalCongestion));
+			
+		}
+		
+		externalConcaveNodes.at(tile) = minTotalCongestion;
+		
+	}
+	
+	if (DEBUG)
+	{
+		debug("\tinternal\n");
+		for (robin_hood::pair<MAP *, double> internalConcaveNodeEntry : internalConcaveNodes)
+		{
+			MAP *tile = internalConcaveNodeEntry.first;
+			double congestion = internalConcaveNodeEntry.second;
+			debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), congestion);
+		}
+		
+		debug("\texternal\n");
+		for (robin_hood::pair<MAP *, double> externalConcaveNodeEntry : externalConcaveNodes)
+		{
+			MAP *tile = externalConcaveNodeEntry.first;
+			double congestion = externalConcaveNodeEntry.second;
+			debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), congestion);
+		}
+		
+	}
+	
 }
 

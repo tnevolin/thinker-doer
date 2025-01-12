@@ -28,6 +28,11 @@ double baseColonyDemandMultiplier;
 robin_hood::unordered_flat_map<int, BaseProductionInfo> baseProductionInfos;
 robin_hood::unordered_flat_map<int, double> weakestEnemyBaseProtection;
 
+double const LAND_ARTILLERY_SATURATION_RATIO = 0.20;
+double const INFANTRY_DEFENSIVE_SATURATION_RATIO = 0.75;
+double globalLandArtillerySaturationCoefficient;
+double globalInfantryDefensiveSaturationCoefficient;
+
 // sea transport parameters by sea cluster
 
 robin_hood::unordered_flat_map<int, double> seaTransportDemands;
@@ -130,7 +135,7 @@ void populateFactionProductionData()
 {
 	const int AVAILABLE_AIR_FORMER_COUNT_DIVISOR = 2;
 	const int AVAILABLE_SEA_FORMER_COUNT_DIVISOR = 1;
-	const int AVAILABLE_LAND_FORMER_COUNT_DIVISOR = 3;
+	const int AVAILABLE_LAND_FORMER_COUNT_DIVISOR = 2;
 	
 	// available former counts
 	
@@ -229,6 +234,66 @@ void populateFactionProductionData()
 		}
 		
 	}
+	
+	// landArtillery and landDefenders saturation
+	
+	int landOffensiveVehicleCount = 0;
+	int landArtilleryVehicleCount = 0;
+	
+	for (int vehicleId : aiData.combatVehicleIds)
+	{
+		VEH *vehicle = getVehicle(vehicleId);
+		
+		// land
+		
+		if (vehicle->triad() != TRIAD_LAND)
+			continue;
+		
+		// offensive
+		
+		if (!isOffensiveVehicle(vehicleId))
+			continue;
+		
+		// land offensive count
+		
+		landOffensiveVehicleCount++;
+		
+		// artillery
+		
+		if (!isArtilleryVehicle(vehicleId))
+			continue;
+		
+		// land artillery count
+		
+		landArtilleryVehicleCount++;
+		
+	}
+	
+	double landArtilleryRatio = landOffensiveVehicleCount == 0 ? 0.0 : (double)landArtilleryVehicleCount / (double)landOffensiveVehicleCount;
+	globalLandArtillerySaturationCoefficient = landArtilleryRatio <= LAND_ARTILLERY_SATURATION_RATIO ? 1.0 : (1.0 - landArtilleryRatio) / (1.0 - LAND_ARTILLERY_SATURATION_RATIO);
+	
+	int vehicleCount = 0;
+	int infantryDefensiveVehicleCount = 0;
+	
+	for (int vehicleId : aiData.combatVehicleIds)
+	{
+		// vehicle count
+		
+		vehicleCount++;
+		
+		// infantry defensive
+		
+		if (!isInfantryDefensiveVehicle(vehicleId))
+			continue;
+		
+		// infantry defensive count
+		
+		infantryDefensiveVehicleCount++;
+		
+	}
+	
+	double infantryDefensiveRatio = vehicleCount == 0 ? 0.0 : (double)infantryDefensiveVehicleCount / (double)vehicleCount;
+	globalInfantryDefensiveSaturationCoefficient = infantryDefensiveRatio <= INFANTRY_DEFENSIVE_SATURATION_RATIO ? 1.0 : (1.0 - infantryDefensiveRatio) / (1.0 - INFANTRY_DEFENSIVE_SATURATION_RATIO);
 	
 }
 
@@ -1404,7 +1469,7 @@ void evaluateExpansionUnits()
 	// citizen loss gain
 	
 	double citizenIncome = getBaseCitizenIncome(baseId);
-	double citizenLossGain = getGainIncome(-citizenIncome);
+	double citizenLossGain = 0.75 * getGainIncome(-citizenIncome);
 	
 	// process colony units
 	
@@ -1507,11 +1572,15 @@ void evaluateExpansionUnits()
 		
 		double gain = bestBuildSiteGain + citizenLossGain;
 		
+		// expantion priority coefficient
+		
+		double productionExpantionPriorityCoefficient = conf.ai_production_expansion_priority + conf.ai_production_expansion_priority_bonus * (1.0 / (1.0 + (double)std::max(0, (int)aiData.baseIds.size() - 2) / conf.ai_production_expansion_priority_bonus_base_scale));
+		
 		// priority
 		
 		double rawPriority = getItemPriority(unitId, gain);
 		double priority =
-			conf.ai_production_expansion_priority
+			productionExpantionPriorityCoefficient
 			* globalColonyDemand
 			* populationLimitCoefficient
 			* rawPriority
@@ -1529,7 +1598,7 @@ void evaluateExpansionUnits()
 			" bestBuildSite=%s"
 			" bestBuildSiteGain=%5.2f"
 			" gain=%5.2f"
-			" conf.ai_production_expansion_priority=%5.2f"
+			" productionExpantionPriorityCoefficient=%5.2f"
 			" globalColonyDemand=%5.2f"
 			" populationLimitCoefficient=%5.2f"
 			" rawPriority=%5.2f"
@@ -1540,7 +1609,7 @@ void evaluateExpansionUnits()
 			, getLocationString(bestBuildSite).c_str()
 			, bestBuildSiteGain
 			, gain
-			, conf.ai_production_expansion_priority
+			, productionExpantionPriorityCoefficient
 			, globalColonyDemand
 			, populationLimitCoefficient
 			, rawPriority
@@ -1554,6 +1623,22 @@ void evaluateTerraformingUnits()
 {
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
+	
+	// supported formers
+	
+	int supportedFormerCounts[3] = {0, 0, 0, };
+	
+	for (int vehicleId : aiData.formerVehicleIds)
+	{
+		VEH *vehicle = getVehicle(vehicleId);
+		int triad = vehicle->triad();
+		
+		if (vehicle->home_base_id != baseId)
+			continue;
+		
+		supportedFormerCounts[triad]++;
+		
+	}
 	
 	// base clusters
 	
@@ -1572,6 +1657,12 @@ void evaluateTerraformingUnits()
 		// for sea former base should have access to water
 		
 		if (triad == TRIAD_SEA && !isBaseAccessesWater(baseId))
+			continue;
+		
+		// early base restriction
+		// no more than one former of each triad
+		
+		if (*CurrentTurn < 40 && supportedFormerCounts[triad] >= 1)
 			continue;
 		
 		// unit priority
@@ -2044,6 +2135,10 @@ void evaluateBaseDefenseUnits()
 		if (!isBaseCanBuildUnit(baseId, unitId))
 			continue;
 		
+		// saturation ratio
+		
+		double infantryDefensiveSaturationCoefficient = (isInfantryDefensiveUnit(unitId) && !isOffensiveUnit(unitId, aiFactionId)) ? globalInfantryDefensiveSaturationCoefficient : 1.0;
+		
 		// seek for best target base gain
 		
 		double bestGain = 0.0;
@@ -2123,6 +2218,7 @@ void evaluateBaseDefenseUnits()
 		double rawPriority = getItemPriority(unitId, bestGain);
 		double priority =
 			conf.ai_production_base_protection_priority
+			* infantryDefensiveSaturationCoefficient
 			* rawPriority
 		;
 		
@@ -2135,12 +2231,14 @@ void evaluateBaseDefenseUnits()
 			"\t%-32s"
 			" priority=%5.2f   |"
 			" ai_production_base_protection_priority=%5.2f"
+			" infantryDefensiveSaturationCoefficient=%5.2f"
 			" bestGain=%5.2f"
 			" rawPriority=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
 			, conf.ai_production_base_protection_priority
+			, infantryDefensiveSaturationCoefficient
 			, bestGain
 			, rawPriority
 		);
@@ -2320,6 +2418,11 @@ void evaluateEnemyBaseAssaultUnits()
 		if (!((offenseValue < 0 || offenseValue >= aiFactionInfo->maxConOffenseValue) && (defenseValue < 0 || defenseValue >= aiFactionInfo->maxConDefenseValue)))
 			continue;
 		
+		// exclude those base cannot produce
+		
+		if (!isBaseCanBuildUnit(baseId, unitId))
+			continue;
+		
 		// unit priority
 		
 		double unitPriorityCoefficient = getUnitPriorityCoefficient(baseId, unitId);
@@ -2327,12 +2430,11 @@ void evaluateEnemyBaseAssaultUnits()
 		if (unitPriorityCoefficient <= 0.0)
 			return;
 		
-		// exclude those base cannot produce
-		
-		if (!isBaseCanBuildUnit(baseId, unitId))
-			continue;
-		
 		debug("\t%-32s\n", unit->name);
+		
+		// landArtillerySaturationCoefficient
+		
+		double landArtillerySaturationCoefficient = isLandArtilleryUnit(unitId) ? globalLandArtillerySaturationCoefficient : 1.0;
 		
 		// iterate potential enemy bases
 		
@@ -2439,6 +2541,7 @@ void evaluateEnemyBaseAssaultUnits()
 		double rawPriority = getItemPriority(unitId, bestGain);
 		double priority =
 			unitPriorityCoefficient
+			* landArtillerySaturationCoefficient
 			* rawPriority
 		;
 		
@@ -2451,12 +2554,14 @@ void evaluateEnemyBaseAssaultUnits()
 			"\t%-32s"
 			" priority=%5.2f   |"
 			" unitPriorityCoefficient=%5.2f"
+			" landArtillerySaturationCoefficient=%5.2f"
 			" bestGain=%5.2f"
 			" rawPriority=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
 			, unitPriorityCoefficient
+			, landArtillerySaturationCoefficient
 			, bestGain
 			, rawPriority
 		);

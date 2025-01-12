@@ -2276,7 +2276,6 @@ void populateLandTransportedClusters()
 		// insert initial tile
 		
 		landTransportedClusters.at(tileIndex) = clusterIndex;
-debug(">%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), clusterIndex);
 		
 		borderTiles.push_back(tileIndex);
 		
@@ -2303,7 +2302,6 @@ debug(">%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), clusterInde
 					// insert adjacent tile
 					
 					landTransportedClusters.at(adjacentTileIndex) = clusterIndex;
-debug(">%s -> %s %2d\n", getLocationString(*MapTiles + currentTileIndex).c_str(), getLocationString(*MapTiles + adjacentTileIndex).c_str(), clusterIndex);
 					
 					newBorderTiles.push_back(adjacentTileIndex);
 					

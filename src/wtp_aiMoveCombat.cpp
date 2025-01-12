@@ -62,8 +62,6 @@ void immediateAttack()
 		if (hasTask(vehicleId))
 			continue;
 		
-		debug("\t[%4d] %s %-32s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), vehicle->name());
-		
 		// collect attack actions
 		
 		robin_hood::unordered_flat_map<MAP *, AttackAction> meleeAttackActions;
@@ -580,6 +578,7 @@ void moveProtectors()
 			" [%4d] %s -> %s"
 			" %-25s"
 			" baseInfo.isSatisfied=%d"
+			" baseInfo.combatData.isSatisfied= %d %d"
 			"\n"
 			, taskPriority.priority
 			, taskPriority.vehicleId
@@ -587,6 +586,7 @@ void moveProtectors()
 			, getLocationString(taskPriority.destination).c_str()
 			, getBase(taskPriority.baseId)->name
 			, baseInfo.isSatisfied(taskPriority.vehicleId, false)
+			, baseInfo.combatData.isSatisfied(false), baseInfo.combatData.isSatisfied(true)
 		);
 		
 	}
@@ -606,6 +606,8 @@ void moveProtectors()
 	
 	// hold base current protectors until future protectors arrive
 	
+	debug("\thold current protectors\n");
+	
 	for (int baseId : aiData.baseIds)
 	{
 		MAP *baseTile = getBaseMapTile(baseId);
@@ -613,6 +615,8 @@ void moveProtectors()
 		
 		if (!baseInfo.combatData.isSatisfied(true))
 		{
+			debug("\t\t%-25s\n", Bases[baseId].name)
+			
 			for (int vehicleId : baseInfo.garrison)
 			{
 				// infantry defensive
@@ -630,6 +634,15 @@ void moveProtectors()
 				
 				if (!transitVehicle(Task(vehicleId, TT_HOLD, baseTile)))
 					continue;
+				
+				// add base protection
+				
+				baseInfo.combatData.addVehicle(vehicleId, true);
+				
+				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSatisfied(true) = %d\n", vehicleId, Vehicles[vehicleId].name(), baseInfo.combatData.isSatisfied(true))
+				
+				if (baseInfo.combatData.isSatisfied(true))
+					break;
 				
 			}
 			
@@ -1343,6 +1356,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 		// travel time
 		
 		double travelTime = std::max(1.0, closestMonolithLocaionTravelTime.value);
+		double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale, travelTime);
 		
 		// repair
 		
@@ -1359,7 +1373,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 			int unitMineralCost = Rules->mineral_cost_multi * vehicle->cost();
 			double fullRepairBonus = conf.ai_combat_strength_increase_value * getVehicleRelativeDamage(vehicleId) * (double)unitMineralCost;
 			double repairBonus = fullRepairBonus;
-			double repairGain = getGainRepetion(getGainBonus(repairBonus), 1.0, travelTime);
+			double repairGain = getGainBonus(repairBonus) * travelTimeCoefficient;
 			
 			repairPriority =
 				repairPriorityCoefficient
@@ -1374,6 +1388,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 				" unitMineralCost=%2d"
 				" repairBonus=%5.2f"
 				" travelTime=%7.2f"
+				" travelTimeCoefficient=%5.2f"
 				" repairGain=%5.2f"
 				"\n"
 				, getLocationString(closestMonolithLocaionTravelTime.tile).c_str()
@@ -1382,6 +1397,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 				, unitMineralCost
 				, repairBonus
 				, travelTime
+				, travelTimeCoefficient
 				, repairGain
 			);
 			
@@ -1402,7 +1418,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 			int unitMineralCost = Rules->mineral_cost_multi * vehicle->cost();
 			double strengthIncrease = getMoraleMultiplier(vehicle->morale + 1) / getMoraleMultiplier(vehicle->morale) - 1.0;
 			double promotionBonus = conf.ai_combat_strength_increase_value * strengthIncrease * (double)unitMineralCost;
-			double promotionGain = getGainRepetion(getGainBonus(promotionBonus), 1.0, travelTime);
+			double promotionGain = getGainBonus(promotionBonus) * travelTimeCoefficient;
 			
 			promotionPriority =
 				promotionPriorityCoefficient
@@ -1417,6 +1433,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 				" unitMineralCost=%2d"
 				" promotionBonus=%5.2f"
 				" travelTime=%7.2f"
+				" travelTimeCoefficient=%5.2f"
 				" promotionGain=%5.2f"
 				"\n"
 				, getLocationString(closestMonolithLocaionTravelTime.tile).c_str()
@@ -1425,6 +1442,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 				, unitMineralCost
 				, promotionBonus
 				, travelTime
+				, travelTimeCoefficient
 				, promotionGain
 			);
 			

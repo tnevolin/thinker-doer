@@ -356,13 +356,11 @@ control=60021> but reduces $LINK<Labs=22> output by half.
 #HELPFAC24
 Helps base grow faster by improving living conditions.
 ^Allows base population growing beyond size {7}.
-^Adds +1 GROWTH.
 
 #; Habitation Dome
 #HELPFAC25
 Helps base grow faster by improving living conditions.
 ^Allows base population growing beyond size {14}.
-^Adds +1 GROWTH.
 
 #; Pressure Dome
 #HELPFAC26
@@ -1043,11 +1041,10 @@ Numbers below represent a percentage change from default, not number of columns.
 ^    +3  = -30% nutrient required =  143% growth rate
 ^    +4  = -40% nutrient required =  167% growth rate
 ^    +5  = -50% nutrient required =  200% growth rate!
-^    +6  = -60% nutrient required =  250% growth rate!
-^    +7  = -70% nutrient required =  333% growth rate!
-^    +8  = -80% nutrient required =   500% growth rate!
-^    +9  = -90% nutrient required = 1000% growth rate!
-^    +10 = [Population Boom!!]
+^    +6  = -60% nutrient required =  250% growth rate!!
+^
+^Base in {$LINK<Golden Age=10>} and maximal GROWTH rating enters {population boom}!
+^New citizen appears at the base every turn if there is enough food for them.
 
 #;Planet
 #HELPEFFECT7

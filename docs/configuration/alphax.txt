@@ -132,10 +132,10 @@ Airbase,          DocAir,  Airbase,          Disable, 10,  Construct $STR0, ., .
 Sensor Array,     None,    Sensor Buoy,      None,     4,  Construct $STR0, O, O
 Fungus,           None,    Sea Fungus,       None,     6,  Remove $STR0,    F, F
 Fungus,           EcoEng,  Sea Fungus,       EcoEng,   6,  Plant $STR0,     F, Ctrl+F
-Condenser,        EcoEng,  Condenser,        Disable, 12,  Construct $STR0, N, N
-Echelon Mirror,   EcoEng,  Echelon Mirror,   Disable, 12,  Construct $STR0, E, Shift+E
-Thermal Borehole, Super,   Thermal Borehole, Disable, 18,  Construct $STR0, B, Shift+B
-Aquifer,          FldMod,  Aquifer,          Disable, 18,  Drill to $STR0,  Q, Q
+Condenser,        EcoEng,  Condenser,        Disable, 16,  Construct $STR0, N, N
+Echelon Mirror,   EcoEng,  Echelon Mirror,   Disable, 20,  Construct $STR0, E, Shift+E
+Thermal Borehole, Super,   Thermal Borehole, Disable, 16,  Construct $STR0, B, Shift+B
+Aquifer,          FldMod,  Aquifer,          Disable, 16,  Drill to $STR0,  Q, Q
 Raise Land,       EcoEng,  Raise Sea Floor,  EcoEng,  12,  Terraform UP,    ], ]]
 Lower Land,       EcoEng,  Lower Sea Floor,  EcoEng,  12,  Terraform DOWN,  [, [[
 Level Terrain,    None,    Level Terrain,    Disable,  8,  Terraform LEVEL, _, _
@@ -754,7 +754,7 @@ The Universal Translator,    100, 0, HomoSup, Disable,  Labs +30% + Two Free Tec
 The Network Backbone,        160, 0, BFG9000, Disable,  +1 Lab Per Commerce/Net Node,    0, 0, 1, 0, 0,
 The Nano Factory,             40, 0, IndRob,  Disable,  Repair Units; Low Upgrade Costs, 2, 1, 0, 0, 0,
 The Living Refinery,          40, 0, Gene,    Disable,  +2 SUPPORT (social),             0, 1, 0, 1, 0,
-The Cloning Vats,            120, 0, BioMac,  Disable,  Population Boom At All Bases,    0, 0, 0, 1, 2,
+The Cloning Vats,            120, 0, BioMac,  Disable,  +2 GROWTH (social),              0, 0, 0, 1, 2,
 The Self-Aware Colony,       200, 0, HAL9000, Disable,  Maintenance Halved; Extra Police,0, 1, 0, 2, 0,
 The Clinical Immortality,    200, 0, NanEdit, Disable,  Extra Talent Every Base,         0, 0, 1, 1, 0,
 The Space Elevator,          160, 0, Space,   Disable,  Energy +100%/Orbital Cost Halved,0, 0, 2, 2, 0,
@@ -962,15 +962,15 @@ Thought Control, WillPow,   ++POLICE,     ++MORALE,     ++PROBE,     ---SUPPORT
 
 #SOCGROWTH
 -3, NEAR-ZERO POPULATION GROWTH
--2, -20% growth rate
--1, -10% growth rate
- 0, Normal growth rate
- 1, +10% growth rate
- 2, +20% growth rate
- 3, +30% growth rate
- 4, +40% growth rate
- 5, +50% growth rate!
- 6, POPULATION BOOM!!
+-2,  80% growth rate
+-1,  90% growth rate
+ 0, 100% growth rate (normal)
+ 1, 110% growth rate
+ 2, 125% growth rate
+ 3, 140% growth rate
+ 4, 165% growth rate
+ 5, 200% growth rate!
+ 6, 250% growth rate!!
 
 #SOCPLANET
 -3, Wanton ecological disruption; -3 Fungus production

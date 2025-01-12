@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v338"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v341"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -445,7 +445,8 @@ struct Config {
     double ai_production_pod_bonus;
     double ai_production_pod_popping_priority;
     double ai_production_expansion_priority;
-    double ai_production_expansion_same_continent_priority_multiplier;
+    double ai_production_expansion_priority_bonus;
+    double ai_production_expansion_priority_bonus_base_scale;
     int ai_production_combat_unit_turns_limit;
     int ai_production_unit_min_mineral_surplus;
     double ai_production_improvement_coverage_land;
@@ -475,9 +476,11 @@ struct Config {
     double ai_expansion_travel_time_multiplier;
     double ai_expansion_coastal_base;
     double ai_expansion_ocean_connection_base;
-    double ai_expansion_land_use_coefficient;
-    double ai_expansion_radius_overlap_base_value;
+    int ai_expansion_radius_overlap_ignored;
     double ai_expansion_radius_overlap_coefficient;
+    double ai_expansion_internal_border_connection_coefficient;
+    double ai_expansion_external_border_connection_coefficient;
+    double ai_expansion_land_use_coefficient;
     double ai_expansion_placement_coefficient;
     double ai_terraforming_nutrientWeight;
     double ai_terraforming_mineralWeight;

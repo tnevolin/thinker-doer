@@ -943,9 +943,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_production_expansion_priority = atof(value);
     }
-    else if (MATCH("ai_production_expansion_same_continent_priority_multiplier"))
+    else if (MATCH("ai_production_expansion_priority_bonus"))
     {
-        cf->ai_production_expansion_same_continent_priority_multiplier = atof(value);
+        cf->ai_production_expansion_priority_bonus = atof(value);
+    }
+    else if (MATCH("ai_production_expansion_priority_bonus_base_scale"))
+    {
+        cf->ai_production_expansion_priority_bonus_base_scale = atof(value);
     }
     else if (MATCH("ai_production_combat_unit_turns_limit"))
     {
@@ -1089,17 +1093,25 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_expansion_ocean_connection_base = atof(value);
     }
-    else if (MATCH("ai_expansion_land_use_coefficient"))
+    else if (MATCH("ai_expansion_radius_overlap_ignored"))
     {
-        cf->ai_expansion_land_use_coefficient = atof(value);
-    }
-    else if (MATCH("ai_expansion_radius_overlap_base_value"))
-    {
-        cf->ai_expansion_radius_overlap_base_value = atof(value);
+        cf->ai_expansion_radius_overlap_ignored = atoi(value);
     }
     else if (MATCH("ai_expansion_radius_overlap_coefficient"))
     {
         cf->ai_expansion_radius_overlap_coefficient = atof(value);
+    }
+    else if (MATCH("ai_expansion_internal_border_connection_coefficient"))
+    {
+        cf->ai_expansion_internal_border_connection_coefficient = atof(value);
+    }
+    else if (MATCH("ai_expansion_external_border_connection_coefficient"))
+    {
+        cf->ai_expansion_external_border_connection_coefficient = atof(value);
+    }
+    else if (MATCH("ai_expansion_land_use_coefficient"))
+    {
+        cf->ai_expansion_land_use_coefficient = atof(value);
     }
     else if (MATCH("ai_expansion_placement_coefficient"))
     {

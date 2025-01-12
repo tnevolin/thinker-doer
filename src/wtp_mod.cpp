@@ -373,6 +373,24 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		addDefenderBonus(defenderStrengthPointer, conf.isle_of_deep_defense_bonus, "Protective");
 	}
 	
+    // ----------------------------------------------------------------------------------------------------
+    // early game colony is tougher against aliens
+    // ----------------------------------------------------------------------------------------------------
+	
+    if
+	(
+		*CurrentTurn < 50
+		&&
+		// attacker is alien
+		attackerVehicle->faction_id == 0
+		&&
+		// defender is colony
+		isColonyUnit(defenderVehicle->unit_id)
+	)
+	{
+		addDefenderBonus(defenderStrengthPointer, 100, "Determination");
+	}
+	
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.
 //    // adjust summary lines to the bottom
 //

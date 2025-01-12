@@ -933,7 +933,7 @@ void setSafeMoveTo(int vehicleId, MAP *destination)
 		MAP *tile = reachableLocation.tile;
 		double danger = getVehicleTileDanger(vehicleId, tile);
 		
-		double distance = getVectorDistance(tile, destination);
+		double distance = getEuqlideanDistance(tile, destination);
 		double weight = danger + 0.2 * distance;
 		
 		if (danger > 0.0)

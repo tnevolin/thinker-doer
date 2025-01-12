@@ -145,6 +145,8 @@ struct TileInfo
 	// artillery zone
 	bool artilleryZone = false;
 	// empty base capture
+	bool hostileBaseCapture = false;
+	bool neutralBaseCapture = false;
 	bool baseCapture = false;
 	
 	// nearest bases

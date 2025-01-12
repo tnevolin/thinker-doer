@@ -11,89 +11,27 @@ const int PLACEMENT_CLOSE_TILE_RANGE = PLACEMENT_CLOSE_BASE_RANGE - 2;
 const double PLACEMENT_COMBINED_DISTANCE[] = {6.0, 10.0};
 const double PLACEMENT_ANGLE_SIN[] = {+0.0, +1.0};
 
-struct PlacementConfiguration
+int const PLACEMENT_CONGESTION_PROXIMITY_MAX = 17;
+double const PLACEMENT_CONGESTION[PLACEMENT_CONGESTION_PROXIMITY_MAX + 1] =
 {
-	double multiplier;
-	std::vector<std::array<int, 2>> gaps;
-};
-const int PLACEMENT_CONFIGURATION_MAX_RANGE = 7;
-PlacementConfiguration const PLACEMENT_CONFIGURATIONS[PLACEMENT_CONFIGURATION_MAX_RANGE + 1][PLACEMENT_CONFIGURATION_MAX_RANGE + 1] =
-{
-	{	// 0
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-	},
-	{	// 1
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-	},
-	{	// 2
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-	},
-	{	// 3
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-	},
-	{	// 4
-		{0.1, {{+2,+2},{+2,-2},}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-		{1.0, {{+2,+2},}},
-		{0.0, {}},
-		{0.0, {}},
-	},
-	{	// 5
-		{0.0, {}},
-		{0.1, {{+2,+2},{+3,-1},}},
-		{0.3, {{+2,+2},{+3, 0},}},
-		{0.5, {{+2,+2},{+3,+1},}},
-		{1.0, {{+2,+2},{+3,+2},}},
-		{1.0, {{+2,+2},{+3,+2},{+2,+3},{+3,+3},}},
-		{0.0, {}},
-		{0.0, {}},
-	},
-	{	// 6
-		{1.0, {{+3,+1},{+3, 0},{+3,-1},}},
-		{1.0, {{+3,+1},{+3, 0},}},
-		{1.0, {{+3,+1},}},
-		{0.3, {{+2,+2},{+3,+2},}},
-		{0.5, {{+2,+2},{+3,+2},{+4,+2},}},
-		{0.3, {{+2,+2},{+3,+2},{+4,+2},{+2,+3},{+3,+3},{+4,+3},}},
-		{0.1, {{+2,+2},{+3,+2},{+4,+2},{+2,+3},{+3,+3},{+4,+3},{+2,+4},{+3,+4},{+4,+4},}},
-		{0.0, {}},
-	},
-	{	// 7
-		{0.5, {{+2,+1},{+3,+1},{+2, 0},{+3, 0},{+2,-1},{+3,-1},}},
-		{0.5, {{+2,+1},{+3,+1},{+2, 0},{+3, 0},}},
-		{0.3, {{+3,+1},{+3,+2},}},
-		{0.1, {{+2,+2},{+3,+2},{+4,+2},{+3,+1},{+4,+1},{+5,+1},}},
-		{0.1, {{+2,+2},{+3,+2},{+4,+2},{+5,+2},}},
-		{0.0, {}},
-		{0.0, {}},
-		{0.0, {}},
-	},
+	0.0,	//  0
+	0.0,	//  1
+	0.0,	//  2
+	0.0,	//  3
+	0.0,	//  4
+	0.0,	//  5
+	0.0,	//  6
+	0.0,	//  7
+	0.0,	//  8
+	0.0,	//  9
+	0.0,	// 10
+	0.0,	// 11
+	1.0,	// 12
+	1.0,	// 13
+	0.7,	// 14
+	0.4,	// 15
+	0.0,	// 16
+	0.0,	// 17
 }
 ;
 
@@ -141,8 +79,11 @@ int getExpansionRange(MAP *tile);
 Resource getAverageTileYield(MAP *tile);
 int getNearestEnemyBaseRange(MAP *tile);
 std::vector<MAP *> getUnavailableBuildSites(MAP *buildSite);
-double getBasePlacementLandUse(MAP *buildSite);
-int getBasePlacementRadiusOverlap(MAP *tile);
+double getBuildSiteOverlapScore(MAP *buildSite);
+int getTileBaseOverlapCount(MAP *tile);
+double getBuildSiteConnectionScore(MAP *buildSite);
+double getBuildSiteLandUseScore(MAP *buildSite);
 double getEffectiveYieldScore(double nutrient, double mineral, double energy);
 double getColonyTravelTimeCoefficient(double travelTime);
+void populateConcaveTiles();
 

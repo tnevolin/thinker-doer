@@ -1,3 +1,21 @@
+# Version 341
+
+* Simplified AI base placement algorithm.
+* Echelon Mirror increases energy output of each adjacent Solar Collector by **2**.
+* Echelon Mirror eco-damage is reverted to 6.
+* Echelon Mirror cost is 20.
+* Condenser cost is 16.
+* Borehole cost is 16.
+* Drill to Aquifer cost is 16.
+
+* AI update.
+  * AI do not build too much artillery anymore.
+  * AI do not build too much defensive units anymore.
+
+# Version 340
+
+* [Bug] Fixed my computation bug.
+
 # Version 339
 
 * Crawler is unlocked by Adv. Ecological Engineering.

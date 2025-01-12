@@ -1925,9 +1925,9 @@ void populateWarzones()
 		bool vehicleTileOcean = is_ocean(vehicleTile);
 		int triad = vehicle->triad();
 		
-		// not friendly
+		// hostal or neutral
 		
-		if (isFriendly(aiFactionId, vehicle->faction_id))
+		if (!isHostile(aiFactionId, vehicle->faction_id) && !isNeutral(aiFactionId, vehicle->faction_id))
 			continue;
 		
 		// combat
@@ -1957,7 +1957,21 @@ void populateWarzones()
 			MAP *tile = moveAction.tile;
 			TileInfo &tileInfo = aiData.getTileInfo(tile);
 			
-			tileInfo.baseCapture = true;
+			// disregard aliens at their max reach
+			
+			if (vehicle->faction_id == 0 && getRange(vehicleTile, tile) >= getVehicleMoveRate(vehicleId) / (conf.magtube_movement_rate == 0 ? Rules->move_rate_roads : conf.magtube_movement_rate))
+				continue;
+			
+			if (isHostile(aiFactionId, vehicle->faction_id))
+			{
+				tileInfo.hostileBaseCapture = true;
+				tileInfo.baseCapture = true;
+			}
+			else if (isNeutral(aiFactionId, vehicle->faction_id))
+			{
+				tileInfo.neutralBaseCapture = true;
+				tileInfo.baseCapture = true;
+			}
 			
 		}
 			
@@ -1965,11 +1979,20 @@ void populateWarzones()
 	
 	if (DEBUG)
 	{
-		debug("baseCapture\n");
+		debug("hostileBaseCapture\n");
 		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
 		{
 			TileInfo &tileInfo = aiData.getTileInfo(tile);
-			if (tileInfo.baseCapture)
+			if (tileInfo.hostileBaseCapture)
+			{
+				debug("\t%s\n", getLocationString(tile).c_str());
+			}
+		}
+		debug("neutralBaseCapture\n");
+		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+		{
+			TileInfo &tileInfo = aiData.getTileInfo(tile);
+			if (tileInfo.neutralBaseCapture)
 			{
 				debug("\t%s\n", getLocationString(tile).c_str());
 			}
@@ -2142,7 +2165,7 @@ void populateEnemyStacks()
 		
 		// bombardmentDestructive
 		
-		enemyStackInfo.bombardmentDestructive = getLocationBombardmentMinRelativePower(enemyStackInfo.tile) == 0.0;
+		enemyStackInfo.bombardmentDestructive = getLocationBombardmentMaxRelativeDamage(enemyStackInfo.tile) == 1.0;
 		
 	}
 	
@@ -2854,9 +2877,10 @@ void populateEnemyBaseAssaultEffects()
 				VEH *enemyVehicle = getVehicle(enemyVehicleId);
 				int enemyVehicleFactionId = enemyVehicle->faction_id;
 				int enemyVehicleUnitId = enemyVehicle->unit_id;
+				double enemyVehicleRelativePower = getVehicleRelativePower(enemyVehicleId);
 				
 				// our unit assaulting enemy base
-				double assaultEffect = getAssaultEffect(aiFactionId, aiUnitId, enemyVehicleFactionId, enemyVehicleUnitId, baseTile);
+				double assaultEffect = getAssaultEffect(aiFactionId, aiUnitId, 1.0, enemyVehicleFactionId, enemyVehicleUnitId, enemyVehicleRelativePower, baseTile);
 				assaultEffectAverageAccumulator.add(enemyVehicleWeight, assaultEffect);
 			
 			}
@@ -3013,7 +3037,7 @@ void evaluateEnemyStacks()
 			{
 				VEH *foeVehicle = getVehicle(foeVehicleId);
 				
-				double assaultEffect = getAssaultEffect(aiFactionId, ownUnitId, foeVehicle->faction_id, foeVehicle->unit_id, enemyStackTile);
+				double assaultEffect = getAssaultEffect(aiFactionId, ownUnitId, 1.0, foeVehicle->faction_id, foeVehicle->unit_id, getVehicleRelativePower(foeVehicleId), enemyStackTile);
 				
 				assaultEffectAverageAccumulator.add(assaultEffect);
 				
@@ -3703,7 +3727,7 @@ void evaluateBaseDefense()
 					if (weight == 0.0)
 						continue;
 					
-					double assaultEffect = getAssaultEffect(foeFactionId, foeUnitId, aiFactionId, ownUnitId, baseTile);
+					double assaultEffect = getAssaultEffect(foeFactionId, foeUnitId, 1.0, aiFactionId, ownUnitId, 1.0, baseTile);
 					double protectionEffect = assaultEffect == 0.0 ? 0.0 : 1.0 / assaultEffect;
 					
 					protectionEffectAverageAccumulator.add(weight, protectionEffect);
@@ -5480,36 +5504,35 @@ double getVehicleConventionalDefenseModifier(int vehicleId)
 
 }
 
-bool isOffensiveUnit(int unitId)
+bool isOffensiveUnit(int unitId, int factionId)
 {
 	UNIT *unit = getUnit(unitId);
 	int offenseValue = getUnitOffenseValue(unitId);
-	int defenseValue = getUnitDefenseValue(unitId);
-
+	
 	// non infantry unit is always offensive
-
+	
 	if (unit->chassis_id != CHS_INFANTRY)
 		return true;
-
+	
+	// artillery unit is always offensive
+	
+	if (isArtilleryUnit(unitId))
+		return true;
+	
 	// psi offense makes it offensive unit
-
+	
 	if (offenseValue < 0)
 		return true;
-
-	// psi defense and conventional offense makes it NOT offensive unit
-
-	if (defenseValue < 0)
-		return false;
-
-	// conventional offense should be greater or equal than conventional defense
-
-	return offenseValue >= defenseValue;
-
+	
+	// conventional offense should be in higher range of this faction offense
+	
+	return offenseValue > aiData.factionInfos.at(factionId).maxConOffenseValue / 2;
+	
 }
 
 bool isOffensiveVehicle(int vehicleId)
 {
-	return isOffensiveUnit(getVehicle(vehicleId)->unit_id);
+	return isOffensiveUnit(Vehicles[vehicleId].unit_id, Vehicles[vehicleId].faction_id);
 }
 
 double getExponentialCoefficient(double scale, double value)
@@ -8138,7 +8161,7 @@ Assailant tries to capture tile.
 Protector tries to protect tile.
 One of the party should be an AI unit to utilize combat effect table.
 */
-double getAssaultEffect(int assailantFactionId, int assailantUnitId, int protectorFactionId, int protectorUnitId, MAP *tile)
+double getAssaultEffect(int assailantFactionId, int assailantUnitId, double assailantRelativeHealth, int protectorFactionId, int protectorUnitId, double protectorRelativeHealth, MAP *tile)
 {
 	assert(assailantFactionId >= 0 && assailantFactionId < MaxPlayerNum);
 	assert(protectorFactionId >= 0 && protectorFactionId < MaxPlayerNum);
@@ -8156,14 +8179,14 @@ double getAssaultEffect(int assailantFactionId, int assailantUnitId, int protect
 	
 	if (isUnitCanMeleeAttackUnitAtTile(assailantUnitId, protectorUnitId, tile))
 	{
-		double effect =
+		double combatEffect =
 			aiData.combatEffectTable.getCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, CM_MELEE)
 			* getUnitMeleeOffenseStrengthMultipler(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, tile, true)
 		;
 		
-		if (effect > 0.0)
+		if (combatEffect > 0.0)
 		{
-			assailantMeleeAttackEffect = effect;
+			assailantMeleeAttackEffect = assailantRelativeHealth / protectorRelativeHealth * combatEffect;
 		}
 		
 	}
@@ -8174,14 +8197,14 @@ double getAssaultEffect(int assailantFactionId, int assailantUnitId, int protect
 	
 	if (isUnitCanInitiateArtilleryDuel(assailantUnitId, protectorUnitId))
 	{
-		double effect =
+		double combatEffect =
 			aiData.combatEffectTable.getCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, CM_ARTILLERY_DUEL)
 			* getUnitMeleeOffenseStrengthMultipler(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, tile, true)
 		;
 		
-		if (effect > 0.0)
+		if (combatEffect > 0.0)
 		{
-			assailantArtilleryDuelAttackEffect = effect;
+			assailantArtilleryDuelAttackEffect = assailantRelativeHealth / protectorRelativeHealth * combatEffect;
 		}
 		
 	}
@@ -8194,16 +8217,20 @@ double getAssaultEffect(int assailantFactionId, int assailantUnitId, int protect
 	
 	double assailantBombardmentEffect = 0.0;
 	
-	if (isUnitCanInitiateBombardment(assailantUnitId, protectorUnitId))
+	double protectorRelativeDamage = 1.0 - protectorRelativeHealth;
+	double protectorMaxRelativeBombardmentDamage = getPercentageBonusMultiplier(-(Rules->max_dmg_percent_arty_base_bunker));
+	double protectorRemaingingRelativeBombardmentDamage = std::max(0.0, protectorMaxRelativeBombardmentDamage - protectorRelativeDamage);
+	
+	if (isUnitCanInitiateBombardment(assailantUnitId, protectorUnitId) && protectorRemaingingRelativeBombardmentDamage > 0.0)
 	{
-		double effect =
+		double combatEffect =
 			aiData.combatEffectTable.getCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, CM_BOMBARDMENT)
 			* getUnitMeleeOffenseStrengthMultipler(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, tile, true)
 		;
 		
-		if (effect > 0.0)
+		if (combatEffect > 0.0)
 		{
-			assailantBombardmentEffect = 1.0 + 5.0 * effect;
+			assailantBombardmentEffect = std::min(protectorRemaingingRelativeBombardmentDamage, 5.0 * combatEffect);
 		}
 		
 	}
@@ -8218,14 +8245,14 @@ double getAssaultEffect(int assailantFactionId, int assailantUnitId, int protect
 	
 	if (isUnitCanMeleeAttackUnitFromTile(protectorUnitId, assailantUnitId, tile))
 	{
-		double effect =
+		double combatEffect =
 			aiData.combatEffectTable.getCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, CM_MELEE)
 			* getUnitMeleeOffenseStrengthMultipler(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, tile, false)
 		;
 		
-		if (effect > 0.0)
+		if (combatEffect > 0.0)
 		{
-			protectorMeleeAttackEffect = effect;
+			protectorMeleeAttackEffect = combatEffect;
 		}
 		
 	}
@@ -8236,14 +8263,14 @@ double getAssaultEffect(int assailantFactionId, int assailantUnitId, int protect
 	
 	if (isUnitCanInitiateArtilleryDuel(protectorUnitId, assailantUnitId))
 	{
-		double effect =
+		double combatEffect =
 			aiData.combatEffectTable.getCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, CM_ARTILLERY_DUEL)
 			* getUnitMeleeOffenseStrengthMultipler(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, tile, false)
 		;
 		
-		if (effect > 0.0)
+		if (combatEffect > 0.0)
 		{
-			protectorArtilleryDuelAttackEffect = effect;
+			protectorArtilleryDuelAttackEffect = combatEffect;
 		}
 		
 	}
@@ -8256,17 +8283,21 @@ double getAssaultEffect(int assailantFactionId, int assailantUnitId, int protect
 	
 	double protectorBombardmentEffect = 0.0;
 	
-	if (isUnitCanInitiateBombardment(protectorUnitId, assailantUnitId))
+	double assailantRelativeDamage = 1.0 - assailantRelativeHealth;
+	double assailantMaxRelativeBombardmentDamage = getPercentageBonusMultiplier(-(is_ocean(tile) ? Rules->max_dmg_percent_arty_sea : Rules->max_dmg_percent_arty_open));
+	double assailantRemaingingRelativeBombardmentDamage = std::max(0.0, assailantMaxRelativeBombardmentDamage - assailantRelativeDamage);
+	
+	if (isUnitCanInitiateBombardment(protectorUnitId, assailantUnitId) && assailantRemaingingRelativeBombardmentDamage > 0.0)
 	{
-		double effect =
+		double combatEffect =
 			aiData.combatEffectTable.getCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, CM_BOMBARDMENT)
 			* getUnitMeleeOffenseStrengthMultipler(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, tile, false)
 		;
 		
-		if (effect > 0.0)
+		if (combatEffect > 0.0)
 		{
-			double bombardmentRoundCount = 3.0 / (double)assailantUnitSpeed;
-			protectorBombardmentEffect = 1.0 + bombardmentRoundCount * effect;
+			double bombardmentRoundCount = 2.0 / (double)assailantUnitSpeed;
+			protectorBombardmentEffect = std::min(assailantRemaingingRelativeBombardmentDamage, bombardmentRoundCount * combatEffect);
 		}
 		
 	}

@@ -6401,7 +6401,7 @@ double getEuclidianDistance(int x1, int y1, int x2, int y2)
 		}
 	}
 
-	return sqrt(dx * dx + dy * dy);
+	return sqrt(0.5 * (dx * dx + dy * dy));
 
 }
 
@@ -7058,9 +7058,28 @@ int getRange(MAP *tile1, MAP *tile2)
 }
 
 /*
+Returns doubled vector distance to turn halves into wholes.
+*/
+int getProximity(int x1, int y1, int x2, int y2)
+{
+	assert(isOnMap(x1, y1));
+	assert(isOnMap(x2, y2));
+	
+	int dx = abs(x1 - x2);
+	int dy = abs(y1 - y2);
+	if (!map_is_flat() && dx > *MapHalfX)
+	{
+		dx = *MapAreaX - dx;
+	}
+	
+    return (min(dx, dy) + 3 * max(dx, dy)) / 2;
+    
+}
+
+/*
 Returns exact Euclidian distance between points squared.
 */
-double getVectorDistanceSquared(MAP *origin, MAP *destination)
+double getEuqlideanDistanceSquared(MAP *origin, MAP *destination)
 {
 	assert(isOnMap(origin));
 	assert(isOnMap(destination));
@@ -7073,11 +7092,11 @@ double getVectorDistanceSquared(MAP *origin, MAP *destination)
 /*
 Returns exact Euclidian distance between points.
 */
-double getVectorDistance(MAP *origin, MAP *destination)
+double getEuqlideanDistance(MAP *origin, MAP *destination)
 {
 	assert(isOnMap(origin));
 	assert(isOnMap(destination));
-	return sqrt(getVectorDistanceSquared(origin, destination));
+	return sqrt(getEuqlideanDistanceSquared(origin, destination));
 }
 
 /**
@@ -7101,9 +7120,9 @@ double getVectorAngleCos(MAP *vertex, MAP *point1, MAP *point2)
 	assert(isOnMap(point1));
 	assert(isOnMap(point2));
 
-	double h2 = getVectorDistanceSquared(point1, point2);
-	double ca2 = getVectorDistanceSquared(vertex, point1);
-	double cb2 = getVectorDistanceSquared(vertex, point2);
+	double h2 = getEuqlideanDistanceSquared(point1, point2);
+	double ca2 = getEuqlideanDistanceSquared(vertex, point1);
+	double cb2 = getEuqlideanDistanceSquared(vertex, point2);
 
 	return ((ca2 + cb2) - h2) / (2.0 * sqrt(ca2 * cb2));
 
@@ -7250,14 +7269,6 @@ double getLocationBombardmentMaxRelativeDamage(MAP *tile)
 	
 }
 
-/**
-Computes how much this location protects from bombardment.
-*/
-double getLocationBombardmentMinRelativePower(MAP *tile)
-{
-	return 1.0 - getLocationBombardmentMaxRelativeDamage(tile);
-}
-
 double getVehicleBombardmentMaxRelativeDamage(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
@@ -7297,9 +7308,9 @@ double getVehicleBombardmentRemainingRelativeDamage(int vehicleId)
 {
 	double maxRelativeBombardmentDamage = getVehicleBombardmentMaxRelativeDamage(vehicleId);
 	double relativeDamage = getVehicleRelativeDamage(vehicleId);
-
+	
 	return std::max(0.0, maxRelativeBombardmentDamage - relativeDamage);
-
+	
 }
 
 int getBasePopulationLimit(int baseId)
@@ -7436,7 +7447,7 @@ int getBaseTurnsToPopulation(int baseId, int population)
 	int nutrientCostFactor = mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
 	int requiredNutrients = nutrientCostFactor * (population - base->pop_size) * (population + base->pop_size + 1) / 2;
 	int remainingNutrients = requiredNutrients - base->nutrients_accumulated;
-	return remainingNutrients / base->nutrient_surplus;
+	return remainingNutrients / std::max(1, base->nutrient_surplus);
 	
 }
 
