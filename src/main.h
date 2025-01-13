@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v341"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v342"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -459,6 +459,7 @@ struct Config {
     double ai_production_transport_priority;
     double ai_production_transport_seats_per_sea_base;
     double ai_production_support_ratio;
+    double ai_production_base_probe_priority;
     double ai_production_base_protection_priority;
     double ai_production_combat_priority;
     double ai_production_alien_combat_priority;

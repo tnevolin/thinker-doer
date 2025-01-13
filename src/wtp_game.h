@@ -737,6 +737,7 @@ MAP *getNearbyItemLocation(int x, int y, int range, int item);
 bool isMapRangeHasItem(int x, int y, int range, uint32_t item);
 bool isVehicleHealing(int vehicleId);
 bool isVehicleInRegion(int vehicleId, int region);
+bool isProbeUnit(int unitId);
 bool isProbeVehicle(int vehicleId);
 double battleCompute(int attackerVehicleId, int defenderVehicleId, bool longRangeCombat);
 double battleComputeStack(int attackerVehicleId, int defenderVehicleId, bool longRangeCombat);

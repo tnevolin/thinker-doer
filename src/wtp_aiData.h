@@ -261,14 +261,12 @@ public:
 	
 	double triadThreats[3]{0.0};
 	double requiredEffect = 0.0;
-	double desiredEffect = 0.0;
 	double providedEffect = 0.0;
 	double providedEffectPresent = 0.0;
 	
 	void clear()
 	{
 		requiredEffect = 0.0;
-		desiredEffect = 0.0;
 		providedEffect = 0.0;
 		providedEffectPresent = 0.0;
 	}
@@ -295,14 +293,60 @@ public:
 	void addVehicle(int vehicleId, bool present)
 	{
 		double vehicleEffect = getVehicleEffect(vehicleId);
-
+		
 		providedEffect += vehicleEffect;
 		
 		if (present)
 		{
 			providedEffectPresent += vehicleEffect;
 		}
+		
+	}
+	
+	bool isSatisfied(bool present) const
+	{
+		return (present ? providedEffectPresent : providedEffect) >= requiredEffect;
+	}
+	
+	double getDemand(bool present) const
+	{
+		double required = requiredEffect;
+		double provided = (present ? providedEffectPresent : providedEffect);
+		return ((required > 0.0 && provided < required) ? 1.0 - provided / required : 0.0);
+	}
+	
+};
 
+struct BaseProbeData
+{
+	double requiredEffect = 0.0;
+	double providedEffect = 0.0;
+	double providedEffectPresent = 0.0;
+	
+	void clear()
+	{
+		requiredEffect = 0.0;
+		providedEffect = 0.0;
+		providedEffectPresent = 0.0;
+	}
+	
+	void reset()
+	{
+		providedEffect = 0.0;
+		providedEffectPresent = 0.0;
+	}
+	
+	void addVehicle(int vehicleId, bool present)
+	{
+		double vehicleEffect = getVehicleMoraleMultiplier(vehicleId);
+		
+		providedEffect += vehicleEffect;
+		
+		if (present)
+		{
+			providedEffectPresent += vehicleEffect;
+		}
+		
 	}
 	
 	bool isSatisfied(bool present) const
@@ -342,6 +386,7 @@ struct BaseInfo
 	bool artillery;
 	BaseCombatData combatData;
 	double safeTime;
+	BaseProbeData probeData;
 	
 	// protector operations
 	

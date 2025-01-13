@@ -156,6 +156,7 @@ void evaluatePopulationLimitFacilities();
 void evaluateMilitaryFacilities();
 void evaluatePrototypingFacilities();
 
+void evaluateDefensiveProbeUnits();
 void evaluateExpansionUnits();
 void evaluateTerraformingUnits();
 void evaluateCrawlingUnits();
@@ -240,4 +241,5 @@ int getBasePoliceExtraCapacity(int baseId);
 double getItemPriority(int item, double gain);
 double getBaseColonyUnitGain(int baseId, int unitId, double travelTime, double buildSiteScore);
 double getBasePoliceGain(int baseId, bool police2x);
+double getTechStealGain();
 

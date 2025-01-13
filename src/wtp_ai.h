@@ -161,6 +161,7 @@ void populateEnemyBaseAssaultEffects();
 void evaluateFactionMilitaryPowers();
 void evaluateEnemyStacks();
 void evaluateBaseDefense();
+void evaluateBaseProbeDefense();
 
 void designUnits();
 void setUnitVariables();

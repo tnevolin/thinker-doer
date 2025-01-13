@@ -4070,9 +4070,14 @@ bool isVehicleInRegion(int vehicleId, int region)
 
 }
 
+bool isProbeUnit(int unitId)
+{
+	return (Units[unitId].weapon_id == WPN_PROBE_TEAM);
+}
+
 bool isProbeVehicle(int vehicleId)
 {
-	return (Units[Vehicles[vehicleId].unit_id].weapon_id == WPN_PROBE_TEAM);
+	return isProbeUnit(Vehicles[vehicleId].unit_id);
 }
 
 /*

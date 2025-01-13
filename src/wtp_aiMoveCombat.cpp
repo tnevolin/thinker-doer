@@ -33,6 +33,8 @@ void moveCombatStrategy()
 	
 	// compute strategy
 	
+	moveDefensiveProbes();
+	
 	immediateAttack();
 	
 	movePolice2x();
@@ -42,6 +44,97 @@ void moveCombatStrategy()
 	coordinateAttack();
 	
 	executionProfiles["1.5.4. moveCombatStrategy"].stop();
+	
+}
+
+void moveDefensiveProbes()
+{
+	debug("moveDefensiveProbes - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	// populate tasks
+	
+	std::vector<CombatAction> taskPriorities;
+	populateDefensiveProbeTasks(taskPriorities);
+	
+	// sort vehicle available tasks
+	
+	std::sort(taskPriorities.begin(), taskPriorities.end(), compareCombatActionDescending);
+	
+	if (DEBUG)
+	{
+		debug("\tsortedTasks\n");
+		
+		for (CombatAction const &taskPriority : taskPriorities)
+		{
+			debug
+			(
+				"\t\t%5.2f:"
+				" [%4d] %s -> %s"
+				"\n"
+				, taskPriority.priority
+				, taskPriority.vehicleId
+				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
+				, getLocationString(taskPriority.destination).c_str()
+			);
+			
+		}
+		
+	}
+	
+	// select tasks
+	
+	debug("\tselected tasks\n");
+	
+	robin_hood::unordered_flat_map<int, CombatAction *> vehicleAssignments;
+	
+	for (CombatAction &taskPriority : taskPriorities)
+	{
+		// skip already assigned vehicles
+		
+		if (vehicleAssignments.find(taskPriority.vehicleId) != vehicleAssignments.end())
+			continue;
+		
+		// base probe should not be yet satisfied
+		
+		BaseInfo &baseInfo = aiData.getBaseInfo(taskPriority.baseId);
+		
+		if (baseInfo.probeData.isSatisfied(false))
+			continue;
+		
+		// assign to base
+		
+		baseInfo.probeData.addVehicle(taskPriority.vehicleId, false);
+		vehicleAssignments.emplace(taskPriority.vehicleId, &taskPriority);
+		
+		debug
+		(
+			"\t\t%5.2f:"
+			" [%4d] %s -> %s"
+			" %-25s"
+			" baseInfo.probeData.isSatisfied=%d"
+			"\n"
+			, taskPriority.priority
+			, taskPriority.vehicleId
+			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
+			, getLocationString(taskPriority.destination).c_str()
+			, getBase(taskPriority.baseId)->name
+			, baseInfo.probeData.isSatisfied(false)
+		);
+		
+	}
+			
+	// set tasks
+	
+	for (robin_hood::pair<int, CombatAction *> vehicleAssignmentEntry : vehicleAssignments)
+	{
+		CombatAction *taskPriority = vehicleAssignmentEntry.second;
+		
+		// set task
+		
+		if (!transitVehicle(Task(taskPriority->vehicleId, TT_HOLD, taskPriority->destination)))
+			continue;
+		
+	}
 	
 }
 
@@ -1121,6 +1214,103 @@ void moveCombat()
 				);
 				
 			}
+			
+		}
+		
+	}
+	
+}
+
+/**
+protection priority:
+- base total threat
+- travel time
+*/
+void populateDefensiveProbeTasks(std::vector<CombatAction> &taskPriorities)
+{
+	debug("\tpopulateDefensiveProbeTasks\n");
+	
+	if (aiData.baseIds.size() == 0)
+		return;
+	
+	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	{
+		VEH *vehicle = getVehicle(vehicleId);
+		
+		// AI faction
+		
+		if (vehicle->faction_id != aiFactionId)
+			continue;
+		
+		// exclude unavailable
+		
+		if (hasTask(vehicleId))
+			continue;
+		
+		// defensive probe
+		
+		if (!(isInfantryVehicle(vehicleId) && isProbeVehicle(vehicleId)))
+			continue;
+		
+		// process bases
+		
+		for (int baseId : aiData.baseIds)
+		{
+			BASE *base = &(Bases[baseId]);
+			MAP *baseTile = getBaseMapTile(baseId);
+			BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+			
+			// exclude not reachable destination
+			
+			if (!isVehicleDestinationReachable(vehicleId, baseTile))
+				continue;
+			
+			// required protection
+			
+			double requiredEffect = baseInfo.probeData.requiredEffect;
+			
+			if (requiredEffect <= 0.0)
+				continue;
+			
+			// get travel time and coresponding coefficient
+			
+			double travelTime = getVehicleATravelTime(vehicleId, baseTile);
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
+			
+			// combat effect
+			
+			double combatEffect = getVehicleMoraleMultiplier(vehicleId);
+			
+			// priority
+			
+			double priority =
+				requiredEffect
+				* combatEffect
+				* travelTimeCoefficient
+			;
+			
+			// add task
+			
+			CombatAction taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
+			taskPriority.baseId = baseId;
+			taskPriorities.push_back(taskPriority);
+			
+			debug
+			(
+				"\t\t[%4d] (%3d,%3d) %-32s -> %-25s"
+				" priority=%5.2f"
+				" requiredEffect=%5.2f"
+				" combatEffect=%5.2f"
+				" travelTime=%7.2f"
+				" travelTimeCoefficient=%5.2f"
+				"\n"
+				, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId), base->name
+				, priority
+				, requiredEffect
+				, combatEffect
+				, travelTime
+				, travelTimeCoefficient
+			);
 			
 		}
 		

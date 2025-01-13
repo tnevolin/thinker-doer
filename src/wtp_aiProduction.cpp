@@ -565,6 +565,7 @@ void suggestBaseProduction(int baseId)
 	
 	// evaluate combat units
 	
+	evaluateDefensiveProbeUnits();
 	evaluatePodPoppingUnits();
 	evaluateBaseDefenseUnits();
 	evaluateTerritoryProtectionUnits();
@@ -1431,6 +1432,126 @@ void evaluatePrototypingFacilities()
 		, useMultiplier
 		, gain
 	);
+	
+}
+
+void evaluateDefensiveProbeUnits()
+{
+	int baseId = productionDemand.baseId;
+	MAP *baseTile = getBaseMapTile(baseId);
+	
+	debug("evaluateDefensiveProbeUnits\n");
+	
+	// base new probe morale multiplier
+	
+	double newProbeMoraleMultiplier = has_facility(FAC_COVERT_OPS_CENTER, baseId) ? 1.25 : 1.00;
+	
+	// scan combat units for protection
+	
+	for (int unitId : aiData.unitIds)
+	{
+		UNIT *unit = getUnit(unitId);
+		
+		// defensive probe
+		
+		if (!(isInfantryUnit(unitId) && isProbeUnit(unitId)))
+			continue;
+		
+		// exclude those base cannot produce
+		
+		if (!isBaseCanBuildUnit(baseId, unitId))
+			continue;
+		
+		// seek for best target base gain
+		
+		double bestGain = 0.0;
+		
+		for (int targetBaseId : aiData.baseIds)
+		{
+			MAP *targetBaseTile = getBaseMapTile(targetBaseId);
+			BaseInfo &targetBaseInfo = aiData.getBaseInfo(targetBaseId);
+			BaseProbeData &targetBaseProbeData = targetBaseInfo.probeData;
+			
+			if (targetBaseProbeData.isSatisfied(false))
+				continue;
+			
+			double travelTime = getUnitATravelTime(unitId, baseTile, targetBaseTile);
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
+			
+			// probe
+			
+			double combatEffect = newProbeMoraleMultiplier;
+			double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
+			double unitProbeGain = getTechStealGain() * combatEffectCoefficient;
+			double probeGain = unitProbeGain * travelTimeCoefficient;
+			
+			double upkeep = getResourceScore(-getUnitSupport(unitId), 0.0);
+			double upkeepGain = getGainIncome(upkeep);
+			
+			// combined
+			
+			double gain =
+				+ probeGain
+				+ upkeepGain
+			;
+			
+			bestGain = std::max(bestGain, gain);
+			
+			debug
+			(
+				"\t\t%-32s"
+				" %-25s"
+				" travelTime=%7.2f"
+				" travelTimeCoefficient=%5.2f"
+				" combatEffect=%5.2f"
+				" combatEffectCoefficient=%5.2f"
+				" unitProbeGain=%5.2f"
+				" probeGain=%5.2f"
+				" upkeepGain=%5.2f"
+				" gain=%7.2f"
+				"\n"
+				, unit->name
+				, Bases[targetBaseId].name
+				, travelTime
+				, travelTimeCoefficient
+				, combatEffect
+				, combatEffectCoefficient
+				, unitProbeGain
+				, probeGain
+				, upkeepGain
+				, gain
+			);
+			
+		}
+		
+		// priority
+		
+		double rawPriority = getItemPriority(unitId, bestGain);
+		double priority =
+			conf.ai_production_base_probe_priority
+			* rawPriority
+		;
+		
+		// add production
+		
+		productionDemand.addItemPriority(unitId, priority);
+		
+		debug
+		(
+			"\t%-32s"
+			" priority=%5.2f   |"
+			" ai_production_base_probe_priority=%5.2f"
+			" bestGain=%5.2f"
+			" rawPriority=%5.2f"
+			"\n"
+			, Units[unitId].name
+			, priority
+			, conf.ai_production_base_probe_priority
+			, bestGain
+			, rawPriority
+		);
+		
+	}
 	
 }
 
@@ -5277,6 +5398,38 @@ double getBasePoliceGain(int baseId, bool police2x)
 	
 	double policeGain = (double)policePower * extraWorkerGain;
 	return policeGain;
+	
+}
+
+double getTechStealGain()
+{
+	int maxLevelTechId = -1;
+	int maxTechLevel = 0;
+	for (int techId = 0; techId < TECH_TranT; techId++)
+	{
+		if (!has_tech(techId, aiFactionId))
+			continue;
+		
+		int techLevel = wtp_tech_level(techId);
+		
+		if (techLevel > maxTechLevel)
+		{
+			maxLevelTechId = techId;
+			maxTechLevel = std::max(maxTechLevel, techLevel);
+		}
+		
+	}
+	
+	if (maxLevelTechId == -1)
+		return 0.0;
+	
+	double techCost = wtp_tech_cost(aiFactionId, maxLevelTechId);
+	double gain = getGainBonus(techCost);
+	
+	// not our gain but other faction gain
+	// divided by remaining faction count
+	
+	return gain / 6.0;
 	
 }
 

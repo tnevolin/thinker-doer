@@ -116,11 +116,13 @@ struct EnemyStackAttackInfo
 };
 
 void moveCombatStrategy();
+void moveDefensiveProbes();
 void immediateAttack();
 void movePolice2x();
 void movePolice();
 void moveProtectors();
 void moveCombat();
+void populateDefensiveProbeTasks(std::vector<CombatAction> &taskPriorities);
 void populateRepairTasks(std::vector<CombatAction> &taskPriorities);
 void populateMonolithTasks(std::vector<CombatAction> &taskPriorities);
 void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities);

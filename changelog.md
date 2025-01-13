@@ -1,3 +1,7 @@
+# Version 342
+
+* AI builds defensive probe teams and station them in bases. First try version. May require testing and adjustment.
+
 # Version 341
 
 * Simplified AI base placement algorithm.

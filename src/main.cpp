@@ -999,6 +999,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_production_support_ratio = atof(value);
     }
+    else if (MATCH("ai_production_base_probe_priority"))
+    {
+        cf->ai_production_base_probe_priority = atof(value);
+    }
     else if (MATCH("ai_production_base_protection_priority"))
     {
         cf->ai_production_base_protection_priority = atof(value);

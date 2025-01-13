@@ -259,6 +259,7 @@ void populateAIData()
 	populateEnemyStacks();
 	evaluateEnemyStacks();
 	evaluateBaseDefense();
+	evaluateBaseProbeDefense();
 	
 	executionProfiles["1.1. populateAIData"].stop();
 	
@@ -3836,6 +3837,252 @@ void evaluateBaseDefense()
 	
 }
 
+void evaluateBaseProbeDefense()
+{
+	debug("evaluateBaseProbeDefense - %s\n", MFactions[aiFactionId].noun_faction);
+	
+	executionProfiles["1.1.J. evaluateBaseProbeDefense"].start();
+	
+	// evaluate base threat
+	
+	executionProfiles["1.1.J.4. evaluate base threat"].start();
+	
+	for (int baseId : aiData.baseIds)
+	{
+		BASE *base = &(Bases[baseId]);
+		MAP *baseTile = getBaseMapTile(baseId);
+		bool baseTileOcean = is_ocean(baseTile);
+		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+		
+		BaseProbeData &baseProbeData = baseInfo.probeData;
+		baseProbeData.clear();
+		
+		debug
+		(
+			"\t%-25s"
+			"\n"
+			, base->name
+		);
+		
+		// calculate foe strength
+		
+		executionProfiles["1.1.J.4.1. calculate foe strength"].start();
+		
+		debug("\t\tbase foeMilitaryStrength\n");
+		
+		std::map<int, double> weights;
+		
+		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+		{
+			VEH *vehicle = &(Vehicles[vehicleId]);
+			MAP *vehicleTile = getVehicleMapTile(vehicleId);
+			int chassisId = vehicle->chassis_type();
+			UNIT *unit = &(Units[vehicle->unit_id]);
+			CChassis *chassis = &(Chassis[unit->chassis_id]);
+			int triad = chassis->triad;
+			int speed = getVehicleSpeed(vehicleId);
+			
+			// other faction
+			
+			if (vehicle->faction_id == aiFactionId)
+				continue;
+			
+			// probe
+			
+			if (!isProbeVehicle(vehicleId))
+				continue;
+			
+			// ocean base
+			if (baseTileOcean)
+			{
+				switch (triad)
+				{
+				case TRIAD_AIR:
+					
+					// same enemy air combat cluster for air vehicle
+					
+					if (!isSameEnemyAirCluster(vehicle->faction_id, chassisId, speed, vehicleTile, baseTile))
+						continue;
+					
+					break;
+					
+				case TRIAD_SEA:
+					
+					// same enemy sea combat cluster for sea vehicle
+					
+					if (!isSameEnemySeaCombatCluster(vehicle->faction_id, vehicleTile, baseTile))
+						continue;
+					
+					break;
+					
+				case TRIAD_LAND:
+					
+					if (vehicle_has_ability(vehicle, ABL_AMPHIBIOUS))
+					{
+						// same land combat cluster for amphibious land vehicle
+						
+						if (!isSameEnemyLandCombatCluster(vehicle->faction_id, vehicleTile, baseTile))
+							continue;
+						
+					}
+					else
+					{
+						// non-amphibious land vehicle cannot attack ocean base
+						
+						continue;
+						
+					}
+					
+				}
+				
+			}
+			// land base
+			else
+			{
+				switch (triad)
+				{
+				case TRIAD_AIR:
+					
+					// same enemy air combat cluster for air vehicle
+					
+					if (!isSameEnemyAirCluster(vehicle->faction_id, chassisId, speed, vehicleTile, baseTile))
+						continue;
+					
+					break;
+					
+				case TRIAD_SEA:
+					
+					// sea vehicle need to get next to coast base
+					
+					{
+						bool accessible = false;
+						for (MAP *adjacentTile : getAdjacentTiles(baseTile))
+						{
+							if (isSameEnemySeaCombatCluster(vehicle->faction_id, vehicleTile, adjacentTile))
+							{
+								accessible = true;
+								break;
+							}
+						}
+						
+						if (!accessible)
+							continue;
+						
+					}
+					
+					break;
+					
+				case TRIAD_LAND:
+					
+					// same land combat cluster for land vehicle
+					
+					if (!isSameEnemyLandCombatCluster(vehicle->faction_id, vehicleTile, baseTile))
+						continue;
+					
+				}
+				
+			}
+			
+			// offense multiplier
+			
+			double offenseMultiplier = getVehicleStrenghtMultiplier(vehicleId);
+			
+			// defense multiplier
+			
+			double defenseMultiplier = getBaseDefenseMultiplier(baseId, triad) * getSensorDefenseMultiplier(aiFactionId, baseTile);
+			
+			if (defenseMultiplier <= 0.0)
+			{
+				debug("ERROR: defenseMultiplier <= 0.0\n");
+				continue;
+			}
+			
+			// approach time coefficient
+			
+			double approachTime = getEnemyApproachTime(baseId, vehicleId);
+			
+			if (approachTime == INF)
+				continue;
+			
+			double approachTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, approachTime);
+			
+			// weight
+			
+			double weight = offenseMultiplier / defenseMultiplier * approachTimeCoefficient;
+			
+			size_t approachTimeBucket = (size_t)std::round(approachTime);
+			weights[approachTimeBucket] += weight;
+			
+			debug
+			(
+				"\t\t\t(%3d,%3d) %-32s"
+				" weight=%5.2f"
+				" offenseMultiplier=%5.2f"
+				" defenseMultiplier=%5.2f"
+				" approachTime=%7.2f approachTimeCoefficient=%5.2f"
+				"\n"
+				, vehicle->x, vehicle->y, Units[vehicle->unit_id].name
+				, weight
+				, offenseMultiplier
+				, defenseMultiplier
+				, approachTime, approachTimeCoefficient
+			);
+			
+		}
+		
+		executionProfiles["1.1.J.4.1. calculate foe strength"].stop();
+		
+		// compute required protection
+		
+		executionProfiles["1.1.J.4.3. compute required protection"].start();
+		
+		int lastTime = 0;
+		double accumulatedWeight = 0.0;
+		double maxWeight = 0.0;
+		
+		for (std::pair<int, double> weightEntry : weights)
+		{
+			int time = weightEntry.first;
+			double weight = weightEntry.second;
+			
+			if (time - lastTime >= 10)
+			{
+				accumulatedWeight = 0.0;
+			}
+			else
+			{
+				accumulatedWeight *= 0.1 * (double)(10 - (time - lastTime));
+			}
+			
+			accumulatedWeight += weight;
+			maxWeight = std::max(maxWeight, accumulatedWeight);
+			
+		}
+		
+		double requiredEffect = conf.ai_combat_base_protection_superiority * maxWeight;
+		baseInfo.probeData.requiredEffect = requiredEffect;
+		
+		debug
+		(
+			"\t\trequiredEffect=%5.2f"
+			" conf.ai_combat_base_protection_superiority=%5.2F"
+			" maxWeight=%5.2f"
+			"\n"
+			, requiredEffect
+			, conf.ai_combat_base_protection_superiority
+			, maxWeight
+		);
+		
+		executionProfiles["1.1.J.4.3. compute required protection"].stop();
+		
+	}
+	
+	executionProfiles["1.1.J.4. evaluate base threat"].stop();
+	
+	executionProfiles["1.1.J. evaluateBaseProbeDefense"].stop();
+	
+}
+
 /*
 Designs units.
 This function works before AI Data are populated and should not rely on them.
@@ -3845,7 +4092,7 @@ void designUnits()
 	executionProfiles["1.0. designUnits"].start();
 	
 	// get best values
-
+	
 	int bestWeapon = getFactionBestWeapon(aiFactionId);
 	int bestArmor = getFactionBestArmor(aiFactionId);
 	int defenderWeapon = getFactionBestWeapon(aiFactionId, (bestArmor + 1) / 2);
@@ -3853,9 +4100,9 @@ void designUnits()
 	int fastLandChassis = (has_chassis(aiFactionId, CHS_HOVERTANK) ? CHS_HOVERTANK : CHS_SPEEDER);
 	int fastSeaChassis = (has_chassis(aiFactionId, CHS_CRUISER) ? CHS_CRUISER : CHS_FOIL);
 	int bestReactor = best_reactor(aiFactionId);
-
+	
 	// land anti-native defenders
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -3869,9 +4116,9 @@ void designUnits()
 		PLAN_DEFENSIVE,
 		NULL
 	);
-
+	
 	// land regular defenders
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -3888,9 +4135,9 @@ void designUnits()
 		PLAN_DEFENSIVE,
 		NULL
 	);
-
+	
 	// land armored attackers
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -3912,9 +4159,9 @@ void designUnits()
 		PLAN_COMBAT,
 		NULL
 	);
-
+	
 	// land fast attackers
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -3942,9 +4189,9 @@ void designUnits()
 		PLAN_OFFENSIVE,
 		NULL
 	);
-
+	
 	// land artillery
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -3958,9 +4205,9 @@ void designUnits()
 		PLAN_OFFENSIVE,
 		NULL
 	);
-
+	
 	// land paratroopers
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -3974,9 +4221,9 @@ void designUnits()
 		PLAN_COMBAT,
 		NULL
 	);
-
+	
 	// ships
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -4001,9 +4248,9 @@ void designUnits()
 		PLAN_COMBAT,
 		NULL
 	);
-
+	
 	// armored transport
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -4020,9 +4267,9 @@ void designUnits()
 		PLAN_COMBAT,
 		NULL
 	);
-
+	
 	// armored land probe
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -4039,9 +4286,9 @@ void designUnits()
 		PLAN_COMBAT,
 		NULL
 	);
-
+	
 	// armored sea probe
-
+	
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
@@ -4058,44 +4305,44 @@ void designUnits()
 		PLAN_COMBAT,
 		NULL
 	);
-
+	
 	// --------------------------------------------------
 	// reinstate units
 	// --------------------------------------------------
-
+	
 	// find Trance Scout Patrol
-
+	
 	int tranceScoutPatrolUnitId = -1;
-
+	
 	for (int unitId : getFactionUnitIds(aiFactionId, true, false))
 	{
 		UNIT *unit = getUnit(unitId);
 		int unitOffenseValue = getUnitOffenseValue(unitId);
 		int unitDefenseValue = getUnitDefenseValue(unitId);
-
+		
 		if (unit->chassis_id == CHS_INFANTRY && unitOffenseValue == 1 && unitDefenseValue == 1 && isUnitHasAbility(unitId, ABL_ID_TRANCE))
 		{
 			tranceScoutPatrolUnitId = unitId;
 			break;
 		}
-
+		
 	}
-
+	
 	if (tranceScoutPatrolUnitId == -1)
 	{
 		// reinstate Scout Patrol if Trance Scout Patrol is not available to faction
-
+		
 		reinstateUnit(BSC_SCOUT_PATROL, aiFactionId);
-
+		
 	}
 	else
 	{
 		// reinstate Trance Scout Patrol
-
+		
 		reinstateUnit(tranceScoutPatrolUnitId, aiFactionId);
-
+		
 	}
-
+	
 	executionProfiles["1.0. designUnits"].stop();
 	
 }
