@@ -604,7 +604,7 @@ Missile,    Missile-, Miss., M
 ; Reac    = Reactor level 1–4
 ;
 #UNITS
-38
+27
 Colony Pod,             Infantry, Colony Pod,   Scout,      8, 0, 0, None,    -1, 00000000000000000000000000
 Formers,                Infantry, Formers,      Scout,      9, 0, 0, Ecology, -1, 00000000000000000000000000
 Scout Patrol,           Infantry, Gun,          Scout,      3, 0, 0, None,    -1, 00000000000000000000000000
@@ -628,20 +628,9 @@ Fungal Tower,           Infantry, Psi,          Psi,        3, 0, 0, Disable,  1
 Unity Mining Laser,     Infantry, Laser,        Scout,      0, 0, 0, Disable, -1, 00000000000000000000000000
 Sea Escape Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, Disable, -1, 00000000000000000000000000
 Unity Gunship,          Foil,     Gun,          Scout,     -1, 0, 0, Disable, -1, 00000000000000000000000000
-Foil Probe Team,        Foil,     Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
-Supply Trawler,         Foil,     Supply,       Scout,     10, 0, 0, EcoEng2, -1, 00000000000000000000000000
-Rover Colony Pod,       Speeder,  Colony Pod,   Scout,      8, 0, 0, Mobile,  -1, 00000000000000000000000000
 Sea Colony Pod,         Foil,     Colony Pod,   Scout,      8, 0, 0, DocFlex, -1, 00000000000000000000000000
-Trance Scout Patrol,    Infantry, Gun,          Scout,      2, 0, 0, Brain,   -1, 00000001000000000000000000
-Police Garrison,        Infantry, Gun,          Scout,      2, 0, 0, Integ,   -1, 00010000000000000000000000
 Gun Foil,               Foil,     Gun,          Scout,      3, 0, 0, DocFlex, -1, 00000000000000000000000000
 Scout Rover,            Speeder,  Gun,          Scout,      3, 0, 0, Mobile,  -1, 00000000000000000000000000
-Empath Rover,           Speeder,  Gun,          Scout,      0, 0, 0, CentEmp, -1, 00000000000000100000000000
-Empath Foil,            Foil,     Gun,          Scout,      0, 0, 0, CentEmp, -1, 00000000000000100000000000
-Trance Formers,         Infantry, Formers,      Scout,      9, 0, 0, Brain,   -1, 00000001000000000000000000
-Trance Sea Formers,     Foil,     Formers,      Scout,      9, 0, 0, Brain,   -1, 00000001000000000000000000
-Patrol Battery,         Infantry, Gun,          Scout,      3, 0, 0, Chemist, -1, 00000000001000000000000000
-Empath Battery,         Infantry, Gun,          Scout,      3, 0, 0, Neural,  -1, 00000000001000100000000000
 Infantry Probe Team,    Infantry, Probe Team,   Scout,     11, 0, 0, Poly,    -1, 00000000000000000000000000
 
 ;

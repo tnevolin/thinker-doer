@@ -4101,6 +4101,54 @@ void designUnits()
 	int fastSeaChassis = (has_chassis(aiFactionId, CHS_CRUISER) ? CHS_CRUISER : CHS_FOIL);
 	int bestReactor = best_reactor(aiFactionId);
 	
+	// fast colony
+	
+	proposeMultiplePrototypes
+	(
+		aiFactionId,
+		{fastLandChassis, fastSeaChassis},
+		{WPN_COLONY_MODULE},
+		{ARM_NO_ARMOR},
+		{
+			{},
+		},
+		bestReactor,
+		PLAN_COLONY,
+		NULL
+	);
+	
+	// protected former
+	
+	proposeMultiplePrototypes
+	(
+		aiFactionId,
+		{fastLandChassis, fastSeaChassis, CHS_GRAVSHIP},
+		{WPN_TERRAFORMING_UNIT},
+		{bestArmor},
+		{
+			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR},
+		},
+		bestReactor,
+		PLAN_TERRAFORM,
+		NULL
+	);
+	
+	// protected crawler
+	
+	proposeMultiplePrototypes
+	(
+		aiFactionId,
+		{CHS_INFANTRY, CHS_FOIL},
+		{WPN_SUPPLY_TRANSPORT},
+		{bestArmor},
+		{
+			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR},
+		},
+		bestReactor,
+		PLAN_SUPPLY,
+		NULL
+	);
+	
 	// land anti-native defenders
 	
 	proposeMultiplePrototypes
@@ -4108,9 +4156,25 @@ void designUnits()
 		aiFactionId,
 		{CHS_INFANTRY},
 		{WPN_HAND_WEAPONS},
-		{ARM_NO_ARMOR},
+		{bestArmor},
 		{
-			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR, ABL_ID_POLICE_2X},
+			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR, ABL_ID_POLICE_2X, },
+		},
+		bestReactor,
+		PLAN_DEFENSIVE,
+		NULL
+	);
+	
+	// police
+	
+	proposeMultiplePrototypes
+	(
+		aiFactionId,
+		{CHS_INFANTRY},
+		{WPN_HAND_WEAPONS},
+		{bestArmor},
+		{
+			{ABL_ID_POLICE_2X, ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR, },
 		},
 		bestReactor,
 		PLAN_DEFENSIVE,
@@ -4195,7 +4259,7 @@ void designUnits()
 	proposeMultiplePrototypes
 	(
 		aiFactionId,
-		{CHS_INFANTRY},
+		{fastLandChassis},
 		{bestWeapon},
 		{bestArmor},
 		{
