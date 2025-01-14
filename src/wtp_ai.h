@@ -165,8 +165,8 @@ void evaluateBaseProbeDefense();
 
 void designUnits();
 void setUnitVariables();
-void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::vector<int> weaponIds, std::vector<int> armorIds, std::vector<std::vector<int>> abilitiesSets, int reactor, int plan, char *name);
-void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int armorId, std::vector<int> abilityIds, int reactor, int plan, char *name);
+void proposeMultiplePrototypes(int factionId, std::vector<VehChassis> chassisIds, std::vector<VehWeapon> weaponIds, std::vector<VehArmor> armorIds, size_t requiredAbilityCount, std::vector<std::vector<VehAbl>> abilityIdSets, VehReactor reactor, VehPlan plan, char *name);
+void checkAndProposePrototype(int factionId, VehChassis chassisId, VehWeapon weaponId, VehArmor armorId, size_t requiredAbilityCount, std::vector<VehAbl> abilityIds, VehReactor reactor, VehPlan plan, char *name);
 void obsoletePrototypes(int factionId, robin_hood::unordered_flat_set<int> chassisIds, robin_hood::unordered_flat_set<int> weaponIds, robin_hood::unordered_flat_set<int> armorIds, robin_hood::unordered_flat_set<int> abilityFlagsSet, robin_hood::unordered_flat_set<int> reactors);
 
 // --------------------------------------------------

@@ -4184,11 +4184,11 @@ int getVehicleSpeedWithoutRoads(int id)
 	return getVehicleSpeed(id);
 }
 
-int getFactionBestWeapon(int factionId)
+VehWeapon getFactionBestWeapon(int factionId)
 {
 	int bestWeapon = WPN_HAND_WEAPONS;
 	int bestWeaponOffenseValue = 1;
-
+	
 	for (int weaponId = WPN_LASER; weaponId <= WPN_STRING_DISRUPTOR; weaponId++)
 	{
 		if (isFactionHasTech(factionId, Weapon[weaponId].preq_tech))
@@ -4198,49 +4198,49 @@ int getFactionBestWeapon(int factionId)
 				bestWeapon = weaponId;
 				bestWeaponOffenseValue = Weapon[weaponId].offense_value;
 			}
-
+			
 		}
-
+		
 	}
-
-	return bestWeapon;
-
+	
+	return (VehWeapon)bestWeapon;
+	
 }
 
 /*
 Searches for faction best weapon not exceeding limit.
 */
-int getFactionBestWeapon(int factionId, int limit)
+VehWeapon getFactionBestWeapon(int factionId, int limit)
 {
 	int bestWeapon = WPN_HAND_WEAPONS;
 	int bestWeaponOffenseValue = 1;
-
+	
 	for (int weaponId = WPN_LASER; weaponId <= WPN_STRING_DISRUPTOR; weaponId++)
 	{
 		if (isFactionHasTech(factionId, Weapon[weaponId].preq_tech))
 		{
 			if (Weapon[weaponId].offense_value > limit)
 				continue;
-
+			
 			if (Weapon[weaponId].offense_value > bestWeaponOffenseValue)
 			{
 				bestWeapon = weaponId;
 				bestWeaponOffenseValue = Weapon[weaponId].offense_value;
 			}
-
+			
 		}
-
+		
 	}
-
-	return bestWeapon;
-
+	
+	return (VehWeapon)bestWeapon;
+	
 }
 
-int getFactionBestArmor(int factionId)
+VehArmor getFactionBestArmor(int factionId)
 {
 	int bestArmor = ARM_NO_ARMOR;
 	int bestArmorDefenseValue = 1;
-
+	
 	for (int armorId = ARM_SYNTHMETAL_ARMOR; armorId <= ARM_RESONANCE_8_ARMOR; armorId++)
 	{
 		if (isFactionHasTech(factionId, Armor[armorId].preq_tech))
@@ -4250,42 +4250,42 @@ int getFactionBestArmor(int factionId)
 				bestArmor = armorId;
 				bestArmorDefenseValue = Armor[armorId].defense_value;
 			}
-
+			
 		}
-
+		
 	}
-
-	return bestArmor;
-
+	
+	return (VehArmor)bestArmor;
+	
 }
 
 /*
 Searches for faction best armor not exceeding limit.
 */
-int getFactionBestArmor(int factionId, int limit)
+VehArmor getFactionBestArmor(int factionId, int limit)
 {
 	int bestArmor = ARM_NO_ARMOR;
 	int bestArmorDefenseValue = 1;
-
+	
 	for (int armorId = ARM_SYNTHMETAL_ARMOR; armorId <= ARM_RESONANCE_8_ARMOR; armorId++)
 	{
 		if (isFactionHasTech(factionId, Armor[armorId].preq_tech))
 		{
 			if (Armor[armorId].defense_value > limit)
 				continue;
-
+			
 			if (Armor[armorId].defense_value > bestArmorDefenseValue)
 			{
 				bestArmor = armorId;
 				bestArmorDefenseValue = Armor[armorId].defense_value;
 			}
-
+			
 		}
-
+		
 	}
-
-	return bestArmor;
-
+	
+	return (VehArmor)bestArmor;
+	
 }
 
 /*
@@ -7420,7 +7420,7 @@ double getBasePopulationGrowth(int baseId)
 {
 	BASE *base = getBase(baseId);
 	int requiredNutrients = (base->pop_size + 1) * mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
-	return 1.0 / ((double)requiredNutrients / (double)base->nutrient_surplus + 1);
+	return 1.0 / ((double)requiredNutrients / (double)std::max(1, base->nutrient_surplus) + 1);
 }
 
 /**

@@ -1,4 +1,5 @@
 
+#include <exception>
 #include <vector>
 #include <set>
 #include <queue>
@@ -1629,11 +1630,6 @@ void populateLandApproachTimes(int factionId)
 		if (triad != TRIAD_LAND)
 			continue;
 		
-		// combat
-		
-		if (!isCombatUnit(unitId))
-			continue;
-		
 		// movementType
 		
 		MovementType movementType = getUnitMovementType(factionId, unitId);
@@ -3001,7 +2997,15 @@ double getEnemyLandApproachTime(int baseId, int vehicleId)
 	int vehicleTileIndex = vehicleTile - *MapTiles;
 	int speed = getVehicleSpeed(vehicleId);
 	
-	return landApproachTimes.at(baseId).at(movementType).at(speed).at(vehicleTileIndex);
+	try
+	{
+		return landApproachTimes.at(baseId).at(movementType).at(speed).at(vehicleTileIndex);
+	}
+	catch (std::out_of_range const &e)
+	{
+		debug("Error: no landApproachTime for this vehicle.");
+		return INF;
+	}
 	
 }
 

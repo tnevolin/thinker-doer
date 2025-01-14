@@ -2248,9 +2248,17 @@ void evaluateBaseDefenseUnits()
 		
 		// best armor or psi
 		
-		if (!(defenseValue < 0 || unit->defense_value() >= aiFactionInfo->maxConDefenseValue))
-			continue;
-		
+		if (baseInfo.garrison.size() == 0)
+		{
+			if (unitId != BSC_SCOUT_PATROL)
+				continue;
+		}
+		else
+		{
+			if (!(defenseValue < 0 || unit->defense_value() >= aiFactionInfo->maxConDefenseValue))
+				continue;
+		}
+			
 		// exclude those base cannot produce
 		
 		if (!isBaseCanBuildUnit(baseId, unitId))

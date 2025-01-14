@@ -4093,13 +4093,13 @@ void designUnits()
 	
 	// get best values
 	
-	int bestWeapon = getFactionBestWeapon(aiFactionId);
-	int bestArmor = getFactionBestArmor(aiFactionId);
-	int defenderWeapon = getFactionBestWeapon(aiFactionId, (bestArmor + 1) / 2);
-	int attackerArmor = getFactionBestArmor(aiFactionId, bestWeapon);
-	int fastLandChassis = (has_chassis(aiFactionId, CHS_HOVERTANK) ? CHS_HOVERTANK : CHS_SPEEDER);
-	int fastSeaChassis = (has_chassis(aiFactionId, CHS_CRUISER) ? CHS_CRUISER : CHS_FOIL);
-	int bestReactor = best_reactor(aiFactionId);
+	VehWeapon bestWeapon = getFactionBestWeapon(aiFactionId);
+	VehArmor bestArmor = getFactionBestArmor(aiFactionId);
+	VehArmor attackerArmor = getFactionBestArmor(aiFactionId, bestWeapon);
+	VehWeapon defenderWeapon = getFactionBestWeapon(aiFactionId, (bestArmor + 1) / 2);
+	VehChassis fastLandChassis = (has_chassis(aiFactionId, CHS_HOVERTANK) ? CHS_HOVERTANK : CHS_SPEEDER);
+	VehChassis fastSeaChassis = (has_chassis(aiFactionId, CHS_CRUISER) ? CHS_CRUISER : CHS_FOIL);
+	VehReactor bestReactor = best_reactor(aiFactionId);
 	
 	// fast colony
 	
@@ -4109,6 +4109,7 @@ void designUnits()
 		{fastLandChassis, fastSeaChassis},
 		{WPN_COLONY_MODULE},
 		{ARM_NO_ARMOR},
+		0,
 		{
 			{},
 		},
@@ -4125,8 +4126,9 @@ void designUnits()
 		{fastLandChassis, fastSeaChassis, CHS_GRAVSHIP},
 		{WPN_TERRAFORMING_UNIT},
 		{bestArmor},
+		0,
 		{
-			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR},
+			{ABL_ID_CLEAN_REACTOR, ABL_ID_TRANCE, },
 		},
 		bestReactor,
 		PLAN_TERRAFORM,
@@ -4141,47 +4143,16 @@ void designUnits()
 		{CHS_INFANTRY, CHS_FOIL},
 		{WPN_SUPPLY_TRANSPORT},
 		{bestArmor},
+		0,
 		{
-			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR},
+			{ABL_ID_CLEAN_REACTOR, ABL_ID_TRANCE, },
 		},
 		bestReactor,
 		PLAN_SUPPLY,
 		NULL
 	);
 	
-	// land anti-native defenders
-	
-	proposeMultiplePrototypes
-	(
-		aiFactionId,
-		{CHS_INFANTRY},
-		{WPN_HAND_WEAPONS},
-		{bestArmor},
-		{
-			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR, ABL_ID_POLICE_2X, },
-		},
-		bestReactor,
-		PLAN_DEFENSIVE,
-		NULL
-	);
-	
-	// police
-	
-	proposeMultiplePrototypes
-	(
-		aiFactionId,
-		{CHS_INFANTRY},
-		{WPN_HAND_WEAPONS},
-		{bestArmor},
-		{
-			{ABL_ID_POLICE_2X, ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR, },
-		},
-		bestReactor,
-		PLAN_DEFENSIVE,
-		NULL
-	);
-	
-	// land regular defenders
+	// defender
 	
 	proposeMultiplePrototypes
 	(
@@ -4189,11 +4160,13 @@ void designUnits()
 		{CHS_INFANTRY},
 		{defenderWeapon},
 		{bestArmor},
+		0,
 		{
 			{ABL_ID_CLEAN_REACTOR},
-			{ABL_ID_POLICE_2X, ABL_ID_CLEAN_REACTOR, ABL_ID_TRANCE},
-			{ABL_ID_COMM_JAMMER, ABL_ID_CLEAN_REACTOR},
-			{ABL_ID_AAA, ABL_ID_CLEAN_REACTOR},
+			{ABL_ID_POLICE_2X, ABL_ID_CLEAN_REACTOR, },
+			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR, },
+			{ABL_ID_COMM_JAMMER, ABL_ID_CLEAN_REACTOR, },
+			{ABL_ID_AAA, ABL_ID_CLEAN_REACTOR, },
 		},
 		bestReactor,
 		PLAN_DEFENSIVE,
@@ -4208,8 +4181,8 @@ void designUnits()
 		{CHS_INFANTRY},
 		{bestWeapon},
 		{attackerArmor},
+		0,
 		{
-			// plain
 			{},
 			// protected against fast and air units
 			{ABL_ID_COMM_JAMMER},
@@ -4232,6 +4205,7 @@ void designUnits()
 		{fastLandChassis},
 		{bestWeapon},
 		{attackerArmor},
+		0,
 		{
 			// plain
 			{},
@@ -4262,6 +4236,7 @@ void designUnits()
 		{fastLandChassis},
 		{bestWeapon},
 		{bestArmor},
+		1,
 		{
 			{ABL_ID_ARTILLERY},
 		},
@@ -4278,6 +4253,7 @@ void designUnits()
 		{CHS_INFANTRY},
 		{bestWeapon},
 		{bestArmor},
+		1,
 		{
 			{ABL_ID_DROP_POD, ABL_ID_BLINK_DISPLACER},
 		},
@@ -4294,6 +4270,7 @@ void designUnits()
 		{fastSeaChassis},
 		{bestWeapon},
 		{attackerArmor},
+		0,
 		{
 			// plain
 			{},
@@ -4321,6 +4298,7 @@ void designUnits()
 		{fastSeaChassis},
 		{WPN_TROOP_TRANSPORT},
 		{bestArmor},
+		0,
 		{
 			// heavy
 			{ABL_ID_HEAVY_TRANSPORT, ABL_ID_CLEAN_REACTOR},
@@ -4340,6 +4318,7 @@ void designUnits()
 		{fastLandChassis},
 		{WPN_PROBE_TEAM},
 		{bestArmor},
+		0,
 		{
 			// psi protected
 			{ABL_ID_TRANCE},
@@ -4359,6 +4338,7 @@ void designUnits()
 		{fastSeaChassis},
 		{WPN_PROBE_TEAM},
 		{bestArmor},
+		0,
 		{
 			// psi protected
 			{ABL_ID_TRANCE},
@@ -4431,17 +4411,17 @@ void setUnitVariables()
 /*
 Propose multiple prototype combinations.
 */
-void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::vector<int> weaponIds, std::vector<int> armorIds, std::vector<std::vector<int>> abilitiesSets, int reactor, int plan, char *name)
+void proposeMultiplePrototypes(int factionId, std::vector<VehChassis> chassisIds, std::vector<VehWeapon> weaponIds, std::vector<VehArmor> armorIds, size_t requiredAbilityCount, std::vector<std::vector<VehAbl>> abilityIdSets, VehReactor reactor, VehPlan plan, char *name)
 {
-	for (int chassisId : chassisIds)
+	for (VehChassis chassisId : chassisIds)
 	{
-		for (int weaponId : weaponIds)
+		for (VehWeapon weaponId : weaponIds)
 		{
-			for (int armorId : armorIds)
+			for (VehArmor armorId : armorIds)
 			{
-				for (std::vector<int> abilitiesSet : abilitiesSets)
+				for (std::vector<VehAbl> abilityIdSet : abilityIdSets)
 				{
-					checkAndProposePrototype(factionId, chassisId, weaponId, armorId, abilitiesSet, reactor, plan, name);
+					checkAndProposePrototype(factionId, chassisId, weaponId, armorId, requiredAbilityCount, abilityIdSet, reactor, plan, name);
 				}
 
 			}
@@ -4456,115 +4436,64 @@ void proposeMultiplePrototypes(int factionId, std::vector<int> chassisIds, std::
 Verify proposed prototype is allowed and propose it if yes.
 Verifies all technologies are available and abilities area allowed.
 */
-void checkAndProposePrototype(int factionId, int chassisId, int weaponId, int armorId, std::vector<int> abilityIds, int reactor, int plan, char *name)
+void checkAndProposePrototype(int factionId, VehChassis chassisId, VehWeapon weaponId, VehArmor armorId, size_t requiredAbilityCount, std::vector<VehAbl> abilityIds, VehReactor reactor, VehPlan plan, char *name)
 {
 	// check chassis is available
-
-	if (!has_chassis(factionId, (VehChassis)chassisId))
+	
+	if (!has_chassis(factionId, chassisId))
 		return;
-
+	
 	// check weapon is available
-
-	if (!has_weapon(factionId, (VehWeapon)weaponId))
+	
+	if (!has_weapon(factionId, weaponId))
 		return;
-
+	
 	// check armor is available
-
+	
 	if (!has_armor(factionId, armorId))
 		return;
-
+	
 	// check reactor is available
-
+	
 	if (!has_reactor(factionId, reactor))
 		return;
-
+	
 	// check abilities are available and allowed
-
+	
 	int allowedAbilityCount = (isFactionHasTech(factionId, Rules->tech_preq_allow_2_spec_abil) ? 2 : 1);
 	int abilityCount = 0;
 	uint32_t abilities = 0;
-
-	for (int abilityId : abilityIds)
+	
+	for (size_t i = 0; i < abilityIds.size(); i++)
 	{
-		if (!isFactionHasAbility(factionId, (VehAbl)abilityId))
-			continue;
-
-		CAbility *ability = getAbility(abilityId);
-
-		// not allowed for triad
-
-		switch (Chassis[chassisId].triad)
+		VehAbl abilityId = abilityIds.at(i);
+		
+		if (!has_ability(factionId, abilityId, chassisId, weaponId))
 		{
-		case TRIAD_LAND:
-			if ((ability->flags & AFLAG_ALLOWED_LAND_UNIT) == 0)
+			if (i < requiredAbilityCount)
+				return;
+			else
 				continue;
-			break;
-
-		case TRIAD_SEA:
-			if ((ability->flags & AFLAG_ALLOWED_SEA_UNIT) == 0)
-				continue;
-			break;
-
-		case TRIAD_AIR:
-			if ((ability->flags & AFLAG_ALLOWED_AIR_UNIT) == 0)
-				continue;
-			break;
-
 		}
-
-		// not allowed for combat unit
-
-		if (Weapon[weaponId].offense_value != 0 && (ability->flags & AFLAG_ALLOWED_COMBAT_UNIT) == 0)
-			continue;
-
-		// not allowed for terraform unit
-
-		if (weaponId == WPN_TERRAFORMING_UNIT && (ability->flags & AFLAG_ALLOWED_TERRAFORM_UNIT) == 0)
-			continue;
-
-		// not allowed for non-combat unit
-
-		if (Weapon[weaponId].offense_value == 0 && (ability->flags & AFLAG_ALLOWED_NONCOMBAT_UNIT) == 0)
-			continue;
-
-		// not allowed for probe team
-
-		if (weaponId == WPN_PROBE_TEAM && (ability->flags & AFLAG_NOT_ALLOWED_PROBE_TEAM) != 0)
-			continue;
-
-		// not allowed for non transport unit
-
-		if (weaponId != WPN_TROOP_TRANSPORT && (ability->flags & AFLAG_TRANSPORT_ONLY_UNIT) != 0)
-			continue;
-
-		// not allowed for fast unit
-
-		if (chassisId == CHS_INFANTRY && Chassis[chassisId].speed > 1 && (ability->flags & AFLAG_NOT_ALLOWED_FAST_UNIT) != 0)
-			continue;
-
-		// not allowed for non probes
-
-		if (weaponId != WPN_PROBE_TEAM && (ability->flags & AFLAG_ONLY_PROBE_TEAM) != 0)
-			continue;
-
+		
 		// all condition passed - add ability
 
 		abilities |= ((uint32_t) 0x1 << abilityId);
 		abilityCount++;
-
+		
 		if (abilityCount == allowedAbilityCount)
 			break;
-
+		
 	}
-
+	
 	// propose prototype
-
+	
 	int unitId = modified_propose_proto(factionId, chassisId, weaponId, armorId, abilities, reactor, plan, name);
-
+	
 	debug("checkAndProposePrototype - %s\n", MFactions[aiFactionId].noun_faction);
 	debug("\treactor=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactor, chassisId, weaponId, armorId, getAbilitiesString(abilities).c_str());
 	debug("\tunitId=%d\n", unitId);
-
+	
 }
 
 /*
