@@ -333,6 +333,14 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
         if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
             value += ManifoldHarmonicsBonus[clamp(planet + 1, 0, 4)][0];
         }
+		
+		// [WTP]
+		// Biology Lab fungus bonus
+		
+		if (base_id >=0 && has_facility(FAC_BIOLOGY_LAB, base_id)) {
+			value += conf.facility_yield_bonuses_biology_lab[0];
+		}
+		
     } else {
         if (alt < ALT_SHORE_LINE) {
             value = ResInfo->ocean_sq_nutrient;
@@ -356,16 +364,6 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
             if (sq->items & BIT_FOREST) {
                 value = ResInfo->forest_sq_nutrient
                     + (bonus_nutrient ? ResInfo->bonus_sq_nutrient : 0);
-                
-				// [WTP]
-				// facilities custom bonus
-				
-//                if (has_fac_built(FAC_TREE_FARM, base_id)) {
-//                    value++;
-//                }
-//                if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-//                    value++;
-//                }
                 if (has_fac_built(FAC_TREE_FARM, base_id)) {
                     value += conf.facility_yield_bonuses_tree_farm[0];
                 }
@@ -503,6 +501,14 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
                 value += ManifoldHarmonicsBonus[clamp(planet + 1, 0, 4)][1];
             }
             has_limit = false;
+			
+			// [WTP]
+			// Biology Lab fungus bonus
+			
+			if (base_id >= 0 && has_facility(FAC_BIOLOGY_LAB, base_id)) {
+				value += conf.facility_yield_bonuses_biology_lab[1];
+			}
+			
         }
         else if (alt >= ALT_SHORE_LINE) {
             int modifier = sq->val3 >> 6;
@@ -647,6 +653,14 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
         }
         is_fungus = true;
         has_limit = false;
+		
+		// [WTP]
+		// Biology Lab fungus bonus
+		
+		if (base_id >= 0 && has_facility(FAC_BIOLOGY_LAB, base_id)) {
+			value += conf.facility_yield_bonuses_biology_lab[2];
+		}
+		
     }
     else if (alt < ALT_SHORE_LINE) {
         if (alt == ALT_OCEAN_SHELF || *ExpansionEnabled) {

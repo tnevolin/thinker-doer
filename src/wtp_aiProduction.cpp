@@ -45,7 +45,8 @@ int selectedProject = -1;
 
 // currently processing base production demand
 
-ProductionDemand productionDemand;
+std::vector<ProductionDemand> productionDemands;
+ProductionDemand *currentBaseProductionDemand;
 
 // ProductionDemand
 
@@ -106,12 +107,10 @@ void productionStrategy()
 	
 	// set production
 	
-	setProduction();
-	
-	// build project
-	
-	selectProject();
-	assignProject();
+	initializeProductionDemands();
+	suggestGlobalProduction();
+	suggestBaseProductions();
+	applyBaseProductions();
 	
 	// hurry protective unit production
 	
@@ -454,18 +453,53 @@ void evaluateGlobalSeaTransportDemand()
 	
 }
 
-/**
-Sets faction bases production.
-*/
-void setProduction()
+void initializeProductionDemands()
 {
-    debug("\nsetProduction - %s\n\n", MFactions[*CurrentFaction].noun_faction);
+	productionDemands.clear();
 	
-    for (int baseId : aiData.baseIds)
+	for (int baseId : aiData.baseIds)
 	{
-		BASE* base = &(Bases[baseId]);
+		productionDemands.emplace_back();
+		productionDemands.back().initialize(baseId);
+	}
+	
+}
+
+void suggestGlobalProduction()
+{
+    debug("\nsuggestGlobalProduction - %s\n\n", MFactions[*CurrentFaction].noun_faction);
+    
+    evaluateHeadquarters();
+    evaluateProject();
+	
+    debug("\n");
+	
+}
+
+void suggestBaseProductions()
+{
+    debug("\nsuggestBaseProductions - %s\n\n", MFactions[*CurrentFaction].noun_faction);
+	
+    for (ProductionDemand &productionDemand : productionDemands)
+	{
+		currentBaseProductionDemand = &productionDemand;
+		suggestBaseProduction();
+	}
+	
+    debug("\n");
+	
+}
+
+void applyBaseProductions()
+{
+    debug("\napplyBaseProductions - %s\n\n", MFactions[*CurrentFaction].noun_faction);
+	
+    for (ProductionDemand &productionDemand : productionDemands)
+	{
+		int baseId = productionDemand.baseId;
+		BASE* base = productionDemand.base;
 		
-		debug("setProduction - %s\n", base->name);
+		debug("applyBaseProductions - %s\n", base->name);
 		
 		// current production choice
 		
@@ -515,8 +549,6 @@ void setProduction()
 		
 		// WTP
 		
-		suggestBaseProduction(baseId);
-		
 		int wtpChoice = productionDemand.item;
 		double wtpPriority = productionDemand.priority;
 		
@@ -546,15 +578,239 @@ void setProduction()
 		
 	}
 	
-    debug("\nsetProduction - %s [end]\n\n", MFactions[*CurrentFaction].noun_faction);
+    debug("\n");
 	
 }
 
-void suggestBaseProduction(int baseId)
+void evaluateHeadquarters()
 {
-    // initialize productionDemand
+	debug("- evaluateHeadquarters\n");
 	
-	productionDemand.initialize(baseId);
+	int facilityId = FAC_HEADQUARTERS;
+	
+	// currentBudget
+	
+	int currentBudget = 0;
+	
+	for (ProductionDemand &otherProductionDemand : productionDemands)
+	{
+		int otherBaseId = otherProductionDemand.baseId;
+		BASE *otherBase = otherProductionDemand.base;
+		
+		computeBase(otherBaseId, false);
+		
+		int budget = otherBase->economy_total + otherBase->psych_total + otherBase->labs_total;
+		currentBudget += budget;
+		
+	}
+	
+	// current HQ base
+	
+	int hqBaseId = -1;
+	
+	for (int baseId : aiData.baseIds)
+	{
+		if (isBaseHasFacility(baseId, facilityId))
+		{
+			hqBaseId = baseId;
+			setBaseFacility(baseId, facilityId, false);
+		}
+		
+	}
+	
+	// best HQ location
+	
+	ProductionDemand *bestHQProductionDemand = nullptr;
+	int bestHQProductionDemandBudget = currentBudget;
+	
+	for (ProductionDemand &productionDemand : productionDemands)
+	{
+		int baseId = productionDemand.baseId;
+		
+		int totalBudget = 0;
+		
+		setBaseFacility(baseId, facilityId, true);
+		
+		for (ProductionDemand &otherProductionDemand : productionDemands)
+		{
+			int otherBaseId = otherProductionDemand.baseId;
+			BASE *otherBase = otherProductionDemand.base;
+			
+			computeBase(otherBaseId, false);
+			
+			int budget = otherBase->economy_total + otherBase->psych_total + otherBase->labs_total;
+			totalBudget += budget;
+			
+		}
+		
+		setBaseFacility(baseId, facilityId, false);
+		
+		if (totalBudget > bestHQProductionDemandBudget)
+		{
+			bestHQProductionDemand = &productionDemand;
+			bestHQProductionDemandBudget = totalBudget;
+		}
+		
+	}
+	
+	// restore HQ
+	
+	if (hqBaseId != -1)
+	{
+		setBaseFacility(hqBaseId, facilityId, true);
+	}
+	
+	// no relocation base
+	
+	if (bestHQProductionDemand == nullptr)
+		return;
+	
+	// add demand
+	
+	int budgetImprovement = bestHQProductionDemandBudget - currentBudget;
+	double income = getResourceScore(0.0, (double)budgetImprovement);
+	double gain = getGainIncome(income);
+	double priority = getItemPriority(-facilityId, gain);
+	bestHQProductionDemand->addItemPriority(-facilityId, priority);
+	
+	debug
+	(
+		"\t%-25s"
+		" priority=%5.2f   |"
+		" income=%5.2f"
+		" gain=%5.2f"
+		"\n"
+		, bestHQProductionDemand->base->name
+		, priority
+		, income
+		, gain
+	)
+	;
+	
+}
+
+void evaluateProject()
+{
+	debug("evaluateProject - %s\n", getMFaction(aiFactionId)->noun_faction);
+	
+	// find project
+	
+	int cheapestProjectFacilityId = -1;
+	int cheapestProjectFacilityCost = INT_MAX;
+	
+	for (int projectFacilityId = SP_ID_First; projectFacilityId <= SP_ID_Last; projectFacilityId++)
+	{
+		// exclude not available project
+		
+		if (!mod_facility_avail((FacilityId)projectFacilityId, aiFactionId, -1, 0))
+			continue;
+		
+		// project cost
+		
+		int cost = getFacility(projectFacilityId)->cost;
+		
+		debug("\t%-30s cost=%3d\n", getFacility(projectFacilityId)->name, getFacility(projectFacilityId)->cost);
+		
+		// update best
+		
+		if (cost < cheapestProjectFacilityCost)
+		{
+			debug("\t\t- best\n");
+			cheapestProjectFacilityId = projectFacilityId;
+			cheapestProjectFacilityCost = cost;
+		}
+		
+	}
+	
+	if (cheapestProjectFacilityId == -1)
+		return;
+	
+	int selectedProjectFacilityId = cheapestProjectFacilityId;
+	CFacility *selectedProjectFacility = getFacility(selectedProjectFacilityId);
+	
+	debug("\t%s\n", selectedProjectFacility->name);
+	
+	// max threat
+	
+	double maxThreat = 2.0;
+	
+	for (ProductionDemand &productionDemand : productionDemands)
+	{
+		BaseInfo &baseInfo = aiData.getBaseInfo(productionDemand.baseId);
+		
+		double threat = baseInfo.combatData.requiredEffect;
+		maxThreat = std::max(maxThreat, threat);
+		
+	}
+
+	// check project value
+	
+	bool projectBuilding = false;
+	ProductionDemand *bestProductionDemand = nullptr;
+	double bestBaseValue = 0.0;
+	
+	for (ProductionDemand &productionDemand : productionDemands)
+	{
+		int baseId = productionDemand.baseId;
+		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+		
+		if (isBaseBuildingProject(baseId))
+		{
+			projectBuilding = true;
+			productionDemand.addItemPriority(-selectedProject, conf.ai_production_current_project_priority);
+			break;
+		}
+		
+		// turns to completion
+		
+		int buildTime = getBaseItemBuildTime(baseId, -selectedProjectFacilityId, true);
+		double buildTimeCoefficient = 1.0 / (double)std::max(1, buildTime);
+debug(">%d %5.2f\n", buildTime, buildTimeCoefficient);
+		
+		// threat coefficient
+		
+		double threat = baseInfo.combatData.requiredEffect;
+		double threatCoefficient = 1.0 - threat / maxThreat;
+debug(">%5.2f %5.2f\n", threat, threatCoefficient);
+		
+		// value
+		
+		double value = buildTimeCoefficient * threatCoefficient;
+debug(">%5.2f\n", value);
+		
+		if (value > bestBaseValue)
+		{
+			bestProductionDemand = &productionDemand;
+			bestBaseValue = value;
+		}
+		
+	}
+	
+	if (projectBuilding)
+	{
+		debug("\tproject is building\n");
+		return;
+	}
+	
+	if (bestProductionDemand == nullptr)
+	{
+		debug("\tmost suitable base not found\n");
+		return;
+	}
+	
+	debug("\t%s\n", bestProductionDemand->base->name);
+	
+	// build project
+	
+	bestProductionDemand->addItemPriority(-selectedProjectFacilityId, conf.ai_production_current_project_priority);
+	
+	debug("\tproject set\n");
+	
+}
+
+void suggestBaseProduction()
+{
+	debug("suggestBaseProduction - %s\n", currentBaseProductionDemand->base->name);
 	
 	// evaluate economical items
 	
@@ -576,9 +832,7 @@ void suggestBaseProduction(int baseId)
 	
 	evaluateSeaTransport();
 	
-	// evaluate projects
-	
-	evaluateProject();
+	debug("\n");
 	
 }
 
@@ -588,7 +842,6 @@ void evaluateFacilities()
 	
 	evaluatePressureDome();
 	evaluateStockpileEnergy();
-	evaluateHeadquarters();
 	evaluatePsychFacilitiesRemoval();
 	evaluatePsychFacilities();
 	evaluateIncomeFacilities();
@@ -603,6 +856,7 @@ void evaluatePressureDome()
 {
 	debug("- evaluatePressureDome\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	BASE *base = productionDemand.base;
 	
 	int facilityId = FAC_PRESSURE_DOME;
@@ -631,6 +885,7 @@ void evaluateStockpileEnergy()
 {
 	debug("- evaluateStockpileEnergy\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	BASE *base = productionDemand.base;
 	
 	int facilityId = FAC_STOCKPILE_ENERGY;
@@ -663,101 +918,6 @@ void evaluateStockpileEnergy()
 	
 }
 
-void evaluateHeadquarters()
-{
-	debug("- evaluateHeadquarters\n");
-	
-	int baseId = productionDemand.baseId;
-	int facilityId = getFirstAvailableFacility(baseId, {FAC_HEADQUARTERS});
-	
-	// cannot build
-	
-	if (facilityId == -1)
-		return;
-	
-	// find HQ base
-	// compute old total energy surplus
-	
-	int hqBaseId = -1;
-	int oldTotalBudget = 0;
-	
-	for (int otherBaseId : aiData.baseIds)
-	{
-		BASE *otherBase = getBase(otherBaseId);
-		
-		if (isBaseHasFacility(otherBaseId, facilityId))
-		{
-			hqBaseId = otherBaseId;
-		}
-		
-		computeBase(otherBaseId, false);
-		
-		int oldBudget = otherBase->economy_total + otherBase->psych_total + otherBase->labs_total;
-		oldTotalBudget += oldBudget;
-		
-	}
-	
-	// relocate HQ
-	// compute new total energy surplus
-	
-	if (hqBaseId != -1)
-	{
-		setBaseFacility(hqBaseId, facilityId, false);
-	}
-	setBaseFacility(baseId, facilityId, true);
-	
-	int newTotalBudget = 0;
-	
-	for (int otherBaseId : aiData.baseIds)
-	{
-		BASE *otherBase = getBase(otherBaseId);
-		
-		computeBase(otherBaseId, false);
-		
-		int newBudget = otherBase->economy_total + otherBase->psych_total + otherBase->labs_total;
-		newTotalBudget += newBudget;
-		
-	}
-	
-	// restore HQ
-	
-	if (hqBaseId != -1)
-	{
-		setBaseFacility(hqBaseId, facilityId, true);
-	}
-	setBaseFacility(baseId, facilityId, false);
-	
-	for (int otherBaseId : aiData.baseIds)
-	{
-		computeBase(otherBaseId, false);
-	}
-	
-	// find initial economical impact
-	
-	double income = getResourceScore(0, newTotalBudget - oldTotalBudget);
-	double gain = getGainIncome(income);
-	double priority = getItemPriority(-facilityId, gain);
-	
-	// add demand
-	
-	productionDemand.addItemPriority(-facilityId, priority);
-	
-	debug
-	(
-		"\t%-32s"
-		" priority=%5.2f   |"
-		" income=%5.2f"
-		" gain=%5.2f"
-		"\n"
-		, getFacility(facilityId)->name
-		, priority
-		, income
-		, gain
-	)
-	;
-	
-}
-
 /**
 Evaluates base income facilities removal.
 */
@@ -765,6 +925,7 @@ void evaluatePsychFacilitiesRemoval()
 {
 	debug("- evaluatePsychFacilitiesRemoval\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	
 	// facilityIds
@@ -808,6 +969,7 @@ void evaluatePsychFacilities()
 {
 	debug("- evaluatePsychFacilities\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	
@@ -914,6 +1076,7 @@ void evaluateIncomeFacilities()
 {
 	debug("- evaluateIncomeFacilities\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	
@@ -1002,6 +1165,7 @@ void evaluateMineralMultiplyingFacilities()
 {
 	debug("- evaluateMineralMultiplyingFacilities\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	
@@ -1083,6 +1247,7 @@ void evaluatePopulationLimitFacilities()
 {
 	debug("- evaluatePopulationLimitFacilities\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	
@@ -1213,6 +1378,7 @@ void evaluateMilitaryFacilities()
 		{0.0, 0.6, 0.2, 0.2, },
 	};
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	bool ocean = is_ocean(getBaseMapTile(baseId));
@@ -1355,6 +1521,7 @@ void evaluatePrototypingFacilities()
 {
 	debug("- evaluatePrototypingFacilities\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	
@@ -1437,6 +1604,7 @@ void evaluatePrototypingFacilities()
 
 void evaluateDefensiveProbeUnits()
 {
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
 	
@@ -1561,6 +1729,7 @@ void evaluateExpansionUnits()
 	
 	debug("evaluateExpansionUnits\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	BASE *base = productionDemand.base;
 	MAP *baseTile = getBaseMapTile(baseId);
@@ -1742,6 +1911,7 @@ void evaluateExpansionUnits()
 
 void evaluateTerraformingUnits()
 {
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
 	
@@ -1899,14 +2069,9 @@ void evaluateTerraformingUnits()
 
 void evaluateCrawlingUnits()
 {
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
-//	MAP *baseTile = getBaseMapTile(baseId);
 	
-	// base clusters
-	
-//	int baseSeaCluster = getSeaCluster(baseTile);
-//	int baseLandTransportedCluster = getLandTransportedCluster(baseTile);
-//	
 	debug("evaluateCrawlingUnits\n");
 	
 	// process available supply units
@@ -1964,6 +2129,7 @@ void evaluateCrawlingUnits()
 
 void evaluatePodPoppingUnits()
 {
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
 	std::set<int> baseSeaRegions = getBaseSeaRegions(baseId);
@@ -2105,6 +2271,8 @@ void evaluatePodPoppingUnits()
 		UNIT *unit = getUnit(unitId);
 		int triad = unit->triad();
 		int surface = triad;
+		int offenseValue = unit->offense_value();
+		int defenseValue = unit->defense_value();
 		
 		// surface triad
 		
@@ -2115,6 +2283,13 @@ void evaluatePodPoppingUnits()
 		
 		if (unit->speed() < aiFactionInfo->fastestTriadChassisIds.at(triad))
 			continue;
+		
+		// best weapon and armor or psi
+		
+		if (!((offenseValue < 0 || offenseValue >= aiFactionInfo->maxConOffenseValue) && (defenseValue < 0 || defenseValue >= std::min(aiFactionInfo->maxConOffenseValue, aiFactionInfo->maxConDefenseValue))))
+			continue;
+		
+		// pod data
 		
 		SurfacePodData &surfacePodData = surfacePodDatas.at(triad);
 		
@@ -2228,6 +2403,7 @@ void evaluatePodPoppingUnits()
 
 void evaluateBaseDefenseUnits()
 {
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
 	BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
@@ -2378,6 +2554,7 @@ void evaluateBaseDefenseUnits()
 
 void evaluateTerritoryProtectionUnits()
 {
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
 	
@@ -2393,7 +2570,7 @@ void evaluateTerritoryProtectionUnits()
 		
 //		// best weapon and armor or psi
 //		
-//		if (!((offenseValue < 0 || offenseValue >= aiFactionInfo->maxConOffenseValue) && (defenseValue < 0 || defenseValue >= aiFactionInfo->maxConDefenseValue)))
+//		if (!((offenseValue < 0 || offenseValue >= aiFactionInfo->maxConOffenseValue) && (defenseValue < 0 || defenseValue >= std::min(aiFactionInfo->maxConOffenseValue, aiFactionInfo->maxConDefenseValue))))
 //			continue;
 //		
 //		// fastest conventional chassis
@@ -2529,6 +2706,7 @@ void evaluateTerritoryProtectionUnits()
 
 void evaluateEnemyBaseAssaultUnits()
 {
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
 	
@@ -2544,7 +2722,7 @@ void evaluateEnemyBaseAssaultUnits()
 		
 		// best weapon and armor or psi
 		
-		if (!((offenseValue < 0 || offenseValue >= aiFactionInfo->maxConOffenseValue) && (defenseValue < 0 || defenseValue >= aiFactionInfo->maxConDefenseValue)))
+		if (!((offenseValue < 0 || offenseValue >= aiFactionInfo->maxConOffenseValue) && (defenseValue < 0 || defenseValue >= std::min(aiFactionInfo->maxConOffenseValue, aiFactionInfo->maxConDefenseValue))))
 			continue;
 		
 		// exclude those base cannot produce
@@ -2703,6 +2881,7 @@ void evaluateSeaTransport()
 {
 	debug("evaluateSeaTransport\n");
 	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	int baseSeaCluster = productionDemand.baseSeaCluster;
 	
@@ -3837,24 +4016,6 @@ int findTransportUnit()
 
 }
 
-void evaluateProject()
-{
-	debug("evaluateProject\n");
-	
-	int baseId = productionDemand.baseId;
-	BASE *base = productionDemand.base;
-	
-	double priority =
-		conf.ai_production_current_project_priority
-	;
-	
-	if (isBaseBuildingProject(baseId))
-	{
-		productionDemand.addItemPriority(base->queue_items[0], priority);
-	}
-	
-}
-
 /*
 Checks if base can build unit.
 */
@@ -4148,225 +4309,6 @@ int findInfantryPoliceUnit(bool first)
 	}
 
 	return bestUnitId;
-
-}
-
-void selectProject()
-{
-	debug("selectProject - %s\n", getMFaction(aiFactionId)->noun_faction);
-
-	// find project
-
-	int cheapestProjectFacilityId = -1;
-	int cheapestProjectFacilityCost = INT_MAX;
-
-	for (int projectFacilityId = SP_ID_First; projectFacilityId <= SP_ID_Last; projectFacilityId++)
-	{
-		// exclude not available project
-		
-		if (!mod_facility_avail((FacilityId)projectFacilityId, aiFactionId, -1, 0))
-			continue;
-
-		// get project cost
-
-		int cost = getFacility(projectFacilityId)->cost;
-
-		debug("\t%-30s cost=%3d\n", getFacility(projectFacilityId)->name, getFacility(projectFacilityId)->cost);
-
-		// update best
-
-		if (cost < cheapestProjectFacilityCost)
-		{
-			debug("\t\t- best\n");
-			cheapestProjectFacilityId = projectFacilityId;
-			cheapestProjectFacilityCost = cost;
-		}
-
-	}
-
-	if (cheapestProjectFacilityId != -1)
-	{
-		selectedProject = cheapestProjectFacilityId;
-	}
-
-}
-
-void assignProject()
-{
-	debug("assignProject - %s\n", getMFaction(aiFactionId)->noun_faction);
-
-	if (selectedProject == -1)
-	{
-		debug("\tno selected project\n");
-		return;
-	}
-
-	CFacility *projectFacility = getFacility(selectedProject);
-
-	debug("\t%s\n", projectFacility->name);
-
-	// check if project is building
-
-	bool projectBuilding = false;
-	int totalMineralSurplus = 0;
-	int mostSuitableBaseId = -1;
-	double mostSuitableBaseValue = 0.0;
-	int mostSuitableBaseMineralSurplus = 0;
-
-	for (int baseId : aiData.baseIds)
-	{
-		BASE *base = getBase(baseId);
-		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
-
-		if (isBaseBuildingProject(baseId))
-		{
-			projectBuilding = true;
-			base->queue_items[0] = -selectedProject;
-			break;
-		}
-
-		// mineral surplus
-
-		int mineralSurplus = base->mineral_surplus;
-		totalMineralSurplus += mineralSurplus;
-
-		// threat
-
-		double threat = baseInfo.combatData.requiredEffect;
-
-		// value
-
-		double value = (double)mineralSurplus - threat;
-
-		if (value > mostSuitableBaseValue)
-		{
-			mostSuitableBaseId = baseId;
-			mostSuitableBaseValue = value;
-			mostSuitableBaseMineralSurplus = mineralSurplus;
-		}
-
-	}
-
-	if (projectBuilding)
-	{
-		debug("\tproject is building\n");
-		return;
-	}
-
-	if (mostSuitableBaseId == -1)
-	{
-		debug("\tmost suitable base not found\n");
-		return;
-	}
-
-	BASE *mostSuitableBase = getBase(mostSuitableBaseId);
-
-	debug("\t%s\n", mostSuitableBase->name);
-
-	// compute base production fraction
-
-	double baseProductionFraction = (double)mostSuitableBaseMineralSurplus / (double)std::max(1, totalMineralSurplus);
-
-	if (baseProductionFraction > conf.ai_production_project_mineral_surplus_fraction)
-	{
-		debug
-		(
-			"\tbaseProductionFraction=%5.2f > conf.ai_production_project_mineral_surplus_fraction=%5.2f\n"
-			, baseProductionFraction
-			, conf.ai_production_project_mineral_surplus_fraction
-		);
-		return;
-	}
-
-	// exclude base building psych facility
-
-	switch (getBaseBuildingItem(mostSuitableBaseId))
-	{
-	case -FAC_RECREATION_COMMONS:
-	case -FAC_HOLOGRAM_THEATRE:
-	case -FAC_PARADISE_GARDEN:
-	case -FAC_RESEARCH_HOSPITAL:
-	case -FAC_NANOHOSPITAL:
-		return;
-	}
-
-	// build project
-
-	mostSuitableBase->queue_items[0] = - selectedProject;
-
-	debug("\tproject set\n");
-
-	// build mineral multiplying facility instead if more effective
-	// This is a hack. I should better balance all priorities.
-
-	int mineralMultiplyingFacilityId =
-		getFirstAvailableFacility
-		(
-			mostSuitableBaseId,
-			{FAC_RECYCLING_TANKS, FAC_GENEJACK_FACTORY, FAC_ROBOTIC_ASSEMBLY_PLANT, FAC_QUANTUM_CONVERTER, FAC_NANOREPLICATOR}
-		)
-	;
-
-	// no available mineral multiplying facility
-
-	if (mineralMultiplyingFacilityId == -1)
-		return;
-
-	// this multiplying facility is already building
-
-	int currentItem = getBaseBuildingItem(mostSuitableBaseId);
-
-	if (currentItem == -mineralMultiplyingFacilityId)
-		return;
-
-	int currentMineralMultiplierNumerator = divideIntegerRoundUp(2 * mostSuitableBase->mineral_intake_2, mostSuitableBase->mineral_intake);
-	int improvedMineralMultiplierNumerator = currentMineralMultiplierNumerator + 1;
-	int currentMineralIntake2 = mostSuitableBase->mineral_intake_2;
-	int improvedMineralIntake2 = mostSuitableBase->mineral_intake * improvedMineralMultiplierNumerator / 2;
-	int currentMineralProduction = mostSuitableBase->mineral_surplus;
-	int improvedMineralProduction = currentMineralProduction + (improvedMineralIntake2 - currentMineralIntake2);
-	int currentItemBuildTime = getBaseItemBuildTime(mostSuitableBaseId, currentItem);
-	int improvedItemBuildTime = divideIntegerRoundUp(getBaseMineralCost(mostSuitableBaseId, currentItem), improvedMineralProduction);
-	int itemBuildTimeReduction = std::max(0, currentItemBuildTime - improvedItemBuildTime);
-	int mineralMultiplyingFacilityBuildTime = getBaseItemBuildTime(mostSuitableBaseId, -mineralMultiplyingFacilityId);
-
-	// not enough time reduction
-
-	if (itemBuildTimeReduction < divideIntegerRoundUp(mineralMultiplyingFacilityBuildTime, 2))
-		return;
-
-	// build mineral multiplying facility instead
-
-	mostSuitableBase->queue_items[0] = -mineralMultiplyingFacilityId;
-
-	debug("\tbuild mineral multiplying facility first\n");
-
-	debug
-	(
-		"\t%-32s"
-		" itemBuildTimeReduction=%2d"
-		" mineralMultiplyingFacilityBuildTime=%2d"
-		" currentMineralMultiplierNumerator=%2d"
-		" improvedMineralMultiplierNumerator=%2d"
-		" currentMineralIntake2=%2d"
-		" improvedMineralIntake2=%2d"
-		" currentMineralProduction=%2d"
-		" improvedMineralProduction=%2d"
-		" currentItemBuildTime=%2d"
-		" improvedItemBuildTime=%2d"
-		"\n"
-		, getFacility(mineralMultiplyingFacilityId)->name
-		, itemBuildTimeReduction
-		, mineralMultiplyingFacilityBuildTime
-		, currentMineralMultiplierNumerator
-		, improvedMineralMultiplierNumerator
-		, currentMineralIntake2
-		, improvedMineralIntake2
-		, currentMineralProduction
-		, improvedMineralProduction
-		, currentItemBuildTime
-		, improvedItemBuildTime
-	);
 
 }
 

@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v343"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v344"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -388,6 +388,7 @@ struct Config {
     int se_police_excess_industry_bonus = 0;
     int isle_of_deep_offense_bonus = 0;
     int isle_of_deep_defense_bonus = 0;
+    int facility_yield_bonuses_biology_lab[3] = {0,0,0};
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

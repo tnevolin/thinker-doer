@@ -138,16 +138,23 @@ void productionStrategy();
 void populateFactionProductionData();
 void evaluateGlobalColonyDemand();
 void evaluateGlobalSeaTransportDemand();
-void setProduction();
+void initializeProductionDemands();
+void suggestGlobalProduction();
+void suggestBaseProductions();
+void applyBaseProductions();
+
+// global item selection
+
+void evaluateHeadquarters();
+void evaluateProject();
 
 // base item selection
 
-void suggestBaseProduction(int baseId);
+void suggestBaseProduction();
 
 void evaluateFacilities();
 void evaluatePressureDome();
 void evaluateStockpileEnergy();
-void evaluateHeadquarters();
 void evaluatePsychFacilitiesRemoval();
 void evaluatePsychFacilities();
 void evaluateIncomeFacilities();
@@ -165,7 +172,6 @@ void evaluateBaseDefenseUnits();
 void evaluateTerritoryProtectionUnits();
 void evaluateEnemyBaseAssaultUnits();
 void evaluateSeaTransport();
-void evaluateProject();
 int findAntiNativeDefenderUnit(bool ocean);
 int findNativeAttackerUnit(bool ocean);
 int findScoutUnit(int triad);
@@ -189,8 +195,6 @@ int getFirstAvailableFacility(int baseId, std::vector<int> facilityIds);
 std::vector<int> getProtectionCounterUnits(int baseId, int targetBaseId, int foeUnitId, UnitStrength *foeUnitStrength);
 double getUnitPriorityCoefficient(int baseId, int unitId);
 int findInfantryPoliceUnit(bool first);
-void selectProject();
-void assignProject();
 void hurryProtectiveUnit();
 
 //=======================================================

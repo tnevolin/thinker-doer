@@ -5783,21 +5783,17 @@ double getExponentialCoefficient(double scale, double value)
 /*
 Estimates turns to build given item at given base.
 */
-int getBaseItemBuildTime(int baseId, int item, bool accumulatedMinerals)
+int getBaseItemBuildTime(int baseId, int item, bool countAccumulatedMinerals)
 {
 	BASE *base = &(Bases[baseId]);
 
 	if (base->mineral_surplus <= 0)
 		return 9999;
 
-	int mineralCost = std::max(0, getBaseMineralCost(baseId, item) - (accumulatedMinerals ? base->minerals_accumulated : 0));
+	int mineralCost = std::max(0, getBaseMineralCost(baseId, item) - (countAccumulatedMinerals ? base->minerals_accumulated : 0));
 
 	return divideIntegerRoundUp(mineralCost, base->mineral_surplus);
 
-}
-int getBaseItemBuildTime(int baseId, int item)
-{
-	return getBaseItemBuildTime(baseId, item, false);
 }
 
 double getStatisticalBaseSize(double age)

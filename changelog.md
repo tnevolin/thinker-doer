@@ -1,3 +1,11 @@
+# Version 344
+
+* Player automated units are managed by Thinker algorithm.
+* Fix AI HQ relocation algorithm.
+* AI will try to build more powerful units even for scouting.
+* Biology Lab adds +1 nutrient and +1 energy in fungus squares.
+* Biology Lab cost/maintenance is 6/1.
+
 # Version 343
 
 * Fixed path computation bug for probes.
