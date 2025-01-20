@@ -1528,16 +1528,10 @@ void finalizeFormerOrders()
 			int vehicleId = formerOrder.vehicleId;
 			VEH *vehicle = &(Vehicles[vehicleId]);
 			
-			// supported
+			// kill supported formers without orders after first few turns
 			
-			if (vehicle->home_base_id < 0)
+			if (*CurrentTurn > 5 && vehicle->home_base_id >= 0)
 			{
-				// hold independent former without order
-				setTask(Task(vehicleId, TT_HOLD));
-			}
-			else
-			{
-				// kill supported formers without orders
 				setTask(Task(vehicleId, TT_KILL));
 			}
 			

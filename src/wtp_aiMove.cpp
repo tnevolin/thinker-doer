@@ -35,41 +35,37 @@ void SeaTransit::copy(SeaTransit &seaTransit)
 void moveStrategy()
 {
 	debug("moveStrategy - %s\n", MFactions[aiFactionId].noun_faction);
-
+	
 	executionProfiles["1.5. moveStrategy"].start();
 	
 	// vanilla fix for transport dropoff
-
+	
 	fixUndesiredTransportDropoff();
-
+	
 	// generic
-
+	
 	moveAllStrategy();
-
+	
 	// artifact
-
+	
 	moveArtifactStrategy();
-
+	
 	// combat
-
+	
 	moveCombatStrategy();
-
+	
 	// colony
-
+	
 	moveColonyStrategy();
-
+	
 	// former
-
+	
 	moveFormerStrategy();
-
+	
 	// transport
-
+	
 	moveTranportStrategy();
-
-	// vanilla fix for transpoft pickup
-
-	fixUndesiredTransportPickup();
-
+	
 	executionProfiles["1.5. moveStrategy"].stop();
 	
 }
@@ -658,14 +654,17 @@ int __cdecl modified_enemy_move(const int vehicleId)
 	
 	// choose AI logic
 	
-	// run WTP AI code for AI eanbled factions
-	if (isWtpEnabledFaction(vehicle->faction_id))
+	// run WTP AI code for AI eanbled factions or human player managed units
+	
+	if (isWtpEnabledFaction(vehicle->faction_id) || (aiFactionId == *CurrentPlayerFaction && conf.manage_player_units && ((vehicle->state & VSTATE_ON_ALERT) != 0) && vehicle->terraform_turns == 0))
 	{
 		executionProfiles["| enemyMoveVehicle"].start();
 		returnValue = enemyMoveVehicle(vehicleId);
 		executionProfiles["| enemyMoveVehicle"].stop();
 	}
+	
 	// default
+	
 	else
 	{
 		executionProfiles["~ mod_enemy_move"].start();

@@ -1,7 +1,15 @@
+# Version 345
+
+* Fully automated (Shift-A) units are controlled by WTP AI algorithm.
+  * Experimental. I have repurposed computer AI for that and there could be many discrepancies. Please be cautious and report bugs.
+  * Unit may randomly get out of automated state. If it happens, simply automate it again and report to me to reduce these occurences.
+  * The algorithm plan optimal strategy assuming all of them are automated. Player controlling some of them may result in sub-optimal actions.
+  * AI does not take player actions into account and does not try to _collaborate_ with them!
+
 # Version 344
 
 * Player automated units are managed by Thinker algorithm.
-* Fix AI HQ relocation algorithm.
+* Fixed AI HQ relocation algorithm.
 * AI will try to build more powerful units even for scouting.
 * Biology Lab adds +1 nutrient and +1 energy in fungus squares.
 * Biology Lab cost/maintenance is 6/1.

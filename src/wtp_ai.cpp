@@ -82,6 +82,10 @@ void __cdecl modified_enemy_units_check(int factionId)
 		
 		assignVehiclesToTransports();
 		
+		// vanilla fix for transpoft pickup
+		
+		fixUndesiredTransportPickup();
+		
 		// balance vehicle support
 		
 		balanceVehicleSupport();
@@ -119,15 +123,12 @@ void __cdecl modified_enemy_units_check(int factionId)
 		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 		{
 			VEH *vehicle = getVehicle(vehicleId);
-			int vehicleSpeed = getVehicleSpeed(vehicleId);
+			uint8_t vehicleMoveRate = (uint8_t)getVehicleMoveRate(vehicleId);
 			
 			if (vehicle->faction_id != factionId)
 				continue;
 			
-			if (vehicle->moves_spent >= vehicleSpeed)
-				continue;
-			
-			vehicle->moves_spent = vehicleSpeed;
+			vehicle->moves_spent = std::max(vehicle->moves_spent, vehicleMoveRate);
 			
 		}
 		
@@ -150,7 +151,6 @@ void strategy()
 	// design units
 	
 	designUnits();
-	setUnitVariables();
 	
 	// populate data
 	
@@ -172,6 +172,29 @@ void strategy()
 	
 }
 
+/*
+Plans strategy for human automated units.
+*/
+void planHumanAutomationStrategy()
+{
+	executionProfiles["1. strategy"].start();
+	
+	// populate data
+	
+	populateAIData();
+	
+	// move strategy
+	
+	moveStrategy();
+	
+	// execute tasks
+	
+	executeTasks();
+	
+	executionProfiles["1. strategy"].stop();
+	
+}
+
 void executeTasks()
 {
 	debug("Tasks - %s\n", MFactions[aiFactionId].noun_faction);
@@ -183,6 +206,11 @@ void executeTasks()
 		Task &task = taskEntry.second;
 		int vehicleId = task.getVehicleId();
 		VEH *vehicle = &(Vehicles[vehicleId]);
+		
+		// skip not fully automated human player units
+		
+		if (aiFactionId == *CurrentPlayerFaction && !(conf.manage_player_units && ((vehicle->state & VSTATE_ON_ALERT) != 0) && vehicle->terraform_turns == 0))
+			continue;
 
 		// do not execute combat tasks immediatelly
 
@@ -1290,6 +1318,21 @@ void populateBaseInfos()
 
 void populatePlayerGlobalVariables()
 {
+	// police2xUnitAvailable
+	
+	aiData.police2xUnitAvailable = false;
+	
+	for (int unitId : aiData.unitIds)
+	{
+		// police2xUnit
+		
+		if (isInfantryDefensivePolice2xUnit(unitId, aiFactionId))
+		{
+			aiData.police2xUnitAvailable = true;
+		}
+		
+	}
+	
 	// summaries
 	
 	aiData.maxBaseSize = getMaxBaseSize(aiFactionId);
@@ -4389,23 +4432,6 @@ void designUnits()
 	
 	executionProfiles["1.0. designUnits"].stop();
 	
-}
-
-void setUnitVariables()
-{
-	aiData.police2xUnitAvailable = false;
-
-	for (int unitId : aiData.unitIds)
-	{
-		// police2xUnit
-
-		if (isInfantryDefensivePolice2xUnit(unitId, aiFactionId))
-		{
-			aiData.police2xUnitAvailable = true;
-		}
-
-	}
-
 }
 
 /*

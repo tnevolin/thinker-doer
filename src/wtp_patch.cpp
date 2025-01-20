@@ -3150,6 +3150,15 @@ void patch_disable_popb()
 	
 }
 
+void patch_console_human_turn()
+{
+	write_call(0x00527661, (int)wtp_mod_Console_human_turn);
+	write_call(0x0052826E, (int)wtp_mod_Console_human_turn);
+	write_call(0x005282C9, (int)wtp_mod_Console_human_turn);
+	write_call(0x0052A765, (int)wtp_mod_Console_human_turn);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3461,6 +3470,8 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_disable_popb();
+	
+	patch_console_human_turn();
 	
 }
 

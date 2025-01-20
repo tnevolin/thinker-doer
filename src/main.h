@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v344"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v345"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -435,8 +435,8 @@ struct Config {
     double ai_development_scale_max;
     double ai_development_scale_max_turn;
     double ai_production_vanilla_priority_unit;
-    double ai_production_vanilla_priority_project;
     double ai_production_vanilla_priority_facility;
+    double ai_production_vanilla_priority_project;
     double ai_production_project_mineral_surplus_fraction;
     double ai_production_threat_coefficient_human;
     double ai_production_threat_coefficient_vendetta;

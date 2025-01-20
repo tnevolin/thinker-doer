@@ -522,14 +522,8 @@ void applyBaseProductions()
 			}
 			
 		}
-		// project
-		else if (choice <= -SP_ID_First)
-		{
-			// project priority is handled by WTP
-			vanillaPriority = 0.0;
-		}
 		// facility
-		else
+		else if (choice < 0 && -choice < FAC_STOCKPILE_ENERGY)
 		{
 			// only not managed facilities
 			
@@ -537,6 +531,14 @@ void applyBaseProductions()
 			{
 				vanillaPriority = conf.ai_production_vanilla_priority_facility;
 			}
+			
+		}
+		// project
+		else if (choice < 0 && -choice >= SP_ID_First && -choice <= SP_ID_Last)
+		{
+			// leave vanilla project be
+			
+			vanillaPriority = conf.ai_production_vanilla_priority_project;
 			
 		}
 		

@@ -903,13 +903,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_production_vanilla_priority_unit = atof(value);
     }
-    else if (MATCH("ai_production_vanilla_priority_project"))
-    {
-        cf->ai_production_vanilla_priority_project = atof(value);
-    }
     else if (MATCH("ai_production_vanilla_priority_facility"))
     {
         cf->ai_production_vanilla_priority_facility = atof(value);
+    }
+    else if (MATCH("ai_production_vanilla_priority_project"))
+    {
+        cf->ai_production_vanilla_priority_project = atof(value);
     }
     else if (MATCH("ai_production_project_mineral_surplus_fraction"))
     {
