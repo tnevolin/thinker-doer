@@ -128,7 +128,7 @@ struct TileInfo
 	
 	// hex costs
 	// [movementType][angle]
-	int hexCosts[MovementTypeCount][ANGLE_COUNT];
+	std::array<std::array<int, ANGLE_COUNT>, MovementTypeCount> hexCosts;
 	
 	// movement data
 	
@@ -359,6 +359,35 @@ struct BaseProbeData
 		double required = requiredEffect;
 		double provided = (present ? providedEffectPresent : providedEffect);
 		return ((required > 0.0 && provided < required) ? 1.0 - provided / required : 0.0);
+	}
+	
+};
+
+/*
+Saves and restores all bases state.
+*/
+class BaseSnapshots
+{
+private:
+	
+	static std::vector<BASE> baseSnapshots;
+	
+public:
+		
+	static void takeSnapshots()
+	{
+		for (size_t baseId = 0; baseId < (size_t)*BaseCount; baseId++)
+		{
+			baseSnapshots.emplace_back();
+			memcpy(&(baseSnapshots.at(baseId)), &(Bases[baseId]), sizeof(BASE));
+		}
+	}
+	static void restoreSnapshots()
+	{
+		for (size_t baseId = 0; baseId < baseSnapshots.size(); baseId++)
+		{
+			memcpy(&(Bases[baseId]), &(baseSnapshots.at(baseId)), sizeof(BASE));
+		}
 	}
 	
 };

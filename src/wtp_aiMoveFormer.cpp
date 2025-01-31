@@ -63,7 +63,7 @@ Prepares former orders.
 */
 void moveFormerStrategy()
 {
-	executionProfiles["1.5.6. moveFormerStrategy"].start();
+	Profiling::start("moveFormerStrategy", "moveStrategy");
 	
 	// initialize data
 
@@ -83,7 +83,7 @@ void moveFormerStrategy()
 	assignFormerOrders();
 	finalizeFormerOrders();
 
-	executionProfiles["1.5.6. moveFormerStrategy"].stop();
+	Profiling::stop("moveFormerStrategy");
 	
 }
 

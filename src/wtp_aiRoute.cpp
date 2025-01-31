@@ -37,17 +37,539 @@ robin_hood::unordered_flat_map <long long, double> cachedATravelTimes;
 
 void populateRouteData()
 {
-	cachedATravelTimes.clear();
+	Profiling::start("populateRouteData", "populateAIData");
 	
+	Profiling::start("cachedATravelTimes.clear()", "populateRouteData");
+	cachedATravelTimes.clear();
+	Profiling::stop("cachedATravelTimes.clear()");
+	
+//	populateSeaRegions();
+//	populateSeaLandmarks();
 	precomputeRouteData();
+	
+	Profiling::stop("populateRouteData");
 	
 }
 
+//void populateSeaRegions()
+//{
+//	Profiling::start("populateSeaRegions", "populateRouteData");
+//	
+//	debug("populateSeaRegions - %s\n", aiMFaction->noun_faction);
+//	
+//	std::vector<int> &seaRegions = landmarkData.seaRegions;
+//	seaRegions.resize(*MapAreaTiles);
+//	std::fill(seaRegions.begin(), seaRegions.end(), -1);
+//	
+//	std::vector<MAP *> openNodes;
+//	std::vector<MAP *> newOpenNodes;
+//	
+//	int seaRegionIndex = 0;
+//	
+//	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//	{
+//		int tileIndex = tile - *MapTiles;
+//		
+//		// sea
+//		
+//		if (tile->region < 64)
+//			continue;
+//		
+//		// not base
+//		
+//		if (tile->is_base())
+//			continue;
+//		
+//		// not yet assigned
+//		
+//		if (seaRegions.at(tileIndex) != -1)
+//			continue;
+//		
+//		openNodes.clear();
+//		newOpenNodes.clear();
+//		
+//		openNodes.push_back(tile);
+//		seaRegions.at(tileIndex) = seaRegionIndex;
+//		
+//		while (!openNodes.empty())
+//		{
+//			for (MAP *currentTile : openNodes)
+//			{
+//				for (MAP *adjacentTile : getAdjacentTiles(currentTile))
+//				{
+//					int adjacentTileIndex = adjacentTile - *MapTiles;
+//					
+//					// sea
+//					
+//					if (adjacentTile->region < 64)
+//						continue;
+//					
+//					// not base
+//					
+//					if (adjacentTile->is_base())
+//						continue;
+//					
+//					// not current region
+//					
+//					if (seaRegions.at(adjacentTileIndex) == seaRegionIndex)
+//						continue;
+//					
+//					// not yet assigned
+//					
+//					if (seaRegions.at(adjacentTileIndex) != -1)
+//					{
+//						debug("ERROR: inconsistent sea regions: currentTile%s=%d adjacentTile%s=%d\n", getLocationString(currentTile).c_str(), seaRegions.at(currentTile - *MapTiles), getLocationString(adjacentTile).c_str(), seaRegions.at(adjacentTileIndex));
+//						continue;
+//					}
+//					
+//					seaRegions.at(adjacentTileIndex) = seaRegionIndex;
+//					newOpenNodes.push_back(adjacentTile);
+//					
+//				}
+//				
+//			}
+//			
+//			openNodes.clear();
+//			openNodes.swap(newOpenNodes);
+//			
+//		}
+//		
+//		seaRegionIndex++;
+//		
+//	}
+//	
+//	landmarkData.seaRegionCount = seaRegionIndex;
+//	
+//	if (DEBUG)
+//	{
+//		debug("\tseaRegions\n");
+//		
+//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//		{
+//			int tileIndex = tile - *MapTiles;
+//			
+//			if (seaRegions.at(tileIndex) == -1)
+//				continue;
+//			
+//			debug("\t\t%s %3d\n", getLocationString(tile).c_str(), seaRegions.at(tileIndex));
+//			
+//		}
+//		
+//	}
+//	
+//	// seaAdjacentBases
+//	
+//	std::vector<SeaAdjacentBase> seaAdjacentBases;
+//	
+//	for (int baseId = 0; baseId < *BaseCount; baseId++)
+//	{
+//		MAP *baseTile = getBaseMapTile(baseId);
+//		
+//		// collect connected sea regions
+//		
+//		std::vector<MAP *> adjacentSeaTiles;
+//		
+//		for (MAP *adjacentTile : getAdjacentTiles(baseTile))
+//		{
+//			// sea
+//			
+//			if (!adjacentTile->is_sea())
+//				continue;
+//			
+//			adjacentSeaTiles.push_back(adjacentTile);
+//			
+//		}
+//		
+//		if (adjacentSeaTiles.size() > 0)
+//		{
+//			seaAdjacentBases.push_back({baseId, baseTile, adjacentSeaTiles});
+//		}
+//		
+//	}
+//	
+//	if (DEBUG)
+//	{
+//		debug("\tseaAdjacentBases\n");
+//		
+//		for (SeaAdjacentBase const &seaAdjacentBase : seaAdjacentBases)
+//		{
+//			debug("\t\t%s %-25s", getLocationString(seaAdjacentBase.baseTile).c_str(), Bases[seaAdjacentBase.baseId].name);
+//			
+//			for (MAP *adjacentSeaTile : seaAdjacentBase.adjacentSeaTiles)
+//			{
+//				debug(" %s", getLocationString(adjacentSeaTile).c_str());
+//			}
+//			
+//			debug("\n");
+//			
+//		}
+//		
+//	}
+//	
+//	// globalSeaRegions
+//	
+//	std::vector<int> &globalSeaRegions = landmarkData.globalSeaRegions;
+//	globalSeaRegions.assign(seaRegions.begin(), seaRegions.end());
+//	
+//	for (SeaAdjacentBase const &seaAdjacentBase : seaAdjacentBases)
+//	{
+//		// connectedSeaRegions
+//		
+//		std::set<int> connectedSeaRegions;
+//		
+//		for (MAP *adjacentSeaTile : seaAdjacentBase.adjacentSeaTiles)
+//		{
+//			int adjacentSeaTileIndex = adjacentSeaTile - *MapTiles;
+//			int adjacentSeaTileRegion = seaRegions.at(adjacentSeaTileIndex);
+//			connectedSeaRegions.insert(adjacentSeaTileRegion);
+//		}
+//		
+//		if (connectedSeaRegions.size() == 0)
+//			continue;
+//		
+//		// update seaRegions
+//		
+//		int firstSeaRegion = *(connectedSeaRegions.begin());
+//		connectedSeaRegions.erase(firstSeaRegion);
+//		
+//		globalSeaRegions.at(seaAdjacentBase.baseTile - *MapTiles) = firstSeaRegion;
+//		
+//		if (!connectedSeaRegions.empty())
+//		{
+//			for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//			{
+//				int tileIndex = tile - *MapTiles;
+//				int oldSeaRegion = globalSeaRegions.at(tileIndex);
+//				
+//				if (connectedSeaRegions.find(oldSeaRegion) != connectedSeaRegions.end())
+//				{
+//					globalSeaRegions.at(tileIndex) = firstSeaRegion;
+//				}
+//				
+//			}
+//			
+//		}
+//			
+//	}
+//	
+//	if (DEBUG)
+//	{
+//		debug("\tglobalSeaRegions\n");
+//		
+//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//		{
+//			int tileIndex = tile - *MapTiles;
+//			
+//			if (globalSeaRegions.at(tileIndex) == -1)
+//				continue;
+//			
+//			debug("\t\t%s %3d\n", getLocationString(tile).c_str(), globalSeaRegions.at(tileIndex));
+//			
+//		}
+//		
+//	}
+//	
+//	// factionSeaRegions
+//	
+//	std::array<std::vector<int>, MaxPlayerNum> &allFactionSeaRegions = landmarkData.allFactionSeaRegions;
+//	
+//	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+//	{
+//		std::vector<int> &factionSeaRegions = allFactionSeaRegions.at(factionId);
+//		factionSeaRegions.assign(seaRegions.begin(), seaRegions.end());
+//		
+//		for (SeaAdjacentBase const &seaAdjacentBase : seaAdjacentBases)
+//		{
+//			// friendly base
+//			
+//			if (!isFriendly(factionId, Bases[seaAdjacentBase.baseId].faction_id))
+//				continue;
+//			
+//			// connectedSeaRegions
+//			
+//			std::set<int> connectedSeaRegions;
+//			
+//			for (MAP *adjacentSeaTile : seaAdjacentBase.adjacentSeaTiles)
+//			{
+//				int adjacentSeaTileIndex = adjacentSeaTile - *MapTiles;
+//				int adjacentSeaTileRegion = seaRegions.at(adjacentSeaTileIndex);
+//				connectedSeaRegions.insert(adjacentSeaTileRegion);
+//			}
+//			
+//			if (connectedSeaRegions.size() == 0)
+//				continue;
+//			
+//			// update seaRegions
+//			
+//			int firstSeaRegion = *(connectedSeaRegions.begin());
+//			connectedSeaRegions.erase(firstSeaRegion);
+//			
+//			factionSeaRegions.at(seaAdjacentBase.baseTile - *MapTiles) = firstSeaRegion;
+//			
+//			if (!connectedSeaRegions.empty())
+//			{
+//				for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//				{
+//					int tileIndex = tile - *MapTiles;
+//					int oldSeaRegion = factionSeaRegions.at(tileIndex);
+//					
+//					if (connectedSeaRegions.find(oldSeaRegion) != connectedSeaRegions.end())
+//					{
+//						factionSeaRegions.at(tileIndex) = firstSeaRegion;
+//					}
+//					
+//				}
+//				
+//			}
+//				
+//		}
+//		
+//		if (DEBUG)
+//		{
+//			debug("\tfactionSeaRegions - %s\n", MFactions[factionId].noun_faction);
+//			
+//			for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//			{
+//				int tileIndex = tile - *MapTiles;
+//				
+//				if (factionSeaRegions.at(tileIndex) == -1)
+//					continue;
+//				
+//				debug("\t\t%s %3d\n", getLocationString(tile).c_str(), factionSeaRegions.at(tileIndex));
+//				
+//			}
+//			
+//		}
+//		
+//	}
+//	
+//	Profiling::stop("populateSeaRegions");
+//	
+//}
+//
+//void populateSeaLandmarks()
+//{
+//	Profiling::start("populateSeaLandmarks", "populateRouteData");
+//	
+//	debug("populateSeaLandmarks - %s\n", aiMFaction->noun_faction);
+//	
+//	std::vector<int> const &globalSeaRegions = landmarkData.globalSeaRegions;
+//	
+//	std::vector<MAP *> openNodes;
+//	std::vector<MAP *> newOpenNodes;
+//	robin_hood::unordered_flat_set<MAP *> endNodes;
+//	
+//	// collect initialTiles
+//	
+//	std::map<int, MAP *> initialTiles;
+//	
+//	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//	{
+//		int tileIndex = tile - *MapTiles;
+//		int seaRegion = globalSeaRegions.at(tileIndex);
+//		
+//		if (seaRegion == -1)
+//			continue;
+//		
+//		if (tile->is_base())
+//			continue;
+//		
+//		if (initialTiles.find(seaRegion) != initialTiles.end())
+//			continue;
+//		
+//		initialTiles.emplace(seaRegion, tile);
+//		
+//	}
+//	
+//	// iterate movementTypes
+//	
+//	for (size_t seaMovementTypeIndex = 0; seaMovementTypeIndex < SeaMovementTypeCount; seaMovementTypeIndex++)
+//	{
+//		MovementType movementType = seaMovementTypes.at(seaMovementTypeIndex);
+//		
+//		std::vector<SeaLandmark> &seaLandmarks = landmarkData.seaLandmarks.at(seaMovementTypeIndex);
+//		seaLandmarks.clear();
+//		
+//		// iterate seaRegions
+//		
+//		for (std::pair<int, MAP *> const &initialTileEntry : initialTiles)
+//		{
+//			int landmarkSeaRegion = initialTileEntry.first;
+//			MAP *landmarkTile = initialTileEntry.second;
+//			
+//			endNodes.clear();
+//			
+//			// generate landmarks
+//			
+//			while (true)
+//			{
+//				// recalculate landmarkTileIndex as landmarkTileIndex changes every iteration
+//				
+//				int landmarkTileIndex = landmarkTile - *MapTiles;
+//				
+//				// create landmark
+//				
+//				seaLandmarks.push_back(SeaLandmark());
+//				SeaLandmark &seaLandmark = seaLandmarks.back();
+//				
+//				seaLandmark.tile = landmarkTile;
+//				seaLandmark.tileInfos.clear();
+//				seaLandmark.tileInfos.resize(*MapAreaTiles);
+//				
+//				// populate initial open nodes
+//				
+//				openNodes.clear();
+//				newOpenNodes.clear();
+//				
+//				seaLandmark.tileInfos.at(landmarkTileIndex).distance = 0;
+//				seaLandmark.tileInfos.at(landmarkTileIndex).movementCost = 0.0;
+//				seaLandmark.tileInfos.at(landmarkTileIndex).seaMovementCost = 0.0;
+//				openNodes.push_back(landmarkTile);
+//				
+//				int currentDistance = 0;
+//				
+//				while (!openNodes.empty())
+//				{
+//					for (MAP *currentTile : openNodes)
+//					{
+//						int currentTileIndex = currentTile - *MapTiles;
+//						TileInfo &currentTileInfo = aiData.getTileInfo(currentTile);
+//						SeaLandmarkTileInfo &currentTileSeaLandmarkTileInfo = seaLandmark.tileInfos.at(currentTileIndex);
+//						
+//						bool endNode = true;
+//						
+//						for (MapAngle adjacentTileMapAngle : getAdjacentMapAngles(currentTile))
+//						{
+//							int adjacentTileAngle = adjacentTileMapAngle.angle;
+//							MAP *adjacentTile = adjacentTileMapAngle.tile;
+//							int adjacentTileIndex = adjacentTile - *MapTiles;
+//							int adjacentTileSeaRegion = globalSeaRegions.at(adjacentTileIndex);
+//							
+//							if (adjacentTileSeaRegion != landmarkSeaRegion)
+//								continue;
+//							
+//							int hexCost = currentTileInfo.hexCosts.at(movementType).at(adjacentTileAngle);
+//							
+//							if (hexCost == -1)
+//								continue;
+//							
+//							// update value
+//							
+//							double adjacentTileMovementCost = currentTileSeaLandmarkTileInfo.movementCost + (double)hexCost;
+//							SeaLandmarkTileInfo &adjacentTileSeaLandmarkTileInfo = seaLandmark.tileInfos.at(adjacentTileIndex);
+//							
+//							if (adjacentTileMovementCost < adjacentTileSeaLandmarkTileInfo.movementCost)
+//							{
+//								adjacentTileSeaLandmarkTileInfo.distance = currentDistance;
+//								adjacentTileSeaLandmarkTileInfo.movementCost = adjacentTileMovementCost;
+//								adjacentTileSeaLandmarkTileInfo.seaMovementCost = adjacentTileMovementCost;
+//								newOpenNodes.push_back(adjacentTile);
+//								
+//								endNode = false;
+//								
+//							}
+//							
+//						}
+//						
+//						if (endNode)
+//						{
+//							endNodes.insert(currentTile);
+//						}
+//						
+//					}
+//					
+//					openNodes.clear();
+//					openNodes.swap(newOpenNodes);
+//					
+//					currentDistance++;
+//					
+//				}
+//				
+//				// select next landmark
+//				
+//				MAP *fartherstEndNodeTile = nullptr;
+//				int fartherstEndNodeDistance = 0;
+//				
+//				for (MAP *otherEndNodeTile : endNodes)
+//				{
+//					int otherEndNodeTileIndex = otherEndNodeTile - *MapTiles;
+//					
+//					int nearestLandmarkDistance = INT_MAX;
+//					
+//					for (SeaLandmark &otherSeaLandmark : seaLandmarks)
+//					{
+//						size_t otherSeaLandmarkTileIndex = otherSeaLandmark.tile - *MapTiles;
+//						int otherSeaLandmarkRegion = globalSeaRegions.at(otherSeaLandmarkTileIndex);
+//						
+//						if (otherSeaLandmarkRegion != landmarkSeaRegion)
+//							continue;
+//						
+//						int distance = otherSeaLandmark.tileInfos.at(otherEndNodeTileIndex).distance;
+//						
+//						if (distance == INT_MAX)
+//							continue;
+//						
+//						if (distance < nearestLandmarkDistance)
+//						{
+//							nearestLandmarkDistance = distance;
+//						}
+//						
+//					}
+//					
+//					if (nearestLandmarkDistance > fartherstEndNodeDistance)
+//					{
+//						fartherstEndNodeTile = otherEndNodeTile;
+//						fartherstEndNodeDistance = nearestLandmarkDistance;
+//					}
+//					
+//				}
+//				
+//				if (fartherstEndNodeTile == nullptr || fartherstEndNodeDistance < MIN_LANDMARK_DISTANCE)
+//				{
+//					// exit cycle
+//					break;
+//				}
+//				
+//				// set new landmark
+//				
+//				landmarkTile = fartherstEndNodeTile;
+//				endNodes.erase(landmarkTile);
+//				
+//			}
+//			
+//		}
+//			
+//	}
+//	
+//	if (DEBUG)
+//	{
+//		for (size_t seaMovementTypeIndex = 0; seaMovementTypeIndex < SeaMovementTypeCount; seaMovementTypeIndex++)
+//		{
+//			MovementType const movementType = seaMovementTypes.at(seaMovementTypeIndex);
+//			
+//			debug("\tmovementType=%d\n", movementType);
+//			
+//			std::vector<SeaLandmark> const &seaLandmarks = landmarkData.seaLandmarks.at(seaMovementTypeIndex);
+//			
+//			for (SeaLandmark const &seaLandmark : seaLandmarks)
+//			{
+//				debug("\t\t%s\n", getLocationString(seaLandmark.tile).c_str());
+//			}
+//			
+//		}
+//		flushlog();
+//			
+//	}
+//	
+//	Profiling::stop("populateSeaLandmarks");
+//	
+//}
+//
 void precomputeRouteData()
 {
-	debug("precomputeRouteData - %s\n", MFactions[aiFactionId].noun_faction);
+	Profiling::start("precomputeRouteData", "populateRouteData");
 	
-	executionProfiles["1.1.4. precomputeRouteData"].start();
+	debug("precomputeRouteData - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	// enemy factions data
 	
@@ -58,13 +580,12 @@ void precomputeRouteData()
 		
 		populateAirbases(factionId);
 		populateAirClusters(factionId);
-		populateSeaTransportClusters(factionId);
+		populateImpediments(factionId);
 		populateSeaTransportWaitTimes(factionId);
 		populateSeaCombatClusters(factionId);
 		populateLandCombatClusters(factionId);
-		populateImpediments(factionId);
-		populateSeaApproachTimes(factionId);
-		populateLandApproachTimes(factionId);
+		populateSeaApproachHexCosts(factionId);
+		populateLandApproachHexCosts(factionId);
 		
 	}
 	
@@ -72,13 +593,12 @@ void precomputeRouteData()
 	
 	populateAirbases(aiFactionId);
 	populateAirClusters(aiFactionId);
-	populateSeaTransportClusters(aiFactionId);
+	populateImpediments(aiFactionId);
 	populateSeaTransportWaitTimes(aiFactionId);
 	populateSeaCombatClusters(aiFactionId);
 	populateLandCombatClusters(aiFactionId);
-	populateImpediments(aiFactionId);
-	populateSeaApproachTimes(aiFactionId);
-	populateLandApproachTimes(aiFactionId);
+	populateSeaApproachHexCosts(aiFactionId);
+	populateLandApproachHexCosts(aiFactionId);
 	
 	populateSeaClusters(aiFactionId);
 	populateLandClusters();
@@ -89,15 +609,14 @@ void precomputeRouteData()
 	
 	populateSharedSeas();
 	
-	executionProfiles["1.1.4. precomputeRouteData"].stop();
-	
+	Profiling::stop("precomputeRouteData");
 }
 
 void populateAirbases(int factionId)
 {
-	debug("populateAirbases aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	Profiling::start("populateAirbases", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.1. populateAirbases"].start();
+	debug("populateAirbases aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
 	
 	std::vector<MAP *> &airbases = (factionId == aiFactionId ? aiFactionMovementInfo.airbases : enemyFactionMovementInfos.at(factionId).airbases);
 	
@@ -132,15 +651,15 @@ void populateAirbases(int factionId)
 //		
 //	}
 	
-	executionProfiles["1.1.4.1. populateAirbases"].stop();
+	Profiling::stop("populateAirbases");
 	
 }
 
 void populateAirClusters(int factionId)
 {
-	debug("populateAirClusters aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	Profiling::start("populateAirClusters", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.2. populateAirClusters"].start();
+	debug("populateAirClusters aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
 	
 	std::vector<MAP *> const &airbases = (factionId == aiFactionId ? aiFactionMovementInfo.airbases : enemyFactionMovementInfos.at(factionId).airbases);
 	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, std::vector<int>>> &airClusters = (factionId == aiFactionId ? aiFactionMovementInfo.airClusters : enemyFactionMovementInfos.at(factionId).airClusters);
@@ -301,8 +820,6 @@ void populateAirClusters(int factionId)
 		
 	}
 	
-	executionProfiles["1.1.4.2. populateAirClusters"].stop();
-	
 	if (DEBUG)
 	{
 		for (robin_hood::pair<int, robin_hood::unordered_flat_map<int, std::vector<int>>> const &airClusterEntry : airClusters)
@@ -330,719 +847,7 @@ void populateAirClusters(int factionId)
 		
 	}
 	
-}
-
-void populateSeaTransportClusters(int factionId)
-{
-	debug("populateSeaTransportClusters aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
-	
-	executionProfiles["1.1.4.3. populateSeaTransportClusters"].start();
-	
-	std::vector<int> &seaTransportClusters = (factionId == aiFactionId ? aiFactionMovementInfo.seaTransportClusters : enemyFactionMovementInfos.at(factionId).seaTransportClusters);
-	
-	seaTransportClusters.resize(*MapAreaTiles); std::fill(seaTransportClusters.begin(), seaTransportClusters.end(), -1);
-	
-	// seaTransportLocations
-	// existing or potential seaTransport locations
-	
-	robin_hood::unordered_flat_set<int> seaTransportTileIndexes;
-	
-	// seaTransports
-	
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-		
-		// this faction
-		
-		if (vehicle->faction_id != factionId)
-			continue;
-		
-		// seaTransport
-		
-		if (!isSeaTransportVehicle(vehicleId))
-			continue;
-		
-		// set
-		
-		seaTransportTileIndexes.insert(getVehicleMapTile(vehicleId) - *MapTiles);
-		
-	}
-	
-	// shipyards
-	
-	for (int baseId = 0; baseId < *BaseCount; baseId++)
-	{
-		BASE *base = getBase(baseId);
-		
-		// this faction
-		
-		if (base->faction_id != factionId)
-			continue;
-		
-		// can build ship
-		
-		if (!isBaseCanBuildShip(baseId))
-			continue;
-		
-		// set
-		
-		seaTransportTileIndexes.insert(getBaseMapTile(baseId) - *MapTiles);
-		
-	}
-	
-//	if (DEBUG)
-//	{
-//		debug("\tshipyardBaseIds\n");
-//		for (int baseId : shipyardBaseIds)
-//		{
-//			debug("\t\t%d\n", baseId);
-//		}
-//		
-//	}
-	
-//	if (DEBUG)
-//	{
-//		debug("\tseaTransportTileIndexes\n");
-//		for (int tileIndex : seaTransportTileIndexes)
-//		{
-//			debug("\t\t%s\n", getLocationString(*MapTiles + tileIndex).c_str());
-//		}
-//		
-//	}
-	
-	// availableSeaTransportTileIndexes
-	
-	std::vector<bool> availableSeaTransportTileIndexes(*MapAreaTiles);
-	
-	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-	{
-		int tileIndex = tile - *MapTiles;
-		bool ocean = is_ocean(tile);
-		
-		// sea
-		
-		if (!ocean)
-			continue;
-		
-		// set
-		
-		availableSeaTransportTileIndexes.at(tileIndex) = true;
-		
-	}
-	
-	// friendly poirts
-	
-	for (int baseId = 0; baseId < *BaseCount; baseId++)
-	{
-		BASE *base = getBase(baseId);
-		MAP *baseTile = getBaseMapTile(baseId);
-		int baseTileIndex = baseTile - *MapTiles;
-		bool ocean = is_ocean(baseTile);
-		
-		// friendly
-		
-		if (!isFriendly(factionId, base->faction_id))
-			continue;
-		
-		// land
-		
-		if (ocean)
-			continue;
-		
-		// accesses to water
-		
-		if (!isBaseAccessesWater(baseId))
-			continue;
-		
-		// set
-		
-		availableSeaTransportTileIndexes.at(baseTileIndex) = true;
-		
-	}
-	
-	// sea transport blocks
-	// not dependent on aiData.tileInfos
-	
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		int vehicleTileIndex = vehicleTile - *MapTiles;
-		bool ocean = is_ocean(vehicleTile);
-		
-		// unfriendly
-		
-		if (!isUnfriendly(factionId, vehicle->faction_id))
-			continue;
-		
-		// sea
-		
-		if (!ocean)
-			continue;
-		
-		// set
-		
-		availableSeaTransportTileIndexes.at(vehicleTileIndex) = false;
-		
-	}
-	
-//	if (DEBUG)
-//	{
-//		debug("\tavailableSeaTransportTileIndexes\n");
-//		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-//		{
-//			if (availableSeaTransportTileIndexes.at(tileIndex))
-//			{
-//				debug("\t\t%s\n", getLocationString(*MapTiles + tileIndex).c_str());
-//			}
-//			
-//		}
-//		
-//	}
-	
-	// seaTransportClusters
-	
-	std::vector<int> borderTiles;
-	std::vector<int> newBorderTiles;
-	
-	int clusterIndex = 0;
-	
-	for (int tileIndex : seaTransportTileIndexes)
-	{
-		// available
-		
-		assert(availableSeaTransportTileIndexes.at(tileIndex));
-		
-		// not yet assigned
-		
-		if (seaTransportClusters.at(tileIndex) != -1)
-			continue;
-		
-		// set collections
-		
-		borderTiles.clear();
-		newBorderTiles.clear();
-		
-		// insert initial tile
-		
-		seaTransportClusters.at(tileIndex) = clusterIndex;
-		
-		borderTiles.push_back(tileIndex);
-		
-		// expand cluster
-		
-		while (!borderTiles.empty())
-		{
-			for (int currentTileIndex : borderTiles)
-			{
-				TileInfo &currentTileInfo = aiData.tileInfos[currentTileIndex];
-				
-				for (int adjacentTileIndex : currentTileInfo.adjacentTileIndexes)
-				{
-					// available
-					
-					if (!availableSeaTransportTileIndexes.at(adjacentTileIndex))
-						continue;
-					
-					// not yet assigned
-					
-					if (seaTransportClusters.at(adjacentTileIndex) != -1)
-						continue;
-					
-					// insert adjacent tile
-					
-					seaTransportClusters.at(adjacentTileIndex) = clusterIndex;
-					
-					newBorderTiles.push_back(adjacentTileIndex);
-					
-				}
-				
-			}
-			
-			// swap border tiles and clear them
-			
-			borderTiles.swap(newBorderTiles);
-			newBorderTiles.clear();
-			
-		}
-		
-		// increment clusterIndex
-		
-		clusterIndex++;
-			
-	}
-	
-	executionProfiles["1.1.4.3. populateSeaTransportClusters"].stop();
-	
-//	if (DEBUG)
-//	{
-//		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-//		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), seaTransportClusters.at(tileIndex));
-//			
-//		}
-//		
-//	}
-	
-}
-
-void populateSeaTransportWaitTimes(int factionId)
-{
-	debug("populateSeaTransportWaitTimes aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
-	
-	executionProfiles["1.1.4.4. populateSeaTransportWaitTimes"].start();
-	
-	FactionInfo const &factionInfo = aiData.factionInfos.at(factionId);
-	
-	std::vector<int> const &seaTransportClusters = (factionId == aiFactionId ? aiFactionMovementInfo.seaTransportClusters : enemyFactionMovementInfos.at(factionId).seaTransportClusters);
-	std::vector<double> &seaTransportWaitTimes = (factionId == aiFactionId ? aiFactionMovementInfo.seaTransportWaitTimes : enemyFactionMovementInfos.at(factionId).seaTransportWaitTimes);
-	
-	seaTransportWaitTimes.resize(*MapAreaTiles); std::fill(seaTransportWaitTimes.begin(), seaTransportWaitTimes.end(), INF);
-	
-	// seaTransports
-	
-	robin_hood::unordered_flat_set<int> seaTransportVehicleIds;
-	
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-		
-		// this faction
-		
-		if (vehicle->faction_id != factionId)
-			continue;
-		
-		// seaTransport
-		
-		if (!isSeaTransportVehicle(vehicleId))
-			continue;
-		
-		// set
-		
-		seaTransportVehicleIds.insert(vehicleId);
-		
-	}
-	
-//	if (DEBUG)
-//	{
-//		debug("\tseaTransportVehicleIds\n");
-//		for (int vehicleId : seaTransportVehicleIds)
-//		{
-//			debug("\t\t%d\n", vehicleId);
-//		}
-//		
-//	}
-	
-	// shipyards
-	
-	robin_hood::unordered_flat_set<int> shipyardBaseIds;
-	
-	for (int baseId = 0; baseId < *BaseCount; baseId++)
-	{
-		BASE *base = getBase(baseId);
-		
-		// this faction
-		
-		if (base->faction_id != factionId)
-			continue;
-		
-		// can build ship
-		
-		if (!isBaseCanBuildShip(baseId))
-			continue;
-		
-		// set
-		
-		shipyardBaseIds.insert(baseId);
-		
-	}
-	
-//	if (DEBUG)
-//	{
-//		debug("\tshipyardBaseIds\n");
-//		for (int baseId : shipyardBaseIds)
-//		{
-//			debug("\t\t%d\n", baseId);
-//		}
-//		
-//	}
-	
-	// process sea transport and sea/port bases
-	
-	for (int vehicleId : seaTransportVehicleIds)
-	{
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		int vehicleTileIndex = vehicleTile - *MapTiles;
-		int vehicleSeaTransportClusterIndex = seaTransportClusters.at(vehicleTileIndex);
-		
-		assert(vehicleSeaTransportClusterIndex != -1);
-		
-		int capacity = getTransportCapacity(vehicleId);
-		int remainingCapacity = getTransportRemainingCapacity(vehicleId);
-		int speed = getVehicleSpeed(vehicleId);
-		
-		// has speed
-		
-		if (speed <= 0)
-			continue;
-		
-		// has capacity
-		
-		if (capacity <= 0)
-			continue;
-		
-		// has remainingCapacity
-		
-		if (remainingCapacity <= 0)
-			continue;
-		
-		// relative remaining capacity
-		
-		double remainingCapacityCoefficient = (double)capacity / (double)remainingCapacity;
-		
-		// process tiles
-		
-		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-		{
-			MAP *tile = *MapTiles + tileIndex;
-			int tileSeaTransportClusterIndex = seaTransportClusters.at(tileIndex);
-			
-			// existing seaTransportCluster
-			
-			if (tileSeaTransportClusterIndex == -1)
-				continue;
-			
-			// same seaTransport cluster
-			
-			if (tileSeaTransportClusterIndex != vehicleSeaTransportClusterIndex)
-				continue;
-			
-			// range
-			
-			int range = getRange(vehicleTile, tile);
-			
-			// seaTransportWaitTime
-			
-			double seaTransportWaitTime = SEA_TRANSPORT_WAIT_TIME_COEFFICIENT * remainingCapacityCoefficient * ((double)range / (double)speed);
-			
-			// update best
-			
-			seaTransportWaitTimes.at(tileIndex) = std::min(seaTransportWaitTimes.at(tileIndex), seaTransportWaitTime);
-			
-		}
-		
-	}
-	
-	if (factionInfo.bestSeaTransportUnitId != -1 && factionInfo.bestSeaTransportUnitSpeed > 0)
-	{
-		for (int baseId : shipyardBaseIds)
-		{
-			MAP *baseTile = getBaseMapTile(baseId);
-			int baseTileIndex = baseTile - *MapTiles;
-			int baseSeaTransportClusterIndex = seaTransportClusters.at(baseTileIndex);
-			
-			assert(baseSeaTransportClusterIndex != -1);
-			
-			// process tiles
-			
-			for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-			{
-				MAP *tile = *MapTiles + tileIndex;
-				int tileSeaTransportClusterIndex = seaTransportClusters.at(tileIndex);
-				
-				// existing seaTransportCluster
-				
-				if (tileSeaTransportClusterIndex == -1)
-					continue;
-				
-				// same seaTransport cluster
-				
-				if (tileSeaTransportClusterIndex != baseSeaTransportClusterIndex)
-					continue;
-				
-				// build time
-				
-				int buildTime = getBaseItemBuildTime(baseId, factionInfo.bestSeaTransportUnitId);
-				
-				// range
-				
-				int range = getRange(baseTile, tile);
-				
-				// seaTransportWaitTime
-				
-				double seaTransportWaitTime = SEA_TRANSPORT_WAIT_TIME_COEFFICIENT * ((double)buildTime + ((double)range / (double)factionInfo.bestSeaTransportUnitSpeed));
-				
-				// update best
-				
-				seaTransportWaitTimes.at(tileIndex) = std::min(seaTransportWaitTimes.at(tileIndex), seaTransportWaitTime);
-				
-			}
-			
-		}
-		
-	}
-	
-	executionProfiles["1.1.4.4. populateSeaTransportWaitTimes"].stop();
-	
-	if (DEBUG)
-	{
-		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-		{
-			int tileIndex = tile - *MapTiles;
-			double seaTransportWaitTime = seaTransportWaitTimes.at(tileIndex);
-			
-			if (seaTransportWaitTime != INF)
-			{
-				debug("\t%s %5.2f\n", getLocationString(tile).c_str(), seaTransportWaitTime);
-			}
-			
-		}
-		
-	}
-	
-}
-
-void populateSeaCombatClusters(int factionId)
-{
-	debug("populateSeaCombatClusters aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
-	
-	executionProfiles["1.1.4.5. populateSeaCombatClusters"].start();
-	
-	std::vector<int> &seaCombatClusters = (factionId == aiFactionId ? aiFactionMovementInfo.seaCombatClusters : enemyFactionMovementInfos.at(factionId).seaCombatClusters);
-	
-	seaCombatClusters.resize(*MapAreaTiles); std::fill(seaCombatClusters.begin(), seaCombatClusters.end(), -1);
-	
-	// availableTileIndexes
-	
-	std::vector<bool> availableTileIndexes(*MapAreaTiles);
-	
-	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-	{
-		int tileIndex = tile - *MapTiles;
-		bool ocean = is_ocean(tile);
-		
-		// sea
-		
-		if (ocean)
-		{
-			seaCombatClusters.at(tileIndex) = -2;
-		}
-		
-	}
-	
-	// friendly ports
-	
-	for (int baseId = 0; baseId < *BaseCount; baseId++)
-	{
-		BASE *base = getBase(baseId);
-		MAP *baseTile = getBaseMapTile(baseId);
-		int baseTileIndex = baseTile - *MapTiles;
-		bool ocean = is_ocean(baseTile);
-		
-		// friendly
-		
-		if (!isFriendly(factionId, base->faction_id))
-			continue;
-		
-		// land
-		
-		if (ocean)
-			continue;
-		
-		// accesses to water
-		
-		if (!isBaseAccessesWater(baseId))
-			continue;
-		
-		// set
-		
-		seaCombatClusters.at(baseTileIndex) = -2;
-		
-	}
-	
-	// process tiles
-	
-	std::vector<int> borderTiles;
-	std::vector<int> newBorderTiles;
-	
-	int clusterIndex = 0;
-	
-	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-	{
-		// available
-		
-		if (seaCombatClusters.at(tileIndex) != -2)
-			continue;
-		
-		// set collections
-		
-		borderTiles.clear();
-		newBorderTiles.clear();
-		
-		// insert initial tile
-		
-		seaCombatClusters.at(tileIndex) = clusterIndex;
-		
-		borderTiles.push_back(tileIndex);
-		
-		// expand cluster
-		
-		while (!borderTiles.empty())
-		{
-			for (int currentTileIndex : borderTiles)
-			{
-				TileInfo &currentTileInfo = aiData.tileInfos[currentTileIndex];
-				
-				for (int adjacentTileIndex : currentTileInfo.adjacentTileIndexes)
-				{
-					// available
-					
-					if (seaCombatClusters.at(adjacentTileIndex) != -2)
-						continue;
-					
-					// insert adjacent tile
-					
-					seaCombatClusters.at(adjacentTileIndex) = clusterIndex;
-					
-					newBorderTiles.push_back(adjacentTileIndex);
-					
-				}
-				
-			}
-			
-			// swap border tiles and clear them
-			
-			borderTiles.swap(newBorderTiles);
-			newBorderTiles.clear();
-			
-		}
-		
-		// increment clusterIndex
-		
-		clusterIndex++;
-			
-	}
-	
-	executionProfiles["1.1.4.5. populateSeaCombatClusters"].stop();
-	
-//	if (DEBUG)
-//	{
-//		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-//		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), seaCombatClusters.at(tileIndex));
-//			
-//		}
-//		
-//	}
-	
-}
-
-void populateLandCombatClusters(int factionId)
-{
-	debug("populateLandCombatClusters aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
-	
-	executionProfiles["1.1.4.6. populateLandCombatClusters"].start();
-	
-	std::vector<int> const &seaTransportClusters = (factionId == aiFactionId ? aiFactionMovementInfo.seaTransportClusters : enemyFactionMovementInfos.at(factionId).seaTransportClusters);
-	std::vector<int> &landCombatClusters = (factionId == aiFactionId ? aiFactionMovementInfo.landCombatClusters : enemyFactionMovementInfos.at(factionId).landCombatClusters);
-	
-	landCombatClusters.resize(*MapAreaTiles); std::fill(landCombatClusters.begin(), landCombatClusters.end(), -1);
-	
-	// availableTileIndexes
-	
-	for (TileInfo const &tileInfo : aiData.tileInfos)
-	{
-		// land and not blocked
-		
-		if (!tileInfo.ocean)
-		{
-			landCombatClusters.at(tileInfo.index) = -2;
-		}
-		
-		// or sea transport cluster
-		
-		if (seaTransportClusters.at(tileInfo.index) != -1)
-		{
-			landCombatClusters.at(tileInfo.index) = -2;
-		}
-		
-	}
-	
-	// process tiles
-	
-	std::vector<int> borderTiles;
-	std::vector<int> newBorderTiles;
-	
-	int clusterIndex = 0;
-	
-	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-	{
-		// available
-		
-		if (landCombatClusters.at(tileIndex) != -2)
-			continue;
-		
-		// set collections
-		
-		borderTiles.clear();
-		newBorderTiles.clear();
-		
-		// insert initial tile
-		
-		landCombatClusters.at(tileIndex) = clusterIndex;
-		
-		borderTiles.push_back(tileIndex);
-		
-		// expand cluster
-		
-		while (!borderTiles.empty())
-		{
-			for (int currentTileIndex : borderTiles)
-			{
-				TileInfo &currentTileInfo = aiData.tileInfos[currentTileIndex];
-				
-				for (int adjacentTileIndex : currentTileInfo.adjacentTileIndexes)
-				{
-					// available
-					
-					if (landCombatClusters.at(adjacentTileIndex) != -2)
-						continue;
-					
-					// insert adjacent tile
-					
-					landCombatClusters.at(adjacentTileIndex) = clusterIndex;
-					
-					newBorderTiles.push_back(adjacentTileIndex);
-					
-				}
-				
-			}
-			
-			// swap border tiles and clear them
-			
-			borderTiles.swap(newBorderTiles);
-			newBorderTiles.clear();
-			
-		}
-		
-		// increment clusterIndex
-		
-		clusterIndex++;
-			
-	}
-	
-	executionProfiles["1.1.4.6. populateLandCombatClusters"].stop();
-	
-//	if (DEBUG)
-//	{
-//		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-//		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landCombatClusters.at(tileIndex));
-//			
-//		}
-//		
-//	}
+	Profiling::stop("populateAirClusters");
 	
 }
 
@@ -1051,9 +856,9 @@ Computes estimated values on how much faction vehicles will be slowed down passi
 */
 void populateImpediments(int factionId)
 {
-	debug("populateImpediments aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	Profiling::start("populateImpediments", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.7. populateImpediments"].start();
+	debug("populateImpediments aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
 	
 	std::vector<double> &seaTransportImpediments = (factionId == aiFactionId ? aiFactionMovementInfo.seaTransportImpediments : enemyFactionMovementInfos.at(factionId).seaTransportImpediments);
 	std::vector<double> &seaCombatImpediments = (factionId == aiFactionId ? aiFactionMovementInfo.seaCombatImpediments : enemyFactionMovementInfos.at(factionId).seaCombatImpediments);
@@ -1149,8 +954,6 @@ void populateImpediments(int factionId)
 			
 	}
 	
-	executionProfiles["1.1.4.7. populateImpediments"].stop();
-	
 	if (DEBUG)
 	{
 		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
@@ -1163,34 +966,478 @@ void populateImpediments(int factionId)
 		
 	}
 	
+	Profiling::stop("populateImpediments");
+	
+}
+
+void populateSeaTransportWaitTimes(int factionId)
+{
+	Profiling::start("populateSeaTransportWaitTimes", "precomputeRouteData");
+	
+	debug("populateSeaTransportWaitTimes aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	
+	int const WAIT_TIME_MULTIPLIER = 2.0;
+	
+	FactionInfo const &factionInfo = aiData.factionInfos.at(factionId);
+	
+	std::vector<double> &seaTransportWaitTimes = (factionId == aiFactionId ? aiFactionMovementInfo.seaTransportWaitTimes : enemyFactionMovementInfos.at(factionId).seaTransportWaitTimes);
+	seaTransportWaitTimes.resize(*MapAreaTiles); std::fill(seaTransportWaitTimes.begin(), seaTransportWaitTimes.end(), INF);
+	
+	std::vector<double> const &seaCombatImpediments = (factionId == aiFactionId ? aiFactionMovementInfo.seaCombatImpediments : enemyFactionMovementInfos.at(factionId).seaCombatImpediments);
+	
+	robin_hood::unordered_flat_set<MAP *> openNodes;
+	robin_hood::unordered_flat_set<MAP *> newOpenNodes;
+	
+	// initial tiles
+	
+	struct SeaTransportInitialTile
+	{
+		MAP *tile;
+		int buildTime;
+		int capacity;
+		MovementType movementType;
+		int moveRate;
+	};
+	
+	// [build time, capacity, speed]
+	std::vector<SeaTransportInitialTile> initialTiles;
+	
+	// seaTransports
+	
+	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	{
+		VEH *vehicle = getVehicle(vehicleId);
+		
+		// this faction
+		
+		if (vehicle->faction_id != factionId)
+			continue;
+		
+		// seaTransport
+		
+		if (!isSeaTransportVehicle(vehicleId))
+			continue;
+		
+		// add initial tile
+		
+		initialTiles.push_back({getVehicleMapTile(vehicleId), 0, Units[vehicle->unit_id].carry_capacity, getVehicleMovementType(vehicleId), getVehicleMoveRate(vehicleId)});
+		
+	}
+	
+	// shipyards
+	
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
+	{
+		BASE *base = getBase(baseId);
+		
+		// this faction
+		
+		if (base->faction_id != factionId)
+			continue;
+		
+		// can build ship
+		
+		if (!isBaseCanBuildShip(baseId))
+			continue;
+		
+		// build time
+		
+		int buildTime = 2 * getBaseItemBuildTime(baseId, factionInfo.bestSeaTransportUnitId, false);
+		
+		// add initial tile
+		
+		initialTiles.push_back({getBaseMapTile(baseId), buildTime, factionInfo.bestSeaTransportUnitCapacity, getUnitMovementType(factionInfo.bestSeaTransportUnitId, factionId), Rules->move_rate_roads * factionInfo.bestSeaTransportUnitSpeed});
+		
+	}
+	
+	if (DEBUG)
+	{
+		debug("\tinitialTiles\n");
+		for (SeaTransportInitialTile &initialTile : initialTiles)
+		{
+			debug("\t\t%s %2d %d %d\n", getLocationString(initialTile.tile).c_str(), initialTile.buildTime, initialTile.capacity, initialTile.moveRate);
+		}
+		
+	}
+	
+	// process sea transport initial tiles
+	
+	for (SeaTransportInitialTile &initialTile : initialTiles)
+	{
+		MAP *tile = initialTile.tile;
+		int tileIndex = tile - *MapTiles;
+		
+		// has capacity
+		
+		if (initialTile.capacity <= 0)
+			continue;
+		
+		// has speed
+		
+		if (initialTile.moveRate <= 0)
+			continue;
+		
+		// parameters
+		
+		double capacityCoefficient = initialTile.capacity >= 8 ? 1.0 : 1.0 + 1.0 * (1.0 - (double)initialTile.capacity / (double)8);
+		
+		// process tiles
+		
+		openNodes.clear();
+		newOpenNodes.clear();
+		
+		
+		double waitTime = (double)initialTile.buildTime;
+		if (waitTime < seaTransportWaitTimes.at(tileIndex))
+		{
+			seaTransportWaitTimes.at(tileIndex) = waitTime;
+			openNodes.insert(tile);
+		}
+		
+		while (!openNodes.empty())
+		{
+			for (MAP * currentTile : openNodes)
+			{
+				int currentTileIndex = currentTile - *MapTiles;
+				double currentTileWaitTime = seaTransportWaitTimes.at(currentTileIndex);
+				
+				for (MapAngle mapAngle : getAdjacentMapAngles(tile))
+				{
+					MAP *adjacentTile = mapAngle.tile;
+					int adjacentTileAngle = mapAngle.angle;
+					
+					int adjacentTileIndex = adjacentTile - *MapTiles;
+					TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
+					
+					// sea or friendly base
+					
+					if (!(is_ocean(adjacentTile) || isFriendlyBaseAt(adjacentTile, factionId)))
+						continue;
+					
+					// hexCost
+					
+					int hexCost = adjacentTileInfo.hexCosts.at(initialTile.movementType).at(adjacentTileAngle);
+					
+					if (hexCost == -1)
+						continue;
+					
+					double stepCost = (double)hexCost + seaCombatImpediments.at(adjacentTileIndex);
+					
+					double moveTime = stepCost / (double)initialTile.moveRate;
+					double waitTime = WAIT_TIME_MULTIPLIER * capacityCoefficient * moveTime;
+					double adjacentTileWaitTime = currentTileWaitTime + waitTime;
+					
+					if (adjacentTileWaitTime < seaTransportWaitTimes.at(adjacentTileIndex))
+					{
+						seaTransportWaitTimes.at(adjacentTileIndex) = adjacentTileWaitTime;
+						newOpenNodes.insert(adjacentTile);
+					}
+					
+				}
+				
+			}
+			
+			openNodes.clear();
+			openNodes.swap(newOpenNodes);
+			
+		}
+		
+	}
+	
+	if (DEBUG)
+	{
+		debug("\twaitTimes\n");
+		
+		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+		{
+			int tileIndex = tile - *MapTiles;
+			double seaTransportWaitTime = seaTransportWaitTimes.at(tileIndex);
+			
+			if (seaTransportWaitTime != INF)
+			{
+				debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), seaTransportWaitTime);
+			}
+			
+		}
+		
+	}
+	
+	Profiling::stop("populateSeaTransportWaitTimes");
+	
+}
+
+void populateSeaCombatClusters(int factionId)
+{
+	Profiling::start("populateSeaCombatClusters", "precomputeRouteData");
+	
+	debug("populateSeaCombatClusters aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	
+	std::vector<int> &seaCombatClusters = (factionId == aiFactionId ? aiFactionMovementInfo.seaCombatClusters : enemyFactionMovementInfos.at(factionId).seaCombatClusters);
+	seaCombatClusters.resize(*MapAreaTiles); std::fill(seaCombatClusters.begin(), seaCombatClusters.end(), -1);
+	
+	robin_hood::unordered_flat_set<int> openNodes;
+	robin_hood::unordered_flat_set<int> newOpenNodes;
+	
+	// availableTiles
+	
+	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+	{
+		int tileIndex = tile - *MapTiles;
+		bool ocean = is_ocean(tile);
+		
+		// sea
+		
+		if (!ocean)
+			continue;
+		
+		// exclude unfriendly base
+		
+		if (isUnfriendlyBaseAt(tile, factionId))
+			continue;
+		
+		// set available
+		
+		seaCombatClusters.at(tileIndex) = -2;
+		
+	}
+	
+	// friendly ports
+	
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
+	{
+		BASE *base = getBase(baseId);
+		MAP *baseTile = getBaseMapTile(baseId);
+		int baseTileIndex = baseTile - *MapTiles;
+		bool ocean = is_ocean(baseTile);
+		
+		// land
+		
+		if (ocean)
+			continue;
+		
+		// friendly
+		
+		if (!isFriendly(factionId, base->faction_id))
+			continue;
+		
+		// accesses to water
+		
+		if (!isBaseAccessesWater(baseId))
+			continue;
+		
+		// set available
+		
+		seaCombatClusters.at(baseTileIndex) = -2;
+		
+	}
+	
+	// process tiles
+	
+	int clusterIndex = 0;
+	
+	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+	{
+		// available
+		
+		if (seaCombatClusters.at(tileIndex) != -2)
+			continue;
+		
+		// reset collections
+		
+		openNodes.clear();
+		newOpenNodes.clear();
+		
+		// set initial tile
+		
+		seaCombatClusters.at(tileIndex) = clusterIndex;
+		openNodes.insert(tileIndex);
+		
+		// expand cluster
+		
+		while (!openNodes.empty())
+		{
+			for (int currentTileIndex : openNodes)
+			{
+				TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
+				
+				for (int adjacentTileIndex : currentTileInfo.adjacentTileIndexes)
+				{
+					// available
+					
+					if (seaCombatClusters.at(adjacentTileIndex) != -2)
+						continue;
+					
+					// insert adjacent tile
+					
+					seaCombatClusters.at(adjacentTileIndex) = clusterIndex;
+					newOpenNodes.insert(adjacentTileIndex);
+					
+				}
+				
+			}
+			
+			openNodes.clear();
+			openNodes.swap(newOpenNodes);
+			
+		}
+		
+		// increment clusterIndex
+		
+		clusterIndex++;
+			
+	}
+	
+	if (DEBUG)
+	{
+		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+		{
+			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), seaCombatClusters.at(tileIndex));
+			
+		}
+		
+	}
+	
+	Profiling::stop("populateSeaCombatClusters");
+	
+}
+
+void populateLandCombatClusters(int factionId)
+{
+	Profiling::start("populateLandCombatClusters", "precomputeRouteData");
+	
+	debug("populateLandCombatClusters aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	
+	std::vector<double> const &seaTransportWaitTimes = (factionId == aiFactionId ? aiFactionMovementInfo.seaTransportWaitTimes : enemyFactionMovementInfos.at(factionId).seaTransportWaitTimes);
+	std::vector<int> &landCombatClusters = (factionId == aiFactionId ? aiFactionMovementInfo.landCombatClusters : enemyFactionMovementInfos.at(factionId).landCombatClusters);
+	
+	landCombatClusters.resize(*MapAreaTiles); std::fill(landCombatClusters.begin(), landCombatClusters.end(), -1);
+	
+	// availableTileIndexes
+	
+	for (TileInfo const &tileInfo : aiData.tileInfos)
+	{
+		// land and not blocked
+		
+		if (!tileInfo.ocean)
+		{
+			landCombatClusters.at(tileInfo.index) = -2;
+		}
+		
+		// or sea with not infinite wait time
+		
+		if (seaTransportWaitTimes.at(tileInfo.index) != INF)
+		{
+			landCombatClusters.at(tileInfo.index) = -2;
+		}
+		
+	}
+	
+	// process tiles
+	
+	std::vector<int> borderTiles;
+	std::vector<int> newBorderTiles;
+	
+	int clusterIndex = 0;
+	
+	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+	{
+		// available
+		
+		if (landCombatClusters.at(tileIndex) != -2)
+			continue;
+		
+		// set collections
+		
+		borderTiles.clear();
+		newBorderTiles.clear();
+		
+		// insert initial tile
+		
+		landCombatClusters.at(tileIndex) = clusterIndex;
+		
+		borderTiles.push_back(tileIndex);
+		
+		// expand cluster
+		
+		while (!borderTiles.empty())
+		{
+			for (int currentTileIndex : borderTiles)
+			{
+				TileInfo &currentTileInfo = aiData.tileInfos[currentTileIndex];
+				
+				for (int adjacentTileIndex : currentTileInfo.adjacentTileIndexes)
+				{
+					// available
+					
+					if (landCombatClusters.at(adjacentTileIndex) != -2)
+						continue;
+					
+					// insert adjacent tile
+					
+					landCombatClusters.at(adjacentTileIndex) = clusterIndex;
+					
+					newBorderTiles.push_back(adjacentTileIndex);
+					
+				}
+				
+			}
+			
+			// swap border tiles and clear them
+			
+			borderTiles.swap(newBorderTiles);
+			newBorderTiles.clear();
+			
+		}
+		
+		// increment clusterIndex
+		
+		clusterIndex++;
+			
+	}
+	
+//	if (DEBUG)
+//	{
+//		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+//		{
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landCombatClusters.at(tileIndex));
+//			
+//		}
+//		
+//	}
+	
+	Profiling::stop("populateLandCombatClusters");
+	
 }
 
 /**
 Populates sea combat vehicle travel times to bases.
 This is used for both 1) enemy vehicles -> player bases approach times, and 2) player vehicles -> enemy bases approach times
 */
-void populateSeaApproachTimes(int factionId)
+void populateSeaApproachHexCosts(int factionId)
 {
-	debug("populateSeaApproachTimes aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	Profiling::start("populateSeaApproachHexCosts", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.8. populateSeaApproachTimes"].start();
+	debug("populateSeaApproachHexCosts aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
 	
 	bool enemy = (factionId != aiFactionId);
 	
-	std::vector<int> const &seaCombatClusters = (factionId == aiFactionId ? aiFactionMovementInfo.seaCombatClusters : enemyFactionMovementInfos.at(factionId).seaCombatClusters);
-	std::vector<double> const &seaCombatImpediments = (factionId == aiFactionId ? aiFactionMovementInfo.seaCombatImpediments : enemyFactionMovementInfos.at(factionId).seaCombatImpediments);
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> &seaApproachTimes =
-		(factionId == aiFactionId ? aiFactionMovementInfo.seaApproachTimes : enemyFactionMovementInfos.at(factionId).seaApproachTimes);
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<double>>> &seaApproachHexCosts = (enemy ? enemyFactionMovementInfos.at(factionId).seaApproachHexCosts : aiFactionMovementInfo.seaApproachHexCosts);
+	seaApproachHexCosts.clear();
 	
-	seaApproachTimes.clear();
+	std::vector<int> const &seaCombatClusters = (enemy ? enemyFactionMovementInfos.at(factionId).seaCombatClusters : aiFactionMovementInfo.seaCombatClusters);
+	std::vector<double> const &seaCombatImpediments = (enemy ? enemyFactionMovementInfos.at(factionId).seaCombatImpediments : aiFactionMovementInfo.seaCombatImpediments);
+	
+	std::vector<int> openNodes;
+	std::vector<int> newOpenNodes;
 	
 	// collect sea bases
 	
-	std::vector<int> seaBaseIds;
+	std::vector<BaseAdjacentClusterSet> baseAdjacentClusterSets;
 	
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
 		BASE *base = getBase(baseId);
+		MAP *baseTile = getBaseMapTile(baseId);
 		TileInfo &baseTileInfo = aiData.getBaseTileInfo(baseId);
 		
 		// player base for enemy faction OR enemy base for player faction
@@ -1211,7 +1458,27 @@ void populateSeaApproachTimes(int factionId)
 		if (!baseTileInfo.ocean)
 			continue;
 		
-		seaBaseIds.push_back(baseId);
+		// scan adjacent tiles
+		
+		baseAdjacentClusterSets.push_back({baseId, baseTile, {}});
+		BaseAdjacentClusterSet &baseAdjacentClusterSet = baseAdjacentClusterSets.back();
+		
+		for (MAP *adjacentTile : getAdjacentTiles(baseTile))
+		{
+			int adjacentTileIndex = adjacentTile - *MapTiles;
+			int seaCombatCluster = seaCombatClusters.at(adjacentTileIndex);
+			
+			if (seaCombatCluster == -1)
+				continue;
+			
+			baseAdjacentClusterSet.adjacentClusters.insert(seaCombatCluster);
+			
+		}
+		
+		if (baseAdjacentClusterSet.adjacentClusters.empty())
+		{
+			baseAdjacentClusterSets.pop_back();
+		}
 		
 	}
 	
@@ -1226,278 +1493,123 @@ void populateSeaApproachTimes(int factionId)
 //		
 //	}
 	
-	// collect sea speeds by movement type
-	
-	std::map<MovementType, std::set<int>> speeds;
-	
-	for (int unitId : getFactionUnitIds(factionId, false, true))
-	{
-		UNIT *unit = getUnit(unitId);
-		int triad = unit->triad();
-		
-		// sea
-		
-		if (triad != TRIAD_SEA)
-			continue;
-		
-		// combat
-		
-		if (!isCombatUnit(unitId))
-			continue;
-		
-		// movementType
-		
-		MovementType movementType = getUnitMovementType(factionId, unitId);
-		
-		// speed
-		
-		int speed = getUnitSpeed(factionId, unitId);
-		
-		if (speed <= 0)
-			continue;
-		
-		// collect
-		
-		speeds[movementType].insert(speed);
-		
-	}
-	
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-		int triad = vehicle->triad();
-		
-		// this faction (either enemy or player)
-		
-		if (vehicle->faction_id != factionId)
-			continue;
-		
-		// sea
-		
-		if (triad != TRIAD_SEA)
-			continue;
-		
-		// combat
-		
-		if (!isCombatVehicle(vehicleId))
-			continue;
-		
-		// movementType
-		
-		MovementType movementType = getVehicleMovementType(vehicleId);
-		
-		// speed
-		
-		int speed = getVehicleSpeed(vehicleId);
-		
-		if (speed <= 0)
-			continue;
-		
-		// collect
-		
-		speeds[movementType].insert(speed);
-		
-	}
-	
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-		int triad = vehicle->triad();
-		
-		// this faction (either enemy or player)
-		
-		if (vehicle->faction_id != factionId)
-			continue;
-		
-		// sea
-		
-		if (triad != TRIAD_SEA)
-			continue;
-		
-		// combat
-		
-		if (!isCombatVehicle(vehicleId))
-			continue;
-		
-		// movementType
-		
-		MovementType movementType = getVehicleMovementType(vehicleId);
-		
-		// speed
-		
-		int speed = getVehicleSpeed(vehicleId);
-		
-		if (speed <= 0)
-			continue;
-		
-		// collect
-		
-		speeds[movementType].insert(speed);
-		
-	}
-	
-//	if (DEBUG)
-//	{
-//		debug("speeds\n");
-//		
-//		for (std::pair<MovementType, std::set<int>> const &vehicleSpeedEntry : speeds)
-//		{
-//			MovementType const &movementType = vehicleSpeedEntry.first;
-//			std::set<int> const &movementTypeVehicleSpeeds = vehicleSpeedEntry.second;
-//			
-//			debug("\tmovementType=%d\n", movementType);
-//			
-//			for (int speed : movementTypeVehicleSpeeds)
-//			{
-//				debug("\t\tspeed=%2d\n", speed);
-//			}
-//			
-//		}
-//		
-//	}
-	
 	// process bases
 	
-	std::vector<int> borderTiles;
-	std::vector<int> newBorderTiles;
-
-	for (int baseId : seaBaseIds)
+	for (BaseAdjacentClusterSet const &baseAdjacentClusterSet : baseAdjacentClusterSets)
 	{
-		MAP *baseTile = getBaseMapTile(baseId);
-		int baseTileIndex = baseTile - *MapTiles;
-		int baseSeaCombatClusterIndex = seaCombatClusters.at(baseTileIndex);
+		int baseId = baseAdjacentClusterSet.baseId;
+		MAP *baseTile = baseAdjacentClusterSet.baseTile;
+		robin_hood::unordered_flat_set<int> const &baseAdjacentClusters = baseAdjacentClusterSet.adjacentClusters;
 		
-		// no vehicle presense
+		// create base approachHexCosts
 		
-		if (baseSeaCombatClusterIndex == -1)
-			continue;
+		seaApproachHexCosts.emplace(baseId, robin_hood::unordered_flat_map<MovementType, std::vector<double>>());
 		
-		// create base approachTimes
-		
-		seaApproachTimes.emplace(baseId, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>());
-		
-		for (std::pair<MovementType, std::set<int>> const &vehicleSpeedEntry : speeds)
+		for (MovementType movementType : seaMovementTypes)
 		{
-			MovementType movementType = vehicleSpeedEntry.first;
-			std::set<int> const &movementTypeVehicleSpeeds = vehicleSpeedEntry.second;
+			seaApproachHexCosts.at(baseId).emplace(movementType, std::vector<double>(*MapAreaTiles));
+			std::vector<double> &approachHexCosts = seaApproachHexCosts.at(baseId).at(movementType);
+			std::fill(approachHexCosts.begin(), approachHexCosts.end(), INF);
 			
-			seaApproachTimes.at(baseId).emplace(movementType, robin_hood::unordered_flat_map<int, std::vector<double>>());
+			// set running variables
 			
-			for (int speed : movementTypeVehicleSpeeds)
+			openNodes.clear();
+			newOpenNodes.clear();
+			
+			robin_hood::unordered_flat_set<int> utilizedOtherBaseIds;
+			
+			// insert initial tile
+			
+			for (MAP *baseAdjacentTile : getBaseAdjacentTiles(baseTile, true))
 			{
-				// resize speed approachTimes
+				int baseAdjacentTileIndex = baseAdjacentTile - *MapTiles;
+				int baseAdjacentTileSeaCombatClusterIndex = seaCombatClusters.at(baseAdjacentTileIndex);
 				
-				seaApproachTimes.at(baseId).at(movementType).emplace(speed, std::vector<double>(*MapAreaTiles));
-				std::vector<double> &approachTimes = seaApproachTimes.at(baseId).at(movementType).at(speed);
-				std::fill(approachTimes.begin(), approachTimes.end(), INF);
+				// within cluster
 				
-				// set running variables
+				if (baseAdjacentClusters.find(baseAdjacentTileSeaCombatClusterIndex) == baseAdjacentClusters.end())
+					continue;
 				
-				borderTiles.clear();
-				newBorderTiles.clear();
+				// add to open nodes
 				
-				robin_hood::unordered_flat_set<int> utilizedOtherBaseIds;
+				approachHexCosts.at(baseAdjacentTileIndex) = 0.0;
+				openNodes.push_back(baseAdjacentTileIndex);
 				
-				// insert initial tile
-				
-				for (MAP *baseAdjacentTile : getBaseAdjacentTiles(baseTile, true))
+			}
+			
+			// iterate tiles
+			
+			while (!openNodes.empty())
+			{
+				for (int currentTileIndex : openNodes)
 				{
-					int baseAdjacentTileIndex = baseAdjacentTile - *MapTiles;
-					int baseAdjacentTileSeaCombatClusterIndex = seaCombatClusters.at(baseAdjacentTileIndex);
+					TileInfo &currentTileInfo = aiData.tileInfos[currentTileIndex];
 					
-					// within cluster
+					double currentTileApproachHexCost = approachHexCosts.at(currentTileIndex);
 					
-					if (baseAdjacentTileSeaCombatClusterIndex != baseSeaCombatClusterIndex)
-						continue;
-					
-					// add to border tiles
-					
-					approachTimes.at(baseAdjacentTileIndex) = 0.0;
-					borderTiles.push_back(baseAdjacentTileIndex);
-					
-				}
-				
-				// iterate tiles
-				
-				while (!borderTiles.empty())
-				{
-					for (int currentTileIndex : borderTiles)
+					for (MapAngle mapAngle : currentTileInfo.adjacentMapAngles)
 					{
-						TileInfo &currentTileInfo = aiData.tileInfos[currentTileIndex];
+						MAP *adjacentTile = mapAngle.tile;
+						int angle = mapAngle.angle;
+						int adjacentTileIndex = adjacentTile - *MapTiles;
 						
-						double currentTileApproachTime = approachTimes.at(currentTileIndex);
+						int adjacentTileSeaCombatClusterIndex = seaCombatClusters.at(adjacentTileIndex);
 						
-						for (MapAngle mapAngle : currentTileInfo.adjacentMapAngles)
+						// within cluster
+						
+						if (baseAdjacentClusters.find(adjacentTileSeaCombatClusterIndex) == baseAdjacentClusters.end())
+							continue;
+						
+						// tile info and opposite angle
+						
+						TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
+						int opppositeAngle = (angle + ANGLE_COUNT / 2) % ANGLE_COUNT;
+						
+						int hexCost = adjacentTileInfo.hexCosts[movementType][opppositeAngle];
+						
+						if (hexCost == -1)
+							continue;
+						
+						// stepCost with impediment
+						
+						double stepCost = (double)hexCost + seaCombatImpediments.at(currentTileIndex);
+						
+						// update adjacentTileApproachHexCost
+						
+						double adjacentTileApproachHexCost = currentTileApproachHexCost + stepCost;
+						
+						// update best
+						
+						if (adjacentTileApproachHexCost < approachHexCosts.at(adjacentTileIndex))
 						{
-							MAP *adjacentTile = mapAngle.tile;
-							int angle = mapAngle.angle;
-							int adjacentTileIndex = adjacentTile - *MapTiles;
+							approachHexCosts.at(adjacentTileIndex) = adjacentTileApproachHexCost;
+							newOpenNodes.push_back(adjacentTileIndex);
+						}
+						
+						// update information from other bases at first hit
+						
+						if (adjacentTileInfo.base && seaApproachHexCosts.find(adjacentTileInfo.baseId) != seaApproachHexCosts.end() && utilizedOtherBaseIds.find(adjacentTileInfo.baseId) == utilizedOtherBaseIds.end())
+						{
+							utilizedOtherBaseIds.insert(adjacentTileInfo.baseId);
 							
-							int adjacentTileSeaCombatClusterIndex = seaCombatClusters.at(adjacentTileIndex);
+							std::vector<double> const &otherBaseapproachHexCosts = seaApproachHexCosts.at(adjacentTileInfo.baseId).at(movementType);
 							
-							// within cluster
-							
-							if (adjacentTileSeaCombatClusterIndex != baseSeaCombatClusterIndex)
-								continue;
-							
-							// tile info and opposite angle
-							
-							TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
-							int opppositeAngle = (angle + ANGLE_COUNT / 2) % ANGLE_COUNT;
-							
-							int hexCost = adjacentTileInfo.hexCosts[movementType][opppositeAngle];
-							
-							// sensible hexCost
-							
-							if (hexCost == -1)
-								continue;
-							
-							// stepCost with impediment
-							
-							double stepCost = (double)hexCost + seaCombatImpediments.at(currentTileIndex);
-							
-							// stepTime
-							
-							double stepTime = stepCost / (double)(Rules->move_rate_roads * speed);
-							
-							// update adjacentTileApproachTime
-							
-							double adjacentTileApproachTime = currentTileApproachTime + stepTime;
-							
-							// update best
-							
-							if (adjacentTileApproachTime < approachTimes.at(adjacentTileIndex))
+							for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 							{
-								approachTimes.at(adjacentTileIndex) = adjacentTileApproachTime;
-								newBorderTiles.push_back(adjacentTileIndex);
-							}
-							
-							// update information from other bases at first hit
-							
-							if (adjacentTileInfo.base && seaApproachTimes.find(adjacentTileInfo.baseId) != seaApproachTimes.end() && utilizedOtherBaseIds.find(adjacentTileInfo.baseId) == utilizedOtherBaseIds.end())
-							{
-								utilizedOtherBaseIds.insert(adjacentTileInfo.baseId);
-								
-								std::vector<double> const &otherBaseApproachTimes = seaApproachTimes.at(adjacentTileInfo.baseId).at(movementType).at(speed);
-								
-								for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-								{
-									double throughOtherbaseApproachTime = otherBaseApproachTimes.at(tileIndex) + adjacentTileApproachTime;
-									approachTimes.at(tileIndex) = std::min(approachTimes.at(tileIndex), throughOtherbaseApproachTime);
-								}
-								
+								double throughOtherBaseApproachHexCost = otherBaseapproachHexCosts.at(tileIndex) + adjacentTileApproachHexCost;
+								approachHexCosts.at(tileIndex) = std::min(approachHexCosts.at(tileIndex), throughOtherBaseApproachHexCost);
 							}
 							
 						}
 						
 					}
 					
-					// swap border tiles with newBorderTiles and clear them
-					
-					borderTiles.swap(newBorderTiles);
-					newBorderTiles.clear();
-					
 				}
+				
+				// swap border tiles with newOpenNodes and clear them
+				
+				openNodes.swap(newOpenNodes);
+				newOpenNodes.clear();
 				
 			}
 			
@@ -1507,21 +1619,21 @@ void populateSeaApproachTimes(int factionId)
 	
 //	if (DEBUG)
 //	{
-//		for (robin_hood::pair<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> const &seaApproachTimeEntry : seaApproachTimes)
+//		for (robin_hood::pair<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> const &seaApproachTimeEntry : seaApproachHexCosts)
 //		{
 //			int baseId = seaApproachTimeEntry.first;
-//			robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>> const &baseSeaApproachTimes = seaApproachTimes.at(baseId);
+//			robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>> const &baseseaApproachHexCosts = seaApproachHexCosts.at(baseId);
 //			
 //			debug("\t%s\n", getBase(baseId)->name);
 //			
-//			for (robin_hood::pair<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>> const &baseSeaApproachTimeEntry : baseSeaApproachTimes)
+//			for (robin_hood::pair<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>> const &baseSeaApproachTimeEntry : baseseaApproachHexCosts)
 //			{
 //				MovementType movementType = baseSeaApproachTimeEntry.first;
-//				robin_hood::unordered_flat_map<int, std::vector<double>> const &baseMovementTypeSeaApproachTimes = baseSeaApproachTimeEntry.second;
+//				robin_hood::unordered_flat_map<int, std::vector<double>> const &baseMovementTypeseaApproachHexCosts = baseSeaApproachTimeEntry.second;
 //				
 //				debug("\t\tmovementType=%d\n", movementType);
 //				
-//				for (robin_hood::pair<int, std::vector<double>> const &baseMovementTypeSeaApproachTimeEntry : baseMovementTypeSeaApproachTimes)
+//				for (robin_hood::pair<int, std::vector<double>> const &baseMovementTypeSeaApproachTimeEntry : baseMovementTypeseaApproachHexCosts)
 //				{
 //					int speed = baseMovementTypeSeaApproachTimeEntry.first;
 //					std::vector<double> const &approachTimes = baseMovementTypeSeaApproachTimeEntry.second;
@@ -1549,18 +1661,18 @@ void populateSeaApproachTimes(int factionId)
 //		
 //	}
 	
-	executionProfiles["1.1.4.8. populateSeaApproachTimes"].stop();
+	Profiling::stop("populateSeaApproachHexCosts");
 	
 }
 
 /**
 Populates enamy land combat vehicle travel times to player bases.
 */
-void populateLandApproachTimes(int factionId)
+void populateLandApproachHexCosts(int factionId)
 {
-	debug("populateLandApproachTimes aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	Profiling::start("populateLandApproachHexCosts", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.9. populateLandApproachTimes"].start();
+	debug("populateLandApproachHexCosts aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
 	
 	bool enemy = (factionId != aiFactionId);
 	FactionInfo const &factionInfo = aiData.factionInfos.at(factionId);
@@ -1569,10 +1681,10 @@ void populateLandApproachTimes(int factionId)
 	std::vector<int> const &landCombatClusters = (factionId == aiFactionId ? aiFactionMovementInfo.landCombatClusters : enemyFactionMovementInfos.at(factionId).landCombatClusters);
 	std::vector<double> const &seaTransportImpediments = (factionId == aiFactionId ? aiFactionMovementInfo.seaTransportImpediments : enemyFactionMovementInfos.at(factionId).seaTransportImpediments);
 	std::vector<double> const &landCombatImpediments = (factionId == aiFactionId ? aiFactionMovementInfo.landCombatImpediments : enemyFactionMovementInfos.at(factionId).landCombatImpediments);
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> &landApproachTimes =
-		(factionId == aiFactionId ? aiFactionMovementInfo.landApproachTimes : enemyFactionMovementInfos.at(factionId).landApproachTimes);
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<std::array<double,3>>>> &landApproachHexCosts =
+		(factionId == aiFactionId ? aiFactionMovementInfo.landApproachHexCosts : enemyFactionMovementInfos.at(factionId).landApproachHexCosts);
 	
-	landApproachTimes.clear();
+	landApproachHexCosts.clear();
 	
 	// collect land bases
 	
@@ -1616,98 +1728,10 @@ void populateLandApproachTimes(int factionId)
 		
 	}
 	
-	// collect enemy land speeds by movement type
-	
-	std::map<MovementType, std::set<int>> speeds;
-	
-	for (int unitId : getFactionUnitIds(factionId, false, true))
-	{
-		UNIT *unit = getUnit(unitId);
-		int triad = unit->triad();
-		
-		// land
-		
-		if (triad != TRIAD_LAND)
-			continue;
-		
-		// movementType
-		
-		MovementType movementType = getUnitMovementType(factionId, unitId);
-		
-		// speed
-		
-		int speed = getUnitSpeed(factionId, unitId);
-		
-		if (speed <= 0)
-			continue;
-		
-		// collect
-		
-		speeds[movementType].insert(speed);
-		
-	}
-	
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-		int triad = vehicle->triad();
-		
-		// this faction (either enemy or player)
-		
-		if (vehicle->faction_id != factionId)
-			continue;
-		
-		// land
-		
-		if (triad != TRIAD_LAND)
-			continue;
-		
-		// combat
-		
-		if (!isCombatVehicle(vehicleId))
-			continue;
-		
-		// movementType
-		
-		MovementType movementType = getVehicleMovementType(vehicleId);
-		
-		// speed
-		
-		int speed = getVehicleSpeed(vehicleId);
-		
-		if (speed <= 0)
-			continue;
-		
-		// collect
-		
-		speeds[movementType].insert(speed);
-		
-	}
-	
-	if (DEBUG)
-	{
-		debug("speeds\n");
-		
-		for (std::pair<MovementType, std::set<int>> const &vehicleSpeedEntry : speeds)
-		{
-			MovementType const &movementType = vehicleSpeedEntry.first;
-			std::set<int> const &movementTypeVehicleSpeeds = vehicleSpeedEntry.second;
-			
-			debug("\tmovementType=%d\n", movementType);
-			
-			for (int speed : movementTypeVehicleSpeeds)
-			{
-				debug("\t\tspeed=%2d\n", speed);
-			}
-			
-		}
-		
-	}
-	
 	// process land bases
 	
-	std::vector<int> borderTiles;
-	std::vector<int> newBorderTiles;
+	robin_hood::unordered_flat_set<int> borderTiles;
+	robin_hood::unordered_flat_set<int> newBorderTiles;
 
 	for (int baseId : landBaseIds)
 	{
@@ -1720,179 +1744,175 @@ void populateLandApproachTimes(int factionId)
 		if (baseLandCombatClusterIndex == -1)
 			continue;
 		
-		// create base approachTimes
+		// create base approachHexCosts
 		
-		landApproachTimes.emplace(baseId, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>());
+		landApproachHexCosts.emplace(baseId, robin_hood::unordered_flat_map<MovementType, std::vector<std::array<double,3>>>());
 		
-		for (std::pair<MovementType, std::set<int>> const &vehicleSpeedEntry : speeds)
+		for (MovementType movementType : landMovementTypes)
 		{
-			MovementType const &movementType = vehicleSpeedEntry.first;
-			std::set<int> const &movementTypeVehicleSpeeds = vehicleSpeedEntry.second;
+			landApproachHexCosts.at(baseId).emplace(movementType, std::vector<std::array<double,3>>(*MapAreaTiles));
+			std::vector<std::array<double,3>> &approachHexCosts = landApproachHexCosts.at(baseId).at(movementType);
+			std::fill(approachHexCosts.begin(), approachHexCosts.end(), std::array<double,3>({INF, INF, INF}));
 			
-			landApproachTimes.at(baseId).emplace(movementType, robin_hood::unordered_flat_map<int, std::vector<double>>());
+			// set running variables
 			
-			for (int speed : movementTypeVehicleSpeeds)
+			borderTiles.clear();
+			newBorderTiles.clear();
+			
+			robin_hood::unordered_flat_set<int> utilizedOtherBaseIds;
+			
+			// insert initial tile
+			
+			for (MAP *baseAdjacentTile : getBaseAdjacentTiles(baseTile, true))
 			{
-				// initialize speed approachTimes
+				int baseAdjacentTileIndex = baseAdjacentTile - *MapTiles;
+				int baseAdjacentTileLandCombatClusterIndex = landCombatClusters.at(baseAdjacentTileIndex);
 				
-				landApproachTimes.at(baseId).at(movementType).emplace(speed, std::vector<double>(*MapAreaTiles));
-				std::vector<double> &approachTimes = landApproachTimes.at(baseId).at(movementType).at(speed);
-				std::fill(approachTimes.begin(), approachTimes.end(), INF);
+				// within cluster
 				
-				// set running variables
+				if (baseAdjacentTileLandCombatClusterIndex != baseLandCombatClusterIndex)
+					continue;
 				
-				borderTiles.clear();
-				newBorderTiles.clear();
+				// add to border tiles
 				
-				robin_hood::unordered_flat_set<int> utilizedOtherBaseIds;
+				approachHexCosts.at(baseAdjacentTileIndex) = {0.0, 0.0, 0.0};
+				borderTiles.insert(baseAdjacentTileIndex);
 				
-				// insert initial tile
-				
-				for (MAP *baseAdjacentTile : getBaseAdjacentTiles(baseTile, true))
+			}
+			
+			// iterate tiles
+			
+			while (!borderTiles.empty())
+			{
+				for (int currentTileIndex : borderTiles)
 				{
-					int baseAdjacentTileIndex = baseAdjacentTile - *MapTiles;
-					int baseAdjacentTileLandCombatClusterIndex = landCombatClusters.at(baseAdjacentTileIndex);
+					TileInfo &currentTileInfo = aiData.tileInfos[currentTileIndex];
 					
-					// within cluster
+					std::array<double,3> currentTileApproachHexCost = approachHexCosts.at(currentTileIndex);
+					double currentTileLandApproachHexCost = currentTileApproachHexCost.at(0);
+					double currentTileSeaTransportApproachTime = currentTileApproachHexCost.at(1);
 					
-					if (baseAdjacentTileLandCombatClusterIndex != baseLandCombatClusterIndex)
-						continue;
-					
-					// add to border tiles
-					
-					approachTimes.at(baseAdjacentTileIndex) = 0.0;
-					borderTiles.push_back(baseAdjacentTileIndex);
-					
-				}
-				
-				// iterate tiles
-				
-				while (!borderTiles.empty())
-				{
-					for (int currentTileIndex : borderTiles)
+					for (MapAngle mapAngle : currentTileInfo.adjacentMapAngles)
 					{
-						TileInfo &currentTileInfo = aiData.tileInfos[currentTileIndex];
+						MAP *adjacentTile = mapAngle.tile;
+						int angle = mapAngle.angle;
+						int adjacentTileIndex = adjacentTile - *MapTiles;
 						
-						double currentTileApproachTime = approachTimes.at(currentTileIndex);
+						int adjacentTileLandCombatClusterIndex = landCombatClusters.at(adjacentTileIndex);
 						
-						for (MapAngle mapAngle : currentTileInfo.adjacentMapAngles)
+						// within cluster
+						
+						if (adjacentTileLandCombatClusterIndex != baseLandCombatClusterIndex)
+							continue;
+						
+						// tile info and opposite angle
+						
+						TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
+						int opppositeAngle = (angle + ANGLE_COUNT / 2) % ANGLE_COUNT;
+						
+						// process move by surface type
+						
+						double seaTransportStepTime = 0.0;
+						double landStepCost = 0.0;
+						
+						if (adjacentTileInfo.landAllowed && currentTileInfo.landAllowed) // land-land
 						{
-							MAP *adjacentTile = mapAngle.tile;
-							int angle = mapAngle.angle;
-							int adjacentTileIndex = adjacentTile - *MapTiles;
+							int hexCost = adjacentTileInfo.hexCosts[movementType][opppositeAngle];
 							
-							int adjacentTileLandCombatClusterIndex = landCombatClusters.at(adjacentTileIndex);
-							
-							// within cluster
-							
-							if (adjacentTileLandCombatClusterIndex != baseLandCombatClusterIndex)
+							if (hexCost == -1)
 								continue;
 							
-							// tile info and opposite angle
+							// stepCost with impediment
 							
-							TileInfo &adjacentTileInfo = aiData.tileInfos[adjacentTileIndex];
-							int opppositeAngle = (angle + ANGLE_COUNT / 2) % ANGLE_COUNT;
+							landStepCost = (double)hexCost + landCombatImpediments.at(currentTileIndex);
 							
-							// process move by surface type
+						}
+						else if (!adjacentTileInfo.landAllowed && !currentTileInfo.landAllowed) // sea-sea transport
+						{
+							int hexCost = adjacentTileInfo.hexCosts[MT_SEA_REGULAR][opppositeAngle];
 							
-							double stepTime = 1.0;
+							if (hexCost == -1)
+								continue;
 							
-							if (adjacentTileInfo.landAllowed && currentTileInfo.landAllowed) // land-land
-							{
-								int hexCost = adjacentTileInfo.hexCosts[movementType][opppositeAngle];
-								
-								// sensible hexCost
-								
-								if (hexCost == -1)
-									continue;
-								
-								// stepCost with impediment
-								
-								double stepCost = (double)hexCost + landCombatImpediments.at(currentTileIndex);
-								
-								// stepTime
-								
-								stepTime = stepCost / (double)(Rules->move_rate_roads * speed);
-								
-							}
-							else if (!adjacentTileInfo.landAllowed && !currentTileInfo.landAllowed) // sea-sea transport moement
-							{
-								int hexCost = adjacentTileInfo.hexCosts[MT_SEA_REGULAR][opppositeAngle];
-								
-								// sensible hexCost
-								
-								if (hexCost == -1)
-									continue;
-								
-								// add impediment
-								
-								double stepCost = (double)hexCost + seaTransportImpediments.at(currentTileIndex);
-								
-								// stepTime
-								
-								stepTime = stepCost / (double)(Rules->move_rate_roads * factionInfo.bestSeaTransportUnitSpeed);
-								
-							}
-							else if (adjacentTileInfo.landAllowed && !currentTileInfo.landAllowed) // boarding
-							{
-								// seaTransportWaitTime
-								
-								double seaTransportWaitTime = seaTransportWaitTimes.at(currentTileIndex);
-								
-								if (seaTransportWaitTime == INF)
-									continue;
-								
-								stepTime = seaTransportWaitTime;
-								
-							}
-							else if (!adjacentTileInfo.landAllowed && currentTileInfo.landAllowed) // unboarding
-							{
-								double stepCost = (double)Rules->move_rate_roads;
-								
-								// stepTime
-								
-								stepTime = stepCost / (double)(Rules->move_rate_roads * speed);
-								
-							}
+							// stepCost with impediment
 							
-							// update adjacentTileApproachTime
+							double seaTransportStepCost = (double)hexCost + seaTransportImpediments.at(currentTileIndex);
 							
-							double adjacentTileApproachTime = currentTileApproachTime + stepTime;
+							// stepTime
 							
-							// update best
+							seaTransportStepTime = seaTransportStepCost / (double)(Rules->move_rate_roads * factionInfo.bestSeaTransportUnitSpeed);
 							
-							if (adjacentTileApproachTime < approachTimes.at(adjacentTileIndex))
-							{
-								approachTimes.at(adjacentTileIndex) = adjacentTileApproachTime;
-								newBorderTiles.push_back(adjacentTileIndex);
-							}
+						}
+						else if (adjacentTileInfo.landAllowed && !currentTileInfo.landAllowed) // boarding
+						{
+							// seaTransportWaitTime
 							
-							// update information from other bases at first hit
+							double seaTransportWaitTime = seaTransportWaitTimes.at(currentTileIndex);
 							
-							if (adjacentTileInfo.base && landApproachTimes.find(adjacentTileInfo.baseId) != landApproachTimes.end() && utilizedOtherBaseIds.find(adjacentTileInfo.baseId) == utilizedOtherBaseIds.end())
-							{
-								utilizedOtherBaseIds.insert(adjacentTileInfo.baseId);
-								
-								std::vector<double> const &otherBaseApproachTimes = landApproachTimes.at(adjacentTileInfo.baseId).at(movementType).at(speed);
-								
-								for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-								{
-									double throughOtherbaseApproachTime = otherBaseApproachTimes.at(tileIndex) + adjacentTileApproachTime;
-									approachTimes.at(tileIndex) = std::min(approachTimes.at(tileIndex), throughOtherbaseApproachTime);
-								}
-								
-							}
+							if (seaTransportWaitTime == INF)
+								continue;
+							
+							seaTransportStepTime = seaTransportWaitTime;
+							landStepCost = (double)Rules->move_rate_roads;
+							
+						}
+						else if (!adjacentTileInfo.landAllowed && currentTileInfo.landAllowed) // unboarding
+						{
+							landStepCost = (double)Rules->move_rate_roads;
+						}
+						
+						// update adjacentTileApproachTime
+						
+						double oldAdjacentTileCombinedApproachTime = approachHexCosts.at(adjacentTileIndex).at(2);
+						
+						double newAdjacentTileLandApproachHexCost = currentTileLandApproachHexCost + landStepCost;
+						double newAdjacentTileSeaTransportApproachTime = currentTileSeaTransportApproachTime + seaTransportStepTime;
+						double newAdjacentTileCombinedApproachTime = newAdjacentTileLandApproachHexCost / (double)(2 * Rules->move_rate_roads) + newAdjacentTileSeaTransportApproachTime;
+						
+						// update best
+						
+						if (newAdjacentTileCombinedApproachTime < oldAdjacentTileCombinedApproachTime)
+						{
+							approachHexCosts.at(adjacentTileIndex).at(0) = newAdjacentTileLandApproachHexCost;
+							approachHexCosts.at(adjacentTileIndex).at(1) = newAdjacentTileSeaTransportApproachTime;
+							approachHexCosts.at(adjacentTileIndex).at(2) = newAdjacentTileCombinedApproachTime;
+							
+							newBorderTiles.insert(adjacentTileIndex);
 							
 						}
 						
+//						// update information from other bases at first hit
+//						
+//						if (adjacentTileInfo.base && landApproachHexCosts.find(adjacentTileInfo.baseId) != landApproachHexCosts.end() && utilizedOtherBaseIds.find(adjacentTileInfo.baseId) == utilizedOtherBaseIds.end())
+//						{
+//							utilizedOtherBaseIds.insert(adjacentTileInfo.baseId);
+//							
+//							std::vector<std::array<double,3>> const &otherBaseApproachHexCosts = landApproachHexCosts.at(adjacentTileInfo.baseId).at(movementType);
+//							
+//							for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+//							{
+//								double combinedApproachTime = approachHexCosts.at(tileIndex).at(2);
+//								double throughOtherBaseCombinedApproachTime = otherBaseApproachHexCosts.at(tileIndex).at(2) + newAdjacentTileCombinedApproachTime;
+//								
+//								if (throughOtherBaseCombinedApproachTime < combinedApproachTime)
+//								{
+//									approachHexCosts.at(tileIndex).at(0) = otherBaseApproachHexCosts.at(tileIndex).at(0);
+//									approachHexCosts.at(tileIndex).at(1) = otherBaseApproachHexCosts.at(tileIndex).at(1);
+//									approachHexCosts.at(tileIndex).at(2) = otherBaseApproachHexCosts.at(tileIndex).at(2);
+//								}
+//								
+//							}
+//							
+//						}
+//						
 					}
 					
-					// swap border tiles with newBorderTiles and clear them
-					
-					borderTiles.swap(newBorderTiles);
-					newBorderTiles.clear();
-					
 				}
+				
+				// swap border tiles with newBorderTiles and clear them
+				
+				borderTiles.swap(newBorderTiles);
+				newBorderTiles.clear();
 				
 			}
 			
@@ -1902,57 +1922,48 @@ void populateLandApproachTimes(int factionId)
 	
 	if (DEBUG)
 	{
-		for (robin_hood::pair<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> const &landApproachTimeEntry : landApproachTimes)
+		for (robin_hood::pair<int, robin_hood::unordered_flat_map<MovementType, std::vector<std::array<double,3>>>> const &landApproachHexCostEntry : landApproachHexCosts)
 		{
-			int baseId = landApproachTimeEntry.first;
-			robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>> const &baseLandApproachTimes = landApproachTimes.at(baseId);
+			int baseId = landApproachHexCostEntry.first;
+			robin_hood::unordered_flat_map<MovementType, std::vector<std::array<double,3>>> const &baseLandApproachHexCosts = landApproachHexCosts.at(baseId);
 			
 			debug("\t%s\n", getBase(baseId)->name);
 			
-			for (robin_hood::pair<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>> const &baseLandApproachTimeEntry : baseLandApproachTimes)
+			for (robin_hood::pair<MovementType, std::vector<std::array<double,3>>> const &baseLandApproachHexCostEntry : baseLandApproachHexCosts)
 			{
-				MovementType movementType = baseLandApproachTimeEntry.first;
-				robin_hood::unordered_flat_map<int, std::vector<double>> const &baseMovementTypeLandApproachTimes = baseLandApproachTimeEntry.second;
+				MovementType movementType = baseLandApproachHexCostEntry.first;
+				std::vector<std::array<double,3>> const &baseMovementTypeLandApproachHexCosts = baseLandApproachHexCostEntry.second;
 				
 				debug("\t\tmovementType=%d\n", movementType);
 				
-				for (robin_hood::pair<int, std::vector<double>> const &baseMovementTypeLandApproachTimeEntry : baseMovementTypeLandApproachTimes)
+				for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
 				{
-					int speed = baseMovementTypeLandApproachTimeEntry.first;
-					std::vector<double> const &approachTimes = baseMovementTypeLandApproachTimeEntry.second;
+					int tileIndex = tile - *MapTiles;
 					
-					debug("\t\t\tspeed=%d\n", speed);
+					std::array<double,3> approachHexCost = baseMovementTypeLandApproachHexCosts.at(tileIndex);
 					
-					for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+					if (approachHexCost.at(2) != INF)
 					{
-						int tileIndex = tile - *MapTiles;
-						
-						double approachTime = approachTimes.at(tileIndex);
-						
-						if (approachTime != INF)
-						{
-							debug("\t\t\t\t%s %5.2f\n", getLocationString(tile).c_str(), approachTime);
-						}
-						
+						debug("\t\t\t\t%s %5.2f %5.2f %5.2f\n", getLocationString(tile).c_str(), approachHexCost.at(0), approachHexCost.at(1), approachHexCost.at(2));
 					}
 					
 				}
-					
+				
 			}
 			
 		}
 		
 	}
 	
-	executionProfiles["1.1.4.9. populateLandApproachTimes"].stop();
+	Profiling::stop("populateLandApproachHexCosts");
 	
 }
 
 void populateSeaClusters(int factionId)
 {
-	debug("populateSeaClusters aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	Profiling::start("populateSeaClusters", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.5. populateSeaClusters"].start();
+	debug("populateSeaClusters aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
 	
 	std::vector<int> &seaClusters = aiFactionMovementInfo.seaClusters;
 	std::map<int, int> &seaClusterAreas = aiFactionMovementInfo.seaClusterAreas;
@@ -2082,8 +2093,6 @@ void populateSeaClusters(int factionId)
 		
 	}
 	
-	executionProfiles["1.1.4.5. populateSeaClusters"].stop();
-	
 	if (DEBUG)
 	{
 		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
@@ -2093,13 +2102,15 @@ void populateSeaClusters(int factionId)
 		
 	}
 	
+	Profiling::stop("populateSeaClusters");
+	
 }
 
 void populateLandClusters()
 {
-	debug("populateLandClusters aiFactionId=%d\n", aiFactionId);
+	Profiling::start("populateLandClusters", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.6. populateLandClusters"].start();
+	debug("populateLandClusters aiFactionId=%d\n", aiFactionId);
 	
 	std::vector<int> &landClusters = aiFactionMovementInfo.landClusters;
 	std::map<int, int> &landClusterAreas = aiFactionMovementInfo.landClusterAreas;
@@ -2204,8 +2215,6 @@ void populateLandClusters()
 		
 	}
 	
-	executionProfiles["1.1.4.6. populateLandClusters"].stop();
-	
 	if (DEBUG)
 	{
 		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
@@ -2215,15 +2224,17 @@ void populateLandClusters()
 		
 	}
 	
+	Profiling::stop("populateLandClusters");
+	
 }
 
 void populateLandTransportedClusters()
 {
+	Profiling::start("populateLandTransportedClusters", "precomputeRouteData");
+	
 	debug("populateLandTransportedClusters aiFactionId=%d\n", aiFactionId);
 	
-	executionProfiles["1.1.4.6. populateLandTransportedClusters"].start();
-	
-	std::vector<int> const &seaTransportClusters = aiFactionMovementInfo.seaTransportClusters;
+	std::vector<double> const &seaTransportWaitTimes = aiFactionMovementInfo.seaTransportWaitTimes;
 	std::vector<int> &landTransportedClusters = aiFactionMovementInfo.landTransportedClusters;
 	
 	landTransportedClusters.resize(*MapAreaTiles); std::fill(landTransportedClusters.begin(), landTransportedClusters.end(), -1);
@@ -2241,9 +2252,9 @@ void populateLandTransportedClusters()
 			landTransportedClusters.at(tileIndex) = -2;
 		}
 		
-		// or sea transport cluster
+		// or sea with non infinite wait time
 		
-		if (seaTransportClusters.at(tileIndex) != -1)
+		if (seaTransportWaitTimes.at(tileIndex) != INF)
 		{
 			landTransportedClusters.at(tileIndex) = -2;
 		}
@@ -2318,8 +2329,6 @@ void populateLandTransportedClusters()
 			
 	}
 	
-	executionProfiles["1.1.4.6. populateLandTransportedClusters"].stop();
-	
 	if (DEBUG)
 	{
 		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
@@ -2330,13 +2339,15 @@ void populateLandTransportedClusters()
 		
 	}
 	
+	Profiling::stop("populateLandTransportedClusters");
+	
 }
 
 void populateTransfers(int factionId)
 {
-	debug("populateTransfers aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
+	Profiling::start("populateTransfers", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.7. populateTransfers"].start();
+	debug("populateTransfers aiFactionId=%d factionId=%d\n", aiFactionId, factionId);
 	
 	std::vector<int> const &landClusters = aiFactionMovementInfo.landClusters;
 	std::vector<int> const &seaClusters = aiFactionMovementInfo.seaClusters;
@@ -2597,15 +2608,15 @@ void populateTransfers(int factionId)
 		
 	}
 
-	executionProfiles["1.1.4.7. populateTransfers"].stop();
+	Profiling::stop("populateTransfers");
 	
 }
 
 void populateReachableLocations()
 {
-	debug("populateReachableLocations aiFactionId=%d\n", aiFactionId);
+	Profiling::start("populateReachableLocations", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.7. populateTransfers"].start();
+	debug("populateReachableLocations aiFactionId=%d\n", aiFactionId);
 	
 	std::vector<bool> &reachableTileIndexes = aiFactionMovementInfo.reachableTileIndexes;
 	
@@ -2679,13 +2690,15 @@ void populateReachableLocations()
 		
 	}
 	
+	Profiling::stop("populateReachableLocations");
+	
 }
 
 void populateAdjacentClusters()
 {
-	debug("populateAdjacentClusters aiFactionId=%d\n", aiFactionId);
+	Profiling::start("populateAdjacentClusters", "precomputeRouteData");
 	
-	executionProfiles["1.1.4.7. populateTransfers"].start();
+	debug("populateAdjacentClusters aiFactionId=%d\n", aiFactionId);
 	
 	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, std::vector<robin_hood::unordered_flat_set<int>>>> &adjacentAirClusters = aiFactionMovementInfo.adjacentAirClusters;
 	std::vector<robin_hood::unordered_flat_set<int>> &adjacentSeaClusters = aiFactionMovementInfo.adjacentSeaClusters;
@@ -2788,6 +2801,8 @@ void populateAdjacentClusters()
 		
 	}
 	
+	Profiling::stop("populateAdjacentClusters");
+	
 }
 
 void populateSharedSeas()
@@ -2851,6 +2866,102 @@ void populateSharedSeas()
 	
 }
 
+//double getTravelTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst)
+//{
+//	double travelTime = INF;
+//	
+//	switch (movementType)
+//	{
+//	case MT_AIR:
+//		travelTime = getATravelTime(movementType, speed, org, dst);
+//		break;
+//		
+//	case MT_SEA_REGULAR:
+//	case MT_SEA_NATIVE:
+//		travelTime = getSeaTravelTime(factionId, movementType, speed, org, dst);
+//		break;
+//		
+//	case MT_LAND_REGULAR:
+//	case MT_LAND_NATIVE:
+//		travelTime = getATravelTime(movementType, speed, org, dst);
+//		break;
+//		
+//	default:
+//		debug("ERROR: unknown movementType: %d\n", movementType);
+//		
+//	}
+//	
+//	return travelTime;
+//	
+//}
+//
+//double getSeaTravelTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst)
+//{
+//	assert(factionId >= 0 && factionId < MaxPlayerNum);
+//	assert(movementType >= seaMovementTypes.front() && movementType <= seaMovementTypes.back());
+//	assert(speed > 0);
+//	assert(isOnMap(org));
+//	assert(isOnMap(dst));
+//	
+//	double travelTime = getSeaLTravelTime(factionId, movementType, speed, org, dst);
+//	double distance = travelTime / (double)(Rules->move_rate_roads * speed);
+//	
+//	if (distance < A_DISTANCE_TRESHOLD)
+//	{
+//		travelTime = getATravelTime(movementType, speed, org, dst);
+//	}
+//	
+//	return travelTime;
+//
+//}
+//
+//double getSeaLTravelTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst)
+//{
+//	assert(factionId >= 0 && factionId < MaxPlayerNum);
+//	assert(movementType >= seaMovementTypes.front() && movementType <= seaMovementTypes.back());
+//	assert(speed > 0);
+//	assert(isOnMap(org));
+//	assert(isOnMap(dst));
+//	
+//	int seaMovementTypeIndex = movementType - MT_SEA_REGULAR;
+//	
+//	std::vector<int> const &factionSeaRegions = landmarkData.allFactionSeaRegions.at(factionId);
+//	
+//	int orgTileIndex = org - *MapTiles;
+//	int dstTileIndex = dst - *MapTiles;
+//	
+//	int orgSeaRegion = factionSeaRegions.at(orgTileIndex);
+//	int dstSeaRegion = factionSeaRegions.at(dstTileIndex);
+//	
+//	if (orgSeaRegion == -1 || dstSeaRegion == -1 || orgSeaRegion != dstSeaRegion)
+//		return INF;
+//	
+//	double maxLandmarkMovementCost = 0.0;
+//	
+//	for (SeaLandmark const &seaLandmark : landmarkData.seaLandmarks.at(seaMovementTypeIndex))
+//	{
+//		int seaLandmarkTileIndex = seaLandmark.tile - *MapTiles;
+//		int seaLandmarkSeaRegion = factionSeaRegions.at(seaLandmarkTileIndex);
+//		
+//		// reachable landmark
+//		
+//		if (seaLandmarkSeaRegion == -1 || seaLandmarkSeaRegion != orgSeaRegion)
+//			continue;
+//		
+//		// landmarkTravelTime
+//		
+//		double landmarkMovementCost = abs(seaLandmark.tileInfos.at(dstTileIndex).movementCost - seaLandmark.tileInfos.at(orgTileIndex).movementCost);
+//		
+//		// update max
+//		
+//		maxLandmarkMovementCost = std::max(maxLandmarkMovementCost, landmarkMovementCost);
+//		
+//	}
+//	
+//	return maxLandmarkMovementCost / (double)(Rules->move_rate_roads * speed);
+//	
+//}
+//
 /**
 Computes enemy combat vehicle travel time to our bases.
 */
@@ -2950,16 +3061,18 @@ Computes enemy combat vehicle travel time to our bases.
 */
 double getEnemySeaApproachTime(int baseId, int vehicleId)
 {
+	Profiling::start("- getEnemySeaApproachTime");
+	
 	VEH *vehicle = getVehicle(vehicleId);
 	int factionId = vehicle->faction_id;
 	
 	assert(vehicle->triad() == TRIAD_SEA);
 	
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> const &seaApproachTimes = enemyFactionMovementInfos.at(factionId).seaApproachTimes;
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<double>>> const &seaApproachHexCosts = enemyFactionMovementInfos.at(factionId).seaApproachHexCosts;
 	
-	// no approach time for this base - sea unit is not in base sea cluster
+	// no approach hex cost for this base - sea unit is not in base sea cluster
 	
-	if (seaApproachTimes.find(baseId) == seaApproachTimes.end())
+	if (seaApproachHexCosts.find(baseId) == seaApproachHexCosts.end())
 		return INF;
 	
 	// return sea approach time
@@ -2967,9 +3080,11 @@ double getEnemySeaApproachTime(int baseId, int vehicleId)
 	MovementType movementType = getVehicleMovementType(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	int vehicleTileIndex = vehicleTile - *MapTiles;
-	int speed = getVehicleSpeed(vehicleId);
+	int moveRate = std::max(Rules->move_rate_roads, getVehicleMoveRate(vehicleId));
 	
-	return seaApproachTimes.at(baseId).at(movementType).at(speed).at(vehicleTileIndex);
+	Profiling::stop("- getEnemySeaApproachTime");
+	
+	return seaApproachHexCosts.at(baseId).at(movementType).at(vehicleTileIndex) / (double)moveRate;
 	
 }
 
@@ -2983,11 +3098,11 @@ double getEnemyLandApproachTime(int baseId, int vehicleId)
 	
 	assert(vehicle->triad() == TRIAD_LAND);
 	
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> const &landApproachTimes = enemyFactionMovementInfos.at(factionId).landApproachTimes;
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<std::array<double,3>>>> const &landApproachHexCosts = enemyFactionMovementInfos.at(factionId).landApproachHexCosts;
 	
 	// no approach time for this base - land unit is not in base land cluster
 	
-	if (landApproachTimes.find(baseId) == landApproachTimes.end())
+	if (landApproachHexCosts.find(baseId) == landApproachHexCosts.end())
 		return INF;
 	
 	// return land approach time
@@ -2995,17 +3110,13 @@ double getEnemyLandApproachTime(int baseId, int vehicleId)
 	MovementType movementType = getVehicleMovementType(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	int vehicleTileIndex = vehicleTile - *MapTiles;
-	int speed = getVehicleSpeed(vehicleId);
+	int moveRate = getVehicleMoveRate(vehicleId);
+	std::array<double,3> landApproachHexCost = landApproachHexCosts.at(baseId).at(movementType).at(vehicleTileIndex);
 	
-	try
-	{
-		return landApproachTimes.at(baseId).at(movementType).at(speed).at(vehicleTileIndex);
-	}
-	catch (std::out_of_range const &e)
-	{
-		debug("Error: no landApproachTime for this vehicle.");
+	if (landApproachHexCost.at(2) == INF)
 		return INF;
-	}
+	
+	return landApproachHexCost.at(0) / (double)moveRate + landApproachHexCost.at(1);
 	
 }
 
@@ -3036,7 +3147,7 @@ double getPlayerApproachTime(int baseId, int unitId, MAP *origin)
 	case CHS_HOVERTANK:
 	case CHS_SPEEDER:
 	case CHS_INFANTRY:
-		approachTime = getPlayerLandApproachTime(baseId, unitId, origin);
+		approachTime = getPlayerLandApproachHexCost(baseId, unitId, origin);
 		break;
 	}
 	
@@ -3108,49 +3219,50 @@ Computes player combat unit travel time to enemy base.
 double getPlayerSeaApproachTime(int baseId, int unitId, MAP *origin)
 {
 	UNIT *unit = getUnit(unitId);
-	int speed = getUnitSpeed(aiFactionId, unitId);
 	int originTileIndex = origin - *MapTiles;
+	int moveRate = getUnitMoveRate(aiFactionId, unitId);
 	
 	assert(unit->triad() == TRIAD_SEA);
 	
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> const &seaApproachTimes = aiFactionMovementInfo.seaApproachTimes;
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<double>>> const &seaApproachHexCosts = aiFactionMovementInfo.seaApproachHexCosts;
 	
-	// no approach time for this base - sea unit is not in base sea cluster
+	// no approach hex cost for this base - sea unit is not in base sea cluster
 	
-	if (seaApproachTimes.find(baseId) == seaApproachTimes.end())
+	if (seaApproachHexCosts.find(baseId) == seaApproachHexCosts.end())
 		return INF;
 	
 	// return sea approach time
 	
 	MovementType movementType = getUnitMovementType(aiFactionId, unitId);
 	
-	return seaApproachTimes.at(baseId).at(movementType).at(speed).at(originTileIndex);
+	return seaApproachHexCosts.at(baseId).at(movementType).at(originTileIndex) / (double)moveRate;
 	
 }
 
 /**
 Computes player combat vehicle travel time to enemy base.
 */
-double getPlayerLandApproachTime(int baseId, int unitId, MAP *origin)
+double getPlayerLandApproachHexCost(int baseId, int unitId, MAP *origin)
 {
 	UNIT *unit = getUnit(unitId);
-	int speed = getUnitSpeed(aiFactionId, unitId);
+	int moveRate = getUnitMoveRate(aiFactionId, unitId);
 	int originTileIndex = origin - *MapTiles;
 	
 	assert(unit->triad() == TRIAD_LAND);
 	
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> const &landApproachTimes = aiFactionMovementInfo.landApproachTimes;
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<std::array<double,3>>>> const &landApproachHexCosts = aiFactionMovementInfo.landApproachHexCosts;
 	
 	// no approach time for this base - land unit is not in base land cluster
 	
-	if (landApproachTimes.find(baseId) == landApproachTimes.end())
+	if (landApproachHexCosts.find(baseId) == landApproachHexCosts.end())
 		return INF;
 	
 	// return land approach time
 	
 	MovementType movementType = getUnitMovementType(aiFactionId, unitId);
+	std::array<double,3> landApproachHexCost = landApproachHexCosts.at(baseId).at(movementType).at(originTileIndex);
 	
-	return landApproachTimes.at(baseId).at(movementType).at(speed).at(originTileIndex);
+	return landApproachHexCost.at(0) / (double)moveRate + landApproachHexCost.at(1);
 	
 }
 
@@ -3275,7 +3387,7 @@ double getATravelTime(MovementType movementType, int speed, MAP *origin, MAP *ds
 {
 //	debug("getATravelTime movementType=%d speed=%d %s->%s\n", movementType, speed, getLocationString(origin).c_str(), getLocationString(dst).c_str());
 	
-	executionProfiles["| getATravelTime"].start();
+	Profiling::start("| getATravelTime");
 	
 	int originIndex = origin - *MapTiles;
 	int dstIndex = dst - *MapTiles;
@@ -3284,7 +3396,7 @@ double getATravelTime(MovementType movementType, int speed, MAP *origin, MAP *ds
 	
 	if (origin == dst)
 	{
-		executionProfiles["| getATravelTime"].stop();
+		Profiling::stop("| getATravelTime");
 		return 0.0;
 	}
 	
@@ -3322,7 +3434,7 @@ double getATravelTime(MovementType movementType, int speed, MAP *origin, MAP *ds
 	
 	if (cachedTravelTime != INF)
 	{
-		executionProfiles["| getATravelTime"].stop();
+		Profiling::stop("| getATravelTime");
 		return cachedTravelTime;
 	}
 	
@@ -3533,8 +3645,7 @@ double getATravelTime(MovementType movementType, int speed, MAP *origin, MAP *ds
 	
 	double travelTime = getCachedATravelTime(movementType, speed, originIndex, dstIndex);
 	
-	executionProfiles["| getATravelTime"].stop();
-	
+	Profiling::stop("| getATravelTime");
 	return travelTime;
 	
 }

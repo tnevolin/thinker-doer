@@ -562,12 +562,13 @@ std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter)
 {
 	assert(range >= 0);
 	
-	executionProfiles["| getRangeTiles"].start();
+	Profiling::start("| getRangeTiles");
 	
 	// use vanilla table for range < TABLE_square_block_radius_count
 	
 	if (range < TABLE_square_block_radius_count)
 	{
+		Profiling::stop("| getRangeTiles");
 		return getSquareBlockTiles(tile, (includeCenter ? 0 : 1), range);
 	}
 	
@@ -586,7 +587,7 @@ std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter)
 		tiles.insert(tiles.end(), equalRangeTiles.begin(), equalRangeTiles.end());
 	}
 	
-	executionProfiles["| getRangeTiles"].stop();
+	Profiling::stop("| getRangeTiles");
 	
 	return tiles;
 	
@@ -1879,15 +1880,19 @@ Base compute may not pick optimal worker placement without worked tile reset.
 */
 void computeBase(int baseId, bool resetWorkedTiles)
 {
+	Profiling::start("- computeBase");
+	
 	if (resetWorkedTiles)
 	{
 		Bases[baseId].worked_tiles = 0;
 		Bases[baseId].specialist_total = 0;
 	}
-
+	
 	set_base(baseId);
 	base_compute(1);
-
+	
+	Profiling::stop("- computeBase");	
+	
 }
 
 ///**

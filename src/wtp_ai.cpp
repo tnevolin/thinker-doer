@@ -94,7 +94,7 @@ void __cdecl modified_enemy_units_check(int factionId)
 		
 		try
 		{
-			strategy();
+			strategy(true);
 		}
 		catch(const std::exception &e)
 		{
@@ -108,9 +108,9 @@ void __cdecl modified_enemy_units_check(int factionId)
 	
 	debug("enemy_units_check - %s - end\n", getMFaction(factionId)->noun_faction);
 	
-	executionProfiles["~ enemy_units_check"].start();
+	Profiling::start("~ enemy_units_check");
 	enemy_units_check(factionId);
-	executionProfiles["~ enemy_units_check"].stop();
+	Profiling::stop("~ enemy_units_check");
 	
 	debug("modified_enemy_units_check - %s - end\n", getMFaction(factionId)->noun_faction);
 	
@@ -144,13 +144,20 @@ void __cdecl modified_enemy_units_check(int factionId)
 	
 }
 
-void strategy()
+void strategy(bool computer)
 {
-	executionProfiles["1. strategy"].start();
+	Profiling::start("strategy", "");
+	
+	// store base state
+	
+	BaseSnapshots::takeSnapshots();
 	
 	// design units
 	
-	designUnits();
+	if (computer)
+	{
+		designUnits();
+	}
 	
 	// populate data
 	
@@ -162,44 +169,28 @@ void strategy()
 	
 	// compute production demands
 	
-	productionStrategy();
+	if (computer)
+	{
+		productionStrategy();
+	}
 	
 	// execute tasks
 	
 	executeTasks();
 	
-	executionProfiles["1. strategy"].stop();
+	// restore base state
 	
-}
-
-/*
-Plans strategy for human automated units.
-*/
-void planHumanAutomationStrategy()
-{
-	executionProfiles["1. strategy"].start();
+	BaseSnapshots::restoreSnapshots();
 	
-	// populate data
-	
-	populateAIData();
-	
-	// move strategy
-	
-	moveStrategy();
-	
-	// execute tasks
-	
-	executeTasks();
-	
-	executionProfiles["1. strategy"].stop();
+	Profiling::stop("strategy");
 	
 }
 
 void executeTasks()
 {
-	debug("Tasks - %s\n", MFactions[aiFactionId].noun_faction);
+	Profiling::start("executeTasks", "strategy");
 	
-	executionProfiles["1.7. executeTasks"].start();
+	debug("Tasks - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	for (robin_hood::pair<int, Task> &taskEntry : aiData.tasks)
 	{
@@ -233,19 +224,19 @@ void executeTasks()
 
 	}
 
-	executionProfiles["1.7. executeTasks"].stop();
+	Profiling::stop("executeTasks");
 	
 }
 
 void populateAIData()
 {
-	executionProfiles["1.1. populateAIData"].start();
+	Profiling::start("populateAIData", "strategy");
 	
 	// clear aiData
 	
-	executionProfiles["1.1.0. aiData.clear()"].start();
+	Profiling::start("aiData.clear()", "populateAIData");
 	aiData.clear();
-	executionProfiles["1.1.0. aiData.clear()"].stop();
+	Profiling::stop("aiData.clear()");
 	
 	// map of tile infos
 	
@@ -289,12 +280,14 @@ void populateAIData()
 	evaluateBaseDefense();
 	evaluateBaseProbeDefense();
 	
-	executionProfiles["1.1. populateAIData"].stop();
+	Profiling::stop("populateAIData");
 	
 }
 
 void populateTileInfos()
 {
+	Profiling::start("populateTileInfos", "populateAIData");
+	
 	debug("populateTileInfos - %s\n", aiMFaction->noun_faction);
 	
 	// ocean / surface type
@@ -616,10 +609,14 @@ void populateTileInfos()
 		
 	}
 	
+	Profiling::stop("populateTileInfos");
+	
 }
 
 void populateTileInfoBaseRanges()
 {
+	Profiling::start("populateTileInfoBaseRanges", "populateAIData");
+	
 	debug("populateTileInfoBaseRanges - %s\n", aiMFaction->noun_faction);
 	
 	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
@@ -816,10 +813,14 @@ void populateTileInfoBaseRanges()
 		
 	}
 	
+	Profiling::stop("populateTileInfoBaseRanges");
+	
 }
 
 void populateSeaRegionAreas()
 {
+	Profiling::start("populateSeaRegionAreas", "populateAIData");
+	
 	debug("populateSeaRegionAreas - %s\n", aiMFaction->noun_faction);
 	
 	aiData.seaRegionAreas.clear();
@@ -875,6 +876,8 @@ void populateSeaRegionAreas()
 		}
 		
 	}
+	
+	Profiling::stop("populateSeaRegionAreas");
 	
 }
 
@@ -967,6 +970,8 @@ void populatePlayerBaseRanges()
 
 void populateFactionInfos()
 {
+	Profiling::start("populateFactionInfos", "populateAIData");
+	
 	aiData.maxConOffenseValue = 0;
 	aiData.maxConDefenseValue = 0;
 	
@@ -1238,10 +1243,14 @@ void populateFactionInfos()
 	aiData.avgConOffenseValue = countConOffenseValue == 0 ? 1.0 : (double)sumConOffenseValue / (double)countConOffenseValue;
 	aiData.avgConDefenseValue = countConDefenseValue == 0 ? 1.0 : (double)sumConDefenseValue / (double)countConDefenseValue;
 	
+	Profiling::stop("populateFactionInfos");
+	
 }
 
 void populateBaseInfos()
 {
+	Profiling::start("populateBaseInfos", "populateAIData");
+	
 	debug("populateBaseInfos\n");
 	
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
@@ -1313,6 +1322,8 @@ void populateBaseInfos()
 		debug("\t%-25s gain=%5.2f\n", "--- average ---", factionInfo.averageBaseGain);
 		
 	}
+	
+	Profiling::stop("populateBaseInfos");
 	
 }
 
@@ -2968,17 +2979,15 @@ void populateEnemyBaseAssaultEffects()
 
 void evaluateEnemyStacks()
 {
-	debug("evaluateEnemyStacks - %s\n", MFactions[aiFactionId].noun_faction);
+	Profiling::start("evaluateEnemyStacks", "populateAIData");
 	
-	executionProfiles["1.1.I. evaluateBaseDefense"].start();
+	debug("evaluateEnemyStacks - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	CombatEffectTable &combatEffectTable = aiData.combatEffectTable;
 	
 	std::vector<int> &ownCombatUnitIds = combatEffectTable.ownCombatUnitIds;
 	
 	FoeUnitWeightTable foeUnitWeightTable;
-	
-	executionProfiles["1.1.I.3. stack combat computation"].start();
 	
 	for (robin_hood::pair<MAP *, EnemyStackInfo> &stackInfoEntry : aiData.enemyStacks)
 	{
@@ -3341,15 +3350,15 @@ void evaluateEnemyStacks()
 		
 	}
 	
-	executionProfiles["1.1.I.3. stack combat computation"].stop();
+	Profiling::stop("evaluateEnemyStacks");
 	
 }
 
 void evaluateBaseDefense()
 {
-	debug("evaluateBaseDefense - %s\n", MFactions[aiFactionId].noun_faction);
+	Profiling::start("evaluateBaseDefense", "populateAIData");
 	
-	executionProfiles["1.1.I. evaluateBaseDefense"].start();
+	debug("evaluateBaseDefense - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	Faction *faction = &(Factions[aiFactionId]);
 	
@@ -3364,7 +3373,7 @@ void evaluateBaseDefense()
 	
 	// evaluate base threat
 	
-	executionProfiles["1.1.I.4. evaluate base threat"].start();
+	Profiling::start("evaluate base threat", "evaluateBaseDefense");
 	
 	aiData.mostVulnerableBaseId = -1;
 	aiData.mostVulnerableBaseThreat = 0.0;
@@ -3390,7 +3399,7 @@ void evaluateBaseDefense()
 		
 		// calculate foe strength
 		
-		executionProfiles["1.1.I.4.1. calculate foe strength"].start();
+		Profiling::start("calculate foe strength", "evaluate base threat");
 		
 		debug("\t\tbase foeMilitaryStrength\n");
 		
@@ -3543,7 +3552,7 @@ void evaluateBaseDefense()
 			
 		}
 		
-		executionProfiles["1.1.I.4.1. calculate foe strength"].stop();
+		Profiling::stop("calculate foe strength");
 		
 		if (DEBUG)
 		{
@@ -3573,7 +3582,7 @@ void evaluateBaseDefense()
 		
 		// summarize foe unit weights by faction
 		
-		executionProfiles["1.1.I.4.2. summarize foe unit weights by faction"].start();
+		Profiling::start("summarize foe unit weights by faction", "evaluate base threat");
 		
 		double foeTriadWeights[3]{0.0};
 		double foeFactionWeights[MaxPlayerNum];
@@ -3710,14 +3719,16 @@ void evaluateBaseDefense()
 		
 		double estimatedThreat = maxThreat == 0.0 ? 0.0 : 1.0 / ((1.0 / maxThreat + 1.0 / sumThreat) / 2.0);
 		
-		executionProfiles["1.1.I.4.2. summarize foe unit weights by faction"].stop();
+		Profiling::stop("summarize foe unit weights by faction");
 		
 		// compute required protection
 		
-		executionProfiles["1.1.I.4.3. compute required protection"].start();
+		Profiling::start("compute required protection", "evaluate base threat");
 		
 		double requiredEffect = conf.ai_combat_base_protection_superiority * estimatedThreat;
 		baseInfo.combatData.requiredEffect = requiredEffect;
+		
+		Profiling::stop("compute required protection");
 		
 		debug
 		(
@@ -3734,8 +3745,6 @@ void evaluateBaseDefense()
 			, estimatedThreat
 		);
 		
-		executionProfiles["1.1.I.4.3. compute required protection"].stop();
-		
 		// update most vulnerable base
 		
 		if (estimatedThreat > aiData.mostVulnerableBaseThreat)
@@ -3746,14 +3755,16 @@ void evaluateBaseDefense()
 		
 		// calculate unit effects
 		
-		executionProfiles["1.1.I.4.4. calculate unit effects"].start();
+		Profiling::start("calculate unit effects", "evaluate base threat");
 		
 		debug("\t\tcalculate base unit effects\n");
 		
 		AverageAccumulator protectionEffectAverageAccumulator;
 		
+debug(">1\n");flushlog();
 		for (int ownUnitId : ownCombatUnitIds)
 		{
+debug(">2\n");flushlog();
 			UNIT *ownUnit = &(Units[ownUnitId]);
 			
 			debug("\t\t\t[%3d] %-32s\n", ownUnitId, ownUnit->name);
@@ -3806,16 +3817,20 @@ void evaluateBaseDefense()
 			);
 			
 		}
+debug(">3\n");flushlog();
 		
-		executionProfiles["1.1.I.4.4. calculate unit effects"].stop();
+		Profiling::stop("calculate unit effects");
+debug(">4\n");flushlog();
 		
 	}
+debug(">5\n");flushlog();
 	
-	executionProfiles["1.1.I.4. evaluate base threat"].stop();
+	Profiling::stop("evaluate base threat");
+debug(">6\n");flushlog();
 	
 	// calculate faction average base required protection
 	
-	executionProfiles["1.1.I.5. calculate faction average base required protection"].start();
+	Profiling::start("calculate faction average base required protection", "evaluateBaseDefense");
 	
 	int factionAverageBaseRequiredProtectionCount = 0;
 	double factionAverageBaseRequiredProtectionSum = 0.0;
@@ -3834,11 +3849,11 @@ void evaluateBaseDefense()
 			factionAverageBaseRequiredProtectionSum / (double)factionAverageBaseRequiredProtectionCount
 	;
 	
-	executionProfiles["1.1.I.5. calculate faction average base required protection"].stop();
+	Profiling::stop("calculate faction average base required protection");
 	
 	// calculate globalAverageUnitEffects
 	
-	executionProfiles["1.1.I.6. calculate globalAverageUnitEffects"].start();
+	Profiling::start("calculate globalAverageUnitEffects", "evaluateBaseDefense");
 	
 	for (int unitId : ownCombatUnitIds)
 	{
@@ -3874,9 +3889,9 @@ void evaluateBaseDefense()
 		
 	}
 	
-	executionProfiles["1.1.I.6. calculate globalAverageUnitEffects"].stop();
+	Profiling::stop("calculate globalAverageUnitEffects");
 	
-	executionProfiles["1.1.I. evaluateBaseDefense"].stop();
+	Profiling::stop("evaluateBaseDefense");
 	
 }
 
@@ -3884,11 +3899,11 @@ void evaluateBaseProbeDefense()
 {
 	debug("evaluateBaseProbeDefense - %s\n", MFactions[aiFactionId].noun_faction);
 	
-	executionProfiles["1.1.J. evaluateBaseProbeDefense"].start();
+	Profiling::start("evaluateBaseDefense", "populateAIData");
 	
 	// evaluate base threat
 	
-	executionProfiles["1.1.J.4. evaluate base threat"].start();
+	Profiling::start("evaluate base threat", "evaluateBaseDefense");
 	
 	for (int baseId : aiData.baseIds)
 	{
@@ -3909,7 +3924,7 @@ void evaluateBaseProbeDefense()
 		
 		// calculate foe strength
 		
-		executionProfiles["1.1.J.4.1. calculate foe strength"].start();
+		Profiling::start("calculate foe strength", "evaluate base threat");
 		
 		debug("\t\tbase foeMilitaryStrength\n");
 		
@@ -4073,11 +4088,11 @@ void evaluateBaseProbeDefense()
 			
 		}
 		
-		executionProfiles["1.1.J.4.1. calculate foe strength"].stop();
+		Profiling::stop("calculate foe strength");
 		
 		// compute required protection
 		
-		executionProfiles["1.1.J.4.3. compute required protection"].start();
+		Profiling::start("compute required protection", "evaluate base threat");
 		
 		int lastTime = 0;
 		double accumulatedWeight = 0.0;
@@ -4116,13 +4131,13 @@ void evaluateBaseProbeDefense()
 			, maxWeight
 		);
 		
-		executionProfiles["1.1.J.4.3. compute required protection"].stop();
+		Profiling::stop("compute required protection");
 		
 	}
 	
-	executionProfiles["1.1.J.4. evaluate base threat"].stop();
+	Profiling::stop("evaluate base threat");
 	
-	executionProfiles["1.1.J. evaluateBaseProbeDefense"].stop();
+	Profiling::stop("evaluateBaseDefense");
 	
 }
 
@@ -4132,7 +4147,7 @@ This function works before AI Data are populated and should not rely on them.
 */
 void designUnits()
 {
-	executionProfiles["1.0. designUnits"].start();
+	Profiling::start("designUnits", "strategy");
 	
 	// get best values
 	
@@ -4430,7 +4445,7 @@ void designUnits()
 		
 	}
 	
-	executionProfiles["1.0. designUnits"].stop();
+	Profiling::stop("designUnits");
 	
 }
 
@@ -6512,7 +6527,7 @@ bool compareMoveActions(MoveAction &o1, MoveAction &o2)
 }
 std::vector<MoveAction> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles)
 {
-	executionProfiles["| getVehicleReachableLocations"].start();
+	Profiling::start("| getVehicleReachableLocations");
 	
 	VEH *vehicle = getVehicle(vehicleId);
 	int factionId = vehicle->faction_id;
@@ -6529,7 +6544,7 @@ std::vector<MoveAction> getVehicleReachableLocations(int vehicleId, bool ignoreV
 	
 	if (isLandVehicleOnTransport(vehicleId))
 	{
-		executionProfiles["| getVehicleReachableLocations"].stop();
+		Profiling::stop("| getVehicleReachableLocations");
 		return movementActions;
 	}
 	
@@ -6654,7 +6669,7 @@ std::vector<MoveAction> getVehicleReachableLocations(int vehicleId, bool ignoreV
 	
 	std::sort(movementActions.begin(), movementActions.end(), compareMoveActions);
 	
-	executionProfiles["| getVehicleReachableLocations"].stop();
+	Profiling::stop("| getVehicleReachableLocations");
 	return movementActions;
 	
 }
@@ -8429,8 +8444,6 @@ double getAssaultEffect(int assailantFactionId, int assailantUnitId, double assa
 	assert(protectorFactionId >= 0 && protectorFactionId < MaxPlayerNum);
 	assert(protectorFactionId != assailantFactionId);
 	assert(protectorFactionId == aiFactionId || assailantFactionId == aiFactionId);
-	assert((assailantUnitId >= 0 && assailantUnitId < MaxProtoFactionNum) || (assailantUnitId >= MaxProtoFactionNum && assailantUnitId / MaxProtoFactionNum == assailantFactionId));
-	assert((protectorUnitId >= 0 && protectorUnitId < MaxProtoFactionNum) || (protectorUnitId >= MaxProtoFactionNum && protectorUnitId / MaxProtoFactionNum == protectorFactionId));
 	
 	int assailantUnitSpeed = getUnitSpeed(assailantFactionId, assailantUnitId);
 	int protectorUnitSpeed = getUnitSpeed(protectorFactionId, protectorUnitId);

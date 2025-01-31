@@ -1037,9 +1037,9 @@ int option_handler(void* user, const char* section, const char* name, const char
 			cf->ai_production_combat_unit_proportions[i] = atof(token);
 		}
     }
-    else if (MATCH("ai_production_current_project_priority"))
+    else if (MATCH("ai_production_current_project_priority_build_time"))
     {
-		cf->ai_production_current_project_priority = atof(value);
+		cf->ai_production_current_project_priority_build_time = atof(value);
     }
     else if (MATCH("ai_production_defensive_facility_threat_threshold"))
     {

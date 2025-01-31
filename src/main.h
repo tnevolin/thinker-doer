@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v345"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v346"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -537,7 +537,7 @@ struct Config {
     double ai_production_global_combat_superiority_land;
     double ai_production_global_combat_superiority_sea;
     double ai_production_combat_unit_proportions[3];
-    double ai_production_current_project_priority;
+    double ai_production_current_project_priority_build_time;
     double ai_production_defensive_facility_threat_threshold;
 
 };

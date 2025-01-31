@@ -128,8 +128,7 @@ public:
 void setPlayerFactionReferences(int factionId);
 void aiFactionUpkeep(const int factionId);
 void __cdecl modified_enemy_units_check(int factionId);
-void strategy();
-void planHumanAutomationStrategy();
+void strategy(bool computer);
 void executeTasks();
 
 void populateAIData();

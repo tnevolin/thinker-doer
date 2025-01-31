@@ -116,6 +116,7 @@
 			<Option compilerVar="CPP" />
 		</Unit>
 		<Unit filename="src/lib/ini.h" />
+		<Unit filename="src/lib/tree.hh" />
 		<Unit filename="src/main.cpp" />
 		<Unit filename="src/main.h" />
 		<Unit filename="src/map.cpp" />

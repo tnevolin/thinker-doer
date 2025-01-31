@@ -1,3 +1,8 @@
+# Version 346
+
+* [Fix] When player units were controlled by WTP AI algorithm, the algorithm also shifted workers in player bases. That is supposed to fix this.
+* Restored scrambling interceptor receiving air superiority bonus. I think this was there before but fell through cracks somehow.
+
 # Version 345
 
 * Fully automated (Shift-A) units are controlled by WTP AI algorithm.

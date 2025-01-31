@@ -71,9 +71,6 @@ struct Location
 bool operator==(const Location &o1, const Location &o2);
 bool operator!=(const Location &o1, const Location &o2);
 
-std::string getLocationString(Location location);
-std::string getLocationString(MAP *tile);
-
 struct RepairInfo
 {
 	bool full;
@@ -478,6 +475,9 @@ int const BASE_TILE_OFFSETS[OFFSET_COUNT_RADIUS_CORNER][2] =
 	{-1,-5},
 	{+1,-5},
 };
+
+std::string getLocationString(Location location);
+std::string getLocationString(MAP *tile);
 
 int getOffsetIndex(int dx, int dy);
 int getOffsetIndex(int x1, int y1, int x2, int y2);

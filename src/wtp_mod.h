@@ -1,24 +1,259 @@
 #pragma once
 
+#include <sstream>
+#include <iomanip>
 #include <map>
 #include "robin_hood.h"
 #include "main.h"
 #include "game.h"
+#include "lib/tree.hh"
+
+void validate(bool condition, std::string message);
 
 struct Profile
 {
-	std::string name;
+	bool running = false;
 	int executionCount = 0;
 	clock_t startTime = 0;
 	clock_t totalTime = 0;
-	void start();
-	void pause();
-	void resume();
-	void stop();
-	int getCount();
-	double getTime();
+	
+	void start()
+	{
+		if (DEBUG)
+		{
+			validate(running == false, "Profile::start. Profile is RUNNING.");
+			
+			running = true;
+			startTime = clock();
+			
+		}
+	}
+	void pause()
+	{
+		if (DEBUG)
+		{
+			validate(running == true, "Profile::pause. Profile is NOT RUNNING.");
+			
+			running = false;
+			totalTime += clock() - startTime;
+			
+		}
+	}
+	void resume()
+	{
+		if (DEBUG)
+		{
+			validate(running == false, "Profile::resume. Profile is RUNNING.");
+			
+			running = true;
+			startTime = clock();
+			
+		}
+	}
+	void stop()
+	{
+		if (DEBUG)
+		{
+			validate(running == true, "Profile::stop. Profile is NOT RUNNING.");
+			
+			running = false;
+			executionCount++;
+			totalTime += clock() - startTime;
+			
+		}
+	}
+	
 };
-extern std::map<std::string, Profile> executionProfiles;
+struct ProfileName
+{
+	std::string name;
+	Profile profile;
+};
+class Profiling
+{
+private:
+	
+	static int const NAME_LENGTH = 120;
+	
+	static tree<ProfileName> profiles;
+	
+	static Profile *getProfile(std::string name)
+	{
+		Profile *profile = nullptr;
+		
+		for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+		{
+			if (iterator->name == name)
+			{
+				profile = &(iterator->profile);
+				break;
+			}
+		}
+		assert(profile != nullptr);
+		
+		return profile;
+		
+	}
+	
+	static Profile *addTopProfile(std::string name)
+	{
+		Profile *profile = nullptr;
+		
+		for (tree<ProfileName>::sibling_iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+		{
+			if (iterator->name == name)
+			{
+				profile = &(iterator->profile);
+				break;
+			}
+		}
+		
+		if (profile == nullptr)
+		{
+			profile = &(profiles.insert(profiles.end(), {name, {}})->profile);
+		}
+		
+		return profile;
+		
+	}
+	static Profile *addChildProfile(std::string name, std::string parentName)
+	{
+		// find parent iterator
+		
+		tree<ProfileName>::iterator parentIterator = nullptr;
+		
+		for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+		{
+			if (iterator->name == parentName)
+			{
+				parentIterator = iterator;
+				break;
+			}
+		}
+		assert(parentIterator != nullptr);
+		
+		// find child profile
+		
+		Profile *profile = nullptr;
+		
+		for (tree<ProfileName>::sibling_iterator iterator = profiles.begin(parentIterator); iterator != profiles.end(parentIterator); iterator++)
+		{
+			if (iterator->name == name)
+			{
+				profile = &(iterator->profile);
+				break;
+			}
+		}
+		
+		if (profile == nullptr)
+		{
+			profile = &(profiles.append_child(parentIterator, {name, {}})->profile);
+		}
+		
+		return profile;
+		
+	}
+	
+public:
+	
+	static void reset()
+	{
+		profiles.clear();
+	}
+	static void start(std::string name)
+	{
+		if (DEBUG)
+		{
+			if (profiles.empty())
+			{
+				profiles.insert(profiles.end(), {"", {}});
+			}
+			
+			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+			Profile *profile = addTopProfile(name);
+			profile->start();
+			
+		}
+	}
+	static void start(std::string name, std::string parentName)
+	{
+		if (DEBUG)
+		{
+			if (profiles.empty())
+			{
+				profiles.insert(profiles.end(), {"", {}});
+			}
+			
+			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+			Profile *profile = addChildProfile(name, parentName);
+			profile->start();
+			
+		}
+	}
+	static void pause(std::string name)
+	{
+		if (DEBUG)
+		{
+			debug("Profiling(%s) - pause\n", name.c_str());flushlog();
+			Profile *profile = getProfile(name);
+			profile->pause();
+		}
+	}
+	static void resume(std::string name)
+	{
+		if (DEBUG)
+		{
+			debug("Profiling(%s) - resume\n", name.c_str());flushlog();
+			Profile *profile = getProfile(name);
+			profile->resume();
+		}
+	}
+	static void stop(std::string name)
+	{
+		if (DEBUG)
+		{
+			debug("Profiling(%s) - stop\n", name.c_str());flushlog();
+			Profile *profile = getProfile(name);
+			profile->stop();
+		}
+	}
+	
+	static void print()
+	{
+		debug("executionProfiles\n");
+		
+		for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+		{
+			int depth = profiles.depth(iterator);
+			std::string const name = iterator->name;
+			Profile const &profile = iterator->profile;
+			
+			std::string prefixedName = std::string(4 * depth, ' ') + name;
+			std::string displayName = prefixedName + " " + std::string(std::max(0, NAME_LENGTH - 1 - (int)prefixedName.length()), '.');
+			int executionCount = profile.executionCount;
+			double totalExecutionTime = (double)profile.totalTime / (double)CLOCKS_PER_SEC;
+			double averageExecutionTime = (executionCount == 0 ? 0.0 : totalExecutionTime / (double)executionCount);
+			
+			debug
+			(
+				"\t%-*s"
+				"   count=%8d"
+				"   totalTime=%7.3f"
+				"   averageTime=%10.6f"
+				"\n"
+				, NAME_LENGTH, displayName.c_str()
+				, executionCount
+				, totalExecutionTime
+				, averageExecutionTime
+			);
+			
+		}
+		
+		flushlog();
+		
+	}
+	
+};
 
 struct BASE_INFO
 {
@@ -48,7 +283,7 @@ const int DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_A
 const int HABITATION_FACILITIES_COUNT = 2;
 const int HABITATION_FACILITIES[] = {FAC_HAB_COMPLEX, FAC_HABITATION_DOME, };
 
-__cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId, int *attackerStrengthPointer, int *defenderStrengthPointer, int flags);
+__cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId, int *attackerStrengthPointer, int *defenderStrengthPointer, int combat_type);
 __cdecl int wtp_mod_proto_cost(int chassisTypeId, int weaponTypeId, int armorTypeId, int abilities, int reactorTypeId);
 
 double standard_combat_mechanics_calculate_attacker_winning_probability(double p, int attacker_hp, int defender_hp);
@@ -119,7 +354,6 @@ void __cdecl modified_alien_move(int vehicleId);
 int __cdecl modified_can_arty_in_alien_move(int unitId, bool allowSeaArty);
 void removeWrongVehiclesFromBases();
 int __cdecl modified_kill(int vehicleId);
-void endOfTurn();
 void __cdecl wtp_mod_base_hurry();
 void addAttackerBonus(int *strengthPointer, int bonus, const char *label);
 void addDefenderBonus(int *strengthPointer, int bonus, const char *label);

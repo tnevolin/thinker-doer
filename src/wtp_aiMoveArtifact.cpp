@@ -7,10 +7,10 @@
 
 void moveArtifactStrategy()
 {
+	Profiling::start("moveArtifactStrategy", "moveStrategy");
+	
 	debug("moveArtifactStrategy - %s\n", getMFaction(aiFactionId)->noun_faction);
 
-	executionProfiles["1.5.3. moveArtifactStrategy"].start();
-	
 	// iterate artifacts
 
 	for (int vehicleId : aiData.vehicleIds)
@@ -178,7 +178,7 @@ void moveArtifactStrategy()
 
 	}
 
-	executionProfiles["1.5.3. moveArtifactStrategy"].stop();
+	Profiling::stop("moveArtifactStrategy");
 	
 }
 

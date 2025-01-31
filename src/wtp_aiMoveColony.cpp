@@ -28,7 +28,7 @@ robin_hood::unordered_flat_map<MAP *, double> externalConcaveNodes;
 
 void moveColonyStrategy()
 {
-	executionProfiles["1.5.5. moveColonyStrategy"].start();
+	Profiling::start("moveColonyStrategy", "moveStrategy");
 	
 	// setup data
 
@@ -38,7 +38,7 @@ void moveColonyStrategy()
 
 	analyzeBasePlacementSites();
 
-	executionProfiles["1.5.5. moveColonyStrategy"].stop();
+	Profiling::stop("moveColonyStrategy");
 	
 }
 
@@ -54,11 +54,9 @@ void populateExpansionData()
 	
 	// concave tiles
 	
-	executionProfiles["1.3.2.2.1. populateConcaveTiles"].start();
-	
+	Profiling::start("populateConcaveTiles", "moveColonyStrategy");
 	populateConcaveTiles();
-	
-	executionProfiles["1.3.2.2.1. populateConcaveTiles"].stop();
+	Profiling::stop("populateConcaveTiles");
 	
 	// worked tiles
 	
@@ -74,7 +72,7 @@ void populateExpansionData()
 	
 	// work tiles
 	
-	executionProfiles["1.3.2.2.2. valid locations"].start();
+	Profiling::start("valid locations", "moveColonyStrategy");
 	
 	buildSiteWorkTiles.clear();
 	
@@ -160,7 +158,7 @@ void populateExpansionData()
 		
 	}
 	
-	executionProfiles["1.3.2.2.2. valid locations"].stop();
+	Profiling::stop("valid locations");
 	
 }
 
@@ -178,7 +176,7 @@ void analyzeBasePlacementSites()
 	
 	// populate tile yields
 	
-	executionProfiles["1.3.2.2.3. tile yield scores"].start();
+	Profiling::start("tile yield scores", "moveColonyStrategy");
 	
 	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
 	{
@@ -195,7 +193,7 @@ void analyzeBasePlacementSites()
 		
 	}
 	
-	executionProfiles["1.3.2.2.3. tile yield scores"].stop();
+	Profiling::stop("tile yield scores");
 	
 	// populate buildSites
 	
@@ -289,7 +287,7 @@ void analyzeBasePlacementSites()
 		
     // distribute colonies to build sites
 	
-	executionProfiles["1.3.2.2.5. distribute colonies"].start();
+	Profiling::start("distribute colonies", "moveColonyStrategy");
 	
 	debug("distribute colonies to build sites - %s\n", MFactions[aiFactionId].noun_faction);
 	
@@ -403,11 +401,11 @@ void analyzeBasePlacementSites()
 		
 	}
 	
-	executionProfiles["1.3.2.2.5. distribute colonies"].stop();
+	Profiling::stop("distribute colonies");
 	
 	// optimize travel time
 	
-	executionProfiles["1.3.2.2.6. optimize travel time"].start();
+	Profiling::start("optimize travel time", "moveColonyStrategy");
 	
 	debug("\tvehicleIds.size()=%2d\n", vehicleIds.size());
 	debug("\tdestinations.size()=%2d\n", destinations.size());
@@ -510,7 +508,7 @@ void analyzeBasePlacementSites()
 		
 	}
 	
-	executionProfiles["1.3.2.2.6. optimize travel time"].stop();
+	Profiling::stop("optimize travel time");
 	
     // populate remaining available build sites
 	
@@ -535,7 +533,7 @@ Computes build location future base gain.
 */
 double getBuildSiteBaseGain(MAP *buildSite)
 {
-	executionProfiles["1.3.2.2.4.2.1. summarize tile yield scores"].start();
+	Profiling::start("summarize tile yield scores", "moveColonyStrategy");
 	
 	debug("getBuildSiteBaseGain %s\n", getLocationString(buildSite).c_str());
 	
@@ -591,15 +589,13 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	if (yieldInfos.empty())
 		return 0.0;
 	
-	executionProfiles["1.3.2.2.4.2.1. summarize tile yield scores"].stop();
-	
-	executionProfiles["1.3.2.2.4.2.3. sort scores"].start();
+	Profiling::stop("summarize tile yield scores");
 	
 	// sort scores
 	
+	Profiling::start("sort scores", "moveColonyStrategy");
 	std::sort(yieldInfos.begin(), yieldInfos.end(), compareYieldInfoByScoreAndResourceScore);
-	
-	executionProfiles["1.3.2.2.4.2.3. sort scores"].stop();
+	Profiling::stop("sort scores");
 	
 	/*
 	// weight drop from better to worse square
@@ -761,32 +757,34 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	// radius overlap
 	
-	executionProfiles["1.3.2.2.4.1.2. radius overlap"].start();
+	Profiling::start("radius overlap", "moveColonyStrategy");
 	
 	double overlapScore = getBuildSiteOverlapScore(tile);
 	debug("\t%-20s%+5.2f\n", "overlapScore", overlapScore);
 	
-	executionProfiles["1.3.2.2.4.1.2. radius overlap"].stop();
-	
-	executionProfiles["1.3.2.2.4.1.1. land use"].start();
+	Profiling::stop("radius overlap");
 	
 	// border connection
+	
+	Profiling::start("border connection", "moveColonyStrategy");
 	
 	double connectionScore = getBuildSiteConnectionScore(tile);
 	debug("\t%-20s%+5.2f\n", "connectionScore", connectionScore);
 	
-	executionProfiles["1.3.2.2.4.1.1. land use"].start();
+	Profiling::stop("border connection");
 	
 	// land use
+	
+	Profiling::start("land use", "moveColonyStrategy");
 	
 	double landUseScore = getBuildSiteLandUseScore(tile);
 	debug("\t%-20s%+5.2f\n", "landUseScore", landUseScore);
 	
-	executionProfiles["1.3.2.2.4.1.1. land use"].stop();
-	
-	executionProfiles["1.3.2.2.4.1.3. coastScore"].start();
+	Profiling::stop("land use");
 	
 	// prefer coast over inland
+	
+	Profiling::start("coastScore", "moveColonyStrategy");
 	
 	double coastScore = 0.0;
 	
@@ -817,20 +815,20 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	debug("\t%-20s%+5.2f\n", "coastScore", coastScore);
 	
-	executionProfiles["1.3.2.2.4.1.3. coastScore"].stop();
-	
-	executionProfiles["1.3.2.2.4.1.4. landmarkScore"].start();
+	Profiling::stop("coastScore");
 	
 	// explicitly discourage placing base on some landmarks
+	
+	Profiling::start("landmarkScore", "moveColonyStrategy");
 	
 	double landmarkScore = (map_has_landmark(tile, LM_CRATER) || map_has_landmark(tile, LM_VOLCANO)) ? -0.20 : 0.0;
 	debug("\t%-20s%+5.2f\n", "landmarkScore", landmarkScore);
 	
-	executionProfiles["1.3.2.2.4.1.4. landmarkScore"].stop();
-	
-	executionProfiles["1.3.2.2.4.1.4. landmarkBonusScore"].start();
+	Profiling::stop("landmarkScore");
 	
 	// explicitly encourage placing base on bonuses
+	
+	Profiling::start("landmarkBonusScore", "moveColonyStrategy");
 	
 	double landmarkBonusScore = 0.0;
 	for (MAP *baseRadiusTile : getBaseRadiusTiles(tile, true))
@@ -851,7 +849,7 @@ double getBuildSitePlacementScore(MAP *tile)
 	landmarkBonusScore = std::min(0.10, landmarkBonusScore);
 	debug("\t%-20s%+5.2f\n", "landmarkBonusScore", landmarkBonusScore);
 	
-	executionProfiles["1.3.2.2.4.1.4. landmarkBonusScore"].stop();
+	Profiling::stop("landmarkBonusScore");
 	
 	// discourage land fungus for faction having difficulties to enter it (just because it spawns worms)
 	

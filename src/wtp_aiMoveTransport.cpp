@@ -10,9 +10,9 @@
 
 void moveTranportStrategy()
 {
-	debug("moveTranportStrategy - %s\n", getMFaction(aiFactionId)->noun_faction);
+	Profiling::start("moveTranportStrategy", "moveStrategy");
 	
-	executionProfiles["1.5.7. moveTranportStrategy"].start();
+	debug("moveTranportStrategy - %s\n", getMFaction(aiFactionId)->noun_faction);
 	
 	// iterate sea transports
 	
@@ -117,7 +117,7 @@ void moveTranportStrategy()
 		
 	}
 	
-	executionProfiles["1.5.7. moveTranportStrategy"].stop();
+	Profiling::stop("moveTranportStrategy");
 	
 }
 

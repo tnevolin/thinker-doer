@@ -5,6 +5,10 @@
 #include "wtp_ai.h"
 #include "wtp_aiRoute.h"
 
+// BaseSnapshots
+
+std::vector<BASE> BaseSnapshots::baseSnapshots;
+
 // global variables
 
 Data aiData;

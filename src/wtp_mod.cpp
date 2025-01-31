@@ -15,46 +15,22 @@
 #include "tech.h"
 #include "patch.h"
 
-int alphax_tgl_probe_steal_tech_value;
+// validation
 
-void Profile::start()
+void validate(bool condition, std::string message)
 {
-	if (DEBUG)
+	if (!condition)
 	{
-		this->startTime = clock();
+		debug(message.c_str());debug("\n");flushlog();
+		abort();
 	}
 }
-void Profile::pause()
-{
-	if (DEBUG)
-	{
-		this->totalTime += clock() - this->startTime;
-	}
-}
-void Profile::resume()
-{
-	if (DEBUG)
-	{
-		this->startTime = clock();
-	}
-}
-void Profile::stop()
-{
-	if (DEBUG)
-	{
-		this->totalTime += clock() - this->startTime;
-		this->executionCount++;
-	}
-}
-int Profile::getCount()
-{
-	return this->executionCount;
-}
-double Profile::getTime()
-{
-	return (double)this->totalTime / (double)CLOCKS_PER_SEC;
-}
-std::map<std::string, Profile> executionProfiles;
+
+// Profiling
+
+tree<ProfileName> Profiling::profiles;
+	
+int alphax_tgl_probe_steal_tech_value;
 
 // storage variables for modified odds dialog
 
@@ -67,7 +43,7 @@ int currentDefenderOdds = -1;
 Combat calculation placeholder.
 All custom combat calculation goes here.
 */
-__cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId, int *attackerStrengthPointer, int *defenderStrengthPointer, int flags)
+__cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId, int *attackerStrengthPointer, int *defenderStrengthPointer, int combat_type)
 {
 //    debug
 //    (
@@ -111,20 +87,46 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	
 	// run original function
 	
-	mod_battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, flags);
+	mod_battle_compute(attackerVehicleId, defenderVehicleId, attackerStrengthPointer, defenderStrengthPointer, combat_type);
+	
+    // ----------------------------------------------------------------------------------------------------
+    // conventional air-air weapon-weapon combat adds Air Superiority bonus
+    // ----------------------------------------------------------------------------------------------------
+	
+    if
+	(
+		Rules->combat_bonus_air_supr_vs_air != 0
+		&&
+		!psiCombat
+		&&
+		(attackerUnit->triad() == TRIAD_AIR && !attackerUnit->is_missile() && defenderUnit->triad() == TRIAD_AIR && !defenderUnit->is_missile())
+		&&
+		((combat_type & CT_WEAPON_ONLY) && defenderVehicleId >= 0) // weapon-weapon
+		&&
+		(combat_type & (CT_INTERCEPT|CT_AIR_DEFENSE)) // air-air
+	)
+	{
+		if (has_abil(attackerVehicle->unit_id, ABL_AIR_SUPERIORITY) && !has_abil(defenderVehicle->unit_id, ABL_AIR_SUPERIORITY))
+		{
+			addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_air_supr_vs_air, label_get(449));
+		}
+		if (has_abil(defenderVehicle->unit_id, ABL_AIR_SUPERIORITY) && !has_abil(attackerVehicle->unit_id, ABL_AIR_SUPERIORITY))
+		{
+			addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_air_supr_vs_air, label_get(449));
+		}
+	}
 	
     // ----------------------------------------------------------------------------------------------------
     // psi artillery duel uses base intrinsic bonus for attacker
     // ----------------------------------------------------------------------------------------------------
 	
     if
-	(
-		// artillery duel
-		(flags & 0x2) != 0
-		// psi combat
-		&& psiCombat
-		// attacker is in base
-		&& map_has_item(attackerMapTile, BIT_BASE_IN_TILE)
+	(		
+		psiCombat // psi combat
+		&&
+		((combat_type & CT_WEAPON_ONLY) != 0 && (combat_type & (CT_INTERCEPT|CT_AIR_DEFENSE)) == 0) // artillery duel
+		&&
+		map_has_item(attackerMapTile, BIT_BASE_IN_TILE) // attacker is in base
 	)
 	{
 		addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
@@ -187,11 +189,9 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	
     if
 	(
-		// artillery duel
-		(flags & 0x2) != 0
+		conf.artillery_duel_uses_bonuses // fix is enabled
 		&&
-		// fix is enabled
-		conf.artillery_duel_uses_bonuses
+		((combat_type & CT_WEAPON_ONLY) != 0 && (combat_type & (CT_INTERCEPT|CT_AIR_DEFENSE)) == 0) // artillery duel
 	)
 	{
 		// sensor offense bonus
@@ -1739,15 +1739,15 @@ __cdecl int modifiedFactionUpkeep(const int factionId)
 {
 	debug("modifiedFactionUpkeep - %s\n", getMFaction(factionId)->noun_faction);
 	
-	executionProfiles["0. modifiedFactionUpkeep"].start();
+	Profiling::start("modifiedFactionUpkeep", "");
 	
     // remove wrong units from bases
 	
     if (factionId > 0)
 	{
-		executionProfiles["0.1. removeWrongVehiclesFromBases"].start();
+		Profiling::start("removeWrongVehiclesFromBases", "modifiedFactionUpkeep");
 		removeWrongVehiclesFromBases();
-		executionProfiles["0.1. removeWrongVehiclesFromBases"].stop();
+		Profiling::stop("removeWrongVehiclesFromBases");
 	}
 	
 	// choose AI logic
@@ -1758,33 +1758,32 @@ __cdecl int modifiedFactionUpkeep(const int factionId)
 	{
 		// run WTP AI code for AI eanbled factions
 		
-		executionProfiles["0.3. aiFactionUpkeep"].start();
+		Profiling::start("aiFactionUpkeep", "modifiedFactionUpkeep");
 		aiFactionUpkeep(factionId);
-		executionProfiles["0.3. aiFactionUpkeep"].stop();
+		Profiling::stop("aiFactionUpkeep");
 		
 	}
 	
-	executionProfiles["0. modifiedFactionUpkeep"].pause();
+	Profiling::pause("modifiedFactionUpkeep");
 	
 	// execute original function
 	
 	returnValue = mod_faction_upkeep(factionId);
 	
-	executionProfiles["0. modifiedFactionUpkeep"].resume();
+	Profiling::resume("modifiedFactionUpkeep");
 	
     // fix vehicle home bases for normal factions
 	
     if (factionId > 0)
 	{
-		executionProfiles["0.4. fixVehicleHomeBases"].start();
+		Profiling::start("fixVehicleHomeBases", "modifiedFactionUpkeep");
 		fixVehicleHomeBases(factionId);
-		executionProfiles["0.4. fixVehicleHomeBases"].stop();
+		Profiling::stop("fixVehicleHomeBases");
 	}
-	
-	executionProfiles["0. modifiedFactionUpkeep"].stop();
 	
 	// return original value
 	
+	Profiling::stop("modifiedFactionUpkeep");
 	return returnValue;
 	
 }
@@ -2406,170 +2405,182 @@ void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_st
 
 int __cdecl modifiedTurnUpkeep()
 {
+	// executionProfiles
+	
+	if (DEBUG)
+	{
+		Profiling::print();
+		Profiling::reset();
+	}
+	
 	// collect statistics
 	
-	std::vector<int> computerFactions;
-	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
+	if (DEBUG)
 	{
-		if (factionId == 0 || is_human(factionId))
-			continue;
-		
-		computerFactions.push_back(factionId);
-		
-	}
-	int factionCount = computerFactions.size();
-	
-	int totalBaseCount = 0;
-	int totalCitizenCount = 0;
-	int totalWorkerCount = 0;
-	double totalMinerals = 0.0;
-	double totalEcoLab = 0.0;
-	double totalResearch = 0.0;
-	int totalTechCount = 0;
-	
-	FILE* statistics_base_log = fopen("statistics_base.txt", "a");
-	for (int baseId = 0; baseId < *BaseCount; baseId++)
-	{
-		BASE *base = getBase(baseId);
-		
-		// computer
-		
-		if (base->faction_id == 0 || is_human(base->faction_id))
-			continue;
-		
-		int foundingTurn = getBaseFoundingTurn(baseId);
-		int age = getBaseAge(baseId);
-		int popSize = base->pop_size;
-		int workerCount = base->pop_size - base->specialist_total;
-		
-		int nutrientCostFactor = mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
-		int nutrientSurplus = base->nutrient_surplus;
-		
-		int mineralIntake = base->mineral_intake;
-		int mineralIntake2 = base->mineral_intake_2;
-		double mineralMultiplier = getBaseMineralMultiplier(baseId);
-		
-		Budget budgetIntake = getBaseBudgetIntake(baseId);
-		Budget budgetIntake2 = getBaseBudgetIntake2(baseId);
-		
-//		int economyIntake = budgetIntake.economy;
-//		int economyIntake2 = budgetIntake2.economy;
-//		double economyMultiplier = getBaseEconomyMultiplier(baseId);
-//		int psychIntake = budgetIntake.psych;
-//		int psychIntake2 = budgetIntake2.psych;
-//		double psychMultiplier = getBasePsychMultiplier(baseId);
-//		int labsIntake = budgetIntake.labs;
-//		int labsIntake2 = budgetIntake2.labs;
-//		double labsMultiplier = getBaseLabsMultiplier(baseId);
-		int ecolabIntake = budgetIntake.economy + budgetIntake.labs;
-		int ecolabIntake2 = budgetIntake2.economy + budgetIntake2.labs;
-		double ecolabMultiplier = ecolabIntake <= 0 ? 1.0 : (double)ecolabIntake2 / (double)ecolabIntake;
-		
-		// totals
-		
-		totalBaseCount++;
-		totalCitizenCount += popSize;
-		totalWorkerCount += workerCount;
-		totalMinerals += mineralIntake2;
-		totalEcoLab += ecolabIntake2;
-		
-		fprintf
-		(
-			statistics_base_log,
-			"%4X"
-			"\t%d"
-			"\t%d"
-			"\t%-25s"
-			"\t%d"
-			"\t%d"
-			"\t%d"
-			"\t%d"
-			"\t%d"
-			"\t%d"
-			"\t%d"
-			"\t%d"
-			"\t%5.4f"
-			"\t%d"
-			"\t%d"
-			"\t%5.4f"
-			"\n"
-			, *MapRandomSeed
-			, *CurrentTurn
-			, baseId
-			, base->name
-			, foundingTurn
-			, age
-			, popSize
-			, workerCount
-			, nutrientCostFactor
-			, nutrientSurplus
-			, mineralIntake
-			, mineralIntake2
-			, mineralMultiplier
-			, ecolabIntake
-			, ecolabIntake2
-			, ecolabMultiplier
-		);
-		
-	}
-	fclose(statistics_base_log);
-	
-	// faction
-	
-	double averageFactionBaseCount = (factionCount == 0 ? 0.0 : (double)totalBaseCount / (double)factionCount);
-	double averageFactionCitizenCount = (factionCount == 0 ? 0.0 : (double)totalCitizenCount / (double)factionCount);
-	double averageFactionWorkerCount = (factionCount == 0 ? 0.0 : (double)totalWorkerCount / (double)factionCount);
-	double averageFactionMinerals = (factionCount == 0 ? 0.0 : totalMinerals / (double)factionCount);
-	double averageFactionEcoLab = (factionCount == 0 ? 0.0 : totalEcoLab / (double)factionCount);
-	
-	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
-	{
-		// computer
-		
-		if (factionId == 0 || is_human(factionId))
-			continue;
-		
-		for (int techId = 0; techId <= TECH_BFG9000; techId++)
+		std::vector<int> computerFactions;
+		for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 		{
-			if (isTechDiscovered(factionId, techId))
+			if (factionId == 0 || is_human(factionId))
+				continue;
+			
+			computerFactions.push_back(factionId);
+			
+		}
+		int factionCount = computerFactions.size();
+		
+		int totalBaseCount = 0;
+		int totalCitizenCount = 0;
+		int totalWorkerCount = 0;
+		double totalMinerals = 0.0;
+		double totalEcoLab = 0.0;
+		double totalResearch = 0.0;
+		int totalTechCount = 0;
+		
+		FILE* statistics_base_log = fopen("statistics_base.txt", "a");
+		for (int baseId = 0; baseId < *BaseCount; baseId++)
+		{
+			BASE *base = getBase(baseId);
+			
+			// computer
+			
+			if (base->faction_id == 0 || is_human(base->faction_id))
+				continue;
+			
+			int foundingTurn = getBaseFoundingTurn(baseId);
+			int age = getBaseAge(baseId);
+			int popSize = base->pop_size;
+			int workerCount = base->pop_size - base->specialist_total;
+			
+			int nutrientCostFactor = mod_cost_factor(base->faction_id, RSC_NUTRIENT, baseId);
+			int nutrientSurplus = base->nutrient_surplus;
+			
+			int mineralIntake = base->mineral_intake;
+			int mineralIntake2 = base->mineral_intake_2;
+			double mineralMultiplier = getBaseMineralMultiplier(baseId);
+			
+			Budget budgetIntake = getBaseBudgetIntake(baseId);
+			Budget budgetIntake2 = getBaseBudgetIntake2(baseId);
+			
+	//		int economyIntake = budgetIntake.economy;
+	//		int economyIntake2 = budgetIntake2.economy;
+	//		double economyMultiplier = getBaseEconomyMultiplier(baseId);
+	//		int psychIntake = budgetIntake.psych;
+	//		int psychIntake2 = budgetIntake2.psych;
+	//		double psychMultiplier = getBasePsychMultiplier(baseId);
+	//		int labsIntake = budgetIntake.labs;
+	//		int labsIntake2 = budgetIntake2.labs;
+	//		double labsMultiplier = getBaseLabsMultiplier(baseId);
+			int ecolabIntake = budgetIntake.economy + budgetIntake.labs;
+			int ecolabIntake2 = budgetIntake2.economy + budgetIntake2.labs;
+			double ecolabMultiplier = ecolabIntake <= 0 ? 1.0 : (double)ecolabIntake2 / (double)ecolabIntake;
+			
+			// totals
+			
+			totalBaseCount++;
+			totalCitizenCount += popSize;
+			totalWorkerCount += workerCount;
+			totalMinerals += mineralIntake2;
+			totalEcoLab += ecolabIntake2;
+			
+			fprintf
+			(
+				statistics_base_log,
+				"%4X"
+				"\t%d"
+				"\t%d"
+				"\t%-25s"
+				"\t%d"
+				"\t%d"
+				"\t%d"
+				"\t%d"
+				"\t%d"
+				"\t%d"
+				"\t%d"
+				"\t%d"
+				"\t%5.4f"
+				"\t%d"
+				"\t%d"
+				"\t%5.4f"
+				"\n"
+				, *MapRandomSeed
+				, *CurrentTurn
+				, baseId
+				, base->name
+				, foundingTurn
+				, age
+				, popSize
+				, workerCount
+				, nutrientCostFactor
+				, nutrientSurplus
+				, mineralIntake
+				, mineralIntake2
+				, mineralMultiplier
+				, ecolabIntake
+				, ecolabIntake2
+				, ecolabMultiplier
+			);
+			
+		}
+		fclose(statistics_base_log);
+		
+		// faction
+		
+		double averageFactionBaseCount = (factionCount == 0 ? 0.0 : (double)totalBaseCount / (double)factionCount);
+		double averageFactionCitizenCount = (factionCount == 0 ? 0.0 : (double)totalCitizenCount / (double)factionCount);
+		double averageFactionWorkerCount = (factionCount == 0 ? 0.0 : (double)totalWorkerCount / (double)factionCount);
+		double averageFactionMinerals = (factionCount == 0 ? 0.0 : totalMinerals / (double)factionCount);
+		double averageFactionEcoLab = (factionCount == 0 ? 0.0 : totalEcoLab / (double)factionCount);
+		
+		for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
+		{
+			// computer
+			
+			if (factionId == 0 || is_human(factionId))
+				continue;
+			
+			for (int techId = 0; techId <= TECH_BFG9000; techId++)
 			{
-				totalTechCount++;
+				if (isTechDiscovered(factionId, techId))
+				{
+					totalTechCount++;
+				}
+				
 			}
+			
+			totalResearch += getFactionTechPerTurn(factionId);
 			
 		}
 		
-		totalResearch += getFactionTechPerTurn(factionId);
+		double averageFactionTechCount = (factionCount == 0 ? 0.0 : (double)totalTechCount / (double)factionCount);
+		double averageFactionResearch = (factionCount == 0 ? 0.0 : totalResearch / (double)factionCount);
+		
+		FILE* statistics_faction_log = fopen("statistics_faction.txt", "a");
+		fprintf
+		(
+			statistics_faction_log,
+			"%4X"
+			"\t%3d"
+			"\t%7.2f"
+			"\t%7.2f"
+			"\t%7.2f"
+			"\t%7.2f"
+			"\t%7.2f"
+			"\t%7.2f"
+			"\t%7.2f"
+			"\n"
+			, *MapRandomSeed
+			, *CurrentTurn
+			, averageFactionBaseCount
+			, averageFactionCitizenCount
+			, averageFactionWorkerCount
+			, averageFactionMinerals
+			, averageFactionEcoLab
+			, averageFactionResearch
+			, averageFactionTechCount
+		);
+		fclose(statistics_faction_log);
 		
 	}
-	
-	double averageFactionTechCount = (factionCount == 0 ? 0.0 : (double)totalTechCount / (double)factionCount);
-	double averageFactionResearch = (factionCount == 0 ? 0.0 : totalResearch / (double)factionCount);
-	
-	FILE* statistics_faction_log = fopen("statistics_faction.txt", "a");
-	fprintf
-	(
-		statistics_faction_log,
-		"%4X"
-		"\t%3d"
-		"\t%7.2f"
-		"\t%7.2f"
-		"\t%7.2f"
-		"\t%7.2f"
-		"\t%7.2f"
-		"\t%7.2f"
-		"\t%7.2f"
-		"\n"
-		, *MapRandomSeed
-		, *CurrentTurn
-		, averageFactionBaseCount
-		, averageFactionCitizenCount
-		, averageFactionWorkerCount
-		, averageFactionMinerals
-		, averageFactionEcoLab
-		, averageFactionResearch
-		, averageFactionTechCount
-	);
-	fclose(statistics_faction_log);
 	
 	// execute original function
 	
@@ -3312,46 +3323,6 @@ int __cdecl modified_kill(int vehicleId)
 }
 
 /*
-Executes after autosave.
-*/
-void endOfTurn()
-{
-	// executionProfiles
-
-	if (DEBUG)
-	{
-		const int NAME_LENGTH = 120;
-		debug("executionProfiles\n");
-		for (std::pair<std::string const, Profile> &executionProfileEntry : executionProfiles)
-		{
-			const std::string &name = executionProfileEntry.first;
-			Profile &profile = executionProfileEntry.second;
-
-			std::string displayName = name + " " + std::string(std::max(0, NAME_LENGTH - 1 - (int)name.length()), '.');
-			int executionCount = profile.getCount();
-			double totalExecutionTime = profile.getTime();
-			double averageExectutionTime = (executionCount == 0 ? 0.0 : totalExecutionTime / (double)executionCount);
-
-			debug
-			(
-				"\t%-*s"
-				"   count=%8d"
-				"   totalTime=%7.3f"
-				"   averageTime=%10.6f"
-				"\n"
-				, NAME_LENGTH, displayName.c_str()
-				, executionCount
-				, totalExecutionTime
-				, averageExectutionTime
-			);
-		}
-	}
-
-	executionProfiles.clear();
-
-}
-
-/*
 Disable base_hurry call.
 */
 void __cdecl wtp_mod_base_hurry()
@@ -3776,7 +3747,7 @@ int __thiscall wtp_mod_Console_human_turn(Console *This)
 		
 		// generate automation strategy
 		
-		planHumanAutomationStrategy();
+		strategy(false);
 		
 	}
 	

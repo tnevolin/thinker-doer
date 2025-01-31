@@ -29,7 +29,7 @@ Prepares combat orders.
 */
 void moveCombatStrategy()
 {
-	executionProfiles["1.5.4. moveCombatStrategy"].start();
+	Profiling::start("moveCombatStrategy", "moveStrategy");
 	
 	// compute strategy
 	
@@ -43,7 +43,7 @@ void moveCombatStrategy()
 	moveCombat();
 	coordinateAttack();
 	
-	executionProfiles["1.5.4. moveCombatStrategy"].stop();
+	Profiling::stop("moveCombatStrategy");
 	
 }
 

@@ -34,9 +34,9 @@ void SeaTransit::copy(SeaTransit &seaTransit)
 
 void moveStrategy()
 {
-	debug("moveStrategy - %s\n", MFactions[aiFactionId].noun_faction);
+	Profiling::start("moveStrategy", "strategy");
 	
-	executionProfiles["1.5. moveStrategy"].start();
+	debug("moveStrategy - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	// vanilla fix for transport dropoff
 	
@@ -66,7 +66,7 @@ void moveStrategy()
 	
 	moveTranportStrategy();
 	
-	executionProfiles["1.5. moveStrategy"].stop();
+	Profiling::stop("moveStrategy");
 	
 }
 
@@ -76,7 +76,7 @@ restore boarded units order back to SENTRY/BOARD so they be able to coninue tran
 */
 void fixUndesiredTransportDropoff()
 {
-	executionProfiles["1.5.1. fixUndesiredTransportDropoff"].start();
+	Profiling::start("fixUndesiredTransportDropoff", "moveStrategy");
 	
 	for (int vehicleId : aiData.vehicleIds)
 	{
@@ -111,7 +111,7 @@ void fixUndesiredTransportDropoff()
 
 	}
 
-	executionProfiles["1.5.1. fixUndesiredTransportDropoff"].stop();
+	Profiling::stop("fixUndesiredTransportDropoff");
 	
 }
 
@@ -121,7 +121,7 @@ set their order to hold to prevent this
 */
 void fixUndesiredTransportPickup()
 {
-	executionProfiles["1.5.8. fixUndesiredTransportPickup"].start();
+	Profiling::start("fixUndesiredTransportPickup", "");
 	
 	for (int vehicleId : aiData.vehicleIds)
 	{
@@ -144,19 +144,19 @@ void fixUndesiredTransportPickup()
 
 	}
 
-	executionProfiles["1.5.8. fixUndesiredTransportPickup"].stop();
+	Profiling::stop("fixUndesiredTransportPickup");
 	
 }
 
 void moveAllStrategy()
 {
-	executionProfiles["1.5.2. moveAllStrategy"].start();
+	Profiling::start("moveAllStrategy", "moveStrategy");
 	
 	// heal
 
 	healStrategy();
 
-	executionProfiles["1.5.2. moveAllStrategy"].stop();
+	Profiling::stop("moveAllStrategy");
 	
 }
 
@@ -543,9 +543,9 @@ Redistributes vehicle between bases to proportinally burden them with support.
 */
 void balanceVehicleSupport()
 {
-	debug("balanceVehicleSupport - %s\n", aiMFaction->noun_faction);
+	Profiling::start("balanceVehicleSupport", "");
 	
-	executionProfiles["1.3. balanceVehicleSupport"].start();
+	debug("balanceVehicleSupport - %s\n", aiMFaction->noun_faction);
 	
 	// find base with lowest/highest mineral surplus
 	
@@ -635,7 +635,7 @@ void balanceVehicleSupport()
 		
 	}
 	
-	executionProfiles["1.3. balanceVehicleSupport"].start();
+	Profiling::stop("balanceVehicleSupport");
 	
 }
 
@@ -658,18 +658,18 @@ int __cdecl modified_enemy_move(const int vehicleId)
 	
 	if (isWtpEnabledFaction(vehicle->faction_id) || (aiFactionId == *CurrentPlayerFaction && conf.manage_player_units && ((vehicle->state & VSTATE_ON_ALERT) != 0) && vehicle->terraform_turns == 0))
 	{
-		executionProfiles["| enemyMoveVehicle"].start();
+		Profiling::start("| enemyMoveVehicle");
 		returnValue = enemyMoveVehicle(vehicleId);
-		executionProfiles["| enemyMoveVehicle"].stop();
+		Profiling::stop("| enemyMoveVehicle");
 	}
 	
 	// default
 	
 	else
 	{
-		executionProfiles["~ mod_enemy_move"].start();
+		Profiling::start("~ mod_enemy_move");
 		returnValue = mod_enemy_move(vehicleId);
-		executionProfiles["~ mod_enemy_move"].stop();
+		Profiling::stop("~ mod_enemy_move");
 	}
 	
 	// return

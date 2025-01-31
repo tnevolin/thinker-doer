@@ -81,7 +81,7 @@ Prepares production choices.
 */
 void productionStrategy()
 {
-	executionProfiles["1.6. productionStrategy"].start();
+	Profiling::start("productionStrategy", "strategy");
 	
 	// set global statistics
 	
@@ -116,7 +116,7 @@ void productionStrategy()
 	
 	hurryProtectiveUnit();
 	
-	executionProfiles["1.6. productionStrategy"].stop();
+	Profiling::stop("productionStrategy");
 	
 }
 
@@ -533,14 +533,14 @@ void applyBaseProductions()
 			}
 			
 		}
-		// project
-		else if (choice < 0 && -choice >= SP_ID_First && -choice <= SP_ID_Last)
-		{
-			// leave vanilla project be
-			
-			vanillaPriority = conf.ai_production_vanilla_priority_project;
-			
-		}
+//		// project
+//		else if (choice < 0 && -choice >= SP_ID_First && -choice <= SP_ID_Last)
+//		{
+//			// leave vanilla project be
+//			
+//			vanillaPriority = conf.ai_production_vanilla_priority_project;
+//			
+//		}
 		
 		// drop priority for impossible colony
 		
@@ -747,51 +747,36 @@ void evaluateProject()
 
 	// check project value
 	
-	bool projectBuilding = false;
 	ProductionDemand *bestProductionDemand = nullptr;
 	double bestBaseValue = 0.0;
+	int bestBaseBuildTime = 0;
 	
 	for (ProductionDemand &productionDemand : productionDemands)
 	{
 		int baseId = productionDemand.baseId;
 		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
 		
-		if (isBaseBuildingProject(baseId))
-		{
-			projectBuilding = true;
-			productionDemand.addItemPriority(-selectedProject, conf.ai_production_current_project_priority);
-			break;
-		}
-		
 		// turns to completion
 		
 		int buildTime = getBaseItemBuildTime(baseId, -selectedProjectFacilityId, true);
 		double buildTimeCoefficient = 1.0 / (double)std::max(1, buildTime);
-debug(">%d %5.2f\n", buildTime, buildTimeCoefficient);
 		
 		// threat coefficient
 		
 		double threat = baseInfo.combatData.requiredEffect;
 		double threatCoefficient = 1.0 - threat / maxThreat;
-debug(">%5.2f %5.2f\n", threat, threatCoefficient);
 		
 		// value
 		
 		double value = buildTimeCoefficient * threatCoefficient;
-debug(">%5.2f\n", value);
 		
 		if (value > bestBaseValue)
 		{
 			bestProductionDemand = &productionDemand;
 			bestBaseValue = value;
+			bestBaseBuildTime = buildTime;
 		}
 		
-	}
-	
-	if (projectBuilding)
-	{
-		debug("\tproject is building\n");
-		return;
 	}
 	
 	if (bestProductionDemand == nullptr)
@@ -802,9 +787,12 @@ debug(">%5.2f\n", value);
 	
 	debug("\t%s\n", bestProductionDemand->base->name);
 	
-	// build project
+	// add project priority
 	
-	bestProductionDemand->addItemPriority(-selectedProjectFacilityId, conf.ai_production_current_project_priority);
+	double buildTimeCoefficient = conf.ai_production_current_project_priority_build_time / (double)std::max(1, bestBaseBuildTime);
+	double priority = buildTimeCoefficient;
+	
+	bestProductionDemand->addItemPriority(-selectedProjectFacilityId, priority);
 	
 	debug("\tproject set\n");
 	

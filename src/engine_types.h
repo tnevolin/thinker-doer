@@ -31,7 +31,13 @@ struct MAP {
     uint8_t unk_2; // 0x40 = set_dirty()
     uint8_t art_ref_id;
     uint32_t visible_items[7];
-
+	
+	bool is_land() {
+		return region < 64;
+	}
+	bool is_sea() {
+		return region >= 64;
+	}
     bool is_visible(int faction) {
         return visibility & (1 << faction);
     }

@@ -4,6 +4,9 @@
 #include "engine.h"
 #include "wtp_aiData.h"
 
+int const MIN_LANDMARK_DISTANCE = 20;
+double const A_DISTANCE_TRESHOLD = 10.0;
+
 const double RANGED_AIR_TRAVEL_TIME_COEFFICIENT = 1.5;
 const double SEA_TRANSPORT_WAIT_TIME_COEFFICIENT = 4.0;
 
@@ -76,6 +79,63 @@ struct FactionMovementInfo
 {
 };
 
+struct BaseAdjacentClusterSet
+{
+	int baseId;
+	MAP *baseTile;
+	robin_hood::unordered_flat_set<int> adjacentClusters;
+};
+
+struct SeaLandmarkTileInfo
+{
+	int distance = INT_MAX;
+	double movementCost = INF;
+	double seaMovementCost = INF;
+};
+struct SeaLandmark
+{
+	MAP *tile;
+	std::vector<SeaLandmarkTileInfo> tileInfos;
+};
+
+struct LandTransportedLandmarkTileInfo
+{
+	double movementCost = INF;
+	double seaMovementCost = INF;
+	double landMovementCost = INF;
+	int crossingSeaRegion = -1;
+};
+struct LandTransportedLandmark
+{
+	MAP *tile;
+	std::vector<LandTransportedLandmarkTileInfo> tileInfos;
+};
+
+struct LandmarkData
+{
+	// sea regions
+	int seaRegionCount;
+	std::vector<int> seaRegions;
+	
+	// seaLandmarks
+	// [seaMovementType]
+	std::array<std::vector<SeaLandmark>, SeaMovementTypeCount> seaLandmarks;
+	
+	// landTransportedLandmarks
+	// [baseId][landMovementType][orgIndex]
+	std::vector<Landmark> landTransportedLandmarks;
+	
+	int getSeaRegion(int tileIndex)
+	{
+		return seaRegions.at(tileIndex);
+	}
+	int getSeaRegion(MAP *tile)
+	{
+		return seaRegions.at(tile - *MapTiles);
+	}
+	
+};
+
 /**
 Unfriendly factions geographical data.
 */
@@ -87,9 +147,11 @@ struct EnemyFactionMovementInfo
 	// [chassisId][speed][tileIndex] = clusterIndex
 	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, std::vector<int>>> airClusters;
 	
-	// sea transport clusters
-	// [tileIndex] = clusterIndex
-	std::vector<int> seaTransportClusters;
+	// impediments
+	std::vector<double> seaTransportImpediments;
+	std::vector<double> seaCombatImpediments;
+	std::vector<double> landCombatImpediments;
+	
 	// seaTransportWaitTimes
 	// [tileIndex] = waitTime
 	std::vector<double> seaTransportWaitTimes;
@@ -102,18 +164,13 @@ struct EnemyFactionMovementInfo
 	// [tileIndex] = clusterIndex
 	std::vector<int> landCombatClusters;
 	
-	// impediments
-	std::vector<double> seaTransportImpediments;
-	std::vector<double> seaCombatImpediments;
-	std::vector<double> landCombatImpediments;
+	// seaApproachHexCostLandmarks
+	// [baseId][seaMovementType][orgIndex]
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<double>>> seaApproachHexCosts;
 	
-	// seaApproachTimes
-	// [baseId][seaMovementType][speed][orgIndex]
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> seaApproachTimes;
-	
-	// landApproachTimes
-	// [baseId][landMovementType][speed][orgIndex]
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> landApproachTimes;
+	// landApproachHexCosts
+	// [baseId][landMovementType][orgIndex]
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<std::array<double,3>>>> landApproachHexCosts;
 	
 };
 
@@ -128,9 +185,11 @@ struct PlayerFactionMovementInfo
 	// [chassisId][speed][tileIndex] = clusterIndex
 	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, std::vector<int>>> airClusters;
 	
-	// sea transport clusters
-	// [tileIndex] = clusterIndex
-	std::vector<int> seaTransportClusters;
+	// impediments
+	std::vector<double> seaTransportImpediments;
+	std::vector<double> seaCombatImpediments;
+	std::vector<double> landCombatImpediments;
+	
 	// seaTransportWaitTimes
 	// [tileIndex] = waitTime
 	std::vector<double> seaTransportWaitTimes;
@@ -143,18 +202,13 @@ struct PlayerFactionMovementInfo
 	// [tileIndex] = clusterIndex
 	std::vector<int> landCombatClusters;
 	
-	// impediments
-	std::vector<double> seaTransportImpediments;
-	std::vector<double> seaCombatImpediments;
-	std::vector<double> landCombatImpediments;
+	// seaApproachHexCosts
+	// [baseId][seaMovementType][orgIndex]
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<double>>> seaApproachHexCosts;
 	
-	// seaApproachTimes
-	// [baseId][seaMovementType][speed][orgIndex]
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> seaApproachTimes;
-	
-	// landApproachTimes
-	// [baseId][landMovementType][speed][orgIndex]
-	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, robin_hood::unordered_flat_map<int, std::vector<double>>>> landApproachTimes;
+	// landApproachHexCosts
+	// [baseId][landMovementType][orgIndex]
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<std::array<double,3>>>> landApproachHexCosts;
 	
 	// sea clusters
 	// [tileIndex] = clusterIndex
@@ -199,6 +253,8 @@ struct PlayerFactionMovementInfo
 };
 
 void populateRouteData();
+//void populateSeaRegions();
+//void populateSeaLandmarks();
 void precomputeRouteData();
 
 // ==================================================
@@ -207,13 +263,12 @@ void precomputeRouteData();
 
 void populateAirbases(int factionId);
 void populateAirClusters(int factionId);
-void populateSeaTransportClusters(int factionId);
+void populateImpediments(int factionId);
 void populateSeaTransportWaitTimes(int factionId);
 void populateSeaCombatClusters(int factionId);
 void populateLandCombatClusters(int factionId);
-void populateImpediments(int factionId);
-void populateSeaApproachTimes(int factionId);
-void populateLandApproachTimes(int factionId);
+void populateSeaApproachHexCosts(int factionId);
+void populateLandApproachHexCosts(int factionId);
 
 void populateSeaClusters(int factionId);
 void populateLandClusters();
@@ -223,6 +278,19 @@ void populateReachableLocations();
 void populateAdjacentClusters();
 
 void populateSharedSeas();
+
+// ==================================================
+// Generic travel time finding algorithm
+// ==================================================
+
+//double getTravelTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
+//double getSeaTravelTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
+
+// ==================================================
+// Landmark travel time finding algorithm
+// ==================================================
+
+//double getSeaLTravelTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
 
 double getEnemyApproachTime(int baseId, int vehicleId);
 double getEnemyGravshipApproachTime(int baseId, int vehicleId);
@@ -234,7 +302,7 @@ double getPlayerApproachTime(int baseId, int unitId, MAP *origin);
 double getPlayerGravshipApproachTime(int baseId, int unitId, MAP *origin);
 double getPlayerRangedAirApproachTime(int baseId, int unitId, MAP *origin);
 double getPlayerSeaApproachTime(int baseId, int unitId, MAP *origin);
-double getPlayerLandApproachTime(int baseId, int unitId, MAP *origin);
+double getPlayerLandApproachHexCost(int baseId, int unitId, MAP *origin);
 
 // ==================================================
 // Generic, not path related travel computations
