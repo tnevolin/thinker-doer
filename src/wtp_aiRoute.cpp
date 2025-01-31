@@ -3073,7 +3073,10 @@ double getEnemySeaApproachTime(int baseId, int vehicleId)
 	// no approach hex cost for this base - sea unit is not in base sea cluster
 	
 	if (seaApproachHexCosts.find(baseId) == seaApproachHexCosts.end())
+	{
+		Profiling::stop("- getEnemySeaApproachTime");
 		return INF;
+	}
 	
 	// return sea approach time
 	
@@ -3083,7 +3086,6 @@ double getEnemySeaApproachTime(int baseId, int vehicleId)
 	int moveRate = std::max(Rules->move_rate_roads, getVehicleMoveRate(vehicleId));
 	
 	Profiling::stop("- getEnemySeaApproachTime");
-	
 	return seaApproachHexCosts.at(baseId).at(movementType).at(vehicleTileIndex) / (double)moveRate;
 	
 }

@@ -3737,19 +3737,19 @@ int __cdecl wpt_mod_Base_hurry_cost_factor_mineral_cost(int itemCost, int /*a1*/
 
 int __thiscall wtp_mod_Console_human_turn(Console *This)
 {
-	// control human player automated units with AI algorithms
-	
-	if (conf.manage_player_units)
-	{
-		// set AI faction id for global reference
-		
-		setPlayerFactionReferences(*CurrentPlayerFaction);
-		
-		// generate automation strategy
-		
-		strategy(false);
-		
-	}
+//	// control human player automated units with AI algorithms
+//	
+//	if (conf.manage_player_units)
+//	{
+//		// set AI faction id for global reference
+//		
+//		setPlayerFactionReferences(*CurrentPlayerFaction);
+//		
+//		// generate automation strategy
+//		
+//		strategy(false);
+//		
+//	}
 	
 	// continue with normail play
 	

@@ -150,7 +150,7 @@ void strategy(bool computer)
 	
 	// store base state
 	
-	BaseSnapshots::takeSnapshots();
+//	BaseSnapshots::takeSnapshots();
 	
 	// design units
 	
@@ -180,7 +180,7 @@ void strategy(bool computer)
 	
 	// restore base state
 	
-	BaseSnapshots::restoreSnapshots();
+//	BaseSnapshots::restoreSnapshots();
 	
 	Profiling::stop("strategy");
 	
