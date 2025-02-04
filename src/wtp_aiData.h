@@ -376,40 +376,19 @@ public:
 		
 	static void takeSnapshots()
 	{
+		baseSnapshots.clear();
+		
 		for (size_t baseId = 0; baseId < (size_t)*BaseCount; baseId++)
 		{
-			BASE *base = &(Bases[baseId]);
-			
 			baseSnapshots.emplace_back();
-			BASE *baseSnapshot = &baseSnapshots.back();
-			
-			strcpy(baseSnapshot->name, base->name);
-			baseSnapshot->pop_size = base->pop_size;
-			baseSnapshot->worked_tiles = base->worked_tiles;
-			baseSnapshot->specialist_total = base->specialist_total;
-			baseSnapshot->specialist_adjust = base->specialist_adjust;
-			baseSnapshot->specialist_types[0] = base->specialist_types[0];
-			baseSnapshot->specialist_types[1] = base->specialist_types[1];
-			
+			memcpy(&(baseSnapshots.at(baseId)), &(Bases[baseId]), sizeof(BASE));
 		}
 	}
 	static void restoreSnapshots()
 	{
 		for (size_t baseId = 0; baseId < baseSnapshots.size(); baseId++)
 		{
-			BASE *base = &(Bases[baseId]);
-			BASE *baseSnapshot = &baseSnapshots.at(baseId);
-			
-			debug("baseId=%d base->name=%s baseSnapshot->name=%s", baseId, base->name, baseSnapshot->name);flushlog();
-			validate(strcmp(baseSnapshot->name, base->name) == 0, "Not the same base name");
-			
-			base->pop_size = baseSnapshot->pop_size;
-			base->worked_tiles = baseSnapshot->worked_tiles;
-			base->specialist_total = baseSnapshot->specialist_total;
-			base->specialist_adjust = baseSnapshot->specialist_adjust;
-			base->specialist_types[0] = baseSnapshot->specialist_types[0];
-			base->specialist_types[1] = baseSnapshot->specialist_types[1];
-			
+			memcpy(&(Bases[baseId]), &(baseSnapshots.at(baseId)), sizeof(BASE));
 		}
 	}
 	

@@ -63,4 +63,5 @@ int __cdecl fac_maint(int facility_id, int faction_id);
 int __cdecl mod_drone_riot();
 void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
 int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx_filename, int a5);
+int findReplacementSpecialist(int factionId, int specialistId);
 

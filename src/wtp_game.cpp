@@ -36,6 +36,17 @@ std::string getLocationString(Location location)
     
 }
 
+std::string getLocationString(int tileIndex)
+{
+	// allow returning for incorrect index
+	
+	if (!(tileIndex >= 0 && tileIndex < *MapAreaTiles))
+		return "-nullptr-";
+	
+	return getLocationString(getLocation(tileIndex));
+	
+}
+
 std::string getLocationString(MAP *tile)
 {
 	// allow returning for nullptr
@@ -158,6 +169,20 @@ bool isOnMap(int x, int y)
 }
 
 /**
+Computes location by map tile index.
+*/
+Location getLocation(int tileIndex)
+{
+	assert(tileIndex >= 0 && tileIndex < *MapAreaTiles);
+	
+	int y = tileIndex / (*MapHalfX);
+	int x = (tileIndex % (*MapHalfX)) * 2 + (y % 2);
+	
+	return {x, y};
+	
+}
+
+/**
 Computes location by map tile.
 */
 Location getLocation(MAP *tile)
@@ -173,23 +198,29 @@ Location getLocation(MAP *tile)
 }
 
 /**
+Computes location coordinates by map tile index.
+*/
+int getX(int tileIndex)
+{
+	assert(tileIndex >= 0 && tileIndex < *MapAreaTiles);
+	return (tileIndex % (*MapHalfX)) * 2 + ((tileIndex / (*MapHalfX)) % 2);
+}
+int getY(int tileIndex)
+{
+	assert(tileIndex >= 0 && tileIndex < *MapAreaTiles);
+	return tileIndex / (*MapHalfX);
+}
+
+/**
 Computes location coordinates by map tile.
 */
 int getX(MAP *tile)
 {
-	assert(isOnMap(tile));
-	
-	int mapIndex = tile - *MapTiles;
-	return (mapIndex % (*MapHalfX)) * 2 + ((mapIndex / (*MapHalfX)) % 2);
-	
+	return getX(tile - *MapTiles);
 }
 int getY(MAP *tile)
 {
-	assert(isOnMap(tile));
-	
-	int mapIndex = tile - *MapTiles;
-	return mapIndex / (*MapHalfX);
-	
+	return getY(tile - *MapTiles);
 }
 
 /**
@@ -309,7 +340,7 @@ Location getDiagonalCoordinates(Location rectangular)
 Returns complete angle array with adjacent tiles.
 Tiles not on the map are nullptr.
 */
-const std::vector<MapAngle> getAdjacentMapAngles(MAP *tile)
+std::vector<MapAngle> const getAdjacentMapAngles(MAP *tile)
 {
 	std::vector<MapAngle> adjacentMapAngles;
 	
@@ -329,9 +360,38 @@ const std::vector<MapAngle> getAdjacentMapAngles(MAP *tile)
 }
 
 /**
+Returns valid adjacent tile indexes.
+*/
+std::vector<int> const getAdjacentTileIndexes(int tileIndex)
+{
+	int x = getX(tileIndex);
+	int y = getY(tileIndex);
+	
+	std::vector<int> adjacentTileIndexes;
+	
+	for (int angle = 0; angle < TABLE_next_cell_count; angle++)
+	{
+		int offsetX = TABLE_next_cell_x[angle];
+		int offsetY = TABLE_next_cell_y[angle];
+		
+		int nextCellX = wrap(x + offsetX);
+		int nextCellY = y + offsetY;
+		
+		if (!isOnMap(nextCellX, nextCellY))
+			continue;
+		
+		adjacentTileIndexes.push_back(getMapTileIndex(nextCellX, nextCellY));
+		
+	}
+	
+	return adjacentTileIndexes;
+	
+}
+
+/**
 Returns valid adjacent tiles.
 */
-const std::vector<MAP *> getAdjacentTiles(MAP *tile)
+std::vector<MAP *> const getAdjacentTiles(MAP *tile)
 {
 	Location location = getLocation(tile);
 	int x = location.x;
@@ -7136,6 +7196,21 @@ double getVectorAngleCos(MAP *vertex, MAP *point1, MAP *point2)
 
 	return ((ca2 + cb2) - h2) / (2.0 * sqrt(ca2 * cb2));
 
+}
+
+Location getLocationByAngle(int x, int y, int angle)
+{
+	assert(isOnMap(x, y));
+	assert(angle >= 0 && angle < TABLE_next_cell_count);
+	
+	int nx = wrap(x + TABLE_next_cell_x[angle]);
+	int ny = y + TABLE_next_cell_y[angle];
+	
+	if (!isOnMap(nx, ny))
+		return Location();
+	
+	return Location(nx, ny);
+	
 }
 
 MAP *getTileByAngle(MAP *tile, int angle)

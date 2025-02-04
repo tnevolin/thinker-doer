@@ -67,6 +67,18 @@ struct Location
 	int maxAbs() { return std::max(std::abs(x), std::abs(y)); }
 	int absDiff() { return abs(abs(x) - abs(y)); }
 	
+	Location(int _x, int _y)
+	: x(_x), y(_y)
+	{}
+	Location()
+	: Location(-1, -1)
+	{}
+	
+	bool isValid()
+	{
+		return x != -1 && y != -1;
+	}
+	
 };
 bool operator==(const Location &o1, const Location &o2);
 bool operator!=(const Location &o1, const Location &o2);
@@ -477,6 +489,7 @@ int const BASE_TILE_OFFSETS[OFFSET_COUNT_RADIUS_CORNER][2] =
 };
 
 std::string getLocationString(Location location);
+std::string getLocationString(int tileIndex);
 std::string getLocationString(MAP *tile);
 
 int getOffsetIndex(int dx, int dy);
@@ -500,6 +513,7 @@ struct VehicleFilter
 
 bool isOnMap(MAP *tile);
 bool isOnMap(int x, int y);
+Location getLocation(int tileIndex);
 Location getLocation(MAP *tile);
 int getX(MAP *tile);
 int getY(MAP *tile);
@@ -519,8 +533,9 @@ Location getDiagonalCoordinates(Location rectangular);
 // iterating surrounding locations
 // =======================================================
 
-const std::vector<MapAngle> getAdjacentMapAngles(MAP *tile);
-const std::vector<MAP *> getAdjacentTiles(MAP *tile);
+std::vector<MapAngle> const getAdjacentMapAngles(MAP *tile);
+std::vector<int> const getAdjacentTileIndexes(int tileIndex);
+std::vector<MAP *> const getAdjacentTiles(MAP *tile);
 std::vector<MAP *> getSideTiles(MAP *tile);
 MAP * getSquareBlockRadiusTile(MAP *center, int index);
 std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, int beginIndex, int endIndex);
@@ -931,6 +946,7 @@ double getEuqlideanDistanceSquared(MAP *origin, MAP *destination);
 double getEuqlideanDistance(MAP *origin, MAP *destination);
 double getDiagonalDistance(MAP *tile1, MAP *tile2);
 double getVectorAngleCos(MAP *vertex, MAP *point1, MAP *point2);
+Location getLocationByAngle(int x, int y, int angle);
 MAP *getTileByAngle(MAP *tile, int angle);
 int getAngleByTile(MAP *tile, MAP *anotherTile);
 bool isPodAt(MAP *tile);

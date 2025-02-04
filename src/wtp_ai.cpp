@@ -150,7 +150,7 @@ void strategy(bool computer)
 	
 	// store base state
 	
-//	BaseSnapshots::takeSnapshots();
+	BaseSnapshots::takeSnapshots();
 	
 	// design units
 	
@@ -180,7 +180,7 @@ void strategy(bool computer)
 	
 	// restore base state
 	
-//	BaseSnapshots::restoreSnapshots();
+	BaseSnapshots::restoreSnapshots();
 	
 	Profiling::stop("strategy");
 	
@@ -3512,6 +3512,7 @@ void evaluateBaseDefense()
 			// approach time coefficient
 			
 			double approachTime = getEnemyApproachTime(baseId, vehicleId);
+debug(">%s -> %s approachTime=%f\n", getLocationString(getVehicleMapTile(vehicleId)).c_str(), getLocationString(getBaseMapTile(baseId)).c_str(), approachTime);
 			
 			if (approachTime == INF)
 				continue;
@@ -4058,6 +4059,7 @@ void evaluateBaseProbeDefense()
 			// approach time coefficient
 			
 			double approachTime = getEnemyApproachTime(baseId, vehicleId);
+debug(">%s -> %s approachTime=%f\n", getLocationString(getVehicleMapTile(vehicleId)).c_str(), getLocationString(getBaseMapTile(baseId)).c_str(), approachTime);
 			
 			if (approachTime == INF)
 				continue;

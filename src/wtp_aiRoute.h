@@ -4,7 +4,7 @@
 #include "engine.h"
 #include "wtp_aiData.h"
 
-int const MIN_LANDMARK_DISTANCE = 20;
+int const MIN_LANDMARK_DISTANCE = 40;
 double const A_DISTANCE_TRESHOLD = 10.0;
 
 const double RANGED_AIR_TRAVEL_TIME_COEFFICIENT = 1.5;
@@ -13,6 +13,9 @@ const double SEA_TRANSPORT_WAIT_TIME_COEFFICIENT = 4.0;
 const double IMPEDIMENT_SEA_TERRITORY_HOSTILE = 2.0;
 const double IMPEDIMENT_LAND_TERRITORY_HOSTILE = 2.0;
 const double IMPEDIMENT_LAND_INTERBASE_UNFRIENDLY = 4.0;
+
+const double APPROACH_HEX_COST_ABSOLUTE_TOLERANCE = 0.0;
+const double APPROACH_HEX_COST_RELATIVE_TOLERANCE = 1.0;
 
 /// Route node for A* path search algorithm.
 struct ANode
@@ -86,6 +89,11 @@ struct BaseAdjacentClusterSet
 	robin_hood::unordered_flat_set<int> adjacentClusters;
 };
 
+struct RangeLandmark
+{
+	int tileIndex;
+	std::vector<int> ranges;
+};
 struct SeaLandmarkTileInfo
 {
 	int distance = INT_MAX;
@@ -113,12 +121,12 @@ struct LandTransportedLandmark
 
 struct LandmarkData
 {
-	// sea regions
-	int seaRegionCount;
-	std::vector<int> seaRegions;
+	// regions
+	int regionCount;
+	std::vector<int> regions;
 	
-	// seaLandmarks
-	// [seaMovementType]
+	// landmarks
+	// [movementTypeIndex]
 	std::array<std::vector<SeaLandmark>, SeaMovementTypeCount> seaLandmarks;
 	
 	// landTransportedLandmarks
@@ -127,11 +135,11 @@ struct LandmarkData
 	
 	int getSeaRegion(int tileIndex)
 	{
-		return seaRegions.at(tileIndex);
+		return regions.at(tileIndex);
 	}
 	int getSeaRegion(MAP *tile)
 	{
-		return seaRegions.at(tile - *MapTiles);
+		return regions.at(tile - *MapTiles);
 	}
 	
 };
@@ -163,6 +171,13 @@ struct EnemyFactionMovementInfo
 	// land combat clusters
 	// [tileIndex] = clusterIndex
 	std::vector<int> landCombatClusters;
+	
+	// seaRangeLandmarks
+	std::vector<RangeLandmark> seaRangeLandmarks;
+	
+	// seaLandmarks
+	// [movementTypeIndex][landmarkIndex]
+	std::array<std::vector<SeaLandmark>, SeaMovementTypeCount> seaLandmarks;
 	
 	// seaApproachHexCostLandmarks
 	// [baseId][seaMovementType][orgIndex]
@@ -201,6 +216,13 @@ struct PlayerFactionMovementInfo
 	// land combat clusters
 	// [tileIndex] = clusterIndex
 	std::vector<int> landCombatClusters;
+	
+	// seaRangeLandmarks
+	std::vector<RangeLandmark> seaRangeLandmarks;
+	
+	// seaLandmarks
+	// [movementTypeIndex][landmarkIndex]
+	std::array<std::vector<SeaLandmark>, SeaMovementTypeCount> seaLandmarks;
 	
 	// seaApproachHexCosts
 	// [baseId][seaMovementType][orgIndex]
@@ -267,6 +289,8 @@ void populateImpediments(int factionId);
 void populateSeaTransportWaitTimes(int factionId);
 void populateSeaCombatClusters(int factionId);
 void populateLandCombatClusters(int factionId);
+void populateSeaRangeLandmarks(int factionId);
+void populateSeaLandmarks(int factionId);
 void populateSeaApproachHexCosts(int factionId);
 void populateLandApproachHexCosts(int factionId);
 
@@ -278,6 +302,12 @@ void populateReachableLocations();
 void populateAdjacentClusters();
 
 void populateSharedSeas();
+
+// ==================================================
+// Range landmarks
+// ==================================================
+
+//int getSeaRangeLandmarkRange(int orgTileIndex, int dstTileIndex);
 
 // ==================================================
 // Generic travel time finding algorithm
@@ -421,4 +451,7 @@ bool isAdjacentSeaOrLandCluster(MAP *tile);
 bool isSameDstAdjacentAirCluster(int chassisId, int speed, MAP *src, MAP *dst);
 bool isSameDstAdjacentSeaCluster(MAP *src, MAP *dst);
 bool isSameDstAdjacentLandTransportedCluster(MAP *src, MAP *dst);
+double getPathMovementCost(MAP *org, MAP *dst, int unitId, int factionId, bool impediment = false);
+double getPathTravelTime(MAP *org, MAP *dst, int unitId, int factionId);
+double getPathTravelTime(int vehicleId, MAP *dst);
 

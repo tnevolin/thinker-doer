@@ -386,6 +386,19 @@ void __cdecl mod_base_yield() {
     }
 
     if (*BaseUpkeepState != 2) {
+		
+		// [WTP]
+		// replace active obsolete specialists
+		
+        for (int i = 0; i < base->specialist_total; i++)
+		{
+            int spc_id = base->specialist_type(i);
+            if (has_tech(Citizen[spc_id].obsol_tech, faction_id))
+            {
+                base->specialist_modify(i, findReplacementSpecialist(faction_id, spc_id));
+            }
+        }
+		
         for (int i = 0; i < MaxBaseSpecNum; i++) {
             int spc_id = base->specialist_type(i);
             // Replace incorrect specialist types if any used
@@ -2848,6 +2861,52 @@ int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx
 	{
 		return popb(label, flags, sound_id, pcx_filename, a5);
 	}
+	
+}
+
+// [WTP]
+// replacement specialist
+int findReplacementSpecialist(int factionId, int specialistId)
+{
+	CCitizen *specialist = &Citizen[specialistId];
+	
+	int bestSuperiorSpecialistId = -1;
+	int bestSuperiorSpecialistValue = 0;
+	int bestSpecialistId = -1;
+	int bestSpecialistValue = 0;
+	
+	for (int otherSpecialistId = 0; otherSpecialistId < MaxSpecialistNum; otherSpecialistId++)
+	{
+		CCitizen *otherSpecialist = &Citizen[otherSpecialistId];
+		
+		if (!has_tech(otherSpecialist->preq_tech, factionId) || has_tech(otherSpecialist->obsol_tech, factionId))
+			continue;
+		
+		int value =
+			std::min(specialist->econ_bonus, otherSpecialist->econ_bonus) + std::min(specialist->psych_bonus, otherSpecialist->psych_bonus) + std::min(specialist->labs_bonus, otherSpecialist->labs_bonus)
+			+ otherSpecialist->econ_bonus + otherSpecialist->psych_bonus + otherSpecialist->labs_bonus
+		;
+		
+		if (otherSpecialist->econ_bonus >= specialist->econ_bonus && otherSpecialist->psych_bonus >= specialist->psych_bonus && otherSpecialist->labs_bonus >= specialist->labs_bonus)
+		{
+			if (value > bestSuperiorSpecialistValue)
+			{
+				bestSuperiorSpecialistId = otherSpecialistId;
+				bestSuperiorSpecialistValue = value;
+			}
+		}
+		else
+		{
+			if (value > bestSpecialistValue)
+			{
+				bestSpecialistId = otherSpecialistId;
+				bestSpecialistValue = value;
+			}
+		}
+		
+	}
+	
+	return bestSuperiorSpecialistId != -1 ? bestSuperiorSpecialistId : bestSpecialistId != -1 ? bestSpecialistId : specialistId;
 	
 }
 

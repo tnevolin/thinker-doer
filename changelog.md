@@ -1,3 +1,13 @@
+# Version 348
+
+* [Fix] Obsoleted specialists are replaced with the most matching specialist type.
+
+
+# Version 347
+
+* [Fix] When player units were controlled by WTP AI algorithm, the algorithm also shifted workers in player bases. That is supposed to fix this.
+* [Fix] Computation crash.
+
 # Version 346
 
 * Disabled WTP AI managing automated player units. There are some bugs there I need to fix.

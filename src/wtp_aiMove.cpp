@@ -123,27 +123,32 @@ void fixUndesiredTransportPickup()
 {
 	Profiling::start("fixUndesiredTransportPickup", "");
 	
-	for (int vehicleId : aiData.vehicleIds)
+	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-
+		
+		// AI vehicle
+		
+		if (vehicle->faction_id != aiFactionId)
+			continue;
+		
 		// verify vehicle is at own base
-
+		
 		if (!(vehicleTile->owner == aiFactionId && map_has_item(vehicleTile, BIT_BASE_IN_TILE)))
 			continue;
-
+		
 		// verify vehicle is idle
-
+		
 		if (!(vehicle->order == ORDER_NONE))
 			continue;
-
+		
 		// put vehicle on hold
-
+		
 		setVehicleOrder(vehicleId, ORDER_HOLD);
-
+		
 	}
-
+	
 	Profiling::stop("fixUndesiredTransportPickup");
 	
 }
