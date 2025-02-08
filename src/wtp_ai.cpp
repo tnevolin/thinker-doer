@@ -310,13 +310,13 @@ void populateTileInfos()
 			tileInfo.land = false;
 			tileInfo.ocean = true;
 			tileInfo.surfaceType = ST_SEA;
+			tileInfo.coast = false;
 		}
 		else
 		{
 			tileInfo.land = true;
 			tileInfo.ocean = false;
 			tileInfo.surfaceType = ST_LAND;
-			
 			tileInfo.coast = false;
 			
 			for (MAP *adjacentTile : getAdjacentTiles(tile))
@@ -426,12 +426,16 @@ void populateTileInfos()
 	{
 		TileInfo &tileInfo = aiData.getTileInfo(tile);
 		
-		for (unsigned int movementType = 0; movementType < MovementTypeCount; movementType++)
+		for (unsigned int movementType = 0; movementType < MOVEMENT_TYPE_COUNT; movementType++)
 		{
+			tileInfo.otherSurfaceTileIndexes.clear();
+			
 			for (unsigned int angle = 0; angle < ANGLE_COUNT; angle++)
 			{
 				tileInfo.hexCosts[movementType][angle] = -1;
 			}
+			
+			tileInfo.mapIndexHexCosts.at(movementType).clear();
 			
 		}
 		
@@ -451,23 +455,47 @@ void populateTileInfos()
 			if (adjacentTile == nullptr)
 				continue;
 			
+			int adjacentTileIndex = adjacentTile - *MapTiles;
 			int adjacentTileX = getX(adjacentTile);
 			int adjacentTileY = getY(adjacentTile);
 			bool adjacentTileOcean = is_ocean(adjacentTile);
 			
+			// other surface
+			
+			if (adjacentTileOcean != tileOcean)
+			{
+				tileInfo.otherSurfaceTileIndexes.push_back(adjacentTileIndex);
+			}
+			
 			// air movement type
 			
-			tileInfo.hexCosts[MT_AIR][angle] = Rules->move_rate_roads;
+			int airHexCost = Rules->move_rate_roads;
+			
+			tileInfo.hexCosts[MT_AIR][angle] = airHexCost;
+			
+			if (airHexCost != -1)
+			{
+				tileInfo.mapIndexHexCosts.at(MT_AIR).push_back({adjacentTileIndex, airHexCost});
+			}
 			
 			// sea vehicle moves on ocean or from/to base
 			
 			if ((tileOcean && adjacentTileOcean) || (tileOcean && isBaseAt(adjacentTile)) || (isBaseAt(tile) && adjacentTileOcean))
 			{
-				int regularHexCost = getHexCost(BSC_UNITY_GUNSHIP, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
-				int nativeHexCost = getHexCost(BSC_ISLE_OF_THE_DEEP, 0, tileX, tileY, adjacentTileX, adjacentTileY, 0);
+				int seaRegularHexCost = getHexCost(BSC_UNITY_GUNSHIP, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
+				int seaNativeHexCost = getHexCost(BSC_ISLE_OF_THE_DEEP, 0, tileX, tileY, adjacentTileX, adjacentTileY, 0);
 				
-				tileInfo.hexCosts[MT_SEA_REGULAR][angle] = regularHexCost;
-				tileInfo.hexCosts[MT_SEA_NATIVE][angle] = nativeHexCost;
+				tileInfo.hexCosts[MT_SEA_REGULAR][angle] = seaRegularHexCost;
+				tileInfo.hexCosts[MT_SEA_NATIVE][angle] = seaNativeHexCost;
+				
+				if (seaRegularHexCost != -1)
+				{
+					tileInfo.mapIndexHexCosts.at(MT_SEA_REGULAR).push_back({adjacentTileIndex, seaRegularHexCost});
+				}
+				if (seaNativeHexCost != -1)
+				{
+					tileInfo.mapIndexHexCosts.at(MT_SEA_NATIVE).push_back({adjacentTileIndex, seaNativeHexCost});
+				}
 				
 			}
 			
@@ -475,7 +503,7 @@ void populateTileInfos()
 			
 			if (!tileOcean && !adjacentTileOcean)
 			{
-				int regularHexCost =
+				int landRegularHexCost =
 					(
 						+ 2 * getHexCost(BSC_SCOUT_PATROL, -1, tileX, tileY, adjacentTileX, adjacentTileY, 1)
 						+ 1 * getHexCost(BSC_UNITY_ROVER, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0)
@@ -483,10 +511,19 @@ void populateTileInfos()
 					/ 3
 				;
 				
-				int nativeHexCost = getHexCost(BSC_MIND_WORMS, 0, tileX, tileY, adjacentTileX, adjacentTileY, 1);
+				int landNativeHexCost = getHexCost(BSC_MIND_WORMS, 0, tileX, tileY, adjacentTileX, adjacentTileY, 1);
 				
-				tileInfo.hexCosts[MT_LAND_REGULAR][angle] = regularHexCost;
-				tileInfo.hexCosts[MT_LAND_NATIVE][angle] = nativeHexCost;
+				tileInfo.hexCosts[MT_LAND_REGULAR][angle] = landRegularHexCost;
+				tileInfo.hexCosts[MT_LAND_NATIVE][angle] = landNativeHexCost;
+				
+				if (landRegularHexCost != -1)
+				{
+					tileInfo.mapIndexHexCosts.at(MT_LAND_REGULAR).push_back({adjacentTileIndex, landRegularHexCost});
+				}
+				if (landNativeHexCost != -1)
+				{
+					tileInfo.mapIndexHexCosts.at(MT_LAND_NATIVE).push_back({adjacentTileIndex, landNativeHexCost});
+				}
 				
 			}
 			
@@ -3512,7 +3549,6 @@ void evaluateBaseDefense()
 			// approach time coefficient
 			
 			double approachTime = getEnemyApproachTime(baseId, vehicleId);
-debug(">%s -> %s approachTime=%f\n", getLocationString(getVehicleMapTile(vehicleId)).c_str(), getLocationString(getBaseMapTile(baseId)).c_str(), approachTime);
 			
 			if (approachTime == INF)
 				continue;
@@ -3762,10 +3798,8 @@ debug(">%s -> %s approachTime=%f\n", getLocationString(getVehicleMapTile(vehicle
 		
 		AverageAccumulator protectionEffectAverageAccumulator;
 		
-debug(">1\n");flushlog();
 		for (int ownUnitId : ownCombatUnitIds)
 		{
-debug(">2\n");flushlog();
 			UNIT *ownUnit = &(Units[ownUnitId]);
 			
 			debug("\t\t\t[%3d] %-32s\n", ownUnitId, ownUnit->name);
@@ -3818,16 +3852,12 @@ debug(">2\n");flushlog();
 			);
 			
 		}
-debug(">3\n");flushlog();
 		
 		Profiling::stop("calculate unit effects");
-debug(">4\n");flushlog();
 		
 	}
-debug(">5\n");flushlog();
 	
 	Profiling::stop("evaluate base threat");
-debug(">6\n");flushlog();
 	
 	// calculate faction average base required protection
 	
@@ -4059,7 +4089,6 @@ void evaluateBaseProbeDefense()
 			// approach time coefficient
 			
 			double approachTime = getEnemyApproachTime(baseId, vehicleId);
-debug(">%s -> %s approachTime=%f\n", getLocationString(getVehicleMapTile(vehicleId)).c_str(), getLocationString(getBaseMapTile(baseId)).c_str(), approachTime);
 			
 			if (approachTime == INF)
 				continue;

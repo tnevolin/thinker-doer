@@ -74,11 +74,15 @@ enum MovementType
 	MT_LAND_REGULAR,
 	MT_LAND_NATIVE,
 };
-const size_t MovementTypeCount = MT_LAND_NATIVE + 1;
-const std::vector<MovementType> seaMovementTypes {MT_SEA_REGULAR, MT_SEA_NATIVE, };
-const size_t SeaMovementTypeCount = MT_SEA_NATIVE - MT_SEA_REGULAR + 1;
-const std::vector<MovementType> landMovementTypes {MT_LAND_REGULAR, MT_LAND_NATIVE, };
-const size_t LandMovementTypeCount = MT_LAND_NATIVE - MT_LAND_REGULAR + 1;
+size_t const MOVEMENT_TYPE_COUNT = MT_LAND_NATIVE + 1;
+size_t const SEA_MOVEMENT_TYPE_FIRST = MT_SEA_REGULAR;
+size_t const SEA_MOVEMENT_TYPE_LAST = MT_SEA_NATIVE;
+size_t const SEA_MOVEMENT_TYPE_COUNT = SEA_MOVEMENT_TYPE_LAST - SEA_MOVEMENT_TYPE_FIRST + 1;
+size_t const LAND_MOVEMENT_TYPE_FIRST = MT_LAND_REGULAR;
+size_t const LAND_MOVEMENT_TYPE_LAST = MT_LAND_NATIVE;
+size_t const LAND_MOVEMENT_TYPE_COUNT = LAND_MOVEMENT_TYPE_LAST - LAND_MOVEMENT_TYPE_FIRST + 1;
+std::vector<MovementType> const SEA_MOVEMENT_TYPES {MT_SEA_REGULAR, MT_SEA_NATIVE, };
+std::vector<MovementType> const LAND_MOVEMENT_TYPES {MT_LAND_REGULAR, MT_LAND_NATIVE, };
 
 struct Offense
 {
@@ -91,6 +95,11 @@ struct TileCombatData
 	robin_hood::unordered_flat_map<int, Offense> enemyOffenses;
 };
 
+struct MapIndexHexCost
+{
+	int tileIndex;
+	int hexCost;
+};
 struct TileInfo
 {
 	int index;
@@ -126,9 +135,14 @@ struct TileInfo
 	std::vector<MAP *> adjacentTiles;
 	std::vector<MapAngle> adjacentMapAngles;
 	
+	// adjacent surface change
+	std::vector<int> otherSurfaceTileIndexes;
+	// [movementType][mapIndex, hexCost]
 	// hex costs
 	// [movementType][angle]
-	std::array<std::array<int, ANGLE_COUNT>, MovementTypeCount> hexCosts;
+	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> hexCosts;
+	// [movementType][mapIndex, hexCost]
+	std::array<std::vector<MapIndexHexCost>, MOVEMENT_TYPE_COUNT> mapIndexHexCosts;
 	
 	// movement data
 	

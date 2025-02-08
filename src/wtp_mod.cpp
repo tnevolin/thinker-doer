@@ -117,22 +117,6 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	}
 	
     // ----------------------------------------------------------------------------------------------------
-    // psi artillery duel uses base intrinsic bonus for attacker
-    // ----------------------------------------------------------------------------------------------------
-	
-    if
-	(		
-		psiCombat // psi combat
-		&&
-		((combat_type & CT_WEAPON_ONLY) != 0 && (combat_type & (CT_INTERCEPT|CT_AIR_DEFENSE)) == 0) // artillery duel
-		&&
-		map_has_item(attackerMapTile, BIT_BASE_IN_TILE) // attacker is in base
-	)
-	{
-		addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
-	}
-	
-    // ----------------------------------------------------------------------------------------------------
     // sensor
     // ----------------------------------------------------------------------------------------------------
 	
@@ -184,7 +168,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	}
 	
     // ----------------------------------------------------------------------------------------------------
-    // artillery duel uses all combat bonuses
+    // artillery duel uses all combat bonuses symmetrically for attacker and defender
     // ----------------------------------------------------------------------------------------------------
 	
     if
@@ -208,7 +192,73 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 			addDefenderBonus(defenderStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
 		
-		// add base defense bonuses
+		// add base defense bonuses to attacker
+		
+		int attackerBaseId = base_at(attackerVehicle->x, attackerVehicle->y);
+		
+		if (attackerBaseId != -1)
+		{
+			if (psiCombat)
+			{
+				addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
+			}
+			else
+			{
+				// assign label and multiplier
+				
+				const char *label = nullptr;
+				int multiplier = 100;
+				
+				switch (attackerUnit->triad())
+				{
+				case TRIAD_LAND:
+					if (isBaseHasFacility(attackerBaseId, FAC_PERIMETER_DEFENSE))
+					{
+						label = *(*tx_labels + LABEL_OFFSET_PERIMETER);
+						multiplier += conf.facility_defense_bonus[0];
+					}
+					break;
+					
+				case TRIAD_SEA:
+					if (isBaseHasFacility(attackerBaseId, FAC_NAVAL_YARD))
+					{
+						label = LABEL_NAVAL_YARD;
+						multiplier += conf.facility_defense_bonus[1];
+					}
+					break;
+					
+				case TRIAD_AIR:
+					if (isBaseHasFacility(attackerBaseId, FAC_AEROSPACE_COMPLEX))
+					{
+						label = LABEL_AEROSPACE_COMPLEX;
+						multiplier += conf.facility_defense_bonus[2];
+					}
+					break;
+					
+				}
+				
+				if (isBaseHasFacility(attackerBaseId, FAC_TACHYON_FIELD))
+				{
+					label = *(*tx_labels + LABEL_OFFSET_TACHYON);
+					multiplier += conf.facility_defense_bonus[3];
+				}
+				
+				if (label == nullptr)
+				{
+					// base intrinsic defense
+					addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
+				}
+				else
+				{
+					// base defensive facility
+					addAttackerBonus(attackerStrengthPointer, (multiplier - 100), label);
+				}
+				
+			}
+			
+		}
+		
+		// add base defense bonuses to defender
 		
 		int defenderBaseId = base_at(defenderVehicle->x, defenderVehicle->y);
 		

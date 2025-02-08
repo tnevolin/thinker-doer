@@ -1,3 +1,9 @@
+# Version 349
+
+* Artillery duel uses all combat bonuses symmetrically for both attacker and defender. It should not matter who initiates the duel.
+  * Sensor (on offense and on the sea if enabled)
+  * Base defense (intrinsic for psi and structural for conventional)
+
 # Version 348
 
 * [Fix] Obsoleted specialists are replaced with the most matching specialist type.
