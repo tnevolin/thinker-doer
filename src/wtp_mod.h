@@ -8,10 +8,9 @@
 #include "game.h"
 #include "lib/tree.hh"
 
-void validate(bool condition, std::string message);
-
 struct Profile
 {
+	std::string name;
 	bool running = false;
 	int executionCount = 0;
 	clock_t startTime = 0;
@@ -21,7 +20,11 @@ struct Profile
 	{
 		if (DEBUG)
 		{
-			validate(running == false, "Profile::start. Profile is RUNNING.");
+			if (running)
+			{
+				debug("ERROR: Profile::start. Profile is RUNNING: " + name + "\n");flushlog();
+				abort();
+			}
 			
 			running = true;
 			startTime = clock();
@@ -32,7 +35,11 @@ struct Profile
 	{
 		if (DEBUG)
 		{
-			validate(running == true, "Profile::pause. Profile is NOT RUNNING.");
+			if (!running)
+			{
+				debug("ERROR: Profile::pause. Profile is NOT RUNNING: " + name + "\n");flushlog();
+				abort();
+			}
 			
 			running = false;
 			totalTime += clock() - startTime;
@@ -43,7 +50,11 @@ struct Profile
 	{
 		if (DEBUG)
 		{
-			validate(running == false, "Profile::resume. Profile is RUNNING.");
+			if (running)
+			{
+				debug("ERROR: Profile::resume. Profile is RUNNING: " + name + "\n");flushlog();
+				abort();
+			}
 			
 			running = true;
 			startTime = clock();
@@ -54,7 +65,11 @@ struct Profile
 	{
 		if (DEBUG)
 		{
-			validate(running == true, "Profile::stop. Profile is NOT RUNNING.");
+			if (!running)
+			{
+				debug("ERROR: Profile::stop. Profile is NOT RUNNING: " + name + "\n");flushlog();
+				abort();
+			}
 			
 			running = false;
 			executionCount++;
@@ -111,6 +126,7 @@ private:
 		if (profile == nullptr)
 		{
 			profile = &(profiles.insert(profiles.end(), {name, {}})->profile);
+			profile->name = name;
 		}
 		
 		return profile;
@@ -148,6 +164,7 @@ private:
 		if (profile == nullptr)
 		{
 			profile = &(profiles.append_child(parentIterator, {name, {}})->profile);
+			profile->name = name;
 		}
 		
 		return profile;
@@ -169,7 +186,7 @@ public:
 				profiles.insert(profiles.end(), {"", {}});
 			}
 			
-			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
 			Profile *profile = addTopProfile(name);
 			profile->start();
 			
@@ -184,7 +201,7 @@ public:
 				profiles.insert(profiles.end(), {"", {}});
 			}
 			
-			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
 			Profile *profile = addChildProfile(name, parentName);
 			profile->start();
 			
@@ -194,7 +211,7 @@ public:
 	{
 		if (DEBUG)
 		{
-			debug("Profiling(%s) - pause\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - pause\n", name.c_str());flushlog();
 			Profile *profile = getProfile(name);
 			profile->pause();
 		}
@@ -203,7 +220,7 @@ public:
 	{
 		if (DEBUG)
 		{
-			debug("Profiling(%s) - resume\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - resume\n", name.c_str());flushlog();
 			Profile *profile = getProfile(name);
 			profile->resume();
 		}
@@ -212,7 +229,7 @@ public:
 	{
 		if (DEBUG)
 		{
-			debug("Profiling(%s) - stop\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - stop\n", name.c_str());flushlog();
 			Profile *profile = getProfile(name);
 			profile->stop();
 		}
@@ -355,8 +372,8 @@ int __cdecl modified_can_arty_in_alien_move(int unitId, bool allowSeaArty);
 void removeWrongVehiclesFromBases();
 int __cdecl modified_kill(int vehicleId);
 void __cdecl wtp_mod_base_hurry();
-void addAttackerBonus(int *strengthPointer, int bonus, const char *label);
-void addDefenderBonus(int *strengthPointer, int bonus, const char *label);
+void addAttackerBonus(int *strengthPointer, double bonus, const char *label);
+void addDefenderBonus(int *strengthPointer, double bonus, const char *label);
 __cdecl int modStatusWinBonus_bonus_at(int x, int y);
 __cdecl int modified_load_game(int a0, int a1);
 __cdecl int modified_zoc_veh(int a0, int a1, int a2);

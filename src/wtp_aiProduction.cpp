@@ -2751,9 +2751,9 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			EnemyStackInfo &enemyStackInfo = aiData.getEnemyStackInfo(enemyBaseTile);
 			
-			// exclude player base
+			// exclude player base or friendly base
 			
-			if (enemyBase->faction_id == aiFactionId)
+			if (isFriendly(aiFactionId, enemyBase->faction_id))
 				continue;
 			
 			// travel time

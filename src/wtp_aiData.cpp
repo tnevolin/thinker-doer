@@ -114,20 +114,23 @@ double CombatEffectTable::getCombatEffect(int factionId1, int unitId1, int facti
 
 void FoeUnitWeightTable::clear()
 {
-	std::fill(weights.begin(), weights.end(), 0.0);
+	for (robin_hood::unordered_flat_map<int, double> &factionWeights : weights)
+	{
+		factionWeights.clear();
+	}
 }
-double FoeUnitWeightTable::get(int factionId, int unitId)
-{
-	return weights.at(getUnitIndex(factionId, unitId));
-}
-void FoeUnitWeightTable::set(int factionId, int unitId, double weight)
-{
-	weights.at(getUnitIndex(factionId, unitId)) = weight;
-}
-void FoeUnitWeightTable::add(int factionId, int unitId, double weight)
-{
-	weights.at(getUnitIndex(factionId, unitId)) += weight;
-}
+//double FoeUnitWeightTable::get(int factionId, int unitId)
+//{
+//	return weights.at(getUnitIndex(factionId, unitId));
+//}
+//void FoeUnitWeightTable::set(int factionId, int unitId, double weight)
+//{
+//	weights.at(getUnitIndex(factionId, unitId)) = weight;
+//}
+//void FoeUnitWeightTable::add(int factionId, int unitId, double weight)
+//{
+//	weights.at(getUnitIndex(factionId, unitId)) += weight;
+//}
 
 // Data
 

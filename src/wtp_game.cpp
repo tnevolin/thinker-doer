@@ -4372,28 +4372,6 @@ int getBaseIdAt(int x, int y)
 
 }
 
-double getSensorOffenseMultiplier(int factionId, MAP *tile)
-{
-	return
-		conf.sensor_offense && (!is_ocean(tile) || conf.sensor_offense_ocean) && isWithinFriendlySensorRange(factionId, tile) ?
-			getPercentageBonusMultiplier(Rules->combat_defend_sensor)
-			:
-			1.0
-	;
-	
-}
-
-double getSensorDefenseMultiplier(int factionId, MAP *tile)
-{
-	return
-		(!is_ocean(tile) || conf.sensor_defense_ocean) && isWithinFriendlySensorRange(factionId, tile) ?
-			getPercentageBonusMultiplier(Rules->combat_defend_sensor)
-			:
-			1.0
-	;
-	
-}
-
 /*
 Determines if unit is a native predefined unit.
 */
@@ -6235,166 +6213,6 @@ bool isMobileUnit(int unitId)
 	}
 }
 
-/**
-Computes melee attack strength multiplier taking all bonuses/penalties into account.
-exactLocation: whether combat happens at this exact location (base)
-*/
-double getUnitMeleeOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation)
-{
-	assert(isOnMap(tile));
-	
-	int x = getX(tile);
-	int y = getY(tile);
-	
-	bool ocean = is_ocean(tile);
-	bool fungus = map_has_item(tile, BIT_FUNGUS);
-	bool landRough = !ocean && (map_has_item(tile, BIT_FUNGUS | BIT_FOREST) || map_rockiness(tile) == 2);
-	bool landOpen = !ocean && !(map_has_item(tile, BIT_FUNGUS | BIT_FOREST) || map_rockiness(tile) == 2);
-	
-	double attackStrengthMultiplier = 1.0;
-	
-	// sensor
-	
-	attackStrengthMultiplier *= getSensorOffenseMultiplier(attackerFactionId, tile);
-	attackStrengthMultiplier /= getSensorDefenseMultiplier(defenderFactionId, tile);
-	
-	// other modifiers are difficult to guess at not exact location
-	
-	if (!exactLocation)
-		return attackStrengthMultiplier;
-	
-	// base and terrain
-	
-	int baseId = base_at(x, y);
-	if (baseId != -1)
-	{
-		// base
-
-		attackStrengthMultiplier /= getBaseDefenseMultiplier(baseId, attackerUnitId, defenderUnitId);
-		
-		// infantry vs. base attack bonus
-		
-		if (isInfantryUnit(attackerUnitId))
-		{
-			attackStrengthMultiplier *= getPercentageBonusMultiplier(Rules->combat_infantry_vs_base);
-		}
-		
-	}
-	else
-	{
-		// native -> regular (fungus) = 50% attack bonus
-		
-		if (isNativeUnit(attackerUnitId) && !isNativeUnit(defenderUnitId) && fungus)
-		{
-			attackStrengthMultiplier *= getPercentageBonusMultiplier(50);
-		}
-		
-		// conventional defense in land rough = 50% defense bonus
-		
-		if (!isPsiCombat(attackerUnitId, defenderUnitId) && landRough)
-		{
-			attackStrengthMultiplier /= getPercentageBonusMultiplier(50);
-		}
-		
-		// conventional defense against mobile in land rough bonus
-		
-		if (!isPsiCombat(attackerUnitId, defenderUnitId) && isMobileUnit(attackerUnitId) && landRough)
-		{
-			attackStrengthMultiplier /= getPercentageBonusMultiplier(Rules->combat_mobile_def_in_rough);
-		}
-		
-		// mobile attack in open bonus
-
-		if (!isPsiCombat(attackerUnitId, defenderUnitId) && isMobileUnit(attackerUnitId) && landOpen)
-		{
-			attackStrengthMultiplier *= getPercentageBonusMultiplier(Rules->combat_mobile_open_ground);
-		}
-		
-	}
-	
-	return attackStrengthMultiplier;
-	
-}
-
-/**
-Computes artillerry attack strength multiplier taking all bonuses/penalties into account.
-exactLocation: whether combat happens at this exact location (base)
-*/
-double getUnitArtilleryOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation)
-{
-	assert(isOnMap(tile));
-	
-	int x = getX(tile);
-	int y = getY(tile);
-	
-	double attackStrengthMultiplier = 1.0;
-	
-	// sensor
-	
-	attackStrengthMultiplier *= getSensorOffenseMultiplier(attackerFactionId, tile);
-	attackStrengthMultiplier /= getSensorDefenseMultiplier(defenderFactionId, tile);
-	
-	// other modifiers are difficult to guess at not exact location
-	
-	if (!exactLocation)
-		return attackStrengthMultiplier;
-	
-	if (isArtilleryUnit(defenderUnitId)) // artillery duel
-	{
-		// base and terrain
-		
-		int baseId = base_at(x, y);
-		
-		if (baseId != -1) // base
-		{
-			// artillery duel defender may get base bonus if configured
-			
-			if (conf.artillery_duel_uses_bonuses)
-			{
-				attackStrengthMultiplier /= getBaseDefenseMultiplier(baseId, attackerUnitId, defenderUnitId);
-			}
-			
-		}
-		else
-		{
-			// no other bonuses for artillery duel in open
-		}
-		
-	}
-	else // bombardment
-	{
-		// base and terrain
-		
-		int baseId = base_at(x, y);
-		
-		if (baseId != -1) // base
-		{
-			// base defense
-			
-			attackStrengthMultiplier /= getBaseDefenseMultiplier(baseId, attackerUnitId, defenderUnitId);
-			
-		}
-		else if (isRoughTerrain(tile))
-		{
-			// bombardment defense in rough terrain bonus
-			
-			attackStrengthMultiplier /= getPercentageBonusMultiplier(50);
-			
-		}
-		else
-		{
-			// bombardment defense in open get 50% bonus
-			
-			attackStrengthMultiplier /= getPercentageBonusMultiplier(50);
-			
-		}
-		
-	}
-	
-	return attackStrengthMultiplier;
-	
-}
-
 /*
 Checks whether tile is an airbase (friendly base or airbase) for this factionId.
 */
@@ -7213,22 +7031,40 @@ Location getLocationByAngle(int x, int y, int angle)
 	
 }
 
+int getTileIndexByAngle(int tileIndex, int angle)
+{
+	assert(tileIndex >= 0 && tileIndex < *MapAreaTiles);
+	assert(angle >= 0 && angle < TABLE_next_cell_count);
+	
+	int x = getX(tileIndex);
+	int y = getY(tileIndex);
+	
+	int nx = wrap(x + TABLE_next_cell_x[angle]);
+	int ny = y + TABLE_next_cell_y[angle];
+	
+	if (!isOnMap(nx, ny))
+		return -1;
+	
+	return getMapTileIndex(nx, ny);
+	
+}
+
 MAP *getTileByAngle(MAP *tile, int angle)
 {
 	assert(isOnMap(tile));
 	assert(angle >= 0 && angle < TABLE_next_cell_count);
-
+	
 	int x = getX(tile);
 	int y = getY(tile);
-
+	
 	int nx = wrap(x + TABLE_next_cell_x[angle]);
 	int ny = y + TABLE_next_cell_y[angle];
-
+	
 	if (!isOnMap(nx, ny))
 		return nullptr;
-
+	
 	return getMapTile(nx, ny);
-
+	
 }
 
 int getAngleByTile(MAP *tile, MAP *anotherTile)

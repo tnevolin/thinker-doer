@@ -702,7 +702,7 @@ int option_handler(void* user, const char* section, const char* name, const char
     }
     else if (MATCH("se_morale_excess_combat_bonus"))
     {
-        cf->se_morale_excess_combat_bonus = atoi(value);
+        cf->se_morale_excess_combat_bonus = atof(value);
     }
     else if (MATCH("se_police_excess_industry_bonus"))
     {

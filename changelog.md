@@ -1,8 +1,13 @@
 # Version 349
 
+* MAJOR AI computation speedup optimization. Please be aware of errors/crashes and report to me! Thank you for understanding.
+
 * Artillery duel uses all combat bonuses symmetrically for both attacker and defender. It should not matter who initiates the duel.
   * Sensor (on offense and on the sea if enabled)
   * Base defense (intrinsic for psi and structural for conventional)
+* Excess MORALE bonus changed to 12.5 to match regular morale bonus.
+* Excess MORALE bonus applies only to combat units (not probes).
+* Changed "HSA stopped enemy probe team" to be a bottom screen message instead of the popup. Did not tested. Let me know if it works.
 
 # Version 348
 

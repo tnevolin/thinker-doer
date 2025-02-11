@@ -15,17 +15,6 @@
 #include "tech.h"
 #include "patch.h"
 
-// validation
-
-void validate(bool condition, std::string message)
-{
-	if (!condition)
-	{
-		debug(message.c_str());debug("\n");flushlog();
-		abort();
-	}
-}
-
 // Profiling
 
 tree<ProfileName> Profiling::profiles;
@@ -373,24 +362,36 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
     // Excess SE MORALE combat bonus
     // ----------------------------------------------------------------------------------------------------
     
-    if (conf.se_morale_excess_combat_bonus != 0)
+    if (conf.se_morale_excess_combat_bonus != 0.0 && isCombatUnit(attackerVehicle->unit_id) && !isProbeUnit(attackerVehicle->unit_id))
 	{
-		int attackerSEMorale = Factions[attackerVehicle->faction_id].SE_morale;
-		int attackerExcessSEMorale = (attackerSEMorale > +4 ? attackerSEMorale - 4 : (attackerSEMorale < -4 ? attackerSEMorale + 4 : 0));
-		int attackerBonus = conf.se_morale_excess_combat_bonus * attackerExcessSEMorale;
+		// combat units only, not probes
 		
-		if (attackerExcessSEMorale != 0)
+		if (isCombatUnit(attackerVehicle->unit_id) && !isProbeUnit(attackerVehicle->unit_id))
 		{
-			addAttackerBonus(attackerStrengthPointer, attackerBonus, "MORALE");
+			int attackerSEMorale = Factions[attackerVehicle->faction_id].SE_morale;
+			int attackerExcessSEMorale = (attackerSEMorale > +4 ? attackerSEMorale - 4 : (attackerSEMorale < -4 ? attackerSEMorale + 4 : 0));
+			double attackerBonus = conf.se_morale_excess_combat_bonus * (double)attackerExcessSEMorale;
+			
+			if (attackerExcessSEMorale != 0)
+			{
+				addAttackerBonus(attackerStrengthPointer, attackerBonus, "MORALE");
+			}
+			
 		}
 		
-		int defenderSEMorale = Factions[defenderVehicle->faction_id].SE_morale;
-		int defenderExcessSEMorale = (defenderSEMorale > +4 ? defenderSEMorale - 4 : (defenderSEMorale < -4 ? defenderSEMorale + 4 : 0));
-		int defenderBonus = conf.se_morale_excess_combat_bonus * defenderExcessSEMorale;
+		// combat units only, not probes
 		
-		if (defenderExcessSEMorale != 0)
+		if (isCombatUnit(defenderVehicle->unit_id) && !isProbeUnit(defenderVehicle->unit_id))
 		{
-			addDefenderBonus(defenderStrengthPointer, defenderBonus, "MORALE");
+			int defenderSEMorale = Factions[defenderVehicle->faction_id].SE_morale;
+			int defenderExcessSEMorale = (defenderSEMorale > +4 ? defenderSEMorale - 4 : (defenderSEMorale < -4 ? defenderSEMorale + 4 : 0));
+			double defenderBonus = conf.se_morale_excess_combat_bonus * (double)defenderExcessSEMorale;
+			
+			if (defenderExcessSEMorale != 0)
+			{
+				addDefenderBonus(defenderStrengthPointer, defenderBonus, "MORALE");
+			}
+			
 		}
 		
 	}
@@ -3382,38 +3383,38 @@ void __cdecl wtp_mod_base_hurry()
 /**
 Adds bonus to battle odds dialog.
 */
-void addAttackerBonus(int *strengthPointer, int bonus, const char *label)
+void addAttackerBonus(int *strengthPointer, double bonus, const char *label)
 {
-	bonus = std::max(-100, bonus);
+	bonus = std::max(-100.0, bonus);
 	
 	// modify strength
 	
-	*strengthPointer = (int)round((double)(*strengthPointer) * (double)(100 + bonus) / 100.0);
+	*strengthPointer = (int)round((double)(*strengthPointer) * (100.0 + bonus) / 100.0);
 	
 	// add effect description
 	
 	if (*tx_battle_compute_attacker_effect_count < 4)
 	{
 		strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], label);
-		(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = bonus;
+		(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = (int)floor(bonus);
 		(*tx_battle_compute_attacker_effect_count)++;
 	}
 	
 }
-void addDefenderBonus(int *strengthPointer, int bonus, const char *label)
+void addDefenderBonus(int *strengthPointer, double bonus, const char *label)
 {
-	bonus = std::max(-100, bonus);
+	bonus = std::max(-100.0, bonus);
 	
 	// modify strength
 	
-	*strengthPointer = (int)round((double)(*strengthPointer) * (double)(100 + bonus) / 100.0);
+	*strengthPointer = (int)round((double)(*strengthPointer) * (100.0 + bonus) / 100.0);
 	
 	// add effect description
 	
 	if (*tx_battle_compute_defender_effect_count < 4)
 	{
 		strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label);
-		(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = bonus;
+		(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = (int)floor(bonus);
 		(*tx_battle_compute_defender_effect_count)++;
 	}
 	

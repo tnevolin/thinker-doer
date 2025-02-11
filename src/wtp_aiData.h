@@ -95,6 +95,29 @@ struct TileCombatData
 	robin_hood::unordered_flat_map<int, Offense> enemyOffenses;
 };
 
+template<class T, int N> class ArrayVector : public std::array<T,N>
+{
+private:
+	int size = 0;
+public:
+	void push_back(T element)
+	{
+		if (size < N) this->at(size++) = element;
+	}
+	typename std::array<T,N>::iterator end()
+	{
+		return this->begin() + size;
+	}
+};
+
+struct TileInfo;
+struct Adjacent
+{
+	int angle;
+	int tileIndex;
+	MAP *tile;
+	TileInfo *tileInfo;
+};
 struct MapIndexHexCost
 {
 	int tileIndex;
@@ -118,6 +141,7 @@ struct TileInfo
 	bool bunker = false;
 	bool airbase = false;
 	bool port = false;
+	std::array<bool, MaxPlayerNum> sensors {};
 	// player base range
 	int baseRange = INT_MAX;
 	
@@ -130,19 +154,16 @@ struct TileInfo
 	bool needlejetInFlight;
 	
 	// adjacent tiles
+	ArrayVector<Adjacent, ANGLE_COUNT> adjacents;
 	
-	std::vector<int> adjacentTileIndexes;
-	std::vector<MAP *> adjacentTiles;
-	std::vector<MapAngle> adjacentMapAngles;
-	
-	// adjacent surface change
-	std::vector<int> otherSurfaceTileIndexes;
 	// [movementType][mapIndex, hexCost]
 	// hex costs
 	// [movementType][angle]
 	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> hexCosts;
-	// [movementType][mapIndex, hexCost]
-	std::array<std::vector<MapIndexHexCost>, MOVEMENT_TYPE_COUNT> mapIndexHexCosts;
+	// [movementType][angle] = {mapIndex, hexCost}
+	// mapIndex == -1 : not existing tile
+	// hexCost == -1 : not allowed move (other surface)
+	std::array<std::array<MapIndexHexCost, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> mapIndexHexCosts;
 	
 	// movement data
 	
@@ -170,19 +191,49 @@ struct TileInfo
 
 // combat data
 
-class FoeUnitWeightTable
+struct FoeUnitWeightTable
 {
-	public:
-		
-		std::vector<double> weights = std::vector<double>((2 * MaxProtoFactionNum) * MaxPlayerNum);
-		
-		void clear();
-		double get(int factionId, int unitId);
-		void set(int factionId, int unitId, double weight);
-		void add(int factionId, int unitId, double weight);
-
+//	std::vector<double> weights = std::vector<double>((2 * MaxProtoFactionNum) * MaxPlayerNum);
+//	
+//	void clear();
+//	double get(int factionId, int unitId);
+//	void set(int factionId, int unitId, double weight);
+//	void add(int factionId, int unitId, double weight);
+//	
+	// [factionId][unitId]
+	std::array<robin_hood::unordered_flat_map<int, double>, MaxPlayerNum> weights;
+	
+	void clear();
+	
 };
 
+struct AssaultEffect
+{
+	double speedFactor = 0.0;
+	double attack = 0.0;
+	double defend = 0.0;
+	
+	double getEffect(double attackMultiplier, double defendMultiplier) const
+	{
+		double attackEffect = this->attack * attackMultiplier;
+		double defendEffect = this->defend * defendMultiplier;
+		
+		double effect = 0.0;
+		
+		if (attackEffect <= defendEffect)
+		{
+			effect = attackEffect;
+		}
+		else
+		{
+			effect = speedFactor * attackEffect + (1.0 - speedFactor) * defendEffect;
+		}
+		
+		return effect;
+		
+	}
+	
+};
 /**
 CombatEffects table.
 Combat effect is the number of enemy units this unit can destroy for its life.
@@ -194,22 +245,32 @@ Combat effect is the number of enemy units this unit can destroy for its life.
 */
 class CombatEffectTable
 {
-	private:
-		
-		std::array<std::array<std::array<std::array<std::array<double, COMBAT_MODE_COUNT>, ATTACKING_SIDE_COUNT>, (2 * MaxProtoFactionNum)>, (MaxPlayerNum)>, (2 * MaxProtoFactionNum)> combatEffects {};
+private:
+	
+	std::array<std::array<std::array<std::array<std::array<double, COMBAT_MODE_COUNT>, ATTACKING_SIDE_COUNT>, (2 * MaxProtoFactionNum)>, (MaxPlayerNum)>, (2 * MaxProtoFactionNum)> combatEffects;
+	std::array<std::array<std::array<std::array<AssaultEffect, ATTACKING_SIDE_COUNT>, (2 * MaxProtoFactionNum)>, (MaxPlayerNum)>, (2 * MaxProtoFactionNum)> assaultEffects;
 
-	public:
-		
-		std::vector<int> ownCombatUnitIds;
-		std::vector<int> foeFactionIds;
-		std::vector<int> hostileFoeFactionIds;
-		std::vector<int> foeCombatVehicleIds;
-		std::array<std::vector<int>, MaxPlayerNum> foeUnitIds;
-		std::array<std::vector<int>, MaxPlayerNum> foeCombatUnitIds;
-		
-		double getCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId, AttackingSide attackingSide, COMBAT_MODE combatMode);
-		void setCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId, AttackingSide attackingSide, COMBAT_MODE combatMode, double combatEffect);
-		double getCombatEffect(int factionId1, int unitId1, int factionId2, int unitId2, COMBAT_MODE combatMode);
+public:
+	
+	std::vector<int> ownCombatUnitIds;
+	std::vector<int> foeFactionIds;
+	std::vector<int> hostileFoeFactionIds;
+	std::vector<int> foeCombatVehicleIds;
+	std::array<std::vector<int>, MaxPlayerNum> foeUnitIds;
+	std::array<std::vector<int>, MaxPlayerNum> foeCombatUnitIds;
+	
+	double getCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId, AttackingSide attackingSide, COMBAT_MODE combatMode);
+	void setCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId, AttackingSide attackingSide, COMBAT_MODE combatMode, double combatEffect);
+	double getCombatEffect(int factionId1, int unitId1, int factionId2, int unitId2, COMBAT_MODE combatMode);
+	
+	void setAssaultEffect(int ownUnitId, int foeFactionId, int foeUnitId, AttackingSide attackingSide, AssaultEffect const &assaultEffect)
+	{
+		this->assaultEffects.at(getUnitSlotById(ownUnitId)).at(foeFactionId).at(getUnitSlotById(foeUnitId)).at(attackingSide) = assaultEffect;
+	}
+	AssaultEffect getAssaultEffect(int ownUnitId, int foeFactionId, int foeUnitId, AttackingSide attackingSide)
+	{
+		return this->assaultEffects.at(getUnitSlotById(ownUnitId)).at(foeFactionId).at(getUnitSlotById(foeUnitId)).at(attackingSide);
+	}
 
 };
 
@@ -458,8 +519,9 @@ struct BaseInfo
 	// includes combat unit expenses (build, support)
 	double captureGain;
 	
-	// protector weights
-	std::vector<IdDoubleValue> protectorWeights;
+	// protector unit weights
+	// [factionId][unitId]
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, double>> protectorUnitWeights;
 	
 	// combat data
 	
