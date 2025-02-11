@@ -238,10 +238,6 @@ struct BASE {
         return (pending ? Factions[faction_id].SE_growth_pending : Factions[faction_id].SE_growth)
             + 2*has_fac_built(FAC_CHILDREN_CRECHE) // +2 on growth scale
             + 2*golden_age_active() // +2 on growth scale when flag set
-//			// [WTP]
-//			// habitation facility GROWTH bonus
-//            + 1 * has_fac_built(FAC_HAB_COMPLEX)
-//            + 1 * has_fac_built(FAC_HABITATION_DOME)
 		;
     }
     int SE_police(bool pending) {

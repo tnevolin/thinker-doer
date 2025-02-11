@@ -720,6 +720,30 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         opt_list_parse(cf->facility_yield_bonuses_biology_lab, buf, 3, 0);
     }
+    else if (MATCH("worker_algorithm_enable_alternative"))
+    {
+        cf->worker_algorithm_enable_alternative = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("worker_algorithm_energy_value"))
+    {
+        cf->worker_algorithm_energy_value = atof(value);
+    }
+    else if (MATCH("worker_algorithm_growth_multiplier"))
+    {
+        cf->worker_algorithm_growth_multiplier = atof(value);
+    }
+    else if (MATCH("worker_algorithm_minimal_nutrient_surplus"))
+    {
+        cf->worker_algorithm_minimal_nutrient_surplus = atoi(value);
+    }
+    else if (MATCH("worker_algorithm_minimal_mineral_surplus"))
+    {
+        cf->worker_algorithm_minimal_mineral_surplus = atoi(value);
+    }
+    else if (MATCH("worker_algorithm_minimal_energy_surplus"))
+    {
+        cf->worker_algorithm_minimal_energy_surplus = atoi(value);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

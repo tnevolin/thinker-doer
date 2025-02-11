@@ -362,7 +362,12 @@ void __cdecl mod_base_yield() {
     int best_spc_id = best_specialist(base, econ_val, labs_val, psych_val);
     int psych_spc_id = (can_riot ? best_specialist(base, econ_val, labs_val, 3*psych_val) : best_spc_id);
     CCitizen& spc = Citizen[best_spc_id];
-
+    
+    // [WTP] alternative scoring constants
+    
+    double const growthFactor = 1.0 / (double)((base->pop_size + 1) * cost_factor(0, base->faction_id, base_id)) / (double)base->pop_size;
+    double const energyValue = conf.worker_algorithm_energy_value * (double)effic_val / 16.0;
+    
     // Initial production without intake from any tiles (incl. base tile)
     int Nv = Ns - base->pop_size * Rules->nutrient_intake_req_citizen
         + BaseResourceConvoyTo[RSC_NUTRIENT] - BaseResourceConvoyFrom[RSC_NUTRIENT];
@@ -429,6 +434,16 @@ void __cdecl mod_base_yield() {
             int best_score = 0;
             for (auto& m : tiles) {
                 int score;
+                
+                // [WTP]
+                // alternative scoring
+                
+                if (conf.worker_algorithm_enable_alternative)
+				{
+					score = computeBaseTileScore(growthFactor, energyValue, can_grow, Nv, Mv, Ev, m);
+				}
+				else
+				{
                 if (can_grow) {
                     score = m.nutrient * max(4 + 4*(Nv < 0) + 4*(Nv < threshold)
                         + max(0, 5 - base->pop_size) - max(0, Nv - 1)/4, 2)
@@ -440,6 +455,8 @@ void __cdecl mod_base_yield() {
                         + (m.energy * effic_val + 15) / 16 * 4;
                 }
                 score = 32*score - m.i; // Select adjacent tiles first
+				}
+                
                 if (!((1 << m.i) & worked_tiles) && score > best_score) {
                     choice = &m;
                     best_score = score;
@@ -2907,6 +2924,47 @@ int findReplacementSpecialist(int factionId, int specialistId)
 	}
 	
 	return bestSuperiorSpecialistId != -1 ? bestSuperiorSpecialistId : bestSpecialistId != -1 ? bestSpecialistId : specialistId;
+	
+}
+
+int computeBaseTileScore(double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, TileValue const &tileValue)
+{
+	double growthMultiplier = can_grow ? conf.worker_algorithm_growth_multiplier : 0.0;
+	int minimalNutrientSurplus = can_grow ? conf.worker_algorithm_minimal_nutrient_surplus : 0;
+	int minimalMineralSurplus = conf.worker_algorithm_minimal_mineral_surplus;
+	int minimalEnergySurplus = conf.worker_algorithm_minimal_energy_surplus;
+	
+	int score = 0;
+	
+	if (nutrientSurplus < minimalNutrientSurplus)
+	{
+		score = 10 * tileValue.nutrient + tileValue.mineral + tileValue.energy;
+	}
+	else if (mineralSurplus < minimalMineralSurplus)
+	{
+		score = tileValue.nutrient + 10 * tileValue.mineral + tileValue.energy;
+	}
+	else if (energySurplus < minimalEnergySurplus)
+	{
+		score = tileValue.nutrient + tileValue.mineral + 10 * tileValue.energy;;
+	}
+	else
+	{
+		double currentGrowth = growthFactor * (double)nutrientSurplus;
+		double currentIncome = 1.0 * (double)mineralSurplus + energyValue * (double)energySurplus;
+		
+		double tileGrowth = growthFactor * (double)tileValue.nutrient;
+		double tileIncome = 1.0 * (double)tileValue.mineral + energyValue * (double)tileValue.energy;
+		
+		double tileGrowthGain = growthMultiplier * currentIncome * tileGrowth;
+		double tileIncomeGain = (1.0 + growthMultiplier * currentGrowth) * tileIncome;
+		double tileGain = tileGrowthGain + tileIncomeGain;
+		
+		score = (int)round(tileGain);
+		
+	}
+	
+	return score;
 	
 }
 

@@ -64,4 +64,5 @@ int __cdecl mod_drone_riot();
 void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
 int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx_filename, int a5);
 int findReplacementSpecialist(int factionId, int specialistId);
+int computeBaseTileScore(double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, TileValue const &tileValue);
 

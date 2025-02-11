@@ -1,3 +1,7 @@
+# Version 350
+
+* Alternative base worker placement algorithm. Off by default (worker_algorithm_enable_alternative=0).
+
 # Version 349
 
 * MAJOR AI computation speedup optimization. Please be aware of errors/crashes and report to me! Thank you for understanding.

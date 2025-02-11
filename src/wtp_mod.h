@@ -22,7 +22,7 @@ struct Profile
 		{
 			if (running)
 			{
-				debug("ERROR: Profile::start. Profile is RUNNING: " + name + "\n");flushlog();
+				debug("ERROR: Profile::start. Profile is RUNNING: %s\n", name.c_str());flushlog();
 				abort();
 			}
 			
@@ -37,7 +37,7 @@ struct Profile
 		{
 			if (!running)
 			{
-				debug("ERROR: Profile::pause. Profile is NOT RUNNING: " + name + "\n");flushlog();
+				debug("ERROR: Profile::pause. Profile is NOT RUNNING: %s\n", name.c_str());flushlog();
 				abort();
 			}
 			
@@ -52,7 +52,7 @@ struct Profile
 		{
 			if (running)
 			{
-				debug("ERROR: Profile::resume. Profile is RUNNING: " + name + "\n");flushlog();
+				debug("ERROR: Profile::resume. Profile is RUNNING: %s\n", name.c_str());flushlog();
 				abort();
 			}
 			
@@ -67,7 +67,7 @@ struct Profile
 		{
 			if (!running)
 			{
-				debug("ERROR: Profile::stop. Profile is NOT RUNNING: " + name + "\n");flushlog();
+				debug("ERROR: Profile::stop. Profile is NOT RUNNING: %s\n", name.c_str());flushlog();
 				abort();
 			}
 			

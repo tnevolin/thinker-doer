@@ -8753,8 +8753,6 @@ For surface unit trying to attack flying unit the worst case is taken: flying un
 */
 bool isUnitCanArtilleryAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MAP */*tile*/)
 {
-	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
-	
 	UNIT *defenderUnit = getUnit(defenderUnitId);
 	
 	// non artillery unit cannot bombard
