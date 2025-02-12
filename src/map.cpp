@@ -338,7 +338,7 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
 		// Biology Lab fungus bonus
 		
 		if (base_id >=0 && has_facility(FAC_BIOLOGY_LAB, base_id)) {
-			value += conf.facility_yield_bonuses_biology_lab[0];
+			value += conf.facility_yield_bonus_biology_lab[0];
 		}
 		
     } else {
@@ -506,7 +506,7 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
 			// Biology Lab fungus bonus
 			
 			if (base_id >= 0 && has_facility(FAC_BIOLOGY_LAB, base_id)) {
-				value += conf.facility_yield_bonuses_biology_lab[1];
+				value += conf.facility_yield_bonus_biology_lab[1];
 			}
 			
         }
@@ -658,7 +658,7 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
 		// Biology Lab fungus bonus
 		
 		if (base_id >= 0 && has_facility(FAC_BIOLOGY_LAB, base_id)) {
-			value += conf.facility_yield_bonuses_biology_lab[2];
+			value += conf.facility_yield_bonus_biology_lab[2];
 		}
 		
     }

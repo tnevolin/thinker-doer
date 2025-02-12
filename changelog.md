@@ -1,3 +1,9 @@
+# Version 351
+
+* Sensor is destructible.
+* Base defensive facilities are destructible (by probe).
+* Geosynchronous Survey Pod is unlocked by Superstring Theory
+
 # Version 350
 
 * Alternative base worker placement algorithm. Off by default (worker_algorithm_enable_alternative=0).

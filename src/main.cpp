@@ -716,9 +716,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->isle_of_deep_defense_bonus = atoi(value);
     }
-    else if (MATCH("facility_yield_bonuses_biology_lab"))
+    else if (MATCH("facility_yield_bonus_biology_lab"))
     {
-        opt_list_parse(cf->facility_yield_bonuses_biology_lab, buf, 3, 0);
+        opt_list_parse(cf->facility_yield_bonus_biology_lab, buf, 3, 0);
     }
     else if (MATCH("worker_algorithm_enable_alternative"))
     {

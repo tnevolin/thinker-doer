@@ -3281,7 +3281,8 @@ void patch_setup_wtp(Config* cf)
 	
 	// probe does not destroy defense
 	
-	patch_probe_not_destroy_defense();
+	// feature disabled
+//	patch_probe_not_destroy_defense();
 	
 	// help ability
 	
