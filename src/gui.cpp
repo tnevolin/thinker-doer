@@ -1824,6 +1824,9 @@ int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, 
     if (!strcmp(label, "GOTMYPROBE")) {
         return NetMsg_pop(This, label, -1, a4, a5);
     }
+    if (!strcmp(label, "HUNTERSEEKER2")) {
+        return NetMsg_pop(This, label, 5000, a4, a5);
+    }
     if (!strcmp(label, netmsg_label)
     && !strcmp((char*)&ParseStrBuffer[0], netmsg_item0)
     && !strcmp((char*)&ParseStrBuffer[1], netmsg_item1)) {

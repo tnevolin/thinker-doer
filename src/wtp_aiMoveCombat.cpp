@@ -143,131 +143,142 @@ Analyze exact one turn movement/attack conditions.
 */
 void immediateAttack()
 {
+	Profiling::start("immediateAttack", "moveCombatStrategy");
+	
 	debug("immediateAttack - %s\n", aiMFaction->noun_faction);
 	
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		bool melee = isMeleeVehicle(vehicleId);
+		bool artillery = isArtilleryVehicle(vehicleId);
+		int triad = vehicle->triad();
+		int speed = getVehicleSpeed(vehicleId);
+		int moveRange = (triad == TRIAD_LAND ? Rules->move_rate_roads : 1) * speed;
 		
 		// exclude unavailable
 		
 		if (hasTask(vehicleId))
 			continue;
 		
-		// collect attack actions
+		// exclude harmless
+		
+		if (!(melee || artillery))
+			continue;
+		
+		int meleeAttackRange = melee ? moveRange : 0;
+		int artilleryAttackRange = artillery ? moveRange + (Rules->artillery_max_rng - 1) : 0;
+		
+		// collect attackable targets
+		
+		robin_hood::unordered_flat_set<MAP const *> meleeAttackTargets;
+		robin_hood::unordered_flat_set<MAP const *> artilleryAttackTargets;
+		
+		for (int enemyBaseId : aiData.emptyEnemyBaseIds)
+		{
+			BASE *enemyBase = &Bases[enemyBaseId];
+			MAP *enemyBaseTile = getBaseMapTile(enemyBaseId);
+			
+			if (isFriendly(aiFactionId, enemyBase->faction_id))
+				continue;
+			
+			int range = map_range(vehicle->x, vehicle->y, enemyBase->x, enemyBase->y);
+			
+			if (range <= meleeAttackRange && isVehicleCanCaptureBase(vehicleId, enemyBaseTile))
+			{
+				meleeAttackTargets.insert(enemyBaseTile);
+			}
+			
+		}
+		
+		for (robin_hood::pair<MAP *, EnemyStackInfo> const &enemyStackEntry : aiData.enemyStacks)
+		{
+			MAP const *enemyStackTile = enemyStackEntry.first;
+			EnemyStackInfo const &enemyStackInfo = enemyStackEntry.second;
+			
+			if (!enemyStackInfo.hostile)
+				continue;
+			
+			int range = getRange(vehicleTile, enemyStackTile);
+			
+			if
+			(range < meleeAttackRange && enemyStackInfo.isUnitCanMeleeAttackStack(vehicle->unit_id, nullptr))
+			{
+				meleeAttackTargets.insert(enemyStackTile);
+			}
+			if (range < artilleryAttackRange && enemyStackInfo.isUnitCanArtilleryAttackStack(vehicle->unit_id, nullptr))
+			{
+				artilleryAttackTargets.insert(enemyStackTile);
+			}
+			
+		}
+		
+		// process collected targets
 		
 		robin_hood::unordered_flat_map<MAP *, AttackAction> meleeAttackActions;
 		robin_hood::unordered_flat_map<MAP *, AttackAction> artilleryAttackActions;
 		
-		for (AttackAction const &attackAction : getMeleeAttackActions(vehicleId))
+		if (!meleeAttackTargets.empty())
 		{
-			// valid target
-			
-			bool validTarget = false;
-			
-			// empty enemy base
-			
-			if (aiData.isEmptyEnemyBaseAt(attackAction.target))
+			for (AttackAction const &attackAction : getMeleeAttackActions(vehicleId))
 			{
-				// can capture base
+				// valid target
 				
-				if (isVehicleCanCaptureBase(vehicleId, attackAction.target))
+				if (meleeAttackTargets.find(attackAction.target) == meleeAttackTargets.end())
+					continue;
+				
+				if (meleeAttackActions.find(attackAction.target) == meleeAttackActions.end())
 				{
-					validTarget = true;
+					meleeAttackActions.insert({attackAction.target, attackAction});
 				}
-				
-			}
-			
-			// hostile enemy stack
-			
-			if (aiData.isEnemyStackAt(attackAction.target))
-			{
-				EnemyStackInfo &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
-				
-				if (enemyStackInfo.hostile)
+				else
 				{
-					// melee attack
+					AttackAction const &existingAttackAction = meleeAttackActions.at(attackAction.target);
 					
-					if (enemyStackInfo.isUnitCanMeleeAttackStack(vehicle->unit_id, attackAction.position))
+					if
+					(
+						attackAction.hastyCoefficient > existingAttackAction.hastyCoefficient
+						||
+						(attackAction.hastyCoefficient == existingAttackAction.hastyCoefficient && getRange(vehicleTile, attackAction.position) < getRange(vehicleTile, existingAttackAction.position))
+					)
 					{
-						validTarget = true;
+						meleeAttackActions.at(attackAction.target) = attackAction;
 					}
 					
-				}
-				
-			}
-			
-			if (!validTarget)
-				continue;
-			
-			robin_hood::unordered_flat_map<MAP *, AttackAction>::iterator meleeAttackActionFindIterator = meleeAttackActions.find(attackAction.target);
-			
-			if (meleeAttackActionFindIterator == meleeAttackActions.end())
-			{
-				meleeAttackActions.emplace(attackAction.target, attackAction);
-			}
-			else
-			{
-				AttackAction const &existingAttackAction = meleeAttackActionFindIterator->second;
-				
-				if (attackAction.hastyCoefficient > existingAttackAction.hastyCoefficient || (attackAction.hastyCoefficient == existingAttackAction.hastyCoefficient && getRange(vehicleTile, attackAction.position) < getRange(vehicleTile, existingAttackAction.position)))
-				{
-					meleeAttackActions.at(attackAction.target) = attackAction;
 				}
 				
 			}
 			
 		}
 		
-		for (AttackAction const &attackAction : getArtilleryAttackActions(vehicleId))
+		if (!artilleryAttackTargets.empty())
 		{
-			// valid target
-			
-			bool validTarget = false;
-			
-			// hostile enemy stack
-			
-			if (aiData.isEnemyStackAt(attackAction.target))
+			for (AttackAction const &attackAction : getArtilleryAttackActions(vehicleId))
 			{
-				EnemyStackInfo &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
+				// valid target
 				
-				if (enemyStackInfo.hostile)
+				if (artilleryAttackTargets.find(attackAction.target) == artilleryAttackTargets.end())
+					continue;
+				
+				if (artilleryAttackActions.find(attackAction.target) == artilleryAttackActions.end())
 				{
-					// artillery attack
-					
-					if (enemyStackInfo.isUnitCanArtilleryAttackStack(vehicle->unit_id, attackAction.position))
-					{
-						validTarget = true;
-					}
-					
-					// do not attack fungal tower
-					
-					if (enemyStackInfo.alienFungalTower)
-					{
-						validTarget = false;
-					}
-					
+					artilleryAttackActions.emplace(attackAction.target, attackAction);
 				}
-				
-			}
-			
-			if (!validTarget)
-				continue;
-			
-			robin_hood::unordered_flat_map<MAP *, AttackAction>::iterator artilleryAttackActionFindIterator = artilleryAttackActions.find(attackAction.target);
-			
-			if (artilleryAttackActionFindIterator == artilleryAttackActions.end())
-			{
-				artilleryAttackActions.emplace(attackAction.target, attackAction);
-			}
-			else
-			{
-				AttackAction const &existingAttackAction = artilleryAttackActionFindIterator->second;
-				
-				if (attackAction.hastyCoefficient > existingAttackAction.hastyCoefficient || (attackAction.hastyCoefficient == existingAttackAction.hastyCoefficient && getRange(vehicleTile, attackAction.position) < getRange(vehicleTile, existingAttackAction.position)))
+				else
 				{
-					artilleryAttackActions.at(attackAction.target) = attackAction;
+					AttackAction const &existingAttackAction = artilleryAttackActions.at(attackAction.target);
+					
+					if
+					(
+						attackAction.hastyCoefficient > existingAttackAction.hastyCoefficient
+						||
+						(attackAction.hastyCoefficient == existingAttackAction.hastyCoefficient && getRange(vehicleTile, attackAction.position) < getRange(vehicleTile, existingAttackAction.position))
+					)
+					{
+						artilleryAttackActions.at(attackAction.target) = attackAction;
+					}
+					
 				}
 				
 			}
@@ -421,6 +432,8 @@ void immediateAttack()
 		);
 		
 	}
+	
+	Profiling::stop("immediateAttack");
 	
 }
 
@@ -1034,8 +1047,8 @@ void moveCombat()
 				
 				double travelTime11 = taskPriority1->travelTime;
 				double travelTime22 = taskPriority2->travelTime;
-				double travelTime12 = getVehicleATravelTime(vehicleId1, taskPriority2->destination);
-				double travelTime21 = getVehicleATravelTime(vehicleId2, taskPriority1->destination);
+				double travelTime12 = getVehicleTravelTime(vehicleId1, taskPriority2->destination);
+				double travelTime21 = getVehicleTravelTime(vehicleId2, taskPriority1->destination);
 				
 				double oldTravelTime = travelTime11 + travelTime22;
 				double newTravelTime = travelTime12 + travelTime21;
@@ -1274,7 +1287,10 @@ void populateDefensiveProbeTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// get travel time and coresponding coefficient
 			
-			double travelTime = getVehicleATravelTime(vehicleId, baseTile);
+			double travelTime = getVehicleTravelTime(vehicleId, baseTile);
+			if (travelTime == INF)
+				continue;
+			
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
 			
 			// combat effect
@@ -1432,9 +1448,8 @@ void populateRepairTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// travel time and total time
 			
-			double travelTime = getVehicleATravelTime(vehicleId, tile);
-			
-			if (travelTime == -1 || travelTime >= INF)
+			double travelTime = getVehicleTravelTime(vehicleId, tile);
+			if (travelTime == INF)
 				continue;
 			
 			double totalTime = std::max(1.0, travelTime + (double)repairInfo.time);
@@ -1536,7 +1551,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 		
 		// find closest monolith
 		
-		MapDoubleValue closestMonolithLocaionTravelTime = findClosestItemLocation(vehicleId, BIT_MONOLITH, MAX_REPAIR_DISTANCE, true);
+		MapDoubleValue closestMonolithLocaionTravelTime = findClosestMonolith(vehicleId, MAX_REPAIR_DISTANCE, true);
 		
 		// not found
 		
@@ -1755,8 +1770,7 @@ void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// get travel time and coresponding coefficient
 			
-			double travelTime = getVehicleATravelTime(vehicleId, podTile);
-			
+			double travelTime = getVehicleTravelTime(vehicleId, podTile);
 			if (travelTime == INF)
 				continue;
 			
@@ -1846,7 +1860,10 @@ void populatePolice2xTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// travel time coefficient
 			
-			double travelTime = getVehicleATravelTime(vehicleId, baseTile);
+			double travelTime = getVehicleTravelTime(vehicleId, baseTile);
+			if (travelTime == INF)
+				continue;
+			
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
 			
 			// priority
@@ -1919,7 +1936,10 @@ void populatePoliceTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// travel time coefficient
 			
-			double travelTime = getVehicleATravelTime(vehicleId, baseTile);
+			double travelTime = getVehicleTravelTime(vehicleId, baseTile);
+			if (travelTime == INF)
+				continue;
+			
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
 			
 			// priority
@@ -1983,6 +2003,13 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 		if (!isInfantryDefensiveVehicle(vehicleId))
 			continue;
 		
+		double closestMonolithTravelTile = INF;
+		if (vehicle->damage_taken > 0)
+		{
+			MapDoubleValue mapDoubleValue = findClosestMonolith(vehicleId, MAX_REPAIR_DISTANCE, true);
+			closestMonolithTravelTile = mapDoubleValue.value;
+		}
+		
 		// process bases
 		
 		for (int baseId : aiData.baseIds)
@@ -2006,12 +2033,18 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// time saved due to repair in the base (unless nearby monolith)
 			
-			MapDoubleValue closestMonolithLocaionTravelTime = findClosestItemLocation(vehicleId, BIT_MONOLITH, MAX_REPAIR_DISTANCE, true);
-			double repairTimeSave = closestMonolithLocaionTravelTime.value <= 2.0 ? 0.0 : 5.0 * getVehicleRelativeDamage(vehicleId);
+			double repairTimeSave = 0.0;
+			if (vehicle->damage_taken > 0)
+			{
+				repairTimeSave = closestMonolithTravelTile <= 2.0 ? 0.0 : 5.0 * getVehicleRelativeDamage(vehicleId);
+			}
 			
 			// get travel time and coresponding coefficient
 			
-			double travelTime = getVehicleATravelTime(vehicleId, baseTile);
+			double travelTime = getVehicleTravelTime(vehicleId, baseTile);
+			if (travelTime == INF)
+				continue;
+			
 			double effectiveTime = travelTime - repairTimeSave;
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, effectiveTime);
 			

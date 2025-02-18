@@ -12,6 +12,45 @@
 #include "wtp_aiProduction.h"
 #include "wtp_aiRoute.h"
 
+// MoveAction vector
+ArrayVector<MoveAction, MAX_REACHABLE_LOCATION_COUNT> REACHABLE_LOCATIONS;
+
+// fast hexCost cache
+robin_hood::unordered_flat_map<int, int> cachedHexCost;
+int getCachedHexCost(ExtendedMovementType extendedMovementType, int speed1, int tile1Index, int angle)
+{
+	int key =
+		+ (int)extendedMovementType 
+		+ speed1						* EXTENDED_MOVEMENT_TYPE_COUNT
+		+ angle							* EXTENDED_MOVEMENT_TYPE_COUNT * 2
+		+ tile1Index					* EXTENDED_MOVEMENT_TYPE_COUNT * 2 * ANGLE_COUNT
+	;
+	
+	robin_hood::unordered_flat_map<int, int>::iterator cachedHexCostIterator = cachedHexCost.find(key);
+	return cachedHexCostIterator == cachedHexCost.end() ? -1 : cachedHexCostIterator->second;
+	
+}
+void setCachedHexCost(ExtendedMovementType extendedMovementType, int speed1, int tile1Index, int angle, int hexCost)
+{
+	int key =
+		+ (int)extendedMovementType 
+		+ speed1						* EXTENDED_MOVEMENT_TYPE_COUNT
+		+ angle							* EXTENDED_MOVEMENT_TYPE_COUNT * 2
+		+ tile1Index					* EXTENDED_MOVEMENT_TYPE_COUNT * 2 * ANGLE_COUNT
+	;
+	
+	robin_hood::unordered_flat_map<int, int>::iterator cachedHexCostIterator = cachedHexCost.find(key);
+	if (cachedHexCostIterator == cachedHexCost.end())
+	{
+		cachedHexCost.emplace(key, hexCost);
+	}
+	else
+	{
+		cachedHexCostIterator->second = hexCost;
+	}
+	
+}
+
 /**
 Top level AI strategy class. Contains AI methods entry points and global AI variable precomputations.
 Faction uses WTP AI algorithms if configured. Otherwise, it falls back to Thinker.
@@ -152,6 +191,10 @@ void strategy(bool computer)
 	
 	BaseSnapshots::takeSnapshots();
 	
+	// precompute baseCompute
+	
+	precomputeBaseComputeValues(aiFactionId);
+	
 	// design units
 	
 	if (computer)
@@ -181,6 +224,10 @@ void strategy(bool computer)
 	// restore base state
 	
 	BaseSnapshots::restoreSnapshots();
+	
+	// clear baseCompute
+	
+	clearBaseComputeValues();
 	
 	Profiling::stop("strategy");
 	
@@ -232,6 +279,10 @@ void populateAIData()
 {
 	Profiling::start("populateAIData", "strategy");
 	
+	// clear fast cachedHexCost
+	cachedHexCost.clear();
+
+	
 	// clear aiData
 	
 	Profiling::start("aiData.clear()", "populateAIData");
@@ -274,7 +325,6 @@ void populateAIData()
 	
 	populateEnemyBaseInfos();
 	
-	populateTileCombatData();
 	populateEnemyStacks();
 	evaluateEnemyStacks();
 	evaluateBaseDefense();
@@ -428,6 +478,7 @@ void populateTileInfos()
 	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 	{
 		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
+		tileInfo.adjacents.clear();
 		
 		for (int angle = 0; angle < ANGLE_COUNT; angle++)
 		{
@@ -435,9 +486,8 @@ void populateTileInfos()
 			
 			if (adjacentTileIndex != -1)
 			{
-				MAP *adjacentTile = *MapTiles + adjacentTileIndex;
 				TileInfo *adjacentTileInfo = &aiData.tileInfos.at(adjacentTileIndex);
-				tileInfo.adjacents.push_back({angle, adjacentTileIndex, adjacentTile, adjacentTileInfo});
+				tileInfo.adjacents.push_back({angle, adjacentTileInfo});
 			}
 			
 		}
@@ -446,11 +496,50 @@ void populateTileInfos()
 	
 	Profiling::stop("adjacent tiles");
 	
+	// range tiles
+	
+	Profiling::start("range tiles", "populateTileInfos");
+	
+	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+	{
+		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
+		
+		int x = getX(tileIndex);
+		int y = getY(tileIndex);
+		
+		int minIndex = 0;
+		int maxIndex = TABLE_square_block_radius[2];
+		
+		int count = 0;
+		for (int index = minIndex; index < maxIndex; index++)
+		{
+			int offsetX = TABLE_square_offset_x[index];
+			int offsetY = TABLE_square_offset_y[index];
+			
+			int cellX = wrap(x + offsetX);
+			int cellY = y + offsetY;
+			
+			if (!isOnMap(cellX, cellY))
+				continue;
+			
+			int rangeTileIndex = getMapTileIndex(cellX, cellY);
+			TileInfo &rangeTileInfo = aiData.tileInfos.at(rangeTileIndex);
+			
+			tileInfo.range2TileInfosArray.at(count) = &rangeTileInfo;
+			count++;
+			
+		}
+		
+		tileInfo.range2CenterTileInfos.set(&tileInfo.range2TileInfosArray, 0, count);
+		tileInfo.range2NoCenterTileInfos.set(&tileInfo.range2TileInfosArray, 1, count);
+		
+	}
+	
+	Profiling::stop("range tiles");
+	
 	// hexCosts
 	
 	Profiling::start("hexCosts", "populateTileInfos");
-	
-	Profiling::start("compute hexCosts", "hexCosts");
 	
 	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 	{
@@ -458,22 +547,32 @@ void populateTileInfos()
 		int tileY = getY(tileIndex);
 		TileInfo &tileInfo = aiData.getTileInfo(tileIndex);
 		
+		for (std::array<int, ANGLE_COUNT> &movementTypeHexCosts : tileInfo.hexCosts)
+		{
+			std::fill(movementTypeHexCosts.begin(), movementTypeHexCosts.end(), -1);
+		}
+		for (std::array<MapIndexHexCost, ANGLE_COUNT> &movementTypeMapIndexHexCosts : tileInfo.mapIndexHexCosts)
+		{
+			for (MapIndexHexCost &angleMovementTypeMapIndexHexCost : movementTypeMapIndexHexCosts)
+			{
+				angleMovementTypeMapIndexHexCost.tileIndex = -1;
+				angleMovementTypeMapIndexHexCost.hexCost = -1;
+			}
+		}
+		for (std::array<std::array<int, ANGLE_COUNT>, 2> &movementTypeExtendedHexCost : tileInfo.extendedHexCosts)
+		{
+			for (std::array<int, ANGLE_COUNT> &speed1MovementTypeExtendedHexCost : movementTypeExtendedHexCost)
+			{
+				std::fill(speed1MovementTypeExtendedHexCost.begin(), speed1MovementTypeExtendedHexCost.end(), -1);
+			}
+		}
+		
 		for (int angle = 0; angle < ANGLE_COUNT; angle++)
 		{
 			int adjacentTileIndex = getTileIndexByAngle(tileIndex, angle);
 			
 			if (adjacentTileIndex == -1)
-			{
-				for (std::array<int, ANGLE_COUNT> &movementTypeHexCosts : tileInfo.hexCosts)
-				{
-					movementTypeHexCosts.at(angle) = -1;
-				}
-				for (std::array<MapIndexHexCost, ANGLE_COUNT> &movementTypeMapIndexHexCosts : tileInfo.mapIndexHexCosts)
-				{
-					movementTypeMapIndexHexCosts.at(angle) = {-1, -1};
-				}
 				continue;
-			}
 			
 			int adjacentTileX = getX(adjacentTileIndex);
 			int adjacentTileY = getY(adjacentTileIndex);
@@ -486,8 +585,10 @@ void populateTileInfos()
 			tileInfo.hexCosts.at(MT_AIR).at(angle) = airHexCost;
 			tileInfo.mapIndexHexCosts.at(MT_AIR).at(angle) = {adjacentTileIndex, airHexCost};
 			
-			// sea vehicle moves on ocean or from/to base
+			tileInfo.extendedHexCosts.at(EMT_AIR).at(0).at(angle) = airHexCost;
+			tileInfo.extendedHexCosts.at(EMT_AIR).at(1).at(angle) = airHexCost;
 			
+			// sea vehicle moves on ocean or from/to base
 			if ((tileInfo.ocean || tileInfo.base) && (adjacentTileInfo.ocean || adjacentTileInfo.base))
 			{
 				int seaRegularHexCost = mod_hex_cost(BSC_UNITY_GUNSHIP, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
@@ -499,30 +600,44 @@ void populateTileInfos()
 				tileInfo.mapIndexHexCosts.at(MT_SEA_REGULAR).at(angle) = {adjacentTileIndex, seaRegularHexCost};
 				tileInfo.mapIndexHexCosts.at(MT_SEA_NATIVE).at(angle) = {adjacentTileIndex, seaNativeHexCost};
 				
+				tileInfo.extendedHexCosts.at(EMT_SEA_REGULAR).at(0).at(angle) = seaRegularHexCost;
+				tileInfo.extendedHexCosts.at(EMT_SEA_REGULAR).at(1).at(angle) = seaRegularHexCost;
+				tileInfo.extendedHexCosts.at(EMT_SEA_NATIVE).at(0).at(angle) = seaNativeHexCost;
+				tileInfo.extendedHexCosts.at(EMT_SEA_NATIVE).at(1).at(angle) = seaNativeHexCost;
+				
 			}
-			
 			// land vehicle moves on land
-			
 			if (tileInfo.land && adjacentTileInfo.land)
 			{
 				int landRegularHexCost1 = mod_hex_cost(BSC_SCOUT_PATROL, -1, tileX, tileY, adjacentTileX, adjacentTileY, 1);
-				int landRegularHexCost2 = mod_hex_cost(BSC_UNITY_ROVER, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
-				int landRegularHexCost = (landRegularHexCost1 == -1 || landRegularHexCost2 == -1) ? -1 : (2 * landRegularHexCost1 + 1 * landRegularHexCost2) / 3;
-				int landNativeHexCost = mod_hex_cost(BSC_MIND_WORMS, 0, tileX, tileY, adjacentTileX, adjacentTileY, 1);
+				int landRegularHexCost0 = mod_hex_cost(BSC_UNITY_ROVER, -1, tileX, tileY, adjacentTileX, adjacentTileY, 0);
+				int landRegularHexCost = (landRegularHexCost1 == -1 || landRegularHexCost0 == -1) ? -1 : (2 * landRegularHexCost1 + 1 * landRegularHexCost0) / 3;
+				int landNativeHexCost1 = mod_hex_cost(BSC_MIND_WORMS, 0, tileX, tileY, adjacentTileX, adjacentTileY, 1);
+				int landNativeHexCost0 = mod_hex_cost(BSC_MIND_WORMS, 0, tileX, tileY, adjacentTileX, adjacentTileY, 0);
 				
 				tileInfo.hexCosts.at(MT_LAND_REGULAR).at(angle) = landRegularHexCost;
-				tileInfo.hexCosts.at(MT_LAND_NATIVE).at(angle) = landNativeHexCost;
+				tileInfo.hexCosts.at(MT_LAND_NATIVE).at(angle) = landNativeHexCost1;
 				
 				tileInfo.mapIndexHexCosts.at(MT_LAND_REGULAR).at(angle) = {adjacentTileIndex, landRegularHexCost};
-				tileInfo.mapIndexHexCosts.at(MT_LAND_NATIVE).at(angle) = {adjacentTileIndex, landNativeHexCost};
+				tileInfo.mapIndexHexCosts.at(MT_LAND_NATIVE).at(angle) = {adjacentTileIndex, landNativeHexCost1};
+				
+				int landHoverHexCost = std::min(Rules->move_rate_roads, landRegularHexCost);
+				int landHoverNativeHexCost = std::min(landHoverHexCost, landNativeHexCost1);
+				
+				tileInfo.extendedHexCosts.at(EMT_LAND_REGULAR).at(0).at(angle) = landRegularHexCost0;
+				tileInfo.extendedHexCosts.at(EMT_LAND_REGULAR).at(1).at(angle) = landRegularHexCost1;
+				tileInfo.extendedHexCosts.at(EMT_LAND_NATIVE).at(0).at(angle) = landNativeHexCost0;
+				tileInfo.extendedHexCosts.at(EMT_LAND_NATIVE).at(1).at(angle) = landNativeHexCost1;
+				tileInfo.extendedHexCosts.at(EMT_LAND_HOVER).at(0).at(angle) = landHoverHexCost;
+				tileInfo.extendedHexCosts.at(EMT_LAND_HOVER).at(1).at(angle) = landHoverHexCost;
+				tileInfo.extendedHexCosts.at(EMT_LAND_HOVER_NATIVE).at(0).at(angle) = landHoverNativeHexCost;
+				tileInfo.extendedHexCosts.at(EMT_LAND_HOVER_NATIVE).at(1).at(angle) = landHoverNativeHexCost;
 				
 			}
 			
 		}
 		
 	}
-	
-	Profiling::stop("compute hexCosts");
 	
 	Profiling::stop("hexCosts");
 	
@@ -574,22 +689,19 @@ void populateTileInfos()
 		
 		for (Adjacent const &adjacent : vehicleTileInfo.adjacents)
 		{
-			int adjacentTileIndex = adjacent.tileIndex;
-			TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTileIndex);
-			
 			// zoc is exerted only to land
 			
-			if (adjacentTileInfo.ocean)
+			if (adjacent.tileInfo->ocean)
 				continue;
 			
 			// zoc is not exerted to base
 			
-			if (adjacentTileInfo.base)
+			if (adjacent.tileInfo->base)
 				continue;
 			
 			// zoc
 			
-			aiData.tileInfos[adjacentTileIndex].zoc = true;
+			adjacent.tileInfo->zoc = true;
 			
 		}
 		
@@ -624,25 +736,25 @@ void populateTileInfos()
 	
 	Profiling::start("sensors", "populateTileInfos");
 	
-	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 	{
-		if (!map_has_item(tile, BIT_SENSOR))
+		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
+		
+		if (!map_has_item(tileInfo.tile, BIT_SENSOR))
 			continue;
 		
-		if (tile->owner >= 0 && tile->owner < MaxPlayerNum)
+		if (tileInfo.tile->owner >= 0 && tileInfo.tile->owner < MaxPlayerNum)
 		{
-			for (MAP *rangeTile : getRangeTiles(tile, 2, true))
+			for (TileInfo *rangeTileInfo : tileInfo.range2CenterTileInfos)
 			{
-				TileInfo &rangeTileInfo = aiData.getTileInfo(rangeTile);
-				rangeTileInfo.sensors.at(tile->owner) = true;
+				rangeTileInfo->sensors.at(tileInfo.tile->owner) = true;
 			}
 		}
 		else
 		{
-			for (MAP *rangeTile : getRangeTiles(tile, 2, true))
+			for (TileInfo *rangeTileInfo : tileInfo.range2CenterTileInfos)
 			{
-				TileInfo &rangeTileInfo = aiData.getTileInfo(rangeTile);
-				std::fill(rangeTileInfo.sensors.begin(), rangeTileInfo.sensors.end(), true);
+				std::fill(rangeTileInfo->sensors.begin(), rangeTileInfo->sensors.end(), true);
 			}
 		}
 		
@@ -650,31 +762,69 @@ void populateTileInfos()
 	
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
-		MAP *tile = getBaseMapTile(baseId);
+		MAP *baseTile = getBaseMapTile(baseId);
+		int baseTileIndex = baseTile - *MapTiles;
+		TileInfo &baseTileInfo = aiData.tileInfos.at(baseTileIndex);
 		
 		if (!has_facility(FAC_GEOSYNC_SURVEY_POD, baseId))
 			continue;
 		
-		if (tile->owner >= 0 && tile->owner < MaxPlayerNum)
+		if (baseTile->owner >= 0 && baseTile->owner < MaxPlayerNum)
 		{
-			for (MAP *rangeTile : getRangeTiles(tile, 2, true))
+			for (TileInfo *rangeTileInfo : baseTileInfo.range2CenterTileInfos)
 			{
-				TileInfo &rangeTileInfo = aiData.getTileInfo(rangeTile);
-				rangeTileInfo.sensors.at(tile->owner) = true;
+				rangeTileInfo->sensors.at(baseTile->owner) = true;
 			}
 		}
 		else
 		{
-			for (MAP *rangeTile : getRangeTiles(tile, 2, true))
+			for (TileInfo *rangeTileInfo : baseTileInfo.range2CenterTileInfos)
 			{
-				TileInfo &rangeTileInfo = aiData.getTileInfo(rangeTile);
-				std::fill(rangeTileInfo.sensors.begin(), rangeTileInfo.sensors.end(), true);
+				std::fill(rangeTileInfo->sensors.begin(), rangeTileInfo->sensors.end(), true);
 			}
 		}
 		
 	}
 	
 	Profiling::stop("sensors");
+	
+	// monoliths
+	
+	Profiling::start("monoliths", "populateTileInfos");
+	
+	aiData.monoliths.clear();
+	
+	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+	{
+		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
+		
+		if (!map_has_item(tileInfo.tile, BIT_MONOLITH))
+			continue;
+		
+		aiData.monoliths.push_back(tileInfo.tile);
+		
+	}
+	
+	Profiling::stop("monoliths");
+	
+	// pods
+	
+	Profiling::start("pods", "populateTileInfos");
+	
+	aiData.pods.clear();
+	
+	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+	{
+		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
+		
+		if (!mod_goody_at(getX(tileInfo.index), getY(tileInfo.index)))
+			continue;
+		
+		aiData.pods.push_back(tileInfo.tile);
+		
+	}
+	
+	Profiling::stop("pods");
 	
 //	if (DEBUG)
 //	{
@@ -761,14 +911,11 @@ void populateTileInfoBaseRanges()
 			
 			for (Adjacent const &adjacent : currentTileInfo.adjacents)
 			{
-				int adjacentTileIndex = adjacent.tileIndex;
-				TileInfo &adjacentTileInfo = aiData.tileInfos.at(adjacentTileIndex);
-				
-				if (range < adjacentTileInfo.nearestBaseRanges.at(TRIAD_AIR).value)
+				if (range < adjacent.tileInfo->nearestBaseRanges.at(TRIAD_AIR).value)
 				{
-					adjacentTileInfo.nearestBaseRanges.at(TRIAD_AIR).id = baseId;
-					adjacentTileInfo.nearestBaseRanges.at(TRIAD_AIR).value = range;
-					newOpenNodes.insert(adjacentTileIndex);
+					adjacent.tileInfo->nearestBaseRanges.at(TRIAD_AIR).id = baseId;
+					adjacent.tileInfo->nearestBaseRanges.at(TRIAD_AIR).value = range;
+					newOpenNodes.insert(adjacent.tileInfo->index);
 				}
 				
 			}
@@ -818,19 +965,16 @@ void populateTileInfoBaseRanges()
 			
 			for (Adjacent const &adjacent : currentTileInfo.adjacents)
 			{
-				int adjacentTileIndex = adjacent.tileIndex;
-				TileInfo &adjacentTileInfo = aiData.tileInfos.at(adjacentTileIndex);
-				
 				// sea
 				
-				if (!adjacentTileInfo.ocean)
+				if (!adjacent.tileInfo->ocean)
 					continue;
 				
-				if (range < adjacentTileInfo.nearestBaseRanges.at(TRIAD_SEA).value)
+				if (range < adjacent.tileInfo->nearestBaseRanges.at(TRIAD_SEA).value)
 				{
-					adjacentTileInfo.nearestBaseRanges.at(TRIAD_SEA).id = baseId;
-					adjacentTileInfo.nearestBaseRanges.at(TRIAD_SEA).value = range;
-					newOpenNodes.insert(adjacentTileIndex);
+					adjacent.tileInfo->nearestBaseRanges.at(TRIAD_SEA).id = baseId;
+					adjacent.tileInfo->nearestBaseRanges.at(TRIAD_SEA).value = range;
+					newOpenNodes.insert(adjacent.tileInfo->index);
 				}
 				
 			}
@@ -880,16 +1024,13 @@ void populateTileInfoBaseRanges()
 			
 			for (Adjacent const &adjacent : currentTileInfo.adjacents)
 			{
-				int adjacentTileIndex = adjacent.tileIndex;
-				TileInfo &adjacentTileInfo = aiData.tileInfos.at(adjacentTileIndex);
-				
 				// land or sea (transported)
 				
-				if (range < adjacentTileInfo.nearestBaseRanges.at(TRIAD_LAND).value)
+				if (range < adjacent.tileInfo->nearestBaseRanges.at(TRIAD_LAND).value)
 				{
-					adjacentTileInfo.nearestBaseRanges.at(TRIAD_LAND).id = baseId;
-					adjacentTileInfo.nearestBaseRanges.at(TRIAD_LAND).value = range;
-					newOpenNodes.insert(adjacentTileIndex);
+					adjacent.tileInfo->nearestBaseRanges.at(TRIAD_LAND).id = baseId;
+					adjacent.tileInfo->nearestBaseRanges.at(TRIAD_LAND).value = range;
+					newOpenNodes.insert(adjacent.tileInfo->index);
 				}
 				
 			}
@@ -1369,8 +1510,14 @@ void populateBaseInfos()
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
 		BASE *base = getBase(baseId);
-		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+		BaseInfo &baseInfo = aiData.baseInfos.at(baseId);
 		MAP *baseTile = getBaseMapTile(baseId);
+		
+		// store base snapshot
+		
+        memcpy(&baseInfo.snapshot, base, sizeof(BASE));
+		
+		// base info
 		
 		baseInfo.id = baseId;
 		baseInfo.factionId = base->faction_id;
@@ -1969,14 +2116,6 @@ void populateWarzones()
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		bool vehicleTileOcean = is_ocean(vehicleTile);
 		int triad = vehicle->triad();
-		COMBAT_TYPE attacketWeaponType = getWeaponType(vehicleId);
-		double psiOffenseStrength = getVehiclePsiOffenseStrength(aiFactionId, vehicleId);
-		double conOffenseStrength = getVehicleConOffenseStrength(vehicleId);
-		
-		// hostile
-		
-		if (!isHostile(aiFactionId, vehicle->faction_id))
-			continue;
 		
 		// combat
 		
@@ -1988,39 +2127,91 @@ void populateWarzones()
 		if ((triad == TRIAD_LAND && vehicleTileOcean) || vehicle->unit_id == BSC_FUNGAL_TOWER)
 			continue;
 		
-		// populate attack tiles danger
+		// parameters
 		
-		if (isMeleeVehicle(vehicleId))
+		int chassisId = vehicle->chassis_type();
+		COMBAT_TYPE attacketWeaponType = getWeaponType(vehicleId);
+		double psiOffenseStrength = getVehiclePsiOffenseStrength(aiFactionId, vehicleId);
+		double conOffenseStrength = getVehicleConOffenseStrength(vehicleId);
+		bool captureSeaBase = chassisId == CHS_GRAVSHIP || triad == TRIAD_SEA;
+		bool captureLandBase = chassisId == CHS_GRAVSHIP || triad == TRIAD_LAND;
+		bool melee = isMeleeVehicle(vehicleId);
+		bool artillery = isArtilleryVehicle(vehicleId);
+		bool meleeSea = melee && triad != TRIAD_LAND;
+		bool meleeLand = melee && triad != TRIAD_SEA;
+		bool artillerySea = artillery;
+		bool artilleryLand = artillery;
+		
+		// iterate reachable locations
+		
+		Profiling::start("- populateWarzones - getVehicleReachableLocations");
+		if (isHostile(aiFactionId, vehicle->faction_id))
 		{
-			for (AttackAction const &attackAction : getMeleeAttackTargets(vehicleId))
+			robin_hood::unordered_flat_map<int, double> dangers;
+			
+			for (robin_hood::pair<int, int> const &reachableLocations : getVehicleReachableLocations(vehicleId, true))
 			{
-				MAP *tile = attackAction.target;
-				double hastyCoefficient = attackAction.hastyCoefficient;
+				int tileIndex = reachableLocations.first;
+				int movementAllowance = reachableLocations.second;
+				TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
 				
-				double attackEffect = 0.0;
-				
-				switch (attacketWeaponType)
+				if ((tileInfo.ocean && captureSeaBase) || (tileInfo.land && captureLandBase))
 				{
-				case CT_PSI:
+					tileInfo.hostileBaseCapture = true;
+					tileInfo.baseCapture = true;
+				}
+				
+				if (movementAllowance <= 0)
+					continue;
+				
+				if ((tileInfo.ocean && artillerySea) || (tileInfo.land && artilleryLand))
+				{
+					tileInfo.artilleryZone = true;
+				}
+				
+				if ((tileInfo.ocean && meleeSea) || (tileInfo.land && meleeLand))
+				{
+					double hastyCoefficient = movementAllowance >= Rules->move_rate_roads ? 1.0 : (double)movementAllowance / (double)Rules->move_rate_roads;
+					double danger = hastyCoefficient * (attacketWeaponType == CT_PSI ? psiOffenseStrength : (psiOffenseStrength + conOffenseStrength / (double)aiData.maxConDefenseValue) / 2.0);
 					
-					attackEffect = hastyCoefficient * psiOffenseStrength;
-					
-					break;
-					
-				case CT_CON:
-					
-					attackEffect = hastyCoefficient * (psiOffenseStrength + conOffenseStrength / (double)aiData.maxConDefenseValue) / 2.0;
-					
-					break;
+					if (dangers.find(tileIndex) == dangers.end())
+					{
+						dangers.insert({tileIndex, danger});
+					}
+					else if (danger > dangers.at(tileIndex))
+					{
+						dangers.at(tileIndex) = danger;
+					}
 					
 				}
 				
-				TileInfo &tileInfo = aiData.getTileInfo(tile);
-				tileInfo.danger += attackEffect;
+			}
+			
+			for (robin_hood::pair<int, double> const &dangerEntry : dangers)
+			{
+				int tileIndex = dangerEntry.first;
+				double danger = dangerEntry.second;
+				aiData.tileInfos.at(tileIndex).danger += danger;
+			}
+			
+		}
+		else if (isNeutral(aiFactionId, vehicle->faction_id))
+		{
+			for (robin_hood::pair<int, int> const &reachableLocations : getVehicleReachableLocations(vehicleId, true))
+			{
+				int tileIndex = reachableLocations.first;
+				TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
+				
+				if ((tileInfo.ocean && captureSeaBase) || (tileInfo.land && captureLandBase))
+				{
+					tileInfo.neutralBaseCapture = true;
+					tileInfo.baseCapture = true;
+				}
 				
 			}
 			
 		}
+		Profiling::stop("- populateWarzones - getVehicleReachableLocations");
 		
 		// reduce danger by friendly defensive vehicles in tile
 		
@@ -2061,232 +2252,15 @@ void populateWarzones()
 		
 		// warzones
 		
-		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 		{
-			TileInfo &tileInfo = aiData.getTileInfo(tile);
-			
+			TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
 			tileInfo.warzone = (tileInfo.danger >= 0.75);
-			
-		}
-		
-		// artillery zones
-		
-		if (isArtilleryVehicle(vehicleId))
-		{
-			for (AttackAction const &attackAction : getArtilleryAttackTargets(vehicleId))
-			{
-				MAP *tile = attackAction.target;
-				
-				TileInfo &tileInfo = aiData.getTileInfo(tile);
-				tileInfo.artilleryZone = true;
-				
-			}
-			
 		}
 		
 	}
-	
-//	if (DEBUG)
-//	{
-//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-//		{
-//			TileInfo &tileInfo = aiData.getTileInfo(tile);
-//			
-//			debug
-//			(
-//				"\t%s"
-//				" %5.2f"
-//				" %1d"
-//				" %1d"
-//				"\n"
-//				, getLocationString(tile).c_str()
-//				, tileInfo.danger
-//				, tileInfo.warzone
-//				, tileInfo.artilleryZone
-//			)
-//			;
-//			
-//		}
-//		
-//	}
-	
-	// baseCapture
-	
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		bool vehicleTileOcean = is_ocean(vehicleTile);
-		int triad = vehicle->triad();
-		
-		// hostal or neutral
-		
-		if (!isHostile(aiFactionId, vehicle->faction_id) && !isNeutral(aiFactionId, vehicle->faction_id))
-			continue;
-		
-		// combat
-		
-		if (!isCombatVehicle(vehicleId))
-			continue;
-		
-		// not ranged air
-		
-		if (vehicle->range() > 0)
-			continue;
-		
-		// not land on transport
-		
-		if (isLandVehicleOnTransport(vehicleId))
-			continue;
-		
-		// able to reach around and act
-		
-		if ((triad == TRIAD_LAND && vehicleTileOcean) || vehicle->unit_id == BSC_FUNGAL_TOWER)
-			continue;
-		
-		// populate reachable locations
-		
-		for (MoveAction const &moveAction : getVehicleReachableLocations(vehicleId, true))
-		{
-			MAP *tile = moveAction.tile;
-			TileInfo &tileInfo = aiData.getTileInfo(tile);
-			
-			// disregard aliens at their max reach
-			
-			if (vehicle->faction_id == 0 && getRange(vehicleTile, tile) >= getVehicleMoveRate(vehicleId) / (conf.magtube_movement_rate == 0 ? Rules->move_rate_roads : conf.magtube_movement_rate))
-				continue;
-			
-			if (isHostile(aiFactionId, vehicle->faction_id))
-			{
-				tileInfo.hostileBaseCapture = true;
-				tileInfo.baseCapture = true;
-			}
-			else if (isNeutral(aiFactionId, vehicle->faction_id))
-			{
-				tileInfo.neutralBaseCapture = true;
-				tileInfo.baseCapture = true;
-			}
-			
-		}
-			
-	}
-	
-//	if (DEBUG)
-//	{
-//		debug("hostileBaseCapture\n");
-//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-//		{
-//			TileInfo &tileInfo = aiData.getTileInfo(tile);
-//			if (tileInfo.hostileBaseCapture)
-//			{
-//				debug("\t%s\n", getLocationString(tile).c_str());
-//			}
-//		}
-//		debug("neutralBaseCapture\n");
-//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-//		{
-//			TileInfo &tileInfo = aiData.getTileInfo(tile);
-//			if (tileInfo.neutralBaseCapture)
-//			{
-//				debug("\t%s\n", getLocationString(tile).c_str());
-//			}
-//		}
-//	}
 	
 	Profiling::stop("populateWarzones");
-	
-}
-
-void populateTileCombatData()
-{
-	Profiling::start("populateTileCombatData", "populateAIData");
-	
-	debug("populateTileCombatData - %s\n", MFactions[aiFactionId].noun_faction);
-	
-	// enemy vehicle offenses
-	
-	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH *vehicle = getVehicle(vehicleId);
-		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		
-		// hostile
-		
-		if (!isHostile(aiFactionId, vehicle->faction_id))
-			continue;
-		
-		// exclude land vehicle on transport
-		
-		if (isVehicleOnTransport(vehicleId))
-			continue;
-		
-		// ignore aliens too far from base
-		
-		if (vehicle->faction_id == 0)
-		{
-			if (getNearestBaseRange(vehicleTile, aiData.baseIds, true) > 6)
-				continue;
-		}
-		
-		// iterate melee/aritllery attack tiles
-		
-		for (AttackAction const &attackAction : getMeleeAttackTargets(vehicleId))
-		{
-			MAP *tile = attackAction.target;
-			double hastyCoefficient = attackAction.hastyCoefficient;
-			
-			robin_hood::unordered_flat_map<int, Offense> &enemyOffenses = aiData.getTileInfo(tile).combatData.enemyOffenses;
-			
-			enemyOffenses[vehicleId].engagementModes.at(EM_MELEE) = true;
-			enemyOffenses[vehicleId].hastyCoefficient = hastyCoefficient;
-			
-		}
-		
-		for (AttackAction const &attackAction : getArtilleryAttackTargets(vehicleId))
-		{
-			MAP *tile = attackAction.target;
-			
-			robin_hood::unordered_flat_map<int, Offense> &enemyOffenses = aiData.getTileInfo(tile).combatData.enemyOffenses;
-			
-			enemyOffenses[vehicleId].engagementModes.at(EM_ARTILLERY) = true;
-			
-		}
-		
-	}
-	
-//	if (DEBUG)
-//	{
-//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-//		{
-//			debug("\t%s\n", getLocationString(tile).c_str());
-//			
-//			TileInfo &tileInfo = aiData.getTileInfo(tile);
-//			
-//			for (robin_hood::pair<int, Offense> const &offenseEntry : tileInfo.combatData.enemyOffenses)
-//			{
-//				int vehicleId = offenseEntry.first;
-//				Offense const &offense = offenseEntry.second;
-//				
-//				debug
-//				(
-//					"\t\t[%4d] %s %-32s"
-//					" EM_MELEE=%d EM_ARTILLERY=%d"
-//					" hastyCoefficient=%5.2f"
-//					"\n"
-//					, vehicleId
-//					, getLocationString(getVehicleMapTile(vehicleId)).c_str()
-//					, getVehicle(vehicleId)->name()
-//					, offense.engagementModes.at(0), offense.engagementModes.at(1)
-//					, offense.hastyCoefficient
-//				);
-//				
-//			}
-//			
-//		}
-//		
-//	}
-	
-	Profiling::stop("populateTileCombatData");
 	
 }
 
@@ -3720,8 +3694,7 @@ void evaluateBaseDefense()
 			
 			// approach time coefficient
 			
-			double approachTime = getEnemyApproachTime(baseId, vehicleId);
-			
+			double approachTime = getVehicleApproachTime(vehicleId, baseTile);
 			if (approachTime == INF)
 				continue;
 			
@@ -4278,8 +4251,7 @@ void evaluateBaseProbeDefense()
 			
 			// approach time coefficient
 			
-			double approachTime = getEnemyApproachTime(baseId, vehicleId);
-			
+			double approachTime = getVehicleApproachTime(vehicleId, baseTile);
 			if (approachTime == INF)
 				continue;
 			
@@ -4873,41 +4845,32 @@ MAP *getClosestPod(int vehicleId)
 {
 	MAP *closestPod = nullptr;
 	double minTravelTime = DBL_MAX;
-
-	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+	
+	for (MAP *tile : aiData.pods)
 	{
-		int x = getX(tile);
-		int y = getY(tile);
-
-		// pod
-
-		if (mod_goody_at(x, y) == 0)
-			continue;
-
 		// reachable
-
+		
 		if (!isVehicleDestinationReachable(vehicleId, tile))
 			continue;
-
-		// get distance
-
-		double travelTime = getVehicleATravelTime(vehicleId, tile);
-
+		
+		// get travel time
+		
+		double travelTime = getVehicleTravelTime(vehicleId, tile);
 		if (travelTime == INF)
 			continue;
-
+		
 		// update best
-
+		
 		if (travelTime < minTravelTime)
 		{
 			closestPod = tile;
 			minTravelTime = travelTime;
 		}
-
+		
 	}
-
+	
 	return closestPod;
-
+	
 }
 
 int getNearestAIFactionBaseRange(int x, int y)
@@ -5161,10 +5124,13 @@ bool isUnitArtilleryTargetReachable(int unitId, MAP *origin, MAP *target)
 	if (!isArtilleryUnit(unitId))
 		return false;
 	
-	for (MAP *tile : getRangeTiles(target, Rules->artillery_max_rng, false))
+	TileInfo &targetTileInfo = aiData.getTileInfo(target);
+	
+	for (TileInfo const *rangeTileInfo : targetTileInfo.range2NoCenterTileInfos)
 	{
-		if (isUnitDestinationReachable(unitId, origin, tile) && isUnitCanArtilleryAttackFromTile(unitId, tile))
+		if (isUnitDestinationReachable(unitId, origin, rangeTileInfo->tile) && isUnitCanArtilleryAttackFromTile(unitId, rangeTileInfo->tile))
 			return true;
+		
 	}
 	
 	return false;
@@ -6141,130 +6107,6 @@ int getBaseGrowthTime(int baseId, int targetSize)
 
 }
 
-/*
-Estimates minimal number of doctors base should maintain to avoid riot.
-*/
-int getBaseOptimalDoctors(int baseId)
-{
-	BASE *base = getBase(baseId);
-
-	// punishment sphere disables riot
-
-	if (isBaseHasFacility(baseId, FAC_PUNISHMENT_SPHERE))
-		return 0;
-
-	// store current base specialists parameters
-
-	int specialistParameters[] = {base->specialist_total, base->specialist_adjust, base->specialist_types[0], base->specialist_types[1]};
-	int doctors = getBaseDoctors(baseId);
-
-	// optimal number of doctors
-
-	if (base->drone_total == base->talent_total)
-	{
-		return doctors;
-	}
-
-	// attempt to modify number of doctors to achieve optimal content
-
-	int optimalDoctors;
-	bool baseModified = false;
-
-	while (true)
-	{
-		if (base->drone_total > base->talent_total)
-		{
-			// too many drones - try to increase number of doctors
-
-			// population limit is reached
-
-			if (doctors == base->pop_size)
-			{
-				optimalDoctors = doctors;
-				break;
-			}
-
-			// specialist limit is reached
-
-			if (doctors == 16)
-			{
-				optimalDoctors = doctors;
-				break;
-			}
-
-			// add doctor
-
-			addBaseDoctor(baseId);
-			doctors++;
-			computeBase(baseId, true);
-			baseModified = true;
-
-			// reached happiness
-
-			if (base->drone_total <= base->talent_total)
-			{
-				optimalDoctors = doctors;
-				break;
-			}
-
-		}
-		else
-		{
-			// too little drones - try to reduce number of doctors
-
-			// no doctors left
-
-			if (doctors == 0)
-			{
-				optimalDoctors = 0;
-				break;
-			}
-
-			// remove doctor
-
-			removeBaseDoctor(baseId);
-			doctors--;
-			computeBase(baseId, true);
-			baseModified = true;
-
-			// reached optimal number of doctors
-
-			if (base->drone_total == base->talent_total)
-			{
-				optimalDoctors = doctors;
-				break;
-			}
-
-			// too little doctors
-
-			if (base->drone_total > base->talent_total)
-			{
-				optimalDoctors = doctors + 1;
-				break;
-			}
-
-		}
-
-	}
-
-	// restore base
-
-	if (baseModified)
-	{
-		base->specialist_total = specialistParameters[0];
-		base->specialist_adjust = specialistParameters[1];
-		base->specialist_types[0] = specialistParameters[2];
-		base->specialist_types[1] = specialistParameters[3];
-		computeBase(baseId, true);
-
-	}
-
-	// return optimal number of doctors
-
-	return optimalDoctors;
-
-}
-
 /**
 Calculates nutrient + minerals + energy resource score.
 */
@@ -6542,162 +6384,727 @@ double getHarmonicMean(std::vector<std::vector<double>> parameters)
 }
 
 /*
-Returns locations vehicle can reach in one turn and corresponding movement allowance left when arriving there.
+Returns reachable locations vehicle can reach in one turn.
 AI vehicles subtract current moves spent as they are currently moving.
 */
-bool compareMoveActions(MoveAction &o1, MoveAction &o2)
+robin_hood::unordered_flat_map<int, int> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles)
 {
-    return (o1.movementAllowance > o2.movementAllowance);
-}
-std::vector<MoveAction> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles)
-{
-	Profiling::start("| getVehicleReachableLocations");
+	Profiling::start("- getVehicleReachableLocations");
 	
 	VEH *vehicle = getVehicle(vehicleId);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	int factionId = vehicle->faction_id;
 	int unitId = vehicle->unit_id;
-	int initialMovementAllowance = getVehicleMoveRate(vehicleId) - (vehicle->faction_id == aiFactionId ? vehicle->moves_spent : 0);
-	UNIT *unit = getUnit(vehicle->unit_id);
-	int triad = unit->triad();
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	int speed1 = unit->speed() == 1 ? 1 : 0;
+	int movementAllowance = getVehicleMoveRate(vehicleId) - (vehicle->faction_id == aiFactionId ? vehicle->moves_spent : 0);
 	
-	std::vector<MoveAction> movementActions;
+	robin_hood::unordered_flat_map<int, int> reachableLocations;
 	
-	// land vehicle on transport cannot move
-	
-	if (isLandVehicleOnTransport(vehicleId))
+	switch (vehicle->triad())
 	{
-		Profiling::stop("| getVehicleReachableLocations");
-		return movementActions;
+	case TRIAD_AIR:
+		{
+			reachableLocations = getAirVehicleReachableLocations(vehicleTile, movementAllowance, ignoreVehicles);
+		}
+		break;
+	case TRIAD_SEA:
+		{
+			MovementType movementType = getUnitMovementType(factionId, unitId);
+			reachableLocations = getSeaVehicleReachableLocations(movementType, vehicleTile, movementAllowance, ignoreVehicles);
+		}
+		break;
+	case TRIAD_LAND:
+		{
+			ExtendedMovementType extendedMovementType = getUnitExtendedMovementType(factionId, unitId);
+			int speed1 = getUnitSpeed(factionId, unitId) == 1 ? 1 : 0;
+			reachableLocations = getLandVehicleReachableLocations(extendedMovementType, speed1, vehicleTile, movementAllowance, ignoreVehicles);
+		}
+		break;
 	}
+	
+	Profiling::stop("- getVehicleReachableLocations");
+	return reachableLocations;
+	
+}
+
+robin_hood::unordered_flat_map<int, int> getAirVehicleReachableLocations(MAP *origin, int movementAllowance, bool ignoreVehicles)
+{
+	int originIndex = origin - *MapTiles;
+	
+	ReachSearch reachSearch;
 	
 	// explore paths
 	
-	robin_hood::unordered_flat_map<MAP *, int> movementCosts;
-	movementCosts.emplace(vehicleTile, 0);
-	robin_hood::unordered_flat_set<MAP *> processingTiles;
-	processingTiles.emplace(vehicleTile);
+	reachSearch.set(originIndex, movementAllowance);
 	
-	while (processingTiles.size() > 0)
+	for (int currentMovementAllowance = movementAllowance; currentMovementAllowance > 0; currentMovementAllowance--)
 	{
-		robin_hood::unordered_flat_set<MAP *> newProcessingTiles;
+		if (reachSearch.layers.find(currentMovementAllowance) == reachSearch.layers.end())
+			continue;
 		
-		for (MAP *tile : processingTiles)
+		for (int currentTileIndex : reachSearch.layers.at(currentMovementAllowance))
 		{
-			int tileX = getX(tile);
-			int tileY = getY(tile);
-			int procesingTileMovementCost = movementCosts.at(tile);
-			int movementAllowance = initialMovementAllowance - procesingTileMovementCost;
-			
-			// stop exploring condition
-			// no more moves to go to adjacent tile
-			
-			if (movementAllowance <= 0)
-				continue;
+			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
 			
 			// iterate adjacent tiles
 			
-			for (MAP *adjacentTile : getAdjacentTiles(tile))
+			for (Adjacent const &adjacent : currentTileInfo.adjacents)
 			{
-				int adjacentTileX = getX(adjacentTile);
-				int adjacentTileY = getY(adjacentTile);
-				
-				// movement surface restrictions
-				
-				switch (triad)
-				{
-				case TRIAD_SEA:
-					if (!(is_ocean(adjacentTile) || isFriendlyBaseAt(tile, factionId)))
-						continue;
-					break;
-				case TRIAD_LAND:
-					if (is_ocean(adjacentTile))
-						continue;
-					break;
-				}
+				int adjacentTileIndex = adjacent.tileInfo->index;
 				
 				// not blocked
 				
-				if (!ignoreVehicles && isBlocked(factionId, adjacentTile))
+				if (!ignoreVehicles && adjacent.tileInfo->blocked)
 					continue;
 				
-				// not zoc
+				// hexCost
 				
-				if (!ignoreVehicles && isZocAffectedVehicle(vehicleId) && isZoc(factionId, tile, adjacentTile))
-					continue;
+				int hexCost = Rules->move_rate_roads;
 				
-				// compute hex cost
+				// movementAllowance
 				
-				int hexCost = mod_hex_cost(unitId, factionId, tileX, tileY, adjacentTileX, adjacentTileY, speed1);
+				int adjacentTileMovementAllowance = currentMovementAllowance - hexCost;
 				
-				// allowed step
+				// update value
 				
-				if (hexCost == -1)
-					continue;
-				
-				// allowed move
-				
-				if (!isVehicleAllowedMove(vehicleId, tile, adjacentTile))
-					continue;
-				
-				// hovertank ignores rough terrain
-				
-				if (unit->chassis_id == CHS_HOVERTANK)
-				{
-					hexCost = std::min(Rules->move_rate_roads, hexCost);
-				}
-				
-				// movement cost
-				
-				int adjacentTileMovementCost = procesingTileMovementCost + hexCost;
-				
-				// wounded vehicle stepping on monolith loses all its movement points
-				
-				if (map_has_item(adjacentTile, BIT_MONOLITH) && vehicle->damage_taken > 0)
-				{
-					adjacentTileMovementCost = initialMovementAllowance;
-				}
-				
-				// update best value
-				
-				if (movementCosts.count(adjacentTile) == 0)
-				{
-					movementCosts.emplace(adjacentTile, adjacentTileMovementCost);
-					newProcessingTiles.emplace(adjacentTile);
-				}
-				else if (adjacentTileMovementCost < movementCosts.at(adjacentTile))
-				{
-					movementCosts.at(adjacentTile) = adjacentTileMovementCost;
-					newProcessingTiles.emplace(adjacentTile);
-				}
+				reachSearch.set(adjacentTileIndex, adjacentTileMovementAllowance);
 				
 			}
 			
 		}
 		
-		processingTiles.clear();
-		processingTiles.swap(newProcessingTiles);
-		
 	}
 	
-	for (robin_hood::pair<MAP *, int> &movementCostEntry : movementCosts)
-	{
-		MAP *tile = movementCostEntry.first;
-		int movementCost = movementCostEntry.second;
-		int movementAllowance = initialMovementAllowance - movementCost;
-		
-		movementActions.push_back({tile, movementAllowance});
-		
-	}
-	
-	std::sort(movementActions.begin(), movementActions.end(), compareMoveActions);
-	
-	Profiling::stop("| getVehicleReachableLocations");
-	return movementActions;
+	return reachSearch.values;
 	
 }
 
+robin_hood::unordered_flat_map<int, int> getSeaVehicleReachableLocations(MovementType movementType, MAP *origin, int movementAllowance, bool ignoreVehicles)
+{
+	int originIndex = origin - *MapTiles;
+	
+	ReachSearch reachSearch;
+	
+	// explore paths
+	
+	reachSearch.set(originIndex, movementAllowance);
+	
+	for (int currentMovementAllowance = movementAllowance; currentMovementAllowance > 0; currentMovementAllowance--)
+	{
+		if (reachSearch.layers.find(currentMovementAllowance) == reachSearch.layers.end())
+			continue;
+		
+		for (int currentTileIndex : reachSearch.layers.at(currentMovementAllowance))
+		{
+			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
+			
+			// iterate adjacent tiles
+			
+			for (Adjacent const &adjacent : currentTileInfo.adjacents)
+			{
+				int adjacentTileIndex = adjacent.tileInfo->index;
+				
+				// not blocked
+				
+				if (!ignoreVehicles && adjacent.tileInfo->blocked)
+					continue;
+				
+				// hexCost
+				
+				int hexCost = currentTileInfo.hexCosts.at(movementType).at(adjacent.angle);
+				if (hexCost == -1)
+					continue;
+				
+				// movementAllowance
+				
+				int adjacentTileMovementAllowance = currentMovementAllowance - hexCost;
+				
+				// update value
+				
+				reachSearch.set(adjacentTileIndex, adjacentTileMovementAllowance);
+				
+			}
+			
+		}
+		
+	}
+	
+	return reachSearch.values;
+	
+}
+
+robin_hood::unordered_flat_map<int, int> getLandVehicleReachableLocations(ExtendedMovementType extendedMovementType, int speed1, MAP *origin, int movementAllowance, bool ignoreVehicles)
+{
+	int originIndex = origin - *MapTiles;
+	
+	ReachSearch reachSearch;
+	
+	// explore paths
+	
+	reachSearch.set(originIndex, movementAllowance);
+	
+	for (int currentMovementAllowance = movementAllowance; currentMovementAllowance > 0; currentMovementAllowance--)
+	{
+		if (reachSearch.layers.find(currentMovementAllowance) == reachSearch.layers.end())
+			continue;
+		
+		for (int currentTileIndex : reachSearch.layers.at(currentMovementAllowance))
+		{
+			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
+			
+			// iterate adjacent tiles
+			
+			for (Adjacent const &adjacent : currentTileInfo.adjacents)
+			{
+				int adjacentTileIndex = adjacent.tileInfo->index;
+				
+				// not blocked
+				
+				if (!ignoreVehicles && adjacent.tileInfo->blocked)
+					continue;
+				
+				// hexCost
+				
+				int hexCost = currentTileInfo.extendedHexCosts.at(extendedMovementType).at(speed1).at(adjacent.angle);
+				if (hexCost == -1)
+					continue;
+				
+				// movementAllowance
+				
+				int adjacentTileMovementAllowance = currentMovementAllowance - hexCost;
+				
+				// update value
+				
+				reachSearch.set(adjacentTileIndex, adjacentTileMovementAllowance);
+				
+			}
+			
+		}
+		
+	}
+	
+	return reachSearch.values;
+	
+}
+
+///*
+//Returns locations vehicle can reach in one turn and corresponding movement allowance left when arriving there.
+//AI vehicles subtract current moves spent as they are currently moving.
+//*/
+//robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles)
+//{
+//	Profiling::start("- getVehicleReachableLocations");
+//	
+//	VEH *vehicle = getVehicle(vehicleId);
+//	int factionId = vehicle->faction_id;
+//	int unitId = vehicle->unit_id;
+//	int initialMovementAllowance = getVehicleMoveRate(vehicleId) - (vehicle->faction_id == aiFactionId ? vehicle->moves_spent : 0);
+//	UNIT *unit = getUnit(vehicle->unit_id);
+//	int triad = unit->triad();
+//	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+//	int vehicleTileIndex = vehicleTile - *MapTiles;
+//	int speed1 = unit->speed() == 1 ? 1 : 0;
+//	bool zocAffectedVehicle = isZocAffectedVehicle(vehicleId);
+//	
+//	switch (unit->triad())
+//	{
+//	case TRIAD_AIR:
+//		getAirVehicleReachableLocations(vehicleTile, initialMovementAllowance, ignoreVehicles);
+//		Profiling::stop("- getVehicleReachableLocations");
+//		return REACHABLE_LOCATIONS;
+//		break;
+//	case TRIAD_SEA:
+//		MovementType movementType = getUnitMovementType(factionId, unitId);
+//		getSeaVehicleReachableLocations(movementType, vehicleTile, initialMovementAllowance, ignoreVehicles);
+//		Profiling::stop("- getVehicleReachableLocations");
+//		return REACHABLE_LOCATIONS;
+//		break;
+//	}
+//	
+//	REACHABLE_LOCATIONS.clear();
+//	
+//	// land vehicle on transport cannot move
+//	
+//	if (isLandVehicleOnTransport(vehicleId))
+//	{
+//		Profiling::stop("- getVehicleReachableLocations");
+//		return REACHABLE_LOCATIONS;
+//	}
+//	
+//	// explore paths
+//	
+//	robin_hood::unordered_flat_set<int> reachedLocations;
+//	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> movementCosts;
+//	
+//	reachedLocations.insert(vehicleTileIndex);
+//	movementCosts[0].insert(vehicleTileIndex);
+//	
+//	for (int currentMovementCost = 0; currentMovementCost <= initialMovementAllowance; currentMovementCost++)
+//	{
+//		if (movementCosts.find(currentMovementCost) == movementCosts.end())
+//			continue;
+//		
+//		robin_hood::unordered_flat_set<int> &movementCostTileIndexes = movementCosts.at(currentMovementCost);
+//		
+//		// remove already reached locations
+//		
+//		for (robin_hood::unordered_flat_set<int>::iterator movementCostTileIndexIterator = movementCostTileIndexes.begin(); movementCostTileIndexIterator != movementCostTileIndexes.end(); )
+//		{
+//			if (reachedLocations.find(*movementCostTileIndexIterator) != reachedLocations.end())
+//			{
+//				movementCostTileIndexIterator = movementCostTileIndexes.erase(movementCostTileIndexIterator);
+//			}
+//			else
+//			{
+//				movementCostTileIndexIterator++;
+//			}
+//		}
+//		
+//		// iterate loctions
+//		
+//		for (int currentTileIndex : movementCostTileIndexes)
+//		{
+//			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
+//			
+//			int currentTileX = getX(currentTileIndex);
+//			int currentTileY = getY(currentTileIndex);
+//			
+//			// iterate adjacent tiles
+//			
+//			for (Adjacent const &adjacent : currentTileInfo.adjacents)
+//			{
+//				int adjacentTileIndex = adjacent.tileInfo->index;
+//				MAP *adjacentTile = adjacent.tileInfo->tile;
+//				int adjacentTileX = getX(adjacentTileIndex);
+//				int adjacentTileY = getY(adjacentTileIndex);
+//				
+//				// not yet reached
+//				
+//				if (reachedLocations.find(adjacentTileIndex) != reachedLocations.end())
+//					continue;
+//				
+//				// movement surface restrictions
+//				
+//				switch (triad)
+//				{
+//				case TRIAD_SEA:
+//					if (!(adjacent.tileInfo->ocean || isFriendlyBaseAt(adjacent.tileInfo->tile, factionId)))
+//						continue;
+//					break;
+//				case TRIAD_LAND:
+//					if (!adjacent.tileInfo->land)
+//						continue;
+//					break;
+//				}
+//				
+//				// not blocked
+//				
+//				if (!ignoreVehicles && adjacent.tileInfo->blocked)
+//					continue;
+//				
+//				// not zoc
+//				
+//				if (!ignoreVehicles && zocAffectedVehicle && isZoc(factionId, currentTileInfo.tile, adjacentTile))
+//					continue;
+//				
+//				int adjacentTileMovementCost;
+//				if (triad != TRIAD_AIR && map_has_item(adjacentTile, BIT_MONOLITH) && vehicle->damage_taken > 0)
+//				{
+//					// wounded vehicle stepping on monolith loses all its movement points
+//					adjacentTileMovementCost = initialMovementAllowance;
+//				}
+//				else
+//				{
+//					// compute hex cost
+//					
+//	//				Profiling::start("- getVehicleReachableLocations - hexCost");
+//					int hexCost = getHexCost(unitId, factionId, currentTileX, currentTileY, adjacentTileX, adjacentTileY, speed1);
+//	//				int hexCost = currentTileInfo.extendedHexCosts.at(extendedMovementType).at(speed1).at(adjacent.angle);
+//	//				Profiling::stop("- getVehicleReachableLocations - hexCost");
+//					
+//					// allowed step
+//					
+//					if (hexCost == -1)
+//						continue;
+//					
+//					// movement cost
+//					
+//					adjacentTileMovementCost = currentMovementCost + hexCost;
+//					
+//				}
+//				
+//				// update value
+//				
+//				reachedLocations.insert(adjacentTileIndex);
+//				movementCosts[adjacentTileMovementCost].insert(adjacentTileIndex);
+//				
+//			}
+//			
+//		}
+//		
+//	}
+//	
+//	for (robin_hood::pair<int, robin_hood::unordered_flat_set<int>> const &movementCostEntry : movementCosts)
+//	{
+//		int movementCost = movementCostEntry.first;
+//		robin_hood::unordered_flat_set<int> const &tileIndexes = movementCostEntry.second;
+//		
+//		for (int tileIndex : tileIndexes)
+//		{
+//			MAP *tile = *MapTiles + tileIndex;
+//			int movementAllowance = initialMovementAllowance - movementCost;
+//			
+//			REACHABLE_LOCATIONS.push_back({tile, movementAllowance});
+//			
+//		}
+//		
+//	}
+//	
+//	Profiling::stop("- getVehicleReachableLocations");
+//	return REACHABLE_LOCATIONS;
+//	
+//}
+//
+//robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> getAirVehicleReachableLocations(MAP *origin, int initialMovementAllowance, bool ignoreVehicles)
+//{
+//	int originIndex = origin - *MapTiles;
+//	
+//	REACHABLE_LOCATIONS.clear();
+//	
+//	// explore paths
+//	
+//	robin_hood::unordered_flat_map<int, int> movementCosts;
+//	robin_hood::unordered_flat_set<int> openNodes;
+//	robin_hood::unordered_flat_set<int> newOpenNodes;
+//	
+//	movementCosts.insert({originIndex, 0});
+//	openNodes.insert(originIndex);
+//	
+//	while (openNodes.size() > 0)
+//	{
+//		for (int currentTileIndex : openNodes)
+//		{
+//			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
+//			
+//			int currentTileMovementCost = movementCosts.at(currentTileIndex);
+//			int currentTileMovementAllowance = initialMovementAllowance - currentTileMovementCost;
+//			
+//			// stop exploring condition
+//			// no more moves to go to adjacent tile
+//			
+//			if (currentTileMovementAllowance <= 0)
+//				continue;
+//			
+//			// iterate adjacent tiles
+//			
+//			for (Adjacent const &adjacent : currentTileInfo.adjacents)
+//			{
+//				int adjacentTileIndex = adjacent.tileInfo->index;
+//				
+//				// not yet populated
+//				
+//				if (movementCosts.find(adjacentTileIndex) != movementCosts.end())
+//					continue;
+//				
+//				// not blocked
+//				
+//				if (!ignoreVehicles && adjacent.tileInfo->blocked)
+//					continue;
+//				
+//				// movement cost
+//				
+//				int adjacentTileMovementCost = currentTileMovementCost + Rules->move_rate_roads;
+//				
+//				// update value
+//				
+//				movementCosts.insert({adjacentTileIndex, adjacentTileMovementCost});
+//				newOpenNodes.insert(adjacentTileIndex);
+//				
+//			}
+//			
+//		}
+//		
+//		openNodes.clear();
+//		openNodes.swap(newOpenNodes);
+//		
+//	}
+//	
+//	for (robin_hood::pair<int, int> &movementCostEntry : movementCosts)
+//	{
+//		int tileIndex = movementCostEntry.first;
+//		int movementCost = movementCostEntry.second;
+//		
+//		MAP *tile = *MapTiles + tileIndex;
+//		int movementAllowance = initialMovementAllowance - movementCost;
+//		
+//		REACHABLE_LOCATIONS.push_back({tile, movementAllowance});
+//		
+//	}
+//	
+//	return REACHABLE_LOCATIONS;
+//	
+//}
+//
+//ArrayVector<MoveAction, MAX_REACHABLE_LOCATION_COUNT> &getSeaVehicleReachableLocations(MovementType movementType, MAP *origin, int initialMovementAllowance, bool ignoreVehicles)
+//{
+//	int originIndex = origin - *MapTiles;
+//	
+//	REACHABLE_LOCATIONS.clear();
+//	
+//	// explore paths
+//	
+//	robin_hood::unordered_flat_map<int, int> movementCosts;
+//	robin_hood::unordered_flat_set<int> openNodes;
+//	robin_hood::unordered_flat_set<int> newOpenNodes;
+//	
+//	movementCosts.insert({originIndex, 0});
+//	openNodes.insert(originIndex);
+//	
+//	while (openNodes.size() > 0)
+//	{
+//		for (int currentTileIndex : openNodes)
+//		{
+//			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
+//			
+//			int currentTileMovementCost = movementCosts.at(currentTileIndex);
+//			int currentTileMovementAllowance = initialMovementAllowance - currentTileMovementCost;
+//			
+//			// stop exploring condition
+//			// no more moves to go to adjacent tile
+//			
+//			if (currentTileMovementAllowance <= 0)
+//				continue;
+//			
+//			// iterate adjacent tiles
+//			
+//			for (Adjacent const &adjacent : currentTileInfo.adjacents)
+//			{
+//				int adjacentTileIndex = adjacent.tileInfo->index;
+//				int hexCost = currentTileInfo.hexCosts.at(movementType).at(adjacent.angle);
+//				
+//				if (hexCost == -1)
+//					continue;
+//				
+//				// not blocked
+//				
+//				if (!ignoreVehicles && adjacent.tileInfo->blocked)
+//					continue;
+//				
+//				// movement cost
+//				
+//				int adjacentTileMovementCost = currentTileMovementCost + Rules->move_rate_roads;
+//				
+//				// update best value
+//				
+//				if (movementCosts.find(adjacentTileIndex) == movementCosts.end())
+//				{
+//					movementCosts.insert({adjacentTileIndex, adjacentTileMovementCost});
+//					newOpenNodes.insert(adjacentTileIndex);
+//				}
+//				else if (adjacentTileMovementCost < movementCosts.at(adjacentTileIndex))
+//				{
+//					movementCosts.at(adjacentTileIndex) = adjacentTileMovementCost;
+//					newOpenNodes.insert(adjacentTileIndex);
+//				}
+//				
+//			}
+//			
+//		}
+//		
+//		openNodes.clear();
+//		openNodes.swap(newOpenNodes);
+//		
+//	}
+//	
+//	for (robin_hood::pair<int, int> &movementCostEntry : movementCosts)
+//	{
+//		int tileIndex = movementCostEntry.first;
+//		int movementCost = movementCostEntry.second;
+//		
+//		MAP *tile = *MapTiles + tileIndex;
+//		int movementAllowance = initialMovementAllowance - movementCost;
+//		
+//		REACHABLE_LOCATIONS.push_back({tile, movementAllowance});
+//		
+//	}
+//	
+//	return REACHABLE_LOCATIONS;
+//	
+//}
+//
+//robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles)
+//{
+//	Profiling::start("- getVehicleReachableLocations");
+//	
+//	VEH *vehicle = getVehicle(vehicleId);
+//	int factionId = vehicle->faction_id;
+//	int unitId = vehicle->unit_id;
+//	int initialMovementAllowance = getVehicleMoveRate(vehicleId) - (vehicle->faction_id == aiFactionId ? vehicle->moves_spent : 0);
+//	UNIT *unit = getUnit(vehicle->unit_id);
+//	int triad = unit->triad();
+//	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+//	int vehicleTileIndex = vehicleTile - *MapTiles;
+//	int speed1 = unit->speed() == 1 ? 1 : 0;
+//	bool zocAffectedVehicle = isZocAffectedVehicle(vehicleId);
+//	
+//	switch (unit->triad())
+//	{
+//	case TRIAD_AIR:
+//		getAirVehicleReachableLocations(vehicleTile, initialMovementAllowance, ignoreVehicles);
+//		Profiling::stop("- getVehicleReachableLocations");
+//		return REACHABLE_LOCATIONS;
+//		break;
+//	case TRIAD_SEA:
+//		MovementType movementType = getUnitMovementType(factionId, unitId);
+//		getSeaVehicleReachableLocations(movementType, vehicleTile, initialMovementAllowance, ignoreVehicles);
+//		Profiling::stop("- getVehicleReachableLocations");
+//		return REACHABLE_LOCATIONS;
+//		break;
+//	}
+//	
+//	REACHABLE_LOCATIONS.clear();
+//	
+//	// land vehicle on transport cannot move
+//	
+//	if (isLandVehicleOnTransport(vehicleId))
+//	{
+//		Profiling::stop("- getVehicleReachableLocations");
+//		return REACHABLE_LOCATIONS;
+//	}
+//	
+//	// explore paths
+//	
+//	robin_hood::unordered_flat_set<int> reachedLocations;
+//	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> movementCosts;
+//	
+//	reachedLocations.insert(vehicleTileIndex);
+//	movementCosts[0].insert(vehicleTileIndex);
+//	
+//	for (int currentMovementCost = 0; currentMovementCost <= initialMovementAllowance; currentMovementCost++)
+//	{
+//		if (movementCosts.find(currentMovementCost) == movementCosts.end())
+//			continue;
+//		
+//		robin_hood::unordered_flat_set<int> &movementCostTileIndexes = movementCosts.at(currentMovementCost);
+//		
+//		// remove already reached locations
+//		
+//		for (robin_hood::unordered_flat_set<int>::iterator movementCostTileIndexIterator = movementCostTileIndexes.begin(); movementCostTileIndexIterator != movementCostTileIndexes.end(); )
+//		{
+//			if (reachedLocations.find(*movementCostTileIndexIterator) != reachedLocations.end())
+//			{
+//				movementCostTileIndexIterator = movementCostTileIndexes.erase(movementCostTileIndexIterator);
+//			}
+//			else
+//			{
+//				movementCostTileIndexIterator++;
+//			}
+//		}
+//		
+//		// iterate loctions
+//		
+//		for (int currentTileIndex : movementCostTileIndexes)
+//		{
+//			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
+//			
+//			int currentTileX = getX(currentTileIndex);
+//			int currentTileY = getY(currentTileIndex);
+//			
+//			// iterate adjacent tiles
+//			
+//			for (Adjacent const &adjacent : currentTileInfo.adjacents)
+//			{
+//				int adjacentTileIndex = adjacent.tileInfo->index;
+//				MAP *adjacentTile = adjacent.tileInfo->tile;
+//				int adjacentTileX = getX(adjacentTileIndex);
+//				int adjacentTileY = getY(adjacentTileIndex);
+//				
+//				// not yet reached
+//				
+//				if (reachedLocations.find(adjacentTileIndex) != reachedLocations.end())
+//					continue;
+//				
+//				// movement surface restrictions
+//				
+//				switch (triad)
+//				{
+//				case TRIAD_SEA:
+//					if (!(adjacent.tileInfo->ocean || isFriendlyBaseAt(adjacent.tileInfo->tile, factionId)))
+//						continue;
+//					break;
+//				case TRIAD_LAND:
+//					if (!adjacent.tileInfo->land)
+//						continue;
+//					break;
+//				}
+//				
+//				// not blocked
+//				
+//				if (!ignoreVehicles && adjacent.tileInfo->blocked)
+//					continue;
+//				
+//				// not zoc
+//				
+//				if (!ignoreVehicles && zocAffectedVehicle && isZoc(factionId, currentTileInfo.tile, adjacentTile))
+//					continue;
+//				
+//				int adjacentTileMovementCost;
+//				if (triad != TRIAD_AIR && map_has_item(adjacentTile, BIT_MONOLITH) && vehicle->damage_taken > 0)
+//				{
+//					// wounded vehicle stepping on monolith loses all its movement points
+//					adjacentTileMovementCost = initialMovementAllowance;
+//				}
+//				else
+//				{
+//					// compute hex cost
+//					
+//	//				Profiling::start("- getVehicleReachableLocations - hexCost");
+//					int hexCost = getHexCost(unitId, factionId, currentTileX, currentTileY, adjacentTileX, adjacentTileY, speed1);
+//	//				int hexCost = currentTileInfo.extendedHexCosts.at(extendedMovementType).at(speed1).at(adjacent.angle);
+//	//				Profiling::stop("- getVehicleReachableLocations - hexCost");
+//					
+//					// allowed step
+//					
+//					if (hexCost == -1)
+//						continue;
+//					
+//					// movement cost
+//					
+//					adjacentTileMovementCost = currentMovementCost + hexCost;
+//					
+//				}
+//				
+//				// update value
+//				
+//				reachedLocations.insert(adjacentTileIndex);
+//				movementCosts[adjacentTileMovementCost].insert(adjacentTileIndex);
+//				
+//			}
+//			
+//		}
+//		
+//	}
+//	
+//	for (robin_hood::pair<int, robin_hood::unordered_flat_set<int>> const &movementCostEntry : movementCosts)
+//	{
+//		int movementCost = movementCostEntry.first;
+//		robin_hood::unordered_flat_set<int> const &tileIndexes = movementCostEntry.second;
+//		
+//		for (int tileIndex : tileIndexes)
+//		{
+//			MAP *tile = *MapTiles + tileIndex;
+//			int movementAllowance = initialMovementAllowance - movementCost;
+//			
+//			REACHABLE_LOCATIONS.push_back({tile, movementAllowance});
+//			
+//		}
+//		
+//	}
+//	
+//	Profiling::stop("- getVehicleReachableLocations");
+//	return REACHABLE_LOCATIONS;
+//	
+//}
+//
 /**
 Searches for locations vehicle can melee attack at.
 */
@@ -6714,10 +7121,12 @@ std::vector<AttackAction> getMeleeAttackActions(int vehicleId)
 	
 	// explore reachable locations
 	
-	for (MoveAction const &movementAction : getVehicleReachableLocations(vehicleId))
+	Profiling::start("- getMeleeAttackActions - getVehicleReachableLocations");
+	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId))
 	{
-		MAP *tile = movementAction.tile;
-		int movementAllowance = movementAction.movementAllowance;
+		int tileIndex = reachableLocation.first;
+		int movementAllowance = reachableLocation.second;
+		MAP *tile = *MapTiles + tileIndex;
 		double hastyCoefficient = std::min(1.0, (double)movementAllowance / (double)Rules->move_rate_roads);
 		
 		// cannot attack without movementAllowance
@@ -6729,7 +7138,7 @@ std::vector<AttackAction> getMeleeAttackActions(int vehicleId)
 		
 		for (Adjacent const &adjacent : aiData.getTileInfo(tile).adjacents)
 		{
-			MAP *targetTile = adjacent.tile;
+			MAP *targetTile = adjacent.tileInfo->tile;
 			
 			// can melee attack
 			
@@ -6743,51 +7152,7 @@ std::vector<AttackAction> getMeleeAttackActions(int vehicleId)
 		}
 		
 	}
-	
-	return attackActions;
-	
-}
-
-/**
-Searches for locations vehicle can melee attack at.
-*/
-std::vector<AttackAction> getMeleeAttackTargets(int vehicleId)
-{
-	std::vector<AttackAction> attackActions;
-	
-	// melee vehicle
-	
-	if (!isMeleeVehicle(vehicleId))
-		return attackActions;
-	
-	robin_hood::unordered_flat_map<MAP *, AttackAction *> attackActionMap;
-	
-	// explore attack actions
-	
-	for (AttackAction attackAction : getMeleeAttackActions(vehicleId))
-	{
-		MAP *position = attackAction.position;
-		MAP *target = attackAction.target;
-		double hastyCoefficient = attackAction.hastyCoefficient;
-		
-		if (attackActionMap.find(target) == attackActionMap.end())
-		{
-			attackActions.push_back({position, target, hastyCoefficient});
-			attackActionMap.insert({target, &(attackActions.back())});
-		}
-		else
-		{
-			AttackAction *targetAttackAction = attackActionMap.at(target);
-			
-			if (hastyCoefficient < targetAttackAction->hastyCoefficient)
-			{
-				targetAttackAction->position = position;
-				targetAttackAction->hastyCoefficient = hastyCoefficient;
-			}
-			
-		}
-		
-	}
+	Profiling::stop("- getMeleeAttackActions - getVehicleReachableLocations");
 	
 	return attackActions;
 	
@@ -6807,10 +7172,13 @@ std::vector<AttackAction> getArtilleryAttackActions(int vehicleId)
 	
 	// explore reachable locations
 	
-	for (MoveAction const &moveAction : getVehicleReachableLocations(vehicleId))
+	Profiling::start("- getArtilleryAttackActions - getVehicleReachableLocations");
+	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId))
 	{
-		MAP *tile = moveAction.tile;
-		int movementAllowance = moveAction.movementAllowance;
+		int tileIndex = reachableLocation.first;
+		int movementAllowance = reachableLocation.second;
+		MAP *tile = *MapTiles + tileIndex;
+		TileInfo &tileInfo = aiData.getTileInfo(tile);
 		
 		// cannot attack without movementAllowance
 		
@@ -6819,55 +7187,13 @@ std::vector<AttackAction> getArtilleryAttackActions(int vehicleId)
 		
 		// explore artillery tiles
 		
-		for (MAP *targetTile : getRangeTiles(tile, Rules->artillery_max_rng, false))
+		for (TileInfo const *targetTileInfo : tileInfo.range2NoCenterTileInfos)
 		{
-			attackActions.push_back({tile, targetTile, 1.0});
+			attackActions.push_back({tile, targetTileInfo->tile, 1.0});
 		}
 		
 	}
-	
-	return attackActions;
-	
-}
-
-/**
-Searches for locations vehicle can artillery attack at.
-*/
-std::vector<AttackAction> getArtilleryAttackTargets(int vehicleId)
-{
-	std::vector<AttackAction> attackActions;
-	
-	// artillery vehicle
-	
-	if (!isArtilleryVehicle(vehicleId))
-		return attackActions;
-	
-	robin_hood::unordered_flat_map<MAP *, AttackAction *> attackActionMap;
-	
-	// explore attack actions
-	
-	for (AttackAction attackAction : getArtilleryAttackActions(vehicleId))
-	{
-		MAP *position = attackAction.position;
-		MAP *target = attackAction.target;
-		double hastyCoefficient = attackAction.hastyCoefficient;
-		
-		if (attackActionMap.find(target) == attackActionMap.end())
-		{
-			attackActions.push_back({position, target, hastyCoefficient});
-			attackActionMap.insert({target, &(attackActions.back())});
-		}
-		else
-		{
-			if (hastyCoefficient < attackActionMap.at(target)->hastyCoefficient)
-			{
-				attackActionMap.at(target)->position = position;
-				attackActionMap.at(target)->hastyCoefficient = hastyCoefficient;
-			}
-			
-		}
-		
-	}
+	Profiling::stop("- getArtilleryAttackActions - getVehicleReachableLocations");
 	
 	return attackActions;
 	
@@ -7207,6 +7533,7 @@ MAP *getVehicleArtilleryAttackPosition(int vehicleId, MAP *target)
 	int factionId = vehicle->faction_id;
 	int triad = vehicle->triad();
 	bool native = isNativeVehicle(vehicleId);
+	TileInfo &targetTileInfo = aiData.getTileInfo(target);
 
 	MAP *closestAttackPosition = nullptr;
 	int closestAttackPositionRange = INT_MAX;
@@ -7217,8 +7544,10 @@ MAP *getVehicleArtilleryAttackPosition(int vehicleId, MAP *target)
 	if (triad == TRIAD_AIR)
 		return nullptr;
 	
-	for (MAP *tile : getRangeTiles(target, Rules->artillery_max_rng, false))
+	for (TileInfo const *rangeTileInfo : targetTileInfo.range2NoCenterTileInfos)
 	{
+		MAP *tile = rangeTileInfo->tile;
+		
 		// should be not blocked
 		
 		if (isBlocked(tile))
@@ -7941,6 +8270,7 @@ bool isVehicleCanArtilleryAttackTile(int vehicleId, MAP *target)
 	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	int triad = vehicle->triad();
+	TileInfo &targetTileInfo = aiData.getTileInfo(target);
 	
 	// air unit cannot be artillery
 	
@@ -7968,26 +8298,32 @@ bool isVehicleCanArtilleryAttackTile(int vehicleId, MAP *target)
 		
 	case TRIAD_SEA:
 		
-		for (MAP *rangeTile : getRangeTiles(target, 2, false))
+		for (TileInfo const *rangeTileInfo : targetTileInfo.range2NoCenterTileInfos)
 		{
+			MAP *rangeTile = rangeTileInfo->tile;
+			
 			if (isSameSeaCluster(vehicleTile, rangeTile))
 			{
 				allowed = true;
 				break;
 			}
+			
 		}
 		
 		break;
 		
 	case TRIAD_LAND:
 		
-		for (MAP *rangeTile : getRangeTiles(target, 2, false))
+		for (TileInfo const *rangeTileInfo : targetTileInfo.range2NoCenterTileInfos)
 		{
+			MAP *rangeTile = rangeTileInfo->tile;
+			
 			if (isSameLandTransportedCluster(vehicleTile, rangeTile))
 			{
 				allowed = true;
 				break;
 			}
+			
 		}
 		
 		break;
@@ -8856,26 +9192,34 @@ bool isUnitCanArtilleryAttackUnitFromBase(int attackerUnitId, int defenderUnitId
 
 MapDoubleValue getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 {
+	TileInfo &targetTileInfo = aiData.getTileInfo(target);
+	
 	// find closest attack position
 	
 	MapDoubleValue closestAttackPosition(nullptr, INF);
 	
-	for (MAP *tile : getAdjacentTiles(target))
+	for (Adjacent const &positionAdjacent : targetTileInfo.adjacents)
 	{
+		MAP *positionTile = positionAdjacent.tileInfo->tile;
+		
+		// reachable
+		
+		if (!isUnitDestinationReachable(unitId, origin, positionTile))
+			continue;
+		
 		// not blocked
 		
-		if (isBlocked(tile))
+		if (positionAdjacent.tileInfo->blocked)
 			continue;
 		
 		// can melee attack
 		
-		if (!isUnitCanMeleeAttackFromTileToTile(unitId, tile, target))
+		if (!isUnitCanMeleeAttackFromTileToTile(unitId, positionTile, target))
 			continue;
 		
 		// travelTime
 		
-		double travelTime = getUnitATravelTime(unitId, origin, tile);
-		
+		double travelTime = getUnitApproachTime(aiFactionId, unitId, origin, positionTile);
 		if (travelTime == INF)
 			continue;
 		
@@ -8883,7 +9227,7 @@ MapDoubleValue getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 		
 		if (travelTime < closestAttackPosition.value)
 		{
-			closestAttackPosition.tile = tile;
+			closestAttackPosition.tile = positionTile;
 			closestAttackPosition.value = travelTime;
 		}
 		
@@ -8900,26 +9244,34 @@ MapDoubleValue getMeleeAttackPosition(int vehicleId, MAP *target)
 
 MapDoubleValue getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target)
 {
+	TileInfo &targetTileInfo = aiData.getTileInfo(target);
+	
 	// find closest attack position
 	
 	MapDoubleValue closestAttackPosition(nullptr, INF);
 	
-	for (MAP *tile : getRangeTiles(target, Rules->artillery_max_rng, false))
+	for (TileInfo *positionTileInfo : targetTileInfo.range2NoCenterTileInfos)
 	{
+		MAP *positionTile = positionTileInfo->tile;
+		
+		// reachable
+		
+		if (!isUnitDestinationReachable(unitId, origin, positionTile))
+			continue;
+		
 		// not blocked
 		
-		if (isBlocked(tile))
+		if (positionTileInfo->blocked)
 			continue;
 		
 		// can artillery attack
 		
-		if (!isUnitCanArtilleryAttackFromTile(unitId, tile))
+		if (!isUnitCanArtilleryAttackFromTile(unitId, positionTile))
 			continue;
 		
 		// travelTime
 		
-		double travelTime = getUnitATravelTime(unitId, origin, tile);
-		
+		double travelTime = getUnitApproachTime(aiFactionId, unitId, origin, positionTile);
 		if (travelTime == INF)
 			continue;
 		
@@ -8927,7 +9279,7 @@ MapDoubleValue getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target)
 		
 		if (travelTime < closestAttackPosition.value)
 		{
-			closestAttackPosition.tile = tile;
+			closestAttackPosition.tile = positionTile;
 			closestAttackPosition.value = travelTime;
 		}
 		
@@ -9190,6 +9542,253 @@ double getUnitArtilleryOffenseStrengthMultipler(int attackerFactionId, int attac
 	}
 	
 	return attackStrengthMultiplier;
+	
+}
+
+/*
+Computes fast hexCost.
+Ignores special case when unit spends rest of their moves in fungus.
+*/
+int getHexCost(int unitId, int factionId, int x1, int y1, int x2, int y2, int speed1)
+{
+	UNIT *unit = &Units[unitId];
+	MAP* org = mapsq(x1, y1);
+	MAP* dst = mapsq(x2, y2);
+	
+	if (org == NULL || dst == NULL)
+		return -1;
+	
+	// angle
+	
+	int angle;
+	
+	int dx = x2 - x1;
+	if (!map_is_flat())
+	{
+		if (dx > *MapHalfX)
+		{
+			dx -= *MapAreaX;
+		}
+		else if (dx < - *MapHalfX)
+		{
+			dx += *MapAreaX;
+		}
+	}
+	int dy = y2 - y1;
+	
+	switch (dx)
+	{
+	case -2:
+		{
+			switch (dy)
+			{
+			case +0:
+				angle = 5;
+				break;
+			default:
+				return -1;
+			}
+		}
+		break;
+	case -1:
+		{
+			switch (dy)
+			{
+			case -1:
+				angle = 6;
+				break;
+			case +1:
+				angle = 4;
+				break;
+			default:
+				return -1;
+			}
+		}
+		break;
+	case +0:
+		{
+			switch (dy)
+			{
+			case -2:
+				angle = 7;
+				break;
+			case +2:
+				angle = 3;
+				break;
+			default:
+				return -1;
+			}
+		}
+		break;
+	case +1:
+		{
+			switch (dy)
+			{
+			case -1:
+				angle = 0;
+				break;
+			case +2:
+				angle = 2;
+				break;
+			default:
+				return -1;
+			}
+		}
+		break;
+	case +2:
+		{
+			switch (dy)
+			{
+			case +0:
+				angle = 1;
+				break;
+			default:
+				return -1;
+			}
+		}
+		break;
+	default:
+		return -1;
+	}
+    
+	// read cache
+	
+	ExtendedMovementType extendedMovementType = getUnitExtendedMovementType(factionId, unitId);
+	int orgIndex = org - *MapTiles;
+	int cachedHexCost = getCachedHexCost(extendedMovementType, speed1, orgIndex, angle);
+	if (cachedHexCost != -1)
+	{
+		return cachedHexCost;
+	}
+	
+	// compute hexCost
+	
+	int hexCost = -1;
+	
+	switch (unit->triad())
+	{
+	case TRIAD_AIR:
+		return 1 * Rules->move_rate_roads;
+		break;
+	
+	case TRIAD_SEA:
+		{
+			if (!((org->is_sea() || org->is_base()) && (dst->is_sea() || dst->is_base())))
+				return -1;
+			
+			if (dst->is_fungus() && unitId != BSC_ISLE_OF_THE_DEEP && unitId != BSC_SEALURK && !has_project(FAC_XENOEMPATHY_DOME, factionId))
+			{
+				hexCost = 3 * Rules->move_rate_roads;
+			}
+			else
+			{
+				hexCost = 1 * Rules->move_rate_roads;
+			}
+			
+		}
+		break;
+		
+	case TRIAD_LAND:
+		{
+			if (!(org->is_land() && dst->is_land()))
+				return -1;
+			
+			if (factionId != 0 && org->items & (BIT_MAGTUBE | BIT_BASE_IN_TILE) && dst->items & (BIT_MAGTUBE | BIT_BASE_IN_TILE))
+			{
+				hexCost = conf.magtube_movement_rate > 0 ? 1 : 0;
+			}
+			else if (dst->is_fungus() && (unitId == BSC_MIND_WORMS || unitId == BSC_SPORE_LAUNCHER || (factionId >= 0 && has_project(FAC_XENOEMPATHY_DOME, factionId))))
+			{
+				hexCost = conf.magtube_movement_rate > 0 ? conf.road_movement_rate : 1;
+			}
+			else if (factionId != 0 && ((org->items & (BIT_ROAD | BIT_BASE_IN_TILE)) || (org->is_fungus() && has_project(FAC_XENOEMPATHY_DOME, factionId))) && (dst->items & (BIT_ROAD | BIT_BASE_IN_TILE)))
+			{
+				hexCost = conf.magtube_movement_rate > 0 ? conf.road_movement_rate : 1;
+			}
+			else if (factionId != 0 && (org->items & BIT_RIVER) && (dst->items & BIT_RIVER) && x_dist(x1, x2) == 1 && abs(y1 - y2) == 1)
+			{
+				hexCost = conf.magtube_movement_rate > 0 ? conf.road_movement_rate : 1;
+			}
+			else if (unit->chassis_id == CHS_HOVERTANK || has_abil(unitId, ABL_ANTIGRAV_STRUTS))
+			{
+				hexCost = 1 * Rules->move_rate_roads;
+			}
+			else
+			{
+				hexCost = Rules->move_rate_roads;
+				if (dst->is_rocky() && !speed1)
+				{
+					hexCost += Rules->move_rate_roads;
+				}
+				if ((dst->items & BIT_FOREST) && !speed1)
+				{
+					hexCost += Rules->move_rate_roads;
+				}
+				if (factionId != 0 && dst->is_fungus() && (unitId >= MaxProtoFactionNum || unit->offense_value() >= 0))
+				{
+					// ignore special case
+	//				int plan = unit->plan;
+	//				if (plan != PLAN_TERRAFORM && plan != PLAN_ARTIFACT && Factions[factionId].SE_planet <= 0)
+	//				{
+	//					return cost + 2 * Rules->move_rate_roads;
+	//				}
+	//				
+	//				int value = proto_speed(unitId);
+	//				if (cost <= value)
+	//				{
+	//					return value;
+	//				}
+					hexCost += 2 * Rules->move_rate_roads;
+				}
+			}
+			
+		}
+		break;
+		
+	default:
+		return -1;
+		
+	}
+	
+	if (hexCost != -1)
+	{
+		setCachedHexCost(extendedMovementType, speed1, orgIndex, angle, hexCost);
+	}
+	
+	return hexCost;
+	
+}
+
+/**
+Determines number of drones could be quelled by police.
+*/
+int getBasePoliceRequiredPower(int baseId)
+{
+	BASE *base = getBase(baseId);
+	
+	// compute base without specialists
+
+	Profiling::start("- getBasePoliceRequiredPower - computeBase");
+	computeBase(baseId, true);
+	Profiling::stop("- getBasePoliceRequiredPower - computeBase");
+	
+	// get drones currently quelled by police
+	
+	int quelledDrones = *CURRENT_BASE_DRONES_FACILITIES - *CURRENT_BASE_DRONES_POLICE;
+	
+	// get drones left after projects applied
+	
+	int leftDrones = *CURRENT_BASE_DRONES_PROJECTS;
+	
+	// calculate potential number of drones can be quelled with police
+	
+	int requiredPolicePower = quelledDrones + leftDrones - base->talent_total;
+	
+	// restore base
+	
+	aiData.resetBase(baseId);
+	
+	return requiredPolicePower;
 	
 }
 

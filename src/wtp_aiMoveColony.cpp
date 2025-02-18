@@ -350,8 +350,7 @@ void analyzeBasePlacementSites()
 			// estimate it as range
 			// plus transfer cost if different clusters
 			
-			double travelTime = conf.ai_expansion_travel_time_multiplier * getVehicleATravelTime(vehicleId, tile);
-			
+			double travelTime = conf.ai_expansion_travel_time_multiplier * getVehicleTravelTime(vehicleId, tile);
 			if (travelTime == INF)
 				continue;
 			
@@ -419,7 +418,7 @@ void analyzeBasePlacementSites()
 		{
 			MAP *destination = destinations.at(destinationIndex);
 			
-			double travelTime = getVehicleATravelTime(vehicleId, destination);
+			double travelTime = getVehicleTravelTime(vehicleId, destination);
 			travelTimes.at(destinations.size() * vehicleIndex + destinationIndex) = travelTime;
 			
 			debug

@@ -1,3 +1,10 @@
+# Version 352
+
+* Collateral damage value is 10%.
+* Alternative worker placement algorithm is on by default.
+* "The Hunter-Seeker Algorithm has stopped a <other faction> probe team!" message is shown as an information message at the bottom of the screen.
+* Futher AI computation speed optimization.
+
 # Version 351
 
 * Sensor is destructible.

@@ -89,6 +89,8 @@ void moveFormerStrategy()
 
 void setupTerraformingData()
 {
+	Profiling::start("setupTerraformingData", "moveFormerStrategy");
+	
 	FactionInfo &aiFactionInfo = aiData.factionInfos.at(aiFactionId);
 	
 	// cleanup and setup data
@@ -218,6 +220,8 @@ void setupTerraformingData()
 	
 	factionTerraformingInfo.bareSolarScore = getTerraformingResourceScore(solarNutrient, solarMineral, solarEnergy);
 	
+	Profiling::stop("setupTerraformingData");
+	
 }
 
 /**
@@ -225,6 +229,8 @@ Populates global lists before processing faction strategy.
 */
 void populateTerraformingData()
 {
+	Profiling::start("populateTerraformingData", "moveFormerStrategy");
+	
 	debug("populateTerraformingData - %s\n", getMFaction(aiFactionId)->noun_faction);
 	
 	// populate map states
@@ -444,23 +450,23 @@ void populateTerraformingData()
 		
 	}
 	
-	if (DEBUG)
-	{
-		debug("\tavailableTerraformingSites\n");
-		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-		{
-			int x = getX(tile);
-			int y = getY(tile);
-			TileTerraformingInfo &tileTerraformingInfo = getTileTerraformingInfo(getMapTile(x, y));
-			
-			if (!tileTerraformingInfo.availableTerraformingSite)
-				continue;
-			
-			debug("\t\t%s\n", getLocationString(tile).c_str());
-			
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("\tavailableTerraformingSites\n");
+//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//		{
+//			int x = getX(tile);
+//			int y = getY(tile);
+//			TileTerraformingInfo &tileTerraformingInfo = getTileTerraformingInfo(getMapTile(x, y));
+//			
+//			if (!tileTerraformingInfo.availableTerraformingSite)
+//				continue;
+//			
+//			debug("\t\t%s\n", getLocationString(tile).c_str());
+//			
+//		}
+//		
+//	}
 	
 	// populated terraformed tiles and former orders
 	
@@ -664,15 +670,15 @@ void populateTerraformingData()
 		
 	}
 	
-	if (DEBUG)
-	{
-		debug("\tterraformingSites\n");
-		for (MAP *tile : terraformingSites)
-		{
-			debug("\t\t%s ocean=%d\n", getLocationString(tile).c_str(), is_ocean(tile));
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("\tterraformingSites\n");
+//		for (MAP *tile : terraformingSites)
+//		{
+//			debug("\t\t%s ocean=%d\n", getLocationString(tile).c_str(), is_ocean(tile));
+//		}
+//		
+//	}
 	
 	// populate base projected sizes
 	
@@ -746,6 +752,8 @@ void populateTerraformingData()
 		
 	}
 	
+	Profiling::stop("populateTerraformingData");
+	
 }
 
 /*
@@ -753,6 +761,8 @@ Checks and removes redundant orders.
 */
 void cancelRedundantOrders()
 {
+	Profiling::start("cancelRedundantOrders", "moveFormerStrategy");
+	
 	for (int id : aiData.formerVehicleIds)
 	{
 		if (isVehicleTerrafomingOrderCompleted(id))
@@ -762,10 +772,14 @@ void cancelRedundantOrders()
 
 	}
 
+	Profiling::stop("cancelRedundantOrders");
+	
 }
 
 void generateTerraformingRequests()
 {
+	Profiling::start("generateTerraformingRequests", "moveFormerStrategy");
+	
 	// conventional requests
 	
 	debug("CONVENTIONAL\n");
@@ -864,6 +878,8 @@ void generateTerraformingRequests()
 		generateLandBridgeTerraformingRequests();
 	}
 	
+	Profiling::stop("generateTerraformingRequests");
+	
 }
 
 /**
@@ -952,7 +968,6 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	
 	// set projected population
 	
-	int currentPopSize = base->pop_size;
 	base->pop_size = baseTerraformingInfo.projectedPopSize;
 	
 	robin_hood::unordered_flat_set<MAP *> appliedLocations;
@@ -972,7 +987,9 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		
 		// compute base
 		
+		Profiling::start("- generateBaseConventionalTerraformingRequests - computeBase");
 		computeBase(baseId, true);
+		Profiling::stop("- generateBaseConventionalTerraformingRequests - computeBase");
 		
 		// verify all already selected tiles are still worked
 		// stop processing if not
@@ -1013,10 +1030,9 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		restoreTileMapState(tile);
 	}
 	
-	// restore population
+	// restore base
 	
-	base->pop_size = currentPopSize;
-	computeBase(baseId, true);
+	aiData.resetBase(baseId);
 	
 	// record existing significant request locations
 	
@@ -1042,7 +1058,7 @@ void generateLandBridgeTerraformingRequests()
 		int bridgeLandCluster = -1;
 		int bridgeRange = -1;
 		
-		for (MAP *rangeTile : getRangeTiles(tile, 10, false))
+		for (MAP *rangeTile : getRangeTiles(tile, 6, false))
 		{
 			bool rangeTileOcean = is_ocean(rangeTile);
 			int rangeTileLandCluster = getLandCluster(rangeTile);
@@ -1198,30 +1214,34 @@ Sort terraforming requests by score.
 */
 void sortTerraformingRequests()
 {
+	Profiling::start("sortTerraformingRequests", "moveFormerStrategy");
+	
 	debug("sortTerraformingRequests - %s\n", getMFaction(aiFactionId)->noun_faction);
 
 	// sort requests
 
 	std::sort(terraformingRequests.begin(), terraformingRequests.end(), compareTerraformingRequests);
 
-	if (DEBUG)
-	{
-		for (const TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
-		{
-			debug
-			(
-				"\t%s"
-				" %-20s"
-				" %6.2f"
-				"\n"
-				, getLocationString(terraformingRequest.tile).c_str()
-				, terraformingRequest.option->name
-				, terraformingRequest.gain
-			);
-		}
-
-	}
-
+//	if (DEBUG)
+//	{
+//		for (const TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
+//		{
+//			debug
+//			(
+//				"\t%s"
+//				" %-20s"
+//				" %6.2f"
+//				"\n"
+//				, getLocationString(terraformingRequest.tile).c_str()
+//				, terraformingRequest.option->name
+//				, terraformingRequest.gain
+//			);
+//		}
+//		
+//	}
+	
+	Profiling::stop("sortTerraformingRequests");
+	
 }
 
 /*
@@ -1229,6 +1249,8 @@ Removes terraforming requests violating proximity rules.
 */
 void applyProximityRules()
 {
+	Profiling::start("applyProximityRules", "moveFormerStrategy");
+	
 	// apply proximity rules
 
 	for
@@ -1283,6 +1305,8 @@ void applyProximityRules()
 
 	}
 
+	Profiling::stop("applyProximityRules");
+	
 }
 
 /*
@@ -1290,6 +1314,8 @@ Removes terraforming requests in terraformed tiles.
 */
 void removeTerraformedTiles()
 {
+	Profiling::start("removeTerraformedTiles", "moveFormerStrategy");
+	
 	for
 	(
 		std::vector<TERRAFORMING_REQUEST>::iterator terraformingRequestsIterator = terraformingRequests.begin();
@@ -1310,10 +1336,14 @@ void removeTerraformedTiles()
 
 	}
 
+	Profiling::stop("removeTerraformedTiles");
+	
 }
 
 void assignFormerOrders()
 {
+	Profiling::start("assignFormerOrders", "moveFormerStrategy");
+	
 	debug("assignFormerOrders - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	// distribute orders
@@ -1369,7 +1399,9 @@ void assignFormerOrders()
 				
 				// travelTime
 				
-				double travelTime = conf.ai_terraforming_travel_time_multiplier * getVehicleATravelTime(vehicleId, vehicleTile, tile);
+				double travelTime = conf.ai_terraforming_travel_time_multiplier * getVehicleTravelTime(vehicleId, tile);
+				if (travelTime == INF)
+					continue;
 				
 				// for assigned request check if this terraformer is closer
 				
@@ -1515,10 +1547,14 @@ void assignFormerOrders()
 		
 	}
 	
+	Profiling::stop("assignFormerOrders");
+	
 }
 
 void finalizeFormerOrders()
 {
+	Profiling::start("finalizeFormerOrders", "moveFormerStrategy");
+	
 	// iterate former orders
 	
 	for (FORMER_ORDER &formerOrder : formerOrders)
@@ -1542,6 +1578,8 @@ void finalizeFormerOrders()
 		}
 		
 	}
+	
+	Profiling::stop("finalizeFormerOrders");
 	
 }
 
@@ -2237,6 +2275,7 @@ TERRAFORMING_REQUEST calculateSensorTerraformingScore(MAP *tile)
 /**
 Computes base tile improvement surplus effect.
 */
+
 double computeBaseTileImprovementGain(int baseId, MAP *tile, MapState &improvedMapState, bool areaEffect)
 {
 	TileTerraformingInfo &tileTerraformingInfo = getTileTerraformingInfo(tile);
@@ -2255,9 +2294,10 @@ double computeBaseTileImprovementGain(int baseId, MAP *tile, MapState &improvedM
 		BASE *affectedBase = getBase(affectedBaseId);
 		BaseTerraformingInfo &baseTerraformingInfo = baseTerraformingInfos.at(baseId);
 		
-		int currentPopSize = affectedBase->pop_size;
 		affectedBase->pop_size = baseTerraformingInfo.projectedPopSize;
+		Profiling::start("- computeBaseTileImprovementGain - computeBase");
 		computeBase(affectedBaseId, true);
+		Profiling::stop("- computeBaseTileImprovementGain - computeBase");
 		
 		// old intake
 		
@@ -2266,7 +2306,9 @@ double computeBaseTileImprovementGain(int baseId, MAP *tile, MapState &improvedM
 		// apply improvement
 		
 		applyMapState(improvedMapState, tile);
+		Profiling::start("- computeBaseTileImprovementGain - computeBase");
 		computeBase(affectedBaseId, true);
+		Profiling::stop("- computeBaseTileImprovementGain - computeBase");
 		
 		// verify square is worked by this base for nonArea effect
 		
@@ -2279,11 +2321,10 @@ double computeBaseTileImprovementGain(int baseId, MAP *tile, MapState &improvedM
 		
 		Resource newResourceIntake2 = getBaseResourceIntake2(baseId);
 		
-		// restore map
+		// restore map and base
 		
 		restoreTileMapState(tile);
-		affectedBase->pop_size = currentPopSize;
-		computeBase(affectedBaseId, true);
+		aiData.resetBase(affectedBaseId);
 		
 		// accumulate improvementGain
 		
@@ -3196,76 +3237,54 @@ Calculates score for sensor actions
 */
 double estimateSensorIncome(MAP *tile)
 {
+	Profiling::start("- estimateSensorIncome");
+	
 	assert(isOnMap(tile));
 	
-	int x = getX(tile);
-	int y = getY(tile);
-
-	// don't build if already built
-
 	if (map_has_item(tile, BIT_SENSOR))
 		return 0.0;
-
-	// find borderRange
-
-	int borderRange = *MapHalfX;
-
-	for (MAP *rangeTile : getRangeTiles(tile, *MapHalfX - 1, false))
-	{
-		// detect not own tile
-
-		if (rangeTile->owner != aiFactionId)
-		{
-			borderRange = getRange(tile, rangeTile);
-			break;
-		}
-
-	}
-
-	// do not compute shoreRange for now - too complicated
-
-	int shoreRange = *MapHalfX;
-
+	
+	int borderRange = getClosestNotOwnedTileRange(aiFactionId, tile, 0, 6);
+	
 	// calculate values
-
-	double borderRangeValue = conf.ai_terraforming_sensorBorderRange / std::max(conf.ai_terraforming_sensorBorderRange, (double)borderRange);
-	double shoreRangeValue = conf.ai_terraforming_sensorShoreRange / std::max(conf.ai_terraforming_sensorShoreRange, (double)shoreRange);
-
-	double value = conf.ai_terraforming_sensorValue * std::max(borderRangeValue, shoreRangeValue);
-
+	
+	double borderRangeValue = borderRange == -1 ? 0.0 : (double)borderRange <= conf.ai_terraforming_sensorBorderRange ? 1.0 : (double)borderRange / conf.ai_terraforming_sensorBorderRange;
+	double value = conf.ai_terraforming_sensorValue * borderRangeValue;
+	
 	// increase value for coverning not yet covered base
-
+	
 	bool coveringBase = false;
-
+	
 	for (int baseId : aiData.baseIds)
 	{
 		BASE *base = &(Bases[baseId]);
 		MAP *baseTile = getBaseMapTile(baseId);
-
+		
 		// within being constructing sensor range
-
-		if (map_range(x, y, base->x, base->y) > 2)
+		
+		if (getRange(tile, baseTile) > 2)
 			continue;
-
+		
 		// not yet covered
-
-		if (isWithinFriendlySensorRange(base->faction_id, baseTile))
+		
+		if (aiData.getTileInfo(baseTile).sensors.at(base->faction_id))
 			continue;
-
+		
 		coveringBase = true;
 		break;
-
+		
 	}
-
+	
 	if (coveringBase)
 	{
 		value *= 1.5;
 	}
-
+	
 	// return value
-
+	
+	Profiling::stop("- estimateSensorIncome");
 	return value;
-
+	
 }
 
 /*
@@ -3571,6 +3590,8 @@ Estimates condenser yield score in adjacent tiles.
 */
 double estimateCondenserExtraYieldScore(MAP *tile, const std::vector<int> *actions)
 {
+	TileInfo &tileInfo = aiData.getTileInfo(tile);
+	
 	// check whether condenser was built or destroyed
 	
 	bool condenserAction = false;
@@ -3607,8 +3628,10 @@ double estimateCondenserExtraYieldScore(MAP *tile, const std::vector<int> *actio
 	
 	double totalRainfallImprovement = 0.0;
 	
-	for (MAP *boxTile : getRangeTiles(tile, 1, true))
+	for (Adjacent const &adjacent : tileInfo.adjacents)
 	{
+		MAP *boxTile = adjacent.tileInfo->tile;
+		
 		TileTerraformingInfo &boxTileTerraformingInfo = getTileTerraformingInfo(boxTile);
 		
 		// exclude non terraformable site
@@ -4000,7 +4023,9 @@ double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP *curr
 	// apply changes
 	
 	*tile = *improvedMapState;
+	Profiling::start("- computeImprovementBaseSurplusEffectScore - computeBase");
 	computeBase(baseId, true);
+	Profiling::stop("- computeImprovementBaseSurplusEffectScore - computeBase");
 	
 	// improved yield
 	
@@ -4021,7 +4046,7 @@ double computeImprovementBaseSurplusEffectScore(int baseId, MAP *tile, MAP *curr
 	// restore original state
 	
 	*tile = *currentMapState;
-	computeBase(baseId, true);
+	aiData.resetBase(baseId);
 	
 	// ignore improvement if not areaEffect and is inferior
 	

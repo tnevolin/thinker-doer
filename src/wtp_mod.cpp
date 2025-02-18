@@ -3288,18 +3288,18 @@ Removes sea vehicles from land bases.
 void removeWrongVehiclesFromBases()
 {
 	// remove non pact vehicles from bases
-
+	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-
+		
 		if (!map_has_item(vehicleTile, BIT_BASE_IN_TILE))
 			continue;
-
+		
 		if (isFriendlyTerritory(vehicle->faction_id, vehicleTile))
 			continue;
-
+		
 		debug
 		(
 			"[VANILLA BUG] non pact vehicle in base:"
@@ -3312,36 +3312,26 @@ void removeWrongVehiclesFromBases()
 			, vehicle->faction_id
 		);
 		killVehicle(vehicleId);
-
+		
 	}
-
+	
 	// remove sea vehicles from land bases
-
+	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		int triad = vehicle->triad();
-
+		
 		if (!map_has_item(vehicleTile, BIT_BASE_IN_TILE))
 			continue;
-
+		
 		if (triad != TRIAD_SEA)
 			continue;
-
-		bool port = false;
-		for (MAP *tile : getRangeTiles(vehicleTile, 1, true))
-		{
-			if (is_ocean(tile))
-			{
-				port = true;
-				break;
-			}
-		}
-
-		if (port)
+		
+		if (isTileAccessesWater(vehicleTile))
 			continue;
-
+		
 		debug
 		(
 			"[VANILLA BUG] sea vehicle in land base:"
@@ -3350,9 +3340,9 @@ void removeWrongVehiclesFromBases()
 			, vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getVehicleUnitName(vehicleId)
 		);
 		killVehicle(vehicleId);
-
+		
 	}
-
+	
 }
 
 /*
@@ -3520,7 +3510,9 @@ __cdecl void modified_base_check_support()
 			break;
 		
 		killVehicle(cheapestVehicleId);
+		Profiling::start("- modified_base_check_support - computeBase");
 		computeBase(baseId, false);
+		Profiling::stop("- modified_base_check_support - computeBase");
 		
 		debug("\t%-25s %-32s killed because of oversupport\n", base->name, getVehicle(cheapestVehicleId)->name());
 		

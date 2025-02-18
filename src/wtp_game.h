@@ -7,6 +7,11 @@
 #include "robin_hood.h"
 #include "engine.h"
 
+int const MAX_RANGE = 40;
+int const MAX_RANGE_TILE_COUNT = (1 + 2 * MAX_RANGE) * (1 + 2 * MAX_RANGE);
+int const MAX_REACHABLE_LOCATION_RANGE = 40;
+int const MAX_REACHABLE_LOCATION_COUNT = (1 + 2 * MAX_REACHABLE_LOCATION_RANGE) * (1 + 2 * MAX_REACHABLE_LOCATION_RANGE);
+
 /// alien units
 const std::vector<int> ALIEN_UNITS
 {
@@ -47,6 +52,52 @@ enum COMBAT_TYPE
 	CT_PSI = 1,
 };
 const int COMBAT_TYPE_COUNT = CT_PSI + 1;
+
+// array structures
+template<class T, int N> class ArrayVector : public std::array<T,N>
+{
+private:
+	int size = 0;
+public:
+	void clear()
+	{
+		size = 0;
+	}
+	void push_back(T element)
+	{
+		if (size < N) this->at(size++) = element;
+	}
+	typename std::array<T,N>::const_iterator const begin() const
+	{
+		return this->cbegin();
+	}
+	typename std::array<T,N>::const_iterator const end() const
+	{
+		return this->cbegin() + size;
+	}
+};
+template<class T, int N> class ArrayView
+{
+private:
+	std::array<T,N> const *a;
+	int b;
+	int e;
+public:
+	void set(std::array<T,N> const *_a, int _b, int _e)
+	{
+		a = _a;
+		b = _b;
+		e = _e;
+	}
+	typename std::array<T,N>::const_iterator const begin() const
+	{
+		return a->cbegin() + b;
+	}
+	typename std::array<T,N>::const_iterator const end() const
+	{
+		return a->cbegin() + e;
+	}
+};
 
 /// combination of angle and tile
 struct MapAngle
@@ -517,8 +568,8 @@ Location getLocation(int tileIndex);
 Location getLocation(MAP *tile);
 int getX(int tileIndex);
 int getY(int tileIndex);
-int getX(MAP *tile);
-int getY(MAP *tile);
+int getX(MAP const *tile);
+int getY(MAP const *tile);
 int getMapTileIndex(int x, int y);
 MAP *getMapTile(int x, int y);
 Location getDelta(MAP *tile1, MAP *tile2);
@@ -539,12 +590,10 @@ std::vector<MapAngle> const getAdjacentMapAngles(MAP *tile);
 std::vector<int> const getAdjacentTileIndexes(int tileIndex);
 std::vector<MAP *> const getAdjacentTiles(MAP *tile);
 std::vector<MAP *> getSideTiles(MAP *tile);
-MAP * getSquareBlockRadiusTile(MAP *center, int index);
-std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, int beginIndex, int endIndex);
 
-std::vector<MAP *> getSquareBlockTiles(MAP *center, int minRadius, int maxRadius);
-std::vector<MAP *> getEqualRangeTiles(MAP *tile, int range);
-std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter);
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareOffsetTiles(MAP *center, int beginIndex, int endIndex);
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareBlockRadiusTiles(MAP *center, int minRadius, int maxRadius);
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int range, bool includeCenter);
 
 std::vector<MAP *> getBaseOffsetTiles(int x, int y, int offsetBegin, int offsetEnd);
 std::vector<MAP *> getBaseOffsetTiles(MAP *tile, int offsetBegin, int offsetEnd);
@@ -552,7 +601,7 @@ std::vector<MAP *> getBaseAdjacentTiles(int x, int y, bool includeCenter);
 std::vector<MAP *> getBaseAdjacentTiles(MAP *tile, bool includeCenter);
 std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool includeCenter);
 std::vector<MAP *> getBaseRadiusTiles(MAP *tile, bool includeCenter);
-std::vector<MAP *> getBaseExternalRadiusTiles(MAP *tile);
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getBaseExternalRadiusTiles(MAP *tile);
 std::vector<MAP *> getBaseRadiusSideTiles(MAP *tile);
 std::vector<MAP *> getBaseRadiusAdjacentTiles(MAP *tile);
 
@@ -659,8 +708,6 @@ bool isActiveArtilleryVehicle(int vehicleId);
 bool isLandArtilleryUnit(int unitId);
 bool isLandArtilleryVehicle(int vehicleId);
 void computeBase(int baseId, bool resetWorkedTiles);
-//void computeBaseComplete(int baseId);
-void computeBaseDoctors(int baseId);
 robin_hood::unordered_flat_set<int> getBaseConnectedRegions(int id);
 robin_hood::unordered_flat_set<int> getBaseConnectedOceanRegions(int baseId);
 double evaluateUnitConDefenseEffectiveness(int id);
@@ -805,10 +852,6 @@ double getVehicleRelativeDamage(int vehicleId);
 double getVehicleRelativePower(int vehicleId);
 int getVehicleHitPoints(int vehicleId, bool psiCombat);
 int getBaseGrowthRate(int baseId);
-int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY, int speed1);
-int getHexCost(int unitId, int factionId, MAP *fromTile, MAP *toTile, int speed1);
-int getVehicleHexCost(int vehicleId, int fromX, int fromY, int toX, int toY);
-int getSeaHexCost(MAP *tile);
 bool isCommlink(int factionId1, int factionId2);
 bool isVendetta(int factionId1, int factionId2);
 bool isPact(int factionId1, int factionId2);
@@ -826,7 +869,6 @@ int getUnitIdBySlot(int factionId, int slot);
 int getUnitIndex(int factionId, int unitId);
 int getFactionIdByUnitIndex(int unitIndex);
 int getUnitIdByUnitIndex(int unitIndex);
-int getBasePoliceRequiredPower(int baseId);
 int getBasePoliceSuppressedDrones(int baseId);
 bool isReactorIgnoredInConventionalCombat();
 bool isReactorIgnoredInCombat(bool psiCombat);
@@ -895,7 +937,6 @@ double getEuclidianDistance(int x1, int y1, int x2, int y2);
 int getVehicleUnitCost(int vehicleId);
 int getVehicleRemainingMovement(int vehicleId);
 bool isAllowedMove(int vehicleId, MAP *srcTile, MAP *dstTile);
-int getVehicleHexCost(int vehicleId, int hexCost);
 bool isZocAffectedUnit(int unitId);
 bool isZocAffectedVehicle(int vehicleId);
 bool isZocIgnoringUnit(int unitId);
@@ -936,7 +977,7 @@ double getBaseLabsMultiplier(int baseId);
 double getBasePsychMultiplier(int baseId);
 bool isLandVechileMoveAllowed(int vehicleId, MAP *from, MAP *to);
 int getRange(int x1, int y1, int x2, int y2);
-int getRange(MAP *origin, MAP *destination);
+int getRange(MAP const *tile1, MAP const *tile2);
 int getRange(int tile1Index, int tile2Index);
 int getProximity(int x1, int y1, int x2, int y2);
 double getEuqlideanDistanceSquared(MAP *origin, MAP *destination);
@@ -985,6 +1026,7 @@ int getUnitMoveRate(int factionId, int unitId);
 int getUnitSpeed(int factionId, int unitId);
 int getVehicleMoveRate(int vehicleId);
 int getVehicleSpeed(int vehicleId);
+bool isTileAccessesWater(MAP *tile);
 bool isBaseAccessesWater(int baseId);
 bool isBaseCanBuildShip(int baseId);
 bool isUnitZocRestricted(int unitId);
@@ -1004,4 +1046,5 @@ bool isFactionCanBuildMelee(int factionId, int type, int triad);
 bool isRoughTerrain(MAP *tile);
 bool isOpenTerrain(MAP *tile);
 std::set<int> getBaseSeaRegions(int baseId);
+int getClosestNotOwnedTileRange(int factionId, MAP *tile, int minRadius, int maxRadius);
 

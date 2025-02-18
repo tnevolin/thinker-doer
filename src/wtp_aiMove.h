@@ -42,7 +42,7 @@ Transfer getOptimalPickupTransfer(MAP *org, MAP *dst);
 Transfer getOptimalDropoffTransfer(MAP *org, MAP *dst, int passengerVehicleId, int transportVehicleId);
 void setSafeMoveTo(int vehicleId, MAP *destination);
 
-MapDoubleValue findClosestItemLocation(int vehicleId, MapItem item, int maxSearchRange, bool avoidWarzone);
+MapDoubleValue findClosestMonolith(int vehicleId, int maxSearchRange, bool avoidWarzone);
 
 MAP *getSafeLocation(int vehicleId);
 MAP *getSafeLocation(int vehicleId, int baseRange);

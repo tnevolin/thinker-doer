@@ -1,5 +1,14 @@
-
+#include "wtp_mod.h"
 #include "base.h"
+
+// [WTP]
+// base_compute precomputed values
+bool baseComputePrecomputed = false;
+bool baseComputePrecomputedFactionId = -1;
+// baseId worked this tile
+std::vector<int> baseComputeWorkedTiles;
+// vehicle in this tile
+std::vector<bool> baseComputeVehicles;
 
 static bool delay_base_riot = false;
 
@@ -238,12 +247,30 @@ void __cdecl mod_base_support() {
 }
 
 static int32_t base_radius(int base_id, std::vector<TileValue>& tiles) {
-    Points reserved;
+
+	// [WTP]
+	// reserve vector capacity
+	
+	tiles.reserve(25);
+	
+	// [WTP]
+	// vehicle in tile
+	
+	robin_hood::unordered_flat_set<int> vehicleTileIndexes;
+	robin_hood::unordered_flat_set<int> reservedTileIndexes;
+//    Points reserved;
     BASE* base = &Bases[base_id];
     int faction_id = base->faction_id;
     bool has_map = Factions[faction_id].player_flags & PFLAG_MAP_REVEALED;
     int32_t usedtiles = 0;
 
+	// [WTP]
+	// precomputed flag
+	bool precomputed = baseComputePrecomputed && base->faction_id == baseComputePrecomputedFactionId;
+debug(">precomputed=%d\n", precomputed);
+	
+	if (!precomputed)
+	{
     // Fix: In rare cases bases might have incorrect worked tiles set on foreign territory.
     // To avoid reserving these tiles the function checks actual territory ownership.
     for (int i = 0; i < *BaseCount; i++) {
@@ -251,23 +278,59 @@ static int32_t base_radius(int base_id, std::vector<TileValue>& tiles) {
         if (base_id == i || map_range(base->x, base->y, b->x, b->y) > 4) {
             continue;
         }
-        for (auto& m : iterate_tiles(b->x, b->y, 1, 21)) {
-            if (b->worked_tiles & (1 << m.i)) {
-                if (m.sq->owner < 0 || m.sq->owner == b->faction_id
-                || mod_whose_territory(b->faction_id, m.x, m.y, 0, 0) < 0) {
-                    reserved.insert({m.x, m.y});
-                }
-            }
+        
+        // [WTP]
+        // optimize worked tile search
+        
+//        for (auto& m : iterate_tiles(b->x, b->y, 1, 21)) {
+//            if (b->worked_tiles & (1 << m.i)) {
+//                if (m.sq->owner < 0 || m.sq->owner == b->faction_id
+//                || mod_whose_territory(b->faction_id, m.x, m.y, 0, 0) < 0) {
+//                    reserved.insert({m.x, m.y});
+//                }
+//            }
+//        }
+		for (int workerIndex = 1; workerIndex < 21; workerIndex++)
+		{
+			if ((b->worked_tiles & (1 << workerIndex)) == 0)
+				continue;
+			
+			int workedTileX = wrap(b->x + TableOffsetX[workerIndex]);
+			int workedTileY = b->y + TableOffsetY[workerIndex];
+			
+			if (map_range(base->x, base->y, workedTileX, workedTileY) > 2)
+				continue;
+			
+			MAP* workedTile = mapsq(workedTileX, workedTileY);
+			
+			if (workedTile->owner < 0 || workedTile->owner == b->faction_id || mod_whose_territory(b->faction_id, workedTileX, workedTileY, 0, 0) < 0)
+			{
+				int workedTileIndex = ((*MapHalfX) * workedTileY + workedTileX / 2);
+				reservedTileIndexes.insert(workedTileIndex);
+			}
+			
         }
+        
     }
-    for (int i = 0; i < 25; i++) {
+	}
+	
+	// [WTP]
+	// flag for a single vehicle processing
+	bool vehiclesProcessed = false;
+	
+	// [WTP]
+	// small optimizations
+	
+	std::fill(BaseTileFlags + 21, BaseTileFlags + 25, BR_NOT_AVAILABLE);
+	
+    for (int i = 0; i < 21; i++) {
         int x = wrap(base->x + TableOffsetX[i]);
         int y = base->y + TableOffsetY[i];
         MAP* sq = mapsq(x, y);
+        int sqIndex = ((*MapHalfX) * y + x / 2);
+        
         if (i == 0) {
-            BaseTileFlags[i] = BR_BASE_IN_TILE;
-        } else if (i >= 21) {
-            BaseTileFlags[i] = BR_NOT_AVAILABLE;
+			BaseTileFlags[i] = BR_BASE_IN_TILE;
         } else if (!sq || (!has_map && !sq->is_visible(faction_id))) {
             BaseTileFlags[i] = BR_NOT_VISIBLE;
         } else {
@@ -275,21 +338,85 @@ static int32_t base_radius(int base_id, std::vector<TileValue>& tiles) {
             if (sq->is_base()) {
                 BaseTileFlags[i] |= BR_BASE_IN_TILE;
             }
-            for (int j = 0; j < *VehCount; j++) {
-                VEH* veh = &Vehs[j];
-                if (veh->x == x && veh->y == y
-                && (veh->order == ORDER_CONVOY
-                || (veh->faction_id != faction_id && veh->is_visible(faction_id)
-                && !has_treaty(faction_id, veh->faction_id, DIPLO_TREATY|DIPLO_PACT)))) {
-                    BaseTileFlags[i] |= BR_VEH_IN_TILE;
-                }
-            }
+			
+			if (precomputed)
+			{
+				if (baseComputeVehicles.at(sqIndex))
+				{
+					BaseTileFlags[i] |= BR_VEH_IN_TILE;
+				}
+			}
+			else
+			{
+			// [WTP]
+			// do not search for the vehicle if none is in the tile
+			// also optimize vehicle search by doing it only once
+			
+//            for (int j = 0; j < *VehCount; j++) {
+//                VEH* veh = &Vehs[j];
+//                if (veh->x == x && veh->y == y
+//                && (veh->order == ORDER_CONVOY
+//                || (veh->faction_id != faction_id && veh->is_visible(faction_id)
+//                && !has_treaty(faction_id, veh->faction_id, DIPLO_TREATY|DIPLO_PACT)))) {
+//                    BaseTileFlags[i] |= BR_VEH_IN_TILE;
+//                }
+//            }
+			if (sq->veh_who() != -1)
+			{
+				if (!vehiclesProcessed)
+				{
+					for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+					{
+						VEH *vehicle = &Vehs[vehicleId];
+						int dy = abs(base->y - vehicle->y);
+						if (dy > 2)
+							continue;
+						int dx = abs(base->x - vehicle->x);
+						if (!map_is_flat() && dx > *MapHalfX)
+						{
+							dx = *MapAreaX - dx;
+						}
+						if (dx > 2)
+							continue;
+						if (vehicle->order == ORDER_CONVOY || (vehicle->faction_id != faction_id && vehicle->is_visible(faction_id) && !has_treaty(faction_id, vehicle->faction_id, DIPLO_TREATY|DIPLO_PACT)))
+						{
+							int vehicleTileIndex = ((*MapHalfX) * vehicle->y + vehicle->x / 2);
+							vehicleTileIndexes.insert(vehicleTileIndex);
+						}
+					}
+				}
+				if (vehicleTileIndexes.find(sqIndex) != vehicleTileIndexes.end())
+				{
+					BaseTileFlags[i] |= BR_VEH_IN_TILE;
+				}
+			}
+			}
+			
+			// [WTP]
+			// use precomputed worked tiles if set
+			
             // Do not display worker status for foreign tiles
+//            if (sq->owner >= 0 && faction_id != mod_whose_territory(faction_id, x, y, 0, 0)) {
+//                BaseTileFlags[i] |= BR_FOREIGN_TILE;
+//            } else if (reservedTileIndexes.find(sqIndex) != reservedTileIndexes.end()) {
+//                BaseTileFlags[i] |= BR_WORKER_ACTIVE;
+//            }
+			bool otherBaseWorkedTile = false;
+			if (precomputed)
+			{
+				int workedTileBase = baseComputeWorkedTiles.at(sqIndex);
+				otherBaseWorkedTile = workedTileBase != -1 && workedTileBase != base_id;
+			}
+			else
+			{
+				otherBaseWorkedTile = (reservedTileIndexes.find(sqIndex) != reservedTileIndexes.end());
+			}
             if (sq->owner >= 0 && faction_id != mod_whose_territory(faction_id, x, y, 0, 0)) {
                 BaseTileFlags[i] |= BR_FOREIGN_TILE;
-            } else if (reserved.count({x, y})) {
+            } else if (otherBaseWorkedTile) {
                 BaseTileFlags[i] |= BR_WORKER_ACTIVE;
             }
+            
         }
         if (i < 21) {
             bool valid = !BaseTileFlags[i];
@@ -367,7 +494,7 @@ void __cdecl mod_base_yield() {
     
     double const growthFactor = 1.0 / (double)((base->pop_size + 1) * cost_factor(0, base->faction_id, base_id)) / (double)base->pop_size;
     double const energyValue = conf.worker_algorithm_energy_value * (double)effic_val / 16.0;
-    
+	
     // Initial production without intake from any tiles (incl. base tile)
     int Nv = Ns - base->pop_size * Rules->nutrient_intake_req_citizen
         + BaseResourceConvoyTo[RSC_NUTRIENT] - BaseResourceConvoyFrom[RSC_NUTRIENT];
@@ -2965,6 +3092,65 @@ int computeBaseTileScore(double growthFactor, double energyValue, bool can_grow,
 	}
 	
 	return score;
+	
+}
+
+void clearBaseComputeValues()
+{
+	baseComputePrecomputed = false;
+}
+void precomputeBaseComputeValues(int factionId)
+{
+	baseComputePrecomputed = true;
+	baseComputePrecomputedFactionId = factionId;
+	
+	baseComputeWorkedTiles.resize(*MapAreaTiles);
+	std::fill(baseComputeWorkedTiles.begin(), baseComputeWorkedTiles.end(), -1);
+	
+	baseComputeVehicles.resize(*MapAreaTiles);
+	std::fill(baseComputeVehicles.begin(), baseComputeVehicles.end(), false);
+	
+	// base worked tiles
+	
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
+	{
+		BASE* base = &Bases[baseId];
+		
+		for (int workerIndex = 1; workerIndex < 21; workerIndex++)
+		{
+			if ((base->worked_tiles & (1 << workerIndex)) == 0)
+				continue;
+			
+			int workedTileX = wrap(base->x + TableOffsetX[workerIndex]);
+			int workedTileY = base->y + TableOffsetY[workerIndex];
+			MAP* workedTile = mapsq(workedTileX, workedTileY);
+			
+			if (workedTile == NULL)
+				continue;
+			
+			if (workedTile->owner < 0 || workedTile->owner == base->faction_id || mod_whose_territory(base->faction_id, workedTileX, workedTileY, 0, 0) < 0)
+			{
+				int workedTileIndex = workedTile - *MapTiles;
+				baseComputeWorkedTiles.at(workedTileIndex) = baseId;
+			}
+			
+        }
+        
+    }
+    
+    // vehicles
+    
+	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	{
+		VEH *vehicle = &Vehs[vehicleId];
+		
+		if (vehicle->order == ORDER_CONVOY || (vehicle->faction_id != factionId && vehicle->is_visible(factionId) && !has_treaty(factionId, vehicle->faction_id, DIPLO_TREATY|DIPLO_PACT)))
+		{
+			int vehicleTileIndex = ((*MapHalfX) * vehicle->y + vehicle->x / 2);
+			baseComputeVehicles.at(vehicleTileIndex) = true;
+		}
+		
+	}
 	
 }
 

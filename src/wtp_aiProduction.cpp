@@ -85,11 +85,14 @@ void productionStrategy()
 	
 	// set global statistics
 	
+	Profiling::start("set global statistics", "productionStrategy");
 	meanNewBaseGain = getNewBaseGain();
 	landColonyGain = getLandColonyGain();
+	Profiling::stop("set global statistics");
 	
 	// base production infos
 	
+	Profiling::start("base production infos", "productionStrategy");
 	for (int baseId : aiData.baseIds)
 	{
 		baseProductionInfos.emplace(baseId, BaseProductionInfo());
@@ -97,6 +100,7 @@ void productionStrategy()
 		baseProductionInfos.at(baseId).extraPoliceGains.at(0) = getBasePoliceGain(baseId, false);
 		baseProductionInfos.at(baseId).extraPoliceGains.at(1) = getBasePoliceGain(baseId, true);
 	}
+	Profiling::stop("base production infos");
 	
 	// evaluate global demands
 	// populate global variables
@@ -132,6 +136,8 @@ bool compareFormerRequests(FormerRequest const &formerRequest1, FormerRequest co
 
 void populateFactionProductionData()
 {
+	Profiling::start("populateFactionProductionData", "productionStrategy");
+	
 	const int AVAILABLE_AIR_FORMER_COUNT_DIVISOR = 2;
 	const int AVAILABLE_SEA_FORMER_COUNT_DIVISOR = 1;
 	const int AVAILABLE_LAND_FORMER_COUNT_DIVISOR = 2;
@@ -215,24 +221,24 @@ void populateFactionProductionData()
 		
 	}
 	
-	if (DEBUG)
-	{
-		debug("formerRequests - %s\n", aiMFaction->noun_faction);
-		
-		for (FormerRequest &formerRequest : aiData.production.formerRequests)
-		{
-			debug
-			(
-				"\t%5.2f %s %s"
-				"\n"
-				, formerRequest.income
-				, getLocationString(formerRequest.tile).c_str()
-				, formerRequest.option->name
-			);
-			
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("formerRequests - %s\n", aiMFaction->noun_faction);
+//		
+//		for (FormerRequest &formerRequest : aiData.production.formerRequests)
+//		{
+//			debug
+//			(
+//				"\t%5.2f %s %s"
+//				"\n"
+//				, formerRequest.income
+//				, getLocationString(formerRequest.tile).c_str()
+//				, formerRequest.option->name
+//			);
+//			
+//		}
+//		
+//	}
 	
 	// landArtillery and landDefenders saturation
 	
@@ -294,6 +300,8 @@ void populateFactionProductionData()
 	double infantryDefensiveRatio = vehicleCount == 0 ? 0.0 : (double)infantryDefensiveVehicleCount / (double)vehicleCount;
 	globalInfantryDefensiveSaturationCoefficient = infantryDefensiveRatio <= INFANTRY_DEFENSIVE_SATURATION_RATIO ? 1.0 : (1.0 - infantryDefensiveRatio) / (1.0 - INFANTRY_DEFENSIVE_SATURATION_RATIO);
 	
+	Profiling::stop("populateFactionProductionData");
+	
 }
 
 /**
@@ -302,6 +310,8 @@ Every new colony creates more drones and, thus, is less effective in larger empi
 */
 void evaluateGlobalColonyDemand()
 {
+	Profiling::start("evaluateGlobalColonyDemand", "productionStrategy");
+	
 	debug("evaluateGlobalColonyDemand - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	Faction *faction = getFaction(aiFactionId);
@@ -370,10 +380,14 @@ void evaluateGlobalColonyDemand()
 		, doctorsPerNewBase
 	);
 	
+	Profiling::stop("evaluateGlobalColonyDemand");
+	
 }
 
 void evaluateGlobalSeaTransportDemand()
 {
+	Profiling::start("evaluateGlobalSeaTransportDemand", "productionStrategy");
+	
 	debug("evaluateGlobalSeaTransportDemand - %s\n", getMFaction(aiFactionId)->noun_faction);
 	
 	// reset demands
@@ -438,23 +452,27 @@ void evaluateGlobalSeaTransportDemand()
 		
 	}
 	
-	if (DEBUG)
-	{
-		for (robin_hood::pair<int, double> seaTransportDemandEntry : seaTransportDemands)
-		{
-			int cluster = seaTransportDemandEntry.first;
-			double demand = seaTransportDemandEntry.second;
-			
-			debug("%2d %5.2f\n", cluster, demand);
-			
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		for (robin_hood::pair<int, double> seaTransportDemandEntry : seaTransportDemands)
+//		{
+//			int cluster = seaTransportDemandEntry.first;
+//			double demand = seaTransportDemandEntry.second;
+//			
+//			debug("%2d %5.2f\n", cluster, demand);
+//			
+//		}
+//		
+//	}
+	
+	Profiling::stop("evaluateGlobalSeaTransportDemand");
 	
 }
 
 void initializeProductionDemands()
 {
+	Profiling::start("initializeProductionDemands", "productionStrategy");
+	
 	productionDemands.clear();
 	
 	for (int baseId : aiData.baseIds)
@@ -463,10 +481,14 @@ void initializeProductionDemands()
 		productionDemands.back().initialize(baseId);
 	}
 	
+	Profiling::stop("initializeProductionDemands");
+	
 }
 
 void suggestGlobalProduction()
 {
+	Profiling::start("suggestGlobalProduction", "productionStrategy");
+	
     debug("\nsuggestGlobalProduction - %s\n\n", MFactions[*CurrentFaction].noun_faction);
     
     evaluateHeadquarters();
@@ -474,10 +496,14 @@ void suggestGlobalProduction()
 	
     debug("\n");
 	
+	Profiling::stop("suggestGlobalProduction");
+	
 }
 
 void suggestBaseProductions()
 {
+	Profiling::start("suggestBaseProductions", "productionStrategy");
+	
     debug("\nsuggestBaseProductions - %s\n\n", MFactions[*CurrentFaction].noun_faction);
 	
     for (ProductionDemand &productionDemand : productionDemands)
@@ -488,10 +514,14 @@ void suggestBaseProductions()
 	
     debug("\n");
 	
+	Profiling::stop("suggestBaseProductions");
+	
 }
 
 void applyBaseProductions()
 {
+	Profiling::start("applyBaseProductions", "productionStrategy");
+	
     debug("\napplyBaseProductions - %s\n\n", MFactions[*CurrentFaction].noun_faction);
 	
     for (ProductionDemand &productionDemand : productionDemands)
@@ -503,7 +533,8 @@ void applyBaseProductions()
 		
 		// current production choice
 		
-		int choice = base->queue_items[0];
+		int currentChoice = base->queue_items[0];
+		int choice = currentChoice;
 		
 		debug("(%s)\n", prod_name(choice));
 		
@@ -554,14 +585,14 @@ void applyBaseProductions()
 		int wtpChoice = productionDemand.item;
 		double wtpPriority = productionDemand.priority;
 		
-		debug
-		(
-			"production selection\n"
-			"\t%-10s(%5.2f) %s\n"
-			"\t%-10s(%5.2f) %s\n"
-			, "vanilla" , vanillaPriority, prod_name(choice)
-			, "wtp", wtpPriority, prod_name(wtpChoice)
-		);
+//		debug
+//		(
+//			"production selection\n"
+//			"\t%-10s(%5.2f) %s\n"
+//			"\t%-10s(%5.2f) %s\n"
+//			, "vanilla" , vanillaPriority, prod_name(choice)
+//			, "wtp", wtpPriority, prod_name(wtpChoice)
+//		);
 		
 		// select production based on priority
 		
@@ -572,15 +603,20 @@ void applyBaseProductions()
 		
 		debug("=> %-25s\n", prod_name(choice));
 		
-		// set base production
+		// set base production if changed
 		
-		base_prod_change(baseId, choice);
+		if (choice != currentChoice)
+		{
+			base_prod_change(baseId, choice);
+		}
 		
 		debug("\n");
 		
 	}
 	
     debug("\n");
+	
+	Profiling::stop("applyBaseProductions");
 	
 }
 
@@ -599,7 +635,9 @@ void evaluateHeadquarters()
 		int otherBaseId = otherProductionDemand.baseId;
 		BASE *otherBase = otherProductionDemand.base;
 		
+		Profiling::start("- evaluateHeadquarters - computeBase");
 		computeBase(otherBaseId, false);
+		Profiling::stop("- evaluateHeadquarters - computeBase");
 		
 		int budget = otherBase->economy_total + otherBase->psych_total + otherBase->labs_total;
 		currentBudget += budget;
@@ -638,7 +676,9 @@ void evaluateHeadquarters()
 			int otherBaseId = otherProductionDemand.baseId;
 			BASE *otherBase = otherProductionDemand.base;
 			
+			Profiling::start("- evaluateHeadquarters - computeBase");
 			computeBase(otherBaseId, false);
+			Profiling::stop("- evaluateHeadquarters - computeBase");
 			
 			int budget = otherBase->economy_total + otherBase->psych_total + otherBase->labs_total;
 			totalBudget += budget;
@@ -800,6 +840,8 @@ void evaluateProject()
 
 void suggestBaseProduction()
 {
+	Profiling::start("suggestBaseProduction", "suggestBaseProductions");
+	
 	debug("suggestBaseProduction - %s\n", currentBaseProductionDemand->base->name);
 	
 	// evaluate economical items
@@ -824,10 +866,14 @@ void suggestBaseProduction()
 	
 	debug("\n");
 	
+	Profiling::stop("suggestBaseProduction");
+	
 }
 
 void evaluateFacilities()
 {
+	Profiling::start("evaluateFacilities", "suggestBaseProduction");
+	
 	debug("evaluateFacilities\n");
 	
 	evaluatePressureDome();
@@ -840,6 +886,8 @@ void evaluateFacilities()
 	evaluateMilitaryFacilities();
 	evaluatePrototypingFacilities();
 
+	Profiling::stop("evaluateFacilities");
+	
 }
 
 void evaluatePressureDome()
@@ -983,16 +1031,15 @@ void evaluatePsychFacilities()
 		// new workers
 		
 		setBaseFacility(baseId, facilityId, true);
-//		computeBaseComplete(baseId);
+		Profiling::start("- evaluatePsychFacilities - computeBase");
 		computeBase(baseId, true);
+		Profiling::stop("- evaluatePsychFacilities - computeBase");
 		
 		int newWorkerCount = base->pop_size - base->specialist_total;
 		
 		// restore base
 		
-		setBaseFacility(baseId, facilityId, false);
-//		computeBaseComplete(baseId);
-		computeBase(baseId, true);
+		aiData.resetBase(baseId);
 		
 		// gain
 		
@@ -1594,6 +1641,8 @@ void evaluatePrototypingFacilities()
 
 void evaluateDefensiveProbeUnits()
 {
+	Profiling::start("evaluateDefensiveProbeUnits", "suggestBaseProduction");
+	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
@@ -1633,7 +1682,7 @@ void evaluateDefensiveProbeUnits()
 			if (targetBaseProbeData.isSatisfied(false))
 				continue;
 			
-			double travelTime = getUnitATravelTime(unitId, baseTile, targetBaseTile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile);
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// probe
@@ -1711,10 +1760,14 @@ void evaluateDefensiveProbeUnits()
 		
 	}
 	
+	Profiling::stop("evaluateDefensiveProbeUnits");
+	
 }
 
 void evaluateExpansionUnits()
 {
+	Profiling::start("evaluateExpansionUnits", "suggestBaseProduction");
+	
 	const int TRACE = DEBUG && false;
 	
 	debug("evaluateExpansionUnits\n");
@@ -1729,6 +1782,7 @@ void evaluateExpansionUnits()
 	if (!canBaseProduceColony(baseId))
 	{
 		debug("\tbase cannot build a colony\n");
+		Profiling::stop("evaluateExpansionUnits");
 		return;
 	}
 	
@@ -1804,7 +1858,7 @@ void evaluateExpansionUnits()
 			
 			// travel time
 			
-			double travelTime = getUnitATravelTime(unitId, baseTile, tile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, tile);
 			
 			// yield score
 			
@@ -1897,10 +1951,14 @@ void evaluateExpansionUnits()
 		
 	}
 	
+	Profiling::stop("evaluateExpansionUnits");
+	
 }
 
 void evaluateTerraformingUnits()
 {
+	Profiling::start("evaluateTerraformingUnits", "suggestBaseProduction");
+	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
@@ -1991,7 +2049,7 @@ void evaluateTerraformingUnits()
 			
 			// travel time
 			
-			double travelTime = getUnitATravelTime(unitId, baseTile, formerRequest.tile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, formerRequest.tile);
 			
 			if (travelTime == INF)
 				continue;
@@ -2055,10 +2113,14 @@ void evaluateTerraformingUnits()
 		
 	}
 	
+	Profiling::stop("evaluateTerraformingUnits");
+	
 }
 
 void evaluateCrawlingUnits()
 {
+	Profiling::start("evaluateCrawlingUnits", "suggestBaseProduction");
+	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	
@@ -2115,10 +2177,14 @@ void evaluateCrawlingUnits()
 		
 	}
 	
+	Profiling::stop("evaluateCrawlingUnits");
+	
 }
 
 void evaluatePodPoppingUnits()
 {
+	Profiling::start("evaluatePodPoppingUnits", "suggestBaseProduction");
+	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
@@ -2141,10 +2207,12 @@ void evaluatePodPoppingUnits()
 		
 		// count pods around the base
 		
-		for (MAP *tile : getRangeTiles(baseTile, surfacePodData.scanRange, false))
+		for (MAP *tile : aiData.pods)
 		{
-			int x = getX(tile);
-			int y = getY(tile);
+			// within range
+			
+			if (getRange(baseTile, tile) > surfacePodData.scanRange)
+				continue;
 			
 			// matching surface
 			
@@ -2154,11 +2222,6 @@ void evaluatePodPoppingUnits()
 			// same cluster
 			
 			if ((surface == 0 && !isSameLandTransportedCluster(baseTile, tile)) || (surface == 1 && !isSameSeaCluster(baseTile, tile)))
-				continue;
-			
-			// pod
-			
-			if (!mod_goody_at(x, y))
 				continue;
 			
 			// not hostile territory
@@ -2389,10 +2452,14 @@ void evaluatePodPoppingUnits()
 		
 	}
 	
+	Profiling::stop("evaluatePodPoppingUnits");
+	
 }
 
 void evaluateBaseDefenseUnits()
 {
+	Profiling::start("evaluateBaseDefenseUnits", "suggestBaseProduction");
+	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
@@ -2441,11 +2508,11 @@ void evaluateBaseDefenseUnits()
 		for (int targetBaseId : aiData.baseIds)
 		{
 			MAP *targetBaseTile = getBaseMapTile(targetBaseId);
-			BaseInfo &targetBaseInfo = aiData.getBaseInfo(targetBaseId);
+			BaseInfo &targetBaseInfo = aiData.baseInfos.at(targetBaseId);
 			BasePoliceData &targetBasePoliceData = targetBaseInfo.policeData;
 			BaseCombatData &targetBaseCombatData = targetBaseInfo.combatData;
 			
-			double travelTime = getUnitATravelTime(unitId, baseTile, targetBaseTile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile);
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// police
@@ -2473,38 +2540,38 @@ void evaluateBaseDefenseUnits()
 			
 			bestGain = std::max(bestGain, gain);
 			
-			debug
-			(
-				"\t\t%-32s"
-				" %-25s"
-				" travelTime=%7.2f"
-				" travelTimeCoefficient=%5.2f"
-				" ai_production_priority_police=%5.2f"
-				" unitPoliceGain=%5.2f"
-				" policeGain=%5.2f"
-				" ai_production_base_protection_priority=%5.2f"
-				" combatEffect=%5.2f"
-				" survivalEffect=%5.2f"
-				" unitProtectionGain=%5.2f"
-				" protectionGain=%5.2f"
-				" upkeepGain=%5.2f"
-				" gain=%7.2f"
-				"\n"
-				, unit->name
-				, Bases[targetBaseId].name
-				, travelTime
-				, travelTimeCoefficient
-				, conf.ai_production_priority_police
-				, unitPoliceGain
-				, policeGain
-				, conf.ai_production_base_protection_priority
-				, combatEffect
-				, survivalEffect
-				, unitProtectionGain
-				, protectionGain
-				, upkeepGain
-				, gain
-			);
+//			debug
+//			(
+//				"\t\t%-32s"
+//				" %-25s"
+//				" travelTime=%7.2f"
+//				" travelTimeCoefficient=%5.2f"
+//				" ai_production_priority_police=%5.2f"
+//				" unitPoliceGain=%5.2f"
+//				" policeGain=%5.2f"
+//				" ai_production_base_protection_priority=%5.2f"
+//				" combatEffect=%5.2f"
+//				" survivalEffect=%5.2f"
+//				" unitProtectionGain=%5.2f"
+//				" protectionGain=%5.2f"
+//				" upkeepGain=%5.2f"
+//				" gain=%7.2f"
+//				"\n"
+//				, unit->name
+//				, Bases[targetBaseId].name
+//				, travelTime
+//				, travelTimeCoefficient
+//				, conf.ai_production_priority_police
+//				, unitPoliceGain
+//				, policeGain
+//				, conf.ai_production_base_protection_priority
+//				, combatEffect
+//				, survivalEffect
+//				, unitProtectionGain
+//				, protectionGain
+//				, upkeepGain
+//				, gain
+//			);
 			
 		}
 		
@@ -2540,10 +2607,14 @@ void evaluateBaseDefenseUnits()
 		
 	}
 	
+	Profiling::stop("evaluateBaseDefenseUnits");
+	
 }
 
 void evaluateTerritoryProtectionUnits()
 {
+	Profiling::start("evaluateTerritoryProtectionUnits", "suggestBaseProduction");
+	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
@@ -2692,10 +2763,14 @@ void evaluateTerritoryProtectionUnits()
 		
 	}
 	
+	Profiling::stop("evaluateTerritoryProtectionUnits");
+	
 }
 
 void evaluateEnemyBaseAssaultUnits()
 {
+	Profiling::start("evaluateEnemyBaseAssaultUnits", "suggestBaseProduction");
+	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
@@ -2725,7 +2800,10 @@ void evaluateEnemyBaseAssaultUnits()
 		double unitPriorityCoefficient = getUnitPriorityCoefficient(baseId, unitId);
 		
 		if (unitPriorityCoefficient <= 0.0)
+		{
+			Profiling::stop("evaluateEnemyBaseAssaultUnits");
 			return;
+		}
 		
 		debug("\t%-32s\n", unit->name);
 		
@@ -2758,7 +2836,7 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			// travel time
 			
-			double travelTime = getPlayerApproachTime(enemyBaseId, unitId, baseTile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, enemyBaseTile);
 			
 			if (travelTime == INF)
 				continue;
@@ -2796,40 +2874,40 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			bestGain = std::max(bestGain, gain);
 			
-			debug
-			(
-				"\t\t%-25s"
-				" travelTime=%7.2f"
-				" assaultEffect=%5.2f"
-				" productionRatio=%5.2f"
-				" costRatio=%5.2f"
-				" adjustedEffect=%5.2f"
-				" adjustedSuperiority=%5.2f"
-				" enemyBaseCaptureGain=%5.2f"
-				" adjustedEnemyBaseCaptureGain=%5.2f"
-				" incomeGain=%5.2f"
-				" closestPlayerBaseRange=%2d"
-				" rangeCoefficient=%5.2f"
-				" captureGain=%5.2f"
-				" upkeepGain=%5.2f"
-				" gain=%5.2f"
-				"\n"
-				, enemyBase->name
-				, travelTime
-				, assaultEffect
-				, productionRatio
-				, costRatio
-				, adjustedEffect
-				, adjustedSuperiority
-				, enemyBaseCaptureGain
-				, adjustedEnemyBaseCaptureGain
-				, incomeGain
-				, enemyBaseInfo.closestPlayerBaseRange
-				, rangeCoefficient
-				, captureGain
-				, upkeepGain
-				, gain
-			);
+//			debug
+//			(
+//				"\t\t%-25s"
+//				" travelTime=%7.2f"
+//				" assaultEffect=%5.2f"
+//				" productionRatio=%5.2f"
+//				" costRatio=%5.2f"
+//				" adjustedEffect=%5.2f"
+//				" adjustedSuperiority=%5.2f"
+//				" enemyBaseCaptureGain=%5.2f"
+//				" adjustedEnemyBaseCaptureGain=%5.2f"
+//				" incomeGain=%5.2f"
+//				" closestPlayerBaseRange=%2d"
+//				" rangeCoefficient=%5.2f"
+//				" captureGain=%5.2f"
+//				" upkeepGain=%5.2f"
+//				" gain=%5.2f"
+//				"\n"
+//				, enemyBase->name
+//				, travelTime
+//				, assaultEffect
+//				, productionRatio
+//				, costRatio
+//				, adjustedEffect
+//				, adjustedSuperiority
+//				, enemyBaseCaptureGain
+//				, adjustedEnemyBaseCaptureGain
+//				, incomeGain
+//				, enemyBaseInfo.closestPlayerBaseRange
+//				, rangeCoefficient
+//				, captureGain
+//				, upkeepGain
+//				, gain
+//			);
 			
 		}
 		
@@ -2846,29 +2924,33 @@ void evaluateEnemyBaseAssaultUnits()
 		
 		productionDemand.addItemPriority(unitId, priority);
 		
-		debug
-		(
-			"\t%-32s"
-			" priority=%5.2f   |"
-			" unitPriorityCoefficient=%5.2f"
-			" landArtillerySaturationCoefficient=%5.2f"
-			" bestGain=%5.2f"
-			" rawPriority=%5.2f"
-			"\n"
-			, Units[unitId].name
-			, priority
-			, unitPriorityCoefficient
-			, landArtillerySaturationCoefficient
-			, bestGain
-			, rawPriority
-		);
+//		debug
+//		(
+//			"\t%-32s"
+//			" priority=%5.2f   |"
+//			" unitPriorityCoefficient=%5.2f"
+//			" landArtillerySaturationCoefficient=%5.2f"
+//			" bestGain=%5.2f"
+//			" rawPriority=%5.2f"
+//			"\n"
+//			, Units[unitId].name
+//			, priority
+//			, unitPriorityCoefficient
+//			, landArtillerySaturationCoefficient
+//			, bestGain
+//			, rawPriority
+//		);
 		
 	}
+	
+	Profiling::stop("evaluateEnemyBaseAssaultUnits");
 	
 }
 
 void evaluateSeaTransport()
 {
+	Profiling::start("evaluateSeaTransport", "suggestBaseProduction");
+	
 	debug("evaluateSeaTransport\n");
 	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
@@ -2878,7 +2960,10 @@ void evaluateSeaTransport()
 	// base should have access to water
 	
 	if (baseSeaCluster == -1)
+	{
+		Profiling::stop("evaluateSeaTransport");
 		return;
+	}
 	
 	// find transport unit
 	
@@ -2887,6 +2972,7 @@ void evaluateSeaTransport()
 	if (unitId == -1)
 	{
 		debug("\tno seaTransport unit\n");
+		Profiling::stop("evaluateSeaTransport");
 		return;
 	}
 	
@@ -2895,6 +2981,7 @@ void evaluateSeaTransport()
 	if (seaTransportDemand <= 0.0)
 	{
 		debug("seaTransportDemand <= 0.0\n");
+		Profiling::stop("evaluateSeaTransport");
 		return;
 	}
 	
@@ -2944,6 +3031,8 @@ void evaluateSeaTransport()
 		);
 		
 	}
+	
+	Profiling::stop("evaluateSeaTransport");
 	
 }
 
@@ -3110,21 +3199,18 @@ bool canBaseProduceColony(int baseId)
 	if (projectedSize == 1)
 		return false;
 	
-	// current parameters
-	
-	int currentSize = base->pop_size;
-	
 	// set projected
 	
 	base->pop_size = projectedSize - 1;
+	Profiling::start("- canBaseProduceColony - computeBase");
 	computeBase(baseId, true);
+	Profiling::stop("- canBaseProduceColony - computeBase");
 	
 	int projectedMineralSurplus = base->mineral_surplus;
 	
 	// restore
 	
-	base->pop_size = currentSize;
-	computeBase(baseId, true);
+	aiData.resetBase(baseId);
 	
 	// check surplus is not below zero
 	
@@ -4304,6 +4390,8 @@ int findInfantryPoliceUnit(bool first)
 
 void hurryProtectiveUnit()
 {
+	Profiling::start("hurryProtectiveUnit", "productionStrategy");
+	
 	debug("hurryProtectiveUnit - %s\n", getMFaction(aiFactionId)->noun_faction);
 
 	int mostVulnerableBaseId = -1;
@@ -4341,7 +4429,10 @@ void hurryProtectiveUnit()
 	}
 
 	if (mostVulnerableBaseId == -1)
+	{
+		Profiling::stop("hurryProtectiveUnit");
 		return;
+	}
 
 	debug
 	(
@@ -4357,6 +4448,7 @@ void hurryProtectiveUnit()
 	if (item < 0 || !isInfantryDefensiveUnit(item))
 	{
 		debug("\t\tnot infantry devensive\n");
+		Profiling::stop("hurryProtectiveUnit");
 		return;
 	}
 
@@ -4368,6 +4460,8 @@ void hurryProtectiveUnit()
 
 	debug("\t%-25s spendPool=%4d\n", getBase(mostVulnerableBaseId)->name, spendPool);
 
+	Profiling::stop("hurryProtectiveUnit");
+	
 }
 
 //=======================================================
@@ -4414,8 +4508,9 @@ double getFacilityGain(int baseId, int facilityId, bool build, bool includeMaint
 	// compute new income
 	
 	setBaseFacility(baseId, facilityId, build);
-//	computeBaseComplete(baseId);
+	Profiling::start("- getFacilityGain - computeBase");
 	computeBase(baseId, true);
+	Profiling::stop("- getFacilityGain - computeBase");
 	
 	double newPopulationGrowth = getBasePopulationGrowth(baseId);
 	double newIncome = getBaseIncome(baseId);
@@ -4423,9 +4518,7 @@ double getFacilityGain(int baseId, int facilityId, bool build, bool includeMaint
 	
 	// restore base
 	
-	setBaseFacility(baseId, facilityId, !build);
-//	computeBaseComplete(baseId);
-	computeBase(baseId, true);
+	aiData.resetBase(baseId);
 	
 	// estimate eco damage effect
 	// assume eco damage is the chance of number of workers to lose half or their productivity

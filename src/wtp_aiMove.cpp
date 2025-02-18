@@ -167,6 +167,8 @@ void moveAllStrategy()
 
 void healStrategy()
 {
+	Profiling::start("- healStrategy");
+	
 	for (int vehicleId : aiData.vehicleIds)
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
@@ -255,7 +257,7 @@ void healStrategy()
 
 			MAP *healingTile = nullptr;
 
-			for (MAP *tile : getRangeTiles(vehicleTile, 9, true))
+			for (MAP *tile : getRangeTiles(vehicleTile, 8, true))
 			{
 				TileInfo &tileInfo = aiData.getTileInfo(tile);
 
@@ -284,6 +286,8 @@ void healStrategy()
 
 	}
 
+	Profiling::stop("- healStrategy");
+	
 }
 
 /*
@@ -625,8 +629,10 @@ void balanceVehicleSupport()
 					
 					// compute both bases
 					
+					Profiling::start("- balanceVehicleSupport - computeBase");
 					computeBase(baseId, false);
 					computeBase(otherBaseId, false);
+					Profiling::stop("- balanceVehicleSupport - computeBase");
 					
 					// exit cycle
 					
@@ -932,9 +938,12 @@ void setSafeMoveTo(int vehicleId, MAP *destination)
 	
 	bool dangerous = false;
 	
-	for (MoveAction &reachableLocation : getVehicleReachableLocations(vehicleId))
+	Profiling::start("- setSafeMoveTo - getVehicleReachableLocations");
+	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId))
 	{
-		MAP *tile = reachableLocation.tile;
+		int tileIndex = reachableLocation.first;
+		MAP *tile = *MapTiles + tileIndex;
+		
 		double danger = getVehicleTileDanger(vehicleId, tile);
 		
 		double distance = getEuqlideanDistance(tile, destination);
@@ -969,6 +978,7 @@ void setSafeMoveTo(int vehicleId, MAP *destination)
 //		);
 	
 	}
+	Profiling::stop("- setSafeMoveTo - getVehicleReachableLocations");
 	
 	if (!dangerous || bestTile == destination)
 	{
@@ -987,17 +997,24 @@ realm: 0 = land, 1 = ocean, 2 = both
 Ignore blocked locations and warzones if requested.
 factionId = aiFactionId
 */
-MapDoubleValue findClosestItemLocation(int vehicleId, MapItem item, int maxSearchRange, bool avoidWarzone)
+MapDoubleValue findClosestMonolith(int vehicleId, int maxSearchRange, bool avoidWarzone)
 {
+	Profiling::start("- findClosestMonolith");
+	
 	VEH *vehicle = getVehicle(vehicleId);
 	int triad = vehicle->triad();
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
-	MAP *closestItemLocation = nullptr;
-	double closestItemLocationTravelTime = DBL_MAX;
+	MAP *closestMonolith = nullptr;
+	double closestMonolithTravelTime = INF;
 	
-	for (MAP *tile : getRangeTiles(vehicleTile, maxSearchRange, true))
+	for (MAP *tile : aiData.monoliths)
 	{
+		int range = getRange(vehicleTile, tile);
+		
+		if (range > maxSearchRange)
+			continue;
+		
 		bool ocean = is_ocean(tile);
 		
 		// corresponding realm
@@ -1007,7 +1024,7 @@ MapDoubleValue findClosestItemLocation(int vehicleId, MapItem item, int maxSearc
 		
 		// item
 		
-		if (!map_has_item(tile, item))
+		if (!map_has_item(tile, BIT_MONOLITH))
 			continue;
 		
 		// exclude blocked location
@@ -1022,22 +1039,22 @@ MapDoubleValue findClosestItemLocation(int vehicleId, MapItem item, int maxSearc
 		
 		// get travel time
 		
-		double travelTime = getVehicleATravelTime(vehicleId, tile);
-		
+		double travelTime = getVehicleTravelTime(vehicleId, tile);
 		if (travelTime == INF)
 			continue;
 		
 		// update best
 		
-		if (travelTime < closestItemLocationTravelTime)
+		if (travelTime < closestMonolithTravelTime)
 		{
-			closestItemLocation = tile;
-			closestItemLocationTravelTime = travelTime;
+			closestMonolith = tile;
+			closestMonolithTravelTime = travelTime;
 		}
 		
 	}
 	
-	return {closestItemLocation, closestItemLocationTravelTime};
+	Profiling::stop("- findClosestMonolith");
+	return {closestMonolith, closestMonolithTravelTime};
 	
 }
 
@@ -1047,6 +1064,8 @@ Otherwies, searches for any closest safe location (above options + not warzone).
 */
 MAP *getSafeLocation(int vehicleId, int baseRange)
 {
+	Profiling::start("- getSafeLocation");
+	
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	int triad = vehicle->triad();
@@ -1188,8 +1207,7 @@ MAP *getSafeLocation(int vehicleId, int baseRange)
 		
 		// get travel time
 		
-		double travelTime = getVehicleATravelTime(vehicleId, tile);
-		
+		double travelTime = getVehicleTravelTime(vehicleId, tile);
 		if (travelTime == INF)
 			continue;
 		
@@ -1206,6 +1224,7 @@ MAP *getSafeLocation(int vehicleId, int baseRange)
 	
 	// return closest safe location
 	
+	Profiling::stop("- getSafeLocation");
 	return closestSafeLocation;
 	
 }

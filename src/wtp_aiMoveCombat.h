@@ -6,7 +6,7 @@
 #include "wtp_aiTask.h"
 #include "wtp_aiData.h"
 
-const int MAX_REPAIR_DISTANCE = 10;
+const int MAX_REPAIR_DISTANCE = 6;
 const int MAX_PODPOP_DISTANCE = 20;
 
 const double MIN_IMMEDIATE_ATTACK_PRIORITY = 1.0;

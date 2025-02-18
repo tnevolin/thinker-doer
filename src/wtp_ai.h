@@ -7,7 +7,7 @@
 #include "wtp_aiData.h"
 #include "engine.h"
 
-const int MAX_SAFE_LOCATION_SEARCH_RANGE = 10;
+const int MAX_SAFE_LOCATION_SEARCH_RANGE = 6;
 const int STACK_MAX_BASE_RANGE = 20;
 const int STACK_MAX_COUNT = 20;
 const int MAX_PROXIMITY_RANGE = 4;
@@ -125,6 +125,33 @@ public:
 	}
 };
 
+struct ReachSearch
+{
+	robin_hood::unordered_flat_map<int, int> values;
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> layers;
+	
+	void set(int key, int value)
+	{
+		robin_hood::unordered_flat_map<int, int>::iterator valueIterator = values.find(key);
+		if (valueIterator == values.end())
+		{
+			values.insert({key, value});
+			layers[value].insert(key);
+		}
+		else
+		{
+			int oldValue = valueIterator->second;
+			if (value > oldValue)
+			{
+				valueIterator->second = value;
+				layers.at(oldValue).erase(key);
+				layers[value].insert(key);
+			}
+		}
+	}
+	
+};
+
 void setPlayerFactionReferences(int factionId);
 void aiFactionUpkeep(const int factionId);
 void __cdecl modified_enemy_units_check(int factionId);
@@ -146,7 +173,6 @@ void populateUnits();
 void populateMaxMineralSurplus();
 void populateVehicles();
 void populateWarzones();
-void populateTileCombatData();
 void populateEnemyStacks();
 void populateEmptyEnemyBaseTiles();
 void populateBasePoliceData();
@@ -216,7 +242,6 @@ double getBaseStatisticalWorkerCount(double age);
 double getBaseStatisticalProportionalWorkerCountIncrease(double currentAge, double futureAge);
 int getBaseProjectedSize(int baseId, int turns);
 int getBaseGrowthTime(int baseId, int targetSize);
-int getBaseOptimalDoctors(int baseId);
 double getResourceScore(double nutrient, double mineral, double energy);
 double getResourceScore(double mineral, double energy);
 int getBaseFoundingTurn(int baseId);
@@ -229,12 +254,16 @@ double getVehicleStrenghtMultiplier(int vehicleId);
 double getVehicleBombardmentStrenghtMultiplier(int vehicleId);
 double getUnitBombardmentAttackEffect(int ownFactionId, int ownUnitId, int foeVehicleId, MAP *tile);
 double getHarmonicMean(std::vector<std::vector<double>> parameters);
-bool compareMoveActions(MoveAction &o1, MoveAction &o2);
-std::vector<MoveAction> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles = false);
+robin_hood::unordered_flat_map<int, int> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles = false);
+robin_hood::unordered_flat_map<int, int> getAirVehicleReachableLocations(MAP *origin, int movementAllowance, bool ignoreVehicles);
+robin_hood::unordered_flat_map<int, int> getSeaVehicleReachableLocations(MovementType movementType, MAP *origin, int movementAllowance, bool ignoreVehicles);
+robin_hood::unordered_flat_map<int, int> getLandVehicleReachableLocations(ExtendedMovementType extendedMovementType, int speed1, MAP *origin, int movementAllowance, bool ignoreVehicles);
+//robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles = false);
+//robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> getAirVehicleReachableLocations(MAP *origin, int initialMovementAllowance, bool ignoreVehicles);
+//robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> getSeaVehicleReachableLocations(MovementType movementType, MAP *origin, int initialMovementAllowance, bool ignoreVehicles);
+//robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> getLandVehicleReachableLocations(int vehicleId, bool ignoreVehicles);
 std::vector<AttackAction> getMeleeAttackActions(int vehicleId);
-std::vector<AttackAction> getMeleeAttackTargets(int vehicleId);
 std::vector<AttackAction> getArtilleryAttackActions(int vehicleId);
-std::vector<AttackAction> getArtilleryAttackTargets(int vehicleId);
 double getVehicleTileDanger(int vehicleId, MAP *tile);
 bool isVehicleAllowedMove(int vehicleId, MAP *from, MAP *to);
 std::vector<MAP *> getVehicleThreatenedTiles(int vehicleId);
@@ -302,4 +331,6 @@ double getSensorOffenseMultiplier(int factionId, MAP *tile);
 double getSensorDefenseMultiplier(int factionId, MAP *tile);
 double getUnitMeleeOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
 double getUnitArtilleryOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
+int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY, int speed1);
+int getBasePoliceRequiredPower(int baseId);
 

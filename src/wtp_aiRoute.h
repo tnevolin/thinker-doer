@@ -189,34 +189,11 @@ struct FactionMovementInfo
 	
 };
 
-///**
-//Approach data.
-//*/
-//struct ApproachMovementInfo
-//{
-//	// seaApproachHexCosts
-//	// [tile][enemyFactionId][seaMovementType][orgIndex] = sea hex cost
-//	robin_hood::unordered_flat_map<MAP *, std::array<std::array<std::vector<double>, SEA_MOVEMENT_TYPE_COUNT>, MaxPlayerNum>> seaApproachHexCosts;
-//	
-//	// landTransportedApproachHexCosts
-//	// [tile][enemyFactionId][seaMovementType][orgIndex] = total value, transport wait time, transport hex cost, land hex cost
-//	robin_hood::unordered_flat_map<MAP *, std::array<std::array<std::vector<std::array<double,4>>, LAND_MOVEMENT_TYPE_COUNT>, MaxPlayerNum>> landTransportedApproachHexCosts;
-//	
-//};
-//
 /**
 Player faction geographical data.
 */
 struct PlayerFactionMovementInfo
 {
-//	// seaApproachHexCosts
-//	// [baseId][seaMovementType][orgIndex]
-//	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<double>>> seaApproachHexCosts;
-//	
-//	// landApproachHexCosts
-//	// [baseId][landMovementType][orgIndex]
-//	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<MovementType, std::vector<std::array<double,3>>>> landApproachHexCosts;
-//	
 	// sea clusters
 	// [tileIndex] = clusterIndex
 	std::vector<int> seaClusters;
@@ -269,8 +246,6 @@ void populateSeaCombatClusters(int factionId);
 void populateLandCombatClusters(int factionId);
 void populateSeaLandmarks(int factionId);
 void populateLandLandmarks(int factionId);
-//void populateSeaApproachHexCosts();
-//void populateLandApproachHexCosts();
 
 void populateSeaClusters(int factionId);
 void populateLandClusters();
@@ -285,60 +260,38 @@ void populateSharedSeas();
 // ==================================================
 
 double getVehicleApproachTime(int vehicleId, MAP *dst);
+double getVehicleApproachTime(int vehicleId, MAP *src, MAP *dst);
 double getUnitApproachTime(int factionId, int unitId, MAP *org, MAP *dst);
-double getApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
+double getGravshipTravelTime(int speed, MAP *org, MAP *dst);
+double getRangedAirTravelTime(int factionId, int chassisId, int speed, MAP *org, MAP *dst);
 double getSeaLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
 double getLandLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
 
-// ==================================================
-// Other travel functions
-// ==================================================
+double getVehicleTravelTime(int vehicleId, MAP *dst);
+double getVehicleTravelTime(int vehicleId, MAP *org, MAP *dst);
+double getUnitTravelTime(int factionId, int unitId, MAP *org, MAP *dst);
 
-double getEnemyApproachTime(int baseId, int vehicleId);
-double getEnemyGravshipApproachTime(int baseId, int vehicleId);
-double getEnemyRangedAirApproachTime(int baseId, int vehicleId);
-//double getEnemySeaApproachTime(int baseId, int vehicleId);
-//double getEnemyLandTransportedApproachTime(int baseId, int vehicleId);
-
-double getPlayerApproachTime(int baseId, int unitId, MAP *origin);
-double getPlayerGravshipApproachTime(int baseId, int unitId, MAP *origin);
-double getPlayerRangedAirApproachTime(int baseId, int unitId, MAP *origin);
-//double getPlayerSeaApproachTime(int baseId, int unitId, MAP *origin);
-//double getPlayerLandApproachHexCost(int baseId, int unitId, MAP *origin);
-
-// ==================================================
-// Generic, not path related travel computations
-// ==================================================
-
-double getGravshipUnitTravelTime(int /*unitId*/, int speed, MAP *org, MAP *dst);
-double getGravshipUnitTravelTime(int unitId, MAP *org, MAP *dst);
-double getGravshipVehicleTravelTime(int vehicleId, MAP *org, MAP *dst);
-
-double getAirRangedUnitTravelTime(int unitId, int speed, MAP *org, MAP *dst);
-double getAirRangedUnitTravelTime(int unitId, MAP *org, MAP *dst);
-double getAirRangedVehicleTravelTime(int vehicleId, MAP *org, MAP *dst);
-
-// ==================================================
-// A* cached movement costs
-// ==================================================
-
-double getCachedATravelTime(MovementType movementType, int speed, int orgIndex, int dstIndex);
-void setCachedATravelTime(MovementType movementType, int speed, int orgIndex, int dstIndex, double travelTime);
-
-// ==================================================
-// A* path finding algorithm
-// ==================================================
-
-double getATravelTime(MovementType movementType, int speed, MAP *origin, MAP *dst);
-
-double getUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst);
-double getUnitATravelTime(int unitId, MAP *org, MAP *dst);
-double getSeaUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst);
-double getLandUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst);
-
-double getVehicleATravelTime(int vehicleId, MAP *org, MAP *dst);
-double getVehicleATravelTime(int vehicleId, MAP *dst);
-
+//// ==================================================
+//// A* cached movement costs
+//// ==================================================
+//
+//double getCachedATravelTime(MovementType movementType, int speed, int orgIndex, int dstIndex);
+//void setCachedATravelTime(MovementType movementType, int speed, int orgIndex, int dstIndex, double travelTime);
+//
+//// ==================================================
+//// A* path finding algorithm
+//// ==================================================
+//
+//double getATravelTime(MovementType movementType, int speed, MAP *origin, MAP *dst);
+//
+//double getUnitATravelTime(int factionId, int unitId, int speed, MAP *org, MAP *dst);
+//double getUnitATravelTime(int factionId, int unitId, MAP *origin, MAP *dst);
+//double getSeaUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst);
+//double getLandUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst);
+//
+//double getVehicleATravelTime(int vehicleId, MAP *org, MAP *dst);
+//double getVehicleATravelTime(int vehicleId, MAP *dst);
+//
 // ============================================================
 // Reachability
 // ============================================================
@@ -354,6 +307,7 @@ bool isVehicleDestinationReachable(int vehicleId, MAP *dst);
 double getRouteVectorDistance(MAP *tile1, MAP *tile2);
 MovementType getUnitMovementType(int factionId, int unitId);
 MovementType getVehicleMovementType(int vehicleId);
+ExtendedMovementType getUnitExtendedMovementType(int factionId, int unitId);
 
 int getAirCluster(int chassisId, int speed, MAP *tile);
 int getVehicleAirCluster(int vehicleId);

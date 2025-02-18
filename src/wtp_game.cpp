@@ -9,6 +9,8 @@
 #include "wtp_mod.h"
 #include "wtp_aiTask.h"
 
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> RANGE_TILES;
+
 // Location
 
 bool operator==(const Location &o1, const Location &o2)
@@ -214,11 +216,11 @@ int getY(int tileIndex)
 /**
 Computes location coordinates by map tile.
 */
-int getX(MAP *tile)
+int getX(MAP const *tile)
 {
 	return getX(tile - *MapTiles);
 }
-int getY(MAP *tile)
+int getY(MAP const *tile)
 {
 	return getY(tile - *MapTiles);
 }
@@ -450,56 +452,71 @@ std::vector<MAP *> getSideTiles(MAP *tile)
 }
 
 /**
-Returns square block radius tile by index.
+Returns tiles from beginIndex (inclusive) to endIndex (exclusive).
 */
-MAP * getSquareBlockRadiusTile(MAP *center, int index)
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareOffsetTiles(MAP *center, int beginIndex, int endIndex)
 {
 	assert(isOnMap(center));
 	
 	int x = getX(center);
 	int y = getY(center);
-
-	int offsetX = TABLE_square_offset_x[index];
-	int offsetY = TABLE_square_offset_y[index];
-
-	int cellX = wrap(x + offsetX);
-	int cellY = y + offsetY;
-
-	MAP *tile = (isOnMap(cellX, cellY) ? getMapTile(cellX, cellY) : nullptr);
-
-	return tile;
-
-}
-
-/**
-Returns square block radius tiles from beginIndex (inclusive) to endIndex (exclusive).
-*/
-std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, int beginIndex, int endIndex)
-{
-	assert(isOnMap(center));
 	
-	int x = getX(center);
-	int y = getY(center);
-
-	std::vector<MAP *> tiles;
-
+	RANGE_TILES.clear();
+	
 	for (int index = beginIndex; index < endIndex; index++)
 	{
 		int offsetX = TABLE_square_offset_x[index];
 		int offsetY = TABLE_square_offset_y[index];
-
+		
 		int cellX = wrap(x + offsetX);
 		int cellY = y + offsetY;
-
+		
 		if (!isOnMap(cellX, cellY))
 			continue;
-
-		tiles.push_back(getMapTile(cellX, cellY));
-
+		
+		RANGE_TILES.push_back(getMapTile(cellX, cellY));
+		
 	}
+	
+	return RANGE_TILES;
+	
+}
 
-	return tiles;
-
+/**
+Returns tiles within given index from given center.
+Uses vanilla TABLE_square_offset.
+*/
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareBlockTiles(MAP *center, int minRadius, int maxRadius)
+{
+	assert(isOnMap(center));
+	assert(minRadius >= 0 && minRadius < TABLE_square_block_radius_count);
+	assert(maxRadius >= 0 && maxRadius < TABLE_square_block_radius_count);
+	
+	int x = getX(center);
+	int y = getY(center);
+	
+	int minIndex = (minRadius == 0 ? 0 : TABLE_square_block_radius[minRadius - 1]);
+	int maxIndex = TABLE_square_block_radius[maxRadius];
+	
+	RANGE_TILES.clear();
+	
+	for (int index = minIndex; index < maxIndex; index++)
+	{
+		int offsetX = TABLE_square_offset_x[index];
+		int offsetY = TABLE_square_offset_y[index];
+		
+		int cellX = wrap(x + offsetX);
+		int cellY = y + offsetY;
+		
+		if (!isOnMap(cellX, cellY))
+			continue;
+		
+		RANGE_TILES.push_back(getMapTile(cellX, cellY));
+		
+	}
+	
+	return RANGE_TILES;
+	
 }
 
 /**
@@ -508,148 +525,114 @@ Uses vanilla TABLE_square_offset.
 minRadius = 0-8, inclusive
 maxRadius = 0-8, inclusive
 */
-std::vector<MAP *> getSquareBlockTiles(MAP *center, int minRadius, int maxRadius)
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareBlockRadiusTiles(MAP *center, int minRadius, int maxRadius)
 {
 	assert(isOnMap(center));
 	assert(minRadius >= 0 && minRadius < TABLE_square_block_radius_count);
 	assert(maxRadius >= 0 && maxRadius < TABLE_square_block_radius_count);
-
+	
 	int x = getX(center);
 	int y = getY(center);
-
+	
 	int minIndex = (minRadius == 0 ? 0 : TABLE_square_block_radius[minRadius - 1]);
 	int maxIndex = TABLE_square_block_radius[maxRadius];
-
-	std::vector<MAP *> tiles;
-
+	
+	RANGE_TILES.clear();
+	
 	for (int index = minIndex; index < maxIndex; index++)
 	{
 		int offsetX = TABLE_square_offset_x[index];
 		int offsetY = TABLE_square_offset_y[index];
-
+		
 		int cellX = wrap(x + offsetX);
 		int cellY = y + offsetY;
-
+		
 		if (!isOnMap(cellX, cellY))
 			continue;
-
-		tiles.push_back(getMapTile(cellX, cellY));
-
+		
+		RANGE_TILES.push_back(getMapTile(cellX, cellY));
+		
 	}
-
-	return tiles;
-
+	
+	return RANGE_TILES;
+	
 }
 
 /*
-Returns tile equally ranged from given center.
+Returns tiles withing given range from given center.
+Returns reference to global variable. Not safe for nested use.
 */
-std::vector<MAP *> getEqualRangeTiles(MAP *tile, int range)
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int range, bool includeCenter)
 {
-	assert(isOnMap(tile));
-	assert(range >= 0);
+	Profiling::start("- getRangeTiles");
 	
-	// use vanilla table for range < TABLE_square_block_radius_count
+	RANGE_TILES.clear();
 	
-	if (range < TABLE_square_block_radius_count)
+	if (!(range >= 0 && range < MAX_RANGE))
 	{
-		return getSquareBlockTiles(tile, range, range);
+		debug("ERROR: assert failed: (range >= 0 && range < MAX_RANGE)\n");flushlog();
+		return RANGE_TILES;
 	}
+	
+	int squareBlockRange = std::min(TABLE_square_block_radius_count - 1, range);
+	
+	// populate range < TABLE_square_block_radius_count
+	
+	getSquareBlockRadiusTiles(tile, (includeCenter ? 0 : 1), squareBlockRange);
 	
 	// use normal computation
 	
 	int x = getX(tile);
 	int y = getY(tile);
 	
-	std::vector<MAP *> tiles;
-	
-	if (range == 0)
+	for (int ringRange = squareBlockRange + 1; ringRange <= range; ringRange++)
 	{
-		tiles.push_back(tile);
-		return tiles;
-	}
-	
-	int dMax = 2 * range;
-	
-	for (int i = 0; i < dMax; i++)
-	{
-		int x0 = wrap(x - dMax + i);
-		int y0 = y + 0 - i;
+		int dMax = 2 * ringRange;
 		
-		if (isOnMap(x0, y0))
+		for (int i = 0; i < dMax; i++)
 		{
-			MAP *tile0 = getMapTile(x0, y0);
-			tiles.push_back(tile0);
-		}
-		
-		int x1 = wrap(x + 0 + i);
-		int y1 = y - dMax + i;
-		
-		if (isOnMap(x1, y1))
-		{
-			MAP *tile1 = getMapTile(x1, y1);
-			tiles.push_back(tile1);
-		}
-		
-		int x2 = wrap(x + dMax - i);
-		int y2 = y + 0 + i;
-		
-		if (isOnMap(x2, y2))
-		{
-			MAP *tile2 = getMapTile(x2, y2);
-			tiles.push_back(tile2);
-		}
-		
-		int x3 = wrap(x + 0 - i);
-		int y3 = y + dMax - i;
-		
-		if (isOnMap(x3, y3))
-		{
-			MAP *tile3 = getMapTile(x3, y3);
-			tiles.push_back(tile3);
+			int x0 = wrap(x - dMax + i);
+			int y0 = y + 0 - i;
+			
+			if (isOnMap(x0, y0))
+			{
+				MAP *tile0 = getMapTile(x0, y0);
+				RANGE_TILES.push_back(tile0);
+			}
+			
+			int x1 = wrap(x + 0 + i);
+			int y1 = y - dMax + i;
+			
+			if (isOnMap(x1, y1))
+			{
+				MAP *tile1 = getMapTile(x1, y1);
+				RANGE_TILES.push_back(tile1);
+			}
+			
+			int x2 = wrap(x + dMax - i);
+			int y2 = y + 0 + i;
+			
+			if (isOnMap(x2, y2))
+			{
+				MAP *tile2 = getMapTile(x2, y2);
+				RANGE_TILES.push_back(tile2);
+			}
+			
+			int x3 = wrap(x + 0 - i);
+			int y3 = y + dMax - i;
+			
+			if (isOnMap(x3, y3))
+			{
+				MAP *tile3 = getMapTile(x3, y3);
+				RANGE_TILES.push_back(tile3);
+			}
+			
 		}
 		
 	}
 	
-	return tiles;
-	
-}
-
-/*
-Returns tiles withing given range from given center.
-*/
-std::vector<MAP *> getRangeTiles(MAP *tile, int range, bool includeCenter)
-{
-	assert(range >= 0);
-	
-	Profiling::start("| getRangeTiles");
-	
-	// use vanilla table for range < TABLE_square_block_radius_count
-	
-	if (range < TABLE_square_block_radius_count)
-	{
-		Profiling::stop("| getRangeTiles");
-		return getSquareBlockTiles(tile, (includeCenter ? 0 : 1), range);
-	}
-	
-	// use normal computation
-	
-	std::vector<MAP *> tiles;
-	
-	if (includeCenter)
-	{
-		tiles.push_back(tile);
-	}
-	
-	for (int ringRange = 1; ringRange <= range; ringRange++)
-	{
-		std::vector<MAP *> equalRangeTiles = getEqualRangeTiles(tile, ringRange);
-		tiles.insert(tiles.end(), equalRangeTiles.begin(), equalRangeTiles.end());
-	}
-	
-	Profiling::stop("| getRangeTiles");
-	
-	return tiles;
+	Profiling::stop("- getRangeTiles");
+	return RANGE_TILES;
 	
 }
 
@@ -702,9 +685,9 @@ std::vector<MAP *> getBaseRadiusTiles(MAP *tile, bool includeCenter)
 	return getBaseRadiusTiles(getX(tile), getY(tile), includeCenter);
 }
 
-std::vector<MAP *> getBaseExternalRadiusTiles(MAP *center)
+ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getBaseExternalRadiusTiles(MAP *center)
 {
-	return getSquareBlockRadiusTiles(center, TABLE_square_block_radius_base_internal, TABLE_square_block_radius_base_external);
+	return getSquareOffsetTiles(center, TABLE_square_block_radius_base_internal, TABLE_square_block_radius_base_external);
 }
 
 /*
@@ -1953,64 +1936,6 @@ void computeBase(int baseId, bool resetWorkedTiles)
 	
 	Profiling::stop("- computeBase");	
 	
-}
-
-///**
-//Computes complete base reset as in base_upkeep.
-//1. Resets workers.
-//2. Computes base.
-//3. Computes drones.
-//4. Computes doctors.
-//*/
-//void computeBaseComplete(int baseId)
-//{
-//	Bases[baseId].worked_tiles = 0;
-//	
-//	*ControlUpkeepA = 1;
-//	
-//	set_base(baseId);
-//	base_compute(1);
-//	base_drones();
-//	base_doctors();
-//	
-//	*ControlUpkeepA = 0;
-//	
-//}
-//
-/**
-Computes base and tries to adjust number of doctors to avoid drones.
-*/
-void computeBaseDoctors(int baseId)
-{
-	BASE *base = getBase(baseId);
-
-//	computeBase(baseId, true);
-//	removeBaseDoctors(baseId);
-//	base_doctors();
-//
-	removeBaseDoctors(baseId);
-	do
-	{
-		int doctors1 = getBaseDoctors(baseId);
-		computeBase(baseId, true);
-		int doctors2 = getBaseDoctors(baseId);
-
-		// computeBase reset doctors count
-
-		if (doctors2 < doctors1)
-			break;
-
-		// exit condition
-
-		if (base->talent_total >= base->drone_total)
-			break;
-
-		if (!addBaseDoctor(baseId))
-			break;
-
-	}
-	while (true);
-
 }
 
 /*
@@ -3522,7 +3447,7 @@ int setMoveTo(int vehicleId, MAP *destination)
 	
     if (vehicle->triad() == TRIAD_LAND && !vehicleTileOcean && !destinationOcean && vehicleTileRangeToDestination == 1 && !destinationBlocked)
 	{
-		int directMoveHexCost = getHexCost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, x, y, vehicleSpeed1);
+		int directMoveHexCost = mod_hex_cost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, x, y, vehicleSpeed1);
 		bool destinationZoc = isZoc(factionId, vehicleTile, destination);
 		
 		// set direct move to infinite cost if zoc
@@ -3568,8 +3493,8 @@ int setMoveTo(int vehicleId, MAP *destination)
 			
 			// compute cost
 			
-			int hexCost1 = getHexCost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, adjacentTileX, adjacentTileY, vehicleSpeed1);
-			int hexCost2 = getHexCost(vehicle->unit_id, vehicle->faction_id, adjacentTileX, adjacentTileY, x, y, vehicleSpeed1);
+			int hexCost1 = mod_hex_cost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, adjacentTileX, adjacentTileY, vehicleSpeed1);
+			int hexCost2 = mod_hex_cost(vehicle->unit_id, vehicle->faction_id, adjacentTileX, adjacentTileY, x, y, vehicleSpeed1);
 			int hexCost = hexCost1 + hexCost2;
 			
 			if (hexCost >= directMoveHexCost)
@@ -3965,6 +3890,8 @@ double getBaseStructureConDefenseMultiplier(bool firstLevelDefense, bool secondL
 
 bool isWithinFriendlySensorRange(int factionId, MAP *tile)
 {
+	Profiling::start("- isWithinFriendlySensorRange");
+	
 	// real sensors
 	
 	for (MAP *rangeTile : getRangeTiles(tile, 2, true))
@@ -3975,7 +3902,10 @@ bool isWithinFriendlySensorRange(int factionId, MAP *tile)
 			continue;
 		
 		if (map_has_item(rangeTile, BIT_SENSOR))
+		{
+			Profiling::stop("- isWithinFriendlySensorRange");
 			return true;
+		}
 		
 	}
 	
@@ -3993,12 +3923,16 @@ bool isWithinFriendlySensorRange(int factionId, MAP *tile)
 			continue;
 		
 		if (isBaseHasFacility(baseId, FAC_GEOSYNC_SURVEY_POD))
+		{
+			Profiling::stop("- isWithinFriendlySensorRange");
 			return true;
+		}
 		
 	}
 	
 	// not found
 	
+	Profiling::stop("- isWithinFriendlySensorRange");
 	return false;
 	
 }
@@ -5225,29 +5159,6 @@ int getBaseGrowthRate(int baseId)
 
 }
 
-int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY, int speed1)
-{
-	return mod_hex_cost(unitId, factionId, fromX, fromY, toX, toY, speed1);
-}
-int getHexCost(int unitId, int factionId, MAP *fromTile, MAP *toTile, int speed1)
-{
-	assert(isOnMap(fromTile));
-	assert(isOnMap(toTile));
-	return mod_hex_cost(unitId, factionId, getX(fromTile), getY(fromTile), getX(toTile), getY(toTile), speed1);
-}
-
-int getVehicleHexCost(int vehicleId, int fromX, int fromY, int toX, int toY)
-{
-	VEH *vehicle = getVehicle(vehicleId);
-	return mod_hex_cost(vehicle->unit_id, vehicle->faction_id, fromX, fromY, toX, toY, (getVehicleSpeed(vehicleId) == 1 ? 1 : 0));
-}
-
-int getSeaHexCost(MAP *tile)
-{
-	assert(isOnMap(tile));
-	return (map_has_item(tile, BIT_FUNGUS) ? 3 : 1) * Rules->move_rate_roads;
-}
-
 /**
 Factions have commlink.
 */
@@ -5434,55 +5345,15 @@ int getUnitIdByUnitIndex(int unitIndex)
 }
 
 /**
-Determines number of drones could be quelled by police.
-*/
-int getBasePoliceRequiredPower(int baseId)
-{
-	BASE *base = getBase(baseId);
-	
-	// compute base without specialists
-	
-	int specialistsTotal = base->specialist_total;
-	int specialistsAdjust = base->specialist_adjust;
-	int specialistsTypes0 = base->specialist_types[0];
-	int specialistsTypes1 = base->specialist_types[1];
-	
-	base->specialist_total = 0;
-	computeBase(baseId, true);
-	
-	// get drones currently quelled by police
-	
-	int quelledDrones = *CURRENT_BASE_DRONES_FACILITIES - *CURRENT_BASE_DRONES_POLICE;
-	
-	// get drones left after projects applied
-	
-	int leftDrones = *CURRENT_BASE_DRONES_PROJECTS;
-	
-	// calculate potential number of drones can be quelled with police
-	
-	int requiredPolicePower = quelledDrones + leftDrones - base->talent_total;
-	
-	// restore base
-	
-	base->specialist_total = specialistsTotal;
-	base->specialist_adjust = specialistsAdjust;
-	base->specialist_types[0] = specialistsTypes0;
-	base->specialist_types[1] = specialistsTypes1;
-	
-	computeBase(baseId, true);
-	
-	return requiredPolicePower;
-	
-}
-
-/**
 Retrieves number of drones currently suppressed by police.
 */
 int getBasePoliceSuppressedDrones(int baseId)
 {
 	// compute base
 	
+	Profiling::start("- getBasePoliceSuppressedDrones - computeBase");
 	computeBase(baseId, false);
+	Profiling::stop("- getBasePoliceSuppressedDrones - computeBase");
 	
 	// get drones currently suppressed by police
 	
@@ -6936,13 +6807,9 @@ int getRange(int tile1Index, int tile2Index)
 	
 }
 
-int getRange(MAP *tile1, MAP *tile2)
+int getRange(MAP const *tile1, MAP const *tile2)
 {
-	assert(isOnMap(tile1));
-	assert(isOnMap(tile2));
-	
 	return getRange(getX(tile1), getY(tile1), getX(tile2), getY(tile2));
-	
 }
 
 /*
@@ -7598,16 +7465,14 @@ int getVehicleSpeed(int vehicleId)
 	return getVehicleMoveRate(vehicleId) / Rules->move_rate_roads;
 }
 
-bool isBaseAccessesWater(int baseId)
+bool isTileAccessesWater(MAP *tile)
 {
-	MAP *baseTile = getBaseMapTile(baseId);
-	
 	// ocean
 	
-	if (is_ocean(baseTile))
+	if (is_ocean(tile))
 		return true;
 	
-	for (MAP *adjacentTile : getAdjacentTiles(baseTile))
+	for (MAP *adjacentTile : getAdjacentTiles(tile))
 	{
 		if (is_ocean(adjacentTile))
 			return true;
@@ -7615,6 +7480,11 @@ bool isBaseAccessesWater(int baseId)
 	
 	return false;
 	
+}
+
+bool isBaseAccessesWater(int baseId)
+{
+	return isTileAccessesWater(getBaseMapTile(baseId));
 }
 
 bool isBaseCanBuildShip(int baseId)
@@ -8047,6 +7917,57 @@ std::set<int> getBaseSeaRegions(int baseId)
 	}
 	
 	return baseSeaRegions;
+	
+}
+
+/**
+Returns range to first not faction owned tile.
+Uses vanilla TABLE_square_offset.
+minRadius = 0-8, inclusive
+maxRadius = 0-8, inclusive
+*/
+int getClosestNotOwnedTileRange(int factionId, MAP *tile, int minRadius, int maxRadius)
+{
+	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
+	assert(minRadius >= 0 && minRadius < TABLE_square_block_radius_count);
+	assert(maxRadius >= 0 && maxRadius < TABLE_square_block_radius_count);
+	
+	int x = getX(tile);
+	int y = getY(tile);
+	
+	int closestNotOwnedTileRange = -1;
+	
+	for (int radius = minRadius; radius <= maxRadius; radius++)
+	{
+		int minIndex = (radius == 0 ? 0 : TABLE_square_block_radius[radius - 1]);
+		int maxIndex = TABLE_square_block_radius[radius];
+		
+		for (int index = minIndex; index < maxIndex; index++)
+		{
+			int offsetX = TABLE_square_offset_x[index];
+			int offsetY = TABLE_square_offset_y[index];
+			
+			int cellX = wrap(x + offsetX);
+			int cellY = y + offsetY;
+			
+			if (!isOnMap(cellX, cellY))
+				continue;
+			
+			MAP *tile = getMapTile(cellX, cellY);
+			if (tile->owner != factionId)
+			{
+				closestNotOwnedTileRange = radius;
+				break;
+			}
+			
+		}
+		
+		if (closestNotOwnedTileRange != -1)
+			break;
+		
+	}
+	
+	return closestNotOwnedTileRange;
 	
 }
 

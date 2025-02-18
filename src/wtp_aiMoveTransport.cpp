@@ -138,7 +138,10 @@ void moveSeaTransportStrategy(int vehicleId)
 	for (UnloadRequest &unloadRequest : aiData.transportControl.getSeaTransportUnloadRequests(vehicleId))
 	{
 		int passengerVehicleId = unloadRequest.getVehicleId();
-		double travelTime = getVehicleATravelTime(vehicleId, unloadRequest.destination);
+		
+		double travelTime = getVehicleTravelTime(vehicleId, unloadRequest.destination);
+		if (travelTime == INF)
+			continue;
 		
 		// preference
 		
@@ -214,7 +217,9 @@ void moveSeaTransportStrategy(int vehicleId)
 			if (transitRequest.isFulfilled())
 				continue;
 			
-			double travelTime = getVehicleATravelTime(vehicleId, transitRequest.origin);
+			double travelTime = getVehicleTravelTime(vehicleId, transitRequest.origin);
+			if (travelTime == INF)
+				continue;
 			
 			if (travelTime < closestLoadLocationTravelTime)
 			{
@@ -246,7 +251,9 @@ void moveSeaTransportStrategy(int vehicleId)
 		
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		MAP *destination = task->getDestination();
-		double currentTravelTime = getVehicleATravelTime(vehicleId, destination);
+		double currentTravelTime = getVehicleTravelTime(vehicleId, destination);
+		if (currentTravelTime == INF)
+			return;
 		
 		TransitRequest *closestTransitRequest = nullptr;
 		double closestLoadLocationTravelTime = currentTravelTime * 150 / 100;
@@ -266,8 +273,8 @@ void moveSeaTransportStrategy(int vehicleId)
 			// combined travel time
 			
 			double travelTime =
-				+ getVehicleATravelTime(vehicleId, vehicleTile, transitRequest.origin)
-				+ getVehicleATravelTime(vehicleId, transitRequest.origin, destination)
+				+ getVehicleTravelTime(vehicleId, vehicleTile, transitRequest.origin)
+				+ getVehicleTravelTime(vehicleId, transitRequest.origin, destination)
 			;
 			
 			if (travelTime < closestLoadLocationTravelTime)

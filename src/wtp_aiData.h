@@ -84,38 +84,28 @@ size_t const LAND_MOVEMENT_TYPE_COUNT = LAND_MOVEMENT_TYPE_LAST - LAND_MOVEMENT_
 std::vector<MovementType> const SEA_MOVEMENT_TYPES {MT_SEA_REGULAR, MT_SEA_NATIVE, };
 std::vector<MovementType> const LAND_MOVEMENT_TYPES {MT_LAND_REGULAR, MT_LAND_NATIVE, };
 
+enum ExtendedMovementType
+{
+	EMT_AIR,
+	EMT_SEA_REGULAR,
+	EMT_SEA_NATIVE,
+	EMT_LAND_REGULAR,
+	EMT_LAND_NATIVE,
+	EMT_LAND_HOVER,
+	EMT_LAND_HOVER_NATIVE,
+};
+size_t const EXTENDED_MOVEMENT_TYPE_COUNT = EMT_LAND_HOVER_NATIVE + 1;
+
 struct Offense
 {
 	std::array<bool, ENGAGEMENT_MODE_COUNT> engagementModes;
 	double hastyCoefficient = 1.0;
 };
 
-struct TileCombatData
-{
-	robin_hood::unordered_flat_map<int, Offense> enemyOffenses;
-};
-
-template<class T, int N> class ArrayVector : public std::array<T,N>
-{
-private:
-	int size = 0;
-public:
-	void push_back(T element)
-	{
-		if (size < N) this->at(size++) = element;
-	}
-	typename std::array<T,N>::iterator end()
-	{
-		return this->begin() + size;
-	}
-};
-
 struct TileInfo;
 struct Adjacent
 {
 	int angle;
-	int tileIndex;
-	MAP *tile;
 	TileInfo *tileInfo;
 };
 struct MapIndexHexCost
@@ -155,8 +145,11 @@ struct TileInfo
 	
 	// adjacent tiles
 	ArrayVector<Adjacent, ANGLE_COUNT> adjacents;
+	// range tiles
+	std::array<TileInfo *, 25> range2TileInfosArray;
+	ArrayView<TileInfo *, 25> range2CenterTileInfos;
+	ArrayView<TileInfo *, 25> range2NoCenterTileInfos;
 	
-	// [movementType][mapIndex, hexCost]
 	// hex costs
 	// [movementType][angle]
 	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> hexCosts;
@@ -164,14 +157,14 @@ struct TileInfo
 	// mapIndex == -1 : not existing tile
 	// hexCost == -1 : not allowed move (other surface)
 	std::array<std::array<MapIndexHexCost, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> mapIndexHexCosts;
+	// extended hex costs
+	// [extendedMovementType][speed1][angle]
+	std::array<std::array<std::array<int, ANGLE_COUNT>, 2>, EXTENDED_MOVEMENT_TYPE_COUNT> extendedHexCosts;
 	
 	// movement data
 	
 	bool blocked;
 	bool zoc;
-	
-	// combat data
-	TileCombatData combatData;
 	
 	// destruction proportion of regular non combat not armored vehicle
 	double danger;
@@ -472,6 +465,7 @@ public:
 /// base information
 struct BaseInfo
 {
+	BASE snapshot;
 	int id;
 	int factionId;
 	bool port;
@@ -494,25 +488,6 @@ struct BaseInfo
 	double safeTime;
 	BaseProbeData probeData;
 	
-	// protector operations
-	
-	void resetProtectors()
-	{
-		policeData.reset();
-		combatData.reset();
-	}
-	
-	void addProtector(int vehicleId)
-	{
-		policeData.addVehicle(vehicleId);
-		combatData.addVehicle(vehicleId, getVehicleMapTile(vehicleId) == getBaseMapTile(id));
-	}
-	
-	bool isSatisfied(int vehicleId, bool present) const
-	{
-		return policeData.isSatisfied(vehicleId) && combatData.isSatisfied(present);
-	}
-	
 	// enemy base data
 	
 	// total gain received from capturing base
@@ -534,6 +509,32 @@ struct BaseInfo
 	double estimatedApproachTime;
 	// production superiority
 	double playerProductionSuperiority;
+	
+	// reset base
+	
+	void reset()
+	{
+		Profiling::start("- BaseInfo::reset");
+        memcpy(&Bases[id], &snapshot, sizeof(BASE));
+		Profiling::stop("- BaseInfo::reset");
+	}
+	
+	// protector operations
+	
+	void resetProtectors()
+	{
+		policeData.reset();
+		combatData.reset();
+	}
+	void addProtector(int vehicleId)
+	{
+		policeData.addVehicle(vehicleId);
+		combatData.addVehicle(vehicleId, getVehicleMapTile(vehicleId) == getBaseMapTile(id));
+	}
+	bool isSatisfied(int vehicleId, bool present) const
+	{
+		return policeData.isSatisfied(vehicleId) && combatData.isSatisfied(present);
+	}
 	
 };
 
@@ -808,10 +809,16 @@ struct Data
 	
 	std::vector<TileInfo> tileInfos;
 	std::map<int, int> seaRegionAreas;
+	std::vector<MAP *> monoliths;
+	std::vector<MAP *> pods;
 	
 	// base infos
 	
 	std::array<BaseInfo, MaxBaseNum> baseInfos;
+	void resetBase(int baseId)
+	{
+		baseInfos.at(baseId).reset();
+	}
 	
 	// faction infos
 	
@@ -989,6 +996,9 @@ struct MoveAction
 	
 	MoveAction(MAP *_tile, int _movementAllowance)
 	: tile{_tile}, movementAllowance{_movementAllowance}
+	{}
+	MoveAction()
+	: MoveAction(nullptr, 0)
 	{}
 	
 };

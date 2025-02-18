@@ -748,6 +748,7 @@ bool patch_setup(Config* cf) {
     write_call(0x55E364, (int)mod_NetMsg_pop); // enemies_treaty
     write_call(0x55CB33, (int)mod_NetMsg_pop); // enemies_war
     write_call(0x597141, (int)mod_NetMsg_pop); // order_veh
+    write_call(0x59F6E1, (int)mod_NetMsg_pop); // #HUNTERSEEKER2
 
     // Custom ambient music option
     write_call(0x445846, (int)load_music_strcmpi);

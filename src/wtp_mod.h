@@ -104,7 +104,11 @@ private:
 				break;
 			}
 		}
-		assert(profile != nullptr);
+		if (profile == nullptr)
+		{
+			debug("ERROR: Profile::getProfile. Profile is NOT FOUND: %s\n", name.c_str());flushlog();
+			abort();
+		}
 		
 		return profile;
 		

@@ -62,7 +62,7 @@ struct TileYield
 struct MapState
 {
 	int rockiness;
-	int items;
+	uint32_t items;
 };
 
 struct FactionTerraformingInfo
