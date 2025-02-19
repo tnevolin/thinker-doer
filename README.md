@@ -375,8 +375,6 @@ Recycling Tanks now is a 50% mineral multplying facilities among others of same 
 
 Energy multiplying facilities are generally at good places already. I've reduced cost of some early coming ones to make their benefit appear earlier.
 
-Some facilities cost/maintenance changed.
-
 | facility | cost | maint | multiplication | other effects |
 | ---- | ----: | ----: | ---- | ---- |
 | Recycling Tanks | 10 | 2 | +50% minerals | |
