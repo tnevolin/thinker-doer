@@ -375,11 +375,11 @@ Recycling Tanks now is a 50% mineral multplying facilities among others of same 
 
 Energy multiplying facilities are generally at good places already. I've reduced cost of some early coming ones to make their benefit appear earlier.
 
-| facility | cost | maint | multiplication | other effects |
+| facility | cost | maint | multi / yield | other effects |
 | ---- | ----: | ----: | ---- | ---- |
 | Recycling Tanks | 10 | 2 | +50% minerals | |
 | Genejack Factory | 12 | 3 | +50% minerals | +1 drone |
-| Genejack Factory (optional) | 12 | 3 | | +1 drone, +1 mineral mining platform, +2 minerals rocky mine |
+| Genejack Factory (optional) | 12 | 3 | +1 mineral mining platform<br/>+2 minerals rocky mine | +1 drone |
 | Robotic Assembly Plant | 16 | 4 | +50% minerals | |
 | Quantum Converter | 20 | 5 | +50% minerals | |
 | Nanoreplicator | 24 | 6 | +50% minerals | mineral eco-damage reduction |
@@ -388,10 +388,10 @@ Energy multiplying facilities are generally at good places already. I've reduced
 | Paradise Garden | 12 | 3 | | +2 talents |
 | Research Hospital | 10 | 2 | +50% labs, +25 psych | -1 drone |
 | Nanohospital | 16 | 3 | +50% labs, +25 psych | -1 drone |
-| Tree Farm | 10 | 2 | +25% econ, +25% psych | terraforming eco-damage reduction, +1 nutrient forest |
-| Hybrid Forest | 16 | 3 | +25% econ, +25% psych | terraforming eco-damage reduction, +1 nutrient forest |
-| Centauri Preserve | 10 | 2 | +25% economy, +25% psych | minerals eco-damage reduction |
-| Temple of Planet | 16 | 3 | +25% economy, +25% psych | minerals eco-damage reduction |
+| Tree Farm | 10 | 2 | +25% econ, +25% psych<br/>+1 nutrient forest | terraforming eco-damage reduction |
+| Hybrid Forest | 16 | 3 | +25% econ, +25% psych<br/>+1 nutrient forest | terraforming eco-damage reduction |
+| Centauri Preserve | 10 | 2 | +25% econy, +25% psych | minerals eco-damage reduction |
+| Temple of Planet | 16 | 3 | +25% econ, +25% psych | minerals eco-damage reduction |
 | Energy Bank / Network Node | 6 | 1 | +50% econ/labs |
 | Fusion Lab | 16 | 3 | +50% econ, +50 labs |
 | Quantum Lab | 20 | 4 | +50% econ, +50 labs |
