@@ -367,13 +367,35 @@ The Telepathic Matrix | 200 | Total drone solution. About 5 times The Human Geno
 The Voice of Planet | 120 | 
 The Ascent to Transcendence | 500 | Should take some time but not to extreme with all empire bases contribuing to it.
 
-# Multiplying facilities
+# Facilities
 
 Multiplying facilities are incentive for base growth vs ICS. Multiplying facilities, especially mineral ones, should start earlier and distributed more evenly across the tree.
 
 Recycling Tanks now is a 50% mineral multplying facilities among others of same type. Other multiplying facilities are distributed more smoothly across the tree.
 
 Energy multiplying facilities are generally at good places already. I've reduced cost of some early coming ones to make their benefit appear earlier.
+
+Some facilities cost/maintenance changed.
+
+| facility | cost | maint | multiplication | other effects |
+| ---- | ----: | ----: | ---- | ---- |
+| Recycling Tanks | 10 | 2 | +50% minerals | |
+| Genejack Factory | 12 | 3 | +50% minerals | +1 drone |
+| Robotic Assembly Plant | 14 | 4 | +50% minerals | |
+| Quantum Converter | 16 | 5 | +50% minerals | |
+| Nanoreplicator | 20 | 6 | +50% minerals | mineral eco-damage reduction |
+| Recreation Commons | 4 | 1 | | -2 drones |
+| Hologram Theatre | 6 | 2 | +50% psych | -2 drones |
+| Paradise Garden | 12 | 3 | | +2 talents |
+| Research Hospital | 10 | 2 | +50% labs, +25 psych | -1 drone |
+| Nanohospital | 16 | 3 | +50% labs, +25 psych | -1 drone |
+| Tree Farm | 10 | 2 | +25% econ, +25% psych | terraforming eco-damage reduction, +1 nutrient forest |
+| Hybrid Forest | 16 | 3 | +25% econ, +25% psych | terraforming eco-damage reduction, +1 nutrient forest |
+| Centauri Preserve | 10 | 2 | +25% economy, +25% psych | minerals eco-damage reduction |
+| Temple of Planet | 16 | 3 | +25% economy, +25% psych | minerals eco-damage reduction |
+| Energy Bank / Network Node | 6 | 1 | +50% econ/labs |
+| Fusion Lab | 16 | 3 | +50% econ, +50 labs |
+| Quantum Lab | 20 | 4 | +50% econ, +50 labs |
 
 # Feature appearance time
 
