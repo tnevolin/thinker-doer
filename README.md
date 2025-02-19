@@ -379,9 +379,9 @@ Energy multiplying facilities are generally at good places already. I've reduced
 | ---- | ----: | ----: | ---- | ---- |
 | Recycling Tanks | 10 | 2 | +50% minerals | |
 | Genejack Factory | 12 | 3 | +50% minerals | +1 drone |
-| Robotic Assembly Plant | 14 | 4 | +50% minerals | |
-| Quantum Converter | 16 | 5 | +50% minerals | |
-| Nanoreplicator | 20 | 6 | +50% minerals | mineral eco-damage reduction |
+| Robotic Assembly Plant | 16 | 4 | +50% minerals | |
+| Quantum Converter | 20 | 5 | +50% minerals | |
+| Nanoreplicator | 24 | 6 | +50% minerals | mineral eco-damage reduction |
 | Recreation Commons | 4 | 1 | | -2 drones |
 | Hologram Theatre | 6 | 2 | +50% psych | -2 drones |
 | Paradise Garden | 12 | 3 | | +2 talents |
