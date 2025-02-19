@@ -379,6 +379,7 @@ Energy multiplying facilities are generally at good places already. I've reduced
 | ---- | ----: | ----: | ---- | ---- |
 | Recycling Tanks | 10 | 2 | +50% minerals | |
 | Genejack Factory | 12 | 3 | +50% minerals | +1 drone |
+| Genejack Factory (optional) | 12 | 3 | | +1 drone, +1 mineral mining platform, +2 minerals rocky mine |
 | Robotic Assembly Plant | 16 | 4 | +50% minerals | |
 | Quantum Converter | 20 | 5 | +50% minerals | |
 | Nanoreplicator | 24 | 6 | +50% minerals | mineral eco-damage reduction |
