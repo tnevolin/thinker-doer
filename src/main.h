@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v352"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v353"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -374,12 +374,15 @@ struct Config {
 	int base_psych_facility_extra_power = 0;
 	int base_psych_police_extra_power = 0;
     bool facility_terraforming_ecodamage_halved = false;
-    int facility_yield_bonuses_tree_farm[3] = {0,0,0};
-    int facility_yield_bonuses_hybrid_forest[3] = {0,0,0};
-    int facility_energy_multipliers_tree_farm[3] = {0,0,0};
-    int facility_energy_multipliers_hybrid_forest[3] = {0,0,0};
-    int facility_energy_multipliers_centauri_preserve[3] = {0,0,0};
-    int facility_energy_multipliers_temple_of_planet[3] = {0,0,0};
+    int yield_bonus_tree_farm_forest[3] = {0,0,0};
+    int yield_bonus_hybrid_forest_forest[3] = {0,0,0};
+    bool genejack_factory_mineral_multiplier = true;
+    int yield_bonus_genejack_factory_mining_platform[3] = {0,0,0};
+    int yield_bonus_genejack_factory_rocky_mine[3] = {0,0,0};
+    int energy_multipliers_tree_farm[3] = {0,0,0};
+    int energy_multipliers_hybrid_forest[3] = {0,0,0};
+    int energy_multipliers_centauri_preserve[3] = {0,0,0};
+    int energy_multipliers_temple_of_planet[3] = {0,0,0};
     int echelon_mirror_bonus[2] = {1,1};
     int echelon_mirror_ecodamage = 6;
     bool base_inefficiency_alternative = false;
@@ -395,6 +398,7 @@ struct Config {
     int worker_algorithm_minimal_nutrient_surplus = 0;
     int worker_algorithm_minimal_mineral_surplus = 0;
     int worker_algorithm_minimal_energy_surplus = 0;
+    int diplomacy_relationship_improvement_chance = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

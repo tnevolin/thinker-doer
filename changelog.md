@@ -1,3 +1,13 @@
+# Version 353
+
+* Updated facility costs: https://github.com/tnevolin/thinker-doer/blob/master/README.md#facilities.
+* Thermocline Transducer is unlocked by Advanced Subatomic Theory.
+* Subsea Trunkline is unlocked by Fusion Power.
+* Aquafarm is unlocked by Centauri Meditation.
+* Thermocline Transducer cost/maint is 8/1.
+* Attacking non enemy vehicle is not considered an aggression or surprise attack if vehicle was in stack with legitimate enemy.
+* There is 5% chance faction repairs irreparable relationships (major atrocity, atrocity victim, revenge).
+
 # Version 352
 
 * Collateral damage value is 10%.

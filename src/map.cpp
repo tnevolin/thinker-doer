@@ -365,10 +365,10 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
                 value = ResInfo->forest_sq_nutrient
                     + (bonus_nutrient ? ResInfo->bonus_sq_nutrient : 0);
                 if (has_fac_built(FAC_TREE_FARM, base_id)) {
-                    value += conf.facility_yield_bonuses_tree_farm[0];
+                    value += conf.yield_bonus_tree_farm_forest[0];
                 }
                 if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-                    value += conf.facility_yield_bonuses_hybrid_forest[0];
+                    value += conf.yield_bonus_hybrid_forest_forest[0];
                 }
                 
                 if (bonus_landmark) {
@@ -519,10 +519,10 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
 				// facilities custom bonus
 				
                 if (has_fac_built(FAC_TREE_FARM, base_id)) {
-                    value += conf.facility_yield_bonuses_tree_farm[1];
+                    value += conf.yield_bonus_tree_farm_forest[1];
                 }
                 if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-                    value += conf.facility_yield_bonuses_hybrid_forest[1];
+                    value += conf.yield_bonus_hybrid_forest_forest[1];
                 }
                 
             } else if (!(sq->items & BIT_MINE) && !flag) {
@@ -541,6 +541,15 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
                     modifier = Rules->limit_mineral_inc_for_mine_wo_road;
                 }
                 value += modifier;
+                
+                // [WTP]
+                // Genejack Factory bonus (rocky mine)
+                
+                if (base_id >=0 && has_facility(FAC_GENEJACK_FACTORY, base_id) && sq->is_rocky())
+				{
+					value += conf.yield_bonus_genejack_factory_rocky_mine[1];
+				}
+				
             }
         }
         else {
@@ -558,6 +567,15 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
                     if (has_fac_built(FAC_SUBSEA_TRUNKLINE, base_id)) {
                         value++;
                     }
+                    
+					// [WTP]
+					// Genejack Factory bonus (mining platform)
+					
+					if (base_id >=0 && has_facility(FAC_GENEJACK_FACTORY, base_id))
+					{
+						value += conf.yield_bonus_genejack_factory_mining_platform[1];
+					}
+					
                 }
             }
         }
@@ -585,7 +603,7 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
 	// [WTP]
 	// Pressure Dome minerals
 	
-    if (is_base && has_fac_built(FAC_PRESSURE_DOME, base_id))
+    if (is_base && base_id >= 0 && has_fac_built(FAC_PRESSURE_DOME, base_id))
 	{
 		value += conf.pressure_dome_minerals;
 	}
@@ -686,10 +704,10 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
 //            value++;
 //        }
 		if (has_fac_built(FAC_TREE_FARM, base_id)) {
-			value += conf.facility_yield_bonuses_tree_farm[2];
+			value += conf.yield_bonus_tree_farm_forest[2];
 		}
 		if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-			value += conf.facility_yield_bonuses_hybrid_forest[2];
+			value += conf.yield_bonus_hybrid_forest_forest[2];
 		}
 		
     }

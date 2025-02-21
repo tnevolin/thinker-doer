@@ -1832,6 +1832,34 @@ __cdecl int modifiedFactionUpkeep(const int factionId)
 		Profiling::stop("fixVehicleHomeBases");
 	}
 	
+	// improve broken relationships
+	
+	if (conf.diplomacy_relationship_improvement_chance > 0)
+	{
+		for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
+		{
+			for (int diplo_flag : {DIPLO_WANT_REVENGE, DIPLO_UNK_40, DIPLO_ATROCITY_VICTIM})
+			{
+				if (has_treaty(factionId, otherFactionId, diplo_flag))
+				{
+					if (random(100) < conf.diplomacy_relationship_improvement_chance)
+					{
+						set_treaty(factionId, otherFactionId, diplo_flag, 0);
+					}
+				}
+			}
+		}
+		
+		if (Factions[factionId].major_atrocities > 0)
+		{
+			if (random(100) < conf.diplomacy_relationship_improvement_chance)
+			{
+				Factions[factionId].major_atrocities--;
+			}
+		}
+		
+	}
+	
 	// return original value
 	
 	Profiling::stop("modifiedFactionUpkeep");

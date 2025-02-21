@@ -1272,7 +1272,25 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         return 0;
     }
     veh_atk->state |= VSTATE_UNK_40;
-
+    
+    // [WTP]
+    // attacking non enemy vehicle is not considered an aggression or surprise attack if vehicle was in stack with legitimate enemy
+    
+    bool stack_enemy = false;
+    if (!(f_atk->diplo_status[faction_id_def] & DIPLO_VENDETTA))
+	{
+		for (int veh_id_def_stack = veh_top(veh_id_def); veh_id_def_stack >= 0; veh_id_def_stack = Vehs[veh_id_def_stack].next_veh_id_stack)
+		{
+			if (f_atk->diplo_status[Vehs[veh_id_def_stack].faction_id] & DIPLO_VENDETTA)
+			{
+				stack_enemy = true;
+				break;
+			}
+		}
+	}
+	
+	if (!stack_enemy)
+	{
     if (!veh_atk->is_probe() && !veh_def->is_artifact()) {
         uint32_t atk_status = f_atk->diplo_status[faction_id_def];
         uint32_t def_status = f_def->diplo_status[faction_id_atk];
@@ -1321,6 +1339,8 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
             }
         }
     }
+	}
+	
     if (nerve_gas) {
         offense_out += offense_out / 2;
         add_bat(0, 50, label_get(341)); // Nerve Gas
@@ -1476,10 +1496,13 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
     }
     // [WTP]
     // alien spore launcher can attack each other
+    // allow attacking not enemy if in stack with enemy
 //    assert(veh_atk->faction_id != veh_def->faction_id);
     assert(veh_atk->x != veh_def->x || veh_atk->y != veh_def->y);
     assert(veh_atk->is_probe() || veh_def->is_artifact() || at_war(faction_id_atk, faction_id_def)
-        || (!faction_id_atk && veh_atk->unit_id == BSC_SPORE_LAUNCHER));
+        || (!faction_id_atk && veh_atk->unit_id == BSC_SPORE_LAUNCHER)
+		|| stack_enemy
+	);
 
     if (combat_type == CT_CAN_ARTY) {
         assert(can_arty(veh_atk->unit_id, true));

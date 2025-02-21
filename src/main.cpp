@@ -660,29 +660,41 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->facility_terraforming_ecodamage_halved = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("facility_yield_bonuses_tree_farm"))
+    else if (MATCH("yield_bonus_tree_farm_forest"))
     {
-        opt_list_parse(cf->facility_yield_bonuses_tree_farm, buf, 3, 0);
+        opt_list_parse(cf->yield_bonus_tree_farm_forest, buf, 3, 0);
     }
-    else if (MATCH("facility_yield_bonuses_hybrid_forest"))
+    else if (MATCH("yield_bonus_hybrid_forest_forest"))
     {
-        opt_list_parse(cf->facility_yield_bonuses_hybrid_forest, buf, 3, 0);
+        opt_list_parse(cf->yield_bonus_hybrid_forest_forest, buf, 3, 0);
     }
-    else if (MATCH("facility_energy_multipliers_tree_farm"))
+    else if (MATCH("genejack_factory_mineral_multiplier"))
     {
-        opt_list_parse(cf->facility_energy_multipliers_tree_farm, buf, 3, 0);
+        cf->genejack_factory_mineral_multiplier = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("facility_energy_multipliers_hybrid_forest"))
+    else if (MATCH("yield_bonus_genejack_factory_mining_platform"))
     {
-        opt_list_parse(cf->facility_energy_multipliers_hybrid_forest, buf, 3, 0);
+        opt_list_parse(cf->yield_bonus_genejack_factory_mining_platform, buf, 3, 0);
     }
-    else if (MATCH("facility_energy_multipliers_centauri_preserve"))
+    else if (MATCH("yield_bonus_genejack_factory_rocky_mine"))
     {
-        opt_list_parse(cf->facility_energy_multipliers_centauri_preserve, buf, 3, 0);
+        opt_list_parse(cf->yield_bonus_genejack_factory_rocky_mine, buf, 3, 0);
     }
-    else if (MATCH("facility_energy_multipliers_temple_of_planet"))
+    else if (MATCH("energy_multipliers_tree_farm"))
     {
-        opt_list_parse(cf->facility_energy_multipliers_temple_of_planet, buf, 3, 0);
+        opt_list_parse(cf->energy_multipliers_tree_farm, buf, 3, 0);
+    }
+    else if (MATCH("energy_multipliers_hybrid_forest"))
+    {
+        opt_list_parse(cf->energy_multipliers_hybrid_forest, buf, 3, 0);
+    }
+    else if (MATCH("energy_multipliers_centauri_preserve"))
+    {
+        opt_list_parse(cf->energy_multipliers_centauri_preserve, buf, 3, 0);
+    }
+    else if (MATCH("energy_multipliers_temple_of_planet"))
+    {
+        opt_list_parse(cf->energy_multipliers_temple_of_planet, buf, 3, 0);
     }
     else if (MATCH("echelon_mirror_bonus"))
     {
@@ -743,6 +755,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("worker_algorithm_minimal_energy_surplus"))
     {
         cf->worker_algorithm_minimal_energy_surplus = atoi(value);
+    }
+    else if (MATCH("diplomacy_relationship_improvement_chance"))
+    {
+        cf->diplomacy_relationship_improvement_chance = atoi(value);
     }
     else if (MATCH("ai_useWTPAlgorithms"))
     {

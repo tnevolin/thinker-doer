@@ -946,24 +946,24 @@ void __cdecl mod_base_energy() {
 //        coeff_psych += 2;
 //    }
     if (has_fac_built(FAC_TREE_FARM, base_id)) {
-        coeff_econ += conf.facility_energy_multipliers_tree_farm[0];
-        coeff_psych += conf.facility_energy_multipliers_tree_farm[1];
-        coeff_labs += conf.facility_energy_multipliers_tree_farm[2];
+        coeff_econ += conf.energy_multipliers_tree_farm[0];
+        coeff_psych += conf.energy_multipliers_tree_farm[1];
+        coeff_labs += conf.energy_multipliers_tree_farm[2];
     }
     if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-        coeff_econ += conf.facility_energy_multipliers_hybrid_forest[0];
-        coeff_psych += conf.facility_energy_multipliers_hybrid_forest[1];
-        coeff_labs += conf.facility_energy_multipliers_hybrid_forest[2];
+        coeff_econ += conf.energy_multipliers_hybrid_forest[0];
+        coeff_psych += conf.energy_multipliers_hybrid_forest[1];
+        coeff_labs += conf.energy_multipliers_hybrid_forest[2];
     }
     if (has_fac_built(FAC_CENTAURI_PRESERVE, base_id)) {
-        coeff_econ += conf.facility_energy_multipliers_centauri_preserve[0];
-        coeff_psych += conf.facility_energy_multipliers_centauri_preserve[1];
-        coeff_labs += conf.facility_energy_multipliers_centauri_preserve[2];
+        coeff_econ += conf.energy_multipliers_centauri_preserve[0];
+        coeff_psych += conf.energy_multipliers_centauri_preserve[1];
+        coeff_labs += conf.energy_multipliers_centauri_preserve[2];
     }
     if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-        coeff_econ += conf.facility_energy_multipliers_temple_of_planet[0];
-        coeff_psych += conf.facility_energy_multipliers_temple_of_planet[1];
-        coeff_labs += conf.facility_energy_multipliers_temple_of_planet[2];
+        coeff_econ += conf.energy_multipliers_temple_of_planet[0];
+        coeff_psych += conf.energy_multipliers_temple_of_planet[1];
+        coeff_labs += conf.energy_multipliers_temple_of_planet[2];
     }
     
     if (has_fac_built(FAC_FUSION_LAB, base_id)) {
@@ -2474,7 +2474,7 @@ int mineral_output_modifier(int base_id) {
     if (has_fac_built(FAC_ROBOTIC_ASSEMBLY_PLANT, base_id)) {
         value++;
     }
-    if (has_fac_built(FAC_GENEJACK_FACTORY, base_id)) {
+    if (conf.genejack_factory_mineral_multiplier && has_fac_built(FAC_GENEJACK_FACTORY, base_id)) {
         value++;
     }
     if (has_fac_built(FAC_NANOREPLICATOR, base_id)) {

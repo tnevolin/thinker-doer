@@ -653,7 +653,7 @@ Infantry Probe Team,    Infantry, Probe Team,   Scout,     11, 0, 0, Poly,    -1
 #FACILITIES
 Headquarters,                  5, 0, None,    Disable,  Efficiency
 Children's Creche,            16, 3, EthCalc, Disable,  Growth/Effic
-Recycling Tanks,               8, 2, Biogen,  Create,   Bonus Resources
+Recycling Tanks,              10, 2, Biogen,  Create,   Bonus Resources
 Perimeter Defense,             5, 0, DocLoy,  Disable,  Defense +50%
 Tachyon Field,                12, 2, Create,  Disable,  All Defense +50%
 Recreation Commons,            4, 1, Psych,   PlaEcon,  Fewer Drones
@@ -662,17 +662,17 @@ Network Node,                  6, 1, InfNet,  DigSent,  Labs Bonus
 Biology Lab,                   6, 1, PrPsych, Disable,  Research and PSI
 Skunkworks,                    6, 1, Subat,   Disable,  Prototypes Free
 Hologram Theatre,              6, 2, Chaos,   Disable,  Psych and Fewer Drones
-Paradise Garden,              18, 4, SentEco, Disable,  +2 Talents
-Tree Farm,                    16, 3, EnvEcon, Disable,  Econ/Psych/Forest
-Hybrid Forest,                24, 4, PlaEcon, Disable,  Econ/Psych/Forest
-Fusion Lab,                   16, 4, SupLube, Disable,  Econ and Labs Bonus
-Quantum Lab,                  32, 8, QuanMac, Disable,  Econ and Labs Bonus
-Research Hospital,            12, 3, OptComp, Disable,  Labs and Psych Bonus
-Nanohospital,                 18, 4, Metal,   Disable,  Labs and Psych Bonus
-Robotic Assembly Plant,       18, 6, IndRob,  Disable,  Minerals Bonus
-Nanoreplicator,               40,10, TempMec, Disable,  Minerals Bonus
-Quantum Converter,            27, 8, QuanMac, Disable,  Minerals Bonus
-Genejack Factory,             12, 4, Gene,    Disable,  Minerals; More Drones
+Paradise Garden,              12, 3, SentEco, Disable,  +2 Talents
+Tree Farm,                    10, 2, EnvEcon, Disable,  Econ/Psych/Forest
+Hybrid Forest,                16, 3, PlaEcon, Disable,  Econ/Psych/Forest
+Fusion Lab,                   16, 3, SupLube, Disable,  Econ and Labs Bonus
+Quantum Lab,                  20, 4, QuanMac, Disable,  Econ and Labs Bonus
+Research Hospital,            10, 3, OptComp, Disable,  Labs and Psych Bonus
+Nanohospital,                 16, 3, Metal,   Disable,  Labs and Psych Bonus
+Robotic Assembly Plant,       16, 4, IndRob,  Disable,  Minerals Bonus
+Nanoreplicator,               24, 6, TempMec, Disable,  Minerals Bonus
+Quantum Converter,            20, 5, QuanMac, Disable,  Minerals Bonus
+Genejack Factory,             10, 3, Gene,    Disable,  Minerals; More Drones
 Punishment Sphere,            10, 2, MilAlg,  Disable,  No Drones/-50% Tech
 Hab Complex,                   8, 1, FldMod,  Disable,  Increase Population Limit
 Habitation Dome,              16, 2, Alloys,  Disable,  Increase Population Limit
@@ -681,14 +681,14 @@ Command Center,                8, 1, Mobile,  Disable,  +2 Morale:Land
 Naval Yard,                    8, 1, DocInit, Disable,  +2 Morale:Sea, Sea Def +50%
 Aerospace Complex,            12, 3, DocAir,  Disable,  +2 Morale:Air, Air Def +50%
 Bioenhancement Center,        20, 5, Viral,   Disable,  +2 Morale:ALL
-Centauri Preserve,            12, 2, CentMed, Disable,  Ecology Bonus
-Temple of Planet,             18, 4, CentGen, Disable,  Ecology Bonus
+Centauri Preserve,            10, 2, CentMed, Disable,  Ecology Bonus
+Temple of Planet,             16, 3, CentGen, Disable,  Ecology Bonus
 Psi Gate,                     10, 2, Matter,  Disable,  Teleport
 Covert Ops Center,            10, 2, Algor,   Disable,  Stronger Probe Teams
 Brood Pit,                    18, 4, CentPsi, Disable,  Police/Morale
-Aquafarm,                     16, 3, DocSec,  Disable,  Sea Nutrients
-Subsea Trunkline,             12, 2, NanoMin, Disable,  Sea Minerals
-Thermocline Transducer,        6, 1, Super,   Disable,  Sea Energy
+Aquafarm,                     16, 3, CentMed, Disable,  Sea Nutrients
+Subsea Trunkline,             12, 2, Fusion,  Disable,  Sea Minerals
+Thermocline Transducer,        8, 1, Subat,   Disable,  Sea Energy
 Flechette Defense System,     12, 2, NewMiss, Disable,  Missile Defense
 Subspace Generator,           60, 5, SecMani, Disable,  Alien Victory
 Geosynchronous Survey Pod,    16, 2, String,  Disable,  Increase sight\sensor bonus
