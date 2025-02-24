@@ -620,6 +620,8 @@ These abilities do not improve unit properties directly. Instead they essentiall
 
 ## Disallowing destroying defensive facilities with probes
 
+**Temporarily disabled while collecting feedback**
+
 Human probes cannot sabotage defensive facilities either by targeting them or by random sabotage.
 
 A disciplined enhanced probe has 50% chance to sabotage targeted PD or TF. A disciplined regular probe has also 100% chance to sabotage a random facility which may be a defensive one. Sabotaging PD reduces base defense by 30%. This is too much of a reduction for the cost of a few probe teams especially against the AI that doesn't protect their bases with counter probes well.
@@ -637,10 +639,6 @@ All the above works well until interceptor decides to scramble. Scrambling inter
 This mod fixes the type of combat when bomber attacks an interceptor. Besides attacking scrambling interceptor that also may happen when bomber attacks interceptor in (air)base or when bomber attacks low flying units such as copters and gravships. When air units without air superiority attacks another air unit with air superiority it uses its armor value for combat strength and interceptor also receives its usual air superiority bonus. Odds confirmation dialog is not shown and the battle starts right away not giving player a chance to change their mind. In other words combat is happening and computed as if interceptor actively counter attacks bomber not giving player a chance to understand and retreat from their mistake.
 
 Now interceptors become a very useful anti-bombers units. They protect surface units and destroy bombers effectively.
-
-## Scorched earth
-
-When faction looses a base (captured or killed) all terrain improvement on lost territory are destroyed.
 
 # UI changes / cosmetics
 
