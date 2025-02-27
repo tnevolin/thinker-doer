@@ -3937,6 +3937,30 @@ bool isWithinFriendlySensorRange(int factionId, MAP *tile)
 	
 }
 
+bool isOffenseSensorBonusApplicable(int factionId, MAP *tile)
+{
+	// offense bonus applies to the surface
+	
+	if (!conf.sensor_offense)
+		return false;
+	
+	if (tile->is_sea() && !conf.sensor_offense_ocean)
+		return false;
+	
+	return isWithinFriendlySensorRange(factionId, tile);
+	
+}
+bool isDefenseSensorBonusApplicable(int factionId, MAP *tile)
+{
+	// defense bonus applies to the surface
+	
+	if (tile->is_sea() && !conf.sensor_defense_ocean)
+		return false;
+	
+	return isWithinFriendlySensorRange(factionId, tile);
+	
+}
+
 int getRegionPodCount(int x, int y, int range, int region)
 {
 	assert(isOnMap(x, y));
@@ -6792,7 +6816,6 @@ int getRange(int x1, int y1, int x2, int y2)
 	return map_range(x1, y1, x2, y2);
 	
 }
-
 int getRange(int tile1Index, int tile2Index)
 {
 	assert(tile1Index >= 0 && tile1Index < *MapAreaTiles);
@@ -6806,10 +6829,39 @@ int getRange(int tile1Index, int tile2Index)
 	return getRange(x1, y1, x2, y2);
 	
 }
-
 int getRange(MAP const *tile1, MAP const *tile2)
 {
 	return getRange(getX(tile1), getY(tile1), getX(tile2), getY(tile2));
+}
+
+int getVectorDist(int x1, int y1, int x2, int y2)
+{
+	assert(isOnMap(x1, y1));
+	assert(isOnMap(x2, y2));
+	
+	return vector_dist(x1, y1, x2, y2);
+	
+}
+int getVectorDist(int tile1Index, int tile2Index)
+{
+	assert(tile1Index >= 0 && tile1Index < *MapAreaTiles);
+	assert(tile2Index >= 0 && tile2Index < *MapAreaTiles);
+	
+	int y1 = tile1Index / (*MapHalfX);
+	int x1 = (tile1Index % (*MapHalfX)) * 2 + (y1 % 2);
+	int y2 = tile2Index / (*MapHalfX);
+	int x2 = (tile2Index % (*MapHalfX)) * 2 + (y2 % 2);
+	
+	return getVectorDist(x1, y1, x2, y2);
+	
+}
+int getVectorDist(MAP const *tile1, MAP const *tile2)
+{
+	assert(tile1 >= *MapTiles && tile1 < *MapTiles + *MapAreaTiles);
+	assert(tile2 >= *MapTiles && tile2 < *MapTiles + *MapAreaTiles);
+	
+	return getVectorDist(getX(tile1), getY(tile1), getX(tile2), getY(tile2));
+	
 }
 
 /*
@@ -6863,24 +6915,19 @@ double getDiagonalDistance(MAP *tile1, MAP *tile2)
 	assert(isOnMap(tile1));
 	assert(isOnMap(tile2));
 	Location delta = getAbsoluteDelta(tile1, tile2);
-	return delta.minAbs() + 1.5 * (double)delta.absDiff() / 2.0;
+	return (double)delta.minAbs() + 1.5 * (double)delta.absDiff() / 2.0;
 }
 
-/*
-Returns exact cosine of angle between two segments.
+/**
+Computes double distance between two tiles.
+Diagonal step counts as 1.5.
 */
-double getVectorAngleCos(MAP *vertex, MAP *point1, MAP *point2)
+int getDiagonalDistanceDoubled(MAP *tile1, MAP *tile2)
 {
-	assert(isOnMap(vertex));
-	assert(isOnMap(point1));
-	assert(isOnMap(point2));
-
-	double h2 = getEuqlideanDistanceSquared(point1, point2);
-	double ca2 = getEuqlideanDistanceSquared(vertex, point1);
-	double cb2 = getEuqlideanDistanceSquared(vertex, point2);
-
-	return ((ca2 + cb2) - h2) / (2.0 * sqrt(ca2 * cb2));
-
+	assert(isOnMap(tile1));
+	assert(isOnMap(tile2));
+	Location delta = getAbsoluteDelta(tile1, tile2);
+	return 2 * delta.minAbs() + 3 * delta.absDiff() / 2;
 }
 
 Location getLocationByAngle(int x, int y, int angle)
@@ -7968,6 +8015,62 @@ int getClosestNotOwnedTileRange(int factionId, MAP *tile, int minRadius, int max
 	}
 	
 	return closestNotOwnedTileRange;
+	
+}
+
+/**
+Returns range to first not faction owned or sea tile.
+Uses vanilla TABLE_square_offset.
+minRadius = 0-8, inclusive
+maxRadius = 0-8, inclusive
+*/
+int getClosestNotOwnedOrSeaTileRange(int factionId, MAP *tile, int minRadius, int maxRadius)
+{
+	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
+	assert(minRadius >= 0 && minRadius < TABLE_square_block_radius_count);
+	assert(maxRadius >= 0 && maxRadius < TABLE_square_block_radius_count);
+	
+	// land
+	
+	if (!tile->is_land())
+		return -1;
+	
+	int x = getX(tile);
+	int y = getY(tile);
+	
+	int closestNotOwnedOrSeaTileRange = -1;
+	
+	for (int radius = minRadius; radius <= maxRadius; radius++)
+	{
+		int minIndex = (radius == 0 ? 0 : TABLE_square_block_radius[radius - 1]);
+		int maxIndex = TABLE_square_block_radius[radius];
+		
+		for (int index = minIndex; index < maxIndex; index++)
+		{
+			int offsetX = TABLE_square_offset_x[index];
+			int offsetY = TABLE_square_offset_y[index];
+			
+			int cellX = wrap(x + offsetX);
+			int cellY = y + offsetY;
+			
+			if (!isOnMap(cellX, cellY))
+				continue;
+			
+			MAP *tile = getMapTile(cellX, cellY);
+			if (tile->owner != factionId || tile->is_sea())
+			{
+				closestNotOwnedOrSeaTileRange = radius;
+				break;
+			}
+			
+		}
+		
+		if (closestNotOwnedOrSeaTileRange != -1)
+			break;
+		
+	}
+	
+	return closestNotOwnedOrSeaTileRange;
 	
 }
 

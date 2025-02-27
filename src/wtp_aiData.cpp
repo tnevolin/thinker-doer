@@ -5,10 +5,10 @@
 #include "wtp_ai.h"
 #include "wtp_aiRoute.h"
 
-// BaseSnapshots
-
-std::vector<BASE> BaseSnapshots::baseSnapshots;
-
+//// BaseSnapshots
+//
+//std::vector<BASE> BaseSnapshots::baseSnapshots;
+//
 // global variables
 
 Data aiData;
@@ -75,50 +75,6 @@ double CombatStrength::getAttackEffect(int vehicleId)
 	
 }
 
-// CombatEffectTable
-
-double CombatEffectTable::getCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId, AttackingSide attackingSide, COMBAT_MODE combatMode)
-{
-	return this->combatEffects.at(getUnitSlotById(ownUnitId)).at(foeFactionId).at(getUnitSlotById(foeUnitId)).at(attackingSide).at(combatMode);
-}
-void CombatEffectTable::setCombatEffect(int ownUnitId, int foeFactionId, int foeUnitId, AttackingSide attackingSide, COMBAT_MODE combatMode, double combatEffect)
-{
-	this->combatEffects.at(getUnitSlotById(ownUnitId)).at(foeFactionId).at(getUnitSlotById(foeUnitId)).at(attackingSide).at(combatMode) = combatEffect;
-}
-
-/**
-Resolves combat effect betwee two units. Unit1 attacks Unit2.
-One of the units should belong to player faction to utilize combat effect table.
-*/
-double CombatEffectTable::getCombatEffect(int factionId1, int unitId1, int factionId2, int unitId2, COMBAT_MODE combatMode)
-{
-	assert(factionId1 != factionId2);
-	assert(factionId1 == aiFactionId || factionId2 == aiFactionId);
-	
-	double effect;
-	
-	if (factionId1 == aiFactionId)
-	{
-		effect = this->combatEffects.at(getUnitSlotById(unitId1)).at(factionId2).at(getUnitSlotById(unitId2)).at(AS_OWN).at(combatMode);
-	}
-	else
-	{
-		effect = this->combatEffects.at(getUnitSlotById(unitId2)).at(factionId1).at(getUnitSlotById(unitId1)).at(AS_FOE).at(combatMode);
-	}
-	
-	return effect;
-	
-}
-
-// FoeUnitWeightTable
-
-void FoeUnitWeightTable::clear()
-{
-	for (robin_hood::unordered_flat_map<int, double> &factionWeights : weights)
-	{
-		factionWeights.clear();
-	}
-}
 //double FoeUnitWeightTable::get(int factionId, int unitId)
 //{
 //	return weights.at(getUnitIndex(factionId, unitId));
@@ -756,18 +712,6 @@ void EnemyStackInfo::computeAttackParameters()
 	
 	debug("\tdestructionRatio=%5.2f requiredSuperioritySatisfied=%d\n", destructionRatio, requiredSuperioritySatisfied);
 	
-}
-
-// combat data
-
-double Data::getGlobalAverageUnitEffect(int unitId)
-{
-	return globalAverageUnitEffects.at(getUnitSlotById(unitId));
-}
-
-void Data::setGlobalAverageUnitEffect(int unitId, double effect)
-{
-	globalAverageUnitEffects.at(getUnitSlotById(unitId)) = effect;
 }
 
 // utility methods

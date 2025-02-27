@@ -681,12 +681,18 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
         offense = mod_get_basic_offense(veh_id_atk, veh_id_def, psi_combat, is_bombard, 0);
         if (!veh_atk->is_probe()) {
             if (veh_id_def >= 0 && !combat_type) { // checking if isn't wpn vs wpn ; air toggle
+				
+				// [WTP]
+				// bunker ignores terrain if configured
+				
                 if (sq_def && sq_def->is_fungus()
+				&& (!conf.bunker_ignores_terrain || !sq_def->is_bunker()) // not bunker if configured
                 && (veh_atk->is_native_unit() || has_project(FAC_PHOLUS_MUTAGEN, faction_id_atk))
                 && veh_def->offense_value() >= 0) {
                     offense = offense * 150 / 100;
                     add_bat(0, 50, label_get(338)); // Fungus
                 }
+				
                 if (psi_combat & 2 && veh_atk->is_resonance_weapon()) {
                     offense = offense * (ResonanceWeaponValue + 100) / 100;
                     add_bat(0, ResonanceWeaponValue, label_get(1110)); // Resonance Attack
@@ -795,6 +801,16 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
                 int terrain_def = terrain_defense(veh_def, veh_atk);
                 assert(terrain_def == (veh_def->triad() == TRIAD_AIR ? 2 :
                     defense_value(faction_id_def, veh_def->x, veh_def->y, veh_id_def, veh_id_atk)));
+				
+				// [WTP]
+				// bunker ignores terrain if configured
+				
+				if (conf.bunker_ignores_terrain && sq_def && sq_def->is_bunker())
+				{
+					*VehBattleDisplayTerrain = NULL;
+					terrain_def = 2;
+				}
+				
                 bool plain_terrain = terrain_def <= 2;
                 if (veh_id_atk >= 0 && veh_atk->triad() == TRIAD_LAND) {
                     if (Rules->combat_artillery_bonus_altitude
@@ -902,8 +918,13 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
                     def_multi += fac_modifier;
                 }
                 else if (base_id_def < 0 && sq_def && sq_def->is_bunker()
-                && (veh_id_atk < 0 || veh_atk->triad() != TRIAD_AIR)) {
-                    def_multi = 150;
+                /*&& (veh_id_atk < 0 || veh_atk->triad() != TRIAD_AIR)*/) {
+                	
+                	// [WTP]
+                	// bunker defense bonus
+//                    def_multi = 150;
+                    def_multi = 100 + (veh_id_atk >= 0 && veh_atk->triad() == TRIAD_AIR ? conf.bunker_bonus_aerial : conf.bunker_bonus_surface);
+                    
                     display_def = label_get(358); // Bunker
                 }
                 else if (is_arty && base_id_def < 0 && sq_def && !is_rocky

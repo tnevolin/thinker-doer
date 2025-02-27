@@ -353,7 +353,7 @@ int __cdecl modifiedMindControlCost(int baseId, int probeFactionId, int cornerMa
 int __cdecl getBasicAlternativeSubversionCost(int vehicleId);
 int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistance);
 void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVehicleId, int radius);
-void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_string_pointer);
+int __cdecl modifiedProbe(int vehicleId, int a2, int a3, int a4);
 int __cdecl modifiedTurnUpkeep();
 int __thiscall wtp_mod_Console_destroy(Console *This, int a0);
 int __cdecl wtp_mod_action_destroy(int vehicleId, int terrainBit, int x, int y);
@@ -402,4 +402,7 @@ int __cdecl wtp_mod_base_police_pending();
 int getHurryMineralCost(int mineralCost);
 int __cdecl wpt_mod_Base_hurry_cost_factor_mineral_cost(int itemCost, int a1, int a2);
 int __thiscall wtp_mod_Console_human_turn(Console *This);
+int __cdecl wtp_mod_action_terraform_cause_friction(int a1, int a2, int a3);
+int __cdecl wtp_mod_action_terraform_set_treaty(int a1, int a2, int a3, int a4);
+int __cdecl wtp_mod_enemy_diplomacy(int factionId);
 

@@ -992,7 +992,7 @@ effects are eliminated by control of $LINK<The Cloning Vats=110024>).
 #HELPEFFECT4
 {Morale} affects the training and determination of combat units, a higher
 score here translates directly into $LINK<morale=29> upgrades for newly built units:
-^    ... Each level below grants extra 25% combat penalty.
+^    ... Each level below grants extra 12.5% combat penalty.
 ^    -4 = -3 Morale; + modifiers halved
 ^    -3 = -2 Morale; + modifiers halved
 ^    -2 = -1 Morale; + modifiers halved
@@ -1002,7 +1002,7 @@ score here translates directly into $LINK<morale=29> upgrades for newly built un
 ^    +2 = +1 Morale (+2 on defense when in base)
 ^    +3 = +2 Morale! (+3 on defense when in base)
 ^    +4 = +3 Morale!!
-^    ... Each level above grants extra 25% combat bonus.
+^    ... Each level above grants extra 12.5% combat bonus.
 
 #;Police
 #HELPEFFECT5

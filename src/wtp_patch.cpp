@@ -2123,6 +2123,13 @@ void patch_subversion_allow_stacked_units()
 	);
 
     write_call(0x005A4250, (int)modifiedSubveredVehicleDrawTile);
+    
+    // override probe call to return zero when unit is subverted
+    
+//    write_call(0x0056E19C, (int)modifiedProbeSubversion);
+//    write_call(0x00578512, (int)modifiedProbeSubversion);
+//    write_call(0x00595026, (int)modifiedProbeSubversion);
+//    write_call(0x00596615, (int)modifiedProbeSubversion);
 
 }
 
@@ -3159,24 +3166,37 @@ void patch_console_human_turn()
 	
 }
 
+void patch_disable_altering_rainfall_patterns_penalty()
+{
+	write_call(0x004CA3EB, (int)wtp_mod_action_terraform_cause_friction);
+	write_call(0x004CA3DD, (int)wtp_mod_action_terraform_set_treaty);
+	
+}
+
+void patch_enemy_diplomacy()
+{
+	write_call(0x005272E4, (int)wtp_mod_enemy_diplomacy);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
 
 void patch_setup_wtp(Config* cf)
 {
-	// debug mode game speedup
-	
-	if (DEBUG)
-	{
-		patch_disable_boom_delay();
-		patch_disable_battle_refresh();
-		patch_accelerate_order_veh();
-		patch_disable_boom();
-		patch_disable_battle_calls();
-		patch_disable_focus();
-	}
-	
+//	// debug mode game speedup
+//	
+//	if (DEBUG)
+//	{
+//		patch_disable_boom_delay();
+//		patch_disable_battle_refresh();
+//		patch_accelerate_order_veh();
+//		patch_disable_boom();
+//		patch_disable_battle_calls();
+//		patch_disable_focus();
+//	}
+//	
 	// patch battle_compute
 	
 	patch_battle_compute();
@@ -3473,6 +3493,13 @@ void patch_setup_wtp(Config* cf)
 	patch_disable_popb();
 	
 	patch_console_human_turn();
+	
+	if (conf.diplomacy_disable_altering_rainfall_patterns_penalty)
+	{
+		patch_disable_altering_rainfall_patterns_penalty();
+	}
+	
+	patch_enemy_diplomacy();
 	
 }
 

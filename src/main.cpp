@@ -596,10 +596,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->science_projects_universaltranslator_labs_bonus = atoi(value);
     }
-    else if (MATCH("combat_bonus_attacking_along_road"))
-    {
-        cf->combat_bonus_attacking_along_road = atoi(value);
-    }
     else if (MATCH("disengagement_from_stack"))
     {
         cf->disengagement_from_stack = (atoi(value) == 0 ? false : true);
@@ -756,9 +752,45 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->worker_algorithm_minimal_energy_surplus = atoi(value);
     }
-    else if (MATCH("diplomacy_relationship_improvement_chance"))
+    else if (MATCH("diplomacy_improvement_chance_human_faction_revenge"))
     {
-        cf->diplomacy_relationship_improvement_chance = atoi(value);
+        cf->diplomacy_improvement_chance_human_faction_revenge = atoi(value);
+    }
+    else if (MATCH("diplomacy_improvement_chance_human_major_atrocity"))
+    {
+        cf->diplomacy_improvement_chance_human_major_atrocity = atoi(value);
+    }
+    else if (MATCH("diplomacy_improvement_chance_ai_faction_revenge"))
+    {
+        cf->diplomacy_improvement_chance_ai_faction_revenge = atoi(value);
+    }
+    else if (MATCH("diplomacy_improvement_chance_ai_major_atrocity"))
+    {
+        cf->diplomacy_improvement_chance_ai_major_atrocity = atoi(value);
+    }
+    else if (MATCH("diplomacy_disable_altering_rainfall_patterns_penalty"))
+    {
+        cf->diplomacy_disable_altering_rainfall_patterns_penalty = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("diplomacy_aggressiveness_effect_interval"))
+    {
+        cf->diplomacy_aggressiveness_effect_interval = atoi(value);
+    }
+    else if (MATCH("diplomacy_se_choice_effect_interval"))
+    {
+        cf->diplomacy_se_choice_effect_interval = atoi(value);
+    }
+    else if (MATCH("bunker_ignores_terrain"))
+    {
+        cf->bunker_ignores_terrain = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("bunker_bonus_surface"))
+    {
+        cf->bunker_bonus_surface = atoi(value);
+    }
+    else if (MATCH("bunker_bonus_aerial"))
+    {
+        cf->bunker_bonus_aerial = atoi(value);
     }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
@@ -1248,6 +1280,14 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("ai_terraforming_sensorShoreRange"))
     {
         cf->ai_terraforming_sensorShoreRange = atof(value);
+    }
+    else if (MATCH("ai_terraforming_bunkerValue"))
+    {
+        cf->ai_terraforming_bunkerValue = atof(value);
+    }
+    else if (MATCH("ai_terraforming_bunkerBorderRange"))
+    {
+        cf->ai_terraforming_bunkerBorderRange = atof(value);
     }
     else if (MATCH("ai_terraforming_landBridgeValue"))
     {

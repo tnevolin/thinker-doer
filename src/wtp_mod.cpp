@@ -64,11 +64,6 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	
 	bool psiCombat = attackerOffenseValue < 0 || defenderDefenseValue < 0;
 	
-	// get vehicle unit speeds
-	
-	int attackerUnitSpeed = getUnitSpeed(attackerVehicle->faction_id, attackerVehicle->unit_id);
-	int defenderUnitSpeed = getUnitSpeed(defenderVehicle->faction_id, defenderVehicle->unit_id);
-	
 	// get combat map tile
 	
 	MAP *attackerMapTile = getVehicleMapTile(attackerVehicleId);
@@ -132,31 +127,6 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
     // ocean sensor defense is implemented in Thinker
 	
     // ----------------------------------------------------------------------------------------------------
-    // attacking along the road
-    // ----------------------------------------------------------------------------------------------------
-	
-    if
-	(
-		// not psi combat
-		!psiCombat
-		&&
-		// attacking along roads bonus is enabled
-		conf.combat_bonus_attacking_along_road != 0
-		&&
-		// attacker is on road or in base
-		map_has_item(attackerMapTile, BIT_ROAD | BIT_MAGTUBE | BIT_BASE_IN_TILE)
-		&&
-		// defender is on road and NOT in base/bunker/airbase
-		map_has_item(defenderMapTile, BIT_ROAD | BIT_MAGTUBE) && !map_has_item(defenderMapTile, BIT_BASE_IN_TILE | BIT_BUNKER | BIT_AIRBASE)
-		&&
-		// attacker unit speed is greater than defender unit speed
-		attackerUnitSpeed > defenderUnitSpeed
-	)
-	{
-		addAttackerBonus(attackerStrengthPointer, conf.combat_bonus_attacking_along_road, *(*tx_labels + LABEL_OFFSET_ROAD_ATTACK));
-	}
-	
-    // ----------------------------------------------------------------------------------------------------
     // artillery duel uses all combat bonuses symmetrically for attacker and defender
     // ----------------------------------------------------------------------------------------------------
 	
@@ -167,16 +137,16 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		((combat_type & CT_WEAPON_ONLY) != 0 && (combat_type & (CT_INTERCEPT|CT_AIR_DEFENSE)) == 0) // artillery duel
 	)
 	{
-		// sensor offense bonus
+		// sensor offense bonus applies to defender within attacker-friendly sensor radius
 		
-		if (conf.sensor_offense && (!is_ocean(defenderMapTile) || conf.sensor_offense_ocean) && isWithinFriendlySensorRange(attackerVehicle->faction_id, defenderMapTile))
+		if (isOffenseSensorBonusApplicable(attackerVehicle->faction_id, defenderMapTile))
 		{
 			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
 		
-		// sensor defense bonus
+		// sensor defense bonus applies to attacker within defender-friendly sensor radius
 		
-		if ((!is_ocean(defenderMapTile) || conf.sensor_defense_ocean) && isWithinFriendlySensorRange(defenderVehicle->faction_id, defenderMapTile))
+		if (isDefenseSensorBonusApplicable(defenderVehicle->faction_id, attackerMapTile))
 		{
 			addDefenderBonus(defenderStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
@@ -184,7 +154,6 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		// add base defense bonuses to attacker
 		
 		int attackerBaseId = base_at(attackerVehicle->x, attackerVehicle->y);
-		
 		if (attackerBaseId != -1)
 		{
 			if (psiCombat)
@@ -250,7 +219,6 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		// add base defense bonuses to defender
 		
 		int defenderBaseId = base_at(defenderVehicle->x, defenderVehicle->y);
-		
 		if (defenderBaseId != -1)
 		{
 			if (psiCombat)
@@ -1834,28 +1802,42 @@ __cdecl int modifiedFactionUpkeep(const int factionId)
 	
 	// improve broken relationships
 	
-	if (conf.diplomacy_relationship_improvement_chance > 0)
+	int factionRevengeForgiveChance = is_human(factionId) ? conf.diplomacy_improvement_chance_human_faction_revenge : conf.diplomacy_improvement_chance_ai_faction_revenge;
+	int majorAtrocityForgiveChance = is_human(factionId) ? conf.diplomacy_improvement_chance_human_major_atrocity : conf.diplomacy_improvement_chance_ai_major_atrocity;
+	
+	if (factionRevengeForgiveChance > 0)
 	{
 		for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
 		{
-			for (int diplo_flag : {DIPLO_WANT_REVENGE, DIPLO_UNK_40, DIPLO_ATROCITY_VICTIM})
+			if (otherFactionId == factionId)
+				continue;
+			
+			for (int diplo_flag : {DIPLO_WANT_REVENGE, DIPLO_UNK_40, DIPLO_ATROCITY_VICTIM, DIPLO_WANT_REVENGE})
 			{
-				if (has_treaty(factionId, otherFactionId, diplo_flag))
+				if (has_treaty(otherFactionId, factionId, diplo_flag))
 				{
-					if (random(100) < conf.diplomacy_relationship_improvement_chance)
+					if (random(100) < factionRevengeForgiveChance)
 					{
-						set_treaty(factionId, otherFactionId, diplo_flag, 0);
+						set_treaty(otherFactionId, factionId, diplo_flag, 0);
 					}
+					
 				}
+				
 			}
+			
 		}
 		
+	}
+	
+	if (majorAtrocityForgiveChance > 0)
+	{
 		if (Factions[factionId].major_atrocities > 0)
 		{
-			if (random(100) < conf.diplomacy_relationship_improvement_chance)
+			if (random(100) < majorAtrocityForgiveChance)
 			{
 				Factions[factionId].major_atrocities--;
 			}
+			
 		}
 		
 	}
@@ -2411,75 +2393,60 @@ int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistanc
 
 }
 
+// probe subversion flag
+bool probeSubvertion = false;
 /*
-Moves subverted vehicle on probe tile and stops probe.
+Moves subverted vehicle on probe tile.
 */
 void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVehicleId, int radius)
 {
 	// store subverted vehicle original location
-
+	
 	VEH *subvertedVehicle = &(Vehicles[subvertedVehicleId]);
 	int targetX = subvertedVehicle->x;
 	int targetY = subvertedVehicle->y;
-
+	
 	// move subverted vehicle to probe tile
-
+	
 	VEH *probeVehicle = &(Vehicles[probeVehicleId]);
 	veh_put(subvertedVehicleId, probeVehicle->x, probeVehicle->y);
-
-	// stop probe
-
-	mod_veh_skip(probeVehicleId);
-
+	
+//	// stop probe
+//	
+//	mod_veh_skip(probeVehicleId);
+//	
 	// redraw original target tile
-
+	
 	draw_tile(targetX, targetY, radius);
-
+	
+	// set subversion flag
+	
+	probeSubvertion = true;
+	
 }
-
 /*
-Moves subverted vehicle on probe tile and stops probe.
+Returns 0 for subversion action to cancel move and expends one probe turn.
 */
-void __cdecl interceptBaseWinDrawSupport(int output_string_pointer, int input_string_pointer)
+int __cdecl modifiedProbeSubversion(int vehicleId, int a2, int a3, int a4)
 {
-    // call original function
-
-    tx_strcat(output_string_pointer, input_string_pointer);
-
-    // get current base variables
-
-    int baseId = *CurrentBaseID;
-    BASE *base = *CurrentBase;
-    Faction *faction = &(Factions[base->faction_id]);
-
-    // calculate support numerator
-
-    int supportNumerator = 4 - std::max(-4, std::min(3, faction->SE_support_pending));
-
-    // set units support
-
-    int supportedVehCount = 0;
-
-    for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	// clear subversion flag
+	
+	probeSubvertion = false;
+	
+	// execute original function
+	
+	int returnValue = probe(vehicleId, a2, a3, a4);
+	
+	// cancel move and expend probe turn
+	
+	if (probeSubvertion)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
-
-		if (vehicle->home_base_id != baseId)
-			continue;
-
-		if ((vehicle->state & VSTATE_REQUIRES_SUPPORT) == 0)
-			continue;
-
-		vehicle->pad_0 =
-			(supportNumerator * (supportedVehCount + 1)) / 4
-			-
-			(supportNumerator * supportedVehCount) / 4
-		;
-
-		supportedVehCount++;
-
+		returnValue = 0;
+		Vehs[vehicleId].moves_spent += Rules->move_rate_roads;
 	}
-
+	
+	return returnValue;
+	
 }
 
 int __cdecl modifiedTurnUpkeep()
@@ -3825,6 +3792,157 @@ int __thiscall wtp_mod_Console_human_turn(Console *This)
 	// continue with normail play
 	
 	return Console_human_turn(This);
+	
+}
+
+/*
+Disables the call from action_terraform.
+*/
+int __cdecl wtp_mod_action_terraform_cause_friction(int /*a1*/, int /*a2*/, int /*a3*/)
+{
+	return 0;
+}
+
+/*
+Disables the call from action_terraform.
+*/
+int __cdecl wtp_mod_action_terraform_set_treaty(int /*a1*/, int /*a2*/, int /*a3*/, int /*a4*/)
+{
+	return 0;
+}
+
+/*
+Patches enemy diplomacy.
+*/
+int __cdecl wtp_mod_enemy_diplomacy(int factionId)
+{
+	MFaction *mFaction = getMFaction(factionId);
+	Faction *faction = getFaction(factionId);
+	
+	int returnValue = enemy_diplomacy(factionId);
+	
+	// adjust aggressiveness effect on diplomacy relation
+	
+	if (conf.diplomacy_aggressiveness_effect_interval != 1 && faction->AI_fight != 0)
+	{
+		bool oldTrigger = (*CurrentTurn % 1) == 0;
+		bool newTrigger = (*CurrentTurn % conf.diplomacy_aggressiveness_effect_interval) == 0;
+		
+		if (oldTrigger || newTrigger)
+		{
+			for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
+			{
+				if (otherFactionId == factionId)
+					continue;
+				
+				if (!is_human(otherFactionId))
+					continue;
+				
+				if (!has_treaty(factionId, otherFactionId, DIPLO_COMMLINK))
+					continue;
+				
+				if (oldTrigger)
+				{
+					faction->diplo_friction[otherFactionId] -= (faction->AI_fight);
+				}
+				
+				if (newTrigger)
+				{
+					faction->diplo_friction[otherFactionId] += (faction->AI_fight);
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	// adjust SE choice effect on diplomacy relation
+	
+	if (conf.diplomacy_se_choice_effect_interval != 2 && mFaction->soc_priority_category >= 0 && mFaction->soc_priority_model > 0)
+	{
+		bool oldTrigger = (*CurrentTurn % 2) == 0;
+		bool newTrigger = (*CurrentTurn % conf.diplomacy_se_choice_effect_interval) == 0;
+		
+		if (oldTrigger || newTrigger)
+		{
+			for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
+			{
+				Faction *otherFaction = getFaction(otherFactionId);
+				
+				if (otherFactionId == factionId)
+					continue;
+				
+				if (!is_human(otherFactionId))
+					continue;
+				
+				if (!has_treaty(factionId, otherFactionId, DIPLO_COMMLINK))
+					continue;
+				
+				if (oldTrigger)
+				{
+					int otherFactionPriorityModel = (&otherFaction->SE_Politics_pending)[mFaction->soc_priority_category];
+					
+					int oldPriorityChange = 0;
+					if (otherFactionPriorityModel == 0)
+					{
+					}
+					else if (otherFactionPriorityModel == mFaction->soc_priority_model)
+					{
+						oldPriorityChange = -1;
+					}
+					else if (otherFactionPriorityModel != mFaction->soc_priority_model)
+					{
+						oldPriorityChange = +1;
+					}
+					faction->diplo_friction[otherFactionId] -= oldPriorityChange;
+				}
+				
+				if (newTrigger)
+				{
+					int otherFactionPriorityModel = (&otherFaction->SE_Politics_pending)[mFaction->soc_priority_category];
+					
+					int newPriorityChange = 0;
+					if (otherFactionPriorityModel == 0)
+					{
+					}
+					else if (otherFactionPriorityModel == mFaction->soc_priority_model)
+					{
+						newPriorityChange = -1;
+					}
+					else if (otherFactionPriorityModel != mFaction->soc_priority_model)
+					{
+					}
+					faction->diplo_friction[otherFactionId] += newPriorityChange;
+					
+					if (mFaction->soc_opposition_category >= 0 && mFaction->soc_opposition_model > 0)
+					{
+						int otherFactionOppositionModel = (&otherFaction->SE_Politics_pending)[mFaction->soc_opposition_category];
+						
+						int newOppositionChange = 0;
+						if (otherFactionOppositionModel == 0)
+						{
+						}
+						else if (otherFactionOppositionModel == mFaction->soc_opposition_model)
+						{
+							newOppositionChange = +1;
+						}
+						else if (otherFactionOppositionModel != mFaction->soc_opposition_model)
+						{
+						}
+						faction->diplo_friction[otherFactionId] += newOppositionChange;
+						
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	return returnValue;
 	
 }
 

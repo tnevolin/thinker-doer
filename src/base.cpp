@@ -267,7 +267,6 @@ static int32_t base_radius(int base_id, std::vector<TileValue>& tiles) {
 	// [WTP]
 	// precomputed flag
 	bool precomputed = baseComputePrecomputed && base->faction_id == baseComputePrecomputedFactionId;
-debug(">precomputed=%d\n", precomputed);
 	
 	if (!precomputed)
 	{

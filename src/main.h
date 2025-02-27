@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v353"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v354"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -358,7 +358,6 @@ struct Config {
 	int science_projects_supercollider_labs_bonus;
 	int science_projects_theoryofeverything_labs_bonus;
 	int science_projects_universaltranslator_labs_bonus;
-	int combat_bonus_attacking_along_road;
 	bool disengagement_from_stack;
 	bool eco_damage_alternative_industry_effect_reduction_formula;
 	int pressure_dome_minerals = 0;
@@ -398,7 +397,16 @@ struct Config {
     int worker_algorithm_minimal_nutrient_surplus = 0;
     int worker_algorithm_minimal_mineral_surplus = 0;
     int worker_algorithm_minimal_energy_surplus = 0;
-    int diplomacy_relationship_improvement_chance = 0;
+    int diplomacy_improvement_chance_human_faction_revenge = 0;
+    int diplomacy_improvement_chance_human_major_atrocity = 0;
+    int diplomacy_improvement_chance_ai_faction_revenge = 0;
+    int diplomacy_improvement_chance_ai_major_atrocity = 0;
+    int diplomacy_disable_altering_rainfall_patterns_penalty = false;
+    int diplomacy_aggressiveness_effect_interval = 1;
+    int diplomacy_se_choice_effect_interval = 2;
+    bool bunker_ignores_terrain = false;
+    int bunker_bonus_surface = 50;
+    int bunker_bonus_aerial = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
@@ -515,6 +523,8 @@ struct Config {
     double ai_terraforming_sensorValue;
     double ai_terraforming_sensorBorderRange;
     double ai_terraforming_sensorShoreRange;
+    double ai_terraforming_bunkerValue;
+    double ai_terraforming_bunkerBorderRange;
     double ai_terraforming_landBridgeValue;
     double ai_terraforming_landBridgeRangeScale;
     double ai_combat_base_threat_coefficient;

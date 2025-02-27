@@ -401,6 +401,11 @@ int __cdecl mod_faction_upkeep(int faction) {
         allocate_energy(faction);
         do_all_non_input();
         enemy_diplomacy(faction);
+debug(">diplo_frictions - %-24s\n", MFactions[faction].noun_faction);
+for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
+{
+	debug(">\t%-24s %2d\n", MFactions[otherFactionId].noun_faction, Factions[faction].diplo_friction[otherFactionId]);
+}
         do_all_non_input();
         enemy_strategy(faction);
         do_all_non_input();

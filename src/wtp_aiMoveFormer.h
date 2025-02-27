@@ -111,6 +111,7 @@ struct TileTerraformingInfo
 	bool terraformedAquifer = false;
 	bool terraformedRaise = false;
 	bool terraformedSensor = false;
+	bool terraformedBunker = false;
 	
 };
 
@@ -160,6 +161,7 @@ TERRAFORMING_OPTION const TO_RAISE_LAND			{"raise land"		, false, false, true , 
 TERRAFORMING_OPTION const TO_NETWORK			{"road/tube"		, false, false, false, false, FORMER_ROAD			, {FORMER_ROAD, FORMER_MAGTUBE}};
 TERRAFORMING_OPTION const TO_LAND_SENSOR		{"sensor (land)"	, false, false, false, false, FORMER_SENSOR			, {FORMER_SENSOR}};
 TERRAFORMING_OPTION const TO_SEA_SENSOR			{"sensor (sea)"		, true , false, false, false, FORMER_SENSOR			, {FORMER_SENSOR}};
+TERRAFORMING_OPTION const TO_LAND_BUNKER		{"bunker (land)"	, false, false, false, false, FORMER_BUNKER			, {FORMER_BUNKER}};
 
 // conventional terraforming options
 
@@ -200,6 +202,7 @@ const robin_hood::unordered_flat_map<int, PROXIMITY_RULE> PROXIMITY_RULES =
 	{FORMER_AQUIFER, {1, 3}},
 	{FORMER_RAISE_LAND, {0, 1}},
 	{FORMER_SENSOR, {2, 2}},
+	{FORMER_BUNKER, {2, 2}},
 };
 
 struct FORMER_ORDER
@@ -295,6 +298,7 @@ void generateAquiferTerraformingRequest(MAP *tile);
 void generateRaiseLandTerraformingRequest(MAP *tile);
 void generateNetworkTerraformingRequest(MAP *tile);
 void generateSensorTerraformingRequest(MAP *tile);
+void generateBunkerTerraformingRequest(MAP *tile);
 void sortTerraformingRequests();
 void applyProximityRules();
 void removeTerraformedTiles();
@@ -307,6 +311,7 @@ TERRAFORMING_REQUEST calculateAquiferTerraformingScore(MAP *tile);
 TERRAFORMING_REQUEST calculateRaiseLandTerraformingScore(MAP *tile);
 TERRAFORMING_REQUEST calculateNetworkTerraformingScore(MAP *tile);
 TERRAFORMING_REQUEST calculateSensorTerraformingScore(MAP *tile);
+TERRAFORMING_REQUEST calculateBunkerTerraformingScore(MAP *tile);
 bool isTerraformingCompleted(MAP *tile, int action);
 bool isVehicleTerrafomingOrderCompleted(int vehicleId);
 bool isTerraformingAvailable(MAP *tile, int action);
@@ -321,12 +326,15 @@ bool isNearbyBoreholePresentOrUnderConstruction(int x, int y);
 bool isNearbyRiverPresentOrUnderConstruction(int x, int y);
 bool isNearbyRaiseUnderConstruction(int x, int y);
 bool isNearbySensorPresentOrUnderConstruction(int x, int y);
+bool isNearbyBunkerPresentOrUnderConstruction(int x, int y);
+bool isNearbyBasePresent(int x, int y, int range);
 double getTerraformingTime(MapState &mapState, int action);
 double calculateNetworkScore(MAP *tile, int action);
 bool isTowardBaseDiagonal(int x, int y, int dxSign, int dySign);
 bool isTowardBaseHorizontal(int x, int y, int dxSign);
 bool isTowardBaseVertical(int x, int y, int dySign);
 double estimateSensorIncome(MAP *tile);
+double estimateBunkerIncome(MAP *tile, bool existing = false);
 bool isBaseWorkedTile(BASE *base, int x, int y);
 double getFitnessScore(MAP *tile, int action, bool levelTerrain);
 bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::iterator begin, std::vector<TERRAFORMING_REQUEST>::iterator end, int action, int x, int y, int range);
@@ -352,4 +360,5 @@ void restoreTileMapState(MAP *tile);
 TileYield getTerraformingYield(int baseId, MAP *tile, std::vector<int> actions);
 double getBaseImprovementIncome(int baseId, Resource oldIntake, Resource newIntake);
 void addConventionalTerraformingRequest(std::vector<TERRAFORMING_REQUEST> &availableTerraformingRequests, TERRAFORMING_REQUEST &terraformingRequest);
+void removeUnusedBunkers();
 

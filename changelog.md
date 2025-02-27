@@ -1,3 +1,19 @@
+# Version 354
+
+* Bunker is availabe from start.
+* Bunker adds 100% bonus against surface attack and 50% bonus against aerial attack.
+* Bunker terrain is ignored for combat bonus purpose.
+* Removed WTP road attack bonus as it is implemented in Thinker now.
+* AI factions have a chance to forgive heinous action from other factions every turn.
+  * Human faction specific: 4%.
+  * Human major atrocities: 2%.
+  * AI faction specific: 10%.
+  * AI major atrocities: 5%.
+* No penalty for altering rainfall patterns.
+* AI faction aggressiveness/peacefullness effect on their relations with human halved.
+* AI faction ideology (matching SE model) effect on their relations with human halved.
+* AI faction ideology penalizes human only when player is using an opposition model.
+
 # Version 353
 
 * Updated facility costs: https://github.com/tnevolin/thinker-doer/blob/master/README.md#facilities.

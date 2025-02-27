@@ -117,7 +117,6 @@ AdapEco, ; Technology for economic victory
 ; Keystroke = Keystroke description (changing text does not change
 ;             the actual key mappings in the game)
 ;
-;# Disabled bunkers.
 ;# Doubled price for forest as it is essentially equivalent to farm + mine.
 #TERRAIN
 Farm,             None,    Kelp Farm,        None,     4,  Cultivate $STR0, f, F
@@ -127,7 +126,7 @@ Solar Collector,  None,    Tidal Harness,    None,     4,  Construct $STR0, S, S
 Forest,           None,    ...,              Disable,  8,  Plant $STR0,     F, Shift+F
 Road,             None,    Road,             Disable,  1,  Build $STR0,     R, R
 Mag Tube,         Magnets, Mag Tube,         Disable,  6,  Build $STR0,     R, R
-Bunker,           Disable, Bunker,           Disable,  5,  Construct $STR0, K, K
+Bunker,           None,    Bunker,           Disable,  5,  Construct $STR0, K, K
 Airbase,          DocAir,  Airbase,          Disable, 10,  Construct $STR0, ., .
 Sensor Array,     None,    Sensor Buoy,      None,     4,  Construct $STR0, O, O
 Fungus,           None,    Sea Fungus,       None,     6,  Remove $STR0,    F, F
