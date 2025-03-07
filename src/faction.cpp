@@ -692,7 +692,6 @@ int __cdecl mod_social_ai(int faction_id, int a2, int a3, int a4, int a5, int a6
     return 0;
 }
 
-void print_wants_to_attack_statistics(int faction_id, int faction_id_target, bool wants_to_attack, std::string message);
 /*
 Determine if the specified faction wants to attack the target faction.
 Lower values of modifier will make the faction more likely to attack.
@@ -704,25 +703,20 @@ static int __cdecl evaluate_attack(int faction_id, int faction_id_tgt, int facti
         return true;
     }
     if (has_treaty(faction_id, faction_id_tgt, DIPLO_WANT_REVENGE | DIPLO_UNK_40 | DIPLO_ATROCITY_VICTIM)) {
-		print_wants_to_attack_statistics(faction_id, faction_id_tgt, true, "revenge/victim");
         return true;
     }
     if (Factions[faction_id_tgt].major_atrocities && Factions[faction_id].major_atrocities) {
-		print_wants_to_attack_statistics(faction_id, faction_id_tgt, true, "major atrocities");
         return true;
     }
     if (has_treaty(faction_id, faction_id_tgt, DIPLO_UNK_4000000)) {
-		print_wants_to_attack_statistics(faction_id, faction_id_tgt, false, "DIPLO_UNK_4000000");
         return false;
     }
     // Modify attacks to be less likely when AI has only few bases
     if (Factions[faction_id].base_count
     <= 1 + (*CurrentTurn + faction_id) % (*MapAreaTiles >= 3200 ? 8 : 4)) {
-		print_wants_to_attack_statistics(faction_id, faction_id_tgt, false, "few bases");
         return false;
     }
     if (!is_human(faction_id_tgt) && Factions[faction_id].player_flags & PFLAG_TEAM_UP_VS_HUMAN) {
-		print_wants_to_attack_statistics(faction_id, faction_id_tgt, false, "TEAM_UP_VS_HUMAN");
         return false;
     }
     int32_t modifier = 0;
@@ -755,7 +749,6 @@ static int __cdecl evaluate_attack(int faction_id, int faction_id_tgt, int facti
                 }
                 bool has_surrender = has_treaty(faction_id, i, DIPLO_HAVE_SURRENDERED);
                 if (has_surrender && has_treaty(i, faction_id_tgt, DIPLO_PACT | DIPLO_TREATY)) {
-					print_wants_to_attack_statistics(faction_id, faction_id_tgt, false, "suseren friend");
                     return false;
                 }
                 if (has_treaty(faction_id_tgt, i, DIPLO_VENDETTA)) {
@@ -767,16 +760,13 @@ static int __cdecl evaluate_attack(int faction_id, int faction_id_tgt, int facti
     }
     if (peace_faction_id) {
         if (has_treaty(faction_id_tgt, peace_faction_id, DIPLO_VENDETTA)) {
-			print_wants_to_attack_statistics(faction_id, faction_id_tgt, true, "suseren/pact enemy");
             return true;
         }
         if (has_treaty(faction_id_tgt, peace_faction_id, DIPLO_PACT | DIPLO_TREATY)) {
-			print_wants_to_attack_statistics(faction_id, faction_id_tgt, false, "suseren/pact friend");
             return false;
         }
     }
     if (Factions[faction_id].AI_fight < 0 && !common_enemy && FactionRankings[7] != faction_id_tgt) {
-		print_wants_to_attack_statistics(faction_id, faction_id_tgt, false, "peaceful faction");
         return false;
     }
     // Fix: initialize array to zero, original doesn't and compares arbitrary data on stack
@@ -820,7 +810,6 @@ static int __cdecl evaluate_attack(int faction_id, int faction_id_tgt, int facti
                         (faction_id_unk > 0
                             ? Factions[faction_id_unk].region_force_rating[region] / 4 : 0);
                     if (Factions[faction_id_tgt].region_force_rating[region] > compare) {
-						print_wants_to_attack_statistics(faction_id, faction_id_tgt, false, "region forces outnumbered");
                         return false;
                     }
                 }
@@ -882,21 +871,12 @@ static int __cdecl evaluate_attack(int faction_id, int faction_id_tgt, int facti
 
     if (!morale_divisor) {
         assert(0);
-		print_wants_to_attack_statistics(faction_id, faction_id_tgt, false, "morale_divisor == 0");
         return false;
     }
     if ((factor_count || modifier > 0 || has_treaty(faction_id, faction_id_tgt, DIPLO_UNK_20000000))
     && ((morale_factor * factor_force_rating * 6) / morale_divisor) < (modifier + 6)) {
-		char s[1000];
-		sprintf(s, "evaluated: factor_count=%2d modifier=%2d DIPLO_UNK_20000000=%d morale_factor=%4d factor_force_rating=%4d morale_divisor=%4d expression=%d\n", factor_count, modifier, has_treaty(faction_id, faction_id_tgt, DIPLO_UNK_20000000), morale_factor, factor_force_rating, morale_divisor, ((morale_factor * factor_force_rating * 6) / morale_divisor) < (modifier + 6));
-		std::string str(s);
-		print_wants_to_attack_statistics(faction_id, faction_id_tgt, false, str);
         return false;
     }
-	char s[1000];
-	sprintf(s, "evaluated: factor_count=%2d modifier=%2d DIPLO_UNK_20000000=%d morale_factor=%4d factor_force_rating=%4d morale_divisor=%4d expression=%d", factor_count, modifier, has_treaty(faction_id, faction_id_tgt, DIPLO_UNK_20000000), morale_factor, factor_force_rating, morale_divisor, ((morale_factor * factor_force_rating * 6) / morale_divisor) < (modifier + 6));
-	std::string str(s);
-	print_wants_to_attack_statistics(faction_id, faction_id_tgt, true, str);
     return true;
 }
 
@@ -908,23 +888,4 @@ int __cdecl mod_wants_to_attack(int faction_id, int faction_id_tgt, int faction_
     return value;
 }
 
-
-void print_wants_to_attack_statistics(int faction_id, int faction_id_target, bool wants_to_attack, std::string message)
-{
-	FILE* statistics_evaluate_attack_file = fopen("statistics_evaluate_attack.txt", "a");
-	fprintf
-	(
-		statistics_evaluate_attack_file,
-		"%4X"
-		" %3d"
-		" %d->%d=%d"
-		" %s"
-		"\n"
-		, *MapRandomSeed
-		, *CurrentTurn
-		, faction_id, faction_id_target, wants_to_attack
-		, message.c_str()
-	);
-	fclose(statistics_evaluate_attack_file);
-}
 

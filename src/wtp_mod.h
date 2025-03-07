@@ -360,7 +360,7 @@ int __cdecl wtp_mod_action_destroy(int vehicleId, int terrainBit, int x, int y);
 int __cdecl modified_tech_value(int techId, int factionId, int flag);
 int getFactionHighestResearchedTechLevel(int factionId);
 int __cdecl modified_pact_withdraw(int factionId, int pactFactionId);
-int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities, int reactorId, int plan, char *name);
+int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities_int, int reactorId, int plan, char const *name);
 int __cdecl modified_base_production();
 int __cdecl modified_base_ecology();
 int getStockpileEnergy(int baseId);
@@ -405,4 +405,7 @@ int __thiscall wtp_mod_Console_human_turn(Console *This);
 int __cdecl wtp_mod_action_terraform_cause_friction(int a1, int a2, int a3);
 int __cdecl wtp_mod_action_terraform_set_treaty(int a1, int a2, int a3, int a4);
 int __cdecl wtp_mod_enemy_diplomacy(int factionId);
+int __cdecl wtp_mod_probe_treaty_on(int faction1Id, int faction2Id, int treaty);
+int __cdecl wtp_mod_enemy_move(int vehicleId);
+int __cdecl wtp_mod_steal_energy(int baseId);
 

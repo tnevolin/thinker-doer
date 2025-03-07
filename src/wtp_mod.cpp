@@ -14,6 +14,7 @@
 #include "wtp_ai.h"
 #include "tech.h"
 #include "patch.h"
+#include "wtp_aiMove.h"
 
 // Profiling
 
@@ -27,6 +28,9 @@ int currentAttackerVehicleId = -1;
 int currentDefenderVehicleId = -1;
 int currentAttackerOdds = -1;
 int currentDefenderOdds = -1;
+
+// probe movement points after subversion
+int probeMovesSpent = -1;
 
 /*
 Combat calculation placeholder.
@@ -2393,13 +2397,13 @@ int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistanc
 
 }
 
-// probe subversion flag
-bool probeSubvertion = false;
 /*
 Moves subverted vehicle on probe tile.
 */
 void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVehicleId, int radius)
 {
+	VEH *probeVehicle = &(Vehicles[probeVehicleId]);
+	
 	// store subverted vehicle original location
 	
 	VEH *subvertedVehicle = &(Vehicles[subvertedVehicleId]);
@@ -2408,44 +2412,16 @@ void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVe
 	
 	// move subverted vehicle to probe tile
 	
-	VEH *probeVehicle = &(Vehicles[probeVehicleId]);
 	veh_put(subvertedVehicleId, probeVehicle->x, probeVehicle->y);
 	
-//	// stop probe
-//	
-//	mod_veh_skip(probeVehicleId);
-//	
+	// stop probe
+	
+	probeMovesSpent = probeVehicle->moves_spent + Rules->move_rate_roads;
+	probeVehicle->moves_spent = veh_speed(probeVehicleId, false);
+	
 	// redraw original target tile
 	
 	draw_tile(targetX, targetY, radius);
-	
-	// set subversion flag
-	
-	probeSubvertion = true;
-	
-}
-/*
-Returns 0 for subversion action to cancel move and expends one probe turn.
-*/
-int __cdecl modifiedProbeSubversion(int vehicleId, int a2, int a3, int a4)
-{
-	// clear subversion flag
-	
-	probeSubvertion = false;
-	
-	// execute original function
-	
-	int returnValue = probe(vehicleId, a2, a3, a4);
-	
-	// cancel move and expend probe turn
-	
-	if (probeSubvertion)
-	{
-		returnValue = 0;
-		Vehs[vehicleId].moves_spent += Rules->move_rate_roads;
-	}
-	
-	return returnValue;
 	
 }
 
@@ -2863,7 +2839,7 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 /*
 Prototype proposal entry point.
 */
-int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities_int, int reactorId, int plan, char *name)
+int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities_int, int reactorId, int plan, char const *name)
 {
 	uint32_t abilities = (uint32_t) abilities_int;
 	int offenseValue = Weapon[weaponId].offense_value;
@@ -2935,64 +2911,92 @@ int __cdecl wtp_mod_order_veh(int vehicleId, int angle, int a3)
 	int x = getX(dst);
 	int y = getY(dst);
 	
-	// do not alter human player vehicle movement
-	
 	if (is_human(factionId))
-		return tx_order_veh(vehicleId, angle, a3);
-	
-	// correct sea transport path
-	
-	if (isSeaTransportVehicle(vehicleId))
 	{
-		// check if there is a sea transport at a given angle
+		// reset probeMovesSpent
 		
-		if (!isAdjacentTransportAtSea(vehicleId, angle))
-			return tx_order_veh(vehicleId, angle, a3);
+		probeMovesSpent = -1;
 		
-		// try other angles
+		// execute original function
 		
-		for (int newAngle = angle + 1; newAngle < angle + ANGLE_COUNT; newAngle++)
+		int returnValue = tx_order_veh(vehicleId, angle, a3);
+		
+		// set probe moves
+		
+		if (probeMovesSpent >= 0)
 		{
-			if (!isAdjacentTransportAtSea(vehicleId, newAngle % ANGLE_COUNT))
-				return tx_order_veh(vehicleId, newAngle, a3);
+			VEH *probeVehicle = &(Vehicles[vehicleId]);
+			
+			// set probe moves
+			
+			probeVehicle->moves_spent = probeMovesSpent;
+			
+			// reset probeMovesSpent
+			
+			probeMovesSpent = -1;
+			
 		}
 		
+		return returnValue;
+		
 	}
-	
-	// correct land unit ZOC movement
-	
-    int destinationVehicleFactionId = veh_who(x, y);
-    bool destinationBlocked = destinationVehicleFactionId == -1 ? false : !isFriendly(factionId, destinationVehicleFactionId);
-	
-	if (!destinationBlocked && triad == TRIAD_LAND && zocAffectedVehicle && !is_ocean(src) && !is_ocean(dst) && isZoc(factionId, src, dst))
+	else
 	{
-		for (int newAngleIndex = 1; newAngleIndex < ANGLE_COUNT; newAngleIndex++)
+		// correct sea transport path
+		
+		if (isSeaTransportVehicle(vehicleId))
 		{
-			int newAngle;
-			if (newAngleIndex % 2 == 1)
+			// check if there is a sea transport at a given angle
+			
+			if (!isAdjacentTransportAtSea(vehicleId, angle))
+				return tx_order_veh(vehicleId, angle, a3);
+			
+			// try other angles
+			
+			for (int newAngle = angle + 1; newAngle < angle + ANGLE_COUNT; newAngle++)
 			{
-				newAngle = (angle + ((newAngleIndex / 2) + 1)) % ANGLE_COUNT;
+				if (!isAdjacentTransportAtSea(vehicleId, newAngle % ANGLE_COUNT))
+					return tx_order_veh(vehicleId, newAngle, a3);
 			}
-			else
+			
+		}
+		
+		// correct land unit ZOC movement
+		
+		int destinationVehicleFactionId = veh_who(x, y);
+		bool destinationBlocked = destinationVehicleFactionId == -1 ? false : !isFriendly(factionId, destinationVehicleFactionId);
+		
+		if (!destinationBlocked && triad == TRIAD_LAND && zocAffectedVehicle && !is_ocean(src) && !is_ocean(dst) && isZoc(factionId, src, dst))
+		{
+			for (int newAngleIndex = 1; newAngleIndex < ANGLE_COUNT; newAngleIndex++)
 			{
-				newAngle = (angle + ANGLE_COUNT - (newAngleIndex / 2)) % ANGLE_COUNT;
-			}
-			
-			MAP *newDst = getTileByAngle(src, newAngle);
-			
-			if (newDst == nullptr)
-				continue;
-			
-			if (!is_ocean(newDst) && !isBlocked(factionId, newDst) && !isZoc(factionId, src, newDst))
-				return tx_order_veh(vehicleId, newAngle, a3);
+				int newAngle;
+				if (newAngleIndex % 2 == 1)
+				{
+					newAngle = (angle + ((newAngleIndex / 2) + 1)) % ANGLE_COUNT;
+				}
+				else
+				{
+					newAngle = (angle + ANGLE_COUNT - (newAngleIndex / 2)) % ANGLE_COUNT;
+				}
 				
+				MAP *newDst = getTileByAngle(src, newAngle);
+				
+				if (newDst == nullptr)
+					continue;
+				
+				if (!is_ocean(newDst) && !isBlocked(factionId, newDst) && !isZoc(factionId, src, newDst))
+					return tx_order_veh(vehicleId, newAngle, a3);
+					
+			}
+			
 		}
 		
+		// execute original function if nothing else applied or worked
+		
+		return tx_order_veh(vehicleId, angle, a3);
+		
 	}
-	
-	// return original angle if nothing else applied or worked
-	
-	return tx_order_veh(vehicleId, angle, a3);
 	
 }
 
@@ -3941,6 +3945,135 @@ int __cdecl wtp_mod_enemy_diplomacy(int factionId)
 		}
 		
 	}
+	
+	return returnValue;
+	
+}
+
+/*
+Increases global friction as a probe actions consequence.
+*/
+int __cdecl wtp_mod_probe_treaty_on(int faction1Id, int faction2Id, int treaty)
+{
+	debug("wtp_mod_probe_treaty_on\n");
+	
+	int returnValue = treaty_on(faction1Id, faction2Id, treaty);
+	
+	if (conf.diplomacy_probe_action_vendetta_global_friction <= 0)
+		return returnValue;
+	
+	bool human1 = is_human(faction1Id);
+	bool human2 = is_human(faction2Id);
+	
+	// human vs AI
+	
+	if (human1 != human2)
+	{
+		int randomBound = conf.diplomacy_probe_action_vendetta_global_friction + 1;
+		
+		int humanFactionId = human1 ? faction1Id : faction2Id;
+		int aiFactionId = !human1 ? faction1Id : faction2Id;
+		
+		for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
+		{
+			if (otherFactionId == faction1Id || otherFactionId == faction2Id)
+				continue;
+			
+			if (is_human(otherFactionId))
+				continue;
+			
+			if (!has_treaty(otherFactionId, humanFactionId, DIPLO_COMMLINK) || !has_treaty(humanFactionId, otherFactionId, DIPLO_COMMLINK))
+				continue;
+			
+			// worsen relation to human
+			
+			int value0 = random(randomBound);
+			cause_friction(otherFactionId, humanFactionId, value0);
+			debug("\tcause_friction %-24s -> %-24s : %+2d\n", MFactions[otherFactionId].noun_faction, MFactions[humanFactionId].noun_faction, value0);
+			
+			if (Factions[otherFactionId].diplo_friction[humanFactionId] >= 10)
+			{
+				treaty_on(otherFactionId, humanFactionId, DIPLO_VENDETTA);
+			}
+			
+		}
+		for (int otherFactionId = 1; otherFactionId < MaxPlayerNum; otherFactionId++)
+		{
+			if (otherFactionId == faction1Id || otherFactionId == faction2Id)
+				continue;
+			
+			if (is_human(otherFactionId))
+				continue;
+			
+			if (!has_treaty(otherFactionId, aiFactionId, DIPLO_COMMLINK) || !has_treaty(aiFactionId, otherFactionId, DIPLO_COMMLINK))
+				continue;
+			
+			// improve relation between AIs
+			
+			int value1 = -random(randomBound);
+			int value2 = -random(randomBound);
+			cause_friction(otherFactionId, aiFactionId, value1);
+			cause_friction(aiFactionId, otherFactionId, value2);
+			debug("\tcause_friction %-24s -> %-24s : %+2d\n", MFactions[otherFactionId].noun_faction, MFactions[aiFactionId].noun_faction, value1);
+			debug("\tcause_friction %-24s -> %-24s : %+2d\n", MFactions[aiFactionId].noun_faction, MFactions[otherFactionId].noun_faction, value2);
+			
+		}
+		flushlog();
+		
+	}
+	
+	return returnValue;
+	
+}
+
+/*
+Intercepts enemy_move to correct probe moves.
+*/
+int __cdecl wtp_mod_enemy_move(int vehicleId)
+{
+	// reset probeMovesSpent
+	
+	probeMovesSpent = -1;
+	
+	// run original function
+	// which also wraps AI logic
+	
+	int returnValue = wtp_mod_ai_enemy_move(vehicleId);
+	
+	// set probe moves
+	
+	if (probeMovesSpent >= 0)
+	{
+		VEH *probeVehicle = &(Vehicles[vehicleId]);
+		
+		// set probe moves
+		
+		probeVehicle->moves_spent = probeMovesSpent;
+		
+		// reset probeMovesSpent
+		
+		probeMovesSpent = -1;
+		
+	}
+	
+	return returnValue;
+	
+}
+
+/*
+Set energy stolen flag.
+*/
+int __cdecl wtp_mod_steal_energy(int baseId)
+{
+	// execute original function
+	
+	int returnValue = steal_energy(baseId);
+	
+	// set energy stolen flag
+	
+	Bases[baseId].state_flags |= BSTATE_ENERGY_RESERVES_DRAINED;
+	
+	// return value
 	
 	return returnValue;
 	

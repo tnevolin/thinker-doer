@@ -780,6 +780,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->diplomacy_se_choice_effect_interval = atoi(value);
     }
+    else if (MATCH("diplomacy_probe_action_vendetta_global_friction"))
+    {
+        cf->diplomacy_probe_action_vendetta_global_friction = atoi(value);
+    }
     else if (MATCH("bunker_ignores_terrain"))
     {
         cf->bunker_ignores_terrain = (atoi(value) == 0 ? false : true);

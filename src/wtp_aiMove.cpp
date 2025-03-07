@@ -342,9 +342,9 @@ int enemyMoveVehicle(const int vehicleId)
 		return executeTask(vehicleId);
 	}
 	
-    // use vanilla algorithm for probes
+    // use vanilla algorithm for non defensive probes
 	
-    if (isProbeVehicle(vehicleId))
+    if (isProbeVehicle(vehicleId) && !isInfantryVehicle(vehicleId))
 	{
 		return enemy_move(vehicleId);
 	}
@@ -657,7 +657,7 @@ void balanceVehicleSupport()
 /*
 Modified vehicle movement.
 */
-int __cdecl modified_enemy_move(const int vehicleId)
+int __cdecl wtp_mod_ai_enemy_move(const int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 	
@@ -665,22 +665,23 @@ int __cdecl modified_enemy_move(const int vehicleId)
 	
 	// choose AI logic
 	
-	// run WTP AI code for AI eanbled factions or human player managed units
-	
 	if (isWtpEnabledFaction(vehicle->faction_id) || (aiFactionId == *CurrentPlayerFaction && conf.manage_player_units && ((vehicle->state & VSTATE_ON_ALERT) != 0) && vehicle->terraform_turns == 0))
 	{
+		// run WTP AI code for AI eanbled factions or human player managed units
+		
 		Profiling::start("| enemyMoveVehicle");
 		returnValue = enemyMoveVehicle(vehicleId);
 		Profiling::stop("| enemyMoveVehicle");
+		
 	}
-	
-	// default
-	
 	else
 	{
+		// default
+		
 		Profiling::start("~ mod_enemy_move");
 		returnValue = mod_enemy_move(vehicleId);
 		Profiling::stop("~ mod_enemy_move");
+		
 	}
 	
 	// return

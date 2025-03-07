@@ -404,6 +404,7 @@ struct Config {
     int diplomacy_disable_altering_rainfall_patterns_penalty = false;
     int diplomacy_aggressiveness_effect_interval = 1;
     int diplomacy_se_choice_effect_interval = 2;
+    int diplomacy_probe_action_vendetta_global_friction = 2;
     bool bunker_ignores_terrain = false;
     int bunker_bonus_surface = 50;
     int bunker_bonus_aerial = 0;

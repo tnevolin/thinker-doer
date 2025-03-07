@@ -1780,7 +1780,9 @@ void patch_disable_air_transport_unload_everywhere()
 
 void patch_enemy_move()
 {
-    write_call_over(0x00579362, (int)modified_enemy_move);
+//    write_call_over(0x00579362, (int)wtp_mod_ai_enemy_move);
+    write_call(0x00512842, (int)wtp_mod_enemy_move);
+    write_call(0x00579362, (int)wtp_mod_enemy_move);
 }
 
 void patch_faction_upkeep()
@@ -2031,19 +2033,19 @@ void patch_carry_over_minerals()
 void patch_subversion_allow_stacked_units()
 {
 	// ignore stack count in probe
-
+	
 	int ignore_stack_count_probe_bytes_length = 0x2;
-
+	
 	/*
 	0:  3b c6                   cmp    eax,esi
 	*/
 	byte ignore_stack_count_probe_bytes_old[] = { 0x3B, 0xC6 };
-
+	
 	/*
 	0:  39 f6                   cmp    esi,esi
 	*/
 	byte ignore_stack_count_probe_bytes_new[] = { 0x39, 0xF6 };
-
+	
 	write_bytes
 	(
 		0x005A1262,
@@ -2051,22 +2053,22 @@ void patch_subversion_allow_stacked_units()
 		ignore_stack_count_probe_bytes_new,
 		ignore_stack_count_probe_bytes_length
 	);
-
+	
 	// ignore stack count in enemy_move
-
+	
 	int ignore_stack_count_enemy_move_bytes_length = 0x3;
-
+	
 	/*
 	0:  83 f8 01                cmp    eax,0x1
 	*/
 	byte ignore_stack_count_enemy_move_bytes_old[] = { 0x83, 0xF8, 0x01 };
-
+	
 	/*
 	0:  39 c0                   cmp    eax,eax
 	..
 	*/
 	byte ignore_stack_count_enemy_move_bytes_new[] = { 0x39, 0xC0, 0x90 };
-
+	
 	write_bytes
 	(
 		0x005784CB,
@@ -2074,21 +2076,21 @@ void patch_subversion_allow_stacked_units()
 		ignore_stack_count_enemy_move_bytes_new,
 		ignore_stack_count_enemy_move_bytes_length
 	);
-
+	
 	// disable target tile ownership change
-
+	
 	int disable_tile_ownership_change_bytes_length = 0x5;
-
+	
 	/*
 	0:  e8 18 d9 fe ff          call   0xfffed91d
 	*/
 	byte disable_tile_ownership_change_bytes_old[] = { 0xE8, 0x18, 0xD9, 0xFE, 0xFF };
-
+	
 	/*
 	...
 	*/
 	byte disable_tile_ownership_change_bytes_new[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
-
+	
 	write_bytes
 	(
 		0x005A41F3,
@@ -2096,24 +2098,24 @@ void patch_subversion_allow_stacked_units()
 		disable_tile_ownership_change_bytes_new,
 		disable_tile_ownership_change_bytes_length
 	);
-
+	
 	// move subverted unit to probe tile
-
+	
 	int pull_subverted_vehicle_bytes_length = 0xe;
-
+	
 	/*
 	0:  0f bf 86 2a 28 95 00    movsx  eax,WORD PTR [esi+0x95282a]
 	7:  0f bf 8e 28 28 95 00    movsx  ecx,WORD PTR [esi+0x952828]
 	*/
 	byte pull_subverted_vehicle_bytes_old[] = { 0x0F, 0xBF, 0x86, 0x2A, 0x28, 0x95, 0x00, 0x0F, 0xBF, 0x8E, 0x28, 0x28, 0x95, 0x00 };
-
+	
 	/*
 	0:  8b 45 10                mov    eax,DWORD PTR [ebp+0x10]
 	3:  8b 4d 08                mov    ecx,DWORD PTR [ebp+0x8]
 	...
 	*/
 	byte pull_subverted_vehicle_bytes_new[] = { 0x8B, 0x45, 0x10, 0x8B, 0x4D, 0x08, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-
+	
 	write_bytes
 	(
 		0x005A423E,
@@ -2121,16 +2123,14 @@ void patch_subversion_allow_stacked_units()
 		pull_subverted_vehicle_bytes_new,
 		pull_subverted_vehicle_bytes_length
 	);
-
+	
     write_call(0x005A4250, (int)modifiedSubveredVehicleDrawTile);
     
-    // override probe call to return zero when unit is subverted
+    // intercept enemy_move is done in patch_enemy_move
     
-//    write_call(0x0056E19C, (int)modifiedProbeSubversion);
-//    write_call(0x00578512, (int)modifiedProbeSubversion);
-//    write_call(0x00595026, (int)modifiedProbeSubversion);
-//    write_call(0x00596615, (int)modifiedProbeSubversion);
-
+//    write_call(0x00512842, (int)wtp_mod_enemy_move);
+//    write_call(0x00579362, (int)wtp_mod_enemy_move);
+    
 }
 
 void patch_alternative_subversion_and_mind_control()
@@ -3179,6 +3179,23 @@ void patch_enemy_diplomacy()
 	
 }
 
+void patch_diplomacy_probe_action_vendetta_global_friction()
+{
+	write_call(0x005A4C2F, (int)wtp_mod_probe_treaty_on);
+	write_call(0x005A4EB8, (int)wtp_mod_probe_treaty_on);
+	write_call(0x005A5375, (int)wtp_mod_probe_treaty_on);
+	write_call(0x005A53C2, (int)wtp_mod_probe_treaty_on);
+	write_call(0x005A56AA, (int)wtp_mod_probe_treaty_on);
+	write_call(0x005A5801, (int)wtp_mod_probe_treaty_on);
+	
+}
+
+void patch_steal_energy()
+{
+	write_call(0x005A371C, (int)wtp_mod_steal_energy);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3500,6 +3517,13 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_enemy_diplomacy();
+	
+	if (conf.diplomacy_probe_action_vendetta_global_friction > 0)
+	{
+		patch_diplomacy_probe_action_vendetta_global_friction();
+	}
+	
+	patch_steal_energy();
 	
 }
 

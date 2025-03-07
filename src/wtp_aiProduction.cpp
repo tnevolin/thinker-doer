@@ -33,6 +33,8 @@ double const INFANTRY_DEFENSIVE_SATURATION_RATIO = 0.75;
 double globalLandArtillerySaturationCoefficient;
 double globalInfantryDefensiveSaturationCoefficient;
 
+double techStealGain;
+
 // sea transport parameters by sea cluster
 
 robin_hood::unordered_flat_map<int, double> seaTransportDemands;
@@ -141,6 +143,10 @@ void populateFactionProductionData()
 	const int AVAILABLE_AIR_FORMER_COUNT_DIVISOR = 2;
 	const int AVAILABLE_SEA_FORMER_COUNT_DIVISOR = 1;
 	const int AVAILABLE_LAND_FORMER_COUNT_DIVISOR = 2;
+	
+	// global parameters
+	
+	techStealGain = getTechStealGain();
 	
 	// available former counts
 	
@@ -1693,7 +1699,7 @@ void evaluateDefensiveProbeUnits()
 			
 			double combatEffect = newProbeMoraleMultiplier;
 			double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
-			double unitProbeGain = getTechStealGain() * combatEffectCoefficient;
+			double unitProbeGain = techStealGain * combatEffectCoefficient;
 			double probeGain = unitProbeGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getUnitSupport(unitId), 0.0);

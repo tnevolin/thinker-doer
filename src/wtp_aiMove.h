@@ -35,7 +35,7 @@ int enemyMoveVehicle(const int vehicleId);
 bool transitVehicle(Task task);
 bool transitLandVehicle(Task task);
 void balanceVehicleSupport();
-int __cdecl modified_enemy_move(const int vehicleId);
+int __cdecl wtp_mod_ai_enemy_move(const int vehicleId);
 MAP *getNearestFriendlyBase(int vehicleId);
 MAP *getNearestMonolith(int x, int y, int triad);
 Transfer getOptimalPickupTransfer(MAP *org, MAP *dst);

@@ -1,8 +1,16 @@
+# Version 355
+
+* Probe expends 1 turn subverting unit.
+* AI designs cheap defensive probes.
+* Amphibious Pods cost is 1 (25%).
+
 # Version 354
 
 * Bunker is availabe from start.
 * Bunker adds 100% bonus against surface attack and 50% bonus against aerial attack.
-* Bunker terrain is ignored for combat bonus purpose.
+* Bunker disables underlying terrain combat bonuses.
+  * Rough terrain (rocky, forest, fungus) under bunker does not add defense bonus.
+  * Fungus under bunker does not add attack bonus to native vs. non-native in fungus.
 * Removed WTP road attack bonus as it is implemented in Thinker now.
 * AI factions have a chance to forgive heinous action from other factions every turn.
   * Human faction specific: 4%.

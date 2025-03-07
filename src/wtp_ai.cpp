@@ -4498,7 +4498,6 @@ void designUnits()
 		{fastLandChassis, fastSeaChassis},
 		{WPN_COLONY_MODULE},
 		{ARM_NO_ARMOR},
-		0,
 		{
 			{},
 		},
@@ -4515,9 +4514,8 @@ void designUnits()
 		{fastLandChassis, fastSeaChassis, CHS_GRAVSHIP},
 		{WPN_TERRAFORMING_UNIT},
 		{bestArmor},
-		0,
 		{
-			{ABL_ID_CLEAN_REACTOR, ABL_ID_TRANCE, },
+			{ABL_ID_SUPER_TERRAFORMER, ABL_ID_CLEAN_REACTOR, ABL_ID_FUNGICIDAL, ABL_ID_TRANCE, },
 		},
 		bestReactor,
 		PLAN_TERRAFORM,
@@ -4532,7 +4530,6 @@ void designUnits()
 		{CHS_INFANTRY, CHS_FOIL},
 		{WPN_SUPPLY_TRANSPORT},
 		{bestArmor},
-		0,
 		{
 			{ABL_ID_CLEAN_REACTOR, ABL_ID_TRANCE, },
 		},
@@ -4541,7 +4538,7 @@ void designUnits()
 		NULL
 	);
 	
-	// defender
+	// police defender
 	
 	proposeMultiplePrototypes
 	(
@@ -4549,20 +4546,33 @@ void designUnits()
 		{CHS_INFANTRY},
 		{defenderWeapon},
 		{bestArmor},
-		0,
 		{
-			{ABL_ID_CLEAN_REACTOR},
-			{ABL_ID_POLICE_2X, ABL_ID_CLEAN_REACTOR, },
-			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR, },
-			{ABL_ID_COMM_JAMMER, ABL_ID_CLEAN_REACTOR, },
-			{ABL_ID_AAA, ABL_ID_CLEAN_REACTOR, },
+			{ABL_ID_POLICE_2X, ABL_ID_CLEAN_REACTOR, ABL_ID_AAA, ABL_ID_TRANCE, },
 		},
 		bestReactor,
 		PLAN_DEFENSIVE,
 		NULL
 	);
 	
-	// land armored attackers
+	// regular defender
+	
+	proposeMultiplePrototypes
+	(
+		aiFactionId,
+		{CHS_INFANTRY},
+		{defenderWeapon},
+		{bestArmor},
+		{
+			{ABL_ID_AAA, ABL_ID_CLEAN_REACTOR, },
+			{ABL_ID_COMM_JAMMER, ABL_ID_CLEAN_REACTOR, },
+			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR, },
+		},
+		bestReactor,
+		PLAN_DEFENSIVE,
+		NULL
+	);
+	
+	// land armored infantry attackers
 	
 	proposeMultiplePrototypes
 	(
@@ -4570,8 +4580,8 @@ void designUnits()
 		{CHS_INFANTRY},
 		{bestWeapon},
 		{attackerArmor},
-		0,
 		{
+			// plain
 			{},
 			// protected against fast and air units
 			{ABL_ID_COMM_JAMMER},
@@ -4594,23 +4604,21 @@ void designUnits()
 		{fastLandChassis},
 		{bestWeapon},
 		{attackerArmor},
-		0,
 		{
 			// plain
 			{},
 			// anti native
-			{ABL_ID_EMPATH},
+			{ABL_ID_EMPATH, },
 			// next to shore sea base attacker
-			{ABL_ID_AMPHIBIOUS, ABL_ID_BLINK_DISPLACER},
+			{ABL_ID_AMPHIBIOUS, ABL_ID_BLINK_DISPLACER, },
 			// fast and deadly in field
-			{ABL_ID_SOPORIFIC_GAS, ABL_ID_ANTIGRAV_STRUTS},
+			{ABL_ID_SOPORIFIC_GAS, ABL_ID_ANTIGRAV_STRUTS, },
 			// fast and deadly against bases
-			{ABL_ID_BLINK_DISPLACER, ABL_ID_ANTIGRAV_STRUTS},
+			{ABL_ID_BLINK_DISPLACER, ABL_ID_ANTIGRAV_STRUTS, },
 			// anti air
-			{ABL_ID_AIR_SUPERIORITY, ABL_ID_ANTIGRAV_STRUTS},
+			{ABL_ID_AIR_SUPERIORITY, ABL_ID_ANTIGRAV_STRUTS, },
 			// anti anti fast
-			{ABL_ID_DISSOCIATIVE_WAVE},
-			{ABL_ID_DISSOCIATIVE_WAVE, ABL_ID_BLINK_DISPLACER},
+			{ABL_ID_DISSOCIATIVE_WAVE, ABL_ID_BLINK_DISPLACER, },
 		},
 		bestReactor,
 		PLAN_OFFENSIVE,
@@ -4625,9 +4633,8 @@ void designUnits()
 		{fastLandChassis},
 		{bestWeapon},
 		{bestArmor},
-		1,
 		{
-			{ABL_ID_ARTILLERY},
+			{ABL_ID_ARTILLERY, },
 		},
 		bestReactor,
 		PLAN_OFFENSIVE,
@@ -4642,9 +4649,8 @@ void designUnits()
 		{CHS_INFANTRY},
 		{bestWeapon},
 		{bestArmor},
-		1,
 		{
-			{ABL_ID_DROP_POD, ABL_ID_BLINK_DISPLACER},
+			{ABL_ID_DROP_POD, ABL_ID_BLINK_DISPLACER, },
 		},
 		bestReactor,
 		PLAN_COMBAT,
@@ -4659,20 +4665,17 @@ void designUnits()
 		{fastSeaChassis},
 		{bestWeapon},
 		{attackerArmor},
-		0,
 		{
 			// plain
 			{},
-			// anti native
-			{ABL_ID_EMPATH},
 			// air defended
-			{ABL_ID_AAA, ABL_ID_SOPORIFIC_GAS},
+			{ABL_ID_AAA, ABL_ID_SOPORIFIC_GAS, },
 			// anti air
-			{ABL_ID_AIR_SUPERIORITY, ABL_ID_SOPORIFIC_GAS},
+			{ABL_ID_AIR_SUPERIORITY, ABL_ID_SOPORIFIC_GAS, },
 			// anti base
-			{ABL_ID_BLINK_DISPLACER, ABL_ID_SOPORIFIC_GAS},
+			{ABL_ID_BLINK_DISPLACER, ABL_ID_SOPORIFIC_GAS, },
 			// pirates
-			{ABL_ID_MARINE_DETACHMENT, ABL_ID_SOPORIFIC_GAS},
+			{ABL_ID_MARINE_DETACHMENT, ABL_ID_SOPORIFIC_GAS, },
 		},
 		bestReactor,
 		PLAN_COMBAT,
@@ -4687,16 +4690,31 @@ void designUnits()
 		{fastSeaChassis},
 		{WPN_TROOP_TRANSPORT},
 		{bestArmor},
-		0,
 		{
 			// heavy
-			{ABL_ID_HEAVY_TRANSPORT, ABL_ID_CLEAN_REACTOR},
+			{ABL_ID_HEAVY_TRANSPORT, ABL_ID_CLEAN_REACTOR, },
 			// air protected
-			{ABL_ID_HEAVY_TRANSPORT, ABL_ID_AAA, ABL_ID_CLEAN_REACTOR},
+			{ABL_ID_HEAVY_TRANSPORT, ABL_ID_AAA, ABL_ID_CLEAN_REACTOR, },
 		},
 		bestReactor,
 		PLAN_COMBAT,
 		NULL
+	);
+	
+	// defensive probe
+	
+	proposeMultiplePrototypes
+	(
+		aiFactionId,
+		{CHS_INFANTRY},
+		{WPN_PROBE_TEAM},
+		{ARM_NO_ARMOR},
+		{
+			{},
+		},
+		bestReactor,
+		PLAN_COMBAT,
+		"Infantry Probe Team"
 	);
 	
 	// armored land probe
@@ -4707,12 +4725,9 @@ void designUnits()
 		{fastLandChassis},
 		{WPN_PROBE_TEAM},
 		{bestArmor},
-		0,
 		{
-			// psi protected
-			{ABL_ID_TRANCE},
 			// air protected
-			{ABL_ID_AAA},
+			{ABL_ID_AAA, ABL_ID_ANTIGRAV_STRUTS, },
 		},
 		bestReactor,
 		PLAN_COMBAT,
@@ -4727,12 +4742,9 @@ void designUnits()
 		{fastSeaChassis},
 		{WPN_PROBE_TEAM},
 		{bestArmor},
-		0,
 		{
-			// psi protected
-			{ABL_ID_TRANCE},
 			// air protected
-			{ABL_ID_AAA},
+			{ABL_ID_AAA, ABL_ID_ANTIGRAV_STRUTS, },
 		},
 		bestReactor,
 		PLAN_COMBAT,
@@ -4783,17 +4795,43 @@ void designUnits()
 /*
 Propose multiple prototype combinations.
 */
-void proposeMultiplePrototypes(int factionId, std::vector<VehChassis> chassisIds, std::vector<VehWeapon> weaponIds, std::vector<VehArmor> armorIds, size_t requiredAbilityCount, std::vector<std::vector<VehAbl>> abilityIdSets, VehReactor reactor, VehPlan plan, char *name)
+void proposeMultiplePrototypes(int factionId, std::vector<VehChassis> chassisIds, std::vector<VehWeapon> weaponIds, std::vector<VehArmor> armorIds, std::vector<std::vector<VehAbl>> potentialAbilityIdSets, VehReactor reactor, VehPlan plan, char const *name)
 {
+	size_t allowedAbilityCount = (has_tech(Rules->tech_preq_allow_2_spec_abil, factionId) ? 2U : 1U);
+	
 	for (VehChassis chassisId : chassisIds)
 	{
+		if (!has_chassis(factionId, chassisId))
+			continue;
+		
 		for (VehWeapon weaponId : weaponIds)
 		{
+			if (!has_weapon(factionId, weaponId))
+				continue;
+			
 			for (VehArmor armorId : armorIds)
 			{
-				for (std::vector<VehAbl> abilityIdSet : abilityIdSets)
+				if (!has_armor(factionId, armorId))
+					continue;
+				
+				for (std::vector<VehAbl> potentialAbilityIdSet : potentialAbilityIdSets)
 				{
-					checkAndProposePrototype(factionId, chassisId, weaponId, armorId, requiredAbilityCount, abilityIdSet, reactor, plan, name);
+					std::vector<VehAbl> abilityIdSets;
+					
+					for (VehAbl potentialAbilityId : potentialAbilityIdSet)
+					{
+						if (!has_tech(Ability[potentialAbilityId].preq_tech, factionId))
+							continue;
+						
+						abilityIdSets.push_back(potentialAbilityId);
+						
+						if (abilityIdSets.size() >= allowedAbilityCount)
+							break;
+						
+					}
+					
+					checkAndProposePrototype(factionId, chassisId, weaponId, armorId, abilityIdSets, reactor, plan, name);
+					
 				}
 
 			}
@@ -4808,54 +4846,18 @@ void proposeMultiplePrototypes(int factionId, std::vector<VehChassis> chassisIds
 Verify proposed prototype is allowed and propose it if yes.
 Verifies all technologies are available and abilities area allowed.
 */
-void checkAndProposePrototype(int factionId, VehChassis chassisId, VehWeapon weaponId, VehArmor armorId, size_t requiredAbilityCount, std::vector<VehAbl> abilityIds, VehReactor reactor, VehPlan plan, char *name)
+void checkAndProposePrototype(int factionId, VehChassis chassisId, VehWeapon weaponId, VehArmor armorId, std::vector<VehAbl> abilityIdSet, VehReactor reactor, VehPlan plan, char const *name)
 {
-	// check chassis is available
+	size_t allowedAbilityCount = (has_tech(Rules->tech_preq_allow_2_spec_abil, factionId) ? 2U : 1U);
 	
-	if (!has_chassis(factionId, chassisId))
-		return;
+	// build abilities
 	
-	// check weapon is available
-	
-	if (!has_weapon(factionId, weaponId))
-		return;
-	
-	// check armor is available
-	
-	if (!has_armor(factionId, armorId))
-		return;
-	
-	// check reactor is available
-	
-	if (!has_reactor(factionId, reactor))
-		return;
-	
-	// check abilities are available and allowed
-	
-	int allowedAbilityCount = (isFactionHasTech(factionId, Rules->tech_preq_allow_2_spec_abil) ? 2 : 1);
-	int abilityCount = 0;
 	uint32_t abilities = 0;
 	
-	for (size_t i = 0; i < abilityIds.size(); i++)
+	for (size_t i = 0; i < std::min(allowedAbilityCount, abilityIdSet.size()); i++)
 	{
-		VehAbl abilityId = abilityIds.at(i);
-		
-		if (!has_ability(factionId, abilityId, chassisId, weaponId))
-		{
-			if (i < requiredAbilityCount)
-				return;
-			else
-				continue;
-		}
-		
-		// all condition passed - add ability
-
-		abilities |= ((uint32_t) 0x1 << abilityId);
-		abilityCount++;
-		
-		if (abilityCount == allowedAbilityCount)
-			break;
-		
+		VehAbl abilityId = abilityIdSet.at(i);
+		abilities |= ((uint32_t)1 << abilityId);
 	}
 	
 	// propose prototype
