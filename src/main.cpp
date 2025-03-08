@@ -752,6 +752,18 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->worker_algorithm_minimal_energy_surplus = atoi(value);
     }
+    else if (MATCH("worker_algorithm_nutrient_preference"))
+    {
+        cf->worker_algorithm_nutrient_preference = atof(value);
+    }
+    else if (MATCH("worker_algorithm_mineral_preference"))
+    {
+        cf->worker_algorithm_mineral_preference = atof(value);
+    }
+    else if (MATCH("worker_algorithm_energy_preference"))
+    {
+        cf->worker_algorithm_energy_preference = atof(value);
+    }
     else if (MATCH("diplomacy_improvement_chance_human_faction_revenge"))
     {
         cf->diplomacy_improvement_chance_human_faction_revenge = atoi(value);

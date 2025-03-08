@@ -3,6 +3,7 @@
 * Probe expends 1 turn subverting unit.
 * AI designs cheap defensive probes.
 * Amphibious Pods cost is 1 (25%).
+* [Bug] Fixed bug in worker placement algorithm.
 
 # Version 354
 

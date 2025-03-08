@@ -491,7 +491,7 @@ void __cdecl mod_base_yield() {
     
     // [WTP] alternative scoring constants
     
-    double const growthFactor = 1.0 / (double)((base->pop_size + 1) * cost_factor(0, base->faction_id, base_id)) / (double)base->pop_size;
+    double const growthFactor = 1.0 / (double)((1 + base->pop_size) * mod_cost_factor(base->faction_id, RSC_NUTRIENT, base_id)) / (double)base->pop_size;
     double const energyValue = conf.worker_algorithm_energy_value * (double)effic_val / 16.0;
 	
     // Initial production without intake from any tiles (incl. base tile)
@@ -3055,6 +3055,16 @@ int findReplacementSpecialist(int factionId, int specialistId)
 
 int computeBaseTileScore(double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, TileValue const &tileValue)
 {
+	debug
+	(
+		"computeBaseTileScore(growthFactor=%7.4f, energyValue=%5.2f, can_grow=%d, nutrientSurplus=%d, mineralSurplus=%d, energySurplus=%d, nutrient=%d, mineral=%d, energy=%d)\n"
+		, growthFactor, energyValue, can_grow, nutrientSurplus, mineralSurplus, energySurplus, tileValue.nutrient, tileValue.mineral, tileValue.energy
+	);
+	
+	double nutrient = conf.worker_algorithm_nutrient_preference * (double)tileValue.nutrient;
+	double mineral = conf.worker_algorithm_mineral_preference * (double)tileValue.mineral;
+	double energy = conf.worker_algorithm_energy_preference * (double)tileValue.energy;
+	
 	double growthMultiplier = can_grow ? conf.worker_algorithm_growth_multiplier : 0.0;
 	int minimalNutrientSurplus = can_grow ? conf.worker_algorithm_minimal_nutrient_surplus : 0;
 	int minimalMineralSurplus = conf.worker_algorithm_minimal_mineral_surplus;
@@ -3079,16 +3089,37 @@ int computeBaseTileScore(double growthFactor, double energyValue, bool can_grow,
 		double currentGrowth = growthFactor * (double)nutrientSurplus;
 		double currentIncome = 1.0 * (double)mineralSurplus + energyValue * (double)energySurplus;
 		
-		double tileGrowth = growthFactor * (double)tileValue.nutrient;
-		double tileIncome = 1.0 * (double)tileValue.mineral + energyValue * (double)tileValue.energy;
+		double tileGrowth = growthFactor * nutrient;
+		double tileIncome = 1.0 * mineral + energyValue * energy;
 		
-		double tileGrowthGain = growthMultiplier * currentIncome * tileGrowth;
+		double tileGrowthGain = growthMultiplier * tileGrowth * currentIncome;
 		double tileIncomeGain = (1.0 + growthMultiplier * currentGrowth) * tileIncome;
 		double tileGain = tileGrowthGain + tileIncomeGain;
 		
 		score = (int)round(tileGain);
 		
+		debug
+		(
+			"\tcurrentGrowth=%7.4f"
+			" currentIncome=%5.2f"
+			" tileGrowth=%7.4f"
+			" tileIncome=%5.2f"
+			" tileGrowthGain=%5.2f"
+			" tileIncomeGain=%5.2f"
+			" tileGain=%5.2f"
+			"\n"
+			, currentGrowth
+			, currentIncome
+			, tileGrowth
+			, tileIncome
+			, tileGrowthGain
+			, tileIncomeGain
+			, tileGain
+		);
+		
 	}
+	
+	flushlog();
 	
 	return score;
 	

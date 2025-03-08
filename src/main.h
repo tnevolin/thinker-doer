@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v354"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v355"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -397,6 +397,9 @@ struct Config {
     int worker_algorithm_minimal_nutrient_surplus = 0;
     int worker_algorithm_minimal_mineral_surplus = 0;
     int worker_algorithm_minimal_energy_surplus = 0;
+    double worker_algorithm_nutrient_preference = 0.0;
+    double worker_algorithm_mineral_preference = 0.0;
+    double worker_algorithm_energy_preference = 0.0;
     int diplomacy_improvement_chance_human_faction_revenge = 0;
     int diplomacy_improvement_chance_human_major_atrocity = 0;
     int diplomacy_improvement_chance_ai_faction_revenge = 0;
