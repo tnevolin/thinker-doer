@@ -3055,12 +3055,6 @@ int findReplacementSpecialist(int factionId, int specialistId)
 
 int computeBaseTileScore(double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, TileValue const &tileValue)
 {
-	debug
-	(
-		"computeBaseTileScore(growthFactor=%7.4f, energyValue=%5.2f, can_grow=%d, nutrientSurplus=%d, mineralSurplus=%d, energySurplus=%d, nutrient=%d, mineral=%d, energy=%d)\n"
-		, growthFactor, energyValue, can_grow, nutrientSurplus, mineralSurplus, energySurplus, tileValue.nutrient, tileValue.mineral, tileValue.energy
-	);
-	
 	double nutrient = (1.0 + conf.worker_algorithm_nutrient_preference) * (double)tileValue.nutrient;
 	double mineral = (1.0 + conf.worker_algorithm_mineral_preference) * (double)tileValue.mineral;
 	double energy = (1.0 + conf.worker_algorithm_energy_preference) * (double)tileValue.energy;
@@ -3098,28 +3092,7 @@ int computeBaseTileScore(double growthFactor, double energyValue, bool can_grow,
 		
 		score = (int)round(tileGain);
 		
-		debug
-		(
-			"\tcurrentGrowth=%7.4f"
-			" currentIncome=%5.2f"
-			" tileGrowth=%7.4f"
-			" tileIncome=%5.2f"
-			" tileGrowthGain=%5.2f"
-			" tileIncomeGain=%5.2f"
-			" tileGain=%5.2f"
-			"\n"
-			, currentGrowth
-			, currentIncome
-			, tileGrowth
-			, tileIncome
-			, tileGrowthGain
-			, tileIncomeGain
-			, tileGain
-		);
-		
 	}
-	
-	flushlog();
 	
 	return score;
 	
