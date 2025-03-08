@@ -3061,9 +3061,9 @@ int computeBaseTileScore(double growthFactor, double energyValue, bool can_grow,
 		, growthFactor, energyValue, can_grow, nutrientSurplus, mineralSurplus, energySurplus, tileValue.nutrient, tileValue.mineral, tileValue.energy
 	);
 	
-	double nutrient = conf.worker_algorithm_nutrient_preference * (double)tileValue.nutrient;
-	double mineral = conf.worker_algorithm_mineral_preference * (double)tileValue.mineral;
-	double energy = conf.worker_algorithm_energy_preference * (double)tileValue.energy;
+	double nutrient = (1.0 + conf.worker_algorithm_nutrient_preference) * (double)tileValue.nutrient;
+	double mineral = (1.0 + conf.worker_algorithm_mineral_preference) * (double)tileValue.mineral;
+	double energy = (1.0 + conf.worker_algorithm_energy_preference) * (double)tileValue.energy;
 	
 	double growthMultiplier = can_grow ? conf.worker_algorithm_growth_multiplier : 0.0;
 	int minimalNutrientSurplus = can_grow ? conf.worker_algorithm_minimal_nutrient_surplus : 0;
