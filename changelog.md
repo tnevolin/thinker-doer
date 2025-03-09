@@ -1,3 +1,8 @@
+# Version 356
+
+* Probe combat uses sensor bonus and base intrinsic defense bonus.
+* Fixed base specialist computation to choose more correct one.
+
 # Version 355
 
 * Probe expends 1 turn subverting unit.

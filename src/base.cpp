@@ -489,6 +489,13 @@ void __cdecl mod_base_yield() {
     int psych_spc_id = (can_riot ? best_specialist(base, econ_val, labs_val, 3*psych_val) : best_spc_id);
     CCitizen& spc = Citizen[best_spc_id];
     
+//    // [WTP] initialize specialists to best specialists
+//    
+//	for (int i = 0; i < MaxBaseSpecNum; i++)
+//	{
+//		base->specialist_modify(i, best_spc_id);
+//	}
+//    
     // [WTP] alternative scoring constants
     
     double const growthFactor = 1.0 / (double)((1 + base->pop_size) * mod_cost_factor(base->faction_id, RSC_NUTRIENT, base_id)) / (double)base->pop_size;
@@ -621,6 +628,7 @@ void __cdecl mod_base_yield() {
             mod_base_minerals();
             mod_base_energy();
             valid = !base->drone_riots();
+            
             if (!valid && manage_workers && best_spc_id != psych_spc_id
             && base->drone_total - base->talent_total > (base->pop_size + 3)/4) {
                 best_spc_id = psych_spc_id;
@@ -632,6 +640,7 @@ void __cdecl mod_base_yield() {
                 mod_base_energy();
                 valid = !base->drone_riots();
             }
+            
             if (base->mineral_surplus - choices.back().mineral < 0) {
                 // Priority for mineral support costs
                 valid = true;
@@ -646,6 +655,12 @@ void __cdecl mod_base_yield() {
             
             memcpy(base, &initial, sizeof(BASE));
             if (!valid) {
+					
+                // [WTP]
+                // use psych specialist to offset drones
+                base->specialist_modify(specialist_total, psych_spc_id);
+                initial.specialist_modify(specialist_total, psych_spc_id);
+                
                 worked_tiles &= ~(1 << choices.back().i);
                 choices.pop_back();
                 specialist_total++;
@@ -653,13 +668,6 @@ void __cdecl mod_base_yield() {
             }
             base->worked_tiles = worked_tiles;
             base->specialist_total = specialist_total;
-            
-            // [WTP]
-            // default specialist is the psych type
-            
-            base->specialist_modify(base->specialist_total - 1, psych_spc_id);
-            initial.specialist_modify(base->specialist_total - 1, psych_spc_id);
-            
         };
         base->specialist_adjust = specialist_adjust;
 
@@ -3068,15 +3076,15 @@ int computeBaseTileScore(double growthFactor, double energyValue, bool can_grow,
 	
 	if (nutrientSurplus < minimalNutrientSurplus)
 	{
-		score = 10 * tileValue.nutrient + tileValue.mineral + tileValue.energy;
+		score = (int)round(10.0 * nutrient + mineral + energyValue * energy);
 	}
 	else if (mineralSurplus < minimalMineralSurplus)
 	{
-		score = tileValue.nutrient + 10 * tileValue.mineral + tileValue.energy;
+		score = (int)round(nutrient + 10.0 * mineral + energyValue * energy);
 	}
 	else if (energySurplus < minimalEnergySurplus)
 	{
-		score = tileValue.nutrient + tileValue.mineral + 10 * tileValue.energy;;
+		score = (int)round(nutrient + mineral + 10.0 * energyValue * energy);
 	}
 	else
 	{

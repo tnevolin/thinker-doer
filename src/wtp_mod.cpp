@@ -108,9 +108,9 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
     // sensor
     // ----------------------------------------------------------------------------------------------------
 	
-    // sensor bonus on attack
+    // sensor bonus on attack (except probe)
 	
-    if (conf.sensor_offense)
+	if (conf.sensor_offense && !attackerUnit->is_probe())
 	{
 		// land or ocean with sensor allowed
 		
@@ -334,7 +334,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
     // Excess SE MORALE combat bonus
     // ----------------------------------------------------------------------------------------------------
     
-    if (conf.se_morale_excess_combat_bonus != 0.0 && isCombatUnit(attackerVehicle->unit_id) && !isProbeUnit(attackerVehicle->unit_id))
+    if (conf.se_morale_excess_combat_bonus != 0.0)
 	{
 		// combat units only, not probes
 		
@@ -412,6 +412,36 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	)
 	{
 		addDefenderBonus(defenderStrengthPointer, 100, "Determination");
+	}
+	
+    // ----------------------------------------------------------------------------------------------------
+    // probe combat uses sensors and intrinsic base defense
+    // ----------------------------------------------------------------------------------------------------
+	
+    if (conf.probe_combat_uses_bonuses && attackerUnit->is_probe() && defenderUnit->is_probe()) // probe combat
+	{
+		// attacker probe benefits from sensor offense bonus
+		
+		if (isOffenseSensorBonusApplicable(attackerVehicle->faction_id, defenderMapTile))
+		{
+			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
+		}
+		
+		// defender probe benefits from sensor defense bonus
+		
+		if (isDefenseSensorBonusApplicable(defenderVehicle->faction_id, defenderMapTile))
+		{
+			addDefenderBonus(defenderStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
+		}
+		
+		// defender probe benefits from base intrinsic defense bonus
+		
+		int defenderBaseId = base_at(defenderVehicle->x, defenderVehicle->y);
+		if (defenderBaseId != -1)
+		{
+			addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_intrinsic_base_def, label_get(332)/*Base*/);
+		}
+		
 	}
 	
     // TODO - remove. This code doesn't work well with Hasty and Gas modifiers.

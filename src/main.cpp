@@ -576,6 +576,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->artillery_duel_uses_bonuses = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("probe_combat_uses_bonuses"))
+    {
+        cf->probe_combat_uses_bonuses = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("disable_vanilla_base_hurry"))
     {
         cf->disable_vanilla_base_hurry = (atoi(value) == 0 ? false : true);

@@ -7,6 +7,9 @@
 #include "robin_hood.h"
 #include "engine.h"
 
+// first level trial based defensive structure facilities
+FacilityId const TRIAD_DEFENSIVE_FACILITIES[3] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX};
+
 int const MAX_RANGE = 40;
 int const MAX_RANGE_TILE_COUNT = (1 + 2 * MAX_RANGE) * (1 + 2 * MAX_RANGE);
 int const MAX_REACHABLE_LOCATION_RANGE = 40;
@@ -794,7 +797,6 @@ int getVehicleMorale(int vehicleId);
 int getNewVehicleMorale(int unitId, int baseId);
 double getVehicleMoraleMultiplier(int vehicleId);
 double getBaseIntrinsicPsiDefenseMultiplier();
-double getBaseStructureConDefenseMultiplier(bool firstLevelDefense, bool secondLevelDefense);
 bool isWithinFriendlySensorRange(int factionId, MAP *tile);
 bool isOffenseSensorBonusApplicable(int factionId, MAP *tile);
 bool isDefenseSensorBonusApplicable(int factionId, MAP *tile);

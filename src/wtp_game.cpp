@@ -2111,38 +2111,51 @@ double evaluateUnitPsiOffenseEffectiveness(int id)
 
 }
 
+/*
+extendedTriad: 0 = land, 1 = sea, 2 = air, 3 = psi, 4 = probe
+*/
 double getBaseDefenseMultiplier(int baseId, int extendedTriad)
 {
-	double defenseMultiplier;
+	int defenseBonus = 0;
 	
-	if (extendedTriad == 3)
+	switch (extendedTriad)
 	{
-		defenseMultiplier = getBaseIntrinsicPsiDefenseMultiplier();
-	}
-	else
-	{
-		bool firstLevelDefense = false;
-		
-		switch (extendedTriad)
+	case 4:
+		defenseBonus = conf.probe_combat_uses_bonuses ? Rules->combat_bonus_intrinsic_base_def : 0;
+		break;
+	case 3:
+		defenseBonus = Rules->combat_bonus_intrinsic_base_def;
+		break;
+	case 2:
+	case 1:
+	case 0:
 		{
-		case TRIAD_LAND:
-			firstLevelDefense = isBaseHasFacility(baseId, FAC_PERIMETER_DEFENSE);
-			break;
-		case TRIAD_SEA:
-			firstLevelDefense = isBaseHasFacility(baseId, FAC_NAVAL_YARD);
-			break;
-		case TRIAD_AIR:
-			firstLevelDefense = isBaseHasFacility(baseId, FAC_AEROSPACE_COMPLEX);
-			break;
+			bool firstLevelDefense = has_facility(TRIAD_DEFENSIVE_FACILITIES[extendedTriad], baseId);
+			bool secondLevelDefense = has_facility(FAC_TACHYON_FIELD, baseId);
+			
+			if (!firstLevelDefense && !secondLevelDefense)
+			{
+				defenseBonus = Rules->combat_bonus_intrinsic_base_def;
+			}
+			else
+			{
+				if (firstLevelDefense)
+				{
+					defenseBonus += conf.facility_defense_bonus[extendedTriad];
+				}
+				if (secondLevelDefense)
+				{
+					defenseBonus += conf.facility_defense_bonus[3];
+				}
+				
+			}
+			
 		}
-		
-		bool secondLevelDefense = isBaseHasFacility(baseId, FAC_TACHYON_FIELD);
-		
-		defenseMultiplier = getBaseStructureConDefenseMultiplier(firstLevelDefense, secondLevelDefense);
+		break;
 		
 	}
-	
-	return defenseMultiplier;
+		
+	return getPercentageBonusMultiplier(defenseBonus);
 	
 }
 
@@ -3754,27 +3767,11 @@ int getFactionSEMoraleBonus(int factionId)
 }
 
 /*
-Returns vehicle morale.
+Returns vehicle morale with all default flags.
 */
 int getVehicleMorale(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
-
-	// get basis vehicle morale
-
-	int morale = vehicle->morale;
-
-	// faction MORALE bonus for regular units
-
-	if (!isNativeVehicle(vehicleId))
-	{
-		morale += getFactionSEMoraleBonus(vehicle->faction_id);
-	}
-
-	// return morale clipped by possible range
-
-	return std::max((int)MORALE_VERY_GREEN, std::min((int)MORALE_ELITE, morale));
-
+	return mod_morale_veh(vehicleId, 0, 0);
 }
 
 /*
@@ -3865,27 +3862,6 @@ double getVehicleMoraleMultiplier(int vehicleId)
 double getBaseIntrinsicPsiDefenseMultiplier()
 {
 	return getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def);
-}
-
-double getBaseStructureConDefenseMultiplier(bool firstLevelDefense, bool secondLevelDefense)
-{
-	if (!firstLevelDefense && !secondLevelDefense)
-		return getPercentageBonusMultiplier(Rules->combat_bonus_intrinsic_base_def);
-	
-	int defenseMultiplier = 2;
-	
-	if (firstLevelDefense)
-	{
-		defenseMultiplier += conf.facility_defense_bonus[0];
-	}
-	
-	if (secondLevelDefense)
-	{
-		defenseMultiplier += conf.facility_defense_bonus[3];
-	}
-	
-	return (double)defenseMultiplier / 2.0;
-	
 }
 
 bool isWithinFriendlySensorRange(int factionId, MAP *tile)

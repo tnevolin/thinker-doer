@@ -3732,7 +3732,7 @@ void evaluateBaseDefense()
 			
 			// approach time coefficient
 			
-			double approachTime = getVehicleApproachTime(vehicleId, baseTile);
+			double approachTime = getVehicleAttackApproachTime(vehicleId, baseTile);
 			if (approachTime == INF)
 				continue;
 			
@@ -4379,7 +4379,7 @@ void evaluateBaseProbeDefense()
 			
 			// defense multiplier
 			
-			double defenseMultiplier = getBaseDefenseMultiplier(baseId, triad) * getSensorDefenseMultiplier(aiFactionId, baseTile);
+			double defenseMultiplier = 1.0 / (getBaseDefenseMultiplier(baseId, 4) * getSensorDefenseMultiplier(aiFactionId, baseTile));
 			
 			if (defenseMultiplier <= 0.0)
 			{
@@ -4389,7 +4389,7 @@ void evaluateBaseProbeDefense()
 			
 			// approach time coefficient
 			
-			double approachTime = getVehicleApproachTime(vehicleId, baseTile);
+			double approachTime = getVehicleAttackApproachTime(vehicleId, baseTile);
 			if (approachTime == INF)
 				continue;
 			
@@ -4397,7 +4397,7 @@ void evaluateBaseProbeDefense()
 			
 			// weight
 			
-			double weight = offenseMultiplier / defenseMultiplier * approachTimeCoefficient;
+			double weight = offenseMultiplier * defenseMultiplier * approachTimeCoefficient;
 			
 			size_t approachTimeBucket = (size_t)std::round(approachTime);
 			weights[approachTimeBucket] += weight;
@@ -9359,7 +9359,7 @@ MapDoubleValue getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 		
 		// travelTime
 		
-		double travelTime = getUnitApproachTime(aiFactionId, unitId, origin, positionTile);
+		double travelTime = getUnitApproachTime(aiFactionId, unitId, origin, positionTile, true);
 		if (travelTime == INF)
 			continue;
 		
@@ -9411,7 +9411,7 @@ MapDoubleValue getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target)
 		
 		// travelTime
 		
-		double travelTime = getUnitApproachTime(aiFactionId, unitId, origin, positionTile);
+		double travelTime = getUnitApproachTime(aiFactionId, unitId, origin, positionTile, true);
 		if (travelTime == INF)
 			continue;
 		

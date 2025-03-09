@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v355"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v356"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -353,6 +353,7 @@ struct Config {
 	int instant_completion_fixed_minerals;
 	bool sensor_indestructible;
 	bool artillery_duel_uses_bonuses;
+	bool probe_combat_uses_bonuses;
 	bool disable_vanilla_base_hurry;
 	bool science_projects_alternative_labs_bonus;
 	int science_projects_supercollider_labs_bonus;

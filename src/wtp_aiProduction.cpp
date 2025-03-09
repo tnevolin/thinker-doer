@@ -1692,7 +1692,7 @@ void evaluateDefensiveProbeUnits()
 			if (targetBaseProbeData.isSatisfied(false))
 				continue;
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile, false);
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// probe
@@ -1868,7 +1868,7 @@ void evaluateExpansionUnits()
 			
 			// travel time
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, tile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, tile, true);
 			
 			// yield score
 			
@@ -2059,7 +2059,7 @@ void evaluateTerraformingUnits()
 			
 			// travel time
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, formerRequest.tile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, formerRequest.tile, true);
 			
 			if (travelTime == INF)
 				continue;
@@ -2525,7 +2525,7 @@ void evaluateBaseDefenseUnits()
 			BasePoliceData &targetBasePoliceData = targetBaseInfo.policeData;
 			BaseCombatData &targetBaseCombatData = targetBaseInfo.combatData;
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile, true);
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// police
@@ -2678,7 +2678,7 @@ void evaluateBunkerDefenseUnits()
 			MAP *targetBunkerTile = bunkerCombatDataEntry.first;
 			BaseCombatData const &targetBunkerCombatData = bunkerCombatDataEntry.second;
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBunkerTile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBunkerTile, true);
 			if (travelTime == INF)
 				continue;
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
@@ -2998,7 +2998,7 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			// travel time
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, enemyBaseTile);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, enemyBaseTile, false);
 			
 			if (travelTime == INF)
 				continue;

@@ -259,13 +259,15 @@ void populateSharedSeas();
 // Landmark travel time finding algorithm
 // ==================================================
 
-double getVehicleApproachTime(int vehicleId, MAP *dst);
-double getVehicleApproachTime(int vehicleId, MAP *src, MAP *dst);
-double getUnitApproachTime(int factionId, int unitId, MAP *org, MAP *dst);
-double getGravshipTravelTime(int speed, MAP *org, MAP *dst);
-double getRangedAirTravelTime(int factionId, int chassisId, int speed, MAP *org, MAP *dst);
-double getSeaLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
-double getLandLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
+double getVehicleAttackApproachTime(int vehicleId, MAP *dst);
+double getVehicleAttackApproachTime(int vehicleId, MAP *org, MAP *dst);
+double getVehicleApproachTime(int vehicleId, MAP *dst, bool includeDestination);
+double getVehicleApproachTime(int vehicleId, MAP *org, MAP *dst, bool includeDestination);
+double getUnitApproachTime(int factionId, int unitId, MAP *org, MAP *dst, bool includeDestination);
+double getGravshipTravelTime(int speed, MAP *org, MAP *dst, bool includeDestination);
+double getRangedAirTravelTime(int factionId, int chassisId, int speed, MAP *org, MAP *dst, bool includeDestination);
+double getSeaLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
+double getLandLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
 
 double getVehicleTravelTime(int vehicleId, MAP *dst);
 double getVehicleTravelTime(int vehicleId, MAP *org, MAP *dst);
