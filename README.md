@@ -369,15 +369,9 @@ The Ascent to Transcendence | 500 | Should take some time but not to extreme wit
 
 # Facilities
 
-Multiplying facilities are incentive for base growth vs ICS. Multiplying facilities, especially mineral ones, should start earlier and distributed more evenly across the tree.
-
-Recycling Tanks now is a 50% mineral multplying facilities among others of same type. Other multiplying facilities are distributed more smoothly across the tree.
-
-Energy multiplying facilities are generally at good places already. I've reduced cost of some early coming ones to make their benefit appear earlier.
-
 | facility | cost | maint | multi / yield | other effects |
 | ---- | ----: | ----: | ---- | ---- |
-| Recycling Tanks | 10 | 2 | +50% minerals | |
+| Recycling Tanks | 10 | 2 | +1 mineral mining platform, +2 minerals rocky mine | |
 | Genejack Factory | 12 | 3 | +50% minerals | +1 drone |
 | Robotic Assembly Plant | 16 | 4 | +50% minerals | |
 | Quantum Converter | 20 | 5 | +50% minerals | |
@@ -394,6 +388,14 @@ Energy multiplying facilities are generally at good places already. I've reduced
 | Energy Bank / Network Node | 6 | 1 | +50% econ/labs |
 | Fusion Lab | 16 | 3 | +50% econ, +50 labs |
 | Quantum Lab | 20 | 4 | +50% econ, +50 labs |
+
+## Multipliers
+
+Multiplying facilities are incentive for base growth vs ICS. Multiplying facilities, especially mineral ones, should start earlier and distributed more evenly across the tree.
+
+### Recycling Tanks
+
+Recycling Tanks does not provide flat base square bonus. Instead it increases mineral output of mining platform by 1 and rocky mine by 2.
 
 ### Future changes proposal
 
