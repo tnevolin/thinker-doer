@@ -1,3 +1,4 @@
+
 /*
  * Thinker - AI improvement mod for Sid Meier's Alpha Centauri.
  * https://github.com/induktio/thinker/
@@ -440,10 +441,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->pop_boom_requires_growth_rating = atoi(value);
     }
-    else if (MATCH("recycling_tanks_mineral_multiplier"))
-    {
-        cf->recycling_tanks_mineral_multiplier = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("ocean_depth_multiplier"))
     {
         cf->ocean_depth_multiplier = atof(value);
@@ -612,6 +609,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->pressure_dome_minerals = std::max(0, atoi(value));
     }
+    else if (MATCH("pressure_dome_recycling_tanks_bonus"))
+    {
+        cf->pressure_dome_recycling_tanks_bonus = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("tech_trade_likeability"))
     {
         cf->tech_trade_likeability = std::min(0x7F, std::max(0, atoi(value)));
@@ -660,25 +661,37 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->facility_terraforming_ecodamage_halved = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("yield_bonus_tree_farm_forest"))
+    else if (MATCH("tree_farm_yield_bonus_forest"))
     {
-        opt_list_parse(cf->yield_bonus_tree_farm_forest, buf, 3, 0);
+        opt_list_parse(cf->tree_farm_yield_bonus_forest, buf, 3, 0);
     }
-    else if (MATCH("yield_bonus_hybrid_forest_forest"))
+    else if (MATCH("hybrid_forest_yield_bonus_forest"))
     {
-        opt_list_parse(cf->yield_bonus_hybrid_forest_forest, buf, 3, 0);
+        opt_list_parse(cf->hybrid_forest_yield_bonus_forest, buf, 3, 0);
+    }
+    else if (MATCH("recycling_tanks_mineral_multiplier"))
+    {
+        cf->recycling_tanks_mineral_multiplier = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("recycling_tanks_mineral_bonus_mining_platform"))
+    {
+        cf->recycling_tanks_mineral_bonus_mining_platform = atoi(value);
+    }
+    else if (MATCH("recycling_tanks_mineral_bonus_rocky_mine"))
+    {
+        cf->recycling_tanks_mineral_bonus_rocky_mine = atoi(value);
     }
     else if (MATCH("genejack_factory_mineral_multiplier"))
     {
         cf->genejack_factory_mineral_multiplier = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("yield_bonus_genejack_factory_mining_platform"))
+    else if (MATCH("genejack_factory_mineral_bonus_mining_platform"))
     {
-        opt_list_parse(cf->yield_bonus_genejack_factory_mining_platform, buf, 3, 0);
+        cf->genejack_factory_mineral_bonus_mining_platform = atoi(value);
     }
-    else if (MATCH("yield_bonus_genejack_factory_rocky_mine"))
+    else if (MATCH("genejack_factory_mineral_bonus_rocky_mine"))
     {
-        opt_list_parse(cf->yield_bonus_genejack_factory_rocky_mine, buf, 3, 0);
+        cf->genejack_factory_mineral_bonus_rocky_mine = atoi(value);
     }
     else if (MATCH("energy_multipliers_tree_farm"))
     {
@@ -736,13 +749,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->worker_algorithm_enable_alternative = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("worker_algorithm_energy_value"))
+    else if (MATCH("worker_algorithm_energy_weight"))
     {
-        cf->worker_algorithm_energy_value = atof(value);
+        cf->worker_algorithm_energy_weight = atof(value);
     }
-    else if (MATCH("worker_algorithm_growth_multiplier"))
+    else if (MATCH("worker_algorithm_nutrient_ratio"))
     {
-        cf->worker_algorithm_growth_multiplier = atof(value);
+        cf->worker_algorithm_nutrient_ratio = atof(value);
     }
     else if (MATCH("worker_algorithm_minimal_nutrient_surplus"))
     {

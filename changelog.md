@@ -1,3 +1,12 @@
+# Version 357
+
+* The Planetary Datalinks cost is 60.
+* Recycling Tanks does not multiply minerals. Instead it increases mineral output of mining platform by 1 and rocky mine by 2.
+* Adv. Ecological Engineering does not increase mineral output of mining platform.
+* Massively rewrote base yield function to enable further tweaking. Be on a lookout for new or wrong behavior.
+  * QoL: Clicking on base square _always_ rearrange workers/specialists even during start turn base upkeep phase.
+  * Added more worker placement algorithm parameters in INI. Will be tuning up further.
+
 # Version 356
 
 * Probe combat uses sensor bonus and base intrinsic defense bonus.

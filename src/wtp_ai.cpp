@@ -1955,22 +1955,22 @@ void populateBasePoliceData()
 			basePoliceData.policeGains.at(i) = std::min(basePoliceData.requiredPower, basePoliceData.policePowers.at(i)) * extraWorkerGain;
 		}
 		
-		debug
-		(
-			"\t\tallowedUnitCount=%d"
-			" providedUnitCounts={%d,%d}"
-			" requiredPower=%d"
-			" providedPower=%d"
-			" policePowers={%d,%d}"
-			" policeGains={%5.2f,%5.2f}"
-			"\n"
-			, basePoliceData.allowedUnitCount
-			, basePoliceData.providedUnitCounts.at(0), basePoliceData.providedUnitCounts.at(1)
-			, basePoliceData.requiredPower
-			, basePoliceData.providedPower
-			, basePoliceData.policePowers.at(0), basePoliceData.policePowers.at(1)
-			, basePoliceData.policeGains.at(0), basePoliceData.policeGains.at(1)
-		);
+//		debug
+//		(
+//			"\t\tallowedUnitCount=%d"
+//			" providedUnitCounts={%d,%d}"
+//			" requiredPower=%d"
+//			" providedPower=%d"
+//			" policePowers={%d,%d}"
+//			" policeGains={%5.2f,%5.2f}"
+//			"\n"
+//			, basePoliceData.allowedUnitCount
+//			, basePoliceData.providedUnitCounts.at(0), basePoliceData.providedUnitCounts.at(1)
+//			, basePoliceData.requiredPower
+//			, basePoliceData.providedPower
+//			, basePoliceData.policePowers.at(0), basePoliceData.policePowers.at(1)
+//			, basePoliceData.policeGains.at(0), basePoliceData.policeGains.at(1)
+//		);
 		
 	}
 	

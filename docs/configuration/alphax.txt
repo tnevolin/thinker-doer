@@ -89,7 +89,7 @@ None,    ; Technology to allow 3 nutrients in a square
 None,    ; Technology to allow 3 minerals in a square
 None,    ; Technology to allow 3 energy in a square
 AGrav,   ; Technology to allow orbital insertion w/o Space Elevator
-EcoEng2, ; Technology for +1 mining platform bonus
+None,    ; Technology for +1 mining platform bonus (vanilla = EcoEng2)
 AdapEco, ; Technology for economic victory
 1,       ; If non-zero, probe teams can steal technologies
 1,       ; If non-zero, humans can always contact each other in net games
@@ -730,7 +730,7 @@ The Planetary Transit System, 40, 0, IndAuto, Disable,  New Bases Begin At Size 
 The Xenoempathy Dome,         40, 0, CentMed, Disable,  Fungus Movement Bonus,           0,-1, 0, 0, 2,
 The Neural Amplifier,         80, 0, Neural,  Disable,  Psi Defense +50%,                0, 0, 0, 0, 0,
 The Maritime Control Center,  60, 0, AdapDoc, Disable,  Naval Movement +2; Naval Bases,  1, 1, 0, 0, 0,
-The Planetary Datalinks,      80, 0, Cyber,   Disable,  Any Tech Known To 3 Others,      0, 0, 1, 0, 0,
+The Planetary Datalinks,      60, 0, Cyber,   Disable,  Any Tech Known To 3 Others,      0, 0, 1, 0, 0,
 The Supercollider,            30, 0, E=Mc2,   Disable,  Labs +10%,                       0, 0, 2, 0, 0,
 The Ascetic Virtues,          60, 0, Eudaim,  Disable,  Pop. Limit Relaxed; +1 POLICE,   0, 0, 0, 1, 2,
 The Longevity Vaccine,        60, 0, BioEng,  Disable,  Fewer Drones or More Profits,    0, 0, 0, 2, 1,

@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v356"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v357"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -319,7 +319,6 @@ struct Config {
     int se_growth_rating_max = 5;
     bool pop_boom_requires_golden_age = false;
     int pop_boom_requires_growth_rating = 6;
-    bool recycling_tanks_mineral_multiplier = false;
     double ocean_depth_multiplier = 1.0;
     int pts_new_base_size_less_average = 2;
     bool hsa_does_not_kill_probe = false;
@@ -362,6 +361,7 @@ struct Config {
 	bool disengagement_from_stack;
 	bool eco_damage_alternative_industry_effect_reduction_formula;
 	int pressure_dome_minerals = 0;
+	bool pressure_dome_recycling_tanks_bonus = 1;
 	int tech_trade_likeability = 0x12;
 	int conventional_power_psi_percentage = 0;
 	bool zoc_enabled = 1;
@@ -374,11 +374,14 @@ struct Config {
 	int base_psych_facility_extra_power = 0;
 	int base_psych_police_extra_power = 0;
     bool facility_terraforming_ecodamage_halved = false;
-    int yield_bonus_tree_farm_forest[3] = {0,0,0};
-    int yield_bonus_hybrid_forest_forest[3] = {0,0,0};
+    int tree_farm_yield_bonus_forest[3] = {0,0,0};
+    int hybrid_forest_yield_bonus_forest[3] = {0,0,0};
+    bool recycling_tanks_mineral_multiplier = true;
+    int recycling_tanks_mineral_bonus_mining_platform = 0;
+    int recycling_tanks_mineral_bonus_rocky_mine = 0;
     bool genejack_factory_mineral_multiplier = true;
-    int yield_bonus_genejack_factory_mining_platform[3] = {0,0,0};
-    int yield_bonus_genejack_factory_rocky_mine[3] = {0,0,0};
+    int genejack_factory_mineral_bonus_mining_platform = 0;
+    int genejack_factory_mineral_bonus_rocky_mine = 0;
     int energy_multipliers_tree_farm[3] = {0,0,0};
     int energy_multipliers_hybrid_forest[3] = {0,0,0};
     int energy_multipliers_centauri_preserve[3] = {0,0,0};
@@ -393,8 +396,8 @@ struct Config {
     int isle_of_deep_defense_bonus = 0;
     int facility_yield_bonus_biology_lab[3] = {0,0,0};
     bool worker_algorithm_enable_alternative = false;
-    double worker_algorithm_energy_value = 0.0;
-    double worker_algorithm_growth_multiplier = 0.0;
+    double worker_algorithm_energy_weight = 0.0;
+    double worker_algorithm_nutrient_ratio = 0.0;
     int worker_algorithm_minimal_nutrient_surplus = 0;
     int worker_algorithm_minimal_mineral_surplus = 0;
     int worker_algorithm_minimal_energy_surplus = 0;
