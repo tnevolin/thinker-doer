@@ -1,3 +1,8 @@
+# Version 358
+
+* Improved worker placement algorithm.
+* Unit upgrade cost modified slightly. Default to double unit hurry cost for mineral difference.
+
 # Version 357
 
 * The Planetary Datalinks cost is 60.

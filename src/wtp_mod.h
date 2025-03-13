@@ -362,7 +362,6 @@ int getFactionHighestResearchedTechLevel(int factionId);
 int __cdecl modified_pact_withdraw(int factionId, int pactFactionId);
 int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities_int, int reactorId, int plan, char const *name);
 int __cdecl modified_base_production();
-int __cdecl modified_base_ecology();
 int getStockpileEnergy(int baseId);
 int __cdecl wtp_mod_order_veh(int vehicleId, int angle, int a3);
 bool isValidMovementAngle(int vehicleId, int angle);

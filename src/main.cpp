@@ -753,9 +753,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->worker_algorithm_energy_weight = atof(value);
     }
-    else if (MATCH("worker_algorithm_nutrient_ratio"))
+    else if (MATCH("worker_algorithm_growth_multiplier"))
     {
-        cf->worker_algorithm_nutrient_ratio = atof(value);
+        cf->worker_algorithm_growth_multiplier = atof(value);
     }
     else if (MATCH("worker_algorithm_minimal_nutrient_surplus"))
     {

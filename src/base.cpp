@@ -1049,7 +1049,13 @@ void __cdecl wtp_mod_base_yield()
 		
 		// select best tiles for unallocated workers
 		
-		while (unallocatedWorkers > 0)
+		int minimalNutrientSurplus = can_grow ? conf.worker_algorithm_minimal_nutrient_surplus : 0;
+		int minimalMineralSurplus = conf.worker_algorithm_minimal_mineral_surplus;
+		int minimalEnergySurplus = conf.worker_algorithm_minimal_energy_surplus;
+		
+		int restrictedWorkers = 1;
+		int workers = unallocatedWorkers;
+		while (workers > 0)
 		{
 			int bestTileNumber = -1;
 			double bestTileScore = 0.0;
@@ -1066,7 +1072,7 @@ void __cdecl wtp_mod_base_yield()
 				int nutrientSurplus = nutrientIntake + nutrientAddition - nutrientConsumption;
 				int mineralSurplus = mineralIntake + mineralAddition * (mineralOutputModifier + 2) / 2 - mineralConsumption;
 				int energySurplus = energyIntake + energyAddition - energyConsumption;
-				double score = computeBaseTileScore(growthFactor, energyValue, can_grow, nutrientSurplus, mineralSurplus, energySurplus, tileValue.nutrient, tileValue.mineral, tileValue.energy);
+				double score = computeBaseTileScore(workers <= restrictedWorkers, growthFactor, energyValue, can_grow, nutrientSurplus, mineralSurplus, energySurplus, tileValue.nutrient, tileValue.mineral, tileValue.energy);
 				
 				if (score > bestTileScore)
 				{
@@ -1085,17 +1091,47 @@ void __cdecl wtp_mod_base_yield()
 			nutrientIntake += bestTileValue.nutrient;
 			mineralIntake += bestTileValue.mineral;
 			energyIntake += bestTileValue.energy;
-			unallocatedWorkers--;
+			workers--;
+			
+			if (workers == 0)
+			{
+				// check restrictions
+				
+				int nutrientSurplus = nutrientIntake + nutrientAddition - nutrientConsumption;
+				int mineralSurplus = mineralIntake + mineralAddition * (mineralOutputModifier + 2) / 2 - mineralConsumption;
+				int energySurplus = energyIntake + energyAddition - energyConsumption;
+				
+				if (nutrientSurplus < minimalNutrientSurplus || mineralSurplus < minimalMineralSurplus || energySurplus < minimalEnergySurplus)
+				{
+					// rollback workers
+					
+					restrictedWorkers++;
+					if (restrictedWorkers > unallocatedWorkers)
+						break;
+					
+					for (int i = 0; i < restrictedWorkers; i++)
+					{
+						TileValue &tileValue = choices.at(--choiceCount);
+						base->worked_tiles &= ~(1 << tileValue.i);
+						nutrientIntake -= bestTileValue.nutrient;
+						mineralIntake -= bestTileValue.mineral;
+						energyIntake -= bestTileValue.energy;
+						workers++;
+					}
+					
+				}
+				
+			}
 			
 		}
 		
 		// convert unallocated workers to best adavanced specialists
 		
-		for (int specialistNumber = base->specialist_total; specialistNumber < std::min(MaxBaseSpecNum, base->specialist_total + unallocatedWorkers); specialistNumber++)
+		for (int specialistNumber = base->specialist_total; specialistNumber < std::min(MaxBaseSpecNum, base->specialist_total + workers); specialistNumber++)
 		{
 			base->specialist_modify(specialistNumber, adavancedSpecialistId);
 		}
-		base->specialist_total += unallocatedWorkers;
+		base->specialist_total += workers;
 		
 	}
 	
@@ -3696,46 +3732,65 @@ int findReplacementSpecialist(int factionId, int specialistId)
 	
 }
 
-double computeBaseTileScore(double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy)
+double computeBaseTileScore(bool restrictions, double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy)
 {
+	debug("computeBaseTileScore gF=%7.4f eV=%5.2f nS=%2d, mS=%2d eS=%2d n=%2d m=%2d e=%2d\n", growthFactor, energyValue, nutrientSurplus, mineralSurplus, energySurplus, tileValueNutrient, tileValueMineral, tileValueEnergy);
+	
 	double nutrient = (1.0 + conf.worker_algorithm_nutrient_preference) * (double)tileValueNutrient;
 	double mineral = (1.0 + conf.worker_algorithm_mineral_preference) * (double)tileValueMineral;
 	double energy = (1.0 + conf.worker_algorithm_energy_preference) * (double)tileValueEnergy;
 	
-	double growthMultiplier = can_grow ? 10.0 * conf.worker_algorithm_nutrient_ratio : 0.0;
+	double growthMultiplier = can_grow ? conf.worker_algorithm_growth_multiplier : 0.0;
 	int minimalNutrientSurplus = can_grow ? conf.worker_algorithm_minimal_nutrient_surplus : 0;
 	int minimalMineralSurplus = conf.worker_algorithm_minimal_mineral_surplus;
 	int minimalEnergySurplus = conf.worker_algorithm_minimal_energy_surplus;
 	
 	double score = 0.0;
 	
-	if (nutrientSurplus < minimalNutrientSurplus)
+	if (restrictions && nutrientSurplus < minimalNutrientSurplus)
 	{
 		score = 10.0 * nutrient + mineral + energyValue * energy;
 	}
-	else if (mineralSurplus < minimalMineralSurplus)
+	else if (restrictions && mineralSurplus < minimalMineralSurplus)
 	{
 		score = nutrient + 10.0 * mineral + energyValue * energy;
 	}
-	else if (energySurplus < minimalEnergySurplus)
+	else if (restrictions && energySurplus < minimalEnergySurplus)
 	{
 		score = nutrient + mineral + 10.0 * energyValue * energy;
 	}
 	else
 	{
-		double currentGrowth = growthFactor * (double)nutrientSurplus;
-		double currentIncome = 1.0 * (double)mineralSurplus + energyValue * (double)energySurplus;
+		double nutrientSurplusFinal = (double)nutrientSurplus + nutrient;
+		double mineralSurplusFinal = (double)mineralSurplus + mineral;
+		double energySurplusFinal = (double)energySurplus + energy;
 		
-		double tileGrowth = growthFactor * nutrient;
-		double tileIncome = 1.0 * mineral + energyValue * energy;
+		double income = mineralSurplusFinal + energyValue * energySurplusFinal;
+		double incomeGrowth = growthFactor * nutrientSurplusFinal * income;
 		
-		double tileGrowthGain = growthMultiplier * tileGrowth * currentIncome;
-		double tileIncomeGain = (1.0 + growthMultiplier * currentGrowth) * tileIncome;
-		double tileGain = tileGrowthGain + tileIncomeGain;
+		double incomeGain = income;
+		double incomeGrowthGain = growthMultiplier * incomeGrowth;
+		double gain = incomeGain + incomeGrowthGain;
 		
-		score = tileGain;
+		score = gain;
+		
+		debug
+		(
+			"\tincome=%5.2f"
+			" incomeGrowth=%5.2f"
+			" incomeGain=%5.2f"
+			" incomeGrowthGain=%5.2f"
+			" gain=%5.2f"
+			"\n"
+			, income
+			, incomeGrowth
+			, incomeGain
+			, incomeGrowthGain
+			, gain
+		);
 		
 	}
+	flushlog();
 	
 	return score;
 	

@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v357"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v358"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -397,7 +397,7 @@ struct Config {
     int facility_yield_bonus_biology_lab[3] = {0,0,0};
     bool worker_algorithm_enable_alternative = false;
     double worker_algorithm_energy_weight = 0.0;
-    double worker_algorithm_nutrient_ratio = 0.0;
+    double worker_algorithm_growth_multiplier = 0.0;
     int worker_algorithm_minimal_nutrient_surplus = 0;
     int worker_algorithm_minimal_mineral_surplus = 0;
     int worker_algorithm_minimal_energy_surplus = 0;

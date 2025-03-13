@@ -553,19 +553,22 @@ int __cdecl mod_upgrade_cost(int faction_id, int new_unit_id, int old_unit_id) {
     UNIT* old_unit = &Units[old_unit_id];
     UNIT* new_unit = &Units[new_unit_id];
     int cost;
-
-    if (conf.modify_upgrade_cost) {
-        if (new_unit->is_supply()) {
-            cost = max((int)new_unit->cost, 4*max(1, new_unit->cost - old_unit->cost));
-        } else {
-            cost = max((int)new_unit->cost, 2*max(1, new_unit->cost - old_unit->cost));
-        }
-        if (new_unit_id >= MaxProtoFactionNum && !new_unit->is_prototyped()) {
-            cost *= 2;
-        }
-        if (has_project(FAC_NANO_FACTORY, faction_id)) {
-            cost /= 2;
-        }
+	
+	if (conf.modify_upgrade_cost)
+	{
+		int mineral_row_difference = std::max(1, (int)new_unit->cost - (int)old_unit->cost);
+		cost = (has_project(FAC_NANO_FACTORY, faction_id) ? 1 : 2) * conf.flat_hurry_cost_multiplier_unit * 10 * mineral_row_difference;
+		
+		if (old_unit->is_supply() || new_unit->is_supply())
+		{
+			cost *= 2;
+		}
+		
+		if (new_unit_id >= MaxProtoFactionNum && !new_unit->is_prototyped())
+		{
+			cost *= 4;
+		}
+		
     } else {
         int modifier = new_unit->cost;
         if (new_unit_id >= MaxProtoFactionNum && !new_unit->is_prototyped()) {

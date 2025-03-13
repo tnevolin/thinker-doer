@@ -83,7 +83,7 @@ int __cdecl mod_drone_riot();
 void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
 int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx_filename, int a5);
 int findReplacementSpecialist(int factionId, int specialistId);
-double computeBaseTileScore(double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy);
+double computeBaseTileScore(bool restrictions, double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy);
 void clearBaseComputeValues();
 void precomputeBaseComputeValues(int factionId);
 int getBasePsychCoefficient(int base_id);
