@@ -4109,3 +4109,25 @@ int __cdecl wtp_mod_steal_energy(int baseId)
 	
 }
 
+/*
+Intercepts diplomacy_caption -> say_fac_special to display the mood.
+*/
+int __cdecl wtp_mod_diplomacy_caption_say_fac_special(int dst, int src, int factionId)
+{
+	// execute original
+	
+	int returnValue = say_fac_special(dst, src, factionId);
+	
+	// append numeric mood if configured
+	
+	if (conf.display_numeric_mood)
+	{
+		char numericFriction[10];
+		sprintf(numericFriction, " <%d>", *DiploFriction);
+		strcat((char *)dst, numericFriction);
+	}
+	
+	return returnValue;
+	
+}
+

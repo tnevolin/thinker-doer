@@ -407,4 +407,5 @@ int __cdecl wtp_mod_enemy_diplomacy(int factionId);
 int __cdecl wtp_mod_probe_treaty_on(int faction1Id, int faction2Id, int treaty);
 int __cdecl wtp_mod_enemy_move(int vehicleId);
 int __cdecl wtp_mod_steal_energy(int baseId);
+int __cdecl wtp_mod_diplomacy_caption_say_fac_special(int dst, int src, int factionId);
 

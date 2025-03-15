@@ -3196,6 +3196,24 @@ void patch_steal_energy()
 	
 }
 
+void patch_diplomacy_caption_display_numeric_mood()
+{
+	write_call(0x00539B20, (int)wtp_mod_diplomacy_caption_say_fac_special);
+	
+}
+
+void patch_planetary_datalinks_faction_count(int planetary_datalinks_faction_count)
+{
+	// in drone_riot
+	// pretend there were no drone riot on previous turn
+	
+    int planetary_datalinks_faction_count_length = 0x3;
+    byte planetary_datalinks_faction_count_old[] = { 0x83, 0xFE, 0x03 };
+    byte planetary_datalinks_faction_count_new[] = { 0x83, 0xFE, (byte)planetary_datalinks_faction_count };
+    write_bytes(0x005BC240, planetary_datalinks_faction_count_old, planetary_datalinks_faction_count_new, planetary_datalinks_faction_count_length);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3524,6 +3542,21 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_steal_energy();
+	
+	if (conf.display_numeric_mood)
+	{
+		patch_diplomacy_caption_display_numeric_mood();
+	}
+	
+	if (conf.display_numeric_mood)
+	{
+		patch_diplomacy_caption_display_numeric_mood();
+	}
+	
+	if (conf.planetary_datalinks_faction_count != 3)
+	{
+		patch_planetary_datalinks_faction_count(conf.planetary_datalinks_faction_count);
+	}
 	
 }
 

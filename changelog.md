@@ -1,3 +1,9 @@
+# Version 359
+
+* Display numeric friction in diplomacy caption dialog. INI parameter: display_numeric_mood. Off by default.
+* AI trades tech to player when their friction is less than 5. That should reduce the trade frequency.
+* The Planetary Datalinks receives tech discovered by *5* factions with contact.
+
 # Version 358
 
 * Improved worker placement algorithm.

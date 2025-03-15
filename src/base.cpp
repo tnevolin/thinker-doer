@@ -3734,7 +3734,7 @@ int findReplacementSpecialist(int factionId, int specialistId)
 
 double computeBaseTileScore(bool restrictions, double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy)
 {
-	debug("computeBaseTileScore gF=%7.4f eV=%5.2f nS=%2d, mS=%2d eS=%2d n=%2d m=%2d e=%2d\n", growthFactor, energyValue, nutrientSurplus, mineralSurplus, energySurplus, tileValueNutrient, tileValueMineral, tileValueEnergy);
+//	debug("computeBaseTileScore gF=%7.4f eV=%5.2f nS=%2d, mS=%2d eS=%2d n=%2d m=%2d e=%2d\n", growthFactor, energyValue, nutrientSurplus, mineralSurplus, energySurplus, tileValueNutrient, tileValueMineral, tileValueEnergy);
 	
 	double nutrient = (1.0 + conf.worker_algorithm_nutrient_preference) * (double)tileValueNutrient;
 	double mineral = (1.0 + conf.worker_algorithm_mineral_preference) * (double)tileValueMineral;
@@ -3774,23 +3774,23 @@ double computeBaseTileScore(bool restrictions, double growthFactor, double energ
 		
 		score = gain;
 		
-		debug
-		(
-			"\tincome=%5.2f"
-			" incomeGrowth=%5.2f"
-			" incomeGain=%5.2f"
-			" incomeGrowthGain=%5.2f"
-			" gain=%5.2f"
-			"\n"
-			, income
-			, incomeGrowth
-			, incomeGain
-			, incomeGrowthGain
-			, gain
-		);
+//		debug
+//		(
+//			"\tincome=%5.2f"
+//			" incomeGrowth=%5.2f"
+//			" incomeGain=%5.2f"
+//			" incomeGrowthGain=%5.2f"
+//			" gain=%5.2f"
+//			"\n"
+//			, income
+//			, incomeGrowth
+//			, incomeGain
+//			, incomeGrowthGain
+//			, gain
+//		);
 		
 	}
-	flushlog();
+//	flushlog();
 	
 	return score;
 	

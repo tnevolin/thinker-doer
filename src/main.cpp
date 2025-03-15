@@ -825,6 +825,14 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->bunker_bonus_aerial = atoi(value);
     }
+    else if (MATCH("display_numeric_mood"))
+    {
+        cf->display_numeric_mood = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("planetary_datalinks_faction_count"))
+    {
+        cf->planetary_datalinks_faction_count = atoi(value);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

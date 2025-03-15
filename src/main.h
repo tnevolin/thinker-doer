@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v358"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v359"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -415,6 +415,8 @@ struct Config {
     bool bunker_ignores_terrain = false;
     int bunker_bonus_surface = 50;
     int bunker_bonus_aerial = 0;
+    bool display_numeric_mood = false;
+    int planetary_datalinks_faction_count = 3;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
