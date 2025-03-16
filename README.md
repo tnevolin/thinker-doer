@@ -800,7 +800,7 @@ Base population is divided into two large groups: land workers and specialists.
 
 Land workers work the land around base and harvest the yield. Specialists do not work the land and instead generate fixed amount of economy/psych/labs to be added to base intake.
 
-Land workers can be at any of the following mood/happiness/education from (least educated/happy) superdrone -> drone -> worker/content/normal -> talent (most educated/happy). There is a confusion in terms when all field workers are collectively called workers and also the default citizen happiness is also called worker. I will be calling them *normal* for disambiguation. There is also a standard Civ term "happiness", which is replaced by "education" in SMACX. They will be used interchangeably.
+Land workers can be at any of the following mood/happiness/education: (least educated/happy) superdrone -> drone -> worker/content/normal -> talent (most educated/happy). There is a confusion in terms when all field workers are collectively called workers and also the default citizen happiness is also called worker. I will be calling them *normal* for disambiguation. There is also a standard Civ term "happiness", which is replaced by "education" in SMACX. They will be used interchangeably.
 
 Specialists are not subdivided by mood/happiness/education and are not affected by happiness improvement means.
 
