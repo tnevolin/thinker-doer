@@ -465,13 +465,17 @@ int option_handler(void* user, const char* section, const char* name, const char
 //    {
 //        cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
 //    }
-    else if (MATCH("modified_probe_action_risks"))
+    else if (MATCH("modified_probe_risks"))
     {
-        cf->modified_probe_action_risks = (atoi(value) == 0 ? false : true);
+        cf->modified_probe_risks = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("probe_action_risk_introduce_genetic_plague"))
+    else if (MATCH("probe_risk_procure_research_data"))
     {
-        cf->probe_action_risk_introduce_genetic_plague = std::max(0, atoi(value));
+        cf->probe_risk_procure_research_data = std::max(0, atoi(value));
+    }
+    else if (MATCH("probe_risk_introduce_genetic_plague"))
+    {
+        cf->probe_risk_introduce_genetic_plague = std::max(0, atoi(value));
     }
     else if (MATCH("sensor_offense"))
     {

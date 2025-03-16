@@ -325,8 +325,9 @@ struct Config {
     bool condenser_and_enricher_do_not_multiply_nutrients = false;
     bool alternative_tech_cost = false;
     bool fix_mineral_contribution = true; // internal setting
-    bool modified_probe_action_risks = false;
-    int probe_action_risk_introduce_genetic_plague = 0;
+    bool modified_probe_risks = false;
+    int probe_risk_procure_research_data = 0;
+    int probe_risk_introduce_genetic_plague = 0;
     bool sensor_offense = false;
     bool sensor_offense_ocean = false;
     bool break_treaty_before_fight = false;

@@ -1519,9 +1519,13 @@ __cdecl void modifiedProbeActionRisk(int action, int riskPointer)
 
 	switch (action)
 	{
-		// genetic plague
+		// Procure Research Data
+	case 1:
+		*risk = conf.probe_risk_procure_research_data;
+		break;
+		// Introduce Genetic Plague
 	case 7:
-		*risk = conf.probe_action_risk_introduce_genetic_plague;
+		*risk = conf.probe_risk_introduce_genetic_plague;
 		break;
 	}
 
@@ -4128,6 +4132,39 @@ int __cdecl wtp_mod_diplomacy_caption_say_fac_special(int dst, int src, int fact
 	}
 	
 	return returnValue;
+	
+}
+
+/*
+Intercepts probe -> success_rates for procure research data action.
+*/
+int wtp_mod_probe_success_rates_procure_research_data(int position, int morale, int risk, int baseId)
+{
+	risk += conf.probe_risk_procure_research_data;
+	return success_rates(position, morale, risk, baseId);
+}
+
+/*
+Intercepts probe -> veh_skip to disable promotion on infiltrate datalinks.
+*/
+int wtp_mod_probe_veh_skip(int vehicleId)
+{
+	int value = veh_skip(vehicleId);
+	
+	// disable probe promotion on infiltrate datalinks by reducing morale
+	
+	if (isProbeVehicle(vehicleId))
+	{
+		VEH &vehicle = Vehicles[vehicleId];
+		
+		if (vehicle.probe_action == 0)
+		{
+			vehicle.morale--;
+		}
+		
+	}
+	
+	return value;
 	
 }
 

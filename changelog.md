@@ -1,3 +1,8 @@
+# Version 360
+
+* Procure Research Data probe action RISK is 1. That is 50% success for Disciplined probe and impossible against high security interlock.
+* Probe is not upgraded on successful Infiltrate Datalinks mission.
+
 # Version 359
 
 * Display numeric friction in diplomacy caption dialog. INI parameter: display_numeric_mood. Off by default.
