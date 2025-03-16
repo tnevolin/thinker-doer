@@ -800,13 +800,22 @@ Base population is divided into two large groups: land workers and specialists.
 
 Land workers work the land around base and harvest the yield. Specialists do not work the land and instead generate fixed amount of economy/psych/labs to be added to base intake.
 
-Land workers can be at any of the following mood/happiness/education: (least educated/happy) superdrone -> drone -> worker/content/normal -> talent (most educated/happy). There is a confusion in terms when all field workers are collectively called workers and also the default citizen happiness is also called worker. I will be calling them *normal* for disambiguation. There is also a standard Civ term "happiness", which is replaced by "education" in SMACX. They will be used interchangeably.
+Land workers can be at any of the following mood/happiness/education.
 
-Specialists are not subdivided by mood/happiness/education and are not affected by happiness improvement means.
+| education | effect |
+| ---- | ---: |
+| superdrone | -2 |
+| drone | -1 |
+| normal | 0 |
+| talent | +1 |
 
-Each mean of improving population mood has certain effect or power, which shows how many times they can improve population happiness/education from worse to better one step at a time. Negative effect changes population mood in opposite direction.
+There is a confusion in terms when all field workers are collectively called workers and also the default averagely educated citizen is also called worker. I will be calling them _normal_ for disambiguation. There is also a standard Civ term "happiness", which is replaced by "education" in SMACX. They will be used interchangeably.
 
-Base can have talents and drones/superdrones at the same time. However, they cannot overlap. If there is not enough room for all talents and drones/superdrone they cancel each other to make room. One talent and one drone cancel each other. Whereas when one talent and one superdrone collide, the talent disappearas and superdrone becomes drone, thus preserving total happiness sum.
+Specialists are not subdivided by education and are not affected by psych improvement means.
+
+Each mean of improving population psych has certain effect, which shows how many times they can improve population psych from worse to better one step at a time. Negative effect changes population psych in opposite direction.
+
+Base can have talents and drones/superdrones at the same time. However, they cannot overlap. If there is not enough room for all talents and drones/superdrone they cancel each other to make room. One talent and one drone cancel each other. Whereas when one talent and one superdrone collide, the talent disappearas and superdrone becomes drone, thus keeping total base psych same.
 
 ## [QoL] Psych effect indicator
 
@@ -816,12 +825,13 @@ Psych effect indicator showing how many citizens will be affected by that psych 
 
 ## [Mod] Specialists do not affect happiness computation
 
-Vanilla specialists are not affected by happiness process, and, theoretically, should not interfere with it too. Unfortunally, due to the visualization requirement, they are occupying population slots on psych computation screen. Therefore, they are inherently limit number of talents/drones/superdrones base can have at any stage more than population size causing mishaps and exploits.
+Vanilla specialists are not affected by psych, and, theoretically, should not interfere with it too. Unfortunally, due to the visualization requirement, they are occupying population slots on psych computation screen. Therefore, they limit number of talents/drones/superdrones base can have at any computation stage causing mishaps and exploits.
 
-This mod implements the idea of happiness process independence from specialists influence.
+This mod implements the idea of specialists independent psych computation.
 
-* Specialists do not take part in happiness computation and are not shown on the psych computation breakdown tab.
+* Specialists do not take part in psych computation and are not shown on the psych computation breakdown tab.
 * They are added after all happiness is computed and normally shown on the main base population row.
+* They are converted from normals/talents. If there are not enough then base forcibly channels additional energy to psych to turn eanough drones into normals for the specialists creation purposes.
 
 ![psych no specialists](images/psych_no_specialists.png)
 
@@ -831,27 +841,27 @@ Vanilla allows exploit turning drones into specialists removing drones for free 
 
 Base can train sufficiently educated personell (talent/normal) into specialists. When specialists are introduced after psych computation, they are replacing talents/normals and not drones.
 
-If player fails to keep sufficient number of well educated personell to meet specialists demand, base economy reserves are allocated to psych for emergency training program to keep population educated enough. The cost is hefty but it is a good tool to fine tune crude global psych allocation at base level.
+If player fails to keep sufficient number of sufficiently educated personell to meet specialists demand, base economy reserves are allocated to psych for emergency training program to educate population. The cost is hefty but it is a good tool to fine tune crude global psych allocation at base level.
 
 ![economy psych allocation](images/economy_psych_allocation.png)
 
 ## [Mod] Psych effect improved
 
-Vanilla has few problem with psych mechanincs. It removes superdrones first, those later can be removed for free by facilites/police. Then it tries to convert drones to talents spending twice as much as it would do when working after facilities/police doing their job. Last but not least, psych effect is limited by population size. That, combined that with above wasteful behavior, leaves pretty limited use for psych in original game.
+Vanilla has few problem with psych mechanincs. It removes superdrones first, those later can be removed for free by facilites/police. Then it tries to convert drones to talents spending twice as much as it would do when working after facilities/police doing their job. Last but not least, psych effect is limited by population size. That, combined with above wasteful behavior, leaves pretty limited use for psych in original game.
 
 This mod removes all psych wastes and limits and allows it to be effective at the whole range of psych slider from 0% to 100%.
 
 * Psych is applied after all other pacifying effects on top of mostly content citizens turning them into talents in one step.
 * Psych removes remaining drones/superdrones first before adding talents. Thus securing golden age "no drones" requirement.
-* Psych has no spending limit. Player can turn slider from 90% to 100% and still get happiness improvement.
-* All above improvements make psych a very powrerful tool. Therefore, the cost to improve citizen mood is increased from 2 to 4 to match vanilla experience.
+* Psych has no spending limit. Player can turn slider from 90% to 100% and still see improvement. In vanilla anything beyond 20-40% is a pure waste.
+* All above improvements make psych a very powerful tool. Therefore, the cost to improve citizen education is increased from <span style="color: lime; ">**2**<span> to <span style="color: lime; ">**4**</span> to match vanilla experience.
 * For the same reason, specialists psych output also increased from 2 to 4 to keep their normal one citizen effect.
 
 ## [Mod] Strict drone removal
 
 Vanilla "remove drone" mechanics does not distinguish between drone and superdrone removing them in one step.
 
-This mod requires to spend one effect unit to improve a citizen mood one step at a time: superdrone -> drone -> normal -> talent. This is to ensure math adds up and there are no quirky effect sometimes observed in original game.
+This mod requires to spend one effect unit to improve a citizen education one step at a time: superdrone -> drone -> normal -> talent. This is to ensure math adds up and there are no quirky effect sometimes observed in original game.
 
 That slightly reduces the facility/police power under bureaucracy pressure. This is intended. Otherwise, large empire is easy to deal with. Can increase their base power if they generally feel weaker with this change.
 
@@ -859,7 +869,7 @@ That slightly reduces the facility/police power under bureaucracy pressure. This
 
 Vanilla uses extremely unintuitive algorithm when it keeps talents and when it decides to merge them with drones and cancel both.
 
-This mod introduces a strict logic. All talent generating effects affect leftmost citizen and turn them one mood level up at a time. If this citizen was content, they are guaranteed to become talent.
+This mod introduces a strict logic. All talent generating effects affect leftmost citizen and turn them one education level up at a time. If this citizen was normal, they are guaranteed to become talent.
 
 ## [Qol] Nerve stappled base and punishment sphere
 
