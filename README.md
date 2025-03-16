@@ -647,6 +647,7 @@ This mod uses Thinker expiration mechanics with slight modification. The infiltr
 ## Probe action RISK changes
 
 | action | vanilla | WTP |
+| ---- | ---: | ---: |
 | Procure Research Data | 0 | 1 |
 | Introduce Genetic Plague | 0 | 2 |
 
