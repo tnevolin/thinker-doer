@@ -564,7 +564,7 @@ Returns reference to global variable. Not safe for nested use.
 */
 ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int range, bool includeCenter)
 {
-	Profiling::start("- getRangeTiles");
+//	Profiling::start("- getRangeTiles");
 	
 	RANGE_TILES.clear();
 	
@@ -631,8 +631,91 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int ran
 		
 	}
 	
-	Profiling::stop("- getRangeTiles");
+//	Profiling::stop("- getRangeTiles");
 	return RANGE_TILES;
+	
+}
+
+/*
+Returns next range tile by given tile.
+*/
+bool nextRangeTile(MAP *center, int maxRange, bool includeCenter, RangeTile &rangeTile)
+{
+//	Profiling::start("- getNextRangeTile");
+	
+	int centerIndex = center - *MapTiles;
+	int centerY = centerIndex / (*MapHalfX);
+	int centerX = (centerIndex % (*MapHalfX)) * 2 + (centerY % 2);
+	
+	if (rangeTile.tile == nullptr)
+	{
+		rangeTile.dx = 0;
+		rangeTile.dy = 0;
+		rangeTile.tile = center;
+		
+		if (includeCenter)
+		{
+			return true;
+		}
+		
+	}
+	
+	int x;
+	int y;
+	bool onMap = false;
+	while (!onMap)
+	{
+		if (rangeTile.tile == center)
+		{
+			rangeTile.dx = +0;
+			rangeTile.dy = -2;
+		}
+		else if (rangeTile.dx >= 0 && rangeTile.dy < 0)
+		{
+			rangeTile.dx++;
+			rangeTile.dy++;
+		}
+		else if (rangeTile.dx > 0 && rangeTile.dy >= 0)
+		{
+			rangeTile.dx--;
+			rangeTile.dy++;
+		}
+		else if (rangeTile.dx <= 0 && rangeTile.dy > 0)
+		{
+			rangeTile.dx--;
+			rangeTile.dy--;
+		}
+		else if (rangeTile.dx < 0 && rangeTile.dy <= 0)
+		{
+			rangeTile.dx++;
+			rangeTile.dy--;
+		}
+		
+		// advance to next range
+		
+		if (rangeTile.dx == 0 && rangeTile.dy < 0)
+		{
+			rangeTile.dy -= 2;
+			
+			// verify max range
+			
+			if ((-rangeTile.dy) / 2 > maxRange)
+			{
+				return false;
+			}
+			
+		}
+		
+		x = wrap(centerX + rangeTile.dx);
+		y = centerY + rangeTile.dy;
+		onMap = x >= 0 && x < *MapAreaX && y >= 0 && y < *MapAreaY && ((x + y) & 1) == 0;
+		
+	}
+	
+	int rangeTileIndex = (x + *MapAreaX * y) / 2;
+	rangeTile.tile = *MapTiles + rangeTileIndex;
+	
+	return true;
 	
 }
 

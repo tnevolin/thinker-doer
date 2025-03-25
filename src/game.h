@@ -36,4 +36,5 @@ void __cdecl mod_repair_phase(int faction_id);
 void __cdecl mod_production_phase(int faction_id);
 void __cdecl mod_name_base(int faction, char* name, bool save_offset, bool water);
 int __cdecl load_music_strcmpi(const char* active, const char* label);
+bool FileExists(const char* path);
 

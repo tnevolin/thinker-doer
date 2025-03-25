@@ -15,10 +15,6 @@ const char* ac_movlistx_txt = "movlistx.txt";
 const char* ac_genwarning_sm_pcx = "genwarning_sm.pcx";
 
 
-bool FileExists(const char* path) {
-    return GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES;
-}
-
 int __cdecl BaseWin_random_seed() {
     return *CurrentBaseID ^ *MapRandomSeed;
 }

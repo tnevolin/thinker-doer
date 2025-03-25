@@ -184,8 +184,8 @@ struct FactionMovementInfo
 	std::array<std::vector<SeaLandmark>, SEA_MOVEMENT_TYPE_COUNT> seaLandmarks;
 	
 	// landLandmarks
-	// [movementTypeIndex][landmarkIndex]
-	std::array<std::vector<LandLandmark>, LAND_MOVEMENT_TYPE_COUNT> landLandmarks;
+	// [basic movementTypeIndex][landmarkIndex]
+	std::array<std::vector<LandLandmark>, BASIC_LAND_MOVEMENT_TYPE_COUNT> landLandmarks;
 	
 };
 
@@ -307,9 +307,10 @@ bool isVehicleDestinationReachable(int vehicleId, MAP *dst);
 // ==================================================
 
 double getRouteVectorDistance(MAP *tile1, MAP *tile2);
+MovementType getUnitBasicMovementType(int factionId, int unitId);
 MovementType getUnitMovementType(int factionId, int unitId);
+MovementType getVehicleBasicMovementType(int vehicleId);
 MovementType getVehicleMovementType(int vehicleId);
-ExtendedMovementType getUnitExtendedMovementType(int factionId, int unitId);
 
 int getAirCluster(int chassisId, int speed, MAP *tile);
 int getVehicleAirCluster(int vehicleId);
@@ -370,8 +371,4 @@ bool isReachable(MAP *tile);
 bool isSharedSea(MAP *tile);
 
 int getSeaClusterArea(int seaCluster);
-
-double getPathMovementCost(MAP *org, MAP *dst, int unitId, int factionId, bool impediment = false);
-double getPathTravelTime(MAP *org, MAP *dst, int unitId, int factionId);
-double getPathTravelTime(int vehicleId, MAP *dst);
 

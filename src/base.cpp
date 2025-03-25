@@ -1403,7 +1403,7 @@ void __cdecl mod_base_energy() {
     int val_unk = (total_energy * (9 - f->SE_alloc_labs - f->SE_alloc_psych) + 4) / 10;
     base->unk_total = max(0, min(total_energy - base->psych_total, val_unk));
     base->labs_total = total_energy - base->psych_total - base->economy_total;
-
+    
     for (int i = 0; i < base->specialist_total; i++) {
         int citizen_id;
         if (i < MaxBaseSpecNum) {

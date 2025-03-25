@@ -1450,6 +1450,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_combat_winning_probability_b = atof(value);
     }
+    else if (MATCH("ai_combat_sea_base_threat_coefficient"))
+    {
+        cf->ai_combat_sea_base_threat_coefficient = atof(value);
+    }
     // =WTP= configuratoin end
     else {
         return opt_handle_error(section, name);
@@ -1518,6 +1522,19 @@ DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LP
                     MOD_VERSION, MB_OK | MB_ICONSTOP);
                 exit(EXIT_FAILURE);
             }
+			
+			// [WTP]
+			// parse thinker user file
+			
+			if (FileExists("thinker_user.ini"))
+			{
+				if (ini_parse("thinker_user.ini", option_handler, &conf) < 0)
+				{
+					MessageBoxA(0, "Error while opening thinker_user.ini file.", MOD_VERSION, MB_OK | MB_ICONSTOP);
+					exit(EXIT_FAILURE);
+				}
+			}
+			
             if (!cmd_parse(&conf) || !patch_setup(&conf)) {
                 MessageBoxA(0, "Error while loading the game.",
                     MOD_VERSION, MB_OK | MB_ICONSTOP);

@@ -265,11 +265,11 @@ void analyzeBasePlacementSites()
 		
 		// warzone
 		
-		if (vehicleTileInfo.warzone)
+		if (vehicleTileInfo.hostileDangerZone)
 		{
 			// safe location
 			
-			MAP *safeLocation = getSafeLocation(vehicleId);
+			MAP *safeLocation = getSafeLocation(vehicleId, false);
 			transitVehicle(Task(vehicleId, TT_MOVE, safeLocation));
 			
 			debug("\t%s -> %s\n", getLocationString(vehicleTile).c_str(), getLocationString(safeLocation).c_str());
@@ -502,7 +502,7 @@ void analyzeBasePlacementSites()
 		int destinationIndex = vehicleDestinations.at(vehicleIndex);
 		MAP *destination = destinations.at(destinationIndex);
 
-		TaskType const taskType = aiData.getTileInfo(destination).baseCapture ? TT_SKIP : TT_BUILD;
+		TaskType const taskType = aiData.getTileInfo(destination).unfriendlyDangerZone ? TT_SKIP : TT_BUILD;
 		transitVehicle(Task(vehicleId, taskType, destination));
 		
 	}
@@ -942,14 +942,9 @@ bool isValidBuildSite(MAP *tile, int factionId)
 	if (isBlocked(tile))
 		return false;
 	
-	// not warzone
+	// not dangerous
 	
-	if (tileInfo.warzone)
-		return false;
-	
-	// not hostileBaseCapture location
-	
-	if (tileInfo.hostileBaseCapture)
+	if (tileInfo.unfriendlyDangerZone)
 		return false;
 	
 	// don't build on edge

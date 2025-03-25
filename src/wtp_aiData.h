@@ -47,48 +47,6 @@ struct CombatTypeStrength
 	
 };
 
-/// cross strength for psi/con
-struct CombatStrengthMatrix
-{
-	// [attacker weapon type (psi/con)][defender weapon type (psi/con)]
-	std::array<std::array<std::array<double, COMBAT_TYPE_COUNT>, COMBAT_TYPE_COUNT>, COMBAT_MODE_COUNT> values;
-	
-	void set(COMBAT_MODE combatMode, COMBAT_TYPE attackerCOMBAT_TYPE, COMBAT_TYPE defenderCOMBAT_TYPE, double value);
-	void accumulate(CombatStrengthMatrix &_combatMatrix, double multiplier = 1.0);
-	double computeDestruction(COMBAT_TYPE defenderCOMBAT_TYPE, CombatStrength defenderCombatStrength);
-	
-};
-
-enum MovementType
-{
-	MT_AIR,
-	MT_SEA_REGULAR,
-	MT_SEA_NATIVE,
-	MT_LAND_REGULAR,
-	MT_LAND_NATIVE,
-};
-size_t const MOVEMENT_TYPE_COUNT = MT_LAND_NATIVE + 1;
-size_t const SEA_MOVEMENT_TYPE_FIRST = MT_SEA_REGULAR;
-size_t const SEA_MOVEMENT_TYPE_LAST = MT_SEA_NATIVE;
-size_t const SEA_MOVEMENT_TYPE_COUNT = SEA_MOVEMENT_TYPE_LAST - SEA_MOVEMENT_TYPE_FIRST + 1;
-size_t const LAND_MOVEMENT_TYPE_FIRST = MT_LAND_REGULAR;
-size_t const LAND_MOVEMENT_TYPE_LAST = MT_LAND_NATIVE;
-size_t const LAND_MOVEMENT_TYPE_COUNT = LAND_MOVEMENT_TYPE_LAST - LAND_MOVEMENT_TYPE_FIRST + 1;
-std::vector<MovementType> const SEA_MOVEMENT_TYPES {MT_SEA_REGULAR, MT_SEA_NATIVE, };
-std::vector<MovementType> const LAND_MOVEMENT_TYPES {MT_LAND_REGULAR, MT_LAND_NATIVE, };
-
-enum ExtendedMovementType
-{
-	EMT_AIR,
-	EMT_SEA_REGULAR,
-	EMT_SEA_NATIVE,
-	EMT_LAND_REGULAR,
-	EMT_LAND_NATIVE,
-	EMT_LAND_HOVER,
-	EMT_LAND_HOVER_NATIVE,
-};
-size_t const EXTENDED_MOVEMENT_TYPE_COUNT = EMT_LAND_HOVER_NATIVE + 1;
-
 struct Offense
 {
 	std::array<bool, ENGAGEMENT_MODE_COUNT> engagementModes;
@@ -101,10 +59,10 @@ struct Adjacent
 	int angle;
 	TileInfo *tileInfo;
 };
-struct MapIndexHexCost
+struct HexCost
 {
-	int tileIndex;
-	int hexCost;
+	int exact;
+	int approximate;
 };
 struct TileInfo
 {
@@ -145,30 +103,21 @@ struct TileInfo
 	
 	// hex costs
 	// [movementType][angle]
-	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> hexCosts;
-	// [movementType][angle] = {mapIndex, hexCost}
-	// mapIndex == -1 : not existing tile
-	// hexCost == -1 : not allowed move (other surface)
-	std::array<std::array<MapIndexHexCost, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> mapIndexHexCosts;
-	// extended hex costs
-	// [extendedMovementType][speed1][angle]
-	std::array<std::array<std::array<int, ANGLE_COUNT>, 2>, EXTENDED_MOVEMENT_TYPE_COUNT> extendedHexCosts;
+	std::array<std::array<HexCost, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> hexCosts;
 	
 	// movement data
 	
 	bool blocked;
-	bool zoc;
+	bool orgZoc;
+	bool dstZoc;
 	
-	// destruction proportion of regular non combat not armored vehicle
-	double danger;
-	// warzone (>= 0.75 chance of destruction)
-	bool warzone = false;
-	// artillery zone
-	bool artilleryZone = false;
-	// empty base capture
-	bool hostileBaseCapture = false;
-	bool neutralBaseCapture = false;
-	bool baseCapture = false;
+	// danger zones
+	// artifact or empty base can be captured
+	bool unfriendlyDangerZone;
+	// units can be attacked by hostiles
+	bool hostileDangerZone;
+	// units can be bombarded by hostiles
+	bool artilleryDangerZone;
 	
 	// nearest bases
 	std::array<IdIntValue, 3> nearestBaseRanges;
@@ -600,14 +549,6 @@ struct FactionInfo
 	
 };
 
-struct UnitStrength
-{
-	double psiOffense = 0.0;
-	double psiDefense = 0.0;
-	double conventionalOffense = 0.0;
-	double conventionalDefense = 0.0;
-};
-
 struct CombatEffect
 {
 	COMBAT_MODE combatMode;
@@ -920,7 +861,6 @@ struct Data
 	
 	// best units
 	robin_hood::unordered_flat_map<int, double> unitWeightedEffects;
-	
 	std::vector<double> globalAverageUnitEffects = std::vector<double>(2 * MaxProtoFactionNum);
 	
 	// other global variables
@@ -941,6 +881,9 @@ struct Data
 	std::vector<int> colonyVehicleIds;
 	std::vector<int> formerVehicleIds;
 	std::vector<int> airFormerVehicleIds;
+	robin_hood::unordered_flat_set<int> unfriendlyEndangeredVehicleIds;
+	robin_hood::unordered_flat_set<int> hostileEndangeredVehicleIds;
+	robin_hood::unordered_flat_set<int> artilleryEndangeredVehicleIds;
 	robin_hood::unordered_flat_map<int, std::vector<int>> landFormerVehicleIds;
 	robin_hood::unordered_flat_map<int, std::vector<int>> seaFormerVehicleIds;
 	// sea transports by clusters
@@ -1037,6 +980,6 @@ struct MutualLoss
 
 bool isBlocked(int tileIndex);
 bool isBlocked(MAP *tile);
-bool isZoc(int tileIndex);
-bool isZoc(MAP *tile);
+bool isZoc(int orgTileIndex, int dstTileIndex);
+bool isZoc(MAP *orgTile, MAP *dstTile);
 

@@ -595,11 +595,11 @@ void populateTerraformingData()
 			// available vehicles
 			else
 			{
-				// ignore those in terraformingWarzone except land vehicle in ocean
+				// ignore those in danger zone except land vehicle in ocean
 				
 				if (!(triad == TRIAD_LAND && is_ocean(vehicleTile)))
 				{
-					double vehicleTileDanger = aiData.getTileInfo(getMapTile(vehicle->x, vehicle->y)).danger;
+					double vehicleTileDanger = aiData.getTileInfo(getMapTile(vehicle->x, vehicle->y)).hostileDangerZone;
 					
 					if (defenseValue > 0 && vehicleTileDanger > defenseValue)
 						continue;

@@ -34,11 +34,11 @@ void CombatStrength::accumulate(CombatStrength &combatStrength, double multiplie
 
 double CombatStrength::getAttackEffect(int vehicleId)
 {
-	COMBAT_TYPE defenderCOMBAT_TYPE = getArmorType(vehicleId);
+	COMBAT_TYPE defenderCombatType = getArmorType(vehicleId);
 	
 	double effect = 0.0;
 	
-	switch (defenderCOMBAT_TYPE)
+	switch (defenderCombatType)
 	{
 	case CT_PSI:
 		
@@ -786,7 +786,7 @@ std::vector<UnloadRequest> TransportControl::getSeaTransportUnloadRequests(int s
 
 bool isWarzone(MAP *tile)
 {
-	return aiData.getTileInfo(tile).warzone;
+	return aiData.tileInfos.at(tile - *MapTiles).hostileDangerZone;
 }
 
 // MutualLoss
@@ -809,15 +809,16 @@ bool isBlocked(MAP *tile)
 	return aiData.tileInfos.at(tile - *MapTiles).blocked;
 }
 
-bool isZoc(int tileIndex)
+bool isZoc(int orgTileIndex, int dstTileIndex)
 {
-	assert(tileIndex >= 0 && tileIndex < *MapAreaTiles);
-	return aiData.tileInfos.at(tileIndex).zoc;
+	assert(orgTileIndex >= 0 && orgTileIndex < *MapAreaTiles);
+	assert(dstTileIndex >= 0 && dstTileIndex < *MapAreaTiles);
+	return aiData.tileInfos.at(orgTileIndex).orgZoc && aiData.tileInfos.at(dstTileIndex).dstZoc;
 }
 
-bool isZoc(MAP *tile)
+bool isZoc(MAP *orgTile, MAP *dstTile)
 {
-	assert(isOnMap(tile));
-	return aiData.tileInfos.at(tile - *MapTiles).zoc;
+	assert(isOnMap(orgTile) && isOnMap(dstTile));
+	return aiData.tileInfos.at(orgTile - *MapTiles).orgZoc && aiData.tileInfos.at(dstTile - *MapTiles).dstZoc;
 }
 

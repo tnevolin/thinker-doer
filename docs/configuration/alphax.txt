@@ -661,7 +661,7 @@ Network Node,                  6, 1, InfNet,  DigSent,  Labs Bonus
 Biology Lab,                   6, 1, PrPsych, Disable,  Research and PSI
 Skunkworks,                    6, 1, Subat,   Disable,  Prototypes Free
 Hologram Theatre,              6, 2, Chaos,   Disable,  Psych and Fewer Drones
-Paradise Garden,              12, 3, SentEco, Disable,  +2 Talents
+Paradise Garden,              12, 3, SentEco, Disable,  +3 Talents
 Tree Farm,                    10, 2, EnvEcon, Disable,  Econ/Psych/Forest
 Hybrid Forest,                16, 3, PlaEcon, Disable,  Econ/Psych/Forest
 Fusion Lab,                   16, 3, SupLube, Disable,  Econ and Labs Bonus

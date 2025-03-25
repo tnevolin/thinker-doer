@@ -24,16 +24,15 @@ void moveArtifactStrategy()
 		
 		debug("\t%s\n", getLocationString(vehicleTile).c_str());
 		
-		// escape warzone
+		// escape danger zone
 		
-		if (aiData.getTileInfo(vehicleTile).warzone)
+		if (aiData.unfriendlyEndangeredVehicleIds.find(vehicleId) != aiData.unfriendlyEndangeredVehicleIds.end() && aiData.getTileInfo(vehicleTile).unfriendlyDangerZone)
 		{
-			debug("\tescape warzone\n");
+			debug("\tescape danger zone\n");
 			
 			// find safe location
 			
-			MAP *safeLocation = getSafeLocation(vehicleId);
-			
+			MAP *safeLocation = getSafeLocation(vehicleId, true);
 			if (safeLocation == nullptr)
 			{
 				debug("\t\t\tsafe location is not found\n");

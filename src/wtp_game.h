@@ -56,6 +56,32 @@ enum COMBAT_TYPE
 };
 const int COMBAT_TYPE_COUNT = CT_PSI + 1;
 
+enum MovementType
+{
+	MT_AIR,
+	MT_SEA,
+	MT_SEA_NATIVE,
+	MT_LAND,
+	MT_LAND_NATIVE,
+	MT_LAND_EASY,
+	MT_LAND_HOVER,
+	MT_LAND_NATIVE_HOVER,
+};
+size_t const MOVEMENT_TYPE_COUNT = MT_LAND_NATIVE_HOVER + 1;
+size_t const SEA_MOVEMENT_TYPE_FIRST = MT_SEA;
+size_t const SEA_MOVEMENT_TYPE_LAST = MT_SEA_NATIVE;
+size_t const SEA_MOVEMENT_TYPE_COUNT = SEA_MOVEMENT_TYPE_LAST - SEA_MOVEMENT_TYPE_FIRST + 1;
+size_t const LAND_MOVEMENT_TYPE_FIRST = MT_LAND;
+size_t const LAND_MOVEMENT_TYPE_LAST = MT_LAND_NATIVE_HOVER;
+size_t const LAND_MOVEMENT_TYPE_COUNT = LAND_MOVEMENT_TYPE_LAST - LAND_MOVEMENT_TYPE_FIRST + 1;
+// basic land movement ignores hovering
+size_t const BASIC_LAND_MOVEMENT_TYPE_FIRST = MT_LAND;
+size_t const BASIC_LAND_MOVEMENT_TYPE_LAST = MT_LAND_NATIVE;
+size_t const BASIC_LAND_MOVEMENT_TYPE_COUNT = BASIC_LAND_MOVEMENT_TYPE_LAST - BASIC_LAND_MOVEMENT_TYPE_FIRST + 1;
+std::array<MovementType, SEA_MOVEMENT_TYPE_COUNT> const SEA_MOVEMENT_TYPES {MT_SEA, MT_SEA_NATIVE};
+std::array<MovementType, LAND_MOVEMENT_TYPE_COUNT> const LAND_MOVEMENT_TYPES {MT_LAND, MT_LAND_NATIVE, MT_LAND_EASY, MT_LAND_HOVER, MT_LAND_NATIVE_HOVER};
+std::array<MovementType, BASIC_LAND_MOVEMENT_TYPE_COUNT> const BASIC_LAND_MOVEMENT_TYPES {MT_LAND, MT_LAND_NATIVE};
+
 // array structures
 template<class T, int N> class ArrayVector : public std::array<T,N>
 {
@@ -180,6 +206,13 @@ struct Income
 	Income() : income(0.0), incomeGrowth(0.0) {}
 	Income(double _income, double _incomeGrowth) : income(_income), incomeGrowth(_incomeGrowth) {}
 	
+};
+
+struct RangeTile
+{
+	int dx;
+	int dy;
+	MAP *tile = nullptr;
 };
 
 // =======================================================
@@ -597,6 +630,7 @@ std::vector<MAP *> getSideTiles(MAP *tile);
 ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareOffsetTiles(MAP *center, int beginIndex, int endIndex);
 ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareBlockRadiusTiles(MAP *center, int minRadius, int maxRadius);
 ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int range, bool includeCenter);
+bool nextRangeTile(MAP *center, int maxRange, bool includeCenter, RangeTile &rangeTile);
 
 std::vector<MAP *> getBaseOffsetTiles(int x, int y, int offsetBegin, int offsetEnd);
 std::vector<MAP *> getBaseOffsetTiles(MAP *tile, int offsetBegin, int offsetEnd);

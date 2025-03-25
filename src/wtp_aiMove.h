@@ -44,6 +44,5 @@ void setSafeMoveTo(int vehicleId, MAP *destination);
 
 MapDoubleValue findClosestMonolith(int vehicleId, int maxSearchRange, bool avoidWarzone);
 
-MAP *getSafeLocation(int vehicleId);
-MAP *getSafeLocation(int vehicleId, int baseRange);
+MAP *getSafeLocation(int vehicleId, bool hostile);
 

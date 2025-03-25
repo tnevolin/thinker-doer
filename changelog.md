@@ -1,7 +1,10 @@
 # Version 360
 
+* Program scans "thinker_user.ini" for user override values. This file is not included in the distribution and is not changed during installation.
 * Procure Research Data probe action RISK is 1. That is 50% success for Disciplined probe and impossible against high security interlock.
 * Probe is not upgraded on successful Infiltrate Datalinks mission.
+* [Reverted] The Planetary Datalinks receives tech discovered by *3* factions with contact.
+* Reverted chopper turns spent per attack to 1 as in vanilla.
 
 # Version 359
 

@@ -912,4 +912,7 @@ int __cdecl load_music_strcmpi(const char* active, const char* label)
     return strcmpi(label, lookup);
 }
 
+bool FileExists(const char* path) {
+    return GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES;
+}
 

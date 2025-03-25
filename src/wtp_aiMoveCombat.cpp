@@ -1526,9 +1526,9 @@ void populateRepairTasks(std::vector<CombatAction> &taskPriorities)
 			if (isBlocked(tile))
 				continue;
 			
-			// exclude warzone and artilleryZone
+			// exclude warzone
 			
-			if (tileInfo.warzone || tileInfo.artilleryZone)
+			if (tileInfo.hostileDangerZone || tileInfo.artilleryDangerZone)
 				continue;
 			
 			// exclude too far field location
@@ -1580,7 +1580,7 @@ void populateRepairTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// warzone coefficient
 			
-			double warzoneCoefficient = (tileInfo.warzone ? 0.7 : 1.0);
+			double warzoneCoefficient = (tileInfo.hostileDangerZone ? 0.7 : 1.0);
 			
 			// travel time and total time
 			
@@ -1717,7 +1717,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// warzone coefficient
 			
-			double warzoneCoefficient = (tileInfo.warzone ? 0.7 : 1.0);
+			double warzoneCoefficient = (tileInfo.hostileDangerZone ? 0.7 : 1.0);
 			
 			// repair gain
 			
@@ -2790,7 +2790,7 @@ Checks if unit available for orders.
 bool isVehicleAvailable(int vehicleId, bool notAvailableInWarzone)
 {
 	// should not have task and should not be notAvailableInWarzone
-	return (!hasTask(vehicleId) && !(notAvailableInWarzone && aiData.getTileInfo(getVehicleMapTile(vehicleId)).warzone));
+	return (!hasTask(vehicleId) && !(notAvailableInWarzone && aiData.getTileInfo(getVehicleMapTile(vehicleId)).hostileDangerZone));
 }
 
 /*

@@ -263,7 +263,7 @@ void healStrategy()
 
 				// exclude warzone
 
-				if (tileInfo.warzone)
+				if (tileInfo.hostileDangerZone)
 					continue;
 
 				// select healingTile
@@ -944,16 +944,11 @@ void setSafeMoveTo(int vehicleId, MAP *destination)
 	{
 		int tileIndex = reachableLocation.first;
 		MAP *tile = *MapTiles + tileIndex;
+		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
 		
-		double danger = getVehicleTileDanger(vehicleId, tile);
-		
+		double danger = tileInfo.hostileDangerZone ? 1.0 : 0.0;
 		double distance = getEuqlideanDistance(tile, destination);
 		double weight = danger + 0.2 * distance;
-		
-		if (danger > 0.0)
-		{
-			dangerous = true;
-		}
 		
 		if (weight < bestTileWeight)
 		{
@@ -1060,82 +1055,36 @@ MapDoubleValue findClosestMonolith(int vehicleId, int maxSearchRange, bool avoid
 }
 
 /*
-Searches for closest friendly base or not blocked bunker withing range if range is given.
-Otherwies, searches for any closest safe location (above options + not warzone).
+Searches for closest friendly base or not blocked bunker.
+If none found, searches for any closest safe location (from unfriendly or hostile).
 */
-MAP *getSafeLocation(int vehicleId, int baseRange)
+MAP *getSafeLocation(int vehicleId, bool unfriendly)
 {
 	Profiling::start("- getSafeLocation");
 	
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH &vehicle = Vehicles[vehicleId];
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	int triad = vehicle->triad();
+	int triad = vehicle.triad();
+	
+	// artifact
+	
+	if (!isArtifactVehicle(vehicleId))
+		return nullptr;
+	
+	// infantry chassis
+	
+	if (vehicle.chassis_type() != CHS_INFANTRY)
+		return nullptr;
 	
 	// exclude transported land vehicle
 	
 	if (isLandVehicleOnTransport(vehicleId))
 		return nullptr;
 	
-	// do not search for safe location for vehicles with range
-	// they have to return to safe location anyway
-	
-	if (getVehicleChassis(vehicleId)->range > 0)
-		return nullptr;
-	
-	// search best safe location (base, bunker)
-	
-	for (MAP *tile : getRangeTiles(vehicleTile, baseRange, true))
-	{
-		// in same cluster for surface vechile
-		
-		switch (triad)
-		{
-		case TRIAD_SEA:
-			
-			if (!isSameSeaCluster(vehicleTile, tile))
-				continue;
-			
-			break;
-			
-		case TRIAD_LAND:
-			
-			if (!isSameLandCluster(vehicleTile, tile))
-				continue;
-			
-			break;
-			
-		}
-		
-		// search for best safe location if not found yet
-		
-		if (map_has_item(tile, BIT_BASE_IN_TILE) && isFriendly(vehicle->faction_id, tile->owner))
-		{
-			// friendly base is the safe location
-			
-			return tile;
-			
-		}
-		
-		if ((triad == TRIAD_LAND || triad == TRIAD_SEA) && map_has_item(tile, BIT_BUNKER) && !isBlocked(tile))
-		{
-			// not blocked bunker is a safe location for surface vehicle
-			
-			return tile;
-			
-		}
-		
-	}
-	
 	// search closest safe location
-	
-	MAP *closestSafeLocation = nullptr;
-	double closestSafeLocationRange = DBL_MAX;
-	double closestSafeLocationTravelTime = DBL_MAX;
 	
 	for (MAP *tile : getRangeTiles(vehicleTile, MAX_SAFE_LOCATION_SEARCH_RANGE, true))
 	{
-		int x = getX(tile);
-		int y = getY(tile);
 		TileInfo &tileInfo = aiData.getTileInfo(tile);
 		
 		// in same cluster for surface vechile
@@ -1158,80 +1107,41 @@ MAP *getSafeLocation(int vehicleId, int baseRange)
 			
 		}
 		
-		if (map_has_item(tile, BIT_BASE_IN_TILE) && isFriendly(vehicle->faction_id, tile->owner))
+		if (map_has_item(tile, BIT_BASE_IN_TILE) && isFriendly(vehicle.faction_id, tile->owner))
 		{
 			// base is a best safe location
+			return tile;
 		}
-		else if ((triad == TRIAD_LAND || triad == TRIAD_SEA) && map_has_item(tile, BIT_BUNKER) && !isBlocked(tile))
+		
+		if ((triad == TRIAD_LAND || triad == TRIAD_SEA) && map_has_item(tile, BIT_BUNKER) && !isBlocked(tile))
 		{
 			// not blocked bunker is a safe location for surface vehicle
-		}
-		else
-		{
-			// not blocked
-			
-			if (isBlocked(tile))
-				continue;
-			
-			// not zoc
-			
-			if (isZoc(tile))
-				continue;
-			
-			// not warzone
-			
-			if (tileInfo.warzone)
-				continue;
-			
-			// not fungus for surface vehicle unless native or XENOEMPATY_DOME or road
-			
-			if
-			(
-				map_has_item(tile, BIT_FUNGUS)
-				&&
-				!(isNativeVehicle(vehicleId) || isFactionHasProject(vehicle->faction_id, FAC_XENOEMPATHY_DOME) || map_has_item(tile, BIT_ROAD))
-			)
-				continue;
-			
-			// everything else is safe
-			
+			return tile;
 		}
 		
-		// get range
+		// not fungus
 		
-		int range = map_range(vehicle->x, vehicle->y, x, y);
-		
-		// break cycle if farther than closest location
-		
-		if (range > closestSafeLocationRange)
-			break;
-		
-		// get travel time
-		
-		double travelTime = getVehicleTravelTime(vehicleId, tile);
-		if (travelTime == INF)
+		if (map_has_item(tile, BIT_FUNGUS))
 			continue;
 		
-		// update best
+		// not blocked
 		
-		if (range <= closestSafeLocationRange && travelTime < closestSafeLocationTravelTime)
-		{
-			closestSafeLocation = tile;
-			closestSafeLocationRange = range;
-			closestSafeLocationTravelTime = travelTime;
-		}
+		if (tileInfo.blocked)
+			continue;
+		
+		// not danger zone
+		
+		if (unfriendly ? tileInfo.unfriendlyDangerZone : tileInfo.hostileDangerZone)
+			continue;
+		
+		return tile;
 		
 	}
 	
-	// return closest safe location
+	// nothing found
 	
 	Profiling::stop("- getSafeLocation");
-	return closestSafeLocation;
+	return nullptr;
 	
-}
-
-MAP *getSafeLocation(int vehicleId)
-{
-	return getSafeLocation(vehicleId, 0);
 }
 

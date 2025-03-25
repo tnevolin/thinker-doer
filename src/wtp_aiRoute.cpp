@@ -347,14 +347,6 @@ void precomputeRouteData()
 	
 	// player faction data
 	
-//	populateImpediments(aiFactionId);
-//	populateAirbases(aiFactionId);
-//	populateAirClusters(aiFactionId);
-//	populateSeaTransportWaitTimes(aiFactionId);
-//	populateSeaCombatClusters(aiFactionId);
-//	populateLandCombatClusters(aiFactionId);
-//	populateSeaLandmarks(aiFactionId);
-	
 	populateSeaClusters(aiFactionId);
 	populateLandClusters();
 	populateTransfers(aiFactionId);
@@ -877,7 +869,7 @@ void populateSeaTransportWaitTimes(int factionId)
 					
 					// hexCost
 					
-					int hexCost = adjacentTileInfo.hexCosts.at(initialTile.movementType).at(adjacentTileAngle);
+					int hexCost = adjacentTileInfo.hexCosts.at(initialTile.movementType).at(adjacentTileAngle).approximate;
 					
 					if (hexCost == -1)
 						continue;
@@ -949,11 +941,15 @@ void populateSeaCombatClusters(int factionId)
 	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
 	{
 		int tileIndex = tile - *MapTiles;
-		bool ocean = is_ocean(tile);
 		
 		// sea
 		
-		if (!ocean)
+		if (!tile->is_sea())
+			continue;
+		
+		// not unfriendly base
+		
+		if (isUnfriendlyBaseAt(tile, factionId))
 			continue;
 		
 		// set available
@@ -969,11 +965,10 @@ void populateSeaCombatClusters(int factionId)
 		BASE *base = getBase(baseId);
 		MAP *baseTile = getBaseMapTile(baseId);
 		int baseTileIndex = baseTile - *MapTiles;
-		bool ocean = is_ocean(baseTile);
 		
 		// land
 		
-		if (ocean)
+		if (!baseTile->is_land())
 			continue;
 		
 		// friendly
@@ -1087,6 +1082,11 @@ void populateLandCombatClusters(int factionId)
 		// land or sea with finite wait time
 		
 		if (!(tileInfo.land || seaTransportWaitTimes.at(tileInfo.index) < INF))
+			continue;
+		
+		// not unfriendly base
+		
+		if (isUnfriendlyBaseAt(tileInfo.tile, factionId))
 			continue;
 		
 		landCombatClusters.at(tileInfo.index) = -2;
@@ -1264,13 +1264,11 @@ void populateSeaLandmarks(int factionId)
 						
 						bool endNode = true;
 						
-						for (MapIndexHexCost const &mapIndexHexCost : currentTileInfo.mapIndexHexCosts.at(movementType))
+						for (Adjacent const &adjacent : currentTileInfo.adjacents)
 						{
-							int adjacentTileIndex = mapIndexHexCost.tileIndex;
-							int hexCost = mapIndexHexCost.hexCost;
-							
-							if (adjacentTileIndex == -1)
-								continue;
+							TileInfo *adjacentTileInfo = adjacent.tileInfo;
+							int adjacentTileIndex = adjacentTileInfo->index;
+							int hexCost = currentTileInfo.hexCosts.at(movementType).at(adjacent.angle).approximate;
 							
 							if (hexCost == -1)
 								continue;
@@ -1415,7 +1413,7 @@ void populateLandLandmarks(int factionId)
 	std::vector<int> const &landCombatClusters = factionMovementInfos.at(factionId).landCombatClusters;
 	std::vector<double> const &seaTransportWaitTimes = factionMovementInfos.at(factionId).seaTransportWaitTimes;
 	std::vector<double> const &impediments = factionMovementInfos.at(factionId).impediments;
-	std::array<std::vector<LandLandmark>, LAND_MOVEMENT_TYPE_COUNT> &landLandmarks = factionMovementInfos.at(factionId).landLandmarks;
+	std::array<std::vector<LandLandmark>, BASIC_LAND_MOVEMENT_TYPE_COUNT> &landLandmarks = factionMovementInfos.at(factionId).landLandmarks;
 	
 	robin_hood::unordered_flat_set<size_t> openNodes;
 	robin_hood::unordered_flat_set<size_t> newOpenNodes;
@@ -1439,13 +1437,13 @@ void populateLandLandmarks(int factionId)
 		
 	}
 	
-	// iterate movementTypes
+	// iterate basic movementTypes
 	
-	for (size_t landMovementTypeIndex = 0; landMovementTypeIndex < LAND_MOVEMENT_TYPE_COUNT; landMovementTypeIndex++)
+	for (size_t movementTypeIndex = 0; movementTypeIndex < BASIC_LAND_MOVEMENT_TYPE_COUNT; movementTypeIndex++)
 	{
-		MovementType movementType = LAND_MOVEMENT_TYPES.at(landMovementTypeIndex);
+		MovementType movementType = BASIC_LAND_MOVEMENT_TYPES.at(movementTypeIndex);
 		
-		std::vector<LandLandmark> &landmarks = landLandmarks.at(landMovementTypeIndex);
+		std::vector<LandLandmark> &landmarks = landLandmarks.at(movementTypeIndex);
 		landmarks.clear();
 		
 		// iterate landClusters
@@ -1506,7 +1504,7 @@ void populateLandLandmarks(int factionId)
 							{
 								// sensible land movement cost
 								
-								int hexCost = currentTileInfo.hexCosts.at(movementType).at(adjacent.angle);
+								int hexCost = currentTileInfo.hexCosts.at(movementType).at(adjacent.angle).approximate;
 								if (hexCost == -1)
 									continue;
 								
@@ -1567,7 +1565,7 @@ void populateLandLandmarks(int factionId)
 							{
 								// sensible sea movement cost
 								
-								int hexCost = currentTileInfo.hexCosts.at(MT_SEA_REGULAR).at(adjacent.angle);
+								int hexCost = currentTileInfo.hexCosts.at(MT_SEA).at(adjacent.angle).approximate;
 								if (hexCost == -1)
 									continue;
 								
@@ -1939,7 +1937,7 @@ void populateLandClusters()
 					
 					// not zoc
 					
-					if (isZoc(currentTileIndex) && isZoc(adjacentTileIndex))
+					if (isZoc(currentTileIndex, adjacentTileIndex))
 						continue;
 					
 					// insert adjacent tile
@@ -2068,7 +2066,7 @@ void populateLandTransportedClusters()
 					
 					// not zoc on land
 					
-					if (isZoc(currentTileIndex) && isZoc(adjacentTileIndex))
+					if (isZoc(currentTileIndex, adjacentTileIndex))
 						continue;
 					
 					// insert adjacent tile
@@ -2568,7 +2566,7 @@ double getUnitApproachTime(int factionId, int unitId, MAP *org, MAP *dst, bool i
 	
 	UNIT *unit = &Units[unitId];
 	int speed = getUnitSpeed(factionId, unitId);
-	MovementType movementType = getUnitMovementType(factionId, unitId);
+	MovementType movementType = getUnitBasicMovementType(factionId, unitId);
 	
 	// check cached values
 	
@@ -2729,7 +2727,7 @@ double getLandLApproachTime(int factionId, MovementType movementType, int speed,
 	Profiling::start("- getLandLApproachTime");
 	
 	assert(factionId >= 0 && factionId < MaxPlayerNum);
-	assert(movementType >= LAND_MOVEMENT_TYPE_FIRST && movementType <= LAND_MOVEMENT_TYPE_LAST);
+	assert(movementType >= BASIC_LAND_MOVEMENT_TYPE_FIRST && movementType <= BASIC_LAND_MOVEMENT_TYPE_LAST);
 	assert(speed > 0);
 	assert(isOnMap(org));
 	assert(isOnMap(dst));
@@ -3372,7 +3370,7 @@ double getRouteVectorDistance(MAP *tile1, MAP *tile2)
 Returns vehicle movement type.
 Ignoring hovering unit ability.
 */
-MovementType getUnitMovementType(int factionId, int unitId)
+MovementType getUnitBasicMovementType(int factionId, int unitId)
 {
 	bool xenoempatyDome = isFactionHasProject(factionId, FAC_XENOEMPATHY_DOME);
 	UNIT *unit = getUnit(unitId);
@@ -3391,14 +3389,14 @@ MovementType getUnitMovementType(int factionId, int unitId)
 	case TRIAD_SEA:
 		{
 			bool native = xenoempatyDome || isNativeUnit(unitId);
-			movementType = native ? MT_SEA_NATIVE : MT_SEA_REGULAR;
+			movementType = native ? MT_SEA_NATIVE : MT_SEA;
 		}
 		break;
 		
 	case TRIAD_LAND:
 		{
 			bool native = xenoempatyDome || isNativeUnit(unitId);
-			movementType = native ? MT_LAND_NATIVE : MT_LAND_REGULAR;
+			movementType = native ? MT_LAND_NATIVE : MT_LAND;
 		}
 		break;
 		
@@ -3408,49 +3406,48 @@ MovementType getUnitMovementType(int factionId, int unitId)
 	
 }
 
+/**
+Returns vehicle movement type.
+*/
+MovementType getUnitMovementType(int factionId, int unitId)
+{
+	UNIT *unit = getUnit(unitId);
+	int triad = unit->triad();
+	
+	MovementType movementType = getUnitBasicMovementType(factionId, unitId);
+	
+	if (triad == TRIAD_LAND && (unit->chassis_id == CHS_HOVERTANK || has_abil(unitId, ABL_ANTIGRAV_STRUTS)))
+	{
+		switch (movementType)
+		{
+		case MT_LAND:
+			movementType = MT_LAND_HOVER;
+			break;
+		case MT_LAND_NATIVE:
+			movementType = MT_LAND_NATIVE_HOVER;
+			break;
+		default:
+			break;
+		}
+	}
+	
+	return movementType;
+	
+}
+
+MovementType getVehicleBasicMovementType(int vehicleId)
+{
+	VEH *vehicle = getVehicle(vehicleId);
+	return getUnitBasicMovementType(vehicle->faction_id, vehicle->unit_id);
+}
+
 MovementType getVehicleMovementType(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	return getUnitMovementType(vehicle->faction_id, vehicle->unit_id);
 }
 
-ExtendedMovementType getUnitExtendedMovementType(int factionId, int unitId)
-{
-	UNIT *unit = getUnit(unitId);
-	int triad = unit->triad();
-	
-	ExtendedMovementType extendedMovementType = EMT_AIR;
-	
-	switch (triad)
-	{
-	case TRIAD_AIR:
-		{
-			extendedMovementType = EMT_AIR;
-		}
-		break;
-		
-	case TRIAD_SEA:
-		{
-			bool native = unitId == BSC_ISLE_OF_THE_DEEP || unitId == BSC_SEALURK || has_project(FAC_XENOEMPATHY_DOME, factionId);
-			extendedMovementType = native ? EMT_SEA_NATIVE : EMT_SEA_REGULAR;
-		}
-		break;
-		
-	case TRIAD_LAND:
-		{
-			bool native = unitId == BSC_MIND_WORMS || unitId == BSC_SPORE_LAUNCHER || has_project(FAC_XENOEMPATHY_DOME, factionId);
-			bool hover = unit->chassis_id == CHS_HOVERTANK || has_abil(unitId, ABL_ANTIGRAV_STRUTS);
-			extendedMovementType = native && hover ? EMT_LAND_HOVER_NATIVE : native ? EMT_LAND_NATIVE : hover ? EMT_LAND_HOVER : EMT_LAND_REGULAR;
-		}
-		break;
-		
-	}
-	
-	return extendedMovementType;
-	
-}
-
-int getAirCluster(int chassisId, int speed, MAP *tile)
+int getAirCombatCluster(int chassisId, int speed, MAP *tile)
 {
 	assert(isOnMap(tile));
 	
@@ -3461,7 +3458,7 @@ int getAirCluster(int chassisId, int speed, MAP *tile)
 
 int getVehicleAirCluster(int vehicleId)
 {
-	return getAirCluster(getVehicle(vehicleId)->chassis_type(), getVehicleSpeed(vehicleId), getVehicleMapTile(vehicleId));
+	return getAirCombatCluster(getVehicle(vehicleId)->chassis_type(), getVehicleSpeed(vehicleId), getVehicleMapTile(vehicleId));
 }
 
 bool isSameAirCluster(int chassisId, int speed, MAP *tile1, MAP *tile2)
@@ -3469,8 +3466,8 @@ bool isSameAirCluster(int chassisId, int speed, MAP *tile1, MAP *tile2)
 	assert(tile1 >= *MapTiles && tile2 < *MapTiles + *MapAreaTiles);
 	assert(tile2 >= *MapTiles && tile2 < *MapTiles + *MapAreaTiles);
 	
-	int tile1AirCluster = getAirCluster(chassisId, speed, tile1);
-	int tile2AirCluster = getAirCluster(chassisId, speed, tile2);
+	int tile1AirCluster = getAirCombatCluster(chassisId, speed, tile1);
+	int tile2AirCluster = getAirCombatCluster(chassisId, speed, tile2);
 	
 	return tile1AirCluster != -1 && tile2AirCluster != -1 && tile1AirCluster == tile2AirCluster;
 	
@@ -3486,11 +3483,11 @@ bool isMeleeAttackableFromAirCluster(int chassisId, int speed, MAP *origin, MAP 
 	assert(origin >= *MapTiles && origin < *MapTiles + *MapAreaTiles);
 	assert(target >= *MapTiles && target < *MapTiles + *MapAreaTiles);
 	
-	int originAirCluster = getAirCluster(chassisId, speed, origin);
+	int originAirCluster = getAirCombatCluster(chassisId, speed, origin);
 	
 	for (MAP *adjacentTile : getAdjacentTiles(target))
 	{
-		if (getAirCluster(chassisId, speed, adjacentTile) == originAirCluster)
+		if (getAirCombatCluster(chassisId, speed, adjacentTile) == originAirCluster)
 			return true;
 	}
 	
@@ -3976,81 +3973,5 @@ bool isSharedSea(MAP *tile)
 int getSeaClusterArea(int seaCluster)
 {
 	return aiFactionMovementInfo.seaClusterAreas.at(seaCluster);
-}
-
-double getPathMovementCost(MAP *org, MAP *dst, int unitId, int factionId, bool impediment)
-{
-	assert(isOnMap(org));
-	assert(isOnMap(dst));
-	
-	int x1 = getX(org);
-	int y1 = getY(org);
-	int x2 = getX(dst);
-	int y2 = getY(dst);
-	MovementType movementType = getUnitMovementType(factionId, unitId);
-	
-	std::vector<double> const *impediments = (!impediment || movementType == MT_AIR) ? nullptr : &(factionMovementInfos.at(factionId).impediments);
-	
-	double movementCost = 0.0;
-	
-	int x = x1;
-	int y = y1;
-	
-	while (!(x == x2 && y == y2))
-	{
-		int angle = path_get_next(x, y, x2, y2, unitId, factionId);
-		
-		if (angle == -1)
-			return INF;
-		
-		Location nextLocation = getLocationByAngle(x, y, angle);
-		
-		if (!nextLocation.isValid())
-			return INF;
-		
-		int tileIndex = getMapTileIndex(x, y);
-		TileInfo &tileInfo = aiData.getTileInfo(tileIndex);
-		
-		int hexCost = tileInfo.hexCosts.at(movementType).at(angle);
-		
-		if (hexCost == -1)
-			return INF;
-		
-		movementCost += (double)hexCost;
-		
-		if (impediments != nullptr)
-		{
-			movementCost += impediments->at(tileIndex);
-		}
-		
-		x = nextLocation.x;
-		y = nextLocation.y;
-		
-	}
-	
-	return movementCost;
-	
-}
-
-double getPathTravelTime(MAP *org, MAP *dst, int unitId, int factionId)
-{
-	int moveRate = getUnitMoveRate(factionId, unitId);
-	
-	if (moveRate <= 0)
-		return INF;
-	
-	double pathMovementCost = getPathMovementCost(org, dst, unitId, factionId);
-	
-	if (pathMovementCost == INF)
-		return INF;
-	
-	return pathMovementCost / (double)moveRate;
-	
-}
-
-double getPathTravelTime(int vehicleId, MAP *dst)
-{
-	VEH *vehicle = &Vehicles[vehicleId];
-	return getPathTravelTime(getVehicleMapTile(vehicleId), dst, vehicle->unit_id, vehicle->faction_id);
 }
 
