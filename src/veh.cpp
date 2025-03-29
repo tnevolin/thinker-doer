@@ -557,7 +557,7 @@ int __cdecl mod_upgrade_cost(int faction_id, int new_unit_id, int old_unit_id) {
 	if (conf.modify_upgrade_cost)
 	{
 		int mineral_row_difference = std::max(1, (int)new_unit->cost - (int)old_unit->cost);
-		cost = (has_project(FAC_NANO_FACTORY, faction_id) ? 1 : 2) * conf.flat_hurry_cost_multiplier_unit * 10 * mineral_row_difference;
+		cost = (has_project(FAC_NANO_FACTORY, faction_id) ? 1 : 2) * conf.flat_hurry_cost_multiplier_unit * mineral_row_difference;
 		
 		if (old_unit->is_supply() || new_unit->is_supply())
 		{

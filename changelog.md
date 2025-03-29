@@ -1,3 +1,7 @@
+# Version 361
+
+* [Fix] Fixed base psych computation.
+
 # Version 360
 
 * Program scans "thinker_user.ini" for user override values. This file is not included in the distribution and is not changed during installation.
@@ -5,6 +9,7 @@
 * Probe is not upgraded on successful Infiltrate Datalinks mission.
 * [Reverted] The Planetary Datalinks receives tech discovered by *3* factions with contact.
 * Reverted chopper turns spent per attack to 1 as in vanilla.
+* [Fix] Removed incorrect 10 multiplier from upgrade cost.
 
 # Version 359
 

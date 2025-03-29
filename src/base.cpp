@@ -1140,6 +1140,7 @@ void __cdecl wtp_mod_base_yield()
 		
 		// fix rioting
 		
+		mod_base_yield_base_energy(baseEnergy, energyIntake);
 		if (can_riot && base->drone_riots() && choiceCount > 0)
 		{
 			// compute base
@@ -3243,7 +3244,7 @@ int getBestSpecialist(int factionId, int basePopSize, double econValue, double l
 	{
 		CCitizen const &citizen = Citizen[citizenId];
 		
-		if (has_tech(citizen.preq_tech, factionId) && (basePopSize >= Rules->min_base_size_specialists || citizen.psych_bonus > 0))
+		if (has_tech(citizen.preq_tech, factionId) && !has_tech(citizen.obsol_tech, factionId) && (basePopSize >= Rules->min_base_size_specialists || citizen.psych_bonus > 0))
 		{
 			double score = econValue * (double)citizen.econ_bonus + labsValue * (double)citizen.labs_bonus + psychValue * (double)citizen.psych_bonus;
 			if (score > bestScore)
