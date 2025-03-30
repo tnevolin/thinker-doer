@@ -268,6 +268,7 @@ double getGravshipTravelTime(int speed, MAP *org, MAP *dst, bool includeDestinat
 double getRangedAirTravelTime(int factionId, int chassisId, int speed, MAP *org, MAP *dst, bool includeDestination);
 double getSeaLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
 double getLandLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
+double getLandLMovementCost(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
 
 double getVehicleTravelTime(int vehicleId, MAP *dst);
 double getVehicleTravelTime(int vehicleId, MAP *org, MAP *dst);

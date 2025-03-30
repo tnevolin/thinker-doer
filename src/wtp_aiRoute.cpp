@@ -2830,6 +2830,82 @@ double getLandLApproachTime(int factionId, MovementType movementType, int speed,
 	
 }
 
+double getLandLMovementCost(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination)
+{
+	Profiling::start("- getLandLMovementCost");
+	
+	assert(factionId >= 0 && factionId < MaxPlayerNum);
+	assert(movementType >= BASIC_LAND_MOVEMENT_TYPE_FIRST && movementType <= BASIC_LAND_MOVEMENT_TYPE_LAST);
+	assert(speed > 0);
+	assert(isOnMap(org));
+	assert(isOnMap(dst));
+	
+	FactionInfo const &factionInfo = aiData.factionInfos.at(factionId);
+	FactionMovementInfo const &factionMovementInfo = factionMovementInfos.at(factionId);
+	std::vector<int> const &combatClusters = factionMovementInfo.landCombatClusters;
+	
+	int landMovementTypeIndex = movementType - LAND_MOVEMENT_TYPE_FIRST;
+	
+	int orgTileIndex = org - *MapTiles;
+	int dstTileIndex = dst - *MapTiles;
+	
+	// same land combat cluster
+	
+	if (!isSameLandCombatCluster(org, dst))
+	{
+		Profiling::stop("- getLandLMovementCost");
+		return INF;
+	}
+	
+	int landmarkCount = 0;
+	double maxLandmarkLandMovementCost = 0.0;
+	
+	for (LandLandmark const &landmark : factionMovementInfo.landLandmarks.at(landMovementTypeIndex))
+	{
+		int landmarkTileIndex = landmark.tileIndex;
+		MAP *landmarkTile = *MapTiles + landmarkTileIndex;
+		
+		// same combat cluster
+		
+		if (!isSameLandCombatCluster(org, landmarkTile))
+			continue;
+		
+		LandLandmarkTileInfo const &orgLandLandmarkTileInfo = landmark.tileInfos.at(orgTileIndex);
+		LandLandmarkTileInfo const &dstLandLandmarkTileInfo = landmark.tileInfos.at(dstTileIndex);
+		
+		// landmarkLandMovementCost
+		
+		double orgLandmarkLandMovementCost = orgLandLandmarkTileInfo.landMovementCost;
+		double dstLandmarkLandMovementCost = dstLandLandmarkTileInfo.landMovementCost;
+		
+		double landmarkLandMovementCost = abs(dstLandmarkLandMovementCost - orgLandmarkLandMovementCost);
+		
+		// update max
+		
+		landmarkCount++;
+		maxLandmarkLandMovementCost = std::max(maxLandmarkLandMovementCost, landmarkLandMovementCost);
+		
+	}
+	
+	if (landmarkCount == 0)
+	{
+		debug("ERROR: no suitable landmark.\n");
+		Profiling::stop("- getLandLMovementCost");
+		return INF;
+	}
+	
+	// exclude destination if requested
+	
+	if (!includeDestination)
+	{
+		maxLandmarkLandMovementCost -= (Rules->move_rate_roads + factionMovementInfo.impediments.at(dstTileIndex));
+	}
+	
+	Profiling::stop("- getLandLMovementCost");
+	return maxLandmarkLandMovementCost;
+	
+}
+
 /*
 Uses approach time algorithm but makes sure destination is reachable.
 */

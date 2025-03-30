@@ -41,6 +41,7 @@ MAP *getNearestMonolith(int x, int y, int triad);
 Transfer getOptimalPickupTransfer(MAP *org, MAP *dst);
 Transfer getOptimalDropoffTransfer(MAP *org, MAP *dst, int passengerVehicleId, int transportVehicleId);
 void setSafeMoveTo(int vehicleId, MAP *destination);
+void setCombatMoveTo(int vehicleId, MAP *destination);
 
 MapDoubleValue findClosestMonolith(int vehicleId, int maxSearchRange, bool avoidWarzone);
 

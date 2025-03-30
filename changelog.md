@@ -1,3 +1,9 @@
+# Version 362
+
+* Land combat unit tries to end turn on the tile with more defensive bonuses while moving to attack position.
+  * regular unit utilizes rough terrain (rocky, forest).
+  * native unit utilizes rough terrain and fungus.
+
 # Version 361
 
 * [Fix] Fixed base psych computation.

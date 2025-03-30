@@ -1625,7 +1625,7 @@ void finalizeFormerOrders()
 		}
 		else
 		{
-			transitVehicle(Task(formerOrder.vehicleId, TT_TERRAFORM, formerOrder.tile, formerOrder.tile, nullptr, -1, formerOrder.action));
+			transitVehicle(Task(formerOrder.vehicleId, TT_TERRAFORM, formerOrder.tile, nullptr, -1, formerOrder.action));
 		}
 		
 	}

@@ -74,6 +74,7 @@ struct TileInfo
 	bool ocean;
 	SurfaceType surfaceType;
 	bool coast;
+	bool rough;
 	std::set<int> adjacentSeaRegions;
 	
 	// items

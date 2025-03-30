@@ -51,25 +51,24 @@ std::string const taskTypeNames[]
 
 struct Task
 {
+	int vehiclePad0;
 	TaskType type;
-	int vehiclePad0 = -1;
-	MAP *destination = nullptr;
-	MAP *attackPosition = nullptr;
-	MAP *attackTarget = nullptr;
-	int order = -1;
-	int terraformingAction = -1;
+	MAP *destination;
+	MAP *attackTarget;
+	int order;
+	int terraformingAction;
 
-	Task(int _vehicleId, TaskType _type)
-	: type(_type), vehiclePad0(Vehicles[_vehicleId].pad_0)
+	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget, int _order, int _terraformingAction)
+	: vehiclePad0(Vehicles[_vehicleId].pad_0), type(_type), destination(_destination), attackTarget(_attackTarget), order(_order), terraformingAction(_terraformingAction)
+	{}
+	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget)
+	: Task(_vehicleId, _type, _destination, _attackTarget, -1, -1)
 	{}
 	Task(int _vehicleId, TaskType _type, MAP *_destination)
-	: type(_type), vehiclePad0(Vehicles[_vehicleId].pad_0), destination(_destination)
+	: Task(_vehicleId, _type, _destination, nullptr, -1, -1)
 	{}
-	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackPosition, MAP *_attackTarget)
-	: type(_type), vehiclePad0(Vehicles[_vehicleId].pad_0), destination(_destination), attackPosition(_attackPosition), attackTarget(_attackTarget)
-	{}
-	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackPosition, MAP *_attackTarget, int _order, int _terraformingAction)
-	: type(_type), vehiclePad0(Vehicles[_vehicleId].pad_0), destination(_destination), attackPosition(_attackPosition), attackTarget(_attackTarget), order(_order), terraformingAction(_terraformingAction)
+	Task(int _vehicleId, TaskType _type)
+	: Task(_vehicleId, _type, nullptr, nullptr, -1, -1)
 	{}
 	
 	static std::string typeName(TaskType &taskType);

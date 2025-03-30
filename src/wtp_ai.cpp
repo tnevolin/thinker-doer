@@ -363,6 +363,7 @@ void populateTileInfos()
 			tileInfo.ocean = true;
 			tileInfo.surfaceType = ST_SEA;
 			tileInfo.coast = false;
+			tileInfo.rough = false;
 		}
 		else
 		{
@@ -370,6 +371,7 @@ void populateTileInfos()
 			tileInfo.ocean = false;
 			tileInfo.surfaceType = ST_LAND;
 			tileInfo.coast = false;
+			tileInfo.rough = tile->is_rocky() || map_has_item(tile, BIT_FOREST);
 			
 			for (MAP *adjacentTile : getAdjacentTiles(tile))
 			{
@@ -2135,10 +2137,6 @@ void populateDangerZones()
 	
 	for (int vehicleId : aiData.vehicleIds)
 	{
-		VEH &vehicle = Vehicles[vehicleId];
-		int triad = vehicle.triad();
-		TileInfo &vehicleTileInfo = aiData.getVehicleTileInfo(vehicleId);
-		
 		// artifact or colony
 		
 		if (!(isArtifactVehicle(vehicleId) || isColonyVehicle(vehicleId)))
@@ -2265,10 +2263,6 @@ void populateDangerZones()
 	
 	for (int vehicleId : aiData.vehicleIds)
 	{
-		VEH &vehicle = Vehicles[vehicleId];
-		int triad = vehicle.triad();
-		TileInfo &vehicleTileInfo = aiData.getVehicleTileInfo(vehicleId);
-		
 		// not artifact or colony
 		
 		if ((isArtifactVehicle(vehicleId) || isColonyVehicle(vehicleId)))
@@ -2395,10 +2389,6 @@ void populateDangerZones()
 	
 	for (int vehicleId : aiData.vehicleIds)
 	{
-		VEH &vehicle = Vehicles[vehicleId];
-		int triad = vehicle.triad();
-		TileInfo &vehicleTileInfo = aiData.getVehicleTileInfo(vehicleId);
-		
 		// combat
 		
 		if (!isCombatVehicle(vehicleId))

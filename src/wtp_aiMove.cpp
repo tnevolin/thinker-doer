@@ -987,6 +987,113 @@ void setSafeMoveTo(int vehicleId, MAP *destination)
 	
 }
 
+/*
+Ends combat vehicle turn at the best tile.
+*/
+void setCombatMoveTo(int vehicleId, MAP *destination)
+{
+	VEH &vehicle = Vehicles[vehicleId];
+	int factionId = vehicle.faction_id;
+	int triad = vehicle.triad();
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	MovementType movementType = getVehicleMovementType(vehicleId);
+	int speed = getVehicleSpeed(vehicleId);
+	bool fungusBonus = isNativeVehicle(vehicleId) || has_project(FAC_XENOEMPATHY_DOME, factionId);
+	
+	debug("setCombatMoveTo [%4d] %s -> %s\n", vehicleId, getLocationString(vehicleTile).c_str(), getLocationString(destination).c_str());
+	
+	// land
+	
+	if (triad != TRIAD_LAND)
+	{
+		debug("\tnot land\n");
+		setMoveTo(vehicleId, destination);
+		return;
+	}
+	
+	// not in the same cluster
+	
+	if (!isSameLandCluster(vehicleTile, destination))
+	{
+		debug("\tnot in same land cluster\n");
+		setMoveTo(vehicleId, destination);
+		return;
+	}
+	
+	// no need for best location when vehicle is not in the danger zone
+	
+	if (aiData.hostileEndangeredVehicleIds.find(vehicleId) == aiData.hostileEndangeredVehicleIds.end())
+	{
+		debug("\tnot hostileEndangeredVehicle\n");
+		setMoveTo(vehicleId, destination);
+		return;
+	}
+	
+	MAP *bestTile = nullptr;
+	double bestTileMovementCost = DBL_MAX;
+	bool bestTileSafe = false;
+	bool bestTileDefenseBonus = false;
+	
+	Profiling::start("- setSafeMoveTo - getVehicleReachableLocations");
+	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId))
+	{
+		int tileIndex = reachableLocation.first;
+		MAP *tile = *MapTiles + tileIndex;
+		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
+		double defenseBonus = tileInfo.rough || (fungusBonus && tile->is_fungus());
+		
+		double movementCost = getLandLMovementCost(factionId, movementType, speed, tile, destination, false);
+		
+		if (movementCost >= bestTileMovementCost + (double)Rules->move_rate_roads)
+			continue;
+		
+		if (movementCost > bestTileMovementCost - (double)Rules->move_rate_roads)
+		{
+			if (bestTileSafe && tileInfo.hostileDangerZone)
+				continue;
+			
+			
+			if (bestTileDefenseBonus && !defenseBonus)
+				continue;
+			
+		}
+		
+		bestTile = tile;
+		bestTileMovementCost = movementCost;
+		bestTileSafe = !tileInfo.hostileDangerZone;
+		bestTileDefenseBonus = defenseBonus;
+		
+//		debug
+//		(
+//			"%s"
+//			" danger=%5.2f"
+//			" distance=%5.2f"
+//			" weight=%5.2f"
+//			" dangerous=%d"
+//			" best=%d"
+//			"\n"
+//			, getLocationString(tile).c_str()
+//			, danger
+//			, distance
+//			, weight
+//			, dangerous
+//			, weight < bestTileWeight
+//		);
+	
+	}
+	Profiling::stop("- setSafeMoveTo - getVehicleReachableLocations");
+	
+	if (bestTile == nullptr)
+	{
+		setMoveTo(vehicleId, destination);
+	}
+	else
+	{
+		setMoveTo(vehicleId, {bestTile, destination});
+	}
+	
+}
+
 /**
 Searches for item closest to origin within given realm withing given range.
 realm: 0 = land, 1 = ocean, 2 = both

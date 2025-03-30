@@ -415,7 +415,7 @@ void immediateAttack()
 		
 		// set task
 		
-		setTask(Task(vehicleId, selectedTaskType, selectedPosition, selectedPosition, selectedTarget));
+		setTask(Task(vehicleId, selectedTaskType, selectedPosition, selectedTarget));
 		
 		debug
 		(
@@ -1251,7 +1251,7 @@ void moveCombat()
 			
 		}
 		
-		if (!transitVehicle(Task(vehicleId, taskPriority.taskType, taskPriority.destination, taskPriority.destination, taskPriority.attackTarget)))
+		if (!transitVehicle(Task(vehicleId, taskPriority.taskType, taskPriority.destination, taskPriority.attackTarget)))
 		{
 			// TODO amphibious vehicles cannot find their path to empty enemy bases
 			debug("ERROR: transitVehicle failed.");

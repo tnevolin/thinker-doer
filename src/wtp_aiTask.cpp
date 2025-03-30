@@ -178,7 +178,7 @@ int Task::execute(int vehicleId)
 
 		if (isCombatVehicle(vehicleId))
 		{
-			setMoveTo(vehicleId, destination);
+			setCombatMoveTo(vehicleId, destination);
 		}
 		else
 		{
@@ -733,7 +733,7 @@ void setTask(Task task)
 	{
 		aiData.tasks.at(vehicle->pad_0) = task;
 	}
-
+	
 }
 
 bool hasTask(int vehicleId)
