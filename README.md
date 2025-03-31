@@ -246,7 +246,7 @@ Instead each subsequent reactor decreases weapon/armor cost by approximately 20%
 
 ### Special cases
 
-* Sea colony/former/supply on foil chassis cost same as infantry, and criuser same as speeder.
+* Sea colony/former/supply/transport on foil chassis cost same as infantry, and criuser same as speeder.
 * Probe armor cost is halved.
 
 ## Unit cost formula
