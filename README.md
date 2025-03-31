@@ -232,16 +232,22 @@ Unit cost formula is reworked and is greatly simplified to resemble Civ 1/2 mode
 
 ## Reactors
 
-Reactor power does not multiply unit max hit points anymore. All units (conventional and native) have 10 max hit points regardless of reactor.
+Reactor power does not multiply unit max hit points anymore. All units (conventional and native) have 10 max hit points regardless of reactor. Each hit removes 10% of total unit power.
 
 Instead each subsequent reactor decreases weapon/armor cost by approximately 20%. Modules are not discounted. Player **does not** get refund when upgrading unit to cheaper one with more powerful reactor.
 
 ## Unit pricing principles
+
+* Stronger reactor decreases weapon/armor cost by 20% comparing to previous generation. Modules are not discounted.
 * Primary item (most expensive module/weapon/armor item) defines base cost.
-* Secondary item (least expensive module/weapon/armor item) increases cost just by 50% of its value to encourage mixed units usage.
+* Secondary item (least expensive module/weapon/armor item) increases cost by 50% of its value.
 * Faster chassis make unit proportionally more expensive. Speeder/Cruiser are 1.5 times and Hovertank is 2 times more expensive than Infantry.
-* Stronger reactors decrease weapon/armor cost by 20% comparing to previous generation.
-* Abilities have now proportional and flat cost components those can be set independently for each ability. Proportional one works as in vanilla and increases cost by 25% for each unit value. Flat cost adds given number of minerals rows to the cost.
+* Abilities have proportional and flat cost components those can be set independently for each ability. Proportional one works as in original and increases cost by 25% for each unit of value. Flat one adds given number of minerals rows to the cost.
+
+### Special cases
+
+* Sea colony/former/supply on foil chassis cost same as infantry, and criuser same as speeder.
+* Probe armor cost is halved.
 
 ## Unit cost formula
 
