@@ -246,6 +246,7 @@ Instead each subsequent reactor decreases weapon/armor cost by approximately 20%
 
 ### Special cases
 
+* Planet Buster, Tectonic Payload, Fungal Payload power is directly proportional to reactor and, therefore, their price is multiplied by reactor!
 * Sea colony/former/supply/transport on foil chassis cost same as infantry, and criuser same as speeder.
 * Probe armor cost is halved.
 
@@ -255,11 +256,12 @@ Ability proportional and flat costs are packed into a singe value for ability co
 
 <pre>
 
+module cost is not modified
+Planet Buster, Tectonic Payload, Fungal Payload cost is not modified
+weapon/armor reactor modified cost = item cost * (reactor value / Fission reactor value)
+
 unit cost = round(round([primary item cost + secondary item shifted cost / 2] * chassis cost / 2) * abilities cost factor + abilities flat cost)
 (rounded normally)
-
-item reactor modified cost = item cost * (reactor value / 100)
-module uses Fission reactor value for their reactor value
 
 primary item = the one with higher reactor modified cost
 secondary item = the one with lower reactor modified cost
