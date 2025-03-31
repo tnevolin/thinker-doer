@@ -372,17 +372,8 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("alternative_prototype_cost_formula")) {
         cf->alternative_prototype_cost_formula = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("reactor_cost_factor_0")) {
-        cf->reactor_cost_factors[0] = atoi(value);
-    }
-    else if (MATCH("reactor_cost_factor_1")) {
-        cf->reactor_cost_factors[1] = atoi(value);
-    }
-    else if (MATCH("reactor_cost_factor_2")) {
-        cf->reactor_cost_factors[2] = atoi(value);
-    }
-    else if (MATCH("reactor_cost_factor_3")) {
-        cf->reactor_cost_factors[3] = atoi(value);
+    else if (MATCH("reactor_cost_factors")) {
+		opt_list_parse(cf->reactor_cost_factors, buf, 4, 0);
     }
     else if (MATCH("hurry_minimal_minerals")) {
         cf->hurry_minimal_minerals = (atoi(value) == 0 ? false : true);

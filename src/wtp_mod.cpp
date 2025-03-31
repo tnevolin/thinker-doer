@@ -470,53 +470,47 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 /*
 Prototype cost calculation.
 
-0.
-colony, former, transport have their chassis cost reduced to match land analogues.
-foil = infantry
-cruiser = speeder
+Sea transport, colony, former, supply chassis cost similar to their land counterparts.
+foil	= infantry
+cruiser	= speeder
 
-1. Calculate module and weapon/armor reactor modified costs.
-module reactor modified cost = item cost * (Fission reactor value / 100)
-weapon/armor reactor modified cost = item cost * (reactor value / 100)
-1a. Planet Buster, Tectonic Payload, Fungal Payload are treated as modules.
+Buster missile (Planet Buster, Tectonic Payload, Fungal Payload) cost is multiplied by reactor.
+This is a special case because their power is directly proportional to reactor.
 
-2. Select primary and secondary item.
+- Calculate module and weapon/armor reactor modified costs.
+module cost is unchanged
+buster cost			= item cost * reactor
+weapon/armor cost	= item cost * (reactor value / Fission reactor value)
+
+- Select primary and secondary item
 primary item = the one with higher reactor modified cost
 secondary item = the one with lower reactor modified cost
 
-3. Calculate primary item cost and secondary item shifted cost
-primary item cost = item cost * (corresponding reactor value / 100)
-secondary item shifted cost = (item cost - 1) * (corresponding reactor value / 100)
+- Calculate primary item cost and secondary item shifted cost
+primary item cost	= item cost
+secondary item cost	= item cost - 1
 
-4. Calculate unit base cost.
-unit base cost = [primary item cost + secondary item shifted cost / 2] * chassis cost / <infrantry chassis cost>
+- Calculate unit base cost
+unit base cost		= [<primary item cost> + <secondary item cost> / 2] * <chassis cost> / <infrantry chassis cost>
 
-5. Round.
-
-6. Multiply by ability cost factor.
+- Multiply by ability cost factor
 ability bytes 0-3 is cost factor
 
-7. Add ability flat cost
+- Add ability flat cost
 ability bytes 4-7 is flat cost
 
-8. Round.
+- Round down
 
 */
-__cdecl int wtp_mod_proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor_level)
+__cdecl int wtp_mod_proto_cost(int chassis_id, int weapon_id, int armor_id, int abilities, int reactor)
 {
-    int weapon_cost = Weapon[weapon_id].cost;
-    int armor_cost = Armor[armor_id].cost;
-    int chassis_cost = Chassis[chassis_id].cost;
+    double weapon_cost	= (double)Weapon[weapon_id].cost;
+    double armor_cost	= (double)Armor[armor_id].cost;
+    double chassis_cost	= (double)Chassis[chassis_id].cost;
 	
     // reactor cost factors
 	
-    double fission_reactor_cost_factor = (double)conf.reactor_cost_factors[0] / 100.0;
-    double reactor_cost_factor = (double)conf.reactor_cost_factors[reactor_level - 1] / 100.0;
-	
-    // minimal item costs
-	
-    int minimal_weapon_cost = Weapon[WPN_HAND_WEAPONS].cost;
-    int minimal_armor_cost = Armor[ARM_NO_ARMOR].cost;
+    double reactor_cost_factor = (double)conf.reactor_cost_factors[reactor - 1] / (double)conf.reactor_cost_factors[0];
 	
     // component values
 	
@@ -524,55 +518,88 @@ __cdecl int wtp_mod_proto_cost(int chassis_id, int weapon_id, int armor_id, int 
     int armor_defense_value = Armor[armor_id].defense_value;
     int chassis_speed = Chassis[chassis_id].speed;
 	
-    // module or weapon
+    // modified component costs
+    
+    double weaponModifiedCost;
+    switch (weapon_id)
+    {
+	case WPN_PLANET_BUSTER:
+	case WPN_TECTONIC_PAYLOAD:
+	case WPN_FUNGAL_PAYLOAD:
+		weaponModifiedCost = weapon_cost * (double)reactor;
+		break;
+	case WPN_TROOP_TRANSPORT:
+	case WPN_COLONY_MODULE:
+	case WPN_TERRAFORMING_UNIT:
+	case WPN_SUPPLY_TRANSPORT:
+	case WPN_PROBE_TEAM:
+	case WPN_ALIEN_ARTIFACT:
+		weaponModifiedCost = weapon_cost;
+		break;
+	default:
+		weaponModifiedCost = weapon_cost * reactor_cost_factor;
+    }
+    
+    double armorModifiedCost;
+    switch (weapon_id)
+    {
+	case WPN_PROBE_TEAM:
+		armorModifiedCost = armor_cost * reactor_cost_factor * 0.5;
+		break;
+	default:
+		armorModifiedCost = armor_cost * reactor_cost_factor;
+    }
 	
-    bool module = ((weapon_id >= WPN_PLANET_BUSTER && weapon_id <= WPN_ALIEN_ARTIFACT) || weapon_id == WPN_TECTONIC_PAYLOAD || weapon_id == WPN_FUNGAL_PAYLOAD);
+    // modified chassis cost for sea based non combat related modules
 	
-    // get component costs
-	
-    // modify chassis cost for sea based non combat related modules
-
-    if (weapon_id == WPN_COLONY_MODULE || weapon_id == WPN_TERRAFORMING_UNIT || weapon_id == WPN_TROOP_TRANSPORT)
-	{
+    double chassisModifiedCost;
+    switch (weapon_id)
+    {
+	case WPN_TROOP_TRANSPORT:
+	case WPN_COLONY_MODULE:
+	case WPN_TERRAFORMING_UNIT:
+	case WPN_SUPPLY_TRANSPORT:
 		switch (chassis_id)
 		{
 		case CHS_FOIL:
-			chassis_cost = Chassis[CHS_INFANTRY].cost;
+			chassisModifiedCost = Chassis[CHS_INFANTRY].cost;
 			break;
 		case CHS_CRUISER:
-			chassis_cost = Chassis[CHS_SPEEDER].cost;
+			chassisModifiedCost = Chassis[CHS_SPEEDER].cost;
 			break;
+		default:
+			chassisModifiedCost = chassis_cost;
 		}
-	}
-	
-    // items reactor modified costs
-	
-    double weapon_reactor_modified_cost = (double)weapon_cost * (module ? fission_reactor_cost_factor : reactor_cost_factor);
-    double armor_reactor_modified_cost = (double)armor_cost * reactor_cost_factor;
-	
+		break;
+	default:
+		chassisModifiedCost = chassis_cost;
+    }
+    
+    double chassisCostFactor = chassisModifiedCost / (double)Chassis[CHS_INFANTRY].cost;
+    
     // primary item and secondary item shifted costs
 	
     double primary_item_cost;
-    double secondary_item_shifted_cost;
+    double secondary_item_cost;
 	
-    if (weapon_reactor_modified_cost >= armor_reactor_modified_cost)
+    if (weaponModifiedCost >= armorModifiedCost)
 	{
-		primary_item_cost = weapon_reactor_modified_cost;
-		secondary_item_shifted_cost = ((double)armor_cost - minimal_armor_cost) * reactor_cost_factor;
+		primary_item_cost	= weaponModifiedCost;
+		secondary_item_cost	= armorModifiedCost;
 	}
 	else
 	{
-		primary_item_cost = armor_reactor_modified_cost;
-		secondary_item_shifted_cost = ((double)weapon_cost - minimal_weapon_cost) * (module ? fission_reactor_cost_factor : reactor_cost_factor);
+		primary_item_cost	= armorModifiedCost;
+		secondary_item_cost	= weaponModifiedCost;
 	}
 	
     // set minimal cost to reactor level (this is checked in some other places so we should do this here to avoid any conflicts)
 	
-    int minimal_cost = reactor_level;
+    int minimal_cost = reactor;
 	
     // calculate base unit cost without abilities
 	
-    double base_cost = (primary_item_cost + secondary_item_shifted_cost / 2) * chassis_cost / Chassis[CHS_INFANTRY].cost;
+    double base_cost = (primary_item_cost + 0.5 * secondary_item_cost) * chassisCostFactor;
 	
     // get abilities cost modifications
 	
@@ -658,25 +685,8 @@ __cdecl int wtp_mod_proto_cost(int chassis_id, int weapon_id, int armor_id, int 
 	
     // calculate final cost
 	
-    int cost =
-        std::max
-        (
-            // minimal cost
-            minimal_cost,
-            (int)
-            round
-            (
-				// base cost
-				base_cost
-                *
-                // abilities cost factor
-                (1.0 + 0.25 * (double)abilities_cost_factor)
-            )
-            +
-            // abilities flat cost
-            abilities_cost_addition
-        )
-    ;
+	int finalCost = (int)floor(base_cost * (1.0 + 0.25 * (double)abilities_cost_factor)) + abilities_cost_addition;
+    int cost = std::max(minimal_cost, finalCost);
 	
     return cost;
 	

@@ -1,3 +1,11 @@
+# Version 363
+
+* Unit cost.
+  * Simplified float computations. Some unit cost may vary slightly due to rounding.
+  * Probe armor cost is halved.
+* [Fix] Governor picks bigger nutrient yield even when base cannot grow for aestetical purposes.
+* [Fix] Another base computation bug when base prefers all specialists.
+
 # Version 362
 
 * Land combat unit tries to end turn on the tile with more defensive bonuses while moving to attack position.

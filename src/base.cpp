@@ -3741,7 +3741,7 @@ double computeBaseTileScore(bool restrictions, double growthFactor, double energ
 	double mineral = (1.0 + conf.worker_algorithm_mineral_preference) * (double)tileValueMineral;
 	double energy = (1.0 + conf.worker_algorithm_energy_preference) * (double)tileValueEnergy;
 	
-	double growthMultiplier = can_grow ? conf.worker_algorithm_growth_multiplier : 0.0;
+	double growthMultiplier = conf.worker_algorithm_growth_multiplier * (can_grow ? 1.0 : 0.1);
 	int minimalNutrientSurplus = can_grow ? conf.worker_algorithm_minimal_nutrient_surplus : 0;
 	int minimalMineralSurplus = conf.worker_algorithm_minimal_mineral_surplus;
 	int minimalEnergySurplus = conf.worker_algorithm_minimal_energy_surplus;
@@ -3766,14 +3766,21 @@ double computeBaseTileScore(bool restrictions, double growthFactor, double energ
 		double mineralSurplusFinal = (double)mineralSurplus + mineral;
 		double energySurplusFinal = (double)energySurplus + energy;
 		
-		double income = mineralSurplusFinal + energyValue * energySurplusFinal;
-		double incomeGrowth = growthFactor * nutrientSurplusFinal * income;
+		double oldIncome = mineralSurplus + energyValue * energySurplus;
+		double oldIncomeGrowth = growthFactor * nutrientSurplus * oldIncome;
 		
-		double incomeGain = income;
-		double incomeGrowthGain = growthMultiplier * incomeGrowth;
-		double gain = incomeGain + incomeGrowthGain;
+		double oldIncomeGain = oldIncome;
+		double oldIncomeGrowthGain = growthMultiplier * oldIncomeGrowth;
+		double oldGain = oldIncomeGain + oldIncomeGrowthGain;
 		
-		score = gain;
+		double newIncome = mineralSurplusFinal + energyValue * energySurplusFinal;
+		double newIncomeGrowth = growthFactor * nutrientSurplusFinal * newIncome;
+		
+		double newIncomeGain = newIncome;
+		double newIncomeGrowthGain = growthMultiplier * newIncomeGrowth;
+		double newGain = newIncomeGain + newIncomeGrowthGain;
+		
+		score = newGain - oldGain;
 		
 //		debug
 //		(

@@ -2830,7 +2830,7 @@ double getLandLApproachTime(int factionId, MovementType movementType, int speed,
 	
 }
 
-double getLandLMovementCost(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination)
+double getLandLMovementCost(int factionId, MovementType movementType, MAP *org, MAP *dst, bool includeDestination)
 {
 	Profiling::start("- getLandLMovementCost");
 	
@@ -2840,9 +2840,7 @@ double getLandLMovementCost(int factionId, MovementType movementType, int speed,
 	assert(isOnMap(org));
 	assert(isOnMap(dst));
 	
-	FactionInfo const &factionInfo = aiData.factionInfos.at(factionId);
 	FactionMovementInfo const &factionMovementInfo = factionMovementInfos.at(factionId);
-	std::vector<int> const &combatClusters = factionMovementInfo.landCombatClusters;
 	
 	int landMovementTypeIndex = movementType - LAND_MOVEMENT_TYPE_FIRST;
 	

@@ -997,7 +997,6 @@ void setCombatMoveTo(int vehicleId, MAP *destination)
 	int triad = vehicle.triad();
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	MovementType movementType = getVehicleMovementType(vehicleId);
-	int speed = getVehicleSpeed(vehicleId);
 	bool fungusBonus = isNativeVehicle(vehicleId) || has_project(FAC_XENOEMPATHY_DOME, factionId);
 	
 	debug("setCombatMoveTo [%4d] %s -> %s\n", vehicleId, getLocationString(vehicleTile).c_str(), getLocationString(destination).c_str());
@@ -1042,7 +1041,7 @@ void setCombatMoveTo(int vehicleId, MAP *destination)
 		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
 		double defenseBonus = tileInfo.rough || (fungusBonus && tile->is_fungus());
 		
-		double movementCost = getLandLMovementCost(factionId, movementType, speed, tile, destination, false);
+		double movementCost = getLandLMovementCost(factionId, movementType, tile, destination, false);
 		
 		if (movementCost >= bestTileMovementCost + (double)Rules->move_rate_roads)
 			continue;
