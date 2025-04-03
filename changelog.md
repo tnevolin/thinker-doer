@@ -1,3 +1,8 @@
+# Version 364
+
+* Reduced number of defensive probes.
+* [Fix] Production computation cleaned up. AI should focus on essential facilities more.
+
 # Version 363
 
 * Unit cost.

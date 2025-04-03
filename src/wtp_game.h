@@ -215,6 +215,69 @@ struct RangeTile
 	MAP *tile = nullptr;
 };
 
+class ArithmeticSummaryStatistics
+{
+private:
+	double sumWeight = 0.0;
+	double sumWeightValue = 0.0;
+public:
+	void clear()
+	{
+		this->sumWeight = 0.0;
+		this->sumWeightValue = 0.0;
+	}
+	void add(double value, double weight = 1.0)
+	{
+		assert(weight >= 0.0);
+		sumWeight += weight;
+		sumWeightValue += weight * value;
+	}
+	double getWeight()
+	{
+		return sumWeight;
+	}
+	double getArithmeticSum()
+	{
+		return sumWeightValue;
+	}
+	double getArithmeticMean()
+	{
+		return sumWeight <= 0.0 ? 0.0 : sumWeightValue / sumWeight;
+	}
+};
+
+class HarmonicSummaryStatistics
+{
+private:
+	double sumWeight = 0.0;
+	double sumWeightValue = 0.0;
+public:
+	void clear()
+	{
+		this->sumWeight = 0.0;
+		this->sumWeightValue = 0.0;
+	}
+	void add(double value, double weight = 1.0)
+	{
+		assert(weight >= 0.0);
+		assert(value > 0.0);
+		sumWeight += weight;
+		sumWeightValue += weight * 1.0 / value;
+	}
+	double getWeight()
+	{
+		return sumWeight;
+	}
+	double getHarmonicSum()
+	{
+		return sumWeightValue;
+	}
+	double getHarmonicMean()
+	{
+		return sumWeight <= 0.0 || sumWeightValue <= 0.0 ? 0.0 : 1.0 / (sumWeightValue / sumWeight);
+	}
+};
+
 // =======================================================
 // tile offsets
 // =======================================================

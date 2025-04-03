@@ -98,33 +98,6 @@ struct AttackAction
 	
 };
 
-class AverageAccumulator
-{
-private:
-	double sumWeight = 0.0;
-	double sumWeightedValue = 0.0;
-public:
-	void clear()
-	{
-		this->sumWeight = 0.0;
-		this->sumWeightedValue = 0.0;
-	}
-	void add(double weight, double value)
-	{
-		assert(weight >= 0.0);
-		sumWeight += weight;
-		sumWeightedValue += weight * value;
-	}
-	void add(double value)
-	{
-		add(1.0, value);
-	}
-	double get()
-	{
-		return sumWeight == 0.0 ? 0.0 : sumWeightedValue / sumWeight;
-	}
-};
-
 struct ReachSearch
 {
 	robin_hood::unordered_flat_map<int, int> values;

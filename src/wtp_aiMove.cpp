@@ -1175,17 +1175,26 @@ MAP *getSafeLocation(int vehicleId, bool unfriendly)
 	// artifact
 	
 	if (!isArtifactVehicle(vehicleId))
+	{
+		Profiling::stop("- getSafeLocation");
 		return nullptr;
+	}
 	
 	// infantry chassis
 	
 	if (vehicle.chassis_type() != CHS_INFANTRY)
+	{
+		Profiling::stop("- getSafeLocation");
 		return nullptr;
+	}
 	
 	// exclude transported land vehicle
 	
 	if (isLandVehicleOnTransport(vehicleId))
+	{
+		Profiling::stop("- getSafeLocation");
 		return nullptr;
+	}
 	
 	// search closest safe location
 	
@@ -1216,12 +1225,14 @@ MAP *getSafeLocation(int vehicleId, bool unfriendly)
 		if (map_has_item(tile, BIT_BASE_IN_TILE) && isFriendly(vehicle.faction_id, tile->owner))
 		{
 			// base is a best safe location
+			Profiling::stop("- getSafeLocation");
 			return tile;
 		}
 		
 		if ((triad == TRIAD_LAND || triad == TRIAD_SEA) && map_has_item(tile, BIT_BUNKER) && !isBlocked(tile))
 		{
 			// not blocked bunker is a safe location for surface vehicle
+			Profiling::stop("- getSafeLocation");
 			return tile;
 		}
 		
@@ -1240,6 +1251,7 @@ MAP *getSafeLocation(int vehicleId, bool unfriendly)
 		if (unfriendly ? tileInfo.unfriendlyDangerZone : tileInfo.hostileDangerZone)
 			continue;
 		
+		Profiling::stop("- getSafeLocation");
 		return tile;
 		
 	}

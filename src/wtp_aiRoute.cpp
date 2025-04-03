@@ -2836,7 +2836,6 @@ double getLandLMovementCost(int factionId, MovementType movementType, MAP *org, 
 	
 	assert(factionId >= 0 && factionId < MaxPlayerNum);
 	assert(movementType >= BASIC_LAND_MOVEMENT_TYPE_FIRST && movementType <= BASIC_LAND_MOVEMENT_TYPE_LAST);
-	assert(speed > 0);
 	assert(isOnMap(org));
 	assert(isOnMap(dst));
 	
@@ -3588,6 +3587,35 @@ int getVehicleSeaCluster(int vehicleId)
 	return(getSeaCluster(getVehicleMapTile(vehicleId)));
 }
 
+int getBaseSeaCluster(MAP *baseTile)
+{
+	int baseSeaCluster = -1;
+	
+	for (MAP *rangeTile : getRangeTiles(baseTile, 1, true))
+	{
+		int seaCluster = getSeaCluster(rangeTile);
+		if (seaCluster == -1)
+			continue;
+		
+		baseSeaCluster = seaCluster;
+		break;
+		
+	}
+	
+	return baseSeaCluster;
+	
+}
+
+bool isSameSeaCluster(int tile1SeaCluster, MAP *tile2)
+{
+	assert(tile2 >= *MapTiles && tile2 < *MapTiles + *MapAreaTiles);
+	
+	int tile2SeaCluster = getSeaCluster(tile2);
+	
+	return tile1SeaCluster != -1 && tile2SeaCluster != -1 && tile1SeaCluster == tile2SeaCluster;
+	
+}
+
 bool isSameSeaCluster(MAP *tile1, MAP *tile2)
 {
 	assert(tile1 >= *MapTiles && tile2 < *MapTiles + *MapAreaTiles);
@@ -3883,19 +3911,6 @@ int getVehicleCluster(int vehicleId)
 	}
 	
 	return cluster;
-	
-}
-
-/**
-Gets base sea cluster.
-*/
-int getBaseSeaCluster(int baseId)
-{
-	assert(baseId >= 0 && baseId < *BaseCount);
-	
-	MAP *baseTile = getBaseMapTile(baseId);
-	
-	return getSeaCluster(baseTile);
 	
 }
 

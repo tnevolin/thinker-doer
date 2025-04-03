@@ -1023,6 +1023,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_production_project_mineral_surplus_fraction = atof(value);
     }
+    else if (MATCH("ai_production_priority_facility_psych"))
+    {
+        cf->ai_production_priority_facility_psych = atof(value);
+    }
     else if (MATCH("ai_production_threat_coefficient_human"))
     {
         cf->ai_production_threat_coefficient_human = atof(value);

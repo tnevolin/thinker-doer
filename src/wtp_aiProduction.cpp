@@ -25,6 +25,8 @@ double landColonyGain;
 
 double globalColonyDemand;
 double baseColonyDemandMultiplier;
+int bestFormerChassisIds[3];
+int bestFormerSpeeds[3];
 robin_hood::unordered_flat_map<int, BaseProductionInfo> baseProductionInfos;
 robin_hood::unordered_flat_map<int, double> weakestEnemyBaseProtection;
 
@@ -147,6 +149,21 @@ void populateFactionProductionData()
 	// global parameters
 	
 	techStealGain = getTechStealGain();
+	
+	// fomer speed
+	
+	std::fill(std::begin(bestFormerSpeeds), std::begin(bestFormerSpeeds) + 3, 0);
+	std::fill(std::begin(bestFormerChassisIds), std::begin(bestFormerChassisIds) + 3, -1);
+	for (int unitId : aiData.formerUnitIds)
+	{
+		int chassisId = Units[unitId].chassis_id;
+		CChassis chassis = Chassis[Units[unitId].chassis_id];
+		if (chassis.speed > bestFormerSpeeds[chassis.triad])
+		{
+			bestFormerChassisIds[chassis.triad] = chassisId;
+			bestFormerSpeeds[chassis.triad] = chassis.speed;
+		}
+	}
 	
 	// available former counts
 	
@@ -436,7 +453,8 @@ void evaluateGlobalSeaTransportDemand()
 		
 		for (int baseId : aiData.baseIds)
 		{
-			int baseSeaCluster = getBaseSeaCluster(baseId);
+			MAP *baseTile = getBaseMapTile(baseId);
+			int baseSeaCluster = getBaseSeaCluster(baseTile);
 			
 			// same seaCluster
 			
@@ -989,24 +1007,23 @@ void evaluatePsychFacilitiesRemoval()
 		
 		// gain
 		
-		double gain = getFacilityGain(baseId, facilityId, false, false);
+		double gain = getFacilityGain(baseId, facilityId, false);
+		
+		debug
+		(
+			"\t%-32s"
+			" gain=%5.2f"
+			"\n"
+			, getFacility(facilityId)->name
+			, gain
+		);
 		
 		// remove if positive gain
 		
 		if (gain >= 0)
 		{
 			setBaseFacility(baseId, facilityId, false);
-			
-			debug
-			(
-				"\t%-32s"
-				" removed"
-				" gain=%5.2f"
-				"\n"
-				, getFacility(facilityId)->name
-				, gain
-			);
-			
+			debug("\t\tremoved\n");
 		}
 		
 	}
@@ -1019,7 +1036,6 @@ void evaluatePsychFacilities()
 	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
-	BASE *base = productionDemand.base;
 	
 	// facilityIds
 	
@@ -1034,48 +1050,10 @@ void evaluatePsychFacilities()
 		if (!isBaseCanBuildFacility(baseId, facilityId))
 			continue;
 		
-		// old workers
-		
-		int oldWorkerCount = base->pop_size - base->specialist_total;
-		
-		// new workers
-		
-		setBaseFacility(baseId, facilityId, true);
-		Profiling::start("- evaluatePsychFacilities - computeBase");
-		computeBase(baseId, true);
-		Profiling::stop("- evaluatePsychFacilities - computeBase");
-		
-		int newWorkerCount = base->pop_size - base->specialist_total;
-		
-		// restore base
-		
-		aiData.resetBase(baseId);
-		
 		// gain
 		
-		int workerCountIncrease = newWorkerCount - oldWorkerCount;
-		double nutrientSurplusIncrease = aiData.averageWorkerNutrientIntake2 * workerCountIncrease;
-		double resourceIncomeIncrease = aiData.averageWorkerResourceIncome * workerCountIncrease;
-		
-		double incomeIncrease = resourceIncomeIncrease;
-		double incomeGain = getGainIncome(incomeIncrease);
-		
-		double populationGrowthIncrease = getBasePopulationGrowthIncrease(baseId, nutrientSurplusIncrease);
-		double incomeGrowthIncrease = aiData.averageCitizenResourceIncome * populationGrowthIncrease;
-		double incomeGrowthGain = getGainIncomeGrowth(incomeGrowthIncrease);
-		
-		// extra bonus for Hologram Theatre because of +50% psych
-		
-		if (facilityId == FAC_HOLOGRAM_THEATRE)
-		{
-			incomeGrowthGain *= (1.0 + PSYCH_MULTIPLIER_RESOURCE_GROWTH_INCREASE);
-		}
-		
-		double upkeep = getResourceScore(0.0, -Facility[facilityId].maint);
-		double upkeepGain = getGainIncome(upkeep);
-		
-		double gain = incomeGain + incomeGrowthGain + upkeepGain;
-		double priority = getItemPriority(-facilityId, gain);
+		double gain = getFacilityGain(baseId, facilityId, true);
+		double priority = conf.ai_production_priority_facility_psych * getItemPriority(-facilityId, gain);
 		
 		// add demand
 		
@@ -1084,32 +1062,14 @@ void evaluatePsychFacilities()
 		debug
 		(
 			"\t%-32s"
-			" priority=%5.2f   |"
-			" workerCountIncrease=%d"
-			" nutrientSurplusIncrease=%5.2f"
-			" resourceIncomeIncrease=%5.2f"
-			" incomeIncrease=%5.2f"
-			" incomeGain=%5.2f"
-			" populationGrowthIncrease=%5.2f"
-			" incomeGrowthIncrease=%5.2f"
-			" incomeGrowthGain=%5.2f"
-			" upkeep=%5.2f"
-			" upkeepGain=%5.2f"
+			" priority=%5.2f"
 			" gain=%5.2f"
+			" ai_production_priority_facility_psych=%5.2f"
 			"\n"
 			, getFacility(facilityId)->name
 			, priority
-			, workerCountIncrease
-			, nutrientSurplusIncrease
-			, resourceIncomeIncrease
-			, incomeIncrease
-			, incomeGain
-			, populationGrowthIncrease
-			, incomeGrowthIncrease
-			, incomeGrowthGain
-			, upkeep
-			, upkeepGain
 			, gain
+			, conf.ai_production_priority_facility_psych
 		);
 		
 	}
@@ -1160,7 +1120,7 @@ void evaluateIncomeFacilities()
 		
 		// gain
 		
-		double facilityGain = getFacilityGain(baseId, facilityId, true, true);
+		double facilityGain = getFacilityGain(baseId, facilityId, true);
 		
 		// moraleIncome
 		
@@ -1351,7 +1311,7 @@ void evaluatePopulationLimitFacilities()
 		
 		// gain from building a facility
 		
-		double facilityGain = getFacilityGain(baseId, facilityId, true, true);
+		double facilityGain = getFacilityGain(baseId, facilityId, true);
 		
 		// gain from population limit lifted
 		
@@ -1967,16 +1927,29 @@ void evaluateExpansionUnits()
 
 void evaluateTerraformingUnits()
 {
+	struct TerraformingGain
+	{
+		double time;
+		double income;
+		double gain;
+		bool operator<(TerraformingGain const &other) const
+		{
+			return this->gain > other.gain;
+		}
+	};
+
 	Profiling::start("evaluateTerraformingUnits", "suggestBaseProduction");
+	
+	debug("evaluateTerraformingUnits\n");
 	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
 	MAP *baseTile = getBaseMapTile(baseId);
+	int baseSeaCluster = getBaseSeaCluster(baseTile);
 	
 	// supported formers
 	
-	int supportedFormerCounts[3] = {0, 0, 0, };
-	
+	int supportedFormerCounts[3] = {0, 0, 0};
 	for (int vehicleId : aiData.formerVehicleIds)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
@@ -1989,23 +1962,156 @@ void evaluateTerraformingUnits()
 		
 	}
 	
-	// base clusters
+	// existing formers
 	
-	int baseSeaCluster = getSeaCluster(baseTile);
-	int baseLandTransportedCluster = getLandTransportedCluster(baseTile);
+	int existingFormerCounts[3] = {0, 0, 0};
+	for (int vehicleId : aiData.formerVehicleIds)
+	{
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		int chassisId = Units[Vehicles[vehicleId].unit_id].chassis_id;
+		CChassis &chassis = Chassis[chassisId];
+		int triad = chassis.triad;
+		int speed = chassis.speed;
+		
+		// same cluster
+		
+		switch (triad)
+		{
+		case TRIAD_AIR:
+			if (!isSameAirCluster(chassisId, speed, baseTile, vehicleTile))
+				continue;
+			break;
+		case TRIAD_SEA:
+			if (!isSameSeaCluster(baseSeaCluster, vehicleTile))
+				continue;
+			break;
+		case TRIAD_LAND:
+			if (!isSameLandTransportedCluster(baseTile, vehicleTile))
+				continue;
+			break;
+		}
+		
+		existingFormerCounts[triad]++;
+		
+	}
+debug(">existingFormerCounts= %d %d %d\n", existingFormerCounts[0], existingFormerCounts[1], existingFormerCounts[2]);
 	
-	debug("evaluateTerraformingUnits\n");
+	// extra former gain
+	
+	double extraFormerGains[3] = {0.0, 0.0, 0.0};
+	for (Triad triad : {TRIAD_AIR, TRIAD_SEA, TRIAD_LAND})
+	{
+		// for sea former base should have access to water
+		
+		if (triad == TRIAD_SEA && !(isBaseAccessesWater(baseId) && baseSeaCluster >= 0))
+			continue;
+		
+		// variable set
+		
+		if (bestFormerChassisIds[triad] == -1 || bestFormerSpeeds[triad] == 0)
+			continue;
+		
+		// average travel time and terraforming gains
+		
+		HarmonicSummaryStatistics distanceHarmonicSummary;
+		std::vector<TerraformingGain> terraformingGains;
+		for (FormerRequest &formerRequest : aiData.production.formerRequests)
+		{
+			TileInfo &tileInfo = aiData.getTileInfo(formerRequest.tile);
+			
+			// sensible terraforming time
+			
+			if (formerRequest.terraformingTime <= 0.0)
+				continue;
+			
+			// compatible surface
+			
+			if ((triad == TRIAD_LAND && !tileInfo.land) || (triad == TRIAD_SEA && !tileInfo.ocean))
+				continue;
+			
+			// same cluster
+			
+			switch (triad)
+			{
+			case TRIAD_AIR:
+				if (!isSameAirCluster(bestFormerChassisIds[TRIAD_AIR], bestFormerSpeeds[TRIAD_AIR], baseTile, formerRequest.tile))
+					continue;
+				break;
+			case TRIAD_SEA:
+				if (!isSameSeaCluster(baseSeaCluster, formerRequest.tile))
+					continue;
+				break;
+			case TRIAD_LAND:
+				if (!isSameLandTransportedCluster(baseTile, formerRequest.tile))
+					continue;
+				break;
+			}
+			
+			// distance
+			
+			double distance = (double)getRange(baseTile, formerRequest.tile);
+			distanceHarmonicSummary.add(distance);
+			
+			// terraforming gain
+			
+			terraformingGains.push_back({formerRequest.terraformingTime, formerRequest.income, 0.0});
+			
+		}
+		double averageDistance = distanceHarmonicSummary.getHarmonicMean();
+		double averateTravelTime = averageDistance / bestFormerSpeeds[triad];
+		
+		// update terraforming gains
+		
+		for (TerraformingGain &terraformingGain : terraformingGains)
+		{
+			terraformingGain.time += averateTravelTime;
+			terraformingGain.gain = terraformingGain.income / terraformingGain.time;
+		}
+		
+		// sort terraforming gains
+		
+		std::sort(terraformingGains.begin(), terraformingGains.end());
+		
+		// extra former gain
+		
+		double existingFormerCount = (double)existingFormerCounts[triad];
+		double existingFormerAccumulatedTime = 0.0;
+		double existingFormerTotalGain = 0.0;
+		double extraFormerCount = existingFormerCount + 1.0;
+		double extraFormerAccumulatedTime = 0.0;
+		double extraFormerTotalGain = 0.0;
+		for (TerraformingGain &terraformingGain : terraformingGains)
+		{
+			existingFormerAccumulatedTime += terraformingGain.time / existingFormerCount;
+			existingFormerTotalGain += getGainDelay(getGainIncome(terraformingGain.income), existingFormerAccumulatedTime);
+			extraFormerAccumulatedTime += terraformingGain.time / extraFormerCount;
+			extraFormerTotalGain += getGainDelay(getGainIncome(terraformingGain.income), extraFormerAccumulatedTime);
+		}
+		extraFormerGains[triad] = extraFormerTotalGain - existingFormerTotalGain;
+		
+	}
+debug(">extraFormerGains= %d %d %d\n", extraFormerGains[0], extraFormerGains[1], extraFormerGains[2]);
 	
 	// process available former units
 	
 	for (int unitId : aiData.formerUnitIds)
 	{
-		UNIT *unit = getUnit(unitId);
-		int triad = unit->triad();
+		UNIT &unit = Units[unitId];
+		int triad = unit.triad();
+		
+		// best unit speed
+		
+		if (unit.chassis_id != bestFormerChassisIds[triad])
+			continue;
 		
 		// for sea former base should have access to water
 		
-		if (triad == TRIAD_SEA && !isBaseAccessesWater(baseId))
+		if (triad == TRIAD_SEA && !(isBaseAccessesWater(baseId) && baseSeaCluster >= 0))
+			continue;
+		
+		// shoud have some gain
+		
+		if (extraFormerGains[triad] == 0.0)
 			continue;
 		
 		// early base restriction
@@ -2021,73 +2127,18 @@ void evaluateTerraformingUnits()
 		if (unitPriorityCoefficient <= 0.0)
 			continue;
 		
-		// best terraforming gain
+		// terraforming gain
 		
-		double bestTerraformingGain = 0.0;
-		
-		for (FormerRequest &formerRequest : aiData.production.formerRequests)
-		{
-			TileInfo &tileInfo = aiData.getTileInfo(formerRequest.tile);
-			
-			// compatible surface
-			
-			if ((triad == TRIAD_LAND && tileInfo.ocean) || (triad == TRIAD_SEA && !tileInfo.ocean))
-				continue;
-			
-			// same cluster
-			
-			switch (triad)
-			{
-			case TRIAD_AIR:
-				// assuming air formers can get anywhere
-				break;
-			case TRIAD_SEA:
-				{
-					int seaCluster = getSeaCluster(formerRequest.tile);
-					if (seaCluster != baseSeaCluster)
-						continue;
-				}
-				break;
-			case TRIAD_LAND:
-				{
-					int landTransportedCluster = getLandTransportedCluster(formerRequest.tile);
-					if (landTransportedCluster != baseLandTransportedCluster)
-						continue;
-				}
-				break;
-			}
-			
-			// travel time
-			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, formerRequest.tile, true);
-			
-			if (travelTime == INF)
-				continue;
-			
-			// terraforming gain
-			
-			double effectiveTravelTime = conf.ai_terraforming_travel_time_multiplier * travelTime;
-			double totalEffectiveTime = effectiveTravelTime + formerRequest.terraformingTime;
-			double terraformingIncome = formerRequest.income / totalEffectiveTime;
-			double terraformingGain = getGainIncomeGrowth(terraformingIncome);
-			
-			// update best
-			
-			bestTerraformingGain = std::max(bestTerraformingGain, terraformingGain);
-			
-		}
-		
-		if (bestTerraformingGain == 0.0)
-			continue;
+		double terraformingGain = extraFormerGains[triad];
 		
 		// upkeep gain
 		
-		double upkeepIncome = getResourceScore(-(double)getBaseNextUnitSupport(baseId, unitId), 0.0);
+		double upkeepIncome = getResourceScore(-(double)getUnitSupport(unitId), 0.0);
 		double upkeepGain = getGainIncome(upkeepIncome);
 		
 		// gain
 		
-		double gain = bestTerraformingGain + upkeepGain;
+		double gain = terraformingGain + upkeepGain;
 		
 		// priority
 		
@@ -2104,16 +2155,16 @@ void evaluateTerraformingUnits()
 		(
 			"\t%-32s"
 			" priority=%5.2f   |"
-			" bestTerraformingGain=%5.2f"
+			" terraformingGain=%5.2f"
 			" upkeepGain=%5.2f"
 			" gain=%5.2f"
 			" rawPriority=%5.2f"
 			" conf.ai_production_improvement_priority=%5.2f"
 			" unitPriorityCoefficient=%5.2f"
 			"\n"
-			, unit->name
+			, unit.name
 			, priority
-			, bestTerraformingGain
+			, terraformingGain
 			, upkeepGain
 			, gain
 			, rawPriority
@@ -3503,7 +3554,8 @@ int selectProtectionUnit(int baseId, int targetBaseId)
 	
 	if (TRACE) { debug("selectProtectionUnit\n"); }
 	
-	int baseSeaCluster = getBaseSeaCluster(baseId);
+	MAP *baseTile = getBaseMapTile(baseId);
+	int baseSeaCluster = getBaseSeaCluster(baseTile);
 	
 	// no target base
 	
@@ -3514,8 +3566,9 @@ int selectProtectionUnit(int baseId, int targetBaseId)
 	
 	// get target base strategy
 	
-	bool targetBaseOcean = is_ocean(getBaseMapTile(targetBaseId));
-	int targetBaseSeaCluster = getBaseSeaCluster(targetBaseId);
+	MAP *targetBaseTile = getBaseMapTile(targetBaseId);
+	bool targetBaseOcean = is_ocean(targetBaseTile);
+	int targetBaseSeaCluster = getBaseSeaCluster(targetBaseTile);
 	BaseInfo &targetBaseInfo = aiData.getBaseInfo(targetBaseId);
 	BaseCombatData &targetBaseCombatData = targetBaseInfo.combatData;
 	
@@ -3722,7 +3775,8 @@ bool isBaseCanBuildUnit(int baseId, int unitId)
 	BASE *base = getBase(baseId);
 	UNIT *unit = getUnit(unitId);
 	
-	int baseSeaCluster = getBaseSeaCluster(baseId);
+	MAP *baseTile = getBaseMapTile(baseId);
+	int baseSeaCluster = getBaseSeaCluster(baseTile);
 	
 	// no sea unit without access to water
 	
@@ -3748,7 +3802,8 @@ bool isBaseCanBuildFacility(int baseId, int facilityId)
 	BASE *base = getBase(baseId);
 	CFacility *facility = getFacility(facilityId);
 	
-	int baseSeaCluster = getBaseSeaCluster(baseId);
+	MAP *baseTile = getBaseMapTile(baseId);
+	int baseSeaCluster = getBaseSeaCluster(baseTile);
 	
 	// no sea facility without access to water
 	
@@ -3991,7 +4046,7 @@ Computes facility gain by comparing to base state with and without it.
 2. income growth due to increase in nutrient surplus
 3. implicit income due to reduction in eco-damage
 */
-double getFacilityGain(int baseId, int facilityId, bool build, bool includeMaintenance)
+double getFacilityGain(int baseId, int facilityId, bool build)
 {
 	BASE *base = getBase(baseId);
 	
@@ -4067,12 +4122,9 @@ double getFacilityGain(int baseId, int facilityId, bool build, bool includeMaint
 	
 	double gain = incomeGain + incomeGrowthGain;
 	
-	if (includeMaintenance)
-	{
-		double maintenanceIncome = getResourceScore(0.0, -Facility[facilityId].maint);
-		double maintenanceIncomeGain = getGainIncome(maintenanceIncome);
-		gain += maintenanceIncomeGain;
-	}
+	double maintenanceIncome = (build ? +1 : -1) * getResourceScore(0.0, -Facility[facilityId].maint);
+	double maintenanceIncomeGain = getGainIncome(maintenanceIncome);
+	gain += maintenanceIncomeGain;
 	
 	// return combined gain
 	

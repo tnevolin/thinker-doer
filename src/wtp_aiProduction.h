@@ -131,7 +131,6 @@ struct SurfacePodData
 	
 };
 
-
 // production strategy
 
 void productionStrategy();
@@ -196,7 +195,7 @@ void hurryProtectiveUnit();
 // estimated income functions
 //=======================================================
 
-double getFacilityGain(int baseId, int facilityId, bool build, bool includeMaintenance);
+double getFacilityGain(int baseId, int facilityId, bool build);
 double getDevelopmentScore(int turn);
 double getDevelopmentScoreGrowth(int turn);
 double getDevelopmentScale();

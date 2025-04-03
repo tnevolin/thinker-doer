@@ -1531,7 +1531,7 @@ void populateBaseInfos()
 {
 	Profiling::start("populateBaseInfos", "populateAIData");
 	
-	debug("populateBaseInfos\n");
+	debug("populateBaseInfos - %s\n", aiMFaction->noun_faction);
 	
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
@@ -1577,7 +1577,7 @@ void populateBaseInfos()
 	
 	// populate faction average base gain
 	
-	AverageAccumulator baseGainAverageAccumulator;
+	ArithmeticSummaryStatistics baseGainSummary;
 	
 	for (int factionId = 1; factionId < MaxPlayerNum; factionId++)
 	{
@@ -1585,6 +1585,7 @@ void populateBaseInfos()
 		
 		debug("averageBaseGain - %s\n", MFactions[factionId].noun_faction);
 		
+		baseGainSummary.clear();
 		for (int baseId = 0; baseId < *BaseCount; baseId++)
 		{
 			BASE *base = getBase(baseId);
@@ -1595,17 +1596,16 @@ void populateBaseInfos()
 			if (base->faction_id != factionId)
 				continue;
 			
-			debug("\t%-25s gain=%5.2f\n", base->name, baseInfo.gain);
+			debug("\t%-25s gain=%7.2f\n", base->name, baseInfo.gain);
 			
 			// accumulate
 			
-			baseGainAverageAccumulator.add(baseInfo.gain);
+			baseGainSummary.add(baseInfo.gain);
 			
 		}
 		
-		factionInfo.averageBaseGain = baseGainAverageAccumulator.get();
-		
-		debug("\t%-25s gain=%5.2f\n", "--- average ---", factionInfo.averageBaseGain);
+		factionInfo.averageBaseGain = baseGainSummary.getArithmeticMean();
+		debug("\t%-25s gain=%7.2f\n", "--- average ---", factionInfo.averageBaseGain);
 		
 	}
 	
@@ -2594,6 +2594,8 @@ void populateEnemyStacks()
 	
 	debug("\tpopulate enemy stacks secondary values\n");
 	
+	ArithmeticSummaryStatistics unitCostSummary;
+	ArithmeticSummaryStatistics attackGainSummary;
 	for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
 	{
 		EnemyStackInfo &enemyStackInfo = enemyStackEntry.second;
@@ -2602,15 +2604,14 @@ void populateEnemyStacks()
 		
 		// averageUnitCost
 		
-		AverageAccumulator averageUnitCostAccumulator;
-		
+		unitCostSummary.clear();
 		for (int vehicleId : enemyStackInfo.vehicleIds)
 		{
 			int unitCost = Vehicles[vehicleId].cost();
-			averageUnitCostAccumulator.add(unitCost);
+			unitCostSummary.add(unitCost);
 		}
 		
-		enemyStackInfo.averageUnitCost = averageUnitCostAccumulator.get();
+		enemyStackInfo.averageUnitCost = unitCostSummary.getArithmeticMean();
 		
 		debug
 		(
@@ -2635,15 +2636,14 @@ void populateEnemyStacks()
 		{
 			// compute average priority based on each stack vehicle priority
 			
-			AverageAccumulator averageAttackGainAccumulator;
-			
+			attackGainSummary.clear();
 			for (int vehicleId : enemyStackInfo.vehicleIds)
 			{
 				double attackGain = getEnemyVehicleAttackGain(vehicleId);
-				averageAttackGainAccumulator.add(attackGain);
+				attackGainSummary.add(attackGain);
 			}
 			
-			averageAttackGain = averageAttackGainAccumulator.get();
+			averageAttackGain = attackGainSummary.getArithmeticMean();
 			
 		}
 		
@@ -3278,6 +3278,7 @@ void populateEnemyBaseAssaultEffects()
 	
 	// iterate bases
 	
+	ArithmeticSummaryStatistics assaultEffectSummary;
 	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
 		BASE *base = getBase(baseId);
@@ -3295,8 +3296,6 @@ void populateEnemyBaseAssaultEffects()
 		{
 			UNIT *aiUnit = getUnit(aiUnitId);
 			
-			AverageAccumulator assaultEffectAverageAccumulator;
-			
 			// can capture base
 			
 			if (!isUnitCanCaptureBase(aiUnitId, baseTile))
@@ -3307,6 +3306,7 @@ void populateEnemyBaseAssaultEffects()
 			
 			// iterate base protectors
 			
+			assaultEffectSummary.clear();
 			for (robin_hood::pair<int, robin_hood::unordered_flat_map<int, double>> const &protectorUnitWeightEntry : baseInfo.protectorUnitWeights)
 			{
 				int enemyUnitFactionId = protectorUnitWeightEntry.first;
@@ -3327,13 +3327,13 @@ void populateEnemyBaseAssaultEffects()
 					double defendMultiplier = 1.0 / (baseInfo.combatData.sensorOffenseMultiplier);
 					double effect = assaultEffect.getEffect(attackMultiplier, defendMultiplier);
 					
-					assaultEffectAverageAccumulator.add(enemyUnitWeight, effect);
+					assaultEffectSummary.add(effect, enemyUnitWeight);
 					
 				}
 				
 			}
 			
-			double averageAssaultEffect = assaultEffectAverageAccumulator.get();
+			double averageAssaultEffect = assaultEffectSummary.getArithmeticMean();
 			baseInfo.assaultEffects.insert({aiUnitId, averageAssaultEffect});
 			
 		}
@@ -3483,14 +3483,12 @@ void evaluateEnemyStacks()
 		
 		debug("\t\tunit effects\n");
 		
-		AverageAccumulator assaultEffectAverageAccumulator;
-		
+		ArithmeticSummaryStatistics assaultEffectSummary;
 		for (int ownUnitId : ownCombatUnitIds)
 		{
 			debug("\t\t\t[%3d] %-32s\n", ownUnitId, Units[ownUnitId].name);
 			
-			assaultEffectAverageAccumulator.clear();
-			
+			assaultEffectSummary.clear();
 			for (int foeVehicleId : enemyStackInfo.vehicleIds)
 			{
 				VEH *foeVehicle = getVehicle(foeVehicleId);
@@ -3502,7 +3500,7 @@ void evaluateEnemyStacks()
 				double defendMultiplier = 1.0 / (foeVehicleStrengthMultiplier);
 				double effect = assaultEffect.getEffect(attackMultiplier, defendMultiplier);
 				
-				assaultEffectAverageAccumulator.add(effect);
+				assaultEffectSummary.add(effect);
 				
 				debug
 				(
@@ -3517,7 +3515,7 @@ void evaluateEnemyStacks()
 			
 			// effect
 			
-			double averageAssaultEffect = assaultEffectAverageAccumulator.get();
+			double averageAssaultEffect = assaultEffectSummary.getArithmeticMean();
 			enemyStackInfo.setUnitEffect(ownUnitId, averageAssaultEffect);
 			
 			debug
@@ -4179,16 +4177,14 @@ void evaluateBaseDefense()
 		
 		debug("\t\tcalculate base unit effects\n");
 		
-		AverageAccumulator protectionEffectAverageAccumulator;
-		
+		ArithmeticSummaryStatistics protectionEffectSummary;
 		for (int ownUnitId : ownCombatUnitIds)
 		{
 			UNIT *ownUnit = &(Units[ownUnitId]);
 			
 			debug("\t\t\t[%3d] %-32s\n", ownUnitId, ownUnit->name);
 			
-			protectionEffectAverageAccumulator.clear();
-			
+			protectionEffectSummary.clear();
 			for (int foeFactionId : foeFactionIds)
 			{
 				robin_hood::unordered_flat_map<int, double> const &foeFactionUnitWeights = baseCombatData.foeUnitWeights.at(foeFactionId);
@@ -4212,8 +4208,7 @@ void evaluateBaseDefense()
 					double effect = assaultEffect.getEffect(attackMultiplier, defendMultiplier);
 					
 					double protectionEffect = effect == 0.0 ? 0.0 : 1.0 / effect;
-					
-					protectionEffectAverageAccumulator.add(weight, protectionEffect);
+					protectionEffectSummary.add(protectionEffect, weight);
 					
 //					debug
 //					(
@@ -4232,7 +4227,7 @@ void evaluateBaseDefense()
 			
 			// effect
 			
-			double averageProtectionEffect = protectionEffectAverageAccumulator.get();
+			double averageProtectionEffect = protectionEffectSummary.getArithmeticMean();
 			baseCombatData.setUnitEffect(ownUnitId, averageProtectionEffect);
 			
 //			debug
@@ -4336,16 +4331,14 @@ void evaluateBunkerDefense()
 		
 		debug("\t\tcalculate bunker unit effects\n");
 		
-		AverageAccumulator protectionEffectAverageAccumulator;
-		
+		ArithmeticSummaryStatistics protectionEffectSummary;
 		for (int ownUnitId : ownCombatUnitIds)
 		{
 			UNIT *ownUnit = &(Units[ownUnitId]);
 			
 			debug("\t\t\t[%3d] %-32s\n", ownUnitId, ownUnit->name);
 			
-			protectionEffectAverageAccumulator.clear();
-			
+			protectionEffectSummary.clear();
 			for (int foeFactionId : foeFactionIds)
 			{
 				robin_hood::unordered_flat_map<int, double> const &foeFactionUnitWeights = bunkerCombatData.foeUnitWeights.at(foeFactionId);
@@ -4375,8 +4368,7 @@ void evaluateBunkerDefense()
 					double effect = assaultEffect.getEffect(attackMultiplier, defendMultiplier);
 					
 					double protectionEffect = effect == 0.0 ? 0.0 : 1.0 / effect;
-					
-					protectionEffectAverageAccumulator.add(weight, protectionEffect);
+					protectionEffectSummary.add(protectionEffect, weight);
 					
 					debug
 					(
@@ -4395,7 +4387,7 @@ void evaluateBunkerDefense()
 			
 			// effect
 			
-			double averageProtectionEffect = protectionEffectAverageAccumulator.get();
+			double averageProtectionEffect = protectionEffectSummary.getArithmeticMean();
 			bunkerCombatData.setUnitEffect(ownUnitId, averageProtectionEffect);
 			
 //			debug
@@ -4452,7 +4444,7 @@ void evaluateBaseProbeDefense()
 		
 		debug("\t\tbase foeMilitaryStrength\n");
 		
-		std::map<int, double> weights;
+		double totalWeight = 0.0;
 		
 		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 		{
@@ -4565,6 +4557,10 @@ void evaluateBaseProbeDefense()
 				
 			}
 			
+			// threat coefficient
+			
+			double threatCoefficient = aiData.factionInfos[vehicle->faction_id].threatCoefficient;
+			
 			// offense multiplier
 			
 			double offenseMultiplier = getVehicleStrenghtMultiplier(vehicleId);
@@ -4589,10 +4585,8 @@ void evaluateBaseProbeDefense()
 			
 			// weight
 			
-			double weight = offenseMultiplier * defenseMultiplier * approachTimeCoefficient;
-			
-			size_t approachTimeBucket = (size_t)std::round(approachTime);
-			weights[approachTimeBucket] += weight;
+			double weight = threatCoefficient * offenseMultiplier * defenseMultiplier * approachTimeCoefficient;
+			totalWeight += weight;
 			
 			debug
 			(
@@ -4617,41 +4611,18 @@ void evaluateBaseProbeDefense()
 		
 		Profiling::start("compute required protection", "evaluate base threat");
 		
-		int lastTime = 0;
-		double accumulatedWeight = 0.0;
-		double maxWeight = 0.0;
-		
-		for (std::pair<int, double> weightEntry : weights)
-		{
-			int time = weightEntry.first;
-			double weight = weightEntry.second;
-			
-			if (time - lastTime >= 10)
-			{
-				accumulatedWeight = 0.0;
-			}
-			else
-			{
-				accumulatedWeight *= 0.1 * (double)(10 - (time - lastTime));
-			}
-			
-			accumulatedWeight += weight;
-			maxWeight = std::max(maxWeight, accumulatedWeight);
-			
-		}
-		
-		double requiredEffect = conf.ai_combat_base_protection_superiority * maxWeight;
+		double requiredEffect = sqrt(totalWeight);
 		baseInfo.probeData.requiredEffect = requiredEffect;
 		
 		debug
 		(
 			"\t\trequiredEffect=%5.2f"
 			" conf.ai_combat_base_protection_superiority=%5.2F"
-			" maxWeight=%5.2f"
+			" totalWeight=%5.2f"
 			"\n"
 			, requiredEffect
 			, conf.ai_combat_base_protection_superiority
-			, maxWeight
+			, totalWeight
 		);
 		
 		Profiling::stop("compute required protection");

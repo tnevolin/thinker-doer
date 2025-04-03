@@ -1163,7 +1163,7 @@ void __cdecl wtp_mod_base_yield()
 			while (base->drone_riots() && choiceCount > 0)
 			{
 				// keep nutrition and support
-				
+
 				if (nutrientSurplus - choices.at(choiceCount - 1).nutrient < 0 || mineralSurplus - choices.at(choiceCount - 1).mineral < 0)
 					break;
 				
@@ -1180,6 +1180,8 @@ void __cdecl wtp_mod_base_yield()
 				base->specialist_adjust++;
 				
 				base_update_reset(base, Ns, Ms, Es, tiles, tileCount);
+				nutrientSurplus = nutrientIntake + nutrientAddition - nutrientConsumption;
+				mineralSurplus = (mineralIntake + mineralAddition) * (mineralOutputModifier + 2) / 2 - mineralConsumption;
 				mod_base_yield_base_energy(baseEnergy, energyIntake);
 				
 			};

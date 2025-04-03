@@ -321,6 +321,8 @@ bool isMeleeAttackableFromAirCluster(int chassisId, int speed, MAP *org, MAP *ta
 bool isVehicleMeleeAttackableFromAirCluster(int vehicleId, MAP *target);
 int getSeaCluster(MAP *tile);
 int getVehicleSeaCluster(int vehicleId);
+int getBaseSeaCluster(MAP *baseTile);
+bool isSameSeaCluster(int tile1SeaCluster, MAP *tile2);
 bool isSameSeaCluster(MAP *tile1, MAP *tile2);
 bool isVehicleSameSeaCluster(int vehicleId, MAP *dst);
 bool isMeleeAttackableFromSeaCluster(MAP *org, MAP *trg);
@@ -365,7 +367,6 @@ int getEnemyLandCombatCluster(int factionId, MAP *tile);
 bool isSameEnemyLandCombatCluster(int factionId, MAP *tile1, MAP *tile2);
 int getCluster(MAP *tile);
 int getVehicleCluster(int vehicleId);
-int getBaseSeaCluster(int baseId);
 
 bool isConnected(int cluster1, int cluster2);
 bool isReachable(MAP *tile);
