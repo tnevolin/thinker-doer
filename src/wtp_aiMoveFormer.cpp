@@ -584,7 +584,7 @@ void populateTerraformingData()
 					vehicleTileTerraformingInfo.terraformedSensor = true;
 				}
 				
-				// populate terraformed sensor tiles
+				// populate terraformed bunker tiles
 				
 				if (vehicle->order == ORDER_BUNKER)
 				{
@@ -1273,24 +1273,6 @@ void sortTerraformingRequests()
 
 	std::sort(terraformingRequests.begin(), terraformingRequests.end(), compareTerraformingRequests);
 
-	if (DEBUG)
-	{
-		for (const TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
-		{
-			debug
-			(
-				"\t%s"
-				" %-20s"
-				" %6.2f"
-				"\n"
-				, getLocationString(terraformingRequest.tile).c_str()
-				, terraformingRequest.option->name
-				, terraformingRequest.gain
-			);
-		}
-		
-	}
-	
 	Profiling::stop("sortTerraformingRequests");
 	
 }
@@ -1388,6 +1370,28 @@ void removeTerraformedTiles()
 	}
 
 	Profiling::stop("removeTerraformedTiles");
+	
+	if (DEBUG)
+	{
+		debug("terraforming requests - %s\n", aiMFaction->noun_faction);
+		for (const TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
+		{
+			debug
+			(
+				"\t%s"
+				" %-20s"
+				" %6.2f"
+				" income=%5.2f time=%5.2f"
+				"\n"
+				, getLocationString(terraformingRequest.tile).c_str()
+				, terraformingRequest.option->name
+				, terraformingRequest.gain
+				, terraformingRequest.income
+				, terraformingRequest.terraformingTime
+			);
+		}
+		
+	}
 	
 }
 
@@ -1587,15 +1591,7 @@ void assignFormerOrders()
 	
 	for (TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
 	{
-		// skip assigned
-		
-		if (assignments.find(&terraformingRequest) != assignments.end())
-			continue;
-		
-		// add request
-		
 		formerRequests.push_back({terraformingRequest.tile, terraformingRequest.option, terraformingRequest.terraformingTime, terraformingRequest.income});
-		
 	}
 	
 	Profiling::stop("assignFormerOrders");

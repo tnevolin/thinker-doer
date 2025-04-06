@@ -300,11 +300,48 @@ void analyzeBasePlacementSites()
 	
 	for (int vehicleId : activeColonyVehicleIds)
 	{
-		VEH *vehicle = getVehicle(vehicleId);
+		VEH &vehicle = Vehicles[vehicleId];
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		int triad = vehicle->triad();
+		int triad = vehicle.triad();
 		
-		debug("\t%s %-32s\n", getLocationString({vehicle->x, vehicle->y}).c_str(), Units[vehicle->unit_id].name);
+		debug("\t%s %-32s\n", getLocationString({vehicle.x, vehicle.y}).c_str(), Units[vehicle.unit_id].name);
+		
+		// travel time multiplier increases in vicinity of enemy colonies
+		
+		int enemyColonyRange = INT_MAX;
+		for (int enemyVehicleId = 0; enemyVehicleId < *VehCount; enemyVehicleId++)
+		{
+			VEH &enemyVehicle = Vehicles[enemyVehicleId];
+			int enemyVehicleTriad = enemyVehicle.triad();
+			
+			// other faction
+			
+			if (enemyVehicle.faction_id == aiFactionId)
+				continue;
+			
+			// colony
+			
+			if (!isColonyVehicle(enemyVehicleId))
+				continue;
+			
+			// targets same realm
+			
+			if ((triad == TRIAD_SEA && enemyVehicleTriad == TRIAD_LAND) || (triad == TRIAD_LAND && enemyVehicleTriad == TRIAD_SEA))
+				continue;
+			
+			// update range
+			
+			int range = map_range(vehicle.x, vehicle.y, enemyVehicle.x, enemyVehicle.y);
+			enemyColonyRange = std::min(enemyColonyRange, range);
+			
+			
+		}
+		
+		double expantionTravelTimeScale = conf.ai_expansion_travel_time_scale;
+		if (enemyColonyRange <= 10)
+		{
+			expantionTravelTimeScale /= 1.0 + 2.0 * (1.0 - (double)enemyColonyRange / 10.0);
+		}
 		
 		// find best buildSite
 		
@@ -350,25 +387,32 @@ void analyzeBasePlacementSites()
 			// estimate it as range
 			// plus transfer cost if different clusters
 			
-			double travelTime = conf.ai_expansion_travel_time_multiplier * getVehicleTravelTime(vehicleId, tile);
+			double travelTime = getVehicleTravelTime(vehicleId, tile);
 			if (travelTime == INF)
 				continue;
+			double travelTimeCoefficient = getExponentialCoefficient(expantionTravelTimeScale, travelTime);
 			
 			// get combined score
 			
-			double buildSiteScore = getGainDelay(tileExpansionInfo.buildSiteScore, travelTime);
+			double buildSiteScore = travelTimeCoefficient * tileExpansionInfo.buildSiteScore;
 			
 			debug
 			(
 				"\t\t%s"
 				" buildSiteScore=%5.2f"
 				" tileExpansionInfo.buildSiteScore=%5.2f"
+				" enemyColonyRange=%2d"
+				" expantionTravelTimeScale=%5.2f"
 				" travelTime=%7.2f"
+				" travelTimeCoefficient=%5.2f"
 				"\n"
 				, getLocationString(tile).c_str()
 				, buildSiteScore
 				, tileExpansionInfo.buildSiteScore
+				, enemyColonyRange
+				, expantionTravelTimeScale
 				, travelTime
+				, travelTimeCoefficient
 			);
 			
 			// update best
@@ -596,60 +640,6 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	std::sort(yieldInfos.begin(), yieldInfos.end(), compareYieldInfoByScoreAndResourceScore);
 	Profiling::stop("sort scores");
 	
-	/*
-	// weight drop from better to worse square
-	
-	double weightDrop = 0.7;
-	
-	// average weighted yield score
-	
-	double sumWeight = 0.0;
-	double sumWeightPopGrowth = 0.0;
-	double sumWeightResourceScore = 0.0;
-	
-	int popSize = 0;
-	double baseNutrientSurplus = (double)ResInfo->base_sq_nutrient;
-	double baseResourceScore = getResourceScore(ResInfo->base_sq_mineral, ResInfo->base_sq_energy);
-	int const nutrientCostFactor = mod_cost_factor(aiFactionId, RSC_NUTRIENT, -1);
-	
-	double weight = 1.0;
-	
-	for (YieldInfo const &yieldInfo : yieldInfos)
-	{
-		popSize++;
-		double yieldNutrientSurplus = 0.5 * yieldInfo.score / getResourceScore(1.0, 0.0, 0.0);
-		baseNutrientSurplus += yieldNutrientSurplus;
-		double yieldResourceScore = 0.5 * yieldInfo.score;
-		baseResourceScore += yieldResourceScore;
-		
-		int nutrientBoxSize = nutrientCostFactor * (1 + popSize);
-		double popGrowth = 1.0 / ((double)nutrientBoxSize / baseNutrientSurplus);
-		
-		double weightPopGrowth = weight * popGrowth;
-		double weightResourceScore = weight * baseResourceScore;
-		
-		sumWeight += weight;
-		sumWeightPopGrowth += weightPopGrowth;
-		sumWeightResourceScore += weightResourceScore;
-		
-		weight *= weightDrop;
-		
-	}
-	
-	double averagePopGrowth = sumWeightPopGrowth/ sumWeight;
-	double averageResourceScore = sumWeightResourceScore / sumWeight;
-	
-	// gain
-	
-	double income = averageResourceScore;
-	double incomeGain = getGainIncome(income);
-	
-	double incomeGrowth = averagePopGrowth * averageResourceScore;
-	double incomeGrowthGain = getGainIncomeGrowth(incomeGrowth);
-	
-	double gain = incomeGain + incomeGrowthGain;
-	*/
-	
 	int const nutrientCostFactor = mod_cost_factor(aiFactionId, RSC_NUTRIENT, -1);
 	
 	int popSize = 1;
@@ -820,7 +810,7 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	Profiling::start("landmarkScore", "moveColonyStrategy");
 	
-	double landmarkScore = (map_has_landmark(tile, LM_CRATER) || map_has_landmark(tile, LM_VOLCANO)) ? -0.20 : 0.0;
+	double landmarkScore = (map_has_landmark(tile, LM_CRATER) || map_has_landmark(tile, LM_VOLCANO)) ? -0.50 : 0.0;
 	debug("\t%-20s%+5.2f\n", "landmarkScore", landmarkScore);
 	
 	Profiling::stop("landmarkScore");

@@ -1,3 +1,7 @@
+# Version 365
+
+* Adv. Ecological Engineering does not increase mineral output of mining platform. This time done correctly.
+
 # Version 364
 
 * Reduced number of defensive probes.

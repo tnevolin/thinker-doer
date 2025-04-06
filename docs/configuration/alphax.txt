@@ -89,7 +89,7 @@ None,    ; Technology to allow 3 nutrients in a square
 None,    ; Technology to allow 3 minerals in a square
 None,    ; Technology to allow 3 energy in a square
 AGrav,   ; Technology to allow orbital insertion w/o Space Elevator
-None,    ; Technology for +1 mining platform bonus (vanilla = EcoEng2)
+Disable, ; Technology for +1 mining platform bonus (vanilla = EcoEng2)
 AdapEco, ; Technology for economic victory
 1,       ; If non-zero, probe teams can steal technologies
 1,       ; If non-zero, humans can always contact each other in net games

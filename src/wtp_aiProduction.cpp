@@ -142,10 +142,6 @@ void populateFactionProductionData()
 {
 	Profiling::start("populateFactionProductionData", "productionStrategy");
 	
-	const int AVAILABLE_AIR_FORMER_COUNT_DIVISOR = 2;
-	const int AVAILABLE_SEA_FORMER_COUNT_DIVISOR = 1;
-	const int AVAILABLE_LAND_FORMER_COUNT_DIVISOR = 2;
-	
 	// global parameters
 	
 	techStealGain = getTechStealGain();
@@ -164,104 +160,6 @@ void populateFactionProductionData()
 			bestFormerSpeeds[chassis.triad] = chassis.speed;
 		}
 	}
-	
-	// available former counts
-	
-	int availableAirFormerCount = aiFactionInfo->airFormerCount / AVAILABLE_AIR_FORMER_COUNT_DIVISOR;
-	
-	robin_hood::unordered_flat_map<int, int> availableSeaFormerCounts;
-	
-	for (robin_hood::pair<int, int> seaClusterFormerCountEntry : aiFactionInfo->seaClusterFormerCounts)
-	{
-		int cluster = seaClusterFormerCountEntry.first;
-		int count = seaClusterFormerCountEntry.second;
-		availableSeaFormerCounts.emplace(cluster, count / AVAILABLE_SEA_FORMER_COUNT_DIVISOR);
-	}
-	
-	robin_hood::unordered_flat_map<int, int> availableLandFormerCounts;
-	
-	for (robin_hood::pair<int, int> landTransportedClusterFormerCountEntry : aiFactionInfo->landTransportedClusterFormerCounts)
-	{
-		int cluster = landTransportedClusterFormerCountEntry.first;
-		int count = landTransportedClusterFormerCountEntry.second;
-		availableLandFormerCounts.emplace(cluster, count / AVAILABLE_LAND_FORMER_COUNT_DIVISOR);
-	}
-	
-	// sort former requests
-	
-	std::sort(aiData.production.formerRequests.begin(), aiData.production.formerRequests.end(), compareFormerRequests);
-	
-	// remove potentially claimed requests
-	
-	std::vector<FormerRequest>::iterator formerRequestIterator;
-	for (formerRequestIterator = aiData.production.formerRequests.begin(); formerRequestIterator != aiData.production.formerRequests.end(); )
-	{
-		FormerRequest &formerRequest = *formerRequestIterator;
-		
-		bool removed = false;
-		
-		if (is_ocean(formerRequest.tile))
-		{
-			int seaCluster = getSeaCluster(formerRequest.tile);
-			
-			if (seaCluster != -1 && availableSeaFormerCounts.find(seaCluster) != availableSeaFormerCounts.end() && availableSeaFormerCounts.at(seaCluster) >= 1)
-			{
-				availableSeaFormerCounts.at(seaCluster)--;
-				removed = true;
-			}
-			else if (availableAirFormerCount >= 1)
-			{
-				availableAirFormerCount--;
-				removed = true;
-			}
-			
-		}
-		else
-		{
-			int landTransportedCluster = getLandTransportedCluster(formerRequest.tile);
-			
-			if (landTransportedCluster != -1 && availableLandFormerCounts.find(landTransportedCluster) != availableLandFormerCounts.end() && availableLandFormerCounts.at(landTransportedCluster) >= 1)
-			{
-				availableLandFormerCounts.at(landTransportedCluster)--;
-				removed = true;
-			}
-			else if (availableAirFormerCount >= 1)
-			{
-				availableAirFormerCount--;
-				removed = true;
-			}
-			
-		}
-		
-		if (removed)
-		{
-			formerRequestIterator = aiData.production.formerRequests.erase(formerRequestIterator);
-		}
-		else
-		{
-			formerRequestIterator++;
-		}
-		
-	}
-	
-//	if (DEBUG)
-//	{
-//		debug("formerRequests - %s\n", aiMFaction->noun_faction);
-//		
-//		for (FormerRequest &formerRequest : aiData.production.formerRequests)
-//		{
-//			debug
-//			(
-//				"\t%5.2f %s %s"
-//				"\n"
-//				, formerRequest.income
-//				, getLocationString(formerRequest.tile).c_str()
-//				, formerRequest.option->name
-//			);
-//			
-//		}
-//		
-//	}
 	
 	// landArtillery and landDefenders saturation
 	
@@ -1876,15 +1774,11 @@ void evaluateExpansionUnits()
 		
 		double gain = bestBuildSiteGain + citizenLossGain;
 		
-		// expantion priority coefficient
-		
-		double productionExpantionPriorityCoefficient = conf.ai_production_expansion_priority + conf.ai_production_expansion_priority_bonus * (1.0 / (1.0 + (double)std::max(0, (int)aiData.baseIds.size() - 2) / conf.ai_production_expansion_priority_bonus_base_scale));
-		
 		// priority
 		
 		double rawPriority = getItemPriority(unitId, gain);
 		double priority =
-			productionExpantionPriorityCoefficient
+			conf.ai_production_expansion_priority
 			* globalColonyDemand
 			* populationLimitCoefficient
 			* rawPriority
@@ -1902,7 +1796,7 @@ void evaluateExpansionUnits()
 			" bestBuildSite=%s"
 			" bestBuildSiteGain=%5.2f"
 			" gain=%5.2f"
-			" productionExpantionPriorityCoefficient=%5.2f"
+			" ai_production_expansion_priority=%5.2f"
 			" globalColonyDemand=%5.2f"
 			" populationLimitCoefficient=%5.2f"
 			" rawPriority=%5.2f"
@@ -1913,7 +1807,7 @@ void evaluateExpansionUnits()
 			, getLocationString(bestBuildSite).c_str()
 			, bestBuildSiteGain
 			, gain
-			, productionExpantionPriorityCoefficient
+			, conf.ai_production_expansion_priority
 			, globalColonyDemand
 			, populationLimitCoefficient
 			, rawPriority
@@ -1994,13 +1888,14 @@ void evaluateTerraformingUnits()
 		existingFormerCounts[triad]++;
 		
 	}
-debug(">existingFormerCounts= %d %d %d\n", existingFormerCounts[0], existingFormerCounts[1], existingFormerCounts[2]);
+debug("existingFormerCounts= %3d %3d %3d\n", existingFormerCounts[0], existingFormerCounts[1], existingFormerCounts[2]);
 	
 	// extra former gain
 	
 	double extraFormerGains[3] = {0.0, 0.0, 0.0};
 	for (Triad triad : {TRIAD_AIR, TRIAD_SEA, TRIAD_LAND})
 	{
+debug("triad=%d\n", triad);
 		// for sea former base should have access to water
 		
 		if (triad == TRIAD_SEA && !(isBaseAccessesWater(baseId) && baseSeaCluster >= 0))
@@ -2017,6 +1912,7 @@ debug(">existingFormerCounts= %d %d %d\n", existingFormerCounts[0], existingForm
 		std::vector<TerraformingGain> terraformingGains;
 		for (FormerRequest &formerRequest : aiData.production.formerRequests)
 		{
+debug("%s formerRequest.income=%5.2f\n", getLocationString(formerRequest.tile).c_str(), formerRequest.income);
 			TileInfo &tileInfo = aiData.getTileInfo(formerRequest.tile);
 			
 			// sensible terraforming time
@@ -2055,6 +1951,7 @@ debug(">existingFormerCounts= %d %d %d\n", existingFormerCounts[0], existingForm
 			// terraforming gain
 			
 			terraformingGains.push_back({formerRequest.terraformingTime, formerRequest.income, 0.0});
+debug("\tadded\n");
 			
 		}
 		double averageDistance = distanceHarmonicSummary.getHarmonicMean();
@@ -2071,6 +1968,7 @@ debug(">existingFormerCounts= %d %d %d\n", existingFormerCounts[0], existingForm
 		// sort terraforming gains
 		
 		std::sort(terraformingGains.begin(), terraformingGains.end());
+debug("%d\n", (int)terraformingGains.size());
 		
 		// extra former gain
 		
@@ -2082,15 +1980,36 @@ debug(">existingFormerCounts= %d %d %d\n", existingFormerCounts[0], existingForm
 		double extraFormerTotalGain = 0.0;
 		for (TerraformingGain &terraformingGain : terraformingGains)
 		{
-			existingFormerAccumulatedTime += terraformingGain.time / existingFormerCount;
-			existingFormerTotalGain += getGainDelay(getGainIncome(terraformingGain.income), existingFormerAccumulatedTime);
+			if (existingFormerCount > 0.0)
+			{
+				existingFormerAccumulatedTime += terraformingGain.time / existingFormerCount;
+				existingFormerTotalGain += getGainDelay(getGainIncome(terraformingGain.income), existingFormerAccumulatedTime);
+			}
 			extraFormerAccumulatedTime += terraformingGain.time / extraFormerCount;
 			extraFormerTotalGain += getGainDelay(getGainIncome(terraformingGain.income), extraFormerAccumulatedTime);
+debug
+(
+	"\tterraformingGain.time=%5.2f"
+	" terraformingGain.income=%5.2f"
+	" existingFormerAccumulatedTime=%5.2f"
+	" existingFormerGain=%5.2f"
+	" extraFormerAccumulatedTime=%5.2f"
+	" extraFormerGain=%5.2f"
+	" delta=%5.2f"
+	"\n"
+	, terraformingGain.time
+	, terraformingGain.income
+	, existingFormerAccumulatedTime
+	, getGainDelay(getGainIncome(terraformingGain.income), existingFormerAccumulatedTime)
+	, extraFormerAccumulatedTime
+	, getGainDelay(getGainIncome(terraformingGain.income), extraFormerAccumulatedTime)
+	, getGainDelay(getGainIncome(terraformingGain.income), extraFormerAccumulatedTime) - getGainDelay(getGainIncome(terraformingGain.income), existingFormerAccumulatedTime)
+);
 		}
 		extraFormerGains[triad] = extraFormerTotalGain - existingFormerTotalGain;
 		
 	}
-debug(">extraFormerGains= %d %d %d\n", extraFormerGains[0], extraFormerGains[1], extraFormerGains[2]);
+debug("extraFormerGains= %5.2f %5.2f %5.2f\n", extraFormerGains[0], extraFormerGains[1], extraFormerGains[2]);
 	
 	// process available former units
 	

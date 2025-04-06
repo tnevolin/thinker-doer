@@ -1059,14 +1059,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_production_expansion_priority = atof(value);
     }
-    else if (MATCH("ai_production_expansion_priority_bonus"))
-    {
-        cf->ai_production_expansion_priority_bonus = atof(value);
-    }
-    else if (MATCH("ai_production_expansion_priority_bonus_base_scale"))
-    {
-        cf->ai_production_expansion_priority_bonus_base_scale = atof(value);
-    }
     else if (MATCH("ai_production_combat_unit_turns_limit"))
     {
         cf->ai_production_combat_unit_turns_limit = atoi(value);
@@ -1201,9 +1193,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_mapstat_elevation = atof(value);
     }
-    else if (MATCH("ai_expansion_travel_time_multiplier"))
+    else if (MATCH("ai_expansion_travel_time_scale"))
     {
-        cf->ai_expansion_travel_time_multiplier = atof(value);
+        cf->ai_expansion_travel_time_scale = atof(value);
     }
     else if (MATCH("ai_expansion_coastal_base"))
     {
