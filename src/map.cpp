@@ -543,11 +543,18 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
                 value += modifier;
                 
                 // [WTP]
-                // facility bonus (rocky mine)
+                // Recycling Tank mineral bonus
                 
-                if (base_id >=0 && has_facility(FAC_RECYCLING_TANKS, base_id) && sq->is_rocky())
+                if (base_id >=0 && has_facility(FAC_RECYCLING_TANKS, base_id))
 				{
-					value += conf.recycling_tanks_mineral_bonus_rocky_mine;
+					if (sq->is_rocky())
+					{
+						value += conf.recycling_tanks_mineral_bonus_rocky_mine;
+					}
+					else
+					{
+						value += conf.recycling_tanks_mineral_bonus_regular_mine;
+					}
 				}
 				
                 if (base_id >=0 && has_facility(FAC_GENEJACK_FACTORY, base_id) && sq->is_rocky())

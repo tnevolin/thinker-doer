@@ -1,6 +1,10 @@
 # Version 365
 
 * Adv. Ecological Engineering does not increase mineral output of mining platform. This time done correctly.
+* Recycling Tank mineral bonus updated.
+  * mining platform:	+1
+  * regular mine:		+1
+  * rocky mine:			+2
 
 # Version 364
 

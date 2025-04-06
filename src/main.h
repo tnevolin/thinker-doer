@@ -379,6 +379,7 @@ struct Config {
     int hybrid_forest_yield_bonus_forest[3] = {0,0,0};
     bool recycling_tanks_mineral_multiplier = true;
     int recycling_tanks_mineral_bonus_mining_platform = 0;
+    int recycling_tanks_mineral_bonus_regular_mine = 0;
     int recycling_tanks_mineral_bonus_rocky_mine = 0;
     bool genejack_factory_mineral_multiplier = true;
     int genejack_factory_mineral_bonus_mining_platform = 0;

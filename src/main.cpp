@@ -672,6 +672,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->recycling_tanks_mineral_bonus_mining_platform = atoi(value);
     }
+    else if (MATCH("recycling_tanks_mineral_bonus_regular_mine"))
+    {
+        cf->recycling_tanks_mineral_bonus_regular_mine = atoi(value);
+    }
     else if (MATCH("recycling_tanks_mineral_bonus_rocky_mine"))
     {
         cf->recycling_tanks_mineral_bonus_rocky_mine = atoi(value);
