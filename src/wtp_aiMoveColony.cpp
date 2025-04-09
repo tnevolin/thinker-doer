@@ -609,13 +609,13 @@ double getBuildSiteBaseGain(MAP *buildSite)
 		double score = getResourceScore(nutrientSurplus, mineralIntake, energyIntake);
 		double resourceScore = getResourceScore(mineralIntake, energyIntake);
 		
-		// bonus score for bonus resources
-		
-		score +=
-			+ getNutrientBonus(tile)
-			+ getMineralBonus(tile)
-			+ getEnergyBonus(tile)
-		;
+//		// bonus score for bonus resources
+//		
+//		score +=
+//			+ getNutrientBonus(tile)
+//			+ getMineralBonus(tile)
+//			+ getEnergyBonus(tile)
+//		;
 		
 		// add bonus for monolith as it does not need to be terraformed
 		
@@ -648,8 +648,9 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	double totalBonus = 0.0;
 	int evaluationTurns = 50;
 	
-	double yieldNutrientSurplus = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score / getResourceScore(1.0, 0.0, 0.0) : 0.0;
-	double yieldResourceScore = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score : 0.0;
+	double yieldScore = (popSize - 1) < (int)yieldInfos.size() ? yieldInfos.at(popSize - 1).score : 0.0;
+	double yieldNutrientSurplus = 0.5 * yieldScore / getResourceScore(1.0, 0.0, 0.0);
+	double yieldResourceScore = 0.5 * yieldScore;
 	double nutrientSurplus = (double)ResInfo->base_sq_nutrient + yieldNutrientSurplus;
 	double resourceScore = getResourceScore(ResInfo->base_sq_mineral, ResInfo->base_sq_energy) + yieldResourceScore;
 	
@@ -664,8 +665,9 @@ double getBuildSiteBaseGain(MAP *buildSite)
 			nutrientBoxSize = nutrientCostFactor * (1 + popSize);
 			nutrientAccumulated = 0.0;
 			
-			yieldNutrientSurplus = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score / getResourceScore(1.0, 0.0, 0.0) : 0.0;
-			yieldResourceScore = popSize - 1 < (int)yieldInfos.size() ? 0.5 * yieldInfos.at(popSize - 1).score : 0.0;
+			yieldScore = (popSize - 1) < (int)yieldInfos.size() ? yieldInfos.at(popSize - 1).score : 0.0;
+			yieldNutrientSurplus = 0.5 * yieldScore / getResourceScore(1.0, 0.0, 0.0);
+			yieldResourceScore = 0.5 * yieldScore;
 			nutrientSurplus += yieldNutrientSurplus;
 			resourceScore += yieldResourceScore;
 			

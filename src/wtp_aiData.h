@@ -712,12 +712,18 @@ struct FormerRequest
 	double income;
 };
 
+struct ConvoyRequest
+{
+	MAP *tile;
+	double gain;
+};
+
 struct Production
 {
 	robin_hood::unordered_flat_set<MAP *> unavailableBuildSites;
 	
-	// formers
 	std::vector<FormerRequest> formerRequests;
+	std::vector<ConvoyRequest> convoyRequests;
 	
 	// combat unit demands
 	

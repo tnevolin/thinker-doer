@@ -211,78 +211,82 @@ int Task::execute(int vehicleId)
 int Task::executeAction(int vehicleId)
 {
 	debug("Task::executeAction(%d)\n", vehicleId);
-
+	
 	switch (type)
 	{
 	case TT_NONE:
 		return executeNone(vehicleId);
 		break;
-
+	
 	case TT_KILL:
 		return executeKill(vehicleId);
 		break;
-
+	
 	case TT_SKIP:
 		return executeSkip(vehicleId);
 		break;
-
+	
 	case TT_BUILD:
 		return executeBuild(vehicleId);
 		break;
-
+	
 	case TT_LOAD:
 		return executeLoad(vehicleId);
 		break;
-
+	
 	case TT_BOARD:
 		return executeBoard(vehicleId);
 		break;
-
+	
 	case TT_UNLOAD:
 		return executeUnload(vehicleId);
 		break;
-
+	
 	case TT_UNBOARD:
 		return executeUnboard(vehicleId);
 		break;
-
+	
 	case TT_TERRAFORM:
 		return executeTerraformingAction(vehicleId);
 		break;
-
+	
 	case TT_ORDER:
 		return executeOrder(vehicleId);
 		break;
-
+	
 	case TT_HOLD:
 		return executeHold(vehicleId);
 		break;
-
+	
 	case TT_ALERT:
 		return executeAlert(vehicleId);
 		break;
-
+	
 	case TT_MOVE:
 		return executeMove(vehicleId);
 		break;
-
+	
 	case TT_ARTIFACT_CONTRIBUTE:
 		return executeArtifactContribute(vehicleId);
 		break;
-
+	
 	case TT_MELEE_ATTACK:
 		return executeAttack(vehicleId);
 		break;
-
+	
 	case TT_LONG_RANGE_FIRE:
 		return executeLongRangeFire(vehicleId);
 		break;
-
+	
+	case TT_CONVOY:
+		return executeConvoy(vehicleId);
+		break;
+	
 	default:
 		return EM_DONE;
-
+	
 	}
-
+	
 }
 
 int Task::executeNone(int)
@@ -691,6 +695,17 @@ int Task::executeLongRangeFire(int vehicleId)
 	longRangeFire(vehicleId, attackTarget);
 	return EM_SYNC;
 
+}
+
+int Task::executeConvoy(int vehicleId)
+{
+	debug("Task::executeConvoy\n");
+	
+	// set order
+	
+	setVehicleOrder(vehicleId, ORDER_CONVOY);
+	return EM_DONE;
+	
 }
 
 // TaskList

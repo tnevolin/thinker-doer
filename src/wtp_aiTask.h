@@ -27,26 +27,28 @@ enum TaskType
 	TT_ARTIFACT_CONTRIBUTE,		// 13
 	TT_MELEE_ATTACK,			// 14
 	TT_LONG_RANGE_FIRE,			// 15
+	TT_CONVOY,					// 16
 };
 
 std::string const taskTypeNames[]
 {
-	"NONE ",				//  0
-	"KILL ",				//  1
-	"SKIP ",				//  2
-	"BUILD",				// 	3
-	"LOAD ",				//  4
-	"BOARD",				//  5
-	"UNLOA",				//  6
-	"UNBOA",				//  7
-	"TERRA",				//  8
-	"ORDER",				//  9
-	"HOLD ",				// 10
-	"ALERT",				// 11
-	"MOVE ",				// 12
-	"ART_C",				// 13
-	"MELEE",				// 14
-	"ARTYL",				// 15
+	"NONE  ",				//  0
+	"KILL  ",				//  1
+	"SKIP  ",				//  2
+	"BUILD ",				// 	3
+	"LOAD  ",				//  4
+	"BOARD ",				//  5
+	"UNLOAD",				//  6
+	"UNBOAR",				//  7
+	"TERRAF",				//  8
+	"ORDER ",				//  9
+	"HOLD  ",				// 10
+	"ALERT ",				// 11
+	"MOVE  ",				// 12
+	"ART_CO",				// 13
+	"MELEE ",				// 14
+	"ARTYLL",				// 15
+	"CONVOY",				// 16
 };
 
 struct Task
@@ -98,6 +100,7 @@ struct Task
 	int executeArtifactContribute(int vehicleId);
 	int executeAttack(int vehicleId);
 	int executeLongRangeFire(int vehicleId);
+	int executeConvoy(int vehicleId);
 
 };
 

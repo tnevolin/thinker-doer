@@ -9,6 +9,7 @@
 #include "wtp_aiMoveColony.h"
 #include "wtp_aiMoveCombat.h"
 #include "wtp_aiMoveFormer.h"
+#include "wtp_aiMoveCrawler.h"
 #include "wtp_aiProduction.h"
 #include "wtp_aiMoveTransport.h"
 #include "wtp_aiRoute.h"
@@ -42,25 +43,12 @@ void moveStrategy()
 	
 	fixUndesiredTransportDropoff();
 	
-	// generic
-	
 	moveAllStrategy();
-	
-	// artifact
-	
 	moveArtifactStrategy();
-	
-	// combat
-	
 	moveCombatStrategy();
-	
-	// colony
-	
 	moveColonyStrategy();
-	
-	// former
-	
 	moveFormerStrategy();
+	moveCrawlerStrategy();
 	
 	// transport
 	

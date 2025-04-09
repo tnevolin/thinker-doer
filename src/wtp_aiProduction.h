@@ -164,8 +164,8 @@ void evaluatePrototypingFacilities();
 
 void evaluateDefensiveProbeUnits();
 void evaluateExpansionUnits();
-void evaluateTerraformingUnits();
-void evaluateCrawlingUnits();
+void evaluateTerraformUnits();
+void evaluateConvoyUnits();
 void evaluatePodPoppingUnits();
 void evaluateBaseDefenseUnits();
 void evaluateBunkerDefenseUnits();

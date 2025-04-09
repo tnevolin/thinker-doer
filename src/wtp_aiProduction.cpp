@@ -773,8 +773,8 @@ void suggestBaseProduction()
 	
 	evaluateFacilities();
 	evaluateExpansionUnits();
-	evaluateTerraformingUnits();
-	evaluateCrawlingUnits();
+	evaluateTerraformUnits();
+	evaluateConvoyUnits();
 	
 	// evaluate combat units
 	
@@ -1636,8 +1636,6 @@ void evaluateExpansionUnits()
 {
 	Profiling::start("evaluateExpansionUnits", "suggestBaseProduction");
 	
-	const int TRACE = DEBUG && false;
-	
 	debug("evaluateExpansionUnits\n");
 	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
@@ -1697,7 +1695,7 @@ void evaluateExpansionUnits()
 			
 		}
 			
-		if (TRACE) { debug("\t[%3d] %-32s\n", unitId, unit->name); }
+//		debug("\t[%3d] %-32s\n", unitId, unit->name);
 		
 		// iterate available build sites
 		
@@ -1752,21 +1750,18 @@ void evaluateExpansionUnits()
 				bestBuildSiteGain = buildSiteGain;
 			}
 			
-			if (TRACE)
-			{
-				debug
-				(
-					"\t\t%s"
-					" travelTime=%7.2f"
-					" buildSiteBaseGain=%5.2f"
-					" buildSiteBuildGain=%5.2f"
-					"\n"
-					, getLocationString(tile).c_str()
-					, travelTime
-					, buildSiteBaseGain
-					, buildSiteBuildGain
-				);
-			}
+//			debug
+//			(
+//				"\t\t%s"
+//				" travelTime=%7.2f"
+//				" buildSiteBaseGain=%5.2f"
+//				" buildSiteBuildGain=%5.2f"
+//				"\n"
+//				, getLocationString(tile).c_str()
+//				, travelTime
+//				, buildSiteBaseGain
+//				, buildSiteBuildGain
+//			);
 			
 		}
 		
@@ -1819,7 +1814,7 @@ void evaluateExpansionUnits()
 	
 }
 
-void evaluateTerraformingUnits()
+void evaluateTerraformUnits()
 {
 	struct TerraformingGain
 	{
@@ -1832,9 +1827,9 @@ void evaluateTerraformingUnits()
 		}
 	};
 
-	Profiling::start("evaluateTerraformingUnits", "suggestBaseProduction");
+	Profiling::start("evaluateTerraformUnits", "suggestBaseProduction");
 	
-	debug("evaluateTerraformingUnits\n");
+	debug("evaluateTerraformUnits\n");
 	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
@@ -2093,18 +2088,19 @@ debug("extraFormerGains= %5.2f %5.2f %5.2f\n", extraFormerGains[0], extraFormerG
 		
 	}
 	
-	Profiling::stop("evaluateTerraformingUnits");
+	Profiling::stop("evaluateTerraformUnits");
 	
 }
 
-void evaluateCrawlingUnits()
+void evaluateConvoyUnits()
 {
-	Profiling::start("evaluateCrawlingUnits", "suggestBaseProduction");
+	Profiling::start("evaluateConvoyUnits", "suggestBaseProduction");
 	
 	ProductionDemand &productionDemand = *currentBaseProductionDemand;
 	int baseId = productionDemand.baseId;
+	MAP *baseTile = getBaseMapTile(baseId);
 	
-	debug("evaluateCrawlingUnits\n");
+	debug("evaluateConvoyUnits\n");
 	
 	// process available supply units
 	
@@ -2115,10 +2111,10 @@ void evaluateCrawlingUnits()
 		
 		// crawler
 		
-		if (unit->weapon_id != WPN_SUPPLY_TRANSPORT)
+		if (!isSupplyUnit(unitId))
 			continue;
 		
-		// for sea former base should have access to water
+		// for sea crawler base should have access to water
 		
 		if (triad == TRIAD_SEA && !isBaseAccessesWater(baseId))
 			continue;
@@ -2130,9 +2126,44 @@ void evaluateCrawlingUnits()
 		if (unitPriorityCoefficient <= 0.0)
 			continue;
 		
-		// fixed priority for now will work it out later
+		// iterate convoy requests
 		
-		double priority = 0.5 * unitPriorityCoefficient;
+		double bestGain = 0.0;
+		for (ConvoyRequest const &convoyRequest : aiData.production.convoyRequests)
+		{
+			// matching surface
+			
+			if ((is_ocean(convoyRequest.tile) && triad == TRIAD_LAND) || (!is_ocean(convoyRequest.tile) && triad == TRIAD_SEA))
+				continue;
+			
+			// reachable
+			
+			if (!isUnitDestinationReachable(unitId, baseTile, convoyRequest.tile))
+				continue;
+			
+			// travelTime
+			
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, convoyRequest.tile, true);
+			if (travelTime == INF)
+				continue;
+			
+			// gain
+			
+			double gain = getGainDelay(convoyRequest.gain, travelTime);
+			
+			bestGain = std::max(bestGain, gain);
+			
+		}
+		
+		// gain
+		
+		double incomeGain = bestGain;
+		double upkeepGain = getGainIncome(getResourceScore(-getUnitSupport(unitId), 0.0));
+		double gain = incomeGain + upkeepGain;
+		
+		// priority
+		
+		double priority = unitPriorityCoefficient * getItemPriority(unitId, gain);;
 		
 		productionDemand.addItemPriority(unitId, priority);
 		
@@ -2141,23 +2172,21 @@ void evaluateCrawlingUnits()
 			"\t%-32s"
 			" priority=%5.2f   |"
 			" unitPriorityCoefficient=%5.2f"
-//			" bestTerraformingGain=%5.2f"
-//			" upkeepGain=%5.2f"
-//			" gain=%5.2f"
-//			" conf.ai_production_improvement_priority=%5.2f"
+			" incomeGain=%5.2f"
+			" upkeepGain=%5.2f"
+			" gain=%5.2f"
 			"\n"
 			, unit->name
 			, priority
 			, unitPriorityCoefficient
-//			, bestTerraformingGain
-//			, upkeepGain
-//			, gain
-//			, conf.ai_production_improvement_priority
+			, incomeGain
+			, upkeepGain
+			, gain
 		);
 		
 	}
 	
-	Profiling::stop("evaluateCrawlingUnits");
+	Profiling::stop("evaluateConvoyUnits");
 	
 }
 

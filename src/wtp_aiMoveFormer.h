@@ -317,7 +317,7 @@ bool isVehicleTerrafomingOrderCompleted(int vehicleId);
 bool isTerraformingAvailable(MAP *tile, int action);
 bool isRemoveFungusRequired(int action);
 bool isLevelTerrainRequired(bool ocean, int action);
-bool isVehicleConvoying(VEH *vehicle);
+bool isVehicleConvoying(int vehicleId);
 bool isVehicleTerraforming(VEH *vehicle);
 bool isNearbyForestUnderConstruction(int x, int y);
 bool isNearbyCondeserUnderConstruction(int x, int y);

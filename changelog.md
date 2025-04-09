@@ -1,3 +1,8 @@
+# Version 366
+
+* Tidal harness terraforming time is always computed for rolling sea floor regardless of actual sea floor rockiness.
+* AI handles crawlers.
+
 # Version 365
 
 * Adv. Ecological Engineering does not increase mineral output of mining platform. This time done correctly.

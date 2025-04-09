@@ -1869,9 +1869,12 @@ int getVehicleMapTileIndex(int vehicleId)
 
 MAP *getVehicleMapTile(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	if (!(vehicleId >= 0 && vehicleId < *VehCount))
+		return nullptr;
 	
-	return getMapTile(vehicle->x, vehicle->y);
+	VEH &vehicle = Vehicles[vehicleId];
+	
+	return getMapTile(vehicle.x, vehicle.y);
 	
 }
 
@@ -1887,9 +1890,13 @@ bool isImprovedTile(int x, int y)
 	return isImprovedTile(getMapTile(x, y));
 }
 
-bool isSupplyVehicle(VEH *vehicle)
+bool isSupplyUnit(int unitId)
 {
-	return (Units[vehicle->unit_id].weapon_id == WPN_SUPPLY_TRANSPORT);
+	return Units[unitId].weapon_id == WPN_SUPPLY_TRANSPORT;
+}
+bool isSupplyVehicle(int vehicleId)
+{
+	return isSupplyUnit(Vehicles[vehicleId].unit_id);
 }
 
 bool isColonyUnit(int id)
@@ -1924,6 +1931,15 @@ bool isFormerVehicle(int vehicleId)
 bool isFormerVehicle(VEH *vehicle)
 {
 	return (Units[vehicle->unit_id].weapon_id == WPN_TERRAFORMING_UNIT);
+}
+
+bool isConvoyUnit(int unitId)
+{
+	return (Units[unitId].weapon_id == WPN_SUPPLY_TRANSPORT);
+}
+bool isConvoyVehicle(int vehicleId)
+{
+	return isConvoyUnit(Vehicles[vehicleId].unit_id);
 }
 
 bool isTransportVehicle(VEH *vehicle)
@@ -2006,6 +2022,8 @@ Base compute may not pick optimal worker placement without worked tile reset.
 */
 void computeBase(int baseId, bool resetWorkedTiles)
 {
+	assert(baseId >= 0 && baseId < *BaseCount);
+	
 	Profiling::start("- computeBase");
 	
 	if (resetWorkedTiles)
@@ -2269,6 +2287,22 @@ int estimateBaseProductionTurnsToComplete(int id)
 
 	return ((getBaseMineralCost(id, base->queue_items[0]) - base->minerals_accumulated) + (base->mineral_surplus - 1)) / base->mineral_surplus;
 
+}
+
+MAP *getBaseWorkerTile(int baseId, int workerNumber)
+{
+	assert(workerNumber >=0 && workerNumber < 21);
+	
+	BASE const &base = Bases[baseId];
+	
+	int dx = OFFSETS[workerNumber][0];
+	int dy = OFFSETS[workerNumber][1];
+	
+	int x = wrap(base.x + dx);
+	int y = base.y + dy;
+	
+	return isOnMap(x, y) ? getMapTile(x, y) : nullptr;
+	
 }
 
 /*

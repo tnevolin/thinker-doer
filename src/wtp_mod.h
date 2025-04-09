@@ -410,4 +410,5 @@ int __cdecl wtp_mod_steal_energy(int baseId);
 int __cdecl wtp_mod_diplomacy_caption_say_fac_special(int dst, int src, int factionId);
 int wtp_mod_probe_success_rates_procure_research_data(int position, int morale, int risk, int baseId);
 int wtp_mod_probe_veh_skip(int vehicleId);
+int __cdecl wtp_mod_action_terraform(int vehicleId, int action, int execute);
 

@@ -3221,6 +3221,21 @@ void patch_infiltrate_datalinks_no_promotion()
 	
 }
 
+void patch_tidal_harness_terraform_rate()
+{
+	write_call(0x0040E216, (int)wtp_mod_action_terraform);
+	write_call(0x00461AD9, (int)wtp_mod_action_terraform);
+	write_call(0x004B5C71, (int)wtp_mod_action_terraform);
+	write_call(0x004B85A7, (int)wtp_mod_action_terraform);
+	write_call(0x004CB70A, (int)wtp_mod_action_terraform);
+	write_call(0x004CB7FA, (int)wtp_mod_action_terraform);
+	write_call(0x004CB88D, (int)wtp_mod_action_terraform);
+	write_call(0x004CF766, (int)wtp_mod_action_terraform);
+	write_call(0x004D31DE, (int)wtp_mod_action_terraform);
+	write_call(0x00536A1E, (int)wtp_mod_action_terraform);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3566,6 +3581,8 @@ void patch_setup_wtp(Config* cf)
 	}
 	
 	patch_infiltrate_datalinks_no_promotion();
+	
+	patch_tidal_harness_terraform_rate();
 	
 }
 

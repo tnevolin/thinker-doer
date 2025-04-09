@@ -485,10 +485,10 @@ void populateTerraformingData()
 		// process supplies and formers
 		
 		// supplies
-		if (isSupplyVehicle(vehicle))
+		if (isSupplyVehicle(vehicleId))
 		{
 			// convoying vehicles
-			if (isVehicleConvoying(vehicle))
+			if (isVehicleConvoying(vehicleId))
 			{
 				vehicleTileTerraformingInfo.harvested = true;
 			}
@@ -975,27 +975,49 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	
 	std::sort(availableBaseTerraformingRequests.begin(), availableBaseTerraformingRequests.end(), compareConventionalTerraformingRequests);
 	
-	// reduce redundant (inferior or equal) request gains
+//	// reduce redundant (inferior or equal) request gains
+//	
+//	double const redundantRequestCoefficient = 0.5;
+//	for (size_t i = 0; i < availableBaseTerraformingRequests.size(); i++)
+//	{
+//		TERRAFORMING_REQUEST &availableBaseTerraformingRequest = availableBaseTerraformingRequests.at(i);
+//		
+//		for (size_t j = 0; j < i; j++)
+//		{
+//			TERRAFORMING_REQUEST &priorAvailableBaseTerraformingRequest = availableBaseTerraformingRequests.at(j);
+//			
+//			if (TileYield::isEqualOrSuperior(priorAvailableBaseTerraformingRequest.yield, availableBaseTerraformingRequest.yield))
+//			{
+//				availableBaseTerraformingRequest.gain *= redundantRequestCoefficient;
+//			}
+//			
+//		}
+//		
+//	}
+//	
+	std::sort(availableBaseTerraformingRequests.begin(), availableBaseTerraformingRequests.end(), compareConventionalTerraformingRequests);
 	
-	double const redundantRequestCoefficient = 0.5;
-	for (size_t i = 0; i < availableBaseTerraformingRequests.size(); i++)
+	if (DEBUG)
 	{
-		TERRAFORMING_REQUEST &availableBaseTerraformingRequest = availableBaseTerraformingRequests.at(i);
-		
-		for (size_t j = 0; j < i; j++)
+		debug("available base terraforming requests SORTED - %s\n", aiMFaction->noun_faction);
+		for (const TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
 		{
-			TERRAFORMING_REQUEST &priorAvailableBaseTerraformingRequest = availableBaseTerraformingRequests.at(j);
-			
-			if (TileYield::isEqualOrSuperior(priorAvailableBaseTerraformingRequest.yield, availableBaseTerraformingRequest.yield))
-			{
-				availableBaseTerraformingRequest.gain *= redundantRequestCoefficient;
-			}
-			
+			debug
+			(
+				"\t%s"
+				" %-20s"
+				" %6.2f"
+				" income=%5.2f time=%5.2f"
+				"\n"
+				, getLocationString(terraformingRequest.tile).c_str()
+				, terraformingRequest.option->name
+				, terraformingRequest.gain
+				, terraformingRequest.income
+				, terraformingRequest.terraformingTime
+			);
 		}
 		
 	}
-	
-	std::sort(availableBaseTerraformingRequests.begin(), availableBaseTerraformingRequests.end(), compareConventionalTerraformingRequests);
 	
 	// select requests
 	
@@ -1012,6 +1034,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	
 	for (TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
 	{
+debug(">%s %s\n", getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name);
 		// skip allready selected locations
 		
 		if (selectedLocations.find(terraformingRequest.tile) != selectedLocations.end())
@@ -1019,6 +1042,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		
 		// apply changes
 		
+debug(">1\n");
 		applyMapState(terraformingRequest.improvedMapState, terraformingRequest.tile);
 		appliedLocations.insert(terraformingRequest.tile);
 		
@@ -1593,6 +1617,8 @@ void assignFormerOrders()
 	{
 		formerRequests.push_back({terraformingRequest.tile, terraformingRequest.option, terraformingRequest.terraformingTime, terraformingRequest.income});
 	}
+	
+	flushlog();
 	
 	Profiling::stop("assignFormerOrders");
 	
@@ -2688,9 +2714,9 @@ bool isLevelTerrainRequired(bool ocean, int action)
 
 }
 
-bool isVehicleConvoying(VEH *vehicle)
+bool isVehicleConvoying(int vehicleId)
 {
-	return vehicle->order == ORDER_CONVOY;
+	return Vehicles[vehicleId].order == ORDER_CONVOY;
 }
 
 bool isVehicleTerraforming(VEH *vehicle)
@@ -3554,11 +3580,11 @@ double estimateBunkerIncome(MAP *tile, bool existing)
 		return 0.0;
 	}
 	
-	// do not place bunker next to shared sea
+	// do not place bunker on a shore
 	
 	for (MAP *adjacentTile : getAdjacentTiles(tile))
 	{
-		if (isSharedSea(adjacentTile))
+		if (is_ocean(adjacentTile))
 		{
 			Profiling::stop("- estimateBunkerIncome");
 			return 0.0;
@@ -4648,7 +4674,7 @@ Compares terraforming requests by improvementIncome then by fitnessScore.
 */
 bool compareConventionalTerraformingRequests(TERRAFORMING_REQUEST const &terraformingRequest1, TERRAFORMING_REQUEST const &terraformingRequest2)
 {
-	return terraformingRequest1.gain > terraformingRequest2.gain;
+	return terraformingRequest1.gain == terraformingRequest2.gain ? terraformingRequest1.tile < terraformingRequest2.tile : terraformingRequest1.gain > terraformingRequest2.gain;
 }
 
 void setMapState(MapState &mapState, MAP *tile)

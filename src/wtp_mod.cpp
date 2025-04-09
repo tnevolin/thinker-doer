@@ -4178,3 +4178,27 @@ int wtp_mod_probe_veh_skip(int vehicleId)
 	
 }
 
+int __cdecl wtp_mod_action_terraform(int vehicleId, int action, int execute)
+{
+	MAP *tile = getVehicleMapTile(vehicleId);
+	int rockiness = 0;
+	
+	if (tile != nullptr && tile->is_sea())
+	{
+		rockiness = tile->val3 && (TILE_ROLLING | TILE_ROCKY);
+		tile->val3 &= ~(TILE_ROLLING | TILE_ROCKY);
+		tile->val3 |= TILE_ROLLING;
+	}
+	
+	int returnValue = action_terraform(vehicleId, action, execute);
+	
+	if (tile != nullptr)
+	{
+		tile->val3 &= ~(TILE_ROLLING | TILE_ROCKY);
+		tile->val3 |= rockiness;
+	}
+	
+	return returnValue;
+	
+}
+

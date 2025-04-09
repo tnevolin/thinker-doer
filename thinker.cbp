@@ -158,6 +158,8 @@
 		<Unit filename="src/wtp_aiMoveColony.h" />
 		<Unit filename="src/wtp_aiMoveCombat.cpp" />
 		<Unit filename="src/wtp_aiMoveCombat.h" />
+		<Unit filename="src/wtp_aiMoveCrawler.cpp" />
+		<Unit filename="src/wtp_aiMoveCrawler.h" />
 		<Unit filename="src/wtp_aiMoveFormer.cpp" />
 		<Unit filename="src/wtp_aiMoveFormer.h" />
 		<Unit filename="src/wtp_aiMoveTransport.cpp" />
