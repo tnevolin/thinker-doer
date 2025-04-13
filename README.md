@@ -513,18 +513,17 @@ Many people before me mentioned overpowed forest. Indeed, it is capable of turni
 
 ## Fungus production
 
-Fungus production is not some crucial part of the game. However, it is still some alternative yield source that is mostly overlooked due to very slow development comparing to conventional terraforming. I'd like to add few touches on it.
+Fungus production is not a crucial part of the game. However, it is still some alternative yield source that is mostly overlooked due to very slow development comparing to conventional terraforming. It is now focused on nutrient and energy production to offset bareland base nutrition.
 
-| technology | level | tech tree % | effect | cumulative yield | comment |
-| ---- | ----: | ----: | ---- | ---- | ---- |
+| technology | level | tech % | effect | yield |
+| ---- | ----: | ----: | ---- | ---- |
 | Centauri Ecology | 1 |  5 | +1 nutrient | 1-0-0 |
-| Progenitor Psych | 1 |  5 | +1 energy | 1-0-1 | reassigned |
-| Field Modulation | 2 | 15 | +1 energy | 1-0-2 | reassigned |
-| Bioadaptive Resonance | 4 | 30 | +1 nutrient | 2-0-2 | reassigned |
-| Centauri Meditation | 5 | 35 | +1 energy | 2-0-3 |
-| Centauri Genetics | 8 | 65 | +1 mineral | 2-1-3 |
-| Centauri Psi | 11 | 75 | +1 nutrient | 3-1-3 |
-| Secrets of Alpha Centauri | 13 | 90 | +1 energy | 3-1-4 |
+| Progenitor Psych | 1 |  5 | +1 energy | 1-0-1 |
+| Field Modulation | 2 | 15 | +1 nutrient | 2-0-1 |
+| Bioadaptive Resonance | 4 | 30 | +1 energy | 2-0-2 |
+| Centauri Meditation | 5 | 35 | +1 nutrient | 3-0-2 |
+| Centauri Genetics | 8 | 65 | +1 mineral | 3-1-2 |
+| Centauri Psi | 11 | 75 | +1 energy | 3-1-3 |
 
 ## Sensors
 
