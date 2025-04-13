@@ -405,7 +405,8 @@ The Ascent to Transcendence | 500 | Should take some time but not to extreme wit
 
 | facility | cost | maint | multi / yield | other effects |
 | ---- | ----: | ----: | ---- | ---- |
-| Recycling Tanks | 10 | 2 | +1 mineral mining platform, +2 minerals rocky mine | |
+| Biology Lab | 6 | 1 | +1 nutrient and +1 energy fungus | +4 labs |
+| Recycling Tanks | 10 | 2 | +1 mineral any mine/platform, +2 minerals rocky mine | |
 | Genejack Factory | 12 | 3 | +50% minerals | +1 drone |
 | Robotic Assembly Plant | 16 | 4 | +50% minerals | |
 | Quantum Converter | 20 | 5 | +50% minerals | |
