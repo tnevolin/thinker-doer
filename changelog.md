@@ -1,3 +1,26 @@
+# Version 369
+
+* Cybernetics gets +1 PLANET.
+
+# Version 368
+
+* Fungus yiled technologies give nutrient before energy.
+* Secrets of Alpha Centauri does not improve fungus yield.
+* The Manifold Harmonics starts giving bonus from +1 PLANET.
+* Biology Lab grants +1 nutrient to base worked fungus but not +1 energy.
+* Fungus receives all bonuses:
+  * river
+  * resources
+  * landmark
+  * The Merchant Exchange
+* Recycling Tanks costs 6 mineral rows and 0 maintenance.
+* Recycling Tanks grants +1 resouce for each next citizen: energy, nutrient, mineral, then again.
+* Base square produces 2 nutrients, not 3 anymore, because of the above RT bonus.
+
+# Version 367
+
+* [Bug] Fixed terraforming computation so it does not remove rockiness.
+
 # Version 366
 
 * Tidal harness terraforming time is always computed for rolling sea floor regardless of actual sea floor rockiness.

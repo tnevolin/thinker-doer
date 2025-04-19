@@ -695,8 +695,6 @@ void evaluateProject()
 	int selectedProjectFacilityId = cheapestProjectFacilityId;
 	CFacility *selectedProjectFacility = getFacility(selectedProjectFacilityId);
 	
-	debug("\t%s\n", selectedProjectFacility->name);
-	
 	// max threat
 	
 	double maxThreat = 2.0;
@@ -723,7 +721,7 @@ void evaluateProject()
 		
 		// turns to completion
 		
-		int buildTime = getBaseItemBuildTime(baseId, -selectedProjectFacilityId, true);
+		int buildTime = getBaseItemBuildTime(baseId, -selectedProjectFacilityId, false);
 		double buildTimeCoefficient = 1.0 / (double)std::max(1, buildTime);
 		
 		// threat coefficient
@@ -750,8 +748,6 @@ void evaluateProject()
 		return;
 	}
 	
-	debug("\t%s\n", bestProductionDemand->base->name);
-	
 	// add project priority
 	
 	double buildTimeCoefficient = conf.ai_production_current_project_priority_build_time / (double)std::max(1, bestBaseBuildTime);
@@ -759,7 +755,15 @@ void evaluateProject()
 	
 	bestProductionDemand->addItemPriority(-selectedProjectFacilityId, priority);
 	
-	debug("\tproject set\n");
+	debug
+	(
+		"\t%-30s %-25s ai_production_current_project_priority_build_time=%5.2f bestBaseBuildTime=%2d priority=%5.2f\n"
+		, selectedProjectFacility->name
+		, bestProductionDemand->base->name
+		, conf.ai_production_current_project_priority_build_time
+		, bestBaseBuildTime
+		, priority
+	);
 	
 }
 
@@ -1883,14 +1887,12 @@ void evaluateTerraformUnits()
 		existingFormerCounts[triad]++;
 		
 	}
-debug("existingFormerCounts= %3d %3d %3d\n", existingFormerCounts[0], existingFormerCounts[1], existingFormerCounts[2]);
 	
 	// extra former gain
 	
 	double extraFormerGains[3] = {0.0, 0.0, 0.0};
 	for (Triad triad : {TRIAD_AIR, TRIAD_SEA, TRIAD_LAND})
 	{
-debug("triad=%d\n", triad);
 		// for sea former base should have access to water
 		
 		if (triad == TRIAD_SEA && !(isBaseAccessesWater(baseId) && baseSeaCluster >= 0))
@@ -1907,7 +1909,6 @@ debug("triad=%d\n", triad);
 		std::vector<TerraformingGain> terraformingGains;
 		for (FormerRequest &formerRequest : aiData.production.formerRequests)
 		{
-debug("%s formerRequest.income=%5.2f\n", getLocationString(formerRequest.tile).c_str(), formerRequest.income);
 			TileInfo &tileInfo = aiData.getTileInfo(formerRequest.tile);
 			
 			// sensible terraforming time
@@ -1946,7 +1947,6 @@ debug("%s formerRequest.income=%5.2f\n", getLocationString(formerRequest.tile).c
 			// terraforming gain
 			
 			terraformingGains.push_back({formerRequest.terraformingTime, formerRequest.income, 0.0});
-debug("\tadded\n");
 			
 		}
 		double averageDistance = distanceHarmonicSummary.getHarmonicMean();
@@ -1963,7 +1963,6 @@ debug("\tadded\n");
 		// sort terraforming gains
 		
 		std::sort(terraformingGains.begin(), terraformingGains.end());
-debug("%d\n", (int)terraformingGains.size());
 		
 		// extra former gain
 		
@@ -1982,24 +1981,24 @@ debug("%d\n", (int)terraformingGains.size());
 			}
 			extraFormerAccumulatedTime += terraformingGain.time / extraFormerCount;
 			extraFormerTotalGain += getGainDelay(getGainIncome(terraformingGain.income), extraFormerAccumulatedTime);
-debug
-(
-	"\tterraformingGain.time=%5.2f"
-	" terraformingGain.income=%5.2f"
-	" existingFormerAccumulatedTime=%5.2f"
-	" existingFormerGain=%5.2f"
-	" extraFormerAccumulatedTime=%5.2f"
-	" extraFormerGain=%5.2f"
-	" delta=%5.2f"
-	"\n"
-	, terraformingGain.time
-	, terraformingGain.income
-	, existingFormerAccumulatedTime
-	, getGainDelay(getGainIncome(terraformingGain.income), existingFormerAccumulatedTime)
-	, extraFormerAccumulatedTime
-	, getGainDelay(getGainIncome(terraformingGain.income), extraFormerAccumulatedTime)
-	, getGainDelay(getGainIncome(terraformingGain.income), extraFormerAccumulatedTime) - getGainDelay(getGainIncome(terraformingGain.income), existingFormerAccumulatedTime)
-);
+//debug
+//(
+//	"\tterraformingGain.time=%5.2f"
+//	" terraformingGain.income=%5.2f"
+//	" existingFormerAccumulatedTime=%5.2f"
+//	" existingFormerGain=%5.2f"
+//	" extraFormerAccumulatedTime=%5.2f"
+//	" extraFormerGain=%5.2f"
+//	" delta=%5.2f"
+//	"\n"
+//	, terraformingGain.time
+//	, terraformingGain.income
+//	, existingFormerAccumulatedTime
+//	, getGainDelay(getGainIncome(terraformingGain.income), existingFormerAccumulatedTime)
+//	, extraFormerAccumulatedTime
+//	, getGainDelay(getGainIncome(terraformingGain.income), extraFormerAccumulatedTime)
+//	, getGainDelay(getGainIncome(terraformingGain.income), extraFormerAccumulatedTime) - getGainDelay(getGainIncome(terraformingGain.income), existingFormerAccumulatedTime)
+//);
 		}
 		extraFormerGains[triad] = extraFormerTotalGain - existingFormerTotalGain;
 		
@@ -2522,7 +2521,7 @@ void evaluateBaseDefenseUnits()
 			MAP *targetBaseTile = getBaseMapTile(targetBaseId);
 			BaseInfo &targetBaseInfo = aiData.baseInfos.at(targetBaseId);
 			BasePoliceData &targetBasePoliceData = targetBaseInfo.policeData;
-			BaseCombatData &targetBaseCombatData = targetBaseInfo.combatData;
+			DefenseCombatData &targetDefenseCombatData = targetBaseInfo.combatData;
 			
 			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile, true);
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
@@ -2534,9 +2533,9 @@ void evaluateBaseDefenseUnits()
 			
 			// protection
 			
-			double combatEffect = targetBaseCombatData.getUnitEffect(unitId);
+			double combatEffect = targetDefenseCombatData.getUnitEffect(unitId);
 			double survivalEffect = getSurvivalEffect(combatEffect);
-			double unitProtectionGain = targetBaseCombatData.isSatisfied(targetBaseId == baseId && baseInfo.combatData.garrison.empty()) ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
+			double unitProtectionGain = targetDefenseCombatData.isSatisfied(targetBaseId == baseId && baseInfo.combatData.garrison.empty()) ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2552,38 +2551,38 @@ void evaluateBaseDefenseUnits()
 			
 			bestGain = std::max(bestGain, gain);
 			
-//			debug
-//			(
-//				"\t\t%-32s"
-//				" %-25s"
-//				" travelTime=%7.2f"
-//				" travelTimeCoefficient=%5.2f"
-//				" ai_production_priority_police=%5.2f"
-//				" unitPoliceGain=%5.2f"
-//				" policeGain=%5.2f"
-//				" ai_production_base_protection_priority=%5.2f"
-//				" combatEffect=%5.2f"
-//				" survivalEffect=%5.2f"
-//				" unitProtectionGain=%5.2f"
-//				" protectionGain=%5.2f"
-//				" upkeepGain=%5.2f"
-//				" gain=%7.2f"
-//				"\n"
-//				, unit->name
-//				, Bases[targetBaseId].name
-//				, travelTime
-//				, travelTimeCoefficient
-//				, conf.ai_production_priority_police
-//				, unitPoliceGain
-//				, policeGain
-//				, conf.ai_production_base_protection_priority
-//				, combatEffect
-//				, survivalEffect
-//				, unitProtectionGain
-//				, protectionGain
-//				, upkeepGain
-//				, gain
-//			);
+			debug
+			(
+				"\t\t%-32s"
+				" %-25s"
+				" travelTime=%7.2f"
+				" travelTimeCoefficient=%5.2f"
+				" ai_production_priority_police=%5.2f"
+				" unitPoliceGain=%5.2f"
+				" policeGain=%5.2f"
+				" ai_production_base_protection_priority=%5.2f"
+				" combatEffect=%5.2f"
+				" survivalEffect=%5.2f"
+				" unitProtectionGain=%5.2f"
+				" protectionGain=%5.2f"
+				" upkeepGain=%5.2f"
+				" gain=%7.2f"
+				"\n"
+				, unit->name
+				, Bases[targetBaseId].name
+				, travelTime
+				, travelTimeCoefficient
+				, conf.ai_production_priority_police
+				, unitPoliceGain
+				, policeGain
+				, conf.ai_production_base_protection_priority
+				, combatEffect
+				, survivalEffect
+				, unitProtectionGain
+				, protectionGain
+				, upkeepGain
+				, gain
+			);
 			
 		}
 		
@@ -2672,10 +2671,10 @@ void evaluateBunkerDefenseUnits()
 		
 		double bestGain = 0.0;
 		
-		for (robin_hood::pair<MAP *, BaseCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+		for (robin_hood::pair<MAP *, DefenseCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 		{
 			MAP *targetBunkerTile = bunkerCombatDataEntry.first;
-			BaseCombatData const &targetBunkerCombatData = bunkerCombatDataEntry.second;
+			DefenseCombatData const &targetBunkerCombatData = bunkerCombatDataEntry.second;
 			
 			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBunkerTile, true);
 			if (travelTime == INF)
@@ -3518,7 +3517,7 @@ int selectProtectionUnit(int baseId, int targetBaseId)
 	bool targetBaseOcean = is_ocean(targetBaseTile);
 	int targetBaseSeaCluster = getBaseSeaCluster(targetBaseTile);
 	BaseInfo &targetBaseInfo = aiData.getBaseInfo(targetBaseId);
-	BaseCombatData &targetBaseCombatData = targetBaseInfo.combatData;
+	DefenseCombatData &targetDefenseCombatData = targetBaseInfo.combatData;
 	
 	// iterate best protectors at target base
 	
@@ -3531,7 +3530,7 @@ int selectProtectionUnit(int baseId, int targetBaseId)
 		int triad = unit->triad();
 		int offenseValue = getUnitOffenseValue(unitId);
 		int defenseValue = getUnitDefenseValue(unitId);
-		double averageCombatEffect = targetBaseCombatData.getUnitEffect(unitId);
+		double averageCombatEffect = targetDefenseCombatData.getUnitEffect(unitId);
 		
 		// infantry defender
 		
@@ -3915,7 +3914,7 @@ void hurryProtectiveUnit()
 	debug("hurryProtectiveUnit - %s\n", getMFaction(aiFactionId)->noun_faction);
 
 	int mostVulnerableBaseId = -1;
-	double mostVulnerableBaseRelativeRemainingEffect = 0.50;
+	double mostVulnerableBaseRelativeNotProvidedPresentEffect = 0.50;
 
 	for (int baseId : aiData.baseIds)
 	{
@@ -3936,14 +3935,14 @@ void hurryProtectiveUnit()
 		if (baseInfo.combatData.requiredEffect <= 0.0)
 			continue;
 
-		double relativeRemainingEffect = (1.0 - baseInfo.combatData.providedEffect / baseInfo.combatData.requiredEffect);
+		double relativeNotProvidedPresentEffect = (1.0 - baseInfo.combatData.getProvidedEffect(true) / baseInfo.combatData.requiredEffect);
 
 		debug("\t\tremainingEffect=%3d\n", item);
 
-		if (relativeRemainingEffect > mostVulnerableBaseRelativeRemainingEffect)
+		if (relativeNotProvidedPresentEffect > mostVulnerableBaseRelativeNotProvidedPresentEffect)
 		{
 			mostVulnerableBaseId = baseId;
-			mostVulnerableBaseRelativeRemainingEffect = relativeRemainingEffect;
+			mostVulnerableBaseRelativeNotProvidedPresentEffect = relativeNotProvidedPresentEffect;
 		}
 
 	}
@@ -3957,10 +3956,10 @@ void hurryProtectiveUnit()
 	debug
 	(
 		"\tmostVulnerableBase=%-25s"
-		" mostVulnerableBaseRelativeRemainingEffect=%5.2f"
+		" mostVulnerableBaseRelativeNotProvidedPresentEffect=%5.2f"
 		"\n"
 		, getBase(mostVulnerableBaseId)->name
-		, mostVulnerableBaseRelativeRemainingEffect
+		, mostVulnerableBaseRelativeNotProvidedPresentEffect
 	);
 
 	int item = getBaseBuildingItem(mostVulnerableBaseId);

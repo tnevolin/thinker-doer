@@ -1034,7 +1034,6 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	
 	for (TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
 	{
-debug(">%s %s\n", getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name);
 		// skip allready selected locations
 		
 		if (selectedLocations.find(terraformingRequest.tile) != selectedLocations.end())
@@ -1042,7 +1041,6 @@ debug(">%s %s\n", getLocationString(terraformingRequest.tile).c_str(), terraform
 		
 		// apply changes
 		
-debug(">1\n");
 		applyMapState(terraformingRequest.improvedMapState, terraformingRequest.tile);
 		appliedLocations.insert(terraformingRequest.tile);
 		
@@ -3532,7 +3530,7 @@ double estimateSensorIncome(MAP *tile)
 		
 	}
 	
-	for (robin_hood::pair<MAP *, BaseCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (robin_hood::pair<MAP *, DefenseCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 	{
 		MAP *bunkerTile = bunkerCombatDataEntry.first;
 		
@@ -3580,16 +3578,39 @@ double estimateBunkerIncome(MAP *tile, bool existing)
 		return 0.0;
 	}
 	
-	// do not place bunker on a shore
+	// range to same land region unfriendly base
 	
-	for (MAP *adjacentTile : getAdjacentTiles(tile))
+	int enemyBaseRange = INT_MAX;
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
 	{
-		if (is_ocean(adjacentTile))
-		{
-			Profiling::stop("- estimateBunkerIncome");
-			return 0.0;
-		}
+		BASE &base = Bases[baseId];
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		if (base.faction_id == aiFactionId)
+			continue;
+		
+		if (!isUnfriendly(aiFactionId, base.faction_id))
+			continue;
+		
+		if (baseTile->region != tile->region)
+			continue;
+		
+		int range = getRange(tile, baseTile);
+		enemyBaseRange = std::min(enemyBaseRange, range);
+		
 	}
+	
+	// too far from unfriendly base
+	
+	if (enemyBaseRange >= BUNKER_ENEMY_BASE_RANGE_MAX)
+	{
+		Profiling::stop("- estimateBunkerIncome");
+		return 0.0;
+	}
+	
+	double enemyBaseRangeCoefficient = enemyBaseRange <= BUNKER_ENEMY_BASE_RANGE_MIN ? 1.0 : (double)(BUNKER_ENEMY_BASE_RANGE_MAX - enemyBaseRange) / (double)(BUNKER_ENEMY_BASE_RANGE_MAX - BUNKER_ENEMY_BASE_RANGE_MIN);
+	
+	// compute value
 	
 	double baseValue = 0.0;
 	double bunkerValue = 0.0;
@@ -3663,7 +3684,7 @@ double estimateBunkerIncome(MAP *tile, bool existing)
 		return 0.0;
 	}
 	
-	double value = conf.ai_terraforming_bunkerValue * (baseValue + bunkerValue);
+	double value = conf.ai_terraforming_bunkerValue * enemyBaseRangeCoefficient * (baseValue + bunkerValue);
 	
 	// return value
 	
@@ -4957,7 +4978,7 @@ void removeUnusedBunkers()
 	debug("removeUnusedBunkers - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	robin_hood::unordered_flat_set<MAP *> unusedBunkers;
-	for (robin_hood::pair<MAP *, BaseCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (robin_hood::pair<MAP *, DefenseCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 	{
 		MAP *bunkerTile = bunkerCombatDataEntry.first;
 		

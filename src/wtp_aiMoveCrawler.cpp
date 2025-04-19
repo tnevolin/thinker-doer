@@ -176,7 +176,7 @@ void populateConvoyData()
 		MAP *tile = *MapTiles + tileIndex;
 		int tileX = getX(tileIndex);
 		int tileY = getY(tileIndex);
-		TileConvoyInfo &tileConvoyInfo = tileConvoyInfos.at(tile - *MapTiles);
+		TileConvoyInfo &tileConvoyInfo = tileConvoyInfos.at(tileIndex);
 		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
 		
 		// default values
@@ -221,7 +221,7 @@ void populateConvoyData()
 			int bestBaseId = bestBaseResourceGainBaseId.at(baseResType);
 			double bestGain = (double) yield * bestBaseResourceGain.at(baseResType);
 			
-			for (int baseId : coveredBaseIds.at(tile - *MapTiles))
+			for (int baseId : coveredBaseIds.at(tileIndex))
 			{
 				int baseYield = resource_yield(baseResType, aiFactionId, baseId, tileX, tileY);
 				double baseGain = (double) baseYield * baseResourceGains.at(baseId).at(baseResType);
@@ -253,19 +253,13 @@ void populateConvoyData()
 		{
 			// emulate crawler on this tile to estimate base gain loss
 			
-			int vehicleId = mod_veh_init(BSC_SUPPLY_CRAWLER, aiFactionId, tileX, tileY);
-			if (vehicleId >= 0)
-			{
-				double oldBaseGain = getBaseGain(baseId);
-				setVehicleOrder(vehicleId, ORDER_CONVOY);
-				computeBase(baseId, true);
-				double newBaseGain = getBaseGain(baseId);
-				veh_kill(vehicleId);
-				aiData.resetBase(baseId);
-				
-				baseGainChange = newBaseGain - oldBaseGain;
-				
-			}
+			double oldBaseGain = getBaseGain(baseId);
+			baseComputeDisabledTile = tile;
+			computeBase(baseId, true);
+			double newBaseGain = getBaseGain(baseId);
+			baseComputeDisabledTile = nullptr;
+			aiData.resetBase(baseId);
+			baseGainChange = newBaseGain - oldBaseGain;
 			
 		}
 		

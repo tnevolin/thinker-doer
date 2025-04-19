@@ -86,6 +86,7 @@ struct TileInfo
 	std::array<bool, MaxPlayerNum> sensors {};
 	// player base range
 	int baseRange = INT_MAX;
+	int landBaseRange = INT_MAX;
 	
 	// land vehicle is allowed here without transport
 	bool landAllowed = false;
@@ -260,7 +261,7 @@ struct BasePoliceData
 		return policeGains.at(isPolice2xVehicle(vehicleId));
 	}
 	
-	void reset()
+	void resetProvided()
 	{
 		std::fill(providedUnitCounts.begin(), providedUnitCounts.end(), 0);
 		providedPower = 0;
@@ -294,73 +295,105 @@ struct BasePoliceData
 	
 };
 
-struct BaseCombatData
+struct CounterEffect
 {
-	std::array<robin_hood::unordered_flat_map<int, double>, MaxPlayerNum> foeUnitWeights;
-	std::array<double, MaxProtoNum> effects;
+	double required = 0.0;
+	double provided = 0.0;
+	double providedPresent = 0.0;
 	
+	CounterEffect(double _required, double _provided, double _providedPresent)
+	: required(_required), provided(_provided), providedPresent(_providedPresent)
+	{}
+	CounterEffect(double _required)
+	: CounterEffect(_required, 0.0, 0.0)
+	{}
+	
+	void resetProvided()
+	{
+		provided = 0.0;
+		providedPresent = 0.0;
+	}
+	bool isSatisfied(bool present) const
+	{
+		return (present ? providedPresent : provided) >= required;
+	}
+	
+};
+
+struct DefenseCombatData
+{
+	std::array<double, 4> defenseMultipliers;
 	double sensorOffenseMultiplier;
 	double sensorDefenseMultiplier;
 	std::vector<int> garrison;
 	
-	double triadThreats[3]{0.0};
-	double requiredEffect = 0.0;
-	double providedEffect = 0.0;
-	double providedEffectPresent = 0.0;
+	std::array<robin_hood::unordered_flat_map<int, CounterEffect>, MaxPlayerNum> counterEffects = {};
+	double requiredEffect;
 	
 	void clear()
 	{
-		requiredEffect = 0.0;
-		providedEffect = 0.0;
-		providedEffectPresent = 0.0;
 		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
 		{
-			foeUnitWeights.at(factionId).clear();
+			counterEffects.at(factionId).clear();
 		}
 	}
+	void resetProvided()
+	{
+		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+		{
+			for (robin_hood::pair<int, CounterEffect> &counterEffectEntry : counterEffects.at(factionId))
+			{
+				CounterEffect &counterEffect = counterEffectEntry.second;
+				counterEffect.resetProvided();
+			}
+		}
+	}
+	double getProvidedEffect(bool present)
+	{
+		double providedEffect = 0.0;
+		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+		{
+			for (robin_hood::pair<int, CounterEffect> const &factionCounterEffectEntry : counterEffects.at(factionId))
+			{
+				CounterEffect const &factionCounterEffect = factionCounterEffectEntry.second;
+				providedEffect += present ? factionCounterEffect.providedPresent : factionCounterEffect.provided;
+			}
+		}
+		return providedEffect;
+	}
 	
-	void setUnitEffect(int unitId, double effect)
-	{
-		effects.at(unitId) = effect;
-	}
-	double getUnitEffect(int unitId) const
-	{
-		return effects.at(unitId);
-	}
+	double getUnitEffect(int unitId) const;
 	double getVehicleEffect(int vehicleId) const
 	{
-		return getUnitEffect(Vehicles[vehicleId].unit_id) * getVehicleMoraleMultiplier(vehicleId);
+		return getVehicleMoraleMultiplier(vehicleId) * getUnitEffect(Vehicles[vehicleId].unit_id);
 	}
 	
-	void reset()
+	double addCounterEffect(int foeFactionId, int foeUnitId, double effect, bool present)
 	{
-		providedEffect = 0.0;
-		providedEffectPresent = 0.0;
+		CounterEffect &counterEffect = counterEffects.at(foeFactionId).at(foeUnitId);
+		double requiredEffect = counterEffect.required - counterEffect.provided;
+		double appliedEffect = std::min(requiredEffect, effect);
+		double remainingEffect = effect - appliedEffect;
+		return remainingEffect;
 	}
 	
 	void addVehicle(int vehicleId, bool present)
 	{
-		double vehicleEffect = getVehicleEffect(vehicleId);
-		
-		providedEffect += vehicleEffect;
-		
-		if (present)
-		{
-			providedEffectPresent += vehicleEffect;
-		}
-		
+		// TODO
 	}
 	
 	bool isSatisfied(bool present) const
 	{
-		return (present ? providedEffectPresent : providedEffect) >= requiredEffect;
-	}
-	
-	double getDemand(bool present) const
-	{
-		double required = requiredEffect;
-		double provided = (present ? providedEffectPresent : providedEffect);
-		return ((required > 0.0 && provided < required) ? 1.0 - provided / required : 0.0);
+		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+		{
+			for (robin_hood::pair<int, CounterEffect> const &counterEffectEntry : counterEffects.at(factionId))
+			{
+				CounterEffect const &counterEffect = counterEffectEntry.second;
+				if (!counterEffect.isSatisfied(present))
+					return false;
+			}
+		}
+		return true;
 	}
 	
 };
@@ -459,10 +492,8 @@ struct BaseInfo
 	
 	// combat data
 	std::array<double, 4> moraleMultipliers;
-	std::array<double, 4> defenseMultipliers;
 	bool artillery;
-	BaseCombatData combatData;
-	double safeTime;
+	DefenseCombatData combatData;
 	BaseProbeData probeData;
 	
 	// enemy base data
@@ -500,8 +531,8 @@ struct BaseInfo
 	
 	void resetProtectors()
 	{
-		policeData.reset();
-		combatData.reset();
+		policeData.resetProvided();
+		combatData.resetProvided();
 	}
 	void addProtector(int vehicleId)
 	{
@@ -783,7 +814,8 @@ struct Data
 	// map data
 	
 	std::vector<TileInfo> tileInfos;
-	std::map<int, int> seaRegionAreas;
+	robin_hood::unordered_flat_map<int, int> regionAreas;
+	robin_hood::unordered_flat_set<int> enemyRegions;
 	std::vector<MAP *> monoliths;
 	std::vector<MAP *> pods;
 	
@@ -797,7 +829,7 @@ struct Data
 	
 	// bunker combat data
 	
-	robin_hood::unordered_flat_map<MAP *, BaseCombatData> bunkerCombatDatas;
+	robin_hood::unordered_flat_map<MAP *, DefenseCombatData> bunkerCombatDatas;
 	
 	// faction infos
 	
@@ -898,8 +930,6 @@ struct Data
 	double threatLevel;
 	robin_hood::unordered_flat_map<int, std::vector<int>> regionSurfaceCombatVehicleIds;
 	robin_hood::unordered_flat_map<int, std::vector<int>> regionSurfaceScoutVehicleIds;
-	int mostVulnerableBaseId;
-	double mostVulnerableBaseThreat;
 	double medianBaseDefenseDemand;
 	robin_hood::unordered_flat_map<int, double> regionDefenseDemand;
 	int maxBaseSize;

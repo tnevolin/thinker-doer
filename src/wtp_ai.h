@@ -125,6 +125,42 @@ struct ReachSearch
 	
 };
 
+struct Threat
+{
+	std::array<std::array<double, 4>, ENGAGEMENT_MODE_COUNT> values = {};
+	void maxUnitWeight(ENGAGEMENT_MODE engagementMode, int extendedTriad, double weight)
+	{
+		this->values.at(engagementMode).at(extendedTriad) = std::max(this->values.at(engagementMode).at(extendedTriad), weight);
+	}
+	void addUnitWeight(ENGAGEMENT_MODE engagementMode, int extendedTriad, double weight)
+	{
+		this->values.at(engagementMode).at(extendedTriad) += weight;
+	}
+	void setThreat(Threat threat)
+	{
+		this->values = threat.values;
+	}
+	void addThreat(Threat threat)
+	{
+		for (int engagementMode : {EM_MELEE, EM_ARTILLERY})
+		{
+			for (int extendedTriad = 0; extendedTriad < 4; extendedTriad++)
+			{
+				this->values.at(engagementMode).at(extendedTriad) += threat.values.at(engagementMode).at(extendedTriad);
+			}
+		}
+	}
+	double getCombinedValue(ENGAGEMENT_MODE engagementMode)
+	{
+		double combinedValue = 0.0;
+		for (int extendedTriad = 0; extendedTriad < 4; extendedTriad++)
+		{
+			combinedValue += this->values.at(engagementMode).at(extendedTriad);
+		}
+		return combinedValue;
+	}
+};
+
 void setPlayerFactionReferences(int factionId);
 void aiFactionUpkeep(const int factionId);
 void __cdecl modified_enemy_units_check(int factionId);
@@ -134,7 +170,7 @@ void executeTasks();
 void populateAIData();
 void populateTileInfos();
 void populateTileInfoBaseRanges();
-void populateSeaRegionAreas();
+void populateRegionAreas();
 void populatePlayerBaseIds();
 void populatePlayerBaseRanges();
 void populateFactionInfos();
@@ -161,7 +197,7 @@ void populateEnemyBaseAssaultEffects();
 void evaluateFactionMilitaryPowers();
 void evaluateEnemyStacks();
 void evaluateBaseDefense();
-void evaluateBunkerDefense();
+void evaluateDefense(MAP *tile, DefenseCombatData &combatData);
 void evaluateBaseProbeDefense();
 
 void designUnits();
@@ -246,7 +282,7 @@ MAP *getVehicleArtilleryAttackPosition(int vehicleId, MAP *target);
 bool isUnitCanCaptureBase(int unitId, MAP *baseTile);
 bool isUnitCanCaptureBase(int unitId, MAP *origin, MAP *baseTile);
 bool isVehicleCanCaptureBase(int vehicleId, MAP *baseTile);
-double getEnemyVehicleAttackGain(int vehicleId);
+double getDestroyingEnemyVehicleGain(int vehicleId);
 int getCombatUnitTrueCost(int unitId);
 int getCombatVehicleTrueCost(int vehicleId);
 double getGain(double bonus, double income, double incomeGrowth, double incomeGrowth2);

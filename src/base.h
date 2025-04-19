@@ -2,6 +2,8 @@
 
 #include "main.h"
 
+extern MAP *baseComputeDisabledTile;
+
 const uint32_t GOV_ALLOW_COMBAT =
     (GOV_MAY_PROD_LAND_COMBAT | GOV_MAY_PROD_NAVAL_COMBAT | GOV_MAY_PROD_AIR_COMBAT);
 

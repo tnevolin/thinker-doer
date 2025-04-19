@@ -8,6 +8,9 @@
 #include "wtp_game.h"
 #include "wtp_mod.h"
 
+int const BUNKER_ENEMY_BASE_RANGE_MIN =  2;
+int const BUNKER_ENEMY_BASE_RANGE_MAX = 10;
+
 struct TileYield
 {
 	int nutrient;

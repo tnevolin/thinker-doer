@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v366"
+    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v368"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -381,6 +381,7 @@ struct Config {
     int recycling_tanks_mineral_bonus_mining_platform = 0;
     int recycling_tanks_mineral_bonus_regular_mine = 0;
     int recycling_tanks_mineral_bonus_rocky_mine = 0;
+    bool recycling_tanks_population_bonus;
     bool genejack_factory_mineral_multiplier = true;
     int genejack_factory_mineral_bonus_mining_platform = 0;
     int genejack_factory_mineral_bonus_rocky_mine = 0;
@@ -418,7 +419,8 @@ struct Config {
     int bunker_bonus_surface = 50;
     int bunker_bonus_aerial = 0;
     bool display_numeric_mood = false;
-    int planetary_datalinks_faction_count = 3;
+    int manifold_harmonics_min_planet_rating = 0;
+    bool fungus_terrain_bonus = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
@@ -505,8 +507,10 @@ struct Config {
     double ai_mapstat_rockiness;
     double ai_mapstat_elevation;
     double ai_expansion_travel_time_scale;
-    double ai_expansion_coastal_base;
+    double ai_expansion_coastal_base_large;
+    double ai_expansion_coastal_base_small;
     double ai_expansion_ocean_connection_base;
+    double ai_expansion_coastal_base_small_land;
     int ai_expansion_radius_overlap_ignored;
     double ai_expansion_radius_overlap_coefficient;
     double ai_expansion_internal_border_connection_coefficient;

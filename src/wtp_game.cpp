@@ -900,10 +900,6 @@ bool vehicle_has_ability(int vehicleId, int ability) {
     return Units[Vehicles[vehicleId].unit_id].ability_flags & ability;
 }
 
-bool vehicle_has_ability(VEH *vehicle, int ability) {
-    return Units[vehicle->unit_id].ability_flags & ability;
-}
-
 int map_rainfall(MAP *tile) {
 	int rainfall;
 	if (tile->climate & TILE_MOIST) {
@@ -1680,14 +1676,14 @@ double calculatePsiDamageAttack(int vehicleId, int enemyVehicleId)
 
 	// attacker empath increases damage
 
-	if (vehicle_has_ability(vehicle, ABL_EMPATH))
+	if (vehicle_has_ability(vehicleId, ABL_EMPATH))
 	{
 		damage *= (1 + (double)Rules->combat_bonus_empath_song_vs_psi / 100.0);
 	}
 
 	// defender trance decreases damage
 
-	if (vehicle_has_ability(enemyVehicle, ABL_TRANCE))
+	if (vehicle_has_ability(enemyVehicleId, ABL_TRANCE))
 	{
 		damage /= (1 + (double)Rules->combat_bonus_trance_vs_psi / 100.0);
 	}
@@ -1726,94 +1722,14 @@ double calculatePsiDamageDefense(int vehicleId, int enemyVehicleId)
 
 	// attacker empath decreases damage
 
-	if (vehicle_has_ability(enemyVehicle, ABL_EMPATH))
+	if (vehicle_has_ability(enemyVehicleId, ABL_EMPATH))
 	{
 		damage /= (1 + (double)Rules->combat_bonus_empath_song_vs_psi / 100.0);
 	}
 
 	// defender trance increases damage
 
-	if (vehicle_has_ability(vehicle, ABL_TRANCE))
-	{
-		damage *= (1 + (double)Rules->combat_bonus_trance_vs_psi / 100.0);
-	}
-
-	return damage;
-
-}
-
-/*
-Calculates average maximal damage unit delivers to average native when attacking.
-*/
-double calculateNativeDamageAttack(int id)
-{
-	VEH *vehicle = &(Vehicles[id]);
-
-	// calculate base damage (vehicle attacking)
-
-	double damage =
-		1.0
-		*
-		getPsiCombatBaseOdds(veh_triad(id))
-		*
-		(
-			getVehicleMoraleMultiplier(id)
-			*
-			getFactionSEPlanetOffenseModifier(vehicle->faction_id)
-		)
-		/
-		(
-			1.0 // average native without morale modifier
-			*
-			1.0 // natives do not have PLANET rating
-		)
-		*
-		(double)(10 - vehicle->damage_taken)
-	;
-
-	// attacker empath increases damage
-
-	if (vehicle_has_ability(vehicle, ABL_EMPATH))
-	{
-		damage *= (1 + (double)Rules->combat_bonus_empath_song_vs_psi / 100.0);
-	}
-
-	return damage;
-
-}
-
-/*
-Calculates average maximal damage unit delivers to average native when defending.
-*/
-double calculateNativeDamageDefense(int id)
-{
-	VEH *vehicle = &(Vehicles[id]);
-
-	// calculate base damage (vehicle defending)
-
-	double damage =
-		1.0
-		/
-		getPsiCombatBaseOdds(veh_triad(id)) // assuming native has same triad as defender
-		*
-		(
-			getVehicleMoraleMultiplier(id)
-			*
-			getFactionSEPlanetDefenseModifier(vehicle->faction_id)
-		)
-		/
-		(
-			1.0 // average native without morale modifier
-			*
-			1.0 // natives do not have PLANET rating
-		)
-		*
-		(double)(10 - vehicle->damage_taken)
-	;
-
-	// defender trance increases damage
-
-	if (vehicle_has_ability(vehicle, ABL_TRANCE))
+	if (vehicle_has_ability(vehicleId, ABL_TRANCE))
 	{
 		damage *= (1 + (double)Rules->combat_bonus_trance_vs_psi / 100.0);
 	}
@@ -7426,7 +7342,6 @@ bool isInfantryDefensiveUnit(int unitId)
 	return offenseValue <= defenseValue;
 
 }
-
 bool isInfantryDefensiveVehicle(int vehicleId)
 {
 	return isInfantryDefensiveUnit(Vehicles[vehicleId].unit_id);
@@ -7459,6 +7374,15 @@ bool isUnitRequiresSupport(int unitId)
 bool isVehicleRequiresSupport(int vehicleId)
 {
 	return isUnitRequiresSupport(Vehicles[vehicleId].unit_id);
+}
+
+bool isInterceptorUnit(int unitId)
+{
+	return Chassis[Units[unitId].chassis_id].triad == TRIAD_AIR && isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY);
+}
+bool isInterceptorVehicle(int vehicleId)
+{
+	return isInterceptorUnit(Vehicles[vehicleId].unit_id);
 }
 
 int getUnitSupport(int unitId)
@@ -8166,5 +8090,17 @@ int getClosestNotOwnedOrSeaTileRange(int factionId, MAP *tile, int minRadius, in
 	
 	return closestNotOwnedOrSeaTileRange;
 	
+}
+
+int getUnitOffenseExtendedTriad(int unitId)
+{
+	UNIT &unit = Units[unitId];
+	return Weapon[unit.weapon_id].offense_value < 0 ? 3 : Chassis[unit.chassis_id].triad;
+}
+
+int getUnitDefenseExtendedTriad(int unitId)
+{
+	UNIT &unit = Units[unitId];
+	return Armor[unit.weapon_id].defense_value < 0 ? 3 : Chassis[unit.chassis_id].triad;
 }
 

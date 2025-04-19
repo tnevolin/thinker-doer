@@ -3206,15 +3206,6 @@ void patch_diplomacy_caption_display_numeric_mood()
 	
 }
 
-void patch_planetary_datalinks_faction_count(int planetary_datalinks_faction_count)
-{
-    int planetary_datalinks_faction_count_length = 0x3;
-    byte planetary_datalinks_faction_count_old[] = { 0x83, 0xFE, 0x03 };
-    byte planetary_datalinks_faction_count_new[] = { 0x83, 0xFE, (byte)planetary_datalinks_faction_count };
-    write_bytes(0x005BC240, planetary_datalinks_faction_count_old, planetary_datalinks_faction_count_new, planetary_datalinks_faction_count_length);
-	
-}
-
 void patch_infiltrate_datalinks_no_promotion()
 {
 	write_call(0x005A4688, (int)wtp_mod_probe_veh_skip);
@@ -3573,11 +3564,6 @@ void patch_setup_wtp(Config* cf)
 	if (conf.display_numeric_mood)
 	{
 		patch_diplomacy_caption_display_numeric_mood();
-	}
-	
-	if (conf.planetary_datalinks_faction_count != 3)
-	{
-		patch_planetary_datalinks_faction_count(conf.planetary_datalinks_faction_count);
 	}
 	
 	patch_infiltrate_datalinks_no_promotion();

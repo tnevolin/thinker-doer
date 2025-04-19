@@ -9,6 +9,9 @@ bool baseComputePrecomputedFactionId = -1;
 std::vector<int> baseComputeWorkedTiles;
 // vehicle in this tile
 std::vector<bool> baseComputeVehicles;
+// temporarily disabled worker locations
+// that is used to emulate convoyed locations
+MAP *baseComputeDisabledTile = nullptr;
 
 static bool delay_base_riot = false;
 
@@ -350,44 +353,44 @@ static int32_t base_radius(int base_id, std::vector<TileValue>& tiles) {
 			// do not search for the vehicle if none is in the tile
 			// also optimize vehicle search by doing it only once
 			
-//            for (int j = 0; j < *VehCount; j++) {
-//                VEH* veh = &Vehs[j];
-//                if (veh->x == x && veh->y == y
-//                && (veh->order == ORDER_CONVOY
-//                || (veh->faction_id != faction_id && veh->is_visible(faction_id)
-//                && !has_treaty(faction_id, veh->faction_id, DIPLO_TREATY|DIPLO_PACT)))) {
-//                    BaseTileFlags[i] |= BR_VEH_IN_TILE;
-//                }
-//            }
-			if (sq->veh_who() != -1)
-			{
-				if (!vehiclesProcessed)
+//				for (int j = 0; j < *VehCount; j++) {
+//					VEH* veh = &Vehs[j];
+//					if (veh->x == x && veh->y == y
+//					&& (veh->order == ORDER_CONVOY
+//					|| (veh->faction_id != faction_id && veh->is_visible(faction_id)
+//					&& !has_treaty(faction_id, veh->faction_id, DIPLO_TREATY|DIPLO_PACT)))) {
+//						BaseTileFlags[i] |= BR_VEH_IN_TILE;
+//					}
+//				}
+				if (sq->veh_who() != -1)
 				{
-					for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+					if (!vehiclesProcessed)
 					{
-						VEH *vehicle = &Vehs[vehicleId];
-						int dy = abs(base->y - vehicle->y);
-						if (dy > 2)
-							continue;
-						int dx = abs(base->x - vehicle->x);
-						if (!map_is_flat() && dx > *MapHalfX)
+						for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 						{
-							dx = *MapAreaX - dx;
-						}
-						if (dx > 2)
-							continue;
-						if (vehicle->order == ORDER_CONVOY || (vehicle->faction_id != faction_id && vehicle->is_visible(faction_id) && !has_treaty(faction_id, vehicle->faction_id, DIPLO_TREATY|DIPLO_PACT)))
-						{
-							int vehicleTileIndex = ((*MapHalfX) * vehicle->y + vehicle->x / 2);
-							vehicleTileIndexes.insert(vehicleTileIndex);
+							VEH *vehicle = &Vehs[vehicleId];
+							int dy = abs(base->y - vehicle->y);
+							if (dy > 2)
+								continue;
+							int dx = abs(base->x - vehicle->x);
+							if (!map_is_flat() && dx > *MapHalfX)
+							{
+								dx = *MapAreaX - dx;
+							}
+							if (dx > 2)
+								continue;
+							if (vehicle->order == ORDER_CONVOY || (vehicle->faction_id != faction_id && vehicle->is_visible(faction_id) && !has_treaty(faction_id, vehicle->faction_id, DIPLO_TREATY|DIPLO_PACT)))
+							{
+								int vehicleTileIndex = ((*MapHalfX) * vehicle->y + vehicle->x / 2);
+								vehicleTileIndexes.insert(vehicleTileIndex);
+							}
 						}
 					}
+					if (vehicleTileIndexes.find(sqIndex) != vehicleTileIndexes.end())
+					{
+						BaseTileFlags[i] |= BR_VEH_IN_TILE;
+					}
 				}
-				if (vehicleTileIndexes.find(sqIndex) != vehicleTileIndexes.end())
-				{
-					BaseTileFlags[i] |= BR_VEH_IN_TILE;
-				}
-			}
 			}
 			
 			// [WTP]
@@ -447,6 +450,11 @@ static size_t populateBaseYieldsAndTiles(int baseId, std::array<TileValue, 21> &
 	
 	robin_hood::unordered_flat_set<MAP *> vehicleTiles;
 	robin_hood::unordered_flat_set<MAP *> otherBaseWorkedTiles;
+	
+	if (baseComputeDisabledTile != nullptr)
+	{
+		vehicleTiles.insert(baseComputeDisabledTile);
+	}
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{

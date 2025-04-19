@@ -680,6 +680,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->recycling_tanks_mineral_bonus_rocky_mine = atoi(value);
     }
+    else if (MATCH("recycling_tanks_population_bonus"))
+    {
+        cf->recycling_tanks_population_bonus = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("genejack_factory_mineral_multiplier"))
     {
         cf->genejack_factory_mineral_multiplier = (atoi(value) == 0 ? false : true);
@@ -828,9 +832,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->display_numeric_mood = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("planetary_datalinks_faction_count"))
+    else if (MATCH("manifold_harmonics_min_planet_rating"))
     {
-        cf->planetary_datalinks_faction_count = atoi(value);
+        cf->manifold_harmonics_min_planet_rating = atoi(value);
+    }
+    else if (MATCH("fungus_terrain_bonus"))
+    {
+        cf->fungus_terrain_bonus = (atoi(value) == 0 ? false : true);
     }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
@@ -1201,13 +1209,21 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_expansion_travel_time_scale = atof(value);
     }
-    else if (MATCH("ai_expansion_coastal_base"))
+    else if (MATCH("ai_expansion_coastal_base_large"))
     {
-        cf->ai_expansion_coastal_base = atof(value);
+        cf->ai_expansion_coastal_base_large = atof(value);
+    }
+    else if (MATCH("ai_expansion_coastal_base_small"))
+    {
+        cf->ai_expansion_coastal_base_small = atof(value);
     }
     else if (MATCH("ai_expansion_ocean_connection_base"))
     {
         cf->ai_expansion_ocean_connection_base = atof(value);
+    }
+    else if (MATCH("ai_expansion_coastal_base_small_land"))
+    {
+        cf->ai_expansion_coastal_base_small_land = atof(value);
     }
     else if (MATCH("ai_expansion_radius_overlap_ignored"))
     {

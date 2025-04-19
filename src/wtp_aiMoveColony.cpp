@@ -781,26 +781,40 @@ double getBuildSitePlacementScore(MAP *tile)
 	
 	if (tileInfo.land && !tileInfo.adjacentSeaRegions.empty())
 	{
-		int sumAdjacentSeaClusterArea = 0;
-		double connectingOceanCoefficient = 5.0 * (double)(tileInfo.adjacentSeaRegions.size() - 1);
+		double oceanConnectionCoefficient = 1.0 + (double)(tileInfo.adjacentSeaRegions.size() - 1) * conf.ai_expansion_ocean_connection_base;
 		
+		int sumAdjacentSeaRegionArea = 0;
 		for (int adjacentSeaRegion : tileInfo.adjacentSeaRegions)
 		{
-			int adjacentSeaRegionArea = aiData.seaRegionAreas.at(adjacentSeaRegion);
-			
-			sumAdjacentSeaClusterArea += adjacentSeaRegionArea;
-			connectingOceanCoefficient *= adjacentSeaRegionArea >= 100 ? 1.0 : (double)adjacentSeaRegionArea / 100.0;
-			
+			sumAdjacentSeaRegionArea += aiData.regionAreas.at(adjacentSeaRegion);
 		}
 		
-		// coast
+		bool landRegionOceanConnection = false;
+		for (int baseId : aiData.baseIds)
+		{
+			MAP *baseTile = getBaseMapTile(baseId);
+			int baseTileIndex = baseTile - *MapTiles;
+			TileInfo const &baseTileInfo = aiData.tileInfos.at(baseTileIndex);
+			
+			if (baseTile->region == tile->region)
+			{
+				int sumBaseAdjacentSeaRegionArea = 0;
+				for (int baseAdjacentSeaRegion : baseTileInfo.adjacentSeaRegions)
+				{
+					sumBaseAdjacentSeaRegionArea += aiData.regionAreas.at(baseAdjacentSeaRegion);
+				}
+				if (sumBaseAdjacentSeaRegionArea >= 10)
+				{
+					landRegionOceanConnection = true;
+					break;
+				}
+			}
+			
+		}
+		double smallLandCoefficient = 1.0 + (landRegionOceanConnection ? 0.0 : conf.ai_expansion_coastal_base_small_land * (aiData.regionAreas.at(tile->region) >= 200 ? 0.0 : 1.0 - (double)aiData.regionAreas.at(tile->region) / 200.0));
 		
-		double coastScoreCoefficient = sumAdjacentSeaClusterArea >= 4 ? 1.0 : (double)sumAdjacentSeaClusterArea / 4.0;
-		coastScore += conf.ai_expansion_coastal_base * coastScoreCoefficient;
-		
-		// connecting oceans
-		
-		coastScore += conf.ai_expansion_coastal_base * connectingOceanCoefficient;
+		double coastScoreCoefficient = conf.ai_expansion_coastal_base_small + (conf.ai_expansion_coastal_base_large - conf.ai_expansion_coastal_base_small) * (sumAdjacentSeaRegionArea >= 100 ? 1.0 : (double)sumAdjacentSeaRegionArea / 100.0);
+		coastScore += coastScoreCoefficient * oceanConnectionCoefficient * smallLandCoefficient;
 		
 	}
 	

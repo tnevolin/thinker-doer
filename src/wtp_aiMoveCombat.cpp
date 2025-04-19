@@ -620,6 +620,144 @@ void movePolice()
 	
 }
 
+void moveInterceptors()
+{
+//	debug("moveInterceptors - %s\n", MFactions[aiFactionId].noun_faction);
+//	
+//	// populate tasks
+//	
+//	std::vector<CombatAction> taskPriorities;
+//	populateProtectorTasks(taskPriorities);
+//	
+//	// sort vehicle available tasks
+//	
+//	std::sort(taskPriorities.begin(), taskPriorities.end(), compareCombatActionDescending);
+//	
+//	if (DEBUG)
+//	{
+//		debug("\tsortedTasks\n");
+//		
+//		for (CombatAction const &taskPriority : taskPriorities)
+//		{
+//			debug
+//			(
+//				"\t\t%5.2f:"
+//				" [%4d] %s -> %s"
+//				"\n"
+//				, taskPriority.priority
+//				, taskPriority.vehicleId
+//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
+//				, getLocationString(taskPriority.destination).c_str()
+//			);
+//			
+//		}
+//		
+//	}
+//	
+//	// select tasks
+//	
+//	debug("\tselected tasks\n");
+//	
+//	robin_hood::unordered_flat_map<int, CombatAction *> vehicleAssignments;
+//	
+//	for (CombatAction &taskPriority : taskPriorities)
+//	{
+//		// skip already assigned vehicles
+//		
+//		if (vehicleAssignments.find(taskPriority.vehicleId) != vehicleAssignments.end())
+//			continue;
+//		
+//		// base police and protection should not be yet satisfied
+//		
+//		BaseInfo &baseInfo = aiData.getBaseInfo(taskPriority.baseId);
+//		
+//		if (baseInfo.isSatisfied(taskPriority.vehicleId, false))
+//			continue;
+//		
+//		// assign to base
+//		
+//		baseInfo.addProtector(taskPriority.vehicleId);
+//		vehicleAssignments.insert({taskPriority.vehicleId, &taskPriority});
+//		
+//		debug
+//		(
+//			"\t\t%5.2f:"
+//			" [%4d] %s -> %s"
+//			" %-25s"
+//			" baseInfo.isSatisfied=%d"
+//			" baseInfo.combatData.isSatisfied= %d %d"
+//			"\n"
+//			, taskPriority.priority
+//			, taskPriority.vehicleId
+//			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
+//			, getLocationString(taskPriority.destination).c_str()
+//			, getBase(taskPriority.baseId)->name
+//			, baseInfo.isSatisfied(taskPriority.vehicleId, false)
+//			, baseInfo.combatData.isSatisfied(false), baseInfo.combatData.isSatisfied(true)
+//		);
+//		
+//	}
+//			
+//	// set tasks
+//	
+//	for (robin_hood::pair<int, CombatAction *> vehicleAssignmentEntry : vehicleAssignments)
+//	{
+//		CombatAction *taskPriority = vehicleAssignmentEntry.second;
+//		
+//		// set task
+//		
+//		if (!transitVehicle(Task(taskPriority->vehicleId, TT_HOLD, taskPriority->destination)))
+//			continue;
+//		
+//	}
+//	
+//	// hold base current protectors until future protectors arrive
+//	
+//	debug("\thold current protectors\n");
+//	
+//	for (int baseId : aiData.baseIds)
+//	{
+//		MAP *baseTile = getBaseMapTile(baseId);
+//		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+//		
+//		if (!baseInfo.combatData.isSatisfied(true))
+//		{
+//			debug("\t\t%-25s\n", Bases[baseId].name)
+//			
+//			for (int vehicleId : baseInfo.combatData.garrison)
+//			{
+//				// infantry defensive
+//				
+//				if (!isInfantryDefensiveVehicle(vehicleId))
+//					continue;
+//				
+//				// not yet assigned to this base
+//				
+//				robin_hood::unordered_flat_map<int, CombatAction *>::iterator vehicleAssignmentIterator = vehicleAssignments.find(vehicleId);
+//				if (vehicleAssignmentIterator != vehicleAssignments.end() && vehicleAssignmentIterator->second->destination == baseTile)
+//					continue;
+//				
+//				// assign to base
+//				
+//				if (!transitVehicle(Task(vehicleId, TT_HOLD, baseTile)))
+//					continue;
+//				
+//				// add base protection
+//				
+//				baseInfo.combatData.addVehicle(vehicleId, true);
+//				
+//				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSatisfied(true) = %d\n", vehicleId, Vehicles[vehicleId].name(), baseInfo.combatData.isSatisfied(true))
+//				if (baseInfo.combatData.isSatisfied(true))
+//					break;
+//				
+//			}
+//			
+//		}
+//		
+//	}
+//	
+}
+
 void moveProtectors()
 {
 	debug("moveProtectors - %s\n", MFactions[aiFactionId].noun_faction);
@@ -747,7 +885,6 @@ void moveProtectors()
 				baseInfo.combatData.addVehicle(vehicleId, true);
 				
 				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSatisfied(true) = %d\n", vehicleId, Vehicles[vehicleId].name(), baseInfo.combatData.isSatisfied(true))
-				
 				if (baseInfo.combatData.isSatisfied(true))
 					break;
 				
@@ -801,7 +938,7 @@ void moveBunkerProtectors()
 	
 	for (CombatAction &taskPriority : taskPriorities)
 	{
-		BaseCombatData &bunkerCombatData = aiData.bunkerCombatDatas.at(taskPriority.destination);
+		DefenseCombatData &bunkerCombatData = aiData.bunkerCombatDatas.at(taskPriority.destination);
 		
 		// skip already assigned vehicles
 		
@@ -822,7 +959,7 @@ void moveBunkerProtectors()
 		(
 			"\t\t%5.2f:"
 			" [%4d] %s -> %s"
-			" bunkerCombatData.isSatisfied= %d %d"
+			" bunkerCombatData.isSatisfied={%d,%d}"
 			"\n"
 			, taskPriority.priority
 			, taskPriority.vehicleId
@@ -850,10 +987,10 @@ void moveBunkerProtectors()
 	
 	debug("\thold current bunker protectors\n");
 	
-	for (robin_hood::pair<MAP *, BaseCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (robin_hood::pair<MAP *, DefenseCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 	{
 		MAP *bunkerTile = bunkerCombatDataEntry.first;
-		BaseCombatData &bunkerCombatData = bunkerCombatDataEntry.second;
+		DefenseCombatData &bunkerCombatData = bunkerCombatDataEntry.second;
 		
 		if (!bunkerCombatData.isSatisfied(true))
 		{
@@ -2107,6 +2244,104 @@ void populatePoliceTasks(std::vector<CombatAction> &taskPriorities)
 	
 }
 
+void populateInterceptorTasks(std::vector<CombatAction> &taskPriorities)
+{
+//	debug("\tpopulateInterceptorTasks\n");
+//	
+//	if (aiData.baseIds.size() == 0)
+//		return;
+//	
+//	for (int vehicleId : aiData.combatVehicleIds)
+//	{
+//		VEH *vehicle = getVehicle(vehicleId);
+//		
+//		// exclude unavailable
+//		
+//		if (hasTask(vehicleId))
+//			continue;
+//		
+//		// interceptor
+//		
+//		if (!isInterceptorVehicle(vehicleId))
+//			continue;
+//		
+//		// process bases
+//		
+//		for (int baseId : aiData.baseIds)
+//		{
+//			BASE *base = &(Bases[baseId]);
+//			MAP *baseTile = getBaseMapTile(baseId);
+//			BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+//			
+//			// exclude not reachable destination
+//			
+//			if (!isVehicleDestinationReachable(vehicleId, baseTile))
+//				continue;
+//			
+//			// required protection
+//			
+//			double requiredEffect = baseInfo.combatData.requiredEffect;
+//			
+//			// vehicle effect
+//			
+//			double vehicleEffect = baseInfo.combatData.getVehicleEffect(vehicleId);
+//			
+//			// time saved due to repair in the base (unless nearby monolith)
+//			
+//			double repairTimeSave = 0.0;
+//			if (vehicle->damage_taken > 0)
+//			{
+//				repairTimeSave = closestMonolithTravelTile <= 2.0 ? 0.0 : 5.0 * getVehicleRelativeDamage(vehicleId);
+//			}
+//			
+//			// get travel time and coresponding coefficient
+//			
+//			double travelTime = getVehicleTravelTime(vehicleId, baseTile);
+//			if (travelTime == INF)
+//				continue;
+//			
+//			double effectiveTime = travelTime - repairTimeSave;
+//			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, effectiveTime);
+//			
+//			// priority
+//			
+//			double priority =
+//				requiredEffect
+//				* vehicleEffect
+//				* travelTimeCoefficient
+//			;
+//			
+//			// add task
+//			
+//			CombatAction taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
+//			taskPriority.baseId = baseId;
+//			taskPriorities.push_back(taskPriority);
+//			
+//			debug
+//			(
+//				"\t\t[%4d] (%3d,%3d) %-32s -> %-25s"
+//				" priority=%5.2f"
+//				" requiredEffect=%5.2f"
+//				" vehicleEffect=%5.2f"
+//				" travelTime=%7.2f"
+//				" effectiveTime=%5.2f"
+//				" travelTimeCoefficient=%5.2f"
+//				"\n"
+//				, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId), base->name
+//				, priority
+//				, requiredEffect
+//				, vehicleEffect
+//				, travelTime
+//				, effectiveTime
+//				, travelTimeCoefficient
+//			);
+//			
+//		}
+//		
+//	}
+//	
+}
+
 /**
 protection priority:
 - base total threat
@@ -2264,10 +2499,10 @@ void populateBunkerProtectorTasks(std::vector<CombatAction> &taskPriorities)
 		
 		// process bunkers
 		
-		for (robin_hood::pair<MAP *, BaseCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+		for (robin_hood::pair<MAP *, DefenseCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 		{
 			MAP *bunkerTile = bunkerCombatDataEntry.first;
-			BaseCombatData const &bunkerCombatData = bunkerCombatDataEntry.second;
+			DefenseCombatData const &bunkerCombatData = bunkerCombatDataEntry.second;
 			
 			// exclude not reachable destination
 			

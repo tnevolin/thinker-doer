@@ -822,3 +822,14 @@ bool isZoc(MAP *orgTile, MAP *dstTile)
 	return aiData.tileInfos.at(orgTile - *MapTiles).orgZoc && aiData.tileInfos.at(dstTile - *MapTiles).dstZoc;
 }
 
+// DefenseCombatData
+
+/*
+Selects the best effect against not yet countered foe unit.
+*/
+double DefenseCombatData::getUnitEffect(int unitId) const
+{
+	// TODO
+	return 0.0;
+}
+

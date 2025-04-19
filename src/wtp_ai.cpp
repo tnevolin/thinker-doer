@@ -293,7 +293,7 @@ void populateAIData()
 	
 	populateTileInfos();
 	populateTileInfoBaseRanges();
-	populateSeaRegionAreas();
+	populateRegionAreas();
 	
 	// basic info
 	// not dependent on other computations
@@ -328,7 +328,6 @@ void populateAIData()
 	populateEnemyStacks();
 	evaluateEnemyStacks();
 	evaluateBaseDefense();
-	evaluateBunkerDefense();
 	evaluateBaseProbeDefense();
 	
 	Profiling::stop("populateAIData");
@@ -429,7 +428,15 @@ void populateTileInfos()
 		
 		if (tileInfo.bunker && tile->owner == aiFactionId)
 		{
-			aiData.bunkerCombatDatas.emplace(tile, BaseCombatData());
+			aiData.bunkerCombatDatas.emplace(tile, DefenseCombatData());
+			if (conf.bunker_ignores_terrain)
+			{
+				aiData.bunkerCombatDatas.at(tile).defenseMultipliers.at(TRIAD_LAND) = getPercentageBonusMultiplier(conf.bunker_bonus_surface);
+				aiData.bunkerCombatDatas.at(tile).defenseMultipliers.at(TRIAD_SEA) = getPercentageBonusMultiplier(conf.bunker_bonus_surface);
+				aiData.bunkerCombatDatas.at(tile).defenseMultipliers.at(TRIAD_AIR) = getPercentageBonusMultiplier(conf.bunker_bonus_aerial);
+				aiData.bunkerCombatDatas.at(tile).defenseMultipliers.at(3) = 1.0;
+			}
+			
 		}
 		
 	}
@@ -1089,39 +1096,64 @@ void populateTileInfoBaseRanges()
 	
 }
 
-void populateSeaRegionAreas()
+void populateRegionAreas()
 {
-	Profiling::start("populateSeaRegionAreas", "populateAIData");
+	Profiling::start("populateRegionAreas", "populateAIData");
 	
-	debug("populateSeaRegionAreas - %s\n", aiMFaction->noun_faction);
+	debug("populateRegionAreas - %s\n", aiMFaction->noun_faction);
 	
-	aiData.seaRegionAreas.clear();
+	robin_hood::unordered_flat_map<int, int> &regionAreas = aiData.regionAreas;
+	regionAreas.clear();
 	
 	for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
 	{
-		// sea region, not polar
+		// not polar region
 		
-		if (!isSeaRegion(tile))
+		if (isPolarRegion(tile))
 			continue;
 		
 		// accumulate region area
 		
-		aiData.seaRegionAreas[tile->region]++;
+		if (regionAreas.find(tile->region) == regionAreas.end())
+		{
+			regionAreas.insert({tile->region, 0});
+		}
+		regionAreas.at(tile->region)++;
 		
 		// populate adjacent sea regions
 		
-		for (MAP *adjacentTile : getAdjacentTiles(tile))
+		if (is_ocean(tile))
 		{
-			// land region, not polar
-			
-			if (!isLandRegion(adjacentTile))
-				continue;
-			
-			// accumulate adjacent sea regions
-			
-			aiData.tileInfos.at(adjacentTile - *MapTiles).adjacentSeaRegions.insert(tile->region);
+			for (MAP *adjacentTile : getAdjacentTiles(tile))
+			{
+				// land region, not polar
+				
+				if (!isLandRegion(adjacentTile))
+					continue;
+				
+				// accumulate adjacent sea regions
+				
+				aiData.tileInfos.at(adjacentTile - *MapTiles).adjacentSeaRegions.insert(tile->region);
+				
+			}
 			
 		}
+		
+	}
+	
+	// enemyRegions
+	
+	aiData.enemyRegions.clear();
+	
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
+	{
+		BASE &base = Bases[baseId];
+		MAP *baseTile = getBaseMapTile(baseId);
+		
+		if (base.faction_id == aiFactionId)
+			continue;
+		
+		aiData.enemyRegions.insert(baseTile->region);
 		
 	}
 	
@@ -1149,7 +1181,7 @@ void populateSeaRegionAreas()
 //		
 //	}
 	
-	Profiling::stop("populateSeaRegionAreas");
+	Profiling::stop("populateRegionAreas");
 	
 }
 
@@ -1203,11 +1235,16 @@ void populatePlayerBaseRanges()
 	
 	debug("populatePlayerBaseRanges - %s\n", aiMFaction->noun_faction);
 	
+	std::vector<MAP *> openNodes;
+	std::vector<MAP *> newOpenNodes;
+	
 	// baseRange
 	
-	int baseRange = 0;
-	std::vector<MAP *> openNodes;
+	openNodes.clear();	
+	newOpenNodes.clear();
 	
+	int baseRange = 0;
+
 	for (int baseId : aiData.baseIds)
 	{
 		MAP *baseTile = getBaseMapTile(baseId);
@@ -1218,7 +1255,6 @@ void populatePlayerBaseRanges()
 		
 	}
 	
-	std::vector<MAP *> newOpenNodes;
 	while (openNodes.size() > 0)
 	{
 		baseRange++;
@@ -1232,6 +1268,51 @@ void populatePlayerBaseRanges()
 				if (baseRange < adjacentTileInfo.baseRange)
 				{
 					adjacentTileInfo.baseRange = baseRange;
+					newOpenNodes.push_back(adjacentTile);
+				}
+				
+			}
+			
+		}
+		
+		openNodes.clear();
+		openNodes.swap(newOpenNodes);
+		
+	}
+	
+	// landBaseRange
+	
+	openNodes.clear();	
+	newOpenNodes.clear();
+	
+	int landBaseRange = 0;
+	
+	for (int baseId : aiData.baseIds)
+	{
+		MAP *baseTile = getBaseMapTile(baseId);
+		TileInfo &baseTileInfo = aiData.getTileInfo(baseTile);
+		
+		if (is_ocean(baseTile))
+			continue;
+		
+		baseTileInfo.landBaseRange = 0;
+		openNodes.push_back(baseTile);
+		
+	}
+	
+	while (openNodes.size() > 0)
+	{
+		landBaseRange++;
+		
+		for (MAP *tile : openNodes)
+		{
+			for (MAP *adjacentTile : getAdjacentTiles(tile))
+			{
+				TileInfo &adjacentTileInfo = aiData.getTileInfo(adjacentTile);
+				
+				if (landBaseRange < adjacentTileInfo.landBaseRange)
+				{
+					adjacentTileInfo.landBaseRange = landBaseRange;
 					newOpenNodes.push_back(adjacentTile);
 				}
 				
@@ -1323,7 +1404,7 @@ void populateFactionInfos()
 		
 		if (is_human(factionId))
 		{
-			threatCoefficient += conf.ai_production_threat_coefficient_human;
+			threatCoefficient *= conf.ai_production_threat_coefficient_human;
 		}
 		
 		factionInfo.threatCoefficient = threatCoefficient;
@@ -1559,7 +1640,7 @@ void populateBaseInfos()
 		
 		for (int extendedTriad = 0; extendedTriad < 4; extendedTriad++)
 		{
-			baseInfo.defenseMultipliers.at(extendedTriad) = getBaseDefenseMultiplier(baseId, extendedTriad);
+			baseInfo.combatData.defenseMultipliers.at(extendedTriad) = getBaseDefenseMultiplier(baseId, extendedTriad);
 		}
 		
 		// sensor
@@ -2296,6 +2377,12 @@ void populateDangerZones()
 		if (vehicle.faction_id == aiFactionId)
 			continue;
 		
+		// not alien
+		// alien should not scare combat unit moving next to them
+		
+		if (vehicle.faction_id == 0)
+			continue;
+		
 		// hostile
 		
 		if (!isHostile(aiFactionId, vehicle.faction_id))
@@ -2494,10 +2581,16 @@ void populateEnemyStacks()
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		TileInfo const &vehicleTileInfo = aiData.tileInfos.at(vehicleTile - *MapTiles);
 		
 		// ignore sea aliens
 		
 		if (vehicle->faction_id == 0 && is_ocean(vehicleTile))
+			continue;
+		
+		// ignore land aliens too far from player bases
+		
+		if (vehicle->faction_id == 0 && !is_ocean(vehicleTile) && vehicleTileInfo.landBaseRange > 10)
 			continue;
 		
 		// hostile
@@ -2639,7 +2732,7 @@ void populateEnemyStacks()
 			attackGainSummary.clear();
 			for (int vehicleId : enemyStackInfo.vehicleIds)
 			{
-				double attackGain = getEnemyVehicleAttackGain(vehicleId);
+				double attackGain = getDestroyingEnemyVehicleGain(vehicleId);
 				attackGainSummary.add(attackGain);
 			}
 			
@@ -3323,7 +3416,7 @@ void populateEnemyBaseAssaultEffects()
 					
 					bool psiCombat = isPsiCombat(aiUnitId, enemyUnitId);
 					int extendedTriad = psiCombat ? 3 : aiUnit->triad();
-					double attackMultiplier = 1.0 / (baseInfo.combatData.sensorDefenseMultiplier * baseInfo.defenseMultipliers.at(extendedTriad));
+					double attackMultiplier = 1.0 / (baseInfo.combatData.sensorDefenseMultiplier * baseInfo.combatData.defenseMultipliers.at(extendedTriad));
 					double defendMultiplier = 1.0 / (baseInfo.combatData.sensorOffenseMultiplier);
 					double effect = assaultEffect.getEffect(attackMultiplier, defendMultiplier);
 					
@@ -3770,205 +3863,206 @@ void evaluateEnemyStacks()
 
 void evaluateBaseDefense()
 {
-	Profiling::start("evaluateBaseDefense", "populateAIData");
-	
 	debug("evaluateBaseDefense - %s\n", MFactions[aiFactionId].noun_faction);
 	
-	Faction *faction = &(Factions[aiFactionId]);
+	for (int baseId : aiData.baseIds)
+	{
+		MAP *tile = getBaseMapTile(baseId);
+		DefenseCombatData &combatData = aiData.baseInfos.at(baseId).combatData;
+		evaluateDefense(tile, combatData);
+	}
+	
+	for (robin_hood::pair<MAP *, DefenseCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	{
+		MAP *tile = bunkerCombatDataEntry.first;
+		DefenseCombatData &combatData = bunkerCombatDataEntry.second;
+		evaluateDefense(tile, combatData);
+	}
+	
+}
+
+void evaluateDefense(MAP *tile, DefenseCombatData &combatData)
+{
+	Profiling::start("evaluateBaseDefense", "populateAIData");
+	
+	debug("evaluateDefense - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	CombatEffectTable &combatEffectTable = aiData.combatEffectTable;
-	
 	robin_hood::unordered_flat_set<int> const &ownCombatUnitIds = combatEffectTable.ownCombatUnitIds;
 	robin_hood::unordered_flat_set<int> const &foeFactionIds = combatEffectTable.foeFactionIds;
 	robin_hood::unordered_flat_set<int> const &foeCombatVehicleIds = combatEffectTable.foeCombatVehicleIds;
 	std::array<robin_hood::unordered_flat_set<int> , MaxPlayerNum> const &foeCombatUnitIds = combatEffectTable.foeCombatUnitIds;
 	
 	// evaluate base threat
-	
+
 	Profiling::start("evaluate base threat", "evaluateBaseDefense");
 	
-	aiData.mostVulnerableBaseId = -1;
-	aiData.mostVulnerableBaseThreat = 0.0;
+	TileInfo &tileInfo = aiData.getTileInfo(tile);
+	BASE *base = getBase(tileInfo.baseId);
 	
-	for (int baseId : aiData.baseIds)
+	combatData.clear();
+	
+	debug
+	(
+		"\t%s %-25s"
+		"\n"
+		, getLocationString(tile).c_str()
+		, base == nullptr ? "--- bunker ---" : base->name
+	);
+	
+	// calculate foe strength
+	
+	Profiling::start("calculate foe strength", "evaluate base threat");
+	
+	debug("\t\tbase foeMilitaryStrength\n");
+	
+	std::array<robin_hood::unordered_flat_map<int, double>, MaxPlayerNum> foeUnitWeights;
+	
+	int alienCount = 0;
+	for (int vehicleId : foeCombatVehicleIds)
 	{
-		BASE *base = &(Bases[baseId]);
-		MAP *baseTile = getBaseMapTile(baseId);
-		bool baseTileOcean = is_ocean(baseTile);
-		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+		VEH &vehicle = Vehicles[vehicleId];
+		MAP *vehicleTile = getVehicleMapTile(vehicleId);
+		UNIT &unit = Units[vehicle.unit_id];
+		CChassis &chassis = Chassis[unit.chassis_id];
+		int triad = chassis.triad;
 		
-		BaseCombatData &baseCombatData = baseInfo.combatData;
-		baseCombatData.clear();
-		baseInfo.safeTime = INT_MAX;
+		// combat
 		
-		debug
-		(
-			"\t%-25s"
-			"\n"
-			, base->name
-		);
+		if (!isCombatVehicle(vehicleId))
+			continue;
 		
-		// calculate foe strength
+		// ignore infantry defensive vehicle at base
 		
-		Profiling::start("calculate foe strength", "evaluate base threat");
+		if (isInfantryDefensiveVehicle(vehicleId) && map_base(vehicleTile))
+			continue;
 		
-		debug("\t\tbase foeMilitaryStrength\n");
+		// reachable
 		
-		int alienCount = 0;
-		for (int vehicleId : foeCombatVehicleIds)
+		switch (triad)
 		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
-			MAP *vehicleTile = getVehicleMapTile(vehicleId);
-			int chassisId = vehicle->chassis_type();
-			UNIT *unit = &(Units[vehicle->unit_id]);
-			CChassis *chassis = &(Chassis[unit->chassis_id]);
-			int triad = chassis->triad;
-			int speed = getVehicleSpeed(vehicleId);
+		case TRIAD_AIR:
 			
-			// combat
+			// same enemy air combat cluster for air vehicle
 			
-			if (!isCombatVehicle(vehicleId))
+			if (!isSameEnemyAirCluster(vehicleId, tile))
 				continue;
 			
-			// ignore infantry defensive vehicle in base
+			break;
 			
-			if (isInfantryDefensiveVehicle(vehicleId) && map_base(vehicleTile))
-				continue;
+		case TRIAD_SEA:
 			
-			// ocean base
-			if (baseTileOcean)
+			if (tileInfo.ocean)
 			{
-				switch (triad)
-				{
-				case TRIAD_AIR:
-					
-					// same enemy air combat cluster for air vehicle
-					
-					if (!isSameEnemyAirCluster(vehicle->faction_id, chassisId, speed, vehicleTile, baseTile))
-						continue;
-					
-					break;
-					
-				case TRIAD_SEA:
-					
-					// same enemy sea combat cluster for sea vehicle
-					
-					if (!isSameEnemySeaCombatCluster(vehicle->faction_id, vehicleTile, baseTile))
-						continue;
-					
-					break;
-					
-				case TRIAD_LAND:
-					
-					if (vehicle_has_ability(vehicle, ABL_AMPHIBIOUS))
-					{
-						// same land combat cluster for amphibious land vehicle
-						
-						if (!isSameEnemyLandCombatCluster(vehicle->faction_id, vehicleTile, baseTile))
-							continue;
-						
-					}
-					else
-					{
-						// non-amphibious land vehicle cannot attack ocean base
-						
-						continue;
-						
-					}
-					
-				}
+				// same enemy sea combat cluster for sea vehicle
+				
+				if (!isSameEnemySeaCombatCluster(vehicleId, tile))
+					continue;
 				
 			}
-			// land base
 			else
 			{
-				switch (triad)
+				// sea vehicle cannot attack land base
+				continue;
+			}
+			
+			break;
+			
+		case TRIAD_LAND:
+			
+			if (tileInfo.ocean)
+			{
+				if (vehicle_has_ability(vehicleId, ABL_AMPHIBIOUS))
 				{
-				case TRIAD_AIR:
+					// same land combat cluster for amphibious land vehicle
 					
-					// same enemy air combat cluster for air vehicle
-					
-					if (!isSameEnemyAirCluster(vehicle->faction_id, chassisId, speed, vehicleTile, baseTile))
-						continue;
-					
-					break;
-					
-				case TRIAD_SEA:
-					
-					// sea vehicle cannot attack land base
-					
-					continue;
-					
-					break;
-					
-				case TRIAD_LAND:
-					
-					// same land combat cluster for land vehicle
-					
-					if (!isSameEnemyLandCombatCluster(vehicle->faction_id, vehicleTile, baseTile))
+					if (!isSameEnemyLandCombatCluster(vehicleId, tile))
 						continue;
 					
 				}
+				else
+				{
+					// non-amphibious land vehicle cannot attack sea base
+					continue;
+				}
+			}
+			else
+			{
+				// same land combat cluster for land vehicle
+				
+				if (!isSameEnemyLandCombatCluster(vehicleId, tile))
+					continue;
 				
 			}
-			
-			// strength multiplier
-			
-			double strengthMultiplier = getVehicleStrenghtMultiplier(vehicleId);
-			
-			// threat coefficient
-			
-			double threatCoefficient = aiData.factionInfos[vehicle->faction_id].threatCoefficient;
-			
-			// approach time coefficient
-			
-			double approachTime = getVehicleAttackApproachTime(vehicleId, baseTile);
-			if (approachTime == INF)
-				continue;
-			
-			double approachTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, approachTime);
-			
-			// base safe time
-			
-			baseInfo.safeTime = std::min(baseInfo.safeTime, approachTime);
-			
-			// weight
-			
-			double weight = strengthMultiplier * threatCoefficient * approachTimeCoefficient;
-			
-			// store value
-			
-			robin_hood::unordered_flat_map<int, double> &foeFactionUnitWeights = baseCombatData.foeUnitWeights.at(vehicle->faction_id);
-			if (foeFactionUnitWeights.find(vehicle->unit_id) == foeFactionUnitWeights.end())
-			{
-				foeFactionUnitWeights.insert({vehicle->unit_id, 0.0});
-			}
-			foeFactionUnitWeights.at(vehicle->unit_id) += weight;
-			
-			if (vehicle->faction_id == 0)
-			{
-				alienCount++;
-			}
-			
-			debug
-			(
-				"\t\t\t(%3d,%3d) %-32s"
-				" weight=%5.2f"
-				" strengthMultiplier=%5.2f"
-				" approachTime=%7.2f approachTimeCoefficient=%5.2f"
-				" threatCoefficient=%5.2f"
-				"\n"
-				, vehicle->x, vehicle->y, Units[vehicle->unit_id].name
-				, weight
-				, strengthMultiplier
-				, approachTime, approachTimeCoefficient
-				, threatCoefficient
-			);
 			
 		}
 		
-		Profiling::stop("calculate foe strength");
+		// strength multiplier
 		
+		double strengthMultiplier = getVehicleStrenghtMultiplier(vehicleId);
+		
+		// threat coefficient
+		
+		double threatCoefficient = aiData.factionInfos[vehicle.faction_id].threatCoefficient;
+		
+		// approach time coefficient
+		
+		double approachTime = getVehicleAttackApproachTime(vehicleId, tile);
+		if (approachTime == INF)
+			continue;
+		
+		double approachTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, approachTime);
+		
+		// weight
+		
+		double weight = strengthMultiplier * threatCoefficient * approachTimeCoefficient;
+		
+		// store value
+		
+		robin_hood::unordered_flat_map<int, double> &foeFactionUnitWeights = foeUnitWeights.at(vehicle.faction_id);
+		if (foeFactionUnitWeights.find(vehicle.unit_id) == foeFactionUnitWeights.end())
+		{
+			foeFactionUnitWeights.insert({vehicle.unit_id, 0.0});
+		}
+		foeFactionUnitWeights.at(vehicle.unit_id) += weight;
+		
+		if (vehicle.faction_id == 0)
+		{
+			alienCount++;
+		}
+		
+		debug
+		(
+			"\t\t\t(%3d,%3d) %-32s"
+			" weight=%5.2f"
+			" strengthMultiplier=%5.2f"
+			" approachTime=%7.2f approachTimeCoefficient=%5.2f"
+			" threatCoefficient=%5.2f"
+			"\n"
+			, vehicle.x, vehicle.y, unit.name
+			, weight
+			, strengthMultiplier
+			, approachTime, approachTimeCoefficient
+			, threatCoefficient
+		);
+		
+	}
+	
+	// reduce alien weight assuming uncoordinated attack
+	
+	if (alienCount > 0)
+	{
+		double alienWeightModifier = 1.0 / sqrt(alienCount);
+		
+		for (robin_hood::pair<int, double> &alienUnitWeightEntry : foeUnitWeights.at(0))
+		{
+			alienUnitWeightEntry.second *= alienWeightModifier;
+		}
+		
+	}
+	
+	Profiling::stop("calculate foe strength");
+	
 //		if (DEBUG)
 //		{
 //			for (int foeFactionId : foeFactionIds)
@@ -3994,420 +4088,136 @@ void evaluateBaseDefense()
 //			}
 //			
 //		}
+	
+	// summarize foe unit weights by faction
+	
+	Profiling::start("summarize foe unit weights by faction", "evaluate base threat");
+	
+	std::array<double, MaxPlayerNum> foeFactionWeights = {};
+	
+	for (int foeFactionId : foeFactionIds)
+	{
+		robin_hood::unordered_flat_map<int, double> &foeFactionUnitWeights = foeUnitWeights.at(foeFactionId);
 		
-		// summarize foe unit weights by faction
-		
-		Profiling::start("summarize foe unit weights by faction", "evaluate base threat");
-		
-		double foeTriadWeights[3]{0.0};
-		double foeFactionWeights[MaxPlayerNum];
-		
-		for (int foeFactionId : foeFactionIds)
+		for (int foeUnitId : foeCombatUnitIds.at(foeFactionId))
 		{
-			robin_hood::unordered_flat_map<int, double> &foeFactionUnitWeights = baseCombatData.foeUnitWeights.at(foeFactionId);
+			int foeUnitOffenseExtendedTriad = getUnitOffenseExtendedTriad(foeUnitId);
 			
-			double foeFactionWeight = 0.0;
+			// exclude alien spore launchers and fungal tower
 			
-			for (int foeUnitId : foeCombatUnitIds.at(foeFactionId))
-			{
-				UNIT *foeUnit = getUnit(foeUnitId);
-				int foeTriad = foeUnit->triad();
-				
-				// exclude alien spore launchers and fungal tower
-				
-				if (foeFactionId == 0 && (foeUnitId == BSC_SPORE_LAUNCHER || foeUnitId == BSC_FUNGAL_TOWER))
-					continue;
-				
-				// accumulate weight
-				
-				robin_hood::unordered_flat_map<int, double>::iterator foeFactionUnitWeightIterator = foeFactionUnitWeights.find(foeUnitId);
-				double weight = (foeFactionUnitWeightIterator == foeFactionUnitWeights.end() ? 0.0 : foeFactionUnitWeightIterator->second);
-				
-				if (foeFactionId == 0)
-				{
-					weight /= sqrt((double)std::max(1, alienCount));
-				}
-				
-				foeFactionWeight += weight;
-				
-				// accumulate base defense type weight
-				
-				if (!isNativeUnit(foeUnitId))
-				{
-					foeTriadWeights[foeTriad] += weight;
-				}
-				
-			}
+			if (foeFactionId == 0 && (foeUnitId == BSC_SPORE_LAUNCHER || foeUnitId == BSC_FUNGAL_TOWER))
+				continue;
 			
-			foeFactionWeights[foeFactionId] = foeFactionWeight;
+			// not present in threat
+			
+			if (foeFactionUnitWeights.find(foeUnitId) == foeFactionUnitWeights.end())
+				continue;
+			
+			// accumulate weight
+			
+			double weight = foeFactionUnitWeights.at(foeUnitId);
+			foeFactionWeights.at(foeFactionId) += weight;
 			
 		}
 		
-		// --------------------------------------------------
-		// calculate potential alien strength
-		// --------------------------------------------------
+	}
+	
+	// --------------------------------------------------
+	// calculate potential alien strength
+	// --------------------------------------------------
+	
+	debug("\t\tfoe MilitaryStrength, potential alien\n");
+	
+	{
+		int alienUnitId = tileInfo.ocean ? BSC_ISLE_OF_THE_DEEP : BSC_MIND_WORMS;
 		
-		debug("\t\tfoe MilitaryStrength, potential alien\n");
+		// strength modifier
 		
+		double moraleMultiplier = getAlienMoraleMultiplier();
+		double gameTurnCoefficient = getAlienTurnStrengthModifier();
+		
+		// set basic numbers to occasional vehicle
+		
+		double numberCoefficient = 1.0;
+		
+		// add more numbers based on eco-damage and number of fungal pops
+		
+		if (base != nullptr && tileInfo.land)
 		{
-			int alienUnitId;
-			
-			if (!baseTileOcean)
-			{
-				alienUnitId = BSC_MIND_WORMS;
-			}
-			else
-			{
-				alienUnitId = BSC_ISLE_OF_THE_DEEP;
-			}
-			
-			// strength modifier
-			
-			double moraleMultiplier = getAlienMoraleMultiplier();
-			double gameTurnCoefficient = getAlienTurnStrengthModifier();
-			
-			// set basic numbers to occasional vehicle
-			
-			double numberCoefficient = 1.0;
-			
-			// add more numbers based on eco-damage and number of fungal pops
-			
-			if (!baseTileOcean)
-			{
-				numberCoefficient += (double)((faction->clean_minerals_modifier / 3) * (base->eco_damage / 20));
-			}
-			
-			// calculate weight
-			// reduce potential alien weight slightly to increase mobility even if for increased risk
-			
-			double weight = 0.75 * moraleMultiplier * gameTurnCoefficient * numberCoefficient;
-			
-			// do not add potential weight more than actual one
-			
-			if (weight <= foeFactionWeights[0])
-			{
-				weight = 0.0;
-			}
-			else
-			{
-				weight -= foeFactionWeights[0];
-			}
-			
-			debug
-			(
-				"\t\t\t%-32s weight=%5.2f, moraleMultiplier=%5.2f, gameTurnCoefficient=%5.2f, numberCoefficient=%5.2f\n",
-				Units[alienUnitId].name,
-				weight, moraleMultiplier, gameTurnCoefficient, numberCoefficient
-			);
-			
-			// store value
-
-			baseCombatData.foeUnitWeights.at(0)[alienUnitId] = weight;
-			foeFactionWeights[0] += weight;
-			
+			numberCoefficient += (double)((aiFaction->clean_minerals_modifier / 3) * (base->eco_damage / 20));
 		}
 		
-		// --------------------------------------------------
-		// calculate potential alien strength - end
-		// --------------------------------------------------
+		// calculate weight
+		// reduce potential alien weight slightly to increase mobility even if for increased risk
 		
-		// store base defense type threats
+		double weight = 0.75 * moraleMultiplier * gameTurnCoefficient * numberCoefficient;
 		
-		for (int i = 0; i < 3; i++)
-		{
-			debug("foeTriadWeights[%d]=%5.2f\n", i, foeTriadWeights[i]);
-			baseCombatData.triadThreats[i] = foeTriadWeights[i];
-		}
+		// do not add potential weight more than actual one
 		
-		// summarize total foe unit weights to estimate threat
-		
-		debug("\t\tfoeFactionThreats\n");
-				
-		double maxThreat = 0.0;
-		double sumThreat = 0.0;
-
-		for (int foeFactionId : foeFactionIds)
-		{
-			maxThreat = std::max(maxThreat, foeFactionWeights[foeFactionId]);
-			sumThreat += foeFactionWeights[foeFactionId];
-			
-			debug("\t\t\t%-24s %7.2f\n", MFactions[foeFactionId].noun_faction, foeFactionWeights[foeFactionId]);
-			
-		}
-		
-		double estimatedThreat = maxThreat == 0.0 ? 0.0 : 1.0 / ((1.0 / maxThreat + 1.0 / sumThreat) / 2.0);
-		
-		Profiling::stop("summarize foe unit weights by faction");
-		
-		// compute required protection
-		
-		Profiling::start("compute required protection", "evaluate base threat");
-		
-		double requiredEffect = conf.ai_combat_base_protection_superiority * (baseTileOcean ? conf.ai_combat_sea_base_threat_coefficient : 1.0) * estimatedThreat;
-		baseInfo.combatData.requiredEffect = requiredEffect;
-		
-		Profiling::stop("compute required protection");
+		foeFactionWeights.at(0) = std::max(foeFactionWeights.at(0), weight);
 		
 		debug
 		(
-			"\t\trequiredEffect=%5.2f"
-			" conf.ai_combat_base_protection_superiority=%5.2F"
-			" maxThreat=%5.2f"
-			" sumThreat=%5.2f"
-			" estimatedThreat=%5.2f"
-			"\n"
-			, requiredEffect
-			, conf.ai_combat_base_protection_superiority
-			, maxThreat
-			, sumThreat
-			, estimatedThreat
+			"\t\t\t%-32s weight=%5.2f, moraleMultiplier=%5.2f, gameTurnCoefficient=%5.2f, numberCoefficient=%5.2f\n",
+			Units[alienUnitId].name,
+			weight, moraleMultiplier, gameTurnCoefficient, numberCoefficient
 		);
 		
-		// update most vulnerable base
+	}
+	
+	// --------------------------------------------------
+	// calculate potential alien strength - end
+	// --------------------------------------------------
+	
+	// select neutral faction to beware of
+	
+	int neutralFactionId = -1;
+	int neutralFactionWeight = 0.0;
+	for (int foeFactionId : foeFactionIds)
+	{
+		if (!isNeutral(aiFactionId, foeFactionId))
+			continue;
 		
-		if (estimatedThreat > aiData.mostVulnerableBaseThreat)
+		double foeFactionWeight = foeFactionWeights.at(foeFactionId);
+		if (foeFactionWeight > neutralFactionWeight)
 		{
-			aiData.mostVulnerableBaseId = baseId;
-			aiData.mostVulnerableBaseThreat = estimatedThreat;
+			neutralFactionId = foeFactionId;
+			neutralFactionWeight = foeFactionWeight;
 		}
-		
-		// calculate unit effects
-		
-		Profiling::start("calculate unit effects", "evaluate base threat");
-		
-		debug("\t\tcalculate base unit effects\n");
-		
-		ArithmeticSummaryStatistics protectionEffectSummary;
-		for (int ownUnitId : ownCombatUnitIds)
-		{
-			UNIT *ownUnit = &(Units[ownUnitId]);
-			
-			debug("\t\t\t[%3d] %-32s\n", ownUnitId, ownUnit->name);
-			
-			protectionEffectSummary.clear();
-			for (int foeFactionId : foeFactionIds)
-			{
-				robin_hood::unordered_flat_map<int, double> const &foeFactionUnitWeights = baseCombatData.foeUnitWeights.at(foeFactionId);
-				
-				for (int foeUnitId : foeCombatUnitIds.at(foeFactionId))
-				{
-					robin_hood::unordered_flat_map<int, double>::const_iterator foeFactionUnitWeightIterator = foeFactionUnitWeights.find(foeUnitId);
-					double weight = (foeFactionUnitWeightIterator == foeFactionUnitWeights.end() ? 0.0 : foeFactionUnitWeightIterator->second);
-					
-					// exclude unit without weight
-					
-					if (weight == 0.0)
-						continue;
-					
-					AssaultEffect const &assaultEffect = aiData.combatEffectTable.getAssaultEffect(foeFactionId, foeUnitId, aiFactionId, ownUnitId);
-					
-					bool psiCombat = isPsiCombat(foeUnitId, ownUnitId);
-					int extendedTriad = psiCombat ? 3 : Units[foeUnitId].triad();
-					double attackMultiplier = 1.0 / (baseInfo.combatData.sensorDefenseMultiplier * baseInfo.defenseMultipliers.at(extendedTriad));
-					double defendMultiplier = 1.0 / (baseInfo.combatData.sensorOffenseMultiplier);
-					double effect = assaultEffect.getEffect(attackMultiplier, defendMultiplier);
-					
-					double protectionEffect = effect == 0.0 ? 0.0 : 1.0 / effect;
-					protectionEffectSummary.add(protectionEffect, weight);
-					
-//					debug
-//					(
-//						"\t\t\t\t[%3d] %-32s - %-20s"
-//						" weight=%5.2f"
-//						" protectionEffect=%5.2f"
-//						"\n"
-//						, foeUnitId, getUnit(foeUnitId)->name, getMFaction(foeFactionId)->noun_faction
-//						, weight
-//						, protectionEffect
-//					);
-					
-				}
-				
-			}
-			
-			// effect
-			
-			double averageProtectionEffect = protectionEffectSummary.getArithmeticMean();
-			baseCombatData.setUnitEffect(ownUnitId, averageProtectionEffect);
-			
-//			debug
-//			(
-//				"\t\t\t%-32s"
-//				" averageProtectionEffect=%5.2f"
-//				"\n"
-//				, ownUnit->name
-//				, averageProtectionEffect
-//			);
-			
-		}
-		
-		Profiling::stop("calculate unit effects");
 		
 	}
+	
+	// compute required protection
+	
+	Profiling::start("compute required protection", "evaluate base threat");
+	
+	double coefficient = conf.ai_combat_base_protection_superiority * (tileInfo.ocean ? conf.ai_combat_sea_base_threat_coefficient : 1.0);
+	
+	debug("\t\trequiredEffects\n");
+	combatData.requiredEffect = 0.0;
+	for (int foeFactionId : foeFactionIds)
+	{
+		if (!(isHostile(aiFactionId, foeFactionId) || foeFactionId == neutralFactionId))
+			continue;
+		
+		debug("\t\t\t%-24s\n", MFactions[foeFactionId].noun_faction);
+		for (robin_hood::pair<int, double> const &foeFactionUnitWeightEntry : foeUnitWeights.at(foeFactionId))
+		{
+			int foeUnitId = foeFactionUnitWeightEntry.first;
+			double foeUnitWeight = foeFactionUnitWeightEntry.second;
+			double requiredEffect = coefficient * foeUnitWeight;
+			combatData.counterEffects.at(foeFactionId).emplace(foeUnitId, CounterEffect(requiredEffect));
+			combatData.requiredEffect += requiredEffect;
+			debug("\t\t\t\t%-32s %5.2f\n", Units[foeUnitId].name, combatData.counterEffects.at(foeFactionId).at(foeUnitId).required);
+		}
+		
+	}
+	
+	Profiling::stop("compute required protection");
 	
 	Profiling::stop("evaluate base threat");
 	
 	Profiling::stop("evaluateBaseDefense");
-	
-}
-
-void evaluateBunkerDefense()
-{
-	Profiling::start("evaluateBunkerDefense", "populateAIData");
-	
-	debug("evaluateBunkerDefense - %s\n", MFactions[aiFactionId].noun_faction);
-	
-	robin_hood::unordered_flat_set<int> const &ownCombatUnitIds = aiData.combatEffectTable.ownCombatUnitIds;
-	robin_hood::unordered_flat_set<int> const &foeFactionIds = aiData.combatEffectTable.foeFactionIds;
-	std::array<robin_hood::unordered_flat_set<int> , MaxPlayerNum> const &foeCombatUnitIds = aiData.combatEffectTable.foeCombatUnitIds;
-	
-	// evaluate bunker threat
-	
-	for (robin_hood::pair<MAP *, BaseCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
-	{
-		Profiling::start("evaluate bunker threat", "evaluateBunkerDefense");
-		
-		MAP *bunkerTile = bunkerCombatDataEntry.first;
-		BaseCombatData &bunkerCombatData = bunkerCombatDataEntry.second;
-		TileInfo const &bunkerTileInfo = aiData.getTileInfo(bunkerTile);
-		
-		bunkerCombatData.clear();
-		
-		// sensor
-		
-		bunkerCombatData.sensorOffenseMultiplier = getSensorOffenseMultiplier(aiFactionId, bunkerTile);
-		bunkerCombatData.sensorDefenseMultiplier = getSensorDefenseMultiplier(aiFactionId, bunkerTile);
-		
-		// land
-		
-		if (!bunkerTileInfo.land)
-			continue;
-		
-		// build bunkerCombatData
-		
-		Profiling::start("build bunkerCombatData", "evaluate bunker threat");
-		
-		for (MAP *tile : getRangeTiles(bunkerTile, 3, false))
-		{
-			TileInfo &tileInfo = aiData.getTileInfo(tile);
-			
-			// base
-			
-			if (!tileInfo.base)
-				continue;
-			
-			// accumulate base foeUnitWeights
-			
-			BaseInfo &baseInfo = aiData.getBaseInfo(tileInfo.baseId);
-			for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-			{
-				if (factionId == aiFactionId)
-					continue;
-				
-				for (robin_hood::pair<int, double> const &factionFoeUnitWeightEntry : baseInfo.combatData.foeUnitWeights.at(factionId))
-				{
-					int factionFoeUnitId = factionFoeUnitWeightEntry.first;
-					double factionFoeUnitWeight = factionFoeUnitWeightEntry.second;
-					
-					if (bunkerCombatData.foeUnitWeights.at(factionId).find(factionFoeUnitId) == bunkerCombatData.foeUnitWeights.at(factionId).end())
-					{
-						bunkerCombatData.foeUnitWeights.at(factionId).insert({factionFoeUnitId, 0.0});
-					}
-					bunkerCombatData.foeUnitWeights.at(factionId).at(factionFoeUnitId) = std::max(bunkerCombatData.foeUnitWeights.at(factionId).at(factionFoeUnitId), factionFoeUnitWeight);
-					
-				}
-				
-				bunkerCombatData.requiredEffect = std::max(bunkerCombatData.requiredEffect, baseInfo.combatData.requiredEffect);
-				
-			}
-			
-		}
-		
-		Profiling::stop("build bunkerCombatData");
-		
-		// calculate unit effects
-		
-		Profiling::start("calculate bunker unit effects", "evaluate bunker threat");
-		
-		debug("\t\tcalculate bunker unit effects\n");
-		
-		ArithmeticSummaryStatistics protectionEffectSummary;
-		for (int ownUnitId : ownCombatUnitIds)
-		{
-			UNIT *ownUnit = &(Units[ownUnitId]);
-			
-			debug("\t\t\t[%3d] %-32s\n", ownUnitId, ownUnit->name);
-			
-			protectionEffectSummary.clear();
-			for (int foeFactionId : foeFactionIds)
-			{
-				robin_hood::unordered_flat_map<int, double> const &foeFactionUnitWeights = bunkerCombatData.foeUnitWeights.at(foeFactionId);
-				
-				for (int foeUnitId : foeCombatUnitIds.at(foeFactionId))
-				{
-					robin_hood::unordered_flat_map<int, double>::const_iterator foeFactionUnitWeightIterator = foeFactionUnitWeights.find(foeUnitId);
-					double weight = (foeFactionUnitWeightIterator == foeFactionUnitWeights.end() ? 0.0 : foeFactionUnitWeightIterator->second);
-					
-					// exclude unit without weight
-					
-					if (weight == 0.0)
-						continue;
-					
-					AssaultEffect const &assaultEffect = aiData.combatEffectTable.getAssaultEffect(foeFactionId, foeUnitId, aiFactionId, ownUnitId);
-					
-					double attackMultiplier = 1.0 / (bunkerCombatData.sensorDefenseMultiplier);
-					double defendMultiplier = 1.0 / (bunkerCombatData.sensorOffenseMultiplier);
-					if (isPsiCombat(foeUnitId, ownUnitId))
-					{
-						// no modification
-					}
-					else
-					{
-						attackMultiplier /= getPercentageBonusMultiplier(Units[foeUnitId].triad() == TRIAD_AIR ? conf.bunker_bonus_aerial : conf.bunker_bonus_surface);
-					}
-					double effect = assaultEffect.getEffect(attackMultiplier, defendMultiplier);
-					
-					double protectionEffect = effect == 0.0 ? 0.0 : 1.0 / effect;
-					protectionEffectSummary.add(protectionEffect, weight);
-					
-					debug
-					(
-						"\t\t\t\t[%3d] %-32s - %-20s"
-						" weight=%5.2f"
-						" protectionEffect=%5.2f"
-						"\n"
-						, foeUnitId, getUnit(foeUnitId)->name, getMFaction(foeFactionId)->noun_faction
-						, weight
-						, protectionEffect
-					);
-					
-				}
-				
-			}
-			
-			// effect
-			
-			double averageProtectionEffect = protectionEffectSummary.getArithmeticMean();
-			bunkerCombatData.setUnitEffect(ownUnitId, averageProtectionEffect);
-			
-//			debug
-//			(
-//				"\t\t\t%-32s"
-//				" averageProtectionEffect=%5.2f"
-//				"\n"
-//				, ownUnit->name
-//				, averageProtectionEffect
-//			);
-			
-		}
-		
-		Profiling::stop("calculate bunker unit effects");
-		
-		Profiling::stop("evaluate bunker threat");
-		
-	}
-	
-	Profiling::stop("evaluateBunkerDefense");
 	
 }
 
@@ -4491,7 +4301,7 @@ void evaluateBaseProbeDefense()
 					
 				case TRIAD_LAND:
 					
-					if (vehicle_has_ability(vehicle, ABL_AMPHIBIOUS))
+					if (vehicle_has_ability(vehicleId, ABL_AMPHIBIOUS))
 					{
 						// same land combat cluster for amphibious land vehicle
 						
@@ -7667,7 +7477,7 @@ bool isVehicleCanCaptureBase(int vehicleId, MAP *baseTile)
 Benefit of destroying an enemy vehicle.
 Measured in average base gain.
 */
-double getEnemyVehicleAttackGain(int vehicleId)
+double getDestroyingEnemyVehicleGain(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
@@ -7717,11 +7527,15 @@ double getEnemyVehicleAttackGain(int vehicleId)
 				{
 					BaseInfo &baseInfo = aiData.getBaseInfo(nearestBaseRange.id);
 					
-					double baseGain = baseInfo.gain;
-					double combatEffect = baseInfo.combatData.getVehicleEffect(vehicleId);
-					double baseGainProportion = combatEffect / baseInfo.combatData.requiredEffect;
-					double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
-					double baseAttackGain = baseGain * baseGainProportion * combatEffectCoefficient;
+					double baseAttackGain = 0.0;
+					if (baseInfo.combatData.requiredEffect > 0.0)
+					{
+						double baseGain = baseInfo.gain;
+						double combatEffect = baseInfo.combatData.getVehicleEffect(vehicleId);
+						double baseGainProportion = combatEffect / baseInfo.combatData.requiredEffect;
+						double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
+						baseAttackGain = baseGain * baseGainProportion * combatEffectCoefficient;
+					}
 					
 					double yieldAttackGain = getGainBonus(conf.ai_combat_attack_bonus_hostile);
 					

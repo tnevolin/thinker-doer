@@ -984,12 +984,11 @@ void setCombatMoveTo(int vehicleId, MAP *destination)
 	int factionId = vehicle.faction_id;
 	int triad = vehicle.triad();
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	MovementType movementType = getVehicleMovementType(vehicleId);
 	bool fungusBonus = isNativeVehicle(vehicleId) || has_project(FAC_XENOEMPATHY_DOME, factionId);
 	
 	debug("setCombatMoveTo [%4d] %s -> %s\n", vehicleId, getLocationString(vehicleTile).c_str(), getLocationString(destination).c_str());
 	
-	// land
+	// not land unit moves normally
 	
 	if (triad != TRIAD_LAND)
 	{
@@ -1017,58 +1016,51 @@ void setCombatMoveTo(int vehicleId, MAP *destination)
 	}
 	
 	MAP *bestTile = nullptr;
-	double bestTileMovementCost = DBL_MAX;
-	bool bestTileSafe = false;
-	bool bestTileDefenseBonus = false;
+	double bestTileTravelTime = DBL_MAX;
+	int bestTileSafety = 0;
 	
-	Profiling::start("- setSafeMoveTo - getVehicleReachableLocations");
+	Profiling::start("- setCombatMoveTo - getVehicleReachableLocations");
 	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId))
 	{
 		int tileIndex = reachableLocation.first;
 		MAP *tile = *MapTiles + tileIndex;
 		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
-		double defenseBonus = tileInfo.rough || (fungusBonus && tile->is_fungus());
+		int safety = 10 * (tileInfo.hostileDangerZone ? 0 : 1) + 1 * (tileInfo.rough || (fungusBonus && tile->is_fungus()) ? 1 : 0);
 		
-		double movementCost = getLandLMovementCost(factionId, movementType, tile, destination, false);
-		
-		if (movementCost >= bestTileMovementCost + (double)Rules->move_rate_roads)
+		double travelTime = getVehicleTravelTime(vehicleId, tile, destination, false);
+		if (travelTime == INF)
 			continue;
 		
-		if (movementCost > bestTileMovementCost - (double)Rules->move_rate_roads)
+		if (travelTime <= bestTileTravelTime - 1.0)
 		{
-			if (bestTileSafe && tileInfo.hostileDangerZone)
-				continue;
-			
-			
-			if (bestTileDefenseBonus && !defenseBonus)
-				continue;
-			
+			bestTile = tile;
+			bestTileTravelTime = travelTime;
+			bestTileSafety = safety;
+		}
+		else if (travelTime < bestTileTravelTime + 1.0 && safety > bestTileSafety)
+		{
+			bestTile = tile;
+			bestTileTravelTime = std::min(bestTileTravelTime, travelTime);
+			bestTileSafety = safety;
+		}
+		else
+		{
+			continue;
 		}
 		
-		bestTile = tile;
-		bestTileMovementCost = movementCost;
-		bestTileSafe = !tileInfo.hostileDangerZone;
-		bestTileDefenseBonus = defenseBonus;
-		
-//		debug
-//		(
-//			"%s"
-//			" danger=%5.2f"
-//			" distance=%5.2f"
-//			" weight=%5.2f"
-//			" dangerous=%d"
-//			" best=%d"
-//			"\n"
-//			, getLocationString(tile).c_str()
-//			, danger
-//			, distance
-//			, weight
-//			, dangerous
-//			, weight < bestTileWeight
-//		);
+		debug
+		(
+			"%s"
+			" travelTime=%5.2f"
+			" safety=%d"
+			"\n"
+			, getLocationString(tile).c_str()
+			, travelTime
+			, safety
+		);
 	
 	}
-	Profiling::stop("- setSafeMoveTo - getVehicleReachableLocations");
+	Profiling::stop("- setCombatMoveTo - getVehicleReachableLocations");
 	
 	if (bestTile == nullptr)
 	{

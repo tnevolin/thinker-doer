@@ -14,6 +14,9 @@ const double IMPEDIMENT_SEA_TERRITORY_HOSTILE = 0.5;
 const double IMPEDIMENT_LAND_TERRITORY_HOSTILE = 2.0;
 const double IMPEDIMENT_LAND_INTERBASE_UNFRIENDLY = 4.0;
 
+int const A_RANGE = 10;
+double const A_FACTOR = 2.0;
+
 struct BaseChange
 {
 	bool friendly;
@@ -270,31 +273,24 @@ double getSeaLApproachTime(int factionId, MovementType movementType, int speed, 
 double getLandLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
 double getLandLMovementCost(int factionId, MovementType movementType, MAP *org, MAP *dst, bool includeDestination);
 
-double getVehicleTravelTime(int vehicleId, MAP *dst);
-double getVehicleTravelTime(int vehicleId, MAP *org, MAP *dst);
-double getUnitTravelTime(int factionId, int unitId, MAP *org, MAP *dst);
+double getUnitTravelTime(int factionId, int unitId, int speed, MAP *org, MAP *dst, bool includeDestination = true);
+double getUnitTravelTime(int factionId, int unitId, MAP *org, MAP *dst, bool includeDestination = true);
+double getVehicleTravelTime(int vehicleId, MAP *org, MAP *dst, bool includeDestination = true);
+double getVehicleTravelTime(int vehicleId, MAP *dst, bool includeDestination = true);
 
-//// ==================================================
-//// A* cached movement costs
-//// ==================================================
-//
-//double getCachedATravelTime(MovementType movementType, int speed, int orgIndex, int dstIndex);
-//void setCachedATravelTime(MovementType movementType, int speed, int orgIndex, int dstIndex, double travelTime);
-//
-//// ==================================================
-//// A* path finding algorithm
-//// ==================================================
-//
-//double getATravelTime(MovementType movementType, int speed, MAP *origin, MAP *dst);
-//
-//double getUnitATravelTime(int factionId, int unitId, int speed, MAP *org, MAP *dst);
-//double getUnitATravelTime(int factionId, int unitId, MAP *origin, MAP *dst);
-//double getSeaUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst);
-//double getLandUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst);
+// ==================================================
+// A* path finding algorithm
+// ==================================================
+
+double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
+//double getUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst, bool includeDestination);
+//double getUnitATravelTime(int unitId, MAP *org, MAP *dst, bool includeDestination);
+//double getSeaUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst, bool includeDestination);
+//double getLandUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst, bool includeDestination);
 //
 //double getVehicleATravelTime(int vehicleId, MAP *org, MAP *dst);
 //double getVehicleATravelTime(int vehicleId, MAP *dst);
-//
+
 // ============================================================
 // Reachability
 // ============================================================
@@ -363,8 +359,10 @@ bool isSameEnemyAirCluster(int factionId, int chassisId, int speed, MAP *tile1, 
 bool isSameEnemyAirCluster(int vehicleId, MAP *tile2);
 int getEnemySeaCombatCluster(int factionId, MAP *tile);
 bool isSameEnemySeaCombatCluster(int factionId, MAP *tile1, MAP *tile2);
+bool isSameEnemySeaCombatCluster(int vehicleId, MAP *tile2);
 int getEnemyLandCombatCluster(int factionId, MAP *tile);
 bool isSameEnemyLandCombatCluster(int factionId, MAP *tile1, MAP *tile2);
+bool isSameEnemyLandCombatCluster(int vehicleId, MAP *tile2);
 int getCluster(MAP *tile);
 int getVehicleCluster(int vehicleId);
 
