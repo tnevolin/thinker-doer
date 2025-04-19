@@ -1,6 +1,10 @@
-# Version 369
+# Version 370
 
 * Cybernetics gets +1 PLANET.
+
+# Version 369
+
+* [Fix] Base defense did not compute sufficient number of protectors because of path computation bug. Should be fixed now.
 
 # Version 368
 

@@ -405,7 +405,8 @@ The Ascent to Transcendence | 500 | Should take some time but not to extreme wit
 
 | facility | cost | maint | multi / yield | other effects |
 | ---- | ----: | ----: | ---- | ---- |
-| Recycling Tanks | 10 | 2 | +1 mineral mining platform, +2 minerals rocky mine | |
+| Biology Lab | 6 | 1 | fungus: +1 nutrient and +1 energy | +4 labs |
+| Recycling Tanks | 10 | 2 | mine/platform: +1 mineral, rocky: +2 minerals | |
 | Genejack Factory | 12 | 3 | +50% minerals | +1 drone |
 | Robotic Assembly Plant | 16 | 4 | +50% minerals | |
 | Quantum Converter | 20 | 5 | +50% minerals | |
@@ -513,18 +514,17 @@ Many people before me mentioned overpowed forest. Indeed, it is capable of turni
 
 ## Fungus production
 
-Fungus production is not some crucial part of the game. However, it is still some alternative yield source that is mostly overlooked due to very slow development comparing to conventional terraforming. I'd like to add few touches on it.
+Fungus production is not a crucial part of the game. However, it is still some alternative yield source that is mostly overlooked due to very slow development comparing to conventional terraforming. It is now focused on nutrient and energy production to offset bareland base nutrition.
 
-| technology | level | tech tree % | effect | cumulative yield | comment |
-| ---- | ----: | ----: | ---- | ---- | ---- |
+| technology | level | tech % | effect | yield |
+| ---- | ----: | ----: | ---- | ---- |
 | Centauri Ecology | 1 |  5 | +1 nutrient | 1-0-0 |
-| Progenitor Psych | 1 |  5 | +1 energy | 1-0-1 | reassigned |
-| Field Modulation | 2 | 15 | +1 energy | 1-0-2 | reassigned |
-| Bioadaptive Resonance | 4 | 30 | +1 nutrient | 2-0-2 | reassigned |
-| Centauri Meditation | 5 | 35 | +1 energy | 2-0-3 |
-| Centauri Genetics | 8 | 65 | +1 mineral | 2-1-3 |
-| Centauri Psi | 11 | 75 | +1 nutrient | 3-1-3 |
-| Secrets of Alpha Centauri | 13 | 90 | +1 energy | 3-1-4 |
+| Progenitor Psych | 1 |  5 | +1 energy | 1-0-1 |
+| Field Modulation | 2 | 15 | +1 nutrient | 2-0-1 |
+| Bioadaptive Resonance | 4 | 30 | +1 energy | 2-0-2 |
+| Centauri Meditation | 5 | 35 | +1 nutrient | 3-0-2 |
+| Centauri Genetics | 8 | 65 | +1 mineral | 3-1-2 |
+| Centauri Psi | 11 | 75 | +1 energy | 3-1-3 |
 
 ## Sensors
 
