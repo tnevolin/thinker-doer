@@ -3888,7 +3888,6 @@ void evaluateDefense(MAP *tile, DefenseCombatData &combatData)
 	debug("evaluateDefense - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	CombatEffectTable &combatEffectTable = aiData.combatEffectTable;
-	robin_hood::unordered_flat_set<int> const &ownCombatUnitIds = combatEffectTable.ownCombatUnitIds;
 	robin_hood::unordered_flat_set<int> const &foeFactionIds = combatEffectTable.foeFactionIds;
 	robin_hood::unordered_flat_set<int> const &foeCombatVehicleIds = combatEffectTable.foeCombatVehicleIds;
 	std::array<robin_hood::unordered_flat_set<int> , MaxPlayerNum> const &foeCombatUnitIds = combatEffectTable.foeCombatUnitIds;
@@ -4101,8 +4100,6 @@ void evaluateDefense(MAP *tile, DefenseCombatData &combatData)
 		
 		for (int foeUnitId : foeCombatUnitIds.at(foeFactionId))
 		{
-			int foeUnitOffenseExtendedTriad = getUnitOffenseExtendedTriad(foeUnitId);
-			
 			// exclude alien spore launchers and fungal tower
 			
 			if (foeFactionId == 0 && (foeUnitId == BSC_SPORE_LAUNCHER || foeUnitId == BSC_FUNGAL_TOWER))
@@ -4172,7 +4169,7 @@ void evaluateDefense(MAP *tile, DefenseCombatData &combatData)
 	// select neutral faction to beware of
 	
 	int neutralFactionId = -1;
-	int neutralFactionWeight = 0.0;
+	double neutralFactionWeight = 0.0;
 	for (int foeFactionId : foeFactionIds)
 	{
 		if (!isNeutral(aiFactionId, foeFactionId))
@@ -4186,6 +4183,8 @@ void evaluateDefense(MAP *tile, DefenseCombatData &combatData)
 		}
 		
 	}
+	
+	Profiling::stop("summarize foe unit weights by faction");
 	
 	// compute required protection
 	

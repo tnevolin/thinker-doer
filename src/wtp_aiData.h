@@ -374,7 +374,15 @@ struct DefenseCombatData
 		double requiredEffect = counterEffect.required - counterEffect.provided;
 		double appliedEffect = std::min(requiredEffect, effect);
 		double remainingEffect = effect - appliedEffect;
+		
+		counterEffect.provided += appliedEffect;
+		if (present)
+		{
+			counterEffect.providedPresent += appliedEffect;
+		}
+		
 		return remainingEffect;
+		
 	}
 	
 	void addVehicle(int vehicleId, bool present)

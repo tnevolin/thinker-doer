@@ -1784,9 +1784,10 @@ void patch_disable_air_transport_unload_everywhere()
 
 void patch_enemy_move()
 {
-//    write_call_over(0x00579362, (int)wtp_mod_ai_enemy_move);
-    write_call(0x00512842, (int)wtp_mod_enemy_move);
-    write_call(0x00579362, (int)wtp_mod_enemy_move);
+//	// in Console::give_hints
+//	write_call(0x00512842, (int)wtp_mod_enemy_move);
+	// in enemy_move_check
+	write_call(0x00579362, (int)wtp_mod_enemy_move);
 }
 
 void patch_faction_upkeep()
