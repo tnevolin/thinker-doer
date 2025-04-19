@@ -1,3 +1,7 @@
+# Version 369
+
+* [Fix] Base defense did not compute sufficient number of protectors because of path computation bug. Should be fixed now.
+
 # Version 366
 
 * Tidal harness terraforming time is always computed for rolling sea floor regardless of actual sea floor rockiness.

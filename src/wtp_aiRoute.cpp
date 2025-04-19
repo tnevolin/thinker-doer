@@ -947,11 +947,6 @@ void populateSeaCombatClusters(int factionId)
 		if (!tile->is_sea())
 			continue;
 		
-		// not unfriendly base
-		
-		if (isUnfriendlyBaseAt(tile, factionId))
-			continue;
-		
 		// set available
 		
 		seaCombatClusters.at(tileIndex) = -2;
@@ -1084,10 +1079,7 @@ void populateLandCombatClusters(int factionId)
 		if (!(tileInfo.land || seaTransportWaitTimes.at(tileInfo.index) < INF))
 			continue;
 		
-		// not unfriendly base
-		
-		if (isUnfriendlyBaseAt(tileInfo.tile, factionId))
-			continue;
+		// set available
 		
 		landCombatClusters.at(tileInfo.index) = -2;
 		
