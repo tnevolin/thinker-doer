@@ -269,10 +269,10 @@ void populateConvoyData()
 		tileConvoyInfo.baseid = bestBaseResTypeBaseId;
 		tileConvoyInfo.gain = bestBaseResTypeGain + baseGainChange;
 		
-		if (DEBUG)
-		{
-			debug("\t%s %d [%3d] %7.2f + %7.2f = %7.2f\n", getLocationString(tile).c_str(), tileConvoyInfo.baseResType, tileConvoyInfo.baseid, bestBaseResTypeGain, baseGainChange, tileConvoyInfo.gain);
-		}
+//		if (DEBUG)
+//		{
+//			debug("\t%s %d [%3d] %7.2f + %7.2f = %7.2f\n", getLocationString(tile).c_str(), tileConvoyInfo.baseResType, tileConvoyInfo.baseid, bestBaseResTypeGain, baseGainChange, tileConvoyInfo.gain);
+//		}
 		
 	}
 	

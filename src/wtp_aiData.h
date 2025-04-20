@@ -158,8 +158,8 @@ struct AssaultEffect
 	
 	double getEffect(double attackMultiplier, double defendMultiplier) const
 	{
-		double attackEffect = this->attack * attackMultiplier;
-		double defendEffect = this->defend * defendMultiplier;
+		double attackEffect = attackMultiplier * this->attack;
+		double defendEffect = defendMultiplier * this->defend;
 		
 		double effect = 0.0;
 		
@@ -190,8 +190,14 @@ class CombatEffectTable
 {
 private:
 	
-	std::array<std::array<std::array<std::array<std::array<double, COMBAT_MODE_COUNT>, MaxProtoNum>, MaxPlayerNum>, MaxProtoNum>, MaxPlayerNum> combatEffects;
-	std::array<std::array<std::array<std::array<AssaultEffect, MaxProtoNum>, MaxPlayerNum>, MaxProtoNum>, MaxPlayerNum> assaultEffects;
+	// each to each unit combat effects
+	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][combatMode] = combatEffect
+//	std::array<std::array<std::array<std::array<std::array<double, COMBAT_MODE_COUNT>, MaxProtoNum>, MaxPlayerNum>, MaxProtoNum>, MaxPlayerNum> combatEffects;
+	robin_hood::unordered_flat_map<int, double> combatEffects;
+	// each to each unit assault effects
+	// [assailantFactionId][assailantUnitId][protectorFactionId][protectorUnitId] = assaultEffect
+//	std::array<std::array<std::array<std::array<AssaultEffect, MaxProtoNum>, MaxPlayerNum>, MaxProtoNum>, MaxPlayerNum> assaultEffects;
+	robin_hood::unordered_flat_map<int, AssaultEffect> assaultEffects;
 
 public:
 	
@@ -204,41 +210,52 @@ public:
 	
 	void clear()
 	{
-		for (int attackerFactionId = 0; attackerFactionId < MaxPlayerNum; attackerFactionId++)
-		{
-			for (int attackerUnitId = 0; attackerUnitId < MaxProtoNum; attackerUnitId++)
-			{
-				for (int defenderFactionId = 0; defenderFactionId < MaxPlayerNum; defenderFactionId++)
-				{
-					for (int defenderUnitId = 0; defenderUnitId < MaxProtoNum; defenderUnitId++)
-					{
-						for (COMBAT_MODE combatMode : {CM_MELEE, CM_ARTILLERY_DUEL, CM_BOMBARDMENT})
-						{
-							combatEffects.at(attackerFactionId).at(attackerUnitId).at(defenderFactionId).at(defenderUnitId).at(combatMode) = 0.0;
-						}
-						assaultEffects.at(attackerFactionId).at(attackerUnitId).at(defenderFactionId).at(defenderUnitId).clear();
-					}
-				}
-			}
-		}
+		combatEffects.clear();
+		assaultEffects.clear();
 	}
 	
 	void setCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, COMBAT_MODE combatMode, double combatEffect)
 	{
-		this->combatEffects.at(attackerFactionId).at(attackerUnitId).at(defenderFactionId).at(defenderUnitId).at(combatMode) = combatEffect;
+		int key =
+			+ attackerFactionId		
+			+ attackerUnitId		* MaxPlayerNum
+			+ defenderFactionId		* MaxPlayerNum * MaxProtoNum
+			+ defenderUnitId		* MaxPlayerNum * MaxProtoNum * MaxPlayerNum
+			+ combatMode			* MaxPlayerNum * MaxProtoNum * MaxPlayerNum * MaxProtoNum
+		;
+		this->combatEffects[key] = combatEffect;
 	}
 	double getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, COMBAT_MODE combatMode) const
 	{
-		return this->combatEffects.at(attackerFactionId).at(attackerUnitId).at(defenderFactionId).at(defenderUnitId).at(combatMode);
+		int key =
+			+ attackerFactionId		
+			+ attackerUnitId		* MaxPlayerNum
+			+ defenderFactionId		* MaxPlayerNum * MaxProtoNum
+			+ defenderUnitId		* MaxPlayerNum * MaxProtoNum * MaxPlayerNum
+			+ combatMode			* MaxPlayerNum * MaxProtoNum * MaxPlayerNum * MaxProtoNum
+		;
+		return this->combatEffects.at(key);
 	}
 	
 	void setAssaultEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, AssaultEffect const &assaultEffect)
 	{
-		this->assaultEffects.at(attackerFactionId).at(attackerUnitId).at(defenderFactionId).at(defenderUnitId) = assaultEffect;
+		int key =
+			+ attackerFactionId		
+			+ attackerUnitId		* MaxPlayerNum
+			+ defenderFactionId		* MaxPlayerNum * MaxProtoNum
+			+ defenderUnitId		* MaxPlayerNum * MaxProtoNum * MaxPlayerNum
+		;
+		this->assaultEffects[key] = assaultEffect;
 	}
 	AssaultEffect const &getAssaultEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId) const
 	{
-		return this->assaultEffects.at(attackerFactionId).at(attackerUnitId).at(defenderFactionId).at(defenderUnitId);
+		int key =
+			+ attackerFactionId		
+			+ attackerUnitId		* MaxPlayerNum
+			+ defenderFactionId		* MaxPlayerNum * MaxProtoNum
+			+ defenderUnitId		* MaxPlayerNum * MaxProtoNum * MaxPlayerNum
+		;
+		return this->assaultEffects.at(key);
 	}
 	
 };
@@ -295,8 +312,16 @@ struct BasePoliceData
 	
 };
 
+struct UnitEffectResult
+{
+	int foeFactionId;
+	int foeUnitId;
+	double effect;
+};
 struct CounterEffect
 {
+	double offenseMultiplier;
+	double defenseMultiplier;
 	double required = 0.0;
 	double provided = 0.0;
 	double providedPresent = 0.0;
@@ -319,14 +344,15 @@ struct CounterEffect
 	}
 	
 };
-
-struct DefenseCombatData
+struct ProtectCombatData
 {
-	std::array<double, 4> defenseMultipliers;
-	double sensorOffenseMultiplier;
-	double sensorDefenseMultiplier;
+	std::array<double, MaxPlayerNum> sensorOffenseMultipliers;
+	std::array<double, MaxPlayerNum> sensorDefenseMultipliers;
+	std::array<double, 4> tileDefenseMultipliers;
 	std::vector<int> garrison;
 	
+	// foe unit counter effects
+	// [foeFactionId][foeUnitId] = CounterEffect
 	std::array<robin_hood::unordered_flat_map<int, CounterEffect>, MaxPlayerNum> counterEffects = {};
 	double requiredEffect;
 	
@@ -362,11 +388,10 @@ struct DefenseCombatData
 		return providedEffect;
 	}
 	
+	UnitEffectResult getUnitEffectResult(int unitId) const;
 	double getUnitEffect(int unitId) const;
-	double getVehicleEffect(int vehicleId) const
-	{
-		return getVehicleMoraleMultiplier(vehicleId) * getUnitEffect(Vehicles[vehicleId].unit_id);
-	}
+	double getVehicleEffect(int vehicleId) const;
+	void addVehicleEffect(int vehicleId, bool present);
 	
 	double addCounterEffect(int foeFactionId, int foeUnitId, double effect, bool present)
 	{
@@ -383,11 +408,6 @@ struct DefenseCombatData
 		
 		return remainingEffect;
 		
-	}
-	
-	void addVehicle(int vehicleId, bool present)
-	{
-		// TODO
 	}
 	
 	bool isSatisfied(bool present) const
@@ -501,7 +521,7 @@ struct BaseInfo
 	// combat data
 	std::array<double, 4> moraleMultipliers;
 	bool artillery;
-	DefenseCombatData combatData;
+	ProtectCombatData combatData;
 	BaseProbeData probeData;
 	
 	// enemy base data
@@ -545,7 +565,7 @@ struct BaseInfo
 	void addProtector(int vehicleId)
 	{
 		policeData.addVehicle(vehicleId);
-		combatData.addVehicle(vehicleId, getVehicleMapTile(vehicleId) == getBaseMapTile(id));
+		combatData.addVehicleEffect(vehicleId, getVehicleMapTile(vehicleId) == getBaseMapTile(id));
 	}
 	bool isSatisfied(int vehicleId, bool present) const
 	{
@@ -837,7 +857,7 @@ struct Data
 	
 	// bunker combat data
 	
-	robin_hood::unordered_flat_map<MAP *, DefenseCombatData> bunkerCombatDatas;
+	robin_hood::unordered_flat_map<MAP *, ProtectCombatData> bunkerCombatDatas;
 	
 	// faction infos
 	

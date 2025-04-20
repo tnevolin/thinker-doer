@@ -8092,15 +8092,10 @@ int getClosestNotOwnedOrSeaTileRange(int factionId, MAP *tile, int minRadius, in
 	
 }
 
-int getUnitOffenseExtendedTriad(int unitId)
+int getUnitOffenseExtendedTriad(int unitId, int enemyUnitId)
 {
 	UNIT &unit = Units[unitId];
-	return Weapon[unit.weapon_id].offense_value < 0 ? 3 : Chassis[unit.chassis_id].triad;
-}
-
-int getUnitDefenseExtendedTriad(int unitId)
-{
-	UNIT &unit = Units[unitId];
-	return Armor[unit.weapon_id].defense_value < 0 ? 3 : Chassis[unit.chassis_id].triad;
+	UNIT &enemyUnit = Units[enemyUnitId];
+	return Weapon[unit.weapon_id].offense_value < 0 || Armor[enemyUnit.armor_id].defense_value < 0 ? 3 : Chassis[unit.chassis_id].triad;
 }
 

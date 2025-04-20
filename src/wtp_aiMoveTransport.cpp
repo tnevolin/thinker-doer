@@ -58,64 +58,64 @@ void moveTranportStrategy()
 		
 	}
 	
-	if (DEBUG)
-	{
-		debug("\t=== Transportation requests ===\n");
-		debug("\t\tunloadRequests\n");
-		for (robin_hood::pair<int, std::vector<UnloadRequest>> &unloadRequestEntry : aiData.transportControl.unloadRequests)
-		{
-			int seaTransportVehiclePad0 = unloadRequestEntry.first;
-			std::vector<UnloadRequest> &transportUnloadRequests = unloadRequestEntry.second;
-			int seaTransportVehicleId = getVehicleIdByAIId(seaTransportVehiclePad0);
-			VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
-			
-			debug("\t\t\t[%4d] %s\n", seaTransportVehicleId, getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str());
-			
-			for (UnloadRequest unloadRequest : transportUnloadRequests)
-			{
-				int vehicleId = unloadRequest.getVehicleId();
-				debug
-				(
-					"\t\t\t\t[%4d]->%s*>%s\n"
-					, vehicleId
-					, getLocationString(unloadRequest.destination).c_str()
-					, getLocationString(unloadRequest.unboardLocation).c_str()
-				);
-				
-			}
-			
-		}
-		
-		debug("\t\ttransitRequests\n");
-		for (TransitRequest &transitRequest : aiData.transportControl.transitRequests)
-		{
-			int vehicleId = transitRequest.getVehicleId();
-			
-			debug
-			(
-				"\t\t\t[%4d] %s->%s\n"
-				, vehicleId
-				, getLocationString(transitRequest.origin).c_str()
-				, getLocationString(transitRequest.destination).c_str()
-			);
-			
-			if (transitRequest.isFulfilled())
-			{
-				int seaTransportVehicleId = transitRequest.getSeaTransportVehicleId();
-				VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
-				
-				debug
-				(
-					"\t\t\t\t[%4d] %s\n"
-					, seaTransportVehicleId
-					, getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str()
-				);
-				
-			}
-			
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("\t=== Transportation requests ===\n");
+//		debug("\t\tunloadRequests\n");
+//		for (robin_hood::pair<int, std::vector<UnloadRequest>> &unloadRequestEntry : aiData.transportControl.unloadRequests)
+//		{
+//			int seaTransportVehiclePad0 = unloadRequestEntry.first;
+//			std::vector<UnloadRequest> &transportUnloadRequests = unloadRequestEntry.second;
+//			int seaTransportVehicleId = getVehicleIdByAIId(seaTransportVehiclePad0);
+//			VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
+//			
+//			debug("\t\t\t[%4d] %s\n", seaTransportVehicleId, getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str());
+//			
+//			for (UnloadRequest unloadRequest : transportUnloadRequests)
+//			{
+//				int vehicleId = unloadRequest.getVehicleId();
+//				debug
+//				(
+//					"\t\t\t\t[%4d]->%s*>%s\n"
+//					, vehicleId
+//					, getLocationString(unloadRequest.destination).c_str()
+//					, getLocationString(unloadRequest.unboardLocation).c_str()
+//				);
+//				
+//			}
+//			
+//		}
+//		
+//		debug("\t\ttransitRequests\n");
+//		for (TransitRequest &transitRequest : aiData.transportControl.transitRequests)
+//		{
+//			int vehicleId = transitRequest.getVehicleId();
+//			
+//			debug
+//			(
+//				"\t\t\t[%4d] %s->%s\n"
+//				, vehicleId
+//				, getLocationString(transitRequest.origin).c_str()
+//				, getLocationString(transitRequest.destination).c_str()
+//			);
+//			
+//			if (transitRequest.isFulfilled())
+//			{
+//				int seaTransportVehicleId = transitRequest.getSeaTransportVehicleId();
+//				VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
+//				
+//				debug
+//				(
+//					"\t\t\t\t[%4d] %s\n"
+//					, seaTransportVehicleId
+//					, getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str()
+//				);
+//				
+//			}
+//			
+//		}
+//		
+//	}
 	
 	Profiling::stop("moveTranportStrategy");
 	

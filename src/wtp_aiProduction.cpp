@@ -2521,7 +2521,7 @@ void evaluateBaseDefenseUnits()
 			MAP *targetBaseTile = getBaseMapTile(targetBaseId);
 			BaseInfo &targetBaseInfo = aiData.baseInfos.at(targetBaseId);
 			BasePoliceData &targetBasePoliceData = targetBaseInfo.policeData;
-			DefenseCombatData &targetDefenseCombatData = targetBaseInfo.combatData;
+			ProtectCombatData &targetProtectCombatData = targetBaseInfo.combatData;
 			
 			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile, true);
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
@@ -2533,9 +2533,9 @@ void evaluateBaseDefenseUnits()
 			
 			// protection
 			
-			double combatEffect = targetDefenseCombatData.getUnitEffect(unitId);
+			double combatEffect = targetProtectCombatData.getUnitEffect(unitId);
 			double survivalEffect = getSurvivalEffect(combatEffect);
-			double unitProtectionGain = targetDefenseCombatData.isSatisfied(targetBaseId == baseId && baseInfo.combatData.garrison.empty()) ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
+			double unitProtectionGain = targetProtectCombatData.isSatisfied(targetBaseId == baseId && baseInfo.combatData.garrison.empty()) ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2671,10 +2671,10 @@ void evaluateBunkerDefenseUnits()
 		
 		double bestGain = 0.0;
 		
-		for (robin_hood::pair<MAP *, DefenseCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+		for (robin_hood::pair<MAP *, ProtectCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 		{
 			MAP *targetBunkerTile = bunkerCombatDataEntry.first;
-			DefenseCombatData const &targetBunkerCombatData = bunkerCombatDataEntry.second;
+			ProtectCombatData const &targetBunkerCombatData = bunkerCombatDataEntry.second;
 			
 			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBunkerTile, true);
 			if (travelTime == INF)
@@ -3517,7 +3517,7 @@ int selectProtectionUnit(int baseId, int targetBaseId)
 	bool targetBaseOcean = is_ocean(targetBaseTile);
 	int targetBaseSeaCluster = getBaseSeaCluster(targetBaseTile);
 	BaseInfo &targetBaseInfo = aiData.getBaseInfo(targetBaseId);
-	DefenseCombatData &targetDefenseCombatData = targetBaseInfo.combatData;
+	ProtectCombatData &targetProtectCombatData = targetBaseInfo.combatData;
 	
 	// iterate best protectors at target base
 	
@@ -3530,7 +3530,7 @@ int selectProtectionUnit(int baseId, int targetBaseId)
 		int triad = unit->triad();
 		int offenseValue = getUnitOffenseValue(unitId);
 		int defenseValue = getUnitDefenseValue(unitId);
-		double averageCombatEffect = targetDefenseCombatData.getUnitEffect(unitId);
+		double averageCombatEffect = targetProtectCombatData.getUnitEffect(unitId);
 		
 		// infantry defender
 		

@@ -124,39 +124,39 @@ void populateExpansionData()
 		
 	}
 	
-	if (DEBUG)
-	{
-		debug("validBuildSite\n");
-		
-		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-		{
-			TileExpansionInfo const &tileExpansionInfo = getTileExpansionInfo(tile);
-			
-			if (tileExpansionInfo.validBuildSite)
-			{
-				debug("\t%s\n", getLocationString(tile).c_str());
-			}
-			
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("validBuildSite\n");
+//		
+//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//		{
+//			TileExpansionInfo const &tileExpansionInfo = getTileExpansionInfo(tile);
+//			
+//			if (tileExpansionInfo.validBuildSite)
+//			{
+//				debug("\t%s\n", getLocationString(tile).c_str());
+//			}
+//			
+//		}
+//		
+//	}
 	
-	if (DEBUG)
-	{
-		debug("validWorkTiles\n");
-		
-		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-		{
-			TileExpansionInfo const &tileExpansionInfo = getTileExpansionInfo(tile);
-			
-			if (tileExpansionInfo.validWorkTile)
-			{
-				debug("\t%s\n", getLocationString(tile).c_str());
-			}
-			
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("validWorkTiles\n");
+//		
+//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//		{
+//			TileExpansionInfo const &tileExpansionInfo = getTileExpansionInfo(tile);
+//			
+//			if (tileExpansionInfo.validWorkTile)
+//			{
+//				debug("\t%s\n", getLocationString(tile).c_str());
+//			}
+//			
+//		}
+//		
+//	}
 	
 	Profiling::stop("valid locations");
 	
@@ -224,35 +224,35 @@ void analyzeBasePlacementSites()
 		
 	}
 	
-	if (DEBUG)
-	{
-		debug("buildSites - %s\n", MFactions[aiFactionId].noun_faction);
-		
-		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-		{
-			TileExpansionInfo &tileExpansionInfo = getTileExpansionInfo(tile);
-			
-			// valid build site
-			
-			if (!tileExpansionInfo.validBuildSite)
-				continue;
-			
-			debug
-			(
-				"\t%s"
-				" buildSiteBaseGain=%7.2f"
-				" buildSitePlacementScore=%7.2f"
-				" buildSiteScore=%7.2f"
-				"\n"
-				, getLocationString(tile).c_str()
-				, tileExpansionInfo.buildSiteBaseGain
-				, tileExpansionInfo.buildSitePlacementScore
-				, tileExpansionInfo.buildSiteScore
-			);
-			
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("buildSites - %s\n", MFactions[aiFactionId].noun_faction);
+//		
+//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//		{
+//			TileExpansionInfo &tileExpansionInfo = getTileExpansionInfo(tile);
+//			
+//			// valid build site
+//			
+//			if (!tileExpansionInfo.validBuildSite)
+//				continue;
+//			
+//			debug
+//			(
+//				"\t%s"
+//				" buildSiteBaseGain=%7.2f"
+//				" buildSitePlacementScore=%7.2f"
+//				" buildSiteScore=%7.2f"
+//				"\n"
+//				, getLocationString(tile).c_str()
+//				, tileExpansionInfo.buildSiteBaseGain
+//				, tileExpansionInfo.buildSitePlacementScore
+//				, tileExpansionInfo.buildSiteScore
+//			);
+//			
+//		}
+//		
+//	}
 	
 	// move colonies out of warzone
 	
@@ -677,59 +677,59 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	
 	double gain = (totalBonus / (double)evaluationTurns) * (1.0 + getExponentialCoefficient(aiData.developmentScale, evaluationTurns));
 	
-	if (DEBUG)
-	{
-		debug("\tyieldInfos\n");
-		
-		for (YieldInfo const &yieldInfo : yieldInfos)
-		{
-			debug
-			(
-				"\t\t%s"
-				" score=%5.2f"
-				" nutrientSurplus=%5.2f"
-				" resourceScore=%5.2f"
-				"\n"
-				, getLocationString(yieldInfo.tile).c_str()
-				, yieldInfo.score
-				, yieldInfo.nutrientSurplus
-				, yieldInfo.resourceScore
-			);
-			
-		}
-		
-		/*
-		debug
-		(
-			"\tmeanBaseGain=%5.2f"
-			" averagePopGrowth=%5.2f"
-			" averageResourceScore=%5.2f"
-			" income=%5.2f"
-			" incomeGrowth=%5.2f"
-			" incomeGain=%5.2f"
-			" incomeGrowthGain=%5.2f"
-			" gain=%5.2f"
-			"\n"
-			, getMeanBaseGain(0)
-			, averagePopGrowth
-			, averageResourceScore
-			, income
-			, incomeGrowth
-			, incomeGain
-			, incomeGrowthGain
-			, gain
-		);
-		*/
-		debug
-		(
-			"\tmeanBaseGain=%5.2f"
-			" gain=%5.2f"
-			"\n"
-			, getMeanBaseGain(0)
-			, gain
-		);
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("\tyieldInfos\n");
+//		
+//		for (YieldInfo const &yieldInfo : yieldInfos)
+//		{
+//			debug
+//			(
+//				"\t\t%s"
+//				" score=%5.2f"
+//				" nutrientSurplus=%5.2f"
+//				" resourceScore=%5.2f"
+//				"\n"
+//				, getLocationString(yieldInfo.tile).c_str()
+//				, yieldInfo.score
+//				, yieldInfo.nutrientSurplus
+//				, yieldInfo.resourceScore
+//			);
+//			
+//		}
+//		
+//		/*
+//		debug
+//		(
+//			"\tmeanBaseGain=%5.2f"
+//			" averagePopGrowth=%5.2f"
+//			" averageResourceScore=%5.2f"
+//			" income=%5.2f"
+//			" incomeGrowth=%5.2f"
+//			" incomeGain=%5.2f"
+//			" incomeGrowthGain=%5.2f"
+//			" gain=%5.2f"
+//			"\n"
+//			, getMeanBaseGain(0)
+//			, averagePopGrowth
+//			, averageResourceScore
+//			, income
+//			, incomeGrowth
+//			, incomeGain
+//			, incomeGrowthGain
+//			, gain
+//		);
+//		*/
+//		debug
+//		(
+//			"\tmeanBaseGain=%5.2f"
+//			" gain=%5.2f"
+//			"\n"
+//			, getMeanBaseGain(0)
+//			, gain
+//		);
+//		
+//	}
 	
 	return gain;
 	
@@ -1811,25 +1811,25 @@ void populateConcaveTiles()
 		
 	}
 	
-	if (DEBUG)
-	{
-		debug("\tinternal\n");
-		for (robin_hood::pair<MAP *, double> internalConcaveNodeEntry : internalConcaveNodes)
-		{
-			MAP *tile = internalConcaveNodeEntry.first;
-			double congestion = internalConcaveNodeEntry.second;
-			debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), congestion);
-		}
-		
-		debug("\texternal\n");
-		for (robin_hood::pair<MAP *, double> externalConcaveNodeEntry : externalConcaveNodes)
-		{
-			MAP *tile = externalConcaveNodeEntry.first;
-			double congestion = externalConcaveNodeEntry.second;
-			debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), congestion);
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("\tinternal\n");
+//		for (robin_hood::pair<MAP *, double> internalConcaveNodeEntry : internalConcaveNodes)
+//		{
+//			MAP *tile = internalConcaveNodeEntry.first;
+//			double congestion = internalConcaveNodeEntry.second;
+//			debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), congestion);
+//		}
+//		
+//		debug("\texternal\n");
+//		for (robin_hood::pair<MAP *, double> externalConcaveNodeEntry : externalConcaveNodes)
+//		{
+//			MAP *tile = externalConcaveNodeEntry.first;
+//			double congestion = externalConcaveNodeEntry.second;
+//			debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), congestion);
+//		}
+//		
+//	}
 	
 }
 

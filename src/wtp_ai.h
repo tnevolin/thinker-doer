@@ -197,7 +197,7 @@ void populateEnemyBaseAssaultEffects();
 void evaluateFactionMilitaryPowers();
 void evaluateEnemyStacks();
 void evaluateBaseDefense();
-void evaluateDefense(MAP *tile, DefenseCombatData &combatData);
+void evaluateDefense(MAP *tile, ProtectCombatData &combatData);
 void evaluateBaseProbeDefense();
 
 void designUnits();

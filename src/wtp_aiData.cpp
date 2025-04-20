@@ -822,14 +822,90 @@ bool isZoc(MAP *orgTile, MAP *dstTile)
 	return aiData.tileInfos.at(orgTile - *MapTiles).orgZoc && aiData.tileInfos.at(dstTile - *MapTiles).dstZoc;
 }
 
-// DefenseCombatData
+// ProtectCombatData
 
 /*
 Selects the best effect against not yet countered foe unit.
 */
-double DefenseCombatData::getUnitEffect(int unitId) const
+UnitEffectResult ProtectCombatData::getUnitEffectResult(int unitId) const
 {
-	// TODO
-	return 0.0;
+	Profiling::start("- getUnitEffectResult");
+	
+	int bestFoeFactionId = -1;
+	int bestFoeUnitId = -1;
+	double bestEffect = 0.0;
+	
+	for (int foeFactionId = 0; foeFactionId < MaxPlayerNum; foeFactionId++)
+	{
+		robin_hood::unordered_flat_map<int, CounterEffect> const &foeFactionCounterEffect = counterEffects.at(foeFactionId);
+		
+		for (robin_hood::pair<int, CounterEffect> const &foeFactionUnitCounterEffectEntry : foeFactionCounterEffect)
+		{
+			int foeUnitId = foeFactionUnitCounterEffectEntry.first;
+			CounterEffect const &counterEffect = foeFactionUnitCounterEffectEntry.second;
+			
+			if (counterEffect.isSatisfied(false))
+				continue;
+			
+			int assailantOffenseExtendedTriad = getUnitOffenseExtendedTriad(foeUnitId, unitId);
+			
+			double attackMultiplier = sensorOffenseMultipliers.at(foeFactionId) / sensorDefenseMultipliers.at(aiFactionId) / tileDefenseMultipliers.at(assailantOffenseExtendedTriad);
+			double defendMultiplier = sensorOffenseMultipliers.at(foeFactionId) / sensorOffenseMultipliers.at(aiFactionId);
+			
+			double assaultEffect = aiData.combatEffectTable.getAssaultEffect(foeFactionId, foeUnitId, aiFactionId, unitId).getEffect(attackMultiplier, defendMultiplier);
+			double protectEffect = assaultEffect <= 0.0 ? 0.0 : 1.0 / assaultEffect;
+			
+			if (protectEffect > bestEffect)
+			{
+				bestFoeFactionId = foeFactionId;
+				bestFoeUnitId = foeUnitId;
+				bestEffect = protectEffect;
+			}
+			
+		}
+		
+	}
+	
+	Profiling::stop("- getUnitEffectResult");
+	return {bestFoeFactionId, bestFoeUnitId, bestEffect};
+	
+}
+double ProtectCombatData::getUnitEffect(int unitId) const
+{
+	return getUnitEffectResult(unitId).effect;
+}
+double ProtectCombatData::getVehicleEffect(int vehicleId) const
+{
+	return getVehicleMoraleMultiplier(vehicleId) * getUnitEffect(Vehicles[vehicleId].unit_id);
+}
+/*
+Adds vehicle effect too all counter effects until it runs out.
+*/
+void ProtectCombatData::addVehicleEffect(int vehicleId, bool present)
+{
+	int unitId = Vehicles[vehicleId].unit_id;
+	double multiplier = getVehicleMoraleMultiplier(vehicleId);
+	
+	double relativePower = 1.0;
+	for (UnitEffectResult unitEffectResult = getUnitEffectResult(unitId); unitEffectResult.effect > 0.0; unitEffectResult = getUnitEffectResult(unitId))
+	{
+		CounterEffect &counterEffect = counterEffects.at(unitEffectResult.foeFactionId).at(unitEffectResult.foeUnitId);
+		double effect = multiplier * unitEffectResult.effect * relativePower;
+		
+		double required = counterEffect.required;
+		double provided = counterEffect.provided;
+		double applicable = required - provided;
+		double applied = std::min(applicable, effect);
+		double remained = effect - applied;
+		relativePower *= remained / effect;
+		
+		counterEffect.provided += applied;
+		if (present)
+		{
+			counterEffect.providedPresent += applied;
+		}
+		
+	}
+	
 }
 

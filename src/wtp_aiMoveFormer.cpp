@@ -997,27 +997,27 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 //	
 	std::sort(availableBaseTerraformingRequests.begin(), availableBaseTerraformingRequests.end(), compareConventionalTerraformingRequests);
 	
-	if (DEBUG)
-	{
-		debug("available base terraforming requests SORTED - %s\n", aiMFaction->noun_faction);
-		for (const TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
-		{
-			debug
-			(
-				"\t%s"
-				" %-20s"
-				" %6.2f"
-				" income=%5.2f time=%5.2f"
-				"\n"
-				, getLocationString(terraformingRequest.tile).c_str()
-				, terraformingRequest.option->name
-				, terraformingRequest.gain
-				, terraformingRequest.income
-				, terraformingRequest.terraformingTime
-			);
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("available base terraforming requests SORTED - %s\n", aiMFaction->noun_faction);
+//		for (const TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
+//		{
+//			debug
+//			(
+//				"\t%s"
+//				" %-20s"
+//				" %6.2f"
+//				" income=%5.2f time=%5.2f"
+//				"\n"
+//				, getLocationString(terraformingRequest.tile).c_str()
+//				, terraformingRequest.option->name
+//				, terraformingRequest.gain
+//				, terraformingRequest.income
+//				, terraformingRequest.terraformingTime
+//			);
+//		}
+//		
+//	}
 	
 	// select requests
 	
@@ -1393,27 +1393,27 @@ void removeTerraformedTiles()
 
 	Profiling::stop("removeTerraformedTiles");
 	
-	if (DEBUG)
-	{
-		debug("terraforming requests - %s\n", aiMFaction->noun_faction);
-		for (const TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
-		{
-			debug
-			(
-				"\t%s"
-				" %-20s"
-				" %6.2f"
-				" income=%5.2f time=%5.2f"
-				"\n"
-				, getLocationString(terraformingRequest.tile).c_str()
-				, terraformingRequest.option->name
-				, terraformingRequest.gain
-				, terraformingRequest.income
-				, terraformingRequest.terraformingTime
-			);
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		debug("terraforming requests - %s\n", aiMFaction->noun_faction);
+//		for (const TERRAFORMING_REQUEST &terraformingRequest : terraformingRequests)
+//		{
+//			debug
+//			(
+//				"\t%s"
+//				" %-20s"
+//				" %6.2f"
+//				" income=%5.2f time=%5.2f"
+//				"\n"
+//				, getLocationString(terraformingRequest.tile).c_str()
+//				, terraformingRequest.option->name
+//				, terraformingRequest.gain
+//				, terraformingRequest.income
+//				, terraformingRequest.terraformingTime
+//			);
+//		}
+//		
+//	}
 	
 }
 
@@ -3530,7 +3530,7 @@ double estimateSensorIncome(MAP *tile)
 		
 	}
 	
-	for (robin_hood::pair<MAP *, DefenseCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (robin_hood::pair<MAP *, ProtectCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 	{
 		MAP *bunkerTile = bunkerCombatDataEntry.first;
 		
@@ -4978,7 +4978,7 @@ void removeUnusedBunkers()
 	debug("removeUnusedBunkers - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	robin_hood::unordered_flat_set<MAP *> unusedBunkers;
-	for (robin_hood::pair<MAP *, DefenseCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (robin_hood::pair<MAP *, ProtectCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 	{
 		MAP *bunkerTile = bunkerCombatDataEntry.first;
 		

@@ -1155,6 +1155,5 @@ bool isOpenTerrain(MAP *tile);
 std::set<int> getBaseSeaRegions(int baseId);
 int getClosestNotOwnedTileRange(int factionId, MAP *tile, int minRadius, int maxRadius);
 int getClosestNotOwnedOrSeaTileRange(int factionId, MAP *tile, int minRadius, int maxRadius);
-int getUnitOffenseExtendedTriad(int unitId);
-int getUnitDefenseExtendedTriad(int unitId);
+int getUnitOffenseExtendedTriad(int unitId, int enemyUnitId);
 

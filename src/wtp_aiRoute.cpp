@@ -464,17 +464,17 @@ void populateImpediments(int factionId)
 			
 	}
 	
-	if (DEBUG)
-	{
-		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
-		{
-			int tileIndex = tile - *MapTiles;
-			
-			debug("\t%s %5.2f\n", getLocationString(tile).c_str(), impediments.at(tileIndex));
-			
-		}
-		
-	}
+//	if (DEBUG)
+//	{
+//		for (MAP *tile = *MapTiles; tile < *MapTiles + *MapAreaTiles; tile++)
+//		{
+//			int tileIndex = tile - *MapTiles;
+//			
+//			debug("\t%s %5.2f\n", getLocationString(tile).c_str(), impediments.at(tileIndex));
+//			
+//		}
+//		
+//	}
 	
 	Profiling::stop("populateImpediments");
 	
@@ -1681,28 +1681,28 @@ void populateLandLandmarks(int factionId)
 			
 	}
 	
-	if (DEBUG)
-	{
-		for (size_t landMovementTypeIndex = 0; landMovementTypeIndex < BASIC_LAND_MOVEMENT_TYPE_COUNT; landMovementTypeIndex++)
-		{
-			MovementType const movementType = BASIC_LAND_MOVEMENT_TYPES.at(landMovementTypeIndex);
-			
-			debug("\tmovementType=%d\n", movementType);
-			
-			std::vector<LandLandmark> const &landmarks = landLandmarks.at(landMovementTypeIndex);
-			
-			for (LandLandmark const &landmark : landmarks)
-			{
-				debug("\t\t%s\n", getLocationString(landmark.tileIndex).c_str());
-				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-				{
-					debug("\t\t\t%s %3.0f %3.0f %3.0f\n", getLocationString(tileIndex).c_str(), landmark.tileInfos.at(tileIndex).seaTransportWaitTime, landmark.tileInfos.at(tileIndex).seaMovementCost, landmark.tileInfos.at(tileIndex).landMovementCost);
-				}
-			}
-			
-		}
-			
-	}
+//	if (DEBUG)
+//	{
+//		for (size_t landMovementTypeIndex = 0; landMovementTypeIndex < BASIC_LAND_MOVEMENT_TYPE_COUNT; landMovementTypeIndex++)
+//		{
+//			MovementType const movementType = BASIC_LAND_MOVEMENT_TYPES.at(landMovementTypeIndex);
+//			
+//			debug("\tmovementType=%d\n", movementType);
+//			
+//			std::vector<LandLandmark> const &landmarks = landLandmarks.at(landMovementTypeIndex);
+//			
+//			for (LandLandmark const &landmark : landmarks)
+//			{
+//				debug("\t\t%s\n", getLocationString(landmark.tileIndex).c_str());
+//				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+//				{
+//					debug("\t\t\t%s %3.0f %3.0f %3.0f\n", getLocationString(tileIndex).c_str(), landmark.tileInfos.at(tileIndex).seaTransportWaitTime, landmark.tileInfos.at(tileIndex).seaMovementCost, landmark.tileInfos.at(tileIndex).landMovementCost);
+//				}
+//			}
+//			
+//		}
+//			
+//	}
 	
 	Profiling::stop("populateLandLandmarks");
 	
