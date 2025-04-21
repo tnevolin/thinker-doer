@@ -810,6 +810,7 @@ void evaluateFacilities()
 	evaluateStockpileEnergy();
 	evaluatePsychFacilitiesRemoval();
 	evaluatePsychFacilities();
+	evaluateRecyclingTanks();
 	evaluateIncomeFacilities();
 	evaluateMineralMultiplyingFacilities();
 	evaluatePopulationLimitFacilities();
@@ -972,6 +973,49 @@ void evaluatePsychFacilities()
 			, priority
 			, gain
 			, conf.ai_production_priority_facility_psych
+		);
+		
+	}
+	
+}
+
+void evaluateRecyclingTanks()
+{
+	debug("- evaluateRecyclingTanks\n");
+	
+	ProductionDemand &productionDemand = *currentBaseProductionDemand;
+	int baseId = productionDemand.baseId;
+	
+	// facilityIds
+	
+	const std::vector<int> facilityIds
+	{
+		FAC_RECYCLING_TANKS,
+	};
+	
+	for (int facilityId : facilityIds)
+	{
+		if (!isBaseCanBuildFacility(baseId, facilityId))
+			continue;
+		
+		// gain
+		
+		double gain = getFacilityGain(baseId, facilityId, true);
+		double priority = getItemPriority(-facilityId, gain);
+		
+		// add demand
+		
+		productionDemand.addItemPriority(-facilityId, priority);
+		
+		debug
+		(
+			"\t%-32s"
+			" priority=%5.2f"
+			" gain=%5.2f"
+			"\n"
+			, getFacility(facilityId)->name
+			, priority
+			, gain
 		);
 		
 	}

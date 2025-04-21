@@ -1395,20 +1395,20 @@ void moveCombat()
 		}
 		
 		
-//		if (DEBUG)
-//		{
-//			debug
-//			(
-//				"\t\t[%4d] %s"
-//				" -> %s"
-//				" => %s"
-//				"\n"
-//				, vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
-//				, getLocationString(taskPriority.attackTarget).c_str()
-//			);
-//			
-//		}
+		if (DEBUG)
+		{
+			debug
+			(
+				"\t\t[%4d] %s"
+				" -> %s"
+				" => %s"
+				"\n"
+				, vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str()
+				, getLocationString(taskPriority.destination).c_str()
+				, getLocationString(taskPriority.attackTarget).c_str()
+			);
+			
+		}
 		
 	}
 	

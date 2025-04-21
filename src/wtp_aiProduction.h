@@ -156,6 +156,7 @@ void evaluatePressureDome();
 void evaluateStockpileEnergy();
 void evaluatePsychFacilitiesRemoval();
 void evaluatePsychFacilities();
+void evaluateRecyclingTanks();
 void evaluateIncomeFacilities();
 void evaluateMineralMultiplyingFacilities();
 void evaluatePopulationLimitFacilities();
