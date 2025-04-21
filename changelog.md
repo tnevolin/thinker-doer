@@ -1,6 +1,7 @@
 # Version 370
 
 * Cybernetics gets +1 PLANET.
+* [Fix] Fixed terraforming computation for area improvements: Condenser, Echelon Mirror.
 
 # Version 369
 

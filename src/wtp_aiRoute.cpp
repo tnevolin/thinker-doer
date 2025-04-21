@@ -2950,7 +2950,7 @@ Computes A* travel time for *player* faction.
 */
 double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination)
 {
-	debug("getATravelTime movementType=%d speed=%d %s->%s\n", movementType, speed, getLocationString(org).c_str(), getLocationString(dst).c_str());
+//	debug("getATravelTime movementType=%d speed=%d %s->%s\n", movementType, speed, getLocationString(org).c_str(), getLocationString(dst).c_str());
 	
 	Profiling::start("- getATravelTime");
 	

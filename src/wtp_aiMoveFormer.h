@@ -341,7 +341,6 @@ double estimateBunkerIncome(MAP *tile, bool existing = false);
 bool isBaseWorkedTile(BASE *base, int x, int y);
 double getFitnessScore(MAP *tile, int action, bool levelTerrain);
 bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::iterator begin, std::vector<TERRAFORMING_REQUEST>::iterator end, int action, int x, int y, int range);
-double estimateCondenserExtraYieldScore(MAP *tile, const std::vector<int> *actions);
 double estimateAquiferIncome(MAP *tile);
 double estimateRaiseLandIncome(MAP *tile, int cost);
 bool isRaiseLandSafe(MAP *tile);

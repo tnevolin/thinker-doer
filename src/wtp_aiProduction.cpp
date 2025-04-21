@@ -454,7 +454,7 @@ void applyBaseProductions()
 		int baseId = productionDemand.baseId;
 		BASE* base = productionDemand.base;
 		
-		debug("applyBaseProductions - %s\n", base->name);
+		debug("applyBaseProduction - %s\n", base->name);
 		
 		// current production choice
 		
@@ -526,7 +526,7 @@ void applyBaseProductions()
 			choice = wtpChoice;
 		}
 		
-		debug("=> %-25s\n", prod_name(choice));
+		debug("=> %-25s vanillaPriority=%5.2f wtpPriority=%5.2f\n", prod_name(choice), vanillaPriority, wtpPriority);
 		
 		// set base production if changed
 		
@@ -1126,7 +1126,7 @@ void evaluateMineralMultiplyingFacilities()
 	
 	const std::vector<int> facilityIds
 	{
-		FAC_RECYCLING_TANKS, FAC_GENEJACK_FACTORY, FAC_ROBOTIC_ASSEMBLY_PLANT, FAC_NANOREPLICATOR, FAC_QUANTUM_CONVERTER,
+		FAC_GENEJACK_FACTORY, FAC_ROBOTIC_ASSEMBLY_PLANT, FAC_NANOREPLICATOR, FAC_QUANTUM_CONVERTER,
 	};
 	
 	for (int facilityId : facilityIds)

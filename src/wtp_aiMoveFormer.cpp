@@ -315,7 +315,7 @@ void populateTerraformingData()
 		
 		// base radius adjacent tiles
 		
-		for (int index = OFFSET_COUNT_RADIUS; index < OFFSET_COUNT_RADIUS_SIDE; index++)
+		for (int index = OFFSET_COUNT_CENTER; index < OFFSET_COUNT_RADIUS_CORNER; index++)
 		{
 			int x = wrap(base->x + BASE_TILE_OFFSETS[index][0]);
 			int y = base->y + BASE_TILE_OFFSETS[index][1];
@@ -1030,7 +1030,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	base->pop_size = baseTerraformingInfo.projectedPopSize;
 	
 	robin_hood::unordered_flat_set<MAP *> appliedLocations;
-	robin_hood::unordered_flat_set<MAP *> selectedLocations;
+	robin_hood::unordered_flat_map<MAP *, bool> selectedLocations;
 	
 	for (TERRAFORMING_REQUEST &terraformingRequest : availableBaseTerraformingRequests)
 	{
@@ -1055,13 +1055,50 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		
 		bool allWorked = true;
 
-		for (MAP *selectedTile : selectedLocations)
+		for (robin_hood::pair<MAP *, bool> const &selectedLocationEntry : selectedLocations)
 		{
-			if (!isBaseWorkedTile(baseId, selectedTile))
+			MAP *tile = selectedLocationEntry.first;
+			bool area = selectedLocationEntry.second;
+			
+			TileTerraformingInfo const &tileTerraformingInfo = getTileTerraformingInfo(tile);
+			
+			if (area)
 			{
-				allWorked = false;
-				break;
+				bool areaWorked = false;
+				for (MAP *areaTile : getBaseAdjacentTiles(tile, true))
+				{
+					for (int workableBaseId : tileTerraformingInfo.workableBaseIds)
+					{
+						if (isBaseWorkedTile(workableBaseId, areaTile))
+						{
+							areaWorked = true;
+							break;
+						}
+						
+					}
+					
+					if (areaWorked)
+						break;
+					
+				}
+				
+				if (!areaWorked)
+				{
+					allWorked = false;
+					break;
+				}
+				
 			}
+			else
+			{
+				if (!isBaseWorkedTile(baseId, tile))
+				{
+					allWorked = false;
+					break;
+				}
+				
+			}
+			
 		}
 		
 		if (!allWorked)
@@ -1076,7 +1113,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		// select request
 		
 		selectedBaseTerraformingRequests.push_back(terraformingRequest);
-		selectedLocations.insert(terraformingRequest.tile);
+		selectedLocations.emplace(terraformingRequest.tile, terraformingRequest.option->area);
 		
 		debug("\t\t\t%s %s\n", getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name);
 		
@@ -1626,6 +1663,8 @@ void finalizeFormerOrders()
 {
 	Profiling::start("finalizeFormerOrders", "moveFormerStrategy");
 	
+	debug("finalizeFormerOrders - %s\n", MFactions[aiFactionId].noun_faction);
+	
 	// iterate former orders
 	
 	for (FORMER_ORDER &formerOrder : formerOrders)
@@ -1646,6 +1685,7 @@ void finalizeFormerOrders()
 		else
 		{
 			transitVehicle(Task(formerOrder.vehicleId, TT_TERRAFORM, formerOrder.tile, nullptr, -1, formerOrder.action));
+			debug("\t[%4d] %s->%s %2d\n", formerOrder.vehicleId, getLocationString(getVehicleMapTile(formerOrder.vehicleId)).c_str(), getLocationString(formerOrder.tile).c_str(), formerOrder.action);
 		}
 		
 	}
@@ -1829,10 +1869,6 @@ TERRAFORMING_REQUEST calculateConventionalTerraformingScore(int baseId, MAP *til
 	// calculate yield income
 	
 	double improvementIncome = computeBaseTileImprovementGain(baseId, tile, improvedMapState, option->area);
-	
-	// special yield computation for area effects
-	
-	improvementIncome += estimateCondenserExtraYieldScore(tile, &(option->actions));
 	
 	// ignore options not increasing income
 	
@@ -3989,132 +4025,6 @@ bool hasNearbyTerraformingRequestAction(std::vector<TERRAFORMING_REQUEST>::itera
 	}
 	
 	return false;
-	
-}
-
-/*
-Estimates condenser yield score in adjacent tiles.
-*/
-double estimateCondenserExtraYieldScore(MAP *tile, const std::vector<int> *actions)
-{
-	TileInfo &tileInfo = aiData.getTileInfo(tile);
-	
-	// check whether condenser was built or destroyed
-	
-	bool condenserAction = false;
-	
-	for (int action : *actions)
-	{
-		if (action == FORMER_CONDENSER)
-		{
-			condenserAction = true;
-			break;
-		}
-	}
-	
-	int sign;
-	
-	// condenser is built
-	if (!map_has_item(tile, BIT_CONDENSER) && condenserAction)
-	{
-		sign = +1;
-	}
-	// condenser is destroyed
-	else if (map_has_item(tile, BIT_CONDENSER) && !condenserAction)
-	{
-		sign = -1;
-	}
-	// neither built nor destroyed
-	else
-	{
-		return 0.0;
-	}
-	
-	// estimate rainfall improvement
-	// [0.0, 9.0]
-	
-	double totalRainfallImprovement = 0.0;
-	
-	for (Adjacent const &adjacent : tileInfo.adjacents)
-	{
-		MAP *boxTile = adjacent.tileInfo->tile;
-		
-		TileTerraformingInfo &boxTileTerraformingInfo = getTileTerraformingInfo(boxTile);
-		
-		// exclude non terraformable site
-		
-		if (!boxTileTerraformingInfo.availableTerraformingSite)
-			continue;
-		
-		// exclude non conventional terraformable site
-		
-		if (!boxTileTerraformingInfo.availableBaseTerraformingSite)
-			continue;
-		
-		// exclude ocean - not affected by condenser
-		
-		if (is_ocean(boxTile))
-			continue;
-		
-		// exclude great dunes - not affected by condenser
-		
-		if (map_has_landmark(boxTile, LM_DUNES))
-			continue;
-		
-		// exclude borehole
-		
-		if (map_has_item(boxTile, BIT_THERMAL_BORE))
-			continue;
-		
-		// exclude rocky areas
-		
-		if (map_rockiness(boxTile) == 2)
-			continue;
-		
-		// condenser was there but removed
-		if (sign == -1)
-		{
-			switch(map_rainfall(boxTile))
-			{
-			case 1:
-				totalRainfallImprovement += 1.0;
-				break;
-			case 2:
-				totalRainfallImprovement += 0.5;
-				break;
-			}
-			
-		}
-		// condenser wasn't there and built
-		else if (sign == +1)
-		{
-			switch(map_rainfall(boxTile))
-			{
-			case 0:
-			case 1:
-				totalRainfallImprovement += 1.0;
-				break;
-			}
-			
-		}
-		// safety check
-		else
-		{
-			return 0.0;
-		}
-		
-	}
-	
-	// calculate bonus
-	// rainfall bonus should be at least 2 for condenser to make sense
-	
-	double extraScore = sign * getTerraformingResourceScore(totalRainfallImprovement - 2.0, 0.0, 0.0);
-	
-//	debug("\t\tsign=%+1d, totalRainfallImprovement=%6.3f, extraScore=%+6.3f\n", sign, totalRainfallImprovement, extraScore);
-	
-	// return score
-	
-	return extraScore;
 	
 }
 
