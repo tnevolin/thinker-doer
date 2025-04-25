@@ -2099,9 +2099,23 @@ debug("extraFormerGains= %5.2f %5.2f %5.2f\n", extraFormerGains[0], extraFormerG
 		
 		// priority
 		
+		double improvementPriority = 0.0;
+		switch (triad)
+		{
+		case TRIAD_AIR:
+			improvementPriority = 0.5 * (conf.ai_production_improvement_priority_sea + conf.ai_production_improvement_priority_land);
+			break;
+		case TRIAD_SEA:
+			improvementPriority = conf.ai_production_improvement_priority_sea;
+			break;
+		case TRIAD_LAND:
+			improvementPriority = conf.ai_production_improvement_priority_land;
+			break;
+		}
+		
 		double rawPriority = getItemPriority(unitId, gain);
 		double priority =
-			conf.ai_production_improvement_priority
+			improvementPriority
 			* unitPriorityCoefficient
 			* rawPriority
 		;
@@ -2116,7 +2130,7 @@ debug("extraFormerGains= %5.2f %5.2f %5.2f\n", extraFormerGains[0], extraFormerG
 			" upkeepGain=%5.2f"
 			" gain=%5.2f"
 			" rawPriority=%5.2f"
-			" conf.ai_production_improvement_priority=%5.2f"
+			" improvementPriority=%5.2f"
 			" unitPriorityCoefficient=%5.2f"
 			"\n"
 			, unit.name
@@ -2125,7 +2139,7 @@ debug("extraFormerGains= %5.2f %5.2f %5.2f\n", extraFormerGains[0], extraFormerG
 			, upkeepGain
 			, gain
 			, rawPriority
-			, conf.ai_production_improvement_priority
+			, improvementPriority
 			, unitPriorityCoefficient
 		);
 		

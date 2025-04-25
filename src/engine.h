@@ -579,7 +579,7 @@ typedef int(__thiscall *FConsole_activate)(Console* This, int a2, int a3, int a4
 typedef int(__thiscall *FConsole_terraform)(Console* This, int a2, int );
 typedef int(__thiscall *FConsole_destroy)(Console* This, int a2);
 typedef int(__thiscall *FConsole_oblit)(Console* This, int a2);
-typedef int(__thiscall *FConsole_go_to)(Console* This, int a2, int a3);
+typedef int(__thiscall *FConsole_go_to)(Console* This, int a1, int a2, int a3);
 typedef int(__thiscall *FConsole_road_to)(Console* This, int a2, int a3);
 typedef int(__thiscall *FConsole_designate)(Console* This, int a2);
 typedef int(__thiscall *FConsole_go_home)(Console* This, int a2);

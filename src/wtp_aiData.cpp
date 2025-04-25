@@ -820,6 +820,29 @@ bool isZoc(MAP *orgTile, MAP *dstTile)
 {
 	assert(isOnMap(orgTile) && isOnMap(dstTile));
 	return aiData.tileInfos.at(orgTile - *MapTiles).orgZoc && aiData.tileInfos.at(dstTile - *MapTiles).dstZoc;
+	
+}
+
+// AssaultEffect
+
+double AssaultEffect::getEffect(double attackMultiplier, double defendMultiplier) const
+{
+	double attackEffect = attackMultiplier * this->attack;
+	double defendEffect = defendMultiplier * this->defend;
+	
+	double effect = 0.0;
+	
+	if (attackEffect <= defendEffect)
+	{
+		effect = attackEffect;
+	}
+	else
+	{
+		effect = speedFactor * attackEffect + (1.0 - speedFactor) * defendEffect;
+	}
+	
+	return effect;
+	
 }
 
 // ProtectCombatData

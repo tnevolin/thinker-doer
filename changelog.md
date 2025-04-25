@@ -1,3 +1,7 @@
+# Version 371
+
+* Psi Gate one unit limit per turn is removed.
+
 # Version 370
 
 * Cybernetics gets +1 PLANET.

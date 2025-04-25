@@ -1079,17 +1079,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_production_unit_min_mineral_surplus = atoi(value);
     }
-    else if (MATCH("ai_production_improvement_coverage_land"))
+    else if (MATCH("ai_production_improvement_priority_sea"))
     {
-        cf->ai_production_improvement_coverage_land = atof(value);
+        cf->ai_production_improvement_priority_sea = atof(value);
     }
-    else if (MATCH("ai_production_improvement_coverage_ocean"))
+    else if (MATCH("ai_production_improvement_priority_land"))
     {
-        cf->ai_production_improvement_coverage_ocean = atof(value);
-    }
-    else if (MATCH("ai_production_improvement_priority"))
-    {
-        cf->ai_production_improvement_priority = atof(value);
+        cf->ai_production_improvement_priority_land = atof(value);
     }
     else if (MATCH("ai_production_naval_yard_defense_priority"))
     {

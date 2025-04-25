@@ -156,25 +156,7 @@ struct AssaultEffect
 		this->defend = 0.0;
 	}
 	
-	double getEffect(double attackMultiplier, double defendMultiplier) const
-	{
-		double attackEffect = attackMultiplier * this->attack;
-		double defendEffect = defendMultiplier * this->defend;
-		
-		double effect = 0.0;
-		
-		if (attackEffect <= defendEffect)
-		{
-			effect = attackEffect;
-		}
-		else
-		{
-			effect = speedFactor * attackEffect + (1.0 - speedFactor) * defendEffect;
-		}
-		
-		return effect;
-		
-	}
+	double getEffect(double attackMultiplier, double defendMultiplier) const;
 	
 };
 /**
@@ -320,8 +302,6 @@ struct UnitEffectResult
 };
 struct CounterEffect
 {
-	double offenseMultiplier;
-	double defenseMultiplier;
 	double required = 0.0;
 	double provided = 0.0;
 	double providedPresent = 0.0;

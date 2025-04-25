@@ -3228,6 +3228,21 @@ void patch_tidal_harness_terraform_rate()
 	
 }
 
+void patch_psi_gate_unlimited()
+{
+	write_call(0x0046D368, (int)wtp_mod_Console_go_to);
+	write_call(0x00516833, (int)wtp_mod_Console_go_to);
+	write_call(0x00517397, (int)wtp_mod_Console_go_to);
+	write_call(0x005173FE, (int)wtp_mod_Console_go_to);
+	write_call(0x0051840D, (int)wtp_mod_Console_go_to);
+	write_call(0x0051ABF6, (int)wtp_mod_Console_go_to);
+	write_call(0x0051C68D, (int)wtp_mod_Console_go_to);
+	write_call(0x0051C8DC, (int)wtp_mod_Console_go_to);
+	write_call(0x0051CA49, (int)wtp_mod_Console_go_to);
+	write_call(0x0051CA73, (int)wtp_mod_Console_go_to);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3570,6 +3585,8 @@ void patch_setup_wtp(Config* cf)
 	patch_infiltrate_datalinks_no_promotion();
 	
 	patch_tidal_harness_terraform_rate();
+	
+	patch_psi_gate_unlimited();
 	
 }
 
