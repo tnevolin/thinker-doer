@@ -2,6 +2,22 @@
 #include "patch.h"
 #include "patchdata.h"
 #include "wtp_patch.h"
+#include <mutex>
+
+static std::mutex FileLock;
+
+/*
+Replace existing file locking on fwrite and similar statically linked library functions
+since MSVC documentation mentions these functions must lock the calling thread (also thread-safe).
+Previously this used file specific locks that apparently caused crashes on newer Windows versions.
+*/
+void __cdecl mod_lock_file(void* UNUSED(ptr)) {
+    FileLock.lock();
+}
+
+void __cdecl mod_unlock_file(void* UNUSED(ptr)) {
+    FileLock.unlock();
+}
 
 const char* ac_mod_alpha = "smac_mod\\alphax";
 const char* ac_mod_help = "smac_mod\\helpx";
@@ -766,6 +782,28 @@ bool patch_setup(Config* cf) {
     write_call(0x62794B, (int)mod_BasePop_start); // pop_ask
     write_call(0x627C90, (int)mod_BasePop_start); // pop_ask_number
 
+    // Replace standard library file locking
+    write_call(0x6455AE, (int)mod_lock_file); // _fclose
+    write_call(0x646046, (int)mod_lock_file); // _fwrite
+    write_call(0x64617F, (int)mod_lock_file); // _fread
+    write_call(0x64685C, (int)mod_lock_file); // _fgetc
+    write_call(0x64688D, (int)mod_lock_file); // _fputc
+    write_call(0x647283, (int)mod_lock_file); // _fgets
+    write_call(0x6472D6, (int)mod_lock_file); // _rewind
+    write_call(0x647337, (int)mod_lock_file); // _fseek
+    write_call(0x64781D, (int)mod_lock_file); // _fprintf
+    write_call(0x647927, (int)mod_lock_file); // _ftell
+    write_call(0x6455BC, (int)mod_unlock_file); // _fclose
+    write_call(0x646061, (int)mod_unlock_file); // _fwrite
+    write_call(0x64619A, (int)mod_unlock_file); // _fread
+    write_call(0x64687B, (int)mod_unlock_file); // _fgetc
+    write_call(0x6468B6, (int)mod_unlock_file); // _fputc
+    write_call(0x6472BF, (int)mod_unlock_file); // _fgets
+    write_call(0x647325, (int)mod_unlock_file); // _rewind
+    write_call(0x64734F, (int)mod_unlock_file); // _fseek
+    write_call(0x647843, (int)mod_unlock_file); // _fprintf
+    write_call(0x647935, (int)mod_unlock_file); // _ftell
+    
     if (cf->directdraw) {
         *(int32_t*)0x45F9EF = cf->window_width;
         *(int32_t*)0x45F9F4 = cf->window_height;

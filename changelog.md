@@ -1,3 +1,7 @@
+# Version 372
+
+* Fixed Windows 11 24H2 patch crash.
+
 # Version 371
 
 * Psi Gate one unit limit per turn is removed.
