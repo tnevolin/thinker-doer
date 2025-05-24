@@ -531,14 +531,13 @@ int tech_cost(int tech_id, int faction_id) {
     assert(valid_player(faction_id));
 	
 	// [WTP]
-	
 	int tech_cost;
-	
 	if (conf.alternative_tech_cost)
 	{
 		tech_cost = wtp_tech_cost(faction_id, tech_id);
 	    return clamp(tech_cost, 1, 99999999);
 	}
+	//
 	
     MFaction* m = &MFactions[faction_id];
     int level = 1;

@@ -16,8 +16,247 @@
 
 // Profiling
 
-tree<ProfileName> Profiling::profiles;
+void Profile::start()
+{
+	if (DEBUG)
+	{
+		if (running)
+		{
+			debug("ERROR: Profile::start. Profile is RUNNING: %s\n", name.c_str());flushlog();
+			abort();
+		}
+		
+		running = true;
+		startTime = clock();
+		
+	}
+}
+void Profile::pause()
+{
+	if (DEBUG)
+	{
+		if (!running)
+		{
+			debug("ERROR: Profile::pause. Profile is NOT RUNNING: %s\n", name.c_str());flushlog();
+			abort();
+		}
+		
+		running = false;
+		totalTime += clock() - startTime;
+		
+	}
+}
+void Profile::resume()
+{
+	if (DEBUG)
+	{
+		if (running)
+		{
+			debug("ERROR: Profile::resume. Profile is RUNNING: %s\n", name.c_str());flushlog();
+			abort();
+		}
+		
+		running = true;
+		startTime = clock();
+		
+	}
+}
+void Profile::stop()
+{
+	if (DEBUG)
+	{
+		if (!running)
+		{
+			debug("ERROR: Profile::stop. Profile is NOT RUNNING: %s\n", name.c_str());flushlog();
+			abort();
+		}
+		
+		running = false;
+		executionCount++;
+		totalTime += clock() - startTime;
+		
+	}
+}
 	
+Profile *Profiling::getProfile(std::string name)
+{
+	Profile *profile = nullptr;
+	
+	for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+	{
+		if (iterator->name == name)
+		{
+			profile = &(iterator->profile);
+			break;
+		}
+	}
+	if (profile == nullptr)
+	{
+		debug("ERROR: Profile::getProfile. Profile is NOT FOUND: %s\n", name.c_str());flushlog();
+		abort();
+	}
+	
+	return profile;
+	
+}
+Profile *Profiling::addTopProfile(std::string name)
+{
+	Profile *profile = nullptr;
+	
+	for (tree<ProfileName>::sibling_iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+	{
+		if (iterator->name == name)
+		{
+			profile = &(iterator->profile);
+			break;
+		}
+	}
+	
+	if (profile == nullptr)
+	{
+		profile = &(profiles.insert(profiles.end(), {name, {}})->profile);
+		profile->name = name;
+	}
+	
+	return profile;
+	
+}
+Profile *Profiling::addChildProfile(std::string name, std::string parentName)
+{
+	// find parent iterator
+	
+	tree<ProfileName>::iterator parentIterator = nullptr;
+	
+	for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+	{
+		if (iterator->name == parentName)
+		{
+			parentIterator = iterator;
+			break;
+		}
+	}
+	assert(parentIterator != nullptr);
+	
+	// find child profile
+	
+	Profile *profile = nullptr;
+	
+	for (tree<ProfileName>::sibling_iterator iterator = profiles.begin(parentIterator); iterator != profiles.end(parentIterator); iterator++)
+	{
+		if (iterator->name == name)
+		{
+			profile = &(iterator->profile);
+			break;
+		}
+	}
+	
+	if (profile == nullptr)
+	{
+		profile = &(profiles.append_child(parentIterator, {name, {}})->profile);
+		profile->name = name;
+	}
+	
+	return profile;
+	
+}
+void Profiling::reset()
+{
+	profiles.clear();
+}
+void Profiling::start(std::string name)
+{
+	if (DEBUG)
+	{
+		if (profiles.empty())
+		{
+			profiles.insert(profiles.end(), {"", {}});
+		}
+		
+//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+		Profile *profile = addTopProfile(name);
+		profile->start();
+		
+	}
+}
+void Profiling::start(std::string name, std::string parentName)
+{
+	if (DEBUG)
+	{
+		if (profiles.empty())
+		{
+			profiles.insert(profiles.end(), {"", {}});
+		}
+		
+//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+		Profile *profile = addChildProfile(name, parentName);
+		profile->start();
+		
+	}
+}
+void Profiling::pause(std::string name)
+{
+	if (DEBUG)
+	{
+//			debug("Profiling(%s) - pause\n", name.c_str());flushlog();
+		Profile *profile = getProfile(name);
+		profile->pause();
+	}
+}
+void Profiling::resume(std::string name)
+{
+	if (DEBUG)
+	{
+//			debug("Profiling(%s) - resume\n", name.c_str());flushlog();
+		Profile *profile = getProfile(name);
+		profile->resume();
+	}
+}
+void Profiling::stop(std::string name)
+{
+	if (DEBUG)
+	{
+//			debug("Profiling(%s) - stop\n", name.c_str());flushlog();
+		Profile *profile = getProfile(name);
+		profile->stop();
+	}
+}
+void Profiling::print()
+{
+	debug("executionProfiles\n");
+	
+	for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+	{
+		int depth = profiles.depth(iterator);
+		std::string const name = iterator->name;
+		Profile const &profile = iterator->profile;
+		
+		std::string prefixedName = std::string(4 * depth, ' ') + name;
+		std::string displayName = prefixedName + " " + std::string(std::max(0, NAME_LENGTH - 1 - (int)prefixedName.length()), '.');
+		int executionCount = profile.executionCount;
+		double totalExecutionTime = (double)profile.totalTime / (double)CLOCKS_PER_SEC;
+		double averageExecutionTime = (executionCount == 0 ? 0.0 : totalExecutionTime / (double)executionCount);
+		
+		debug
+		(
+			"\t%-*s"
+			"   count=%8d"
+			"   totalTime=%7.3f"
+			"   averageTime=%10.6f"
+			"\n"
+			, NAME_LENGTH, displayName.c_str()
+			, executionCount
+			, totalExecutionTime
+			, averageExecutionTime
+		);
+		
+	}
+	
+	flushlog();
+	
+}
+
+tree<ProfileName> Profiling::profiles;
+
 int alphax_tgl_probe_steal_tech_value;
 
 // storage variables for modified odds dialog
@@ -3656,87 +3895,19 @@ int __thiscall wtp_mod_BaseWin_psych_row(Win* This, int horizontal_pos, int vert
 	
 	int specialist_total = base->specialist_total;
 	
-	if (conf.base_psych_specialist_content)
-	{
-		// pretend there are no specialists
-		base->specialist_total = 0;
-	}
+	// pretend there are no specialists
+	base->specialist_total = 0;
 	
 	// execute function
 	
 	int returnValue = BaseWin_psych_row(This, horizontal_pos, vertical_pos, a4, a5, talents, drones, sdrones);
 	
-	if (conf.base_psych_specialist_content)
-	{
-		// restore specialist count
-		
-		base->specialist_total = specialist_total;
-		
-	}
+	// restore specialist count
+	base->specialist_total = specialist_total;
 	
 	return returnValue;
 	
 }
-
-
-///*
-//BaseWin pop click.
-//Removes excess specialists after selection.
-//*/
-//int __thiscall wtp_mod_BaseWin_pop_click(Win* This, int clicked_specialist_index, int a2, int a3, int a4)
-//{
-//	BASE *base = (*CurrentBase);
-//	
-//	int returnValue = BaseWin_pop_click(This, clicked_specialist_index, a2, a3, a4);
-//	
-//	if (conf.base_psych_specialist_content)
-//	{
-//		// verify specialists do not replace drones
-//		
-//		bool changed = false;
-//		while (base->specialist_total > 0 && base->specialist_total > base->pop_size - base->drone_total)
-//		{
-//			int best_specialist_id = best_specialist(base, 1, 1, 10);
-//			
-//			// iterate specialists
-//			
-//			bool modified = false;
-//			for (int i = base->specialist_total - 1; i >= 0; i--)
-//			{
-//				CCitizen *citizen = &Citizen[base->specialist_type(i)];
-//				
-//				// skip doctors
-//				
-//				if (citizen->psych_bonus >= 2)
-//					continue;
-//				
-//				// replace specialist with the doctor and restart the loop
-//				
-//				base->specialist_modify(i, best_specialist_id);
-//				base_compute(true);
-//				modified = true;
-//				changed = true;
-//				break;
-//				
-//			}
-//			
-//			// no non-doctor specialist found
-//			
-//			if (!modified)
-//				break;
-//			
-//		}
-//		
-//		if (changed)
-//		{
-//			GraphicWin_redraw(This);
-//		}
-//		
-//	}
-//	
-//	return returnValue;
-//	
-//}
 
 /*
 BaseWin pop click.

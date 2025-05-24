@@ -596,10 +596,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->disengagement_from_stack = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("eco_damage_alternative_industry_effect_reduction_formula"))
-    {
-        cf->eco_damage_alternative_industry_effect_reduction_formula = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("pressure_dome_minerals"))
     {
         cf->pressure_dome_minerals = std::max(0, atoi(value));
@@ -632,14 +628,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->base_psych_cost = atoi(value);
     }
-    else if (MATCH("base_psych_remove_drone_soft"))
-    {
-        cf->base_psych_remove_drone_soft = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("base_psych_specialist_content"))
-    {
-        cf->base_psych_specialist_content = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("base_psych_economy_conversion_ratio"))
     {
         cf->base_psych_economy_conversion_ratio = atoi(value);
@@ -668,18 +656,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->recycling_tanks_mineral_multiplier = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("recycling_tanks_mineral_bonus_mining_platform"))
-    {
-        cf->recycling_tanks_mineral_bonus_mining_platform = atoi(value);
-    }
-    else if (MATCH("recycling_tanks_mineral_bonus_regular_mine"))
-    {
-        cf->recycling_tanks_mineral_bonus_regular_mine = atoi(value);
-    }
-    else if (MATCH("recycling_tanks_mineral_bonus_rocky_mine"))
-    {
-        cf->recycling_tanks_mineral_bonus_rocky_mine = atoi(value);
-    }
     else if (MATCH("recycling_tanks_population_bonus"))
     {
         cf->recycling_tanks_population_bonus = (atoi(value) == 0 ? false : true);
@@ -691,6 +667,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("genejack_factory_mineral_bonus_mining_platform"))
     {
         cf->genejack_factory_mineral_bonus_mining_platform = atoi(value);
+    }
+    else if (MATCH("genejack_factory_mineral_bonus_regular_mine"))
+    {
+        cf->genejack_factory_mineral_bonus_regular_mine = atoi(value);
     }
     else if (MATCH("genejack_factory_mineral_bonus_rocky_mine"))
     {
@@ -714,7 +694,7 @@ int option_handler(void* user, const char* section, const char* name, const char
     }
     else if (MATCH("echelon_mirror_bonus"))
     {
-        opt_list_parse(cf->echelon_mirror_bonus, buf, 2, 0);
+        cf->echelon_mirror_bonus = atoi(value);
     }
     else if (MATCH("base_inefficiency_alternative"))
     {
@@ -1538,7 +1518,6 @@ DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LP
 			
 			// [WTP]
 			// parse thinker user file
-			
 			if (FileExists("thinker_user.ini"))
 			{
 				if (ini_parse("thinker_user.ini", option_handler, &conf) < 0)

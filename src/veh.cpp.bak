@@ -2118,9 +2118,29 @@ int __cdecl mod_veh_skip(int veh_id) {
             }
         }
     } else if (veh->faction_id > 0) {
+        veh->waypoint_x[0] = veh->x;
+        veh->waypoint_y[0] = veh->y;
+        veh->status_icon = '-';
+        
+		// [WTP]
+		// apply monolith to damaged vehicles as well
+		/*
         if (want_monolith(veh_id) && bit_at(veh->x, veh->y) & BIT_MONOLITH) {
             mod_monolith(veh_id);
         }
+        */
+		if
+		(
+			bit_at(veh->x, veh->y) & BIT_MONOLITH
+			&&
+			veh->triad() != TRIAD_AIR
+			&&
+			(veh->damage_taken > 0 || (veh->state & VSTATE_MONOLITH_UPGRADED) == 0)
+		)
+		{
+			monolith(veh_id);
+		}
+		
     }
     veh->moves_spent = moves;
     return moves;

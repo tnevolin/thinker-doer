@@ -187,14 +187,6 @@ void strategy(bool computer)
 {
 	Profiling::start("strategy", "");
 	
-//	// store base state
-//	
-//	BaseSnapshots::takeSnapshots();
-//	
-	// precompute baseCompute
-	
-	precomputeBaseComputeValues(aiFactionId);
-	
 	// design units
 	
 	if (computer)
@@ -220,14 +212,6 @@ void strategy(bool computer)
 	// execute tasks
 	
 	executeTasks();
-	
-//	// restore base state
-//	
-//	BaseSnapshots::restoreSnapshots();
-//	
-	// clear baseCompute
-	
-	clearBaseComputeValues();
 	
 	Profiling::stop("strategy");
 	

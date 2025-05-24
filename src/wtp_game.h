@@ -807,7 +807,7 @@ bool isArtilleryVehicle(int vehicleId);
 bool isActiveArtilleryVehicle(int vehicleId);
 bool isLandArtilleryUnit(int unitId);
 bool isLandArtilleryVehicle(int vehicleId);
-void computeBase(int baseId, bool resetWorkedTiles);
+void computeBase(int baseId, bool resetWorkedTiles, MAP *excludedTile = nullptr);
 robin_hood::unordered_flat_set<int> getBaseConnectedRegions(int id);
 robin_hood::unordered_flat_set<int> getBaseConnectedOceanRegions(int baseId);
 double evaluateUnitConDefenseEffectiveness(int id);

@@ -254,10 +254,8 @@ void populateConvoyData()
 			// emulate crawler on this tile to estimate base gain loss
 			
 			double oldBaseGain = getBaseGain(baseId);
-			baseComputeDisabledTile = tile;
-			computeBase(baseId, true);
+			computeBase(baseId, true, tile);
 			double newBaseGain = getBaseGain(baseId);
-			baseComputeDisabledTile = nullptr;
 			aiData.resetBase(baseId);
 			baseGainChange = newBaseGain - oldBaseGain;
 			

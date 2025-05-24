@@ -514,6 +514,15 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
         || has_fac_built(FAC_RECYCLING_TANKS, base_id)) {
             value += ResInfo->recycling_tanks.energy;
         }
+        
+		// [WTP]
+		// Recycling Tanks population bonus
+		if (conf.recycling_tanks_population_bonus && has_fac_built(FAC_RECYCLING_TANKS, base_id))
+		{
+			// every second out of three citizens contributes nutrient
+			value += (Bases[base_id].pop_size + 1) / 3;
+        }
+        
     }
     else if (sq->items & BIT_THERMAL_BORE) {
         value = ResInfo->borehole_sq.nutrient;
@@ -527,30 +536,32 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
             value += ResInfo->bonus_sq.nutrient;
         }
         if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
+			
 			// [WTP]
 			// shift Manifold Harmonics minimal planet rating
             value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][0];
+			
         }
     }
     else if (sq->items & BIT_FUNGUS && !flag && alt >= ALT_OCEAN_SHELF) {
         int fungus_val = clamp(planet, -3, 0) + Factions[faction_id].tech_fungus_nutrient;
         value = clamp(fungus_val, 0, 99);
         if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
+			
 			// [WTP]
 			// shift Manifold Harmonics minimal planet rating
             value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][0];
+			
         }
 		
 		// [WTP]
 		// Biology Lab fungus bonus
-		
 		if (base_id >=0 && has_facility(FAC_BIOLOGY_LAB, base_id)) {
 			value += conf.facility_yield_bonus_biology_lab[0];
 		}
 		
 		// [WTP]
 		// fungus receives terrain bonuses
-		
 		if (conf.fungus_terrain_bonus)
 		{
 			if (bonus_nutrient) {
@@ -619,7 +630,7 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
         if (sq->items & BIT_SOIL_ENRICHER) {
 			
 			// [WTP]
-			
+			// correct enricher
 			if (conf.condenser_and_enricher_do_not_multiply_nutrients)
 			{
 				// enricher does not multiply nutrients and instead adds 1
@@ -634,7 +645,7 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
         if (sq->items & BIT_CONDENSER) {
 			
 			// [WTP]
-			
+			// correct condenser
 			if (conf.condenser_and_enricher_do_not_multiply_nutrients)
 			{
 				// condenser does not multiply nutrients
@@ -696,6 +707,7 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
         || has_fac_built(FAC_RECYCLING_TANKS, base_id)) {
             value += ResInfo->recycling_tanks.mineral;
         }
+        
 		// [WTP]
 		// Recycling Tanks population bonus
 		if (conf.recycling_tanks_population_bonus && has_fac_built(FAC_RECYCLING_TANKS, base_id))
@@ -703,6 +715,7 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
 			// every third out of three citizens contributes mineral
 			value += (Bases[base_id].pop_size + 0) / 3;
         }
+        
         has_limit = false;
     } else {
         if (sq->items & BIT_MONOLITH) {
@@ -711,9 +724,11 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
                 value += ResInfo->bonus_sq.mineral;
             }
             if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
+				
 				// [WTP]
 				// shift Manifold Harmonics minimal planet rating
 				value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][1];
+				
             }
             has_limit = false;
         }
@@ -727,22 +742,22 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
             int fungus_val = clamp(planet, -3, 0) + Factions[faction_id].tech_fungus_mineral;
             value = clamp(fungus_val, 0, 99);
             if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
+				
 				// [WTP]
 				// shift Manifold Harmonics minimal planet rating
 				value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][1];
+				
             }
             has_limit = false;
 			
 			// [WTP]
 			// Biology Lab fungus bonus
-			
 			if (base_id >= 0 && has_facility(FAC_BIOLOGY_LAB, base_id)) {
 				value += conf.facility_yield_bonus_biology_lab[1];
 			}
 			
 			// [WTP]
 			// fungus receives terrain bonuses
-			
 			if (conf.fungus_terrain_bonus)
 			{
 				if (bonus_mineral) {
@@ -758,7 +773,6 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
                 
 				// [WTP]
 				// facilities custom bonus
-				
                 if (has_fac_built(FAC_TREE_FARM, base_id)) {
                     value += conf.tree_farm_yield_bonus_forest[1];
                 }
@@ -784,23 +798,17 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
                 value += modifier;
                 
                 // [WTP]
-                // Recycling Tank mineral bonus
-                
-                if (base_id >=0 && has_facility(FAC_RECYCLING_TANKS, base_id))
+				// facility bonus
+                if (base_id >=0 && has_facility(FAC_GENEJACK_FACTORY, base_id) && sq->is_rocky())
 				{
 					if (sq->is_rocky())
 					{
-						value += conf.recycling_tanks_mineral_bonus_rocky_mine;
+						value += conf.genejack_factory_mineral_bonus_rocky_mine;
 					}
 					else
 					{
-						value += conf.recycling_tanks_mineral_bonus_regular_mine;
+						value += conf.genejack_factory_mineral_bonus_regular_mine;
 					}
-				}
-				
-                if (base_id >=0 && has_facility(FAC_GENEJACK_FACTORY, base_id) && sq->is_rocky())
-				{
-					value += conf.genejack_factory_mineral_bonus_rocky_mine;
 				}
 				
             }
@@ -823,12 +831,6 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
                     
 					// [WTP]
 					// facility bonus (mining platform)
-					
-					if (base_id >=0 && has_facility(FAC_RECYCLING_TANKS, base_id))
-					{
-						value += conf.recycling_tanks_mineral_bonus_mining_platform;
-					}
-					
 					if (base_id >=0 && has_facility(FAC_GENEJACK_FACTORY, base_id))
 					{
 						value += conf.genejack_factory_mineral_bonus_mining_platform;
@@ -893,13 +895,15 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
         || has_fac_built(FAC_RECYCLING_TANKS, base_id)) {
             value += ResInfo->recycling_tanks.energy;
         }
+        
 		// [WTP]
 		// Recycling Tanks population bonus
 		if (conf.recycling_tanks_population_bonus && has_fac_built(FAC_RECYCLING_TANKS, base_id))
 		{
-			// every first out of three citizens contributes nutrient
+			// every first out of three citizens contributes energy
 			value += (Bases[base_id].pop_size + 2) / 3;
         }
+        
         if (economy > 4) {
             value += 4;
         } else if (economy > 3) {
@@ -924,9 +928,11 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
     else if (sq->items & BIT_MONOLITH) {
         value = ResInfo->monolith_sq.energy;
         if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
+			
 			// [WTP]
 			// shift Manifold Harmonics minimal planet rating
 			value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][2];
+			
         }
         has_limit = false;
     }
@@ -937,16 +943,17 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
         int fungus_val = clamp(planet, -3, 0) + Factions[faction_id].tech_fungus_energy;
         value = clamp(fungus_val, 0, 99);
         if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
+			
 			// [WTP]
 			// shift Manifold Harmonics minimal planet rating
 			value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][2];
+			
         }
         is_fungus = true;
         has_limit = false;
 		
 		// [WTP]
 		// Biology Lab fungus bonus
-		
 		if (base_id >= 0 && has_facility(FAC_BIOLOGY_LAB, base_id)) {
 			value += conf.facility_yield_bonus_biology_lab[2];
 		}
@@ -1008,11 +1015,12 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
                     echelonMirrorBonus++;
                 }
             }
-            echelonMirrorBonus = echelonMirrorBonus * conf.echelon_mirror_bonus[0] / conf.echelon_mirror_bonus[1];
+            echelonMirrorBonus = echelonMirrorBonus * conf.echelon_mirror_bonus;
             value += echelonMirrorBonus;
 			
         }
     }
+    
     // [WTP]
     // fungus receives all bonuses
     if (!is_fungus || conf.fungus_terrain_bonus) {
@@ -1037,6 +1045,7 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
             *BaseTerraformEnergy = value;
         }
     }
+    
     if (has_limit && value > conf.resource_limit[2] && !bonus_energy
     && (faction_id < 0 || !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id))) {
         *BaseTerraformReduce += (value - conf.resource_limit[2]);
@@ -1356,12 +1365,14 @@ int fungus_yield(int faction_id, ResType res_type) {
     int E = clamp(f->tech_fungus_energy + p + (f->SE_economy_pending >= 2), 0, 99);
 
     if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
+		
 		// [WTP]
 		// shift Manifold Harmonics minimal planet rating
         int m = clamp(f->SE_planet_pending - conf.manifold_harmonics_min_planet_rating + 1, 0, 4);
         N += ManifoldHarmonicsBonus[m][0];
         M += ManifoldHarmonicsBonus[m][1];
         E += ManifoldHarmonicsBonus[m][2];
+		
     }
     if (res_type == RES_NUTRIENT) {
         return N;

@@ -3026,40 +3026,10 @@ void patch_psych_specialist_content()
 	
 	write_call(0x00408E3B, (int)wtp_mod_BaseWin_psych_row);
 	
-//	// disable drawing specialists
-//	
-//    int psych_row_no_specialists_length1 = 0x3;
-//    byte psych_row_no_specialists_length1_old[] = { 0x2B, 0x50, 0x7C };		// sub     edx, [eax+7Ch]
-//    byte psych_row_no_specialists_length1_new[] = { 0x90, 0x90, 0x90 };
-//    write_bytes(0x0040880F, psych_row_no_specialists_length1_old, psych_row_no_specialists_length1_new, psych_row_no_specialists_length1);
-//    write_bytes(0x004089A2, psych_row_no_specialists_length1_old, psych_row_no_specialists_length1_new, psych_row_no_specialists_length1);
-//	
-//    int psych_row_no_specialists_length2 = 0x3;
-//    byte psych_row_no_specialists_length2_old[] = { 0x2B, 0xCA };			// mov     edx, [eax+7Ch]
-//    byte psych_row_no_specialists_length2_new[] = { 0x90, 0x90 };
-//    write_bytes(0x00408860, psych_row_no_specialists_length2_old, psych_row_no_specialists_length2_new, psych_row_no_specialists_length2);
-//	
-//    int psych_row_no_specialists_length3 = 0x3;
-//    byte psych_row_no_specialists_length3_old[] = { 0x8B, 0x48, 0x7C };
-//    byte psych_row_no_specialists_length3_new[] = { 0x31, 0xC9, 0x90 };
-//    write_bytes(0x00408A0B, psych_row_no_specialists_length3_old, psych_row_no_specialists_length3_new, psych_row_no_specialists_length3);
-	
-//	// BaseWin__pop_click
-//	// intercept call to remove extra specialists
-//	
-//	write_call(0x004164AB, (int)wtp_mod_BaseWin_pop_click);
-//	write_call(0x00497308, (int)wtp_mod_BaseWin_pop_click);
-	
 	// in BaseWin__pop_click
 	// intercept call to display popup for bases with pop_size >= min_base_size_specialists
 	
 	write_call(0x0040A9EB, (int)wtp_mod_BaseWin_pop_click_popup_start);
-	
-//	// in BaseWin__pop_click
-//	// intercept call to disable specialist option and show now when no contents
-//	
-//	write_call(0x0040AA14, (int)wtp_mod_BaseWin_pop_click_specialist_cycle_strcat);
-//	write_call(0x0040AA48, (int)wtp_mod_BaseWin_pop_click_specialist_has_tech);
 	
 }
 
@@ -3542,7 +3512,7 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_scroll_other_faction_bases();
 	
-	if (conf.base_psych && conf.base_psych_improved && conf.base_psych_specialist_content)
+	if (conf.base_psych && conf.base_psych_improved)
 	{
 		patch_psych_specialist_content();
 	}

@@ -1,27 +1,10 @@
 #pragma once
 
 #include "main.h"
-
-extern MAP *baseComputeDisabledTile;
+#include "wtp_base.h"
 
 const uint32_t GOV_ALLOW_COMBAT =
     (GOV_MAY_PROD_LAND_COMBAT | GOV_MAY_PROD_NAVAL_COMBAT | GOV_MAY_PROD_AIR_COMBAT);
-
-struct BaseYield
-{
-	int worked_tiles		= 0;
-	int specialist_total	= 0;
-	int specialist_adjust	= 0;
-	int nutrient			= 0;
-	int mineral				= 0;
-	int energy				= 0;
-};
-struct BaseEnergy
-{
-	int our_rank;
-	std::array<int, MaxPlayerNum> otherFaciontRanks;
-	int coeff_psych;
-};
 
 void __cdecl mod_base_reset(int base_id, bool has_gov);
 int __cdecl mod_base_build(int base_id, bool has_gov);
@@ -38,7 +21,6 @@ void __cdecl wtp_mod_base_yield();
 void __cdecl mod_base_nutrient();
 void __cdecl mod_base_minerals();
 void __cdecl mod_base_energy();
-void mod_base_yield_base_energy(BaseEnergy const &baseEnergy, int energyIntake);
 void __cdecl mod_base_psych(int base_id);
 void __cdecl mod_base_energy_costs();
 void __cdecl mod_base_research();
@@ -73,7 +55,7 @@ int __cdecl is_objective(int base_id);
 int __cdecl own_base_rank(int base_id);
 int __cdecl mod_base_rank(int faction_id, int position);
 int __cdecl best_specialist(BASE* base, int econ_val, int labs_val, int psych_val);
-int getBestSpecialist(int factionId, int basePopSize, double econValue, double labsValue, double psychValue);
+
 int __cdecl mod_best_specialist();
 int __cdecl mod_facility_avail(FacilityId item_id, int faction_id, int base_id, int queue_count);
 bool can_build(int base_id, int item_id);
@@ -93,9 +75,6 @@ void __cdecl set_fac(FacilityId item_id, int base_id, bool add);
 int __cdecl fac_maint(int facility_id, int faction_id);
 void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
 int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx_filename, int a5);
-int findReplacementSpecialist(int factionId, int specialistId);
 double computeBaseTileScore(bool restrictions, double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy);
-void clearBaseComputeValues();
-void precomputeBaseComputeValues(int factionId);
 int getBasePsychCoefficient(int base_id);
 
