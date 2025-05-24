@@ -122,10 +122,10 @@ enum VehWeaponMode {
 };
 
 enum VehPlan {
-    PLAN_OFFENSIVE = 0,
+    PLAN_OFFENSE = 0,
     PLAN_COMBAT = 1,
-    PLAN_DEFENSIVE = 2,
-    PLAN_RECONNAISSANCE = 3,
+    PLAN_DEFENSE = 2,
+    PLAN_RECON = 3,
     PLAN_AIR_SUPERIORITY = 4,
     PLAN_PLANET_BUSTER = 5,
     PLAN_NAVAL_SUPERIORITY = 6,
@@ -353,8 +353,8 @@ enum VehState {
     VSTATE_EXPLORE = 0x4000, // cleared in veh_wake
     VSTATE_UNK_8000 = 0x8000,
     VSTATE_UNK_10000 = 0x10000,
-    VSTATE_UNK_20000 = 0x20000,
-    VSTATE_UNK_40000 = 0x40000,
+    VSTATE_UNK_20000 = 0x20000, // veh_init
+    VSTATE_UNK_40000 = 0x40000, // veh_init
     VSTATE_USED_NERVE_GAS = 0x80000, // set/reset on attacking Veh after each attack
     VSTATE_UNK_100000 = 0x100000,
     VSTATE_PACIFISM_DRONE = 0x200000,
@@ -484,16 +484,10 @@ struct VEH {
     int8_t order;
     uint8_t waypoint_count;
     uint8_t patrol_current_point;
-    int16_t waypoint_1_x; // doubles as transport veh_id if unit is sentry/board
-    int16_t waypoint_2_x;
-    int16_t waypoint_3_x;
-    int16_t waypoint_4_x;
-    int16_t waypoint_1_y;
-    int16_t waypoint_2_y;
-    int16_t waypoint_3_y;
-    int16_t waypoint_4_y;
+    int16_t waypoint_x[4]; // first doubles as transport veh_id if unit is sentry/board
+    int16_t waypoint_y[4];
     uint8_t morale;
-    uint8_t terraform_turns;
+    uint8_t movement_turns;
     uint8_t order_auto_type;
     uint8_t visibility; // faction bitfield of who can currently see Veh excluding owner
     uint8_t moves_spent; // stored as road moves spent unless magtube_movement_rate > 0
@@ -541,11 +535,21 @@ struct VEH {
         }
         return 10*reactor_type();
     }
-    int cur_hitpoints() {
+    int cur_hitpoints() { // Replace veh_health function
         if (is_artifact()) {
             return !damage_taken;
         }
         return std::max(0, 10*reactor_type() - damage_taken);
+    }
+    int lifecycle_value() {
+        return (flags & VFLAG_ADD_ONE_MORALE ? 1 : 0)
+            + (flags & VFLAG_ADD_TWO_MORALE ? 2 : 0);
+    }
+    void set_lifecycle_value(int level) {
+        level = std::min(3, std::max(0, level));
+        flags &= ~(VFLAG_ADD_ONE_MORALE|VFLAG_ADD_TWO_MORALE);
+        if (level & 1) flags |= VFLAG_ADD_ONE_MORALE;
+        if (level & 2) flags |= VFLAG_ADD_TWO_MORALE;
     }
     int armor_type() {
         return Units[unit_id].armor_id;
@@ -580,8 +584,12 @@ struct VEH {
     bool is_garrison_unit() {
         return Units[unit_id].is_garrison_unit();
     }
+    // Determine if native unit modifiers apply in this case. Multiple original functions
+    // may check separately unit_id == BSC_SPORE_LAUNCHER for native units but this condition
+    // is redundant since they will always have PSI weapon equipped in the default config.
+    // However this condition is not always present and it is removed here for consistency.
     bool is_native_unit() {
-        return unit_id < MaxProtoFactionNum && Units[unit_id].is_psi_unit();
+        return unit_id < MaxProtoFactionNum && Units[unit_id].offense_value() < 0;
     }
     bool is_battle_ogre() {
         return unit_id == BSC_BATTLE_OGRE_MK1 || unit_id == BSC_BATTLE_OGRE_MK2
@@ -621,11 +629,11 @@ struct VEH {
         return is_human(faction_id);
     }
     bool at_target() {
-        return order == ORDER_NONE || (waypoint_1_x < 0 && waypoint_1_y < 0)
-            || (x == waypoint_1_x && y == waypoint_1_y);
+        return order == ORDER_NONE || (waypoint_x[0] < 0 && waypoint_y[0] < 0)
+            || (x == waypoint_x[0] && y == waypoint_y[0]);
     }
     bool in_transit() {
-        return order == ORDER_SENTRY_BOARD && waypoint_1_x >= 0;
+        return order == ORDER_SENTRY_BOARD && waypoint_x[0] >= 0;
     }
     bool mid_damage() {
         return damage_taken > 2*Units[unit_id].reactor_id;
@@ -637,8 +645,10 @@ struct VEH {
         return mid_damage() && can_repair(unit_id);
     }
     bool need_monolith() {
-        return !is_battle_ogre() && (need_heals() || (morale < MORALE_ELITE
-            && !(state & VSTATE_MONOLITH_UPGRADED) && offense_value() != 0));
+        return triad() != TRIAD_AIR
+            && can_monolith(unit_id)
+            && (need_heals() || (!(state & VSTATE_MONOLITH_UPGRADED)
+            && morale < MORALE_ELITE && offense_value() != 0));
     }
     void reset_order() {
         order = ORDER_NONE;

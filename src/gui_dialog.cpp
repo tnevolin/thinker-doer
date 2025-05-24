@@ -2,24 +2,43 @@
 #include "gui_dialog.h"
 
 
+void parse_gen_name(int faction_id, size_t title_value, size_t name_value)
+{
+    *plurality_default = 0;
+    *gender_default = MFactions[faction_id].is_leader_female;
+    parse_says(title_value, MFactions[faction_id].title_leader, -1, -1);
+    parse_says(name_value, MFactions[faction_id].name_leader, -1, -1);
+}
+
+void parse_noun_name(int faction_id, size_t title_value, size_t name_value)
+{
+    *plurality_default = 0;
+    *gender_default = MFactions[faction_id].noun_gender;
+    parse_says(title_value, MFactions[faction_id].title_leader, -1, -1);
+    parse_says(name_value, MFactions[faction_id].name_leader, -1, -1);
+}
+
 int __cdecl X_pop2(const char* label, int a2)
 {
     if (!conf.warn_on_former_replace && !strcmp(label, "MIMIMI")) {
         return 1;
     }
-    /*
-    Disable unnecessary warning if the map is larger than 128x128.
-    In any case the dialog will limit all map sizes to 256x256.
-    */
-    if (!strcmp(label, "VERYLARGEMAP")) {
-        return 0;
-    }
     return X_pop(ScriptFile, label, -1, 0, 0, a2);
+}
+
+int __cdecl X_pop3(const char* filename, const char* label, int a3)
+{
+    return X_pop(filename, label, -1, 0, 0, a3);
 }
 
 int __cdecl X_pop7(const char* label, int a2, int a3)
 {
     return X_pop(ScriptFile, label, -1, 0, a2, a3);
+}
+
+int __cdecl X_pops3(const char* label, Sprite* a2, int a3)
+{
+    return X_pops(ScriptFile, label, -1, 0, 0, (int)a2, 1, 1, a3);
 }
 
 int __cdecl X_pops4(const char* label, int a2, Sprite* a3, int a4)
@@ -40,13 +59,37 @@ int __cdecl X_dialog(const char* filename, const char* label, int faction2)
 }
 
 /*
+Pact status counts as infiltration on diplomacy window for displaying the energy reserves.
+In original game energy reserves are always displayed on faction profile if pact is active.
+*/
+int __cdecl DiploPop_spying(int faction_id)
+{
+    return has_treaty(MapWin->cOwner, faction_id, DIPLO_PACT|DIPLO_HAVE_INFILTRATOR)
+        || has_project(FAC_EMPATH_GUILD, MapWin->cOwner)
+        || (MapWin->cOwner == *GovernorFaction && !is_alien(faction_id));
+}
+
+/*
+Skip social engineering choices dialog SOCIETY while diplomacy is active.
+*/
+int __cdecl tech_achieved_pop3(const char* filename, const char* label, int a3)
+{
+    if (*DiploWinState) {
+        return 0;
+    }
+    return X_pop3(filename, label, a3);
+}
+
+/*
 Higher values indicate more hostile relations (broken treaties or similar).
 */
-int diplo_relation(int faction1, int faction2)
+static int diplo_relation(int faction1, int faction2)
 {
+    assert(!is_human(faction2));
     return clamp(Factions[faction1].integrity_blemishes
         + Factions[faction2].diplo_betrayed[faction1]
-        - Factions[faction2].diplo_gifts[faction1], -8, 8);
+        - Factions[faction1].diplo_gifts[faction2]
+        + clamp(Factions[faction1].eliminated_count - 1, 0, 4), -10, 10);
 }
 
 int __cdecl mod_threaten(int faction1, int faction2)
@@ -162,6 +205,7 @@ int base_trade_value(int base_id, int faction1, int faction2)
     if (is_objective(base_id)) {
         value *= 2;
     }
+    value = ((value + 25) / 25) * 25;
     debug("base_trade_value %s %d %d score: %d num_own: %d num_all: %d value: %d\n",
     base->name, faction1, faction2, score, num_own, num_all, value);
     flushlog();
@@ -188,8 +232,7 @@ int __cdecl mod_base_swap(int faction1, int faction2)
     }
     if (*diplo_counter_proposal_id == DiploCounterThreaten) {
         cause_friction(faction2, faction1, 2);
-        parse_says(0, MFactions[faction1].title_leader, -1, -1);
-        parse_says(1, MFactions[faction1].name_leader, -1, -1);
+        parse_gen_name(faction1, 0, 1);
         X_dialog("BASENOCEDE", faction2);
         return 0;
     }
@@ -255,8 +298,7 @@ int __cdecl mod_base_swap(int faction1, int faction2)
     if (*diplo_counter_proposal_id == DiploCounterResearchData) {
         // skipped
     }
-    parse_says(0, MFactions[faction1].title_leader, -1, -1);
-    parse_says(1, MFactions[faction1].name_leader, -1, -1);
+    parse_gen_name(faction1, 0, 1);
     X_dialog("modmenu", "REJECTIDEA", faction2);
     return 0;
 }
@@ -265,142 +307,186 @@ int __cdecl mod_energy_trade(int faction1, int faction2)
 {
     Faction& f_plr = Factions[faction1];
     Faction& f_cmp = Factions[faction2];
-
-    if (*diplo_current_proposal_id == DiploProposalNeedEnergy
-    && *diplo_counter_proposal_id == DiploCounterResearchData
-    && f_cmp.energy_credits < 100) {
-        tech_analysis(faction1, faction2);
-        parse_says(0, MFactions[faction1].title_leader, -1, -1);
-        parse_says(1, MFactions[faction1].name_leader, -1, -1);
-        if (*diplo_entry_id < 0) {
-            X_dialog("REJSELLNONE", faction2);
-        } else {
-            X_dialog("REJSELLAFFORD", faction2);
-        }
-        return 0;
-    }
-    if (*diplo_current_proposal_id != DiploProposalNeedEnergy
-    || *diplo_counter_proposal_id != DiploCounterLoanPayment) {
-        return energy_trade(faction1, faction2);
-    }
-
     bool is_pact = has_treaty(faction1, faction2, DIPLO_PACT);
     bool is_treaty = has_treaty(faction1, faction2, DIPLO_TREATY);
-    int friction = clamp(*DiploFriction, 0, 20);
-    int score = 5 - friction
-        - 8*diplo_relation(faction1, faction2)
-        - 4*f_plr.atrocities
-        + (is_pact ? 16 : (is_treaty ? 4 : 0))
-        + (want_revenge(faction2, faction1) ? -20 : 0)
-        + clamp((f_cmp.pop_total - f_plr.pop_total)/32, -8, 8)
-        + clamp((f_cmp.labs_total - f_plr.labs_total)/64, -8, 8);
+    int prop_counter = *diplo_counter_proposal_id;
+    *diplo_second_faction = faction2;
+    tech_analysis(faction1, faction2); // diplo_entry_id
 
-    for (int i=1; i < MaxPlayerNum; i++) {
-        if (Factions[i].base_count && i != faction1 && i != faction2) {
-            if (at_war(i, faction1) && has_pact(i, faction2)) {
-                score -= 5;
-            }
-            if (at_war(i, faction2) && has_pact(i, faction1)) {
-                score -= 5;
-            }
-            if (at_war(i, faction1) && at_war(i, faction2)) {
-                score += 5;
+    if (*diplo_current_proposal_id != DiploProposalNeedEnergy) {
+        assert(0);
+        return 0;
+    }
+
+    if (is_pact && prop_counter != DiploCounterLoanPayment) {
+        if (f_cmp.ranking > f_plr.ranking) {
+            // Modify value for possible free gift for pact factions
+            int value = 25 * (min(f_cmp.energy_credits/2 - 50,
+                f_cmp.energy_credits/16 + f_cmp.base_count*5 + *CurrentTurn) / 25);
+            if (value < 25 || value > f_cmp.energy_credits/2
+            || f_cmp.energy_credits <= 2 * f_plr.energy_credits
+            || f_cmp.energy_credits <= 4 * *CurrentTurn
+            || f_cmp.tech_ranking <= f_plr.tech_ranking
+            || f_cmp.diplo_patience[faction1] >= 2) {
+                // Nothing
+            } else if (*diplo_entry_id < 0 || prop_counter == DiploCounterFriendship) {
+                net_energy(faction1, value, faction2, -value, 1);
+                f_cmp.diplo_patience[faction1] += 2;
+                parse_num(0, value);
+                X_dialog(random(2) ? "ENERGYFREEBIE0" : "ENERGYFREEBIE1", faction2);
+                return 0;
             }
         }
     }
-    int reserve = max(0, min(f_cmp.energy_credits - 50 - 20*friction,
-        50*max(4, f_cmp.base_count + f_plr.base_count)));
-    int amount = (reserve
-        * clamp(32 - friction - 4*diplo_relation(faction1, faction2)
-        - 8*clamp(f_cmp.AI_fight, -1, 1)
-        + 8*clamp(f_cmp.SE_economy_base, -1, 1)
-        + 4*clamp(f_cmp.ranking - f_plr.ranking, -4, 4)
-        + (is_pact ? 32 : (is_treaty ? 8 : 0)), 12, 96) / 256) / 20 * 20;
-    int turns = clamp(50 - *DiffLevel*5 - friction + score/2, 10, 50);
-    int payment = ((18 + friction/4 + *DiffLevel*2)*amount + 15) / (16*turns);
 
-    debug("energy_trade %s score: %d friction: %d credits: %d reserve: %d amount: %d turns: %d payment: %d\n",
-    MFactions[faction2].filename, score, friction, f_cmp.energy_credits, reserve, amount, turns, payment);
-    flushlog();
+    if (prop_counter == DiploCounterLoanPayment) {
+        int friction = clamp(*DiploFriction, 0, 20);
+        int score = 5 - friction
+            - 8*diplo_relation(faction1, faction2)
+            - 4*f_plr.atrocities
+            + (is_pact ? 16 : (is_treaty ? 4 : 0))
+            + (want_revenge(faction2, faction1) ? -20 : 0)
+            + clamp((f_cmp.pop_total - f_plr.pop_total)/32, -8, 8)
+            + clamp((f_cmp.labs_total - f_plr.labs_total)/64, -8, 8);
 
-    if (f_plr.sanction_turns > 0 || score < -15) {
-        parse_says(0, MFactions[faction1].title_leader, -1, -1);
-        parse_says(1, MFactions[faction1].name_leader, -1, -1);
-        X_dialog("modmenu", "REJECTIDEA", faction2);
+        for (int i = 1; i < MaxPlayerNum; i++) {
+            if (Factions[i].base_count && i != faction1 && i != faction2) {
+                if (at_war(i, faction1) && has_pact(i, faction2)) {
+                    score -= 5;
+                }
+                if (at_war(i, faction2) && has_pact(i, faction1)) {
+                    score -= 5;
+                }
+                if (at_war(i, faction1) && at_war(i, faction2)) {
+                    score += 5;
+                }
+            }
+        }
+        int reserve = max(0, min(f_cmp.energy_credits - 50 - 20*friction,
+            f_cmp.energy_credits/16 + 40*max(4, f_cmp.base_count + f_plr.base_count)));
+        int amount = (reserve
+            * clamp(32 - friction - 4*diplo_relation(faction1, faction2)
+            - 8*clamp(f_cmp.AI_fight, -1, 1)
+            + 8*clamp(f_cmp.SE_economy_base, -1, 1)
+            + 4*clamp(f_cmp.ranking - f_plr.ranking, -4, 4)
+            + (is_pact ? 32 : (is_treaty ? 8 : 0)), 12, 96) / 256) / 20 * 20;
+        int turns = clamp(50 - *DiffLevel*5 - friction + score/2, 10, 50);
+        int payment = ((20 + friction/4 + *DiffLevel*2)*amount + 15) / (16*turns);
+
+        debug("energy_trade %s score: %d friction: %d credits: %d reserve: %d amount: %d turns: %d payment: %d\n",
+        MFactions[faction2].filename, score, friction, f_cmp.energy_credits, reserve, amount, turns, payment);
+        flushlog();
+
+        if (f_plr.sanction_turns > 0 || score < -15) {
+            parse_gen_name(faction1, 0, 1);
+            X_dialog("modmenu", "REJECTIDEA", faction2);
+            return 0;
+        }
+        if (f_plr.loan_balance[faction2] > 0) {
+            X_dialog("modmenu", "REJECTLOAN", faction2);
+            return 0;
+        }
+        if (amount < 10 || payment < 1 || score < 0 || f_cmp.energy_credits < 50) {
+            X_dialog(random(2) ? "REJENERGY0" : "REJENERGY1", faction2);
+            return 0;
+        }
+        ParseNumTable[0] = amount;
+        ParseNumTable[1] = payment;
+        ParseNumTable[2] = turns;
+        parse_gen_name(faction1, 0, 1);
+
+        int value = X_dialog(random(2) ? "ENERGYLOAN1" : "ENERGYLOAN2", faction2);
+        if (value == 1) {
+            net_loan(faction1, faction2, turns * payment, payment);
+            net_energy(faction1, amount, faction2, -amount, 1);
+            return 1;
+        }
         return 0;
     }
-    if (f_plr.loan_balance[faction2] > 0) {
-        X_dialog("modmenu", "REJECTLOAN", faction2);
+
+    if ((prop_counter != DiploCounterNameAPrice || *diplo_entry_id >= 0)
+    && (prop_counter == DiploCounterResearchData || prop_counter == DiploCounterNameAPrice)) {
+        bool difficult = f_cmp.AI_fight > 0 && f_cmp.AI_power > 0;
+        parse_gen_name(faction1, 0, 1);
+        // Replace faction label reference on Believers with more generic code
+        if (*diplo_entry_id >= 0 && (!difficult || f_cmp.SE_research_base > -2)) {
+            int tech_value = tech_alt_val(*diplo_entry_id, faction2, 0);
+            int alt_tech_value = (*diplo_tech_id2 < 0 ? 0 : tech_alt_val(*diplo_tech_id2, faction2, 0));
+            int cost_limit = min(f_cmp.energy_credits/4,
+                f_cmp.energy_credits/16 + f_cmp.base_count*5 + *CurrentTurn);
+            int cost_value = tech_value
+                * clamp(64 - clamp(*DiploFriction, 0, 20)
+                - 8*diplo_relation(faction1, faction2)
+                - 4*f_plr.atrocities, 16, 96) / 64;
+            if (f_plr.ranking > f_cmp.ranking) {
+                cost_value = cost_value * 7 / 8;
+            }
+            if (f_plr.pop_total > f_cmp.pop_total) {
+                cost_value = cost_value * 7 / 8;
+            }
+            if (is_pact) {
+                cost_value = cost_value * 5 / 4;
+            } else if (is_treaty) {
+                cost_value = cost_value * 9 / 8;
+            }
+            cost_value = clamp((min(cost_value / 4, cost_limit) / 25) * 25, 25, 1000);
+
+            if (cost_value > f_cmp.energy_credits) { // Fix: check for sufficient energy to buy techs
+                X_dialog("REJSELLAFFORD", faction2);
+                return 0;
+            }
+            while (true) {
+                StrBuffer[0] = '\0';
+                say_tech(StrBuffer, *diplo_entry_id, 1);
+                parse_says(0, StrBuffer, -1, -1);
+                if (*diplo_tech_id2 >= 0) {
+                    StrBuffer[0] = '\0';
+                    say_tech(StrBuffer, *diplo_tech_id2, 1);
+                    parse_says(1, StrBuffer, -1, -1);
+                }
+                parse_num(0, cost_value);
+                int value;
+                if (*diplo_tech_id2 < 0) {
+                    value = X_dialog(random(2) ? "ENERGYTECH0" : "ENERGYTECH1", faction2);
+                } else {
+                    value = X_dialog("ENERGYTECH2", faction2);
+                }
+                if (!value) { // "Sorry, not interested."
+                    break;
+                }
+                if (value == 3 || (value == 2 && *diplo_tech_id2 < 0)) { // Consult Datalinks.
+                    help_topic(14, *diplo_entry_id);
+                } else {
+                    if (value == 2) { // "No, but I will sell you $TECH1 for the same price."
+                        // Replace faction label references on Hive/University with more generic code
+                        if ((difficult && tech_value > alt_tech_value && f_cmp.SE_research_base > -2)
+                        || (tech_value > 2*alt_tech_value && f_cmp.SE_research_base < 2)) {
+                            X_dialog("REJSELLSECOND", faction2);
+                            return 0;
+                        }
+                        X_dialog("SELLSECOND", faction2);
+                        net_tech(faction2, *diplo_tech_id2, faction1, 0);
+                    } else { // Transmit information on $TECH0.
+                        net_tech(faction2, *diplo_entry_id, faction1, 0);
+                        *diplo_entry_id = *diplo_tech_id2;
+                    }
+                    *dword_7AD330 = 0;
+                    *diplo_tech_id2 = -1;
+                    net_energy(faction1, cost_value, faction2, -cost_value, 1); // NetDaemon_await_diplo
+                    return 1;
+                }
+            }
+            return 0;
+        }
+        X_dialog("REJSELLNONE", faction2);
         return 0;
     }
-    if (amount < 10 || payment < 1 || score < 0 || f_cmp.energy_credits < 50) {
-        X_dialog(random(2) ? "REJENERGY0" : "REJENERGY1", faction2);
-        return 0;
-    }
-
-    parse_says(0, MFactions[faction1].title_leader, -1, -1);
-    parse_says(1, MFactions[faction1].name_leader, -1, -1);
-    ParseNumTable[0] = amount;
-    ParseNumTable[1] = payment;
-    ParseNumTable[2] = turns;
-    int choice = X_dialog(random(2) ? "ENERGYLOAN1" : "ENERGYLOAN2", faction2);
-
-    if (choice == 1) {
-        net_loan(faction1, faction2, turns * payment, payment);
-        net_energy(faction1, amount, faction2, -amount, 1);
-    }
+    // Energy trade rejected for any reason / DiploCounterFriendship
+    X_dialog(random(2) ? "REJENERGY0" : "REJENERGY1", faction2);
     return 0;
 }
 
-int tech_ask_value(int faction1, int faction2, int tech_id, bool high_price)
-{
-    CTech& tech = Tech[tech_id];
-    Faction& f_plr = Factions[faction1];
-    Faction& f_cmp = Factions[faction2];
-
-    int level = clamp(tech_level(tech_id, 0), 1, 16);
-    int owners = __builtin_popcount(TechOwners[tech_id]);
-    int weights = clamp((f_cmp.AI_growth + 1) * tech.AI_growth
-        + (f_cmp.AI_power + 1) * tech.AI_power
-        + (f_cmp.AI_tech + 1) * tech.AI_tech
-        + (f_cmp.AI_wealth + 1) * tech.AI_wealth, 0, 32);
-    int value = (20 + 35*level + 4*level*level)
-        * (64 + weights/2 + *DiffLevel*4
-        + max(0, clamp(*DiploFriction, 0, 20)
-        + 8*diplo_relation(faction1, faction2)
-        + 4*f_plr.atrocities)) / 64;
-
-    if (*GameRules & RULES_TECH_STAGNATION) {
-        value = value * 3 / 2;
-    }
-    if (high_price) {
-        value = value * 3 / 2;
-    }
-    if (f_plr.ranking > 5) {
-        value = value * 5 / 4;
-    }
-    if (f_plr.pop_total > f_cmp.pop_total) {
-        value = value * 5 / 4;
-    }
-    if (owners > 1) {
-        value = value * 3 / 4;
-    }
-    if (has_pact(faction1, faction2)) {
-        value = value * 3 / 4;
-    }
-    if (conf.revised_tech_cost && f_plr.tech_research_id == tech_id) {
-        value = (int)(value * (1.0 - clamp(
-            1.0 * f_plr.tech_accumulated / tech_cost(faction1, tech_id), 0.0, 0.7)));
-    }
-    value = (value + 24) / 25 * 25;
-
-    debug("tech_ask_value %d %d level: %d owners: %d weights: %d value: %d tech: %d %s\n",
-    faction1, faction2, level, owners, weights, value, tech_id, Tech[tech_id].name);
-    flushlog();
-    return value;
-}
-
-int __cdecl mod_buy_tech(int faction1, int faction2, int counter_id, bool high_price, int proposal_id)
+int __cdecl mod_buy_tech(int faction1, int faction2, int counter_id, int high_price, int proposal_id)
 {
     Faction& f_plr = Factions[faction1];
     Faction& f_cmp = Factions[faction2];
@@ -417,12 +503,33 @@ int __cdecl mod_buy_tech(int faction1, int faction2, int counter_id, bool high_p
             X_dialog(random(2) ? "REJTECHLATER0" : "REJTECHLATER1", faction2);
             return 1; // skip additional dialog replies
         }
-        int value = tech_ask_value(faction1, faction2, *diplo_tech_id1, high_price);
-        if (value < 1) {
-            return 0;
+        int value = (tech_alt_val(*diplo_tech_id1, faction2, 0) + 50)
+            * clamp(*DiffLevel + 3, 4, 8)
+            * clamp(32 + clamp(*DiploFriction, 0, 20)
+            + 4*diplo_relation(faction1, faction2)
+            + 2*f_plr.atrocities, 16, 96) / 256;
+        if (f_plr.ranking > f_cmp.ranking) {
+            value = value * 5 / 4;
         }
+        if (f_plr.pop_total > f_cmp.pop_total) {
+            value = value * 5 / 4;
+        }
+        if (has_treaty(faction1, faction2, DIPLO_PACT)) {
+            value = value * 3 / 4;
+        } else if (has_treaty(faction1, faction2, DIPLO_TREATY)) {
+            value = value * 7 / 8;
+        }
+        if (high_price) {
+            value = value * 5 / 4;
+        }
+        if (f_plr.tech_cost > 50 && f_plr.tech_research_id == *diplo_tech_id1) {
+            value = (int)(value * (1.0 - clamp(
+                1.0 * f_plr.tech_accumulated / f_plr.tech_cost, 0.0, 0.7)));
+        }
+        value = clamp((value / 25) * 25, 25, 10000);
+
         StrBuffer[0] = '\0';
-        say_tech((int)StrBuffer, *diplo_tech_id1, 1);
+        say_tech(StrBuffer, *diplo_tech_id1, 1);
         parse_says(0, StrBuffer, -1, -1);
         ParseNumTable[0] = value;
 
@@ -435,8 +542,8 @@ int __cdecl mod_buy_tech(int faction1, int faction2, int counter_id, bool high_p
             return 1;
         }
         if (X_dialog(random(2) ? "BUYTECH0" : "BUYTECH1", faction2) == 1) {
-            net_tech(faction1, *diplo_tech_id1, faction2, 1);
             net_energy(faction1, -value, faction2, value, 1);
+            net_tech(faction1, *diplo_tech_id1, faction2, 1);
         }
         return 1;
     }

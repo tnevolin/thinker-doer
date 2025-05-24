@@ -97,7 +97,7 @@ AdapEco, ; Technology for economic victory
 50,      ; Maximum % damage inflicted by arty versus units in base/bunker
 99,      ; Maximum % damage inflicted by arty versus units in open
 100,     ; Maximum % damage inflicted by arty versus units at sea
-1, 1     ; Numerator/Denominator for frequency of global warming (1,2 would be "half" normal warming).
+1, 2     ; Numerator/Denominator for frequency of global warming (1,2 would be "half" normal warming).
 2100     ; Normal starting year
 2600     ; Normal ending year for lowest 3 difficulty levels
 2500     ; Normal ending year for highest 3 difficulty levels
@@ -132,7 +132,7 @@ Sensor Array,     None,    Sensor Buoy,      None,     4,  Construct $STR0, O, O
 Fungus,           None,    Sea Fungus,       None,     6,  Remove $STR0,    F, F
 Fungus,           EcoEng,  Sea Fungus,       EcoEng,   6,  Plant $STR0,     F, Ctrl+F
 Condenser,        EcoEng,  Condenser,        Disable, 16,  Construct $STR0, N, N
-Echelon Mirror,   EcoEng,  Echelon Mirror,   Disable, 20,  Construct $STR0, E, Shift+E
+Echelon Mirror,   EcoEng,  Echelon Mirror,   Disable, 16,  Construct $STR0, E, Shift+E
 Thermal Borehole, Super,   Thermal Borehole, Disable, 16,  Construct $STR0, B, Shift+B
 Aquifer,          FldMod,  Aquifer,          Disable, 16,  Drill to $STR0,  Q, Q
 Raise Land,       EcoEng,  Raise Sea Floor,  EcoEng,  12,  Terraform UP,    ], ]]
@@ -641,7 +641,7 @@ Infantry Probe Team,    Infantry, Probe Team,   Scout,     11, 0, 0, Poly,    -1
 ; Cost  = Construction cost in minerals (x Minerals multiplier in RULES)
 ; Maint = Maintenance cost in energy per turn
 ; Preq  = Technology prerequisite (see TECHNOLOGY)
-; Free  = No longer supported.
+; Free  = Technology for free facility at new bases
 ; Effect= Brief description of effect
 ; ai-fight    = Corresponds with AI 'aggressiveness' setting of -1, 0, or 1
 ; ai-power    = 1 or 0 (interest in power)
