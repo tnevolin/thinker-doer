@@ -224,6 +224,7 @@ int __cdecl probe_has_renew(int faction_id, int faction_id_tgt) {
 }
 
 int probe_roll_value(int faction_id) {
+	
 	// [WTP]
 	/*
     int techs = 0;
@@ -238,14 +239,16 @@ int probe_roll_value(int faction_id) {
         + clamp(Factions[faction_id].SE_police, -3, 3);
 	*/
     return 10 * clamp(Factions[faction_id].SE_probe, -2, 3);
+    
 }
 
 int probe_active_turns(int /*faction1*/, int faction2) {
+	
 	// [WTP]
 	/*
     int value = clamp(15 + probe_roll_value(faction1) - probe_roll_value(faction2), 5, 50);
     */
-    int value = clamp(30 + probe_roll_value(faction2), 5, 50);
+    int value = clamp(40 - probe_roll_value(faction2), 10, 60);
     
     value = value * (4 + (*MapAreaTiles >= 4000) + (*MapAreaTiles >= 8000)) / 4;
     value = value * (4 + (*DiffLevel < DIFF_TRANSCEND) + (*DiffLevel < DIFF_THINKER)) / 4;

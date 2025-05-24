@@ -1658,10 +1658,10 @@ bool patch_setup(Config* cf) {
         write_bytes(0x526540, old_bytes, new_bytes, sizeof(new_bytes));
     }
     */
+    
     // [WTP]
-
     patch_setup_wtp(cf);
-
+	
     if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READ, &attrs)) {
         return false;
     }

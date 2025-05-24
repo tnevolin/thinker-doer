@@ -1900,7 +1900,7 @@ bool isLandArtilleryVehicle(int vehicleId)
 Computes base with optional worked tiles reset.
 Base compute may not pick optimal worker placement without worked tile reset.
 */
-void computeBase(int baseId, bool resetWorkedTiles)
+void computeBase(int baseId, bool resetWorkedTiles, MAP *excludedTile)
 {
 	assert(baseId >= 0 && baseId < *BaseCount);
 	
@@ -1914,7 +1914,9 @@ void computeBase(int baseId, bool resetWorkedTiles)
 	}
 	
 	set_base(baseId);
+	baseComputeExcludedTile = excludedTile;
 	base_compute(1);
+	baseComputeExcludedTile = nullptr;
 	
 	Profiling::stop("- computeBase");	
 	

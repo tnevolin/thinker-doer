@@ -178,8 +178,8 @@
 		<Unit filename="src/wtp_aiRoute.h" />
 		<Unit filename="src/wtp_aiTask.cpp" />
 		<Unit filename="src/wtp_aiTask.h" />
-		<Unit filename="src/wtp_engine.cpp" />
-		<Unit filename="src/wtp_engine.h" />
+		<Unit filename="src/wtp_base.cpp" />
+		<Unit filename="src/wtp_base.h" />
 		<Unit filename="src/wtp_game.cpp" />
 		<Unit filename="src/wtp_game.h" />
 		<Unit filename="src/wtp_mod.cpp" />

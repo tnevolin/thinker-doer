@@ -1,10 +1,10 @@
 #pragma once
 
+#include "main.h"
 #include <sstream>
 #include <iomanip>
 #include <map>
 #include "robin_hood.h"
-#include "main.h"
 #include "game.h"
 #include "lib/tree.hh"
 
@@ -16,67 +16,10 @@ struct Profile
 	clock_t startTime = 0;
 	clock_t totalTime = 0;
 	
-	void start()
-	{
-		if (DEBUG)
-		{
-			if (running)
-			{
-				debug("ERROR: Profile::start. Profile is RUNNING: %s\n", name.c_str());flushlog();
-				abort();
-			}
-			
-			running = true;
-			startTime = clock();
-			
-		}
-	}
-	void pause()
-	{
-		if (DEBUG)
-		{
-			if (!running)
-			{
-				debug("ERROR: Profile::pause. Profile is NOT RUNNING: %s\n", name.c_str());flushlog();
-				abort();
-			}
-			
-			running = false;
-			totalTime += clock() - startTime;
-			
-		}
-	}
-	void resume()
-	{
-		if (DEBUG)
-		{
-			if (running)
-			{
-				debug("ERROR: Profile::resume. Profile is RUNNING: %s\n", name.c_str());flushlog();
-				abort();
-			}
-			
-			running = true;
-			startTime = clock();
-			
-		}
-	}
-	void stop()
-	{
-		if (DEBUG)
-		{
-			if (!running)
-			{
-				debug("ERROR: Profile::stop. Profile is NOT RUNNING: %s\n", name.c_str());flushlog();
-				abort();
-			}
-			
-			running = false;
-			executionCount++;
-			totalTime += clock() - startTime;
-			
-		}
-	}
+	void start();
+	void pause();
+	void resume();
+	void stop();
 	
 };
 struct ProfileName
@@ -92,187 +35,19 @@ private:
 	
 	static tree<ProfileName> profiles;
 	
-	static Profile *getProfile(std::string name)
-	{
-		Profile *profile = nullptr;
-		
-		for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
-		{
-			if (iterator->name == name)
-			{
-				profile = &(iterator->profile);
-				break;
-			}
-		}
-		if (profile == nullptr)
-		{
-			debug("ERROR: Profile::getProfile. Profile is NOT FOUND: %s\n", name.c_str());flushlog();
-			abort();
-		}
-		
-		return profile;
-		
-	}
-	
-	static Profile *addTopProfile(std::string name)
-	{
-		Profile *profile = nullptr;
-		
-		for (tree<ProfileName>::sibling_iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
-		{
-			if (iterator->name == name)
-			{
-				profile = &(iterator->profile);
-				break;
-			}
-		}
-		
-		if (profile == nullptr)
-		{
-			profile = &(profiles.insert(profiles.end(), {name, {}})->profile);
-			profile->name = name;
-		}
-		
-		return profile;
-		
-	}
-	static Profile *addChildProfile(std::string name, std::string parentName)
-	{
-		// find parent iterator
-		
-		tree<ProfileName>::iterator parentIterator = nullptr;
-		
-		for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
-		{
-			if (iterator->name == parentName)
-			{
-				parentIterator = iterator;
-				break;
-			}
-		}
-		assert(parentIterator != nullptr);
-		
-		// find child profile
-		
-		Profile *profile = nullptr;
-		
-		for (tree<ProfileName>::sibling_iterator iterator = profiles.begin(parentIterator); iterator != profiles.end(parentIterator); iterator++)
-		{
-			if (iterator->name == name)
-			{
-				profile = &(iterator->profile);
-				break;
-			}
-		}
-		
-		if (profile == nullptr)
-		{
-			profile = &(profiles.append_child(parentIterator, {name, {}})->profile);
-			profile->name = name;
-		}
-		
-		return profile;
-		
-	}
+	static Profile *getProfile(std::string name);
+	static Profile *addTopProfile(std::string name);
+	static Profile *addChildProfile(std::string name, std::string parentName);
 	
 public:
 	
-	static void reset()
-	{
-		profiles.clear();
-	}
-	static void start(std::string name)
-	{
-		if (DEBUG)
-		{
-			if (profiles.empty())
-			{
-				profiles.insert(profiles.end(), {"", {}});
-			}
-			
-//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
-			Profile *profile = addTopProfile(name);
-			profile->start();
-			
-		}
-	}
-	static void start(std::string name, std::string parentName)
-	{
-		if (DEBUG)
-		{
-			if (profiles.empty())
-			{
-				profiles.insert(profiles.end(), {"", {}});
-			}
-			
-//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
-			Profile *profile = addChildProfile(name, parentName);
-			profile->start();
-			
-		}
-	}
-	static void pause(std::string name)
-	{
-		if (DEBUG)
-		{
-//			debug("Profiling(%s) - pause\n", name.c_str());flushlog();
-			Profile *profile = getProfile(name);
-			profile->pause();
-		}
-	}
-	static void resume(std::string name)
-	{
-		if (DEBUG)
-		{
-//			debug("Profiling(%s) - resume\n", name.c_str());flushlog();
-			Profile *profile = getProfile(name);
-			profile->resume();
-		}
-	}
-	static void stop(std::string name)
-	{
-		if (DEBUG)
-		{
-//			debug("Profiling(%s) - stop\n", name.c_str());flushlog();
-			Profile *profile = getProfile(name);
-			profile->stop();
-		}
-	}
-	
-	static void print()
-	{
-		debug("executionProfiles\n");
-		
-		for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
-		{
-			int depth = profiles.depth(iterator);
-			std::string const name = iterator->name;
-			Profile const &profile = iterator->profile;
-			
-			std::string prefixedName = std::string(4 * depth, ' ') + name;
-			std::string displayName = prefixedName + " " + std::string(std::max(0, NAME_LENGTH - 1 - (int)prefixedName.length()), '.');
-			int executionCount = profile.executionCount;
-			double totalExecutionTime = (double)profile.totalTime / (double)CLOCKS_PER_SEC;
-			double averageExecutionTime = (executionCount == 0 ? 0.0 : totalExecutionTime / (double)executionCount);
-			
-			debug
-			(
-				"\t%-*s"
-				"   count=%8d"
-				"   totalTime=%7.3f"
-				"   averageTime=%10.6f"
-				"\n"
-				, NAME_LENGTH, displayName.c_str()
-				, executionCount
-				, totalExecutionTime
-				, averageExecutionTime
-			);
-			
-		}
-		
-		flushlog();
-		
-	}
+	static void reset();
+	static void start(std::string name);
+	static void start(std::string name, std::string parentName);
+	static void pause(std::string name);
+	static void resume(std::string name);
+	static void stop(std::string name);
+	static void print();
 	
 };
 

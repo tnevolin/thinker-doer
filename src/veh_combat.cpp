@@ -337,7 +337,6 @@ int __cdecl mod_get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat
             && (Units[unit_id_atk].offense_value() < 0 || unit_id_atk == BSC_SPORE_LAUNCHER);
 		
 		// [WTP]
-		
 		if (conf.disable_current_base_morale_effect)
 		{
 			// disable Children Creche and Brood Pit morale effect
@@ -408,7 +407,6 @@ int __cdecl mod_get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat
             && (Units[unit_id_def].offense_value() < 0 || unit_id_def == BSC_SPORE_LAUNCHER);
 		
 		// [WTP]
-		
 		if (conf.disable_current_base_morale_effect)
 		{
 			// disable Children Creche and Brood Pit morale effect
@@ -449,7 +447,6 @@ int __cdecl mod_get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat
     
     // [WTP]
     // very green morale does not have defense bonus
-    
     if (conf.very_green_no_defense_bonus)
 	{
 		// no bonus
@@ -758,7 +755,6 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
 				
 				// [WTP]
 				// bunker ignores terrain if configured
-				
                 if (sq_def && sq_def->is_fungus()
 				&& (!conf.bunker_ignores_terrain || !sq_def->is_bunker()) // not bunker if configured
                 && (veh_atk->is_native_unit() || has_project(FAC_PHOLUS_MUTAGEN, faction_id_atk))
@@ -879,7 +875,6 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
 				
 				// [WTP]
 				// bunker ignores terrain if configured
-				
 				if (conf.bunker_ignores_terrain && sq_def && sq_def->is_bunker())
 				{
 					*VehBattleDisplayTerrain = NULL;
@@ -997,7 +992,9 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
                 	
                 	// [WTP]
                 	// bunker defense bonus
-//                    def_multi = 150;
+                	/*
+                    def_multi = 150;
+                    */
                     def_multi = 100 + (veh_id_atk >= 0 && veh_atk->triad() == TRIAD_AIR ? conf.bunker_bonus_aerial : conf.bunker_bonus_surface);
                     
                     display_def = label_get(358); // Bunker
@@ -1386,7 +1383,6 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
     
     // [WTP]
     // attacking non enemy vehicle is not considered an aggression or surprise attack if vehicle was in stack with legitimate enemy
-    
     bool stack_enemy = false;
     if (!(f_atk->diplo_status[faction_id_def] & DIPLO_VENDETTA))
 	{

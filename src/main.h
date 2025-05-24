@@ -320,7 +320,6 @@ struct Config {
     int debug_verbose = DEBUG; // internal variable
     
 	//  [WTP]
-	
     bool alternative_weapon_icon_selection_algorithm = false;
     // implemented in Thinker?
     bool alternative_prototype_cost_formula = false;
@@ -386,7 +385,6 @@ struct Config {
 	int science_projects_theoryofeverything_labs_bonus;
 	int science_projects_universaltranslator_labs_bonus;
 	bool disengagement_from_stack;
-	bool eco_damage_alternative_industry_effect_reduction_formula;
 	int pressure_dome_minerals = 0;
 	bool pressure_dome_recycling_tanks_bonus = 1;
 	int tech_trade_likeability = 0x12;
@@ -395,8 +393,6 @@ struct Config {
 	int aaa_range = -1;
 	bool base_psych_improved = false;
 	int base_psych_cost = 2;
-	bool base_psych_remove_drone_soft = false;
-	bool base_psych_specialist_content = false;
 	int base_psych_economy_conversion_ratio = 0;
 	int base_psych_facility_extra_power = 0;
 	int base_psych_police_extra_power = 0;
@@ -404,18 +400,16 @@ struct Config {
     int tree_farm_yield_bonus_forest[3] = {0,0,0};
     int hybrid_forest_yield_bonus_forest[3] = {0,0,0};
     bool recycling_tanks_mineral_multiplier = true;
-    int recycling_tanks_mineral_bonus_mining_platform = 0;
-    int recycling_tanks_mineral_bonus_regular_mine = 0;
-    int recycling_tanks_mineral_bonus_rocky_mine = 0;
     bool recycling_tanks_population_bonus;
     bool genejack_factory_mineral_multiplier = true;
     int genejack_factory_mineral_bonus_mining_platform = 0;
+    int genejack_factory_mineral_bonus_regular_mine = 0;
     int genejack_factory_mineral_bonus_rocky_mine = 0;
     int energy_multipliers_tree_farm[3] = {0,0,0};
     int energy_multipliers_hybrid_forest[3] = {0,0,0};
     int energy_multipliers_centauri_preserve[3] = {0,0,0};
     int energy_multipliers_temple_of_planet[3] = {0,0,0};
-    int echelon_mirror_bonus[2] = {1,1};
+    int echelon_mirror_bonus = 1;
     bool base_inefficiency_alternative = false;
     bool drone_riot_intensifies = true;
     double se_morale_excess_combat_bonus = 0;

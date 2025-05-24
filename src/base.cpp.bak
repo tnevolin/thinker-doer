@@ -2140,13 +2140,15 @@ int terraform_eco_damage(int base_id) {
         value += num * (2 - modifier) / 2;
     }
     return value;
+	
 }
 
 int mineral_output_modifier(int base_id) {
     int value = 0;
     
     // [WTP]
-    // Recycling Tanks can be a mineral multiplying facility
+    // Recycling Tanks could be a mineral multiplying facility
+    
     if (conf.recycling_tanks_mineral_multiplier && has_facility(FAC_RECYCLING_TANKS, base_id)) {
         value++;
     }
@@ -2157,13 +2159,9 @@ int mineral_output_modifier(int base_id) {
     if (has_fac_built(FAC_ROBOTIC_ASSEMBLY_PLANT, base_id)) {
         value++;
     }
-    
-    // [WTP]
-    // Genejack Factory can be NOT a mineral multiplying facility
     if (conf.genejack_factory_mineral_multiplier && has_fac_built(FAC_GENEJACK_FACTORY, base_id)) {
         value++;
     }
-    
     if (has_fac_built(FAC_NANOREPLICATOR, base_id)) {
         value++;
     }
@@ -2488,6 +2486,7 @@ int __cdecl mod_facility_avail(FacilityId item_id, int faction_id, int base_id, 
     	
     	// [WTP]
     	// allow building Recycle Tanks if it is not included into Pressure Dome
+    	
         return !conf.pressure_dome_recycling_tanks_bonus || !has_fac(FAC_PRESSURE_DOME, base_id, queue_count); // count as Recycling Tank, skip
         
     case FAC_TACHYON_FIELD:
@@ -2849,6 +2848,52 @@ int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx
 	{
 		return popb(label, flags, sound_id, pcx_filename, a5);
 	}
+	
+}
+
+// [WTP]
+// replacement specialist
+int findReplacementSpecialist(int factionId, int specialistId)
+{
+	CCitizen *specialist = &Citizen[specialistId];
+	
+	int bestSuperiorSpecialistId = -1;
+	int bestSuperiorSpecialistValue = 0;
+	int bestSpecialistId = -1;
+	int bestSpecialistValue = 0;
+	
+	for (int otherSpecialistId = 0; otherSpecialistId < MaxSpecialistNum; otherSpecialistId++)
+	{
+		CCitizen *otherSpecialist = &Citizen[otherSpecialistId];
+		
+		if (!has_tech(otherSpecialist->preq_tech, factionId) || has_tech(otherSpecialist->obsol_tech, factionId))
+			continue;
+		
+		int value =
+			std::min(specialist->econ_bonus, otherSpecialist->econ_bonus) + std::min(specialist->psych_bonus, otherSpecialist->psych_bonus) + std::min(specialist->labs_bonus, otherSpecialist->labs_bonus)
+			+ otherSpecialist->econ_bonus + otherSpecialist->psych_bonus + otherSpecialist->labs_bonus
+		;
+		
+		if (otherSpecialist->econ_bonus >= specialist->econ_bonus && otherSpecialist->psych_bonus >= specialist->psych_bonus && otherSpecialist->labs_bonus >= specialist->labs_bonus)
+		{
+			if (value > bestSuperiorSpecialistValue)
+			{
+				bestSuperiorSpecialistId = otherSpecialistId;
+				bestSuperiorSpecialistValue = value;
+			}
+		}
+		else
+		{
+			if (value > bestSpecialistValue)
+			{
+				bestSpecialistId = otherSpecialistId;
+				bestSpecialistValue = value;
+			}
+		}
+		
+	}
+	
+	return bestSuperiorSpecialistId != -1 ? bestSuperiorSpecialistId : bestSpecialistId != -1 ? bestSpecialistId : specialistId;
 	
 }
 
