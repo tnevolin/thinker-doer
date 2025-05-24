@@ -6,14 +6,12 @@
 #include <map>
 #include <regex>
 #include "main.h"
-#include "wtp_terranx.h"
-#include "wtp_mod.h"
-#include "patch.h"
-#include "engine.h"
-#include "wtp_game.h"
-#include "wtp_ai.h"
 #include "tech.h"
 #include "patch.h"
+#include "wtp_terranx.h"
+#include "wtp_game.h"
+#include "wtp_mod.h"
+#include "wtp_ai.h"
 #include "wtp_aiMove.h"
 
 // Profiling
@@ -883,7 +881,7 @@ int wtp_tech_cost(int fac, int tech)
         base
         * (double)m->rule_techcost / 100.0
         * (*GameRules & RULES_TECH_STAGNATION ? 1.5 : 1.0)
-        * (double)Rules->rules_tech_discovery_rate / 100.0
+        * (double)Rules->tech_discovery_rate / 100.0
     ;
 	
     double dw;
@@ -1100,7 +1098,7 @@ __cdecl char *getAbilityCostText(int cost, char *destination, int radix)
 Wraps social_calc.
 This is initially for CV GROWTH effect.
 */
-__cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly)
+__cdecl void modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly)
 {
 	// old cost factors (for accumulated resources adjustment below)
 	
@@ -1109,7 +1107,7 @@ __cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, in
 	
 	// execute original code
 	
-	int value = social_calc(seSelectionsPointer, seRatingsPointer, factionId, ignored4, seChoiceEffectOnly);
+	social_calc((CSocialCategory *) seSelectionsPointer, (CSocialEffect *) seRatingsPointer, factionId, ignored4, seChoiceEffectOnly);
 	
 	// CV changes GROWTH rate if configured
 	
@@ -1198,10 +1196,6 @@ __cdecl int modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, in
 		}
 		
 	}
-	
-	// return original value
-	
-	return value;
 	
 }
 
@@ -2260,7 +2254,7 @@ int __cdecl modifiedMindControlCost(int baseId, int probeFactionId, int cornerMa
 
 	// previous MC factor
 
-	mindControlCost *= 1.0 + (0.1 * (double)(baseFaction->subvert_total / 4));
+	mindControlCost *= 1.0 + (0.1 * (double)(baseFaction->mind_control_total / 4));
 
 	// recapturing factor
 
@@ -3997,14 +3991,14 @@ int __cdecl wtp_mod_enemy_diplomacy(int factionId)
 /*
 Increases global friction as a probe actions consequence.
 */
-int __cdecl wtp_mod_probe_treaty_on(int faction1Id, int faction2Id, int treaty)
+void __cdecl wtp_mod_probe_treaty_on(int faction1Id, int faction2Id, int treaty)
 {
 	debug("wtp_mod_probe_treaty_on\n");
 	
-	int returnValue = treaty_on(faction1Id, faction2Id, treaty);
+	treaty_on(faction1Id, faction2Id, treaty);
 	
 	if (conf.diplomacy_probe_action_vendetta_global_friction <= 0)
-		return returnValue;
+		return;
 	
 	bool human1 = is_human(faction1Id);
 	bool human2 = is_human(faction2Id);
@@ -4065,8 +4059,6 @@ int __cdecl wtp_mod_probe_treaty_on(int faction1Id, int faction2Id, int treaty)
 		flushlog();
 		
 	}
-	
-	return returnValue;
 	
 }
 
@@ -4202,9 +4194,9 @@ int __cdecl wtp_mod_action_terraform(int vehicleId, int action, int execute)
 	
 }
 
-int __thiscall wtp_mod_Console_go_to(Console* This, int a1, int a2, int a3)
+int __thiscall wtp_mod_Console_go_to(Console* This, int a2, int a3)
 {
-	int returnValue = Console_go_to(This, a1, a2, a3);
+	int returnValue = Console_go_to(This, a2, a3);
 	
 	// reset Psi Gate use flag in all bases
 	

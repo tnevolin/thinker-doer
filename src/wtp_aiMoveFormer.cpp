@@ -181,9 +181,9 @@ void setupTerraformingData()
 	
 	// bareLandScore
 	
-	int forestNutrient = ResInfo->forest_sq_nutrient + (isFactionHasTech(aiFactionId, Facility[FAC_TREE_FARM].preq_tech) ? 1 : 0) + (isFactionHasTech(aiFactionId, Facility[FAC_HYBRID_FOREST].preq_tech) ? 1 : 0);
-	int forestMineral = ResInfo->forest_sq_mineral;
-	int forestEnergy = ResInfo->forest_sq_energy + (isFactionHasTech(aiFactionId, Facility[FAC_HYBRID_FOREST].preq_tech) ? 1 : 0);
+	int forestNutrient = ResInfo->forest_sq.nutrient + (isFactionHasTech(aiFactionId, Facility[FAC_TREE_FARM].preq_tech) ? 1 : 0) + (isFactionHasTech(aiFactionId, Facility[FAC_HYBRID_FOREST].preq_tech) ? 1 : 0);
+	int forestMineral = ResInfo->forest_sq.mineral;
+	int forestEnergy = ResInfo->forest_sq.energy + (isFactionHasTech(aiFactionId, Facility[FAC_HYBRID_FOREST].preq_tech) ? 1 : 0);
 	double forestScore = getTerraformingResourceScore(forestNutrient, forestMineral, forestEnergy);
 	
 	double fungusScore = 0.0;
@@ -210,7 +210,7 @@ void setupTerraformingData()
 	
 	// bareMineScore
 	
-	int mineNutrient = ResInfo->improved_land_nutrient + (isFactionHasTech(aiFactionId, Terraform[FORMER_SOIL_ENR].preq_tech) ? 1 : 0) + Rules->nutrient_effect_mine_sq;
+	int mineNutrient = ResInfo->improved_land.nutrient + (isFactionHasTech(aiFactionId, Terraform[FORMER_SOIL_ENR].preq_tech) ? 1 : 0) + Rules->nutrient_effect_mine_sq;
 	int mineMineral = 1;
 	int mineEnergy = 0;
 	
@@ -218,7 +218,7 @@ void setupTerraformingData()
 	
 	// bareSolarScore
 	
-	int solarNutrient = ResInfo->improved_land_nutrient + (isFactionHasTech(aiFactionId, Terraform[FORMER_SOIL_ENR].preq_tech) ? 1 : 0);
+	int solarNutrient = ResInfo->improved_land.nutrient + (isFactionHasTech(aiFactionId, Terraform[FORMER_SOIL_ENR].preq_tech) ? 1 : 0);
 	int solarMineral = 0;
 	int solarEnergy = 1 + (isFactionHasTech(aiFactionId, Terraform[FORMER_ECH_MIRROR].preq_tech) ? 2 : 0);
 	
@@ -4434,7 +4434,7 @@ bool isWorkableTile(MAP *tile)
 
 	// exclude volcano mouth
 
-	if ((tile->landmarks & LM_VOLCANO) && (tile->art_ref_id == 0))
+	if ((tile->landmarks & LM_VOLCANO) && (tile->code_at() == 0))
 		return false;
 
 	// exclude claimed territory
@@ -4491,7 +4491,7 @@ bool isValidTerraformingSite(MAP *tile)
 	
 	// exclude volcano mouth
 	
-	if ((tile->landmarks & LM_VOLCANO) && (tile->art_ref_id == 0))
+	if ((tile->landmarks & LM_VOLCANO) && (tile->code_at() == 0))
 		return false;
 	
 	// exclude claimed territory

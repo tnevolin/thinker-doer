@@ -26,8 +26,8 @@ bool voice_of_planet() {
     return project_base(FAC_VOICE_OF_PLANET) != SP_Unbuilt;
 }
 
-bool valid_player(int faction) {
-    return faction > 0 && faction < MaxPlayerNum;
+bool valid_player(int faction_id) {
+    return faction_id > 0 && faction_id < MaxPlayerNum;
 }
 
 bool valid_triad(int triad) {
@@ -35,7 +35,7 @@ bool valid_triad(int triad) {
 }
 
 char* label_get(size_t index) {
-    return (*TextLabels)[index];
+    return (TextLabels->labels)[index];
 }
 
 char* __cdecl parse_set(int faction_id) {
@@ -67,7 +67,7 @@ int __cdecl parse_says(size_t index, const char* src, int gender, int plural) {
        plural = *plurality_default;
    }
    ParseStrPlurality[index] = plural;
-   strncpy((char*)&ParseStrBuffer[index], src, StrBufLen);
+   strcpy_n(ParseStrBuffer[index].str, StrBufLen, src);
    return 0;
 }
 
@@ -93,151 +93,6 @@ void __cdecl bitmask(uint32_t input, uint32_t* offset, uint32_t* mask) {
     *mask = 1 << (input & 7);
 }
 
-/*
-Calculate nutrient/mineral cost factors for base production.
-If the player faction is ranked first in the original game, the AI factions will get
-additional growth/industry bonuses. This can be optionally skipped with simple_cost_factor option.
-*/
-int __cdecl mod_cost_factor(int faction_id, BaseResType type, int base_id) {
-    int value;
-    int multiplier = (type == RSC_NUTRIENT ?
-        Rules->nutrient_cost_multi : Rules->mineral_cost_multi);
-
-    if (is_human(faction_id)) {
-        value = multiplier;
-    } else {
-        value = CostRatios[*DiffLevel];
-        if (!conf.simple_cost_factor) {
-            value -= (great_satan(FactionRankings[7], 0) != 0);
-            value -= (!*MultiplayerActive && is_human(FactionRankings[7]));
-        }
-        value = multiplier * value / 10;
-    }
-    if (*MapSizePlanet == 0) {
-        value = 8 * value / 10;
-    } else if (*MapSizePlanet == 1) {
-        value = 9 * value / 10;
-    }
-    if (type == RSC_MINERAL) {
-        switch (Factions[faction_id].SE_industry_pending) {
-            case -7:
-            case -6:
-            case -5:
-            case -4:
-            case -3:
-                value = (13 * value + 9) / 10;
-                break;
-            case -2:
-                value = (6 * value + 4) / 5;
-                break;
-            case -1:
-                value = (11 * value + 9) / 10;
-                break;
-            case 0:
-                break;
-            case 1:
-                value = (9 * value + 9) / 10;
-                break;
-            case 2:
-                value = (4 * value + 4) / 5;
-                break;
-            case 3:
-                value = (7 * value + 9) / 10;
-                break;
-            case 4:
-                value = (3 * value + 4) / 5;
-                break;
-            default: // +5 Industry or better
-                value = (value + 1) / 2;
-        }
-    } else if (type == RSC_NUTRIENT) {
-        int growth = Factions[faction_id].SE_growth_pending;
-        if (base_id >= 0) {
-            growth = Bases[base_id].SE_growth(SE_Pending);
-        }
-        
-        // [WTP]
-        // GROWTH modifed min-max
-        value = (value * (10 - clamp(growth, conf.se_growth_rating_min, conf.se_growth_rating_max)) + 9) / 10;
-        
-    }
-    return value;
-}
-
-/*
-Calculate the energy loss/inefficiency for the given energy intake in the base.
-This function modifies the parameters to avoid writing on the global game state.
-*/
-int __cdecl mod_black_market(int base_id, int energy, int* effic_energy_lost) {
-    BASE* base = &Bases[base_id];
-    if (energy <= 0) {
-        return 0;
-    }
-    int dist_hq;
-    int head_id = find_hq(base->faction_id);
-    if (head_id >= 0) {
-        dist_hq = vector_dist(Bases[head_id].x, Bases[head_id].y, base->x, base->y);
-    } else {
-    	// [WTP]
-    	// no HQ distance is half of equatorial circumference
-//        dist_hq = 16;
-        dist_hq = *MapAreaX * 3 / 4;
-    }
-    if (dist_hq == 0) {
-        return 0;
-    }
-    bool has_creche = has_fac_built(FAC_CHILDREN_CRECHE, base_id);
-    
-    // [WTP]
-    // alternative inefficiency
-    
-    double const energy_radius_a = (double)*MapAreaX * 3.0 / 4.0;
-    double const energy_radius_b = 1.3;
-    
-    if (conf.base_inefficiency_alternative)
-	{
-		if (effic_energy_lost != NULL) {
-			for (int i = 0; i < 9; i++) {
-				int se_efficiency = 4 - i
-					+ (has_creche ? 2 : 0) // +2 on efficiency scale
-				;
-				double energy_radius = energy_radius_a * pow(energy_radius_b, (double)se_efficiency);
-				effic_energy_lost[i] += clamp((int)round((double)energy * (double)dist_hq / energy_radius), 0, energy);
-			}
-		}
-		int se_efficiency = Factions[base->faction_id].SE_effic_pending
-			+ (has_creche ? 2 : 0) // +2 on efficiency scale
-		;
-		double energy_radius = ((double)*MapAreaX * 3.0 / 8.0) * pow(1.3, (double)se_efficiency);
-		return clamp((int)round((double)energy * (double)dist_hq / energy_radius), 0, energy);
-	}
-	else
-	{
-    if (effic_energy_lost != NULL) {
-        for (int i = 0; i < 9; i++) {
-            int factor;
-            if (has_creche) {
-                factor = 10 - i; // +2 on efficiency scale
-            } else {
-                factor = 8 - i;
-            }
-            if (factor <= 0) {
-                effic_energy_lost[i] += energy;
-            } else {
-                effic_energy_lost[i] += energy * dist_hq / (8 * factor);
-            }
-        }
-    }
-    int factor = 4 + Factions[base->faction_id].SE_effic_pending
-        + (has_creche ? 2 : 0); // +2 on efficiency scale
-    if (factor <= 0) {
-        return energy;
-    }
-    return clamp(energy * dist_hq / (8 * factor), 0, energy);
-	}
-	
-}
-
 void init_world_config() {
     ThinkerVars->game_time_spent = 0;
     /*
@@ -258,9 +113,9 @@ void show_rules_menu() {
     custom_more_rules = *GameMoreRules & ~GAME_MRULES_MASK;
 }
 
-void init_save_game(int faction) {
-    MFaction* m = &MFactions[faction];
-    if (!faction) {
+void init_save_game(int faction_id) {
+    MFaction* m = &MFactions[faction_id];
+    if (!faction_id) {
         return;
     }
     if (!*CurrentTurn) {
@@ -270,12 +125,27 @@ void init_save_game(int faction) {
     m->thinker_unused[1] = 0;
     m->thinker_unused[2] = 0;
     /*
+    COMMFREQ = Gets an extra comm frequency (another faction to talk to) at beginning of game.
+    */
+    if (m->rule_flags & RFLAG_COMMFREQ && *CurrentTurn == 1) {
+        std::set<int> plrs;
+        for (int i = 1; i < MaxPlayerNum; i++) {
+            if (faction_id != i && is_alive(i)) {
+                plrs.insert({i});
+            }
+        }
+        if (plrs.size()) {
+            int plr_id = pick_random(plrs);
+            net_set_treaty(faction_id, plr_id, DIPLO_COMMLINK, 1, 0);
+        }
+    }
+    /*
     Remove invalid prototypes from the savegame.
     This also attempts to repair invalid vehicle stacks to prevent game crashes.
     Stack iterators should never contain infinite loops or vehicles from multiple tiles.
     */
     for (int i = 0; i < MaxProtoFactionNum; i++) {
-        int unit_id = faction*MaxProtoFactionNum + i;
+        int unit_id = faction_id*MaxProtoFactionNum + i;
         UNIT* u = &Units[unit_id];
         if (strlen(u->name) >= MaxProtoNameLen
         || u->chassis_id < CHS_INFANTRY
@@ -374,35 +244,47 @@ void __cdecl mod_auto_save() {
     }
 }
 
-int __cdecl mod_faction_upkeep(int faction) {
-    Faction* f = &Factions[faction];
-    MFaction* m = &MFactions[faction];
-    debug("faction_upkeep %d %d\n", *CurrentTurn, faction);
+/*
+Store base related events for the endgame replay screen.
+0 = create base, 1 = change base owner, 2 = kill base.
+*/
+int __cdecl mod_replay_base(int event, int x, int y, int faction_id) {
+    assert(mapsq(x, y) && event >= 0 && event <= 2);
+    debug("replay_base %d %d %d %d %d %d\n",
+        *ReplayEventSize, *CurrentTurn, event, faction_id, x, y);
+    ReplayEvent* p = &ReplayEvents[*ReplayEventSize/8];
+    if (*ReplayEventSize >= 0 && *ReplayEventSize < 8192) {
+        p->event = event;
+        p->faction_id = faction_id;
+        p->turn = *CurrentTurn;
+        p->x = x;
+        p->y = y;
+        *ReplayEventSize += 8;
+    }
+    return *ReplayEventSize;
+}
 
-    init_save_game(faction);
-    plans_upkeep(faction);
+int __cdecl mod_faction_upkeep(int faction_id) {
+    Faction* f = &Factions[faction_id];
+    MFaction* m = &MFactions[faction_id];
+    debug("faction_upkeep %d %d\n", *CurrentTurn, faction_id);
+
+    init_save_game(faction_id);
+    plans_upkeep(faction_id);
     reset_netmsg_status();
     *ControlUpkeepA = 1;
-    social_upkeep(faction);
+    social_upkeep(faction_id);
     do_all_non_input();
-
-    if (conf.activate_skipped_units) {
-        for (int i = 0; i < *VehCount; i++) {
-            if (Vehs[i].faction_id == faction) {
-                Vehs[i].flags &= ~VFLAG_FULL_MOVE_SKIPPED;
-            }
-        }
-    }
-    mod_repair_phase(faction);
+    mod_repair_phase(faction_id);
     do_all_non_input();
-    mod_production_phase(faction);
+    mod_production_phase(faction_id);
     do_all_non_input();
     if (!(*GameState & STATE_GAME_DONE) || *GameState & STATE_FINAL_SCORE_DONE) {
-        allocate_energy(faction);
+        allocate_energy(faction_id);
         do_all_non_input();
-        enemy_diplomacy(faction);
+        enemy_diplomacy(faction_id);
         do_all_non_input();
-        enemy_strategy(faction);
+        enemy_strategy(faction_id);
         do_all_non_input();
         /*
         Thinker-specific AI planning routines.
@@ -410,16 +292,15 @@ int __cdecl mod_faction_upkeep(int faction) {
         so that the movement code can utilize up-to-date priority maps.
         This means we cannot use move_upkeep maps or variables in production phase.
         */
-        mod_social_ai(faction, -1, -1, -1, -1, 0);
-        probe_upkeep(faction);
-        move_upkeep(faction, UM_Full);
+        mod_social_ai(faction_id, -1, -1, -1, -1, 0);
+        probe_upkeep(faction_id);
+        move_upkeep(faction_id, (is_human(faction_id) ? UM_Player : UM_Full));
         do_all_non_input();
 
-        if (!is_human(faction)) {
-            int cost = corner_market(faction);
-            if (!victory_done() && f->energy_credits > cost && f->corner_market_active < 1
-            && has_tech(Rules->tech_preq_economic_victory, faction)
-            && *GameRules & RULES_VICTORY_ECONOMIC) {
+        if (!is_human(faction_id) && *GameRules & RULES_VICTORY_ECONOMIC
+        && has_tech(Rules->tech_preq_economic_victory, faction_id)) {
+            int cost = corner_market(faction_id);
+            if (!victory_done() && f->corner_market_active <= 0 && f->energy_credits > cost) {
                 f->corner_market_turn = *CurrentTurn + Rules->turns_corner_global_energy_market;
                 f->corner_market_active = cost;
                 f->energy_credits -= cost;
@@ -432,45 +313,45 @@ int __cdecl mod_faction_upkeep(int faction) {
                 parse_says(2, m->noun_faction, -1, -1);
                 parse_says(3, m->adj_name_faction, -1, -1);
                 ParseNumTable[0] = game_year(f->corner_market_turn);
-                popp("SCRIPT", "CORNERWARNING", 0, "econwin_sm.pcx", 0);
+                popp(ScriptFile, "CORNERWARNING", 0, "econwin_sm.pcx", 0);
             }
         }
     }
-    for (int i = 0; i<*BaseCount; i++) {
+    for (int i = 0; i < *BaseCount; i++) {
         BASE* base = &Bases[i];
-        if (base->faction_id == faction) {
+        if (base->faction_id == faction_id) {
             base->state_flags &= ~(BSTATE_UNK_1 | BSTATE_HURRY_PRODUCTION);
         }
     }
-    f->energy_credits -= f->energy_cost;
-    f->energy_cost = 0;
+    f->energy_credits -= f->hurry_cost_total;
+    f->hurry_cost_total = 0;
     if (f->energy_credits < 0) {
         f->energy_credits = 0;
     }
-    if (!f->base_count && !has_active_veh(faction, PLAN_COLONY)) {
-        eliminate_player(faction, 0);
+    if (!f->base_count && !has_active_veh(faction_id, PLAN_COLONY)) {
+        mod_eliminate_player(faction_id, 0);
     }
     if (f->base_count && f->tech_research_id < 0 && *NetUpkeepState != 1
     && !(*GameRules & RULES_SCN_NO_TECH_ADVANCES)) {
-        tech_selection(faction);
+        tech_selection(faction_id);
     }
     *ControlUpkeepA = 0;
     Paths->xDst = -1;
     Paths->yDst = -1;
 
     if (!(*GameState & STATE_GAME_DONE) || *GameState & STATE_FINAL_SCORE_DONE) {
-        if (faction == MapWin->cOwner
+        if (faction_id == MapWin->cOwner
         && !(*GameState & (STATE_COUNCIL_HAS_CONVENED | STATE_DISPLAYED_COUNCIL_AVAIL_MSG))
-        && can_call_council(faction, 0) && !(*GameState & STATE_GAME_DONE)) {
+        && can_call_council(faction_id, 0) && !(*GameState & STATE_GAME_DONE)) {
             *GameState |= STATE_DISPLAYED_COUNCIL_AVAIL_MSG;
-            popp("SCRIPT", "COUNCILOPEN", 0, "council_sm.pcx", 0);
+            popp(ScriptFile, "COUNCILOPEN", 0, "council_sm.pcx", 0);
         }
-        if (!is_human(faction)) {
-            call_council(faction);
+        if (!is_human(faction_id)) {
+            call_council(faction_id);
         }
     }
     if (!*MultiplayerActive && *GamePreferences & PREF_BSC_AUTOSAVE_EACH_TURN
-    && faction == MapWin->cOwner) {
+    && faction_id == MapWin->cOwner) {
         auto_save();
     }
     flushlog();
@@ -495,6 +376,9 @@ void __cdecl mod_repair_phase(int faction_id) {
         veh->flags &= ~VFLAG_UNK_1000;
         veh->state &= ~(VSTATE_WORKING|VSTATE_UNK_2000|VSTATE_UNK_2);
 
+        if (conf.activate_skipped_units) {
+            veh->flags &= ~VFLAG_FULL_MOVE_SKIPPED;
+        }
         if (sq && !at_base) {
             if (veh->faction_id == MapWin->cOwner || veh->is_visible(MapWin->cOwner)) {
                 tiles.insert({veh->x, veh->y});
@@ -509,9 +393,8 @@ void __cdecl mod_repair_phase(int faction_id) {
             }
         }
         if (veh->order == ORDER_SENTRY_BOARD || veh->order == ORDER_HOLD) {
-            if (veh->waypoint_1_y) {
-                veh->waypoint_1_y--;
-                if (!veh->waypoint_1_y) {
+            if (veh->waypoint_y[0]) {
+                if (!--veh->waypoint_y[0]) {
                     veh->order = ORDER_NONE;
                 }
             }
@@ -535,7 +418,8 @@ void __cdecl mod_repair_phase(int faction_id) {
         int base_id = base_at(veh->x, veh->y);
 
         if (veh->unit_id != BSC_FUNGAL_TOWER) {
-            if (veh->is_native_unit() && sq->is_fungus() && sq->alt_level() >= ALT_OCEAN_SHELF) {
+            if (veh->is_native_unit() && sq->is_fungus()) {
+                assert(sq->alt_level() >= ALT_OCEAN_SHELF);
                 value = conf.repair_fungus;
             }
             if (conf.repair_friendly > 0
@@ -558,7 +442,7 @@ void __cdecl mod_repair_phase(int faction_id) {
                 || (triad == TRIAD_AIR && has_facility(FAC_AEROSPACE_COMPLEX, base_id))) {
                     value += conf.repair_base_facility;
                 }
-            } else if (breed_level(base_id, faction_id)) {
+            } else if (breed_mod(base_id, faction_id)) {
                 value += conf.repair_base_native;
             }
         }
@@ -588,7 +472,8 @@ void __cdecl mod_repair_phase(int faction_id) {
 
         if (faction_id && !repair_abl && base_id < 0 && !has_project(FAC_NANO_FACTORY, faction_id)) {
             repair_limit = 2 * veh->reactor_type();
-            if (sq->is_fungus() && sq->alt_level() >= ALT_OCEAN_SHELF) {
+            if (sq->is_fungus()) {
+                assert(sq->alt_level() >= ALT_OCEAN_SHELF);
                 if (veh->is_native_unit()) {
                     repair_limit = 0;
                 }
@@ -626,11 +511,6 @@ void __cdecl mod_production_phase(int faction_id) {
 
     for (int i = 1; i < MaxPlayerNum; i++) {
         if (faction_id != i && is_alive(faction_id) && is_alive(i)) {
-			
-			// make loan balance non negative
-			
-			f->loan_balance[i] = std::max(0, f->loan_balance[i]);
-			
             assert(f->loan_balance[i] >= 0);
             if (f->loan_balance[i] && !Factions[i].sanction_turns) {
                 assert(f->loan_payment[i] > 0);
@@ -757,10 +637,9 @@ Generate a base name. Uses additional base names from basenames folder.
 When faction base names are used, creates additional variations from basenames/generic.txt.
 First land/sea base always uses the first available name from land/sea names list.
 Vanilla name_base chooses sea base names in a sequential non-random order (this version is random).
-Original Offset: 004E4090
 */
-void __cdecl mod_name_base(int faction, char* name, bool save_offset, bool sea_base) {
-    Faction& f = Factions[faction];
+void __cdecl mod_name_base(int faction_id, char* name, bool save_offset, bool sea_base) {
+    Faction& f = Factions[faction_id];
     uint32_t offset = f.base_name_offset;
     uint32_t offset_sea = f.base_sea_name_offset;
     const int buf_size = 1024;
@@ -769,13 +648,13 @@ void __cdecl mod_name_base(int faction, char* name, bool save_offset, bool sea_b
     set_str_t all_names;
     vec_str_t sea_names;
     vec_str_t land_names;
-    snprintf(file_name_1, buf_size, "%s.txt", MFactions[faction].filename);
-    snprintf(file_name_2, buf_size, "basenames\\%s.txt", MFactions[faction].filename);
+    snprintf(file_name_1, buf_size, "%s.txt", MFactions[faction_id].filename);
+    snprintf(file_name_2, buf_size, "basenames\\%s.txt", MFactions[faction_id].filename);
     strlwr(file_name_1);
     strlwr(file_name_2);
 
     for (int i = 0; i < *BaseCount; i++) {
-        if (Bases[i].faction_id == faction) {
+        if (Bases[i].faction_id == faction_id) {
             all_names.insert(Bases[i].name);
         }
     }
@@ -785,7 +664,7 @@ void __cdecl mod_name_base(int faction, char* name, bool save_offset, bool sea_b
 
         if (sea_names.size() > 0 && offset_sea < sea_names.size()) {
             for (uint32_t i = 0; i < sea_names.size(); i++) {
-                uint32_t seed = offset_next(faction, offset_sea + i, sea_names.size());
+                uint32_t seed = offset_next(faction_id, offset_sea + i, sea_names.size());
                 if (seed < sea_names.size()) {
                     vec_str_t::const_iterator it(sea_names.begin());
                     std::advance(it, seed);
@@ -810,7 +689,7 @@ void __cdecl mod_name_base(int faction, char* name, bool save_offset, bool sea_b
     }
     if (land_names.size() > 0 && offset < land_names.size()) {
         for (uint32_t i = 0; i < land_names.size(); i++) {
-            uint32_t seed = offset_next(faction, offset + i, land_names.size());
+            uint32_t seed = offset_next(faction_id, offset + i, land_names.size());
             if (seed < land_names.size()) {
                 vec_str_t::const_iterator it(land_names.begin());
                 std::advance(it, seed);
@@ -839,7 +718,7 @@ void __cdecl mod_name_base(int faction, char* name, bool save_offset, bool sea_b
     }
 
     for (int i = 0; i < 2*MaxBaseNum && land_names.size() > 0; i++) {
-        x = pair_hash(faction + MaxPlayerNum*f.base_name_offset, *MapRandomSeed + i);
+        x = pair_hash(faction_id + MaxPlayerNum*f.base_name_offset, *MapRandomSeed + i);
         a = ((x & 0xffff) * land_names.size()) >> 16;
         name[0] = '\0';
 
@@ -912,7 +791,4 @@ int __cdecl load_music_strcmpi(const char* active, const char* label)
     return strcmpi(label, lookup);
 }
 
-bool FileExists(const char* path) {
-    return GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES;
-}
 

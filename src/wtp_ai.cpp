@@ -247,7 +247,7 @@ void executeTasks()
 		
 		// skip not fully automated human player units
 		
-		if (aiFactionId == *CurrentPlayerFaction && !(conf.manage_player_units && ((vehicle->state & VSTATE_ON_ALERT) != 0) && vehicle->terraform_turns == 0))
+		if (aiFactionId == *CurrentPlayerFaction && !(conf.manage_player_units && ((vehicle->state & VSTATE_ON_ALERT) != 0) && vehicle->movement_turns == 0))
 			continue;
 
 		// do not execute combat tasks immediatelly
@@ -1627,10 +1627,10 @@ void populatePlayerGlobalVariables()
 			double labsMultiplier = getBaseLabsMultiplier(baseId);
 			double psychMultiplier = getBasePsychMultiplier(baseId);
 			
-			double baseSquareMineralIntake = (double)ResInfo->base_sq_mineral;
-			double baseSquareEconomyIntake = (double)ResInfo->base_sq_energy * energyEfficiencyCoefficient * economyAllocation;
-			double baseSquareLabsIntake = (double)ResInfo->base_sq_energy * energyEfficiencyCoefficient * labsAllocation;
-			double baseSquarePsychIntake = (double)ResInfo->base_sq_energy * energyEfficiencyCoefficient * psychAllocation;
+			double baseSquareMineralIntake = (double)ResInfo->base_sq.mineral;
+			double baseSquareEconomyIntake = (double)ResInfo->base_sq.energy * energyEfficiencyCoefficient * economyAllocation;
+			double baseSquareLabsIntake = (double)ResInfo->base_sq.energy * energyEfficiencyCoefficient * labsAllocation;
+			double baseSquarePsychIntake = (double)ResInfo->base_sq.energy * energyEfficiencyCoefficient * psychAllocation;
 			
 			double baseCitizensMineralIntake = base->mineral_intake - baseSquareMineralIntake;
 			double baseCitizensEconomyIntake = base->energy_intake_2 * energyEfficiencyCoefficient * economyAllocation - baseSquareEconomyIntake;
@@ -2135,7 +2135,7 @@ void populateDangerZones()
 		{
 		case TRIAD_AIR:
 			{
-				if (chassis.range > 0 && vehicle.terraform_turns + 1 >= chassis.range)
+				if (chassis.range > 0 && vehicle.movement_turns + 1 >= chassis.range)
 				{
 					// too long out of base
 					continue;
@@ -2267,7 +2267,7 @@ void populateDangerZones()
 		{
 		case TRIAD_AIR:
 			{
-				if (chassis.range > 0 && vehicle.terraform_turns + 1 >= chassis.range)
+				if (chassis.range > 0 && vehicle.movement_turns + 1 >= chassis.range)
 				{
 					// too long out of base
 					continue;
@@ -4392,7 +4392,7 @@ void designUnits()
 			{ABL_ID_POLICE_2X, ABL_ID_CLEAN_REACTOR, ABL_ID_AAA, ABL_ID_TRANCE, },
 		},
 		bestReactor,
-		PLAN_DEFENSIVE,
+		PLAN_DEFENSE,
 		NULL
 	);
 	
@@ -4410,7 +4410,7 @@ void designUnits()
 			{ABL_ID_TRANCE, ABL_ID_CLEAN_REACTOR, },
 		},
 		bestReactor,
-		PLAN_DEFENSIVE,
+		PLAN_DEFENSE,
 		NULL
 	);
 	
@@ -4463,7 +4463,7 @@ void designUnits()
 			{ABL_ID_DISSOCIATIVE_WAVE, ABL_ID_BLINK_DISPLACER, },
 		},
 		bestReactor,
-		PLAN_OFFENSIVE,
+		PLAN_OFFENSE,
 		NULL
 	);
 	
@@ -4479,7 +4479,7 @@ void designUnits()
 			{ABL_ID_ARTILLERY, },
 		},
 		bestReactor,
-		PLAN_OFFENSIVE,
+		PLAN_OFFENSE,
 		NULL
 	);
 	
@@ -5422,28 +5422,11 @@ double getMeleeRelativeUnitStrength(int attackerUnitId, int attackerFactionId, i
 	
 	// calculate relative strength
 	
-	double relativeStrength = 1.0;
+	double relativeStrength;
 	
 	if (attackerOffenseValue < 0 || defenderDefenseValue < 0)
 	{
-		switch ((Triad)attackerUnit->triad())
-		{
-		case TRIAD_LAND:
-			relativeStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
-			break;
-		
-		case TRIAD_SEA:
-			relativeStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
-			break;
-		
-		case TRIAD_AIR:
-			relativeStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
-			break;
-			
-		default:
-			relativeStrength = 1.0;
-		
-		}
+		relativeStrength = getPsiCombatBaseOdds(attackerUnit->triad());
 		
 		// reactor
 		// psi combat ignores reactor
@@ -5616,28 +5599,11 @@ double getArtilleryDuelRelativeUnitStrength(int attackerUnitId, int attackerFact
 	
 	// calculate relative strength
 	
-	double relativeStrength = 1.0;
+	double relativeStrength;
 	
 	if (attackerOffenseValue < 0 || defenderDefenseValue < 0)
 	{
-		switch ((Triad)attackerUnit->triad())
-		{
-		case TRIAD_LAND:
-			relativeStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
-			break;
-		
-		case TRIAD_SEA:
-			relativeStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
-			break;
-		
-		case TRIAD_AIR:
-			relativeStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
-			break;
-		
-		default:
-			relativeStrength = 1.0;
-			
-		}
+		relativeStrength = getPsiCombatBaseOdds(attackerUnit->triad());
 		
 		// reactor
 		// psi combat ignores reactor
@@ -5746,24 +5712,7 @@ double getUnitBombardmentDamage(int attackerUnitId, int attackerFactionId, int d
 	
 	if (attackerOffenseValue < 0 || defenderDefenseValue < 0)
 	{
-		switch ((Triad)attackerUnit->triad())
-		{
-		case TRIAD_LAND:
-			relativeStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
-			break;
-		
-		case TRIAD_SEA:
-			relativeStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
-			break;
-		
-		case TRIAD_AIR:
-			relativeStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
-			break;
-		
-		default:
-			relativeStrength = 1.0;
-			
-		}
+		relativeStrength = getPsiCombatBaseOdds(attackerUnit->triad());
 		
 		// reactor
 		// psi combat ignores reactor

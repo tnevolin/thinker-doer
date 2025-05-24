@@ -72,12 +72,12 @@ void fixUndesiredTransportDropoff()
 
 		// verify transportVehicleId is set
 
-		if (!((vehicle->state & VSTATE_IN_TRANSPORT) != 0 && vehicle->waypoint_1_y == 0 && vehicle->waypoint_1_x >= 0))
+		if (!((vehicle->state & VSTATE_IN_TRANSPORT) != 0 && vehicle->waypoint_y[0] == 0 && vehicle->waypoint_x[0] >= 0))
 			continue;
 
 		// get transportVehicleId
 
-		int transportVehicleId = vehicle->waypoint_1_x;
+		int transportVehicleId = vehicle->waypoint_x[0];
 
 		// verify transportVehicleId is within range
 
@@ -653,7 +653,7 @@ int __cdecl wtp_mod_ai_enemy_move(const int vehicleId)
 	
 	// choose AI logic
 	
-	if (isWtpEnabledFaction(vehicle->faction_id) || (aiFactionId == *CurrentPlayerFaction && conf.manage_player_units && ((vehicle->state & VSTATE_ON_ALERT) != 0) && vehicle->terraform_turns == 0))
+	if (isWtpEnabledFaction(vehicle->faction_id) || (aiFactionId == *CurrentPlayerFaction && conf.manage_player_units && ((vehicle->state & VSTATE_ON_ALERT) != 0) && vehicle->movement_turns == 0))
 	{
 		// run WTP AI code for AI eanbled factions or human player managed units
 		
