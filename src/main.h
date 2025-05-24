@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v4.6 - The Will to Power mod v372"
+    #define MOD_VERSION "Thinker Mod v5.0 - The Will to Power mod v372"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -50,13 +50,17 @@
     #define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
     #pragma GCC diagnostic ignored "-Wchar-subscripts"
     #pragma GCC diagnostic ignored "-Wattributes"
+    #pragma GCC diagnostic error "-Wreturn-type"
 #else
     #define UNUSED(x) UNUSED_ ## x
 #endif
 
 #include <assert.h>
-#include <stdint.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <inttypes.h>
 #include <windows.h>
 #include <limits.h>
 #include <time.h>
@@ -72,10 +76,10 @@
 #include <unordered_map>
 
 #define DLL_EXPORT extern "C" __declspec(dllexport)
-#define ModAppName "thinker"
 #define GameAppName "Alpha Centauri"
-#define ModIniFile ".\\thinker.ini"
 #define GameIniFile ".\\Alpha Centauri.ini"
+#define ModAppName "thinker"
+#define ModIniFile ".\\thinker.ini"
 
 #ifdef BUILD_DEBUG
 #ifdef assert
@@ -116,9 +120,23 @@ const int MaxWeaponNum = 26;
 const int MaxArmorNum = 14;
 const int MaxReactorNum = 4;
 const int MaxAbilityNum = 29;
+const int MaxMoraleNum = 7;
+const int MaxDefenseModeNum = 3;
+const int MaxOffenseModeNum = 3;
+const int MaxOrderNum = 30;
+const int MaxPlanNum = 15;
+const int MaxTriadNum = 3;
 
+const int MaxResourceInfoNum = 9;
+const int MaxTimeControlNum = 6;
+const int MaxCompassNum = 8;
+const int MaxResourceNum = 4;
+const int MaxEnergyNum = 3;
+
+const int MaxMandateNum = 4;
 const int MaxFacilityNum = 64; // 0 slot unused
 const int MaxSecretProjectNum = 64;
+const int MaxTerrainNum = 20;
 const int MaxSocialCatNum = 4;
 const int MaxSocialModelNum = 4;
 const int MaxSocialEffectNum = 11;
@@ -127,7 +145,9 @@ const int MaxCitizenNum = 10;
 const int MaxMoodNum = 9;
 const int MaxReputeNum = 8;
 const int MaxMightNum = 7;
+const int MaxBonusNum = 8;
 const int MaxBonusNameNum = 41;
+const int MaxProposalNum = 11;
 
 const int StrBufLen = 256;
 const int LineBufLen = 128;
@@ -167,6 +187,7 @@ struct Config {
     int window_width = 1024;
     int window_height = 768;
     int minimised = 0; // internal variable
+    int video_player = 2; // internal variable
     int playing_movie = 0;  // internal variable
     int screen_width = 1024; // internal variable
     int screen_height = 768; // internal variable
@@ -225,16 +246,17 @@ struct Config {
     int simple_cost_factor = 0;
     int revised_tech_cost = 1;
     int tech_cost_factor[MaxDiffNum] = {116,108,100,92,84,76};
+    int tech_rate_modifier = 100; // internal variable
     int tech_stagnate_rate = 200;
     int fast_fungus_movement = 0;
     int magtube_movement_rate = 0;
     int road_movement_rate = 1; // internal variable
+    int max_movement_rate = 255; // internal variable
     int chopper_attack_rate = 1;
     int base_psych = 1;
     int nerve_staple = 2;
     int nerve_staple_mod = -10;
     int delay_drone_riots = 0;
-    int skip_drone_revolts = 1; // unlisted option
     int activate_skipped_units = 1; // unlisted option
     int counter_espionage = 0;
     int ignore_reactor_power = 0;
@@ -258,6 +280,8 @@ struct Config {
     int event_perihelion = 1;
     int event_sunspots = 10;
     int event_market_crash = 1;
+    int resource_limit[3] = {2,2,2};
+    int soil_improve_value = 0;
     int aquatic_bonus_minerals = 1;
     int alien_guaranteed_techs = 1;
     int alien_early_start = 0;
@@ -275,6 +299,7 @@ struct Config {
     int collateral_damage_value = 3;
     int content_pop_player[MaxDiffNum] = {6,5,4,3,2,1};
     int content_pop_computer[MaxDiffNum] = {3,3,3,3,3,3};
+    int unit_support_bonus[MaxDiffNum] = {0,0,0,0,0,0};
     int repair_minimal = 1;
     int repair_fungus = 2;
     int repair_friendly = 1;
@@ -287,6 +312,7 @@ struct Config {
     int repair_battle_ogre = 0;
     LMConfig landmarks;
     int minimal_popups = 0; // unlisted option
+    int diplo_patience = 0; // internal variable
     int skip_random_factions = 0; // internal variable
     int faction_file_count = 14; // internal variable
     int reduced_mode = 0; // internal variable
@@ -390,7 +416,6 @@ struct Config {
     int energy_multipliers_centauri_preserve[3] = {0,0,0};
     int energy_multipliers_temple_of_planet[3] = {0,0,0};
     int echelon_mirror_bonus[2] = {1,1};
-    int echelon_mirror_ecodamage = 6;
     bool base_inefficiency_alternative = false;
     bool drone_riot_intensifies = true;
     double se_morale_excess_combat_bonus = 0;
@@ -616,6 +641,7 @@ struct AIPlans {
     */
     int project_limit = 5;
     int median_limit = 5;
+    int energy_limit = 15;
     /*
     PSI combat units are only selected for production if this score is higher than zero.
     Higher values will make the prototype picker choose these units more often.
@@ -627,6 +653,7 @@ struct AIPlans {
     int enemy_odp = 0;
     int enemy_sat = 0;
     int mil_strength = 0;
+    int defense_modifier = 0;
     float enemy_base_range = 0;
     float enemy_mil_factor = 0;
     int enemy_bases = 0;
@@ -634,21 +661,25 @@ struct AIPlans {
 };
 
 #include "engine.h"
+#include "config.h"
 #include "strings.h"
 #include "faction.h"
 #include "random.h"
 #include "patch.h"
-#include "probe.h"
-#include "path.h"
-#include "plan.h"
-#include "gui.h"
-#include "gui_dialog.h"
-#include "veh.h"
-#include "veh_combat.h"
-#include "map.h"
 #include "base.h"
 #include "build.h"
 #include "game.h"
+#include "gui.h"
+#include "gui_dialog.h"
+#include "veh.h"
+#include "veh_turn.h"
+#include "veh_combat.h"
+#include "net.h"
+#include "map.h"
+#include "mapgen.h"
+#include "probe.h"
+#include "path.h"
+#include "plan.h"
 #include "goal.h"
 #include "move.h"
 #include "tech.h"
@@ -662,8 +693,10 @@ extern set_str_t movedlabels;
 extern map_str_t musiclabels;
 
 DLL_EXPORT DWORD ThinkerModule();
+void exit_fail(int32_t addr);
+void exit_fail();
 int opt_handle_error(const char* section, const char* name);
-int opt_list_parse(int* ptr, char* buf, int len, int min_val);
+int opt_list_parse(int32_t* dst, char* src, int num, int min_val);
 
 
 

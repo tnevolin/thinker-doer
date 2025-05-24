@@ -128,14 +128,19 @@ int __cdecl is_coast(int x, int y, bool is_base_radius) {
         int y2 = y + TableOffsetY[i];
         MAP* sq = mapsq(x2, y2);
         if (sq && is_ocean(sq)) {
-            return true;
+            return i; // Must return index to the first ocean tile
         }
     }
-    return false;
+    return 0;
 }
 
 int __cdecl is_port(int base_id, bool is_base_radius) {
     return is_coast(Bases[base_id].x, Bases[base_id].y, is_base_radius);
+}
+
+int __cdecl on_map(int x, int y) {
+    assert(!((x + y)&1)); // Original version does not check this condition
+    return x >= 0 && x < *MapAreaX && y >= 0 && y < *MapAreaY;
 }
 
 /*
@@ -143,6 +148,29 @@ Validate region bounds. Bad regions include: 0, 63, 64, 127, 128.
 */
 int __cdecl bad_reg(int region) {
     return (region & RegionBounds) == RegionBounds || !(region & RegionBounds);
+}
+
+void __cdecl owner_set(int x, int y, int faction_id) {
+    MAP* sq = mapsq(x, y);
+    if (sq) {
+        sq->val2 &= 0xF0;
+        sq->val2 |= faction_id & 0xF;
+    }
+}
+
+void __cdecl site_set(int x, int y, uint8_t site) {
+    MAP* sq = mapsq(x, y);
+    if (sq) {
+        sq->val2 &= 0x0F;
+        sq->val2 |= site << 4;
+    }
+}
+
+void __cdecl region_set(int x, int y, uint8_t region) {
+    MAP* sq = mapsq(x, y);
+    if (sq) {
+        sq->region = region;
+    }
 }
 
 int __cdecl region_at(int x, int y) {
@@ -176,6 +204,101 @@ int __cdecl x_dist(int x1, int x2) {
     return dist;
 }
 
+int __cdecl alt_at(int x, int y) {
+    MAP* sq = mapsq(x, y);
+    if (sq) {
+        return sq->alt_level();
+    }
+    assert(sq);
+    return 0;
+}
+
+int __cdecl alt_detail_at(int x, int y) {
+    MAP* sq = mapsq(x, y);
+    if (sq) {
+        return sq->contour;
+    }
+    assert(sq);
+    return 0;
+}
+
+void __cdecl alt_put_detail(int x, int y, uint8_t detail) {
+    MAP* sq = mapsq(x, y);
+    if (sq) {
+        mapsq(x, y)->contour = detail;
+    }
+    assert(sq);
+}
+
+void __cdecl world_alt_put_detail(int x, int y) {
+    alt_put_detail(x, y, (uint8_t)AltNatural[3]);
+}
+
+/*
+Calculate the elevation of the specified tile.
+Return Value: Elevation (bounded to: -3000 to 3500)
+*/
+int __cdecl elev_at(int x, int y) {
+    int contour = alt_detail_at(x, y);
+    int elev = 50 * (contour - ElevDetail[3] - *MapSeaLevel);
+    elev += (contour <= ElevDetail[alt_at(x, y)]) ? 10
+        : (x * 113 + y * 217 + *MapSeaLevel * 301) % 50;
+    return clamp(elev, -3000, 3500);
+}
+
+/*
+Calculate the natural altitude of the specified tile.
+Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain tops)
+*/
+int __cdecl alt_natural(int x, int y) {
+    int detail = alt_detail_at(x, y) - *MapSeaLevel;
+    int alt = ALT_THREE_ABOVE_SEA;
+    while (alt > 0 && detail < AltNatural[alt]) {
+        alt--;
+    }
+    return alt;
+}
+
+/*
+Set both the altitude and natural altitude for the specified tile.
+The altitude_natural parameter can be between 0 to 9.
+*/
+void __cdecl alt_set_both(int x, int y, int altitude_natural) {
+    assert(altitude_natural >= 0 && altitude_natural <= 9);
+    alt_set(x, y, altitude_natural);
+    if (alt_natural(x, y) != altitude_natural) {
+        int offset = AltNatural[altitude_natural + 1] - AltNatural[altitude_natural];
+        alt_put_detail(x, y, (uint8_t)(*MapSeaLevel + AltNatural[altitude_natural]
+            + (offset > 1 ? game_rand() % offset : 0)));
+    }
+}
+
+int __cdecl temp_at(int x, int y) {
+    return mapsq(x, y)->climate & 7;
+}
+
+void __cdecl temp_set(int x, int y, uint8_t value) {
+    MAP* sq = mapsq(x, y);
+    sq->climate &= 0xF8;
+    sq->climate |= value & 7;
+}
+
+void __cdecl climate_set(int x, int y, uint8_t rainfall) {
+    MAP* sq = mapsq(x, y);
+    sq->climate &= 0xE7;
+    sq->climate |= (rainfall & 3) << 3;
+    sq->landmarks |= LM_UNK_400000;
+    *GameDrawState |= 1;
+}
+
+void __cdecl rocky_set(int x, int y, uint8_t rocky) {
+    MAP* sq = mapsq(x, y);
+    sq->val3 &= 0x3F;
+    sq->val3 |= rocky << 6;
+    sq->landmarks |= LM_UNK_400000;
+    *GameDrawState |= 1;
+}
+
 uint32_t __cdecl bit_at(int x, int y) {
     MAP* sq = mapsq(x, y);
     return sq ? sq->items : 0;
@@ -183,42 +306,62 @@ uint32_t __cdecl bit_at(int x, int y) {
 
 void __cdecl bit_put(int x, int y, uint32_t items) {
     MAP* sq = mapsq(x, y);
-    sq->items = items;
+    if (sq) {
+        sq->items = items;
+    }
+    assert(sq);
 }
 
 void __cdecl bit_set(int x, int y, uint32_t items, bool add) {
     MAP* sq = mapsq(x, y);
-    if (add) {
-        sq->items |= items;
-    } else {
-        sq->items &= ~items;
+    if (sq) {
+        if (add) {
+            sq->items |= items;
+        } else {
+            sq->items &= ~items;
+        }
     }
+    assert(sq);
 }
 
 uint32_t __cdecl bit2_at(int x, int y) {
     MAP* sq = mapsq(x, y);
-    return (sq ? *((uint32_t*)&sq->landmarks) : 0);
+    return (sq ? sq->landmarks : 0);
 }
 
 void __cdecl bit2_set(int x, int y, uint32_t items, bool add) {
     MAP* sq = mapsq(x, y);
-    if (add) {
-        *((uint32_t*)&sq->landmarks) |= items;
-    } else {
-        *((uint32_t*)&sq->landmarks) &= ~items;
+    if (sq) {
+        if (add) {
+            sq->landmarks |= items;
+        } else {
+            sq->landmarks &= ~items;
+        }
     }
+    assert(sq);
 }
 
 uint32_t __cdecl code_at(int x, int y) {
     MAP* sq = mapsq(x, y);
-    return (sq ? sq->art_ref_id : 0);
+    return (sq ? sq->code_at() : 0);
 }
 
 void __cdecl code_set(int x, int y, int code) {
     MAP* sq = mapsq(x, y);
     if (sq) {
-        sq->art_ref_id = code;
+        sq->landmarks &= 0xFFFFFF;
+        sq->landmarks |= (code << 24);
         *GameDrawState |= 4;
+    }
+}
+
+void __cdecl synch_bit(int x, int y, int faction_id) {
+    if (faction_id > 0 && faction_id < MaxPlayerNum) {
+        MAP* sq = mapsq(x, y);
+        if (sq) {
+            sq->visible_items[faction_id - 1] = sq->items;
+        }
+        assert(sq);
     }
 }
 
@@ -230,7 +373,7 @@ int __cdecl has_temple(int faction_id) {
         for (int x = y&1; x < *MapAreaX; x += 2) {
             MAP* sq = mapsq(x, y);
             if (sq && sq->landmarks & LM_NEXUS
-            && sq->art_ref_id == 0 && sq->owner == faction_id
+            && sq->code_at() == 0 && sq->owner == faction_id
             && sq->visibility & (1 << faction_id)) {
                 return true;
             }
@@ -239,22 +382,80 @@ int __cdecl has_temple(int faction_id) {
     return false;
 }
 
-int __cdecl near_landmark(int x, int y) {
-    for (int i = 0; i < TableRange[8]; i++) {
+/*
+Search for the first landmark found within the radius range of the specified tile.
+Return Value: Landmark offset or -1 if none found
+*/
+int __cdecl find_landmark(int x, int y, size_t range_offset) {
+    int offset = TableRange[range_offset];
+    for (int i = 0; i < offset; i++) {
         int x2 = wrap(x + TableOffsetX[i]);
         int y2 = y + TableOffsetY[i];
-        if (code_at(x2, y2)) {
-            return true;
+        if (mapsq(x2, y2)) {
+            for (int lm = 0; lm < *MapLandmarkCount; lm++) {
+                if (x2 == Landmarks[lm].x && y2 == Landmarks[lm].y) {
+                    return lm;
+                }
+            }
         }
     }
-    return false;
+    return -1;
+}
+
+/*
+Set up a new landmark with the provided name at the specified tile.
+Return Value: Landmark offset or -1 if max landmark count is reached
+*/
+int __cdecl new_landmark(int x, int y, const char* name) {
+    int offset = *MapLandmarkCount;
+    if (offset >= MaxLandmarkNum) {
+        return -1;
+    }
+    *MapLandmarkCount += 1;
+    Landmarks[offset].x = x;
+    Landmarks[offset].y = y;
+    strcpy_n(&Landmarks[offset].name[0], 32, name);
+    return offset;
+}
+
+/*
+Check whether the specified faction has permission to name a landmark on the provided tile.
+Return Value: Does the faction have control of the tile to set a landmark? true/false
+*/
+int __cdecl valid_landmark(int x, int y, int faction_id) {
+    MAP* sq;
+    int owner = *MultiplayerActive ? (sq = mapsq(x, y), sq ? sq->owner : -1)
+        : mod_whose_territory(faction_id, x, y, NULL, false);
+    if (owner == faction_id) {
+        return true;
+    }
+    if (owner > 0) {
+        return false;
+    }
+    int base_id = base_find(x, y);
+    return base_id < 0 || Bases[base_id].faction_id == faction_id;
+}
+
+/*
+Remove the landmark at the specified tile.
+*/
+void __cdecl kill_landmark(int x, int y) {
+    int remove_id = find_landmark(x, y, 1);
+    if (remove_id >= 0) {
+        if (remove_id < (*MapLandmarkCount - 1)) {
+            memmove_s(&Landmarks[remove_id], sizeof(Landmark) * MaxLandmarkNum,
+                &Landmarks[remove_id + 1],
+                sizeof(Landmark) * (*MapLandmarkCount - remove_id - 1));
+        }
+        *MapLandmarkCount -= 1;
+    }
 }
 
 /*
 Reset the map to a blank state. Original doesn't wipe unk_1 and owner fields.
 This is simplified by zeroing all fields first and then setting specific fields.
 */
-void __cdecl mod_map_wipe() {
+void __cdecl map_wipe() {
     *MapSeaLevel = 0;
     *MapSeaLevelCouncil = 0;
     *MapLandmarkCount = 0;
@@ -291,44 +492,39 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
     }
     int value = 0;
     int alt = sq->alt_level();
+    bool has_limit = false;
     bool bonus_landmark = false;
     bool bonus_nutrient = bonus_at(x, y) == RES_NUTRIENT;
     bool is_base = sq->is_base();
     int planet = Factions[faction_id].SE_planet_pending;
 
-    if ((alt >= ALT_SHORE_LINE && sq->landmarks & LM_JUNGLE && !(sq->art_ref_id & 0x80))
+    if ((alt >= ALT_SHORE_LINE && sq->landmarks & LM_JUNGLE && !(sq->landmarks & LM_DISABLE))
     || (alt < ALT_SHORE_LINE && sq->landmarks & LM_FRESH)) {
         bonus_landmark = true;
     }
     if (is_base) {
-        value = ResInfo->base_sq_nutrient;
-        if (bonus_nutrient )
-            value = 2 * ResInfo->base_sq_nutrient;
+        value = ResInfo->base_sq.nutrient;
+        if (bonus_nutrient) {
+            value = 2 * ResInfo->base_sq.nutrient;
+        }
         if (bonus_landmark) {
             value++;
         }
         if (has_fac_built(FAC_PRESSURE_DOME, base_id)
         || has_fac_built(FAC_RECYCLING_TANKS, base_id)) {
-            value += ResInfo->recycling_tanks_energy;
-        }
-		// [WTP]
-		// Recycling Tanks population bonus
-		if (conf.recycling_tanks_population_bonus && has_fac_built(FAC_RECYCLING_TANKS, base_id))
-		{
-			// every second out of three citizens contributes nutrient
-			value += (Bases[base_id].pop_size + 1) / 3;
+            value += ResInfo->recycling_tanks.energy;
         }
     }
     else if (sq->items & BIT_THERMAL_BORE) {
-        value = ResInfo->borehole_sq_nutrient;
+        value = ResInfo->borehole_sq.nutrient;
         if (bonus_nutrient) {
-            value += ResInfo->bonus_sq_nutrient;
+            value += ResInfo->bonus_sq.nutrient;
         }
     }
     else if (sq->items & BIT_MONOLITH) {
-        value = ResInfo->monolith_nutrient;
+        value = ResInfo->monolith_sq.nutrient;
         if (bonus_nutrient) {
-            value += ResInfo->bonus_sq_nutrient;
+            value += ResInfo->bonus_sq.nutrient;
         }
         if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
 			// [WTP]
@@ -358,23 +554,24 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
 		if (conf.fungus_terrain_bonus)
 		{
 			if (bonus_nutrient) {
-				value += ResInfo->bonus_sq_nutrient;
+				value += ResInfo->bonus_sq.nutrient;
 			}
             if (bonus_landmark)
                 value++;
 		}
 		
     } else {
+        has_limit = true;
         if (alt < ALT_SHORE_LINE) {
-            value = ResInfo->ocean_sq_nutrient;
+            value = ResInfo->ocean_sq.nutrient;
             if (bonus_nutrient) {
-                value = ResInfo->bonus_sq_nutrient + ResInfo->ocean_sq_nutrient;
+                value = ResInfo->bonus_sq.nutrient + ResInfo->ocean_sq.nutrient;
             }
             if (bonus_landmark)
                 value++;
             if (alt == ALT_OCEAN_SHELF || *ExpansionEnabled) {
                 if (sq->items & BIT_FARM) {
-                    value += ResInfo->improved_sea_nutrient;
+                    value += ResInfo->improved_sea.nutrient;
                     if (has_fac_built(FAC_AQUAFARM, base_id)) {
                         value++;
                     }
@@ -385,15 +582,14 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
             }
         } else {
             if (sq->items & BIT_FOREST) {
-                value = ResInfo->forest_sq_nutrient
-                    + (bonus_nutrient ? ResInfo->bonus_sq_nutrient : 0);
+                value = ResInfo->forest_sq.nutrient
+                    + (bonus_nutrient ? ResInfo->bonus_sq.nutrient : 0);
                 if (has_fac_built(FAC_TREE_FARM, base_id)) {
-                    value += conf.tree_farm_yield_bonus_forest[0];
+                    value++;
                 }
                 if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-                    value += conf.hybrid_forest_yield_bonus_forest[0];
+                    value++;
                 }
-                
                 if (bonus_landmark) {
                     value++;
                 }
@@ -404,7 +600,7 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
                     value = (sq->is_rainy() ? 2 : (sq->is_moist() ? 1 : 0));
                 }
                 if (bonus_nutrient) {
-                    value += ResInfo->bonus_sq_nutrient;
+                    value += ResInfo->bonus_sq.nutrient;
                 }
                 if (bonus_landmark) {
                     value++;
@@ -413,7 +609,7 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
                     value = 0;
                 }
                 if (sq->items & BIT_FARM && !sq->is_rocky()) {
-                    value += ResInfo->improved_land_nutrient;
+                    value += ResInfo->improved_land.nutrient;
                 }
                 if (sq->items & BIT_MINE && value > 1) {
                     value += Rules->nutrient_effect_mine_sq;
@@ -431,8 +627,7 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
 			}
 			else
 			{
-				// vanilla default: 50% increase
-				value += value / 2;
+            value += (conf.soil_improve_value ? conf.soil_improve_value : value / 2);
 			}
 			
         }
@@ -446,16 +641,15 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
 			}
 			else
 			{
-				// vanilla default: 50% increase
-				value += value / 2;
+            value += (conf.soil_improve_value ? conf.soil_improve_value : value / 2);
 			}
 			
         }
-        if (value > 2 && !bonus_nutrient && !(sq->items & BIT_CONDENSER)
-        && (faction_id < 0 || !has_tech(Rules->tech_preq_allow_3_nutrients_sq, faction_id))) {
-            *BaseTerraformReduce += (value - 2);
-            value = 2;
-        }
+    }
+    if (has_limit && value > conf.resource_limit[0] && !bonus_nutrient && !(sq->items & BIT_CONDENSER)
+    && (faction_id < 0 || !has_tech(Rules->tech_preq_allow_3_nutrients_sq, faction_id))) {
+        *BaseTerraformReduce += (value - conf.resource_limit[0]);
+        value = conf.resource_limit[0];
     }
     if (base_id >= 0) {
         if (Bases[base_id].event_flags & BEVENT_BUMPER) {
@@ -468,8 +662,11 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
     
     // [WTP]
     // not like vanilla anymore
-//    assert(value == crop_yield(faction_id, base_id, x, y, flag));
-
+    /*
+    assert((conf.soil_improve_value && sq->items & (BIT_CONDENSER|BIT_SOIL_ENRICHER))
+        || (has_limit && !bonus_nutrient && conf.resource_limit[0] != 2)
+        || value == crop_yield(faction_id, base_id, x, y, flag));
+    */
     return value;
 }
 
@@ -485,19 +682,19 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
     int alt = sq->alt_level();
     int planet = Factions[faction_id].SE_planet_pending;
 
-    if ((sq->landmarks & LM_CRATER && sq->art_ref_id < 9)
-    || (sq->landmarks & LM_VOLCANO && sq->art_ref_id < 9)
-    || (sq->landmarks & LM_FOSSIL && sq->art_ref_id < 6)
+    if ((sq->landmarks & LM_CRATER && sq->code_at() < 9)
+    || (sq->landmarks & LM_VOLCANO && sq->code_at() < 9)
+    || (sq->landmarks & LM_FOSSIL && sq->code_at() < 6)
     || (sq->landmarks & LM_CANYON)) {
-        bonus_landmark = !(sq->art_ref_id & 0x80);
+        bonus_landmark = !(sq->landmarks & LM_DISABLE);
     }
-    int value = bonus_landmark + (bonus_mineral ? ResInfo->bonus_sq_mineral : 0);
+    int value = bonus_landmark + (bonus_mineral ? ResInfo->bonus_sq.mineral : 0);
 
     if (is_base) {
-        value += ResInfo->base_sq_mineral;
+        value += ResInfo->base_sq.mineral;
         if (has_fac_built(FAC_PRESSURE_DOME, base_id)
         || has_fac_built(FAC_RECYCLING_TANKS, base_id)) {
-            value += ResInfo->recycling_tanks_mineral;
+            value += ResInfo->recycling_tanks.mineral;
         }
 		// [WTP]
 		// Recycling Tanks population bonus
@@ -509,9 +706,9 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
         has_limit = false;
     } else {
         if (sq->items & BIT_MONOLITH) {
-            value = ResInfo->monolith_mineral;
+            value = ResInfo->monolith_sq.mineral;
             if (bonus_mineral) {
-                value += ResInfo->bonus_sq_mineral;
+                value += ResInfo->bonus_sq.mineral;
             }
             if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
 				// [WTP]
@@ -521,9 +718,9 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
             has_limit = false;
         }
         else if (sq->items & BIT_THERMAL_BORE) {
-            value = ResInfo->borehole_sq_mineral;
+            value = ResInfo->borehole_sq.mineral;
             if (bonus_mineral) {
-                value += ResInfo->bonus_sq_mineral;
+                value += ResInfo->bonus_sq.mineral;
             }
         }
         else if (sq->items & BIT_FUNGUS && alt >= ALT_OCEAN_SHELF) {
@@ -549,7 +746,7 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
 			if (conf.fungus_terrain_bonus)
 			{
 				if (bonus_mineral) {
-					value += ResInfo->bonus_sq_mineral;
+					value += ResInfo->bonus_sq.mineral;
 				}
 			}
 			
@@ -557,7 +754,7 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
         else if (alt >= ALT_SHORE_LINE) {
             int modifier = sq->val3 >> 6;
             if (sq->items & BIT_FOREST) {
-                value += ResInfo->forest_sq_mineral;
+                value += ResInfo->forest_sq.mineral;
                 
 				// [WTP]
 				// facilities custom bonus
@@ -609,14 +806,14 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
             }
         }
         else {
-            value += ResInfo->ocean_sq_mineral;
+            value += ResInfo->ocean_sq.mineral;
             if (alt == ALT_OCEAN_SHELF && MFactions[faction_id].is_aquatic()
-            && *ExpansionEnabled && conf.aquatic_bonus_minerals) {
+            && conf.aquatic_bonus_minerals) {
                 value++;
             }
             if (alt == ALT_OCEAN_SHELF || *ExpansionEnabled) {
                 if (sq->items & BIT_MINE || flag) {
-                    value += ResInfo->improved_sea_mineral;
+                    value += ResInfo->improved_sea.mineral;
                     if (has_tech(Rules->tech_preq_mining_platform_bonus, faction_id) ) {
                         value++;
                     }
@@ -641,10 +838,10 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
             }
         }
     }
-    if (has_limit && value > 2 && !bonus_mineral
-    && !has_tech(Rules->tech_preq_allow_3_minerals_sq, faction_id)) {
-        *BaseTerraformReduce += (value - 2);
-        value = 2;
+    if (has_limit && value > conf.resource_limit[1] && !bonus_mineral
+    && (faction_id < 0 || !has_tech(Rules->tech_preq_allow_3_minerals_sq, faction_id))) {
+        *BaseTerraformReduce += (value - conf.resource_limit[1]);
+        value = conf.resource_limit[1];
     }
     if (base_id >= 0) {
         if (Bases[base_id].event_flags & BEVENT_INDUSTRY) {
@@ -657,9 +854,12 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
     
     // [WTP]
     // assertion is incorrect for aquatic faction base
-//    // Original function can return inconsistent sea mineral output when base_id is not set
-//    assert((base_id < 0 && alt == ALT_OCEAN_SHELF && MFactions[faction_id].is_aquatic())
-//        || (value == mine_yield(faction_id, base_id, x, y, flag)));
+    /*
+    // Original function can return inconsistent sea mineral output when base_id is not set
+    assert((base_id < 0 && alt == ALT_OCEAN_SHELF && MFactions[faction_id].is_aquatic())
+        || (has_limit && !bonus_mineral && conf.resource_limit[1] != 2)
+        || (value == mine_yield(faction_id, base_id, x, y, flag)));
+    */
 	
 	// [WTP]
 	// Pressure Dome minerals
@@ -691,7 +891,7 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
         bool is_hq = has_fac_built(FAC_HEADQUARTERS, base_id);
         if (has_fac_built(FAC_PRESSURE_DOME, base_id)
         || has_fac_built(FAC_RECYCLING_TANKS, base_id)) {
-            value += ResInfo->recycling_tanks_energy;
+            value += ResInfo->recycling_tanks.energy;
         }
 		// [WTP]
 		// Recycling Tanks population bonus
@@ -722,7 +922,7 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
     // Modify the game to not apply 2 resource yield restrictions on monolith energy.
     // This limit does not apply on nutrients/minerals produced by monoliths.
     else if (sq->items & BIT_MONOLITH) {
-        value = ResInfo->monolith_energy;
+        value = ResInfo->monolith_sq.energy;
         if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
 			// [WTP]
 			// shift Manifold Harmonics minimal planet rating
@@ -731,7 +931,7 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
         has_limit = false;
     }
     else if (sq->items & BIT_THERMAL_BORE) {
-        value = ResInfo->borehole_sq_energy;
+        value = ResInfo->borehole_sq.energy;
     }
     else if (sq->items & BIT_FUNGUS && alt >= ALT_OCEAN_SHELF) {
         int fungus_val = clamp(planet, -3, 0) + Factions[faction_id].tech_fungus_energy;
@@ -754,9 +954,9 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
     }
     else if (alt < ALT_SHORE_LINE) {
         if (alt == ALT_OCEAN_SHELF || *ExpansionEnabled) {
-            value = ResInfo->ocean_sq_energy;
+            value = ResInfo->ocean_sq.energy;
             if (sq->items & BIT_SOLAR || flag) {
-                value += ResInfo->improved_sea_energy;
+                value += ResInfo->improved_sea.energy;
                 if (has_fac_built(FAC_THERMOCLINE_TRANSDUCER, base_id)) {
                     value++;
                 }
@@ -767,14 +967,15 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
         }
     }
     else if (sq->items & BIT_FOREST) {
-        value = ResInfo->forest_sq_energy;
+        value = ResInfo->forest_sq.energy;
                 
 		// [WTP]
 		// facilities custom bonus
-		
-//        if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
-//            value++;
-//        }
+		/*
+        if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+            value++;
+        }
+        */
 		if (has_fac_built(FAC_TREE_FARM, base_id)) {
 			value += conf.tree_farm_yield_bonus_forest[2];
 		}
@@ -792,13 +993,14 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
 			
 			// [WTP]
 			// custom Echelon Mirror bonus
-			
-//            for (auto& m : iterate_tiles(x, y, 1, 9)) {
-//                if (m.sq->items & BIT_ECH_MIRROR
-//                && m.sq->owner == (*CurrentBase)->faction_id) {
-//                    value++;
-//                }
-//            }
+			/*
+            for (auto& m : iterate_tiles(x, y, 1, 9)) {
+                if (m.sq->items & BIT_ECH_MIRROR
+                && m.sq->owner == (*CurrentBase)->faction_id) {
+                    value++;
+                }
+            }
+            */
 			int echelonMirrorBonus = 0;
             for (auto& m : iterate_tiles(x, y, 1, 9)) {
                 if (m.sq->items & BIT_ECH_MIRROR
@@ -818,11 +1020,11 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
             value++;
         }
         if (bonus_energy) {
-            value += ResInfo->bonus_sq_energy;
+            value += ResInfo->bonus_sq.energy;
         }
-        if ((sq->landmarks & LM_VOLCANO && sq->art_ref_id < 9)
+        if ((sq->landmarks & LM_VOLCANO && sq->code_at() < 9)
         || sq->landmarks & (LM_URANIUM|LM_GEOTHERMAL|LM_RIDGE)) {
-            value += !(sq->art_ref_id & 0x80);
+            value += !(sq->landmarks & LM_DISABLE);
         }
         if (base_id >= 0 && project_base(FAC_MERCHANT_EXCHANGE) == base_id) {
             value++;
@@ -835,10 +1037,10 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
             *BaseTerraformEnergy = value;
         }
     }
-    if (has_limit && value > 2 && !bonus_energy
-    && !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id)) {
-        value = 2;
-        *BaseTerraformReduce += (value - 2);
+    if (has_limit && value > conf.resource_limit[2] && !bonus_energy
+    && (faction_id < 0 || !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id))) {
+        *BaseTerraformReduce += (value - conf.resource_limit[2]);
+        value = conf.resource_limit[2];
     }
     if (base_id >= 0) {
         if (Bases[base_id].event_flags & BEVENT_HEAT_WAVE) {
@@ -861,15 +1063,18 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
 
     // [WTP]
     // assertion is not correct anymore
-//    // Original function can return inconsistent base output when economy is between 3 and 4
-//    assert((is_base && economy >= 3 && economy <= 4)
-//        || (!is_base && sq->items & BIT_MONOLITH && !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id))
-//        || (value == energy_yield(faction_id, base_id, x, y, flag)));
+    /*
+    // Original function can return inconsistent base output when economy is between 3 and 4
+    assert((is_base && economy >= 3 && economy <= 4)
+        || (!is_base && sq->items & BIT_MONOLITH && !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id))
+        || (has_limit && !bonus_energy && conf.resource_limit[2] != 2)
+        || (value == energy_yield(faction_id, base_id, x, y, flag)));
+    */
 	
     return value;
 }
 
-static int __cdecl base_hex_cost(int unit_id, int faction_id, int x1, int y1, int x2, int y2, bool toggle) {
+static int __cdecl base_hex_cost(int unit_id, int faction_id, int x1, int y1, int x2, int y2, int toggle) {
     MAP* sq_dst = mapsq(x2, y2);
     uint32_t bit_dst = (sq_dst ? sq_dst->items : 0);
     if (is_ocean(sq_dst)) {
@@ -940,9 +1145,11 @@ int __cdecl mod_hex_cost(int unit_id, int faction_id, int x1, int y1, int x2, in
     MAP* sq_a = mapsq(x1, y1);
     MAP* sq_b = mapsq(x2, y2);
 
-//    if (DEBUG && sq_a && sq_b) {
-//        assert(value == hex_cost(unit_id, faction_id, x1, y1, x2, y2, toggle));
-//    }
+	/*
+    if (DEBUG && sq_a && sq_b) {
+        assert(value == hex_cost(unit_id, faction_id, x1, y1, x2, y2, toggle));
+    }
+	*/
     if (conf.magtube_movement_rate > 0 && Units[unit_id].triad() == TRIAD_LAND) {
         if (!is_ocean(sq_a) && !is_ocean(sq_b)) {
             if (sq_a->items & (BIT_BASE_IN_TILE | BIT_MAGTUBE)
@@ -959,6 +1166,60 @@ int __cdecl mod_hex_cost(int unit_id, int faction_id, int x1, int y1, int x2, in
         }
     }
     return value;
+}
+
+/*
+Determine the tile mineral count that translates to rockiness.
+Return Value: 0 (Flat), 1 (Rolling), 2 (Rocky)
+*/
+int __cdecl mod_minerals_at(int x, int y) {
+    if (!y || y == (*MapAreaY - 1)) {
+        return 2;
+    }
+    MAP* sq = mapsq(x, y);
+    int alt = sq->alt_level();
+    int avg = (x + y) / 2;
+    int val1 = (x - avg) / 2 + 2 * ((x - avg) / 2) + 2 * (avg / 2) + *MapRandomSeed;
+    int val2 = ((byte)val1 - 2 * (((byte)x - (byte)avg) & 1) - (avg & 1)) & 3;
+    int val3 = (alt - 3 >= 0 ? alt - 3 : 3 - alt) - (alt < 3);
+    if (val3 == 0) {
+        if (val2 == 0) {
+            return 1;
+        }
+        if (val2 == 1 || val2 == 3) {
+            return 0;
+        }
+        if (val2 == 2) {
+            return (val1 & 4 ? 2 : 1);
+        }
+        return ~val2 & 1;
+    } else if (val3 == 1) {
+        if (!val2) {
+            return 0;
+        }
+        if (!(val2 - 1)) {
+            return 1;
+        }
+        if ((val2 - 1) != 1) {
+            return 2;
+        }
+        return 1;
+    } else if (val3 == 2) {
+        if (!val2) {
+            return 0;
+        }
+        if (val2 == 1) {
+            return 1;
+        }
+        return 2;
+    } else if (val3 == 3) {
+        if (val2 < 0 || val2 > 1) {
+            return 2;
+        }
+        return 1;
+    } else {
+        return ~val2 & 1;
+    }
 }
 
 /*
@@ -1027,42 +1288,39 @@ int __cdecl mod_goody_at(int x, int y) {
 /*
 This version adds support for modified territory borders (earlier bases claim tiles first).
 */
-int __cdecl mod_base_find3(int x, int y, int faction1, int region, int faction2, int faction3) {
-    int dist = 9999;
-    int result = -1;
-    bool border_fix = conf.territory_border_fix && region >= MaxRegionNum/2;
+int __cdecl mod_base_find3(int x, int y, int faction_id, int region, int faction_id_2, int faction_id_3) {
+    int base_dist = 9999;
+    int base_id = -1;
+    bool border_fix = conf.territory_border_fix && region >= MaxRegionLandNum;
 
     for (int i = 0; i < *BaseCount; i++) {
         BASE* base = &Bases[i];
-        MAP* bsq = mapsq(base->x, base->y);
-
-        if (bsq && (region < 0 || bsq->region == region || border_fix)) {
-            if ((faction1 < 0 && (faction2 < 0 || faction2 != base->faction_id))
-            || (faction1 == base->faction_id)
-            || (faction2 == -2 && Factions[faction1].diplo_status[base->faction_id] & DIPLO_PACT)
-            || (faction2 >= 0 && faction2 == base->faction_id)) {
-                if (faction3 < 0 || base->faction_id == faction3 || base->visibility & (1 << faction3)) {
-                    int val = vector_dist(x, y, base->x, base->y);
-                    if (conf.territory_border_fix ? val < dist : val <= dist) {
-                        dist = val;
-                        result = i;
+        if (border_fix || region < 0 || region_at(base->x, base->y) == region) {
+            if (faction_id < 0 ? (faction_id_2 < 0 || base->faction_id != faction_id_2)
+            : (faction_id == base->faction_id
+            || (faction_id_2 == -2 ? has_treaty(faction_id, base->faction_id, DIPLO_PACT)
+            : (faction_id_2 >= 0 && faction_id_2 == base->faction_id)))) {
+                if (faction_id_3 < 0 || base->faction_id == faction_id_3
+                || base->visibility & (1 << faction_id_3)) {
+                    int dist = vector_dist(x, y, base->x, base->y);
+                    if (conf.territory_border_fix ? dist < base_dist : dist <= base_dist) {
+                        base_dist = dist;
+                        base_id = i;
                     }
                 }
             }
         }
     }
     if (DEBUG && !conf.territory_border_fix) {
-        int res = base_find3(x, y, faction1, region, faction2, faction3);
-        debug("base_find3 x: %2d y: %2d r: %2d %2d %2d %2d %2d %4d\n",
-              x, y, region, faction1, faction2, faction3, result, dist);
-        assert(res == result);
-        assert(*BaseFindDist == dist);
+        int value = base_find3(x, y, faction_id, region, faction_id_2, faction_id_3);
+        assert(base_id == value);
+        assert(base_dist == *BaseFindDist);
     }
     *BaseFindDist = 9999;
-    if (result >= 0) {
-        *BaseFindDist = dist;
+    if (base_id >= 0) {
+        *BaseFindDist = base_dist;
     }
-    return result;
+    return base_id;
 }
 
 int __cdecl mod_whose_territory(int faction_id, int x, int y, int* base_id, int ignore_comm) {
@@ -1078,30 +1336,26 @@ int __cdecl mod_whose_territory(int faction_id, int x, int y, int* base_id, int 
             return -1;
         }
         if (base_id) {
-            if (conf.territory_border_fix) {
-                *base_id = mod_base_find3(x, y, -1, sq->region, -1, -1);
-            } else {
-                *base_id = base_find3(x, y, -1, sq->region, -1, -1);
-            }
+            *base_id = mod_base_find3(x, y, -1, sq->region, -1, -1);
         }
     }
     return sq->owner;
 }
 
-int total_yield(int x, int y, int faction) {
-    return mod_crop_yield(faction, -1, x, y, 0)
-        + mod_mine_yield(faction, -1, x, y, 0)
-        + mod_energy_yield(faction, -1, x, y, 0);
+int total_yield(int x, int y, int faction_id) {
+    return mod_crop_yield(faction_id, -1, x, y, 0)
+        + mod_mine_yield(faction_id, -1, x, y, 0)
+        + mod_energy_yield(faction_id, -1, x, y, 0);
 }
 
-int fungus_yield(int faction, ResType res_type) {
-    Faction* f = &Factions[faction];
+int fungus_yield(int faction_id, ResType res_type) {
+    Faction* f = &Factions[faction_id];
     int p = clamp(f->SE_planet_pending, -3, 0);
     int N = clamp(f->tech_fungus_nutrient + p, 0, 99);
     int M = clamp(f->tech_fungus_mineral + p, 0, 99);
     int E = clamp(f->tech_fungus_energy + p + (f->SE_economy_pending >= 2), 0, 99);
 
-    if (has_project(FAC_MANIFOLD_HARMONICS, faction)) {
+    if (has_project(FAC_MANIFOLD_HARMONICS, faction_id)) {
 		// [WTP]
 		// shift Manifold Harmonics minimal planet rating
         int m = clamp(f->SE_planet_pending - conf.manifold_harmonics_min_planet_rating + 1, 0, 4);
@@ -1121,7 +1375,7 @@ int fungus_yield(int faction, ResType res_type) {
     return N+M+E;
 }
 
-int item_yield(int x, int y, int faction, int bonus, MapItem item) {
+int item_yield(int x, int y, int faction_id, int bonus, MapItem item) {
     MAP* sq = mapsq(x, y);
     if (!sq) {
         return 0;
@@ -1129,83 +1383,83 @@ int item_yield(int x, int y, int faction, int bonus, MapItem item) {
     int N = 0, M = 0, E = 0;
     if (item != BIT_FUNGUS) {
         if (bonus == RES_NUTRIENT) {
-            N += ResInfo->bonus_sq_nutrient;
+            N += ResInfo->bonus_sq.nutrient;
         }
         if (bonus == RES_MINERAL) {
-            M += ResInfo->bonus_sq_mineral;
+            M += ResInfo->bonus_sq.mineral;
         }
         if (bonus == RES_ENERGY) {
-            E += ResInfo->bonus_sq_energy;
+            E += ResInfo->bonus_sq.energy;
         }
         if (sq->items & BIT_RIVER && !is_ocean(sq)) {
             E++;
         }
-        if (sq->landmarks & LM_CRATER && sq->art_ref_id < 9) { M++; }
-        if (sq->landmarks & LM_VOLCANO && sq->art_ref_id < 9) { M++; E++; }
+        if (sq->landmarks & LM_CRATER && sq->code_at() < 9) { M++; }
+        if (sq->landmarks & LM_VOLCANO && sq->code_at() < 9) { M++; E++; }
         if (sq->landmarks & LM_JUNGLE) { N++; }
         if (sq->landmarks & LM_URANIUM) { E++; }
         if (sq->landmarks & LM_FRESH && is_ocean(sq)) { N++; }
         if (sq->landmarks & LM_GEOTHERMAL) { E++; }
         if (sq->landmarks & LM_RIDGE) { E++; }
         if (sq->landmarks & LM_CANYON) { M++; }
-        if (sq->landmarks & LM_FOSSIL && sq->art_ref_id < 6) { M++; }
-        if (Factions[faction].SE_economy_pending >= 2) {
+        if (sq->landmarks & LM_FOSSIL && sq->code_at() < 6) { M++; }
+        if (Factions[faction_id].SE_economy_pending >= 2) {
             E++;
         }
     }
     if (item == BIT_FOREST) {
-        N += ResInfo->forest_sq_nutrient;
-        M += ResInfo->forest_sq_mineral;
-        E += ResInfo->forest_sq_energy;
+        N += ResInfo->forest_sq.nutrient;
+        M += ResInfo->forest_sq.mineral;
+        E += ResInfo->forest_sq.energy;
     }
     else if (item == BIT_THERMAL_BORE) {
-        N += ResInfo->borehole_sq_nutrient;
-        M += ResInfo->borehole_sq_mineral;
-        E += ResInfo->borehole_sq_energy;
+        N += ResInfo->borehole_sq.nutrient;
+        M += ResInfo->borehole_sq.mineral;
+        E += ResInfo->borehole_sq.energy;
         N -= (N > 0);
     }
     else if (item == BIT_FUNGUS) {
-        N = fungus_yield(faction, RES_NUTRIENT);
-        M = fungus_yield(faction, RES_MINERAL);
-        E = fungus_yield(faction, RES_ENERGY);
+        N = fungus_yield(faction_id, RES_NUTRIENT);
+        M = fungus_yield(faction_id, RES_MINERAL);
+        E = fungus_yield(faction_id, RES_ENERGY);
     }
     else if (item == BIT_FARM && is_ocean(sq)) {
-        N += ResInfo->ocean_sq_nutrient + ResInfo->improved_sea_nutrient;
-        M += ResInfo->ocean_sq_mineral;
-        E += ResInfo->ocean_sq_energy;
+        N += ResInfo->ocean_sq.nutrient + ResInfo->improved_sea.nutrient;
+        M += ResInfo->ocean_sq.mineral;
+        E += ResInfo->ocean_sq.energy;
         if (sq->items & BIT_MINE) {
-            M += ResInfo->improved_sea_mineral
-                + has_tech(Rules->tech_preq_mining_platform_bonus, faction);
+            M += ResInfo->improved_sea.mineral
+                + has_tech(Rules->tech_preq_mining_platform_bonus, faction_id);
             N -= (N > 0);
         }
         if (sq->items & BIT_SOLAR) {
-            E += ResInfo->improved_sea_energy;
+            E += ResInfo->improved_sea.energy;
         }
     }
     else {
         assert(0);
     }
     if (N > 2 && bonus != RES_NUTRIENT
-    && !has_tech(Rules->tech_preq_allow_3_nutrients_sq, faction)) {
+    && !has_tech(Rules->tech_preq_allow_3_nutrients_sq, faction_id)) {
         N = 2;
     }
     if (M > 2 && bonus != RES_MINERAL
-    && !has_tech(Rules->tech_preq_allow_3_minerals_sq, faction)) {
+    && !has_tech(Rules->tech_preq_allow_3_minerals_sq, faction_id)) {
         M = 2;
     }
     if (E > 2 && bonus != RES_ENERGY
-    && !has_tech(Rules->tech_preq_allow_3_energy_sq, faction)) {
+    && !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id)) {
         E = 2;
     }
     if (conf.debug_verbose) {
         debug("item_yield %2d %2d %08X faction: %d bonus: %d planet: %d N: %d M: %d E: %d prev: %d\n",
-        x, y, item, faction, bonus, Factions[faction].SE_planet_pending,
-        N, M, E, total_yield(x, y, faction));
+        x, y, item, faction_id, bonus, Factions[faction_id].SE_planet_pending,
+        N, M, E, total_yield(x, y, faction_id));
     }
     return N+M+E;
 }
 
-void process_map(int faction, int k) {
+static void process_map(int faction_id, int k) {
     spawns.clear();
     natives.clear();
     goodtiles.clear();
@@ -1225,7 +1479,7 @@ void process_map(int faction, int k) {
             }
             // LM_FRESH landmark is ignored for this check
             if (!is_ocean(sq) && !sq->is_rocky() && !sq->is_fungus()
-            && sq->is_land_region() && !(sq->landmarks & ~LM_FRESH)
+            && sq->is_land_region() && !(sq->lm_items() & ~LM_FRESH)
             && Continents[sq->region].tile_count >= limit) {
                 goodtiles.insert({x, y});
             }
@@ -1239,9 +1493,12 @@ void process_map(int faction, int k) {
         if (v->faction_id == 0) {
             natives.insert({v->x, v->y});
         }
-        if (v->faction_id != 0 && v->faction_id != faction) {
+        if (v->faction_id != 0 && v->faction_id != faction_id) {
             spawns.insert({v->x, v->y});
         }
+    }
+    for (int i = 0; i < *BaseCount; i++) {
+        spawns.insert({Bases[i].x, Bases[i].y});
     }
     if (goodtiles.size() * 3 < land_area) {
         goodtiles.clear();
@@ -1250,30 +1507,32 @@ void process_map(int faction, int k) {
         *MapAreaX, *MapAreaY, *MapAreaSqRoot, *MapAreaTiles, goodtiles.size());
 }
 
-bool valid_start(int faction, int iter, int x, int y) {
+static bool valid_start(int faction_id, int iter, int x, int y) {
     MAP* sq = mapsq(x, y);
-    bool aquatic = MFactions[faction].is_aquatic();
-    int limit = max((*MapAreaTiles < 1600 ? 5 : 7), 8 - iter/80);
-    int min_sc = 80 - iter/4;
+    bool aquatic = MFactions[faction_id].is_aquatic();
+    int native_limit = (goodtiles.size() > 0 ? 3 : 2) + ((int)natives.size() < *MapAreaTiles/80);
+    int spawn_limit = max((*MapAreaTiles < 1600 ? 5 : 7), 8 - iter/100);
+
+    if (!sq || !sq->allow_spawn()) { // Select only tiles where bases can be built
+        return false;
+    }
+    // LM_FRESH landmark is incorrectly used on some maps
+    if (aquatic != is_ocean(sq) || ((sq->lm_items() & ~LM_FRESH) && iter < 160)) {
+        return false;
+    }
+    if ((goody_at(x, y) > 0 || bonus_at(x, y) > 0) && iter < 160) {
+        return false;
+    }
+    if (min_range(natives, x, y) < max(native_limit, 8 - iter/16)) {
+        return false;
+    }
+    int spawn_range = min_range(spawns, x, y);
+    int min_sc = 80 - iter/4 + 20 * max(0, 12 - spawn_range);
     int sea = 0;
     int sc = 0;
     int xd = 0;
     int yd = 0;
-
-    if (!sq || sq->items & BIT_BASE_DISALLOWED || (sq->is_rocky() && !is_ocean(sq))) {
-        return false;
-    }
-    // LM_FRESH landmark is incorrectly used on some maps
-    if (aquatic != is_ocean(sq) || (sq->landmarks & ~LM_FRESH && iter < 150)) {
-        return false;
-    }
-    if ((goody_at(x, y) > 0 || bonus_at(x, y) > 0) && iter < 200) {
-        return false;
-    }
-    if (min_range(natives, x, y) < max(4, 8 - iter/32)) {
-        return false;
-    }
-    if (min_range(spawns, x, y) < max(limit, *MapAreaSqRoot/4 + 8 - iter/8)) {
+    if (spawn_range < clamp(*MapAreaSqRoot/4 + 8 - iter/8, spawn_limit, 32)) {
         return false;
     }
     if (aquatic) {
@@ -1328,8 +1587,8 @@ bool valid_start(int faction, int iter, int x, int y) {
             sc += 8;
         }
     }
-    debug("find_score %d %d x: %3d y: %3d xd: %d yd: %d min: %d score: %d\n",
-        faction, iter, x, y, xd, yd, min_sc, sc);
+    debug("find_score %d %3d x: %3d y: %3d xd: %d yd: %d min: %d score: %d\n",
+        faction_id, iter, x, y, xd, yd, min_sc, sc);
 
     if (!aquatic && iter < 100) { // Avoid spawns without sufficient land nearby
         if (sea > 20) {
@@ -1342,13 +1601,13 @@ bool valid_start(int faction, int iter, int x, int y) {
     return sc >= min_sc;
 }
 
-void apply_nutrient_bonus(int faction, int* x, int* y) {
+static void apply_nutrient_bonus(int faction_id, int* x, int* y) {
     MAP* sq;
     Points addon;
     Points places;
     Points allpods;
     Points rivers;
-    bool aquatic = MFactions[faction].is_aquatic();
+    bool aquatic = MFactions[faction_id].is_aquatic();
     int adjust = (aquatic ? 0 : 8);
     int nutrient = 0;
     int num = 0;
@@ -1366,7 +1625,7 @@ void apply_nutrient_bonus(int faction, int* x, int* y) {
                 if (m.sq->is_rocky()) {
                     rocky_set(m.x, m.y, LEVEL_ROLLING);
                 }
-                synch_bit(m.x, m.y, faction);
+                synch_bit(m.x, m.y, faction_id);
                 nutrient++;
             } else if (!goody && bonus == RES_NONE
             && adjust > 0 && m.sq->items & BIT_RIVER) {
@@ -1375,7 +1634,7 @@ void apply_nutrient_bonus(int faction, int* x, int* y) {
                 }
                 if (m.i > 0 && m.i <= adjust
                 && m.sq->region == region_at(*x, *y)
-                && can_build_base(m.x, m.y, faction, TRIAD_LAND)
+                && can_build_base(m.x, m.y, faction_id, TRIAD_LAND)
                 && min_range(spawns, m.x, m.y) >= 8) {
                     rivers.insert({m.x, m.y});
                 }
@@ -1386,7 +1645,7 @@ void apply_nutrient_bonus(int faction, int* x, int* y) {
         }
         else if (m.i < 45 && (int)places.size()/4 < conf.nutrient_bonus
         && aquatic == is_ocean(m.sq) && m.sq->alt_level() >= ALT_OCEAN_SHELF
-        && !(m.sq->items & (BIT_SUPPLY_REMOVE | BIT_MONOLITH))) {
+        && !(m.sq->items & (BIT_BASE_IN_TILE|BIT_VEH_IN_TILE|BIT_MONOLITH))) {
             places.insert({m.x, m.y});
         }
     }
@@ -1411,7 +1670,7 @@ void apply_nutrient_bonus(int faction, int* x, int* y) {
         if (sq->is_rocky()) {
             rocky_set(t.x, t.y, LEVEL_ROLLING);
         }
-        synch_bit(t.x, t.y, faction);
+        synch_bit(t.x, t.y, faction_id);
         num++;
     }
     // Adjust position to adjacent river if currently not on river
@@ -1422,15 +1681,45 @@ void apply_nutrient_bonus(int faction, int* x, int* y) {
     }
 }
 
-void __cdecl find_start(int faction, int* tx, int* ty) {
-    bool aquatic = MFactions[faction].is_aquatic();
+static void apply_supply_pods(int faction_id, int x, int y) {
+    MAP* sq;
+    Points places;
+    int bonus = 0;
+    int pods = 0;
+    for (auto& m : iterate_tiles(x, y, 0, 25)) {
+        if (conf.rare_supply_pods > 1) {
+            m.sq->items |= BIT_SUPPLY_REMOVE;
+            synch_bit(m.x, m.y, faction_id);
+        } else if (goody_at(m.x, m.y)) {
+            pods++;
+        } else if (bonus_at(m.x, m.y)) {
+            bonus++;
+        } else if (m.i > 0 && m.sq->allow_supply()) {
+            places.insert({m.x, m.y});
+        }
+    }
+    if (conf.rare_supply_pods <= 1) {
+        int adjust = clamp(random(10) - bonus, 2, 4) - pods;
+        while (adjust > 0 && places.size() > 0) {
+            auto t = pick_random(places);
+            sq = mapsq(t.x, t.y);
+            sq->items |= BIT_UNK_8000000;
+            synch_bit(t.x, t.y, faction_id);
+            adjust--;
+            places.erase(t);
+        }
+    }
+}
+
+void __cdecl find_start(int faction_id, int* tx, int* ty) {
+    bool aquatic = MFactions[faction_id].is_aquatic();
     int x = 0;
     int y = 0;
     int i = 0;
     int k = (*MapAreaY < 80 ? 4 : 8);
-    process_map(faction, k/2);
+    process_map(faction_id, k/2);
 
-    while (++i <= 500) {
+    while (++i <= 800) {
         if (!aquatic && goodtiles.size() > 0 && i <= 200) {
             auto t = pick_random(goodtiles);
             y = t.y;
@@ -1439,605 +1728,22 @@ void __cdecl find_start(int faction, int* tx, int* ty) {
             y = (random(*MapAreaY - k*2) + k);
             x = (random(*MapAreaX) & (~1)) + (y&1);
         }
-        debug("find_iter  %d %d x: %3d y: %3d\n", faction, i, x, y);
-        if (valid_start(faction, i, x, y)) {
+        if (valid_start(faction_id, i, x, y)) {
             if (conf.nutrient_bonus > 0) {
-                apply_nutrient_bonus(faction, &x, &y);
+                apply_nutrient_bonus(faction_id, &x, &y);
             }
             // No unity scattering can normally spawn pods at two tile range from the start
-            if (*GameRules & RULES_NO_UNITY_SCATTERING && conf.rare_supply_pods > 1) {
-                for (auto& m : iterate_tiles(x, y, 0, 25)) {
-                    m.sq->items |= BIT_SUPPLY_REMOVE;
-                }
+            if (*GameRules & RULES_NO_UNITY_SCATTERING) {
+                apply_supply_pods(faction_id, x, y);
             }
             *tx = x;
             *ty = y;
+            site_set(x, y, world_site(x, y, 0));
             break;
         }
     }
-    site_set(*tx, *ty, world_site(*tx, *ty, 0));
-    debug("find_start %d %d x: %3d y: %3d range: %d\n", faction, i, *tx, *ty, min_range(spawns, *tx, *ty));
-    flushlog();
-}
-
-bool locate_landmark(int* x, int* y, bool ocean) {
-    int attempts = 0;
-    if (!mapsq(*x, *y)) {
-        do {
-            if (*MapAreaY > 17) {
-                *y = random(*MapAreaY - 16) + 8;
-            } else {
-                *y = 0;
-            }
-            if (*MapAreaX > 1) {
-                *x = (random(*MapAreaX) & (~1)) + (*y&1);
-            } else {
-                *x = 0;
-            }
-            if (++attempts >= 1000) {
-                return false;
-            }
-        } while (is_ocean(mapsq(*x, *y)) != ocean || near_landmark(*x, *y));
-    }
-    return true;
-}
-
-void __cdecl mod_world_monsoon(int x, int y) {
-    MAP* sq;
-    world_rainfall();
-    if (!conf.modified_landmarks) {
-        int attempts = 0;
-        int land_count;
-        if (!mapsq(x, y)) {
-            do {
-                y = *MapAreaY / 2 + random(4) - 2;
-                x = (random(*MapAreaX) & (~1)) + (y&1);
-                land_count = 0;
-                for (int i = 0; i < TableRange[5]; i++) {
-                    int x2 = wrap(x + TableOffsetX[i]);
-                    int y2 = y + TableOffsetY[i];
-                    if (!is_ocean(mapsq(x2, y2))) {
-                        land_count++;
-                    }
-                }
-                if (++attempts >= 1000) {
-                    return;
-                }
-                sq = mapsq(x, y);
-            } while (is_ocean(sq) || !is_coast(x, y, true)
-            || land_count < 40 || !sq->is_rainy() || near_landmark(x, y));
-        }
-        for (int i = 0; i < TableRange[5]; i++) {
-            int x2 = wrap(x + TableOffsetX[i]);
-            int y2 = y + TableOffsetY[i];
-            sq = mapsq(x2, y2);
-            if (sq && abs(TableOffsetY[i]) <= 8) {
-                if (i < 21 && is_ocean(sq)) {
-                    world_alt_set(x2, y2, ALT_SHORE_LINE, true);
-                }
-                bit2_set(x2, y2, LM_JUNGLE, true);
-                code_set(x2, y2, i);
-            }
-        }
-        new_landmark(x, y, (int)Natural[__builtin_ctz(LM_JUNGLE)].name);
-        return;
-    }
-    struct TileInfo {
-        uint8_t valid;
-        uint8_t valid_near;
-        uint8_t sea;
-        uint8_t sea_near;
-    };
-    std::unordered_map<Point, TileInfo> tiles;
-
-    int i = 0, j = 0, x2 = 0, y2 = 0, num = 0;
-    const int y_a = *MapAreaY * 5/16;
-    const int y_b = *MapAreaY * 11/16;
-    const int limit = max(1024, *MapAreaTiles) * (3 + *MapCloudCover) / 120;
-
-    for (y = 0; y < *MapAreaY; y++) {
-        for (x = y&1; x < *MapAreaX; x+=2) {
-            if (!(sq = mapsq(x, y))) {
-                continue;
-            }
-            tiles[{x, y}].sea = sq->alt_level() < ALT_SHORE_LINE
-                && Continents[sq->region].tile_count > 15;
-            tiles[{x, y}].valid = !sq->landmarks
-                && (sq->alt_level() == ALT_SHORE_LINE || sq->alt_level() == ALT_ONE_ABOVE_SEA);
-        }
-    }
-    for (y = 0; y < *MapAreaY; y++) {
-        for (x = y&1; x < *MapAreaX; x+=2) {
-            if (tiles[{x, y}].valid) {
-                for (auto& p : iterate_tiles(x, y, 0, 45)) {
-                    if (tiles[{p.x, p.y}].valid) {
-                        tiles[{x, y}].valid_near++;
-                    }
-                    if (tiles[{p.x, p.y}].sea) {
-                        tiles[{x, y}].sea_near++;
-                    }
-                }
-            }
-        }
-    }
-    int loc_all = 0;
-    int loc_cur = random(4);
-    for (i = 0; i < 512 && num < limit; i++) {
-        if (loc_all == 15) {
-            loc_all = 0;
-            loc_cur = random(4);
-        }
-        if (i % 16 == 0 || loc_all & (1 << loc_cur)) {
-            while (loc_all & (1 << loc_cur)) {
-                loc_cur = random(4);
-            }
-        }
-        y = (random(y_b - y_a) + y_a);
-        x = wrap(((random(*MapAreaX / 4) + loc_cur * *MapAreaX / 4) &~1) + (y&1));
-        if (!tiles[{x, y}].valid
-        || tiles[{x, y}].sea_near < 8 - i/16
-        || tiles[{x, y}].valid_near < 16 - i/32) {
-            continue;
-        }
-        int goal = num + max(21, limit/4);
-        for (j = 0; j < 32 && num < goal && num < limit; j++) {
-            if (j % 4 == 0) {
-                y2 = y;
-                x2 = x;
-            }
-            y2 = y2 + random(8);
-            x2 = wrap(((x2 + random(8)) &~1) + (y2&1));
-            if (y2 >= y_a && y2 <= y_b
-            && tiles[{x2, y2}].valid
-            && tiles[{x2, y2}].valid_near > 8 - i/32) {
-                for (auto& p : iterate_tiles(x2, y2, 0, 21)) {
-                    if (tiles[{p.x, p.y}].valid && !(p.sq->landmarks & LM_JUNGLE)) {
-                        assert(!is_ocean(p.sq));
-                        bit2_set(p.x, p.y, LM_JUNGLE, 1);
-                        code_set(p.x, p.y, num % 121);
-                        loc_all |= (1 << loc_cur);
-                        num++;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void __cdecl mod_world_borehole(int x, int y) {
-    if (!locate_landmark(&x, &y, false)) {
-        return;
-    }
-    // Replace inconsistent timeGetTime() values used for seeding
-    uint32_t seed = random(256);
-    int val0 = (seed / 8) % 4;
-    int val1 = 8;
-    int val2 = ((seed % 8) / 3) + 5;
-    int val3 = 3 - ((seed % 8) % 3);
-    int val4 = -1;
-
-    if (val0 & 2) {
-        val2--;
-        val3--;
-        if (val0 & 1) {
-            val1 = 8;
-            val2++;
-            val3++;
-        } else {
-            val1 = 6;
-            val2--;
-            val3--;
-        }
-        val1 = (val1 + 8) % 8 + 1;
-        val2 = (val2 + 8) % 8 + 1;
-        val3 = (val3 + 8) % 8 + 1;
-    }
-    if (conf.modified_landmarks) {
-        val1 = 2;
-        val2 = 4;
-        val3 = 6;
-        val4 = 8;
-    }
-    for (int i = 0; i < 9; i++) {
-        int x2 = wrap(x + TableOffsetX[i]);
-        int y2 = y + TableOffsetY[i];
-        if (mapsq(x2, y2)) {
-            world_alt_set(x2, y2, ALT_SHORE_LINE, true);
-            bit_set(x2, y2, BIT_SUPPLY_REMOVE, true);
-            if (i == val1 || i == val2 || i == val3 || i == val4) {
-                bit_set(x2, y2, BIT_THERMAL_BORE, true);
-                bit2_set(x2, y2, LM_BOREHOLE, true);
-                code_set(x2, y2, i);
-            }
-        }
-    }
-    for (auto offset : {val1, val2, val3, val4}) {
-        if (offset > 0) {
-            int x2 = wrap(x + TableOffsetX[offset]);
-            int y2 = y + TableOffsetY[offset];
-            for (int i = 1; i < 9; i++) {
-                int x3 = wrap(x2 + TableOffsetX[i]);
-                int y3 = y2 + TableOffsetY[i];
-                if (mapsq(x3, y3) && is_ocean(mapsq(x3, y3))) {
-                    world_alt_set(x3, y3, ALT_SHORE_LINE, true);
-                }
-            }
-        }
-    }
-    bit2_set(x, y, LM_BOREHOLE, true);
-    new_landmark(x, y, (int)Natural[__builtin_ctz(LM_BOREHOLE)].name);
-}
-
-void __cdecl mod_world_fossil(int x, int y) {
-    if (!locate_landmark(&x, &y, true)) {
-        return;
-    }
-    for (int i = 0; i < 6; i++) {
-        int x2 = wrap(x + TableOffsetX[i]);
-        int y2 = y + TableOffsetY[i];
-        MAP* sq = mapsq(x2, y2);
-        if (sq && is_ocean(sq)) {
-            world_alt_set(x2, y2, ALT_OCEAN, true);
-            if (conf.modified_landmarks) {
-                world_alt_set(x2, y2, ALT_OCEAN_SHELF, true);
-            }
-            bit2_set(x2, y2, LM_FOSSIL, true);
-            code_set(x2, y2, i);
-        }
-    }
-    new_landmark(x, y, (int)Natural[__builtin_ctz(LM_FOSSIL)].name);
-}
-
-float world_fractal(FastNoiseLite& noise, int x, int y) {
-    float val = 1.0f * noise.GetNoise(3.0f*x, 2.0f*y)
-        + 0.3f * (2 + *MapErosiveForces) * noise.GetNoise(-6.0f*x, -4.0f*y);
-    if (x < 8 && *MapAreaX >= 32 && !map_is_flat()) {
-        val = x/8.0f * val + (1.0f - x/8.0f) * world_fractal(noise, *MapAreaX + x, y);
-    }
-    return val;
-}
-
-void console_world_generate(uint32_t seed) {
-    if (*GameState & STATE_SCENARIO_EDITOR && *GameState & STATE_OMNISCIENT_VIEW) {
-        *VehCount = 0;
-        *BaseCount = 0;
-        MapWin->fUnitNotViewMode = 0;
-        MapWin->iUnit = -1;
-        *GameState |= STATE_UNK_4;
-        *GameState &= ~STATE_OMNISCIENT_VIEW;
-        world_generate(seed);
-        *GameState |= STATE_OMNISCIENT_VIEW;
-        draw_map(1);
-        GraphicWin_redraw(WorldWin);
-    }
-}
-
-void __cdecl mod_world_build() {
-    static uint32_t seed = random_state();
-    if (!conf.new_world_builder) {
-        ThinkerVars->map_random_value = 0;
-        world_build();
-        
-        // [WTP]
-		// modify ocean depth
-		
-		if (conf.ocean_depth_multiplier != 1.0)
-		{
-			debug("modify ocean depth %d\n", *MapAreaTiles);
-			
-			for (int i = 0; i < *MapAreaTiles; i++)
-			{
-				MAP *tile = &((*MapTiles)[i]);
-				
-				// ocean
-				
-				if (!is_ocean(tile))
-					continue;
-				
-				// old level and altitude
-				
-				int oldLevel = tile->climate & 0xE0;
-				int oldLevelIndex = oldLevel >> 5;
-				int oldAltitude = tile->contour;
-				int oldAltitudeM = 50 * (tile->contour - 60);
-				int oldAltitudeLevelIndex = oldAltitude / 20;
-				
-				if (oldAltitudeLevelIndex != oldLevelIndex)
-				{
-					debug("\toldAltitudeLevelIndex and oldLevelIndex do not match.\n");
-				}
-				
-				// new level and altitude
-				
-				int newAltitudeM = (int)floor(conf.ocean_depth_multiplier * (double)oldAltitudeM);
-				int newAltitude = newAltitudeM / 50 + 60;
-				int newAltitudeLevelIndex = newAltitude / 20;
-				int newLevelIndex = newAltitudeLevelIndex;
-				int newLevel = newLevelIndex << 5;
-				
-				// update map
-				
-				tile->climate = (tile->climate & ~0xE0) | newLevel;
-				tile->contour = newAltitude;
-				
-				debug("[%4d] %d, %3d, %5d -> %d, %3d, %5d\n", i, oldLevelIndex, oldAltitude, oldAltitudeM, newLevelIndex, newAltitude, newAltitudeM);
-				
-			}
-			
-			debug("\n");
-			
-		}
-		
-        return;
-    }
-    seed += pair_hash(seed, GetTickCount());
-    world_generate(seed);
-}
-
-void world_generate(uint32_t seed) {
-    if (DEBUG) {
-        *GameState |= STATE_DEBUG_MODE;
-    }
-    MAP* sq;
-    mod_map_wipe();
-    ThinkerVars->map_random_value = seed;
-    FastNoiseLite noise;
-    noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
-    noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-    noise.SetSeed(seed);
-    random_reseed(seed);
-
-    memcpy(AltNatural, AltNaturalDefault, 0x2Cu);
-    *WorldAddTemperature = 1;
-    *WorldSkipTerritory = 1;
-    /*
-    MapSizePlanet (this should not be unset, but checked regardless)
-    MapOceanCoverage
-    MapLandCoverage
-    MapErosiveForces
-    MapPlanetaryOrbit
-    MapCloudCover
-    MapNativeLifeForms
-    */
-    for (int i = 0; i < 7; i++) {
-        if (MapSizePlanet[i] < 0) {
-            MapSizePlanet[i] = random(3);
-        }
-        if (i > 0) {
-            MapSizePlanet[i] = clamp(MapSizePlanet[i], 0, 2);
-        }
-    }
-    if (*GameState & STATE_OMNISCIENT_VIEW) {
-        MapWin_clear_terrain(MapWin);
-        draw_map(1);
-    }
-    game_srand(seed ^ 0xffff); // For game_rand function, terrain detail and landmark placement
-    *MapRandomSeed = (seed % 0x7fff) + 1; // Must be non-zero, supply pod placement
-
-    Points conts;
-    uint32_t continents = clamp(*MapAreaSqRoot / 12, 4, 20);
-    int levels[256] = {};
-    int x = 0, y = 0, i = 0;
-
-    if (conf.world_continents && *MapAreaY >= 32) {
-        while (++i <= 200 && conts.size() < continents) {
-            y = (random(*MapAreaY - 16) + 8);
-            x = (random(*MapAreaX) &~1) + (y&1);
-            if (i & 1 && min_vector(conts, x, y) <= *MapAreaSqRoot/6) {
-                conts.insert({x, y});
-            }
-            if (~i & 1 && min_vector(conts, x, y) >= *MapAreaSqRoot/3) {
-                conts.insert({x, y});
-            }
-        }
-    }
-
-    const float L = AltNatural[ALT_SHORE_LINE]; // Default shoreline altitude = 45
-    const float Wmid = (50 - conf.world_sea_levels[*MapOceanCoverage])*0.01f;
-    const float Wsea = 0.1f + 0.01f * conf.world_ocean_mod;
-    const float Wland = 0.1f + 0.01f * conf.world_hills_mod + 0.25f * (*MapErosiveForces);
-    const float Wdist = 1.0f / clamp(*MapAreaSqRoot * 0.1f, 1.0f, 15.0f);
-
-    for (y = 0; y < *MapAreaY; y++) {
-        float Wcaps = 1.0f - min(1.0f, (min(y, *MapAreaY - y) / (max(1.0f, *MapAreaY * 0.2f))));
-
-        for (x = y&1; x < *MapAreaX; x+=2) {
-            float Wcont = 1.5f - clamp(min_vector(conts, x, y) * Wdist, 0.75f, 1.5f);
-            float value = world_fractal(noise, x, y) + Wmid - 0.5f*Wcaps;
-            if (value > 0) {
-                value = value * Wland;
-            } else {
-                value = value * Wsea;
-            }
-            if (conf.world_continents && value < 0.2f) {
-                value += Wcont * Wland;
-//                if (DEBUG) pm_overlay[x][y] = (int)(10*Wcont);
-            }
-            sq = mapsq(x, y);
-            sq->contour = clamp((int)(L + L*value), 0, 255);
-        }
-    }
-    if (conf.world_mirror_x) {
-        const int ky = 2 - (*MapAreaY & 1);
-        for (y = 0; y < *MapAreaY/2; y++) {
-            for (x = y&1; x < *MapAreaX; x+=2) {
-                MAP* src = mapsq(x, y);
-                MAP* tgt = mapsq(x, *MapAreaY - y - ky);
-                tgt->contour = src->contour;
-            }
-        }
-    }
-    if (conf.world_mirror_y) {
-        const int kx = 2 - (*MapAreaX & 1);
-        for (y = 0; y < *MapAreaY; y++) {
-            for (x = y&1; x < *MapAreaX/2; x+=2) {
-                MAP* src = mapsq(x, y);
-                MAP* tgt = mapsq(*MapAreaX - x - kx, y);
-                tgt->contour = src->contour;
-            }
-        }
-    }
-    for (y = 0; y < *MapAreaY; y++) {
-        for (x = y&1; x < *MapAreaX; x+=2) {
-            sq = mapsq(x, y);
-            levels[sq->contour]++;
-        }
-    }
-    int level_sum = 0;
-    int level_mod = 0;
-    for (i = 0; i < 256; i++) {
-        level_sum += levels[i];
-        if (level_sum >= *MapAreaTiles * conf.world_sea_levels[*MapOceanCoverage] / 100) {
-            level_mod = AltNatural[ALT_SHORE_LINE] - i;
-            break;
-        }
-    }
-    for (y = 0; y < *MapAreaY; y++) {
-        for (x = y&1; x < *MapAreaX; x+=2) {
-            sq = mapsq(x, y);
-            sq->contour = clamp(sq->contour + level_mod, 0, 255);
-        }
-    }
-    debug("world_build seed: %10u size: %d x: %d y: %d "\
-    "ocean: %d erosion: %d cloud: %d sea_level: %d level_mod: %d\n",
-    seed, *MapSizePlanet, *MapAreaX, *MapAreaY, *MapOceanCoverage,
-    *MapErosiveForces, *MapCloudCover, conf.world_sea_levels[*MapOceanCoverage], level_mod);
-
-    if (conf.world_polar_caps) {
-        world_polar_caps();
-    }
-    world_linearize_contours();
-    world_shorelines();
-    Path_continents(Paths);
-    Points bridges;
-
-    for (y = 3; y < *MapAreaY - 3; y++) {
-        for (x = y&1; x < *MapAreaX; x+=2) {
-            sq = mapsq(x, y);
-            if (is_ocean(sq)) {
-                continue;
-            }
-            uint64_t sea = 0;
-            int land_count = Continents[sq->region].tile_count;
-            if (conf.world_islands_mod > 0) {
-                if (land_count < conf.world_islands_mod && land_count < *MapAreaTiles/8) {
-                    bridges.insert({x, y});
-                    if (DEBUG) mapdata[{x, y}].overlay = -1;
-                    continue;
-                }
-            }
-            for (auto& m : iterate_tiles(x, y, 1, 13)) {
-                if (is_ocean(m.sq)) {
-                    if (Continents[m.sq->region].tile_count >= 30) {
-                        sea |= 1 << (m.sq->region & 0x3f);
-                    }
-                }
-            }
-            if (__builtin_popcount(sea) > 1) {
-                if (land_count > *MapAreaTiles/8 || pair_hash(seed^(x/8), y/8) & 1) {
-                    bridges.insert({x, y});
-                    if (DEBUG) mapdata[{x, y}].overlay = -2;
-                }
-            }
-        }
-    }
-    for (auto& p : bridges) {
-        world_alt_set(p.x, p.y, ALT_OCEAN, 1);
-        world_alt_set(p.x, p.y, ALT_OCEAN_SHELF, 1);
-    }
-    world_temperature();
-    world_riverbeds();
-    world_fungus();
-    Path_continents(Paths);
-
-    LMConfig lm;
-    memcpy(&lm, &conf.landmarks, sizeof(lm));
-
-    for (i = 0; i < 16; i++) {
-        if (conf.world_mirror_x || conf.world_mirror_y) {
-            break;
-        }
-        if (lm.jungle > 0) {
-            mod_world_monsoon(-1, -1);
-            lm.jungle--;
-        }
-        if (lm.crater > 0) {
-            world_crater(-1, -1);
-            lm.crater--;
-        }
-        if (lm.volcano > 0) {
-            world_volcano(-1, -1, 0);
-            lm.volcano--;
-        }
-        if (lm.mesa > 0) {
-            world_mesa(-1, -1);
-            lm.mesa--;
-        }
-        if (lm.ridge > 0) {
-            world_ridge(-1, -1);
-            lm.ridge--;
-        }
-        if (lm.uranium > 0) {
-            world_diamond(-1, -1);
-            lm.uranium--;
-        }
-        if (lm.ruins > 0) {
-            world_ruin(-1, -1);
-            lm.ruins--;
-        }
-        /*
-        Unity Wreckage and Fossil Field Ridge are always expansion only content.
-        Manifold Nexus and Borehole Cluster were also added to vanilla SMAC
-        in the patches, even though those landmarks are technically expansion content.
-        */
-        if (*ExpansionEnabled) {
-            if (lm.unity > 0) {
-                world_unity(-1, -1);
-                lm.unity--;
-            }
-            if (lm.fossil > 0) {
-                mod_world_fossil(-1, -1);
-                lm.fossil--;
-            }
-        }
-        if (lm.canyon > 0) {
-            world_canyon_nessus(-1, -1);
-            lm.canyon--;
-        }
-        if (lm.nexus > 0) {
-            world_temple(-1, -1);
-            lm.nexus--;
-        }
-        if (lm.borehole > 0) {
-            mod_world_borehole(-1, -1);
-            lm.borehole--;
-        }
-        if (lm.sargasso > 0) {
-            world_sargasso(-1, -1);
-            lm.sargasso--;
-        }
-        if (lm.dunes > 0) {
-            world_dune(-1, -1);
-            lm.dunes--;
-        }
-        if (lm.fresh > 0) {
-            world_fresh(-1, -1);
-            lm.fresh--;
-        }
-        if (lm.geothermal > 0) {
-            world_geothermal(-1, -1);
-            lm.geothermal--;
-        }
-    }
-    fixup_landmarks();
-    *WorldAddTemperature = 0;
-    *WorldSkipTerritory = 0; // If this flag is false, reset_territory is run in world_climate
-    world_climate(); // Run Path::continents
-    world_rocky();
-
-    if (!*GameHalted) {
-        MapWin_clear_terrain(MapWin);
-    }
+    debug("find_start %d %3d x: %3d y: %3d range: %d\n",
+        faction_id, i, *tx, *ty, min_range(spawns, *tx, *ty));
     flushlog();
 }
 
@@ -2070,15 +1776,18 @@ void __cdecl mod_time_warp() {
     Alien factions spawn with an extra Colony Pod and Battle Ogre Mk1.
     These units are added in setup_player regardless of other conditions.
     */
-
-    if (conf.time_warp_mod && !*MultiplayerActive) {
-        *SkipTechScreenB = 1;
+    if (conf.time_warp_mod) {
         for (int i = 1; i < MaxPlayerNum; i++) {
             bool ocean = MFactions[i].is_aquatic();
             bool alien = MFactions[i].is_alien();
+            *SkipTechScreenB = 1;
             for (int j = 0; j < conf.time_warp_techs; j++) {
+                Factions[i].tech_research_id = mod_tech_ai(i);
                 tech_advance(i);
             }
+            *SkipTechScreenB = 0;
+            Factions[i].tech_ranking = 2 * Factions[i].tech_achieved;
+            Factions[i].tech_research_id = -1;
             Factions[i].energy_credits += num * 50;
             consider_designs(i);
 
@@ -2148,13 +1857,12 @@ void __cdecl mod_time_warp() {
                 base_change(base_id, select_build(base_id));
             }
         }
-        *SkipTechScreenB = 0;
         *CurrentTurn = conf.time_warp_start_turn;
     } else {
         time_warp();
     }
     init_world_config();
-    if (!conf.time_warp_projects || *MultiplayerActive) {
+    if (!conf.time_warp_projects) {
         return;
     }
     for (const FacilityId item_id : projects) {

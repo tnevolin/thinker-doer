@@ -7,17 +7,21 @@ const int32_t MainWinHandle = (int32_t)(&MapWin->oMainWin.oWinBase.field_4); // 
 char label_pop_size[StrBufLen] = "Pop: %d / %d / %d / %d";
 char label_pop_boom[StrBufLen] = "Population Boom";
 char label_nerve_staple[StrBufLen] = "Nerve Staple: %d turns";
-char label_psych_effect[StrBufLen] = "effect: %2d citizens";
-char label_psych_effect_allocated[StrBufLen] = "( econ: %+2d )    effect: %2d";
-char label_psych_energy_allocation[StrBufLen] = "to psych: %2d";
 char label_captured_base[StrBufLen] = "Captured Base: %d turns";
 char label_stockpile_energy[StrBufLen] = "Stockpile: %d per turn";
 char label_sat_nutrient[StrBufLen] = "N +%d";
 char label_sat_mineral[StrBufLen] = "M +%d";
 char label_sat_energy[StrBufLen] = "E +%d";
-char label_eco_damage[StrBufLen] = "";
-char label_base_surplus[StrBufLen] = "";
+char label_eco_damage[StrBufLen] = "Eco-Damage: %d%%";
+char label_base_surplus[StrBufLen] = "Surplus: %d / %d / %d";
 char label_unit_reactor[4][StrBufLen] = {};
+// [WTP]
+char label_psych_effect[StrBufLen] = "effect: %2d citizens";
+char label_psych_effect_allocated[StrBufLen] = "( econ: %+2d )    effect: %2d";
+char label_psych_energy_allocation[StrBufLen] = "to psych: %2d";
+
+std::string video_player_path = "";
+std::string video_player_args = "";
 
 static int minimal_cost = 0;
 static int base_zoom_factor = -14;
@@ -142,6 +146,22 @@ CMAP_GETCORNERYOFFSET_F        pfncMapGetCornerYOffset =        (CMAP_GETCORNERY
 // End of PRACX definitions
 
 
+bool shift_key_down() {
+    return GetAsyncKeyState(VK_SHIFT) < 0;
+}
+
+bool ctrl_key_down() {
+    return GetAsyncKeyState(VK_CONTROL) < 0;
+}
+
+bool alt_key_down() {
+    return GetAsyncKeyState(VK_MENU) < 0;
+}
+
+bool win_has_focus() {
+    return GetFocus() == *phWnd;
+}
+
 int __thiscall Win_is_visible(Win* This) {
     bool value = (This->iSomeFlag & WIN_VISIBLE)
         && (!This->poParent || Win_is_visible(This->poParent));
@@ -164,18 +184,6 @@ static GameWinState current_window() {
         }
     }
     return GW_None;
-}
-
-static bool win_has_focus() {
-    return GetFocus() == *phWnd;
-}
-
-static bool alt_key_down() {
-    return GetAsyncKeyState(VK_MENU) < 0;
-}
-
-static bool ctrl_key_down() {
-    return GetAsyncKeyState(VK_CONTROL) < 0;
 }
 
 static void base_resource_zoom(bool zoom_in) {
@@ -569,6 +577,8 @@ int __cdecl mod_blink_timer() {
 LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     const bool debug_cmd = DEBUG && !*GameHalted && msg == WM_CHAR;
+    const bool is_editor = !*GameHalted
+        && *GameState & STATE_SCENARIO_EDITOR && *GameState & STATE_OMNISCIENT_VIEW;
     static int delta_accum = 0;
     POINT p;
     MAP* sq;
@@ -583,7 +593,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         return WinProc(hwnd, msg, wParam, lParam);
 
-    } else if (msg == WM_MOVIEOVER && !conf.reduced_mode) {
+    } else if (msg == WM_MOVIEOVER) {
         conf.playing_movie = false;
         set_video_mode(1);
 
@@ -647,14 +657,35 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     } else if (msg == WM_KEYDOWN && (wParam == VK_LEFT || wParam == VK_RIGHT)
     && ctrl_key_down() && current_window() == GW_Base) {
-        int32_t value = ((BaseWindow*)BaseWin)->oRender.iResWindowTab;
+        int32_t value = BaseWin->oRender.iResWindowTab;
         if (wParam == VK_LEFT) {
             value = (value + 1) % 3;
         } else {
             value = (value + 2) % 3;
         }
-        ((BaseWindow*)BaseWin)->oRender.iResWindowTab = value;
+        BaseWin->oRender.iResWindowTab = value;
         GraphicWin_redraw(BaseWin);
+
+    } else if (msg == WM_KEYDOWN && wParam == 'H' && ctrl_key_down()
+    && !*MultiplayerActive && current_window() == GW_Base && *CurrentBaseID >= 0
+    && Bases[*CurrentBaseID].faction_id == MapWin->cOwner) {
+        BASE* base = &Bases[*CurrentBaseID];
+        Faction* f = &Factions[base->faction_id];
+        int mins = max(0, mineral_cost(*CurrentBaseID, base->item()) - base->minerals_accumulated);
+        int cost = hurry_cost(*CurrentBaseID, base->item(), mins);
+        if (base->can_hurry_item() && cost > 0 && mins > 0) {
+            if (max(0, f->energy_credits - f->hurry_cost_total) >= cost) {
+                f->energy_credits -= cost;
+                base->minerals_accumulated += mins;
+                base->state_flags |= BSTATE_HURRY_PRODUCTION;
+                GraphicWin_redraw(BaseWin);
+                ok_callback();
+            } else {
+                wave_it(9); // Insufficient energy
+            }
+        } else if (cost > 0 && mins > 0) {
+            wave_it(8); // Cannot execute order
+        }
 
     } else if (conf.smooth_scrolling && msg >= WM_MOUSEFIRST && msg <= WM_MOUSELAST) {
         if (current_window() != GW_World || !win_has_focus()) {
@@ -691,13 +722,16 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     } else if (conf.reduced_mode && msg == WM_CHAR && wParam == 'h' && alt_key_down()) {
         show_mod_menu();
 
-    } else if (msg == WM_CHAR && wParam == 'o' && alt_key_down() && !*GameHalted
-    && *GameState & STATE_SCENARIO_EDITOR && *GameState & STATE_OMNISCIENT_VIEW) {
+    } else if (msg == WM_CHAR && wParam == 'o' && alt_key_down() && is_editor) {
         uint32_t seed = ThinkerVars->map_random_value;
         int value = pop_ask_number("modmenu", "MAPGEN", seed, 0);
         if (!value) { // OK button pressed
             console_world_generate(ParseNumTable[0]);
         }
+
+    } else if (msg == WM_CHAR && wParam == 'l' && alt_key_down() && is_editor
+    && *ReplayEventSize > 0) {
+        show_replay();
 
     } else if (DEBUG && msg == WM_CHAR && wParam == 'd' && alt_key_down()) {
         conf.debug_mode = !conf.debug_mode;
@@ -723,7 +757,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             popp("modmenu", "GENERIC", 0, 0, 0);
         }
 
-    } else if (DEBUG && msg == WM_CHAR && wParam == 'm' && alt_key_down()) {
+    } else if (debug_cmd && wParam == 'm' && alt_key_down()) {
         conf.debug_verbose = !conf.debug_verbose;
         parse_says(0, MOD_VERSION, -1, -1);
         parse_says(1, (conf.debug_verbose ?
@@ -735,15 +769,21 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         base_compute(1);
         BaseWin_on_redraw(BaseWin);
 
-    } else if (debug_cmd && wParam == 'c' && alt_key_down()
-    && *GameState & STATE_SCENARIO_EDITOR && *GameState & STATE_OMNISCIENT_VIEW
-    && (sq = mapsq(MapWin->iTileX, MapWin->iTileY)) && sq->landmarks) {
+    } else if (debug_cmd && wParam == 'p' && alt_key_down()) {
+        parse_says(0, "diplomatic patience", -1, -1);
+        int value = pop_ask_number("modmenu", "ASKNUMBER", conf.diplo_patience, 0);
+        if (!value) { // OK button pressed
+            conf.diplo_patience = max(0, ParseNumTable[0]);
+        }
+
+    } else if (debug_cmd && wParam == 'c' && alt_key_down() && is_editor
+    && (sq = mapsq(MapWin->iTileX, MapWin->iTileY)) && sq->lm_items()) {
         uint32_t prev_state = MapWin->iWhatToDrawFlags;
         MapWin->iWhatToDrawFlags |= MAPWIN_DRAW_GOALS;
         refresh_overlay(code_at);
-        int value = pop_ask_number("modmenu", "MAPGEN", sq->art_ref_id, 0);
+        int value = pop_ask_number("modmenu", "MAPGEN", sq->code_at(), 0);
         if (!value) { // OK button pressed
-            sq->art_ref_id = ParseNumTable[0];
+            code_set(MapWin->iTileX, MapWin->iTileY, ParseNumTable[0]);
         }
         refresh_overlay(clear_overlay);
         MapWin->iWhatToDrawFlags = prev_state;
@@ -777,13 +817,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         InvalidateRect(hwnd, NULL, false);
 
     } else if (debug_cmd && wParam == 'f' && alt_key_down()
-    && (sq = mapsq(MapWin->iTileX, MapWin->iTileY))) {
+    && (sq = mapsq(MapWin->iTileX, MapWin->iTileY)) && sq->is_owned()) {
         MapWin->iWhatToDrawFlags |= MAPWIN_DRAW_GOALS;
-        if (sq && sq->is_owned()) {
-            move_upkeep(sq->owner, UM_Visual);
-            MapWin_draw_map(MapWin, 0);
-            InvalidateRect(hwnd, NULL, false);
-        }
+        move_upkeep(sq->owner, UM_Visual);
+        MapWin_draw_map(MapWin, 0);
+        InvalidateRect(hwnd, NULL, false);
 
     } else if (debug_cmd && wParam == 'x' && alt_key_down()) {
         MapWin->iWhatToDrawFlags |= MAPWIN_DRAW_GOALS;
@@ -803,11 +841,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             print_base(base_id);
         }
         print_map(x, y);
-        for (int k=0; k < *VehCount; k++) {
-            VEH* veh = &Vehicles[k];
+        for (int k = 0; k < *VehCount; k++) {
+            VEH* veh = &Vehs[k];
             if (veh->x == x && veh->y == y) {
-                Vehicles[k].state |= VSTATE_UNK_40000;
-                Vehicles[k].state &= ~VSTATE_UNK_2000;
+                Vehs[k].state |= VSTATE_UNK_40000;
+                Vehs[k].state &= ~VSTATE_UNK_2000;
                 print_veh(k);
             }
         }
@@ -831,7 +869,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			Faction *faction = &Factions[base->faction_id];
 			int hurryCost = hurry_cost(baseId, itemId, hurryMinerals);
-			int factionAvaialbleCredits = faction->energy_credits - faction->energy_cost;
+			int factionAvaialbleCredits = faction->energy_credits - faction->hurry_cost_total;
 			
 			if (hurryCost <= factionAvaialbleCredits)
 			{
@@ -857,8 +895,24 @@ int __cdecl mod_Win_init_class(const char* lpWindowName)
 
 void __cdecl mod_amovie_project(const char* name)
 {
-    conf.playing_movie = true;
-    amovie_project(name);
+    if (!strlen(name) || !conf.video_player) {
+        return;
+    } else if (conf.video_player == 1) {
+        conf.playing_movie = true;
+        amovie_project(name);
+    } else if (conf.video_player == 2) {
+        conf.playing_movie = true;
+        PROCESS_INFORMATION pi = {};
+        STARTUPINFO si = {};
+        std::string cmd = "\"" + video_player_path + "\" " + video_player_args
+            + " .\\movies\\" + std::string(name) + ".wve";
+        if (CreateProcessA(NULL, (char*)cmd.c_str(),
+        NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+            WaitForSingleObject(pi.hProcess, INFINITE);
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+        }
+    }
     if (*phWnd) {
         PostMessage(*phWnd, WM_MOVIEOVER, 0, 0);
     }
@@ -983,6 +1037,11 @@ void __thiscall MapWin_gen_overlays(Console* This, int x, int y)
                         case AI_GOAL_RAISE_LAND:
                             buf[1] = 'r';
                             break;
+                        case AI_GOAL_NAVAL_BEACH:
+                        case AI_GOAL_NAVAL_START:
+                        case AI_GOAL_NAVAL_END:
+                            buf[1] = 'n';
+                            break;
                         default:
                             buf[1] = (goal.type < Thinker_Goal_ID_First ? '*' : 'g');
                             break;
@@ -1037,12 +1096,12 @@ void show_mod_stats()
     int total_pop = 0,
         total_minerals = 0,
         total_energy = 0,
+        faction_bases = 0,
         faction_pop = 0,
         faction_units = 0,
         faction_minerals = 0,
         faction_energy = 0;
 
-    Faction* f = &Factions[MapWin->cOwner];
     for (int i = 0; i < *BaseCount; ++i) {
         BASE* b = &Bases[i];
         int mindiv = (has_project(FAC_SPACE_ELEVATOR, b->faction_id)
@@ -1051,6 +1110,7 @@ void show_mod_stats()
              || b->item() == -FAC_ORBITAL_POWER_TRANS
              || b->item() == -FAC_SKY_HYDRO_LAB) ? 2 : 1);
         if (b->faction_id == MapWin->cOwner) {
+            faction_bases++;
             faction_pop += b->pop_size;
             faction_minerals += b->mineral_intake_2 / mindiv;
             faction_energy += b->energy_intake_2;
@@ -1060,7 +1120,7 @@ void show_mod_stats()
         total_energy += b->energy_intake_2;
     }
     for (int i = 0; i < *VehCount; i++) {
-        VEH* v = &Vehicles[i];
+        VEH* v = &Vehs[i];
         if (v->faction_id == MapWin->cOwner) {
             faction_units++;
         }
@@ -1070,9 +1130,9 @@ void show_mod_stats()
     ParseNumTable[2] = total_pop;
     ParseNumTable[3] = total_minerals;
     ParseNumTable[4] = total_energy;
-    ParseNumTable[5] = f->base_count;
+    ParseNumTable[5] = faction_bases;
     ParseNumTable[6] = faction_units;
-    ParseNumTable[7] = f->pop_total;
+    ParseNumTable[7] = faction_pop;
     ParseNumTable[8] = faction_minerals;
     ParseNumTable[9] = faction_energy;
     popp("modmenu", "STATS", 0, "markbm_sm.pcx", 0);
@@ -1293,7 +1353,7 @@ Win* This, const char* filename, const char* label, int a4, int a5, int a6, int 
     Faction* f = &Factions[base->faction_id];
     int item_cost = mineral_cost(*CurrentBaseID, base->queue_items[0]);
     int minerals = item_cost - base->minerals_accumulated - max(0, base->mineral_surplus);
-    int credits = max(0, f->energy_credits - f->energy_cost);
+    int credits = max(0, f->energy_credits - f->hurry_cost_total);
     int cost = hurry_cost(*CurrentBaseID, base->queue_items[0], minerals);
     minimal_cost = min(credits, cost);
     if (item_cost <= base->minerals_accumulated) {
@@ -1306,25 +1366,75 @@ Win* This, const char* filename, const char* label, int a4, int a5, int a6, int 
 
 #pragma GCC diagnostic pop
 
-void __thiscall BaseWin_draw_misc_eco_damage(Buffer* This, char* buf, int x, int y, int len)
+int __cdecl BaseWin_ask_number(const char* label, int value, int a3)
 {
-    BASE* base = *CurrentBase;
-    Faction* f = &Factions[base->faction_id];
-    if (!conf.render_base_info || !strlen(label_eco_damage)) {
-        Buffer_write_l(This, buf, x, y, len);
-    } else {
-        int clean_mins = conf.clean_minerals + f->clean_minerals_modifier
-            + clamp(f->satellites_mineral, 0, (int)base->pop_size);
-        int damage = terraform_eco_damage(*CurrentBaseID);
-        int mins = base->mineral_intake_2 + damage/8;
-        int pct;
-        if (base->eco_damage > 0) {
-            pct = 100 + base->eco_damage;
-        } else {
-            pct = (clean_mins > 0 ? 100 * clamp(mins, 0, clean_mins) / clean_mins : 0);
+    ParseNumTable[0] = value;
+    return pop_ask_number(ScriptFile, label, minimal_cost, a3);
+}
+
+int __thiscall BaseWin_gov_options(BaseWindow* This, int flag)
+{
+    int base_id = *CurrentBaseID;
+    if (base_id < 0 || base_id != This->oRender.base_id) {
+        assert(0);
+        return 1;
+    }
+    BASE* base = &Bases[base_id];
+    int worked_tiles = base->worked_tiles;
+    set_base(base_id);
+    base_compute(base_id);
+    if (*MultiplayerActive && !*ControlTurnC
+    && worked_tiles != base->worked_tiles
+    && !NetDaemon_lock_base(NetState, *CurrentBaseID, 0, -1, -1)) {
+        NetDaemon_unlock_base(NetState, *CurrentBaseID);
+    }
+    if (base->faction_id != MapWin->cOwner && !(*GameState & STATE_OMNISCIENT_VIEW)) {
+        return 1;
+    }
+    *DialogChoices = 0;
+    for (auto& p : BaseGovOptions) {
+        if (base->governor_flags & p[1]) {
+            *DialogChoices |= p[0];
         }
-        snprintf(buf, StrBufLen, label_eco_damage, pct);
-        Buffer_write_l(This, buf, x, y, strlen(buf));
+    }
+    parse_says(0, base->name, -1, -1);
+    if (NetDaemon_lock_base(NetState, base_id, 0, -1, -1)) {
+        return 1;
+    }
+    if (X_pop("modmenu", "GOVOPTIONS", -1, 0, 65, 0) >= 0) {
+        base->governor_flags &= (GOV_PRIORITY_CONQUER|GOV_PRIORITY_BUILD|GOV_PRIORITY_DISCOVER|GOV_PRIORITY_EXPLORE);
+        for (auto& p : BaseGovOptions) {
+            if (*DialogChoices & p[0]) {
+                base->governor_flags |= p[1];
+            }
+        }
+        Factions[base->faction_id].base_governor_adv = base->governor_flags;
+        if (!flag) {
+            if (base->governor_flags & GOV_ACTIVE) {
+                if (base->governor_flags & GOV_MANAGE_PRODUCTION) {
+                    base->state_flags &= ~BSTATE_UNK_80000000;
+                    base->queue_size = 0;
+                    mod_base_reset(base_id, 1);
+                }
+                if (base->governor_flags & GOV_MANAGE_CITIZENS) {
+                    base->worked_tiles = 0;
+                    base->specialist_total = 0;
+                    base->specialist_adjust = 0;
+                    base_compute(1);
+                    // base_doctors() removed as obsolete
+                }
+            }
+            if (!(base->governor_flags & GOV_ACTIVE) || !(base->governor_flags & GOV_MANAGE_PRODUCTION)) {
+                draw_radius(base->x, base->y, 2, 2);
+            }
+        }
+        NetDaemon_unlock_base(NetState, base_id);
+        GraphicWin_redraw(BaseWin);
+        GraphicWin_redraw(MainWin);
+        return 0;
+    } else {
+        NetDaemon_unlock_base(NetState, base_id);
+        return 1;
     }
 }
 
@@ -1349,17 +1459,33 @@ void __thiscall BaseWin_draw_support(BaseWindow* This)
     Buffer_set_clip(&This->oCanvas, &This->oCanvas.stRect[0]);
 }
 
-int __cdecl BaseWin_ask_number(const char* label, int value, int a3)
+void __thiscall BaseWin_draw_misc_eco_damage(Buffer* This, char* buf, int x, int y, int len)
 {
-    ParseNumTable[0] = value;
-    return pop_ask_number(ScriptFile, label, minimal_cost, a3);
+    BASE* base = *CurrentBase;
+    Faction* f = &Factions[base->faction_id];
+    if (!conf.render_base_info || !strlen(label_eco_damage)) {
+        Buffer_write_l(This, buf, x, y, len);
+    } else {
+        int clean_mins = conf.clean_minerals + f->clean_minerals_modifier
+            + clamp(f->satellites_mineral, 0, (int)base->pop_size);
+        int damage = terraform_eco_damage(*CurrentBaseID);
+        int mins = base->mineral_intake_2 + damage/8;
+        int pct;
+        if (base->eco_damage > 0) {
+            pct = 100 + base->eco_damage;
+        } else {
+            pct = (clean_mins > 0 ? 100 * clamp(mins, 0, clean_mins) / clean_mins : 0);
+        }
+        snprintf(buf, StrBufLen, label_eco_damage, pct);
+        Buffer_write_l(This, buf, x, y, strlen(buf));
+    }
 }
 
 void __thiscall BaseWin_draw_farm_set_font(Buffer* This, Font* font, int a3, int a4, int a5)
 {
     char buf[StrBufLen] = {};
     // Base resource window coordinates including button row
-    RECT* rc = &((BaseWindow*)BaseWin)->oRender.rResWindow;
+    RECT* rc = &BaseWin->oRender.rResWindow;
     int x1 = rc->left;
     int y1 = rc->top;
     int x2 = rc->right;
@@ -1475,28 +1601,9 @@ void __cdecl BaseWin_draw_psych_strcat(char* buffer, char* source)
             return;
         }
     }
+	}
+	
     strncat(buffer, source, StrBufLen);
-	}
-	
-}
-
-void __cdecl BaseWin_draw_psych_strcat_police(char* buffer, char* source)
-{
-	// [WTP]
-	// base psych simplified rearranged labels
-	
-	if (conf.base_psych && conf.base_psych_improved)
-	{
-		// replace label #3 with [Secret Projects]
-		
-		strncat(buffer, label_get(327), StrBufLen); // Secret Projects
-		
-	}
-	else
-	{
-		strncat(buffer, source, StrBufLen);
-	}
-	
 }
 
 void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3, int a4, int a5)
@@ -1720,7 +1827,7 @@ int __thiscall ReportWin_close_handler(void* This)
 
 /*
 Fix potential crash when a game is loaded after using Edit Map > Generate/Remove Fungus > No Fungus.
-Vanilla version changed MapWin->cOwner variable for unknown reason.
+Original version changed MapWin->cOwner variable for unknown reason which is skipped.
 */
 void __thiscall Console_editor_fungus(Console* UNUSED(This))
 {
@@ -1732,9 +1839,8 @@ void __thiscall Console_editor_fungus(Console* UNUSED(This))
             MAP* sq = *MapTiles;
             for (int i = 0; i < *MapAreaTiles; ++i, ++sq) {
                 sq->items &= ~BIT_FUNGUS;
-                // Update visible tile items
                 for (int j = 1; j < 8; ++j) {
-                    *((uint32_t*)&sq->landmarks + j) = sq->items;
+                    sq->visible_items[j - 1] = sq->items;
                 }
             }
         }
@@ -1755,7 +1861,7 @@ void __thiscall Console_editor_fungus(Console* UNUSED(This))
 Fix foreign base names being visible in unexplored tiles when issuing move to or patrol
 orders to the tiles. This version adds visibility checks for all base tiles.
 */
-void __cdecl mod_say_loc(char* dest, int x, int y, int a4, int a5, int a6)
+void __cdecl say_loc(char* dest, int x, int y, int a4, int a5, int a6)
 {
     int base_id = -1;
     MAP* sq;
@@ -1766,7 +1872,7 @@ void __cdecl mod_say_loc(char* dest, int x, int y, int a4, int a5, int a6)
     }
     if (a4 != 0 && base_id < 0) {
         a6 = 0;
-        base_id = base_find3(x, y, -1, -1, -1, MapWin->cOwner);
+        base_id = mod_base_find3(x, y, -1, -1, -1, MapWin->cOwner);
         if (base_id >= 0) {
             strncat(dest, label_get(62), 32); // near
             strncat(dest, " ", 2);
@@ -1824,21 +1930,15 @@ int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, 
     if (!strcmp(label, "GOTMYPROBE")) {
         return NetMsg_pop(This, label, -1, a4, a5);
     }
-    if (!strcmp(label, "HUNTERSEEKER2")) {
-        return NetMsg_pop(This, label, 5000, a4, a5);
-    }
     if (!strcmp(label, netmsg_label)
-    && !strcmp((char*)&ParseStrBuffer[0], netmsg_item0)
-    && !strcmp((char*)&ParseStrBuffer[1], netmsg_item1)) {
+    && !strcmp(ParseStrBuffer[0].str, netmsg_item0)
+    && !strcmp(ParseStrBuffer[1].str, netmsg_item1)) {
         // Skip additional popup windows
         return NetMsg_pop(This, label, delay, a4, a5);
     }
-    strncpy(netmsg_label, label, StrBufLen);
-    netmsg_label[StrBufLen-1] = '\0';
-    strncpy(netmsg_item0, (char*)&ParseStrBuffer[0], StrBufLen);
-    netmsg_item0[StrBufLen-1] = '\0';
-    strncpy(netmsg_item1, (char*)&ParseStrBuffer[1], StrBufLen);
-    netmsg_item1[StrBufLen-1] = '\0';
+    strcpy_n(netmsg_label, StrBufLen, label);
+    strcpy_n(netmsg_item0, StrBufLen, ParseStrBuffer[0].str);
+    strcpy_n(netmsg_item1, StrBufLen, ParseStrBuffer[1].str);
     return NetMsg_pop(This, label, -1, a4, a5);
 }
 

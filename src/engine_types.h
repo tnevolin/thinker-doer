@@ -27,17 +27,18 @@ struct MAP {
     uint8_t unk_1; // flags? bitfield
     int8_t owner;
     uint32_t items;
-    uint16_t landmarks;
-    uint8_t unk_2; // 0x40 = set_dirty()
-    uint8_t art_ref_id;
+    uint32_t landmarks;
     uint32_t visible_items[7];
-	
-	bool is_land() {
-		return region < 64;
-	}
-	bool is_sea() {
-		return region >= 64;
-	}
+
+    int alt_level() {
+        return climate >> 5;
+    }
+    int code_at() {
+        return landmarks >> 24;
+    }
+    int lm_items() {
+        return landmarks & 0xFFFF;
+    }
     bool is_visible(int faction) {
         return visibility & (1 << faction);
     }
@@ -68,9 +69,6 @@ struct MAP {
     bool is_fungus() {
         return items & BIT_FUNGUS && alt_level() >= ALT_OCEAN_SHELF;
     }
-    int alt_level() {
-        return climate >> 5;
-    }
     bool is_rocky() {
         return val3 & TILE_ROCKY && alt_level() >= ALT_SHORE_LINE;
     }
@@ -89,11 +87,20 @@ struct MAP {
     bool is_rainy_or_moist() {
         return climate & (TILE_MOIST | TILE_RAINY);
     }
-    bool volcano_center() {
-        return landmarks & LM_VOLCANO && art_ref_id == 0;
+    bool volcano_center() { // Volcano also counts as rocky
+        return landmarks & LM_VOLCANO && code_at() == 0;
     }
     bool veh_in_tile() {
         return items & BIT_VEH_IN_TILE;
+    }
+    bool allow_base() {
+        return !(items & (BIT_BASE_IN_TILE|BIT_MONOLITH)) && !is_fungus() && !is_rocky();
+    }
+    bool allow_spawn() {
+        return allow_base() && veh_who() < 0;
+    }
+    bool allow_supply() {
+        return !(items & (BIT_BASE_IN_TILE|BIT_VEH_IN_TILE|BIT_MONOLITH|BIT_SUPPLY_REMOVE));
     }
     int veh_owner() {
         if ((val2 & 0xF) >= MaxPlayerNum) {
@@ -119,6 +126,47 @@ struct MAP {
         }
         return -1;
     }
+    // [WTP]
+    bool is_sea()
+	{
+		return region >= 0x40;
+	}
+    bool is_land()
+	{
+		return region < 0x40;
+	}
+};
+
+struct FileFindPath {
+    char cd_path[256];
+    char alt_path[256];
+    char last_path[256];
+    char exe_dir[256];
+    char relative_path[256];
+};
+
+struct AlphaIniPref {
+    int32_t preferences;
+    int32_t more_preferences;
+    int32_t announce;
+    int32_t rules;
+    int32_t semaphore;
+    int32_t time_controls;
+    int32_t customize;
+    int32_t custom_world[7];
+};
+
+struct DefaultPref {
+    int32_t difficulty;
+    int32_t faction_id;
+    int32_t pad; // unused
+    int32_t map_type;
+    int32_t top_menu;
+};
+
+struct Label {
+    char** labels;
+    int32_t label_count;
 };
 
 struct Landmark {
@@ -137,17 +185,38 @@ struct Continent {
 };
 
 struct Path {
-    int* mapTable;
+    int32_t* mapTable;
     int16_t* xTable;
     int16_t* yTable;
-    int index1; // specific territory count
-    int index2; // overall territory count
-    int faction_id1;
-    int xDst;
-    int yDst;
-    int field_20;
-    int faction_id2;
-    int unit_id;
+    int32_t index1; // specific territory count
+    int32_t index2; // overall territory count
+    int32_t faction_id1;
+    int32_t xDst;
+    int32_t yDst;
+    int32_t field_20;
+    int32_t faction_id2;
+    int32_t unit_id;
+};
+
+struct Goal {
+    int16_t type;
+    int16_t priority;
+    int32_t x;
+    int32_t y;
+    int32_t base_id;
+};
+
+struct Monument {
+    int32_t data1[205];
+    int32_t data2[8][14];
+};
+
+struct ReplayEvent {
+    int8_t event;
+    int8_t faction_id;
+    int16_t turn;
+    int16_t x;
+    int16_t y;
 };
 
 struct MFaction {
@@ -164,7 +233,8 @@ struct MFaction {
     Thinker-specific save game variables.
     */
     int32_t thinker_unused[3];
-    int16_t thinker_probe_lost;
+    uint8_t thinker_probe_lost;
+    uint8_t thinker_probe_renew;
     int16_t thinker_last_mc_turn;
     int16_t thinker_probe_end_turn[8];
     char pad_1[96];
@@ -220,14 +290,6 @@ struct MFaction {
     }
 };
 
-struct Goal {
-    int16_t type;
-    int16_t priority;
-    int32_t x;
-    int32_t y;
-    int32_t base_id;
-};
-
 struct Faction {
     int32_t player_flags;
     int32_t ranking; // 0 (lowest) to 7 (highest)
@@ -247,7 +309,7 @@ struct Faction {
     int32_t unk_1[8]; // unused
     int32_t integrity_blemishes;
     int32_t diplo_reputation;
-    int32_t diplo_gifts[8]; // ? Gifts and bribes we have received
+    int32_t diplo_gifts[8]; // Gifts and bribes we have given to this faction
     int32_t diplo_wrongs[8]; // Number of times we double crossed this faction
     int32_t diplo_betrayed[8]; // Number of times double crossed by this faction
     int32_t diplo_unk_3[8]; // ? combat related
@@ -256,11 +318,11 @@ struct Faction {
     int32_t base_governor_adv; // default advanced Governor settings
     int32_t atrocities; // count committed by faction
     int32_t major_atrocities; // count committed by faction
-    int32_t subvert_total; // ? probe: mind control base (+4) / subvert unit (+1) total
-    int32_t diplo_subvert[8]; // ? probe: mind control base (+4) / subvert unit (+1) per faction
+    int32_t mind_control_total; // ? probe: mind control base (+4) / subvert unit (+1) total
+    int32_t diplo_mind_control[8]; // ? probe: mind control base (+4) / subvert unit (+1) per faction
     int32_t diplo_stolen_techs[8]; // probe: successfully procured research data (tech/map) per faction
     int32_t energy_credits;
-    int32_t energy_cost;
+    int32_t hurry_cost_total; // Net MP: Total paid energy to hurry production (current turn)
     int32_t SE_Politics_pending;
     int32_t SE_Economics_pending;
     int32_t SE_Values_pending;
@@ -326,13 +388,13 @@ struct Faction {
     int32_t tech_fungus_unused;
     int32_t SE_alloc_psych;
     int32_t SE_alloc_labs;
-    int32_t unk_25;
-    int32_t unk_26[11]; // unused
+    int32_t tech_pact_shared_goals[12]; // Bitfield; Suggested tech_id goals from pacts (TEAMTECH)
     int32_t tech_ranking; // Twice the number of techs discovered
     int32_t unk_27;
     int32_t ODP_deployed;
     int32_t tech_count_transcendent; // Transcendent Thoughts achieved
-    int8_t tech_trade_source[92];
+    int8_t tech_trade_source[88];
+    int32_t unk_28;
     int32_t tech_accumulated;
     int32_t tech_research_id;
     int32_t tech_cost;
@@ -349,8 +411,7 @@ struct Faction {
     int32_t council_call_turn;
     int32_t unk_29[11]; // Council related
     int32_t unk_30[11]; // Council related
-    uint8_t facility_announced[4]; // bitfield - used to determine one time play of fac audio blurb
-    int32_t unk_32;
+    int32_t facility_announced[2]; // bitfield - used to determine one time play of fac audio blurb
     int32_t unk_33;
     int32_t clean_minerals_modifier; // Starts from zero and increases by one after each fungal pop
     int32_t base_id_attack_target; // Battle planning of base to attack, -1 if not set
@@ -420,10 +481,10 @@ struct Faction {
     Goal goals[75];
     Goal sites[25];
     int32_t unk_93;
-    int32_t unk_94;
-    int32_t unk_95;
-    int32_t unk_96;
-    int32_t unk_97;
+    int32_t goody_opened;
+    int32_t goody_artifact;
+    int32_t goody_earthquake;
+    int32_t goody_tech;
     int32_t tech_achieved; // count of technology faction has discovered/achieved
     int32_t time_bonus_count; // Net MP: Each is worth amount in seconds under Time Controls Extra
     int32_t unk_99; // unused?
@@ -437,7 +498,7 @@ struct Faction {
     int32_t unk_105;
     int32_t unk_106;
     int32_t unk_107;
-    int32_t unk_108;
+    int32_t eliminated_count; // may decrease if some faction respawns
     int32_t unk_109;
     int32_t unk_110;
     int32_t unk_111;
@@ -459,7 +520,7 @@ struct CRules {
     int32_t artillery_dmg_denominator;
     int32_t nutrient_cost_multi;
     int32_t mineral_cost_multi;
-    int32_t rules_tech_discovery_rate;
+    int32_t tech_discovery_rate;
     int32_t limit_mineral_inc_for_mine_wo_road;
     int32_t nutrient_effect_mine_sq;
     int32_t min_base_size_specialists;
@@ -476,12 +537,8 @@ struct CRules {
     int32_t extra_cost_prototype_land;
     int32_t extra_cost_prototype_sea;
     int32_t extra_cost_prototype_air;
-    int32_t psi_combat_land_numerator;
-    int32_t psi_combat_sea_numerator;
-    int32_t psi_combat_air_numerator;
-    int32_t psi_combat_land_denominator;
-    int32_t psi_combat_sea_denominator;
-    int32_t psi_combat_air_denominator;
+    int32_t psi_combat_ratio_atk[3]; // Numerator: LAND, SEA, AIR
+    int32_t psi_combat_ratio_def[3]; // Denominator: LAND, SEA, AIR
     int32_t starting_energy_reserve;
     int32_t combat_bonus_intrinsic_base_def;
     int32_t combat_bonus_atk_road;
@@ -515,7 +572,7 @@ struct CRules {
     int32_t retool_penalty_prod_change;
     int32_t retool_exemption;
     int32_t tgl_probe_steal_tech;
-    int32_t tgl_humans_always_contact_tcp;
+    int32_t tgl_humans_always_contact_net;
     int32_t tgl_humans_always_contact_pbem;
     int32_t max_dmg_percent_arty_base_bunker;
     int32_t max_dmg_percent_arty_open;
@@ -523,50 +580,30 @@ struct CRules {
     int32_t freq_global_warming_numerator;
     int32_t freq_global_warming_denominator;
     int32_t normal_start_year;
-    int32_t normal_ending_year_lowest_3_diff;
-    int32_t normal_ending_year_highest_3_diff;
+    int32_t normal_end_year_low_three_diff;
+    int32_t normal_end_year_high_three_diff;
     int32_t tgl_oblit_base_atrocity;
     int32_t base_size_subspace_gen;
     int32_t subspace_gen_req;
 };
 
+struct ResValue {
+    int nutrient;
+    int mineral;
+    int energy;
+    int unused;
+};
+
 struct CResourceInfo {
-    int32_t ocean_sq_nutrient;
-    int32_t ocean_sq_mineral;
-    int32_t ocean_sq_energy;
-    int32_t pad_0;
-    int32_t base_sq_nutrient;
-    int32_t base_sq_mineral;
-    int32_t base_sq_energy;
-    int32_t pad_1;
-    int32_t bonus_sq_nutrient;
-    int32_t bonus_sq_mineral;
-    int32_t bonus_sq_energy;
-    int32_t pad_2;
-    int32_t forest_sq_nutrient;
-    int32_t forest_sq_mineral;
-    int32_t forest_sq_energy;
-    int32_t pad_3;
-    int32_t recycling_tanks_nutrient;
-    int32_t recycling_tanks_mineral;
-    int32_t recycling_tanks_energy;
-    int32_t pad_4;
-    int32_t improved_land_nutrient;
-    int32_t improved_land_mineral;
-    int32_t improved_land_energy;
-    int32_t pad_5;
-    int32_t improved_sea_nutrient;
-    int32_t improved_sea_mineral;
-    int32_t improved_sea_energy;
-    int32_t pad_6;
-    int32_t monolith_nutrient;
-    int32_t monolith_mineral;
-    int32_t monolith_energy;
-    int32_t pad_7;
-    int32_t borehole_sq_nutrient;
-    int32_t borehole_sq_mineral;
-    int32_t borehole_sq_energy;
-    int32_t pad_8;
+    ResValue ocean_sq;
+    ResValue base_sq;
+    ResValue bonus_sq;
+    ResValue forest_sq;
+    ResValue recycling_tanks;
+    ResValue improved_land;
+    ResValue improved_sea;
+    ResValue monolith_sq;
+    ResValue borehole_sq;
 };
 
 struct CResourceName {
@@ -586,7 +623,7 @@ struct CFacility {
     int32_t cost;
     int32_t maint;
     int32_t preq_tech;
-    int32_t free;
+    int32_t free_tech;
     int32_t AI_fight;
     int32_t AI_growth;
     int32_t AI_tech;
@@ -597,7 +634,8 @@ struct CFacility {
 struct CTech {
     int32_t flags;
     char* name;
-    char short_name[12];
+    char short_name[8]; // up to 7 characters in length
+    int32_t padding; // unused
     int32_t AI_growth;
     int32_t AI_tech;
     int32_t AI_wealth;
@@ -621,7 +659,7 @@ struct CAbility {
     char* description;
     char* abbreviation;
     int32_t cost;
-    int32_t unk_1;
+    int32_t unk_1; // only referenced in NetDaemon::synch
     int32_t flags;
     int16_t preq_tech;
     int16_t pad;
@@ -656,12 +694,12 @@ struct CChassis {
     int32_t defsv1_is_plural;
     int32_t defsv2_is_plural;
     int32_t defsv_is_plural_lrg;
-    char speed;
-    char triad;
-    char range;
-    char cargo;
-    char cost;
-    char missile;
+    int8_t speed;
+    int8_t triad;
+    int8_t range;
+    int8_t cargo;
+    int8_t cost;
+    int8_t missile;
     char sprite_flag_x_coord[8];
     char sprite_flag_y_coord[8];
     char sprite_unk1_x_coord[8];
@@ -688,7 +726,7 @@ struct CReactor {
     char* name;
     char* name_short;
     int16_t preq_tech;
-    int16_t padding;
+    int16_t power; // Fix: this value is not originally set
 };
 
 struct CWeapon {
@@ -742,17 +780,43 @@ struct CTimeControl {
     int32_t accumulated;
 };
 
+struct CSocialCategory {
+    int32_t politics;
+    int32_t economics;
+    int32_t values;
+    int32_t future;
+};
+
+struct CSocialEffect {
+    int32_t economy;
+    int32_t efficiency;
+    int32_t support;
+    int32_t talent;
+    int32_t morale;
+    int32_t police;
+    int32_t growth;
+    int32_t planet;
+    int32_t probe;
+    int32_t industry;
+    int32_t research;
+};
+
+struct CSocialParam {
+    char set1[24];
+    char set2[24];
+    char padding[56];
+};
+
 struct CSocialField {
     char* field_name;
     int32_t soc_preq_tech[4];
     char* soc_name[4];
-    int32_t effects[4][11];
+    CSocialEffect soc_effect[4];
 };
 
-struct CSocialEffect {
-    char set1[24];
-    char set2[24];
-    char padding[56];
+struct CMandate {
+    char* name;
+    char* name_caps;
 };
 
 struct CMight {

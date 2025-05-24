@@ -41,7 +41,7 @@ int __cdecl has_abil(int unit_id, VehAblFlag ability) {
     }
     // Pirates > "Marine Detachment" ability for combat sea units with Adaptive Doctrine
     for (int i = 0; i < MFactions[faction_id].faction_bonus_count; i++) {
-        if (MFactions[faction_id].faction_bonus_id[i] == FCB_FREEABIL_PREQ) {
+        if (MFactions[faction_id].faction_bonus_id[i] == RULE_FREEABIL) {
             int abil_bonus_id = MFactions[faction_id].faction_bonus_val1[i];
             if (has_tech(Ability[abil_bonus_id].preq_tech, faction_id)
             && (ability & (1 << abil_bonus_id))) {
@@ -73,33 +73,33 @@ int __cdecl arty_range(int unit_id) {
     return 0;
 }
 
-int __cdecl drop_range(int faction) {
-    if (!has_orbital_drops(faction)) {
+int __cdecl drop_range(int faction_id) {
+    if (!has_orbital_drops(faction_id)) {
         return max(0, Rules->max_airdrop_rng_wo_orbital_insert);
     }
     return max(*MapAreaX, *MapAreaY);
 }
 
-bool has_orbital_drops(int faction) {
-    return has_tech(Rules->tech_preq_orb_insert_wo_space, faction)
-        || has_project(FAC_SPACE_ELEVATOR, faction);
+bool has_orbital_drops(int faction_id) {
+    return has_tech(Rules->tech_preq_orb_insert_wo_space, faction_id)
+        || has_project(FAC_SPACE_ELEVATOR, faction_id);
 }
 
-bool has_ability(int faction, VehAbl abl, VehChassis chs, VehWeapon wpn) {
+bool has_ability(int faction_id, VehAbl abl, VehChassis chs, VehWeapon wpn) {
     int F = Ability[abl].flags;
     int triad = Chassis[chs].triad;
     bool is_combat = Weapon[wpn].offense_value != 0;
     bool is_former = Weapon[wpn].mode == WMODE_TERRAFORM;
     bool is_probe = Weapon[wpn].mode == WMODE_PROBE;
 
-    if ((triad == TRIAD_LAND && ~F & AFLAG_ALLOWED_LAND_UNIT)
-    || (triad == TRIAD_SEA && ~F & AFLAG_ALLOWED_SEA_UNIT)
-    || (triad == TRIAD_AIR && ~F & AFLAG_ALLOWED_AIR_UNIT)) {
+    if ((triad == TRIAD_LAND && !(F & AFLAG_ALLOWED_LAND_UNIT))
+    || (triad == TRIAD_SEA && !(F & AFLAG_ALLOWED_SEA_UNIT))
+    || (triad == TRIAD_AIR && !(F & AFLAG_ALLOWED_AIR_UNIT))) {
         return false;
     }
-    if ((~F & AFLAG_ALLOWED_COMBAT_UNIT && is_combat)
-    || (~F & AFLAG_ALLOWED_TERRAFORM_UNIT && is_former)
-    || (~F & AFLAG_ALLOWED_NONCOMBAT_UNIT && !is_combat && !is_former)) {
+    if ((!(F & AFLAG_ALLOWED_COMBAT_UNIT) && is_combat)
+    || (!(F & AFLAG_ALLOWED_TERRAFORM_UNIT) && is_former)
+    || (!(F & AFLAG_ALLOWED_NONCOMBAT_UNIT) && !is_combat && !is_former)) {
         return false;
     }
     if ((F & AFLAG_NOT_ALLOWED_PROBE_TEAM && is_probe)
@@ -115,13 +115,25 @@ bool has_ability(int faction, VehAbl abl, VehChassis chs, VehWeapon wpn) {
     if (F & AFLAG_NOT_ALLOWED_PSI_UNIT && Weapon[wpn].offense_value < 0) {
         return false;
     }
-    return has_tech(Ability[abl].preq_tech, faction);
+    return has_tech(Ability[abl].preq_tech, faction_id);
+}
+
+/*
+Fractional healing at monoliths is not implemented and for this reason
+Battle Ogres may be excluded from healing/promoting at monoliths.
+*/
+bool is_battle_ogre(int unit_id) {
+    return unit_id == BSC_BATTLE_OGRE_MK1 || unit_id == BSC_BATTLE_OGRE_MK2 || unit_id == BSC_BATTLE_OGRE_MK3;
 }
 
 bool can_repair(int unit_id) {
     assert(unit_id >= 0 && unit_id < MaxProtoNum);
-    return conf.repair_battle_ogre > 0 || (unit_id != BSC_BATTLE_OGRE_MK1
-        && unit_id != BSC_BATTLE_OGRE_MK2 && unit_id != BSC_BATTLE_OGRE_MK3);
+    return conf.repair_battle_ogre > 0 || !is_battle_ogre(unit_id);
+}
+
+bool can_monolith(int unit_id) {
+    assert(unit_id >= 0 && unit_id < MaxProtoNum);
+    return conf.repair_battle_ogre >= 10 || !is_battle_ogre(unit_id);
 }
 
 int __cdecl veh_who(int x, int y) {
@@ -182,8 +194,8 @@ int __cdecl stack_fix(int veh_id) {
 }
 
 void __cdecl stack_sort(int veh_id) {
-    int16_t x = Vehs[veh_id].x;
-    int16_t y = Vehs[veh_id].y;
+    int x = Vehs[veh_id].x;
+    int y = Vehs[veh_id].y;
     int next_veh_id = veh_top(veh_id);
     int veh_id_put = -1;
     int veh_id_loop;
@@ -200,11 +212,149 @@ void __cdecl stack_sort(int veh_id) {
     }
 }
 
+/*
+Temporarily remove the specified unit from its current tile and stack in preparation for
+another action such as interacting with the stack, moving or killing it.
+Return Value: veh_id
+*/
+int __cdecl veh_lift(int veh_id) {
+    bool prev_stack_exists = false;
+    int16_t prev_veh_id = Vehs[veh_id].prev_veh_id_stack;
+    int16_t next_veh_id = Vehs[veh_id].next_veh_id_stack;
+    if (prev_veh_id >= 0) {
+        prev_stack_exists = true;
+        Vehs[prev_veh_id].next_veh_id_stack = next_veh_id;
+    }
+    int x = Vehs[veh_id].x;
+    int y = Vehs[veh_id].y;
+    if (next_veh_id >= 0) {
+        Vehs[next_veh_id].prev_veh_id_stack = prev_veh_id;
+    } else if (!prev_stack_exists && on_map(x, y)) {
+        bit_set(x, y, BIT_VEH_IN_TILE, false);
+    }
+    *VehDropLiftVehID = veh_id;
+    *VehLiftX = x;
+    *VehLiftY = y;
+    Vehs[veh_id].x = -1;
+    Vehs[veh_id].y = -1;
+    Vehs[veh_id].next_veh_id_stack = -1;
+    Vehs[veh_id].prev_veh_id_stack = -1;
+    return veh_id;
+}
+
+/*
+Move the specified unit to the provided coordinates.
+Return Value: veh_id (first param), seems not to be used
+*/
+int __cdecl veh_drop(int veh_id, int x, int y) {
+    int veh_id_dest = veh_at(x, y);
+    Vehs[veh_id].next_veh_id_stack = (int16_t)veh_id_dest;
+    Vehs[veh_id].prev_veh_id_stack = -1;
+    Vehs[veh_id].x = (int16_t)x;
+    Vehs[veh_id].y = (int16_t)y;
+    *VehDropLiftVehID = -1;
+    if (veh_id_dest < 0) {
+        if (y < 0) {
+            return veh_id;
+        }
+        if (on_map(x, y) && !(bit_at(x, y) & BIT_BASE_IN_TILE)) {
+            owner_set(x, y, Vehs[veh_id].faction_id);
+        }
+    } else {
+        Vehs[veh_id_dest].prev_veh_id_stack = (int16_t)veh_id;
+    }
+    if (on_map(x, y)) {
+        uint32_t flags = (Vehs[veh_id].faction_id && Vehs[veh_id].triad() != TRIAD_AIR)
+            ? (BIT_VEH_IN_TILE|BIT_SUPPLY_REMOVE) : BIT_VEH_IN_TILE;
+        bit_set(x, y, flags, true);
+    }
+    return veh_id;
+}
+
+/*
+Relocate an existing unit to the specified tile.
+*/
+void __cdecl veh_put(int veh_id, int x, int y) {
+    veh_drop(veh_lift(veh_id), x, y);
+}
+
+/*
+Set the unit's status to sentry/board.
+*/
+void __cdecl sleep(int veh_id) {
+    Vehs[veh_id].order = ORDER_SENTRY_BOARD;
+    Vehs[veh_id].waypoint_x[0] = -1;
+    Vehs[veh_id].waypoint_y[0] = 0;
+}
+
+/*
+Move the specified unit to the bottom of the stack.
+*/
+void __cdecl veh_demote(int veh_id) {
+    if (veh_id >= 0) {
+        int16_t next_veh_id = Vehs[veh_id].next_veh_id_stack;
+        if (next_veh_id >= 0) {
+            int16_t last_veh_id;
+            do {
+                last_veh_id = next_veh_id;
+                next_veh_id = Vehs[last_veh_id].next_veh_id_stack;
+            } while (next_veh_id >= 0);
+            if (last_veh_id != veh_id) {
+                veh_lift(veh_id);
+                Vehs[last_veh_id].next_veh_id_stack = (int16_t)veh_id;
+                Vehs[veh_id].prev_veh_id_stack = last_veh_id;
+                Vehs[veh_id].next_veh_id_stack = -1;
+                Vehs[veh_id].x = Vehs[last_veh_id].x;
+                Vehs[veh_id].y = Vehs[last_veh_id].y;
+            }
+        }
+    }
+}
+
+/*
+Move the specified unit to the top of the stack.
+*/
 void __cdecl veh_promote(int veh_id) {
     int veh_id_top = veh_top(veh_id);
     if (veh_id_top >= 0 && veh_id_top != veh_id) {
         veh_put(veh_id, Vehs[veh_id_top].x, Vehs[veh_id_top].y);
     }
+}
+
+/*
+Clear the specified unit (called by veh_init/veh_fake).
+*/
+void __cdecl veh_clear(int veh_id, int unit_id, int faction_id) {
+    VEH* veh = &Vehs[veh_id];
+    veh->x = -4;
+    veh->y = -4;
+    veh->state = 0;
+    veh->flags = 0;
+    veh->pad_0 = 0;
+    veh->unit_id = (int16_t)unit_id;
+    veh->faction_id = (uint8_t)faction_id;
+    veh->year_end_lurking = 0;
+    veh->damage_taken = 0;
+    veh->order = ORDER_NONE;
+    veh->waypoint_count = 0;
+    veh->patrol_current_point = 0;
+    for (int i = 0; i < 4; i++) {
+        veh->waypoint_x[i] = -1;
+        veh->waypoint_y[i] = -1;
+    }
+    veh->morale = (uint8_t)(MFactions[faction_id].rule_morale + 1);
+    veh->movement_turns = 0;
+    veh->order_auto_type = 0;
+    veh->visibility = 0;
+    veh->moves_spent = 0;
+    veh->rotate_angle = 2;
+    veh->iter_count = 0;
+    veh->status_icon = 0;
+    veh->probe_action = 0;
+    veh->probe_sabotage_id = 0;
+    veh->home_base_id = -1;
+    veh->next_veh_id_stack = -1;
+    veh->prev_veh_id_stack = -1;
 }
 
 /*
@@ -264,8 +414,6 @@ int __cdecl veh_speed(int veh_id, bool skip_morale) {
     if (unit_id == BSC_FUNGAL_TOWER) {
         return 0; // cannot move
     }
-    // Maximum speed is rounded down to nearest full movement point
-    int max_speed = 255 - (255 % Rules->move_rate_roads);
     int speed_val = proto_speed(unit_id);
     int triad = u->triad();
     if (triad == TRIAD_SEA && has_project(FAC_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
@@ -290,7 +438,7 @@ int __cdecl veh_speed(int veh_id, bool skip_morale) {
             + speed_val - 1) / speed_val;
         speed_val = clamp(speed_val, (triad == TRIAD_SEA) ? 2 : 1, 999) * Rules->move_rate_roads;
     }
-    return min(max_speed, speed_val);
+    return min(conf.max_movement_rate, speed_val);
 }
 
 /*
@@ -298,7 +446,7 @@ Calculate the cargo capacity of a unit. This version removes a redundant referen
 Spore Launchers which was never triggered since their carry_capacity was set to zero.
 */
 int __cdecl veh_cargo(int veh_id) {
-    VEH* v = &Vehicles[veh_id];
+    VEH* v = &Vehs[veh_id];
     UNIT* u = &Units[v->unit_id];
     if (u->carry_capacity && v->unit_id < MaxProtoFactionNum && u->offense_value() < 0) {
         return v->morale + 1;
@@ -307,55 +455,1018 @@ int __cdecl veh_cargo(int veh_id) {
 }
 
 /*
-Determine whether the specified unit is eligible for a monolith morale upgrade.
+Determine whether the specified unit is eligible for monolith healing or morale upgrade.
 */
 int __cdecl want_monolith(int veh_id) {
-    return veh_id >= 0 && !(Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED)
-        && Vehs[veh_id].offense_value() != 0
-        && Vehs[veh_id].triad() != TRIAD_AIR
-        && Vehs[veh_id].morale < MORALE_ELITE
-        && mod_morale_veh(veh_id, true, 0) < MORALE_ELITE;
+    VEH* veh = &Vehs[veh_id];
+    return veh_id >= 0 && veh->triad() != TRIAD_AIR
+        && can_monolith(veh->unit_id)
+        && (veh->damage_taken
+        || (!(veh->state & VSTATE_MONOLITH_UPGRADED)
+        && veh->offense_value() != 0
+        && veh->morale < MORALE_ELITE
+        && mod_morale_veh(veh_id, true, 0) < MORALE_ELITE));
 }
 
-int __cdecl breed_level(int base_id, int faction_id) {
-    int value = 0;
-    if (has_project(FAC_XENOEMPATHY_DOME, faction_id)) {
-        value++;
+void __cdecl mod_monolith(int veh_id) {
+    VEH* veh = &Vehs[veh_id];
+    MAP* sq = mapsq(veh->x, veh->y);
+    const bool is_player = veh->faction_id == *CurrentPlayerFaction;
+    if (!can_monolith(veh->unit_id)) {
+        return;
     }
-    if (has_project(FAC_PHOLUS_MUTAGEN, faction_id)) {
-        value++;
+    if (is_player && !*MultiplayerActive) {
+        if (veh->order == ORDER_MOVE_TO
+        && veh->x == veh->waypoint_x[0] && veh->y == veh->waypoint_y[0]) {
+            veh->order = ORDER_NONE;
+        }
+        if (veh->order != ORDER_NONE) {
+            return;
+        }
     }
-    if (has_project(FAC_VOICE_OF_PLANET, faction_id)) {
-        value++;
+    if (!veh->offense_value()) {
+        if (veh->damage_taken) {
+            veh->damage_taken = 0;
+            mod_veh_skip(veh_id);
+            draw_tile(veh->x, veh->y, 2);
+            if (!is_player) {
+                return;
+            }
+            NetMsg_pop(NetMsg, "MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
+            *GameState |= STATE_UNK_4;
+        } else if (!(veh->state & VSTATE_MONOLITH_UPGRADED)) {
+            veh->state |= VSTATE_MONOLITH_UPGRADED;
+            if (is_player && !*MultiplayerActive
+            && !(*GameMorePreferences & MPREF_AUTO_ALWAYS_INSPECT_MONOLITH)) {
+                NetMsg_pop(NetMsg, "SEEMONOLITH", -5000, 0, "monolith_sm.pcx");
+                *GameState |= STATE_UNK_4;
+            }
+        }
+    } else {
+        for (int i = 1; i < MaxPlayerNum; i++) {
+            del_site(i, 0, veh->x, veh->y, 0);
+        }
+        if (is_human(veh->faction_id)) {
+            if (!*MultiplayerActive && !(*GameMorePreferences & MPREF_AUTO_ALWAYS_INSPECT_MONOLITH)) {
+                FX_play(Sounds, 6);
+                int value = popp(ScriptFile, "MONOLITH", 0, "monolith_sm.pcx", 0);
+                FX_stop(Sounds, 6);
+                if (value == 2) {
+                    *GameMorePreferences |= MPREF_AUTO_ALWAYS_INSPECT_MONOLITH;
+                    prefs_save(0);
+                } else if (!value) {
+                    for (int i = 1; i < MaxPlayerNum; i++) {
+                        if (sq && sq->visible_items[i - 1] & BIT_MONOLITH) {
+                            add_site(i, 0, 2, veh->x, veh->y);
+                        }
+                    }
+                    return;
+                }
+            }
+        } else {
+            if (veh->state & VSTATE_MONOLITH_UPGRADED
+            || mod_morale_veh(veh_id, 1, 0) >= 6 || veh->morale >= 6 || !veh->offense_value()) {
+                if (veh->damage_taken) {
+                    veh->damage_taken = 0;
+                    mod_veh_skip(veh_id);
+                    draw_tile(veh->x, veh->y, 2);
+                }
+                for (int i = 1; i < MaxPlayerNum; i++) {
+                    if (sq && sq->visible_items[i - 1] & BIT_MONOLITH) {
+                        add_site(i, 0, 2, veh->x, veh->y);
+                    }
+                }
+                return;
+            }
+        }
+        if (veh->damage_taken) {
+            veh->damage_taken = 0;
+            mod_veh_skip(veh_id);
+            draw_tile(veh->x, veh->y, 2);
+            if (veh->state & VSTATE_MONOLITH_UPGRADED || mod_morale_veh(veh_id, 1, 0) >= 6) {
+                if (!is_player) {
+                    return;
+                }
+                if (*GameMorePreferences & MPREF_AUTO_ALWAYS_INSPECT_MONOLITH) {
+                    NetMsg_pop(NetMsg, "MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
+                } else {
+                    NetMsg_pop(NetMsg, "MONOLITHHEAL", -5000, 0, "monolith_sm.pcx");
+                }
+                *GameState |= STATE_UNK_4;
+                return;
+            }
+        }
+        if (veh->state & VSTATE_MONOLITH_UPGRADED || mod_morale_veh(veh_id, 1, 0) >= 6) {
+            if (is_player) {
+                if (*GameMorePreferences & MPREF_AUTO_ALWAYS_INSPECT_MONOLITH) {
+                    NetMsg_pop(NetMsg, "MONOLITHNO", 5000, 0, "monolith_sm.pcx");
+                } else {
+                    NetMsg_pop(NetMsg, "MONOLITHNO", -5000, 0, "monolith_sm.pcx");
+                }
+            }
+        } else {
+            int rnd_val = game_rand() % 32;
+            if (!(sq && sq->items & BIT_UNK_2000000) || *CurrentTurn < 100) {
+                rnd_val = 1;
+                bit_set(veh->x, veh->y, BIT_UNK_2000000, 1);
+            }
+            veh->state |= VSTATE_MONOLITH_UPGRADED;
+            veh->morale = clamp(veh->morale + 1, 0, 6);
+            mod_veh_skip(veh_id);
+            mod_say_morale2(StrBuffer, veh_id, 0);
+            CharLowerA(StrBuffer);
+            parse_says(0, StrBuffer, -1, -1);
+            if (rnd_val) {
+                for (int i = 1; i < MaxPlayerNum; i++) {
+                    if (sq && sq->visible_items[i - 1] & BIT_MONOLITH) {
+                        add_site(i, 0, 2, veh->x, veh->y);
+                    }
+                }
+            } else { // Monolith disappears
+                bit_set(veh->x, veh->y, BIT_MONOLITH, 0);
+                synch_bit(veh->x, veh->y, veh->faction_id);
+            }
+            draw_tile(veh->x, veh->y, 2);
+            if (is_player) {
+                FX_play(Sounds, 34);
+                StrBuffer[0] = '\0';
+                snprintf(StrBuffer, StrBufLen, "MONOLITH%d", rnd_val != 0);
+                if (*GameMorePreferences & MPREF_AUTO_ALWAYS_INSPECT_MONOLITH) {
+                    NetMsg_pop(NetMsg, StrBuffer, 5000, 0, "monolith_sm.pcx");
+                } else {
+                    NetMsg_pop(NetMsg, StrBuffer, -5000, 0, "monolith_sm.pcx");
+                }
+                *GameState |= STATE_UNK_4;
+            }
+        }
     }
-    if (has_fac_built(FAC_CENTAURI_PRESERVE, base_id)) {
-        value++;
+}
+
+static int goody_rand(int value) {
+    return (value > 1 ? game_rand() % value : 0);
+}
+
+int __cdecl mod_goody_box(int veh_id) {
+    VEH* veh = &Vehs[veh_id];
+    MAP* sq = mapsq(veh->x, veh->y);
+    Faction* f = &Factions[veh->faction_id];
+    const int faction_id = veh->faction_id;
+    const bool is_sea = is_ocean(sq);
+    const bool is_player = faction_id == *CurrentPlayerFaction;
+    const bool perihelion = *GameState & STATE_PERIHELION_ACTIVE;
+    int x = veh->x;
+    int y = veh->y;
+    int event_value;
+    int event_flag = 0;
+    int landing_site_pod = 0;
+
+    if (!sq || do_unity_crash(x, y, faction_id)) {
+        return 0;
     }
-    if (has_fac_built(FAC_TEMPLE_OF_PLANET, base_id)) {
-        value++;
+    f->goody_opened++;
+    if (*MultiplayerActive) {
+        game_srand(f->goody_opened + *MapRandomSeed + 36 * f->goody_opened);
     }
-    if (has_fac_built(FAC_BIOLOGY_LAB, base_id)) {
-        value++;
+    if (!(*GameRules & RULES_SCN_NO_TECH_ADVANCES)
+    && (conf.early_research_start || *CurrentTurn >= -5 * f->SE_research_pending)) {
+        f->tech_accumulated++;
     }
-    if (has_facility(FAC_BIOENHANCEMENT_CENTER, base_id)) {
-        value++; // The Cyborg Factory also possible
+    int base_id = base_find(x, y);
+    if (sq->items & (BIT_UNK_8000000|BIT_UNK_4000000)
+    && (!f->base_count || (base_id >= 0 && Bases[base_id].faction_id == faction_id))) {
+        landing_site_pod = 1;
+        event_value = (sq->items & BIT_UNK_4000000 ? 9 : 10);
+        bit_set(x, y, BIT_UNK_8000000|BIT_UNK_4000000, 0);
+    } else if (*BaseFindDist > 2 || base_id < 0 || Bases[base_id].faction_id == faction_id) {
+        if (sq->is_fungus() || is_sea) {
+            goto GOODY_NEXT;
+        }
+        int modifier = 20;
+        if (*BaseFindDist <= 12 || !f->region_total_bases[sq->region]) {
+            modifier = 40;
+        }
+        if ((veh->plan() == PLAN_TERRAFORM && (*BaseFindDist < 12 || *CurrentTurn < 40)) || veh->plan() == PLAN_COLONY) {
+            modifier += 10;
+        }
+        event_value = goody_rand(modifier);
+    } else {
+        event_value = 16;
+        event_flag = 1;
     }
-    assert(value == breed_mod(base_id, faction_id));
+
+GOODY_START:
+    assert(is_ocean(sq) == is_sea);
+    assert(x == veh->x && y == veh->y);
+    assert(event_flag >= 0 && event_flag < 4);
+    assert(event_value >= 0 && event_value < 50);
+    if (veh->plan() == PLAN_ARTIFACT) {
+        if (!goody_rand(3) && !(veh->flags & VFLAG_IS_OBJECTIVE)) {
+            if (is_player) {
+                NetMsg_pop(NetMsg, is_sea ? "GOODYWHIRLPOOL" : "GOODYVANISH", 5000, 0, 0);
+            }
+            kill(veh_id);
+            return 1; // Special return value
+        }
+    }
+    switch (event_value) {
+    case 0:
+        int credits;
+        credits = (goody_rand(is_sea + 3) + 1) * (*CurrentTurn >= (is_sea ? 100 : 50) ? 50 : 25);
+        f->energy_credits += credits;
+        if (is_player) {
+            parse_num(0, credits);
+            FX_play(Sounds, 22);
+            NetMsg_pop(NetMsg, is_sea ? "GOODYHYDROGEN" : "GOODYURANIUM", -5000, 0, is_sea ? 0 : "supply_sm.pcx");
+            FX_fade(Sounds, 22);
+        }
+        return 0;
+    case 1:
+        if (is_sea || sq->items & BIT_RIVER) {
+            goto GOODY_NEXT;
+        }
+        for (auto& m : iterate_tiles(x, y, 0, 9)) {
+            if (is_ocean(m.sq) || m.sq->items & BIT_RIVER) {
+                goto GOODY_NEXT;
+            }
+        }
+        if (is_player) {
+            FX_play(Sounds, 38);
+            NetMsg_pop(NetMsg, "GOODYRIVER", 5000, 0, "supply_sm.pcx");
+        }
+        bit_set(x, y, BIT_RIVER_SRC, 1);
+        world_climate();
+        draw_map(1);
+        return 0;
+    case 2:
+        if (is_sea || sq->alt_level() >= ALT_TWO_ABOVE_SEA) {
+            for (auto& m : iterate_tiles(x, y, 0, 121)) {
+                if (!is_sea || (is_ocean(m.sq) && m.sq->region == sq->region)) {
+                    spot_loc(m.x, m.y, faction_id);
+                }
+            }
+            if (is_player) {
+                FX_play(Sounds, 22);
+                NetMsg_pop(NetMsg, is_sea ? "GOODYSONAR" : "GOODYVIEW", 5000, 0, "supply_sm.pcx");
+                FX_fade(Sounds, 22);
+                draw_map(1);
+            }
+            return 0;
+        }
+        if (*CurrentTurn >= 50) {
+            goto GOODY_NEXT;
+        }
+        event_value = 8;
+        goto GOODY_START;
+    case 3:
+        if (*GameRules & RULES_SCN_FORCE_CURRENT_DIFF_LEVEL && *DiffLevel <= 1) {
+            goto GOODY_NEXT;
+        }
+        if (is_sea || f->base_count < 2 || sq->alt_level() >= ALT_TWO_ABOVE_SEA || *MultiplayerActive) {
+            goto GOODY_NEXT;
+        }
+        if (goody_rand(2 * f->goody_earthquake + 2)) {
+            goto GOODY_NEXT;
+        }
+        f->goody_earthquake++;
+        FX_play(Sounds, 8);
+        world_raise_alt(x, y);
+        world_raise_alt(x, y);
+        for (auto& m : iterate_tiles(x, y, 0, 25)) {
+            if (m.sq->items & BIT_ROAD && !goody_rand(3)) {
+                bit_set(m.x, m.y, BIT_ROAD, 0);
+                synch_bit(m.x, m.y, faction_id);
+            }
+            if (m.i < 9) {
+                rocky_set(m.x, m.y, mod_minerals_at(m.x, m.y));
+            }
+        }
+        world_climate();
+        draw_map(1);
+        if (is_player) {
+            NetMsg_pop(NetMsg, "GOODYQUAKE", -5000, 0, "quake_sm.pcx");
+            if (!tut_check(2048)) {
+                return 0;
+            }
+            TutWin_tut_map(TutWin, "TERRAFORM", x, y, -1, 0, 0, -1, -1);
+        }
+        return 0;
+    case 4:
+        if (perihelion && !is_sea) {
+            event_value = 7;
+            goto GOODY_START;
+        }
+        if (*MultiplayerActive || veh->plan() == PLAN_ARTIFACT
+        || (*GameRules & RULES_SCN_FORCE_CURRENT_DIFF_LEVEL && *DiffLevel <= 1)) {
+            goto GOODY_NEXT;
+        }
+        if (*CurrentTurn < 25 || (*CurrentTurn < 50 && *DiffLevel <= 1)) {
+            event_value = 8;
+            goto GOODY_START;
+        }
+        int max_dist, tx, ty;
+        if (veh->triad() == TRIAD_LAND && veh->plan() != PLAN_COLONY) {
+            max_dist = veh->plan() != PLAN_TERRAFORM ? 24 : 8;
+        }  else if (goody_rand(2)) {
+            max_dist = 8;
+        } else {
+            goto GOODY_NEXT;
+        }
+        for (int iter = 0;;) {
+            tx = goody_rand(*MapAreaX);
+            ty = goody_rand(*MapAreaY);
+            if (tx & 1) {
+                tx--;
+            }
+            if (ty & 1) {
+                tx++;
+            }
+            if (++iter >= 1000) {
+                goto GOODY_NEXT;
+            }
+            MAP* bsq = mapsq(tx, ty);
+            if (is_ocean(bsq) == is_sea && bsq->region == sq->region) {
+                if (bsq->anything_at() < 0 && !mod_zoc_any(tx, ty, faction_id)) {
+                    if (!(f->player_flags & PFLAG_MAP_REVEALED) && !bsq->is_visible(faction_id)) {
+                        int dist = map_range(x, y, tx, ty);
+                        if (dist > 4 && dist <= max_dist) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (is_player) {
+            NetMsg_pop(NetMsg, is_sea ? "GOODYWAVE" : "GOODYGATE", -5000, 0, is_sea ? 0 : "stars_sm.pcx");
+        }
+        veh->moves_spent = 0;
+        veh->order = 0;
+        veh->state &= ~(VSTATE_UNK_2000000|VSTATE_UNK_1000000|VSTATE_ON_ALERT);
+        stack_put(stack_veh(veh_id, 1), tx, ty);
+        if (is_player) {
+            draw_tile_fixup(x, y, has_abil(veh->unit_id, ABL_DEEP_RADAR), 2);
+        } else {
+            draw_tile(x, y, 2);
+        }
+        if (is_player) {
+            Console_focus(MapWin, tx, ty, faction_id);
+            GraphicWin_redraw(WorldWin);
+        }
+        spot_all(veh_id, 1);
+        return 0;
+    case 5:
+        if (perihelion && !is_sea) {
+            event_value = 7;
+            goto GOODY_START;
+        }
+        int fc_base_id, item_id;
+        fc_base_id = base_find2(x, y, faction_id);
+        item_id = Bases[fc_base_id].queue_items[0];
+        if (!*MultiplayerActive && fc_base_id >= 0 && item_id > -SP_ID_First) {
+            int cost;
+            if (item_id < 0) {
+                cost = Facility[-item_id].cost;
+                parse_says(0, &Facility[-item_id].name[0], -1, -1);
+            } else {
+                if (Units[item_id].plan == PLAN_COLONY && Bases[fc_base_id].pop_size == 1) {
+                    goto GOODY_NEXT;
+                }
+                cost = mod_veh_cost(item_id, fc_base_id, 0);
+                parse_says(0, &Units[item_id].name[0], -1, -1);
+            }
+            int minerals = Bases[fc_base_id].minerals_accumulated;
+            int prod_cost = cost * mod_cost_factor(faction_id, RSC_MINERAL, -1);
+            if (minerals < 3 * prod_cost / 4) {
+                if (conf.rare_supply_pods && prod_cost - minerals > 40 + goody_rand(60)) {
+                    goto GOODY_NEXT;
+                }
+                Bases[fc_base_id].minerals_accumulated = prod_cost;
+                if (is_player) {
+                    parse_says(1, &Bases[fc_base_id].name[0], -1, -1);
+                    NetMsg_pop(NetMsg, "GOODYBUILD", -5000, 0, "indbm_sm.pcx");
+                }
+                return 0;
+            }
+        }
+        if (!is_sea && !(*GameRules & RULES_SCN_UNITY_PODS_NO_ARTIFACTS)) {
+            int artifacts;
+            artifacts = f->units_active[BSC_ALIEN_ARTIFACT];
+            for (int i = 0; i < *BaseCount; i++) {
+                if (Bases[i].faction_id == faction_id && Bases[i].state_flags & BSTATE_ARTIFACT_LINKED) {
+                    artifacts++;
+                }
+            }
+            if (artifacts < f->base_count || *GameState & STATE_SCN_VICT_ALL_ARTIFACTS_OBJ_UNIT) {
+    case 6: // Skip conditions from previous label
+                if (*GameRules & RULES_SCN_UNITY_PODS_NO_ARTIFACTS) {
+                    goto GOODY_NEXT;
+                }
+                if (event_flag > 1 && event_value == 6) {
+                    event_value = 5;
+                    goto GOODY_START;
+                }
+                if (!is_sea || mod_stack_check(veh_id, 8, -1, -1, -1) > 0) {
+                    if (*MultiplayerActive && !(*GameState & STATE_SCN_VICT_ALL_ARTIFACTS_OBJ_UNIT)) {
+                        for (int i = 1; i < MaxPlayerNum; i++) {
+                            if (i != faction_id && is_human(i) && f->goody_artifact > Factions[i].goody_artifact) {
+                                goto GOODY_NEXT;
+                            }
+                        }
+                    }
+                    f->goody_artifact++;
+                    if (veh->plan() != PLAN_ARTIFACT) {
+                        int spawn_id = veh_init(BSC_ALIEN_ARTIFACT, faction_id, x, y);
+                        if (spawn_id >= 0) {
+                            veh_skip(spawn_id);
+                            draw_tile(x, y, 2);
+                            if (is_player) {
+                                NetMsg_pop(NetMsg, "GOODYARTIFACT", -5000, 0, "art_dis_sm.pcx");
+                                FX_fade(Sounds, 27);
+                            }
+                        }
+                        return 0;
+                    }
+                }
+            }
+        }
+        goto GOODY_NEXT;
+    case 7:
+        if (event_flag > 1 || *GameRules & RULES_SCN_NO_NATIVE_LIFE
+        || (*GameRules & RULES_SCN_FORCE_CURRENT_DIFF_LEVEL && *DiffLevel <= 1)) {
+            goto GOODY_NEXT;
+        }
+        if (is_sea) {
+            event_value = 8;
+            goto GOODY_START;
+        }
+        base_find(x, y);
+        if (*BaseFindDist < 3) {
+            goto GOODY_NEXT;
+        }
+        if (*MultiplayerActive && faction_id == *dword_9A6510 && !goody_rand(2)) {
+            goto GOODY_NEXT;
+        }
+        bool val1, val2;
+        val1 = 0;
+        val2 = goody_rand(2) && *ExpansionEnabled;
+        if (is_player) {
+            FX_play(Sounds, 9);
+            NetMsg_pop(NetMsg, "GOODYFUNGUS", -5000, 0, "fung_sm.pcx");
+        }
+        site_radius(x, y);
+        for (auto& m : iterate_tiles(x, y, 0, 9)) {
+            if (m.sq->alt_level() >= ALT_OCEAN_SHELF) {
+                bit_set(m.x, m.y, BIT_FUNGUS, 1);
+                bit_set(m.x, m.y, BIT_FOREST|BIT_SOIL_ENRICHER|BIT_FARM|BIT_SOLAR|BIT_MINE|BIT_MAGTUBE|BIT_ROAD, 0);
+                synch_bit(m.x, m.y, faction_id);
+                if (val1 == 0 && val2 == 1 && goody_rand(2) && conf.spawn_fungal_towers) {
+                    if (*ExpansionEnabled && m.sq->anything_at() < 0 && !is_ocean(m.sq)) {
+                        veh_init(BSC_FUNGAL_TOWER, 0, m.x, m.y);
+                        val1 = 1;
+                        val2 = 0;
+                    }
+                }
+                draw_tile(m.x, m.y, 2);
+            }
+        }
+        return 0;
+    case 8:
+        if (*GameRules & RULES_SCN_UNITY_PODS_NO_MONOLITHS || is_sea || bonus_at(x, y)) {
+            goto GOODY_NEXT;
+        }
+        site_radius(x, y);
+        bit_set(x, y, BIT_MONOLITH, 1);
+        bit_set(x, y, BIT_FUNGUS, 0);
+        synch_bit(x, y, faction_id);
+        draw_tiles(x, y, 2);
+        mod_monolith(veh_id);
+        return 0;
+    case 9:
+        if (*GameMoreRules & MRULES_SCN_UNITY_PODS_NO_VEHICLES || TechOwners[TECH_Orbital]
+        || (is_sea && mod_stack_check(veh_id, 8, -1, -1, -1) <= 0)) {
+            goto GOODY_NEXT;
+        }
+        int alt_unit_id;
+        alt_unit_id = BSC_UNITY_ROVER;
+        if (TechOwners[TECH_Fossil]) {
+            if (!goody_rand(3) && !f->units_active[BSC_UNITY_SCOUT_CHOPPER]) {
+                base_find2(x, y, faction_id);
+                if (*BaseFindDist <= 3 * proto_speed(BSC_UNITY_SCOUT_CHOPPER)) {
+                    alt_unit_id = BSC_UNITY_SCOUT_CHOPPER;
+                }
+            }
+        }
+        int alt_count, unit_count;
+        unit_count = f->units_active[BSC_UNITY_FOIL] + (Continents[sq->region].tile_count > 50 ? 3 : 2);
+        if (f->units_active[BSC_UNITY_FOIL] >= 2 || goody_rand(unit_count)) {
+            // skipped
+        } else if (is_sea) {
+            alt_unit_id = BSC_UNITY_FOIL;
+        } else {
+            for (auto& m : iterate_tiles(x, y, 1, 9)) {
+                if (is_ocean(m.sq) && Continents[m.sq->region].tile_count >= 80) {
+                    x = m.x;
+                    y = m.y;
+                    alt_unit_id = BSC_UNITY_FOIL;
+                    break;
+                }
+            }
+        }
+        alt_count = f->units_active[alt_unit_id];
+        unit_count = f->units_active[BSC_UNITY_ROVER] + f->units_active[BSC_UNITY_SCOUT_CHOPPER] + f->units_active[BSC_UNITY_FOIL];
+        if (alt_count && (alt_count > 1 || unit_count > (f->base_count + 1) / 2)) {
+            event_value = goody_rand(2) + 12;
+            x = veh->x;
+            y = veh->y;
+            sq = mapsq(x, y);
+            goto GOODY_START;
+        }
+        if (conf.spawn_battle_ogres && alt_unit_id == BSC_UNITY_ROVER && !goody_rand(5) && *ExpansionEnabled) {
+            int val = 0;
+            for (int i = 1; i < MaxPlayerNum; i++) {
+                if (has_tech(TECH_Bioadap, i) && val < 1) {
+                    val = 1;
+                }
+                if (has_tech(TECH_SentRes, i)) {
+                    val = 2;
+                }
+            }
+            alt_unit_id = (val > 1 ? BSC_BATTLE_OGRE_MK3 : (val > 0 ? BSC_BATTLE_OGRE_MK2 : BSC_BATTLE_OGRE_MK1));
+        }
+        int alt_veh_id;
+        alt_veh_id = veh_init(alt_unit_id, faction_id, x, y);
+        if (alt_veh_id >= 0) {
+            if (landing_site_pod || *CurrentTurn < 50) {
+                Vehs[alt_veh_id].home_base_id = -1;
+            }
+            Vehs[alt_veh_id].morale = (alt_unit_id == BSC_BATTLE_OGRE_MK2 ? 4 : (alt_unit_id == BSC_BATTLE_OGRE_MK3 ? 6 : 2));
+            if (is_sea && Units[alt_unit_id].triad() == TRIAD_LAND) {
+                sleep(alt_veh_id);
+            }
+            if (is_player) {
+                parse_says(0, &Units[alt_unit_id].name[0], -1, -1);
+                if (is_battle_ogre(alt_unit_id)) {
+                    NetMsg_pop(NetMsg, "OGREPOD", is_sea ? 5000 : -5000, 0, "ogre_sm.pcx");
+                } else {
+                    NetMsg_pop(NetMsg, "GOODYPOD", is_sea ? 5000 : -5000, 0, "supply_sm.pcx");
+                }
+            }
+            return 0;
+        }
+        goto GOODY_NEXT;
+    case 10:
+        if (*GameMoreRules & MRULES_SCN_UNITY_PODS_NO_TECH) {
+            goto GOODY_NEXT;
+        }
+        int rnd_id;
+        if (!goody_rand(4)
+        && !(rnd_id = goody_rand(7) + 1, rnd_id == faction_id || f->diplo_status[rnd_id] & DIPLO_COMMLINK)) {
+            if (is_human(faction_id) && is_alive(rnd_id) && !is_human(rnd_id) && !is_alien(rnd_id)) {
+                MFaction* m = &MFactions[rnd_id];
+                treaty_on(faction_id, rnd_id, DIPLO_COMMLINK);
+                if (is_player) {
+                    *gender_default = m->is_leader_female;
+                    *plurality_default = 0;
+                    parse_says(0, m->title_leader, -1, -1);
+                    parse_says(1, m->name_leader, -1, -1);
+                    *gender_default = m->noun_gender;
+                    *plurality_default = m->is_noun_plural;
+                    parse_says(2, m->noun_faction, -1, -1);
+                    NetMsg_pop(NetMsg, "GOODYCOMM", is_sea ? 5000 : -5000, 0, "supply_sm.pcx");
+                }
+                return 0;
+            }
+        }
+        if (!(*GameRules & RULES_SCN_NO_TECH_ADVANCES)) {
+            if (*MultiplayerActive && !landing_site_pod) {
+                for (int i = 1; i < MaxPlayerNum; i++) {
+                    if (i != faction_id && is_human(i)
+                    && f->goody_tech > Factions[i].goody_tech + 1
+                    && (f->ranking > Factions[i].ranking || f->tech_ranking > Factions[i].tech_ranking)) {
+                        goto GOODY_NEXT;
+                    }
+                }
+            }
+            int iter_val = 0;
+            int rand_val = goody_rand(MaxTechnologyNum);
+            while (true) {
+                int tech_id = (rand_val + iter_val) % MaxTechnologyNum;
+                if (!has_tech(tech_id, faction_id) && mod_tech_avail(tech_id, faction_id)
+                && (!tech_is_preq(tech_id, TECH_Brain, 9999) || TechOwners[TECH_Brain])) {
+                    int val = 0;
+                    for (int iter_id : {Tech[tech_id].preq_tech1, Tech[tech_id].preq_tech2}) {
+                        if (iter_id == TECH_None) {
+                            val++;
+                        }
+                        if (iter_id >= 0 && Tech[iter_id].preq_tech1 == TECH_None && Tech[iter_id].preq_tech2 == TECH_None) {
+                            val++;
+                            break;
+                        }
+                    }
+                    if (val >= 2) {
+                        if (tech_id != TECH_PrPsych && tech_id != TECH_FldMod && tech_id != TECH_AdapEco
+                        && tech_id != TECH_Bioadap && tech_id != TECH_SentRes) {
+                            if (!landing_site_pod) {
+                                f->goody_tech++;
+                            }
+                            if (is_player) {
+                                if (*MultiplayerActive) {
+                                    strncpy(StrBuffer, "GOODYDATA1", StrBufLen);
+                                    parse_says(0, Tech[tech_id].name, -1, -1);
+                                } else {
+                                    strncpy(StrBuffer, "GOODYDATA", StrBufLen);
+                                }
+                                NetMsg_pop(NetMsg, StrBuffer, is_sea ? 5000 : -5000, 0, "supply_sm.pcx");
+                            }
+                            tech_achieved(faction_id, tech_id, 0, 0);
+                            if (landing_site_pod) {
+                                f->tech_ranking--;
+                            }
+                            return 0;
+                        }
+                        goto GOODY_NEXT;
+                    }
+                }
+                if (++iter_val >= MaxTechnologyNum) {
+                    goto GOODY_NEXT;
+                }
+            }
+        }
+        goto GOODY_NEXT;
+    case 11:
+        if (bad_reg(sq->region) || sq->is_rocky()) {
+            goto GOODY_NEXT;
+        }
+        if (sq->alt_level() >= ALT_OCEAN_SHELF) {
+            int choice;
+            if (is_sea) {
+                choice = 0;
+            } else {
+                base_find(x, y);
+                if (*BaseFindDist < 3) {
+                    goto GOODY_NEXT;
+                }
+                choice = goody_rand(4);
+            }
+            site_radius(x, y);
+            int terrain_addons = 0;
+            int values[9] = {};
+            for (int i = 1; i < 9; i++) {
+                values[i] = goody_rand(3 - (choice > 1));
+            }
+            for (auto& m : iterate_tiles(x, y, 0, 9)) {
+                if (!m.i || values[m.i]) {
+                    if (m.i && m.sq->items & BIT_SUPPLY_REMOVE) {
+                        continue;
+                    }
+                    if (is_sea) {
+                        if (m.sq->alt_level() >= ALT_SHORE_LINE) {
+                            continue;
+                        }
+                        if (m.sq->alt_level() < ALT_OCEAN_SHELF) {
+                            if (m.i) {
+                                continue;
+                            }
+                            alt_set_both(m.x, m.y, 2);
+                        }
+                    } else {
+                        if (m.sq->alt_level() < ALT_SHORE_LINE) {
+                            continue;
+                        }
+                        if (m.sq->is_rocky() && choice < 2) {
+                            continue;
+                        }
+                        if (!m.sq->is_rocky() && !m.sq->is_rolling() && choice == 2) {
+                            continue;
+                        }
+                    }
+                    bit_set(m.x, m.y, BIT_FOREST|BIT_SOIL_ENRICHER|BIT_FARM|BIT_SOLAR|BIT_FUNGUS|BIT_MINE, 0);
+                    if (is_sea) {
+                        bit_set(m.x, m.y, BIT_FARM, 1);
+                    } else if (choice == 0) {
+                        bit_set(m.x, m.y, BIT_FOREST, 1);
+                        bit_set(m.x, m.y, BIT_FARM|BIT_SOLAR|BIT_MINE, 0);
+                    } else if (choice == 1) {
+                        bit_set(m.x, m.y, BIT_FARM, 1);
+                        bit_set(m.x, m.y, BIT_FOREST, 0);
+                    } else if (choice == 2) {
+                        bit_set(m.x, m.y, BIT_MINE|BIT_ROAD, 1);
+                        bit_set(m.x, m.y, BIT_FOREST|BIT_SOLAR, 0);
+                    } else if (choice == 3) {
+                        bit_set(m.x, m.y, BIT_SOLAR, 1);
+                        bit_set(m.x, m.y, BIT_FOREST|BIT_MINE, 0);
+                    }
+                    synch_bit(m.x, m.y, faction_id);
+                    draw_tile(m.x, m.y, 2);
+                    terrain_addons++;
+                }
+            }
+            if (!terrain_addons) {
+                goto GOODY_NEXT;
+            }
+            if (is_player) {
+                if (is_sea) {
+                    NetMsg_pop(NetMsg, "GOODYKELP", -5000, 0, "kelp_sm.pcx");
+                } else if (choice == 0) {
+                    NetMsg_pop(NetMsg, "GOODYFOREST", -5000, 0, "forgr_sm.pcx");
+                } else if (choice == 1) {
+                    NetMsg_pop(NetMsg, "GOODYFARM", -5000, 0, "forgr_sm.pcx");
+                } else if (choice == 2) {
+                    NetMsg_pop(NetMsg, "GOODYMINE", -5000, 0, "supply_sm.pcx");
+                } else if (choice == 3) {
+                    NetMsg_pop(NetMsg, "GOODYSOLAR", -5000, 0, "supply_sm.pcx");
+                }
+            }
+            return 0;
+        }
+        event_value = 12;
+        goto GOODY_START;
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+        if (*GameRules & RULES_SCN_NO_NATIVE_LIFE || (*GameRules & RULES_SCN_FORCE_CURRENT_DIFF_LEVEL && *DiffLevel <= 1)) {
+            goto GOODY_NEXT;
+        }
+        int find_dist, is_spore_launcher;
+        is_spore_launcher = 0;
+        base_find2(x, y, faction_id);
+        find_dist = *BaseFindDist;
+        base_find(x, y);
+        if (*BaseFindDist <= 1) {
+            goto GOODY_NEXT;
+        }
+        if (event_value > 13) {
+            int val = (sq->is_fungus() ? 2 : 4);
+            if (find_dist * (perihelion ? 2 : 1) < val * (event_value - 13) + 2 * (4 - *MapNativeLifeForms)) {
+                goto GOODY_NEXT;
+            }
+        }
+        if (*MultiplayerActive && faction_id == *dword_9A6510 && !goody_rand(2)) {
+            goto GOODY_NEXT;
+        }
+        if (is_sea) {
+            if (event_value > (perihelion ? 13 : 12)) {
+                goto GOODY_NEXT;
+            }
+            veh->moves_spent += Rules->move_rate_roads;
+        }
+        int native_spawns, tile_offset;
+        native_spawns = 0;
+        tile_offset = 0;
+        while (tile_offset < 8) {
+            int i = (*CurrentTurn + tile_offset) % 8;
+            int bx = wrap(x + BaseOffsetX[i]);
+            int by = y + BaseOffsetY[i];
+            MAP* bsq = mapsq(bx, by);
+            if (bsq && is_ocean(bsq) == is_sea && bsq->anything_at() < 0) {
+                if (is_sea) {
+                    int spawn_veh_id = veh_init(BSC_ISLE_OF_THE_DEEP, 0, bx, by);
+                    if (spawn_veh_id >= 0) {
+                        native_spawns++;
+                        Vehs[spawn_veh_id].visibility |= bsq->visibility;
+                        int val = min(veh_cargo(spawn_veh_id), goody_rand(2) + 1);
+                        while (--val >= 0) {
+                            if (goody_rand(5) || !*ExpansionEnabled || !conf.spawn_spore_launchers) {
+                                veh_init(BSC_MIND_WORMS, 0, bx, by);
+                            } else {
+                                veh_init(BSC_SPORE_LAUNCHER, 0, bx, by);
+                                is_spore_launcher = 1;
+                            }
+                        }
+                        break;
+                    }
+                } else {
+                    base_find(bx, by);
+                    if (*BaseFindDist > 1) {
+                        int spawn_id;
+                        if (goody_rand(5) || !*ExpansionEnabled || !conf.spawn_spore_launchers) {
+                            spawn_id = veh_init(BSC_MIND_WORMS, 0, bx, by);
+                        } else {
+                            spawn_id = veh_init(BSC_SPORE_LAUNCHER, 0, bx, by);
+                            is_spore_launcher = 1;
+                        }
+                        if (spawn_id >= 0) {
+                            native_spawns++;
+                            Vehs[spawn_id].visibility |= bsq->visibility;
+                            draw_tile(bx, by, 2);
+                            if (event_value > (perihelion ? 13 : 12) || *CurrentTurn < 15 || *BaseFindDist <= 3) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            int val = clamp(native_spawns ? 5 - f->base_count / 2 : 1, 1, 4);
+            tile_offset += val;
+        }
+        if (!native_spawns) {
+            goto GOODY_NEXT;
+        }
+        if (is_player) {
+            FX_play(Sounds, 17);
+            if (is_sea) {
+                NetMsg_pop(NetMsg, "GOODYISLE", -5000, 0, "isle_sm.pcx");
+            } else if (is_spore_launcher) {
+                NetMsg_pop(NetMsg, "GOODYWORMS", -5000, 0, "sporlnch_sm.pcx");
+            } else {
+                NetMsg_pop(NetMsg, "GOODYWORMS", -5000, 0, "mindworm_sm.pcx");
+            }
+            FX_fade(Sounds, 17);
+        }
+        return 0;
+    case 18:
+        if (is_sea) {
+            if (goody_rand(4)) {
+                goto GOODY_NEXT;
+            }
+        } else if (!veh->offense_value()) {
+            goto GOODY_NEXT;
+        }
+        if (veh->plan() == PLAN_ARTIFACT) {
+            goto GOODY_NEXT;
+        }
+        if (*MultiplayerActive) {
+            int found = 0;
+            for (int i = 1; i < MaxPlayerNum; i++) {
+                if (is_alive(i) && is_human(i) && i != faction_id) {
+                    if (is_sea) {
+                        if (Factions[i].unk_70 >= f->unk_70) {
+                            found = 1;
+                        }
+                    } else if (Factions[i].total_combat_units >= f->total_combat_units) {
+                        found = 1;
+                    }
+                    if (Factions[i].total_combat_units < f->total_combat_units / 2) {
+                        goto GOODY_NEXT;
+                    }
+                }
+            }
+            if (!found) {
+                goto GOODY_NEXT;
+            }
+        }
+        int clone_id;
+        clone_id = veh_init(veh->unit_id, faction_id, x, y);
+        if (clone_id >= 0) {
+            Vehs[clone_id].home_base_id = -1;
+            Vehs[clone_id].morale = veh->morale;
+            Vehs[clone_id].damage_taken = veh->damage_taken;
+            if (is_player) {
+                parse_says(0, veh->name(), -1, -1);
+                NetMsg_pop(NetMsg, "GOODYCLONE", -5000, 0, "clone_sm.pcx");
+            }
+            return 0;
+        }
+GOODY_NEXT:
+        x = veh->x;
+        y = veh->y;
+        sq = mapsq(x, y);
+        event_value = goody_rand(14);
+        if (event_flag) {
+            if (event_flag > 2) {
+                return 0;
+            }
+            if (event_flag == 2) {
+                event_flag = 3;
+            }
+        } else {
+            event_flag = 1;
+        }
+        if ((!y || y == *MapAreaY - 1) && !goody_rand(3)) {
+            event_value = 12;
+        }
+        if (!goody_rand(100)) {
+            event_value = 18;
+        }
+        goto GOODY_START;
+    default:
+        if (event_flag > 1) {
+            return 0;
+        }
+        if (!is_sea || sq->alt_level() >= ALT_OCEAN_SHELF) {
+            if (!sq->is_fungus() && y > 1 && y < *MapAreaY - 2
+            && !(*GameRules & RULES_SCN_UNITY_PODS_NO_RESOURCES)) {
+                bit_set(x, y, BIT_BONUS_RES, 1);
+                int bonus_val = bonus_at(x, y);
+                site_radius(x, y);
+                if (is_player && bonus_val) {
+                    if (bonus_val == RES_NUTRIENT) {
+                        wave_it(40);
+                    } else if (bonus_val == RES_MINERAL) {
+                        wave_it(42);
+                    } else if (bonus_val == RES_ENERGY) {
+                        ambience(210);
+                        wave_it(41);
+                    }
+                    parse_says(0, label_get(91 + bonus_val), -1, -1);
+                    NetMsg_pop(NetMsg, "GOODYRESOURCE", 5000, 0, "supply_sm.pcx");
+                }
+                draw_tile(x, y, 2);
+                if (!goody_rand(3) || event_flag) {
+                    return 0;
+                }
+                event_flag = 2;
+            }
+        }
+        goto GOODY_NEXT;
+    }
+}
+
+/*
+Calculate the former rate to perform terrain enhancements.
+This is only called from veh_wake but it can be inlined on other functions.
+*/
+int __cdecl contribution(int veh_id, int terraform_id) {
+    int value = has_abil(Vehs[veh_id].unit_id, ABL_SUPER_TERRAFORMER) ? 4 : 2;
+    if (terraform_id == (ORDER_REMOVE_FUNGUS - 4) || terraform_id == (ORDER_PLANT_FUNGUS - 4)) {
+        if (has_project(FAC_XENOEMPATHY_DOME, Vehs[veh_id].faction_id)) {
+            value *= 2; // Doubled
+        }
+    } else if (has_project(FAC_WEATHER_PARADIGM, Vehs[veh_id].faction_id)) {
+        value = (value * 3) / 2; // +50%
+    }
     return value;
 }
 
-int __cdecl worm_level(int base_id, int faction_id) {
-    int value = breed_level(base_id, faction_id);
-    if (MFactions[faction_id].rule_psi) {
-        value++;
+/*
+Calculate the armor strategy for the specified armor id.
+Return Value: Armor strategy
+*/
+int __cdecl arm_strat(int armor_id, int faction_id) {
+    assert(armor_id >= 0 && armor_id < MaxArmorNum);
+    assert(faction_id >= 0 && faction_id < MaxPlayerNum);
+    if (!*ExpansionEnabled && armor_id > ARM_PSI_DEFENSE) {
+        return 1;
     }
-    if (has_project(FAC_DREAM_TWISTER, faction_id)) {
-        value++;
+    int value = Armor[armor_id].defense_value;
+    if (value < 0) {
+        return psi_factor((Rules->psi_combat_ratio_def[TRIAD_LAND]
+            * Factions[faction_id].enemy_best_weapon_value)
+            / Rules->psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
     }
-    if (has_project(FAC_NEURAL_AMPLIFIER, faction_id)) {
-        value++;
+    return value;
+}
+
+/*
+Calculate the weapon strategy for the specified weapon id.
+Return Value: Weapon strategy
+*/
+int __cdecl weap_strat(int weapon_id, int faction_id) {
+    assert(weapon_id >= 0 && weapon_id < MaxWeaponNum);
+    assert(faction_id >= 0 && faction_id < MaxPlayerNum);
+    if (!*ExpansionEnabled && (weapon_id == WPN_RESONANCE_LASER || weapon_id == WPN_RESONANCE_BOLT
+    || weapon_id == WPN_STRING_DISRUPTOR)) {
+        return 1;
     }
-    assert(value == worm_mod(base_id, faction_id));
+    int value = Weapon[weapon_id].offense_value;
+    if (value < 0) {
+        return psi_factor((Rules->psi_combat_ratio_atk[TRIAD_LAND]
+            * Factions[faction_id].enemy_best_armor_value)
+            / Rules->psi_combat_ratio_def[TRIAD_LAND], faction_id, true, false);
+    }
+    return value;
+}
+
+/*
+Calculate the weapon value for the specified prototype.
+Return Value: Weapon value
+*/
+int __cdecl weap_val(int unit_id, int faction_id) {
+    return weap_strat(Units[unit_id].weapon_id, faction_id);
+}
+
+/*
+Calculate the armor value for the specified armor id.
+Return Value: Armor value
+*/
+int __cdecl arm_val(int armor_id, int faction_id) {
+    return 2 * ((faction_id >= 0) ? arm_strat(armor_id, faction_id) : Armor[armor_id].defense_value);
+}
+
+/*
+Calculate the armor value for the specified prototype.
+Return Value: Armor value
+*/
+int __cdecl armor_val(int unit_id, int faction_id) {
+    return arm_val(Units[unit_id].armor_id, faction_id);
+}
+
+/*
+Calculate the transport capacity for the specified chassis, abilities and reactor.
+*/
+int __cdecl transport_val(VehChassis chassis_id, VehAblFlag abls, VehReactor reactor_id) {
+    int value = Chassis[chassis_id].cargo;
+    if (Chassis[chassis_id].triad == TRIAD_SEA) {
+        value *= reactor_id;
+    }
+    if (abls & ABL_SLOW) {
+        value /= 2; // -50%, rounded down
+    }
+    if (abls & ABL_HEAVY_TRANSPORT) {
+        value = (3 * value + 1) / 2; // +50%, rounded up
+    }
     return value;
 }
 
@@ -541,7 +1652,9 @@ int __cdecl mod_veh_cost(int unit_id, int base_id, int32_t* has_proto_cost) {
     }
     
     // [WTP] no assertion needed as cost can actually be modded
-//    assert(cost == veh_cost(unit_id, base_id, 0));
+    /*
+    assert(cost == veh_cost(unit_id, base_id, 0));
+    */
     
     return cost;
 }
@@ -553,22 +1666,19 @@ int __cdecl mod_upgrade_cost(int faction_id, int new_unit_id, int old_unit_id) {
     UNIT* old_unit = &Units[old_unit_id];
     UNIT* new_unit = &Units[new_unit_id];
     int cost;
-	
-	if (conf.modify_upgrade_cost)
-	{
-		int mineral_row_difference = std::max(1, (int)new_unit->cost - (int)old_unit->cost);
-		cost = (has_project(FAC_NANO_FACTORY, faction_id) ? 1 : 2) * conf.flat_hurry_cost_multiplier_unit * mineral_row_difference;
-		
-		if (old_unit->is_supply() || new_unit->is_supply())
-		{
-			cost *= 2;
-		}
-		
-		if (new_unit_id >= MaxProtoFactionNum && !new_unit->is_prototyped())
-		{
-			cost *= 4;
-		}
-		
+
+    if (conf.modify_upgrade_cost) {
+        if (new_unit->is_supply()) {
+            cost = max((int)new_unit->cost, 4*max(1, new_unit->cost - old_unit->cost));
+        } else {
+            cost = max((int)new_unit->cost, 2*max(1, new_unit->cost - old_unit->cost));
+        }
+        if (new_unit_id >= MaxProtoFactionNum && !new_unit->is_prototyped()) {
+            cost *= 2;
+        }
+        if (has_project(FAC_NANO_FACTORY, faction_id)) {
+            cost /= 2;
+        }
     } else {
         int modifier = new_unit->cost;
         if (new_unit_id >= MaxProtoFactionNum && !new_unit->is_prototyped()) {
@@ -585,6 +1695,195 @@ int __cdecl mod_upgrade_cost(int faction_id, int new_unit_id, int old_unit_id) {
         assert(cost == upgrade_cost(faction_id, new_unit_id, old_unit_id));
     }
     return cost;
+}
+
+int __cdecl mod_upgrade_prototype(int faction_id, int new_unit_id, int old_unit_id, int flag) {
+    Faction* f = &Factions[faction_id];
+    UNIT* new_unit = &Units[new_unit_id];
+    UNIT* old_unit = &Units[old_unit_id];
+    assert(new_unit_id != old_unit_id);
+    assert(new_unit_id / MaxProtoFactionNum == faction_id);
+
+    if (*GameState & STATE_GAME_DONE && !(*GameState & STATE_FINAL_SCORE_DONE)) {
+        return 0;
+    }
+    // Fix issue with upgrade cost being incorrect for unit counts of more than 255.
+    int unit_cost = 10 * mod_upgrade_cost(faction_id, new_unit_id, old_unit_id);
+    int unit_count = veh_count(faction_id, old_unit_id);
+    int total_cost = unit_cost * unit_count;
+    bool prototyped = new_unit_id < MaxProtoFactionNum || new_unit->is_prototyped();
+
+    if (!total_cost && (flag || !is_human(faction_id))) {
+        return 0;
+    }
+    if (!is_human(faction_id)) {
+        // Simplify cost threshold for automatic upgrades
+        if (total_cost > f->energy_credits/4
+        || unit_cost >= 50 + min(50, f->energy_credits/32)) {
+            return 0;
+        }
+        // Reduce non-important upgrades
+        if (conf.design_units && (old_unit->plan > PLAN_RECON
+        || (conf.ignore_reactor_power && new_unit->offense_value() <= old_unit->offense_value()
+        && new_unit->defense_value() <= old_unit->defense_value()))) {
+            return 0;
+        }
+        goto DO_UPGRADE;
+    }
+    if (faction_id != MapWin->cOwner) {
+        return 0;
+    }
+    if (!total_cost) {
+        goto DO_UPGRADE;
+    }
+    StrBuffer[0] = '\0';
+    strncat(StrBuffer, old_unit->name, StrBufLen);
+    strncat(StrBuffer, " (", StrBufLen);
+    say_stats_2(StrBuffer, old_unit_id);
+    if (old_unit->ability_flags) {
+        strncat(StrBuffer, " ", StrBufLen);
+        for (int i = 0; i < MaxAbilityNum; i++) {
+            if (has_abil(old_unit_id, (VehAblFlag)(1 << i))) {
+                strncat(StrBuffer, Ability[i].abbreviation, StrBufLen);
+            }
+        }
+    }
+    strncat(StrBuffer, ")", StrBufLen);
+    parse_says(0, StrBuffer, -1, -1);
+    StrBuffer[0] = '\0';
+    strncat(StrBuffer, new_unit->name, StrBufLen);
+    strncat(StrBuffer, " (", StrBufLen);
+    say_stats_2(StrBuffer, new_unit_id);
+    if (new_unit->ability_flags) {
+        strncat(StrBuffer, " ", StrBufLen);
+        for (int i = 0; i < MaxAbilityNum; i++) {
+            if (has_abil(new_unit_id, (VehAblFlag)(1 << i))) {
+                strncat(StrBuffer, Ability[i].abbreviation, StrBufLen);
+            }
+        }
+    }
+    strncat(StrBuffer, ")", StrBufLen);
+    parse_says(1, StrBuffer, -1, -1);
+    parse_num(0, total_cost);
+    parse_num(1, f->energy_credits);
+    parse_num(2, unit_count);
+
+    const char* image_file;
+    switch (new_unit->triad()) {
+        case TRIAD_SEA: image_file = "navun_sm.pcx"; break;
+        case TRIAD_AIR: image_file = (is_alien(faction_id) ? "alair_sm.pcx" : "air_sm.pcx"); break;
+        default: image_file = (is_alien(faction_id) ? "alunit_sm.pcx" : "unit_sm.pcx"); break;
+    }
+    if (total_cost > f->energy_credits) {
+        if (flag && !(*GameWarnings & WARN_STOP_PROTOTYPE_COMPLETE)) {
+            return 0;
+        }
+        const char* text_label = (prototyped ? "UPGRADEPROTOCOST" : "UPGRADEPROTOCOST2");
+        popp(ScriptFile, text_label, 0, image_file, 0);
+        return 0;
+    } else {
+        const char* text_label = (prototyped ? "UPGRADEPROTO" : "UPGRADEPROTO2");
+        if (!*dword_90EA3C) {
+            int value = popp(ScriptFile, text_label, 0, image_file, 0);
+            if (!value) {
+                return 0;
+            }
+            if (value > 1) { // This dialog option is not visible by default
+                *dword_90EA3C = 1;
+            }
+        }
+    }
+DO_UPGRADE:
+    if (is_human(faction_id) && *MultiplayerActive) {
+        message_data(0x2411, 0, faction_id, new_unit_id, old_unit_id, 0);
+        if (NetDaemon_receive(NetState)) {
+            while (NetDaemon_receive(NetState));
+            return 1;
+        }
+    } else {
+        full_upgrade(faction_id, new_unit_id, old_unit_id);
+    }
+    return 1;
+}
+
+static void veh_upgrade(VEH* veh, int new_unit_id, int old_unit_id, int cost) {
+    Faction* f = &Factions[veh->faction_id];
+    f->energy_credits -= cost;
+    f->units_active[new_unit_id]++;
+    f->units_active[old_unit_id]--;
+    veh->unit_id = new_unit_id;
+    int morale_diff = (has_abil(new_unit_id, ABL_TRAINED) != 0)
+        - (has_abil(old_unit_id, ABL_TRAINED) != 0);
+    veh->morale = clamp(veh->morale + morale_diff, 0, 6);
+    assert(f->energy_credits >= 0);
+    assert(new_unit_id / MaxProtoFactionNum == veh->faction_id);
+    debug("upgrade_unit %d %d %2d %2d cost: %d %s / %s\n",
+    *CurrentTurn, veh->faction_id, veh->x, veh->y, cost, Units[old_unit_id].name, veh->name());
+}
+
+/*
+Partial upgrades until energy reserves run out, MP mode not implemented.
+*/
+void __cdecl part_upgrade(int faction_id, int new_unit_id, int old_unit_id) {
+    Faction* f = &Factions[faction_id];
+    if (!*MultiplayerActive && faction_id > 0
+    && old_unit_id >= 0 && new_unit_id != old_unit_id
+    && new_unit_id / MaxProtoFactionNum == faction_id) {
+        int cost = 10 * mod_upgrade_cost(faction_id, new_unit_id, old_unit_id);
+        bool active = false;
+        for (int i = 0; i < *VehCount; i++) {
+            VEH* veh = &Vehs[i];
+            if (veh->faction_id == faction_id && veh->unit_id == old_unit_id
+            && !veh->moves_spent && !veh->damage_taken && base_at(veh->x, veh->y) >= 0) {
+                if (f->energy_credits < cost + 20) {
+                    break;
+                }
+                veh_upgrade(veh, new_unit_id, old_unit_id, cost);
+                active = true;
+            }
+        }
+        if (active) {
+            draw_map(1);
+        }
+    }
+}
+
+/*
+Full upgrade to new prototype, retire old prototype and update base queues.
+Total cost must be checked by the caller function.
+*/
+void __cdecl full_upgrade(int faction_id, int new_unit_id, int old_unit_id) {
+    int cost = 10 * mod_upgrade_cost(faction_id, new_unit_id, old_unit_id);
+    bool active = false;
+    for (int i = 0; i < *VehCount; i++) {
+        VEH* veh = &Vehs[i];
+        if (veh->faction_id == faction_id && veh->unit_id == old_unit_id) {
+            veh_upgrade(veh, new_unit_id, old_unit_id, cost);
+            active = true;
+        }
+    }
+    for (int i = *BaseCount-1; i >= 0; i--) {
+        BASE* base = &Bases[i];
+        if (base->faction_id == faction_id) {
+            for (int j = 0; j < 10 && j <= base->queue_size; j++) {
+                if (base->queue_items[j] == old_unit_id) {
+                    base->queue_items[j] = new_unit_id;
+                }
+            }
+        }
+    }
+    if (new_unit_id >= MaxProtoFactionNum && active) {
+        Units[new_unit_id].unit_flags |= UNIT_PROTOTYPED;
+    }
+    if (old_unit_id >= MaxProtoFactionNum) {
+        Units[old_unit_id].unit_flags &= ~UNIT_ACTIVE;
+    }
+    if (is_human(faction_id)) {
+        draw_map(1);
+    }
+    if (faction_id == MapWin->cOwner) {
+        Console_update_data(MapWin, 0);
+    }
 }
 
 /*
@@ -723,7 +2022,7 @@ int __cdecl mod_stack_check(int veh_id, int type, int cond1, int cond2, int cond
             break;
         case 14:
             if ((cond1 < 0 || Vehs[i].faction_id == cond1)
-            && (Vehs[i].plan() == PLAN_COMBAT || Vehs[i].plan() == PLAN_DEFENSIVE)) {
+            && (Vehs[i].plan() == PLAN_COMBAT || Vehs[i].plan() == PLAN_DEFENSE)) {
                 value++;
             }
             break;
@@ -734,8 +2033,8 @@ int __cdecl mod_stack_check(int veh_id, int type, int cond1, int cond2, int cond
             break;
         case 16:
             if ((cond1 < 0 || Vehs[i].faction_id == cond1)
-            && (Vehs[i].plan() == PLAN_COMBAT || Vehs[i].plan() == PLAN_DEFENSIVE
-            || Vehs[i].plan() == PLAN_RECONNAISSANCE)) {
+            && (Vehs[i].plan() == PLAN_COMBAT || Vehs[i].plan() == PLAN_DEFENSE
+            || Vehs[i].plan() == PLAN_RECON)) {
                 value++;
             }
             break;
@@ -764,8 +2063,8 @@ int __cdecl mod_stack_check(int veh_id, int type, int cond1, int cond2, int cond
     return value;
 }
 
-int __cdecl mod_veh_init(int unit_id, int faction, int x, int y) {
-    int veh_id = veh_init(unit_id, faction, x, y);
+int __cdecl mod_veh_init(int unit_id, int faction_id, int x, int y) {
+    int veh_id = veh_init(unit_id, faction_id, x, y);
     if (veh_id >= 0) {
         Vehicles[veh_id].home_base_id = -1;
         // Set these flags to disable any non-Thinker unit automation.
@@ -783,17 +2082,33 @@ int __cdecl mod_veh_kill(int veh_id) {
 }
 
 /*
+Check if the land unit inside an air transport can disembark.
+The transport must be in either a base or an airbase to do so.
+*/
+int __cdecl mod_veh_jail(int veh_id) {
+    VEH* veh = &Vehs[veh_id];
+    MAP* sq = mapsq(veh->x, veh->y);
+    if (veh->triad() == TRIAD_LAND && veh->order == ORDER_SENTRY_BOARD
+    && veh->waypoint_x[0] >= 0 && Vehs[veh->waypoint_x[0]].triad() == TRIAD_AIR
+    && sq && !sq->is_airbase()) { // Fix: also allow airbases with owner = 0
+        return true;
+    }
+    return false;
+}
+
+/*
 Skip vehicle turn by adjusting spent moves to maximum available moves.
+Formers are a special case since they can build items without moving on the same turn.
 */
 int __cdecl mod_veh_skip(int veh_id) {
     VEH* veh = &Vehs[veh_id];
     int moves = veh_speed(veh_id, 0);
 
     if (is_human(veh->faction_id)) {
+        if (veh->is_former() && veh->order >= ORDER_FARM && veh->order < ORDER_MOVE_TO) {
+            veh->state |= VSTATE_WORKING;
+        }
         if (conf.activate_skipped_units) {
-            if (veh->is_former() && veh->order >= ORDER_FARM && veh->order < ORDER_MOVE_TO) {
-                veh->state |= VSTATE_WORKING;
-            }
             if (!veh->moves_spent && veh->order < ORDER_FARM
             && !(veh->state & (VSTATE_HAS_MOVED|VSTATE_MADE_AIRDROP))) {
                 veh->flags |= VFLAG_FULL_MOVE_SKIPPED;
@@ -803,18 +2118,17 @@ int __cdecl mod_veh_skip(int veh_id) {
             }
         }
     } else if (veh->faction_id > 0) {
-        veh->waypoint_1_x = veh->x;
-        veh->waypoint_1_y = veh->y;
+        veh->waypoint_x[0] = veh->x;
+        veh->waypoint_y[0] = veh->y;
         veh->status_icon = '-';
         
 		// [WTP]
 		// apply monolith to damaged vehicles as well
-
-//        if (want_monolith(veh_id)) {
-//            if (bit_at(veh->x, veh->y) & BIT_MONOLITH) {
-//                monolith(veh_id);
-//            }
-//        }
+		/*
+        if (want_monolith(veh_id) && bit_at(veh->x, veh->y) & BIT_MONOLITH) {
+            mod_monolith(veh_id);
+        }
+        */
 		if
 		(
 			bit_at(veh->x, veh->y) & BIT_MONOLITH
@@ -836,18 +2150,14 @@ int __cdecl mod_veh_wake(int veh_id) {
     VEH* veh = &Vehs[veh_id];
     if (veh->order >= ORDER_FARM && veh->order < ORDER_MOVE_TO && !(veh->state & VSTATE_WORKING)) {
         veh->moves_spent = veh_speed(veh_id, 0) - Rules->move_rate_roads;
-        if (veh->terraform_turns) {
-            veh->terraform_turns = max(0, veh->terraform_turns - contribution(veh_id, veh->order - 4));
+        if (veh->movement_turns) {
+            veh->movement_turns = max(0, veh->movement_turns - contribution(veh_id, veh->order - 4));
         }
     }
     if (veh->state & VSTATE_ON_ALERT && !(veh->state & VSTATE_HAS_MOVED)
     && veh->order_auto_type == ORDERA_ON_ALERT) {
         veh->moves_spent = 0;
     }
-    /*
-    Formers are a special case since they can build items without moving on the same turn.
-    In this case VSTATE_HAS_MOVED or VSTATE_WORKING should be set to prevent them from moving twice per turn.
-    */
     if (conf.activate_skipped_units && is_human(veh->faction_id)) {
         if (veh->flags & VFLAG_FULL_MOVE_SKIPPED
         && !(veh->state & (VSTATE_HAS_MOVED|VSTATE_MADE_AIRDROP))) {
@@ -895,27 +2205,28 @@ int __cdecl probe_return_base(int UNUSED(x), int UNUSED(y), int veh_id) {
     return find_return_base(veh_id);
 }
 
-int __cdecl create_proto(int faction, VehChassis chs, VehWeapon wpn, VehArmor arm,
+int __cdecl create_proto(int faction_id, VehChassis chs, VehWeapon wpn, VehArmor arm,
 VehAblFlag abls, VehReactor rec, VehPlan ai_plan) {
     char name[256];
-    mod_name_proto(name, -1, faction, chs, wpn, arm, abls, rec);
-    debug("create_proto %4d %d chs: %d rec: %d wpn: %2d arm: %2d %08X %s\n",
-        *CurrentTurn, faction, chs, rec, wpn, arm, abls, name);
-    return propose_proto(faction, chs, wpn, arm, abls, rec, ai_plan, (strlen(name) ? name : NULL));
+    mod_name_proto(name, -1, faction_id, chs, wpn, arm, abls, rec);
+    int unit_id = propose_proto(faction_id, chs, wpn, arm, abls, rec, ai_plan, (strlen(name) ? name : NULL));
+    debug("create_proto %4d %d chs: %d rec: %d wpn: %2d arm: %2d %08X %d %s\n",
+        *CurrentTurn, faction_id, chs, rec, wpn, arm, abls, unit_id, name);
+    return unit_id;
 }
 
 /*
 This function is only called from propose_proto to skip prototypes that are invalid.
 */
-int __cdecl mod_is_bunged(int faction, VehChassis chs, VehWeapon wpn, VehArmor arm,
+int __cdecl mod_is_bunged(int faction_id, VehChassis chs, VehWeapon wpn, VehArmor arm,
 VehAblFlag abls, VehReactor rec) {
     int triad = Chassis[chs].triad;
     int arm_v = Armor[arm].defense_value;
     int wpn_v = Weapon[wpn].offense_value;
     debug("propose_proto %3d %d chs: %d rec: %d wpn: %2d arm: %2d %08X\n",
-        *CurrentTurn, faction, chs, rec, wpn, arm, abls);
+        *CurrentTurn, faction_id, chs, rec, wpn, arm, abls);
 
-    if (!is_human(faction)) {
+    if (!is_human(faction_id)) {
         if (conf.design_units) {
             if (triad == TRIAD_SEA && wpn_v > 0 && arm_v > 3
             && arm_v > wpn_v + 1) {
@@ -924,7 +2235,155 @@ VehAblFlag abls, VehReactor rec) {
         }
         return 0;
     }
-    return is_bunged(faction, chs, wpn, arm, abls, rec);
+    return is_bunged(faction_id, chs, wpn, arm, abls, rec);
+}
+
+/*
+Create a new prototype. Sets initial values for everything except name and preq_tech.
+*/
+void __cdecl mod_make_proto(int unit_id, VehChassis chassis_id,
+VehWeapon weapon_id, VehArmor armor_id, VehAblFlag abls, VehReactor reactor_id) {
+    UNIT* unit = &Units[unit_id];
+    int faction_id = unit_id / MaxProtoFactionNum;
+    int option = 0;
+    debug("make_proto %d %d chs: %d rec: %d wpn: %2d arm: %2d %08X\n",
+        *CurrentTurn, unit_id, chassis_id, reactor_id, weapon_id, armor_id, abls);
+    if (unit_id >= MaxProtoFactionNum) {
+        bool cond1 = false;
+        bool cond2 = false;
+        bool cond3 = false;
+        int unit_id_loop;
+        for (int i = 0; i < 2*MaxProtoFactionNum; i++) {
+            unit_id_loop = i % MaxProtoFactionNum;
+            if (i >= MaxProtoFactionNum) {
+                unit_id_loop += unit_id - unit_id % MaxProtoFactionNum;
+            }
+            int flags_check = Units[unit_id_loop].unit_flags;
+            if (flags_check & UNIT_ACTIVE) {
+                if ((unit_id_loop < MaxProtoFactionNum
+                && has_tech(Units[unit_id_loop].preq_tech, faction_id))
+                || (unit_id_loop >= MaxProtoFactionNum
+                && (flags_check & UNIT_PROTOTYPED))) {
+                    int loop_weapon_id = Units[unit_id_loop].weapon_id;
+                    if (loop_weapon_id == weapon_id) {
+                        cond1 = true;
+                    }
+                    int loop_armor_id = Units[unit_id_loop].armor_id;
+                    if (loop_armor_id == armor_id) {
+                        cond2 = true;
+                    }
+                    int loop_chassis_id = Units[unit_id_loop].chassis_id;
+                    if (loop_chassis_id == chassis_id) {
+                        cond3 = true;
+                    }
+                    int off_rating = Weapon[weapon_id].offense_value;
+                    if (off_rating > 0 && Weapon[loop_weapon_id].offense_value >= off_rating) {
+                        cond1 = true;
+                    }
+                    int def_rating = Armor[armor_id].defense_value;
+                    if (def_rating > 0 && Armor[loop_armor_id].defense_value >= def_rating) {
+                        cond2 = true;
+                    }
+                    if (Chassis[chassis_id].triad == Chassis[loop_chassis_id].triad
+                    && Chassis[loop_chassis_id].speed >= Chassis[chassis_id].speed) {
+                        cond3 = true;
+                    }
+                }
+            }
+        }
+        if (cond1 && cond2 && cond3) {
+            option = (unit_id_loop >= MaxProtoFactionNum
+                && Units[unit_id_loop].unit_flags & UNIT_UNK_10) ? 3 : 1;
+        }
+    }
+    unit->chassis_id = (uint8_t)chassis_id;
+    unit->weapon_id = (uint8_t)weapon_id;
+    unit->armor_id = (uint8_t)armor_id;
+    unit->ability_flags = abls;
+    unit->reactor_id = (uint8_t)reactor_id;
+    unit->cost = (uint8_t)mod_proto_cost(chassis_id, weapon_id, armor_id, abls, reactor_id);
+    unit->carry_capacity = (Weapon[weapon_id].mode == WMODE_TRANSPORT)
+        ? (uint8_t)transport_val(chassis_id, abls, reactor_id) : 0;
+
+    if (Chassis[chassis_id].missile) {
+        if (Weapon[weapon_id].offense_value < 99) { // non-PB missiles
+            if (weapon_id == WPN_TECTONIC_PAYLOAD) {
+                unit->plan = PLAN_TECTONIC_MISSILE;
+                unit->group_id = 22;
+            } else if (weapon_id == WPN_FUNGAL_PAYLOAD) {
+                unit->plan = PLAN_FUNGAL_MISSILE;
+                unit->group_id = 23;
+            } else { // Conventional Payload
+                unit->plan = PLAN_OFFENSE;
+                unit->group_id = 13;
+            }
+        } else {
+            unit->plan = PLAN_PLANET_BUSTER;
+            unit->group_id = 14;
+        }
+    } else if (Weapon[weapon_id].mode >= WMODE_TRANSPORT) { // Non-combat
+        unit->plan = Weapon[weapon_id].mode;
+        unit->group_id = Weapon[weapon_id].mode + 32;
+    } else if (Chassis[chassis_id].triad == TRIAD_SEA) { // combat sea
+        unit->plan = PLAN_NAVAL_SUPERIORITY;
+        unit->group_id = 6; // same value as plan
+    } else if (Chassis[chassis_id].triad == TRIAD_AIR) { // combat air
+        if (has_abil(unit_id, ABL_AIR_SUPERIORITY)) {
+            unit->plan = PLAN_AIR_SUPERIORITY;
+            unit->group_id = 9;
+        } else {
+            unit->plan = PLAN_OFFENSE;
+            unit->group_id = 8;
+        }
+    } else { // TRIAD_LAND combat unit
+        unit->plan = PLAN_OFFENSE;
+        if (Armor[armor_id].defense_value > 1) {
+            unit->plan = PLAN_DEFENSE;
+        }
+        if (Weapon[weapon_id].offense_value >= Armor[armor_id].defense_value
+        && unit->plan == PLAN_DEFENSE) {
+            unit->plan = PLAN_COMBAT;
+        }
+        if (Chassis[chassis_id].speed > 1
+        && Weapon[weapon_id].offense_value > Armor[armor_id].defense_value) {
+            unit->plan = PLAN_OFFENSE;
+        }
+        if (abls & (ABL_ARTILLERY | ABL_DROP_POD | ABL_AMPHIBIOUS)) {
+            unit->plan = PLAN_OFFENSE;
+        }
+        unit->group_id = 3;
+        if (Armor[armor_id].defense_value > Weapon[weapon_id].offense_value) {
+            unit->group_id = 2;
+        }
+        if (Weapon[weapon_id].offense_value > Armor[armor_id].defense_value * 2) {
+            unit->group_id = 1;
+        }
+        if (Chassis[chassis_id].speed == 2) {
+            unit->group_id = 4;
+        } else if (Chassis[chassis_id].speed >= 3) {
+            unit->group_id = 5;
+        }
+        if (Weapon[weapon_id].offense_value == 1 && Armor[armor_id].defense_value == 1) {
+            if (Chassis[chassis_id].speed > 1) {
+                unit->plan = PLAN_RECON;
+            }
+            if (has_abil(unit_id, ABL_POLICE_2X)) {
+                unit->plan = PLAN_DEFENSE;
+            }
+            unit->group_id = 10;
+        }
+    }
+    unit->icon_offset = -1;
+    unit->obsolete_factions = 0;
+    unit->combat_factions = (unit_id >= MaxProtoFactionNum) ? (1 << faction_id) : -1;
+    unit->unit_flags = UNIT_ACTIVE;
+    if (option) {
+        if (option & 2) {
+            unit->unit_flags = (UNIT_UNK_100|UNIT_UNK_10|UNIT_PROTOTYPED|UNIT_ACTIVE);
+        } else {
+            unit->unit_flags = (UNIT_UNK_100|UNIT_PROTOTYPED|UNIT_ACTIVE);
+        }
+    }
 }
 
 void parse_abl_name(char* buf, const char* name, bool reduce) {
@@ -942,7 +2401,7 @@ void parse_abl_name(char* buf, const char* name, bool reduce) {
             return;
         }
     }
-    strncat(buf, name, len);
+    strncat(buf, name, MaxProtoNameLen);
     if (!isspace(name[len-1]) && name[len-1] != '-') {
         strncat(buf, " ", 2);
     }
@@ -1134,46 +2593,39 @@ VehChassis chs, VehWeapon wpn, VehArmor arm, VehAblFlag abls, VehReactor rec) {
     return 0;
 }
 
-VehArmor best_armor(int faction, int max_cost) {
-    int ci = ARM_NO_ARMOR;
-    int cv = 0;
+VehArmor best_armor(int faction_id, int max_cost) {
+    int best_id = ARM_NO_ARMOR;
     for (int i = ARM_NO_ARMOR; i <= ARM_RESONANCE_8_ARMOR; i++) {
-        if (has_tech(Armor[i].preq_tech, faction)) {
-            int iv = Armor[i].defense_value;
+        if (has_tech(Armor[i].preq_tech, faction_id)) {
             int cost = Armor[i].cost;
-            if (max_cost >= 0 && (cost > max_cost || cost > iv + 3)) {
+            if (max_cost > 0 && (cost > max_cost || cost > Armor[i].defense_value + 3)) {
                 continue;
             }
-            iv = iv * ((i == ARM_PULSE_3_ARMOR || i == ARM_PULSE_8_ARMOR
-                || i == ARM_RESONANCE_3_ARMOR || i == ARM_RESONANCE_8_ARMOR) ? 5 : 4);
-            if (iv > cv) {
-                cv = iv;
-                ci = i;
+            int diff = Armor[i].defense_value - Armor[best_id].defense_value;
+            if (diff > 0 || (diff == 0 && Armor[best_id].cost >= cost)) {
+                best_id = i;
             }
         }
     }
-    return (VehArmor)ci;
+    return (VehArmor)best_id;
 }
 
-VehWeapon best_weapon(int faction) {
-    int ci = WPN_HAND_WEAPONS;
-    int cv = 0;
+VehWeapon best_weapon(int faction_id) {
+    int best_id = WPN_HAND_WEAPONS;
     for (int i = WPN_HAND_WEAPONS; i <= WPN_STRING_DISRUPTOR; i++) {
-        if (has_tech(Weapon[i].preq_tech, faction)) {
-            int iv = Weapon[i].offense_value
-                * ((i == WPN_RESONANCE_LASER || i == WPN_RESONANCE_BOLT) ? 5 : 4);
-            if (iv > cv) {
-                cv = iv;
-                ci = i;
+        if (has_tech(Weapon[i].preq_tech, faction_id)) {
+            int diff = Weapon[i].offense_value - Weapon[best_id].offense_value;
+            if (diff > 0 || (diff == 0 && Weapon[best_id].cost >= Weapon[i].cost)) {
+                best_id = i;
             }
         }
     }
-    return (VehWeapon)ci;
+    return (VehWeapon)best_id;
 }
 
-VehReactor best_reactor(int faction) {
+VehReactor best_reactor(int faction_id) {
     for (VehReactor r : {REC_SINGULARITY, REC_QUANTUM, REC_FUSION}) {
-        if (has_tech(Reactor[r - 1].preq_tech, faction)) {
+        if (has_tech(Reactor[r - 1].preq_tech, faction_id)) {
             return r;
         }
     }
@@ -1186,8 +2638,8 @@ int proto_offense(int unit_id) {
     int w = (conf.ignore_reactor_power ? (int)REC_FISSION : u->reactor_id);
     if (u->is_missile() && !u->is_planet_buster()) {
         // Conv missiles might have nominally low attack rating
-        int faction = unit_id / MaxProtoFactionNum;
-        int max_value = max(1, (int)Weapon[best_weapon(faction)].offense_value);
+        int faction_id = unit_id / MaxProtoFactionNum;
+        int max_value = max(1, (int)Weapon[best_weapon(faction_id)].offense_value);
         return max_value * w;
     }
     return Weapon[u->weapon_id].offense_value * w;
@@ -1203,12 +2655,12 @@ int proto_defense(int unit_id) {
 int set_move_to(int veh_id, int x, int y) {
     VEH* veh = &Vehs[veh_id];
     debug("set_move_to %2d %2d -> %2d %2d %s\n", veh->x, veh->y, x, y, veh->name());
-    veh->waypoint_1_x = x;
-    veh->waypoint_1_y = y;
+    veh->waypoint_x[0] = x;
+    veh->waypoint_y[0] = y;
     veh->order = ORDER_MOVE_TO;
     veh->status_icon = 'G';
     if (veh->is_former()) {
-        veh->terraform_turns = 0;
+        veh->movement_turns = 0;
     }
     mapnodes.erase({x, y, NODE_PATROL});
     mapnodes.erase({x, y, NODE_COMBAT_PATROL});
@@ -1228,8 +2680,8 @@ int set_move_next(int veh_id, int offset) {
 
 int set_road_to(int veh_id, int x, int y) {
     VEH* veh = &Vehs[veh_id];
-    veh->waypoint_1_x = x;
-    veh->waypoint_1_y = y;
+    veh->waypoint_x[0] = x;
+    veh->waypoint_y[0] = y;
     veh->order = ORDER_ROAD_TO;
     veh->status_icon = 'R';
     return VEH_SYNC;
@@ -1254,8 +2706,8 @@ int set_order_none(int veh_id) {
     VEH* veh = &Vehs[veh_id];
     veh->order = ORDER_NONE;
     veh->order_auto_type = ORDERA_TERRA_AUTO_FULL;
-    veh->waypoint_1_x = -1;
-    veh->waypoint_1_y = -1;
+    veh->waypoint_x[0] = -1;
+    veh->waypoint_y[0] = -1;
     veh->status_icon = '-';
     return mod_veh_skip(veh_id);
 }
@@ -1275,8 +2727,8 @@ int set_board_to(int veh_id, int trans_veh_id) {
     assert(veh->x == v2->x && veh->y == v2->y);
     assert(veh_cargo(trans_veh_id) > 0);
     veh->order = ORDER_SENTRY_BOARD;
-    veh->waypoint_1_x = trans_veh_id;
-    veh->waypoint_1_y = 0;
+    veh->waypoint_x[0] = trans_veh_id;
+    veh->waypoint_y[0] = 0;
     veh->status_icon = 'L';
     debug("set_board_to %2d %2d %s -> %s\n", veh->x, veh->y, veh->name(), v2->name());
     return VEH_SYNC;
@@ -1286,7 +2738,7 @@ int veh_cargo_loaded(int veh_id) {
     int num = 0;
     for (int i = 0; i < *VehCount; i++) {
         VEH* veh = &Vehs[i];
-        if (veh->order == ORDER_SENTRY_BOARD && veh->waypoint_1_x == veh_id
+        if (veh->order == ORDER_SENTRY_BOARD && veh->waypoint_x[0] == veh_id
         && veh->x == Vehs[veh_id].x && veh->y == Vehs[veh_id].y) {
             assert(veh_id != i);
             num++;

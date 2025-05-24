@@ -651,8 +651,8 @@ double getBuildSiteBaseGain(MAP *buildSite)
 	double yieldScore = (popSize - 1) < (int)yieldInfos.size() ? yieldInfos.at(popSize - 1).score : 0.0;
 	double yieldNutrientSurplus = 0.5 * yieldScore / getResourceScore(1.0, 0.0, 0.0);
 	double yieldResourceScore = 0.5 * yieldScore;
-	double nutrientSurplus = (double)ResInfo->base_sq_nutrient + yieldNutrientSurplus;
-	double resourceScore = getResourceScore(ResInfo->base_sq_mineral, ResInfo->base_sq_energy) + yieldResourceScore;
+	double nutrientSurplus = (double)ResInfo->base_sq.nutrient + yieldNutrientSurplus;
+	double resourceScore = getResourceScore(ResInfo->base_sq.mineral, ResInfo->base_sq.energy) + yieldResourceScore;
 	
 	for (int turn = 0; turn < evaluationTurns; turn++)
 	{
@@ -887,7 +887,7 @@ bool isValidBuildSite(MAP *tile, int factionId)
 	
 	// cannot build at volcano
 	
-	if (tile->landmarks & LM_VOLCANO && tile->art_ref_id == 0)
+	if (tile->landmarks & LM_VOLCANO && tile->code_at() == 0)
 		return false;
 	
 	// cannot build in base tile and on monolith
@@ -979,7 +979,7 @@ bool isValidWorkTile(MAP *baseTile, MAP *workTile)
 	
 	// cannot terraform volcano
 	
-	if (workTile->landmarks & LM_VOLCANO && workTile->art_ref_id == 0)
+	if (workTile->landmarks & LM_VOLCANO && workTile->code_at() == 0)
 		return false;
 	
 	// exclude not owned land tiles for ocean base

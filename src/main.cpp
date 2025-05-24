@@ -1,4 +1,3 @@
-
 /*
  * Thinker - AI improvement mod for Sid Meier's Alpha Centauri.
  * https://github.com/induktio/thinker/
@@ -29,10 +28,9 @@ map_str_t musiclabels;
 
 int option_handler(void* user, const char* section, const char* name, const char* value) {
     #define MATCH(n) strcmp(name, n) == 0
-    char buf[INI_MAX_LINE] = {};
+    char buf[INI_MAX_LINE];
     Config* cf = (Config*)user;
-    strncpy(buf, value, INI_MAX_LINE);
-    buf[INI_MAX_LINE-1] = '\0';
+    strcpy_n(buf, INI_MAX_LINE, value);
 
     if (strcmp(section, "thinker") != 0 && strcmp(section, "wtp") != 0) {
         return opt_handle_error(section, name);
@@ -166,8 +164,6 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->nerve_staple_mod = atoi(value);
     } else if (MATCH("delay_drone_riots")) {
         cf->delay_drone_riots = atoi(value);
-    } else if (MATCH("skip_drone_revolts")) {
-        cf->skip_drone_revolts = atoi(value);
     } else if (MATCH("activate_skipped_units")) {
         cf->activate_skipped_units = atoi(value);
     } else if (MATCH("counter_espionage")) {
@@ -195,9 +191,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     } else if (MATCH("eco_damage_fix")) {
         cf->eco_damage_fix = atoi(value);
     } else if (MATCH("clean_minerals")) {
-        cf->clean_minerals = clamp(atoi(value), 0, 127);
+        cf->clean_minerals = clamp(atoi(value), 0, 1000);
     } else if (MATCH("biology_lab_bonus")) {
-        cf->biology_lab_bonus = clamp(atoi(value), 0, 127);
+        cf->biology_lab_bonus = clamp(atoi(value), 0, 1000);
     } else if (MATCH("spawn_fungal_towers")) {
         cf->spawn_fungal_towers = atoi(value);
     } else if (MATCH("spawn_spore_launchers")) {
@@ -214,6 +210,10 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->event_sunspots = clamp(atoi(value), 0, 100);
     } else if (MATCH("event_market_crash")) {
         cf->event_market_crash = atoi(value);
+    } else if (MATCH("soil_improve_value")) {
+        cf->soil_improve_value = clamp(atoi(value), 0, 10);
+    } else if (MATCH("resource_limit")) {
+        opt_list_parse(cf->resource_limit, buf, 3, 0);
     } else if (MATCH("aquatic_bonus_minerals")) {
         cf->aquatic_bonus_minerals = atoi(value);
     } else if (MATCH("alien_guaranteed_techs")) {
@@ -252,6 +252,8 @@ int option_handler(void* user, const char* section, const char* name, const char
         opt_list_parse(cf->content_pop_player, buf, MaxDiffNum, 0);
     } else if (MATCH("content_pop_computer")) {
         opt_list_parse(cf->content_pop_computer, buf, MaxDiffNum, 0);
+    } else if (MATCH("unit_support_bonus")) {
+        opt_list_parse(cf->unit_support_bonus, buf, MaxDiffNum, 0);
     } else if (MATCH("repair_minimal")) {
         cf->repair_minimal = clamp(atoi(value), 0, 10);
     } else if (MATCH("repair_fungus")) {
@@ -319,8 +321,6 @@ int option_handler(void* user, const char* section, const char* name, const char
         parse_format_args(label_pop_boom, value, 0, StrBufLen);
     } else if (MATCH("label_nerve_staple")) {
         parse_format_args(label_nerve_staple, value, 1, StrBufLen);
-    } else if (MATCH("label_psych_effect")) {
-        parse_format_args(label_psych_effect, value, 2, StrBufLen);
     } else if (MATCH("label_captured_base")) {
         parse_format_args(label_captured_base, value, 1, StrBufLen);
     } else if (MATCH("label_stockpile_energy")) {
@@ -349,15 +349,15 @@ int option_handler(void* user, const char* section, const char* name, const char
             }
         }
     } else if (MATCH("script_label")) {
-        char* p = strupr(strstrip(buf));
+        char* p = strupr(strtrim(buf));
         debug("script_label %s\n", p);
         movedlabels.insert(p);
     } else if (MATCH("music_label")) {
         char *p, *s, *k, *v;
         if ((p = strtok_r(buf, ",", &s)) != NULL) {
-            k = strstrip(p);
+            k = strtrim(p);
             if ((p = strtok_r(NULL, ",", &s)) != NULL) {
-                v = strstrip(p);
+                v = strtrim(p);
                 if (strlen(k) && strlen(v)) {
                     debug("music_label %s = %s\n", k, v);
                     musiclabels[k] = v;
@@ -715,10 +715,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("echelon_mirror_bonus"))
     {
         opt_list_parse(cf->echelon_mirror_bonus, buf, 2, 0);
-    }
-    else if (MATCH("echelon_mirror_ecodamage"))
-    {
-        cf->echelon_mirror_ecodamage = atoi(value);
     }
     else if (MATCH("base_inefficiency_alternative"))
     {
@@ -1480,12 +1476,12 @@ int opt_handle_error(const char* section, const char* name) {
     return 0;
 }
 
-int opt_list_parse(int* ptr, char* buf, int len, int min_val) {
+int opt_list_parse(int32_t* dst, char* src, int num, int min_val) {
     const char *d=",";
     char *s, *p;
-    p = strtok_r(buf, d, &s);
-    for (int i = 0; i < len && p != NULL; i++, p = strtok_r(NULL, d, &s)) {
-        ptr[i] = max(min_val, atoi(p));
+    p = strtok_r(src, d, &s);
+    for (int i = 0; i < num && p != NULL; i++, p = strtok_r(NULL, d, &s)) {
+        dst[i] = max(min_val, atoi(p));
     }
     return 1;
 }
@@ -1494,7 +1490,7 @@ int cmd_parse(Config* cf) {
     int argc;
     LPWSTR* argv;
     argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    for (int i=1; i<argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (wcscmp(argv[i], L"-smac") == 0) {
             cf->smac_only = 1;
         } else if (wcscmp(argv[i], L"-native") == 0) {
@@ -1508,22 +1504,36 @@ int cmd_parse(Config* cf) {
     return 1;
 }
 
+void exit_fail(int32_t addr) {
+    char buf[512];
+    snprintf(buf, sizeof(buf),
+        "Error while patching address %08X in the game binary.\n"
+        "This mod requires Alien Crossfire v2.0 terranx.exe in the same folder.", addr);
+    MessageBoxA(0, buf, MOD_VERSION, MB_OK | MB_ICONSTOP);
+    exit(EXIT_FAILURE);
+}
+
+void exit_fail() {
+    exit(EXIT_FAILURE);
+}
+
 DLL_EXPORT DWORD ThinkerModule() {
     return 0;
 }
 
 DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LPVOID UNUSED(lpvReserved)) {
+    size_t seed;
     switch (fdwReason) {
         case DLL_PROCESS_ATTACH:
             if (DEBUG && !(debug_log = fopen("debug.txt", "w"))) {
                 MessageBoxA(0, "Error while opening debug.txt file.",
                     MOD_VERSION, MB_OK | MB_ICONSTOP);
-                exit(EXIT_FAILURE);
+                exit_fail();
             }
             if (ini_parse("thinker.ini", option_handler, &conf) < 0) {
                 MessageBoxA(0, "Error while opening thinker.ini file.",
                     MOD_VERSION, MB_OK | MB_ICONSTOP);
-                exit(EXIT_FAILURE);
+                exit_fail();
             }
 			
 			// [WTP]
@@ -1541,17 +1551,21 @@ DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LP
             if (!cmd_parse(&conf) || !patch_setup(&conf)) {
                 MessageBoxA(0, "Error while loading the game.",
                     MOD_VERSION, MB_OK | MB_ICONSTOP);
-                exit(EXIT_FAILURE);
+                exit_fail();
             }
             *EngineVersion = MOD_VERSION;
             *EngineDate = MOD_DATE;
-            random_reseed(GetTickCount());
-            debug("random_reseed %u\n", random_state());
+            seed = GetTickCount();
+            random_reseed(seed);
+            map_rand.reseed(seed ^ 0xff);
+            debug("random_reseed %u\n", seed);
             flushlog();
             break;
 
         case DLL_PROCESS_DETACH:
-            fclose(debug_log);
+            if (debug_log) {
+                fclose(debug_log);
+            }
             break;
 
         case DLL_THREAD_ATTACH:

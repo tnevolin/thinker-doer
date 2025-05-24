@@ -34,7 +34,7 @@ enum BaseState {
     BSTATE_NET_LOCKED = 0x10000000,
     BSTATE_PSI_GATE_USED = 0x20000000,
     BSTATE_HURRY_PRODUCTION = 0x40000000,
-    BSTATE_UNK_8000000000 = 0x80000000,
+    BSTATE_UNK_80000000 = 0x80000000,
 };
 
 enum BaseEvent {
@@ -49,38 +49,62 @@ enum BaseEvent {
 };
 
 enum BaseGovernor {
-    GOV_MANAGES_PRODUCTION = 0x1,
-    // 0x2
-    // 0x4
-    // 0x8
-    // 0x10
+    GOV_MANAGE_PRODUCTION = 0x1,
+    GOV_MAY_FORCE_PSYCH = 0x2, // Thinker variable
+    GOV_UNK_4 = 0x4, // maybe unused
+    GOV_UNK_8 = 0x8, // maybe unused
+    GOV_UNK_10 = 0x10, // maybe unused
     GOV_MAY_HURRY_PRODUCTION = 0x20,
-    GOV_MANAGES_CITIZENS_SPECS = 0x40, // incl. drone riots
+    GOV_MANAGE_CITIZENS = 0x40,
     GOV_NEW_VEH_FULLY_AUTO = 0x80,
-    // 0x100
+    GOV_MAY_PROD_NATIVE = 0x100, // Thinker variable
     GOV_MAY_PROD_LAND_COMBAT = 0x200,
     GOV_MAY_PROD_NAVAL_COMBAT = 0x400,
     GOV_MAY_PROD_AIR_COMBAT = 0x800,
     GOV_MAY_PROD_LAND_DEFENSE = 0x1000,
     GOV_MAY_PROD_AIR_DEFENSE = 0x2000,
-    // 0x4000 ; Naval defense?
+    GOV_UNK_4000 = 0x4000, // maybe unused
     GOV_MAY_PROD_TERRAFORMERS = 0x8000,
     GOV_MAY_PROD_FACILITIES = 0x10000,
     GOV_MAY_PROD_COLONY_POD = 0x20000,
     GOV_MAY_PROD_SP = 0x40000,
     GOV_MAY_PROD_PROTOTYPE = 0x80000,
     GOV_MAY_PROD_PROBES = 0x100000,
-    GOV_MULTI_PRIORITIES = 0x200000, // or no priorities
-    GOV_MAY_PROD_EXPLORE_VEH = 0x400000, // scout/exploration units
+    GOV_MULTI_PRIORITIES = 0x200000,
+    GOV_MAY_PROD_EXPLORE_VEH = 0x400000,
     GOV_MAY_PROD_TRANSPORT = 0x800000,
     GOV_PRIORITY_EXPLORE = 0x1000000,
     GOV_PRIORITY_DISCOVER = 0x2000000,
     GOV_PRIORITY_BUILD = 0x4000000,
     GOV_PRIORITY_CONQUER = 0x8000000,
-    // 0x10000000
-    // 0x20000000
+    GOV_UNK_10000000 = 0x10000000, // maybe unused
+    GOV_UNK_20000000 = 0x20000000, // maybe unused
     GOV_UNK_40000000 = 0x40000000, // used on lowest difficulty
     GOV_ACTIVE = 0x80000000,
+};
+
+const uint32_t BaseGovOptions[][2] = {
+    {0x1, GOV_ACTIVE},
+    {0x2, GOV_MULTI_PRIORITIES},
+    {0x4, GOV_NEW_VEH_FULLY_AUTO},
+    {0x8, GOV_MANAGE_CITIZENS},
+    {0x10, GOV_MANAGE_PRODUCTION},
+    {0x20, GOV_MAY_PROD_EXPLORE_VEH},
+    {0x40, GOV_MAY_PROD_LAND_COMBAT},
+    {0x80, GOV_MAY_PROD_NAVAL_COMBAT},
+    {0x100, GOV_MAY_PROD_AIR_COMBAT},
+    {0x200, GOV_MAY_PROD_NATIVE},
+    {0x400, GOV_MAY_PROD_LAND_DEFENSE},
+    {0x800, GOV_MAY_PROD_AIR_DEFENSE},
+    {0x1000, GOV_MAY_PROD_PROTOTYPE},
+    {0x2000, GOV_MAY_PROD_TRANSPORT},
+    {0x4000, GOV_MAY_PROD_PROBES},
+    {0x8000, GOV_MAY_PROD_TERRAFORMERS},
+    {0x10000, GOV_MAY_PROD_COLONY_POD},
+    {0x20000, GOV_MAY_PROD_FACILITIES},
+    {0x40000, GOV_MAY_FORCE_PSYCH},
+    {0x80000, GOV_MAY_PROD_SP},
+    {0x100000, GOV_MAY_HURRY_PRODUCTION},
 };
 
 enum BaseRadius {
@@ -103,9 +127,9 @@ struct BASE {
     int8_t faction_id;
     int8_t faction_id_former;
     int8_t pop_size;
-    int8_t assimilation_turns_left;
-    int8_t nerve_staple_turns_left;
-    int8_t ai_plan_status;
+    uint8_t assimilation_turns_left;
+    uint8_t nerve_staple_turns_left;
+    uint8_t ai_plan_status;
     uint8_t visibility;
     int8_t factions_pop_size_intel[8];
     char name[25];
@@ -158,14 +182,16 @@ struct BASE {
     int16_t autoforward_land_base_id;
     int16_t autoforward_sea_base_id;
     int16_t autoforward_air_base_id;
-    int8_t defend_goal; // Thinker variable
-    int8_t defend_range; // Thinker variable
+    int16_t pad_5;
     int32_t talent_total;
     int32_t drone_total;
     int32_t superdrone_total;
     int32_t random_event_turns;
     int32_t nerve_staple_count;
-    int32_t pad_7;
+    int8_t defend_goal; // Thinker variable
+    int8_t defend_range; // Thinker variable
+    int8_t pad_6;
+    int8_t pad_7;
     int32_t pad_8;
 
     int item() {
@@ -199,11 +225,13 @@ struct BASE {
         return is_human(faction_id) ? governor_flags : ~0u;
     }
     /*
-    This implementation is simplified to skip additional checks for these rules:
-    RULES_SCN_VICT_SP_COUNT_OBJ, STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ.
+    When drone riots are active game only allows hurrying facilities (excluding projects/satellites).
     */
-    bool is_objective() {
-        return (*GameRules & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ ) || (event_flags & BEVENT_OBJECTIVE);
+    bool can_hurry_item() {
+        return queue_items[0] != -FAC_STOCKPILE_ENERGY
+            && !(state_flags & BSTATE_HURRY_PRODUCTION)
+            && (!(state_flags & BSTATE_DRONE_RIOTS_ACTIVE)
+            || (queue_items[0] < 0 && queue_items[0] > -FAC_SKY_HYDRO_LAB));
     }
     /*
     Specialist types (CCitizen, 4 bits per id) for the first 16 specialists in the base.
@@ -237,8 +265,7 @@ struct BASE {
     int SE_growth(bool pending) {
         return (pending ? Factions[faction_id].SE_growth_pending : Factions[faction_id].SE_growth)
             + 2*has_fac_built(FAC_CHILDREN_CRECHE) // +2 on growth scale
-            + 2*golden_age_active() // +2 on growth scale when flag set
-		;
+            + 2*golden_age_active(); // +2 on growth scale when flag set
     }
     int SE_police(bool pending) {
         return (pending ? Factions[faction_id].SE_police_pending : Factions[faction_id].SE_police)

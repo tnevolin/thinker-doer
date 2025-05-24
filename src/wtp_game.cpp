@@ -949,64 +949,59 @@ NULL pointer returns false.
 bool map_has_landmark(MAP *tile, int landmark)
 {
 	// null pointer
-
+	
 	if (tile == nullptr)
 		return false;
-
+	
 	// ladmark should be present
-
+	
 	if ((tile->landmarks & landmark) == 0)
 		return false;
-
-	// high bit in art_ref_id should not be set
-
-	if ((tile->art_ref_id & 0x80) != 0)
-		return false;
-
+	
 	// special conditions
-
+	
 	switch (landmark)
 	{
 	case LM_CRATER:
-		return (tile->art_ref_id < 9);
+		return (tile->code_at() < 9);
 		break;
-
+	
 	case LM_VOLCANO:
-		return (tile->art_ref_id < 9);
+		return (tile->code_at() < 9);
 		break;
-
+	
 	case LM_JUNGLE:
 		return (!is_ocean(tile));
 		break;
-
+	
 	case LM_URANIUM:
 		return true;
 		break;
-
+	
 	case LM_FRESH:
 		return (is_ocean(tile));
 		break;
-
+	
 	case LM_CANYON:
 		return true;
 		break;
-
+	
 	case LM_GEOTHERMAL:
 		return true;
 		break;
-
+	
 	case LM_RIDGE:
 		return true;
 		break;
-
+	
 	case LM_FOSSIL:
-		return (tile->art_ref_id < 6);
+		return (tile->code_at() < 6);
 		break;
-
+	
 	}
-
+	
 	return true;
-
+	
 }
 
 int isBonusAt(MAP *tile)
@@ -1033,7 +1028,7 @@ int getNutrientBonus(MAP *tile)
 	
 	if (bonus_at(x, y) == 1)
 	{
-		bonus += ResInfo->bonus_sq_nutrient;
+		bonus += ResInfo->bonus_sq.nutrient;
 	}
 	
 	// ladmarks
@@ -1065,7 +1060,7 @@ int getMineralBonus(MAP *tile)
 	
 	if (bonus_at(x, y) == 2)
 	{
-		bonus += ResInfo->bonus_sq_mineral;
+		bonus += ResInfo->bonus_sq.mineral;
 	}
 	
 	// ladmarks
@@ -1101,7 +1096,7 @@ int getEnergyBonus(MAP *tile)
 	
 	if (bonus_at(x, y) == 3)
 	{
-		bonus += ResInfo->bonus_sq_energy;
+		bonus += ResInfo->bonus_sq.energy;
 	}
 	
 	// ladmarks
@@ -1304,20 +1299,7 @@ double getUnitPsiOffenseStrength(int factionId, int unitId)
 	
 	// initial value
 	
-	double psiOffenseStrength = 1.0;
-	
-	switch (triad)
-	{
-	case TRIAD_LAND:
-		psiOffenseStrength = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
-		break;
-	case TRIAD_SEA:
-		psiOffenseStrength = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
-		break;
-	case TRIAD_AIR:
-		psiOffenseStrength = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
-		break;
-	}
+	double psiOffenseStrength = (double)Rules->psi_combat_ratio_atk[triad] / (double)Rules->psi_combat_ratio_def[triad];
 	
 	// faction PLANET rating modifier
 	
@@ -1583,25 +1565,7 @@ double getFactionSEPlanetDefenseModifier(int factionId)
 
 double getPsiCombatBaseOdds(int triad)
 {
-	double psiCombatBaseOdds;
-
-	switch (triad)
-	{
-	case TRIAD_LAND:
-		psiCombatBaseOdds = (double)Rules->psi_combat_land_numerator / (double)Rules->psi_combat_land_denominator;
-		break;
-	case TRIAD_SEA:
-		psiCombatBaseOdds = (double)Rules->psi_combat_sea_numerator / (double)Rules->psi_combat_sea_denominator;
-		break;
-	case TRIAD_AIR:
-		psiCombatBaseOdds = (double)Rules->psi_combat_air_numerator / (double)Rules->psi_combat_air_denominator;
-		break;
-	default:
-		psiCombatBaseOdds = 1.0;
-	}
-
-	return psiCombatBaseOdds;
-
+	return (double)Rules->psi_combat_ratio_atk[triad] / (double)Rules->psi_combat_ratio_def[triad];
 }
 
 bool isCombatUnit(int unitId)
@@ -2761,7 +2725,7 @@ double getFactionOffenseMultiplier(int factionId)
 	{
 		int bonusId = MFaction->faction_bonus_id[bonusIndex];
 
-		if (bonusId == FCB_OFFENSE)
+		if (bonusId == RULE_OFFENSE)
 		{
 			factionOffenseMultiplier *= ((double)MFaction->faction_bonus_val1[bonusIndex] / 100.0);
 		}
@@ -2782,7 +2746,7 @@ double getFactionDefenseMultiplier(int factionId)
 	{
 		int bonusId = MFaction->faction_bonus_id[bonusIndex];
 
-		if (bonusId == FCB_DEFENSE)
+		if (bonusId == RULE_DEFENSE)
 		{
 			factionDefenseMultiplier *= ((double)MFaction->faction_bonus_val1[bonusIndex] / 100.0);
 		}
@@ -3335,7 +3299,7 @@ std::vector<int> getLoadedVehicleIds(int vehicleId)
 
 		// get loaded vehicles
 
-		if (stackedVehicle->order == ORDER_SENTRY_BOARD && stackedVehicle->waypoint_1_x == vehicleId)
+		if (stackedVehicle->order == ORDER_SENTRY_BOARD && stackedVehicle->waypoint_x[0] == vehicleId)
 		{
 			loadedVehicleIds.push_back(stackedVehicleId);
 		}
@@ -3442,13 +3406,13 @@ int getVehicleTransportId(int vehicleId)
 		vehicle->order == ORDER_SENTRY_BOARD
 		&&
 		// on transport
-		vehicle->waypoint_1_y == 0
+		vehicle->waypoint_y[0] == 0
 		&&
 		// transportId is set
-		vehicle->waypoint_1_x >= 0
+		vehicle->waypoint_x[0] >= 0
 	)
 	{
-		transportId = vehicle->waypoint_1_x;
+		transportId = vehicle->waypoint_x[0];
 		
 		// check transport is actually a transport
 		
@@ -3479,11 +3443,11 @@ int setMoveTo(int vehicleId, MAP *destination)
 	
     debug("setMoveTo %s -> %s\n", getLocationString({vehicle->x, vehicle->y}).c_str(), getLocationString(destination).c_str());
 	
-    vehicle->waypoint_1_x = x;
-    vehicle->waypoint_1_y = y;
+    vehicle->waypoint_x[0] = x;
+    vehicle->waypoint_y[0] = y;
     vehicle->order = ORDER_MOVE_TO;
     vehicle->status_icon = 'G';
-    vehicle->terraform_turns = 0;
+    vehicle->movement_turns = 0;
 	
     // vanilla bug fix for adjacent tile move
 	
@@ -3557,10 +3521,10 @@ int setMoveTo(int vehicleId, MAP *destination)
 		
 		if (waypoint != nullptr)
 		{
-			vehicle->waypoint_1_x = getX(waypoint);
-			vehicle->waypoint_1_y = getY(waypoint);
-			vehicle->waypoint_2_x = x;
-			vehicle->waypoint_2_y = y;
+			vehicle->waypoint_x[0] = getX(waypoint);
+			vehicle->waypoint_y[0] = getY(waypoint);
+			vehicle->waypoint_x[1] = x;
+			vehicle->waypoint_y[1] = y;
 			vehicle->waypoint_count = 1;
 			debug("setWaypoint %s\n", getLocationString(waypoint).c_str());
 		}
@@ -3580,7 +3544,7 @@ int setMoveTo(int vehicleId, const std::vector<MAP *> &waypoints)
 	setVehicleWaypoints(vehicleId, waypoints);
     vehicle->order = ORDER_MOVE_TO;
     vehicle->status_icon = 'G';
-    vehicle->terraform_turns = 0;
+    vehicle->movement_turns = 0;
 
     return EM_SYNC;
 
@@ -4375,11 +4339,11 @@ bool isMineBonus(MAP *tile)
 	(
 		bonus_at(x, y) == RES_MINERAL
 		||
-		(map_has_landmark(tile, LM_VOLCANO) && tile->art_ref_id < 9)
+		(map_has_landmark(tile, LM_VOLCANO) && tile->code_at() < 9)
 		||
-		(map_has_landmark(tile, LM_CRATER) && tile->art_ref_id < 9)
+		(map_has_landmark(tile, LM_CRATER) && tile->code_at() < 9)
 		||
-		(map_has_landmark(tile, LM_FOSSIL) && tile->art_ref_id < 6)
+		(map_has_landmark(tile, LM_FOSSIL) && tile->code_at() < 6)
 		||
 		map_has_landmark(tile, LM_CANYON)
 	)
@@ -4971,7 +4935,7 @@ Checks if vehicle is boarded to transport.
 bool isVehicleOnTransport(int vehicleId, int transportVehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
-	return vehicle->order == ORDER_SENTRY_BOARD && vehicle->waypoint_1_y == 0 && vehicle->waypoint_1_x == transportVehicleId && (vehicle->state & VSTATE_IN_TRANSPORT) != 0;
+	return vehicle->order == ORDER_SENTRY_BOARD && vehicle->waypoint_y[0] == 0 && vehicle->waypoint_x[0] == transportVehicleId && (vehicle->state & VSTATE_IN_TRANSPORT) != 0;
 }
 
 /**
@@ -5012,8 +4976,8 @@ void board(int vehicleId, int transportVehicleId)
 	// board vehicle on transport
 	
 	setVehicleOrder(vehicleId, ORDER_SENTRY_BOARD);
-	vehicle->waypoint_1_y = 0;
-	vehicle->waypoint_1_x = transportVehicleId;
+	vehicle->waypoint_y[0] = 0;
+	vehicle->waypoint_x[0] = transportVehicleId;
 	vehicle->state |= VSTATE_IN_TRANSPORT;
 	
 }
@@ -5058,8 +5022,8 @@ void board(int vehicleId)
 	// board
 
 	setVehicleOrder(vehicleId, ORDER_SENTRY_BOARD);
-	vehicle->waypoint_1_y = 0;
-	vehicle->waypoint_1_x = transportVehicleId;
+	vehicle->waypoint_y[0] = 0;
+	vehicle->waypoint_x[0] = transportVehicleId;
 	vehicle->state |= VSTATE_IN_TRANSPORT;
 
 }
@@ -5069,8 +5033,8 @@ void unboard(int vehicleId)
 	VEH* vehicle = &(Vehicles[vehicleId]);
 
 	setVehicleOrder(vehicleId, ORDER_NONE);
-	vehicle->waypoint_1_y = 0;
-	vehicle->waypoint_1_x = -1;
+	vehicle->waypoint_y[0] = 0;
+	vehicle->waypoint_x[0] = -1;
 	vehicle->state &= ~VSTATE_IN_TRANSPORT;
 
 }
@@ -5483,7 +5447,7 @@ bool isVehicleOnSentry(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
-	return vehicle->order == ORDER_SENTRY_BOARD && vehicle->waypoint_1_x == -1 && vehicle->waypoint_1_y == 0;
+	return vehicle->order == ORDER_SENTRY_BOARD && vehicle->waypoint_x[0] == -1 && vehicle->waypoint_y[0] == 0;
 
 }
 
@@ -5491,7 +5455,7 @@ bool isVehicleOnAlert(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
-	return vehicle->order == ORDER_HOLD && vehicle->waypoint_1_x == -1 && vehicle->waypoint_1_y == 0 && vehicle->waypoint_2_x == vehicle->x && vehicle->waypoint_2_y == vehicle->y;
+	return vehicle->order == ORDER_HOLD && vehicle->waypoint_x[0] == -1 && vehicle->waypoint_y[0] == 0 && vehicle->waypoint_x[1] == vehicle->x && vehicle->waypoint_y[1] == vehicle->y;
 
 }
 
@@ -5499,7 +5463,7 @@ bool isVehicleOnHold(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
-	return vehicle->order == ORDER_HOLD && vehicle->waypoint_1_x == -1 && vehicle->waypoint_1_y == 0 && vehicle->waypoint_2_x == -1 && vehicle->waypoint_2_y == -1;
+	return vehicle->order == ORDER_HOLD && vehicle->waypoint_x[0] == -1 && vehicle->waypoint_y[0] == 0 && vehicle->waypoint_x[1] == -1 && vehicle->waypoint_y[1] == -1;
 
 }
 
@@ -5507,7 +5471,7 @@ bool isVehicleOnHold10Turns(int vehicleId)
 {
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
-	return vehicle->order == ORDER_HOLD && vehicle->waypoint_1_x == -1 && vehicle->waypoint_1_y == 10 && vehicle->waypoint_2_x == -1 && vehicle->waypoint_2_y == -1;
+	return vehicle->order == ORDER_HOLD && vehicle->waypoint_x[0] == -1 && vehicle->waypoint_y[0] == 10 && vehicle->waypoint_x[1] == -1 && vehicle->waypoint_y[1] == -1;
 
 }
 
@@ -5516,8 +5480,8 @@ void setVehicleOnSentry(int vehicleId)
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
 	vehicle->order = ORDER_SENTRY_BOARD;
-	vehicle->waypoint_1_x = -1;
-	vehicle->waypoint_1_y = 0;
+	vehicle->waypoint_x[0] = -1;
+	vehicle->waypoint_y[0] = 0;
 
 }
 
@@ -5526,10 +5490,10 @@ void setVehicleOnAlert(int vehicleId)
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
 	vehicle->order = ORDER_HOLD;
-	vehicle->waypoint_1_x = -1;
-	vehicle->waypoint_1_y = 0;
-	vehicle->waypoint_2_x = vehicle->x;
-	vehicle->waypoint_2_y = vehicle->y;
+	vehicle->waypoint_x[0] = -1;
+	vehicle->waypoint_y[0] = 0;
+	vehicle->waypoint_x[1] = vehicle->x;
+	vehicle->waypoint_y[1] = vehicle->y;
 
 }
 
@@ -5538,10 +5502,10 @@ void setVehicleOnHold(int vehicleId)
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
 	vehicle->order = ORDER_HOLD;
-	vehicle->waypoint_1_x = -1;
-	vehicle->waypoint_1_y = 0;
-	vehicle->waypoint_2_x = -1;
-	vehicle->waypoint_2_y = -1;
+	vehicle->waypoint_x[0] = -1;
+	vehicle->waypoint_y[0] = 0;
+	vehicle->waypoint_x[1] = -1;
+	vehicle->waypoint_y[1] = -1;
 
 }
 
@@ -5550,10 +5514,10 @@ void setVehicleOnHold10Turns(int vehicleId)
 	VEH *vehicle = &(Vehicles[vehicleId]);
 
 	vehicle->order = ORDER_HOLD;
-	vehicle->waypoint_1_x = -1;
-	vehicle->waypoint_1_y = 10;
-	vehicle->waypoint_2_x = -1;
-	vehicle->waypoint_2_y = -1;
+	vehicle->waypoint_x[0] = -1;
+	vehicle->waypoint_y[0] = 10;
+	vehicle->waypoint_x[1] = -1;
+	vehicle->waypoint_y[1] = -1;
 
 }
 
@@ -6571,23 +6535,23 @@ void setVehicleWaypoints(int vehicleId, const std::vector<MAP *> &waypoints)
 
 	if (waypoints.size() >= 1)
 	{
-		vehicle->waypoint_1_x = getX(waypoints.at(0));
-		vehicle->waypoint_1_y = getY(waypoints.at(0));
+		vehicle->waypoint_x[0] = getX(waypoints.at(0));
+		vehicle->waypoint_y[0] = getY(waypoints.at(0));
 	}
 	if (waypoints.size() >= 2)
 	{
-		vehicle->waypoint_2_x = getX(waypoints.at(1));
-		vehicle->waypoint_2_y = getY(waypoints.at(1));
+		vehicle->waypoint_x[1] = getX(waypoints.at(1));
+		vehicle->waypoint_y[1] = getY(waypoints.at(1));
 	}
 	if (waypoints.size() >= 3)
 	{
-		vehicle->waypoint_3_x = getX(waypoints.at(2));
-		vehicle->waypoint_3_y = getY(waypoints.at(2));
+		vehicle->waypoint_x[2] = getX(waypoints.at(2));
+		vehicle->waypoint_y[2] = getY(waypoints.at(2));
 	}
 	if (waypoints.size() >= 4)
 	{
-		vehicle->waypoint_4_x = getX(waypoints.at(3));
-		vehicle->waypoint_4_y = getY(waypoints.at(3));
+		vehicle->waypoint_x[3] = getX(waypoints.at(3));
+		vehicle->waypoint_y[3] = getY(waypoints.at(3));
 	}
 
 }

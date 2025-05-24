@@ -251,6 +251,13 @@ enum TechFlags {
     TFLAG_INC_NUTRIENT_FUNGUS = 0x100,
 };
 
+enum TechCategory {
+    TCAT_GROWTH = 0,
+    TCAT_TECH = 1,
+    TCAT_WEALTH = 2,
+    TCAT_POWER = 3,
+};
+
 enum GameState {
     STATE_GAME_DONE = 0x1,
     STATE_UNK_2 = 0x2,
@@ -425,26 +432,88 @@ enum DiffLevel {
     DIFF_TRANSCEND = 5,
 };
 
-enum FactionBonusType {
-    FCB_FREETECH = 0,
-    FCB_FREEUNIT = 1,
-    FCB_FREEFAC = 2,
-    FCB_SOCIAL = 3,
-    FCB_IMMUNITY = 4,
-    FCB_IMPUNITY = 5,
-    FCB_PENALTY = 6,
-    FCB_FUNGNUTRIENT = 7,
-    FCB_FUNGMINERALS = 8,
-    FCB_FUNGENERGY = 9,
-    FCB_ROBUST = 10,
-    FCB_VOTES = 11,
-    FCB_FREEFAC_PREQ = 12,
-    FCB_REVOLT = 13,
-    FCB_NODRONE = 14,
-    FCB_FREEABIL_PREQ = 15,
-    FCB_PROBECOST = 16,
-    FCB_DEFENSE = 17,
-    FCB_OFFENSE = 18,
+enum FactionGender {
+    GENDER_MALE = 0,
+    GENDER_FEMALE = 1,
+    GENDER_NEUTRAL = 2,
+};
+
+enum FactionMood {
+    MOOD_MAGNANIMOUS = 0,
+    MOOD_SOLICITOUS = 1,
+    MOOD_COOPERATIVE = 2,
+    MOOD_NONCOMMITTAL = 3,
+    MOOD_AMBIVALENT = 4,
+    MOOD_OBSTINATE = 5,
+    MOOD_QUARRELSOME = 6,
+    MOOD_BELLIGERENT = 7,
+    MOOD_SEETHING = 8,
+};
+
+enum FactionBonusName {
+    BN_TECH = 0,
+    BN_MORALE = 1,
+    BN_PSI = 2,
+    BN_FACILITY = 3,
+    BN_RESEARCH = 4,
+    BN_DRONE = 5,
+    BN_TALENT = 6,
+    BN_ENERGY = 7,
+    BN_INTEREST = 8,
+    BN_COMMERCE = 9,
+    BN_POPULATION = 10,
+    BN_HURRY = 11,
+    BN_UNIT = 12,
+    BN_TECHCOST = 13,
+    BN_SHARETECH = 14,
+    BN_TERRAFORM = 15,
+    BN_SOCIAL = 16,
+    BN_ROBUST = 17,
+    BN_IMMUNITY = 18,
+    BN_IMPUNITY = 19,
+    BN_PENALTY = 20,
+    BN_FUNGNUTRIENT = 21,
+    BN_FUNGMINERALS = 22,
+    BN_FUNGENERGY = 23,
+    BN_COMMFREQ = 24,
+    BN_MINDCONTROL = 25,
+    BN_FANATIC = 26,
+    BN_VOTES = 27,
+    BN_FREEPROTO = 28,
+    BN_AQUATIC = 29,
+    BN_ALIEN = 30,
+    BN_FREEFAC = 31,
+    BN_REVOLT = 32,
+    BN_NODRONE = 33,
+    BN_WORMPOLICE = 34,
+    BN_FREEABIL = 35,
+    BN_PROBECOST = 36,
+    BN_DEFENSE = 37,
+    BN_OFFENSE = 38,
+    BN_TECHSHARE = 39,
+    BN_TECHSTEAL = 40,
+};
+
+enum FactionRuleType {
+    RULE_TECH = 0,
+    RULE_UNIT = 1,
+    RULE_FACILITY = 2,
+    RULE_SOCIAL = 3,
+    RULE_IMMUNITY = 4,
+    RULE_IMPUNITY = 5,
+    RULE_PENALTY = 6,
+    RULE_FUNGNUTRIENT = 7,
+    RULE_FUNGMINERALS = 8,
+    RULE_FUNGENERGY = 9,
+    RULE_ROBUST = 10,
+    RULE_VOTES = 11,
+    RULE_FREEFAC = 12,
+    RULE_REVOLT = 13,
+    RULE_NODRONE = 14,
+    RULE_FREEABIL = 15,
+    RULE_PROBECOST = 16,
+    RULE_DEFENSE = 17,
+    RULE_OFFENSE = 18,
 };
 
 enum FactionRuleFlags {
@@ -477,24 +546,24 @@ enum DiploStatus {
     DIPLO_UNK_800 = 0x800,
     DIPLO_HAVE_INFILTRATOR = 0x1000,
     DIPLO_WANT_TO_TALK = 0x2000,
-    DIPLO_UNK_4000 = 0x4000,
-    DIPLO_RENEW_INFILTRATOR = 0x8000, // infiltration done on this turn
+    DIPLO_UNK_4000 = 0x4000, // introduce
+    DIPLO_UNK_8000 = 0x8000, // act_of_aggression, removed when vendetta ends
     DIPLO_UNK_10000 = 0x10000, // "informal" truce status?
     DIPLO_UNK_20000 = 0x20000,
-    DIPLO_ATROCITY_VICTIM = 0x40000,
-    DIPLO_UNK_80000 = 0x80000,
-    DIPLO_UNK_100000 = 0x100000,
+    DIPLO_ATROCITY_VICTIM = 0x40000, // atrocity / major_atrocity
+    DIPLO_MAJOR_ATROCITY_VICTIM = 0x80000, // major_atrocity
+    DIPLO_UNK_100000 = 0x100000, // treaty_off
     DIPLO_UNK_200000 = 0x200000,
     DIPLO_UNK_400000 = 0x400000,
-    DIPLO_UNK_800000 = 0x800000,
-    DIPLO_UNK_1000000 = 0x1000000,
+    DIPLO_UNK_800000 = 0x800000, // treaty_on
+    DIPLO_UNK_1000000 = 0x1000000, // treaty_off
     DIPLO_HAVE_SURRENDERED = 0x2000000,
-    DIPLO_UNK_4000000 = 0x4000000,
-    DIPLO_UNK_8000000 = 0x8000000,
-    DIPLO_UNK_10000000 = 0x10000000,
-    DIPLO_UNK_20000000 = 0x20000000,
-    DIPLO_UNK_40000000 = 0x40000000,
-    DIPLO_UNK_80000000 = 0x80000000,
+    DIPLO_UNK_4000000 = 0x4000000, // wants_to_attack
+    DIPLO_UNK_8000000 = 0x8000000, // whose_territory
+    DIPLO_UNK_10000000 = 0x10000000, // setup_player
+    DIPLO_UNK_20000000 = 0x20000000, // enemy_diplomacy
+    DIPLO_UNK_40000000 = 0x40000000, // encounter
+    DIPLO_UNK_80000000 = 0x80000000, // treaty_on
 };
 
 enum DiploAgenda {
@@ -522,8 +591,10 @@ enum PlayerFlags {
     PFLAG_UNK_10 = 0x10, // study_artifact
     PFLAG_SELF_AWARE_COLONY_LOST_MAINT = 0x20, // used to even out lossy integer division
     PFLAG_FIRST_SECRETS = 0x40, // set in tech_achieved for first faction gaining TFLAG_SECRETS
+    PFLAG_UNK_100 = 0x100, // setup_player
     PFLAG_MAP_REVEALED = 0x200,
     PFLAG_GENETIC_PLAGUE_INTRO = 0x400, // +1 to defense against after 1st time faction experiences
+    PFLAG_UNK_1000 = 0x1000, // setup_player
     PFLAG_BEEN_ELECTED_GOVERNOR = 0x8000, // used to determine whether #GOVERNOR has been displayed
     PFLAG_UNK_10000 = 0x10000,
     PFLAG_UNK_20000 = 0x20000,
@@ -577,9 +648,9 @@ enum MapItem {
     BIT_CONDENSER = 0x400000,
     BIT_ECH_MIRROR = 0x800000,
     BIT_THERMAL_BORE = 0x1000000,
-    BIT_UNK_2000000 = 0x2000000, // related to monoliths, maybe redundant
-    BIT_UNK_4000000 = 0x4000000, // this tile has a pod when no unity scattering
-    BIT_UNK_8000000 = 0x8000000, // this tile has a pod when no unity scattering
+    BIT_UNK_2000000 = 0x2000000, // Monolith on this tile has been used at least once
+    BIT_UNK_4000000 = 0x4000000, // This tile has supply pod when no unity scattering
+    BIT_UNK_8000000 = 0x8000000, // This tile has supply pod when no unity scattering
     BIT_SUPPLY_POD = 0x10000000,
     BIT_NUTRIENT_RES = 0x20000000,
     BIT_DOUBLE_SEA = 0x40000000, // Iterate adjacent 8 sea tiles, set bit if there are
@@ -635,6 +706,8 @@ enum MapLandmark {
     LM_NEXUS = 0x2000,
     LM_UNITY = 0x4000,
     LM_FOSSIL = 0x8000,
+    LM_UNK_400000 = 0x400000, // set_dirty()
+    LM_DISABLE = 0x80000000, // most landmark effects skipped
 };
 
 enum TerrainAltitude {
