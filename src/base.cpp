@@ -158,7 +158,12 @@ int __cdecl mod_cost_factor(int faction_id, BaseResType type, int base_id) {
         if (base_id >= 0) {
             growth = Bases[base_id].SE_growth(SE_Pending);
         }
+        // [WTP]
+        // GROWTH modifed min-max
+        /*
         value = (value * (10 - clamp(growth, -2, 5)) + 9) / 10;
+        */
+        value = (value * (10 - clamp(growth, conf.se_growth_rating_min, conf.se_growth_rating_max)) + 9) / 10;
     }
     return value;
 }
