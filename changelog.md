@@ -1,3 +1,7 @@
+# Version 373
+
+* Merged with Thinker v5.0.
+
 # Version 372
 
 * Fixed Windows 11 24H2 patch crash.

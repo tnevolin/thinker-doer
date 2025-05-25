@@ -465,6 +465,10 @@ int __cdecl mod_tech_val(int tech_id, int faction_id, int simple_calc) {
         assert(value == tech_val(tech_id, faction_id, simple_calc));
         if (conf.tech_balance) {
             bool high_cost = conf.revised_tech_cost && tech_id_lvl > 2;
+            
+			// [WTP]
+			// increase preference bonus
+			/*
             if (tech_id == Weapon[WPN_TERRAFORMING_UNIT].preq_tech) {
                 value += (high_cost ? 60 : 120);
             } else if (tech_id == Weapon[WPN_SUPPLY_TRANSPORT].preq_tech
@@ -476,6 +480,17 @@ int __cdecl mod_tech_val(int tech_id, int faction_id, int simple_calc) {
             || tech_id == Rules->tech_preq_allow_3_energy_sq) {
                 value += (high_cost ? 20 : 40);
             }
+            */
+			if (tech_id == Weapon[WPN_TERRAFORMING_UNIT].preq_tech || tech_id == Rules->tech_preq_allow_3_energy_sq || tech_id == Rules->tech_preq_allow_3_minerals_sq || tech_id == Rules->tech_preq_allow_3_nutrients_sq)
+			{
+				value += 4000;
+			}
+			if (tech_id == Weapon[WPN_SUPPLY_TRANSPORT].preq_tech || tech_id == Weapon[WPN_PROBE_TEAM].preq_tech || tech_id == Facility[FAC_RECYCLING_TANKS].preq_tech || tech_id == Facility[FAC_CHILDREN_CRECHE].preq_tech)
+			{
+				value += 500;
+			}
+			//
+
         }
     } else if (tech_id < 97) { // Factions
         int factor = 1;
