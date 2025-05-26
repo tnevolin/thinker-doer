@@ -430,7 +430,6 @@ struct Config {
     int diplomacy_improvement_chance_human_major_atrocity = 0;
     int diplomacy_improvement_chance_ai_faction_revenge = 0;
     int diplomacy_improvement_chance_ai_major_atrocity = 0;
-    int diplomacy_disable_altering_rainfall_patterns_penalty = false;
     int diplomacy_aggressiveness_effect_interval = 1;
     int diplomacy_se_choice_effect_interval = 2;
     int diplomacy_probe_action_vendetta_global_friction = 2;

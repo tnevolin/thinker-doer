@@ -3141,13 +3141,6 @@ void patch_console_human_turn()
 	
 }
 
-void patch_disable_altering_rainfall_patterns_penalty()
-{
-	write_call(0x004CA3EB, (int)wtp_mod_action_terraform_cause_friction);
-	write_call(0x004CA3DD, (int)wtp_mod_action_terraform_set_treaty);
-	
-}
-
 void patch_enemy_diplomacy()
 {
 	write_call(0x005272E4, (int)wtp_mod_enemy_diplomacy);
@@ -3527,11 +3520,6 @@ void patch_setup_wtp(Config* cf)
 	patch_disable_popb();
 	
 	patch_console_human_turn();
-	
-	if (conf.diplomacy_disable_altering_rainfall_patterns_penalty)
-	{
-		patch_disable_altering_rainfall_patterns_penalty();
-	}
 	
 	patch_enemy_diplomacy();
 	
