@@ -776,10 +776,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->diplomacy_improvement_chance_ai_major_atrocity = atoi(value);
     }
-    else if (MATCH("diplomacy_disable_altering_rainfall_patterns_penalty"))
-    {
-        cf->diplomacy_disable_altering_rainfall_patterns_penalty = (atoi(value) == 0 ? false : true);
-    }
     else if (MATCH("diplomacy_aggressiveness_effect_interval"))
     {
         cf->diplomacy_aggressiveness_effect_interval = atoi(value);

@@ -464,11 +464,11 @@ int __cdecl mod_tech_val(int tech_id, int faction_id, int simple_calc) {
         }
         assert(value == tech_val(tech_id, faction_id, simple_calc));
         if (conf.tech_balance) {
-            bool high_cost = conf.revised_tech_cost && tech_id_lvl > 2;
             
 			// [WTP]
 			// increase preference bonus
 			/*
+            bool high_cost = conf.revised_tech_cost && tech_id_lvl > 2;
             if (tech_id == Weapon[WPN_TERRAFORMING_UNIT].preq_tech) {
                 value += (high_cost ? 60 : 120);
             } else if (tech_id == Weapon[WPN_SUPPLY_TRANSPORT].preq_tech
