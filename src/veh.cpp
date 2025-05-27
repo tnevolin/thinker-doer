@@ -1498,6 +1498,11 @@ the original without any differences to the final calculation.
 */
 int __cdecl mod_proto_cost(VehChassis chassis_id, VehWeapon weapon_id,
 VehArmor armor_id, VehAblFlag ability, VehReactor reactor_id) {
+	
+	// [WTP]
+	// redirect to WTP version
+	return wtp_mod_proto_cost(chassis_id, weapon_id, armor_id, ability, reactor_id);
+	
     uint8_t weap_cost = Weapon[weapon_id].cost;
     // PB check: moved to start vs after 1st triad checks in original > no difference in logic
     if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_value >= 99) {
