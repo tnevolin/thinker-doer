@@ -53,6 +53,11 @@ parameter determines if this cost is for cornering the market (true) or via prob
 Return Value: Mind control cost
 */
 int __cdecl mod_mind_control(int base_id, int faction_id, int is_corner_market) {
+	
+	// [WTP]
+	// use WTP version
+	return modifiedMindControlCost(base_id, faction_id, is_corner_market);
+	
     BASE* base = &Bases[base_id];
     int dist = vulnerable(base->faction_id, base->x, base->y);
     if (dist <= 0) {

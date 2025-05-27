@@ -5362,19 +5362,11 @@ int getBasePoliceSuppressedDrones(int baseId)
 }
 
 /*
-Returns true if reactor is ignored in conventional combat.
-*/
-bool isReactorIgnoredInConventionalCombat()
-{
-	return (conf.ignore_reactor_power || conf.ignore_reactor_power);
-}
-
-/*
 Returns true if reactor is ignored in combat.
 */
 bool isReactorIgnoredInCombat(bool psiCombat)
 {
-	return psiCombat || isReactorIgnoredInConventionalCombat();
+	return psiCombat || conf.ignore_reactor_power;
 }
 
 bool isInfantryUnit(int unitId)

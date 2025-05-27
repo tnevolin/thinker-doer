@@ -115,9 +115,6 @@ int __cdecl wtp_mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, i
 __cdecl int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteIndex, int effectValue);
 __cdecl int modifiedVehicleCargoForAirTransportUnload(int vehicleId);
 __cdecl int modifiedFactionUpkeep(const int factionId);
-__cdecl void captureAttackerOdds(const int position, const int value);
-__cdecl void captureDefenderOdds(const int position, const int value);
-__cdecl void modifiedDisplayOdds(const char* file_name, const char* label, int a3, const char* pcx_file_name, int a5);
 double calculateWinningProbability(double p, int attackerHP, int defenderHP);
 void simplifyOdds(int *attackerOdds, int *defenderOdds);
 bool isTechDiscovered(int factionId, int techId);

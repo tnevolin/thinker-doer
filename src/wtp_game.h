@@ -972,7 +972,6 @@ int getUnitIndex(int factionId, int unitId);
 int getFactionIdByUnitIndex(int unitIndex);
 int getUnitIdByUnitIndex(int unitIndex);
 int getBasePoliceSuppressedDrones(int baseId);
-bool isReactorIgnoredInConventionalCombat();
 bool isReactorIgnoredInCombat(bool psiCombat);
 bool isInfantryUnit(int unitId);
 bool isInfantryVehicle(int vehicleId);

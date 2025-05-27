@@ -148,7 +148,7 @@ void __cdecl modified_enemy_units_check(int factionId)
 	debug("enemy_units_check - %s - end\n", getMFaction(factionId)->noun_faction);
 	
 	Profiling::start("~ enemy_units_check");
-	enemy_units_check(factionId);
+	mod_enemy_turn(factionId);
 	Profiling::stop("~ enemy_units_check");
 	
 	debug("modified_enemy_units_check - %s - end\n", getMFaction(factionId)->noun_faction);
@@ -5472,7 +5472,7 @@ double getMeleeRelativeUnitStrength(int attackerUnitId, int attackerFactionId, i
 		
 		// reactor
 		
-		if (!isReactorIgnoredInConventionalCombat())
+		if (!conf.ignore_reactor_power)
 		{
 			relativeStrength *= (double)attackerUnit->reactor_id / (double)defenderUnit->reactor_id;
 		}
@@ -5625,7 +5625,7 @@ double getArtilleryDuelRelativeUnitStrength(int attackerUnitId, int attackerFact
 		
 		// reactor
 		
-		if (!isReactorIgnoredInConventionalCombat())
+		if (!conf.ignore_reactor_power)
 		{
 			relativeStrength *= (double)attackerUnit->reactor_id / (double)defenderUnit->reactor_id;
 		}
@@ -5729,7 +5729,7 @@ double getUnitBombardmentDamage(int attackerUnitId, int attackerFactionId, int d
 		
 		// reactor
 		
-		if (!isReactorIgnoredInConventionalCombat())
+		if (!conf.ignore_reactor_power)
 		{
 			relativeStrength *= 1.0 / (double)defenderUnit->reactor_id;
 		}

@@ -259,13 +259,6 @@ tree<ProfileName> Profiling::profiles;
 
 int alphax_tgl_probe_steal_tech_value;
 
-// storage variables for modified odds dialog
-
-int currentAttackerVehicleId = -1;
-int currentDefenderVehicleId = -1;
-int currentAttackerOdds = -1;
-int currentDefenderOdds = -1;
-
 // probe movement points after subversion
 int probeMovesSpent = -1;
 
@@ -1824,19 +1817,6 @@ __cdecl int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, i
 		bestDefenderVehicleId = mod_best_defender(defenderVehicleId, attackerVehicleId, bombardment);
 	}
 	
-	// store variables for modified odds dialog unless bombardment
-	
-	if (bombardment)
-	{
-		currentAttackerVehicleId = -1;
-		currentDefenderVehicleId = -1;
-	}
-	else
-	{
-		currentAttackerVehicleId = attackerVehicleId;
-		currentDefenderVehicleId = bestDefenderVehicleId;
-	}
-	
 	// return best defender
 	
 	return bestDefenderVehicleId;
@@ -2127,152 +2107,6 @@ __cdecl int modifiedFactionUpkeep(const int factionId)
 	
 	Profiling::stop("modifiedFactionUpkeep");
 	return returnValue;
-	
-}
-
-__cdecl void captureAttackerOdds(const int position, const int value)
-{
-	// capture attacker odds
-
-	currentAttackerOdds = value;
-
-	// execute original code
-
-	parse_num(position, value);
-
-}
-
-__cdecl void captureDefenderOdds(const int position, const int value)
-{
-	// capture defender odds
-
-	currentDefenderOdds = value;
-
-	// execute original code
-
-	parse_num(position, value);
-
-}
-
-__cdecl void modifiedDisplayOdds(const char* file_name, const char* label, int a3, const char* pcx_file_name, int a5)
-{
-	// fall into default vanilla code if global parameters are not set
-	
-	if (currentAttackerVehicleId == -1 || currentDefenderVehicleId == -1 || currentAttackerOdds == -1 || currentDefenderOdds == -1)
-	{
-		// execute original code
-		
-		popp(file_name, label, a3, pcx_file_name, a5);
-	}
-	else
-	{
-		if (conf.ignore_reactor_power)
-		{
-			// get attacker and defender vehicles
-			
-			VEH *attackerVehicle = &(Vehicles[currentAttackerVehicleId]);
-			VEH *defenderVehicle = &(Vehicles[currentDefenderVehicleId]);
-			
-			// get attacker and defender units
-			
-			UNIT *attackerUnit = &(Units[attackerVehicle->unit_id]);
-			UNIT *defenderUnit = &(Units[defenderVehicle->unit_id]);
-			
-			// calculate attacker and defender power
-			// artifact gets 1 HP regardless of reactor
-			
-			int attackerPower = (attackerUnit->plan == PLAN_ARTIFACT ? 1 : attackerUnit->reactor_id * 10 - attackerVehicle->damage_taken);
-			int defenderPower = (defenderUnit->plan == PLAN_ARTIFACT ? 1 : defenderUnit->reactor_id * 10 - defenderVehicle->damage_taken);
-			
-			// calculate FP
-			
-			int attackerFP = defenderUnit->reactor_id;
-			int defenderFP = attackerUnit->reactor_id;
-			
-			// calculate HP
-			
-			int attackerHP = (attackerPower + (defenderFP - 1)) / defenderFP;
-			int defenderHP = (defenderPower + (attackerFP - 1)) / attackerFP;
-			
-			// compute vanilla odds
-			
-			int attackerOdds = currentAttackerOdds * attackerHP * defenderPower;
-			int defenderOdds = currentDefenderOdds * defenderHP * attackerPower;
-			simplifyOdds(&attackerOdds, &defenderOdds);
-			
-			// reparse vanilla odds into dialog
-			
-			parse_num(2, attackerOdds);
-			parse_num(3, defenderOdds);
-			
-			// calculate round probabilty
-			
-			double attackerStrength = (double)attackerOdds / (double)attackerHP;
-			double defenderStrength = (double)defenderOdds / (double)defenderHP;
-			double p = attackerStrength / (attackerStrength + defenderStrength);
-			
-			// calculate attacker winning probability
-			
-			double attackerWinningProbability = calculateWinningProbability(p, attackerHP, defenderHP);
-			
-			// compute exact odds
-			
-			int attackerExactOdds;
-			int defenderExactOdds;
-			
-			if (attackerWinningProbability >= 0.99)
-			{
-				attackerExactOdds = 100;
-				defenderExactOdds = 1;
-			}
-			else if (attackerWinningProbability <= 0.01)
-			{
-				attackerExactOdds = 1;
-				defenderExactOdds = 100;
-			}
-			else if (attackerWinningProbability >= 0.5)
-			{
-				attackerExactOdds = (int)round(attackerWinningProbability / (1.0 - attackerWinningProbability) * (double)defenderOdds);
-				defenderExactOdds = defenderOdds;
-			}
-			else
-			{
-				attackerExactOdds = attackerOdds;
-				defenderExactOdds = (int)round((1.0 - attackerWinningProbability) / attackerWinningProbability * (double)attackerOdds);
-			}
-			
-			parse_num(0, attackerExactOdds);
-			parse_num(1, defenderExactOdds);
-			
-			// convert to percentage
-			
-			int attackerWinningPercentage = (int)round(attackerWinningProbability * 100);
-			
-			// add value to parse
-			
-			parse_num(4, attackerWinningPercentage);
-			
-			// display modified odds dialog
-			
-			popp(file_name, "GOODIDEA_IGNORE_REACTOR", a3, pcx_file_name, a5);
-			
-		}
-		else
-		{
-			// execute original code
-			
-			popp(file_name, label, a3, pcx_file_name, a5);
-			
-		}
-		
-	}
-	
-	// clear global variables
-	
-	currentAttackerVehicleId = -1;
-	currentDefenderVehicleId = -1;
-	currentAttackerOdds = -1;
-	currentDefenderOdds = -1;
 	
 }
 

@@ -248,9 +248,6 @@ fp_4int base_prod_choice = (fp_4int)0x004F81A0;
 // updates base production
 fp_2void base_prod_change = (fp_2void)0x004E5A60;
 
-// enemy unit movement entry point
-fp_1void enemy_units_check = (fp_1void)0x00579510;
-
 // energy compute
 fp_2void energy_compute = (fp_2void)0x00445130;
 

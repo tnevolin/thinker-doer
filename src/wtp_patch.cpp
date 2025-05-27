@@ -211,25 +211,6 @@ void patch_disable_focus()
 }
 
 /*
-Display more information and more correct one in odds display dialog.
-*/
-void patch_display_odds()
-{
-	// intercept parse_num call to capture attacker odds
-	
-	write_call(0x005082AF, (int)captureAttackerOdds);
-	
-	// intercept parse_num call to capture defender odds
-	
-	write_call(0x005082B7, (int)captureDefenderOdds);
-	
-	// intercept popp call to modify the display
-	
-	write_call(0x005082F0, (int)modifiedDisplayOdds);
-	
-}
-
-/*
 Assigns alternative base values for weapon icon selection algorithm.
 */
 void patch_weapon_icon_selection_algorithm()
@@ -3227,10 +3208,6 @@ void patch_setup_wtp(Config* cf)
 	// patch battle_compute
 	
 	patch_battle_compute();
-	
-	// patch odds display
-	
-	patch_display_odds();
 	
 	// patch weapon icon selection algorithm
 	
