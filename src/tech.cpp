@@ -40,6 +40,12 @@ If there is a tie, the order of precedence is as follows: growth > tech > wealth
 Return Value: Tech category id: growth (0), tech (1), wealth (2) or power (3).
 */
 int __cdecl tech_category(int tech_id) {
+	
+	// [WTP]
+	// fix in case negative tech_id
+	if (tech_id < TECH_Biogen || tech_id > TECH_TranT)
+		return 0;
+	
     int category = TCAT_GROWTH;
     int value = Tech[tech_id].AI_growth;
     if (Tech[tech_id].AI_tech > value) {
