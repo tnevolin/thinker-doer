@@ -3187,6 +3187,18 @@ void patch_psi_gate_unlimited()
 	
 }
 
+void patch_battle_kill()
+{
+	write_call(0x00506116, (int)wtp_mod_veh_kill);
+	
+}
+
+void patch_tech_advance()
+{
+	write_call(0x004F336F, (int)wtp_mod_tech_advance);
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3522,6 +3534,10 @@ void patch_setup_wtp(Config* cf)
 	patch_tidal_harness_terraform_rate();
 	
 	patch_psi_gate_unlimited();
+	
+	patch_battle_kill();
+	
+	patch_tech_advance();
 	
 }
 
