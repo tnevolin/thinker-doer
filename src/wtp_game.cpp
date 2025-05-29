@@ -2573,7 +2573,7 @@ std::vector<int> getBaseGarrison(int baseId)
 	if (topStackVehicleId == -1)
 		return baseGarrison;
 
-	for (int vehicleId : getStackVehicles(topStackVehicleId))
+	for (int vehicleId : getStackVehicleIds(topStackVehicleId))
 	{
 		VEH *vehicle = &(Vehicles[vehicleId]);
 
@@ -3186,7 +3186,7 @@ int getRemainingMinerals(int baseId)
 
 }
 
-std::vector<int> getStackVehicles(int vehicleId)
+std::vector<int> getStackVehicleIds(int vehicleId)
 {
 	std::vector<int> stackedVehicleIds;
 
@@ -3224,7 +3224,7 @@ std::vector<int> getTileVehicleIds(MAP *tile)
 	}
 	else
 	{
-		return getStackVehicles(vehicleAt);
+		return getStackVehicleIds(vehicleAt);
 	}
 
 }
@@ -3290,7 +3290,7 @@ std::vector<int> getLoadedVehicleIds(int vehicleId)
 
 	// select those in stack attached to this one
 
-	for (int stackedVehicleId : getStackVehicles(vehicleId))
+	for (int stackedVehicleId : getStackVehicleIds(vehicleId))
 	{
 		VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
 
@@ -4395,7 +4395,7 @@ bool isNextToRegion(int x, int y, int region)
 
 int getSeaTransportInStack(int vehicleId)
 {
-	for (int stackedVehicleId : getStackVehicles(vehicleId))
+	for (int stackedVehicleId : getStackVehicleIds(vehicleId))
 	{
 		VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
 
@@ -4428,7 +4428,7 @@ bool isSeaTransportAt(MAP *tile, int factionId)
 	if (vehicleIdAtTile == -1)
 		return false;
 
-	for (int vehicleId : getStackVehicles(vehicleIdAtTile))
+	for (int vehicleId : getStackVehicleIds(vehicleIdAtTile))
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 
@@ -4467,7 +4467,7 @@ bool isAvailableSeaTransportAt(MAP *tile, int factionId)
 	if (vehicleIdAtTile == -1)
 		return false;
 
-	for (int vehicleId : getStackVehicles(vehicleIdAtTile))
+	for (int vehicleId : getStackVehicleIds(vehicleIdAtTile))
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 
@@ -4997,7 +4997,7 @@ void board(int vehicleId)
 
 	// find available transport in same tile
 
-	for (int tileVehicleId : getStackVehicles(vehicleId))
+	for (int tileVehicleId : getStackVehicleIds(vehicleId))
 	{
 		// transport
 
@@ -7394,7 +7394,7 @@ bool isUnprotectedArtifact(int vehicleId)
 	if (map_has_item(getVehicleMapTile(vehicleId), BIT_BASE_IN_TILE))
 		return false;
 	
-	for (int stackVehicleId : getStackVehicles(vehicleId))
+	for (int stackVehicleId : getStackVehicleIds(vehicleId))
 	{
 		VEH *stackVehicle = getVehicle(stackVehicleId);
 		

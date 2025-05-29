@@ -859,7 +859,7 @@ void setMapTileVisibleToFaction(MAP *tile, int factionId);
 bool isDiploStatus(int faction1Id, int faction2Id, int diploStatus);
 void setDiploStatus(int faction1Id, int faction2Id, int diploStatus, bool on);
 int getRemainingMinerals(int baseId);
-std::vector<int> getStackVehicles(int vehicleId);
+std::vector<int> getStackVehicleIds(int vehicleId);
 std::vector<int> getTileVehicleIds(MAP *tile);
 void setTerraformingAction(int vehicleId, int action);
 bool isCoast(MAP *tile);

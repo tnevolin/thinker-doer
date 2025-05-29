@@ -7844,7 +7844,7 @@ void assignVehiclesToTransports()
 		
 		int transportId = -1;
 		
-		for (int stackVechileId : getStackVehicles(vehicleId))
+		for (int stackVechileId : getStackVehicleIds(vehicleId))
 		{
 			// sea transport
 			
@@ -9258,6 +9258,149 @@ int getBasePoliceRequiredPower(int baseId)
 	aiData.resetBase(baseId);
 	
 	return requiredPolicePower;
+	
+}
+
+void aiVehKill(int vehicleId)
+{
+	debug("aiVehKill [%4d] %s\n", vehicleId, getLocationString(getVehicleMapTileIndex(vehicleId)).c_str());
+	
+	VEH &vehicle = Vehicles[vehicleId];
+	TileInfo &tileInfo = aiData.getVehicleTileInfo(vehicleId);
+	
+	if (isFriendly(aiFactionId, vehicle.faction_id))
+	{
+		// check if no more friendly vehicles are at the tile
+		
+		bool friendlyVehicles = false;
+		for (int stackVehicleId : getStackVehicleIds(vehicleId))
+		{
+			if (stackVehicleId == vehicleId)
+				continue;
+			
+			if (isFriendly(aiFactionId, stackVehicleId))
+			{
+				friendlyVehicles = true;
+				break;
+			}
+			
+		}
+		if (friendlyVehicles)
+			return;
+		
+		// clear tile friendly vehicle
+		
+		tileInfo.friendlyVehicle = false;
+		setTileBlockedAndZoc(tileInfo);
+		debug("\t%s : no more friendly vehicle\n", getLocationString(tileInfo.tile).c_str());
+		
+	}
+	else
+	{
+		// check if no more friendly vehicles are at the tile
+		
+		bool unfriendlyVehicles = false;
+		for (int stackVehicleId : getStackVehicleIds(vehicleId))
+		{
+			if (stackVehicleId == vehicleId)
+				continue;
+			
+			if (isFriendly(aiFactionId, stackVehicleId))
+			{
+				unfriendlyVehicles = true;
+				break;
+			}
+			
+		}
+		if (unfriendlyVehicles)
+			return;
+		
+		// clear tile unfriendly vehicle
+		
+		tileInfo.unfriendlyVehicle = false;
+		setTileBlockedAndZoc(tileInfo);
+		debug("\t%s : no more unfriendly vehicle\n", getLocationString(tileInfo.tile).c_str());
+		
+		// clear tile zoc
+		
+		if (tileInfo.land)
+		{
+			for (Adjacent adjacent : tileInfo.adjacents)
+			{
+				// not base
+				
+				if (adjacent.tileInfo->base)
+					continue;
+				
+				// land
+				
+				if (!adjacent.tileInfo->land)
+					continue;
+				
+				bool unfriendlyVehicleZoc = false;
+				for (Adjacent adjacentAdjacent : adjacent.tileInfo->adjacents)
+				{
+					// land
+					
+					if (!adjacentAdjacent.tileInfo->land)
+						continue;
+					
+					if (adjacentAdjacent.tileInfo->unfriendlyVehicle)
+					{
+						unfriendlyVehicleZoc = true;
+						break;
+					}
+						
+				}
+				if (unfriendlyVehicleZoc)
+					continue;
+				
+				// clear tile unfriendly vehicle zoc
+				
+				adjacent.tileInfo->unfriendlyVehicleZoc = false;
+				setTileBlockedAndZoc(*adjacent.tileInfo);
+				debug("\t%s : no more unfriendly vehicle zoc\n", getLocationString(adjacent.tileInfo->tile).c_str());
+				
+			}
+			
+		}
+		
+	}
+	
+}
+
+void setTileBlockedAndZoc(TileInfo &tileInfo)
+{
+	// blocked
+	
+	tileInfo.blocked =
+		// unfriendly base blocks
+		tileInfo.unfriendlyBase
+		||
+		// unfriendly vehicle blocks
+		tileInfo.unfriendlyVehicle
+	;
+	
+	// zoc
+	
+	tileInfo.orgZoc =
+		// not base
+		!tileInfo.base
+		&&
+		// unfriendly vehicle zoc
+		tileInfo.unfriendlyVehicleZoc
+	;
+	
+	tileInfo.dstZoc =
+		// not base
+		!tileInfo.base
+		&&
+		// not friendly vehicle
+		!tileInfo.friendlyVehicle
+		&&
+		// unfriendly vehicle zoc
+		tileInfo.unfriendlyVehicleZoc
+	;
 	
 }
 

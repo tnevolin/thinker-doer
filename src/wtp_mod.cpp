@@ -1792,7 +1792,7 @@ __cdecl int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, i
 		
 		double bestDefenderEffectiveness = 0.0;
 		
-		for (int stackedVehicleId : getStackVehicles(defenderVehicleId))
+		for (int stackedVehicleId : getStackVehicleIds(defenderVehicleId))
 		{
 			VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
 			UNIT *stackedVehicleUnit = &(Units[stackedVehicle->unit_id]);
@@ -1887,7 +1887,7 @@ int __cdecl wtp_mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, i
 		{
 			bool nonArtifactUnitExists = false;
 			
-			std::vector<int> stackedVehicleIds = getStackVehicles(defenderVehicleId);
+			std::vector<int> stackedVehicleIds = getStackVehicleIds(defenderVehicleId);
 			
 			for (int vehicleId : stackedVehicleIds)
 			{
@@ -3173,7 +3173,7 @@ bool isAdjacentTransportAtSea(int vehicleId, int angle)
 
 	// iterate target tile stack to find same faction transport
 
-	for (int targetTileStackVehicleId : getStackVehicles(targetTileVehicleId))
+	for (int targetTileStackVehicleId : getStackVehicleIds(targetTileVehicleId))
 	{
 		VEH *targetTileStackVehicle = &(Vehicles[targetTileStackVehicleId]);
 
