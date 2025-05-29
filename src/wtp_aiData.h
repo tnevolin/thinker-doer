@@ -109,6 +109,11 @@ struct TileInfo
 	
 	// movement data
 	
+	bool friendlyBase;
+	bool unfriendlyBase;
+	bool friendlyVehicle;
+	bool unfriendlyVehicle;
+	bool unfriendlyVehicleZoc;
 	bool blocked;
 	bool orgZoc;
 	bool dstZoc;
