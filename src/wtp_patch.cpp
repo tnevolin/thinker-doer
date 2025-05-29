@@ -3187,15 +3187,57 @@ void patch_psi_gate_unlimited()
 	
 }
 
-void patch_battle_kill()
+void patch_tech_achieved()
 {
-	write_call(0x00506116, (int)wtp_mod_veh_kill);
-	
-}
-
-void patch_tech_advance()
-{
-	write_call(0x004F336F, (int)wtp_mod_tech_advance);
+	write_call(0x00428136, (int)wtp_mod_tech_achieved);
+	write_call(0x00428145, (int)wtp_mod_tech_achieved);
+	write_call(0x004DFD3B, (int)wtp_mod_tech_achieved);
+	write_call(0x0050C469, (int)wtp_mod_tech_achieved);
+	write_call(0x005371C4, (int)wtp_mod_tech_achieved);
+	write_call(0x00539652, (int)wtp_mod_tech_achieved);
+	write_call(0x0053A3F1, (int)wtp_mod_tech_achieved);
+	write_call(0x0053A450, (int)wtp_mod_tech_achieved);
+	write_call(0x0053FC48, (int)wtp_mod_tech_achieved);
+	write_call(0x0053FC9C, (int)wtp_mod_tech_achieved);
+	write_call(0x0053FCF0, (int)wtp_mod_tech_achieved);
+	write_call(0x0053FD44, (int)wtp_mod_tech_achieved);
+	write_call(0x005405E2, (int)wtp_mod_tech_achieved);
+	write_call(0x00540C16, (int)wtp_mod_tech_achieved);
+	write_call(0x00540C7F, (int)wtp_mod_tech_achieved);
+	write_call(0x00541F9F, (int)wtp_mod_tech_achieved);
+	write_call(0x00541FF8, (int)wtp_mod_tech_achieved);
+	write_call(0x00542A2A, (int)wtp_mod_tech_achieved);
+	write_call(0x00542B4F, (int)wtp_mod_tech_achieved);
+	write_call(0x00542CFD, (int)wtp_mod_tech_achieved);
+	write_call(0x00542F80, (int)wtp_mod_tech_achieved);
+	write_call(0x00542FCE, (int)wtp_mod_tech_achieved);
+	write_call(0x005447F3, (int)wtp_mod_tech_achieved);
+	write_call(0x00544850, (int)wtp_mod_tech_achieved);
+	write_call(0x005457A6, (int)wtp_mod_tech_achieved);
+	write_call(0x00546ED6, (int)wtp_mod_tech_achieved);
+	write_call(0x00546F38, (int)wtp_mod_tech_achieved);
+	write_call(0x00546F95, (int)wtp_mod_tech_achieved);
+	write_call(0x00546FEE, (int)wtp_mod_tech_achieved);
+	write_call(0x005489F4, (int)wtp_mod_tech_achieved);
+	write_call(0x00548B48, (int)wtp_mod_tech_achieved);
+	write_call(0x0054A3A2, (int)wtp_mod_tech_achieved);
+	write_call(0x0054A49C, (int)wtp_mod_tech_achieved);
+	write_call(0x0054DA5F, (int)wtp_mod_tech_achieved);
+	write_call(0x00551274, (int)wtp_mod_tech_achieved);
+	write_call(0x0055D667, (int)wtp_mod_tech_achieved);
+	write_call(0x0055D674, (int)wtp_mod_tech_achieved);
+	write_call(0x0055D6FB, (int)wtp_mod_tech_achieved);
+	write_call(0x0055D744, (int)wtp_mod_tech_achieved);
+	write_call(0x0057C239, (int)wtp_mod_tech_achieved);
+	write_call(0x0057D1D4, (int)wtp_mod_tech_achieved);
+	write_call(0x005A33B1, (int)wtp_mod_tech_achieved);
+	write_call(0x005B29D0, (int)wtp_mod_tech_achieved);
+	write_call(0x005B2A01, (int)wtp_mod_tech_achieved);
+	write_call(0x005B2A0D, (int)wtp_mod_tech_achieved);
+	write_call(0x005B2A79, (int)wtp_mod_tech_achieved);
+	write_call(0x005BC24B, (int)wtp_mod_tech_achieved);
+	write_call(0x005BC3FF, (int)wtp_mod_tech_achieved);
+	write_call(0x005BE603, (int)wtp_mod_tech_achieved);
 	
 }
 
@@ -3535,9 +3577,7 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_psi_gate_unlimited();
 	
-	patch_battle_kill();
-	
-	patch_tech_advance();
+	patch_tech_achieved();
 	
 }
 

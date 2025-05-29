@@ -1,3 +1,7 @@
+# Version 374
+
+* New technology goal is set immediatelly after achieving currently researched technology by some other mean (artifact, trade, stealing, etc.). This would update research screen with current goal to avoid confusion.
+
 # Version 373
 
 * Merged with Thinker v5.0.

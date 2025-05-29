@@ -4214,27 +4214,11 @@ int __thiscall wtp_mod_Console_go_to(Console* This, int a2, int a3)
 	
 }
 
-/*
-Intercepts battle_kill to update AI map block/zoc.
-*/
-void __cdecl wtp_mod_veh_kill(int vehicle_id)
-{
-	// update AI map data
-	// that should be done BEFORE the original code because original code DELETES the vehicle
-	
-	aiVehKill(vehicle_id);
-	
-	// execute original code
-	
-	veh_kill(vehicle_id);
-	
-}
-
-void __cdecl wtp_mod_tech_advance(int factionId)
+int __cdecl wtp_mod_tech_achieved(int factionId, int techId, int targetFactionId, int steal)
 {
 	// execute original code
 	
-	tech_advance(factionId);
+	int value = tech_achieved(factionId, techId, targetFactionId, steal);
 	
 	// select technology if not set
 	
@@ -4242,6 +4226,8 @@ void __cdecl wtp_mod_tech_advance(int factionId)
 	{
 		tech_selection(factionId);
 	}
+	
+	return value;
 	
 }
 

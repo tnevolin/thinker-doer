@@ -184,6 +184,5 @@ int wtp_mod_probe_success_rates_procure_research_data(int position, int morale, 
 int wtp_mod_probe_veh_skip(int vehicleId);
 int __cdecl wtp_mod_action_terraform(int vehicleId, int action, int execute);
 int __thiscall wtp_mod_Console_go_to(Console* This, int a2, int a3);
-void __cdecl wtp_mod_veh_kill(int vehicle_id);
-void __cdecl wtp_mod_tech_advance(int factionId);
+int __cdecl wtp_mod_tech_achieved(int factionId, int techId, int targetFactionId, int steal);
 
