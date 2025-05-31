@@ -2424,38 +2424,6 @@ void patch_obsoletion()
 	
 }
 
-void patch_instant_completion_fixed_minerals(int minerals)
-{
-	int instant_completion_fixed_minerals_bytes_length = 0xf;
-	
-	/*
-	0:  8d 04 f6                lea    eax,[esi+esi*8]
-	3:  8d 14 46                lea    edx,[esi+eax*2]
-	6:  8b 45 ec                mov    eax,DWORD PTR [ebp-0x14]
-	9:  8d 34 96                lea    esi,[esi+edx*4]
-	c:  c1 e6 02                shl    esi,0x2
-	*/
-	byte instant_completion_fixed_minerals_bytes_old[] = { 0x8D, 0x04, 0xF6, 0x8D, 0x14, 0x46, 0x8B, 0x45, 0xEC, 0x8D, 0x34, 0x96, 0xC1, 0xE6, 0x02 };
-	
-	/*
-	0:  89 d6                   mov    esi,edx
-	2:  8b 8e 80 d0 97 00       mov    ecx,DWORD PTR [esi+0x97d080]
-	8:  83 c1 14                add    ecx,0x14
-	b:  8b 45 ec                mov    eax,DWORD PTR [ebp-0x14]
-	...
-	*/
-	byte instant_completion_fixed_minerals_bytes_new[] = { 0x89, 0xD6, 0x8B, 0x8E, 0x80, 0xD0, 0x97, 0x00, 0x83, 0xC1, (byte)minerals, 0x8B, 0x45, 0xEC, 0x90 };
-	
-	write_bytes
-	(
-		0x0057B824,
-		instant_completion_fixed_minerals_bytes_old,
-		instant_completion_fixed_minerals_bytes_new,
-		instant_completion_fixed_minerals_bytes_length
-	);
-	
-}
-
 void patch_turn_upkeep()
 {
     write_call_over(0x52768A, (int)modifiedTurnUpkeep);
@@ -3469,11 +3437,6 @@ void patch_setup_wtp(Config* cf)
 	patch_exact_odds();
 	
 	patch_obsoletion();
-	
-	if (cf->instant_completion_fixed_minerals > 0)
-	{
-		patch_instant_completion_fixed_minerals(cf->instant_completion_fixed_minerals);
-	}
 	
 	patch_turn_upkeep();
 	

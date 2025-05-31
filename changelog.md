@@ -1,3 +1,10 @@
+# Version 375
+
+Post merge fixes.
+* [Fix] Removed duplicate Psych screen labels.
+* [Fix] Corrected University drones.
+* [Fix] Restored fixed amount of 20 bonus minerals from pod.
+
 # Version 374
 
 * New technology goal is set immediatelly after achieving currently researched technology by some other mean (artifact, trade, stealing, etc.). This would update research screen with current goal to avoid confusion.

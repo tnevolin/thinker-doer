@@ -1601,9 +1601,9 @@ void __cdecl BaseWin_draw_psych_strcat(char* buffer, char* source)
             return;
         }
     }
+    strncat(buffer, source, StrBufLen);
 	}
 	
-    strncat(buffer, source, StrBufLen);
 }
 
 void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3, int a4, int a5)

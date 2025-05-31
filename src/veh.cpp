@@ -839,7 +839,19 @@ GOODY_START:
                 if (conf.rare_supply_pods && prod_cost - minerals > 40 + goody_rand(60)) {
                     goto GOODY_NEXT;
                 }
+				
+				// [WTP]
+				// fixed instant completion minerals
+				if (conf.instant_completion_fixed_minerals > 0)
+				{
+					Bases[fc_base_id].minerals_accumulated += conf.instant_completion_fixed_minerals;
+				}
+				else
+				{
                 Bases[fc_base_id].minerals_accumulated = prod_cost;
+				}
+				//
+				
                 if (is_player) {
                     parse_says(1, &Bases[fc_base_id].name[0], -1, -1);
                     NetMsg_pop(NetMsg, "GOODYBUILD", -5000, 0, "indbm_sm.pcx");

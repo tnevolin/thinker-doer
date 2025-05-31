@@ -824,7 +824,7 @@ void __cdecl wtp_mod_base_psych(int base_id)
 	
 	if (m->rule_talent) {
 		// Extra talent at base (per "param" citizens, rounded up)
-		talent_value = (m->rule_talent + base->pop_size - 1) / m->rule_talent;
+		talent_value += (m->rule_talent + base->pop_size - 1) / m->rule_talent;
 	}
 	
 	// drones are not limited by specialists
@@ -844,7 +844,7 @@ void __cdecl wtp_mod_base_psych(int base_id)
 	}
 	if (m->rule_drone) {
 		// Extra drone at base (per "param" citizens, rounded down)
-		drone_value = base->pop_size / m->rule_drone;
+		drone_value += base->pop_size / m->rule_drone;
 	}
 	for (int i = 0; i < m->faction_bonus_count; i++) {
 		// Number of drones per base made content
