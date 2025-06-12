@@ -8,6 +8,7 @@
 #include "wtp_game.h"
 #include "wtp_mod.h"
 #include "wtp_aiTask.h"
+#include "wtp_base.h"
 
 ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> RANGE_TILES;
 

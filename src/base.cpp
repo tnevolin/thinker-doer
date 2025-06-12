@@ -469,6 +469,7 @@ void __cdecl mod_base_yield() {
     std::vector<TileValue> tiles;
     uint32_t gov = base->gov_config();
     int32_t reserved = base_radius(base_id, tiles);
+debug(">base->worked_tiles=%d gov & GOV_ACTIVE=%x gov & GOV_MANAGE_CITIZENS=%x gov=%x GOV_MANAGE_CITIZENS=%x\n", base->worked_tiles, gov & GOV_ACTIVE, gov & GOV_MANAGE_CITIZENS, gov, GOV_MANAGE_CITIZENS);flushlog();
     bool manage_workers = !base->worked_tiles || (gov & GOV_ACTIVE && gov & GOV_MANAGE_CITIZENS);
     bool pre_upkeep = *BaseUpkeepState != 2 || (base_id == *BaseUpkeepDrawID && Win_is_visible(BaseWin));
     base->worked_tiles &= (~reserved) | 1;
@@ -531,6 +532,7 @@ void __cdecl mod_base_yield() {
             }
         }
     }
+debug(">total=%d manage_workers=%d pre_upkeep=%d\n", total, manage_workers, pre_upkeep);flushlog();
     if (total != 0 || (manage_workers && pre_upkeep)) {
         int workers = total;
         if (workers < 0 || manage_workers) {

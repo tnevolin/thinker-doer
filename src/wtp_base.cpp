@@ -37,8 +37,11 @@ void __cdecl wtp_mod_base_yield()
 	// reallocate existing workers if managed or requested
 	
 	uint32_t gov = base->gov_config();
-	bool manage_workers = (gov & GOV_ACTIVE) && (gov & GOV_MANAGE_CITIZENS);
-	bool reallocate = manage_workers || base->worked_tiles == 0;
+    bool manage_workers = base->worked_tiles == 0 || (gov & GOV_ACTIVE && gov & GOV_MANAGE_CITIZENS);
+    // modified to not override user choice with open window
+//    bool pre_upkeep = *BaseUpkeepState != 2 || (base_id == *BaseUpkeepDrawID && Win_is_visible(BaseWin));
+    bool pre_upkeep = *BaseUpkeepState == 1;
+debug(">manage_workers=%d base->worked_tiles=%d pre_upkeep=%d *BaseUpkeepState=%d, base_id=%d *BaseUpkeepDrawID=%d Win_is_visible(BaseWin)=%d\n", manage_workers, base->worked_tiles, pre_upkeep, *BaseUpkeepState, base_id, *BaseUpkeepDrawID, Win_is_visible(BaseWin));flushlog();
 	
 	// energy conversion and scoring constants
 	
@@ -146,11 +149,12 @@ void __cdecl wtp_mod_base_yield()
 	std::array<TileValue, 21> choices;
 	size_t choiceCount = 0;
 	
-	if (reallocate || unallocatedWorkers != 0)
+debug(">unallocatedWorkers=%d manage_workers=%d pre_upkeep=%d\n", unallocatedWorkers, manage_workers, pre_upkeep);flushlog();
+	if (unallocatedWorkers != 0 || (manage_workers && pre_upkeep))
 	{
 		// reset workers if required or incorrect
 		
-		if (reallocate || unallocatedWorkers < 0)
+		if (unallocatedWorkers < 0 || manage_workers)
 		{
 			base->worked_tiles = 1;
 			base->specialist_total = 0;
@@ -261,7 +265,7 @@ void __cdecl wtp_mod_base_yield()
 		
 	}
 	
-	if (reallocate || (*BaseUpkeepState != 2 && reallocate) || (*BaseUpkeepState != 2 && unallocatedWorkers != 0))
+	if ((unallocatedWorkers != 0 || manage_workers) && pre_upkeep)
 	{
 		
 		// fix rioting

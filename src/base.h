@@ -1,7 +1,7 @@
 #pragma once
 
 #include "main.h"
-#include "wtp_base.h"
+//#include "wtp_base.h"
 
 const uint32_t GOV_ALLOW_COMBAT =
     (GOV_MAY_PROD_LAND_COMBAT | GOV_MAY_PROD_NAVAL_COMBAT | GOV_MAY_PROD_AIR_COMBAT);
@@ -17,7 +17,6 @@ int __cdecl mod_base_lose_minerals(int base_id, int item_id);
 int __cdecl mod_base_production();
 void __cdecl mod_base_support();
 void __cdecl mod_base_yield();
-void __cdecl wtp_mod_base_yield();
 void __cdecl mod_base_nutrient();
 void __cdecl mod_base_minerals();
 void __cdecl mod_base_energy();

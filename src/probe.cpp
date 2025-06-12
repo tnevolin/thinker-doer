@@ -1,6 +1,6 @@
 
 #include "probe.h"
-
+#include "wtp_mod.h"
 
 /*
 Calculate how vulnerable the coordinates are for the specified faction based on how far
