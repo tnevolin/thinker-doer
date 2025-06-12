@@ -1,3 +1,7 @@
+# Version 376
+
+* [Fix] Worker placement algorithm was using Thinker code after merge. It is correctly using WTP code now.
+
 # Version 375
 
 Post merge fixes.
