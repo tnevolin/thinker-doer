@@ -476,7 +476,7 @@ void populateTerraformingData()
 	
 	for (int vehicleId : aiData.vehicleIds)
 	{
-		VEH *vehicle = &Vehicles[vehicleId];
+		VEH *vehicle = &Vehs[vehicleId];
 		int triad = vehicle->triad();
 		int defenseValue = getVehicleDefenseValue(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
@@ -1474,7 +1474,7 @@ void assignFormerOrders()
 		for (FORMER_ORDER &formerOrder : formerOrders)
 		{
 			int vehicleId = formerOrder.vehicleId;
-			VEH *vehicle = &(Vehicles[vehicleId]);
+			VEH *vehicle = getVehicle(vehicleId);
 			int triad = vehicle->triad();
 			MAP *vehicleTile = getVehicleMapTile(vehicleId);
 			
@@ -1672,7 +1672,7 @@ void finalizeFormerOrders()
 		if (formerOrder.action == -1)
 		{
 			int vehicleId = formerOrder.vehicleId;
-			VEH *vehicle = &(Vehicles[vehicleId]);
+			VEH *vehicle = getVehicle(vehicleId);
 			
 			// kill supported formers without orders after first few turns
 			
@@ -2585,7 +2585,7 @@ Determines whether vehicle order is a terraforming order and is already complete
 */
 bool isVehicleTerrafomingOrderCompleted(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	if (!(vehicle->order >= ORDER_FARM && vehicle->order <= ORDER_PLACE_MONOLITH))
 		return false;
@@ -2750,7 +2750,7 @@ bool isLevelTerrainRequired(bool ocean, int action)
 
 bool isVehicleConvoying(int vehicleId)
 {
-	return Vehicles[vehicleId].order == ORDER_CONVOY;
+	return Vehs[vehicleId].order == ORDER_CONVOY;
 }
 
 bool isVehicleTerraforming(VEH *vehicle)

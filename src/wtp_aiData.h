@@ -695,7 +695,7 @@ public:
 	}
 	double getVehicleEffect(int vehicleId) const
 	{
-		return getUnitEffect(Vehicles[vehicleId].unit_id) * getVehicleMoraleMultiplier(vehicleId);
+		return getUnitEffect(Vehs[vehicleId].unit_id) * getVehicleMoraleMultiplier(vehicleId);
 	}
 	void setUnitOffenseEffect(int unitId, COMBAT_MODE combatMode, double effect);
 	double getUnitOffenseEffect(int unitId, COMBAT_MODE combatMode) const;

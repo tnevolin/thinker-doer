@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v5.0 - The Will to Power mod v376"
+    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v377"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -208,6 +208,7 @@ struct Config {
     int editor_free_units = 1;
     int new_base_names = 1;
     int new_unit_names = 1;
+    int spawn_free_units[9] = {0,0,1,0,0,1,1,0,1};
     int player_colony_pods = 0;
     int computer_colony_pods = 0;
     int player_formers = 0;
@@ -245,7 +246,7 @@ struct Config {
     int rare_supply_pods = 0;
     int simple_cost_factor = 0;
     int revised_tech_cost = 1;
-    int tech_cost_factor[MaxDiffNum] = {116,108,100,92,84,76};
+    int tech_cost_factor[MaxDiffNum] = {124,116,108,100,84,76};
     int tech_rate_modifier = 100; // internal variable
     int tech_stagnate_rate = 200;
     int fast_fungus_movement = 0;
@@ -263,6 +264,8 @@ struct Config {
     int long_range_artillery = 0;
     int modify_upgrade_cost = 0;
     int modify_unit_support = 0;
+    int modify_unit_limit = 0;
+    int max_veh_num = MaxVehNum; // internal variable
     int skip_default_balance = 1; // unlisted option
     int early_research_start = 1; // unlisted option
     int facility_capture_fix = 1; // unlisted option
@@ -280,7 +283,8 @@ struct Config {
     int event_perihelion = 1;
     int event_sunspots = 10;
     int event_market_crash = 1;
-    int resource_limit[3] = {2,2,2};
+    int altitude_limit = 6; // internal variable
+    int tile_output_limit[3] = {2,2,2};
     int soil_improve_value = 0;
     int aquatic_bonus_minerals = 1;
     int alien_guaranteed_techs = 1;
@@ -626,7 +630,7 @@ struct AIPlans {
     int unknown_factions = 0;
     int contacted_factions = 0;
     int enemy_factions = 0;
-    int diplo_flags = 0;
+    int build_tubes = 0;
     /*
     Amount of minerals a base needs to produce before it is allowed to build secret projects.
     All faction-owned bases are ranked each turn based on the surplus mineral production,
@@ -686,6 +690,7 @@ extern set_str_t movedlabels;
 extern map_str_t musiclabels;
 
 DLL_EXPORT DWORD ThinkerModule();
+bool FileExists(const char* path);
 void exit_fail(int32_t addr);
 void exit_fail();
 int opt_handle_error(const char* section, const char* name);

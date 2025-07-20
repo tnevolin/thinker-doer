@@ -7,6 +7,17 @@ static Points natives;
 static Points goodtiles;
 
 
+static int mapgen_rand(int value) {
+    // Replaces game_rand function, used by alt_set / alt_set_both
+    return (value > 1 ? map_rand.get(value) : 0);
+}
+
+static MAP* next_tile(int x, int y, size_t offset, int* tx, int* ty) {
+    *tx = wrap(x + TableOffsetX[offset]);
+    *ty = y + TableOffsetY[offset];
+    return mapsq(*tx, *ty);
+}
+
 MAP* mapsq(int x, int y) {
     if (x >= 0 && y >= 0 && x < *MapAreaX && y < *MapAreaY && !((x + y)&1)) {
         return &((*MapTiles)[ (x + *MapAreaX * y)/2 ]);
@@ -218,7 +229,6 @@ int __cdecl alt_detail_at(int x, int y) {
     if (sq) {
         return sq->contour;
     }
-    assert(sq);
     return 0;
 }
 
@@ -227,32 +237,131 @@ void __cdecl alt_put_detail(int x, int y, uint8_t detail) {
     if (sq) {
         mapsq(x, y)->contour = detail;
     }
-    assert(sq);
 }
 
-void __cdecl world_alt_put_detail(int x, int y) {
-    alt_put_detail(x, y, (uint8_t)AltNatural[3]);
+void __cdecl alt_set(int x, int y, int altitude) {
+    MAP* sq = mapsq(x, y);
+    assert(sq && altitude >= 0 && altitude <= 7);
+    int alt = sq->alt_level();
+    int is_sea = altitude < ALT_SHORE_LINE;
+    auto set_alt = [&]() {
+        sq->climate = (altitude * 32) | (sq->climate & 0x1F);
+        *GameDrawState |= 4;
+    };
+    if (!*CurrentTurn) {
+        return set_alt();
+    }
+    if (altitude != alt) {
+        delete_landmark(x, y);
+    }
+    if ((alt < ALT_SHORE_LINE) != is_sea) {
+        sq->items &= ~(BIT_SENSOR|BIT_THERMAL_BORE|BIT_ECH_MIRROR|BIT_CONDENSER|BIT_FOREST|\
+            BIT_SOIL_ENRICHER|BIT_AIRBASE|BIT_FARM|BIT_BUNKER|BIT_SOLAR|BIT_MINE|BIT_MAGTUBE|BIT_ROAD);
+        for (int i = 1; i < MaxPlayerNum; i++) {
+            sq->visible_items[i - 1] = sq->items;
+        }
+        if (*WorldSkipTerritory) {
+            return set_alt();
+        }
+        int base_id = base_at(x, y);
+        if (base_id >= 0) {
+            BASE* base = &Bases[base_id];
+            const bool is_player = base->faction_id == *CurrentPlayerFaction;
+            const bool is_visible = base->visibility & (1 << *CurrentPlayerFaction);
+            if (!is_sea || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
+                return set_alt();
+            }
+            // Fix: skip rendering pop_size as negative, zero pop_size deletes the base
+            base->pop_size = max(0, base->pop_size
+                - clamp(base->pop_size / 2, mapgen_rand(3) + 2, 10));
+            set_fac(FAC_PRESSURE_DOME, base_id, 1);
+            Factions[base->faction_id].player_flags |= PFLAG_UNK_80000;
+            MapBaseSubmergedCount[base->faction_id]++;
+            if (is_objective(base_id) && base->pop_size < 1) {
+                base->pop_size = 1;
+            }
+            if (base->pop_size > 0) {
+                return set_alt();
+            }
+            if (Factions[base->faction_id].base_count <= 1 || (*MultiplayerActive && !*ControlTurnC)) {
+                base->pop_size = 1;
+                if (!*VehBattleState && (is_player || is_visible)) {
+                    Console_focus(MapWin, base->x, base->y, *CurrentPlayerFaction);
+                    parse_says(0, &base->name[0], -1, -1);
+                    if (is_player) {
+                        X_pop3("BASESUBMERGED", "subbase_sm.pcx", 0);
+                    } else {
+                        parse_says(1, &MFactions[base->faction_id].adj_name_faction[0], -1, -1);
+                        X_pop3("BASESUBMERGED2", "subbase_sm.pcx", 0);
+                    }
+                }
+                return set_alt();
+            }
+            if (!*VehBattleState && (is_player || is_visible)) {
+                Console_focus(MapWin, base->x, base->y, *CurrentPlayerFaction);
+                parse_says(0, &base->name[0], -1, -1);
+                if (is_player) {
+                    popp(ScriptFile, "BASESUBMERGED1", 0, "subbase_sm.pcx", 0);
+                } else {
+                    parse_says(1, &MFactions[base->faction_id].adj_name_faction[0], -1, -1);
+                    popp(ScriptFile, "BASESUBMERGED3", 0, "subbase_sm.pcx", 0);
+                }
+            }
+            mod_base_kill(base_id);
+        }
+        int veh_id = stack_fix(veh_at(x, y));
+        while (veh_id >= 0) {
+            VEH* veh = &Vehs[veh_id];
+            int next_veh_id = veh->next_veh_id_stack;
+            if (veh->triad() != TRIAD_AIR && (veh->triad() == TRIAD_SEA) != is_sea
+            && !(veh->flags & VFLAG_IS_OBJECTIVE)) {
+                MapBaseIdClosestSubmergedVeh[veh->faction_id] = base_find2(x, y, veh->faction_id);
+                veh_kill(veh_id);
+                if (next_veh_id > veh_id) {
+                    --next_veh_id;
+                }
+            }
+            veh_id = next_veh_id;
+        }
+    } else if (altitude >= ALT_SHORE_LINE) {
+        int val = sq->val3 >> 6;
+        if (altitude <= alt) {
+            if (altitude < alt && val > altitude - 3 && mapgen_rand(val + 1)) {
+                sq->val3 = (sq->val3 & 0x3F) | ((val + 3) << 6);
+                sq->landmarks |= LM_UNK_400000;
+                *GameDrawState |= 1;
+            }
+        } else if (val < 2 && val + 1 <= altitude - 3) {
+            if (!mapgen_rand(val + 4)) {
+                sq->val3 = (sq->val3 & 0x3F) | ((val + 1) << 6);
+                sq->landmarks |= LM_UNK_400000;
+                *GameDrawState |= 1;
+            }
+        }
+        assert((sq->val3 & 0xC0) != 0xC0); // Both rocky bits must not be set
+    }
+    set_alt(); // Always set altitude level
 }
 
 /*
-Calculate the elevation of the specified tile.
-Return Value: Elevation (bounded to: -3000 to 3500)
+Set both the altitude level and altitude detail for the specified tile.
 */
-int __cdecl elev_at(int x, int y) {
-    int contour = alt_detail_at(x, y);
-    int elev = 50 * (contour - ElevDetail[3] - *MapSeaLevel);
-    elev += (contour <= ElevDetail[alt_at(x, y)]) ? 10
-        : (x * 113 + y * 217 + *MapSeaLevel * 301) % 50;
-    return clamp(elev, -3000, 3500);
+void __cdecl alt_set_both(int x, int y, int altitude) {
+    alt_set(x, y, altitude);
+    if (alt_natural(x, y) != altitude) {
+        int offset = AltNatural[altitude + 1] - AltNatural[altitude];
+        alt_put_detail(x, y,
+            (uint8_t)(*MapSeaLevel + AltNatural[altitude] + mapgen_rand(offset)));
+    }
 }
 
 /*
-Calculate the natural altitude of the specified tile.
-Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain tops)
+Calculate the altitude of the specified tile.
+Return Value: altitude level on a scale from 0 (ocean trench) to 6 (mountain tops)
 */
 int __cdecl alt_natural(int x, int y) {
     int detail = alt_detail_at(x, y) - *MapSeaLevel;
-    int alt = ALT_THREE_ABOVE_SEA;
+    int alt = conf.altitude_limit;
     while (alt > 0 && detail < AltNatural[alt]) {
         alt--;
     }
@@ -260,17 +369,103 @@ int __cdecl alt_natural(int x, int y) {
 }
 
 /*
-Set both the altitude and natural altitude for the specified tile.
-The altitude_natural parameter can be between 0 to 9.
+Calculate the elevation of the specified tile.
+Return Value: elevation meters (bounded to: -3000 to 3500)
 */
-void __cdecl alt_set_both(int x, int y, int altitude_natural) {
-    assert(altitude_natural >= 0 && altitude_natural <= 9);
-    alt_set(x, y, altitude_natural);
-    if (alt_natural(x, y) != altitude_natural) {
-        int offset = AltNatural[altitude_natural + 1] - AltNatural[altitude_natural];
-        alt_put_detail(x, y, (uint8_t)(*MapSeaLevel + AltNatural[altitude_natural]
-            + (offset > 1 ? game_rand() % offset : 0)));
+int __cdecl elev_at(int x, int y) {
+    int contour = alt_detail_at(x, y);
+    int elev = 50 * (contour - ElevDetail[3] - *MapSeaLevel);
+    elev += (contour <= ElevDetail[alt_at(x, y)]) ? 10
+        : (x * 113 + y * 217 + *MapSeaLevel * 301) % 50;
+    return clamp(elev, -3000, conf.altitude_limit > ALT_THREE_ABOVE_SEA ? 4500 : 3500);
+}
+
+void __cdecl world_alt_set(int x, int y, int altitude, int toggle) {
+    assert(altitude >= 0 && altitude <= 7);
+    memset(MapBaseSubmergedCount, 0, MaxPlayerNum * sizeof(int));
+    memset(MapBaseIdClosestSubmergedVeh, 0xFF, MaxPlayerNum * sizeof(int));
+    if (on_map(x, y)) {
+        if (toggle) {
+            alt_set_both(x, y, altitude);
+        } else {
+            alt_set(x, y, altitude);
+        }
     }
+    MAP* sq;
+    int tx = -1;
+    int ty = -1;
+    if (altitude > 1) {
+        int alt = altitude - 1;
+        for (int i = 0; i < altitude - 1; ++i, --alt) {
+            bool found = false;
+            for (int j = TableRange[i]; j < TableRange[i+1]; ++j) {
+                if ((sq = next_tile(x, y, j, &tx, &ty)) != NULL && sq->alt_level() < alt) {
+                    if (toggle) {
+                        alt_set_both(tx, ty, alt);
+                        if (sq->anything_at() < 0 && !bonus_at(tx, ty)) {
+                            owner_set(tx, ty, -1);
+                        }
+                    } else {
+                        alt_set(tx, ty, alt);
+                    }
+                    found = true;
+                }
+            }
+            if (!found) {
+                break;
+            }
+        }
+    }
+    if (altitude <= conf.altitude_limit) {
+        int alt = altitude + 1;
+        for (int i = 0; i <= conf.altitude_limit - altitude; ++i, ++alt) {
+            bool found = false;
+            for (int j = TableRange[i]; j < TableRange[i+1]; ++j) {
+                if ((sq = next_tile(x, y, j, &tx, &ty)) != NULL && sq->alt_level() > alt) {
+                    if (toggle) {
+                        alt_set_both(tx, ty, alt);
+                        if (sq->anything_at() < 0 && !bonus_at(tx, ty)) {
+                            owner_set(tx, ty, -1);
+                        }
+                    } else {
+                        alt_set(tx, ty, alt);
+                    }
+                    found = true;
+                }
+            }
+            if (!found) {
+                break;
+            }
+        }
+    }
+}
+
+void __cdecl world_raise_alt(int x, int y) {
+    MAP* sq = mapsq(x, y);
+    if (sq) {
+        int alt = sq->alt_level();
+        if (alt < conf.altitude_limit) {
+            world_alt_set(x, y, alt + 1, 1);
+        }
+    } else {
+        assert(sq);
+    }
+}
+
+void __cdecl world_lower_alt(int x, int y) {
+    MAP* sq = mapsq(x, y);
+    if (sq) {
+        int alt = sq->alt_level();
+        if (alt > 0) {
+            world_alt_set(x, y, alt - 1, 1);
+        }
+    } else {
+        assert(sq);
+    }
+}
+
+void __cdecl world_alt_put_detail(int x, int y) {
+    alt_put_detail(x, y, (uint8_t)AltNatural[3]);
 }
 
 int __cdecl temp_at(int x, int y) {
@@ -539,6 +734,9 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
 			
 			// [WTP]
 			// shift Manifold Harmonics minimal planet rating
+			/*
+            value += ManifoldHarmonicsBonus[clamp(planet + 1, 0, 4)][0];
+            */
             value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][0];
 			
         }
@@ -550,6 +748,9 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
 			
 			// [WTP]
 			// shift Manifold Harmonics minimal planet rating
+			/*
+            value += ManifoldHarmonicsBonus[clamp(planet + 1, 0, 4)][0];
+            */
             value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][0];
 			
         }
@@ -657,10 +858,10 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
 			
         }
     }
-    if (has_limit && value > conf.resource_limit[0] && !bonus_nutrient && !(sq->items & BIT_CONDENSER)
+    if (has_limit && value > conf.tile_output_limit[0] && !bonus_nutrient && !(sq->items & BIT_CONDENSER)
     && (faction_id < 0 || !has_tech(Rules->tech_preq_allow_3_nutrients_sq, faction_id))) {
-        *BaseTerraformReduce += (value - conf.resource_limit[0]);
-        value = conf.resource_limit[0];
+        *BaseTerraformReduce += (value - conf.tile_output_limit[0]);
+        value = conf.tile_output_limit[0];
     }
     if (base_id >= 0) {
         if (Bases[base_id].event_flags & BEVENT_BUMPER) {
@@ -675,7 +876,7 @@ int __cdecl mod_crop_yield(int faction_id, int base_id, int x, int y, int flag) 
     // not like vanilla anymore
     /*
     assert((conf.soil_improve_value && sq->items & (BIT_CONDENSER|BIT_SOIL_ENRICHER))
-        || (has_limit && !bonus_nutrient && conf.resource_limit[0] != 2)
+        || (has_limit && !bonus_nutrient && conf.tile_output_limit[0] != 2)
         || value == crop_yield(faction_id, base_id, x, y, flag));
     */
     return value;
@@ -727,6 +928,9 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
 				
 				// [WTP]
 				// shift Manifold Harmonics minimal planet rating
+				/*
+                value += ManifoldHarmonicsBonus[clamp(planet + 1, 0, 4)][1];
+                */
 				value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][1];
 				
             }
@@ -745,6 +949,9 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
 				
 				// [WTP]
 				// shift Manifold Harmonics minimal planet rating
+				/*
+                value += ManifoldHarmonicsBonus[clamp(planet + 1, 0, 4)][1];
+                */
 				value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][1];
 				
             }
@@ -840,10 +1047,10 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
             }
         }
     }
-    if (has_limit && value > conf.resource_limit[1] && !bonus_mineral
+    if (has_limit && value > conf.tile_output_limit[1] && !bonus_mineral
     && (faction_id < 0 || !has_tech(Rules->tech_preq_allow_3_minerals_sq, faction_id))) {
-        *BaseTerraformReduce += (value - conf.resource_limit[1]);
-        value = conf.resource_limit[1];
+        *BaseTerraformReduce += (value - conf.tile_output_limit[1]);
+        value = conf.tile_output_limit[1];
     }
     if (base_id >= 0) {
         if (Bases[base_id].event_flags & BEVENT_INDUSTRY) {
@@ -858,8 +1065,8 @@ int __cdecl mod_mine_yield(int faction_id, int base_id, int x, int y, int flag) 
     // assertion is incorrect for aquatic faction base
     /*
     // Original function can return inconsistent sea mineral output when base_id is not set
-    assert((base_id < 0 && alt == ALT_OCEAN_SHELF && MFactions[faction_id].is_aquatic())
-        || (has_limit && !bonus_mineral && conf.resource_limit[1] != 2)
+    assert((base_id < 0 && alt == ALT_OCEAN_SHELF)
+        || (has_limit && !bonus_mineral && conf.tile_output_limit[1] != 2)
         || (value == mine_yield(faction_id, base_id, x, y, flag)));
     */
 	
@@ -931,6 +1138,9 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
 			
 			// [WTP]
 			// shift Manifold Harmonics minimal planet rating
+			/*
+            value += ManifoldHarmonicsBonus[clamp(planet + 1, 0, 4)][2];
+            */
 			value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][2];
 			
         }
@@ -946,6 +1156,9 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
 			
 			// [WTP]
 			// shift Manifold Harmonics minimal planet rating
+			/*
+            value += ManifoldHarmonicsBonus[clamp(planet + 1, 0, 4)][2];
+            */
 			value += ManifoldHarmonicsBonus[clamp(planet - conf.manifold_harmonics_min_planet_rating + 1, 0, 4)][2];
 			
         }
@@ -1023,6 +1236,9 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
     
     // [WTP]
     // fungus receives all bonuses
+    /*
+    if (!is_fungus) {
+    */
     if (!is_fungus || conf.fungus_terrain_bonus) {
         if (sq->items & BIT_RIVER && alt >= ALT_SHORE_LINE) {
             value++;
@@ -1045,11 +1261,10 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
             *BaseTerraformEnergy = value;
         }
     }
-    
-    if (has_limit && value > conf.resource_limit[2] && !bonus_energy
+    if (has_limit && value > conf.tile_output_limit[2] && !bonus_energy
     && (faction_id < 0 || !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id))) {
-        *BaseTerraformReduce += (value - conf.resource_limit[2]);
-        value = conf.resource_limit[2];
+        *BaseTerraformReduce += (value - conf.tile_output_limit[2]);
+        value = conf.tile_output_limit[2];
     }
     if (base_id >= 0) {
         if (Bases[base_id].event_flags & BEVENT_HEAT_WAVE) {
@@ -1076,7 +1291,7 @@ int __cdecl mod_energy_yield(int faction_id, int base_id, int x, int y, int flag
     // Original function can return inconsistent base output when economy is between 3 and 4
     assert((is_base && economy >= 3 && economy <= 4)
         || (!is_base && sq->items & BIT_MONOLITH && !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id))
-        || (has_limit && !bonus_energy && conf.resource_limit[2] != 2)
+        || (has_limit && !bonus_energy && conf.tile_output_limit[2] != 2)
         || (value == energy_yield(faction_id, base_id, x, y, flag)));
     */
 	
@@ -1351,6 +1566,15 @@ int __cdecl mod_whose_territory(int faction_id, int x, int y, int* base_id, int 
     return sq->owner;
 }
 
+int bonus_yield(int res_type) {
+    switch (res_type) {
+    case RES_NUTRIENT: return ResInfo->bonus_sq.nutrient;
+    case RES_MINERAL: return ResInfo->bonus_sq.mineral;
+    case RES_ENERGY: return ResInfo->bonus_sq.energy;
+    default: return 0;
+    }
+}
+
 int total_yield(int x, int y, int faction_id) {
     return mod_crop_yield(faction_id, -1, x, y, 0)
         + mod_mine_yield(faction_id, -1, x, y, 0)
@@ -1368,11 +1592,13 @@ int fungus_yield(int faction_id, ResType res_type) {
 		
 		// [WTP]
 		// shift Manifold Harmonics minimal planet rating
+		/*
+        int m = clamp(f->SE_planet_pending + 1, 0, 4);
+        */
         int m = clamp(f->SE_planet_pending - conf.manifold_harmonics_min_planet_rating + 1, 0, 4);
         N += ManifoldHarmonicsBonus[m][0];
         M += ManifoldHarmonicsBonus[m][1];
         E += ManifoldHarmonicsBonus[m][2];
-		
     }
     if (res_type == RES_NUTRIENT) {
         return N;
@@ -1450,17 +1676,17 @@ int item_yield(int x, int y, int faction_id, int bonus, MapItem item) {
     else {
         assert(0);
     }
-    if (N > 2 && bonus != RES_NUTRIENT
+    if (N > conf.tile_output_limit[0] && bonus != RES_NUTRIENT
     && !has_tech(Rules->tech_preq_allow_3_nutrients_sq, faction_id)) {
-        N = 2;
+        N = conf.tile_output_limit[0];
     }
-    if (M > 2 && bonus != RES_MINERAL
+    if (M > conf.tile_output_limit[1] && bonus != RES_MINERAL
     && !has_tech(Rules->tech_preq_allow_3_minerals_sq, faction_id)) {
-        M = 2;
+        M = conf.tile_output_limit[1];
     }
-    if (E > 2 && bonus != RES_ENERGY
+    if (E > conf.tile_output_limit[2] && bonus != RES_ENERGY
     && !has_tech(Rules->tech_preq_allow_3_energy_sq, faction_id)) {
-        E = 2;
+        E = conf.tile_output_limit[2];
     }
     if (conf.debug_verbose) {
         debug("item_yield %2d %2d %08X faction: %d bonus: %d planet: %d N: %d M: %d E: %d prev: %d\n",
@@ -1500,7 +1726,7 @@ static void process_map(int faction_id, int k) {
         }
     }
     for (int i = 0; i < *VehCount; i++) {
-        VEH* v = &Vehicles[i];
+        VEH* v = &Vehs[i];
         if (v->faction_id == 0) {
             natives.insert({v->x, v->y});
         }

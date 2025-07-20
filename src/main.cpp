@@ -74,6 +74,8 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->new_base_names = atoi(value);
     } else if (MATCH("new_unit_names")) {
         cf->new_unit_names = atoi(value);
+    } else if (MATCH("spawn_free_units")) {
+        opt_list_parse(cf->spawn_free_units, buf, 9, 0);
     } else if (MATCH("player_colony_pods")) {
         cf->player_colony_pods = atoi(value);
     } else if (MATCH("computer_colony_pods")) {
@@ -176,6 +178,8 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->modify_upgrade_cost = atoi(value);
     } else if (MATCH("modify_unit_support")) {
         cf->modify_unit_support = atoi(value);
+    } else if (MATCH("modify_unit_limit")) {
+        cf->modify_unit_limit = atoi(value);
     } else if (MATCH("skip_default_balance")) {
         cf->skip_default_balance = atoi(value);
     } else if (MATCH("early_research_start")) {
@@ -210,10 +214,12 @@ int option_handler(void* user, const char* section, const char* name, const char
         cf->event_sunspots = clamp(atoi(value), 0, 100);
     } else if (MATCH("event_market_crash")) {
         cf->event_market_crash = atoi(value);
+    } else if (MATCH("modify_altitude_limit")) {
+        cf->altitude_limit = (atoi(value) ? ALT_FOUR_ABOVE_SEA : ALT_THREE_ABOVE_SEA);
+    } else if (MATCH("tile_output_limit")) {
+        opt_list_parse(cf->tile_output_limit, buf, 3, 0);
     } else if (MATCH("soil_improve_value")) {
         cf->soil_improve_value = clamp(atoi(value), 0, 10);
-    } else if (MATCH("resource_limit")) {
-        opt_list_parse(cf->resource_limit, buf, 3, 0);
     } else if (MATCH("aquatic_bonus_minerals")) {
         cf->aquatic_bonus_minerals = atoi(value);
     } else if (MATCH("alien_guaranteed_techs")) {
@@ -1480,6 +1486,10 @@ int cmd_parse(Config* cf) {
     return 1;
 }
 
+bool FileExists(const char* path) {
+    return GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES;
+}
+
 void exit_fail(int32_t addr) {
     char buf[512];
     snprintf(buf, sizeof(buf),
@@ -1532,7 +1542,7 @@ DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LP
             *EngineDate = MOD_DATE;
             seed = GetTickCount();
             random_reseed(seed);
-            map_rand.reseed(seed ^ 0xff);
+            map_rand.reseed(seed ^ 0xffff);
             debug("random_reseed %u\n", seed);
             flushlog();
             break;

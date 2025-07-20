@@ -850,7 +850,7 @@ int getBaseItemCost(int baseId, int item)
 }
 
 int veh_triad(int id) {
-    return unit_triad(Vehicles[id].unit_id);
+    return unit_triad(Vehs[id].unit_id);
 }
 
 int veh_speed_without_roads(int id) {
@@ -864,7 +864,7 @@ int unit_chassis_speed(int id)
 
 int veh_chassis_speed(int id)
 {
-	VEH *vehicle = &Vehicles[id];
+	VEH *vehicle = &Vehs[id];
 	UNIT *unit = &Units[vehicle->unit_id];
 	CChassis *chassis = &Chassis[unit->chassis_id];
 	return chassis->speed;
@@ -898,7 +898,7 @@ bool unit_has_ability(int id, int ability) {
 }
 
 bool vehicle_has_ability(int vehicleId, int ability) {
-    return Units[Vehicles[vehicleId].unit_id].ability_flags & ability;
+    return Units[Vehs[vehicleId].unit_id].ability_flags & ability;
 }
 
 int map_rainfall(MAP *tile) {
@@ -1442,7 +1442,7 @@ double getVehiclePsiOffenseStrength(int vehicleId, bool ignoreDamage)
 
 double getVehiclePsiDefenseStrength(int vehicleId, bool ignoreDamage)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	int factionId = vehicle->faction_id;
 	int unitId = vehicle->unit_id;
 	
@@ -1469,7 +1469,7 @@ double getVehiclePsiDefenseStrength(int vehicleId, bool ignoreDamage)
 
 double getVehicleConOffenseStrength(int vehicleId, bool ignoreDamage)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	// unit with psi weapon does not initiate conventional offense
 
@@ -1499,7 +1499,7 @@ double getVehicleConOffenseStrength(int vehicleId, bool ignoreDamage)
 
 double getVehicleConDefenseStrength(int vehicleId, bool ignoreDamage)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	// unit with psi armor does not initiate conventional defense
 
@@ -1608,7 +1608,7 @@ bool isOgreUnit(int unitId)
 bool isOgreVehicle(int vehicleId)
 {
 	assert(vehicleId >= 0 && vehicleId < *VehCount);
-	return isOgreUnit(Vehicles[vehicleId].unit_id);
+	return isOgreUnit(Vehs[vehicleId].unit_id);
 }
 
 /*
@@ -1616,8 +1616,8 @@ Calculates average maximal damage vehicle delivers to enemy in psi combat when a
 */
 double calculatePsiDamageAttack(int vehicleId, int enemyVehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
+	VEH *enemyVehicle = &(Vehs[enemyVehicleId]);
 
 	// calculate base damage (vehicle attacking)
 
@@ -1662,8 +1662,8 @@ Calculates average maximal damage unit delivers to enemy in psi combat when defe
 */
 double calculatePsiDamageDefense(int vehicleId, int enemyVehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
-	VEH *enemyVehicle = &(Vehicles[enemyVehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
+	VEH *enemyVehicle = &(Vehs[enemyVehicleId]);
 
 	// calculate base damage (vehicle defending)
 
@@ -1710,7 +1710,7 @@ VehOrder getVehicleOrder(int vehicleId)
 
 void setVehicleOrder(int id, int order)
 {
-	VEH *vehicle = &(Vehicles[id]);
+	VEH *vehicle = &(Vehs[id]);
 
     vehicle->order = order;
     vehicle->status_icon = VehStatusIcon[order];
@@ -1742,7 +1742,7 @@ MAP *getBaseMapTile(int baseId)
 
 int getVehicleMapTileIndex(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	
 	return getMapTileIndex(vehicle->x, vehicle->y);
 	
@@ -1753,7 +1753,7 @@ MAP *getVehicleMapTile(int vehicleId)
 	if (!(vehicleId >= 0 && vehicleId < *VehCount))
 		return nullptr;
 	
-	VEH &vehicle = Vehicles[vehicleId];
+	VEH &vehicle = Vehs[vehicleId];
 	
 	return getMapTile(vehicle.x, vehicle.y);
 	
@@ -1777,7 +1777,7 @@ bool isSupplyUnit(int unitId)
 }
 bool isSupplyVehicle(int vehicleId)
 {
-	return isSupplyUnit(Vehicles[vehicleId].unit_id);
+	return isSupplyUnit(Vehs[vehicleId].unit_id);
 }
 
 bool isColonyUnit(int id)
@@ -1792,12 +1792,12 @@ bool isArtifactUnit(int unitId)
 
 bool isArtifactVehicle(int id)
 {
-	return (Units[Vehicles[id].unit_id].weapon_id == WPN_ALIEN_ARTIFACT);
+	return (Units[Vehs[id].unit_id].weapon_id == WPN_ALIEN_ARTIFACT);
 }
 
 bool isColonyVehicle(int id)
 {
-	return (Units[Vehicles[id].unit_id].weapon_id == WPN_COLONY_MODULE);
+	return (Units[Vehs[id].unit_id].weapon_id == WPN_COLONY_MODULE);
 }
 
 bool isFormerUnit(int unitId)
@@ -1807,7 +1807,7 @@ bool isFormerUnit(int unitId)
 
 bool isFormerVehicle(int vehicleId)
 {
-	return isFormerVehicle(&(Vehicles[vehicleId]));
+	return isFormerVehicle(getVehicle(vehicleId));
 }
 bool isFormerVehicle(VEH *vehicle)
 {
@@ -1820,7 +1820,7 @@ bool isConvoyUnit(int unitId)
 }
 bool isConvoyVehicle(int vehicleId)
 {
-	return isConvoyUnit(Vehicles[vehicleId].unit_id);
+	return isConvoyUnit(Vehs[vehicleId].unit_id);
 }
 
 bool isTransportVehicle(VEH *vehicle)
@@ -1835,7 +1835,7 @@ bool isTransportUnit(int unitId)
 
 bool isTransportVehicle(int vehicleId)
 {
-	return (Units[Vehicles[vehicleId].unit_id].weapon_id == WPN_TROOP_TRANSPORT);
+	return (Units[Vehs[vehicleId].unit_id].weapon_id == WPN_TROOP_TRANSPORT);
 }
 
 bool isSeaTransportUnit(int unitId)
@@ -1856,7 +1856,7 @@ bool isVehicleProbe(VEH *vehicle)
 
 bool isVehicleIdle(int vehicleId)
 {
-	return (Vehicles[vehicleId].order == ORDER_NONE);
+	return (Vehs[vehicleId].order == ORDER_NONE);
 }
 
 bool isMeleeUnit(int unitId)
@@ -2359,7 +2359,7 @@ Determines if vehicle is a native land predefined unit.
 */
 bool isVehicleNativeLand(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	int unitId = vehicle->unit_id;
 
 	return
@@ -2576,7 +2576,7 @@ std::vector<int> getBaseGarrison(int baseId)
 
 	for (int vehicleId : getStackVehicleIds(topStackVehicleId))
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		// only this faction units
 
@@ -2613,7 +2613,7 @@ std::vector<int> getBaseInfantryDefenderGarrison(int baseId)
 
 	for (int vehicleId : getTileVehicleIds(baseTile))
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		// only this faction units
 
@@ -2703,12 +2703,12 @@ This accounts for vehicle morale.
 */
 double getVehicleBaseNativeProtection(int baseId, int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	MAP *baseTile = getBaseMapTile(baseId);
 
 	// unit native protection
 
-	double nativeProtection = estimateUnitBaseLandNativeProtection(Vehicles[vehicleId].unit_id, vehicle->faction_id, is_ocean(baseTile));
+	double nativeProtection = estimateUnitBaseLandNativeProtection(Vehs[vehicleId].unit_id, vehicle->faction_id, is_ocean(baseTile));
 
 	// add morale
 
@@ -2781,7 +2781,7 @@ Assuming vehicle will heal in full at base.
 */
 double getVehicleBaseNativeProtectionPotential(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	// calculate base damage (vehicle defending)
 
@@ -2815,7 +2815,7 @@ Assuming vehicle will heal in full at base.
 */
 double getVehicleBaseNativeProtectionEfficiency(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	// calculate protection potential
 
@@ -2931,7 +2931,7 @@ int getBasePoliceCount(int baseId, bool police2x)
 
 char *getVehicleUnitName(int vehicleId)
 {
-	return Units[Vehicles[vehicleId].unit_id].name;
+	return Units[Vehs[vehicleId].unit_id].name;
 }
 
 int getVehicleUnitPlan(int vehicleId)
@@ -2991,7 +2991,7 @@ bool isExploredEdge(int factionId, int x, int y)
 
 bool isVehicleExploring(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	return vehicle->state & VSTATE_EXPLORE;
 
@@ -2999,7 +2999,7 @@ bool isVehicleExploring(int vehicleId)
 
 bool isVehicleCanHealAtThisLocation(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehilceMapTile = getVehicleMapTile(vehicleId);
 
 	// calculate vehicle field damage healing threshold
@@ -3194,14 +3194,14 @@ std::vector<int> getStackVehicleIds(int vehicleId)
 	// get top of the stack vehicle
 
 	int topStackVehicleId = vehicleId;
-	while (Vehicles[topStackVehicleId].prev_veh_id_stack != -1)
+	while (Vehs[topStackVehicleId].prev_veh_id_stack != -1)
 	{
-		topStackVehicleId = Vehicles[topStackVehicleId].prev_veh_id_stack;
+		topStackVehicleId = Vehs[topStackVehicleId].prev_veh_id_stack;
 	}
 
 	// collect all vehicles in the stack
 
-	for (int stackedVehicleId = topStackVehicleId; stackedVehicleId != -1; stackedVehicleId = Vehicles[stackedVehicleId].next_veh_id_stack)
+	for (int stackedVehicleId = topStackVehicleId; stackedVehicleId != -1; stackedVehicleId = Vehs[stackedVehicleId].next_veh_id_stack)
 	{
 		stackedVehicleIds.push_back(stackedVehicleId);
 	}
@@ -3232,7 +3232,7 @@ std::vector<int> getTileVehicleIds(MAP *tile)
 
 void setTerraformingAction(int id, int action)
 {
-	VEH *vehicle = &(Vehicles[id]);
+	VEH *vehicle = &(Vehs[id]);
 
 	// subtract raise/lower land cost
 
@@ -3293,7 +3293,7 @@ std::vector<int> getLoadedVehicleIds(int vehicleId)
 
 	for (int stackedVehicleId : getStackVehicleIds(vehicleId))
 	{
-		VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
+		VEH *stackedVehicle = &(Vehs[stackedVehicleId]);
 
 		// exclude self
 
@@ -3321,7 +3321,7 @@ bool isVehicleAtLocation(int vehicleId, int x, int y)
 {
 	assert(isOnMap(x, y));
 	
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	return vehicle->x == x && vehicle->y == y;
 	
 }
@@ -3338,7 +3338,7 @@ std::vector<int> getFactionLocationVehicleIds(int factionId, MAP *tile)
 
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		if
 		(
@@ -3396,7 +3396,7 @@ bool isLandVehicleOnTransport(int vehicleId)
 
 int getVehicleTransportId(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	
 	int transportId = -1;
 	
@@ -3540,7 +3540,7 @@ int setMoveTo(int vehicleId, MAP *destination)
 
 int setMoveTo(int vehicleId, const std::vector<MAP *> &waypoints)
 {
-    VEH* vehicle = &(Vehicles[vehicleId]);
+    VEH* vehicle = getVehicle(vehicleId);
 
     debug("setMoveTo %s -> waypoints\n", getLocationString({vehicle->x, vehicle->y}).c_str());
 
@@ -3592,7 +3592,7 @@ bool isUnitHasAbility(int unitId, int ability)
 
 bool isVehicleHasAbility(int vehicleId, int ability)
 {
-	return isUnitHasAbility(Vehicles[vehicleId].unit_id, ability);
+	return isUnitHasAbility(Vehs[vehicleId].unit_id, ability);
 }
 
 bool isScoutUnit(int unitId)
@@ -3605,7 +3605,7 @@ bool isScoutUnit(int unitId)
 
 bool isScoutVehicle(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	UNIT *unit = &(Units[vehicle->unit_id]);
 
 	return unit->weapon_id == WPN_HAND_WEAPONS && unit->armor_id == ARM_NO_ARMOR;
@@ -3619,7 +3619,7 @@ bool isPodPoppingUnit(int unitId)
 
 bool isPodPoppingVehicle(int vehicleId)
 {
-	return isPodPoppingUnit(Vehicles[vehicleId].unit_id);
+	return isPodPoppingUnit(Vehs[vehicleId].unit_id);
 }
 
 /*
@@ -3634,7 +3634,7 @@ bool isTargettedLocation(MAP *tile)
 
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		if (vehicle->order == ORDER_MOVE_TO && vehicle->x == x && vehicle->y == y)
 			return true;
@@ -3657,7 +3657,7 @@ bool isFactionTargettedLocation(MAP *tile, int factionId)
 
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		// only given faction
 
@@ -4015,7 +4015,7 @@ Return true if vehicle order == ORDER_SENTRY_BOARD and damage > 0.
 */
 bool isVehicleHealing(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	return vehicle->order == ORDER_SENTRY_BOARD && vehicle->damage_taken > 0;
 }
 
@@ -4025,7 +4025,7 @@ Air units are assumed to be in all regions at once.
 */
 bool isVehicleInRegion(int vehicleId, int region)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	int triad = vehicle->triad();
 
@@ -4077,7 +4077,7 @@ bool isProbeUnit(int unitId)
 
 bool isProbeVehicle(int vehicleId)
 {
-	return isProbeUnit(Vehicles[vehicleId].unit_id);
+	return isProbeUnit(Vehs[vehicleId].unit_id);
 }
 
 /*
@@ -4085,8 +4085,8 @@ Computes relative attacker/defender strength.
 */
 double battleCompute(int attackerVehicleId, int defenderVehicleId, bool longRangeCombat)
 {
-	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
-	VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+	VEH *attackerVehicle = &(Vehs[attackerVehicleId]);
+	VEH *defenderVehicle = &(Vehs[defenderVehicleId]);
 	MAP *defenderVehicleTile = getVehicleMapTile(defenderVehicleId);
 
 	// set flags
@@ -4360,7 +4360,7 @@ std::vector<int> selectVehicles(const VehicleFilter filter)
 
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		if (filter.factionId >= 0 && vehicle->faction_id != filter.factionId)
 			continue;
@@ -4398,7 +4398,7 @@ int getSeaTransportInStack(int vehicleId)
 {
 	for (int stackedVehicleId : getStackVehicleIds(vehicleId))
 	{
-		VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
+		VEH *stackedVehicle = &(Vehs[stackedVehicleId]);
 
 		if (stackedVehicle->weapon_type() == WPN_TROOP_TRANSPORT)
 			return stackedVehicleId;
@@ -4599,8 +4599,8 @@ Calculates relative attacker odds (= relative strength * relative power) taking 
 */
 double getBattleOdds(int attackerVehicleId, int defenderVehicleId, int longRangeCombat)
 {
-	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
-	VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+	VEH *attackerVehicle = &(Vehs[attackerVehicleId]);
+	VEH *defenderVehicle = &(Vehs[defenderVehicleId]);
 
 	// calculate relative strength
 
@@ -4629,7 +4629,7 @@ double getBattleOddsAt(int attackerVehicleId, int defenderVehicleId, bool longRa
 {
 	assert(isOnMap(battleTile));
 	
-	VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+	VEH *defenderVehicle = &(Vehs[defenderVehicleId]);
 	int battleTileX = getX(battleTile);
 	int battleTileY = getY(battleTile);
 
@@ -4681,8 +4681,8 @@ Calculates average attack effect.
 */
 double getAttackEffect(int attackerVehicleId, int defenderVehicleId, bool longRangeCombat)
 {
-	VEH *attackerVehicle = &(Vehicles[attackerVehicleId]);
-	VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+	VEH *attackerVehicle = &(Vehs[attackerVehicleId]);
+	VEH *defenderVehicle = &(Vehs[defenderVehicleId]);
 
 	// calculate relative strength
 
@@ -4736,7 +4736,7 @@ double getStackAttackEffect(int attackerVehicleId, std::vector<int> defenderVehi
 
 	for (int defenderVehicleId : defenderVehicleIds)
 	{
-		VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+		VEH *defenderVehicle = &(Vehs[defenderVehicleId]);
 
 		// get attack effect
 
@@ -4815,12 +4815,12 @@ int getUnitDefenseValue(int unitId)
 
 int getVehicleOffenseValue(int vehicleId)
 {
-	return getUnitOffenseValue(Vehicles[vehicleId].unit_id);
+	return getUnitOffenseValue(Vehs[vehicleId].unit_id);
 }
 
 int getVehicleDefenseValue(int vehicleId)
 {
-	return getUnitDefenseValue(Vehicles[vehicleId].unit_id);
+	return getUnitDefenseValue(Vehs[vehicleId].unit_id);
 }
 
 bool isFactionSpecial(int factionId, int special)
@@ -5033,7 +5033,7 @@ void board(int vehicleId)
 
 void unboard(int vehicleId)
 {
-	VEH* vehicle = &(Vehicles[vehicleId]);
+	VEH* vehicle = getVehicle(vehicleId);
 
 	setVehicleOrder(vehicleId, ORDER_NONE);
 	vehicle->waypoint_y[0] = 0;
@@ -5093,7 +5093,7 @@ Returns vehicle max power.
 */
 int getVehicleMaxPower(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	return 10 * vehicle->reactor_type();
 
@@ -5104,7 +5104,7 @@ Returns vehicle current power.
 */
 int getVehiclePower(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	return 10 * vehicle->reactor_type() - vehicle->damage_taken;
 
@@ -5112,7 +5112,7 @@ int getVehiclePower(int vehicleId)
 
 double getVehicleRelativeDamage(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	return (double)vehicle->damage_taken / (double)(10 * vehicle->reactor_type());
 
@@ -5125,7 +5125,7 @@ double getVehicleRelativePower(int vehicleId)
 
 int getVehicleHitPoints(int vehicleId, bool psiCombat)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	int power = getVehiclePower(vehicleId);
 
@@ -5252,7 +5252,7 @@ Returns vehicle max hit points in psi combat.
 */
 int getVehicleMaxPsiHP(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	int opponentFirePower = vehicle->reactor_type();
 	return (10 * vehicle->reactor_type()) / opponentFirePower;
@@ -5264,7 +5264,7 @@ Returns vehicle current hit points in psi combat.
 */
 int getVehicleCurrentPsiHP(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	int opponentFirePower = vehicle->reactor_type();
 	return (10 * vehicle->reactor_type() - vehicle->damage_taken / (opponentFirePower + 1)) / opponentFirePower;
@@ -5276,7 +5276,7 @@ Returns vehicle max hit points in conventional combat.
 */
 int getVehicleMaxConHP(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	int opponentFirePower = (conf.ignore_reactor_power ? vehicle->reactor_type() : 1);
 	return (10 * vehicle->reactor_type()) / opponentFirePower;
@@ -5288,7 +5288,7 @@ Returns vehicle current hit points in conventional combat.
 */
 int getVehicleCurrentConHP(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	int opponentFirePower = (conf.ignore_reactor_power ? vehicle->reactor_type() : 1);
 	return (10 * vehicle->reactor_type() - vehicle->damage_taken / (opponentFirePower + 1)) / opponentFirePower;
@@ -5388,7 +5388,7 @@ bool isPolice2xUnit(int unitId, int factionId)
 
 bool isPolice2xVehicle(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	return isPolice2xUnit(vehicle->unit_id, vehicle->faction_id);
 }
 
@@ -5399,7 +5399,7 @@ bool isInfantryPolice2xUnit(int unitId, int factionId)
 
 bool isInfantryPolice2xVehicle(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	return isInfantryPolice2xUnit(vehicle->unit_id, vehicle->faction_id);
 }
 
@@ -5440,7 +5440,7 @@ double getFactionTechPerTurn(int factionId)
 
 bool isVehicleOnSentry(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	return vehicle->order == ORDER_SENTRY_BOARD && vehicle->waypoint_x[0] == -1 && vehicle->waypoint_y[0] == 0;
 
@@ -5448,7 +5448,7 @@ bool isVehicleOnSentry(int vehicleId)
 
 bool isVehicleOnAlert(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	return vehicle->order == ORDER_HOLD && vehicle->waypoint_x[0] == -1 && vehicle->waypoint_y[0] == 0 && vehicle->waypoint_x[1] == vehicle->x && vehicle->waypoint_y[1] == vehicle->y;
 
@@ -5456,7 +5456,7 @@ bool isVehicleOnAlert(int vehicleId)
 
 bool isVehicleOnHold(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	return vehicle->order == ORDER_HOLD && vehicle->waypoint_x[0] == -1 && vehicle->waypoint_y[0] == 0 && vehicle->waypoint_x[1] == -1 && vehicle->waypoint_y[1] == -1;
 
@@ -5464,7 +5464,7 @@ bool isVehicleOnHold(int vehicleId)
 
 bool isVehicleOnHold10Turns(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	return vehicle->order == ORDER_HOLD && vehicle->waypoint_x[0] == -1 && vehicle->waypoint_y[0] == 10 && vehicle->waypoint_x[1] == -1 && vehicle->waypoint_y[1] == -1;
 
@@ -5472,7 +5472,7 @@ bool isVehicleOnHold10Turns(int vehicleId)
 
 void setVehicleOnSentry(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	vehicle->order = ORDER_SENTRY_BOARD;
 	vehicle->waypoint_x[0] = -1;
@@ -5482,7 +5482,7 @@ void setVehicleOnSentry(int vehicleId)
 
 void setVehicleOnAlert(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	vehicle->order = ORDER_HOLD;
 	vehicle->waypoint_x[0] = -1;
@@ -5494,7 +5494,7 @@ void setVehicleOnAlert(int vehicleId)
 
 void setVehicleOnHold(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	vehicle->order = ORDER_HOLD;
 	vehicle->waypoint_x[0] = -1;
@@ -5506,7 +5506,7 @@ void setVehicleOnHold(int vehicleId)
 
 void setVehicleOnHold10Turns(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	vehicle->order = ORDER_HOLD;
 	vehicle->waypoint_x[0] = -1;
@@ -5573,7 +5573,7 @@ VEH *getVehicle(int vehicleId)
 {
 	if (vehicleId >= 0 && vehicleId < *VehCount)
 	{
-		return &(Vehicles[vehicleId]);
+		return &Vehs[vehicleId];
 	}
 	else
 	{
@@ -7303,7 +7303,7 @@ bool isInfantryDefensiveUnit(int unitId)
 }
 bool isInfantryDefensiveVehicle(int vehicleId)
 {
-	return isInfantryDefensiveUnit(Vehicles[vehicleId].unit_id);
+	return isInfantryDefensiveUnit(Vehs[vehicleId].unit_id);
 }
 
 bool isInfantryDefensivePolice2xUnit(int unitId, int factionId)
@@ -7326,13 +7326,13 @@ bool isBaseDefenderVehicle(int vehicleId)
 
 bool isUnitRequiresSupport(int unitId)
 {
-	const int support_type = (conf.modify_unit_support == 1 ? PLAN_SUPPLY : (conf.modify_unit_support == 2 ? PLAN_PROBE : PLAN_TERRAFORM));
+	const int support_type = support_plan();
 	return Units[unitId].plan <= support_type && !isUnitHasAbility(unitId, ABL_CLEAN_REACTOR);
 }
 
 bool isVehicleRequiresSupport(int vehicleId)
 {
-	return isUnitRequiresSupport(Vehicles[vehicleId].unit_id);
+	return isUnitRequiresSupport(Vehs[vehicleId].unit_id);
 }
 
 bool isInterceptorUnit(int unitId)
@@ -7341,7 +7341,7 @@ bool isInterceptorUnit(int unitId)
 }
 bool isInterceptorVehicle(int vehicleId)
 {
-	return isInterceptorUnit(Vehicles[vehicleId].unit_id);
+	return isInterceptorUnit(Vehs[vehicleId].unit_id);
 }
 
 int getUnitSupport(int unitId)
@@ -7351,7 +7351,7 @@ int getUnitSupport(int unitId)
 
 bool getVehicleSupport(int vehicleId)
 {
-	return isUnitRequiresSupport(Vehicles[vehicleId].unit_id);
+	return isUnitRequiresSupport(Vehs[vehicleId].unit_id);
 }
 
 bool isFactionHasAbility(int faction, VehAbl abl)
@@ -7430,7 +7430,7 @@ bool isBattleOgreUnit(int unitId)
 
 bool isBattleOgreVehicle(int vehicleId)
 {
-	return isBattleOgreUnit(Vehicles[vehicleId].unit_id);
+	return isBattleOgreUnit(Vehs[vehicleId].unit_id);
 }
 
 /**
@@ -7577,7 +7577,7 @@ bool isUnitZocRestricted(int unitId)
 
 bool isVehicleZocRestricted(int vehicleId)
 {
-	return isUnitZocRestricted(Vehicles[vehicleId].unit_id);
+	return isUnitZocRestricted(Vehs[vehicleId].unit_id);
 }
 
 /**
@@ -7678,7 +7678,7 @@ int getBaseNextUnitSupport(int baseId, int unitId)
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		if (Vehicles[vehicleId].home_base_id == baseId && isVehicleRequiresSupport(vehicleId))
+		if (Vehs[vehicleId].home_base_id == baseId && isVehicleRequiresSupport(vehicleId))
 		{
 			supportRequiredVehicleCount++;
 		}

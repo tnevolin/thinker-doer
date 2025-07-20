@@ -152,11 +152,11 @@ int __cdecl veh_at(int x, int y) {
         }
     }
     if (!sq) {
-        debug("VehLocError x: %d y: %d\n", x, y);
+        debug("VehLocError %d %d\n", x, y);
         return -1;
     }
     if (!*VehBitError) {
-        debug("VehBitError x: %d y: %d\n", x, y);
+        debug("VehBitError %d %d\n", x, y);
     }
     if (*GameState & STATE_SCENARIO_EDITOR || *GameState & STATE_DEBUG_MODE || *MultiplayerActive) {
         if (*VehBitError) {
@@ -408,23 +408,23 @@ seems to be only set to true for certain combat calculations in battle_fight.
 Fix: due to limited size of moves_spent field, speeds over 255 are not allowed.
 */
 int __cdecl veh_speed(int veh_id, bool skip_morale) {
-    int unit_id = Vehs[veh_id].unit_id;
-    UNIT* u = &Units[unit_id];
-    bool normal_unit = unit_id >= MaxProtoFactionNum || u->offense_value() >= 0;
-    if (unit_id == BSC_FUNGAL_TOWER) {
+    VEH* veh = &Vehs[veh_id];
+    UNIT* u = &Units[veh->unit_id];
+    if (veh->unit_id == BSC_FUNGAL_TOWER) {
         return 0; // cannot move
     }
-    int speed_val = proto_speed(unit_id);
+    bool is_native = veh->is_native_unit();
+    int speed_val = proto_speed(veh->unit_id);
     int triad = u->triad();
-    if (triad == TRIAD_SEA && has_project(FAC_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
+    if (triad == TRIAD_SEA && has_project(FAC_MARITIME_CONTROL_CENTER, veh->faction_id)) {
         speed_val += Rules->move_rate_roads * 2;
     }
     if (!skip_morale && mod_morale_veh(veh_id, true, 0) == MORALE_ELITE
-    && ((normal_unit && conf.normal_elite_moves > 0)
-    || (!normal_unit && conf.native_elite_moves > 0))) {
+    && ((is_native && conf.native_elite_moves > 0)
+    || (!is_native && conf.normal_elite_moves > 0))) {
         speed_val += Rules->move_rate_roads;
     }
-    if (Vehs[veh_id].damage_taken && triad != TRIAD_AIR) {
+    if (veh->damage_taken && triad != TRIAD_AIR) {
         int moves = speed_val / Rules->move_rate_roads;
         int reactor_val;
         if (u->plan == PLAN_ARTIFACT) {
@@ -434,7 +434,7 @@ int __cdecl veh_speed(int veh_id, bool skip_morale) {
             reactor_val = clamp((int)u->reactor_id, 1, 100) * 10;
             speed_val = clamp(reactor_val, 1, 99);
         }
-        speed_val = (moves * clamp(reactor_val - Vehs[veh_id].damage_taken, 0, 9999)
+        speed_val = (moves * clamp(reactor_val - veh->damage_taken, 0, 9999)
             + speed_val - 1) / speed_val;
         speed_val = clamp(speed_val, (triad == TRIAD_SEA) ? 2 : 1, 999) * Rules->move_rate_roads;
     }
@@ -888,7 +888,7 @@ GOODY_START:
                     if (veh->plan() != PLAN_ARTIFACT) {
                         int spawn_id = veh_init(BSC_ALIEN_ARTIFACT, faction_id, x, y);
                         if (spawn_id >= 0) {
-                            veh_skip(spawn_id);
+                            mod_veh_skip(spawn_id);
                             draw_tile(x, y, 2);
                             if (is_player) {
                                 NetMsg_pop(NetMsg, "GOODYARTIFACT", -5000, 0, "art_dis_sm.pcx");
@@ -1721,7 +1721,7 @@ int __cdecl mod_upgrade_prototype(int faction_id, int new_unit_id, int old_unit_
     assert(new_unit_id != old_unit_id);
     assert(new_unit_id / MaxProtoFactionNum == faction_id);
 
-    if (*GameState & STATE_GAME_DONE && !(*GameState & STATE_FINAL_SCORE_DONE)) {
+    if (!full_game_turn()) {
         return 0;
     }
     // Fix issue with upgrade cost being incorrect for unit counts of more than 255.
@@ -2083,16 +2083,16 @@ int __cdecl mod_stack_check(int veh_id, int type, int cond1, int cond2, int cond
 int __cdecl mod_veh_init(int unit_id, int faction_id, int x, int y) {
     int veh_id = veh_init(unit_id, faction_id, x, y);
     if (veh_id >= 0) {
-        Vehicles[veh_id].home_base_id = -1;
+        Vehs[veh_id].home_base_id = -1;
         // Set these flags to disable any non-Thinker unit automation.
-        Vehicles[veh_id].state |= VSTATE_UNK_40000;
-        Vehicles[veh_id].state &= ~VSTATE_UNK_2000;
+        Vehs[veh_id].state |= VSTATE_UNK_40000;
+        Vehs[veh_id].state &= ~VSTATE_UNK_2000;
     }
     return veh_id;
 }
 
 int __cdecl mod_veh_kill(int veh_id) {
-    VEH* veh = &Vehicles[veh_id];
+    VEH* veh = &Vehs[veh_id];
     debug("disband %2d %2d %s\n", veh->x, veh->y, veh->name());
     veh_kill(veh_id);
     return VEH_SKIP;
@@ -2116,6 +2116,7 @@ int __cdecl mod_veh_jail(int veh_id) {
 /*
 Skip vehicle turn by adjusting spent moves to maximum available moves.
 Formers are a special case since they can build items without moving on the same turn.
+To work around several issues, this version adjusts more fields in addition to moves_spent.
 */
 int __cdecl mod_veh_skip(int veh_id) {
     VEH* veh = &Vehs[veh_id];
@@ -2141,6 +2142,15 @@ int __cdecl mod_veh_skip(int veh_id) {
     }
     veh->moves_spent = moves;
     return moves;
+}
+
+/*
+Purpose: Initialize/reset the fake veh_id used as a placeholder for various UI elements.
+Return Value: veh_id (not used by active vehs, original value 2048)
+*/
+int __cdecl mod_veh_fake(int unit_id, int faction_id) {
+    veh_clear(conf.max_veh_num, unit_id, faction_id);
+    return conf.max_veh_num;
 }
 
 int __cdecl mod_veh_wake(int veh_id) {
@@ -2207,32 +2217,29 @@ VehAblFlag abls, VehReactor rec, VehPlan ai_plan) {
     char name[256];
     mod_name_proto(name, -1, faction_id, chs, wpn, arm, abls, rec);
     int unit_id = propose_proto(faction_id, chs, wpn, arm, abls, rec, ai_plan, (strlen(name) ? name : NULL));
-    debug("create_proto %4d %d chs: %d rec: %d wpn: %2d arm: %2d %08X %d %s\n",
-        *CurrentTurn, faction_id, chs, rec, wpn, arm, abls, unit_id, name);
+    debug("create_proto  %d %d chs: %d rec: %d wpn: %2d arm: %2d pln: %2d %08X %d %s\n",
+        *CurrentTurn, faction_id, chs, rec, wpn, arm, ai_plan, abls, unit_id, name);
     return unit_id;
 }
 
 /*
-This function is only called from propose_proto to skip prototypes that are invalid.
+Propose a new prototype to be added for the faction. However this may be skipped
+if a similar prototype already exists or other exclude conditions apply on the parameters.
 */
-int __cdecl mod_is_bunged(int faction_id, VehChassis chs, VehWeapon wpn, VehArmor arm,
-VehAblFlag abls, VehReactor rec) {
+int __cdecl mod_propose_proto(int faction_id, VehChassis chs, VehWeapon wpn, VehArmor arm,
+VehAblFlag abls, VehReactor rec, VehPlan ai_plan, char* name) {
+    debug("propose_proto %d %d chs: %d rec: %d wpn: %2d arm: %2d pln: %2d %08X %s\n",
+        *CurrentTurn, faction_id, chs, rec, wpn, arm, ai_plan, abls, (name ? name : ""));
     int triad = Chassis[chs].triad;
     int arm_v = Armor[arm].defense_value;
     int wpn_v = Weapon[wpn].offense_value;
-    debug("propose_proto %3d %d chs: %d rec: %d wpn: %2d arm: %2d %08X\n",
-        *CurrentTurn, faction_id, chs, rec, wpn, arm, abls);
-
-    if (!is_human(faction_id)) {
-        if (conf.design_units) {
-            if (triad == TRIAD_SEA && wpn_v > 0 && arm_v > 3
-            && arm_v > wpn_v + 1) {
-                return 1;
-            }
+    if (conf.design_units) {
+        if (triad == TRIAD_SEA && wpn_v > 0 && arm_v > 3 && arm_v > wpn_v + 1
+        && !(abls & ~(ABL_SLOW|ABL_DEEP_RADAR|ABL_TRAINED))) {
+            return -1; // skipped
         }
-        return 0;
     }
-    return is_bunged(faction_id, chs, wpn, arm, abls, rec);
+    return propose_proto(faction_id, chs, wpn, arm, abls, rec, ai_plan, name);
 }
 
 /*
@@ -2468,14 +2475,14 @@ VehChassis chs, VehWeapon wpn, VehArmor arm, VehAblFlag abls, VehReactor rec) {
     int triad = Chassis[chs].triad;
     int spd_v = Chassis[chs].speed;
     bool arty = abls & ABL_ARTILLERY && triad == TRIAD_LAND;
-    bool sea_arty = abls & ABL_ARTILLERY && triad == TRIAD_SEA;
     bool marine = abls & ABL_AMPHIBIOUS && triad == TRIAD_LAND;
     bool intercept = abls & ABL_AIR_SUPERIORITY && triad == TRIAD_AIR;
     bool garrison = combat && !arty && !marine && wpn_v < arm_v && spd_v < 2;
     uint32_t prefix_abls = abls & ~(ABL_ARTILLERY|ABL_AMPHIBIOUS|ABL_CARRIER|ABL_NERVE_GAS
         | (intercept ? ABL_AIR_SUPERIORITY : 0)); // SAM for ground units
     // Battleship names are used only for long range artillery
-    bool lrg_names = (sea_arty || triad != TRIAD_SEA || conf.long_range_artillery < 1);
+    bool sea_arty = abls & ABL_ARTILLERY && triad == TRIAD_SEA && conf.long_range_artillery > 0;
+    bool lrg_names = (triad != TRIAD_SEA || conf.long_range_artillery < 1);
 
     if (!conf.new_unit_names || (!combat && !noncombat) || Chassis[chs].missile) {
         if (unit_id < 0) {
@@ -2515,8 +2522,7 @@ VehChassis chs, VehWeapon wpn, VehArmor arm, VehAblFlag abls, VehReactor rec) {
             if ((!arty && !marine && !intercept) || (arty && spd_v > 1)) {
                 int value = wpn_v - arm_v;
                 if (value <= -1) { // Defensive
-                    if ((arm_v >= 8 && wpn_v*2 >= min(24, arm_v) && lrg_names)
-                    || (sea_arty && wpn_v + arm_v >= 4)) {
+                    if (sea_arty || (lrg_names && arm_v >= 8 && wpn_v*2 >= min(24, arm_v))) {
                         parse_chs_name(buf, Chassis[chs].defsv_name_lrg);
                     } else if (wpn_v >= 2) {
                         parse_chs_name(buf, Chassis[chs].defsv1_name);
@@ -2524,8 +2530,7 @@ VehChassis chs, VehWeapon wpn, VehArmor arm, VehAblFlag abls, VehReactor rec) {
                         parse_chs_name(buf, Chassis[chs].defsv2_name);
                     }
                 } else if (value >= 1 || sea_arty) { // Offensive
-                    if ((wpn_v >= 8 && arm_v*2 >= min(24, wpn_v) && lrg_names)
-                    || (sea_arty && wpn_v + arm_v >= 4)) {
+                    if (sea_arty || (lrg_names && wpn_v >= 8 && arm_v*2 >= min(24, wpn_v))) {
                         parse_chs_name(buf, Chassis[chs].offsv_name_lrg);
                     } else if (triad != TRIAD_AIR && arm_v >= 2) {
                         parse_chs_name(buf, Chassis[chs].offsv1_name);
@@ -2585,9 +2590,13 @@ VehChassis chs, VehWeapon wpn, VehArmor arm, VehAblFlag abls, VehReactor rec) {
             break;
         }
     }
-    strncpy(name, buf, MaxProtoNameLen);
-    name[MaxProtoNameLen - 1] = '\0';
+    strcpy_n(name, MaxProtoNameLen, buf);
     return 0;
+}
+
+VehPlan support_plan() {
+    return (conf.modify_unit_support == 1 ? PLAN_SUPPLY :
+        (conf.modify_unit_support == 2 ? PLAN_PROBE : PLAN_TERRAFORM));
 }
 
 VehArmor best_armor(int faction_id, int max_cost) {

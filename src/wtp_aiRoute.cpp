@@ -505,7 +505,7 @@ void populateAirbases(int factionId)
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		
 		if (vehicle_has_ability(vehicleId, ABL_CARRIER) && vehicle->faction_id == factionId)
 		{
@@ -2532,24 +2532,24 @@ void populateSharedSeas()
 
 double getVehicleAttackApproachTime(int vehicleId, MAP *dst)
 {
-	VEH *vehicle = &Vehicles[vehicleId];
+	VEH *vehicle = &Vehs[vehicleId];
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	return getUnitApproachTime(vehicle->faction_id, vehicle->unit_id, vehicleTile, dst, false);
 }
 double getVehicleAttackApproachTime(int vehicleId, MAP *org, MAP *dst)
 {
-	VEH *vehicle = &Vehicles[vehicleId];
+	VEH *vehicle = &Vehs[vehicleId];
 	return getUnitApproachTime(vehicle->faction_id, vehicle->unit_id, org, dst, false);
 }
 double getVehicleApproachTime(int vehicleId, MAP *dst, bool includeDestination)
 {
-	VEH *vehicle = &Vehicles[vehicleId];
+	VEH *vehicle = &Vehs[vehicleId];
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	return getUnitApproachTime(vehicle->faction_id, vehicle->unit_id, vehicleTile, dst, includeDestination);
 }
 double getVehicleApproachTime(int vehicleId, MAP *org, MAP *dst, bool includeDestination)
 {
-	VEH *vehicle = &Vehicles[vehicleId];
+	VEH *vehicle = &Vehs[vehicleId];
 	return getUnitApproachTime(vehicle->faction_id, vehicle->unit_id, org, dst, includeDestination);
 }
 double getUnitApproachTime(int factionId, int unitId, MAP *org, MAP *dst, bool includeDestination)
@@ -2929,13 +2929,13 @@ double getUnitTravelTime(int factionId, int unitId, MAP *org, MAP *dst, bool inc
 }
 double getVehicleTravelTime(int vehicleId, MAP *org, MAP *dst, bool includeDestination)
 {
-	VEH &vehicle = Vehicles[vehicleId];
+	VEH &vehicle = Vehs[vehicleId];
 	int speed = getVehicleSpeed(vehicleId);
 	return getUnitTravelTime(vehicle.faction_id, vehicle.unit_id, speed, org, dst, includeDestination);
 }
 double getVehicleTravelTime(int vehicleId, MAP *dst, bool includeDestination)
 {
-	VEH &vehicle = Vehicles[vehicleId];
+	VEH &vehicle = Vehs[vehicleId];
 	int speed = getVehicleSpeed(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	return getUnitTravelTime(vehicle.faction_id, vehicle.unit_id, speed, vehicleTile, dst, includeDestination);
@@ -3975,7 +3975,7 @@ bool isSameEnemySeaCombatCluster(int vehicleId, MAP *tile2)
 	assert(vehicleId >= 0 && vehicleId < *VehCount);
 	assert(tile2 >= *MapTiles && tile2 < *MapTiles + *MapAreaTiles);
 	
-	VEH &vehicle = Vehicles[vehicleId];
+	VEH &vehicle = Vehs[vehicleId];
 	int factionId = vehicle.faction_id;
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
@@ -4009,7 +4009,7 @@ bool isSameEnemyLandCombatCluster(int vehicleId, MAP *tile2)
 	assert(vehicleId >= 0 && vehicleId < *VehCount);
 	assert(tile2 >= *MapTiles && tile2 < *MapTiles + *MapAreaTiles);
 	
-	VEH &vehicle = Vehicles[vehicleId];
+	VEH &vehicle = Vehs[vehicleId];
 	int factionId = vehicle.faction_id;
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	

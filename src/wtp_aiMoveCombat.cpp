@@ -746,7 +746,7 @@ void moveInterceptors()
 //				
 //				baseInfo.combatData.addVehicle(vehicleId, true);
 //				
-//				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSatisfied(true) = %d\n", vehicleId, Vehicles[vehicleId].name(), baseInfo.combatData.isSatisfied(true))
+//				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSatisfied(true) = %d\n", vehicleId, Vehs[vehicleId].name(), baseInfo.combatData.isSatisfied(true))
 //				if (baseInfo.combatData.isSatisfied(true))
 //					break;
 //				
@@ -884,7 +884,7 @@ void moveProtectors()
 				
 				baseInfo.combatData.addVehicleEffect(vehicleId, true);
 				
-				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSatisfied(true) = %d\n", vehicleId, Vehicles[vehicleId].name(), baseInfo.combatData.isSatisfied(true))
+				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSatisfied(true) = %d\n", vehicleId, Vehs[vehicleId].name(), baseInfo.combatData.isSatisfied(true))
 				if (baseInfo.combatData.isSatisfied(true))
 					break;
 				
@@ -1018,7 +1018,7 @@ void moveBunkerProtectors()
 				
 				bunkerCombatData.addVehicleEffect(vehicleId, true);
 				
-				debug("\t\t\t[%4d] %-32s bunkerCombatData.isSatisfied(true) = %d\n", vehicleId, Vehicles[vehicleId].name(), bunkerCombatData.isSatisfied(true))
+				debug("\t\t\t[%4d] %-32s bunkerCombatData.isSatisfied(true) = %d\n", vehicleId, Vehs[vehicleId].name(), bunkerCombatData.isSatisfied(true))
 				
 				if (bunkerCombatData.isSatisfied(true))
 					break;
@@ -1298,8 +1298,8 @@ void moveCombat()
 				CombatAction *taskPriority1 = podPoppingAssignment1->second;
 				CombatAction *taskPriority2 = podPoppingAssignment2->second;
 				
-				int triad1 = Vehicles[vehicleId1].triad();
-				int triad2 = Vehicles[vehicleId2].triad();
+				int triad1 = Vehs[vehicleId1].triad();
+				int triad2 = Vehs[vehicleId2].triad();
 				MAP *vehicleTile1 = getVehicleMapTile(vehicleId1);
 				MAP *vehicleTile2 = getVehicleMapTile(vehicleId2);
 				bool destinationOcean1 = is_ocean(taskPriority1->destination);
@@ -1613,7 +1613,7 @@ void populateRepairTasks(std::vector<CombatAction> &taskPriorities)
 	
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		int triad = vehicle->triad();
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		
@@ -1796,7 +1796,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 	
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		int triad = vehicle->triad();
 		
 		// exclude battle ogres
@@ -1998,7 +1998,7 @@ void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities)
 	
 	for (int vehicleId : aiData.combatVehicleIds)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		int triad = vehicle->triad();
 		

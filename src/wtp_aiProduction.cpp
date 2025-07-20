@@ -1905,7 +1905,7 @@ void evaluateTerraformUnits()
 	for (int vehicleId : aiData.formerVehicleIds)
 	{
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
-		int chassisId = Units[Vehicles[vehicleId].unit_id].chassis_id;
+		int chassisId = Units[Vehs[vehicleId].unit_id].chassis_id;
 		CChassis &chassis = Chassis[chassisId];
 		int triad = chassis.triad;
 		int speed = chassis.speed;
@@ -3477,7 +3477,7 @@ int calculateUnitTypeCount(int factionId, int weaponType, int triad, int exclude
 
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		if (vehicle->faction_id != factionId)
 			continue;

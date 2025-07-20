@@ -259,8 +259,11 @@ tree<ProfileName> Profiling::profiles;
 
 int alphax_tgl_probe_steal_tech_value;
 
-// probe movement points after subversion
-int probeMovesSpent = -1;
+// probe subversion parameters
+int probe_probeVehicleId;
+int probe_targetBaseId;
+int probe_targetVehicleId;
+int probe_probeMovesSpent = -1;
 
 /*
 Combat calculation placeholder.
@@ -281,8 +284,8 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 //
 	// get attacker/defender vehicle
 	
-	VEH *attackerVehicle = &Vehicles[attackerVehicleId];
-	VEH *defenderVehicle = &Vehicles[defenderVehicleId];
+	VEH *attackerVehicle = &Vehs[attackerVehicleId];
+	VEH *defenderVehicle = &Vehs[defenderVehicleId];
 	
 	// get attacker/defender unit
 	
@@ -539,7 +542,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	{
 		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 		{
-			VEH *vehicle = &Vehs[vehicleId];
+			VEH *vehicle = getVehicle(vehicleId);
 			
 			if (vehicle->faction_id != defenderVehicle->faction_id)
 				continue;
@@ -1212,7 +1215,7 @@ __cdecl int wtp_mod_base_init(int factionId, int x, int y)
 {
 	// execute original code
 	
-	int baseId = base_init(factionId, x, y);
+	int baseId = mod_base_init(factionId, x, y);
 	
 	// return immediatelly if base wasn't created
 	
@@ -1492,7 +1495,7 @@ void createFreeVehicles(int factionId)
 
 	for (int id = 0; id < *VehCount; id++)
 	{
-		VEH* vehicle = &(Vehicles[id]);
+		VEH* vehicle = &(Vehs[id]);
 
 		if (vehicle->faction_id != factionId)
 			continue;
@@ -1783,7 +1786,7 @@ __cdecl int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, i
 	
 	if
 	(
-		Units[Vehicles[attackerVehicleId].unit_id].weapon_id != WPN_PROBE_TEAM
+		Units[Vehs[attackerVehicleId].unit_id].weapon_id != WPN_PROBE_TEAM
 		&&
 		attackerTriad == TRIAD_SEA && defenderTriad == TRIAD_SEA && bombardment == 0
 	)
@@ -1794,7 +1797,7 @@ __cdecl int modifiedBestDefender(int defenderVehicleId, int attackerVehicleId, i
 		
 		for (int stackedVehicleId : getStackVehicleIds(defenderVehicleId))
 		{
-			VEH *stackedVehicle = &(Vehicles[stackedVehicleId]);
+			VEH *stackedVehicle = &(Vehs[stackedVehicleId]);
 			UNIT *stackedVehicleUnit = &(Units[stackedVehicle->unit_id]);
 			
 			int attackerOffenseValue;
@@ -1876,7 +1879,7 @@ int __cdecl wtp_mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, i
 {
 	debug("modifiedBattleFight2(attackerVehicleId=%d, angle=%d, tx=%d, ty=%d, do_arty=%d, option=%d)\n", veh_id_atk, offset, tx, ty, table_offset, option);
 	
-	VEH *attackerVehicle = &Vehicles[veh_id_atk];
+	VEH *attackerVehicle = &Vehs[veh_id_atk];
 	
 	if (attackerVehicle->faction_id == *CurrentPlayerFaction)
 	{
@@ -1891,7 +1894,7 @@ int __cdecl wtp_mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, i
 			
 			for (int vehicleId : stackedVehicleIds)
 			{
-				if (Units[Vehicles[vehicleId].unit_id].weapon_id != WPN_ALIEN_ARTIFACT)
+				if (Units[Vehs[vehicleId].unit_id].weapon_id != WPN_ALIEN_ARTIFACT)
 				{
 					nonArtifactUnitExists = true;
 					break;
@@ -1900,7 +1903,7 @@ int __cdecl wtp_mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, i
 			
 			if (nonArtifactUnitExists)
 			{
-				VEH *defenderVehicle = &(Vehicles[defenderVehicleId]);
+				VEH *defenderVehicle = &(Vehs[defenderVehicleId]);
 				
 				int treatyNotBroken = tx_break_treaty(attackerVehicle->faction_id, defenderVehicle->faction_id, 0xB);
 				
@@ -1988,7 +1991,7 @@ Pretends that air transport has zero cargo capacity when in not appropriate unlo
 */
 __cdecl int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
 	// disable air transport unload not in base
@@ -2015,7 +2018,7 @@ __cdecl int modifiedVehicleCargoForAirTransportUnload(int vehicleId)
 /*
 Overrides faction_upkeep calls to amend vanilla and Thinker AI functionality.
 */
-__cdecl int modifiedFactionUpkeep(const int factionId)
+__cdecl void modifiedFactionUpkeep(const int factionId)
 {
 	debug("modifiedFactionUpkeep - %s\n", getMFaction(factionId)->noun_faction);
 	
@@ -2032,8 +2035,6 @@ __cdecl int modifiedFactionUpkeep(const int factionId)
 	
 	// choose AI logic
 	
-	int returnValue;
-	
 	if (isWtpEnabledFaction(factionId))
 	{
 		// run WTP AI code for AI eanbled factions
@@ -2048,7 +2049,7 @@ __cdecl int modifiedFactionUpkeep(const int factionId)
 	
 	// execute original function
 	
-	returnValue = mod_faction_upkeep(factionId);
+	mod_faction_upkeep(factionId);
 	
 	Profiling::resume("modifiedFactionUpkeep");
 	
@@ -2106,7 +2107,6 @@ __cdecl int modifiedFactionUpkeep(const int factionId)
 	// return original value
 	
 	Profiling::stop("modifiedFactionUpkeep");
-	return returnValue;
 	
 }
 
@@ -2246,7 +2246,7 @@ int __cdecl modifiedBaseMaking(int item, int baseId)
 	
 	// run original code in all other cases
 	
-	return base_making(item, baseId);
+	return mod_base_making(item, baseId);
 	
 }
 
@@ -2369,7 +2369,7 @@ int __cdecl modifiedMindControlCost(int baseId, int probeFactionId, int cornerMa
 
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		// skip not base faction
 
@@ -2409,7 +2409,7 @@ Calculates vehicle alternative subversion cost.
 */
 int __cdecl getBasicAlternativeSubversionCost(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	int hqDistance;
 
@@ -2446,7 +2446,7 @@ Calculates vehicle alternative subversion cost.
 */
 int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistance)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	UNIT *vehicleUnit = &(Units[vehicle->unit_id]);
 
 	// calculate base unit subversion cost
@@ -2466,7 +2466,7 @@ int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistanc
 
 	for (int otherVehicleId = 0; otherVehicleId < *VehCount; otherVehicleId++)
 	{
-		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		VEH *otherVehicle = getVehicle(otherVehicleId);
 
 		// same faction only
 
@@ -2509,34 +2509,57 @@ int getBasicAlternativeSubversionCostWithHQDistance(int vehicleId, int hqDistanc
 }
 
 /*
-Moves subverted vehicle on probe tile.
+Intercept probe call to record actors.
 */
-void __cdecl modifiedSubveredVehicleDrawTile(int probeVehicleId, int subvertedVehicleId, int radius)
+void __cdecl wtp_mod_probe(int probeVehicleId, int targetBaseId, int targetVehicleId, int flags)
 {
-	VEH *probeVehicle = &(Vehicles[probeVehicleId]);
+	probe_probeVehicleId = probeVehicleId;
+	probe_targetBaseId = targetBaseId;
+	probe_targetVehicleId = targetVehicleId;
 	
-	// store subverted vehicle original location
+	// execute original function
 	
-	VEH *subvertedVehicle = &(Vehicles[subvertedVehicleId]);
-	int targetX = subvertedVehicle->x;
-	int targetY = subvertedVehicle->y;
-	
-	// move subverted vehicle to probe tile
-	
-	veh_put(subvertedVehicleId, probeVehicle->x, probeVehicle->y);
-	
-	// stop probe
-	
-	probeMovesSpent = probeVehicle->moves_spent + Rules->move_rate_roads;
-	probeVehicle->moves_spent = veh_speed(probeVehicleId, false);
-	
-	// redraw original target tile
-	
-	draw_tile(targetX, targetY, radius);
+	probe(probeVehicleId, targetBaseId, targetVehicleId, flags);
 	
 }
 
-int __cdecl modifiedTurnUpkeep()
+/*
+Moves subverted vehicle on probe tile.
+*/
+void __cdecl modifiedSubveredVehicleDrawTile(int x, int y, int radius)
+{
+	// vehicle targeted
+	if (probe_targetVehicleId >= 0)
+	{
+		// get vehicles
+		
+		VEH *probeVehicle = getVehicle(probe_probeVehicleId);
+		VEH *targetVehicle = getVehicle(probe_targetVehicleId);
+		
+		// vehicle subverted
+		
+		if (targetVehicle->faction_id == probeVehicle->faction_id)
+		{
+			// move subverted vehicle to probe tile
+			
+			veh_put(probe_targetVehicleId, probeVehicle->x, probeVehicle->y);
+			
+			// stop probe
+			
+			probe_probeMovesSpent = probeVehicle->moves_spent + Rules->move_rate_roads;
+			probeVehicle->moves_spent = veh_speed(probe_probeVehicleId, false);
+			
+		}
+		
+	}
+	
+	// execute original function
+	
+	draw_tile(x, y, radius);
+	
+}
+
+void __cdecl modifiedTurnUpkeep()
 {
 	// executionProfiles
 	
@@ -2717,7 +2740,7 @@ int __cdecl modifiedTurnUpkeep()
 	
 	// execute original function
 	
-	return mod_turn_upkeep();
+	mod_turn_upkeep();
 	
 }
 
@@ -2869,7 +2892,7 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 {
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		
 		if (vehicle->faction_id != factionId)
 			continue;
@@ -2948,37 +2971,6 @@ int __cdecl modified_pact_withdraw(int factionId, int pactFactionId)
 }
 
 /*
-Prototype proposal entry point.
-*/
-int __cdecl modified_propose_proto(int factionId, int chassisId, int weaponId, int armorId, int abilities_int, int reactorId, int plan, char const *name)
-{
-	uint32_t abilities = (uint32_t) abilities_int;
-	int offenseValue = Weapon[weaponId].offense_value;
-	int defenseValue = Armor[armorId].defense_value;
-	
-	// do not build defender ships
-	
-	if
-	(
-		(chassisId == CHS_FOIL || chassisId == CHS_CRUISER)
-		&&
-		(offenseValue > 0 && defenseValue > 0 && offenseValue < defenseValue)
-	)
-	{
-		debug("modified_propose_proto: rejected defender ship\n");
-		debug("\treactorId=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactorId, chassisId, weaponId, armorId, getAbilitiesString(abilities).c_str());
-		
-		return -1;
-		
-	}
-	
-	// otherwise execute original code
-	
-	return propose_proto(factionId, (VehChassis)chassisId, (VehWeapon)weaponId, (VehArmor)armorId, abilities, (VehReactor)reactorId, (VehPlan)plan, name);
-	
-}
-
-/*
 Calculates stockpile energy as vanilla does it.
 */
 int getStockpileEnergy(int baseId)
@@ -3026,7 +3018,7 @@ int __cdecl wtp_mod_order_veh(int vehicleId, int angle, int a3)
 	{
 		// reset probeMovesSpent
 		
-		probeMovesSpent = -1;
+		probe_probeMovesSpent = -1;
 		
 		// execute original function
 		
@@ -3034,17 +3026,17 @@ int __cdecl wtp_mod_order_veh(int vehicleId, int angle, int a3)
 		
 		// set probe moves
 		
-		if (probeMovesSpent >= 0)
+		if (probe_probeMovesSpent >= 0)
 		{
-			VEH *probeVehicle = &(Vehicles[vehicleId]);
+			VEH *probeVehicle = getVehicle(vehicleId);
 			
 			// set probe moves
 			
-			probeVehicle->moves_spent = probeMovesSpent;
+			probeVehicle->moves_spent = probe_probeMovesSpent;
 			
-			// reset probeMovesSpent
+			// reset probe_probeMovesSpent
 			
-			probeMovesSpent = -1;
+			probe_probeMovesSpent = -1;
 			
 		}
 		
@@ -3116,7 +3108,7 @@ Verifies that given vehicle can move to this angle.
 */
 bool isValidMovementAngle(int vehicleId, int angle)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	// find target tile
 
@@ -3154,7 +3146,7 @@ Verifies that there is same faction transport from given vehicle by given angle.
 */
 bool isAdjacentTransportAtSea(int vehicleId, int angle)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	// find target tile
 
@@ -3175,7 +3167,7 @@ bool isAdjacentTransportAtSea(int vehicleId, int angle)
 
 	for (int targetTileStackVehicleId : getStackVehicleIds(targetTileVehicleId))
 	{
-		VEH *targetTileStackVehicle = &(Vehicles[targetTileStackVehicleId]);
+		VEH *targetTileStackVehicle = &(Vehs[targetTileStackVehicleId]);
 
 		// same faction
 
@@ -3208,7 +3200,7 @@ void fixVehicleHomeBases(int factionId)
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		
 		// exclude not own vehicles
 		
@@ -3355,7 +3347,7 @@ void __cdecl modified_veh_skip_disable_non_transport_stop_in_base(int vehicleId)
 	
 	if (isTransportVehicle(vehicleId))
 	{
-		veh_skip(vehicleId);
+		mod_veh_skip(vehicleId);
 	}
 	
 }
@@ -4072,9 +4064,9 @@ Intercepts enemy_move to correct probe moves.
 */
 int __cdecl wtp_mod_enemy_move(int vehicleId)
 {
-	// reset probeMovesSpent
+	// reset probe_probeMovesSpent
 	
-	probeMovesSpent = -1;
+	probe_probeMovesSpent = -1;
 	
 	// run original function
 	// which also wraps AI logic
@@ -4083,17 +4075,17 @@ int __cdecl wtp_mod_enemy_move(int vehicleId)
 	
 	// set probe moves
 	
-	if (probeMovesSpent >= 0)
+	if (probe_probeMovesSpent >= 0)
 	{
-		VEH *probeVehicle = &(Vehicles[vehicleId]);
+		VEH *probeVehicle = getVehicle(vehicleId);
 		
 		// set probe moves
 		
-		probeVehicle->moves_spent = probeMovesSpent;
+		probeVehicle->moves_spent = probe_probeMovesSpent;
 		
-		// reset probeMovesSpent
+		// reset probe_probeMovesSpent
 		
-		probeMovesSpent = -1;
+		probe_probeMovesSpent = -1;
 		
 	}
 	
@@ -4156,13 +4148,13 @@ Intercepts probe -> veh_skip to disable promotion on infiltrate datalinks.
 */
 int wtp_mod_probe_veh_skip(int vehicleId)
 {
-	int value = veh_skip(vehicleId);
+	int value = mod_veh_skip(vehicleId);
 	
 	// disable probe promotion on infiltrate datalinks by reducing morale
 	
 	if (isProbeVehicle(vehicleId))
 	{
-		VEH &vehicle = Vehicles[vehicleId];
+		VEH &vehicle = Vehs[vehicleId];
 		
 		if (vehicle.probe_action == 0)
 		{
@@ -4224,10 +4216,26 @@ int __cdecl wtp_mod_tech_achieved(int factionId, int techId, int targetFactionId
 	
 	if (Factions[factionId].tech_research_id < 0)
 	{
-		tech_selection(factionId);
+		mod_tech_selection(factionId);
 	}
 	
 	return value;
+	
+}
+
+/*
+Does not initialize disabled popup.
+*/
+int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx_filename, int a5)
+{
+	if ((*GameWarnings & flags) == 0)
+	{
+		return 0;
+	}
+	else
+	{
+		return popb(label, flags, sound_id, pcx_filename, a5);
+	}
 	
 }
 

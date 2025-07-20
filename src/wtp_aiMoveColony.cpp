@@ -300,7 +300,7 @@ void analyzeBasePlacementSites()
 	
 	for (int vehicleId : activeColonyVehicleIds)
 	{
-		VEH &vehicle = Vehicles[vehicleId];
+		VEH &vehicle = Vehs[vehicleId];
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		int triad = vehicle.triad();
 		
@@ -311,7 +311,7 @@ void analyzeBasePlacementSites()
 		int enemyColonyRange = INT_MAX;
 		for (int enemyVehicleId = 0; enemyVehicleId < *VehCount; enemyVehicleId++)
 		{
-			VEH &enemyVehicle = Vehicles[enemyVehicleId];
+			VEH &enemyVehicle = Vehs[enemyVehicleId];
 			int enemyVehicleTriad = enemyVehicle.triad();
 			
 			// other faction
@@ -1087,7 +1087,7 @@ int getNearestColonyRange(MAP *tile)
 
 	for (int vehicleId : aiData.colonyVehicleIds)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 
 		// proper triad only

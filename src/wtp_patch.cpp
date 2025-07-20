@@ -1076,7 +1076,7 @@ void patch_hsa_does_not_kill_probe()
 {
 	// HSA does not kill probe but exhausts its movement points instead.
 
-    write_call(0x0059F6EA, (int)veh_skip);
+    write_call(0x0059F6EA, (int)mod_veh_skip);
 
 }
 
@@ -1783,21 +1783,21 @@ Disabling this restriction to allow easier AI navigation.
 */
 void patch_disable_move_territory_restrictions()
 {
-	int disable_move_territory_restriction_bytes_length = 0x7;
+	int disable_move_territory_restriction_bytes_length = 0x1;
 	
 	/*
 	0:  80 be 39 28 95 00 18    cmp    BYTE PTR [esi+0x952839],0x18
 	*/
-	byte disable_move_territory_restriction_bytes_old[] = { 0x80, 0xBE, 0x39, 0x28, 0x95, 0x00, 0x18 };
+	byte disable_move_territory_restriction_bytes_old[] = { 0x18 };
 	
 	/*
 	0:  80 be 39 28 95 00 ff    cmp    BYTE PTR [esi+0x952839],0xff
 	*/
-	byte disable_move_territory_restriction_bytes_new[] = { 0x80, 0xBE, 0x39, 0x28, 0x95, 0x00, 0xFF };
+	byte disable_move_territory_restriction_bytes_new[] = { 0xFF };
 	
 	write_bytes
 	(
-		0x00594A0B,
+		0x00594A0B + 0x6,
 		disable_move_territory_restriction_bytes_old,
 		disable_move_territory_restriction_bytes_new,
 		disable_move_territory_restriction_bytes_length
@@ -2087,28 +2087,10 @@ void patch_subversion_allow_stacked_units()
 	
 	// move subverted unit to probe tile
 	
-	int pull_subverted_vehicle_bytes_length = 0xe;
-	
-	/*
-	0:  0f bf 86 2a 28 95 00    movsx  eax,WORD PTR [esi+0x95282a]
-	7:  0f bf 8e 28 28 95 00    movsx  ecx,WORD PTR [esi+0x952828]
-	*/
-	byte pull_subverted_vehicle_bytes_old[] = { 0x0F, 0xBF, 0x86, 0x2A, 0x28, 0x95, 0x00, 0x0F, 0xBF, 0x8E, 0x28, 0x28, 0x95, 0x00 };
-	
-	/*
-	0:  8b 45 10                mov    eax,DWORD PTR [ebp+0x10]
-	3:  8b 4d 08                mov    ecx,DWORD PTR [ebp+0x8]
-	...
-	*/
-	byte pull_subverted_vehicle_bytes_new[] = { 0x8B, 0x45, 0x10, 0x8B, 0x4D, 0x08, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-	
-	write_bytes
-	(
-		0x005A423E,
-		pull_subverted_vehicle_bytes_old,
-		pull_subverted_vehicle_bytes_new,
-		pull_subverted_vehicle_bytes_length
-	);
+    write_call(0x0056E19C, (int)wtp_mod_probe);
+    write_call(0x00578512, (int)wtp_mod_probe);
+    write_call(0x00595026, (int)wtp_mod_probe);
+    write_call(0x00596615, (int)wtp_mod_probe);
 	
     write_call(0x005A4250, (int)modifiedSubveredVehicleDrawTile);
     
@@ -2514,41 +2496,6 @@ void patch_pact_withdraw()
 	
 }
 
-void patch_propose_proto()
-{
-	write_call(0x004CEF64, (int)modified_propose_proto);
-	write_call(0x004F59B2, (int)modified_propose_proto);
-	write_call(0x0058188D, (int)modified_propose_proto);
-	write_call(0x00581C1A, (int)modified_propose_proto);
-	write_call(0x00581CA3, (int)modified_propose_proto);
-	write_call(0x00581D16, (int)modified_propose_proto);
-	write_call(0x0058215E, (int)modified_propose_proto);
-	write_call(0x005821C5, (int)modified_propose_proto);
-	write_call(0x00582210, (int)modified_propose_proto);
-	write_call(0x005825F3, (int)modified_propose_proto);
-	write_call(0x00582961, (int)modified_propose_proto);
-	write_call(0x00582C22, (int)modified_propose_proto);
-	write_call(0x0058306D, (int)modified_propose_proto);
-	write_call(0x00583183, (int)modified_propose_proto);
-	write_call(0x005832D1, (int)modified_propose_proto);
-	write_call(0x00583401, (int)modified_propose_proto);
-	write_call(0x00583437, (int)modified_propose_proto);
-	write_call(0x00583631, (int)modified_propose_proto);
-	write_call(0x005836F9, (int)modified_propose_proto);
-	write_call(0x005838F3, (int)modified_propose_proto);
-	write_call(0x005839B9, (int)modified_propose_proto);
-	write_call(0x005839EC, (int)modified_propose_proto);
-	write_call(0x00583A1A, (int)modified_propose_proto);
-	write_call(0x00583A64, (int)modified_propose_proto);
-	write_call(0x00583B6A, (int)modified_propose_proto);
-	write_call(0x00583C80, (int)modified_propose_proto);
-	write_call(0x005A4173, (int)modified_propose_proto);
-	write_call(0x005A49F5, (int)modified_propose_proto);
-	write_call(0x005BB364, (int)modified_propose_proto);
-	write_call(0x005BB5CD, (int)modified_propose_proto);
-
-}
-
 void patch_disengagement_from_stack()
 {
     int disengagement_from_stack_bytes_length = 0x3;
@@ -2611,6 +2558,7 @@ void patch_base_attack()
     byte base_attack_bytes_old[] =
 		{ 0x8D, 0x14, 0x7F, 0x8D, 0x04, 0x97, 0x0F, 0xBF, 0x04, 0x85, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x0C, 0x40, 0x8D, 0x14, 0x88, 0x33, 0xC0, 0x8A, 0x04, 0x95, 0x8D, 0xB8, 0x9A, 0x00, 0xC1, 0xE0, 0x04, 0x8A, 0x88, 0x68, 0xAE, 0x94, 0x00 }
     ;
+    shiftVehicleAddress(base_attack_bytes_old, 0xA);
 	
     /*
     ...
@@ -2651,6 +2599,7 @@ void patch_vehicle_boom()
     byte boom1_bytes_old[] =
 		{ 0x8D, 0x04, 0x7F, 0x8D, 0x04, 0x87, 0xC1, 0xE0, 0x02, 0x0F, 0xBF, 0x88, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x14, 0x49, 0x8D, 0x0C, 0x91, 0xC1, 0xE1, 0x02, 0x80, 0xB9, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
     ;
+	shiftVehicleAddress(boom1_bytes_old, 0xC);
 	
     /*
     0:  83 ff 00                cmp    edi,0x0
@@ -2694,6 +2643,7 @@ void patch_vehicle_boom()
     byte boom2_bytes_old[] =
 		{ 0x8B, 0x45, 0xE4, 0x8D, 0x0C, 0x40, 0x8D, 0x14, 0x88, 0x0F, 0xBF, 0x04, 0x95, 0x32, 0x28, 0x95, 0x00, 0x8D, 0x0C, 0x40, 0x8D, 0x14, 0x88, 0x80, 0x3C, 0x95, 0x8C, 0xB8, 0x9A, 0x00, 0x08 }
     ;
+	shiftVehicleAddress(boom2_bytes_old, 0xD);
 	
     /*
     0:  8b 4d e4                mov    ecx,DWORD PTR [ebp-0x1c]
@@ -3458,8 +3408,6 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_pact_withdraw();
 	
-	patch_propose_proto();
-	
 	if (cf->disengagement_from_stack)
 	{
 		patch_disengagement_from_stack();
@@ -3541,6 +3489,20 @@ void patch_setup_wtp(Config* cf)
 	patch_psi_gate_unlimited();
 	
 	patch_tech_achieved();
+	
+}
+
+void shiftVehicleAddress(byte *bytes, int position)
+{
+	if (!conf.modify_unit_limit)
+		return;
+	
+	int address = 0x1000000 * bytes[position + 3] + 0x10000 * bytes[position + 2] + 0x100 * bytes[position + 1] + 0x1 * bytes[position + 0];
+	address += ((int)VehsMod - (int)VehsDef);
+	bytes[position + 3] = (address >> 24) % 0x100;
+	bytes[position + 2] = (address >> 16) % 0x100;
+	bytes[position + 1] = (address >>  8) % 0x100;
+	bytes[position + 0] = (address >>  0) % 0x100;
 	
 }
 

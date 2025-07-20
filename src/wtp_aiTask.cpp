@@ -12,7 +12,7 @@ int Task::getVehicleId()
 {
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		if (vehicle->pad_0 == vehiclePad0)
 		{
@@ -139,7 +139,7 @@ int Task::getDestinationRange()
 		return 0;
 	}
 
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	return map_range(vehicle->x, vehicle->y, x, y);
 
@@ -319,7 +319,7 @@ int Task::executeBuild(int vehicleId)
 {
 	debug("Task::executeBuild\n");
 
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 
 	// check there is no adjacent bases
@@ -738,7 +738,7 @@ void TaskList::addTask(Task _task)
 void setTask(Task task)
 {
 	int vehicleId = task.getVehicleId();
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	if (aiData.tasks.count(vehicle->pad_0) == 0)
 	{
@@ -753,7 +753,7 @@ void setTask(Task task)
 
 bool hasTask(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	return (aiData.tasks.count(vehicle->pad_0) != 0);
 }
 
@@ -764,7 +764,7 @@ bool hasExecutableTask(int vehicleId)
 
 void deleteTask(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	aiData.tasks.erase(vehicle->pad_0);
 
@@ -772,7 +772,7 @@ void deleteTask(int vehicleId)
 
 Task *getTask(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	
 	robin_hood::unordered_flat_map<int, Task>::iterator taskIterator = aiData.tasks.find(vehicle->pad_0);
 	

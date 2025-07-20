@@ -247,18 +247,19 @@ int probe_roll_value(int faction_id) {
     
 }
 
-int probe_active_turns(int /*faction1*/, int faction2) {
-	
-	// [WTP]
-	/*
+// [WTP]
+// modified function for probe use below
+/*
+int probe_active_turns(int faction1, int faction2) {
     int value = clamp(15 + probe_roll_value(faction1) - probe_roll_value(faction2), 5, 50);
     value = value * (4 + (*MapAreaTiles >= 4000) + (*MapAreaTiles >= 8000)) / 4;
     value = value * (4 + (*DiffLevel < DIFF_TRANSCEND) + (*DiffLevel < DIFF_THINKER)) / 4;
     return clamp(value, 5, 50);
-    */
+}
+*/
+int probe_active_turns(int /*faction1*/, int faction2) {
     int value = clamp(40 - probe_roll_value(faction2), 10, 60);
     return clamp(value, 10, 60);
-    
 }
 
 int probe_upkeep(int faction1) {

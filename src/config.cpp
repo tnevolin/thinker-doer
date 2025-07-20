@@ -2,7 +2,7 @@
 #include "config.h"
 
 const char* AlphaFile = "alphax";
-char const * const ScriptFile = "script";
+const char* ScriptFile = "script";
 const char* ModAlphaFile = "smac_mod\\alphax";
 const char* ModHelpFile = "smac_mod\\helpx";
 const char* ModTutorFile = "smac_mod\\tutor";

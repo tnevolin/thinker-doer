@@ -227,7 +227,7 @@ void executeTasks()
 	{
 		Task &task = taskEntry.second;
 		int vehicleId = task.getVehicleId();
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		
 		// skip not fully automated human player units
 		
@@ -2093,7 +2093,7 @@ void populateDangerZones()
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH &vehicle = Vehicles[vehicleId];
+		VEH &vehicle = Vehs[vehicleId];
 		UNIT &unit = Units[vehicle.unit_id];
 		CChassis &chassis = Chassis[unit.chassis_id];
 		int triad = chassis.triad;
@@ -2150,7 +2150,7 @@ void populateDangerZones()
 		
 		for (int unfriendlyAffectedVehicleId : unfriendlyAffectedVehicleIds)
 		{
-			VEH &unfriendlyAffectedVehicle = Vehicles[unfriendlyAffectedVehicleId];
+			VEH &unfriendlyAffectedVehicle = Vehs[unfriendlyAffectedVehicleId];
 			int unfriendlyAffectedVehicleTriad = unfriendlyAffectedVehicle.triad();
 			
 			// able to attack
@@ -2219,7 +2219,7 @@ void populateDangerZones()
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH &vehicle = Vehicles[vehicleId];
+		VEH &vehicle = Vehs[vehicleId];
 		UNIT &unit = Units[vehicle.unit_id];
 		CChassis &chassis = Chassis[unit.chassis_id];
 		int triad = chassis.triad;
@@ -2282,7 +2282,7 @@ void populateDangerZones()
 		
 		for (int hostileAffectedVehicleId : hostileAffectedVehicleIds)
 		{
-			VEH &hostileAffectedVehicle = Vehicles[hostileAffectedVehicleId];
+			VEH &hostileAffectedVehicle = Vehs[hostileAffectedVehicleId];
 			int hostileAffectedVehicleTriad = hostileAffectedVehicle.triad();
 			
 			// able to attack
@@ -2351,7 +2351,7 @@ void populateDangerZones()
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH &vehicle = Vehicles[vehicleId];
+		VEH &vehicle = Vehs[vehicleId];
 		UNIT &unit = Units[vehicle.unit_id];
 		CChassis &chassis = Chassis[unit.chassis_id];
 		int triad = chassis.triad;
@@ -2377,7 +2377,7 @@ void populateDangerZones()
 		
 		for (int artilleryAffectedVehicleId : artilleryAffectedVehicleIds)
 		{
-			VEH &artilleryAffectedVehicle = Vehicles[artilleryAffectedVehicleId];
+			VEH &artilleryAffectedVehicle = Vehs[artilleryAffectedVehicleId];
 			int artilleryAffectedVehicleTriad = artilleryAffectedVehicle.triad();
 			
 			// able to attack
@@ -2552,7 +2552,7 @@ void populateEnemyStacks()
 		unitCostSummary.clear();
 		for (int vehicleId : enemyStackInfo.vehicleIds)
 		{
-			int unitCost = Vehicles[vehicleId].cost();
+			int unitCost = Vehs[vehicleId].cost();
 			unitCostSummary.add(unitCost);
 		}
 		
@@ -2744,7 +2744,7 @@ void computeCombatEffects()
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		int factionId = vehicle->faction_id;
 		int unitId = vehicle->unit_id;
 		
@@ -3770,7 +3770,7 @@ void evaluateDefense(MAP *tile, ProtectCombatData &combatData)
 	int alienCount = 0;
 	for (int vehicleId : foeCombatVehicleIds)
 	{
-		VEH &vehicle = Vehicles[vehicleId];
+		VEH &vehicle = Vehs[vehicleId];
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		UNIT &unit = Units[vehicle.unit_id];
 		CChassis &chassis = Chassis[unit.chassis_id];
@@ -4111,7 +4111,7 @@ void evaluateBaseProbeDefense()
 		
 		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 		{
-			VEH *vehicle = &(Vehicles[vehicleId]);
+			VEH *vehicle = getVehicle(vehicleId);
 			MAP *vehicleTile = getVehicleMapTile(vehicleId);
 			int chassisId = vehicle->chassis_type();
 			UNIT *unit = &(Units[vehicle->unit_id]);
@@ -4688,7 +4688,12 @@ void checkAndProposePrototype(int factionId, VehChassis chassisId, VehWeapon wea
 	
 	// propose prototype
 	
-	int unitId = modified_propose_proto(factionId, chassisId, weaponId, armorId, abilities, reactor, plan, name);
+	char prototypeName[32];
+	if (name != nullptr)
+	{
+		strcpy(prototypeName, name);
+	}
+	int unitId = mod_propose_proto(factionId, chassisId, weaponId, armorId, (VehAblFlag) abilities, reactor, plan, name == nullptr ? nullptr : prototypeName);
 	
 	debug("checkAndProposePrototype - %s\n", MFactions[aiFactionId].noun_faction);
 	debug("\treactor=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactor, chassisId, weaponId, armorId, getAbilitiesString(abilities).c_str());
@@ -5009,7 +5014,7 @@ double evaluateDefenseStrength(double DefenseValue)
 
 bool isVehicleThreatenedByEnemyInField(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 
 	// not in base
@@ -5023,7 +5028,7 @@ bool isVehicleThreatenedByEnemyInField(int vehicleId)
 
 	for (int otherVehicleId = 0; otherVehicleId < *VehCount; otherVehicleId++)
 	{
-		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		VEH *otherVehicle = getVehicle(otherVehicleId);
 		MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
 
 		// exclude non alien units not in war
@@ -5317,11 +5322,11 @@ std::string getAbilitiesString(int ability_flags)
 
 bool isWithinAlienArtilleryRange(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	for (int otherVehicleId = 0; otherVehicleId < *VehCount; otherVehicleId++)
 	{
-		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		VEH *otherVehicle = getVehicle(otherVehicleId);
 
 		if (otherVehicle->faction_id == 0 && otherVehicle->unit_id == BSC_SPORE_LAUNCHER && map_range(vehicle->x, vehicle->y, otherVehicle->x, otherVehicle->y) <= 2)
 			return true;
@@ -5796,7 +5801,7 @@ Returns vehicle specific psi offense modifier to unit strength.
 */
 double getVehiclePsiOffenseModifier(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	double psiOffenseModifier = 1.0;
 
@@ -5823,7 +5828,7 @@ Returns vehicle specific psi defense modifier to unit strength.
 */
 double getVehiclePsiDefenseModifier(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	double psiDefenseModifier = 1.0;
 
@@ -5850,7 +5855,7 @@ Returns vehicle specific conventional offense modifier to unit strength.
 */
 double getVehicleConventionalOffenseModifier(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	// modifier
 
@@ -5879,7 +5884,7 @@ Returns vehicle specific conventional defense modifier to unit strength.
 */
 double getVehicleConventionalDefenseModifier(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	// modifier
 
@@ -5927,7 +5932,7 @@ bool isOffensiveUnit(int unitId, int factionId)
 
 bool isOffensiveVehicle(int vehicleId)
 {
-	return isOffensiveUnit(Vehicles[vehicleId].unit_id, Vehicles[vehicleId].faction_id);
+	return isOffensiveUnit(Vehs[vehicleId].unit_id, Vehs[vehicleId].faction_id);
 }
 
 double getExponentialCoefficient(double scale, double value)
@@ -6614,7 +6619,7 @@ robin_hood::unordered_flat_map<int, double> getMeleeAttackLocations(int vehicleI
 {
 	Profiling::start("- getMeleeAttackLocations");
 	
-	VEH &vehicle = Vehicles[vehicleId];
+	VEH &vehicle = Vehs[vehicleId];
 	int vehicleTileIndex = getVehicleMapTileIndex(vehicleId);
 	int factionId = vehicle.faction_id;
 	int unitId = vehicle.unit_id;
@@ -6734,7 +6739,7 @@ robin_hood::unordered_flat_set<int> getArtilleryAttackLocations(int vehicleId)
 {
 	Profiling::start("- getArtilleryAttackLocations");
 	
-	VEH &vehicle = Vehicles[vehicleId];
+	VEH &vehicle = Vehs[vehicleId];
 	int vehicleTileIndex = getVehicleMapTileIndex(vehicleId);
 	int factionId = vehicle.faction_id;
 	int unitId = vehicle.unit_id;
@@ -7400,7 +7405,7 @@ int getCombatUnitTrueCost(int unitId)
 
 int getCombatVehicleTrueCost(int vehicleId)
 {
-	return getCombatUnitTrueCost(Vehicles[vehicleId].unit_id);
+	return getCombatUnitTrueCost(Vehs[vehicleId].unit_id);
 }
 
 /**
@@ -8179,7 +8184,7 @@ bool isUnitCanMeleeAttackTile(int unitId, MAP *target, MAP *position)
 
 bool isVehicleCanMeleeAttackTile(int vehicleId, MAP *target, MAP *position)
 {
-	return isUnitCanMeleeAttackTile(Vehicles[vehicleId].unit_id, target, position);
+	return isUnitCanMeleeAttackTile(Vehs[vehicleId].unit_id, target, position);
 }
 
 double getBaseExtraWorkerGain(int baseId)

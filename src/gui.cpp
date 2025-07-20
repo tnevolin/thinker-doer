@@ -23,7 +23,7 @@ char label_psych_energy_allocation[StrBufLen] = "to psych: %2d";
 std::string video_player_path = "";
 std::string video_player_args = "";
 
-static int minimal_cost = 0;
+static int hurry_minimal_cost = 0;
 static int base_zoom_factor = -14;
 
 struct ConsoleState {
@@ -733,6 +733,12 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     && *ReplayEventSize > 0) {
         show_replay();
 
+    } else if (DEBUG && !*GameHalted && msg == WM_KEYDOWN && wParam == 'Q'
+    && ctrl_key_down() && shift_key_down()) {
+        net_game_close(); // Close network multiplayer if active
+        *ControlTurnA = 1; // Return to main menu without dialog
+        *ControlTurnB = 1;
+
     } else if (DEBUG && msg == WM_CHAR && wParam == 'd' && alt_key_down()) {
         conf.debug_mode = !conf.debug_mode;
         if (conf.debug_mode) {
@@ -851,35 +857,6 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         flushlog();
 
-    }
-    
-    // [WTP]
-    // Ctrl-H automatic hurry
-    
-    else if (Win_is_visible(BaseWin) && msg == WM_KEYDOWN && wParam == 'H' && ctrl_key_down())
-	{
-		int baseId = *CurrentBaseID;
-		BASE *base = *CurrentBase;
-		int itemId = base->queue_items[0];
-		int mineralCost = mineral_cost(baseId, itemId);
-		int hurryMineralCost = getHurryMineralCost(mineralCost);
-		int hurryMinerals = std::max(0, hurryMineralCost - base->minerals_accumulated);
-		
-		if (hurryMinerals > 0)
-		{
-			Faction *faction = &Factions[base->faction_id];
-			int hurryCost = hurry_cost(baseId, itemId, hurryMinerals);
-			int factionAvaialbleCredits = faction->energy_credits - faction->hurry_cost_total;
-			
-			if (hurryCost <= factionAvaialbleCredits)
-			{
-				base->minerals_accumulated = hurryMineralCost;
-				faction->energy_credits -= hurryCost;
-				BaseWin_on_redraw(BaseWin);
-			}
-			
-		}
-		
     } else {
         return WinProc(hwnd, msg, wParam, lParam);
     }
@@ -1346,7 +1323,7 @@ Win* This, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a
     }
 }
 
-int __thiscall BaseWin_popup_start(
+int __thiscall BaseWin_hurry_popup_start(
 Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
 {
     BASE* base = *CurrentBase;
@@ -1355,7 +1332,7 @@ Win* This, const char* filename, const char* label, int a4, int a5, int a6, int 
     int minerals = item_cost - base->minerals_accumulated - max(0, base->mineral_surplus);
     int credits = max(0, f->energy_credits - f->hurry_cost_total);
     int cost = hurry_cost(*CurrentBaseID, base->queue_items[0], minerals);
-    minimal_cost = min(credits, cost);
+    hurry_minimal_cost = min(credits, cost);
     if (item_cost <= base->minerals_accumulated) {
         ParseNumTable[0] = 0;
     }
@@ -1366,10 +1343,22 @@ Win* This, const char* filename, const char* label, int a4, int a5, int a6, int 
 
 #pragma GCC diagnostic pop
 
-int __cdecl BaseWin_ask_number(const char* label, int value, int a3)
+int __cdecl BaseWin_hurry_ask_number(const char* label, int value, int a3)
 {
     ParseNumTable[0] = value;
-    return pop_ask_number(ScriptFile, label, minimal_cost, a3);
+    return pop_ask_number(ScriptFile, label, hurry_minimal_cost, a3);
+}
+
+/*
+Fix issue where hurry production flag will not be set after
+completely hurrying the current production "Spend $NUM0 energy credits."
+*/
+int __thiscall BaseWin_hurry_unlock_base(AlphaNet* This, int base_id)
+{
+    if (base_id >= 0) {
+        Bases[base_id].state_flags |= BSTATE_HURRY_PRODUCTION;
+    }
+    return NetDaemon_unlock_base(This, base_id);
 }
 
 int __thiscall BaseWin_gov_options(BaseWindow* This, int flag)
@@ -1603,6 +1592,7 @@ void __cdecl BaseWin_draw_psych_strcat(char* buffer, char* source)
     }
     strncat(buffer, source, StrBufLen);
 	}
+	// [WTP]
 	
 }
 
@@ -1889,10 +1879,9 @@ StrBuffer in make_gift but diplomacy_caption overwrites it with other data.
 void __cdecl mod_diplomacy_caption(int faction1, int faction2)
 {
     char buf[StrBufLen];
-    strncpy(buf, StrBuffer, StrBufLen);
-    buf[StrBufLen-1] = '\0';
+    strcpy_n(buf, StrBufLen, StrBuffer);
     diplomacy_caption(faction1, faction2);
-    strncpy(StrBuffer, buf, StrBufLen);
+    strcpy_n(StrBuffer, StrBufLen, buf);
 }
 
 /*
@@ -1939,7 +1928,25 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
     return BasePop_start(This, filename, label, a4, a5, a6, a7);
 }
 
-int __cdecl mod_action_move(int veh_id, int x, int y)
+/*
+Modify Unit Workshop command to open prototype for the currently selected unit.
+Normally unit_id can be set when ASKSEEDESIGN popup is opened from tech_achieved.
+*/
+int __cdecl mod_design_new_veh(int faction_id, int unit_id) {
+    if (unit_id < 0 && MapWin->iUnit >= 0) {
+        VEH* veh = &Vehs[MapWin->iUnit];
+        if (((veh->unit_id < MaxProtoFactionNum
+        && has_tech(Units[veh->unit_id].preq_tech, faction_id))
+        || veh->unit_id / MaxProtoFactionNum == faction_id)
+        && Units[veh->unit_id].icon_offset < 0
+        && veh->x == MapWin->iTileX && veh->y == MapWin->iTileY) {
+            return DesignWin_exec(DesignWin, faction_id, veh->unit_id);
+        }
+    }
+    return DesignWin_exec(DesignWin, faction_id, unit_id);
+}
+
+int __cdecl mod_action_arty(int veh_id, int x, int y)
 {
     VEH* veh = &Vehs[veh_id];
     
@@ -1949,7 +1956,7 @@ int __cdecl mod_action_move(int veh_id, int x, int y)
 		return 0;
 	
     if (*MultiplayerActive) {
-        return action_move(veh_id, x, y);
+        return action_arty(veh_id, x, y);
     }
     if (veh->faction_id == *CurrentPlayerFaction) {
         if (!veh_ready(veh_id)) {

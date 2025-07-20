@@ -34,4 +34,7 @@ bool wtp_base_pop_boom(int base_id);
 int wtp_flat_hurry_cost(int base_id, int item_id, int hurry_mins);
 int wtp_terraform_eco_damage(int base_id);
 int findReplacementSpecialist(int factionId, int specialistId);
+void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
+int getBasePsychCoefficient(int baseId);
+double computeBaseTileScore(bool restrictions, double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy);
 

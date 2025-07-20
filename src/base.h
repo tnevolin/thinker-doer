@@ -1,19 +1,21 @@
 #pragma once
 
 #include "main.h"
-//#include "wtp_base.h"
 
 const uint32_t GOV_ALLOW_COMBAT =
     (GOV_MAY_PROD_LAND_COMBAT | GOV_MAY_PROD_NAVAL_COMBAT | GOV_MAY_PROD_AIR_COMBAT);
 
+int __cdecl mod_base_init(int faction_id, int x, int y);
+void __cdecl mod_base_kill(int base_id);
 void __cdecl mod_base_reset(int base_id, bool has_gov);
 int __cdecl mod_base_build(int base_id, bool has_gov);
 void __cdecl base_first(int base_id);
 void __cdecl set_base(int base_id);
 void __cdecl base_compute(bool update_prev);
+void __cdecl mod_base_mark(int base_id);
 int __cdecl mod_cost_factor(int faction_id, BaseResType type, int base_id);
 int __cdecl mod_base_making(int item_id, int base_id);
-int __cdecl mod_base_lose_minerals(int base_id, int item_id);
+int __cdecl mod_base_lose_minerals(int base_id, int UNUSED(item_id));
 int __cdecl mod_base_production();
 void __cdecl mod_base_support();
 void __cdecl mod_base_yield();
@@ -28,7 +30,6 @@ void __cdecl mod_drone_riot();
 void __cdecl mod_base_drones();
 void __cdecl mod_base_maint();
 int __cdecl mod_base_upkeep(int base_id);
-int __cdecl mod_base_kill(int base_id);
 int __cdecl mod_capture_base(int base_id, int faction, int is_probe);
 int __cdecl base_psych_content_pop();
 void __cdecl mod_psych_check(int faction_id, int32_t* content_pop, int32_t* base_limit);
@@ -54,7 +55,6 @@ int __cdecl is_objective(int base_id);
 int __cdecl own_base_rank(int base_id);
 int __cdecl mod_base_rank(int faction_id, int position);
 int __cdecl best_specialist(BASE* base, int econ_val, int labs_val, int psych_val);
-
 int __cdecl mod_best_specialist();
 int __cdecl mod_facility_avail(FacilityId item_id, int faction_id, int base_id, int queue_count);
 bool can_build(int base_id, int item_id);
@@ -72,8 +72,4 @@ int __cdecl has_fac(FacilityId item_id, int base_id, int queue_count);
 int __cdecl has_fac_built(FacilityId item_id, int base_id);
 void __cdecl set_fac(FacilityId item_id, int base_id, bool add);
 int __cdecl fac_maint(int facility_id, int faction_id);
-void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
-int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx_filename, int a5);
-double computeBaseTileScore(bool restrictions, double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy);
-int getBasePsychCoefficient(int base_id);
 

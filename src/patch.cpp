@@ -1,6 +1,7 @@
 
 #include "patch.h"
 #include "patchdata.h"
+#include "patchveh.h"
 #include "wtp_patch.h"
 #include <mutex>
 
@@ -13,16 +14,12 @@ Replace existing file locking on fwrite and similar statically linked library fu
 since MSVC documentation mentions these functions must lock the calling thread (also thread-safe).
 Previously this used file specific locks that apparently caused crashes on newer Windows versions.
 */
-void __cdecl mod_lock_file(void* UNUSED(ptr)) {
+void __cdecl mod_lock_file(void*) {
     FileLock.lock();
 }
 
-void __cdecl mod_unlock_file(void* UNUSED(ptr)) {
+void __cdecl mod_unlock_file(void*) {
     FileLock.unlock();
-}
-
-bool FileExists(const char* path) {
-    return GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES;
 }
 
 int __cdecl BaseWin_random_seed() {
@@ -34,12 +31,16 @@ int __cdecl ProdPicker_calculate_itoa(int UNUSED(value), char* buf, int UNUSED(b
     return 0;
 }
 
+int __thiscall NetWin_random_get(void*, int low, int high) {
+    return random_get(low, high); // Multiplayer random factions
+}
+
 int __cdecl zero_value() {
     return 0;
 }
 
 int __cdecl config_game_rand() {
-    int val = 0;
+    int val = 0; // Singleplayer random factions
     for (int i = 0; i < 1000; i++) {
         val = random(conf.faction_file_count);
         if ((1 << val) & ~conf.skip_random_factions) {
@@ -334,13 +335,13 @@ static void init_video_config(Config* cf) {
     char* path = strtrim(&buf_path[0]);
     char* args = strtrim(&buf_args[0]);
     if (!strlen(path)) {
-        conf.video_player = 1;
+        cf->video_player = 1;
     } else {
         bool found = false;
         if (!strcmp(path, "<DEFAULT>")) {
             for (auto& cur_path : DefaultPaths) {
                 if (FileExists(cur_path)) {
-                    conf.video_player = 2;
+                    cf->video_player = 2;
                     video_player_path = std::string(cur_path);
                     video_player_args = std::string(args);
                     prefs_put2("MoviePlayerPath", cur_path);
@@ -350,7 +351,7 @@ static void init_video_config(Config* cf) {
                 }
             }
         } else if (FileExists(path)) {
-            conf.video_player = 2;
+            cf->video_player = 2;
             video_player_path = std::string(path);
             video_player_args = std::string(args);
             prefs_put2("MoviePlayerPath", path);
@@ -364,15 +365,19 @@ static void init_video_config(Config* cf) {
                 "Select NO to skip video playback temporarily.",
                 MOD_VERSION, MB_YESNO | MB_ICONWARNING);
             if (value == IDYES) {
-                conf.video_player = 1;
+                cf->video_player = 1;
                 prefs_put2("MoviePlayerPath", "");
                 prefs_put2("MoviePlayerArgs", "");
             } else {
-                conf.video_player = 0;
+                cf->video_player = 0;
                 prefs_put2("MoviePlayerPath", "<DEFAULT>");
                 prefs_put2("MoviePlayerArgs", args);
             }
         }
+    }
+    if (!FileExists("modmenu.txt")) {
+        MessageBoxA(0, "Error while opening modmenu.txt. Game might not work as intended.",
+            MOD_VERSION, MB_OK | MB_ICONWARNING);
     }
 }
 
@@ -405,11 +410,26 @@ bool patch_setup(Config* cf) {
     // Apply Scient's Patch changes first
     for (auto& item : AXPatchData) {
         uint8_t* addr = (uint8_t*)(item.address);
-        if(*addr != item.old_byte && *addr != item.new_byte
+        if (*addr != item.old_byte && *addr != item.new_byte
         && (addr < AXSkipVerifyStart || addr > AXSkipVerifyEnd)) {
             exit_fail((int)addr);
         }
         *addr = item.new_byte;
+    }
+    if (cf->modify_unit_limit) {
+        for (auto& item : VehPatchData) {
+            int32_t* addr = (int32_t*)item[0];
+            if (*addr == (int)VehsDef + (int)item[1] && item[1] <= sizeof(VEH)) {
+                *addr += ((int)VehsMod - (int)VehsDef);
+            } else {
+                exit_fail((int)addr);
+            }
+        }
+        write_word(0x5C03DE, 2048, MaxVehModNum); // veh_init
+        write_word(0x5C09C8, 2048, MaxVehModNum); // veh_kill
+        write_word(0x522610, 1792, (MaxVehModNum*3)/4); // alien_fauna
+        cf->max_veh_num = MaxVehModNum;
+        Vehs = VehsMod;
     }
     extra_setup(cf);
 
@@ -432,6 +452,7 @@ bool patch_setup(Config* cf) {
     write_jump(0x4688E0, (int)MapWin_gen_overlays);
     write_jump(0x4E3EF0, (int)mod_whose_territory);
     write_jump(0x4E4020, (int)mod_best_specialist);
+    write_jump(0x4E4350, (int)mod_base_mark);
     write_jump(0x4E4430, (int)mod_cost_factor);
     write_jump(0x4E4AA0, (int)base_first);
     write_jump(0x4E6400, (int)morale_mod);
@@ -487,6 +508,8 @@ bool patch_setup(Config* cf) {
     write_jump(0x55F450, (int)major_atrocity);
     write_jump(0x579A30, (int)add_goal);
     write_jump(0x579B70, (int)add_site);
+    write_jump(0x579E00, (int)clear_goals);
+    write_jump(0x579E70, (int)del_site);
     write_jump(0x579F80, (int)want_monolith);
     write_jump(0x584D60, (int)tech_name);
     write_jump(0x584E40, (int)chas_name);
@@ -500,6 +523,8 @@ bool patch_setup(Config* cf) {
     write_jump(0x587240, (int)read_units);
     write_jump(0x5873C0, (int)read_rules);
     write_jump(0x591040, (int)map_wipe);
+    write_jump(0x591290, (int)alt_set);
+    write_jump(0x5918F0, (int)alt_set_both);
     write_jump(0x591E50, (int)synch_bit);
     write_jump(0x592250, (int)say_loc);
     write_jump(0x592550, (int)find_landmark);
@@ -534,7 +559,11 @@ bool patch_setup(Config* cf) {
     write_jump(0x5C1540, (int)veh_speed);
     write_jump(0x5C1C40, (int)mod_veh_jail);
     write_jump(0x5C1D20, (int)mod_veh_skip);
+    write_jump(0x5C1D50, (int)mod_veh_fake);
     write_jump(0x5C1D70, (int)mod_veh_wake);
+    write_jump(0x5C2020, (int)world_alt_set);
+    write_jump(0x5C2380, (int)world_raise_alt);
+    write_jump(0x5C23E0, (int)world_lower_alt);
     write_jump(0x626250, (int)log_say2);
     write_jump(0x6262F0, (int)log_say);
     write_jump(0x626350, (int)log_say_hex2);
@@ -551,6 +580,10 @@ bool patch_setup(Config* cf) {
     write_call(0x5AAD7D, (int)mod_load_daemon); // load_game
     write_call(0x5ABEB3, (int)mod_load_daemon); // load_undo
     write_call(0x5ADCD7, (int)mod_load_daemon); // show_replay
+    write_call(0x5A9653, (int)save_daemon_header); // save_daemon
+    write_call(0x5A9BA8, (int)save_daemon_header); // save_map_daemon
+    write_call(0x5A97B3, (int)load_daemon_strcmp); // load_daemon
+    write_call(0x5A9CA0, (int)load_daemon_strcmp); // load_map_daemon
     write_call(0x4E1061, (int)mod_world_build); // Console::editor_generate
     write_call(0x4E113B, (int)mod_world_build); // Console::editor_fast
     write_call(0x58B9BF, (int)mod_world_build); // config_game
@@ -586,16 +619,29 @@ bool patch_setup(Config* cf) {
     write_call(0x559E21, (int)map_draw_strcmp); // veh_draw
     write_call(0x55B5E1, (int)map_draw_strcmp); // base_draw
     write_call(0x5C0984, (int)veh_kill_lift); // veh_kill
+    write_call(0x51825B, (int)mod_design_new_veh); // Console::on_key_click
+    write_call(0x51C12B, (int)mod_design_new_veh); // Console::iface_click
     write_call(0x43FE47, (int)DiploPop_spying); // DiploPop::draw_info
     write_call(0x43FEA8, (int)DiploPop_spying); // DiploPop::draw_info
+    write_call(0x482E79, (int)NetWin_random_get); // NetWin::prepare_game
+    write_call(0x482E96, (int)NetWin_random_get); // NetWin::prepare_game
     write_call(0x4E2A81, (int)prefs_get_strcpy); // AlphaNet::do_create
     write_call(0x4E2AA3, (int)prefs_get_strcpy); // AlphaNet::do_create
     write_call(0x4E2EA2, (int)prefs_get_strcpy); // AlphaNet::do_join
     write_call(0x4B72C0, (int)elev_at); // StatusWin::draw_status
-    write_call(0x57C419, (int)alt_set_both); // goody_box
-    write_call(0x5C2073, (int)alt_set_both); // world_alt_set
-    write_call(0x5C2148, (int)alt_set_both); // world_alt_set
-    write_call(0x5C22C3, (int)alt_set_both); // world_alt_set
+    write_call(0x46B719, (int)world_raise_alt); // MapWin::editor
+    write_call(0x4CA122, (int)world_raise_alt); // action_terraform
+    write_call(0x4CE560, (int)world_raise_alt); // action_tectonic
+    write_call(0x57B393, (int)world_raise_alt); // goody_box
+    write_call(0x57B39A, (int)world_raise_alt); // goody_box
+    write_call(0x46B705, (int)world_lower_alt); // MapWin::editor
+    write_call(0x4CA13A, (int)world_lower_alt); // action_terraform
+    write_call(0x500EFD, (int)world_lower_alt); // planet_busting
+    write_call(0x5C2D05, (int)mod_world_shorelines); // world_erosion
+    write_call(0x5C5A4A, (int)mod_world_shorelines); // world_climate
+    write_call(0x5C8866, (int)mod_world_shorelines); // world_build
+    write_call(0x5A98C9, (int)mod_world_linearize_contours); // load_daemon
+    write_call(0x5C8949, (int)mod_world_linearize_contours); // world_build
     write_call(0x57BC7A, (int)mod_monolith); // goody_box
     write_call(0x5991C8, (int)mod_monolith); // order_veh
     write_call(0x4CCFE0, (int)mod_goody_box); // action_airdrop
@@ -622,8 +668,9 @@ bool patch_setup(Config* cf) {
     write_call(0x40F8F8, (int)BaseWin_draw_farm_set_font);
     write_call(0x4129E5, (int)BaseWin_draw_energy_set_text_color);
     write_call(0x415AD8, (int)BaseWin_draw_misc_eco_damage);
-    write_call(0x41916B, (int)BaseWin_popup_start);
-    write_call(0x4195A6, (int)BaseWin_ask_number);
+    write_call(0x41916B, (int)BaseWin_hurry_popup_start);
+    write_call(0x4195A6, (int)BaseWin_hurry_ask_number);
+    write_call(0x419762, (int)BaseWin_hurry_unlock_base);
     write_call(0x41B6E5, (int)BaseWin_staple_popp);
     write_call(0x41B719, (int)BaseWin_staple_popp);
     write_call(0x41B771, (int)BaseWin_action_staple);
@@ -695,9 +742,6 @@ bool patch_setup(Config* cf) {
     write_call(0x486655, (int)mod_tech_ai); // PickTech::pick
     write_call(0x5AEFA1, (int)mod_tech_ai); // time_warp
     write_call(0x5B2A6F, (int)mod_tech_ai); // setup_player
-    write_call(0x50C398, (int)mod_tech_pick); // steal_tech
-    write_call(0x515080, (int)mod_tech_pick); // Console::set_research
-    write_call(0x5BE4AC, (int)mod_tech_pick); // tech_selection
     write_call(0x4452D5, (int)mod_tech_rate); // energy_compute
     write_call(0x498D26, (int)mod_tech_rate); // ReportWin::draw_labs
     write_call(0x4A77DA, (int)mod_tech_rate); // ReportIF::draw_labs
@@ -706,22 +750,38 @@ bool patch_setup(Config* cf) {
     write_call(0x5581E9, (int)mod_tech_rate); // communicate
     write_call(0x5BEA4D, (int)mod_tech_rate); // tech_research
     write_call(0x5BEAC7, (int)mod_tech_rate); // tech_research
+    write_call(0x50C398, (int)mod_tech_pick); // steal_tech
+    write_call(0x515080, (int)mod_tech_pick); // Console::set_research
+    write_call(0x5BE4AC, (int)mod_tech_pick); // tech_selection
+    write_call(0x52935F, (int)mod_tech_selection); // net_upkeep
+    write_call(0x5BE5E1, (int)mod_tech_selection); // tech_advance
+    write_call(0x5BE690, (int)mod_tech_selection); // tech_advance
+    write_call(0x5BEB5D, (int)mod_tech_selection); // tech_research
     write_call(0x4B497C, (int)mod_say_orders); // say_orders2
     write_call(0x4B5C27, (int)mod_say_orders); // StatusWin::draw_active
     write_call(0x4F7B82, (int)mod_base_research); // base_upkeep
     write_call(0x4CCF13, (int)mod_capture_base); // action_airdrop
     write_call(0x598778, (int)mod_capture_base); // order_veh
     write_call(0x5A4AB0, (int)mod_capture_base); // probe
+    write_call(0x4C9870, (int)mod_base_init); // action_build
+    write_call(0x5AF926, (int)mod_base_init); // time_warp
+    write_call(0x5B2BB8, (int)mod_base_init); // setup_player
+    // write_call(0x41CC8F, (int)mod_base_kill); // BaseWin::base_editor
     write_call(0x4CD629, (int)mod_base_kill); // action_oblit
-    write_call(0x4F1466, (int)mod_base_kill); // base_production
+    // write_call(0x4D2EC8, (int)mod_base_kill); // Console::disband2
+    // write_call(0x4E07AC, (int)mod_base_kill); // Console::editor_eliminate
     write_call(0x4EF319, (int)mod_base_kill); // base_growth
+    write_call(0x4F1466, (int)mod_base_kill); // base_production
     write_call(0x500FD7, (int)mod_base_kill); // planet_busting
     write_call(0x50ADA8, (int)mod_base_kill); // battle_fight_2
     write_call(0x50AE77, (int)mod_base_kill); // battle_fight_2
+    write_call(0x50CE5B, (int)mod_base_kill); // capture_base
     write_call(0x520E1A, (int)mod_base_kill); // random_events
     write_call(0x521121, (int)mod_base_kill); // random_events
+    // write_call(0x5890E7, (int)mod_base_kill); // alien_start
     write_call(0x5915A6, (int)mod_base_kill); // alt_set
     write_call(0x598673, (int)mod_base_kill); // order_veh
+    // write_call(0x5B0FF1, (int)mod_base_kill); // setup_player
     write_call(0x415F35, (int)mod_base_reset); // BaseWin::unk4
     write_call(0x41605A, (int)mod_base_reset); // BaseWin::gov_on
     write_call(0x417F83, (int)mod_base_reset); // BaseWin::production
@@ -873,7 +933,36 @@ bool patch_setup(Config* cf) {
     write_call(0x560DDF, (int)mod_veh_avail); // enemy_capabilities
     write_call(0x560E86, (int)mod_veh_avail); // enemy_capabilities
     write_call(0x5B30E1, (int)mod_veh_avail); // setup_player
-    write_call(0x5808B3, (int)mod_is_bunged); // propose_proto
+    write_call(0x4CEF64, (int)mod_propose_proto); // action_give
+    write_call(0x4F59B2, (int)mod_propose_proto); // drone_riot
+    write_call(0x58188D, (int)mod_propose_proto); // consider_designs
+    write_call(0x581C1A, (int)mod_propose_proto); // consider_designs
+    write_call(0x581CA3, (int)mod_propose_proto); // consider_designs
+    write_call(0x581D16, (int)mod_propose_proto); // consider_designs
+    write_call(0x58215E, (int)mod_propose_proto); // consider_designs
+    write_call(0x5821C5, (int)mod_propose_proto); // consider_designs
+    write_call(0x582210, (int)mod_propose_proto); // consider_designs
+    write_call(0x5825F3, (int)mod_propose_proto); // consider_designs
+    write_call(0x582961, (int)mod_propose_proto); // consider_designs
+    write_call(0x582C22, (int)mod_propose_proto); // consider_designs
+    write_call(0x58306D, (int)mod_propose_proto); // consider_designs
+    write_call(0x583183, (int)mod_propose_proto); // consider_designs
+    write_call(0x5832D1, (int)mod_propose_proto); // consider_designs
+    write_call(0x583401, (int)mod_propose_proto); // consider_designs
+    write_call(0x583437, (int)mod_propose_proto); // consider_designs
+    write_call(0x583631, (int)mod_propose_proto); // consider_designs
+    write_call(0x5836F9, (int)mod_propose_proto); // consider_designs
+    write_call(0x5838F3, (int)mod_propose_proto); // consider_designs
+    write_call(0x5839B9, (int)mod_propose_proto); // consider_designs
+    write_call(0x5839EC, (int)mod_propose_proto); // consider_designs
+    write_call(0x583A1A, (int)mod_propose_proto); // consider_designs
+    write_call(0x583A64, (int)mod_propose_proto); // consider_designs
+    write_call(0x583B6A, (int)mod_propose_proto); // consider_designs
+    write_call(0x583C80, (int)mod_propose_proto); // consider_designs
+    write_call(0x5A4173, (int)mod_propose_proto); // probe
+    write_call(0x5A49F5, (int)mod_propose_proto); // probe
+    write_call(0x5BB364, (int)mod_propose_proto); // tech_achieved
+    write_call(0x5BB5CD, (int)mod_propose_proto); // tech_achieved
     write_call(0x438354, (int)mod_make_proto); // DesignWin::design_it
     write_call(0x580F6C, (int)mod_make_proto); // propose_proto
     write_call(0x587364, (int)mod_make_proto); // read_units
@@ -1026,6 +1115,9 @@ bool patch_setup(Config* cf) {
     }
     if (cf->editor_free_units) {
         write_call(0x4DF19B, (int)mod_veh_init); // Console_editor_veh
+    }
+    if (cf->altitude_limit > ALT_THREE_ABOVE_SEA) {
+        write_word(0x4D4479, 192, 224); // Console_terraform
     }
     if (DEBUG) {
         if (cf->minimal_popups) {
@@ -1419,8 +1511,7 @@ bool patch_setup(Config* cf) {
     if (cf->skip_default_balance) {
         remove_call(0x5B41F5); // setup_game
         // Remove aquatic faction extra sea colony pod in setup_player
-        const byte old_bytes[] = {0x66,0x89,0xB1,0x56,0x28,0x95,0x00};
-        write_bytes(0x5B3060, old_bytes, NULL, sizeof(old_bytes));
+        memset((void*)0x5B3060, 0x90, 7);
         remove_call(0x5B3052);
         remove_call(0x5B3067);
     }
@@ -1432,8 +1523,8 @@ bool patch_setup(Config* cf) {
         write_call(0x5082B7, (int)battle_fight_parse_num);
     }
     if (cf->long_range_artillery > 0) {
-        write_call(0x46D42F, (int)mod_action_move); // MapWin::right_menu
-        write_call(0x46E1FF, (int)mod_action_move); // MapWin::click
+        write_call(0x46D42F, (int)mod_action_arty); // MapWin::right_menu
+        write_call(0x46E1FF, (int)mod_action_arty); // MapWin::click
 
         const byte old_cursor[] = {0x8B,0x0D,0x44,0x97,0x94,0x00,0x51};
         const byte new_cursor[] = {0x57,0x90,0x90,0x90,0x90,0x90,0x90};
@@ -1442,7 +1533,7 @@ bool patch_setup(Config* cf) {
 
         const byte old_menu[] = {
             0x8B,0x45,0xF0,0x6A,0x01,0x8D,0x0C,0x40,0x8D,0x14,
-            0x88,0x0F,0xBF,0x04,0x95,0x32,0x28,0x95,0x00,0x50,
+            0x88,0x0F,0xBF,0x04,0x95,0x00,0x00,0x00,0x00,0x50,
             0xE8,0x82,0x43,0x15,0x00,0x83,0xC4,0x08,0x85,0xC0
         };
         const byte new_menu[] = {
@@ -1450,6 +1541,7 @@ bool patch_setup(Config* cf) {
             0xF0,0x50,0xE8,0x00,0x00,0x00,0x00,0x83,0xC4,0x0C,
             0x85,0xC0,0x75,0x6E,0xE9,0x8E,0x00,0x00,0x00,0x90
         };
+        memset((void*)0x46CA24, 0, 4);
         write_bytes(0x46CA15, old_menu, new_menu, sizeof(new_menu));
         write_call(0x46CA21, (int)MapWin_right_menu_arty);
     }

@@ -899,14 +899,14 @@ double ProtectCombatData::getUnitEffect(int unitId) const
 }
 double ProtectCombatData::getVehicleEffect(int vehicleId) const
 {
-	return getVehicleMoraleMultiplier(vehicleId) * getUnitEffect(Vehicles[vehicleId].unit_id);
+	return getVehicleMoraleMultiplier(vehicleId) * getUnitEffect(Vehs[vehicleId].unit_id);
 }
 /*
 Adds vehicle effect too all counter effects until it runs out.
 */
 void ProtectCombatData::addVehicleEffect(int vehicleId, bool present)
 {
-	int unitId = Vehicles[vehicleId].unit_id;
+	int unitId = Vehs[vehicleId].unit_id;
 	double multiplier = getVehicleMoraleMultiplier(vehicleId);
 	
 	double relativePower = 1.0;

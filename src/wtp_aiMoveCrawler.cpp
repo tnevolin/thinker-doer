@@ -290,7 +290,7 @@ void assignCrawlerOrders()
 	
 	for (int vehicleId : crawlerIds)
 	{
-		VEH &vehicle = Vehicles[vehicleId];
+		VEH &vehicle = Vehs[vehicleId];
 		int triad = vehicle.triad();
 		
 		// find best assignment location

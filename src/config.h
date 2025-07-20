@@ -3,7 +3,7 @@
 #include "main.h"
 
 extern const char* AlphaFile;
-extern char const * const ScriptFile;
+extern const char* ScriptFile;
 extern const char* ModAlphaFile;
 extern const char* ModHelpFile;
 extern const char* ModTutorFile;

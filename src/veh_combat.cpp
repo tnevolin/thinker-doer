@@ -573,10 +573,8 @@ static int __cdecl find_defender(int veh_id_def, int veh_id_atk, int check_arty)
         if (!offense_out) {
             break;
         }
-        int v1 = (veh->is_artifact() ? 1 : 10 * veh->reactor_type());
-        int v2 = clamp(v1 - veh->damage_taken, 0, 9999);
-        int score = offense_val * defense_out * v2 / v1 / offense_out / 8 - veh->offense_value();
-
+        int score = offense_val * defense_out * min(veh->cur_hitpoints(), 9999)
+            / veh->max_hitpoints() / offense_out / 8 - veh->offense_value();
         if (veh->plan() <= PLAN_NAVAL_TRANSPORT || veh->plan() == PLAN_TERRAFORM) {
             score *= 16;
         }
@@ -597,8 +595,8 @@ static int __cdecl find_defender(int veh_id_def, int veh_id_atk, int check_arty)
         || !mod_stack_check(veh_id, 3, TRIAD_AIR, -1, -1))) {
             score += 0x80000;
         }
-        score = veh_id + (score * MaxVehNum);
-        if (score > best_score) {
+        // Replace old score method to avoid overflow issues with larger veh_ids
+        if (score > best_score || (score == best_score && veh_id > best_veh_id)) {
             best_score = score;
             best_veh_id = veh_id;
         }
@@ -823,14 +821,14 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
             if (MFactions[faction_id_atk].rule_flags & RFLAG_FANATIC
             && Rules->combat_bonus_fanatic && !combat_type && !psi_combat) {
                 offense = offense * (Rules->combat_bonus_fanatic + 100) / 100;
-                add_bat(0, Rules->combat_bonus_fanatic, label_get(528));
+                add_bat(0, Rules->combat_bonus_fanatic, label_get(528)); // Belief
             }
             int bonus_count = MFactions[faction_id_atk].faction_bonus_count;
             for (int i = 0; i < bonus_count; i++) {
                 if (MFactions[faction_id_atk].faction_bonus_id[i] == RULE_OFFENSE) {
                     int rule_off_bonus = MFactions[faction_id_atk].faction_bonus_val1[i];
                     offense = offense * rule_off_bonus / 100;
-                    add_bat(0, rule_off_bonus, label_get(1108)); // Alien Offense
+                    add_bat(0, rule_off_bonus - 100, label_get(1108)); // Alien Offense
                 }
             }
             if (psi_combat && faction_id_atk) {
@@ -876,7 +874,7 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
             if (MFactions[faction_id_def].faction_bonus_id[i] == RULE_DEFENSE) {
                 int rule_def_bonus = MFactions[faction_id_def].faction_bonus_val1[i];
                 defense = defense * rule_def_bonus / 100;
-                add_bat(1, rule_def_bonus, label_get(1109)); // Alien Defense
+                add_bat(1, rule_def_bonus - 100, label_get(1109)); // Alien Defense
             }
         }
         if (veh_id_atk >= 0 && veh_atk->is_probe()) {
@@ -1023,11 +1021,15 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
                     }
                     def_multi += fac_modifier;
                 }
+                
+            	// [WTP]
+            	// bunker defense bonus also against air
+            	/*
                 else if (base_id_def < 0 && sq_def && sq_def->is_bunker()
-                /*&& (veh_id_atk < 0 || veh_atk->triad() != TRIAD_AIR)*/) {
-                	
-                	// [WTP]
-                	// bunker defense bonus
+                && (veh_id_atk < 0 || veh_atk->triad() != TRIAD_AIR)) {
+                */
+                else if (base_id_def < 0 && sq_def && sq_def->is_bunker())
+                {
                 	/*
                     def_multi = 150;
                     */
@@ -1035,6 +1037,8 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
                     
                     display_def = label_get(358); // Bunker
                 }
+                //
+                
                 else if (is_arty && base_id_def < 0 && sq_def && !is_rocky
                 && !(sq_def->items & BIT_FOREST) && !sq_def->is_fungus()) {
                     def_multi = 150;
@@ -1484,6 +1488,8 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         }
     }
 	}
+	// [WTP]
+	// surprise attack fix
 	
     if (nerve_gas) {
         offense_out += offense_out / 2;
@@ -1762,7 +1768,7 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         *dword_8C6B3C = 1;
         flush_input();
         if (!shift_key_down() && !(combat_type & CT_CAN_ARTY)) {
-            sub_55A150(veh_id_atk, x, y, offset, 1);
+            veh_scoot(veh_id_atk, x, y, offset, 1);
         }
         stack_put(veh_id_atk, x, y);
         draw_tile(x, y, 2);

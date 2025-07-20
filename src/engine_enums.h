@@ -5,7 +5,8 @@ const int SP_Destroyed = -2;
 const int SP_ID_First = 70;
 const int SP_ID_Last = 133;
 const int Fac_ID_First = 1;
-const int Fac_ID_Last = 64;
+const int Fac_ID_Last = 64; // facilities that can be built on the base
+const int Fac_All_ID_Last = 69; // includes satellites and stockpile energy
 const int Tech_ID_First = 0;
 const int Tech_ID_Last = 88;
 
@@ -267,8 +268,8 @@ enum GameState {
     STATE_SCENARIO_CHEATED_FLAG = 0x20,
     STATE_SCENARIO_EDITOR = 0x40,
     STATE_OMNISCIENT_VIEW = 0x80,
-    STATE_UNK_100 = 0x100, // set or unset in Path::continents
-    STATE_UNK_200 = 0x200,
+    STATE_UNK_100 = 0x100, // Path_continents
+    STATE_UNK_200 = 0x200, // rankings
     STATE_UNK_400 = 0x400,
     STATE_UNK_800 = 0x800, // time expired? MP related? NOBONUSATEND
     STATE_DEBUG_MODE = 0x1000,
@@ -287,7 +288,7 @@ enum GameState {
     STATE_SCN_VICT_TERRAIN_ENH_COUNT_OBJ = 0x2000000,
     STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ = 0x4000000,
     STATE_EDITOR_ONLY_MODE = 0x8000000,
-    STATE_UNK_10000000 = 0x10000000,
+    STATE_UNK_10000000 = 0x10000000, // save_daemon
     STATE_SCN_VICT_POPULATION_COUNT_OBJ = 0x20000000,
     STATE_SCN_VICT_TECH_COUNT_OBJ = 0x40000000,
     STATE_SCN_VICT_CREDITS_COUNT_OBJ = 0x80000000,
@@ -333,6 +334,8 @@ enum GameMoreRules {
     MRULES_SCN_UNITY_PODS_NO_TECH = 0x2,
     MRULES_NO_PLANETARY_COUNCIL = 0x4,
     MRULES_NO_SOCIAL_ENGINEERING = 0x8,
+    MRULES_UNK_10 = 0x10, // multiplayer simultaneous moves related
+    MRULES_UNK_20 = 0x20, // save_daemon / load_daemon
 };
 
 enum GameWarnings {
@@ -595,9 +598,13 @@ enum PlayerFlags {
     PFLAG_MAP_REVEALED = 0x200,
     PFLAG_GENETIC_PLAGUE_INTRO = 0x400, // +1 to defense against after 1st time faction experiences
     PFLAG_UNK_1000 = 0x1000, // setup_player
+    PFLAG_UNK_2000 = 0x2000, // turn_upkeep
     PFLAG_BEEN_ELECTED_GOVERNOR = 0x8000, // used to determine whether #GOVERNOR has been displayed
     PFLAG_UNK_10000 = 0x10000,
-    PFLAG_UNK_20000 = 0x20000,
+    PFLAG_UNK_20000 = 0x20000, // compute_score
+    PFLAG_UNK_40000 = 0x40000, // compute_score
+    PFLAG_UNK_80000 = 0x80000, // alt_set
+    PFLAG_UNK_100000 = 0x100000, // compute_score
     PFLAG_STRAT_ATK_ENEMY_HQ = 0x200000,
     PFLAG_COOP_WITH_HUMAN = 0x400000,
     PFLAG_TEAM_UP_VS_HUMAN = 0x800000,
@@ -849,6 +856,8 @@ enum MapwinState {
     MAPWIN_DRAW_CURSOR_COMPASS = 0x20000,
     MAPWIN_DRAW_DIPLO_STATE = 0x100000, // show faction treaty status matrix in window corner
     MAPWIN_SUPPORT_VIEW = 0x200000,
+    MAPWIN_UNK_400000 = 0x400000, // MapWin_draw_base_dest
+    MAPWIN_UNK_800000 = 0x800000, // MapWin_draw_base_dest
     MAPWIN_DRAW_SOLID_RADIUS = 0x1000000, // faction base radius solid color terrain view
     MAPWIN_HIDE_OCEAN_BASE = 0x2000000, // stop rendering ocean base layer
     MAPWIN_UNK_4000000 = 0x4000000,

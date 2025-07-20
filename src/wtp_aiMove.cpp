@@ -68,7 +68,7 @@ void fixUndesiredTransportDropoff()
 	
 	for (int vehicleId : aiData.vehicleIds)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 
 		// verify transportVehicleId is set
 
@@ -86,7 +86,7 @@ void fixUndesiredTransportDropoff()
 
 		// get transport vehicle
 
-		VEH *transportVehicle = &(Vehicles[transportVehicleId]);
+		VEH *transportVehicle = &(Vehs[transportVehicleId]);
 
 		// verify transportVehicle is in same location
 
@@ -113,7 +113,7 @@ void fixUndesiredTransportPickup()
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		
 		// AI vehicle
@@ -159,7 +159,7 @@ void healStrategy()
 	
 	for (int vehicleId : aiData.vehicleIds)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 
 		// exclude ogres
@@ -306,7 +306,7 @@ int lastEnemyMoveVehicleX = -1;
 int lastEnemyMoveVehicleY = -1;
 int enemyMoveVehicle(const int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	
 	debug("enemyMoveVehicle [%4d] %s %2d %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), getVehicleRemainingMovement(vehicleId), Units[vehicle->unit_id].name);
 	
@@ -352,7 +352,7 @@ bool transitVehicle(Task task)
 	const bool TRACE = DEBUG && false;
 
 	int vehicleId = task.getVehicleId();
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	MAP *destination = task.getDestination();
 
@@ -447,7 +447,7 @@ bool transitLandVehicle(Task task)
 	assert(vehicleId >= 0 && vehicleId < *VehCount);
 	assert(destination >= *MapTiles && destination < *MapTiles + *MapAreaTiles);
 	
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	TileInfo &vehicleTileInfo = aiData.getVehicleTileInfo(vehicleId);
 	
@@ -565,7 +565,7 @@ void balanceVehicleSupport()
 			
 			for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 			{
-				VEH *vehicle = &(Vehicles[vehicleId]);
+				VEH *vehicle = getVehicle(vehicleId);
 				
 				// this home base
 				
@@ -647,7 +647,7 @@ Modified vehicle movement.
 */
 int __cdecl wtp_mod_ai_enemy_move(const int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	
 	int returnValue;
 	
@@ -683,7 +683,7 @@ Searches for allied base where vehicle can get into.
 */
 MAP *getNearestFriendlyBase(int vehicleId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 	int triad = vehicle->triad();
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
@@ -980,7 +980,7 @@ Ends combat vehicle turn at the best tile.
 */
 void setCombatMoveTo(int vehicleId, MAP *destination)
 {
-	VEH &vehicle = Vehicles[vehicleId];
+	VEH &vehicle = Vehs[vehicleId];
 	int factionId = vehicle.faction_id;
 	int triad = vehicle.triad();
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
@@ -1148,7 +1148,7 @@ MAP *getSafeLocation(int vehicleId, bool unfriendly)
 {
 	Profiling::start("- getSafeLocation");
 	
-	VEH &vehicle = Vehicles[vehicleId];
+	VEH &vehicle = Vehs[vehicleId];
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	int triad = vehicle.triad();
 	

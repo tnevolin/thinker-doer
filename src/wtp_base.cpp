@@ -499,7 +499,7 @@ size_t populateBaseYieldsAndTiles(int baseId, std::array<TileValue, 21> &tiles)
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &Vehicles[vehicleId];
+		VEH *vehicle = &Vehs[vehicleId];
 		
 		// within 2 range
 		
@@ -1221,6 +1221,123 @@ int findReplacementSpecialist(int factionId, int specialistId)
 	}
 	
 	return bestSuperiorSpecialistId != -1 ? bestSuperiorSpecialistId : bestSpecialistId != -1 ? bestSpecialistId : specialistId;
+	
+}
+
+void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int)
+{
+	
+}
+
+int getBasePsychCoefficient(int baseId)
+{
+	assert(baseId >= 0 && baseId < *BaseCount);
+	
+	BASE &base = Bases[baseId];
+	int factionId = base.faction_id;
+	
+	int psychCoefficient = 4;
+	
+	if (has_fac_built(FAC_HOLOGRAM_THEATRE, baseId) || (has_project(FAC_VIRTUAL_WORLD, factionId) && has_fac_built(FAC_NETWORK_NODE, baseId)))
+	{
+		psychCoefficient += 2;
+	}
+	if (has_fac_built(FAC_RESEARCH_HOSPITAL, baseId))
+	{
+		psychCoefficient += 1;
+	}
+	if (has_fac_built(FAC_NANOHOSPITAL, baseId))
+	{
+		psychCoefficient += 1;
+	}
+	if (has_fac_built(FAC_TREE_FARM, baseId))
+	{
+		psychCoefficient += conf.energy_multipliers_tree_farm[1];
+	}
+	if (has_fac_built(FAC_HYBRID_FOREST, baseId))
+	{
+		psychCoefficient += conf.energy_multipliers_hybrid_forest[1];
+	}
+	if (has_fac_built(FAC_CENTAURI_PRESERVE, baseId))
+	{
+		psychCoefficient += conf.energy_multipliers_centauri_preserve[1];
+	}
+	if (has_fac_built(FAC_HYBRID_FOREST, baseId))
+	{
+		psychCoefficient += conf.energy_multipliers_temple_of_planet[1];
+	}
+	
+	return psychCoefficient;
+	
+}
+
+double computeBaseTileScore(bool restrictions, double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy)
+{
+//	debug("computeBaseTileScore gF=%7.4f eV=%5.2f nS=%2d, mS=%2d eS=%2d n=%2d m=%2d e=%2d\n", growthFactor, energyValue, nutrientSurplus, mineralSurplus, energySurplus, tileValueNutrient, tileValueMineral, tileValueEnergy);
+	
+	double nutrient = (1.0 + conf.worker_algorithm_nutrient_preference) * (double)tileValueNutrient;
+	double mineral = (1.0 + conf.worker_algorithm_mineral_preference) * (double)tileValueMineral;
+	double energy = (1.0 + conf.worker_algorithm_energy_preference) * (double)tileValueEnergy;
+	
+	double growthMultiplier = conf.worker_algorithm_growth_multiplier * (can_grow ? 1.0 : 0.1);
+	int minimalNutrientSurplus = can_grow ? conf.worker_algorithm_minimal_nutrient_surplus : 0;
+	int minimalMineralSurplus = conf.worker_algorithm_minimal_mineral_surplus;
+	int minimalEnergySurplus = conf.worker_algorithm_minimal_energy_surplus;
+	
+	double score = 0.0;
+	
+	if (restrictions && nutrientSurplus < minimalNutrientSurplus)
+	{
+		score = 10.0 * nutrient + mineral + energyValue * energy;
+	}
+	else if (restrictions && mineralSurplus < minimalMineralSurplus)
+	{
+		score = nutrient + 10.0 * mineral + energyValue * energy;
+	}
+	else if (restrictions && energySurplus < minimalEnergySurplus)
+	{
+		score = nutrient + mineral + 10.0 * energyValue * energy;
+	}
+	else
+	{
+		double nutrientSurplusFinal = (double)nutrientSurplus + nutrient;
+		double mineralSurplusFinal = (double)mineralSurplus + mineral;
+		double energySurplusFinal = (double)energySurplus + energy;
+		
+		double oldIncome = mineralSurplus + energyValue * energySurplus;
+		double oldIncomeGrowth = growthFactor * nutrientSurplus * oldIncome;
+		
+		double oldIncomeGain = oldIncome;
+		double oldIncomeGrowthGain = growthMultiplier * oldIncomeGrowth;
+		double oldGain = oldIncomeGain + oldIncomeGrowthGain;
+		
+		double newIncome = mineralSurplusFinal + energyValue * energySurplusFinal;
+		double newIncomeGrowth = growthFactor * nutrientSurplusFinal * newIncome;
+		
+		double newIncomeGain = newIncome;
+		double newIncomeGrowthGain = growthMultiplier * newIncomeGrowth;
+		double newGain = newIncomeGain + newIncomeGrowthGain;
+		
+		score = newGain - oldGain;
+		
+//		debug
+//		(
+//			"\tincome=%5.2f"
+//			" incomeGrowth=%5.2f"
+//			" incomeGain=%5.2f"
+//			" incomeGrowthGain=%5.2f"
+//			" gain=%5.2f"
+//			"\n"
+//			, income
+//			, incomeGrowth
+//			, incomeGain
+//			, incomeGrowthGain
+//			, gain
+//		);
+		
+	}
+	
+	return score;
 	
 }
 

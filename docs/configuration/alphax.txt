@@ -4,11 +4,6 @@
 ; *  https://github.com/tnevolin/thinker-doer                  *
 ; **************************************************************
 ;
-; **************************************************************
-; *  SMACX Thinker Mod / Default tech tree for the expansion   *
-; *  https://github.com/induktio/thinker                       *
-; **************************************************************
-;
 ; Sid Meier's ALPHA CENTAURI
 ;
 ; Alpha Centauri User-Configurable Rules

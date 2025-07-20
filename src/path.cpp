@@ -395,20 +395,23 @@ bool has_base_sites(TileSearch& ts, int x, int y, int faction_id, int triad) {
     assert(valid_player(faction_id));
     assert(valid_triad(triad));
     MAP* sq;
-    int area = 0;
+    int value = 0;
     int bases = 0;
     int i = 0;
-    int limit = ((*CurrentTurn * x ^ y) & 7 ? 200 : 800);
+    int limit = ((*CurrentTurn ^ x) & 7 ? 50 : 200) * clamp(conf.base_spacing, 4, 8);
     ts.init(x, y, triad, 1);
     while (++i <= limit && (sq = ts.get_next()) != NULL) {
         if (sq->is_base()) {
             bases++;
         } else if (can_build_base(ts.rx, ts.ry, faction_id, triad)) {
-            area++;
+            value += (sq->alt_level() >= ALT_OCEAN_SHELF ? 4 : 1);
+            if (value > 40) {
+                break;
+            }
         }
     }
-    debug("has_base_sites %2d %2d triad: %d area: %d bases: %d\n", x, y, triad, area, bases);
-    return area > min(10, bases+4);
+    debug("has_base_sites %2d %2d triad: %d value: %d bases: %d\n", x, y, triad, value, bases);
+    return value > min(40, 4*(bases+4));
 }
 
 int route_distance(PMTable& tbl, int x1, int y1, int x2, int y2) {
@@ -464,7 +467,7 @@ int move_to_base(int veh_id, bool ally) {
 }
 
 int escape_move(const int id) {
-    VEH* veh = &Vehicles[id];
+    VEH* veh = &Vehs[id];
     MAP* sq = mapsq(veh->x, veh->y);
     if (defend_tile(veh, sq)) {
         return set_order_none(id);
@@ -577,7 +580,6 @@ static int route_score(VEH* veh, int x, int y, int modifier, MAP* sq) {
 int search_route(TileSearch& ts, int veh_id, int* tx, int* ty) {
     VEH* veh = &Vehs[veh_id];
     MAP* sq = mapsq(veh->x, veh->y);
-    AIPlans& plan = plans[veh->faction_id];
     debug("search_route %2d %2d %s\n", veh->x, veh->y, veh->name());
     *tx = -1;
     *ty = -1;
@@ -585,6 +587,8 @@ int search_route(TileSearch& ts, int veh_id, int* tx, int* ty) {
         assert(0);
         return false;
     }
+    Faction& plr = Factions[veh->faction_id];
+    AIPlans& plan = plans[veh->faction_id];
     int veh_reg = sq->region;
     bool combat = veh->is_combat_unit();
     bool scout = combat && !bad_reg(veh_reg)
@@ -627,10 +631,14 @@ int search_route(TileSearch& ts, int veh_id, int* tx, int* ty) {
         }
         return *tx >= 0;
     }
-    if (!combat && !veh->in_transit()
-    && mapdata[{veh->x, veh->y}].safety < PM_SAFE
-    && search_escape(ts, veh_id, tx, ty)) {
-        return true;
+    if (!combat) {
+        if (veh->in_transit() || (at_base && plr.base_count < 2)) {
+            return false;
+        }
+        if (mapdata[{veh->x, veh->y}].safety < PM_SAFE
+        && search_escape(ts, veh_id, tx, ty)) {
+            return true;
+        }
     }
     for (int i = 0; i < *BaseCount; i++) {
         BASE* base = &Bases[i];
@@ -700,7 +708,7 @@ int search_route(TileSearch& ts, int veh_id, int* tx, int* ty) {
         if (tgt_id >= 0) {
             debug("action_gate %2d %2d %s -> %s\n",
             veh->x, veh->y, veh->name(), Bases[tgt_id].name);
-            action_gate(veh_id, tgt_id);
+            net_action_gate(veh_id, tgt_id);
             *tx = px;
             *ty = py;
             return true;

@@ -313,7 +313,7 @@ void moveAvailableSeaTransportStrategy(int vehicleId)
 
 void moveLoadedSeaTransportStrategy(int vehicleId, int passengerId)
 {
-	VEH *vehicle = &(Vehicles[vehicleId]);
+	VEH *vehicle = getVehicle(vehicleId);
 
 	// find nearest owned land
 
@@ -398,7 +398,7 @@ bool isCarryingVehicle(int vehicleId)
 
 bool deliverArtifact(int transportVehicleId, int artifactVehicleId)
 {
-	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
+	VEH *transportVehicle = &(Vehs[transportVehicleId]);
 
 	// find base in need of artifact (building project or closest)
 
@@ -443,7 +443,7 @@ bool deliverArtifact(int transportVehicleId, int artifactVehicleId)
 
 bool deliverFormer(int transportVehicleId, int formerVehicleId)
 {
-	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
+	VEH *transportVehicle = &(Vehs[transportVehicleId]);
 	MAP *transportVehicleTile = getVehicleMapTile(transportVehicleId);
 	
 	debug("\ndeliverFormer %s\n", getLocationString({transportVehicle->x, transportVehicle->y}).c_str());
@@ -518,7 +518,7 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = &(Vehicles[vehicleId]);
+		VEH *vehicle = getVehicle(vehicleId);
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		
 		// only own vehicles
@@ -586,7 +586,7 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 
 bool deliverScout(int transportVehicleId, int scoutVehicleId)
 {
-	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
+	VEH *transportVehicle = &(Vehs[transportVehicleId]);
 
 	debug("\ndeliverScount %s\n", getLocationString({transportVehicle->x, transportVehicle->y}).c_str());
 
@@ -634,7 +634,7 @@ bool deliverScout(int transportVehicleId, int scoutVehicleId)
 
 bool pickupColony(int transportVehicleId)
 {
-	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
+	VEH *transportVehicle = &(Vehs[transportVehicleId]);
 	MAP *transportVehicleTile = getVehicleMapTile(transportVehicleId);
 
 	// search for nearest colony need ferry
@@ -644,7 +644,7 @@ bool pickupColony(int transportVehicleId)
 
 	for (int otherVehicleId = 0; otherVehicleId < *VehCount; otherVehicleId++)
 	{
-		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		VEH *otherVehicle = getVehicle(otherVehicleId);
 		MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
 
 		if
@@ -726,7 +726,7 @@ bool pickupColony(int transportVehicleId)
 
 bool pickupFormer(int transportVehicleId)
 {
-	VEH *transportVehicle = &(Vehicles[transportVehicleId]);
+	VEH *transportVehicle = &(Vehs[transportVehicleId]);
 	MAP *transportVehicleTile = getVehicleMapTile(transportVehicleId);
 
 	// search for nearest Former need ferry
@@ -736,7 +736,7 @@ bool pickupFormer(int transportVehicleId)
 
 	for (int otherVehicleId = 0; otherVehicleId < *VehCount; otherVehicleId++)
 	{
-		VEH *otherVehicle = &(Vehicles[otherVehicleId]);
+		VEH *otherVehicle = getVehicle(otherVehicleId);
 		MAP *otherVehicleTile = getVehicleMapTile(otherVehicleId);
 
 		if
