@@ -403,13 +403,21 @@ int __cdecl mod_get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat
                         morale -= 2;
                     }
                 } else {
+                	// [WTP]
+                	// no morale bonus against alien
+                	/*
                     morale++;
+                    */
                 }
             }
         }
     }
     if (unk_tgl) {
+		// [WTP]
+		// no bonus morale on defense
+		/*
         morale = clamp(morale, 1, 6);
+        */
     }
     VehBasicBattleMorale[unk_tgl != 0] = morale; // shifted up from original
     morale += 6;
@@ -472,7 +480,11 @@ int __cdecl mod_get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat
             morale++;
         }
         if (veh_id_atk >= 0 && !Vehs[veh_id_atk].faction_id) {
+			// [WTP]
+			// no bonus against aliens
+			/*
             morale++;
+            */
         }
     }
     if (veh_id_atk >= 0 && Vehs[veh_id_atk].faction_id

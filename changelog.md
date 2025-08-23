@@ -1,3 +1,9 @@
+# Version 379
+
+* Removed all quirky morale rules
+  * Morale bonus defending against aliens
+  * Morale bonus to defending Very Green unit.
+
 # Version 378
 
 * Updated Genejack Factory description to match the effect.
