@@ -353,8 +353,11 @@ Increases $LINK<Minerals=42> output at base by 50%.
 
 #; Genejack Factory
 #HELPFAC22
-Increases $LINK<Minerals=42> output at base by 50% but increases the number of $LINK<Drones=36> at base by one and increases
+Increases mining improvement $LINK<Minerals=42> yield but increases the number of $LINK<Drones=36> at base by one and increases
 vulnerability to enemy $LINK<mind control=60021>.
+^rocky mine          +2
+^flat mine              +1
+^mining platform  +1
 
 #; Punishment Sphere
 #HELPFAC23

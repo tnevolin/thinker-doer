@@ -1,3 +1,7 @@
+# Version 378
+
+* Updated Genejack Factory description to match the effect.
+
 # Version 377
 
 * Merged with Thinker 5.1.
