@@ -1,3 +1,13 @@
+# Version 380
+
+* Added description to battle screen for some combat rules.
+  * Alien attacking at 1/3 strenght before turn 15.
+  * Alien defending at 1/2 strength before turn 15.
+  * Alien attacking at 1/2 strenght against last player base.
+  * Alien attacking at 1/2 strength against player HQ if less than 4 bases left.
+  * Difficulty offense modifiers. Player gets significant bonus on lower levels.
+  * etc.
+
 # Version 379
 
 * Removed all quirky morale rules

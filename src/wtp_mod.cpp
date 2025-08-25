@@ -1487,52 +1487,6 @@ __cdecl void correctGrowthTurnsIndicator(int destinationStringPointer, int sourc
 	
 }
 
-void createFreeVehicles(int factionId)
-{
-	// find first faction vehicle location
-
-	VEH *factionVehicle = NULL;
-
-	for (int id = 0; id < *VehCount; id++)
-	{
-		VEH* vehicle = &(Vehs[id]);
-
-		if (vehicle->faction_id != factionId)
-			continue;
-
-		factionVehicle = vehicle;
-
-		break;
-
-	}
-
-	// faction vehicle is not found
-
-	if (factionVehicle == NULL)
-		return;
-
-	// get spawn location
-
-	MAP *tile = getMapTile(factionVehicle->x, factionVehicle->y);
-
-	// create free vehicles
-
-	int colonyCount = is_human(factionId) ? conf.player_colony_pods : conf.computer_colony_pods;
-	int colony = (is_ocean(tile) ? BSC_SEA_ESCAPE_POD : BSC_COLONY_POD);
-	for (int j = 0; j < colonyCount; j++)
-	{
-		mod_veh_init(colony, factionId, factionVehicle->x, factionVehicle->y);
-	}
-
-	int formerCount = is_human(factionId) ? conf.player_formers : conf.computer_formers;
-	int former = (is_ocean(tile) ? BSC_SEA_FORMERS : BSC_FORMERS);
-	for (int j = 0; j < formerCount; j++)
-	{
-		mod_veh_init(former, factionId, factionVehicle->x, factionVehicle->y);
-	}
-
-}
-
 int getLandUnitSpeedOnRoads(int unitId)
 {
 	UNIT *unit = getUnit(unitId);

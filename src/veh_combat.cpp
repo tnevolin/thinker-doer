@@ -1516,9 +1516,17 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
     int diff_val = 3 - (faction_id_atk != 0);
     if (f_def->diff_level < diff_val && is_human(faction_id_def) && !is_human(faction_id_atk)) {
         offense_out = offense_out * (f_def->diff_level + 1) / 4;
+        // [WTP]
+        // describe effect
+        int modifier = 100 * (f_def->diff_level + 1) / 4 - 100;
+        add_bat(0, modifier, "Difficulty");
     }
     if (f_atk->diff_level < diff_val && is_human(faction_id_atk) && !is_human(faction_id_def)) {
         offense_out = offense_out * (4 - f_atk->diff_level) / 2;
+        // [WTP]
+        // describe effect
+        int modifier = 100 * (4 - f_atk->diff_level) / 2 - 100;
+        add_bat(0, modifier, "Difficulty");
     }
     if (!faction_id_atk) {
         if (!is_human(faction_id_def)) {
@@ -1535,21 +1543,41 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
             }
             if (f_def->base_count <= 1) {
                 offense_out /= 2;
+				// [WTP]
+				// describe effect
+				int modifier = 100 / 2 - 100;
+				add_bat(0, modifier, "Last base");
             }
             if (*CurrentTurn < 50) {
                 offense_out /= 2;
+				// [WTP]
+				// describe effect
+				int modifier = 100 / 2 - 100;
+				add_bat(0, modifier, "Turn < 50");
             }
             if (has_fac_built(FAC_HEADQUARTERS, base_id) && f_def->base_count < 4) {
                 offense_out /= 2;
+				// [WTP]
+				// describe effect
+				int modifier = 100 / 2 - 100;
+				add_bat(0, modifier, "HQ, bases < 4");
             }
         }
     }
     if (*CurrentTurn < conf.native_weak_until_turn) {
         if (!faction_id_atk) {
             offense_out /= 3;
+			// [WTP]
+			// describe effect
+			int modifier = 100 / 3 - 100;
+			add_bat(0, modifier, "Native weak");
         }
         if (!faction_id_def) {
             defense_out /= 2;
+			// [WTP]
+			// describe effect
+			int modifier = 100 / 2 - 100;
+			add_bat(1, modifier, "Native weak");
         }
     }
     if (base_id >= 0 && veh_atk->triad() == TRIAD_AIR) {
