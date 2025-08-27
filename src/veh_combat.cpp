@@ -149,7 +149,11 @@ void __cdecl mod_say_morale2(char* output, int veh_id, int faction_id_vs_native)
             morale_modifier++;
         }
         if (!morale && !morale_modifier) {
+			// [WTP]
+			// no morale bonus for Very Green defender
+			/*
             morale_modifier = 1;
+            */
         }
         bool flag = false;
         if (morale_penalty) {
@@ -1532,10 +1536,18 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         if (!is_human(faction_id_def)) {
             if (veh_def->is_former()) {
                 offense_out /= 2;
+				// [WTP]
+				// describe effect
+				int modifier = 100 / 2 - 100;
+				add_bat(0, modifier, "Native vs. AI");
                 // Removed additional AI bonus here for former units which halved
                 // native attacker offense based on various visibility conditions
             } else {
                 offense_out = offense_out * (f_def->ranking + 8) / 16;
+				// [WTP]
+				// describe effect
+				int modifier = 100 * (f_def->ranking + 8) / 16 - 100;
+				add_bat(0, modifier, "Native vs. AI");
             }
         } else if (base_id >= 0) {
             if (faction_id_def == player_id) {
@@ -1570,14 +1582,14 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
 			// [WTP]
 			// describe effect
 			int modifier = 100 / 3 - 100;
-			add_bat(0, modifier, "Native weak");
+			add_bat(0, modifier, "Early native");
         }
         if (!faction_id_def) {
             defense_out /= 2;
 			// [WTP]
 			// describe effect
 			int modifier = 100 / 2 - 100;
-			add_bat(1, modifier, "Native weak");
+			add_bat(1, modifier, "Early native");
         }
     }
     if (base_id >= 0 && veh_atk->triad() == TRIAD_AIR) {
@@ -1703,7 +1715,16 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
                     continue;
                 }
                 mod_veh_skip(veh_id_atk);
+                
+                // [WTP]
+                // use modified battle compute for bombardment
+                // also copy existing modifiers
+                /*
                 battle_compute(veh_id_atk, veh_id_def, &offense_out, &defense_out, 1);
+                */
+                wtp_mod_battle_compute(veh_id_atk, veh_id_def, &offense_out, &defense_out, 1);
+                //
+                
                 // Original version compared def_value on unrelated data and is skipped here
                 int def_value = max(1, defense_out * Rules->artillery_dmg_denominator);
                 int damage_value = combat_rand(clamp(offense_out * Rules->artillery_dmg_numerator / def_value + 1, 1, 999));

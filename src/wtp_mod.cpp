@@ -614,7 +614,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		conf.isle_of_deep_offense_bonus != 0
 	)
 	{
-		addAttackerBonus(attackerStrengthPointer, conf.isle_of_deep_offense_bonus, "Non combat");
+		addAttackerBonus(attackerStrengthPointer, conf.isle_of_deep_offense_bonus, "IoD attack malus");
 	}
 	
     if
@@ -626,25 +626,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		conf.isle_of_deep_defense_bonus != 0
 	)
 	{
-		addDefenderBonus(defenderStrengthPointer, conf.isle_of_deep_defense_bonus, "Protective");
-	}
-	
-    // ----------------------------------------------------------------------------------------------------
-    // early game colony is tougher against aliens
-    // ----------------------------------------------------------------------------------------------------
-	
-    if
-	(
-		*CurrentTurn < 50
-		&&
-		// attacker is alien
-		attackerVehicle->faction_id == 0
-		&&
-		// defender is colony
-		isColonyUnit(defenderVehicle->unit_id)
-	)
-	{
-		addDefenderBonus(defenderStrengthPointer, 100, "Determination");
+		addDefenderBonus(defenderStrengthPointer, conf.isle_of_deep_defense_bonus, "IoD defend bonus");
 	}
 	
     // ----------------------------------------------------------------------------------------------------

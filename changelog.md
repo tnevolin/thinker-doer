@@ -1,3 +1,11 @@
+# Version 381
+
+* Removed (+) for Very Green units.
+* Removed IoD attack malus and defend bonus. Too quirky rule.
+* Fixed a bug when artillery attack did not use patched combat calculation version. Now it does.
+* Display combat bonuses/maluses for non player combats too as they can be visible as well.
+* Removed my previously added "Determination" combat bonus for colonies defending against natives int early game.
+
 # Version 380
 
 * Added description to battle screen for some combat rules.
