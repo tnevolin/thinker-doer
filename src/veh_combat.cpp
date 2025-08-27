@@ -1579,6 +1579,10 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
     }
 
     int diff_val = 3 - (faction_id_atk != 0);
+    
+    // [WTP]
+    // remove difficulty combat effects
+    /*
     if (f_def->diff_level < diff_val && is_human(faction_id_def) && !is_human(faction_id_atk)) {
         offense_out = offense_out * (f_def->diff_level + 1) / 4;
         // [WTP]
@@ -1586,6 +1590,11 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         int modifier = 100 * (f_def->diff_level + 1) / 4 - 100;
         add_bat(0, modifier, "Difficulty");
     }
+    */
+    
+    // [WTP]
+    // remove difficulty combat effects
+    /*
     if (f_atk->diff_level < diff_val && is_human(faction_id_atk) && !is_human(faction_id_def)) {
         offense_out = offense_out * (4 - f_atk->diff_level) / 2;
         // [WTP]
@@ -1593,6 +1602,11 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         int modifier = 100 * (4 - f_atk->diff_level) / 2 - 100;
         add_bat(0, modifier, "Difficulty");
     }
+    */
+    
+    // [WTP]
+    // remove anti-alien combat effects
+    /*
     if (!faction_id_atk) {
         if (!is_human(faction_id_def)) {
             if (veh_def->is_former()) {
@@ -1653,6 +1667,8 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
 			add_bat(1, modifier, "Early native");
         }
     }
+    */
+    
     if (base_id >= 0 && veh_atk->triad() == TRIAD_AIR) {
         Bases[base_id].state_flags |= BSTATE_UNK_100000;
     }
@@ -1779,7 +1795,6 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
                 
                 // [WTP]
                 // use modified battle compute for bombardment
-                // also copy existing modifiers
                 /*
                 battle_compute(veh_id_atk, veh_id_def, &offense_out, &defense_out, 1);
                 */
@@ -1787,8 +1802,23 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
                 //
                 
                 // Original version compared def_value on unrelated data and is skipped here
+                
+                // [WTP]
+                // simplified bombardment damage
+                /*
                 int def_value = max(1, defense_out * Rules->artillery_dmg_denominator);
                 int damage_value = combat_rand(clamp(offense_out * Rules->artillery_dmg_numerator / def_value + 1, 1, 999));
+                */
+                int off_value = max(1, offense_out * Rules->artillery_dmg_numerator);
+                int def_value = max(1, defense_out * Rules->artillery_dmg_denominator);
+                int damage_value = off_value / def_value;
+                if (combat_rand(def_value) < off_value % def_value)
+				{
+					damage_value++;
+				}
+				damage_value *= veh_def->reactor_type();
+				//
+				
                 int damage_limit;
                 if (base_id >= 0 || (sq_def->items & BIT_BUNKER)) {
                     damage_limit = (veh_def->max_hitpoints() * (100 - Rules->max_dmg_percent_arty_base_bunker) + 99) / 100;

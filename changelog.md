@@ -5,6 +5,9 @@
 * Fixed Air Drop label to show malus instead of bonus. Thinker fixed it as well.
 * Removed "Land based guns vs. ship artillery bonus". Land artillery is already much cheaper.
 * Artillery damage is straightened out. Artillery damage multiplier is set to 1. Artillery bombardment ignores terrain defender bonuses (rough terrain, "Open Ground").
+* Removed difficulty combat adjustments.
+* Removed anti alien combat adjustments.
+* Re-Fixed Artilery damage computation. Bombardment inflicts exactly offense/defense hitpoints (hitpoint = 10% of health) on average with fractions resolved randomly.
 
 # Version 381
 
