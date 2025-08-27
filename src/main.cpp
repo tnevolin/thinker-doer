@@ -818,6 +818,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->fungus_terrain_bonus = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("promotion_probability_denominator"))
+    {
+        cf->promotion_probability_denominator = atoi(value);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

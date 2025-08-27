@@ -1,3 +1,11 @@
+# Version 382
+
+* Removed HQ defense morale bonus.
+* Re-Fixed promotion probability to be dependent only on offense-defense ratio.
+* Fixed Air Drop label to show malus instead of bonus. Thinker fixed it as well.
+* Removed "Land based guns vs. ship artillery bonus". Land artillery is already much cheaper.
+* Artillery damage is straightened out. Artillery damage multiplier is set to 1. Artillery bombardment ignores terrain defender bonuses (rough terrain, "Open Ground").
+
 # Version 381
 
 * Removed (+) for Very Green units.

@@ -780,40 +780,6 @@ void patch_uniform_promotions()
 }
 
 /*
-Removes Very Green on defense morale bonus.
-*/
-void patch_very_green_no_defense_bonus()
-{
-    // very_green_no_defense_bonus_display
-	
-    int very_green_no_defense_bonus_display_bytes_length = 0x2;
-	
-    /*
-    0:  75 10                   jne    0x12
-    */
-    byte very_green_no_defense_bonus_display_bytes_old[] =
-        { 0x75, 0x10 }
-    ;
-	
-    /*
-    0:  75 10                   jmp    0x12
-    */
-    byte very_green_no_defense_bonus_display_bytes_new[] =
-        { 0xEB, 0x10 }
-    ;
-	
-    write_bytes
-    (
-        0x004B4327,
-        very_green_no_defense_bonus_display_bytes_old,
-        very_green_no_defense_bonus_display_bytes_new,
-        very_green_no_defense_bonus_display_bytes_length
-    )
-    ;
-	
-}
-
-/*
 Makes sea base territory distance same as land one.
 */
 void patch_sea_territory_distance_same_as_land()
@@ -3225,13 +3191,6 @@ void patch_setup_wtp(Config* cf)
 	if (cf->uniform_promotions)
 	{
 		patch_uniform_promotions();
-	}
-	
-	// patch very_green_no_defense_bonus
-	
-	if (cf->very_green_no_defense_bonus)
-	{
-		patch_very_green_no_defense_bonus();
 	}
 	
 	// patch sea_territory_distance_same_as_land

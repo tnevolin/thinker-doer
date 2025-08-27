@@ -29,7 +29,7 @@
 #RULES
 3,       ; Movement rate along roads
 2,       ; Nutrient intake requirement for citizens
-3,2      ; Numerator & Denominator for artillery fire damage
+1,1      ; Numerator & Denominator for artillery fire damage
 2,       ; Max artillery range (larger will break multiplayer)
 8,       ; Max airdrop range w/o orbital insertion
 20,      ; Nutrient cost multiplier
@@ -57,7 +57,7 @@
 0,       ; Combat % -> Infantry vs. Base
 50,      ; Combat penalty % -> attack after airdrop
 50,      ; Combat % -> Fanatic attack bonus
-50,      ; Combat % -> Land based guns vs. ship artillery bonus
+0,       ; Combat % -> Land based guns vs. ship artillery bonus
 0,       ; Combat % -> Artillery bonus per level of altitude
 50,      ; Combat % -> Trance bonus defending vs. psi
 50,      ; Combat % -> Empath Song bonus attacking vs. psi

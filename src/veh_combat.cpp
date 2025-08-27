@@ -116,7 +116,19 @@ void __cdecl mod_say_morale2(char* output, int veh_id, int faction_id_vs_native)
             bool has_creche = has_fac_built(FAC_CHILDREN_CRECHE, base_id);
             bool has_brood_pit = native_unit && has_fac_built(FAC_BROOD_PIT, base_id);
             if (has_fac_built(FAC_HEADQUARTERS, base_id)) {
+				
+				// [WTP]
+				// disable HQ morale effect
+				if (conf.disable_current_base_morale_effect)
+				{
+					// no morale change from current base
+				}
+				else
+				{
                 morale_modifier++;
+				}
+				//
+				
             }
             
 			// [WTP]
@@ -150,10 +162,15 @@ void __cdecl mod_say_morale2(char* output, int veh_id, int faction_id_vs_native)
         }
         if (!morale && !morale_modifier) {
 			// [WTP]
-			// no morale bonus for Very Green defender
-			/*
+			// very green morale does not have defense bonus
+			if (conf.very_green_no_defense_bonus)
+			{
+				// no bonus
+			}
+			else
+			{
             morale_modifier = 1;
-            */
+			}
         }
         bool flag = false;
         if (morale_penalty) {
@@ -418,10 +435,15 @@ int __cdecl mod_get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat
     }
     if (unk_tgl) {
 		// [WTP]
-		// no bonus morale on defense
-		/*
+		// very green morale does not have defense bonus
+		if (conf.very_green_no_defense_bonus)
+		{
+			// no bonus
+		}
+		else
+		{
         morale = clamp(morale, 1, 6);
-        */
+		}
     }
     VehBasicBattleMorale[unk_tgl != 0] = morale; // shifted up from original
     morale += 6;
@@ -475,10 +497,21 @@ int __cdecl mod_get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat
 		}
 		//
 		
+		// [WTP]
+		// disable current base morale effect
+		if (conf.disable_current_base_morale_effect)
+		{
+			// no morale change from current base
+		}
+		else
+		{
         // Fix: manual has "Units in a headquarters base automatically gain +1 Morale when defending."
         if (has_fac_built(FAC_HEADQUARTERS, base_id_def)) {
             morale++;
         }
+		}
+		//
+		
         int morale_pending = Factions[faction_id_def].SE_morale_pending;
         if (!native_unit && morale_pending >= 2 && morale_pending <= 3) {
             morale++;
@@ -829,7 +862,7 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
             && veh_atk->state & VSTATE_MADE_AIRDROP
             && has_abil(veh_atk->unit_id, ABL_DROP_POD)) {
                 offense = offense * (100 - Rules->combat_penalty_atk_airdrop) / 100;
-                add_bat(0, Rules->combat_penalty_atk_airdrop,
+                add_bat(0, - Rules->combat_penalty_atk_airdrop,
                     (drop_range(faction_id_atk) <= Rules->max_airdrop_rng_wo_orbital_insert
                     ? label_get(437) // Air Drop
                     : label_get(438))); // Orbital Insertion
@@ -923,6 +956,22 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
                 assert(terrain_def == (veh_def->triad() == TRIAD_AIR ? 2 :
                     defense_value(faction_id_def, veh_def->x, veh_def->y, veh_id_def, veh_id_atk)));
 				
+				// [WTP]
+				// bunker ignores terrain if configured
+				if (conf.bunker_ignores_terrain && sq_def && sq_def->is_bunker())
+				{
+					*VehBattleDisplayTerrain = NULL;
+					terrain_def = 2;
+				}
+				
+				// [WTP]
+				// no artillery defense terrain bonus
+				if (is_arty && base_id_def < 0 && sq_def)
+				{
+					*VehBattleDisplayTerrain = NULL;
+					terrain_def = 2;
+				}
+                
 				// [WTP]
 				// bunker ignores terrain if configured
 				if (conf.bunker_ignores_terrain && sq_def && sq_def->is_bunker())
@@ -1055,11 +1104,16 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
                 }
                 //
                 
+                // [WTP]
+                // no artillery defense terrain bonus
+                /*
                 else if (is_arty && base_id_def < 0 && sq_def && !is_rocky
                 && !(sq_def->items & BIT_FOREST) && !sq_def->is_fungus()) {
                     def_multi = 150;
                     display_def = label_get(525); // Open Ground
                 }
+                */
+                
                 defense = defense * def_multi / 50;
                 if (def_multi > 100) {
                     add_bat(1, def_multi - 100, display_def);
@@ -1192,13 +1246,20 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
     }
 }
 
+// [WTP] TODO check promotion chance
 void __cdecl promote(int veh_id) {
     VEH* veh = &Vehs[veh_id];
     if (veh_id >= 0 && !veh->is_missile()
     && (veh->plan() < PLAN_COLONY || veh->defense_value() > 1)) {
         int morale = mod_morale_veh(veh_id, 1, 0);
         if (veh->morale < MORALE_ELITE && morale < MORALE_ELITE) {
+			
+			// [WTP]
+			// disable extra promotion chance multiplier
+            {
+			/*
             if (morale <= MORALE_DISCIPLINED || combat_rand(2) == 0) {
+            */
                 veh->morale++;
                 int mod_morale = mod_morale_veh(veh_id, 1, 0);
                 if (morale != mod_morale && veh->faction_id == MapWin->cOwner && is_human(veh->faction_id)) {
@@ -2101,8 +2162,16 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         offense_out = offense_out * veh_atk_last_hp * veh_atk->reactor_type() / veh_atk_hp;
         defense_out = defense_out * veh_def_hp * veh_def->reactor_type() / veh_def->max_hitpoints();
         if (!veh_def->is_artifact()) {
+			
+			// [WTP]
+			// uniform promotion probability
+			/*
             if (mod_morale_veh(veh_id_atk, 1, 0) <= 1
             || combat_rand(offense_out + defense_out) <= defense_out) {
+			*/
+            if (combat_rand(offense_out + defense_out) <= defense_out) {
+			//
+			
                 promote(veh_id_atk);
             }
         }
@@ -2110,9 +2179,17 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         offense_out = offense_out * veh_atk_hp * veh_atk->reactor_type() / veh_atk->max_hitpoints();
         defense_out = defense_out * veh_def_last_hp * veh_def->reactor_type() / veh_def_hp;
         if (!veh_atk->is_artifact()) {
+			
+			// [WTP]
+			// uniform promotion probability
+			/*
             if (mod_morale_veh(veh_id_def, 1, 0) <= 1
             || combat_rand(offense_out + defense_out) <= offense_out
             || (base_id >= 0 && mod_morale_veh(veh_id_def, 1, 0) < 4)) {
+			*/
+            if (combat_rand(offense_out + defense_out) <= offense_out) {
+			//
+			
                 promote(veh_id_def);
             }
         }
