@@ -1,3 +1,7 @@
+# Version 383
+
+* Mobile aliens will not appear until turn 15. Uncovering a pod still may produce them.
+
 # Version 382
 
 * Removed HQ defense morale bonus.

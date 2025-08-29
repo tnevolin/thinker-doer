@@ -1578,11 +1578,11 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         TutWin_tut_map(TutWin, "PSICOMBAT", tx, ty, (faction_id_atk == player_id ? veh_id_atk : veh_id_def), 0, 1, -1, -1);
     }
 
-    int diff_val = 3 - (faction_id_atk != 0);
-    
     // [WTP]
     // remove difficulty combat effects
     /*
+    int diff_val = 3 - (faction_id_atk != 0);
+    
     if (f_def->diff_level < diff_val && is_human(faction_id_def) && !is_human(faction_id_atk)) {
         offense_out = offense_out * (f_def->diff_level + 1) / 4;
         // [WTP]
@@ -1590,11 +1590,6 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         int modifier = 100 * (f_def->diff_level + 1) / 4 - 100;
         add_bat(0, modifier, "Difficulty");
     }
-    */
-    
-    // [WTP]
-    // remove difficulty combat effects
-    /*
     if (f_atk->diff_level < diff_val && is_human(faction_id_atk) && !is_human(faction_id_def)) {
         offense_out = offense_out * (4 - f_atk->diff_level) / 2;
         // [WTP]

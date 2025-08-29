@@ -4175,3 +4175,18 @@ int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx
 	
 }
 
+int __cdecl wtp_mod_alien_veh_init(int unitId, int factionId, int x, int y)
+{
+	// do not create mobile natives until they gain full strength
+	
+	if (factionId == 0 && unitId != BSC_FUNGAL_TOWER && *CurrentTurn < conf.native_weak_until_turn)
+	{
+		return -1;
+	}
+	
+	// execute original code
+	
+	return veh_init(unitId, factionId, x, y);
+	
+}
+

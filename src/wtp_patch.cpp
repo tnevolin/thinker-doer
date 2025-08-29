@@ -3125,6 +3125,26 @@ void patch_tech_achieved()
 	
 }
 
+void patch_alien_veh_init()
+{
+	write_call(0x004CEB0A, (int)wtp_mod_alien_veh_init); // action_fungal
+	write_call(0x004CECBF, (int)wtp_mod_alien_veh_init); // action_fungal
+	write_call(0x004F7143, (int)wtp_mod_alien_veh_init); // base_ecology
+	write_call(0x004F7407, (int)wtp_mod_alien_veh_init); // base_ecology
+	write_call(0x004F74FC, (int)wtp_mod_alien_veh_init); // base_ecology
+	write_call(0x00522789, (int)wtp_mod_alien_veh_init); // alien_fauna
+	write_call(0x005227C7, (int)wtp_mod_alien_veh_init); // alien_fauna
+	write_call(0x00522820, (int)wtp_mod_alien_veh_init); // alien_fauna
+	write_call(0x00522858, (int)wtp_mod_alien_veh_init); // alien_fauna
+	write_call(0x00522ABB, (int)wtp_mod_alien_veh_init); // alien_fauna
+	write_call(0x00522BA3, (int)wtp_mod_alien_veh_init); // alien_fauna
+	write_call(0x00522C49, (int)wtp_mod_alien_veh_init); // alien_fauna
+	write_call(0x00522D9B, (int)wtp_mod_alien_veh_init); // alien_fauna
+	write_call(0x00522DB2, (int)wtp_mod_alien_veh_init); // alien_fauna
+	write_call(0x0059571C, (int)wtp_mod_alien_veh_init); // order_veh
+	
+}
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3448,6 +3468,8 @@ void patch_setup_wtp(Config* cf)
 	patch_psi_gate_unlimited();
 	
 	patch_tech_achieved();
+	
+	patch_alien_veh_init();
 	
 }
 
