@@ -273,12 +273,25 @@ int __cdecl mod_morale_veh(int veh_id, int check_drone_riot, int faction_id_vs_n
         return value;
     }
     // everything else
+    
+    // [WTP]
+    // MORALE grants combat bonus but does not change morale
+    int morale_modifier = 0;
+    if (conf.se_morale_combat_bonus != 0)
+	{
+		// no change in morale
+	}
+	else
+	{
     int morale_modifier = clamp(Factions[faction_id].SE_morale, -4, 4);
     if (morale_modifier <= -2) {
         morale_modifier++;
     } else if (morale_modifier >= 2) {
         morale_modifier--;
     }
+	}
+	//
+	
     int rule_morale = MFactions[faction_id].rule_morale; // different from 'SOCIAL, MORALE'
     if (rule_morale < 0) { // negative effects 1st
         morale_modifier += rule_morale;

@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v383"
+    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v384"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -416,7 +416,7 @@ struct Config {
     int echelon_mirror_bonus = 1;
     bool base_inefficiency_alternative = false;
     bool drone_riot_intensifies = true;
-    double se_morale_excess_combat_bonus = 0;
+    int se_morale_combat_bonus = 0;
     int se_police_excess_industry_bonus = 0;
     int isle_of_deep_offense_bonus = 0;
     int isle_of_deep_defense_bonus = 0;

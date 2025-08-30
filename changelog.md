@@ -1,3 +1,7 @@
+# Version 384
+
+* SE MORALE grants 10% combat bonus.
+
 # Version 383
 
 * Mobile aliens will not appear until turn 15. Uncovering a pod still may produce them.

@@ -710,9 +710,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->drone_riot_intensifies = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("se_morale_excess_combat_bonus"))
+    else if (MATCH("se_morale_combat_bonus"))
     {
-        cf->se_morale_excess_combat_bonus = atof(value);
+        cf->se_morale_combat_bonus = atoi(value);
     }
     else if (MATCH("se_police_excess_industry_bonus"))
     {

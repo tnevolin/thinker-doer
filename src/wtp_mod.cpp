@@ -564,20 +564,19 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	}
 	
     // ----------------------------------------------------------------------------------------------------
-    // Excess SE MORALE combat bonus
+    // SE MORALE combat bonus
     // ----------------------------------------------------------------------------------------------------
     
-    if (conf.se_morale_excess_combat_bonus != 0.0)
+    if (conf.se_morale_combat_bonus != 0)
 	{
-		// combat units only, not probes
+		// regular combat units only, not probes
 		
-		if (isCombatUnit(attackerVehicle->unit_id) && !isProbeUnit(attackerVehicle->unit_id))
+		if (isRegularUnit(attackerVehicle->unit_id) && isCombatUnit(attackerVehicle->unit_id) && !isProbeUnit(attackerVehicle->unit_id))
 		{
 			int attackerSEMorale = Factions[attackerVehicle->faction_id].SE_morale;
-			int attackerExcessSEMorale = (attackerSEMorale > +4 ? attackerSEMorale - 4 : (attackerSEMorale < -4 ? attackerSEMorale + 4 : 0));
-			double attackerBonus = conf.se_morale_excess_combat_bonus * (double)attackerExcessSEMorale;
+			int attackerBonus = conf.se_morale_combat_bonus * attackerSEMorale;
 			
-			if (attackerExcessSEMorale != 0)
+			if (attackerBonus != 0)
 			{
 				addAttackerBonus(attackerStrengthPointer, attackerBonus, "MORALE");
 			}
@@ -586,13 +585,12 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		
 		// combat units only, not probes
 		
-		if (isCombatUnit(defenderVehicle->unit_id) && !isProbeUnit(defenderVehicle->unit_id))
+		if (isRegularUnit(attackerVehicle->unit_id) && isCombatUnit(defenderVehicle->unit_id) && !isProbeUnit(defenderVehicle->unit_id))
 		{
 			int defenderSEMorale = Factions[defenderVehicle->faction_id].SE_morale;
-			int defenderExcessSEMorale = (defenderSEMorale > +4 ? defenderSEMorale - 4 : (defenderSEMorale < -4 ? defenderSEMorale + 4 : 0));
-			double defenderBonus = conf.se_morale_excess_combat_bonus * (double)defenderExcessSEMorale;
+			int defenderBonus = conf.se_morale_combat_bonus * defenderSEMorale;
 			
-			if (defenderExcessSEMorale != 0)
+			if (defenderBonus != 0)
 			{
 				addDefenderBonus(defenderStrengthPointer, defenderBonus, "MORALE");
 			}
@@ -3413,6 +3411,8 @@ Adds bonus to battle odds dialog.
 */
 void addAttackerBonus(int *strengthPointer, double bonus, const char *label)
 {
+	// bonus cannot be lower than -100
+	
 	bonus = std::max(-100.0, bonus);
 	
 	// modify strength

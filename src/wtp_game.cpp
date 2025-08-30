@@ -1368,51 +1368,6 @@ double getUnitConArtilleryDuelStrength(int unitId)
 	return (double)(Weapon[Units[unitId].weapon_id].offense_value);
 }
 
-/*
-Calculates psi offense strength for new vehicle built at base.
-*/
-double getNewUnitPsiOffenseStrength(int unitId, int baseId)
-{
-	BASE *base = &(Bases[baseId]);
-	int factionId = base->faction_id;
-	
-	double psiOffenseStrength = getUnitPsiOffenseStrength(factionId, unitId);
-	double moraleMultiplier = getMoraleMultiplier(getNewVehicleMorale(unitId, baseId));
-	
-	return psiOffenseStrength * moraleMultiplier;
-	
-}
-
-double getNewUnitPsiDefenseStrength(int unitId, int baseId)
-{
-	BASE *base = &(Bases[baseId]);
-	int factionId = base->faction_id;
-	
-	double psiDefenseStrength = getUnitPsiDefenseStrength(factionId, unitId);
-	double moraleMultiplier = getMoraleMultiplier(getNewVehicleMorale(unitId, baseId));
-	
-	return psiDefenseStrength * moraleMultiplier;
-	
-}
-
-double getNewUnitConOffenseStrength(int unitId, int baseId)
-{
-	double conOffenseStrength = getUnitConOffenseStrength(unitId);
-	double moraleMultiplier = getMoraleMultiplier(getNewVehicleMorale(unitId, baseId));
-
-	return conOffenseStrength * moraleMultiplier;
-	
-}
-
-double getNewUnitConDefenseStrength(int unitId, int baseId)
-{
-	double conDefenseStrength = getUnitConDefenseStrength(unitId);
-	double moraleMultiplier = getMoraleMultiplier(getNewVehicleMorale(unitId, baseId));
-	
-	return conDefenseStrength * moraleMultiplier;
-	
-}
-
 double getVehiclePsiOffenseStrength(int vehicleId, bool ignoreDamage)
 {
 	VEH *vehicle = getVehicle(vehicleId);
@@ -3723,133 +3678,11 @@ double getMoraleMultiplier(int morale)
 }
 
 /*
-Returns SE MORALE bonus.
-*/
-int getFactionSEMoraleBonus(int factionId)
-{
-	Faction *faction = &(Factions[factionId]);
-	int factionSEMoraleRating = std::max(-4, std::min(4, faction->SE_morale));
-
-	int factionSEMoraleBonus = 0;
-
-	switch (factionSEMoraleRating)
-	{
-	case -4:
-		factionSEMoraleBonus = -3;
-		break;
-	case -3:
-		factionSEMoraleBonus = -2;
-		break;
-	case -2:
-		factionSEMoraleBonus = -1;
-		break;
-	case -1:
-		factionSEMoraleBonus = -1;
-		break;
-	case 0:
-		factionSEMoraleBonus = 0;
-		break;
-	case 1:
-		factionSEMoraleBonus = 1;
-		break;
-	case 2:
-		factionSEMoraleBonus = 1;
-		break;
-	case 3:
-		factionSEMoraleBonus = 2;
-		break;
-	case 4:
-		factionSEMoraleBonus = 3;
-		break;
-	}
-
-	return factionSEMoraleBonus;
-
-}
-
-/*
 Returns vehicle morale with all default flags.
 */
 int getVehicleMorale(int vehicleId)
 {
 	return mod_morale_veh(vehicleId, 0, 0);
-}
-
-/*
-Returns new vehicle morale built at base.
-*/
-int getNewVehicleMorale(int unitId, int baseId)
-{
-	UNIT *unit = &(Units[unitId]);
-	BASE *base = &(Bases[baseId]);
-
-	// get default unit morale
-
-	int morale = (conf.default_morale_very_green ? MORALE_VERY_GREEN : MORALE_GREEN);
-
-	// modify morale for trained unit
-
-	if (unit_has_ability(unitId, ABL_TRAINED))
-	{
-		morale++;
-	}
-
-	// modify morale based on morale facilities
-
-	if (isNativeUnit(unitId))
-	{
-		if (isFactionHasProject(base->faction_id, FAC_XENOEMPATHY_DOME))
-		{
-			morale++;
-		}
-
-		if (isFactionHasProject(base->faction_id, FAC_PHOLUS_MUTAGEN))
-		{
-			morale++;
-		}
-
-		if (isFactionHasProject(base->faction_id, FAC_VOICE_OF_PLANET))
-		{
-			morale++;
-		}
-
-		if (isBaseHasFacility(baseId, FAC_CENTAURI_PRESERVE))
-		{
-			morale++;
-		}
-
-		if (isBaseHasFacility(baseId, FAC_TEMPLE_OF_PLANET))
-		{
-			morale++;
-		}
-
-		if (isBaseHasFacility(baseId, FAC_BIOLOGY_LAB))
-		{
-			morale++;
-		}
-
-		if (isBaseHasFacility(baseId, FAC_BIOENHANCEMENT_CENTER))
-		{
-			morale++;
-		}
-
-	}
-	else
-	{
-		morale += morale_mod(baseId, base->faction_id, unit->triad());
-	}
-
-	// faction MORALE bonus for regular units
-
-	if (!isNativeUnit(unitId))
-	{
-		morale += getFactionSEMoraleBonus(base->faction_id);
-	}
-
-	// return morale clipped by possible range
-
-	return std::max((int)MORALE_VERY_GREEN, std::min((int)MORALE_ELITE, morale));
-
 }
 
 /*
@@ -4321,6 +4154,22 @@ Determines if vehicle is a native predefined unit.
 bool isNativeVehicle(int vehicleId)
 {
 	return isNativeUnit(getVehicle(vehicleId)->unit_id);
+}
+
+/*
+Determines if unit is a regular unit.
+*/
+bool isRegularUnit(int unitId)
+{
+	return !isNativeUnit(unitId);
+}
+
+/*
+Determines if vehicle is a regular unit.
+*/
+bool isRegularVehicle(int vehicleId)
+{
+	return isRegularUnit(getVehicle(vehicleId)->unit_id);
 }
 
 double getPercentageBonusMultiplier(int percentageBonus)
