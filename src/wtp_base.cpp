@@ -41,7 +41,6 @@ void __cdecl wtp_mod_base_yield()
     // modified to not override user choice with open window
 //    bool pre_upkeep = *BaseUpkeepState != 2 || (base_id == *BaseUpkeepDrawID && Win_is_visible(BaseWin));
     bool pre_upkeep = *BaseUpkeepState == 1;
-debug(">manage_workers=%d base->worked_tiles=%d pre_upkeep=%d *BaseUpkeepState=%d, base_id=%d *BaseUpkeepDrawID=%d Win_is_visible(BaseWin)=%d\n", manage_workers, base->worked_tiles, pre_upkeep, *BaseUpkeepState, base_id, *BaseUpkeepDrawID, Win_is_visible(BaseWin));flushlog();
 	
 	// energy conversion and scoring constants
 	
@@ -149,7 +148,6 @@ debug(">manage_workers=%d base->worked_tiles=%d pre_upkeep=%d *BaseUpkeepState=%
 	std::array<TileValue, 21> choices;
 	size_t choiceCount = 0;
 	
-debug(">unallocatedWorkers=%d manage_workers=%d pre_upkeep=%d\n", unallocatedWorkers, manage_workers, pre_upkeep);flushlog();
 	if (unallocatedWorkers != 0 || (manage_workers && pre_upkeep))
 	{
 		// reset workers if required or incorrect

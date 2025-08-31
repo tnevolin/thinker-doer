@@ -1,3 +1,7 @@
+# Version 386
+
+* AI no longer tries to remove unused psych facility except Punishment Sphere.
+
 # Version 385
 
 * Fixed "go to base (G)" crash.
