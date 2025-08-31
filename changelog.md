@@ -1,6 +1,6 @@
 # Version 386
 
-* AI no longer tries to remove unused psych facility except Punishment Sphere.
+* AI does not evaluate normal psych facility for removal without Punishment Sphere present.
 
 # Version 385
 

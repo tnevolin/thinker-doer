@@ -898,12 +898,16 @@ void evaluatePsychFacilitiesRemoval()
 	int baseId = productionDemand.baseId;
 	
 	// facilityIds
-	// only punishment sphere should be removed
 	
-	int facilityIds[] = {FAC_PUNISHMENT_SPHERE, /*FAC_RECREATION_COMMONS, FAC_HOLOGRAM_THEATRE, FAC_PARADISE_GARDEN, */};
+	int facilityIds[] = {FAC_PUNISHMENT_SPHERE, FAC_RECREATION_COMMONS, FAC_HOLOGRAM_THEATRE, FAC_PARADISE_GARDEN, };
 	
 	for (int facilityId : facilityIds)
 	{
+		// evaluate regular psych facility removal only when PS is present
+		
+		if (!has_facility(FAC_PUNISHMENT_SPHERE, baseId) && facilityId != FAC_PUNISHMENT_SPHERE)
+			continue;
+		
 		// facility should be present
 		
 		if (!isBaseHasFacility(baseId, facilityId))
