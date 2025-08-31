@@ -182,7 +182,7 @@ int __cdecl wtp_mod_diplomacy_caption_say_fac_special(int dst, int src, int fact
 int wtp_mod_probe_success_rates_procure_research_data(int position, int morale, int risk, int baseId);
 int wtp_mod_probe_veh_skip(int vehicleId);
 int __cdecl wtp_mod_action_terraform(int vehicleId, int action, int execute);
-int __thiscall wtp_mod_Console_go_to(Console* This, int a2, int a3);
+int __thiscall wtp_mod_Console_go_to(Console* This, int a1, int a2, int a3);
 int __cdecl wtp_mod_tech_achieved(int factionId, int techId, int targetFactionId, int steal);
 int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx_filename, int a5);
 int __cdecl wtp_mod_alien_veh_init(int unitId, int factionId, int x, int y);

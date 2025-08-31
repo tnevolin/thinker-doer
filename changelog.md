@@ -1,3 +1,7 @@
+# Version 385
+
+* Fixed "go to base (G)" crash.
+
 # Version 384
 
 * SE MORALE grants 10% combat bonus.

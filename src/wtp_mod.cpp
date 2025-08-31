@@ -4127,9 +4127,9 @@ int __cdecl wtp_mod_action_terraform(int vehicleId, int action, int execute)
 	
 }
 
-int __thiscall wtp_mod_Console_go_to(Console* This, int a2, int a3)
+int __thiscall wtp_mod_Console_go_to(Console* This, int a1, int a2, int a3)
 {
-	int returnValue = Console_go_to(This, a2, a3);
+	int returnValue = Console_go_to(This, a1, a2, a3);
 	
 	// reset Psi Gate use flag in all bases
 	
