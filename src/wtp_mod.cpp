@@ -585,7 +585,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		
 		// combat units only, not probes
 		
-		if (isRegularUnit(attackerVehicle->unit_id) && isCombatUnit(defenderVehicle->unit_id) && !isProbeUnit(defenderVehicle->unit_id))
+		if (isRegularUnit(defenderVehicle->unit_id) && isCombatUnit(defenderVehicle->unit_id) && !isProbeUnit(defenderVehicle->unit_id))
 		{
 			int defenderSEMorale = Factions[defenderVehicle->faction_id].SE_morale;
 			int defenderBonus = conf.se_morale_combat_bonus * defenderSEMorale;
