@@ -9,7 +9,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * [Changelog](https://github.com/tnevolin/thinker-doer/blob/master/changelog.md)
 * [Strategy tips](https://github.com/tnevolin/thinker-doer/blob/master/strategy.md)
 * [Issue submission](https://github.com/tnevolin/thinker-doer/issues)
-* [An awesome playlist by Loladarules !](https://www.youtube.com/playlist?list=PLDGozj3_2wdF5niSbkbuPrsrgL5LO-KMr)
+* [An awesome tutorial playlist by Loladarules !](https://www.youtube.com/playlist?list=PLDGozj3_2wdF5niSbkbuPrsrgL5LO-KMr)
 
 ## Special thanks and acknowledgements
 
