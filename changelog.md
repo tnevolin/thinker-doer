@@ -1,3 +1,8 @@
+# Version 387
+
+* Fixed base computation crash when manage_player_bases=1 and manage_player_units=1.
+* Fixed AI air unit routing error condition.
+
 # Version 386
 
 * AI does not evaluate normal psych facility for removal without Punishment Sphere present.

@@ -692,32 +692,32 @@ void populateAirClusters(int factionId)
 		
 	}
 	
-//	if (DEBUG)
-//	{
-//		for (robin_hood::pair<int, robin_hood::unordered_flat_map<int, std::vector<int>>> const &airClusterEntry : airClusters)
-//		{
-//			int chassisId = airClusterEntry.first;
-//			robin_hood::unordered_flat_map<int, std::vector<int>> const &chassisAirClusters = airClusterEntry.second;
-//			
-//			debug("\tchassisId=%2d\n", chassisId);
-//			
-//			for (robin_hood::pair<int, std::vector<int>> const &chassisAirClusterEntry : chassisAirClusters)
-//			{
-//				int speed = chassisAirClusterEntry.first;
-//				std::vector<int> const &chassisAirSpeedAirClusters = chassisAirClusterEntry.second;
-//				
-//				debug("\t\tspeed=%2d\n", speed);
-//				
-//				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-//				{
-//					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), chassisAirSpeedAirClusters.at(tileIndex));
-//				}
-//				
-//			}
-//			
-//		}
-//		
-//	}
+	if (DEBUG)
+	{
+		for (robin_hood::pair<int, robin_hood::unordered_flat_map<int, std::vector<int>>> const &airClusterEntry : airClusters)
+		{
+			int chassisId = airClusterEntry.first;
+			robin_hood::unordered_flat_map<int, std::vector<int>> const &chassisAirClusters = airClusterEntry.second;
+			
+			debug("\tchassisId=%2d\n", chassisId);
+			
+			for (robin_hood::pair<int, std::vector<int>> const &chassisAirClusterEntry : chassisAirClusters)
+			{
+				int speed = chassisAirClusterEntry.first;
+				std::vector<int> const &chassisAirSpeedAirClusters = chassisAirClusterEntry.second;
+				
+				debug("\t\tspeed=%2d\n", speed);
+				
+				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+				{
+					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), chassisAirSpeedAirClusters.at(tileIndex));
+				}
+				
+			}
+			
+		}
+		
+	}
 	
 	Profiling::stop("populateAirClusters");
 	
@@ -3918,7 +3918,25 @@ int getEnemyAirCluster(int factionId, int chassisId, int speed, MAP *tile)
 	assert(isOnMap(tile));
 	
 	int tileIndex = tile - *MapTiles;
-	return factionMovementInfos.at(factionId).airClusters.at(chassisId).at(speed).at(tileIndex);
+	
+	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_map<int, std::vector<int>>> &airClusters = factionMovementInfos.at(factionId).airClusters;
+	
+	// safely return -1 if no key
+	
+	if
+	(
+		airClusters.find(chassisId) == airClusters.end()
+		||
+		airClusters.at(chassisId).find(speed) == airClusters.at(chassisId).end()
+		||
+		!(tileIndex >= 0 && tileIndex < (int)airClusters.at(chassisId).at(speed).size())
+	)
+	{
+		debug("ERROR: No airCluster key: factionId=%d chassisId=%d speed=%d tileIndex=%d\n", factionId, chassisId, speed, tileIndex);flushlog();
+		return -1;
+	}
+	
+	return airClusters.at(chassisId).at(speed).at(tileIndex);
 	
 }
 

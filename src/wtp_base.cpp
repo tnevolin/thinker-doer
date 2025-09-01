@@ -37,6 +37,7 @@ void __cdecl wtp_mod_base_yield()
 	// reallocate existing workers if managed or requested
 	
 	uint32_t gov = base->gov_config();
+	// manage workers when forced (all worked tiles are cleared) or governor is active and manages citizens
     bool manage_workers = base->worked_tiles == 0 || (gov & GOV_ACTIVE && gov & GOV_MANAGE_CITIZENS);
     // modified to not override user choice with open window
 //    bool pre_upkeep = *BaseUpkeepState != 2 || (base_id == *BaseUpkeepDrawID && Win_is_visible(BaseWin));
@@ -326,7 +327,7 @@ void __cdecl wtp_mod_base_yield()
 		// set workers 
 		
 		base->specialist_total = base->pop_size - choiceCount;
-		base->worked_tiles = 0;
+		base->worked_tiles = 1;
 		for (size_t choiceNumber = 0; choiceNumber < choiceCount; choiceNumber++)
 		{
 			TileValue &tileValue = choices.at(choiceNumber);
@@ -477,6 +478,7 @@ void mod_base_yield_base_energy(BaseEnergy const &baseEnergy, int energyIntake)
 
 /*
 Populates avaiable worker tiles in base catchment area around the base and returns available tile count.
+An optimized version of Thinker base_radius function.
 */
 size_t populateBaseYieldsAndTiles(int baseId, std::array<TileValue, 21> &tiles)
 {
