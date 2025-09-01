@@ -334,7 +334,7 @@ int __cdecl mod_morale_veh(int veh_id, int check_drone_riot, int faction_id_vs_n
 Calculate the offense of the specified prototype. Optional param of the unit defending
 against (-1 to ignore) as well as whether artillery or missile combat is being utilized.
 */
-int __cdecl mod_offense_proto(int unit_id, int veh_id_def, int is_bombard) {
+int __cdecl mod_offense_proto(int unit_id, int veh_id_def, int /*is_bombard*/) {
     UNIT* unit = &Units[unit_id];
     int value;
     if (unit->weapon_mode() == WMODE_PROBE
@@ -342,10 +342,20 @@ int __cdecl mod_offense_proto(int unit_id, int veh_id_def, int is_bombard) {
         value = 16; // probe attacking another probe
     // Fix: veh_id_def -1 could cause out of bounds memory read on reactor struct
     // due to lack of bounds checking when comparing veh_id_def unit_id to Spore Launcher
+    
+    // [WTP]
+    // psi combat is triggered by offense-defense values, no exceptions
+    /*
     } else if ((is_bombard || (unit->offense_value() >= 0
     && (veh_id_def < 0 || Vehs[veh_id_def].defense_value() >= 0)))
     && (veh_id_def < 0 || Vehs[veh_id_def].unit_id != BSC_SPORE_LAUNCHER)
     && unit_id != BSC_SPORE_LAUNCHER) {
+    */
+    }
+    else if (unit->offense_value() >= 0 && (veh_id_def < 0 || Vehs[veh_id_def].defense_value() >= 0))
+	{
+    //
+    
         int off_rating = abs(unit->offense_value());
         if (unit->is_missile() && off_rating < 99) {
             off_rating = (off_rating * 3) / 2;
@@ -355,7 +365,11 @@ int __cdecl mod_offense_proto(int unit_id, int veh_id_def, int is_bombard) {
         value = (veh_id_def < 0) ? Rules->psi_combat_ratio_atk[TRIAD_LAND] : // PSI
            Rules->psi_combat_ratio_atk[Vehs[veh_id_def].triad()] * 8;
     }
-    assert(value == offense_proto(unit_id, veh_id_def, is_bombard));
+    
+    // [WTP]
+    // assert is no longer working due to psi rules
+    // assert(value == offense_proto(unit_id, veh_id_def, is_bombard));
+    
     return value;
 }
 
@@ -363,7 +377,7 @@ int __cdecl mod_offense_proto(int unit_id, int veh_id_def, int is_bombard) {
 Calculate the defense of the specified prototype. Optional param if unit is being attacked
 (-1 to ignore) as well as whether artillery or missile combat is being utilized.
 */
-int __cdecl mod_armor_proto(int unit_id, int veh_id_atk, int is_bombard) {
+int __cdecl mod_armor_proto(int unit_id, int veh_id_atk, int /*is_bombard*/) {
     UNIT* unit = &Units[unit_id];
     int value;
     if (unit->weapon_mode() == WMODE_PROBE
@@ -371,16 +385,30 @@ int __cdecl mod_armor_proto(int unit_id, int veh_id_atk, int is_bombard) {
         value = 16; // probe defending against another probe
     // Fix: veh_id_def -1 could cause out of bounds memory read on reactor struct
     // due to lack of bounds checking when comparing veh_id_def unit_id to Spore Launcher
+    
+    // [WTP]
+    // psi combat is triggered by offense-defense values, no exceptions
+    /*
     } else if ((is_bombard && unit_id != BSC_SPORE_LAUNCHER
     && (veh_id_atk < 0 || Vehs[veh_id_atk].unit_id != BSC_SPORE_LAUNCHER))
     || (unit->defense_value() >= 0 && (veh_id_atk < 0 || Vehs[veh_id_atk].offense_value() >= 0))) {
+    */
+    }
+    else if (unit->defense_value() >= 0 && (veh_id_atk < 0 || Vehs[veh_id_atk].offense_value() >= 0))
+	{
+    //
+    
         int def_rating = clamp(unit->defense_value(), 1, 9999);
         value = (veh_id_atk < 0) ? def_rating : def_rating * 8; // conventional
     } else {
         value = (veh_id_atk < 0) ? Rules->psi_combat_ratio_def[TRIAD_LAND] : // PSI
             Rules->psi_combat_ratio_def[unit->triad()] * 8;
     }
-    assert(value == armor_proto(unit_id, veh_id_atk, is_bombard));
+    
+    // [WTP]
+    // assert is no longer working due to psi rules
+    // assert(value == armor_proto(unit_id, veh_id_atk, is_bombard));
+    
     return value;
 }
 
@@ -460,7 +488,14 @@ int __cdecl mod_get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat
     }
     VehBasicBattleMorale[unk_tgl != 0] = morale; // shifted up from original
     morale += 6;
+    
+    // [WTP]
+    // redefined to mod_offense_proto but forgot to switch?
+    /*
     int offense = offense_proto(unit_id_atk, veh_id_def, is_bombard);
+    */
+    int offense = mod_offense_proto(unit_id_atk, veh_id_def, is_bombard);
+    
     if (psi_combat_type) {
         offense = psi_factor(offense, faction_id_atk, true, false);
     }
@@ -565,7 +600,14 @@ int __cdecl mod_get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat
     && (veh_id_atk < 0 || Units[Vehs[veh_id_atk].unit_id].plan != PLAN_PROBE)) {
         return 1;
     }
+    
+    // [WTP]
+    // redefined to mod_armor_proto but forgot to switch?
+    /*
     int defense = armor_proto(unit_id_def, veh_id_atk, is_bombard);
+    */
+    int defense = mod_armor_proto(unit_id_def, veh_id_atk, is_bombard);
+    
     if (psi_combat_type) {
         defense = psi_factor(defense, faction_id_def, false, unit_id_def == BSC_FUNGAL_TOWER);
     }
@@ -812,9 +854,14 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
     const int alt_atk = sq_atk ? sq_atk->alt_level() : 0;
     const int alt_def = sq_def ? sq_def->alt_level() : 0;
 
+    // [WTP]
+    // psi combat is triggered by psi offense-defense, no exceptions
+    /*
     if (!is_bombard
     || (veh_id_atk >= 0 && veh_atk->unit_id == BSC_SPORE_LAUNCHER)
     || (veh_id_def >= 0 && veh_def->unit_id == BSC_SPORE_LAUNCHER)) {
+    */
+    {
         if (veh_id_atk >= 0 && veh_atk->offense_value() < 0) {
             psi_combat = 1;
         }
@@ -830,7 +877,13 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
             if (has_project(FAC_DREAM_TWISTER, faction_id_atk)) {
                 add_bat(0, conf.dream_twister_bonus, label_get(343)); // Dream Twist
             }
+            
+            // [WTP]
+            // psi combat is symmetrical, there is no need for defender to be psi to utilize psi combat bonuses
+            /*
             if (psi_combat & 2) { // Added check for PSI defend flag
+			*/
+            {
                 int rule_psi_def = MFactions[faction_id_def].rule_psi;
                 if (rule_psi_def) {
                     add_bat(1, rule_psi_def, label_get(342)); // Gaian Psi
@@ -842,8 +895,12 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
                     add_bat(1, conf.fungal_tower_bonus, Units[BSC_FUNGAL_TOWER].name); // Fungal Tower
                 }
             }
+            //
+            
         }
     }
+    //
+    
     if (veh_id_atk >= 0) {
         offense = mod_get_basic_offense(veh_id_atk, veh_id_def, psi_combat, is_bombard, 0);
         if (!veh_atk->is_probe()) {

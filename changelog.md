@@ -1,3 +1,7 @@
+# Version 388
+
+* Psi combat is triggered by psi offense or psi defense regardless of engagement mode (long range firle, missile attack).
+
 # Version 387
 
 * Fixed base computation crash when manage_player_bases=1 and manage_player_units=1.
