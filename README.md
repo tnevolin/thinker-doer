@@ -67,6 +67,8 @@ Keep in mind that technology prerequisites are generally arbitrary and serve as 
 Modding Social Engineering is the project in itself. There is no right and wrong answer on that. However, I expressed my view in the article here that also contains references to contemporary updates with explanations.
 http://alphacentauri2.info/wiki/Social_Engineering_Mod
 
+## Social models
+
 _v337_
 
 ![SE v337](images/se-v337.png)
