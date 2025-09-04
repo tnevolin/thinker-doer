@@ -106,7 +106,7 @@ Example energy collection percentage for different faction base count.
 
 ### POLICE
 
-The effect itself is unchanged but it is worth refering new base psych computation which grants one extra power to police unit but requires it to suppress superdrones as well. That makes police units stronger early game and slightly weaker in presense of many superdrones.
+The effect description is unchanged. However, police psych computation changed a bit. Police unit quells either two drones or one superdrone, not just two citizens. That makes police units stronger early game and slightly weaker in presense of many superdrones.
 
 ### GROWTH
 
