@@ -1,10 +1,13 @@
 #pragma GCC diagnostic ignored "-Wshadow"
 
+#include "wtp_aiMoveCrawler.h"
+
+#include <vector>
+
 #include "wtp_ai.h"
 #include "wtp_aiData.h"
 #include "wtp_aiRoute.h"
 #include "wtp_aiMove.h"
-#include "wtp_aiMoveCrawler.h"
 
 // convoy data
 
