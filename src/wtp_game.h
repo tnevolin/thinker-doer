@@ -1,11 +1,11 @@
 #pragma once
 
-#include "main.h"
 #include <vector>
 #include <set>
 #include <map>
 #include "robin_hood.h"
-#include "engine.h"
+
+#include "main.h"
 
 // first level triad based defensive structure facilities
 FacilityId constexpr TRIAD_DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX};
