@@ -458,10 +458,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->alternative_tech_cost = (atoi(value) == 0 ? false : true);
     }
-//    else if (MATCH("fix_mineral_contribution"))
-//    {
-//        cf->fix_mineral_contribution = (atoi(value) == 0 ? false : true);
-//    }
     else if (MATCH("modified_probe_risks"))
     {
         cf->modified_probe_risks = (atoi(value) == 0 ? false : true);

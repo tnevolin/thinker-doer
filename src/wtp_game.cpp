@@ -195,7 +195,6 @@ void Profiling::pause(std::string name)
 {
 	if (DEBUG)
 	{
-//			debug("Profiling(%s) - pause\n", name.c_str());flushlog();
 		Profile *profile = getProfile(name);
 		profile->pause();
 	}
@@ -204,7 +203,6 @@ void Profiling::resume(std::string name)
 {
 	if (DEBUG)
 	{
-//			debug("Profiling(%s) - resume\n", name.c_str());flushlog();
 		Profile *profile = getProfile(name);
 		profile->resume();
 	}
@@ -213,7 +211,6 @@ void Profiling::stop(std::string name)
 {
 	if (DEBUG)
 	{
-//			debug("Profiling(%s) - stop\n", name.c_str());flushlog();
 		Profile *profile = getProfile(name);
 		profile->stop();
 	}

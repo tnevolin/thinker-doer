@@ -7439,7 +7439,7 @@ period - repetition period
 */
 double getGainRepetion(double gain, double probability, double period)
 {
-	period = std::max(1.0, period);
+//	period = std::max(1.0, period);
 	double scale = aiData.developmentScale;
 	return exp(- period / scale) / (1.0 - probability * exp(- period / scale)) * gain;
 }
