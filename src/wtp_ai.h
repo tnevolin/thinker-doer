@@ -1,11 +1,6 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <set>
-#include <map>
 #include "wtp_aiData.h"
-#include "engine.h"
 
 const int MAX_SAFE_LOCATION_SEARCH_RANGE = 6;
 const int STACK_MAX_BASE_RANGE = 20;
