@@ -110,26 +110,6 @@ struct FValueComparator
 
 };
 
-/// land-unload transfer
-struct Transfer
-{
-	MAP *passengerStop = nullptr;
-	MAP *transportStop = nullptr;
-	
-	Transfer() {}
-	
-	Transfer(MAP *_passengerStop, MAP *_transportStop)
-	: passengerStop{_passengerStop}
-	, transportStop{_transportStop}
-	{}
-	
-	bool valid()
-	{
-		return passengerStop != nullptr && transportStop != nullptr;
-	}
-	
-};
-
 struct SeaLandmarkTileInfo
 {
 	int distance = INT_MAX;

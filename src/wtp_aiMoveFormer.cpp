@@ -3566,7 +3566,7 @@ double estimateSensorIncome(MAP *tile)
 		
 	}
 	
-	for (robin_hood::pair<MAP *, ProtectCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (robin_hood::pair<MAP *, CombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 	{
 		MAP *bunkerTile = bunkerCombatDataEntry.first;
 		
@@ -4888,7 +4888,7 @@ void removeUnusedBunkers()
 	debug("removeUnusedBunkers - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	robin_hood::unordered_flat_set<MAP *> unusedBunkers;
-	for (robin_hood::pair<MAP *, ProtectCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (robin_hood::pair<MAP *, CombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 	{
 		MAP *bunkerTile = bunkerCombatDataEntry.first;
 		

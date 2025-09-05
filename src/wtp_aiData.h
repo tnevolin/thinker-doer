@@ -6,52 +6,12 @@
 #include "robin_hood.h"
 
 #include "wtp_game.h"
+#include "wtp_aiCombatData.h"
 #include "wtp_aiTask.h"
 #include "wtp_aiMoveFormer.h"
 
-const int INT_INFINITY = INT_MAX;
-const double INF = std::numeric_limits<double>::infinity();
-
 const double MIN_SIGNIFICANT_THREAT = 0.2;
 const int COMBAT_ABILITY_FLAGS = ABL_AMPHIBIOUS | ABL_AIR_SUPERIORITY | ABL_AAA | ABL_COMM_JAMMER | ABL_EMPATH | ABL_ARTILLERY | ABL_BLINK_DISPLACER | ABL_TRANCE | ABL_NERVE_GAS | ABL_SOPORIFIC_GAS | ABL_DISSOCIATIVE_WAVE;
-
-struct IdIntValue
-{
-	int id;
-	int value;
-};
-
-struct IdDoubleValue
-{
-	int id;
-	double value;
-
-};
-
-/// strength for psi/con against psi/con
-struct CombatStrength
-{
-	// [attacker gear type (psi/con)][defender gear type (psi/con)]
-	std::array<std::array<double, COMBAT_TYPE_COUNT>, COMBAT_TYPE_COUNT> values;
-	
-	void accumulate(CombatStrength &combatStrength, double multiplier = 1.0);
-	double getAttackEffect(int vehicleId);
-	
-};
-
-/// strength for psi/con grouped by combat type
-struct CombatTypeStrength
-{
-	// [combatType][attacker gear type (psi/con)][defender gear type (psi/con)]
-	std::array<std::array<std::array<double, COMBAT_TYPE_COUNT>, COMBAT_TYPE_COUNT>, COMBAT_MODE_COUNT> values;
-	
-};
-
-struct Offense
-{
-	std::array<bool, ENGAGEMENT_MODE_COUNT> engagementModes;
-	double hastyCoefficient = 1.0;
-};
 
 struct TileInfo;
 struct Adjacent
@@ -64,6 +24,31 @@ struct HexCost
 	int exact;
 	int approximate;
 };
+struct PotentialAttack
+{
+	int vehicleId;
+	double hastyCoefficient;
+};
+
+/**
+CombatEffects table.
+Combat effect is the number of enemy units this unit can destroy for its life.
+[1. own units: 2 * MaxProtoFactionNum]
+[2. factions: MaxPlayerNum]
+[3. faction units: 2 * MaxProtoFactionNum]
+[4. attacking side: 2]
+[5. combat type: 3]
+*/
+struct CombatUnitTable
+{
+	robin_hood::unordered_flat_set<int> ownCombatUnitIds;
+	robin_hood::unordered_flat_set<int> foeFactionIds;
+	robin_hood::unordered_flat_set<int> hostileFoeFactionIds;
+	robin_hood::unordered_flat_set<int> foeCombatVehicleIds;
+	std::array<robin_hood::unordered_flat_set<int> , MaxPlayerNum> foeUnitIds;
+	std::array<robin_hood::unordered_flat_set<int> , MaxPlayerNum> foeCombatUnitIds;
+};
+
 struct TileInfo
 {
 	int index;
@@ -75,7 +60,12 @@ struct TileInfo
 	SurfaceType surfaceType;
 	bool coast;
 	bool rough;
+	bool fungus;
 	std::set<int> adjacentSeaRegions;
+	bool adjacentLand;
+	bool adjacentSea;
+	double adjacentLandRatio;
+	double adjacentSeaRatio;
 	
 	// items
 	int baseId = -1;
@@ -85,8 +75,8 @@ struct TileInfo
 	bool port = false;
 	std::array<bool, MaxPlayerNum> sensors {};
 	// player base range
-	int baseRange = INT_MAX;
-	int landBaseRange = INT_MAX;
+	std::array<int, TRIAD_COUNT> baseRanges;
+	std::array<double, TRIAD_COUNT> baseDistances;
 	
 	// land vehicle is allowed here without transport
 	bool landAllowed = false;
@@ -94,14 +84,14 @@ struct TileInfo
 	// vehicles at tile
 	
 	std::vector<int> vehicleIds;
+	std::vector<int> playerVehicleIds;
 	bool needlejetInFlight;
 	
 	// adjacent tiles
-	ArrayVector<Adjacent, ANGLE_COUNT> adjacents;
+	std::vector<Adjacent> adjacents;
 	// range tiles
-	std::array<TileInfo *, 25> range2TileInfosArray;
-	ArrayView<TileInfo *, 25> range2CenterTileInfos;
-	ArrayView<TileInfo *, 25> range2NoCenterTileInfos;
+	std::vector<TileInfo *> range2CenterTileInfos;
+	std::vector<TileInfo *> range2NoCenterTileInfos;
 	
 	// hex costs
 	// [movementType][angle]
@@ -125,125 +115,19 @@ struct TileInfo
 	bool hostileDangerZone;
 	// units can be bombarded by hostiles
 	bool artilleryDangerZone;
+	// possible enemy attacks
+	std::array<std::vector<PotentialAttack>, ENGAGEMENT_MODE_COUNT> potentialAttacks;
 	
 	// nearest bases
 	std::array<IdIntValue, 3> nearestBaseRanges;
 	
-};
-
-// combat data
-
-struct FoeUnitWeightTable
-{
-	// [factionId][unitId]
-	std::array<robin_hood::unordered_flat_map<int, double>, MaxPlayerNum> weights;
-	
-	void clear()
-	{
-		for (robin_hood::unordered_flat_map<int, double> &factionWeights : weights)
-		{
-			factionWeights.clear();
-		}
-	}
-	
-};
-
-struct AssaultEffect
-{
-	double speedFactor = 0.0;
-	double attack = 0.0;
-	double defend = 0.0;
-	
-	void clear()
-	{
-		this->speedFactor = 0.0;
-		this->attack = 0.0;
-		this->defend = 0.0;
-	}
-	
-	double getEffect(double attackMultiplier, double defendMultiplier) const;
-	
-};
-/**
-CombatEffects table.
-Combat effect is the number of enemy units this unit can destroy for its life.
-[1. own units: 2 * MaxProtoFactionNum]
-[2. factions: MaxPlayerNum]
-[3. faction units: 2 * MaxProtoFactionNum]
-[4. attacking side: 2]
-[5. combat type: 3]
-*/
-class CombatEffectTable
-{
-private:
-	
-	// each to each unit combat effects
-	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][combatMode] = combatEffect
-//	std::array<std::array<std::array<std::array<std::array<double, COMBAT_MODE_COUNT>, MaxProtoNum>, MaxPlayerNum>, MaxProtoNum>, MaxPlayerNum> combatEffects;
-	robin_hood::unordered_flat_map<int, double> combatEffects;
-	// each to each unit assault effects
-	// [assailantFactionId][assailantUnitId][protectorFactionId][protectorUnitId] = assaultEffect
-//	std::array<std::array<std::array<std::array<AssaultEffect, MaxProtoNum>, MaxPlayerNum>, MaxProtoNum>, MaxPlayerNum> assaultEffects;
-	robin_hood::unordered_flat_map<int, AssaultEffect> assaultEffects;
-
-public:
-	
-	robin_hood::unordered_flat_set<int> ownCombatUnitIds;
-	robin_hood::unordered_flat_set<int> foeFactionIds;
-	robin_hood::unordered_flat_set<int> hostileFoeFactionIds;
-	robin_hood::unordered_flat_set<int> foeCombatVehicleIds;
-	std::array<robin_hood::unordered_flat_set<int> , MaxPlayerNum> foeUnitIds;
-	std::array<robin_hood::unordered_flat_set<int> , MaxPlayerNum> foeCombatUnitIds;
-	
-	void clear()
-	{
-		combatEffects.clear();
-		assaultEffects.clear();
-	}
-	
-	void setCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, COMBAT_MODE combatMode, double combatEffect)
-	{
-		int key =
-			+ attackerFactionId		
-			+ attackerUnitId		* MaxPlayerNum
-			+ defenderFactionId		* MaxPlayerNum * MaxProtoNum
-			+ defenderUnitId		* MaxPlayerNum * MaxProtoNum * MaxPlayerNum
-			+ combatMode			* MaxPlayerNum * MaxProtoNum * MaxPlayerNum * MaxProtoNum
-		;
-		this->combatEffects[key] = combatEffect;
-	}
-	double getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, COMBAT_MODE combatMode) const
-	{
-		int key =
-			+ attackerFactionId		
-			+ attackerUnitId		* MaxPlayerNum
-			+ defenderFactionId		* MaxPlayerNum * MaxProtoNum
-			+ defenderUnitId		* MaxPlayerNum * MaxProtoNum * MaxPlayerNum
-			+ combatMode			* MaxPlayerNum * MaxProtoNum * MaxPlayerNum * MaxProtoNum
-		;
-		return this->combatEffects.at(key);
-	}
-	
-	void setAssaultEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, AssaultEffect const &assaultEffect)
-	{
-		int key =
-			+ attackerFactionId		
-			+ attackerUnitId		* MaxPlayerNum
-			+ defenderFactionId		* MaxPlayerNum * MaxProtoNum
-			+ defenderUnitId		* MaxPlayerNum * MaxProtoNum * MaxPlayerNum
-		;
-		this->assaultEffects[key] = assaultEffect;
-	}
-	AssaultEffect const &getAssaultEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId) const
-	{
-		int key =
-			+ attackerFactionId		
-			+ attackerUnitId		* MaxPlayerNum
-			+ defenderFactionId		* MaxPlayerNum * MaxProtoNum
-			+ defenderUnitId		* MaxPlayerNum * MaxProtoNum * MaxPlayerNum
-		;
-		return this->assaultEffects.at(key);
-	}
+	// combat data
+	double maxBombardmentDamage;
+	std::array<double, MaxPlayerNum> sensorOffenseMultipliers;
+	std::array<double, MaxPlayerNum> sensorDefenseMultipliers;
+	std::array<double, ATTACK_TRIAD_COUNT> structureDefenseMultipliers;
+	double getOffenseMultiplier(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
+	double getDefenseMultiplier(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, bool atTile);
 	
 };
 
@@ -329,87 +213,126 @@ struct CounterEffect
 	}
 	
 };
-struct ProtectCombatData
+enum AssaultEffectCombatType
 {
-	std::array<double, MaxPlayerNum> sensorOffenseMultipliers;
-	std::array<double, MaxPlayerNum> sensorDefenseMultipliers;
-	std::array<double, 4> tileDefenseMultipliers;
-	std::vector<int> garrison;
-	
-	// foe unit counter effects
-	// [foeFactionId][foeUnitId] = CounterEffect
-	std::array<robin_hood::unordered_flat_map<int, CounterEffect>, MaxPlayerNum> counterEffects = {};
-	double requiredEffect;
-	
-	void clear()
-	{
-		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-		{
-			counterEffects.at(factionId).clear();
-		}
-	}
-	void resetProvided()
-	{
-		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-		{
-			for (robin_hood::pair<int, CounterEffect> &counterEffectEntry : counterEffects.at(factionId))
-			{
-				CounterEffect &counterEffect = counterEffectEntry.second;
-				counterEffect.resetProvided();
-			}
-		}
-	}
-	double getProvidedEffect(bool present)
-	{
-		double providedEffect = 0.0;
-		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-		{
-			for (robin_hood::pair<int, CounterEffect> const &factionCounterEffectEntry : counterEffects.at(factionId))
-			{
-				CounterEffect const &factionCounterEffect = factionCounterEffectEntry.second;
-				providedEffect += present ? factionCounterEffect.providedPresent : factionCounterEffect.provided;
-			}
-		}
-		return providedEffect;
-	}
-	
-	UnitEffectResult getUnitEffectResult(int unitId) const;
-	double getUnitEffect(int unitId) const;
-	double getVehicleEffect(int vehicleId) const;
-	void addVehicleEffect(int vehicleId, bool present);
-	
-	double addCounterEffect(int foeFactionId, int foeUnitId, double effect, bool present)
-	{
-		CounterEffect &counterEffect = counterEffects.at(foeFactionId).at(foeUnitId);
-		double requiredEffect = counterEffect.required - counterEffect.provided;
-		double appliedEffect = std::min(requiredEffect, effect);
-		double remainingEffect = effect - appliedEffect;
-		
-		counterEffect.provided += appliedEffect;
-		if (present)
-		{
-			counterEffect.providedPresent += appliedEffect;
-		}
-		
-		return remainingEffect;
-		
-	}
-	
-	bool isSatisfied(bool present) const
-	{
-		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
-		{
-			for (robin_hood::pair<int, CounterEffect> const &counterEffectEntry : counterEffects.at(factionId))
-			{
-				CounterEffect const &counterEffect = counterEffectEntry.second;
-				if (!counterEffect.isSatisfied(present))
-					return false;
-			}
-		}
-		return true;
-	}
-	
+	AECT_ARTILLERY_ARTILLERY,
+	AECT_ARTILLERY_NON_ARTILLERY,
+	AECT_MELEE,
 };
+size_t const ASSAULT_EFFECT_COMBAT_TYPE_COUNT = AECT_MELEE + 1;
+struct AssaultEffect
+{
+	size_t assailantFactionId;
+	size_t assailantUnitId;
+	size_t protectorFactionId;
+	size_t protectorUnitId;
+	double value;
+};
+//struct ProtectCombatData
+//{
+//	// bombardment health reduction
+//	double bombardmentHealthReduction;
+//	
+//	// currently located units
+//	std::vector<int> garrison;
+//	
+//	// combat multipliers
+//	std::array<double, MaxPlayerNum> sensorOffenseMultipliers;
+//	std::array<double, MaxPlayerNum> sensorDefenseMultipliers;
+//	std::array<double, 4> tileDefenseMultipliers;
+//	
+//	// each to each unit assault effects
+//	// [combat type] = AssaultEffect
+//	// combat types:
+//	// 0 = artillery vs. artillery
+//	// 1 = artillery vs. melee
+//	// 2 = others
+//	std::array<std::vector<AssaultEffect>, ASSAULT_EFFECT_COMBAT_TYPE_COUNT> assaultEffects;
+//	// artillery and melee assailants [FactionUnitKey]
+//	robin_hood::unordered_flat_set<int> artilleryAssailants;
+//	robin_hood::unordered_flat_set<int> meleeAssailants;
+//	// assailantWeights [FactionUnitKey]
+//	robin_hood::unordered_flat_map<int, double> assailantWeights;
+//	// protectorWeights [FactionUnitKey]
+//	robin_hood::unordered_flat_map<int, double> protectorWeights;
+//	// prevalence
+//	double assaultPrevalence;
+//	// average assault effects
+//	// [factionUnitKey] = effect
+//	robin_hood::unordered_flat_map<int, double> averageAssaultEffects;
+//	
+////	// foe unit counter effects
+////	// [foeFactionId][foeUnitId] = CounterEffect
+////	std::array<robin_hood::unordered_flat_map<int, CounterEffect>, MaxPlayerNum> counterEffects = {};
+////	double requiredEffect;
+//	
+//	void addAssaultEffect(AssaultEffectCombatType assaultEffectCombatType, int assailantFactionId, int assailantUnitId, int protectorFactionId, int protectorUnitId, double assaultEffect);
+//	void addAssailant(int vehicleId, double weight);
+//	void addProtector(int vehicleId);
+//	void compute();
+//	
+////	void resetProvided()
+////	{
+////		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+////		{
+////			for (robin_hood::pair<int, CounterEffect> &counterEffectEntry : counterEffects.at(factionId))
+////			{
+////				CounterEffect &counterEffect = counterEffectEntry.second;
+////				counterEffect.resetProvided();
+////			}
+////		}
+////	}
+//	double getProvidedEffect(bool present)
+//	{
+//		double providedEffect = 0.0;
+//		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+//		{
+//			for (robin_hood::pair<int, CounterEffect> const &factionCounterEffectEntry : counterEffects.at(factionId))
+//			{
+//				CounterEffect const &factionCounterEffect = factionCounterEffectEntry.second;
+//				providedEffect += present ? factionCounterEffect.providedPresent : factionCounterEffect.provided;
+//			}
+//		}
+//		return providedEffect;
+//	}
+//	
+////	UnitEffectResult getUnitEffectResult(int unitId) const;
+////	double getUnitEffect(int unitId) const;
+////	double getVehicleEffect(int vehicleId) const;
+////	void addVehicleEffect(int vehicleId, bool present);
+//	
+//	double addCounterEffect(int foeFactionId, int foeUnitId, double effect, bool present)
+//	{
+//		CounterEffect &counterEffect = counterEffects.at(foeFactionId).at(foeUnitId);
+//		double requiredEffect = counterEffect.required - counterEffect.provided;
+//		double appliedEffect = std::min(requiredEffect, effect);
+//		double remainingEffect = effect - appliedEffect;
+//		
+//		counterEffect.provided += appliedEffect;
+//		if (present)
+//		{
+//			counterEffect.providedPresent += appliedEffect;
+//		}
+//		
+//		return remainingEffect;
+//		
+//	}
+//	
+//	bool isSatisfied(bool present) const
+//	{
+//		for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+//		{
+//			for (robin_hood::pair<int, CounterEffect> const &counterEffectEntry : counterEffects.at(factionId))
+//			{
+//				CounterEffect const &counterEffect = counterEffectEntry.second;
+//				if (!counterEffect.isSatisfied(present))
+//					return false;
+//			}
+//		}
+//		return true;
+//	}
+//	
+//};
 
 struct BaseProbeData
 {
@@ -506,7 +429,7 @@ struct BaseInfo
 	// combat data
 	std::array<double, 4> moraleMultipliers;
 	bool artillery;
-	ProtectCombatData combatData;
+	CombatData combatData;
 	BaseProbeData probeData;
 	
 	// enemy base data
@@ -545,16 +468,16 @@ struct BaseInfo
 	void resetProtectors()
 	{
 		policeData.resetProvided();
-		combatData.resetProvided();
+		combatData.clearProtectors();
 	}
 	void addProtector(int vehicleId)
 	{
 		policeData.addVehicle(vehicleId);
-		combatData.addVehicleEffect(vehicleId, getVehicleMapTile(vehicleId) == getBaseMapTile(id));
+		combatData.addProtector(vehicleId);
 	}
-	bool isSatisfied(int vehicleId, bool present) const
+	bool isSatisfied(int vehicleId)
 	{
-		return policeData.isSatisfied(vehicleId) && combatData.isSatisfied(present);
+		return policeData.isSatisfied(vehicleId) && combatData.isSufficientProtection();
 	}
 	
 };
@@ -598,13 +521,6 @@ struct FactionInfo
 	
 };
 
-struct CombatEffect
-{
-	COMBAT_MODE combatMode;
-	bool destructive;
-	double effect = 0.0;
-};
-
 struct ProtectedLocation
 {
 	MAP *tile = nullptr;
@@ -632,15 +548,15 @@ struct OffenseEffect
 	double effect;
 };
 
-class EnemyStackInfo
+struct EnemyStackInfo
 {
 private:
 	
 	static int const BOMBARDMENT_ROUNDS = 5;
-	std::array<double, 2 * MaxProtoFactionNum * COMBAT_MODE_COUNT> offenseEffects;	// including location bonuses
-	std::array<double, 2 * MaxProtoFactionNum> defenseEffects;						// excluding location bonuses
-	std::vector<CombatEffect> unitEffects = std::vector<CombatEffect>(2 * MaxProtoFactionNum * COMBAT_MODE_COUNT);
-	std::array<double, 2 * MaxProtoFactionNum> effects;
+//	std::array<double, 2 * MaxProtoFactionNum * COMBAT_MODE_COUNT> offenseEffects;	// including location bonuses
+//	std::array<double, 2 * MaxProtoFactionNum> defenseEffects;						// excluding location bonuses
+//	std::vector<CombatEffect> unitEffects = std::vector<CombatEffect>(2 * MaxProtoFactionNum * COMBAT_MODE_COUNT);
+//	std::array<double, 2 * MaxProtoFactionNum> effects;
 	
 public:
 	
@@ -676,6 +592,10 @@ public:
 	
 	// combat data
 	
+	CombatData combatData;
+	std::array<std::array<double, COMBAT_MODE_COUNT>, 2 * MaxProtoFactionNum> offenseEffects;	// including location bonuses
+	double destructionGain;
+	
 	double requiredSuperiority;
 	double desiredSuperiority;
 	// sum of relative powers
@@ -689,24 +609,9 @@ public:
 	
 	// unit effects
 	
-	void setUnitEffect(int unitId, double effect)
-	{
-		effects.at(getUnitSlotById(unitId)) = effect;
-	}
-	double getUnitEffect(int unitId) const
-	{
-		return effects.at(getUnitSlotById(unitId));
-	}
-	double getVehicleEffect(int vehicleId) const
-	{
-		return getUnitEffect(Vehs[vehicleId].unit_id) * getVehicleMoraleMultiplier(vehicleId);
-	}
 	void setUnitOffenseEffect(int unitId, COMBAT_MODE combatMode, double effect);
 	double getUnitOffenseEffect(int unitId, COMBAT_MODE combatMode) const;
 	double getVehicleOffenseEffect(int vehicleId, COMBAT_MODE combatMode) const;
-	void setUnitDefenseEffect(int unitId, double effect);
-	double getUnitDefenseEffect(int unitId) const;
-	double getVehicleDefenseEffect(int vehicleId) const;
 	double getUnitBombardmentEffect(int unitId) const;
 	double getVehicleBombardmentEffect(int vehicleId) const;
 	double getUnitDirectEffect(int unitId) const;
@@ -828,6 +733,11 @@ struct TransportControl
 
 struct Data
 {
+	// global variables
+	
+	double newBaseGain;
+	double psiVehicleRatio;
+	
 	// map data
 	
 	std::vector<TileInfo> tileInfos;
@@ -835,6 +745,10 @@ struct Data
 	robin_hood::unordered_flat_set<int> enemyRegions;
 	std::vector<MAP *> monoliths;
 	std::vector<MAP *> pods;
+	
+	// pre turn to current vehicle mapping
+	std::vector<VEH> savedVehicles;
+	std::array<int, MaxVehNum> currentVehicleIds;
 	
 	// base infos
 	
@@ -846,7 +760,7 @@ struct Data
 	
 	// bunker combat data
 	
-	robin_hood::unordered_flat_map<MAP *, ProtectCombatData> bunkerCombatDatas;
+	robin_hood::unordered_flat_map<MAP *, CombatData> bunkerCombatDatas;
 	
 	// faction infos
 	
@@ -889,8 +803,15 @@ struct Data
 	
 	// combat data
 	
-	// combat effects
-	CombatEffectTable combatEffectTable;
+	double continuousImprovmentGain;
+	double continuousHarvestingGain;
+	double stealingTechnologyGain;
+	double cachingArtifactGain;
+	std::array<double, MaxProtoNum> unitDestructionGains;
+	CombatUnitTable combatUnitTable;
+	// each to each unit combat effects
+	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][combatMode] = combatEffect
+	CombatEffectData combatEffectData;
 	
 	// enemy stacks
 	robin_hood::unordered_flat_map<MAP *, EnemyStackInfo> enemyStacks;
@@ -1007,21 +928,6 @@ extern FactionInfo *aiFactionInfo;
 
 bool isWarzone(MAP *tile);
 
-// Vehicle movement action (move).
-struct MoveAction
-{
-	MAP *tile;
-	int movementAllowance;
-	
-	MoveAction(MAP *_tile, int _movementAllowance)
-	: tile{_tile}, movementAllowance{_movementAllowance}
-	{}
-	MoveAction()
-	: MoveAction(nullptr, 0)
-	{}
-	
-};
-
 struct MutualLoss
 {
 	double own = 0.0;
@@ -1036,4 +942,5 @@ bool isBlocked(MAP *tile);
 bool isZoc(int orgTileIndex, int dstTileIndex);
 bool isZoc(MAP *orgTile, MAP *dstTile);
 bool isVendettaStoppedWith(int enemyFactionId);
+double getVehicleDestructionGain(int vehicleId);
 

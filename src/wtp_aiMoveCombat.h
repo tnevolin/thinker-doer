@@ -121,7 +121,7 @@ void immediateAttack();
 void movePolice2x();
 void movePolice();
 void moveInterceptors();
-void moveProtectors();
+void moveBaseProtectors();
 void moveBunkerProtectors();
 void moveCombat();
 void populateDefensiveProbeTasks(std::vector<CombatAction> &taskPriorities);
@@ -130,7 +130,6 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities);
 void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities);
 void populatePolice2xTasks(std::vector<CombatAction> &taskPriorities);
 void populatePoliceTasks(std::vector<CombatAction> &taskPriorities);
-void populateInterceptorTasks(std::vector<CombatAction> &taskPriorities);
 void populateProtectorTasks(std::vector<CombatAction> &taskPriorities);
 void populateBunkerProtectorTasks(std::vector<CombatAction> &taskPriorities);
 void populateEmptyBaseCaptureTasks(std::vector<CombatAction> &taskPriorities);
@@ -144,4 +143,11 @@ double getDuelCombatCostCoefficient(int vehicleId, double effect, double enemyUn
 double getBombardmentCostCoefficient(int vehicleId, double effect, double enemyUnitCost);
 bool isPrimaryEffect(int vehicleId, MAP *enemyStackTile, EnemyStackInfo &enemyStackInfo, COMBAT_MODE combatMode);
 bool isProtecting(int vehicleId);
+void aiMoveCombatVehicle(int const vehicleId);
+double getDefenseGain(int defenderVehicleId, MAP *destination, double defenderHealthCoefficient, int excludeEnemyVehicleId);
+double getProximityGain(int vehicleId, MAP *destination);
+double getMeleeAttackGain(int vehicleId, MAP *destination, MAP *target);
+double getArtilleryAttackGain(int vehicleId, MAP *destination, MAP *target);
+double getMutualCombatGain(double attackerDestructionGain, double defenderDestructionGain, double combatEffect);
+double getBombardmentGain(double defenderDestructionGain, double relativeBombardmentDamage);
 

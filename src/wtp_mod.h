@@ -6,50 +6,6 @@
 #include <map>
 #include "robin_hood.h"
 #include "game.h"
-#include "lib/tree.hh"
-
-struct Profile
-{
-	std::string name;
-	bool running = false;
-	int executionCount = 0;
-	clock_t startTime = 0;
-	clock_t totalTime = 0;
-	
-	void start();
-	void pause();
-	void resume();
-	void stop();
-	
-};
-struct ProfileName
-{
-	std::string name;
-	Profile profile;
-};
-class Profiling
-{
-private:
-	
-	static int const NAME_LENGTH = 120;
-	
-	static tree<ProfileName> profiles;
-	
-	static Profile *getProfile(std::string name);
-	static Profile *addTopProfile(std::string name);
-	static Profile *addChildProfile(std::string name, std::string parentName);
-	
-public:
-	
-	static void reset();
-	static void start(std::string name);
-	static void start(std::string name, std::string parentName);
-	static void pause(std::string name);
-	static void resume(std::string name);
-	static void stop(std::string name);
-	static void print();
-	
-};
 
 struct BASE_INFO
 {
@@ -110,7 +66,6 @@ int __cdecl wtp_mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, i
 __cdecl int modifiedSocialWinDrawSocialCalculateSpriteOffset(int spriteIndex, int effectValue);
 __cdecl int modifiedVehicleCargoForAirTransportUnload(int vehicleId);
 __cdecl void modifiedFactionUpkeep(const int factionId);
-double calculateWinningProbability(double p, int attackerHP, int defenderHP);
 void simplifyOdds(int *attackerOdds, int *defenderOdds);
 bool isTechDiscovered(int factionId, int techId);
 bool isTechAvailable(int factionId, int techId);

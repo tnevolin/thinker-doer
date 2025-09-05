@@ -305,6 +305,12 @@ int lastEnemyMoveVehicleX = -1;
 int lastEnemyMoveVehicleY = -1;
 int enemyMoveVehicle(const int vehicleId)
 {
+	// update map data
+	
+	enemyMoveVehicleUpdateMapData();
+	
+	//
+	
 	VEH *vehicle = getVehicle(vehicleId);
 	
 	debug("enemyMoveVehicle [%4d] %s %2d %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), getVehicleRemainingMovement(vehicleId), Units[vehicle->unit_id].name);
@@ -322,18 +328,15 @@ int enemyMoveVehicle(const int vehicleId)
 	lastEnemyMoveVehicleX = vehicle->x;
 	lastEnemyMoveVehicleY = vehicle->y;
 	
+	// reassign tasks based on current environment
+	
+	aiMoveVehicle(vehicleId);
+	
 	// execute task
 	
 	if (hasExecutableTask(vehicleId))
 	{
 		return executeTask(vehicleId);
-	}
-	
-    // use vanilla algorithm for non defensive probes
-	
-    if (isProbeVehicle(vehicleId) && !isInfantryVehicle(vehicleId))
-	{
-		return enemy_move(vehicleId);
 	}
 	
 	// unhandled cases handled by default
@@ -346,7 +349,7 @@ int enemyMoveVehicle(const int vehicleId)
 Creates tasks to transit vehicle to destination.
 Returns true on successful task creation.
 */
-bool transitVehicle(Task task)
+bool transitVehicle(Task const &task)
 {
 	const bool TRACE = DEBUG && false;
 
@@ -438,7 +441,7 @@ bool transitVehicle(Task task)
 
 }
 
-bool transitLandVehicle(Task task)
+bool transitLandVehicle(Task const &task)
 {
 	int vehicleId = task.getVehicleId();
 	MAP *destination = task.getDestination();
@@ -480,9 +483,7 @@ bool transitLandVehicle(Task task)
 		
 		// set unboarding task and add unload request
 		
-		task.type = TT_UNBOARD;
-		task.destination = transfer.passengerStop;
-		setTask(task);
+		setTask(Task(vehicleId, TT_UNBOARD, transfer.passengerStop));
 		aiData.transportControl.addUnloadRequest(transportId, vehicleId, transfer.transportStop, transfer.passengerStop);
 		
 		return true;
@@ -509,9 +510,7 @@ bool transitLandVehicle(Task task)
 		
 		// handle transit
 		
-		task.type = TT_BOARD;
-		task.destination = transfer.passengerStop;
-		setTask(task);
+		setTask(Task(vehicleId, TT_BOARD, transfer.passengerStop));
 		
 		if (vehicleTile == transfer.passengerStop)
 		{
@@ -927,7 +926,7 @@ void setSafeMoveTo(int vehicleId, MAP *destination)
 	bool dangerous = false;
 	
 	Profiling::start("- setSafeMoveTo - getVehicleReachableLocations");
-	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId))
+	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId, false))
 	{
 		int tileIndex = reachableLocation.first;
 		MAP *tile = *MapTiles + tileIndex;
@@ -964,104 +963,6 @@ void setSafeMoveTo(int vehicleId, MAP *destination)
 	Profiling::stop("- setSafeMoveTo - getVehicleReachableLocations");
 	
 	if (!dangerous || bestTile == destination)
-	{
-		setMoveTo(vehicleId, destination);
-	}
-	else
-	{
-		setMoveTo(vehicleId, {bestTile, destination});
-	}
-	
-}
-
-/*
-Ends combat vehicle turn at the best tile.
-*/
-void setCombatMoveTo(int vehicleId, MAP *destination)
-{
-	VEH &vehicle = Vehs[vehicleId];
-	int factionId = vehicle.faction_id;
-	int triad = vehicle.triad();
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	bool fungusBonus = isNativeVehicle(vehicleId) || has_project(FAC_XENOEMPATHY_DOME, factionId);
-	
-	debug("setCombatMoveTo [%4d] %s -> %s\n", vehicleId, getLocationString(vehicleTile).c_str(), getLocationString(destination).c_str());
-	
-	// not land unit moves normally
-	
-	if (triad != TRIAD_LAND)
-	{
-		debug("\tnot land\n");
-		setMoveTo(vehicleId, destination);
-		return;
-	}
-	
-	// not in the same cluster
-	
-	if (!isSameLandCluster(vehicleTile, destination))
-	{
-		debug("\tnot in same land cluster\n");
-		setMoveTo(vehicleId, destination);
-		return;
-	}
-	
-	// no need for best location when vehicle is not in the danger zone
-	
-	if (aiData.hostileEndangeredVehicleIds.find(vehicleId) == aiData.hostileEndangeredVehicleIds.end())
-	{
-		debug("\tnot hostileEndangeredVehicle\n");
-		setMoveTo(vehicleId, destination);
-		return;
-	}
-	
-	MAP *bestTile = nullptr;
-	double bestTileTravelTime = DBL_MAX;
-	int bestTileSafety = 0;
-	
-	Profiling::start("- setCombatMoveTo - getVehicleReachableLocations");
-	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId))
-	{
-		int tileIndex = reachableLocation.first;
-		MAP *tile = *MapTiles + tileIndex;
-		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
-		int safety = 10 * (tileInfo.hostileDangerZone ? 0 : 1) + 1 * (tileInfo.rough || (fungusBonus && tile->is_fungus()) ? 1 : 0);
-		
-		double travelTime = getVehicleTravelTime(vehicleId, tile, destination, false);
-		if (travelTime == INF)
-			continue;
-		
-		if (travelTime <= bestTileTravelTime - 1.0)
-		{
-			bestTile = tile;
-			bestTileTravelTime = travelTime;
-			bestTileSafety = safety;
-		}
-		else if (travelTime < bestTileTravelTime + 1.0 && safety > bestTileSafety)
-		{
-			bestTile = tile;
-			bestTileTravelTime = std::min(bestTileTravelTime, travelTime);
-			bestTileSafety = safety;
-		}
-		else
-		{
-			continue;
-		}
-		
-		debug
-		(
-			"%s"
-			" travelTime=%5.2f"
-			" safety=%d"
-			"\n"
-			, getLocationString(tile).c_str()
-			, travelTime
-			, safety
-		);
-	
-	}
-	Profiling::stop("- setCombatMoveTo - getVehicleReachableLocations");
-	
-	if (bestTile == nullptr)
 	{
 		setMoveTo(vehicleId, destination);
 	}
@@ -1239,6 +1140,308 @@ MAP *getSafeLocation(int vehicleId, bool unfriendly)
 	
 	Profiling::stop("- getSafeLocation");
 	return nullptr;
+	
+}
+
+void aiMoveVehicle(int const vehicleId)
+{
+	debug("aiMoveVehicle [%4d] %s %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), Units[Vehs[vehicleId].unit_id].name);
+	
+	if (isCombatVehicle(vehicleId) && hasTask(vehicleId) && getTask(vehicleId)->attackTarget != nullptr)
+	{
+		aiMoveCombatVehicle(vehicleId);
+	}
+	
+}
+
+void enemyMoveVehicleUpdateMapData()
+{
+	Profiling::start("- enemyMoveVehicleUpdateMapData");
+	
+	// update currentVehicleId mapping
+	
+	std::fill(aiData.currentVehicleIds.begin(), aiData.currentVehicleIds.end(), -1);
+	
+	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	{
+		VEH &vehicle = Vehs[vehicleId];
+        aiData.currentVehicleIds.at(vehicle.pad_0) = vehicleId;
+	}
+	
+	// analyze removed and renumbered vehicles
+	
+	std::vector<int> removedSavedVehicleIds;
+	std::vector<std::pair<int, int>> renumberedSavedVehicleIds;
+	
+	for (int vehicleId = 0, savedVehicleId = 0; savedVehicleId < (int)aiData.savedVehicles.size(); )
+	{
+		int vehiclePad0 = vehicleId < *VehCount ? Vehs[vehicleId].pad_0 : -1;
+		int savedVehiclePad0 = aiData.savedVehicles.at(savedVehicleId).pad_0;
+		
+		if (vehiclePad0 != savedVehiclePad0)
+		{
+			// no match - remove
+			removedSavedVehicleIds.push_back(savedVehicleId);
+			savedVehicleId++;
+		}
+		else
+		{
+			// match - renumber
+			renumberedSavedVehicleIds.push_back({savedVehicleId, vehicleId});
+			savedVehicleId++;
+			vehicleId++;
+		}
+		
+	}
+	
+	// remove savedVehicles
+	
+	for (int i = removedSavedVehicleIds.size() - 1; i >= 0; i--)
+	{
+		int savedVehicleId = removedSavedVehicleIds.at(i);
+		
+		enemyMoveVehicleUpdateMapDataVehRemoved(savedVehicleId);
+		aiData.savedVehicles.erase(aiData.savedVehicles.begin() + savedVehicleId);
+		aiData.currentVehicleIds.at(Vehs[savedVehicleId].pad_0) = -1;
+		
+	}
+	
+	// verify sizes are equal after removal
+	
+	if ((int)aiData.savedVehicles.size() != *VehCount)
+	{
+		debug("ERROR: aiData.savedVehicles.size() != *VehCount.\n");
+		Profiling::stop("- enemyMoveVehicleUpdateMapData");
+		return;
+	}
+	
+	// compare position to see if vehicle moved
+	
+	for (int vehicleId = 0; vehicleId < *VehCount && vehicleId < (int)aiData.savedVehicles.size(); vehicleId++)
+	{
+		VEH *vehicle = &Vehs[vehicleId];
+		VEH *savedVehicle = &aiData.savedVehicles.at(vehicleId);
+		
+		// check vehicle moved
+		
+		if (vehicle->x != savedVehicle->x || vehicle->y != savedVehicle->y)
+		{
+			enemyMoveVehicleUpdateMapDataVehRemoved(vehicleId);
+			enemyMoveVehicleUpdateMapDataVehAdded(vehicleId);
+			*savedVehicle = *vehicle;
+		}
+		
+	}
+	
+	Profiling::stop("- enemyMoveVehicleUpdateMapData");
+	
+}
+
+void enemyMoveVehicleUpdateMapDataVehRemoved(int savedVehicleId)
+{
+	debug("enemyMoveVehicleUpdateMapDataVehRemoved [%4d]\n", savedVehicleId);
+	
+	VEH *savedVehicle = &aiData.savedVehicles.at(savedVehicleId);
+	int tileIndex = getMapTileIndex(savedVehicle->x, savedVehicle->y);
+	TileInfo &tileInfo = aiData.getTileInfo(tileIndex);
+	
+	// remove friendly vehicle obstacle effect
+	
+	if (isFriendly(aiFactionId, savedVehicle->faction_id))
+	{
+		// check if no more friendly vehicles are at the tile
+		
+		bool friendlyVehicles = false;
+		for (int stackVehicleId : getTileVehicleIds(tileInfo.tile))
+		{
+			if (isFriendly(aiFactionId, Vehs[stackVehicleId].faction_id))
+			{
+				friendlyVehicles = true;
+				break;
+			}
+			
+		}
+		
+		if (!friendlyVehicles)
+		{
+			// clear tile friendly vehicle and recompute obstacles
+			
+			tileInfo.friendlyVehicle = false;
+			setTileBlockedAndZoc(tileInfo);
+			debug("\tUpdateMapData %s no more friendly vehicle\n", getLocationString(tileInfo.tile).c_str());
+			
+		}
+		
+	}
+	
+	// remove unfriendly vehicle obstacle effect
+	
+	if (isUnfriendly(aiFactionId, savedVehicle->faction_id))
+	{
+		// check if no more unfriendly vehicles are at the tile
+		
+		bool unfriendlyVehicles = false;
+		for (int stackVehicleId : getTileVehicleIds(tileInfo.tile))
+		{
+			if (isUnfriendly(aiFactionId, Vehs[stackVehicleId].faction_id))
+			{
+				unfriendlyVehicles = true;
+				break;
+			}
+			
+		}
+		
+		if (!unfriendlyVehicles)
+		{
+			// clear tile unfriendly vehicle and recompute obstacles
+			
+			tileInfo.unfriendlyVehicle = false;
+			setTileBlockedAndZoc(tileInfo);
+			debug("\tUpdateMapData %s no more unfriendly vehicle\n", getLocationString(tileInfo.tile).c_str());
+			
+			// clear tile zoc
+			
+			if (tileInfo.land)
+			{
+				for (Adjacent const &adjacent : tileInfo.adjacents)
+				{
+					// not base
+					
+					if (adjacent.tileInfo->base)
+						continue;
+					
+					// land
+					
+					if (!adjacent.tileInfo->land)
+						continue;
+					
+					bool unfriendlyVehicleZoc = false;
+					for (Adjacent const &adjacentAdjacent : adjacent.tileInfo->adjacents)
+					{
+						// land
+						
+						if (!adjacentAdjacent.tileInfo->land)
+							continue;
+						
+						if (adjacentAdjacent.tileInfo->unfriendlyVehicle)
+						{
+							unfriendlyVehicleZoc = true;
+							break;
+						}
+							
+					}
+					if (unfriendlyVehicleZoc)
+						continue;
+					
+					// clear tile unfriendly vehicle zoc
+					
+					adjacent.tileInfo->unfriendlyVehicleZoc = false;
+					setTileBlockedAndZoc(*adjacent.tileInfo);
+					debug("\tUpdateMapData %s no more unfriendly vehicle zoc\n", getLocationString(adjacent.tileInfo->tile).c_str());
+					
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	// remove enemy stack
+	
+	if (aiData.hasEnemyStack(tileInfo.tile) && !tileInfo.tile->veh_in_tile())
+	{
+		aiData.enemyStacks.erase(tileInfo.tile);
+	}
+	
+	// remove potential attack
+	
+	for (TileInfo &mapTileInfo : aiData.tileInfos)
+	{
+		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
+		{
+			std::vector<PotentialAttack> &potentialAttacks = mapTileInfo.potentialAttacks.at(engagementMode);
+			
+			for (std::vector<PotentialAttack>::iterator potentialAttackIterator = potentialAttacks.begin(); potentialAttackIterator != potentialAttacks.end(); )
+			{
+				PotentialAttack &potentialAttack = *potentialAttackIterator;
+				
+				if (potentialAttack.vehicleId == savedVehicleId)
+				{
+					potentialAttackIterator = potentialAttacks.erase(potentialAttackIterator);
+				}
+				else
+				{
+					potentialAttackIterator++;
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+}
+
+void enemyMoveVehicleUpdateMapDataVehAdded(int vehicleId)
+{
+	VEH *vehicle = getVehicle(vehicleId);
+	TileInfo &tileInfo = aiData.getVehicleTileInfo(vehicleId);
+	
+	// recompute friendly vehicle obstacle effect
+	
+	if (isFriendly(aiFactionId, vehicle->faction_id))
+	{
+		if (!tileInfo.friendlyVehicle)
+		{
+			// add tile friendly vehicle and recompute obstacles
+			
+			tileInfo.friendlyVehicle = true;
+			setTileBlockedAndZoc(tileInfo);
+			debug("\tUpdateMapData %s new friendly vehicle\n", getLocationString(tileInfo.tile).c_str());
+			
+		}
+		
+	}
+	
+	// recompute unfriendly vehicle obstacle effect
+	
+	if (isUnfriendly(aiFactionId, vehicle->faction_id))
+	{
+		if (!tileInfo.unfriendlyVehicle)
+		{
+			// add tile unfriendly vehicle and recompute obstacles
+			
+			tileInfo.unfriendlyVehicle = false;
+			setTileBlockedAndZoc(tileInfo);
+			debug("\tUpdateMapData %s new unfriendly vehicle\n", getLocationString(tileInfo.tile).c_str());
+			
+			// add tile zoc
+			
+			if (tileInfo.land)
+			{
+				for (Adjacent &adjacent : tileInfo.adjacents)
+				{
+					// not base
+					
+					if (adjacent.tileInfo->base)
+						continue;
+					
+					// land
+					
+					if (!adjacent.tileInfo->land)
+						continue;
+					
+					adjacent.tileInfo->unfriendlyVehicleZoc = true;
+					setTileBlockedAndZoc(*adjacent.tileInfo);
+					
+				}
+				
+			}
+			
+		}
+		
+	}
 	
 }
 

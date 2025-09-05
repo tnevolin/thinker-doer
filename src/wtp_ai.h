@@ -1,6 +1,7 @@
 #pragma once
 
 #include "wtp_aiData.h"
+#include "wtp_aiCombatData.h"
 
 const int MAX_SAFE_LOCATION_SEARCH_RANGE = 6;
 const int STACK_MAX_BASE_RANGE = 20;
@@ -28,50 +29,6 @@ const double ATTACK_PROPORTION_CON_SURFACE	= 0.5;
 
 // forward declarations
 
-struct MapIntValue
-{
-	MAP *tile = nullptr;
-	int value = INT_MAX;
-	
-	MapIntValue(MAP *_tile, int _value)
-	: tile(_tile), value(_value)
-	{}
-	
-};
-
-struct MapDoubleValue
-{
-	MAP *tile = nullptr;
-	double value = INF;
-	
-	MapDoubleValue(MAP *_tile, double _value)
-	: tile(_tile), value(_value)
-	{}
-	
-};
-
-struct VehicleLocation
-{
-	int vehicleId;
-	MAP *location;
-};
-
-struct VehicleLocationTravelTime
-{
-	int vehicleId;
-	MAP *location;
-	int travelTime;
-};
-
-/*
-Information about defend economic effect and remaining health.
-*/
-struct VehicleDefendInfo
-{
-	double economicEffect;
-	double relativeDamage;
-};
-
 const int BASE_DEFENSE_TYPE_COUNT = 4;
 enum BASE_DEFENSE_TYPE
 {
@@ -81,16 +38,22 @@ enum BASE_DEFENSE_TYPE
 	BD_NATIVE,
 };
 
+/*
+Available vehicle move action.
+*/
+struct MoveAction
+{
+	MAP *destination;
+	int movementAllowance;
+};
+/*
+Available vehicle attack action.
+*/
 struct AttackAction
 {
-	MAP *position;
+	MAP *destination;
 	MAP *target;
 	double hastyCoefficient;
-	
-	AttackAction(MAP *_position, MAP *_target, double _hastyCoefficient)
-	: position(_position), target(_target), hastyCoefficient(_hastyCoefficient)
-	{}
-	
 };
 
 struct ReachSearch
@@ -156,6 +119,7 @@ struct Threat
 	}
 };
 
+void clearPlayerFactionReferences();
 void setPlayerFactionReferences(int factionId);
 void aiFactionUpkeep(const int factionId);
 void __cdecl modified_enemy_units_check(int factionId);
@@ -163,6 +127,7 @@ void strategy(bool computer);
 void executeTasks();
 
 void populateAIData();
+void populateGlobalVariables();
 void populateTileInfos();
 void populateTileInfoBaseRanges();
 void populateRegionAreas();
@@ -175,6 +140,7 @@ void populatePlayerGlobalVariables();
 void populatePlayerFactionIncome();
 void populateUnits();
 void populateMaxMineralSurplus();
+void saveVehicles();
 void populateVehicles();
 void populateDangerZones();
 void populateArtifactDangerZones();
@@ -182,6 +148,7 @@ void populateEnemyStacks();
 void populateEmptyEnemyBaseTiles();
 void populateBasePoliceData();
 
+void computeUnitDestructionGains();
 void computeCombatEffects();
 
 void populateEnemyBaseInfos();
@@ -192,7 +159,7 @@ void populateEnemyBaseAssaultEffects();
 void evaluateFactionMilitaryPowers();
 void evaluateEnemyStacks();
 void evaluateBaseDefense();
-void evaluateDefense(MAP *tile, ProtectCombatData &combatData);
+void evaluateDefense(MAP *tile, CombatData &combatData);
 void evaluateBaseProbeDefense();
 
 void designUnits();
@@ -212,7 +179,6 @@ int getNearestBaseRange(MAP *tile, std::vector<int> baseIds, bool sameRealm);
 int getFactionMaxConOffenseValue(int factionId);
 int getFactionMaxConDefenseValue(int factionId);
 std::array<int, 3> getFactionFastestTriadChassisIds(int factionId);
-double evaluateCombatStrength(double offenseValue, double defenseValue);
 double evaluateOffenseStrength(double offenseValue);
 double evaluateDefenseStrength(double DefenseValue);
 bool isVehicleThreatenedByEnemyInField(int vehicleId);
@@ -256,16 +222,15 @@ double getBaseSizeGrowth(int baseId);
 double getBonusDelayEffectCoefficient(double delay);
 double getBuildTimeEffectCoefficient(double delay);
 int getUnitGroup(int unitId, bool airbase);
-double getVehicleStrenghtMultiplier(int vehicleId);
-double getVehicleBombardmentStrenghtMultiplier(int vehicleId);
-double getUnitBombardmentAttackEffect(int ownFactionId, int ownUnitId, int foeVehicleId, MAP *tile);
 double getHarmonicMean(std::vector<std::vector<double>> parameters);
-robin_hood::unordered_flat_map<int, int> getVehicleReachableLocations(int vehicleId, bool ignoreVehicles = false);
-robin_hood::unordered_flat_map<int, int> getAirVehicleReachableLocations(MAP *origin, int movementAllowance, bool ignoreVehicles);
-robin_hood::unordered_flat_map<int, int> getSeaVehicleReachableLocations(MovementType movementType, MAP *origin, int movementAllowance, bool ignoreVehicles);
-robin_hood::unordered_flat_map<int, int> getLandVehicleReachableLocations(MovementType movementType, MAP *origin, int movementAllowance, bool ignoreVehicles);
-std::vector<AttackAction> getMeleeAttackActions(int vehicleId);
-std::vector<AttackAction> getArtilleryAttackActions(int vehicleId);
+robin_hood::unordered_flat_map<int, int> getVehicleReachableLocations(int vehicleId, bool regardObstacle);
+robin_hood::unordered_flat_map<int, int> getAirVehicleReachableLocations(MAP *origin, int movementAllowance, bool regardObstacle);
+robin_hood::unordered_flat_map<int, int> getSeaVehicleReachableLocations(MovementType movementType, MAP *origin, int movementAllowance, bool regardObstacle);
+robin_hood::unordered_flat_map<int, int> getLandVehicleReachableLocations(MovementType movementType, MAP *origin, int movementAllowance, bool regardObstacle, bool regardZoc);
+robin_hood::unordered_flat_map<MAP *, double> getPotentialMeleeAttackTargets(int vehicleId);
+robin_hood::unordered_flat_map<MAP *, double> getPotentialArtilleryAttackTargets(int vehicleId);
+std::vector<AttackAction> getMeleeAttackActions(int vehicleId, bool regardObstacle);
+std::vector<AttackAction> getArtilleryAttackActions(int vehicleId, bool regardObstacle);
 robin_hood::unordered_flat_map<int, double> getMeleeAttackLocations(int vehicleId);
 robin_hood::unordered_flat_set<int> getArtilleryAttackLocations(int vehicleId);
 bool isVehicleAllowedMove(int vehicleId, MAP *from, MAP *to);
@@ -302,7 +267,6 @@ double getBaseImprovementGain(int baseId, Resource oldBaseIntake2, Resource newB
 COMBAT_TYPE getWeaponType(int vehicleId);
 COMBAT_TYPE getArmorType(int vehicleId);
 CombatStrength getMeleeAttackCombatStrength(int vehicleId);
-bool isVehicleCanMeleeAttackTile(int vehicleId, MAP *attackPosition, MAP *attackTarget);
 bool isVehicleCanArtilleryAttack(int vehicleId);
 void assignVehiclesToTransports();
 bool isUnitCanMeleeAttackUnit(int attackerUnitId, int defenderUnitId);
@@ -311,10 +275,11 @@ bool isUnitCanArtilleryAttackFromTile(int unitId, MAP *position);
 bool isUnitCanMeleeAttackTile(int unitId, MAP *target, MAP *position = nullptr);
 bool isVehicleCanMeleeAttackTile(int vehicleId, MAP *target, MAP *position = nullptr);
 double getBaseExtraWorkerGain(int baseId);
-double getOffenseEffect(int attackerVehicleId, int defenderVehicleId, COMBAT_MODE combatMode, MAP *tile);
-AssaultEffect computeAssaultEffect(int assailantFactionId, int assailantUnitId, int protectorFactionId, int protectorUnitId);
+double computeAssaultEffect(int assailantFactionId, int assailantUnitId, int protectorFactionId, int protectorUnitId, MAP *tile);
+bool isUnitCanMeleeAttackAtTile(int unitId, MAP *tile);
 bool isUnitCanMeleeAttackUnitAtTile(int attackerUnitId, int defenderUnitId, MAP *tile);
 bool isUnitCanMeleeAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MAP *tile);
+bool isUnitCanArtilleryAttackAtTile(int unitId, MAP *tile);
 bool isUnitCanArtilleryAttackUnitAtTile(int attackerUnitId, int defenderUnitId, MAP *tile);
 bool isUnitCanArtilleryAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MAP *tile);
 bool isUnitCanMeleeAttackUnitAtBase(int attackerUnitId, int defenderUnitId);
@@ -333,4 +298,16 @@ double getSensorDefenseMultiplier(int factionId, MAP *tile);
 double getUnitMeleeOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
 double getUnitArtilleryOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
 int getBasePoliceRequiredPower(int baseId);
+void setTileBlockedAndZoc(TileInfo &tileInfo);
+double getContinuousImprovmentGain();
+double getContinuousHarvestingGain();
+double getStealingTechnologyGain();
+double getCachingArtifactGain();
+double getUnitDestructionGain(int unitId);
+double getCombatUnitDestructionGain(int unitId);
+double getCivicUnitDestructionGain(int unitId);
+double getTileCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, COMBAT_MODE combatMode, MAP *tile, bool atTile);
+double getProportionalCoefficient(double minValue, double maxValue, double value);
+void initializeLocationCombatData(CombatData &combatData, TileInfo &tileInfo, bool playerAssaults);
+double getCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *tile);
 

@@ -182,7 +182,6 @@ int getRegionBasesMaxMineralSurplus(int factionId, int region);
 int getRegionBasesMaxPopulationSize(int factionId, int region);
 int calculateUnitTypeCount(int baseId, int weaponType, int triad, int excludedBaseId);
 bool isMilitaryItem(int item);
-int selectProtectionUnit(int baseId, int targetBaseId);
 int selectAlienProtectorUnit();
 int findTransportUnit();
 bool isBaseCanBuildUnit(int baseId, int unitId);

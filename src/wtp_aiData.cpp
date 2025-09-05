@@ -5,10 +5,6 @@
 #include "wtp_ai.h"
 #include "wtp_aiRoute.h"
 
-//// BaseSnapshots
-//
-//std::vector<BASE> BaseSnapshots::baseSnapshots;
-//
 // global variables
 
 Data aiData;
@@ -75,18 +71,28 @@ double CombatStrength::getAttackEffect(int vehicleId)
 	
 }
 
-//double FoeUnitWeightTable::get(int factionId, int unitId)
-//{
-//	return weights.at(getUnitIndex(factionId, unitId));
-//}
-//void FoeUnitWeightTable::set(int factionId, int unitId, double weight)
-//{
-//	weights.at(getUnitIndex(factionId, unitId)) = weight;
-//}
-//void FoeUnitWeightTable::add(int factionId, int unitId, double weight)
-//{
-//	weights.at(getUnitIndex(factionId, unitId)) += weight;
-//}
+// TileInfo
+
+double TileInfo::getOffenseMultiplier(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
+{
+	double offenseMultiplier = this->sensorOffenseMultipliers.at(attackerFactionId);
+	if (this->fungus && (isNativeUnit(attackerUnitId) || has_project(FAC_XENOEMPATHY_DOME, attackerFactionId)) && !(isNativeUnit(defenderUnitId) || has_project(FAC_XENOEMPATHY_DOME, defenderFactionId)))
+	{
+		offenseMultiplier *= 1.5;
+	}
+	return offenseMultiplier;
+}
+
+double TileInfo::getDefenseMultiplier(int /*attackerFactionId*/, int attackerUnitId, int defenderFactionId, int defenderUnitId, bool atTile)
+{
+	double defenseMultiplier = this->sensorDefenseMultipliers.at(defenderFactionId);
+	if (atTile)
+	{
+		int attackTriad = getAttackTriad(attackerUnitId, defenderUnitId);
+		defenseMultiplier *= this->structureDefenseMultipliers.at(attackTriad);
+	}
+	return defenseMultiplier;
+}
 
 // Data
 
@@ -258,7 +264,8 @@ void EnemyStackInfo::addVehicle(int vehicleId)
 	{
 		if (tile != vehicleTile)
 		{
-			debug("ERROR: stack vehicles are on different tiles."); exit(1);
+			debug("ERROR: stack vehicles are on different tiles.");
+			return;
 		}
 		
 	}
@@ -288,7 +295,7 @@ void EnemyStackInfo::addVehicle(int vehicleId)
 		
 		// add weight
 		
-		weight += getVehicleRelativePower(vehicleId);
+		weight += getVehicleRelativeHealth(vehicleId);
 		
 	}
 	
@@ -296,7 +303,7 @@ void EnemyStackInfo::addVehicle(int vehicleId)
 	
 	hostile = isHostile(aiFactionId, vehicle->faction_id);
 	
-	if (isPact(aiFactionId, vehicle->faction_id) || isTreaty(aiFactionId, vehicle->faction_id))
+	if (!isHostile(aiFactionId, vehicle->faction_id))
 	{
 		breakTreaty = true;
 	}
@@ -506,32 +513,17 @@ bool EnemyStackInfo::isUnitCanArtilleryAttackStack(int unitId, MAP *position) co
 
 void EnemyStackInfo::setUnitOffenseEffect(int unitId, COMBAT_MODE combatMode, double effect)
 {
-	this->offenseEffects.at(getUnitSlotById(unitId) * COMBAT_MODE_COUNT + combatMode) = effect;
+	this->offenseEffects.at(getUnitSlotById(unitId)).at(combatMode) = effect;
 }
 
 double EnemyStackInfo::getUnitOffenseEffect(int unitId, COMBAT_MODE combatMode) const
 {
-	return this->offenseEffects.at(getUnitSlotById(unitId) * COMBAT_MODE_COUNT + combatMode);
+	return this->offenseEffects.at(getUnitSlotById(unitId)).at(combatMode);
 }
 
 double EnemyStackInfo::getVehicleOffenseEffect(int vehicleId, COMBAT_MODE combatMode) const
 {
 	return this->getUnitOffenseEffect(getVehicle(vehicleId)->unit_id, combatMode) * getVehicleStrenghtMultiplier(vehicleId);
-}
-
-void EnemyStackInfo::setUnitDefenseEffect(int unitId, double effect)
-{
-	this->defenseEffects.at(getUnitSlotById(unitId)) = effect;
-}
-
-double EnemyStackInfo::getUnitDefenseEffect(int unitId) const
-{
-	return this->defenseEffects.at(getUnitSlotById(unitId));
-}
-
-double EnemyStackInfo::getVehicleDefenseEffect(int vehicleId) const
-{
-	return this->getUnitDefenseEffect(getVehicle(vehicleId)->unit_id) * getVehicleStrenghtMultiplier(vehicleId);
 }
 
 double EnemyStackInfo::getUnitBombardmentEffect(int unitId) const
@@ -823,113 +815,373 @@ bool isZoc(MAP *orgTile, MAP *dstTile)
 	
 }
 
-// AssaultEffect
-
-double AssaultEffect::getEffect(double attackMultiplier, double defendMultiplier) const
+//// ProtectCombatData
+//
+//void ProtectCombatData::addAssaultEffect(AssaultEffectCombatType assaultEffectCombatType, int assailantFactionId, int assailantUnitId, int protectorFactionId, int protectorUnitId, double assaultEffect)
+//{
+//	assaultEffects.at(assaultEffectCombatType).push_back({assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, assaultEffect});
+//}
+//
+//void ProtectCombatData::addAssailant(int vehicleId, double weight)
+//{
+//	VEH *vehicle = getVehicle(vehicleId);
+//	int factionUnitKey = encodeFactionUnitKey(vehicle->faction_id, vehicle->unit_id);
+//	
+//	double strengthCoefficient = getVehicleStrenghtMultiplier(vehicleId);
+//	weight *= strengthCoefficient;
+//	
+//	if (assailantWeights.find(factionUnitKey) == assailantWeights.end())
+//	{
+//		assailantWeights.emplace(factionUnitKey, 0.0);
+//	}
+//	assailantWeights.at(factionUnitKey) += weight;
+//	
+//}
+//
+//void ProtectCombatData::addProtector(int vehicleId)
+//{
+//	VEH *vehicle = getVehicle(vehicleId);
+//	double weight = 1.0;
+//	int factionUnitKey = encodeFactionUnitKey(vehicle->faction_id, vehicle->unit_id);
+//	
+//	double strengthCoefficient = getVehicleMoraleMultiplier(vehicleId);
+//	weight *= strengthCoefficient;
+//	
+//	if (protectorWeights.find(factionUnitKey) == protectorWeights.end())
+//	{
+//		protectorWeights.emplace(factionUnitKey, 0.0);
+//	}
+//	protectorWeights.at(factionUnitKey) += weight;
+//	
+//}
+//
+//void ProtectCombatData::compute()
+//{
+//	// count initial weight
+//	
+//	double initialAssailantWeight = 0.0;
+//	double initialProtectorWeight = 0.0;
+//	for (robin_hood::pair<int, double> assailantWeightEntry : assailantWeights)
+//	{
+//		double factionUnitKey = assailantWeightEntry.first;
+//		double weight = assailantWeightEntry.second;
+//		
+//		// melee assailant only
+//		if (meleeAssailants.find(factionUnitKey) == meleeAssailants.end())
+//			continue;
+//		
+//		initialAssailantWeight += weight;
+//		
+//	}
+//	for (robin_hood::pair<int, double> protectorWeightEntry : protectorWeights)
+//	{
+//		double weight = protectorWeightEntry.second;
+//		initialProtectorWeight += weight;
+//	}
+//	
+//	// simple cases
+//	
+//	if (initialAssailantWeight <= 0.0)
+//	{
+//		assaultPrevalence = 0.0;
+//		return;
+//	}
+//	else if (initialProtectorWeight <= 0.0)
+//	{
+//		assaultPrevalence = INF;
+//		return;
+//	}
+//	
+//	// current weights
+//	
+//	robin_hood::unordered_flat_map<int, double> currentAssailantWeights(assailantWeights.begin(), assailantWeights.end());
+//	robin_hood::unordered_flat_map<int, double> currentProtectorWeights(protectorWeights.begin(), protectorWeights.end());
+//	
+//	// match assailant artillery with protectors
+//	
+//	for (AssaultEffectCombatType assaultEffectCombatType : {AECT_ARTILLERY_ARTILLERY, AECT_ARTILLERY_NON_ARTILLERY})
+//	{
+//		for (AssaultEffect const &assaultEffect : assaultEffects.at(assaultEffectCombatType))
+//		{
+//			int assailantFactionUnitKey = encodeFactionUnitKey(assaultEffect.assailantFactionId, assaultEffect.assailantUnitId);
+//			int protectorFactionUnitKey = encodeFactionUnitKey(assaultEffect.protectorFactionId, assaultEffect.protectorUnitId);
+//			
+//			// no such assailant or protector
+//			if (currentAssailantWeights.find(assailantFactionUnitKey) == currentAssailantWeights.end())
+//				continue;
+//			if (currentProtectorWeights.find(protectorFactionUnitKey) == currentProtectorWeights.end())
+//				continue;
+//			
+//			// current weights
+//			double currentAssailantWeight = currentAssailantWeights.at(assailantFactionUnitKey);
+//			double currentProtectorWeight = currentProtectorWeights.at(protectorFactionUnitKey);
+//			
+//			// no more assailant or protector
+//			if (currentAssailantWeight <= 0.0)
+//				continue;
+//			if (currentProtectorWeight <= 0.0)
+//				continue;
+//			
+//			// assailant is desroyed outright
+//			if (assaultEffect.value == 0)
+//			{
+//				currentAssailantWeights.at(assailantFactionUnitKey) = 0.0;
+//				continue;
+//			}
+//			// assailant is desroying protector
+//			if (assaultEffect.value == INF)
+//			{
+//				currentProtectorWeights.at(protectorFactionUnitKey) = 0.0;
+//				continue;
+//			}
+//			
+//			// assailants weight reduction for destroying all protectors
+//			
+//			double maxAssailantWeightReduction = currentProtectorWeight / assaultEffect.value;
+//			double assailantWeightReduction = std::min(maxAssailantWeightReduction, currentAssailantWeight);
+//			double protectorWeightReduction = assailantWeightReduction * assaultEffect.value;
+//			
+//			currentAssailantWeights.at(assailantFactionUnitKey) -= assailantWeightReduction;
+//			currentProtectorWeights.at(protectorFactionUnitKey) -= protectorWeightReduction;
+//			
+//		}
+//		
+//	}
+//	
+//	// check if any assailant artillery left
+//	
+//	bool assailantArtillery = false;
+//	for (int artilleryAssailantFactionUnitKey : artilleryAssailants)
+//	{
+//		// no such assailant
+//		if (currentAssailantWeights.find(artilleryAssailantFactionUnitKey) == currentAssailantWeights.end())
+//			continue;
+//		
+//		// no more of this assilant
+//		if (currentAssailantWeights.at(artilleryAssailantFactionUnitKey) <= 0.0)
+//			continue;
+//		
+//		assailantArtillery = true;
+//		break;
+//		
+//	}
+//	
+//	// reduce current protector health if assailant artillery remains
+//	
+//	if (assailantArtillery)
+//	{
+//		for (robin_hood::pair<int, double> &currentProtectorEntry : currentProtectorWeights)
+//		{
+//			currentProtectorEntry.second /= bombardmentHealthReduction;
+//		}
+//	}
+//	
+//	// match assailant non artillery with protectors
+//	
+//	for (AssaultEffectCombatType assaultEffectCombatType : {AECT_MELEE})
+//	{
+//		for (AssaultEffect const &assaultEffect : assaultEffects.at(assaultEffectCombatType))
+//		{
+//			int assailantFactionUnitKey = encodeFactionUnitKey(assaultEffect.assailantFactionId, assaultEffect.assailantUnitId);
+//			int protectorFactionUnitKey = encodeFactionUnitKey(assaultEffect.protectorFactionId, assaultEffect.protectorUnitId);
+//			
+//			// no such assailant or protector
+//			if (currentAssailantWeights.find(assailantFactionUnitKey) == currentAssailantWeights.end())
+//				continue;
+//			if (currentProtectorWeights.find(protectorFactionUnitKey) == currentProtectorWeights.end())
+//				continue;
+//			
+//			// current weights
+//			double currentAssailantWeight = currentAssailantWeights.at(assailantFactionUnitKey);
+//			double currentProtectorWeight = currentProtectorWeights.at(protectorFactionUnitKey);
+//			
+//			// no more assailant or protector
+//			if (currentAssailantWeight <= 0.0)
+//				continue;
+//			if (currentProtectorWeight <= 0.0)
+//				continue;
+//			
+//			// assailant is desroyed outright
+//			if (assaultEffect.value == 0)
+//			{
+//				currentAssailantWeights.at(assailantFactionUnitKey) = 0.0;
+//				continue;
+//			}
+//			// assailant is desroying protector
+//			if (assaultEffect.value == INF)
+//			{
+//				currentProtectorWeights.at(protectorFactionUnitKey) = 0.0;
+//				continue;
+//			}
+//			
+//			// assailants weight reduction for destroying all protectors
+//			
+//			double maxAssailantWeightReduction = currentProtectorWeight / assaultEffect.value;
+//			double assailantWeightReduction = std::min(maxAssailantWeightReduction, currentAssailantWeight);
+//			double protectorWeightReduction = assailantWeightReduction * assaultEffect.value;
+//			
+//			currentAssailantWeights.at(assailantFactionUnitKey) -= assailantWeightReduction;
+//			currentProtectorWeights.at(protectorFactionUnitKey) -= protectorWeightReduction;
+//			
+//		}
+//		
+//	}
+//	
+//	// count terminal weight
+//	
+//	double terminalAssailantWeight = 0.0;
+//	double terminalProtectorWeight = 0.0;
+//	for (robin_hood::pair<int, double> assailantWeightEntry : currentAssailantWeights)
+//	{
+//		double factionUnitKey = assailantWeightEntry.first;
+//		double weight = assailantWeightEntry.second;
+//		
+//		// melee assailant only
+//		if (meleeAssailants.find(factionUnitKey) == meleeAssailants.end())
+//			continue;
+//		
+//		terminalAssailantWeight += weight;
+//		
+//	}
+//	for (robin_hood::pair<int, double> protectorWeightEntry : currentProtectorWeights)
+//	{
+//		double weight = protectorWeightEntry.second;
+//		terminalProtectorWeight += weight;
+//	}
+//	
+//	// compute prevalence
+//	
+//	if (terminalAssailantWeight > 0.0 && terminalProtectorWeight > 0.0)
+//	{
+//		debug("ERROR: terminalAssailantWeight > 0.0 && terminalProtectorWeight > 0.0\n");
+//		assaultPrevalence = 1.0;
+//	}
+//	else if (terminalAssailantWeight > 0.0)
+//	{
+//		double spentAssailantWeight = initialAssailantWeight - terminalAssailantWeight;
+//		assaultPrevalence = spentAssailantWeight <= 0.0 ? INF : initialAssailantWeight / spentAssailantWeight;
+//	}
+//	else
+//	{
+//		double spentProtectorWeight = initialProtectorWeight - terminalProtectorWeight;
+//		assaultPrevalence = spentProtectorWeight <= 0.0 ? 0.0 : initialProtectorWeight / spentProtectorWeight;
+//	}
+//	
+//}
+//
+///*
+//Selects the best effect against not yet countered foe unit.
+//*/
+//UnitEffectResult ProtectCombatData::getUnitEffectResult(int unitId) const
+//{
+//	Profiling::start("- getUnitEffectResult");
+//	
+//	int bestFoeFactionId = -1;
+//	int bestFoeUnitId = -1;
+//	double bestEffect = 0.0;
+//	
+//	for (int foeFactionId = 0; foeFactionId < MaxPlayerNum; foeFactionId++)
+//	{
+//		robin_hood::unordered_flat_map<int, CounterEffect> const &foeFactionCounterEffect = counterEffects.at(foeFactionId);
+//		
+//		for (robin_hood::pair<int, CounterEffect> const &foeFactionUnitCounterEffectEntry : foeFactionCounterEffect)
+//		{
+//			int foeUnitId = foeFactionUnitCounterEffectEntry.first;
+//			CounterEffect const &counterEffect = foeFactionUnitCounterEffectEntry.second;
+//			
+//			if (counterEffect.isSatisfied(false))
+//				continue;
+//			
+//			double assaultEffect = getAssaultEffect(foeFactionId, foeUnitId, aiFactionId, unitId);
+//			double protectEffect = assaultEffect <= 0.0 ? 0.0 : 1.0 / assaultEffect;
+//			
+//			if (protectEffect > bestEffect)
+//			{
+//				bestFoeFactionId = foeFactionId;
+//				bestFoeUnitId = foeUnitId;
+//				bestEffect = protectEffect;
+//			}
+//			
+//		}
+//		
+//	}
+//	
+//	Profiling::stop("- getUnitEffectResult");
+//	return {bestFoeFactionId, bestFoeUnitId, bestEffect};
+//	
+//}
+//double ProtectCombatData::getUnitEffect(int unitId) const
+//{
+//	return getUnitEffectResult(unitId).effect;
+//}
+//double ProtectCombatData::getVehicleEffect(int vehicleId) const
+//{
+//	return getVehicleMoraleMultiplier(vehicleId) * getUnitEffect(Vehs[vehicleId].unit_id);
+//}
+///*
+//Adds vehicle effect too all counter effects until it runs out.
+//Assuming fully powered vehicle at the end of the turn.
+//*/
+//void ProtectCombatData::addVehicleEffect(int vehicleId, bool present)
+//{
+//	debug("ProtectCombatData::addVehicleEffect %s present=%d\n", getVehicleIdAndLocationString(vehicleId).c_str(), present);
+//	debug("\n");
+//	
+//	int unitId = Vehs[vehicleId].unit_id;
+//	double multiplier = getVehicleMoraleMultiplier(vehicleId);
+//	debug("\tmultiplier=%5.2f\n", multiplier);
+//	
+//	double remainingPower = 1.0;
+//	while (true)
+//	{
+//		UnitEffectResult unitEffectResult = getUnitEffectResult(unitId);
+//		debug("\tunitEffectResult: foeFactionId=%d foeUnitId=%3d effect=%5.2f\n", unitEffectResult.foeFactionId, unitEffectResult.foeUnitId, unitEffectResult.effect);
+//		
+//		if (unitEffectResult.effect <= 0.0)
+//			break;
+//		
+//		CounterEffect &counterEffect = counterEffects.at(unitEffectResult.foeFactionId).at(unitEffectResult.foeUnitId);
+//		double effect = multiplier * unitEffectResult.effect * remainingPower;
+//		
+//		// compute counter
+//		
+//		double providing = effect * remainingPower;
+//		double required = counterEffect.required;
+//		double provided = counterEffect.provided;
+//		double remaning = required - provided;
+//		double applied = std::min(remaning, providing);
+//		debug("\tproviding=%5.2f required=%5.2f provided=%5.2f remaning=%5.2f applied=%5.2f\n", providing, required, provided, remaning, applied);
+//		
+//		counterEffect.provided += applied;
+//		if (present)
+//		{
+//			counterEffect.providedPresent += applied;
+//		}
+//		
+//		if (applied >= providing)
+//		{
+//			// all our vehicle is used up
+//			break;
+//		}
+//		else
+//		{
+//			// compute remaning power after combat
+//			remainingPower *= applied / providing;
+//			debug("\tremainingPower=%5.2f\n", remainingPower);
+//		}
+//		debug("\n");
+//		
+//	}
+//	debug("\n");
+//	
+//}
+//
+double getVehicleDestructionGain(int vehicleId)
 {
-	double attackEffect = attackMultiplier * this->attack;
-	double defendEffect = defendMultiplier * this->defend;
-	
-	double effect = 0.0;
-	
-	if (attackEffect <= defendEffect)
-	{
-		effect = attackEffect;
-	}
-	else
-	{
-		effect = speedFactor * attackEffect + (1.0 - speedFactor) * defendEffect;
-	}
-	
-	return effect;
-	
-}
-
-// ProtectCombatData
-
-/*
-Selects the best effect against not yet countered foe unit.
-*/
-UnitEffectResult ProtectCombatData::getUnitEffectResult(int unitId) const
-{
-	Profiling::start("- getUnitEffectResult");
-	
-	int bestFoeFactionId = -1;
-	int bestFoeUnitId = -1;
-	double bestEffect = 0.0;
-	
-	for (int foeFactionId = 0; foeFactionId < MaxPlayerNum; foeFactionId++)
-	{
-		robin_hood::unordered_flat_map<int, CounterEffect> const &foeFactionCounterEffect = counterEffects.at(foeFactionId);
-		
-		for (robin_hood::pair<int, CounterEffect> const &foeFactionUnitCounterEffectEntry : foeFactionCounterEffect)
-		{
-			int foeUnitId = foeFactionUnitCounterEffectEntry.first;
-			CounterEffect const &counterEffect = foeFactionUnitCounterEffectEntry.second;
-			
-			if (counterEffect.isSatisfied(false))
-				continue;
-			
-			int assailantOffenseExtendedTriad = getUnitOffenseExtendedTriad(foeUnitId, unitId);
-			
-			double attackMultiplier = sensorOffenseMultipliers.at(foeFactionId) / sensorDefenseMultipliers.at(aiFactionId) / tileDefenseMultipliers.at(assailantOffenseExtendedTriad);
-			double defendMultiplier = sensorOffenseMultipliers.at(foeFactionId) / sensorOffenseMultipliers.at(aiFactionId);
-			
-			double assaultEffect = aiData.combatEffectTable.getAssaultEffect(foeFactionId, foeUnitId, aiFactionId, unitId).getEffect(attackMultiplier, defendMultiplier);
-			double protectEffect = assaultEffect <= 0.0 ? 0.0 : 1.0 / assaultEffect;
-			
-			if (protectEffect > bestEffect)
-			{
-				bestFoeFactionId = foeFactionId;
-				bestFoeUnitId = foeUnitId;
-				bestEffect = protectEffect;
-			}
-			
-		}
-		
-	}
-	
-	Profiling::stop("- getUnitEffectResult");
-	return {bestFoeFactionId, bestFoeUnitId, bestEffect};
-	
-}
-double ProtectCombatData::getUnitEffect(int unitId) const
-{
-	return getUnitEffectResult(unitId).effect;
-}
-double ProtectCombatData::getVehicleEffect(int vehicleId) const
-{
-	return getVehicleMoraleMultiplier(vehicleId) * getUnitEffect(Vehs[vehicleId].unit_id);
-}
-/*
-Adds vehicle effect too all counter effects until it runs out.
-*/
-void ProtectCombatData::addVehicleEffect(int vehicleId, bool present)
-{
-	int unitId = Vehs[vehicleId].unit_id;
-	double multiplier = getVehicleMoraleMultiplier(vehicleId);
-	
-	double relativePower = 1.0;
-	for (UnitEffectResult unitEffectResult = getUnitEffectResult(unitId); unitEffectResult.effect > 0.0; unitEffectResult = getUnitEffectResult(unitId))
-	{
-		CounterEffect &counterEffect = counterEffects.at(unitEffectResult.foeFactionId).at(unitEffectResult.foeUnitId);
-		double effect = multiplier * unitEffectResult.effect * relativePower;
-		
-		double required = counterEffect.required;
-		double provided = counterEffect.provided;
-		double applicable = required - provided;
-		double applied = std::min(applicable, effect);
-		double remained = effect - applied;
-		relativePower *= remained / effect;
-		
-		counterEffect.provided += applied;
-		if (present)
-		{
-			counterEffect.providedPresent += applied;
-		}
-		
-	}
-	
+	VEH *vehicle = getVehicle(vehicleId);
+	double unitDestructionGain = aiData.unitDestructionGains.at(vehicle->unit_id);
+	double damageCoefficient = 1.00 + conf.ai_combat_damage_destruction_value_coefficient * getVehicleRelativeDamage(vehicleId);
+	return damageCoefficient * unitDestructionGain;
 }
 
 bool isVendettaStoppedWith(int enemyFactionId)

@@ -34,6 +34,23 @@ CombatModeEffect const CombatEffectData::getCombatModeEffect(int key, ENGAGEMENT
 	CombatModeEffect const combatModeEffect = combatModeEffects.at(key).at(engagementMode);
 	
 	return combatModeEffect;
+
+}
+
+CombatModeEffect const *CombatEffectData::getCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
+{
+	int key = FactionUnitCombat(FactionUnit(attackerFactionId, attackerUnitId), FactionUnit(defenderFactionId, defenderUnitId)).key;
+	if (combatModeEffects.find(key) == combatModeEffects.end())
+	{
+		debug("ERROR: no combat effect for given units.\n");
+		return nullptr;
+	}
+	
+	CombatModeEffect const &combatModeEffect = combatModeEffects.at(key).at(engagementMode);
+	if (!combatModeEffect.valid)
+		return nullptr;
+	
+	return &combatModeEffect;
 	
 }
 

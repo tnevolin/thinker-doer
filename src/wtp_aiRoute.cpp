@@ -1,4 +1,3 @@
-#include "wtp_aiRoute.h"
 
 #include <exception>
 #include <vector>
@@ -6,8 +5,6 @@
 #include <queue>
 #include <unordered_map>
 #include "robin_hood.h"
-
-#include "wtp_ai.h"
 #include "wtp_aiRoute.h"
 
 // approach time cache
@@ -1844,14 +1841,21 @@ void populateSeaClusters(int factionId)
 		
 	}
 	
-//	if (DEBUG)
-//	{
-//		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
-//		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), seaClusters.at(tileIndex));
-//		}
-//		
-//	}
+	if (DEBUG)
+	{
+		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+		{
+			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), seaClusters.at(tileIndex));
+		}
+		
+		for (std::pair<int, int> const &seaClusterAreaEntry : seaClusterAreas)
+		{
+			int seaCluster = seaClusterAreaEntry.first;
+			int seaClusterArea = seaClusterAreaEntry.second;
+			debug("\t%3d %3d\n", seaCluster, seaClusterArea);
+		}
+		
+	}
 	
 	Profiling::stop("populateSeaClusters");
 	

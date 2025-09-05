@@ -38,11 +38,11 @@ void moveCombatStrategy()
 	immediateAttack();
 	
 	movePolice2x();
-	moveProtectors();
+	moveBaseProtectors();
 	movePolice();
 	moveBunkerProtectors();
 	moveCombat();
-	coordinateAttack();
+//	coordinateAttack();
 	
 	Profiling::stop("moveCombatStrategy");
 	
@@ -215,78 +215,10 @@ void immediateAttack()
 			
 		}
 		
-		// process collected targets
-		
-		robin_hood::unordered_flat_map<MAP *, AttackAction> meleeAttackActions;
-		robin_hood::unordered_flat_map<MAP *, AttackAction> artilleryAttackActions;
-		
-		if (!meleeAttackTargets.empty())
-		{
-			for (AttackAction const &attackAction : getMeleeAttackActions(vehicleId))
-			{
-				// valid target
-				
-				if (meleeAttackTargets.find(attackAction.target) == meleeAttackTargets.end())
-					continue;
-				
-				if (meleeAttackActions.find(attackAction.target) == meleeAttackActions.end())
-				{
-					meleeAttackActions.insert({attackAction.target, attackAction});
-				}
-				else
-				{
-					AttackAction const &existingAttackAction = meleeAttackActions.at(attackAction.target);
-					
-					if
-					(
-						attackAction.hastyCoefficient > existingAttackAction.hastyCoefficient
-						||
-						(attackAction.hastyCoefficient == existingAttackAction.hastyCoefficient && getRange(vehicleTile, attackAction.position) < getRange(vehicleTile, existingAttackAction.position))
-					)
-					{
-						meleeAttackActions.at(attackAction.target) = attackAction;
-					}
-					
-				}
-				
-			}
-			
-		}
-		
-		if (!artilleryAttackTargets.empty())
-		{
-			for (AttackAction const &attackAction : getArtilleryAttackActions(vehicleId))
-			{
-				// valid target
-				
-				if (artilleryAttackTargets.find(attackAction.target) == artilleryAttackTargets.end())
-					continue;
-				
-				if (artilleryAttackActions.find(attackAction.target) == artilleryAttackActions.end())
-				{
-					artilleryAttackActions.emplace(attackAction.target, attackAction);
-				}
-				else
-				{
-					AttackAction const &existingAttackAction = artilleryAttackActions.at(attackAction.target);
-					
-					if
-					(
-						attackAction.hastyCoefficient > existingAttackAction.hastyCoefficient
-						||
-						(attackAction.hastyCoefficient == existingAttackAction.hastyCoefficient && getRange(vehicleTile, attackAction.position) < getRange(vehicleTile, existingAttackAction.position))
-					)
-					{
-						artilleryAttackActions.at(attackAction.target) = attackAction;
-					}
-					
-				}
-				
-			}
-			
-		}
-		
 		// select best attack priority for each vehicle
+		
+		std::vector<AttackAction> meleeAttackActions = getMeleeAttackActions(vehicleId, false);
+		std::vector<AttackAction> artilleryAttackActions = getArtilleryAttackActions(vehicleId, false);
 		
 		bool selected = false;
 		TaskType selectedTaskType;
@@ -294,10 +226,8 @@ void immediateAttack()
 		MAP *selectedTarget;
 		double selectedPriority = 0.0;
 		
-		for (robin_hood::pair<MAP *, AttackAction> const &attackActionEntry : meleeAttackActions)
+		for (AttackAction const &attackAction : meleeAttackActions)
 		{
-			AttackAction const &attackAction = attackActionEntry.second;
-			
 			TaskType taskType = TT_MELEE_ATTACK;
 			
 			// empty enemy base
@@ -318,6 +248,7 @@ void immediateAttack()
 				EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(attackAction.target);
 				
 				COMBAT_MODE combatMode = CM_MELEE;
+				
 				double combatEffect = attackAction.hastyCoefficient * enemyStackInfo.getVehicleOffenseEffect(vehicleId, combatMode);
 				double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
 				double priority = enemyStackInfo.averageAttackGain * combatEffectCoefficient;
@@ -326,7 +257,7 @@ void immediateAttack()
 				{
 					selected = true;
 					selectedTaskType = taskType;
-					selectedPosition = attackAction.position;
+					selectedPosition = attackAction.destination;
 					selectedTarget = attackAction.target;
 					selectedPriority = priority;
 				}
@@ -346,10 +277,8 @@ void immediateAttack()
 			
 		}
 		
-		for (robin_hood::pair<MAP *, AttackAction> const &attackActionEntry : artilleryAttackActions)
+		for (AttackAction const &attackAction : artilleryAttackActions)
 		{
-			AttackAction const &attackAction = attackActionEntry.second;
-			
 			TaskType taskType = TT_ARTILLERY_ATTACK;
 			
 			// enemy stack
@@ -385,7 +314,7 @@ void immediateAttack()
 				{
 					selected = true;
 					selectedTaskType = taskType;
-					selectedPosition = attackAction.position;
+					selectedPosition = attackAction.destination;
 					selectedTarget = attackAction.target;
 					selectedPriority = priority;
 				}
@@ -397,7 +326,7 @@ void immediateAttack()
 					" combatEffectCoefficient=%5.2f"
 					" priority=%5.2f"
 					"\n"
-					, getLocationString(attackAction.position).c_str(), getLocationString(attackAction.target).c_str()
+					, getLocationString(attackAction.destination).c_str(), getLocationString(attackAction.target).c_str()
 					, combatEffect
 					, combatEffectCoefficient
 					, priority
@@ -509,7 +438,7 @@ void movePolice2x()
 			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
 			, getLocationString(taskPriority.destination).c_str()
 			, getBase(taskPriority.baseId)->name
-			, baseInfo.isSatisfied(taskPriority.vehicleId, false)
+			, baseInfo.isSatisfied(taskPriority.vehicleId)
 		);
 		
 	}
@@ -600,7 +529,7 @@ void movePolice()
 			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
 			, getLocationString(taskPriority.destination).c_str()
 			, getBase(taskPriority.baseId)->name
-			, baseInfo.isSatisfied(taskPriority.vehicleId, false)
+			, baseInfo.isSatisfied(taskPriority.vehicleId)
 		);
 		
 	}
@@ -758,7 +687,7 @@ void moveInterceptors()
 //	
 }
 
-void moveProtectors()
+void moveBaseProtectors()
 {
 	debug("moveProtectors - %s\n", MFactions[aiFactionId].noun_faction);
 	
@@ -809,7 +738,7 @@ void moveProtectors()
 		
 		BaseInfo &baseInfo = aiData.getBaseInfo(taskPriority.baseId);
 		
-		if (baseInfo.isSatisfied(taskPriority.vehicleId, false))
+		if (baseInfo.isSatisfied(taskPriority.vehicleId))
 			continue;
 		
 		// assign to base
@@ -823,15 +752,15 @@ void moveProtectors()
 			" [%4d] %s -> %s"
 			" %-25s"
 			" baseInfo.isSatisfied=%d"
-			" baseInfo.combatData.isSatisfied= %d %d"
+			" baseInfo.combatData.isSatisfied=%d"
 			"\n"
 			, taskPriority.priority
 			, taskPriority.vehicleId
 			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
 			, getLocationString(taskPriority.destination).c_str()
 			, getBase(taskPriority.baseId)->name
-			, baseInfo.isSatisfied(taskPriority.vehicleId, false)
-			, baseInfo.combatData.isSatisfied(false), baseInfo.combatData.isSatisfied(true)
+			, baseInfo.isSatisfied(taskPriority.vehicleId)
+			, baseInfo.combatData.isSufficientProtection()
 		);
 		
 	}
@@ -857,12 +786,13 @@ void moveProtectors()
 	{
 		MAP *baseTile = getBaseMapTile(baseId);
 		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+		TileInfo &baseTileInfo = aiData.getBaseTileInfo(baseId);
 		
-		if (!baseInfo.combatData.isSatisfied(true))
+		if (!baseInfo.combatData.isSufficientProtection())
 		{
 			debug("\t\t%-25s\n", Bases[baseId].name)
 			
-			for (int vehicleId : baseInfo.combatData.garrison)
+			for (int vehicleId : baseTileInfo.playerVehicleIds)
 			{
 				// infantry defensive
 				
@@ -882,10 +812,10 @@ void moveProtectors()
 				
 				// add base protection
 				
-				baseInfo.combatData.addVehicleEffect(vehicleId, true);
+				baseInfo.combatData.addProtector(vehicleId);
 				
-				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSatisfied(true) = %d\n", vehicleId, Vehs[vehicleId].name(), baseInfo.combatData.isSatisfied(true))
-				if (baseInfo.combatData.isSatisfied(true))
+				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSufficientProtection() = %d\n", vehicleId, Vehs[vehicleId].name(), baseInfo.combatData.isSufficientProtection())
+				if (baseInfo.combatData.isSufficientProtection())
 					break;
 				
 			}
@@ -938,7 +868,7 @@ void moveBunkerProtectors()
 	
 	for (CombatAction &taskPriority : taskPriorities)
 	{
-		ProtectCombatData &bunkerCombatData = aiData.bunkerCombatDatas.at(taskPriority.destination);
+		CombatData &bunkerCombatData = aiData.bunkerCombatDatas.at(taskPriority.destination);
 		
 		// skip already assigned vehicles
 		
@@ -947,25 +877,25 @@ void moveBunkerProtectors()
 		
 		// bunker protection should not be yet satisfied
 		
-		if (bunkerCombatData.isSatisfied(false))
+		if (bunkerCombatData.isSufficientProtection())
 			continue;
 		
 		// assign to bunker
 		
-		bunkerCombatData.addVehicleEffect(taskPriority.vehicleId, false);
+		bunkerCombatData.addProtector(taskPriority.vehicleId);
 		vehicleAssignments.insert({taskPriority.vehicleId, &taskPriority});
 		
 		debug
 		(
 			"\t\t%5.2f:"
 			" [%4d] %s -> %s"
-			" bunkerCombatData.isSatisfied={%d,%d}"
+			" bunkerCombatData.isSatisfied=%d"
 			"\n"
 			, taskPriority.priority
 			, taskPriority.vehicleId
 			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
 			, getLocationString(taskPriority.destination).c_str()
-			, bunkerCombatData.isSatisfied(false), bunkerCombatData.isSatisfied(true)
+			, bunkerCombatData.isSufficientProtection()
 		);
 		
 	}
@@ -987,16 +917,17 @@ void moveBunkerProtectors()
 	
 	debug("\thold current bunker protectors\n");
 	
-	for (robin_hood::pair<MAP *, ProtectCombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (robin_hood::pair<MAP *, CombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 	{
 		MAP *bunkerTile = bunkerCombatDataEntry.first;
-		ProtectCombatData &bunkerCombatData = bunkerCombatDataEntry.second;
+		CombatData &bunkerCombatData = bunkerCombatDataEntry.second;
+		TileInfo &bunkerTileInfo = aiData.getTileInfo(bunkerTile);
 		
-		if (!bunkerCombatData.isSatisfied(true))
+		if (!bunkerCombatData.isSufficientProtection())
 		{
 			debug("\t\t%s\n", getLocationString(bunkerTile).c_str())
 			
-			for (int vehicleId : bunkerCombatData.garrison)
+			for (int vehicleId : bunkerTileInfo.playerVehicleIds)
 			{
 				// infantry defensive
 				
@@ -1016,11 +947,11 @@ void moveBunkerProtectors()
 				
 				// add bunker protection
 				
-				bunkerCombatData.addVehicleEffect(vehicleId, true);
+				bunkerCombatData.addProtector(vehicleId);
 				
-				debug("\t\t\t[%4d] %-32s bunkerCombatData.isSatisfied(true) = %d\n", vehicleId, Vehs[vehicleId].name(), bunkerCombatData.isSatisfied(true))
+				debug("\t\t\t[%4d] %-32s bunkerCombatData.isSufficientProtection() = %d\n", vehicleId, Vehs[vehicleId].name(), bunkerCombatData.isSufficientProtection())
 				
-				if (bunkerCombatData.isSatisfied(true))
+				if (bunkerCombatData.isSufficientProtection())
 					break;
 				
 			}
@@ -1388,12 +1319,12 @@ void moveCombat()
 //			
 //		}
 		
-		if (!transitVehicle(Task(vehicleId, taskPriority.taskType, taskPriority.destination, taskPriority.attackTarget)))
+		Task t(vehicleId, taskPriority.taskType, taskPriority.destination, taskPriority.attackTarget);
+		if (!transitVehicle(t))
 		{
 			// TODO amphibious vehicles cannot find their path to empty enemy bases
 			debug("ERROR: transitVehicle failed.");
 		}
-		
 		
 		if (DEBUG)
 		{
@@ -1504,6 +1435,48 @@ void moveCombat()
 //		}
 //		
 //	}
+	
+	// remove fully destroyed stacks from retaliation threat
+	
+	for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackInfoEntry : aiData.enemyStacks)
+	{
+		EnemyStackInfo &enemyStackInfo = enemyStackInfoEntry.second;
+		
+		if (!enemyStackInfo.isSufficient(false))
+			continue;
+		
+		for (int vehicleId : enemyStackInfo.vehicleIds)
+		{
+			// remove potential attack
+			
+			for (TileInfo &mapTileInfo : aiData.tileInfos)
+			{
+				for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
+				{
+					std::vector<PotentialAttack> &potentialAttacks = mapTileInfo.potentialAttacks.at(engagementMode);
+					
+					for (std::vector<PotentialAttack>::iterator potentialAttackIterator = potentialAttacks.begin(); potentialAttackIterator != potentialAttacks.end(); )
+					{
+						PotentialAttack &potentialAttack = *potentialAttackIterator;
+						
+						if (potentialAttack.vehicleId == vehicleId)
+						{
+							potentialAttackIterator = potentialAttacks.erase(potentialAttackIterator);
+						}
+						else
+						{
+							potentialAttackIterator++;
+						}
+						
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+	}
 	
 }
 
@@ -2244,104 +2217,6 @@ void populatePoliceTasks(std::vector<CombatAction> &taskPriorities)
 	
 }
 
-void populateInterceptorTasks(std::vector<CombatAction> &taskPriorities)
-{
-//	debug("\tpopulateInterceptorTasks\n");
-//	
-//	if (aiData.baseIds.size() == 0)
-//		return;
-//	
-//	for (int vehicleId : aiData.combatVehicleIds)
-//	{
-//		VEH *vehicle = getVehicle(vehicleId);
-//		
-//		// exclude unavailable
-//		
-//		if (hasTask(vehicleId))
-//			continue;
-//		
-//		// interceptor
-//		
-//		if (!isInterceptorVehicle(vehicleId))
-//			continue;
-//		
-//		// process bases
-//		
-//		for (int baseId : aiData.baseIds)
-//		{
-//			BASE *base = &(Bases[baseId]);
-//			MAP *baseTile = getBaseMapTile(baseId);
-//			BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
-//			
-//			// exclude not reachable destination
-//			
-//			if (!isVehicleDestinationReachable(vehicleId, baseTile))
-//				continue;
-//			
-//			// required protection
-//			
-//			double requiredEffect = baseInfo.combatData.requiredEffect;
-//			
-//			// vehicle effect
-//			
-//			double vehicleEffect = baseInfo.combatData.getVehicleEffect(vehicleId);
-//			
-//			// time saved due to repair in the base (unless nearby monolith)
-//			
-//			double repairTimeSave = 0.0;
-//			if (vehicle->damage_taken > 0)
-//			{
-//				repairTimeSave = closestMonolithTravelTile <= 2.0 ? 0.0 : 5.0 * getVehicleRelativeDamage(vehicleId);
-//			}
-//			
-//			// get travel time and coresponding coefficient
-//			
-//			double travelTime = getVehicleTravelTime(vehicleId, baseTile);
-//			if (travelTime == INF)
-//				continue;
-//			
-//			double effectiveTime = travelTime - repairTimeSave;
-//			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, effectiveTime);
-//			
-//			// priority
-//			
-//			double priority =
-//				requiredEffect
-//				* vehicleEffect
-//				* travelTimeCoefficient
-//			;
-//			
-//			// add task
-//			
-//			CombatAction taskPriority(vehicleId, priority, TPR_BASE, TT_HOLD, baseTile, travelTime, baseId);
-//			taskPriority.baseId = baseId;
-//			taskPriorities.push_back(taskPriority);
-//			
-//			debug
-//			(
-//				"\t\t[%4d] (%3d,%3d) %-32s -> %-25s"
-//				" priority=%5.2f"
-//				" requiredEffect=%5.2f"
-//				" vehicleEffect=%5.2f"
-//				" travelTime=%7.2f"
-//				" effectiveTime=%5.2f"
-//				" travelTimeCoefficient=%5.2f"
-//				"\n"
-//				, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId), base->name
-//				, priority
-//				, requiredEffect
-//				, vehicleEffect
-//				, travelTime
-//				, effectiveTime
-//				, travelTimeCoefficient
-//			);
-//			
-//		}
-//		
-//	}
-//	
-}
-
 /**
 protection priority:
 - base total threat
@@ -2374,13 +2249,6 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 		if (!isInfantryDefensiveVehicle(vehicleId))
 			continue;
 		
-		double closestMonolithTravelTile = INF;
-		if (vehicle->damage_taken > 0)
-		{
-			MapDoubleValue mapDoubleValue = findClosestMonolith(vehicleId, MAX_REPAIR_DISTANCE, true);
-			closestMonolithTravelTile = mapDoubleValue.value;
-		}
-		
 		// process bases
 		
 		for (int baseId : aiData.baseIds)
@@ -2396,19 +2264,11 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// required protection
 			
-			double requiredEffect = baseInfo.combatData.requiredEffect;
+			double requiredEffect = baseInfo.combatData.getInitialAssailantWeight();
 			
 			// vehicle effect
 			
-			double vehicleEffect = baseInfo.combatData.getVehicleEffect(vehicleId);
-			
-			// time saved due to repair in the base (unless nearby monolith)
-			
-			double repairTimeSave = 0.0;
-			if (vehicle->damage_taken > 0)
-			{
-				repairTimeSave = closestMonolithTravelTile <= 2.0 ? 0.0 : 5.0 * getVehicleRelativeDamage(vehicleId);
-			}
+			double vehicleEffect = baseInfo.combatData.getProtectorVehicleMaxEffect(vehicleId);
 			
 			// get travel time and coresponding coefficient
 			
@@ -2416,8 +2276,7 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 			if (travelTime == INF)
 				continue;
 			
-			double effectiveTime = travelTime - repairTimeSave;
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, effectiveTime);
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
 			
 			// priority
 			
@@ -2440,7 +2299,6 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 				" requiredEffect=%5.2f"
 				" vehicleEffect=%5.2f"
 				" travelTime=%7.2f"
-				" effectiveTime=%5.2f"
 				" travelTimeCoefficient=%5.2f"
 				"\n"
 				, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId), base->name
@@ -2448,7 +2306,6 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 				, requiredEffect
 				, vehicleEffect
 				, travelTime
-				, effectiveTime
 				, travelTimeCoefficient
 			);
 			
@@ -2499,10 +2356,10 @@ void populateBunkerProtectorTasks(std::vector<CombatAction> &taskPriorities)
 		
 		// process bunkers
 		
-		for (robin_hood::pair<MAP *, ProtectCombatData> const &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+		for (robin_hood::pair<MAP *, CombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
 		{
 			MAP *bunkerTile = bunkerCombatDataEntry.first;
-			ProtectCombatData const &bunkerCombatData = bunkerCombatDataEntry.second;
+			CombatData &bunkerCombatData = bunkerCombatDataEntry.second;
 			
 			// exclude not reachable destination
 			
@@ -2511,11 +2368,11 @@ void populateBunkerProtectorTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// required protection
 			
-			double requiredEffect = bunkerCombatData.requiredEffect;
+			double requiredEffect = bunkerCombatData.getInitialAssailantWeight();
 			
 			// vehicle effect
 			
-			double vehicleEffect = bunkerCombatData.getVehicleEffect(vehicleId);
+			double vehicleEffect = bunkerCombatData.getProtectorVehicleMaxEffect(vehicleId);
 			
 			// time saved due to repair in the bunker (unless nearby monolith)
 			
@@ -3218,6 +3075,350 @@ bool isProtecting(int vehicleId)
 	// destined to hold at the base or bunker and is at destination
 	
 	return (destinationTileInfo.base || destinationTileInfo.bunker) && task->type == TT_HOLD && vehicleTile == destination;
+	
+}
+
+void aiMoveCombatVehicle(int const vehicleId)
+{
+	Profiling::start("aiMoveCombatVehicle", "moveCombatStrategy");
+	
+	debug("aiMoveCombatVehicle [%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
+
+	Task bestTask(vehicleId, TT_NONE);
+	double bestTaskGain = -DBL_MAX;
+	
+	// move
+	
+	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId, true))
+	{
+		int tileIndex = reachableLocation.first;
+		MAP *destination = *MapTiles + tileIndex;
+		
+		double defenseGain = getDefenseGain(vehicleId, destination, 1.0, -1);
+		double proximityGain = getProximityGain(vehicleId, destination);
+		double gain =
+			+defenseGain
+			+proximityGain
+		;
+		
+		debug("\t-> %s => %s gain= %+5.2f\n", getLocationString(destination).c_str(), getLocationString(nullptr).c_str(), gain);
+		
+		if (gain > bestTaskGain)
+		{
+			bestTask = Task(vehicleId, TT_MOVE, destination);
+			bestTaskGain = gain;
+			debug("\t\t- best\n");
+		}
+		
+	}
+	
+	if (isMeleeVehicle(vehicleId))
+	{
+		for (AttackAction const &attackAction : getMeleeAttackActions(vehicleId, true))
+		{
+			MAP *target = attackAction.target;
+			MAP *destination = attackAction.destination;
+			
+			double gain = getMeleeAttackGain(vehicleId, destination, target);
+			debug("\t-> %s => %s gain= %+5.2f\n", getLocationString(destination).c_str(), getLocationString(target).c_str(), gain);
+			
+			if (gain > bestTaskGain)
+			{
+				bestTask = Task(vehicleId, TT_MELEE_ATTACK, destination, target);
+				bestTaskGain = gain;
+				debug("\t\t- best\n");
+			}
+			
+		}
+		
+	}
+	
+	if (isArtilleryVehicle(vehicleId))
+	{
+		for (AttackAction const &attackAction : getArtilleryAttackActions(vehicleId, true))
+		{
+			MAP *target = attackAction.target;
+			MAP *destination = attackAction.destination;
+			
+			double gain = getArtilleryAttackGain(vehicleId, destination, target);
+			debug("\t-> %s => %s gain= %+5.2f\n", getLocationString(destination).c_str(), getLocationString(target).c_str(), gain);
+			
+			if (gain > bestTaskGain)
+			{
+				bestTask = Task(vehicleId, TT_ARTILLERY_ATTACK, destination, target);
+				bestTaskGain = gain;
+				debug("\t\t- best\n");
+			}
+			
+		}
+		
+	}
+	
+	if (bestTaskGain > -DBL_MAX)
+	{
+		deleteTask(vehicleId);
+		setTask(bestTask);
+		
+		switch (bestTask.type)
+		{
+		case TT_MOVE:
+			debug("\t-> %s\n", getLocationString(bestTask.destination).c_str());
+			break;
+		case TT_MELEE_ATTACK:
+			debug("\t-> %s M-> %s\n", getLocationString(bestTask.destination).c_str(), getLocationString(bestTask.attackTarget).c_str());
+			break;
+		case TT_ARTILLERY_ATTACK:
+			debug("\t-> %s A-> %s\n", getLocationString(bestTask.destination).c_str(), getLocationString(bestTask.attackTarget).c_str());
+			break;
+		default:
+			break;
+		}
+		
+	}
+	
+	Profiling::stop("aiMoveCombatVehicle");
+	
+}
+
+/*
+Estimates the gain of vehicle defending at this location.
+Gain is composed of estimated losses at both sides times unit cost.
+*/
+double getDefenseGain(int defenderVehicleId, MAP *destination, double defenderHealthCoefficient, int excludeEnemyVehicleId)
+{
+	if (defenderHealthCoefficient <= 0.0)
+	{
+		debug("ERROR: defenderHealthCoefficient <= 0.0\n");
+		return 0.0;
+	}
+		
+	VEH *defenderVehicle = getVehicle(defenderVehicleId);
+	Triad defenderTriad = (Triad) defenderVehicle->triad();
+	TileInfo *destinationTileInfo = &aiData.getTileInfo(destination);
+	
+	int bestAttackerVehicleId = -1;
+	double bestAttackerGain = DBL_MAX;
+	
+	for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
+	{
+		for (PotentialAttack const &potentialAttack : destinationTileInfo->potentialAttacks.at(engagementMode))
+		{
+			// exclude enemy vehicle
+			
+			if (potentialAttack.vehicleId == excludeEnemyVehicleId)
+				continue;
+			
+			int attackerVehicleId = potentialAttack.vehicleId;
+			
+			COMBAT_MODE combatMode = getCombatMode(engagementMode, defenderVehicle->unit_id);
+			bool mutualCombat = combatMode != CM_BOMBARDMENT;
+			
+			double gain;
+			
+			if (mutualCombat)
+			{
+				// combatEffect is relative mutual damage - reduced by defenderHealthCoefficient
+				double combatEffect = (1.0 / defenderHealthCoefficient) * getCombatEffect(potentialAttack.vehicleId, defenderVehicleId, engagementMode, destination);
+				
+				// defender gain is an opposite of attacker gain
+				gain = -getMutualCombatGain(getVehicleDestructionGain(attackerVehicleId), getVehicleDestructionGain(defenderVehicleId), combatEffect);
+				
+			}
+			else
+			{
+				// combatEffect is absolute damate - not reduced by defenderHealthCoefficient
+				double combatEffect = getCombatEffect(potentialAttack.vehicleId, defenderVehicleId, engagementMode, destination);
+				
+				// defender relative damage
+				
+				double relativeHealth = defenderHealthCoefficient * getVehicleRelativeHealth(defenderVehicleId);
+				double relativeDamage = 1.0 - relativeHealth;
+				double maxRelativeBombardmentDamage = getMaxBombardmentDamage(defenderTriad, destination);
+				double remainingRelativeBombardmentDamage = relativeDamage >= maxRelativeBombardmentDamage ? 0.0 : maxRelativeBombardmentDamage - relativeDamage;
+				double relativeBombardmentDamage = std::min(remainingRelativeBombardmentDamage, combatEffect);
+				
+				// defender gain is an opposite of attacker gain
+				gain = -getBombardmentGain(getVehicleDestructionGain(defenderVehicleId), relativeBombardmentDamage);
+				
+			}
+			
+			if (gain < bestAttackerGain)
+			{
+				bestAttackerVehicleId = potentialAttack.vehicleId;
+				bestAttackerGain = gain;
+			}
+			
+		}
+		
+	}
+	
+	if (bestAttackerVehicleId == -1)
+		return 0.0;
+	
+	return bestAttackerGain;
+	
+}
+
+double getProximityGain(int vehicleId, MAP *tile)
+{
+	Triad triad = (Triad) Vehs[vehicleId].triad();
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	
+	if (!hasTask(vehicleId))
+		return 0.0;
+	
+	Task *task = getTask(vehicleId);
+	MAP *target = task->attackTarget;
+	
+	if (target == nullptr)
+		return 0.0;
+	
+	double initialTravelTime = getVehicleTravelTime(vehicleId, target, true);
+	double tileTravelTime = getVehicleTravelTime(vehicleId, tile, target, true);
+	double proximityDestTimeGain = conf.ai_combat_proximity_dest_time_coefficient * (initialTravelTime - tileTravelTime);
+	
+	double initialDestDistance = getDiagonalDistance(vehicleTile, target);
+	double tileDestDistance = getDiagonalDistance(tile, target);
+	double proximityDestRangeGain = conf.ai_combat_proximity_dest_distance_coefficient * (initialDestDistance - tileDestDistance);
+	
+	double initialBasetDistance = aiData.getTileInfo(vehicleTile).baseDistances.at(triad);
+	double tileBasetDistance = aiData.getTileInfo(tile).baseDistances.at(triad);
+	double proximityBasetDistanceGain = conf.ai_combat_proximity_base_distance_coefficient * (initialBasetDistance - tileBasetDistance);
+
+	return
+		+ proximityDestTimeGain
+		+ proximityDestRangeGain
+		+ proximityBasetDistanceGain
+	;
+	
+}
+
+/*
+Estimates the gain of vehicle melee attacking and then defending at this location.
+Gain is composed of estimated losses at both sides times unit cost.
+*/
+double getMeleeAttackGain(int vehicleId, MAP *destination, MAP *target)
+{
+	if (!aiData.hasEnemyStack(target))
+		return 0.0;
+	
+	EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(target);
+	
+	if (enemyStackInfo.vehicleIds.size() == 0)
+		return 0.0;
+	
+	// defender
+	
+	int defenderVehicleId = best_defender(enemyStackInfo.vehicleIds.front(), vehicleId, 0);
+	
+	// compute gain
+	
+	double combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, CM_MELEE);
+	double survivalProbability = getWinningProbability(combatEffect);
+	double attackerLoss = combatEffect <= 1.0 ? 1.0 : (1.0 / combatEffect);
+	double attackerHealthCoefficient = 1.0 - attackerLoss;
+	
+	// attack gain
+	
+	double attackGain = getMutualCombatGain(getVehicleDestructionGain(vehicleId), enemyStackInfo.destructionGain, combatEffect);
+	
+	// defend gain if survived
+	
+	double defendGain = (survivalProbability <= 0.0 || attackerHealthCoefficient <= 0.0) ? 0.0 : survivalProbability * getDefenseGain(vehicleId, destination, attackerHealthCoefficient, defenderVehicleId);
+	
+	return attackGain + defendGain;
+	
+}
+
+/*
+Estimates the gain of vehicle artillery attacking and then defending at this location.
+Gain is composed of estimated losses at both sides times unit cost.
+*/
+double getArtilleryAttackGain(int vehicleId, MAP *destination, MAP *target)
+{
+	if (!aiData.hasEnemyStack(target))
+		return 0.0;
+	
+	EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(target);
+	
+	if (enemyStackInfo.vehicleIds.size() == 0)
+		return 0.0;
+	
+	int defenderVehicleId;
+	double survivalProbability;
+	double attackerHealthCoefficient;
+	double attackGain;
+	
+	if (enemyStackInfo.artillery)
+	{
+		defenderVehicleId = best_defender(enemyStackInfo.vehicleIds.front(), vehicleId, 1);
+		
+		double combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, CM_ARTILLERY_DUEL);
+		double attackerLoss = combatEffect <= 1.0 ? 1.0 : (1.0 / combatEffect);
+		
+		attackerHealthCoefficient = 1.0 - attackerLoss;
+		survivalProbability = getWinningProbability(combatEffect);
+		
+		attackGain = getMutualCombatGain(getVehicleDestructionGain(vehicleId), enemyStackInfo.destructionGain, combatEffect);
+		
+	}
+	else
+	{
+		defenderVehicleId = -1;
+		
+		double combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, CM_BOMBARDMENT);
+		
+		attackerHealthCoefficient = 1.0;
+		survivalProbability = 1.0;
+		attackGain = getBombardmentGain(enemyStackInfo.destructionGain, combatEffect);
+		
+	}
+	
+	// defend gain if survived
+	
+	double defendGain = (survivalProbability <= 0.0 || attackerHealthCoefficient <= 0.0) ? 0.0 : survivalProbability * getDefenseGain(vehicleId, destination, attackerHealthCoefficient, defenderVehicleId);
+	
+	return attackGain + defendGain;
+	
+}
+
+/*
+Combat gain to attacker.
+*/
+double getMutualCombatGain(double attackerDestructionGain, double defenderDestructionGain, double combatEffect)
+{
+	double winningProbability = getWinningProbability(combatEffect);
+	
+	double attackerDamage = combatEffect <= 1.0 ? 1.0 : 1.0 / combatEffect;
+	double attackerLoss = (1.0 - winningProbability) + winningProbability * (1.0 - conf.ai_combat_healing_chance) * attackerDamage;
+	double attackerLossGain = attackerLoss * attackerDestructionGain;
+	
+	double defenderDamage = combatEffect >= 1.0 ? 1.0 : combatEffect;
+	double defenderLoss = winningProbability + (1.0 - winningProbability) * (1.0 - conf.ai_combat_healing_chance) * defenderDamage;
+	double defenderLossGain = defenderLoss * defenderDestructionGain;
+	
+	double gain =
+		-attackerLossGain
+		+defenderLossGain
+	;
+	
+	return gain;
+	
+}
+
+/*
+Combat gain to attacker.
+*/
+double getBombardmentGain(double defenderDestructionGain, double relativeBombardmentDamage)
+{
+	double defenderLoss = relativeBombardmentDamage;
+	double defenderLossGain = defenderLoss * defenderDestructionGain;
+	
+	double gain =
+		+defenderLossGain
+	;
+	
+	return gain;
 	
 }
 

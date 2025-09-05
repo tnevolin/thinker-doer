@@ -10,7 +10,325 @@
 #include "wtp_aiTask.h"
 #include "wtp_base.h"
 
-ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> RANGE_TILES;
+double const INF = std::numeric_limits<double>::infinity();
+
+// Profiling
+
+void Profile::start()
+{
+	if (DEBUG)
+	{
+		if (running)
+		{
+			debug("ERROR: Profile::start. Profile is RUNNING: %s\n", name.c_str());flushlog();
+			abort();
+		}
+		
+		running = true;
+		startTime = clock();
+		
+	}
+}
+void Profile::pause()
+{
+	if (DEBUG)
+	{
+		if (!running)
+		{
+			debug("ERROR: Profile::pause. Profile is NOT RUNNING: %s\n", name.c_str());flushlog();
+			abort();
+		}
+		
+		running = false;
+		totalTime += clock() - startTime;
+		
+	}
+}
+void Profile::resume()
+{
+	if (DEBUG)
+	{
+		if (running)
+		{
+			debug("ERROR: Profile::resume. Profile is RUNNING: %s\n", name.c_str());flushlog();
+			abort();
+		}
+		
+		running = true;
+		startTime = clock();
+		
+	}
+}
+void Profile::stop()
+{
+	if (DEBUG)
+	{
+		if (!running)
+		{
+			debug("ERROR: Profile::stop. Profile is NOT RUNNING: %s\n", name.c_str());flushlog();
+			abort();
+		}
+		
+		running = false;
+		executionCount++;
+		totalTime += clock() - startTime;
+		
+	}
+}
+	
+Profile *Profiling::getProfile(std::string name)
+{
+	Profile *profile = nullptr;
+	
+	for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+	{
+		if (iterator->name == name)
+		{
+			profile = &(iterator->profile);
+			break;
+		}
+	}
+	if (profile == nullptr)
+	{
+		debug("ERROR: Profile::getProfile. Profile is NOT FOUND: %s\n", name.c_str());flushlog();
+		abort();
+	}
+	
+	return profile;
+	
+}
+Profile *Profiling::addTopProfile(std::string name)
+{
+	Profile *profile = nullptr;
+	
+	for (tree<ProfileName>::sibling_iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+	{
+		if (iterator->name == name)
+		{
+			profile = &(iterator->profile);
+			break;
+		}
+	}
+	
+	if (profile == nullptr)
+	{
+		profile = &(profiles.insert(profiles.end(), {name, {}})->profile);
+		profile->name = name;
+	}
+	
+	return profile;
+	
+}
+Profile *Profiling::addChildProfile(std::string name, std::string parentName)
+{
+	// find parent iterator
+	
+	tree<ProfileName>::iterator parentIterator = nullptr;
+	
+	for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+	{
+		if (iterator->name == parentName)
+		{
+			parentIterator = iterator;
+			break;
+		}
+	}
+	assert(parentIterator != nullptr);
+	
+	// find child profile
+	
+	Profile *profile = nullptr;
+	
+	for (tree<ProfileName>::sibling_iterator iterator = profiles.begin(parentIterator); iterator != profiles.end(parentIterator); iterator++)
+	{
+		if (iterator->name == name)
+		{
+			profile = &(iterator->profile);
+			break;
+		}
+	}
+	
+	if (profile == nullptr)
+	{
+		profile = &(profiles.append_child(parentIterator, {name, {}})->profile);
+		profile->name = name;
+	}
+	
+	return profile;
+	
+}
+void Profiling::reset()
+{
+	profiles.clear();
+}
+void Profiling::start(std::string name)
+{
+	if (DEBUG)
+	{
+		if (profiles.empty())
+		{
+			profiles.insert(profiles.end(), {"", {}});
+		}
+		
+//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+		Profile *profile = addTopProfile(name);
+		profile->start();
+		
+	}
+}
+void Profiling::start(std::string name, std::string parentName)
+{
+	if (DEBUG)
+	{
+		if (profiles.empty())
+		{
+			profiles.insert(profiles.end(), {"", {}});
+		}
+		
+//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+		Profile *profile = addChildProfile(name, parentName);
+		profile->start();
+		
+	}
+}
+void Profiling::pause(std::string name)
+{
+	if (DEBUG)
+	{
+//			debug("Profiling(%s) - pause\n", name.c_str());flushlog();
+		Profile *profile = getProfile(name);
+		profile->pause();
+	}
+}
+void Profiling::resume(std::string name)
+{
+	if (DEBUG)
+	{
+//			debug("Profiling(%s) - resume\n", name.c_str());flushlog();
+		Profile *profile = getProfile(name);
+		profile->resume();
+	}
+}
+void Profiling::stop(std::string name)
+{
+	if (DEBUG)
+	{
+//			debug("Profiling(%s) - stop\n", name.c_str());flushlog();
+		Profile *profile = getProfile(name);
+		profile->stop();
+	}
+}
+void Profiling::print()
+{
+	debug("executionProfiles\n");
+	
+	for (tree<ProfileName>::iterator iterator = profiles.begin(); iterator != profiles.end(); iterator++)
+	{
+		int depth = profiles.depth(iterator);
+		std::string const name = iterator->name;
+		Profile const &profile = iterator->profile;
+		
+		std::string prefixedName = std::string(4 * depth, ' ') + name;
+		std::string displayName = prefixedName + " " + std::string(std::max(0, NAME_LENGTH - 1 - (int)prefixedName.length()), '.');
+		int executionCount = profile.executionCount;
+		double totalExecutionTime = (double)profile.totalTime / (double)CLOCKS_PER_SEC;
+		double averageExecutionTime = (executionCount == 0 ? 0.0 : totalExecutionTime / (double)executionCount);
+		
+		debug
+		(
+			"\t%-*s"
+			"   count=%8d"
+			"   totalTime=%7.3f"
+			"   averageTime=%10.6f"
+			"\n"
+			, NAME_LENGTH, displayName.c_str()
+			, executionCount
+			, totalExecutionTime
+			, averageExecutionTime
+		);
+		
+	}
+	
+	flushlog();
+	
+}
+
+tree<ProfileName> Profiling::profiles;
+
+// FactionUnit
+
+FactionUnit::FactionUnit(int _factionId, int _unitId, int _key)
+: factionId(_factionId), unitId(_unitId), key(_key)
+{
+	assert(_factionId >= 0 && _factionId < MaxPlayerNum);
+	assert(_unitId >= 0 && _unitId < MaxProtoNum);
+}
+
+FactionUnit::FactionUnit(int _factionId, int _unitId)
+:
+	FactionUnit
+	(
+		_factionId,
+		_unitId,
+		// key
+		+ _factionId				* (1 * (2 * MaxProtoFactionNum)) 
+		+ getUnitSlotById(_unitId)	* (1)
+	)
+{}
+
+FactionUnit::FactionUnit(int _key)
+:
+	FactionUnit
+	(
+		// factionId
+			_key	/ (1 * (2 * MaxProtoFactionNum))	% (1),
+		// unitId
+		getUnitIdBySlot
+		(
+			// factionId
+			_key	/ (1 * (2 * MaxProtoFactionNum))	% (1),
+			// unitSlot
+			_key	/ (1)								% (1 * (2 * MaxProtoFactionNum))
+		),
+		_key
+	)
+{}
+
+// FactionUnitCombat
+
+FactionUnitCombat::FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit, int _key)
+: attackerFactionUnit(_attackerFactionUnit), defenderFactionUnit(_defenderFactionUnit), key(_key)
+{}
+
+FactionUnitCombat::FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit)
+:
+	FactionUnitCombat
+	(
+		_attackerFactionUnit,
+		_defenderFactionUnit,
+		// key
+		+ _attackerFactionUnit.key	* (1 * MaxPlayerNum * (2 * MaxProtoFactionNum))
+		+ _defenderFactionUnit.key	* (1)
+	)
+{}
+
+FactionUnitCombat::FactionUnitCombat(int _key)
+:
+	FactionUnitCombat
+	(
+		// attackerFactionUnit
+		FactionUnit(_key / (1 * MaxPlayerNum * (2 * MaxProtoFactionNum)) % (1)),
+		// defenderFactionUnit
+		FactionUnit(_key / (1) % (1 * MaxPlayerNum * (2 * MaxProtoFactionNum))),
+		_key
+	)
+{}
+
+// FactionUnitCombatEffect
+
+FactionUnitCombatEffect::FactionUnitCombatEffect(FactionUnitCombat _factionUnitCombat, double _effect)
+: factionUnitCombat(_factionUnitCombat), effect(_effect)
+{}
 
 // Location
 
@@ -59,6 +377,14 @@ std::string getLocationString(MAP *tile)
 	
 	return getLocationString(getLocation(tile));
 	
+}
+
+std::string getVehicleIdAndLocationString(int vehicleId)
+{
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	std::string vehicleIdString = std::to_string(vehicleId);
+	vehicleIdString = std::string(4 - vehicleIdString.length(), ' ') + vehicleIdString;
+	return vehicleIdString + " " + getLocationString(vehicleTile);
 }
 
 // =======================================================
@@ -455,14 +781,15 @@ std::vector<MAP *> getSideTiles(MAP *tile)
 /**
 Returns tiles from beginIndex (inclusive) to endIndex (exclusive).
 */
-ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareOffsetTiles(MAP *center, int beginIndex, int endIndex)
+std::vector<MAP *> getSquareOffsetTiles(MAP *center, int beginIndex, int endIndex)
 {
 	assert(isOnMap(center));
 	
+	std::vector<MAP *> tiles;
+	tiles.reserve(endIndex - beginIndex);
+	
 	int x = getX(center);
 	int y = getY(center);
-	
-	RANGE_TILES.clear();
 	
 	for (int index = beginIndex; index < endIndex; index++)
 	{
@@ -475,11 +802,11 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareOffsetTiles(MAP *center
 		if (!isOnMap(cellX, cellY))
 			continue;
 		
-		RANGE_TILES.push_back(getMapTile(cellX, cellY));
+		tiles.push_back(getMapTile(cellX, cellY));
 		
 	}
 	
-	return RANGE_TILES;
+	return tiles;
 	
 }
 
@@ -487,7 +814,7 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareOffsetTiles(MAP *center
 Returns tiles within given index from given center.
 Uses vanilla TABLE_square_offset.
 */
-ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareBlockTiles(MAP *center, int minRadius, int maxRadius)
+std::vector<MAP *> getSquareBlockRadiusTiles(MAP *center, int minRadius, int maxRadius)
 {
 	assert(isOnMap(center));
 	assert(minRadius >= 0 && minRadius < TABLE_square_block_radius_count);
@@ -499,7 +826,8 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareBlockTiles(MAP *center,
 	int minIndex = (minRadius == 0 ? 0 : TABLE_square_block_radius[minRadius - 1]);
 	int maxIndex = TABLE_square_block_radius[maxRadius];
 	
-	RANGE_TILES.clear();
+	std::vector<MAP *> tiles;
+	tiles.reserve(maxIndex - minIndex);
 	
 	for (int index = minIndex; index < maxIndex; index++)
 	{
@@ -512,81 +840,46 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareBlockTiles(MAP *center,
 		if (!isOnMap(cellX, cellY))
 			continue;
 		
-		RANGE_TILES.push_back(getMapTile(cellX, cellY));
+		tiles.push_back(getMapTile(cellX, cellY));
 		
 	}
 	
-	return RANGE_TILES;
-	
-}
-
-/**
-Returns tiles within given radius range from given center.
-Uses vanilla TABLE_square_offset.
-minRadius = 0-8, inclusive
-maxRadius = 0-8, inclusive
-*/
-ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getSquareBlockRadiusTiles(MAP *center, int minRadius, int maxRadius)
-{
-	assert(isOnMap(center));
-	assert(minRadius >= 0 && minRadius < TABLE_square_block_radius_count);
-	assert(maxRadius >= 0 && maxRadius < TABLE_square_block_radius_count);
-	
-	int x = getX(center);
-	int y = getY(center);
-	
-	int minIndex = (minRadius == 0 ? 0 : TABLE_square_block_radius[minRadius - 1]);
-	int maxIndex = TABLE_square_block_radius[maxRadius];
-	
-	RANGE_TILES.clear();
-	
-	for (int index = minIndex; index < maxIndex; index++)
-	{
-		int offsetX = TABLE_square_offset_x[index];
-		int offsetY = TABLE_square_offset_y[index];
-		
-		int cellX = wrap(x + offsetX);
-		int cellY = y + offsetY;
-		
-		if (!isOnMap(cellX, cellY))
-			continue;
-		
-		RANGE_TILES.push_back(getMapTile(cellX, cellY));
-		
-	}
-	
-	return RANGE_TILES;
+	return tiles;
 	
 }
 
 /*
-Returns tiles withing given range from given center.
-Returns reference to global variable. Not safe for nested use.
+Returns tiles within given radius range with given center.
+Uses vanilla TABLE_square_offset.
+minRadius = 0-8, inclusive
+maxRadius = 0-8, inclusive
 */
-ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int range, bool includeCenter)
+std::vector<MAP *> getRangeTiles(MAP *center, int range, bool includeCenter)
 {
-//	Profiling::start("- getRangeTiles");
+	assert(isOnMap(center));
+	assert(range >= 0);
 	
-	RANGE_TILES.clear();
-	
-	if (!(range >= 0 && range < MAX_RANGE))
+	if (range < TABLE_square_block_radius_count)
 	{
-		debug("ERROR: assert failed: (range >= 0 && range < MAX_RANGE)\n");flushlog();
-		return RANGE_TILES;
+		int minRadius = includeCenter ? 0 : 1;
+		int maxRadius = range;
+		return getSquareBlockRadiusTiles(center, minRadius, maxRadius);
 	}
 	
-	int squareBlockRange = std::min(TABLE_square_block_radius_count - 1, range);
+	// use direct computation
 	
-	// populate range < TABLE_square_block_radius_count
+	std::vector<MAP *> tiles;
+	tiles.reserve(1 + 8 * range * (range + 1) / 2);
 	
-	getSquareBlockRadiusTiles(tile, (includeCenter ? 0 : 1), squareBlockRange);
+	if (includeCenter)
+	{
+		tiles.push_back(center);
+	}
 	
-	// use normal computation
+	int x = getX(center);
+	int y = getY(center);
 	
-	int x = getX(tile);
-	int y = getY(tile);
-	
-	for (int ringRange = squareBlockRange + 1; ringRange <= range; ringRange++)
+	for (int ringRange = 1; ringRange <= range; ringRange++)
 	{
 		int dMax = 2 * ringRange;
 		
@@ -598,7 +891,7 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int ran
 			if (isOnMap(x0, y0))
 			{
 				MAP *tile0 = getMapTile(x0, y0);
-				RANGE_TILES.push_back(tile0);
+				tiles.push_back(tile0);
 			}
 			
 			int x1 = wrap(x + 0 + i);
@@ -607,7 +900,7 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int ran
 			if (isOnMap(x1, y1))
 			{
 				MAP *tile1 = getMapTile(x1, y1);
-				RANGE_TILES.push_back(tile1);
+				tiles.push_back(tile1);
 			}
 			
 			int x2 = wrap(x + dMax - i);
@@ -616,7 +909,7 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int ran
 			if (isOnMap(x2, y2))
 			{
 				MAP *tile2 = getMapTile(x2, y2);
-				RANGE_TILES.push_back(tile2);
+				tiles.push_back(tile2);
 			}
 			
 			int x3 = wrap(x + 0 - i);
@@ -625,7 +918,7 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int ran
 			if (isOnMap(x3, y3))
 			{
 				MAP *tile3 = getMapTile(x3, y3);
-				RANGE_TILES.push_back(tile3);
+				tiles.push_back(tile3);
 			}
 			
 		}
@@ -633,90 +926,7 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getRangeTiles(MAP *tile, int ran
 	}
 	
 //	Profiling::stop("- getRangeTiles");
-	return RANGE_TILES;
-	
-}
-
-/*
-Returns next range tile by given tile.
-*/
-bool nextRangeTile(MAP *center, int maxRange, bool includeCenter, RangeTile &rangeTile)
-{
-//	Profiling::start("- getNextRangeTile");
-	
-	int centerIndex = center - *MapTiles;
-	int centerY = centerIndex / (*MapHalfX);
-	int centerX = (centerIndex % (*MapHalfX)) * 2 + (centerY % 2);
-	
-	if (rangeTile.tile == nullptr)
-	{
-		rangeTile.dx = 0;
-		rangeTile.dy = 0;
-		rangeTile.tile = center;
-		
-		if (includeCenter)
-		{
-			return true;
-		}
-		
-	}
-	
-	int x;
-	int y;
-	bool onMap = false;
-	while (!onMap)
-	{
-		if (rangeTile.tile == center)
-		{
-			rangeTile.dx = +0;
-			rangeTile.dy = -2;
-		}
-		else if (rangeTile.dx >= 0 && rangeTile.dy < 0)
-		{
-			rangeTile.dx++;
-			rangeTile.dy++;
-		}
-		else if (rangeTile.dx > 0 && rangeTile.dy >= 0)
-		{
-			rangeTile.dx--;
-			rangeTile.dy++;
-		}
-		else if (rangeTile.dx <= 0 && rangeTile.dy > 0)
-		{
-			rangeTile.dx--;
-			rangeTile.dy--;
-		}
-		else if (rangeTile.dx < 0 && rangeTile.dy <= 0)
-		{
-			rangeTile.dx++;
-			rangeTile.dy--;
-		}
-		
-		// advance to next range
-		
-		if (rangeTile.dx == 0 && rangeTile.dy < 0)
-		{
-			rangeTile.dy -= 2;
-			
-			// verify max range
-			
-			if ((-rangeTile.dy) / 2 > maxRange)
-			{
-				return false;
-			}
-			
-		}
-		
-		x = wrap(centerX + rangeTile.dx);
-		y = centerY + rangeTile.dy;
-		onMap = x >= 0 && x < *MapAreaX && y >= 0 && y < *MapAreaY && ((x + y) & 1) == 0;
-		
-	}
-	
-	int rangeTileIndex = (x + *MapAreaX * y) / 2;
-	rangeTile.tile = *MapTiles + rangeTileIndex;
-	
-	return true;
+	return tiles;
 	
 }
 
@@ -739,10 +949,10 @@ std::vector<MAP *> getBaseOffsetTiles(int x, int y, int offsetBegin, int offsetE
 
 }
 
-std::vector<MAP *> getBaseOffsetTiles(MAP *tile, int offsetBegin, int offsetEnd)
+std::vector<MAP *> getBaseOffsetTiles(MAP *center, int offsetBegin, int offsetEnd)
 {
-	assert(isOnMap(tile));
-	return getBaseOffsetTiles(getX(tile), getY(tile), offsetBegin, offsetEnd);
+	assert(isOnMap(center));
+	return getBaseOffsetTiles(getX(center), getY(center), offsetBegin, offsetEnd);
 }
 
 std::vector<MAP *> getBaseAdjacentTiles(int x, int y, bool includeCenter)
@@ -751,10 +961,10 @@ std::vector<MAP *> getBaseAdjacentTiles(int x, int y, bool includeCenter)
 	return getBaseOffsetTiles(x, y, (includeCenter ? 0 : 1), OFFSET_COUNT_ADJACENT);
 }
 
-std::vector<MAP *> getBaseAdjacentTiles(MAP *tile, bool includeCenter)
+std::vector<MAP *> getBaseAdjacentTiles(MAP *center, bool includeCenter)
 {
-	assert(isOnMap(tile));
-	return getBaseAdjacentTiles(getX(tile), getY(tile), includeCenter);
+	assert(isOnMap(center));
+	return getBaseAdjacentTiles(getX(center), getY(center), includeCenter);
 }
 
 std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool includeCenter)
@@ -763,13 +973,13 @@ std::vector<MAP *> getBaseRadiusTiles(int x, int y, bool includeCenter)
 	return getBaseOffsetTiles(x, y, (includeCenter ? 0 : 1), OFFSET_COUNT_RADIUS);
 }
 
-std::vector<MAP *> getBaseRadiusTiles(MAP *tile, bool includeCenter)
+std::vector<MAP *> getBaseRadiusTiles(MAP *center, bool includeCenter)
 {
-	assert(isOnMap(tile));
-	return getBaseRadiusTiles(getX(tile), getY(tile), includeCenter);
+	assert(isOnMap(center));
+	return getBaseRadiusTiles(getX(center), getY(center), includeCenter);
 }
 
-ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getBaseExternalRadiusTiles(MAP *center)
+std::vector<MAP *> getBaseExternalRadiusTiles(MAP *center)
 {
 	return getSquareOffsetTiles(center, TABLE_square_block_radius_base_internal, TABLE_square_block_radius_base_external);
 }
@@ -777,17 +987,17 @@ ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> const &getBaseExternalRadiusTiles(MAP *
 /*
 Returns tiles outside of base radius with sharing side with radius.
 */
-std::vector<MAP *> getBaseRadiusSideTiles(MAP *tile)
+std::vector<MAP *> getBaseRadiusSideTiles(MAP *center)
 {
-	return getBaseOffsetTiles(tile, OFFSET_COUNT_RADIUS, OFFSET_COUNT_RADIUS_SIDE);
+	return getBaseOffsetTiles(center, OFFSET_COUNT_RADIUS, OFFSET_COUNT_RADIUS_SIDE);
 }
 
 /*
 Returns tiles outside of base radius with sharing side with radius.
 */
-std::vector<MAP *> getBaseRadiusAdjacentTiles(MAP *tile)
+std::vector<MAP *> getBaseRadiusAdjacentTiles(MAP *center)
 {
-	return getBaseOffsetTiles(tile, OFFSET_COUNT_RADIUS, OFFSET_COUNT_RADIUS_CORNER);
+	return getBaseOffsetTiles(center, OFFSET_COUNT_RADIUS, OFFSET_COUNT_RADIUS_CORNER);
 }
 
 // =======================================================
@@ -1386,7 +1596,7 @@ double getVehiclePsiOffenseStrength(int vehicleId, bool ignoreDamage)
 	
 	if (!ignoreDamage)
 	{
-		psiOffenseStrength *= getVehicleRelativePower(vehicleId);
+		psiOffenseStrength *= getVehicleRelativeHealth(vehicleId);
 	}
 	
 	// return strength
@@ -1413,7 +1623,7 @@ double getVehiclePsiDefenseStrength(int vehicleId, bool ignoreDamage)
 	
 	if (!ignoreDamage)
 	{
-		psiDefenseStrength *= getVehicleRelativePower(vehicleId);
+		psiDefenseStrength *= getVehicleRelativeHealth(vehicleId);
 	}
 	
 	// return strength
@@ -1443,7 +1653,7 @@ double getVehicleConOffenseStrength(int vehicleId, bool ignoreDamage)
 	
 	if (!ignoreDamage)
 	{
-		conventionalOffenseStrength *= getVehicleRelativePower(vehicleId);
+		conventionalOffenseStrength *= getVehicleRelativeHealth(vehicleId);
 	}
 	
 	// return strength
@@ -1471,7 +1681,7 @@ double getVehicleConDefenseStrength(int vehicleId, bool ignoreDamage)
 
 	if (!ignoreDamage)
 	{
-		conventionalDefenseStrength *= getVehicleRelativePower(vehicleId);
+		conventionalDefenseStrength *= getVehicleRelativeHealth(vehicleId);
 	}
 	
 	// return strength
@@ -1485,7 +1695,7 @@ Computes total damage vehicle can deliver in conventional offense.
 */
 double getVehicleConOffensePower(int vehicleId)
 {
-	return getVehicleConOffenseStrength(vehicleId) * getVehicleRelativePower(vehicleId);
+	return getVehicleConOffenseStrength(vehicleId) * getVehicleRelativeHealth(vehicleId);
 }
 
 /*
@@ -1493,7 +1703,7 @@ Computes total damage vehicle can deliver in conventional defense.
 */
 double getVehicleConDefensePower(int vehicleId)
 {
-	return getVehicleConDefenseStrength(vehicleId) * getVehicleRelativePower(vehicleId);
+	return getVehicleConDefenseStrength(vehicleId) * getVehicleRelativeHealth(vehicleId);
 }
 
 double getFactionSEPlanetOffenseModifier(int factionId)
@@ -2261,12 +2471,17 @@ std::vector<int> getFactionUnitIds(int factionId, bool includeObsolete, bool inc
 		
 		// skip not available
 		
-		if (!isAvailableUnit(unitId, factionId, includeObsolete))
+		if (!isUnitAvailable(unitId, factionId))
+			continue;
+		
+		// skip obsolete if requested
+		
+		if (!includeObsolete && isUnitObsolete(unitId, factionId))
 			continue;
 		
 		// do not include not prototyped if not requested
 		
-		if (!includeNotPrototyped && !isPrototypedUnit(unitId))
+		if (!includeNotPrototyped && !Units[unitId].is_prototyped())
 			continue;
 		
 		// add unit
@@ -4967,7 +5182,7 @@ double getVehicleRelativeDamage(int vehicleId)
 
 }
 
-double getVehicleRelativePower(int vehicleId)
+double getVehicleRelativeHealth(int vehicleId)
 {
 	return 1.0 - getVehicleRelativeDamage(vehicleId);
 }
@@ -5076,7 +5291,7 @@ Factions can NOT collocate each other vehicles.
 */
 bool isUnfriendly(int factionId1, int factionId2)
 {
-	return factionId1 != factionId2 && !isPact(factionId1, factionId2);
+	return factionId1 >= 0 && factionId2 >= 0 && factionId1 != factionId2 && !isPact(factionId1, factionId2);
 }
 
 /**
@@ -5085,7 +5300,7 @@ Aliens are always at war with other factions.
 */
 bool isHostile(int factionId1, int factionId2)
 {
-	return isVendetta(factionId1, factionId2);
+	return (factionId1 >= 0 && factionId1 < MaxPlayerNum) && (factionId2 >= 0 && factionId2 < MaxPlayerNum) && factionId1 != factionId2 && isVendetta(factionId1, factionId2);
 }
 
 /**
@@ -5262,7 +5477,9 @@ bool isPsiCombat(int attackerUnitId, int defenderUnitId)
 
 double getAlienTurnStrengthModifier()
 {
-	return (*CurrentTurn <= conf.native_weak_until_turn ? 0.5 : 1.0);
+	// no weak aliens anymore
+//	return (*CurrentTurn <= conf.native_weak_until_turn ? 0.5 : 1.0);
+	return 1.0;
 }
 
 int getFactionMaintenance(int factionId)
@@ -5651,58 +5868,6 @@ RepairInfo getVehicleRepairInfo(int vehicleId, MAP *tile)
 	// return repair object
 
 	return {fullRepair, repairDamage, repairTime};
-
-}
-
-/*
-Checks if unit is obsolete.
-*/
-bool isObsoleteUnit(int unitId, int factionId)
-{
-	UNIT *unit = getUnit(unitId);
-
-	return ((unit->obsolete_factions & (0x1 << factionId)) != 0);
-
-}
-
-/**
-Checks if unit is prototyped.
-*/
-bool isPrototypedUnit(int unitId)
-{
-	return unitId < MaxProtoFactionNum || Units[unitId].is_prototyped();
-}
-
-/*
-Checks if unit is active.
-*/
-bool isActiveUnit(int unitId)
-{
-	UNIT *unit = getUnit(unitId);
-
-	return (unit->unit_flags & UNIT_ACTIVE);
-
-}
-
-/*
-Checks if unit is listed in faction workshop.
-*/
-bool isAvailableUnit(int unitId, int factionId, bool includeObsolete)
-{
-	UNIT *unit = getUnit(unitId);
-
-	if (unitId < MaxProtoFactionNum)
-	{
-		// predefined unit has to be discovered to become available
-
-		if (!isFactionHasTech(factionId, unit->preq_tech))
-			return false;
-
-	}
-
-	// unit has to be active and not obsolete
-
-	return isActiveUnit(unitId) && (includeObsolete || !isObsoleteUnit(unitId, factionId));
 
 }
 
@@ -6898,71 +7063,57 @@ std::vector<int> getTransportPassengers(int transportVehicleId)
 
 }
 
-/**
-Computes max relative bombardment damage vehicles can receive at this location.
+/*
+Returns max relative bombardment damage for location and triad.
+If tile is not specified, the matching realsm is assumed.
 */
-double getLocationBombardmentMaxRelativeDamage(MAP *tile)
+double getMaxBombardmentDamage(Triad triad, MAP *tile)
 {
-	int maxBombardmentDamagePercentage = 100;
+	int maxBombardmentDamagePercentage;
 	
-	if (isBaseAt(tile) || isBunkerAt(tile))
-	{
-		maxBombardmentDamagePercentage = Rules->max_dmg_percent_arty_base_bunker;
-	}
-	else if (is_ocean(tile))
-	{
-		maxBombardmentDamagePercentage = Rules->max_dmg_percent_arty_sea;
-	}
-	else
-	{
-		maxBombardmentDamagePercentage = Rules->max_dmg_percent_arty_open;
-	}
-	
-	return getPercentageBonusMultiplier(-maxBombardmentDamagePercentage);
-	
-}
-
-double getVehicleBombardmentMaxRelativeDamage(int vehicleId)
-{
-	VEH *vehicle = getVehicle(vehicleId);
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	bool vehicleTileOcean = is_ocean(vehicleTile);
-	int vehicleMaxPower = getVehicleMaxPower(vehicleId);
-
-	int maxBombardmentDamagePercentage = 100;
-
-	if (isBaseAt(vehicleTile) || isBunkerAt(vehicleTile))
+	if (tile != nullptr && tile->is_base_or_bunker())
 	{
 		maxBombardmentDamagePercentage = Rules->max_dmg_percent_arty_base_bunker;
 	}
 	else
 	{
-		switch (vehicle->triad())
+		switch (triad)
 		{
 		case TRIAD_AIR:
-			maxBombardmentDamagePercentage = (isAirbaseAt(vehicleTile) ? Rules->max_dmg_percent_arty_sea : 0);
-			break;
-		case TRIAD_SEA:
 			maxBombardmentDamagePercentage = Rules->max_dmg_percent_arty_sea;
 			break;
+			
+		case TRIAD_SEA:
 		case TRIAD_LAND:
-			maxBombardmentDamagePercentage = (vehicleTileOcean ? Rules->max_dmg_percent_arty_sea : Rules->max_dmg_percent_arty_open);
+			if (tile != nullptr && tile->is_sea())
+			{
+				maxBombardmentDamagePercentage = Rules->max_dmg_percent_arty_sea;
+			}
+			else
+			{
+				maxBombardmentDamagePercentage = Rules->max_dmg_percent_arty_open;
+			}
 			break;
+			
+		default:
+			maxBombardmentDamagePercentage = 0.0;
+			
 		}
+		
 	}
-
-	int maxDamage = vehicleMaxPower * maxBombardmentDamagePercentage / 100;
-
-	return (double)maxDamage / (double)vehicleMaxPower;
-
+	
+	return (double) maxBombardmentDamagePercentage / 100.0;
+	
 }
 
-double getVehicleBombardmentRemainingRelativeDamage(int vehicleId)
+double getVehicleRemainingBombardmentDamage(int vehicleId)
 {
-	double maxRelativeBombardmentDamage = getVehicleBombardmentMaxRelativeDamage(vehicleId);
-	double relativeDamage = getVehicleRelativeDamage(vehicleId);
+	Triad triad = (Triad) Vehs[vehicleId].triad();
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	
-	return std::max(0.0, maxRelativeBombardmentDamage - relativeDamage);
+	double maxBombardmentDamage = getMaxBombardmentDamage(triad, vehicleTile);
+	double relativeDamage = getVehicleRelativeDamage(vehicleId);
+	return relativeDamage >= maxBombardmentDamage ? 0.0 : maxBombardmentDamage - relativeDamage;
 	
 }
 
@@ -7890,11 +8041,67 @@ int getClosestNotOwnedOrSeaTileRange(int factionId, MAP *tile, int minRadius, in
 	
 }
 
-int getUnitOffenseExtendedTriad(int unitId, int enemyUnitId)
+AttackTriad getAttackTriad(int attackUnitId, int defendUnitId)
 {
-	UNIT &unit = Units[unitId];
-	UNIT &enemyUnit = Units[enemyUnitId];
-	return Weapon[unit.weapon_id].offense_value < 0 || Armor[enemyUnit.armor_id].defense_value < 0 ? 3 : Chassis[unit.chassis_id].triad;
+	return isPsiCombat(attackUnitId, defendUnitId) ? ATTACK_TRIAD_PSI : (AttackTriad) Units[attackUnitId].triad();
+}
+
+bool isUnitObsolete(int unitId, int factionId)
+{
+	return (Units[unitId].obsolete_factions & (0x1 << factionId)) != 0;
+}
+bool isUnitAvailable(int unitId, int factionId)
+{
+	return has_tech(Units[unitId].preq_tech, factionId) && Units[unitId].is_active();
+}
+bool isUnitPsiOffense(int unitId)
+{
+	return Units[unitId].offense_value() < 0;
+}
+bool isUnitPsiDefense(int unitId)
+{
+	return Units[unitId].defense_value() < 0;
+}
+
+/*
+Returns combat mode by engagement mode.
+*/
+COMBAT_MODE getCombatMode(ENGAGEMENT_MODE engagementMode, int defenderUnitId)
+{
+	return engagementMode == EM_MELEE ? CM_MELEE : isArtilleryUnit(defenderUnitId) ? CM_ARTILLERY_DUEL : CM_BOMBARDMENT;
+}
+/*
+Determines if engagement results in mutual combat: melee combat or artillery duel.
+*/
+bool isMutualCombat(ENGAGEMENT_MODE engagementMode, int defenderUnitId)
+{
+	return !isBombardment(engagementMode, defenderUnitId);
+}
+/*
+Determines if engagement results in bombardment
+*/
+bool isBombardment(ENGAGEMENT_MODE engagementMode, int defenderUnitId)
+{
+	COMBAT_MODE combatMode = getCombatMode(engagementMode, defenderUnitId);
+	return combatMode == CM_BOMBARDMENT;
+}
+
+/**
+Computes vehicle additional combat multiplier on top if unit properties.
+= moraleMultiplier * relativePower
+*/
+double getVehicleStrenghtMultiplier(int vehicleId)
+{
+	return getVehicleMoraleMultiplier(vehicleId) * getVehicleRelativeHealth(vehicleId);
+}
+
+/**
+Computes vehicle additional combat multiplier on top if unit properties.
+= moraleMultiplier
+*/
+double getVehicleBombardmentStrenghtMultiplier(int vehicleId)
+{
+	return getVehicleMoraleMultiplier(vehicleId);
 }
 
 /*
