@@ -7,7 +7,6 @@
 #include <vector>
 #include <map>
 #include <regex>
-#include "main.h"
 #include "tech.h"
 #include "patch.h"
 #include "wtp_terranx.h"
