@@ -1,3 +1,4 @@
+#include "wtp_aiRoute.h"
 
 #include <exception>
 #include <vector>
@@ -5,10 +6,9 @@
 #include <queue>
 #include <unordered_map>
 #include "robin_hood.h"
+
 #include "wtp_ai.h"
 #include "wtp_aiRoute.h"
-#include "wtp_aiMoveColony.h"
-#include "wtp_aiMoveTransport.h"
 
 // approach time cache
 // [factionId][movementType][org][dst]
