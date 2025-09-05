@@ -1,16 +1,16 @@
 #pragma GCC diagnostic ignored "-Wshadow"
 
 #include "wtp_ai.h"
-#include "main.h"
-#include "engine.h"
+
+#include "robin_hood.h"
 #include "wtp_terranx.h"
 #include "wtp_game.h"
 #include "wtp_mod.h"
+#include "wtp_aiRoute.h"
+#include "wtp_aiMove.h"
 #include "wtp_aiData.h"
 #include "wtp_aiHurry.h"
-#include "wtp_aiMove.h"
 #include "wtp_aiProduction.h"
-#include "wtp_aiRoute.h"
 
 // MoveAction vector
 ArrayVector<MoveAction, MAX_REACHABLE_LOCATION_COUNT> REACHABLE_LOCATIONS;
