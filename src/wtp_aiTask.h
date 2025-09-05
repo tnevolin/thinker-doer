@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "engine.h"
+#include "main.h"
 
 enum ENEMY_MOVE_RETURN_VALUE
 {
@@ -26,7 +27,7 @@ enum TaskType
 	TT_MOVE,					// 12
 	TT_ARTIFACT_CONTRIBUTE,		// 13
 	TT_MELEE_ATTACK,			// 14
-	TT_LONG_RANGE_FIRE,			// 15
+	TT_ARTILLERY_ATTACK,		// 15
 	TT_CONVOY,					// 16
 };
 
@@ -59,6 +60,7 @@ struct Task
 	MAP *attackTarget;
 	int order;
 	int terraformingAction;
+	double priority = 1.0;
 
 	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget, int _order, int _terraformingAction)
 	: vehiclePad0(Vehs[_vehicleId].pad_0), type(_type), destination(_destination), attackTarget(_attackTarget), order(_order), terraformingAction(_terraformingAction)
@@ -72,13 +74,13 @@ struct Task
 	Task(int _vehicleId, TaskType _type)
 	: Task(_vehicleId, _type, nullptr, nullptr, -1, -1)
 	{}
-	
+
 	static std::string typeName(TaskType &taskType);
-	int getVehicleId();
+	int getVehicleId() const;
 	void clearDestination();
 	void setDestination(MAP *_destination);
-	MAP *getDestination();
-	MAP *getAttackTarget();
+	MAP *getDestination() const;
+	MAP *getAttackTarget() const;
 	int getDestinationRange();
 	int execute();
 	int execute(int vehicleId);
@@ -103,22 +105,7 @@ struct Task
 
 };
 
-/*
-Holds potential tasks for the vehicle in preference order.
-*/
-struct TaskList
-{
-	std::vector<Task> tasks;
-
-	void setTasks(const std::vector<Task> _tasks);
-	std::vector<Task> &getTasks();
-	void setTask(const Task _task);
-	Task *getTask();
-	void addTask(const Task _task);
-
-};
-
-void setTask(Task task);
+void setTask(Task const &task);
 bool hasTask(int vehicleId);
 bool hasExecutableTask(int vehicleId);
 void deleteTask(int vehicleId);

@@ -108,11 +108,11 @@ int __cdecl mod_enemy_veh(size_t veh_id) {
         && !mod_zoc_any(veh->x, veh->y, veh->faction_id);
 
 	// [WTP]
-	// use modified version
+	// use WTP version
 	/*
     if (!skip && mod_enemy_move(veh_id) != VEH_SYNC) {
 	*/
-    if (!skip && wtp_mod_enemy_move(veh_id) != VEH_SYNC) {
+	if (!skip && wtp_mod_enemy_move(veh_id) != VEH_SYNC) {
 	//
         return 1;
     }

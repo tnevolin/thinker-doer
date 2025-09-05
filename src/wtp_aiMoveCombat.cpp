@@ -350,7 +350,7 @@ void immediateAttack()
 		{
 			AttackAction const &attackAction = attackActionEntry.second;
 			
-			TaskType taskType = TT_LONG_RANGE_FIRE;
+			TaskType taskType = TT_ARTILLERY_ATTACK;
 			
 			// enemy stack
 			
@@ -2837,7 +2837,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 					, travelTimeCoefficient
 				);
 				
-				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_LONG_RANGE_FIRE, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);
+				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_ARTILLERY_ATTACK, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);
 				
 			}
 			
@@ -2891,7 +2891,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 					, travelTimeCoefficient
 				);
 				
-				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_LONG_RANGE_FIRE, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);
+				taskPriorities.emplace_back(vehicleId, priority, TPR_STACK, TT_ARTILLERY_ATTACK, destination, travelTime, combatMode, enemyStackTile, destructive, combatEffect);
 				
 			}
 			

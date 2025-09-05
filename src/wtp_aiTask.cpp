@@ -1,6 +1,7 @@
 
-#include "wtp_aiTask.h"
 #include "wtp_game.h"
+#include "wtp_aiTask.h"
+#include "wtp_aiData.h"
 #include "wtp_aiMove.h"
 
 std::string Task::typeName(TaskType &taskType)
@@ -8,7 +9,7 @@ std::string Task::typeName(TaskType &taskType)
 	return taskTypeNames[taskType];
 }
 
-int Task::getVehicleId()
+int Task::getVehicleId() const
 {
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
@@ -41,7 +42,7 @@ void Task::setDestination(MAP *_destination)
 Returns vehicle destination if specified.
 Otherwise, current vehicle location.
 */
-MAP *Task::getDestination()
+MAP *Task::getDestination() const
 {
 	int vehicleId = getVehicleId();
 	
@@ -63,7 +64,7 @@ MAP *Task::getDestination()
 	
 }
 
-MAP *Task::getAttackTarget()
+MAP *Task::getAttackTarget() const
 {
 	int vehicleId = getVehicleId();
 	
@@ -141,7 +142,7 @@ int Task::execute(int vehicleId)
 
 		if (isCombatVehicle(vehicleId))
 		{
-			setCombatMoveTo(vehicleId, destination);
+			setMoveTo(vehicleId, destination);
 		}
 		else
 		{
@@ -237,7 +238,7 @@ int Task::executeAction(int vehicleId)
 		return executeAttack(vehicleId);
 		break;
 	
-	case TT_LONG_RANGE_FIRE:
+	case TT_ARTILLERY_ATTACK:
 		return executeLongRangeFire(vehicleId);
 		break;
 	
@@ -671,53 +672,42 @@ int Task::executeConvoy(int vehicleId)
 	
 }
 
-// TaskList
-
-void TaskList::setTasks(const std::vector<Task> _tasks)
-{
-	this->tasks.clear();
-	this->tasks.insert(this->tasks.end(), _tasks.begin(), _tasks.end());
-}
-std::vector<Task> &TaskList::getTasks()
-{
-	return this->tasks;
-}
-void TaskList::setTask(Task _task)
-{
-	this->tasks.clear();
-	this->tasks.push_back(_task);
-}
-Task *TaskList::getTask()
-{
-	return (this->tasks.size() >= 1 ? &(this->tasks.front()) : nullptr);
-}
-void TaskList::addTask(Task _task)
-{
-	this->tasks.push_back(_task);
-}
-
 // static functions
 
-void setTask(Task task)
+bool compareTaskPriorityDescending(Task const &a, Task const &b)
+{
+	return a.priority > b.priority;
+}
+
+void setTask(Task const &task)
 {
 	int vehicleId = task.getVehicleId();
 	VEH *vehicle = getVehicle(vehicleId);
 
-	if (aiData.tasks.count(vehicle->pad_0) == 0)
+	if (aiData.tasks.find(vehicle->pad_0) == aiData.tasks.end())
 	{
-		aiData.tasks.insert({vehicle->pad_0, task});
+		aiData.tasks.emplace(vehicle->pad_0, std::vector<Task>());
 	}
-	else
-	{
-		aiData.tasks.at(vehicle->pad_0) = task;
-	}
+	
+	aiData.tasks.at(vehicle->pad_0).emplace_back(vehicleId, task.type, task.destination, task.attackTarget, task.order, task.terraformingAction);
+	
+}
+
+void setPriorityTask(Task task, double priority)
+{
+	task.priority = priority;
+	setTask(task);
+	int vehicleId = task.getVehicleId();
+	VEH *vehicle = &(Vehs[vehicleId]);
+
+	std::sort(aiData.tasks.at(vehicle->pad_0).begin(), aiData.tasks.at(vehicle->pad_0).end(), compareTaskPriorityDescending);
 	
 }
 
 bool hasTask(int vehicleId)
 {
-	VEH *vehicle = getVehicle(vehicleId);
-	return (aiData.tasks.count(vehicle->pad_0) != 0);
+	VEH *vehicle = &(Vehs[vehicleId]);
+	return (aiData.tasks.find(vehicle->pad_0) != aiData.tasks.end() && !aiData.tasks.at(vehicle->pad_0).empty());
 }
 
 bool hasExecutableTask(int vehicleId)
@@ -763,22 +753,56 @@ Task *getTask(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	
-	robin_hood::unordered_flat_map<int, Task>::iterator taskIterator = aiData.tasks.find(vehicle->pad_0);
+	if (aiData.tasks.find(vehicle->pad_0) == aiData.tasks.end())
+		return nullptr;
 	
-	return taskIterator == aiData.tasks.end() ? nullptr : &(taskIterator->second);
+	std::vector<Task> &vehicleTasks = aiData.tasks.at(vehicle->pad_0);
+	
+	if (vehicleTasks.empty())
+		return nullptr;
+	
+	return &(vehicleTasks.front());
 	
 }
 
 int executeTask(int vehicleId)
 {
 	debug("executeTask\n");
-
-	Task *task = getTask(vehicleId);
-
+	
+	VEH *vehicle = &Vehs[vehicleId];
+	
+	if (aiData.tasks.find(vehicle->pad_0) == aiData.tasks.end())
+		return EM_DONE;
+	
+	Task *task = nullptr;
+	for (Task &vehicleTask : aiData.tasks.at(vehicle->pad_0))
+	{
+		switch (vehicleTask.type)
+		{
+		case TT_MELEE_ATTACK:
+		case TT_ARTILLERY_ATTACK:
+			{
+				MAP *vehicleTaskAttackTarget = vehicleTask.getAttackTarget();
+				if (!aiData.hasEnemyStack(vehicleTaskAttackTarget))
+					continue;
+			}
+			task = &vehicleTask;
+			break;
+			
+		default:
+			task = &vehicleTask;
+			
+		}
+		
+		if (task != nullptr)
+			break;
+		
+	}
+	
 	if (task == nullptr)
 		return EM_DONE;
 	
 	return task->execute(vehicleId);
-
+	
 }
 

@@ -964,8 +964,7 @@ struct Data
 	double landAlienHunterDemand;
 	robin_hood::unordered_flat_map<int, int> seaTransportRequestCounts;
 	TransportControl transportControl;
-	robin_hood::unordered_flat_map<int, Task> tasks;
-	robin_hood::unordered_flat_map<int, TaskList> potentialTasks;
+	robin_hood::unordered_flat_map<int, std::vector<Task>> tasks;
 	double airColonyProductionPriority;
 	double landColonyProductionPriority;
 	robin_hood::unordered_flat_map<int, double> seaColonyProductionPriorities;

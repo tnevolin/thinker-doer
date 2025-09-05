@@ -223,9 +223,14 @@ void executeTasks()
 	
 	debug("Tasks - %s\n", MFactions[aiFactionId].noun_faction);
 	
-	for (robin_hood::pair<int, Task> &taskEntry : aiData.tasks)
+	for (robin_hood::pair<int, std::vector<Task>> &taskEntry : aiData.tasks)
 	{
-		Task &task = taskEntry.second;
+		std::vector<Task> &vehicleTasks = taskEntry.second;
+		
+		if (vehicleTasks.empty())
+			continue;
+		
+		Task &task = vehicleTasks.front();
 		int vehicleId = task.getVehicleId();
 		VEH *vehicle = getVehicle(vehicleId);
 		
@@ -233,12 +238,12 @@ void executeTasks()
 		
 		if (aiFactionId == *CurrentPlayerFaction && !(conf.manage_player_units && ((vehicle->state & VSTATE_ON_ALERT) != 0) && vehicle->movement_turns == 0))
 			continue;
-
+		
 		// do not execute combat tasks immediatelly
-
-		if (task.type == TT_MELEE_ATTACK || task.type == TT_LONG_RANGE_FIRE)
+		
+		if (task.type == TT_MELEE_ATTACK || task.type == TT_ARTILLERY_ATTACK)
 			continue;
-
+		
 		debug
 		(
 			"\t[%4d] %s->%s/%s taskType=%2d, %s\n",
@@ -250,11 +255,11 @@ void executeTasks()
 			Units[vehicle->unit_id].name
 		)
 		;
-
+		
 		task.execute();
-
+		
 	}
-
+	
 	Profiling::stop("executeTasks");
 	
 }
