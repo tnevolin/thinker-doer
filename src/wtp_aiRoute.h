@@ -1,8 +1,6 @@
 #pragma once
 
-#include <functional>
-#include "engine.h"
-#include "wtp_aiData.h"
+#include "wtp_ai.h"
 
 int const MIN_LANDMARK_DISTANCE = 20;
 double const A_DISTANCE_TRESHOLD = 10.0;
