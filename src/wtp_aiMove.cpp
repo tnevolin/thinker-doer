@@ -1,10 +1,10 @@
 #pragma GCC diagnostic ignored "-Wshadow"
 
-#include <algorithm>
 #include "wtp_aiMove.h"
-#include "wtp_terranx.h"
-#include "wtp_ai.h"
+
+#include <algorithm>
 #include "wtp_aiData.h"
+#include "wtp_aiRoute.h"
 #include "wtp_aiMoveArtifact.h"
 #include "wtp_aiMoveColony.h"
 #include "wtp_aiMoveCombat.h"
@@ -12,7 +12,6 @@
 #include "wtp_aiMoveCrawler.h"
 #include "wtp_aiProduction.h"
 #include "wtp_aiMoveTransport.h"
-#include "wtp_aiRoute.h"
 
 // SeaTransit
 
