@@ -1400,7 +1400,8 @@ void __cdecl mod_base_psych(int base_id) {
 	// replace with improved version
 	if (conf.base_psych_improved)
 	{
-		return wtp_mod_base_psych(base_id);
+		wtp_mod_base_psych(base_id);
+		return;
 	}
 	
     BASE* base = &Bases[base_id];

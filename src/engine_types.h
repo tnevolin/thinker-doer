@@ -139,6 +139,10 @@ struct MAP {
 	{
 		return (items & item) != 0;
 	}
+	bool is_sensor()
+	{
+		return (items & BIT_SENSOR) != 0;
+	}
 };
 
 struct FileFindPath {

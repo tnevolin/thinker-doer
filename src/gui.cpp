@@ -1796,6 +1796,10 @@ void __thiscall ReportWin_draw_ops_color(Buffer* This, int UNUSED(a2), int a3, i
 
 int __thiscall mod_MapWin_focus(Console* This, int x, int y)
 {
+	// [WTP]
+	// debug - ignore
+//	return 0;
+	
     // Return value is non-zero when the map is recentered offscreen
     if (MapWin_focus(This, x, y)) {
         This->drawOnlyCursor = 0;

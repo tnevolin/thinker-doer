@@ -6,6 +6,8 @@ enum Triad {
     TRIAD_SEA = 1,
     TRIAD_AIR = 2,
 };
+size_t const TRIAD_COUNT = TRIAD_AIR + 1;
+std::array<Triad, TRIAD_COUNT> const TRIADS = {TRIAD_LAND, TRIAD_SEA, TRIAD_AIR};
 
 enum VehMorale {
     MORALE_VERY_GREEN = 0,
@@ -469,6 +471,7 @@ struct UNIT {
     bool is_planet_buster() {
         return plan == PLAN_PLANET_BUSTER;
     }
+
 };
 
 struct VEH {

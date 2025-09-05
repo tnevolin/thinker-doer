@@ -1479,6 +1479,30 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_combat_sea_base_threat_coefficient = atof(value);
     }
+    else if (MATCH("ai_combat_strength_destruction_gain"))
+    {
+        cf->ai_combat_strength_destruction_gain = atof(value);
+    }
+    else if (MATCH("ai_combat_healing_chance"))
+    {
+        cf->ai_combat_healing_chance = atof(value);
+    }
+    else if (MATCH("ai_combat_proximity_dest_time_coefficient"))
+    {
+        cf->ai_combat_proximity_dest_time_coefficient = atof(value);
+    }
+    else if (MATCH("ai_combat_proximity_dest_distance_coefficient"))
+    {
+        cf->ai_combat_proximity_dest_distance_coefficient = atof(value);
+    }
+    else if (MATCH("ai_combat_proximity_base_distance_coefficient"))
+    {
+        cf->ai_combat_proximity_base_distance_coefficient = atof(value);
+    }
+    else if (MATCH("ai_combat_damage_destruction_value_coefficient"))
+    {
+        cf->ai_combat_damage_destruction_value_coefficient = atof(value);
+    }
     // =WTP= configuratoin end
     else {
         return opt_handle_error(section, name);
