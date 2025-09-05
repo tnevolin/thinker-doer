@@ -2,8 +2,8 @@
 #pragma pack(push, 1)
 
 struct MAP {
-    uint8_t climate; // 000 00 000 | altitude (3 bit) ; rainfall (2 bit) ; temperature (3 bit)
-    uint8_t contour; // altitude details
+    uint8_t climate; // 000 00 000 | altitude (3 bit) ; rainfall (2 bit) ; temperature (3 bit)			// 0x00
+    uint8_t contour; // altitude details																// 0x01
     /*
     val2 & 0xF0:
     AI colonization priority returned by world_site()
@@ -15,20 +15,20 @@ struct MAP {
     Faction ID of the unit occupying this tile. 0xF = unoccupied.
     Sometimes faction ID of a deleted unit persists on the tile.
     */
-    uint8_t val2;
+    uint8_t val2;																						// 0x02
     /*
     The game keeps track of disjoint land/water areas and assigns each of them an ID number
     which is used to index the [128] planning variable arrays in Faction struct.
     Valid ranges: 1-62 (land), 65-126 (sea).
     */
-    uint8_t region;
-    uint8_t visibility;
-    uint8_t val3; // 00 000 000 | rocky (2 bit); lock faction_id (3 bit); using faction_id (3 bit)
-    uint8_t unk_1; // flags? bitfield
-    int8_t owner;
-    uint32_t items;
-    uint32_t landmarks;
-    uint32_t visible_items[7];
+    uint8_t region;																						// 0x03
+    uint8_t visibility;																					// 0x04
+    uint8_t val3; // 00 000 000 | rocky (2 bit); lock faction_id (3 bit); using faction_id (3 bit)		// 0x05
+    uint8_t unk_1; // flags? bitfield																	// 0x06
+    int8_t owner;																						// 0x07
+    uint32_t items;																						// 0x08
+    uint32_t landmarks;																					// 0x0C
+    uint32_t visible_items[7];																			// 0x10
 
     int alt_level() {
         return climate >> 5;
