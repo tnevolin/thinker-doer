@@ -1,11 +1,8 @@
 #pragma once
 
-#include <memory>
 #include "wtp_game.h"
 #include "wtp_ai.h"
-#include "wtp_aiMoveTransport.h"
 #include "wtp_aiTask.h"
-#include "wtp_aiData.h"
 #include "wtp_aiRoute.h"
 
 struct SeaTransit
