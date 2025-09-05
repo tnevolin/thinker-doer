@@ -4,8 +4,8 @@
 #include <set>
 #include <map>
 #include "robin_hood.h"
-#include "main.h"
-#include "engine.h"
+
+#include "wtp_game.h"
 #include "wtp_aiTask.h"
 #include "wtp_aiMoveFormer.h"
 
