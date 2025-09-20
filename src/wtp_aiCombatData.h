@@ -9,8 +9,8 @@ combat mode and effect
 struct CombatModeEffect
 {
 	bool valid = false;
-	COMBAT_MODE combatMode;
-	double value;
+	COMBAT_MODE combatMode = CM_MELEE;
+	double value = 0.0;
 };
 
 /*
@@ -19,12 +19,12 @@ all unit-to-unit combat effect data
 struct CombatEffectData
 {
 	// each to each unit combat effects
-	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][combatMode] = combatEffect
+	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][engagementMode] = combatEffect
 	robin_hood::unordered_flat_map<int, std::array<CombatModeEffect, ENGAGEMENT_MODE_COUNT>> combatModeEffects;
 	
 	void clear();
 	void setCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, COMBAT_MODE combatMode, double value);
-	CombatModeEffect const *getCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
+	CombatModeEffect const getCombatModeEffect(int key, ENGAGEMENT_MODE engagementMode);
 	double getCombatEffect(int attackerFactionUnitKey, int defenderFactionUnitKey, ENGAGEMENT_MODE engagementMode);
 	double getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
 	double getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, COMBAT_MODE combatMode);
@@ -43,11 +43,11 @@ struct CombatData
 	double initialProtectorWeight = 0.0;
 	double initialAssailantWeight = 0.0;
 	
-	bool computed = true;
-	double remainingProtectorWeight = 0.0;
-	double remainingAssailantWeight = 0.0;
-	bool sufficientProtection = true;
-	bool sufficientAssault = false;
+	bool computed = false;
+	double remainingAssailantWeight;
+	double remainingProtectorWeight;
+	bool sufficientAssault;
+	bool sufficientProtect;
 	
 	// assailantWeights [FactionUnitKey]
 	robin_hood::unordered_flat_map<int, double> assailants;
@@ -85,13 +85,13 @@ struct CombatData
 	double getProtectorVehicleCurrentEffect(int vehicleId);
 	double getAssailantVehicleCurrentEffect(int vehicleId);
 	
-	bool isSufficientProtection();
 	bool isSufficientAssault();
+	bool isSufficientProtect();
 	
 	void compute();
 	
 };
 
-void resolveMutualCombat(double combatEffect, double *attackerHealth, double *defenderHealth);
-FactionUnitCombat getBestMeleeAttackerDefender(CombatEffectData &combatEffectData, robin_hood::unordered_flat_map<int, double> &attackers, robin_hood::unordered_flat_map<int, double> &defenders);
+void resolveMutualCombat(double combatEffect, double &attackerHealth, double &defenderHealth);
+FactionUnitCombatEffect getBestAttackerDefenderMeleeEffect(CombatEffectData &combatEffectData, robin_hood::unordered_flat_map<int, double> &attackers, robin_hood::unordered_flat_map<int, double> &defenders);
 

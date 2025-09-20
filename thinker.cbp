@@ -155,6 +155,8 @@
 		<Unit filename="src/veh_turn.h" />
 		<Unit filename="src/wtp_ai.cpp" />
 		<Unit filename="src/wtp_ai.h" />
+		<Unit filename="src/wtp_aiCombatData.cpp" />
+		<Unit filename="src/wtp_aiCombatData.h" />
 		<Unit filename="src/wtp_aiData.cpp" />
 		<Unit filename="src/wtp_aiData.h" />
 		<Unit filename="src/wtp_aiHurry.cpp" />

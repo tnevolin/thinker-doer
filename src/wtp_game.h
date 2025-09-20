@@ -173,7 +173,7 @@ struct FactionUnit
 	int unitId;
 	int key;
 	
-	FactionUnit(int _factionId, int _unitId, int _key);
+	FactionUnit();
 	FactionUnit(int _factionId, int _unitId);
 	FactionUnit(int _key);
 	
@@ -190,7 +190,7 @@ struct FactionUnitCombat
 	FactionUnit defenderFactionUnit;
 	int key;
 	
-	FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit, int _key);
+	FactionUnitCombat();
 	FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit);
 	FactionUnitCombat(int _key);
 	
@@ -226,7 +226,7 @@ size_t const ATTACK_TRIAD_COUNT = ATTACK_TRIAD_PSI + 1;
 std::array<AttackTriad, ATTACK_TRIAD_COUNT> const ATTACK_TRIADS = {ATTACK_TRIAD_LAND, ATTACK_TRIAD_SEA, ATTACK_TRIAD_AIR, ATTACK_TRIAD_PSI, };
 
 /// alien units
-const std::vector<int> ALIEN_UNITS
+const robin_hood::unordered_flat_set<int> ALIEN_UNITS
 {
     BSC_MIND_WORMS,
     BSC_ISLE_OF_THE_DEEP,
@@ -1000,7 +1000,8 @@ std::vector<MAP *> getBaseWorkedTiles(int baseId);
 int getBaseWorkerCount(int baseId);
 bool isBaseWorkedTile(int baseId, int x, int y);
 bool isBaseWorkedTile(int baseId, MAP *tile);
-std::vector<int> getFactionUnitIds(int factionId, bool includeObsolete, bool includeNotPrototyped);
+robin_hood::unordered_flat_set<int> getDesignedFactionUnitIds(int factionId, bool includeObsolete, bool includeNotPrototyped);
+robin_hood::unordered_flat_set<int> getActiveFactionUnitIds(int factionId);
 int getFactionFastestFormerUnitId(int factionId);
 bool isVehicleNativeLand(int vehicleId);
 bool isBaseBuildingColony(int baseId);
@@ -1333,6 +1334,7 @@ bool isMutualCombat(ENGAGEMENT_MODE engagementMode, int defenderUnitId);
 bool isBombardment(ENGAGEMENT_MODE engagementMode, int defenderUnitId);
 double getVehicleStrenghtMultiplier(int vehicleId);
 double getVehicleBombardmentStrenghtMultiplier(int vehicleId);
+bool isMapValueEmpty(robin_hood::unordered_flat_map<int, double> const &map, int key);
 int getBaseDoctorCount(int baseId);
 int getBaseSpecialistPsych(int baseId);
 bool isFriendlyBaseInRangeHasFacility(int factionId, int x, int y, int range, FacilityId facilityId);

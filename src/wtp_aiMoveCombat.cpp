@@ -700,26 +700,26 @@ void moveBaseProtectors()
 	
 	std::sort(taskPriorities.begin(), taskPriorities.end(), compareCombatActionDescending);
 	
-//	if (DEBUG)
-//	{
-//		debug("\tsortedTasks\n");
-//		
-//		for (CombatAction const &taskPriority : taskPriorities)
-//		{
-//			debug
-//			(
-//				"\t\t%5.2f:"
-//				" [%4d] %s -> %s"
-//				"\n"
-//				, taskPriority.priority
-//				, taskPriority.vehicleId
-//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
-//			);
-//			
-//		}
-//		
-//	}
+	if (DEBUG)
+	{
+		debug("\tsortedTasks\n");
+		
+		for (CombatAction const &taskPriority : taskPriorities)
+		{
+			debug
+			(
+				"\t\t%5.2f:"
+				" [%4d] %s -> %s"
+				"\n"
+				, taskPriority.priority
+				, taskPriority.vehicleId
+				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
+				, getLocationString(taskPriority.destination).c_str()
+			);
+			
+		}
+		
+	}
 	
 	// select tasks
 	
@@ -760,7 +760,7 @@ void moveBaseProtectors()
 			, getLocationString(taskPriority.destination).c_str()
 			, getBase(taskPriority.baseId)->name
 			, baseInfo.isSatisfied(taskPriority.vehicleId)
-			, baseInfo.combatData.isSufficientProtection()
+			, baseInfo.combatData.isSufficientProtect()
 		);
 		
 	}
@@ -788,7 +788,7 @@ void moveBaseProtectors()
 		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
 		TileInfo &baseTileInfo = aiData.getBaseTileInfo(baseId);
 		
-		if (!baseInfo.combatData.isSufficientProtection())
+		if (!baseInfo.combatData.isSufficientProtect())
 		{
 			debug("\t\t%-25s\n", Bases[baseId].name)
 			
@@ -814,8 +814,8 @@ void moveBaseProtectors()
 				
 				baseInfo.combatData.addProtector(vehicleId);
 				
-				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSufficientProtection() = %d\n", vehicleId, Vehs[vehicleId].name(), baseInfo.combatData.isSufficientProtection())
-				if (baseInfo.combatData.isSufficientProtection())
+				debug("\t\t\t[%4d] %-32s baseInfo.combatData.isSufficientProtect() = %d\n", vehicleId, Vehs[vehicleId].name(), baseInfo.combatData.isSufficientProtect())
+				if (baseInfo.combatData.isSufficientProtect())
 					break;
 				
 			}
@@ -877,7 +877,7 @@ void moveBunkerProtectors()
 		
 		// bunker protection should not be yet satisfied
 		
-		if (bunkerCombatData.isSufficientProtection())
+		if (bunkerCombatData.isSufficientProtect())
 			continue;
 		
 		// assign to bunker
@@ -895,7 +895,7 @@ void moveBunkerProtectors()
 			, taskPriority.vehicleId
 			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
 			, getLocationString(taskPriority.destination).c_str()
-			, bunkerCombatData.isSufficientProtection()
+			, bunkerCombatData.isSufficientProtect()
 		);
 		
 	}
@@ -923,7 +923,7 @@ void moveBunkerProtectors()
 		CombatData &bunkerCombatData = bunkerCombatDataEntry.second;
 		TileInfo &bunkerTileInfo = aiData.getTileInfo(bunkerTile);
 		
-		if (!bunkerCombatData.isSufficientProtection())
+		if (!bunkerCombatData.isSufficientProtect())
 		{
 			debug("\t\t%s\n", getLocationString(bunkerTile).c_str())
 			
@@ -949,9 +949,9 @@ void moveBunkerProtectors()
 				
 				bunkerCombatData.addProtector(vehicleId);
 				
-				debug("\t\t\t[%4d] %-32s bunkerCombatData.isSufficientProtection() = %d\n", vehicleId, Vehs[vehicleId].name(), bunkerCombatData.isSufficientProtection())
+				debug("\t\t\t[%4d] %-32s bunkerCombatData.isSufficientProtect() = %d\n", vehicleId, Vehs[vehicleId].name(), bunkerCombatData.isSufficientProtect())
 				
-				if (bunkerCombatData.isSufficientProtection())
+				if (bunkerCombatData.isSufficientProtect())
 					break;
 				
 			}

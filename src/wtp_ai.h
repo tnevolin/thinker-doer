@@ -140,7 +140,7 @@ void populatePlayerGlobalVariables();
 void populatePlayerFactionIncome();
 void populateUnits();
 void populateMaxMineralSurplus();
-void saveVehicles();
+//void saveVehicles();
 void populateVehicles();
 void populateDangerZones();
 void populateArtifactDangerZones();
@@ -165,14 +165,12 @@ void evaluateBaseProbeDefense();
 void designUnits();
 void proposeMultiplePrototypes(int factionId, std::vector<VehChassis> chassisIds, std::vector<VehWeapon> weaponIds, std::vector<VehArmor> armorIds, std::vector<std::vector<VehAbl>> potentialAbilityIdSets, VehReactor reactor, VehPlan plan, char const *name);
 void checkAndProposePrototype(int factionId, VehChassis chassisId, VehWeapon weaponId, VehArmor armorId, std::vector<VehAbl> abilityIdSet, VehReactor reactor, VehPlan plan, char const *name);
-void obsoletePrototypes(int factionId, robin_hood::unordered_flat_set<int> chassisIds, robin_hood::unordered_flat_set<int> weaponIds, robin_hood::unordered_flat_set<int> armorIds, robin_hood::unordered_flat_set<int> abilityFlagsSet, robin_hood::unordered_flat_set<int> reactors);
 
 // --------------------------------------------------
 // helper functions
 // --------------------------------------------------
 
-int getVehicleIdByAIId(int aiId);
-VEH *getVehicleByAIId(int aiId);
+int getVehicleIdByPad0(int pad0);
 MAP *getClosestPod(int vehicleId);
 int getNearestAIFactionBaseRange(int x, int y);
 int getNearestBaseRange(MAP *tile, std::vector<int> baseIds, bool sameRealm);
@@ -234,8 +232,6 @@ std::vector<AttackAction> getArtilleryAttackActions(int vehicleId, bool regardOb
 robin_hood::unordered_flat_map<int, double> getMeleeAttackLocations(int vehicleId);
 robin_hood::unordered_flat_set<int> getArtilleryAttackLocations(int vehicleId);
 bool isVehicleAllowedMove(int vehicleId, MAP *from, MAP *to);
-int getBestSeaCombatSpeed(int factionId);
-int getBestSeaTransportSpeed(int factionId);
 void disbandOrversupportedVehicles(int factionId);
 void disbandUnneededVehicles();
 bool isUnitCanCaptureBase(int unitId, MAP *baseTile);
@@ -298,6 +294,7 @@ double getSensorDefenseMultiplier(int factionId, MAP *tile);
 double getUnitMeleeOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
 double getUnitArtilleryOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
 int getBasePoliceRequiredPower(int baseId);
+void updateVehicleTileBlockedAndZocs();
 void setTileBlockedAndZoc(TileInfo &tileInfo);
 double getContinuousImprovmentGain();
 double getContinuousHarvestingGain();

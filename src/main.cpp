@@ -1199,26 +1199,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_expansion_weight_deep = atof(value);
     }
-    else if (MATCH("ai_mapstat_ocean"))
-    {
-        cf->ai_mapstat_ocean = atof(value);
-    }
-    else if (MATCH("ai_mapstat_rocky"))
-    {
-        cf->ai_mapstat_rocky = atof(value);
-    }
-    else if (MATCH("ai_mapstat_rainfall"))
-    {
-        cf->ai_mapstat_rainfall = atof(value);
-    }
-    else if (MATCH("ai_mapstat_rockiness"))
-    {
-        cf->ai_mapstat_rockiness = atof(value);
-    }
-    else if (MATCH("ai_mapstat_elevation"))
-    {
-        cf->ai_mapstat_elevation = atof(value);
-    }
     else if (MATCH("ai_expansion_travel_time_scale"))
     {
         cf->ai_expansion_travel_time_scale = atof(value);

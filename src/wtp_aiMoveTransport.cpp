@@ -66,7 +66,7 @@ void moveTranportStrategy()
 //		{
 //			int seaTransportVehiclePad0 = unloadRequestEntry.first;
 //			std::vector<UnloadRequest> &transportUnloadRequests = unloadRequestEntry.second;
-//			int seaTransportVehicleId = getVehicleIdByAIId(seaTransportVehiclePad0);
+//			int seaTransportVehicleId = getVehicleIdByPad0(seaTransportVehiclePad0);
 //			VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
 //			
 //			debug("\t\t\t[%4d] %s\n", seaTransportVehicleId, getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str());

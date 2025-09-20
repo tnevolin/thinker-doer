@@ -254,72 +254,68 @@ tree<ProfileName> Profiling::profiles;
 
 // FactionUnit
 
-FactionUnit::FactionUnit(int _factionId, int _unitId, int _key)
-: factionId(_factionId), unitId(_unitId), key(_key)
+FactionUnit::FactionUnit()
+: factionId(-1), unitId(-1), key(-1)
+{}
+
+FactionUnit::FactionUnit(int _factionId, int _unitId)
 {
 	assert(_factionId >= 0 && _factionId < MaxPlayerNum);
 	assert(_unitId >= 0 && _unitId < MaxProtoNum);
-}
-
-FactionUnit::FactionUnit(int _factionId, int _unitId)
-:
-	FactionUnit
-	(
-		_factionId,
-		_unitId,
-		// key
+	
+	this->factionId = _factionId;
+	this->unitId = _unitId;
+	
+	this->key =
 		+ _factionId				* (1 * (2 * MaxProtoFactionNum)) 
 		+ getUnitSlotById(_unitId)	* (1)
-	)
-{}
+	;
+	
+}
 
 FactionUnit::FactionUnit(int _key)
-:
-	FactionUnit
-	(
-		// factionId
-			_key	/ (1 * (2 * MaxProtoFactionNum))	% (1),
-		// unitId
-		getUnitIdBySlot
-		(
-			// factionId
-			_key	/ (1 * (2 * MaxProtoFactionNum))	% (1),
-			// unitSlot
-			_key	/ (1)								% (1 * (2 * MaxProtoFactionNum))
-		),
-		_key
-	)
-{}
+{
+	this->key = _key;
+	
+	this->factionId	= _key	/ (1 * (2 * MaxProtoFactionNum));
+	int unitSlot	= _key	% (1 * (2 * MaxProtoFactionNum));
+	
+	this->unitId = getUnitIdBySlot(this->factionId, unitSlot);
+	
+	assert(this->factionId >= 0 && this->factionId < MaxPlayerNum);
+	assert(this->unitId >= 0 && this->unitId < MaxProtoNum);
+	
+}
 
 // FactionUnitCombat
 
-FactionUnitCombat::FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit, int _key)
-: attackerFactionUnit(_attackerFactionUnit), defenderFactionUnit(_defenderFactionUnit), key(_key)
+FactionUnitCombat::FactionUnitCombat()
+: attackerFactionUnit(FactionUnit()), defenderFactionUnit(FactionUnit())
 {}
 
 FactionUnitCombat::FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit)
-:
-	FactionUnitCombat
-	(
-		_attackerFactionUnit,
-		_defenderFactionUnit,
-		// key
+{
+	this->attackerFactionUnit = _attackerFactionUnit;
+	this->defenderFactionUnit = _defenderFactionUnit;
+	
+	this->key =
 		+ _attackerFactionUnit.key	* (1 * MaxPlayerNum * (2 * MaxProtoFactionNum))
 		+ _defenderFactionUnit.key	* (1)
-	)
-{}
+	;
+	
+}
 
 FactionUnitCombat::FactionUnitCombat(int _key)
-:
-	FactionUnitCombat
-	(
-		// attackerFactionUnit
-		FactionUnit(_key / (1 * MaxPlayerNum * (2 * MaxProtoFactionNum)) % (1)),
-		// defenderFactionUnit
-		FactionUnit(_key / (1) % (1 * MaxPlayerNum * (2 * MaxProtoFactionNum))),
-		_key
-	)
-{}
+{
+	this->key = _key;
+	
+	int attackerKey = _key / (1 * MaxPlayerNum * (2 * MaxProtoFactionNum));
+	int defenderKey = _key % (1 * MaxPlayerNum * (2 * MaxProtoFactionNum));
+	
+	this->attackerFactionUnit = FactionUnit(attackerKey);
+	this->defenderFactionUnit = FactionUnit(defenderKey);
+	
+}
 
 // FactionUnitCombatEffect
 
@@ -2449,11 +2445,11 @@ bool isBaseWorkedTile(int baseId, MAP *tile)
 }
 
 /**
-Returns faction available units.
+Returns faction designed units.
 */
-std::vector<int> getFactionUnitIds(int factionId, bool includeObsolete, bool includeNotPrototyped)
+robin_hood::unordered_flat_set<int> getDesignedFactionUnitIds(int factionId, bool includeObsolete, bool includeNotPrototyped)
 {
-	std::vector<int> factionUnitIds;
+	robin_hood::unordered_flat_set<int> designedFactionUnitIds;
 	
 	// alien units are always the same
 	
@@ -2483,11 +2479,35 @@ std::vector<int> getFactionUnitIds(int factionId, bool includeObsolete, bool inc
 		
 		// add unit
 		
-		factionUnitIds.push_back(unitId);
+		designedFactionUnitIds.insert(unitId);
 		
 	}
 	
-	return factionUnitIds;
+	return designedFactionUnitIds;
+	
+}
+
+/**
+Returns operable faction units: 1) designed, 2) in service
+*/
+robin_hood::unordered_flat_set<int> getActiveFactionUnitIds(int factionId)
+{
+	robin_hood::unordered_flat_set<int> activeFactionUnitIds = getDesignedFactionUnitIds(factionId, true, true);
+	
+	// iterate vehicles
+	
+    for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	{
+		VEH &vehicle = Vehs[vehicleId];
+		
+		if (vehicle.faction_id != factionId)
+			continue;
+		
+		activeFactionUnitIds.insert(vehicle.unit_id);
+		
+	}
+	
+	return activeFactionUnitIds;
 	
 }
 
@@ -2499,7 +2519,7 @@ int getFactionFastestFormerUnitId(int factionId)
 	int fastestFormerUnitId = BSC_FORMERS;
 	int fastestFormerUnitChassisSpeed = 1;
 
-    for (int unitId : getFactionUnitIds(factionId, false, false))
+    for (int unitId : getDesignedFactionUnitIds(factionId, false, false))
 	{
         UNIT *unit = getUnit(unitId);
         int unitChassisSpeed = unit->speed();
@@ -8099,6 +8119,15 @@ Computes vehicle additional combat multiplier on top if unit properties.
 double getVehicleBombardmentStrenghtMultiplier(int vehicleId)
 {
 	return getVehicleMoraleMultiplier(vehicleId);
+}
+
+bool isMapValueEmpty(robin_hood::unordered_flat_map<int, double> const &map, int key)
+{
+	return
+		map.find(key) == map.end()
+		||
+		map.at(key) == 0.0
+	;
 }
 
 /*

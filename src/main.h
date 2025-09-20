@@ -533,11 +533,6 @@ struct Config {
     double ai_production_survival_effect_c;
     double ai_production_survival_effect_d;
     double ai_expansion_weight_deep;
-    double ai_mapstat_ocean;
-    double ai_mapstat_rocky;
-    double ai_mapstat_rainfall;
-    double ai_mapstat_rockiness;
-    double ai_mapstat_elevation;
     double ai_expansion_travel_time_scale;
     double ai_expansion_coastal_base_large;
     double ai_expansion_coastal_base_small;

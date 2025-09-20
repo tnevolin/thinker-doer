@@ -30,25 +30,6 @@ struct PotentialAttack
 	double hastyCoefficient;
 };
 
-/**
-CombatEffects table.
-Combat effect is the number of enemy units this unit can destroy for its life.
-[1. own units: 2 * MaxProtoFactionNum]
-[2. factions: MaxPlayerNum]
-[3. faction units: 2 * MaxProtoFactionNum]
-[4. attacking side: 2]
-[5. combat type: 3]
-*/
-struct CombatUnitTable
-{
-	robin_hood::unordered_flat_set<int> ownCombatUnitIds;
-	robin_hood::unordered_flat_set<int> foeFactionIds;
-	robin_hood::unordered_flat_set<int> hostileFoeFactionIds;
-	robin_hood::unordered_flat_set<int> foeCombatVehicleIds;
-	std::array<robin_hood::unordered_flat_set<int> , MaxPlayerNum> foeUnitIds;
-	std::array<robin_hood::unordered_flat_set<int> , MaxPlayerNum> foeCombatUnitIds;
-};
-
 struct TileInfo
 {
 	int index;
@@ -85,7 +66,8 @@ struct TileInfo
 	
 	std::vector<int> vehicleIds;
 	std::vector<int> playerVehicleIds;
-	bool needlejetInFlight;
+	std::array<bool, MaxPlayerNum> factionNeedlejetInFlights;
+	std::array<bool, MaxPlayerNum> unfriendlyNeedlejetInFlights;
 	
 	// adjacent tiles
 	std::vector<Adjacent> adjacents;
@@ -477,7 +459,7 @@ struct BaseInfo
 	}
 	bool isSatisfied(int vehicleId)
 	{
-		return policeData.isSatisfied(vehicleId) && combatData.isSufficientProtection();
+		return policeData.isSatisfied(vehicleId) && combatData.isSufficientProtect();
 	}
 	
 };
@@ -514,6 +496,9 @@ struct FactionInfo
 	
 	int totalVendettaCount; // excluding aliens and player
 	double productionPower;
+	robin_hood::unordered_flat_set<int> unitIds;
+	robin_hood::unordered_flat_set<int> combatUnitIds;
+	robin_hood::unordered_flat_set<int> combatVehicleIds;
 	
 	// diplomacy
 	
@@ -746,9 +731,12 @@ struct Data
 	std::vector<MAP *> monoliths;
 	std::vector<MAP *> pods;
 	
-	// pre turn to current vehicle mapping
-	std::vector<VEH> savedVehicles;
-	std::array<int, MaxVehNum> currentVehicleIds;
+//	// pre turn to current vehicle mapping
+//	// [pad0] = vehicleId
+//	size_t maxVehiclePad0;
+//	robin_hood::unordered_flat_map<int, int> currentVehicleIds;
+//	// [pad0] = VEH
+//	robin_hood::unordered_flat_map<int, VEH> savedVehicles;
 	
 	// base infos
 	
@@ -808,7 +796,9 @@ struct Data
 	double stealingTechnologyGain;
 	double cachingArtifactGain;
 	std::array<double, MaxProtoNum> unitDestructionGains;
-	CombatUnitTable combatUnitTable;
+	robin_hood::unordered_flat_set<int> rivalFactionIds;
+	robin_hood::unordered_flat_set<int> unfriendlyFactionIds;
+	robin_hood::unordered_flat_set<int> hostileFactionIds;
 	// each to each unit combat effects
 	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][combatMode] = combatEffect
 	CombatEffectData combatEffectData;
@@ -845,7 +835,6 @@ struct Data
 	std::vector<int> baseIds;
 	std::vector<int> vehicleIds;
 	std::vector<int> combatVehicleIds;
-	std::vector<int> activeCombatUnitIds;
 	std::vector<int> scoutVehicleIds;
 	std::vector<int> outsideCombatVehicleIds;
 	std::vector<int> unitIds;

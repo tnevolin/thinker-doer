@@ -8,12 +8,12 @@ double const A_DISTANCE_TRESHOLD = 10.0;
 const double RANGED_AIR_TRAVEL_TIME_COEFFICIENT = 1.5;
 const double SEA_TRANSPORT_WAIT_TIME_COEFFICIENT = 4.0;
 
-const double IMPEDIMENT_SEA_TERRITORY_HOSTILE = 0.5;
-const double IMPEDIMENT_LAND_TERRITORY_HOSTILE = 2.0;
-const double IMPEDIMENT_LAND_INTERBASE_UNFRIENDLY = 4.0;
+// vehicle impediment
+static constexpr int IMPEDIMENT_MOBILE_TURN_RANGE = 2;
+static constexpr double IMPEDIMENT_HOSTILE = 10.0;
+static constexpr double IMPEDIMENT_NEUTRAL = 5.0;
 
-int const A_RANGE = 10;
-double const A_FACTOR = 2.0;
+static constexpr double A_TRAVEL_TIME = 10.0;
 
 struct BaseChange
 {
@@ -222,6 +222,7 @@ void precomputeRouteData();
 void populateImpediments(int factionId);
 void populateAirbases(int factionId);
 void populateAirClusters(int factionId);
+void populateAirCluster(int factionId, int chassisId, int speed);
 void populateSeaTransportWaitTimes(int factionId);
 void populateSeaCombatClusters(int factionId);
 void populateLandCombatClusters(int factionId);
@@ -240,31 +241,29 @@ void populateSharedSeas();
 // Landmark travel time finding algorithm
 // ==================================================
 
-double getVehicleAttackApproachTime(int vehicleId, MAP *dst);
-double getVehicleAttackApproachTime(int vehicleId, MAP *org, MAP *dst);
-double getVehicleApproachTime(int vehicleId, MAP *dst, bool includeDestination);
-double getVehicleApproachTime(int vehicleId, MAP *org, MAP *dst, bool includeDestination);
-double getUnitApproachTime(int factionId, int unitId, MAP *org, MAP *dst, bool includeDestination);
-double getGravshipTravelTime(int speed, MAP *org, MAP *dst, bool includeDestination);
-double getRangedAirTravelTime(int factionId, int chassisId, int speed, MAP *org, MAP *dst, bool includeDestination);
-double getSeaLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
-double getLandLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
-double getLandLMovementCost(int factionId, MovementType movementType, MAP *org, MAP *dst, bool includeDestination);
+double getVehicleApproachTime(int vehicleId, MAP *dst);
+double getVehicleApproachTime(int vehicleId, MAP *org, MAP *dst);
+double getUnitApproachTime(int factionId, int unitId, MAP *org, MAP *dst);
+double getGravshipTravelTime(int speed, MAP *org, MAP *dst);
+double getRangedAirTravelTime(int factionId, int chassisId, int speed, MAP *org, MAP *dst);
+double getSeaLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
+double getLandLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst);
+double getLandLMovementCost(int factionId, MovementType movementType, MAP *org, MAP *dst);
 
-double getUnitTravelTime(int factionId, int unitId, int speed, MAP *org, MAP *dst, bool includeDestination = true);
-double getUnitTravelTime(int factionId, int unitId, MAP *org, MAP *dst, bool includeDestination = true);
-double getVehicleTravelTime(int vehicleId, MAP *org, MAP *dst, bool includeDestination = true);
-double getVehicleTravelTime(int vehicleId, MAP *dst, bool includeDestination = true);
+double getUnitTravelTime(int factionId, int unitId, int speed, MAP *org, MAP *dst, bool attackDestination = true);
+double getUnitTravelTime(int factionId, int unitId, MAP *org, MAP *dst, bool attackDestination = true);
+double getVehicleTravelTime(int vehicleId, MAP *org, MAP *dst, bool attackDestination = true);
+double getVehicleTravelTime(int vehicleId, MAP *dst, bool attackDestination = true);
 
 // ==================================================
 // A* path finding algorithm
 // ==================================================
 
-double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination);
-//double getUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst, bool includeDestination);
-//double getUnitATravelTime(int unitId, MAP *org, MAP *dst, bool includeDestination);
-//double getSeaUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst, bool includeDestination);
-//double getLandUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst, bool includeDestination);
+double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, bool attackDestination);
+//double getUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst, bool attackDestination);
+//double getUnitATravelTime(int unitId, MAP *org, MAP *dst, bool attackDestination);
+//double getSeaUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst, bool attackDestination);
+//double getLandUnitATravelTime(int unitId, int speed, MAP *org, MAP *dst, bool attackDestination);
 //
 //double getVehicleATravelTime(int vehicleId, MAP *org, MAP *dst);
 //double getVehicleATravelTime(int vehicleId, MAP *dst);
@@ -288,6 +287,7 @@ MovementType getVehicleBasicMovementType(int vehicleId);
 MovementType getVehicleMovementType(int vehicleId);
 
 int getAirCluster(int chassisId, int speed, MAP *tile);
+int getUnitAirCluster(int unitId, MAP *tile);
 int getVehicleAirCluster(int vehicleId);
 bool isSameAirCluster(int chassisId, int speed, MAP *tile1, MAP *tile2);
 bool isVehicleSameAirCluster(int vehicleId, MAP *dst);

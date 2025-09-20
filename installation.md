@@ -33,3 +33,8 @@ Copy files from **multiplayer** folder to game directory overriding existing fil
 
 Run terranx_mod.exe
 
+# Preserving user configuration
+
+Program scans "thinker_user.ini" and load configuration from there overriding default one. This file is NOT in the installation specifically because it SHOULD NOT be overwriten by it.
+You need to create your own and copy desired values from default configuration those you want to modify and preserve across releases.
+

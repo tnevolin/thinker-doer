@@ -1603,7 +1603,7 @@ void evaluateDefensiveProbeUnits()
 			if (targetBaseProbeData.isSatisfied(false))
 				continue;
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile, false);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile);
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// probe
@@ -1777,7 +1777,7 @@ void evaluateExpansionUnits()
 			
 			// travel time
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, tile, true);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, tile);
 			
 			// yield score
 			
@@ -2205,7 +2205,7 @@ void evaluateConvoyUnits()
 			
 			// travelTime
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, convoyRequest.tile, true);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, convoyRequest.tile);
 			if (travelTime == INF)
 				continue;
 			
@@ -2586,7 +2586,7 @@ void evaluateBaseDefenseUnits()
 			BasePoliceData &targetBasePoliceData = targetBaseInfo.policeData;
 			CombatData &targetCombatData = targetBaseInfo.combatData;
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile, true);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBaseTile);
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// police
@@ -2598,7 +2598,7 @@ void evaluateBaseDefenseUnits()
 			
 			double combatEffect = targetCombatData.getProtectorUnitMaxEffect(aiFactionId, unitId);
 			double survivalEffect = getSurvivalEffect(combatEffect);
-			double unitProtectionGain = targetCombatData.isSufficientProtection() ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
+			double unitProtectionGain = targetCombatData.isSufficientProtect() ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2739,7 +2739,7 @@ void evaluateBunkerDefenseUnits()
 			MAP *targetBunkerTile = bunkerCombatDataEntry.first;
 			CombatData &targetBunkerCombatData = bunkerCombatDataEntry.second;
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBunkerTile, true);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBunkerTile);
 			if (travelTime == INF)
 				continue;
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
@@ -2748,7 +2748,7 @@ void evaluateBunkerDefenseUnits()
 			
 			double combatEffect = targetBunkerCombatData.getProtectorUnitCurrentEffect(aiFactionId, unitId);
 			double survivalEffect = getSurvivalEffect(combatEffect);
-			double unitProtectionGain = targetBunkerCombatData.isSufficientProtection() ? 0.0 : 0.5 * aiFactionInfo->averageBaseGain * survivalEffect;
+			double unitProtectionGain = targetBunkerCombatData.isSufficientProtect() ? 0.0 : 0.5 * aiFactionInfo->averageBaseGain * survivalEffect;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -3076,7 +3076,7 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			// travel time
 			
-			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, enemyBaseTile, false);
+			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, enemyBaseTile);
 			
 			if (travelTime == INF)
 				continue;

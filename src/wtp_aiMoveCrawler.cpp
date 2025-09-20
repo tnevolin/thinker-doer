@@ -336,7 +336,7 @@ void assignCrawlerOrders()
 			
 			// travel time
 			
-			double travelTime = getVehicleApproachTime(vehicleId, tile, true);
+			double travelTime = getVehicleApproachTime(vehicleId, tile);
 			if (travelTime == INF)
 				continue;
 			

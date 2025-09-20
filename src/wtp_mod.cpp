@@ -1294,7 +1294,7 @@ int calculateNotPrototypedComponentsCost(int factionId, int chassisId, int weapo
 	int weaponPrototyped = 0;
 	int armorPrototyped = 0;
 	
-	for (int unitId : getFactionUnitIds(factionId, true, false))
+	for (int unitId : getDesignedFactionUnitIds(factionId, true, false))
 	{
 		UNIT *unit = getUnit(unitId);
 		

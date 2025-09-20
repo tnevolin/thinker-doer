@@ -40,6 +40,6 @@ MapDoubleValue findClosestMonolith(int vehicleId, int maxSearchRange, bool avoid
 MAP *getSafeLocation(int vehicleId, bool hostile);
 void aiMoveVehicle(int const vehicleId);
 void enemyMoveVehicleUpdateMapData();
-void enemyMoveVehicleUpdateMapDataVehRemoved(int savedVehicleId);
-void enemyMoveVehicleUpdateMapDataVehAdded(int vehicleId);
+//void enemyMoveVehicleUpdateMapDataVehRemoved(int savedVehicleId);
+//void enemyMoveVehicleUpdateMapDataVehAdded(int vehicleId);
 

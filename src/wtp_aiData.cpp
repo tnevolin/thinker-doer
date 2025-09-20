@@ -109,7 +109,6 @@ void Data::clear()
 	production.clear();
 	baseIds.clear();
 	vehicleIds.clear();
-	activeCombatUnitIds.clear();
 	combatVehicleIds.clear();
 	scoutVehicleIds.clear();
 	outsideCombatVehicleIds.clear();
@@ -724,7 +723,7 @@ UnloadRequest::UnloadRequest(int _vehicleId, MAP *_destination, MAP *_unboardLoc
 
 int UnloadRequest::getVehicleId()
 {
-	return getVehicleIdByAIId(this->vehiclePad0);
+	return getVehicleIdByPad0(this->vehiclePad0);
 }
 
 // TransitRequest
@@ -738,7 +737,7 @@ TransitRequest::TransitRequest(int _vehicleId, MAP *_origin, MAP *_destination)
 
 int TransitRequest::getVehicleId()
 {
-	return getVehicleIdByAIId(this->vehiclePad0);
+	return getVehicleIdByPad0(this->vehiclePad0);
 }
 
 void TransitRequest::setSeaTransportVehicleId(int seaTransportVehicleId)
@@ -748,7 +747,7 @@ void TransitRequest::setSeaTransportVehicleId(int seaTransportVehicleId)
 
 int TransitRequest::getSeaTransportVehicleId()
 {
-	return getVehicleIdByAIId(this->seaTransportVehiclePad0);
+	return getVehicleIdByPad0(this->seaTransportVehiclePad0);
 }
 
 bool TransitRequest::isFulfilled()
