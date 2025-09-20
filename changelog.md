@@ -1,3 +1,8 @@
+# Version 389
+
+* Restored "to psych" base indicator when economy is transferred to psych to turn drone into normal under specialist.
+* Energy allocation slider economy-labs imbalance penalty is applied at allocation. It does not affect any further direct contributions from specialist and Network Backbone.
+
 # Version 388
 
 * Psi combat is triggered by psi offense or psi defense regardless of engagement mode (long range firle, missile attack).

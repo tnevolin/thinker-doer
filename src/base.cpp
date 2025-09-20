@@ -1120,6 +1120,30 @@ void __cdecl mod_base_energy() {
     base->unk_total = max(0, min(total_energy - base->psych_total, val_unk));
     base->labs_total = total_energy - base->psych_total - base->economy_total;
 
+    // [WTP]
+    // slider imbalance penalty is applied here to not affect direct contribution from specialists
+    // Apply slider imbalance penalty if SE Efficiency is less than 4
+    int alloc_labs = f->SE_alloc_labs;
+    int alloc_psych = f->SE_alloc_psych;
+    int effic_val = 4 - clamp(f->SE_effic_pending, -4, 4);
+    int psych_val;
+    if (2 * alloc_labs + alloc_psych - 10 < 0) {
+        psych_val = (2 * (5 - alloc_labs) - alloc_psych) / 2;
+    } else {
+        psych_val = (2 * alloc_labs + alloc_psych - 10) / 2;
+    }
+    if (psych_val && effic_val) {
+        int penalty = psych_val * effic_val * 2;
+        if (2 * alloc_labs + alloc_psych <= 10) {
+            base->labs_total = (base->labs_total * (100 - clamp(2 * penalty, 0, 80)) + 50) / 100;
+            base->economy_total = (base->economy_total * (100 - clamp(penalty, 0, 40)) + 50) / 100;
+        } else {
+            base->labs_total = (base->labs_total * (100 - clamp(penalty, 0, 40)) + 50) / 100;
+            base->economy_total = (base->economy_total * (100 - clamp(2 * penalty, 0, 80)) + 50) / 100;
+        }
+    }
+    //
+    
     for (int i = 0; i < base->specialist_total; i++) {
         int citizen_id;
         if (i < MaxBaseSpecNum) {
@@ -1266,6 +1290,10 @@ void __cdecl mod_base_energy() {
             base->labs_total += commerce;
         }
     }
+    
+    // [WTP]
+    // slider imbalance penalty is applied at energy to budget conversion above
+    /*
     // Apply slider imbalance penalty if SE Efficiency is less than 4
     int alloc_labs = f->SE_alloc_labs;
     int alloc_psych = f->SE_alloc_psych;
@@ -1286,6 +1314,9 @@ void __cdecl mod_base_energy() {
             base->economy_total = (base->economy_total * (100 - clamp(2 * penalty, 0, 80)) + 50) / 100;
         }
     }
+    */
+    //
+    
     // Normally Stockpile Energy output would be applied here on base->economy_total
     // To avoid double production issues instead it is calculated in mod_base_production
     if (conf.base_psych) {

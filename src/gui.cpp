@@ -1601,6 +1601,11 @@ void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3,
     BASE* base = &Bases[*CurrentBaseID];
     char buf[StrBufLen] = {};
     if (conf.render_base_info && *CurrentBaseID >= 0) {
+		
+		// [WTP]
+		// energy to psych allocation indication instead
+		
+		/*
         int workers = base->pop_size - base->talent_total - base->drone_total - base->specialist_total;
         int color;
 
@@ -1618,13 +1623,27 @@ void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3,
             strncat(buf, conf.base_psych ? " / B" : " / A", 32);
         }
         Buffer_write_right_l2(This, buf, 690, 423 - 42, LineBufLen);
-
+		*/
+		if (base->pad_7 != 0)
+		{
+			Buffer_set_text_color(This, ColorEnergyLight, a3, a4, a5);
+			snprintf(buf, StrBufLen, label_psych_energy_allocation, base->pad_7);
+			Buffer_write_right_l2(This, buf, 690, 423 - 42, LineBufLen);
+		}
+		Buffer_write_right_l2(This, buf, 690, 423 - 42, LineBufLen);
+		//
+		
+ 		// [WTP]
+ 		// population boom marker is already displayed in the nutrient box
+		
+		/*
         if (base_pop_boom(*CurrentBaseID) && base_unused_space(*CurrentBaseID) > 0) {
             Buffer_set_text_color(This, ColorNutrient, a3, a4, a5);
             snprintf(buf, StrBufLen, "%s", label_pop_boom);
             Buffer_write_right_l2(This, buf, 690, 423 - 21, LineBufLen);
         }
-
+		*/
+		
         if (base->nerve_staple_turns_left > 0) {
             snprintf(buf, StrBufLen, label_nerve_staple, base->nerve_staple_turns_left);
             Buffer_set_text_color(This, ColorEnergy, a3, a4, a5);
@@ -1632,7 +1651,8 @@ void __thiscall BaseWin_draw_energy_set_text_color(Buffer* This, int a2, int a3,
         }
 		
 		// [WTP]
-		// display psych effect
+		// display psych effect if no nerve staple
+		
 		else if (conf.base_psych && conf.base_psych_improved)
 		{
 			int psych_effect = max(0, base->psych_total / conf.base_psych_cost);
