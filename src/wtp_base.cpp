@@ -264,8 +264,14 @@ void __cdecl wtp_mod_base_yield()
 		
 	}
 	
+	// fix rioting in base upkeep states 0,1
+	// state 0 happens during human interactions
+	/*
 	if ((unallocatedWorkers != 0 || manage_workers) && pre_upkeep)
+	*/
+	if ((unallocatedWorkers != 0 || manage_workers) && *BaseUpkeepState != 2)
 	{
+debug(">SE_POLICE_pending = %d\n", Factions[(*CurrentBase)->faction_id].SE_police_pending);flushlog();
 		
 		// fix rioting
 		
@@ -291,15 +297,38 @@ void __cdecl wtp_mod_base_yield()
 			
 			while (base->drone_riots() && choiceCount > 0)
 			{
-				// keep nutrition and support
-
-				if (nutrientSurplus - choices.at(choiceCount - 1).nutrient < 0 || mineralSurplus - choices.at(choiceCount - 1).mineral < 0)
+				// find a worker that can be removed while keeping nutrition and support
+				
+				int removeChoiceIndex = -1;
+				for (int i = choiceCount - 1; i >= 0; i--)
+				{
+debug(">i = %d workedTileIndex = %2d nutrientSurplus = %d choices.at(i).nutrient = %d mineralSurplus = %d choices.at(i).mineral = %d\n", i, choices.at(i).i, nutrientSurplus, choices.at(i).nutrient, mineralSurplus, choices.at(i).mineral);flushlog();
+					if (nutrientSurplus - choices.at(i).nutrient >= 0 && mineralSurplus - choices.at(i).mineral >= 0)
+					{
+						removeChoiceIndex = i;
+						break;
+					}
+					
+				}
+debug(">removeChoiceIndex = %d\n", removeChoiceIndex);flushlog();
+				
+				if (removeChoiceIndex == -1)
 					break;
 				
 				// remove worker and recompute base
 				
-				TileValue &tileValue = choices.at(--choiceCount);
-				
+for (int i = 0; i < (int)choiceCount; i++)
+{
+	debug(">choice.i = %d\n", choices.at(i).i);flushlog();
+}
+				TileValue tileValue = choices.at(removeChoiceIndex);
+				std::move(choices.begin() + removeChoiceIndex + 1, choices.end(), choices.begin() + removeChoiceIndex);
+				choiceCount--;
+for (int i = 0; i < (int)choiceCount; i++)
+{
+	debug(">choice.i = %d\n", choices.at(i).i);flushlog();
+}
+
 				nutrientIntake -= tileValue.nutrient;
 				mineralIntake -= tileValue.mineral;
 				energyIntake -= tileValue.energy;

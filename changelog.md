@@ -1,3 +1,13 @@
+# Version 390
+
+* Base manages worker with following priorities in mind:
+  1. sufficient nutrition
+  2. sufficient support
+  3. avoid drone riot by turning advanced specialists to doctors
+  4. avoid drone riot by turning workers to doctors
+
+This is an improvement to previous algorithm allowing more flexible worker removal selection.
+
 # Version 389
 
 * Restored "to psych" base indicator when economy is transferred to psych to turn drone into normal under specialist.
