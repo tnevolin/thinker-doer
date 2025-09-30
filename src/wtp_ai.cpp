@@ -1425,6 +1425,8 @@ void populateFactionInfos()
 {
 	Profiling::start("populateFactionInfos", "populateAIData");
 	
+	debug("populateFactionInfos - %s\n", aiMFaction->noun_faction);
+	
 	aiData.maxConOffenseValue = 0;
 	aiData.maxConDefenseValue = 0;
 	
@@ -1661,6 +1663,40 @@ void populateFactionInfos()
 		
 		std::copy(std::begin(faction.diplo_status), std::end(faction.diplo_status), std::begin(factionInfo.diplo_status));
 		
+		// units
+		
+		for (int unitId : getDesignedFactionUnitIds(factionId, true, true))
+		{
+			// available
+			
+			factionInfo.availableUnitIds.push_back(unitId);
+			
+			// buildable (not obsolete)
+			
+			if (!isUnitObsolete(unitId, aiFactionId))
+			{
+				factionInfo.buildableUnitIds.push_back(unitId);
+			}
+			
+		}
+		
+		if (DEBUG)
+		{
+			debug("\tavailableUnitIds\n");
+			for (int unitId : factionInfo.availableUnitIds)
+			{
+				debug("\t\t[%4d] %-32s\n", unitId, Units[unitId].name);
+			}
+			
+			debug("\tbuildableUnitIds\n");
+			for (int unitId : factionInfo.buildableUnitIds)
+			{
+				debug("\t\t[%4d] %-32s\n", unitId, Units[unitId].name);
+			}
+			
+		}
+	
+debug(">factionInfos.at(aiFactionId).availableUnitIds.size()=%d\n", aiData.factionInfos.at(factionId).availableUnitIds.size());flushlog();
 	}
 	
 	// average conventional values
@@ -1786,7 +1822,7 @@ void populatePlayerGlobalVariables()
 	
 	aiData.police2xUnitAvailable = false;
 	
-	for (int unitId : aiData.unitIds)
+	for (int unitId : aiFactionInfo->availableUnitIds)
 	{
 		// police2xUnit
 		
@@ -1977,7 +2013,6 @@ void populateUnits()
 	
 	debug("populateUnits - %s\n", getMFaction(aiFactionId)->noun_faction);
 	
-	aiData.unitIds.clear();
 	aiData.colonyUnitIds.clear();
 	aiData.formerUnitIds.clear();
 	aiData.landColonyUnitIds.clear();
@@ -1990,17 +2025,13 @@ void populateUnits()
 	aiData.seaAndAirCombatUnitIds.clear();
 	aiData.airCombatUnitIds.clear();
 	
-    for (int unitId : getDesignedFactionUnitIds(aiFactionId, true, true))
+    for (int unitId : aiFactionInfo->availableUnitIds)
 	{
 		UNIT *unit = &(Units[unitId]);
 		int unitOffenseValue = getUnitOffenseValue(unitId);
 		int unitDefenseValue = getUnitDefenseValue(unitId);
 		
 		debug("\t[%3d] %-32s\n", unitId, unit->name);
-		
-		// add unit
-		
-		aiData.unitIds.push_back(unitId);
 		
 		// add colony units
 		
@@ -2198,6 +2229,10 @@ void populateVehicles()
 		int vehicleLandTransportedCluster = getLandTransportedCluster(vehicleTile);
 		int vehicleSeaCluster = getSeaCluster(vehicleTile);
 		
+		// store all vehicle current id in pad_0 field
+
+		vehicle->pad_0 = vehicleId;
+
 		// further process only own vehicles
 		
 		if (vehicle->faction_id != aiFactionId)
@@ -3029,9 +3064,9 @@ void computeCombatEffects()
 	
 	CombatEffectData &combatEffectData = aiData.combatEffectData;
 	
-	robin_hood::unordered_flat_set<int> &rivalFactionIds = aiData.rivalFactionIds;
-	robin_hood::unordered_flat_set<int> &unfriendlyFactionIds = aiData.unfriendlyFactionIds;
-	robin_hood::unordered_flat_set<int> &hostileFactionIds = aiData.hostileFactionIds;
+	std::vector<int> &rivalFactionIds = aiData.rivalFactionIds;
+	std::vector<int> &unfriendlyFactionIds = aiData.unfriendlyFactionIds;
+	std::vector<int> &hostileFactionIds = aiData.hostileFactionIds;
 	std::array<FactionInfo, MaxPlayerNum> &factionInfos = aiData.factionInfos;
 	
 	rivalFactionIds.clear();
@@ -3039,7 +3074,6 @@ void computeCombatEffects()
 	hostileFactionIds.clear();
 	for (FactionInfo &factionInfo : factionInfos)
 	{
-		factionInfo.unitIds.clear();
 		factionInfo.combatUnitIds.clear();
 		factionInfo.combatVehicleIds.clear();
 	}
@@ -3053,22 +3087,20 @@ void computeCombatEffects()
 		if (factionId == aiFactionId)
 			continue;
 		
-		rivalFactionIds.insert(factionId);
-		
-		// exclude pact faction
-		
-		if (isPact(aiFactionId, factionId))
-			continue;
+		rivalFactionIds.push_back(factionId);
 		
 		// add unfriendly faction
 		
-		unfriendlyFactionIds.insert(factionId);
+		if (isUnfriendly(aiFactionId, factionId))
+		{
+			unfriendlyFactionIds.push_back(factionId);
+		}
 		
 		// add hostile faction if hostile
 		
 		if (isHostile(aiFactionId, factionId))
 		{
-			hostileFactionIds.insert(factionId);
+			hostileFactionIds.push_back(factionId);
 		}
 		
 	}
@@ -3079,17 +3111,13 @@ void computeCombatEffects()
 	{
 		FactionInfo &factionInfo = factionInfos.at(factionId);
 		
-		for (int unitId : getActiveFactionUnitIds(factionId))
+		for (int unitId : factionInfo.availableUnitIds)
 		{
-			// add to all list
-			
-			factionInfo.unitIds.insert(unitId);
-			
 			// add to combat list
 			
 			if (isCombatUnit(unitId))
 			{
-				factionInfo.combatUnitIds.insert(unitId);
+				factionInfo.combatUnitIds.push_back(unitId);
 			}
 			
 		}
@@ -3107,7 +3135,7 @@ void computeCombatEffects()
 		
 		if (isCombatVehicle(vehicleId))
 		{
-			factionInfos.at(factionId).combatVehicleIds.insert(vehicleId);
+			factionInfos.at(factionId).combatVehicleIds.push_back(vehicleId);
 		}
 		
 	}
@@ -3116,11 +3144,12 @@ void computeCombatEffects()
 	
 	combatEffectData.combatModeEffects.clear();
 	
-	for (int ownUnitId : factionInfos.at(aiFactionId).unitIds)
+debug(">factionInfos.at(aiFactionId).availableUnitIds.size()=%d\n", factionInfos.at(aiFactionId).availableUnitIds.size());flushlog();
+	for (int ownUnitId : factionInfos.at(aiFactionId).availableUnitIds)
 	{
 		for (int foeFactionId : rivalFactionIds)
 		{
-			for (int foeUnitId : factionInfos.at(foeFactionId).unitIds)
+			for (int foeUnitId : factionInfos.at(foeFactionId).availableUnitIds)
 			{
 				// calculate how many foe units our unit can destroy in melee attack
 				
@@ -3206,7 +3235,7 @@ void computeCombatEffects()
 	{
 		debug("combatEffects - %s\n", aiMFaction->noun_faction);
 		
-		for (int ownUnitId : std::set<int>(factionInfos.at(aiFactionId).unitIds.begin(), factionInfos.at(aiFactionId).unitIds.end()))
+		for (int ownUnitId : factionInfos.at(aiFactionId).availableUnitIds)
 		{
 			debug("\t[%3d] %-32s\n", ownUnitId, getUnit(ownUnitId)->name);
 			
@@ -3214,7 +3243,7 @@ void computeCombatEffects()
 			{
 				debug("\t\t%-24s\n", getMFaction(foeFactionId)->noun_faction);
 				
-				for (int foeUnitId : std::set<int>(factionInfos.at(foeFactionId).unitIds.begin(), factionInfos.at(foeFactionId).unitIds.end()))
+				for (int foeUnitId : factionInfos.at(foeFactionId).availableUnitIds)
 				{
 					debug("\t\t\t[%3d] %-32s\n", foeUnitId, getUnit(foeUnitId)->name);
 					
@@ -3979,7 +4008,7 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 	Profiling::start("evaluateBaseDefense", "populateAIData");
 	
 	std::array<FactionInfo, MaxPlayerNum> &factionInfos = aiData.factionInfos;
-	robin_hood::unordered_flat_set<int> const &unfriendlyFactionIds = aiData.unfriendlyFactionIds;
+	std::vector<int> const &unfriendlyFactionIds = aiData.unfriendlyFactionIds;
 	
 	// evaluate base threat
 
@@ -4235,9 +4264,9 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 		
 		for (int foeUnitId : factionInfos.at(foeFactionId).combatUnitIds)
 		{
-			// exclude alien spore launchers and fungal tower
+			// exclude fungal tower
 			
-			if (foeFactionId == 0 && (foeUnitId == BSC_SPORE_LAUNCHER || foeUnitId == BSC_FUNGAL_TOWER))
+			if (foeFactionId == 0 && foeUnitId == BSC_FUNGAL_TOWER)
 				continue;
 			
 			// not present in threat
@@ -4254,37 +4283,91 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 		
 	}
 	
-	// select neutral faction to beware of
+	// leave only strongest neutral faction
 	
-	int watchedNeutralFactionId = -1;
-	double watchedNeutralFactionWeight = 0.0;
+	int strongestNeutralFactionId = -1;
+	double strongestNeutralFactionWeight = 0.0;
+	
 	for (int foeFactionId : unfriendlyFactionIds)
 	{
+		// neutral
+		
 		if (!isNeutral(aiFactionId, foeFactionId))
 			continue;
 		
+		// update strongest faction
+		
 		double foeFactionWeight = foeFactionWeights.at(foeFactionId);
-		if (foeFactionWeight > watchedNeutralFactionWeight)
+		
+		if (foeFactionWeight > strongestNeutralFactionWeight)
 		{
-			watchedNeutralFactionId = foeFactionId;
-			watchedNeutralFactionWeight = foeFactionWeight;
+			strongestNeutralFactionId = foeFactionId;
+			strongestNeutralFactionWeight = foeFactionWeight;
 		}
 		
 	}
 	
-	// clear weights of all other neutral factions besides watched one
-	
 	for (int foeFactionId : unfriendlyFactionIds)
 	{
+		// neutral
+		
 		if (!isNeutral(aiFactionId, foeFactionId))
 			continue;
 		
-		if (foeFactionId == watchedNeutralFactionId)
+		// exclude strongest
+		
+		if (foeFactionId == strongestNeutralFactionId)
 			continue;
 		
-		for (robin_hood::pair<int, double> &foeUnitWeightEntry : foeUnitWeights.at(foeFactionId))
+		// clear this faction unit weights
+		
+		foeUnitWeights.at(foeFactionId).clear();
+		foeFactionWeights.at(foeFactionId) = 0.0;
+		
+	}
+	
+	// do not reduce threat based on enemy slowing down each other because that what mutual impediment does
+	
+	// reduce alien weight to be not additive to combined threat because they fight everybody
+	
+	double alienThreat = foeFactionWeights.at(0);
+	
+	if (alienThreat > 0.0)
+	{
+		double combinedThreat = 0.0;
+		
+		for (int foeFactionId : unfriendlyFactionIds)
 		{
-			foeUnitWeightEntry.second = 0.0;
+			// not alien
+			
+			if (foeFactionId == 0)
+				continue;
+			
+			combinedThreat += foeFactionWeights.at(foeFactionId);
+			
+		}
+		
+		double alienCoefficient = combinedThreat <= 0.0 ? 1.0 : alienThreat < combinedThreat ? 0.0 : (alienThreat - combinedThreat) / alienThreat;
+		
+		
+		robin_hood::unordered_flat_map<int, double> &foeFactionUnitWeights = foeUnitWeights.at(0);
+		
+		for (int foeUnitId : factionInfos.at(0).combatUnitIds)
+		{
+			// exclude fungal tower
+			
+			if (foeUnitId == BSC_FUNGAL_TOWER)
+				continue;
+			
+			// not present in threat
+			
+			if (foeFactionUnitWeights.find(foeUnitId) == foeFactionUnitWeights.end())
+				continue;
+			
+			// reduce weight
+			
+			foeFactionUnitWeights.at(foeUnitId) *= alienCoefficient;
+			
 		}
 		
 	}
@@ -4856,7 +4939,7 @@ void designUnits()
 	
 	int tranceScoutPatrolUnitId = -1;
 	
-	for (int unitId : getDesignedFactionUnitIds(aiFactionId, true, false))
+	for (int unitId : aiFactionInfo->availableUnitIds)
 	{
 		UNIT *unit = getUnit(unitId);
 		int unitOffenseValue = getUnitOffenseValue(unitId);
@@ -5072,16 +5155,16 @@ int getFactionMaxConOffenseValue(int factionId)
 {
 	int bestWeaponOffenseValue = 0;
 
-	for (int unitId : getDesignedFactionUnitIds(factionId, false, true))
+	for (int unitId : getDesignedFactionUnitIds(factionId, true, true))
 	{
 		UNIT *unit = &(Units[unitId]);
 
-		// skip non combat units
+		// combat
 
 		if (!isCombatUnit(unitId))
 			continue;
 
-		// get weapon offense value
+		// weapon offense value
 
 		int weaponOffenseValue = Weapon[unit->weapon_id].offense_value;
 
@@ -5099,7 +5182,7 @@ int getFactionMaxConDefenseValue(int factionId)
 {
 	int bestArmorDefenseValue = 0;
 
-	for (int unitId : getDesignedFactionUnitIds(factionId, false, true))
+	for (int unitId : getDesignedFactionUnitIds(factionId, true, true))
 	{
 		UNIT *unit = &(Units[unitId]);
 
@@ -8944,7 +9027,7 @@ double getSurvivalEffect(double combatEffect)
 	{
 		survivalEffect = (2.0) * (combatEffect);
 	}
-	else if (combatEffect >= DBL_MAX )
+	else if (combatEffect >= DBL_MAX)
 	{
 		survivalEffect = DBL_MAX;
 	}

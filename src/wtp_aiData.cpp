@@ -112,7 +112,6 @@ void Data::clear()
 	combatVehicleIds.clear();
 	scoutVehicleIds.clear();
 	outsideCombatVehicleIds.clear();
-	unitIds.clear();
 	combatUnitIds.clear();
 	landColonyUnitIds.clear();
 	seaColonyUnitIds.clear();

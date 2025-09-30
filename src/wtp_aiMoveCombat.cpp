@@ -2268,7 +2268,7 @@ void populateProtectorTasks(std::vector<CombatAction> &taskPriorities)
 			
 			// vehicle effect
 			
-			double vehicleEffect = baseInfo.combatData.getProtectorVehicleMaxEffect(vehicleId);
+			double vehicleEffect = baseInfo.combatData.getProtectorVehicleEffect(vehicleId);
 			
 			// get travel time and coresponding coefficient
 			

@@ -226,7 +226,7 @@ size_t const ATTACK_TRIAD_COUNT = ATTACK_TRIAD_PSI + 1;
 std::array<AttackTriad, ATTACK_TRIAD_COUNT> const ATTACK_TRIADS = {ATTACK_TRIAD_LAND, ATTACK_TRIAD_SEA, ATTACK_TRIAD_AIR, ATTACK_TRIAD_PSI, };
 
 /// alien units
-const robin_hood::unordered_flat_set<int> ALIEN_UNITS
+const std::vector<int> ALIEN_UNITS
 {
     BSC_MIND_WORMS,
     BSC_ISLE_OF_THE_DEEP,
@@ -1000,9 +1000,7 @@ std::vector<MAP *> getBaseWorkedTiles(int baseId);
 int getBaseWorkerCount(int baseId);
 bool isBaseWorkedTile(int baseId, int x, int y);
 bool isBaseWorkedTile(int baseId, MAP *tile);
-robin_hood::unordered_flat_set<int> getDesignedFactionUnitIds(int factionId, bool includeObsolete, bool includeNotPrototyped);
-robin_hood::unordered_flat_set<int> getActiveFactionUnitIds(int factionId);
-int getFactionFastestFormerUnitId(int factionId);
+std::vector<int> getDesignedFactionUnitIds(int factionId, bool includeObsolete, bool includeNotPrototyped);
 bool isVehicleNativeLand(int vehicleId);
 bool isBaseBuildingColony(int baseId);
 int getFacilityPopulationLimit(int factionId, int facilityId);

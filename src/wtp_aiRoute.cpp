@@ -498,7 +498,7 @@ void populateAirClusters(int factionId)
 	
 	robin_hood::unordered_flat_map<int, robin_hood::unordered_flat_set<int>> speeds;
 	
-	for (int unitId : getActiveFactionUnitIds(factionId))
+	for (int unitId : aiData.factionInfos.at(factionId).availableUnitIds)
 	{
 		UNIT *unit = getUnit(unitId);
 		int chassisId = unit->chassis_id;
@@ -2792,7 +2792,7 @@ double getSeaLApproachTime(int factionId, MovementType movementType, int speed, 
 
 double getLandLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst)
 {
-	debug("getLandLApproachTime( factionId=%d movementType=%d speed=%d org=%s dst=%s )\n", factionId, movementType, speed, getLocationString(org).c_str(), getLocationString(dst).c_str());
+//	debug("getLandLApproachTime( factionId=%d movementType=%d speed=%d org=%s dst=%s )\n", factionId, movementType, speed, getLocationString(org).c_str(), getLocationString(dst).c_str());
 	
 	Profiling::start("- getLandLApproachTime");
 	
@@ -2874,7 +2874,6 @@ double getLandLApproachTime(int factionId, MovementType movementType, int speed,
 		}
 		
 		double landmarkTravelTime = abs(dstLandmarkTravelTime - orgLandmarkTravelTime);
-debug("landmark=%s orgLandmarkTravelTime=%5.2f dstLandmarkTravelTime=%5.2f landmarkTravelTime=%5.2f\n", getLocationString(landmark.tileIndex).c_str(), orgLandmarkTravelTime, dstLandmarkTravelTime, landmarkTravelTime);
 		
 		// update max
 		

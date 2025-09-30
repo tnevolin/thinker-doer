@@ -496,9 +496,10 @@ struct FactionInfo
 	
 	int totalVendettaCount; // excluding aliens and player
 	double productionPower;
-	robin_hood::unordered_flat_set<int> unitIds;
-	robin_hood::unordered_flat_set<int> combatUnitIds;
-	robin_hood::unordered_flat_set<int> combatVehicleIds;
+	std::vector<int> availableUnitIds;
+	std::vector<int> buildableUnitIds;
+	std::vector<int> combatUnitIds;
+	std::vector<int> combatVehicleIds;
 	
 	// diplomacy
 	
@@ -796,9 +797,9 @@ struct Data
 	double stealingTechnologyGain;
 	double cachingArtifactGain;
 	std::array<double, MaxProtoNum> unitDestructionGains;
-	robin_hood::unordered_flat_set<int> rivalFactionIds;
-	robin_hood::unordered_flat_set<int> unfriendlyFactionIds;
-	robin_hood::unordered_flat_set<int> hostileFactionIds;
+	std::vector<int> rivalFactionIds;
+	std::vector<int> unfriendlyFactionIds;
+	std::vector<int> hostileFactionIds;
 	// each to each unit combat effects
 	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][combatMode] = combatEffect
 	CombatEffectData combatEffectData;
@@ -837,7 +838,6 @@ struct Data
 	std::vector<int> combatVehicleIds;
 	std::vector<int> scoutVehicleIds;
 	std::vector<int> outsideCombatVehicleIds;
-	std::vector<int> unitIds;
 	std::vector<int> combatUnitIds;
 	std::vector<int> colonyUnitIds;
 	std::vector<int> formerUnitIds;

@@ -35,8 +35,8 @@ struct CombatEffectData
 struct CombatData
 {
 	CombatEffectData combatEffectData;
-	robin_hood::unordered_flat_map<int, double> assailantMaxEffects;
-	robin_hood::unordered_flat_map<int, double> protectorMaxEffects;
+	robin_hood::unordered_flat_map<int, double> assailantEffects;
+	robin_hood::unordered_flat_map<int, double> protectorEffects;
 	
 	bool initialProtectorWeightComputed = true;
 	bool initialAssailantWeightComputed = true;
@@ -53,6 +53,11 @@ struct CombatData
 	robin_hood::unordered_flat_map<int, double> assailants;
 	// protectorWeights [FactionUnitKey]
 	robin_hood::unordered_flat_map<int, double> protectors;
+	
+	// assailantWeights [FactionUnitKey]
+	robin_hood::unordered_flat_map<int, double> remainingAssailants;
+	// protectorWeights [FactionUnitKey]
+	robin_hood::unordered_flat_map<int, double> remainingProtectors;
 	
 	void initialize(robin_hood::unordered_flat_map<int, std::vector<int>> const &assailantFactionUnitIds, robin_hood::unordered_flat_map<int, std::vector<int>> const &protectorFactionUnitIds, MAP *tile);
 	
@@ -75,10 +80,10 @@ struct CombatData
 	double getAssailantPrevalence();
 	double getProtectorPrevalence();
 	
-	double getAssailantUnitMaxEffect(int factionId, int unitId);
-	double getProtectorUnitMaxEffect(int factionId, int unitId);
-	double getProtectorVehicleMaxEffect(int vehicleId);
-	double getAssailantVehicleMaxEffect(int vehicleId);
+	double getAssailantUnitEffect(int factionId, int unitId);
+	double getProtectorUnitEffect(int factionId, int unitId);
+	double getProtectorVehicleEffect(int vehicleId);
+	double getAssailantVehicleEffect(int vehicleId);
 	
 	double getAssailantUnitCurrentEffect(int factionId, int unitId);
 	double getProtectorUnitCurrentEffect(int factionId, int unitId);

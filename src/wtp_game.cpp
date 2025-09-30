@@ -2447,9 +2447,9 @@ bool isBaseWorkedTile(int baseId, MAP *tile)
 /**
 Returns faction designed units.
 */
-robin_hood::unordered_flat_set<int> getDesignedFactionUnitIds(int factionId, bool includeObsolete, bool includeNotPrototyped)
+std::vector<int> getDesignedFactionUnitIds(int factionId, bool includeObsolete, bool includeNotPrototyped)
 {
-	robin_hood::unordered_flat_set<int> designedFactionUnitIds;
+	std::vector<int> designedFactionUnitIds;
 	
 	// alien units are always the same
 	
@@ -2479,66 +2479,12 @@ robin_hood::unordered_flat_set<int> getDesignedFactionUnitIds(int factionId, boo
 		
 		// add unit
 		
-		designedFactionUnitIds.insert(unitId);
+		designedFactionUnitIds.push_back(unitId);
 		
 	}
 	
 	return designedFactionUnitIds;
 	
-}
-
-/**
-Returns operable faction units: 1) designed, 2) in service
-*/
-robin_hood::unordered_flat_set<int> getActiveFactionUnitIds(int factionId)
-{
-	robin_hood::unordered_flat_set<int> activeFactionUnitIds = getDesignedFactionUnitIds(factionId, true, true);
-	
-	// iterate vehicles
-	
-    for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-	{
-		VEH &vehicle = Vehs[vehicleId];
-		
-		if (vehicle.faction_id != factionId)
-			continue;
-		
-		activeFactionUnitIds.insert(vehicle.unit_id);
-		
-	}
-	
-	return activeFactionUnitIds;
-	
-}
-
-/*
-Returns fastest former unit.
-*/
-int getFactionFastestFormerUnitId(int factionId)
-{
-	int fastestFormerUnitId = BSC_FORMERS;
-	int fastestFormerUnitChassisSpeed = 1;
-
-    for (int unitId : getDesignedFactionUnitIds(factionId, false, false))
-	{
-        UNIT *unit = getUnit(unitId);
-        int unitChassisSpeed = unit->speed();
-
-		// former
-
-		if (!isFormerUnit(unitId))
-			continue;
-
-		if (unitChassisSpeed > fastestFormerUnitChassisSpeed)
-		{
-			fastestFormerUnitId = unitId;
-			fastestFormerUnitChassisSpeed = unitChassisSpeed;
-		}
-
-	}
-
-	return fastestFormerUnitId;
-
 }
 
 /*
@@ -8067,9 +8013,21 @@ bool isUnitObsolete(int unitId, int factionId)
 {
 	return (Units[unitId].obsolete_factions & (0x1 << factionId)) != 0;
 }
+/*
+Faction can use this unit in the field.
+*/
 bool isUnitAvailable(int unitId, int factionId)
 {
-	return has_tech(Units[unitId].preq_tech, factionId) && Units[unitId].is_active();
+	UNIT &unit = Units[unitId];
+	
+	// unit should be active and predefined unit should be also unlocked
+	
+	return
+		unit.is_active()
+		&&
+		(unitId < MaxProtoFactionNum ? has_tech(unit.preq_tech, factionId) : true)
+	;
+
 }
 bool isUnitPsiOffense(int unitId)
 {

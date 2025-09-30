@@ -1576,7 +1576,7 @@ void evaluateDefensiveProbeUnits()
 	
 	// scan combat units for protection
 	
-	for (int unitId : aiData.unitIds)
+	for (int unitId : aiFactionInfo->buildableUnitIds)
 	{
 		UNIT *unit = getUnit(unitId);
 		
@@ -2166,7 +2166,7 @@ void evaluateConvoyUnits()
 	
 	// process available supply units
 	
-	for (int unitId : aiData.unitIds)
+	for (int unitId : aiFactionInfo->buildableUnitIds)
 	{
 		UNIT *unit = getUnit(unitId);
 		int triad = unit->triad();
@@ -2597,8 +2597,7 @@ void evaluateBaseDefenseUnits()
 			// protection
 			
 			double combatEffect = targetCombatData.getProtectorUnitMaxEffect(aiFactionId, unitId);
-			double survivalEffect = getSurvivalEffect(combatEffect);
-			double unitProtectionGain = targetCombatData.isSufficientProtect() ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
+			double unitProtectionGain = targetCombatData.isSufficientProtect() ? 0.0 : aiFactionInfo->averageBaseGain;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2625,7 +2624,6 @@ void evaluateBaseDefenseUnits()
 				" policeGain=%5.2f"
 				" ai_production_base_protection_priority=%5.2f"
 				" combatEffect=%5.2f"
-				" survivalEffect=%5.2f"
 				" unitProtectionGain=%5.2f"
 				" protectionGain=%5.2f"
 				" upkeepGain=%5.2f"
@@ -2640,7 +2638,6 @@ void evaluateBaseDefenseUnits()
 				, policeGain
 				, conf.ai_production_base_protection_priority
 				, combatEffect
-				, survivalEffect
 				, unitProtectionGain
 				, protectionGain
 				, upkeepGain
@@ -3276,59 +3273,6 @@ void evaluateSeaTransport()
 	
 }
 
-int findNativeAttackerUnit(bool ocean)
-{
-    int bestUnitId = -1;
-    double bestUnitEffectiveness = 0.0;
-
-    for (int unitId : aiData.unitIds)
-	{
-		UNIT *unit = &(Units[unitId]);
-
-		// skip wrong triad
-
-		if (!(unit->triad() == (ocean ? TRIAD_SEA : TRIAD_LAND)))
-			continue;
-
-		// skip not scout
-
-		if (!isScoutUnit(unitId))
-			continue;
-
-		// prefer empath unit
-
-		double effectiveness;
-
-		if (unit_has_ability(unitId, ABL_EMPATH))
-		{
-			effectiveness = 1.5;
-		}
-		else
-		{
-			effectiveness = 1.0;
-		}
-
-		// prefer fast unit after turn 100
-
-		if (*CurrentTurn > 50)
-		{
-			effectiveness *= (double)unit->speed();
-		}
-
-		// update best
-
-		if (bestUnitId == -1 || effectiveness > bestUnitEffectiveness)
-		{
-			bestUnitId = unitId;
-			bestUnitEffectiveness = effectiveness;
-		}
-
-	}
-
-    return bestUnitId;
-
-}
-
 int findScoutUnit(int triad)
 {
 	int bestUnitId = -1;
@@ -3411,50 +3355,6 @@ bool canBaseProduceColony(int baseId)
 	
 	return true;
 	
-}
-
-int findFormerUnit(int triad)
-{
-	int bestUnitId = -1;
-	double bestUnitValue = -1;
-
-	for (int unitId : aiData.unitIds)
-	{
-		UNIT *unit = &(Units[unitId]);
-
-		// formers only
-
-		if (!isFormerUnit(unitId))
-			continue;
-
-		// given triad only or air
-
-		if (!(unit_triad(unitId) == TRIAD_AIR || unit_triad(unitId) == triad))
-			continue;
-
-		// calculate value
-
-		double unitTerraformingSpeedValue =
-			(unit_has_ability(unitId, ABL_FUNGICIDAL) ? 1.2 : 1.0)
-			*
-			(unit_has_ability(unitId, ABL_SUPER_TERRAFORMER) ? 2.5 : 1.0)
-		;
-		double unitNativeProtectionValue = (unit_has_ability(unitId, ABL_TRANCE) ? 2.0 : 1.0);
-		double unitChassisSpeedValue = 1.0 + (double)(unit_chassis_speed(unitId) - 1) * 1.5;
-		double unitValue = unitTerraformingSpeedValue * unitNativeProtectionValue * unitChassisSpeedValue / (double)unit->cost;
-
-		// find best unit
-
-		if (bestUnitId == -1 || unitValue > bestUnitValue)
-		{
-			bestUnitId = unitId;
-			bestUnitValue = unitValue;
-		}
-
-	}
-
-	return bestUnitId;
-
 }
 
 int getRegionBasesMaxMineralSurplus(int factionId, int region)
@@ -3569,98 +3469,6 @@ bool isMilitaryItem(int item)
 	{
 		return false;
 	}
-
-}
-
-int selectAlienProtectorUnit()
-{
-	int bestUnitId = -1;
-	int bestUnitTrance = 0;
-	int bestUnitCost = INT_MAX;
-
-	for (int unitId : aiData.unitIds)
-	{
-		UNIT *unit = &(Units[unitId]);
-
-		// exclude not infantry
-
-		if (unit->chassis_id != CHS_INFANTRY)
-			continue;
-
-		// get trance
-
-		int trance = (isUnitHasAbility(unitId, ABL_TRANCE) ? 1 : 0);
-
-		// get cost
-
-		int cost = unit->cost;
-
-		// update best
-
-		if
-		(
-			(trance > bestUnitTrance)
-			||
-			(trance == bestUnitTrance && cost < bestUnitCost)
-		)
-		{
-			bestUnitId = unitId;
-			bestUnitTrance = trance;
-			bestUnitCost = cost;
-		}
-
-	}
-
-	return bestUnitId;
-
-}
-
-int findTransportUnit()
-{
-	int bestUnitId = -1;
-	double bestUnitEffectiveness = 0.0;
-
-	for (int unitId : aiData.unitIds)
-	{
-		UNIT *unit = &(Units[unitId]);
-		int triad = unit->triad();
-
-		// sea
-
-		if (triad != TRIAD_SEA)
-			continue;
-
-		// transport
-
-		if (!isTransportUnit(unitId))
-			continue;
-
-		// calculate effectiveness
-
-		double effectiveness = 1.0;
-
-		// faster unit
-
-		effectiveness *= unit->speed();
-
-		// more capacity unit
-
-		if (unit_has_ability(unitId, ABL_HEAVY_TRANSPORT))
-		{
-			effectiveness *= 1.5;
-		}
-
-		// update best
-
-		if (bestUnitId == -1 || effectiveness > bestUnitEffectiveness)
-		{
-			bestUnitId = unitId;
-			bestUnitEffectiveness = effectiveness;
-		}
-
-	}
-
-	return bestUnitId;
 
 }
 
