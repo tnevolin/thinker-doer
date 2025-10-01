@@ -1,3 +1,5 @@
+#include "wtp_mod.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +12,6 @@
 #include "patch.h"
 #include "wtp_terranx.h"
 #include "wtp_game.h"
-#include "wtp_mod.h"
 #include "wtp_ai.h"
 #include "wtp_aiMove.h"
 
@@ -4187,6 +4188,186 @@ int __cdecl wtp_mod_alien_veh_init(int unitId, int factionId, int x, int y)
 	// execute original code
 	
 	return veh_init(unitId, factionId, x, y);
+	
+}
+
+/*
+Adjusts energy allocation to maximize an effect.
+*/
+void wtp_mod_social_ai(int factionId)
+{
+	Profiling::start("- wtp_mod_social_ai");
+	
+	debug("wtp_mod_social_ai - %s\n", MFactions[factionId].noun_faction);
+	
+	Faction &faction = Factions[factionId];
+	
+	// evaluate best psych allocation
+	
+	int oldPsychAllocation = faction.SE_alloc_psych;
+	int oldLabsAllocation = faction.SE_alloc_labs;
+	
+	debug
+	(
+		"\told allocation={%d,%d,%d}"
+		"\n"
+		, 10 - oldPsychAllocation - oldLabsAllocation
+		, oldPsychAllocation
+		, oldLabsAllocation
+	);
+	
+	int newPsychAllocation = oldPsychAllocation;
+	int newLabsAllocation = oldLabsAllocation;
+	double bestScore = 0.0;
+	
+	for (int psychAllocationChange = -1; psychAllocationChange <= +1; psychAllocationChange++)
+	{
+		for (int labsAllocationChange = -1; labsAllocationChange <= +1; labsAllocationChange++)
+		{
+			int psychAllocation;
+			int labsAllocation;
+			
+			// compute modified allocation
+			
+			psychAllocation = oldPsychAllocation + psychAllocationChange;
+			labsAllocation = oldLabsAllocation + labsAllocationChange;
+			
+			if (psychAllocation < 0 || psychAllocation > 10 || labsAllocation < 0 || labsAllocation > 10)
+				continue;
+			
+			// compute bases
+			
+			faction.SE_alloc_psych = psychAllocation;
+			faction.SE_alloc_labs = labsAllocation;
+			
+			for (int baseId = 0; baseId < *BaseCount; baseId++)
+			{
+				BASE &base = Bases[baseId];
+				
+				if (base.faction_id != factionId)
+					continue;
+				
+				computeBase(baseId, true);
+				
+			}
+			
+			energy_compute(factionId, 0);
+			
+			// avoid negative net income
+			
+			if (*net_income < 0)
+				continue;
+			
+			// evaluate effect score
+			
+			int totalNutrient = 0;
+			int totalMineral = 0;
+			int totalEconomy = 0;
+			int totalPsych = 0;
+			int totalLabs = 0;
+			int totalBudget = 0;
+			int totalDoctorCount = 0;
+			
+			for (int baseId = 0; baseId < *BaseCount; baseId++)
+			{
+				BASE &base = Bases[baseId];
+				
+				if (base.faction_id != factionId)
+					continue;
+				
+				totalNutrient += base.nutrient_surplus;
+				totalMineral += base.mineral_surplus;
+				totalEconomy += base.economy_total;
+				totalPsych += base.psych_total;
+				totalLabs += base.labs_total;
+				totalBudget += base.economy_total + base.labs_total;
+				totalDoctorCount += getBaseDoctorCount(baseId);
+				
+			}
+			
+			// how many credits one lab is worth
+			
+			double totalLabsWorth =
+				(double) totalLabs
+				*
+				(
+					conf.flat_hurry_cost ?
+						conf.lab_mineral_worth * conf.flat_hurry_cost_multiplier_facility
+						:
+						1.0
+				)
+			;
+			
+			double score = getResourceScore((double) totalNutrient, (double) totalMineral, (double) totalEconomy + totalLabsWorth);
+			
+			debug
+			(
+				"\tallocation={%d,%d,%d}"
+				" totalNutrient=%3d"
+				" totalMineral=%3d"
+				" totalEconomy=%3d"
+				" totalPsych=%3d"
+				" totalLabs=%3d"
+				" totalLabsWorth=%5.2f"
+				" totalBudget=%3d"
+				" totalDoctorCount=%3d"
+				" *net_income=%3d"
+				" score=%5.2f"
+				"\n"
+				, 10 - psychAllocation - labsAllocation
+				, psychAllocation
+				, labsAllocation
+				, totalNutrient
+				, totalMineral
+				, totalEconomy
+				, totalPsych
+				, totalLabs
+				, totalLabsWorth
+				, totalBudget
+				, totalDoctorCount
+				, *net_income
+				, score
+			);
+			
+			if (score > bestScore)
+			{
+				newPsychAllocation = psychAllocation;
+				newLabsAllocation = labsAllocation;
+				bestScore = score;
+			}
+			
+		}
+		
+	}
+	
+	// set values
+	
+	faction.SE_alloc_psych = newPsychAllocation;
+	faction.SE_alloc_labs = newLabsAllocation;
+	
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
+	{
+		BASE &base = Bases[baseId];
+		
+		if (base.faction_id != factionId)
+			continue;
+		
+		computeBase(baseId, true);
+		
+	}
+	
+	energy_compute(factionId, 0);
+	
+	debug
+	(
+		"\tnew allocation={%d,%d,%d}"
+		"\n"
+		, 10 - newPsychAllocation - newLabsAllocation
+		, newPsychAllocation
+		, newLabsAllocation
+	);
+	
+	Profiling::stop("- wtp_mod_social_ai");
 	
 }
 

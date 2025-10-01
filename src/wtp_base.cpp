@@ -271,8 +271,6 @@ void __cdecl wtp_mod_base_yield()
 	*/
 	if ((unallocatedWorkers != 0 || manage_workers) && *BaseUpkeepState != 2)
 	{
-debug(">SE_POLICE_pending = %d\n", Factions[(*CurrentBase)->faction_id].SE_police_pending);flushlog();
-		
 		// fix rioting
 		
 		mod_base_yield_base_energy(baseEnergy, energyIntake);
@@ -302,7 +300,6 @@ debug(">SE_POLICE_pending = %d\n", Factions[(*CurrentBase)->faction_id].SE_polic
 				int removeChoiceIndex = -1;
 				for (int i = choiceCount - 1; i >= 0; i--)
 				{
-debug(">i = %d workedTileIndex = %2d nutrientSurplus = %d choices.at(i).nutrient = %d mineralSurplus = %d choices.at(i).mineral = %d\n", i, choices.at(i).i, nutrientSurplus, choices.at(i).nutrient, mineralSurplus, choices.at(i).mineral);flushlog();
 					if (nutrientSurplus - choices.at(i).nutrient >= 0 && mineralSurplus - choices.at(i).mineral >= 0)
 					{
 						removeChoiceIndex = i;
@@ -310,24 +307,15 @@ debug(">i = %d workedTileIndex = %2d nutrientSurplus = %d choices.at(i).nutrient
 					}
 					
 				}
-debug(">removeChoiceIndex = %d\n", removeChoiceIndex);flushlog();
 				
 				if (removeChoiceIndex == -1)
 					break;
 				
 				// remove worker and recompute base
 				
-for (int i = 0; i < (int)choiceCount; i++)
-{
-	debug(">choice.i = %d\n", choices.at(i).i);flushlog();
-}
 				TileValue tileValue = choices.at(removeChoiceIndex);
 				std::move(choices.begin() + removeChoiceIndex + 1, choices.end(), choices.begin() + removeChoiceIndex);
 				choiceCount--;
-for (int i = 0; i < (int)choiceCount; i++)
-{
-	debug(">choice.i = %d\n", choices.at(i).i);flushlog();
-}
 
 				nutrientIntake -= tileValue.nutrient;
 				mineralIntake -= tileValue.mineral;

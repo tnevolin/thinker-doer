@@ -822,6 +822,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->promotion_probability_denominator = atoi(value);
     }
+    else if (MATCH("lab_mineral_worth"))
+    {
+        cf->lab_mineral_worth = atof(value);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

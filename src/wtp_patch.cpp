@@ -3471,6 +3471,8 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_alien_veh_init();
 	
+	patch_alien_veh_init();
+	
 }
 
 void shiftVehicleAddress(byte *bytes, int position)

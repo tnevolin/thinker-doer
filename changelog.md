@@ -1,3 +1,13 @@
+# Version 391
+
+* AI adjusts energy allocation (economy, psych, labs) to maximise combined faction output.
+  * +1/-1 change for psych and labs a turn.
+  * Keep sufficient income for facility maintenance.
+  * All bases are recomputed for tested values: workers, doctors, specialists.
+  * Lab value in minerals is taken from lab_mineral_worth parameter in thinker.ini.
+  * Final combined value is computed based on resource weights: ai_resource_score_nutrient, ai_resource_score_mineral, ai_resource_score_energy.
+
+
 # Version 390
 
 * Base manages worker with following priorities in mind:

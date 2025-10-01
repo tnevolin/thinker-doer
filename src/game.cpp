@@ -1,6 +1,8 @@
 
 #include "game.h"
 
+#include "wtp_mod.h"
+
 static uint32_t custom_game_rules = 0;
 static uint32_t custom_more_rules = 0;
 
@@ -442,6 +444,11 @@ void __cdecl mod_faction_upkeep(int faction_id) {
         This means we cannot use move_upkeep maps or variables in production phase.
         */
         mod_social_ai(faction_id, -1, -1, -1, -1, 0);
+                
+        // [WTP]
+        // social AI
+        wtp_mod_social_ai(faction_id);
+        
         probe_upkeep(faction_id);
         move_upkeep(faction_id, (is_human(faction_id) ? UM_Player : UM_Full));
         do_all_non_input();
