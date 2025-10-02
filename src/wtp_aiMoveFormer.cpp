@@ -2685,12 +2685,12 @@ bool isTerraformingAvailable(MAP *tile, int action)
 		// raise land should not disturb other faction bases
 		if (!isRaiseLandSafe(tile))
 			return false;
-		// raise land should not be built near another building raise
+		// raising land should not be built near another building raise
 		if (isNearbyRaiseUnderConstruction(x, y))
 			return false;
 		break;
 	case FORMER_LOWER_LAND:
-		// lower land should not disturb other faction bases
+		// lowering land should not disturb other faction bases
 		// TODO
 		return false;
 		break;

@@ -2591,13 +2591,14 @@ void evaluateBaseDefenseUnits()
 			
 			// police
 			
-			double unitPoliceGain = targetBasePoliceData.isSatisfied(false) ? 0.0 : targetBasePoliceData.getUnitPoliceGain(unitId, aiFactionId);
+			double unitPoliceGain = targetBasePoliceData.isSatisfied(isPolice2xUnit(unitId, aiFactionId)) ? 0.0 : targetBasePoliceData.getUnitPoliceGain(unitId, aiFactionId);
 			double policeGain = conf.ai_production_priority_police * getGainDelay(unitPoliceGain, travelTime);
 			
 			// protection
 			
-			double combatEffect = targetCombatData.getProtectorUnitMaxEffect(aiFactionId, unitId);
-			double unitProtectionGain = targetCombatData.isSufficientProtect() ? 0.0 : aiFactionInfo->averageBaseGain;
+			double combatEffect = targetCombatData.getProtectorUnitEffect(aiFactionId, unitId);
+			double survivalEffect = getSurvivalEffect(combatEffect);
+			double unitProtectionGain = targetCombatData.isSufficientProtect() ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2742,8 +2743,9 @@ void evaluateBunkerDefenseUnits()
 			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// protection
+			// 0.5 of average base gain
 			
-			double combatEffect = targetBunkerCombatData.getProtectorUnitCurrentEffect(aiFactionId, unitId);
+			double combatEffect = targetBunkerCombatData.getProtectorUnitEffect(aiFactionId, unitId);
 			double survivalEffect = getSurvivalEffect(combatEffect);
 			double unitProtectionGain = targetBunkerCombatData.isSufficientProtect() ? 0.0 : 0.5 * aiFactionInfo->averageBaseGain * survivalEffect;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;

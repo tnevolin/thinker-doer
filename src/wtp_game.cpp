@@ -8154,4 +8154,15 @@ bool isFriendlyBaseInRangeHasFacility(int factionId, int x, int y, int range, Fa
 	return false;
 	
 }
+	
+bool isRangedAirUnit(int unitId)
+{
+	CChassis &chassis = Chassis[Units[unitId].chassis_id];
+	return chassis.triad == TRIAD_AIR && chassis.range > 0;
+}
+
+bool isRangedAirVehicle(int vehicleId)
+{
+	return isRangedAirUnit(Vehs[vehicleId].unit_id);
+}
 

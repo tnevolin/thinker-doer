@@ -153,14 +153,19 @@ struct BasePoliceData
 		
 	}
 	
-	bool isSatisfied2x() const
+	bool isSatisfied(int policePower) const
 	{
-		return (providedUnitCounts.at(1) >= allowedUnitCount || providedPower >= requiredPower);
+		return (providedUnitCounts.at(policePower) >= allowedUnitCount || providedPower >= requiredPower);
 	}
 	
-	bool isSatisfied(int vehicleId) const
+	bool isSatisfied1x() const
 	{
-		return (providedUnitCounts.at(isPolice2xVehicle(vehicleId)) >= allowedUnitCount || providedPower >= requiredPower);
+		return isSatisfied(0);
+	}
+	
+	bool isSatisfied2x() const
+	{
+		return isSatisfied(1);
 	}
 	
 };
@@ -457,9 +462,9 @@ struct BaseInfo
 		policeData.addVehicle(vehicleId);
 		combatData.addProtector(vehicleId);
 	}
-	bool isSatisfied(int vehicleId)
+	bool isSatisfied(int policePower)
 	{
-		return policeData.isSatisfied(vehicleId) && combatData.isSufficientProtect();
+		return policeData.isSatisfied(policePower) && combatData.isSufficientProtect();
 	}
 	
 };

@@ -1336,4 +1336,6 @@ bool isMapValueEmpty(robin_hood::unordered_flat_map<int, double> const &map, int
 int getBaseDoctorCount(int baseId);
 int getBaseSpecialistPsych(int baseId);
 bool isFriendlyBaseInRangeHasFacility(int factionId, int x, int y, int range, FacilityId facilityId);
+bool isRangedAirUnit(int unitId);
+bool isRangedAirVehicle(int vehicleId);
 

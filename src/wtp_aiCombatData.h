@@ -85,11 +85,6 @@ struct CombatData
 	double getProtectorVehicleEffect(int vehicleId);
 	double getAssailantVehicleEffect(int vehicleId);
 	
-	double getAssailantUnitCurrentEffect(int factionId, int unitId);
-	double getProtectorUnitCurrentEffect(int factionId, int unitId);
-	double getProtectorVehicleCurrentEffect(int vehicleId);
-	double getAssailantVehicleCurrentEffect(int vehicleId);
-	
 	bool isSufficientAssault();
 	bool isSufficientProtect();
 	

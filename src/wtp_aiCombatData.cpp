@@ -37,20 +37,6 @@ CombatModeEffect const CombatEffectData::getCombatModeEffect(int key, ENGAGEMENT
 
 }
 
-CombatModeEffect const *CombatEffectData::getCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
-{
-	if (combatModeEffects.find(key) == combatModeEffects.end())
-	{
-		debug("ERROR: no combat effect for given units.\n");
-		return CombatModeEffect();
-	}
-	
-	CombatModeEffect const combatModeEffect = combatModeEffects.at(key).at(engagementMode);
-	
-	return combatModeEffect;
-	
-}
-
 double CombatEffectData::getCombatEffect(int attackerFactionUnitKey, int defenderFactionUnitKey, ENGAGEMENT_MODE engagementMode)
 {
 	int key = FactionUnitCombat(FactionUnit(attackerFactionUnitKey), FactionUnit(defenderFactionUnitKey)).key;
@@ -420,7 +406,6 @@ double CombatData::getProtectorPrevalence()
 
 /*
 Returns unit effect
-attacking weight is 1.00, defending weight is 0.50
 */
 double CombatData::getAssailantUnitEffect(int factionId, int unitId)
 {
@@ -431,50 +416,25 @@ double CombatData::getAssailantUnitEffect(int factionId, int unitId)
 		return assailantEffects.at(assailantKey);
 	}
 	
-	assailantEffects.emplace(assailantKey, 0.0);
+	double bestAssailantEffect = 0.0;
 	
 	for (robin_hood::pair<int, double> remainingProtectorEntry : remainingProtectors)
 	{
 		int remainingProtectorKey = remainingProtectorEntry.first;
 		
-		FactionUnitCombat factionUnitCombat(assailantKey, remainingProtectorKey);
-		FactionUnit remainingProtectorFactionUnit(remainingProtectorKey);
-		int remainingProtectorFactionId = remainingProtectorFactionUnit.factionId;
-		int remainingProtectorUnitId = remainingProtectorFactionUnit.unitId;
-		
 		// assailant attacks
 		
 		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
 		{
-			CombatModeEffect const &combatModeEffect = combatEffectData.getCombatModeEffect(factionUnitCombat.key, engagementMode);
+			CombatModeEffect const &combatModeEffect = combatEffectData.getCombatModeEffect(FactionUnitCombat(assailantKey, remainingProtectorKey).key, engagementMode);
 			double combatEffect = combatModeEffect.value;
 			if (combatEffect == 0.0)
 				continue;
 			
-			// sensor bonus
-			
-			combatEffect *=
-				* tileInfo.sensorOffenseMultipliers.at(assailantFactionId)
-				/ tileInfo.sensorDefenseMultipliers.at(protectorFactionId)
-			;
-			
-			// protector receives terrain bonus on melee
-			
-			if (combatModeEffect.combatMode == CM_MELEE)
-			{
-				AttackTriad attackTriad = getAttackTriad(assailantUnitId, protectorUnitId);
-				combatEffect *=
-					1.0
-					/ tileInfo.structureDefenseMultipliers.at(attackTriad)
-				;
-			}
-			
 			// max effects
 			
 			double assailantEffect = combatEffect;
-			double protectorEffect = 1.0 / combatEffect;
-			
-			assailantMaxEffects.at(assailantKey) = std::max(assailantMaxEffects.at(assailantKey), assailantEffect);
+			bestAssailantEffect = std::max(bestAssailantEffect, assailantEffect);
 			
 		}
 		
@@ -482,193 +442,94 @@ double CombatData::getAssailantUnitEffect(int factionId, int unitId)
 		
 		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
 		{
-			COMBAT_MODE combatMode = getCombatMode(engagementMode, assailantUnitId);
-			double combatEffect = aiData.combatEffectData.getCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, combatMode);
+			CombatModeEffect const &combatModeEffect = combatEffectData.getCombatModeEffect(FactionUnitCombat(remainingProtectorKey, assailantKey).key, engagementMode);
+			double combatEffect = combatModeEffect.value;
 			if (combatEffect == 0.0)
 				continue;
 			
-			// sensor bonus
-			
-			combatEffect *=
-				* tileInfo.sensorOffenseMultipliers.at(protectorFactionId)
-				/ tileInfo.sensorDefenseMultipliers.at(assailantFactionId)
-			;
-			
-			// assailant does not receive terrain bonus
-				
 			// max effects
 			
 			double assailantEffect = 1.0 / combatEffect;
-			double protectorEffect = combatEffect;
-			
-			assailantEffects.at(assailantKey) = std::max(assailantMaxEffects.at(assailantKey), assailantEffect);
+			bestAssailantEffect = std::max(bestAssailantEffect, assailantEffect);
 			
 		}
 		
 	}
 	
-	return assailantEffects.at(assailantKey);
+	assailantEffects.emplace(assailantKey, bestAssailantEffect);
+	
+	return bestAssailantEffect;
 	
 }
 
 /*
-Returns max effect from effect table.
-attacking weight is 1.00, defending weight is 0.75
+Returns unit effect.
 */
-double CombatData::getProtectorUnitMaxEffect(int factionId, int unitId)
+double CombatData::getProtectorUnitEffect(int factionId, int unitId)
 {
 	int protectorKey = FactionUnit(factionId, unitId).key;
 	
-	if (protectorMaxEffects.find(protectorKey) == protectorMaxEffects.end())
+	if (protectorEffects.find(protectorKey) != protectorEffects.end())
 	{
-		protectorMaxEffects.emplace(protectorKey, 0.0);
+		return protectorEffects.at(protectorKey);
+	}
+	
+	double bestProtectorEffect = 0.0;
+	
+	for (robin_hood::pair<int, double> remainingAssailantEntry : remainingAssailants)
+	{
+		int remainingAssailantKey = remainingAssailantEntry.first;
 		
-		for (robin_hood::pair<int, double> const &assailantEntry : assailants)
+		// protector attacks
+		
+		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
 		{
-			int assailantKey = assailantEntry.first;
+			CombatModeEffect const &combatModeEffect = combatEffectData.getCombatModeEffect(FactionUnitCombat(protectorKey, remainingAssailantKey).key, engagementMode);
+			double combatEffect = combatModeEffect.value;
+			if (combatEffect == 0.0)
+				continue;
 			
-			for (ENGAGEMENT_MODE engagementMode : ENGAGEMENT_MODES)
-			{
-				CombatModeEffect const attackCombatModeEffect = combatEffectData.getCombatModeEffect(FactionUnitCombat(protectorKey, assailantKey).key, engagementMode);
-				if (attackCombatModeEffect.valid)
-				{
-					double effect = 1.00 * attackCombatModeEffect.value;
-					if (effect > protectorMaxEffects.at(protectorKey))
-					{
-						protectorMaxEffects.at(protectorKey) = effect;
-					}
-					
-				}
-				
-				CombatModeEffect const defendCombatModeEffect = combatEffectData.getCombatModeEffect(FactionUnitCombat(assailantKey, protectorKey).key, engagementMode);
-				if (defendCombatModeEffect.valid)
-				{
-					double effect = 0.75 * defendCombatModeEffect.value;
-					if (effect > protectorMaxEffects.at(protectorKey))
-					{
-						protectorMaxEffects.at(protectorKey) = effect;
-					}
-					
-				}
-				
-			}
+			// max effects
+			
+			double protectorEffect = combatEffect;
+			bestProtectorEffect = std::max(bestProtectorEffect, protectorEffect);
+			
+		}
+		
+		// assailant attacks
+		
+		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
+		{
+			CombatModeEffect const &combatModeEffect = combatEffectData.getCombatModeEffect(FactionUnitCombat(remainingAssailantKey, protectorKey).key, engagementMode);
+			double combatEffect = combatModeEffect.value;
+			if (combatEffect == 0.0)
+				continue;
+			
+			// max effects
+			
+			double protectorEffect = 1.0 / combatEffect;
+			bestProtectorEffect = std::max(bestProtectorEffect, protectorEffect);
 			
 		}
 		
 	}
 	
-	return protectorMaxEffects.at(protectorKey);
+	protectorEffects.emplace(protectorKey, bestProtectorEffect);
+	
+	return bestProtectorEffect;
 	
 }
 
-/*
-Returns max effect from effect table.
-attacking weight is 1.00, defending weight is 0.50
-*/
-double CombatData::getAssailantVehicleMaxEffect(int vehicleId)
+double CombatData::getAssailantVehicleEffect(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
-	return getAssailantUnitMaxEffect(vehicle->faction_id, vehicle->unit_id);
+	return getAssailantUnitEffect(vehicle->faction_id, vehicle->unit_id);
 }
 
-/*
-Returns max effect from effect table.
-attacking weight is 1.00, defending weight is 0.75
-*/
-double CombatData::getProtectorVehicleMaxEffect(int vehicleId)
+double CombatData::getProtectorVehicleEffect(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
-	return getProtectorUnitMaxEffect(vehicle->faction_id, vehicle->unit_id);
-}
-
-/*
-Evaluates effect based on battle computation.
-*/
-double CombatData::getAssailantUnitCurrentEffect(int factionId, int unitId)
-{
-	double oldAssailantPrevalence = getAssailantPrevalence();
-	
-	if (oldAssailantPrevalence == INF)
-		return 0.0;
-	
-	addAssailantUnit(factionId, unitId);
-	compute();
-	
-	double newAssailantPrevalence = getAssailantPrevalence();
-	
-	double effect;
-	
-	if (newAssailantPrevalence <= oldAssailantPrevalence)
-	{
-		effect = 0.0;
-	}
-	else if (newAssailantPrevalence == INF)
-	{
-		effect = INF;
-	}
-	else
-	{
-		effect = initialProtectorWeight * (newAssailantPrevalence - oldAssailantPrevalence);
-	}
-	
-	removeAssailantUnit(factionId, unitId);
-	
-	return effect;
-	
-}
-
-/*
-Evaluates effect based on battle computation.
-*/
-double CombatData::getProtectorUnitCurrentEffect(int factionId, int unitId)
-{
-	double oldProtectorPrevalence = getProtectorPrevalence();
-	
-	if (oldProtectorPrevalence == INF)
-		return 0.0;
-	
-	addProtectorUnit(factionId, unitId);
-	compute();
-	
-	double newProtectorPrevalence = getProtectorPrevalence();
-	
-	double effect;
-	
-	if (newProtectorPrevalence <= oldProtectorPrevalence)
-	{
-		effect = 0.0;
-	}
-	else if (newProtectorPrevalence == INF)
-	{
-		effect = INF;
-	}
-	else
-	{
-		effect = initialProtectorWeight * (newProtectorPrevalence - oldProtectorPrevalence);
-	}
-	
-	removeProtectorUnit(factionId, unitId);
-	
-	return effect;
-	
-}
-
-/*
-Evaluates effect based on battle computation.
-*/
-double CombatData::getAssailantVehicleCurrentEffect(int vehicleId)
-{
-	VEH *vehicle = getVehicle(vehicleId);
-	return getAssailantUnitCurrentEffect(vehicle->faction_id, vehicle->unit_id);
-}
-
-/*
-Evaluates effect based on battle computation.
-*/
-double CombatData::getProtectorVehicleCurrentEffect(int vehicleId)
-{
-	VEH *vehicle = getVehicle(vehicleId);
-	return getProtectorUnitCurrentEffect(vehicle->faction_id, vehicle->unit_id);
+	return getProtectorUnitEffect(vehicle->faction_id, vehicle->unit_id);
 }
 
 bool CombatData::isSufficientAssault()
