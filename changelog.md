@@ -1,3 +1,8 @@
+# Version 392
+
+* Base sometimes did not manage workers based on processing stage resulting in inconsistent state. Now it does it all the time.
+  * Kudo to Qes for identifiying this issue.
+
 # Version 391
 
 * AI adjusts energy allocation (economy, psych, labs) to maximise combined faction output.

@@ -37,11 +37,26 @@ void __cdecl wtp_mod_base_yield()
 	// reallocate existing workers if managed or requested
 	
 	uint32_t gov = base->gov_config();
-	// manage workers when forced (all worked tiles are cleared) or governor is active and manages citizens
-    bool manage_workers = base->worked_tiles == 0 || (gov & GOV_ACTIVE && gov & GOV_MANAGE_CITIZENS);
-    // modified to not override user choice with open window
+	// manage workers when requested by player click on base tile (all worked tiles are cleared) or governor is active and manages citizens
+	// exclude scenario editor mode when player can manually place workers in any base
+	bool is_visible = base_id == *BaseUpkeepDrawID && Win_is_visible(BaseWin);
+    bool manage_workers =
+		// base tile click (all worker tiles are cleared)
+		base->worked_tiles == 0
+		||
+		(
+			// governor is active
+			(gov & GOV_ACTIVE)
+			&&
+			// governor manages citizens
+			(gov & GOV_MANAGE_CITIZENS)
+			&&
+			// NOT in scenario editor mode
+			!(is_visible && (*GameState & STATE_SCENARIO_EDITOR) && (*GameState & STATE_OMNISCIENT_VIEW))
+		);
+//    // modified to not override user choice with open window
 //    bool pre_upkeep = *BaseUpkeepState != 2 || (base_id == *BaseUpkeepDrawID && Win_is_visible(BaseWin));
-    bool pre_upkeep = *BaseUpkeepState == 1;
+//    bool pre_upkeep = *BaseUpkeepState == 1;
 	
 	// energy conversion and scoring constants
 	
@@ -149,7 +164,7 @@ void __cdecl wtp_mod_base_yield()
 	std::array<TileValue, 21> choices;
 	size_t choiceCount = 0;
 	
-	if (unallocatedWorkers != 0 || (manage_workers && pre_upkeep))
+	if (unallocatedWorkers != 0 || manage_workers)
 	{
 		// reset workers if required or incorrect
 		
@@ -266,10 +281,8 @@ void __cdecl wtp_mod_base_yield()
 	
 	// fix rioting in base upkeep states 0,1
 	// state 0 happens during human interactions
-	/*
-	if ((unallocatedWorkers != 0 || manage_workers) && pre_upkeep)
-	*/
-	if ((unallocatedWorkers != 0 || manage_workers) && *BaseUpkeepState != 2)
+	if (unallocatedWorkers != 0 || manage_workers)
+//	if ((unallocatedWorkers != 0 || manage_workers) && *BaseUpkeepState != 2)
 	{
 		// fix rioting
 		
@@ -335,23 +348,23 @@ void __cdecl wtp_mod_base_yield()
 		}
 		
 	}
-	else if (*BaseUpkeepState == 2 && unallocatedWorkers != 0)
-	{
-		// remove excessive choices
-		
-		choiceCount = std::min(choiceCount, (size_t)base->pop_size);
-		
-		// set workers 
-		
-		base->specialist_total = base->pop_size - choiceCount;
-		base->worked_tiles = 1;
-		for (size_t choiceNumber = 0; choiceNumber < choiceCount; choiceNumber++)
-		{
-			TileValue &tileValue = choices.at(choiceNumber);
-			base->worked_tiles |= (1 << tileValue.i);
-		}
-		
-	}
+//	else if (*BaseUpkeepState == 2 && unallocatedWorkers != 0)
+//	{
+//		// remove excessive choices
+//		
+//		choiceCount = std::min(choiceCount, (size_t)base->pop_size);
+//		
+//		// set workers 
+//		
+//		base->specialist_total = base->pop_size - choiceCount;
+//		base->worked_tiles = 1;
+//		for (size_t choiceNumber = 0; choiceNumber < choiceCount; choiceNumber++)
+//		{
+//			TileValue &tileValue = choices.at(choiceNumber);
+//			base->worked_tiles |= (1 << tileValue.i);
+//		}
+//		
+//	}
 	
 	// recompute base
 	
