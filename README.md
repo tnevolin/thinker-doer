@@ -44,6 +44,65 @@ Whenever I see some feature worth improving/highlighting these are guidelines I 
 * Some items naturally come in sequence when successor effectively obsoletes its predecessor. Good example is weapons and armors. This mod tries to spread them evenly on a research scale so player can enjoy each for about same time. It also tries to link their corresponding technologies to assure they appear in right order. 
 * Mutually exclusive items/features are adjusted in price and effect so that they can compete with each other and none is completely inferior. Good example is social models.
 
+# Faction changes
+
+## The Human Hive
+
+Datalinks text added:
+
+* IMMUNITY to EFFICIENCY penalty
+
+## The University of Planet
+
+* SOCIAL, +++RESEARCH, SOCIAL, --PROBE, - Extra RESEARCH bonus
+
+## Morgan Industries
+
+Datalinks text added:
+
+* HAB COMPLEX and HABITATION DOME GROWTH penalty/bonus affect bases much earlier: {Creature comforts at a premium}
+
+## The Spartan Federation
+
+* SOCIAL, ++MORALE, SOCIAL, +POLICE, SOCIAL, -INDUSTRY, SOCIAL, -EFFIC, - Reduced EFFIC
+
+## The Lord's Believers
+
+Datalinks text modified:
+
+* 50% fanatics bonus
+
+## The Cybernetic Consciousness
+
+* SOCIAL, +RESEARCH, SOCIAL, +EFFIC, - Reduced bonuses to make faction less OP.
+
+## Nautilus Pirates
+
+Datalinks text removed:
+
+* ^Bonus mineral from ocean shelf squares: {Culture and technology adapted for the ocean}
+
+## Data Angels
+
+* SOCIAL, ---RESEARCH, - Severe research penalty to balance inherent Planetary Datalinks.
+* TECH, DocFlex, TECH, Poly, - Probe team available from start.
+
+## The Cult of Planet
+
+* SOCIAL, ++PLANET, SOCIAL, -INDUSTRY, SOCIAL, -ECONOMY, SOCIAL, -POLICE, - Reduced POLICE to otherwise OP faction.
+
+## Manifold Caretakers
+
+* SOCIAL, +PLANET, SOCIAL, -INDUSTRY, - Generic alien faction INDUSTRY penalty to make it less OP.
+* TECH, PrPsych, TECH, Ecology - More relevant alien faction technologies.
+* FACILITY, 3, (removed) - No free Recycling Tanks.
+
+## Manifold Usurpers
+
+* SOCIAL, +GROWTH, SOCIAL, +MORALE, SOCIAL, -PLANET, SOCIAL, -INDUSTRY, - Generic alien faction INDUSTRY penalty to make it less OP.
+* TECH, PrPsych, TECH, Physic - More relevant alien faction technologies.
+* FACILITY, 3, (removed) - No free Recycling Tanks.
+
 # Technology tree
 
 A lot of above changes require moving items and features up and down technology tree. Apparently, rearranging technology tree is inevitable. This may seem like a big change for users. Therefore I dedicate a whole section to explain my reasons.
