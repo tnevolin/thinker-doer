@@ -69,6 +69,7 @@
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)installation.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)strategy.md&quot; &quot;releases\TheWillToPower\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\exe\terranx_mod.exe&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
+					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\exe\thinker.exe&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)$(TARGET_OUTPUT_FILE)&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\*.*&quot; &quot;releases\TheWillToPower\core\&quot; /iy' />
 					<Add after='cmd /c xcopy &quot;$(PROJECT_DIR)docs\configuration\basenames\*.*&quot; &quot;releases\TheWillToPower\core\basenames\&quot; /iy' />
