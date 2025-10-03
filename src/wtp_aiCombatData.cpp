@@ -102,6 +102,9 @@ double CombatEffectData::getVehicleCombatEffect(int attackerVehicleId, int defen
 
 // CombatData
 
+/*
+Computes combat effects with tile combat bonuses.
+*/
 void CombatData::initialize(robin_hood::unordered_flat_map<int, std::vector<int>> const &assailantFactionUnitIds, robin_hood::unordered_flat_map<int, std::vector<int>> const &protectorFactionUnitIds, MAP *tile)
 {
 	TileInfo &tileInfo = aiData.getTileInfo(tile);
@@ -117,8 +120,6 @@ void CombatData::initialize(robin_hood::unordered_flat_map<int, std::vector<int>
 		
 		for (int assailantUnitId : assailantUnitIds)
 		{
-			int assailantFactionUnitKey = FactionUnit(assailantFactionId, assailantUnitId).key;
-			
 			for (robin_hood::pair<int, std::vector<int>> const &protectorFactionUnitIdEntry : protectorFactionUnitIds)
 			{
 				int protectorFactionId = protectorFactionUnitIdEntry.first;
@@ -126,8 +127,6 @@ void CombatData::initialize(robin_hood::unordered_flat_map<int, std::vector<int>
 				
 				for (int protectorUnitId : protectorUnitIds)
 				{
-					int protectorFactionUnitKey = FactionUnit(protectorFactionId, protectorUnitId).key;
-					
 					// assailant attacks
 					
 					for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
@@ -151,11 +150,6 @@ void CombatData::initialize(robin_hood::unordered_flat_map<int, std::vector<int>
 							
 						combatEffectData.setCombatModeEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, engagementMode, combatMode, tileCombatEffect);
 						
-						// max effects
-						
-						double assailantEffect = 1.00 * tileCombatEffect;
-						double protectorEffect = 0.75 * 1.0 / tileCombatEffect;
-						
 					}
 					
 					// protector attacks
@@ -175,11 +169,6 @@ void CombatData::initialize(robin_hood::unordered_flat_map<int, std::vector<int>
 						;
 							
 						combatEffectData.setCombatModeEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, engagementMode, combatMode, tileCombatEffect);
-						
-						// max effects
-						
-						double assailantEffect = 0.50 * 1.0 / tileCombatEffect;
-						double protectorEffect = 1.00 * tileCombatEffect;
 						
 					}
 					

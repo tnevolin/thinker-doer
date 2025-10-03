@@ -689,7 +689,7 @@ void moveInterceptors()
 
 void moveBaseProtectors()
 {
-	debug("moveProtectors - %s\n", MFactions[aiFactionId].noun_faction);
+	debug("moveBaseProtectors - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	// populate tasks
 	
@@ -856,32 +856,27 @@ void moveBunkerProtectors()
 	
 	std::vector<TaskPriority> taskPriorities;
 	populateBunkerProtectorTasks(taskPriorities);
-	+++
 	
-	// sort vehicle available tasks
-	
-	std::sort(taskPriorities.begin(), taskPriorities.end(), compareTaskPriorityDescending);
-	
-//	if (DEBUG)
-//	{
-//		debug("\tsortedTasks\n");
-//		
-//		for (TaskPriority const &taskPriority : taskPriorities)
-//		{
-//			debug
-//			(
-//				"\t\t%5.2f:"
-//				" [%4d] %s -> %s"
-//				"\n"
-//				, taskPriority.priority
-//				, taskPriority.vehicleId
-//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
-//			);
-//			
-//		}
-//		
-//	}
+	if (DEBUG)
+	{
+		debug("\tsortedTasks\n");
+		
+		for (TaskPriority &taskPriority : taskPriorities)
+		{
+			debug
+			(
+				"\t\t%5.2f:"
+				" [%4d] %s -> %s"
+				"\n"
+				, taskPriority.priority
+				, taskPriority.vehicleId
+				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
+				, getLocationString(taskPriority.destination).c_str()
+			);
+			
+		}
+		
+	}
 	
 	// select tasks
 	
@@ -889,36 +884,64 @@ void moveBunkerProtectors()
 	
 	robin_hood::unordered_flat_map<int, TaskPriority *> vehicleAssignments;
 	
-	for (TaskPriority &taskPriority : taskPriorities)
+	while (true)
 	{
-		CombatData &bunkerCombatData = aiData.bunkerCombatDatas.at(taskPriority.destination);
+		// reevaluate dynamicPriorities
 		
-		// skip already assigned vehicles
+		TaskPriority *bestTaskPriority = nullptr;
+		double bestPriority = 0.0;
 		
-		if (vehicleAssignments.find(taskPriority.vehicleId) != vehicleAssignments.end())
-			continue;
+		for (TaskPriority &taskPriority : taskPriorities)
+		{
+			// skip already assigned vehicles
+			
+			if (vehicleAssignments.find(taskPriority.vehicleId) != vehicleAssignments.end())
+				continue;
+			
+			// bunker protection should not be yet satisfied
+			
+			CombatData &combatData = aiData.bunkerCombatDatas.at(taskPriority.destination);
+			
+			if (combatData.isSufficientProtect())
+				continue;
+			
+			// compute priority
+			
+			double combatEffect = combatData.getProtectorVehicleEffect(taskPriority.vehicleId);
+			double survivalEffect = getSurvivalEffect(combatEffect);
+			double priority = taskPriority.priority * survivalEffect;
+			
+			if (priority > bestPriority)
+			{
+				bestTaskPriority = &taskPriority;
+				bestPriority = priority;
+			}
+			
+		}
 		
-		// bunker protection should not be yet satisfied
+		if (bestTaskPriority == nullptr)
+			break;
 		
-		if (bunkerCombatData.isSufficientProtect())
-			continue;
+		// assign to target
 		
-		// assign to bunker
+		CombatData &combatData = aiData.bunkerCombatDatas.at(bestTaskPriority->destination);
 		
-		bunkerCombatData.addProtector(taskPriority.vehicleId);
-		vehicleAssignments.insert({taskPriority.vehicleId, &taskPriority});
+		combatData.addProtector(bestTaskPriority->vehicleId);
+		vehicleAssignments.insert({bestTaskPriority->vehicleId, bestTaskPriority});
 		
 		debug
 		(
 			"\t\t%5.2f:"
 			" [%4d] %s -> %s"
-			" bunkerCombatData.isSatisfied=%d"
+			" %-25s"
+			" combatData.isSufficientProtect()=%d"
 			"\n"
-			, taskPriority.priority
-			, taskPriority.vehicleId
-			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-			, getLocationString(taskPriority.destination).c_str()
-			, bunkerCombatData.isSufficientProtect()
+			, bestTaskPriority->priority
+			, bestTaskPriority->vehicleId
+			, getLocationString(getVehicleMapTile(bestTaskPriority->vehicleId)).c_str()
+			, getLocationString(bestTaskPriority->destination).c_str()
+			, getBase(bestTaskPriority->baseId)->name
+			, combatData.isSufficientProtect()
 		);
 		
 	}
