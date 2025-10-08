@@ -115,9 +115,9 @@ struct CombatData
 void resolveMutualCombat(double combatEffect, double &attackerHealth, double &defenderHealth);
 FactionUnitCombatEffect getBestAttackerDefenderMeleeEffect(TileCombatEffectTable &tileCombatEffectTable, robin_hood::unordered_flat_map<int, double> &attackers, robin_hood::unordered_flat_map<int, double> &defenders);
 
-double calculateCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
+double getUnitCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
 //double calculateTileCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *tile);
-double getMeleeRelativeUnitStrength1(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
-double getArtilleryDuelRelativeUnitStrength1(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
-double getUnitBombardmentDamage1(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
+double getMeleeRelativeUnitStrength(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
+double getArtilleryDuelRelativeUnitStrength(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
+double getUnitBombardmentDamage(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
 

@@ -25,6 +25,7 @@ void CombatEffectTable::setCombatModeEffect(int attackerFactionId, int attackerU
 CombatModeEffect const &CombatEffectTable::getCombatModeEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode)
 {
 	int key = FactionUnitCombat::encodeKey(attackerKey, defenderKey, engagementMode);
+	
 	if (combatModeEffects.find(key) == combatModeEffects.end())
 	{
 		debug("ERROR: no combat effect for given units.\n");
@@ -848,7 +849,7 @@ FactionUnitCombatEffect getBestAttackerDefenderMeleeEffect(TileCombatEffectTable
 /*
 Computes generic unit to unit combat effect.
 */
-double calculateCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
+double getUnitCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
 {
 	Profiling::start("- calculateCombatEffect");
 	
@@ -859,15 +860,15 @@ double calculateCombatEffect(int attackerFactionId, int attackerUnitId, int defe
 	switch (combatMode)
 	{
 	case CM_MELEE:
-		combatEffect = getMeleeRelativeUnitStrength1(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
+		combatEffect = getMeleeRelativeUnitStrength(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
 		break;
 		
 	case CM_ARTILLERY_DUEL:
-		combatEffect = getArtilleryDuelRelativeUnitStrength1(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
+		combatEffect = getArtilleryDuelRelativeUnitStrength(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
 		break;
 		
 	case CM_BOMBARDMENT:
-		combatEffect = getUnitBombardmentDamage1(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
+		combatEffect = getUnitBombardmentDamage(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
 		break;
 		
 	default:
@@ -915,7 +916,7 @@ double calculateCombatEffect(int attackerFactionId, int attackerUnitId, int defe
 Calculates relative unit strength for melee attack.
 How many defender units can attacker destroy until own complete destruction.
 */
-double getMeleeRelativeUnitStrength1(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
+double getMeleeRelativeUnitStrength(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
 {
 	UNIT *attackerUnit = &(Units[attackerUnitId]);
 	UNIT *defenderUnit = &(Units[defenderUnitId]);
@@ -1108,7 +1109,7 @@ double getMeleeRelativeUnitStrength1(int attackerFactionId, int attackerUnitId, 
 Calculates relative unit strength for artillery duel attack.
 How many defender units can attacker destroy until own complete destruction.
 */
-double getArtilleryDuelRelativeUnitStrength1(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
+double getArtilleryDuelRelativeUnitStrength(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
 {
 	UNIT *attackerUnit = &(Units[attackerUnitId]);
 	UNIT *defenderUnit = &(Units[defenderUnitId]);
@@ -1210,7 +1211,7 @@ double getArtilleryDuelRelativeUnitStrength1(int attackerFactionId, int attacker
 Calculates relative bombardment damage for units.
 How many defender units can attacker destroy with single shot.
 */
-double getUnitBombardmentDamage1(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
+double getUnitBombardmentDamage(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
 {
 	Profiling::start("getUnitBombardmentDamage", "combatEffects");
 	

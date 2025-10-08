@@ -149,7 +149,6 @@ void populateEmptyEnemyBaseTiles();
 void populateBasePoliceData();
 
 void computeUnitDestructionGains();
-//void computeCombatEffects();
 
 void populateEnemyBaseInfos();
 void populateEnemyBaseCaptureGains();
