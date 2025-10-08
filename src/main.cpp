@@ -826,6 +826,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->lab_mineral_worth = atof(value);
     }
+    else if (MATCH("road_magtube_fixed_movement_rate"))
+    {
+        cf->road_magtube_fixed_movement_rate = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);

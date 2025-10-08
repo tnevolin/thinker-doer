@@ -1389,6 +1389,15 @@ int __cdecl mod_hex_cost(int unit_id, int faction_id, int x1, int y1, int x2, in
             value = min(max(proto_speed(unit_id), Rules->move_rate_roads), value);
         }
     }
+    
+    // [WTP]
+    // fixed road/magtube movement rate
+    if (conf.road_magtube_fixed_movement_rate && value < Rules->move_rate_roads)
+	{
+		value *= Units[unit_id].speed();
+	}
+    //
+    
     return value;
 }
 

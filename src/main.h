@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v392"
+    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v393"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -445,6 +445,7 @@ struct Config {
     bool fungus_terrain_bonus = false;
     int promotion_probability_denominator = 1;
     double lab_mineral_worth = 0.5;
+    bool road_magtube_fixed_movement_rate = false;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

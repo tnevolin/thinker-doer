@@ -1,3 +1,7 @@
+# Version 393
+
+* New thinker.ini option: road_magtube_fixed_movement_rate=1. Makes river/road/magtube movement proportionally slower for fast units.
+
 # Version 392
 
 * Base sometimes did not manage workers based on processing stage resulting in inconsistent state. Now it does it all the time.
