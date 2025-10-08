@@ -249,6 +249,7 @@ void ProtectedLocation::addVehicle(int vehicleId)
 void EnemyStackInfo::addVehicle(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
+	int vehiclePad0 = vehicle->pad_0;
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	int triad = vehicle->triad();
 	
@@ -272,21 +273,21 @@ void EnemyStackInfo::addVehicle(int vehicleId)
 	
 	if (!isArtifactVehicle(vehicleId) && !(isProbeVehicle(vehicleId) && getVehicleDefenseValue(vehicleId) == 1))
 	{
-		vehicleIds.push_back(vehicleId);
+		vehiclePad0s.push_back(vehiclePad0);
 		
 		if (triad == TRIAD_AIR && !airbase)
 		{
-			airVehicleIds.push_back(vehicleId);
+			airVehiclePad0s.push_back(vehiclePad0);
 		}
 		else if (isArtilleryVehicle(vehicleId))
 		{
-			artilleryVehicleIds.push_back(vehicleId);
+			artilleryVehiclePad0s.push_back(vehiclePad0);
 			artillery = true;
 			targetable = true;
 		}
 		else
 		{
-			nonArtilleryVehicleIds.push_back(vehicleId);
+			nonArtilleryVehiclePad0s.push_back(vehiclePad0);
 			bombardment = true;
 			targetable = true;
 		}

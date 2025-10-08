@@ -26,7 +26,7 @@ struct HexCost
 };
 struct PotentialAttack
 {
-	int vehicleId;
+	int vehiclePad0;
 	double hastyCoefficient;
 };
 
@@ -553,10 +553,10 @@ public:
 	
 	MAP *tile = nullptr;
 	
-	std::vector<int> vehicleIds;
-	std::vector<int> airVehicleIds;
-	std::vector<int> artilleryVehicleIds;
-	std::vector<int> nonArtilleryVehicleIds;
+	std::vector<int> vehiclePad0s;
+	std::vector<int> airVehiclePad0s;
+	std::vector<int> artilleryVehiclePad0s;
+	std::vector<int> nonArtilleryVehiclePad0s;
 	
 	int baseRange;
 	bool base;
@@ -737,12 +737,9 @@ struct Data
 	std::vector<MAP *> monoliths;
 	std::vector<MAP *> pods;
 	
-//	// pre turn to current vehicle mapping
-//	// [pad0] = vehicleId
-//	size_t maxVehiclePad0;
-//	robin_hood::unordered_flat_map<int, int> currentVehicleIds;
-//	// [pad0] = VEH
-//	robin_hood::unordered_flat_map<int, VEH> savedVehicles;
+	// pad_0 to vehicleId mapping
+	// [pad0] = vehicleId
+	robin_hood::unordered_flat_map<int, int> pad0VehicleIds;
 	
 	// base infos
 	
@@ -807,7 +804,7 @@ struct Data
 	std::vector<int> hostileFactionIds;
 	// each to each unit combat effects
 	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][combatMode] = combatEffect
-	CombatEffectData combatEffectData;
+	CombatEffectTable combatEffectTable;
 	
 	// enemy stacks
 	robin_hood::unordered_flat_map<MAP *, EnemyStackInfo> enemyStacks;
@@ -879,7 +876,7 @@ struct Data
 	double landAlienHunterDemand;
 	robin_hood::unordered_flat_map<int, int> seaTransportRequestCounts;
 	TransportControl transportControl;
-	robin_hood::unordered_flat_map<int, std::vector<Task>> tasks;
+	robin_hood::unordered_flat_map<int, Task> tasks;
 	double airColonyProductionPriority;
 	double landColonyProductionPriority;
 	robin_hood::unordered_flat_map<int, double> seaColonyProductionPriorities;

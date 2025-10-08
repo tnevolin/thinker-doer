@@ -158,7 +158,15 @@ void init_save_game(int faction_id) {
         || u->chassis_id > CHS_MISSILE) {
             for (int j = *VehCount-1; j >= 0; j--) {
                 if (Vehs[j].unit_id == unit_id) {
+					
+					// [WTP]
+					// intercept veh_kill
+					/*
                     veh_kill(j);
+					*/
+					wtp_mod_veh_kill(j);
+					//
+					
                 }
             }
             for (int j = 0; j < *BaseCount; j++) {
@@ -415,7 +423,13 @@ int __cdecl mod_replay_base(int event, int x, int y, int faction_id) {
     return *ReplayEventSize;
 }
 
+#include <iostream>
+#include <ctime>
 void __cdecl mod_faction_upkeep(int faction_id) {
+debug(">mod_faction_upkeep(%d)\n", faction_id);
+std::time_t now = std::time(nullptr);
+debug(">%s\n", std::ctime(&now));
+
     Faction* f = &Factions[faction_id];
     MFaction* m = &MFactions[faction_id];
     debug("faction_upkeep %d %d\n", *CurrentTurn, faction_id);

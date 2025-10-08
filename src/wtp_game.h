@@ -165,33 +165,35 @@ struct CombatStrength
 };
 
 /**
-Combination of faction and unit uniquely definining game unit properties.
+Combination of factionId and unitId uniquely definining game unit properties.
 */
 struct FactionUnit
 {
 	int factionId;
 	int unitId;
-	int key;
 	
-	FactionUnit();
+	static int encodeKey(int factionId, int unitId);
+	static int encodeKey(int vehicleId);
+	
 	FactionUnit(int _factionId, int _unitId);
+	int encodeKey();
 	FactionUnit(int _key);
-	
-	static int encode(int factionId, int unitId);
 	
 };
 
 /**
-Combination of two faction/unit identifying combat.
+Combination of two faction-units and engagement mode identifying combat.
 */
 struct FactionUnitCombat
 {
 	FactionUnit attackerFactionUnit;
 	FactionUnit defenderFactionUnit;
-	int key;
+	ENGAGEMENT_MODE engagementMode;
 	
-	FactionUnitCombat();
-	FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit);
+	static int encodeKey(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode);
+	static int encodeKey(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
+	
+	FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit, ENGAGEMENT_MODE _engagementMode);
 	FactionUnitCombat(int _key);
 	
 };

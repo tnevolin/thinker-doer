@@ -1359,10 +1359,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_combat_travel_time_scale = atof(value);
     }
-    else if (MATCH("ai_combat_travel_time_scale_base_protection"))
-    {
-        cf->ai_combat_travel_time_scale_base_protection = atof(value);
-    }
     else if (MATCH("ai_combat_priority_escape"))
     {
         cf->ai_combat_priority_escape = atof(value);

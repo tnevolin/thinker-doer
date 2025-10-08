@@ -254,9 +254,35 @@ tree<ProfileName> Profiling::profiles;
 
 // FactionUnit
 
-FactionUnit::FactionUnit()
-: factionId(-1), unitId(-1), key(-1)
-{}
+/*
+Converts factionId + unitId into key.
+[factionId][unitSlot]
+*/
+FactionUnit::encodeKey(int factionId, int unitId)
+{
+	assert(factionId >= 0 && factionId < MaxPlayerNum);
+	assert(unitId >= 0 && unitId < MaxProtoNum);
+	
+	int unitSlot = unitId < MaxProtoFactionNum ? unitId : MaxProtoFactionNum + unitId % MaxProtoFactionNum;
+	int key = factionId * (2 * MaxProtoFactionNum) + unitSlot;
+	
+	return key;
+	
+}
+
+/*
+Converts vehicleId into key.
+[factionId][unitSlot]
+*/
+FactionUnit::encodeKey(int vehicleId)
+{
+	assert(vehicleId >= 0 && vehicleId < *VehCount);
+	
+	VEH &vehicle = Vehs[vehicleId];
+	
+	return encodeKey(vehicle.faction_id, vehicle.unit_id);
+	
+}
 
 FactionUnit::FactionUnit(int _factionId, int _unitId)
 {
@@ -266,56 +292,51 @@ FactionUnit::FactionUnit(int _factionId, int _unitId)
 	this->factionId = _factionId;
 	this->unitId = _unitId;
 	
-	this->key =
-		+ _factionId				* (1 * (2 * MaxProtoFactionNum)) 
-		+ getUnitSlotById(_unitId)	* (1)
-	;
+}
+
+FactionUnit::encodeKey()
+{
+	int unitSlot = unitId < MaxProtoFactionNum ? unitId : MaxProtoFactionNum + unitId % MaxProtoFactionNum;
+	int key = factionId * (2 * MaxProtoFactionNum) + unitSlot;
+	
+	return key;
 	
 }
 
 FactionUnit::FactionUnit(int _key)
 {
-	this->key = _key;
+	assert(_key >= 0 && _key < MaxPlayerNum * (2 * MaxProtoFactionNum));
 	
-	this->factionId	= _key	/ (1 * (2 * MaxProtoFactionNum));
-	int unitSlot	= _key	% (1 * (2 * MaxProtoFactionNum));
+	this->factionId = _key % (2 * MaxProtoFactionNum);
 	
-	this->unitId = getUnitIdBySlot(this->factionId, unitSlot);
-	
-	assert(this->factionId >= 0 && this->factionId < MaxPlayerNum);
-	assert(this->unitId >= 0 && this->unitId < MaxProtoNum);
+	int unitSlot = _key % (2 * MaxProtoFactionNum);
+	this->unitId = unitSlot < MaxProtoFactionNum ? unitSlot : factionId * MaxProtoFactionNum + (unitSlot - MaxProtoFactionNum);
 	
 }
 
 // FactionUnitCombat
 
-FactionUnitCombat::FactionUnitCombat()
-: attackerFactionUnit(FactionUnit()), defenderFactionUnit(FactionUnit())
+int FactionUnitCombat::encodeKey(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode)
+{
+	return
+		+ attackerKey	* 2 * (MaxPlayerNum * (2 * MaxProtoFactionNum))
+		+ defenderKey	* 2
+		+ engagementMode
+	;
+}
+
+int FactionUnitCombat::encodeKey(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
+{
+	return encodeKey(FactionUnit::encodeKey(attackerFactionId, attackerUnitId), FactionUnit::encodeKey(defenderFactionId, defenderUnitId), engagementMode);
+}
+
+FactionUnitCombat::FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit, ENGAGEMENT_MODE _engagementMode)
+: attackerFactionUnit(_attackerFactionUnit), defenderFactionUnit(_defenderFactionUnit), engagementMode(_engagementMode)
 {}
 
-FactionUnitCombat::FactionUnitCombat(FactionUnit _attackerFactionUnit, FactionUnit _defenderFactionUnit)
-{
-	this->attackerFactionUnit = _attackerFactionUnit;
-	this->defenderFactionUnit = _defenderFactionUnit;
-	
-	this->key =
-		+ _attackerFactionUnit.key	* (1 * MaxPlayerNum * (2 * MaxProtoFactionNum))
-		+ _defenderFactionUnit.key	* (1)
-	;
-	
-}
-
 FactionUnitCombat::FactionUnitCombat(int _key)
-{
-	this->key = _key;
-	
-	int attackerKey = _key / (1 * MaxPlayerNum * (2 * MaxProtoFactionNum));
-	int defenderKey = _key % (1 * MaxPlayerNum * (2 * MaxProtoFactionNum));
-	
-	this->attackerFactionUnit = FactionUnit(attackerKey);
-	this->defenderFactionUnit = FactionUnit(defenderKey);
-	
-}
+: attackerFactionUnit(FactionUnit(_key / (2 * (MaxPlayerNum * (2 * MaxProtoFactionNum))))), defenderFactionUnit(FactionUnit(_key / 2 % (MaxPlayerNum * (2 * MaxProtoFactionNum)))), engagementMode((ENGAGEMENT_MODE) (_key % (2 * (MaxPlayerNum * (2 * MaxProtoFactionNum)))))
+{}
 
 // FactionUnitCombatEffect
 

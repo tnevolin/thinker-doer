@@ -703,7 +703,7 @@ void evaluateProject()
 	{
 		BaseInfo &baseInfo = aiData.getBaseInfo(productionDemand.baseId);
 		
-		double threat = baseInfo.combatData.getInitialAssailantWeight();
+		double threat = baseInfo.combatData.assailantWeight;
 		maxThreat = std::max(maxThreat, threat);
 		
 	}
@@ -726,7 +726,7 @@ void evaluateProject()
 		
 		// threat coefficient
 		
-		double threat = baseInfo.combatData.getInitialAssailantWeight();
+		double threat = baseInfo.combatData.assailantWeight;
 		double threatCoefficient = 1.0 - threat / maxThreat;
 		
 		// value
@@ -3692,10 +3692,10 @@ void hurryProtectiveUnit()
 			continue;
 		}
 
-		if (baseInfo.combatData.getInitialAssailantWeight() <= 0.0)
+		if (baseInfo.combatData.assailantWeight <= 0.0)
 			continue;
 
-		double relativeNotProvidedPresentEffect = std::min(1.0, baseInfo.combatData.getRemainingAssailantWeight() / baseInfo.combatData.getInitialAssailantWeight());
+		double relativeNotProvidedPresentEffect = std::min(1.0, baseInfo.combatData.remainingAssailantWeight / baseInfo.combatData.assailantWeight);
 
 		debug("\t\tremainingEffect=%3d\n", item);
 

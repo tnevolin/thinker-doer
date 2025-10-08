@@ -3176,6 +3176,29 @@ void patch_air_superiority_attack_needlejet()
     
 }
 
+void patch_veh_kill()
+{
+	write_call(0x004C9936, (int)wtp_mod_veh_kill); // action_build
+	write_call(0x004DBCCA, (int)wtp_mod_veh_kill); // Console::editor_reset_tech
+	write_call(0x00506116, (int)wtp_mod_veh_kill); // battle_kill
+	write_call(0x00518929, (int)wtp_mod_veh_kill); // Console::on_key_click
+	write_call(0x00520CDA, (int)wtp_mod_veh_kill); // random_events
+	write_call(0x0052116A, (int)wtp_mod_veh_kill); // random_events
+	write_call(0x00561E3D, (int)wtp_mod_veh_kill); // enemy_strategy
+	write_call(0x00561E58, (int)wtp_mod_veh_kill); // enemy_strategy
+	write_call(0x0057D06F, (int)wtp_mod_veh_kill); // study_artifact
+	write_call(0x00589126, (int)wtp_mod_veh_kill); // alien_start
+	write_call(0x00591639, (int)wtp_mod_veh_kill); // alt_set
+	write_call(0x005970B1, (int)wtp_mod_veh_kill); // order_veh
+	write_call(0x005985FC, (int)wtp_mod_veh_kill); // order_veh
+	write_call(0x005A3C7A, (int)wtp_mod_veh_kill); // probe
+	write_call(0x005A4771, (int)wtp_mod_veh_kill); // probe
+	write_call(0x005B0D42, (int)wtp_mod_veh_kill); // scenario_setup
+	write_call(0x005B33EA, (int)wtp_mod_veh_kill); // eliminate_player
+	write_call(0x005B9560, (int)wtp_mod_veh_kill); // stack_kill
+	write_call(0x005C0C1F, (int)wtp_mod_veh_kill); // kill
+	
+}
 
 // =======================================================
 // main patch option selection
@@ -3513,6 +3536,8 @@ void patch_setup_wtp(Config* cf)
 	{
 		patch_air_superiority_attack_needlejet();
 	}
+
+	patch_veh_kill();
 	
 }
 

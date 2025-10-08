@@ -8,58 +8,84 @@ combat mode and effect
 */
 struct CombatModeEffect
 {
-	bool valid = false;
 	COMBAT_MODE combatMode = CM_MELEE;
 	double value = 0.0;
 };
 
 /*
-all unit-to-unit combat effect data
+all unit-to-unit combat effects
 */
-struct CombatEffectData
+struct CombatEffectTable
 {
 	// each to each unit combat effects
 	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][engagementMode] = combatEffect
-	robin_hood::unordered_flat_map<int, std::array<CombatModeEffect, ENGAGEMENT_MODE_COUNT>> combatModeEffects;
+	robin_hood::unordered_flat_map<int, CombatModeEffect> combatModeEffects;
 	
 	void clear();
 	void setCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, COMBAT_MODE combatMode, double value);
-	CombatModeEffect const getCombatModeEffect(int key, ENGAGEMENT_MODE engagementMode);
-	double getCombatEffect(int attackerFactionUnitKey, int defenderFactionUnitKey, ENGAGEMENT_MODE engagementMode);
+	CombatModeEffect const &getCombatModeEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode);
+	CombatModeEffect const &getCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
+	double getCombatEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode);
 	double getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
-	double getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, COMBAT_MODE combatMode);
+	double getVehicleCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode);
+	
+};
+
+/*
+all unit-to-unit combat effects with terrain modifiers
+*/
+struct TileCombatEffectTable
+{
+	// each to each unit combat effects
+	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][engagementMode] = combatEffect
+	CombatEffectTable *combatEffectTable = nullptr;
+	// tile
+	MAP *tile = nullptr;
+	// who is assailant
+	bool playerAssault = false;
+	// each to each unit combat effects for this tile
+	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][engagementMode] = combatEffect
+	robin_hood::unordered_flat_map<int, CombatModeEffect> combatModeEffects;
+	
+	void clear();
+	void setCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, COMBAT_MODE combatMode, double value);
+	CombatModeEffect const &getCombatModeEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode);
+	CombatModeEffect const &getCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
+	double getCombatEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode);
+	double getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
 	double getVehicleCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode);
 	
 };
 
 struct CombatData
 {
-	CombatEffectData combatEffectData;
+	// combat effects
+	TileCombatEffectTable tileCombatEffectTable;
+	
+	// participants
+	
 	robin_hood::unordered_flat_map<int, double> assailantEffects;
 	robin_hood::unordered_flat_map<int, double> protectorEffects;
 	
-	bool initialProtectorWeightComputed = true;
-	bool initialAssailantWeightComputed = true;
-	double initialProtectorWeight = 0.0;
-	double initialAssailantWeight = 0.0;
-	
-	bool computed = false;
-	double remainingAssailantWeight;
-	double remainingProtectorWeight;
-	bool sufficientAssault;
-	bool sufficientProtect;
-	
+//	void initialize(robin_hood::unordered_flat_map<int, std::vector<int>> const &assailantFactionUnitIds, robin_hood::unordered_flat_map<int, std::vector<int>> const &protectorFactionUnitIds, MAP *tile);
+		
 	// assailantWeights [FactionUnitKey]
 	robin_hood::unordered_flat_map<int, double> assailants;
+	double assailantWeight = 0.0;
 	// protectorWeights [FactionUnitKey]
 	robin_hood::unordered_flat_map<int, double> protectors;
+	double protectorWeight = 0.0;
 	
 	// assailantWeights [FactionUnitKey]
 	robin_hood::unordered_flat_map<int, double> remainingAssailants;
+	double remainingAssailantWeight;
 	// protectorWeights [FactionUnitKey]
 	robin_hood::unordered_flat_map<int, double> remainingProtectors;
+	double remainingProtectorWeight;
 	
-	void initialize(robin_hood::unordered_flat_map<int, std::vector<int>> const &assailantFactionUnitIds, robin_hood::unordered_flat_map<int, std::vector<int>> const &protectorFactionUnitIds, MAP *tile);
+	bool computed = false;
+	bool sufficientAssault;
+	bool sufficientProtect;
 	
 	void clearAssailants();
 	void clearProtectors();
@@ -71,14 +97,8 @@ struct CombatData
 	void removeAssailantUnit(int factionId, int unitId, double weight = 1.0);
 	void removeProtectorUnit(int factionId, int unitId, double weight = 1.0);
 	
-	double getInitialAssailantWeight();
-	double getInitialProtectorWeight();
-	
 	double getRemainingAssailantWeight();
 	double getRemainingProtectorWeight();
-	
-	double getAssailantPrevalence();
-	double getProtectorPrevalence();
 	
 	double getAssailantUnitEffect(int factionId, int unitId);
 	double getProtectorUnitEffect(int factionId, int unitId);
@@ -93,5 +113,11 @@ struct CombatData
 };
 
 void resolveMutualCombat(double combatEffect, double &attackerHealth, double &defenderHealth);
-FactionUnitCombatEffect getBestAttackerDefenderMeleeEffect(CombatEffectData &combatEffectData, robin_hood::unordered_flat_map<int, double> &attackers, robin_hood::unordered_flat_map<int, double> &defenders);
+FactionUnitCombatEffect getBestAttackerDefenderMeleeEffect(TileCombatEffectTable &tileCombatEffectTable, robin_hood::unordered_flat_map<int, double> &attackers, robin_hood::unordered_flat_map<int, double> &defenders);
+
+double calculateCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode);
+//double calculateTileCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *tile);
+double getMeleeRelativeUnitStrength1(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
+double getArtilleryDuelRelativeUnitStrength1(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
+double getUnitBombardmentDamage1(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
 

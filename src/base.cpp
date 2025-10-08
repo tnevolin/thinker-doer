@@ -2191,7 +2191,15 @@ int __cdecl mod_capture_base(int base_id, int faction, int is_probe) {
         for (int i = *VehCount-1; i >= 0; i--) {
             if (Vehs[i].x == base->x && Vehs[i].y == base->y
             && Vehs[i].faction_id != faction && !has_pact(faction, Vehs[i].faction_id)) {
+            	
+            	// [WTP]
+            	// intercept veh_kill
+            	/*
                 veh_kill(i);
+                */
+                wtp_mod_veh_kill(i);
+                //
+                
             }
         }
     }

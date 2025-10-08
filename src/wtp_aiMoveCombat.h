@@ -144,7 +144,7 @@ double getBombardmentCostCoefficient(int vehicleId, double effect, double enemyU
 bool isPrimaryEffect(int vehicleId, MAP *enemyStackTile, EnemyStackInfo &enemyStackInfo, COMBAT_MODE combatMode);
 bool isProtecting(int vehicleId);
 void aiMoveCombatVehicle(int const vehicleId);
-double getDefenseGain(int defenderVehicleId, MAP *destination, double defenderHealthCoefficient, int excludeEnemyVehicleId);
+double getDefenseGain(int defenderVehicleId, MAP *destination, double defenderHealthCoefficient, int excludeEnemyVehiclePad0);
 double getProximityGain(int vehicleId, MAP *destination);
 double getMeleeAttackGain(int vehicleId, MAP *destination, MAP *target);
 double getArtilleryAttackGain(int vehicleId, MAP *destination, MAP *target);

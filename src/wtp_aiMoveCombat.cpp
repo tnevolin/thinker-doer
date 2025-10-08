@@ -1491,7 +1491,7 @@ void moveCombat()
 		if (!enemyStackInfo.isSufficient(false))
 			continue;
 		
-		for (int vehicleId : enemyStackInfo.vehicleIds)
+		for (int vehiclePad0 : enemyStackInfo.vehiclePad0s)
 		{
 			// remove potential attack
 			
@@ -1505,7 +1505,7 @@ void moveCombat()
 					{
 						PotentialAttack &potentialAttack = *potentialAttackIterator;
 						
-						if (potentialAttack.vehicleId == vehicleId)
+						if (potentialAttack.vehiclePad0 == vehiclePad0)
 						{
 							potentialAttackIterator = potentialAttacks.erase(potentialAttackIterator);
 						}
@@ -1583,7 +1583,7 @@ void populateDefensiveProbeTasks(std::vector<TaskPriority> &taskPriorities)
 			if (travelTime == INF)
 				continue;
 			
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// combat effect
 			
@@ -2156,7 +2156,7 @@ void populatePolice2xTasks(std::vector<TaskPriority> &taskPriorities)
 			if (travelTime == INF)
 				continue;
 			
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// priority
 			
@@ -2232,7 +2232,7 @@ void populatePoliceTasks(std::vector<TaskPriority> &taskPriorities)
 			if (travelTime == INF)
 				continue;
 			
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// priority
 			
@@ -2307,7 +2307,7 @@ void populateBaseProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// initial threat
 			
-			double threat = baseInfo.combatData.getInitialAssailantWeight();
+			double threat = baseInfo.combatData.assailantWeight;
 			
 			// get travel time and coresponding coefficient
 			
@@ -2315,7 +2315,7 @@ void populateBaseProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			if (travelTime == INF)
 				continue;
 			
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// priority
 			
@@ -2399,7 +2399,7 @@ void populateBunkerProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// required protection
 			
-			double threat = bunkerCombatData.getInitialAssailantWeight();
+			double threat = bunkerCombatData.assailantWeight;
 			
 			// get travel time and coresponding coefficient
 			
@@ -2407,7 +2407,7 @@ void populateBunkerProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			if (travelTime == INF)
 				continue;
 			
-			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_combat_travel_time_scale_base_protection, travelTime);
+			double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
 			
 			// priority
 			
@@ -3216,12 +3216,14 @@ double getDefenseGain(int defenderVehicleId, MAP *destination, double defenderHe
 	{
 		for (PotentialAttack const &potentialAttack : destinationTileInfo->potentialAttacks.at(engagementMode))
 		{
-			// exclude enemy vehicle
-			
-			if (potentialAttack.vehicleId == excludeEnemyVehicleId)
+			int attackerVehicleId = getVehicleIdByPad0(potentialAttack.vehiclePad0);
+			if (!(attackerVehicleId >= 0 && attackerVehicleId < *VehCount))
 				continue;
 			
-			int attackerVehicleId = potentialAttack.vehicleId;
+			// exclude enemy vehicle
+			
+			if (attackerVehicleId == excludeEnemyVehicleId)
+				continue;
 			
 			COMBAT_MODE combatMode = getCombatMode(engagementMode, defenderVehicle->unit_id);
 			bool mutualCombat = combatMode != CM_BOMBARDMENT;
@@ -3231,7 +3233,7 @@ double getDefenseGain(int defenderVehicleId, MAP *destination, double defenderHe
 			if (mutualCombat)
 			{
 				// combatEffect is relative mutual damage - reduced by defenderHealthCoefficient
-				double combatEffect = (1.0 / defenderHealthCoefficient) * getCombatEffect(potentialAttack.vehicleId, defenderVehicleId, engagementMode, destination);
+				double combatEffect = (1.0 / defenderHealthCoefficient) * getTileCombatEffect(attackerVehicleId, defenderVehicleId, engagementMode, destination, true);
 				
 				// defender gain is an opposite of attacker gain
 				gain = -getMutualCombatGain(getVehicleDestructionGain(attackerVehicleId), getVehicleDestructionGain(defenderVehicleId), combatEffect);
@@ -3239,8 +3241,8 @@ double getDefenseGain(int defenderVehicleId, MAP *destination, double defenderHe
 			}
 			else
 			{
-				// combatEffect is absolute damate - not reduced by defenderHealthCoefficient
-				double combatEffect = getCombatEffect(potentialAttack.vehicleId, defenderVehicleId, engagementMode, destination);
+				// combatEffect is absolute damage - not reduced by defenderHealthCoefficient
+				double combatEffect = getTileCombatEffect(attackerVehicleId, defenderVehicleId, engagementMode, destination, true);
 				
 				// defender relative damage
 				
@@ -3257,7 +3259,7 @@ double getDefenseGain(int defenderVehicleId, MAP *destination, double defenderHe
 			
 			if (gain < bestAttackerGain)
 			{
-				bestAttackerVehicleId = potentialAttack.vehicleId;
+				bestAttackerVehicleId = attackerVehicleId;
 				bestAttackerGain = gain;
 			}
 			
@@ -3317,12 +3319,26 @@ double getMeleeAttackGain(int vehicleId, MAP *destination, MAP *target)
 	
 	EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(target);
 	
-	if (enemyStackInfo.vehicleIds.size() == 0)
+	if (enemyStackInfo.vehiclePad0s.size() == 0)
 		return 0.0;
 	
 	// defender
 	
-	int defenderVehicleId = best_defender(enemyStackInfo.vehicleIds.front(), vehicleId, 0);
+	int defenderVehicleId = -1;
+	for (int defenderVehiclePad0 : enemyStackInfo.vehiclePad0s)
+	{
+		int vehicleId = getVehicleIdByPad0(defenderVehiclePad0);
+		if (!(vehicleId >= 0 && vehicleId < *VehCount))
+			continue;
+		
+		defenderVehicleId = vehicleId;
+		break;
+		
+	}
+	if (defenderVehicleId == -1)
+		return 0.0;
+	
+	defenderVehicleId = best_defender(defenderVehicleId, vehicleId, 0);
 	
 	// compute gain
 	
@@ -3354,17 +3370,30 @@ double getArtilleryAttackGain(int vehicleId, MAP *destination, MAP *target)
 	
 	EnemyStackInfo const &enemyStackInfo = aiData.getEnemyStackInfo(target);
 	
-	if (enemyStackInfo.vehicleIds.size() == 0)
+	if (enemyStackInfo.vehiclePad0s.size() == 0)
 		return 0.0;
 	
-	int defenderVehicleId;
 	double survivalProbability;
 	double attackerHealthCoefficient;
 	double attackGain;
 	
+	int defenderVehicleId = -1;
+	for (int defenderVehiclePad0 : enemyStackInfo.vehiclePad0s)
+	{
+		int vehicleId = getVehicleIdByPad0(defenderVehiclePad0);
+		if (!(vehicleId >= 0 && vehicleId < *VehCount))
+			continue;
+		
+		defenderVehicleId = vehicleId;
+		break;
+		
+	}
+	if (defenderVehicleId == -1)
+		return 0.0;
+	
 	if (enemyStackInfo.artillery)
 	{
-		defenderVehicleId = best_defender(enemyStackInfo.vehicleIds.front(), vehicleId, 1);
+		defenderVehicleId = best_defender(defenderVehicleId, vehicleId, 1);
 		
 		double combatEffect = enemyStackInfo.getVehicleOffenseEffect(vehicleId, CM_ARTILLERY_DUEL);
 		double attackerLoss = combatEffect <= 1.0 ? 1.0 : (1.0 / combatEffect);

@@ -9,7 +9,24 @@ std::string Task::typeName(TaskType &taskType)
 	return taskTypeNames[taskType];
 }
 
-int Task::getVehicleId() const
+int Task::getTaskVehicleId() const
+{
+	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	{
+		VEH *vehicle = getVehicle(vehicleId);
+		
+		if (vehicle->pad_0 == vehiclePad0)
+		{
+			return vehicleId;
+		}
+		
+	}
+	
+	return -1;
+	
+}
+
+VEH *Task::getTaskVehicle() const
 {
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
@@ -17,12 +34,12 @@ int Task::getVehicleId() const
 
 		if (vehicle->pad_0 == vehiclePad0)
 		{
-			return vehicleId;
+			return vehicle;
 		}
 
 	}
 
-	return -1;
+	return nullptr;
 
 }
 
@@ -44,7 +61,7 @@ Otherwise, current vehicle location.
 */
 MAP *Task::getDestination() const
 {
-	int vehicleId = getVehicleId();
+	int vehicleId = getTaskVehicleId();
 	
 	// unknown vehicle
 	
@@ -66,8 +83,8 @@ MAP *Task::getDestination() const
 
 MAP *Task::getAttackTarget() const
 {
-	int vehicleId = getVehicleId();
-	
+	int vehicleId = getTaskVehicleId();
+
 	if (vehicleId == -1)
 		return nullptr;
 	
@@ -94,7 +111,7 @@ int Task::getDestinationRange()
 	int x = getX(destination);
 	int y = getY(destination);
 
-	int vehicleId = getVehicleId();
+	int vehicleId = getTaskVehicleId();
 
 	if (vehicleId == -1)
 	{
@@ -113,7 +130,7 @@ int Task::execute()
 {
 	debug("Task::execute()\n");
 
-	int vehicleId = getVehicleId();
+	int vehicleId = getTaskVehicleId();
 
 	if (vehicleId == -1)
 	{
@@ -681,33 +698,23 @@ bool compareTaskPriorityDescending(Task const &a, Task const &b)
 
 void setTask(Task const &task)
 {
-	int vehicleId = task.getVehicleId();
+	int vehicleId = task.getTaskVehicleId();
 	VEH *vehicle = getVehicle(vehicleId);
 
 	if (aiData.tasks.find(vehicle->pad_0) == aiData.tasks.end())
 	{
-		aiData.tasks.emplace(vehicle->pad_0, std::vector<Task>());
+		aiData.tasks.emplace(vehicle->pad_0, task);
 	}
-	
-	aiData.tasks.at(vehicle->pad_0).emplace_back(vehicleId, task.type, task.destination, task.attackTarget, task.order, task.terraformingAction);
-	
-}
-
-void setPriorityTask(Task task, double priority)
-{
-	task.priority = priority;
-	setTask(task);
-	int vehicleId = task.getVehicleId();
-	VEH *vehicle = &(Vehs[vehicleId]);
-
-	std::sort(aiData.tasks.at(vehicle->pad_0).begin(), aiData.tasks.at(vehicle->pad_0).end(), compareTaskPriorityDescending);
+	else
+	{
+		aiData.tasks.at(vehicle->pad_0) = task;
+	}
 	
 }
 
 bool hasTask(int vehicleId)
 {
-	VEH *vehicle = &(Vehs[vehicleId]);
-	return (aiData.tasks.find(vehicle->pad_0) != aiData.tasks.end() && !aiData.tasks.at(vehicle->pad_0).empty());
+	return (aiData.tasks.find(Vehs[vehicleId].pad_0) != aiData.tasks.end());
 }
 
 bool hasExecutableTask(int vehicleId)
@@ -751,17 +758,12 @@ void deleteTask(int vehicleId)
 
 Task *getTask(int vehicleId)
 {
-	VEH *vehicle = getVehicle(vehicleId);
+	int vehiclePad0 = Vehs[vehicleId].pad_0;
 	
-	if (aiData.tasks.find(vehicle->pad_0) == aiData.tasks.end())
+	if (aiData.tasks.find(vehiclePad0) == aiData.tasks.end())
 		return nullptr;
 	
-	std::vector<Task> &vehicleTasks = aiData.tasks.at(vehicle->pad_0);
-	
-	if (vehicleTasks.empty())
-		return nullptr;
-	
-	return &(vehicleTasks.front());
+	return &(aiData.tasks.at(vehiclePad0));
 	
 }
 
@@ -769,36 +771,7 @@ int executeTask(int vehicleId)
 {
 	debug("executeTask\n");
 	
-	VEH *vehicle = &Vehs[vehicleId];
-	
-	if (aiData.tasks.find(vehicle->pad_0) == aiData.tasks.end())
-		return EM_DONE;
-	
-	Task *task = nullptr;
-	for (Task &vehicleTask : aiData.tasks.at(vehicle->pad_0))
-	{
-		switch (vehicleTask.type)
-		{
-		case TT_MELEE_ATTACK:
-		case TT_ARTILLERY_ATTACK:
-			{
-				MAP *vehicleTaskAttackTarget = vehicleTask.getAttackTarget();
-				if (!aiData.hasEnemyStack(vehicleTaskAttackTarget))
-					continue;
-			}
-			task = &vehicleTask;
-			break;
-			
-		default:
-			task = &vehicleTask;
-			
-		}
-		
-		if (task != nullptr)
-			break;
-		
-	}
-	
+	Task *task = getTask(vehicleId);
 	if (task == nullptr)
 		return EM_DONE;
 	

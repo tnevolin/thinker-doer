@@ -2110,9 +2110,17 @@ int __cdecl mod_veh_init(int unit_id, int faction_id, int x, int y) {
 }
 
 int __cdecl mod_veh_kill(int veh_id) {
+    
+    // [WTP]
+    // intercept veh_kill
+    /*
     VEH* veh = &Vehs[veh_id];
     debug("disband %2d %2d %s\n", veh->x, veh->y, veh->name());
     veh_kill(veh_id);
+    */
+    wtp_mod_veh_kill(veh_id);
+    //
+    
     return VEH_SKIP;
 }
 

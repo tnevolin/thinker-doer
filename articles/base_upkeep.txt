@@ -1,0 +1,181 @@
+.text:004F79C0 base_upkeep     proc near                         ; CODE XREF: production_phase+1C9↓p
+
+	.text:004F7A16                 call    base_support
+	.text:004F7A1B                 call    base_yield
+	.text:004F7A20                 call    base_nutrient
+	.text:004F7A25                 call    base_minerals
+	.text:004F7A2A                 call    base_energy               ; ECON, LAB, PSYCH
+	.text:004F7A2F                 call    base_production           ; base_production
+	return 1 : base diappears
+	
+	.text:004F7A38                 call    base_hurry
+	.text:004F7A52                 call    base_growth
+	return 1 : base diappears
+	
+	if (CURRENT_TURN_NUM > 1)
+	{
+		.text:004F7A75                 call    base_check_support
+	}
+	
+	.text:004F7A7F                 mov     g_BaseUpkeepState, edi    ; =1
+	
+	// these are just duplicates always executed
+	// looks like the idea was to recompute the base after base_production or base_growth changes something in base (population, multipliers, etc.)
+	// however, it would probably be more CPU effective to just check if this _something_ changed
+	.text:004F7A8A                 call    base_support
+	.text:004F7A8F                 call    base_yield
+	.text:004F7A94                 call    base_nutrient
+	.text:004F7A99                 call    base_minerals
+	.text:004F7A9E                 call    base_energy
+	
+	.text:004F7B31                 mov     g_BaseUpkeepState, 2
+	
+	if (CURRENT_TURN_NUM > 1)
+	{
+		.text:004F7B3D                 call    base_drones
+		.text:004F7B42                 call    base_doctors
+		
+		base ownership changed : exit
+		
+		.text:004F7B62                 call    base_energy_costs
+		
+		(some tutorial check)
+		.text:004F7B82                 call    base_research
+		
+	}
+		
+	// do not understand the idea
+	// why recompute THIS base if some OTHER base was computed meanwhile?
+	// computing some OTHER base does not change THIS base values
+	ComputeBaseID != BASE_CURRENT_ID
+		.text:004F7BA4                 call    base_support
+		.text:004F7BA9                 call    base_yield
+		.text:004F7BAE                 call    base_nutrient
+		.text:004F7BB3                 call    base_minerals
+		.text:004F7BB8                 call    base_energy
+		
+	.text:004F7BBD                 call    base_ecology
+	
+	(some sanctions computation)
+	
+	if (CURRENT_TURN_NUM > 1)
+	{
+		.text:004F7CF2                 call    base_maint
+	}
+	
+	.text:004F7CF9                 call    base_terraform
+	
+	.text:004F7F4E                 mov     g_BaseUpkeepState, 0
+	
+----------
+
+.text:004E9550 base_support    proc near                         ; CODE XREF: base_init+6A2↑p
+
+	iterate through vehicles ?
+	{
+		if (plan < Supply Convoy)
+		{
+			if (! CLEAN_REACTOR)
+			{
+				if (BaseUpkeepState == 1)
+				{
+					// accumulates some values in dword_96D080[eax*4]
+				}
+			}
+		}
+	}
+
+----------
+
+.text:004E80B0 base_yield      proc near                         ; CODE XREF: base_init+6A7↑p
+
+	.text:004E80B9                 call    farm_compute
+	
+----------
+
+.text:004E68B0 farm_compute    proc near                         ; CODE XREF: base_yield+9↓p
+
+	cycle by 100 tiles around the base?
+	{
+		...
+		
+		if (BaseUpkeepState == 1)
+		{
+			if (goody_at tile != 0)
+			{
+				if (land)
+				{
+					// add goals toward this tile
+					.text:004E6997                 mov     esi, [ebp+fac]
+					.text:004E699A                 push    0FFFFFFFFh                ; flag2
+					.text:004E699C                 push    ebx                       ; y
+					.text:004E699D                 push    edi                       ; x
+					.text:004E699E                 push    1                         ; flag1
+					.text:004E69A0                 push    3                         ; flag0
+					.text:004E69A2                 push    esi                       ; fac
+					.text:004E69A3                 call    add_goal
+					.text:004E69A8                 push    0FFFFFFFFh                ; flag2
+					.text:004E69AA                 push    ebx                       ; y
+					.text:004E69AB                 push    edi                       ; x
+					.text:004E69AC                 push    1                         ; flag1
+					.text:004E69AE                 push    2                         ; flag0
+					.text:004E69B0                 push    esi                       ; fac
+					.text:004E69B1                 call    add_goal
+					.text:004E69B6                 push    0FFFFFFFFh                ; flag2
+					.text:004E69B8                 push    ebx                       ; y
+					.text:004E69B9                 push    edi                       ; x
+					.text:004E69BA                 push    1                         ; flag1
+					.text:004E69BC                 push    0                         ; flag0
+					.text:004E69BE                 push    esi                       ; fac
+					.text:004E69BF                 call    add_goal
+				}
+				
+			}
+
+		}
+		
+		...
+		
+	}
+
+----------
+
+.text:004E9B70 base_nutrient   proc near                         ; CODE XREF: base_init+6AC↑p
+
+	if (BaseUpkeepState == 1)
+	{
+		// accumulates base nutrients in FACTION_nutrient_surplus_total
+	}
+
+----------
+
+.text:004EA1F0 black_market    proc near                         ; CODE XREF: base_energy+4E↓p
+
+	if (BaseUpkeepState == 1)
+	{
+		// accumulates something in dword_96D1B0[ecx*4]
+	}
+	
+----------
+
+.text:004EA540 base_psych      proc near                         ; CODE XREF: base_energy:loc_4EC39A↓p
+
+	iterate over edi = 8..0
+	{
+		if (edi != 0 || BaseUpkeepState == 1 // and some other complex conditions including BaseUpkeepState == 1 in some other place)
+		{
+			// looks like base psych computation for psych base screen
+		}
+	}
+	
+----------
+
+.text:004EB560 base_energy     proc near                         ; CODE XREF: base_init+6B6↑p
+
+	if (BaseUpkeepState == 1)
+	{
+		// accumulates base energy surplus in dword_96CCDC[ecx*4] (faction total ?)
+	}
+
+----------
+

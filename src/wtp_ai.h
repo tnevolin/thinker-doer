@@ -149,7 +149,7 @@ void populateEmptyEnemyBaseTiles();
 void populateBasePoliceData();
 
 void computeUnitDestructionGains();
-void computeCombatEffects();
+//void computeCombatEffects();
 
 void populateEnemyBaseInfos();
 void populateEnemyBaseCaptureGains();
@@ -171,6 +171,7 @@ void checkAndProposePrototype(int factionId, VehChassis chassisId, VehWeapon wea
 // --------------------------------------------------
 
 int getVehicleIdByPad0(int pad0);
+VEH *getVehicleByPad0(int pad0);
 MAP *getClosestPod(int vehicleId);
 int getNearestAIFactionBaseRange(int x, int y);
 int getNearestBaseRange(MAP *tile, std::vector<int> baseIds, bool sameRealm);
@@ -194,10 +195,6 @@ bool compareIdIntValueAscending(const IdIntValue &a, const IdIntValue &b);
 bool compareIdIntValueDescending(const IdIntValue &a, const IdIntValue &b);
 bool compareIdDoubleValueAscending(const IdDoubleValue &a, const IdDoubleValue &b);
 bool compareIdDoubleValueDescending(const IdDoubleValue &a, const IdDoubleValue &b);
-double getMeleeRelativeUnitStrength(int attackerUnitId, int attackerFactionId, int defenderUnitId, int defenderFactionId);
-double getArtilleryDuelRelativeUnitStrength(int attackerUnitId, int attackerFactionId, int defenderUnitId, int defenderFactionId);
-double getUnitBombardmentDamage(int attackerUnitId, int attackerFactionId, int defenderUnitId, int defenderFactionId);
-double getVehicleBombardmentDamage(int attackerVehicleId, int defenderVehicleId);
 double getVehiclePsiOffensePowerModifier(int vehicleId);
 double getVehiclePsiDefenseModifier(int vehicleId);
 double getVehicleConventionalOffenseModifier(int vehicleId);
@@ -303,8 +300,9 @@ double getCachingArtifactGain();
 double getUnitDestructionGain(int unitId);
 double getCombatUnitDestructionGain(int unitId);
 double getCivicUnitDestructionGain(int unitId);
-double getTileCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, COMBAT_MODE combatMode, MAP *tile, bool atTile);
+double getTileCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, MAP *tile, bool atTile);
+double getTileCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *tile, bool atTile);
 double getProportionalCoefficient(double minValue, double maxValue, double value);
-void initializeLocationCombatData(CombatData &combatData, TileInfo &tileInfo, bool playerAssaults);
-double getCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *tile);
+//void initializeLocationCombatData(CombatData &combatData, TileInfo &tileInfo, bool playerAssaults);
+void populateVehiclePad0Map();
 

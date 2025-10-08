@@ -2318,7 +2318,15 @@ int __cdecl mod_eliminate_player(int faction_id, int setup_id) {
     }
     for (int i = *VehCount - 1; i >= 0; i--) {
         if (Vehs[i].faction_id == faction_id) {
+			
+			// [WTP]
+			// intercept veh_kill
+			/*
             veh_kill(i); // does not call kill() instead?
+			*/
+			mod_veh_kill(i);
+			//
+			
         }
     }
     plr->base_count = 0;

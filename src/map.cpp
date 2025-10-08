@@ -316,7 +316,15 @@ void __cdecl alt_set(int x, int y, int altitude) {
             if (veh->triad() != TRIAD_AIR && (veh->triad() == TRIAD_SEA) != is_sea
             && !(veh->flags & VFLAG_IS_OBJECTIVE)) {
                 MapBaseIdClosestSubmergedVeh[veh->faction_id] = base_find2(x, y, veh->faction_id);
+				
+				// [WTP]
+				// intercept veh_kill
+				/*
                 veh_kill(veh_id);
+				*/
+				mod_veh_kill(veh_id);
+				//
+				
                 if (next_veh_id > veh_id) {
                     --next_veh_id;
                 }

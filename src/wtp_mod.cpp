@@ -4221,3 +4221,16 @@ int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAb
 	
 }
 
+/*	
+Intercepts veh_kill to update pad_0 mapping.
+*/
+int __cdecl wtp_mod_veh_kill(int vehicleId)
+{
+	int returnValue = veh_kill(vehicleId);
+	
+	populateVehiclePad0Map();
+	
+	return returnValue;
+	
+}
+

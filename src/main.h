@@ -573,7 +573,6 @@ struct Config {
     double ai_combat_base_threat_range;
     double ai_base_threat_travel_time_scale;
     double ai_combat_travel_time_scale;
-    double ai_combat_travel_time_scale_base_protection;
     double ai_combat_priority_escape;
     double ai_combat_priority_repair;
     double ai_combat_priority_repair_partial;

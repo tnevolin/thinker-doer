@@ -76,7 +76,8 @@ struct Task
 	{}
 
 	static std::string typeName(TaskType &taskType);
-	int getVehicleId() const;
+	int getTaskVehicleId() const;
+	VEH *getTaskVehicle() const;
 	void clearDestination();
 	void setDestination(MAP *_destination);
 	MAP *getDestination() const;
