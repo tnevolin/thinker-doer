@@ -28,8 +28,12 @@ CombatModeEffect const &CombatEffectTable::getCombatModeEffect(int attackerKey, 
 	
 	if (combatModeEffects.find(key) == combatModeEffects.end())
 	{
-		debug("ERROR: no combat effect for given units.\n");
-		return CombatModeEffect();
+		FactionUnit attackerFactionUnit(attackerKey);
+		FactionUnit defenderFactionUnit(defenderKey);
+		
+		CombatModeEffect combatModeEffect = getUnitCombatModeEffect(attackerFactionUnit.factionId, attackerFactionUnit.unitId, defenderFactionUnit.factionId, defenderFactionUnit.unitId, engagementMode);
+		combatModeEffects.emplace(key, combatModeEffect);
+		
 	}
 	
 	return combatModeEffects.at(key);
@@ -80,10 +84,16 @@ void TileCombatEffectTable::setCombatModeEffect(int attackerFactionId, int attac
 CombatModeEffect const &TileCombatEffectTable::getCombatModeEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode)
 {
 	int key = FactionUnitCombat::encodeKey(attackerKey, defenderKey, engagementMode);
+	
 	if (combatModeEffects.find(key) == combatModeEffects.end())
 	{
-		debug("ERROR: no combat effect for given units.\n");
-		return CombatModeEffect();
+		FactionUnit attackerFactionUnit(attackerKey);
+		FactionUnit defenderFactionUnit(defenderKey);
+		bool atTile = playerAssault ? attackerFactionUnit.factionId == playerFactionId : defenderFactionUnit.factionId == playerFactionId;
+
+		CombatModeEffect combatModeEffect = getTileCombatModeEffect(combatEffectTable, attackerFactionUnit.factionId, attackerFactionUnit.unitId, defenderFactionUnit.factionId, defenderFactionUnit.unitId, engagementMode, tileCombatModifiers, atTile);
+		combatModeEffects.emplace(key, combatModeEffect);
+		
 	}
 	
 	return combatModeEffects.at(key);
@@ -849,7 +859,7 @@ FactionUnitCombatEffect getBestAttackerDefenderMeleeEffect(TileCombatEffectTable
 /*
 Computes generic unit to unit combat effect.
 */
-double getUnitCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
+CombatModeEffect getUnitCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
 {
 	Profiling::start("- calculateCombatEffect");
 	
@@ -877,9 +887,31 @@ double getUnitCombatEffect(int attackerFactionId, int attackerUnitId, int defend
 		
 	}
 	
+	CombatModeEffect combatModeEffect = {combatMode, combatEffect};
+	
 	Profiling::stop("- calculateCombatEffect");
 	
-	return combatEffect;
+	return combatModeEffect;
+	
+}
+
+CombatModeEffect getTileCombatModeEffect(CombatEffectTable *combatEffectTable, int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, TileCombatModifiers &tileCombatModifiers, bool atTile)
+{
+	CombatModeEffect combatModeEffect = combatEffectTable->getCombatModeEffect(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode);
+	
+	combatModeEffect.value *=
+		1.0
+		* tileCombatModifiers.sensorOffenseMultipliers.at(attackerFactionId)
+		/ tileCombatModifiers.sensorDefenseMultipliers.at(defenderFactionId)
+	;
+	
+	if (atTile)
+	{
+		AttackTriad attackTriad = getAttackTriad(attackerUnitId, defenderUnitId);
+		combatModeEffect.value /= tileCombatModifiers.terrainDefenseMultipliers.at(attackTriad);
+	}
+	
+	return combatModeEffect;
 	
 }
 
