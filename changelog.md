@@ -1,8 +1,10 @@
-# Version 340
+# Version 394
 
 * New thinker.ini option: right_of_passage_agreement.
   * Disables road/magtube movement bonus on other faction territory.
 * New thinker.ini option: scorched_earth.
+  * Destroys lost territory terrain improvements on base capture.
+* New thinker.ini option: destroy_captured_base_defense.
   * Destroys lost territory terrain improvements on base capture.
 
 # Version 393
