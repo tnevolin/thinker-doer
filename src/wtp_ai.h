@@ -1,7 +1,6 @@
 #pragma once
 
 #include "wtp_aiData.h"
-#include "wtp_aiCombatData.h"
 
 const int MAX_SAFE_LOCATION_SEARCH_RANGE = 6;
 const int STACK_MAX_BASE_RANGE = 20;
@@ -151,6 +150,7 @@ void populateBasePoliceData();
 void computeUnitDestructionGains();
 
 void populateEnemyBaseInfos();
+void computeCombatEffects();
 void populateEnemyBaseCaptureGains();
 void populateEnemyBaseProtectorWeights();
 void populateEnemyBaseAssaultEffects();

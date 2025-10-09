@@ -328,7 +328,7 @@ void populateAIData()
 	// other computations
 	
 	computeUnitDestructionGains();
-//	computeCombatEffects();
+	computeCombatEffects();
 	
 	// enemy info
 	
@@ -874,21 +874,21 @@ void populateTileInfos()
 		{
 			for (AttackTriad attackTriad : ATTACK_TRIADS)
 			{
-				tileInfo.structureDefenseMultipliers.at(attackTriad)		= getBaseDefenseMultiplier(tileInfo.baseId, attackTriad);
+				tileInfo.terrainDefenseMultipliers.at(attackTriad)		= getBaseDefenseMultiplier(tileInfo.baseId, attackTriad);
 			}
 		}
 		else if (tileInfo.bunker)
 		{
-			tileInfo.structureDefenseMultipliers.at(ATTACK_TRIAD_LAND)	= getPercentageBonusMultiplier(conf.bunker_bonus_surface);
-			tileInfo.structureDefenseMultipliers.at(ATTACK_TRIAD_SEA)		= getPercentageBonusMultiplier(conf.bunker_bonus_surface);
-			tileInfo.structureDefenseMultipliers.at(ATTACK_TRIAD_AIR)		= getPercentageBonusMultiplier(conf.bunker_bonus_aerial);
-			tileInfo.structureDefenseMultipliers.at(ATTACK_TRIAD_PSI)		= 1.0;
+			tileInfo.terrainDefenseMultipliers.at(ATTACK_TRIAD_LAND)	= getPercentageBonusMultiplier(conf.bunker_bonus_surface);
+			tileInfo.terrainDefenseMultipliers.at(ATTACK_TRIAD_SEA)		= getPercentageBonusMultiplier(conf.bunker_bonus_surface);
+			tileInfo.terrainDefenseMultipliers.at(ATTACK_TRIAD_AIR)		= getPercentageBonusMultiplier(conf.bunker_bonus_aerial);
+			tileInfo.terrainDefenseMultipliers.at(ATTACK_TRIAD_PSI)		= 1.0;
 		}
 		else
 		{
 			for (AttackTriad attackTriad : ATTACK_TRIADS)
 			{
-				tileInfo.structureDefenseMultipliers.at(attackTriad)		= 1.0;
+				tileInfo.terrainDefenseMultipliers.at(attackTriad)		= 1.0;
 			}
 		}
 		
@@ -3057,6 +3057,17 @@ void computeUnitDestructionGains()
 	
 }
 
+void computeCombatEffects()
+{
+	// reset combatEffects
+	
+	aiData.combatEffectTable.clear();
+	
+	// no upfront computation
+	// values are computed on demand and cached
+	
+}
+
 void populateEnemyBaseInfos()
 {
 	Profiling::start("populateEnemyBaseInfos", "populateAIData");
@@ -3469,6 +3480,10 @@ void evaluateEnemyStacks()
 		CombatData &combatData = enemyStackInfo.combatData;
 		TileCombatEffectTable &tileCombatEffectTable = combatData.tileCombatEffectTable;
 		
+		// reset combatData
+		
+		combatData.reset(&aiData.combatEffectTable, enemyStackTile);
+		
 		// ignore stacks without vehicles
 		
 		if (enemyStackInfo.vehiclePad0s.empty())
@@ -3718,6 +3733,22 @@ void evaluateEnemyStacks()
 		
 		Profiling::stop("calculate destructionGain");
 		
+		// populate protectors
+		
+		Profiling::start("populate protectors", "evaluateEnemyStacks");
+		
+		for (int vehiclePad0 : enemyStackInfo.vehiclePad0s)
+		{
+			int vehicleId = getVehicleIdByPad0(vehiclePad0);
+			if (!(vehicleId >= 0 && vehicleId < *VehCount))
+				continue;
+			
+			combatData.addProtector(vehicleId);
+			
+		}
+		
+		Profiling::stop("populate protectors");
+		
 	}
 	
 	Profiling::stop("evaluateEnemyStacks");
@@ -3750,6 +3781,10 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 	
 	std::array<FactionInfo, MaxPlayerNum> &factionInfos = aiData.factionInfos;
 	std::vector<int> const &unfriendlyFactionIds = aiData.unfriendlyFactionIds;
+	
+	// reset combat data
+	
+	combatData.reset(&aiData.combatEffectTable, tile);
 	
 	// evaluate base threat
 
@@ -4140,8 +4175,6 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 	// populate assailants
 	
 	Profiling::start("populate assailants", "evaluate base threat");
-	
-	combatData.clearAssailants();
 	
 	debug("\tassailants\n");
 	for (int foeFactionId : unfriendlyFactionIds)
@@ -8868,7 +8901,7 @@ double getTileCombatEffect(int attackerFactionId, int attackerUnitId, int defend
 	if (atTile)
 	{
 		AttackTriad attackTriad = getAttackTriad(attackerUnitId, defenderUnitId);
-		combatEffect /= tileInfo.structureDefenseMultipliers.at(attackTriad);
+		combatEffect /= tileInfo.terrainDefenseMultipliers.at(attackTriad);
 	}
 	
 	return combatEffect;

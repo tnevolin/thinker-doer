@@ -307,7 +307,7 @@ FactionUnit::FactionUnit(int _key)
 {
 	assert(_key >= 0 && _key < MaxPlayerNum * (2 * MaxProtoFactionNum));
 	
-	this->factionId = _key % (2 * MaxProtoFactionNum);
+	this->factionId = _key / (2 * MaxProtoFactionNum);
 	
 	int unitSlot = _key % (2 * MaxProtoFactionNum);
 	this->unitId = unitSlot < MaxProtoFactionNum ? unitSlot : factionId * MaxProtoFactionNum + (unitSlot - MaxProtoFactionNum);
