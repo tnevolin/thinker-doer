@@ -7,8 +7,10 @@
 #include "robin_hood.h"
 #include "engine.h"
 
-// first level trial based defensive structure facilities
-FacilityId const TRIAD_DEFENSIVE_FACILITIES[3] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX};
+// first level triad based defensive structure facilities
+FacilityId constexpr TRIAD_DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX};
+// all defensive structure facilities
+FacilityId const DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX, FAC_TACHYON_FIELD};
 
 int const MAX_RANGE = 40;
 int const MAX_RANGE_TILE_COUNT = (1 + 2 * MAX_RANGE) * (1 + 2 * MAX_RANGE);

@@ -1,3 +1,10 @@
+# Version 340
+
+* New thinker.ini option: right_of_passage_agreement.
+  * Disables road/magtube movement bonus on other faction territory.
+* New thinker.ini option: scorched_earth.
+  * Destroys lost territory terrain improvements on base capture.
+
 # Version 393
 
 * New thinker.ini option: road_magtube_fixed_movement_rate=1. Makes river/road/magtube movement proportionally slower for fast units.

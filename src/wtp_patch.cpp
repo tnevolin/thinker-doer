@@ -3145,6 +3145,17 @@ void patch_alien_veh_init()
 	
 }
 
+void patch_capture_base()
+{
+	// wrap reset_territory when base is captured or killed
+	
+    write_call(0x004CCF13, (int)wtp_mod_capture_base); // action_airdrop
+    write_call(0x00598778, (int)wtp_mod_capture_base); // order_veh
+    write_call(0x005A4AB0, (int)wtp_mod_capture_base); // probe
+    
+}
+
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3472,6 +3483,8 @@ void patch_setup_wtp(Config* cf)
 	patch_alien_veh_init();
 	
 	patch_alien_veh_init();
+	
+	patch_capture_base();
 	
 }
 

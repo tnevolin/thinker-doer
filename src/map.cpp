@@ -1391,14 +1391,77 @@ int __cdecl mod_hex_cost(int unit_id, int faction_id, int x1, int y1, int x2, in
     }
     
     // [WTP]
-    // fixed road/magtube movement rate
+    // fixed river/road/magtube movement rate
     if (conf.road_magtube_fixed_movement_rate && value < Rules->move_rate_roads)
 	{
 		value *= Units[unit_id].speed();
 	}
     //
     
-    return value;
+    // [WTP]
+	// right of passage agreement
+	if (conf.right_of_passage_agreement > 0)
+	{
+		if (sq_a != nullptr && sq_b != nullptr)
+		{
+			// check if we don't have right of passage
+			
+			if
+			(
+				(
+					sq_a->owner != -1 && sq_a->owner != faction_id
+					&&
+					(
+						(conf.right_of_passage_agreement == 1 && at_war(faction_id, sq_a->owner))
+						||
+						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, sq_a->owner))
+					)
+				)
+				||
+				(
+					sq_b->owner != -1 && sq_b->owner != faction_id
+					&&
+					(
+						(conf.right_of_passage_agreement == 1 && at_war(faction_id, sq_b->owner))
+						||
+						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, sq_b->owner))
+					)
+				)
+			)
+			{
+				// get road/tube improvements
+				
+				int sqARoadTube = sq_a->items & (BIT_ROAD | BIT_MAGTUBE);
+				int sqBRoadTube = sq_b->items & (BIT_ROAD | BIT_MAGTUBE);
+				
+				// at least one tile has road/tube
+				
+				if (sqARoadTube != 0 || sqBRoadTube != 0)
+				{
+					// remove road/tube from the map
+					
+					sq_a->items &= ~(BIT_ROAD | BIT_MAGTUBE);
+					sq_b->items &= ~(BIT_ROAD | BIT_MAGTUBE);
+					
+					// recalculate value without road/tube
+					
+					value = hex_cost(unit_id, faction_id, x1, y1, x2, y2, toggle);
+					
+					// restore road/tube to the map
+					
+					sq_a->items |= sqARoadTube;
+					sq_b->items |= sqBRoadTube;
+					
+				}
+				
+			}
+			
+		}
+		
+	}
+	//
+	
+	return value;
 }
 
 /*

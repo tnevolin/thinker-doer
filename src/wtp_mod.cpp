@@ -4371,3 +4371,89 @@ void wtp_mod_social_ai(int factionId)
 	
 }
 
+/*
+Destroys terrain improvements on lost territory.
+*/
+int __cdecl wtp_mod_capture_base(int base_id, int faction, int is_probe)
+{
+	BASE &base = Bases[base_id];
+	int oldBaseFactionId = base.faction_id;
+	
+	// destroyable terrain improvements
+	
+	uint32_t destroyableImprovments =
+		Terraform[FORMER_FARM].bit |
+		Terraform[FORMER_SOIL_ENR].bit |
+		Terraform[FORMER_MINE].bit |
+		Terraform[FORMER_SOLAR].bit |
+		Terraform[FORMER_FOREST].bit |
+		Terraform[FORMER_ROAD].bit |
+		Terraform[FORMER_MAGTUBE].bit |
+		Terraform[FORMER_BUNKER].bit |
+		Terraform[FORMER_AIRBASE].bit |
+		Terraform[FORMER_SENSOR].bit |
+		Terraform[FORMER_CONDENSER].bit |
+		Terraform[FORMER_ECH_MIRROR].bit |
+		Terraform[FORMER_THERMAL_BORE].bit
+	;
+	
+	int *oldMapOwners = nullptr;
+	
+	if (conf.scorched_earth)
+	{
+		// record exising map owners
+		
+		int *oldMapOwners = new int[*MapAreaTiles];
+		
+		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+		{
+			MAP *tile = *MapTiles + tileIndex;
+			oldMapOwners[tileIndex] = tile->owner;
+		}
+		
+	}
+	// execute original code
+	
+	int returnValue = mod_capture_base(base_id, faction, is_probe);
+	
+	if (conf.scorched_earth && oldMapOwners != nullptr)
+	{
+		// destroy improvements on lost territory
+		
+		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+		{
+			MAP *tile = *MapTiles + tileIndex;
+			
+			int oldMapOwner = oldMapOwners[tileIndex];
+			int newMapOwner = tile->owner;
+			
+			if (oldMapOwner == oldBaseFactionId && newMapOwner != oldBaseFactionId)
+			{
+				tile->items &= ~destroyableImprovments;
+			}
+			
+		}
+		
+		// delete allocated array
+		
+		delete[] oldMapOwners;
+		
+	}
+	
+	if (conf.destroy_captured_base_defense)
+	{
+		// destroy base defensive structures
+		
+		for (FacilityId facilityId : DEFENSIVE_FACILITIES)
+		{
+			setBaseFacility(base_id, facilityId, false);
+		}
+		
+	}
+	
+	// return value
+	
+	return returnValue;
+	
+}
+

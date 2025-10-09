@@ -830,7 +830,19 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->road_magtube_fixed_movement_rate = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("ai_useWTPAlgorithms"))
+    else if (MATCH("right_of_passage_agreement"))
+    {
+        cf->right_of_passage_agreement = std::max(0, std::min(2, atoi(value)));
+    }
+    else if (MATCH("scorched_earth"))
+    {
+        cf->scorched_earth = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("destroy_captured_base_defense"))
+    {
+        cf->destroy_captured_base_defense = (atoi(value) == 0 ? false : true);
+    }
+	else if (MATCH("ai_useWTPAlgorithms"))
     {
         cf->ai_useWTPAlgorithms = (atoi(value) == 0 ? false : true);
     }

@@ -74,8 +74,6 @@ struct BASE_HURRY_ALLOWANCE_PROPORTION
 	double allowanceProportion;
 };
 
-const int DEFENSIVE_FACILITIES_COUNT = 4;
-const int DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX, FAC_TACHYON_FIELD};
 const int HABITATION_FACILITIES_COUNT = 2;
 const int HABITATION_FACILITIES[] = {FAC_HAB_COMPLEX, FAC_HABITATION_DOME, };
 
@@ -187,4 +185,5 @@ int __cdecl wtp_mod_tech_achieved(int factionId, int techId, int targetFactionId
 int __cdecl mod_popb(char const *label, int flags, int sound_id, char const *pcx_filename, int a5);
 int __cdecl wtp_mod_alien_veh_init(int unitId, int factionId, int x, int y);
 void wtp_mod_social_ai(int factionId);
+int __cdecl wtp_mod_capture_base(int base_id, int faction, int is_probe);
 
