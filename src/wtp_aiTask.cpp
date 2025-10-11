@@ -700,6 +700,7 @@ void setTask(Task const &task)
 {
 	int vehicleId = task.getTaskVehicleId();
 	VEH *vehicle = getVehicle(vehicleId);
+	debug("setTask( vehicleId=%4d type=%2d )\n", vehicleId, task.type);
 
 	if (aiData.tasks.find(vehicle->pad_0) == aiData.tasks.end())
 	{

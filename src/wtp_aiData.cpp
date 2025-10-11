@@ -269,7 +269,7 @@ Computes generic unit to unit combat effect.
 */
 CombatModeEffect CombatEffectTable::getUnitCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
 {
-	debug("CombatData::getUnitCombatModeEffect( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d engagementMode=%d )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode);
+	debug("CombatEffectTable::getUnitCombatModeEffect( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d engagementMode=%d )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode);
 	
 	Profiling::start("- calculateCombatEffect");
 	
@@ -311,6 +311,8 @@ How many defender units can attacker destroy until own complete destruction.
 */
 double CombatEffectTable::getMeleeRelativeUnitStrength(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
 {
+	debug("CombatEffectTable::getMeleeRelativeUnitStrength( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
+	
 	UNIT *attackerUnit = &(Units[attackerUnitId]);
 	UNIT *defenderUnit = &(Units[defenderUnitId]);
 	int attackerOffenseValue = getUnitOffenseValue(attackerUnitId);
@@ -504,6 +506,8 @@ How many defender units can attacker destroy until own complete destruction.
 */
 double CombatEffectTable::getArtilleryDuelRelativeUnitStrength(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
 {
+	debug("CombatEffectTable::getArtilleryDuelRelativeUnitStrength( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
+	
 	UNIT *attackerUnit = &(Units[attackerUnitId]);
 	UNIT *defenderUnit = &(Units[defenderUnitId]);
 	int attackerOffenseValue = getUnitOffenseValue(attackerUnitId);
@@ -606,7 +610,7 @@ How many defender units can attacker destroy with single shot.
 */
 double CombatEffectTable::getUnitBombardmentDamage(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
 {
-	Profiling::start("getUnitBombardmentDamage", "combatEffects");
+	debug("CombatEffectTable::getUnitBombardmentDamage( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
 	
 	UNIT *attackerUnit = &(Units[attackerUnitId]);
 	UNIT *defenderUnit = &(Units[defenderUnitId]);
@@ -617,7 +621,6 @@ double CombatEffectTable::getUnitBombardmentDamage(int attackerFactionId, int at
 	
 	if (!isArtilleryUnit(attackerUnitId) || isArtilleryUnit(defenderUnitId) || defenderUnit->triad() == TRIAD_AIR)
 	{
-		Profiling::stop("getUnitBombardmentDamage");
 		return 0.0;
 	}
 	
@@ -696,7 +699,6 @@ double CombatEffectTable::getUnitBombardmentDamage(int attackerFactionId, int at
 	
 	// divide by 10 to convert damage to units destroyed
 	
-	Profiling::stop("getUnitBombardmentDamage");
 	return relativeStrength / 10.0;
 	
 }
@@ -722,10 +724,14 @@ void TileCombatEffectTable::setCombatModeEffect(int attackerFactionId, int attac
 
 CombatModeEffect const &TileCombatEffectTable::getCombatModeEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode)
 {
+	debug("TileCombatEffectTable::getCombatModeEffect( attackerKey=%d defenderKey=%d engagementMode=%d )\n", attackerKey, defenderKey, engagementMode);
+	
 	int key = FactionUnitCombat::encodeKey(attackerKey, defenderKey, engagementMode);
 	
 	if (combatModeEffects.find(key) == combatModeEffects.end())
 	{
+		debug("\tnot found - computing\n");
+		
 		FactionUnit attackerFactionUnit(attackerKey);
 		FactionUnit defenderFactionUnit(defenderKey);
 		bool atTile = playerAssault ? attackerFactionUnit.factionId == playerFactionId : defenderFactionUnit.factionId == playerFactionId;
@@ -746,7 +752,7 @@ CombatModeEffect const &TileCombatEffectTable::getCombatModeEffect(int attackerF
 
 double TileCombatEffectTable::getCombatEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode)
 {
-	return combatModeEffects.at(FactionUnitCombat::encodeKey(attackerKey, defenderKey, engagementMode)).value;
+	return getCombatModeEffect(attackerKey, defenderKey, engagementMode).value;
 }
 
 double TileCombatEffectTable::getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)

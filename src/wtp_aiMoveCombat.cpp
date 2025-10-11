@@ -336,16 +336,20 @@ void immediateAttack()
 				
 		}
 		
+debug(">1\n");
 		if (!selected)
 			continue;
 		
+debug(">2\n");
 		if (selectedPriority < MIN_IMMEDIATE_ATTACK_PRIORITY)
 			continue;
 		
 		// set task
 		
+debug(">3\n");
 		setTask(Task(vehicleId, selectedTaskType, selectedPosition, selectedTarget));
 		
+debug(">4\n");
 		debug
 		(
 			"\t[%4d] %s %-32s"
@@ -360,6 +364,12 @@ void immediateAttack()
 			, getLocationString(selectedTarget).c_str()
 			, selectedPriority
 		);
+for (robin_hood::pair<int, Task> taskEntry : aiData.tasks)
+{
+	Task &task = taskEntry.second;
+	int vehicleId = task.getTaskVehicleId();
+	debug(">task vehicleId=%4d task.type=%2d\n", vehicleId, task.type);
+}
 		
 	}
 	

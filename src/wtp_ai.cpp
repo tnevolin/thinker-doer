@@ -3059,12 +3059,96 @@ void computeUnitDestructionGains()
 
 void computeCombatEffects()
 {
+	Profiling::start("computeCombatEffects", "populateAIData");
+	
+	debug("computeCombatEffects - %s\n", MFactions[aiFactionId].noun_faction);
+	
 	// reset combatEffects
 	
 	aiData.combatEffectTable.clear();
 	
-	// no upfront computation
-	// values are computed on demand and cached
+	// populate lists
+	
+	std::vector<int> &rivalFactionIds = aiData.rivalFactionIds;
+	std::vector<int> &unfriendlyFactionIds = aiData.unfriendlyFactionIds;
+	std::vector<int> &hostileFactionIds = aiData.hostileFactionIds;
+	std::array<FactionInfo, MaxPlayerNum> &factionInfos = aiData.factionInfos;
+	
+	rivalFactionIds.clear();
+	unfriendlyFactionIds.clear();
+	hostileFactionIds.clear();
+	for (FactionInfo &factionInfo : factionInfos)
+	{
+		factionInfo.combatUnitIds.clear();
+		factionInfo.combatVehicleIds.clear();
+	}
+		
+	// populate factions
+	
+	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+	{
+		// exclude player
+		
+		if (factionId == aiFactionId)
+			continue;
+		
+		rivalFactionIds.push_back(factionId);
+		
+		// add unfriendly faction
+		
+		if (isUnfriendly(aiFactionId, factionId))
+		{
+			unfriendlyFactionIds.push_back(factionId);
+		}
+		
+		// add hostile faction if hostile
+		
+		if (isHostile(aiFactionId, factionId))
+		{
+			hostileFactionIds.push_back(factionId);
+		}
+		
+	}
+		
+	// populate active units
+	
+	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
+	{
+		FactionInfo &factionInfo = factionInfos.at(factionId);
+		
+		for (int unitId : factionInfo.availableUnitIds)
+		{
+			// add to combat list
+			
+			if (isCombatUnit(unitId))
+			{
+				factionInfo.combatUnitIds.push_back(unitId);
+			}
+			
+		}
+		
+	}
+	
+	// populate vehicles
+	
+	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	{
+		VEH *vehicle = getVehicle(vehicleId);
+		int factionId = vehicle->faction_id;
+		
+		// add to combat list
+		
+		if (isCombatVehicle(vehicleId))
+		{
+			factionInfos.at(factionId).combatVehicleIds.push_back(vehicleId);
+		}
+		
+	}
+	
+	// do not compute combatEffects
+	// they are computed on demand and cached
+	
+	Profiling::stop("computeCombatEffects");
 	
 }
 

@@ -64,7 +64,9 @@ struct Task
 
 	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget, int _order, int _terraformingAction)
 	: vehiclePad0(Vehs[_vehicleId].pad_0), type(_type), destination(_destination), attackTarget(_attackTarget), order(_order), terraformingAction(_terraformingAction)
-	{}
+	{
+		debug(">Task::Task( _vehicleId=%4d _type=%2d\n", _vehicleId, _type);
+	}
 	Task(int _vehicleId, TaskType _type, MAP *_destination, MAP *_attackTarget)
 	: Task(_vehicleId, _type, _destination, _attackTarget, -1, -1)
 	{}
