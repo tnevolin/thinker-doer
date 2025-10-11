@@ -1399,62 +1399,102 @@ int __cdecl mod_hex_cost(int unit_id, int faction_id, int x1, int y1, int x2, in
     //
     
     // [WTP]
-	// right of passage agreement
-	if (conf.right_of_passage_agreement > 0)
+	// right of passage on road/tube
+	
+	if (sq_a != nullptr && sq_b != nullptr)
 	{
-		if (sq_a != nullptr && sq_b != nullptr)
-		{
-			// check if we don't have right of passage
-			
-			if
+		// current road/tube improvements
+		
+		int sqARoadTube = sq_a->items & (BIT_ROAD | BIT_MAGTUBE);
+		int sqBRoadTube = sq_b->items & (BIT_ROAD | BIT_MAGTUBE);
+		
+		// check if we need to recalculate disabled road/tube
+		
+		bool recalculate = false;
+		
+		if
+		(
+			// road
+			sq_a->is_item(BIT_ROAD)
+			&&
+			// road is disabled
 			(
-				(
-					sq_a->owner != -1 && sq_a->owner != faction_id
-					&&
-					(
-						(conf.right_of_passage_agreement == 1 && at_war(faction_id, sq_a->owner))
-						||
-						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, sq_a->owner))
-					)
-				)
+				(conf.right_of_passage_road == 1 && sq_a->owner != -1 && sq_a->owner != faction_id && at_war(faction_id, sq_a->owner))
 				||
-				(
-					sq_b->owner != -1 && sq_b->owner != faction_id
-					&&
-					(
-						(conf.right_of_passage_agreement == 1 && at_war(faction_id, sq_b->owner))
-						||
-						(conf.right_of_passage_agreement == 2 && !has_pact(faction_id, sq_b->owner))
-					)
-				)
+				(conf.right_of_passage_road == 2 && sq_a->owner != -1 && sq_a->owner != faction_id && !has_pact(faction_id, sq_a->owner))
 			)
-			{
-				// get road/tube improvements
-				
-				int sqARoadTube = sq_a->items & (BIT_ROAD | BIT_MAGTUBE);
-				int sqBRoadTube = sq_b->items & (BIT_ROAD | BIT_MAGTUBE);
-				
-				// at least one tile has road/tube
-				
-				if (sqARoadTube != 0 || sqBRoadTube != 0)
-				{
-					// remove road/tube from the map
-					
-					sq_a->items &= ~(BIT_ROAD | BIT_MAGTUBE);
-					sq_b->items &= ~(BIT_ROAD | BIT_MAGTUBE);
-					
-					// recalculate value without road/tube
-					
-					value = hex_cost(unit_id, faction_id, x1, y1, x2, y2, toggle);
-					
-					// restore road/tube to the map
-					
-					sq_a->items |= sqARoadTube;
-					sq_b->items |= sqBRoadTube;
-					
-				}
-				
-			}
+		)
+		{
+			sq_a->items &= ~BIT_ROAD;
+			recalculate = true;
+		}
+		
+		if
+		(
+			// road
+			sq_b->is_item(BIT_ROAD)
+			&&
+			// road is disabled
+			(
+				(conf.right_of_passage_road == 1 && sq_b->owner != -1 && sq_b->owner != faction_id && at_war(faction_id, sq_b->owner))
+				||
+				(conf.right_of_passage_road == 2 && sq_b->owner != -1 && sq_b->owner != faction_id && !has_pact(faction_id, sq_b->owner))
+			)
+		)
+		{
+			sq_b->items &= ~BIT_ROAD;
+			recalculate = true;
+		}
+		
+		if
+		(
+			// magtube
+			sq_a->is_item(BIT_MAGTUBE)
+			&&
+			// magtube is disabled
+			(
+				(conf.right_of_passage_magtube == 1 && sq_a->owner != -1 && sq_a->owner != faction_id && at_war(faction_id, sq_a->owner))
+				||
+				(conf.right_of_passage_magtube == 2 && sq_a->owner != -1 && sq_a->owner != faction_id && !has_pact(faction_id, sq_a->owner))
+			)
+		)
+		{
+			sq_a->items &= ~BIT_MAGTUBE;
+			recalculate = true;
+		}
+		
+		if
+		(
+			// magtube
+			sq_b->is_item(BIT_MAGTUBE)
+			&&
+			// magtube is disabled
+			(
+				(conf.right_of_passage_magtube == 1 && sq_b->owner != -1 && sq_b->owner != faction_id && at_war(faction_id, sq_b->owner))
+				||
+				(conf.right_of_passage_magtube == 2 && sq_b->owner != -1 && sq_b->owner != faction_id && !has_pact(faction_id, sq_b->owner))
+			)
+		)
+		{
+			sq_b->items &= ~BIT_MAGTUBE;
+			recalculate = true;
+		}
+		
+		if (recalculate)
+		{
+			// remove road/tube from the map
+			
+			sq_a->items &= ~(BIT_ROAD | BIT_MAGTUBE);
+			sq_b->items &= ~(BIT_ROAD | BIT_MAGTUBE);
+			
+			// recalculate value without road/tube
+			
+			value = hex_cost(unit_id, faction_id, x1, y1, x2, y2, toggle);
+			
+			// restore road/tube to the map
+			
+			sq_a->items |= sqARoadTube;
+			sq_b->items |= sqBRoadTube;
 			
 		}
 		

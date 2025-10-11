@@ -830,9 +830,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->road_magtube_fixed_movement_rate = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("right_of_passage_agreement"))
+    else if (MATCH("right_of_passage_road"))
     {
-        cf->right_of_passage_agreement = std::max(0, std::min(2, atoi(value)));
+        cf->right_of_passage_road = std::max(0, std::min(2, atoi(value)));
+    }
+    else if (MATCH("right_of_passage_magtube"))
+    {
+        cf->right_of_passage_magtube = std::max(0, std::min(2, atoi(value)));
     }
     else if (MATCH("scorched_earth"))
     {

@@ -135,6 +135,10 @@ struct MAP {
 	{
 		return region < 0x40;
 	}
+    bool is_item(MapItem item)
+	{
+		return (items & item) != 0;
+	}
 };
 
 struct FileFindPath {

@@ -1,3 +1,9 @@
+# Version 395
+
+* Right of passage is separated for road and magtube.
+  * right_of_passage_road
+  * right_of_passage_magtube
+
 # Version 394
 
 * New thinker.ini option: right_of_passage_agreement.
