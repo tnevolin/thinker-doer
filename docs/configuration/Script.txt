@@ -9170,7 +9170,7 @@ Tidal Wave wipes out all mining platforms near $BASENAME0!
 Do you wish to retire the "$UNITTYPE0" design? $NUM0 $<#0:unit:units>
 of that type still in operation will be disbanded.
 ^
-^(Default unit will not be retired)
+^(Default design will not be retired)
 
 Never mind.
 Retire "$UNITTYPE0" design.
@@ -9180,7 +9180,7 @@ Retire "$UNITTYPE0" design.
 #caption Chief Engineer
 Do you wish to retire the "$UNITTYPE0" design?
 ^
-^(Default unit will not be retired)
+^(Default design will not be retired)
 
 Never mind.
 Retire "$UNITTYPE0" design.
