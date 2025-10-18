@@ -16,15 +16,15 @@ double constexpr MIN_SIGNIFICANT_THREAT = 0.2;
 struct TileInfo;
 
 
-struct Adjacent
-{
-	int angle;
-	TileInfo *tileInfo;
-};
 struct HexCost
 {
 	int exact;
 	int approximate;
+};
+struct Adjacent
+{
+	int angle;
+	TileInfo *tileInfo;
 };
 struct PotentialAttack
 {
@@ -315,7 +315,6 @@ public:
 	// tile
 	MAP *tile = nullptr;
 	// who is assailant
-	int playerFactionId;
 	bool playerAssault;
 	// each to each unit combat effects for this tile
 	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][engagementMode] = combatEffect
@@ -363,7 +362,7 @@ struct CombatData
 	bool sufficientAssault;
 	bool sufficientProtect;
 	
-	void reset(CombatEffectTable *combatEffectTable, MAP *tile);
+	void reset(CombatEffectTable *combatEffectTable, MAP *tile, bool playerAssault);
 	
 	void clearAssailants();
 	void clearProtectors();
@@ -387,7 +386,7 @@ struct CombatData
 	bool isSufficientProtect();
 	
 	void compute();
-	void resolveMutualCombat(double combatEffect, double &attackerHealth, double &defenderHealth);
+	void resolveMutualCombat(double combatEffect, double &attackerWeight, double &defenderWeight);
 	FactionUnitCombatEffect getBestAttackerDefenderMeleeEffect(TileCombatEffectTable &tileCombatEffectTable, robin_hood::unordered_flat_map<int, double> &attackers, robin_hood::unordered_flat_map<int, double> &defenders);
 	
 };

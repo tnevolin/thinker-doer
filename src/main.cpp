@@ -1411,29 +1411,17 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_combat_priority_pod = atof(value);
     }
-    else if (MATCH("ai_combat_base_protection_superiority"))
+    else if (MATCH("ai_combat_superiority_min"))
     {
-        cf->ai_combat_base_protection_superiority = atof(value);
+        cf->ai_combat_superiority_min = atof(value);
+    }
+    else if (MATCH("ai_combat_superiority_max"))
+    {
+        cf->ai_combat_superiority_max = atof(value);
     }
     else if (MATCH("ai_combat_field_attack_base_proximity_scale"))
     {
         cf->ai_combat_field_attack_base_proximity_scale = atoi(value);
-    }
-    else if (MATCH("ai_combat_field_attack_superiority_required"))
-    {
-        cf->ai_combat_field_attack_superiority_required = atof(value);
-    }
-    else if (MATCH("ai_combat_field_attack_superiority_desired"))
-    {
-        cf->ai_combat_field_attack_superiority_desired = atof(value);
-    }
-    else if (MATCH("ai_combat_base_attack_superiority_required"))
-    {
-        cf->ai_combat_base_attack_superiority_required = atof(value);
-    }
-    else if (MATCH("ai_combat_base_attack_superiority_desired"))
-    {
-        cf->ai_combat_base_attack_superiority_desired = atof(value);
     }
     else if (MATCH("ai_combat_strength_increase_value"))
     {

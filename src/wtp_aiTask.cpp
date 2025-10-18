@@ -606,33 +606,10 @@ int Task::executeAttack(int vehicleId)
 	if (defenderVehicleId == -1)
 		return EM_DONE;
 	
-	// compute battle odds accounting for hasty attack
+	// proceed with attack
 	
-	int remainingMovement = getVehicleRemainingMovement(vehicleId);
-	double hastyCoefficient = std::min(1.0, (double)remainingMovement / (double)Rules->move_rate_roads);
-	double battleOdds = getBattleOdds(vehicleId, defenderVehicleId, false);
-	double adjustedBattleOdds = battleOdds * hastyCoefficient;
-	
-	// attack if good odds
-	
-	if (adjustedBattleOdds >= 1.25)
-	{
-		setMoveTo(vehicleId, attackTarget);
-		return EM_SYNC;
-	}
-	
-	// otherwise attack only if not hasty
-	
-	if (hastyCoefficient == 1.0)
-	{
-		setMoveTo(vehicleId, attackTarget);
-		return EM_SYNC;
-	}
-	
-	// otherwise skip
-	
-	mod_veh_skip(vehicleId);
-	return EM_DONE;
+	setMoveTo(vehicleId, attackTarget);
+	return EM_SYNC;
 	
 }
 

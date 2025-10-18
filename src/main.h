@@ -586,12 +586,9 @@ struct Config {
     double ai_combat_attack_bonus_alien_fungal_tower;
     double ai_combat_attack_bonus_hostile;
     double ai_combat_priority_pod;
-    double ai_combat_base_protection_superiority;
+    double ai_combat_superiority_min;
+    double ai_combat_superiority_max;
     int ai_combat_field_attack_base_proximity_scale;
-    double ai_combat_field_attack_superiority_required;
-    double ai_combat_field_attack_superiority_desired;
-    double ai_combat_base_attack_superiority_required;
-    double ai_combat_base_attack_superiority_desired;
     double ai_combat_strength_increase_value;
     double ai_combat_winning_probability_a;
     double ai_combat_winning_probability_b;

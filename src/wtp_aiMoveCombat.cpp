@@ -35,7 +35,7 @@ void moveCombatStrategy()
 	
 	moveDefensiveProbes();
 	
-	immediateAttack();
+//	immediateAttack();
 	
 	movePolice2x();
 	moveBaseProtectors();
@@ -784,7 +784,7 @@ void moveBaseProtectors()
 			" [%4d] %s -> %s"
 			" %-25s"
 			" baseInfo.isSatisfied(0)=%d"
-			" baseInfo.combatData.isSatisfied()=%d"
+			" baseInfo.combatData.isSufficientProtect()=%d"
 			"\n"
 			, bestTaskPriority->priority
 			, bestTaskPriority->vehicleId
@@ -3101,6 +3101,20 @@ bool isProtecting(int vehicleId)
 	
 }
 
+// TODO
+/*
+aiMoveCombatVehicle [  49] ( 30, 44)
+	-> ( 30, 44) => -nullptr- gain=  +nan
+	-> ( 30, 46) => -nullptr- gain=  +nan
+	-> ( 31, 45) => -nullptr- gain=  +nan
+	-> ( 31, 43) => -nullptr- gain=  +nan
+	-> ( 29, 45) => -nullptr- gain=  +nan
+	-> ( 29, 43) => -nullptr- gain=  +nan
+	-> ( 30, 42) => -nullptr- gain=  +nan
+	-> ( 28, 44) => -nullptr- gain=  +nan
+	-> ( 29, 45) => ( 28, 46) gain= +0.00
+		- best
+*/
 void aiMoveCombatVehicle(int const vehicleId)
 {
 	Profiling::start("aiMoveCombatVehicle", "moveCombatStrategy");
@@ -3112,10 +3126,9 @@ void aiMoveCombatVehicle(int const vehicleId)
 	
 	// move
 	
-	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId, true))
+	for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, true))
 	{
-		int tileIndex = reachableLocation.first;
-		MAP *destination = *MapTiles + tileIndex;
+		MAP *destination = moveAction.destination;
 		
 		double defenseGain = getDefenseGain(vehicleId, destination, 1.0, -1);
 		double proximityGain = getProximityGain(vehicleId, destination);
@@ -3134,6 +3147,8 @@ void aiMoveCombatVehicle(int const vehicleId)
 		}
 		
 	}
+	
+	// melee attack
 	
 	if (isMeleeVehicle(vehicleId))
 	{
@@ -3155,6 +3170,8 @@ void aiMoveCombatVehicle(int const vehicleId)
 		}
 		
 	}
+	
+	// artillery attack
 	
 	if (isArtilleryVehicle(vehicleId))
 	{

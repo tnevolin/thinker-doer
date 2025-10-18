@@ -297,6 +297,20 @@ CombatModeEffect CombatEffectTable::getUnitCombatModeEffect(int attackerFactionI
 		
 	}
 	
+	// MORALE combat bonus
+	
+	if (conf.se_morale_combat_bonus != 0)
+	{
+		int attackerSEMorale = Factions[attackerFactionId].SE_morale;
+		double attackerSEMoraleCombatBonus = conf.se_morale_combat_bonus * attackerSEMorale;
+		combatEffect *= std::max(0.30, getPercentageBonusMultiplier(attackerSEMoraleCombatBonus));
+		
+		int defenderSEMorale = Factions[defenderFactionId].SE_morale;
+		double defenderSEMoraleCombatBonus = conf.se_morale_combat_bonus * defenderSEMorale;
+		combatEffect /= std::max(0.30, getPercentageBonusMultiplier(defenderSEMoraleCombatBonus));
+		
+	}
+	
 	CombatModeEffect combatModeEffect = {combatMode, combatEffect};
 	
 	Profiling::stop("- calculateCombatEffect");
@@ -734,7 +748,7 @@ CombatModeEffect const &TileCombatEffectTable::getCombatModeEffect(int attackerK
 		
 		FactionUnit attackerFactionUnit(attackerKey);
 		FactionUnit defenderFactionUnit(defenderKey);
-		bool atTile = playerAssault ? attackerFactionUnit.factionId == playerFactionId : defenderFactionUnit.factionId == playerFactionId;
+		bool atTile = playerAssault ? attackerFactionUnit.factionId == aiFactionId : defenderFactionUnit.factionId == aiFactionId;
 
 		CombatModeEffect combatModeEffect = getTileCombatModeEffect(combatEffectTable, attackerFactionUnit.factionId, attackerFactionUnit.unitId, defenderFactionUnit.factionId, defenderFactionUnit.unitId, engagementMode, atTile);
 		combatModeEffects.emplace(key, combatModeEffect);
@@ -799,13 +813,14 @@ CombatModeEffect TileCombatEffectTable::getTileCombatModeEffect(CombatEffectTabl
 
 // CombatData
 
-void CombatData::reset(CombatEffectTable *combatEffectTable, MAP *tile)
+void CombatData::reset(CombatEffectTable *combatEffectTable, MAP *tile, bool playerAssault)
 {
-	debug("CombatData::reset( combatEffectTable=%d )\n", (int) combatEffectTable);
+	if (TRACE) { debug("CombatData::reset( combatEffectTable=%d )\n", (int) combatEffectTable); }
 	
 	tileCombatEffectTable.clear();
 	tileCombatEffectTable.combatEffectTable = combatEffectTable;
 	tileCombatEffectTable.tile = tile;
+	tileCombatEffectTable.playerAssault = playerAssault;
 	
 	clearAssailants();
 	clearProtectors();
@@ -813,7 +828,8 @@ void CombatData::reset(CombatEffectTable *combatEffectTable, MAP *tile)
 }
 void CombatData::clearAssailants()
 {
-	debug("CombatData::clearAssailants()\n");
+	if (TRACE) { debug("CombatData::clearAssailants()\n"); }
+	if (TRACE) { debug("\tcomputed = false\n"); }
 	
 	assailants.clear();
 	assailantWeight = 0.0;
@@ -823,7 +839,8 @@ void CombatData::clearAssailants()
 
 void CombatData::clearProtectors()
 {
-	debug("CombatData::clearProtectors()\n");
+	if (TRACE) { debug("CombatData::clearProtectors()\n"); }
+	if (TRACE) { debug("\tcomputed = false\n"); }
 	
 	protectors.clear();
 	protectorWeight = 0.0;
@@ -833,7 +850,8 @@ void CombatData::clearProtectors()
 
 void CombatData::addAssailantUnit(int factionId, int unitId, double weight)
 {
-	debug("CombatData::addAssailantUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight);
+	if (TRACE) { debug("CombatData::addAssailantUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight); }
+	if (TRACE) { debug("\tcomputed = false\n"); }
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
@@ -851,7 +869,7 @@ void CombatData::addAssailantUnit(int factionId, int unitId, double weight)
 	
 	computed = false;
 	
-	if (DEBUG)
+	if (TRACE)
 	{
 		debug("CombatData::addAssailantUnit\n");
 		debug("\tassailants\n");
@@ -871,7 +889,8 @@ void CombatData::addAssailantUnit(int factionId, int unitId, double weight)
 
 void CombatData::addProtectorUnit(int factionId, int unitId, double weight)
 {
-	debug("CombatData::addProtectorUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight);
+	if (TRACE) { debug("CombatData::addProtectorUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight); }
+	if (TRACE) { debug("\tcomputed = false\n"); }
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
@@ -915,7 +934,8 @@ void CombatData::addProtector(int vehicleId, double weight)
 
 void CombatData::removeAssailantUnit(int factionId, int unitId, double weight)
 {
-	debug("CombatData::removeAssailantUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight);
+	if (TRACE) { debug("CombatData::removeAssailantUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight); }
+	if (TRACE) { debug("\tcomputed = false\n"); }
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
@@ -933,7 +953,8 @@ void CombatData::removeAssailantUnit(int factionId, int unitId, double weight)
 
 void CombatData::removeProtectorUnit(int factionId, int unitId, double weight)
 {
-	debug("CombatData::removeProtectorUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight);
+	if (TRACE) { debug("CombatData::removeProtectorUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight); }
+	if (TRACE) { debug("\tcomputed = false\n"); }
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
@@ -966,7 +987,7 @@ Returns unit effect
 */
 double CombatData::getAssailantUnitEffect(int factionId, int unitId)
 {
-	debug("CombatData::getAssailantUnitEffect( factionId=%d unitId=%d )\n", factionId, unitId);
+	if (TRACE) { debug("CombatData::getAssailantUnitEffect( factionId=%d unitId=%d )\n", factionId, unitId); }
 	
 	compute();
 	
@@ -1028,7 +1049,7 @@ Returns unit effect.
 */
 double CombatData::getProtectorUnitEffect(int factionId, int unitId)
 {
-	debug("CombatData::getProtectorUnitEffect( factionId=%d unitId=%d )\n", factionId, unitId);
+	if (TRACE) { debug("CombatData::getProtectorUnitEffect( factionId=%d unitId=%d )\n", factionId, unitId); }
 	
 	compute();
 	
@@ -1097,7 +1118,7 @@ double CombatData::getProtectorVehicleEffect(int vehicleId)
 
 bool CombatData::isSufficientAssault()
 {
-	debug("CombatData::isSufficientAssault()\n");
+	if (TRACE) { debug("CombatData::isSufficientAssault()\n"); }
 	
 	if (assailants.size() == 0)
 		return false;
@@ -1112,7 +1133,8 @@ bool CombatData::isSufficientAssault()
 
 bool CombatData::isSufficientProtect()
 {
-	debug("CombatData::isSufficientProtect()\n");
+	if (TRACE) { debug("CombatData::isSufficientProtect()\n"); }
+	if (TRACE) { debug("\tprotectorWeight=%5.2f remainingProtectorWeight=%5.2f superiority=%5.2f\n", protectorWeight, remainingProtectorWeight, 1.00 + remainingProtectorWeight / protectorWeight); }
 	
 	if (assailants.size() == 0)
 		return true;
@@ -1121,14 +1143,12 @@ bool CombatData::isSufficientProtect()
 	
 	compute();
 	
-	return remainingProtectorWeight > 0.0;
+	return protectorWeight > 0.0 && remainingProtectorWeight > 0.0 && (1.00 + remainingProtectorWeight / protectorWeight >= conf.ai_combat_superiority_min);
 	
 }
 
 void CombatData::compute()
 {
-	constexpr bool TRACE = DEBUG && true;
-	
 	if (computed)
 		return;
 	
@@ -1144,30 +1164,39 @@ void CombatData::compute()
 	this->remainingAssailants = this->assailants;
 	this->remainingProtectors = this->protectors;
 	
-	if (TRACE)
-	{
-		debug("\tassailants\n");
-		for (robin_hood::pair<int, double> &assailantEntry : this->remainingAssailants)
+	if (TRACE) {
+		debug("\tassailants=%X\n", (int) &(this->assailants));
+		for (robin_hood::pair<int, double> assailantEntry : this->assailants)
 		{
-			int assailantKey = assailantEntry.first;
-			double assailantWeight = assailantEntry.second;
-			FactionUnit assailantFactionUnit(assailantKey);
-			
-			debug("\t\t%-24s %-32s %5.2f\n", MFactions[assailantFactionUnit.factionId].noun_faction, Units[assailantFactionUnit.unitId].name, assailantWeight);
-			
+			int key = assailantEntry.first;
+			double weight = assailantEntry.second;
+			FactionUnit factionUnit(key);
+			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
 		}
-		
-		debug("\tprotectors\n");
-		for (robin_hood::pair<int, double> &protectorEntry : this->remainingProtectors)
+		debug("\tprotectors=%X\n", (int) &(this->protectors));
+		for (robin_hood::pair<int, double> protectorEntry : this->protectors)
 		{
-			int protectorKey = protectorEntry.first;
-			double protectorWeight = protectorEntry.second;
-			FactionUnit protectorFactionUnit(protectorKey);
-			
-			debug("\t\t%-24s %-32s %5.2f\n", MFactions[protectorFactionUnit.factionId].noun_faction, Units[protectorFactionUnit.unitId].name, protectorWeight);
-			
+			int key = protectorEntry.first;
+			double weight = protectorEntry.second;
+			FactionUnit factionUnit(key);
+			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
 		}
-		
+		debug("\tremainingAssailants=%X\n", (int) &(this->remainingAssailants));
+		for (robin_hood::pair<int, double> remainingAssailantEntry : this->remainingAssailants)
+		{
+			int key = remainingAssailantEntry.first;
+			double weight = remainingAssailantEntry.second;
+			FactionUnit factionUnit(key);
+			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
+		}
+		debug("\tremainingProtectors=%X\n", (int) &(this->remainingProtectors));
+		for (robin_hood::pair<int, double> remainingProtectorEntry : this->remainingProtectors)
+		{
+			int key = remainingProtectorEntry.first;
+			double weight = remainingProtectorEntry.second;
+			FactionUnit factionUnit(key);
+			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
+		}
 	}
 	
 	// resolve artillery duels
@@ -1285,6 +1314,18 @@ void CombatData::compute()
 	{
 		if (TRACE) { debug("\t\t-\n"); }
 		
+		if (this->remainingAssailants.size() == 0)
+		{
+			if (TRACE) { debug("\t\tno more assailants\n"); }
+			break;
+		}
+		
+		if (this->remainingProtectors.size() == 0)
+		{
+			if (TRACE) { debug("\t\tno more protectors\n"); }
+			break;
+		}
+		
 		FactionUnitCombatEffect bestAssailantProtectorMeleeEffect = getBestAttackerDefenderMeleeEffect(tileCombatEffectTable, this->remainingAssailants, this->remainingProtectors);
 		FactionUnitCombatEffect bestProtectorAssailantMeleeEffect = getBestAttackerDefenderMeleeEffect(tileCombatEffectTable, this->remainingProtectors, this->remainingAssailants);
 		if (TRACE)
@@ -1396,26 +1437,70 @@ void CombatData::compute()
 	}
 	sufficientProtect = remainingProtectorWeight > 0.0;
 	
+	if (TRACE) {
+		debug("\tassailants=%X\n", (int) &(this->assailants));
+		for (robin_hood::pair<int, double> assailantEntry : this->assailants)
+		{
+			int key = assailantEntry.first;
+			double weight = assailantEntry.second;
+			FactionUnit factionUnit(key);
+			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
+		}
+		debug("\tprotectors=%X\n", (int) &(this->protectors));
+		for (robin_hood::pair<int, double> protectorEntry : this->protectors)
+		{
+			int key = protectorEntry.first;
+			double weight = protectorEntry.second;
+			FactionUnit factionUnit(key);
+			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
+		}
+		debug("\tremainingAssailants=%X\n", (int) &(this->remainingAssailants));
+		for (robin_hood::pair<int, double> remainingAssailantEntry : this->remainingAssailants)
+		{
+			int key = remainingAssailantEntry.first;
+			double weight = remainingAssailantEntry.second;
+			FactionUnit factionUnit(key);
+			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
+		}
+		debug("\tremainingProtectors=%X\n", (int) &(this->remainingProtectors));
+		for (robin_hood::pair<int, double> remainingProtectorEntry : this->remainingProtectors)
+		{
+			int key = remainingProtectorEntry.first;
+			double weight = remainingProtectorEntry.second;
+			FactionUnit factionUnit(key);
+			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
+		}
+	}
+	
 	if (TRACE) { debug("\tremainingAssailantWeight=%5.2f remainingProtectorWeight=%5.2f\n", remainingAssailantWeight, remainingProtectorWeight); }
+	
 	computed = true;
 	
 }
 
-void CombatData::resolveMutualCombat(double combatEffect, double &attackerHealth, double &defenderHealth)
+void CombatData::resolveMutualCombat(double combatEffect, double &attackerWeight, double &defenderWeight)
 {
-	debug("CombatData::resolveMutualCombat( combatEffect=%5.2f attackerHealth=%5.2f defenderHealth=%5.2f )\n", combatEffect, attackerHealth, defenderHealth);
+	debug("CombatData::resolveMutualCombat( combatEffect=%5.2f attackerWeight=%5.2f defenderWeight=%5.2f )\n", combatEffect, attackerWeight, defenderWeight);
 	
-	double defenderDamage = attackerHealth * combatEffect;
-	if (defenderDamage <= defenderHealth)
+	if (attackerWeight <= 0.0 || defenderWeight <= 0.0)
+		return;
+	
+	double borderCombatEffect = defenderWeight / attackerWeight;
+	
+	if (combatEffect >= borderCombatEffect)
 	{
-		attackerHealth = 0.0;
-		defenderHealth -= defenderDamage;
+		// defender dies
+		double attackerDamage = defenderWeight / combatEffect;
+		attackerWeight -= attackerDamage;
+		defenderWeight = 0.0;
 	}
 	else
 	{
-		attackerHealth *= (defenderDamage / defenderHealth - 1.0);
-		defenderHealth = 0.0;
+		double defenderDamage = attackerWeight * combatEffect;
+		attackerWeight = 0.0;
+		defenderWeight -= defenderDamage;
 	}
+	
 }
 
 

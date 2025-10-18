@@ -4371,9 +4371,9 @@ bool isRegularVehicle(int vehicleId)
 	return isRegularUnit(getVehicle(vehicleId)->unit_id);
 }
 
-double getPercentageBonusMultiplier(int percentageBonus)
+double getPercentageBonusMultiplier(double percentageBonus)
 {
-	return 1.0 + (double)percentageBonus / 100.0;
+	return 1.0 + percentageBonus / 100.0;
 }
 
 /**
@@ -5621,14 +5621,8 @@ UNIT *getUnit(int unitId)
 
 VEH *getVehicle(int vehicleId)
 {
-	if (vehicleId >= 0 && vehicleId < *VehCount)
-	{
-		return &Vehs[vehicleId];
-	}
-	else
-	{
-		return nullptr;
-	}
+	assert(vehicleId >= 0 && vehicleId < *VehCount);
+	return &Vehs[vehicleId];
 }
 
 BASE *getBase(int baseId)

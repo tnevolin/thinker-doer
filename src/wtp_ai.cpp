@@ -2444,13 +2444,10 @@ void populateDangerZones()
 	
 	for (int vehicleId : reachingUnfriendlyVehicleIds)
 	{
-		for (robin_hood::pair<int, int> vehicleReachableLocation : getVehicleReachableLocations(vehicleId, false))
+		for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, false))
 		{
-			int tileIndex = vehicleReachableLocation.first;
-			TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
-			
+			TileInfo &tileInfo = aiData.getTileInfo(moveAction.destination);
 			tileInfo.unfriendlyDangerZone = true;
-			
 		}
 		
 	}
@@ -2576,13 +2573,10 @@ void populateDangerZones()
 	
 	for (int vehicleId : reachingHostileVehicleIds)
 	{
-		for (robin_hood::pair<int, int> vehicleReachableLocation : getVehicleReachableLocations(vehicleId, true))
+		for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, true))
 		{
-			int tileIndex = vehicleReachableLocation.first;
-			TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
-			
+			TileInfo &tileInfo = aiData.getTileInfo(moveAction.destination);
 			tileInfo.hostileDangerZone = true;
-			
 		}
 		
 	}
@@ -2671,13 +2665,10 @@ void populateDangerZones()
 	
 	for (int vehicleId : reachingArtilleryVehicleIds)
 	{
-		for (robin_hood::pair<int, int> vehicleReachableLocation : getVehicleReachableLocations(vehicleId, true))
+		for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, true))
 		{
-			int tileIndex = vehicleReachableLocation.first;
-			TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
-			
+			TileInfo &tileInfo = aiData.getTileInfo(moveAction.destination);
 			tileInfo.artilleryDangerZone = true;
-			
 		}
 		
 	}
@@ -3566,7 +3557,7 @@ void evaluateEnemyStacks()
 		
 		// reset combatData
 		
-		combatData.reset(&aiData.combatEffectTable, enemyStackTile);
+		combatData.reset(&aiData.combatEffectTable, enemyStackTile, true);
 		
 		// ignore stacks without vehicles
 		
@@ -3581,19 +3572,19 @@ void evaluateEnemyStacks()
 		
 		if (isBaseAt(enemyStackTile))
 		{
-			enemyStackInfo.requiredSuperiority = conf.ai_combat_base_attack_superiority_required;
-			enemyStackInfo.desiredSuperiority = conf.ai_combat_base_attack_superiority_desired;
+			enemyStackInfo.requiredSuperiority = conf.ai_combat_superiority_min;
+			enemyStackInfo.desiredSuperiority = conf.ai_combat_superiority_max;
 		}
 		// attacking aliens (except tower) does not require minimal superiority
 		else if (enemyStackInfo.alien && !enemyStackInfo.alienFungalTower)
 		{
 			enemyStackInfo.requiredSuperiority = 0.0;
-			enemyStackInfo.desiredSuperiority = conf.ai_combat_field_attack_superiority_desired;
+			enemyStackInfo.desiredSuperiority = conf.ai_combat_superiority_max;
 		}
 		else
 		{
-			enemyStackInfo.requiredSuperiority = conf.ai_combat_field_attack_superiority_required;
-			enemyStackInfo.desiredSuperiority = conf.ai_combat_field_attack_superiority_desired;
+			enemyStackInfo.requiredSuperiority = conf.ai_combat_superiority_min;
+			enemyStackInfo.desiredSuperiority = conf.ai_combat_superiority_max;
 		}
 		
 		Profiling::stop("superiorities");
@@ -3868,7 +3859,7 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 	
 	// reset combat data
 	
-	combatData.reset(&aiData.combatEffectTable, tile);
+	combatData.reset(&aiData.combatEffectTable, tile, false);
 	
 	// evaluate base threat
 
@@ -4492,11 +4483,11 @@ void evaluateBaseProbeDefense()
 		debug
 		(
 			"\t\trequiredEffect=%5.2f"
-			" conf.ai_combat_base_protection_superiority=%5.2f"
+			" conf.ai_combat_superiority_min=%5.2f"
 			" totalWeight=%5.2f"
 			"\n"
 			, requiredEffect
-			, conf.ai_combat_base_protection_superiority
+			, conf.ai_combat_superiority_min
 			, totalWeight
 		);
 		
@@ -5844,74 +5835,33 @@ double getHarmonicMean(std::vector<std::vector<double>> parameters)
 
 }
 
-/*
-Returns reachable locations vehicle can reach in one turn.
-AI vehicles subtract current moves spent as they are currently moving.
-*/
-robin_hood::unordered_flat_map<int, int> getVehicleReachableLocations(int vehicleId, bool regardObstacle)
+std::vector<MoveAction> getMoveActions(MovementType movementType, MAP *origin, int initialMovementAllowance, bool regardObstacle, bool regardZoc)
 {
-	Profiling::start("- getVehicleReachableLocations");
+	robin_hood::unordered_flat_map<int, int> movementAllowances;
+	robin_hood::unordered_flat_set<int> openNodes;
+	robin_hood::unordered_flat_set<int> newOpenNodes;
 	
-	VEH *vehicle = getVehicle(vehicleId);
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	int factionId = vehicle->faction_id;
-	int unitId = vehicle->unit_id;
-	int movementAllowance = getVehicleMoveRate(vehicleId) - (vehicle->faction_id == aiFactionId ? vehicle->moves_spent : 0);
+	// set initial values
 	
-	robin_hood::unordered_flat_map<int, int> reachableLocations;
-	
-	switch (vehicle->triad())
-	{
-	case TRIAD_AIR:
-		{
-			reachableLocations = getAirVehicleReachableLocations(vehicleTile, movementAllowance, regardObstacle);
-		}
-		break;
-	case TRIAD_SEA:
-		{
-			MovementType movementType = getUnitMovementType(factionId, unitId);
-			reachableLocations = getSeaVehicleReachableLocations(movementType, vehicleTile, movementAllowance, regardObstacle);
-		}
-		break;
-	case TRIAD_LAND:
-		{
-			MovementType movementType = getUnitMovementType(factionId, unitId);
-			reachableLocations = getLandVehicleReachableLocations(movementType, vehicleTile, movementAllowance, regardObstacle, regardObstacle && isZocAffectedVehicle(vehicleId));
-		}
-		break;
-	}
-	
-	Profiling::stop("- getVehicleReachableLocations");
-	return reachableLocations;
-	
-}
-
-robin_hood::unordered_flat_map<int, int> getAirVehicleReachableLocations(MAP *origin, int movementAllowance, bool regardObstacle)
-{
 	int originIndex = origin - *MapTiles;
+	movementAllowances.emplace(originIndex, initialMovementAllowance);
+	openNodes.insert(originIndex);
 	
-	ReachSearch reachSearch;
+	// iterate locations
 	
-	// explore paths
-	
-	reachSearch.set(originIndex, movementAllowance);
-	
-	for (int currentMovementAllowance = movementAllowance; currentMovementAllowance > 0; currentMovementAllowance--)
+	while (!openNodes.empty())
 	{
-		if (reachSearch.layers.find(currentMovementAllowance) == reachSearch.layers.end())
-			continue;
-		
-		for (int currentTileIndex : reachSearch.layers.at(currentMovementAllowance))
+		for (int currentTileIndex : openNodes)
 		{
-			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
-			
-			// iterate adjacent tiles
+			TileInfo const &currentTileInfo = aiData.getTileInfo(currentTileIndex);
+			int currentMovementAllowance = movementAllowances.at(currentTileIndex);
 			
 			for (Adjacent const &adjacent : currentTileInfo.adjacents)
 			{
-				int adjacentTileIndex = adjacent.tileInfo->index;
+				TileInfo const *adjacentTileInfo = adjacent.tileInfo;
+				int adjacentTileIndex = adjacentTileInfo->tile - *MapTiles;
 				
-				// regard obstacle
+				// regard obstacle and ZoC
 				
 				if (regardObstacle)
 				{
@@ -5919,122 +5869,9 @@ robin_hood::unordered_flat_map<int, int> getAirVehicleReachableLocations(MAP *or
 						continue;
 				}
 				
-				// hexCost
+				// regard ZOC
 				
-				int hexCost = Rules->move_rate_roads;
-				
-				// movementAllowance
-				
-				int adjacentTileMovementAllowance = currentMovementAllowance - hexCost;
-				
-				// update value
-				
-				reachSearch.set(adjacentTileIndex, adjacentTileMovementAllowance);
-				
-			}
-			
-		}
-		
-	}
-	
-	return reachSearch.values;
-	
-}
-
-robin_hood::unordered_flat_map<int, int> getSeaVehicleReachableLocations(MovementType movementType, MAP *origin, int movementAllowance, bool regardObstacle)
-{
-	int originIndex = origin - *MapTiles;
-	
-	ReachSearch reachSearch;
-	
-	// explore paths
-	
-	reachSearch.set(originIndex, movementAllowance);
-	
-	for (int currentMovementAllowance = movementAllowance; currentMovementAllowance > 0; currentMovementAllowance--)
-	{
-		if (reachSearch.layers.find(currentMovementAllowance) == reachSearch.layers.end())
-			continue;
-		
-		for (int currentTileIndex : reachSearch.layers.at(currentMovementAllowance))
-		{
-			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
-			
-			// iterate adjacent tiles
-			
-			for (Adjacent const &adjacent : currentTileInfo.adjacents)
-			{
-				int adjacentTileIndex = adjacent.tileInfo->index;
-				
-				// regard obstacle
-				
-				if (regardObstacle)
-				{
-					if (adjacent.tileInfo->blocked)
-						continue;
-				}
-				
-				// hexCost
-				
-				int hexCost = currentTileInfo.hexCosts.at(movementType).at(adjacent.angle).exact;
-				if (hexCost == -1)
-					continue;
-				
-				// movementAllowance
-				
-				int adjacentTileMovementAllowance = currentMovementAllowance - hexCost;
-				
-				// update value
-				
-				reachSearch.set(adjacentTileIndex, adjacentTileMovementAllowance);
-				
-			}
-			
-		}
-		
-	}
-	
-	return reachSearch.values;
-	
-}
-
-robin_hood::unordered_flat_map<int, int> getLandVehicleReachableLocations(MovementType movementType, MAP *origin, int movementAllowance, bool regardObstacle, bool regardZoc)
-{
-	int originIndex = origin - *MapTiles;
-	
-	ReachSearch reachSearch;
-	
-	// explore paths
-	
-	reachSearch.set(originIndex, movementAllowance);
-	
-	for (int currentMovementAllowance = movementAllowance; currentMovementAllowance > 0; currentMovementAllowance--)
-	{
-		if (reachSearch.layers.find(currentMovementAllowance) == reachSearch.layers.end())
-			continue;
-		
-		for (int currentTileIndex : reachSearch.layers.at(currentMovementAllowance))
-		{
-			TileInfo &currentTileInfo = aiData.tileInfos.at(currentTileIndex);
-			
-			// iterate adjacent tiles
-			
-			for (Adjacent const &adjacent : currentTileInfo.adjacents)
-			{
-				TileInfo *adjacentTileInfo = adjacent.tileInfo;
-				int adjacentTileIndex = adjacentTileInfo->index;
-				
-				// regard obstacle
-				
-				if (regardObstacle)
-				{
-					if (adjacent.tileInfo->blocked)
-						continue;
-				}
-				
-				// regard ZoC
-				
-				if (regardObstacle && regardZoc)
+				if (regardZoc)
 				{
 					if (currentTileInfo.orgZoc && adjacentTileInfo->dstZoc)
 						continue;
@@ -6046,21 +5883,71 @@ robin_hood::unordered_flat_map<int, int> getLandVehicleReachableLocations(Moveme
 				if (hexCost == -1)
 					continue;
 				
-				// movementAllowance
+				// allowance change
 				
-				int adjacentTileMovementAllowance = currentMovementAllowance - hexCost;
+				int adjacentMovementAllowance = std::max(0, currentMovementAllowance - hexCost);
 				
-				// update value
+				// update best
 				
-				reachSearch.set(adjacentTileIndex, adjacentTileMovementAllowance);
+				if (movementAllowances.find(adjacentTileIndex) == movementAllowances.end())
+				{
+					movementAllowances.emplace(adjacentTileIndex, adjacentMovementAllowance);
+				}
+				else if (adjacentMovementAllowance > movementAllowances.at(adjacentTileIndex))
+				{
+					movementAllowances.at(adjacentTileIndex) = adjacentMovementAllowance;
+				}
+				
+				// add open node
+				
+				if (movementAllowances.at(adjacentTileIndex) > 0)
+				{
+					newOpenNodes.insert(adjacentTileIndex);
+				}
 				
 			}
 			
 		}
 		
+		openNodes.clear();
+		openNodes.swap(newOpenNodes);
+		
 	}
 	
-	return reachSearch.values;
+	std::vector<MoveAction> moveActions;
+	
+	for (robin_hood::pair<int, int> movementAllowanceEntry : movementAllowances)
+	{
+		int tileIndex = movementAllowanceEntry.first;
+		int movementAllowance = movementAllowanceEntry.second;
+		
+		MAP *tile = *MapTiles + tileIndex;
+		
+		moveActions.push_back({tile, movementAllowance});
+		
+	}
+	
+	return moveActions;
+	
+}
+
+/*
+Returns vehicle available move destinations.
+Player vehicles subtract current moves spent as they are currently moving.
+*/
+std::vector<MoveAction> getVehicleMoveActions(int vehicleId, bool regardObstacle)
+{
+	Profiling::start("- getVehicleMoveActions");
+	
+	VEH *vehicle = getVehicle(vehicleId);
+	MAP *vehicleTile = getVehicleMapTile(vehicleId);
+	MovementType movementType = getVehicleMovementType(vehicleId);
+	int movementAllowance = getVehicleMoveRate(vehicleId) - (vehicle->faction_id == aiFactionId ? vehicle->moves_spent : 0);
+	bool regardZoc = regardObstacle ? isVehicleZocRestricted(vehicleId) : false;
+	
+	Profiling::stop("- getVehicleMoveActions");
+	
+	return getMoveActions(movementType, vehicleTile, movementAllowance, regardObstacle, regardZoc);
 	
 }
 
@@ -6080,12 +5967,11 @@ robin_hood::unordered_flat_map<MAP *, double> getPotentialMeleeAttackTargets(int
 	// explore reachable locations
 	
 	Profiling::start("- getMeleeAttackActions - getVehicleReachableLocations");
-	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId, false))
+	for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, false))
 	{
-		int tileIndex = reachableLocation.first;
-		int movementAllowance = reachableLocation.second;
+		MAP *tile = moveAction.destination;
+		int movementAllowance = moveAction.movementAllowance;
 		
-		MAP *tile = *MapTiles + tileIndex;
 		double hastyCoefficient = movementAllowance >= Rules->move_rate_roads ? 1.0 : (double)movementAllowance / (double)Rules->move_rate_roads;
 		
 		// cannot attack without movementAllowance
@@ -6143,12 +6029,10 @@ robin_hood::unordered_flat_map<MAP *, double> getPotentialArtilleryAttackTargets
 	// explore reachable locations
 	
 	Profiling::start("- getMeleeAttackActions - getVehicleReachableLocations");
-	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId, false))
+	for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, false))
 	{
-		int tileIndex = reachableLocation.first;
-		int movementAllowance = reachableLocation.second;
-		
-		MAP *tile = *MapTiles + tileIndex;
+		MAP *tile = moveAction.destination;
+		int movementAllowance = moveAction.movementAllowance;
 		
 		// cannot attack without movementAllowance
 		
@@ -6197,12 +6081,11 @@ std::vector<AttackAction> getMeleeAttackActions(int vehicleId, bool regardObstac
 	// explore reachable locations
 	
 	Profiling::start("- getMeleeAttackActions - getVehicleReachableLocations");
-	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId, regardObstacle))
+	for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, regardObstacle))
 	{
-		int tileIndex = reachableLocation.first;
-		int movementAllowance = reachableLocation.second;
+		MAP *tile = moveAction.destination;
+		int movementAllowance = moveAction.movementAllowance;
 		
-		MAP *tile = *MapTiles + tileIndex;
 		double hastyCoefficient = movementAllowance >= Rules->move_rate_roads ? 1.0 : (double)movementAllowance / (double)Rules->move_rate_roads;
 		
 		// need movementAllowance for attack
@@ -6254,11 +6137,11 @@ std::vector<AttackAction> getArtilleryAttackActions(int vehicleId, bool regardOb
 	// explore reachable locations
 	
 	Profiling::start("- getArtilleryAttackActions - getVehicleReachableLocations");
-	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId, regardObstacle))
+	for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, regardObstacle))
 	{
-		int tileIndex = reachableLocation.first;
-		int movementAllowance = reachableLocation.second;
-		MAP *tile = *MapTiles + tileIndex;
+		MAP *tile = moveAction.destination;
+		int movementAllowance = moveAction.movementAllowance;
+		
 		TileInfo &tileInfo = aiData.getTileInfo(tile);
 		
 		// cannot attack without movementAllowance

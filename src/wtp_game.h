@@ -8,6 +8,9 @@
 
 #include "main.h"
 
+// tracing statements
+bool constexpr TRACE = DEBUG && true;
+
 // first level triad based defensive structure facilities
 FacilityId constexpr TRIAD_DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX};
 // all defensive structure facilities
@@ -1092,7 +1095,7 @@ bool isNativeUnit(int unitId);
 bool isNativeVehicle(int vehicleId);
 bool isRegularUnit(int unitId);
 bool isRegularVehicle(int vehicleId);
-double getPercentageBonusMultiplier(int percentageBonus);
+double getPercentageBonusMultiplier(double percentageBonus);
 bool isMineBonus(MAP *tile);
 std::vector<int> selectVehicles(const VehicleFilter filter);
 bool isNextToRegion(int x, int y, int region);

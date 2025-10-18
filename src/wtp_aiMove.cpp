@@ -305,15 +305,13 @@ int lastEnemyMoveVehicleX = -1;
 int lastEnemyMoveVehicleY = -1;
 int enemyMoveVehicle(const int vehicleId)
 {
+	debug("enemyMoveVehicle [%4d] %s %2d %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), getVehicleRemainingMovement(vehicleId), Units[Vehs[vehicleId].unit_id].name);
+	
 	// update map data
 	
 	enemyMoveVehicleUpdateMapData();
 	
-	//
-	
 	VEH *vehicle = getVehicle(vehicleId);
-	
-	debug("enemyMoveVehicle [%4d] %s %2d %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), getVehicleRemainingMovement(vehicleId), Units[vehicle->unit_id].name);
 	
 	// fall over to default if vehicle did not move since last iteration
 	
@@ -926,11 +924,10 @@ void setSafeMoveTo(int vehicleId, MAP *destination)
 	bool dangerous = false;
 	
 	Profiling::start("- setSafeMoveTo - getVehicleReachableLocations");
-	for (robin_hood::pair<int, int> const &reachableLocation : getVehicleReachableLocations(vehicleId, false))
+	for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, false))
 	{
-		int tileIndex = reachableLocation.first;
-		MAP *tile = *MapTiles + tileIndex;
-		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
+		MAP *tile = moveAction.destination;
+		TileInfo &tileInfo = aiData.getTileInfo(tile);
 		
 		double danger = tileInfo.hostileDangerZone ? 1.0 : 0.0;
 		double distance = getEuqlideanDistance(tile, destination);
@@ -1147,7 +1144,7 @@ void aiMoveVehicle(int const vehicleId)
 {
 	debug("aiMoveVehicle [%4d] %s %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), Units[Vehs[vehicleId].unit_id].name);
 	
-	if (isCombatVehicle(vehicleId) && hasTask(vehicleId) && getTask(vehicleId)->attackTarget != nullptr)
+	if (isCombatVehicle(vehicleId))
 	{
 		aiMoveCombatVehicle(vehicleId);
 	}
@@ -1166,211 +1163,3 @@ void enemyMoveVehicleUpdateMapData()
 	
 }
 
-//void enemyMoveVehicleUpdateMapDataVehRemoved(int savedVehicleId)
-//{
-//	debug("enemyMoveVehicleUpdateMapDataVehRemoved [%4d]\n", savedVehicleId);
-//	
-//	VEH *savedVehicle = &aiData.savedVehicles.at(savedVehicleId);
-//	int tileIndex = getMapTileIndex(savedVehicle->x, savedVehicle->y);
-//	TileInfo &tileInfo = aiData.getTileInfo(tileIndex);
-//	
-//	// remove friendly vehicle obstacle effect
-//	
-//	if (isFriendly(aiFactionId, savedVehicle->faction_id))
-//	{
-//		// check if no more friendly vehicles are at the tile
-//		
-//		bool friendlyVehicles = false;
-//		for (int stackVehicleId : getTileVehicleIds(tileInfo.tile))
-//		{
-//			if (isFriendly(aiFactionId, Vehs[stackVehicleId].faction_id))
-//			{
-//				friendlyVehicles = true;
-//				break;
-//			}
-//			
-//		}
-//		
-//		if (!friendlyVehicles)
-//		{
-//			// clear tile friendly vehicle and recompute obstacles
-//			
-//			tileInfo.friendlyVehicle = false;
-//			setTileBlockedAndZoc(tileInfo);
-//			debug("\tUpdateMapData %s no more friendly vehicle\n", getLocationString(tileInfo.tile).c_str());
-//			
-//		}
-//		
-//	}
-//	
-//	// remove unfriendly vehicle obstacle effect
-//	
-//	if (isUnfriendly(aiFactionId, savedVehicle->faction_id))
-//	{
-//		// check if no more unfriendly vehicles are at the tile
-//		
-//		bool unfriendlyVehicles = false;
-//		for (int stackVehicleId : getTileVehicleIds(tileInfo.tile))
-//		{
-//			if (isUnfriendly(aiFactionId, Vehs[stackVehicleId].faction_id))
-//			{
-//				unfriendlyVehicles = true;
-//				break;
-//			}
-//			
-//		}
-//		
-//		if (!unfriendlyVehicles)
-//		{
-//			// clear tile unfriendly vehicle and recompute obstacles
-//			
-//			tileInfo.unfriendlyVehicle = false;
-//			setTileBlockedAndZoc(tileInfo);
-//			debug("\tUpdateMapData %s no more unfriendly vehicle\n", getLocationString(tileInfo.tile).c_str());
-//			
-//			// clear tile zoc
-//			
-//			if (tileInfo.land)
-//			{
-//				for (Adjacent const &adjacent : tileInfo.adjacents)
-//				{
-//					// not base
-//					
-//					if (adjacent.tileInfo->base)
-//						continue;
-//					
-//					// land
-//					
-//					if (!adjacent.tileInfo->land)
-//						continue;
-//					
-//					bool unfriendlyVehicleZoc = false;
-//					for (Adjacent const &adjacentAdjacent : adjacent.tileInfo->adjacents)
-//					{
-//						// land
-//						
-//						if (!adjacentAdjacent.tileInfo->land)
-//							continue;
-//						
-//						if (adjacentAdjacent.tileInfo->unfriendlyVehicle)
-//						{
-//							unfriendlyVehicleZoc = true;
-//							break;
-//						}
-//							
-//					}
-//					if (unfriendlyVehicleZoc)
-//						continue;
-//					
-//					// clear tile unfriendly vehicle zoc
-//					
-//					adjacent.tileInfo->unfriendlyVehicleZoc = false;
-//					setTileBlockedAndZoc(*adjacent.tileInfo);
-//					debug("\tUpdateMapData %s no more unfriendly vehicle zoc\n", getLocationString(adjacent.tileInfo->tile).c_str());
-//					
-//				}
-//				
-//			}
-//			
-//		}
-//		
-//	}
-//	
-//	// remove enemy stack
-//	
-//	if (aiData.hasEnemyStack(tileInfo.tile) && !tileInfo.tile->veh_in_tile())
-//	{
-//		aiData.enemyStacks.erase(tileInfo.tile);
-//	}
-//	
-//	// remove potential attack
-//	
-//	for (TileInfo &mapTileInfo : aiData.tileInfos)
-//	{
-//		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
-//		{
-//			std::vector<PotentialAttack> &potentialAttacks = mapTileInfo.potentialAttacks.at(engagementMode);
-//			
-//			for (std::vector<PotentialAttack>::iterator potentialAttackIterator = potentialAttacks.begin(); potentialAttackIterator != potentialAttacks.end(); )
-//			{
-//				PotentialAttack &potentialAttack = *potentialAttackIterator;
-//				
-//				if (potentialAttack.vehicleId == savedVehicleId)
-//				{
-//					potentialAttackIterator = potentialAttacks.erase(potentialAttackIterator);
-//				}
-//				else
-//				{
-//					potentialAttackIterator++;
-//				}
-//				
-//			}
-//			
-//		}
-//		
-//	}
-//	
-//}
-//
-//void enemyMoveVehicleUpdateMapDataVehAdded(int vehicleId)
-//{
-//	VEH *vehicle = getVehicle(vehicleId);
-//	TileInfo &tileInfo = aiData.getVehicleTileInfo(vehicleId);
-//	
-//	// recompute friendly vehicle obstacle effect
-//	
-//	if (isFriendly(aiFactionId, vehicle->faction_id))
-//	{
-//		if (!tileInfo.friendlyVehicle)
-//		{
-//			// add tile friendly vehicle and recompute obstacles
-//			
-//			tileInfo.friendlyVehicle = true;
-//			setTileBlockedAndZoc(tileInfo);
-//			debug("\tUpdateMapData %s new friendly vehicle\n", getLocationString(tileInfo.tile).c_str());
-//			
-//		}
-//		
-//	}
-//	
-//	// recompute unfriendly vehicle obstacle effect
-//	
-//	if (isUnfriendly(aiFactionId, vehicle->faction_id))
-//	{
-//		if (!tileInfo.unfriendlyVehicle)
-//		{
-//			// add tile unfriendly vehicle and recompute obstacles
-//			
-//			tileInfo.unfriendlyVehicle = false;
-//			setTileBlockedAndZoc(tileInfo);
-//			debug("\tUpdateMapData %s new unfriendly vehicle\n", getLocationString(tileInfo.tile).c_str());
-//			
-//			// add tile zoc
-//			
-//			if (tileInfo.land)
-//			{
-//				for (Adjacent &adjacent : tileInfo.adjacents)
-//				{
-//					// not base
-//					
-//					if (adjacent.tileInfo->base)
-//						continue;
-//					
-//					// land
-//					
-//					if (!adjacent.tileInfo->land)
-//						continue;
-//					
-//					adjacent.tileInfo->unfriendlyVehicleZoc = true;
-//					setTileBlockedAndZoc(*adjacent.tileInfo);
-//					
-//				}
-//				
-//			}
-//			
-//		}
-//		
-//	}
-//	
-//}
-//
