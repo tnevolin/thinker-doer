@@ -1,3 +1,7 @@
+# Version 396
+
+* Default design is not retired even if the button is still there.
+
 # Version 395
 
 * Right of passage is separated for road and magtube.

@@ -3155,6 +3155,15 @@ void patch_capture_base()
     
 }
 
+void patch_retire_proto()
+{
+    write_call(0x00438322, (int)wtp_mod_retire_proto); // action_airdrop
+    write_call(0x0043890A, (int)wtp_mod_retire_proto); // action_airdrop
+    write_call(0x00536C68, (int)wtp_mod_retire_proto); // action_airdrop
+    write_call(0x00580F4F, (int)wtp_mod_retire_proto); // action_airdrop
+	
+}
+
 
 // =======================================================
 // main patch option selection
@@ -3485,6 +3494,8 @@ void patch_setup_wtp(Config* cf)
 	patch_alien_veh_init();
 	
 	patch_capture_base();
+	
+	patch_retire_proto();
 	
 }
 

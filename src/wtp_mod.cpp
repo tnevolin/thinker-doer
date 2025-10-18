@@ -4457,3 +4457,15 @@ int __cdecl wtp_mod_capture_base(int base_id, int faction, int is_probe)
 	
 }
 
+/*
+Do not retire default unit.
+*/
+void __cdecl wtp_mod_retire_proto(int unitId, int factionId)
+{
+	if (unitId < MaxProtoFactionNum)
+		return;
+	
+	retire_proto(unitId, factionId);
+	
+}
+
