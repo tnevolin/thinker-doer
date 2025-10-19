@@ -46,6 +46,8 @@ Whenever I see some feature worth improving/highlighting these are guidelines I 
 
 # Faction changes
 
+Some small tweaks here and there in attempt to balance them. Those are results of user suggestions. I do not feel strongly about them and can revert them back or vary with next wave of suggestions.
+
 ## The Human Hive
 
 Datalinks text added:
@@ -950,6 +952,37 @@ Nerve stappled base and punishment sphere ignore all other effects and are displ
 # AI
 
 This section describes AI improvements. The description is pretty generic. I don't give specific numerical parameters because a) Ugh, and b) they get constantly changed by AI tuning.
+
+## Unit design
+
+Vanilla approach is completely replaced by following algorithm.
+
+### Components
+
+* best weapon
+* best armor
+* half of the best armor for base defender to make them cheaper but able to kick damaged attackers next to the base
+* land chassis: infantry for defender and field attacker, speeder/hovertank for fast attackers
+* sea chassis: fastest
+* air chassis: all of them until gravship is available, then it replaces them all
+* best reactor - always
+
+### Designs
+
+* colony: (fast land, fast sea), no armor
+* former: (fast land, fast sea, gravship), best armor, (super, clean, fungicidal, trance)
+* supply: (infantry, foil), best armor, (clean, trance)
+* police defender: (infantry), best armor, half best weapon, (police 2x, clean, AAA, trance)
+* regular defender: (infantry), best armor, half best weapon, (clean, AAA, ECM, trance)
+* land infantry attacker: (infantry), best armor, best weapon, (ECM, AAA, soporific, antigrav, blink)
+* land fast attacker: (fast land), best armor, best weapon, (empath, amphibious, soporific, antigrav, blink, air sup, dissociative)
+* land artillery: (fast land), best armor, best weapon, (artillery)
+* land paratroopers: (infantry), best armor, best weapon, (drop, blink)
+* ships: (fast sea), best armor, best weapon, (AAA, soporific, air sup, blink, detachment)
+* armored transport: (fast sea), best armor, troop transport, (heavy transport, clean, AAA)
+* defensive probe: (infantry), no armor, probe
+* armored land probe: (fast land), best armor, probe, (AAA, antigrav)
+* armored sea probe: (fast sea), best armor, probe, (AAA, antigrav)
 
 ## Hurrying
 
