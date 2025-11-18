@@ -734,7 +734,10 @@ void __cdecl mod_base_yield() {
 	
 	// [WTP]
 	// replace with WTP version
-	return wtp_mod_base_yield();
+	if (conf.worker_algorithm_enable_alternative)
+	{
+		return wtp_mod_base_yield();
+	}
 	
     BASE* base = *CurrentBase;
     int base_id = *CurrentBaseID;
