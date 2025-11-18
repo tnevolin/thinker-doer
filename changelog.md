@@ -1,3 +1,7 @@
+# Version 397
+
+* [Bug] Energy allocation AI computation was applied to human faction by mistake. Fixed.
+
 # Version 396
 
 * Default design is not retired even if the button is still there.

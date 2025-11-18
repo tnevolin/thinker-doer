@@ -4196,6 +4196,19 @@ Adjusts energy allocation to maximize an effect.
 */
 void wtp_mod_social_ai(int factionId)
 {
+	// not applicable cases
+	
+	if (is_human(factionId) || !is_alive(factionId))
+	{
+		return;
+	}
+	if (!isWtpEnabledFaction(factionId) || !conf.social_ai)
+	{
+		return;
+	}
+	
+	// method starts
+	
 	Profiling::start("- wtp_mod_social_ai");
 	
 	debug("wtp_mod_social_ai - %s\n", MFactions[factionId].noun_faction);
