@@ -1,8 +1,9 @@
 #pragma once
 
+#include "robin_hood.h"
+
 #include "main.h"
-#include "game.h"
-#include "wtp_aiData.h"
+#include "engine.h"
 
 const int GAME_DURATION = 350;
 const double MAX_THREAT_TURNS = 10.0;

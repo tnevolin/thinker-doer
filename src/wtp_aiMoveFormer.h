@@ -2,65 +2,15 @@
 
 #include <float.h>
 #include <map>
+#include <vector>
+#include "robin_hood.h"
+
 #include "main.h"
-#include "game.h"
-#include "move.h"
-#include "wtp_game.h"
-#include "wtp_mod.h"
+#include "engine.h"
+#include "wtp_ai_game.h"
 
 int const BUNKER_ENEMY_BASE_RANGE_MIN =  2;
 int const BUNKER_ENEMY_BASE_RANGE_MAX = 10;
-
-struct TileYield
-{
-	int nutrient;
-	int mineral;
-	int energy;
-	
-	TileYield(int _nutrient, int _mineral, int _energy)
-	: nutrient(_nutrient), mineral(_mineral), energy(_energy)
-	{}
-	
-	TileYield()
-	: TileYield(0, 0, 0)
-	{}
-	
-	/*
-	Verifies equal or superior yields.
-	*/
-	static bool isEqualOrSuperior(TileYield o1, TileYield o2)
-	{
-		return
-			(o1.nutrient >= o2.nutrient && o1.mineral >= o2.mineral && o1.energy >= o2.energy)
-		;
-		
-	}
-	
-	/*
-	Verifies equal yields.
-	*/
-	static bool isEqual(TileYield o1, TileYield o2)
-	{
-		return
-			(o1.nutrient == o2.nutrient && o1.mineral == o2.mineral && o1.energy == o2.energy)
-		;
-		
-	}
-	
-	/*
-	Verifies first is superior to second.
-	*/
-	static bool isSuperior(TileYield o1, TileYield o2)
-	{
-		return
-			(o1.nutrient >= o2.nutrient && o1.mineral >= o2.mineral && o1.energy >= o2.energy)
-			&&
-			(o1.nutrient > o2.nutrient || o1.mineral > o2.mineral || o1.energy > o2.energy)
-		;
-		
-	}
-	
-};
 
 struct MapState
 {
@@ -126,24 +76,6 @@ struct BaseTerraformingInfo
 	int minimalNutrientYield;
 	int minimalMineralYield;
 	int minimalEnergyYield;
-};
-
-struct TERRAFORMING_OPTION
-{
-	// recognizable name
-	const char *name;
-	// land or ocean
-	bool ocean;
-	// applies to rocky tile only
-	bool rocky;
-	// area effect
-	bool area;
-	// requires base yield computation
-	bool yield;
-	// main action that is required to be discovered
-	int requiredAction;
-	// list of actions
-	std::vector<int> actions;
 };
 
 // terraforming options
@@ -320,8 +252,6 @@ bool isVehicleTerrafomingOrderCompleted(int vehicleId);
 bool isTerraformingAvailable(MAP *tile, int action);
 bool isRemoveFungusRequired(int action);
 bool isLevelTerrainRequired(bool ocean, int action);
-bool isVehicleConvoying(int vehicleId);
-bool isVehicleTerraforming(VEH *vehicle);
 bool isNearbyForestUnderConstruction(int x, int y);
 bool isNearbyCondeserUnderConstruction(int x, int y);
 bool isNearbyMirrorUnderConstruction(int x, int y);

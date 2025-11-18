@@ -1,14 +1,10 @@
 #pragma once
 
 #include <vector>
-#include "engine.h"
-#include "main.h"
+#include <string>
 
-enum ENEMY_MOVE_RETURN_VALUE
-{
-	EM_SYNC = 0,
-	EM_DONE = 1,
-};
+#include "main.h"
+#include "engine.h"
 
 enum TaskType
 {
@@ -29,27 +25,6 @@ enum TaskType
 	TT_MELEE_ATTACK,			// 14
 	TT_ARTILLERY_ATTACK,		// 15
 	TT_CONVOY,					// 16
-};
-
-std::string const taskTypeNames[]
-{
-	"NONE  ",				//  0
-	"KILL  ",				//  1
-	"SKIP  ",				//  2
-	"BUILD ",				// 	3
-	"LOAD  ",				//  4
-	"BOARD ",				//  5
-	"UNLOAD",				//  6
-	"UNBOAR",				//  7
-	"TERRAF",				//  8
-	"ORDER ",				//  9
-	"HOLD  ",				// 10
-	"ALERT ",				// 11
-	"MOVE  ",				// 12
-	"ART_CO",				// 13
-	"MELEE ",				// 14
-	"ARTYLL",				// 15
-	"CONVOY",				// 16
 };
 
 struct Task
@@ -75,7 +50,7 @@ struct Task
 	: Task(_vehicleId, _type, nullptr, nullptr, -1, -1)
 	{}
 
-	static std::string typeName(TaskType &taskType);
+	static char const *typeName(TaskType &taskType);
 	int getTaskVehicleId() const;
 	VEH *getTaskVehicle() const;
 	void clearDestination();

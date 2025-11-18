@@ -38,3 +38,5 @@ void __cdecl mod_battle_compute(int veh_id_atk, int veh_id_def, int* offense_out
 int __cdecl mod_battle_fight(int veh_id, int offset, int table_offset, int option, int* def_id);
 int __cdecl mod_battle_fight_2(int veh_id, int offset, int tx, int ty, int table_offset, int option, int* def_id);
 
+void simplifyFraction(int *a, int *b, int maxVal);
+

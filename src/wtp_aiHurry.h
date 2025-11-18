@@ -1,8 +1,5 @@
 #pragma once
 
-#include "main.h"
-#include "game.h"
-
 struct BASE_WEIGHT
 {
 	int baseId;

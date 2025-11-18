@@ -1,20 +1,19 @@
 #pragma GCC diagnostic ignored "-Wshadow"
 
+#include "wtp_aiProduction.h"
+
 #include <math.h>
 #include <set>
 #include <map>
 #include <numeric>
 #include <deque>
-#include "wtp_aiProduction.h"
-#include "engine.h"
-#include "game.h"
-#include "wtp_game.h"
+
 #include "wtp_terranx.h"
-#include "wtp_ai.h"
-#include "wtp_aiData.h"
-#include "wtp_aiMoveColony.h"
+#include "wtp_mod.h"
+#include "wtp_game.h"
 #include "wtp_aiRoute.h"
 #include "wtp_aiHurry.h"
+#include "wtp_aiMoveColony.h"
 
 // global statistics
 
@@ -1609,8 +1608,8 @@ void evaluateDefensiveProbeUnits()
 			// probe
 			
 			double combatEffect = newProbeMoraleMultiplier;
-			double combatEffectCoefficient = getCombatEffectCoefficient(combatEffect);
-			double unitProbeGain = techStealGain * combatEffectCoefficient;
+			double winningProbability = getWinningProbability(combatEffect);
+			double unitProbeGain = techStealGain * winningProbability;
 			double probeGain = unitProbeGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getUnitSupport(unitId), 0.0);
@@ -1632,7 +1631,7 @@ void evaluateDefensiveProbeUnits()
 				" travelTime=%7.2f"
 				" travelTimeCoefficient=%5.2f"
 				" combatEffect=%5.2f"
-				" combatEffectCoefficient=%5.2f"
+				" winningProbability=%5.2f"
 				" unitProbeGain=%5.2f"
 				" probeGain=%5.2f"
 				" upkeepGain=%5.2f"
@@ -1643,7 +1642,7 @@ void evaluateDefensiveProbeUnits()
 				, travelTime
 				, travelTimeCoefficient
 				, combatEffect
-				, combatEffectCoefficient
+				, winningProbability
 				, unitProbeGain
 				, probeGain
 				, upkeepGain
@@ -1810,7 +1809,7 @@ void evaluateExpansionUnits()
 //				" buildSiteBaseGain=%5.2f"
 //				" buildSiteBuildGain=%5.2f"
 //				"\n"
-//				, getLocationString(tile).c_str()
+//				, getLocationString(tile)
 //				, travelTime
 //				, buildSiteBaseGain
 //				, buildSiteBuildGain
@@ -1852,7 +1851,7 @@ void evaluateExpansionUnits()
 			, unit->name
 			, priority
 			, citizenLossGain
-			, getLocationString(bestBuildSite).c_str()
+			, getLocationString(bestBuildSite)
 			, bestBuildSiteGain
 			, gain
 			, conf.ai_production_expansion_priority
@@ -2597,8 +2596,8 @@ void evaluateBaseDefenseUnits()
 			// protection
 			
 			double combatEffect = targetCombatData.getProtectorUnitEffect(aiFactionId, unitId);
-			double survivalEffect = getSurvivalEffect(combatEffect);
-			double unitProtectionGain = targetCombatData.isSufficientProtect() ? 0.0 : aiFactionInfo->averageBaseGain * survivalEffect;
+			double winningProbability = getWinningProbability(combatEffect);
+			double unitProtectionGain = targetCombatData.isSufficientProtect() ? 0.0 : aiFactionInfo->averageBaseGain * winningProbability;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2746,8 +2745,8 @@ void evaluateBunkerDefenseUnits()
 			// 0.5 of average base gain
 			
 			double combatEffect = targetBunkerCombatData.getProtectorUnitEffect(aiFactionId, unitId);
-			double survivalEffect = getSurvivalEffect(combatEffect);
-			double unitProtectionGain = targetBunkerCombatData.isSufficientProtect() ? 0.0 : 0.5 * aiFactionInfo->averageBaseGain * survivalEffect;
+			double winningProbability = getWinningProbability(combatEffect);
+			double unitProtectionGain = targetBunkerCombatData.isSufficientProtect() ? 0.0 : 0.5 * aiFactionInfo->averageBaseGain * winningProbability;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2962,7 +2961,7 @@ void evaluateTerritoryProtectionUnits()
 				" gain=%7.2f"
 				"\n"
 				, unit->name
-				, getLocationString(enemyStackInfo->tile).c_str()
+				, getLocationString(enemyStackInfo->tile)
 				, travelTime
 				, combatEffect
 				, attackGain

@@ -1,14 +1,16 @@
 
+#include "wtp_game.h"
+
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <numeric>
-#include "wtp_terranx_enum.h"
+#include <limits>
+
 #include "wtp_terranx.h"
-#include "wtp_game.h"
-#include "wtp_mod.h"
-#include "wtp_aiTask.h"
+#include "wtp_terranx_enum.h"
 #include "wtp_base.h"
+#include "wtp_mod.h"
 
 double const INF = std::numeric_limits<double>::infinity();
 
@@ -355,23 +357,28 @@ bool operator!=(const Location &o1, const Location &o2)
 	return o1.x != o2.x || o1.y != o2.y;
 }
 
-std::string getLocationString(Location location)
+/*
+returns reference to static buffer
+not thread-safe, not reentrant
+uses rotating buffers to allow up to 10 calls withing a single debug statement
+*/
+char const *getLocationString(Location location)
 {
-	std::ostringstream ss;
+	int constexpr BUFFER_COUNT = 10;
+	int constexpr BUFFER_SIZE = 10;
 	
-	ss
-		<< "("
-		<< std::dec << std::setw(3) << std::setfill(' ') << location.x
-		<< ","
-		<< std::dec << std::setw(3) << std::setfill(' ') << location.y
-		<< ")"
-	;
+    static char buffers[BUFFER_COUNT][BUFFER_SIZE];
+    static int index = 0;
 	
-    return ss.str();
+    int i = index;
+    index = (index + 1) % BUFFER_COUNT;
     
+    snprintf(buffers[i], sizeof(buffers[i]), "(%3d,%3d)", location.x, location.y);
+    
+    return buffers[i];
 }
 
-std::string getLocationString(int tileIndex)
+char const *getLocationString(int tileIndex)
 {
 	// allow returning for incorrect index
 	
@@ -382,7 +389,7 @@ std::string getLocationString(int tileIndex)
 	
 }
 
-std::string getLocationString(MAP *tile)
+char const *getLocationString(MAP *tile)
 {
 	// allow returning for nullptr
 	
@@ -393,12 +400,18 @@ std::string getLocationString(MAP *tile)
 	
 }
 
-std::string getVehicleIdAndLocationString(int vehicleId)
+char const *getVehicleLocationIdNameString(int vehicleId)
 {
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	std::string vehicleIdString = std::to_string(vehicleId);
-	vehicleIdString = std::string(4 - vehicleIdString.length(), ' ') + vehicleIdString;
-	return vehicleIdString + " " + getLocationString(vehicleTile);
+	assert(vehicleId >= 0 && vehicleId < *VehCount);
+	
+	VEH &vehicle = Vehs[vehicleId];
+	
+	static char buffer[64];
+	
+    snprintf(buffer, sizeof(buffer), "(%3d,%3d) [%4d] %-32s", vehicle.x, vehicle.y, vehicleId, vehicle.name());
+    
+    return buffer;
+	
 }
 
 // =======================================================
@@ -3585,128 +3598,6 @@ int getVehicleTransportId(int vehicleId)
 	
 }
 
-int setMoveTo(int vehicleId, MAP *destination)
-{
-	assert(isOnMap(destination));
-	
-    VEH *vehicle = getVehicle(vehicleId);
-	int factionId = vehicle->faction_id;
-    MAP *vehicleTile = getVehicleMapTile(vehicleId);
-    int vehicleSpeed1 = (getVehicleSpeed(vehicleId) == 1 ? 1 : 0);
-	int x = getX(destination);
-	int y = getY(destination);
-	bool vehicleTileOcean = is_ocean(vehicleTile);
-	bool destinationOcean = is_ocean(destination);
-	
-    debug("setMoveTo %s -> %s\n", getLocationString({vehicle->x, vehicle->y}).c_str(), getLocationString(destination).c_str());
-	
-    vehicle->waypoint_x[0] = x;
-    vehicle->waypoint_y[0] = y;
-    vehicle->order = ORDER_MOVE_TO;
-    vehicle->status_icon = 'G';
-    vehicle->movement_turns = 0;
-	
-    // vanilla bug fix for adjacent tile move
-	
-    int vehicleTileRangeToDestination = getRange(vehicleTile, destination);
-    
-    int destinationVehicleFactionId = veh_who(x, y);
-    bool destinationBlocked = destinationVehicleFactionId == -1 ? false : !isFriendly(factionId, destinationVehicleFactionId);
-	
-    if (vehicle->triad() == TRIAD_LAND && !vehicleTileOcean && !destinationOcean && vehicleTileRangeToDestination == 1 && !destinationBlocked)
-	{
-		int directMoveHexCost = mod_hex_cost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, x, y, vehicleSpeed1);
-		bool destinationZoc = isZoc(factionId, vehicleTile, destination);
-		
-		// set direct move to infinite cost if zoc
-		
-		if (destinationZoc)
-		{
-			directMoveHexCost = INT_MAX;
-		}
-		
-		// search optimal waypoint
-		
-		MAP *waypoint = nullptr;
-		int waypointMoveHexCost = directMoveHexCost;
-		
-		for (MAP *adjacentTile : getAdjacentTiles(vehicleTile))
-		{
-			bool adjacentTileOcean = is_ocean(adjacentTile);
-			int adjacentTileRangeToDestination = getRange(adjacentTile, destination);
-			int adjacentTileX = getX(adjacentTile);
-			int adjacentTileY = getY(adjacentTile);
-			bool adjacentTileBlocked = isBlocked(factionId, adjacentTile);
-			bool adjacentTileZoc = isZoc(factionId, vehicleTile, adjacentTile);
-			
-			// land
-			
-			if (adjacentTileOcean)
-				continue;
-			
-			// adjacent tile should be also adjacent to destination
-			
-			if (adjacentTileRangeToDestination != 1)
-				continue;
-			
-			// not blocked
-			
-			if (adjacentTileBlocked)
-				continue;
-			
-			// not zoc
-			
-			if (adjacentTileZoc)
-				continue;
-			
-			// compute cost
-			
-			int hexCost1 = mod_hex_cost(vehicle->unit_id, vehicle->faction_id, vehicle->x, vehicle->y, adjacentTileX, adjacentTileY, vehicleSpeed1);
-			int hexCost2 = mod_hex_cost(vehicle->unit_id, vehicle->faction_id, adjacentTileX, adjacentTileY, x, y, vehicleSpeed1);
-			int hexCost = hexCost1 + hexCost2;
-			
-			if (hexCost >= directMoveHexCost)
-				continue;
-			
-			if (hexCost < waypointMoveHexCost)
-			{
-				waypoint = adjacentTile;
-				waypointMoveHexCost = hexCost;
-			}
-			
-		}
-		
-		if (waypoint != nullptr)
-		{
-			vehicle->waypoint_x[0] = getX(waypoint);
-			vehicle->waypoint_y[0] = getY(waypoint);
-			vehicle->waypoint_x[1] = x;
-			vehicle->waypoint_y[1] = y;
-			vehicle->waypoint_count = 1;
-			debug("setWaypoint %s\n", getLocationString(waypoint).c_str());
-		}
-		
-	}
-	
-    return EM_SYNC;
-	
-}
-
-int setMoveTo(int vehicleId, const std::vector<MAP *> &waypoints)
-{
-    VEH* vehicle = getVehicle(vehicleId);
-
-    debug("setMoveTo %s -> waypoints\n", getLocationString({vehicle->x, vehicle->y}).c_str());
-
-	setVehicleWaypoints(vehicleId, waypoints);
-    vehicle->order = ORDER_MOVE_TO;
-    vehicle->status_icon = 'G';
-    vehicle->movement_turns = 0;
-
-    return EM_SYNC;
-
-}
-
 /*
 Checks if territory belongs to nobody, us or ally.
 */
@@ -5616,18 +5507,20 @@ int getAbilityFlatCost(int abilityId)
 
 UNIT *getUnit(int unitId)
 {
+	assert(unitId >= 0 && unitId < MaxProtoNum);
 	return &(Units[unitId]);
 }
 
 VEH *getVehicle(int vehicleId)
 {
 	assert(vehicleId >= 0 && vehicleId < *VehCount);
-	return &Vehs[vehicleId];
+	return &(Vehs[vehicleId]);
 }
 
 BASE *getBase(int baseId)
 {
-	return (baseId >= 0 && baseId < *BaseCount ? &(Bases[baseId]) : nullptr);
+	assert(baseId >= 0 && baseId < *BaseCount);
+	return &(Bases[baseId]);
 }
 
 bool isBaseHasNativeRepairFacility(int baseId)
@@ -6157,7 +6050,7 @@ int getVehicleUnitCost(int vehicleId)
 int getVehicleRemainingMovement(int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
-	return getVehicleMoveRate(vehicleId) - vehicle->moves_spent;
+	return getVehicleMaxMoves(vehicleId) - vehicle->moves_spent;
 }
 
 /*
@@ -6868,18 +6761,6 @@ double getEuqlideanDistance(MAP *origin, MAP *destination)
 }
 
 /**
-Computes distance between two tiles.
-Diagonal step counts as 1.5.
-*/
-double getDiagonalDistance(MAP *tile1, MAP *tile2)
-{
-	assert(isOnMap(tile1));
-	assert(isOnMap(tile2));
-	Location delta = getAbsoluteDelta(tile1, tile2);
-	return (double)delta.minAbs() + 1.5 * (double)delta.absDiff() / 2.0;
-}
-
-/**
 Computes double distance between two tiles.
 Diagonal step counts as 1.5.
 */
@@ -7062,6 +6943,9 @@ double getMaxBombardmentDamage(Triad triad, MAP *tile)
 			break;
 			
 		case TRIAD_SEA:
+			maxBombardmentDamagePercentage = Rules->max_dmg_percent_arty_sea;
+			break;
+			
 		case TRIAD_LAND:
 			if (tile != nullptr && tile->is_sea())
 			{
@@ -7082,6 +6966,11 @@ double getMaxBombardmentDamage(Triad triad, MAP *tile)
 	
 	return (double) maxBombardmentDamagePercentage / 100.0;
 	
+}
+
+double isLethalBombardment(Triad triad, MAP *tile)
+{
+	return getMaxBombardmentDamage(triad, tile) >= 1.0;
 }
 
 double getVehicleRemainingBombardmentDamage(int vehicleId)
@@ -7118,49 +7007,16 @@ int getBasePopulationLimit(int baseId)
 
 }
 
-/*
-Determines number of side moves from tile2 to base range with center at tile1.
-Returns 0 if already within base range.
-*/
-int getBaseRadiusLayer(MAP *baseTile, MAP *tile)
+bool isWithinBaseRadius(int x1, int y1, int x2, int y2)
 {
-	Location delta = getDelta(baseTile, tile);
-	Location rectangularDelta = getRectangularCoordinates(delta);
-	int maxAbsRectangularDelta = std::max(abs(rectangularDelta.x), abs(rectangularDelta.y));
-	int minAbsRectangularDelta = std::min(abs(rectangularDelta.x), abs(rectangularDelta.y));
-	return std::max(0, maxAbsRectangularDelta - 2) + std::max(0, minAbsRectangularDelta - 1);
+	return map_distance(x1, y1, x2, y2) <= 2;
 }
 
-bool isWithinBaseRadius(MAP *baseTile, MAP *tile)
+bool isWithinBaseRadius(MAP *tile1, MAP *tile2)
 {
-	return getBaseRadiusLayer(baseTile, tile) == 0;
-}
-
-/*
-Returns one or two tiles closer to base range than given one.
-*/
-std::vector<MAP *> getFartherBaseRadiusTiles(MAP *baseTile, MAP *tile)
-{
-	std::vector<MAP *> fartherBaseRadiusTiles;
-
-	int tileBaseRadiusLayer = getBaseRadiusLayer(baseTile, tile);
-
-	if (tileBaseRadiusLayer == 0)
-		return fartherBaseRadiusTiles;
-
-	for (MAP *sideTile : getSideTiles(tile))
-	{
-		int sideTileBaseRadiusLayer = getBaseRadiusLayer(baseTile, sideTile);
-
-		if (sideTileBaseRadiusLayer > tileBaseRadiusLayer)
-		{
-			fartherBaseRadiusTiles.push_back(sideTile);
-		}
-
-	}
-
-	return fartherBaseRadiusTiles;
-
+	Location tile1Location = getLocation(tile1);
+	Location tile2Location = getLocation(tile2);
+	return isWithinBaseRadius(tile1Location.x, tile1Location.y, tile2Location.x, tile2Location.y);
 }
 
 bool isFactionHasProject(int factionId, int facilityId)
@@ -7442,9 +7298,14 @@ Computes vehicle unit move rate along the road/tube.
 + elite movement bonus
 + damage
 */
-int getVehicleMoveRate(int vehicleId)
+int getVehicleMaxMoves(int vehicleId)
 {
 	return veh_speed(vehicleId, false);
+}
+
+int getVehicleRemainingMoves(int vehicleId)
+{
+	return getVehicleMaxMoves(vehicleId) - Vehs[vehicleId].moves_spent;
 }
 
 /**
@@ -7454,7 +7315,7 @@ Computes vehicle unit speed (not move rate along the road/tube !!!)
 */
 int getVehicleSpeed(int vehicleId)
 {
-	return getVehicleMoveRate(vehicleId) / Rules->move_rate_roads;
+	return getVehicleMaxMoves(vehicleId) / Rules->move_rate_roads;
 }
 
 bool isTileAccessesWater(MAP *tile)
@@ -8179,5 +8040,99 @@ bool isRangedAirUnit(int unitId)
 bool isRangedAirVehicle(int vehicleId)
 {
 	return isRangedAirUnit(Vehs[vehicleId].unit_id);
+}
+
+std::string getAbilitiesString(int ability_flags)
+{
+	std::string abilitiesString;
+	
+	if ((ability_flags & ABL_AMPHIBIOUS) != 0)
+	{
+		abilitiesString += " AMPHIBIOUS";
+	}
+	
+	if ((ability_flags & ABL_AIR_SUPERIORITY) != 0)
+	{
+		abilitiesString += " AIR_SUPERIORITY";
+	}
+	
+	if ((ability_flags & ABL_AAA) != 0)
+	{
+		abilitiesString += " AAA";
+	}
+	
+	if ((ability_flags & ABL_COMM_JAMMER) != 0)
+	{
+		abilitiesString += " ECM";
+	}
+	
+	if ((ability_flags & ABL_EMPATH) != 0)
+	{
+		abilitiesString += " EMPATH";
+	}
+	
+	if ((ability_flags & ABL_ARTILLERY) != 0)
+	{
+		abilitiesString += " ARTILLERY";
+	}
+	
+	if ((ability_flags & ABL_BLINK_DISPLACER) != 0)
+	{
+		abilitiesString += " BLINK_DISPLACER";
+	}
+	
+	if ((ability_flags & ABL_TRANCE) != 0)
+	{
+		abilitiesString += " TRANCE";
+	}
+	
+	if ((ability_flags & ABL_NERVE_GAS) != 0)
+	{
+		abilitiesString += " NERVE_GAS";
+	}
+	
+	if ((ability_flags & ABL_POLICE_2X) != 0)
+	{
+		abilitiesString += " POLICE_2X";
+	}
+	
+	if ((ability_flags & ABL_SOPORIFIC_GAS) != 0)
+	{
+		abilitiesString += " SOPORIFIC_GAS";
+	}
+	
+	if ((ability_flags & ABL_DISSOCIATIVE_WAVE) != 0)
+	{
+		abilitiesString += " DISSOCIATIVE_WAVE";
+	}
+	
+	return abilitiesString;
+	
+}
+
+/*
+Computes number of turns to build given item at given base.
+*/
+int getBaseItemBuildTime(int baseId, int item, bool countAccumulatedMinerals)
+{
+	BASE *base = &(Bases[baseId]);
+	
+	if (base->mineral_surplus <= 0)
+		return 9999;
+	
+	int mineralCost = std::max(0, getBaseMineralCost(baseId, item) - (countAccumulatedMinerals ? base->minerals_accumulated : 0));
+	
+	return divideIntegerRoundUp(mineralCost, base->mineral_surplus);
+	
+}
+
+bool isVehicleConvoying(int vehicleId)
+{
+	return Vehs[vehicleId].order == ORDER_CONVOY;
+}
+
+bool isVehicleTerraforming(VEH *vehicle)
+{
+	return vehicle->order >= ORDER_FARM && vehicle->order <= ORDER_PLACE_MONOLITH;
 }
 

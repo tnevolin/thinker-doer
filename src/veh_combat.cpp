@@ -1779,12 +1779,20 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
             int divisor = std::__gcd(off_value, def_value);
             off_value /= divisor;
             def_value /= divisor;
+            
+            // [WTP]
+            // more precise algorithm
+            /*
             for (int value : {10000, 5000, 1000, 500, 100, 50}) {
                 while (off_value >= 2*value && def_value >= 2*value) {
                     off_value /= value;
                     def_value /= value;
                 }
             }
+            */
+            simplifyFraction(&off_value, &def_value, 50);
+            //
+            
             combat_odds_fix(veh_atk, veh_def, &off_value, &def_value);
             BattleWin_stop_timer(BattleWin);
             parse_num(0, off_value);
@@ -2634,5 +2642,41 @@ END_BATTLE:
     return (veh->movement_turns + 1 < veh_range ? result : 1);
 }
 
-
+/*
+Simplifies fraction to reduce numerator and denominator to be not more than max value.
+*/
+void simplifyFraction(int *p, int *q, int maxVal)
+{
+	double r = *p / *q;
+	
+	// Initialize continued fraction
+	int p0 = 1;
+	int q0 = 0;
+	int p1 = (int) floor(r);
+	int q1 = 1;
+	
+	r = r - floor(r);
+	
+	while (r != 0.0)
+	{
+		r = 1 / r;
+		double n = floor(r);
+		r -= n;
+		int p2 = (int) n * p1 + p0;
+		int q2 = (int) n * q1 + q0;
+		
+		if (p2 > maxVal || q2 > maxVal)
+			break;
+		
+		p0 = p1;
+		q0 = q1;
+		p1 = p2;
+		q1 = q2;
+		
+	}
+	
+	*p = p1;
+	*q = q1;
+	
+}
 

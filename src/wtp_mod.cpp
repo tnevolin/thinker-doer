@@ -1,3 +1,4 @@
+
 #include "wtp_mod.h"
 
 #include <math.h>
@@ -7,10 +8,10 @@
 #include <vector>
 #include <map>
 #include <regex>
-#include "tech.h"
-#include "patch.h"
+
 #include "wtp_terranx.h"
 #include "wtp_game.h"
+#include "wtp_ai_game.h"
 #include "wtp_ai.h"
 #include "wtp_aiMove.h"
 
@@ -763,15 +764,6 @@ int map_distance(int x1, int y1, int x2, int y2)
         xd = *MapAreaX - xd;
 
     return ((xd + yd) + abs(xd - yd) / 2) / 2;
-
-}
-
-/*
-Verifies two locations are within the base radius of each other.
-*/
-bool isWithinBaseRadius(int x1, int y1, int x2, int y2)
-{
-	return map_distance(x1, y1, x2, y2) <= 2;
 
 }
 
@@ -3051,7 +3043,7 @@ void removeWrongVehiclesFromBases()
 			" territoryOwner=%d"
 			" vehicleOwner=%d"
 			"\n"
-			, vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getVehicleUnitName(vehicleId)
+			, vehicleId, getLocationString({vehicle->x, vehicle->y}), getVehicleUnitName(vehicleId)
 			, vehicleTile->owner
 			, vehicle->faction_id
 		);
@@ -3081,7 +3073,7 @@ void removeWrongVehiclesFromBases()
 			"[VANILLA BUG] sea vehicle in land base:"
 			" [%4d] %s %-32s"
 			"\n"
-			, vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getVehicleUnitName(vehicleId)
+			, vehicleId, getLocationString({vehicle->x, vehicle->y}), getVehicleUnitName(vehicleId)
 		);
 		killVehicle(vehicleId);
 		
@@ -3715,7 +3707,7 @@ int __cdecl wtp_mod_enemy_move(int vehicleId)
 	// run original function
 	// which also wraps AI logic
 	
-	int returnValue = wtp_mod_ai_enemy_move(vehicleId);
+	int returnValue = aiEnemyMove(vehicleId);
 	
 	// set probe moves
 	
@@ -4226,6 +4218,8 @@ Intercepts veh_kill to update pad_0 mapping.
 */
 int __cdecl wtp_mod_veh_kill(int vehicleId)
 {
+	vehicleKill(vehicleId);
+	
 	int returnValue = veh_kill(vehicleId);
 	
 	populateVehiclePad0Map();

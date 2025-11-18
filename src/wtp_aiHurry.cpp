@@ -1,8 +1,13 @@
+
+#include "wtp_aiHurry.h"
+
 #include <algorithm>
 #include <vector>
 #include <set>
-#include "wtp_aiHurry.h"
-#include "wtp_mod.h"
+#include "robin_hood.h"
+
+#include "main.h"
+#include "engine.h"
 #include "wtp_game.h"
 
 const robin_hood::unordered_flat_set<int> IMPORTANT_FACILITIES =

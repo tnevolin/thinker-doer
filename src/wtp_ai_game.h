@@ -5,23 +5,70 @@
 #include <map>
 #include "robin_hood.h"
 
+#include "main.h"
+#include "engine.h"
 #include "wtp_game.h"
 #include "wtp_aiTask.h"
-#include "wtp_aiMoveFormer.h"
 
-double constexpr MIN_SIGNIFICANT_THREAT = 0.2;
+constexpr int MAX_SAFE_LOCATION_SEARCH_RANGE = 6;
+constexpr int STACK_MAX_BASE_RANGE = 20;
+constexpr int STACK_MAX_COUNT = 20;
+
+// estimated average land colony travel time
+constexpr double AVERAGE_LAND_COLONY_TRAVEL_TIME = 10.0;
+
+// project value multiplier comparing to mineral cost
+constexpr double BASE_CAPTURE_GAIN_COEFFICIENT = 0.75;
+constexpr double PROJECT_VALUE_MULTIPLIER = 1.0;
+
+// base defense weight for remote vehicles
+constexpr double BASE_DEFENSE_RANGE_AIR		= 10.0;
+constexpr double BASE_DEFENSE_RANGE_SEA		=  5.0;
+constexpr double BASE_DEFENSE_RANGE_LAND	=  3.0;
 
 // forward declarations
 
 struct TileInfo;
 
-
-struct HexCost
+/*
+Available vehicle move action.
+*/
+struct MoveAction
 {
-	int exact;
-	int approximate;
+	MAP *destination;
+	int movementAllowance;
 };
-struct Adjacent
+/*
+Available vehicle attack action.
+*/
+struct AttackAction
+{
+	MAP *destination;
+	MAP *target;
+	double hastyCoefficient;
+};
+
+/// land-unload transfer
+struct Transfer
+{
+	MAP *passengerStop = nullptr;
+	MAP *transportStop = nullptr;
+	
+	Transfer() {}
+	
+	Transfer(MAP *_passengerStop, MAP *_transportStop)
+	: passengerStop{_passengerStop}
+	, transportStop{_transportStop}
+	{}
+	
+	bool valid()
+	{
+		return passengerStop != nullptr && transportStop != nullptr;
+	}
+	
+};
+
+struct AngleTileInfo
 {
 	int angle;
 	TileInfo *tileInfo;
@@ -30,6 +77,7 @@ struct PotentialAttack
 {
 	int vehiclePad0;
 	double hastyCoefficient;
+	ENGAGEMENT_MODE engagementMode;
 };
 
 struct TileInfo
@@ -72,14 +120,15 @@ struct TileInfo
 	std::array<bool, MaxPlayerNum> unfriendlyNeedlejetInFlights;
 	
 	// adjacent tiles
-	std::vector<Adjacent> adjacents;
+	std::vector<AngleTileInfo> adjacentAngleTileInfos;
 	// range tiles
 	std::vector<TileInfo *> range2CenterTileInfos;
 	std::vector<TileInfo *> range2NoCenterTileInfos;
 	
 	// hex costs
 	// [movementType][angle]
-	std::array<std::array<HexCost, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> hexCosts;
+	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> hexCosts;
+	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> averageHexCosts;
 	
 	// movement data
 	
@@ -100,7 +149,7 @@ struct TileInfo
 	// units can be bombarded by hostiles
 	bool artilleryDangerZone;
 	// possible enemy attacks
-	std::array<std::vector<PotentialAttack>, ENGAGEMENT_MODE_COUNT> potentialAttacks;
+	std::vector<PotentialAttack> potentialAttacks;
 	
 	// nearest bases
 	std::array<IdIntValue, 3> nearestBaseRanges;
@@ -170,52 +219,6 @@ struct BasePoliceData
 		return isSatisfied(1);
 	}
 	
-};
-
-struct UnitEffectResult
-{
-	int foeFactionId;
-	int foeUnitId;
-	double effect;
-};
-struct CounterEffect
-{
-	double required = 0.0;
-	double provided = 0.0;
-	double providedPresent = 0.0;
-	
-	CounterEffect(double _required, double _provided, double _providedPresent)
-	: required(_required), provided(_provided), providedPresent(_providedPresent)
-	{}
-	CounterEffect(double _required)
-	: CounterEffect(_required, 0.0, 0.0)
-	{}
-	
-	void resetProvided()
-	{
-		provided = 0.0;
-		providedPresent = 0.0;
-	}
-	bool isSatisfied(bool present) const
-	{
-		return (present ? providedPresent : provided) >= required;
-	}
-	
-};
-enum AssaultEffectCombatType
-{
-	AECT_ARTILLERY_ARTILLERY,
-	AECT_ARTILLERY_NON_ARTILLERY,
-	AECT_MELEE,
-};
-size_t const ASSAULT_EFFECT_COMBAT_TYPE_COUNT = AECT_MELEE + 1;
-struct AssaultEffect
-{
-	size_t assailantFactionId;
-	size_t assailantUnitId;
-	size_t protectorFactionId;
-	size_t protectorUnitId;
-	double value;
 };
 
 struct BaseProbeData
@@ -507,27 +510,6 @@ struct FactionInfo
 	
 };
 
-struct ProtectedLocation
-{
-	MAP *tile = nullptr;
-	
-	std::vector<int> vehicleIds;
-	std::vector<int> airVehicleIds;
-	std::vector<int> artilleryVehicleIds;
-	std::vector<int> nonArtilleryVehicleIds;
-	
-	int baseId;
-	bool base;
-	bool bunker;
-	bool airbase;
-	bool artillery = false;
-	
-	std::array<double, 4> defenseMultipliers;
-	
-	void addVehicle(int vehicleId);
-	
-};
-
 struct OffenseEffect
 {
 	ENGAGEMENT_MODE engagementMode;
@@ -568,7 +550,6 @@ public:
 	bool alienFungalTower = false;
 	bool needlejetInFlight = false;
 	bool artifact = false;
-	double averageAttackGain = 0.0;
 	int lowestSpeed = -1;
 	bool artillery = false;
 	bool bombardment = false;
@@ -641,6 +622,24 @@ public:
 	bool addAttacker(IdDoubleValue vehicleTravelTime);
 	void computeAttackParameters();
 	
+};
+
+struct TERRAFORMING_OPTION
+{
+	// recognizable name
+	const char *name;
+	// land or ocean
+	bool ocean;
+	// applies to rocky tile only
+	bool rocky;
+	// area effect
+	bool area;
+	// requires base yield computation
+	bool yield;
+	// main action that is required to be discovered
+	int requiredAction;
+	// list of actions
+	std::vector<int> actions;
 };
 
 struct FormerRequest
@@ -717,6 +716,57 @@ struct TransportControl
 	
 };
 
+struct TileYield
+{
+	int nutrient;
+	int mineral;
+	int energy;
+	
+	TileYield(int _nutrient, int _mineral, int _energy)
+	: nutrient(_nutrient), mineral(_mineral), energy(_energy)
+	{}
+	
+	TileYield()
+	: TileYield(0, 0, 0)
+	{}
+	
+	/*
+	Verifies equal or superior yields.
+	*/
+	static bool isEqualOrSuperior(TileYield o1, TileYield o2)
+	{
+		return
+			(o1.nutrient >= o2.nutrient && o1.mineral >= o2.mineral && o1.energy >= o2.energy)
+		;
+		
+	}
+	
+	/*
+	Verifies equal yields.
+	*/
+	static bool isEqual(TileYield o1, TileYield o2)
+	{
+		return
+			(o1.nutrient == o2.nutrient && o1.mineral == o2.mineral && o1.energy == o2.energy)
+		;
+		
+	}
+	
+	/*
+	Verifies first is superior to second.
+	*/
+	static bool isSuperior(TileYield o1, TileYield o2)
+	{
+		return
+			(o1.nutrient >= o2.nutrient && o1.mineral >= o2.mineral && o1.energy >= o2.energy)
+			&&
+			(o1.nutrient > o2.nutrient || o1.mineral > o2.mineral || o1.energy > o2.energy)
+		;
+		
+	}
+	
+};
+
 struct Data
 {
 	// global variables
@@ -735,6 +785,9 @@ struct Data
 	// pad_0 to vehicleId mapping
 	// [pad0] = vehicleId
 	robin_hood::unordered_flat_map<int, int> pad0VehicleIds;
+	// current vehicles
+	// [pad0] = vehicle
+	std::array<VEH, MaxVehModNum> savedVehicles;
 	
 	// base infos
 	
@@ -789,9 +842,6 @@ struct Data
 	
 	// combat data
 	
-	double continuousImprovmentGain;
-	double continuousHarvestingGain;
-	double stealingTechnologyGain;
 	double cachingArtifactGain;
 	std::array<double, MaxProtoNum> unitDestructionGains;
 	std::vector<int> rivalFactionIds;
@@ -856,7 +906,6 @@ struct Data
 	robin_hood::unordered_flat_map<int, std::vector<int>> regionSurfaceScoutVehicleIds;
 	double medianBaseDefenseDemand;
 	robin_hood::unordered_flat_map<int, double> regionDefenseDemand;
-	int maxBaseSize;
 	int totalMineralIntake2;
 	int maxMineralSurplus;
 	int maxMineralIntake2;
@@ -872,6 +921,7 @@ struct Data
 	robin_hood::unordered_flat_map<int, int> seaTransportRequestCounts;
 	TransportControl transportControl;
 	robin_hood::unordered_flat_map<int, Task> tasks;
+	robin_hood::unordered_flat_map<int, Task> tacticalTasks;
 	double airColonyProductionPriority;
 	double landColonyProductionPriority;
 	robin_hood::unordered_flat_map<int, double> seaColonyProductionPriorities;
@@ -929,4 +979,121 @@ bool isZoc(int orgTileIndex, int dstTileIndex);
 bool isZoc(MAP *orgTile, MAP *dstTile);
 bool isVendettaStoppedWith(int enemyFactionId);
 double getVehicleDestructionGain(int vehicleId);
+
+
+
+void clearPlayerFactionReferences();
+void setPlayerFactionReferences(int factionId);
+
+void computeUnitDestructionGains();
+
+int getVehicleIdByPad0(int pad0);
+VEH *getVehicleByPad0(int pad0);
+MAP *getClosestPod(int vehicleId);
+int getFactionMaxConOffenseValue(int factionId);
+int getFactionMaxConDefenseValue(int factionId);
+std::array<int, 3> getFactionFastestTriadChassisIds(int factionId);
+bool isWithinAlienArtilleryRange(int vehicleId);
+bool isWtpEnabledFaction(int factionId);
+bool compareIdIntValueAscending(const IdIntValue &a, const IdIntValue &b);
+bool compareIdIntValueDescending(const IdIntValue &a, const IdIntValue &b);
+bool compareIdDoubleValueAscending(const IdDoubleValue &a, const IdDoubleValue &b);
+bool compareIdDoubleValueDescending(const IdDoubleValue &a, const IdDoubleValue &b);
+bool isOffensiveUnit(int unitId, int factionId);
+bool isOffensiveVehicle(int vehicleId);
+double getExponentialCoefficient(double scale, double value);
+double getStatisticalBaseSize(double age);
+double getBaseEstimatedSize(double currentSize, double currentAge, double futureAge);
+double getBaseStatisticalWorkerCount(double age);
+double getBaseStatisticalProportionalWorkerCountIncrease(double currentAge, double futureAge);
+int getBaseProjectedSize(int baseId, int turns);
+int getBaseGrowthTime(int baseId, int targetSize);
+double getResourceScore(double nutrient, double mineral, double energy);
+double getResourceScore(double mineral, double energy);
+int getBaseFoundingTurn(int baseId);
+int getBaseAge(int baseId);
+double getBaseSizeGrowth(int baseId);
+double getBonusDelayEffectCoefficient(double delay);
+double getBuildTimeEffectCoefficient(double delay);
+int getUnitGroup(int unitId, bool airbase);
+double getHarmonicMean(std::vector<std::vector<double>> parameters);
+std::vector<MoveAction> getMoveActions(MovementType movementType, MAP *origin, int initialMovementAllowance, bool regardObstacle, bool regardZoc);
+std::vector<MoveAction> getVehicleMoveActions(int vehicleId, bool regardObstacle);
+robin_hood::unordered_flat_map<MAP *, double> getPotentialMeleeAttackTargets(int vehicleId);
+robin_hood::unordered_flat_map<MAP *, double> getPotentialArtilleryAttackTargets(int vehicleId);
+std::vector<AttackAction> getMeleeAttackActions(int vehicleId, bool regardObstacle, bool requireEnemy);
+std::vector<AttackAction> getArtilleryAttackActions(int vehicleId, bool regardObstacle, bool requireEnemy);
+robin_hood::unordered_flat_map<int, double> getMeleeAttackLocations(int vehicleId);
+robin_hood::unordered_flat_set<int> getArtilleryAttackLocations(int vehicleId);
+bool isVehicleAllowedMove(int vehicleId, MAP *from, MAP *to);
+void disbandOrversupportedVehicles(int factionId);
+void disbandUnneededVehicles();
+MAP *getVehicleArtilleryAttackPosition(int vehicleId, MAP *target);
+bool isUnitCanCaptureBase(int unitId, MAP *baseTile);
+bool isUnitCanCaptureBase(int unitId, MAP *origin, MAP *baseTile);
+bool isVehicleCanCaptureBase(int vehicleId, MAP *baseTile);
+int getCombatUnitTrueCost(int unitId);
+int getCombatVehicleTrueCost(int vehicleId);
+double getGain(double bonus, double income, double incomeGrowth, double incomeGrowth2);
+double getGainDelay(double gain, double delay);
+double getGainTimeInterval(double gain, double beginTime, double endTime);
+double getGainRepetion(double gain, double probability, double period);
+double getGainBonus(double bonus);
+double getGainIncome(double income);
+double getGainIncomeGrowth(double incomeGrowth);
+double getGainIncomeGrowth2(double incomeGrowth2);
+double getBaseIncome(int baseId, bool withNutrients = false);
+double getAverageBaseIncome();
+double getBaseCitizenIncome(int baseId);
+double getMeanBaseIncome(double age);
+double getMeanBaseGain(double age);
+double getNewBaseGain();
+double getLandColonyGain();
+double getBaseGain(int popSize, int nutrientCostFactor, Resource baseIntake2);
+double getBaseGain(int baseId, Resource baseIntake2);
+double getBaseGain(int baseId);
+double getBaseValue(int baseId);
+double getBaseImprovementGain(int baseId, Resource oldBaseIntake2, Resource newBaseIntake2);
+COMBAT_TYPE getWeaponType(int vehicleId);
+COMBAT_TYPE getArmorType(int vehicleId);
+CombatStrength getMeleeAttackCombatStrength(int vehicleId);
+bool isVehicleCanArtilleryAttack(int vehicleId);
+void assignVehiclesToTransports();
+bool isUnitCanMeleeAttackUnit(int attackerUnitId, int defenderUnitId);
+bool isUnitCanMeleeAttackFromTileToTile(int unitId, MAP *position, MAP *target);
+bool isUnitCanArtilleryAttackFromTile(int unitId, MAP *position);
+bool isUnitCanMeleeAttackTile(int unitId, MAP *target, MAP *position = nullptr);
+bool isVehicleCanMeleeAttackTile(int vehicleId, MAP *target, MAP *position = nullptr);
+double getBaseExtraWorkerGain(int baseId);
+double computeAssaultEffect(int assailantFactionId, int assailantUnitId, int protectorFactionId, int protectorUnitId, MAP *tile);
+bool isUnitCanMeleeAttackAtTile(int unitId, MAP *tile);
+bool isUnitCanMeleeAttackUnitAtTile(int attackerUnitId, int defenderUnitId, MAP *tile);
+bool isUnitCanMeleeAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MAP *tile);
+bool isUnitCanArtilleryAttackAtTile(int unitId, MAP *tile);
+bool isUnitCanArtilleryAttackUnitAtTile(int attackerUnitId, int defenderUnitId, MAP *tile);
+bool isUnitCanArtilleryAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MAP *tile);
+bool isUnitCanMeleeAttackUnitAtBase(int attackerUnitId, int defenderUnitId);
+bool isUnitCanMeleeAttackUnitFromBase(int attackerUnitId, int defenderUnitId);
+bool isUnitCanArtilleryAttackUnitAtBase(int attackerUnitId, int defenderUnitId);
+bool isUnitCanArtilleryAttackUnitFromBase(int attackerUnitId, int defenderUnitId);
+MapDoubleValue getMeleeAttackPosition(int unitId, MAP *origin, MAP *target);
+MapDoubleValue getMeleeAttackPosition(int vehicleId, MAP *target);
+MapDoubleValue getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target);
+MapDoubleValue getArtilleryAttackPosition(int vehicleId, MAP *target);
+double getWinningProbability(double combatEffect);
+double getWinningHealthRatio(double combatEffect);
+double getSensorOffenseMultiplier(int factionId, MAP *tile);
+double getSensorDefenseMultiplier(int factionId, MAP *tile);
+double getUnitMeleeOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
+double getUnitArtilleryOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
+int getBasePoliceRequiredPower(int baseId);
+void setTileBlockedAndZoc(TileInfo &tileInfo);
+double getUnitDestructionGain(int unitId);
+double getTileCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, MAP *tile, bool atTile);
+double getTileCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *tile, bool atTile);
+double getProportionalCoefficient(double minValue, double maxValue, double value);
+//void initializeLocationCombatData(CombatData &combatData, TileInfo &tileInfo, bool playerAssaults);
+void populateVehiclePad0Map();
+void updateVehicleTileBlockedAndZocs();
+double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *tile, bool atTile, double attackerHealth, double defenderHealth);
 

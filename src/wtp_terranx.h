@@ -1,6 +1,7 @@
 #pragma once
 
-#include "path.h"
+#include "main.h"
+#include "engine.h"
 
 typedef void	(__cdecl *fp_0void				)();
 typedef void	(__cdecl *fp_1void				)(int);

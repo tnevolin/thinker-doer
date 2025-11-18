@@ -1,6 +1,7 @@
 #pragma once
 
-#include "game.h"
+#include "main.h"
+#include "engine.h"
 #include "wtp_game.h"
 
 struct LOCATION_RANGE

@@ -165,7 +165,7 @@ void populateMapSnapshot()
 			// base appeared
 			if (mapSnapshot.mapBases.find(baseTile) == mapSnapshot.mapBases.end())
 			{
-				debug("\t%s %-24s - appeared\n", getLocationString(baseTile), Bases[baseId].name);
+				debug("\t%s %-24s - appeared\n", getLocationString(baseTile).c_str(), Bases[baseId].name);
 				
 				for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
 				{
@@ -201,7 +201,7 @@ void populateMapSnapshot()
 			// base factionId changed
 			else if (mapSnapshot.mapBases.at(baseTile) != baseFactionId)
 			{
-				debug("\t%s %-24s - faction changed\n", getLocationString(baseTile), Bases[baseId].name);
+				debug("\t%s %-24s - faction changed\n", getLocationString(baseTile).c_str(), Bases[baseId].name);
 				
 				int oldBaseFactionId = mapSnapshot.mapBases.at(baseTile);
 				int newBaseFactionId = baseFactionId;
@@ -248,7 +248,7 @@ void populateMapSnapshot()
 			// base disappeared
 			if (baseId == -1)
 			{
-				debug("\t%s %-24s - disappeared\n", getLocationString(baseTile), Bases[baseId].name);
+				debug("\t%s %-24s - disappeared\n", getLocationString(baseTile).c_str(), Bases[baseId].name);
 				
 				for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
 				{
@@ -280,7 +280,7 @@ void populateMapSnapshot()
 			// base factionId changed
 			else if (baseFactionId != Bases[baseId].faction_id)
 			{
-				debug("\t%s %-24s - faction changed\n", getLocationString(baseTile), Bases[baseId].name);
+				debug("\t%s %-24s - faction changed\n", getLocationString(baseTile).c_str(), Bases[baseId].name);
 				
 				int oldBaseFactionId = baseFactionId;
 				int newBaseFactionId = Bases[baseId].faction_id;
@@ -427,7 +427,7 @@ void populateImpediments(int factionId)
 		{
 			int tileIndex = tile - *MapTiles;
 			
-			debug("\t%s %5.2f\n", getLocationString(tile), impediments.at(tileIndex));
+			debug("\t%s %5.2f\n", getLocationString(tile).c_str(), impediments.at(tileIndex));
 			
 		}
 		
@@ -475,7 +475,7 @@ void populateAirbases(int factionId)
 //	{
 //		for (MAP *airbase : airbases)
 //		{
-//			debug("\t%s\n", getLocationString(airbase));
+//			debug("\t%s\n", getLocationString(airbase).c_str());
 //		}
 //		
 //	}
@@ -667,7 +667,7 @@ void populateAirClusters(int factionId)
 				
 				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 				{
-					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex), chassisAirSpeedAirClusters.at(tileIndex));
+					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), chassisAirSpeedAirClusters.at(tileIndex));
 				}
 				
 			}
@@ -803,7 +803,7 @@ void populateAirCluster(int factionId, int chassisId, int speed)
 				
 				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 				{
-					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex), chassisAirSpeedAirClusters.at(tileIndex));
+					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), chassisAirSpeedAirClusters.at(tileIndex));
 				}
 				
 			}
@@ -866,7 +866,7 @@ void populateSeaTransportWaitTimes(int factionId)
 		
 		// add initial tile
 		
-		initialTiles.push_back({getVehicleMapTile(vehicleId), 0, Units[vehicle->unit_id].carry_capacity, getVehicleMovementType(vehicleId), getVehicleMaxMoves(vehicleId)});
+		initialTiles.push_back({getVehicleMapTile(vehicleId), 0, Units[vehicle->unit_id].carry_capacity, getVehicleMovementType(vehicleId), getVehicleMoveRate(vehicleId)});
 		
 	}
 	
@@ -901,7 +901,7 @@ void populateSeaTransportWaitTimes(int factionId)
 //		debug("\tinitialTiles\n");
 //		for (SeaTransportInitialTile &initialTile : initialTiles)
 //		{
-//			debug("\t\t%s %2d %d %d\n", getLocationString(initialTile.tile), initialTile.buildTime, initialTile.capacity, initialTile.moveRate);
+//			debug("\t\t%s %2d %d %d\n", getLocationString(initialTile.tile).c_str(), initialTile.buildTime, initialTile.capacity, initialTile.moveRate);
 //		}
 //		
 //	}
@@ -1001,7 +1001,7 @@ void populateSeaTransportWaitTimes(int factionId)
 //			
 //			if (seaTransportWaitTime != INF)
 //			{
-//				debug("\t\t%s %5.2f\n", getLocationString(tile), seaTransportWaitTime);
+//				debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), seaTransportWaitTime);
 //			}
 //			
 //		}
@@ -1137,7 +1137,7 @@ void populateSeaCombatClusters(int factionId)
 //	{
 //		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), seaCombatClusters.at(tileIndex));
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), seaCombatClusters.at(tileIndex));
 //			
 //		}
 //		
@@ -1247,7 +1247,7 @@ void populateLandCombatClusters(int factionId)
 //	{
 //		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), landCombatClusters.at(tileIndex));
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landCombatClusters.at(tileIndex));
 //			
 //		}
 //		
@@ -1351,8 +1351,8 @@ void populateSeaLandmarks(int factionId)
 						
 						for (AngleTileInfo const &adjacentAngleTileInfo : currentTileInfo.adjacentAngleTileInfos)
 						{
-							int angle = adjacentAngleTileInfo.angle;
-							TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo;
+							int angle = adjacentAngleTileInfo.angle();
+							TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo();
 							int adjacentTileIndex = adjacentTileInfo->index;
 							int hexCost = currentTileInfo.averageHexCosts.at(movementType).at(angle);
 							
@@ -1465,10 +1465,10 @@ void populateSeaLandmarks(int factionId)
 //			
 //			for (SeaLandmark const &landmark : landmarks)
 //			{
-//				debug("\t\t%s\n", getLocationString(landmark.tileIndex));
+//				debug("\t\t%s\n", getLocationString(landmark.tileIndex).c_str());
 //				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //				{
-//					debug("\t\t\t%s %f %f\n", getLocationString(tileIndex), landmark.tileInfos.at(tileIndex).movementCost, landmark.tileInfos.at(tileIndex).seaMovementCost);
+//					debug("\t\t\t%s %f %f\n", getLocationString(tileIndex).c_str(), landmark.tileInfos.at(tileIndex).movementCost, landmark.tileInfos.at(tileIndex).seaMovementCost);
 //				}
 //			}
 //			
@@ -1577,8 +1577,8 @@ void populateLandLandmarks(int factionId)
 						
 						for (AngleTileInfo const &adjacentAngleTileInfo : currentTileInfo.adjacentAngleTileInfos)
 						{
-							int angle = adjacentAngleTileInfo.angle;
-							TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo;
+							int angle = adjacentAngleTileInfo.angle();
+							TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo();
 							int adjacentTileIndex = adjacentTileInfo->index;
 							
 							// should be in same land transported cluster
@@ -1789,10 +1789,10 @@ void populateLandLandmarks(int factionId)
 			
 			for (LandLandmark const &landmark : landmarks)
 			{
-				debug("\t\t%s\n", getLocationString(landmark.tileIndex));
+				debug("\t\t%s\n", getLocationString(landmark.tileIndex).c_str());
 				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 				{
-					debug("\t\t\t%s %3.0f %3.0f %3.0f\n", getLocationString(tileIndex), landmark.tileInfos.at(tileIndex).seaTransportWaitTime, landmark.tileInfos.at(tileIndex).seaMovementCost, landmark.tileInfos.at(tileIndex).landMovementCost);
+					debug("\t\t\t%s %3.0f %3.0f %3.0f\n", getLocationString(tileIndex).c_str(), landmark.tileInfos.at(tileIndex).seaTransportWaitTime, landmark.tileInfos.at(tileIndex).seaMovementCost, landmark.tileInfos.at(tileIndex).landMovementCost);
 				}
 			}
 			
@@ -1944,7 +1944,7 @@ void populateSeaClusters(int factionId)
 	{
 		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 		{
-			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), seaClusters.at(tileIndex));
+			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), seaClusters.at(tileIndex));
 		}
 		
 		for (std::pair<int, int> const &seaClusterAreaEntry : seaClusterAreas)
@@ -2075,7 +2075,7 @@ void populateLandClusters()
 //	{
 //		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), landClusters.at(tileIndex));
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landClusters.at(tileIndex));
 //		}
 //		
 //	}
@@ -2191,7 +2191,7 @@ void populateLandTransportedClusters()
 //	{
 //		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), landTransportedClusters.at(tileIndex));
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landTransportedClusters.at(tileIndex));
 //			
 //		}
 //		
@@ -2252,20 +2252,20 @@ void populateTransfers(int factionId)
 		
 		for (AngleTileInfo const &adjacentAngleTileInfo : tileInfo.adjacentAngleTileInfos)
 		{
-			TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo;
+			TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo();
 			int adjacentTileIndex = adjacentTileInfo->index;
 			MAP *adjacentTile = adjacentTileInfo->tile;
 			
 			// sea
 			
-			if (!adjacentTileInfo->ocean)
+			if (!adjacent.tileInfo->ocean)
 				continue;
 			
 			int seaClusterIndex = seaClusters.at(adjacentTileIndex);
 			
 			// not blocked
 			
-			if (adjacentTileInfo->blocked)
+			if (adjacent.tileInfo->blocked)
 				continue;
 			
 			// assigned cluster
@@ -2312,14 +2312,13 @@ void populateTransfers(int factionId)
 		
 		// process adjacent tiles
 		
-		for (AngleTileInfo const &adjacentAngleTileInfo : baseTileInfo.adjacentAngleTileInfos)
+		for (Adjacent const &adjacent : baseTileInfo.adjacents)
 		{
-			TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo;
-			MAP *adjacentTile = adjacentTileInfo->tile;
+			MAP *adjacentTile = adjacent.tileInfo->tile;
 			
 			// ocean
 			
-			if (!adjacentTileInfo->ocean)
+			if (!adjacent.tileInfo->ocean)
 				continue;
 			
 			// add transfer
@@ -2424,7 +2423,7 @@ void populateTransfers(int factionId)
 //				
 //				for (Transfer const &transfer : landClusterTransferEntry.second)
 //				{
-//					debug("\t\t%s -> %s\n", getLocationString(transfer.passengerStop), getLocationString(transfer.transportStop));
+//					debug("\t\t%s -> %s\n", getLocationString(transfer.passengerStop).c_str(), getLocationString(transfer.transportStop).c_str());
 //				}
 //				
 //			}
@@ -2437,11 +2436,11 @@ void populateTransfers(int factionId)
 //		{
 //			MAP *baseTile = oceanBaseTransferEntry.first;
 //			
-//			debug("\t%s\n", getLocationString(baseTile));
+//			debug("\t%s\n", getLocationString(baseTile).c_str());
 //			
 //			for (Transfer const &transfer : oceanBaseTransferEntry.second)
 //			{
-//				debug("\t\t%s -> %s\n", getLocationString(transfer.passengerStop), getLocationString(transfer.transportStop));
+//				debug("\t\t%s -> %s\n", getLocationString(transfer.passengerStop).c_str(), getLocationString(transfer.transportStop).c_str());
 //			}
 //			
 //		}
@@ -2798,7 +2797,7 @@ double getSeaLApproachTime(int factionId, MovementType movementType, int speed, 
 
 double getLandLApproachTime(int factionId, MovementType movementType, int speed, MAP *org, MAP *dst)
 {
-//	debug("getLandLApproachTime( factionId=%d movementType=%d speed=%d org=%s dst=%s )\n", factionId, movementType, speed, getLocationString(org), getLocationString(dst));
+//	debug("getLandLApproachTime( factionId=%d movementType=%d speed=%d org=%s dst=%s )\n", factionId, movementType, speed, getLocationString(org).c_str(), getLocationString(dst).c_str());
 	
 	Profiling::start("- getLandLApproachTime");
 	
@@ -3009,7 +3008,7 @@ Computes A* travel time for *player* faction.
 */
 double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, bool attackDestination)
 {
-//	debug("getATravelTime movementType=%d speed=%d %s->%s\n", movementType, speed, getLocationString(org), getLocationString(dst));
+//	debug("getATravelTime movementType=%d speed=%d %s->%s\n", movementType, speed, getLocationString(org).c_str(), getLocationString(dst).c_str());
 	
 	Profiling::start("- getATravelTime");
 	
@@ -3084,12 +3083,11 @@ double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, 
 		
 		// check surrounding tiles
 		
-		for (AngleTileInfo const &adjacentAngleTileInfo : currentTileInfo.adjacentAngleTileInfos)
+		for (Adjacent const &adjacent : currentTileInfo.adjacents)
 		{
-			int angle = adjacentAngleTileInfo.angle;
-			TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo;
-			int adjacentTileIndex = adjacentTileInfo->index;
-			MAP *adjacentTile = adjacentTileInfo->tile;
+			int angle = adjacent.angle;
+			int adjacentTileIndex = adjacent.tileInfo->index;
+			MAP *adjacentTile = adjacent.tileInfo->tile;
 			
 			// within cluster for surface vehicle
 			
@@ -3164,7 +3162,7 @@ double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, 
 				
 				// movement restrictions by surface type
 				
-				if (!currentTileInfo.ocean && !adjacentTileInfo->ocean) // land-land
+				if (!currentTileInfo.ocean && !adjacent.tileInfo->ocean) // land-land
 				{
 					// not zoc (could be within the cluster but specific movement can still be restricted by zoc)
 					
@@ -3174,7 +3172,7 @@ double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, 
 					// hexCost
 					// single road turn if attacking
 					
-					int hexCost = adjacentTileInfo->tile == dst && attackDestination ? Rules->move_rate_roads : currentTileInfo.averageHexCosts.at(movementType).at(angle);
+					int hexCost = adjacent.tileInfo->tile == dst && attackDestination ? Rules->move_rate_roads : currentTileInfo.averageHexCosts.at(movementType).at(angle);
 					
 					// sensible hexCost
 					
@@ -3186,7 +3184,7 @@ double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, 
 					stepTime = (double)hexCost / (double)(Rules->move_rate_roads * speed);
 					
 				}
-				else if (currentTileInfo.ocean && adjacentTileInfo->ocean) // sea-sea transport movement
+				else if (currentTileInfo.ocean && adjacent.tileInfo->ocean) // sea-sea transport movement
 				{
 					// hexCost for transport movement
 					
@@ -3202,7 +3200,7 @@ double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, 
 					stepTime = (double)hexCost / (double)(Rules->move_rate_roads * aiFactionInfo->bestSeaTransportUnitSpeed);
 					
 				}
-				else if (!currentTileInfo.ocean && adjacentTileInfo->ocean) // boarding
+				else if (!currentTileInfo.ocean && adjacent.tileInfo->ocean) // boarding
 				{
 					// transport is available
 					
@@ -3216,7 +3214,7 @@ double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, 
 					stepTime = seaTransportWaitTime;
 					
 				}
-				else if (currentTileInfo.ocean && !adjacentTileInfo->ocean) // unboarding
+				else if (currentTileInfo.ocean && !adjacent.tileInfo->ocean) // unboarding
 				{
 					// stepTime
 					

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engine.h"
+
 const int SP_Unbuilt = -1;
 const int SP_Destroyed = -2;
 const int SP_ID_First = 70;

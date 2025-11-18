@@ -1,10 +1,8 @@
 
 #include "wtp_patch.h"
-#include "wtp_game.h"
+
 #include "wtp_mod.h"
 #include "wtp_ai.h"
-#include "wtp_aiProduction.h"
-#include "wtp_aiMove.h"
 
 void exit_fail_over()
 {
@@ -1733,6 +1731,7 @@ void patch_enemy_move()
 {
 	// in enemy_move_check
 	write_call(0x00579362, (int)wtp_mod_enemy_move);
+	
 }
 
 void patch_faction_upkeep()
@@ -2058,7 +2057,7 @@ void patch_subversion_allow_stacked_units()
 	
     write_call(0x005A4250, (int)modifiedSubveredVehicleDrawTile);
     
-    // intercept enemy_move is done in patch_enemy_move
+    // intercepting enemy_move is done in patch_enemy_move
     
 //    write_call(0x00512842, (int)wtp_mod_enemy_move);
 //    write_call(0x00579362, (int)wtp_mod_enemy_move);
@@ -2414,10 +2413,10 @@ void patch_disable_vanilla_base_hurry()
 /*
 Vehicle moves entry point.
 */
-void patch_enemy_units_check()
+void patch_enemy_turn()
 {
-	write_call(0x00528289, (int)modified_enemy_units_check);
-	write_call(0x005295C0, (int)modified_enemy_units_check);
+    write_call(0x00528289, (int)wtp_mod_enemy_turn); // control_turn
+    write_call(0x005295C0, (int)wtp_mod_enemy_turn); // net_upkeep
 
 }
 
@@ -3436,7 +3435,7 @@ void patch_setup_wtp(Config* cf)
 		patch_disable_vanilla_base_hurry();
 	}
 	
-	patch_enemy_units_check();
+	patch_enemy_turn();
 	
 	patch_tech_ai_randomization();
 	
@@ -3538,6 +3537,8 @@ void patch_setup_wtp(Config* cf)
 	}
 
 	patch_veh_kill();
+	
+	patch_enemy_turn();
 	
 }
 

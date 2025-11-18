@@ -1,8 +1,11 @@
 #pragma once
 
 #include <float.h>
+
+#include "main.h"
+#include "engine.h"
+#include "game.h"
 #include "wtp_game.h"
-#include "wtp_aiMoveFormer.h"
 
 const int MAX_EXPANSION_RANGE = 10;
 

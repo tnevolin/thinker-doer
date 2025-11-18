@@ -1,6 +1,10 @@
 #pragma once
 
-#include "wtp_ai.h"
+#include "robin_hood.h"
+
+#include "main.h"
+#include "engine.h"
+#include "wtp_ai_game.h"
 
 int const MIN_LANDMARK_DISTANCE = 20;
 double const A_DISTANCE_TRESHOLD = 10.0;

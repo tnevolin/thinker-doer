@@ -4,8 +4,9 @@
 
 #include <vector>
 
-#include "wtp_ai.h"
-#include "wtp_aiData.h"
+#include "main.h"
+#include "wtp_game.h"
+#include "wtp_ai_game.h"
 #include "wtp_aiRoute.h"
 #include "wtp_aiMove.h"
 
@@ -53,7 +54,7 @@ void populateConvoyData()
 		{
 			// available crawler
 			crawlerIds.push_back(vehicleId);
-			debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
+			debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)));
 		}
 		
 	}
@@ -272,7 +273,7 @@ void populateConvoyData()
 		
 //		if (DEBUG)
 //		{
-//			debug("\t%s %d [%3d] %7.2f + %7.2f = %7.2f\n", getLocationString(tile).c_str(), tileConvoyInfo.baseResType, tileConvoyInfo.baseid, bestBaseResTypeGain, baseGainChange, tileConvoyInfo.gain);
+//			debug("\t%s %d [%3d] %7.2f + %7.2f = %7.2f\n", getLocationString(tile), tileConvoyInfo.baseResType, tileConvoyInfo.baseid, bestBaseResTypeGain, baseGainChange, tileConvoyInfo.gain);
 //		}
 		
 	}
@@ -380,7 +381,7 @@ void assignCrawlerOrders()
 		
 		assignments.insert(bestTile);
 		
-		debug("\t[%4d] %s -> %s [%3d] %d\n", vehicleId, getLocationString({vehicle.x, vehicle.y}).c_str(), getLocationString(bestTile).c_str(), tileConvoyInfo.baseid, tileConvoyInfo.baseResType);
+		debug("\t[%4d] %s -> %s [%3d] %d\n", vehicleId, getLocationString({vehicle.x, vehicle.y}), getLocationString(bestTile), tileConvoyInfo.baseid, tileConvoyInfo.baseResType);
 		
 	}
 	

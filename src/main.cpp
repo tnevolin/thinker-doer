@@ -1349,7 +1349,7 @@ int option_handler(void* user, const char* section, const char* name, const char
     }
     else if (MATCH("ai_combat_base_threat_range"))
     {
-        cf->ai_combat_base_threat_range = atof(value);
+        cf->ai_combat_base_threat_range = atoi(value);
     }
     else if (MATCH("ai_base_threat_travel_time_scale"))
     {
@@ -1450,14 +1450,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("ai_combat_proximity_dest_time_coefficient"))
     {
         cf->ai_combat_proximity_dest_time_coefficient = atof(value);
-    }
-    else if (MATCH("ai_combat_proximity_dest_distance_coefficient"))
-    {
-        cf->ai_combat_proximity_dest_distance_coefficient = atof(value);
-    }
-    else if (MATCH("ai_combat_proximity_base_distance_coefficient"))
-    {
-        cf->ai_combat_proximity_base_distance_coefficient = atof(value);
     }
     else if (MATCH("ai_combat_damage_destruction_value_coefficient"))
     {

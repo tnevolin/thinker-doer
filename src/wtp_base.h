@@ -1,9 +1,9 @@
 #pragma once
 
 #include "robin_hood.h"
+
 #include "main.h"
-#include "wtp_game.h"
-#include "wtp_mod.h"
+#include "engine.h"
 
 extern MAP *baseComputeExcludedTile;
 

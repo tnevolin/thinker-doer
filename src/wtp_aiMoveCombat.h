@@ -1,10 +1,10 @@
 #pragma once
 
+#include <float.h>
+
 #include "main.h"
-#include "game.h"
-#include "wtp_game.h"
-#include "wtp_aiTask.h"
-#include "wtp_aiData.h"
+#include "engine.h"
+#include "wtp_ai_game.h"
 
 const int MAX_REPAIR_DISTANCE = 6;
 const int MAX_PODPOP_DISTANCE = 20;
@@ -115,6 +115,21 @@ struct EnemyStackAttackInfo
 	
 };
 
+struct CombatAction
+{
+	int vehicleId = -1;
+	double gain;
+	MAP *destination;
+	int remainingMoves;
+	ENGAGEMENT_MODE engagementMode;
+	MAP *target;
+	double hastyCoefficient;
+	
+	void setMove(int _vehicleId, double _gain, MAP *_destination, int _remainingMoves);
+	void setAttack(int _vehicleId, double _gain, MAP *_destination, int _remainingMoves, ENGAGEMENT_MODE _engagementMode, MAP *_target, double _hastyCoefficient);
+	
+};
+
 void moveCombatStrategy();
 void moveDefensiveProbes();
 void immediateAttack();
@@ -143,11 +158,12 @@ double getDuelCombatCostCoefficient(int vehicleId, double effect, double enemyUn
 double getBombardmentCostCoefficient(int vehicleId, double effect, double enemyUnitCost);
 bool isPrimaryEffect(int vehicleId, MAP *enemyStackTile, EnemyStackInfo &enemyStackInfo, COMBAT_MODE combatMode);
 bool isProtecting(int vehicleId);
-void aiMoveCombatVehicle(int const vehicleId);
-double getDefenseGain(int defenderVehicleId, MAP *destination, double defenderHealthCoefficient, int excludeEnemyVehiclePad0);
+double getDefendGain(int defenderVehicleId, MAP *tile, double defenderHealth, int excludeEnemyVehiclePad0 = -1);
 double getProximityGain(int vehicleId, MAP *destination);
-double getMeleeAttackGain(int vehicleId, MAP *destination, MAP *target);
+double getMeleeAttackGain(int vehicleId, MAP *destination, MAP *target, double hastyCoefficient);
 double getArtilleryAttackGain(int vehicleId, MAP *destination, MAP *target);
 double getMutualCombatGain(double attackerDestructionGain, double defenderDestructionGain, double combatEffect);
 double getBombardmentGain(double defenderDestructionGain, double relativeBombardmentDamage);
+CombatAction selectVehicleCombatAction(int vehicleId);
+void aiEnemyMoveCombatVehicles();
 

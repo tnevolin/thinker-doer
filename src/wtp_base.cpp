@@ -1,6 +1,8 @@
 
 #include "wtp_base.h"
 
+#include "wtp_game.h"
+
 // [WTP]
 // temporarily disabled worker locations
 // that is used to emulate convoyed locations

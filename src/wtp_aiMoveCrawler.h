@@ -1,9 +1,7 @@
 #pragma once
 
-#include "wtp_ai.h"
-#include "wtp_aiData.h"
-#include "wtp_aiRoute.h"
-#include "wtp_aiMove.h"
+#include "main.h"
+#include "engine.h"
 
 struct TileConvoyInfo
 {

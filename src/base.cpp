@@ -1,6 +1,8 @@
 
 #include "base.h"
+
 #include "wtp_base.h"
+#include "wtp_mod.h"
 
 static bool delay_base_riot = false;
 

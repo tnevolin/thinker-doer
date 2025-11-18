@@ -5,7 +5,6 @@
 #include <iomanip>
 #include <map>
 #include "robin_hood.h"
-#include "game.h"
 
 struct BASE_INFO
 {
@@ -40,7 +39,6 @@ double standard_combat_mechanics_calculate_attacker_winning_probability(double p
 double binomial_koefficient(int n, int k);
 
 int map_distance(int x1, int y1, int x2, int y2);
-bool isWithinBaseRadius(int x1, int y1, int x2, int y2);
 __cdecl int modified_artillery_damage(int attacker_strength, int defender_strength, int attacker_firepower);
 int wtp_tech_level(int id);
 int wtp_tech_cost(int fac, int tech);

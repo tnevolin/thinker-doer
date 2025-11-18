@@ -570,7 +570,7 @@ struct Config {
     double ai_terraforming_landBridgeValue;
     double ai_terraforming_landBridgeRangeScale;
     double ai_combat_base_threat_coefficient;
-    double ai_combat_base_threat_range;
+    int ai_combat_base_threat_range;
     double ai_base_threat_travel_time_scale;
     double ai_combat_travel_time_scale;
     double ai_combat_priority_escape;
@@ -596,8 +596,6 @@ struct Config {
     double ai_combat_strength_destruction_gain;
     double ai_combat_healing_chance;
     double ai_combat_proximity_dest_time_coefficient;
-    double ai_combat_proximity_dest_distance_coefficient;
-    double ai_combat_proximity_base_distance_coefficient;
     double ai_combat_damage_destruction_value_coefficient;
     double ai_production_global_combat_superiority_land;
     double ai_production_global_combat_superiority_sea;

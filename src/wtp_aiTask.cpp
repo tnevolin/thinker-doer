@@ -1,10 +1,31 @@
 
-#include "wtp_game.h"
 #include "wtp_aiTask.h"
-#include "wtp_aiData.h"
+
+#include "wtp_game.h"
 #include "wtp_aiMove.h"
 
-std::string Task::typeName(TaskType &taskType)
+static char const *taskTypeNames[]
+{
+	"NONE  ",				//  0
+	"KILL  ",				//  1
+	"SKIP  ",				//  2
+	"BUILD ",				// 	3
+	"LOAD  ",				//  4
+	"BOARD ",				//  5
+	"UNLOAD",				//  6
+	"UNBOAR",				//  7
+	"TERRAF",				//  8
+	"ORDER ",				//  9
+	"HOLD  ",				// 10
+	"ALERT ",				// 11
+	"MOVE  ",				// 12
+	"ART_CO",				// 13
+	"MELEE ",				// 14
+	"ARTYLL",				// 15
+	"CONVOY",				// 16
+};
+
+char const *Task::typeName(TaskType &taskType)
 {
 	return taskTypeNames[taskType];
 }
@@ -155,7 +176,7 @@ int Task::execute(int vehicleId)
 	{
 		// proceed to destination
 
-		debug("[%4d] %s -> %s\n", vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getLocationString(destination).c_str());
+		debug("[%4d] %s -> %s\n", vehicleId, getLocationString({vehicle->x, vehicle->y}), getLocationString(destination));
 
 		if (isCombatVehicle(vehicleId))
 		{
@@ -384,7 +405,7 @@ int Task::executeLoad(int seaTransportVehicleId)
 		
 		// board passenger
 		
-		debug("\tboard passenger: [%3d] %s->%s\n", passengerVehicleId, getLocationString({passengerVehicle->x, passengerVehicle->y}).c_str(), getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str());
+		debug("\tboard passenger: [%3d] %s->%s\n", passengerVehicleId, getLocationString({passengerVehicle->x, passengerVehicle->y}), getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}));
 		veh_put(passengerVehicleId, seaTransportVehicle->x, seaTransportVehicle->y);
 		board(passengerVehicleId, seaTransportVehicleId);
 		
@@ -625,7 +646,7 @@ int Task::executeLongRangeFire(int vehicleId)
 		return EM_DONE;
 	}
 
-	debug("\t^ %s\n", getLocationString(attackTarget).c_str());
+	debug("\t^ %s\n", getLocationString(attackTarget));
 
 	// get base and vehicle at attackLocation
 
@@ -738,10 +759,17 @@ Task *getTask(int vehicleId)
 {
 	int vehiclePad0 = Vehs[vehicleId].pad_0;
 	
-	if (aiData.tasks.find(vehiclePad0) == aiData.tasks.end())
-		return nullptr;
-	
-	return &(aiData.tasks.at(vehiclePad0));
+	return
+		// tactical task
+		(aiData.tacticalTasks.find(vehiclePad0) != aiData.tacticalTasks.end()) ?
+			&(aiData.tacticalTasks.at(vehiclePad0))
+			:
+				// task
+				(aiData.tasks.find(vehiclePad0) != aiData.tasks.end()) ?
+					&(aiData.tasks.at(vehiclePad0))
+					:
+						nullptr
+	;
 	
 }
 

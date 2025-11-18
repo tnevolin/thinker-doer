@@ -9,7 +9,7 @@
 #include "main.h"
 
 // tracing statements
-bool constexpr TRACE = DEBUG && true;
+bool constexpr TRACE = DEBUG && false;
 
 // first level triad based defensive structure facilities
 FacilityId constexpr TRIAD_DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX};
@@ -135,26 +135,6 @@ enum COMBAT_TYPE
 	CT_PSI = 1,
 };
 static constexpr int COMBAT_TYPE_COUNT = CT_PSI + 1;
-
-/// land-unload transfer
-struct Transfer
-{
-	MAP *passengerStop = nullptr;
-	MAP *transportStop = nullptr;
-	
-	Transfer() {}
-	
-	Transfer(MAP *_passengerStop, MAP *_transportStop)
-	: passengerStop{_passengerStop}
-	, transportStop{_transportStop}
-	{}
-	
-	bool valid()
-	{
-		return passengerStop != nullptr && transportStop != nullptr;
-	}
-	
-};
 
 /// strength for psi/con against psi/con
 struct CombatStrength
@@ -823,10 +803,10 @@ int const BASE_TILE_OFFSETS[OFFSET_COUNT_RADIUS_CORNER][2] =
 	{+1,-5},
 };
 
-std::string getLocationString(Location location);
-std::string getLocationString(int tileIndex);
-std::string getLocationString(MAP *tile);
-std::string getVehicleIdAndLocationString(int vehicleId);
+char const *getLocationString(Location location);
+char const *getLocationString(int tileIndex);
+char const *getLocationString(MAP *tile);
+char const *getVehicleLocationIdNameString(int vehicleId);
 
 int getOffsetIndex(int dx, int dy);
 int getOffsetIndex(int x1, int y1, int x2, int y2);
@@ -1054,8 +1034,6 @@ bool isVehicleOnTransport(int vehicleId);
 bool isVehicleOnSeaTransport(int vehicleId);
 bool isLandVehicleOnTransport(int vehicleId);
 int getVehicleTransportId(int vehicleId);
-int setMoveTo(int vehicleId, MAP *destination);
-int setMoveTo(int vehicleId, const std::vector<MAP *> &waypoints);
 bool isFriendlyTerritory(int factionId, MAP* tile);
 bool isUnfriendlyTerritory(int factionId, MAP* tile);
 bool isNeutralTerritory(int factionId, MAP* tile);
@@ -1262,7 +1240,6 @@ int getVectorDist(MAP const *tile1, MAP const *tile2);
 int getProximity(int x1, int y1, int x2, int y2);
 double getEuqlideanDistanceSquared(MAP *origin, MAP *destination);
 double getEuqlideanDistance(MAP *origin, MAP *destination);
-double getDiagonalDistance(MAP *tile1, MAP *tile2);
 int getDiagonalDistanceDoubled(MAP *tile1, MAP *tile2);
 Location getLocationByAngle(int x, int y, int angle);
 int getTileIndexByAngle(int tileIndex, int angle);
@@ -1271,11 +1248,11 @@ int getAngleByTile(MAP *tile, MAP *anotherTile);
 bool isPodAt(MAP *tile);
 std::vector<int> getTransportPassengers(int transportVehicleId);
 double getMaxBombardmentDamage(Triad triad, MAP *tile);
+double isLethalBombardment(Triad triad, MAP *tile);
 double getVehicleRemainingBombardmentDamage(int vehicleId);
 int getBasePopulationLimit(int baseId);
-int getBaseRadiusLayer(MAP *baseTile, MAP *tile);
-bool isWithinBaseRadius(MAP *baseTile, MAP *tile);
-std::vector<MAP *> getFartherBaseRadiusTiles(MAP *baseTile, MAP *tile);
+bool isWithinBaseRadius(int x1, int y1, int x2, int y2);
+bool isWithinBaseRadius(MAP *tile1, MAP *tile2);
 bool isFactionHasProject(int factionId, int facilityId);
 Budget getBaseBudgetIntake(int baseId);
 Budget getBaseBudgetIntake2(int baseId);
@@ -1303,7 +1280,8 @@ bool isBattleOgreUnit(int unitId);
 bool isBattleOgreVehicle(int unitId);
 int getUnitMoveRate(int factionId, int unitId);
 int getUnitSpeed(int factionId, int unitId);
-int getVehicleMoveRate(int vehicleId);
+int getVehicleMaxMoves(int vehicleId);
+int getVehicleRemainingMoves(int vehicleId);
 int getVehicleSpeed(int vehicleId);
 bool isTileAccessesWater(MAP *tile);
 bool isBaseAccessesWater(int baseId);
@@ -1343,4 +1321,8 @@ int getBaseSpecialistPsych(int baseId);
 bool isFriendlyBaseInRangeHasFacility(int factionId, int x, int y, int range, FacilityId facilityId);
 bool isRangedAirUnit(int unitId);
 bool isRangedAirVehicle(int vehicleId);
+std::string getAbilitiesString(int unitType);
+int getBaseItemBuildTime(int baseId, int item, bool countAccumulatedMinerals = false);
+bool isVehicleConvoying(int vehicleId);
+bool isVehicleTerraforming(VEH *vehicle);
 

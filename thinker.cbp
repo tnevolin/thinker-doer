@@ -156,8 +156,6 @@
 		<Unit filename="src/veh_turn.h" />
 		<Unit filename="src/wtp_ai.cpp" />
 		<Unit filename="src/wtp_ai.h" />
-		<Unit filename="src/wtp_aiData.cpp" />
-		<Unit filename="src/wtp_aiData.h" />
 		<Unit filename="src/wtp_aiHurry.cpp" />
 		<Unit filename="src/wtp_aiHurry.h" />
 		<Unit filename="src/wtp_aiMove.cpp" />
@@ -180,6 +178,8 @@
 		<Unit filename="src/wtp_aiRoute.h" />
 		<Unit filename="src/wtp_aiTask.cpp" />
 		<Unit filename="src/wtp_aiTask.h" />
+		<Unit filename="src/wtp_ai_game.cpp" />
+		<Unit filename="src/wtp_ai_game.h" />
 		<Unit filename="src/wtp_base.cpp" />
 		<Unit filename="src/wtp_base.h" />
 		<Unit filename="src/wtp_game.cpp" />
