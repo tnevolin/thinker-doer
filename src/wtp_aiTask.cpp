@@ -66,56 +66,19 @@ MAP *Task::getDestination()
 MAP *Task::getAttackTarget()
 {
 	int vehicleId = getVehicleId();
-
+	
 	if (vehicleId == -1)
 		return nullptr;
-
-	VEH *vehicle = getVehicle(vehicleId);
-
+	
 	if (attackTarget != nullptr)
 	{
 		return attackTarget;
 	}
-	else if (destination != nullptr && (isHostileVehicleAt(destination, vehicle->faction_id) || isBaseAt(destination)))
-	{
-		return destination;
-	}
 	else
 	{
 		return nullptr;
 	}
-
-}
-
-/*
-Returns attackTarget or destination or current tile if vehicle is not moving.
-*/
-MAP *Task::getGoal()
-{
-	int vehicleId = getVehicleId();
-
-	if (vehicleId == -1)
-		return nullptr;
-
-	MAP *goal = nullptr;
-
-	MAP *_attackTarget;
-	MAP *_destination;
-	if ((_attackTarget = getAttackTarget()) != nullptr)
-	{
-		goal = _attackTarget;
-	}
-	else if ((_destination = getDestination()) != nullptr)
-	{
-		goal = _destination;
-	}
-	else
-	{
-		goal = getVehicleMapTile(vehicleId);
-	}
-
-	return goal;
-
+	
 }
 
 int Task::getDestinationRange()
@@ -759,7 +722,33 @@ bool hasTask(int vehicleId)
 
 bool hasExecutableTask(int vehicleId)
 {
-	return hasTask(vehicleId) && getTask(vehicleId)->type != TT_NONE;
+	// no task
+	
+	if (!hasTask(vehicleId))
+		return false;
+	
+	// get task
+	
+	Task *task = getTask(vehicleId);
+	
+	// special task type that is NO task
+	
+	if (task->type == TT_NONE)
+		return false;
+	
+	// do not attack no longer hostile vehicles
+	
+	MAP *attackTarget = task->getAttackTarget();
+debug(">attackTarget=%s\n", getLocationString(attackTarget).c_str());flushlog();
+	if (attackTarget != nullptr)
+	{
+		int vehicleFactionId = veh_at(getX(attackTarget), getY(attackTarget));
+		if (isVendettaStoppedWith(vehicleFactionId))
+			return false;
+	}
+	
+	return true;
+	
 }
 
 void deleteTask(int vehicleId)

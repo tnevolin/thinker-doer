@@ -79,7 +79,6 @@ struct Task
 	void setDestination(MAP *_destination);
 	MAP *getDestination();
 	MAP *getAttackTarget();
-	MAP *getGoal();
 	int getDestinationRange();
 	int execute();
 	int execute(int vehicleId);

@@ -592,6 +592,10 @@ struct FactionInfo
 	int totalVendettaCount; // excluding aliens and player
 	double productionPower;
 	
+	// diplomacy
+	
+    int32_t diplo_status[8];
+	
 };
 
 struct CombatEffect
@@ -1032,4 +1036,5 @@ bool isBlocked(int tileIndex);
 bool isBlocked(MAP *tile);
 bool isZoc(int orgTileIndex, int dstTileIndex);
 bool isZoc(MAP *orgTile, MAP *dstTile);
+bool isVendettaStoppedWith(int enemyFactionId);
 

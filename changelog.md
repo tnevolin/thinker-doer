@@ -1,3 +1,7 @@
+# Version 398
+
+* AI does not attack faction with vendetta canceled during the turn.
+
 # Version 397
 
 * [Bug] Energy allocation AI computation was applied to human faction by mistake. Fixed.

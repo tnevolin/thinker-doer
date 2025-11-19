@@ -932,3 +932,8 @@ void ProtectCombatData::addVehicleEffect(int vehicleId, bool present)
 	
 }
 
+bool isVendettaStoppedWith(int enemyFactionId)
+{
+	return (aiFactionInfo->diplo_status[enemyFactionId] & DIPLO_VENDETTA) != 0 && (aiFaction->diplo_status[enemyFactionId] & DIPLO_VENDETTA) == 0;
+}
+

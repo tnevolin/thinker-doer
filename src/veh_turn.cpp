@@ -1,5 +1,6 @@
 
 #include "veh_turn.h"
+#include "wtp_mod.h"
 
 void __cdecl mod_enemy_turn(int faction_id) {
     debug("enemy_turn %d %d\n", *CurrentTurn, faction_id);
@@ -106,7 +107,13 @@ int __cdecl mod_enemy_veh(size_t veh_id) {
         && veh->plan() != PLAN_NAVAL_TRANSPORT && !(veh->state & VSTATE_EXPLORE)
         && !mod_zoc_any(veh->x, veh->y, veh->faction_id);
 
+	// [WTP]
+	// use modified version
+	/*
     if (!skip && mod_enemy_move(veh_id) != VEH_SYNC) {
+	*/
+    if (!skip && wtp_mod_enemy_move(veh_id) != VEH_SYNC) {
+	//
         return 1;
     }
     if (skip || veh_speed(veh_id, 0) - veh->moves_spent > 0) {

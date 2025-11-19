@@ -1189,6 +1189,7 @@ void populateFactionInfos()
 	
 	for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
 	{
+		Faction &faction = Factions[factionId];
 		FactionInfo &factionInfo = aiData.factionInfos[factionId];
 		
 		// can build unit types
@@ -1412,6 +1413,10 @@ void populateFactionInfos()
 			}
 			
 		}
+		
+		// save diplo_status
+		
+		std::copy(std::begin(faction.diplo_status), std::end(faction.diplo_status), std::begin(factionInfo.diplo_status));
 		
 	}
 	
