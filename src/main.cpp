@@ -718,14 +718,6 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->se_police_excess_industry_bonus = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("isle_of_deep_offense_bonus"))
-    {
-        cf->isle_of_deep_offense_bonus = atoi(value);
-    }
-    else if (MATCH("isle_of_deep_defense_bonus"))
-    {
-        cf->isle_of_deep_defense_bonus = atoi(value);
-    }
     else if (MATCH("facility_yield_bonus_biology_lab"))
     {
         opt_list_parse(cf->facility_yield_bonus_biology_lab, buf, 3, 0);
@@ -845,6 +837,10 @@ int option_handler(void* user, const char* section, const char* name, const char
     else if (MATCH("destroy_captured_base_defense"))
     {
         cf->destroy_captured_base_defense = (atoi(value) == 0 ? false : true);
+	}
+    else if (MATCH("facility_field_defense_bonus"))
+    {
+        opt_list_parse(cf->facility_field_defense_bonus, buf, 4, 0);
     }
 	else if (MATCH("ai_useWTPAlgorithms"))
     {

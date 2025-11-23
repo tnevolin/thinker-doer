@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v398"
+    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v399"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -418,8 +418,6 @@ struct Config {
     bool drone_riot_intensifies = true;
     int se_morale_combat_bonus = 0;
     int se_police_excess_industry_bonus = 0;
-    int isle_of_deep_offense_bonus = 0;
-    int isle_of_deep_defense_bonus = 0;
     int facility_yield_bonus_biology_lab[3] = {0,0,0};
     bool worker_algorithm_enable_alternative = false;
     double worker_algorithm_energy_weight = 0.0;
@@ -450,6 +448,7 @@ struct Config {
     int right_of_passage_magtube = 0;
     bool scorched_earth = false;
     bool destroy_captured_base_defense = false;
+    int facility_field_defense_bonus[4] = {0,0,0,0};
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

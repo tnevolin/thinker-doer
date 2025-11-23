@@ -7944,3 +7944,33 @@ int getBaseSpecialistPsych(int baseId)
 	
 }
 
+/*
+Checks if there is a friendly base in range with given facility.
+*/
+bool isFriendlyBaseInRangeHasFacility(int factionId, int x, int y, int range, FacilityId facilityId)
+{
+	for (int baseId = 0; baseId < *BaseCount; baseId++)
+	{
+		BASE &base = Bases[baseId];
+		
+		// friendly
+		
+		if (!isFriendly(factionId, base.faction_id))
+			continue;
+		
+		// in range
+		
+		if (getRange(x, y, base.x, base.y) > range)
+			continue;
+		
+		// has facility
+		
+		if (has_facility(facilityId, baseId))
+			return true;
+		
+	}
+	
+	return false;
+	
+}
+

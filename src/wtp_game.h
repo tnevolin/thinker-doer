@@ -1155,4 +1155,5 @@ int getClosestNotOwnedOrSeaTileRange(int factionId, MAP *tile, int minRadius, in
 int getUnitOffenseExtendedTriad(int unitId, int enemyUnitId);
 int getBaseDoctorCount(int baseId);
 int getBaseSpecialistPsych(int baseId);
+bool isFriendlyBaseInRangeHasFacility(int factionId, int x, int y, int range, FacilityId facilityId);
 

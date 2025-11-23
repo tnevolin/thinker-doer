@@ -285,18 +285,23 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 //
 	// get attacker/defender vehicle
 	
-	VEH *attackerVehicle = &Vehs[attackerVehicleId];
-	VEH *defenderVehicle = &Vehs[defenderVehicleId];
+	VEH &attackerVehicle = Vehs[attackerVehicleId];
+	VEH &defenderVehicle = Vehs[defenderVehicleId];
 	
 	// get attacker/defender unit
 	
-	UNIT *attackerUnit = &Units[attackerVehicle->unit_id];
-	UNIT *defenderUnit = &Units[defenderVehicle->unit_id];
+	UNIT &attackerUnit = Units[attackerVehicle.unit_id];
+	UNIT &defenderUnit = Units[defenderVehicle.unit_id];
+	
+	// triad
+	
+	Triad attackerTriad = (Triad) attackerUnit.triad();
+	Triad defenderTriad = (Triad) defenderUnit.triad();
 	
 	// get item values
 	
-	int attackerOffenseValue = getUnitOffenseValue(attackerVehicle->unit_id);
-	int defenderDefenseValue = getUnitDefenseValue(defenderVehicle->unit_id);
+	int attackerOffenseValue = getUnitOffenseValue(attackerVehicle.unit_id);
+	int defenderDefenseValue = getUnitDefenseValue(defenderVehicle.unit_id);
 	
 	// determine psi combat
 	
@@ -321,18 +326,18 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		&&
 		!psiCombat
 		&&
-		(attackerUnit->triad() == TRIAD_AIR && !attackerUnit->is_missile() && defenderUnit->triad() == TRIAD_AIR && !defenderUnit->is_missile())
+		(attackerTriad == TRIAD_AIR && !attackerUnit.is_missile() && defenderTriad == TRIAD_AIR && !defenderUnit.is_missile())
 		&&
 		((combat_type & CT_WEAPON_ONLY) && defenderVehicleId >= 0) // weapon-weapon
 		&&
 		(combat_type & (CT_INTERCEPT|CT_AIR_DEFENSE)) // air-air
 	)
 	{
-		if (has_abil(attackerVehicle->unit_id, ABL_AIR_SUPERIORITY) && !has_abil(defenderVehicle->unit_id, ABL_AIR_SUPERIORITY))
+		if (has_abil(attackerVehicle.unit_id, ABL_AIR_SUPERIORITY) && !has_abil(defenderVehicle.unit_id, ABL_AIR_SUPERIORITY))
 		{
 			addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_air_supr_vs_air, label_get(449));
 		}
-		if (has_abil(defenderVehicle->unit_id, ABL_AIR_SUPERIORITY) && !has_abil(attackerVehicle->unit_id, ABL_AIR_SUPERIORITY))
+		if (has_abil(defenderVehicle.unit_id, ABL_AIR_SUPERIORITY) && !has_abil(attackerVehicle.unit_id, ABL_AIR_SUPERIORITY))
 		{
 			addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_air_supr_vs_air, label_get(449));
 		}
@@ -344,7 +349,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	
     // sensor bonus on attack (except probe)
 	
-	if (conf.sensor_offense && !attackerUnit->is_probe())
+	if (conf.sensor_offense && !attackerUnit.is_probe())
 	{
 		// land or ocean with sensor allowed
 		
@@ -352,7 +357,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		{
 			// attacker is in range of friendly sensor and combat is happening on neutral/attacker territory
 			
-			if (isWithinFriendlySensorRange(attackerVehicle->faction_id, defenderMapTile))
+			if (isWithinFriendlySensorRange(attackerVehicle.faction_id, defenderMapTile))
 			{
 				addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 			}
@@ -377,21 +382,21 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	{
 		// sensor offense bonus applies to defender within attacker-friendly sensor radius
 		
-		if (isOffenseSensorBonusApplicable(attackerVehicle->faction_id, defenderMapTile))
+		if (isOffenseSensorBonusApplicable(attackerVehicle.faction_id, defenderMapTile))
 		{
 			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
 		
 		// sensor defense bonus applies to attacker within defender-friendly sensor radius
 		
-		if (isDefenseSensorBonusApplicable(defenderVehicle->faction_id, attackerMapTile))
+		if (isDefenseSensorBonusApplicable(defenderVehicle.faction_id, attackerMapTile))
 		{
 			addDefenderBonus(defenderStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
 		
 		// add base defense bonuses to attacker
 		
-		int attackerBaseId = base_at(attackerVehicle->x, attackerVehicle->y);
+		int attackerBaseId = base_at(attackerVehicle.x, attackerVehicle.y);
 		if (attackerBaseId != -1)
 		{
 			if (psiCombat)
@@ -405,7 +410,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 				const char *label = nullptr;
 				int multiplier = 100;
 				
-				switch (attackerUnit->triad())
+				switch (attackerTriad)
 				{
 				case TRIAD_LAND:
 					if (isBaseHasFacility(attackerBaseId, FAC_PERIMETER_DEFENSE))
@@ -456,7 +461,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		
 		// add base defense bonuses to defender
 		
-		int defenderBaseId = base_at(defenderVehicle->x, defenderVehicle->y);
+		int defenderBaseId = base_at(defenderVehicle.x, defenderVehicle.y);
 		if (defenderBaseId != -1)
 		{
 			if (psiCombat)
@@ -470,7 +475,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 				const char *label = nullptr;
 				int multiplier = 100;
 				
-				switch (attackerUnit->triad())
+				switch (attackerTriad)
 				{
 				case TRIAD_LAND:
 					if (isBaseHasFacility(defenderBaseId, FAC_PERIMETER_DEFENSE))
@@ -525,33 +530,33 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
     // conventional power contributes to psi combat
     // ----------------------------------------------------------------------------------------------------
 	
-    if (psiCombat && conf.conventional_power_psi_percentage > 0 && attackerUnit->offense_value() > 0)
+    if (psiCombat && conf.conventional_power_psi_percentage > 0 && attackerUnit.offense_value() > 0)
 	{
-		addAttackerBonus(attackerStrengthPointer, conf.conventional_power_psi_percentage * attackerUnit->offense_value(), LABEL_WEAPON);
+		addAttackerBonus(attackerStrengthPointer, conf.conventional_power_psi_percentage * attackerUnit.offense_value(), LABEL_WEAPON);
 	}
 	
-    if (psiCombat && conf.conventional_power_psi_percentage > 0 && defenderUnit->defense_value() > 0)
+    if (psiCombat && conf.conventional_power_psi_percentage > 0 && defenderUnit.defense_value() > 0)
 	{
-		addDefenderBonus(defenderStrengthPointer, conf.conventional_power_psi_percentage * defenderUnit->defense_value(), LABEL_ARMOR);
+		addDefenderBonus(defenderStrengthPointer, conf.conventional_power_psi_percentage * defenderUnit.defense_value(), LABEL_ARMOR);
 	}
 	
     // ----------------------------------------------------------------------------------------------------
     // AAA range effect
     // ----------------------------------------------------------------------------------------------------
 	
-    if (attackerUnit->triad() == TRIAD_AIR && defenderUnit->triad() != TRIAD_AIR && !isUnitHasAbility(defenderVehicle->unit_id, ABL_AAA) && conf.aaa_range >= 0)
+    if (attackerTriad == TRIAD_AIR && defenderTriad != TRIAD_AIR && !isUnitHasAbility(defenderVehicle.unit_id, ABL_AAA) && conf.aaa_range >= 0)
 	{
 		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 		{
 			VEH *vehicle = getVehicle(vehicleId);
 			
-			if (vehicle->faction_id != defenderVehicle->faction_id)
+			if (vehicle->faction_id != defenderVehicle.faction_id)
 				continue;
 			
 			if (!isVehicleHasAbility(vehicleId, ABL_AAA))
 				continue;
 			
-			int range = map_range(defenderVehicle->x, defenderVehicle->y, vehicle->x, vehicle->y);
+			int range = map_range(defenderVehicle.x, defenderVehicle.y, vehicle->x, vehicle->y);
 			
 			if (range > conf.aaa_range)
 				continue;
@@ -572,9 +577,9 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	{
 		// regular combat units only, not probes
 		
-		if (isRegularUnit(attackerVehicle->unit_id) && isCombatUnit(attackerVehicle->unit_id) && !isProbeUnit(attackerVehicle->unit_id))
+		if (isRegularUnit(attackerVehicle.unit_id) && isCombatUnit(attackerVehicle.unit_id) && !isProbeUnit(attackerVehicle.unit_id))
 		{
-			int attackerSEMorale = Factions[attackerVehicle->faction_id].SE_morale;
+			int attackerSEMorale = Factions[attackerVehicle.faction_id].SE_morale;
 			int attackerBonus = conf.se_morale_combat_bonus * attackerSEMorale;
 			
 			if (attackerBonus != 0)
@@ -586,9 +591,9 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		
 		// combat units only, not probes
 		
-		if (isRegularUnit(defenderVehicle->unit_id) && isCombatUnit(defenderVehicle->unit_id) && !isProbeUnit(defenderVehicle->unit_id))
+		if (isRegularUnit(defenderVehicle.unit_id) && isCombatUnit(defenderVehicle.unit_id) && !isProbeUnit(defenderVehicle.unit_id))
 		{
-			int defenderSEMorale = Factions[defenderVehicle->faction_id].SE_morale;
+			int defenderSEMorale = Factions[defenderVehicle.faction_id].SE_morale;
 			int defenderBonus = conf.se_morale_combat_bonus * defenderSEMorale;
 			
 			if (defenderBonus != 0)
@@ -601,59 +606,61 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	}
 	
     // ----------------------------------------------------------------------------------------------------
-    // isle of deep combat modifiers
-    // ----------------------------------------------------------------------------------------------------
-	
-    if
-	(
-		// attacker is isle of deep
-		attackerVehicle->unit_id == BSC_ISLE_OF_THE_DEEP
-		&&
-		// isle of deep offense malus is enabled
-		conf.isle_of_deep_offense_bonus != 0
-	)
-	{
-		addAttackerBonus(attackerStrengthPointer, conf.isle_of_deep_offense_bonus, "IoD attack malus");
-	}
-	
-    if
-	(
-		// defender is isle of deep
-		defenderVehicle->unit_id == BSC_ISLE_OF_THE_DEEP
-		&&
-		// isle of deep defense malus is enabled
-		conf.isle_of_deep_defense_bonus != 0
-	)
-	{
-		addDefenderBonus(defenderStrengthPointer, conf.isle_of_deep_defense_bonus, "IoD defend bonus");
-	}
-	
-    // ----------------------------------------------------------------------------------------------------
     // probe combat uses sensors and intrinsic base defense
     // ----------------------------------------------------------------------------------------------------
 	
-    if (conf.probe_combat_uses_bonuses && attackerUnit->is_probe() && defenderUnit->is_probe()) // probe combat
+    if (conf.probe_combat_uses_bonuses && attackerUnit.is_probe() && defenderUnit.is_probe()) // probe combat
 	{
 		// attacker probe benefits from sensor offense bonus
 		
-		if (isOffenseSensorBonusApplicable(attackerVehicle->faction_id, defenderMapTile))
+		if (isOffenseSensorBonusApplicable(attackerVehicle.faction_id, defenderMapTile))
 		{
 			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
 		
 		// defender probe benefits from sensor defense bonus
 		
-		if (isDefenseSensorBonusApplicable(defenderVehicle->faction_id, defenderMapTile))
+		if (isDefenseSensorBonusApplicable(defenderVehicle.faction_id, defenderMapTile))
 		{
 			addDefenderBonus(defenderStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 		}
 		
 		// defender probe benefits from base intrinsic defense bonus
 		
-		int defenderBaseId = base_at(defenderVehicle->x, defenderVehicle->y);
+		int defenderBaseId = base_at(defenderVehicle.x, defenderVehicle.y);
 		if (defenderBaseId != -1)
 		{
 			addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_intrinsic_base_def, label_get(332)/*Base*/);
+		}
+		
+	}
+	
+    // ----------------------------------------------------------------------------------------------------
+    // defense facilities extend their effect 2 tiles outside of the base
+    // ----------------------------------------------------------------------------------------------------
+	
+	constexpr char const *triadFacilityFieldLabels[3] = {"PD - field", "NY - field", "AC - field", };
+	constexpr char const *tachyonFieldFieldLabel = "TF - field";
+	
+	// blink displacer ignores defensive facilities
+	if (!has_abil(attackerVehicle.unit_id, ABL_BLINK_DISPLACER))
+	{
+		int facilityFieldBonus = 0;
+		char const *facilityFieldLabel = nullptr;
+		if (isFriendlyBaseInRangeHasFacility(defenderVehicle.faction_id, defenderVehicle.x, defenderVehicle.y, 2, TRIAD_DEFENSIVE_FACILITIES[attackerTriad]))
+		{
+			facilityFieldBonus += conf.facility_field_defense_bonus[attackerTriad];
+			facilityFieldLabel = triadFacilityFieldLabels[attackerTriad];
+		}
+		if (isFriendlyBaseInRangeHasFacility(defenderVehicle.faction_id, defenderVehicle.x, defenderVehicle.y, 2, FAC_TACHYON_FIELD))
+		{
+			facilityFieldBonus += conf.facility_field_defense_bonus[3];
+			facilityFieldLabel = tachyonFieldFieldLabel;
+		}
+		
+		if (facilityFieldBonus > 0)
+		{
+			addDefenderBonus(defenderStrengthPointer, facilityFieldBonus, facilityFieldLabel);
 		}
 		
 	}

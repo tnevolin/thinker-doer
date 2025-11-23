@@ -1,3 +1,8 @@
+# Version 399
+
+* Base defensive facilities extend their effect 2 tiles outside of the base.
+facility_field_defense_bonus
+
 # Version 398
 
 * AI does not attack faction with vendetta canceled during the turn.
