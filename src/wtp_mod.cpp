@@ -90,11 +90,11 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		(combat_type & (CT_INTERCEPT|CT_AIR_DEFENSE)) // air-air
 	)
 	{
-		if (has_abil(attackerVehicle->unit_id, ABL_AIR_SUPERIORITY))
+		if (has_abil(attackerVehicle.unit_id, ABL_AIR_SUPERIORITY))
 		{
 			addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_air_supr_vs_air, label_get(449));
 		}
-		if (has_abil(defenderVehicle->unit_id, ABL_AIR_SUPERIORITY))
+		if (has_abil(defenderVehicle.unit_id, ABL_AIR_SUPERIORITY))
 		{
 			addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_air_supr_vs_air, label_get(449));
 		}
@@ -108,18 +108,18 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	(
 		psiCombat
 		&&
-		(attackerUnit->triad() == TRIAD_AIR && !attackerUnit->is_missile() && defenderUnit->triad() == TRIAD_AIR && !defenderUnit->is_missile())
+		(attackerTriad == TRIAD_AIR && !attackerUnit.is_missile() && defenderTriad == TRIAD_AIR && !defenderUnit.is_missile())
 		&&
 		((combat_type & CT_WEAPON_ONLY) && defenderVehicleId >= 0) // weapon-weapon
 		&&
 		(combat_type & (CT_INTERCEPT|CT_AIR_DEFENSE)) // air-air
 	)
 	{
-		if (has_abil(attackerVehicle->unit_id, ABL_EMPATH))
+		if (has_abil(attackerVehicle.unit_id, ABL_EMPATH))
 		{
 			addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_empath_song_vs_psi, Ability[ABL_ID_EMPATH].name);
 		}
-		if (has_abil(defenderVehicle->unit_id, ABL_TRANCE))
+		if (has_abil(defenderVehicle.unit_id, ABL_TRANCE))
 		{
 			addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_empath_song_vs_psi, Ability[ABL_ID_TRANCE].name);
 		}

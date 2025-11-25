@@ -3368,19 +3368,19 @@ void evaluateEnemyStacks()
 		
 		if (isBaseAt(enemyStackTile))
 		{
-			enemyStackInfo.requiredSuperiority = conf.ai_combat_superiority_min;
-			enemyStackInfo.desiredSuperiority = conf.ai_combat_superiority_max;
+			   enemyStackInfo.requiredSuperiority	= 1.0 + 1.0 * conf.ai_combat_advantage;
+			   enemyStackInfo.desiredSuperiority	= 1.0 + 2.0 * conf.ai_combat_advantage;
 		}
 		// attacking aliens (except tower) does not require minimal superiority
 		else if (enemyStackInfo.alien && !enemyStackInfo.alienFungalTower)
 		{
-			enemyStackInfo.requiredSuperiority = 0.0;
-			enemyStackInfo.desiredSuperiority = conf.ai_combat_superiority_max;
+			   enemyStackInfo.requiredSuperiority	= 0.0;
+			   enemyStackInfo.desiredSuperiority	= 1.0 + 2.0 * conf.ai_combat_advantage;
 		}
 		else
 		{
-			enemyStackInfo.requiredSuperiority = conf.ai_combat_superiority_min;
-			enemyStackInfo.desiredSuperiority = conf.ai_combat_superiority_max;
+			   enemyStackInfo.requiredSuperiority	= 1.0 + 1.0 * conf.ai_combat_advantage;
+			   enemyStackInfo.desiredSuperiority	= 1.0 + 2.0 * conf.ai_combat_advantage;
 		}
 		
 		Profiling::stop("superiorities");
@@ -4258,11 +4258,11 @@ void evaluateBaseProbeDefense()
 		debug
 		(
 			"\t\trequiredEffect=%5.2f"
-			" conf.ai_combat_superiority_min=%5.2f"
+			" conf.ai_combat_advantage=%5.2f"
 			" totalWeight=%5.2f"
 			"\n"
 			, requiredEffect
-			, conf.ai_combat_superiority_min
+			, conf.ai_combat_advantage
 			, totalWeight
 		);
 		

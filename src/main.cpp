@@ -1411,13 +1411,9 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_combat_priority_pod = atof(value);
     }
-    else if (MATCH("ai_combat_superiority_min"))
+    else if (MATCH("ai_combat_advantage"))
     {
-        cf->ai_combat_superiority_min = atof(value);
-    }
-    else if (MATCH("ai_combat_superiority_max"))
-    {
-        cf->ai_combat_superiority_max = atof(value);
+        cf->ai_combat_advantage = atof(value);
     }
     else if (MATCH("ai_combat_field_attack_base_proximity_scale"))
     {

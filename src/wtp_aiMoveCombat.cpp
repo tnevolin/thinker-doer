@@ -2807,7 +2807,7 @@ void coordinateAttack()
 		// do not coordinate attack for not targeted stacks
 		
 		if (enemyStack.directVechileTravelTimes.empty())
-			continue;
+			   continue;
 		
 		// do not coordinate attack against mobile aliens
 		

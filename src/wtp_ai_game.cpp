@@ -1121,14 +1121,14 @@ bool CombatData::isSufficientAssault()
 {
 	if (TRACE) { debug("CombatData::isSufficientAssault()\n"); }
 	
-	if (assailants.size() == 0)
+	if (assailants.size() <= 0)
 		return false;
-	else if (protectors.size() == 0)
+	else if (protectors.size() <= 0)
 		return true;
 	
 	compute();
 	
-	return remainingProtectorWeight > 0.0;
+	return assailantWeight > 0.0 && remainingAssailantWeight > 0.0 && remainingAssailantWeight / assailantWeight >= conf.ai_combat_advantage * sqrt(protectorWeight);
 	
 }
 
@@ -1137,14 +1137,14 @@ bool CombatData::isSufficientProtect()
 	if (TRACE) { debug("CombatData::isSufficientProtect()\n"); }
 	if (TRACE) { debug("\tprotectorWeight=%5.2f remainingProtectorWeight=%5.2f superiority=%5.2f\n", protectorWeight, remainingProtectorWeight, 1.00 + remainingProtectorWeight / protectorWeight); }
 	
-	if (assailants.size() == 0)
+	if (assailants.size() <= 0)
 		return true;
-	else if (protectors.size() == 0)
+	else if (protectors.size() <= 0)
 		return false;
 	
 	compute();
 	
-	return protectorWeight > 0.0 && remainingProtectorWeight > 0.0 && (1.00 + remainingProtectorWeight / protectorWeight >= conf.ai_combat_superiority_min);
+	return protectorWeight > 0.0 && remainingProtectorWeight > 0.0 && remainingProtectorWeight / protectorWeight >= conf.ai_combat_advantage * sqrt(assailantWeight);
 	
 }
 
@@ -1908,7 +1908,7 @@ double EnemyStackInfo::getRequiredEffect() const
 	return requiredMeleeEffect;
 }
 
-/**
+/*
 Returns total destruction ratio after bombardment if any.
 */
 double EnemyStackInfo::getDestructionRatio() const
@@ -1918,13 +1918,14 @@ double EnemyStackInfo::getDestructionRatio() const
 	return destructionRatio;
 }
 
-/**
+/*
 Checks sufficient destruction ratio.
 */
 bool EnemyStackInfo::isSufficient(bool desired) const
 {
 	return getDestructionRatio() >= (desired ? desiredSuperiority : requiredSuperiority);
 }
+
 
 /**
 Attempts adding vehicle to stack attackers.
@@ -2009,9 +2010,9 @@ void EnemyStackInfo::computeAttackParameters()
 		}
 		
 	}
-		
-	debug("\tcoordinatorTravelTime=%5.2f\n", coordinatorTravelTime)
 	
+	debug("\tcoordinatorTravelTime=%5.2f\n", coordinatorTravelTime)
+
 	// compute additional weight
 	
 	if (baseId != -1)
@@ -2144,6 +2145,11 @@ bool isZoc(MAP *orgTile, MAP *dstTile)
 	assert(isOnMap(orgTile) && isOnMap(dstTile));
 	return aiData.tileInfos.at(orgTile - *MapTiles).orgZoc && aiData.tileInfos.at(dstTile - *MapTiles).dstZoc;
 	
+}
+
+bool isVendettaStoppedWith(int enemyFactionId)
+{
+	return (aiFactionInfo->diplo_status[enemyFactionId] & DIPLO_VENDETTA) != 0 && (aiFaction->diplo_status[enemyFactionId] & DIPLO_VENDETTA) == 0;
 }
 
 double getVehicleDestructionGain(int vehicleId)
