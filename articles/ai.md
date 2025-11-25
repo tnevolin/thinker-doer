@@ -121,5 +121,5 @@ A highly damaged unit gets extra destruction points as it prevents it from heali
 ### Positional value: blocking/defending
 
 That one I have not even started thinking about. From the top of my head, I would say it is equivalent of defending/keeping something (base, bunker, other friendly units). However, what is the coefficient for preventing opponent advance, I do not know.
-How much more beneficial is to move toward enemy rather than stay at base/bunker? Does it worth to attack assailant adjacent to the base or sit tight?
+How much more beneficial is to move toward enemy rather than stay at base/bunker? Does it worth to attack assailant adjacent to the base or better sit tight?
 
