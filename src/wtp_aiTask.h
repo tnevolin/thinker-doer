@@ -50,7 +50,7 @@ struct Task
 	: Task(_vehicleId, _type, nullptr, nullptr, -1, -1)
 	{}
 
-	static char const *typeName(TaskType &taskType);
+	char const *typeName();
 	int getTaskVehicleId() const;
 	VEH *getTaskVehicle() const;
 	void clearDestination();
@@ -58,6 +58,8 @@ struct Task
 	MAP *getDestination() const;
 	MAP *getAttackTarget() const;
 	int getDestinationRange();
+	char const *toString();
+	
 	int execute();
 	int execute(int vehicleId);
 	int executeAction(int vehicleId);
@@ -83,8 +85,6 @@ struct Task
 
 void setTask(Task const &task);
 bool hasTask(int vehicleId);
-bool hasExecutableTask(int vehicleId);
 void deleteTask(int vehicleId);
 Task *getTask(int vehicleId);
-int executeTask(int vehicleId);
 

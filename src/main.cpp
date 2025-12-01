@@ -1343,13 +1343,21 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->ai_terraforming_landBridgeRangeScale = atof(value);
     }
-    else if (MATCH("ai_combat_base_threat_coefficient"))
+    else if (MATCH("ai_combat_enemy_unit_value_coefficient"))
     {
-        cf->ai_combat_base_threat_coefficient = atof(value);
+        cf->ai_combat_enemy_unit_value_coefficient = atof(value);
     }
-    else if (MATCH("ai_combat_base_threat_range"))
+    else if (MATCH("ai_combat_unit_value_offense_coefficient"))
     {
-        cf->ai_combat_base_threat_range = atoi(value);
+        cf->ai_combat_unit_value_offense_coefficient = atof(value);
+    }
+    else if (MATCH("ai_combat_unit_value_defense_coefficient"))
+    {
+        cf->ai_combat_unit_value_defense_coefficient = atof(value);
+    }
+    else if (MATCH("ai_combat_unit_value_speed_coefficient"))
+    {
+        cf->ai_combat_unit_value_speed_coefficient = atof(value);
     }
     else if (MATCH("ai_base_threat_travel_time_scale"))
     {

@@ -215,7 +215,7 @@ void CombatEffectTable::clear()
 	combatModeEffects.clear();
 }
 
-void CombatEffectTable::setCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, COMBAT_MODE combatMode, double value)
+void CombatEffectTable::setCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, CombatMode combatMode, double value)
 {
 	int key = FactionUnitCombat::encodeKey(FactionUnit::encodeKey(attackerFactionId, attackerUnitId), FactionUnit::encodeKey(defenderFactionId, defenderUnitId), engagementMode);
 	if (combatModeEffects.find(key) == combatModeEffects.end())
@@ -280,7 +280,7 @@ CombatModeEffect CombatEffectTable::getUnitCombatModeEffect(int attackerFactionI
 	
 	Profiling::start("- calculateCombatEffect");
 	
-	COMBAT_MODE combatMode = getCombatMode(engagementMode, defenderUnitId);
+	CombatMode combatMode = getCombatMode(engagementMode, defenderUnitId);
 	
 	double combatEffect;
 	
@@ -725,7 +725,7 @@ void TileCombatEffectTable::clear()
 	combatModeEffects.clear();
 }
 
-void TileCombatEffectTable::setCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, COMBAT_MODE combatMode, double value)
+void TileCombatEffectTable::setCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, CombatMode combatMode, double value)
 {
 	int key = FactionUnitCombat::encodeKey(FactionUnit::encodeKey(attackerFactionId, attackerUnitId), FactionUnit::encodeKey(defenderFactionId, defenderUnitId), engagementMode);
 	if (combatModeEffects.find(key) == combatModeEffects.end())
@@ -812,6 +812,55 @@ CombatModeEffect TileCombatEffectTable::getTileCombatModeEffect(CombatEffectTabl
 	
 }
 
+// MapSum
+
+void MapSum::clear()
+{
+	map.clear();
+	sum = 0.0;
+}
+
+double MapSum::get(int key)
+{
+	robin_hood::unordered_flat_map<int, double>::iterator const iterator = map.find(key);
+	return iterator == map.end() ? 0.0 : iterator->second;
+}
+
+void MapSum::set(int key, double value)
+{
+	if (map.find(key) == map.end())
+	{
+		map.emplace(key, value);
+		sum += value;
+	}
+	else
+	{
+		// weight cannot get below zero
+		value = std::max(0.0, value);
+		double oldValue = map.at(key);
+		map.at(key) = value;
+		sum += (- oldValue + value);
+	}
+	
+}
+
+void MapSum::add(int key, double value)
+{
+	if (map.find(key) == map.end())
+	{
+		map.emplace(key, value);
+	}
+	else
+	{
+		// weight cannot get below zero
+		value = std::max(-map.at(key), value);
+		map.at(key) += value;
+	}
+	
+	sum += value;
+	
+}
+
 // CombatData
 
 void CombatData::reset(CombatEffectTable *combatEffectTable, MAP *tile, bool playerAssault)
@@ -832,8 +881,7 @@ void CombatData::clearAssailants()
 	if (TRACE) { debug("CombatData::clearAssailants()\n"); }
 	if (TRACE) { debug("\tcomputed = false\n"); }
 	
-	assailants.clear();
-	assailantWeight = 0.0;
+	assailantUnitWeights.clear();
 	computed = false;
 	
 }
@@ -843,8 +891,7 @@ void CombatData::clearProtectors()
 	if (TRACE) { debug("CombatData::clearProtectors()\n"); }
 	if (TRACE) { debug("\tcomputed = false\n"); }
 	
-	protectors.clear();
-	protectorWeight = 0.0;
+	protectorUnitWeights.clear();
 	computed = false;
 	
 }
@@ -856,36 +903,14 @@ void CombatData::addAssailantUnit(int factionId, int unitId, double weight)
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
-	if (assailants.find(key) == assailants.end())
-	{
-		assailants.emplace(key, 0.0);
-	}
-	assailants.at(key) += weight;
-	
-	// summarize weight
-	
-	assailantWeight += weight;
+	assailantUnitWeights.add(key, +weight);
 	
 	// clear computed flag
 	
 	computed = false;
+	assailantAttackGains.clear();
+	protectorDefendGains.clear();
 	
-	if (TRACE)
-	{
-		debug("CombatData::addAssailantUnit\n");
-		debug("\tassailants\n");
-		for (robin_hood::pair<int, double> &assailantEntry : assailants)
-		{
-			int assailantKey = assailantEntry.first;
-			double assailantWeight = assailantEntry.second;
-			FactionUnit assailantFactionUnit(assailantKey);
-			
-			debug("\t\t%-24s %-32s %5.2f\n", MFactions[assailantFactionUnit.factionId].noun_faction, Units[assailantFactionUnit.unitId].name, assailantWeight);
-			
-		}
-		
-	}
-		
 }
 
 void CombatData::addProtectorUnit(int factionId, int unitId, double weight)
@@ -895,41 +920,47 @@ void CombatData::addProtectorUnit(int factionId, int unitId, double weight)
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
-	if (protectors.find(key) == protectors.end())
-	{
-		protectors.emplace(key, 0.0);
-	}
-	protectors.at(key) += weight;
-	
-	// summarize weight
-	
-	protectorWeight += weight;
+	protectorUnitWeights.add(key, +weight);
 	
 	// clear computed flag
 	
 	computed = false;
+	assailantAttackGains.clear();
+	protectorDefendGains.clear();
 	
 }
 
+/*
+Adds just a vehicle but NOT unit.
+Weight is precomputed.
+*/
+void CombatData::addAssailantVehicle(int vehicleId, double weight)
+{
+	assailantVehicleWeights[vehicleId] = weight;
+}
+
+/*
+Adds vehicle and its unit.
+*/
 void CombatData::addAssailant(int vehicleId, double weight)
 {
-	VEH *vehicle = getVehicle(vehicleId);
+	VEH &vehicle = Vehs[vehicleId];
 	
-	double strengthMultiplier = getVehicleStrenghtMultiplier(vehicleId);
-	weight *= strengthMultiplier;
+	weight *= getVehicleStrenghtMultiplier(vehicleId);
 	
-	addAssailantUnit(vehicle->faction_id, vehicle->unit_id, weight);
+	assailantVehicleWeights.emplace(vehicle.pad_0, weight);
+	addAssailantUnit(vehicle.faction_id, vehicle.unit_id, weight);
 	
 }
 
 void CombatData::addProtector(int vehicleId, double weight)
 {
-	VEH *vehicle = getVehicle(vehicleId);
+	VEH &vehicle = Vehs[vehicleId];
 	
-	double strengthMultiplier = getVehicleStrenghtMultiplier(vehicleId);
-	weight *= strengthMultiplier;
+	weight *= getVehicleStrenghtMultiplier(vehicleId);
 	
-	addProtectorUnit(vehicle->faction_id, vehicle->unit_id, weight);
+	protectorVehicleWeights.emplace(vehicle.pad_0, weight);
+	addProtectorUnit(vehicle.faction_id, vehicle.unit_id, weight);
 	
 }
 
@@ -940,15 +971,13 @@ void CombatData::removeAssailantUnit(int factionId, int unitId, double weight)
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
-	if (assailants.find(key) == assailants.end())
-	{
-		return;
-	}
-	assailants.at(key) = std::max(0.0, assailants.at(key) - weight);
+	assailantUnitWeights.add(key, -weight);
 	
 	// clear computed flag
 	
 	computed = false;
+	assailantAttackGains.clear();
+	protectorDefendGains.clear();
 	
 }
 
@@ -959,28 +988,216 @@ void CombatData::removeProtectorUnit(int factionId, int unitId, double weight)
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
-	if (protectors.find(key) == protectors.end())
-	{
-		return;
-	}
-	protectors.at(key) = std::max(0.0, protectors.at(key) - weight);
+	protectorUnitWeights.add(key, -weight);
 	
 	// clear computed flag
 	
 	computed = false;
+	assailantAttackGains.clear();
+	protectorDefendGains.clear();
 	
 }
 
-double CombatData::getRemainingAssailantWeight()
+double CombatData::getAverageAssailantAttackGain(int factionId, int unitId)
 {
-	compute();
-	return remainingAssailantWeight;
+	int assailantKey = FactionUnit::encodeKey(factionId, unitId);
+	
+	// retrieve value
+	
+	if (assailantAttackGains.find(assailantKey) != assailantAttackGains.end())
+	{
+		return assailantAttackGains.at(assailantKey);
+	}
+	
+	// compute value
+	
+	double assailantMeleeAttackGain;
+	if (isUnitCanMeleeAttack(factionId, unitId, nullptr, tile))
+	{
+		SummaryStatistics assailantMeleeAttackGainStatistics;
+		
+		for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : protectorUnitWeights.map)
+		{
+			int protectorKey = protectorUnitWeightEntry.first;
+			double weight = protectorUnitWeightEntry.second;
+			FactionUnit protectorFactionUnit(protectorKey);
+			
+			double combatEffect = tileCombatEffectTable.getCombatEffect(assailantKey, protectorKey, EM_MELEE);
+			double combatGain = getMutualCombatGain(aiData.unitDestructionGains.at(unitId), aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
+			
+			assailantMeleeAttackGainStatistics.add(combatGain, weight);
+			
+		}
+		
+		assailantMeleeAttackGain = assailantMeleeAttackGainStatistics.mean();
+		
+	}
+	else
+	{
+		assailantMeleeAttackGain = 0.0;
+	}
+	
+	double assailantArtilAttackGain;
+	if (isUnitCanArtilleryAttack(unitId, nullptr))
+	{
+		SummaryStatistics assailantArtilAttackGainStatistics;
+		
+		for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : protectorUnitWeights.map)
+		{
+			int protectorKey = protectorUnitWeightEntry.first;
+			double weight = protectorUnitWeightEntry.second;
+			FactionUnit protectorFactionUnit(protectorKey);
+			
+			CombatMode combatMode = getCombatMode(EM_ARTILLERY, protectorFactionUnit.unitId);
+			double combatEffect = tileCombatEffectTable.getCombatEffect(assailantKey, protectorKey, EM_ARTILLERY);
+			
+			double combatGain;
+			if (combatMode == CM_ARTILLERY_DUEL)
+			{
+				combatGain = getMutualCombatGain(aiData.unitDestructionGains.at(unitId), aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
+			}
+			else
+			{
+				combatGain = getBombardmentGain(aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
+			}
+			
+			assailantArtilAttackGainStatistics.add(combatGain, weight);
+			
+		}
+		
+		assailantArtilAttackGain = assailantArtilAttackGainStatistics.mean();
+		
+	}
+	else
+	{
+		assailantArtilAttackGain = 0.0;
+	}
+	
+	double assailantAttackGain;
+	if (assailantMeleeAttackGain > 0.0 && assailantArtilAttackGain > 0.0)
+	{
+		assailantAttackGain = 0.5 * (assailantMeleeAttackGain + assailantArtilAttackGain);
+	}
+	else if (assailantMeleeAttackGain > 0.0)
+	{
+		assailantAttackGain = assailantMeleeAttackGain;
+	}
+	else if (assailantArtilAttackGain > 0.0)
+	{
+		assailantAttackGain = assailantArtilAttackGain;
+	}
+	else
+	{
+		assailantAttackGain = 0.0;
+	}
+	
+	// store value
+	
+	assailantAttackGains[assailantKey] = assailantAttackGain;
+	
+	return assailantAttackGain;
+	
 }
 
-double CombatData::getRemainingProtectorWeight()
+double CombatData::getAverageProtectorDefendGain(int factionId, int unitId)
 {
-	compute();
-	return remainingProtectorWeight;
+	int assailantKey = FactionUnit::encodeKey(factionId, unitId);
+	
+	// retrieve value
+	
+	if (assailantAttackGains.find(assailantKey) != assailantAttackGains.end())
+	{
+		return assailantAttackGains.at(assailantKey);
+	}
+	
+	// compute value
+	
+	double assailantMeleeAttackGain;
+	if (isUnitCanMeleeAttack(factionId, unitId, nullptr, tile))
+	{
+		SummaryStatistics assailantMeleeAttackGainStatistics;
+		
+		for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : protectorUnitWeights.map)
+		{
+			int protectorKey = protectorUnitWeightEntry.first;
+			double weight = protectorUnitWeightEntry.second;
+			FactionUnit protectorFactionUnit(protectorKey);
+			
+			double combatEffect = tileCombatEffectTable.getCombatEffect(assailantKey, protectorKey, EM_MELEE);
+			double combatGain = getMutualCombatGain(aiData.unitDestructionGains.at(unitId), aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
+			
+			assailantMeleeAttackGainStatistics.add(combatGain, weight);
+			
+		}
+		
+		assailantMeleeAttackGain = assailantMeleeAttackGainStatistics.mean();
+		
+	}
+	else
+	{
+		assailantMeleeAttackGain = 0.0;
+	}
+	
+	double assailantArtilAttackGain;
+	if (isUnitCanArtilleryAttack(unitId, nullptr))
+	{
+		SummaryStatistics assailantArtilAttackGainStatistics;
+		
+		for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : protectorUnitWeights.map)
+		{
+			int protectorKey = protectorUnitWeightEntry.first;
+			double weight = protectorUnitWeightEntry.second;
+			FactionUnit protectorFactionUnit(protectorKey);
+			
+			CombatMode combatMode = getCombatMode(EM_ARTILLERY, protectorFactionUnit.unitId);
+			double combatEffect = tileCombatEffectTable.getCombatEffect(assailantKey, protectorKey, EM_ARTILLERY);
+			
+			double combatGain;
+			if (combatMode == CM_ARTILLERY_DUEL)
+			{
+				combatGain = getMutualCombatGain(aiData.unitDestructionGains.at(unitId), aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
+			}
+			else
+			{
+				combatGain = getBombardmentGain(aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
+			}
+			
+			assailantArtilAttackGainStatistics.add(combatGain, weight);
+			
+		}
+		
+		assailantArtilAttackGain = assailantArtilAttackGainStatistics.mean();
+		
+	}
+	else
+	{
+		assailantArtilAttackGain = 0.0;
+	}
+	
+	double assailantAttackGain;
+	if (assailantMeleeAttackGain > 0.0 && assailantArtilAttackGain > 0.0)
+	{
+		assailantAttackGain = 0.5 * (assailantMeleeAttackGain + assailantArtilAttackGain);
+	}
+	else if (assailantMeleeAttackGain > 0.0)
+	{
+		assailantAttackGain = assailantMeleeAttackGain;
+	}
+	else if (assailantArtilAttackGain > 0.0)
+	{
+		assailantAttackGain = assailantArtilAttackGain;
+	}
+	else
+	{
+		assailantAttackGain = 0.0;
+	}
+	
+	// store value
+	
+	assailantAttackGains[assailantKey] = assailantAttackGain;
+	
+	return assailantAttackGain;
+	
 }
 
 /*
@@ -1001,9 +1218,9 @@ double CombatData::getAssailantUnitEffect(int factionId, int unitId)
 	
 	double bestAssailantEffect = 0.0;
 	
-	for (robin_hood::pair<int, double> remainingProtectorEntry : remainingProtectors)
+	for (robin_hood::pair<int, double> remainingProtectorUnitWeightEntry : remainingProtectorUnitWeights.map)
 	{
-		int remainingProtectorKey = remainingProtectorEntry.first;
+		int remainingProtectorKey = remainingProtectorUnitWeightEntry.first;
 		
 		// assailant attacks
 		
@@ -1063,9 +1280,9 @@ double CombatData::getProtectorUnitEffect(int factionId, int unitId)
 	
 	double bestProtectorEffect = 0.0;
 	
-	for (robin_hood::pair<int, double> remainingAssailantEntry : remainingAssailants)
+	for (robin_hood::pair<int, double> remainingAssailantUnitWeightEntry : remainingAssailantUnitWeights.map)
 	{
-		int remainingAssailantKey = remainingAssailantEntry.first;
+		int remainingAssailantKey = remainingAssailantUnitWeightEntry.first;
 		
 		// protector attacks
 		
@@ -1117,34 +1334,78 @@ double CombatData::getProtectorVehicleEffect(int vehicleId)
 	return getProtectorUnitEffect(vehicle->faction_id, vehicle->unit_id);
 }
 
+double CombatData::getAssaultWinProbability()
+{
+	if (assailantUnitWeights.sum <= 0.0)
+	{
+		// no assailants - guaranteed loss
+		return 0.0;
+	}
+	else if (protectorUnitWeights.sum <= 0.0)
+	{
+		// no protectors - guaranteed win
+		return 1.0;
+	}
+	
+	compute();
+	
+	if (remainingAssailantUnitWeights.sum <= 0.0 && remainingProtectorUnitWeights.sum <= 0.0)
+	{
+		return 0.5;
+	}
+	else if (remainingAssailantUnitWeights.sum > 0.0 && remainingProtectorUnitWeights.sum <= 0.0)
+	{
+		double destroyedAssailantWeight = assailantUnitWeights.sum - remainingAssailantUnitWeights.sum;
+		double destroyedProtectorWeight = protectorUnitWeights.sum;
+		return getWinProbability(destroyedAssailantWeight, destroyedProtectorWeight, remainingAssailantUnitWeights.sum);
+	}
+	else if (remainingAssailantUnitWeights.sum <= 0.0 && remainingProtectorUnitWeights.sum > 0.0)
+	{
+		double destroyedAssailantWeight = assailantUnitWeights.sum;
+		double destroyedProtectorWeight = protectorUnitWeights.sum - remainingProtectorUnitWeights.sum;
+		return 1.0 - getWinProbability(destroyedProtectorWeight, destroyedAssailantWeight, remainingProtectorUnitWeights.sum);
+	}
+	else
+	{
+		debug("ERROR: remainingAssailantWeight > 0.0 && remainingProtectorWeight > 0.0 after compute.\n");
+		return 0.5;
+	}
+	
+}
+
+double CombatData::getProtectWinProbability()
+{
+	return 1.0 - getAssaultWinProbability();
+}
+
 bool CombatData::isSufficientAssault()
 {
 	if (TRACE) { debug("CombatData::isSufficientAssault()\n"); }
 	
-	if (assailants.size() <= 0)
+	if (assailantUnitWeights.map.size() <= 0)
 		return false;
-	else if (protectors.size() <= 0)
+	else if (protectorUnitWeights.map.size() <= 0)
 		return true;
 	
 	compute();
 	
-	return assailantWeight > 0.0 && remainingAssailantWeight > 0.0 && remainingAssailantWeight / assailantWeight >= conf.ai_combat_advantage * sqrt(protectorWeight);
+	return assailantUnitWeights.sum > 0.0 && remainingAssailantUnitWeights.sum > 0.0 && remainingAssailantUnitWeights.sum / assailantUnitWeights.sum >= conf.ai_combat_advantage * sqrt(protectorUnitWeights.sum);
 	
 }
 
 bool CombatData::isSufficientProtect()
 {
 	if (TRACE) { debug("CombatData::isSufficientProtect()\n"); }
-	if (TRACE) { debug("\tprotectorWeight=%5.2f remainingProtectorWeight=%5.2f superiority=%5.2f\n", protectorWeight, remainingProtectorWeight, 1.00 + remainingProtectorWeight / protectorWeight); }
+	if (TRACE) { debug("\tprotectorWeight=%5.2f remainingProtectorWeight=%5.2f superiority=%5.2f\n", protectorUnitWeights.sum, remainingProtectorUnitWeights.sum, 1.00 + remainingProtectorUnitWeights.sum / protectorUnitWeights.sum); }
 	
-	if (assailants.size() <= 0)
+	if (assailantUnitWeights.map.size() <= 0)
 		return true;
-	else if (protectors.size() <= 0)
+	else if (protectorUnitWeights.map.size() <= 0)
 		return false;
 	
 	compute();
 	
-	return protectorWeight > 0.0 && remainingProtectorWeight > 0.0 && remainingProtectorWeight / protectorWeight >= conf.ai_combat_advantage * sqrt(assailantWeight);
+	return protectorUnitWeights.sum > 0.0 && remainingProtectorUnitWeights.sum > 0.0 && remainingProtectorUnitWeights.sum / protectorUnitWeights.sum >= conf.ai_combat_advantage * sqrt(assailantUnitWeights.sum);
 	
 }
 
@@ -1162,81 +1423,46 @@ void CombatData::compute()
 	
 	// reset remaining weights
 	
-	this->remainingAssailants = this->assailants;
-	this->remainingProtectors = this->protectors;
-	
-	if (TRACE) {
-		debug("\tassailants=%X\n", (int) &(this->assailants));
-		for (robin_hood::pair<int, double> assailantEntry : this->assailants)
-		{
-			int key = assailantEntry.first;
-			double weight = assailantEntry.second;
-			FactionUnit factionUnit(key);
-			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
-		}
-		debug("\tprotectors=%X\n", (int) &(this->protectors));
-		for (robin_hood::pair<int, double> protectorEntry : this->protectors)
-		{
-			int key = protectorEntry.first;
-			double weight = protectorEntry.second;
-			FactionUnit factionUnit(key);
-			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
-		}
-		debug("\tremainingAssailants=%X\n", (int) &(this->remainingAssailants));
-		for (robin_hood::pair<int, double> remainingAssailantEntry : this->remainingAssailants)
-		{
-			int key = remainingAssailantEntry.first;
-			double weight = remainingAssailantEntry.second;
-			FactionUnit factionUnit(key);
-			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
-		}
-		debug("\tremainingProtectors=%X\n", (int) &(this->remainingProtectors));
-		for (robin_hood::pair<int, double> remainingProtectorEntry : this->remainingProtectors)
-		{
-			int key = remainingProtectorEntry.first;
-			double weight = remainingProtectorEntry.second;
-			FactionUnit factionUnit(key);
-			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
-		}
-	}
+	remainingAssailantUnitWeights = assailantUnitWeights;
+	remainingProtectorUnitWeights = protectorUnitWeights;
 	
 	// resolve artillery duels
 	
 	if (TRACE) { debug("\tresolve artillery duels\n"); }
 	bool assailantArtillerySurvives = false;
-	for (robin_hood::unordered_flat_map<int, double>::iterator assailantIterator = this->remainingAssailants.begin(); assailantIterator != this->remainingAssailants.end(); )
+	for (robin_hood::unordered_flat_map<int, double>::iterator assailantUnitWeightsIterator = remainingAssailantUnitWeights.map.begin(); assailantUnitWeightsIterator != remainingAssailantUnitWeights.map.end(); )
 	{
-		int assailantKey = assailantIterator->first;
-		double assailantWeight = assailantIterator->second;
+		int assailantKey = assailantUnitWeightsIterator->first;
+		double assailantWeight = assailantUnitWeightsIterator->second;
 		FactionUnit assailantFactionUnit(assailantKey);
 		
 		if (!isArtilleryUnit(assailantFactionUnit.unitId))
 		{
-			assailantIterator++;
+			assailantUnitWeightsIterator++;
 			continue;
 		}
 		
 		if (assailantWeight <= 0.0)
 		{
-			assailantIterator = this->remainingAssailants.erase(assailantIterator);
+			assailantUnitWeightsIterator = remainingAssailantUnitWeights.map.erase(assailantUnitWeightsIterator);
 			continue;
 		}
 		
-		for (robin_hood::unordered_flat_map<int, double>::iterator protectorIterator = this->remainingProtectors.begin(); protectorIterator != this->remainingProtectors.end(); )
+		for (robin_hood::unordered_flat_map<int, double>::iterator protectorUnitWeightsIterator = remainingProtectorUnitWeights.map.begin(); protectorUnitWeightsIterator != remainingProtectorUnitWeights.map.end(); )
 		{
-			int protectorKey = protectorIterator->first;
-			double protectorWeight = protectorIterator->second;
+			int protectorKey = protectorUnitWeightsIterator->first;
+			double protectorWeight = protectorUnitWeightsIterator->second;
 			FactionUnit protectorFactionUnit(protectorKey);
 			
 			if (!isArtilleryUnit(protectorFactionUnit.unitId))
 			{
-				protectorIterator++;
+				protectorUnitWeightsIterator++;
 				continue;
 			}
 			
 			if (protectorWeight <= 0.0)
 			{
-				protectorIterator = this->remainingProtectors.erase(protectorIterator);
+				protectorUnitWeightsIterator = remainingProtectorUnitWeights.map.erase(protectorUnitWeightsIterator);
 				continue;
 			}
 			if (TRACE) { debug("\t\t-\n"); }
@@ -1252,13 +1478,13 @@ void CombatData::compute()
 			if (protectorWeight <= 0.0)
 			{
 				// protector is destroyed
-				protectorIterator = this->remainingProtectors.erase(protectorIterator);
+				protectorUnitWeightsIterator = remainingProtectorUnitWeights.map.erase(protectorUnitWeightsIterator);
 			}
 			else
 			{
 				// protector survives
-				protectorIterator->second = protectorWeight;
-				protectorIterator++;
+				protectorUnitWeightsIterator->second = protectorWeight;
+				protectorUnitWeightsIterator++;
 			}
 			
 			if (assailantWeight <= 0.0)
@@ -1272,12 +1498,12 @@ void CombatData::compute()
 		if (assailantWeight <= 0.0)
 		{
 			// assailant is destroyed
-			assailantIterator = this->remainingAssailants.erase(assailantIterator);
+			assailantUnitWeightsIterator = remainingAssailantUnitWeights.map.erase(assailantUnitWeightsIterator);
 		}
 		else
 		{
 			// assailant survives
-			assailantIterator->second = assailantWeight;
+			assailantUnitWeightsIterator->second = assailantWeight;
 			assailantArtillerySurvives = true;
 			if (TRACE) { debug("\t\tassailantArtillerySurvives\n"); }
 			break;
@@ -1289,10 +1515,10 @@ void CombatData::compute()
 	
 	if (assailantArtillerySurvives)
 	{
-		for (robin_hood::pair<int, double> &protectorEntry : this->remainingProtectors)
+		for (robin_hood::pair<int, double> &protectorUnitWeightsEntry : remainingProtectorUnitWeights.map)
 		{
-			int protectorKey = protectorEntry.first;
-			double protectorWeight = protectorEntry.second;
+			int protectorKey = protectorUnitWeightsEntry.first;
+			double protectorWeight = protectorUnitWeightsEntry.second;
 			FactionUnit protectorFactionUnit(protectorKey);
 			int protectorUnitId = protectorFactionUnit.unitId;
 			
@@ -1302,7 +1528,7 @@ void CombatData::compute()
 			if (isArtilleryUnit(protectorUnitId))
 				continue;
 			
-			protectorEntry.second /= 2.0;
+			protectorUnitWeightsEntry.second /= 2.0;
 			
 		}
 			
@@ -1315,20 +1541,20 @@ void CombatData::compute()
 	{
 		if (TRACE) { debug("\t\t-\n"); }
 		
-		if (this->remainingAssailants.size() == 0)
+		if (remainingAssailantUnitWeights.sum <= 0.0)
 		{
 			if (TRACE) { debug("\t\tno more assailants\n"); }
 			break;
 		}
 		
-		if (this->remainingProtectors.size() == 0)
+		if (remainingProtectorUnitWeights.sum <= 0.0)
 		{
 			if (TRACE) { debug("\t\tno more protectors\n"); }
 			break;
 		}
 		
-		FactionUnitCombatEffect bestAssailantProtectorMeleeEffect = getBestAttackerDefenderMeleeEffect(tileCombatEffectTable, this->remainingAssailants, this->remainingProtectors);
-		FactionUnitCombatEffect bestProtectorAssailantMeleeEffect = getBestAttackerDefenderMeleeEffect(tileCombatEffectTable, this->remainingProtectors, this->remainingAssailants);
+		FactionUnitCombatEffect bestAssailantProtectorMeleeEffect = getBestAttackerDefenderMeleeEffect(tileCombatEffectTable, remainingAssailantUnitWeights.map, remainingProtectorUnitWeights.map);
+		FactionUnitCombatEffect bestProtectorAssailantMeleeEffect = getBestAttackerDefenderMeleeEffect(tileCombatEffectTable, remainingProtectorUnitWeights.map, remainingAssailantUnitWeights.map);
 		if (TRACE)
 		{
 			debug
@@ -1362,8 +1588,8 @@ void CombatData::compute()
 			int assailantKey = bestProtectorAssailantMeleeEffect.factionUnitCombat.defenderFactionUnit.encodeKey();
 			int protectorKey = bestProtectorAssailantMeleeEffect.factionUnitCombat.attackerFactionUnit.encodeKey();
 			
-			double assailantWeight = this->remainingAssailants.at(assailantKey);
-			double protectorWeight = this->remainingProtectors.at(protectorKey);
+			double assailantWeight = remainingAssailantUnitWeights.get(assailantKey);
+			double protectorWeight = remainingProtectorUnitWeights.get(protectorKey);
 			if (TRACE) { debug("\t\tassailantKey=%d protectorKey=%d\n", assailantKey, protectorKey); }
 			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
 			
@@ -1371,8 +1597,8 @@ void CombatData::compute()
 			resolveMutualCombat(combatEffect, protectorWeight, assailantWeight);
 			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
 			
-			this->remainingAssailants.at(assailantKey) = assailantWeight;
-			this->remainingProtectors.at(protectorKey) = protectorWeight;
+			remainingAssailantUnitWeights.set(assailantKey, assailantWeight);
+			remainingProtectorUnitWeights.set(protectorKey, protectorWeight);
 			
 		}
 		else
@@ -1384,8 +1610,8 @@ void CombatData::compute()
 			int assailantKey = bestAssailantProtectorMeleeEffect.factionUnitCombat.attackerFactionUnit.encodeKey();
 			int protectorKey = bestAssailantProtectorMeleeEffect.factionUnitCombat.defenderFactionUnit.encodeKey();
 			
-			double assailantWeight = this->remainingAssailants.at(assailantKey);
-			double protectorWeight = this->remainingProtectors.at(protectorKey);
+			double assailantWeight = remainingAssailantUnitWeights.get(assailantKey);
+			double protectorWeight = remainingProtectorUnitWeights.get(protectorKey);
 			if (TRACE) { debug("\t\tassailantKey=%d protectorKey=%d\n", assailantKey, protectorKey); }
 			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
 			
@@ -1393,8 +1619,8 @@ void CombatData::compute()
 			resolveMutualCombat(combatEffect, assailantWeight, protectorWeight);
 			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
 			
-			this->remainingAssailants.at(assailantKey) = assailantWeight;
-			this->remainingProtectors.at(protectorKey) = protectorWeight;
+			remainingAssailantUnitWeights.set(assailantKey, assailantWeight);
+			remainingProtectorUnitWeights.set(protectorKey, protectorWeight);
 			
 		}
 		
@@ -1402,11 +1628,11 @@ void CombatData::compute()
 	
 	// count remaining melee unit weights
 	
-	remainingAssailantWeight = 0.0;
-	for (robin_hood::pair<int, double> &assailantEntry : this->remainingAssailants)
+	double remainingMeleeAssailantWeight = 0.0;
+	for (robin_hood::pair<int, double> const &assailantUnitWeightEntry : remainingAssailantUnitWeights.map)
 	{
-		int assailantKey = assailantEntry.first;
-		double assailantWeight = assailantEntry.second;
+		int assailantKey = assailantUnitWeightEntry.first;
+		double assailantWeight = assailantUnitWeightEntry.second;
 		int assailantUnitId = FactionUnit(assailantKey).unitId;
 		
 		if (assailantWeight <= 0.0)
@@ -1415,16 +1641,16 @@ void CombatData::compute()
 		if (!isMeleeUnit(assailantUnitId))
 			continue;
 		
-		remainingAssailantWeight += assailantWeight;
+		remainingMeleeAssailantWeight += assailantWeight;
 		
 	}
-	sufficientAssault = remainingAssailantWeight > 0.0;
+	sufficientAssault = remainingMeleeAssailantWeight > 0.0;
 	
-	remainingProtectorWeight = 0.0;
-	for (robin_hood::pair<int, double> &protectorEntry : this->remainingProtectors)
+	double remainingMeleeProtectorWeight = 0.0;
+	for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : remainingProtectorUnitWeights.map)
 	{
-		int protectorKey = protectorEntry.first;
-		double protectorWeight = protectorEntry.second;
+		int protectorKey = protectorUnitWeightEntry.first;
+		double protectorWeight = protectorUnitWeightEntry.second;
 		int protectorUnitId = FactionUnit(protectorKey).unitId;
 		
 		if (protectorWeight <= 0.0)
@@ -1433,47 +1659,10 @@ void CombatData::compute()
 		if (!isMeleeUnit(protectorUnitId))
 			continue;
 		
-		remainingProtectorWeight += protectorWeight;
+		remainingMeleeProtectorWeight += protectorWeight;
 		
 	}
-	sufficientProtect = remainingProtectorWeight > 0.0;
-	
-	if (TRACE) {
-		debug("\tassailants=%X\n", (int) &(this->assailants));
-		for (robin_hood::pair<int, double> assailantEntry : this->assailants)
-		{
-			int key = assailantEntry.first;
-			double weight = assailantEntry.second;
-			FactionUnit factionUnit(key);
-			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
-		}
-		debug("\tprotectors=%X\n", (int) &(this->protectors));
-		for (robin_hood::pair<int, double> protectorEntry : this->protectors)
-		{
-			int key = protectorEntry.first;
-			double weight = protectorEntry.second;
-			FactionUnit factionUnit(key);
-			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
-		}
-		debug("\tremainingAssailants=%X\n", (int) &(this->remainingAssailants));
-		for (robin_hood::pair<int, double> remainingAssailantEntry : this->remainingAssailants)
-		{
-			int key = remainingAssailantEntry.first;
-			double weight = remainingAssailantEntry.second;
-			FactionUnit factionUnit(key);
-			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
-		}
-		debug("\tremainingProtectors=%X\n", (int) &(this->remainingProtectors));
-		for (robin_hood::pair<int, double> remainingProtectorEntry : this->remainingProtectors)
-		{
-			int key = remainingProtectorEntry.first;
-			double weight = remainingProtectorEntry.second;
-			FactionUnit factionUnit(key);
-			debug("\t\t%-24s %-32s weight=%5.2f\n", MFactions[factionUnit.factionId].noun_faction, Units[factionUnit.unitId].name, weight);
-		}
-	}
-	
-	if (TRACE) { debug("\tremainingAssailantWeight=%5.2f remainingProtectorWeight=%5.2f\n", remainingAssailantWeight, remainingProtectorWeight); }
+	sufficientProtect = remainingMeleeProtectorWeight > 0.0;
 	
 	computed = true;
 	
@@ -1842,17 +2031,17 @@ bool EnemyStackInfo::isUnitCanArtilleryAttackStack(int unitId, MAP *position) co
 	
 }
 
-void EnemyStackInfo::setUnitOffenseEffect(int unitId, COMBAT_MODE combatMode, double effect)
+void EnemyStackInfo::setUnitOffenseEffect(int unitId, CombatMode combatMode, double effect)
 {
 	this->offenseEffects.at(getUnitSlotById(unitId)).at(combatMode) = effect;
 }
 
-double EnemyStackInfo::getUnitOffenseEffect(int unitId, COMBAT_MODE combatMode) const
+double EnemyStackInfo::getUnitOffenseEffect(int unitId, CombatMode combatMode) const
 {
 	return this->offenseEffects.at(getUnitSlotById(unitId)).at(combatMode);
 }
 
-double EnemyStackInfo::getVehicleOffenseEffect(int vehicleId, COMBAT_MODE combatMode) const
+double EnemyStackInfo::getVehicleOffenseEffect(int vehicleId, CombatMode combatMode) const
 {
 	return this->getUnitOffenseEffect(getVehicle(vehicleId)->unit_id, combatMode) * getVehicleStrenghtMultiplier(vehicleId);
 }
@@ -2156,11 +2345,11 @@ double getVehicleDestructionGain(int vehicleId)
 {
 	VEH &vehicle = Vehs[vehicleId];
 	
-	double unitDestructionGain = aiData.unitDestructionGains.at(vehicle.unit_id);
+	double vehicleDestructionGain = aiData.unitDestructionGains.at(vehicle.unit_id);
 	
 	// increase destruction gain for damaged vehicle preventing it from healing
 	
-	unitDestructionGain *= 1.00 + conf.ai_combat_damage_destruction_value_coefficient * getVehicleRelativeDamage(vehicleId);
+	vehicleDestructionGain *= 1.00 + conf.ai_combat_damage_destruction_value_coefficient * getVehicleRelativeDamage(vehicleId);
 	
 	// increase destruction gain for combat vehicle close to player base
 	
@@ -2170,15 +2359,14 @@ double getVehicleDestructionGain(int vehicleId)
 		
 		int baseRange = tileInfo.baseRanges.at(vehicle.triad());
 		
-		if (baseRange < conf.ai_combat_base_threat_range)
-		{
-			double threatCoefficient = 1.0 + conf.ai_combat_base_threat_coefficient * (1.0 - (double) (baseRange - 1) / (double) (conf.ai_combat_base_threat_range - 1));
-			unitDestructionGain *= threatCoefficient;
-		}
+		double travelTime = (double) baseRange / (double) getVehicleSpeed(vehicleId);
+		double travelTimeCoefficient = getExponentialCoefficient(conf.ai_base_threat_travel_time_scale, travelTime);
+		
+		vehicleDestructionGain *= travelTimeCoefficient;
 		
 	}
 	
-	return unitDestructionGain;
+	return vehicleDestructionGain;
 	
 }
 
@@ -2204,9 +2392,9 @@ void computeUnitDestructionGains()
 	
 	for (int unitId = 0; unitId < MaxProtoNum; unitId++)
 	{
-		UNIT *unit = getUnit(unitId);
+		UNIT &unit = Units[unitId];
 		
-		if (!unit->is_active())
+		if (!unit.is_active())
 		{
 			aiData.unitDestructionGains.at(unitId) = 0.0;
 			continue;
@@ -2879,7 +3067,7 @@ std::vector<AttackAction> getMeleeAttackActions(int vehicleId, bool regardObstac
 			
 			// can melee attack tile
 			
-			if (!isVehicleCanMeleeAttackTile(vehicleId, targetTile, tile))
+			if (!isVehicleCanMeleeAttack(vehicleId, tile, targetTile))
 				continue;
 			
 			// add action
@@ -3042,7 +3230,7 @@ robin_hood::unordered_flat_map<int, double> getMeleeAttackLocations(int vehicleI
 				
 				// can melee attack
 				
-				if (!isVehicleCanMeleeAttackTile(vehicleId, adjacentTile, currentTile))
+				if (!isVehicleCanMeleeAttack(vehicleId, currentTile, adjacentTile))
 					continue;
 				
 				// update attack
@@ -3456,22 +3644,24 @@ bool isUnitCanCaptureBase(int unitId, MAP *baseTile)
 	int triad = unit->triad();
 	bool baseTileOcean = is_ocean(baseTile);
 	
-	// vehicle should generally be able to capture base
-	
-	switch (unit->chassis_id)
-	{
-	case CHS_NEEDLEJET:
-	case CHS_COPTER:
-	case CHS_MISSILE:
-		return false;
-		break;
-	
-	}
-	
-	// check if vehicle can capture this specific base
-	
 	switch (triad)
 	{
+	case TRIAD_AIR:
+		
+		// some air chassis cannot capture base
+		
+		switch (unit->chassis_id)
+		{
+		case CHS_NEEDLEJET:
+		case CHS_COPTER:
+		case CHS_MISSILE:
+			return false;
+			break;
+		
+		}
+		
+		break;
+	
 	case TRIAD_SEA:
 		
 		// sea unit can not capture land base
@@ -3495,74 +3685,6 @@ bool isUnitCanCaptureBase(int unitId, MAP *baseTile)
 	// all checks passed
 	
 	return true;
-	
-}
-
-/**
-Checks if unit can capture given base from given position.
-*/
-bool isUnitCanCaptureBase(int unitId, MAP *origin, MAP *baseTile)
-{
-	UNIT *unit = getUnit(unitId);
-	int triad = unit->triad();
-	bool baseTileOcean = is_ocean(baseTile);
-	
-	// vehicle should generally be able to capture base
-	
-	switch (unit->chassis_id)
-	{
-	case CHS_NEEDLEJET:
-	case CHS_COPTER:
-	case CHS_MISSILE:
-		return false;
-		break;
-	
-	}
-	
-	// check if vehicle can capture this specific base
-	
-	switch (triad)
-	{
-	case TRIAD_SEA:
-		
-		// sea unit can not capture land base
-		
-		if (!baseTileOcean)
-			return false;
-		
-		// sea unit can move within same sea cluster
-		
-		if (!isMeleeAttackableFromSeaCluster(origin, baseTile))
-			return false;
-		
-		break;
-		
-	case TRIAD_LAND:
-		
-		// non-amphibious land unit can not capture sea base
-		
-		if (baseTileOcean && !isUnitHasAbility(unitId, ABL_AMPHIBIOUS))
-			return false;
-		
-		break;
-		
-	}
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/**
-Checks if vehicle can capture given base.
-*/
-bool isVehicleCanCaptureBase(int vehicleId, MAP *baseTile)
-{
-	VEH *vehicle = getVehicle(vehicleId);
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	
-	return isUnitCanCaptureBase(vehicle->unit_id, vehicleTile, baseTile);
 	
 }
 
@@ -3948,27 +4070,6 @@ CombatStrength getMeleeAttackCombatStrength(int vehicleId)
 }
 
 /**
-Checks if vehicle can use artillery.
-*/
-bool isVehicleCanArtilleryAttack(int vehicleId)
-{
-	// artillery
-	
-	if (!isArtilleryVehicle(vehicleId))
-		return false;
-	
-	// not on transport
-	
-	if (isVehicleOnTransport(vehicleId))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/**
 Engine sometimes forgets to assign vehicle to transport.
 This function ensures land units at sea are assigned to transport.
 */
@@ -4052,124 +4153,111 @@ void assignVehiclesToTransports()
 	
 }
 
-/**
-Checks if unit can attack another unit in the field.
-*/
-bool isUnitCanMeleeAttackUnit(int attackerUnitId, int defenderUnitId)
-{
-	UNIT *attackerUnit = getUnit(attackerUnitId);
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	int attackerTriad = attackerUnit->triad();
-	int defenderTriad = defenderUnit->triad();
-	
-	// non melee unit cannot melee attack
-	
-	if (!isMeleeUnit(attackerUnitId))
-		return false;
-	
-	// cannot attack needlejet in flight without air superiority
-	
-	if (defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// different surface triads cannot attack each other
-	
-	if ((attackerTriad == TRIAD_LAND && defenderTriad == TRIAD_SEA) || (attackerTriad == TRIAD_SEA && defenderTriad == TRIAD_LAND))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
 /*
-Player unit can melee attack.
+Unit can attack enemy at the tile.
 */
-bool isUnitCanMeleeAttackFromTileToTile(int unitId, MAP *position, MAP *target)
+bool isUnitCanMeleeAttack(int factionId, int unitId, MAP *position, MAP *target)
 {
 	UNIT *unit = getUnit(unitId);
 	int triad = unit->triad();
-	TileInfo &positionTileInfo = aiData.getTileInfo(position);
-	TileInfo &targetTileInfo = aiData.getTileInfo(target);
 	
 	// non melee unit cannot melee attack
 	
 	if (!isMeleeUnit(unitId))
 		return false;
 	
-	// position should not be blocked
+	// check position if provided
 	
-	if (positionTileInfo.blocked)
-		return false;
-	
-	// cannot attack needlejet in flight without air superiority
-	
-	if (targetTileInfo.unfriendlyNeedlejetInFlights.at(aiFactionId) && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// check movement
-	
-	switch (triad)
+	if (position != nullptr)
 	{
-	case TRIAD_AIR:
+		TileInfo &positionTileInfo = aiData.getTileInfo(position);
 		
-		// air unit can attack from any realm to any realm
-		
-		return true;
-		
-		break;
-		
-	case TRIAD_SEA:
-		
-		if (unitId == BSC_SEALURK)
+		switch (triad)
 		{
-			// sealurk can attack from sea to sea or land
+		case TRIAD_SEA:
 			
-			if (positionTileInfo.ocean)
-				return true;
-			else
+			// sea unit cannot attack from land without a base
+			
+			if (!positionTileInfo.ocean && !map_has_item(position, BIT_BASE_IN_TILE))
 				return false;
 			
-		}
-		else
-		{
-			// other sea units can attack from sea to sea
+			break;
+			
+		case TRIAD_LAND:
+			
+			if (isUnitHasAbility(unitId, ABL_AMPHIBIOUS))
+			{
+				// amphibious unit can attack from land and sea
+			}
+			else
+			{
+				// other land units cannot attack from sea
 				
-			if (positionTileInfo.ocean && targetTileInfo.ocean)
-				return true;
-			else
-				return false;
+				if (positionTileInfo.ocean)
+					return false;
+				
+			}
+			
+			break;
 			
 		}
+			
+	}
+	
+	// check target if provided
+	
+	if (target != nullptr)
+	{
+		TileInfo &targetTileInfo = aiData.getTileInfo(target);
 		
-		break;
+		// cannot attack needlejet in flight without air superiority
 		
-	case TRIAD_LAND:
+		if (targetTileInfo.unfriendlyNeedlejetInFlights.at(factionId) && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
+			return false;
 		
-		if (isUnitHasAbility(unitId, ABL_AMPHIBIOUS))
+		// check movement
+		
+		switch (triad)
 		{
-			// amphibious unit can attack from sea or land to sea base or land
-			// the only tile they cannot attack is open sea
+		case TRIAD_SEA:
 			
-			if (targetTileInfo.land || (targetTileInfo.ocean && map_has_item(target, BIT_BASE_IN_TILE)))
-				return true;
+			if (unitId == BSC_SEALURK)
+			{
+				// sealurk can attack sea and land
+			}
 			else
-				return false;
+			{
+				// other sea units cannot attack land
+					
+				if (!targetTileInfo.ocean)
+					return false;
+				
+			}
+			
+			break;
+			
+		case TRIAD_LAND:
+			
+			if (isUnitHasAbility(unitId, ABL_AMPHIBIOUS))
+			{
+				// amphibious unit cannot attack sea without a base
+				
+				if (targetTileInfo.ocean && !map_has_item(target, BIT_BASE_IN_TILE))
+					return false;
+				
+			}
+			else
+			{
+				// other land units cannot attack sea
+				
+				if (targetTileInfo.ocean)
+					return false;
+				
+			}
+			
+			break;
 			
 		}
-		else
-		{
-			// other land units can attack from land to land
-			
-			if (positionTileInfo.land && targetTileInfo.land)
-				return true;
-			else
-				return false;
-			
-		}
-		
-		break;
 		
 	}
 	
@@ -4179,126 +4267,27 @@ bool isUnitCanMeleeAttackFromTileToTile(int unitId, MAP *position, MAP *target)
 	
 }
 
-bool isUnitCanArtilleryAttackFromTile(int unitId, MAP *position)
+/*
+Vehilce can attack enemy at the tile.
+*/
+bool isVehicleCanMeleeAttack(int vehicleId, MAP *position, MAP *target)
 {
-	UNIT *unit = getUnit(unitId);
-	int triad = unit->triad();
-	TileInfo &positionTileInfo = aiData.getTileInfo(position);
+	VEH &vehicle = Vehs[vehicleId];
+	return isUnitCanMeleeAttack(vehicle.faction_id, vehicle.unit_id, position, target);
+}
+
+/*
+Unit can attack enemy at the tile.
+*/
+bool isUnitCanArtilleryAttack(int unitId, MAP *position)
+{
+	UNIT &unit = Units[unitId];
+	int triad = unit.triad();
 	
 	// non artillery unit cannot artillery attack
 	
 	if (!isArtilleryUnit(unitId))
 		return false;
-	
-	// position should not be blocked
-	
-	if (positionTileInfo.blocked)
-		return false;
-	
-	// check movement
-	
-	switch (triad)
-	{
-	case TRIAD_AIR:
-		
-		// air unit can not artillery attack
-		
-		return false;
-		
-		break;
-		
-	case TRIAD_SEA:
-		
-		// sea units can attack from sea
-			
-		if (positionTileInfo.ocean)
-			return true;
-		else
-			return false;
-		
-		break;
-		
-	case TRIAD_LAND:
-		
-		// land units can attack from land
-		
-		if (positionTileInfo.land)
-			return true;
-		else
-			return false;
-		
-		break;
-		
-	}
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/*
-Player unit can attack enemy at the tile.
-*/
-bool isUnitCanMeleeAttackTile(int unitId, MAP *target, MAP *position)
-{
-	UNIT *unit = getUnit(unitId);
-	int triad = unit->triad();
-	TileInfo &targetTileInfo = aiData.getTileInfo(target);
-	
-	// non melee unit cannot melee attack
-	
-	if (!isMeleeUnit(unitId))
-		return false;
-	
-	// cannot attack needlejet in flight without air superiority
-	
-	if (targetTileInfo.unfriendlyNeedlejetInFlights.at(aiFactionId) && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// check movement
-	
-	switch (triad)
-	{
-	case TRIAD_SEA:
-		
-		if (unitId == BSC_SEALURK)
-		{
-			// sealurk can attack sea and land
-		}
-		else
-		{
-			// other sea units cannot attack land
-				
-			if (!targetTileInfo.ocean)
-				return false;
-			
-		}
-		
-		break;
-		
-	case TRIAD_LAND:
-		
-		if (isUnitHasAbility(unitId, ABL_AMPHIBIOUS))
-		{
-			// amphibious unit cannot attack sea without a base
-			
-			if (targetTileInfo.ocean && !map_has_item(target, BIT_BASE_IN_TILE))
-				return false;
-			
-		}
-		else
-		{
-			// other land units cannot attack sea
-			
-			if (targetTileInfo.ocean)
-				return false;
-			
-		}
-		
-		break;
-		
-	}
 	
 	// additionally check position tile if provided
 	
@@ -4308,45 +4297,54 @@ bool isUnitCanMeleeAttackTile(int unitId, MAP *target, MAP *position)
 		
 		switch (triad)
 		{
-			case TRIAD_SEA:
+		case TRIAD_AIR:
+			
+			// air unit can attack from anywhere
+			
+			break;
+			
+		case TRIAD_SEA:
+			
+			// sea unit can attack from sea and a base
+			
+			if (!(positionTileInfo.ocean || positionTileInfo.base))
+				return false;
+			
+			break;
+			
+		case TRIAD_LAND:
+			
+			if (isUnitHasAbility(unitId, ABL_AMPHIBIOUS))
+			{
+				// amphibious unit can attack from land and sea
+			}
+			else
+			{
+				// other land units cannot attack from sea
 				
-				// sea unit cannot attack from land without a base
-				
-				if (!positionTileInfo.ocean && !map_has_item(position, BIT_BASE_IN_TILE))
+				if (positionTileInfo.ocean)
 					return false;
-				
-				break;
-				
-			case TRIAD_LAND:
-				
-				if (isUnitHasAbility(unitId, ABL_AMPHIBIOUS))
-				{
-					// amphibious unit can attack from land and sea
-				}
-				else
-				{
-					// other land units cannot attack from sea
-					
-					if (positionTileInfo.ocean)
-						return false;
-					
-				}
-				
-				break;
 				
 			}
 			
+			break;
+			
 		}
-		
+			
+	}
+	
 	// all checks passed
 	
 	return true;
 	
 }
 
-bool isVehicleCanMeleeAttackTile(int vehicleId, MAP *target, MAP *position)
+/*
+Checks if vehicle can use artillery.
+*/
+bool isVehicleCanArtilleryAttack(int vehicleId, MAP *position)
 {
-	return isUnitCanMeleeAttackTile(Vehs[vehicleId].unit_id, target, position);
+	return isUnitCanArtilleryAttack(Vehs[vehicleId].unit_id, position);
 }
 
 double getBaseExtraWorkerGain(int baseId)
@@ -4396,10 +4394,10 @@ double computeAssaultEffect(int assailantFactionId, int assailantUnitId, int pro
 	int assailantSpeed = getUnitSpeed(assailantFactionId, assailantUnitId);
 	int protectorSpeed = getUnitSpeed(protectorFactionId, protectorUnitId);
 	
-	bool assailantMelee = isUnitCanMeleeAttackUnitAtTile(assailantUnitId, protectorUnitId, tile);
-	bool protectorMelee = isUnitCanMeleeAttackUnitFromTile(protectorUnitId, assailantUnitId, tile);
-	bool assailantArtillery = isUnitCanArtilleryAttackUnitAtTile(assailantUnitId, protectorUnitId, tile);
-	bool protectorArtillery = isUnitCanArtilleryAttackUnitFromTile(protectorUnitId, assailantUnitId, tile);
+	bool assailantMelee = isUnitCanMeleeAttack(assailantFactionId, assailantUnitId, tile, nullptr);
+	bool protectorMelee = isUnitCanMeleeAttack(protectorFactionId, protectorUnitId, nullptr, tile);
+	bool assailantArtillery = isUnitCanArtilleryAttack(assailantUnitId, nullptr);
+	bool protectorArtillery = isUnitCanArtilleryAttack(protectorUnitId, tile);
 	
 	// compute combat
 	
@@ -4666,385 +4664,6 @@ double computeAssaultEffect(int assailantFactionId, int assailantUnitId, int pro
 	
 }
 
-/*
-Checks if unit can melee attack at tile.
-*/
-bool isUnitCanMeleeAttackAtTile(int unitId, MAP *tile)
-{
-	assert(unitId >= 0 && unitId < MaxProtoNum);
-	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
-	
-	int triad = Units[unitId].triad();
-	
-	// non melee unit cannot melee attack
-	
-	if (!isMeleeUnit(unitId))
-		return false;
-	
-	// triad
-	
-	switch (triad)
-	{
-	case TRIAD_AIR:
-		
-		// can attack any unit in any tile
-		
-		break;
-		
-	case TRIAD_SEA:
-		
-		if (unitId == BSC_SEALURK)
-		{
-			// sealurk can attack sea and land
-		}
-		else
-		{
-			// sea can attack sea only
-			
-			if (!tile->is_sea())
-				return false;
-			
-		}
-		
-		break;
-		
-	case TRIAD_LAND:
-		
-		if (isUnitHasAbility(unitId, ABL_AMPHIBIOUS))
-		{
-			// amphibious cannot attack open sea
-			
-			if (tile->is_sea() && !tile->is_base())
-				return false;
-			
-		}
-		else
-		{
-			// land can attack land only
-			
-			if (!tile->is_land())
-				return false;
-			
-		}
-		
-		break;
-		
-	}
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/*
-Checks if unit can attack another unit at certain tile.
-*/
-bool isUnitCanMeleeAttackUnitAtTile(int attackerUnitId, int defenderUnitId, MAP *tile)
-{
-	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
-	
-	UNIT *attackerUnit = getUnit(attackerUnitId);
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	int attackerTriad = attackerUnit->triad();
-	TileInfo &tileInfo = aiData.getTileInfo(tile);
-	
-	// non melee unit cannot melee attack
-	
-	if (!isMeleeUnit(attackerUnitId))
-		return false;
-	
-	// cannot attack needlejet in flight without air superiority
-	
-	if (!tileInfo.airbase && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// triad
-	
-	switch (attackerTriad)
-	{
-	case TRIAD_AIR:
-		
-		// can attack any unit in any tile
-		
-		break;
-		
-	case TRIAD_SEA:
-		
-		if (attackerUnitId == BSC_SEALURK)
-		{
-			// sealurk can attack sea and land
-		}
-		else
-		{
-			// cannot attack land
-			
-			if (tileInfo.land)
-				return false;
-			
-		}
-		
-		break;
-		
-	case TRIAD_LAND:
-		
-		if (isUnitHasAbility(attackerUnitId, ABL_AMPHIBIOUS))
-		{
-			// amphibious cannot attack open sea
-			
-			if (tileInfo.ocean && !tileInfo.base)
-				return false;
-			
-		}
-		else
-		{
-			// land cannot attack sea
-			
-			if (tileInfo.ocean)
-				return false;
-			
-		}
-		
-		break;
-		
-	}
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/*
-Checks if unit can attack another unit from a certain tile.
-It is supposed the other tile realm is same.
-*/
-bool isUnitCanMeleeAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MAP *tile)
-{
-	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
-	
-	UNIT *attackerUnit = getUnit(attackerUnitId);
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	int attackerTriad = attackerUnit->triad();
-	int defenderTriad = defenderUnit->triad();
-	TileInfo &tileInfo = aiData.getTileInfo(tile);
-	
-	// non melee unit cannot melee attack
-	
-	if (!isMeleeUnit(attackerUnitId))
-		return false;
-	
-	// unit cannot melee attack from the tile of different realm
-	
-	if ((attackerTriad == TRIAD_SEA && !tileInfo.ocean) || (attackerTriad == TRIAD_LAND && !tileInfo.land))
-		return false;
-	
-	// cannot attack needlejet in flight without air superiority
-	// assuming the land around tile is an open field
-	
-	if (defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// triad
-	
-	switch (attackerTriad)
-	{
-	case TRIAD_AIR:
-		
-		// can attack any unit in any tile
-		
-		break;
-		
-	case TRIAD_SEA:
-		
-		if (attackerUnitId == BSC_SEALURK)
-		{
-			// sealurk can attack sea and land
-		}
-		else
-		{
-			// cannot attack land unit
-			
-			if (defenderTriad == TRIAD_LAND)
-				return false;
-			
-		}
-		
-		break;
-		
-	case TRIAD_LAND:
-		
-		// cannot attack ship
-		
-		if (defenderTriad == TRIAD_SEA)
-			return false;
-		
-		// cannot attack from sea (base)
-		
-		if (tileInfo.ocean)
-			return false;
-		
-		break;
-		
-	}
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/*
-Checks if unit can artillery attack tile.
-*/
-bool isUnitCanArtilleryAttackAtTile(int unitId, MAP */*tile*/)
-{
-	assert(unitId >= 0 && unitId < MaxProtoNum);
-	
-	// non artillery unit cannot bombard
-	
-	if (!isArtilleryUnit(unitId))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/*
-Checks if unit can attack another unit at certain tile.
-*/
-bool isUnitCanArtilleryAttackUnitAtTile(int attackerUnitId, int defenderUnitId, MAP *tile)
-{
-	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
-	
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	TileInfo &tileInfo = aiData.getTileInfo(tile);
-	
-	// non artillery unit cannot bombard
-	
-	if (!isArtilleryUnit(attackerUnitId))
-		return false;
-	
-	// cannot bombard air unit without air superiority
-	
-	if (!tileInfo.airbase && defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/**
-Checks if unit can attack another unit from a certain tile.
-For surface unit trying to attack flying unit the worst case is taken: flying unit is assumed to approach from the inaccessible realm.
-*/
-bool isUnitCanArtilleryAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MAP */*tile*/)
-{
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	
-	// non artillery unit cannot bombard
-	
-	if (!isArtilleryUnit(attackerUnitId))
-		return false;
-	
-	// cannot bombard air unit without air superiority
-	// assuming the land around tile is an open field
-	
-	if (defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/**
-Checks if unit can attack another unit at certain Base.
-*/
-bool isUnitCanMeleeAttackUnitAtBase(int attackerUnitId, int /*defenderUnitId*/)
-{
-	// non melee unit cannot melee attack
-	
-	if (!isMeleeUnit(attackerUnitId))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/**
-Checks if unit can attack another unit from a certain Base.
-For surface unit trying to attack flying unit the worst case is taken: flying unit is assumed to approach from the inaccessible realm.
-*/
-bool isUnitCanMeleeAttackUnitFromBase(int attackerUnitId, int defenderUnitId)
-{
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	
-	// non melee unit cannot melee attack
-	
-	if (!isMeleeUnit(attackerUnitId))
-		return false;
-	
-	// cannot attack needlejet in flight without air superiority
-	// assuming the land around Base is an open field
-	
-	if (defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/**
-Checks if unit can attack another unit at certain Base.
-*/
-bool isUnitCanArtilleryAttackUnitAtBase(int attackerUnitId, int /*defenderUnitId*/)
-{
-	// non artillery unit cannot bombard
-	
-	if (!isArtilleryUnit(attackerUnitId))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
-/**
-Checks if unit can attack another unit from a certain Base.
-For surface unit trying to attack flying unit the worst case is taken: flying unit is assumed to approach from the inaccessible realm.
-*/
-bool isUnitCanArtilleryAttackUnitFromBase(int attackerUnitId, int defenderUnitId)
-{
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	
-	// non artillery unit cannot bombard
-	
-	if (!isArtilleryUnit(attackerUnitId))
-		return false;
-	
-	// cannot bombard air unit without air superiority
-	// assuming the land around Base is an open field
-	
-	if (defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
 MapDoubleValue getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 {
 	TileInfo &targetTileInfo = aiData.getTileInfo(target);
@@ -5070,7 +4689,7 @@ MapDoubleValue getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 		
 		// can melee attack
 		
-		if (!isUnitCanMeleeAttackFromTileToTile(unitId, positionTile, target))
+		if (!isUnitCanMeleeAttack(aiFactionId, unitId, positionTile, target))
 			continue;
 		
 		// travelTime
@@ -5122,7 +4741,7 @@ MapDoubleValue getArtilleryAttackPosition(int unitId, MAP *origin, MAP *target)
 		
 		// can artillery attack
 		
-		if (!isUnitCanArtilleryAttackFromTile(unitId, positionTile))
+		if (!isUnitCanArtilleryAttack(unitId, positionTile))
 			continue;
 		
 		// travelTime
@@ -5436,14 +5055,14 @@ double getUnitDestructionGain(int unitId)
 	double resourceScore = getResourceScore(0.0, (double) mineralCost, 0.0);
 	double destructionGain = getGainBonus(resourceScore);
 	
-	if (!isCombatUnit(unitId))
+	if (isCombatUnit(unitId))
+	{
+		// no change
+	}
+	else
 	{
 		switch (unit.weapon_id)
 		{
-		case WPN_TROOP_TRANSPORT:
-			// increase the cost for passengers
-			destructionGain *= 2.0;
-			break;
 		case WPN_PROBE_TEAM:
 			// increase the cost for additional threat
 			destructionGain *= 2.0;
@@ -5513,12 +5132,36 @@ double getProportionalCoefficient(double minValue, double maxValue, double value
 	
 }
 
+size_t generatePad0FromVehicleId(size_t vehicleId)
+{
+	// shift pad_0 by 2 * MaxVehModNum to make sure it is distinct from any vehicleId
+	return 2 * MaxVehModNum + vehicleId;
+}
+
+size_t getInitialVehicleIdByPad0(size_t pad0)
+{
+	return pad0 - 2 * MaxVehModNum;
+}
+
 /*
 Populates pad0 -> vehicle maps using currently assigned pad0s.
 */
-void populateVehiclePad0Map()
+void populateVehiclePad0Map(bool initialize)
 {
 	Profiling::start("- populateVehiclePad0Map");
+	
+	// assign pad0 values if requested
+	
+	if (initialize)
+	{
+		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+		{
+			Vehs[vehicleId].pad_0 = generatePad0FromVehicleId(vehicleId);
+		}
+		
+	}
+	
+	// populate map
 	
 	aiData.pad0VehicleIds.clear();
 	
@@ -5690,7 +5333,7 @@ double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MO
 	
 	// combat mode
 	
-	COMBAT_MODE combatMode = getCombatMode(engagementMode, defenderVehicle.unit_id);
+	CombatMode combatMode = getCombatMode(engagementMode, defenderVehicle.unit_id);
 	bool mutualCombat = combatMode != CM_BOMBARDMENT;
 	
 	// combatEffect
@@ -5751,5 +5394,123 @@ double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MO
 	
 	return gain;
 
+}
+
+char const *getVehiclePad0LocationNameString(int vehicleId)
+{
+	static int constexpr BUFFER_COUNT = 10;
+	static int constexpr BUFFER_SIZE = 100;
+	
+    static char buffers[BUFFER_COUNT][BUFFER_SIZE];
+    static int index = 0;
+	
+	assert(vehicleId >= 0 && vehicleId < *VehCount);
+	
+	VEH &vehicle = Vehs[vehicleId];
+	
+    int i = index;
+    index = (index + 1) % BUFFER_COUNT;
+    
+    snprintf
+    (
+		buffers[i], sizeof(buffers[i]),
+		"{%4d} (%3d,%3d) %-32s"
+		, getInitialVehicleIdByPad0(vehicle.pad_0)
+		, vehicle.x, vehicle.y
+		, vehicle.name()
+	);
+    
+    return buffers[i];
+    
+}
+
+/*
+Approximates CND probability by shift from mean in standard deviations.
+*/
+double getCNDProbability(double value)
+{
+	double probability;
+	
+	if (value >= 0.0)
+	{
+		double baseValue = (- value / CND_APPROXIMATION_SCALE + 1 );
+		probability = 1.0 - 0.5 * baseValue * baseValue;
+	}
+	else
+	{
+		double baseValue = (+ value / CND_APPROXIMATION_SCALE + 1 );
+		probability = 0.0 + 0.5 * baseValue * baseValue;
+	}
+	
+	return probability;
+	
+}
+
+/*
+A helper function to estimate win probability by given destroyed weights.
+*/
+double getWinProbability(double destroyedWeight1, double destroyedWeight2, double remainingWeight1)
+{
+	assert(destroyedWeight1 >= 0.0 && destroyedWeight2 >= 0.0 && remainingWeight1 >= 0.0);
+	
+	if (destroyedWeight1 == 0)
+	{
+		return 1.0;
+	}
+	else if (destroyedWeight2 == 0.0)
+	{
+		return 0.0;
+	}
+	
+	double p = destroyedWeight2 / (destroyedWeight1 + destroyedWeight2);
+	double q = 1.0 - p;
+	double tryVariance = p * q;
+	double tryCount = 10.0 * (destroyedWeight1 + destroyedWeight2);
+	double totalVariance = tryVariance * tryCount;
+	double totalSTD = sqrt(totalVariance);
+	double shiftSTD = remainingWeight1 / totalSTD;
+	return getCNDProbability(shiftSTD);
+	
+}
+
+/*
+Combat gain to attacker.
+*/
+double getMutualCombatGain(double attackerDestructionGain, double defenderDestructionGain, double combatEffect)
+{
+debug(">attackerDestructionGain=%5.2f\n", attackerDestructionGain);
+debug(">defenderDestructionGain=%5.2f\n", defenderDestructionGain);
+	double winningProbability = getWinningProbability(combatEffect);
+debug(">winningProbability=%5.2f\n", winningProbability);
+	
+	double attackerLoss = (1.0 - winningProbability);
+	double defenderLoss = winningProbability;
+	
+	double attackerLossGain = attackerLoss * attackerDestructionGain;
+	double defenderLossGain = defenderLoss * defenderDestructionGain;
+	
+	double gain =
+		-attackerLossGain
+		+defenderLossGain
+	;
+	
+	return gain;
+	
+}
+
+/*
+Combat gain to attacker.
+*/
+double getBombardmentGain(double defenderDestructionGain, double relativeBombardmentDamage)
+{
+	double defenderLoss = relativeBombardmentDamage;
+	double defenderLossGain = defenderLoss * defenderDestructionGain;
+	
+	double gain =
+		+defenderLossGain
+	;
+	
+	return gain;
+	
 }
 

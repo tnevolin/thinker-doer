@@ -364,8 +364,8 @@ uses rotating buffers to allow up to 10 calls withing a single debug statement
 */
 char const *getLocationString(Location location)
 {
-	int constexpr BUFFER_COUNT = 10;
-	int constexpr BUFFER_SIZE = 10;
+	static int constexpr BUFFER_COUNT = 10;
+	static int constexpr BUFFER_SIZE = 10;
 	
     static char buffers[BUFFER_COUNT][BUFFER_SIZE];
     static int index = 0;
@@ -376,6 +376,7 @@ char const *getLocationString(Location location)
     snprintf(buffers[i], sizeof(buffers[i]), "(%3d,%3d)", location.x, location.y);
     
     return buffers[i];
+    
 }
 
 char const *getLocationString(int tileIndex)
@@ -397,20 +398,6 @@ char const *getLocationString(MAP *tile)
 		return "-nullptr-";
 	
 	return getLocationString(getLocation(tile));
-	
-}
-
-char const *getVehicleLocationIdNameString(int vehicleId)
-{
-	assert(vehicleId >= 0 && vehicleId < *VehCount);
-	
-	VEH &vehicle = Vehs[vehicleId];
-	
-	static char buffer[64];
-	
-    snprintf(buffer, sizeof(buffer), "(%3d,%3d) [%4d] %-32s", vehicle.x, vehicle.y, vehicleId, vehicle.name());
-    
-    return buffer;
 	
 }
 
@@ -5234,7 +5221,7 @@ int getVehicleCurrentConHP(int vehicleId)
 
 }
 
-/**
+/*
 Returns unit slot number by unitId.
 Slot number is the unique unit index across all faction units.
 */
@@ -5244,7 +5231,7 @@ int getUnitSlotById(int unitId)
 	return (unitId < MaxProtoFactionNum ? unitId : MaxProtoFactionNum + unitId % MaxProtoFactionNum);
 }
 
-/**
+/*
 Returns unitId by faction and slot number.
 */
 int getUnitIdBySlot(int factionId, int slot)
@@ -5255,7 +5242,7 @@ int getUnitIdBySlot(int factionId, int slot)
 	return (slot < MaxProtoFactionNum ? slot : MaxProtoFactionNum * (factionId - 1) + slot);
 }
 
-/**
+/*
 Returns unit index by unitId.
 Unit index is the unique unit index across all factions and units.
 */
@@ -5266,25 +5253,7 @@ int getUnitIndex(int factionId, int unitId)
 	return (2 * MaxProtoFactionNum) * factionId + getUnitSlotById(unitId);
 }
 
-/**
-Extracts factionId from unitIndex.
-*/
-int getFactionIdByUnitIndex(int unitIndex)
-{
-	assert((unitIndex >= 0 && unitIndex < MaxProtoFactionNum) || (unitIndex >= (2 * MaxProtoFactionNum) && unitIndex < (2 * MaxProtoFactionNum) * MaxPlayerNum));
-	return unitIndex / (2 * MaxProtoFactionNum);
-}
-
-/**
-Extracts unitId from unitIndex.
-*/
-int getUnitIdByUnitIndex(int unitIndex)
-{
-	assert((unitIndex >= 0 && unitIndex < MaxProtoFactionNum) || (unitIndex >= (2 * MaxProtoFactionNum) && unitIndex < (2 * MaxProtoFactionNum) * MaxPlayerNum));
-	return getUnitIdBySlot(getFactionIdByUnitIndex(unitIndex), unitIndex % (2 * MaxProtoFactionNum));
-}
-
-/**
+/*
 Retrieves number of drones currently suppressed by police.
 */
 int getBasePoliceSuppressedDrones(int baseId)
@@ -6045,12 +6014,6 @@ double getEuclidianDistance(int x1, int y1, int x2, int y2)
 int getVehicleUnitCost(int vehicleId)
 {
 	return getUnit(getVehicle(vehicleId)->unit_id)->cost;
-}
-
-int getVehicleRemainingMovement(int vehicleId)
-{
-	VEH *vehicle = getVehicle(vehicleId);
-	return getVehicleMaxMoves(vehicleId) - vehicle->moves_spent;
 }
 
 /*
@@ -7917,7 +7880,7 @@ bool isUnitPsiDefense(int unitId)
 /*
 Returns combat mode by engagement mode.
 */
-COMBAT_MODE getCombatMode(ENGAGEMENT_MODE engagementMode, int defenderUnitId)
+CombatMode getCombatMode(ENGAGEMENT_MODE engagementMode, int defenderUnitId)
 {
 	return engagementMode == EM_MELEE ? CM_MELEE : isArtilleryUnit(defenderUnitId) ? CM_ARTILLERY_DUEL : CM_BOMBARDMENT;
 }
@@ -7933,7 +7896,7 @@ Determines if engagement results in bombardment
 */
 bool isBombardment(ENGAGEMENT_MODE engagementMode, int defenderUnitId)
 {
-	COMBAT_MODE combatMode = getCombatMode(engagementMode, defenderUnitId);
+	CombatMode combatMode = getCombatMode(engagementMode, defenderUnitId);
 	return combatMode == CM_BOMBARDMENT;
 }
 

@@ -179,6 +179,22 @@ void executeTasks()
 	
 	debug("Tasks - %s\n", MFactions[aiFactionId].noun_faction);
 	
+	if (DEBUG)
+	{
+		debug("\ttask list\n");
+		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+		{
+			Task *task = getTask(vehicleId);
+			if (task == nullptr)
+				continue;
+			
+			debug("\t\t%s\n", task->toString());
+			
+		}
+		debug("\t\t-----------------------------------------------------------------------------\n\n");
+		
+	}
+	
 	for (robin_hood::pair<int, Task> &taskEntry : aiData.tasks)
 	{
 		Task &task = taskEntry.second;
@@ -201,17 +217,7 @@ void executeTasks()
 		if (task.type == TT_MELEE_ATTACK || task.type == TT_ARTILLERY_ATTACK)
 			continue;
 		
-		debug
-		(
-			"\t[%4d] %s->%s/%s taskType=%2d, %s\n",
-			vehicleId,
-			getLocationString({vehicle->x,vehicle->y}),
-			getLocationString(task.getDestination()),
-			getLocationString(task.attackTarget),
-			task.type,
-			Units[vehicle->unit_id].name
-		)
-		;
+		debug("\t%s\n", task.toString());
 		
 		task.execute();
 		
@@ -1645,6 +1651,10 @@ void populateBaseInfos()
 		
 		debug("\t%-25s gain=%5.2f\n", base->name, baseInfo.gain);
 		
+		// combatData
+		
+		baseInfo.combatData.tile = getBaseMapTile(baseId);
+		
 	}
 	
 	// populate faction average base gain
@@ -2069,6 +2079,12 @@ void populateVehicles()
 	
 	debug("populate vehicles - %s\n", MFactions[aiFactionId].noun_faction);
 	
+	// assign pad0 values and populate vehicle pad0 map
+	
+	populateVehiclePad0Map(true);
+	
+	// process vehicles
+	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
@@ -2076,11 +2092,6 @@ void populateVehicles()
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		int vehicleLandTransportedCluster = getLandTransportedCluster(vehicleTile);
 		int vehicleSeaCluster = getSeaCluster(vehicleTile);
-		
-		// store all vehicle current id in pad_0 field
-		// shift pad_0 by MaxVehNum to make sure it is distinct from vehicleId
-		
-		vehicle->pad_0 = MaxVehNum + vehicleId;
 		
 		// further process only own vehicles
 		
@@ -2177,9 +2188,66 @@ void populateVehicles()
 		
 	}
 	
-	// populate vehicle pad0 map
+	// psi unit proportion
 	
-	populateVehiclePad0Map();
+	int psiCounts[2][3] = {};
+	
+	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+	{
+		VEH &vehicle = Vehs[vehicleId];
+		
+		if (!isCombatVehicle(vehicleId))
+			continue;
+		
+		int sideIndex;
+		if (vehicle.faction_id == aiFactionId)
+		{
+			sideIndex = 0;
+		}
+		else if (isHostile(aiFactionId, vehicle.faction_id))
+		{
+			sideIndex = 1;
+		}
+		else
+		{
+			continue;
+		}
+		
+		psiCounts[sideIndex][0]++;
+		
+		if (vehicle.offense_value() < 0)
+		{
+			psiCounts[sideIndex][1]++;
+		}
+		
+		if (vehicle.defense_value() < 0)
+		{
+			psiCounts[sideIndex][2]++;
+		}
+		
+	}
+	
+	if (psiCounts[0][0] > 0)
+	{
+		aiData.playerPsiOffenseProportion = psiCounts[0][1] / psiCounts[0][0];
+		aiData.playerPsiDefenseProportion = psiCounts[0][2] / psiCounts[0][0];
+	}
+	else
+	{
+		aiData.playerPsiOffenseProportion = 0.5;
+		aiData.playerPsiDefenseProportion = 0.5;
+	}
+	
+	if (psiCounts[1][0] > 0)
+	{
+		aiData.enemyPsiOffenseProportion = psiCounts[1][1] / psiCounts[1][0];
+		aiData.enemyPsiDefenseProportion = psiCounts[1][2] / psiCounts[1][0];
+	}
+	else
+	{
+		aiData.enemyPsiOffenseProportion = 0.5;
+		aiData.enemyPsiDefenseProportion = 0.5;
+	}
 	
 	Profiling::stop("populateVehicles");
 	
@@ -2543,21 +2611,17 @@ void populateDangerZones()
 		tileInfo->potentialAttacks.clear();
 	}
 	
-debug(">tileInfo.potentialAttacks 1\n");
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
 		VEH *vehicle = getVehicle(vehicleId);
 		
 		// hostile
 		
-debug(">tileInfo.potentialAttacks 2\n");
 		if (!isHostile(aiFactionId, vehicle->faction_id))
 			continue;
 		
-debug(">tileInfo.potentialAttacks 3\n");
 		if (isMeleeVehicle(vehicleId))
 		{
-debug(">tileInfo.potentialAttacks 4\n");
 			for (robin_hood::pair<MAP *, double> const &potentialMeleeAttackTarget : getPotentialMeleeAttackTargets(vehicleId))
 			{
 				MAP *tile = potentialMeleeAttackTarget.first;
@@ -2565,7 +2629,6 @@ debug(">tileInfo.potentialAttacks 4\n");
 				
 				TileInfo &tileInfo = aiData.getTileInfo(tile);
 				
-debug(">tileInfo.potentialAttacks\n");
 				tileInfo.potentialAttacks.push_back({vehicle->pad_0, hastyCoefficient, EM_MELEE});
 				
 			}
@@ -2758,6 +2821,10 @@ void populateEnemyStacks()
 			"\n"
 			, enemyStackInfo.averageUnitCost
 		);
+		
+		// combatData
+		
+		enemyStackInfo.combatData.tile = enemyStackInfo.tile;
 		
 	}
 	
@@ -3657,6 +3724,7 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 	
 	debug("\t\tbase foeMilitaryStrength\n");
 	
+	std::array<robin_hood::unordered_flat_map<int, double>, MaxPlayerNum> foeVehicleWeights;
 	std::array<robin_hood::unordered_flat_map<int, double>, MaxPlayerNum> foeUnitWeights;
 	
 	for (int foeFactionId : unfriendlyFactionIds)
@@ -3761,12 +3829,8 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 			
 			// store value
 			
-			robin_hood::unordered_flat_map<int, double> &foeFactionUnitWeights = foeUnitWeights.at(vehicle.faction_id);
-			if (foeFactionUnitWeights.find(vehicle.unit_id) == foeFactionUnitWeights.end())
-			{
-				foeFactionUnitWeights.insert({vehicle.unit_id, 0.0});
-			}
-			foeFactionUnitWeights.at(vehicle.unit_id) += weight;
+			foeVehicleWeights.at(vehicle.faction_id)[vehicleId] = weight;
+			foeUnitWeights.at(vehicle.faction_id)[vehicle.unit_id] += weight;
 			
 			debug
 			(
@@ -3859,11 +3923,7 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 		
 		// do not add potential weight more than actual one
 		
-		if (foeUnitWeights.at(0).find(alienUnitId) == foeUnitWeights.at(0).end())
-		{
-			foeUnitWeights.at(0).emplace(alienUnitId, 0.0);
-		}
-		foeUnitWeights.at(0).at(alienUnitId) += weight;
+		foeUnitWeights.at(0)[alienUnitId] += weight;
 		
 		debug
 		(
@@ -3947,6 +4007,7 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 		
 		// clear this faction unit weights
 		
+		foeVehicleWeights.at(foeFactionId).clear();
 		foeUnitWeights.at(foeFactionId).clear();
 		foeFactionWeights.at(foeFactionId) = 0.0;
 		
@@ -4029,6 +4090,19 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 	debug("\tassailants\n");
 	for (int foeFactionId : unfriendlyFactionIds)
 	{
+		for (robin_hood::pair<int, double> const &foeVehicleWeightsEntry : foeVehicleWeights.at(foeFactionId))
+		{
+			int foeVehicleId = foeVehicleWeightsEntry.first;
+			double foeVehicleWeight = foeVehicleWeightsEntry.second;
+			
+			if (foeVehicleWeight <= 0.0)
+				continue;
+			
+			debug("\t\t%-24s %-32s\n", MFactions[foeFactionId].noun_faction, Vehs[foeVehicleId].name());
+			combatData.addAssailantVehicle(foeVehicleId, foeVehicleWeight);
+			
+		}
+		
 		for (robin_hood::pair<int, double> &foeUnitWeightEntry : foeUnitWeights.at(foeFactionId))
 		{
 			int foeUnitId = foeUnitWeightEntry.first;

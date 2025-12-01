@@ -6,28 +6,28 @@
 
 static char const *taskTypeNames[]
 {
-	"NONE  ",				//  0
-	"KILL  ",				//  1
-	"SKIP  ",				//  2
-	"BUILD ",				// 	3
-	"LOAD  ",				//  4
-	"BOARD ",				//  5
-	"UNLOAD",				//  6
-	"UNBOAR",				//  7
-	"TERRAF",				//  8
-	"ORDER ",				//  9
-	"HOLD  ",				// 10
-	"ALERT ",				// 11
-	"MOVE  ",				// 12
-	"ART_CO",				// 13
-	"MELEE ",				// 14
-	"ARTYLL",				// 15
-	"CONVOY",				// 16
+	"NONE",				//  0
+	"KILL",				//  1
+	"SKIP",				//  2
+	"BUIL",				// 	3
+	"LOAD",				//  4
+	"BOAR",				//  5
+	"UNLO",				//  6
+	"UNBO",				//  7
+	"TERR",				//  8
+	"ORDE",				//  9
+	"HOLD",				// 10
+	"ALER",				// 11
+	"MOVE",				// 12
+	"ARTC",				// 13
+	"MELE",				// 14
+	"ARTI",				// 15
+	"CONV",				// 16
 };
 
-char const *Task::typeName(TaskType &taskType)
+char const *Task::typeName()
 {
-	return taskTypeNames[taskType];
+	return taskTypeNames[this->type];
 }
 
 int Task::getTaskVehicleId() const
@@ -147,6 +147,47 @@ int Task::getDestinationRange()
 
 }
 
+/*
+returns reference to static buffer
+not thread-safe, not reentrant
+uses rotating buffers to allow up to 10 calls withing a single debug statement
+*/
+char const *Task::toString()
+{
+	static int constexpr BUFFER_COUNT = 10;
+	static int constexpr BUFFER_SIZE = 100;
+	
+    static char buffers[BUFFER_COUNT][BUFFER_SIZE];
+    static int index = 0;
+    
+    int i = index;
+    index = (index + 1) % BUFFER_COUNT;
+    
+    int vehicleId = getVehicleIdByPad0(vehiclePad0);
+    
+    if (vehicleId == -1)
+	{
+		snprintf(buffers[i], sizeof(buffers[i]), "ERROR: vehicleId is not found for pad0: {%4d}", vehiclePad0);
+	}
+	else
+	{
+		VEH &vehicle = Vehs[vehicleId];
+		snprintf
+		(
+			buffers[i],
+			sizeof(buffers[i]),
+			"{%4d} (%3d,%3d) %-32s %-4s -> %s/%s"
+			, getInitialVehicleIdByPad0(vehiclePad0), vehicle.x, vehicle.y, vehicle.name()
+			, typeName()
+			, getLocationString(destination)
+			, getLocationString(attackTarget)
+		);
+	}
+	
+    return buffers[i];
+    
+}
+
 int Task::execute()
 {
 	debug("Task::execute()\n");
@@ -189,7 +230,7 @@ int Task::execute(int vehicleId)
 
 		// make sure to declare vendetta if moving into neutral base
 
-		if (getRange(vehicleTile, destination) == 1 && getVehicleRemainingMovement(vehicleId) >= Rules->move_rate_roads && isBaseAt(destination))
+		if (getRange(vehicleTile, destination) == 1 && getVehicleRemainingMoves(vehicleId) >= Rules->move_rate_roads && isBaseAt(destination))
 		{
 			int destinationOwner = destination->owner;
 
@@ -716,34 +757,9 @@ bool hasTask(int vehicleId)
 	return (aiData.tasks.find(Vehs[vehicleId].pad_0) != aiData.tasks.end());
 }
 
-bool hasExecutableTask(int vehicleId)
+bool hasTacticalTask(int vehicleId)
 {
-	// no task
-	
-	if (!hasTask(vehicleId))
-		return false;
-	
-	// get task
-	
-	Task *task = getTask(vehicleId);
-	
-	// special task type that is NO task
-	
-	if (task->type == TT_NONE)
-		return false;
-	
-	// do not attack no longer hostile vehicles
-	
-	MAP *attackTarget = task->getAttackTarget();
-	if (attackTarget != nullptr)
-	{
-		int vehicleFactionId = veh_at(getX(attackTarget), getY(attackTarget));
-		if (isVendettaStoppedWith(vehicleFactionId))
-			return false;
-	}
-	
-	return true;
-	
+	return (aiData.tacticalTasks.find(Vehs[vehicleId].pad_0) != aiData.tacticalTasks.end());
 }
 
 void deleteTask(int vehicleId)
@@ -758,29 +774,10 @@ Task *getTask(int vehicleId)
 {
 	int vehiclePad0 = Vehs[vehicleId].pad_0;
 	
-	return
-		// tactical task
-		(aiData.tacticalTasks.find(vehiclePad0) != aiData.tacticalTasks.end()) ?
-			&(aiData.tacticalTasks.at(vehiclePad0))
-			:
-				// task
-				(aiData.tasks.find(vehiclePad0) != aiData.tasks.end()) ?
-					&(aiData.tasks.at(vehiclePad0))
-					:
-						nullptr
-	;
+	robin_hood::unordered_flat_map<int, Task>::iterator tacticalTaskIterator = aiData.tacticalTasks.find(vehiclePad0);
+	robin_hood::unordered_flat_map<int, Task>::iterator taskIterator = aiData.tasks.find(vehiclePad0);
 	
-}
-
-int executeTask(int vehicleId)
-{
-	debug("executeTask\n");
-	
-	Task *task = getTask(vehicleId);
-	if (task == nullptr)
-		return EM_DONE;
-	
-	return task->execute(vehicleId);
+	return tacticalTaskIterator != aiData.tacticalTasks.end() ? &(tacticalTaskIterator->second) : taskIterator != aiData.tasks.end() ? &(taskIterator->second) : nullptr;
 	
 }
 

@@ -121,13 +121,13 @@ enum ENGAGEMENT_MODE
 int const ENGAGEMENT_MODE_COUNT = EM_ARTILLERY + 1;
 std::array<ENGAGEMENT_MODE, ENGAGEMENT_MODE_COUNT> const ENGAGEMENT_MODES = {EM_MELEE, EM_ARTILLERY};
 
-enum COMBAT_MODE
+enum CombatMode
 {
 	CM_MELEE,
 	CM_ARTILLERY_DUEL,
 	CM_BOMBARDMENT,
 };
-static constexpr int COMBAT_MODE_COUNT = CM_BOMBARDMENT + 1;
+static constexpr int CombatMode_COUNT = CM_BOMBARDMENT + 1;
 
 enum COMBAT_TYPE
 {
@@ -806,7 +806,6 @@ int const BASE_TILE_OFFSETS[OFFSET_COUNT_RADIUS_CORNER][2] =
 char const *getLocationString(Location location);
 char const *getLocationString(int tileIndex);
 char const *getLocationString(MAP *tile);
-char const *getVehicleLocationIdNameString(int vehicleId);
 
 int getOffsetIndex(int dx, int dy);
 int getOffsetIndex(int x1, int y1, int x2, int y2);
@@ -1127,8 +1126,6 @@ int getVehicleCurrentConHP(int vehicleId);
 int getUnitSlotById(int unitId);
 int getUnitIdBySlot(int factionId, int slot);
 int getUnitIndex(int factionId, int unitId);
-int getFactionIdByUnitIndex(int unitIndex);
-int getUnitIdByUnitIndex(int unitIndex);
 int getBasePoliceSuppressedDrones(int baseId);
 bool isReactorIgnoredInCombat(bool psiCombat);
 bool isInfantryUnit(int unitId);
@@ -1190,7 +1187,6 @@ bool isAtAirbase(int vehicleId);
 int getClosestHostileBaseRange(int factionId, MAP *tile);
 double getEuclidianDistance(int x1, int y1, int x2, int y2);
 int getVehicleUnitCost(int vehicleId);
-int getVehicleRemainingMovement(int vehicleId);
 bool isAllowedMove(int vehicleId, MAP *srcTile, MAP *dstTile);
 bool isZocAffectedUnit(int unitId);
 bool isZocAffectedVehicle(int vehicleId);
@@ -1310,7 +1306,7 @@ bool isUnitObsolete(int unitId, int factionId);
 bool isUnitAvailable(int unitId, int factionId);
 bool isUnitPsiOffense(int unitId);
 bool isUnitPsiDefense(int unitId);
-COMBAT_MODE getCombatMode(ENGAGEMENT_MODE engagementMode, int defenderUnitId);
+CombatMode getCombatMode(ENGAGEMENT_MODE engagementMode, int defenderUnitId);
 bool isMutualCombat(ENGAGEMENT_MODE engagementMode, int defenderUnitId);
 bool isBombardment(ENGAGEMENT_MODE engagementMode, int defenderUnitId);
 double getVehicleStrenghtMultiplier(int vehicleId);

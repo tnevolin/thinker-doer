@@ -308,7 +308,7 @@ int lastEnemyMoveVehicleX = -1;
 int lastEnemyMoveVehicleY = -1;
 int enemyMoveVehicle(const int vehicleId)
 {
-	debug("enemyMoveVehicle [%4d] %s %2d %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)), getVehicleRemainingMovement(vehicleId), Units[Vehs[vehicleId].unit_id].name);
+	debug("enemyMoveVehicle %s remaningMoves=%2d\n", getVehiclePad0LocationNameString(vehicleId), getVehicleRemainingMoves(vehicleId));
 	
 	// update map data
 	
@@ -331,9 +331,11 @@ int enemyMoveVehicle(const int vehicleId)
 	
 	// execute task
 	
-	if (hasExecutableTask(vehicleId))
+	Task *task = getTask(vehicleId);
+	
+	if (task != nullptr && task->type != TT_NONE)
 	{
-		return executeTask(vehicleId);
+		return task->execute();
 	}
 	
 	// unhandled cases handled by default
