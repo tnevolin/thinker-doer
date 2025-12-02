@@ -3493,7 +3493,7 @@ void evaluateEnemyStacks()
 			
 			// direct
 			
-			if (isMeleeUnit(ownUnitId) && !(enemyStackInfo.needlejetInFlight && !isUnitHasAbility(ownUnitId, ABL_AIR_SUPERIORITY)))
+			if (isMeleeUnit(ownUnitId) && (conf.air_superiority_not_required_to_attack_needlejet || !enemyStackInfo.needlejetInFlight || isUnitHasAbility(ownUnitId, ABL_AIR_SUPERIORITY)))
 			{
 				int battleCount = 0;
 				double totalLoss = 0.0;
@@ -7914,7 +7914,7 @@ bool isUnitCanMeleeAttackUnit(int attackerUnitId, int defenderUnitId)
 	
 	// cannot attack needlejet in flight without air superiority
 	
-	if (defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// different surface triads cannot attack each other
@@ -7928,7 +7928,7 @@ bool isUnitCanMeleeAttackUnit(int attackerUnitId, int defenderUnitId)
 	
 }
 
-bool isUnitCanMeleeAttackFromTileToTile(int unitId, MAP *position, MAP *target)
+bool isUnitCanMeleeAttackFromTileToTile(int unitId, MAP *position, MAP *target) // TODO remove
 {
 	UNIT *unit = getUnit(unitId);
 	int triad = unit->triad();
@@ -7947,7 +7947,7 @@ bool isUnitCanMeleeAttackFromTileToTile(int unitId, MAP *position, MAP *target)
 	
 	// cannot attack needlejet in flight without air superiority
 	
-	if (targetTileInfo.needlejetInFlight && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && targetTileInfo.needlejetInFlight && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// check movement
@@ -8083,7 +8083,7 @@ bool isUnitCanArtilleryAttackFromTile(int unitId, MAP *position)
 Checks if unit can generally attack enemy at tile.
 Tile may have base/bunker/airbase.
 */
-bool isUnitCanMeleeAttackTile(int unitId, MAP *target, MAP *position)
+bool isUnitCanMeleeAttackTile(int unitId, MAP *target, MAP *position) // TODO remove
 {
 	UNIT *unit = getUnit(unitId);
 	int triad = unit->triad();
@@ -8096,7 +8096,7 @@ bool isUnitCanMeleeAttackTile(int unitId, MAP *target, MAP *position)
 	
 	// cannot attack needlejet in flight without air superiority
 	
-	if (targetTileInfo.needlejetInFlight && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && targetTileInfo.needlejetInFlight && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// check movement
@@ -8388,7 +8388,7 @@ bool isUnitCanMeleeAttackUnitAtTile(int attackerUnitId, int defenderUnitId, MAP 
 	
 	// cannot attack needlejet in flight without air superiority
 	
-	if (!tileInfo.airbase && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && !tileInfo.airbase && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// triad
@@ -8469,7 +8469,7 @@ bool isUnitCanMeleeAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MA
 	// cannot attack needlejet in flight without air superiority
 	// assuming the land around tile is an open field
 	
-	if (defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// check if air defender can place itself in inaccesible realm
@@ -8553,7 +8553,7 @@ bool isUnitCanArtilleryAttackUnitAtTile(int attackerUnitId, int defenderUnitId, 
 	
 	// cannot bombard air unit without air superiority
 	
-	if (!tileInfo.airbase && defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && !tileInfo.airbase && defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// all checks passed
@@ -8578,7 +8578,7 @@ bool isUnitCanArtilleryAttackUnitFromTile(int attackerUnitId, int defenderUnitId
 	// cannot bombard air unit without air superiority
 	// assuming the land around tile is an open field
 	
-	if (defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// all checks passed
@@ -8619,7 +8619,7 @@ bool isUnitCanMeleeAttackUnitFromBase(int attackerUnitId, int defenderUnitId)
 	// cannot attack needlejet in flight without air superiority
 	// assuming the land around Base is an open field
 	
-	if (defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// all checks passed
@@ -8660,7 +8660,7 @@ bool isUnitCanArtilleryAttackUnitFromBase(int attackerUnitId, int defenderUnitId
 	// cannot bombard air unit without air superiority
 	// assuming the land around Base is an open field
 	
-	if (defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// all checks passed

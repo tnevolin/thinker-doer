@@ -4489,3 +4489,19 @@ void __cdecl wtp_mod_retire_proto(int unitId, int factionId)
 	
 }
 
+/*
+Intercepts has_abil call for the purpose of determining whether vehicle can attack needlejet in flight.
+*/
+int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAblFlag ability)
+{
+	if (conf.air_superiority_not_required_to_attack_needlejet && ability == ABL_AIR_SUPERIORITY)
+	{
+		return 1;
+	}
+	
+	// execute original code
+	
+	return has_abil(unit_id, ability);
+	
+}
+

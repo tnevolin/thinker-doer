@@ -2578,10 +2578,21 @@ int aircraft_move(const int id) {
     while (++i < 625 && (sq = ts.get_next()) != NULL && ts.dist <= max_dist) {
         if ((id2 = choose_defender(ts.rx, ts.ry, id, sq)) >= 0) {
             VEH* veh2 = &Vehs[id2];
+			
+			// [WTP]
+			// air superiority is not required to attack needlejet
+			if (conf.air_superiority_not_required_to_attack_needlejet)
+			{
+			}
+			else
+			{
             if (!sq->is_base() && veh2->chassis_type() == CHS_NEEDLEJET
             && !has_abil(veh->unit_id, ABL_AIR_SUPERIORITY)) {
                 continue;
             }
+			}
+			//
+			
             if (missile && bx < 0 && ts.dist == 1) {
                 bx = ts.rx;
                 by = ts.ry;
@@ -2892,10 +2903,21 @@ int combat_move(const int id) {
             if (!ignore_zocs) { // Avoid zones of control
                 max_dist = ts.dist;
             }
+            
+            // [WTP]
+            // air superiority is not required to attack needlejet
+            if (conf.air_superiority_not_required_to_attack_needlejet)
+			{
+			}
+			else
+			{
             if (!to_base && Vehs[id2].chassis_type() == CHS_NEEDLEJET
             && !has_abil(veh->unit_id, ABL_AIR_SUPERIORITY)) {
                 continue;
             }
+			}
+			//
+			
             double odds = battle_priority(id, id2, ts.dist - 1, moves, sq);
 
             if (odds > best_odds) {

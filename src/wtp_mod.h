@@ -187,4 +187,5 @@ int __cdecl wtp_mod_alien_veh_init(int unitId, int factionId, int x, int y);
 void wtp_mod_social_ai(int factionId);
 int __cdecl wtp_mod_capture_base(int base_id, int faction, int is_probe);
 void __cdecl wtp_mod_retire_proto(int unitId, int factionId);
+int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAblFlag ability);
 

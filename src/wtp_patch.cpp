@@ -3164,6 +3164,14 @@ void patch_retire_proto()
 	
 }
 
+void patch_air_superiority_attack_needlejet()
+{
+    write_call(0x00595274, (int)wtp_mod_has_abil_air_superiority_attack_needlejet); // order_veh
+    write_call(0x00578456, (int)wtp_mod_has_abil_air_superiority_attack_needlejet); // enemy_move
+    write_call(0x005A132A, (int)wtp_mod_has_abil_air_superiority_attack_needlejet); // probe
+    
+}
+
 
 // =======================================================
 // main patch option selection
@@ -3496,6 +3504,11 @@ void patch_setup_wtp(Config* cf)
 	patch_capture_base();
 	
 	patch_retire_proto();
+	
+	if (conf.air_superiority_not_required_to_attack_needlejet)
+	{
+		patch_air_superiority_attack_needlejet();
+	}
 	
 }
 

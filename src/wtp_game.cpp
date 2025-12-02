@@ -5937,12 +5937,12 @@ bool isAtAirbase(int vehicleId)
 
 bool isUnitCanAttackNeedlejet(int unitId)
 {
-	return unit_has_ability(unitId, ABL_AIR_SUPERIORITY);
+	return conf.air_superiority_not_required_to_attack_needlejet || unit_has_ability(unitId, ABL_AIR_SUPERIORITY);
 }
 
 bool isUnitCanAttackLowAir(int unitId)
 {
-	return isMeleeUnit(unitId) || (isArtilleryUnit(unitId) && unit_has_ability(unitId, ABL_AIR_SUPERIORITY));
+	return conf.air_superiority_not_required_to_attack_needlejet || isMeleeUnit(unitId) || (isArtilleryUnit(unitId) && unit_has_ability(unitId, ABL_AIR_SUPERIORITY));
 }
 
 int getClosestHostileBaseRange(int factionId, MAP *tile)

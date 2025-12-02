@@ -1341,6 +1341,14 @@ int __cdecl read_rules(int tgl_all_rules) {
     BaseButton_set_bubble_text(&FlatButtons[34], Natural[3].name_short); // LM_URANIUM
     BaseButton_set_bubble_text(&FlatButtons[35], Natural[10].name_short); // LM_GEOTHERMAL
     text_close(); // Make sure file handle is closed
+    
+    // [WTP]
+    // disable air superiority for ground units
+    if (conf.air_superiority_not_required_to_attack_needlejet)
+	{
+		Ability[ABL_ID_AIR_SUPERIORITY].flags &= ~(AFLAG_ALLOWED_LAND_UNIT | AFLAG_ALLOWED_SEA_UNIT);
+	}
+	
     return false;
 }
 

@@ -360,7 +360,7 @@ bool EnemyStackInfo::isUnitCanMeleeAttackStack(int unitId, MAP *position) const
 	
 	// cannot attack needlejet in flight without air superiority
 	
-	if (this->needlejetInFlight && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
+	if (!conf.air_superiority_not_required_to_attack_needlejet && this->needlejetInFlight && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
 		return false;
 	
 	// check movement

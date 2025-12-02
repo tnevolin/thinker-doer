@@ -1,3 +1,9 @@
+# Version 400
+
+* Air Superiority fix.
+  * This ability is not required to attack Needlejet in flight.
+  * This ability is not applicable to surface units due to above.
+
 # Version 399
 
 * Base defensive facilities extend their effect 2 tiles outside of the base.

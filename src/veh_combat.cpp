@@ -1850,12 +1850,23 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
             veh_id_def = veh_top(veh_id_def);
             while (veh_id_def >= 0) {
                 veh_def = &Vehs[veh_id_def];
+                
+                // [WTP]
+                // air superiority is not required to attack needlejet
+                if (conf.air_superiority_not_required_to_attack_needlejet)
+				{
+				}
+				else
+				{
                 if (!(airbase || veh_def->triad() != TRIAD_AIR
                 || has_abil(veh_atk->unit_id, ABL_AIR_SUPERIORITY))) {
                     // Attack is not possible on this unit
                     veh_id_def = veh_def->next_veh_id_stack;
                     continue;
                 }
+				}
+				//
+				
                 mod_veh_skip(veh_id_atk);
                 
                 // [WTP]
