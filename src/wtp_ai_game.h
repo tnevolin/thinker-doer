@@ -357,6 +357,8 @@ struct MapSum
 
 struct CombatData
 {
+public:
+	
 	MAP *tile;
 	robin_hood::unordered_flat_map<int, double> assailantAttackGains;
 	robin_hood::unordered_flat_map<int, double> protectorDefendGains;
@@ -418,10 +420,20 @@ struct CombatData
 	bool isSufficientAssault();
 	bool isSufficientProtect();
 	
+	double getProtectWinProbabilityChange(int assailantVehicleId, double assailantWeightLoss, int protectorVehicleId, double protectorWeightLoss);
+	
+	double getAssailantAttackGain(int vehicleId);
+	double getProtectorDefendGain(int vehicleId);
+	
+private:
+	
 	void compute();
+	void compute(int assailantVehicleId, double assailantLoss, int protectorVehicleId, double protectorLoss);
+	void computeInitialize();
+	void computeReduceWeights(int assailantVehicleId, double assailantLoss, int protectorVehicleId, double protectorLoss);
+	void computeProcess();
 	void resolveMutualCombat(double combatEffect, double &attackerWeight, double &defenderWeight);
 	FactionUnitCombatEffect getBestAttackerDefenderMeleeEffect(TileCombatEffectTable &tileCombatEffectTable, robin_hood::unordered_flat_map<int, double> &attackers, robin_hood::unordered_flat_map<int, double> &defenders);
-	
 	
 };
 
@@ -1123,4 +1135,5 @@ double getCNDProbability(double value);
 double getWinProbability(double destroyedWeight1, double destroyedWeight2, double remainingWeight1);
 double getMutualCombatGain(double attackerDestructionGain, double defenderDestructionGain, double combatEffect);
 double getBombardmentGain(double defenderDestructionGain, double relativeBombardmentDamage);
+double getAssignedTaskProtectionGain(int vehicleId);
 

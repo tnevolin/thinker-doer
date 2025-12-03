@@ -1416,6 +1416,81 @@ void CombatData::compute()
 	
 	if (TRACE) { debug("CombatData::compute()\n"); }
 	
+	computeInitialize();
+	computeProcess();
+	
+}
+
+void CombatData::compute(int assailantVehicleId, double assailantLoss, int protectorVehicleId, double protectorLoss)
+{
+	if (computed)
+		return;
+	
+	if (TRACE) { debug("CombatData::compute()\n"); }
+	
+	computeInitialize();
+	computeReduceWeights(assailantVehicleId, assailantLoss, protectorVehicleId, protectorLoss);
+	computeProcess();
+	
+}
+
+void CombatData::computeInitialize()
+{
+	// clear effects
+	
+	assailantEffects.clear();
+	protectorEffects.clear();
+	
+	// reset remaining weights
+	
+	remainingAssailantUnitWeights = assailantUnitWeights;
+	remainingProtectorUnitWeights = protectorUnitWeights;
+	
+}
+
+void CombatData::computeReduceWeights(int assailantVehicleId, double assailantLoss, int protectorVehicleId, double protectorLoss)
+{
+	// reduce remaining weights
+	
+	VEH &assailantVehicle = Vehs[assailantVehicleId];
+	VEH &protectorVehicle = Vehs[protectorVehicleId];
+	
+	int assailantVehiclePad0 = assailantVehicle.pad_0;
+	int protectorVehiclePad0 = protectorVehicle.pad_0;
+	
+	if (assailantVehicleWeights.find(assailantVehiclePad0) != assailantVehicleWeights.end())
+	{
+		int assailantKey = FactionUnit::encodeKey(assailantVehicle.faction_id, assailantVehicle.unit_id);
+		double weightReduction = assailantLoss * assailantVehicleWeights.at(assailantVehiclePad0);
+		
+		if (remainingAssailantUnitWeights.map.find(assailantKey) != remainingAssailantUnitWeights.map.end())
+		{
+			remainingAssailantUnitWeights.map.at(assailantKey) = std::max(0.0, remainingAssailantUnitWeights.map.at(assailantKey) - weightReduction);
+		}
+		
+	}
+	
+	if (protectorVehicleWeights.find(protectorVehiclePad0) != protectorVehicleWeights.end())
+	{
+		int protectorKey = FactionUnit::encodeKey(protectorVehicle.faction_id, protectorVehicle.unit_id);
+		double weightReduction = protectorLoss * protectorVehicleWeights.at(protectorVehiclePad0);
+		
+		if (remainingProtectorUnitWeights.map.find(protectorKey) != remainingProtectorUnitWeights.map.end())
+		{
+			remainingProtectorUnitWeights.map.at(protectorKey) = std::max(0.0, remainingProtectorUnitWeights.map.at(protectorKey) - weightReduction);
+		}
+		
+	}
+	
+}
+
+void CombatData::computeProcess()
+{
+	if (computed)
+		return;
+	
+	if (TRACE) { debug("CombatData::compute()\n"); }
+	
 	// clear effects
 	
 	assailantEffects.clear();
@@ -1764,6 +1839,42 @@ FactionUnitCombatEffect CombatData::getBestAttackerDefenderMeleeEffect(TileComba
 	return FactionUnitCombatEffect(FactionUnitCombat(bestAttackerKey, bestDefenderKey, EM_MELEE), bestCombatEffect);
 	
 }
+
+double CombatData::getProtectWinProbabilityChange(int assailantVehicleId, double assailantWeightLoss, int protectorVehicleId, double protectorWeightLoss)
+{
+	// compute without reduction
+	
+	computed = false;
+	compute();
+	double oldProtectWinProbability = getProtectWinProbability();
+	
+	// compute with reduction
+	
+	computed = false;
+	compute(assailantVehicleId, assailantWeightLoss, protectorVehicleId, protectorWeightLoss);
+	double newProtectWinProbability = getProtectWinProbability();
+	
+	computed = false;
+	
+	return newProtectWinProbability - oldProtectWinProbability;
+	
+}
+
+double CombatData::getAssailantAttackGain(int vehicleId)
+{
+	VEH &vehicle = Vehs[vehicleId];
+	
+	if (assailantAttackGains.find(vehicle.pad_0) != assailantAttackGains.end())
+	{
+		return assailantAttackGains.at(vehicle.pad_0);
+	}
+	
+	for ()
+	
+}
+
+	double getProtectorDefendGain(int vehicleId);
+
 
 // EnemyStackInfo
 
@@ -5511,6 +5622,36 @@ double getBombardmentGain(double defenderDestructionGain, double relativeBombard
 	;
 	
 	return gain;
+	
+}
+
+double getAssignedTaskProtectionGain(int vehicleId)
+{
+	Task *task = getTask(vehicleId);
+	
+	if (task == nullptr)
+		return 0.0;
+	
+	if (task->attackTarget != nullptr)
+		return 0.0;
+	
+	TileInfo &tileInfo = aiData.getTileInfo(task->destination);
+	
+	CombatData *combatData;
+	if (tileInfo.base)
+	{
+		combatData = aiData.getBaseInfo(tileInfo.baseId).combatData;
+	}
+	else if (tileInfo.bunker)
+	{
+		combatData = aiData.bunkerCombatDatas.at(task->destination).combatData;
+	}
+	else
+	{
+		return 0.0;
+	}
+	
+	combatData.get
 	
 }
 

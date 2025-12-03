@@ -3366,6 +3366,9 @@ double getArtilleryAttackGain(int vehicleId, MAP *destination, MAP *target)
 
 CombatAction selectVehicleCombatAction(int vehicleId)
 {
+	// protection gain
+	
+	double protectionGain = getAssignedTaskProtectionGain(vehicleId);
 	
 	CombatAction bestCombatAction;
 	bestCombatAction.gain = -DBL_MAX;
