@@ -3164,6 +3164,12 @@ void patch_retire_proto()
 	
 }
 
+void patch_land_air_superiority_attack_needlejet_at_sea()
+{
+    write_call(0x005950E4, (int)wtp_mod_has_abil_land_air_superiority_attack_needlejet_at_sea); // order_veh
+    
+}
+
 void patch_air_superiority_attack_needlejet()
 {
     write_call(0x00595274, (int)wtp_mod_has_abil_air_superiority_attack_needlejet); // order_veh

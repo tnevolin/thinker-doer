@@ -4490,6 +4490,22 @@ void __cdecl wtp_mod_retire_proto(int unitId, int factionId)
 }
 
 /*
+Intercepts has_abil call to disallow land air superiority vehicle attacking needlejet at sea.
+*/
+int __cdecl wtp_mod_has_abil_land_air_superiority_attack_needlejet_at_sea(int unit_id, VehAblFlag ability)
+{
+	if (ability == ABL_AIR_SUPERIORITY)
+	{
+		return 0;
+	}
+	
+	// execute original code
+	
+	return has_abil(unit_id, ability);
+	
+}
+
+/*
 Intercepts has_abil call for the purpose of determining whether vehicle can attack needlejet in flight.
 */
 int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAblFlag ability)

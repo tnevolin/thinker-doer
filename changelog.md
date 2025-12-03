@@ -1,3 +1,7 @@
+# Version 401
+
+* [Fix] OG allows lans unit with air superiority attacking needlejet at sea. Fixed.
+
 # Version 400
 
 * Air Superiority fix.
