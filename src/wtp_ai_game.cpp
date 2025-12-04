@@ -1860,7 +1860,7 @@ double CombatData::getProtectWinProbabilityChange(int assailantVehicleId, double
 	
 }
 
-double CombatData::getAssailantAttackGain(int vehicleId)
+double CombatData::getAssaultAttackGain(int vehicleId)
 {
 	VEH &vehicle = Vehs[vehicleId];
 	
@@ -1869,12 +1869,34 @@ double CombatData::getAssailantAttackGain(int vehicleId)
 		return assailantAttackGains.at(vehicle.pad_0);
 	}
 	
-	for ()
+	double assaultAttackGain = 0.0;
+	
+	// TODO compute
+	
+	assaultAttackGains[vehicle.pad_0] = assaultAttackGain;
+	
+	return assaultAttackGain;
 	
 }
 
-	double getProtectorDefendGain(int vehicleId);
-
+double CombatData::getProtectDefendGain(int vehicleId)
+{
+	VEH &vehicle = Vehs[vehicleId];
+	
+	if (protectorDefendGains.find(vehicle.pad_0) != protectorDefendGains.end())
+	{
+		return protectorDefendGains.at(vehicle.pad_0);
+	}
+	
+	double protectDefendGain = 0.0;
+	
+	// TODO compute
+	
+	protectDefendGains[vehicle.pad_0] = protectDefendGain;
+	
+	return protectDefendGain;
+	
+}
 
 // EnemyStackInfo
 
@@ -2344,6 +2366,17 @@ void Data::addSeaTransportRequest(int seaCluster)
 {
 	seaTransportRequestCounts[seaCluster]++;
 }
+
+CombatData &Data::getTileCombatData(MAP *tile)
+{
+	return tileInfos.at(tile - *MapTiles).combatData;
+}
+
+CombatData &Data::getBaseCombatData(int baseId)
+{
+	return tileInfos.at(baseInfos.at(baseId).tile - *MapTiles).combatData;
+}
+
 
 // UnloadRequest
 
@@ -5625,7 +5658,7 @@ double getBombardmentGain(double defenderDestructionGain, double relativeBombard
 	
 }
 
-double getAssignedTaskProtectionGain(int vehicleId)
+double getAssignedTaskProtectDefendGain(int vehicleId)
 {
 	Task *task = getTask(vehicleId);
 	
@@ -5637,21 +5670,14 @@ double getAssignedTaskProtectionGain(int vehicleId)
 	
 	TileInfo &tileInfo = aiData.getTileInfo(task->destination);
 	
-	CombatData *combatData;
-	if (tileInfo.base)
+	double protectGain = 0.0;
+	
+	if (tileInfo.base || tileInfo.bunker)
 	{
-		combatData = aiData.getBaseInfo(tileInfo.baseId).combatData;
-	}
-	else if (tileInfo.bunker)
-	{
-		combatData = aiData.bunkerCombatDatas.at(task->destination).combatData;
-	}
-	else
-	{
-		return 0.0;
+		protectGain = aiData.getTileCombatData(task->destination).getProtectDefendGain(vehicleId);
 	}
 	
-	combatData.get
+	return protectGain;
 	
 }
 

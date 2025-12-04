@@ -917,7 +917,7 @@ void moveBunkerProtectors()
 			
 			// bunker protection should not be yet satisfied
 			
-			CombatData &combatData = aiData.bunkerCombatDatas.at(taskPriority.destination);
+			CombatData &combatData = aiData.getTileCombatData(taskPriority.destination);
 			
 			if (combatData.isSufficientProtect())
 				continue;
@@ -941,7 +941,7 @@ void moveBunkerProtectors()
 		
 		// assign to target
 		
-		CombatData &combatData = aiData.bunkerCombatDatas.at(bestTaskPriority->destination);
+		CombatData &combatData = aiData.getTileCombatData(bestTaskPriority->destination);
 		
 		combatData.addProtector(bestTaskPriority->vehicleId);
 		vehicleAssignments.insert({bestTaskPriority->vehicleId, bestTaskPriority});
@@ -980,11 +980,10 @@ void moveBunkerProtectors()
 	
 	debug("\thold current bunker protectors\n");
 	
-	for (robin_hood::pair<MAP *, CombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (MAP *bunkerTile : aiData.bunkers)
 	{
-		MAP *bunkerTile = bunkerCombatDataEntry.first;
-		CombatData &bunkerCombatData = bunkerCombatDataEntry.second;
 		TileInfo &bunkerTileInfo = aiData.getTileInfo(bunkerTile);
+		CombatData &bunkerCombatData = bunkerTileInfo.combatData;
 		
 		if (!bunkerCombatData.isSufficientProtect())
 		{
@@ -2376,7 +2375,7 @@ void populateBunkerProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 {
 	debug("\tpopulateBunkerProtectorTasks\n");
 	
-	if (aiData.bunkerCombatDatas.size() == 0)
+	if (aiData.bunkers.size() == 0)
 		return;
 	
 	for (int vehicleId : aiData.combatVehicleIds)
@@ -2400,10 +2399,9 @@ void populateBunkerProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 		
 		// process bunkers
 		
-		for (robin_hood::pair<MAP *, CombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+		for (MAP *bunkerTile : aiData.bunkers)
 		{
-			MAP *bunkerTile = bunkerCombatDataEntry.first;
-			CombatData &bunkerCombatData = bunkerCombatDataEntry.second;
+			CombatData &bunkerCombatData = aiData.getTileCombatData(bunkerTile);
 			
 			// exclude not reachable destination
 			
@@ -3368,7 +3366,7 @@ CombatAction selectVehicleCombatAction(int vehicleId)
 {
 	// protection gain
 	
-	double protectionGain = getAssignedTaskProtectionGain(vehicleId);
+	double protectionGain = getAssignedTaskProtectDefendGain(vehicleId);
 	
 	CombatAction bestCombatAction;
 	bestCombatAction.gain = -DBL_MAX;

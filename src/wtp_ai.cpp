@@ -421,7 +421,7 @@ void populateTileInfos()
 	
 	Profiling::start("bunkers and airbases", "populateTileInfos");
 	
-	aiData.bunkerCombatDatas.clear();
+	aiData.bunkers.clear();
 	
 	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 	{
@@ -433,7 +433,7 @@ void populateTileInfos()
 		
 		if (tileInfo.bunker && tile->owner == aiFactionId)
 		{
-			aiData.bunkerCombatDatas.emplace(tile, CombatData());
+			aiData.bunkers.emplace(tile);
 		}
 		
 	}
@@ -1636,6 +1636,7 @@ void populateBaseInfos()
 		// base info
 		
 		baseInfo.id = baseId;
+		baseInfo.tile = getBaseMapTile(baseId);
 		baseInfo.factionId = base->faction_id;
 		
 		// morale
@@ -3683,10 +3684,9 @@ void evaluateBaseDefense()
 		evaluateDefense(tile, combatData);
 	}
 	
-	for (robin_hood::pair<MAP *, CombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+	for (MAP *tile : aiData.bunkers)
 	{
-		MAP *tile = bunkerCombatDataEntry.first;
-		CombatData &combatData = bunkerCombatDataEntry.second;
+		CombatData &combatData = aiData.getTileCombatData(tile);
 		evaluateDefense(tile, combatData);
 	}
 	

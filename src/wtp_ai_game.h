@@ -76,198 +76,12 @@ struct AngleTileInfo
 	int angle;
 	TileInfo *tileInfo;
 };
+
 struct PotentialAttack
 {
 	int vehiclePad0;
 	double hastyCoefficient;
 	ENGAGEMENT_MODE engagementMode;
-};
-
-struct TileInfo
-{
-	int index;
-	MAP *tile;
-	
-	// surface type (in boolean and numeric form)
-	bool land;
-	bool ocean;
-	SurfaceType surfaceType;
-	bool coast;
-	bool rough;
-	bool fungus;
-	std::set<int> adjacentSeaRegions;
-	bool adjacentLand;
-	bool adjacentSea;
-	double adjacentLandRatio;
-	double adjacentSeaRatio;
-	
-	// items
-	int baseId = -1;
-	bool base = false;
-	bool bunker = false;
-	bool airbase = false;
-	bool port = false;
-	std::array<bool, MaxPlayerNum> sensors {};
-	// player base range
-	std::array<int, TRIAD_COUNT> baseRanges;
-	std::array<double, TRIAD_COUNT> baseDistances;
-	
-	// land vehicle is allowed here without transport
-	bool landAllowed = false;
-	
-	// vehicles at tile
-	
-	std::vector<int> vehicleIds;
-	std::vector<int> playerVehicleIds;
-	std::array<bool, MaxPlayerNum> factionNeedlejetInFlights;
-	std::array<bool, MaxPlayerNum> unfriendlyNeedlejetInFlights;
-	
-	// adjacent tiles
-	std::vector<AngleTileInfo> adjacentAngleTileInfos;
-	// range tiles
-	std::vector<TileInfo *> range2CenterTileInfos;
-	std::vector<TileInfo *> range2NoCenterTileInfos;
-	
-	// hex costs
-	// [movementType][angle]
-	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> hexCosts;
-	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> averageHexCosts;
-	
-	// movement data
-	
-	bool friendlyBase;
-	bool unfriendlyBase;
-	bool friendlyVehicle;
-	bool unfriendlyVehicle;
-	bool unfriendlyVehicleZoc;
-	bool blocked;
-	bool orgZoc;
-	bool dstZoc;
-	
-	// danger zones
-	// artifact or empty base can be captured
-	bool unfriendlyDangerZone;
-	// units can be attacked by hostiles
-	bool hostileDangerZone;
-	// units can be bombarded by hostiles
-	bool artilleryDangerZone;
-	// possible enemy attacks
-	std::vector<PotentialAttack> potentialAttacks;
-	
-	// nearest bases
-	std::array<IdIntValue, 3> nearestBaseRanges;
-	
-	// combat data
-	double maxBombardmentDamage;
-	std::array<double, MaxPlayerNum> sensorOffenseMultipliers;
-	std::array<double, MaxPlayerNum> sensorDefenseMultipliers;
-	std::array<double, ATTACK_TRIAD_COUNT> terrainDefenseMultipliers;
-	double getOffenseMultiplier(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
-	double getDefenseMultiplier(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, bool atTile);
-	
-};
-
-struct BasePoliceData
-{
-	int allowedUnitCount;
-	std::array<int, 2> providedUnitCounts;
-	int requiredPower;
-	int providedPower;
-	std::array<int, 2> policePowers;
-	std::array<double, 2> policeGains;
-	
-	double getUnitPoliceGain(int unitId, int factionId)
-	{
-		return policeGains.at(isPolice2xUnit(unitId, factionId));
-	}
-	double getVehiclePoliceGain(int vehicleId)
-	{
-		return policeGains.at(isPolice2xVehicle(vehicleId));
-	}
-	
-	void resetProvided()
-	{
-		std::fill(providedUnitCounts.begin(), providedUnitCounts.end(), 0);
-		providedPower = 0;
-	}
-	
-	void addVehicle(int vehicleId)
-	{
-		if (isPolice2xVehicle(vehicleId))
-		{
-			providedUnitCounts.at(0)++;
-			providedUnitCounts.at(1)++;
-			providedPower += policePowers.at(1);
-		}
-		else
-		{
-			providedUnitCounts.at(0)++;
-			providedPower += policePowers.at(0);
-		}
-		
-	}
-	
-	bool isSatisfied(int policePower) const
-	{
-		return (providedUnitCounts.at(policePower) >= allowedUnitCount || providedPower >= requiredPower);
-	}
-	
-	bool isSatisfied1x() const
-	{
-		return isSatisfied(0);
-	}
-	
-	bool isSatisfied2x() const
-	{
-		return isSatisfied(1);
-	}
-	
-};
-
-struct BaseProbeData
-{
-	double requiredEffect = 0.0;
-	double providedEffect = 0.0;
-	double providedEffectPresent = 0.0;
-	
-	void clear()
-	{
-		requiredEffect = 0.0;
-		providedEffect = 0.0;
-		providedEffectPresent = 0.0;
-	}
-	
-	void reset()
-	{
-		providedEffect = 0.0;
-		providedEffectPresent = 0.0;
-	}
-	
-	void addVehicle(int vehicleId, bool present)
-	{
-		double vehicleEffect = getVehicleMoraleMultiplier(vehicleId);
-		
-		providedEffect += vehicleEffect;
-		
-		if (present)
-		{
-			providedEffectPresent += vehicleEffect;
-		}
-		
-	}
-	
-	bool isSatisfied(bool present) const
-	{
-		return (present ? providedEffectPresent : providedEffect) >= requiredEffect;
-	}
-	
-	double getDemand(bool present) const
-	{
-		double required = requiredEffect;
-		double provided = (present ? providedEffectPresent : providedEffect);
-		return ((required > 0.0 && provided < required) ? 1.0 - provided / required : 0.0);
-	}
-	
 };
 
 /*
@@ -422,8 +236,8 @@ public:
 	
 	double getProtectWinProbabilityChange(int assailantVehicleId, double assailantWeightLoss, int protectorVehicleId, double protectorWeightLoss);
 	
-	double getAssailantAttackGain(int vehicleId);
-	double getProtectorDefendGain(int vehicleId);
+	double getAssaultAttackGain(int vehicleId);
+	double getProtectDefendGain(int vehicleId);
 	
 private:
 	
@@ -437,6 +251,195 @@ private:
 	
 };
 
+struct TileInfo
+{
+	int index;
+	MAP *tile;
+	
+	// surface type (in boolean and numeric form)
+	bool land;
+	bool ocean;
+	SurfaceType surfaceType;
+	bool coast;
+	bool rough;
+	bool fungus;
+	std::set<int> adjacentSeaRegions;
+	bool adjacentLand;
+	bool adjacentSea;
+	double adjacentLandRatio;
+	double adjacentSeaRatio;
+	
+	// items
+	int baseId = -1;
+	bool base = false;
+	bool bunker = false;
+	bool airbase = false;
+	bool port = false;
+	std::array<bool, MaxPlayerNum> sensors {};
+	// player base range
+	std::array<int, TRIAD_COUNT> baseRanges;
+	std::array<double, TRIAD_COUNT> baseDistances;
+	
+	// land vehicle is allowed here without transport
+	bool landAllowed = false;
+	
+	// vehicles at tile
+	
+	std::vector<int> vehicleIds;
+	std::vector<int> playerVehicleIds;
+	std::array<bool, MaxPlayerNum> factionNeedlejetInFlights;
+	std::array<bool, MaxPlayerNum> unfriendlyNeedlejetInFlights;
+	
+	// adjacent tiles
+	std::vector<AngleTileInfo> adjacentAngleTileInfos;
+	// range tiles
+	std::vector<TileInfo *> range2CenterTileInfos;
+	std::vector<TileInfo *> range2NoCenterTileInfos;
+	
+	// hex costs
+	// [movementType][angle]
+	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> hexCosts;
+	std::array<std::array<int, ANGLE_COUNT>, MOVEMENT_TYPE_COUNT> averageHexCosts;
+	
+	// movement data
+	
+	bool friendlyBase;
+	bool unfriendlyBase;
+	bool friendlyVehicle;
+	bool unfriendlyVehicle;
+	bool unfriendlyVehicleZoc;
+	bool blocked;
+	bool orgZoc;
+	bool dstZoc;
+	
+	// danger zones
+	// artifact or empty base can be captured
+	bool unfriendlyDangerZone;
+	// units can be attacked by hostiles
+	bool hostileDangerZone;
+	// units can be bombarded by hostiles
+	bool artilleryDangerZone;
+	// possible enemy attacks
+	std::vector<PotentialAttack> potentialAttacks;
+	// combat data
+	CombatData combatData;
+	
+	// nearest bases
+	std::array<IdIntValue, 3> nearestBaseRanges;
+	
+	// combat data
+	double maxBombardmentDamage;
+	std::array<double, MaxPlayerNum> sensorOffenseMultipliers;
+	std::array<double, MaxPlayerNum> sensorDefenseMultipliers;
+	std::array<double, ATTACK_TRIAD_COUNT> terrainDefenseMultipliers;
+	double getOffenseMultiplier(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId);
+	double getDefenseMultiplier(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, bool atTile);
+	
+};
+
+struct BasePoliceData
+{
+	int allowedUnitCount;
+	std::array<int, 2> providedUnitCounts;
+	int requiredPower;
+	int providedPower;
+	std::array<int, 2> policePowers;
+	std::array<double, 2> policeGains;
+	
+	double getUnitPoliceGain(int unitId, int factionId)
+	{
+		return policeGains.at(isPolice2xUnit(unitId, factionId));
+	}
+	double getVehiclePoliceGain(int vehicleId)
+	{
+		return policeGains.at(isPolice2xVehicle(vehicleId));
+	}
+	
+	void resetProvided()
+	{
+		std::fill(providedUnitCounts.begin(), providedUnitCounts.end(), 0);
+		providedPower = 0;
+	}
+	
+	void addVehicle(int vehicleId)
+	{
+		if (isPolice2xVehicle(vehicleId))
+		{
+			providedUnitCounts.at(0)++;
+			providedUnitCounts.at(1)++;
+			providedPower += policePowers.at(1);
+		}
+		else
+		{
+			providedUnitCounts.at(0)++;
+			providedPower += policePowers.at(0);
+		}
+		
+	}
+	
+	bool isSatisfied(int policePower) const
+	{
+		return (providedUnitCounts.at(policePower) >= allowedUnitCount || providedPower >= requiredPower);
+	}
+	
+	bool isSatisfied1x() const
+	{
+		return isSatisfied(0);
+	}
+	
+	bool isSatisfied2x() const
+	{
+		return isSatisfied(1);
+	}
+	
+};
+
+struct BaseProbeData
+{
+	double requiredEffect = 0.0;
+	double providedEffect = 0.0;
+	double providedEffectPresent = 0.0;
+	
+	void clear()
+	{
+		requiredEffect = 0.0;
+		providedEffect = 0.0;
+		providedEffectPresent = 0.0;
+	}
+	
+	void reset()
+	{
+		providedEffect = 0.0;
+		providedEffectPresent = 0.0;
+	}
+	
+	void addVehicle(int vehicleId, bool present)
+	{
+		double vehicleEffect = getVehicleMoraleMultiplier(vehicleId);
+		
+		providedEffect += vehicleEffect;
+		
+		if (present)
+		{
+			providedEffectPresent += vehicleEffect;
+		}
+		
+	}
+	
+	bool isSatisfied(bool present) const
+	{
+		return (present ? providedEffectPresent : providedEffect) >= requiredEffect;
+	}
+	
+	double getDemand(bool present) const
+	{
+		double required = requiredEffect;
+		double provided = (present ? providedEffectPresent : providedEffect);
+		return ((required > 0.0 && provided < required) ? 1.0 - provided / required : 0.0);
+	}
+	
+};
+
 /*
 base information
 */
@@ -444,6 +447,7 @@ struct BaseInfo
 {
 	BASE snapshot;
 	int id;
+	MAP *tile;
 	int factionId;
 	bool port;
 	int enemyAirbaseDistance;
@@ -840,9 +844,9 @@ struct Data
 		baseInfos.at(baseId).reset();
 	}
 	
-	// bunker combat data
+	// bunkers
 	
-	robin_hood::unordered_flat_map<MAP *, CombatData> bunkerCombatDatas;
+	robin_hood::unordered_flat_set<MAP *> bunkers;
 	
 	// faction infos
 	
@@ -1001,6 +1005,9 @@ struct Data
 	
 	void addSeaTransportRequest(int seaCluster);
 	
+	CombatData &getTileCombatData(MAP *tile);
+	CombatData &getBaseCombatData(int baseId);
+	
 };
 
 extern Data aiData;
@@ -1135,5 +1142,5 @@ double getCNDProbability(double value);
 double getWinProbability(double destroyedWeight1, double destroyedWeight2, double remainingWeight1);
 double getMutualCombatGain(double attackerDestructionGain, double defenderDestructionGain, double combatEffect);
 double getBombardmentGain(double defenderDestructionGain, double relativeBombardmentDamage);
-double getAssignedTaskProtectionGain(int vehicleId);
+double getAssignedTaskProtectDefendGain(int vehicleId);
 

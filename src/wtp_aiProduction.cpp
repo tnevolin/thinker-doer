@@ -2731,10 +2731,9 @@ void evaluateBunkerDefenseUnits()
 		
 		double bestGain = 0.0;
 		
-		for (robin_hood::pair<MAP *, CombatData> &bunkerCombatDataEntry : aiData.bunkerCombatDatas)
+		for (MAP *targetBunkerTile : aiData.bunkers)
 		{
-			MAP *targetBunkerTile = bunkerCombatDataEntry.first;
-			CombatData &targetBunkerCombatData = bunkerCombatDataEntry.second;
+			CombatData &targetBunkerCombatData = aiData.getTileCombatData(targetBunkerTile);
 			
 			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBunkerTile);
 			if (travelTime == INF)
