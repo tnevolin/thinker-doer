@@ -94,8 +94,6 @@ __cdecl char *getAbilityCostText(int number, char *destination, int radix);
 __cdecl void modifiedSocialCalc(int seSelectionsPointer, int seRatingsPointer, int factionId, int ignored4, int seChoiceEffectOnly);
 __cdecl void displayBaseNutrientCostFactor(int destinationStringPointer, int sourceStringPointer);
 __cdecl void correctGrowthTurnsIndicator(int destinationStringPointer, int sourceStringPointer);
-int getLandUnitSpeedOnRoads(int unitId);
-int getLandUnitSpeedOnTubes(int unitId);
 int calculateNotPrototypedComponentsCost(int chassisId, int weaponId, int armorId, int chassisPrototyped, int weaponPrototyped, int armorPrototyped);
 int calculateNotPrototypedComponentsCost(int factionId, int chassisId, int weaponId, int armorId);
 int calculateNotPrototypedComponentsCost(int unitId);

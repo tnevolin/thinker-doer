@@ -1106,8 +1106,6 @@ double getBasePopulationGrowth(int baseId);
 double getBasePopulationGrowthIncrease(int baseId, double nutrientSurplusIncrease);
 double getBasePopulationGrowthRate(int baseId);
 int getBaseTurnsToPopulation(int baseId, int population);
-int getMovementRateAlongTube();
-int getMovementRateAlongRoad();
 bool isInfantryDefensiveUnit(int unitId);
 bool isInfantryDefensiveVehicle(int vehicleId);
 bool isInfantryDefensivePolice2xUnit(int unitId, int factionId);

@@ -1378,9 +1378,25 @@ int __cdecl mod_hex_cost(int unit_id, int faction_id, int x1, int y1, int x2, in
         if (!is_ocean(sq_a) && !is_ocean(sq_b)) {
             if (sq_a->items & (BIT_BASE_IN_TILE | BIT_MAGTUBE)
             && sq_b->items & (BIT_BASE_IN_TILE | BIT_MAGTUBE)) {
+            	
+            	// [WTP]
+            	// explicit value
+            	/*
                 value = 1;
+                */
+                value = conf.move_cost_magtube;
+                //
+                
             } else if (value == 1) { // Moving along a road
+            	
+            	// [WTP]
+            	// explicit value
+            	/*
                 value = conf.road_movement_rate;
+                */
+                value = conf.move_cost_road;
+                //
+                
             }
         }
     }

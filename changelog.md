@@ -1,6 +1,11 @@
 # Version 401
 
 * [Fix] OG allows lans unit with air superiority attacking needlejet at sea. Fixed.
+* Explicit move rate configuration for road and magtube: move_points, move_cost_road, move_cost_magtube.
+  * Default is double speed on road and triple on magtube.
+* Magtube takes 4 turns to build.
+* Fuel nanocells can be applied to ship and grant +4 moves.
+  * Fuel nanocells cost is 50%.
 
 # Version 400
 

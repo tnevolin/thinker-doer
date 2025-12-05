@@ -396,8 +396,26 @@ int __cdecl proto_speed(int unit_id) {
             speed_val /= 2; // 2nd penalty for air transports: -50%
         }
     }
+    
+    // [WTP]
+    // fuel nanocells for ships
+    if (triad == TRIAD_SEA)
+    {
+        if (has_abil(unit_id, ABL_FUEL_NANOCELLS)) {
+            speed_val += 4;
+        }
+    }
+    //
+    
     speed_val = clamp(speed_val, 1, 99) * Rules->move_rate_roads;
+    
+    // [WTP]
+    // assert is no longer working
+    /*
     assert(speed_val == speed_proto(unit_id));
+    */
+    //
+    
     return speed_val;
 }
 

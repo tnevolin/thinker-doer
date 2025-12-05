@@ -278,7 +278,6 @@ int getBestSeaCombatSpeed(int factionId);
 int getBestSeaTransportSpeed(int factionId);
 void disbandOrversupportedVehicles(int factionId);
 void disbandUnneededVehicles();
-MAP *getVehicleArtilleryAttackPosition(int vehicleId, MAP *target);
 bool isUnitCanCaptureBase(int unitId, MAP *baseTile);
 bool isUnitCanCaptureBase(int unitId, MAP *origin, MAP *baseTile);
 bool isVehicleCanCaptureBase(int vehicleId, MAP *baseTile);
@@ -338,6 +337,5 @@ double getSensorOffenseMultiplier(int factionId, MAP *tile);
 double getSensorDefenseMultiplier(int factionId, MAP *tile);
 double getUnitMeleeOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
 double getUnitArtilleryOffenseStrengthMultipler(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, MAP *tile, bool exactLocation);
-int getHexCost(int unitId, int factionId, int fromX, int fromY, int toX, int toY, int speed1);
 int getBasePoliceRequiredPower(int baseId);
 

@@ -120,7 +120,7 @@ Mine,             None,    Mining Platform,  None,     8,  Construct $STR0, M, M
 Solar Collector,  None,    Tidal Harness,    None,     4,  Construct $STR0, S, S
 Forest,           None,    ...,              Disable,  8,  Plant $STR0,     F, Shift+F
 Road,             None,    Road,             Disable,  1,  Build $STR0,     R, R
-Mag Tube,         Magnets, Mag Tube,         Disable,  6,  Build $STR0,     R, R
+Mag Tube,         Magnets, Mag Tube,         Disable,  4,  Build $STR0,     R, R
 Bunker,           None,    Bunker,           Disable,  5,  Construct $STR0, K, K
 Airbase,          DocAir,  Airbase,          Disable, 10,  Construct $STR0, ., .
 Sensor Array,     None,    Sensor Buoy,      None,     4,  Construct $STR0, O, O
@@ -527,7 +527,7 @@ Slow Unit,              0, Disable,  Slow,      000000111111, -1 moves
 Soporific Gas Pods,     2, Bioadap,  Gas,       000001001101, -2 Enemy morale vs. non-native
 Dissociative Wave,      2, Surface,  Wave,      000000111111, Fizzles special abilities
 Marine Detachment,      2, AdapDoc,  Marine,    000001001010, Capture enemy ships
-Fuel Nanocells,         1, MatComp,  Nanocell,  000000111100, Increased air range
+Fuel Nanocells,         2, MatComp,  Nanocell,  000000111100, Increased air range
 Algorithmic Enhancement,4, NanoMin,  Enhanced,  100000111111, Halves probe team failure
 
 

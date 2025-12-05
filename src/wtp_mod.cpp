@@ -1475,46 +1475,6 @@ __cdecl void correctGrowthTurnsIndicator(int destinationStringPointer, int sourc
 	
 }
 
-int getLandUnitSpeedOnRoads(int unitId)
-{
-	UNIT *unit = getUnit(unitId);
-	int chassisSpeed = unit->speed();
-
-	int speed;
-
-	if (conf.magtube_movement_rate > 0)
-	{
-		speed = chassisSpeed * Rules->move_rate_roads / conf.road_movement_cost;
-	}
-	else
-	{
-		speed = chassisSpeed * Rules->move_rate_roads;
-	}
-
-	return speed;
-
-}
-
-int getLandUnitSpeedOnTubes(int unitId)
-{
-	UNIT *unit = getUnit(unitId);
-	int chassisSpeed = unit->speed();
-
-	int speed;
-
-	if (conf.magtube_movement_rate > 0)
-	{
-		speed = chassisSpeed * Rules->move_rate_roads;
-	}
-	else
-	{
-		speed = 1000;
-	}
-
-	return speed;
-
-}
-
 /**
 Calculates summary cost of all not prototyped components.
 */

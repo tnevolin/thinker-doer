@@ -449,6 +449,12 @@ int __cdecl read_basic_rules() {
         conf.road_movement_rate = conf.magtube_movement_rate;
         Rules->move_rate_roads *= conf.magtube_movement_rate;
     }
+    
+    // [WTP]
+    // set move rate explicitly
+    Rules->move_rate_roads = conf.move_points;
+    //
+    
     if (!conf.revised_tech_cost) {
         conf.tech_stagnate_rate = 150;
     }
@@ -1347,6 +1353,13 @@ int __cdecl read_rules(int tgl_all_rules) {
     if (conf.air_superiority_not_required_to_attack_needlejet)
 	{
 		Ability[ABL_ID_AIR_SUPERIORITY].flags &= ~(AFLAG_ALLOWED_LAND_UNIT | AFLAG_ALLOWED_SEA_UNIT);
+	}
+	
+    // [WTP]
+    // enable fuel nanocells for ships
+    if (conf.fuel_nanocell_ship_bonus > 0)
+	{
+		Ability[ABL_ID_FUEL_NANOCELLS].flags |= (AFLAG_ALLOWED_SEA_UNIT);
 	}
 	
     return false;

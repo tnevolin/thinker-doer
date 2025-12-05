@@ -7104,16 +7104,6 @@ int getBaseTurnsToPopulation(int baseId, int population)
 	
 }
 
-int getMovementRateAlongTube()
-{
-	return (conf.magtube_movement_rate == 0 ? 0 : 1);
-}
-
-int getMovementRateAlongRoad()
-{
-	return (conf.magtube_movement_rate == 0 ? 1 : conf.magtube_movement_rate);
-}
-
 bool isInfantryDefensiveUnit(int unitId)
 {
 	UNIT *unit = getUnit(unitId);

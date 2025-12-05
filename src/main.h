@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v400"
+    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v401"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -443,7 +443,11 @@ struct Config {
     bool fungus_terrain_bonus = false;
     int promotion_probability_denominator = 1;
     double lab_mineral_worth = 0.5;
+    int move_points;
+    int move_cost_road;
+    int move_cost_magtube;
     bool road_magtube_fixed_movement_rate = false;
+    int fuel_nanocell_ship_bonus = 0;
     int right_of_passage_road = 0;
     int right_of_passage_magtube = 0;
     bool scorched_earth = false;

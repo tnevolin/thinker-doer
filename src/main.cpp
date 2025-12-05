@@ -818,9 +818,25 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->lab_mineral_worth = atof(value);
     }
+    else if (MATCH("move_points"))
+    {
+        cf->move_points = atoi(value);
+    }
+    else if (MATCH("move_cost_road"))
+    {
+        cf->move_cost_road = atoi(value);
+    }
+    else if (MATCH("move_cost_magtube"))
+    {
+        cf->move_cost_magtube = atoi(value);
+    }
     else if (MATCH("road_magtube_fixed_movement_rate"))
     {
         cf->road_magtube_fixed_movement_rate = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("fuel_nanocell_ship_bonus"))
+    {
+        cf->fuel_nanocell_ship_bonus = atoi(value);
     }
     else if (MATCH("right_of_passage_road"))
     {
