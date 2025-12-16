@@ -3531,7 +3531,7 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_retire_proto();
 	
-	if (conf.air_superiority_not_required_to_attack_needlejet)
+	if (!conf.air_attack_requires_air_superiority)
 	{
 		patch_air_superiority_attack_needlejet();
 	}

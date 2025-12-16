@@ -9,7 +9,12 @@
 #include "main.h"
 
 // tracing statements
-bool constexpr TRACE = DEBUG && false;
+#ifdef BUILD_DEBUG
+	#define trace(...) if (TRACE) { fprintf(debug_log, __VA_ARGS__); }
+#else
+	#define trace(...) /* Nothing */
+#endif
+constexpr bool TRACE = DEBUG && false;
 
 // first level triad based defensive structure facilities
 FacilityId constexpr TRIAD_DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX};
@@ -154,13 +159,14 @@ struct FactionUnit
 {
 	int factionId;
 	int unitId;
+	int key = -1;
 	
 	static int encodeKey(int factionId, int unitId);
 	static int encodeKey(int vehicleId);
 	
 	FactionUnit(int _factionId, int _unitId);
-	int encodeKey();
 	FactionUnit(int _key);
+	int encodeKey();
 	
 };
 
@@ -1071,6 +1077,7 @@ int getBaseIdAt(int x, int y);
 bool isNativeUnit(int unitId);
 bool isNativeVehicle(int vehicleId);
 bool isRegularUnit(int unitId);
+bool isRegularCombatUnit(int unitId);
 bool isRegularVehicle(int vehicleId);
 double getPercentageBonusMultiplier(double percentageBonus);
 bool isMineBonus(MAP *tile);
@@ -1135,7 +1142,8 @@ bool isPolice2xVehicle(int vehicleId);
 bool isInfantryPolice2xUnit(int unitId, int factionId);
 bool isInfantryPolice2xVehicle(int vehicleId);
 bool isPsiCombat(int attackerUnitId, int defenderUnitId);
-double getAlienTurnStrengthModifier();
+double getAlienTurnOffenseModifier();
+double getAlienTurnDefenseModifier();
 int getFactionMaintenance(int factionId);
 int getFactionNetIncome(int factionId);
 int getFactionGrossIncome(int factionId);
@@ -1321,4 +1329,8 @@ std::string getAbilitiesString(int unitType);
 int getBaseItemBuildTime(int baseId, int item, bool countAccumulatedMinerals = false);
 bool isVehicleConvoying(int vehicleId);
 bool isVehicleTerraforming(VEH *vehicle);
+double getValueSum(robin_hood::unordered_flat_map<int, double> weights);
+bool isValidFactionId(int factionId);
+bool isValidUnitId(int unitId);
+bool isValidVehicleId(int vehicleId);	
 

@@ -342,7 +342,15 @@ void __cdecl veh_clear(int veh_id, int unit_id, int faction_id) {
         veh->waypoint_x[i] = -1;
         veh->waypoint_y[i] = -1;
     }
+    
+    // [WTP]
+    // default morale = 0
+    /*
     veh->morale = (uint8_t)(MFactions[faction_id].rule_morale + 1);
+    */
+    veh->morale = (uint8_t) (MFactions[faction_id].rule_morale + 0);
+    //
+    
     veh->movement_turns = 0;
     veh->order_auto_type = 0;
     veh->visibility = 0;

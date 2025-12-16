@@ -66,8 +66,8 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	
 	// get combat map tile
 	
-	MAP *attackerMapTile = getVehicleMapTile(attackerVehicleId);
-	MAP *defenderMapTile = getVehicleMapTile(defenderVehicleId);
+	MAP *attackerMapTile = getMapTile(attackerVehicle.x, attackerVehicle.y);
+	MAP *defenderMapTile = getMapTile(defenderVehicle.x, defenderVehicle.y);
 	
 	// run original function
 	
@@ -129,17 +129,17 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
     // sensor
     // ----------------------------------------------------------------------------------------------------
 	
-    // sensor bonus on attack (except probe)
+    // sensor bonus on offense
+    // granted based on attacker location
 	
-	if (conf.sensor_offense && !attackerUnit.is_probe())
+	// compute terrain bonus if on map only
+	if (attackerMapTile != nullptr)
 	{
-		// land or ocean with sensor allowed
-		
-		if (!is_ocean(defenderMapTile) || conf.sensor_offense_ocean)
+		if (conf.sensor_offense && (conf.sensor_offense_ocean || !is_ocean(attackerMapTile)))
 		{
-			// attacker is in range of friendly sensor and combat is happening on neutral/attacker territory
+			// attacker is in range of friendly sensor and attacking from neutral/attacker territory
 			
-			if (isWithinFriendlySensorRange(attackerVehicle.faction_id, defenderMapTile))
+			if (isWithinFriendlySensorRange(attackerVehicle.faction_id, attackerMapTile))
 			{
 				addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
 			}
@@ -162,79 +162,86 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		((combat_type & CT_WEAPON_ONLY) != 0 && (combat_type & (CT_INTERCEPT|CT_AIR_DEFENSE)) == 0) // artillery duel
 	)
 	{
-		// sensor offense bonus applies to defender within attacker-friendly sensor radius
+		// sensor bonus applies to attacker even when it is not enabled
 		
-		if (isOffenseSensorBonusApplicable(attackerVehicle.faction_id, defenderMapTile))
+		// compute terrain bonus if on map only
+		if (attackerMapTile != nullptr)
 		{
-			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
-		}
-		
-		// sensor defense bonus applies to attacker within defender-friendly sensor radius
-		
-		if (isDefenseSensorBonusApplicable(defenderVehicle.faction_id, attackerMapTile))
-		{
-			addDefenderBonus(defenderStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
+			if (isOffenseSensorBonusApplicable(attackerVehicle.faction_id, attackerMapTile))
+			{
+				// already applied
+			}
+			else if (isDefenseSensorBonusApplicable(attackerVehicle.faction_id, attackerMapTile))
+			{
+				addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
+			}
+			
 		}
 		
 		// add base defense bonuses to attacker
 		
-		int attackerBaseId = base_at(attackerVehicle.x, attackerVehicle.y);
-		if (attackerBaseId != -1)
+		// compute terrain bonus if on map only
+		if (attackerMapTile != nullptr)
 		{
-			if (psiCombat)
+			int attackerBaseId = base_at(attackerVehicle.x, attackerVehicle.y);
+			if (attackerBaseId != -1)
 			{
-				addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
-			}
-			else
-			{
-				// assign label and multiplier
-				
-				const char *label = nullptr;
-				int multiplier = 100;
-				
-				switch (attackerTriad)
+				if (psiCombat)
 				{
-				case TRIAD_LAND:
-					if (isBaseHasFacility(attackerBaseId, FAC_PERIMETER_DEFENSE))
-					{
-						label = *(*tx_labels + LABEL_OFFSET_PERIMETER);
-						multiplier += conf.facility_defense_bonus[0];
-					}
-					break;
-					
-				case TRIAD_SEA:
-					if (isBaseHasFacility(attackerBaseId, FAC_NAVAL_YARD))
-					{
-						label = LABEL_NAVAL_YARD;
-						multiplier += conf.facility_defense_bonus[1];
-					}
-					break;
-					
-				case TRIAD_AIR:
-					if (isBaseHasFacility(attackerBaseId, FAC_AEROSPACE_COMPLEX))
-					{
-						label = LABEL_AEROSPACE_COMPLEX;
-						multiplier += conf.facility_defense_bonus[2];
-					}
-					break;
-					
-				}
-				
-				if (isBaseHasFacility(attackerBaseId, FAC_TACHYON_FIELD))
-				{
-					label = *(*tx_labels + LABEL_OFFSET_TACHYON);
-					multiplier += conf.facility_defense_bonus[3];
-				}
-				
-				if (label == nullptr)
-				{
-					// base intrinsic defense
 					addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
 				}
 				else
 				{
-					// base defensive facility
-					addAttackerBonus(attackerStrengthPointer, (multiplier - 100), label);
+					// assign label and multiplier
+					
+					const char *label = nullptr;
+					int multiplier = 100;
+					
+					switch (attackerTriad)
+					{
+					case TRIAD_LAND:
+						if (isBaseHasFacility(attackerBaseId, FAC_PERIMETER_DEFENSE))
+						{
+							label = *(*tx_labels + LABEL_OFFSET_PERIMETER);
+							multiplier += conf.facility_defense_bonus[0];
+						}
+						break;
+						
+					case TRIAD_SEA:
+						if (isBaseHasFacility(attackerBaseId, FAC_NAVAL_YARD))
+						{
+							label = LABEL_NAVAL_YARD;
+							multiplier += conf.facility_defense_bonus[1];
+						}
+						break;
+						
+					case TRIAD_AIR:
+						if (isBaseHasFacility(attackerBaseId, FAC_AEROSPACE_COMPLEX))
+						{
+							label = LABEL_AEROSPACE_COMPLEX;
+							multiplier += conf.facility_defense_bonus[2];
+						}
+						break;
+						
+					}
+					
+					if (isBaseHasFacility(attackerBaseId, FAC_TACHYON_FIELD))
+					{
+						label = *(*tx_labels + LABEL_OFFSET_TACHYON);
+						multiplier += conf.facility_defense_bonus[3];
+					}
+					
+					if (label == nullptr)
+					{
+						// base intrinsic defense
+						addAttackerBonus(attackerStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
+					}
+					else
+					{
+						// base defensive facility
+						addAttackerBonus(attackerStrengthPointer, (multiplier - 100), label);
+					}
+					
 				}
 				
 			}
@@ -243,63 +250,68 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		
 		// add base defense bonuses to defender
 		
-		int defenderBaseId = base_at(defenderVehicle.x, defenderVehicle.y);
-		if (defenderBaseId != -1)
+		// compute terrain bonus if on map only
+		if (defenderMapTile != nullptr)
 		{
-			if (psiCombat)
+			int defenderBaseId = base_at(defenderVehicle.x, defenderVehicle.y);
+			if (defenderBaseId != -1)
 			{
-				addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
-			}
-			else
-			{
-				// assign label and multiplier
-				
-				const char *label = nullptr;
-				int multiplier = 100;
-				
-				switch (attackerTriad)
+				if (psiCombat)
 				{
-				case TRIAD_LAND:
-					if (isBaseHasFacility(defenderBaseId, FAC_PERIMETER_DEFENSE))
-					{
-						label = *(*tx_labels + LABEL_OFFSET_PERIMETER);
-						multiplier += conf.facility_defense_bonus[0];
-					}
-					break;
-					
-				case TRIAD_SEA:
-					if (isBaseHasFacility(defenderBaseId, FAC_NAVAL_YARD))
-					{
-						label = LABEL_NAVAL_YARD;
-						multiplier += conf.facility_defense_bonus[1];
-					}
-					break;
-					
-				case TRIAD_AIR:
-					if (isBaseHasFacility(defenderBaseId, FAC_AEROSPACE_COMPLEX))
-					{
-						label = LABEL_AEROSPACE_COMPLEX;
-						multiplier += conf.facility_defense_bonus[2];
-					}
-					break;
-					
-				}
-				
-				if (isBaseHasFacility(defenderBaseId, FAC_TACHYON_FIELD))
-				{
-					label = *(*tx_labels + LABEL_OFFSET_TACHYON);
-					multiplier += conf.facility_defense_bonus[3];
-				}
-				
-				if (label == nullptr)
-				{
-					// base intrinsic defense
 					addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
 				}
 				else
 				{
-					// base defensive facility
-					addDefenderBonus(defenderStrengthPointer, (multiplier - 100), label);
+					// assign label and multiplier
+					
+					const char *label = nullptr;
+					int multiplier = 100;
+					
+					switch (attackerTriad)
+					{
+					case TRIAD_LAND:
+						if (isBaseHasFacility(defenderBaseId, FAC_PERIMETER_DEFENSE))
+						{
+							label = *(*tx_labels + LABEL_OFFSET_PERIMETER);
+							multiplier += conf.facility_defense_bonus[0];
+						}
+						break;
+						
+					case TRIAD_SEA:
+						if (isBaseHasFacility(defenderBaseId, FAC_NAVAL_YARD))
+						{
+							label = LABEL_NAVAL_YARD;
+							multiplier += conf.facility_defense_bonus[1];
+						}
+						break;
+						
+					case TRIAD_AIR:
+						if (isBaseHasFacility(defenderBaseId, FAC_AEROSPACE_COMPLEX))
+						{
+							label = LABEL_AEROSPACE_COMPLEX;
+							multiplier += conf.facility_defense_bonus[2];
+						}
+						break;
+						
+					}
+					
+					if (isBaseHasFacility(defenderBaseId, FAC_TACHYON_FIELD))
+					{
+						label = *(*tx_labels + LABEL_OFFSET_TACHYON);
+						multiplier += conf.facility_defense_bonus[3];
+					}
+					
+					if (label == nullptr)
+					{
+						// base intrinsic defense
+						addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_intrinsic_base_def, *(*tx_labels + LABEL_OFFSET_BASE));
+					}
+					else
+					{
+						// base defensive facility
+						addDefenderBonus(defenderStrengthPointer, (multiplier - 100), label);
+					}
+					
 				}
 				
 			}
@@ -326,26 +338,31 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
     // AAA range effect
     // ----------------------------------------------------------------------------------------------------
 	
-    if (attackerTriad == TRIAD_AIR && defenderTriad != TRIAD_AIR && !isUnitHasAbility(defenderVehicle.unit_id, ABL_AAA) && conf.aaa_range >= 0)
+	// compute terrain bonus if on map only
+	if (defenderMapTile != nullptr)
 	{
-		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+		if (attackerTriad == TRIAD_AIR && defenderTriad != TRIAD_AIR && !isUnitHasAbility(defenderVehicle.unit_id, ABL_AAA) && conf.aaa_range >= 0)
 		{
-			VEH *vehicle = getVehicle(vehicleId);
-			
-			if (vehicle->faction_id != defenderVehicle.faction_id)
-				continue;
-			
-			if (!isVehicleHasAbility(vehicleId, ABL_AAA))
-				continue;
-			
-			int range = map_range(defenderVehicle.x, defenderVehicle.y, vehicle->x, vehicle->y);
-			
-			if (range > conf.aaa_range)
-				continue;
-			
-			addDefenderBonus(defenderStrengthPointer, Rules->combat_aaa_bonus_vs_air, *(*tx_labels + LABEL_OFFSET_TRACKING));
-			
-			break;
+			for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+			{
+				VEH *vehicle = getVehicle(vehicleId);
+				
+				if (vehicle->faction_id != defenderVehicle.faction_id)
+					continue;
+				
+				if (!isVehicleHasAbility(vehicleId, ABL_AAA))
+					continue;
+				
+				int range = map_range(defenderVehicle.x, defenderVehicle.y, vehicle->x, vehicle->y);
+				
+				if (range > conf.aaa_range)
+					continue;
+				
+				addDefenderBonus(defenderStrengthPointer, Rules->combat_aaa_bonus_vs_air, *(*tx_labels + LABEL_OFFSET_TRACKING));
+				
+				break;
+				
+			}
 			
 		}
 		
@@ -371,7 +388,7 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 			
 		}
 		
-		// combat units only, not probes
+		// regular combat units only, not probes
 		
 		if (isRegularUnit(defenderVehicle.unit_id) && isCombatUnit(defenderVehicle.unit_id) && !isProbeUnit(defenderVehicle.unit_id))
 		{
@@ -395,24 +412,39 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	{
 		// attacker probe benefits from sensor offense bonus
 		
-		if (isOffenseSensorBonusApplicable(attackerVehicle.faction_id, defenderMapTile))
+		// compute terrain bonus if on map only
+		if (attackerMapTile != nullptr)
 		{
-			addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
+			if (isOffenseSensorBonusApplicable(attackerVehicle.faction_id, defenderMapTile))
+			{
+				addAttackerBonus(attackerStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
+			}
+			
 		}
 		
 		// defender probe benefits from sensor defense bonus
 		
-		if (isDefenseSensorBonusApplicable(defenderVehicle.faction_id, defenderMapTile))
+		// compute terrain bonus if on map only
+		if (defenderMapTile != nullptr)
 		{
-			addDefenderBonus(defenderStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
+			if (isDefenseSensorBonusApplicable(defenderVehicle.faction_id, defenderMapTile))
+			{
+				addDefenderBonus(defenderStrengthPointer, Rules->combat_defend_sensor, *(*tx_labels + LABEL_OFFSET_SENSOR));
+			}
+			
 		}
 		
 		// defender probe benefits from base intrinsic defense bonus
 		
-		int defenderBaseId = base_at(defenderVehicle.x, defenderVehicle.y);
-		if (defenderBaseId != -1)
+		// compute terrain bonus if on map only
+		if (defenderMapTile != nullptr)
 		{
-			addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_intrinsic_base_def, label_get(332)/*Base*/);
+			int defenderBaseId = base_at(defenderVehicle.x, defenderVehicle.y);
+			if (defenderBaseId != -1)
+			{
+				addDefenderBonus(defenderStrengthPointer, Rules->combat_bonus_intrinsic_base_def, label_get(332)/*Base*/);
+			}
+			
 		}
 		
 	}
@@ -427,22 +459,27 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 	// blink displacer ignores defensive facilities
 	if (!has_abil(attackerVehicle.unit_id, ABL_BLINK_DISPLACER))
 	{
-		int facilityFieldBonus = 0;
-		char const *facilityFieldLabel = nullptr;
-		if (isFriendlyBaseInRangeHasFacility(defenderVehicle.faction_id, defenderVehicle.x, defenderVehicle.y, 2, TRIAD_DEFENSIVE_FACILITIES[attackerTriad]))
+		// compute terrain bonus if on map only
+		if (defenderMapTile != nullptr && !defenderMapTile->is_base())
 		{
-			facilityFieldBonus += conf.facility_field_defense_bonus[attackerTriad];
-			facilityFieldLabel = triadFacilityFieldLabels[attackerTriad];
-		}
-		if (isFriendlyBaseInRangeHasFacility(defenderVehicle.faction_id, defenderVehicle.x, defenderVehicle.y, 2, FAC_TACHYON_FIELD))
-		{
-			facilityFieldBonus += conf.facility_field_defense_bonus[3];
-			facilityFieldLabel = tachyonFieldFieldLabel;
-		}
-		
-		if (facilityFieldBonus > 0)
-		{
-			addDefenderBonus(defenderStrengthPointer, facilityFieldBonus, facilityFieldLabel);
+			int facilityFieldBonus = 0;
+			char const *facilityFieldLabel = nullptr;
+			if (isFriendlyBaseInRangeHasFacility(defenderVehicle.faction_id, defenderVehicle.x, defenderVehicle.y, 2, TRIAD_DEFENSIVE_FACILITIES[attackerTriad]))
+			{
+				facilityFieldBonus += conf.facility_field_defense_bonus[attackerTriad];
+				facilityFieldLabel = triadFacilityFieldLabels[attackerTriad];
+			}
+			if (isFriendlyBaseInRangeHasFacility(defenderVehicle.faction_id, defenderVehicle.x, defenderVehicle.y, 2, FAC_TACHYON_FIELD))
+			{
+				facilityFieldBonus += conf.facility_field_defense_bonus[3];
+				facilityFieldLabel = tachyonFieldFieldLabel;
+			}
+			
+			if (facilityFieldBonus > 0)
+			{
+				addDefenderBonus(defenderStrengthPointer, facilityFieldBonus, facilityFieldLabel);
+			}
+			
 		}
 		
 	}
@@ -4202,7 +4239,7 @@ Intercepts has_abil call for the purpose of determining whether vehicle can atta
 */
 int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAblFlag ability)
 {
-	if (conf.air_superiority_not_required_to_attack_needlejet && ability == ABL_AIR_SUPERIORITY)
+	if (!conf.air_attack_requires_air_superiority && ability == ABL_AIR_SUPERIORITY)
 	{
 		return 1;
 	}

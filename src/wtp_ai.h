@@ -33,7 +33,6 @@ void populateEnemyBaseInfos();
 void populateCombatEffects();
 void populateEnemyBaseCaptureGains();
 void populateEnemyBaseProtectorWeights();
-void populateEnemyBaseAssaultEffects();
 
 void evaluateEnemyStacks();
 void evaluateBaseDefense();

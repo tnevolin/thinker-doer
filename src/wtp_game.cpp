@@ -296,23 +296,28 @@ FactionUnit::FactionUnit(int _factionId, int _unitId)
 	
 }
 
-FactionUnit::encodeKey()
-{
-	int unitSlot = unitId < MaxProtoFactionNum ? unitId : MaxProtoFactionNum + unitId % MaxProtoFactionNum;
-	int key = factionId * (2 * MaxProtoFactionNum) + unitSlot;
-	
-	return key;
-	
-}
-
 FactionUnit::FactionUnit(int _key)
 {
 	assert(_key >= 0 && _key < MaxPlayerNum * (2 * MaxProtoFactionNum));
+	
+	this->key = _key;
 	
 	this->factionId = _key / (2 * MaxProtoFactionNum);
 	
 	int unitSlot = _key % (2 * MaxProtoFactionNum);
 	this->unitId = unitSlot < MaxProtoFactionNum ? unitSlot : factionId * MaxProtoFactionNum + (unitSlot - MaxProtoFactionNum);
+	
+}
+
+FactionUnit::encodeKey()
+{
+	if (key == -1)
+	{
+		int unitSlot = unitId < MaxProtoFactionNum ? unitId : MaxProtoFactionNum + unitId % MaxProtoFactionNum;
+		this->key = factionId * (2 * MaxProtoFactionNum) + unitSlot;
+	}
+	
+	return this->key;
 	
 }
 
@@ -870,6 +875,10 @@ maxRadius = 0-8, inclusive
 */
 std::vector<MAP *> getRangeTiles(MAP *center, int range, bool includeCenter)
 {
+	if (!isOnMap(center))
+	{
+		debug("a\n");
+	}
 	assert(isOnMap(center));
 	assert(range >= 0);
 	
@@ -4058,11 +4067,11 @@ double battleCompute(int attackerVehicleId, int defenderVehicleId, bool longRang
 
 	if (attackerVehicle->faction_id == 0)
 	{
-		relativeStrength *= getAlienTurnStrengthModifier();
+		relativeStrength *= getAlienTurnOffenseModifier();
 	}
 	if (defenderVehicle->faction_id == 0)
 	{
-		relativeStrength /= getAlienTurnStrengthModifier();
+		relativeStrength /= getAlienTurnDefenseModifier();
 	}
 
 	// return relative strength
@@ -4239,6 +4248,11 @@ Determines if unit is a regular unit.
 bool isRegularUnit(int unitId)
 {
 	return !isNativeUnit(unitId);
+}
+
+bool isRegularCombatUnit(int unitId)
+{
+	return isRegularUnit(unitId) && isCombatUnit(unitId);
 }
 
 /*
@@ -5319,11 +5333,13 @@ bool isPsiCombat(int attackerUnitId, int defenderUnitId)
 	return (Weapon[Units[attackerUnitId].weapon_id].offense_value < 0 || Armor[Units[defenderUnitId].armor_id].defense_value < 0);
 }
 
-double getAlienTurnStrengthModifier()
+double getAlienTurnOffenseModifier()
 {
-	// no weak aliens anymore
-//	return (*CurrentTurn <= conf.native_weak_until_turn ? 0.5 : 1.0);
-	return 1.0;
+	return (*CurrentTurn <= conf.native_weak_until_turn ? 1.0 / 3.0 : 1.0);
+}
+double getAlienTurnDefenseModifier()
+{
+	return (*CurrentTurn <= conf.native_weak_until_turn ? 1.0 / 2.0 : 1.0);
 }
 
 int getFactionMaintenance(int factionId)
@@ -5938,16 +5954,6 @@ bool isAtAirbase(int vehicleId)
 {
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	return map_has_item(vehicleTile, BIT_BASE_IN_TILE | BIT_AIRBASE);
-}
-
-bool isUnitCanAttackNeedlejet(int unitId)
-{
-	return conf.air_superiority_not_required_to_attack_needlejet || unit_has_ability(unitId, ABL_AIR_SUPERIORITY);
-}
-
-bool isUnitCanAttackLowAir(int unitId)
-{
-	return conf.air_superiority_not_required_to_attack_needlejet || isMeleeUnit(unitId) || (isArtilleryUnit(unitId) && unit_has_ability(unitId, ABL_AIR_SUPERIORITY));
 }
 
 int getClosestHostileBaseRange(int factionId, MAP *tile)
@@ -8097,5 +8103,34 @@ bool isVehicleConvoying(int vehicleId)
 bool isVehicleTerraforming(VEH *vehicle)
 {
 	return vehicle->order >= ORDER_FARM && vehicle->order <= ORDER_PLACE_MONOLITH;
+}
+
+double getValueSum(robin_hood::unordered_flat_map<int, double> map)
+{
+	double sum = 0.0;
+	
+	for (robin_hood::pair<int, double> const &mapEntry : map)
+	{
+		double value = mapEntry.second;
+		sum += value;
+	}
+	
+	return sum;
+	
+}
+
+bool isValidFactionId(int factionId)
+{
+	return factionId >= 0 && factionId < MaxPlayerNum;
+}
+
+bool isValidUnitId(int unitId)
+{
+	return unitId >= 0 && unitId < MaxProtoNum;
+}
+
+bool isValidVehicleId(int vehicleId)
+{
+	return vehicleId >= 0 && vehicleId < *VehCount;
 }
 

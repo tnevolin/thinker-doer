@@ -2581,7 +2581,7 @@ int aircraft_move(const int id) {
 			
 			// [WTP]
 			// air superiority is not required to attack needlejet
-			if (conf.air_superiority_not_required_to_attack_needlejet)
+			if (!conf.air_attack_requires_air_superiority)
 			{
 			}
 			else
@@ -2906,7 +2906,7 @@ int combat_move(const int id) {
             
             // [WTP]
             // air superiority is not required to attack needlejet
-            if (conf.air_superiority_not_required_to_attack_needlejet)
+            if (!conf.air_attack_requires_air_superiority)
 			{
 			}
 			else

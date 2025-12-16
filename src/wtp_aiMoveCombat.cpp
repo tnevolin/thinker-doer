@@ -763,9 +763,9 @@ void moveBaseProtectors()
 			
 			// compute priority
 			
-			double combatEffect = baseInfo.combatData.getProtectorVehicleEffect(taskPriority.vehicleId);
-			double winningProbability = getWinningProbability(combatEffect);
-			double priority = taskPriority.priority * winningProbability;
+			double contribution = baseInfo.combatData.getProtectorContribution(taskPriority.vehicleId);
+			trace("\t\tcontribution=%5.2f\n", contribution);
+			double priority = taskPriority.priority * contribution;
 			
 			if (priority > bestPriority)
 			{
@@ -917,16 +917,15 @@ void moveBunkerProtectors()
 			
 			// bunker protection should not be yet satisfied
 			
-			CombatData &combatData = aiData.getTileCombatData(taskPriority.destination);
+			CombatData &combatData = aiData.bunkerInfos.at(taskPriority.destination).combatData;
 			
 			if (combatData.isSufficientProtect())
 				continue;
 			
 			// compute priority
 			
-			double combatEffect = combatData.getProtectorVehicleEffect(taskPriority.vehicleId);
-			double winningProbability = getWinningProbability(combatEffect);
-			double priority = taskPriority.priority * winningProbability;
+			double contribution = combatData.getProtectorContribution(taskPriority.vehicleId);
+			double priority = taskPriority.priority * contribution;
 			
 			if (priority > bestPriority)
 			{
@@ -941,7 +940,7 @@ void moveBunkerProtectors()
 		
 		// assign to target
 		
-		CombatData &combatData = aiData.getTileCombatData(bestTaskPriority->destination);
+		CombatData &combatData = aiData.bunkerInfos.at(bestTaskPriority->destination).combatData;
 		
 		combatData.addProtector(bestTaskPriority->vehicleId);
 		vehicleAssignments.insert({bestTaskPriority->vehicleId, bestTaskPriority});
@@ -980,10 +979,13 @@ void moveBunkerProtectors()
 	
 	debug("\thold current bunker protectors\n");
 	
-	for (MAP *bunkerTile : aiData.bunkers)
+	for (robin_hood::pair<MAP *, BunkerInfo> &bunkerInfoEntry : aiData.bunkerInfos)
 	{
+		MAP *bunkerTile = bunkerInfoEntry.first;
+		BunkerInfo &bunkerInfo = bunkerInfoEntry.second;
+		
 		TileInfo &bunkerTileInfo = aiData.getTileInfo(bunkerTile);
-		CombatData &bunkerCombatData = bunkerTileInfo.combatData;
+		CombatData &bunkerCombatData = bunkerInfo.combatData;
 		
 		if (!bunkerCombatData.isSufficientProtect())
 		{
@@ -2319,7 +2321,7 @@ void populateBaseProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// initial threat
 			
-			double threat = baseInfo.combatData.assailantUnitWeights.sum;
+			double threat = baseInfo.combatData.assailantUnitWeightSum;
 			
 			// get travel time and coresponding coefficient
 			
@@ -2375,7 +2377,7 @@ void populateBunkerProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 {
 	debug("\tpopulateBunkerProtectorTasks\n");
 	
-	if (aiData.bunkers.size() == 0)
+	if (aiData.bunkerInfos.size() == 0)
 		return;
 	
 	for (int vehicleId : aiData.combatVehicleIds)
@@ -2399,9 +2401,11 @@ void populateBunkerProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 		
 		// process bunkers
 		
-		for (MAP *bunkerTile : aiData.bunkers)
+		for (robin_hood::pair<MAP *, BunkerInfo> &bunkerInfoEntry : aiData.bunkerInfos)
 		{
-			CombatData &bunkerCombatData = aiData.getTileCombatData(bunkerTile);
+			MAP *bunkerTile = bunkerInfoEntry.first;
+			BunkerInfo &bunkerInfo = bunkerInfoEntry.second;
+			CombatData &bunkerCombatData = bunkerInfo.combatData;
 			
 			// exclude not reachable destination
 			
@@ -2410,7 +2414,7 @@ void populateBunkerProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// required protection
 			
-			double threat = bunkerCombatData.assailantUnitWeights.sum;
+			double threat = bunkerCombatData.assailantUnitWeightSum;
 			
 			// get travel time and coresponding coefficient
 			
@@ -2953,7 +2957,7 @@ double getDuelCombatCostCoefficient(int vehicleId, double effect, double enemyUn
 {
 	bool TRACE = DEBUG && false;
 
-	if (TRACE) { debug("getDuelCombatCostCoefficient\n"); }
+	trace("getDuelCombatCostCoefficient\n");
 
 	double vehicleUnitCost = (double)getVehicleUnitCost(vehicleId);
 
@@ -3005,7 +3009,7 @@ double getBombardmentCostCoefficient(int vehicleId, double effect, double enemyU
 {
 	bool TRACE = DEBUG && false;
 
-	if (TRACE) { debug("getDuelCombatCostCoefficient\n"); }
+	trace("getDuelCombatCostCoefficient\n");
 
 	double vehicleUnitCost = (double)getVehicleUnitCost(vehicleId);
 
@@ -3141,7 +3145,7 @@ double getDefendGain(int defenderVehicleId, MAP *tile, double defenderHealth, in
 		if (combatMode != CM_BOMBARDMENT)
 			continue;
 		
-		double combatEffect = getTileCombatEffect(attackerVehicleId, defenderVehicleId, engagementMode, tile, true);
+		double combatEffect = aiData.combatEffectTable.getVehicleCombatEffect(attackerVehicleId, defenderVehicleId, engagementMode);
 		defenderHealth -= combatEffect;
 		
 	}
@@ -3184,7 +3188,7 @@ double getDefendGain(int defenderVehicleId, MAP *tile, double defenderHealth, in
 		if (combatMode == CM_BOMBARDMENT)
 			continue;
 		
-		double gain = getCombatGain(attackerVehicleId, defenderVehicleId, engagementMode, tile, true, getVehicleRelativeHealth(attackerVehicleId), defenderHealth);
+		double gain = getCombatGain(attackerVehicleId, defenderVehicleId, engagementMode, nullptr, tile, getVehicleRelativeHealth(attackerVehicleId), defenderHealth);
 		
 		if (gain > bestAttackerGain)
 		{
@@ -3456,6 +3460,7 @@ void aiEnemyMoveCombatVehicles()
 		// select best action
 		
 		CombatAction bestCombatAction;
+		bestCombatAction.gain = -DBL_MAX;
 		
 		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 		{

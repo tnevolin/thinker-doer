@@ -3,7 +3,9 @@
 
 #include <cstring>
 #include <float.h>
+#include <numeric>
 
+#include "wtp_mod.h"
 #include "wtp_terranx.h"
 #include "wtp_aiRoute.h"
 
@@ -208,122 +210,180 @@ BaseInfo &Data::getBaseInfo(int baseId)
 	return aiData.baseInfos.at(baseId);
 }
 
+BunkerInfo &Data::getBunkerInfo(MAP *tile)
+{
+	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
+	robin_hood::unordered_flat_map<MAP *, BunkerInfo>::iterator bunkerInfoIterator = aiData.bunkerInfos.find(tile);
+	if (bunkerInfoIterator == aiData.bunkerInfos.end())
+	{
+		debug("ERROR: No bunker at tile = %s\n", getLocationString(tile)); flushlog();
+		exit(1);
+	}
+	return bunkerInfoIterator->second;
+}
+
 // CombatEffectTable
+
+inline uint64_t CombatEffectTable::makeKey(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, MAP *attackerTile, MAP *defenderTile) noexcept
+{
+	int attackerTileIndex = (attackerTile == nullptr ? 0xFFFF : attackerTile - *MapTiles);
+	int defenderTileIndex = (defenderTile == nullptr ? 0xFFFF : defenderTile - *MapTiles);
+debug(">attackerFactionId=%d attackerUnitId=%3d defenderFactionId=%d defenderUnitId=%3d engagementMode=%d attackerTileIndex=%4d defenderTileIndex=%4d\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode, attackerTileIndex, defenderTileIndex);flushlog();
+	return
+		static_cast<uint64_t>(attackerFactionId)			//  3 bit
+		|
+		static_cast<uint64_t>(attackerUnitId)		<<  3	// 10 bit
+		|
+		static_cast<uint64_t>(defenderFactionId)	<< 13	//  3 bit
+		|
+		static_cast<uint64_t>(defenderUnitId)		<< 16	// 10 bit
+		|
+		static_cast<uint64_t>(engagementMode)		<< 26	//  1 bit
+		|
+		static_cast<uint64_t>(attackerTileIndex)	<< 27	// 16 bit
+		|
+		static_cast<uint64_t>(defenderTileIndex)	<< 43	// 16 bit
+	;
+}
 
 void CombatEffectTable::clear()
 {
-	combatModeEffects.clear();
+	combatEffects.clear();
 }
 
-void CombatEffectTable::setCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, CombatMode combatMode, double value)
+/*
+Computes combat effect using battle_compute.
+Creates fake vehicles using units and optionally battle tile.
+*/
+double CombatEffectTable::computeUnitCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, MAP *attackerTile, MAP *defenderTile)
 {
-	int key = FactionUnitCombat::encodeKey(FactionUnit::encodeKey(attackerFactionId, attackerUnitId), FactionUnit::encodeKey(defenderFactionId, defenderUnitId), engagementMode);
-	if (combatModeEffects.find(key) == combatModeEffects.end())
+	UNIT &attackerUnit = Units[attackerUnitId];
+	UNIT &defenderUnit = Units[defenderUnitId];
+	
+	CombatMode combatMode = getCombatMode(engagementMode, defenderUnitId);
+	
+	// fake vehicles
+	
+	int attackerVehicleId = conf.max_veh_num + 0;
+	int defenderVehicleId = conf.max_veh_num + 1;
+	createFakeVehicle(attackerVehicleId, attackerFactionId, attackerUnitId);
+	createFakeVehicle(defenderVehicleId, defenderFactionId, defenderUnitId);
+	
+	// set battle tile if provided
+	
+	if (attackerTile != nullptr)
 	{
-		combatModeEffects.emplace(key, CombatModeEffect());
+		VEH &attackerVehicle = Vehs[attackerVehicleId];
+		attackerVehicle.x = getX(attackerTile);
+		attackerVehicle.y = getY(attackerTile);
 	}
-	CombatModeEffect &combatModeEffect = combatModeEffects.at(key);
-	combatModeEffect.combatMode = combatMode;
-	combatModeEffect.value = value;
-}
-
-CombatModeEffect const &CombatEffectTable::getCombatModeEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode)
-{
-//	debug("CombatEffectTable::getCombatModeEffect( attackerKey=%d defenderKey=%d engagementMode=%d )\n", attackerKey, defenderKey, engagementMode);
-	
-	int key = FactionUnitCombat::encodeKey(attackerKey, defenderKey, engagementMode);
-	
-	if (combatModeEffects.find(key) == combatModeEffects.end())
+	if (defenderTile != nullptr)
 	{
-//		debug("\tnot found - computing\n");
-		
-		FactionUnit attackerFactionUnit(attackerKey);
-		FactionUnit defenderFactionUnit(defenderKey);
-		
-		CombatModeEffect combatModeEffect = getUnitCombatModeEffect(attackerFactionUnit.factionId, attackerFactionUnit.unitId, defenderFactionUnit.factionId, defenderFactionUnit.unitId, engagementMode);
-		combatModeEffects.emplace(key, combatModeEffect);
-		
+		VEH &defenderVehicle = Vehs[defenderVehicleId];
+		defenderVehicle.x = getX(defenderTile);
+		defenderVehicle.y = getY(defenderTile);
 	}
 	
-	return combatModeEffects.at(key);
+	// build combat type
+	
+	int combat_type = 0;
+	if (engagementMode == EM_ARTILLERY)
+	{
+		combat_type |= CT_CAN_ARTY;
+	}
+	if (combatMode == CM_ARTILLERY_DUEL)
+	{
+		combat_type |= CT_WEAPON_ONLY;
+	}
+	if (attackerUnit.is_aircraft() && defenderUnit.is_interceptor())
+	{
+        combat_type |= (CT_INTERCEPT|CT_AIR_DEFENSE|CT_WEAPON_ONLY);
+	}
+	
+	// battle compute
+	
+	int attackerStrength;
+	int defenderStrength;
+	wtp_mod_battle_compute(attackerVehicleId, defenderVehicleId, &attackerStrength, &defenderStrength, combat_type);
+	
+	// compute combat effect
+	
+	double combatEffect;
+	if (combatMode == CM_BOMBARDMENT)
+	{
+		// convert bombardment strength to damage
+		
+		int off_value = std::max(1, attackerStrength * Rules->artillery_dmg_numerator);
+		int def_value = std::max(1, defenderStrength * Rules->artillery_dmg_denominator);
+		double damage_value = (double) off_value / (double) def_value;
+		damage_value *= (double) defenderUnit.reactor_id;
+		combatEffect = damage_value / 10.0;
+		
+	}
+	else
+	{
+		// mutual fight combat effect
+		combatEffect = defenderStrength == 0.0 ? 10.0 : (double) attackerStrength / (double) defenderStrength;
+	}
+	
+	// combattant without a tile inherits sensor bonus from the other combattant tile
+	// this is not handled by battle_compute
+	
+	if (attackerTile == nullptr && defenderTile != nullptr)
+	{
+		combatEffect *= getSensorOffenseMultiplier(attackerFactionId, defenderTile);
+	}
+	if (defenderTile == nullptr && attackerTile != nullptr)
+	{
+		combatEffect /= getSensorDefenseMultiplier(defenderFactionId, attackerTile);
+	}
+	
+	return combatEffect;
 	
 }
 
-CombatModeEffect const &CombatEffectTable::getCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
+double CombatEffectTable::getUnitCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, MAP *attackerTile, MAP *defenderTile)
 {
-	return getCombatModeEffect(FactionUnit::encodeKey(attackerFactionId, attackerUnitId), FactionUnit::encodeKey(defenderFactionId, defenderUnitId), engagementMode);
+	trace("CombatEffectTable::getCombatModeEffect( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d engagementMode=%d attackerTile=%s defenderTile=%s )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode, getLocationString(attackerTile), getLocationString(defenderTile));
+	
+	uint64_t key = this->makeKey(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode, attackerTile, defenderTile);
+	
+	if (combatEffects.find(key) == combatEffects.end())
+	{
+		double combatEffect = computeUnitCombatEffect(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode, attackerTile, defenderTile);
+		combatEffects.emplace(key, combatEffect);
+	}
+	
+	return combatEffects.at(key);
+	
 }
 
-double CombatEffectTable::getCombatEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode)
+double CombatEffectTable::getUnitCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
 {
-	return getCombatModeEffect(attackerKey, defenderKey, engagementMode).value;
+	return getUnitCombatEffect(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode, nullptr, nullptr);
 }
 
-double CombatEffectTable::getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
+double CombatEffectTable::getVehicleCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *attackerTile, MAP *defenderTile)
 {
-	return getCombatEffect(FactionUnit::encodeKey(attackerFactionId, attackerUnitId), FactionUnit::encodeKey(defenderFactionId, defenderUnitId), engagementMode);
+	assert(isValidVehicleId(attackerVehicleId));
+	assert(isValidVehicleId(defenderVehicleId));
+	
+	VEH &attackerVehicle = Vehs[attackerVehicleId];
+	VEH &defenderVehicle = Vehs[defenderVehicleId];
+	
+	double unitCombatEffect = getUnitCombatEffect(attackerVehicle.faction_id, attackerVehicle.unit_id, defenderVehicle.faction_id, defenderVehicle.unit_id, engagementMode, attackerTile, defenderTile);
+	
+	return
+		unitCombatEffect
+		* getVehicleMoraleMultiplier(attackerVehicleId)
+		/ getVehicleMoraleMultiplier(defenderVehicleId)
+	;
+	
 }
 
 double CombatEffectTable::getVehicleCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode)
 {
-	VEH *attackerVehicle = getVehicle(attackerVehicleId);
-	VEH *defenderVehicle = getVehicle(defenderVehicleId);
-	return getCombatEffect(attackerVehicle->faction_id, attackerVehicle->unit_id, defenderVehicle->faction_id, defenderVehicle->unit_id, engagementMode);
-}
-
-/*
-Computes generic unit to unit combat effect.
-*/
-CombatModeEffect CombatEffectTable::getUnitCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
-{
-//	debug("CombatEffectTable::getUnitCombatModeEffect( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d engagementMode=%d )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode);
-	
-	Profiling::start("- calculateCombatEffect");
-	
-	CombatMode combatMode = getCombatMode(engagementMode, defenderUnitId);
-	
-	double combatEffect;
-	
-	switch (combatMode)
-	{
-	case CM_MELEE:
-		combatEffect = getMeleeRelativeUnitStrength(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
-		break;
-		
-	case CM_ARTILLERY_DUEL:
-		combatEffect = getArtilleryDuelRelativeUnitStrength(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
-		break;
-		
-	case CM_BOMBARDMENT:
-		combatEffect = getUnitBombardmentDamage(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
-		break;
-		
-	default:
-		debug("ERROR: Unexpected combatMode.\n");
-		combatEffect = 0.0;
-		
-	}
-	
-	// MORALE combat bonus
-	
-	if (conf.se_morale_combat_bonus != 0)
-	{
-		int attackerSEMorale = Factions[attackerFactionId].SE_morale;
-		double attackerSEMoraleCombatBonus = conf.se_morale_combat_bonus * attackerSEMorale;
-		combatEffect *= std::max(0.30, getPercentageBonusMultiplier(attackerSEMoraleCombatBonus));
-		
-		int defenderSEMorale = Factions[defenderFactionId].SE_morale;
-		double defenderSEMoraleCombatBonus = conf.se_morale_combat_bonus * defenderSEMorale;
-		combatEffect /= std::max(0.30, getPercentageBonusMultiplier(defenderSEMoraleCombatBonus));
-		
-	}
-	
-	CombatModeEffect combatModeEffect = {combatMode, combatEffect};
-	
-	Profiling::stop("- calculateCombatEffect");
-	
-	return combatModeEffect;
-	
+	return getVehicleCombatEffect(attackerVehicleId, defenderVehicleId, engagementMode, getVehicleMapTile(attackerVehicleId), getVehicleMapTile(defenderVehicleId));
 }
 
 /*
@@ -498,17 +558,16 @@ double CombatEffectTable::getMeleeRelativeUnitStrength(int attackerFactionId, in
 		relativeStrength *= 50.0;
 	}
 	
-	// not anymore
-//	// alien fight on half a strength in early game
-//	
-//	if (attackerFactionId == 0 && *CurrentTurn <= conf.native_weak_until_turn)
-//	{
-//		relativeStrength /= 2.0;
-//	}
-//	if (defenderFactionId == 0 && *CurrentTurn <= conf.native_weak_until_turn)
-//	{
-//		relativeStrength *= 2.0;
-//	}
+	// alien fight on half a strength in early game
+	
+	if (attackerFactionId == 0 && *CurrentTurn <= conf.native_weak_until_turn)
+	{
+		relativeStrength *= getAlienTurnOffenseModifier();
+	}
+	if (defenderFactionId == 0 && *CurrentTurn <= conf.native_weak_until_turn)
+	{
+		relativeStrength /= getAlienTurnDefenseModifier();
+	}
 	
 //	debug("\t%5.2f\n", relativeStrength);
 	return relativeStrength;
@@ -521,7 +580,7 @@ How many defender units can attacker destroy until own complete destruction.
 */
 double CombatEffectTable::getArtilleryDuelRelativeUnitStrength(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId)
 {
-	debug("CombatEffectTable::getArtilleryDuelRelativeUnitStrength( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
+//	debug("CombatEffectTable::getArtilleryDuelRelativeUnitStrength( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId);
 	
 	UNIT *attackerUnit = &(Units[attackerUnitId]);
 	UNIT *defenderUnit = &(Units[defenderUnitId]);
@@ -597,11 +656,11 @@ double CombatEffectTable::getArtilleryDuelRelativeUnitStrength(int attackerFacti
 	
 	if (attackerFactionId == 0 && *CurrentTurn <= conf.native_weak_until_turn)
 	{
-		relativeStrength /= 2.0;
+		relativeStrength *= getAlienTurnOffenseModifier();
 	}
 	if (defenderFactionId == 0 && *CurrentTurn <= conf.native_weak_until_turn)
 	{
-		relativeStrength *= 2.0;
+		relativeStrength /= getAlienTurnDefenseModifier();
 	}
 	
 	// land vs. sea guns bonus
@@ -632,9 +691,9 @@ double CombatEffectTable::getUnitBombardmentDamage(int attackerFactionId, int at
 	int attackerOffenseValue = Weapon[attackerUnit->weapon_id].offense_value;
 	int defenderDefenseValue = Armor[defenderUnit->armor_id].defense_value;
 	
-	// attacker should be artillery capable and defender should not and should be surface unit
+	// attacker is artillery and defender is not
 	
-	if (!isArtilleryUnit(attackerUnitId) || isArtilleryUnit(defenderUnitId) || defenderUnit->triad() == TRIAD_AIR)
+	if (!isArtilleryUnit(attackerUnitId) || isArtilleryUnit(defenderUnitId))
 	{
 		return 0.0;
 	}
@@ -646,6 +705,7 @@ double CombatEffectTable::getUnitBombardmentDamage(int attackerFactionId, int at
 	if (attackerOffenseValue < 0 || defenderDefenseValue < 0)
 	{
 		relativeStrength = getPsiCombatBaseOdds(attackerUnit->triad());
+debug(">relativeStrength=%5.2f\n", relativeStrength);flushlog();
 		
 		// reactor
 		// psi combat ignores reactor
@@ -653,7 +713,9 @@ double CombatEffectTable::getUnitBombardmentDamage(int attackerFactionId, int at
 		// PLANET bonus
 		
 		relativeStrength *= getFactionSEPlanetOffenseModifier(attackerFactionId);
+debug(">relativeStrength=%5.2f\n", relativeStrength);flushlog();
 		relativeStrength /= getFactionSEPlanetOffenseModifier(defenderFactionId);
+debug(">relativeStrength=%5.2f\n", relativeStrength);flushlog();
 		
 		// gear bonus
 		
@@ -701,11 +763,11 @@ double CombatEffectTable::getUnitBombardmentDamage(int attackerFactionId, int at
 	
 	if (attackerFactionId == 0 && *CurrentTurn <= conf.native_weak_until_turn)
 	{
-		relativeStrength /= 2.0;
+		relativeStrength *= getAlienTurnOffenseModifier();
 	}
 	if (defenderFactionId == 0 && *CurrentTurn <= conf.native_weak_until_turn)
 	{
-		relativeStrength *= 2.0;
+		relativeStrength /= getAlienTurnDefenseModifier();
 	}
 	
 	// artillery damage numerator/denominator
@@ -718,630 +780,408 @@ double CombatEffectTable::getUnitBombardmentDamage(int attackerFactionId, int at
 	
 }
 
-// TileCombatEffectTable
-
-void TileCombatEffectTable::clear()
+Combattant::Combattant(int factionId, int unitId, double weight, bool airbase)
 {
-	combatModeEffects.clear();
-}
-
-void TileCombatEffectTable::setCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, CombatMode combatMode, double value)
-{
-	int key = FactionUnitCombat::encodeKey(FactionUnit::encodeKey(attackerFactionId, attackerUnitId), FactionUnit::encodeKey(defenderFactionId, defenderUnitId), engagementMode);
-	if (combatModeEffects.find(key) == combatModeEffects.end())
-	{
-		combatModeEffects.emplace(key, CombatModeEffect());
-	}
-	CombatModeEffect &combatModeEffect = combatModeEffects.at(key);
-	combatModeEffect.combatMode = combatMode;
-	combatModeEffect.value = value;
-}
-
-CombatModeEffect const &TileCombatEffectTable::getCombatModeEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode)
-{
-//	debug("TileCombatEffectTable::getCombatModeEffect( attackerKey=%d defenderKey=%d engagementMode=%d )\n", attackerKey, defenderKey, engagementMode);
+	assert(isValidFactionId(factionId));
+	assert(isValidUnitId(unitId));
+	assert(weight > 0.0);
 	
-	int key = FactionUnitCombat::encodeKey(attackerKey, defenderKey, engagementMode);
+	UNIT &unit = Units[unitId];
 	
-	if (combatModeEffects.find(key) == combatModeEffects.end())
-	{
-//		debug("\tnot found - computing\n");
-		
-		FactionUnit attackerFactionUnit(attackerKey);
-		FactionUnit defenderFactionUnit(defenderKey);
-		bool atTile = playerAssault ? attackerFactionUnit.factionId == aiFactionId : defenderFactionUnit.factionId == aiFactionId;
-
-		CombatModeEffect combatModeEffect = getTileCombatModeEffect(combatEffectTable, attackerFactionUnit.factionId, attackerFactionUnit.unitId, defenderFactionUnit.factionId, defenderFactionUnit.unitId, engagementMode, atTile);
-		combatModeEffects.emplace(key, combatModeEffect);
-		
-	}
+	this->factionId = factionId;
+	this->unitId = unitId;
+	this->key = FactionUnit::encodeKey(factionId, unitId);
+	this->weight = weight;
 	
-	return combatModeEffects.at(key);
+	this->range = isArtilleryUnit(unitId);
+	this->melee = isMeleeUnit(unitId);
+	this->aircraftInFlight = !airbase && unit.is_air();
+	this->needlejetInFlight = !airbase && unit.is_needlejet();
+	this->canAttackAricraftInFlight = !conf.air_attack_requires_air_superiority || has_abil(unitId, ABL_AIR_SUPERIORITY);
+	
+	this->pad0 = -1;
+	this->strengthCoefficient = 1.0;
+	this->health = 1.0;
 	
 }
 
-CombatModeEffect const &TileCombatEffectTable::getCombatModeEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
+Combattant::Combattant(int vehicleId, double weight, bool airbase)
+: Combattant(Vehs[vehicleId].faction_id, Vehs[vehicleId].unit_id, weight, airbase)
 {
-	return getCombatModeEffect(FactionUnit::encodeKey(attackerFactionId, attackerUnitId), FactionUnit::encodeKey(defenderFactionId, defenderUnitId), engagementMode);
-}
-
-double TileCombatEffectTable::getCombatEffect(int attackerKey, int defenderKey, ENGAGEMENT_MODE engagementMode)
-{
-	return getCombatModeEffect(attackerKey, defenderKey, engagementMode).value;
-}
-
-double TileCombatEffectTable::getCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode)
-{
-	return getCombatEffect(FactionUnit::encodeKey(attackerFactionId, attackerUnitId), FactionUnit::encodeKey(defenderFactionId, defenderUnitId), engagementMode);
-}
-
-double TileCombatEffectTable::getVehicleCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode)
-{
-	VEH *attackerVehicle = getVehicle(attackerVehicleId);
-	VEH *defenderVehicle = getVehicle(defenderVehicleId);
-	return getCombatEffect(attackerVehicle->faction_id, attackerVehicle->unit_id, defenderVehicle->faction_id, defenderVehicle->unit_id, engagementMode);
-}
-
-CombatModeEffect TileCombatEffectTable::getTileCombatModeEffect(CombatEffectTable *combatEffectTable, int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, bool atTile)
-{
-//	debug("CombatData::getTileCombatModeEffect( attackerFactionId=%d attackerUnitId=%d defenderFactionId=%d defenderUnitId=%d engagementMode=%d atTile=%d )\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode, atTile);
+	assert(isValidVehicleId(vehicleId));
 	
-	CombatModeEffect combatModeEffect = combatEffectTable->getCombatModeEffect(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode);
+	VEH &vehicle = Vehs[vehicleId];
 	
-	// modify effect with tile modifiers if tile is set
-	
-	if (tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles)
-	{
-		TileInfo &tileInfo = aiData.getTileInfo(tile);
-		
-		combatModeEffect.value *=
-			1.0
-			* tileInfo.sensorOffenseMultipliers.at(attackerFactionId)
-			/ tileInfo.sensorDefenseMultipliers.at(defenderFactionId)
-		;
-		
-		if (atTile)
-		{
-			AttackTriad attackTriad = getAttackTriad(attackerUnitId, defenderUnitId);
-			combatModeEffect.value /= tileInfo.terrainDefenseMultipliers.at(attackTriad);
-		}
-		
-	}
-	
-	return combatModeEffect;
+	this->pad0 = vehicle.pad_0;
+	this->strengthCoefficient = getVehicleMoraleMultiplier(vehicleId);
+	this->health = getVehicleRelativeHealth(vehicleId);
 	
 }
 
-// MapSum
-
-void MapSum::clear()
+void Combattant::initialize(robin_hood::unordered_flat_map<int, double> const &damageCoefficients)
 {
-	map.clear();
-	sum = 0.0;
-}
-
-double MapSum::get(int key)
-{
-	robin_hood::unordered_flat_map<int, double>::iterator const iterator = map.find(key);
-	return iterator == map.end() ? 0.0 : iterator->second;
-}
-
-void MapSum::set(int key, double value)
-{
-	if (map.find(key) == map.end())
-	{
-		map.emplace(key, value);
-		sum += value;
-	}
-	else
-	{
-		// weight cannot get below zero
-		value = std::max(0.0, value);
-		double oldValue = map.at(key);
-		map.at(key) = value;
-		sum += (- oldValue + value);
-	}
-	
-}
-
-void MapSum::add(int key, double value)
-{
-	if (map.find(key) == map.end())
-	{
-		map.emplace(key, value);
-	}
-	else
-	{
-		// weight cannot get below zero
-		value = std::max(-map.at(key), value);
-		map.at(key) += value;
-	}
-	
-	sum += value;
-	
+	robin_hood::unordered_flat_map<int, double>::const_iterator damageCoefficientIterator = damageCoefficients.find(pad0);
+	double damageCoefficient = damageCoefficientIterator == damageCoefficients.end() ? 0.0 : damageCoefficientIterator->second;
+	assert(damageCoefficient >= 0.0 && damageCoefficient <= 1.0);
+	this->remainingHealth = (1.0 - damageCoefficient) * this->health;
 }
 
 // CombatData
 
-void CombatData::reset(CombatEffectTable *combatEffectTable, MAP *tile, bool playerAssault)
+void CombatData::initialize(MAP *tile)
 {
-	if (TRACE) { debug("CombatData::reset( combatEffectTable=%d )\n", (int) combatEffectTable); }
+	this->tile = tile;
+	this->airbase = aiData.getTileInfo(tile).airbase;
 	
-	tileCombatEffectTable.clear();
-	tileCombatEffectTable.combatEffectTable = combatEffectTable;
-	tileCombatEffectTable.tile = tile;
-	tileCombatEffectTable.playerAssault = playerAssault;
+	this->assailants.clear();
+	this->protectors.clear();
 	
-	clearAssailants();
-	clearProtectors();
+	this->assailantUnitWeights.clear();
+	this->assailantUnitWeightSum = 0.0;
+	this->protectorUnitWeights.clear();
+	this->protectorUnitWeightSum = 0.0;
 	
-}
-void CombatData::clearAssailants()
-{
-	if (TRACE) { debug("CombatData::clearAssailants()\n"); }
-	if (TRACE) { debug("\tcomputed = false\n"); }
+	this->remainingAssailantUnitWeights.clear();
+	this->remainingAssailantUnitWeightSum = 0.0;
+	this->remainingProtectorUnitWeights.clear();
+	this->remainingProtectorUnitWeightSum = 0.0;
 	
-	assailantUnitWeights.clear();
-	computed = false;
+	this->computed = false;
 	
 }
 
-void CombatData::clearProtectors()
+double CombatData::getUnitCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, bool attackerAtTile, bool defenderAtTile)
 {
-	if (TRACE) { debug("CombatData::clearProtectors()\n"); }
-	if (TRACE) { debug("\tcomputed = false\n"); }
-	
-	protectorUnitWeights.clear();
-	computed = false;
-	
+	return
+		aiData.combatEffectTable.getUnitCombatEffect(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode, attackerAtTile ? tile : nullptr, defenderAtTile ? tile : nullptr)
+	;
+}
+
+double CombatData::getCombattantCombatEffect(Combattant const &attacker, Combattant const &defender, ENGAGEMENT_MODE engagementMode, bool attackerAtTile, bool defenderAtTile)
+{
+	return
+		getUnitCombatEffect(attacker.factionId, attacker.unitId, defender.factionId, defender.unitId, engagementMode, attackerAtTile, defenderAtTile)
+		* attacker.strengthCoefficient
+		/ defender.strengthCoefficient
+	;
 }
 
 void CombatData::addAssailantUnit(int factionId, int unitId, double weight)
 {
-	if (TRACE) { debug("CombatData::addAssailantUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight); }
-	if (TRACE) { debug("\tcomputed = false\n"); }
+	trace("CombatData::addAssailantUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight);
+	trace("\tcomputed = false\n");
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
-	assailantUnitWeights.add(key, +weight);
+	assailantUnitWeights[key] += weight;
+	assailantUnitWeightSum += weight;
 	
 	// clear computed flag
 	
 	computed = false;
-	assailantAttackGains.clear();
-	protectorDefendGains.clear();
 	
 }
 
 void CombatData::addProtectorUnit(int factionId, int unitId, double weight)
 {
-	if (TRACE) { debug("CombatData::addProtectorUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight); }
-	if (TRACE) { debug("\tcomputed = false\n"); }
+	trace("CombatData::addProtectorUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight);
+	trace("\tcomputed = false\n");
 	
 	int key = FactionUnit::encodeKey(factionId, unitId);
 	
-	protectorUnitWeights.add(key, +weight);
+	protectorUnitWeights[key] += weight;
+	protectorUnitWeightSum += weight;
 	
 	// clear computed flag
 	
 	computed = false;
-	assailantAttackGains.clear();
-	protectorDefendGains.clear();
 	
 }
 
-/*
-Adds just a vehicle but NOT unit.
-Weight is precomputed.
-*/
-void CombatData::addAssailantVehicle(int vehicleId, double weight)
-{
-	assailantVehicleWeights[vehicleId] = weight;
-}
-
-/*
-Adds vehicle and its unit.
-*/
 void CombatData::addAssailant(int vehicleId, double weight)
 {
-	VEH &vehicle = Vehs[vehicleId];
-	
-	weight *= getVehicleStrenghtMultiplier(vehicleId);
-	
-	assailantVehicleWeights.emplace(vehicle.pad_0, weight);
-	addAssailantUnit(vehicle.faction_id, vehicle.unit_id, weight);
-	
+	assailants.emplace_back(vehicleId, weight, /*airbase*/false);
 }
 
 void CombatData::addProtector(int vehicleId, double weight)
 {
-	VEH &vehicle = Vehs[vehicleId];
-	
-	weight *= getVehicleStrenghtMultiplier(vehicleId);
-	
-	protectorVehicleWeights.emplace(vehicle.pad_0, weight);
-	addProtectorUnit(vehicle.faction_id, vehicle.unit_id, weight);
-	
+	protectors.emplace_back(vehicleId, weight, /*airbase*/airbase);
 }
 
-void CombatData::removeAssailantUnit(int factionId, int unitId, double weight)
+double CombatData::getAssailantHealthSum(bool range)
 {
-	if (TRACE) { debug("CombatData::removeAssailantUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight); }
-	if (TRACE) { debug("\tcomputed = false\n"); }
-	
-	int key = FactionUnit::encodeKey(factionId, unitId);
-	
-	assailantUnitWeights.add(key, -weight);
-	
-	// clear computed flag
-	
-	computed = false;
-	assailantAttackGains.clear();
-	protectorDefendGains.clear();
-	
+	return std::accumulate(assailants.begin(), assailants.end(), 0.0, [range](double sum, Combattant const &combattant) { return sum + (!range || combattant.range ? combattant.health : 0.0); });
 }
 
-void CombatData::removeProtectorUnit(int factionId, int unitId, double weight)
+double CombatData::getProtectorHealthSum(bool range)
 {
-	if (TRACE) { debug("CombatData::removeProtectorUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight); }
-	if (TRACE) { debug("\tcomputed = false\n"); }
-	
-	int key = FactionUnit::encodeKey(factionId, unitId);
-	
-	protectorUnitWeights.add(key, -weight);
-	
-	// clear computed flag
-	
-	computed = false;
-	assailantAttackGains.clear();
-	protectorDefendGains.clear();
-	
+	return std::accumulate(protectors.begin(), protectors.end(), 0.0, [range](double sum, Combattant const &combattant) { return sum + (!range || combattant.range ? combattant.health : 0.0); });
 }
 
-double CombatData::getAverageAssailantAttackGain(int factionId, int unitId)
+double CombatData::getAssailantRemainingHealthSum(bool range)
 {
-	int assailantKey = FactionUnit::encodeKey(factionId, unitId);
-	
-	// retrieve value
-	
-	if (assailantAttackGains.find(assailantKey) != assailantAttackGains.end())
-	{
-		return assailantAttackGains.at(assailantKey);
-	}
-	
-	// compute value
-	
-	double assailantMeleeAttackGain;
-	if (isUnitCanMeleeAttack(factionId, unitId, nullptr, tile))
-	{
-		SummaryStatistics assailantMeleeAttackGainStatistics;
-		
-		for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : protectorUnitWeights.map)
-		{
-			int protectorKey = protectorUnitWeightEntry.first;
-			double weight = protectorUnitWeightEntry.second;
-			FactionUnit protectorFactionUnit(protectorKey);
-			
-			double combatEffect = tileCombatEffectTable.getCombatEffect(assailantKey, protectorKey, EM_MELEE);
-			double combatGain = getMutualCombatGain(aiData.unitDestructionGains.at(unitId), aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
-			
-			assailantMeleeAttackGainStatistics.add(combatGain, weight);
-			
-		}
-		
-		assailantMeleeAttackGain = assailantMeleeAttackGainStatistics.mean();
-		
-	}
-	else
-	{
-		assailantMeleeAttackGain = 0.0;
-	}
-	
-	double assailantArtilAttackGain;
-	if (isUnitCanArtilleryAttack(unitId, nullptr))
-	{
-		SummaryStatistics assailantArtilAttackGainStatistics;
-		
-		for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : protectorUnitWeights.map)
-		{
-			int protectorKey = protectorUnitWeightEntry.first;
-			double weight = protectorUnitWeightEntry.second;
-			FactionUnit protectorFactionUnit(protectorKey);
-			
-			CombatMode combatMode = getCombatMode(EM_ARTILLERY, protectorFactionUnit.unitId);
-			double combatEffect = tileCombatEffectTable.getCombatEffect(assailantKey, protectorKey, EM_ARTILLERY);
-			
-			double combatGain;
-			if (combatMode == CM_ARTILLERY_DUEL)
-			{
-				combatGain = getMutualCombatGain(aiData.unitDestructionGains.at(unitId), aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
-			}
-			else
-			{
-				combatGain = getBombardmentGain(aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
-			}
-			
-			assailantArtilAttackGainStatistics.add(combatGain, weight);
-			
-		}
-		
-		assailantArtilAttackGain = assailantArtilAttackGainStatistics.mean();
-		
-	}
-	else
-	{
-		assailantArtilAttackGain = 0.0;
-	}
-	
-	double assailantAttackGain;
-	if (assailantMeleeAttackGain > 0.0 && assailantArtilAttackGain > 0.0)
-	{
-		assailantAttackGain = 0.5 * (assailantMeleeAttackGain + assailantArtilAttackGain);
-	}
-	else if (assailantMeleeAttackGain > 0.0)
-	{
-		assailantAttackGain = assailantMeleeAttackGain;
-	}
-	else if (assailantArtilAttackGain > 0.0)
-	{
-		assailantAttackGain = assailantArtilAttackGain;
-	}
-	else
-	{
-		assailantAttackGain = 0.0;
-	}
-	
-	// store value
-	
-	assailantAttackGains[assailantKey] = assailantAttackGain;
-	
-	return assailantAttackGain;
-	
+	return std::accumulate(assailants.begin(), assailants.end(), 0.0, [range](double sum, Combattant const &combattant) { return sum + (!range || combattant.range ? combattant.remainingHealth : 0.0); });
 }
 
-double CombatData::getAverageProtectorDefendGain(int factionId, int unitId)
+double CombatData::getProtectorRemainingHealthSum(bool range)
 {
-	int assailantKey = FactionUnit::encodeKey(factionId, unitId);
-	
-	// retrieve value
-	
-	if (assailantAttackGains.find(assailantKey) != assailantAttackGains.end())
-	{
-		return assailantAttackGains.at(assailantKey);
-	}
-	
-	// compute value
-	
-	double assailantMeleeAttackGain;
-	if (isUnitCanMeleeAttack(factionId, unitId, nullptr, tile))
-	{
-		SummaryStatistics assailantMeleeAttackGainStatistics;
-		
-		for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : protectorUnitWeights.map)
-		{
-			int protectorKey = protectorUnitWeightEntry.first;
-			double weight = protectorUnitWeightEntry.second;
-			FactionUnit protectorFactionUnit(protectorKey);
-			
-			double combatEffect = tileCombatEffectTable.getCombatEffect(assailantKey, protectorKey, EM_MELEE);
-			double combatGain = getMutualCombatGain(aiData.unitDestructionGains.at(unitId), aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
-			
-			assailantMeleeAttackGainStatistics.add(combatGain, weight);
-			
-		}
-		
-		assailantMeleeAttackGain = assailantMeleeAttackGainStatistics.mean();
-		
-	}
-	else
-	{
-		assailantMeleeAttackGain = 0.0;
-	}
-	
-	double assailantArtilAttackGain;
-	if (isUnitCanArtilleryAttack(unitId, nullptr))
-	{
-		SummaryStatistics assailantArtilAttackGainStatistics;
-		
-		for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : protectorUnitWeights.map)
-		{
-			int protectorKey = protectorUnitWeightEntry.first;
-			double weight = protectorUnitWeightEntry.second;
-			FactionUnit protectorFactionUnit(protectorKey);
-			
-			CombatMode combatMode = getCombatMode(EM_ARTILLERY, protectorFactionUnit.unitId);
-			double combatEffect = tileCombatEffectTable.getCombatEffect(assailantKey, protectorKey, EM_ARTILLERY);
-			
-			double combatGain;
-			if (combatMode == CM_ARTILLERY_DUEL)
-			{
-				combatGain = getMutualCombatGain(aiData.unitDestructionGains.at(unitId), aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
-			}
-			else
-			{
-				combatGain = getBombardmentGain(aiData.unitDestructionGains.at(protectorFactionUnit.unitId), combatEffect);
-			}
-			
-			assailantArtilAttackGainStatistics.add(combatGain, weight);
-			
-		}
-		
-		assailantArtilAttackGain = assailantArtilAttackGainStatistics.mean();
-		
-	}
-	else
-	{
-		assailantArtilAttackGain = 0.0;
-	}
-	
-	double assailantAttackGain;
-	if (assailantMeleeAttackGain > 0.0 && assailantArtilAttackGain > 0.0)
-	{
-		assailantAttackGain = 0.5 * (assailantMeleeAttackGain + assailantArtilAttackGain);
-	}
-	else if (assailantMeleeAttackGain > 0.0)
-	{
-		assailantAttackGain = assailantMeleeAttackGain;
-	}
-	else if (assailantArtilAttackGain > 0.0)
-	{
-		assailantAttackGain = assailantArtilAttackGain;
-	}
-	else
-	{
-		assailantAttackGain = 0.0;
-	}
-	
-	// store value
-	
-	assailantAttackGains[assailantKey] = assailantAttackGain;
-	
-	return assailantAttackGain;
-	
+	return std::accumulate(protectors.begin(), protectors.end(), 0.0, [range](double sum, Combattant const &combattant) { return sum + (!range || combattant.range ? combattant.remainingHealth : 0.0); });
 }
 
-/*
-Returns unit effect
-*/
-double CombatData::getAssailantUnitEffect(int factionId, int unitId)
+double CombatData::getAssaultSufficiency(bool range)
 {
-	if (TRACE) { debug("CombatData::getAssailantUnitEffect( factionId=%d unitId=%d )\n", factionId, unitId); }
+	trace("CombatData::getAssaultSufficiency( range=%d )\n", range);
+	
+	if (assailants.empty())
+	{
+		// no assailants - zero sufficiency
+		return 0.0;
+	}
+	if (protectors.empty())
+	{
+		// no protectors - full sufficiency
+		return 1.0;
+	}
 	
 	compute();
 	
-	int assailantKey = FactionUnit::encodeKey(factionId, unitId);
+	double assailantHealthSum = getAssailantHealthSum(range);
+	double protectorHealthSum = getProtectorHealthSum(range);
+	double assailantRemainingHealthSum = getAssailantRemainingHealthSum(range);
+	double protectorRemainingHealthSum = getProtectorRemainingHealthSum(range);
+	trace("\tassailantHealthSum=%5.2f protectorHealthSum=%5.2f assailantRemainingHealthSum=%5.2f protectorRemainingHealthSum=%5.2f \n", assailantHealthSum, protectorHealthSum, assailantRemainingHealthSum, protectorRemainingHealthSum);
 	
-	if (assailantEffects.find(assailantKey) != assailantEffects.end())
+	if (assailantHealthSum <= 0.0)
 	{
-		return assailantEffects.at(assailantKey);
+		return 0.0;
+	}
+	if (protectorHealthSum <= 0.0)
+	{
+		return 1.0;
 	}
 	
-	double bestAssailantEffect = 0.0;
+	// assailant health to equalize forces
 	
-	for (robin_hood::pair<int, double> remainingProtectorUnitWeightEntry : remainingProtectorUnitWeights.map)
+	double equalAssailantHealthSum;
+	
+	if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum <= 0.0)
 	{
-		int remainingProtectorKey = remainingProtectorUnitWeightEntry.first;
-		
-		// assailant attacks
-		
-		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
-		{
-			CombatModeEffect const &combatModeEffect = tileCombatEffectTable.getCombatModeEffect(assailantKey, remainingProtectorKey, engagementMode);
-			double combatEffect = combatModeEffect.value;
-			if (combatEffect == 0.0)
-				continue;
-			
-			// max effects
-			
-			double assailantEffect = combatEffect;
-			bestAssailantEffect = std::max(bestAssailantEffect, assailantEffect);
-			
-		}
-		
-		// protector attacks
-		
-		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
-		{
-			CombatModeEffect const &combatModeEffect = tileCombatEffectTable.getCombatModeEffect(remainingProtectorKey, assailantKey, engagementMode);
-			double combatEffect = combatModeEffect.value;
-			if (combatEffect == 0.0)
-				continue;
-			
-			// max effects
-			
-			double assailantEffect = 1.0 / combatEffect;
-			bestAssailantEffect = std::max(bestAssailantEffect, assailantEffect);
-			
-		}
-		
+		equalAssailantHealthSum = assailantHealthSum;
+	}
+	else if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum >= protectorHealthSum)
+	{
+		// no casualties in protectors while all assailants are destroyed
+		return 0.0;
+	}
+	else if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum > 0.0)
+	{
+		equalAssailantHealthSum = assailantHealthSum * protectorHealthSum / (protectorHealthSum - protectorRemainingHealthSum);
+	}
+	else if (protectorRemainingHealthSum <= 0.0 && assailantRemainingHealthSum > assailantHealthSum)
+	{
+		// no casualties in assailants while all protectors are destroyed
+		return 1.0;
+	}
+	else if (protectorRemainingHealthSum <= 0.0 && assailantRemainingHealthSum > 0.0)
+	{
+		equalAssailantHealthSum = assailantHealthSum - assailantRemainingHealthSum;
+	}
+	else
+	{
+		debug("ERROR: assailantRemainingHealthSum > 0.0 && protectorRemainingHealthSum > 0.0 after compute.\n");
+		return 0.5;
 	}
 	
-	assailantEffects.emplace(assailantKey, bestAssailantEffect);
-	
-	return bestAssailantEffect;
+	double p = protectorHealthSum / equalAssailantHealthSum;
+	double q = 1.0 - p;
+	double tryVariance = p * q;
+	double tryCount = 10.0 * (protectorHealthSum + equalAssailantHealthSum);
+	double totalVariance = tryVariance * tryCount;
+	double totalSTD = sqrt(totalVariance);
+	double sufficientAssailantHealthSum = equalAssailantHealthSum + totalSTD;
+	double assailtSufficiency = std::min(1.0, assailantHealthSum / sufficientAssailantHealthSum);
+	return assailtSufficiency;
 	
 }
 
-/*
-Returns unit effect.
-*/
-double CombatData::getProtectorUnitEffect(int factionId, int unitId)
+double CombatData::getProtectSufficiency(bool artillery)
 {
-	if (TRACE) { debug("CombatData::getProtectorUnitEffect( factionId=%d unitId=%d )\n", factionId, unitId); }
+	trace("CombatData::getProtectSufficiency( artillery=%d )\n", artillery);
+	
+	if (assailants.empty())
+	{
+		// no assailants - full sufficiency
+		trace("\tno assailants\n");
+		trace("\tprotectSufficiency=1.0\n");
+		return 1.0;
+	}
+	if (protectors.empty())
+	{
+		// no protectors - zero sufficiency
+		trace("\tno protectors\n");
+		trace("\tprotectSufficiency=0.0\n");
+		return 0.0;
+	}
 	
 	compute();
 	
-	int protectorKey = FactionUnit::encodeKey(factionId, unitId);
-	
-	if (protectorEffects.find(protectorKey) != protectorEffects.end())
+	if (TRACE)
 	{
-		return protectorEffects.at(protectorKey);
+		trace("\tassailants\n")
+		for (Combattant const &assailant : assailants)
+		{
+			trace("\t\t[%4d] weight=%5.2f health=%5.2f remainingHealth=%5.2f\n", getInitialVehicleIdByPad0(assailant.pad0), assailant.weight, assailant.health, assailant.remainingHealth);
+		}
+		trace("\tprotectors\n")
+		for (Combattant const &protector : protectors)
+		{
+			trace("\t\t[%4d] weight=%5.2f health=%5.2f remainingHealth=%5.2f\n", getInitialVehicleIdByPad0(protector.pad0), protector.weight, protector.health, protector.remainingHealth);
+		}
 	}
 	
-	double bestProtectorEffect = 0.0;
+	double assailantHealthSum = getAssailantHealthSum(artillery);
+	double protectorHealthSum = getProtectorHealthSum(artillery);
+	double assailantRemainingHealthSum = getAssailantRemainingHealthSum(artillery);
+	double protectorRemainingHealthSum = getProtectorRemainingHealthSum(artillery);
+	trace("\tassailantHealthSum=%5.2f protectorHealthSum=%5.2f assailantRemainingHealthSum=%5.2f protectorRemainingHealthSum=%5.2f \n", assailantHealthSum, protectorHealthSum, assailantRemainingHealthSum, protectorRemainingHealthSum);
 	
-	for (robin_hood::pair<int, double> remainingAssailantUnitWeightEntry : remainingAssailantUnitWeights.map)
+	if (assailantHealthSum <= 0.0)
 	{
-		int remainingAssailantKey = remainingAssailantUnitWeightEntry.first;
-		
-		// protector attacks
-		
-		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
-		{
-			double combatEffect = tileCombatEffectTable.getCombatEffect(protectorKey, remainingAssailantKey, engagementMode);
-			if (combatEffect == 0.0)
-				continue;
-			
-			// max effects
-			
-			double protectorEffect = combatEffect;
-			bestProtectorEffect = std::max(bestProtectorEffect, protectorEffect);
-			
-		}
-		
-		// assailant attacks
-		
-		for (ENGAGEMENT_MODE engagementMode : {EM_MELEE, EM_ARTILLERY})
-		{
-			double combatEffect = tileCombatEffectTable.getCombatEffect(remainingAssailantKey, protectorKey, engagementMode);
-			if (combatEffect == 0.0)
-				continue;
-			
-			// max effects
-			
-			double protectorEffect = 1.0 / combatEffect;
-			bestProtectorEffect = std::max(bestProtectorEffect, protectorEffect);
-			
-		}
-		
+		trace("\tprotectSufficiency=1.0\n");
+		return 1.0;
+	}
+	if (protectorHealthSum <= 0.0)
+	{
+		trace("\tprotectSufficiency=0.0\n");
+		return 0.0;
 	}
 	
-	protectorEffects.emplace(protectorKey, bestProtectorEffect);
+	// protector health to equalize forces
 	
-	return bestProtectorEffect;
+	double equalProtectorHealthSum;
+	
+	if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum <= 0.0)
+	{
+		equalProtectorHealthSum = protectorHealthSum;
+	}
+	else if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum >= protectorHealthSum)
+	{
+		// no casualties in protectors while all assailants are destroyed
+		trace("\tprotectSufficiency=1.0\n");
+		return 1.0;
+	}
+	else if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum > 0.0)
+	{
+		equalProtectorHealthSum = protectorHealthSum - protectorRemainingHealthSum;
+	}
+	else if (protectorRemainingHealthSum <= 0.0 && assailantRemainingHealthSum > assailantHealthSum)
+	{
+		// no casualties in assailants while all protectors are destroyed
+		trace("\tprotectSufficiency=0.0\n");
+		return 0.0;
+	}
+	else if (protectorRemainingHealthSum <= 0.0 && assailantRemainingHealthSum > 0.0)
+	{
+		equalProtectorHealthSum = protectorHealthSum * assailantHealthSum / (assailantHealthSum - assailantRemainingHealthSum);
+	}
+	else
+	{
+		debug("ERROR: assailantRemainingHealthSum=%5.2f protectorRemainingHealthSum=%5.2f after compute.\n", assailantRemainingHealthSum, protectorRemainingHealthSum);
+		return 0.5;
+	}
+	
+	double p = assailantHealthSum / (assailantHealthSum + equalProtectorHealthSum);
+	double q = 1.0 - p;
+	double tryVariance = 0.1 * p * 0.1 * q;
+	double tryCount = 10.0 * (assailantHealthSum + equalProtectorHealthSum);
+	double totalVariance = tryVariance * tryCount;
+	double totalSTD = sqrt(totalVariance);
+	double sufficientProtectorHealthSum = equalProtectorHealthSum + totalSTD;
+	double protectSufficiency = std::min(1.0, protectorHealthSum / sufficientProtectorHealthSum);
+	
+	trace
+	(
+		"\tprotectSufficiency=%5.2f"
+		" assailantHealthSum=%5.2f equalProtectorHealthSum=%5.2f p=%5.2f q=%5.2f tryVariance=%7.4f tryCount=%5.2f totalVariance=%5.2f totalSTD=%5.2f sufficientProtectorHealthSum=%5.2f"
+		"\n"
+		, protectSufficiency
+		, assailantHealthSum, equalProtectorHealthSum
+		, p, q, tryVariance, tryCount, totalVariance, totalSTD, sufficientProtectorHealthSum
+	);
+	return protectSufficiency;
 	
 }
 
-double CombatData::getAssailantVehicleEffect(int vehicleId)
+double CombatData::getAssailantCombattantContribution(Combattant combattant)
 {
-	VEH *vehicle = getVehicle(vehicleId);
-	return getAssailantUnitEffect(vehicle->faction_id, vehicle->unit_id);
+	double oldSufficiency = getAssaultSufficiency(false);
+	double oldArtillerySufficiency = getAssaultSufficiency(true);
+	computed = false;
+	
+	assailants.push_back(combattant);
+	double newSufficiency = getAssaultSufficiency(false);
+	double newArtillerySufficiency = getAssaultSufficiency(true);
+	assailants.pop_back();
+	computed = false;
+	
+	double contribution = newSufficiency - oldSufficiency;
+	double artilleryContribution = newArtillerySufficiency - oldArtillerySufficiency;
+	
+	return std::max(contribution, artilleryContribution);
+	
 }
 
-double CombatData::getProtectorVehicleEffect(int vehicleId)
+double CombatData::getProtectorCombattantContribution(Combattant combattant)
 {
-	VEH *vehicle = getVehicle(vehicleId);
-	return getProtectorUnitEffect(vehicle->faction_id, vehicle->unit_id);
+	double oldSufficiency = getProtectSufficiency(false);
+	double oldArtillerySufficiency = getProtectSufficiency(true);
+	computed = false;
+	
+	protectors.push_back(combattant);
+	double newSufficiency = getProtectSufficiency(false);
+	double newArtillerySufficiency = getProtectSufficiency(true);
+	protectors.pop_back();
+	computed = false;
+	
+	double contribution = newSufficiency - oldSufficiency;
+	double artilleryContribution = newArtillerySufficiency - oldArtillerySufficiency;
+	
+	return std::max(contribution, artilleryContribution);
+	
+}
+
+double CombatData::getAssailantUnitContribution(int factionId, int unitId)
+{
+	Combattant assailant(factionId, unitId, 1.0, /*airbase*/false);
+	return getAssailantCombattantContribution(assailant);
+}
+
+double CombatData::getProtectorUnitContribution(int factionId, int unitId)
+{
+	Combattant protector(factionId, unitId, 1.0, /*airbase*/airbase);
+	return getProtectorCombattantContribution(protector);
+}
+
+double CombatData::getAssailantContribution(int vehicleId)
+{
+	Combattant assailant(vehicleId, 1.0, /*airbase*/false);
+	return getAssailantCombattantContribution(assailant);
+}
+
+double CombatData::getProtectorContribution(int vehicleId)
+{
+	Combattant protector(vehicleId, 1.0, /*airbase*/airbase);
+	return getProtectorCombattantContribution(protector);
 }
 
 double CombatData::getAssaultWinProbability()
 {
-	if (assailantUnitWeights.sum <= 0.0)
+	if (assailantUnitWeightSum <= 0.0)
 	{
 		// no assailants - guaranteed loss
 		return 0.0;
 	}
-	else if (protectorUnitWeights.sum <= 0.0)
+	else if (protectorUnitWeightSum <= 0.0)
 	{
 		// no protectors - guaranteed win
 		return 1.0;
@@ -1349,25 +1189,28 @@ double CombatData::getAssaultWinProbability()
 	
 	compute();
 	
-	if (remainingAssailantUnitWeights.sum <= 0.0 && remainingProtectorUnitWeights.sum <= 0.0)
+	if (remainingAssailantUnitWeightSum <= 0.0 && remainingProtectorUnitWeightSum <= 0.0)
 	{
+		// pure mutual destruction
 		return 0.5;
 	}
-	else if (remainingAssailantUnitWeights.sum > 0.0 && remainingProtectorUnitWeights.sum <= 0.0)
+	else if (remainingAssailantUnitWeightSum > 0.0 && remainingProtectorUnitWeightSum <= 0.0)
 	{
-		double destroyedAssailantWeight = assailantUnitWeights.sum - remainingAssailantUnitWeights.sum;
-		double destroyedProtectorWeight = protectorUnitWeights.sum;
-		return getWinProbability(destroyedAssailantWeight, destroyedProtectorWeight, remainingAssailantUnitWeights.sum);
+		// assailant wins
+		double destroyedAssailantWeight = assailantUnitWeightSum - remainingAssailantUnitWeightSum;
+		double destroyedProtectorWeight = protectorUnitWeightSum;
+		return getWinProbability(destroyedAssailantWeight, destroyedProtectorWeight, remainingAssailantUnitWeightSum);
 	}
-	else if (remainingAssailantUnitWeights.sum <= 0.0 && remainingProtectorUnitWeights.sum > 0.0)
+	else if (remainingAssailantUnitWeightSum <= 0.0 && remainingProtectorUnitWeightSum > 0.0)
 	{
-		double destroyedAssailantWeight = assailantUnitWeights.sum;
-		double destroyedProtectorWeight = protectorUnitWeights.sum - remainingProtectorUnitWeights.sum;
-		return 1.0 - getWinProbability(destroyedProtectorWeight, destroyedAssailantWeight, remainingProtectorUnitWeights.sum);
+		// protector wins
+		double destroyedAssailantWeight = assailantUnitWeightSum;
+		double destroyedProtectorWeight = protectorUnitWeightSum - remainingProtectorUnitWeightSum;
+		return 1.0 - getWinProbability(destroyedProtectorWeight, destroyedAssailantWeight, remainingProtectorUnitWeightSum);
 	}
 	else
 	{
-		debug("ERROR: remainingAssailantWeight > 0.0 && remainingProtectorWeight > 0.0 after compute.\n");
+		debug("ERROR: remainingAssailantUnitWeightSum > 0.0 && remainingProtectorUnitWeightSum > 0.0 after compute.\n");
 		return 0.5;
 	}
 	
@@ -1380,439 +1223,410 @@ double CombatData::getProtectWinProbability()
 
 bool CombatData::isSufficientAssault()
 {
-	if (TRACE) { debug("CombatData::isSufficientAssault()\n"); }
-	
-	if (assailantUnitWeights.map.size() <= 0)
-		return false;
-	else if (protectorUnitWeights.map.size() <= 0)
-		return true;
-	
-	compute();
-	
-	return assailantUnitWeights.sum > 0.0 && remainingAssailantUnitWeights.sum > 0.0 && remainingAssailantUnitWeights.sum / assailantUnitWeights.sum >= conf.ai_combat_advantage * sqrt(protectorUnitWeights.sum);
-	
+	trace("CombatData::isSufficientAssault()\n");
+	return getAssaultSufficiency(false) >= 1.0;
 }
 
 bool CombatData::isSufficientProtect()
 {
-	if (TRACE) { debug("CombatData::isSufficientProtect()\n"); }
-	if (TRACE) { debug("\tprotectorWeight=%5.2f remainingProtectorWeight=%5.2f superiority=%5.2f\n", protectorUnitWeights.sum, remainingProtectorUnitWeights.sum, 1.00 + remainingProtectorUnitWeights.sum / protectorUnitWeights.sum); }
-	
-	if (assailantUnitWeights.map.size() <= 0)
-		return true;
-	else if (protectorUnitWeights.map.size() <= 0)
-		return false;
-	
-	compute();
-	
-	return protectorUnitWeights.sum > 0.0 && remainingProtectorUnitWeights.sum > 0.0 && remainingProtectorUnitWeights.sum / protectorUnitWeights.sum >= conf.ai_combat_advantage * sqrt(assailantUnitWeights.sum);
-	
+	trace("CombatData::isSufficientProtect()\n");
+	return getProtectSufficiency(false) >= 1.0;
 }
 
 void CombatData::compute()
 {
-	if (computed)
-		return;
-	
-	if (TRACE) { debug("CombatData::compute()\n"); }
-	
-	computeInitialize();
-	computeProcess();
-	
+	return compute(robin_hood::unordered_flat_map<int, double>{}, robin_hood::unordered_flat_map<int, double>{});
 }
 
-void CombatData::compute(int assailantVehicleId, double assailantLoss, int protectorVehicleId, double protectorLoss)
+void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVehicleDamageCoefficients, robin_hood::unordered_flat_map<int, double> protectorVehicleDamageCoefficients)
 {
 	if (computed)
 		return;
 	
-	if (TRACE) { debug("CombatData::compute()\n"); }
+	trace("CombatData::compute( %s )\n", getLocationString(tile));
 	
-	computeInitialize();
-	computeReduceWeights(assailantVehicleId, assailantLoss, protectorVehicleId, protectorLoss);
-	computeProcess();
+	// initialize combattants
 	
-}
-
-void CombatData::computeInitialize()
-{
-	// clear effects
-	
-	assailantEffects.clear();
-	protectorEffects.clear();
-	
-	// reset remaining weights
-	
-	remainingAssailantUnitWeights = assailantUnitWeights;
-	remainingProtectorUnitWeights = protectorUnitWeights;
-	
-}
-
-void CombatData::computeReduceWeights(int assailantVehicleId, double assailantLoss, int protectorVehicleId, double protectorLoss)
-{
-	// reduce remaining weights
-	
-	VEH &assailantVehicle = Vehs[assailantVehicleId];
-	VEH &protectorVehicle = Vehs[protectorVehicleId];
-	
-	int assailantVehiclePad0 = assailantVehicle.pad_0;
-	int protectorVehiclePad0 = protectorVehicle.pad_0;
-	
-	if (assailantVehicleWeights.find(assailantVehiclePad0) != assailantVehicleWeights.end())
+	for (Combattant &assailant : assailants)
 	{
-		int assailantKey = FactionUnit::encodeKey(assailantVehicle.faction_id, assailantVehicle.unit_id);
-		double weightReduction = assailantLoss * assailantVehicleWeights.at(assailantVehiclePad0);
-		
-		if (remainingAssailantUnitWeights.map.find(assailantKey) != remainingAssailantUnitWeights.map.end())
-		{
-			remainingAssailantUnitWeights.map.at(assailantKey) = std::max(0.0, remainingAssailantUnitWeights.map.at(assailantKey) - weightReduction);
-		}
-		
+		assailant.initialize(assailantVehicleDamageCoefficients);
+	}
+	for (Combattant &protector : protectors)
+	{
+		protector.initialize(protectorVehicleDamageCoefficients);
 	}
 	
-	if (protectorVehicleWeights.find(protectorVehiclePad0) != protectorVehicleWeights.end())
+	if (TRACE)
 	{
-		int protectorKey = FactionUnit::encodeKey(protectorVehicle.faction_id, protectorVehicle.unit_id);
-		double weightReduction = protectorLoss * protectorVehicleWeights.at(protectorVehiclePad0);
-		
-		if (remainingProtectorUnitWeights.map.find(protectorKey) != remainingProtectorUnitWeights.map.end())
+		trace("\tassailants\n")
+		for (Combattant const &assailant : assailants)
 		{
-			remainingProtectorUnitWeights.map.at(protectorKey) = std::max(0.0, remainingProtectorUnitWeights.map.at(protectorKey) - weightReduction);
+			trace("\t\t[%4d] weight=%5.2f health=%5.2f remainingHealth=%5.2f\n", getInitialVehicleIdByPad0(assailant.pad0), assailant.weight, assailant.health, assailant.remainingHealth);
 		}
-		
+		trace("\tprotectors\n")
+		for (Combattant const &protector : protectors)
+		{
+			trace("\t\t[%4d] weight=%5.2f health=%5.2f remainingHealth=%5.2f\n", getInitialVehicleIdByPad0(protector.pad0), protector.weight, protector.health, protector.remainingHealth);
+		}
 	}
 	
-}
-
-void CombatData::computeProcess()
-{
-	if (computed)
-		return;
+	// artillery combattants
 	
-	if (TRACE) { debug("CombatData::compute()\n"); }
-	
-	// clear effects
-	
-	assailantEffects.clear();
-	protectorEffects.clear();
-	
-	// reset remaining weights
-	
-	remainingAssailantUnitWeights = assailantUnitWeights;
-	remainingProtectorUnitWeights = protectorUnitWeights;
-	
-	// resolve artillery duels
-	
-	if (TRACE) { debug("\tresolve artillery duels\n"); }
-	bool assailantArtillerySurvives = false;
-	for (robin_hood::unordered_flat_map<int, double>::iterator assailantUnitWeightsIterator = remainingAssailantUnitWeights.map.begin(); assailantUnitWeightsIterator != remainingAssailantUnitWeights.map.end(); )
+	std::list<Combattant *> rangeAssailants;
+	std::list<Combattant *> rangeProtectors;
+	for (Combattant &assailant : assailants)
 	{
-		int assailantKey = assailantUnitWeightsIterator->first;
-		double assailantWeight = assailantUnitWeightsIterator->second;
-		FactionUnit assailantFactionUnit(assailantKey);
-		
-		if (!isArtilleryUnit(assailantFactionUnit.unitId))
+		if (assailant.remainingHealth > 0.0 && assailant.range)
 		{
-			assailantUnitWeightsIterator++;
-			continue;
+			rangeAssailants.push_back(&assailant);
 		}
-		
-		if (assailantWeight <= 0.0)
+	}
+	for (Combattant &protector : protectors)
+	{
+		if (protector.remainingHealth > 0.0 && protector.range)
 		{
-			assailantUnitWeightsIterator = remainingAssailantUnitWeights.map.erase(assailantUnitWeightsIterator);
-			continue;
+			rangeProtectors.push_back(&protector);
 		}
-		
-		for (robin_hood::unordered_flat_map<int, double>::iterator protectorUnitWeightsIterator = remainingProtectorUnitWeights.map.begin(); protectorUnitWeightsIterator != remainingProtectorUnitWeights.map.end(); )
+	}
+	trace("\t\trangeAssailants.size()=%d rangeProtectors.size()=%d\n", rangeAssailants.size(), rangeProtectors.size());
+	
+	// artillery duels
+	trace("\tartillery duels\n");
+	
+	while (!rangeAssailants.empty() && !rangeProtectors.empty())
+	{
+		CombattantEffect bestAssailantProtectorEffect = getBestCombattantEffect(rangeAssailants, rangeProtectors, EM_ARTILLERY, false, true);
+		CombattantEffect bestProtectorAssailantEffect = getBestCombattantEffect(rangeProtectors, rangeAssailants, EM_ARTILLERY, true, false);
+		if (TRACE)
 		{
-			int protectorKey = protectorUnitWeightsIterator->first;
-			double protectorWeight = protectorUnitWeightsIterator->second;
-			FactionUnit protectorFactionUnit(protectorKey);
-			
-			if (!isArtilleryUnit(protectorFactionUnit.unitId))
+			if (bestAssailantProtectorEffect.attacker != nullptr && bestAssailantProtectorEffect.defender != nullptr)
 			{
-				protectorUnitWeightsIterator++;
-				continue;
-			}
-			
-			if (protectorWeight <= 0.0)
-			{
-				protectorUnitWeightsIterator = remainingProtectorUnitWeights.map.erase(protectorUnitWeightsIterator);
-				continue;
-			}
-			if (TRACE) { debug("\t\t-\n"); }
-			if (TRACE) { debug("\t\tassailantKey=%d protectorKey=%d\n", assailantKey, protectorKey); }
-			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
-			
-			double combatEffect = tileCombatEffectTable.getCombatEffect(assailantFactionUnit.encodeKey(), protectorFactionUnit.encodeKey(), EM_ARTILLERY);
-			if (TRACE) { debug("\t\tcombatEffect=%5.2f\n", combatEffect); }
-			
-			resolveMutualCombat(combatEffect, assailantWeight, protectorWeight);
-			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
-			
-			if (protectorWeight <= 0.0)
-			{
-				// protector is destroyed
-				protectorUnitWeightsIterator = remainingProtectorUnitWeights.map.erase(protectorUnitWeightsIterator);
+				trace
+				(
+					"\t\tbestAssailantProtectorEffect: effect=%5.2f attackerFactionId=%d attackerUnitId=%3d defenderFactionId=%d defenderUnitId=%3d\n"
+					, bestAssailantProtectorEffect.effect
+					, bestAssailantProtectorEffect.attacker->factionId, bestAssailantProtectorEffect.attacker->unitId
+					, bestAssailantProtectorEffect.defender->factionId, bestAssailantProtectorEffect.defender->unitId
+				);
 			}
 			else
 			{
-				// protector survives
-				protectorUnitWeightsIterator->second = protectorWeight;
-				protectorUnitWeightsIterator++;
+				trace("\t\tbestAssailantProtectorEffect: not found\n");
 			}
-			
-			if (assailantWeight <= 0.0)
+			if (bestProtectorAssailantEffect.attacker != nullptr && bestProtectorAssailantEffect.defender != nullptr)
 			{
-				// assailant is destroyed
+				trace
+				(
+					"\t\tbestProtectorAssailantEffect: effect=%5.2f attackerFactionId=%d attackerUnitId=%3d defenderFactionId=%d defenderUnitId=%3d\n"
+					, bestProtectorAssailantEffect.effect
+					, bestProtectorAssailantEffect.attacker->factionId, bestProtectorAssailantEffect.attacker->unitId
+					, bestProtectorAssailantEffect.defender->factionId, bestProtectorAssailantEffect.defender->unitId
+				);
+			}
+			else
+			{
+				trace("\t\tbestProtectorAssailantEffect: not found\n");
+			}
+		}
+		
+		if (bestAssailantProtectorEffect.effect <= 0.0)
+		{
+			// assailant cannot attack and loses all their vehicles
+			trace("\t\tassailant cannot attack\n");
+			std::for_each(rangeAssailants.begin(), rangeAssailants.end(), [](Combattant *combattant) { combattant->remainingHealth = 0.0; });
+		}
+		else if (bestProtectorAssailantEffect.effect >= 1.0 / bestAssailantProtectorEffect.effect)
+		{
+			// protector attacks because it is better than defend
+			trace("\t\tprotector attacks because it is better than defend\n");
+			resolveMutualCombat(bestProtectorAssailantEffect);
+		}
+		else
+		{
+			// assailant attacks because protector does not want to
+			trace("\t\tassailant attacks because protector does not want to\n");
+			resolveMutualCombat(bestAssailantProtectorEffect);
+		}
+		
+		// remove destroyed combattants
+		
+		rangeAssailants.remove_if([](Combattant *combattant) { return combattant->remainingHealth <= 0.0; });
+		rangeProtectors.remove_if([](Combattant *combattant) { return combattant->remainingHealth <= 0.0; });
+		
+	}
+	
+	// no artillery at one side after artillery duels
+	
+	if (!rangeAssailants.empty() && !rangeProtectors.empty())
+	{
+		debug("ERROR: !rangeAssailants.empty() && !rangeProtectors.empty() - after artillery duels\n");
+	}
+	
+	if (TRACE)
+	{
+		trace("\tassailants\n")
+		for (Combattant const &assailant : assailants)
+		{
+			trace("\t\t[%4d] weight=%5.2f health=%5.2f remainingHealth=%5.2f\n", getInitialVehicleIdByPad0(assailant.pad0), assailant.weight, assailant.health, assailant.remainingHealth);
+		}
+		trace("\tprotectors\n")
+		for (Combattant const &protector : protectors)
+		{
+			trace("\t\t[%4d] weight=%5.2f health=%5.2f remainingHealth=%5.2f\n", getInitialVehicleIdByPad0(protector.pad0), protector.weight, protector.health, protector.remainingHealth);
+		}
+	}
+	
+	// bombardment
+	trace("\tbombardment\n");
+	
+	if (rangeAssailants.empty() && rangeProtectors.empty())
+	{
+		// Artillerys mutual destruction
+		trace("\t\tartillery mutual destruction\n");
+	}
+	else if (!rangeAssailants.empty() && rangeProtectors.empty())
+	{
+		// assailants bombards protectors
+		trace("\t\tassailants bombard protectors\n");
+		
+		bool rangeAssailantCanBombardAircraftInFlight = false;
+		for (Combattant *rangeAssailant : rangeAssailants)
+		{
+			if (!conf.air_attack_requires_air_superiority || rangeAssailant->canAttackAricraftInFlight)
+			{
+				rangeAssailantCanBombardAircraftInFlight = true;
 				break;
 			}
 			
 		}
 		
-		if (assailantWeight <= 0.0)
+		double minBombardmentHealth = 1.0 - aiData.getTileInfo(this->tile).maxBombardmentDamage;
+		
+		for (Combattant &protector : protectors)
 		{
-			// assailant is destroyed
-			assailantUnitWeightsIterator = remainingAssailantUnitWeights.map.erase(assailantUnitWeightsIterator);
+			if (protector.aircraftInFlight && !rangeAssailantCanBombardAircraftInFlight)
+				continue;
+			
+			protector.remainingHealth = std::min(minBombardmentHealth, protector.remainingHealth);
+			
 		}
-		else
+		
+	}
+	else if (rangeAssailants.empty() && !rangeProtectors.empty())
+	{
+		// protectors bombards assailants
+		trace("\t\tprotectors bombard assailants\n");
+		
+		bool rangeProtectorCanBombardAircraftInFlight = false;
+		for (Combattant *rangeProtector : rangeProtectors)
 		{
-			// assailant survives
-			assailantUnitWeightsIterator->second = assailantWeight;
-			assailantArtillerySurvives = true;
-			if (TRACE) { debug("\t\tassailantArtillerySurvives\n"); }
-			break;
+			if (!conf.air_attack_requires_air_superiority || rangeProtector->canAttackAricraftInFlight)
+			{
+				rangeProtectorCanBombardAircraftInFlight = true;
+				break;
+			}
+			
+		}
+		
+		for (Combattant *rangeProtector : rangeProtectors)
+		{
+			for (Combattant &assailant : assailants)
+			{
+				if (assailant.aircraftInFlight && !rangeProtectorCanBombardAircraftInFlight)
+					continue;
+				
+				double combatEffect = getCombattantCombatEffect(*rangeProtector, assailant, EM_ARTILLERY, true, false);
+				assailant.remainingHealth = std::max(0.0, assailant.remainingHealth - combatEffect);
+				
+			}
+			
 		}
 		
 	}
 	
-	// halve protector non-artillery weights because of bombardment
-	
-	if (assailantArtillerySurvives)
+	if (TRACE)
 	{
-		for (robin_hood::pair<int, double> &protectorUnitWeightsEntry : remainingProtectorUnitWeights.map)
+		trace("\tassailants\n")
+		for (Combattant const &assailant : assailants)
 		{
-			int protectorKey = protectorUnitWeightsEntry.first;
-			double protectorWeight = protectorUnitWeightsEntry.second;
-			FactionUnit protectorFactionUnit(protectorKey);
-			int protectorUnitId = protectorFactionUnit.unitId;
-			
-			if (protectorWeight <= 0.0)
-				continue;
-			
-			if (isArtilleryUnit(protectorUnitId))
-				continue;
-			
-			protectorUnitWeightsEntry.second /= 2.0;
-			
+			trace("\t\t[%4d] weight=%5.2f health=%5.2f remainingHealth=%5.2f\n", getInitialVehicleIdByPad0(assailant.pad0), assailant.weight, assailant.health, assailant.remainingHealth);
 		}
-			
+		trace("\tprotectors\n")
+		for (Combattant const &protector : protectors)
+		{
+			trace("\t\t[%4d] weight=%5.2f health=%5.2f remainingHealth=%5.2f\n", getInitialVehicleIdByPad0(protector.pad0), protector.weight, protector.health, protector.remainingHealth);
+		}
 	}
 	
-	// melee cycle
+	// melee combattants
 	
-	if (TRACE) { debug("\tmelee cycle\n"); }
-	while (true)
+	std::list<Combattant *> meleeAssailants;
+	std::list<Combattant *> meleeProtectors;
+	for (Combattant &assailant : assailants)
 	{
-		if (TRACE) { debug("\t\t-\n"); }
-		
-		if (remainingAssailantUnitWeights.sum <= 0.0)
+		if (assailant.remainingHealth > 0.0)
 		{
-			if (TRACE) { debug("\t\tno more assailants\n"); }
-			break;
+			meleeAssailants.push_back(&assailant);
 		}
-		
-		if (remainingProtectorUnitWeights.sum <= 0.0)
+	}
+	for (Combattant &protector : protectors)
+	{
+		if (protector.remainingHealth > 0.0)
 		{
-			if (TRACE) { debug("\t\tno more protectors\n"); }
-			break;
+			meleeProtectors.push_back(&protector);
 		}
-		
-		FactionUnitCombatEffect bestAssailantProtectorMeleeEffect = getBestAttackerDefenderMeleeEffect(tileCombatEffectTable, remainingAssailantUnitWeights.map, remainingProtectorUnitWeights.map);
-		FactionUnitCombatEffect bestProtectorAssailantMeleeEffect = getBestAttackerDefenderMeleeEffect(tileCombatEffectTable, remainingProtectorUnitWeights.map, remainingAssailantUnitWeights.map);
+	}
+	trace("\t\tmeleeAssailants.size()=%d meleeProtectors.size()=%d\n", meleeAssailants.size(), meleeProtectors.size());
+	
+	// melee duels
+	trace("\tmelee duels\n");
+	
+	while (!meleeAssailants.empty() && !meleeProtectors.empty())
+	{
+		CombattantEffect bestAssailantProtectorEffect = getBestCombattantEffect(meleeAssailants, meleeProtectors, EM_MELEE, false, true);
+		CombattantEffect bestProtectorAssailantEffect = getBestCombattantEffect(meleeProtectors, meleeAssailants, EM_MELEE, true, false);
 		if (TRACE)
 		{
-			debug
-			(
-				"\t\tbestAssailantProtectorMeleeEffect: effect=%5.2f attackerFactionId=%d attackerUnitId=%3d defenderFactionId=%d defenderUnitId=%3d\n"
-				, bestAssailantProtectorMeleeEffect.effect
-				, bestAssailantProtectorMeleeEffect.factionUnitCombat.attackerFactionUnit.factionId, bestAssailantProtectorMeleeEffect.factionUnitCombat.attackerFactionUnit.unitId
-				, bestAssailantProtectorMeleeEffect.factionUnitCombat.defenderFactionUnit.factionId, bestAssailantProtectorMeleeEffect.factionUnitCombat.defenderFactionUnit.unitId
-			);
-			debug
-			(
-				"\t\tbestProtectorAssailantMeleeEffect: effect=%5.2f attackerFactionId=%d attackerUnitId=%3d defenderFactionId=%d defenderUnitId=%3d\n"
-				, bestProtectorAssailantMeleeEffect.effect
-				, bestProtectorAssailantMeleeEffect.factionUnitCombat.attackerFactionUnit.factionId, bestProtectorAssailantMeleeEffect.factionUnitCombat.attackerFactionUnit.unitId
-				, bestProtectorAssailantMeleeEffect.factionUnitCombat.defenderFactionUnit.factionId, bestProtectorAssailantMeleeEffect.factionUnitCombat.defenderFactionUnit.unitId
-			);
+			if (bestAssailantProtectorEffect.attacker != nullptr && bestAssailantProtectorEffect.defender != nullptr)
+			{
+				trace
+				(
+					"\t\tbestAssailantProtectorEffect: effect=%5.2f attackerFactionId=%d attackerUnitId=%3d defenderFactionId=%d defenderUnitId=%3d\n"
+					, bestAssailantProtectorEffect.effect
+					, bestAssailantProtectorEffect.attacker->factionId, bestAssailantProtectorEffect.attacker->unitId
+					, bestAssailantProtectorEffect.defender->factionId, bestAssailantProtectorEffect.defender->unitId
+				);
+			}
+			else
+			{
+				trace("\t\tbestAssailantProtectorEffect: not found\n");
+			}
+			if (bestProtectorAssailantEffect.attacker != nullptr && bestProtectorAssailantEffect.defender != nullptr)
+			{
+				trace
+				(
+					"\t\tbestProtectorAssailantEffect: effect=%5.2f attackerFactionId=%d attackerUnitId=%3d defenderFactionId=%d defenderUnitId=%3d\n"
+					, bestProtectorAssailantEffect.effect
+					, bestProtectorAssailantEffect.attacker->factionId, bestProtectorAssailantEffect.attacker->unitId
+					, bestProtectorAssailantEffect.defender->factionId, bestProtectorAssailantEffect.defender->unitId
+				);
+			}
+			else
+			{
+				trace("\t\tbestProtectorAssailantEffect: not found\n");
+			}
 		}
 		
-		if (bestAssailantProtectorMeleeEffect.effect <= 0.0)
+		if (bestAssailantProtectorEffect.effect <= 0.0)
 		{
-			// assailant cannot attack
-			if (TRACE) { debug("\t\tassailant cannot attack\n"); }
-			break;
+			// assailant cannot attack and loses all their vehicles
+			trace("\t\tassailant cannot attack\n");
+			std::for_each(meleeAssailants.begin(), meleeAssailants.end(), [](Combattant *combattant) { combattant->remainingHealth = 0.0; });
 		}
-		else if (bestProtectorAssailantMeleeEffect.effect >= 1.0 / bestAssailantProtectorMeleeEffect.effect)
+		else if (bestProtectorAssailantEffect.effect >= 1.0 / bestAssailantProtectorEffect.effect)
 		{
 			// protector attacks because it is better than defend
-			if (TRACE) { debug("\t\tprotector attacks because it is better than defend\n"); }
-			
-			double combatEffect = bestProtectorAssailantMeleeEffect.effect;
-			int assailantKey = bestProtectorAssailantMeleeEffect.factionUnitCombat.defenderFactionUnit.encodeKey();
-			int protectorKey = bestProtectorAssailantMeleeEffect.factionUnitCombat.attackerFactionUnit.encodeKey();
-			
-			double assailantWeight = remainingAssailantUnitWeights.get(assailantKey);
-			double protectorWeight = remainingProtectorUnitWeights.get(protectorKey);
-			if (TRACE) { debug("\t\tassailantKey=%d protectorKey=%d\n", assailantKey, protectorKey); }
-			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
-			
-			if (TRACE) { debug("\t\tcombatEffect=%5.2f\n", combatEffect); }
-			resolveMutualCombat(combatEffect, protectorWeight, assailantWeight);
-			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
-			
-			remainingAssailantUnitWeights.set(assailantKey, assailantWeight);
-			remainingProtectorUnitWeights.set(protectorKey, protectorWeight);
-			
+			trace("\t\tprotector attacks because it is better than defend\n");
+			resolveMutualCombat(bestProtectorAssailantEffect);
 		}
 		else
 		{
 			// assailant attacks because protector does not want to
-			if (TRACE) { debug("\t\tassailant attacks because protector does not want to\n"); }
-			
-			double combatEffect = bestAssailantProtectorMeleeEffect.effect;
-			int assailantKey = bestAssailantProtectorMeleeEffect.factionUnitCombat.attackerFactionUnit.encodeKey();
-			int protectorKey = bestAssailantProtectorMeleeEffect.factionUnitCombat.defenderFactionUnit.encodeKey();
-			
-			double assailantWeight = remainingAssailantUnitWeights.get(assailantKey);
-			double protectorWeight = remainingProtectorUnitWeights.get(protectorKey);
-			if (TRACE) { debug("\t\tassailantKey=%d protectorKey=%d\n", assailantKey, protectorKey); }
-			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
-			
-			if (TRACE) { debug("\t\tcombatEffect=%5.2f\n", combatEffect); }
-			resolveMutualCombat(combatEffect, assailantWeight, protectorWeight);
-			if (TRACE) { debug("\t\tassailantWeight=%5.2f protectorWeight=%5.2f\n", assailantWeight, protectorWeight); }
-			
-			remainingAssailantUnitWeights.set(assailantKey, assailantWeight);
-			remainingProtectorUnitWeights.set(protectorKey, protectorWeight);
-			
+			trace("\t\tassailant attacks because protector does not want to\n");
+			resolveMutualCombat(bestAssailantProtectorEffect);
 		}
 		
-	}
-	
-	// count remaining melee unit weights
-	
-	double remainingMeleeAssailantWeight = 0.0;
-	for (robin_hood::pair<int, double> const &assailantUnitWeightEntry : remainingAssailantUnitWeights.map)
-	{
-		int assailantKey = assailantUnitWeightEntry.first;
-		double assailantWeight = assailantUnitWeightEntry.second;
-		int assailantUnitId = FactionUnit(assailantKey).unitId;
+		// remove destroyed combattants
 		
-		if (assailantWeight <= 0.0)
-			continue;
-			
-		if (!isMeleeUnit(assailantUnitId))
-			continue;
-		
-		remainingMeleeAssailantWeight += assailantWeight;
+		meleeAssailants.remove_if([](Combattant const *combattant) { return combattant->remainingHealth <= 0.0; });
+		meleeProtectors.remove_if([](Combattant const *combattant) { return combattant->remainingHealth <= 0.0; });
 		
 	}
-	sufficientAssault = remainingMeleeAssailantWeight > 0.0;
-	
-	double remainingMeleeProtectorWeight = 0.0;
-	for (robin_hood::pair<int, double> const &protectorUnitWeightEntry : remainingProtectorUnitWeights.map)
-	{
-		int protectorKey = protectorUnitWeightEntry.first;
-		double protectorWeight = protectorUnitWeightEntry.second;
-		int protectorUnitId = FactionUnit(protectorKey).unitId;
-		
-		if (protectorWeight <= 0.0)
-			continue;
-			
-		if (!isMeleeUnit(protectorUnitId))
-			continue;
-		
-		remainingMeleeProtectorWeight += protectorWeight;
-		
-	}
-	sufficientProtect = remainingMeleeProtectorWeight > 0.0;
 	
 	computed = true;
 	
 }
 
-void CombatData::resolveMutualCombat(double combatEffect, double &attackerWeight, double &defenderWeight)
+void CombatData::resolveMutualCombat(CombattantEffect &combattantEffect)
 {
-	debug("CombatData::resolveMutualCombat( combatEffect=%5.2f attackerWeight=%5.2f defenderWeight=%5.2f )\n", combatEffect, attackerWeight, defenderWeight);
+	trace("CombatData::resolveMutualCombat( combatEffect=%5.2f )\n", combattantEffect.effect);
+	trace("\tattacker->weight=%5.2f defender->weight=%5.2f\n", combattantEffect.attacker->weight, combattantEffect.defender->weight);
 	
-	if (attackerWeight <= 0.0 || defenderWeight <= 0.0)
+	if (combattantEffect.attacker->remainingHealth <= 0.0 || combattantEffect.defender->remainingHealth <= 0.0)
+	{
+		trace("\tone of the combattants is dead\n");
 		return;
+	}
 	
-	double borderCombatEffect = defenderWeight / attackerWeight;
+	double weightedCombatEffect = combattantEffect.effect * combattantEffect.attacker->weight / combattantEffect.defender->weight;
+	double equalCombatEffect = combattantEffect.defender->remainingHealth / combattantEffect.attacker->remainingHealth;
+	trace("\tweightedCombatEffect=%5.2f equalCombatEffect=%5.2f\n", weightedCombatEffect, equalCombatEffect);
 	
-	if (combatEffect >= borderCombatEffect)
+	trace("\told: attacker->remainingHealth=%5.2f defender->remainingHealth=%5.2f\n", combattantEffect.attacker->remainingHealth, combattantEffect.defender->remainingHealth);
+	if (weightedCombatEffect == equalCombatEffect)
+	{
+		// both die
+		combattantEffect.attacker->remainingHealth = 0.0;
+		combattantEffect.defender->remainingHealth = 0.0;
+	}
+	else if (weightedCombatEffect > equalCombatEffect)
 	{
 		// defender dies
-		double attackerDamage = defenderWeight / combatEffect;
-		attackerWeight -= attackerDamage;
-		defenderWeight = 0.0;
+		double attackerDamage = combattantEffect.defender->remainingHealth / weightedCombatEffect;
+		combattantEffect.attacker->remainingHealth -= attackerDamage;
+		combattantEffect.defender->remainingHealth = 0.0;
 	}
 	else
 	{
-		double defenderDamage = attackerWeight * combatEffect;
-		attackerWeight = 0.0;
-		defenderWeight -= defenderDamage;
+		double defenderDamage = combattantEffect.attacker->remainingHealth * weightedCombatEffect;
+		combattantEffect.attacker->remainingHealth = 0.0;
+		combattantEffect.defender->remainingHealth -= defenderDamage;
 	}
+	trace("\tnew: attacker->remainingHealth=%5.2f defender->remainingHealth=%5.2f\n", combattantEffect.attacker->remainingHealth, combattantEffect.defender->remainingHealth);
 	
 }
 
 
-FactionUnitCombatEffect CombatData::getBestAttackerDefenderMeleeEffect(TileCombatEffectTable &tileCombatEffectTable, robin_hood::unordered_flat_map<int, double> &attackers, robin_hood::unordered_flat_map<int, double> &defenders)
+CombattantEffect CombatData::getBestCombattantEffect(std::list<Combattant *> &attackers, std::list<Combattant *> &defenders, ENGAGEMENT_MODE engagementMode, bool attackerAtTile, bool defenderAtTile)
 {
-	debug("CombatData::getBestAttackerDefenderMeleeEffect( ... )\n");
+	trace("CombatData::getBestCombattantEffect( ... )\n");
 	
-	int bestAttackerKey = 0;
-	int bestDefenderKey = 0;
+	Combattant *bestAttacker = nullptr;
+	Combattant *bestDefender = nullptr;
 	double bestCombatEffect = 0.0;
 	
-	for (robin_hood::pair<int, double> &attackerEntry : attackers)
+	for (Combattant *attacker : attackers)
 	{
-		int attackerKey = attackerEntry.first;
-		double attackerWeight = attackerEntry.second;
-		FactionUnit attackerFactionUnit(attackerKey);
+		Combattant *bestAttackerDefender = nullptr;
+		double bestAttackerDefenderCombatEffect = +DBL_MAX;
 		
-		if (!isMeleeUnit(attackerFactionUnit.unitId))
-			continue;
-		
-		if (attackerWeight <= 0.0)
-			continue;
-		
-		int bestAttackerDefenderKey = 0;
-		double bestAttackerDefenderCombatEffect = DBL_MAX;
-		
-		for (robin_hood::pair<int, double> &defenderEntry : defenders)
+		for (Combattant *defender : defenders)
 		{
-			int defenderKey = defenderEntry.first;
-			double defenderWeight = defenderEntry.second;
-			FactionUnit defenderFactionUnit(defenderKey);
+			// able to attack
 			
-			if (!isMeleeUnit(defenderFactionUnit.unitId))
-				continue;
+			switch (engagementMode)
+			{
+			case EM_ARTILLERY:
+				if (!attacker->range)
+					continue;
+				if (defender->aircraftInFlight && !attacker->canAttackAricraftInFlight)
+					continue;
+				break;
+			case EM_MELEE:
+				if (!attacker->melee)
+					continue;
+				if (defender->needlejetInFlight && !attacker->canAttackAricraftInFlight)
+					continue;
+				break;
+			}
 			
-			if (defenderWeight <= 0.0)
-				continue;
-			
-			double combatEffect = tileCombatEffectTable.getCombatEffect(attackerKey, defenderKey, EM_MELEE);
-			if (combatEffect <= 0.0)
-				continue;
+			double combatEffect = getCombattantCombatEffect(*attacker, *defender, engagementMode, attackerAtTile, defenderAtTile);
 			
 			// defender looks for the lowest effect
 			
 			if (combatEffect < bestAttackerDefenderCombatEffect)
 			{
-				bestAttackerDefenderKey = defenderKey;
+				bestAttackerDefender = defender;
 				bestAttackerDefenderCombatEffect = combatEffect;
 			}
 			
@@ -1820,7 +1634,7 @@ FactionUnitCombatEffect CombatData::getBestAttackerDefenderMeleeEffect(TileComba
 		
 		// no defender selected
 		
-		if (bestAttackerDefenderCombatEffect == DBL_MAX)
+		if (bestAttackerDefender == nullptr)
 		{
 			continue;
 		}
@@ -1829,14 +1643,25 @@ FactionUnitCombatEffect CombatData::getBestAttackerDefenderMeleeEffect(TileComba
 		
 		if (bestAttackerDefenderCombatEffect > bestCombatEffect)
 		{
-			bestAttackerKey = attackerKey;
-			bestDefenderKey = bestAttackerDefenderKey;
+			bestAttacker = attacker;
+			bestDefender = bestAttackerDefender;
 			bestCombatEffect = bestAttackerDefenderCombatEffect;
 		}
 		
 	}
 	
-	return FactionUnitCombatEffect(FactionUnitCombat(bestAttackerKey, bestDefenderKey, EM_MELEE), bestCombatEffect);
+	if (TRACE)
+	{
+		if (bestAttacker != nullptr && bestDefender != nullptr)
+		{
+			trace("\tbestAttacker=[%4d] bestDefender=[%4d] bestCombatEffect=%5.2f\n", getInitialVehicleIdByPad0(bestAttacker->pad0), getInitialVehicleIdByPad0(bestDefender->pad0), bestCombatEffect);
+		}
+		else
+		{
+			trace("\tnot found\n");
+		}
+	}
+	return {bestAttacker, bestDefender, bestCombatEffect};
 	
 }
 
@@ -1851,50 +1676,12 @@ double CombatData::getProtectWinProbabilityChange(int assailantVehicleId, double
 	// compute with reduction
 	
 	computed = false;
-	compute(assailantVehicleId, assailantWeightLoss, protectorVehicleId, protectorWeightLoss);
+	compute(robin_hood::unordered_flat_map<int, double>{{assailantVehicleId, assailantWeightLoss}}, robin_hood::unordered_flat_map<int, double>{{protectorVehicleId, protectorWeightLoss}});
 	double newProtectWinProbability = getProtectWinProbability();
 	
 	computed = false;
 	
 	return newProtectWinProbability - oldProtectWinProbability;
-	
-}
-
-double CombatData::getAssaultAttackGain(int vehicleId)
-{
-	VEH &vehicle = Vehs[vehicleId];
-	
-	if (assailantAttackGains.find(vehicle.pad_0) != assailantAttackGains.end())
-	{
-		return assailantAttackGains.at(vehicle.pad_0);
-	}
-	
-	double assaultAttackGain = 0.0;
-	
-	// TODO compute
-	
-	assaultAttackGains[vehicle.pad_0] = assaultAttackGain;
-	
-	return assaultAttackGain;
-	
-}
-
-double CombatData::getProtectDefendGain(int vehicleId)
-{
-	VEH &vehicle = Vehs[vehicleId];
-	
-	if (protectorDefendGains.find(vehicle.pad_0) != protectorDefendGains.end())
-	{
-		return protectorDefendGains.at(vehicle.pad_0);
-	}
-	
-	double protectDefendGain = 0.0;
-	
-	// TODO compute
-	
-	protectDefendGains[vehicle.pad_0] = protectDefendGain;
-	
-	return protectDefendGain;
 	
 }
 
@@ -2366,17 +2153,6 @@ void Data::addSeaTransportRequest(int seaCluster)
 {
 	seaTransportRequestCounts[seaCluster]++;
 }
-
-CombatData &Data::getTileCombatData(MAP *tile)
-{
-	return tileInfos.at(tile - *MapTiles).combatData;
-}
-
-CombatData &Data::getBaseCombatData(int baseId)
-{
-	return tileInfos.at(baseInfos.at(baseId).tile - *MapTiles).combatData;
-}
-
 
 // UnloadRequest
 
@@ -3653,132 +3429,6 @@ void disbandUnneededVehicles()
 
 }
 
-MAP *getVehicleArtilleryAttackPosition(int vehicleId, MAP *target)
-{
-	VEH *vehicle = getVehicle(vehicleId);
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	int factionId = vehicle->faction_id;
-	int triad = vehicle->triad();
-	bool native = isNativeVehicle(vehicleId);
-	TileInfo &targetTileInfo = aiData.getTileInfo(target);
-
-	MAP *closestAttackPosition = nullptr;
-	int closestAttackPositionRange = INT_MAX;
-	int closestAttackPositionMovementCost = 0;
-	
-	// air units are not artillery capable
-	
-	if (triad == TRIAD_AIR)
-		return nullptr;
-	
-	for (TileInfo const *rangeTileInfo : targetTileInfo.range2NoCenterTileInfos)
-	{
-		MAP *tile = rangeTileInfo->tile;
-		
-		// should be not blocked
-		
-		if (isBlocked(tile))
-			continue;
-		
-		// destination is reachable
-		
-		switch (triad)
-		{
-		case TRIAD_SEA:
-			if (!isSameSeaCluster(vehicleTile, tile))
-				continue;
-			break;
-		case TRIAD_LAND:
-			if (!isSameLandTransportedCluster(vehicleTile, tile))
-				continue;
-			break;
-		}
-		
-		// land artillery can attack from land only
-		
-		if (triad == TRIAD_LAND && is_ocean(tile))
-			continue;
-		
-		// range
-		
-		int range = getRange(vehicleTile, tile);
-		
-		// movement cost
-		
-		int movementCost = Rules->move_rate_roads;
-		
-		switch (triad)
-		{
-		case TRIAD_SEA:
-			if
-			(
-				isBaseAt(tile)
-				||
-				!map_has_item(tile, BIT_FUNGUS)
-				||
-				(native || isFactionHasProject(factionId, FAC_XENOEMPATHY_DOME))
-			)
-			{
-				movementCost = Rules->move_rate_roads;
-			}
-			else
-			{
-				movementCost = Rules->move_rate_roads * 3;
-			}
-			break;
-			
-		case TRIAD_LAND:
-			if
-			(
-				isBaseAt(tile)
-				||
-				map_has_item(tile, BIT_MAGTUBE)
-			)
-			{
-				movementCost = getMovementRateAlongTube();
-			}
-			else if
-			(
-				map_has_item(tile, BIT_ROAD)
-				||
-				(native || (isFactionHasProject(factionId, FAC_XENOEMPATHY_DOME) && map_has_item(tile, BIT_FUNGUS)))
-			)
-			{
-				movementCost = getMovementRateAlongRoad();
-			}
-			else if
-			(
-				!map_has_item(tile, BIT_FUNGUS)
-			)
-			{
-				movementCost = Rules->move_rate_roads;
-			}
-			else
-			{
-				movementCost = Rules->move_rate_roads * 3;
-			}
-			break;
-			
-		}
-		
-		if
-		(
-			range < closestAttackPositionRange
-			||
-			(range == closestAttackPositionRange && movementCost < closestAttackPositionMovementCost)
-		)
-		{
-			closestAttackPosition = tile;
-			closestAttackPositionRange = range;
-			closestAttackPositionMovementCost = movementCost;
-		}
-		
-	}
-	
-	return closestAttackPosition;
-	
-}
-
 /**
 Checks if unit can capture given base in general.
 */
@@ -4520,294 +4170,6 @@ double getBaseExtraWorkerGain(int baseId)
 	
 }
 
-/*
-Computes assault effect at specific tile.
-Assailant tries to capture tile.
-Protector tries to protect tile.
-One of the parties should be an AI unit to utilize combat effect table.
-*/
-double computeAssaultEffect(int assailantFactionId, int assailantUnitId, int protectorFactionId, int protectorUnitId, MAP *tile)
-{
-	assert(assailantFactionId >= 0 && assailantFactionId < MaxPlayerNum);
-	assert(assailantUnitId >= 0 && assailantUnitId < MaxProtoNum);
-	assert(protectorFactionId >= 0 && protectorFactionId < MaxPlayerNum);
-	assert(protectorUnitId >= 0 && protectorUnitId < MaxProtoNum);
-	assert(protectorFactionId != assailantFactionId);
-	assert(protectorFactionId == aiFactionId || assailantFactionId == aiFactionId);
-	
-	int assailantSpeed = getUnitSpeed(assailantFactionId, assailantUnitId);
-	int protectorSpeed = getUnitSpeed(protectorFactionId, protectorUnitId);
-	
-	bool assailantMelee = isUnitCanMeleeAttack(assailantFactionId, assailantUnitId, tile, nullptr);
-	bool protectorMelee = isUnitCanMeleeAttack(protectorFactionId, protectorUnitId, nullptr, tile);
-	bool assailantArtillery = isUnitCanArtilleryAttack(assailantUnitId, nullptr);
-	bool protectorArtillery = isUnitCanArtilleryAttack(protectorUnitId, tile);
-	
-	// compute combat
-	
-	double assaultEffect = 0.0;
-	
-	if (!assailantMelee && !assailantArtillery)
-	{
-		// impotent assailant
-		
-		assaultEffect = 0.0;
-		
-	}
-	else if (assailantMelee && !assailantArtillery)
-	{
-		// melee assailant
-		
-		if (!protectorMelee && !protectorArtillery)
-		{
-			// impotent protector
-			
-			double assailantMeleeEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_MELEE, tile, true);
-			
-			double assailantAttackEffect = assailantMeleeEffect;
-			
-			assaultEffect = assailantAttackEffect;
-			
-		}
-		else if (protectorMelee && !protectorArtillery)
-		{
-			// melee combat
-			
-			double assailantMeleeEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_MELEE, tile, true);
-			double protectorMeleeEffect = getTileCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, EM_MELEE, tile, false);
-			
-			double assailantAttackEffect = assailantMeleeEffect;
-			double assailantDefendEffect = 1.0 / protectorMeleeEffect;
-			
-			if (assailantAttackEffect <= assailantDefendEffect)
-			{
-				// assailant is better in defense than in offense
-				// defense does not contributes to the assault
-				assaultEffect = assailantAttackEffect;
-			}
-			else
-			{
-				// assailant is better in defense than in offense
-				double speedCoefficient = getProportionalCoefficient(1, protectorSpeed + 1, assailantSpeed);
-				assaultEffect = assailantDefendEffect + speedCoefficient * (assailantAttackEffect - assailantDefendEffect);
-			}
-			
-		}
-		else if (!protectorMelee && protectorArtillery)
-		{
-			// melee vs. artillery
-			
-			double assailantMeleeEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_MELEE, tile, true);
-			double protectorBombardEffect = getTileCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, EM_ARTILLERY, tile, false);
-			
-			// pre attack bobardment round
-			if (assailantSpeed <= 2)
-			{
-				assailantMeleeEffect *= std::max(0.0, 1.0 - protectorBombardEffect);
-			}
-			
-			double assailantAttackEffect = assailantMeleeEffect;
-			
-			// assailant attacks
-			// not attacking is useless against artillery
-			assaultEffect = assailantAttackEffect;
-			
-		}
-		else if (protectorMelee && protectorArtillery)
-		{
-			// melee vs. ship
-			
-			double assailantMeleeEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_MELEE, tile, true);
-			double protectorMeleeEffect = getTileCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, EM_MELEE, tile, false);
-			double protectorBombardEffect = getTileCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, EM_ARTILLERY, tile, false);
-			
-			// pre attack bobardment round
-			if (assailantSpeed <= 2)
-			{
-				assailantMeleeEffect *= std::max(0.0, 1.0 - protectorBombardEffect);
-			}
-			
-			double assailantAttackEffect = assailantMeleeEffect;
-			double assailantDefendEffect = 1.0 / protectorMeleeEffect;
-			
-			// assailant attacks
-			// not attacking is useless against artillery
-			double speedCoefficient = getProportionalCoefficient(1, protectorSpeed + 1, assailantSpeed);
-			assaultEffect = assailantDefendEffect + speedCoefficient * (assailantAttackEffect - assailantDefendEffect);
-			
-		}
-		
-	}
-	else if (!assailantMelee && assailantArtillery)
-	{
-		// artillery assailant
-		
-		if (!protectorMelee && !protectorArtillery)
-		{
-			// impotent protector
-			
-			// infinitely bombarded
-			assaultEffect = INF;
-			
-		}
-		else if (protectorMelee && !protectorArtillery)
-		{
-			// artillery vs. melee
-			
-			double assailantBombardEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_ARTILLERY, tile, true);
-			double protectorMeleeEffect = getTileCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, EM_MELEE, tile, false);
-			
-			// pre attack bobardment round
-			if (assailantSpeed > protectorSpeed - 1)
-			{
-				protectorMeleeEffect *= std::max(0.0, 1.0 - assailantBombardEffect);
-			}
-			
-			double assailantDefendEffect = 1.0 / protectorMeleeEffect;
-			
-			// protector attacks
-			// not attacking is useless against artillery
-			assaultEffect = assailantDefendEffect;
-			
-		}
-		else if (!protectorMelee && protectorArtillery)
-		{
-			// artillery vs. artillery
-			
-			double assailantArtilleryDuelEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_ARTILLERY, tile, true);
-			
-			// artillery duel is symmetric
-			assaultEffect = assailantArtilleryDuelEffect;
-			
-		}
-		else if (protectorMelee && protectorArtillery)
-		{
-			// artillery vs. ship
-			
-			double assailantArtilleryDuelEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_ARTILLERY, tile, true);
-			double protectorMeleeEffect = getTileCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, EM_MELEE, tile, false);
-			double protectorArtilleryDuelEffect = assailantArtilleryDuelEffect;
-			
-			double assailantAttackEffect = assailantArtilleryDuelEffect;
-			double assailantDefendEffect = 1.0 / std::max(protectorMeleeEffect, protectorArtilleryDuelEffect);
-			
-			if (assailantAttackEffect <= assailantDefendEffect)
-			{
-				// assailant is better in defense than in offense
-				// defense does not contributes to the assault
-				assaultEffect = assailantAttackEffect;
-			}
-			else
-			{
-				// assailant is better in defense than in offense
-				double speedCoefficient = getProportionalCoefficient(1, protectorSpeed + 1, assailantSpeed);
-				assaultEffect = assailantDefendEffect + speedCoefficient * (assailantAttackEffect - assailantDefendEffect);
-			}
-			
-		}
-		
-	}
-	else if (assailantMelee && assailantArtillery)
-	{
-		// ship assailant
-		
-		if (!protectorMelee && !protectorArtillery)
-		{
-			// impotent protector
-			
-			// infinitely bombarded
-			assaultEffect = INF;
-			
-		}
-		else if (protectorMelee && !protectorArtillery)
-		{
-			// ship vs. melee
-			
-			double assailantMeleeEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_MELEE, tile, true);
-			double assailantBombardEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_ARTILLERY, tile, true);
-			double protectorMeleeEffect = getTileCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, EM_MELEE, tile, false);
-			
-			// pre attack bobardment round
-			if (assailantSpeed > protectorSpeed - 1)
-			{
-				protectorMeleeEffect *= std::max(0.0, 1.0 - assailantBombardEffect);
-			}
-			
-			double assailantAttackEffect = assailantMeleeEffect;
-			double assailantDefendEffect = 1.0 / protectorMeleeEffect;
-			
-			if (assailantAttackEffect <= assailantDefendEffect)
-			{
-				// assailant is better in defense than in offense
-				// defense does not contributes to the assault
-				assaultEffect = assailantAttackEffect;
-			}
-			else
-			{
-				// assailant is better in defense than in offense
-				double speedCoefficient = getProportionalCoefficient(1, protectorSpeed + 1, assailantSpeed);
-				assaultEffect = assailantDefendEffect + speedCoefficient * (assailantAttackEffect - assailantDefendEffect);
-			}
-			
-		}
-		else if (!protectorMelee && protectorArtillery)
-		{
-			// ship vs. artillery
-			
-			double assailantMeleeEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_MELEE, tile, true);
-			double assailantArtilleryDuelEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_ARTILLERY, tile, true);
-			double protectorArtilleryDuelEffect = assailantArtilleryDuelEffect;
-			
-			double assailantAttackEffect = std::max(assailantMeleeEffect, assailantArtilleryDuelEffect);
-			double assailantDefendEffect = 1.0 / protectorArtilleryDuelEffect;
-			
-			if (assailantAttackEffect <= assailantDefendEffect)
-			{
-				// assailant is better in defense than in offense
-				// defense does not contributes to the assault
-				assaultEffect = assailantAttackEffect;
-			}
-			else
-			{
-				// assailant is better in defense than in offense
-				double speedCoefficient = getProportionalCoefficient(1, protectorSpeed + 1, assailantSpeed);
-				assaultEffect = assailantDefendEffect + speedCoefficient * (assailantAttackEffect - assailantDefendEffect);
-			}
-			
-		}
-		else if (protectorMelee && protectorArtillery)
-		{
-			// ship vs. ship
-			
-			double assailantMeleeEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_MELEE, tile, true);
-			double assailantArtilleryDuelEffect = getTileCombatEffect(assailantFactionId, assailantUnitId, protectorFactionId, protectorUnitId, EM_ARTILLERY, tile, true);
-			double protectorMeleeEffect = getTileCombatEffect(protectorFactionId, protectorUnitId, assailantFactionId, assailantUnitId, EM_MELEE, tile, false);
-			double protectorArtilleryDuelEffect = assailantArtilleryDuelEffect;
-			
-			double assailantAttackEffect = std::max(assailantMeleeEffect, assailantArtilleryDuelEffect);
-			double assailantDefendEffect = 1.0 / std::max(protectorMeleeEffect, protectorArtilleryDuelEffect);
-			
-			if (assailantAttackEffect <= assailantDefendEffect)
-			{
-				// assailant is better in defense than in offense
-				// defense does not contributes to the assault
-				assaultEffect = assailantAttackEffect;
-			}
-			else
-			{
-				// assailant is better in defense than in offense
-				double speedCoefficient = getProportionalCoefficient(1, protectorSpeed + 1, assailantSpeed);
-				assaultEffect = assailantDefendEffect + speedCoefficient * (assailantAttackEffect - assailantDefendEffect);
-			}
-			
-		}
-		
-	}
-	
-	return assaultEffect;
-	
-}
-
 MapDoubleValue getMeleeAttackPosition(int unitId, MAP *origin, MAP *target)
 {
 	TileInfo &targetTileInfo = aiData.getTileInfo(target);
@@ -5224,47 +4586,6 @@ double getUnitDestructionGain(int unitId)
 }
 
 /*
-Returns combat effect with tile modifiers if specified.
-*/
-double getTileCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, MAP *tile, bool atTile)
-{
-	TileInfo const &tileInfo = aiData.getTileInfo(tile);
-	
-	double combatEffect = aiData.combatEffectTable.getCombatEffect(attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode);
-	
-	if (tile != nullptr)
-	{
-		double combatEffect =
-			combatEffect
-			* tileInfo.sensorOffenseMultipliers.at(attackerFactionId)
-			/ tileInfo.sensorDefenseMultipliers.at(defenderFactionId)
-		;
-		
-		if (atTile)
-		{
-			AttackTriad attackTriad = getAttackTriad(attackerUnitId, defenderUnitId);
-			combatEffect /= tileInfo.terrainDefenseMultipliers.at(attackTriad);
-		}
-		
-	}
-	
-	return combatEffect;
-	
-}
-
-/*
-Computes combat effect with tile modifiers.
-*/
-double getTileCombatEffect(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *tile, bool atTile)
-{
-	VEH &attackerVehicle = Vehs[attackerVehicleId];
-	VEH &defenderVehicle = Vehs[defenderVehicleId];
-	
-	return getTileCombatEffect(attackerVehicle.faction_id, attackerVehicle.unit_id, defenderVehicle.faction_id, defenderVehicle.unit_id, engagementMode, tile, atTile);
-	
-}
-
-/*
 Returns the proportion of the given value from the lowest (0.0) to the highest (1.0) value.
 */
 double getProportionalCoefficient(double minValue, double maxValue, double value)
@@ -5276,15 +4597,15 @@ double getProportionalCoefficient(double minValue, double maxValue, double value
 	
 }
 
-size_t generatePad0FromVehicleId(size_t vehicleId)
+int generatePad0FromVehicleId(int vehicleId)
 {
 	// shift pad_0 by 2 * MaxVehModNum to make sure it is distinct from any vehicleId
-	return 2 * MaxVehModNum + vehicleId;
+	return 2 * conf.max_veh_num + vehicleId;
 }
 
-size_t getInitialVehicleIdByPad0(size_t pad0)
+int getInitialVehicleIdByPad0(int pad0)
 {
-	return pad0 - 2 * MaxVehModNum;
+	return pad0 >= 2 * conf.max_veh_num ? pad0 - 2 * conf.max_veh_num : -1;
 }
 
 /*
@@ -5450,8 +4771,9 @@ void updateVehicleTileBlockedAndZocs()
 Evaluates combat gain for attacker.
 Could be positive or negative.
 */
-double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *tile, bool atTile, double attackerHealth, double defenderHealth)
+double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *attackerTile, MAP *defenderTile, double attackerHealth, double defenderHealth)
 {
+	VEH &attackerVehicle = Vehs[attackerVehicleId];
 	VEH &defenderVehicle = Vehs[defenderVehicleId];
 	
 	// destruction gains
@@ -5482,7 +4804,7 @@ double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MO
 	
 	// combatEffect
 	
-	double combatEffect = getTileCombatEffect(attackerVehicleId, defenderVehicleId, engagementMode, tile, atTile);
+	double combatEffect = aiData.combatEffectTable.getVehicleCombatEffect(attackerVehicleId, defenderVehicleId, engagementMode, attackerTile, defenderTile);
 	
 	// compute gain
 	
@@ -5529,9 +4851,13 @@ double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MO
 		
 		// non lethal bombardment reduces loss
 		
-		if (!isLethalBombardment((Triad) defenderVehicle.triad(), tile))
+		if (defenderTile != nullptr)
 		{
-			gain *= 0.5;
+			if (!isLethalBombardment((Triad) defenderVehicle.triad(), defenderTile))
+			{
+				gain *= 0.5;
+			}
+			
 		}
 		
 	}
@@ -5670,14 +4996,28 @@ double getAssignedTaskProtectDefendGain(int vehicleId)
 	
 	TileInfo &tileInfo = aiData.getTileInfo(task->destination);
 	
-	double protectGain = 0.0;
-	
-	if (tileInfo.base || tileInfo.bunker)
+	CombatData *combatData;
+	if (tileInfo.base)
 	{
-		protectGain = aiData.getTileCombatData(task->destination).getProtectDefendGain(vehicleId);
+		combatData = &(aiData.getBaseInfo(tileInfo.baseId).combatData);
+	}
+	else if (tileInfo.bunker)
+	{
+		combatData = &(aiData.getBunkerInfo(task->destination).combatData);
+	}
+	else
+	{
+		return 0.0;
 	}
 	
+	double protectGain = aiData.factionInfos.at(aiFactionId).averageBaseGain * combatData->getProtectorContribution(vehicleId);
 	return protectGain;
 	
+}
+
+void createFakeVehicle(int vehicleId, int factionId, int unitId)
+{
+	assert(vehicleId >= conf.max_veh_num && vehicleId < conf.max_veh_num + 2);
+	veh_clear(vehicleId, unitId, factionId);
 }
 

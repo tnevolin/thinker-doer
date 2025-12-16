@@ -31,8 +31,6 @@ robin_hood::unordered_flat_map<int, double> weakestEnemyBaseProtection;
 
 double const LAND_ARTILLERY_SATURATION_RATIO = 0.20;
 double const INFANTRY_DEFENSIVE_SATURATION_RATIO = 0.75;
-double globalLandArtillerySaturationCoefficient;
-double globalInfantryDefensiveSaturationCoefficient;
 
 double techStealGain;
 
@@ -194,9 +192,6 @@ void populateFactionProductionData()
 		
 	}
 	
-	double landArtilleryRatio = landOffensiveVehicleCount == 0 ? 0.0 : (double)landArtilleryVehicleCount / (double)landOffensiveVehicleCount;
-	globalLandArtillerySaturationCoefficient = landArtilleryRatio <= LAND_ARTILLERY_SATURATION_RATIO ? 1.0 : (1.0 - landArtilleryRatio) / (1.0 - LAND_ARTILLERY_SATURATION_RATIO);
-	
 	int vehicleCount = 0;
 	int infantryDefensiveVehicleCount = 0;
 	
@@ -216,10 +211,6 @@ void populateFactionProductionData()
 		infantryDefensiveVehicleCount++;
 		
 	}
-	
-	double infantryDefensiveRatio = vehicleCount == 0 ? 0.0 : (double)infantryDefensiveVehicleCount / (double)vehicleCount;
-	globalInfantryDefensiveSaturationCoefficient = infantryDefensiveRatio <= INFANTRY_DEFENSIVE_SATURATION_RATIO ? 1.0 : (1.0 - infantryDefensiveRatio) / (1.0 - INFANTRY_DEFENSIVE_SATURATION_RATIO);
-	debug("globalInfantryDefensiveSaturationCoefficient=%5.2f\n", globalInfantryDefensiveSaturationCoefficient);
 	
 	Profiling::stop("populateFactionProductionData");
 	
@@ -702,7 +693,7 @@ void evaluateProject()
 	{
 		BaseInfo &baseInfo = aiData.getBaseInfo(productionDemand.baseId);
 		
-		double threat = baseInfo.combatData.assailantUnitWeights.sum;
+		double threat = baseInfo.combatData.assailantUnitWeightSum;
 		maxThreat = std::max(maxThreat, threat);
 		
 	}
@@ -725,7 +716,7 @@ void evaluateProject()
 		
 		// threat coefficient
 		
-		double threat = baseInfo.combatData.assailantUnitWeights.sum;
+		double threat = baseInfo.combatData.assailantUnitWeightSum;
 		double threatCoefficient = 1.0 - threat / maxThreat;
 		
 		// value
@@ -2570,10 +2561,6 @@ void evaluateBaseDefenseUnits()
 		if (!isBaseCanBuildUnit(baseId, unitId))
 			continue;
 		
-		// saturation ratio
-		
-		double infantryDefensiveSaturationCoefficient = (isInfantryDefensiveUnit(unitId) && !isOffensiveUnit(unitId, aiFactionId)) ? globalInfantryDefensiveSaturationCoefficient : 1.0;
-		
 		// seek for best target base gain
 		
 		double bestGain = 0.0;
@@ -2595,9 +2582,8 @@ void evaluateBaseDefenseUnits()
 			
 			// protection
 			
-			double combatEffect = targetCombatData.getProtectorUnitEffect(aiFactionId, unitId);
-			double winningProbability = getWinningProbability(combatEffect);
-			double unitProtectionGain = targetCombatData.isSufficientProtect() ? 0.0 : aiFactionInfo->averageBaseGain * winningProbability;
+			double unitContribution = targetCombatData.getProtectorUnitContribution(aiFactionId, unitId);
+			double unitProtectionGain = aiFactionInfo->averageBaseGain * unitContribution;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2623,7 +2609,7 @@ void evaluateBaseDefenseUnits()
 				" unitPoliceGain=%5.2f"
 				" policeGain=%5.2f"
 				" ai_production_base_protection_priority=%5.2f"
-				" combatEffect=%5.2f"
+				" unitContribution=%5.2f"
 				" unitProtectionGain=%5.2f"
 				" protectionGain=%5.2f"
 				" upkeepGain=%5.2f"
@@ -2637,7 +2623,7 @@ void evaluateBaseDefenseUnits()
 				, unitPoliceGain
 				, policeGain
 				, conf.ai_production_base_protection_priority
-				, combatEffect
+				, unitContribution
 				, unitProtectionGain
 				, protectionGain
 				, upkeepGain
@@ -2651,7 +2637,6 @@ void evaluateBaseDefenseUnits()
 		double rawPriority = getItemPriority(unitId, bestGain);
 		double priority =
 			conf.ai_production_base_protection_priority
-			* infantryDefensiveSaturationCoefficient
 			* rawPriority
 		;
 		
@@ -2664,14 +2649,12 @@ void evaluateBaseDefenseUnits()
 			"\t%-32s"
 			" priority=%5.2f   |"
 			" ai_production_base_protection_priority=%5.2f"
-			" infantryDefensiveSaturationCoefficient=%5.2f"
 			" bestGain=%5.2f"
 			" rawPriority=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
 			, conf.ai_production_base_protection_priority
-			, infantryDefensiveSaturationCoefficient
 			, bestGain
 			, rawPriority
 		);
@@ -2723,17 +2706,15 @@ void evaluateBunkerDefenseUnits()
 		if (!isBaseCanBuildUnit(baseId, unitId))
 			continue;
 		
-		// saturation ratio
-		
-		double infantryDefensiveSaturationCoefficient = (isInfantryDefensiveUnit(unitId) && !isOffensiveUnit(unitId, aiFactionId)) ? globalInfantryDefensiveSaturationCoefficient : 1.0;
-		
 		// seek for best target base gain
 		
 		double bestGain = 0.0;
 		
-		for (MAP *targetBunkerTile : aiData.bunkers)
+		for (robin_hood::pair<MAP *, BunkerInfo> &bunkerInfoEntry : aiData.bunkerInfos)
 		{
-			CombatData &targetBunkerCombatData = aiData.getTileCombatData(targetBunkerTile);
+			MAP *targetBunkerTile = bunkerInfoEntry.first;
+			BunkerInfo &targetBunkerInfo = bunkerInfoEntry.second;
+			CombatData &targetBunkerCombatData = targetBunkerInfo.combatData;
 			
 			double travelTime = getUnitApproachTime(aiFactionId, unitId, baseTile, targetBunkerTile);
 			if (travelTime == INF)
@@ -2743,9 +2724,8 @@ void evaluateBunkerDefenseUnits()
 			// protection
 			// 0.5 of average base gain
 			
-			double combatEffect = targetBunkerCombatData.getProtectorUnitEffect(aiFactionId, unitId);
-			double winningProbability = getWinningProbability(combatEffect);
-			double unitProtectionGain = targetBunkerCombatData.isSufficientProtect() ? 0.0 : 0.5 * aiFactionInfo->averageBaseGain * winningProbability;
+			double unitContribution = targetBunkerCombatData.getProtectorUnitContribution(aiFactionId, unitId);
+			double unitProtectionGain = aiFactionInfo->averageBaseGain * unitContribution;
 			double protectionGain = unitProtectionGain * travelTimeCoefficient;
 			
 			double upkeep = getResourceScore(-getBaseNextUnitSupport(baseId, unitId), 0);
@@ -2800,7 +2780,6 @@ void evaluateBunkerDefenseUnits()
 		double rawPriority = getItemPriority(unitId, bestGain);
 		double priority =
 			conf.ai_production_base_protection_priority
-			* infantryDefensiveSaturationCoefficient
 			* rawPriority
 		;
 		
@@ -2813,14 +2792,12 @@ void evaluateBunkerDefenseUnits()
 			"\t%-32s"
 			" priority=%5.2f   |"
 			" ai_production_base_protection_priority=%5.2f"
-			" infantryDefensiveSaturationCoefficient=%5.2f"
 			" bestGain=%5.2f"
 			" rawPriority=%5.2f"
 			"\n"
 			, Units[unitId].name
 			, priority
 			, conf.ai_production_base_protection_priority
-			, infantryDefensiveSaturationCoefficient
 			, bestGain
 			, rawPriority
 		);
@@ -3044,10 +3021,6 @@ void evaluateEnemyBaseAssaultUnits()
 		
 		debug("\t%-32s\n", unit->name);
 		
-		// landArtillerySaturationCoefficient
-		
-		double landArtillerySaturationCoefficient = isLandArtilleryUnit(unitId) ? globalLandArtillerySaturationCoefficient : 1.0;
-		
 		// iterate potential enemy bases
 		
 		double bestGain = 0.0;
@@ -3057,14 +3030,11 @@ void evaluateEnemyBaseAssaultUnits()
 			BASE *enemyBase = getBase(enemyBaseId);
 			MAP *enemyBaseTile = getBaseMapTile(enemyBaseId);
 			BaseInfo &enemyBaseInfo = aiData.getBaseInfo(enemyBaseId);
-			FactionInfo &factionInfo = aiData.factionInfos[enemyBase->faction_id];
 			
 			// enemy base stack
 			
 			if (!aiData.isEnemyStackAt(enemyBaseTile))
 				continue;
-			
-			EnemyStackInfo &enemyStackInfo = aiData.getEnemyStackInfo(enemyBaseTile);
 			
 			// exclude player base or friendly base
 			
@@ -3080,18 +3050,13 @@ void evaluateEnemyBaseAssaultUnits()
 			
 			// proportional base capture value
 			
-			double assaultEffect = enemyBaseInfo.assaultEffects.at(unitId);
-			double productionRatio = aiFactionInfo->productionPower / factionInfo.productionPower;
-			double costRatio = enemyStackInfo.averageUnitCost / (double)unit->cost;
-			double adjustedEffect = assaultEffect * productionRatio * costRatio;
-			double adjustedSuperiority = adjustedEffect - 2.0;
+			double unitContribution = enemyBaseInfo.combatData.getAssailantUnitContribution(aiFactionId, unitId);
 			
-			if (adjustedSuperiority <= 0.0)
+			if (unitContribution <= 0.0)
 				continue;
 			
-			double enemyBaseCaptureGain = enemyBaseInfo.captureGain;
-			double adjustedEnemyBaseCaptureGain  = enemyBaseCaptureGain * adjustedSuperiority;
-			double incomeGain = getGainDelay(adjustedEnemyBaseCaptureGain, travelTime);
+			double unitEnemyBaseCaptureGain  = enemyBaseInfo.captureGain * unitContribution;
+			double incomeGain = getGainDelay(unitEnemyBaseCaptureGain, travelTime);
 			
 			// range coefficient
 			
@@ -3153,7 +3118,6 @@ void evaluateEnemyBaseAssaultUnits()
 		double rawPriority = getItemPriority(unitId, bestGain);
 		double priority =
 			unitPriorityCoefficient
-			* landArtillerySaturationCoefficient
 			* rawPriority
 		;
 		
@@ -3690,10 +3654,10 @@ void hurryProtectiveUnit()
 			continue;
 		}
 
-		if (baseInfo.combatData.assailantUnitWeights.sum <= 0.0)
+		if (baseInfo.combatData.assailantUnitWeightSum <= 0.0)
 			continue;
 
-		double relativeNotProvidedPresentEffect = std::min(1.0, baseInfo.combatData.remainingAssailantUnitWeights.sum / baseInfo.combatData.assailantUnitWeights.sum);
+		double relativeNotProvidedPresentEffect = std::min(1.0, baseInfo.combatData.remainingAssailantUnitWeightSum / baseInfo.combatData.assailantUnitWeightSum);
 
 		debug("\t\tremainingEffect=%3d\n", item);
 
@@ -4203,7 +4167,7 @@ double getBasePopulationGain(int baseId, const Interval &baseSizeInterval)
 {
 	bool TRACE = DEBUG & false;
 
-	if (TRACE) { debug("getBasePopulationGain\n"); }
+	trace("getBasePopulationGain\n");
 
 	BASE *base = getBase(baseId);
 

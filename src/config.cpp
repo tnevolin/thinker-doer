@@ -1350,7 +1350,7 @@ int __cdecl read_rules(int tgl_all_rules) {
     
     // [WTP]
     // disable air superiority for ground units
-    if (conf.air_superiority_not_required_to_attack_needlejet)
+    if (!conf.air_attack_requires_air_superiority)
 	{
 		Ability[ABL_ID_AIR_SUPERIORITY].flags &= ~(AFLAG_ALLOWED_LAND_UNIT | AFLAG_ALLOWED_SEA_UNIT);
 	}

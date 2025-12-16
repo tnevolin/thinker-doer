@@ -471,6 +471,22 @@ struct UNIT {
     bool is_planet_buster() {
         return plan == PLAN_PLANET_BUSTER;
     }
+    
+    // [WTP]
+    bool is_air() {
+        return Chassis[chassis_id].triad == TRIAD_AIR;
+    }
+    bool is_needlejet() {
+        return chassis_id == CHS_NEEDLEJET;
+    }
+    // air except missile
+    bool is_aircraft() {
+        return !Chassis[chassis_id].missile && Chassis[chassis_id].triad == TRIAD_AIR;
+    }
+    // air with air superiority except missile
+    bool is_interceptor() {
+        return !Chassis[chassis_id].missile && Chassis[chassis_id].triad == TRIAD_AIR && (ability_flags & ABL_AIR_SUPERIORITY) != 0;
+    }
 
 };
 

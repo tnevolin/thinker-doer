@@ -262,7 +262,9 @@ void populateAIData()
 	
 	populatePlayerGlobalVariables();
 	populatePlayerBaseIds();
+debug(">populatePlayerBaseRanges\n");flushlog();
 	populatePlayerBaseRanges();
+debug(">populateUnits\n");flushlog();
 	populateUnits();
 //	saveVehicles();
 	populateVehicles();
@@ -421,7 +423,7 @@ void populateTileInfos()
 	
 	Profiling::start("bunkers and airbases", "populateTileInfos");
 	
-	aiData.bunkers.clear();
+	aiData.bunkerInfos.clear();
 	
 	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 	{
@@ -433,7 +435,7 @@ void populateTileInfos()
 		
 		if (tileInfo.bunker && tile->owner == aiFactionId)
 		{
-			aiData.bunkers.emplace(tile);
+			aiData.bunkerInfos.emplace(tile, BunkerInfo());
 		}
 		
 	}
@@ -830,7 +832,7 @@ void populateTileInfos()
 		// bombardment damage
 		
 		int maxBombardmentDamagePercent = (tileInfo.base || tileInfo.bunker) ? Rules->max_dmg_percent_arty_base_bunker : tileInfo.land ? Rules->max_dmg_percent_arty_open : Rules->max_dmg_percent_arty_sea;
-		tileInfo.maxBombardmentDamage = getPercentageBonusMultiplier(maxBombardmentDamagePercent);
+		tileInfo.maxBombardmentDamage = (double)maxBombardmentDamagePercent / 100.0;
 		
 		// strength multipliers
 		
@@ -1111,7 +1113,7 @@ void populatePlayerBaseRanges()
 		for (Triad triad : TRIADS)
 		{
 			tileInfo.baseRanges.at(triad) = INT_MAX;
-			tileInfo.baseDistances.at(triad) = DBL_MAX;
+//			tileInfo.baseDistances.at(triad) = DBL_MAX;
 		}
 	}
 	
@@ -1133,7 +1135,7 @@ void populatePlayerBaseRanges()
 		TileInfo &baseTileInfo = aiData.getTileInfo(baseTile);
 		
 		baseTileInfo.baseRanges.at(TRIAD_AIR) = 0;
-		baseTileInfo.baseDistances.at(TRIAD_AIR) = 0.0;
+//		baseTileInfo.baseDistances.at(TRIAD_AIR) = 0.0;
 		openNodes.push_back(baseTile);
 		
 	}
@@ -1148,7 +1150,7 @@ void populatePlayerBaseRanges()
 			
 			for (AngleTileInfo const &adjacentAngleTileInfo : tileInfo.adjacentAngleTileInfos)
 			{
-				int angle = adjacentAngleTileInfo.angle;
+//				int angle = adjacentAngleTileInfo.angle;
 				TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo;
 				
 				if (baseRange < adjacentTileInfo->baseRanges.at(TRIAD_AIR))
@@ -1157,8 +1159,8 @@ void populatePlayerBaseRanges()
 					newOpenNodes.push_back(adjacentTileInfo->tile);
 				}
 				
-				double baseDistance = tileInfo.baseDistances.at(TRIAD_AIR) + (angle % 2 == 0 ? 1.0 : 1.5);
-				adjacentTileInfo->baseDistances.at(TRIAD_AIR) = std::min(adjacentTileInfo->baseDistances.at(TRIAD_AIR), baseDistance);
+//				double baseDistance = tileInfo.baseDistances.at(TRIAD_AIR) + (angle % 2 == 0 ? 1.0 : 1.5);
+//				adjacentTileInfo->baseDistances.at(TRIAD_AIR) = std::min(adjacentTileInfo->baseDistances.at(TRIAD_AIR), baseDistance);
 				
 			}
 			
@@ -1187,7 +1189,7 @@ void populatePlayerBaseRanges()
 			continue;
 		
 		baseTileInfo.baseRanges.at(TRIAD_SEA) = 0;
-		baseTileInfo.baseDistances.at(TRIAD_SEA) = 0.0;
+//		baseTileInfo.baseDistances.at(TRIAD_SEA) = 0.0;
 		openNodes.push_back(baseTile);
 		
 	}
@@ -1202,7 +1204,7 @@ void populatePlayerBaseRanges()
 			
 			for (AngleTileInfo const &adjacentAngleTileInfo : tileInfo.adjacentAngleTileInfos)
 			{
-				int angle = adjacentAngleTileInfo.angle;
+//				int angle = adjacentAngleTileInfo.angle;
 				TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo;
 				
 				if (baseRange < adjacentTileInfo->baseRanges.at(TRIAD_SEA))
@@ -1211,8 +1213,8 @@ void populatePlayerBaseRanges()
 					newOpenNodes.push_back(adjacentTileInfo->tile);
 				}
 				
-				double baseDistance = tileInfo.baseDistances.at(TRIAD_SEA) + (angle % 2 == 0 ? 1.0 : 1.5);
-				adjacentTileInfo->baseDistances.at(TRIAD_SEA) = std::min(adjacentTileInfo->baseDistances.at(TRIAD_SEA), baseDistance);
+//				double baseDistance = tileInfo.baseDistances.at(TRIAD_SEA) + (angle % 2 == 0 ? 1.0 : 1.5);
+//				adjacentTileInfo->baseDistances.at(TRIAD_SEA) = std::min(adjacentTileInfo->baseDistances.at(TRIAD_SEA), baseDistance);
 				
 			}
 			
@@ -1241,7 +1243,7 @@ void populatePlayerBaseRanges()
 			continue;
 		
 		baseTileInfo.baseRanges.at(TRIAD_LAND) = 0;
-		baseTileInfo.baseDistances.at(TRIAD_LAND) = 0.0;
+//		baseTileInfo.baseDistances.at(TRIAD_LAND) = 0.0;
 		openNodes.push_back(baseTile);
 		
 	}
@@ -1256,7 +1258,7 @@ void populatePlayerBaseRanges()
 			
 			for (AngleTileInfo const &adjacentAngleTileInfo : tileInfo.adjacentAngleTileInfos)
 			{
-				int angle = adjacentAngleTileInfo.angle;
+//				int angle = adjacentAngleTileInfo.angle;
 				TileInfo *adjacentTileInfo = adjacentAngleTileInfo.tileInfo;
 				
 				if (baseRange < adjacentTileInfo->baseRanges.at(TRIAD_LAND))
@@ -1265,8 +1267,8 @@ void populatePlayerBaseRanges()
 					newOpenNodes.push_back(adjacentTileInfo->tile);
 				}
 				
-				double baseDistance = tileInfo.baseDistances.at(TRIAD_LAND) + (angle % 2 == 0 ? 1.0 : 1.5);
-				adjacentTileInfo->baseDistances.at(TRIAD_LAND) = std::min(adjacentTileInfo->baseDistances.at(TRIAD_LAND), baseDistance);
+//				double baseDistance = tileInfo.baseDistances.at(TRIAD_LAND) + (angle % 2 == 0 ? 1.0 : 1.5);
+//				adjacentTileInfo->baseDistances.at(TRIAD_LAND) = std::min(adjacentTileInfo->baseDistances.at(TRIAD_LAND), baseDistance);
 				
 			}
 			
@@ -1281,16 +1283,12 @@ void populatePlayerBaseRanges()
 	{
 		for (TileInfo const &tileInfo : aiData.tileInfos)
 		{
-			debug
-			(
-				"\t%s"
-				" %2d %2d %2d"
-				"\n"
-				, getLocationString(tileInfo.tile)
-				, tileInfo.baseRanges.at(TRIAD_AIR)
-				, tileInfo.baseRanges.at(TRIAD_SEA)
-				, tileInfo.baseRanges.at(TRIAD_LAND)
-			);
+			debug("\t%s", getLocationString(tileInfo.tile));
+			int range;
+			if ((range = tileInfo.baseRanges.at(TRIAD_AIR))		== INT_MAX) { debug(" INF"); } else { debug(" %3d", range); }
+			if ((range = tileInfo.baseRanges.at(TRIAD_SEA))		== INT_MAX) { debug(" INF"); } else { debug(" %3d", range); }
+			if ((range = tileInfo.baseRanges.at(TRIAD_LAND))	== INT_MAX) { debug(" INF"); } else { debug(" %3d", range); }
+			debug("\n");
 		}
 		
 	}
@@ -1651,10 +1649,6 @@ void populateBaseInfos()
 		baseInfo.gain = getBaseGain(baseId);
 		
 		debug("\t%-25s gain=%5.2f\n", base->name, baseInfo.gain);
-		
-		// combatData
-		
-		baseInfo.combatData.tile = getBaseMapTile(baseId);
 		
 	}
 	
@@ -2823,10 +2817,6 @@ void populateEnemyStacks()
 			, enemyStackInfo.averageUnitCost
 		);
 		
-		// combatData
-		
-		enemyStackInfo.combatData.tile = enemyStackInfo.tile;
-		
 	}
 	
 	Profiling::stop("populateEnemyStacks");
@@ -2991,7 +2981,6 @@ void populateEnemyBaseInfos()
 	
 	populateEnemyBaseCaptureGains();
 	populateEnemyBaseProtectorWeights();
-	populateEnemyBaseAssaultEffects();
 	
 	Profiling::stop("populateEnemyBaseInfos");
 	
@@ -3276,109 +3265,6 @@ void populateEnemyBaseProtectorWeights()
 	
 }
 
-void populateEnemyBaseAssaultEffects()
-{
-	Profiling::start("populateEnemyBaseAssaultEffects", "populateEnemyBaseInfos");
-	
-	debug("populateEnemyBaseAssaultEffects - %s\n", MFactions[aiFactionId].noun_faction);
-	
-	// reset base values
-	
-	for (int baseId = 0; baseId < *BaseCount; baseId++)
-	{
-		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
-		
-		baseInfo.assaultEffects.clear();
-		
-	}
-	
-	// iterate bases
-	
-	SummaryStatistics assaultEffectSummary;
-	for (int baseId = 0; baseId < *BaseCount; baseId++)
-	{
-		BASE *base = getBase(baseId);
-		MAP *baseTile = getBaseMapTile(baseId);
-		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
-		
-		// exclude player base or friendly base
-		
-		if (isFriendly(aiFactionId, base->faction_id))
-			continue;
-		
-		// evaluate player unit assault effects
-		
-		for (int aiUnitId : aiData.combatUnitIds)
-		{
-			// can capture base
-			
-			if (!isUnitCanCaptureBase(aiUnitId, baseTile))
-			{
-				baseInfo.assaultEffects.insert({aiUnitId, 0.0});
-				continue;
-			}
-			
-			// iterate base protectors
-			
-			assaultEffectSummary.clear();
-			for (robin_hood::pair<int, robin_hood::unordered_flat_map<int, double>> const &protectorUnitWeightEntry : baseInfo.protectorUnitWeights)
-			{
-				int enemyUnitFactionId = protectorUnitWeightEntry.first;
-				robin_hood::unordered_flat_map<int, double> const &protectorFactionUnitWeights = protectorUnitWeightEntry.second;
-				
-				for (robin_hood::pair<int, double> const &protectorFactionUnitWeightEntry : protectorFactionUnitWeights)
-				{
-					int enemyUnitId = protectorFactionUnitWeightEntry.first;
-					double enemyUnitWeight = protectorFactionUnitWeightEntry.second;
-					
-					// our unit assaulting enemy base
-					
-					double assaultEffect = computeAssaultEffect(aiFactionId, aiUnitId, enemyUnitFactionId, enemyUnitId, baseTile);
-					assaultEffectSummary.add(assaultEffect, enemyUnitWeight);
-					
-				}
-				
-			}
-			
-			double averageAssaultEffect = assaultEffectSummary.mean();
-			baseInfo.assaultEffects.insert({aiUnitId, averageAssaultEffect});
-			
-		}
-		
-	}
-	
-//	if (DEBUG)
-//	{
-//		for (int baseId = 0; baseId < *BaseCount; baseId++)
-//		{
-//			BASE *base = getBase(baseId);
-//			int factionId = base->faction_id;
-//			BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
-//			
-//			// exclude player base
-//			
-//			if (factionId == aiFactionId)
-//				continue;
-//			
-//			debug("\t%-25s\n", Bases[baseId].name);
-//			
-//			for (robin_hood::pair<int, double> assaultEffectEntry : baseInfo.assaultEffects)
-//			{
-//				int unitId = assaultEffectEntry.first;
-//				double assaultEffect = assaultEffectEntry.second;
-//				
-//				debug("\t\t%-32s %5.2f\n", getUnit(unitId)->name, assaultEffect);
-//				
-//			}
-//			
-//		}
-//		
-//	}
-	
-	Profiling::stop("populateEnemyBaseAssaultEffects");
-	
-}
-
 void evaluateEnemyStacks()
 {
 	Profiling::start("evaluateEnemyStacks", "populateAIData");
@@ -3395,11 +3281,10 @@ void evaluateEnemyStacks()
 		assert(isOnMap(enemyStackTile));
 		
 		CombatData &combatData = enemyStackInfo.combatData;
-		TileCombatEffectTable &tileCombatEffectTable = combatData.tileCombatEffectTable;
 		
-		// reset combatData
+		// initialize combatData
 		
-		combatData.reset(&aiData.combatEffectTable, enemyStackTile, true);
+		combatData.initialize(enemyStackTile);
 		
 		// ignore stacks without vehicles
 		
@@ -3525,7 +3410,7 @@ void evaluateEnemyStacks()
 			
 			// melee
 			
-			if (isMeleeUnit(ownUnitId) && (conf.air_superiority_not_required_to_attack_needlejet || !enemyStackInfo.needlejetInFlight || isUnitHasAbility(ownUnitId, ABL_AIR_SUPERIORITY)))
+			if (isMeleeUnit(ownUnitId) && (!conf.air_attack_requires_air_superiority || !enemyStackInfo.needlejetInFlight || isUnitHasAbility(ownUnitId, ABL_AIR_SUPERIORITY)))
 			{
 				int battleCount = 0;
 				double totalLoss = 0.0;
@@ -3538,7 +3423,7 @@ void evaluateEnemyStacks()
 					
 					VEH *foeVehicle = getVehicle(foeVehicleId);
 					
-					double effect = tileCombatEffectTable.getCombatEffect(aiFactionId, ownUnitId, foeVehicle->faction_id, foeVehicle->unit_id, EM_MELEE);
+					double effect = combatData.getUnitCombatEffect(aiFactionId, ownUnitId, foeVehicle->faction_id, foeVehicle->unit_id, EM_MELEE, false, true);
 					if (effect <= 0.0)
 						continue;
 					
@@ -3581,7 +3466,7 @@ void evaluateEnemyStacks()
 					
 					VEH *foeVehicle = getVehicle(foeVehicleId);
 					
-					double effect = tileCombatEffectTable.getCombatEffect(aiFactionId, ownUnitId, foeVehicle->faction_id, foeVehicle->unit_id, EM_ARTILLERY);
+					double effect = combatData.getUnitCombatEffect(aiFactionId, ownUnitId, foeVehicle->faction_id, foeVehicle->unit_id, EM_ARTILLERY, false, true);
 					if (effect <= 0.0)
 						continue;
 					
@@ -3623,7 +3508,7 @@ void evaluateEnemyStacks()
 					
 					VEH *foeVehicle = getVehicle(foeVehicleId);
 					
-					double effect = tileCombatEffectTable.getCombatEffect(aiFactionId, ownUnitId, foeVehicle->faction_id, foeVehicle->unit_id, EM_ARTILLERY);
+					double effect = combatData.getUnitCombatEffect(aiFactionId, ownUnitId, foeVehicle->faction_id, foeVehicle->unit_id, EM_ARTILLERY, false, true);
 					
 					if (effect <= 0.0)
 						continue;
@@ -3677,17 +3562,28 @@ void evaluateBaseDefense()
 {
 	debug("evaluateBaseDefense - %s\n", MFactions[aiFactionId].noun_faction);
 	
+	// bases
+	
 	for (int baseId : aiData.baseIds)
 	{
 		MAP *tile = getBaseMapTile(baseId);
-		CombatData &combatData = aiData.baseInfos.at(baseId).combatData;
+		CombatData &combatData = aiData.getBaseInfo(baseId).combatData;
+		
 		evaluateDefense(tile, combatData);
+		
 	}
 	
-	for (MAP *tile : aiData.bunkers)
+	// bunkers
+	
+	for (robin_hood::pair<MAP *, BunkerInfo> &bunkerInfoEntry : aiData.bunkerInfos)
 	{
-		CombatData &combatData = aiData.getTileCombatData(tile);
+		MAP *tile = bunkerInfoEntry.first;
+		BunkerInfo &bunkerInfo = bunkerInfoEntry.second;
+		
+		CombatData &combatData = bunkerInfo.combatData;
+		
 		evaluateDefense(tile, combatData);
+		
 	}
 	
 }
@@ -3699,9 +3595,9 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 	std::array<FactionInfo, MaxPlayerNum> &factionInfos = aiData.factionInfos;
 	std::vector<int> const &unfriendlyFactionIds = aiData.unfriendlyFactionIds;
 	
-	// reset combat data
+	// initialize combat data
 	
-	combatData.reset(&aiData.combatEffectTable, tile, false);
+	combatData.initialize(tile);
 	
 	// evaluate base threat
 
@@ -3807,10 +3703,6 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 				
 			}
 			
-			// strength multiplier
-			
-			double strengthMultiplier = getVehicleStrenghtMultiplier(vehicleId);
-			
 			// threat coefficient
 			
 			double threatCoefficient = aiData.factionInfos[vehicle.faction_id].threatCoefficient;
@@ -3825,7 +3717,7 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 			
 			// weight
 			
-			double weight = strengthMultiplier * threatCoefficient * approachTimeCoefficient;
+			double weight = threatCoefficient * approachTimeCoefficient;
 			
 			// store value
 			
@@ -3836,13 +3728,11 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 			(
 				"\t\t\t(%3d,%3d) %-32s"
 				" weight=%5.2f"
-				" strengthMultiplier=%5.2f"
 				" approachTime=%7.2f approachTimeCoefficient=%5.2f"
 				" threatCoefficient=%5.2f"
 				"\n"
 				, vehicle.x, vehicle.y, unit.name
 				, weight
-				, strengthMultiplier
 				, approachTime, approachTimeCoefficient
 				, threatCoefficient
 			);
@@ -3891,7 +3781,7 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 		// strength modifier
 		
 		double moraleMultiplier = getAlienMoraleMultiplier();
-		double gameTurnCoefficient = getAlienTurnStrengthModifier();
+		double gameTurnCoefficient = getAlienTurnOffenseModifier();
 		
 		// set basic numbers to occasional vehicle
 		
@@ -4099,7 +3989,7 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 				continue;
 			
 			debug("\t\t%-24s %-32s\n", MFactions[foeFactionId].noun_faction, Vehs[foeVehicleId].name());
-			combatData.addAssailantVehicle(foeVehicleId, foeVehicleWeight);
+			combatData.addAssailant(foeVehicleId, foeVehicleWeight);
 			
 		}
 		

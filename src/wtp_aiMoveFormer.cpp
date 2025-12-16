@@ -3552,8 +3552,10 @@ double estimateSensorIncome(MAP *tile)
 		
 	}
 	
-	for (MAP *bunkerTile : aiData.bunkers)
+	for (robin_hood::pair<MAP *, BunkerInfo> const &bunkerInfoEntry : aiData.bunkerInfos)
 	{
+		MAP *bunkerTile = bunkerInfoEntry.first;
+		
 		// within being constructing sensor range
 		
 		if (getRange(tile, bunkerTile) > 2)
@@ -4872,8 +4874,10 @@ void removeUnusedBunkers()
 	debug("removeUnusedBunkers - %s\n", MFactions[aiFactionId].noun_faction);
 	
 	robin_hood::unordered_flat_set<MAP *> unusedBunkers;
-	for (MAP *bunkerTile : aiData.bunkers)
+	for (robin_hood::pair<MAP *, BunkerInfo> &bunkerInfoEntry : aiData.bunkerInfos)
 	{
+		MAP *bunkerTile = bunkerInfoEntry.first;
+		
 		if (estimateBunkerIncome(bunkerTile, true) <= 0.0)
 		{
 			unusedBunkers.insert(bunkerTile);
@@ -4885,7 +4889,7 @@ void removeUnusedBunkers()
 	{
 		unusedBunkerTile->items &= (~BIT_BUNKER);
 		aiData.getTileInfo(unusedBunkerTile).bunker = false;
-		aiData.bunkers.erase(unusedBunkerTile);
+		aiData.bunkerInfos.erase(unusedBunkerTile);
 		debug("\t%s\n", getLocationString(unusedBunkerTile));
 	}
 	
