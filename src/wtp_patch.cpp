@@ -3178,6 +3178,18 @@ void patch_air_superiority_attack_needlejet()
     
 }
 
+void patch_datalinks_default_category()
+{
+	// in Console::on_key_click
+	// change datalinks default category
+	
+    int datalinks_default_category_length = 0x2;
+    byte datalinks_default_category_old[] = { 0x6A, 0x0E }; // 0:  85 f6                   test   esi,esi
+    byte datalinks_default_category_new[] = { 0x6A, 0x00 }; // 0:  85 c0                   test   eax,eax
+    write_bytes(0x0051A7BF, datalinks_default_category_old, datalinks_default_category_new, datalinks_default_category_length);
+	
+}
+
 
 // =======================================================
 // main patch option selection
@@ -3515,6 +3527,8 @@ void patch_setup_wtp(Config* cf)
 	{
 		patch_air_superiority_attack_needlejet();
 	}
+	
+	patch_datalinks_default_category();
 	
 }
 

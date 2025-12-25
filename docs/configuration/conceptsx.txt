@@ -11,57 +11,19 @@
 ;
 
 #TITLES
-01 Welcome to the mod
-02 Design principles
-03 Technology tree
-Pact of Brotherhood
-Treaty of Friendship
-Blood Truce
-Vendetta
-Integrity
-Atrocities
-Drone Riots
-Golden Age
-Morale
-Monoliths
-Artifacts
-Fungus/Xenofungus
-Psi Combat
-Waypoints
-Patrol
-Explore (Governor)
-Discover (Governor)
-Build (Governor)
-Conquer (Governor)
-Damage and Repair
-Prototypes
-Unit Cost (Basic)
-Inefficiency (Basic)
-Ecology (Basic)
-Planetary Council
-Planetary Governor
-Commerce (Basic)
-Victory and Defeat
-Territory/Borders
-Might
-Disengage
-Zone of Control
-Bombardment
-Drones
-Talents
-Psych
-Landmarks, Volcanos, etc.
-Council Proposals
-Nutrients
-Minerals
-Energy
-Economy
-Labs
-Energy Reserves
-Progenitors
-Resonance
-Manifolds
-Energy Grid
+00 Welcome to the mod
+01 Design principles
+02 Factions
+03 Technologies
+04 Social models
+05 Social effects
+06 Combat
+07 Unit cost
+08 Terraforming
+09 Info Warfare
+10 Eco damage
+11 Base psych
+12 Roads and magtubes
 
 #ADVTITLES
 Unit Cost (Advanced)
@@ -1042,14 +1004,17 @@ heralds the end of human habitation on Planet.
 
 #CONCEPT0
 Welcome to {The Will to Power} mod!
-^It optimizes and balances different game features making them more effective and attractive. Increased number of viable strategies make game more variative and replayable.
 ^
-^The mod targets these areas
+^This mod optimizes and balances different game features making them more comparable to each other. It increases number of viable strategies, makes game more variative and replayable.
+^
+^Main focus areas
 ^- Rule fixes and simplification
 ^- Overall game balance
 ^- AI improvement
 ^- Bug fixes
 ^- QoL features
+^
+^This datalinks section highlights only conceptual changes. Specific feature changes can be found in corresponding datalinks articles.
 
 #CONCEPT1
 Feature should do what it claims to. If it is impossible to make it work, such feature should be excluded. Example: Deep pressure hull.
@@ -1067,13 +1032,131 @@ Feature should do what it claims to. If it is impossible to make it work, such f
 ^Mutually exclusive items/features are adjusted in price and effect so that they can compete with each other and none is completely inferior. Good example is social models.
 
 #CONCEPT2
+Factions are minimally modified to match changes in other related game aspects (SE effects and models) and to generally balance them.
+^This is not a faction mod. Above changes are recommended but optional.
+^Suggestions are welcome.
+^
+^- University of Planet: Extra RESEARCH.
+^
+^- Spartan Federation: Reduced EFFICIENCE.
+^
+^- Lord's Believers: {+50%} fanatics bonus.
+^
+^- Cybernetic Consciousness: Reduced bonuses to make faction less OP.
+^
+^- AQUATIC factions: No extra minerals from water. It was too OP.
+^
+^- Data Angels: Severe research penalty to balance inherent Planetary Datalinks. Probe team available from start.
+^
+^- Cult of Planet: Reduced POLICE to otherwise OP faction. Their Mind Worms still have double police power.
+^
+^- Alien factions: INDUSTRY penalty. No free Recycling Tanks.
+
+#CONCEPT3
 Technology links and dependencies are moderately modified in this mod to make appearence time of different features more sensible.
 ^At the same time it tries to keep technology names and they major unlocked feature the same as much as possible to relate to vanilla experience.
 ^
-^Some notable changes
 ^- Techs are more evenly distributed by levels. Player starts with just handful techs and gradually makes their way up.
+^
 ^- Techs are priced by their level preventing trading abuse.
+^
 ^- Doctrine: Flexibility is the first level technology available to be researched at start.
+^
 ^- Weapons and armors are discovered in progressive manner to allow them advance side by side.
+^
+^- Energy Bank and Network Node are moved to higher levels as they are not usable until bases yield enough energy.
+
+#CONCEPT4
+Social models are minimally modified for balance.
+^https://github.com/tnevolin/thinker-doer#social-models
+^
+^- Most models now have 4 effects to increase variativity.
+^
+^- Use of effects is adjusted to account for their applicable range.
+
+#CONCEPT5
+Social effects are minimaly modified to simplify rules and smoothen out some harsh effects.
+^https://github.com/tnevolin/thinker-doer#social-effects
+^
+^- EFFICIENCY: Formula slightly tweaked to smoothen impossible negative effects. -4 EFFICIENCY now reduces income by {~50%}, not {100%} as in OG. Still a lot but endurable.
+^
+^- SUPPORT: Free unit range is extended to {0-8} (was 0-4). New base always gets minerals. Support cost is always 1. Crawlers and Probes require support.
+^
+^- POLICE: The effect itself has not changed, but the police unit effect has been modified a little.
+^
+^- GROWTH: Upper cap is raised to +6. The Cloning Vats gives +2 GROWTH (no pop boom). Population boom requires {Golden Age} and {+6 GROWTH}.
+^
+^- PLANET: Combat bonus is increased to 15% and is applied on both offense and defense.
+^
+^- MORALE: Does not change unit morale but instead modifies battle strenght by {(+/-)10%}.
+
+#CONCEPT6
+Various combat changes.
+^
+^- Reactor does not increase unit hit points and instead makes it slightly cheaper down to half with the lastest one.
+^- Weapon offence and Armor defense are progressing together alloweing defense to play its role.
+^- Combat round odds are fixed to reflect displayed odds. OG bug.
+^- Base defenses are smoothens up: intrinsic = {+50%}, first level = {+100%}, first + second levels = {+150%}.
+^- Artillery can damage tougher units those it could not in OG.
+^- Morale bonuses are simplified greatly. No quirky bonuses from home and current base, CC/BP.
+^- Promotion probability is equalized across the whole spectrum to avoid abuse.
+^- Interceptor applies its Air Superiority bonus while defending as well.
+^- Ground units can attack needlejet in flight without Air Superiority.
+
+#CONCEPT7
+Unit cost is completely reworked toward simplification and adopting Civ 1/2 progression.
+^
+^- Reactor does not change combat unit hit points but reduces its cost by ~20%.
+^- Base weapon/armor cost is equal to its strength.
+^- Unit with equal weapon and armor strength is {50%} more expensive.
+^- Chassis multiplies unit cost. Faster units are usually {50%} more expensive.
+^- - Sea chassis cost {combat/probe}: foil = speeder, cruiser = hovertank.
+^- - Sea chassis cost {non combat}: foil = infantry, cruiser = speeder.
+^- Abilities may multiply the cost as in OG or they may add flat cost.
+^- PB, Tectonic/Fungal {cost} is proportional to their reactor power.
+^- Probe armor cost is halved.
+^- Prototype cost applies to the new {item}, not the whole unit.
+
+#CONCEPT8
+Terraforming changes.
+^
+^- No resource yield restrictions.
+^- Base nutrient box width is increased to 20.
+^- Farm gives {+2} nutrients.
+^- Forest terraforming time is {doubled}.
+^- Borehole produces {0-2-6}.
+^- Fungus yield is reworked to focus more on {nutrients} and {energy}.
+
+#CONCEPT9
+Probe operation changes.
+^
+^- Subvertion pulls unit to the probe tile allowing subverting from stack.
+^- Polymorphic Encryption increases subversion cost for all stacked and adjacent units.
+^- Mind control cost is completely reworked to accurately reflect base features.
+^- - Surplus resources: nutrient, mineral, energy
+^- - Secret projects and facilities
+^- - Proportional distance to HQ
+^- - Gradual citizen happiness (not just binary riot switch)
+^- - Subversion cost of all flipped units
+^- Infiltration expires and can be renewed/prolonged any time.
+^- Introduce Genetic Plague probe action is now much more riskier.
+
+#CONCEPT10
+Eco damage forumula is adjusted to match description and to make more sense.
+^ Industry effect reducing facilities (Centauri Preserve, Temple Of Planet, and others) proportionally raise base eco friendly mineral production limit.
+
+#CONCEPT11
+Base psych is seriously reworked to avoid well known abuses and simplify rules.
+^
+^- All happiness computations are simplified and work similar to psych: one psych power improves citizen education by one level.
+^- Psych facilities have {+1} extra psych power but have to gradually improve citizen mood (it takes two powers to turn superdrone into normal).
+^- Police units have {+1} extra psych power but have to gradually improve citizen mood (it takes two powers to turn superdrone into normal).
+^- Psych is applied last to avoid overlapping with other effects. Due to this effect increase it now takes {4} psych (2 in OG) to improve citizen mood.
+^- Specialists do not affect happiness computation and are not displayed on the base psych breakdown screen.
+^- Specialists converted from sufficiently educated citizens (normals and talents) after happiness is computed.
+^- Base credits may be converted to psych to educate enough citizens as needed for specialists conversion.
+
+#CONCEPT12
+Road doubles movement and magtube triples.
 
 # ; This line must remain at end of file
