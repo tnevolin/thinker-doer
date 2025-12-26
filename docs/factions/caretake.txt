@@ -86,7 +86,7 @@ Therefore: if it means the end of our evolution as a species, so be it.
 ^LEADER: {Caretaker Lular H'minee}
 ^BACKGROUND: {<Unknown>}
 ^AGENDA: {Prevent Transcendence}
-^TECH: {Progenitor Psych, Centauri Ecology, Field Modulation, Information Networks, Biogenetics}
+^TECH: {Progenitor Psych, Centauri Ecology}
 ^
 
 #DATALINKS2

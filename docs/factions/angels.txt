@@ -12,7 +12,7 @@
 
 #ANGELS
 The Data Angels, The Infogrrrrl, Angels, F, 2, Roze, F, 0, 0, 1, 1, 0, 
-  TECH, DocFlex, TECH, Poly, SOCIAL, ++PROBE, SOCIAL, -POLICE, SOCIAL, ---RESEARCH, PROBECOST, 75, FREEFAC, 34, SHARETECH, 3, UNIT, 6
+  TECH, DocFlex, TECH, Poly, SOCIAL, ++PROBE, SOCIAL, -POLICE, SOCIAL, ---RESEARCH, PROBECOST, 75, FREEFAC, 34, TECHSHARE, 3, UNIT, 6
   Politics, Democratic, PROBE
   Values, Power, nil
   Datatech, Datate.
@@ -84,12 +84,13 @@ caught. The data is 1's and 0's. Life is the jazz.
 ^LEADER: {Sinder Roze}
 ^BACKGROUND: {MorganNet QA Manager, Unity Information Services Helpdesk}
 ^AGENDA: {Free Flow of Information}
-^TECH: {Information Networks, Planetary Networks}
+^TECH: {Polymorphic Software, Doctrine: Flexibility}
 ^
 
 #DATALINKS2
 ^+2 PROBE: {Highly motivated computer specialists}
 ^-1 POLICE: {Decentralized, difficult to control}
+^-3 RESEARCH: {Security protocols prevent information flow}
 ^Gain any tech known to 3 other factions with whom Angels have infiltration: {Wide-ranging covert activities}
 ^-25% cost to PROBE TEAM actions: {Skilled at network access and control}
 ^Free COVERT OPS CENTER with discovery of Pre-Sentient Algorithms

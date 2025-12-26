@@ -4470,7 +4470,7 @@ Intercepts has_abil call for the purpose of determining whether vehicle can atta
 */
 int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAblFlag ability)
 {
-	if (conf.air_superiority_not_required_to_attack_needlejet && ability == ABL_AIR_SUPERIORITY)
+	if (!conf.needlejet_air_superiority_required && ability == ABL_AIR_SUPERIORITY)
 	{
 		return 1;
 	}
@@ -4479,5 +4479,10 @@ int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAb
 	
 	return has_abil(unit_id, ability);
 	
+}
+
+int __thiscall StringList__sort_nop(int */*This*/, int /*sortType*/)
+{
+	return 0;
 }
 

@@ -858,9 +858,13 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         opt_list_parse(cf->facility_field_defense_bonus, buf, 4, 0);
     }
-    else if (MATCH("air_superiority_not_required_to_attack_needlejet"))
+    else if (MATCH("needlejet_air_superiority_required"))
     {
-        cf->air_superiority_not_required_to_attack_needlejet = (atoi(value) == 0 ? false : true);
+        cf->needlejet_air_superiority_required = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("datalinks_sort"))
+    {
+        cf->datalinks_sort = (atoi(value) == 0 ? false : true);
     }
 	else if (MATCH("ai_useWTPAlgorithms"))
     {

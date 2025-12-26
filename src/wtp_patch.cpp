@@ -3178,16 +3178,47 @@ void patch_air_superiority_attack_needlejet()
     
 }
 
-void patch_datalinks_default_category()
+char fontName[20] = "Courier";
+void patch_datalinks()
 {
 	// in Console::on_key_click
-	// change datalinks default category
+	// change datalinks default category to first one
 	
     int datalinks_default_category_length = 0x2;
-    byte datalinks_default_category_old[] = { 0x6A, 0x0E }; // 0:  85 f6                   test   esi,esi
-    byte datalinks_default_category_new[] = { 0x6A, 0x00 }; // 0:  85 c0                   test   eax,eax
+    byte datalinks_default_category_old[] = { 0x6A, 0x0E };
+    byte datalinks_default_category_new[] = { 0x6A, 0x00 };
     write_bytes(0x0051A7BF, datalinks_default_category_old, datalinks_default_category_new, datalinks_default_category_length);
 	
+	// disable sorting
+	
+	if (!conf.datalinks_sort)
+	{
+		write_call(0x0042A485, (int)StringList__sort_nop); // Datalink::set_cat
+	}
+	
+//	char **f = (char **)0x00691B2C;
+//	*f = fontName;
+	
+//    int datalinks_font_name_length = 0x4;
+//    byte datalinks_font_name_old[] = { 0xD4, 0x1B, 0x69, 0x00, };
+//    byte datalinks_font_name_new[] = { (byte) ((fontNameAddress >> 0x0) & 0xFF), (byte) ((fontNameAddress >> 0x4) & 0xFF), (byte) ((fontNameAddress >> 0x8) & 0xFF), (byte) ((fontNameAddress >> 0xC) & 0xFF), };
+//    write_bytes(0x00691B2C, datalinks_font_name_old, datalinks_font_name_new, datalinks_font_name_length);
+	
+	// font size
+	
+    int datalinks_font_size_length = 0x2;
+    byte datalinks_font_size_old[] = { 0x6A, 0x0E };
+    byte datalinks_font_size_new[] = { 0x6A, 0x10 };
+    write_bytes(0x004297F0, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+    write_bytes(0x00429806, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+    write_bytes(0x00429831, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+    write_bytes(0x00429847, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+    write_bytes(0x0042985C, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+    write_bytes(0x00429872, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+    write_bytes(0x00429887, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+    write_bytes(0x0042989D, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+    write_bytes(0x004298C8, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+    
 }
 
 
@@ -3523,12 +3554,12 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_retire_proto();
 	
-	if (conf.air_superiority_not_required_to_attack_needlejet)
+	if (!conf.needlejet_air_superiority_required)
 	{
 		patch_air_superiority_attack_needlejet();
 	}
 	
-	patch_datalinks_default_category();
+	patch_datalinks();
 	
 }
 

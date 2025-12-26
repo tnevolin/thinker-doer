@@ -11,19 +11,18 @@
 ;
 
 #TITLES
-00 Welcome to the mod
-01 Design principles
-02 Factions
-03 Technologies
-04 Social models
-05 Social effects
-06 Combat
-07 Unit cost
-08 Terraforming
-09 Info Warfare
-10 Eco damage
-11 Base psych
-12 Roads and magtubes
+Welcome to the mod
+Design principles
+Factions
+Technologies
+Social engineering
+Combat
+Unit cost
+Terraforming
+Info Warfare
+Eco damage
+Base psych
+Roads and magtubes
 
 #ADVTITLES
 Unit Cost (Advanced)
@@ -93,11 +92,12 @@ Progenitors
 Resonance
 Manifolds
 Energy Grid
+Population Boom
 
 #ADVCONCEPT16
-The {Rainfall} level of a region determines the amount of $LINK<Nutrients=10057> which
+The {Rainfall} level of a land region determines the amount of $LINK<Nutrients=10057> which
 can be produced. A region can be arid, moderate or rainy, producing 0, 1, or 2
-nutrients respectively. A $LINK<farm=90000> increases the nutrient production by 1.
+nutrients respectively. A $LINK<farm=90000> increases the nutrient production.
 ^
 In addition to coastal and tropical regions, the western (upwind) slopes of mountain ranges
 tend to be quite rainy, since warm moisture-laden air cools as it rises, and sheds
@@ -105,8 +105,7 @@ its moisture as rainfall. You can take advantage of this phenomenon by raising
 hills to the east of your important bases. Conversely, areas east, or downwind of
 mountain ranges tend to be quite arid.
 ^
-Ocean squares produce 1 nutrient unless you cultivate a $LINK<kelp farm=90020>,
-in which case they produce 3.
+Ocean squares produce 1 nutrient unless you cultivate a $LINK<kelp farm=90020>.
 ^
 Special {Nutrient Resource} squares produce two extra nutrients, and
 $LINK<Monsoon Jungle=10055> squares produce a single extra nutrient.
@@ -114,15 +113,14 @@ $LINK<Monsoon Jungle=10055> squares produce a single extra nutrient.
 #ADVCONCEPT17
 The {Rockiness} of an area determines that region's $LINK<Mineral=10058> production potential.
 Regions can be flat, rolling, or rocky. {Flat} regions produce no minerals unless
-a $LINK<mine=90002> is build there, in which case they can produce one. {Rolling} regions
-produce a single mineral, which can be increased to two with a mine. Unimproved {Rocky}
-regions also produce 1, but can produce 4 with a mine and road.
+a $LINK<mine=90002> is build there. {Rolling} regions
+produce a single mineral, which can be increased with a mine. Unimproved {Rocky}
+regions also produce 1, but can produce more with a mine and road.
 ^
 Rocky areas inhibit movement, costing twice the normal number of moves to enter. They
 also provide a modest defensive benefit in combat.
 ^
-Ocean squares produce minerals only if you build a $LINK<mining platform=90022>, in which
-case they produce 2.
+Ocean squares produce minerals only if you build a $LINK<mining platform=90022>.
 ^
 Special {Mineral Resource} squares produce two additional minerals per turn, and
 can be increased to three extra with a mine. $LINK<Crater=10055> squares also produce one extra
@@ -130,13 +128,10 @@ mineral.
 
 #ADVCONCEPT18
 The {Altitude} of a region affects the amount of $LINK<Energy=10059> which can be collected
-there. To collect this energy, you must build a $LINK<Solar Collector=90003>. Areas below
-1000m above sea level produce 1 unit of energy. From 1000m to 2000m, areas
-produce 2 energy; 2000m-3000m areas produce 3 energy, and areas more than 3000m
-above sea level produce 4 energy.
+there. To collect this energy, you must build a $LINK<Solar Collector=90003>.
+It produces 1 unit of energy plus one more for each 1000m of altitude.
 ^
-Ocean squares do not produce energy unless you build a $LINK<tidal harness=90023>, in which
-case they produce 3.
+Ocean squares do not produce energy unless you build a $LINK<tidal harness=90023>.
 ^
 Special {Energy Resource} squares produce two additional units of energy per turn. Squares
 in the $LINK<Uranium Flats=10055> and $LINK<Geothermal Shallows=10055> produce one additional unit.
@@ -235,8 +230,6 @@ equals the number of regular Workers and Specialists.
 A Golden Age significantly increases a base's {growth} rate and {energy} production--
 equivalent of +1 $LINK<ECONOMY=130000> and +2 $LINK<GROWTH=130006> on the social
 engineering table.
-^
-^A Golden Age with maximal GROWTH rating also triggers population boom at the base!
 
 #ADVCONCEPT27
 {Morale} reflects the training and experience of your military units. Morale levels
@@ -247,7 +240,7 @@ since no weapon and armor values are considered in those cases.
 ^
 New units typically begin with {Very Green} morale, though this may be higher or lower
 depending on your social engineering $LINK<MORALE=130004> setting. A new unit's morale can also
-be increased if a base has a $LINK<Command Center=100027> or other related {facility}.
+be increased if a base has a $LINK<Command Center=100027> or similar morale facility.
 ^
 Alien units such as Mind Worms have {life cycles} which correspond to morale
 levels. Alien units are not affected by Command Centers and military facilities,
@@ -255,19 +248,14 @@ but their life cycle levels can be improved by building $LINK<Biology Labs=10000
 similar facilities. The {transport} capacity of an $LINK<Isle of the Deep=30009> is determined
 by its life cycle level: one unit for each level.
 ^
-A unit victorious in combat will often receive a morale upgrade (the lower its
-morale level, the more likely an upgrade).
+A unit victorious in combat will often receive a morale upgrade.
 ^
-{Elite} units receive a special bonus--an additional move each turn.
-^
-A unit with a "+" sign after its morale possesses a combat bonus from its location in a base with a 
-$LINK<Children's Creche=100002>. 
+{Elite} units receive a special bonus -- an additional move each turn.
 
 #ADVCONCEPT28
 {Monoliths} are mysterious and unexplained alien devices discovered on Planet.
 A monolith will increase a unit's $LINK<morale=10027> (or life cycle) one level, but an individual
-unit can receive only one monolith upgrade (hint: consider saving your upgrade for
-those hard-to-get promotions from Commando to Elite).
+unit can receive only one monolith upgrade.
 ^
 A monolith will also completely repair any damaged unit; this can be done any
 number of times, even if a unit has already received a morale upgrade from a
@@ -292,11 +280,11 @@ any player without diplomatic penalty.
 has a number of unusual properties which you may discover in the course of play.
 Some of the more obvious properties include:
 ^
-(1) Fungus impedes {movement}. Units may have difficulty entering Fungus squares.
+(1) Fungus impedes movement. Units may have difficulty entering Fungus squares.
 Increasing your $LINK<PLANET=130007> social engineering rating will alleviate this problem. Building
 the Xenoempathy Dome improves Fungus movement considerably.
 ^
-(2) Fungus has some {defensive} value when defending against other human 
+(2) Fungus has some defensive value when defending against other human 
 or $LINK<Progenitor=10063> factions. Against native $LINK<Mind Worms=30008>, 
 however, Fungus has negative value.
 ^
@@ -306,8 +294,7 @@ discovered.
 
 #ADVCONCEPT31
 Some units (usually alien creatures such as $LINK<Mind Worms=30008>) can engage in
-{PSI COMBAT}. In Psi Combat, weapon and armor strengths are ignored, and
-the attacker is given a 3 to 2 advantage on land (1 to 1 for sea combat).
+{PSI COMBAT}. In Psi Combat, weapon and armor strengths are ignored.
 $LINK<MORALE=130004> level becomes quite important in Psi Combat.
 
 #ADVCONCEPT32
@@ -403,27 +390,20 @@ more than 10% damage.
 You may use the Design Workshop screen to create new unit types.
 Whenever you create a unit using a $LINK<weapon=60005>, $LINK<armor=70007>,
 or $LINK<chassis=40006>
-type which you have never used before, you must {prototype} the
-unit.
+type which you have never used before, you must {prototype} this component.
 ^
-A prototype unit requires an extra {+50% Minerals} to build, though
-it receives a bonus $LINK<+1 Morale=10027> upgrade in compensation since
+A prototype component requires an extra {+100% Minerals} of its own cost to build.
+^
+Prototyped unit receives a bonus $LINK<+1 Morale=10027> upgrade in compensation since
 experimental weapons are often given to crack, well-trained troops.
 ^
-Once you have prototyped a new unit, you may build that unit in the
-future at no additional cost.
+Once you have prototyped a new component, you may build units with this component at no additional cost.
 
 #ADVCONCEPT40
 When designing new units, bear in mind that units strong in
 three areas ($LINK<weapon=60005>, $LINK<armor=70007>, $LINK<chassis=40006>)
 will be vastly more
 expensive than units strong in only two areas (or one).
-^
-For example, a 4-3-2 unit normally costs 70 minerals to build,
-whereas a 4-1-2 unit costs only 30 and a 4-3-1 unit costs 40.
-So you can have two units for the price of one, not to mention
-the +25% base-attack bonus which the 4-3-1 $LINK<infantry=40000> unit will
-receive.
 
 #ADVCONCEPT41
 As your colony grows and you claim more territory and build more
@@ -552,7 +532,7 @@ Fast units, such as Speeders and Hovertanks, can sometimes
 when the following conditions are met:
 ^
 ^* Unit incurs 50% damage, relative to what it started the combat with.
-^* Unit is faster than its attacker, taking damage into account.
+^* Unit is faster than its attacker, taking initial damage into account.
 ^* Unit is alone in its square.
 ^* Unit did not attack on its last turn.
 ^* Unit is a combat unit (non-combat units may never disengage).
@@ -564,28 +544,23 @@ or $LINK<airbase=90008>.
 $LINK<Pholus Mutagen=110086>) and is not adjacent to an enemy unit.
 
 #ADVCONCEPT50
-Every unit exerts a {Zone of Control} into every adjacent
-square of the same type unit is on (land or sea).
+Any unit placed over land exerts a {Zone of Control} into adjacent land squares.
 ^
-Land units may not normally move between two squares in an enemy
+Land units may not normally move between two land squares in an enemy
 zone of control, with the following exceptions:
 ^* Units may freely move into and out of bases.
 ^* Units may freely attack any adjacent unit.
-^* Units may freely enter squares already containing friendly non probe units.
+^* Units may freely enter squares already containing friendly units.
 ^* $LINK<Probe teams=30006> and units with the $LINK<Cloaking ability=80002>
-may ignore this rule.
-^
-Air and Sea units exert zones of control, but are not affected by
-them.
+ignore zone of control.
 
 #ADVCONCEPT51
 Naval units, and land units with the $LINK<Heavy Artillery=80015> ability may
 conduct {Bombardment} by selecting the Long Range Fire option from
 the Action menu.
 ^
-Bombardment has the advantage of potentially damaging every enemy unit
-in a particular square and the disadvantage that land units can never
-be reduced below 50% damage by bombardment.
+Bombardment damages every enemy unit in a particular square.
+Maximum bombardment damage is 50% for unit in base or bunker, 99% for land unit on land, and 100% (lethal) for all others.
 ^
 If bombardment is attempted against a square containing an enemy
 naval or artillery unit, the bombardment is cancelled and an
@@ -646,7 +621,7 @@ $LINK<Diplomatic Victory=10005>.
 {Nutrients} are produced in squares with sufficient $LINK<Rainfall=10016>, sometimes
 supplemented by the addition of $LINK<Farms=90000> and similar enhancements.
 ^
-Every citizen at a base must "eat" two Nutrients per turn to survive.
+Every citizen at a base must consume some number of nutrients per turn to survive.
 ^
 Surplus nutrients are stored. When sufficient surplus nutrients have
 been accumulated, a base will grow, producing a new citizen.
@@ -690,37 +665,31 @@ as your treasury for monetary transactions.
 Your energy reserves increase depending on the amount of $LINK<Energy=10059>
 you allocate to $LINK<Economy=10060> on the Social Engineering screen.
 
-
 #ADVCONCEPT0
-^Cost =
-^ (<primary item> + (<secondary item> - 1) / 2)
-^ * <reactor cost factor>
-^ * (1 + 0.25 * <sum of ability factor values>)
-^ + <sum of ability flat values>
+Unit cost is defined by following factors:
+^- Each more advanced reactor reduces weapon/armor cost by ~20%.
+^- Primary component contributes its full cost.
+^- Secondary component contributes half of its cost.
+^- Chassis cost factor multiplies unit cost.
+^- Ability cost factor multiplies unit cost and its flat cost added on top.
 ^
 ^The above result is rounded normally to get number of mineral rows.
 ^Minimum cost = Reactor power
 ^
-^* primary item = most expensive module/weapon/armor
-^* secondary item = least expensive module/weapon/armor
-^* reactor cost factor = <reactor cost value> / <Fission reactor cost value>
-^
-^Special rules for non combat units
-^* Colony, Former, Supply on foil/cruiser costs same as their infantry/speeder analogues.
+^Special rules for non combat units:
+^Colony, Former, Supply on foil/cruiser costs same as their infantry/speeder analogues.
 
 
 #ADVCONCEPT1
-The formula used to compute the energy lost to {Inefficiency} by
-a base is:
+The {Inefficiency} at base is computed as:
 ^
-^Inefficiency = (Energy * Distance / (64 - ((4 - Efficiency) * 8))
+inefficiency = energy * hqDistance / maxDistance - energy * (4 + EFFICIENCY) / 8
 ^
-^Energy | Amount of energy produced by base this turn.
-^Distance | Distance from $LINK<Headquarters=100001> base (16 if no HQ).
-^Efficiency | Social Engineering $LINK<EFFICIENCY=130001> (+2 if
-$LINK<Children's Creche=100002>)
-^
-^* If denominator reaches zero, ALL energy is lost to inefficiency.
+Clumped at 0 to energy.
+^energy | Amount of energy produced by base this turn.
+^maxDistance | half of equatorial circumference
+^hqDistance | Distance from $LINK<Headquarters=100001> base (maxDistance if no HQ).
+^EFFICIENCY | $LINK<EFFICIENCY=130001> at base (+2 if $LINK<Children's Creche=100002>).
 
 #ADVCONCEPT2
 The ecological damage formula is complex:
@@ -732,15 +701,15 @@ and $LINK<Boreholes=90014>. Items
 in squares which are actually being worked count double.
 ^(2) Add an extra +8 for each Borehole, +6 for each Mirror, and +4 for each Condenser.
 ^(3) Subract 1 for each $LINK<Forest=90004>.
-^(4) Halve if base has either $LINK<Tree Farm=100013> or $LINK<Hybrid Forest=100014>. Divide by four if both.
+^(4) Halve for each $LINK<Tree Farm=100013> or $LINK<Hybrid Forest=100014>.
 ^(5) Divide this value by 8, and reduce by up to 16 plus # of previous
 damages. Set this number aside.
 ^(6) Take the number of minerals produced this turn (but not from Orbit)
-^(7) If result from 5 was reduced by less than 16+#, reduce result 6
-by remaining amount.
-^(8) Divide minerals by 1 plus # of $LINK<Centauri Preserve=100031>,
+^(7) Divide minerals by 1 plus # of $LINK<Centauri Preserve=100031>,
 $LINK<Temple of Planet=100032>,
 $LINK<Nanoreplicator=100020>.
+^(8) If result from 5 was reduced by less than 16+#, reduce result 7
+by remaining amount.
 ^(9) Sum the values of (5) and (8), and add +5 for each major $LINK<atrocity=10024>.
 ^(10) If Alpha Prime is at perihelion (20 years out of every 80), double
 your value.
@@ -964,6 +933,13 @@ five energy added to the base total.
 $LINK<Nerve Stapling=10024> causes widespread disaffection among Progenitor citizens, 
 resulting in the shutdown of the Grid for a limited time.
 
+#ADVCONCEPT67
+{Population Boom} allows base growing by 1 every turn as long as there is enough food for new citizens and population limit is not reached.
+^
+Population Boom is triggered at base by following conditions:
+^- Base is in $LINK<Golden Age=10026>
+^- Base $LINK<GROWTH=130006> rating is at least 6
+
 #ADVCONCEPT14
 The two $LINK<Progenitor=10063> factions can achieve victory by calling in reinforcements from 
 their respective homeworlds. To broadcast the hidden location of the $LINK<Manifold=10065> to
@@ -1017,24 +993,22 @@ Welcome to {The Will to Power} mod!
 ^This datalinks section highlights only conceptual changes. Specific feature changes can be found in corresponding datalinks articles.
 
 #CONCEPT1
-Feature should do what it claims to. If it is impossible to make it work, such feature should be excluded. Example: Deep pressure hull.
+Feature should do what it claims to or be disabled if impossible to fix (Deep Pressure Hull).
 ^
-^Feature should not outright contradict game concept. Example: hybrid components (resonance armor and such) contradict build-your-own-unit design workshop principle.
+^Feature should respect game concepts or be disabled if impossible to fix (resonance weapon/armor).
 ^
-^Rules should be simple and produce expected effect. Example: unit cost. Infantry attacker 10-1-1 costs 5. Player expects infantry defender 1-10-1 to cost the same. Yet, it is 20 in vanilla. Bad design.
+^Rules should be comprehensible for the player and produce an expected effect. OG unit cost for 10-1-1 (5) and 1-10-1 (20) is an example of bad design.
 ^
-^There should not be any extremely overpowered or underpowered strategy. Each one should be viable and has its niche. Overpowered strategy example: indestructible army.
+^Balance extremely OP or underpowered strategies. Each one should be viable and has its niche or be disabled if impossible to fix and use.
 ^
-^Each feature should come at the right time in research tree to not waste tech slot. The mod adjusts item appearence times to match their use.
+^Features should appear at the right moment when they are needed.
 ^
-^Similar item types (weapon, armor) should appear in strict succession to avoid jumping over. This mod orders them and spreads them evenly on a research scale for player to enjoy each for about same time.
+^Replaceable items (weapon, armor) should appear in progressive succession to let each one to play their part.
 ^
-^Mutually exclusive items/features are adjusted in price and effect so that they can compete with each other and none is completely inferior. Good example is social models.
+^Generally features (items, strategies, social choices) should have competitive cost and effect to allow multiple viable choices.
 
 #CONCEPT2
-Factions are minimally modified to match changes in other related game aspects (SE effects and models) and to generally balance them.
-^This is not a faction mod. Above changes are recommended but optional.
-^Suggestions are welcome.
+Minimal modifications to match game concept changes and for general balance.
 ^
 ^- University of Planet: Extra RESEARCH.
 ^
@@ -1042,13 +1016,13 @@ Factions are minimally modified to match changes in other related game aspects (
 ^
 ^- Lord's Believers: {+50%} fanatics bonus.
 ^
-^- Cybernetic Consciousness: Reduced bonuses to make faction less OP.
+^- Cybernetic Consciousness: Reduced bonuses (balance).
 ^
-^- AQUATIC factions: No extra minerals from water. It was too OP.
+^- AQUATIC factions: No bonus minerals from water.
 ^
-^- Data Angels: Severe research penalty to balance inherent Planetary Datalinks. Probe team available from start.
+^- Data Angels: Severe research penalty to balance inherent Planetary Datalinks. Probe teams are available from start.
 ^
-^- Cult of Planet: Reduced POLICE to otherwise OP faction. Their Mind Worms still have double police power.
+^- Cult of Planet: Reduced POLICE. Their Mind Worms still have double police power.
 ^
 ^- Alien factions: INDUSTRY penalty. No free Recycling Tanks.
 
@@ -1067,30 +1041,14 @@ Technology links and dependencies are moderately modified in this mod to make ap
 ^- Energy Bank and Network Node are moved to higher levels as they are not usable until bases yield enough energy.
 
 #CONCEPT4
-Social models are minimally modified for balance.
-^https://github.com/tnevolin/thinker-doer#social-models
+Society effects changes are described in corresponding effect articles.
 ^
+^Social models are minimally modified for balance.
 ^- Most models now have 4 effects to increase variativity.
-^
 ^- Use of effects is adjusted to account for their applicable range.
+^- TALENT effect is now unlocked and is used in few models.
 
 #CONCEPT5
-Social effects are minimaly modified to simplify rules and smoothen out some harsh effects.
-^https://github.com/tnevolin/thinker-doer#social-effects
-^
-^- EFFICIENCY: Formula slightly tweaked to smoothen impossible negative effects. -4 EFFICIENCY now reduces income by {~50%}, not {100%} as in OG. Still a lot but endurable.
-^
-^- SUPPORT: Free unit range is extended to {0-8} (was 0-4). New base always gets minerals. Support cost is always 1. Crawlers and Probes require support.
-^
-^- POLICE: The effect itself has not changed, but the police unit effect has been modified a little.
-^
-^- GROWTH: Upper cap is raised to +6. The Cloning Vats gives +2 GROWTH (no pop boom). Population boom requires {Golden Age} and {+6 GROWTH}.
-^
-^- PLANET: Combat bonus is increased to 15% and is applied on both offense and defense.
-^
-^- MORALE: Does not change unit morale but instead modifies battle strenght by {(+/-)10%}.
-
-#CONCEPT6
 Various combat changes.
 ^
 ^- Reactor does not increase unit hit points and instead makes it slightly cheaper down to half with the lastest one.
@@ -1103,7 +1061,7 @@ Various combat changes.
 ^- Interceptor applies its Air Superiority bonus while defending as well.
 ^- Ground units can attack needlejet in flight without Air Superiority.
 
-#CONCEPT7
+#CONCEPT6
 Unit cost is completely reworked toward simplification and adopting Civ 1/2 progression.
 ^
 ^- Reactor does not change combat unit hit points but reduces its cost by ~20%.
@@ -1117,7 +1075,7 @@ Unit cost is completely reworked toward simplification and adopting Civ 1/2 prog
 ^- Probe armor cost is halved.
 ^- Prototype cost applies to the new {item}, not the whole unit.
 
-#CONCEPT8
+#CONCEPT7
 Terraforming changes.
 ^
 ^- No resource yield restrictions.
@@ -1127,36 +1085,37 @@ Terraforming changes.
 ^- Borehole produces {0-2-6}.
 ^- Fungus yield is reworked to focus more on {nutrients} and {energy}.
 
-#CONCEPT9
-Probe operation changes.
+#CONCEPT8
+Subvertion pulls unit to the probe tile allowing subverting from stack.
 ^
-^- Subvertion pulls unit to the probe tile allowing subverting from stack.
-^- Polymorphic Encryption increases subversion cost for all stacked and adjacent units.
-^- Mind control cost is completely reworked to accurately reflect base features.
-^- - Surplus resources: nutrient, mineral, energy
-^- - Secret projects and facilities
-^- - Proportional distance to HQ
-^- - Gradual citizen happiness (not just binary riot switch)
-^- - Subversion cost of all flipped units
-^- Infiltration expires and can be renewed/prolonged any time.
-^- Introduce Genetic Plague probe action is now much more riskier.
+^Polymorphic Encryption increases subversion cost for all stacked and adjacent units.
+^
+^Infiltration expires and can be renewed/prolonged any time.
+^
+^Introduce Genetic Plague probe action is now much more riskier.
+^
+^Mind control cost accurately summarizes all factors:
+^- Surplus resources: nutrient, mineral, energy
+^- Secret projects and facilities
+^- Proportional distance to HQ
+^- Gradual citizen happiness (not just binary riot switch)
+^- Subversion cost of all flipped units
+
+#CONCEPT9
+Eco damage forumula is adjusted to match description and to make more sense.
+^Industry effect reducing facilities (Centauri Preserve, Temple Of Planet, and others) proportionally raise base eco friendly mineral production limit.
 
 #CONCEPT10
-Eco damage forumula is adjusted to match description and to make more sense.
-^ Industry effect reducing facilities (Centauri Preserve, Temple Of Planet, and others) proportionally raise base eco friendly mineral production limit.
-
-#CONCEPT11
-Base psych is seriously reworked to avoid well known abuses and simplify rules.
+Base psych is reworked to simplify rules and avoid abuses.
 ^
 ^- All happiness computations are simplified and work similar to psych: one psych power improves citizen education by one level.
-^- Psych facilities have {+1} extra psych power but have to gradually improve citizen mood (it takes two powers to turn superdrone into normal).
-^- Police units have {+1} extra psych power but have to gradually improve citizen mood (it takes two powers to turn superdrone into normal).
-^- Psych is applied last to avoid overlapping with other effects. Due to this effect increase it now takes {4} psych (2 in OG) to improve citizen mood.
+^- Psych facilities and police have extra power but spend two powers to quell superdrone.
+^- Psych is applied last to avoid redundancy with other effects and unleash its full power, but is twice less effective.
 ^- Specialists do not affect happiness computation and are not displayed on the base psych breakdown screen.
 ^- Specialists converted from sufficiently educated citizens (normals and talents) after happiness is computed.
 ^- Base credits may be converted to psych to educate enough citizens as needed for specialists conversion.
 
-#CONCEPT12
+#CONCEPT11
 Road doubles movement and magtube triples.
 
 # ; This line must remain at end of file

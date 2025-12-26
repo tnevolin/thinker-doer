@@ -3493,7 +3493,7 @@ void evaluateEnemyStacks()
 			
 			// direct
 			
-			if (isMeleeUnit(ownUnitId) && (conf.air_superiority_not_required_to_attack_needlejet || !enemyStackInfo.needlejetInFlight || isUnitHasAbility(ownUnitId, ABL_AIR_SUPERIORITY)))
+			if (enemyStackInfo.isUnitCanMeleeAttackStack(ownUnitId))
 			{
 				int battleCount = 0;
 				double totalLoss = 0.0;
@@ -5073,28 +5073,6 @@ bool isVehicleThreatenedByEnemyInField(int vehicleId)
 
 }
 
-bool isUnitMeleeTargetReachable(int unitId, MAP *origin, MAP *target)
-{
-	if (!isMeleeUnit(unitId))
-		return false;
-	
-	for (MAP *tile : getAdjacentTiles(target))
-	{
-		if (isUnitDestinationReachable(unitId, origin, tile) && isUnitCanMeleeAttackFromTileToTile(unitId, tile, target))
-			return true;
-	}
-	
-	return false;
-	
-}
-
-bool isVehicleMeleeTargetReachable(int vehicleId, MAP *target)
-{
-	VEH *vehicle = getVehicle(vehicleId);
-	MAP *vehicleTile = getVehicleMapTile(vehicleId);
-	return isUnitMeleeTargetReachable(vehicle->unit_id, vehicleTile, target);
-}
-
 bool isUnitArtilleryTargetReachable(int unitId, MAP *origin, MAP *target)
 {
 	if (!isArtilleryUnit(unitId))
@@ -6135,91 +6113,6 @@ Computes vehicle additional combat multiplier on top if unit properties.
 double getVehicleBombardmentStrenghtMultiplier(int vehicleId)
 {
 	return getVehicleMoraleMultiplier(vehicleId);
-}
-
-/*
-Computes unit stack asault melee combat effect against enemy unit.
-*/
-double getUnitBombardmentAttackEffect(int ownFactionId, int ownUnitId, int foeVehicleId, MAP *tile)
-{
-	VEH *foeVehicle = getVehicle(foeVehicleId);
-	int foeFactionId = foeVehicle->faction_id;
-	int foeUnitId = foeVehicle->unit_id;
-	UNIT *foeUnit = getUnit(foeUnitId);
-	int foeUnitChassisSpeed = foeUnit->speed();
-
-	// bombardment
-
-	if (!isUnitCanInitiateBombardment(ownUnitId, foeUnitId))
-		return 0.0;
-
-	// own attack
-
-	double ownBombardmentAttackEffect =
-		aiData.combatEffectTable.getCombatEffect(aiFactionId, ownUnitId, foeFactionId, foeUnitId, CM_BOMBARDMENT)
-		* getUnitArtilleryOffenseStrengthMultipler(ownFactionId, ownUnitId, foeFactionId, foeUnitId, tile, true)
-		/ getVehicleMoraleMultiplier(foeVehicleId)
-	;
-
-	double attackEffect = ownBombardmentAttackEffect;
-
-	// foe attack (melee if they can)
-
-	double foeMeleeAttackEffect = 0.0;
-
-	if (isUnitCanMeleeAttackUnit(foeUnitId, ownUnitId))
-	{
-		foeMeleeAttackEffect =
-			aiData.combatEffectTable.getCombatEffect(foeFactionId, foeUnitId, aiFactionId, ownUnitId, CM_MELEE)
-			* getUnitMeleeOffenseStrengthMultipler(foeFactionId, foeUnitId, ownFactionId, ownUnitId, tile, false)
-			* getVehicleStrenghtMultiplier(foeVehicleId)
-		;
-	}
-
-	double defendEffect = foeMeleeAttackEffect > 0.0 ? (1.0 / foeMeleeAttackEffect) : 0.0;
-
-	// effect
-
-	double effect;
-
-	if (attackEffect <= 0.0)
-	{
-		// we cannot attack
-		effect = 0.0;
-	}
-	else if (attackEffect > 0.0 && defendEffect <= 0.0)
-	{
-		// enemy cannot attack
-		effect = attackEffect;
-	}
-	// attack is worse
-	else if (attackEffect <= defendEffect)
-	{
-		// enemy chooses not to attack as it worse for them
-		effect = attackEffect;
-	}
-	// attack is better than defend
-	else
-	{
-		// enemy chooses to kill our artillery with small chance of our artillery to shoot once
-
-		if (foeUnitChassisSpeed == 1)
-		{
-			effect = 0.20 * attackEffect + 0.80 * defendEffect;
-		}
-		else if (foeUnitChassisSpeed == 2)
-		{
-			effect = 0.10 * attackEffect + 0.90 * defendEffect;
-		}
-		else
-		{
-			effect = 0.00 * attackEffect + 1.00 * defendEffect;
-		}
-
-	}
-
-	return effect;
-
 }
 
 /*
@@ -7771,37 +7664,6 @@ void assignVehiclesToTransports()
 	
 }
 
-/**
-Checks if unit can attack another unit in the field.
-*/
-bool isUnitCanMeleeAttackUnit(int attackerUnitId, int defenderUnitId)
-{
-	UNIT *attackerUnit = getUnit(attackerUnitId);
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	int attackerTriad = attackerUnit->triad();
-	int defenderTriad = defenderUnit->triad();
-	
-	// non melee unit cannot melee attack
-	
-	if (!isMeleeUnit(attackerUnitId))
-		return false;
-	
-	// cannot attack needlejet in flight without air superiority
-	
-	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
-		return false;
-	
-	// different surface triads cannot attack each other
-	
-	if ((attackerTriad == TRIAD_LAND && defenderTriad == TRIAD_SEA) || (attackerTriad == TRIAD_SEA && defenderTriad == TRIAD_LAND))
-		return false;
-	
-	// all checks passed
-	
-	return true;
-	
-}
-
 bool isUnitCanMeleeAttackFromTileToTile(int unitId, MAP *position, MAP *target) // TODO remove
 {
 	UNIT *unit = getUnit(unitId);
@@ -7821,7 +7683,7 @@ bool isUnitCanMeleeAttackFromTileToTile(int unitId, MAP *position, MAP *target) 
 	
 	// cannot attack needlejet in flight without air superiority
 	
-	if (!conf.air_superiority_not_required_to_attack_needlejet && targetTileInfo.needlejetInFlight && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
+	if (targetTileInfo.needlejetInFlight && !isUnitCanAttackNeedlejetInFlight(unitId))
 		return false;
 	
 	// check movement
@@ -7970,7 +7832,7 @@ bool isUnitCanMeleeAttackTile(int unitId, MAP *target, MAP *position) // TODO re
 	
 	// cannot attack needlejet in flight without air superiority
 	
-	if (!conf.air_superiority_not_required_to_attack_needlejet && targetTileInfo.needlejetInFlight && !isUnitHasAbility(unitId, ABL_AIR_SUPERIORITY))
+	if (targetTileInfo.needlejetInFlight && !isUnitCanAttackNeedlejetInFlight(unitId))
 		return false;
 	
 	// check movement
@@ -8251,7 +8113,6 @@ bool isUnitCanMeleeAttackUnitAtTile(int attackerUnitId, int defenderUnitId, MAP 
 	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
 	
 	UNIT *attackerUnit = getUnit(attackerUnitId);
-	UNIT *defenderUnit = getUnit(defenderUnitId);
 	int attackerTriad = attackerUnit->triad();
 	TileInfo &tileInfo = aiData.getTileInfo(tile);
 	
@@ -8262,7 +8123,7 @@ bool isUnitCanMeleeAttackUnitAtTile(int attackerUnitId, int defenderUnitId, MAP 
 	
 	// cannot attack needlejet in flight without air superiority
 	
-	if (!conf.air_superiority_not_required_to_attack_needlejet && !tileInfo.airbase && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (isNeedlejetInFlightUnit(defenderUnitId, tile) && !isUnitCanAttackNeedlejetInFlight(attackerUnitId))
 		return false;
 	
 	// triad
@@ -8343,7 +8204,7 @@ bool isUnitCanMeleeAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MA
 	// cannot attack needlejet in flight without air superiority
 	// assuming the land around tile is an open field
 	
-	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (isNeedlejetUnit(defenderUnitId) && !isUnitCanAttackNeedlejetInFlight(attackerUnitId))
 		return false;
 	
 	// check if air defender can place itself in inaccesible realm
@@ -8417,9 +8278,6 @@ bool isUnitCanArtilleryAttackUnitAtTile(int attackerUnitId, int defenderUnitId, 
 {
 	assert(tile >= *MapTiles && tile < *MapTiles + *MapAreaTiles);
 	
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	TileInfo &tileInfo = aiData.getTileInfo(tile);
-	
 	// non artillery unit cannot bombard
 	
 	if (!isArtilleryUnit(attackerUnitId))
@@ -8427,7 +8285,7 @@ bool isUnitCanArtilleryAttackUnitAtTile(int attackerUnitId, int defenderUnitId, 
 	
 	// cannot bombard air unit without air superiority
 	
-	if (!conf.air_superiority_not_required_to_attack_needlejet && !tileInfo.airbase && defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (isAircraftInFlightUnit(defenderUnitId, tile) && !isUnitCanBombardAircraftInFlight(attackerUnitId))
 		return false;
 	
 	// all checks passed
@@ -8442,8 +8300,6 @@ For surface unit trying to attack flying unit the worst case is taken: flying un
 */
 bool isUnitCanArtilleryAttackUnitFromTile(int attackerUnitId, int defenderUnitId, MAP */*tile*/)
 {
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	
 	// non artillery unit cannot bombard
 	
 	if (!isArtilleryUnit(attackerUnitId))
@@ -8452,7 +8308,7 @@ bool isUnitCanArtilleryAttackUnitFromTile(int attackerUnitId, int defenderUnitId
 	// cannot bombard air unit without air superiority
 	// assuming the land around tile is an open field
 	
-	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (isAircraftUnit(defenderUnitId) && !isUnitCanBombardAircraftInFlight(attackerUnitId))
 		return false;
 	
 	// all checks passed
@@ -8483,8 +8339,6 @@ For surface unit trying to attack flying unit the worst case is taken: flying un
 */
 bool isUnitCanMeleeAttackUnitFromBase(int attackerUnitId, int defenderUnitId)
 {
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	
 	// non melee unit cannot melee attack
 	
 	if (!isMeleeUnit(attackerUnitId))
@@ -8493,7 +8347,7 @@ bool isUnitCanMeleeAttackUnitFromBase(int attackerUnitId, int defenderUnitId)
 	// cannot attack needlejet in flight without air superiority
 	// assuming the land around Base is an open field
 	
-	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->chassis_id == CHS_NEEDLEJET && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (isNeedlejetUnit(defenderUnitId) && !isUnitCanAttackNeedlejetInFlight(attackerUnitId))
 		return false;
 	
 	// all checks passed
@@ -8524,8 +8378,6 @@ For surface unit trying to attack flying unit the worst case is taken: flying un
 */
 bool isUnitCanArtilleryAttackUnitFromBase(int attackerUnitId, int defenderUnitId)
 {
-	UNIT *defenderUnit = getUnit(defenderUnitId);
-	
 	// non artillery unit cannot bombard
 	
 	if (!isArtilleryUnit(attackerUnitId))
@@ -8534,7 +8386,7 @@ bool isUnitCanArtilleryAttackUnitFromBase(int attackerUnitId, int defenderUnitId
 	// cannot bombard air unit without air superiority
 	// assuming the land around Base is an open field
 	
-	if (!conf.air_superiority_not_required_to_attack_needlejet && defenderUnit->triad() == TRIAD_AIR && !isUnitHasAbility(attackerUnitId, ABL_AIR_SUPERIORITY))
+	if (isAircraftUnit(defenderUnitId) && !isUnitCanBombardAircraftInFlight(attackerUnitId))
 		return false;
 	
 	// all checks passed

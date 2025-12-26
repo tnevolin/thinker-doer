@@ -5480,7 +5480,7 @@ CChassis *getChassis(int chassisId)
 
 CChassis *getUnitChassis(int unitId)
 {
-	return getChassis(getUnit(unitId)->chassis_id);
+	return getChassis(Units[unitId].chassis_id);
 }
 
 CChassis *getVehicleChassis(int vehicleId)
@@ -5490,12 +5490,42 @@ CChassis *getVehicleChassis(int vehicleId)
 
 bool isNeedlejetUnit(int unitId)
 {
-	return getUnit(unitId)->chassis_id == CHS_NEEDLEJET;
+	return Units[unitId].chassis_id == CHS_NEEDLEJET;
 }
 
 bool isNeedlejetVehicle(int vehicleId)
 {
 	return isNeedlejetUnit(getVehicle(vehicleId)->unit_id);
+}
+
+bool isNeedlejetInFlightUnit(int unitId, MAP *tile)
+{
+	return Units[unitId].chassis_id == CHS_NEEDLEJET && !tile->is_airbase();
+}
+
+bool isNeedlejetInFlightVehicle(int vehicleId)
+{
+	return isNeedlejetInFlightUnit(Vehs[vehicleId].unit_id, getVehicleMapTile(vehicleId));
+}
+
+bool isAircraftUnit(int unitId)
+{
+	return Units[unitId].triad() == TRIAD_AIR;
+}
+
+bool isAircrafttVehicle(int vehicleId)
+{
+	return isAircraftUnit(Vehs[vehicleId].unit_id);
+}
+
+bool isAircraftInFlightUnit(int unitId, MAP *tile)
+{
+	return Units[unitId].triad() == TRIAD_AIR && !tile->is_airbase();
+}
+
+bool isAircraftInFlightVehicle(int vehicleId)
+{
+	return isAircraftInFlightUnit(Vehs[vehicleId].unit_id, getVehicleMapTile(vehicleId));
 }
 
 void longRangeFire(int vehicleId, int offsetIndex)
@@ -5935,14 +5965,20 @@ bool isAtAirbase(int vehicleId)
 	return map_has_item(vehicleTile, BIT_BASE_IN_TILE | BIT_AIRBASE);
 }
 
-bool isUnitCanAttackNeedlejet(int unitId)
+/*
+Melee attacking needlejet in flight.
+*/
+bool isUnitCanAttackNeedlejetInFlight(int unitId)
 {
-	return conf.air_superiority_not_required_to_attack_needlejet || unit_has_ability(unitId, ABL_AIR_SUPERIORITY);
+	return isMeleeUnit(unitId) && (!conf.needlejet_air_superiority_required || unit_has_ability(unitId, ABL_AIR_SUPERIORITY));
 }
 
-bool isUnitCanAttackLowAir(int unitId)
+/*
+Bombarding aircraft in flight.
+*/
+bool isUnitCanBombardAircraftInFlight(int unitId)
 {
-	return conf.air_superiority_not_required_to_attack_needlejet || isMeleeUnit(unitId) || (isArtilleryUnit(unitId) && unit_has_ability(unitId, ABL_AIR_SUPERIORITY));
+	return isArtilleryUnit(unitId) && (!conf.needlejet_air_superiority_required || unit_has_ability(unitId, ABL_AIR_SUPERIORITY));
 }
 
 int getClosestHostileBaseRange(int factionId, MAP *tile)

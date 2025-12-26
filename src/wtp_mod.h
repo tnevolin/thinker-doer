@@ -187,4 +187,5 @@ int __cdecl wtp_mod_capture_base(int base_id, int faction, int is_probe);
 void __cdecl wtp_mod_retire_proto(int unitId, int factionId);
 int __cdecl wtp_mod_has_abil_land_air_superiority_attack_needlejet_at_sea(int unit_id, VehAblFlag ability);
 int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAblFlag ability);
+int __thiscall StringList__sort_nop(int *This, int sortType);
 

@@ -66,7 +66,7 @@ void __cdecl wtp_mod_base_yield()
 	int alloc_psych = faction->SE_alloc_psych;
 	int allocationPenalty = clamp(4 - SE_effic, 0, 8) * (2 * (abs(alloc_econ - alloc_labs) / 2));
 	
-	double const efficiency = (double)(16 - energy_intake_lost(base_id, 16, 0)) / 16.0;
+	double const efficiency = (double)(16 - wtp_mod_energy_intake_lost(base_id, 16, 0)) / 16.0;
 	double const econValue = allocationPenalty == 0 ? 1.0 : 1.0 - (double)((alloc_econ > alloc_labs ? 1 : 2) * allocationPenalty) / 100.0;
 	double const labsValue = allocationPenalty == 0 ? 1.0 : 1.0 - (double)((alloc_labs > alloc_econ ? 1 : 2) * allocationPenalty) / 100.0 / (has_fac_built(FAC_PUNISHMENT_SPHERE, base_id) ? 2.0 : 1.0);
 	double const psychValue = 1.0;
@@ -455,7 +455,7 @@ void mod_base_yield_base_energy(BaseEnergy const &baseEnergy, int energyIntake)
 	base->energy_intake_2 += commerce;
 	base->energy_intake_2 += energygrid;
 	
-	base->energy_inefficiency = energy_intake_lost(base_id, base->energy_intake_2 - base->energy_consumption, (*BaseUpkeepState == 1 ? faction.unk_43 : NULL));
+	base->energy_inefficiency = wtp_mod_energy_intake_lost(base_id, base->energy_intake_2 - base->energy_consumption, (*BaseUpkeepState == 1 ? faction.unk_43 : NULL));
 	base->energy_surplus = base->energy_intake_2 - base->energy_consumption - base->energy_inefficiency;
 	
 	if (*BaseUpkeepState == 1)
@@ -1369,5 +1369,67 @@ double computeBaseTileScore(bool restrictions, double growthFactor, double energ
 	
 	return score;
 	
+}
+
+/*
+Calculate the energy loss/inefficiency for the given energy intake in the base.
+*/
+int wtp_mod_energy_intake_lost(int base_id, int energy, int32_t* effic_energy_lost)
+{
+	// headquarter does not incure energy loss
+	
+	if (has_fac_built(FAC_HEADQUARTERS, base_id))
+	{
+		return 0;
+	}
+	
+	// no energy loss if no energy
+	
+	if (energy <= 0)
+	{
+		return 0;
+	}
+	
+	BASE &base = Bases[base_id];
+	int max_dist = *MapHalfX * 3 / 2;
+	int dist_hq = max_dist;
+	for (int i = 0; i < *BaseCount; i++)
+	{
+		BASE &otherBase = Bases[i];
+	
+		if (otherBase.faction_id == base.faction_id && has_fac_built(FAC_HEADQUARTERS, i))
+		{
+			int dist = vector_dist(otherBase.x, otherBase.y, base.x, base.y);
+			dist_hq = std::min(dist_hq, dist);
+			break;
+		}
+		
+	}
+	
+	bool has_creche = has_fac_built(FAC_CHILDREN_CRECHE, base_id);
+	int crecheEfficiencyBonus = has_creche ? 2 /* +2 on efficiency scale */ : 0;
+	
+	if (effic_energy_lost)
+	{
+		for (int i = 0; i < 9; i++)
+		{
+			int efficiencyRating = 4 - i + crecheEfficiencyBonus;
+			int energy_lost = getEnergyLost(energy, dist_hq, max_dist, efficiencyRating);
+			effic_energy_lost[i] += energy_lost;
+		}
+		
+	}
+	
+	int efficiencyRating = Factions[base.faction_id].SE_effic_pending + crecheEfficiencyBonus;
+	int value = getEnergyLost(energy, dist_hq, max_dist, efficiencyRating);
+	
+	return value;
+	
+}
+
+int getEnergyLost(int energy, int hqDistance, int maxDistance, int efficiencyRating)
+{
+	int efficiencyLevel = 4 + efficiencyRating;
+	return std::max(0, std::min(energy, energy * 2 * hqDistance / maxDistance - energy * efficiencyLevel / 8));
 }
 

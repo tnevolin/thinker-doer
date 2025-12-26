@@ -453,7 +453,8 @@ struct Config {
     bool scorched_earth = false;
     bool destroy_captured_base_defense = false;
     int facility_field_defense_bonus[4] = {0,0,0,0};
-    bool air_superiority_not_required_to_attack_needlejet = false;
+    bool needlejet_air_superiority_required = true;
+    bool datalinks_sort = true;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
