@@ -3178,16 +3178,15 @@ void patch_air_superiority_attack_needlejet()
     
 }
 
-char fontName[20] = "Courier";
 void patch_datalinks()
 {
 	// in Console::on_key_click
 	// change datalinks default category to first one
 	
-    int datalinks_default_category_length = 0x2;
-    byte datalinks_default_category_old[] = { 0x6A, 0x0E };
-    byte datalinks_default_category_new[] = { 0x6A, 0x00 };
-    write_bytes(0x0051A7BF, datalinks_default_category_old, datalinks_default_category_new, datalinks_default_category_length);
+	int datalinks_default_category_length = 0x2;
+	byte datalinks_default_category_old[] = { 0x6A, 0x0E };
+	byte datalinks_default_category_new[] = { 0x6A, 0x00 };
+	write_bytes(0x0051A7BF, datalinks_default_category_old, datalinks_default_category_new, datalinks_default_category_length);
 	
 	// disable sorting
 	
@@ -3196,29 +3195,90 @@ void patch_datalinks()
 		write_call(0x0042A485, (int)StringList__sort_nop); // Datalink::set_cat
 	}
 	
+	// font size
+	
+	if (conf.datalinks_normal_font_extra_size > 0)
+	{
+		int datalinks_font_size_length = 0x2;
+		byte datalinks_font_size_old[] = { 0x6A, 0x0E };
+		byte datalinks_font_size_new[] = { 0x6A, static_cast<uint8_t>(0x0E + conf.datalinks_normal_font_extra_size) };
+		// tech info links (do not change)
+//		write_bytes(0x004297F0, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+		// tech info groups (do not change)
+//		write_bytes(0x00429806, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+		// unknown (do not change)
+//		write_bytes(0x00429831, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+		// button text (do not change)
+//		write_bytes(0x00429847, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+		// unknown (do not change)
+//		write_bytes(0x0042985C, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+		// article, normal
+		write_bytes(0x00429872, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+		// unknown (do not change)
+//		write_bytes(0x00429887, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+		// article, link
+		write_bytes(0x0042989D, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+		// category (do not change)
+//		write_bytes(0x004298C8, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+	}
+	
+	
 //	char **f = (char **)0x00691B2C;
 //	*f = fontName;
 	
-//    int datalinks_font_name_length = 0x4;
-//    byte datalinks_font_name_old[] = { 0xD4, 0x1B, 0x69, 0x00, };
-//    byte datalinks_font_name_new[] = { (byte) ((fontNameAddress >> 0x0) & 0xFF), (byte) ((fontNameAddress >> 0x4) & 0xFF), (byte) ((fontNameAddress >> 0x8) & 0xFF), (byte) ((fontNameAddress >> 0xC) & 0xFF), };
-//    write_bytes(0x00691B2C, datalinks_font_name_old, datalinks_font_name_new, datalinks_font_name_length);
+//	int datalinks_font_name_length = 0x4;
+//	byte datalinks_font_name_old[] = { 0xD4, 0x1B, 0x69, 0x00, };
+//	byte datalinks_font_name_new[] = { (byte) ((fontNameAddress >> 0x0) & 0xFF), (byte) ((fontNameAddress >> 0x4) & 0xFF), (byte) ((fontNameAddress >> 0x8) & 0xFF), (byte) ((fontNameAddress >> 0xC) & 0xFF), };
+//	write_bytes(0x00691B2C, datalinks_font_name_old, datalinks_font_name_new, datalinks_font_name_length);
 	
-	// font size
+	// window size
 	
-    int datalinks_font_size_length = 0x2;
-    byte datalinks_font_size_old[] = { 0x6A, 0x0E };
-    byte datalinks_font_size_new[] = { 0x6A, 0x10 };
-    write_bytes(0x004297F0, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
-    write_bytes(0x00429806, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
-    write_bytes(0x00429831, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
-    write_bytes(0x00429847, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
-    write_bytes(0x0042985C, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
-    write_bytes(0x00429872, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
-    write_bytes(0x00429887, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
-    write_bytes(0x0042989D, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
-    write_bytes(0x004298C8, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
-    
+	if (conf.datalinks_window_extra_width > 0 || conf.datalinks_window_extra_height > 0)
+	{
+		int32_t windowHeightDelta = std::max(0, conf.datalinks_window_extra_height);
+		int32_t windowWidthDelta = std::max(0, conf.datalinks_window_extra_width);
+		int32_t menuWidthDelta = std::max(0, std::min(windowWidthDelta, conf.datalinks_menu_extra_width));
+		
+		// window
+		
+		// window - height
+		write_word(0x0042938C, 0x2E2, 0x2E2 + windowHeightDelta);
+		// window - width
+		write_word(0x0042958D, 0x340, 0x340 + windowWidthDelta);
+		// window - horizontal centering
+		write_word(0x004293A0, -(0x320), -(0x320 + windowWidthDelta));
+		
+		// content
+		
+		// menu - height
+		write_word(0x004293EA, 0x143, 0x143 + windowHeightDelta);
+		// text - height
+		write_word(0x004294B4, 0x08D, 0x08D + windowHeightDelta);
+		// text - width
+		write_word(0x00429471, 0x302, 0x302 + windowWidthDelta);
+		// menu - width
+		write_word(0x004293F7, 0x0E6, 0x0E6 + menuWidthDelta);
+		
+		// buttons
+		
+		// buttons - top
+		write_word(0x004296BB, 0x14E, 0x14E + windowHeightDelta);
+		// back button - left
+		write_word(0x004296A9, 0x098, 0x098 + windowWidthDelta / 2);
+		// back button - right
+		write_word(0x004296B3, 0x18E, 0x18E + windowWidthDelta / 2);
+		// exit button - left
+		write_word(0x004296DD, 0x192, 0x192 + windowWidthDelta / 2);
+		// exit button - right
+		write_word(0x004296F2, 0x288, 0x288 + windowWidthDelta / 2);
+		
+		// box
+		
+		// box.right
+		write_word(0x00429A54, 0x309, 0x309 + windowWidthDelta);
+		
+	}
+	
 }
 
 

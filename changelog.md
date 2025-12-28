@@ -1,3 +1,13 @@
+# Version 402
+
+* Datalinks improvements
+  * Reviewed all articles to ensure they match current mod state.
+  * Created "About the mod" category with top level mod concepts.
+  * Combined "Concepts" and "Advanced Concepts" into one category.
+  * Disabled articles alphabetic sorting within category.
+  * Customized font size and exposed corresponding parameter: datalinks_normal_font_extra_size.
+  * Customized window size and exposed corresponding parameters: datalinks_window_... .
+
 # Version 401
 
 * [Fix] OG allows lans unit with air superiority attacking needlejet at sea. Fixed.

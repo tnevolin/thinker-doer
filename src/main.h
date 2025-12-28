@@ -455,6 +455,10 @@ struct Config {
     int facility_field_defense_bonus[4] = {0,0,0,0};
     bool needlejet_air_superiority_required = true;
     bool datalinks_sort = true;
+    int datalinks_normal_font_extra_size = 0;
+    int datalinks_window_extra_height = 0;
+    int datalinks_window_extra_width = 0;
+    int datalinks_menu_extra_width = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];
