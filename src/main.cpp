@@ -866,21 +866,25 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->datalinks_sort = (atoi(value) == 0 ? false : true);
     }
+    else if (MATCH("datalinks_window_expand"))
+    {
+        cf->datalinks_window_expand = (atoi(value) == 0 ? false : true);
+    }
+    else if (MATCH("datalinks_normal_font_name"))
+    {
+        strcpy(cf->datalinks_normal_font_name, value);
+    }
+    else if (MATCH("datalinks_normal_font_bold"))
+    {
+        cf->datalinks_normal_font_bold = (atoi(value) == 0 ? false : true);
+    }
     else if (MATCH("datalinks_normal_font_extra_size"))
     {
         cf->datalinks_normal_font_extra_size = atoi(value);
     }
-    else if (MATCH("datalinks_window_extra_height"))
+    else if (MATCH("datalinks_menu_font_extra_size"))
     {
-        cf->datalinks_window_extra_height = atoi(value);
-    }
-    else if (MATCH("datalinks_window_extra_width"))
-    {
-        cf->datalinks_window_extra_width = atoi(value);
-    }
-    else if (MATCH("datalinks_menu_extra_width"))
-    {
-        cf->datalinks_menu_extra_width = atoi(value);
+        cf->datalinks_menu_font_extra_size = atoi(value);
     }
 	else if (MATCH("ai_useWTPAlgorithms"))
     {

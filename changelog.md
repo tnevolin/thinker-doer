@@ -1,3 +1,11 @@
+# Version 403
+
+* Datalinks improvements
+  * Datalinks window is expanded to the whole game window.
+  * Datalinks left menu font size is increased.
+  * Datalinks article text font size is increased.
+  * Datalinks article text font name changed to ProFontWindows. You have to download it to Windows to be used.
+
 # Version 402
 
 * Datalinks improvements

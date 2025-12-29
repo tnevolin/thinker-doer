@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v402"
+    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v403"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -455,10 +455,11 @@ struct Config {
     int facility_field_defense_bonus[4] = {0,0,0,0};
     bool needlejet_air_superiority_required = true;
     bool datalinks_sort = true;
+    bool datalinks_window_expand = false;
+    char datalinks_normal_font_name[StrBufLen] = "Arial";
+	bool datalinks_normal_font_bold = 1;
     int datalinks_normal_font_extra_size = 0;
-    int datalinks_window_extra_height = 0;
-    int datalinks_window_extra_width = 0;
-    int datalinks_menu_extra_width = 0;
+    int datalinks_menu_font_extra_size = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

@@ -259,14 +259,12 @@ $LINK<alien artifacts=30007>.
 #; Skunkworks
 #HELPFAC10
 Eliminates additional cost to $LINK<prototype=10039> new units at this base.
-^
-Lifts the retooling penalty for production switching within category (unit, facility, secret project).
+^Lifts the retooling penalty for production switching within category (unit, facility, secret project).
 
 #; Hologram Theatre
 #HELPFAC11
 Reduces number of $LINK<Drones=10052>/Superdrones in base by {three}.
-^
-Increases base $LINK<PSYCH=10054> output by 50%.
+^Increases base $LINK<PSYCH=10054> output by 50%.
 
 #; Paradise Garden
 #HELPFAC12
@@ -319,9 +317,9 @@ Increases base $LINK<mineral=10058> output by 50%.
 #; Genejack Factory
 #HELPFAC22
 Increases mine $LINK<mineral=10058> output
-^+2 rocky mine
-^+1 flat mine
-^+1 mining platform
+^  +2 rocky mine
+^  +1 flat mine
+^  +1 mining platform
 ^
 ^Increases the number of $LINK<drones=10052> at base by one and increases vulnerability
 to enemy mind control.
@@ -354,14 +352,12 @@ Repairs damaged ground units quickly.
 #HELPFAC28
 Repairs damaged naval units quickly.
 ^Naval units built here receive two $LINK<morale=10027> upgrades.
-^
 ^Units at base receive 100% defense bonus against conventional naval attacks.
 
 #; Aerospace Complex
 #HELPFAC29
 Repairs damaged air units quickly.
 ^Air units built here receive two $LINK<morale=10027> upgrades.
-^
 ^Units at base receive 100% defense bonus against [conventional] air attacks.
 ^
 ^Base must have an Aerospace complex before it can produce space-based improvements.
@@ -636,10 +632,6 @@ Police States use oppression to keep their citizens in line, and allow
 their leaders great power over military decisions. But oppression of
 this type also decreases economic efficiency.
 ^
-+2 POLICE
-+2 SUPPORT
--2 EFFICIENCY
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Democratic
@@ -649,10 +641,6 @@ oppression and the stability it confers in favor of growth and efficiency.
 But citizens remain suspicious of large military deployments, and civilian
 oversight creates large military bureaucracies, so military support
 costs increase.
-^
-+2 EFFICIENCY
-+2 GROWTH
--2 SUPPORT
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -664,10 +652,6 @@ military forces, and tends to immunize citizens against (other forms
 of) brainwashing, but technological research tends to suffer under the
 continual assaults on intellectual integrity associated with such
 regimes.
-^
-+1 MORALE
-+2 PROBE
--2 RESEARCH
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -700,10 +684,6 @@ to extremes of pollution and ecological damage. Also, citizens rendered
 suddenly poor by the actions unscrupulous moguls may revolt against
 their energy-fattened masters.
 ^
-+2 ECONOMY
--3 PLANET
--5 POLICE
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Planned
@@ -711,10 +691,6 @@ their energy-fattened masters.
 A semi-market economy kept in check by fierce governmental regulation,
 Planned Economics promotes stable industrial and population growth, but
 sacrifices efficiency.
-^
-+2 GROWTH
-+1 INDUSTRY
--2 EFFICIENCY
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -725,10 +701,6 @@ of the biosphere. Green economies use resources efficiently and
 tend to avoid the excesses of industrial development which could
 provoke Planet's native life, but population growth necessarily
 suffers for lack of space.
-^
-+2 PLANET
-+2 EFFICIENCY
--2 GROWTH
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -756,10 +728,6 @@ Leaders seeking Power build strong, well-paid military forces to
 enforce their will. But Economic and industrial infrastructure may
 suffer from bloated "defense" budgets.
 ^
-+2 MORALE
-+2 SUPPORT
--2 INDUSTRY
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Knowledge
@@ -769,10 +737,6 @@ resources into research and education. They will also tend to promote
 the free exchange of information, which increases efficiency but also
 carries greater security risks.
 ^
-+2 RESEARCH
-+1 EFFICIENCY
--2 PROBE
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Wealth
@@ -781,10 +745,6 @@ Leaders seeking Wealth will concentrate on building economic and
 industrial infrastructure rapidly. They achieve rapid growth and
 development, with possible side effects being decadence and moral
 decay.
-^
-+1 INDUSTRY
-+1 ECONOMY
--2 MORALE
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -813,11 +773,6 @@ efficiency and freeing individuals for more creative tasks. But will
 workers displaced by computers sink into despair, poverty, and
 possible unrest?
 ^
-+2 EFFICIENCY
-+2 PLANET
-+2 RESEARCH
--3 POLICE
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Eudiamonic
@@ -831,11 +786,6 @@ Violence fades as society grows more tolerant and just, and even when
 this society's hand is forced it often shoots to subdue rather than
 to destroy.
 ^
-+2 GROWTH
-+2 ECONOMY
-+2 INDUSTRY
--2 MORALE
-^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
 #;Thought Control
@@ -845,11 +795,6 @@ subtle neurochemical triggers into the atmosphere to render its
 population obedient, loyal, and resistant to outside ideas.
 But significant resources are required to maintain this level
 of control.
-^
-+2 POLICE
-+2 MORALE
-+2 PROBE
--3 SUPPORT
 ^
 ^Prerequisite: $LINK<$STR0=$NUM0>
 
@@ -863,12 +808,12 @@ Increasing this value will increase your $LINK<energy=10059> flow.
 ^-3, -2 energy each base
 ^-2, -1 energy each base
 ^-1, -1 energy at HQ base
-^ 0, Standard energy rates
-^ 1, +1 energy each base
-^ 2, +1 energy each square!
-^ 3, +1 energy each square; +1 commerce rating!!
-^ 4, +1 energy/sq; +2 energy/base; +2 commerce!!!
-^ 5, +1 energy/sq; +4 energy/base; +3 commerce!!!!
+^ 0,    Standard energy rates
+^+1, +1 energy each base
+^+2, +1 energy each square                                     !
+^+3, +1 energy each square;                 +1 commerce rating !!
+^+4, +1 energy each square; +2 energy/base; +2 commerce rating !!!
+^+5, +1 energy each square; +4 energy/base; +3 commerce rating !!!!
 
 #;EFFIC
 #HELPEFFECT1
@@ -881,24 +826,24 @@ will begin to lose $LINK<energy=10059> to inefficiency.
 ^-2, Appalling inefficiency
 ^-1, Gross inefficiency
 ^ 0, High inefficiency
-^ 1, Reasonable efficiency
-^ 2, Commendable efficiency
-^ 3, Exemplary efficiency!
-^ 4, PARADIGM ECONOMY!!
+^+1, Reasonable efficiency
+^+2, Commendable efficiency
+^+3, Exemplary efficiency!
+^+4, PARADIGM ECONOMY!!
 
 #;SUPPORT
 #HELPEFFECT2
 {Support} affects the $LINK<Minerals=42> support costs of units:
 ^Alien Artifact, Tectonic Payload, Fungal Payload and units with Clean Reactor are always free.
 ^
-^-4 = Each unit costs 1 to support
-^-3 = Support 1 unit free per base
+^-4 = Support 0 units free per base; Each unit costs 1 to support
+^-3 = Support 1 unit  free per base
 ^-2 = Support 2 units free per base
 ^-1 = Support 3 units free per base
-^ 0 = Support 4 units free per base
-^ 1 = Support 5 units free per base
-^ 2 = Support 6 units free per base!
-^ 3 = Support 8 units OR up to base size for free!!
+^+0 = Support 4 units free per base
+^+1 = Support 5 units free per base
+^+2 = Support 6 units free per base!
+^+3 = Support 8 units OR up to base size for free!!
 
 #;TALENT -- NOTUSED!!!
 #HELPEFFECT3
@@ -912,11 +857,11 @@ fsdjflsdjfslkdfj
 ^-3, 30% combat malus
 ^-2, 20% combat malus
 ^-1, 10% combat malus
-^ 0, Normal Morale
-^ 1, 10% combat bonus
-^ 2, 20% combat bonus
-^ 3, 30% combat bonus
-^ 4, 40% combat bonus
+^ 0,     no combat malus/bonus
+^+1, 10% combat bonus
+^+2, 20% combat bonus
+^+3, 30% combat bonus
+^+4, 40% combat bonus
 
 #;POLICE
 #HELPEFFECT5
@@ -930,26 +875,26 @@ cause increasing tension when your military units are away from home.
 ^-3, Extra drone if more than one military unit away from territory
 ^-2, Cannot use military units as police. No nerve stapling.
 ^-1, One police unit allowed. No nerve stapling.
-^ 0, Can use one military unit as police
-^ 1, Can use up to 2 military units as police
-^ 2, Can use up to 3 military units as police!
-^ 3, 3 units as police. Police effect doubled!!
+^+0, Can use one     military unit  as police.
+^+1, Can use up to 2 military units as police.
+^+2, Can use up to 3 military units as police.                   !
+^+3, Can use up to 3 military units as police. +1 police effect. !!
 
 #;GROWTH
 #HELPEFFECT6
 {GROWTH} affects your population growth rate.
 The higher your score, the fewer $LINK<Nutrients=31> bases need in order to grow.
 ^
-^ -3, [population does not grow]
-^ -2, +20% nutrients required (  83% growth rate)
-^ -1, +10% nutrients required (  91% growth rate)
-^  0, standard growh rate
-^+1,  -10% nutrients required (111% growth rate)
-^+2,  -20% nutrients required (125% growth rate)
-^+3,  -30% nutrients required (143% growth rate)
-^+4,  -40% nutrients required (167% growth rate)
-^+5,  -50% nutrients required (200% growth rate) !
-^+6,  -60% nutrients required (250% growth rate) !!
+^-3, [population does not grow]
+^-2, -20% base growth
+^-1, -10% base growth
+^ 0,      standard growh rate
+^+1, +10% base growth
+^+2, +20% base growth
+^+3, +30% base growth
+^+4, +40% base growth
+^+5, +50% base growth !
+^+6, +60% base growth !!
 ^
 ^Base in $LINK<Golden Age=10026> and with maximal GROWTH rating enters $LINK<population boom=10067>!
 
@@ -959,13 +904,15 @@ The higher your score, the fewer $LINK<Nutrients=31> bases need in order to grow
 Planet=10042>.
 A low score indicates that ecological damage will occur more quickly.
 ^
-^-3, Wanton ecological disruption; -3 Fungus production
-^-2, Rampant ecological disruption; -2 Fungus production
+^-3, Wanton ecological disruption;    -3 Fungus production
+^-2, Rampant ecological disruption;   -2 Fungus production
 ^-1, Increased ecological disruption; -1 Fungus production
 ^ 0, Normal ecological tension
-^ 1, Ecological safeguards!; Can capture native life forms
-^ 2, Ecological harmony!; Increased chance of native life form capture!
-^ 3, Ecological wisdom!!; Maximum chance of native life form capture!!
+^+1, Ecological safeguards!; Can capture native life forms
+^+2, Ecological harmony!; Increased chance of native life form capture!
+^+3, Ecological wisdom!!; Maximum chance of native life form capture!!
+^
+^Each PLANET level also grants psi combat bonus (positive or negative).
 
 #;PROBE
 #HELPEFFECT8
@@ -975,9 +922,9 @@ A high score will help prevent enemy $LINK<probe team=30006> attacks.
 ^-2, -50% cost of enemy probe team actions; enemy success rate increased
 ^-1, -25% cost of enemy probe team actions; enemy success rate increased
 ^ 0, Normal security measures
-^ 1, +1 probe team morale; +50% cost of enemy probe team actions
-^ 2, +2 probe team morale; Doubles cost of enemy probe team actions!
-^ 3, +3 probe team morale; Bases and units cannot be subverted by standard Probe Teams!!
+^+1, +1 probe team morale; +50% cost of enemy probe team actions
+^+2, +2 probe team morale; Doubles cost of enemy probe team actions!
+^+3, +3 probe team morale; Bases and units cannot be subverted by standard Probe Teams!!
 
 
 #;INDUSTRY
@@ -989,11 +936,11 @@ number of $LINK<minerals=10058> required to build units and facilities.
 ^-2, Mineral costs increased by 20%
 ^-1, Mineral costs increased by 10%
 ^ 0, Normal production rate
-^ 1, Mineral costs decreased by 10%
-^ 2, Mineral costs decreased by 20%
-^ 3, Mineral costs decreased by 30%!
-^ 4, Mineral costs decreased by 40%!!
-^ 5, Mineral costs decreased by 50%!!!
+^+1, Mineral costs decreased by 10%
+^+2, Mineral costs decreased by 20%
+^+3, Mineral costs decreased by 30%!
+^+4, Mineral costs decreased by 40%!!
+^+5, Mineral costs decreased by 50%!!!
 
 
 #;RESEARCH
@@ -1007,11 +954,11 @@ increase the rate at which you make breakthroughs.
 ^-2, Labs research slowed by 20%
 ^-1, Labs research slowed by 10%
 ^ 0, Normal research rate
-^ 1, Labs research speeded by 10%
-^ 2, Labs research speeded by 20%
-^ 3, Labs research speeded by 30%
-^ 4, Labs research speeded by 40%
-^ 5, Labs research speeded by 50%
+^+1, Labs research speeded by 10%
+^+2, Labs research speeded by 20%
+^+3, Labs research speeded by 30%
+^+4, Labs research speeded by 40%
+^+5, Labs research speeded by 50%
 
 
 
