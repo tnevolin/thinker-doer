@@ -3317,6 +3317,8 @@ void patch_datalinks()
 	// unknown (do not change)
 //		write_bytes(0x00429887, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
 	
+	write_byte(0x004303BB + 0x2, 0x14, 0x20);
+	
 }
 
 
