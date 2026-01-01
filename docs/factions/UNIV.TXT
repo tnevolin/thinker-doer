@@ -94,7 +94,7 @@ secrets, but also new mysteries.
 ^
 
 #DATALINKS2
-^+2 RESEARCH:  {Brilliant research}
+^+3 RESEARCH:  {Brilliant research}
 ^-2 PROBE:  {Academic networks vulnerable to infiltration}
 ^Free NETWORK NODE at every base
 ^One BONUS TECH at beginning of game

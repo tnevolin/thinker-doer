@@ -2580,11 +2580,8 @@ int aircraft_move(const int id) {
             VEH* veh2 = &Vehs[id2];
 			
 			// [WTP]
-			// air superiority is not required to attack needlejet
-			if (!conf.air_attack_requires_air_superiority)
-			{
-			}
-			else
+			// check needlejet_air_superiority_required
+			if (conf.needlejet_air_superiority_required)
 			{
             if (!sq->is_base() && veh2->chassis_type() == CHS_NEEDLEJET
             && !has_abil(veh->unit_id, ABL_AIR_SUPERIORITY)) {
@@ -2905,11 +2902,8 @@ int combat_move(const int id) {
             }
             
             // [WTP]
-            // air superiority is not required to attack needlejet
-            if (!conf.air_attack_requires_air_superiority)
-			{
-			}
-			else
+            // check needlejet_air_superiority_required
+            if (conf.needlejet_air_superiority_required)
 			{
             if (!to_base && Vehs[id2].chassis_type() == CHS_NEEDLEJET
             && !has_abil(veh->unit_id, ABL_AIR_SUPERIORITY)) {

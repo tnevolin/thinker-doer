@@ -3199,6 +3199,127 @@ void patch_veh_kill()
 	
 }
 
+void patch_datalinks()
+{
+	// in Console::on_key_click
+	// change datalinks default category to first one
+	
+	int datalinks_default_category_length = 0x2;
+	byte datalinks_default_category_old[] = { 0x6A, 0x0E };
+	byte datalinks_default_category_new[] = { 0x6A, 0x00 };
+	write_bytes(0x0051A7BF, datalinks_default_category_old, datalinks_default_category_new, datalinks_default_category_length);
+	
+	// disable sorting
+	
+	if (!conf.datalinks_sort)
+	{
+		write_call(0x0042A485, (int)StringList__sort_nop); // Datalink::set_cat
+	}
+	
+	// window size
+	
+	if (conf.datalinks_window_expand)
+	{
+		int32_t windowHeightDelta = std::max(0, conf.window_height - 0x2E2);
+		int32_t windowWidthDelta = std::max(0, conf.window_width - 0x320);
+		int32_t menuWidthDelta = std::max(0, conf.window_width * 0x0E6 / 0x320 - 0x0E6);
+		
+		// window
+		
+		// window - height
+		write_word(0x0042938C, 0x2E2, 0x2E2 + windowHeightDelta);
+		// window - width
+		write_word(0x0042958D, 0x340, 0x340 + windowWidthDelta);
+		// window - horizontal centering
+		write_word(0x004293A0, -(0x320), -(0x320 + windowWidthDelta));
+		
+		// content
+		
+		// menu - height
+		write_word(0x004293EA, 0x143, 0x143 + windowHeightDelta);
+		// text - height
+		write_word(0x004294B4, 0x08D, 0x08D + windowHeightDelta);
+		// text - width
+		write_word(0x00429471, 0x302, 0x302 + windowWidthDelta);
+		// menu - width
+		write_word(0x004293F7, 0x0E6, 0x0E6 + menuWidthDelta);
+		
+		// buttons
+		
+		// buttons - top
+		write_word(0x004296BB, 0x14E, 0x14E + windowHeightDelta);
+		// back button - left
+		write_word(0x004296A9, 0x098, 0x098 + windowWidthDelta / 2);
+		// back button - right
+		write_word(0x004296B3, 0x18E, 0x18E + windowWidthDelta / 2);
+		// exit button - left
+		write_word(0x004296DD, 0x192, 0x192 + windowWidthDelta / 2);
+		// exit button - right
+		write_word(0x004296F2, 0x288, 0x288 + windowWidthDelta / 2);
+		
+		// box
+		
+		// box.right
+		write_word(0x00429A54, 0x309, 0x309 + windowWidthDelta);
+		
+	}
+	
+	// font
+	
+	// text
+	if (strcmp(conf.datalinks_text_font_name, "Arial") != 0)
+	{
+		static const char* datalinkTextFontNamePointer = conf.datalinks_text_font_name;
+		uint32_t datalinkTextFontNamePointerPointer = reinterpret_cast<uintptr_t>(&datalinkTextFontNamePointer);
+		write_word(0x0042986A + 0x2, 0x00691B2C, datalinkTextFontNamePointerPointer);
+		write_word(0x00429895 + 0x2, 0x00691B2C, datalinkTextFontNamePointerPointer);
+	}
+	if (!conf.datalinks_text_font_bold)
+	{
+		write_byte(0x00429870 + 0x1, 0x1, 0x0);
+		write_byte(0x0042989B + 0x1, 0x5, 0x4);
+	}
+	if (conf.datalinks_text_font_size != 0)
+	{
+		write_byte(0x00429872 + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(conf.datalinks_text_font_size));
+		write_byte(0x0042989D + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(conf.datalinks_text_font_size));
+	}
+	
+	// menu
+	if (strcmp(conf.datalinks_menu_font_name, "Arial") != 0)
+	{
+		static const char* datalinkMenuFontNamePointer = conf.datalinks_menu_font_name;
+		uint32_t datalinkMenuFontNamePointerPointer = reinterpret_cast<uintptr_t>(&datalinkMenuFontNamePointer);
+		write_word(0x004298CA + 0x2, 0x00691B2C, datalinkMenuFontNamePointerPointer);
+	}
+	if (conf.datalinks_menu_font_bold)
+	{
+		write_byte(0x004298C0 + 0x1, 0x0, 0x1);
+	}
+	if (conf.datalinks_menu_font_size != 0)
+	{
+		write_byte(0x004298C8 + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(conf.datalinks_menu_font_size));
+	}
+	
+	// tech info links
+//		static const char techInfoLinkFontName[] = "Audiowide";
+//		static const char* techInfoLinkFontNamePointer = techInfoLinkFontName;
+//		write_word(0x004297EB + 0x1, 0x00691B2C, reinterpret_cast<uintptr_t>(&techInfoLinkFontNamePointer));
+//		write_byte(0x004297F0 + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(0x0E + conf.datalinks_normal_font_extra_size));
+	// tech info groups (do not change)
+//		write_bytes(0x00429806, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+	// unknown (do not change)
+//		write_bytes(0x00429831, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+	// button text (do not change)
+//		write_bytes(0x00429847, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+	// unknown (do not change)
+//		write_bytes(0x0042985C, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+	// unknown (do not change)
+//		write_bytes(0x00429887, datalinks_font_size_old, datalinks_font_size_new, datalinks_font_size_length);
+	
+}
+
+
 // =======================================================
 // main patch option selection
 // =======================================================
@@ -3531,7 +3652,7 @@ void patch_setup_wtp(Config* cf)
 	
 	patch_retire_proto();
 	
-	if (!conf.air_attack_requires_air_superiority)
+	if (!conf.needlejet_air_superiority_required)
 	{
 		patch_air_superiority_attack_needlejet();
 	}
@@ -3539,6 +3660,8 @@ void patch_setup_wtp(Config* cf)
 	patch_veh_kill();
 	
 	patch_enemy_turn();
+	
+	patch_datalinks();
 	
 }
 

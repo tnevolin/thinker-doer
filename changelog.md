@@ -1,3 +1,28 @@
+# Version 404
+
+* Datalinks improvements
+  * Configuration options are standardized for text and menu.
+  * Good fonts and sizes are selected.
+  * Fonts are distributed with the game. They need to be installed manually.
+
+# Version 403
+
+* Datalinks improvements
+  * Datalinks window is expanded to the whole game window.
+  * Datalinks left menu font size is increased.
+  * Datalinks article text font size is increased.
+  * Datalinks article text font name changed to ProFontWindows. You have to download it to Windows to be used.
+
+# Version 402
+
+* Datalinks improvements
+  * Reviewed all articles to ensure they match current mod state.
+  * Created "About the mod" category with top level mod concepts.
+  * Combined "Concepts" and "Advanced Concepts" into one category.
+  * Disabled articles alphabetic sorting within category.
+  * Customized font size and exposed corresponding parameter: datalinks_normal_font_extra_size.
+  * Customized window size and exposed corresponding parameters: datalinks_window_... .
+
 # Version 401
 
 * [Fix] OG allows lans unit with air superiority attacking needlejet at sea. Fixed.

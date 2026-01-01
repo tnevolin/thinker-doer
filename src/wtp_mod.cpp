@@ -4239,7 +4239,7 @@ Intercepts has_abil call for the purpose of determining whether vehicle can atta
 */
 int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAblFlag ability)
 {
-	if (!conf.air_attack_requires_air_superiority && ability == ABL_AIR_SUPERIORITY)
+	if (!conf.needlejet_air_superiority_required && ability == ABL_AIR_SUPERIORITY)
 	{
 		return 1;
 	}
@@ -4262,6 +4262,11 @@ int __cdecl wtp_mod_veh_kill(int vehicleId)
 	populateVehiclePad0Map();
 	
 	return returnValue;
+
+}
 	
+int __thiscall StringList__sort_nop(int */*This*/, int /*sortType*/)
+{
+	return 0;
 }
 

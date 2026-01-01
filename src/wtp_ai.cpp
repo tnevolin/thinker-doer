@@ -3410,7 +3410,7 @@ void evaluateEnemyStacks()
 			
 			// melee
 			
-			if (isMeleeUnit(ownUnitId) && (!conf.air_attack_requires_air_superiority || !enemyStackInfo.needlejetInFlight || isUnitHasAbility(ownUnitId, ABL_AIR_SUPERIORITY)))
+			if (enemyStackInfo.isUnitCanMeleeAttackStack(ownUnitId))
 			{
 				int battleCount = 0;
 				double totalLoss = 0.0;

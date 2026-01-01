@@ -38,4 +38,6 @@ int findReplacementSpecialist(int factionId, int specialistId);
 void clear_stack(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int);
 int getBasePsychCoefficient(int baseId);
 double computeBaseTileScore(bool restrictions, double growthFactor, double energyValue, bool can_grow, int nutrientSurplus, int mineralSurplus, int energySurplus, int tileValueNutrient, int tileValueMineral, int tileValueEnergy);
+int wtp_mod_energy_intake_lost(int base_id, int energy, int32_t* effic_energy_lost);
+int getEnergyLost(int energy, int hqDistance, int maxDistance, int efficiencyRating);
 
