@@ -797,7 +797,8 @@ Combattant::Combattant(int factionId, int unitId, double weight, bool airbase)
 	this->melee = isMeleeUnit(unitId);
 	this->aircraftInFlight = !airbase && unit.is_air();
 	this->needlejetInFlight = !airbase && unit.is_needlejet();
-	this->canAttackAricraftInFlight = !conf.air_attack_requires_air_superiority || has_abil(unitId, ABL_AIR_SUPERIORITY);
+	this->canAttackNeedlejetInFlight = isUnitCanAttackNeedlejetInFlight(unitId);
+	this->canBombardAircraftInFlight = isUnitCanBombardAircraftInFlight(unitId);
 	
 	this->pad0 = -1;
 	this->strengthCoefficient = 1.0;
@@ -1392,7 +1393,7 @@ void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVe
 		bool rangeAssailantCanBombardAircraftInFlight = false;
 		for (Combattant *rangeAssailant : rangeAssailants)
 		{
-			if (!conf.air_attack_requires_air_superiority || rangeAssailant->canAttackAricraftInFlight)
+			if (rangeAssailant->canBombardAircraftInFlight)
 			{
 				rangeAssailantCanBombardAircraftInFlight = true;
 				break;
@@ -1420,7 +1421,7 @@ void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVe
 		bool rangeProtectorCanBombardAircraftInFlight = false;
 		for (Combattant *rangeProtector : rangeProtectors)
 		{
-			if (!conf.air_attack_requires_air_superiority || rangeProtector->canAttackAricraftInFlight)
+			if (rangeProtector->canBombardAircraftInFlight)
 			{
 				rangeProtectorCanBombardAircraftInFlight = true;
 				break;
@@ -1609,13 +1610,13 @@ CombattantEffect CombatData::getBestCombattantEffect(std::list<Combattant *> &at
 			case EM_ARTILLERY:
 				if (!attacker->range)
 					continue;
-				if (defender->aircraftInFlight && !attacker->canAttackAricraftInFlight)
+				if (defender->aircraftInFlight && !attacker->canBombardAircraftInFlight)
 					continue;
 				break;
 			case EM_MELEE:
 				if (!attacker->melee)
 					continue;
-				if (defender->needlejetInFlight && !attacker->canAttackAricraftInFlight)
+				if (defender->needlejetInFlight && !attacker->canAttackNeedlejetInFlight)
 					continue;
 				break;
 			}
@@ -4773,8 +4774,8 @@ Could be positive or negative.
 */
 double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MODE engagementMode, MAP *attackerTile, MAP *defenderTile, double attackerHealth, double defenderHealth)
 {
-	VEH &attackerVehicle = Vehs[attackerVehicleId];
-	VEH &defenderVehicle = Vehs[defenderVehicleId];
+	int defenderUnitId = Vehs[defenderVehicleId].unit_id;
+	Triad defenderTriad = static_cast<Triad>(Units[defenderUnitId].triad());
 	
 	// destruction gains
 	
@@ -4799,7 +4800,7 @@ double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MO
 	
 	// combat mode
 	
-	CombatMode combatMode = getCombatMode(engagementMode, defenderVehicle.unit_id);
+	CombatMode combatMode = getCombatMode(engagementMode, defenderUnitId);
 	bool mutualCombat = combatMode != CM_BOMBARDMENT;
 	
 	// combatEffect
@@ -4853,7 +4854,7 @@ double getCombatGain(int attackerVehicleId, int defenderVehicleId, ENGAGEMENT_MO
 		
 		if (defenderTile != nullptr)
 		{
-			if (!isLethalBombardment((Triad) defenderVehicle.triad(), defenderTile))
+			if (!isLethalBombardment(defenderTriad, defenderTile))
 			{
 				gain *= 0.5;
 			}

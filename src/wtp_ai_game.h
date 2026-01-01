@@ -125,7 +125,8 @@ struct Combattant
 	bool melee;
 	bool aircraftInFlight;
 	bool needlejetInFlight;
-	bool canAttackAricraftInFlight;
+	bool canAttackNeedlejetInFlight;
+	bool canBombardAircraftInFlight;
 	double strengthCoefficient;
 	double health;
 	double weight;
