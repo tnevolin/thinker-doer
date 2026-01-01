@@ -19,7 +19,7 @@
 #pragma once
 
 #ifdef BUILD_REL
-    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v403"
+    #define MOD_VERSION "Thinker Mod v5.1 - The Will to Power mod v404"
 #else
     #define MOD_VERSION "Thinker Mod develop build"
 #endif
@@ -456,10 +456,12 @@ struct Config {
     bool needlejet_air_superiority_required = true;
     bool datalinks_sort = true;
     bool datalinks_window_expand = false;
-    char datalinks_normal_font_name[StrBufLen] = "Arial";
-	bool datalinks_normal_font_bold = 1;
-    int datalinks_normal_font_extra_size = 0;
-    int datalinks_menu_font_extra_size = 0;
+    char datalinks_text_font_name[StrBufLen] = "Arial";
+	bool datalinks_text_font_bold = 1;
+    int datalinks_text_font_size = 0;
+    char datalinks_menu_font_name[StrBufLen] = "Arial";
+	bool datalinks_menu_font_bold = 1;
+    int datalinks_menu_font_size = 0;
     // AI configurations
     bool ai_useWTPAlgorithms;
     bool wtp_enabled_factions[MaxPlayerNum];

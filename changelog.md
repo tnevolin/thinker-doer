@@ -1,3 +1,10 @@
+# Version 404
+
+* Datalinks improvements
+  * Configuration options are standardized for text and menu.
+  * Good fonts and sizes are selected.
+  * Fonts are distributed with the game. They need to be installed manually.
+
 # Version 403
 
 * Datalinks improvements

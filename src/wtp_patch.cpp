@@ -3245,29 +3245,39 @@ void patch_datalinks()
 	
 	// font
 	
-	// article, normal and link
-	if (strcmp(conf.datalinks_normal_font_name, "Arial") != 0)
+	// text
+	if (strcmp(conf.datalinks_text_font_name, "Arial") != 0)
 	{
-		static const char* datalinkNormalFontNamePointer = conf.datalinks_normal_font_name;
-		uint32_t datalinkNormalFontNamePointerPointer = reinterpret_cast<uintptr_t>(&datalinkNormalFontNamePointer);
-		write_word(0x0042986A + 0x2, 0x00691B2C, datalinkNormalFontNamePointerPointer);
-		write_word(0x00429895 + 0x2, 0x00691B2C, datalinkNormalFontNamePointerPointer);
+		static const char* datalinkTextFontNamePointer = conf.datalinks_text_font_name;
+		uint32_t datalinkTextFontNamePointerPointer = reinterpret_cast<uintptr_t>(&datalinkTextFontNamePointer);
+		write_word(0x0042986A + 0x2, 0x00691B2C, datalinkTextFontNamePointerPointer);
+		write_word(0x00429895 + 0x2, 0x00691B2C, datalinkTextFontNamePointerPointer);
 	}
-	if (!conf.datalinks_normal_font_bold)
+	if (!conf.datalinks_text_font_bold)
 	{
 		write_byte(0x00429870 + 0x1, 0x1, 0x0);
 		write_byte(0x0042989B + 0x1, 0x5, 0x4);
 	}
-	if (conf.datalinks_normal_font_extra_size != 0)
+	if (conf.datalinks_text_font_size != 0)
 	{
-		write_byte(0x00429872 + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(0x0E + conf.datalinks_normal_font_extra_size));
-		write_byte(0x0042989D + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(0x0E + conf.datalinks_normal_font_extra_size));
+		write_byte(0x00429872 + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(conf.datalinks_text_font_size));
+		write_byte(0x0042989D + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(conf.datalinks_text_font_size));
 	}
 	
 	// menu
-	if (conf.datalinks_menu_font_extra_size != 0)
+	if (strcmp(conf.datalinks_menu_font_name, "Arial") != 0)
 	{
-		write_byte(0x004298C8 + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(0x0E + conf.datalinks_menu_font_extra_size));
+		static const char* datalinkMenuFontNamePointer = conf.datalinks_menu_font_name;
+		uint32_t datalinkMenuFontNamePointerPointer = reinterpret_cast<uintptr_t>(&datalinkMenuFontNamePointer);
+		write_word(0x004298CA + 0x2, 0x00691B2C, datalinkMenuFontNamePointerPointer);
+	}
+	if (conf.datalinks_menu_font_bold)
+	{
+		write_byte(0x004298C0 + 0x1, 0x0, 0x1);
+	}
+	if (conf.datalinks_menu_font_size != 0)
+	{
+		write_byte(0x004298C8 + 0x1, static_cast<uint8_t>(0x0E), static_cast<uint8_t>(conf.datalinks_menu_font_size));
 	}
 	
 	// tech info links

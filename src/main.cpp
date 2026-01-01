@@ -870,21 +870,63 @@ int option_handler(void* user, const char* section, const char* name, const char
     {
         cf->datalinks_window_expand = (atoi(value) == 0 ? false : true);
     }
-    else if (MATCH("datalinks_normal_font_name"))
+    else if (MATCH("datalinks_text_font"))
     {
-        strcpy(cf->datalinks_normal_font_name, value);
+        int len = strlen(buf);
+        int j = 0;
+        int tokenIndex = 0;
+        for (int i = 0; i < len && tokenIndex < 3; i++)
+		{
+            bool last = i == len - 1;
+            if (buf[i] == ',' || last)
+            {
+				if (i-j+last > 0)
+				{
+					switch (tokenIndex)
+					{
+					case 0:
+						strncpy(cf->datalinks_text_font_name, buf+j, i-j+last);
+						break;
+					case 1:
+						cf->datalinks_text_font_bold = *(buf+j) == '0' ? false : true;
+						break;
+					case 2:
+						cf->datalinks_text_font_size = atoi(buf+j);
+					}
+				}
+                j = i + 1;
+                tokenIndex++;
+            }
+        }
     }
-    else if (MATCH("datalinks_normal_font_bold"))
+    else if (MATCH("datalinks_menu_font"))
     {
-        cf->datalinks_normal_font_bold = (atoi(value) == 0 ? false : true);
-    }
-    else if (MATCH("datalinks_normal_font_extra_size"))
-    {
-        cf->datalinks_normal_font_extra_size = atoi(value);
-    }
-    else if (MATCH("datalinks_menu_font_extra_size"))
-    {
-        cf->datalinks_menu_font_extra_size = atoi(value);
+        int len = strlen(buf);
+        int j = 0;
+        int tokenIndex = 0;
+        for (int i = 0; i < len && tokenIndex < 3; i++)
+		{
+            bool last = i == len - 1;
+            if (buf[i] == ',' || last)
+            {
+				if (i-j+last > 0)
+				{
+					switch (tokenIndex)
+					{
+					case 0:
+						strncpy(cf->datalinks_menu_font_name, buf+j, i-j+last);
+						break;
+					case 1:
+						cf->datalinks_menu_font_bold = *(buf+j) == '0' ? false : true;
+						break;
+					case 2:
+						cf->datalinks_menu_font_size = atoi(buf+j);
+					}
+				}
+                j = i + 1;
+                tokenIndex++;
+            }
+        }
     }
 	else if (MATCH("ai_useWTPAlgorithms"))
     {
