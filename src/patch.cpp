@@ -301,7 +301,10 @@ static void init_video_config(Config* cf) {
         cf->window_width = max(800, cf->window_width);
         cf->window_height = max(600, cf->window_height);
     }
-    if (!valid_resolution(cf)) {
+    
+    // [WTP]
+    // keep proposed resolution
+    if (!valid_resolution(cf) && false) {
         DEVMODE dm = {};
         dm.dmSize = sizeof(dm);
         int w_width = 800;
@@ -322,6 +325,7 @@ static void init_video_config(Config* cf) {
         cf->window_width = w_width;
         cf->window_height = w_height;
     }
+    
     const char* DefaultPaths[] = {
         "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe",
         "C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe",
