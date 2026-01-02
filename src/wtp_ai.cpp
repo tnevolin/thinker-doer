@@ -165,10 +165,26 @@ void strategy(bool computer)
 		productionStrategy();
 	}
 	
-	// execute tasks
+	if (DEBUG)
+	{
+		debug("Tasks - %s\n", MFactions[aiFactionId].noun_faction);
+		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
+		{
+			Task *task = getTask(vehicleId);
+			if (task == nullptr)
+				continue;
+			
+			debug("\t%s\n", task->toString());
+			
+		}
+		debug("\n");
+		
+	}
 	
-	executeTasks();
-	
+//	// execute tasks
+//	
+//	executeTasks();
+//	
 	Profiling::stop("strategy");
 	
 }
@@ -176,24 +192,6 @@ void strategy(bool computer)
 void executeTasks()
 {
 	Profiling::start("executeTasks", "strategy");
-	
-	debug("Tasks - %s\n", MFactions[aiFactionId].noun_faction);
-	
-	if (DEBUG)
-	{
-		debug("\ttask list\n");
-		for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
-		{
-			Task *task = getTask(vehicleId);
-			if (task == nullptr)
-				continue;
-			
-			debug("\t\t%s\n", task->toString());
-			
-		}
-		debug("\t\t-----------------------------------------------------------------------------\n\n");
-		
-	}
 	
 	for (robin_hood::pair<int, Task> &taskEntry : aiData.tasks)
 	{
@@ -216,8 +214,6 @@ void executeTasks()
 		
 		if (task.type == TT_MELEE_ATTACK || task.type == TT_ARTILLERY_ATTACK)
 			continue;
-		
-		debug("\t%s\n", task.toString());
 		
 		task.execute();
 		

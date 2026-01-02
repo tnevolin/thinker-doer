@@ -3370,8 +3370,6 @@ CombatAction selectVehicleCombatAction(int vehicleId)
 {
 	// protection gain
 	
-	double protectionGain = getAssignedTaskProtectDefendGain(vehicleId);
-	
 	CombatAction bestCombatAction;
 	bestCombatAction.gain = -DBL_MAX;
 	

@@ -228,7 +228,6 @@ inline uint64_t CombatEffectTable::makeKey(int attackerFactionId, int attackerUn
 {
 	int attackerTileIndex = (attackerTile == nullptr ? 0xFFFF : attackerTile - *MapTiles);
 	int defenderTileIndex = (defenderTile == nullptr ? 0xFFFF : defenderTile - *MapTiles);
-debug(">attackerFactionId=%d attackerUnitId=%3d defenderFactionId=%d defenderUnitId=%3d engagementMode=%d attackerTileIndex=%4d defenderTileIndex=%4d\n", attackerFactionId, attackerUnitId, defenderFactionId, defenderUnitId, engagementMode, attackerTileIndex, defenderTileIndex);flushlog();
 	return
 		static_cast<uint64_t>(attackerFactionId)			//  3 bit
 		|
