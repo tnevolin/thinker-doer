@@ -130,7 +130,6 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities);
 void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities);
 void populatePolice2xTasks(std::vector<CombatAction> &taskPriorities);
 void populatePoliceTasks(std::vector<CombatAction> &taskPriorities);
-void populateInterceptorTasks(std::vector<CombatAction> &taskPriorities);
 void populateProtectorTasks(std::vector<CombatAction> &taskPriorities);
 void populateBunkerProtectorTasks(std::vector<CombatAction> &taskPriorities);
 void populateEmptyBaseCaptureTasks(std::vector<CombatAction> &taskPriorities);
