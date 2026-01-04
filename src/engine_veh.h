@@ -480,8 +480,8 @@ struct UNIT {
         return chassis_id == CHS_NEEDLEJET;
     }
     // air except missile
-    bool is_aircraft() {
-        return !Chassis[chassis_id].missile && Chassis[chassis_id].triad == TRIAD_AIR;
+    bool is_air_not_missile() {
+        return Chassis[chassis_id].triad == TRIAD_AIR && !Chassis[chassis_id].missile;
     }
     // air with air superiority except missile
     bool is_interceptor() {

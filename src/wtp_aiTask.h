@@ -59,7 +59,7 @@ struct Task
 	MAP *getAttackTarget() const;
 	int getDestinationRange();
 	char const *toString();
-	
+
 	int execute();
 	int execute(int vehicleId);
 	int executeAction(int vehicleId);

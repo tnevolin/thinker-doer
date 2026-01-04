@@ -39,7 +39,7 @@ Available vehicle move action.
 struct MoveAction
 {
 	MAP *destination;
-	int movementAllowance;
+	int remainingMovementPoints;
 };
 /*
 Available vehicle attack action.
@@ -199,8 +199,8 @@ public:
 	double getAssaultSufficiency(bool artillery);
 	double getProtectSufficiency(bool artillery);
 	
-	double getAssailantCombattantContribution(Combattant combattant);
-	double getProtectorCombattantContribution(Combattant combattant);
+	double getAssailantCombattantContribution(Combattant &combattant);
+	double getProtectorCombattantContribution(Combattant &combattant);
 	double getAssailantUnitContribution(int factionId, int unitId);
 	double getProtectorUnitContribution(int factionId, int unitId);
 	double getAssailantContribution(int vehicleId);
@@ -864,6 +864,8 @@ struct Data
 	// each to each unit combat effects
 	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][combatMode] = combatEffect
 	CombatEffectTable combatEffectTable;
+	robin_hood::unordered_flat_map<int, CombatData *> assailantCombatDatas;
+	robin_hood::unordered_flat_map<int, CombatData *> protectorCombatDatas;
 	
 	// enemy stacks
 	robin_hood::unordered_flat_map<MAP *, EnemyStackInfo> enemyStacks;

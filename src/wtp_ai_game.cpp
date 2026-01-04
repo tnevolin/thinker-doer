@@ -143,6 +143,8 @@ void Data::clear()
 	transportControl.clear();
 	tasks.clear();
 	tacticalTasks.clear();
+	assailantCombatDatas.clear();
+	protectorCombatDatas.clear();
 
 }
 
@@ -294,7 +296,7 @@ double CombatEffectTable::computeUnitCombatEffect(int attackerFactionId, int att
 	{
 		combat_type |= CT_WEAPON_ONLY;
 	}
-	if (attackerUnit.is_aircraft() && defenderUnit.is_interceptor())
+	if (attackerUnit.is_air_not_missile() && defenderUnit.is_interceptor())
 	{
         combat_type |= (CT_INTERCEPT|CT_AIR_DEFENSE|CT_WEAPON_ONLY);
 	}
@@ -900,12 +902,28 @@ void CombatData::addProtectorUnit(int factionId, int unitId, double weight)
 
 void CombatData::addAssailant(int vehicleId, double weight)
 {
+	VEH &vehicle = Vehs[vehicleId];
+	int vehiclePad0 = vehicle.pad_0;
+	
 	assailants.emplace_back(vehicleId, weight, /*airbase*/false);
+	
+	// store vehicle combat data reference
+	
+	aiData.assailantCombatDatas.emplace(vehiclePad0, this);
+	
 }
 
 void CombatData::addProtector(int vehicleId, double weight)
 {
-	protectors.emplace_back(vehicleId, weight, /*airbase*/airbase);
+	VEH &vehicle = Vehs[vehicleId];
+	int vehiclePad0 = vehicle.pad_0;
+	
+	protectors.emplace_back(vehicleId, weight, /*airbase*/false);
+	
+	// store vehicle combat data
+	
+	aiData.protectorCombatDatas.emplace(vehiclePad0, this);
+	
 }
 
 double CombatData::getAssailantHealthSum(bool range)
@@ -1112,18 +1130,32 @@ double CombatData::getProtectSufficiency(bool artillery)
 	
 }
 
-double CombatData::getAssailantCombattantContribution(Combattant combattant)
+/*
+Computes sufficiency contribution by comparing sufficiency with and without the combattant.
+*/
+double CombatData::getAssailantCombattantContribution(Combattant &combattant)
 {
+	double combattantHealth = combattant.health;
+	
+	// compute sufficiency without combattant
+	
+	combattant.health = 0.0;
+	
+	computed = false;
 	double oldSufficiency = getAssaultSufficiency(false);
 	double oldArtillerySufficiency = getAssaultSufficiency(true);
-	computed = false;
 	
-	assailants.push_back(combattant);
+	// compute sufficiency with combattant
+	
+	combattant.health = combattantHealth;
+	
+	computed = false;
 	double newSufficiency = getAssaultSufficiency(false);
 	double newArtillerySufficiency = getAssaultSufficiency(true);
-	assailants.pop_back();
-	computed = false;
 	
+	// compute contribution
+	
+	computed = false;
 	double contribution = newSufficiency - oldSufficiency;
 	double artilleryContribution = newArtillerySufficiency - oldArtillerySufficiency;
 	
@@ -1131,17 +1163,30 @@ double CombatData::getAssailantCombattantContribution(Combattant combattant)
 	
 }
 
-double CombatData::getProtectorCombattantContribution(Combattant combattant)
+/*
+Computes sufficiency contribution by comparing sufficiency with and without the combattant.
+*/
+double CombatData::getProtectorCombattantContribution(Combattant &combattant)
 {
+	double combattantHealth = combattant.health;
+	
+	// compute sufficiency without combattant
+	
+	combattant.health = 0.0;
+	
+	computed = false;
 	double oldSufficiency = getProtectSufficiency(false);
 	double oldArtillerySufficiency = getProtectSufficiency(true);
-	computed = false;
 	
-	protectors.push_back(combattant);
+	// compute sufficiency with combattant
+	
+	combattant.health = combattantHealth;
+	
+	computed = false;
 	double newSufficiency = getProtectSufficiency(false);
 	double newArtillerySufficiency = getProtectSufficiency(true);
-	protectors.pop_back();
-	computed = false;
+	
+	// compute contribution
 	
 	double contribution = newSufficiency - oldSufficiency;
 	double artilleryContribution = newArtillerySufficiency - oldArtillerySufficiency;
@@ -1152,26 +1197,59 @@ double CombatData::getProtectorCombattantContribution(Combattant combattant)
 
 double CombatData::getAssailantUnitContribution(int factionId, int unitId)
 {
-	Combattant assailant(factionId, unitId, 1.0, /*airbase*/false);
-	return getAssailantCombattantContribution(assailant);
+	assailants.emplace_back(factionId, unitId, 1.0, /*airbase*/false);
+	Combattant &combattant = assailants.back();
+	double contribution = getAssailantCombattantContribution(combattant);
+	assailants.pop_back();
+	return contribution;
 }
 
 double CombatData::getProtectorUnitContribution(int factionId, int unitId)
 {
-	Combattant protector(factionId, unitId, 1.0, /*airbase*/airbase);
-	return getProtectorCombattantContribution(protector);
+	protectors.emplace_back(factionId, unitId, 1.0, /*airbase*/airbase);
+	Combattant &combattant = protectors.back();
+	double contribution = getProtectorCombattantContribution(combattant);
+	protectors.pop_back();
+	return contribution;
 }
 
 double CombatData::getAssailantContribution(int vehicleId)
 {
-	Combattant assailant(vehicleId, 1.0, /*airbase*/false);
-	return getAssailantCombattantContribution(assailant);
+	VEH &vehicle = Vehs[vehicleId];
+	int vehiclePad0 = vehicle.pad_0;
+	
+	// add combattant if needed
+	
+	bool add = false;
+	 = (assailants.find(vehiclePad0) == assailants.end());
+	if (add)
+	{
+		assailants.emplace(vehiclePad0, {vehicleId, 1.0, /*airbase*/false});
+	}
+	
+	// get combattant reference
+	
+	Combattant &combattant = assailants.at(vehiclePad0);
+	
+	// compute contribution
+	
+	double contribution = getAssailantCombattantContribution(Combattant &combattant);
+	
+	// remove combattant if was added
+	
+	if (add)
+	{
+		assailants.erase(vehiclePad0);
+	}
+	
+	return contribution;
+	
 }
 
 double CombatData::getProtectorContribution(int vehicleId)
 {
-	Combattant protector(vehicleId, 1.0, /*airbase*/airbase);
-	return getProtectorCombattantContribution(protector);
+	VEH &vehicle = Vehs[vehicleId];
+	return getProtectorUnitContribution(vehicle.faction_id, vehicle.unit_id);
 }
 
 double CombatData::getAssaultWinProbability()
@@ -2760,6 +2838,7 @@ std::vector<MoveAction> getMoveActions(MovementType movementType, MAP *origin, i
 	// set initial values
 	
 	int originIndex = origin - *MapTiles;
+	
 	movementAllowances.emplace(originIndex, initialMovementAllowance);
 	openNodes.insert(originIndex);
 	
@@ -2965,14 +3044,19 @@ std::vector<AttackAction> getMeleeAttackActions(int vehicleId, bool regardObstac
 	for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, regardObstacle))
 	{
 		MAP *tile = moveAction.destination;
-		int movementAllowance = moveAction.movementAllowance;
+		int remainingMovementPoints = moveAction.remainingMovementPoints;
 		
-		// need movementAllowance for attack
+		// need movement points to attack
 		
-		if (movementAllowance <= 0)
+		if (remainingMovementPoints <= 0)
 			continue;
 		
-		double hastyCoefficient = movementAllowance >= Rules->move_rate_roads ? 1.0 : (double)movementAllowance / (double)Rules->move_rate_roads;
+		double hastyCoefficient =
+			remainingMovementPoints >= Rules->move_rate_roads ?
+				1.0
+				:
+				static_cast<double>(remainingMovementPoints) / static_cast<double>(Rules->move_rate_roads)
+		;
 		
 		// explore adjacent tiles
 		
@@ -3021,13 +3105,13 @@ std::vector<AttackAction> getArtilleryAttackActions(int vehicleId, bool regardOb
 	for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, regardObstacle))
 	{
 		MAP *tile = moveAction.destination;
-		int movementAllowance = moveAction.movementAllowance;
+		int remainingMovementPoints = moveAction.remainingMovementPoints;
 		
 		TileInfo &tileInfo = aiData.getTileInfo(tile);
 		
-		// cannot attack without movementAllowance
+		// need movement points to attack
 		
-		if (movementAllowance <= 0)
+		if (remainingMovementPoints <= 0)
 			continue;
 		
 		// explore artillery tiles

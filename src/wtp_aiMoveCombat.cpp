@@ -3368,23 +3368,46 @@ double getArtilleryAttackGain(int vehicleId, MAP *destination, MAP *target)
 
 CombatAction selectVehicleCombatAction(int vehicleId)
 {
-	// protection gain
+	int vehiclePad0 = Vehs[vehicleId].pad_0;
+	double protectionGain;
+	if (aiData.protectorCombatDatas.find(vehiclePad0) == aiData.protectorCombatDatas.end())
+	{
+		protectionGain = 0.0;
+	}
+	else
+	{
+		CombatData combatData = aiData.protectorCombatDatas.at(vehiclePad0);
+		combatData->getProtectorContribution(vehicleId);
+	}
+	
+	// select best combat action
 	
 	CombatAction bestCombatAction;
 	bestCombatAction.gain = -DBL_MAX;
 	
 	// move
 	
-	for (MoveAction const &moveAction : getVehicleMoveActions(vehicleId, true))
+	debug("\tmove\n");
+	std::vector<MoveAction> moveActions = getVehicleMoveActions(vehicleId, true);
+	if (DEBUG)
+	{
+		// sort for debug purposes
+		std::sort
+		(
+			moveActions.begin(), moveActions.end(),
+			[](MoveAction const &a, MoveAction const &b) { return a.remainingMovementPoints > b.remainingMovementPoints; }
+		);
+	}
+	for (MoveAction const &moveAction : moveActions)
 	{
 		MAP *destination = moveAction.destination;
 		
 		double gain = getDefendGain(vehicleId, destination, getVehicleRelativeHealth(vehicleId));
-		debug("\t\t-> %s / %s gain= %+5.2f", getLocationString(destination), getLocationString(nullptr), gain);
+		debug("\t\t->%s/%s gain = %+5.2f", getLocationString(destination), getLocationString(nullptr), gain);
 		
 		if (gain > bestCombatAction.gain)
 		{
-			bestCombatAction.setMove(vehicleId, gain, destination, moveAction.movementAllowance);
+			bestCombatAction.setMove(vehicleId, gain, destination, moveAction.remainingMovementPoints);
 			debug("\t- best\n");
 		}
 		else
@@ -3396,12 +3419,13 @@ CombatAction selectVehicleCombatAction(int vehicleId)
 	
 	// melee attack
 	
+	debug("\tattack melee\n");
 	if (isMeleeVehicle(vehicleId))
 	{
 		for (AttackAction const &attackAction : getMeleeAttackActions(vehicleId, true, true))
 		{
 			double gain = getMeleeAttackGain(vehicleId, attackAction.destination, attackAction.target, attackAction.hastyCoefficient);
-			debug("\t\t-> %s / %s gain= %+5.2f", getLocationString(attackAction.destination), getLocationString(attackAction.target), gain);
+			debug("\t\t->%s/%s gain = %+5.2f", getLocationString(attackAction.destination), getLocationString(attackAction.target), gain);
 			
 			if (gain > bestCombatAction.gain)
 			{
@@ -3419,12 +3443,13 @@ CombatAction selectVehicleCombatAction(int vehicleId)
 	
 	// artillery attack
 	
+	debug("\tattack range\n");
 	if (isArtilleryVehicle(vehicleId))
 	{
 		for (AttackAction const &attackAction : getArtilleryAttackActions(vehicleId, true, true))
 		{
 			double gain = getArtilleryAttackGain(vehicleId, attackAction.destination, attackAction.target);
-			debug("\t\t-> %s / %s gain= %+5.2f", getLocationString(attackAction.destination), getLocationString(attackAction.target), gain);
+			debug("\t->%s/%s gain = %+5.2f", getLocationString(attackAction.destination), getLocationString(attackAction.target), gain);
 			
 			if (gain > bestCombatAction.gain)
 			{
@@ -3449,7 +3474,7 @@ Move faction combat vehicles.
 */
 void aiEnemyMoveCombatVehicles()
 {
-	debug("aiEnemyMoveCombatVehicles - %s\n", aiMFaction->noun_faction);
+	debug("aiEnemyMoveCombatVehicles - %s\n\n", aiMFaction->noun_faction);
 	
 	// move combat vehicles
 	
@@ -3476,17 +3501,19 @@ void aiEnemyMoveCombatVehicles()
 			debug("\t%s\n", getVehiclePad0LocationNameString(vehicleId));
 			
 			CombatAction combatAction = selectVehicleCombatAction(vehicleId);
-			debug("\t-> %s / %s gain=%5.2f", getLocationString(combatAction.destination), getLocationString(combatAction.target), combatAction.gain);
+			debug("\tselected\n");
+			debug("\t\t->%s/%s gain = %+5.2f", getLocationString(combatAction.destination), getLocationString(combatAction.target), combatAction.gain);
 			
 			if (combatAction.gain > bestCombatAction.gain)
 			{
 				bestCombatAction = combatAction;
-				debug("\t\t- best vehicle\n");
+				debug("\t- best vehicle\n");
 			}
 			else
 			{
 				debug("\n");
 			}
+			debug("\n");
 			
 		}
 		
