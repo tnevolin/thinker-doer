@@ -27,15 +27,6 @@ const int *TABLE_square_offset_y = (int *)0x0066F440;
 FPath_find PATH_find = (FPath_find)0x59A530;
 int *PATH_flags = (int *)0x00945B20;
 
-// battle computation display variables
-
-int *tx_battle_compute_attacker_effect_count = (int *)0x915614;
-int *tx_battle_compute_defender_effect_count = (int *)0x915618;
-char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F554;
-char (*tx_battle_compute_defender_effect_labels)[0x4][0x50] = (char (*)[0x4][0x50])0x90F694;
-int (*tx_battle_compute_attacker_effect_values)[0x4] = (int (*)[0x4])0x9155F0;
-int (*tx_battle_compute_defender_effect_values)[0x4] = (int (*)[0x4])0x915600;
-
 // labels pointer
 
 char ***tx_labels = (char ***)0x009B90F8;

@@ -582,6 +582,9 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 			int attackerSEMorale = Factions[attackerVehicle.faction_id].SE_morale;
 			int attackerBonus = conf.se_morale_combat_bonus * attackerSEMorale;
 			
+			// capped at [-100 - +100]
+			attackerBonus = std::max(-100, std::min(+100, attackerBonus));
+			
 			if (attackerBonus != 0)
 			{
 				addAttackerBonus(attackerStrengthPointer, attackerBonus, "MORALE");
@@ -595,6 +598,9 @@ __cdecl void wtp_mod_battle_compute(int attackerVehicleId, int defenderVehicleId
 		{
 			int defenderSEMorale = Factions[defenderVehicle.faction_id].SE_morale;
 			int defenderBonus = conf.se_morale_combat_bonus * defenderSEMorale;
+			
+			// capped at [-100 - +100]
+			defenderBonus = std::max(-100, std::min(+100, defenderBonus));
 			
 			if (defenderBonus != 0)
 			{
@@ -3377,7 +3383,7 @@ void __cdecl wtp_mod_base_hurry()
 /**
 Adds bonus to battle odds dialog.
 */
-void addAttackerBonus(int *strengthPointer, double bonus, const char *label)
+void addBattleBonus(int side, int *strengthPointer, double bonus, char const *label)
 {
 	// bonus cannot be lower than -100
 	
@@ -3389,31 +3395,16 @@ void addAttackerBonus(int *strengthPointer, double bonus, const char *label)
 	
 	// add effect description
 	
-	if (*tx_battle_compute_attacker_effect_count < 4)
-	{
-		strcpy((*tx_battle_compute_attacker_effect_labels)[*tx_battle_compute_attacker_effect_count], label);
-		(*tx_battle_compute_attacker_effect_values)[*tx_battle_compute_attacker_effect_count] = (int)floor(bonus);
-		(*tx_battle_compute_attacker_effect_count)++;
-	}
+	add_bat(side, static_cast<int>(floor(bonus)), label);
 	
+}
+void addAttackerBonus(int *strengthPointer, double bonus, const char *label)
+{
+	addBattleBonus(0, strengthPointer, bonus, label);
 }
 void addDefenderBonus(int *strengthPointer, double bonus, const char *label)
 {
-	bonus = std::max(-100.0, bonus);
-	
-	// modify strength
-	
-	*strengthPointer = (int)round((double)(*strengthPointer) * (100.0 + bonus) / 100.0);
-	
-	// add effect description
-	
-	if (*tx_battle_compute_defender_effect_count < 4)
-	{
-		strcpy((*tx_battle_compute_defender_effect_labels)[*tx_battle_compute_defender_effect_count], label);
-		(*tx_battle_compute_defender_effect_values)[*tx_battle_compute_defender_effect_count] = (int)floor(bonus);
-		(*tx_battle_compute_defender_effect_count)++;
-	}
-	
+	addBattleBonus(1, strengthPointer, bonus, label);
 }
 
 /**
@@ -4484,5 +4475,20 @@ int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAb
 int __thiscall StringList__sort_nop(int */*This*/, int /*sortType*/)
 {
 	return 0;
+}
+
+/*
+Intercepts Buffer_wrap2 to adjust summary vertical position.
+*/
+int __thiscall wtp_mod_BattleWin_battle_report_Buffer_wrap2(Buffer* This, LPCSTR lpString, int x, int y, int a5)
+{
+	// set fixed vertical position or use existing one if is already lower
+	
+	y = std::max(0xC6, y);
+	
+	// call original function
+	
+	return Buffer_wrap2(This, lpString, x, y, a5);
+	
 }
 
