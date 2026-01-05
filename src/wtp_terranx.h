@@ -48,15 +48,6 @@ extern const int *TABLE_square_offset_y;
 extern FPath_find PATH_find;
 extern int *PATH_flags;
 
-// battle computation display variables
-
-extern int *tx_battle_compute_attacker_effect_count;
-extern int *tx_battle_compute_defender_effect_count;
-extern char (*tx_battle_compute_attacker_effect_labels)[0x4][0x50];
-extern char (*tx_battle_compute_defender_effect_labels)[0x4][0x50];
-extern int (*tx_battle_compute_attacker_effect_values)[0x4];
-extern int (*tx_battle_compute_defender_effect_values)[0x4];
-
 // labels pointer
 
 extern char ***tx_labels;

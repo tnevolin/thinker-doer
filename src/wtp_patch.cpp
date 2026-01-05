@@ -3321,6 +3321,12 @@ void patch_datalinks()
 	
 }
 
+void patch_battle_report()
+{
+    write_call(0x00422A66, (int)wtp_mod_BattleWin_battle_report_Buffer_wrap2); // BattleWin::battle_report
+    
+}
+
 
 // =======================================================
 // main patch option selection
@@ -3664,6 +3670,8 @@ void patch_setup_wtp(Config* cf)
 	patch_enemy_turn();
 	
 	patch_datalinks();
+	
+	patch_battle_report();
 	
 }
 

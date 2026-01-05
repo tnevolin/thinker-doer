@@ -95,6 +95,7 @@ int __cdecl modified_can_arty_in_alien_move(int unitId, bool allowSeaArty);
 void removeWrongVehiclesFromBases();
 int __cdecl modified_kill(int vehicleId);
 void __cdecl wtp_mod_base_hurry();
+void addBattleBonus(int side, int *strengthPointer, double bonus, char const *label);
 void addAttackerBonus(int *strengthPointer, double bonus, const char *label);
 void addDefenderBonus(int *strengthPointer, double bonus, const char *label);
 __cdecl int modStatusWinBonus_bonus_at(int x, int y);
@@ -142,4 +143,5 @@ int __cdecl wtp_mod_has_abil_land_air_superiority_attack_needlejet_at_sea(int un
 int __cdecl wtp_mod_has_abil_air_superiority_attack_needlejet(int unit_id, VehAblFlag ability);
 int __cdecl wtp_mod_veh_kill(int vehicleId);
 int __thiscall StringList__sort_nop(int *This, int sortType);
+int __thiscall wtp_mod_BattleWin_battle_report_Buffer_wrap2(Buffer* This, LPCSTR lpString, int x, int y, int a5);
 

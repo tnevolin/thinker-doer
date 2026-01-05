@@ -1,6 +1,11 @@
+# Version 406
+
+* Combat report window UI change.
+  * Two last summary lines (strength, power) are shifted down and aligned at the same height for attacker and defender.
+
 # Version 405
 
-Disabled Thinker attempt to change resolution for Windows scaling. That should let game run normally under these conditions.
+* Disabled Thinker attempt to change resolution for Windows scaling. That should let game run normally under these conditions.
 
 # Version 404
 
