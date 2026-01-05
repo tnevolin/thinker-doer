@@ -243,9 +243,9 @@ void executeTasks()
 		(
 			"\t[%4d] %s->%s/%s taskType=%2d, %s\n",
 			vehicleId,
-			getLocationString({vehicle->x,vehicle->y}).c_str(),
-			getLocationString(task.getDestination()).c_str(),
-			getLocationString(task.attackTarget).c_str(),
+			getLocationString({vehicle->x,vehicle->y}),
+			getLocationString(task.getDestination()),
+			getLocationString(task.attackTarget),
 			task.type,
 			Units[vehicle->unit_id].name
 		)
@@ -851,7 +851,7 @@ void populateTileInfos()
 //		{
 //			if (isBlocked(tile))
 //			{
-//				debug("\t\t\t%s\n", getLocationString(tile).c_str());
+//				debug("\t\t\t%s\n", getLocationString(tile));
 //			}
 //			
 //		}
@@ -862,7 +862,7 @@ void populateTileInfos()
 //		{
 //			if (isZoc(tile))
 //			{
-//				debug("\t\t\t%s\n", getLocationString(tile).c_str());
+//				debug("\t\t\t%s\n", getLocationString(tile));
 //			}
 //			
 //		}
@@ -930,7 +930,7 @@ void populateTileInfoBaseRanges()
 //		{
 //			TileInfo &tileInfo = aiData.getTileInfo(tile);
 //			
-//			debug("\t%s", getLocationString(tile).c_str());
+//			debug("\t%s", getLocationString(tile));
 //			for (int i = 0; i < 3; i ++)
 //			{
 //				debug(" [%3d] %4d", tileInfo.nearestBaseRanges.at(i).id, tileInfo.nearestBaseRanges.at(i).id == -1 ? -1 : tileInfo.nearestBaseRanges.at(i).value);
@@ -1024,7 +1024,7 @@ void populateRegionAreas()
 //			if (tileInfo.adjacentSeaRegions.empty())
 //				continue;
 //			
-//			debug("\t\t%s %d\n", getLocationString(tileInfo.tile).c_str(), tileInfo.adjacentSeaRegions.size());
+//			debug("\t\t%s %d\n", getLocationString(tileInfo.tile), tileInfo.adjacentSeaRegions.size());
 //			
 //		}
 //		
@@ -1962,7 +1962,7 @@ void populateVehicles()
 		if (vehicle->faction_id != aiFactionId)
 			continue;
 
-		debug("\t[%4d] %s region = %3d\n", vehicleId, getLocationString(vehicleTile).c_str(), vehicleTile->region);
+		debug("\t[%4d] %s region = %3d\n", vehicleId, getLocationString(vehicleTile), vehicleTile->region);
 
 		// add vehicle
 
@@ -2494,7 +2494,7 @@ void populateEnemyStacks()
 		
 		assert(isOnMap(enemyStackTile));
 		
-		debug("\t\t%s\n", getLocationString(enemyStackTile).c_str());
+		debug("\t\t%s\n", getLocationString(enemyStackTile));
 		
 		// populate baseRange
 		
@@ -2550,7 +2550,7 @@ void populateEnemyStacks()
 	{
 		EnemyStackInfo &enemyStackInfo = enemyStackEntry.second;
 		
-		debug("\t\t%s\n", getLocationString(enemyStackInfo.tile).c_str());
+		debug("\t\t%s\n", getLocationString(enemyStackInfo.tile));
 		
 		// averageUnitCost
 		
@@ -2660,7 +2660,7 @@ void populateEmptyEnemyBaseTiles()
 //			BASE *emptyEnemyBase = getBase(emptyEnemyBaseId);
 //			MAP *emptyEnemyBaseTile = getBaseMapTile(emptyEnemyBaseId);
 //			
-//			debug("\t%s %-25s\n", getLocationString(emptyEnemyBaseTile).c_str(), emptyEnemyBase->name);
+//			debug("\t%s %-25s\n", getLocationString(emptyEnemyBaseTile), emptyEnemyBase->name);
 //			
 //		}
 //		
@@ -3196,7 +3196,7 @@ void populateEnemyBaseProtectorWeights()
 //					int vehicleId = protectorWeight.id;
 //					double weight = protectorWeight.value;
 //					
-//					debug("\t\t\t[%4d] %s %-32s weight=%5.2f\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), getVehicle(vehicleId)->name(), weight);
+//					debug("\t\t\t[%4d] %s %-32s weight=%5.2f\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)), getVehicle(vehicleId)->name(), weight);
 //					
 //				}
 //				
@@ -3760,7 +3760,7 @@ void evaluateDefense(MAP *tile, ProtectCombatData &combatData)
 	(
 		"\t%s %-25s"
 		"\n"
-		, getLocationString(tile).c_str()
+		, getLocationString(tile)
 		, base == nullptr ? "--- bunker ---" : base->name
 	);
 	
@@ -4701,7 +4701,7 @@ void checkAndProposePrototype(int factionId, VehChassis chassisId, VehWeapon wea
 	int unitId = mod_propose_proto(factionId, chassisId, weaponId, armorId, (VehAblFlag) abilities, reactor, plan, name == nullptr ? nullptr : prototypeName);
 	
 	debug("checkAndProposePrototype - %s\n", MFactions[aiFactionId].noun_faction);
-	debug("\treactor=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactor, chassisId, weaponId, armorId, getAbilitiesString(abilities).c_str());
+	debug("\treactor=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactor, chassisId, weaponId, armorId, getAbilitiesString(abilities));
 	debug("\tunitId=%d\n", unitId);
 	
 }
@@ -4736,7 +4736,7 @@ void obsoletePrototypes(int factionId, robin_hood::unordered_flat_set<int> chass
 //		debug("\tabilityFlags\n");
 //		for (int abilityFlags : abilityFlagsSet)
 //		{
-//			debug("\t\t%s\n", getAbilitiesString(abilityFlags).c_str());
+//			debug("\t\t%s\n", getAbilitiesString(abilityFlags));
 //		}
 //		
 //		debug("\treactors\n");
@@ -4755,7 +4755,7 @@ void obsoletePrototypes(int factionId, robin_hood::unordered_flat_set<int> chass
 		debug("\t\t%d\n", unit->chassis_id);
 		debug("\t\t%s\n", Weapon[unit->weapon_id].name);
 		debug("\t\t%s\n", Armor[unit->armor_id].name);
-		debug("\t\t%s\n", getAbilitiesString(unit->ability_flags).c_str());
+		debug("\t\t%s\n", getAbilitiesString(unit->ability_flags));
 		debug("\t\t%s\n", Reactor[unit->reactor_id - 1].name);
 		
 		// verify condition match
@@ -5235,72 +5235,82 @@ double getConventionalCombatBonusMultiplier(int attackerUnitId, int defenderUnit
 
 }
 
-std::string getAbilitiesString(int ability_flags)
+char* getAbilitiesString(int ability_flags)
 {
-	std::string abilitiesString;
-
+	static constexpr size_t BUFFER_COUNT = 2;
+    static constexpr size_t BUFFER_SIZE  = 200;
+	
+    static char buffers[BUFFER_COUNT][BUFFER_SIZE];
+    static size_t index = 0;
+	
+    char* buffer = buffers[index];
+	
+    // fill buffer
+    
+    buffer[0] = '\x0';
+	
 	if ((ability_flags & ABL_AMPHIBIOUS) != 0)
 	{
-		abilitiesString += " AMPHIBIOUS";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " AMPHIBIOUS");
 	}
-
+	
 	if ((ability_flags & ABL_AIR_SUPERIORITY) != 0)
 	{
-		abilitiesString += " AIR_SUPERIORITY";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " AIR_SUPERIORITY");
 	}
-
+	
 	if ((ability_flags & ABL_AAA) != 0)
 	{
-		abilitiesString += " AAA";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " AAA");
 	}
-
+	
 	if ((ability_flags & ABL_COMM_JAMMER) != 0)
 	{
-		abilitiesString += " ECM";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " ECM");
 	}
-
+	
 	if ((ability_flags & ABL_EMPATH) != 0)
 	{
-		abilitiesString += " EMPATH";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " EMPATH");
 	}
-
+	
 	if ((ability_flags & ABL_ARTILLERY) != 0)
 	{
-		abilitiesString += " ARTILLERY";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " ARTILLERY");
 	}
-
+	
 	if ((ability_flags & ABL_BLINK_DISPLACER) != 0)
 	{
-		abilitiesString += " BLINK_DISPLACER";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " BLINK_DISPLACER");
 	}
-
+	
 	if ((ability_flags & ABL_TRANCE) != 0)
 	{
-		abilitiesString += " TRANCE";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " TRANCE");
 	}
-
+	
 	if ((ability_flags & ABL_NERVE_GAS) != 0)
 	{
-		abilitiesString += " NERVE_GAS";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " NERVE_GAS");
 	}
-
+	
 	if ((ability_flags & ABL_POLICE_2X) != 0)
 	{
-		abilitiesString += " POLICE_2X";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " POLICE_2X");
 	}
-
+	
 	if ((ability_flags & ABL_SOPORIFIC_GAS) != 0)
 	{
-		abilitiesString += " SOPORIFIC_GAS";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " SOPORIFIC_GAS");
 	}
-
+	
 	if ((ability_flags & ABL_DISSOCIATIVE_WAVE) != 0)
 	{
-		abilitiesString += " DISSOCIATIVE_WAVE";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " DISSOCIATIVE_WAVE");
 	}
-
-	return abilitiesString;
-
+	
+    return buffer;
+    
 }
 
 bool isWithinAlienArtilleryRange(int vehicleId)
@@ -6862,7 +6872,7 @@ void disbandOrversupportedVehicles(int factionId)
 			if ((triad == TRIAD_AIR || vehicleTile->owner != aiFactionId) && base->pop_size < 5)
 			{
 				outsideVehicles[vehicle->home_base_id].push_back(vehicleId);
-				debug("\t\toutsideVehicles: %s\n", getLocationString(vehicleTile).c_str());
+				debug("\t\toutsideVehicles: %s\n", getLocationString(vehicleTile));
 			}
 
 		}
@@ -6879,7 +6889,7 @@ void disbandOrversupportedVehicles(int factionId)
 				debug
 				(
 					"\t\t[%4d] %s : %-25s\n"
-					, vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), getBase(getVehicle(vehicleId)->home_base_id)->name
+					, vehicleId, getLocationString(getVehicleMapTile(vehicleId)), getBase(getVehicle(vehicleId)->home_base_id)->name
 				);
 
 			}
@@ -7615,7 +7625,7 @@ void assignVehiclesToTransports()
 		if (getVehicleTransportId(vehicleId) != -1)
 			continue;
 		
-		debug("\t[%4d] %s\n", vehicleId, getLocationString(vehicleTile).c_str());
+		debug("\t[%4d] %s\n", vehicleId, getLocationString(vehicleTile));
 		
 		// find available sea transport at this location and assign vehicle to it
 		

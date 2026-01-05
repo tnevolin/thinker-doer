@@ -308,7 +308,7 @@ int enemyMoveVehicle(const int vehicleId)
 {
 	VEH *vehicle = getVehicle(vehicleId);
 	
-	debug("enemyMoveVehicle [%4d] %s %2d %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), getVehicleRemainingMovement(vehicleId), Units[vehicle->unit_id].name);
+	debug("enemyMoveVehicle [%4d] %s %2d %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)), getVehicleRemainingMovement(vehicleId), Units[vehicle->unit_id].name);
 	
 	// fall over to default if vehicle did not move since last iteration
 	
@@ -368,7 +368,7 @@ bool transitVehicle(Task task)
 			" %s->%s"
 			"\n"
 			, vehicleId
-			, getLocationString(vehicleTile).c_str(), getLocationString(destination).c_str()
+			, getLocationString(vehicleTile), getLocationString(destination)
 		);
 	}
 
@@ -788,7 +788,7 @@ MAP *getNearestMonolith(int x, int y, int triad)
 
 Transfer getOptimalPickupTransfer(MAP *org, MAP *dst)
 {
-	debug("getOptimalPickupTransfer %s -> %s\n", getLocationString(org).c_str(), getLocationString(dst).c_str());
+	debug("getOptimalPickupTransfer %s -> %s\n", getLocationString(org), getLocationString(dst));
 	
 	TileInfo &orgTileInfo = aiData.getTileInfo(org);
 	
@@ -839,7 +839,7 @@ Transfer getOptimalPickupTransfer(MAP *org, MAP *dst)
 
 Transfer getOptimalDropoffTransfer(MAP *org, MAP *dst, int passengerVehicleId, int transportVehicleId)
 {
-	debug("getOptimalDropoffTransfer %s -> %s\n", getLocationString(org).c_str(), getLocationString(dst).c_str());
+	debug("getOptimalDropoffTransfer %s -> %s\n", getLocationString(org), getLocationString(dst));
 	
 	TileInfo &dstTileInfo = aiData.getTileInfo(dst);
 	int passengerSpeed = getVehicleSpeed(passengerVehicleId);
@@ -901,7 +901,7 @@ Transfer getOptimalDropoffTransfer(MAP *org, MAP *dst, int passengerVehicleId, i
 			" passengerTravelTime=%5.2f"
 			" totalTravelTime=%5.2f"
 			"\n"
-			, getLocationString(transfer.transportStop).c_str(), getLocationString(transfer.passengerStop).c_str()
+			, getLocationString(transfer.transportStop), getLocationString(transfer.passengerStop)
 			, transportStopRange
 			, passengerStopRange
 			, transportTravelTime
@@ -920,7 +920,7 @@ Sends vehicle along safest travel waypoints.
 */
 void setSafeMoveTo(int vehicleId, MAP *destination)
 {
-	debug("setSafeMoveTo [%4d] -> %s\n", vehicleId, getLocationString(destination).c_str());
+	debug("setSafeMoveTo [%4d] -> %s\n", vehicleId, getLocationString(destination));
 	
 	MAP *bestTile = destination;
 	double bestTileWeight = DBL_MAX;
@@ -953,7 +953,7 @@ void setSafeMoveTo(int vehicleId, MAP *destination)
 //			" dangerous=%d"
 //			" best=%d"
 //			"\n"
-//			, getLocationString(tile).c_str()
+//			, getLocationString(tile)
 //			, danger
 //			, distance
 //			, weight
@@ -986,7 +986,7 @@ void setCombatMoveTo(int vehicleId, MAP *destination)
 	MAP *vehicleTile = getVehicleMapTile(vehicleId);
 	bool fungusBonus = isNativeVehicle(vehicleId) || has_project(FAC_XENOEMPATHY_DOME, factionId);
 	
-	debug("setCombatMoveTo [%4d] %s -> %s\n", vehicleId, getLocationString(vehicleTile).c_str(), getLocationString(destination).c_str());
+	debug("setCombatMoveTo [%4d] %s -> %s\n", vehicleId, getLocationString(vehicleTile), getLocationString(destination));
 	
 	// not land unit moves normally
 	
@@ -1054,7 +1054,7 @@ void setCombatMoveTo(int vehicleId, MAP *destination)
 			" travelTime=%5.2f"
 			" safety=%d"
 			"\n"
-			, getLocationString(tile).c_str()
+			, getLocationString(tile)
 			, travelTime
 			, safety
 		);

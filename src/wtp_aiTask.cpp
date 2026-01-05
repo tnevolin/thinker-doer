@@ -3,7 +3,7 @@
 #include "wtp_game.h"
 #include "wtp_aiMove.h"
 
-std::string Task::typeName(TaskType &taskType)
+char const * Task::typeName(TaskType &taskType)
 {
 	return taskTypeNames[taskType];
 }
@@ -137,7 +137,7 @@ int Task::execute(int vehicleId)
 	{
 		// proceed to destination
 
-		debug("[%4d] %s -> %s\n", vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getLocationString(destination).c_str());
+		debug("[%4d] %s -> %s\n", vehicleId, getLocationString({vehicle->x, vehicle->y}), getLocationString(destination));
 
 		if (isCombatVehicle(vehicleId))
 		{
@@ -366,7 +366,7 @@ int Task::executeLoad(int seaTransportVehicleId)
 		
 		// board passenger
 		
-		debug("\tboard passenger: [%3d] %s->%s\n", passengerVehicleId, getLocationString({passengerVehicle->x, passengerVehicle->y}).c_str(), getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str());
+		debug("\tboard passenger: [%3d] %s->%s\n", passengerVehicleId, getLocationString({passengerVehicle->x, passengerVehicle->y}), getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}));
 		veh_put(passengerVehicleId, seaTransportVehicle->x, seaTransportVehicle->y);
 		board(passengerVehicleId, seaTransportVehicleId);
 		
@@ -630,7 +630,7 @@ int Task::executeLongRangeFire(int vehicleId)
 		return EM_DONE;
 	}
 
-	debug("\t^ %s\n", getLocationString(attackTarget).c_str());
+	debug("\t^ %s\n", getLocationString(attackTarget));
 
 	// get base and vehicle at attackLocation
 
@@ -739,7 +739,7 @@ bool hasExecutableTask(int vehicleId)
 	// do not attack no longer hostile vehicles
 	
 	MAP *attackTarget = task->getAttackTarget();
-debug(">attackTarget=%s\n", getLocationString(attackTarget).c_str());flushlog();
+debug(">attackTarget=%s\n", getLocationString(attackTarget));flushlog();
 	if (attackTarget != nullptr)
 	{
 		int vehicleFactionId = veh_at(getX(attackTarget), getY(attackTarget));

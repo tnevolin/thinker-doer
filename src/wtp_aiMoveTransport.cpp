@@ -50,8 +50,8 @@ void moveTranportStrategy()
 			"\n"
 			, seaTransportCluster
 			, transitRequest.getVehicleId()
-			, getLocationString(transitRequest.origin).c_str()
-			, getLocationString(transitRequest.destination).c_str()
+			, getLocationString(transitRequest.origin)
+			, getLocationString(transitRequest.destination)
 		);
 		
 		aiData.addSeaTransportRequest(seaTransportCluster);
@@ -69,7 +69,7 @@ void moveTranportStrategy()
 //			int seaTransportVehicleId = getVehicleIdByAIId(seaTransportVehiclePad0);
 //			VEH *seaTransportVehicle = getVehicle(seaTransportVehicleId);
 //			
-//			debug("\t\t\t[%4d] %s\n", seaTransportVehicleId, getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str());
+//			debug("\t\t\t[%4d] %s\n", seaTransportVehicleId, getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}));
 //			
 //			for (UnloadRequest unloadRequest : transportUnloadRequests)
 //			{
@@ -78,8 +78,8 @@ void moveTranportStrategy()
 //				(
 //					"\t\t\t\t[%4d]->%s*>%s\n"
 //					, vehicleId
-//					, getLocationString(unloadRequest.destination).c_str()
-//					, getLocationString(unloadRequest.unboardLocation).c_str()
+//					, getLocationString(unloadRequest.destination)
+//					, getLocationString(unloadRequest.unboardLocation)
 //				);
 //				
 //			}
@@ -95,8 +95,8 @@ void moveTranportStrategy()
 //			(
 //				"\t\t\t[%4d] %s->%s\n"
 //				, vehicleId
-//				, getLocationString(transitRequest.origin).c_str()
-//				, getLocationString(transitRequest.destination).c_str()
+//				, getLocationString(transitRequest.origin)
+//				, getLocationString(transitRequest.destination)
 //			);
 //			
 //			if (transitRequest.isFulfilled())
@@ -108,7 +108,7 @@ void moveTranportStrategy()
 //				(
 //					"\t\t\t\t[%4d] %s\n"
 //					, seaTransportVehicleId
-//					, getLocationString({seaTransportVehicle->x, seaTransportVehicle->y}).c_str()
+//					, getLocationString({seaTransportVehicle->x, seaTransportVehicle->y})
 //				);
 //				
 //			}
@@ -127,7 +127,7 @@ void moveSeaTransportStrategy(int vehicleId)
 	
 	bool TRACE = DEBUG && false;
 	
-	debug("moveSeaTransportStrategy [%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
+	debug("moveSeaTransportStrategy [%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)));
 	
 	// assign unload task
 	
@@ -179,7 +179,7 @@ void moveSeaTransportStrategy(int vehicleId)
 	if (closestUnloadLocation != nullptr)
 	{
 		setTask(Task(vehicleId, TT_UNLOAD, closestUnloadLocation));
-		if (TRACE) { debug("\tunload task: %s\n", getLocationString(closestUnloadLocation).c_str()); }
+		if (TRACE) { debug("\tunload task: %s\n", getLocationString(closestUnloadLocation)); }
 	}
 	
 	// assign load tasks
@@ -233,7 +233,7 @@ void moveSeaTransportStrategy(int vehicleId)
 		{
 			setTask(Task(vehicleId, TT_LOAD, closestTransitRequest->origin));
 			closestTransitRequest->setSeaTransportVehicleId(vehicleId);
-			if (TRACE) { debug("\tload task: %s\n", getLocationString(closestTransitRequest->origin).c_str()); }
+			if (TRACE) { debug("\tload task: %s\n", getLocationString(closestTransitRequest->origin)); }
 		}
 		
 	}
@@ -289,7 +289,7 @@ void moveSeaTransportStrategy(int vehicleId)
 		{
 			setTask(Task(vehicleId, TT_LOAD, closestTransitRequest->origin));
 			closestTransitRequest->setSeaTransportVehicleId(vehicleId);
-			if (TRACE) { debug("\tload task: %s\n", getLocationString(closestTransitRequest->origin).c_str()); }
+			if (TRACE) { debug("\tload task: %s\n", getLocationString(closestTransitRequest->origin)); }
 		}
 		
 	}
@@ -446,7 +446,7 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 	VEH *transportVehicle = &(Vehs[transportVehicleId]);
 	MAP *transportVehicleTile = getVehicleMapTile(transportVehicleId);
 	
-	debug("\ndeliverFormer %s\n", getLocationString({transportVehicle->x, transportVehicle->y}).c_str());
+	debug("\ndeliverFormer %s\n", getLocationString({transportVehicle->x, transportVehicle->y}));
 	
 	// search for reachable regions
 	
@@ -574,7 +574,7 @@ bool deliverFormer(int transportVehicleId, int formerVehicleId)
 	
 	BASE *regionClosestBase = regionClosestBases[mostDemandingRegion];
 	
-	debug("\tdestinationLocation=%s\n", getLocationString({regionClosestBase->x, regionClosestBase->y}).c_str());
+	debug("\tdestinationLocation=%s\n", getLocationString({regionClosestBase->x, regionClosestBase->y}));
 	
 	// transport vehicles
 	
@@ -588,7 +588,7 @@ bool deliverScout(int transportVehicleId, int scoutVehicleId)
 {
 	VEH *transportVehicle = &(Vehs[transportVehicleId]);
 
-	debug("\ndeliverScount %s\n", getLocationString({transportVehicle->x, transportVehicle->y}).c_str());
+	debug("\ndeliverScount %s\n", getLocationString({transportVehicle->x, transportVehicle->y}));
 
 	// find nearest pod
 

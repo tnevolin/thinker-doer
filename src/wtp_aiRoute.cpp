@@ -167,7 +167,7 @@ void populateMapSnapshot()
 			// base appeared
 			if (mapSnapshot.mapBases.find(baseTile) == mapSnapshot.mapBases.end())
 			{
-				debug("\t%s %-24s - appeared\n", getLocationString(baseTile).c_str(), Bases[baseId].name);
+				debug("\t%s %-24s - appeared\n", getLocationString(baseTile), Bases[baseId].name);
 				
 				for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
 				{
@@ -203,7 +203,7 @@ void populateMapSnapshot()
 			// base factionId changed
 			else if (mapSnapshot.mapBases.at(baseTile) != baseFactionId)
 			{
-				debug("\t%s %-24s - faction changed\n", getLocationString(baseTile).c_str(), Bases[baseId].name);
+				debug("\t%s %-24s - faction changed\n", getLocationString(baseTile), Bases[baseId].name);
 				
 				int oldBaseFactionId = mapSnapshot.mapBases.at(baseTile);
 				int newBaseFactionId = baseFactionId;
@@ -250,7 +250,7 @@ void populateMapSnapshot()
 			// base disappeared
 			if (baseId == -1)
 			{
-				debug("\t%s %-24s - disappeared\n", getLocationString(baseTile).c_str(), Bases[baseId].name);
+				debug("\t%s %-24s - disappeared\n", getLocationString(baseTile), Bases[baseId].name);
 				
 				for (int factionId = 0; factionId < MaxPlayerNum; factionId++)
 				{
@@ -282,7 +282,7 @@ void populateMapSnapshot()
 			// base factionId changed
 			else if (baseFactionId != Bases[baseId].faction_id)
 			{
-				debug("\t%s %-24s - faction changed\n", getLocationString(baseTile).c_str(), Bases[baseId].name);
+				debug("\t%s %-24s - faction changed\n", getLocationString(baseTile), Bases[baseId].name);
 				
 				int oldBaseFactionId = baseFactionId;
 				int newBaseFactionId = Bases[baseId].faction_id;
@@ -470,7 +470,7 @@ void populateImpediments(int factionId)
 //		{
 //			int tileIndex = tile - *MapTiles;
 //			
-//			debug("\t%s %5.2f\n", getLocationString(tile).c_str(), impediments.at(tileIndex));
+//			debug("\t%s %5.2f\n", getLocationString(tile), impediments.at(tileIndex));
 //			
 //		}
 //		
@@ -518,7 +518,7 @@ void populateAirbases(int factionId)
 //	{
 //		for (MAP *airbase : airbases)
 //		{
-//			debug("\t%s\n", getLocationString(airbase).c_str());
+//			debug("\t%s\n", getLocationString(airbase));
 //		}
 //		
 //	}
@@ -710,7 +710,7 @@ void populateAirClusters(int factionId)
 				
 				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 				{
-					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), chassisAirSpeedAirClusters.at(tileIndex));
+					debug("\t\t\t%s %2d\n", getLocationString(*MapTiles + tileIndex), chassisAirSpeedAirClusters.at(tileIndex));
 				}
 				
 			}
@@ -808,7 +808,7 @@ void populateSeaTransportWaitTimes(int factionId)
 //		debug("\tinitialTiles\n");
 //		for (SeaTransportInitialTile &initialTile : initialTiles)
 //		{
-//			debug("\t\t%s %2d %d %d\n", getLocationString(initialTile.tile).c_str(), initialTile.buildTime, initialTile.capacity, initialTile.moveRate);
+//			debug("\t\t%s %2d %d %d\n", getLocationString(initialTile.tile), initialTile.buildTime, initialTile.capacity, initialTile.moveRate);
 //		}
 //		
 //	}
@@ -908,7 +908,7 @@ void populateSeaTransportWaitTimes(int factionId)
 //			
 //			if (seaTransportWaitTime != INF)
 //			{
-//				debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), seaTransportWaitTime);
+//				debug("\t\t%s %5.2f\n", getLocationString(tile), seaTransportWaitTime);
 //			}
 //			
 //		}
@@ -1044,7 +1044,7 @@ void populateSeaCombatClusters(int factionId)
 //	{
 //		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), seaCombatClusters.at(tileIndex));
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), seaCombatClusters.at(tileIndex));
 //			
 //		}
 //		
@@ -1154,7 +1154,7 @@ void populateLandCombatClusters(int factionId)
 //	{
 //		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landCombatClusters.at(tileIndex));
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), landCombatClusters.at(tileIndex));
 //			
 //		}
 //		
@@ -1371,10 +1371,10 @@ void populateSeaLandmarks(int factionId)
 //			
 //			for (SeaLandmark const &landmark : landmarks)
 //			{
-//				debug("\t\t%s\n", getLocationString(landmark.tileIndex).c_str());
+//				debug("\t\t%s\n", getLocationString(landmark.tileIndex));
 //				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //				{
-//					debug("\t\t\t%s %f %f\n", getLocationString(tileIndex).c_str(), landmark.tileInfos.at(tileIndex).movementCost, landmark.tileInfos.at(tileIndex).seaMovementCost);
+//					debug("\t\t\t%s %f %f\n", getLocationString(tileIndex), landmark.tileInfos.at(tileIndex).movementCost, landmark.tileInfos.at(tileIndex).seaMovementCost);
 //				}
 //			}
 //			
@@ -1693,10 +1693,10 @@ void populateLandLandmarks(int factionId)
 //			
 //			for (LandLandmark const &landmark : landmarks)
 //			{
-//				debug("\t\t%s\n", getLocationString(landmark.tileIndex).c_str());
+//				debug("\t\t%s\n", getLocationString(landmark.tileIndex));
 //				for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //				{
-//					debug("\t\t\t%s %3.0f %3.0f %3.0f\n", getLocationString(tileIndex).c_str(), landmark.tileInfos.at(tileIndex).seaTransportWaitTime, landmark.tileInfos.at(tileIndex).seaMovementCost, landmark.tileInfos.at(tileIndex).landMovementCost);
+//					debug("\t\t\t%s %3.0f %3.0f %3.0f\n", getLocationString(tileIndex), landmark.tileInfos.at(tileIndex).seaTransportWaitTime, landmark.tileInfos.at(tileIndex).seaMovementCost, landmark.tileInfos.at(tileIndex).landMovementCost);
 //				}
 //			}
 //			
@@ -1848,7 +1848,7 @@ void populateSeaClusters(int factionId)
 //	{
 //		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), seaClusters.at(tileIndex));
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), seaClusters.at(tileIndex));
 //		}
 //		
 //	}
@@ -1972,7 +1972,7 @@ void populateLandClusters()
 //	{
 //		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landClusters.at(tileIndex));
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), landClusters.at(tileIndex));
 //		}
 //		
 //	}
@@ -2088,7 +2088,7 @@ void populateLandTransportedClusters()
 //	{
 //		for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
 //		{
-//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex).c_str(), landTransportedClusters.at(tileIndex));
+//			debug("\t%s %2d\n", getLocationString(*MapTiles + tileIndex), landTransportedClusters.at(tileIndex));
 //			
 //		}
 //		
@@ -2319,7 +2319,7 @@ void populateTransfers(int factionId)
 //				
 //				for (Transfer const &transfer : landClusterTransferEntry.second)
 //				{
-//					debug("\t\t%s -> %s\n", getLocationString(transfer.passengerStop).c_str(), getLocationString(transfer.transportStop).c_str());
+//					debug("\t\t%s -> %s\n", getLocationString(transfer.passengerStop), getLocationString(transfer.transportStop));
 //				}
 //				
 //			}
@@ -2332,11 +2332,11 @@ void populateTransfers(int factionId)
 //		{
 //			MAP *baseTile = oceanBaseTransferEntry.first;
 //			
-//			debug("\t%s\n", getLocationString(baseTile).c_str());
+//			debug("\t%s\n", getLocationString(baseTile));
 //			
 //			for (Transfer const &transfer : oceanBaseTransferEntry.second)
 //			{
-//				debug("\t\t%s -> %s\n", getLocationString(transfer.passengerStop).c_str(), getLocationString(transfer.transportStop).c_str());
+//				debug("\t\t%s -> %s\n", getLocationString(transfer.passengerStop), getLocationString(transfer.transportStop));
 //			}
 //			
 //		}
@@ -2950,7 +2950,7 @@ Computes A* travel time for *player* faction.
 */
 double getATravelTime(MovementType movementType, int speed, MAP *org, MAP *dst, bool includeDestination)
 {
-//	debug("getATravelTime movementType=%d speed=%d %s->%s\n", movementType, speed, getLocationString(org).c_str(), getLocationString(dst).c_str());
+//	debug("getATravelTime movementType=%d speed=%d %s->%s\n", movementType, speed, getLocationString(org), getLocationString(dst));
 	
 	Profiling::start("- getATravelTime");
 	

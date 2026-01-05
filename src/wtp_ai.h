@@ -225,7 +225,7 @@ bool isUnitArtilleryTargetReachable(int unitId, MAP *origin, MAP *target);
 bool isVehicleArtilleryTargetReachable(int vehicleId, MAP *target);
 int getNearestEnemyBaseDistance(int baseId);
 double getConventionalCombatBonusMultiplier(int attackerUnitId, int defenderUnitId);
-std::string getAbilitiesString(int unitType);
+char* getAbilitiesString(int unitType);
 bool isWithinAlienArtilleryRange(int vehicleId);
 bool isWtpEnabledFaction(int factionId);
 int getMaxBaseSize(int factionId);

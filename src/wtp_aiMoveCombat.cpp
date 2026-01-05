@@ -74,8 +74,8 @@ void moveDefensiveProbes()
 //				"\n"
 //				, taskPriority.priority
 //				, taskPriority.vehicleId
-//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
+//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+//				, getLocationString(taskPriority.destination)
 //			);
 //			
 //		}
@@ -116,8 +116,8 @@ void moveDefensiveProbes()
 			"\n"
 			, taskPriority.priority
 			, taskPriority.vehicleId
-			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-			, getLocationString(taskPriority.destination).c_str()
+			, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+			, getLocationString(taskPriority.destination)
 			, getBase(taskPriority.baseId)->name
 			, baseInfo.probeData.isSatisfied(false)
 		);
@@ -339,7 +339,7 @@ void immediateAttack()
 //				" effect=%5.2f"
 //				" priority=%5.2f"
 //				"\n"
-//				, getLocationString(attackAction.position).c_str(), getLocationString(attackAction.target).c_str()
+//				, getLocationString(attackAction.position), getLocationString(attackAction.target)
 //				, effect
 //				, priority
 //			);
@@ -397,7 +397,7 @@ void immediateAttack()
 					" combatEffectCoefficient=%5.2f"
 					" priority=%5.2f"
 					"\n"
-					, getLocationString(attackAction.position).c_str(), getLocationString(attackAction.target).c_str()
+					, getLocationString(attackAction.position), getLocationString(attackAction.target)
 					, combatEffect
 					, combatEffectCoefficient
 					, priority
@@ -425,10 +425,10 @@ void immediateAttack()
 			" => %s"
 			" priority=%5.2f"
 			"\n"
-			, vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), vehicle->name()
-			, Task::typeName(selectedTaskType).c_str()
-			, getLocationString(selectedPosition).c_str()
-			, getLocationString(selectedTarget).c_str()
+			, vehicleId, getLocationString(getVehicleMapTile(vehicleId)), vehicle->name()
+			, Task::typeName(selectedTaskType)
+			, getLocationString(selectedPosition)
+			, getLocationString(selectedTarget)
 			, selectedPriority
 		);
 		
@@ -464,8 +464,8 @@ void movePolice2x()
 //				"\n"
 //				, taskPriority.priority
 //				, taskPriority.vehicleId
-//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
+//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+//				, getLocationString(taskPriority.destination)
 //			);
 //			
 //		}
@@ -506,8 +506,8 @@ void movePolice2x()
 			"\n"
 			, taskPriority.priority
 			, taskPriority.vehicleId
-			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-			, getLocationString(taskPriority.destination).c_str()
+			, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+			, getLocationString(taskPriority.destination)
 			, getBase(taskPriority.baseId)->name
 			, baseInfo.isSatisfied(taskPriority.vehicleId, false)
 		);
@@ -555,8 +555,8 @@ void movePolice()
 //				"\n"
 //				, taskPriority.priority
 //				, taskPriority.vehicleId
-//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
+//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+//				, getLocationString(taskPriority.destination)
 //			);
 //			
 //		}
@@ -597,8 +597,8 @@ void movePolice()
 			"\n"
 			, taskPriority.priority
 			, taskPriority.vehicleId
-			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-			, getLocationString(taskPriority.destination).c_str()
+			, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+			, getLocationString(taskPriority.destination)
 			, getBase(taskPriority.baseId)->name
 			, baseInfo.isSatisfied(taskPriority.vehicleId, false)
 		);
@@ -646,8 +646,8 @@ void moveInterceptors()
 //				"\n"
 //				, taskPriority.priority
 //				, taskPriority.vehicleId
-//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
+//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+//				, getLocationString(taskPriority.destination)
 //			);
 //			
 //		}
@@ -689,8 +689,8 @@ void moveInterceptors()
 //			"\n"
 //			, taskPriority.priority
 //			, taskPriority.vehicleId
-//			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//			, getLocationString(taskPriority.destination).c_str()
+//			, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+//			, getLocationString(taskPriority.destination)
 //			, getBase(taskPriority.baseId)->name
 //			, baseInfo.isSatisfied(taskPriority.vehicleId, false)
 //			, baseInfo.combatData.isSatisfied(false), baseInfo.combatData.isSatisfied(true)
@@ -784,8 +784,8 @@ void moveProtectors()
 //				"\n"
 //				, taskPriority.priority
 //				, taskPriority.vehicleId
-//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
+//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+//				, getLocationString(taskPriority.destination)
 //			);
 //			
 //		}
@@ -827,8 +827,8 @@ void moveProtectors()
 			"\n"
 			, taskPriority.priority
 			, taskPriority.vehicleId
-			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-			, getLocationString(taskPriority.destination).c_str()
+			, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+			, getLocationString(taskPriority.destination)
 			, getBase(taskPriority.baseId)->name
 			, baseInfo.isSatisfied(taskPriority.vehicleId, false)
 			, baseInfo.combatData.isSatisfied(false), baseInfo.combatData.isSatisfied(true)
@@ -922,8 +922,8 @@ void moveBunkerProtectors()
 //				"\n"
 //				, taskPriority.priority
 //				, taskPriority.vehicleId
-//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
+//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+//				, getLocationString(taskPriority.destination)
 //			);
 //			
 //		}
@@ -963,8 +963,8 @@ void moveBunkerProtectors()
 			"\n"
 			, taskPriority.priority
 			, taskPriority.vehicleId
-			, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-			, getLocationString(taskPriority.destination).c_str()
+			, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+			, getLocationString(taskPriority.destination)
 			, bunkerCombatData.isSatisfied(false), bunkerCombatData.isSatisfied(true)
 		);
 		
@@ -994,7 +994,7 @@ void moveBunkerProtectors()
 		
 		if (!bunkerCombatData.isSatisfied(true))
 		{
-			debug("\t\t%s\n", getLocationString(bunkerTile).c_str())
+			debug("\t\t%s\n", getLocationString(bunkerTile))
 			
 			for (int vehicleId : bunkerCombatData.garrison)
 			{
@@ -1064,9 +1064,9 @@ void moveCombat()
 //				"\n"
 //				, taskPriority.priority
 //				, taskPriority.vehicleId
-//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
-//				, getLocationString(taskPriority.attackTarget).c_str()
+//				, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+//				, getLocationString(taskPriority.destination)
+//				, getLocationString(taskPriority.attackTarget)
 //			);
 //			
 //		}
@@ -1181,10 +1181,10 @@ void moveCombat()
 //					" effect=%5.2f"
 //					"\n"
 //					, taskPriority.vehicleId
-//					, getLocationString(getVehicleMapTile(taskPriority.vehicleId)).c_str()
-//					, Task::typeName(taskPriority.taskType).c_str()
-//					, getLocationString(taskPriority.destination).c_str()
-//					, getLocationString(taskPriority.attackTarget).c_str()
+//					, getLocationString(getVehicleMapTile(taskPriority.vehicleId))
+//					, Task::typeName(taskPriority.taskType)
+//					, getLocationString(taskPriority.destination)
+//					, getLocationString(taskPriority.attackTarget)
 //					, taskPriority.combatMode
 //					, taskPriority.destructive
 //					, taskPriority.effect
@@ -1231,7 +1231,7 @@ void moveCombat()
 				" destructionRatio=%5.2f"
 				" requiredSuperioritySatisfied=%d"
 				"\n"
-				, getLocationString(enemyStack->tile).c_str()
+				, getLocationString(enemyStack->tile)
 				, enemyStack->destructionRatio
 				, enemyStack->requiredSuperioritySatisfied
 			);
@@ -1255,7 +1255,7 @@ void moveCombat()
 		
 		excludedEnemyStacks.insert(mostUndertargetedEnemyStack);
 		
-		debug("\tmost untargeted enemy stack: %s\n", getLocationString(mostUndertargetedEnemyStack->tile).c_str());
+		debug("\tmost untargeted enemy stack: %s\n", getLocationString(mostUndertargetedEnemyStack->tile));
 		
 	}
 	
@@ -1334,8 +1334,8 @@ void moveCombat()
 					" newTravelTime=%7.2f"
 					" improvement=%+6.2f"
 					"\n"
-					, getLocationString(vehicleTile1).c_str(), getLocationString(taskPriority1->destination).c_str()
-					, getLocationString(vehicleTile2).c_str(), getLocationString(taskPriority2->destination).c_str()
+					, getLocationString(vehicleTile1), getLocationString(taskPriority1->destination)
+					, getLocationString(vehicleTile2), getLocationString(taskPriority2->destination)
 					, oldTravelTime
 					, newTravelTime
 					, improvement
@@ -1381,9 +1381,9 @@ void moveCombat()
 //				" -> %s"
 //				" => %s"
 //				"\n"
-//				, vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str()
-//				, getLocationString(taskPriority.destination).c_str()
-//				, getLocationString(taskPriority.attackTarget).c_str()
+//				, vehicleId, getLocationString(getVehicleMapTile(vehicleId))
+//				, getLocationString(taskPriority.destination)
+//				, getLocationString(taskPriority.attackTarget)
 //			);
 //			
 //		}
@@ -1403,9 +1403,9 @@ void moveCombat()
 				" -> %s"
 				" => %s"
 				"\n"
-				, vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str()
-				, getLocationString(taskPriority.destination).c_str()
-				, getLocationString(taskPriority.attackTarget).c_str()
+				, vehicleId, getLocationString(getVehicleMapTile(vehicleId))
+				, getLocationString(taskPriority.destination)
+				, getLocationString(taskPriority.attackTarget)
 			);
 			
 		}
@@ -1443,7 +1443,7 @@ void moveCombat()
 //				" combinedDirectEffect=%5.2f"
 //				" sufficient: %d %d"
 //				"\n"
-//				, getLocationString(enemyStack.tile).c_str()
+//				, getLocationString(enemyStack.tile)
 //				, enemyStack.requiredSuperiority
 //				, enemyStack.desiredSuperiority
 //				, enemyStack.maxBombardmentEffect
@@ -1471,7 +1471,7 @@ void moveCombat()
 //					" task=%d"
 //					" travelTime=%7.2f"
 //					"\n"
-//					, vehicleId, getLocationString(vehicleTile).c_str()
+//					, vehicleId, getLocationString(vehicleTile)
 //					, (int)task
 //					, travelTime
 //				);
@@ -1494,7 +1494,7 @@ void moveCombat()
 //					" task=%d"
 //					" travelTime=%7.2f"
 //					"\n"
-//					, vehicleId, getLocationString(vehicleTile).c_str()
+//					, vehicleId, getLocationString(vehicleTile)
 //					, (int)task
 //					, travelTime
 //				);
@@ -1632,7 +1632,7 @@ void populateRepairTasks(std::vector<CombatAction> &taskPriorities)
 		if (hasTask(vehicleId))
 			continue;
 		
-		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
+		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)));
 		
 		// vehicle mineral cost
 		
@@ -1752,7 +1752,7 @@ void populateRepairTasks(std::vector<CombatAction> &taskPriorities)
 				" totalTimeCoefficient=%7.2f"
 				" repairGain=%5.2f"
 				"\n"
-				, getLocationString({x, y}).c_str()
+				, getLocationString({x, y})
 				, repairPriority
 				, repairPriorityCoefficient
 				, warzoneCoefficient
@@ -1820,7 +1820,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 		if (hasTask(vehicleId))
 			continue;
 		
-		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
+		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)));
 		
 		// find closest monolith
 		
@@ -1882,7 +1882,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 				" totalTimeCoefficient=%5.2f"
 				" repairGain=%5.2f"
 				"\n"
-				, getLocationString(closestMonolithLocaionTravelTime.tile).c_str()
+				, getLocationString(closestMonolithLocaionTravelTime.tile)
 				, repairPriority
 				, repairPriorityCoefficient
 				, warzoneCoefficient
@@ -1930,7 +1930,7 @@ void populateMonolithTasks(std::vector<CombatAction> &taskPriorities)
 				" totalTimeCoefficient=%5.2f"
 				" promotionGain=%5.2f"
 				"\n"
-				, getLocationString(closestMonolithLocaionTravelTime.tile).c_str()
+				, getLocationString(closestMonolithLocaionTravelTime.tile)
 				, promotionPriority
 				, promotionPriorityCoefficient
 				, unitMineralCost
@@ -2017,7 +2017,7 @@ void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities)
 		if (isVehicleCanHealAtThisLocation(vehicleId))
 			continue;
 		
-		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(vehicleTile).c_str());
+		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(vehicleTile));
 		
 		// cluster and pod locations
 		
@@ -2069,7 +2069,7 @@ void populatePodPoppingTasks(std::vector<CombatAction> &taskPriorities)
 				" travelTimeCoefficient=%5.2f"
 				" podpopGain=%5.2f"
 				"\n"
-				, getLocationString(podTile).c_str()
+				, getLocationString(podTile)
 				, podpopPriority
 				, conf.ai_combat_priority_pod
 				, podpopBonus
@@ -2459,7 +2459,7 @@ void populateBunkerProtectorTasks(std::vector<CombatAction> &taskPriorities)
 				" effectiveTime=%5.2f"
 				" travelTimeCoefficient=%5.2f"
 				"\n"
-				, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId), getLocationString(bunkerTile).c_str()
+				, vehicleId, vehicle->x, vehicle->y, getVehicleUnitName(vehicleId), getLocationString(bunkerTile)
 				, priority
 				, requiredEffect
 				, vehicleEffect
@@ -2487,7 +2487,7 @@ void populateEmptyBaseCaptureTasks(std::vector<CombatAction> &taskPriorities)
 		if (hasTask(vehicleId))
 			continue;
 		
-		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
+		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)));
 		
 		for (int enemyBaseId : aiData.emptyEnemyBaseIds)
 		{
@@ -2537,7 +2537,7 @@ void populateEmptyBaseCaptureTasks(std::vector<CombatAction> &taskPriorities)
 //					" enemyBaseGain=%5.2f"
 //					" enemyBaseCaptureGain=%5.2f"
 //					"\n"
-//					, getLocationString(enemyBaseTile).c_str()
+//					, getLocationString(enemyBaseTile)
 //					, priority
 //					, conf.ai_combat_attack_priority_base
 //					, travelTime
@@ -2572,7 +2572,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 		if (vehicleRelativeDamage > 0.5)
 			continue;
 		
-		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str());
+		debug("\t\t[%4d] %s\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)));
 		
 		for (robin_hood::pair<MAP *, EnemyStackInfo> &enemyStackEntry : aiData.enemyStacks)
 		{
@@ -2599,7 +2599,7 @@ void populateEnemyStackAttackTasks(std::vector<CombatAction> &taskPriorities)
 			if (vehicle->triad() == TRIAD_SEA && enemyStackInfo.alienFungalTower)
 				continue;
 			
-			debug("\t\t\t-> %s\n", getLocationString(enemyStackTile).c_str());
+			debug("\t\t\t-> %s\n", getLocationString(enemyStackTile));
 			
 			// attack position and travel time
 			
@@ -2826,7 +2826,7 @@ void coordinateAttack()
 		if (enemyStack.alien && !enemyStack.alienFungalTower)
 			continue;
 		
-		debug("\t%s <-\n", getLocationString(enemyStack.tile).c_str());
+		debug("\t%s <-\n", getLocationString(enemyStack.tile));
 		
 		// hold bombarders if bombarding would break a treaty
 		
@@ -2843,7 +2843,7 @@ void coordinateAttack()
 				
 				task->type = TT_HOLD;
 				task->clearDestination();
-				debug("\t\t[%4d] %s travelTime=%7.2f - bombardment wait for breaking treaty\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+				debug("\t\t[%4d] %s travelTime=%7.2f - bombardment wait for breaking treaty\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)), travelTime);
 				
 			}
 			
@@ -2860,7 +2860,7 @@ void coordinateAttack()
 			
 			if (isLandVehicleOnTransport(vehicleId))
 			{
-				debug("\t\t[%4d] %s travelTime=%7.2f\t\t(on transport)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+				debug("\t\t[%4d] %s travelTime=%7.2f\t\t(on transport)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)), travelTime);
 				continue;
 			}
 			
@@ -2868,7 +2868,7 @@ void coordinateAttack()
 			
 			if (travelTime >= enemyStack.coordinatorTravelTime - 2.0)
 			{
-				debug("\t\t[%4d] %s travelTime=%7.2f\t\t(behind)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+				debug("\t\t[%4d] %s travelTime=%7.2f\t\t(behind)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)), travelTime);
 				continue;
 			}
 			
@@ -2881,7 +2881,7 @@ void coordinateAttack()
 			
 			task->type = TT_HOLD;
 			task->clearDestination();
-			debug("\t\t[%4d] %s travelTime=%7.2f - melee wait for coordinator\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+			debug("\t\t[%4d] %s travelTime=%7.2f - melee wait for coordinator\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)), travelTime);
 			
 		}
 		
@@ -2898,7 +2898,7 @@ void coordinateAttack()
 				
 				if (travelTime > 2.0)
 				{
-					debug("\t\t[%4d] %s travelTime=%7.2f\t\t(too far)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+					debug("\t\t[%4d] %s travelTime=%7.2f\t\t(too far)\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)), travelTime);
 					continue;
 				}
 				
@@ -2911,7 +2911,7 @@ void coordinateAttack()
 				
 				task->type = TT_HOLD;
 				task->clearDestination();
-				debug("\t\t[%4d] %s travelTime=%7.2f - melee wait for bombardment\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), travelTime);
+				debug("\t\t[%4d] %s travelTime=%7.2f - melee wait for bombardment\n", vehicleId, getLocationString(getVehicleMapTile(vehicleId)), travelTime);
 				
 			}
 			

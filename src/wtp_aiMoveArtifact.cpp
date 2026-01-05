@@ -22,7 +22,7 @@ void moveArtifactStrategy()
 		if (!isArtifactVehicle(vehicleId))
 			continue;
 		
-		debug("\t%s\n", getLocationString(vehicleTile).c_str());
+		debug("\t%s\n", getLocationString(vehicleTile));
 		
 		// escape danger zone
 		
@@ -39,7 +39,7 @@ void moveArtifactStrategy()
 				continue;
 			}
 			
-			debug("\t\t-> %s\n", getLocationString(safeLocation).c_str());
+			debug("\t\t-> %s\n", getLocationString(safeLocation));
 			
 			// add task
 			
@@ -109,7 +109,7 @@ void moveArtifactStrategy()
 		
 		if (closestProjectBaseLocation != nullptr)
 		{
-			debug("\tmove to project base %s\n", getLocationString(closestProjectBaseLocation).c_str());
+			debug("\tmove to project base %s\n", getLocationString(closestProjectBaseLocation));
 			transitVehicle(Task(vehicleId, TT_ARTIFACT_CONTRIBUTE, closestProjectBaseLocation));
 			continue;
 		}
@@ -118,7 +118,7 @@ void moveArtifactStrategy()
 		
 		if (isBaseAt(vehicleTile))
 		{
-			debug("\tstay at this base %s\n", getLocationString(vehicleTile).c_str());
+			debug("\tstay at this base %s\n", getLocationString(vehicleTile));
 			setTask(Task(vehicleId, TT_HOLD));
 			continue;
 		}
@@ -174,7 +174,7 @@ void moveArtifactStrategy()
 		
 		if (closestBaseLocation != nullptr)
 		{
-			debug("\tmove to closest base %s\n", getLocationString(closestBaseLocation).c_str());
+			debug("\tmove to closest base %s\n", getLocationString(closestBaseLocation));
 			transitVehicle(Task(vehicleId, TT_HOLD, closestBaseLocation));
 			continue;
 		}

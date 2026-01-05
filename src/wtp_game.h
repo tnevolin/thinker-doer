@@ -7,6 +7,8 @@
 #include "robin_hood.h"
 #include "engine.h"
 
+extern const char NULLPTR_STRING[];
+
 // first level triad based defensive structure facilities
 FacilityId constexpr TRIAD_DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX};
 // all defensive structure facilities
@@ -640,9 +642,9 @@ int const BASE_TILE_OFFSETS[OFFSET_COUNT_RADIUS_CORNER][2] =
 	{+1,-5},
 };
 
-std::string getLocationString(Location location);
-std::string getLocationString(int tileIndex);
-std::string getLocationString(MAP *tile);
+char const * getLocationString(Location location);
+char const * getLocationString(int tileIndex);
+char const * getLocationString(MAP *tile);
 
 int getOffsetIndex(int dx, int dy);
 int getOffsetIndex(int x1, int y1, int x2, int y2);

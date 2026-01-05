@@ -466,7 +466,7 @@ void populateTerraformingData()
 //			if (!tileTerraformingInfo.availableTerraformingSite)
 //				continue;
 //			
-//			debug("\t\t%s\n", getLocationString(tile).c_str());
+//			debug("\t\t%s\n", getLocationString(tile));
 //			
 //		}
 //		
@@ -686,7 +686,7 @@ void populateTerraformingData()
 //		debug("\tterraformingSites\n");
 //		for (MAP *tile : terraformingSites)
 //		{
-//			debug("\t\t%s ocean=%d\n", getLocationString(tile).c_str(), is_ocean(tile));
+//			debug("\t\t%s ocean=%d\n", getLocationString(tile), is_ocean(tile));
 //		}
 //		
 //	}
@@ -915,7 +915,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 	
 	for (MAP *tile : baseTerraformingInfo.terraformingSites)
 	{
-		debug("\t\t%s\n", getLocationString(tile).c_str());
+		debug("\t\t%s\n", getLocationString(tile));
 		
 		// exclude already selected significant request location
 		
@@ -1009,7 +1009,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 //				" %6.2f"
 //				" income=%5.2f time=%5.2f"
 //				"\n"
-//				, getLocationString(terraformingRequest.tile).c_str()
+//				, getLocationString(terraformingRequest.tile)
 //				, terraformingRequest.option->name
 //				, terraformingRequest.gain
 //				, terraformingRequest.income
@@ -1115,7 +1115,7 @@ void generateBaseConventionalTerraformingRequests(int baseId)
 		selectedBaseTerraformingRequests.push_back(terraformingRequest);
 		selectedLocations.emplace(terraformingRequest.tile, terraformingRequest.option->area);
 		
-		debug("\t\t\t%s %s\n", getLocationString(terraformingRequest.tile).c_str(), terraformingRequest.option->name);
+		debug("\t\t\t%s %s\n", getLocationString(terraformingRequest.tile), terraformingRequest.option->name);
 		
 	}
 	
@@ -1226,7 +1226,7 @@ void generateLandBridgeTerraformingRequests()
 			" bridgeRequest.value=%d"
 			" income=%5.2f"
 			"\n"
-			, getLocationString(bridgeRequest.tile).c_str()
+			, getLocationString(bridgeRequest.tile)
 			, gain
 			, terraformingTime
 			, conf.ai_terraforming_landBridgeValue
@@ -1442,7 +1442,7 @@ void removeTerraformedTiles()
 //				" %6.2f"
 //				" income=%5.2f time=%5.2f"
 //				"\n"
-//				, getLocationString(terraformingRequest.tile).c_str()
+//				, getLocationString(terraformingRequest.tile)
 //				, terraformingRequest.option->name
 //				, terraformingRequest.gain
 //				, terraformingRequest.income
@@ -1483,7 +1483,7 @@ void assignFormerOrders()
 			if (assignedOrders.count(&formerOrder) != 0)
 				continue;
 			
-			debug("\t[%4d] %s\n", vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str());
+			debug("\t[%4d] %s\n", vehicleId, getLocationString({vehicle->x, vehicle->y}));
 			
 			// find best terraformingRequest
 			
@@ -1532,7 +1532,7 @@ void assignFormerOrders()
 							"\t\t\tnot closer than [%4d] %s"
 							"\n"
 							, assignment.formerOrder->vehicleId
-							, getLocationString(getVehicleMapTile(assignment.formerOrder->vehicleId)).c_str()
+							, getLocationString(getVehicleMapTile(assignment.formerOrder->vehicleId))
 						);
 						
 						continue;
@@ -1564,7 +1564,7 @@ void assignFormerOrders()
 					" terraformingTime=%5.2f"
 					" gain=%5.2f"
 					"\n"
-					, getLocationString(tile).c_str(), terraformingRequest.option->name
+					, getLocationString(tile), terraformingRequest.option->name
 					, terraformingRequest.income
 					, travelTime
 					, terraformingRequest.terraformingTime
@@ -1592,7 +1592,7 @@ void assignFormerOrders()
 					"\t\t\tremove existing assignment [%4d] %s"
 					"\n"
 					, assignment.formerOrder->vehicleId
-					, getLocationString(getVehicleMapTile(assignment.formerOrder->vehicleId)).c_str()
+					, getLocationString(getVehicleMapTile(assignment.formerOrder->vehicleId))
 				);
 				
 				assignedOrders.erase(assignment.formerOrder);
@@ -1603,7 +1603,7 @@ void assignFormerOrders()
 			(
 				"\t\t\tbest: %s"
 				"\n"
-				, getLocationString(bestTerraformingRequest->tile).c_str()
+				, getLocationString(bestTerraformingRequest->tile)
 			);
 			
 			// set assignment
@@ -1633,8 +1633,8 @@ void assignFormerOrders()
 			"\t[%4d] %s -> %s"
 			"\n"
 			, formerOrder->vehicleId
-			, getLocationString(getVehicleMapTile(formerOrder->vehicleId)).c_str()
-			, getLocationString(terraformingRequest->tile).c_str()
+			, getLocationString(getVehicleMapTile(formerOrder->vehicleId))
+			, getLocationString(terraformingRequest->tile)
 		);
 		
 	}
@@ -1685,7 +1685,7 @@ void finalizeFormerOrders()
 		else
 		{
 			transitVehicle(Task(formerOrder.vehicleId, TT_TERRAFORM, formerOrder.tile, nullptr, -1, formerOrder.action));
-			debug("\t[%4d] %s->%s %2d\n", formerOrder.vehicleId, getLocationString(getVehicleMapTile(formerOrder.vehicleId)).c_str(), getLocationString(formerOrder.tile).c_str(), formerOrder.action);
+			debug("\t[%4d] %s->%s %2d\n", formerOrder.vehicleId, getLocationString(getVehicleMapTile(formerOrder.vehicleId)), getLocationString(formerOrder.tile), formerOrder.action);
 		}
 		
 	}
@@ -1981,7 +1981,7 @@ TERRAFORMING_REQUEST calculateAquiferTerraformingScore(MAP *tile)
 	terraformingRequest.income = income;
 	terraformingRequest.gain = gain;
 	
-	debug("calculateTerraformingScore: %s\n", getLocationString(tile).c_str());
+	debug("calculateTerraformingScore: %s\n", getLocationString(tile));
 	debug
 	(
 		"\t%-10s"
@@ -2081,7 +2081,7 @@ TERRAFORMING_REQUEST calculateRaiseLandTerraformingScore(MAP *tile)
 	terraformingRequest.income = income;
 	terraformingRequest.gain = gain;
 
-	debug("calculateTerraformingScore: %s\n", getLocationString(tile).c_str());
+	debug("calculateTerraformingScore: %s\n", getLocationString(tile));
 	debug
 	(
 		"\t%-10s"
@@ -2221,7 +2221,7 @@ TERRAFORMING_REQUEST calculateNetworkTerraformingScore(MAP *tile)
 	terraformingRequest.income = income;
 	terraformingRequest.gain = gain;
 	
-	debug("calculateTerraformingScore: %s\n", getLocationString(tile).c_str());
+	debug("calculateTerraformingScore: %s\n", getLocationString(tile));
 	debug
 	(
 		"\t%-10s"
@@ -2347,7 +2347,7 @@ TERRAFORMING_REQUEST calculateSensorTerraformingScore(MAP *tile)
 	terraformingRequest.income = income;
 	terraformingRequest.gain = gain;
 	
-	debug("calculateTerraformingScore: %s\n", getLocationString(tile).c_str());
+	debug("calculateTerraformingScore: %s\n", getLocationString(tile));
 	debug
 	(
 		"\t%-10s"
@@ -2476,7 +2476,7 @@ TERRAFORMING_REQUEST calculateBunkerTerraformingScore(MAP *tile)
 	terraformingRequest.income = income;
 	terraformingRequest.gain = gain;
 	
-	debug("calculateTerraformingScore: %s\n", getLocationString(tile).c_str());
+	debug("calculateTerraformingScore: %s\n", getLocationString(tile));
 	debug
 	(
 		"\t%-10s"
@@ -2869,7 +2869,7 @@ bool isNearbyMirrorUnderConstruction(int x, int y)
 
 			if (getTileTerraformingInfo(tile).terraformedMirror)
 			{
-				debug("terraformedMirrorTiles found: %s\n", getLocationString({wrap(x + dx), y + dy}).c_str());
+				debug("terraformedMirrorTiles found: %s\n", getLocationString({wrap(x + dx), y + dy}));
                 return true;
 			}
 
@@ -4903,7 +4903,7 @@ void removeUnusedBunkers()
 	{
 		unusedBunkerTile->items &= (~BIT_BUNKER);
 		aiData.bunkerCombatDatas.erase(unusedBunkerTile);
-		debug("\t%s\n", getLocationString(unusedBunkerTile).c_str());
+		debug("\t%s\n", getLocationString(unusedBunkerTile));
 	}
 	
 }

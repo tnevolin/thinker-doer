@@ -10,6 +10,8 @@
 #include "wtp_aiTask.h"
 #include "wtp_base.h"
 
+constexpr char NULLPTR_STRING[] = "-nullptr-";
+
 ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> RANGE_TILES;
 
 // Location
@@ -23,34 +25,35 @@ bool operator!=(const Location &o1, const Location &o2)
 	return o1.x != o2.x || o1.y != o2.y;
 }
 
-std::string getLocationString(Location location)
+char const * getLocationString(Location location)
 {
-	std::ostringstream ss;
+	static constexpr size_t BUFFER_COUNT = 8;
+    static constexpr size_t BUFFER_SIZE  = 20;
 	
-	ss
-		<< "("
-		<< std::dec << std::setw(3) << std::setfill(' ') << location.x
-		<< ","
-		<< std::dec << std::setw(3) << std::setfill(' ') << location.y
-		<< ")"
-	;
+    static char buffers[BUFFER_COUNT][BUFFER_SIZE];
+    static size_t index = 0;
 	
-    return ss.str();
+    char* buffer = buffers[index];
+	
+    // fill buffer
+    std::snprintf(buffer, BUFFER_SIZE, "(%3d,%3d)", location.x, location.y);
+	
+    return buffer;
     
 }
 
-std::string getLocationString(int tileIndex)
+char const * getLocationString(int tileIndex)
 {
 	// allow returning for incorrect index
 	
 	if (!(tileIndex >= 0 && tileIndex < *MapAreaTiles))
-		return "-nullptr-";
+		return NULLPTR_STRING;
 	
 	return getLocationString(getLocation(tileIndex));
 	
 }
 
-std::string getLocationString(MAP *tile)
+char const * getLocationString(MAP *tile)
 {
 	// allow returning for nullptr
 	
@@ -3399,7 +3402,7 @@ int setMoveTo(int vehicleId, MAP *destination)
 	bool vehicleTileOcean = is_ocean(vehicleTile);
 	bool destinationOcean = is_ocean(destination);
 	
-    debug("setMoveTo %s -> %s\n", getLocationString({vehicle->x, vehicle->y}).c_str(), getLocationString(destination).c_str());
+    debug("setMoveTo %s -> %s\n", getLocationString({vehicle->x, vehicle->y}), getLocationString(destination));
 	
     vehicle->waypoint_x[0] = x;
     vehicle->waypoint_y[0] = y;
@@ -3484,7 +3487,7 @@ int setMoveTo(int vehicleId, MAP *destination)
 			vehicle->waypoint_x[1] = x;
 			vehicle->waypoint_y[1] = y;
 			vehicle->waypoint_count = 1;
-			debug("setWaypoint %s\n", getLocationString(waypoint).c_str());
+			debug("setWaypoint %s\n", getLocationString(waypoint));
 		}
 		
 	}
@@ -3497,7 +3500,7 @@ int setMoveTo(int vehicleId, const std::vector<MAP *> &waypoints)
 {
     VEH* vehicle = getVehicle(vehicleId);
 
-    debug("setMoveTo %s -> waypoints\n", getLocationString({vehicle->x, vehicle->y}).c_str());
+    debug("setMoveTo %s -> waypoints\n", getLocationString({vehicle->x, vehicle->y}));
 
 	setVehicleWaypoints(vehicleId, waypoints);
     vehicle->order = ORDER_MOVE_TO;

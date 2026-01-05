@@ -643,7 +643,7 @@ Computes atttack parameters after all attackers are added.
 */
 void EnemyStackInfo::computeAttackParameters()
 {
-	debug("enemyStack computeAttackParameters %s\n", getLocationString(tile).c_str());
+	debug("enemyStack computeAttackParameters %s\n", getLocationString(tile));
 	
 	// sort direct ascending
 	
@@ -672,7 +672,7 @@ void EnemyStackInfo::computeAttackParameters()
 			" effect=%5.2f"
 			" accumulatedEffect=%5.2f"
 			"\n"
-			, vehicleTravelTime.id, getLocationString(getVehicleMapTile(vehicleTravelTime.id)).c_str()
+			, vehicleTravelTime.id, getLocationString(getVehicleMapTile(vehicleTravelTime.id))
 			, vehicleTravelTime.value
 			, requiredEffect
 			, effect

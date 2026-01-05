@@ -1810,7 +1810,7 @@ void evaluateExpansionUnits()
 //				" buildSiteBaseGain=%5.2f"
 //				" buildSiteBuildGain=%5.2f"
 //				"\n"
-//				, getLocationString(tile).c_str()
+//				, getLocationString(tile)
 //				, travelTime
 //				, buildSiteBaseGain
 //				, buildSiteBuildGain
@@ -1852,7 +1852,7 @@ void evaluateExpansionUnits()
 			, unit->name
 			, priority
 			, citizenLossGain
-			, getLocationString(bestBuildSite).c_str()
+			, getLocationString(bestBuildSite)
 			, bestBuildSiteGain
 			, gain
 			, conf.ai_production_expansion_priority
@@ -2945,7 +2945,7 @@ void evaluateTerritoryProtectionUnits()
 				" gain=%7.2f"
 				"\n"
 				, unit->name
-				, getLocationString(enemyStackInfo->tile).c_str()
+				, getLocationString(enemyStackInfo->tile)
 				, travelTime
 				, combatEffect
 				, survivalProbability

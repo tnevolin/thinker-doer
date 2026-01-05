@@ -173,7 +173,7 @@ void Profiling::start(std::string name)
 			profiles.insert(profiles.end(), {"", {}});
 		}
 		
-//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - start\n", name);flushlog();
 		Profile *profile = addTopProfile(name);
 		profile->start();
 		
@@ -188,7 +188,7 @@ void Profiling::start(std::string name, std::string parentName)
 			profiles.insert(profiles.end(), {"", {}});
 		}
 		
-//			debug("Profiling(%s) - start\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - start\n", name);flushlog();
 		Profile *profile = addChildProfile(name, parentName);
 		profile->start();
 		
@@ -198,7 +198,7 @@ void Profiling::pause(std::string name)
 {
 	if (DEBUG)
 	{
-//			debug("Profiling(%s) - pause\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - pause\n", name);flushlog();
 		Profile *profile = getProfile(name);
 		profile->pause();
 	}
@@ -207,7 +207,7 @@ void Profiling::resume(std::string name)
 {
 	if (DEBUG)
 	{
-//			debug("Profiling(%s) - resume\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - resume\n", name);flushlog();
 		Profile *profile = getProfile(name);
 		profile->resume();
 	}
@@ -216,7 +216,7 @@ void Profiling::stop(std::string name)
 {
 	if (DEBUG)
 	{
-//			debug("Profiling(%s) - stop\n", name.c_str());flushlog();
+//			debug("Profiling(%s) - stop\n", name);flushlog();
 		Profile *profile = getProfile(name);
 		profile->stop();
 	}
@@ -3317,7 +3317,7 @@ void removeWrongVehiclesFromBases()
 			" territoryOwner=%d"
 			" vehicleOwner=%d"
 			"\n"
-			, vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getVehicleUnitName(vehicleId)
+			, vehicleId, getLocationString({vehicle->x, vehicle->y}), getVehicleUnitName(vehicleId)
 			, vehicleTile->owner
 			, vehicle->faction_id
 		);
@@ -3347,7 +3347,7 @@ void removeWrongVehiclesFromBases()
 			"[VANILLA BUG] sea vehicle in land base:"
 			" [%4d] %s %-32s"
 			"\n"
-			, vehicleId, getLocationString({vehicle->x, vehicle->y}).c_str(), getVehicleUnitName(vehicleId)
+			, vehicleId, getLocationString({vehicle->x, vehicle->y}), getVehicleUnitName(vehicleId)
 		);
 		killVehicle(vehicleId);
 		

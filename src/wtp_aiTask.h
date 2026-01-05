@@ -30,7 +30,7 @@ enum TaskType
 	TT_CONVOY,					// 16
 };
 
-std::string const taskTypeNames[]
+static constexpr char taskTypeNames[][7]
 {
 	"NONE  ",				//  0
 	"KILL  ",				//  1
@@ -73,7 +73,7 @@ struct Task
 	: Task(_vehicleId, _type, nullptr, nullptr, -1, -1)
 	{}
 	
-	static std::string typeName(TaskType &taskType);
+	static char const * typeName(TaskType &taskType);
 	int getVehicleId();
 	void clearDestination();
 	void setDestination(MAP *_destination);

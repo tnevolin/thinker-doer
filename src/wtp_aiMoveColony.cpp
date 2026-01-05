@@ -134,7 +134,7 @@ void populateExpansionData()
 //			
 //			if (tileExpansionInfo.validBuildSite)
 //			{
-//				debug("\t%s\n", getLocationString(tile).c_str());
+//				debug("\t%s\n", getLocationString(tile));
 //			}
 //			
 //		}
@@ -151,7 +151,7 @@ void populateExpansionData()
 //			
 //			if (tileExpansionInfo.validWorkTile)
 //			{
-//				debug("\t%s\n", getLocationString(tile).c_str());
+//				debug("\t%s\n", getLocationString(tile));
 //			}
 //			
 //		}
@@ -244,7 +244,7 @@ void analyzeBasePlacementSites()
 //				" buildSitePlacementScore=%7.2f"
 //				" buildSiteScore=%7.2f"
 //				"\n"
-//				, getLocationString(tile).c_str()
+//				, getLocationString(tile)
 //				, tileExpansionInfo.buildSiteBaseGain
 //				, tileExpansionInfo.buildSitePlacementScore
 //				, tileExpansionInfo.buildSiteScore
@@ -272,7 +272,7 @@ void analyzeBasePlacementSites()
 			MAP *safeLocation = getSafeLocation(vehicleId, false);
 			transitVehicle(Task(vehicleId, TT_MOVE, safeLocation));
 			
-			debug("\t%s -> %s\n", getLocationString(vehicleTile).c_str(), getLocationString(safeLocation).c_str());
+			debug("\t%s -> %s\n", getLocationString(vehicleTile), getLocationString(safeLocation));
 			
 		}
 		else
@@ -304,7 +304,7 @@ void analyzeBasePlacementSites()
 		MAP *vehicleTile = getVehicleMapTile(vehicleId);
 		int triad = vehicle.triad();
 		
-		debug("\t%s %-32s\n", getLocationString({vehicle.x, vehicle.y}).c_str(), Units[vehicle.unit_id].name);
+		debug("\t%s %-32s\n", getLocationString({vehicle.x, vehicle.y}), Units[vehicle.unit_id].name);
 		
 		// travel time multiplier increases in vicinity of enemy colonies
 		
@@ -406,7 +406,7 @@ void analyzeBasePlacementSites()
 				" travelTime=%7.2f"
 				" travelTimeCoefficient=%5.2f"
 				"\n"
-				, getLocationString(tile).c_str()
+				, getLocationString(tile)
 				, buildSiteScore
 				, tileExpansionInfo.buildSiteScore
 				, enemyColonyRange
@@ -470,7 +470,7 @@ void analyzeBasePlacementSites()
 				"\t[%4d] %s->%s"
 				" %5.2f"
 				"\n"
-				, vehicleId, getLocationString(getVehicleMapTile(vehicleId)).c_str(), getLocationString(destination).c_str()
+				, vehicleId, getLocationString(getVehicleMapTile(vehicleId)), getLocationString(destination)
 				, travelTime
 			);
 			
@@ -578,7 +578,7 @@ double getBuildSiteBaseGain(MAP *buildSite)
 {
 	Profiling::start("summarize tile yield scores", "moveColonyStrategy");
 	
-	debug("getBuildSiteBaseGain %s\n", getLocationString(buildSite).c_str());
+	debug("getBuildSiteBaseGain %s\n", getLocationString(buildSite));
 	
 	// tile yieldInfos
 	
@@ -690,7 +690,7 @@ double getBuildSiteBaseGain(MAP *buildSite)
 //				" nutrientSurplus=%5.2f"
 //				" resourceScore=%5.2f"
 //				"\n"
-//				, getLocationString(yieldInfo.tile).c_str()
+//				, getLocationString(yieldInfo.tile)
 //				, yieldInfo.score
 //				, yieldInfo.nutrientSurplus
 //				, yieldInfo.resourceScore
@@ -740,7 +740,7 @@ Computes build location placement score.
 */
 double getBuildSitePlacementScore(MAP *tile)
 {
-	debug("getBuildSitePlacementScore %s\n", getLocationString(tile).c_str());
+	debug("getBuildSitePlacementScore %s\n", getLocationString(tile));
 	
 	int x = getX(tile);
 	int y = getY(tile);
@@ -1189,7 +1189,7 @@ Resource getAverageTileYield(MAP *tile)
 		
 	}
 	
-	debug("getTileYield%s = (%5.2f,%5.2f,%5.2f)\n", getLocationString(tile).c_str(), averageYield.nutrient, averageYield.mineral, averageYield.energy);
+	debug("getTileYield%s = (%5.2f,%5.2f,%5.2f)\n", getLocationString(tile), averageYield.nutrient, averageYield.mineral, averageYield.energy);
 	
 	return averageYield;
 	
@@ -1320,9 +1320,9 @@ double getBuildSiteOverlapScore(MAP *buildSite)
 		" ai_expansion_radius_overlap_coefficient=%5.2f"
 		" overlapScore=%5.2f"
 		"\n"
-		, getLocationString(buildSite).c_str()
+		, getLocationString(buildSite)
 		, overlapCount
-		, getLocationString(minOverlapTile).c_str()
+		, getLocationString(minOverlapTile)
 		, minOverlapCount
 		, overlapCountAdjusted
 		, conf.ai_expansion_radius_overlap_coefficient
@@ -1400,7 +1400,7 @@ double getBuildSiteConnectionScore(MAP *buildSite)
 		" externalConnectionCongestion=%5.2f"
 		" connectionScore=%5.2f"
 		"\n"
-		, getLocationString(buildSite).c_str()
+		, getLocationString(buildSite)
 		, conf.ai_expansion_internal_border_connection_coefficient
 		, internalConnectionCongestion
 		, conf.ai_expansion_external_border_connection_coefficient
@@ -1447,7 +1447,7 @@ double getBuildSiteLandUseScore(MAP *buildSite)
 		" ai_expansion_land_use_coefficient=%5.2f"
 		" landUseScore=%5.2f"
 		"\n"
-		, getLocationString(buildSite).c_str()
+		, getLocationString(buildSite)
 		, landCongestion
 		, conf.ai_expansion_land_use_coefficient
 		, landUseScore
@@ -1818,7 +1818,7 @@ void populateConcaveTiles()
 //		{
 //			MAP *tile = internalConcaveNodeEntry.first;
 //			double congestion = internalConcaveNodeEntry.second;
-//			debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), congestion);
+//			debug("\t\t%s %5.2f\n", getLocationString(tile), congestion);
 //		}
 //		
 //		debug("\texternal\n");
@@ -1826,7 +1826,7 @@ void populateConcaveTiles()
 //		{
 //			MAP *tile = externalConcaveNodeEntry.first;
 //			double congestion = externalConcaveNodeEntry.second;
-//			debug("\t\t%s %5.2f\n", getLocationString(tile).c_str(), congestion);
+//			debug("\t\t%s %5.2f\n", getLocationString(tile), congestion);
 //		}
 //		
 //	}
