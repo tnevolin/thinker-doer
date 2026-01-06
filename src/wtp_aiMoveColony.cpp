@@ -690,7 +690,7 @@ double getBuildSiteBaseGain(MAP *buildSite)
 //				" nutrientSurplus=%5.2f"
 //				" resourceScore=%5.2f"
 //				"\n"
-//				, getLocationString(yieldInfo.tile).c_str()
+//				, getLocationString(yieldInfo.tile)
 //				, yieldInfo.score
 //				, yieldInfo.nutrientSurplus
 //				, yieldInfo.resourceScore

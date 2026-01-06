@@ -1047,7 +1047,7 @@ void populateRegionAreas()
 //			if (tileInfo.adjacentSeaRegions.empty())
 //				continue;
 //			
-//			debug("\t\t%s %d\n", getLocationString(tileInfo.tile).c_str(), tileInfo.adjacentSeaRegions.size());
+//			debug("\t\t%s %d\n", getLocationString(tileInfo.tile), tileInfo.adjacentSeaRegions.size());
 //			
 //		}
 //		
@@ -2866,7 +2866,7 @@ void populateEmptyEnemyBaseTiles()
 //			BASE *emptyEnemyBase = getBase(emptyEnemyBaseId);
 //			MAP *emptyEnemyBaseTile = getBaseMapTile(emptyEnemyBaseId);
 //			
-//			debug("\t%s %-25s\n", getLocationString(emptyEnemyBaseTile).c_str(), emptyEnemyBase->name);
+//			debug("\t%s %-25s\n", getLocationString(emptyEnemyBaseTile), emptyEnemyBase->name);
 //			
 //		}
 //		
@@ -4634,7 +4634,7 @@ void checkAndProposePrototype(int factionId, VehChassis chassisId, VehWeapon wea
 	int unitId = mod_propose_proto(factionId, chassisId, weaponId, armorId, (VehAblFlag) abilities, reactor, plan, name == nullptr ? nullptr : prototypeName);
 	
 	debug("checkAndProposePrototype - %s\n", MFactions[aiFactionId].noun_faction);
-	debug("\treactor=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactor, chassisId, weaponId, armorId, getAbilitiesString(abilities).c_str());
+	debug("\treactor=%d, chassisId=%d, weaponId=%d, armorId=%d, abilities=%s\n", reactor, chassisId, weaponId, armorId, getAbilitiesString(abilities));
 	debug("\tunitId=%d\n", unitId);
 	
 }

@@ -1216,34 +1216,7 @@ double CombatData::getProtectorUnitContribution(int factionId, int unitId)
 double CombatData::getAssailantContribution(int vehicleId)
 {
 	VEH &vehicle = Vehs[vehicleId];
-	int vehiclePad0 = vehicle.pad_0;
-	
-	// add combattant if needed
-	
-	bool add = false;
-	 = (assailants.find(vehiclePad0) == assailants.end());
-	if (add)
-	{
-		assailants.emplace(vehiclePad0, {vehicleId, 1.0, /*airbase*/false});
-	}
-	
-	// get combattant reference
-	
-	Combattant &combattant = assailants.at(vehiclePad0);
-	
-	// compute contribution
-	
-	double contribution = getAssailantCombattantContribution(Combattant &combattant);
-	
-	// remove combattant if was added
-	
-	if (add)
-	{
-		assailants.erase(vehiclePad0);
-	}
-	
-	return contribution;
-	
+	return getAssailantUnitContribution(vehicle.faction_id, vehicle.unit_id);
 }
 
 double CombatData::getProtectorContribution(int vehicleId)

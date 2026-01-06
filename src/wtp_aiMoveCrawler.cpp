@@ -307,6 +307,8 @@ void assignCrawlerOrders()
 			MAP *tile = *MapTiles + tileIndex;
 			TileConvoyInfo const &tileConvoyInfo = tileConvoyInfos.at(tileIndex);
 			
+			debug("\t%s\n", getLocationString(tile));
+			
 			// available
 			
 			if (!tileConvoyInfo.available)
@@ -344,6 +346,7 @@ void assignCrawlerOrders()
 			// gain
 			
 			double gain = getGainDelay(tileConvoyInfo.gain, travelTime);
+			debug("\t\tgain = %5.2f\n", gain);
 			
 			if (gain > bestTileGain)
 			{

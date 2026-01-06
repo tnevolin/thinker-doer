@@ -12,6 +12,8 @@
 #include "wtp_base.h"
 #include "wtp_mod.h"
 
+constexpr char NULLPTR_STRING[] = "-nullptr-";
+
 double const INF = std::numeric_limits<double>::infinity();
 
 // Profiling
@@ -362,40 +364,35 @@ bool operator!=(const Location &o1, const Location &o2)
 	return o1.x != o2.x || o1.y != o2.y;
 }
 
-/*
-returns reference to static buffer
-not thread-safe, not reentrant
-uses rotating buffers to allow up to 10 calls withing a single debug statement
-*/
-char const *getLocationString(Location location)
+char const * getLocationString(Location location)
 {
-	static int constexpr BUFFER_COUNT = 10;
-	static int constexpr BUFFER_SIZE = 10;
+	static constexpr size_t BUFFER_COUNT = 8;
+    static constexpr size_t BUFFER_SIZE  = 20;
 	
     static char buffers[BUFFER_COUNT][BUFFER_SIZE];
-    static int index = 0;
+    static size_t index = 0;
 	
-    int i = index;
-    index = (index + 1) % BUFFER_COUNT;
-    
-    snprintf(buffers[i], sizeof(buffers[i]), "(%3d,%3d)", location.x, location.y);
-    
-    return buffers[i];
+    char* buffer = buffers[index];
+	
+    // fill buffer
+    std::snprintf(buffer, BUFFER_SIZE, "(%3d,%3d)", location.x, location.y);
+	
+    return buffer;
     
 }
 
-char const *getLocationString(int tileIndex)
+char const * getLocationString(int tileIndex)
 {
 	// allow returning for incorrect index
 	
 	if (!(tileIndex >= 0 && tileIndex < *MapAreaTiles))
-		return "-nullptr-";
+		return NULLPTR_STRING;
 	
 	return getLocationString(getLocation(tileIndex));
 	
 }
 
-char const *getLocationString(MAP *tile)
+char const * getLocationString(MAP *tile)
 {
 	// allow returning for nullptr
 	
