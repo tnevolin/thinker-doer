@@ -4486,6 +4486,10 @@ int __thiscall wtp_mod_BattleWin_battle_report_Buffer_wrap2(Buffer* This, LPCSTR
 	
 	y = std::max(0xC6, y);
 	
+	// set text color
+	
+	Buffer_set_text_color(This, 0xCE - 0x2, 0, 1, 1);
+	
 	// call original function
 	
 	return Buffer_wrap2(This, lpString, x, y, a5);
