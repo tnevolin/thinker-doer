@@ -29,6 +29,9 @@ constexpr double BASE_DEFENSE_RANGE_LAND	=  3.0;
 // cumulative normal distribution approximation
 constexpr double CND_APPROXIMATION_SCALE = +2.30;
 
+// minimal opponent relative health bonus to use in sufficiency computation
+static constexpr double MIN_OPPONENT_RELATIVE_HEALTH_BONUS = 0.1;
+	
 // forward declarations
 
 struct TileInfo;
@@ -150,6 +153,8 @@ private:
 	
 	MAP *tile;
 	bool airbase;
+	bool playerAssaults;
+	double targetGain;
 	
 	std::vector<Combattant> assailants;
 	std::vector<Combattant> protectors;
@@ -159,29 +164,22 @@ private:
 	
 public:
 	
-	void initialize(MAP *tile);
+	void initialize(MAP *tile, bool playerAssaults, double targetGain);
 	
 	double getUnitCombatEffect(int attackerFactionId, int attackerUnitId, int defenderFactionId, int defenderUnitId, ENGAGEMENT_MODE engagementMode, bool attackerAtTile, bool defenderAtTile);
 	double getCombattantCombatEffect(Combattant const &attacker, Combattant const &defender, ENGAGEMENT_MODE engagementMode, bool attackerAtTile, bool defenderAtTile);
 	
-	void addAssailantUnit(int factionId, int unitId, double weight = 1.0);
-	void addProtectorUnit(int factionId, int unitId, double weight = 1.0);
+	Combattant &addAssailant(int vehicleId, double weight = 1.0);
+	Combattant &addProtector(int vehicleId, double weight = 1.0);
+	void removeLastAssailant();
+	void removeLastProtector();
 	
-	void addAssailant(int vehicleId, double weight = 1.0);
-	void addProtector(int vehicleId, double weight = 1.0);
-	
+	double getAssailantWeightSum();
+	double getProtectorWeightSum();
 	double getAssailantHealthSum(bool range);
 	double getProtectorHealthSum(bool range);
 	double getAssailantRemainingHealthSum(bool range);
 	double getProtectorRemainingHealthSum(bool range);
-	
-	// units and their initial summary weights
-	// [FactionUnitKey] = weight
-	robin_hood::unordered_flat_map<int, double> assailantUnitWeights;
-	double assailantUnitWeightSum;
-	// [FactionUnitKey] = weight
-	robin_hood::unordered_flat_map<int, double> protectorUnitWeights;
-	double protectorUnitWeightSum;
 	
 	// units and their remaining summary weights
 	
@@ -206,9 +204,6 @@ public:
 	double getAssailantContribution(int vehicleId);
 	double getProtectorContribution(int vehicleId);
 	
-	double getAssaultWinProbability();
-	double getProtectWinProbability();
-	
 	bool isSufficientAssault();
 	bool isSufficientProtect();
 	
@@ -218,7 +213,7 @@ public:
 	CombattantEffect getBestCombattantEffect(std::list<Combattant *> &attackers, std::list<Combattant *> &defenders, ENGAGEMENT_MODE engagementMode, bool attackerAtTile, bool defenderAtTile);
 	robin_hood::unordered_flat_map<int, double> selectInterceptors(robin_hood::unordered_flat_map<int, double> &unitWeights);
 	
-	double getProtectWinProbabilityChange(int assailantVehicleId, double assailantWeightLoss, int protectorVehicleId, double protectorWeightLoss);
+	static double getOpponentRelativeHealthBonus(std::vector<Combattant> opponentCombattants);
 	
 };
 
@@ -864,8 +859,6 @@ struct Data
 	// each to each unit combat effects
 	// [attackerFactionId][attackerUnitId][defenderFactionId][defenderUnitId][combatMode] = combatEffect
 	CombatEffectTable combatEffectTable;
-	robin_hood::unordered_flat_map<int, CombatData *> assailantCombatDatas;
-	robin_hood::unordered_flat_map<int, CombatData *> protectorCombatDatas;
 	
 	// enemy stacks
 	robin_hood::unordered_flat_map<MAP *, EnemyStackInfo> enemyStacks;

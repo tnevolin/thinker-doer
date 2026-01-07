@@ -8054,72 +8054,82 @@ bool isRangedAirVehicle(int vehicleId)
 	return isRangedAirUnit(Vehs[vehicleId].unit_id);
 }
 
-std::string getAbilitiesString(int ability_flags)
+char * getAbilitiesString(int ability_flags)
 {
-	std::string abilitiesString;
+	static constexpr size_t BUFFER_COUNT = 2;
+    static constexpr size_t BUFFER_SIZE  = 200;
+	
+    static char buffers[BUFFER_COUNT][BUFFER_SIZE];
+    static size_t index = 0;
+	
+    char* buffer = buffers[index];
+	
+    // fill buffer
+    
+    buffer[0] = '\x0';
 	
 	if ((ability_flags & ABL_AMPHIBIOUS) != 0)
 	{
-		abilitiesString += " AMPHIBIOUS";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " AMPHIBIOUS");
 	}
 	
 	if ((ability_flags & ABL_AIR_SUPERIORITY) != 0)
 	{
-		abilitiesString += " AIR_SUPERIORITY";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " AIR_SUPERIORITY");
 	}
 	
 	if ((ability_flags & ABL_AAA) != 0)
 	{
-		abilitiesString += " AAA";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " AAA");
 	}
 	
 	if ((ability_flags & ABL_COMM_JAMMER) != 0)
 	{
-		abilitiesString += " ECM";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " ECM");
 	}
 	
 	if ((ability_flags & ABL_EMPATH) != 0)
 	{
-		abilitiesString += " EMPATH";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " EMPATH");
 	}
 	
 	if ((ability_flags & ABL_ARTILLERY) != 0)
 	{
-		abilitiesString += " ARTILLERY";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " ARTILLERY");
 	}
 	
 	if ((ability_flags & ABL_BLINK_DISPLACER) != 0)
 	{
-		abilitiesString += " BLINK_DISPLACER";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " BLINK_DISPLACER");
 	}
 	
 	if ((ability_flags & ABL_TRANCE) != 0)
 	{
-		abilitiesString += " TRANCE";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " TRANCE");
 	}
 	
 	if ((ability_flags & ABL_NERVE_GAS) != 0)
 	{
-		abilitiesString += " NERVE_GAS";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " NERVE_GAS");
 	}
 	
 	if ((ability_flags & ABL_POLICE_2X) != 0)
 	{
-		abilitiesString += " POLICE_2X";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " POLICE_2X");
 	}
 	
 	if ((ability_flags & ABL_SOPORIFIC_GAS) != 0)
 	{
-		abilitiesString += " SOPORIFIC_GAS";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " SOPORIFIC_GAS");
 	}
 	
 	if ((ability_flags & ABL_DISSOCIATIVE_WAVE) != 0)
 	{
-		abilitiesString += " DISSOCIATIVE_WAVE";
+		strcpy_n(buffer + strlen(buffer), BUFFER_SIZE - strlen(buffer) - 1, " DISSOCIATIVE_WAVE");
 	}
 	
-	return abilitiesString;
-	
+    return buffer;
+    
 }
 
 /*

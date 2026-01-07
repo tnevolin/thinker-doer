@@ -14,7 +14,7 @@
 #else
 	#define trace(...) /* Nothing */
 #endif
-constexpr bool TRACE = DEBUG && false;
+constexpr bool TRACE = DEBUG && true;
 
 extern const char NULLPTR_STRING[];
 
@@ -1335,7 +1335,7 @@ int getBaseSpecialistPsych(int baseId);
 bool isFriendlyBaseInRangeHasFacility(int factionId, int x, int y, int range, FacilityId facilityId);
 bool isRangedAirUnit(int unitId);
 bool isRangedAirVehicle(int vehicleId);
-std::string getAbilitiesString(int unitType);
+char * getAbilitiesString(int unitType);
 int getBaseItemBuildTime(int baseId, int item, bool countAccumulatedMinerals = false);
 bool isVehicleConvoying(int vehicleId);
 bool isVehicleTerraforming(VEH *vehicle);

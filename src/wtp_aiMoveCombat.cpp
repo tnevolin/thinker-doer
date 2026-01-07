@@ -2321,7 +2321,7 @@ void populateBaseProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// initial threat
 			
-			double threat = baseInfo.combatData.assailantUnitWeightSum;
+			double threat = baseInfo.combatData.getAssailantWeightSum();
 			
 			// get travel time and coresponding coefficient
 			
@@ -2414,7 +2414,7 @@ void populateBunkerProtectorTasks(std::vector<TaskPriority> &taskPriorities)
 			
 			// required protection
 			
-			double threat = bunkerCombatData.assailantUnitWeightSum;
+			double threat = bunkerCombatData.getAssailantWeightSum();
 			
 			// get travel time and coresponding coefficient
 			
@@ -3368,18 +3368,6 @@ double getArtilleryAttackGain(int vehicleId, MAP *destination, MAP *target)
 
 CombatAction selectVehicleCombatAction(int vehicleId)
 {
-	int vehiclePad0 = Vehs[vehicleId].pad_0;
-	double protectionGain;
-	if (aiData.protectorCombatDatas.find(vehiclePad0) == aiData.protectorCombatDatas.end())
-	{
-		protectionGain = 0.0;
-	}
-	else
-	{
-		CombatData * combatData = aiData.protectorCombatDatas.at(vehiclePad0);
-		combatData->getProtectorContribution(vehicleId);
-	}
-	
 	// select best combat action
 	
 	CombatAction bestCombatAction;

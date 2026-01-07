@@ -3278,10 +3278,6 @@ void evaluateEnemyStacks()
 		
 		CombatData &combatData = enemyStackInfo.combatData;
 		
-		// initialize combatData
-		
-		combatData.initialize(enemyStackTile);
-		
 		// ignore stacks without vehicles
 		
 		if (enemyStackInfo.vehiclePad0s.empty())
@@ -3310,6 +3306,10 @@ void evaluateEnemyStacks()
 		debug("\t\tdestructionGain=%5.2f\n", enemyStackInfo.destructionGain);
 		
 		Profiling::stop("calculate destructionGain");
+		
+		// initialize combatData
+		
+		combatData.initialize(enemyStackTile, true, enemyStackInfo.destructionGain);
 		
 		// superiorities
 		
@@ -3563,9 +3563,10 @@ void evaluateBaseDefense()
 	for (int baseId : aiData.baseIds)
 	{
 		MAP *tile = getBaseMapTile(baseId);
-		CombatData &combatData = aiData.getBaseInfo(baseId).combatData;
+		BaseInfo &baseInfo = aiData.getBaseInfo(baseId);
+		CombatData &combatData = baseInfo.combatData;
 		
-		evaluateDefense(tile, combatData);
+		evaluateDefense(tile, combatData, baseInfo.gain);
 		
 	}
 	
@@ -3578,13 +3579,13 @@ void evaluateBaseDefense()
 		
 		CombatData &combatData = bunkerInfo.combatData;
 		
-		evaluateDefense(tile, combatData);
+		evaluateDefense(tile, combatData, 0.0);
 		
 	}
 	
 }
 
-void evaluateDefense(MAP *tile, CombatData &combatData)
+void evaluateDefense(MAP *tile, CombatData &combatData, double targetGain)
 {
 	Profiling::start("evaluateBaseDefense", "populateAIData");
 	
@@ -3593,7 +3594,7 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 	
 	// initialize combat data
 	
-	combatData.initialize(tile);
+	combatData.initialize(tile, false, targetGain);
 	
 	// evaluate base threat
 
@@ -3986,19 +3987,6 @@ void evaluateDefense(MAP *tile, CombatData &combatData)
 			
 			debug("\t\t%-24s %-32s\n", MFactions[foeFactionId].noun_faction, Vehs[foeVehicleId].name());
 			combatData.addAssailant(foeVehicleId, foeVehicleWeight);
-			
-		}
-		
-		for (robin_hood::pair<int, double> &foeUnitWeightEntry : foeUnitWeights.at(foeFactionId))
-		{
-			int foeUnitId = foeUnitWeightEntry.first;
-			double foeUnitWeight = foeUnitWeightEntry.second;
-			
-			if (foeUnitWeight == 0.0)
-				continue;
-			
-			debug("\t\t%-24s %-32s\n", MFactions[foeFactionId].noun_faction, Units[foeUnitId].name);
-			combatData.addAssailantUnit(foeFactionId, foeUnitId, foeUnitWeight);
 			
 		}
 		

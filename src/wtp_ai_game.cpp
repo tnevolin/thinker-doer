@@ -143,8 +143,6 @@ void Data::clear()
 	transportControl.clear();
 	tasks.clear();
 	tacticalTasks.clear();
-	assailantCombatDatas.clear();
-	protectorCombatDatas.clear();
 
 }
 
@@ -830,18 +828,15 @@ void Combattant::initialize(robin_hood::unordered_flat_map<int, double> const &d
 
 // CombatData
 
-void CombatData::initialize(MAP *tile)
+void CombatData::initialize(MAP *tile, bool playerAssaults, double targetGain)
 {
 	this->tile = tile;
 	this->airbase = aiData.getTileInfo(tile).airbase;
+	this->playerAssaults = playerAssaults;
+	this->targetGain = targetGain;
 	
 	this->assailants.clear();
 	this->protectors.clear();
-	
-	this->assailantUnitWeights.clear();
-	this->assailantUnitWeightSum = 0.0;
-	this->protectorUnitWeights.clear();
-	this->protectorUnitWeightSum = 0.0;
 	
 	this->remainingAssailantUnitWeights.clear();
 	this->remainingAssailantUnitWeightSum = 0.0;
@@ -868,62 +863,34 @@ double CombatData::getCombattantCombatEffect(Combattant const &attacker, Combatt
 	;
 }
 
-void CombatData::addAssailantUnit(int factionId, int unitId, double weight)
+Combattant &CombatData::addAssailant(int vehicleId, double weight)
 {
-	trace("CombatData::addAssailantUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight);
-	trace("\tcomputed = false\n");
-	
-	int key = FactionUnit::encodeKey(factionId, unitId);
-	
-	assailantUnitWeights[key] += weight;
-	assailantUnitWeightSum += weight;
-	
-	// clear computed flag
-	
-	computed = false;
-	
-}
-
-void CombatData::addProtectorUnit(int factionId, int unitId, double weight)
-{
-	trace("CombatData::addProtectorUnit( factionId=%d unitId=%d weight=%5.2f )\n", factionId, unitId, weight);
-	trace("\tcomputed = false\n");
-	
-	int key = FactionUnit::encodeKey(factionId, unitId);
-	
-	protectorUnitWeights[key] += weight;
-	protectorUnitWeightSum += weight;
-	
-	// clear computed flag
-	
-	computed = false;
-	
-}
-
-void CombatData::addAssailant(int vehicleId, double weight)
-{
-	VEH &vehicle = Vehs[vehicleId];
-	int vehiclePad0 = vehicle.pad_0;
-	
 	assailants.emplace_back(vehicleId, weight, /*airbase*/false);
-	
-	// store vehicle combat data reference
-	
-	aiData.assailantCombatDatas.emplace(vehiclePad0, this);
-	
+	return assailants.back();
+}
+Combattant &CombatData::addProtector(int vehicleId, double weight)
+{
+	protectors.emplace_back(vehicleId, weight, /*airbase*/false);
+	return protectors.back();
 }
 
-void CombatData::addProtector(int vehicleId, double weight)
+void CombatData::removeLastAssailant()
 {
-	VEH &vehicle = Vehs[vehicleId];
-	int vehiclePad0 = vehicle.pad_0;
-	
-	protectors.emplace_back(vehicleId, weight, /*airbase*/false);
-	
-	// store vehicle combat data
-	
-	aiData.protectorCombatDatas.emplace(vehiclePad0, this);
-	
+	assailants.pop_back();
+}
+void CombatData::removeLastProtector()
+{
+	protectors.pop_back();
+}
+
+double CombatData::getAssailantWeightSum()
+{
+	return std::accumulate(assailants.begin(), assailants.end(), 0.0, [](double sum, Combattant const &combattant) { return sum + combattant.weight; });
+}
+
+double CombatData::getProtectorWeightSum()
+{
+	return std::accumulate(protectors.begin(), protectors.end(), 0.0, [](double sum, Combattant const &combattant) { return sum + combattant.weight; });
 }
 
 double CombatData::getAssailantHealthSum(bool range)
@@ -967,6 +934,8 @@ double CombatData::getAssaultSufficiency(bool range)
 	double protectorHealthSum = getProtectorHealthSum(range);
 	double assailantRemainingHealthSum = getAssailantRemainingHealthSum(range);
 	double protectorRemainingHealthSum = getProtectorRemainingHealthSum(range);
+	double assailantDestroyedHealthSum = assailantHealthSum - assailantRemainingHealthSum;
+	double protectorDestroyedHealthSum = protectorHealthSum - protectorRemainingHealthSum;
 	trace("\tassailantHealthSum=%5.2f protectorHealthSum=%5.2f assailantRemainingHealthSum=%5.2f protectorRemainingHealthSum=%5.2f \n", assailantHealthSum, protectorHealthSum, assailantRemainingHealthSum, protectorRemainingHealthSum);
 	
 	if (assailantHealthSum <= 0.0)
@@ -978,47 +947,44 @@ double CombatData::getAssaultSufficiency(bool range)
 		return 1.0;
 	}
 	
-	// assailant health to equalize forces
+	// compute sufficiency
 	
-	double equalAssailantHealthSum;
+	double sufficiency;
 	
 	if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum <= 0.0)
 	{
-		equalAssailantHealthSum = assailantHealthSum;
+		// both parties are destroyed
+		sufficiency = 1.0;
 	}
 	else if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum >= protectorHealthSum)
 	{
 		// no casualties in protectors while all assailants are destroyed
-		return 0.0;
+		sufficiency = 0.0;
 	}
 	else if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum > 0.0)
 	{
-		equalAssailantHealthSum = assailantHealthSum * protectorHealthSum / (protectorHealthSum - protectorRemainingHealthSum);
+		// protectors survived
+		// ratio of actually destroyed opponent to what it should be
+		sufficiency = protectorDestroyedHealthSum / protectorHealthSum;
 	}
 	else if (protectorRemainingHealthSum <= 0.0 && assailantRemainingHealthSum > assailantHealthSum)
 	{
 		// no casualties in assailants while all protectors are destroyed
-		return 1.0;
+		sufficiency = INF;
 	}
 	else if (protectorRemainingHealthSum <= 0.0 && assailantRemainingHealthSum > 0.0)
 	{
-		equalAssailantHealthSum = assailantHealthSum - assailantRemainingHealthSum;
+		// assailants survived
+		// ratio of initial aiplayer forces to destroyed ones
+		sufficiency = assailantHealthSum / assailantDestroyedHealthSum;
 	}
 	else
 	{
 		debug("ERROR: assailantRemainingHealthSum > 0.0 && protectorRemainingHealthSum > 0.0 after compute.\n");
-		return 0.5;
+		sufficiency = 0.5;
 	}
 	
-	double p = protectorHealthSum / equalAssailantHealthSum;
-	double q = 1.0 - p;
-	double tryVariance = p * q;
-	double tryCount = 10.0 * (protectorHealthSum + equalAssailantHealthSum);
-	double totalVariance = tryVariance * tryCount;
-	double totalSTD = sqrt(totalVariance);
-	double sufficientAssailantHealthSum = equalAssailantHealthSum + totalSTD;
-	double assailtSufficiency = std::min(1.0, assailantHealthSum / sufficientAssailantHealthSum);
-	return assailtSufficiency;
+	return sufficiency;
 	
 }
 
@@ -1061,6 +1027,8 @@ double CombatData::getProtectSufficiency(bool artillery)
 	double protectorHealthSum = getProtectorHealthSum(artillery);
 	double assailantRemainingHealthSum = getAssailantRemainingHealthSum(artillery);
 	double protectorRemainingHealthSum = getProtectorRemainingHealthSum(artillery);
+	double assailantDestroyedHealthSum = assailantHealthSum - assailantRemainingHealthSum;
+	double protectorDestroyedHealthSum = protectorHealthSum - protectorRemainingHealthSum;
 	trace("\tassailantHealthSum=%5.2f protectorHealthSum=%5.2f assailantRemainingHealthSum=%5.2f protectorRemainingHealthSum=%5.2f \n", assailantHealthSum, protectorHealthSum, assailantRemainingHealthSum, protectorRemainingHealthSum);
 	
 	if (assailantHealthSum <= 0.0)
@@ -1074,59 +1042,46 @@ double CombatData::getProtectSufficiency(bool artillery)
 		return 0.0;
 	}
 	
-	// protector health to equalize forces
+	// compute sufficiency
 	
-	double equalProtectorHealthSum;
+	double sufficiency;
 	
 	if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum <= 0.0)
 	{
-		equalProtectorHealthSum = protectorHealthSum;
+		// both parties are destroyed
+		sufficiency = 1.0;
 	}
 	else if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum >= protectorHealthSum)
 	{
 		// no casualties in protectors while all assailants are destroyed
-		trace("\tprotectSufficiency=1.0\n");
-		return 1.0;
+		trace("\tprotectSufficiency=Inf\n");
+		sufficiency = INF;
 	}
 	else if (assailantRemainingHealthSum <= 0.0 && protectorRemainingHealthSum > 0.0)
 	{
-		equalProtectorHealthSum = protectorHealthSum - protectorRemainingHealthSum;
+		// protectors survived
+		// ratio of initial aiplayer forces to destroyed ones
+		sufficiency = protectorHealthSum / protectorDestroyedHealthSum;
 	}
 	else if (protectorRemainingHealthSum <= 0.0 && assailantRemainingHealthSum > assailantHealthSum)
 	{
 		// no casualties in assailants while all protectors are destroyed
 		trace("\tprotectSufficiency=0.0\n");
-		return 0.0;
+		sufficiency = 0.0;
 	}
 	else if (protectorRemainingHealthSum <= 0.0 && assailantRemainingHealthSum > 0.0)
 	{
-		equalProtectorHealthSum = protectorHealthSum * assailantHealthSum / (assailantHealthSum - assailantRemainingHealthSum);
+		// assailants survived
+		// ratio of actually destroyed opponent to what it should be
+		sufficiency = assailantDestroyedHealthSum / assailantHealthSum;
 	}
 	else
 	{
 		debug("ERROR: assailantRemainingHealthSum=%5.2f protectorRemainingHealthSum=%5.2f after compute.\n", assailantRemainingHealthSum, protectorRemainingHealthSum);
-		return 0.5;
+		sufficiency = 0.5;
 	}
 	
-	double p = assailantHealthSum / (assailantHealthSum + equalProtectorHealthSum);
-	double q = 1.0 - p;
-	double tryVariance = 0.1 * p * 0.1 * q;
-	double tryCount = 10.0 * (assailantHealthSum + equalProtectorHealthSum);
-	double totalVariance = tryVariance * tryCount;
-	double totalSTD = sqrt(totalVariance);
-	double sufficientProtectorHealthSum = equalProtectorHealthSum + totalSTD;
-	double protectSufficiency = std::min(1.0, protectorHealthSum / sufficientProtectorHealthSum);
-	
-	trace
-	(
-		"\tprotectSufficiency=%5.2f"
-		" assailantHealthSum=%5.2f equalProtectorHealthSum=%5.2f p=%5.2f q=%5.2f tryVariance=%7.4f tryCount=%5.2f totalVariance=%5.2f totalSTD=%5.2f sufficientProtectorHealthSum=%5.2f"
-		"\n"
-		, protectSufficiency
-		, assailantHealthSum, equalProtectorHealthSum
-		, p, q, tryVariance, tryCount, totalVariance, totalSTD, sufficientProtectorHealthSum
-	);
-	return protectSufficiency;
+	return sufficiency;
 	
 }
 
@@ -1215,61 +1170,18 @@ double CombatData::getProtectorUnitContribution(int factionId, int unitId)
 
 double CombatData::getAssailantContribution(int vehicleId)
 {
-	VEH &vehicle = Vehs[vehicleId];
-	return getAssailantUnitContribution(vehicle.faction_id, vehicle.unit_id);
+	Combattant &combattant = addAssailant(vehicleId);
+	double contribution = getAssailantCombattantContribution(combattant);
+	removeLastAssailant();
+	return contribution;
 }
 
 double CombatData::getProtectorContribution(int vehicleId)
 {
-	VEH &vehicle = Vehs[vehicleId];
-	return getProtectorUnitContribution(vehicle.faction_id, vehicle.unit_id);
-}
-
-double CombatData::getAssaultWinProbability()
-{
-	if (assailantUnitWeightSum <= 0.0)
-	{
-		// no assailants - guaranteed loss
-		return 0.0;
-	}
-	else if (protectorUnitWeightSum <= 0.0)
-	{
-		// no protectors - guaranteed win
-		return 1.0;
-	}
-	
-	compute();
-	
-	if (remainingAssailantUnitWeightSum <= 0.0 && remainingProtectorUnitWeightSum <= 0.0)
-	{
-		// pure mutual destruction
-		return 0.5;
-	}
-	else if (remainingAssailantUnitWeightSum > 0.0 && remainingProtectorUnitWeightSum <= 0.0)
-	{
-		// assailant wins
-		double destroyedAssailantWeight = assailantUnitWeightSum - remainingAssailantUnitWeightSum;
-		double destroyedProtectorWeight = protectorUnitWeightSum;
-		return getWinProbability(destroyedAssailantWeight, destroyedProtectorWeight, remainingAssailantUnitWeightSum);
-	}
-	else if (remainingAssailantUnitWeightSum <= 0.0 && remainingProtectorUnitWeightSum > 0.0)
-	{
-		// protector wins
-		double destroyedAssailantWeight = assailantUnitWeightSum;
-		double destroyedProtectorWeight = protectorUnitWeightSum - remainingProtectorUnitWeightSum;
-		return 1.0 - getWinProbability(destroyedProtectorWeight, destroyedAssailantWeight, remainingProtectorUnitWeightSum);
-	}
-	else
-	{
-		debug("ERROR: remainingAssailantUnitWeightSum > 0.0 && remainingProtectorUnitWeightSum > 0.0 after compute.\n");
-		return 0.5;
-	}
-	
-}
-
-double CombatData::getProtectWinProbability()
-{
-	return 1.0 - getAssaultWinProbability();
+	Combattant &combattant = addProtector(vehicleId);
+	double contribution = getProtectorCombattantContribution(combattant);
+	removeLastProtector();
+	return contribution;
 }
 
 bool CombatData::isSufficientAssault()
@@ -1305,6 +1217,17 @@ void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVe
 	for (Combattant &protector : protectors)
 	{
 		protector.initialize(protectorVehicleDamageCoefficients);
+	}
+	
+	// set advantage for the opponent
+	
+	std::vector<Combattant> &opponentCombattants = (playerAssaults ? protectors : assailants);
+	double opponentRelativeHealthBonus = getOpponentRelativeHealthBonus(opponentCombattants);
+	trace("\topponentRelativeHealthBonus = %5.2f\n", opponentRelativeHealthBonus);
+	
+	for (Combattant &combattant : opponentCombattants)
+	{
+		combattant.remainingHealth *= (1.0 + opponentRelativeHealthBonus);
 	}
 	
 	if (TRACE)
@@ -1716,23 +1639,15 @@ CombattantEffect CombatData::getBestCombattantEffect(std::list<Combattant *> &at
 	
 }
 
-double CombatData::getProtectWinProbabilityChange(int assailantVehicleId, double assailantWeightLoss, int protectorVehicleId, double protectorWeightLoss)
+/*
+Computes opponent relative health bonus to ensure player 80% win chance sufficiency.
+*/
+double CombatData::getOpponentRelativeHealthBonus(std::vector<Combattant> opponentCombattants)
 {
-	// compute without reduction
+	double opponentTotalHealth = std::accumulate(opponentCombattants.begin(), opponentCombattants.end(), 0.0, [](double sum, Combattant const &combattant) { return sum + combattant.health; });
+	double opponentTotalHP = std::max(1.0, 10.0 * opponentTotalHealth);
 	
-	computed = false;
-	compute();
-	double oldProtectWinProbability = getProtectWinProbability();
-	
-	// compute with reduction
-	
-	computed = false;
-	compute(robin_hood::unordered_flat_map<int, double>{{assailantVehicleId, assailantWeightLoss}}, robin_hood::unordered_flat_map<int, double>{{protectorVehicleId, protectorWeightLoss}});
-	double newProtectWinProbability = getProtectWinProbability();
-	
-	computed = false;
-	
-	return newProtectWinProbability - oldProtectWinProbability;
+	return std::max(MIN_OPPONENT_RELATIVE_HEALTH_BONUS, sqrt(1.0 / opponentTotalHP));
 	
 }
 
