@@ -10,6 +10,7 @@ It is built on top of Thinker mod. (Thinker mod info: Thinker_Readme.md, Thinker
 * [Strategy tips](https://github.com/tnevolin/thinker-doer/blob/master/strategy.md)
 * [Issue submission](https://github.com/tnevolin/thinker-doer/issues)
 * [An awesome tutorial playlist by Loladarules !](https://www.youtube.com/playlist?list=PLDGozj3_2wdF5niSbkbuPrsrgL5LO-KMr)
+* [Technology tree browser](https://tnevolin.github.io/thinker-doer/smacx-tech-tree-wtp.html)
 
 ## Special thanks and acknowledgements
 
@@ -130,9 +131,9 @@ http://alphacentauri2.info/wiki/Social_Engineering_Mod
 
 ## Social models
 
-_v337_
+_v406_
 
-![SE v337](images/se-v337.png)
+![SE v406](images/se-v406.png)
 
 ## Social effects
 
