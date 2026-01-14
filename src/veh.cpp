@@ -2612,9 +2612,40 @@ VehChassis chs, VehWeapon wpn, VehArmor arm, VehAblFlag abls, VehReactor rec) {
     return 0;
 }
 
+// [WTP]
+// more granular support control
+// return true if plan requires support
+/*
 VehPlan support_plan() {
     return (conf.modify_unit_support == 1 ? PLAN_SUPPLY :
         (conf.modify_unit_support == 2 ? PLAN_PROBE : PLAN_TERRAFORM));
+}
+*/
+bool support_plan(int vehPlan)
+{
+	bool requireSupport = false;
+	
+	switch (conf.modify_unit_support)
+	{
+	case 1:
+		requireSupport = (vehPlan <= PLAN_SUPPLY);
+		break;
+		
+	case 2:
+		requireSupport = (vehPlan <= PLAN_PROBE);
+		break;
+		
+	case 3:
+		requireSupport = (vehPlan <= PLAN_TERRAFORM || vehPlan == PLAN_PROBE);
+		break;
+		
+	default:
+		requireSupport = (vehPlan <= PLAN_TERRAFORM);
+		
+	}
+	
+	return requireSupport;
+	
 }
 
 VehArmor best_armor(int faction_id, int max_cost) {

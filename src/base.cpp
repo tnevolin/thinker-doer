@@ -561,7 +561,14 @@ void __cdecl mod_base_support() {
     
     const int support_val = clamp(f->SE_support_pending + 4, 0, 7);
     const int support_mod = (is_human(base->faction_id) ? 0 : conf.unit_support_bonus[*DiffLevel]);
+    
+    // [WTP]
+    // more granular control over support plan
+    /*
     const int support_type = support_plan();
+    */
+    //
+    
     const int SE_police = base->SE_police(SE_Pending);
 
     BaseResourceConvoyTo[0] = 0;
@@ -609,7 +616,15 @@ void __cdecl mod_base_support() {
             // Exclude probe, supply, artifact, fungal and tectonic missiles
             // Native units do not require support on fungus
             // However fungus is not rendered on tiles deeper than ocean shelf
+            
+			// [WTP]
+			// more granular control over support plan
+			/*
             if (veh->plan() <= support_type) {
+			*/
+            if (support_plan(veh->plan())) {
+			//
+			
                 if (!has_abil(veh->unit_id, ABL_CLEAN_REACTOR)) {
                     if (!veh->is_native_unit() || !sq->is_fungus()) {
                         (*BaseForcesSupported)++;

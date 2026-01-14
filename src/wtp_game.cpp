@@ -10,7 +10,9 @@
 #include "wtp_aiTask.h"
 #include "wtp_base.h"
 
-constexpr char NULLPTR_STRING[] = "-nullptr-";
+char const NULLPTR_STRING[] = "-nullptr-";
+
+const std::array<Triad, 3> Triads = { TRIAD_LAND, TRIAD_SEA, TRIAD_AIR };
 
 ArrayVector<MAP *, MAX_RANGE_TILE_COUNT> RANGE_TILES;
 
@@ -7204,8 +7206,7 @@ bool isBaseDefenderVehicle(int vehicleId)
 
 bool isUnitRequiresSupport(int unitId)
 {
-	const int support_type = support_plan();
-	return Units[unitId].plan <= support_type && !isUnitHasAbility(unitId, ABL_CLEAN_REACTOR);
+	return support_plan(Units[unitId].plan) && !isUnitHasAbility(unitId, ABL_CLEAN_REACTOR);
 }
 
 bool isVehicleRequiresSupport(int vehicleId)

@@ -7,6 +7,7 @@ enum Triad {
     TRIAD_AIR = 2,
 };
 
+
 enum VehMorale {
     MORALE_VERY_GREEN = 0,
     MORALE_GREEN = 1,

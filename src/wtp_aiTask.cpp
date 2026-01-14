@@ -739,7 +739,6 @@ bool hasExecutableTask(int vehicleId)
 	// do not attack no longer hostile vehicles
 	
 	MAP *attackTarget = task->getAttackTarget();
-debug(">attackTarget=%s\n", getLocationString(attackTarget));flushlog();
 	if (attackTarget != nullptr)
 	{
 		int vehicleFactionId = veh_at(getX(attackTarget), getY(attackTarget));
