@@ -204,7 +204,7 @@ Each technology may be assigned any number of below tags. Tags are given purely 
 Only those modified listed here.
 
 | feature | level range | comment |
-| ---- | ---- |
+| ---- | ---- | ---- |
 | weapons | 12 items at each level | even spread to give them equal play time |
 | armors | 8 items spread evenly | even spread to give them equal play time |
 | Foil chassis | level 1 | required from the start |
