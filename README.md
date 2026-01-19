@@ -108,21 +108,135 @@ Datalinks text removed:
 
 # Technology tree
 
-A lot of above changes require moving items and features up and down technology tree. Apparently, rearranging technology tree is inevitable. This may seem like a big change for users. Therefore I dedicate a whole section to explain my reasons.
+Significantly rewired.
 
-Rearranging technology tree is not something unheard of. A lot of mods do it and produce quite playable experience. The trick is in accuracy and placement since handling a dependency tree is nontrivial work.
+## Modification principles
 
-SMACX futuristicly named technologies have no roots in real scientific history except maybe Fusion Power :). This is done, obviously, on purpose to highlight a sci-fi atmosphere. Same story is with other in game concepts, items, and features. Nobody can rationally explain why technology has such prerequisites or why it allows certain game features. I agree that *some* technology-feature relations make sense but most do not. In this regard I believe fiddling with technology tree is an acceptable modding approach. One could memorize some game concepts after thousands of games, of course but I doubt this is the way to go. Most of the time I find myself browsing help to understand which technology uncover which feature. That is completely fine and that is what help is for.
+Even with significant changes, all attempts are made to keep technology relative position in a tree, their prerequisites, and uncovering featues as close to the original as possible.
 
-I tried to minimize technology tree changes to satisfy my modding needs only and to not get highwire about it. I selected one primary feature for each technology among those it uncovers. Such primary feature is the most memorized and most important technology association. In other words, player usually researches certain technology for its primary feature. Example: Doctrine: Air Power for needlejet chassis. I firmly kept such assosiations. Everything else might change. However, I also tried to keep modified tree as close as possible to vanilla one. Technologies may float but they do not go far from where they were originally. Like Biogenetics is still early game technology while Advanced Spaceflight is still late game one. I also tried to preserve secondary assosiations whenever possible to not mix things up too much.
+### Tech tree structure
 
-I think I did good job on linking technologies. Vanilla technology level quite inaccurately predict technology appearance time. My tree is built with exactly 7 technologies per level. Each technology prerequisites are exactly from two below levels. This puts a pretty good timeline and value on a technology which is a great help for technology exchange. You know right away that any level 4 technology is clearly farther up the tree than any level 3 one - no need to look them up in datalink. Now it is easy to predict relative technology appearance time by its level.
+86 technologies are broken down into 12 levels. The first two levels contain 8 technologies. All remaining levels contain 7 technologies.
 
-###### Note to users
+Each technology starting from level 2 has two prerequisites. Level 2 technologies have both prerequisites from level 1. All subsequent level technologies have two prerequisites from one and two levels below, correspondingly.
 
-I have selected primary features based on my own understanding of their importance. If someone believes there should be a different primary association - let me know. I'll gladly substitute. After all, the technology is just a placeholder for features and can be replaced or even renamed as needed.
+### Technology main features
 
-Keep in mind that technology prerequisites are generally arbitrary and serve as interlevel relations only. Preserving some beelines is an option but not a primary concern. I welcome any suggestions about rearranging and relinking technology tree to match game lore.
+Technology may have main features associated with it based on how well this association is defined by the game lore and players' memory. Such features are stuck its mother technology and moves with it along the tech tree.
+Other (not assosiated) features are freely moved across available technologies to be placed as the desired position.
+
+| technology | main features |
+| ---- | ---- |
+| Biogenetics | The Human Genome Project |
+| Social Psych | Recreation Commons |
+| Doctrine: Mobility | Speeder |
+| Centauri Ecology | Formers |
+| Applied Relativity | The Supercollider |
+| Fusion Power | Fusion Reactor |
+| Silksteel Alloys | Silksteel armor |
+| Monopole Magnets | Magtube |
+| Unified Field Theory | The Theory of Everything |
+| Graviton ... | Graviton Gun, Gravship |
+| Polymorphic Software | Polymorphic encryption |
+| Quantum ... | Quantum Chamber, Quantum Laser, Quantum Lab, Quantum Converter |
+| Singularity ... | Singularity Engine, The Singularity Inductor, Singularity laser |
+| Controlled Singularity | The Human Genome Project |
+| Temporal Mechanics | Stasis generator |
+| Probability Mechanics | Probability sheath |
+| Pre-Sentient Algorithms | The Hunter-Seeker Algorithm |
+| Self-Aware Machines | The Self-Aware Colony |
+| Doctrine: Initiative | Cruiser (?) |
+| Doctrine: Flexibility | Foil (?) |
+| Synthetic Fossil Fuels | Missile launcher |
+| Doctrine: Air Power | Needlejet |
+| Photon/Wave Mechanics | Photon wall |
+| Mind/Machine Interface | The Human Genome Project |
+| Doctrine: Loyalty | Police State |
+| Ethical Calculus | Democratic |
+| Centauri ... | Native units, Centauri preserve |
+| Secrets of the Human Brain | Fundamentalist |
+| Biomachinery | The Cloning Vats |
+| Cyberethics | Knowledge |
+| Eudaimonia | Eudaimonic |
+| The Will to Power | Thought Control |
+| Threshold of Transcendence | The Ascent to Transcendence |
+| Matter Transmission | The Bulk Matter Transmitter |
+| Ecological, Environmental ... | Terraforming |
+| Spaceflight ... | Satellites |
+| Homo Superior | The Cyborg Factory |
+| Matter Editation | Antimatter plate |
+| Industrial Nanorobotics | Robotic Assembly Plant |
+| Secrets of the Manifolds | Subspace Generator |
+
+### Modification process
+
+* Technology are given a desired level range based on its original relative position in the tech tree and and its main feature desired appearance time, if any such feature is assosiated with this technology.
+* After that all technologies are sorted out to satisfy both tech tree structure and their desired positions.
+* Then technolgy prerequisites are assigned based on their original connection (if available) and their tag similarity.
+
+Each technology may be assigned any number of below tags. Tags are given purely on technology name connotation, NOT on what they uncover.
+
+#### Tags
+
+| tag | meaning |
+| ---- | ---- |
+| science | generic science |
+| theory | theoretical science |
+| applied | applied science |
+| biology | biology, genetics |
+| ecology | ecology, environment, terraforming |
+| industry | industrial applications and improvements |
+| economics | economical applications and improvements |
+| computers | any computers and digital related |
+| networks | anything networking |
+| psych | pyshcology, mind, social, drones |
+| land, sea, air, space | applicability area |
+| chassis | new chassis |
+| centauri | natural life, planet, environment, psi |
+| military | combat applications |
+| fusion, quantum, singularity, graviton, temporal, probability, photon, sentience, resonance | specific research branch |
+| planetary, nano | specific sub area |
+| nano | theoretical science |
+| progenitor | progenitor related research |
+
+## Feature appearance time
+
+Only those modified listed here.
+
+| feature | level range | comment |
+| ---- | ---- |
+| weapons | 12 items at each level | even spread to give them equal play time |
+| armors | 8 items spread evenly | even spread to give them equal play time |
+| Foil chassis | level 1 | required from the start |
+| Needlejet chassis | 5-8 | can easily wait for its time |
+| Planet Buster | closer to the end | early appearance turns the rest of the game into potential armageddon |
+| orbital insertion | closer to the end | another OP random point attack ability |
+| Sealurk | soon after Mindworms | appeared quite late in OG |
+| Aquifer | earlier | a minimalistic help for arid areas |
+| Thermal Borehole | earlier | could be allowed earlier as it does not produce too many minerals |
+| Mag tube | could be earlier | not OP anymore with limited movement rate |
+| Bioenhancement center | later than Aerospace Complex | appeared before AC in OG |
+| Geosynchronous Survey Pod | early game | useful and not OP |
+| Biology lab | level 1 | offsets low labs output for deprived factions |
+| Energy bank, Network node | later | not usable early until solid energy income is established |
+| economy/psych/labs multiplier facilities | level 3 and spread evenly | to allow steady progression and based on their cost affordability |
+| mineral multiplier facilities | level 3 and spread evenly | OG provides them quite closer to the end when they are not relevant anymore |
+| eco-damage facilities | level 4 and spread evenly | TF should be avialable before advanced terraforming |
+| satellites | mid-end | not at mid game, but not at the very end either to enjoy them without being OP |
+| population limit facilites | level 2 and 4-5 | should be available very early to aid Morgan and to alow bases growth |
+| sea base improvement facilities | level 3-7 | no need early but should be available beg-mid |
+| reactors | levels 4, 7, 10 | spread evenly across tech tree levels to enjoy each reactor for same time |
+| The Living Refinery | mid game | was too late in OG to benefit on SUPPORT |
+| The Cloudbase Academy | mid-end | can wait its time as somewhat OP |
+| The Cloning Vats | end | moved to the end even though it is not too OP anymore |
+| The Manifold Harmonics | closer to the end | should not be given too early or faction may just stop terraforming altogether |
+| The Cyborg Factory | closer to the end | somewhat OP |
+| The Bulk Matter Transmitter | end | OP |
+| The Self-Aware Colony | closer to the end | somewhat OP |
+| SE models level 1 | level 2 |  |
+| SE models level 2 | level 3 |  |
+| SE models level 3 | level 5 |  |
+| SE models level 4 | level 9 |  |
 
 # Social Engineering
 
