@@ -108,100 +108,17 @@ Datalinks text removed:
 
 # Technology tree
 
-Significantly rewired.
+Significantly rewired. Even with significant changes, all attempts are made to keep technology relative position in a tree, their prerequisites, and uncovering featues as close to the original as possible.
 
-## Modification principles
-
-Even with significant changes, all attempts are made to keep technology relative position in a tree, their prerequisites, and uncovering featues as close to the original as possible.
-
-### Tech tree structure
+## Technology tree structure
 
 86 technologies are broken down into 12 levels. The first two levels contain 8 technologies. All remaining levels contain 7 technologies.
 
 Each technology starting from level 2 has two prerequisites. Level 2 technologies have both prerequisites from level 1. All subsequent level technologies have two prerequisites from one and two levels below, correspondingly.
 
-### Technology main features
-
-Technology may have main features associated with it based on how well this association is defined by the game lore and players' memory. Such features are stuck its mother technology and moves with it along the tech tree.
-Other (not assosiated) features are freely moved across available technologies to be placed as the desired position.
-
-| technology | main features |
-| ---- | ---- |
-| Biogenetics | The Human Genome Project |
-| Social Psych | Recreation Commons |
-| Doctrine: Mobility | Speeder |
-| Centauri Ecology | Formers |
-| Applied Relativity | The Supercollider |
-| Fusion Power | Fusion Reactor |
-| Silksteel Alloys | Silksteel armor |
-| Monopole Magnets | Magtube |
-| Unified Field Theory | The Theory of Everything |
-| Graviton ... | Graviton Gun, Gravship |
-| Polymorphic Software | Polymorphic encryption |
-| Quantum ... | Quantum Chamber, Quantum Laser, Quantum Lab, Quantum Converter |
-| Singularity ... | Singularity Engine, The Singularity Inductor, Singularity laser |
-| Controlled Singularity | The Human Genome Project |
-| Temporal Mechanics | Stasis generator |
-| Probability Mechanics | Probability sheath |
-| Pre-Sentient Algorithms | The Hunter-Seeker Algorithm |
-| Self-Aware Machines | The Self-Aware Colony |
-| Doctrine: Initiative | Cruiser (?) |
-| Doctrine: Flexibility | Foil (?) |
-| Synthetic Fossil Fuels | Missile launcher |
-| Doctrine: Air Power | Needlejet |
-| Photon/Wave Mechanics | Photon wall |
-| Mind/Machine Interface | The Human Genome Project |
-| Doctrine: Loyalty | Police State |
-| Ethical Calculus | Democratic |
-| Centauri ... | Native units, Centauri preserve |
-| Secrets of the Human Brain | Fundamentalist |
-| Biomachinery | The Cloning Vats |
-| Cyberethics | Knowledge |
-| Eudaimonia | Eudaimonic |
-| The Will to Power | Thought Control |
-| Threshold of Transcendence | The Ascent to Transcendence |
-| Matter Transmission | The Bulk Matter Transmitter |
-| Ecological, Environmental ... | Terraforming |
-| Spaceflight ... | Satellites |
-| Homo Superior | The Cyborg Factory |
-| Matter Editation | Antimatter plate |
-| Industrial Nanorobotics | Robotic Assembly Plant |
-| Secrets of the Manifolds | Subspace Generator |
-
-### Modification process
-
-* Technology are given a desired level range based on its original relative position in the tech tree and and its main feature desired appearance time, if any such feature is assosiated with this technology.
-* After that all technologies are sorted out to satisfy both tech tree structure and their desired positions.
-* Then technolgy prerequisites are assigned based on their original connection (if available) and their tag similarity.
-
-Each technology may be assigned any number of below tags. Tags are given purely on technology name connotation, NOT on what they uncover.
-
-#### Tags
-
-| tag | meaning |
-| ---- | ---- |
-| science | generic science |
-| theory | theoretical science |
-| applied | applied science |
-| biology | biology, genetics |
-| ecology | ecology, environment, terraforming |
-| industry | industrial applications and improvements |
-| economics | economical applications and improvements |
-| computers | any computers and digital related |
-| networks | anything networking |
-| psych | pyshcology, mind, social, drones |
-| land, sea, air, space | applicability area |
-| chassis | new chassis |
-| centauri | natural life, planet, environment, psi |
-| military | combat applications |
-| fusion, quantum, singularity, graviton, temporal, probability, photon, sentience, resonance | specific research branch |
-| planetary, nano | specific sub area |
-| nano | theoretical science |
-| progenitor | progenitor related research |
-
 ## Feature appearance time
 
-Only those modified listed here.
+Only those significantly modified listed here.
 
 | feature | level range | comment |
 | ---- | ---- | ---- |
