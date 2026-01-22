@@ -909,6 +909,14 @@ void populateTileInfoBaseRanges()
 		MAP *tile = *MapTiles + tileIndex;
 		TileInfo &tileInfo = aiData.getTileInfo(tileIndex);
 		
+		// reset ranges
+		
+		for (Triad triad : Triads)
+		{
+			tileInfo.nearestBaseRanges.at(triad).id = -1;
+			tileInfo.nearestBaseRanges.at(triad).value = INT_MAX;
+		}
+		
 		for (int baseId = 0; baseId < *BaseCount; baseId++)
 		{
 			BASE const &base = Bases[baseId];

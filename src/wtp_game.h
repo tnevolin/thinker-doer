@@ -16,7 +16,9 @@
 #endif
 constexpr bool TRACE = DEBUG && true;
 
-extern const char NULLPTR_STRING[];
+extern char const NULLPTR_STRING[];
+
+extern const std::array<Triad, 3> Triads;
 
 // first level triad based defensive structure facilities
 FacilityId constexpr TRIAD_DEFENSIVE_FACILITIES[] = {FAC_PERIMETER_DEFENSE, FAC_NAVAL_YARD, FAC_AEROSPACE_COMPLEX};

@@ -504,7 +504,15 @@ int unit_score(BASE* base, int unit_id, int psi_score, bool defend) {
         v += (u->speed() > 1 ? 16 : 32);
         v += 8*min(4, base->specialist_adjust);
     }
+    
+    // [WTP]
+    // more granular control over support plans
+    /*
     if (u->ability_flags & ABL_CLEAN_REACTOR && u->plan <= support_plan()
+	*/
+    if (u->ability_flags & ABL_CLEAN_REACTOR && support_plan(u->plan)
+	//
+	
     && (f->SE_support_pending < 3 || base->mineral_consumption > 0)) {
         v += 16;
     }
