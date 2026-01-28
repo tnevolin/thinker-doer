@@ -8,7 +8,7 @@ Game is a mix of many author contributions. Following approach is used to preser
 
 1. Use vanilla/Thinker algorithms as a base line.
 2. Improve game in small area of operations.
-3. Fall back to default (#1) for not not covered or impossible to compute cases.
+3. Fall back to default (#1) for not covered or impossible to compute cases.
 
 # Generic AI paradigm
 
