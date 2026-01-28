@@ -40,7 +40,7 @@ income value        = <income resource score>
 income growth value = <income growth resource score> * <development scale>
 ```
 
-They can be converted to each other using above rules. Income is picked as a baseline as it is the most common bonus and the most easiest to visualise.
+They can be converted to each other using above rules. Income is picked as a baseline as it is the most common bonus and the most easiest to comprehend.
 
 ## Evaluation examples
 
