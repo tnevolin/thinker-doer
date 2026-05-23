@@ -18,6 +18,7 @@ void populatePlayerBaseIds();
 void populatePlayerBaseRanges();
 void populateFactionInfos();
 void populateBaseInfos();
+void populateBunkerInfos();
 
 void populatePlayerGlobalVariables();
 void populatePlayerFactionIncome();

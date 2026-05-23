@@ -159,8 +159,8 @@ private:
 	std::vector<Combattant> assailants;
 	std::vector<Combattant> protectors;
 	
-	robin_hood::unordered_flat_map<int, double> assailantEffects;
-	robin_hood::unordered_flat_map<int, double> protectorEffects;
+	robin_hood::unordered_flat_map<int, double> assailantGains;
+	robin_hood::unordered_flat_map<int, double> protectorGains;
 	
 public:
 	
@@ -213,7 +213,7 @@ public:
 	CombattantEffect getBestCombattantEffect(std::list<Combattant *> &attackers, std::list<Combattant *> &defenders, ENGAGEMENT_MODE engagementMode, bool attackerAtTile, bool defenderAtTile);
 	robin_hood::unordered_flat_map<int, double> selectInterceptors(robin_hood::unordered_flat_map<int, double> &unitWeights);
 	
-	static double getOpponentRelativeHealthBonus(std::vector<Combattant> opponentCombattants);
+	static double getEnemyRelativeHealthBonus(std::vector<Combattant> opponentCombattants);
 	
 };
 
@@ -271,6 +271,7 @@ struct TileInfo
 	
 	bool friendlyBase;
 	bool unfriendlyBase;
+	bool playerVehicle;
 	bool friendlyVehicle;
 	bool unfriendlyVehicle;
 	bool unfriendlyVehicleZoc;
@@ -467,8 +468,13 @@ struct BunkerInfo
 {
 	MAP *tile;
 	
+	bool playerTerritory = false;
+	
 	// combat data
 	CombatData combatData;
+	
+	// economical data
+	double gain;
 	
 };
 

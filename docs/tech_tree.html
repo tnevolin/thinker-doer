@@ -1,0 +1,351 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Alpha Centauri Rules Viewer</title>
+  <style>
+    body { font-family: monospace; background: #1a1a2e; color: #e0e0e0; padding: 2rem; }
+    h1 { color: #a0c4ff; }
+    h2 { color: #ffd166; margin-top: 2rem; }
+    .section-block { background: #16213e; border: 1px solid #0f3460; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; }
+    .entry { padding: 0.2rem 0; border-bottom: 1px solid #0f3460; font-size: 0.85rem; }
+    .entry:last-child { border-bottom: none; }
+    .key { color: #a0c4ff; }
+    .val { color: #c8f7c5; }
+    pre { color: #888; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; }
+    #status { color: #ffd166; margin-bottom: 1rem; }
+    .count { color: #888; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <h1>⚙ Alpha Centauri Rules — alphax.txt</h1>
+  <div id="status">Loading...</div>
+  <div id="output"></div>
+
+  <script>
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PARSER
+  // Parses the SMAC-style INI format:
+  //   - Lines starting with ; or ## are comments → stripped
+  //   - Lines starting with # followed by a word are section headers → #RULES, #TERRAIN, etc.
+  //   - A bare "#" alone (or "# ;") ends the file
+  //   - Within each section, rows are comma-and/or-whitespace-delimited values.
+  //     Inline ; comments are stripped from each value.
+  //   - Some sections have a leading count line (e.g. #UNITS has "26" as first line).
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Strip inline comment from a raw token.
+   * E.g. "3,       ; Movement rate" → tokens: ["3", "Movement rate along roads"]
+   * We split the full line on ";" so comments are already separated before we tokenize values.
+   */
+  function stripComment(str) {
+    return str.split(';')[0].trim();
+  }
+
+  /**
+   * Parse a data line into an array of trimmed, non-empty string tokens.
+   * Strips trailing ; comments first, then splits on commas.
+   * Preserves values that contain spaces (e.g. technology names).
+   */
+  function parseLine(line) {
+    const withoutComment = stripComment(line);
+    if (!withoutComment) return null;
+    return withoutComment
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+  }
+
+  /**
+   * Main parser.  Returns a Map<sectionName, Array<Array<string>>>
+   * where each inner array is one parsed data row (array of tokens).
+   *
+   * Also exposes window.ALPHAX as a plain object where keys are section names
+   * and values are arrays of row-arrays, plus a few well-known sections are
+   * additionally parsed into friendlier structures (see enrichSections below).
+   */
+  function parseAlphaxIni(text) {
+    const lines = text.split(/\r?\n/);
+    const sections = new Map();
+    let currentSection = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const raw = lines[i];
+      const trimmed = raw.trim();
+
+      // Skip blank lines
+      if (!trimmed) continue;
+
+      // Skip full-line comments (; or ##)
+      if (trimmed.startsWith('##') || trimmed.startsWith(';')) continue;
+
+      // End-of-file marker:  a lone "#" or "# ;"
+      if (/^#\s*(;.*)?$/.test(trimmed)) break;
+
+      // Section header: #WORD
+      if (/^#[A-Z]/.test(trimmed)) {
+        const name = trimmed.match(/^#([A-Z0-9]+)/)[1];
+        currentSection = name;
+        if (!sections.has(name)) sections.set(name, []);
+        continue;
+      }
+
+      // Data line — only if we're inside a section
+      if (currentSection) {
+        const tokens = parseLine(trimmed);
+        if (tokens && tokens.length > 0) {
+          sections.get(currentSection).push(tokens);
+        }
+      }
+    }
+
+    return sections;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SECTION SCHEMAS
+  // For well-known sections, map raw row arrays into named-field objects.
+  // Unknown sections are left as raw arrays of string arrays.
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // #RULES is a flat list of single values with trailing comments already stripped.
+  // We pair them up with human-readable labels in order.
+  const RULES_LABELS = [
+    'movementRateRoads', 'nutrientIntakePerCitizen', 'artilleryDamageNumerator',
+    'artilleryDamageDenominator', 'maxArtilleryRange', 'maxAirdropRange',
+    'nutrientCostMultiplier', 'mineralsCostMultiplier', 'techDiscoveryRatePct',
+    'mineWithoutRoadLimit', 'nutrientEffectMine', 'minBaseSizeSpecialists',
+    'dronesGenejackFactory', 'popLimitNoHabComplex', 'popLimitNoHabDome',
+    'protoCostLandPct', 'protoCostSeaPct', 'protoCostAirPct',
+    'psiCombatLandOffense', 'psiCombatLandDefense',
+    'psiCombatSeaOffense',  'psiCombatSeaDefense',
+    'psiCombatAirOffense',  'psiCombatAirDefense',
+    'startingEnergyReserves', 'intrinsicBaseDefensePct',
+    'attackAlongRoadPct', 'attackHigherElevPct', 'attackLowerElevPenPct',
+    'mobileOpenGroundPct', 'defendVsMobileRoughPct', 'infantryVsBasePct',
+    'attackAfterAirdropPenPct', 'fanaticAttackBonusPct',
+    'landGunsVsShipPct', 'artilleryAltitudePct',
+    'tranceBonusVsPsiPct', 'empathSongVsPsiPct',
+    'airSuperiorityVsGroundPenPct', 'airSuperiorityVsAirPct',
+    'nonCombatDefendingPenPct', 'commJammerVsMobilePct',
+    'bonusVsShipsInPortPct', 'aaaBonusVsAirPct',
+    'sensorDefendPct', 'psiAttackPctPerPlanet',
+    'retoolPenaltyPct', 'retoolStrictness', 'retoolExemptionMinerals',
+    'minTurnsBetweenCouncils', 'mineralsHarvestForest',
+    'territoryMaxDistFromBase', 'turnsCornerEnergyMarket',
+    'techImproveFungus', 'techEaseFungusMovement', 'techBuildRoadsInFungus',
+    'techAllow2SpecialAbilities', 'techAllow3Nutrients',
+    'techAllow3Minerals', 'techAllow3Energy',
+    'techOrbitalInsertionNoElevator', 'techMiningPlatformBonus',
+    'techEconomicVictory', 'probeTeamsCanStealTechs',
+    'humansCanContactNetGames', 'humansCanContactHotseat',
+    'maxArtyDmgBaseOrBunkerPct', 'maxArtyDmgOpenPct', 'maxArtyDmgSeaPct',
+    'globalWarmingNumerator', 'globalWarmingDenominator',
+    'normalStartYear', 'normalEndYearLow3Diff', 'normalEndYearHigh3Diff',
+    'obliteratingBaseIsAtrocity', 'baseSizeSubspaceGenerator',
+    'numSubspaceGeneratorsNeeded'
+  ];
+
+  function enrichRules(rows) {
+    // Flatten all tokens from all rows into a single value list
+    const flat = rows.flatMap(r => r);
+    return flat.map((val, i) => ({
+      index: i,
+      label: RULES_LABELS[i] || `rule_${i}`,
+      value: isNaN(val) ? val : Number(val)
+    }));
+  }
+
+  const TECHNOLOGY_FIELDS = ['name','id','aiPower','aiTech','aiWealth','aiGrowth','preq1','preq2','flags'];
+  const TERRAIN_FIELDS    = ['name','preq','seaName','seaPreq','rate','order','letter','keystroke'];
+  const CHASSIS_FIELDS    = ['name','nameM1','squadM1','sentinelsM2','garrisonM1','speed','triad','range','missile','cargo','cost','preq','name2M2','eliteM1'];
+  const WEAPONS_FIELDS    = ['name','shortName','offense','mode','cost','icon','preq'];
+  const DEFENSES_FIELDS   = ['name','shortName','armor','mode','cost','preq'];
+  const FACILITIES_FIELDS = ['name','cost','maintenance','preq','obsolete','description'];
+  const ABILITIES_FIELDS  = ['name','cost','preq','abbrev','flags','desc'];
+  const UNITS_FIELDS      = ['name','chassis','weapon','armor','plan','cost','carry','preq','icon','abilities'];
+  const REACTORS_FIELDS   = ['name','id','power','preq'];
+  const MORALE_FIELDS     = ['humanName','alienName'];
+  const CITIZENS_FIELDS   = ['singular','plural','preq','obsolete','ops','psych','research','flags'];
+  const NATURAL_FIELDS    = ['name','key'];
+  const FACTIONS_FIELDS   = ['file','key'];
+  const WORLDSIZE_FIELDS  = ['name','width','height'];
+  const TIMECONTROLS_FIELDS = ['name','turn','base','unit','event','extra','refresh','accum'];
+  const PLANS_FIELDS      = ['shortName','fullName'];
+  const RESOURCES_FIELDS  = ['singular','plural'];
+  const RESOURCEINFO_FIELDS = ['name','nutrient','mineral','energy','unused'];
+  const PROPOSALS_FIELDS  = ['proposal','preq','result'];
+  const ORDERS_FIELDS     = ['name','key'];
+  const COMPASS_FIELDS    = ['direction'];
+  const TRIAD_FIELDS      = ['name'];
+  const ENERGY_FIELDS     = ['shortName','fullName'];
+  const DIFF_FIELDS       = ['name'];
+  const MOOD_FIELDS       = ['name'];
+  const REPUTE_FIELDS     = ['name'];
+  const MIGHT_FIELDS      = ['name','adjective'];
+  const BONUSNAMES_FIELDS = ['name'];
+
+  function rowsToObjects(rows, fields, skipCountLine = false) {
+    const data = skipCountLine && rows.length > 0 && rows[0].length === 1 && !isNaN(rows[0][0])
+      ? rows.slice(1)
+      : rows;
+    return data.map(tokens =>
+      Object.fromEntries(
+        fields.map((f, i) => [f, tokens[i] !== undefined ? tokens[i] : null])
+      )
+    );
+  }
+
+  function enrichSections(sections) {
+    const out = {};
+    for (const [name, rows] of sections) {
+      switch (name) {
+        case 'RULES':         out[name] = enrichRules(rows);                              break;
+        case 'TECHNOLOGY':    out[name] = rowsToObjects(rows, TECHNOLOGY_FIELDS);         break;
+        case 'TERRAIN':       out[name] = rowsToObjects(rows, TERRAIN_FIELDS);            break;
+        case 'CHASSIS':       out[name] = rowsToObjects(rows, CHASSIS_FIELDS);            break;
+        case 'WEAPONS':       out[name] = rowsToObjects(rows, WEAPONS_FIELDS);            break;
+        case 'DEFENSES':      out[name] = rowsToObjects(rows, DEFENSES_FIELDS);           break;
+        case 'FACILITIES':    out[name] = rowsToObjects(rows, FACILITIES_FIELDS);         break;
+        case 'ABILITIES':     out[name] = rowsToObjects(rows, ABILITIES_FIELDS);          break;
+        case 'UNITS':         out[name] = rowsToObjects(rows, UNITS_FIELDS, true);        break;
+        case 'REACTORS':      out[name] = rowsToObjects(rows, REACTORS_FIELDS);           break;
+        case 'MORALE':        out[name] = rowsToObjects(rows, MORALE_FIELDS);             break;
+        case 'CITIZENS':      out[name] = rowsToObjects(rows, CITIZENS_FIELDS);           break;
+        case 'NATURAL':       out[name] = rowsToObjects(rows, NATURAL_FIELDS);            break;
+        case 'FACTIONS':
+        case 'NEWFACTIONS':
+        case 'CUSTOMFACTIONS':out[name] = rowsToObjects(rows, FACTIONS_FIELDS);           break;
+        case 'WORLDSIZE':     out[name] = rowsToObjects(rows.slice(1), WORLDSIZE_FIELDS); break;
+        case 'TIMECONTROLS':  out[name] = rowsToObjects(rows, TIMECONTROLS_FIELDS);       break;
+        case 'PLANS':         out[name] = rowsToObjects(rows, PLANS_FIELDS);              break;
+        case 'RESOURCES':     out[name] = rowsToObjects(rows, RESOURCES_FIELDS);          break;
+        case 'RESOURCEINFO':  out[name] = rowsToObjects(rows, RESOURCEINFO_FIELDS);       break;
+        case 'PROPOSALS':     out[name] = rowsToObjects(rows, PROPOSALS_FIELDS);          break;
+        case 'ORDERS':        out[name] = rowsToObjects(rows, ORDERS_FIELDS);             break;
+        case 'COMPASS':       out[name] = rowsToObjects(rows, COMPASS_FIELDS);            break;
+        case 'TRIAD':         out[name] = rowsToObjects(rows, TRIAD_FIELDS);              break;
+        case 'ENERGY':        out[name] = rowsToObjects(rows, ENERGY_FIELDS);             break;
+        case 'DIFF':          out[name] = rowsToObjects(rows, DIFF_FIELDS);               break;
+        case 'MOOD':          out[name] = rowsToObjects(rows, MOOD_FIELDS);               break;
+        case 'REPUTE':        out[name] = rowsToObjects(rows, REPUTE_FIELDS);             break;
+        case 'MIGHT':         out[name] = rowsToObjects(rows, MIGHT_FIELDS);              break;
+        case 'BONUSNAMES':    out[name] = rows.flatMap(r => r).map(n => ({ name: n }));   break;
+        case 'MANDATE':       out[name] = rowsToObjects(rows, ['name','key']);             break;
+        case 'WORLDBUILDER':  out[name] = rows.flatMap(r => r).map((v,i) => ({ index:i, value: isNaN(v)?v:Number(v) })); break;
+        // Soc tables: each row is "value, description"
+        case 'SOCECONOMY': case 'SOCEFFIC': case 'SOCSUPPORT': case 'SOCTALENT':
+        case 'SOCMORALE':  case 'SOCPOLICE': case 'SOCGROWTH': case 'SOCPLANET':
+        case 'SOCPROBE':   case 'SOCINDUSTRY': case 'SOCRESEARCH':
+          out[name] = rows.map(r => ({ value: isNaN(r[0]) ? r[0] : Number(r[0]), description: r.slice(1).join(', ') }));
+          break;
+        // SOCIO: mixed structure — first two rows are column headers, rest are rows
+        case 'SOCIO':
+          out[name] = { _raw: rows };
+          break;
+        default:
+          // Leave as raw arrays
+          out[name] = rows.map(r => ({ values: r }));
+      }
+    }
+    return out;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LOAD + EXPOSE AS GLOBALS
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  async function loadAndParse() {
+    const statusEl = document.getElementById('status');
+    const outputEl = document.getElementById('output');
+
+    let text;
+    try {
+      const resp = await fetch('alphax.txt');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      text = await resp.text();
+    } catch (err) {
+      statusEl.textContent = `❌ Failed to load alphax.txt: ${err.message}`;
+      statusEl.style.color = '#ff6b6b';
+      return;
+    }
+
+    // Parse
+    const sections = parseAlphaxIni(text);
+    const enriched = enrichSections(sections);
+
+    // ── Expose each section as a global variable ──────────────────────────────
+    //    e.g.  window.TECHNOLOGY, window.WEAPONS, window.RULES, …
+    for (const [key, val] of Object.entries(enriched)) {
+      window[key] = val;
+    }
+    // Also expose the full map under one umbrella object
+    window.ALPHAX = enriched;
+
+    statusEl.textContent =
+      `✅ Loaded ${sections.size} sections. All exposed as window.ALPHAX and as individual globals (e.g. window.TECHNOLOGY).`;
+    statusEl.style.color = '#c8f7c5';
+
+    // ── Quick preview render ──────────────────────────────────────────────────
+    const prioritySections = [
+      'RULES','TECHNOLOGY','TERRAIN','WEAPONS','DEFENSES',
+      'CHASSIS','FACILITIES','ABILITIES','UNITS','FACTIONS','NEWFACTIONS',
+      'NATURAL','WORLDSIZE','MORALE','REACTORS'
+    ];
+    const otherSections = [...sections.keys()].filter(k => !prioritySections.includes(k));
+    const orderedKeys = [...prioritySections.filter(k => enriched[k]), ...otherSections.filter(k => enriched[k])];
+
+    for (const key of orderedKeys) {
+      const data = enriched[key];
+      const count = Array.isArray(data) ? data.length : Object.keys(data).length;
+      const h2 = document.createElement('h2');
+      h2.textContent = `#${key}`;
+      outputEl.appendChild(h2);
+
+      const block = document.createElement('div');
+      block.className = 'section-block';
+
+      const countEl = document.createElement('div');
+      countEl.className = 'count';
+      countEl.textContent = Array.isArray(data) ? `${data.length} entries` : '';
+      block.appendChild(countEl);
+
+      const items = Array.isArray(data) ? data : [data];
+      const preview = items.slice(0, 10);
+      for (const item of preview) {
+        const div = document.createElement('div');
+        div.className = 'entry';
+        if (item.values) {
+          // Raw fallback
+          div.innerHTML = `<span class="val">${escHtml(item.values.join(' | '))}</span>`;
+        } else {
+          const parts = Object.entries(item)
+            .map(([k,v]) => `<span class="key">${k}</span>: <span class="val">${escHtml(String(v ?? ''))}</span>`)
+            .join('  ');
+          div.innerHTML = parts;
+        }
+        block.appendChild(div);
+      }
+      if (items.length > 10) {
+        const more = document.createElement('div');
+        more.className = 'count';
+        more.textContent = `… and ${items.length - 10} more (accessible via window.${key})`;
+        block.appendChild(more);
+      }
+
+      outputEl.appendChild(block);
+    }
+
+    console.log('ALPHAX data loaded. Available globals:', Object.keys(window.ALPHAX));
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  window.addEventListener('DOMContentLoaded', loadAndParse);
+  </script>
+</body>
+</html>

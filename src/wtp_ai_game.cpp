@@ -1219,15 +1219,19 @@ void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVe
 		protector.initialize(protectorVehicleDamageCoefficients);
 	}
 	
+	// set player and enemy combattants
+	
+	std::vector<Combattant>& playerCombattants = (playerAssaults ? assailants : protectors );
+	std::vector<Combattant>& enemyCombattants = (playerAssaults ? protectors : assailants);
+	
 	// set advantage for the opponent
 	
-	std::vector<Combattant> &opponentCombattants = (playerAssaults ? protectors : assailants);
-	double opponentRelativeHealthBonus = getOpponentRelativeHealthBonus(opponentCombattants);
-	trace("\topponentRelativeHealthBonus = %5.2f\n", opponentRelativeHealthBonus);
+	double enemyRelativeHealthBonus = getEnemyRelativeHealthBonus(enemyCombattants);
+	trace("\tenemyRelativeHealthBonus = %5.2f\n", enemyRelativeHealthBonus);
 	
-	for (Combattant &combattant : opponentCombattants)
+	for (Combattant &combattant : enemyCombattants)
 	{
-		combattant.remainingHealth *= (1.0 + opponentRelativeHealthBonus);
+		combattant.remainingHealth *= (1.0 + enemyRelativeHealthBonus);
 	}
 	
 	if (TRACE)
@@ -1242,6 +1246,14 @@ void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVe
 		{
 			trace("\t\t[%4d] weight=%5.2f health=%5.2f remainingHealth=%5.2f\n", getInitialVehicleIdByPad0(protector.pad0), protector.weight, protector.health, protector.remainingHealth);
 		}
+	}
+	
+	// playerCombattantContributions
+	
+	robin_hood::unordered_flat_map<int, double> playerCombattantContributions;
+	for (Combattant& combattant : playerCombattants)
+	{
+		playerCombattantContributions.emplace(combattant.pad0, 0.0);
 	}
 	
 	// artillery combattants
@@ -1309,17 +1321,40 @@ void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVe
 			trace("\t\tassailant cannot attack\n");
 			std::for_each(rangeAssailants.begin(), rangeAssailants.end(), [](Combattant *combattant) { combattant->remainingHealth = 0.0; });
 		}
-		else if (bestProtectorAssailantEffect.effect >= 1.0 / bestAssailantProtectorEffect.effect)
-		{
-			// protector attacks because it is better than defend
-			trace("\t\tprotector attacks because it is better than defend\n");
-			resolveMutualCombat(bestProtectorAssailantEffect);
-		}
 		else
 		{
-			// assailant attacks because protector does not want to
-			trace("\t\tassailant attacks because protector does not want to\n");
-			resolveMutualCombat(bestAssailantProtectorEffect);
+			Combattant* playerCombattant;
+			Combattant* enemyCombattant;
+			CombattantEffect* selectedCombattantEffect;
+			
+			if (bestProtectorAssailantEffect.effect >= 1.0 / bestAssailantProtectorEffect.effect)
+			{
+				// protector attacks because it is better than defend
+				trace("\t\tprotector attacks because it is better than defend\n");
+				
+				playerCombattant = this->playerAssaults ? bestProtectorAssailantEffect.defender : bestProtectorAssailantEffect.attacker;
+				enemyCombattant = this->playerAssaults ? bestProtectorAssailantEffect.attacker : bestProtectorAssailantEffect.defender;
+				selectedCombattantEffect = &bestProtectorAssailantEffect;
+				
+			}
+			else
+			{
+				// assailant attacks because protector does not want to
+				trace("\t\tassailant attacks because protector does not want to\n");
+				
+				playerCombattant = this->playerAssaults ? bestProtectorAssailantEffect.attacker : bestProtectorAssailantEffect.defender;
+				enemyCombattant = this->playerAssaults ? bestProtectorAssailantEffect.defender : bestProtectorAssailantEffect.attacker;
+				selectedCombattantEffect = &bestAssailantProtectorEffect;
+				
+			}
+			
+			// compute player combattant contribution
+			
+			double enemyCombattantHealth = enemyCombattant->remainingHealth;
+			resolveMutualCombat(*selectedCombattantEffect);
+			double enemyCombattantHealthLoss = enemyCombattantHealth - enemyCombattant->remainingHealth;
+			playerCombattantContributions.at(playerCombattant->pad0) += enemyCombattantHealthLoss;
+			
 		}
 		
 		// remove destroyed combattants
@@ -1360,6 +1395,8 @@ void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVe
 	}
 	else if (!rangeAssailants.empty() && rangeProtectors.empty())
 	{
+		// TODO: select best bombarder and use it
+		
 		// assailants bombards protectors
 		trace("\t\tassailants bombard protectors\n");
 		
@@ -1376,12 +1413,25 @@ void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVe
 		
 		double minBombardmentHealth = 1.0 - aiData.getTileInfo(this->tile).maxBombardmentDamage;
 		
+		double totalProtectorLostHealth = 0.0;
 		for (Combattant &protector : protectors)
 		{
 			if (protector.aircraftInFlight && !rangeAssailantCanBombardAircraftInFlight)
 				continue;
 			
-			protector.remainingHealth = std::min(minBombardmentHealth, protector.remainingHealth);
+			if (protector.remainingHealth <= minBombardmentHealth)
+				continue;
+			
+			double protectorLostHealth = protector.remainingHealth - minBombardmentHealth;
+			totalProtectorLostHealth += protectorLostHealth;
+			protector.remainingHealth -= protectorLostHealth;
+			
+		}
+		
+		// update player contribution if player is bombarder
+		
+		if (playerAssaults)
+		{
 			
 		}
 		
@@ -1497,17 +1547,40 @@ void CombatData::compute(robin_hood::unordered_flat_map<int, double> assailantVe
 			trace("\t\tassailant cannot attack\n");
 			std::for_each(meleeAssailants.begin(), meleeAssailants.end(), [](Combattant *combattant) { combattant->remainingHealth = 0.0; });
 		}
-		else if (bestProtectorAssailantEffect.effect >= 1.0 / bestAssailantProtectorEffect.effect)
-		{
-			// protector attacks because it is better than defend
-			trace("\t\tprotector attacks because it is better than defend\n");
-			resolveMutualCombat(bestProtectorAssailantEffect);
-		}
 		else
 		{
-			// assailant attacks because protector does not want to
-			trace("\t\tassailant attacks because protector does not want to\n");
-			resolveMutualCombat(bestAssailantProtectorEffect);
+			Combattant* playerCombattant;
+			Combattant* enemyCombattant;
+			CombattantEffect* selectedCombattantEffect;
+			
+			if (bestProtectorAssailantEffect.effect >= 1.0 / bestAssailantProtectorEffect.effect)
+			{
+				// protector attacks because it is better than defend
+				trace("\t\tprotector attacks because it is better than defend\n");
+				
+				playerCombattant = this->playerAssaults ? bestProtectorAssailantEffect.defender : bestProtectorAssailantEffect.attacker;
+				enemyCombattant = this->playerAssaults ? bestProtectorAssailantEffect.attacker : bestProtectorAssailantEffect.defender;
+				selectedCombattantEffect = &bestProtectorAssailantEffect;
+				
+			}
+			else
+			{
+				// assailant attacks because protector does not want to
+				trace("\t\tassailant attacks because protector does not want to\n");
+				
+				playerCombattant = this->playerAssaults ? bestProtectorAssailantEffect.attacker : bestProtectorAssailantEffect.defender;
+				enemyCombattant = this->playerAssaults ? bestProtectorAssailantEffect.defender : bestProtectorAssailantEffect.attacker;
+				selectedCombattantEffect = &bestAssailantProtectorEffect;
+				
+			}
+			
+			// compute player combattant contribution
+			
+			double enemyCombattantHealth = enemyCombattant->remainingHealth;
+			resolveMutualCombat(*selectedCombattantEffect);
+			double enemyCombattantHealthLoss = enemyCombattantHealth - enemyCombattant->remainingHealth;
+			playerCombattantContributions.at(playerCombattant->pad0) += enemyCombattantHealthLoss;
+			
 		}
 		
 		// remove destroyed combattants
@@ -1531,6 +1604,8 @@ void CombatData::resolveMutualCombat(CombattantEffect &combattantEffect)
 		trace("\tone of the combattants is dead\n");
 		return;
 	}
+	
+	// compute effect
 	
 	double weightedCombatEffect = combattantEffect.effect * combattantEffect.attacker->weight / combattantEffect.defender->weight;
 	double equalCombatEffect = combattantEffect.defender->remainingHealth / combattantEffect.attacker->remainingHealth;
@@ -1642,7 +1717,7 @@ CombattantEffect CombatData::getBestCombattantEffect(std::list<Combattant *> &at
 /*
 Computes opponent relative health bonus to ensure player 80% win chance sufficiency.
 */
-double CombatData::getOpponentRelativeHealthBonus(std::vector<Combattant> opponentCombattants)
+double CombatData::getEnemyRelativeHealthBonus(std::vector<Combattant> opponentCombattants)
 {
 	double opponentTotalHealth = std::accumulate(opponentCombattants.begin(), opponentCombattants.end(), 0.0, [](double sum, Combattant const &combattant) { return sum + combattant.health; });
 	double opponentTotalHP = std::max(1.0, 10.0 * opponentTotalHealth);
@@ -4634,6 +4709,7 @@ void updateVehicleTileBlockedAndZocs()
 		std::fill(tileInfo.factionNeedlejetInFlights.begin(), tileInfo.factionNeedlejetInFlights.end(), false);
 		std::fill(tileInfo.unfriendlyNeedlejetInFlights.begin(), tileInfo.unfriendlyNeedlejetInFlights.end(), false);
 		
+		tileInfo.playerVehicle = false;
 		tileInfo.friendlyVehicle = false;
 		tileInfo.unfriendlyVehicle = false;
 		tileInfo.unfriendlyVehicleZoc = false;
@@ -4674,6 +4750,10 @@ void updateVehicleTileBlockedAndZocs()
 		if (isFriendly(aiFactionId, vehicle.faction_id))
 		{
 			tileInfo.friendlyVehicle = true;
+			if (vehicle.faction_id == aiFactionId)
+			{
+				tileInfo.playerVehicle = true;
+			}
 		}
 		else
 		{

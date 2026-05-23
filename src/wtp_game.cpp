@@ -5154,11 +5154,7 @@ Any faction is friendly to itself.
 */
 bool isFriendly(int factionId1, int factionId2)
 {
-	assert(factionId1 >= 0 && factionId1 < MaxPlayerNum);
-	assert(factionId2 >= 0 && factionId2 < MaxPlayerNum);
-	
-	return factionId1 == factionId2 || isPact(factionId1, factionId2);
-	
+	return isPact(factionId1, factionId2);
 }
 
 /**
@@ -5166,7 +5162,7 @@ Factions can NOT collocate each other vehicles.
 */
 bool isUnfriendly(int factionId1, int factionId2)
 {
-	return factionId1 >= 0 && factionId2 >= 0 && factionId1 != factionId2 && !isPact(factionId1, factionId2);
+	return !isPact(factionId1, factionId2);
 }
 
 /**
@@ -5175,7 +5171,7 @@ Aliens are always at war with other factions.
 */
 bool isHostile(int factionId1, int factionId2)
 {
-	return (factionId1 >= 0 && factionId1 < MaxPlayerNum) && (factionId2 >= 0 && factionId2 < MaxPlayerNum) && factionId1 != factionId2 && isVendetta(factionId1, factionId2);
+	return isVendetta(factionId1, factionId2);
 }
 
 /**
@@ -5183,7 +5179,7 @@ Factions do not have pact and do not have vendetta.
 */
 bool isNeutral(int factionId1, int factionId2)
 {
-	return factionId1 != factionId2 && !isFriendly(factionId1, factionId2) && !isHostile(factionId1, factionId2);
+	return !isPact(factionId1, factionId2) && !isVendetta(factionId1, factionId2);
 }
 
 /*

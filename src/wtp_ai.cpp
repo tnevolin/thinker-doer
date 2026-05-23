@@ -248,6 +248,7 @@ void populateAIData()
 	
 	populateFactionInfos();
 	populateBaseInfos();
+	populateBunkerInfos();
 	
 	// route data
 	// dependent on faction info (bestSeaTransport)
@@ -649,6 +650,7 @@ void populateTileInfos()
 		TileInfo &tileInfo = aiData.tileInfos.at(tileIndex);
 		tileInfo.friendlyBase = false;
 		tileInfo.unfriendlyBase = false;
+		tileInfo.playerVehicle = false;
 		tileInfo.friendlyVehicle = false;
 		tileInfo.unfriendlyVehicle = false;
 		tileInfo.unfriendlyVehicleZoc = false;
@@ -676,12 +678,18 @@ void populateTileInfos()
 	
 	for (int vehicleId = 0; vehicleId < *VehCount; vehicleId++)
 	{
-		VEH *vehicle = getVehicle(vehicleId);
+		VEH &vehicle = Vehs[vehicleId];
 		TileInfo &tileInfo = aiData.getVehicleTileInfo(vehicleId);
 		
-		if (isFriendly(aiFactionId, vehicle->faction_id))
+		// block and zoc
+		
+		if (isFriendly(aiFactionId, vehicle.faction_id))
 		{
 			tileInfo.friendlyVehicle = true;
+			if (vehicle.faction_id == aiFactionId)
+			{
+				tileInfo.playerVehicle = true;
+			}
 		}
 		else
 		{
@@ -1694,6 +1702,112 @@ void populateBaseInfos()
 	
 }
 
+void populateBunkerInfos()
+{
+	Profiling::start("populateBunkerInfos", "populateAIData");
+	
+	debug("populateBunkerInfos - %s\n", aiMFaction->noun_faction);
+	
+	aiData.bunkerInfos.clear();
+	
+	for (int tileIndex = 0; tileIndex < *MapAreaTiles; tileIndex++)
+	{
+		MAP *tile = *MapTiles + tileIndex;
+		TileInfo &tileInfo = aiData.getTileInfo(tile);
+		
+		if (tileInfo.bunker)
+		{
+			// player territory - not occupied by unfriendly
+			if (tile->owner == aiFactionId && !tileInfo.unfriendlyVehicle)
+			{
+				aiData.bunkerInfos.emplace(tile, BunkerInfo());
+				aiData.getBunkerInfo(tile).playerTerritory = true;
+			}
+			// hostile territory - player occupied
+			else if (isHostile(aiFactionId, tile->owner) && tileInfo.playerVehicle)
+			{
+				aiData.bunkerInfos.emplace(tile, BunkerInfo());
+				aiData.getBunkerInfo(tile).playerTerritory = false;
+			}
+
+		}
+		
+	}
+	
+	// bunker gain
+	
+	SummaryStatistics baseGainSummary;
+	
+	for (robin_hood::pair<MAP *, BunkerInfo> &bunkerInfoEntry : aiData.bunkerInfos)
+	{
+		BunkerInfo &bunkerInfo = bunkerInfoEntry.second;
+		
+		int bunkerX = getX(bunkerInfo.tile);
+		int bunkerY = getY(bunkerInfo.tile);
+		
+		if (bunkerInfo.playerTerritory)
+		{
+			baseGainSummary.clear();
+			
+			for (int baseId = 0; baseId < *BaseCount; baseId++)
+			{
+				BASE &base = Bases[baseId];
+				BaseInfo &baseInfo = aiData.baseInfos.at(baseId);
+				
+				// player base
+				
+				if (base.faction_id != aiFactionId)
+					continue;
+				
+				// within the range
+				
+				if (getRange(bunkerX, bunkerY, base.x, base.y) > 4)
+					continue;
+				
+				// gain
+				
+				baseGainSummary.add(baseInfo.gain);
+				
+			}
+			
+			bunkerInfo.gain = baseGainSummary.mean();
+			
+		}
+		else
+		{
+			baseGainSummary.clear();
+			
+			for (int baseId = 0; baseId < *BaseCount; baseId++)
+			{
+				BASE &base = Bases[baseId];
+				BaseInfo &baseInfo = aiData.baseInfos.at(baseId);
+				
+				// non player base
+				
+				if (base.faction_id == aiFactionId)
+					continue;
+				
+				// within the range
+				
+				if (getRange(bunkerX, bunkerY, base.x, base.y) > 4)
+					continue;
+				
+				// gain
+				
+				baseGainSummary.add(baseInfo.gain);
+				
+			}
+			
+			bunkerInfo.gain = baseGainSummary.mean();
+			
+		}
+		
+	}
+	
+	Profiling::stop("populateBunkerInfos");
+	
+}
+
 void populatePlayerGlobalVariables()
 {
 	Profiling::start("populatePlayerGlobalVariables", "populateAIData");
@@ -2107,12 +2221,6 @@ void populateVehicles()
 		
 		if (isCombatVehicle(vehicleId))
 		{
-			// exclude paratroopers - I do not know what to do with them yet
-			// TODO think about how to move paratroopers
-			
-			if (isVehicleHasAbility(vehicleId, ABL_DROP_POD))
-				continue;
-			
 			// add vehicle to global list
 			
 			aiData.combatVehicleIds.push_back(vehicleId);
